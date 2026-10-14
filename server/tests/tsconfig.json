@@ -1,0 +1,12 @@
+{
+  // Type-checks src + tests + vitest config without affecting the build (tsconfig.json emits src only).
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "rootDir": "..",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "types": ["node"]
+  },
+  "include": ["../src", "./**/*.ts", "../vitest.config.ts"]
+}

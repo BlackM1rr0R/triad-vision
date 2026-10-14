@@ -1,0 +1,777 @@
+{
+ "meta": {
+  "lang": "Deutsch",
+  "short": "DE"
+ },
+ "nav": {
+  "home": "Startseite",
+  "about": "Über uns",
+  "services": "Leistungen",
+  "visas": "Visa",
+  "partners": "Partner",
+  "stories": "Erfolgsgeschichten",
+  "ausbildung": "Ausbildung",
+  "faq": "FAQ",
+  "news": "News",
+  "contact": "Kontakt",
+  "more": "Mehr",
+  "cooperation": "Kooperationsanfrage",
+  "cooperationShort": "Kooperation",
+  "eligibility": "Visum-Check",
+  "search": "Suche",
+  "accountShort": "Konto",
+  "login": "Anmelden",
+  "apply": "Bewerben",
+  "account": "Kundenbereich",
+  "admin": "Admin-Panel",
+  "logout": "Abmelden"
+ },
+ "common": {
+  "learnMore": "Mehr erfahren",
+  "viewAll": "Alle ansehen",
+  "back": "Zurück",
+  "loading": "Wird geladen...",
+  "error": "Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.",
+  "save": "Speichern",
+  "cancel": "Abbrechen",
+  "send": "Senden",
+  "close": "Schließen",
+  "required": "Pflichtfeld",
+  "optional": "Optional",
+  "download": "Herunterladen",
+  "open": "Öffnen",
+  "delete": "Löschen",
+  "readMore": "Weiterlesen",
+  "minRead": "Min. Lesezeit"
+ },
+ "hero": {
+  "eyebrow": "Von Aserbaidschan nach Deutschland",
+  "title1": "Ihr zuverlässiger Partner",
+  "title2": "für qualifizierte Arbeitskräfte",
+  "subtitle": "Triad Vision unterstützt Unternehmen in Deutschland umfassend bei der Auswahl qualifizierter und motivierter Fachkräfte aus Aserbaidschan, beim Visumverfahren und bei der Integration.",
+  "ctaPrimary": "Kooperationsanfrage senden",
+  "ctaSecondary": "Visum beantragen",
+  "bullets": [
+   "Erfahrene und passende Kandidaten",
+   "Volle Unterstützung bei Visum und Dokumenten",
+   "Arbeitskräfte für verschiedene Berufsfelder",
+   "Langfristige Zusammenarbeit mit deutschen Firmen"
+  ],
+  "cardTitle": "Ihr verlässlicher Partner für deutsche Unternehmen",
+  "cardText": "Vom Personalbedarf bis zur Ankunft der Fachkraft in Deutschland steuern wir den gesamten Prozess professionell.",
+  "scroll": "Nach unten scrollen",
+  "route": "Baku → Berlin"
+ },
+ "visas": {
+  "eyebrow": "Visaarten",
+  "title": "Visa für verschiedene Branchen",
+  "subtitle": "Für diese und weitere Visaarten unterstützen wir Sie umfassend bei Auswahl, Dokumentation und Einreise der Kandidaten nach Deutschland.",
+  "all": "Alle Visaarten ansehen",
+  "pageTitle": "Visaarten und Berufsfelder",
+  "pageSubtitle": "Der legale und sichere Weg nach Deutschland – mit dem passenden Visum für jede Berufsgruppe.",
+  "applyNow": "Dieses Visum beantragen",
+  "whatWeDo": "Was wir tun",
+  "otherVisas": "Weitere Visaarten"
+ },
+ "partners": {
+  "eyebrow": "Partnerunternehmen",
+  "title": "Unsere Partner in Deutschland",
+  "subtitle": "Wir arbeiten langfristig mit renommierten deutschen Unternehmen aus verschiedenen Branchen zusammen.",
+  "all": "Alle Partner ansehen",
+  "pageTitle": "Unsere Partnerunternehmen",
+  "pageSubtitle": "Wir arbeiten mit führenden deutschen Unternehmen aus Logistik, Bau, Hotellerie und Dienstleistung.",
+  "becomePartner": "Partner werden",
+  "becomePartnerText": "Ihr Unternehmen braucht zuverlässige und motivierte Mitarbeiter? Lassen Sie uns zusammenarbeiten."
+ },
+ "process": {
+  "eyebrow": "Unser Ablauf",
+  "title": "Volle Unterstützung von der Bewerbung bis zur Ankunft",
+  "steps": [
+   {
+    "title": "Kandidatenauswahl",
+    "text": "Passende Kandidaten werden ermittelt und beraten"
+   },
+   {
+    "title": "Dokumentenvorbereitung",
+    "text": "Lebenslauf, Zertifikate, Sprachnachweise u. a. werden geprüft"
+   },
+   {
+    "title": "Einigung mit der Firma",
+    "text": "Jobangebot, Vertrag und elektronische Signatur"
+   },
+   {
+    "title": "Visumverfahren",
+    "text": "Botschaftsunterlagen, Termin und Sicherheitsbegleitung"
+   },
+   {
+    "title": "Ankunft in Deutschland",
+    "text": "Hilfe bei Reise, Wohnung und Anmeldung"
+   },
+   {
+    "title": "Arbeitsbeginn",
+    "text": "Integration im Betrieb und laufende Betreuung"
+   }
+  ]
+ },
+ "samples": {
+  "eyebrow": "Erfolgreiche Visa",
+  "title": "Kandidaten, die mit uns nach Deutschland kamen",
+  "subtitle": "Hier sehen Sie echte Beispiele erteilter Visa aus verschiedenen Berufsfeldern.",
+  "privacy": "Personenbezogene Daten wurden unkenntlich gemacht (DSGVO).",
+  "visa": "Visum"
+ },
+ "testimonials": {
+  "title": "Erfolgsgeschichten",
+  "company": "Unternehmensstimme",
+  "candidate": "Kandidatenstimme"
+ },
+ "audience": {
+  "eyebrow": "Für wen",
+  "title": "Zwei Seiten, eine verlässliche Brücke",
+  "company": {
+   "title": "Für deutsche Unternehmen",
+   "text": "Lösen Sie Ihren Fachkräftemangel: ausgewählte, geprüfte und vorbereitete Kandidaten – inklusive aller Verwaltungsschritte.",
+   "items": [
+    "Kandidatenauswahl und Interviews",
+    "Bundesagentur- und Botschaftsverfahren",
+    "Ankunft, Wohnung und Anmeldung",
+    "Betreuung nach Arbeitsbeginn"
+   ],
+   "cta": "Kooperationsanfrage senden"
+  },
+  "candidate": {
+   "title": "Für Kandidaten",
+   "text": "Legale Arbeit und Karriere in Deutschland: Laden Sie Ihre Unterlagen online hoch und verfolgen Sie jeden Schritt im Kundenbereich.",
+   "items": [
+    "Kostenlose Erstberatung",
+    "Online-Dokumentenupload",
+    "Elektronische Vertragsunterschrift",
+    "Benachrichtigung bei jedem Schritt"
+   ],
+   "cta": "Online bewerben"
+  }
+ },
+ "why": {
+  "eyebrow": "Warum Triad Vision",
+  "title": "Transparent, legal und schnell",
+  "items": [
+   {
+    "title": "Legal und sicher",
+    "text": "Der gesamte Prozess erfolgt nach deutschem Recht."
+   },
+   {
+    "title": "Online-Kundenbereich",
+    "text": "Dokumente, Vertrag und Status – alles an einem Ort, 24/7."
+   },
+   {
+    "title": "Persönlicher Manager",
+    "text": "Ein fester Ansprechpartner für jeden Kandidaten und jedes Unternehmen."
+   },
+   {
+    "title": "Schneller Ablauf",
+    "text": "Visumentscheidung im Schnitt in 3–8 Wochen."
+   },
+   {
+    "title": "Betreuung in 4 Sprachen",
+    "text": "Auf Aserbaidschanisch, Deutsch, Englisch und Russisch."
+   },
+   {
+    "title": "Auch nach der Ankunft",
+    "text": "Wir begleiten Sie bei Wohnung, Anmeldung und Einarbeitung."
+   }
+  ]
+ },
+ "ausbildung": {
+  "eyebrow": "Weiterbildung",
+  "title": "Berufsausbildung in Deutschland",
+  "text": "Neben der direkten Arbeitsvermittlung unterstützen wir auch bei der Berufsausbildung (Ausbildung) in Deutschland – in Medizin, Handwerk, Technik und weiteren Berufen.",
+  "pageTitle": "Ausbildung und Weiterbildung",
+  "pageSubtitle": "Lernen, verdienen und in Deutschland Karriere machen: die bezahlte duale Ausbildung.",
+  "benefits": [
+   {
+    "title": "Monatliches Gehalt",
+    "text": "Während der Ausbildung jeden Monat 1000–1300 € Vergütung."
+   },
+   {
+    "title": "Staatlicher Abschluss",
+    "text": "Ein in ganz Deutschland anerkannter Berufsabschluss."
+   },
+   {
+    "title": "Feste Anstellung",
+    "text": "Möglichkeit zur Übernahme im selben Betrieb nach der Ausbildung."
+   },
+   {
+    "title": "Weg für die Familie",
+    "text": "Künftig Daueraufenthalt und Familiennachzug."
+   }
+  ],
+  "requirements": "Voraussetzungen",
+  "reqItems": [
+   "Schulabschluss (Sekundarstufe)",
+   "Deutsch B1 (in manchen Bereichen B2)",
+   "Empfohlenes Alter 18–35 Jahre",
+   "Motivation und Lernbereitschaft"
+  ]
+ },
+ "faq": {
+  "eyebrow": "Fragen",
+  "title": "Häufig gestellte Fragen",
+  "subtitle": "Keine Antwort gefunden? Schreiben Sie uns – wir antworten innerhalb von 24 Stunden.",
+  "all": "Alle",
+  "company": "Unternehmen",
+  "candidate": "Kandidaten"
+ },
+ "news": {
+  "eyebrow": "News",
+  "title": "Nützliche Artikel und Neuigkeiten",
+  "pageTitle": "News und Ratgeber"
+ },
+ "cta": {
+  "title": "Ihr verlässlicher Personalpartner",
+  "text": "Teilen Sie uns Ihren Personalbedarf mit – wir stellen Ihnen passende Kandidaten vor.",
+  "button": "Kooperationsanfrage"
+ },
+ "about": {
+  "title": "Über uns",
+  "subtitle": "Menschen · Arbeit · Chancen – eine verlässliche Brücke zwischen Aserbaidschan und Deutschland.",
+  "storyTitle": "Unsere Geschichte",
+  "story": "Triad Vision wurde gegründet, um talentierte und fleißige Menschen aus Aserbaidschan mit deutschen Unternehmen zusammenzubringen, die qualifizierte Fachkräfte suchen. Unsere Mission: eine legale, transparente und langfristige Zusammenarbeit für beide Seiten.\n\nUnser Team arbeitet in Baku und in Deutschland und steuert alle Phasen direkt – von der Auswahl des Kandidaten bis zum Arbeitsbeginn.",
+  "valuesTitle": "Unsere Werte",
+  "values": [
+   {
+    "title": "Vertrauen",
+    "text": "Wir stehen für jedes Wort und jedes Dokument, das wir geben."
+   },
+   {
+    "title": "Transparenz",
+    "text": "Kandidat und Unternehmen sehen jeden Schritt des Prozesses."
+   },
+   {
+    "title": "Rechtssicherheit",
+    "text": "Wir arbeiten nur auf legalem Weg und mit offiziellen Visa."
+   },
+   {
+    "title": "Der Mensch zählt",
+    "text": "Jeder Kandidat ist für uns keine Nummer, sondern eine Geschichte."
+   }
+  ],
+  "teamTitle": "Unser Team in Baku und Deutschland"
+ },
+ "services": {
+  "title": "Unsere Leistungen",
+  "subtitle": "Von der Personalsuche bis zur Ankunft – der gesamte Prozess aus einer Hand.",
+  "items": [
+   {
+    "title": "Kandidatenauswahl",
+    "text": "Auswahl und Interviews nach Fachkenntnissen, Erfahrung und Sprachniveau."
+   },
+   {
+    "title": "Dokumentation",
+    "text": "Sammlung, Übersetzung, Beglaubigung und Prüfung der Unterlagen."
+   },
+   {
+    "title": "Diplomanerkennung",
+    "text": "Anerkennung, ZAB und Bewertung beruflicher Zertifikate."
+   },
+   {
+    "title": "Visumservice",
+    "text": "Zustimmung der Bundesagentur, Botschaftstermin und Verfolgung des Antrags."
+   },
+   {
+    "title": "Sprachvorbereitung",
+    "text": "Deutschvorbereitung von A1 bis B2 mit Partnerkursen."
+   },
+   {
+    "title": "Ankunft und Integration",
+    "text": "Abholung am Flughafen, Wohnung, Anmeldung, Bank und Versicherung."
+   }
+  ]
+ },
+ "stories": {
+  "title": "Erfolgsgeschichten",
+  "subtitle": "Hunderte Kandidaten haben mit uns ein neues Leben in Deutschland begonnen."
+ },
+ "contact": {
+  "title": "Kontakt",
+  "subtitle": "Haben Sie Fragen? Schreiben Sie uns, rufen Sie an oder besuchen Sie unser Büro.",
+  "phone": "Telefon",
+  "email": "E-Mail",
+  "whatsapp": "WhatsApp",
+  "hours": "Öffnungszeiten",
+  "offices": "Unsere Büros",
+  "formTitle": "Schreiben Sie uns",
+  "writeWhatsapp": "Per WhatsApp schreiben"
+ },
+ "cooperation": {
+  "title": "Kooperationsanfrage",
+  "subtitle": "Teilen Sie uns den Bedarf Ihres Unternehmens mit – innerhalb von 24 Stunden erhalten Sie ein individuelles Angebot.",
+  "steps": [
+   "Formular ausfüllen",
+   "Beratungsgespräch",
+   "Kandidatenvorstellung",
+   "Visum und Ankunft"
+  ]
+ },
+ "form": {
+  "name": "Vor- und Nachname",
+  "company": "Unternehmen",
+  "email": "E-Mail",
+  "phone": "Telefon",
+  "sector": "Branche",
+  "workers": "Benötigte Mitarbeiterzahl",
+  "message": "Nachricht",
+  "send": "Senden",
+  "sending": "Wird gesendet...",
+  "sent": "Vielen Dank! Ihre Nachricht wurde gesendet, wir melden uns in Kürze bei Ihnen.",
+  "privacy": "Mit dem Absenden stimme ich der Verarbeitung meiner personenbezogenen Daten zu."
+ },
+ "auth": {
+  "loginTitle": "Anmeldung im Kundenbereich",
+  "loginSubtitle": "Verfolgen Sie den Status Ihres Antrags und laden Sie Ihre Dokumente hoch.",
+  "registerTitle": "Registrierung",
+  "registerSubtitle": "Erstellen Sie ein Konto und starten Sie Ihren Online-Visumantrag.",
+  "firstName": "Vorname",
+  "lastName": "Nachname",
+  "email": "E-Mail",
+  "phone": "Telefon",
+  "password": "Passwort",
+  "passwordHint": "Mindestens 8 Zeichen",
+  "login": "Anmelden",
+  "register": "Registrieren",
+  "noAccount": "Noch kein Konto?",
+  "haveAccount": "Bereits ein Konto?",
+  "forgot": "Passwort vergessen?",
+  "forgotTitle": "Passwort zurücksetzen",
+  "forgotText": "Geben Sie Ihre E-Mail-Adresse ein, wir senden Ihnen einen Link zum Zurücksetzen.",
+  "forgotSent": "Falls ein Konto mit dieser E-Mail existiert, wurde ein Link gesendet.",
+  "sendLink": "Link senden",
+  "resetTitle": "Neues Passwort",
+  "newPassword": "Neues Passwort",
+  "resetDone": "Ihr Passwort wurde geändert. Sie können sich jetzt anmelden.",
+  "errors": {
+   "INVALID_CREDENTIALS": "E-Mail oder Passwort ist falsch.",
+   "EMAIL_TAKEN": "Diese E-Mail ist bereits registriert.",
+   "INVALID_TOKEN": "Der Link ist ungültig oder abgelaufen."
+  },
+  "terms": "Mit der Registrierung akzeptiere ich die Datenschutzerklärung."
+ },
+ "portal": {
+  "title": "Kundenbereich",
+  "hello": "Hallo",
+  "myCases": "Meine Anträge",
+  "notifications": "Benachrichtigungen",
+  "profile": "Profil",
+  "noCases": "Sie haben noch keinen Antrag.",
+  "newCase": "Neuer Antrag",
+  "startTitle": "Visumantrag starten",
+  "startText": "Wählen Sie Ihren Beruf und die Visumart. Danach erscheint die Liste der benötigten Dokumente in Ihrem Kundenbereich.",
+  "profession": "Ihr Beruf",
+  "professionPh": "z. B. LKW-Fahrer, Koch, Pflegekraft",
+  "visaType": "Visumart",
+  "notSure": "Weiß nicht / Beratung nötig",
+  "create": "Antrag erstellen",
+  "caseNo": "Antrag Nr.",
+  "created": "Erstellt",
+  "updated": "Aktualisiert",
+  "currentStep": "Aktueller Schritt",
+  "nextAction": "Ihre Aufgabe",
+  "waitingUs": "Unser Team arbeitet daran – Sie erhalten eine Benachrichtigung.",
+  "waiting": "In Bearbeitung",
+  "actionRequired": "Ihre Aktion ist gefragt",
+  "openCase": "Antrag öffnen",
+  "staffNote": "Hinweis vom Mitarbeiter",
+  "manager": "Manager",
+  "steps": {
+   "documents": "Dokumente",
+   "contract": "Vertrag",
+   "embassyDocs": "Botschaftsunterlagen",
+   "appointment": "Botschaftstermin",
+   "decision": "Entscheidung",
+   "result": "Ergebnis"
+  },
+  "status": {
+   "DOCUMENTS_PENDING": "Dokumente hochladen",
+   "DOCUMENTS_REVIEW": "Dokumente werden geprüft",
+   "CONTRACT_SENT": "Vertrag muss unterschrieben werden",
+   "CONTRACT_SIGNED": "Vertrag wird geprüft",
+   "EMBASSY_DOCUMENTS": "Botschaftsunterlagen hochladen",
+   "EMBASSY_REVIEW": "Botschaftsunterlagen werden geprüft",
+   "APPOINTMENT_SCHEDULED": "Botschaftstermin vereinbart",
+   "DECISION_PENDING": "Entscheidung der Botschaft ausstehend",
+   "APPROVED": "Visum erteilt",
+   "REJECTED": "Visum abgelehnt",
+   "CANCELLED": "Storniert"
+  },
+  "statusHelp": {
+   "DOCUMENTS_PENDING": "Laden Sie die Dokumente aus der Liste unten hoch und klicken Sie auf „Zur Prüfung senden“.",
+   "DOCUMENTS_REVIEW": "Ihre Dokumente werden von unserem Team geprüft. Das dauert meist 1–3 Werktage.",
+   "CONTRACT_SENT": "Lesen Sie den Vertrag und unterschreiben Sie ihn unten elektronisch.",
+   "CONTRACT_SIGNED": "Ihr unterschriebener Vertrag wird geprüft. Nach der Freigabe beginnt die Botschaftsphase.",
+   "EMBASSY_DOCUMENTS": "Laden Sie die für die Botschaft benötigten Dokumente hoch und senden Sie sie zur Prüfung.",
+   "EMBASSY_REVIEW": "Ihre Botschaftsunterlagen werden geprüft. Danach wird ein Botschaftstermin vereinbart.",
+   "APPOINTMENT_SCHEDULED": "Erscheinen Sie pünktlich mit allen Originaldokumenten zum Termin.",
+   "DECISION_PENDING": "Ihr Antrag liegt bei der Botschaft. Sobald entschieden ist, werden Sie benachrichtigt.",
+   "APPROVED": "Herzlichen Glückwunsch! Unser Manager meldet sich bei Ihnen zu den nächsten Schritten.",
+   "REJECTED": "Den Grund finden Sie unten. Unser Manager meldet sich bei Ihnen zu den nächsten Schritten.",
+   "CANCELLED": "Dieser Antrag wurde storniert."
+  },
+  "docs": {
+   "initialTitle": "Erste Dokumente",
+   "embassyTitle": "Botschaftsunterlagen",
+   "upload": "Datei hochladen",
+   "uploading": "Wird hochgeladen...",
+   "replace": "Neu hochladen",
+   "formats": "PDF, JPG, PNG, WEBP, DOC, DOCX · max. 15 MB",
+   "submit": "Zur Prüfung senden",
+   "submitConfirm": "Möchten Sie die Dokumente zur Prüfung senden? Während der Prüfung sind keine Änderungen möglich.",
+   "missing": "Laden Sie alle Pflichtdokumente hoch",
+   "locked": "In dieser Phase können Dokumente nicht geändert werden.",
+   "status": {
+    "PENDING": "In Prüfung",
+    "ACCEPTED": "Akzeptiert",
+    "REJECTED": "Abgelehnt"
+   },
+   "notUploaded": "Nicht hochgeladen",
+   "otherFiles": "Dateien für Sie",
+   "tooLarge": "Die Datei ist zu groß (max. 15 MB).",
+   "badType": "Dieser Dateityp wird nicht akzeptiert.",
+   "drop": "Datei hierher ziehen oder zum Auswählen klicken",
+   "uploaded": "Datei hochgeladen",
+   "deleteConfirm": "Möchten Sie diese Datei löschen?",
+   "missingList": "Noch nicht hochgeladen:"
+  },
+  "contract": {
+   "title": "Vertrag",
+   "version": "Version",
+   "read": "Vertrag öffnen",
+   "signTitle": "Elektronische Signatur",
+   "signText": "Unterschreiben Sie im Feld unten mit dem Finger oder der Maus.",
+   "fullName": "Vollständiger Name (wie im Pass)",
+   "clear": "Löschen",
+   "agree": "Ich habe den Vertrag gelesen, stimme den Bedingungen zu und unterschreibe ihn elektronisch.",
+   "sign": "Unterschreiben und senden",
+   "signing": "Wird unterschrieben...",
+   "signed": "Unterschrieben",
+   "signedAt": "Unterschrieben am",
+   "signedFile": "Unterschriebener Vertrag (PDF)",
+   "emptySignature": "Bitte unterschreiben Sie.",
+   "sentAt": "Gesendet am",
+   "nameRequired": "Bitte geben Sie Ihren vollständigen Namen ein."
+  },
+  "appointment": {
+   "title": "Botschaftstermin",
+   "date": "Datum und Uhrzeit",
+   "place": "Adresse",
+   "addToCalendar": "Zum Kalender hinzufügen"
+  },
+  "decision": {
+   "approved": "Ihr Visum wurde erteilt!",
+   "rejected": "Der Visumantrag wurde abgelehnt",
+   "reason": "Grund",
+   "validity": "Gültigkeitsdauer",
+   "note": "Hinweis"
+  },
+  "timeline": "Verlauf",
+  "messages": {
+   "title": "Nachrichten an den Manager",
+   "placeholder": "Ihre Nachricht...",
+   "empty": "Noch keine Nachrichten. Bei Fragen schreiben Sie uns hier.",
+   "you": "Sie",
+   "team": "Triad Vision"
+  },
+  "events": {
+   "CASE_CREATED": "Antrag erstellt",
+   "STATUS_CHANGED": "Status geändert",
+   "DOCUMENTS_SUBMITTED": "Dokumente zur Prüfung gesendet",
+   "DOCUMENT_ACCEPTED": "Dokument akzeptiert",
+   "DOCUMENT_REJECTED": "Dokument abgelehnt",
+   "DOCUMENT_PENDING": "Dokument erneut zur Prüfung",
+   "CONTRACT_SENT": "Vertrag gesendet",
+   "CONTRACT_SIGNED": "Vertrag unterschrieben",
+   "SIGNATURE_REJECTED": "Unterschrift abgelehnt",
+   "CONTRACT_CONFIRMED": "Vertrag bestätigt",
+   "APPOINTMENT_SCHEDULED": "Botschaftstermin vereinbart",
+   "APPOINTMENT_RESCHEDULED": "Botschaftstermin verschoben",
+   "LODGED_AT_EMBASSY": "Antrag bei der Botschaft eingereicht",
+   "DECISION": "Entscheidung der Botschaft",
+   "REOPENED": "Antrag wieder geöffnet",
+   "STAFF_DOCUMENT_UPLOADED": "Datei für Sie hinzugefügt"
+  },
+  "markAllRead": "Alle als gelesen markieren",
+  "noNotifications": "Keine Benachrichtigungen.",
+  "profileSaved": "Profil gespeichert.",
+  "language": "Sprache der Benachrichtigungen",
+  "changePassword": "Passwort ändern",
+  "currentPassword": "Aktuelles Passwort",
+  "personalData": "Persönliche Daten",
+  "passwordChanged": "Passwort wurde geändert.",
+  "errors": {
+   "ACTIVE_CASE_EXISTS": "Sie haben bereits einen aktiven Antrag.",
+   "REQUIRED_DOCUMENTS_MISSING": "Laden Sie alle Pflichtdokumente hoch.",
+   "INVALID_TRANSITION": "Diese Aktion ist im aktuellen Schritt nicht möglich. Bitte laden Sie die Seite neu.",
+   "UPLOAD_NOT_ALLOWED": "In dieser Phase ist kein Dokumentenupload möglich.",
+   "WRONG_PASSWORD": "Das aktuelle Passwort ist falsch.",
+   "DELETE_NOT_ALLOWED": "Diese Datei kann nicht gelöscht werden.",
+   "UNSUPPORTED_FILE_TYPE": "Dieser Dateityp wird nicht akzeptiert.",
+   "FILE_TOO_LARGE": "Die Datei ist zu groß (max. 15 MB)."
+  }
+ },
+ "footer": {
+  "about": "Legale, transparente und verlässliche Personalvermittlung und Visalösungen von Aserbaidschan nach Deutschland.",
+  "company": "Unternehmen",
+  "forCandidates": "Für Kandidaten",
+  "contact": "Kontakt",
+  "rights": "Alle Rechte vorbehalten.",
+  "privacy": "Datenschutz",
+  "imprint": "Impressum",
+  "newsletter": "Bleiben Sie informiert"
+ },
+ "notFound": {
+  "title": "Seite nicht gefunden",
+  "text": "Die gesuchte Seite existiert nicht oder wurde verschoben.",
+  "home": "Zur Startseite"
+ },
+ "svc": {
+  "eyebrow": "Unsere Leistungen",
+  "title": "Der gesamte Prozess – von der Suche bis zur Ankunft",
+  "subtitle": "Klicken Sie auf eine Leistung, um zu sehen, was enthalten ist und wie sie funktioniert.",
+  "included": "Was ist enthalten",
+  "forCompany": "Für Unternehmen",
+  "forCandidate": "Für Bewerber",
+  "forAll": "Für Unternehmen und Bewerber",
+  "all": "Alle",
+  "related": "Weitere Leistungen",
+  "getOffer": "Kostenlose Beratung",
+  "askTitle": "Fragen zu dieser Leistung?",
+  "askText": "Füllen Sie das Formular aus – wir melden uns innerhalb von 24 Stunden.",
+  "howItWorks": "So funktioniert es"
+ },
+ "detail": {
+  "open": "Details",
+  "step": "Schritt",
+  "process": [
+   "Im Erstgespräch lernen wir Beruf, Erfahrung, Sprachniveau und Ziele kennen. Für Unternehmen erstellen wir gemeinsam das Anforderungsprofil. In dieser Phase wird die passende Visumart bestimmt.",
+   "In Ihrem Kundenbereich entsteht eine individuelle Dokumentenliste. Sie laden die Unterlagen online hoch, wir prüfen jedes Dokument und fordern bei Bedarf Korrekturen an. Auch bei Übersetzung und Beglaubigung helfen wir.",
+   "Wir organisieren das Gespräch mit dem passenden Arbeitgeber. Nach der Einigung wird der Vertrag in Ihren Kundenbereich gestellt und Sie unterschreiben ihn elektronisch am Bildschirm. Das unterschriebene PDF liegt sofort beiden Seiten vor.",
+   "Das Antragspaket für die Botschaft wird erstellt, die Zustimmung der Bundesagentur eingeholt und der Botschaftstermin vereinbart. Wir bereiten Sie auf das Gespräch vor. Bis zur Entscheidung werden Sie über jede Änderung informiert.",
+   "Nach Erteilung des Visums planen wir den Flug, holen Sie am Flughafen ab und bringen Sie in Ihre Unterkunft. Wir helfen bei Anmeldung, Bankkonto und Versicherung.",
+   "Ab dem ersten Arbeitstag haben Sie und Ihr Arbeitgeber einen festen Ansprechpartner. In den ersten Monaten halten wir regelmäßig Kontakt und lösen Fragen schnell."
+  ],
+  "why": [
+   "Wir arbeiten ausschließlich mit offiziellen Visumarten: §18a, §18b, §19c, §16a, §16d und Saisonbeschäftigung. Jeder Vertrag wird auf Übereinstimmung mit dem deutschen Arbeitsrecht geprüft – ohne versteckte Kosten.",
+   "Im Kundenbereich laden Sie Dokumente hoch, unterschreiben den Vertrag, verfolgen den Status und schreiben Ihrem Ansprechpartner. Bei jedem Schritt erhalten Sie eine Benachrichtigung im Portal und per E-Mail.",
+   "Jeder Bewerber und jedes Unternehmen erhält einen festen Ansprechpartner. Sie wissen immer, an wen Sie sich wenden können.",
+   "Bei vollständigen Unterlagen dauert die Bearbeitung bei der Botschaft meist 3–8 Wochen. Mit dem beschleunigten Fachkräfteverfahren (§81a) geht es oft noch schneller.",
+   "Unser Team spricht Aserbaidschanisch, Deutsch, Englisch und Russisch. Website, Kundenbereich und Benachrichtigungen gibt es ebenfalls in diesen 4 Sprachen.",
+   "Auch nach dem Visum sind wir da: Abholung am Flughafen, Unterkunft, Anmeldung, Bank, Versicherung und Einarbeitung."
+  ]
+ },
+ "cookie": {
+  "text": "Wir verwenden nur technisch notwendige Cookies (Anmeldesitzung und Spracheinstellung). Tracking- oder Werbe-Cookies werden nicht eingesetzt.",
+  "accept": "Verstanden"
+ },
+ "topbar": {
+  "hours": "Mo–Fr 09:00–18:00"
+ },
+ "quiz": {
+  "navLabel": "Welches Visum passt zu mir?",
+  "navShort": "Visa-Check",
+  "eyebrow": "Eignungs-Check",
+  "title": "Welches Visum passt zu mir?",
+  "subtitle": "Beantworten Sie ein paar kurze Fragen — wir zeigen Ihnen die passende deutsche Visumkategorie, Ihren Vorbereitungsstand und die nächsten Schritte.",
+  "duration": "Ca. 2 Minuten · kostenlos · ohne Registrierung",
+  "stepOf": "Frage {{current}} von {{total}}",
+  "back": "Zurück",
+  "next": "Weiter",
+  "seeResult": "Ergebnis anzeigen",
+  "startAgain": "Neu starten",
+  "enterHint": "Mit Enter geht es weiter",
+  "restored": "Ihre bisherigen Antworten wurden wiederhergestellt",
+  "loading": "Wird geladen...",
+  "questions": {
+   "field": {
+    "title": "In welchem Bereich möchten Sie arbeiten?",
+    "hint": "Wählen Sie den Bereich, der Ihnen am nächsten liegt."
+   },
+   "education": {
+    "title": "Was ist Ihr höchster Bildungsabschluss?",
+    "hint": "Wählen Sie den letzten Abschluss, für den Sie ein Zeugnis haben."
+   },
+   "experience": {
+    "title": "Wie viele Jahre Berufserfahrung haben Sie in diesem Bereich?",
+    "hint": "Zählen Sie nur nachweisbare Erfahrung."
+   },
+   "german": {
+    "title": "Wie gut sprechen Sie Deutsch?",
+    "hint": "Auch ohne Zertifikat — schätzen Sie Ihr Niveau ein."
+   },
+   "age": {
+    "title": "Wie alt sind Sie?",
+    "hint": "Bei manchen Visa spielt das Alter eine Rolle."
+   },
+   "licence": {
+    "title": "Welchen Führerschein haben Sie?",
+    "hint": "Wählen Sie die höchste Klasse."
+   },
+   "goal": {
+    "title": "Was ist Ihr wichtigstes Ziel?",
+    "hint": "Wählen Sie, was für Sie gerade am wichtigsten ist."
+   }
+  },
+  "options": {
+   "education": {
+    "school": "Schulabschluss",
+    "vocational": "Berufsausbildung / College",
+    "university": "Hochschulabschluss"
+   },
+   "experience": {
+    "exp0": "Keine Erfahrung",
+    "exp1": "1–2 Jahre",
+    "exp3": "3–5 Jahre",
+    "exp5": "Mehr als 5 Jahre"
+   },
+   "german": {
+    "none": "Keine Kenntnisse",
+    "a1a2": "A1–A2 (Grundkenntnisse)",
+    "b1": "B1 (Mittelstufe)",
+    "b2": "B2 oder höher"
+   },
+   "age": {
+    "a18": "18–25",
+    "a26": "26–35",
+    "a36": "36–45",
+    "a46": "46 und älter"
+   },
+   "licence": {
+    "B": "Klasse B",
+    "C": "Klasse C",
+    "CE": "Klasse CE",
+    "none": "Kein Führerschein"
+   },
+   "licenceDesc": {
+    "B": "Pkw, Transporter",
+    "C": "Lkw ohne Anhänger",
+    "CE": "Lkw mit Anhänger (Sattelzug)",
+    "none": "Noch nicht vorhanden"
+   },
+   "goal": {
+    "work": "Jetzt arbeiten",
+    "study": "Ausbildung",
+    "seasonal": "Saisonarbeit"
+   },
+   "goalDesc": {
+    "work": "Mit Arbeitsvertrag in Deutschland arbeiten",
+    "study": "In Deutschland lernen und Gehalt verdienen",
+    "seasonal": "Befristete Arbeit für einige Monate"
+   }
+  },
+  "result": {
+   "eyebrow": "Ihr Ergebnis",
+   "title": "Das passende Visum für Sie",
+   "subtitle": "Eine persönliche Empfehlung auf Basis Ihrer Antworten.",
+   "topMatch": "Beste Übereinstimmung",
+   "match": "{{score}} % Übereinstimmung",
+   "alternatives": "Alternativen",
+   "readiness": "Vorbereitungsstand",
+   "readinessLevel": {
+    "low": "Vorbereitung nötig",
+    "mid": "Guter Start",
+    "high": "Fast bereit"
+   },
+   "readinessText": {
+    "low": "Keine Sorge — mit den Schritten unten können Sie Ihre Chancen deutlich verbessern. Wir begleiten Sie dabei.",
+    "mid": "Viele Voraussetzungen erfüllen Sie bereits. Mit wenigen Schritten wird Ihr Antrag deutlich stärker.",
+    "high": "Ihr Profil ist für dieses Visum stark. Sie können Ihre Unterlagen vorbereiten und den Antrag starten."
+   },
+   "why": "Warum dieses Visum?",
+   "checklist": "Ihre persönliche Checkliste",
+   "tones": {
+    "todo": "Verbessern",
+    "info": "Vorbereiten",
+    "ok": "Erledigt"
+   },
+   "apply": "Online bewerben",
+   "read": "Mehr zu diesem Visum",
+   "ask": "Fragen Sie uns",
+   "disclaimer": "Dieses Ergebnis ist eine erste Einschätzung und keine Rechtsberatung. Die endgültige Entscheidung treffen die deutsche Botschaft und die Bundesagentur für Arbeit."
+  },
+  "reasons": {
+   "fieldMatch": "Ihr gewünschter Bereich passt genau zu dieser Visumkategorie.",
+   "relatedField": "Ein verwandter Bereich — Ihre Fähigkeiten sind auch hier gefragt.",
+   "goalStudy": "Sie möchten lernen — eine Ausbildung ist dafür der beste Weg.",
+   "goalSeasonal": "Für Saisonarbeit ist dies der schnellste und einfachste Weg.",
+   "germanStrong": "Ihre Deutschkenntnisse liegen über der Anforderung — ein großer Vorteil.",
+   "experienceStrong": "Ihre Berufserfahrung ist für Arbeitgeber attraktiv.",
+   "degreeStrong": "Ihr Hochschulabschluss öffnet den Weg zur Blauen Karte EU.",
+   "vocationalStrong": "Ihre Berufsausbildung ist die Grundlage für ein Fachkräftevisum.",
+   "ageFit": "Ihr Alter ist ideal für eine Ausbildung.",
+   "licenceStrong": "Der CE-Führerschein ist im Güterverkehr besonders gefragt.",
+   "licenceOk": "Ihr Führerschein reicht für die Arbeit als Kurierfahrer aus.",
+   "fallback": "Nach Ihren Antworten passt Ihr Profil am besten zu dieser Kategorie."
+  },
+  "checklist": {
+   "germanNeeded": "Bringen Sie Ihr Deutsch mindestens auf Niveau {{level}} und legen Sie eine Prüfung ab (Goethe, telc, ÖSD).",
+   "germanOk": "Ihr Deutschniveau reicht aus — halten Sie Ihr Sprachzertifikat bereit.",
+   "germanNursing": "Für die Pflege ist mindestens B1 nötig, für die volle Anerkennung B2.",
+   "truckLicence": "Erwerben Sie die Klasse CE und die Schlüsselzahl 95 (Berufskraftfahrerqualifikation) — für Lkw-Fahrer Pflicht.",
+   "truckCode95": "Lassen Sie die Schlüsselzahl 95 in Deutschland bestätigen und Ihren Führerschein umschreiben.",
+   "driverCard": "Für den digitalen Tachografen benötigen Sie eine Fahrerkarte.",
+   "licenceConvert": "Ihr Führerschein muss innerhalb von 6 Monaten in einen deutschen umgeschrieben werden.",
+   "courierLicence": "Für die Arbeit als Kurierfahrer ist mindestens ein Führerschein der Klasse B erforderlich.",
+   "nursingRecognition": "Beantragen Sie die Anerkennung Ihres Pflegeabschlusses — eventuell ist ein Anpassungslehrgang oder eine Kenntnisprüfung nötig.",
+   "schoolCertificate": "Bereiten Sie Ihr Schulzeugnis mit Apostille und beglaubigter Übersetzung vor.",
+   "ausbildungAge": "Eine Ausbildung richtet sich meist an jüngere Bewerber — ab 35 wird die Suche schwieriger, prüfen Sie auch Alternativen.",
+   "ausbildungFunds": "Sie müssen Ihren Lebensunterhalt nachweisen — durch die Ausbildungsvergütung oder ein Sperrkonto.",
+   "seasonal": "Saisonarbeitserlaubnisse sind befristet — bewerben Sie sich einige Monate vor Saisonbeginn.",
+   "degreeAnabin": "Prüfen Sie die Anerkennung Ihres Abschlusses in der anabin-Datenbank — wichtig für die Blaue Karte.",
+   "itDegree": "Auch ohne Studium ist ein Visum möglich: mit 3 Jahren IT-Erfahrung in den letzten 7 Jahren.",
+   "qualificationNeeded": "Für diesen Bereich ist eine Berufsausbildung oder nachweisbare Qualifikation nötig — ein kurzer Fachkurs kann helfen.",
+   "recognition": "Lassen Sie die Anerkennung Ihres Abschlusses in Deutschland prüfen — wir helfen bei den Unterlagen.",
+   "experienceBuild": "Mindestens {{years}} Jahre nachweisbare Berufserfahrung in diesem Bereich stärken Ihr Profil deutlich.",
+   "experienceProof": "Belegen Sie Ihre Erfahrung mit Arbeitsbuch und Arbeitszeugnissen.",
+   "age45": "Ab 45 Jahren ist beim ersten Arbeitsvisum ein Mindestgehalt oder ein Nachweis zur Altersversorgung erforderlich.",
+   "passport": "Halten Sie einen Reisepass bereit, der noch mindestens 12 Monate gültig ist.",
+   "cv": "Erstellen Sie einen Lebenslauf im deutschen Format."
+  }
+ },
+ "search": {
+  "button": "Suche",
+  "placeholder": "Visa, Leistungen, Fragen suchen...",
+  "shortcutHint": "Strg K",
+  "close": "Schließen",
+  "recent": "Letzte Suchen",
+  "clearRecent": "Löschen",
+  "suggestions": "Vorschläge",
+  "noResults": "Keine Ergebnisse für „{{query}}“",
+  "noResultsHint": "Versuchen Sie einen anderen Begriff oder kontaktieren Sie uns.",
+  "loading": "Inhalte werden geladen...",
+  "groups": {
+   "pages": "Seiten",
+   "visas": "Visumkategorien",
+   "services": "Leistungen",
+   "faq": "Häufige Fragen",
+   "news": "Neuigkeiten"
+  },
+  "hints": {
+   "navigate": "auswählen",
+   "select": "öffnen",
+   "close": "schließen"
+  },
+  "pages": {
+   "home": "Startseite",
+   "about": "Unternehmen, Mission und Team",
+   "services": "Unterlagen, Übersetzung, Visumservice",
+   "visas": "Alle Arbeitsvisa für Deutschland",
+   "partners": "Unsere Partnerunternehmen in Deutschland",
+   "stories": "Erfahrungen unserer Kunden",
+   "ausbildung": "Berufsausbildung in Deutschland",
+   "faq": "Häufig gestellte Fragen",
+   "news": "Neuigkeiten und Artikel",
+   "contact": "Telefon, Adresse, WhatsApp",
+   "cooperation": "Für deutsche Unternehmen",
+   "eligibility": "Test: Welches Visum passt zu Ihnen?",
+   "login": "Anmeldung im Kundenportal",
+   "register": "Online-Bewerbung und Registrierung"
+  }
+ }
+}

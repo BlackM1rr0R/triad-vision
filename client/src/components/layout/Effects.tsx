@@ -1,0 +1,148 @@
+import { useEffect, useLayoutEffect, useState } from 'react';
+import { useLocation, useNavigationType } from 'react-router-dom';
+import { AnimatePresence, motion, useScroll, useSpring } from 'framer-motion';
+import { LogoMark } from '../ui/Logo';
+
+export const scrollToTop = (immediate = false) => {
+  window.scrollTo({ top: 0, behavior: immediate ? 'instant' : 'smooth' });
+};
+
+const POS_KEY = 'tv_scroll';
+const readPositions = (): Record<string, number> => {
+  try {
+    return JSON.parse(sessionStorage.getItem(POS_KEY) ?? '{}') as Record<string, number>;
+  } catch {
+    return {};
+  }
+};
+const savePosition = (key: string) => {
+  try {
+    const all = readPositions();
+    all[key] = window.scrollY;
+    // keep the store small
+    const keys = Object.keys(all);
+    if (keys.length > 60) delete all[keys[0]];
+    sessionStorage.setItem(POS_KEY, JSON.stringify(all));
+  } catch {
+    // storage unavailable: restoration just won't happen
+  }
+};
+
+/** Scrolls to `y` once the page has grown tall enough (content loads asynchronously), giving up after 2 s. */
+const restoreTo = (y: number) => {
+  const started = performance.now();
+  const attempt = () => {
+    const max = document.documentElement.scrollHeight - window.innerHeight;
+    if (max >= y - 4 || performance.now() - started > 2000) {
+      window.scrollTo({ top: y, behavior: 'instant' });
+      return;
+    }
+    requestAnimationFrame(attempt);
+  };
+  requestAnimationFrame(attempt);
+};
+
+/**
+ * Scroll behaviour like a classic website:
+ * - clicking a link (PUSH/REPLACE) opens the new page at the top;
+ * - reload and back/forward (POP) return to where the user was on that page.
+ * Native scrolling is used on purpose: JS smooth-scroll libraries move scrolling onto the main
+ * thread, so any busy frame turns into visible lag.
+ */
+export const SmoothScroll = () => {
+  const location = useLocation();
+  const navType = useNavigationType();
+
+  useEffect(() => {
+    if ('scrollRestoration' in window.history) window.history.scrollRestoration = 'manual';
+    const onUnload = () => savePosition(`${window.history.state?.key ?? 'default'}:${window.location.pathname}`);
+    window.addEventListener('pagehide', onUnload);
+    return () => window.removeEventListener('pagehide', onUnload);
+  }, []);
+
+  useLayoutEffect(() => {
+    if (navType === 'POP') {
+      const y = readPositions()[`${location.key}:${location.pathname}`];
+      if (y) restoreTo(y);
+      else scrollToTop(true);
+    } else {
+      scrollToTop(true);
+    }
+    // Remember where we were on this entry when leaving it.
+    // Entries opened by typing a URL all share the key "default", so the path is part of the key.
+    const key = `${location.key}:${location.pathname}`;
+    return () => savePosition(key);
+  }, [location.key, location.pathname, navType]);
+
+  return null;
+};
+
+export const ScrollProgress = () => {
+  const { scrollYProgress } = useScroll();
+  const scaleX = useSpring(scrollYProgress, { stiffness: 120, damping: 25 });
+  return (
+    <motion.div
+      className="fixed inset-x-0 top-0 z-[70] h-[3px] origin-left bg-gradient-to-r from-az-blue via-brand-500 to-de-gold"
+      style={{ scaleX }}
+    />
+  );
+};
+
+/** Intro animation shown once per browser session. */
+export const Preloader = () => {
+  const [show, setShow] = useState(() => {
+    try {
+      return !sessionStorage.getItem('tv_intro');
+    } catch {
+      return false;
+    }
+  });
+  useEffect(() => {
+    if (!show) return;
+    const id = window.setTimeout(() => {
+      setShow(false);
+      try {
+        sessionStorage.setItem('tv_intro', '1');
+      } catch {
+        // storage unavailable: intro simply shows again next time
+      }
+    }, 1300);
+    return () => window.clearTimeout(id);
+  }, [show]);
+
+  return (
+    <AnimatePresence>
+      {show && (
+        <motion.div
+          className="fixed inset-0 z-[200] grid place-items-center bg-navy-950"
+          exit={{ clipPath: 'inset(0 0 100% 0)' }}
+          transition={{ duration: 0.9, ease: [0.76, 0, 0.24, 1] }}
+        >
+          <div className="flex flex-col items-center gap-6">
+            <motion.div initial={{ scale: 0.4, rotate: -30, opacity: 0 }} animate={{ scale: 1, rotate: 0, opacity: 1 }} transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}>
+              <LogoMark className="h-20 w-24 text-white" />
+            </motion.div>
+            <div className="overflow-hidden">
+              <motion.div
+                className="font-display text-2xl font-extrabold tracking-[0.3em] text-white"
+                initial={{ y: '100%' }}
+                animate={{ y: 0 }}
+                transition={{ delay: 0.35, duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+              >
+                TRIAD VISION
+              </motion.div>
+            </div>
+            <div className="h-[2px] w-48 overflow-hidden rounded bg-white/10">
+              <motion.div
+                className="h-full bg-gradient-to-r from-az-blue via-brand-500 to-de-gold"
+                initial={{ x: '-100%' }}
+                animate={{ x: '0%' }}
+                transition={{ duration: 1.1, ease: 'easeInOut' }}
+              />
+            </div>
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+};

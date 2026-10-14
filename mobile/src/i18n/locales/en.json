@@ -1,0 +1,777 @@
+{
+ "meta": {
+  "lang": "English",
+  "short": "EN"
+ },
+ "nav": {
+  "home": "Home",
+  "about": "About us",
+  "services": "Services",
+  "visas": "Visas",
+  "partners": "Partners",
+  "stories": "Success stories",
+  "ausbildung": "Ausbildung",
+  "faq": "FAQ",
+  "news": "News",
+  "contact": "Contact",
+  "more": "More",
+  "cooperation": "Request cooperation",
+  "cooperationShort": "Partner with us",
+  "eligibility": "Visa check",
+  "search": "Search",
+  "accountShort": "Account",
+  "login": "Log in",
+  "apply": "Apply",
+  "account": "My account",
+  "admin": "Admin panel",
+  "logout": "Log out"
+ },
+ "common": {
+  "learnMore": "Learn more",
+  "viewAll": "View all",
+  "back": "Back",
+  "loading": "Loading...",
+  "error": "Something went wrong. Please try again.",
+  "save": "Save",
+  "cancel": "Cancel",
+  "send": "Send",
+  "close": "Close",
+  "required": "Required",
+  "optional": "Optional",
+  "download": "Download",
+  "open": "Open",
+  "delete": "Delete",
+  "readMore": "Read more",
+  "minRead": "min read"
+ },
+ "hero": {
+  "eyebrow": "From Azerbaijan to Germany",
+  "title1": "Reliable workforce supply",
+  "title2": "and visa solutions",
+  "subtitle": "Triad Vision provides companies in Germany with full support in selecting qualified, motivated workers from Azerbaijan, handling the visa process and integration.",
+  "ctaPrimary": "Send a cooperation request",
+  "ctaSecondary": "Apply for a visa",
+  "bullets": [
+   "Experienced, well-matched candidates",
+   "Full visa and paperwork support",
+   "Workers for a wide range of professions",
+   "Long-term cooperation with German companies"
+  ],
+  "cardTitle": "A trusted partner for German companies",
+  "cardText": "We professionally manage the entire process, from your staffing request to the worker’s arrival in Germany.",
+  "scroll": "Scroll down",
+  "route": "Baku → Berlin"
+ },
+ "visas": {
+  "eyebrow": "Visa types",
+  "title": "Visa support across many sectors",
+  "subtitle": "For these and other visa types, we fully support candidate selection, paperwork and arrival in Germany.",
+  "all": "See all visa types",
+  "pageTitle": "Visa types and professions",
+  "pageSubtitle": "A legal and safe path to Germany with the right visa type for every occupational group.",
+  "applyNow": "Apply for this visa",
+  "whatWeDo": "What we do",
+  "otherVisas": "Other visa types"
+ },
+ "partners": {
+  "eyebrow": "Partner companies",
+  "title": "Our partners in Germany",
+  "subtitle": "We maintain long-term cooperation with reputable German companies across many sectors.",
+  "all": "See all partners",
+  "pageTitle": "Our partner companies",
+  "pageSubtitle": "We work with leading German companies in logistics, construction, hospitality and services.",
+  "becomePartner": "Become a partner",
+  "becomePartnerText": "Does your company need reliable, motivated workers? Let’s work together."
+ },
+ "process": {
+  "eyebrow": "Our process",
+  "title": "Full support from application to arrival in Germany",
+  "steps": [
+   {
+    "title": "Candidate selection",
+    "text": "Suitable candidates are identified and advised"
+   },
+   {
+    "title": "Document preparation",
+    "text": "CV, certificates, language and other documents are checked"
+   },
+   {
+    "title": "Employer agreement",
+    "text": "Job offer, contract and electronic signature"
+   },
+   {
+    "title": "Visa process",
+    "text": "Embassy documents, appointment and security support"
+   },
+   {
+    "title": "Arrival in Germany",
+    "text": "Help with travel, housing and registration"
+   },
+   {
+    "title": "Starting work",
+    "text": "Integration at the company and ongoing support"
+   }
+  ]
+ },
+ "samples": {
+  "eyebrow": "Successful visa examples",
+  "title": "Candidates who left for Germany with us",
+  "subtitle": "Below you can see real examples of visas obtained in various professions.",
+  "privacy": "Personal data has been hidden (DSGVO).",
+  "visa": "visa"
+ },
+ "testimonials": {
+  "title": "Success stories",
+  "company": "Company review",
+  "candidate": "Candidate review"
+ },
+ "audience": {
+  "eyebrow": "Who it’s for",
+  "title": "Two sides, one trusted bridge",
+  "company": {
+   "title": "For German companies",
+   "text": "Solve your labour shortage: selected, vetted and prepared candidates — with the entire administrative process included.",
+   "items": [
+    "Candidate selection and interviews",
+    "Bundesagentur and embassy process",
+    "Arrival, housing and registration",
+    "Support after starting work"
+   ],
+   "cta": "Send a cooperation request"
+  },
+  "candidate": {
+   "title": "For candidates",
+   "text": "Legal work and a career in Germany: upload your documents online and track every step in your account.",
+   "items": [
+    "Free initial consultation",
+    "Online document upload",
+    "Electronic contract signing",
+    "Notifications at every step"
+   ],
+   "cta": "Apply online"
+  }
+ },
+ "why": {
+  "eyebrow": "Why Triad Vision",
+  "title": "Transparent, legal and fast",
+  "items": [
+   {
+    "title": "Legal and safe",
+    "text": "The entire process complies with German law."
+   },
+   {
+    "title": "Online account",
+    "text": "Documents, contract and status — all in one place, 24/7."
+   },
+   {
+    "title": "Personal manager",
+    "text": "A dedicated contact person for every candidate and company."
+   },
+   {
+    "title": "Fast process",
+    "text": "A visa decision in 3–8 weeks on average."
+   },
+   {
+    "title": "Support in 4 languages",
+    "text": "In Azerbaijani, German, English and Russian."
+   },
+   {
+    "title": "After arrival, too",
+    "text": "We stay with you for housing, registration and settling in at work."
+   }
+  ]
+ },
+ "ausbildung": {
+  "eyebrow": "Weiterbildung",
+  "title": "Vocational training in Germany",
+  "text": "Besides direct employment, we also support vocational training (Ausbildung) opportunities in Germany in healthcare, crafts, engineering and other professions.",
+  "pageTitle": "Ausbildung and Weiterbildung",
+  "pageSubtitle": "Learn, earn and build a career in Germany: paid dual vocational training.",
+  "benefits": [
+   {
+    "title": "Monthly salary",
+    "text": "An allowance of €1000–1300 every month during training."
+   },
+   {
+    "title": "State diploma",
+    "text": "A vocational diploma recognised throughout Germany."
+   },
+   {
+    "title": "Permanent job",
+    "text": "The chance to stay with the same employer after training."
+   },
+   {
+    "title": "A path for your family",
+    "text": "Permanent residence and family reunification in the future."
+   }
+  ],
+  "requirements": "Requirements",
+  "reqItems": [
+   "Secondary school certificate",
+   "German B1 (B2 in some fields)",
+   "Recommended age 18–35",
+   "Motivation and willingness to learn"
+  ]
+ },
+ "faq": {
+  "eyebrow": "Questions",
+  "title": "Frequently asked questions",
+  "subtitle": "Didn’t find an answer? Write to us — we reply within 24 hours.",
+  "all": "All",
+  "company": "Companies",
+  "candidate": "Candidates"
+ },
+ "news": {
+  "eyebrow": "News",
+  "title": "Useful articles and updates",
+  "pageTitle": "News and guides"
+ },
+ "cta": {
+  "title": "A reliable staffing partner for your company",
+  "text": "Tell us about your staffing needs and we will present suitable candidates.",
+  "button": "Request cooperation"
+ },
+ "about": {
+  "title": "About us",
+  "subtitle": "People · Work · Opportunities — a trusted bridge between Azerbaijan and Germany.",
+  "storyTitle": "Our story",
+  "story": "Triad Vision was founded to connect talented, hard-working people in Azerbaijan with German companies that need skilled workers. Our mission is to build legal, transparent and long-term cooperation for both sides.\n\nOur team works in Baku and Germany and directly manages every stage, from candidate selection to the first day at work.",
+  "valuesTitle": "Our values",
+  "values": [
+   {
+    "title": "Trust",
+    "text": "We take responsibility for every word we give and every document we handle."
+   },
+   {
+    "title": "Transparency",
+    "text": "Both the candidate and the company see every step of the process."
+   },
+   {
+    "title": "Legality",
+    "text": "We work only through legal channels and with official visas."
+   },
+   {
+    "title": "The human factor",
+    "text": "To us, every candidate is not a number but a story."
+   }
+  ],
+  "teamTitle": "Our team in Baku and Germany"
+ },
+ "services": {
+  "title": "Our services",
+  "subtitle": "The whole process, from recruitment to arrival — from a single source.",
+  "items": [
+   {
+    "title": "Candidate selection",
+    "text": "Selection and interviews based on skills, experience and language level."
+   },
+   {
+    "title": "Documentation",
+    "text": "Collecting, translating, notarising and checking documents."
+   },
+   {
+    "title": "Diploma recognition",
+    "text": "Anerkennung, ZAB and recognition of professional certificates."
+   },
+   {
+    "title": "Visa support",
+    "text": "Bundesagentur approval, embassy appointment and application tracking."
+   },
+   {
+    "title": "Language training",
+    "text": "German preparation from A1 to B2 with partner courses."
+   },
+   {
+    "title": "Arrival and integration",
+    "text": "Airport pickup, housing, Anmeldung, bank and insurance."
+   }
+  ]
+ },
+ "stories": {
+  "title": "Success stories",
+  "subtitle": "Hundreds of candidates have started a new life in Germany with us."
+ },
+ "contact": {
+  "title": "Contact",
+  "subtitle": "Have a question? Write to us, call us or visit our office.",
+  "phone": "Phone",
+  "email": "Email",
+  "whatsapp": "WhatsApp",
+  "hours": "Office hours",
+  "offices": "Our offices",
+  "formTitle": "Write to us",
+  "writeWhatsapp": "Message on WhatsApp"
+ },
+ "cooperation": {
+  "title": "Cooperation request",
+  "subtitle": "Tell us your company’s needs and we will send you a tailored offer within 24 hours.",
+  "steps": [
+   "Fill in the form",
+   "Consultation",
+   "Candidate presentation",
+   "Visa and arrival"
+  ]
+ },
+ "form": {
+  "name": "Full name",
+  "company": "Company name",
+  "email": "Email",
+  "phone": "Phone",
+  "sector": "Sector",
+  "workers": "Number of workers needed",
+  "message": "Message",
+  "send": "Send",
+  "sending": "Sending...",
+  "sent": "Thank you! Your message has been sent and we will contact you shortly.",
+  "privacy": "By submitting, I consent to the processing of my personal data."
+ },
+ "auth": {
+  "loginTitle": "Log in to your account",
+  "loginSubtitle": "Track the status of your application and upload your documents.",
+  "registerTitle": "Sign up",
+  "registerSubtitle": "Create an account and start your online visa application.",
+  "firstName": "First name",
+  "lastName": "Last name",
+  "email": "Email",
+  "phone": "Phone",
+  "password": "Password",
+  "passwordHint": "At least 8 characters",
+  "login": "Log in",
+  "register": "Sign up",
+  "noAccount": "Don’t have an account?",
+  "haveAccount": "Already have an account?",
+  "forgot": "Forgot your password?",
+  "forgotTitle": "Password recovery",
+  "forgotText": "Enter your email address and we will send you a reset link.",
+  "forgotSent": "If an account exists for this email, a reset link has been sent.",
+  "sendLink": "Send link",
+  "resetTitle": "New password",
+  "newPassword": "New password",
+  "resetDone": "Your password has been updated. You can now log in.",
+  "errors": {
+   "INVALID_CREDENTIALS": "Incorrect email or password.",
+   "EMAIL_TAKEN": "This email is already registered.",
+   "INVALID_TOKEN": "The link is invalid or has expired."
+  },
+  "terms": "By signing up, I accept the privacy policy."
+ },
+ "portal": {
+  "title": "My account",
+  "hello": "Hello",
+  "myCases": "My applications",
+  "notifications": "Notifications",
+  "profile": "Profile",
+  "noCases": "You have no applications yet.",
+  "newCase": "New application",
+  "startTitle": "Start your visa application",
+  "startText": "Choose your profession and visa type. The list of required documents will then appear in your account.",
+  "profession": "Your profession",
+  "professionPh": "e.g. truck driver, cook, nurse",
+  "visaType": "Visa type",
+  "notSure": "Not sure / need advice",
+  "create": "Create application",
+  "caseNo": "Application No.",
+  "created": "Created",
+  "updated": "Updated",
+  "currentStep": "Current step",
+  "nextAction": "Your next action",
+  "waitingUs": "Our team is working on it — you will be notified.",
+  "waiting": "In progress",
+  "actionRequired": "Action required",
+  "openCase": "Open application",
+  "staffNote": "Note from staff",
+  "manager": "Manager",
+  "steps": {
+   "documents": "Documents",
+   "contract": "Contract",
+   "embassyDocs": "Embassy documents",
+   "appointment": "Embassy appointment",
+   "decision": "Decision",
+   "result": "Result"
+  },
+  "status": {
+   "DOCUMENTS_PENDING": "Upload documents",
+   "DOCUMENTS_REVIEW": "Documents under review",
+   "CONTRACT_SENT": "Contract awaiting signature",
+   "CONTRACT_SIGNED": "Contract under review",
+   "EMBASSY_DOCUMENTS": "Upload embassy documents",
+   "EMBASSY_REVIEW": "Embassy documents under review",
+   "APPOINTMENT_SCHEDULED": "Embassy appointment scheduled",
+   "DECISION_PENDING": "Awaiting embassy decision",
+   "APPROVED": "Visa approved",
+   "REJECTED": "Visa refused",
+   "CANCELLED": "Cancelled"
+  },
+  "statusHelp": {
+   "DOCUMENTS_PENDING": "Upload the documents in the list below and click “Submit for review”.",
+   "DOCUMENTS_REVIEW": "Your documents are being reviewed by our staff. This usually takes 1–3 business days.",
+   "CONTRACT_SENT": "Read the contract and sign it electronically below.",
+   "CONTRACT_SIGNED": "Your signed contract is being reviewed. Once approved, the embassy stage will begin.",
+   "EMBASSY_DOCUMENTS": "Upload the documents required by the embassy and submit them for review.",
+   "EMBASSY_REVIEW": "Your embassy documents are being reviewed. An embassy appointment will be scheduled next.",
+   "APPOINTMENT_SCHEDULED": "Arrive on time for the appointment with all your original documents.",
+   "DECISION_PENDING": "Your application is at the embassy. You will be notified as soon as a decision is made.",
+   "APPROVED": "Congratulations! Our manager will contact you about the next steps.",
+   "REJECTED": "The reason is shown below. Our manager will contact you about the next steps.",
+   "CANCELLED": "This application has been cancelled."
+  },
+  "docs": {
+   "initialTitle": "Initial documents",
+   "embassyTitle": "Embassy documents",
+   "upload": "Upload file",
+   "uploading": "Uploading...",
+   "replace": "Upload new",
+   "formats": "PDF, JPG, PNG, WEBP, DOC, DOCX · max. 15 MB",
+   "submit": "Submit for review",
+   "submitConfirm": "Do you want to submit the documents for review? No changes can be made during the review.",
+   "missing": "Upload all required documents",
+   "locked": "Documents cannot be changed at this stage.",
+   "status": {
+    "PENDING": "Under review",
+    "ACCEPTED": "Accepted",
+    "REJECTED": "Rejected"
+   },
+   "notUploaded": "Not uploaded",
+   "otherFiles": "Files for you",
+   "tooLarge": "The file is too large (max. 15 MB).",
+   "badType": "This file type is not accepted.",
+   "drop": "Drag a file here or click to choose",
+   "uploaded": "File uploaded",
+   "deleteConfirm": "Delete this file?",
+   "missingList": "Still missing:"
+  },
+  "contract": {
+   "title": "Contract",
+   "version": "Version",
+   "read": "Open contract",
+   "signTitle": "Electronic signature",
+   "signText": "Sign in the field below using your finger or mouse.",
+   "fullName": "Full name (as in your passport)",
+   "clear": "Clear",
+   "agree": "I have read the contract, agree to its terms and sign it electronically.",
+   "sign": "Sign and send",
+   "signing": "Signing...",
+   "signed": "Signed",
+   "signedAt": "Signed on",
+   "signedFile": "Signed contract (PDF)",
+   "emptySignature": "Please provide your signature.",
+   "sentAt": "Sent on",
+   "nameRequired": "Please enter your full name."
+  },
+  "appointment": {
+   "title": "Embassy appointment",
+   "date": "Date and time",
+   "place": "Address",
+   "addToCalendar": "Add to calendar"
+  },
+  "decision": {
+   "approved": "Your visa has been approved!",
+   "rejected": "The visa application was refused",
+   "reason": "Reason",
+   "validity": "Validity period",
+   "note": "Note"
+  },
+  "timeline": "History",
+  "messages": {
+   "title": "Chat with your manager",
+   "placeholder": "Type your message...",
+   "empty": "No messages yet. If you have a question, write here.",
+   "you": "You",
+   "team": "Triad Vision"
+  },
+  "events": {
+   "CASE_CREATED": "Application created",
+   "STATUS_CHANGED": "Status changed",
+   "DOCUMENTS_SUBMITTED": "Documents submitted for review",
+   "DOCUMENT_ACCEPTED": "Document accepted",
+   "DOCUMENT_REJECTED": "Document rejected",
+   "DOCUMENT_PENDING": "Document returned for review",
+   "CONTRACT_SENT": "Contract sent",
+   "CONTRACT_SIGNED": "Contract signed",
+   "SIGNATURE_REJECTED": "Signature rejected",
+   "CONTRACT_CONFIRMED": "Contract confirmed",
+   "APPOINTMENT_SCHEDULED": "Embassy appointment scheduled",
+   "APPOINTMENT_RESCHEDULED": "Embassy appointment rescheduled",
+   "LODGED_AT_EMBASSY": "Application lodged at the embassy",
+   "DECISION": "Embassy decision",
+   "REOPENED": "Application reopened",
+   "STAFF_DOCUMENT_UPLOADED": "A file was added for you"
+  },
+  "markAllRead": "Mark all as read",
+  "noNotifications": "No notifications.",
+  "profileSaved": "Profile saved.",
+  "language": "Notification language",
+  "changePassword": "Change password",
+  "currentPassword": "Current password",
+  "personalData": "Personal details",
+  "passwordChanged": "Password changed.",
+  "errors": {
+   "ACTIVE_CASE_EXISTS": "You already have an active application.",
+   "REQUIRED_DOCUMENTS_MISSING": "Upload all required documents.",
+   "INVALID_TRANSITION": "This action is not possible at the current stage. Please refresh the page.",
+   "UPLOAD_NOT_ALLOWED": "Documents cannot be uploaded at this stage.",
+   "WRONG_PASSWORD": "The current password is incorrect.",
+   "DELETE_NOT_ALLOWED": "This file cannot be deleted.",
+   "UNSUPPORTED_FILE_TYPE": "This file type is not accepted.",
+   "FILE_TOO_LARGE": "The file is too large (max. 15 MB)."
+  }
+ },
+ "footer": {
+  "about": "Legal, transparent and reliable workforce supply and visa solutions from Azerbaijan to Germany.",
+  "company": "Company",
+  "forCandidates": "For candidates",
+  "contact": "Contact",
+  "rights": "All rights reserved.",
+  "privacy": "Privacy policy",
+  "imprint": "Legal notice",
+  "newsletter": "Stay up to date"
+ },
+ "notFound": {
+  "title": "Page not found",
+  "text": "The page you are looking for does not exist or has been moved.",
+  "home": "Back to home"
+ },
+ "svc": {
+  "eyebrow": "Our services",
+  "title": "The whole process, from search to arrival",
+  "subtitle": "Click a service to see what is included and how it works.",
+  "included": "What's included",
+  "forCompany": "For companies",
+  "forCandidate": "For candidates",
+  "forAll": "For companies and candidates",
+  "all": "All",
+  "related": "Other services",
+  "getOffer": "Free consultation",
+  "askTitle": "Questions about this service?",
+  "askText": "Fill in the form and your manager will contact you within 24 hours.",
+  "howItWorks": "How it works"
+ },
+ "detail": {
+  "open": "Details",
+  "step": "Step",
+  "process": [
+   "In the first meeting we learn about your profession, experience, language level and goals. For companies we define the job profile together. At this stage we determine the right visa type.",
+   "A personal document checklist is created in your account. You upload documents online, we check each one and ask for corrections if needed. We also help with translation and certification.",
+   "We arrange a meeting with a matching employer. Once agreed, the contract is sent to your account and you sign it electronically on screen. Both sides get the signed PDF immediately.",
+   "The embassy document package is prepared, Federal Employment Agency approval is obtained and the embassy appointment is booked. We prepare you for the interview and notify you of every change until the decision.",
+   "Once the visa is approved we plan the flight, pick you up at the airport and settle you into your housing. We help with registration, a bank account and insurance.",
+   "From your first working day you and your employer have a dedicated contact person. We stay in regular contact in the first months and solve questions quickly."
+  ],
+  "why": [
+   "We only work with official visa types: §18a, §18b, §19c, §16a, §16d and seasonal work. Every contract is checked against German labour law, with no hidden fees.",
+   "In your account you upload documents, sign the contract, track the status and message your manager. You get a portal and email notification at every step.",
+   "Every candidate and company gets a dedicated manager, so you always know who to contact.",
+   "With complete documents, embassy processing usually takes 3–8 weeks. The fast-track procedure (§81a) can shorten it further.",
+   "Our team speaks Azerbaijani, German, English and Russian. The website, account and notifications are available in all 4 languages too.",
+   "We are there after the visa as well: airport pick-up, housing, registration, bank, insurance and onboarding."
+  ]
+ },
+ "cookie": {
+  "text": "We only use cookies that are strictly necessary (login session and language choice). No tracking or advertising cookies are used.",
+  "accept": "Got it"
+ },
+ "topbar": {
+  "hours": "Mon–Fri 09:00–18:00"
+ },
+ "quiz": {
+  "navLabel": "Which visa suits me?",
+  "navShort": "Visa check",
+  "eyebrow": "Eligibility check",
+  "title": "Which visa suits me?",
+  "subtitle": "Answer a few quick questions and we will show you the German visa category that fits you best, how ready you are and what to do next.",
+  "duration": "About 2 minutes · free · no sign-up",
+  "stepOf": "Question {{current}} of {{total}}",
+  "back": "Back",
+  "next": "Continue",
+  "seeResult": "Show my result",
+  "startAgain": "Start again",
+  "enterHint": "Press Enter to continue",
+  "restored": "Your previous answers have been restored",
+  "loading": "Loading...",
+  "questions": {
+   "field": {
+    "title": "Which field would you like to work in?",
+    "hint": "Choose the one closest to you."
+   },
+   "education": {
+    "title": "What is your highest level of education?",
+    "hint": "Choose the last qualification you have a certificate for."
+   },
+   "experience": {
+    "title": "How many years of experience do you have in this field?",
+    "hint": "Count only experience you can document."
+   },
+   "german": {
+    "title": "How good is your German?",
+    "hint": "Even without a certificate — estimate your level."
+   },
+   "age": {
+    "title": "How old are you?",
+    "hint": "Age matters for some visa types."
+   },
+   "licence": {
+    "title": "Which driving licence do you have?",
+    "hint": "Choose the highest category."
+   },
+   "goal": {
+    "title": "What is your main goal?",
+    "hint": "Choose what matters most to you right now."
+   }
+  },
+  "options": {
+   "education": {
+    "school": "School leaving certificate",
+    "vocational": "Vocational training / college",
+    "university": "University degree"
+   },
+   "experience": {
+    "exp0": "No experience",
+    "exp1": "1–2 years",
+    "exp3": "3–5 years",
+    "exp5": "More than 5 years"
+   },
+   "german": {
+    "none": "None",
+    "a1a2": "A1–A2 (beginner)",
+    "b1": "B1 (intermediate)",
+    "b2": "B2 or higher"
+   },
+   "age": {
+    "a18": "18–25",
+    "a26": "26–35",
+    "a36": "36–45",
+    "a46": "46 or older"
+   },
+   "licence": {
+    "B": "Category B",
+    "C": "Category C",
+    "CE": "Category CE",
+    "none": "No licence"
+   },
+   "licenceDesc": {
+    "B": "Cars and vans",
+    "C": "Trucks without trailer",
+    "CE": "Trucks with trailer (articulated)",
+    "none": "Not yet"
+   },
+   "goal": {
+    "work": "Start working now",
+    "study": "Vocational training (Ausbildung)",
+    "seasonal": "Seasonal work"
+   },
+   "goalDesc": {
+    "work": "Work in Germany with an employment contract",
+    "study": "Learn a trade in Germany and earn a salary",
+    "seasonal": "Temporary work for a few months"
+   }
+  },
+  "result": {
+   "eyebrow": "Your result",
+   "title": "The visa that suits you best",
+   "subtitle": "A personal recommendation based on your answers.",
+   "topMatch": "Best match",
+   "match": "{{score}}% match",
+   "alternatives": "Alternatives",
+   "readiness": "Readiness",
+   "readinessLevel": {
+    "low": "Preparation needed",
+    "mid": "Good start",
+    "high": "Almost ready"
+   },
+   "readinessText": {
+    "low": "Don’t worry — the steps below can raise your chances considerably. We support you all the way.",
+    "mid": "You already meet many requirements. A few more steps will make your application much stronger.",
+    "high": "Your profile is strong for this visa. You can prepare your documents and start your application."
+   },
+   "why": "Why this visa?",
+   "checklist": "Your personal checklist",
+   "tones": {
+    "todo": "Improve",
+    "info": "Prepare",
+    "ok": "Done"
+   },
+   "apply": "Apply online",
+   "read": "Read about this visa",
+   "ask": "Ask us",
+   "disclaimer": "This result is a first assessment, not legal advice. The final decision is made by the German embassy and the Federal Employment Agency."
+  },
+  "reasons": {
+   "fieldMatch": "The field you chose matches this visa category exactly.",
+   "relatedField": "A closely related field — your skills are in demand here too.",
+   "goalStudy": "You want to learn — an Ausbildung is the best route for that.",
+   "goalSeasonal": "This is the quickest and simplest route for seasonal work.",
+   "germanStrong": "Your German is above the requirement — a big advantage.",
+   "experienceStrong": "Your work experience is attractive to employers.",
+   "degreeStrong": "Your university degree opens the way to the EU Blue Card.",
+   "vocationalStrong": "Your vocational training is the basis for a skilled-worker visa.",
+   "ageFit": "Your age is ideal for an Ausbildung.",
+   "licenceStrong": "A CE licence is the most sought-after licence in freight transport.",
+   "licenceOk": "Your licence is enough to work as a courier driver.",
+   "fallback": "Based on your answers, your profile fits this category best."
+  },
+  "checklist": {
+   "germanNeeded": "Bring your German up to at least {{level}} and take a certified exam (Goethe, telc, ÖSD).",
+   "germanOk": "Your German level is sufficient — keep your language certificate ready.",
+   "germanNursing": "Nursing requires at least B1 German, and B2 for full recognition.",
+   "truckLicence": "Get a CE licence and code 95 (driver qualification) — both are mandatory for truck drivers.",
+   "truckCode95": "Have your code 95 confirmed in Germany and your licence converted.",
+   "driverCard": "You will need a driver card (Fahrerkarte) for the digital tachograph.",
+   "licenceConvert": "Your licence must be converted into a German one within 6 months.",
+   "courierLicence": "Courier work requires at least a category B driving licence.",
+   "nursingRecognition": "Apply for recognition (Anerkennung) of your nursing diploma — an adaptation course or knowledge test may be required.",
+   "schoolCertificate": "Prepare your school certificate with an apostille and certified translation.",
+   "ausbildungAge": "Ausbildung mainly targets younger applicants — after 35 it is harder to find a place, so consider alternatives too.",
+   "ausbildungFunds": "You must prove you can support yourself — through the training salary or a blocked account.",
+   "seasonal": "Seasonal work permits are time-limited — apply a few months before the season starts.",
+   "degreeAnabin": "Check that your degree is recognised in the anabin database — important for the Blue Card.",
+   "itDegree": "A visa is possible without a degree too: with 3 years of IT experience within the last 7 years.",
+   "qualificationNeeded": "This field requires vocational training or a documented qualification — a short professional course can help.",
+   "recognition": "Have your qualification checked for recognition in Germany (Anerkennung) — we help with the paperwork.",
+   "experienceBuild": "At least {{years}} years of documented experience in this field will strengthen your profile considerably.",
+   "experienceProof": "Prove your experience with your employment record book and employer references.",
+   "age45": "From age 45, a first work visa requires a minimum salary or proof of pension provision.",
+   "passport": "Have a passport ready that is valid for at least 12 more months.",
+   "cv": "Prepare a CV in the German format (Lebenslauf)."
+  }
+ },
+ "search": {
+  "button": "Search",
+  "placeholder": "Search visas, services, questions...",
+  "shortcutHint": "Ctrl K",
+  "close": "Close",
+  "recent": "Recent searches",
+  "clearRecent": "Clear",
+  "suggestions": "Suggestions",
+  "noResults": "No results for “{{query}}”",
+  "noResultsHint": "Try a different word or get in touch with us.",
+  "loading": "Loading content...",
+  "groups": {
+   "pages": "Pages",
+   "visas": "Visa categories",
+   "services": "Services",
+   "faq": "FAQ",
+   "news": "News"
+  },
+  "hints": {
+   "navigate": "move",
+   "select": "open",
+   "close": "close"
+  },
+  "pages": {
+   "home": "Home page",
+   "about": "Company, mission and team",
+   "services": "Documents, translation, visa support",
+   "visas": "All German work visas",
+   "partners": "Our partner companies in Germany",
+   "stories": "Experiences of our clients",
+   "ausbildung": "Vocational training in Germany",
+   "faq": "Frequently asked questions",
+   "news": "News and articles",
+   "contact": "Phone, address, WhatsApp",
+   "cooperation": "For German companies",
+   "eligibility": "Quiz: which visa suits you?",
+   "login": "Sign in to your account",
+   "register": "Online application and sign-up"
+  }
+ }
+}

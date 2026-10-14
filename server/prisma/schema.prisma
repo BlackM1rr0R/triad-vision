@@ -1,0 +1,386 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// Localized text fields are stored as JSON: { "az": "...", "de": "...", "en": "...", "ru": "..." }
+
+enum Role {
+  CLIENT
+  STAFF
+  ADMIN
+}
+
+enum Locale {
+  az
+  de
+  en
+  ru
+}
+
+model User {
+  id            String         @id @default(cuid())
+  email         String         @unique
+  passwordHash  String
+  role          Role           @default(CLIENT)
+  firstName     String
+  lastName      String
+  phone         String?
+  locale        Locale         @default(az)
+  isActive      Boolean        @default(true)
+  // Candidate profile (all optional, filled in the portal)
+  birthDate       DateTime?
+  nationality     String?
+  city            String?
+  address         String?   @db.Text
+  profession      String?
+  experienceYears Int?
+  germanLevel     String?   // none | A1 | A2 | B1 | B2 | C1 | C2
+  education       String?   // school | vocational | university
+  drivingLicence  String?   // e.g. "B, C, CE"
+  about           String?   @db.Text
+  // Notification preferences (in-app notifications are always kept)
+  emailNotifications Boolean @default(true)
+  pushNotifications  Boolean @default(true)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  cases         Case[]         @relation("CaseClient")
+  assignedCases Case[]         @relation("CaseStaff")
+  notifications Notification[]
+  events        CaseEvent[]
+  messages      CaseMessage[]
+  documents     Document[]
+  resetTokens   PasswordResetToken[]
+  devices       PushDevice[]
+}
+
+/// Expo push token of a phone where the user is logged in to the mobile app.
+model PushDevice {
+  id         String   @id @default(cuid())
+  token      String   @unique
+  platform   String   // ios | android
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+  lastSeenAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  tokenHash String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+}
+
+// ─── Visa case workflow ────────────────────────────────────────────────
+
+enum CaseStatus {
+  DOCUMENTS_PENDING      // client uploads initial documents
+  DOCUMENTS_REVIEW       // client submitted, staff reviewing
+  CONTRACT_SENT          // staff sent contract, waiting for client signature
+  CONTRACT_SIGNED        // client signed, staff verifying
+  EMBASSY_DOCUMENTS      // client uploads embassy documents
+  EMBASSY_REVIEW         // client submitted embassy docs, staff reviewing
+  APPOINTMENT_SCHEDULED  // embassy appointment date set
+  DECISION_PENDING       // application lodged at the embassy, awaiting decision
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
+enum DocStage {
+  INITIAL
+  EMBASSY
+  CONTRACT
+  CONTRACT_SIGNED
+  VISA
+  OTHER
+}
+
+enum DocStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+model Case {
+  id               String       @id @default(cuid())
+  number           String       @unique
+  clientId         String
+  client           User         @relation("CaseClient", fields: [clientId], references: [id], onDelete: Cascade)
+  assignedStaffId  String?
+  assignedStaff    User?        @relation("CaseStaff", fields: [assignedStaffId], references: [id], onDelete: SetNull)
+  visaCategoryId   String?
+  visaCategory     VisaCategory? @relation(fields: [visaCategoryId], references: [id], onDelete: SetNull)
+  profession       String
+  status           CaseStatus   @default(DOCUMENTS_PENDING)
+  staffNote        String? @db.Text  // latest note visible to client (e.g. what to fix)
+  appointmentAt    DateTime?
+  appointmentPlace String? @db.Text
+  decisionAt       DateTime?
+  decisionReason   String? @db.Text  // rejection reason or approval remark
+  visaValidFrom    DateTime?
+  visaValidTo      DateTime?
+  cancelReason     String? @db.Text
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+  requirements     DocumentRequirement[]
+  documents        Document[]
+  contract         Contract?
+  events           CaseEvent[]
+  messages         CaseMessage[]
+  notifications    Notification[]
+
+  @@index([clientId])
+  @@index([status])
+}
+
+model DocumentRequirement {
+  id          String    @id @default(cuid())
+  caseId      String
+  case        Case      @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  stage       DocStage
+  title       Json
+  description Json?
+  required    Boolean   @default(true)
+  sortOrder   Int       @default(0)
+  createdAt   DateTime  @default(now())
+  documents   Document[]
+
+  @@index([caseId, stage])
+}
+
+model Document {
+  id            String               @id @default(cuid())
+  caseId        String
+  case          Case                 @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  requirementId String?
+  requirement   DocumentRequirement? @relation(fields: [requirementId], references: [id], onDelete: SetNull)
+  stage         DocStage
+  originalName  String
+  storedName    String               @unique
+  mimeType      String
+  size          Int
+  status        DocStatus            @default(PENDING)
+  reviewNote    String? @db.Text
+  uploadedById  String
+  uploadedBy    User                 @relation(fields: [uploadedById], references: [id])
+  createdAt     DateTime             @default(now())
+
+  @@index([caseId, stage])
+}
+
+model Contract {
+  id               String    @id @default(cuid())
+  caseId           String    @unique
+  case             Case      @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  fileDocumentId   String    // unsigned contract (Document with stage CONTRACT)
+  signedDocumentId String?   // signed PDF produced by the server (Document with stage CONTRACT_SIGNED)
+  signerName       String?
+  signedAt         DateTime?
+  signerIp         String?
+  signerUserAgent  String? @db.Text
+  sentAt           DateTime  @default(now())
+  version          Int       @default(1)
+}
+
+model CaseEvent {
+  id              String      @id @default(cuid())
+  caseId          String
+  case            Case        @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  type            String      // e.g. STATUS_CHANGED, DOCUMENT_UPLOADED, DOCUMENT_REVIEWED, CONTRACT_SIGNED
+  fromStatus      CaseStatus?
+  toStatus        CaseStatus?
+  note            String? @db.Text
+  actorId         String?
+  actor           User?       @relation(fields: [actorId], references: [id], onDelete: SetNull)
+  visibleToClient Boolean     @default(true)
+  createdAt       DateTime    @default(now())
+
+  @@index([caseId, createdAt])
+}
+
+model CaseMessage {
+  id        String   @id @default(cuid())
+  caseId    String
+  case      Case     @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  authorId  String
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  body      String @db.Text
+  createdAt DateTime @default(now())
+
+  @@index([caseId, createdAt])
+}
+
+model Notification {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  caseId    String?
+  case      Case?     @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  type      String
+  title     String
+  body      String @db.Text
+  link      String? @db.Text
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId, readAt])
+}
+
+model EmailLog {
+  id        String   @id @default(cuid())
+  to        String
+  subject   String @db.Text
+  status    String   // SENT | FAILED | CONSOLE
+  error     String? @db.Text
+  createdAt DateTime @default(now())
+}
+
+// ─── Website content (CMS) ─────────────────────────────────────────────
+
+model VisaCategory {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  icon        String   // lucide icon name
+  image       String @db.Text
+  visaLabel   String   // e.g. "§18b", "§16d", "Saisonarbeit"
+  title       Json
+  summary     Json
+  items       Json     // { az: string[], de: string[], ... }
+  body        Json     // long description per locale
+  // Structured details for the visa page (all optional; figures are indicative and editable in the CMS)
+  germanLevel     String?  // e.g. "A2", "B1"
+  salaryMin       Int?     // EUR gross per month
+  salaryMax       Int?
+  processingMin   Int?     // weeks
+  processingMax   Int?
+  familyReunion   Boolean?
+  requirements    Json?    // L10nList
+  documents       Json?    // L10nList
+  faq             Json?    // { q: L10n, a: L10n }[]
+  sortOrder   Int      @default(0)
+  published   Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  cases       Case[]
+}
+
+model Service {
+  id        String   @id @default(cuid())
+  slug      String   @unique
+  icon      String   // lucide icon name
+  image     String   @db.Text
+  audience  String   @default("all") // all | company | candidate
+  title     Json
+  summary   Json
+  body      Json     // long description per locale, paragraphs separated by blank lines
+  features  Json     // { az: string[], ... } what is included
+  steps     Json?    // L10nList: service-specific "how it works" steps
+  duration  Json?    // L10n, e.g. "2–4 weeks"
+  sortOrder Int      @default(0)
+  published Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Partner {
+  id        String   @id @default(cuid())
+  name      String
+  logo      String? @db.Text  // URL; if empty the name is rendered as a wordmark
+  website   String? @db.Text
+  sector      String?  // logistics | courier | industry | construction | hospitality | healthcare | agriculture | other
+  city        String?  // German location shown on the partners map
+  description Json?    // L10n
+  featured    Boolean  @default(false)
+  sortOrder Int      @default(0)
+  published Boolean  @default(true)
+}
+
+model VisaSample {
+  id         String   @id @default(cuid())
+  image      String @db.Text
+  profession Json
+  visaLabel  String
+  dateLabel  Json
+  sortOrder  Int      @default(0)
+  published  Boolean  @default(true)
+}
+
+model Testimonial {
+  id        String   @id @default(cuid())
+  quote     Json
+  author    Json
+  role      Json
+  kind      String   @default("company") // company | candidate
+  sortOrder Int      @default(0)
+  published Boolean  @default(true)
+}
+
+model Stat {
+  id        String  @id @default(cuid())
+  icon      String
+  value     Int
+  prefix    String  @default("")
+  suffix    String  @default("")
+  label     Json
+  sortOrder Int     @default(0)
+}
+
+model Faq {
+  id        String  @id @default(cuid())
+  question  Json
+  answer    Json
+  audience  String  @default("all") // all | company | candidate
+  sortOrder Int     @default(0)
+  published Boolean @default(true)
+}
+
+model Post {
+  id          String    @id @default(cuid())
+  slug        String    @unique
+  cover       String @db.Text
+  title       Json
+  excerpt     Json
+  body        Json
+  published   Boolean   @default(true)
+  publishedAt DateTime  @default(now())
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+enum InquiryStatus {
+  NEW
+  IN_PROGRESS
+  DONE
+  ARCHIVED
+}
+
+model Inquiry {
+  id            String        @id @default(cuid())
+  kind          String        // company | contact
+  companyName   String?
+  contactName   String
+  email         String
+  phone         String?
+  sector        String?
+  workersNeeded Int?
+  message       String @db.Text
+  locale        String
+  status        InquiryStatus @default(NEW)
+  createdAt     DateTime      @default(now())
+}
+
+model Setting {
+  key   String @id
+  value Json
+}

@@ -1,0 +1,23 @@
+services:
+  db:
+    image: mysql:8.4
+    container_name: triad-vision-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: triad_vision
+      MYSQL_USER: triad
+      MYSQL_PASSWORD: triad_dev_password
+      MYSQL_ROOT_PASSWORD: triad_root_dev_password
+    command: ['--character-set-server=utf8mb4', '--collation-server=utf8mb4_unicode_ci']
+    ports:
+      - "3308:3306"
+    volumes:
+      - triad_mysql:/var/lib/mysql
+    healthcheck:
+      test: ['CMD', 'mysqladmin', 'ping', '-h', 'localhost', '-uroot', '-ptriad_root_dev_password']
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+volumes:
+  triad_mysql:

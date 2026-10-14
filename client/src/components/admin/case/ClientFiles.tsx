@@ -1,0 +1,80 @@
+import { useRef, useState } from 'react';
+import { toast } from 'sonner';
+import { FolderUp, Upload } from 'lucide-react';
+import type { CaseDetail } from '@/lib/types';
+import { Spinner } from '@/components/ui/Spinner';
+import { STAGE_LABEL, toastError } from '../labels';
+import { Panel } from '../ui';
+import { DocIcon, DocLinks, DocMeta, uploadCaseDocument, useCaseRefresh } from './shared';
+
+/** Files staff attach for the client: the visa scan or any other document. */
+export const ClientFiles = ({ c }: { c: CaseDetail }) => {
+  const refresh = useCaseRefresh(c.id);
+  const ref = useRef<HTMLInputElement>(null);
+  const [stage, setStage] = useState<'VISA' | 'OTHER'>(c.status === 'APPROVED' ? 'VISA' : 'OTHER');
+  const [busy, setBusy] = useState(false);
+
+  const upload = async (file: File) => {
+    setBusy(true);
+    try {
+      await uploadCaseDocument(c.id, file, stage);
+      await refresh();
+      toast.success('Fayl yükləndi və müştəri üçün əlçatandır.');
+    } catch (err) {
+      toastError(err, 'Fayl yüklənmədi.');
+    } finally {
+      setBusy(false);
+      if (ref.current) ref.current.value = '';
+    }
+  };
+
+  return (
+    <Panel title="Müştəri üçün fayllar" icon={FolderUp}>
+      <div className="mb-4 flex flex-wrap items-center gap-2">
+        <label htmlFor="cf-stage" className="sr-only">
+          Fayl növü
+        </label>
+        <select id="cf-stage" className="input w-auto min-w-0 flex-1 py-2 sm:flex-none" value={stage} onChange={(e) => setStage(e.target.value as 'VISA' | 'OTHER')}>
+          <option value="VISA">Viza (skan)</option>
+          <option value="OTHER">Digər sənəd</option>
+        </select>
+        <input
+          ref={ref}
+          type="file"
+          className="sr-only"
+          tabIndex={-1}
+          aria-hidden
+          accept="application/pdf,image/jpeg,image/png,image/webp,.doc,.docx"
+          onChange={(e) => {
+            const f = e.target.files?.[0];
+            if (f) void upload(f);
+          }}
+        />
+        <button type="button" className="btn-primary btn-sm" onClick={() => ref.current?.click()} disabled={busy}>
+          {busy ? <Spinner className="size-3.5" /> : <Upload className="size-3.5" />} Fayl yüklə
+        </button>
+      </div>
+      {c.otherDocuments.length === 0 ? (
+        <p className="text-sm text-muted">Hələ fayl yüklənməyib. Yüklənən fayllar müştərinin kabinetində görünəcək.</p>
+      ) : (
+        <ul className="space-y-2">
+          {c.otherDocuments.map((d) => (
+            <li key={d.id} className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-lg border border-line px-3 py-2.5">
+              <div className="flex min-w-0 flex-[1_1_13rem] items-center gap-3">
+                <DocIcon mime={d.mimeType} className="size-4 shrink-0 text-brand-600" />
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium" title={d.originalName}>{d.originalName}</p>
+                  <DocMeta doc={d} />
+                </div>
+              </div>
+              <span className={d.stage === 'VISA' ? 'badge whitespace-nowrap bg-emerald-100 text-emerald-800' : 'badge whitespace-nowrap bg-slate-100 text-slate-600'}>
+                {STAGE_LABEL[d.stage]}
+              </span>
+              <DocLinks doc={d} />
+            </li>
+          ))}
+        </ul>
+      )}
+    </Panel>
+  );
+};
