@@ -17,6 +17,7 @@ import { useL10n } from '@/lib/l10n';
 import type { VisaCategory } from '@/lib/types';
 import { registerCopy } from '@/i18n';
 import { pagesVisa } from '@/i18n/pagesVisa';
+import { usePageTitle } from '@/lib/usePageTitle';
 
 registerCopy(pagesVisa);
 
@@ -52,6 +53,7 @@ const sorter: Record<Sort, (a: VisaCategory, b: VisaCategory) => number> = {
 
 export default function Visas() {
   const { t } = useTranslation();
+  usePageTitle(t('visasPage.heroTitle'));
   const { tr } = useL10n();
   const euro = useEuro();
   const { data, isLoading } = useSiteContent();

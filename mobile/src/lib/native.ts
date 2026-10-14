@@ -1,6 +1,6 @@
 import { Platform } from 'react-native';
 import * as Calendar from 'expo-calendar';
-import { File, Paths } from 'expo-file-system';
+import { Directory, File, Paths } from 'expo-file-system';
 import * as IntentLauncher from 'expo-intent-launcher';
 import * as Sharing from 'expo-sharing';
 import { authHeaders, fileUrl } from './api';
@@ -10,15 +10,35 @@ import { buildIcs } from './ics';
 
 const safeName = (name: string) => name.replace(/[\\/:*?"<>|]+/g, '_').slice(-120) || 'file';
 
+const DOC_CACHE_PREFIX = 'doc-';
+
 /** Downloads a private case document (Bearer auth) into the cache and returns the local file. */
 export const downloadDocument = async (doc: { id: string; originalName: string }) => {
-  const dest = new File(Paths.cache, `doc-${doc.id}-${safeName(doc.originalName)}`);
+  const dest = new File(Paths.cache, `${DOC_CACHE_PREFIX}${doc.id}-${safeName(doc.originalName)}`);
   if (dest.exists && dest.size > 0) return dest;
   try {
     return await File.downloadFileAsync(fileUrl(doc.id), dest, { headers: authHeaders(), idempotent: true });
   } catch (err) {
     const status = Number(/status(?: code)?:? (\d{3})/i.exec(String((err as Error)?.message))?.[1]);
     throw status ? new ApiError(status, status === 404 ? 'DOCUMENT_NOT_FOUND' : 'DOWNLOAD_FAILED') : err;
+  }
+};
+
+/** Removes every downloaded private document from the cache (logout / session end). Best effort. */
+export const clearDocumentCache = async () => {
+  try {
+    const entries = new Directory(Paths.cache).list();
+    for (const entry of entries) {
+      if (entry instanceof File && entry.name.startsWith(DOC_CACHE_PREFIX)) {
+        try {
+          entry.delete();
+        } catch {
+          /* locked or already gone */
+        }
+      }
+    }
+  } catch {
+    /* cache dir unreadable — nothing to do */
   }
 };
 

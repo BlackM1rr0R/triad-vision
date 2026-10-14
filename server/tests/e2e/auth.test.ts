@@ -160,7 +160,7 @@ describe('POST /api/auth/login', () => {
 describe('session lifecycle', () => {
   it('GET /me is null for anonymous and for an invalid cookie', async () => {
     expect((await anon().get('/api/auth/me')).body).toEqual({ user: null });
-    expect((await anon().get('/api/auth/me').set('Cookie', 'tv_session=garbage')).body).toEqual({ user: null });
+    expect((await anon().get('/api/auth/me').set('Cookie', 'tv_session=garbage')).body).toEqual({ user: null, reason: 'INVALID_TOKEN' });
   });
 
   it('logout clears the cookie so the agent is anonymous again', async () => {
@@ -171,7 +171,7 @@ describe('session lifecycle', () => {
     expect(out.status).toBe(200);
     expect(out.body).toEqual({ ok: true });
     expect(sessionCookie(out)).toMatch(/tv_session=;/);
-    expect((await agent.get('/api/auth/me')).body).toEqual({ user: null });
+    expect((await agent.get('/api/auth/me')).body).toMatchObject({ user: null });
     expect((await agent.get('/api/cases')).status).toBe(401);
   });
 
@@ -181,7 +181,7 @@ describe('session lifecycle', () => {
     expect((await agent.get('/api/cases')).status).toBe(200);
     await prisma.user.update({ where: { id: user.id }, data: { isActive: false } });
     expect((await agent.get('/api/cases')).status).toBe(401);
-    expect((await agent.get('/api/auth/me')).body).toEqual({ user: null });
+    expect((await agent.get('/api/auth/me')).body).toMatchObject({ user: null });
   });
 
   it('logout works without a session', async () => {

@@ -3,14 +3,17 @@ import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { MailCheck, Send } from 'lucide-react';
 import { toast } from 'sonner';
-import { api } from '@/lib/api';
+import { api, errorCode } from '@/lib/api';
+import { usePageTitle } from '@/lib/usePageTitle';
 import { Spinner } from '@/components/ui/Spinner';
 import { AuthShell } from './AuthShell';
+import { authError } from './Login';
 
 export default function ForgotPassword() {
   const { t } = useTranslation();
   const [busy, setBusy] = useState(false);
   const [sent, setSent] = useState(false);
+  usePageTitle(t('auth.forgotTitle'));
 
   const submit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -18,8 +21,8 @@ export default function ForgotPassword() {
     try {
       await api.post('/auth/forgot-password', { email: new FormData(e.currentTarget).get('email') });
       setSent(true);
-    } catch {
-      toast.error(t('common.error'));
+    } catch (err) {
+      toast.error(authError(t, errorCode(err)));
     } finally {
       setBusy(false);
     }

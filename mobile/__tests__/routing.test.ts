@@ -14,6 +14,7 @@ describe('notification → screen', () => {
   it('opens the staff case screen for staff and admins', () => {
     expect(routeForNotification({ link: '/admin/cases/xyz', caseId: 'xyz' }, 'STAFF')).toBe('/staff/cases/xyz');
     expect(routeForNotification({ link: '', caseId: 'xyz' }, 'ADMIN')).toBe('/staff/cases/xyz');
+    expect(routeForNotification({ link: '', caseId: 'xyz' }, 'SUPER_ADMIN')).toBe('/staff/cases/xyz');
   });
 
   it('falls back sensibly without a case', () => {

@@ -18,13 +18,22 @@ Notifications.setNotificationHandler({
   }),
 });
 
-export type PushState = 'registered' | 'denied' | 'unsupported-expo-go' | 'simulator' | 'no-project-id' | 'error';
+export type PushState =
+  | 'registered'
+  | 'not-asked'
+  | 'denied'
+  | 'unsupported-expo-go'
+  | 'simulator'
+  | 'no-project-id'
+  | 'error';
 
 /**
- * Asks for permission, gets the Expo push token and registers it with the API (POST /api/devices).
+ * Gets the Expo push token and registers it with the API (POST /api/devices).
+ * With `requestPermission: false` (the silent login-time call) it only proceeds when the user already
+ * granted notifications and reports 'not-asked' otherwise; the profile screen asks explicitly.
  * Never throws — push is a convenience; the in-app notification list always works.
  */
-export const registerForPush = async (): Promise<PushState> => {
+export const registerForPush = async ({ requestPermission = true }: { requestPermission?: boolean } = {}): Promise<PushState> => {
   try {
     if (Platform.OS === 'android') {
       await Notifications.setNotificationChannelAsync('default', {
@@ -38,8 +47,12 @@ export const registerForPush = async (): Promise<PushState> => {
     if (IS_EXPO_GO && Platform.OS === 'android') return 'unsupported-expo-go';
     if (!Device.isDevice) return 'simulator';
 
-    let { status } = await Notifications.getPermissionsAsync();
-    if (status !== 'granted') status = (await Notifications.requestPermissionsAsync()).status;
+    const current = await Notifications.getPermissionsAsync();
+    let status = current.status;
+    if (status !== 'granted') {
+      if (!requestPermission) return current.canAskAgain === false ? 'denied' : 'not-asked';
+      status = (await Notifications.requestPermissionsAsync()).status;
+    }
     if (status !== 'granted') return 'denied';
 
     if (!EAS_PROJECT_ID) return 'no-project-id';
@@ -53,15 +66,36 @@ export const registerForPush = async (): Promise<PushState> => {
   }
 };
 
-/** Called on logout (while the session token is still valid) so this phone stops getting the user's pushes. */
+/**
+ * Called on logout (while the session token is still valid) and on a server-side session end so this
+ * phone stops getting the user's pushes. The local token is always forgotten so the next login
+ * registers afresh (the server re-binds a known Expo token to the new user on POST /devices).
+ */
 export const unregisterPush = async () => {
+  let token: string | null = null;
   try {
-    const token = await SecureStore.getItemAsync(PUSH_KEY);
-    if (!token) return;
-    await api.delete('/devices', { data: { token } });
-    await SecureStore.deleteItemAsync(PUSH_KEY);
+    token = await SecureStore.getItemAsync(PUSH_KEY);
   } catch {
-    /* best effort */
+    return;
+  }
+  if (!token) return;
+  try {
+    await api.delete('/devices', { data: { token } });
+  } catch {
+    /* best effort — the session may already be dead */
+  }
+  await SecureStore.deleteItemAsync(PUSH_KEY).catch(() => undefined);
+};
+
+/**
+ * Forgets the last tapped notification so a user who logs in next is never routed by the previous
+ * user's push (expo-notifications keeps the last response across the whole process lifetime).
+ */
+export const clearLastPushResponse = async () => {
+  try {
+    await Notifications.clearLastNotificationResponseAsync();
+  } catch {
+    /* not supported on this platform/runtime */
   }
 };
 

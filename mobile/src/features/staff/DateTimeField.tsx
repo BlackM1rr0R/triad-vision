@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Platform, Pressable, StyleSheet, View } from 'react-native';
 import DateTimePicker, { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
 import { CalendarDays, Clock } from '@/components/icons';
@@ -6,6 +7,12 @@ import { DATE_LOCALE } from '@/i18n';
 import { useFormat } from '@/lib/format';
 import { haptic } from '@/lib/haptics';
 import { colors, fonts, radius } from '@/theme';
+
+/**
+ * v9 only calls onValueChange for a picked value, but older/`onChange`-style events carry
+ * `type: 'dismissed'` with the untouched date — never forward those as a choice.
+ */
+const isDismissed = (e: unknown) => (e as { type?: string } | null)?.type === 'dismissed';
 
 /**
  * Date or time input. Android opens the native dialog; iOS shows the compact inline picker.
@@ -29,27 +36,47 @@ export const DateTimeField = ({
   const f = useFormat();
   const shown = value ? (mode === 'date' ? f.date(value) : f.time(value)) : placeholder ?? '—';
   const Icon = mode === 'date' ? CalendarDays : Clock;
+  // iOS: the inline picker only appears once the user taps the placeholder, so an untouched field
+  // stays empty (and validation can tell) instead of silently showing "now".
+  const [iosOpen, setIosOpen] = useState(false);
 
   if (Platform.OS === 'ios') {
     return (
       <View style={styles.wrap}>
         <Text variant="label">{label}</Text>
-        <View style={styles.iosRow}>
-          <Icon size={18} color={colors.blue} />
-          <DateTimePicker
-            value={value ?? new Date()}
-            mode={mode}
-            display="compact"
-            locale={DATE_LOCALE[f.lang]}
-            minimumDate={minimumDate}
-            minuteInterval={5}
-            accentColor={colors.blue}
-            onValueChange={(_e, d) => {
-              haptic.select();
-              onChange(d);
+        {value || iosOpen ? (
+          <View style={styles.iosRow}>
+            <Icon size={18} color={colors.blue} />
+            <DateTimePicker
+              value={value ?? new Date()}
+              mode={mode}
+              display="compact"
+              locale={DATE_LOCALE[f.lang]}
+              minimumDate={minimumDate}
+              minuteInterval={5}
+              accentColor={colors.blue}
+              onValueChange={(e, d) => {
+                if (isDismissed(e) || !d) return;
+                haptic.select();
+                onChange(d);
+              }}
+            />
+          </View>
+        ) : (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={`${label}: ${shown}`}
+            onPress={() => {
+              haptic.tap();
+              setIosOpen(true);
+              onChange(minimumDate && minimumDate > new Date() ? minimumDate : new Date());
             }}
-          />
-        </View>
+            style={({ pressed }) => [styles.button, pressed && { borderColor: colors.blue }]}
+          >
+            <Icon size={18} color={colors.blue} />
+            <Text style={{ fontFamily: fonts.medium, fontSize: 15, color: colors.muted }}>{shown}</Text>
+          </Pressable>
+        )}
       </View>
     );
   }
@@ -67,7 +94,10 @@ export const DateTimeField = ({
             mode,
             is24Hour: true,
             minimumDate,
-            onValueChange: (_e, d) => onChange(d),
+            onValueChange: (e, d) => {
+              if (isDismissed(e) || !d) return;
+              onChange(d);
+            },
           });
         }}
         style={({ pressed }) => [styles.button, pressed && { borderColor: colors.blue }]}

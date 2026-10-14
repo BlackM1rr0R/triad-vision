@@ -49,7 +49,7 @@ export default function Viewer() {
           style={{ flex: 1 }}
           contentFit="contain"
           transition={200}
-          cachePolicy="memory-disk"
+          cachePolicy="memory"
           onLoadEnd={() => setLoading(false)}
           onError={() => {
             setLoading(false);
@@ -66,7 +66,7 @@ export default function Viewer() {
         <Text numberOfLines={1} style={styles.title}>
           {name}
         </Text>
-        <Pressable onPress={share} disabled={sharing} hitSlop={12} accessibilityRole="button" accessibilityLabel="Share" style={styles.btn}>
+        <Pressable onPress={share} disabled={sharing} hitSlop={12} accessibilityRole="button" accessibilityLabel={t('m.common.share')} style={styles.btn}>
           {sharing ? <ActivityIndicator color={colors.white} /> : <Share2 size={20} color={colors.white} />}
         </Pressable>
       </View>

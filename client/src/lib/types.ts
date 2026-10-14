@@ -1,7 +1,36 @@
 export type L10n = { az: string; de: string; en: string; ru: string };
 export type L10nList = { az: string[]; de: string[]; en: string[]; ru: string[] };
 
-export type Role = 'CLIENT' | 'STAFF' | 'ADMIN';
+export type Role = 'CLIENT' | 'STAFF' | 'ADMIN' | 'SUPER_ADMIN';
+
+/** Role hierarchy: every role includes the permissions of the ones below it. */
+export const ROLE_RANK: Record<Role, number> = { CLIENT: 0, STAFF: 1, ADMIN: 2, SUPER_ADMIN: 3 };
+export const hasMinRole = (role: Role | null | undefined, min: Role) => !!role && ROLE_RANK[role] >= ROLE_RANK[min];
+export const isStaffRole = (role: Role | null | undefined) => hasMinRole(role, 'STAFF');
+
+/** Why the server rejected a session token (401 / `GET /auth/me`). */
+export type AuthFailure = 'UNAUTHENTICATED' | 'SESSION_EXPIRED' | 'SESSION_REVOKED' | 'INVALID_TOKEN';
+
+export interface SessionInfo {
+  id: string;
+  expiresAt: string;
+}
+
+export interface UserSession {
+  id: string;
+  client: 'web' | 'mobile';
+  ip: string | null;
+  userAgent: string | null;
+  createdAt: string;
+  lastSeenAt: string;
+  expiresAt: string;
+  current: boolean;
+}
+
+/** Shared password rule (server: PASSWORD_TOO_WEAK): 8–128 chars with at least one letter and one digit. */
+export const PASSWORD_MIN = 8;
+export const PASSWORD_MAX = 128;
+export const isStrongPassword = (p: string) => p.length >= PASSWORD_MIN && p.length <= PASSWORD_MAX && /[A-Za-z]/.test(p) && /\d/.test(p);
 
 export interface User {
   id: string;
@@ -273,4 +302,139 @@ export interface Notification {
   link: string | null;
   readAt: string | null;
   createdAt: string;
+}
+
+// ─── Staff document workspaces ─────────────────────────────────────────
+
+export type DocAccess = 'VIEW' | 'DOWNLOAD' | 'EDIT';
+export type DocEffectiveAccess = DocAccess | 'OWNER';
+
+export const DOC_ACCESS_RANK: Record<DocEffectiveAccess, number> = { VIEW: 1, DOWNLOAD: 2, EDIT: 3, OWNER: 4 };
+export const docAllows = (have: DocEffectiveAccess | null | undefined, need: DocAccess) => !!have && DOC_ACCESS_RANK[have] >= DOC_ACCESS_RANK[need];
+
+export interface DocOwner {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  role: Role;
+  isActive: boolean;
+}
+
+export interface DocFolderSummary {
+  id: string;
+  slug: string;
+  owner: DocOwner;
+  access: DocEffectiveAccess;
+  fileCount: number;
+  totalSize: number;
+  lastUploadAt: string | null;
+  createdAt: string;
+}
+
+/** Fixed layout of every workspace: `<rootDir>/<company>/<companyDocsDir>`. */
+export interface DocStructure {
+  rootDir: string;
+  companyDocsDir: string;
+  maxFileBytes: number;
+}
+
+export interface DocFoldersResponse {
+  folders: DocFolderSummary[];
+  structure: DocStructure;
+}
+
+/** One company (firm) folder inside a workspace's root directory. */
+export interface DocCompany {
+  name: string;
+  /** `<rootDir>/<name>` */
+  path: string;
+  /** `<rootDir>/<name>/<companyDocsDir>` */
+  docsPath: string;
+  files: number;
+  bytes: number;
+  lastUploadAt: string | null;
+  createdAt: string;
+}
+
+export interface DocCompaniesResponse {
+  access: DocEffectiveAccess;
+  rootDir: string;
+  companies: DocCompany[];
+}
+
+export interface DocDir {
+  name: string;
+  path: string;
+  createdAt: string;
+}
+
+export interface DocFile {
+  id: string;
+  path: string;
+  name: string;
+  mimeType: string;
+  size: number;
+  version: number;
+  previewable: boolean;
+  createdAt: string;
+  updatedAt: string;
+  uploadedBy: { id: string; firstName: string; lastName: string } | null;
+}
+
+export interface DocDirListing {
+  folder: { id: string; slug: string; owner: DocOwner };
+  access: DocEffectiveAccess;
+  path: string;
+  dirs: DocDir[];
+  files: DocFile[];
+}
+
+/** One directory of a workspace as returned by `GET /docs/folders/:id/tree`. */
+export interface DocTreeNode {
+  path: string;
+  name: string;
+  /** Files directly inside this directory (not counting sub-directories). */
+  files: number;
+  bytes: number;
+  lastUploadAt: string | null;
+  /** Standard directory (`<rootDir>` or a company's `<companyDocsDir>`): cannot be renamed or deleted. */
+  fixed: boolean;
+}
+
+export interface DocTreeDir extends DocTreeNode {
+  /** Parent directory path; '' for top-level directories. */
+  parent: string;
+  createdAt: string;
+}
+
+export interface DocTreeResponse {
+  folder: { id: string; slug: string; owner: DocOwner };
+  access: DocEffectiveAccess;
+  root: DocTreeNode;
+  /** Every directory of the workspace (nested paths included). */
+  dirs: DocTreeDir[];
+  totals: { files: number; bytes: number };
+}
+
+export interface DocGrant {
+  user: DocOwner;
+  access: DocAccess;
+  updatedAt: string;
+}
+
+export interface DocGrantsResponse {
+  folder: { id: string; slug: string; owner: DocOwner };
+  grants: DocGrant[];
+  candidates: DocOwner[];
+}
+
+export interface AuditItem {
+  id: string;
+  action: string;
+  target: string | null;
+  details: Record<string, unknown> | null;
+  ip: string | null;
+  createdAt: string;
+  actor: { id: string; firstName: string; lastName: string; email: string } | null;
 }

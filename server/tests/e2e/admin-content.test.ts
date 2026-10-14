@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { anon, asAdmin } from '../helpers/api';
 import { prisma } from '../helpers/db';
 import { contentPayload, l10n, type ContentResource } from '../helpers/factories';
-import { PNG_BUFFER } from '../helpers/files';
+import { PNG_BUFFER, sampleFor } from '../helpers/files';
 import { TEST_UPLOADS_DIR } from '../helpers/testEnv';
 
 /** A field to update per resource and an invalid body that must be refused. */
@@ -145,7 +145,7 @@ describe('POST /api/admin/upload', () => {
     ['icon.svg', 'image/svg+xml'],
   ])('accepts %s and serves it publicly with a locked-down CSP', async (filename, contentType) => {
     const { agent } = await asAdmin();
-    const data = contentType === 'image/svg+xml' ? Buffer.from('<svg xmlns="http://www.w3.org/2000/svg"/>') : PNG_BUFFER;
+    const data = sampleFor(contentType);
     const res = await agent.post('/api/admin/upload').attach('file', data, { filename, contentType });
     expect(res.status).toBe(201);
     const ext = path.extname(filename);

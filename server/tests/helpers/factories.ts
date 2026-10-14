@@ -2,7 +2,7 @@ import crypto from 'node:crypto';
 import bcrypt from 'bcryptjs';
 import type { Locale, Role } from '@prisma/client';
 import { prisma } from '../../src/db.js';
-import { signSession } from '../../src/middleware/auth.js';
+import { issueSession } from '../../src/middleware/auth.js';
 
 export const TEST_PASSWORD = 'Password123!';
 // Low cost factor keeps fixtures fast; bcrypt.compare works with any cost.
@@ -19,9 +19,10 @@ export interface UserOpts {
   lastName?: string;
   phone?: string | null;
   isActive?: boolean;
+  client?: 'web' | 'mobile';
 }
 
-/** Inserts a user directly (bypassing the rate-limited register route) and returns a session token. */
+/** Inserts a user directly (bypassing the rate-limited register route) and returns a web session token. */
 export const createUser = async (opts: UserOpts = {}) => {
   const user = await prisma.user.create({
     data: {
@@ -35,10 +36,12 @@ export const createUser = async (opts: UserOpts = {}) => {
       isActive: opts.isActive ?? true,
     },
   });
-  return { user, token: signSession(user.id), password: TEST_PASSWORD };
+  const { token } = await issueSession(user.id, { client: opts.client ?? 'web' });
+  return { user, token, password: TEST_PASSWORD };
 };
 
 export const createAdmin = (opts: UserOpts = {}) => createUser({ firstName: 'Admin', ...opts, role: 'ADMIN' });
+export const createSuperAdmin = (opts: UserOpts = {}) => createUser({ firstName: 'Super', ...opts, role: 'SUPER_ADMIN' });
 export const createStaff = (opts: UserOpts = {}) => createUser({ firstName: 'Staff', ...opts, role: 'STAFF' });
 export const createClient = (opts: UserOpts = {}) => createUser({ ...opts, role: 'CLIENT' });
 

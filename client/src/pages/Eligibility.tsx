@@ -38,6 +38,7 @@ import { useQuizState } from '@/components/quiz/useQuizState';
 import { FIELD_SLUGS, OPTIONS, isComplete, scoreQuiz, type QuestionId } from '@/components/quiz/scoring';
 import { useSiteContent } from '@/lib/content';
 import { useL10n } from '@/lib/l10n';
+import { usePageTitle } from '@/lib/usePageTitle';
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 
@@ -58,6 +59,7 @@ const slide = {
 
 export default function Eligibility() {
   const { t } = useTranslation();
+  usePageTitle(t('quiz.title'));
   const { tr } = useL10n();
   const { data, isLoading } = useSiteContent();
   const q = useQuizState();

@@ -14,6 +14,7 @@ import { PageCta } from '@/components/visa/PageCta';
 import { useSiteContent } from '@/lib/content';
 import { registerCopy } from '@/i18n';
 import { pagesVisa } from '@/i18n/pagesVisa';
+import { usePageTitle } from '@/lib/usePageTitle';
 
 registerCopy(pagesVisa);
 
@@ -21,6 +22,7 @@ type Filter = 'all' | 'company' | 'candidate';
 
 export default function Services() {
   const { t } = useTranslation();
+  usePageTitle(t('servicesPage.heroTitle'));
   const { data, isLoading } = useSiteContent();
   const [filter, setFilter] = useState<Filter>('all');
   const all = data?.services ?? [];

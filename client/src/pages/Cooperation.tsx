@@ -12,6 +12,7 @@ import { useSiteContent } from '@/lib/content';
 import { useL10n } from '@/lib/l10n';
 import { registerCopy } from '@/i18n';
 import { pagesCompany } from '@/i18n/pagesCompany';
+import { usePageTitle } from '@/lib/usePageTitle';
 
 registerCopy(pagesCompany);
 
@@ -210,6 +211,7 @@ const Timeline = () => {
 
 export default function Cooperation() {
   const { t } = useTranslation();
+  usePageTitle(t('cooperationPage.hero.title'));
   const { tr } = useL10n();
   const copy = useCopy();
   const { data } = useSiteContent();

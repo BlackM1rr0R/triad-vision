@@ -2,6 +2,7 @@ import { Fragment, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
 import { toast } from 'sonner';
 import { ArrowDown, ArrowUp, FileQuestion, ImageOff, LayoutList, Pencil, Plus, Trash2, X } from 'lucide-react';
@@ -17,6 +18,9 @@ import { fmtDate, toDateInput, toastError } from '@/components/admin/labels';
 import { EmptyState, ErrorBlock, LoadingBlock, PageHead, Switch } from '@/components/admin/ui';
 
 // ─── Config ─────────────────────────────────────────────────────────────
+
+/** Translator bound to the current language (a plain signature keeps the resource table simple). */
+type Tr = (key: string, opts?: Record<string, unknown>) => string;
 
 type FieldType = 'text' | 'slug' | 'url' | 'number' | 'boolean' | 'tristate' | 'l10n' | 'l10n-textarea' | 'l10n-list' | 'faq' | 'image' | 'icon' | 'select' | 'date';
 
@@ -37,6 +41,8 @@ interface FieldDef {
   group?: string;
   /** Unit shown next to number inputs, e.g. "€" or "həftə". */
   unit?: string;
+  /** Maximum length for text / url inputs. */
+  maxLength?: number;
 }
 
 type FaqItem = { q: L10n; a: L10n };
@@ -64,473 +70,200 @@ const isL10n = (v: unknown): v is L10n => isObj(v) && LANGS.every((l) => typeof 
 const isL10nList = (v: unknown): v is L10nList => isObj(v) && LANGS.every((l) => Array.isArray(v[l]));
 const isFaqList = (v: unknown): v is FaqItem[] => Array.isArray(v) && v.every((x) => isObj(x) && isL10n(x.q) && isL10n(x.a));
 const str = (v: unknown) => (typeof v === 'string' ? v : '');
+/** CMS items are listed by their Azerbaijani (source) text. */
 const l10nAz = (v: unknown) => (isL10n(v) ? v.az : '');
 
-const AUDIENCE_LABEL: Record<string, string> = {
-  all: 'Hamı üçün',
-  company: 'Şirkətlər üçün',
-  candidate: 'Namizədlər üçün',
-};
+const AUDIENCES = ['all', 'company', 'candidate'] as const;
+const SECTORS = ['logistics', 'courier', 'industry', 'construction', 'hospitality', 'healthcare', 'agriculture', 'other'] as const;
 
-const SECTOR_LABEL: Record<string, string> = {
-  logistics: 'Logistika',
-  courier: 'Kuryer/bağlama',
-  industry: 'Sənaye',
-  construction: 'Tikinti',
-  hospitality: 'Otel və restoran',
-  healthcare: 'Səhiyyə',
-  agriculture: 'Kənd təsərrüfatı',
-  other: 'Digər',
-};
+/** Resource definitions in the current language. Rebuilt when the language changes. */
+const buildResources = (t: Tr): Record<string, ResourceDef> => {
+  const f = (key: string) => t(`admin.content.f.${key}`);
+  const hint = (key: string) => t(`admin.content.hint.${key}`);
+  const audience = (key: string) => (AUDIENCES.includes(key as (typeof AUDIENCES)[number]) ? t(`admin.content.audience.${key}`) : '');
+  const sector = (key: string) => (SECTORS.includes(key as (typeof SECTORS)[number]) ? t(`admin.content.sector.${key}`) : '');
+  const res = (key: string) => ({ title: t(`admin.content.res.${key}.title`), singular: t(`admin.content.res.${key}.singular`), description: t(`admin.content.res.${key}.description`) });
+  const PUBLISHED: FieldDef = { key: 'published', label: t('admin.content.published'), type: 'boolean' };
+  const audienceOptions = (order: readonly string[]) => order.map((value) => ({ value, label: audience(value) }));
 
-const PUBLISHED: FieldDef = {
-  key: 'published',
-  label: 'Saytda dərc olunsun',
-  type: 'boolean',
-};
-
-const RESOURCES: Record<string, ResourceDef> = {
-  services: {
-    title: 'Xidmətlər',
-    singular: 'xidmət',
-    description: 'Saytın “Xidmətlər” bölməsində göstərilən xidmətlər (şirkətlər və namizədlər üçün).',
-    sortable: true,
-    publishable: true,
-    imageKey: 'image',
-    iconKey: 'icon',
-    titleOf: (i) => l10nAz(i.title),
-    subtitleOf: (i) => `${AUDIENCE_LABEL[str(i.audience)] ?? ''} · /${str(i.slug)}`,
-    fields: [
-      {
-        key: 'title',
-        label: 'Başlıq',
-        type: 'l10n',
-        required: true,
-        wide: true,
-      },
-      {
-        key: 'slug',
-        label: 'Slug (URL)',
-        type: 'slug',
-        required: true,
-        hint: 'Yalnız kiçik latın hərfləri, rəqəmlər və “-”. Məs.: ishe-qebul',
-      },
-      {
-        key: 'audience',
-        label: 'Auditoriya',
-        type: 'select',
-        options: [
-          { value: 'all', label: 'Hamı üçün' },
-          { value: 'company', label: 'Şirkətlər üçün' },
-          { value: 'candidate', label: 'Namizədlər üçün' },
-        ],
-      },
-      { key: 'icon', label: 'İkon', type: 'icon' },
-      { key: 'image', label: 'Şəkil', type: 'image', wide: true },
-      {
-        key: 'summary',
-        label: 'Qısa təsvir',
-        type: 'l10n-textarea',
-        rows: 3,
-        wide: true,
-      },
-      {
-        key: 'features',
-        label: 'Üstünlüklər (hər sətirdə bir)',
-        type: 'l10n-list',
-        wide: true,
-      },
-      {
-        key: 'body',
-        label: 'Ətraflı mətn',
-        type: 'l10n-textarea',
-        rows: 8,
-        wide: true,
-        hint: 'Abzasları boş sətirlə ayırın.',
-      },
-      {
-        key: 'steps',
-        label: 'Necə işləyir — addımlar (hər sətirdə bir)',
-        type: 'l10n-list',
-        nullable: true,
-        wide: true,
-        group: 'Xidmət səhifəsi üçün əlavə məlumat',
-        hint: 'Bu xidmətə aid addımlar; xidmət səhifəsində zaman xətti kimi göstərilir.',
-      },
-      {
-        key: 'duration',
-        label: 'Təxmini müddət',
-        type: 'l10n',
-        nullable: true,
-        wide: true,
-        hint: 'Məs.: 2–4 həftə. Boş qalsa, göstərilmir.',
-      },
-      PUBLISHED,
-    ],
-  },
-  'visa-categories': {
-    title: 'Viza kateqoriyaları',
-    singular: 'viza kateqoriyası',
-    description: 'Saytın “Vizalar” bölməsindəki kateqoriyalar. Müştərilər müraciət edərkən bunlardan birini seçir.',
-    sortable: true,
-    publishable: true,
-    imageKey: 'image',
-    iconKey: 'icon',
-    titleOf: (i) => l10nAz(i.title),
-    subtitleOf: (i) => `${str(i.visaLabel)} · /${str(i.slug)}`,
-    fields: [
-      {
-        key: 'title',
-        label: 'Başlıq',
-        type: 'l10n',
-        required: true,
-        wide: true,
-      },
-      {
-        key: 'slug',
-        label: 'Slug (URL)',
-        type: 'slug',
-        required: true,
-        hint: 'Yalnız kiçik latın hərfləri, rəqəmlər və “-”. Məs.: skilled-workers',
-      },
-      {
-        key: 'visaLabel',
-        label: 'Viza nişanı',
-        type: 'text',
-        required: true,
-        hint: 'Məs.: §18a AufenthG',
-      },
-      { key: 'icon', label: 'İkon', type: 'icon' },
-      { key: 'image', label: 'Şəkil', type: 'image', wide: true },
-      {
-        key: 'summary',
-        label: 'Qısa təsvir',
-        type: 'l10n-textarea',
-        rows: 3,
-        wide: true,
-      },
-      {
-        key: 'items',
-        label: 'Siyahı (üstünlüklər / tələblər)',
-        type: 'l10n-list',
-        wide: true,
-      },
-      {
-        key: 'body',
-        label: 'Ətraflı mətn',
-        type: 'l10n-textarea',
-        rows: 8,
-        wide: true,
-      },
-      {
-        key: 'germanLevel',
-        label: 'Alman dili səviyyəsi',
-        type: 'text',
-        nullable: true,
-        group: 'Əsas göstəricilər (saytda “təxmini” kimi qeyd olunur)',
-        hint: 'Məs.: A2 və ya B1–B2',
-      },
-      {
-        key: 'familyReunion',
-        label: 'Ailə birləşməsi',
-        type: 'tristate',
-        options: [
-          { value: 'true', label: 'Mümkündür' },
-          { value: 'false', label: 'Nəzərdə tutulmur' },
-          { value: '', label: 'Vəziyyətdən asılıdır' },
-        ],
-      },
-      {
-        key: 'salaryMin',
-        label: 'Maaş — minimum',
-        type: 'number',
-        nullable: true,
-        unit: '€ / ay',
-        hint: 'Brutto, aylıq. Boş qalsa, göstərilmir.',
-      },
-      {
-        key: 'salaryMax',
-        label: 'Maaş — maksimum',
-        type: 'number',
-        nullable: true,
-        unit: '€ / ay',
-      },
-      {
-        key: 'processingMin',
-        label: 'Emal müddəti — minimum',
-        type: 'number',
-        nullable: true,
-        unit: 'həftə',
-      },
-      {
-        key: 'processingMax',
-        label: 'Emal müddəti — maksimum',
-        type: 'number',
-        nullable: true,
-        unit: 'həftə',
-      },
-      {
-        key: 'requirements',
-        label: 'Tələblər (hər sətirdə bir)',
-        type: 'l10n-list',
-        nullable: true,
-        wide: true,
-        group: 'Viza səhifəsinin bölmələri',
-      },
-      {
-        key: 'documents',
-        label: 'Sənəd siyahısı (hər sətirdə bir)',
-        type: 'l10n-list',
-        nullable: true,
-        wide: true,
-      },
-      {
-        key: 'faq',
-        label: 'Bu viza üzrə suallar və cavablar',
-        type: 'faq',
-        wide: true,
-      },
-      PUBLISHED,
-    ],
-    check: (v) => {
-      const pair = (a: string, b: string, name: string) => {
-        const lo = v[a];
-        const hi = v[b];
-        if ((lo === null) !== (hi === null)) return `“${name}”: minimum və maksimum ya birlikdə doldurulmalı, ya da hər ikisi boş qalmalıdır.`;
-        if (typeof lo === 'number' && typeof hi === 'number' && lo > hi) return `“${name}”: minimum maksimumdan böyük ola bilməz.`;
-        return null;
-      };
-      return pair('salaryMin', 'salaryMax', 'Maaş') ?? pair('processingMin', 'processingMax', 'Emal müddəti');
+  return {
+    services: {
+      ...res('services'),
+      sortable: true,
+      publishable: true,
+      imageKey: 'image',
+      iconKey: 'icon',
+      titleOf: (i) => l10nAz(i.title),
+      subtitleOf: (i) => `${audience(str(i.audience))} · /${str(i.slug)}`,
+      fields: [
+        { key: 'title', label: f('title'), type: 'l10n', required: true, wide: true },
+        { key: 'slug', label: f('slug'), type: 'slug', required: true, hint: hint('slugServices') },
+        { key: 'audience', label: f('audience'), type: 'select', options: audienceOptions(['all', 'company', 'candidate']) },
+        { key: 'icon', label: f('icon'), type: 'icon' },
+        { key: 'image', label: f('image'), type: 'image', wide: true },
+        { key: 'summary', label: f('summary'), type: 'l10n-textarea', rows: 3, wide: true },
+        { key: 'features', label: f('features'), type: 'l10n-list', wide: true },
+        { key: 'body', label: f('body'), type: 'l10n-textarea', rows: 8, wide: true, hint: hint('paragraphs') },
+        { key: 'steps', label: f('steps'), type: 'l10n-list', nullable: true, wide: true, group: t('admin.content.group.serviceExtra'), hint: hint('steps') },
+        { key: 'duration', label: f('duration'), type: 'l10n', nullable: true, wide: true, hint: hint('duration') },
+        PUBLISHED,
+      ],
     },
-  },
-  partners: {
-    title: 'Tərəfdaşlar',
-    singular: 'tərəfdaş',
-    description: 'Saytda loqosu göstərilən alman tərəfdaş şirkətləri.',
-    sortable: true,
-    publishable: true,
-    imageKey: 'logo',
-    titleOf: (i) => str(i.name),
-    subtitleOf: (i) => [SECTOR_LABEL[str(i.sector)], str(i.city), str(i.website)].filter(Boolean).join(' · '),
-    fields: [
-      { key: 'name', label: 'Şirkətin adı', type: 'text', required: true },
-      { key: 'website', label: 'Veb sayt', type: 'url', nullable: true },
-      { key: 'logo', label: 'Loqo', type: 'image', nullable: true, wide: true },
-      {
-        key: 'sector',
-        label: 'Sahə',
-        type: 'select',
-        nullable: true,
-        options: [
-          { value: '', label: 'Seçilməyib' },
-          ...Object.entries(SECTOR_LABEL).map(([value, label]) => ({
-            value,
-            label,
-          })),
-        ],
+    'visa-categories': {
+      ...res('visaCategories'),
+      sortable: true,
+      publishable: true,
+      imageKey: 'image',
+      iconKey: 'icon',
+      titleOf: (i) => l10nAz(i.title),
+      subtitleOf: (i) => `${str(i.visaLabel)} · /${str(i.slug)}`,
+      fields: [
+        { key: 'title', label: f('title'), type: 'l10n', required: true, wide: true },
+        { key: 'slug', label: f('slug'), type: 'slug', required: true, hint: hint('slugVisa') },
+        { key: 'visaLabel', label: f('visaLabel'), type: 'text', required: true, hint: hint('visaLabel') },
+        { key: 'icon', label: f('icon'), type: 'icon' },
+        { key: 'image', label: f('image'), type: 'image', wide: true },
+        { key: 'summary', label: f('summary'), type: 'l10n-textarea', rows: 3, wide: true },
+        { key: 'items', label: f('items'), type: 'l10n-list', wide: true },
+        { key: 'body', label: f('body'), type: 'l10n-textarea', rows: 8, wide: true },
+        { key: 'germanLevel', label: f('germanLevel'), type: 'text', nullable: true, maxLength: 10, group: t('admin.content.group.visaKey'), hint: hint('germanLevel') },
+        {
+          key: 'familyReunion',
+          label: f('familyReunion'),
+          type: 'tristate',
+          options: [
+            { value: 'true', label: t('admin.content.opt.possible') },
+            { value: 'false', label: t('admin.content.opt.notPlanned') },
+            { value: '', label: t('admin.content.opt.depends') },
+          ],
+        },
+        { key: 'salaryMin', label: f('salaryMin'), type: 'number', nullable: true, unit: t('admin.content.unit.perMonth'), hint: hint('salaryMin') },
+        { key: 'salaryMax', label: f('salaryMax'), type: 'number', nullable: true, unit: t('admin.content.unit.perMonth') },
+        { key: 'processingMin', label: f('processingMin'), type: 'number', nullable: true, unit: t('admin.content.unit.weeks') },
+        { key: 'processingMax', label: f('processingMax'), type: 'number', nullable: true, unit: t('admin.content.unit.weeks') },
+        { key: 'requirements', label: f('requirements'), type: 'l10n-list', nullable: true, wide: true, group: t('admin.content.group.visaSections') },
+        { key: 'documents', label: f('documents'), type: 'l10n-list', nullable: true, wide: true },
+        { key: 'faq', label: f('faq'), type: 'faq', wide: true },
+        PUBLISHED,
+      ],
+      check: (v) => {
+        const pair = (a: string, b: string, name: string) => {
+          const lo = v[a];
+          const hi = v[b];
+          if ((lo === null) !== (hi === null)) return t('admin.content.check.pairBoth', { name });
+          if (typeof lo === 'number' && typeof hi === 'number' && lo > hi) return t('admin.content.check.pairOrder', { name });
+          return null;
+        };
+        return pair('salaryMin', 'salaryMax', t('admin.content.check.salary')) ?? pair('processingMin', 'processingMax', t('admin.content.check.processing'));
       },
-      {
-        key: 'city',
-        label: 'Şəhər (Almaniya)',
-        type: 'text',
-        nullable: true,
-        hint: 'Məs.: Hamburg',
-      },
-      {
-        key: 'description',
-        label: 'Qısa təsvir',
-        type: 'l10n-textarea',
-        nullable: true,
-        rows: 3,
-        wide: true,
-      },
-      {
-        key: 'featured',
-        label: 'Önə çıxarılan tərəfdaş',
-        type: 'boolean',
-        initial: false,
-      },
-      PUBLISHED,
-    ],
-  },
-  'visa-samples': {
-    title: 'Viza nümunələri',
-    singular: 'viza nümunəsi',
-    description: 'Uğurla alınmış vizaların (şəxsi məlumatları gizlədilmiş) nümunələri.',
-    sortable: true,
-    publishable: true,
-    imageKey: 'image',
-    titleOf: (i) => l10nAz(i.profession),
-    subtitleOf: (i) => `${str(i.visaLabel)} · ${l10nAz(i.dateLabel)}`,
-    fields: [
-      {
-        key: 'image',
-        label: 'Şəkil',
-        type: 'image',
-        required: true,
-        wide: true,
-      },
-      {
-        key: 'profession',
-        label: 'Peşə',
-        type: 'l10n',
-        required: true,
-        wide: true,
-      },
-      { key: 'visaLabel', label: 'Viza nişanı', type: 'text' },
-      {
-        key: 'dateLabel',
-        label: 'Tarix yazısı',
-        type: 'l10n',
-        hint: 'Məs.: Mart 2025',
-      },
-      PUBLISHED,
-    ],
-  },
-  testimonials: {
-    title: 'Rəylər',
-    singular: 'rəy',
-    description: 'Şirkətlərin və namizədlərin rəyləri.',
-    sortable: true,
-    publishable: true,
-    titleOf: (i) => l10nAz(i.author),
-    subtitleOf: (i) => l10nAz(i.quote),
-    fields: [
-      {
-        key: 'quote',
-        label: 'Rəy mətni',
-        type: 'l10n-textarea',
-        required: true,
-        rows: 4,
-        wide: true,
-      },
-      { key: 'author', label: 'Müəllif', type: 'l10n', required: true },
-      { key: 'role', label: 'Vəzifə / şirkət', type: 'l10n' },
-      {
-        key: 'kind',
-        label: 'Növ',
-        type: 'select',
-        options: [
-          { value: 'candidate', label: 'Namizəd' },
-          { value: 'company', label: 'Şirkət' },
-        ],
-      },
-      PUBLISHED,
-    ],
-  },
-  stats: {
-    title: 'Statistika',
-    singular: 'göstərici',
-    description: 'Ana səhifədəki rəqəmlər (məs.: “500+ yerləşdirilmiş işçi”).',
-    sortable: true,
-    publishable: false,
-    iconKey: 'icon',
-    titleOf: (i) => `${str(i.prefix)}${typeof i.value === 'number' ? i.value : ''}${str(i.suffix)}`,
-    subtitleOf: (i) => l10nAz(i.label),
-    fields: [
-      { key: 'label', label: 'Yazı', type: 'l10n', required: true, wide: true },
-      { key: 'value', label: 'Dəyər', type: 'number', required: true },
-      { key: 'icon', label: 'İkon', type: 'icon' },
-      {
-        key: 'prefix',
-        label: 'Prefiks',
-        type: 'text',
-        hint: 'Rəqəmdən əvvəl, məs.: “€”',
-      },
-      {
-        key: 'suffix',
-        label: 'Suffiks',
-        type: 'text',
-        hint: 'Rəqəmdən sonra, məs.: “+” və ya “%”',
-      },
-    ],
-  },
-  faqs: {
-    title: 'Tez-tez verilən suallar',
-    singular: 'sual',
-    description: 'FAQ səhifəsindəki suallar və cavablar.',
-    sortable: true,
-    publishable: true,
-    titleOf: (i) => l10nAz(i.question),
-    subtitleOf: (i) => AUDIENCE_LABEL[str(i.audience)] ?? '',
-    fields: [
-      {
-        key: 'question',
-        label: 'Sual',
-        type: 'l10n',
-        required: true,
-        wide: true,
-      },
-      {
-        key: 'answer',
-        label: 'Cavab',
-        type: 'l10n-textarea',
-        required: true,
-        rows: 5,
-        wide: true,
-      },
-      {
-        key: 'audience',
-        label: 'Auditoriya',
-        type: 'select',
-        options: [
-          { value: 'all', label: 'Hamı üçün' },
-          { value: 'candidate', label: 'Namizədlər üçün' },
-          { value: 'company', label: 'Şirkətlər üçün' },
-        ],
-      },
-      PUBLISHED,
-    ],
-  },
-  posts: {
-    title: 'Xəbərlər',
-    singular: 'xəbər',
-    description: 'Xəbərlər və bloq yazıları. Dərc tarixinə görə sıralanır.',
-    sortable: false,
-    publishable: true,
-    imageKey: 'cover',
-    titleOf: (i) => l10nAz(i.title),
-    subtitleOf: (i) => `${fmtDate(str(i.publishedAt))} · /${str(i.slug)}`,
-    fields: [
-      {
-        key: 'title',
-        label: 'Başlıq',
-        type: 'l10n',
-        required: true,
-        wide: true,
-      },
-      {
-        key: 'slug',
-        label: 'Slug (URL)',
-        type: 'slug',
-        required: true,
-        hint: 'Məs.: yeni-viza-qaydalari-2025',
-      },
-      {
-        key: 'publishedAt',
-        label: 'Dərc tarixi',
-        type: 'date',
-        required: true,
-      },
-      { key: 'cover', label: 'Üz qabığı şəkli', type: 'image', wide: true },
-      {
-        key: 'excerpt',
-        label: 'Qısa məzmun',
-        type: 'l10n-textarea',
-        rows: 3,
-        wide: true,
-      },
-      {
-        key: 'body',
-        label: 'Mətn',
-        type: 'l10n-textarea',
-        rows: 12,
-        wide: true,
-        hint: 'Abzasları boş sətirlə ayırın.',
-      },
-      PUBLISHED,
-    ],
-  },
+    },
+    partners: {
+      ...res('partners'),
+      sortable: true,
+      publishable: true,
+      imageKey: 'logo',
+      titleOf: (i) => str(i.name),
+      subtitleOf: (i) => [sector(str(i.sector)), str(i.city), str(i.website)].filter(Boolean).join(' · '),
+      fields: [
+        { key: 'name', label: f('name'), type: 'text', required: true },
+        { key: 'website', label: f('website'), type: 'url', nullable: true },
+        { key: 'logo', label: f('logo'), type: 'image', nullable: true, wide: true },
+        {
+          key: 'sector',
+          label: f('sector'),
+          type: 'select',
+          nullable: true,
+          options: [{ value: '', label: t('admin.content.opt.notSelected') }, ...SECTORS.map((value) => ({ value, label: sector(value) }))],
+        },
+        { key: 'city', label: f('city'), type: 'text', nullable: true, hint: hint('city') },
+        { key: 'description', label: f('description'), type: 'l10n-textarea', nullable: true, rows: 3, wide: true },
+        { key: 'featured', label: f('featured'), type: 'boolean', initial: false },
+        PUBLISHED,
+      ],
+    },
+    'visa-samples': {
+      ...res('visaSamples'),
+      sortable: true,
+      publishable: true,
+      imageKey: 'image',
+      titleOf: (i) => l10nAz(i.profession),
+      subtitleOf: (i) => `${str(i.visaLabel)} · ${l10nAz(i.dateLabel)}`,
+      fields: [
+        { key: 'image', label: f('image'), type: 'image', required: true, wide: true },
+        { key: 'profession', label: f('profession'), type: 'l10n', required: true, wide: true },
+        { key: 'visaLabel', label: f('visaLabel'), type: 'text' },
+        { key: 'dateLabel', label: f('dateLabel'), type: 'l10n', hint: hint('dateLabel') },
+        PUBLISHED,
+      ],
+    },
+    testimonials: {
+      ...res('testimonials'),
+      sortable: true,
+      publishable: true,
+      titleOf: (i) => l10nAz(i.author),
+      subtitleOf: (i) => l10nAz(i.quote),
+      fields: [
+        { key: 'quote', label: f('quote'), type: 'l10n-textarea', required: true, rows: 4, wide: true },
+        { key: 'author', label: f('author'), type: 'l10n', required: true },
+        { key: 'role', label: f('role'), type: 'l10n' },
+        {
+          key: 'kind',
+          label: f('kind'),
+          type: 'select',
+          options: [
+            { value: 'candidate', label: t('admin.content.opt.candidate') },
+            { value: 'company', label: t('admin.content.opt.company') },
+          ],
+        },
+        PUBLISHED,
+      ],
+    },
+    stats: {
+      ...res('stats'),
+      sortable: true,
+      publishable: false,
+      iconKey: 'icon',
+      titleOf: (i) => `${str(i.prefix)}${typeof i.value === 'number' ? i.value : ''}${str(i.suffix)}`,
+      subtitleOf: (i) => l10nAz(i.label),
+      fields: [
+        { key: 'label', label: f('label'), type: 'l10n', required: true, wide: true },
+        { key: 'value', label: f('value'), type: 'number', required: true },
+        { key: 'icon', label: f('icon'), type: 'icon' },
+        { key: 'prefix', label: f('prefix'), type: 'text', hint: hint('prefix') },
+        { key: 'suffix', label: f('suffix'), type: 'text', hint: hint('suffix') },
+      ],
+    },
+    faqs: {
+      ...res('faqs'),
+      sortable: true,
+      publishable: true,
+      titleOf: (i) => l10nAz(i.question),
+      subtitleOf: (i) => audience(str(i.audience)),
+      fields: [
+        { key: 'question', label: f('question'), type: 'l10n', required: true, wide: true },
+        { key: 'answer', label: f('answer'), type: 'l10n-textarea', required: true, rows: 5, wide: true },
+        { key: 'audience', label: f('audience'), type: 'select', options: audienceOptions(['all', 'candidate', 'company']) },
+        PUBLISHED,
+      ],
+    },
+    posts: {
+      ...res('posts'),
+      sortable: false,
+      publishable: true,
+      imageKey: 'cover',
+      titleOf: (i) => l10nAz(i.title),
+      subtitleOf: (i) => `${fmtDate(str(i.publishedAt))} · /${str(i.slug)}`,
+      fields: [
+        { key: 'title', label: f('title'), type: 'l10n', required: true, wide: true },
+        { key: 'slug', label: f('slug'), type: 'slug', required: true, hint: hint('slugPost') },
+        { key: 'publishedAt', label: f('publishedAt'), type: 'date', required: true },
+        { key: 'cover', label: f('cover'), type: 'image', wide: true },
+        { key: 'excerpt', label: f('excerpt'), type: 'l10n-textarea', rows: 3, wide: true },
+        { key: 'body', label: f('text'), type: 'l10n-textarea', rows: 12, wide: true, hint: hint('paragraphs') },
+        PUBLISHED,
+      ],
+    },
+  };
 };
 
 // ─── Value conversion ───────────────────────────────────────────────────
@@ -604,20 +337,24 @@ const toValues = (def: ResourceDef, item: Item | null): Values => {
 };
 
 const SLUG_RE = /^[a-z0-9-]+$/;
+/** Absolute http(s) URL or a site-relative path; empty is allowed (nullable fields). */
+const URL_RE = /^(https?:\/\/\S+|\/\S*)$|^$/;
 
-const validate = (def: ResourceDef, v: Values): string | null => {
+const validate = (def: ResourceDef, v: Values, t: Tr): string | null => {
+  const msg = (key: string, opts: Record<string, unknown>) => t(`admin.content.check.${key}`, opts);
   for (const f of def.fields) {
     const val = v[f.key];
-    if (f.type === 'slug' && (typeof val !== 'string' || !SLUG_RE.test(val))) return `“${f.label}” düzgün deyil.`;
-    if (f.type === 'number' && f.nullable && typeof val === 'number' && val < 0) return `“${f.label}” mənfi ola bilməz.`;
+    if (f.type === 'slug' && (typeof val !== 'string' || !SLUG_RE.test(val))) return msg('invalid', { label: f.label });
+    if (f.type === 'url' && typeof val === 'string' && !URL_RE.test(val.trim())) return msg('invalidUrl', { label: f.label });
+    if (f.type === 'number' && f.nullable && typeof val === 'number' && val < 0) return msg('negative', { label: f.label });
     if (f.type === 'faq' && isFaqList(val)) {
       const bad = val.findIndex((x) => !x.q.az.trim() || !x.a.az.trim());
-      if (bad >= 0) return `“${f.label}”: ${bad + 1}-ci sualın AZ mətni (sual və cavab) doldurulmalıdır.`;
+      if (bad >= 0) return msg('faqAz', { label: f.label, n: bad + 1 });
     }
     if (!f.required) continue;
-    if ((f.type === 'l10n' || f.type === 'l10n-textarea') && !(isL10n(val) && val.az.trim())) return `“${f.label}” (AZ) doldurulmalıdır.`;
-    if ((f.type === 'text' || f.type === 'image' || f.type === 'date') && !(typeof val === 'string' && val.trim())) return `“${f.label}” doldurulmalıdır.`;
-    if (f.type === 'number' && !(typeof val === 'number' && Number.isInteger(val))) return `“${f.label}” tam ədəd olmalıdır.`;
+    if ((f.type === 'l10n' || f.type === 'l10n-textarea') && !(isL10n(val) && val.az.trim())) return msg('requiredAz', { label: f.label });
+    if ((f.type === 'text' || f.type === 'image' || f.type === 'date') && !(typeof val === 'string' && val.trim())) return msg('required', { label: f.label });
+    if (f.type === 'number' && !(typeof val === 'number' && Number.isInteger(val))) return msg('integer', { label: f.label });
   }
   return def.check?.(v) ?? null;
 };
@@ -665,6 +402,7 @@ const toPayload = (def: ResourceDef, v: Values) => {
 // ─── Form fields ────────────────────────────────────────────────────────
 
 const IconField = ({ id, label, value, onChange }: { id: string; label: string; value: string; onChange: (v: string) => void }) => {
+  const { t } = useTranslation();
   const valid = hasIcon(value);
   return (
     <div>
@@ -689,7 +427,7 @@ const IconField = ({ id, label, value, onChange }: { id: string; label: string; 
         </datalist>
       </div>
       <p className={clsx('mt-1 text-[11px]', valid ? 'text-muted' : 'text-amber-700')}>
-        {valid ? `Siyahıdan ikon seçin (${ICON_NAMES.length} ikon mövcuddur).` : 'Belə ikon siyahıda yoxdur — saytda standart dairə göstəriləcək. Siyahıdan seçin.'}
+        {valid ? t('admin.content.icon.pick', { count: ICON_NAMES.length }) : t('admin.content.icon.unknown')}
       </p>
     </div>
   );
@@ -697,6 +435,7 @@ const IconField = ({ id, label, value, onChange }: { id: string; label: string; 
 
 /** Ordered list of question/answer pairs, each in four languages. */
 const FaqListInput = ({ label, value, onChange }: { label: string; value: FaqItem[]; onChange: (v: FaqItem[]) => void }) => {
+  const { t } = useTranslation();
   // Stable keys so the language tabs of an item stay with it when items are reordered.
   const ids = useRef<number[]>(value.map((_, i) => i));
   const next = useRef(value.length);
@@ -708,12 +447,12 @@ const FaqListInput = ({ label, value, onChange }: { label: string; value: FaqIte
     onChange(value.filter((_, j) => j !== i));
   };
   const move = (i: number, dir: -1 | 1) => {
-    const t = i + dir;
-    if (t < 0 || t >= value.length) return;
+    const target = i + dir;
+    if (target < 0 || target >= value.length) return;
     const v = [...value];
-    [v[i], v[t]] = [v[t], v[i]];
+    [v[i], v[target]] = [v[target], v[i]];
     const k = [...ids.current];
-    [k[i], k[t]] = [k[t], k[i]];
+    [k[i], k[target]] = [k[target], k[i]];
     ids.current = k;
     onChange(v);
   };
@@ -726,22 +465,22 @@ const FaqListInput = ({ label, value, onChange }: { label: string; value: FaqIte
     <div>
       <div className="mb-2 flex items-center justify-between gap-2">
         <span className="text-xs font-semibold text-ink/80">{label}</span>
-        <span className="text-[11px] text-muted">{value.length} sual</span>
+        <span className="text-[11px] text-muted">{t('admin.content.faq.count', { count: value.length })}</span>
       </div>
       {value.length === 0 ? (
-        <p className="rounded-lg border border-dashed border-line px-4 py-5 text-center text-xs text-muted">Hələ sual yoxdur. Saytda bu bölmə göstərilməyəcək.</p>
+        <p className="rounded-lg border border-dashed border-line px-4 py-5 text-center text-xs text-muted">{t('admin.content.faq.empty')}</p>
       ) : (
         <ol className="space-y-3">
           {value.map((item, i) => (
             <li key={ids.current[i]} className="rounded-xl border border-line bg-surface/60 p-3 sm:p-4">
               <div className="mb-2 flex items-center gap-1">
-                <span className="mr-auto text-xs font-bold text-navy-900">Sual {i + 1}</span>
+                <span className="mr-auto text-xs font-bold text-navy-900">{t('admin.content.faq.questionN', { n: i + 1 })}</span>
                 <button
                   type="button"
                   className="grid size-8 place-items-center rounded-md text-muted hover:bg-white hover:text-navy-900 disabled:opacity-25"
                   onClick={() => move(i, -1)}
                   disabled={i === 0}
-                  aria-label={`${i + 1}-ci sualı yuxarı qaldır`}
+                  aria-label={t('admin.content.faq.moveUp', { n: i + 1 })}
                 >
                   <ArrowUp className="size-3.5" />
                 </button>
@@ -750,7 +489,7 @@ const FaqListInput = ({ label, value, onChange }: { label: string; value: FaqIte
                   className="grid size-8 place-items-center rounded-md text-muted hover:bg-white hover:text-navy-900 disabled:opacity-25"
                   onClick={() => move(i, 1)}
                   disabled={i === value.length - 1}
-                  aria-label={`${i + 1}-ci sualı aşağı endir`}
+                  aria-label={t('admin.content.faq.moveDown', { n: i + 1 })}
                 >
                   <ArrowDown className="size-3.5" />
                 </button>
@@ -758,21 +497,21 @@ const FaqListInput = ({ label, value, onChange }: { label: string; value: FaqIte
                   type="button"
                   className="grid size-8 place-items-center rounded-md text-muted hover:bg-red-50 hover:text-danger"
                   onClick={() => remove(i)}
-                  aria-label={`${i + 1}-ci sualı sil`}
+                  aria-label={t('admin.content.faq.remove', { n: i + 1 })}
                 >
                   <X className="size-4" />
                 </button>
               </div>
               <div className="grid gap-3">
-                <L10nInput label="Sual" value={item.q} onChange={(q) => update(i, { q })} required />
-                <L10nInput label="Cavab" value={item.a} onChange={(a) => update(i, { a })} multiline rows={3} required />
+                <L10nInput label={t('admin.content.f.question')} value={item.q} onChange={(q) => update(i, { q })} required />
+                <L10nInput label={t('admin.content.f.answer')} value={item.a} onChange={(a) => update(i, { a })} multiline rows={3} required />
               </div>
             </li>
           ))}
         </ol>
       )}
       <button type="button" className="btn-white btn-sm mt-3 border border-line" onClick={add} disabled={value.length >= 30}>
-        <Plus className="size-3.5" /> Sual əlavə et
+        <Plus className="size-3.5" /> {t('admin.content.faq.addQuestion')}
       </button>
     </div>
   );
@@ -882,7 +621,7 @@ const FieldInput = ({ f, value, onChange }: { f: FieldDef; value: Value; onChang
       );
     default: {
       const s = typeof value === 'string' ? value : '';
-      const bad = f.type === 'slug' && s !== '' && !SLUG_RE.test(s);
+      const bad = (f.type === 'slug' && s !== '' && !SLUG_RE.test(s)) || (f.type === 'url' && !URL_RE.test(s.trim()));
       return (
         <div>
           {labelEl}
@@ -893,6 +632,7 @@ const FieldInput = ({ f, value, onChange }: { f: FieldDef; value: Value; onChang
             value={s}
             required={f.required}
             placeholder={f.type === 'url' ? 'https://' : undefined}
+            maxLength={f.maxLength}
             aria-invalid={bad || undefined}
             onChange={(e) => onChange(f.type === 'slug' ? e.target.value.toLowerCase().replace(/\s+/g, '-') : e.target.value)}
           />
@@ -912,6 +652,9 @@ export default function ContentManager() {
 }
 
 function ResourcePage({ resource }: { resource: string }) {
+  const { t } = useTranslation();
+  const tr = useMemo<Tr>(() => (key, opts) => String(t(key, opts)), [t]);
+  const RESOURCES = useMemo(() => buildResources(tr), [tr]);
   const def = RESOURCES[resource];
   const qc = useQueryClient();
   const key = ['admin-content', resource] as const;
@@ -937,7 +680,7 @@ function ResourcePage({ resource }: { resource: string }) {
   if (!def) {
     return (
       <div className="rounded-xl border border-line bg-white">
-        <EmptyState icon={FileQuestion} title="Belə məzmun bölməsi yoxdur">
+        <EmptyState icon={FileQuestion} title={t('admin.content.unknown')}>
           <div className="mt-2 flex flex-wrap justify-center gap-2">
             {Object.entries(RESOURCES).map(([k, r]) => (
               <Link key={k} to={`/admin/content/${k}`} className="text-brand-600 hover:underline">
@@ -958,7 +701,7 @@ function ResourcePage({ resource }: { resource: string }) {
   };
 
   const save = async () => {
-    const problem = validate(def, values);
+    const problem = validate(def, values, tr);
     if (problem) {
       toast.error(problem);
       return;
@@ -969,15 +712,15 @@ function ResourcePage({ resource }: { resource: string }) {
       if (editing === 'new') {
         if (def.sortable) payload.sortOrder = items.reduce((m, i) => Math.max(m, Number(i.sortOrder ?? 0)), -1) + 1;
         await api.post(`/admin/content/${resource}`, payload);
-        toast.success('Əlavə edildi.');
+        toast.success(t('admin.content.added'));
       } else if (editing) {
         await api.put(`/admin/content/${resource}/${editing.id}`, payload);
-        toast.success('Yadda saxlanıldı.');
+        toast.success(t('admin.content.saved'));
       }
       await invalidate();
       setEditing(null);
     } catch (err) {
-      toastError(err, 'Yadda saxlamaq mümkün olmadı (slug artıq istifadə oluna bilər).');
+      toastError(err, t('admin.content.saveFailed'));
     } finally {
       setSaving(false);
     }
@@ -989,7 +732,7 @@ function ResourcePage({ resource }: { resource: string }) {
     try {
       await api.delete(`/admin/content/${resource}/${deleting.id}`);
       await invalidate();
-      toast.success('Silindi.');
+      toast.success(t('admin.content.deleted'));
       setDeleting(null);
     } catch (err) {
       toastError(err);
@@ -1003,7 +746,7 @@ function ResourcePage({ resource }: { resource: string }) {
     qc.setQueryData<Item[]>(key, (old) => old?.map((i) => (i.id === item.id ? { ...i, published } : i)));
     try {
       await api.put(`/admin/content/${resource}/${item.id}`, { published });
-      toast.success(published ? 'Saytda dərc edildi.' : 'Saytdan gizlədildi.');
+      toast.success(published ? t('admin.content.publishedToast') : t('admin.content.hiddenToast'));
     } catch (err) {
       toastError(err);
     } finally {
@@ -1026,14 +769,14 @@ function ResourcePage({ resource }: { resource: string }) {
     try {
       await Promise.all(changed.map(({ it, i }) => api.put(`/admin/content/${resource}/${it.id}`, { sortOrder: i })));
     } catch (err) {
-      toastError(err, 'Sıralama yadda saxlanılmadı.');
+      toastError(err, t('admin.content.orderFailed'));
     } finally {
       setBusyId(null);
       await invalidate();
     }
   };
 
-  const editingTitle = editing === 'new' ? `Yeni ${def.singular}` : editing ? def.titleOf(editing) || 'Redaktə' : '';
+  const editingTitle = editing === 'new' ? t('admin.content.newItem', { singular: def.singular }) : editing ? def.titleOf(editing) || t('admin.content.editTitle') : '';
 
   return (
     <div>
@@ -1042,7 +785,7 @@ function ResourcePage({ resource }: { resource: string }) {
         subtitle={def.description}
         actions={
           <button type="button" className="btn-primary btn-sm" onClick={() => openEditor('new')}>
-            <Plus className="size-3.5" /> Əlavə et
+            <Plus className="size-3.5" /> {t('admin.common.add')}
           </button>
         }
       />
@@ -1053,9 +796,9 @@ function ResourcePage({ resource }: { resource: string }) {
         <ErrorBlock error={error} onRetry={() => refetch()} />
       ) : items.length === 0 ? (
         <div className="rounded-xl border border-line bg-white">
-          <EmptyState icon={LayoutList} title="Hələ heç nə əlavə edilməyib">
+          <EmptyState icon={LayoutList} title={t('admin.content.empty')}>
             <button type="button" className="btn-primary btn-sm mt-3" onClick={() => openEditor('new')}>
-              <Plus className="size-3.5" /> İlk elementi əlavə et
+              <Plus className="size-3.5" /> {t('admin.content.addFirst')}
             </button>
           </EmptyState>
         </div>
@@ -1083,7 +826,7 @@ function ResourcePage({ resource }: { resource: string }) {
                         className="grid size-8 place-items-center rounded-md text-muted hover:bg-surface hover:text-navy-900 disabled:opacity-25 sm:size-7"
                         onClick={() => move(index, -1)}
                         disabled={index === 0 || !!busyId}
-                        aria-label="Yuxarı"
+                        aria-label={t('admin.common.up')}
                       >
                         <ArrowUp className="size-3.5" />
                       </button>
@@ -1092,7 +835,7 @@ function ResourcePage({ resource }: { resource: string }) {
                         className="grid size-8 place-items-center rounded-md text-muted hover:bg-surface hover:text-navy-900 disabled:opacity-25 sm:size-7"
                         onClick={() => move(index, 1)}
                         disabled={index === items.length - 1 || !!busyId}
-                        aria-label="Aşağı"
+                        aria-label={t('admin.common.down')}
                       >
                         <ArrowDown className="size-3.5" />
                       </button>
@@ -1112,18 +855,20 @@ function ResourcePage({ resource }: { resource: string }) {
                   <button type="button" className="min-w-0 flex-1 py-1 text-left" onClick={() => openEditor(item)}>
                     <p className="flex min-w-0 items-center gap-1.5 text-sm font-semibold text-navy-900">
                       <span className="truncate">{def.titleOf(item) || '—'}</span>
-                      {def.publishable && !published && <span className="badge shrink-0 bg-slate-100 text-[10px] text-slate-600 sm:hidden">Gizli</span>}
+                      {def.publishable && !published && <span className="badge shrink-0 bg-slate-100 text-[10px] text-slate-600 sm:hidden">{t('admin.content.hiddenBadge')}</span>}
                     </p>
                     {def.subtitleOf && <p className="truncate text-xs text-muted">{def.subtitleOf(item)}</p>}
                   </button>
                   {def.publishable && (
                     <span className="hidden shrink-0 items-center gap-2 sm:flex">
-                      <span className={clsx('text-[11px] whitespace-nowrap', published ? 'text-success' : 'text-muted')}>{published ? 'Dərcdə' : 'Gizli'}</span>
+                      <span className={clsx('text-[11px] whitespace-nowrap', published ? 'text-success' : 'text-muted')}>
+                        {published ? t('admin.content.publishedState') : t('admin.content.hiddenBadge')}
+                      </span>
                       <Switch
                         checked={published}
                         disabled={busyId === item.id}
                         onChange={(v) => togglePublished(item, v)}
-                        label={published ? 'Saytdan gizlət' : 'Saytda dərc et'}
+                        label={published ? t('admin.content.hide') : t('admin.content.publish')}
                       />
                     </span>
                   )}
@@ -1133,8 +878,8 @@ function ResourcePage({ resource }: { resource: string }) {
                       type="button"
                       className="grid size-10 place-items-center rounded-lg text-muted hover:bg-brand-50 hover:text-brand-700 lg:size-9"
                       onClick={() => openEditor(item)}
-                      aria-label="Redaktə et"
-                      title="Redaktə et"
+                      aria-label={t('admin.common.edit')}
+                      title={t('admin.common.edit')}
                     >
                       <Pencil className="size-4" />
                     </button>
@@ -1142,8 +887,8 @@ function ResourcePage({ resource }: { resource: string }) {
                       type="button"
                       className="grid size-10 place-items-center rounded-lg text-muted hover:bg-red-50 hover:text-danger lg:size-9"
                       onClick={() => setDeleting(item)}
-                      aria-label="Sil"
-                      title="Sil"
+                      aria-label={t('admin.common.delete')}
+                      title={t('admin.common.delete')}
                     >
                       <Trash2 className="size-4" />
                     </button>
@@ -1162,10 +907,10 @@ function ResourcePage({ resource }: { resource: string }) {
         footer={
           <>
             <button type="button" className="btn-white btn-sm border border-line" onClick={() => setEditing(null)} disabled={saving}>
-              İmtina et
+              {t('admin.common.cancel')}
             </button>
             <button type="submit" form="content-form" className="btn-primary btn-sm" disabled={saving}>
-              {saving && <Spinner className="size-3.5" />} Yadda saxla
+              {saving && <Spinner className="size-3.5" />} {t('admin.common.save')}
             </button>
           </>
         }
@@ -1188,7 +933,7 @@ function ResourcePage({ resource }: { resource: string }) {
               </div>
             </Fragment>
           ))}
-          <p className="text-[11px] text-muted sm:col-span-2">Çoxdilli sahələrdə boş qalan dillər üçün Azərbaycan mətni avtomatik istifadə olunacaq.</p>
+          <p className="text-[11px] text-muted sm:col-span-2">{t('admin.content.fallbackNote')}</p>
         </form>
       </Drawer>
 
@@ -1197,9 +942,9 @@ function ResourcePage({ resource }: { resource: string }) {
         onClose={() => setDeleting(null)}
         onConfirm={remove}
         loading={deleteBusy}
-        title="Silinsin?"
-        message={deleting ? `“${def.titleOf(deleting) || def.singular}” birdəfəlik silinəcək və saytdan götürüləcək.` : undefined}
-        confirmLabel="Sil"
+        title={t('admin.content.deleteTitle')}
+        message={deleting ? t('admin.content.deleteMsg', { name: def.titleOf(deleting) || def.singular }) : undefined}
+        confirmLabel={t('admin.common.delete')}
       />
     </div>
   );

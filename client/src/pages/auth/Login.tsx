@@ -4,8 +4,9 @@ import { useTranslation } from 'react-i18next';
 import { LogIn } from 'lucide-react';
 import { toast } from 'sonner';
 import { api, errorCode } from '@/lib/api';
-import { useAuth } from '@/lib/auth';
-import type { User } from '@/lib/types';
+import { landingAfterLogin, useAuth } from '@/lib/auth';
+import type { SessionInfo, User } from '@/lib/types';
+import { usePageTitle } from '@/lib/usePageTitle';
 import { Spinner } from '@/components/ui/Spinner';
 import { AuthShell } from './AuthShell';
 
@@ -21,16 +22,17 @@ export default function Login() {
   const navigate = useNavigate();
   const location = useLocation();
   const [busy, setBusy] = useState(false);
+  usePageTitle(t('auth.loginTitle'));
 
   const submit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
     setBusy(true);
     try {
-      const { data } = await api.post<{ user: User }>('/auth/login', { email: fd.get('email'), password: fd.get('password') });
+      const { data } = await api.post<{ user: User; session: SessionInfo }>('/auth/login', { email: fd.get('email'), password: fd.get('password') });
       setUser(data.user);
-      const from = (location.state as { from?: string } | null)?.from;
-      navigate(from ?? (data.user.role === 'CLIENT' ? '/account' : '/admin'), { replace: true });
+      const from = (location.state as { from?: unknown } | null)?.from;
+      navigate(landingAfterLogin(data.user.role, from), { replace: true });
     } catch (err) {
       toast.error(authError(t, errorCode(err)));
     } finally {

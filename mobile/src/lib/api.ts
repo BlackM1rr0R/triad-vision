@@ -3,11 +3,20 @@ import * as SecureStore from 'expo-secure-store';
 import { File, Paths, UploadType } from 'expo-file-system';
 import { API_URL } from './config';
 import { ApiError, codeFromStatus } from './errors';
+import type { AuthFailure } from '@/types';
 
 const TOKEN_KEY = 'tv_token';
 
 let token: string | null = null;
-let onUnauthorized: (() => void) | null = null;
+let onUnauthorized: ((reason: AuthFailure) => void) | null = null;
+
+const AUTH_FAILURES: readonly string[] = ['SESSION_EXPIRED', 'SESSION_REVOKED', 'INVALID_TOKEN', 'UNAUTHENTICATED'];
+
+/** Narrows a 401 body `{ error }` to the session failure reasons the server uses. */
+export const authFailureOf = (body: unknown): AuthFailure => {
+  const code = codeFromStatus(401, body);
+  return AUTH_FAILURES.includes(code) ? (code as AuthFailure) : 'UNAUTHENTICATED';
+};
 
 export const tokenStore = {
   async load() {
@@ -29,8 +38,8 @@ export const tokenStore = {
   get: () => token,
 };
 
-/** Registered by the auth provider: any 401 from an authenticated request logs the user out. */
-export const setUnauthorizedHandler = (fn: (() => void) | null) => {
+/** Registered by the auth provider: any 401 from an authenticated request logs the user out (with the server's reason). */
+export const setUnauthorizedHandler = (fn: ((reason: AuthFailure) => void) | null) => {
   onUnauthorized = fn;
 };
 
@@ -52,7 +61,7 @@ api.interceptors.response.use(
   (err) => {
     // Only a request that carried our token can mean "session expired".
     const hadToken = !!err?.config?.headers?.Authorization;
-    if (err?.response?.status === 401 && hadToken && token) onUnauthorized?.();
+    if (err?.response?.status === 401 && hadToken && token) onUnauthorized?.(authFailureOf(err.response.data));
     return Promise.reject(err);
   },
 );
@@ -94,7 +103,7 @@ export const uploadFile = async (opts: {
         ? ({ bytesSent, totalBytes }) => totalBytes > 0 && opts.onProgress!(Math.min(1, bytesSent / totalBytes))
         : undefined,
     });
-    if (res.status === 401 && token) onUnauthorized?.();
+    if (res.status === 401 && token) onUnauthorized?.(authFailureOf(res.body));
     if (res.status >= 400) throw new ApiError(res.status, codeFromStatus(res.status, res.body));
     try {
       return JSON.parse(res.body);

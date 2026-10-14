@@ -16,7 +16,7 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
-import { OfflineBanner, ToastProvider } from '@/components/ui';
+import { OfflineBanner, ToastProvider, useToast } from '@/components/ui';
 import { AuthProvider, useAuth } from '@/lib/auth';
 import { routeForNotification } from '@/lib/links';
 import { dataOf } from '@/lib/push';
@@ -31,6 +31,18 @@ const PushRouter = () => {
   const { status, user } = useAuth();
   const last = Notifications.useLastNotificationResponse();
   const handled = useRef<string | null>(null);
+  const wasAuthed = useRef(false);
+
+  useEffect(() => {
+    if (status === 'guest' && wasAuthed.current && last) {
+      // Logout / session ended in this process: the last response belongs to the previous user.
+      // Mark it handled so whoever logs in next is not routed by it (the hook keeps returning it
+      // until a new tap; the auth provider also clears it natively). A cold-start tap while logged
+      // out is deliberately kept, so "tap push → log in → open the case" still works.
+      handled.current = last.notification.request.identifier;
+    }
+    wasAuthed.current = status === 'authed';
+  }, [status, last]);
 
   useEffect(() => {
     if (status !== 'authed' || !user || !last) return;
@@ -50,6 +62,21 @@ const PushRouter = () => {
     });
     return () => sub.remove();
   }, []);
+  return null;
+};
+
+/** Tells the user once why they were logged out when the server ended the session. */
+const SessionNotice = () => {
+  const { sessionEndReason, clearSessionEndReason } = useAuth();
+  const toast = useToast();
+  const { t } = useTranslation();
+  useEffect(() => {
+    if (!sessionEndReason) return;
+    const key =
+      sessionEndReason === 'SESSION_REVOKED' ? 'm.session.revoked' : sessionEndReason === 'INVALID_TOKEN' ? 'm.session.invalid' : 'm.session.expired';
+    toast(t(key), 'info', 6000);
+    clearSessionEndReason();
+  }, [sessionEndReason, clearSessionEndReason, toast, t]);
   return null;
 };
 
@@ -126,6 +153,7 @@ const Gate = () => {
     <>
       <RootStack />
       <PushRouter />
+      <SessionNotice />
       <OfflineBanner />
     </>
   );

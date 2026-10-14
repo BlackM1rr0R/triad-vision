@@ -26,6 +26,7 @@ const Register = lazy(() => import('./pages/auth/Register'));
 const ForgotPassword = lazy(() => import('./pages/auth/ForgotPassword'));
 const ResetPassword = lazy(() => import('./pages/auth/ResetPassword'));
 const NotFound = lazy(() => import('./pages/NotFound'));
+const AccessibilityPage = lazy(() => import('./pages/Accessibility'));
 
 const AccountLayout = lazy(() => import('./pages/account/AccountLayout'));
 const AccountHome = lazy(() => import('./pages/account/AccountHome'));
@@ -35,10 +36,14 @@ const Profile = lazy(() => import('./pages/account/Profile'));
 
 const AdminLayout = lazy(() => import('./pages/admin/AdminLayout'));
 const AdminDashboard = lazy(() => import('./pages/admin/Dashboard'));
+const AdminOversight = lazy(() => import('./pages/admin/Oversight'));
+const AdminStaffDetail = lazy(() => import('./pages/admin/StaffDetail'));
 const AdminCases = lazy(() => import('./pages/admin/CasesList'));
 const AdminCase = lazy(() => import('./pages/admin/CaseAdmin'));
 const AdminInquiries = lazy(() => import('./pages/admin/Inquiries'));
 const AdminUsers = lazy(() => import('./pages/admin/Users'));
+const AdminDocs = lazy(() => import('./pages/admin/Docs'));
+const AdminDocsAudit = lazy(() => import('./pages/admin/DocsAudit'));
 const AdminContent = lazy(() => import('./pages/admin/ContentManager'));
 const AdminSettings = lazy(() => import('./pages/admin/Settings'));
 
@@ -154,6 +159,7 @@ export default function App() {
             <Route path="news/:slug" element={<NewsDetail />} />
             <Route path="contact" element={<Contact />} />
             <Route path="cooperation" element={<Cooperation />} />
+            <Route path="accessibility" element={<AccessibilityPage />} />
             <Route path="login" element={<Login />} />
             <Route path="register" element={<Register />} />
             <Route path="forgot-password" element={<ForgotPassword />} />
@@ -161,7 +167,7 @@ export default function App() {
             <Route
               path="account"
               element={
-                <RequireAuth>
+                <RequireAuth roles={['CLIENT']}>
                   <AccountLayout />
                 </RequireAuth>
               }
@@ -177,16 +183,34 @@ export default function App() {
           <Route
             path="admin"
             element={
-              <RequireAuth roles={['STAFF', 'ADMIN']}>
+              <RequireAuth roles={['STAFF', 'ADMIN', 'SUPER_ADMIN']}>
                 <AdminLayout />
               </RequireAuth>
             }
           >
             <Route index element={<AdminDashboard />} />
+            <Route
+              path="oversight"
+              element={
+                <RequireAuth roles={['SUPER_ADMIN']}>
+                  <AdminOversight />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="oversight/staff/:id"
+              element={
+                <RequireAuth roles={['SUPER_ADMIN']}>
+                  <AdminStaffDetail />
+                </RequireAuth>
+              }
+            />
             <Route path="cases" element={<AdminCases />} />
             <Route path="cases/:id" element={<AdminCase />} />
             <Route path="inquiries" element={<AdminInquiries />} />
             <Route path="users" element={<AdminUsers />} />
+            <Route path="docs" element={<AdminDocs />} />
+            <Route path="docs/audit" element={<AdminDocsAudit />} />
             <Route path="content/:resource" element={<AdminContent />} />
             <Route path="settings" element={<AdminSettings />} />
           </Route>

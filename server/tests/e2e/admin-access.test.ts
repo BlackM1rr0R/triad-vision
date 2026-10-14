@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { anon, asAdmin, asClient, asStaff } from '../helpers/api';
+import { anon, asAdmin, asClient, asStaff, asSuperAdmin } from '../helpers/api';
 import { prisma } from '../helpers/db';
 import { createClient, createStaff, TEST_PASSWORD } from '../helpers/factories';
 import { PNG_BUFFER } from '../helpers/files';
@@ -141,7 +141,7 @@ describe('/api/admin/users', () => {
 
     const search = await agent.get(`/api/admin/users?search=${encodeURIComponent('həsən')}`);
     expect(search.body.users.map((u: { email: string }) => u.email)).toEqual(['ali@test.local']);
-    expect(search.body.users[0]._count).toEqual({ cases: 1 });
+    expect(search.body.users[0]._count).toEqual({ cases: 1, assignedCases: 0, docFiles: 0, messages: 0 });
     expect((await agent.get('/api/admin/users?search=IVAN@')).body.users).toHaveLength(1);
     expect((await agent.get('/api/admin/users?role=GOD')).status).toBe(400);
   });
@@ -158,8 +158,8 @@ describe('/api/admin/users', () => {
     ]);
   });
 
-  it('admins create staff accounts that can log in', async () => {
-    const { agent } = await asAdmin();
+  it('the super admin creates staff accounts that can log in', async () => {
+    const { agent } = await asSuperAdmin();
     const res = await agent
       .post('/api/admin/users')
       .send({ email: ' New.Staff@Test.local ', password: 'StaffPass123', firstName: 'Nigar', lastName: 'Əliyeva', role: 'STAFF' });
@@ -173,7 +173,7 @@ describe('/api/admin/users', () => {
   });
 
   it('refuses duplicates and invalid input', async () => {
-    const { agent } = await asAdmin();
+    const { agent } = await asSuperAdmin();
     await createClient({ email: 'dupe@test.local' });
     const dup = await agent.post('/api/admin/users').send({ email: 'DUPE@test.local', password: 'StaffPass123', firstName: 'A', lastName: 'B', role: 'STAFF' });
     expect(dup.status).toBe(409);
@@ -191,7 +191,7 @@ describe('/api/admin/users', () => {
   });
 
   it('PATCH changes role, deactivates and resets passwords', async () => {
-    const { agent } = await asAdmin();
+    const { agent } = await asSuperAdmin();
     const target = await asClient({ email: 'target@test.local' });
 
     const promoted = await agent.patch(`/api/admin/users/${target.user.id}`).send({ role: 'STAFF' });
@@ -208,20 +208,20 @@ describe('/api/admin/users', () => {
     expect((await target.agent.get('/api/admin/cases')).status).toBe(401);
   });
 
-  it('an admin cannot demote or deactivate themselves', async () => {
-    const me = await asAdmin();
+  it('the super admin cannot demote or deactivate themselves', async () => {
+    const me = await asSuperAdmin();
     for (const body of [{ role: 'STAFF' }, { isActive: false }]) {
       const res = await me.agent.patch(`/api/admin/users/${me.user.id}`).send(body);
       expect(res.status).toBe(400);
       expect(res.body.error).toBe('CANNOT_CHANGE_SELF');
     }
-    expect((await prisma.user.findUniqueOrThrow({ where: { id: me.user.id } })).role).toBe('ADMIN');
+    expect((await prisma.user.findUniqueOrThrow({ where: { id: me.user.id } })).role).toBe('SUPER_ADMIN');
     // changing their own password is fine
     expect((await me.agent.patch(`/api/admin/users/${me.user.id}`).send({ password: 'MyNewPass123' })).status).toBe(200);
   });
 
   it('PATCH validates input and 404s unknown users', async () => {
-    const { agent } = await asAdmin();
+    const { agent } = await asSuperAdmin();
     const u = await createClient();
     expect((await agent.patch(`/api/admin/users/${u.user.id}`).send({ role: 'ROOT' })).status).toBe(400);
     expect((await agent.patch('/api/admin/users/nope').send({ isActive: true })).status).toBe(404);

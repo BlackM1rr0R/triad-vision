@@ -1,13 +1,17 @@
 import { Suspense, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Outlet, useLocation } from 'react-router-dom';
 import { AnimatePresence, motion, useMotionValueEvent, useScroll } from 'framer-motion';
 import { ArrowUp } from 'lucide-react';
-import { Header } from './Header';
+import { Header, LIGHT_TOP } from './Header';
+import { RouteErrorBoundary } from '../ui/RouteErrorBoundary';
+import { Spinner } from '../ui/Spinner';
 import { Footer } from './Footer';
 import { Preloader, ScrollProgress, SmoothScroll, scrollToTop } from './Effects';
 import { useSiteContent } from '@/lib/content';
 import { SearchPalette } from '../search/SearchPalette';
 import { CookieNotice } from './CookieNotice';
+import { AccessibilityWidget } from '../a11y/AccessibilityWidget';
 
 const WhatsAppIcon = () => (
   <svg viewBox="0 0 24 24" className="size-7" fill="currentColor" aria-hidden>
@@ -16,6 +20,7 @@ const WhatsAppIcon = () => (
 );
 
 const FloatingActions = () => {
+  const { t } = useTranslation();
   const { data } = useSiteContent();
   const [showTop, setShowTop] = useState(false);
   // framer-motion reads scroll once per frame in its read phase; a raw scroll listener reading
@@ -30,7 +35,7 @@ const FloatingActions = () => {
         {showTop && (
           <motion.button
             type="button"
-            aria-label="Top"
+            aria-label={t('a11y.toTop')}
             initial={{ opacity: 0, scale: 0.5 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.5 }}
@@ -41,6 +46,8 @@ const FloatingActions = () => {
           </motion.button>
         )}
       </AnimatePresence>
+      {/* Accessibility panel button sits above WhatsApp; the panel itself is fixed above the whole stack. */}
+      <AccessibilityWidget panelClass="sm:bottom-[10rem] sm:max-h-[calc(100dvh-11rem)]" />
       {wa && (
         <motion.a
           href={`https://wa.me/${wa}`}
@@ -61,26 +68,47 @@ const FloatingActions = () => {
   );
 };
 
+/**
+ * Shown while a page chunk downloads. Dark on routes with a dark hero so the floating white header
+ * stays readable (a plain white fallback made the header text vanish and looked like a broken page).
+ */
+const RouteFallback = ({ pathname }: { pathname: string }) => {
+  const light = LIGHT_TOP.some((p) => pathname.startsWith(p));
+  return (
+    <div className={light ? 'grid min-h-[100svh] place-items-center bg-white text-brand-600' : 'grid min-h-[100svh] place-items-center bg-navy-950 text-white/70'} role="status" aria-live="polite">
+      <Spinner className="size-9 border-[3px]" />
+    </div>
+  );
+};
+
 export const SiteLayout = () => {
   const { pathname } = useLocation();
+  const { t } = useTranslation();
   return (
     <>
+      <a href="#main" className="skip-link">
+        {t('a11y.skip')}
+      </a>
       <Preloader />
       <SmoothScroll />
       <ScrollProgress />
       <Header />
       <AnimatePresence mode="wait">
         <motion.main
-          className="min-h-[100svh]"
+          id="main"
+          tabIndex={-1}
+          className="min-h-[100svh] outline-none"
           key={pathname}
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0, transition: { duration: 0.35, ease: [0.22, 1, 0.36, 1] } }}
           exit={{ opacity: 0, transition: { duration: 0.12 } }}
         >
           {/* Suspense lives inside the layout so header/footer stay put while a page chunk loads. */}
-          <Suspense fallback={<div className="min-h-[100svh]" />}>
-            <Outlet />
-          </Suspense>
+          <RouteErrorBoundary>
+            <Suspense fallback={<RouteFallback pathname={pathname} />}>
+              <Outlet />
+            </Suspense>
+          </RouteErrorBoundary>
         </motion.main>
       </AnimatePresence>
       <Footer />

@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { StyleSheet, View, type DimensionValue, type StyleProp, type ViewStyle } from 'react-native';
 import Animated, { Easing, useAnimatedStyle, useSharedValue, withRepeat, withTiming } from 'react-native-reanimated';
+import { useTranslation } from 'react-i18next';
 import { colors, radius, space } from '@/theme';
 
 export const Skeleton = ({
@@ -32,13 +33,16 @@ export const SkeletonCard = ({ lines = 3 }: { lines?: number }) => (
   </View>
 );
 
-export const SkeletonList = ({ count = 4, lines = 2 }: { count?: number; lines?: number }) => (
-  <View style={{ gap: space.md }} accessibilityLabel="Loading" accessibilityRole="progressbar">
-    {Array.from({ length: count }, (_, i) => (
-      <SkeletonCard key={i} lines={lines} />
-    ))}
-  </View>
-);
+export const SkeletonList = ({ count = 4, lines = 2 }: { count?: number; lines?: number }) => {
+  const { t } = useTranslation();
+  return (
+    <View style={{ gap: space.md }} accessibilityLabel={t('m.common.loading')} accessibilityRole="progressbar">
+      {Array.from({ length: count }, (_, i) => (
+        <SkeletonCard key={i} lines={lines} />
+      ))}
+    </View>
+  );
+};
 
 const styles = StyleSheet.create({
   card: {

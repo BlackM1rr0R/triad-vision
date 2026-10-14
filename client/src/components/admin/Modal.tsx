@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import clsx from 'clsx';
 import { X } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 /** Escape-to-close, body scroll lock and initial focus for overlay panels. */
 export const useOverlay = (open: boolean, onClose: () => void) => {
@@ -53,6 +54,7 @@ export const Modal = ({
 }) => {
   const panelRef = useOverlay(open, onClose);
   const titleId = useId();
+  const { t } = useTranslation();
 
   return createPortal(
     <AnimatePresence>
@@ -94,7 +96,7 @@ export const Modal = ({
                 type="button"
                 onClick={onClose}
                 className="grid size-10 shrink-0 place-items-center rounded-lg text-muted transition hover:bg-surface hover:text-navy-900"
-                aria-label="Bağla"
+                aria-label={t('admin.common.close')}
               >
                 <X className="size-4" />
               </button>

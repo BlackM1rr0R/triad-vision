@@ -2,11 +2,26 @@ import type { ConfigContext, ExpoConfig } from 'expo/config';
 
 /**
  * EAS project id — needed for real remote push notifications (Expo push tokens) and EAS builds.
- * After running `eas init` once, paste the printed id below (committed, so EAS cloud builds see it)
- * or provide it as the EAS_PROJECT_ID environment variable. Without it the app runs normally and
- * simply skips push registration.
+ *
+ * Resolution order: the EAS_PROJECT_ID environment variable (every eas.json profile sets it, and
+ * `.env` can set it for local dev builds), then the committed constant below. Replace the placeholder
+ * with the id printed by `npx eas-cli@latest init` (see README § "How push works"). The placeholder
+ * is NOT a valid id: with it (or nothing) the app runs normally and simply skips push registration.
  */
-const EAS_PROJECT_ID = process.env.EAS_PROJECT_ID || '';
+const EAS_PROJECT_ID_PLACEHOLDER = '00000000-0000-0000-0000-000000000000';
+const COMMITTED_EAS_PROJECT_ID = EAS_PROJECT_ID_PLACEHOLDER; // ← paste the real id here after `eas init`
+
+const pickProjectId = (...candidates: (string | undefined)[]) =>
+  candidates.map((c) => c?.trim()).find((c) => c && c !== EAS_PROJECT_ID_PLACEHOLDER) || '';
+
+const EAS_PROJECT_ID = pickProjectId(process.env.EAS_PROJECT_ID, COMMITTED_EAS_PROJECT_ID);
+
+/**
+ * Plain-HTTP API access is only allowed in development builds (APP_VARIANT=development: set by the
+ * eas.json `development` profile and by `npx expo run:*` / Expo Go via .env). Preview and production
+ * builds talk HTTPS only, so App Transport Security / Android cleartext stay at their secure defaults.
+ */
+const IS_DEV_VARIANT = process.env.APP_VARIANT === 'development';
 
 export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
@@ -27,8 +42,8 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       NSPhotoLibraryUsageDescription: 'Triad Vision needs access to your photos so you can upload document images for your visa application.',
       NSCalendarsUsageDescription: 'Triad Vision adds your embassy appointment to your calendar.',
       NSCalendarsWriteOnlyAccessUsageDescription: 'Triad Vision adds your embassy appointment to your calendar.',
-      // The API runs over plain HTTP on the local network during development.
-      NSAppTransportSecurity: { NSAllowsArbitraryLoads: true },
+      // The API runs over plain HTTP on the local network during development only.
+      ...(IS_DEV_VARIANT ? { NSAppTransportSecurity: { NSAllowsArbitraryLoads: true } } : {}),
       ITSAppUsesNonExemptEncryption: false,
     },
   },
@@ -39,8 +54,8 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       foregroundImage: './assets/images/adaptive-icon.png',
       monochromeImage: './assets/images/adaptive-icon-monochrome.png',
     },
-    // Allow http:// to the dev API on the LAN (production builds should use https).
-    usesCleartextTraffic: true,
+    // Allow http:// to the dev API on the LAN in development builds only (preview/production are https).
+    ...(IS_DEV_VARIANT ? { usesCleartextTraffic: true } : {}),
     predictiveBackGestureEnabled: false,
     permissions: ['CAMERA', 'READ_CALENDAR', 'WRITE_CALENDAR', 'POST_NOTIFICATIONS'],
   } as ExpoConfig['android'],

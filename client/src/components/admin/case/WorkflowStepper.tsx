@@ -1,10 +1,12 @@
 import clsx from 'clsx';
+import { useTranslation } from 'react-i18next';
 import { Ban, Check, X } from 'lucide-react';
 import { STATUS_STEP, STEP_KEYS } from '@/lib/caseStatus';
 import type { CaseStatus } from '@/lib/types';
-import { STEP_LABEL } from '../labels';
+import { stepLabel } from '../labels';
 
 export const WorkflowStepper = ({ status }: { status: CaseStatus }) => {
+  const { t } = useTranslation();
   const current = STATUS_STEP[status];
   const cancelled = status === 'CANCELLED';
   const finished = status === 'APPROVED' || status === 'REJECTED';
@@ -13,10 +15,10 @@ export const WorkflowStepper = ({ status }: { status: CaseStatus }) => {
     <div>
       {cancelled && (
         <p className="mb-3 inline-flex items-center gap-1.5 rounded-md bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600">
-          <Ban className="size-3.5" aria-hidden /> Müraciət ləğv edilib
+          <Ban className="size-3.5" aria-hidden /> {t('admin.case.stepper.cancelled')}
         </p>
       )}
-      <ol className="flex items-start overflow-x-auto pb-1" aria-label="İş axını">
+      <ol className="flex items-start overflow-x-auto pb-1" aria-label={t('admin.case.stepper.aria')}>
         {STEP_KEYS.map((key, i) => {
           const done = !cancelled && (i < current || (finished && i === current));
           const active = !cancelled && !finished && i === current;
@@ -41,7 +43,7 @@ export const WorkflowStepper = ({ status }: { status: CaseStatus }) => {
                 />
               </div>
               <span className={clsx('mt-1.5 px-1 text-[11px] leading-tight font-medium', active || done ? 'text-navy-900' : 'text-muted')}>
-                {key === 'result' && status === 'REJECTED' ? 'İmtina' : key === 'result' && status === 'APPROVED' ? 'Təsdiq' : STEP_LABEL[key]}
+                {key === 'result' && status === 'REJECTED' ? t('admin.case.stepper.rejected') : key === 'result' && status === 'APPROVED' ? t('admin.case.stepper.approved') : stepLabel(key)}
               </span>
             </li>
           );

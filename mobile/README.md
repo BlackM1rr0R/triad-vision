@@ -84,14 +84,14 @@ Profile → "Push notifications" shows the state on the device (on / off / "need
 
 ### How push works
 
-1. After login the app asks for notification permission, gets an Expo push token (`getExpoPushTokenAsync({ projectId })`) and calls `POST /api/devices { token, platform }`.
+1. After login the app registers silently if notifications are already allowed; otherwise Profile → "Push notifications" asks for permission when the user switches it on. It then gets an Expo push token (`getExpoPushTokenAsync({ projectId })`) and calls `POST /api/devices { token, platform }`.
 2. Every status change / document review / new message on the server creates an in-app notification **and** sends an Expo push to the user's registered devices (`server/src/lib/push.ts`).
 3. Tapping a push opens the right screen: clients → the case (or the chat for `NEW_MESSAGE`), staff → the staff case screen. This also works when the app was closed (cold start).
-4. On logout the app calls `DELETE /api/devices { token }` so the phone stops receiving that user's pushes.
+4. On logout — and whenever the server ends the session (expired after 14 days idle / 30 days, revoked by an admin or from another device) — the app calls `DELETE /api/devices { token }`, forgets the last tapped notification and deletes cached documents, so the phone stops receiving that user's pushes and a one-time message explains why the user was logged out.
 
 Requirements for real push:
 
-- An **EAS project id**: `npx eas-cli@latest login` (free Expo account) → `npx eas-cli@latest init` in `mobile/`, then paste the printed id into `EAS_PROJECT_ID` in `app.config.ts` (or set the `EAS_PROJECT_ID` env var). Without it the app works, just without remote push.
+- An **EAS project id**: `npx eas-cli@latest login` (free Expo account) → `npx eas-cli@latest init` in `mobile/`, then put the printed id in **every** place that builds the app: the `EAS_PROJECT_ID` entry in the `env` of each `eas.json` profile (development, preview **and** production — store builds read it from there), `EAS_PROJECT_ID` in `.env` for local `expo run:*` builds, and/or the `COMMITTED_EAS_PROJECT_ID` constant in `app.config.ts`. All of them ship with the all-zero placeholder `00000000-0000-0000-0000-000000000000`, which `app.config.ts` ignores — the app then works, just without remote push (Profile → Push notifications shows "needs the installed app").
 - **Android**: a Firebase project + FCM V1 service-account key uploaded with `npx eas-cli@latest credentials` (free).
 - **iOS**: an APNs key, which requires the paid **Apple Developer Program** ($99/year). EAS can create it for you during `eas build`.
 - A **development build** (or preview/production build) installed on the phone — see below.
@@ -127,7 +127,7 @@ Accounts needed:
 - **Google Play** release: Google Play Console developer account (one-time $25) + FCM for push.
 - **Any iOS build on a real iPhone** (ad-hoc, TestFlight, App Store): **Apple Developer Program** ($99/year). Without it you can only use Expo Go on iPhone.
 
-Before a store release: set the production API URL in `eas.json`, remove `NSAllowsArbitraryLoads` / `usesCleartextTraffic` from `app.config.ts` once the API is HTTPS-only, and bump `version`.
+Before a store release: set the production API URL in `eas.json`, replace the `EAS_PROJECT_ID` placeholder in every profile, and bump `version`. Plain-HTTP API access (`NSAllowsArbitraryLoads` / `usesCleartextTraffic`) is only emitted when `APP_VARIANT=development` (the `development` profile and `.env`), so preview/production builds are HTTPS-only automatically.
 
 ---
 

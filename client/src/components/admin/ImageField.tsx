@@ -1,5 +1,6 @@
 import { useId, useRef, useState } from 'react';
 import { ImageOff, Upload, X } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { api } from '@/lib/api';
 import { Spinner } from '@/components/ui/Spinner';
 import { toastError } from './labels';
@@ -16,6 +17,7 @@ export const ImageField = ({
   onChange: (url: string) => void;
   required?: boolean;
 }) => {
+  const { t } = useTranslation();
   const id = useId();
   const fileRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
@@ -30,7 +32,7 @@ export const ImageField = ({
       setBroken(false);
       onChange(data.url);
     } catch (err) {
-      toastError(err, 'Şəkil yüklənmədi.');
+      toastError(err, t('admin.image.uploadFailed'));
     } finally {
       setUploading(false);
       if (fileRef.current) fileRef.current.value = '';
@@ -57,7 +59,7 @@ export const ImageField = ({
               id={id}
               className="input pr-9"
               value={value}
-              placeholder="https://… və ya /uploads/…"
+              placeholder={t('admin.image.placeholder')}
               required={required}
               onChange={(e) => {
                 setBroken(false);
@@ -69,7 +71,7 @@ export const ImageField = ({
                 type="button"
                 className="absolute top-1/2 right-2 -translate-y-1/2 rounded p-1 text-muted hover:text-danger"
                 onClick={() => onChange('')}
-                aria-label="Şəkli təmizlə"
+                aria-label={t('admin.image.clear')}
               >
                 <X className="size-3.5" />
               </button>
@@ -88,7 +90,7 @@ export const ImageField = ({
           />
           <button type="button" className="btn-white btn-sm border border-line" onClick={() => fileRef.current?.click()} disabled={uploading}>
             {uploading ? <Spinner className="size-3.5" /> : <Upload className="size-3.5" />}
-            Şəkil yüklə
+            {t('admin.image.upload')}
           </button>
         </div>
       </div>

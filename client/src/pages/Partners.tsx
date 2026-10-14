@@ -19,11 +19,13 @@ import { useSiteContent } from '@/lib/content';
 import type { Partner } from '@/lib/types';
 import { registerCopy } from '@/i18n';
 import { pagesCompany } from '@/i18n/pagesCompany';
+import { usePageTitle } from '@/lib/usePageTitle';
 
 registerCopy(pagesCompany);
 
 export default function Partners() {
   const { t } = useTranslation();
+  usePageTitle(t('partnersPage.hero.title'));
   const { data } = useSiteContent();
   const partners = useMemo(() => data?.partners ?? [], [data]);
   const [open, setOpen] = useState<Partner | null>(null);

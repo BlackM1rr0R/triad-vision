@@ -1,14 +1,16 @@
 import { useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { FolderUp, Upload } from 'lucide-react';
 import type { CaseDetail } from '@/lib/types';
 import { Spinner } from '@/components/ui/Spinner';
-import { STAGE_LABEL, toastError } from '../labels';
+import { stageLabel, toastError } from '../labels';
 import { Panel } from '../ui';
 import { DocIcon, DocLinks, DocMeta, uploadCaseDocument, useCaseRefresh } from './shared';
 
 /** Files staff attach for the client: the visa scan or any other document. */
 export const ClientFiles = ({ c }: { c: CaseDetail }) => {
+  const { t } = useTranslation();
   const refresh = useCaseRefresh(c.id);
   const ref = useRef<HTMLInputElement>(null);
   const [stage, setStage] = useState<'VISA' | 'OTHER'>(c.status === 'APPROVED' ? 'VISA' : 'OTHER');
@@ -19,9 +21,9 @@ export const ClientFiles = ({ c }: { c: CaseDetail }) => {
     try {
       await uploadCaseDocument(c.id, file, stage);
       await refresh();
-      toast.success('Fayl yükləndi və müştəri üçün əlçatandır.');
+      toast.success(t('admin.case.files.uploaded'));
     } catch (err) {
-      toastError(err, 'Fayl yüklənmədi.');
+      toastError(err, t('admin.case.files.uploadFailed'));
     } finally {
       setBusy(false);
       if (ref.current) ref.current.value = '';
@@ -29,14 +31,14 @@ export const ClientFiles = ({ c }: { c: CaseDetail }) => {
   };
 
   return (
-    <Panel title="Müştəri üçün fayllar" icon={FolderUp}>
+    <Panel title={t('admin.case.files.title')} icon={FolderUp}>
       <div className="mb-4 flex flex-wrap items-center gap-2">
         <label htmlFor="cf-stage" className="sr-only">
-          Fayl növü
+          {t('admin.case.files.fileType')}
         </label>
         <select id="cf-stage" className="input w-auto min-w-0 flex-1 py-2 sm:flex-none" value={stage} onChange={(e) => setStage(e.target.value as 'VISA' | 'OTHER')}>
-          <option value="VISA">Viza (skan)</option>
-          <option value="OTHER">Digər sənəd</option>
+          <option value="VISA">{t('admin.case.files.visa')}</option>
+          <option value="OTHER">{t('admin.case.files.other')}</option>
         </select>
         <input
           ref={ref}
@@ -51,11 +53,11 @@ export const ClientFiles = ({ c }: { c: CaseDetail }) => {
           }}
         />
         <button type="button" className="btn-primary btn-sm" onClick={() => ref.current?.click()} disabled={busy}>
-          {busy ? <Spinner className="size-3.5" /> : <Upload className="size-3.5" />} Fayl yüklə
+          {busy ? <Spinner className="size-3.5" /> : <Upload className="size-3.5" />} {t('admin.common.uploadFile')}
         </button>
       </div>
       {c.otherDocuments.length === 0 ? (
-        <p className="text-sm text-muted">Hələ fayl yüklənməyib. Yüklənən fayllar müştərinin kabinetində görünəcək.</p>
+        <p className="text-sm text-muted">{t('admin.case.files.empty')}</p>
       ) : (
         <ul className="space-y-2">
           {c.otherDocuments.map((d) => (
@@ -68,7 +70,7 @@ export const ClientFiles = ({ c }: { c: CaseDetail }) => {
                 </div>
               </div>
               <span className={d.stage === 'VISA' ? 'badge whitespace-nowrap bg-emerald-100 text-emerald-800' : 'badge whitespace-nowrap bg-slate-100 text-slate-600'}>
-                {STAGE_LABEL[d.stage]}
+                {stageLabel(d.stage)}
               </span>
               <DocLinks doc={d} />
             </li>

@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { CalendarClock, Mail, MessageCircle, Pencil, Phone, ShieldCheck, ShieldX, X } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useSiteContent } from '@/lib/content';
+import { useL10n } from '@/lib/l10n';
 import type { CaseDetail } from '@/lib/types';
 import { Spinner } from '@/components/ui/Spinner';
 import { StatusBadge } from '../StatusBadge';
@@ -14,6 +16,8 @@ import { useCaseRefresh } from './shared';
 const patchCase = (id: string, body: Record<string, string | null>) => api.patch(`/admin/cases/${id}`, body);
 
 export const CaseHeader = ({ c }: { c: CaseDetail }) => {
+  const { t } = useTranslation();
+  const { tr } = useL10n();
   const refresh = useCaseRefresh(c.id);
   const { data: staffData } = useQuery({
     queryKey: ['admin-staff'],
@@ -35,7 +39,7 @@ export const CaseHeader = ({ c }: { c: CaseDetail }) => {
     try {
       await patchCase(c.id, { assignedStaffId: assignedStaffId || null });
       await refresh();
-      toast.success(assignedStaffId ? 'Məsul əməkdaş təyin edildi.' : 'Məsul əməkdaş götürüldü.');
+      toast.success(assignedStaffId ? t('admin.case.header.assigned') : t('admin.case.header.unassigned'));
     } catch (err) {
       toastError(err);
     } finally {
@@ -49,7 +53,7 @@ export const CaseHeader = ({ c }: { c: CaseDetail }) => {
       await patchCase(c.id, { profession: profession.trim(), visaCategoryId: visaId || null });
       await refresh();
       setEditing(false);
-      toast.success('Müraciət məlumatları yeniləndi.');
+      toast.success(t('admin.case.header.updated'));
     } catch (err) {
       toastError(err);
     } finally {
@@ -83,16 +87,18 @@ export const CaseHeader = ({ c }: { c: CaseDetail }) => {
                   rel="noreferrer"
                   className="inline-flex min-h-8 items-center gap-1.5 rounded-md border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-800 transition hover:bg-emerald-100"
                 >
-                  <MessageCircle className="size-3.5" /> WhatsApp
+                  <MessageCircle className="size-3.5" /> {t('admin.common.whatsapp')}
                 </a>
               </>
             )}
-            <span className="inline-flex min-h-8 items-center rounded-md bg-surface px-2.5 py-1 text-xs whitespace-nowrap text-muted uppercase">Dil: {client.locale}</span>
+            <span className="inline-flex min-h-8 items-center rounded-md bg-surface px-2.5 py-1 text-xs whitespace-nowrap text-muted uppercase">
+              {t('admin.case.header.language', { value: client.locale })}
+            </span>
           </div>
         </div>
         <div className="w-full sm:w-64">
           <label htmlFor="assign" className="label">
-            Məsul əməkdaş
+            {t('admin.case.header.staff')}
           </label>
           <div className="relative">
             <select
@@ -102,7 +108,7 @@ export const CaseHeader = ({ c }: { c: CaseDetail }) => {
               disabled={assigning}
               onChange={(e) => void assign(e.target.value)}
             >
-              <option value="">— Təyin edilməyib —</option>
+              <option value="">{t('admin.case.header.notAssigned')}</option>
               {c.assignedStaff && !staffData?.some((s) => s.id === c.assignedStaff?.id) && (
                 <option value={c.assignedStaff.id}>{fullName(c.assignedStaff)}</option>
               )}
@@ -128,27 +134,27 @@ export const CaseHeader = ({ c }: { c: CaseDetail }) => {
           >
             <div>
               <label htmlFor="ed-prof" className="label">
-                Peşə
+                {t('admin.case.header.profession')}
               </label>
               <input id="ed-prof" className="input" value={profession} minLength={2} maxLength={120} required onChange={(e) => setProfession(e.target.value)} />
             </div>
             <div>
               <label htmlFor="ed-visa" className="label">
-                Viza kateqoriyası
+                {t('admin.case.header.visaCategory')}
               </label>
               <select id="ed-visa" className="input" value={visaId} onChange={(e) => setVisaId(e.target.value)}>
-                <option value="">— Seçilməyib —</option>
-                {currentMissing && c.visaCategory && <option value={c.visaCategory.id}>{c.visaCategory.title.az}</option>}
+                <option value="">{t('admin.case.header.notSelected')}</option>
+                {currentMissing && c.visaCategory && <option value={c.visaCategory.id}>{tr(c.visaCategory.title)}</option>}
                 {visaOptions.map((v) => (
                   <option key={v.id} value={v.id}>
-                    {v.title.az} ({v.visaLabel})
+                    {tr(v.title)} ({v.visaLabel})
                   </option>
                 ))}
               </select>
             </div>
             <div className="flex gap-2">
               <button type="submit" className="btn-primary btn-sm" disabled={saving || profession.trim().length < 2}>
-                {saving && <Spinner className="size-3.5" />} Yadda saxla
+                {saving && <Spinner className="size-3.5" />} {t('admin.common.save')}
               </button>
               <button
                 type="button"
@@ -158,7 +164,7 @@ export const CaseHeader = ({ c }: { c: CaseDetail }) => {
                   setProfession(c.profession);
                   setVisaId(c.visaCategory?.id ?? '');
                 }}
-                aria-label="Ləğv et"
+                aria-label={t('admin.case.header.cancelAria')}
               >
                 <X className="size-3.5" />
               </button>
@@ -167,20 +173,20 @@ export const CaseHeader = ({ c }: { c: CaseDetail }) => {
         ) : (
           <dl className="flex flex-wrap items-center gap-x-6 gap-y-3 text-sm">
             <div>
-              <dt className="text-[11px] text-muted">Peşə</dt>
+              <dt className="text-[11px] text-muted">{t('admin.case.header.profession')}</dt>
               <dd className="font-medium text-ink">{c.profession}</dd>
             </div>
             <div>
-              <dt className="text-[11px] text-muted">Viza</dt>
-              <dd className="font-medium text-ink">{c.visaCategory ? `${c.visaCategory.title.az} · ${c.visaCategory.visaLabel}` : '—'}</dd>
+              <dt className="text-[11px] text-muted">{t('admin.case.header.visa')}</dt>
+              <dd className="font-medium text-ink">{c.visaCategory ? `${tr(c.visaCategory.title)} · ${c.visaCategory.visaLabel}` : '—'}</dd>
             </div>
             <div>
-              <dt className="text-[11px] text-muted">Yaradılıb</dt>
+              <dt className="text-[11px] text-muted">{t('admin.case.header.createdAt')}</dt>
               <dd className="text-ink/80">{fmtDate(c.createdAt)}</dd>
             </div>
             {c.appointmentAt && (
               <div>
-                <dt className="text-[11px] text-muted">Səfirlik görüşü</dt>
+                <dt className="text-[11px] text-muted">{t('admin.case.header.appointment')}</dt>
                 <dd className="flex items-start gap-1 font-medium text-violet-800">
                   <CalendarClock className="mt-0.5 size-3.5 shrink-0" /> {fmtDateTime(c.appointmentAt)} · {c.appointmentPlace}
                 </dd>
@@ -188,7 +194,7 @@ export const CaseHeader = ({ c }: { c: CaseDetail }) => {
             )}
             {c.status === 'APPROVED' && (
               <div>
-                <dt className="text-[11px] text-muted">Viza etibarlıdır</dt>
+                <dt className="text-[11px] text-muted">{t('admin.case.header.visaValid')}</dt>
                 <dd className="inline-flex items-center gap-1 font-medium text-emerald-800">
                   <ShieldCheck className="size-3.5" /> {fmtDate(c.visaValidFrom)} – {fmtDate(c.visaValidTo)}
                 </dd>
@@ -196,7 +202,7 @@ export const CaseHeader = ({ c }: { c: CaseDetail }) => {
             )}
             {(c.status === 'REJECTED' || c.status === 'CANCELLED') && (c.decisionReason || c.cancelReason) && (
               <div className="min-w-0">
-                <dt className="text-[11px] text-muted">{c.status === 'REJECTED' ? 'İmtina səbəbi' : 'Ləğv səbəbi'}</dt>
+                <dt className="text-[11px] text-muted">{c.status === 'REJECTED' ? t('admin.case.header.rejectReason') : t('admin.case.header.cancelReason')}</dt>
                 <dd className="inline-flex items-center gap-1 font-medium text-red-700">
                   <ShieldX className="size-3.5 shrink-0" /> {c.status === 'REJECTED' ? c.decisionReason : c.cancelReason}
                 </dd>
@@ -211,7 +217,7 @@ export const CaseHeader = ({ c }: { c: CaseDetail }) => {
                 setEditing(true);
               }}
             >
-              <Pencil className="size-3.5" /> Redaktə et
+              <Pencil className="size-3.5" /> {t('admin.common.edit')}
             </button>
           </dl>
         )}

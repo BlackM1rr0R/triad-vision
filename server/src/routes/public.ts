@@ -1,8 +1,7 @@
 import { Router, type Response } from 'express';
-import rateLimit from 'express-rate-limit';
 import { z } from 'zod';
 import { prisma } from '../db.js';
-import { notFound, parse } from '../lib/http.js';
+import { limiter, notFound, parse } from '../lib/http.js';
 import { notifyStaff } from '../lib/notifications.js';
 import { cached } from '../lib/cache.js';
 
@@ -10,6 +9,12 @@ export const publicRouter = Router();
 
 /** Lets browsers/CDNs reuse public content briefly; admin edits clear the server cache immediately. */
 const publicCache = (res: Response) => res.setHeader('Cache-Control', 'public, max-age=60, stale-while-revalidate=600');
+
+// Detail pages are public too; let browsers reuse them briefly (the global no-store is for private data).
+publicRouter.use((_req, res, next) => {
+  res.setHeader('Cache-Control', 'public, max-age=30');
+  next();
+});
 
 publicRouter.get('/content', async (_req, res) => {
   publicCache(res);
@@ -81,7 +86,7 @@ publicRouter.get('/posts/:slug', async (req, res) => {
   res.json({ post });
 });
 
-const inquiryLimiter = rateLimit({ windowMs: 60 * 60 * 1000, limit: 10, standardHeaders: true, legacyHeaders: false });
+const inquiryLimiter = limiter({ windowMs: 60 * 60 * 1000, limit: 10 });
 
 publicRouter.post('/inquiries', inquiryLimiter, async (req, res) => {
   const body = parse(
@@ -94,13 +99,18 @@ publicRouter.post('/inquiries', inquiryLimiter, async (req, res) => {
       sector: z.string().trim().max(120).optional(),
       workersNeeded: z.coerce.number().int().min(1).max(10000).optional(),
       message: z.string().trim().min(5).max(5000),
-      locale: z.string().max(5).default('az'),
+      locale: z.enum(['az', 'de', 'en', 'ru']).catch('az'),
       // honeypot: real users never fill this hidden field
-      website: z.string().max(0).optional(),
+      website: z.string().max(200).optional(),
     }),
     req.body,
   );
-  const { website: _hp, ...data } = body;
+  const { website: honeypot, ...data } = body;
+  if (honeypot) {
+    // A bot filled the hidden field. Answer exactly like a success so it learns nothing.
+    res.status(201).json({ ok: true, id: 'ok' });
+    return;
+  }
   const inquiry = await prisma.inquiry.create({ data });
 
   const lines = [

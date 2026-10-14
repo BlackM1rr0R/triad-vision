@@ -1,11 +1,11 @@
 import type { ComponentType, ReactNode } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { CloudOff, Inbox, type LucideProps } from '@/components/icons';
 import { useTranslation } from 'react-i18next';
 import { errorCode } from '@/lib/errors';
 import { useErrorMessage } from '@/lib/queries';
-import { colors, space } from '@/theme';
+import { colors, fonts, radius, space } from '@/theme';
 import { Button } from './Button';
 import { Text } from './Text';
 
@@ -56,7 +56,41 @@ export const ErrorState = ({ error, onRetry }: { error: unknown; onRetry?: () =>
   );
 };
 
+/**
+ * Small non-blocking hint for a failed background refetch while stale data is still on screen
+ * (TanStack keeps `data` on error). Render it instead of replacing the loaded screen with ErrorState.
+ */
+export const StaleHint = ({ error, onRetry }: { error: unknown; onRetry?: () => void }) => {
+  const { t } = useTranslation();
+  if (!error) return null;
+  return (
+    <Pressable
+      onPress={onRetry}
+      disabled={!onRetry}
+      accessibilityRole={onRetry ? 'button' : undefined}
+      accessibilityLiveRegion="polite"
+      style={({ pressed }) => [styles.stale, pressed && { opacity: 0.7 }]}
+    >
+      <CloudOff size={14} color={colors.warning} strokeWidth={2} />
+      <Text style={styles.staleText} numberOfLines={2}>
+        {t('m.common.staleHint')}
+        {onRetry ? ` · ${t('m.common.retry')}` : ''}
+      </Text>
+    </Pressable>
+  );
+};
+
 const styles = StyleSheet.create({
+  stale: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: radius.md,
+    backgroundColor: colors.warningSoft,
+  },
+  staleText: { flexShrink: 1, color: colors.warning, fontFamily: fonts.medium, fontSize: 12.5 },
   wrap: { alignItems: 'center', justifyContent: 'center', gap: space.sm, paddingVertical: space.xxxl, paddingHorizontal: space.xl },
   iconWrap: {
     width: 64,

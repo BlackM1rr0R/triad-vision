@@ -23,11 +23,12 @@ export const BottomSheet = ({
   children: ReactNode;
 }) => {
   const insets = useSafeAreaInsets();
+  const { t } = useTranslation();
   return (
     <Modal visible={visible} transparent animationType="none" onRequestClose={onClose} statusBarTranslucent navigationBarTranslucent>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <Animated.View entering={FadeIn.duration(180)} style={StyleSheet.absoluteFill}>
-          <Pressable style={styles.backdrop} onPress={onClose} accessibilityLabel="Close" />
+          <Pressable style={styles.backdrop} onPress={onClose} accessibilityRole="button" accessibilityLabel={t('m.common.close')} />
         </Animated.View>
         <View style={{ flex: 1 }} pointerEvents="box-none" />
         <Animated.View entering={SlideInDown.springify().damping(20).stiffness(180)} style={[styles.sheet, { paddingBottom: insets.bottom + space.lg }]}>

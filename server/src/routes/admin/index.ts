@@ -1,19 +1,24 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { prisma } from '../../db.js';
-import { requireRole } from '../../middleware/auth.js';
+import { requireMinRole } from '../../middleware/auth.js';
 import { parse } from '../../lib/http.js';
 import { clearCache } from '../../lib/cache.js';
 import { adminCasesRouter } from './cases.js';
 import { adminContentRouter, adminSettingsRouter, adminUploadRouter } from './content.js';
 import { adminUsersRouter } from './users.js';
+import { oversightRouter } from './oversight.js';
+import { FINAL_STATUSES } from '../../lib/caseFlow.js';
 
 export const adminRouter = Router();
-adminRouter.use(requireRole('STAFF', 'ADMIN'));
+adminRouter.use(requireMinRole('STAFF'));
 
-adminRouter.get('/dashboard', async (_req, res) => {
-  const monthAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-  const [byStatus, newInquiries, clients, recentEvents, waiting] = await Promise.all([
+adminRouter.get('/dashboard', async (req, res) => {
+  const now = Date.now();
+  const DAY = 24 * 60 * 60 * 1000;
+  const monthAgo = new Date(now - 30 * DAY);
+  const weekAgo = new Date(now - 7 * DAY);
+  const [byStatus, newInquiries, clients, recentEvents, waiting, docsPending, casesNew7d, appointments, waitingOverdue, decided30d, inquiriesByStatus, myOpen, unansweredClientMessages, decidedAll] = await Promise.all([
     prisma.case.groupBy({ by: ['status'], _count: { _all: true } }),
     prisma.inquiry.count({ where: { status: 'NEW' } }),
     prisma.user.count({ where: { role: 'CLIENT', createdAt: { gte: monthAgo } } }),
@@ -32,15 +37,46 @@ adminRouter.get('/dashboard', async (_req, res) => {
       take: 10,
       include: { client: { select: { firstName: true, lastName: true } } },
     }),
+    prisma.document.count({ where: { status: 'PENDING', stage: { in: ['INITIAL', 'EMBASSY'] } } }),
+    prisma.case.count({ where: { createdAt: { gte: weekAgo } } }),
+    // embassy appointments in the next 14 days
+    prisma.case.findMany({
+      where: { status: 'APPOINTMENT_SCHEDULED', appointmentAt: { gte: new Date(now), lte: new Date(now + 14 * DAY) } },
+      orderBy: { appointmentAt: 'asc' },
+      take: 8,
+      select: { id: true, number: true, appointmentAt: true, appointmentPlace: true, client: { select: { firstName: true, lastName: true } } },
+    }),
+    prisma.case.count({ where: { status: { in: ['DOCUMENTS_REVIEW', 'CONTRACT_SIGNED', 'EMBASSY_REVIEW'] }, updatedAt: { lt: new Date(now - 3 * DAY) } } }),
+    prisma.case.groupBy({ by: ['status'], where: { status: { in: ['APPROVED', 'REJECTED'] }, decisionAt: { gte: monthAgo } }, _count: { _all: true } }),
+    prisma.inquiry.groupBy({ by: ['status'], _count: { _all: true } }),
+    prisma.case.count({ where: { assignedStaffId: req.user!.id, status: { notIn: FINAL_STATUSES } } }),
+    // open cases whose latest message came from the client (someone should answer)
+    prisma.$queryRaw<{ n: bigint | number }[]>`
+      SELECT COUNT(*) AS n FROM \`Case\` c
+      JOIN CaseMessage m ON m.id = (SELECT id FROM CaseMessage WHERE caseId = c.id ORDER BY createdAt DESC, id DESC LIMIT 1)
+      WHERE c.status NOT IN ('APPROVED','REJECTED','CANCELLED') AND m.authorId = c.clientId`,
+    prisma.case.findMany({ where: { status: { in: ['APPROVED', 'REJECTED'] }, decisionAt: { not: null } }, select: { createdAt: true, decisionAt: true } }),
   ]);
+  const decisionDays = decidedAll.map((c) => (c.decisionAt!.getTime() - c.createdAt.getTime()) / DAY);
   res.json({
     counts: Object.fromEntries(byStatus.map((b) => [b.status, b._count._all])),
     newInquiries,
     newClients30d: clients,
     recentEvents,
     waiting,
+    docsPending,
+    casesNew7d,
+    appointments,
+    waitingOverdue3d: waitingOverdue,
+    decided30d: Object.fromEntries(decided30d.map((b) => [b.status, b._count._all])),
+    inquiriesByStatus: Object.fromEntries(inquiriesByStatus.map((b) => [b.status, b._count._all])),
+    myOpenCases: myOpen,
+    unansweredClientMessages: Number(unansweredClientMessages[0]?.n ?? 0),
+    avgDaysToDecision: decisionDays.length ? Math.round((decisionDays.reduce((a, b) => a + b, 0) / decisionDays.length) * 10) / 10 : null,
   });
 });
+
+adminRouter.use('/oversight', oversightRouter);
 
 // Any successful CMS write must be visible on the public site right away.
 // The cache is cleared before the response is sent, so the admin's next public read is already fresh.
@@ -57,12 +93,29 @@ adminRouter.use(['/content', '/settings'], (req, res, next) => {
 
 adminRouter.use('/cases', adminCasesRouter);
 adminRouter.use('/users', adminUsersRouter);
-adminRouter.use('/upload', requireRole('ADMIN'), adminUploadRouter);
-adminRouter.use('/settings', requireRole('ADMIN'), adminSettingsRouter);
-adminRouter.use('/content', requireRole('ADMIN'), adminContentRouter);
+adminRouter.use('/upload', requireMinRole('ADMIN'), adminUploadRouter);
+adminRouter.use('/settings', requireMinRole('ADMIN'), adminSettingsRouter);
+adminRouter.use('/content', requireMinRole('ADMIN'), adminContentRouter);
 
 adminRouter.get('/inquiries', async (_req, res) => {
-  res.json({ items: await prisma.inquiry.findMany({ orderBy: { createdAt: 'desc' }, take: 300 }) });
+  const DAY = 24 * 60 * 60 * 1000;
+  const [items, byStatus, byKind, new7d, openOldest] = await Promise.all([
+    prisma.inquiry.findMany({ orderBy: { createdAt: 'desc' }, take: 300 }),
+    prisma.inquiry.groupBy({ by: ['status'], _count: { _all: true } }),
+    prisma.inquiry.groupBy({ by: ['kind'], _count: { _all: true } }),
+    prisma.inquiry.count({ where: { createdAt: { gte: new Date(Date.now() - 7 * DAY) } } }),
+    prisma.inquiry.findFirst({ where: { status: 'NEW' }, orderBy: { createdAt: 'asc' }, select: { createdAt: true } }),
+  ]);
+  res.json({
+    items,
+    summary: {
+      byStatus: Object.fromEntries(byStatus.map((b) => [b.status, b._count._all])),
+      byKind: Object.fromEntries(byKind.map((b) => [b.kind, b._count._all])),
+      new7d,
+      oldestOpenDays: openOldest ? Math.floor((Date.now() - openOldest.createdAt.getTime()) / DAY) : null,
+      workersRequested: items.reduce((a, i) => a + (i.workersNeeded ?? 0), 0),
+    },
+  });
 });
 
 adminRouter.patch('/inquiries/:id', async (req, res) => {

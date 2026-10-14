@@ -1,15 +1,16 @@
 import { useId, useState } from 'react';
 import clsx from 'clsx';
+import { useTranslation } from 'react-i18next';
 import type { L10n, L10nList } from '@/lib/types';
 
 export const LANGS = ['az', 'de', 'en', 'ru'] as const;
 export type Lang = (typeof LANGS)[number];
 
-const LANG_META: Record<Lang, { short: string; name: string; tone: string }> = {
-  az: { short: 'AZ', name: 'Azərbaycan', tone: 'bg-az-blue/15 text-[#0089ab]' },
-  de: { short: 'DE', name: 'Alman', tone: 'bg-de-gold/25 text-[#8a6d00]' },
-  en: { short: 'EN', name: 'İngilis', tone: 'bg-brand-100 text-brand-700' },
-  ru: { short: 'RU', name: 'Rus', tone: 'bg-red-100 text-red-700' },
+const LANG_META: Record<Lang, { short: string; tone: string }> = {
+  az: { short: 'AZ', tone: 'bg-az-blue/15 text-[#0089ab]' },
+  de: { short: 'DE', tone: 'bg-de-gold/25 text-[#8a6d00]' },
+  en: { short: 'EN', tone: 'bg-brand-100 text-brand-700' },
+  ru: { short: 'RU', tone: 'bg-red-100 text-red-700' },
 };
 
 export const emptyL10n = (): L10n => ({ az: '', de: '', en: '', ru: '' });
@@ -46,29 +47,32 @@ const Tabs = ({
   onChange: (l: Lang) => void;
   filled: Record<Lang, boolean>;
   id: string;
-}) => (
-  <div role="tablist" className="flex gap-1 rounded-lg bg-surface p-0.5">
-    {LANGS.map((l) => (
-      <button
-        key={l}
-        type="button"
-        role="tab"
-        id={`${id}-tab-${l}`}
-        aria-selected={active === l}
-        aria-controls={`${id}-panel`}
-        title={LANG_META[l].name}
-        onClick={() => onChange(l)}
-        className={clsx(
-          'relative min-h-8 rounded-md px-2.5 py-1 text-[11px] font-bold tracking-wide transition',
-          active === l ? 'bg-white text-navy-900 shadow-sm' : 'text-muted hover:text-navy-900',
-        )}
-      >
-        {LANG_META[l].short}
-        {!filled[l] && <span className="absolute top-0.5 right-0.5 size-1.5 rounded-full bg-warning" aria-label="boşdur" />}
-      </button>
-    ))}
-  </div>
-);
+}) => {
+  const { t } = useTranslation();
+  return (
+    <div role="tablist" className="flex gap-1 rounded-lg bg-surface p-0.5">
+      {LANGS.map((l) => (
+        <button
+          key={l}
+          type="button"
+          role="tab"
+          id={`${id}-tab-${l}`}
+          aria-selected={active === l}
+          aria-controls={`${id}-panel`}
+          title={t(`admin.l10n.lang.${l}`)}
+          onClick={() => onChange(l)}
+          className={clsx(
+            'relative min-h-8 rounded-md px-2.5 py-1 text-[11px] font-bold tracking-wide transition',
+            active === l ? 'bg-white text-navy-900 shadow-sm' : 'text-muted hover:text-navy-900',
+          )}
+        >
+          {LANG_META[l].short}
+          {!filled[l] && <span className="absolute top-0.5 right-0.5 size-1.5 rounded-full bg-warning" aria-label={t('admin.l10n.empty')} />}
+        </button>
+      ))}
+    </div>
+  );
+};
 
 /** Text (or textarea) in four languages, switched with tabs. */
 export const L10nInput = ({
@@ -88,6 +92,7 @@ export const L10nInput = ({
   required?: boolean;
   hint?: string;
 }) => {
+  const { t } = useTranslation();
   const id = useId();
   const [lang, setLang] = useState<Lang>('az');
   const filled = { az: !!value.az.trim(), de: !!value.de.trim(), en: !!value.en.trim(), ru: !!value.ru.trim() };
@@ -97,7 +102,7 @@ export const L10nInput = ({
     className: 'input',
     value: value[lang],
     required: required && lang === 'az',
-    placeholder: lang === 'az' ? '' : value.az ? `Boş qalsa, AZ mətni istifadə olunacaq` : '',
+    placeholder: lang === 'az' ? '' : value.az ? t('admin.l10n.fallbackPlaceholder') : '',
   };
   return (
     <div>
@@ -130,6 +135,7 @@ export const L10nListInput = ({
   onChange: (v: L10nList) => void;
   rows?: number;
 }) => {
+  const { t } = useTranslation();
   const id = useId();
   const [lang, setLang] = useState<Lang>('az');
   // Keep raw text per language so blank lines don't vanish while typing.
@@ -166,7 +172,7 @@ export const L10nListInput = ({
           });
         }}
       />
-      <p className="mt-1 text-xs text-muted">Hər sətirdə bir element. Boş dillər üçün AZ siyahısı istifadə olunacaq.</p>
+      <p className="mt-1 text-xs text-muted">{t('admin.l10n.listHint')}</p>
     </div>
   );
 };

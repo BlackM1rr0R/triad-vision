@@ -33,7 +33,10 @@
       "back": "Zurück",
       "more": "Mehr",
       "required": "Pflicht",
-      "optional": "Optional"
+      "optional": "Optional",
+      "staleHint": "Aktualisierung fehlgeschlagen — zuletzt geladene Daten werden angezeigt.",
+      "share": "Teilen",
+      "loading": "Wird geladen"
     },
     "welcome": {
       "eyebrow": "Von Aserbaidschan nach Deutschland",
@@ -54,6 +57,11 @@
       "resetInfo": "Die E-Mail enthält einen Link zum Festlegen eines neuen Passworts. Er öffnet sich auf der Triad-Vision-Website; danach melden Sie sich hier mit dem neuen Passwort an.",
       "passwordRule": "Mindestens 8 Zeichen",
       "staffHint": "Mitarbeiter und Admins nutzen dieselbe Anmeldung."
+    },
+    "session": {
+      "expired": "Ihre Sitzung ist abgelaufen. Bitte melden Sie sich erneut an.",
+      "revoked": "Sie wurden auf diesem Gerät von einem Administrator oder von einem anderen Gerät aus abgemeldet.",
+      "invalid": "Ihre Sitzung ist nicht mehr gültig. Bitte melden Sie sich erneut an."
     },
     "home": {
       "hello": "Hallo, {{name}}",
@@ -158,14 +166,24 @@
       "roles": {
         "CLIENT": "Kunde",
         "STAFF": "Mitarbeiter",
-        "ADMIN": "Administrator"
+        "ADMIN": "Administrator",
+        "SUPER_ADMIN": "Super-Admin"
       },
       "push": "Push-Mitteilungen",
       "pushOn": "Aktiv",
       "pushOff": "Aus – in den Telefoneinstellungen erlauben",
       "pushExpoGo": "Erfordert die installierte App (nicht Expo Go)",
       "openSettings": "Einstellungen öffnen",
-      "webOnly": "Inhalte, Benutzer und Anfragen werden im Web-Adminbereich verwaltet."
+      "webOnly": "Inhalte, Benutzer und Anfragen werden im Web-Adminbereich verwaltet.",
+      "pushNotAsked": "Aus — zum Aktivieren tippen",
+      "pushError": "Konnte nicht aktiviert werden — zum Wiederholen tippen",
+      "pushSimulator": "Im Simulator nicht verfügbar",
+      "pushDisable": "Push-Benachrichtigungen auf diesem Telefon ausschalten?",
+      "sessions": "Angemeldete Geräte",
+      "sessionsCount": "{{count}} aktiv · dieses läuft am {{date}} ab",
+      "logoutOthers": "Andere Geräte abmelden",
+      "logoutOthersConfirm": "Alle anderen Telefone und Browser werden abgemeldet. Dieses Telefon bleibt angemeldet.",
+      "logoutOthersDone": "Andere Geräte abgemeldet"
     },
     "apply": {
       "title": "Neuer Antrag",

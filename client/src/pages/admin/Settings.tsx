@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { AtSign, Building, MapPin, Plus, Save, Share2, Trash2 } from 'lucide-react';
 import { api } from '@/lib/api';
@@ -15,6 +16,7 @@ const emptyContact = (): Contact => ({ phone: '', whatsapp: '', email: '', hours
 const emptyOffice = (): Office => ({ city: emptyL10n(), address: '', lat: 40.4093, lng: 49.8671 });
 
 const DEFAULT_SOCIAL = ['instagram', 'facebook', 'linkedin', 'tiktok', 'youtube', 'telegram'];
+/** Brand names, not translated. */
 const SOCIAL_LABEL: Record<string, string> = {
   instagram: 'Instagram',
   facebook: 'Facebook',
@@ -44,6 +46,7 @@ const normalizeContact = (c: SiteSettings['contact']): Contact => ({
 });
 
 const useSaveSetting = () => {
+  const { t } = useTranslation();
   const qc = useQueryClient();
   const [busy, setBusy] = useState(false);
   const save = async (key: 'contact' | 'social', value: unknown) => {
@@ -51,7 +54,7 @@ const useSaveSetting = () => {
     try {
       await api.put(`/admin/settings/${key}`, { value });
       await Promise.all([qc.invalidateQueries({ queryKey: ['admin-settings'] }), qc.invalidateQueries({ queryKey: ['content'] })]);
-      toast.success('Ayarlar yadda saxlanıldı.');
+      toast.success(t('admin.settings.saved'));
     } catch (err) {
       toastError(err);
     } finally {
@@ -62,6 +65,7 @@ const useSaveSetting = () => {
 };
 
 const ContactForm = ({ initial }: { initial: Contact }) => {
+  const { t } = useTranslation();
   const [c, setC] = useState<Contact>(initial);
   const { save, busy } = useSaveSetting();
   useEffect(() => setC(initial), [initial]);
@@ -70,11 +74,11 @@ const ContactForm = ({ initial }: { initial: Contact }) => {
 
   const submit = () => {
     if (c.email && !/\S+@\S+\.\S+/.test(c.email)) {
-      toast.error('E-poçt ünvanı düzgün deyil.');
+      toast.error(t('admin.settings.invalidEmail'));
       return;
     }
     if (c.offices.some((o) => !o.city.az.trim() || !o.address.trim())) {
-      toast.error('Hər ofis üçün şəhər (AZ) və ünvan doldurulmalıdır.');
+      toast.error(t('admin.settings.officeRequired'));
       return;
     }
     void save('contact', {
@@ -94,53 +98,53 @@ const ContactForm = ({ initial }: { initial: Contact }) => {
       }}
     >
       <Panel
-        title="Əlaqə məlumatları"
+        title={t('admin.settings.contactTitle')}
         icon={AtSign}
         actions={
           <button type="submit" className="btn-primary btn-sm" disabled={busy}>
-            {busy ? <Spinner className="size-3.5" /> : <Save className="size-3.5" />} Yadda saxla
+            {busy ? <Spinner className="size-3.5" /> : <Save className="size-3.5" />} {t('admin.common.save')}
           </button>
         }
       >
         <div className="grid gap-4 sm:grid-cols-3">
           <div>
             <label htmlFor="st-phone" className="label">
-              Telefon
+              {t('admin.settings.phone')}
             </label>
             <input id="st-phone" type="tel" className="input" value={c.phone} onChange={(e) => setC({ ...c, phone: e.target.value })} placeholder="+994 …" />
           </div>
           <div>
             <label htmlFor="st-wa" className="label">
-              WhatsApp nömrəsi
+              {t('admin.settings.whatsapp')}
             </label>
             <input id="st-wa" type="tel" className="input" value={c.whatsapp} onChange={(e) => setC({ ...c, whatsapp: e.target.value })} placeholder="+994 …" />
           </div>
           <div>
             <label htmlFor="st-email" className="label">
-              E-poçt
+              {t('admin.settings.email')}
             </label>
             <input id="st-email" type="email" className="input" value={c.email} onChange={(e) => setC({ ...c, email: e.target.value })} />
           </div>
           <div className="sm:col-span-3">
-            <L10nInput label="İş saatları" value={c.hours} onChange={(hours) => setC({ ...c, hours })} hint="Məs.: B.e.–Cümə, 09:00–18:00" />
+            <L10nInput label={t('admin.settings.hours')} value={c.hours} onChange={(hours) => setC({ ...c, hours })} hint={t('admin.settings.hoursHint')} />
           </div>
         </div>
 
         <div className="mt-6">
           <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
             <h3 className="flex items-center gap-2 font-sans text-sm font-semibold text-navy-900">
-              <Building className="size-4 text-brand-600" aria-hidden /> Ofislər
+              <Building className="size-4 text-brand-600" aria-hidden /> {t('admin.settings.offices')}
             </h3>
             <button type="button" className="btn-white btn-sm border border-line" onClick={() => setC({ ...c, offices: [...c.offices, emptyOffice()] })}>
-              <Plus className="size-3.5" /> Ofis əlavə et
+              <Plus className="size-3.5" /> {t('admin.settings.addOffice')}
             </button>
           </div>
-          {c.offices.length === 0 && <p className="text-sm text-muted">Ofis əlavə edilməyib.</p>}
+          {c.offices.length === 0 && <p className="text-sm text-muted">{t('admin.settings.noOffices')}</p>}
           <ul className="space-y-3">
             {c.offices.map((o, i) => (
               <li key={i} className="rounded-xl border border-line bg-surface/40 p-4">
                 <div className="mb-3 flex items-center justify-between">
-                  <span className="text-xs font-semibold text-muted">Ofis #{i + 1}</span>
+                  <span className="text-xs font-semibold text-muted">{t('admin.settings.officeN', { n: i + 1 })}</span>
                   <div className="flex items-center gap-1">
                     {o.lat !== 0 && o.lng !== 0 && (
                       <a
@@ -149,30 +153,30 @@ const ContactForm = ({ initial }: { initial: Contact }) => {
                         rel="noreferrer"
                         className="inline-flex min-h-10 items-center gap-1 rounded-md px-2 py-1 text-xs font-semibold whitespace-nowrap text-brand-600 hover:bg-brand-50 lg:min-h-8"
                       >
-                        <MapPin className="size-3.5" /> Xəritədə yoxla
+                        <MapPin className="size-3.5" /> {t('admin.settings.checkMap')}
                       </a>
                     )}
                     <button
                       type="button"
                       className="grid size-10 place-items-center rounded-lg text-muted hover:bg-red-50 hover:text-danger lg:size-8"
                       onClick={() => setC({ ...c, offices: c.offices.filter((_, j) => j !== i) })}
-                      aria-label={`Ofis #${i + 1} sil`}
+                      aria-label={t('admin.settings.deleteOffice', { n: i + 1 })}
                     >
                       <Trash2 className="size-3.5" />
                     </button>
                   </div>
                 </div>
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <L10nInput label="Şəhər" value={o.city} onChange={(city) => setOffice(i, { city })} required />
+                  <L10nInput label={t('admin.settings.city')} value={o.city} onChange={(city) => setOffice(i, { city })} required />
                   <div>
                     <label htmlFor={`of-addr-${i}`} className="label">
-                      Ünvan
+                      {t('admin.settings.address')}
                     </label>
                     <input id={`of-addr-${i}`} className="input" value={o.address} onChange={(e) => setOffice(i, { address: e.target.value })} />
                   </div>
                   <div>
                     <label htmlFor={`of-lat-${i}`} className="label">
-                      Enlik (lat)
+                      {t('admin.settings.lat')}
                     </label>
                     <input
                       id={`of-lat-${i}`}
@@ -185,7 +189,7 @@ const ContactForm = ({ initial }: { initial: Contact }) => {
                   </div>
                   <div>
                     <label htmlFor={`of-lng-${i}`} className="label">
-                      Uzunluq (lng)
+                      {t('admin.settings.lng')}
                     </label>
                     <input
                       id={`of-lng-${i}`}
@@ -207,6 +211,7 @@ const ContactForm = ({ initial }: { initial: Contact }) => {
 };
 
 const SocialForm = ({ initial }: { initial: Record<string, string> }) => {
+  const { t } = useTranslation();
   const toRows = (v: Record<string, string>) => {
     const keys = [...DEFAULT_SOCIAL, ...Object.keys(v).filter((k) => !DEFAULT_SOCIAL.includes(k))];
     return keys.map((k) => ({ key: k, url: v[k] ?? '' }));
@@ -219,7 +224,7 @@ const SocialForm = ({ initial }: { initial: Record<string, string> }) => {
   const submit = () => {
     const bad = rows.find((r) => r.url.trim() && !/^https?:\/\//i.test(r.url.trim()));
     if (bad) {
-      toast.error(`${SOCIAL_LABEL[bad.key] ?? bad.key}: link https:// ilə başlamalıdır.`);
+      toast.error(t('admin.settings.socialInvalid', { name: SOCIAL_LABEL[bad.key] ?? bad.key }));
       return;
     }
     const value: Record<string, string> = {};
@@ -242,15 +247,15 @@ const SocialForm = ({ initial }: { initial: Record<string, string> }) => {
       }}
     >
       <Panel
-        title="Sosial şəbəkələr"
+        title={t('admin.settings.socialTitle')}
         icon={Share2}
         actions={
           <button type="submit" className="btn-primary btn-sm" disabled={busy}>
-            {busy ? <Spinner className="size-3.5" /> : <Save className="size-3.5" />} Yadda saxla
+            {busy ? <Spinner className="size-3.5" /> : <Save className="size-3.5" />} {t('admin.common.save')}
           </button>
         }
       >
-        <p className="mb-3 text-xs text-muted">Boş saxlanılan şəbəkələr saytda göstərilməyəcək.</p>
+        <p className="mb-3 text-xs text-muted">{t('admin.settings.socialHint')}</p>
         <div className="grid gap-4 sm:grid-cols-2">
           {rows.map((r, i) => (
             <div key={r.key}>
@@ -271,7 +276,7 @@ const SocialForm = ({ initial }: { initial: Record<string, string> }) => {
                     type="button"
                     className="rounded-md px-2 text-muted hover:bg-red-50 hover:text-danger"
                     onClick={() => setRows(rows.filter((_, j) => j !== i))}
-                    aria-label={`${r.key} sil`}
+                    aria-label={t('admin.settings.deleteNetwork', { name: r.key })}
                   >
                     <Trash2 className="size-3.5" />
                   </button>
@@ -282,12 +287,12 @@ const SocialForm = ({ initial }: { initial: Record<string, string> }) => {
         </div>
         <div className="mt-4 flex max-w-sm gap-2">
           <label htmlFor="so-new" className="sr-only">
-            Yeni şəbəkənin adı
+            {t('admin.settings.newNetwork')}
           </label>
           <input
             id="so-new"
             className="input"
-            placeholder="Başqa şəbəkə (məs.: x, vk)"
+            placeholder={t('admin.settings.newNetworkPlaceholder')}
             value={newKey}
             onChange={(e) => setNewKey(e.target.value)}
             onKeyDown={(e) => {
@@ -298,7 +303,7 @@ const SocialForm = ({ initial }: { initial: Record<string, string> }) => {
             }}
           />
           <button type="button" className="btn-white btn-sm shrink-0 border border-line whitespace-nowrap" onClick={addKey} disabled={!newKey.trim()}>
-            <Plus className="size-3.5" /> Əlavə et
+            <Plus className="size-3.5" /> {t('admin.common.add')}
           </button>
         </div>
       </Panel>
@@ -307,6 +312,7 @@ const SocialForm = ({ initial }: { initial: Record<string, string> }) => {
 };
 
 export default function Settings() {
+  const { t } = useTranslation();
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['admin-settings'],
     queryFn: async () => (await api.get<{ settings: SiteSettings }>('/admin/settings')).data.settings,
@@ -324,7 +330,7 @@ export default function Settings() {
 
   return (
     <div className="space-y-6 lg:space-y-8">
-      <PageHead title="Ayarlar" subtitle="Saytda göstərilən əlaqə məlumatları və sosial şəbəkə linkləri." />
+      <PageHead title={t('admin.nav.settings')} subtitle={t('admin.settings.subtitle')} />
       {isLoading ? (
         <LoadingBlock />
       ) : error ? (

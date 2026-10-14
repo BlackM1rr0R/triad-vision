@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { FileSignature, FileUp, Fingerprint, Globe, Monitor, User } from 'lucide-react';
 import type { ReactNode } from 'react';
@@ -20,22 +21,23 @@ export const ContractUpload = ({
   disabled?: boolean;
   variant?: 'primary' | 'ghost';
 }) => {
+  const { t } = useTranslation();
   const ref = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const refresh = useCaseRefresh(c.id);
 
   const onFile = async (file: File) => {
     if (file.type !== 'application/pdf') {
-      toast.error('Müqavilə yalnız PDF formatında ola bilər.');
+      toast.error(t('admin.case.contract.pdfOnly'));
       return;
     }
     setBusy(true);
     try {
       await uploadCaseDocument(c.id, file, 'CONTRACT');
       await refresh();
-      toast.success('Müqavilə yükləndi və müştəriyə imza üçün göndərildi.');
+      toast.success(t('admin.case.contract.uploaded'));
     } catch (err) {
-      toastError(err, 'Müqavilə yüklənmədi.');
+      toastError(err, t('admin.case.contract.uploadFailed'));
     } finally {
       setBusy(false);
       if (ref.current) ref.current.value = '';
@@ -80,25 +82,24 @@ const Row = ({ icon: IconCmp, label, children }: { icon: typeof User; label: str
 );
 
 export const ContractBox = ({ c }: { c: CaseDetail }) => {
+  const { t } = useTranslation();
   const k = c.contract;
   const canReupload = c.status === 'CONTRACT_SENT' || c.status === 'CONTRACT_SIGNED';
 
   return (
     <Panel
-      title="Müqavilə"
+      title={t('admin.case.contract.title')}
       icon={FileSignature}
-      actions={canReupload ? <ContractUpload c={c} label="Yeni versiya yüklə" variant="ghost" /> : undefined}
+      actions={canReupload ? <ContractUpload c={c} label={t('admin.case.contract.newVersion')} variant="ghost" /> : undefined}
     >
       {!k ? (
-        <p className="text-sm text-muted">
-          Müqavilə hələ göndərilməyib. İlkin sənədlər qəbul edildikdən sonra PDF faylı “Növbəti addım” bölməsindən yükləyin.
-        </p>
+        <p className="text-sm text-muted">{t('admin.case.contract.notSent')}</p>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
             <div className="flex items-center gap-2">
               <span className="badge bg-navy-900 text-white">v{k.version}</span>
-              <span className="min-w-0 text-xs text-muted">Göndərilib: {fmtDateTime(k.sentAt)}</span>
+              <span className="min-w-0 text-xs text-muted">{t('admin.case.contract.sentAt', { date: fmtDateTime(k.sentAt) })}</span>
             </div>
             {k.file && (
               <div className="flex items-center gap-2 rounded-lg border border-line bg-surface/60 px-3 py-2">
@@ -110,25 +111,25 @@ export const ContractBox = ({ c }: { c: CaseDetail }) => {
             {k.signedFile ? (
               <div className="flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2">
                 <FileSignature className="size-4 shrink-0 text-success" aria-hidden />
-                <span className="min-w-0 flex-1 truncate text-sm font-medium text-emerald-900">İmzalanmış müqavilə</span>
+                <span className="min-w-0 flex-1 truncate text-sm font-medium text-emerald-900">{t('admin.case.contract.signed')}</span>
                 <DocLinks doc={k.signedFile} />
               </div>
             ) : (
-              <p className="rounded-lg border border-dashed border-line px-3 py-2 text-xs text-muted">Müştərinin imzası gözlənilir.</p>
+              <p className="rounded-lg border border-dashed border-line px-3 py-2 text-xs text-muted">{t('admin.case.contract.awaitingSignature')}</p>
             )}
           </div>
           {k.signedAt && (
             <div className="rounded-lg border border-line px-3 py-1.5">
-              <Row icon={User} label="İmzalayan">
+              <Row icon={User} label={t('admin.case.contract.signer')}>
                 {k.signerName ?? '—'}
               </Row>
-              <Row icon={Fingerprint} label="İmza tarixi">
+              <Row icon={Fingerprint} label={t('admin.case.contract.signedAt')}>
                 {fmtDateTime(k.signedAt)}
               </Row>
-              <Row icon={Globe} label="IP ünvanı">
+              <Row icon={Globe} label={t('admin.case.contract.ip')}>
                 <span className="font-mono text-xs">{k.signerIp ?? '—'}</span>
               </Row>
-              <Row icon={Monitor} label="Brauzer (user-agent)">
+              <Row icon={Monitor} label={t('admin.case.contract.ua')}>
                 <span className="font-mono text-[11px] leading-snug text-ink/80">{k.signerUserAgent ?? '—'}</span>
               </Row>
             </div>

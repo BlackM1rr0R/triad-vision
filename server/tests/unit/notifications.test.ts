@@ -153,7 +153,7 @@ describe('notifyStaff', () => {
     m.prisma.user.findMany.mockResolvedValue([{ id: 'a1' }, { id: 's1' }]);
     await notifyStaff('Subject', 'Body', { caseId: 'c1', link: '/admin/cases/c1' });
     expect(m.prisma.user.findMany.mock.calls[0][0].where).toEqual({
-      OR: [{ role: 'ADMIN' }, { assignedCases: { some: { id: 'c1' } } }],
+      OR: [{ role: { in: ['ADMIN', 'SUPER_ADMIN'] } }, { assignedCases: { some: { id: 'c1' } } }],
       isActive: true,
     });
     expect(m.prisma.notification.createMany).toHaveBeenCalledWith({
@@ -168,7 +168,7 @@ describe('notifyStaff', () => {
   it('without a case only admins are notified, and nothing is stored when there are none', async () => {
     m.prisma.user.findMany.mockResolvedValue([]);
     await notifyStaff('S', 'B');
-    expect(m.prisma.user.findMany.mock.calls[0][0].where).toEqual({ role: 'ADMIN', isActive: true });
+    expect(m.prisma.user.findMany.mock.calls[0][0].where).toEqual({ role: { in: ['ADMIN', 'SUPER_ADMIN'] }, isActive: true });
     expect(m.prisma.notification.createMany).not.toHaveBeenCalled();
     expect(m.sendPush).not.toHaveBeenCalled();
     expect(m.sendMail).toHaveBeenCalledTimes(1);

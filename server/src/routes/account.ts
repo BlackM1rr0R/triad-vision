@@ -1,11 +1,10 @@
 import { Router } from 'express';
-import rateLimit from 'express-rate-limit';
 import { z } from 'zod';
 import type { CaseStatus, DocStage, DocStatus, User } from '@prisma/client';
 import { prisma } from '../db.js';
 import { requireAuth } from '../middleware/auth.js';
 import { FINAL_STATUSES } from '../lib/caseFlow.js';
-import { parse } from '../lib/http.js';
+import { limiter, parse } from '../lib/http.js';
 import { notifyStaff } from '../lib/notifications.js';
 import { publicUser } from './auth.js';
 
@@ -204,7 +203,14 @@ accountRouter.get('/overview', async (req, res) => {
         assignedStaff: { select: { firstName: true, lastName: true } },
         contract: { select: { version: true, sentAt: true, signedAt: true } },
         requirements: { include: { documents: { select: { status: true, reviewNote: true, createdAt: true } } } },
+        _count: { select: { messages: true, events: { where: { visibleToClient: true } } } },
       },
+    });
+    const DAY = 24 * 60 * 60 * 1000;
+    const lastStatusEvent = await prisma.caseEvent.findFirst({
+      where: { caseId: c.id, toStatus: c.status },
+      orderBy: { createdAt: 'desc' },
+      select: { createdAt: true },
     });
     const hasEmbassy = c.requirements.some((r) => r.stage === 'EMBASSY');
     const docs = documentSummary(c.requirements, summaryStage(c.status, hasEmbassy));
@@ -220,6 +226,13 @@ accountRouter.get('/overview', async (req, res) => {
       appointment: c.appointmentAt ? { at: c.appointmentAt, place: c.appointmentPlace } : null,
       manager: c.assignedStaff ? { firstName: c.assignedStaff.firstName, lastName: c.assignedStaff.lastName } : null,
       contract: c.contract,
+      stats: {
+        ageDays: Math.floor((Date.now() - c.createdAt.getTime()) / DAY),
+        daysInStatus: Math.floor((Date.now() - (lastStatusEvent?.createdAt ?? c.createdAt).getTime()) / DAY),
+        messages: c._count.messages,
+        events: c._count.events,
+        uploads: c.requirements.reduce((a, r) => a + r.documents.length, 0),
+      },
     };
   }
 
@@ -303,16 +316,7 @@ accountRouter.get('/export', async (req, res) => {
   res.send(JSON.stringify(data, null, 2));
 });
 
-const deleteLimiter = rateLimit({
-  windowMs: 60 * 60 * 1000,
-  limit: 3,
-  standardHeaders: true,
-  legacyHeaders: false,
-  keyGenerator: (req) => req.user?.id ?? 'anonymous',
-  handler: (_req, res) => {
-    res.status(429).json({ error: 'TOO_MANY_REQUESTS' });
-  },
-});
+const deleteLimiter = limiter({ windowMs: 60 * 60 * 1000, limit: 3, keyGenerator: (req) => req.user?.id ?? 'anonymous' });
 
 /** Asks staff to delete the account. Nothing is deleted automatically. */
 accountRouter.post('/delete-request', deleteLimiter, async (req, res) => {

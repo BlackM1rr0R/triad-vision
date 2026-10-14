@@ -6,9 +6,11 @@ import { PostCard } from '@/components/cards';
 import { PageLoader } from '@/components/ui/Spinner';
 import { api } from '@/lib/api';
 import type { PostSummary } from '@/lib/types';
+import { usePageTitle } from '@/lib/usePageTitle';
 
 export default function News() {
   const { t } = useTranslation();
+  usePageTitle(t('news.pageTitle'));
   const { data, isLoading } = useQuery({
     queryKey: ['posts'],
     queryFn: async () => (await api.get<{ posts: PostSummary[] }>('/public/posts')).data.posts,

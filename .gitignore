@@ -6,3 +6,8 @@ server/uploads/private/*
 server/uploads/public/*
 !server/uploads/**/.gitkeep
 .DS_Store
+server/docs/*
+!server/docs/.gitkeep
+*.tsbuildinfo
+.env.production
+data/

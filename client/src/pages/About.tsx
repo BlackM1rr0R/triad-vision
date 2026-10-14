@@ -18,11 +18,13 @@ import {
 import { useSiteContent } from '@/lib/content';
 import { registerCopy } from '@/i18n';
 import { pagesCompany } from '@/i18n/pagesCompany';
+import { usePageTitle } from '@/lib/usePageTitle';
 
 registerCopy(pagesCompany);
 
 export default function About() {
   const { t } = useTranslation();
+  usePageTitle(t('aboutPage.hero.title'));
   const copy = useCopy();
   const { data } = useSiteContent();
   const offices = data?.settings.contact?.offices ?? [];

@@ -5,7 +5,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { Check, Eraser, FileText, PenLine } from '@/components/icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
-import { Button, Card, ErrorState, Field, SkeletonList, Text, useToast } from '@/components/ui';
+import { Button, Card, ErrorState, Field, SkeletonList, StaleHint, Text, useToast } from '@/components/ui';
 import { useOpenDocument } from '@/features/case/useDocuments';
 import { SignaturePad, type SignaturePadHandle } from '@/features/sign/SignaturePad';
 import { api } from '@/lib/api';
@@ -43,7 +43,8 @@ export default function SignContract() {
       </View>
     );
   }
-  if (error || !c) return <ErrorState error={error} onRetry={() => void refetch()} />;
+  // A failed background refetch must not hide a contract that is already on screen.
+  if (!c) return <ErrorState error={error} onRetry={() => void refetch()} />;
 
   const file = c.contract?.file;
 

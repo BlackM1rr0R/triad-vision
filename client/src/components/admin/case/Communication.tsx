@@ -1,16 +1,18 @@
 import { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
 import { toast } from 'sonner';
 import { History, Lock, MessageCircle, Send, StickyNote } from 'lucide-react';
 import { api } from '@/lib/api';
 import type { CaseDetail } from '@/lib/types';
 import { Spinner } from '@/components/ui/Spinner';
-import { ROLE_LABEL, STATUS_LABEL, eventLabel, fmtDateTime, fullName, toastError } from '../labels';
+import { eventLabel, fmtDateTime, fullName, roleLabel, statusLabel, toastError } from '../labels';
 import { Panel } from '../ui';
 import { useCaseRefresh } from './shared';
 
 export const Messages = ({ c }: { c: CaseDetail }) => {
+  const { t } = useTranslation();
   const refresh = useCaseRefresh(c.id);
   const [body, setBody] = useState('');
   const [busy, setBusy] = useState(false);
@@ -29,16 +31,16 @@ export const Messages = ({ c }: { c: CaseDetail }) => {
       setBody('');
       await refresh();
     } catch (err) {
-      toastError(err, 'Mesaj göndərilmədi.');
+      toastError(err, t('admin.case.comm.sendFailed'));
     } finally {
       setBusy(false);
     }
   };
 
   return (
-    <Panel title="Müştəri ilə yazışma" icon={MessageCircle} bodyClassName="p-0">
+    <Panel id="messages" title={t('admin.case.comm.messagesTitle')} icon={MessageCircle} bodyClassName="p-0" className="scroll-mt-24">
       <div ref={listRef} className="max-h-[420px] space-y-3 overflow-y-auto px-5 py-5 sm:px-6">
-        {c.messages.length === 0 && <p className="py-6 text-center text-sm text-muted">Hələ mesaj yoxdur.</p>}
+        {c.messages.length === 0 && <p className="py-6 text-center text-sm text-muted">{t('admin.case.comm.noMessages')}</p>}
         {c.messages.map((m) => {
           const fromClient = m.author.role === 'CLIENT';
           return (
@@ -71,7 +73,7 @@ export const Messages = ({ c }: { c: CaseDetail }) => {
         }}
       >
         <label htmlFor="msg-body" className="sr-only">
-          Mesaj
+          {t('admin.case.comm.message')}
         </label>
         <textarea
           id="msg-body"
@@ -79,7 +81,7 @@ export const Messages = ({ c }: { c: CaseDetail }) => {
           rows={1}
           value={body}
           maxLength={4000}
-          placeholder="Müştəriyə mesaj yazın… (Ctrl+Enter — göndər)"
+          placeholder={t('admin.case.comm.placeholder')}
           onChange={(e) => setBody(e.target.value)}
           onKeyDown={(e) => {
             if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
@@ -88,7 +90,7 @@ export const Messages = ({ c }: { c: CaseDetail }) => {
             }
           }}
         />
-        <button type="submit" className="btn-primary size-11 shrink-0 p-0" disabled={!body.trim() || busy} aria-label="Göndər">
+        <button type="submit" className="btn-primary size-11 shrink-0 p-0" disabled={!body.trim() || busy} aria-label={t('admin.case.comm.send')}>
           {busy ? <Spinner className="size-4" /> : <Send className="size-4" />}
         </button>
       </form>
@@ -97,6 +99,7 @@ export const Messages = ({ c }: { c: CaseDetail }) => {
 };
 
 export const InternalNotes = ({ c }: { c: CaseDetail }) => {
+  const { t } = useTranslation();
   const refresh = useCaseRefresh(c.id);
   const [note, setNote] = useState('');
   const [busy, setBusy] = useState(false);
@@ -109,7 +112,7 @@ export const InternalNotes = ({ c }: { c: CaseDetail }) => {
       await api.post(`/admin/cases/${c.id}/notes`, { note: note.trim() });
       setNote('');
       await refresh();
-      toast.success('Daxili qeyd əlavə edildi.');
+      toast.success(t('admin.case.comm.noteAdded'));
     } catch (err) {
       toastError(err);
     } finally {
@@ -118,7 +121,7 @@ export const InternalNotes = ({ c }: { c: CaseDetail }) => {
   };
 
   return (
-    <Panel title="Daxili qeydlər" icon={StickyNote} actions={<span className="text-[11px] text-muted">Müştəri görmür</span>}>
+    <Panel title={t('admin.case.comm.notesTitle')} icon={StickyNote} actions={<span className="text-[11px] text-muted">{t('admin.case.comm.clientCantSee')}</span>}>
       <form
         className="space-y-2"
         onSubmit={(e) => {
@@ -127,7 +130,7 @@ export const InternalNotes = ({ c }: { c: CaseDetail }) => {
         }}
       >
         <label htmlFor="int-note" className="sr-only">
-          Daxili qeyd
+          {t('admin.case.comm.internalNote')}
         </label>
         <textarea
           id="int-note"
@@ -136,10 +139,10 @@ export const InternalNotes = ({ c }: { c: CaseDetail }) => {
           maxLength={4000}
           value={note}
           onChange={(e) => setNote(e.target.value)}
-          placeholder="Komanda üçün qeyd: zəng edildi, əlavə məlumat və s."
+          placeholder={t('admin.case.comm.notePlaceholder')}
         />
         <button type="submit" className="btn-white btn-sm border border-line" disabled={!note.trim() || busy}>
-          {busy ? <Spinner className="size-3.5" /> : <StickyNote className="size-3.5" />} Qeyd əlavə et
+          {busy ? <Spinner className="size-3.5" /> : <StickyNote className="size-3.5" />} {t('admin.case.comm.addNote')}
         </button>
       </form>
       {notes.length > 0 && (
@@ -148,11 +151,11 @@ export const InternalNotes = ({ c }: { c: CaseDetail }) => {
             <li key={n.id} className="rounded-lg border border-amber-200/70 bg-amber-50/60 px-3 py-2">
               <p className="text-sm break-words whitespace-pre-wrap text-ink">{n.note}</p>
               <p className="mt-1 text-[11px] text-muted">
-                {n.actor ? fullName(n.actor) : 'Sistem'} · {fmtDateTime(n.createdAt)}
+                {n.actor ? fullName(n.actor) : t('admin.common.system')} · {fmtDateTime(n.createdAt)}
               </p>
             </li>
           ))}
-          {notes.length > 5 && <li className="text-[11px] text-muted">Qalan {notes.length - 5} qeyd tarixçədədir.</li>}
+          {notes.length > 5 && <li className="text-[11px] text-muted">{t('admin.case.comm.moreNotes', { count: notes.length - 5 })}</li>}
         </ul>
       )}
     </Panel>
@@ -160,10 +163,11 @@ export const InternalNotes = ({ c }: { c: CaseDetail }) => {
 };
 
 export const Timeline = ({ c }: { c: CaseDetail }) => {
+  const { t } = useTranslation();
   const [showAll, setShowAll] = useState(false);
   const events = showAll ? c.events : c.events.slice(0, 12);
   return (
-    <Panel title="Tarixçə" icon={History} actions={<span className="text-[11px] text-muted tabular-nums">{c.events.length} hadisə</span>}>
+    <Panel title={t('admin.case.comm.timeline')} icon={History} actions={<span className="text-[11px] text-muted tabular-nums">{t('admin.case.stats.events', { count: c.events.length })}</span>}>
       <ol className="relative space-y-4 before:absolute before:top-1 before:bottom-1 before:left-[5px] before:w-px before:bg-line">
         {events.map((e) => (
           <li key={e.id} className="relative pl-6">
@@ -178,25 +182,25 @@ export const Timeline = ({ c }: { c: CaseDetail }) => {
               <span className="font-semibold text-navy-900">{eventLabel(e.type)}</span>
               {!e.visibleToClient && (
                 <span className="badge bg-slate-100 text-[10px] text-slate-600">
-                  <Lock className="size-2.5" aria-hidden /> Daxili
+                  <Lock className="size-2.5" aria-hidden /> {t('admin.common.internal')}
                 </span>
               )}
             </p>
             {e.fromStatus && e.toStatus && e.fromStatus !== e.toStatus && (
               <p className="mt-0.5 text-xs text-muted">
-                {STATUS_LABEL[e.fromStatus]} → <span className="font-medium text-ink/80">{STATUS_LABEL[e.toStatus]}</span>
+                {statusLabel(e.fromStatus)} → <span className="font-medium text-ink/80">{statusLabel(e.toStatus)}</span>
               </p>
             )}
             {e.note && <p className="mt-1 text-xs break-words whitespace-pre-wrap text-ink/80">{e.note}</p>}
             <p className="mt-1 text-[11px] text-muted">
-              {e.actor ? `${fullName(e.actor)} (${ROLE_LABEL[e.actor.role]})` : 'Sistem'} · {fmtDateTime(e.createdAt)}
+              {e.actor ? `${fullName(e.actor)} (${roleLabel(e.actor.role)})` : t('admin.common.system')} · {fmtDateTime(e.createdAt)}
             </p>
           </li>
         ))}
       </ol>
       {c.events.length > 12 && (
         <button type="button" className="mt-3 inline-flex min-h-10 items-center text-xs font-semibold text-brand-600 hover:underline" onClick={() => setShowAll((v) => !v)}>
-          {showAll ? 'Daha az göstər' : `Hamısını göstər (${c.events.length})`}
+          {showAll ? t('admin.common.showLess') : t('admin.common.showAll', { count: c.events.length })}
         </button>
       )}
     </Panel>

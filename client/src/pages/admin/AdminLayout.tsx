@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Link, NavLink, Outlet, matchPath, useLocation, useNavigate } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
 import type { LucideIcon } from 'lucide-react';
 import {
@@ -13,8 +14,10 @@ import {
   ChevronsLeft,
   ChevronsRight,
   ExternalLink,
+  Eye,
   FileImage,
   FolderKanban,
+  FolderOpen,
   Handshake,
   HelpCircle,
   Inbox,
@@ -30,49 +33,69 @@ import {
   X,
 } from 'lucide-react';
 import { Logo, LogoMark } from '@/components/ui/Logo';
+import { LanguageSwitcher } from '@/components/layout/LanguageSwitcher';
+import { ThemeToggle } from '@/components/a11y/ThemeToggle';
+import { AccessibilityWidget } from '@/components/a11y/AccessibilityWidget';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
-import type { Notification } from '@/lib/types';
-import { ROLE_LABEL, fmtRelative } from '@/components/admin/labels';
+import { hasMinRole, type Notification } from '@/lib/types';
+import { registerCopy } from '@/i18n';
+import { adminCopy } from '@/i18n/admin';
+import { roleLabel, fmtRelative } from '@/components/admin/labels';
+
+registerCopy(adminCopy);
 
 interface NavItem {
   to: string;
+  /** Key under admin.nav. */
   label: string;
   icon: LucideIcon;
   end?: boolean;
   adminOnly?: boolean;
+  /** Shown only to the super admin. */
+  superOnly?: boolean;
 }
 
 const MAIN_NAV: NavItem[] = [
-  { to: '/admin', label: 'Panel', icon: LayoutDashboard, end: true },
-  { to: '/admin/cases', label: 'Müraciətlər', icon: FolderKanban },
-  { to: '/admin/inquiries', label: 'Sorğular', icon: Inbox },
-  { to: '/admin/users', label: 'İstifadəçilər', icon: Users },
+  { to: '/admin', label: 'dashboard', icon: LayoutDashboard, end: true },
+  { to: '/admin/oversight', label: 'oversight', icon: Eye, superOnly: true },
+  { to: '/admin/cases', label: 'cases', icon: FolderKanban },
+  { to: '/admin/docs', label: 'docs', icon: FolderOpen },
+  { to: '/admin/inquiries', label: 'inquiries', icon: Inbox },
+  { to: '/admin/users', label: 'users', icon: Users },
 ];
 
 const CONTENT_NAV: (NavItem & { resource: string })[] = [
-  { resource: 'services', to: '/admin/content/services', label: 'Xidmətlər', icon: Layers },
-  { resource: 'visa-categories', to: '/admin/content/visa-categories', label: 'Viza kateqoriyaları', icon: Briefcase },
-  { resource: 'partners', to: '/admin/content/partners', label: 'Tərəfdaşlar', icon: Handshake },
-  { resource: 'visa-samples', to: '/admin/content/visa-samples', label: 'Viza nümunələri', icon: FileImage },
-  { resource: 'testimonials', to: '/admin/content/testimonials', label: 'Rəylər', icon: MessageSquareQuote },
-  { resource: 'stats', to: '/admin/content/stats', label: 'Statistika', icon: TrendingUp },
-  { resource: 'faqs', to: '/admin/content/faqs', label: 'Tez-tez verilən suallar', icon: HelpCircle },
-  { resource: 'posts', to: '/admin/content/posts', label: 'Xəbərlər', icon: Newspaper },
+  { resource: 'services', to: '/admin/content/services', label: 'services', icon: Layers },
+  { resource: 'visa-categories', to: '/admin/content/visa-categories', label: 'visaCategories', icon: Briefcase },
+  { resource: 'partners', to: '/admin/content/partners', label: 'partners', icon: Handshake },
+  { resource: 'visa-samples', to: '/admin/content/visa-samples', label: 'visaSamples', icon: FileImage },
+  { resource: 'testimonials', to: '/admin/content/testimonials', label: 'testimonials', icon: MessageSquareQuote },
+  { resource: 'stats', to: '/admin/content/stats', label: 'stats', icon: TrendingUp },
+  { resource: 'faqs', to: '/admin/content/faqs', label: 'faqs', icon: HelpCircle },
+  { resource: 'posts', to: '/admin/content/posts', label: 'posts', icon: Newspaper },
 ];
 
-const SETTINGS_NAV: NavItem = { to: '/admin/settings', label: 'Ayarlar', icon: Settings, adminOnly: true };
+const SETTINGS_NAV: NavItem = { to: '/admin/settings', label: 'settings', icon: Settings, adminOnly: true };
 
-const pageTitle = (pathname: string) => {
-  if (matchPath('/admin', pathname)) return 'Panel';
-  if (matchPath('/admin/cases', pathname)) return 'Müraciətlər';
-  if (matchPath('/admin/cases/:id', pathname)) return 'Müraciət';
-  if (matchPath('/admin/inquiries', pathname)) return 'Sorğular';
-  if (matchPath('/admin/users', pathname)) return 'İstifadəçilər';
-  if (matchPath('/admin/settings', pathname)) return 'Ayarlar';
+/** Translation key of the page title for a pathname. */
+const pageTitleKey = (pathname: string) => {
+  if (matchPath('/admin', pathname)) return 'admin.nav.dashboard';
+  if (matchPath('/admin/oversight', pathname)) return 'admin.nav.oversight';
+  if (matchPath('/admin/oversight/staff/:id', pathname)) return 'admin.layout.staff';
+  if (matchPath('/admin/cases', pathname)) return 'admin.nav.cases';
+  if (matchPath('/admin/cases/:id', pathname)) return 'admin.layout.case';
+  if (matchPath('/admin/docs', pathname)) return 'admin.nav.docs';
+  if (matchPath('/admin/docs/audit', pathname)) return 'admin.layout.audit';
+  if (matchPath('/admin/inquiries', pathname)) return 'admin.nav.inquiries';
+  if (matchPath('/admin/users', pathname)) return 'admin.nav.users';
+  if (matchPath('/admin/settings', pathname)) return 'admin.nav.settings';
   const m = matchPath('/admin/content/:resource', pathname);
-  if (m) return CONTENT_NAV.find((c) => c.resource === m.params.resource)?.label ?? 'Məzmun';
-  return 'İdarəetmə paneli';
+  if (m) {
+    const item = CONTENT_NAV.find((c) => c.resource === m.params.resource);
+    return item ? `admin.nav.${item.label}` : 'admin.nav.content';
+  }
+  return 'admin.layout.panel';
 };
 
 const COLLAPSE_KEY = 'tv-admin-sidebar-collapsed';
@@ -86,38 +109,43 @@ const readCollapsed = () => {
 
 // ─── Sidebar ────────────────────────────────────────────────────────────
 
-const SideLink = ({ item, collapsed, onNavigate }: { item: NavItem; collapsed: boolean; onNavigate?: () => void }) => (
-  <NavLink
-    to={item.to}
-    end={item.end}
-    onClick={onNavigate}
-    title={collapsed ? item.label : undefined}
-    className={({ isActive }) =>
-      clsx(
-        'group relative flex min-h-10 items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition',
-        collapsed && 'justify-center px-0',
-        isActive ? 'bg-white/10 text-white' : 'text-white/60 hover:bg-white/5 hover:text-white',
-      )
-    }
-  >
-    {({ isActive }) => (
-      <>
-        {isActive && <span className="absolute top-1.5 bottom-1.5 left-0 w-0.5 rounded-full bg-brand-400" aria-hidden />}
-        <item.icon className={clsx('size-[18px] shrink-0', isActive ? 'text-brand-400' : 'text-white/50 group-hover:text-white/80')} aria-hidden />
-        {!collapsed && <span className="truncate">{item.label}</span>}
-      </>
-    )}
-  </NavLink>
-);
+const SideLink = ({ item, collapsed, onNavigate }: { item: NavItem; collapsed: boolean; onNavigate?: () => void }) => {
+  const { t } = useTranslation();
+  const label = t(`admin.nav.${item.label}`);
+  return (
+    <NavLink
+      to={item.to}
+      end={item.end}
+      onClick={onNavigate}
+      title={collapsed ? label : undefined}
+      className={({ isActive }) =>
+        clsx(
+          'group relative flex min-h-10 items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition',
+          collapsed && 'justify-center px-0',
+          isActive ? 'bg-white/10 text-white' : 'text-white/60 hover:bg-white/5 hover:text-white',
+        )
+      }
+    >
+      {({ isActive }) => (
+        <>
+          {isActive && <span className="absolute top-1.5 bottom-1.5 left-0 w-0.5 rounded-full bg-brand-400" aria-hidden />}
+          <item.icon className={clsx('size-[18px] shrink-0', isActive ? 'text-brand-400' : 'text-white/50 group-hover:text-white/80')} aria-hidden />
+          {!collapsed && <span className="truncate">{label}</span>}
+        </>
+      )}
+    </NavLink>
+  );
+};
 
-const SidebarNav = ({ collapsed, isAdmin, onNavigate }: { collapsed: boolean; isAdmin: boolean; onNavigate?: () => void }) => {
+const SidebarNav = ({ collapsed, isAdmin, isSuper, onNavigate }: { collapsed: boolean; isAdmin: boolean; isSuper: boolean; onNavigate?: () => void }) => {
+  const { t } = useTranslation();
   const location = useLocation();
   const inContent = location.pathname.startsWith('/admin/content');
   const [contentOpen, setContentOpen] = useState(true);
 
   return (
-    <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4" aria-label="Admin naviqasiyası">
-      {MAIN_NAV.map((item) => (
+    <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4" aria-label={t('admin.layout.navAria')}>
+      {MAIN_NAV.filter((item) => !item.superOnly || isSuper).map((item) => (
         <SideLink key={item.to} item={item} collapsed={collapsed} onNavigate={onNavigate} />
       ))}
 
@@ -135,7 +163,7 @@ const SidebarNav = ({ collapsed, isAdmin, onNavigate }: { collapsed: boolean; is
                 inContent ? 'text-brand-400' : 'text-white/40 hover:text-white/70',
               )}
             >
-              Məzmun
+              {t('admin.nav.content')}
               <ChevronDown className={clsx('size-3.5 transition-transform', !contentOpen && '-rotate-90')} aria-hidden />
             </button>
           )}
@@ -166,6 +194,7 @@ const SidebarNav = ({ collapsed, isAdmin, onNavigate }: { collapsed: boolean; is
 // ─── Notifications ──────────────────────────────────────────────────────
 
 const NotificationBell = () => {
+  const { t } = useTranslation();
   const qc = useQueryClient();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
@@ -214,7 +243,7 @@ const NotificationBell = () => {
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
         aria-haspopup="true"
-        aria-label={unread ? `Bildirişlər (${unread} oxunmamış)` : 'Bildirişlər'}
+        aria-label={unread ? t('admin.layout.notificationsUnread', { count: unread }) : t('admin.layout.notifications')}
         className="relative grid size-10 place-items-center rounded-lg text-ink/70 transition hover:bg-surface hover:text-navy-900"
       >
         <Bell className="size-[18px]" />
@@ -234,19 +263,19 @@ const NotificationBell = () => {
             className="fixed inset-x-3 top-16 z-50 overflow-hidden rounded-xl border border-line bg-white shadow-xl sm:absolute sm:inset-x-auto sm:top-11 sm:right-0 sm:w-96"
           >
             <div className="flex items-center justify-between border-b border-line px-4 py-2.5">
-              <p className="text-sm font-semibold text-navy-900">Bildirişlər</p>
+              <p className="text-sm font-semibold text-navy-900">{t('admin.layout.notifications')}</p>
               {unread > 0 && (
                 <button
                   type="button"
                   className="inline-flex min-h-8 items-center gap-1 rounded-md px-1.5 text-xs font-semibold whitespace-nowrap text-brand-600 hover:text-brand-700"
                   onClick={() => markRead.mutate(undefined)}
                 >
-                  <CheckCheck className="size-3.5" /> Hamısını oxunmuş et
+                  <CheckCheck className="size-3.5" /> {t('admin.layout.markAllRead')}
                 </button>
               )}
             </div>
             <ul className="max-h-[min(60vh,32rem)] divide-y divide-line overflow-y-auto">
-              {items.length === 0 && <li className="px-4 py-8 text-center text-sm text-muted">Bildiriş yoxdur</li>}
+              {items.length === 0 && <li className="px-4 py-8 text-center text-sm text-muted">{t('admin.layout.noNotifications')}</li>}
               {items.map((n) => (
                 <li key={n.id}>
                   <button
@@ -280,13 +309,15 @@ const NotificationBell = () => {
 // ─── Layout ─────────────────────────────────────────────────────────────
 
 export default function AdminLayout() {
+  const { t } = useTranslation();
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [collapsed, setCollapsed] = useState(readCollapsed);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const isAdmin = user?.role === 'ADMIN';
-  const title = pageTitle(location.pathname);
+  const isAdmin = hasMinRole(user?.role, 'ADMIN');
+  const isSuper = hasMinRole(user?.role, 'SUPER_ADMIN');
+  const title = t(pageTitleKey(location.pathname));
 
   useEffect(() => {
     try {
@@ -324,6 +355,9 @@ export default function AdminLayout() {
 
   return (
     <div className="flex min-h-screen bg-surface text-ink">
+      <a href="#admin-main" className="skip-link">
+        {t('a11y.skip')}
+      </a>
       {/* Desktop sidebar */}
       <aside
         className={clsx(
@@ -340,7 +374,7 @@ export default function AdminLayout() {
             <Logo light className="origin-left scale-[0.82]" />
           )}
         </div>
-        <SidebarNav collapsed={collapsed} isAdmin={isAdmin} />
+        <SidebarNav collapsed={collapsed} isAdmin={isAdmin} isSuper={isSuper} />
         <button
           type="button"
           onClick={() => setCollapsed((v) => !v)}
@@ -348,10 +382,10 @@ export default function AdminLayout() {
             'm-3 flex min-h-10 items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium text-white/50 transition hover:bg-white/5 hover:text-white',
             collapsed && 'justify-center',
           )}
-          aria-label={collapsed ? 'Menyunu genişləndir' : 'Menyunu yığ'}
+          aria-label={collapsed ? t('admin.layout.expandMenu') : t('admin.layout.collapseMenu')}
         >
           {collapsed ? <ChevronsRight className="size-4" /> : <ChevronsLeft className="size-4" />}
-          {!collapsed && 'Menyunu yığ'}
+          {!collapsed && t('admin.layout.collapseMenu')}
         </button>
       </aside>
 
@@ -375,7 +409,7 @@ export default function AdminLayout() {
               transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
               role="dialog"
               aria-modal="true"
-              aria-label="Menyu"
+              aria-label={t('admin.layout.menu')}
             >
               <div className="flex h-16 items-center justify-between border-b border-white/10 pr-3 pl-4">
                 <Logo light className="origin-left scale-[0.8]" />
@@ -383,18 +417,18 @@ export default function AdminLayout() {
                   type="button"
                   onClick={() => setMobileOpen(false)}
                   className="grid size-10 place-items-center rounded-lg text-white/70 hover:bg-white/10 hover:text-white"
-                  aria-label="Menyunu bağla"
+                  aria-label={t('admin.layout.closeMenu')}
                 >
                   <X className="size-5" />
                 </button>
               </div>
-              <SidebarNav collapsed={false} isAdmin={isAdmin} onNavigate={() => setMobileOpen(false)} />
+              <SidebarNav collapsed={false} isAdmin={isAdmin} isSuper={isSuper} onNavigate={() => setMobileOpen(false)} />
               <div className="border-t border-white/10 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
                 <a
                   href="/"
                   className="flex min-h-10 items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-white/60 transition hover:bg-white/5 hover:text-white"
                 >
-                  <ExternalLink className="size-[18px] shrink-0 text-white/50" aria-hidden /> Sayta keç
+                  <ExternalLink className="size-[18px] shrink-0 text-white/50" aria-hidden /> {t('admin.layout.goToSite')}
                 </a>
               </div>
             </motion.aside>
@@ -408,18 +442,20 @@ export default function AdminLayout() {
             type="button"
             onClick={() => setMobileOpen(true)}
             className="grid size-10 shrink-0 place-items-center rounded-lg text-ink/70 hover:bg-surface lg:hidden"
-            aria-label="Menyunu aç"
+            aria-label={t('admin.layout.openMenu')}
           >
             <Menu className="size-5" />
           </button>
           <p className="min-w-0 flex-1 truncate pl-1 font-display text-base font-bold text-navy-900 sm:text-lg lg:pl-0">{title}</p>
 
+          <LanguageSwitcher variant="pill" />
+          <ThemeToggle />
           <NotificationBell />
           <a
             href="/"
             className="hidden min-h-10 items-center gap-1.5 rounded-lg px-2.5 py-2 text-xs font-semibold whitespace-nowrap text-ink/70 transition hover:bg-surface hover:text-navy-900 sm:inline-flex"
           >
-            <ExternalLink className="size-3.5" /> Sayta keç
+            <ExternalLink className="size-3.5" /> {t('admin.layout.goToSite')}
           </a>
           <div className="mx-1 hidden h-6 w-px bg-line sm:block" aria-hidden />
           <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
@@ -430,27 +466,28 @@ export default function AdminLayout() {
               <span className="block truncate text-sm font-semibold text-navy-900">
                 {user?.firstName} {user?.lastName}
               </span>
-              <span className="block text-[11px] text-muted">{user ? ROLE_LABEL[user.role] : ''}</span>
+              <span className="block text-[11px] text-muted">{user ? roleLabel(user.role) : ''}</span>
             </span>
             <button
               type="button"
               onClick={onLogout}
               className="grid size-10 place-items-center rounded-lg text-ink/60 transition hover:bg-red-50 hover:text-danger"
-              aria-label="Çıxış"
-              title="Çıxış"
+              aria-label={t('admin.layout.logout')}
+              title={t('admin.layout.logout')}
             >
               <LogOut className="size-[18px]" />
             </button>
           </div>
         </header>
 
-        <main className="mx-auto w-full max-w-[1440px] min-w-0 flex-1 p-4 sm:p-6 lg:p-8">
+        <main id="admin-main" tabIndex={-1} className="mx-auto w-full max-w-[1440px] min-w-0 flex-1 p-4 outline-none sm:p-6 lg:p-8">
           <Outlet />
         </main>
         <footer className="flex items-center justify-center gap-1.5 px-4 pb-5 text-[11px] text-muted/70">
-          <BookOpen className="size-3" aria-hidden /> Triad Vision · İdarəetmə paneli
+          <BookOpen className="size-3" aria-hidden /> {t('admin.layout.footer')}
         </footer>
       </div>
+      <AccessibilityWidget standalone panelClass="sm:bottom-[5.75rem] sm:max-h-[calc(100dvh-6.75rem)]" />
     </div>
   );
 }

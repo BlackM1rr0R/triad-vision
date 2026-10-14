@@ -419,13 +419,15 @@ async function main() {
   if (!adminPassword || adminPassword.length < 10) {
     throw new Error('Set SEED_ADMIN_PASSWORD (at least 10 characters) in server/.env before seeding.');
   }
+  // The seeded account is the super admin: it manages staff accounts and workspace permissions.
+  // Re-running the seed promotes an existing account with this e-mail but never changes its password.
   await prisma.user.upsert({
     where: { email: adminEmail },
-    update: {},
+    update: { role: 'SUPER_ADMIN', isActive: true },
     create: {
       email: adminEmail,
       passwordHash: await bcrypt.hash(adminPassword, 12),
-      role: 'ADMIN',
+      role: 'SUPER_ADMIN',
       firstName: 'Triad',
       lastName: 'Admin',
       locale: 'az',

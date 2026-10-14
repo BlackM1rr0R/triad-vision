@@ -1,0 +1,15 @@
+node_modules
+**/node_modules
+**/dist
+**/coverage
+.git
+.env
+.env.*
+!.env.production.example
+server/uploads
+server/docs
+data
+mobile
+assets
+*.log
+*.tsbuildinfo

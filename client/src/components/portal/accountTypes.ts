@@ -57,6 +57,8 @@ export interface ActiveCase extends OverviewCaseRow {
   appointment: { at: string; place: string | null } | null;
   manager: { firstName: string; lastName: string } | null;
   contract: { version: number; sentAt: string; signedAt: string | null } | null;
+  /** Small counters for the "case in numbers" strip. */
+  stats: { ageDays: number; daysInStatus: number; messages: number; events: number; uploads: number };
 }
 
 export interface LastMessage {

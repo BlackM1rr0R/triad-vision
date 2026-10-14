@@ -14,19 +14,19 @@ interface ToastItem {
   tone: Tone;
 }
 
-const ToastContext = createContext<{ show: (message: string, tone?: Tone) => void } | null>(null);
+const ToastContext = createContext<{ show: (message: string, tone?: Tone, durationMs?: number) => void } | null>(null);
 
 export const ToastProvider = ({ children }: { children: ReactNode }) => {
   const [toast, setToast] = useState<ToastItem | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const insets = useSafeAreaInsets();
 
-  const show = useCallback((message: string, tone: Tone = 'success') => {
+  const show = useCallback((message: string, tone: Tone = 'success', durationMs?: number) => {
     if (tone === 'success') haptic.success();
     else if (tone === 'error') haptic.error();
     if (timer.current) clearTimeout(timer.current);
     setToast({ id: Date.now(), message, tone });
-    timer.current = setTimeout(() => setToast(null), tone === 'error' ? 4200 : 2800);
+    timer.current = setTimeout(() => setToast(null), durationMs ?? (tone === 'error' ? 4200 : 2800));
   }, []);
 
   const value = useMemo(() => ({ show }), [show]);

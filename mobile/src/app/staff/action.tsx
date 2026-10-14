@@ -4,7 +4,7 @@ import { Stack, router, useLocalSearchParams } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
 import { FileUp } from '@/components/icons';
 import { useTranslation } from 'react-i18next';
-import { Button, Card, ErrorState, Field, ScrollScreen, SkeletonList, StatusBadge, Text, useToast } from '@/components/ui';
+import { Button, Card, ErrorState, Field, ScrollScreen, SkeletonList, StaleHint, StatusBadge, Text, useToast } from '@/components/ui';
 import { Note } from '@/features/case/parts';
 import { useUploader } from '@/features/case/useDocuments';
 import { ACTION_ICON } from '@/features/staff/actionIcons';
@@ -95,7 +95,8 @@ export default function StaffActionScreen() {
         <SkeletonList count={2} lines={3} />
       </View>
     );
-  if (error || !c) return <ErrorState error={error} onRetry={() => void refetch()} />;
+  // Keep the form usable with the last loaded case when a background refetch fails.
+  if (!c) return <ErrorState error={error} onRetry={() => void refetch()} />;
 
   const Icon = ACTION_ICON[type];
   const titleKey = type === 'SCHEDULE' && c.status === 'APPOINTMENT_SCHEDULED' ? 'RESCHEDULE' : type;

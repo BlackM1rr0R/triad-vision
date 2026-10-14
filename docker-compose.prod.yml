@@ -1,0 +1,59 @@
+# Production stack: MySQL + API + Caddy (static site, HTTPS, reverse proxy).
+#   cp .env.production.example .env.production   # fill in secrets
+#   docker compose -f docker-compose.prod.yml up -d --build
+# Data lives in ./data on the host: data/mysql, data/uploads (case files), data/docs (staff workspaces,
+# e.g. data/docs/tofig/senedleri/...), data/caddy (TLS certificates).
+services:
+  db:
+    image: mysql:8.4
+    restart: unless-stopped
+    env_file: .env.production
+    command: ['--character-set-server=utf8mb4', '--collation-server=utf8mb4_unicode_ci', '--max-connections=200']
+    volumes:
+      - ./data/mysql:/var/lib/mysql
+    healthcheck:
+      test: ['CMD-SHELL', 'mysqladmin ping -h localhost -uroot -p"$$MYSQL_ROOT_PASSWORD" --silent']
+      interval: 10s
+      timeout: 5s
+      retries: 30
+    # No ports: the database is reachable only from the other containers.
+
+  api:
+    build:
+      context: .
+      dockerfile: deploy/api.Dockerfile
+    restart: unless-stopped
+    env_file: .env.production
+    environment:
+      NODE_ENV: production
+      TRUST_PROXY: '1'
+      UPLOADS_DIR: /data/uploads
+      DOCS_DIR: /data/docs
+    volumes:
+      - ./data/uploads:/data/uploads
+      - ./data/docs:/data/docs
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD', 'curl', '-fsS', 'http://localhost:4000/api/health']
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+
+  web:
+    build:
+      context: .
+      dockerfile: deploy/web.Dockerfile
+    restart: unless-stopped
+    env_file: .env.production
+    ports:
+      - '80:80'
+      - '443:443'
+      - '443:443/udp'
+    volumes:
+      - ./data/caddy/data:/data
+      - ./data/caddy/config:/config
+    depends_on:
+      - api

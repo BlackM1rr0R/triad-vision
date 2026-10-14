@@ -18,6 +18,10 @@
   --color-muted: #5b6b88;
   --color-line: #dfe7f3;
   --color-surface: #f5f8fd;
+  /* page / card / form-field backgrounds: white in light mode, deep navy shades in dark mode */
+  --color-page: #ffffff;
+  --color-card: #ffffff;
+  --color-field: #ffffff;
   --color-de-red: #dd0000;
   --color-de-gold: #ffce00;
   --color-az-blue: #00b5e2;
@@ -30,6 +34,11 @@
   --animate-marquee: marquee 40s linear infinite;
   --animate-float: float 6s ease-in-out infinite;
   --animate-shine: shine 3.5s ease-in-out infinite;
+  --animate-twinkle: twinkle 4s ease-in-out infinite;
+  --animate-pulse-ring: pulse-ring 2.4s ease-out infinite;
+  --animate-dash: dash 1.6s linear infinite;
+  --animate-fly: fly 7s ease-in-out infinite;
+  --animate-drift: drift 18s ease-in-out infinite;
 
   @keyframes marquee {
     from { transform: translateX(0); }
@@ -43,6 +52,28 @@
     0% { transform: translateX(-120%) skewX(-20deg); }
     60%, 100% { transform: translateX(220%) skewX(-20deg); }
   }
+  /* hero globe (HeroGlobeLite): transform/opacity only, so the compositor runs them off the main thread */
+  @keyframes twinkle {
+    0%, 100% { opacity: 0.25; transform: scale(0.8); }
+    50% { opacity: 1; transform: scale(1.2); }
+  }
+  @keyframes pulse-ring {
+    0% { transform: scale(0.6); opacity: 0.8; }
+    100% { transform: scale(3.2); opacity: 0; }
+  }
+  @keyframes dash {
+    to { stroke-dashoffset: -30; }
+  }
+  @keyframes fly {
+    0% { offset-distance: 0%; opacity: 0; }
+    6% { opacity: 1; }
+    94% { opacity: 1; }
+    100% { offset-distance: 100%; opacity: 0; }
+  }
+  @keyframes drift {
+    0%, 100% { transform: translate(0, 0); }
+    50% { transform: translate(6%, 4%); }
+  }
 }
 
 @layer base {
@@ -51,7 +82,7 @@
     scroll-behavior: auto;
   }
   body {
-    @apply bg-white font-sans text-ink;
+    @apply bg-page font-sans text-ink;
     /* clip (not hidden) so position:sticky keeps working; stops off-screen reveal animations from adding a scrollbar */
     overflow-x: clip;
   }
@@ -67,6 +98,13 @@
   }
   :focus-visible {
     @apply outline-2 outline-offset-2 outline-brand-500;
+  }
+  /* "Skip to content": visually hidden until it receives keyboard focus */
+  .skip-link {
+    @apply fixed top-2 left-2 z-[1000] -translate-y-24 rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white shadow-xl transition-transform;
+  }
+  .skip-link:focus {
+    @apply translate-y-0;
   }
 }
 
@@ -131,10 +169,10 @@
     @apply inline-flex items-center gap-2 text-xs font-bold tracking-[0.18em] text-brand-600 uppercase;
   }
   .card {
-    @apply rounded-2xl border border-line bg-white shadow-[0_8px_30px_-12px_rgba(11,31,68,0.18)];
+    @apply rounded-2xl border border-line bg-card shadow-[0_8px_30px_-12px_rgba(11,31,68,0.18)];
   }
   .input {
-    @apply w-full rounded-lg border border-line bg-white px-3.5 py-2.5 text-sm text-ink transition outline-none placeholder:text-muted/70 focus:border-brand-500 focus:ring-4 focus:ring-brand-500/15;
+    @apply w-full rounded-lg border border-line bg-field px-3.5 py-2.5 text-sm text-ink transition outline-none placeholder:text-muted/70 focus:border-brand-500 focus:ring-4 focus:ring-brand-500/15;
   }
   .label {
     @apply mb-1.5 block text-xs font-semibold text-ink/80;
@@ -156,9 +194,359 @@
 
 
 @media (prefers-reduced-motion: reduce) {
+  /* No transitions at all (not "0.01ms" ones): with a tiny duration every JS-driven style change
+     still starts and cancels a CSS transition per frame, which made scrolling stutter for users who
+     turned animations off in the OS. Framer Motion is told the same via <MotionConfig reducedMotion="user">. */
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
+    transition-property: none !important;
   }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   Dark theme. `data-theme` is set on <html> by src/lib/prefs.ts (and by the inline script in
+   index.html before the app loads). Semantic tokens are redefined, and the handful of built-in
+   Tailwind colours the components use directly (bg-white, text-navy-900, slate, badge tints…) are
+   remapped below. These rules are intentionally unlayered so they win over Tailwind's utilities.
+   Dark heroes (bg-navy-950/900), primary buttons (bg-brand-600) and text-white are left alone.
+   ══════════════════════════════════════════════════════════════════════════════ */
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --color-page: #0b1220;
+  --color-surface: #0f192c;
+  --color-card: #131e33;
+  --color-field: #0d1627;
+  --color-line: rgba(255, 255, 255, 0.12);
+  --color-ink: #eef2f9;
+  --color-muted: #9fb0c8;
+  --color-brand-50: rgba(47, 123, 255, 0.1);
+  --color-brand-100: rgba(47, 123, 255, 0.2);
+}
+[data-theme='dark'] body {
+  background-color: var(--color-page);
+  color: var(--color-ink);
+}
+[data-theme='dark'] .card {
+  box-shadow: 0 8px 30px -12px rgba(0, 0, 0, 0.6);
+}
+[data-theme='dark'] .eyebrow,
+[data-theme='dark'] .btn-ghost {
+  color: var(--color-brand-400);
+}
+[data-theme='dark'] .btn-ghost {
+  border-color: var(--color-brand-400);
+}
+[data-theme='dark'] .btn-ghost:hover {
+  color: #fff;
+}
+
+/* backgrounds */
+[data-theme='dark'] :is(.bg-white, .bg-white\/90, .bg-white\/95, .bg-white\/\[0\.97\], .hover\:bg-white:hover) {
+  background-color: var(--color-card);
+}
+@media (min-width: 64rem) {
+  [data-theme='dark'] .lg\:bg-white {
+    background-color: var(--color-card);
+  }
+}
+[data-theme='dark'] :is(.bg-slate-50, .bg-slate-50\/80) {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+[data-theme='dark'] .bg-slate-100 {
+  background-color: rgba(255, 255, 255, 0.09);
+}
+[data-theme='dark'] .bg-slate-200 {
+  background-color: rgba(255, 255, 255, 0.14);
+}
+[data-theme='dark'] .bg-slate-300 {
+  background-color: rgba(255, 255, 255, 0.22);
+}
+[data-theme='dark'] .bg-slate-400 {
+  background-color: rgba(255, 255, 255, 0.32);
+}
+
+/* text */
+[data-theme='dark'] :is(.text-navy-900, .text-navy-950, .text-navy-800, .hover\:text-navy-900:hover, :where(.group):hover .group-hover\:text-navy-900) {
+  color: var(--color-ink);
+}
+[data-theme='dark'] .text-navy-900\/85 { color: color-mix(in oklab, var(--color-ink) 85%, transparent); }
+[data-theme='dark'] .text-navy-900\/80 { color: color-mix(in oklab, var(--color-ink) 80%, transparent); }
+[data-theme='dark'] .text-navy-900\/70 { color: color-mix(in oklab, var(--color-ink) 70%, transparent); }
+[data-theme='dark'] .text-navy-900\/60 { color: color-mix(in oklab, var(--color-ink) 60%, transparent); }
+[data-theme='dark'] .text-navy-900\/40 { color: color-mix(in oklab, var(--color-ink) 40%, transparent); }
+[data-theme='dark'] .text-navy-900\/30 { color: color-mix(in oklab, var(--color-ink) 30%, transparent); }
+[data-theme='dark'] .text-navy-900\/5 { color: color-mix(in oklab, var(--color-ink) 8%, transparent); }
+[data-theme='dark'] :is(.text-slate-500, .text-slate-600, .text-slate-700) {
+  color: var(--color-muted);
+}
+[data-theme='dark'] :is(.text-slate-300, .text-slate-400) {
+  color: color-mix(in oklab, var(--color-muted) 60%, transparent);
+}
+[data-theme='dark']
+  :is(
+    .text-brand-600,
+    .text-brand-700,
+    .text-brand-800,
+    .text-brand-700\/80,
+    .lg\:text-brand-700,
+    .hover\:text-brand-600:hover,
+    .hover\:text-brand-700:hover,
+    :where(.group):hover .group-hover\:text-brand-600,
+    :where(.group):hover .group-hover\:text-brand-700
+  ) {
+  color: var(--color-brand-400);
+}
+[data-theme='dark'] .\!text-brand-600 {
+  color: var(--color-brand-400) !important;
+}
+[data-theme='dark'] :is(.text-danger, .hover\:text-danger:hover) {
+  color: #ff7a84;
+}
+[data-theme='dark'] .text-warning {
+  color: #f5b14a;
+}
+[data-theme='dark'] .text-success {
+  color: #3ccf7a;
+}
+
+/* borders / rings */
+[data-theme='dark'] :is(.border-slate-200, .border-navy-900\/40, .border-navy-900\/25) {
+  border-color: var(--color-line);
+}
+[data-theme='dark'] .border-navy-900 {
+  border-color: var(--color-ink);
+}
+[data-theme='dark'] .border-white {
+  border-color: var(--color-card);
+}
+[data-theme='dark'] .ring-white {
+  --tw-ring-color: var(--color-card);
+}
+[data-theme='dark'] .accent-brand-600 {
+  accent-color: var(--color-brand-500);
+}
+
+/* status badges: `bg-*-100 text-*-800` becomes a translucent tint with a light text colour */
+[data-theme='dark'] :is(.bg-emerald-50, .bg-emerald-100, .bg-emerald-50\/60, .hover\:bg-emerald-50:hover, .hover\:bg-emerald-100:hover) {
+  background-color: rgba(16, 185, 129, 0.16);
+}
+[data-theme='dark'] :is(.text-emerald-600, .text-emerald-700, .text-emerald-800, .text-emerald-900) {
+  color: #6ee7b7;
+}
+[data-theme='dark'] :is(.border-emerald-200, .ring-emerald-200) {
+  border-color: rgba(16, 185, 129, 0.45);
+  --tw-ring-color: rgba(16, 185, 129, 0.45);
+}
+[data-theme='dark'] :is(.bg-amber-50, .bg-amber-100, .bg-amber-50\/70, .bg-amber-50\/60, .bg-amber-50\/40, .bg-amber-50\/30, .hover\:bg-amber-100:hover) {
+  background-color: rgba(245, 158, 11, 0.16);
+}
+[data-theme='dark'] :is(.text-amber-700, .text-amber-800, .text-amber-900, .text-amber-950) {
+  color: #fcd34d;
+}
+[data-theme='dark'] :is(.border-amber-200, .border-amber-300, .border-amber-200\/70, .ring-amber-200) {
+  border-color: rgba(245, 158, 11, 0.45);
+  --tw-ring-color: rgba(245, 158, 11, 0.45);
+}
+[data-theme='dark'] :is(.bg-red-50, .bg-red-100, .bg-red-50\/50, .bg-red-50\/40, .hover\:bg-red-50:hover, .hover\:bg-red-100:hover, .focus-visible\:bg-red-50:focus-visible) {
+  background-color: rgba(239, 68, 68, 0.16);
+}
+[data-theme='dark'] :is(.text-red-600, .text-red-700, .text-red-800) {
+  color: #fca5a5;
+}
+[data-theme='dark'] :is(.border-red-100, .border-red-200, .hover\:border-red-200:hover) {
+  border-color: rgba(239, 68, 68, 0.45);
+}
+[data-theme='dark'] :is(.bg-violet-50, .bg-violet-100) {
+  background-color: rgba(139, 92, 246, 0.18);
+}
+[data-theme='dark'] :is(.text-violet-600, .text-violet-700, .text-violet-800) {
+  color: #c4b5fd;
+}
+[data-theme='dark'] .border-violet-200 {
+  border-color: rgba(139, 92, 246, 0.45);
+}
+[data-theme='dark'] .bg-sky-100 {
+  background-color: rgba(14, 165, 233, 0.18);
+}
+[data-theme='dark'] :is(.text-sky-700, .text-sky-800) {
+  color: #7dd3fc;
+}
+[data-theme='dark'] .bg-blue-50 {
+  background-color: rgba(59, 130, 246, 0.16);
+}
+[data-theme='dark'] .text-blue-600 {
+  color: #93c5fd;
+}
+[data-theme='dark'] .bg-orange-50 {
+  background-color: rgba(249, 115, 22, 0.16);
+}
+[data-theme='dark'] .text-orange-600 {
+  color: #fdba74;
+}
+/* search-palette highlight */
+[data-theme='dark'] mark {
+  background-color: rgba(47, 123, 255, 0.3);
+  color: var(--color-ink);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   Accessibility widget (src/components/a11y). Every option is a class on <html>, set by
+   src/lib/prefs.ts and by the inline script in index.html.
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+/* High contrast: near-black/white text, solid borders, no translucency on cards */
+html.a11y-contrast {
+  --color-ink: #000000;
+  --color-muted: #1f2937;
+  --color-line: #000000;
+  --color-brand-600: #0b45b0;
+  --color-brand-700: #083386;
+  --color-brand-500: #0b45b0;
+}
+html.a11y-contrast[data-theme='dark'] {
+  --color-page: #000000;
+  --color-surface: #000000;
+  --color-card: #000000;
+  --color-field: #000000;
+  --color-ink: #ffffff;
+  --color-muted: #e5e7eb;
+  --color-line: #ffffff;
+  --color-brand-400: #9cc3ff;
+  --color-brand-500: #9cc3ff;
+}
+html.a11y-contrast :is(.card, .input, .glass, .badge, .btn-ghost, .btn-outline) {
+  border-width: 2px;
+  border-style: solid;
+}
+html.a11y-contrast .glass {
+  background-color: rgba(0, 0, 0, 0.85);
+  border-color: #ffffff;
+}
+html.a11y-contrast [class*='text-white/'] {
+  color: #ffffff;
+}
+html.a11y-contrast [class*='text-muted/'] {
+  color: var(--color-muted);
+}
+html.a11y-contrast :is([class*='text-ink/'], [class*='text-navy-900/']) {
+  color: var(--color-ink);
+}
+html.a11y-contrast :is(.btn-primary, .btn-danger) {
+  border: 2px solid #ffffff;
+}
+
+/* Line height */
+html.a11y-lineheight-15 :where(body *) {
+  line-height: 1.5 !important;
+}
+html.a11y-lineheight-20 :where(body *) {
+  line-height: 2 !important;
+}
+
+/* Letter spacing */
+html.a11y-spacing-05 :where(body *) {
+  letter-spacing: 0.05em !important;
+}
+html.a11y-spacing-10 :where(body *) {
+  letter-spacing: 0.1em !important;
+}
+
+/* Readable font: wide, familiar system sans */
+html.a11y-font :where(body, body *) {
+  font-family: Verdana, 'DejaVu Sans', Geneva, Arial, sans-serif !important;
+}
+
+/* Big cursor (SVG, 40px) */
+html.a11y-cursor,
+html.a11y-cursor * {
+  cursor:
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 24 24'><path d='M4 2 L4 20 L9 15.5 L12.5 22 L15.5 20.5 L12 14 L19 14 Z' fill='%23000' stroke='%23fff' stroke-width='1.5' stroke-linejoin='round'/></svg>")
+      6 3,
+    auto !important;
+}
+html.a11y-cursor :is(a, button, [role='button'], label, select, summary, input[type='checkbox'], input[type='radio']) {
+  cursor:
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 24 24'><path d='M9 3 a1.5 1.5 0 0 1 3 0 v7 h1 v-2 a1.5 1.5 0 0 1 3 0 v2 h1 v-1 a1.5 1.5 0 0 1 3 0 v6 c0 3.5 -2.5 6 -6 6 h-2 c-2 0 -3.5 -1 -4.5 -2.5 l-3.5 -5 a1.5 1.5 0 0 1 2.4 -1.8 l2.1 2.3 Z' fill='%23000' stroke='%23fff' stroke-width='1.5' stroke-linejoin='round'/></svg>")
+      12 2,
+    pointer !important;
+}
+
+/* Highlight links */
+html.a11y-links a:not([data-a11y-widget] a, .skip-link) {
+  text-decoration: underline !important;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+  outline: 2px solid color-mix(in srgb, var(--color-brand-500) 70%, transparent);
+  outline-offset: 2px;
+}
+
+/* Hide images (layout is kept) */
+html.a11y-noimg :is(img, picture, video, [style*='background-image']) {
+  visibility: hidden !important;
+}
+
+/* Greyscale / inverted colours. A filter on the root element does not break position:fixed. */
+html.a11y-gray {
+  filter: grayscale(1);
+}
+html.a11y-invert {
+  filter: invert(1) hue-rotate(180deg);
+}
+html.a11y-invert :is(img, picture, video, iframe) {
+  filter: invert(1) hue-rotate(180deg);
+}
+
+/* Reading ruler: a band that follows the pointer (positioned by the widget) */
+.a11y-ruler-band {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 3.25rem;
+  margin-top: -1.625rem;
+  pointer-events: none;
+  z-index: 9990;
+  background: rgba(255, 196, 0, 0.16);
+  border-top: 2px solid rgba(255, 150, 0, 0.75);
+  border-bottom: 2px solid rgba(255, 150, 0, 0.75);
+  will-change: transform;
+}
+
+/* Strong focus indicator */
+html.a11y-focus :focus {
+  outline: 4px solid #ff8a00 !important;
+  outline-offset: 3px !important;
+  box-shadow: 0 0 0 8px rgba(255, 138, 0, 0.35) !important;
+}
+
+/* Stop all animations and transitions (framer-motion is told the same through MotionConfig) */
+html.a11y-nomotion *,
+html.a11y-nomotion *::before,
+html.a11y-nomotion *::after {
+  animation: none !important;
+  transition: none !important;
+  scroll-behavior: auto !important;
+}
+
+/* Visual alerts: the screen edge flashes when a toast arrives (class toggled by the widget) */
+html.a11y-visual-alerts.a11y-flash::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 10000;
+  box-shadow: inset 0 0 0 8px var(--color-brand-500);
+  animation: a11y-flash 0.7s ease-out 3;
+}
+@keyframes a11y-flash {
+  0%, 100% { opacity: 0; }
+  50% { opacity: 1; }
+}
+
+/* Element currently read aloud by the screen-reader mode */
+.a11y-reading {
+  outline: 3px solid #ff8a00 !important;
+  outline-offset: 3px;
+  background-color: rgba(255, 138, 0, 0.12);
 }

@@ -2,9 +2,11 @@ import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
 import { ArrowLeft } from 'lucide-react';
+import { usePageTitle } from '@/lib/usePageTitle';
 
 export default function NotFound() {
   const { t } = useTranslation();
+  usePageTitle(t('notFound.title'));
   return (
     <section className="relative grid min-h-[90vh] place-items-center overflow-hidden bg-navy-950 px-4 pt-24 text-center text-white">
       <motion.p

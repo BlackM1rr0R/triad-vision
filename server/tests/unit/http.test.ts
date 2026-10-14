@@ -79,7 +79,7 @@ describe('errorHandler', () => {
     (err) => {
       const spy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
       expect(handle(err)).toEqual({ statusCode: 500, body: { error: 'INTERNAL' } });
-      expect(spy).toHaveBeenCalledWith(err);
+      expect(spy).toHaveBeenCalledWith(expect.any(String), err);
     },
   );
 });

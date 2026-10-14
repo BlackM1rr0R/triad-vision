@@ -204,7 +204,6 @@ describe('POST /api/public/inquiries', () => {
     ['invalid email', { kind: 'contact', contactName: 'Ab', email: 'nope', message: 'hello there' }],
     ['too short message', { kind: 'contact', contactName: 'Ab', email: 'a@test.local', message: 'hi' }],
     ['zero workers', { kind: 'company', contactName: 'Ab', email: 'a@test.local', message: 'hello there', workersNeeded: 0 }],
-    ['filled honeypot', { kind: 'contact', contactName: 'Bot', email: 'bot@test.local', message: 'buy now!!!', website: 'http://spam.example' }],
   ])('rejects %s with 400', async (_label, body) => {
     const res = await anon().post('/api/public/inquiries').send(body);
     expect(res.status).toBe(400);

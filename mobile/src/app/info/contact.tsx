@@ -20,6 +20,11 @@ export default function Contact() {
   const { data, isLoading, error, refetch } = useContent();
   const c = data?.settings.contact;
   const social = data?.settings.social ?? {};
+  // CMS fields can be missing/empty on a fresh install — hide what we cannot dial or mail.
+  const text = (v: unknown) => (typeof v === 'string' && v.trim() ? v.trim() : null);
+  const phone = text(c?.phone);
+  const whatsapp = text(c?.whatsapp);
+  const email = text(c?.email);
 
   return (
     <ScrollScreen onRefresh={refetch}>
@@ -33,20 +38,24 @@ export default function Contact() {
         <ErrorState error={error} onRetry={() => void refetch()} />
       ) : c ? (
         <>
-          <View style={{ flexDirection: 'row', gap: space.md }}>
-            <Button title={t('m.common.call')} icon={Phone} onPress={() => void Linking.openURL(`tel:${c.phone.replace(/\s/g, '')}`)} style={{ flex: 1 }} />
-            <Button
-              title={t('m.common.whatsapp')}
-              icon={MessageCircle}
-              variant="success"
-              onPress={() => void Linking.openURL(`https://wa.me/${c.whatsapp.replace(/\D/g, '')}`)}
-              style={{ flex: 1 }}
-            />
-          </View>
+          {phone || whatsapp ? (
+            <View style={{ flexDirection: 'row', gap: space.md }}>
+              {phone ? <Button title={t('m.common.call')} icon={Phone} onPress={() => void Linking.openURL(`tel:${phone.replace(/\s/g, '')}`)} style={{ flex: 1 }} /> : null}
+              {whatsapp ? (
+                <Button
+                  title={t('m.common.whatsapp')}
+                  icon={MessageCircle}
+                  variant="success"
+                  onPress={() => void Linking.openURL(`https://wa.me/${whatsapp.replace(/\D/g, '')}`)}
+                  style={{ flex: 1 }}
+                />
+              ) : null}
+            </View>
+          ) : null}
           <Card>
-            <ListRow icon={Phone} title={t('contact.phone')} subtitle={c.phone} onPress={() => void Linking.openURL(`tel:${c.phone.replace(/\s/g, '')}`)} />
-            <ListRow icon={Mail} title={t('contact.email')} subtitle={c.email} onPress={() => void Linking.openURL(`mailto:${c.email}`)} />
-            <ListRow icon={Clock} title={t('contact.hours')} subtitle={f.tr(c.hours)} />
+            {phone ? <ListRow icon={Phone} title={t('contact.phone')} subtitle={phone} onPress={() => void Linking.openURL(`tel:${phone.replace(/\s/g, '')}`)} /> : null}
+            {email ? <ListRow icon={Mail} title={t('contact.email')} subtitle={email} onPress={() => void Linking.openURL(`mailto:${email}`)} /> : null}
+            {c.hours ? <ListRow icon={Clock} title={t('contact.hours')} subtitle={f.tr(c.hours)} /> : null}
           </Card>
           {c.offices?.length ? (
             <Section title={t('contact.offices')} icon={MapPin}>

@@ -6,7 +6,7 @@ import { z } from 'zod';
 import { config } from '../config.js';
 import { prisma } from '../db.js';
 import { requireAuth } from '../middleware/auth.js';
-import { decodeOriginalName, documentUpload } from '../middleware/upload.js';
+import { decodeOriginalName, documentUpload, verifyUploadedFile } from '../middleware/upload.js';
 import { CLIENT_UPLOAD_STAGE, clientSignContract, clientSubmitDocuments, createCase } from '../lib/caseFlow.js';
 import { loadCaseDetail } from '../lib/caseView.js';
 import { badRequest, conflict, notFound, parse } from '../lib/http.js';
@@ -41,7 +41,7 @@ casesRouter.post('/', async (req, res) => {
     req.body,
   );
   if (body.visaCategoryId) {
-    const exists = await prisma.visaCategory.count({ where: { id: body.visaCategoryId } });
+    const exists = await prisma.visaCategory.count({ where: { id: body.visaCategoryId, published: true } });
     if (!exists) throw badRequest('INVALID_VISA_CATEGORY');
   }
   const created = await createCase(req.user!.id, body);
@@ -60,6 +60,7 @@ casesRouter.post('/:id/documents', documentUpload.single('file'), async (req, re
     const c = await ownCase(String(req.params.id), req.user!.id);
     const stage = CLIENT_UPLOAD_STAGE[c.status];
     if (!stage) throw conflict('UPLOAD_NOT_ALLOWED');
+    await verifyUploadedFile(file);
 
     const { requirementId } = parse(z.object({ requirementId: z.string() }), req.body);
     const requirement = await prisma.documentRequirement.findUnique({ where: { id: requirementId } });

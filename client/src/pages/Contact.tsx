@@ -5,9 +5,11 @@ import { Reveal, Stagger, StaggerItem } from '@/components/motion';
 import { InquiryForm } from '@/components/InquiryForm';
 import { useSiteContent } from '@/lib/content';
 import { useL10n } from '@/lib/l10n';
+import { usePageTitle } from '@/lib/usePageTitle';
 
 export default function Contact() {
   const { t } = useTranslation();
+  usePageTitle(t('contact.title'));
   const { data } = useSiteContent();
   const { tr } = useL10n();
   const c = data?.settings.contact;

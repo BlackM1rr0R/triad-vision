@@ -1,6 +1,9 @@
 import request from 'supertest';
 import { createApp } from '../../src/app.js';
-import { createAdmin, createClient, createStaff, type UserOpts } from './factories';
+import { createAdmin, createClient, createStaff, createSuperAdmin, type UserOpts } from './factories';
+
+/** Browsers send Origin on every POST; the CSRF guard requires it for cookie sessions. */
+export const ORIGIN = 'http://localhost:5173';
 
 /** One in-process app per test file (module graphs are isolated per file). */
 export const app = createApp();
@@ -10,6 +13,7 @@ export const anon = () => request(app);
 /** Cookie-keeping agent; goes through the real (rate-limited) login route. */
 export const loginAgent = async (email: string, password: string) => {
   const agent = request.agent(app);
+  agent.set('Origin', ORIGIN);
   const res = await agent.post('/api/auth/login').send({ email, password });
   if (res.status !== 200) throw new Error(`login failed: ${res.status} ${JSON.stringify(res.body)}`);
   return agent;
@@ -24,7 +28,7 @@ type Method = 'get' | 'post' | 'put' | 'patch' | 'delete';
 export const sessionAgent = (token: string, mode: 'cookie' | 'bearer' = 'cookie') => {
   const call = (method: Method) => (url: string) => {
     const t = request(app)[method](url);
-    return mode === 'cookie' ? t.set('Cookie', `tv_session=${token}`) : t.set('Authorization', `Bearer ${token}`);
+    return mode === 'cookie' ? t.set('Cookie', `tv_session=${token}`).set('Origin', ORIGIN) : t.set('Authorization', `Bearer ${token}`);
   };
   return { get: call('get'), post: call('post'), put: call('put'), patch: call('patch'), delete: call('delete') };
 };
@@ -41,6 +45,11 @@ export const asStaff = async (opts: UserOpts = {}) => {
 };
 export const asAdmin = async (opts: UserOpts = {}) => {
   const u = await createAdmin(opts);
+  return { ...u, agent: sessionAgent(u.token) };
+};
+
+export const asSuperAdmin = async (opts: UserOpts = {}) => {
+  const u = await createSuperAdmin(opts);
   return { ...u, agent: sessionAgent(u.token) };
 };
 

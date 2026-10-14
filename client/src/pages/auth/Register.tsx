@@ -6,7 +6,8 @@ import { toast } from 'sonner';
 import { api, errorCode } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { useL10n } from '@/lib/l10n';
-import type { User } from '@/lib/types';
+import { isStrongPassword, PASSWORD_MAX, PASSWORD_MIN, type SessionInfo, type User } from '@/lib/types';
+import { usePageTitle } from '@/lib/usePageTitle';
 import { Spinner } from '@/components/ui/Spinner';
 import { AuthShell } from './AuthShell';
 import { authError } from './Login';
@@ -17,13 +18,20 @@ export default function Register() {
   const { setUser } = useAuth();
   const navigate = useNavigate();
   const [busy, setBusy] = useState(false);
+  const [password, setPassword] = useState('');
+  const weak = password.length > 0 && !isStrongPassword(password);
+  usePageTitle(t('auth.registerTitle'));
 
   const submit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
+    if (!isStrongPassword(String(fd.get('password') ?? ''))) {
+      toast.error(t('auth.errors.PASSWORD_TOO_WEAK'));
+      return;
+    }
     setBusy(true);
     try {
-      const { data } = await api.post<{ user: User }>('/auth/register', {
+      const { data } = await api.post<{ user: User; session: SessionInfo }>('/auth/register', {
         firstName: fd.get('firstName'),
         lastName: fd.get('lastName'),
         email: fd.get('email'),
@@ -61,8 +69,20 @@ export default function Register() {
         </div>
         <div className="sm:col-span-2">
           <label className="label" htmlFor="password">{t('auth.password')}</label>
-          <input id="password" name="password" type="password" required minLength={8} autoComplete="new-password" className="input" />
-          <p className="mt-1 text-xs text-muted">{t('auth.passwordHint')}</p>
+          <input
+            id="password"
+            name="password"
+            type="password"
+            required
+            minLength={PASSWORD_MIN}
+            maxLength={PASSWORD_MAX}
+            autoComplete="new-password"
+            className={`input${weak ? ' border-danger' : ''}`}
+            aria-invalid={weak || undefined}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+          <p className={`mt-1 text-xs ${weak ? 'text-danger' : 'text-muted'}`}>{t('auth.passwordHint')}</p>
         </div>
         <label className="flex items-start gap-2.5 text-xs text-muted sm:col-span-2">
           <input type="checkbox" required className="mt-0.5 size-4 accent-brand-600" /> {t('auth.terms')}

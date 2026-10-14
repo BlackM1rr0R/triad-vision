@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { UploadCloud } from 'lucide-react';
 
-export const MAX_FILE_SIZE = 15 * 1024 * 1024;
+export const MAX_FILE_SIZE = 5 * 1024 * 1024;
 const EXTENSIONS = ['pdf', 'jpg', 'jpeg', 'png', 'webp', 'doc', 'docx'];
 const MIME = new Set([
   'application/pdf',

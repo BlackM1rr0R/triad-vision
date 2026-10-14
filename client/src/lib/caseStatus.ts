@@ -35,3 +35,18 @@ export const STATUS_TONE: Record<CaseStatus, string> = {
   REJECTED: 'bg-red-100 text-red-700',
   CANCELLED: 'bg-slate-200 text-slate-600',
 };
+
+/** Solid bar colour per status (status breakdown bars, status-history timeline). */
+export const STATUS_BAR_TONE: Record<CaseStatus, string> = {
+  DOCUMENTS_PENDING: 'bg-amber-400',
+  DOCUMENTS_REVIEW: 'bg-brand-500',
+  CONTRACT_SENT: 'bg-amber-400',
+  CONTRACT_SIGNED: 'bg-brand-500',
+  EMBASSY_DOCUMENTS: 'bg-amber-400',
+  EMBASSY_REVIEW: 'bg-brand-500',
+  APPOINTMENT_SCHEDULED: 'bg-violet-500',
+  DECISION_PENDING: 'bg-sky-500',
+  APPROVED: 'bg-emerald-500',
+  REJECTED: 'bg-red-500',
+  CANCELLED: 'bg-slate-400',
+};

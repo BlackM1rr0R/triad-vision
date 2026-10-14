@@ -83,7 +83,7 @@ export const ServiceCard = ({ service, index }: { service: Service; index: numbe
 /** Partner logo; falls back to a styled wordmark when no logo image was uploaded. */
 export const PartnerLogo = ({ partner, className }: { partner: Partner; className?: string }) => {
   const content = partner.logo ? (
-    <img src={partner.logo} alt={partner.name} className="max-h-10 max-w-[140px] object-contain grayscale transition duration-500 group-hover:grayscale-0" />
+    <img src={partner.logo} alt={partner.name} loading="lazy" decoding="async" className="max-h-10 max-w-[140px] object-contain grayscale transition duration-500 group-hover:grayscale-0" />
   ) : (
     <span className="font-display text-lg font-black tracking-tight text-navy-900/70 uppercase transition-colors duration-300 group-hover:text-brand-600">
       {partner.name}
@@ -123,12 +123,12 @@ export const VisaSticker = ({ sample }: { sample: VisaSample }) => {
           </div>
           <div className="flex-1 space-y-1.5 pt-1">
             {[80, 60, 90, 50, 70, 40].map((w, i) => (
-              <div key={i} className="h-1.5 rounded bg-[#5b3f7a]/25 blur-[1.5px]" style={{ width: `${w}%` }} />
+              <div key={i} className="h-1.5 rounded bg-[#5b3f7a]/20 shadow-[0_0_2px_1px_rgba(91,63,122,0.18)]" style={{ width: `${w}%` }} />
             ))}
             <span className="inline-block rounded bg-[#5b3f7a]/80 px-1.5 py-0.5 text-[9px] font-bold text-white">{sample.visaLabel}</span>
           </div>
         </div>
-        <div className="relative mt-2 h-4 rounded-sm bg-[#5b3f7a]/15 font-mono text-[7px] leading-4 tracking-[0.2em] text-[#5b3f7a]/60 blur-[1.2px]">
+        <div className="relative mt-2 h-4 rounded-sm bg-[#5b3f7a]/15 font-mono text-[7px] leading-4 tracking-[0.2em] text-[#5b3f7a]/35 select-none">
           VDDEU&lt;&lt;XXXXXXXX&lt;&lt;XXXXXX&lt;&lt;&lt;
         </div>
       </div>

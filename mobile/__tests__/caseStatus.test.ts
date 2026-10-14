@@ -84,10 +84,15 @@ describe('staff workflow actions (mirror of server/src/lib/caseFlow.ts)', () => 
 
   it('maps review statuses to their decisions', () => {
     expect(STAFF_ACTIONS.DOCUMENTS_REVIEW).toEqual(expect.arrayContaining(['SEND_CONTRACT', 'REQUEST_CHANGES']));
-    expect(STAFF_ACTIONS.CONTRACT_SIGNED).toEqual(expect.arrayContaining(['CONFIRM_CONTRACT', 'REJECT_SIGNATURE']));
+    expect(STAFF_ACTIONS.CONTRACT_SIGNED).toEqual(expect.arrayContaining(['CONFIRM_CONTRACT', 'REJECT_SIGNATURE', 'SEND_CONTRACT']));
     expect(STAFF_ACTIONS.EMBASSY_REVIEW).toEqual(expect.arrayContaining(['SCHEDULE', 'REQUEST_CHANGES']));
     expect(STAFF_ACTIONS.APPOINTMENT_SCHEDULED).toEqual(expect.arrayContaining(['MARK_LODGED', 'SCHEDULE']));
     expect(STAFF_ACTIONS.DECISION_PENDING).toContain('DECIDE');
+  });
+
+  it('lets staff resend the contract wherever the server allows it (staffSendContract)', () => {
+    for (const s of ['DOCUMENTS_REVIEW', 'CONTRACT_SENT', 'CONTRACT_SIGNED'] as const) expect(STAFF_ACTIONS[s]).toContain('SEND_CONTRACT');
+    for (const s of ALL_STATUSES.filter((x) => !['DOCUMENTS_REVIEW', 'CONTRACT_SENT', 'CONTRACT_SIGNED'].includes(x))) expect(STAFF_ACTIONS[s]).not.toContain('SEND_CONTRACT');
   });
 });
 

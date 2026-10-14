@@ -2,9 +2,11 @@ import { useEffect, useLayoutEffect, useState } from 'react';
 import { useLocation, useNavigationType } from 'react-router-dom';
 import { AnimatePresence, motion, useScroll, useSpring } from 'framer-motion';
 import { LogoMark } from '../ui/Logo';
+import { smoothScrollTo, startSmoothScroll, stopSmoothScroll } from '@/lib/smoothScroll';
+import { usePrefs } from '@/lib/prefs';
 
 export const scrollToTop = (immediate = false) => {
-  window.scrollTo({ top: 0, behavior: immediate ? 'instant' : 'smooth' });
+  smoothScrollTo(0, { immediate });
 };
 
 const POS_KEY = 'tv_scroll';
@@ -34,7 +36,7 @@ const restoreTo = (y: number) => {
   const attempt = () => {
     const max = document.documentElement.scrollHeight - window.innerHeight;
     if (max >= y - 4 || performance.now() - started > 2000) {
-      window.scrollTo({ top: y, behavior: 'instant' });
+      smoothScrollTo(y, { immediate: true });
       return;
     }
     requestAnimationFrame(attempt);
@@ -45,13 +47,23 @@ const restoreTo = (y: number) => {
 /**
  * Scroll behaviour like a classic website:
  * - clicking a link (PUSH/REPLACE) opens the new page at the top;
- * - reload and back/forward (POP) return to where the user was on that page.
- * Native scrolling is used on purpose: JS smooth-scroll libraries move scrolling onto the main
- * thread, so any busy frame turns into visible lag.
+ * - reload and back/forward (POP) return to where the user was on that page;
+ * - inertial wheel scrolling (Lenis) on desktop pointers, native everywhere else.
  */
 export const SmoothScroll = () => {
   const location = useLocation();
   const navType = useNavigationType();
+  const { noMotion } = usePrefs();
+
+  // Inertial scrolling is itself motion: off while "stop animations" is on in the accessibility widget.
+  useEffect(() => {
+    if (noMotion) {
+      stopSmoothScroll();
+      return;
+    }
+    startSmoothScroll();
+    return () => stopSmoothScroll();
+  }, [noMotion]);
 
   useEffect(() => {
     if ('scrollRestoration' in window.history) window.history.scrollRestoration = 'manual';

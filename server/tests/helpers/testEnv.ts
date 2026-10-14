@@ -14,6 +14,7 @@ if (TEST_DB_NAME === 'triad_vision') throw new Error('Refusing to run tests agai
 
 export const TEST_DATABASE_URL = `mysql://${DB_USER}:${DB_PASS}@${DB_HOST}/${TEST_DB_NAME}`;
 export const TEST_UPLOADS_DIR = path.join(os.tmpdir(), 'triad-vision-test-uploads');
+export const TEST_DOCS_DIR = path.join(os.tmpdir(), 'triad-vision-test-docs');
 export const ADMIN_INBOX = 'staff-inbox@test.local';
 
 export const testEnv: Record<string, string> = {
@@ -22,6 +23,7 @@ export const testEnv: Record<string, string> = {
   JWT_SECRET: 'test-jwt-secret-please-do-not-use-elsewhere',
   CLIENT_URL: 'http://localhost:5173',
   UPLOADS_DIR: TEST_UPLOADS_DIR,
+  DOCS_DIR: TEST_DOCS_DIR,
   ADMIN_NOTIFY_EMAIL: ADMIN_INBOX,
   // Empty SMTP host: mail is recorded in the EmailLog table instead of being sent.
   SMTP_HOST: '',

@@ -2,10 +2,11 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { Router } from 'express';
 import { z } from 'zod';
-import type { Prisma } from '@prisma/client';
+import { Prisma } from '@prisma/client';
+import { PDFDocument } from 'pdf-lib';
 import { config } from '../../config.js';
 import { prisma } from '../../db.js';
-import { decodeOriginalName, documentUpload } from '../../middleware/upload.js';
+import { decodeOriginalName, documentUpload, verifyUploadedFile } from '../../middleware/upload.js';
 import {
   staffCancel,
   staffConfirmContract,
@@ -17,7 +18,7 @@ import {
   staffScheduleAppointment,
   staffSendContract,
 } from '../../lib/caseFlow.js';
-import { loadCaseDetail } from '../../lib/caseView.js';
+import { caseStats, loadCaseDetail } from '../../lib/caseView.js';
 import { badRequest, conflict, notFound, parse } from '../../lib/http.js';
 import { notifyClient } from '../../lib/notifications.js';
 
@@ -33,7 +34,7 @@ adminCasesRouter.get('/', async (req, res) => {
   const q = parse(
     z.object({
       status: z.enum(STATUSES).optional(),
-      search: z.string().trim().optional(),
+      search: z.string().trim().max(120).optional(),
       mine: z.enum(['true', 'false']).transform((v) => v === 'true').optional(),
       page: z.coerce.number().int().min(1).default(1),
     }),
@@ -65,13 +66,37 @@ adminCasesRouter.get('/', async (req, res) => {
         client: { select: { firstName: true, lastName: true, email: true, phone: true } },
         assignedStaff: { select: { firstName: true, lastName: true } },
         visaCategory: { select: { title: true, visaLabel: true } },
+        events: { orderBy: { createdAt: 'desc' }, take: 1, select: { type: true, createdAt: true, actor: { select: { role: true } } } },
+        _count: { select: { messages: true, documents: { where: { status: 'PENDING', stage: { in: ['INITIAL', 'EMBASSY'] } } } } },
       },
     }),
     prisma.case.count({ where }),
     prisma.case.groupBy({ by: ['status'], _count: { _all: true } }),
   ]);
+  // When the current status was entered (first status-changing event into it, newest first).
+  const entered = items.length
+    ? await prisma.caseEvent.findMany({
+        where: { caseId: { in: items.map((c) => c.id) }, toStatus: { not: null } },
+        orderBy: { createdAt: 'desc' },
+        select: { caseId: true, toStatus: true, createdAt: true },
+      })
+    : [];
+  const statusSince = new Map<string, Date>();
+  for (const c of items) {
+    const e = entered.find((x) => x.caseId === c.id && x.toStatus === c.status);
+    statusSince.set(c.id, e?.createdAt ?? c.createdAt);
+  }
+  const DAY = 24 * 60 * 60 * 1000;
   res.json({
-    items,
+    items: items.map(({ events, _count, ...c }) => ({
+      ...c,
+      lastEvent: events[0] ?? null,
+      messagesCount: _count.messages,
+      pendingDocs: _count.documents,
+      statusSince: statusSince.get(c.id),
+      daysInStatus: Math.floor((Date.now() - (statusSince.get(c.id) ?? c.createdAt).getTime()) / DAY),
+      ageDays: Math.floor((Date.now() - c.createdAt.getTime()) / DAY),
+    })),
     total,
     pageSize,
     counts: Object.fromEntries(byStatus.map((b) => [b.status, b._count._all])),
@@ -79,7 +104,8 @@ adminCasesRouter.get('/', async (req, res) => {
 });
 
 adminCasesRouter.get('/:id', async (req, res) => {
-  res.json({ case: await loadCaseDetail(req.params.id, { forStaff: true }) });
+  const detail = await loadCaseDetail(req.params.id, { forStaff: true });
+  res.json({ case: detail, stats: caseStats(detail) });
 });
 
 adminCasesRouter.patch('/:id', async (req, res) => {
@@ -138,7 +164,7 @@ adminCasesRouter.patch('/:id/requirements/:reqId', async (req, res) => {
   if (!r || r.caseId !== req.params.id) throw notFound();
   const requirement = await prisma.documentRequirement.update({
     where: { id: r.id },
-    data: { ...body, description: body.description === null ? undefined : body.description },
+    data: { ...body, description: body.description === null ? Prisma.DbNull : body.description },
   });
   res.json({ requirement });
 });
@@ -205,7 +231,16 @@ adminCasesRouter.post('/:id/documents', documentUpload.single('file'), async (re
     );
     const c = await prisma.case.findUnique({ where: { id: String(req.params.id) } });
     if (!c) throw notFound('CASE_NOT_FOUND');
-    if (body.stage === 'CONTRACT' && file.mimetype !== 'application/pdf') throw badRequest('CONTRACT_MUST_BE_PDF');
+    await verifyUploadedFile(file);
+    if (body.stage === 'CONTRACT') {
+      if (file.mimetype !== 'application/pdf') throw badRequest('CONTRACT_MUST_BE_PDF');
+      // The client signs by appending a page with pdf-lib; an encrypted or broken PDF would fail at that moment.
+      try {
+        await PDFDocument.load(await fs.readFile(file.path));
+      } catch {
+        throw badRequest('INVALID_PDF', 'The contract must be an unencrypted, well-formed PDF');
+      }
+    }
     if (body.requirementId) {
       const r = await prisma.documentRequirement.findUnique({ where: { id: body.requirementId } });
       if (!r || r.caseId !== c.id || r.stage !== body.stage) throw badRequest('INVALID_REQUIREMENT');
@@ -301,6 +336,7 @@ adminCasesRouter.post('/:id/actions', async (req, res) => {
       await staffMarkLodged(id, actor);
       break;
     case 'DECIDE':
+      if (a.validFrom && a.validTo && a.validTo < a.validFrom) throw badRequest('VALID_TO_BEFORE_VALID_FROM');
       await staffDecide(id, actor, a);
       break;
     case 'CANCEL':

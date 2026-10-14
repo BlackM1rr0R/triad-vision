@@ -1,5 +1,6 @@
 import { Link, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { ArrowLeft, Route } from 'lucide-react';
 import { api } from '@/lib/api';
 import { STATUS_STEP } from '@/lib/caseStatus';
@@ -8,23 +9,26 @@ import { ActionPanel } from '@/components/admin/case/ActionPanel';
 import { CaseHeader } from '@/components/admin/case/CaseHeader';
 import { ClientFiles } from '@/components/admin/case/ClientFiles';
 import { InternalNotes, Messages, Timeline } from '@/components/admin/case/Communication';
+import { CaseStatsPanel } from '@/components/admin/case/CaseStats';
 import { ContractBox } from '@/components/admin/case/Contract';
 import { RequirementsSection } from '@/components/admin/case/Requirements';
 import { WorkflowStepper } from '@/components/admin/case/WorkflowStepper';
-import { caseKey } from '@/components/admin/case/shared';
+import { caseKey, type CaseDetailResponse } from '@/components/admin/case/shared';
 import { ErrorBlock, LoadingBlock, Panel } from '@/components/admin/ui';
 
 export default function CaseAdmin() {
+  const { t } = useTranslation();
   const { id = '' } = useParams();
-  const { data: c, isLoading, error, refetch } = useQuery({
+  const { data, isLoading, error, refetch } = useQuery({
     queryKey: caseKey(id),
-    queryFn: async () => (await api.get<{ case: CaseDetail }>(`/admin/cases/${id}`)).data.case,
+    queryFn: async () => (await api.get<CaseDetailResponse>(`/admin/cases/${id}`)).data,
     enabled: !!id,
     refetchOnWindowFocus: true,
   });
 
   if (isLoading) return <LoadingBlock />;
-  if (error || !c) return <ErrorBlock error={error} onRetry={() => refetch()} />;
+  if (error || !data) return <ErrorBlock error={error} onRetry={() => refetch()} />;
+  const c: CaseDetail = data.case;
 
   const step = STATUS_STEP[c.status];
   const hasEmbassy = c.requirements.some((r) => r.stage === 'EMBASSY');
@@ -36,12 +40,12 @@ export default function CaseAdmin() {
   return (
     <div className="space-y-6">
       <Link to="/admin/cases" className="-my-2 inline-flex min-h-10 items-center gap-1.5 text-xs font-semibold text-muted transition hover:text-navy-900">
-        <ArrowLeft className="size-3.5" /> Müraciətlərə qayıt
+        <ArrowLeft className="size-3.5" /> {t('admin.cases.back')}
       </Link>
 
       <CaseHeader key={c.id} c={c} />
 
-      <Panel title="İş axını" icon={Route}>
+      <Panel title={t('admin.cases.workflow')} icon={Route}>
         <WorkflowStepper status={c.status} />
       </Panel>
 
@@ -55,6 +59,7 @@ export default function CaseAdmin() {
           <ClientFiles c={c} />
         </div>
         <div className="min-w-0 space-y-6">
+          <CaseStatsPanel stats={data.stats} />
           <Messages c={c} />
           <InternalNotes c={c} />
           <Timeline c={c} />

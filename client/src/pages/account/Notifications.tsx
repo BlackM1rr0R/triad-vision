@@ -13,9 +13,11 @@ import { useNotifications } from '@/components/portal/useNotifications';
 import { useApiError } from '@/components/portal/useApiError';
 import { useWhen } from '@/components/portal/useWhen';
 import { OVERVIEW_KEY } from '@/components/portal/useOverview';
+import { usePageTitle } from '@/lib/usePageTitle';
 
 export default function Notifications() {
   const { t } = useTranslation();
+  usePageTitle(t('portal.notifications'));
   const { dateTime } = useL10n();
   const when = useWhen();
   const navigate = useNavigate();

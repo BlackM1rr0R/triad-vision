@@ -2,7 +2,7 @@ import { useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useFocusEffect } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { ErrorState, SkeletonList, Text } from '@/components/ui';
+import { ErrorState, SkeletonList, StaleHint, Text } from '@/components/ui';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { useCase } from '@/lib/queries';
@@ -29,6 +29,7 @@ export const ClientChat = ({ caseId, bottomInset = true }: { caseId: string; bot
 
   const send = async (body: string) => {
     const { data } = await api.post<{ message: Omit<CaseMessage, 'author'> }>(`/cases/${caseId}/messages`, { body });
+    // Show it immediately, then refetch so a poll that was already in flight cannot overwrite it.
     qc.setQueryData<CaseDetail>(qk.case(caseId), (old) =>
       old
         ? {
@@ -43,6 +44,7 @@ export const ClientChat = ({ caseId, bottomInset = true }: { caseId: string; bot
           }
         : old,
     );
+    void qc.invalidateQueries({ queryKey: qk.case(caseId) });
   };
 
   if (isLoading)
@@ -51,7 +53,8 @@ export const ClientChat = ({ caseId, bottomInset = true }: { caseId: string; bot
         <SkeletonList count={3} lines={1} />
       </View>
     );
-  if (error || !c) return <ErrorState error={error} onRetry={() => void refetch()} />;
+  // A failed background poll keeps the loaded thread on screen (TanStack keeps `data` on error).
+  if (!c) return <ErrorState error={error} onRetry={() => void refetch()} />;
 
   return (
     <ChatView
@@ -60,9 +63,12 @@ export const ClientChat = ({ caseId, bottomInset = true }: { caseId: string; bot
       onSend={send}
       bottomInset={bottomInset}
       header={
-        <Text variant="caption" center>
-          {c.number} · {t('m.chat.subtitle')}
-        </Text>
+        <View style={{ gap: space.sm }}>
+          <Text variant="caption" center>
+            {c.number} · {t('m.chat.subtitle')}
+          </Text>
+          {error ? <StaleHint error={error} onRetry={() => void refetch()} /> : null}
+        </View>
       }
     />
   );

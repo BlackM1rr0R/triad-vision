@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next';
-import { AlertTriangle, FolderOpen, RotateCw } from 'lucide-react';
+import { AlertTriangle, BellRing, CalendarDays, FileUp, FolderOpen, Hourglass, MessageCircle, RotateCw } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { FINAL } from '@/lib/caseStatus';
 import { useAuth } from '@/lib/auth';
 import { Stagger, StaggerItem } from '@/components/motion';
@@ -19,9 +20,10 @@ import {
 import { StartCase } from '@/components/portal/StartCase';
 import { profileCompleteness } from '@/components/portal/profileFields';
 import { useHashScroll, useOverview } from '@/components/portal/useOverview';
-import type { OverviewCaseRow } from '@/components/portal/accountTypes';
+import type { ActiveCase, OverviewCaseRow } from '@/components/portal/accountTypes';
 import { registerCopy } from '@/i18n';
 import { pagesAccount } from '@/i18n/pagesAccount';
+import { usePageTitle } from '@/lib/usePageTitle';
 
 registerCopy(pagesAccount);
 
@@ -42,8 +44,38 @@ const CaseList = ({ cases, title }: { cases: OverviewCaseRow[]; title: string })
   </section>
 );
 
+/** "Your application in numbers": compact counters under the journey card. */
+const CaseNumbers = ({ c }: { c: ActiveCase }) => {
+  const { t } = useTranslation();
+  const items: { icon: LucideIcon; label: string; value: number }[] = [
+    { icon: CalendarDays, label: t('accountPage.dash.numbers.age'), value: c.stats.ageDays },
+    { icon: Hourglass, label: t('accountPage.dash.numbers.step'), value: c.stats.daysInStatus },
+    { icon: FileUp, label: t('accountPage.dash.numbers.uploads'), value: c.stats.uploads },
+    { icon: MessageCircle, label: t('accountPage.dash.numbers.messages'), value: c.stats.messages },
+    { icon: BellRing, label: t('accountPage.dash.numbers.updates'), value: c.stats.events },
+  ];
+  return (
+    <section className="card" aria-label={t('accountPage.dash.numbers.title')}>
+      <ul className="grid grid-cols-2 divide-y divide-line sm:grid-cols-5 sm:divide-x sm:divide-y-0 [&>*]:min-w-0">
+        {items.map((it) => (
+          <li key={it.label} className="flex items-center gap-3 px-4 py-3 sm:flex-col sm:items-start sm:gap-1.5 sm:px-5 sm:py-4">
+            <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-brand-50 text-brand-600">
+              <it.icon className="size-4" aria-hidden />
+            </span>
+            <span className="min-w-0">
+              <span className="block text-xl leading-tight font-extrabold text-navy-900">{it.value}</span>
+              <span className="block truncate text-[11px] font-medium text-muted">{it.label}</span>
+            </span>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+};
+
 export default function AccountHome() {
   const { t } = useTranslation();
+  usePageTitle(t('portal.title'));
   const { user } = useAuth();
   const { data, isLoading, isError, refetch, isFetching } = useOverview();
   useHashScroll(!!data);
@@ -75,6 +107,7 @@ export default function AccountHome() {
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-8">
           <div className="min-w-0 space-y-6">
             <JourneyCard c={activeCase} />
+            <CaseNumbers c={activeCase} />
             {activeCase.appointment && (
               <div className="lg:hidden">
                 <AppointmentWidget c={activeCase} />

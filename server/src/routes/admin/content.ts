@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { z, type ZodTypeAny } from 'zod';
 import { Prisma } from '@prisma/client';
 import { prisma } from '../../db.js';
-import { imageUpload } from '../../middleware/upload.js';
+import { imageUpload, verifyUploadedFile } from '../../middleware/upload.js';
 import { badRequest, notFound, parse } from '../../lib/http.js';
 
 export const adminContentRouter = Router();
@@ -25,6 +25,9 @@ interface Delegate {
 }
 
 const faqList = z.array(z.object({ q: l10n, a: l10n })).max(30);
+/** http(s) links or site-relative paths only, so a stored value can never become a javascript: href. */
+const safeUrl = z.string().max(2000).refine((v) => /^(https?:\/\/[^\s]+|\/[^\s]*)$/i.test(v), 'INVALID_URL');
+const safeUrlOrEmpty = z.union([safeUrl, z.literal('')]);
 const optInt = z.number().int().min(0).max(1_000_000).nullable().optional();
 
 const resources: Record<string, { delegate: () => Delegate; schema: z.ZodObject<Record<string, ZodTypeAny>>; orderBy: object }> = {
@@ -33,9 +36,9 @@ const resources: Record<string, { delegate: () => Delegate; schema: z.ZodObject<
     orderBy: { sortOrder: 'asc' },
     schema: z.object({
       slug: z.string().regex(/^[a-z0-9-]+$/),
-      icon: z.string(),
-      image: z.string(),
-      visaLabel: z.string(),
+      icon: z.string().max(60),
+      image: safeUrlOrEmpty,
+      visaLabel: z.string().max(40),
       title: l10n,
       summary: l10n,
       items: l10nList,
@@ -58,8 +61,8 @@ const resources: Record<string, { delegate: () => Delegate; schema: z.ZodObject<
     orderBy: { sortOrder: 'asc' },
     schema: z.object({
       slug: z.string().regex(/^[a-z0-9-]+$/),
-      icon: z.string(),
-      image: z.string(),
+      icon: z.string().max(60),
+      image: safeUrlOrEmpty,
       audience: z.enum(['all', 'company', 'candidate']),
       title: l10n,
       summary: l10n,
@@ -75,9 +78,9 @@ const resources: Record<string, { delegate: () => Delegate; schema: z.ZodObject<
     delegate: () => prisma.partner as unknown as Delegate,
     orderBy: { sortOrder: 'asc' },
     schema: z.object({
-      name: z.string().min(1),
-      logo: z.string().nullable(),
-      website: z.string().nullable(),
+      name: z.string().min(1).max(160),
+      logo: safeUrlOrEmpty.nullable(),
+      website: safeUrlOrEmpty.nullable(),
       sector: z.enum(['logistics', 'courier', 'industry', 'construction', 'hospitality', 'healthcare', 'agriculture', 'other']).nullable().optional(),
       city: z.string().max(80).nullable().optional(),
       description: l10n.nullable().optional(),
@@ -90,7 +93,7 @@ const resources: Record<string, { delegate: () => Delegate; schema: z.ZodObject<
     delegate: () => prisma.visaSample as unknown as Delegate,
     orderBy: { sortOrder: 'asc' },
     schema: z.object({
-      image: z.string(),
+      image: safeUrlOrEmpty,
       profession: l10n,
       visaLabel: z.string(),
       dateLabel: l10n,
@@ -138,7 +141,7 @@ const resources: Record<string, { delegate: () => Delegate; schema: z.ZodObject<
     orderBy: { publishedAt: 'desc' },
     schema: z.object({
       slug: z.string().regex(/^[a-z0-9-]+$/),
-      cover: z.string(),
+      cover: safeUrlOrEmpty,
       title: l10n,
       excerpt: l10n,
       body: l10n,
@@ -207,7 +210,8 @@ adminSettingsRouter.put('/:key', async (req, res) => {
 
 export const adminUploadRouter = Router();
 
-adminUploadRouter.post('/', imageUpload.single('file'), (req, res) => {
+adminUploadRouter.post('/', imageUpload.single('file'), async (req, res) => {
   if (!req.file) throw badRequest('FILE_REQUIRED');
+  await verifyUploadedFile(req.file);
   res.status(201).json({ url: `/uploads/${req.file.filename}` });
 });

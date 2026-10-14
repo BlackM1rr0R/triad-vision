@@ -10,6 +10,6 @@ const config = getDefaultConfig(projectRoot);
 // picks up a second copy of react / react-native from ../node_modules.
 config.watchFolders = [projectRoot];
 config.resolver.nodeModulesPaths = [path.resolve(projectRoot, 'node_modules')];
-config.resolver.disableHierarchicalLookup = false;
+config.resolver.disableHierarchicalLookup = true;
 
 module.exports = config;

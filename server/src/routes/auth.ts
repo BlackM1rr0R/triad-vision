@@ -1,21 +1,35 @@
 import crypto from 'node:crypto';
 import { Router } from 'express';
 import bcrypt from 'bcryptjs';
-import rateLimit from 'express-rate-limit';
 import { z } from 'zod';
 import { config } from '../config.js';
 import type { User } from '@prisma/client';
 import { prisma } from '../db.js';
-import { AUTH_COOKIE, requireAuth, setSessionCookie, signSession, wantsBearerToken } from '../middleware/auth.js';
-import { HttpError, conflict, parse } from '../lib/http.js';
+import {
+  clearSessionCookie,
+  issueSession,
+  requireAuth,
+  revokeSession,
+  revokeUserSessions,
+  setSessionCookie,
+  wantsBearerToken,
+} from '../middleware/auth.js';
+import { HttpError, conflict, limiter, parse } from '../lib/http.js';
 import { renderEmail, sendMail } from '../lib/mailer.js';
+import { loginLockedFor, recordLoginFailure, recordLoginSuccess } from '../lib/loginGuard.js';
+import { audit } from '../lib/audit.js';
 
 export const authRouter = Router();
 
-const limiter = rateLimit({ windowMs: 15 * 60 * 1000, limit: 30, standardHeaders: true, legacyHeaders: false });
+const authLimiter = limiter({ windowMs: 15 * 60 * 1000, limit: 30 });
 
 const locale = z.enum(['az', 'de', 'en', 'ru']);
-const password = z.string().min(8).max(128);
+/** Passwords: 8–128 chars, at least one letter and one digit; anything longer than 128 is a bcrypt DoS. */
+export const password = z
+  .string()
+  .min(8)
+  .max(128)
+  .refine((p) => /[A-Za-z]/.test(p) && /\d/.test(p), 'PASSWORD_TOO_WEAK');
 
 /** The signed-in user as returned to the client (never includes the password hash). */
 export const publicUser = (u: User) => ({
@@ -88,7 +102,19 @@ const birthDate = z
     return d;
   });
 
-authRouter.post('/register', limiter, async (req, res) => {
+/** Creates the session for a freshly authenticated user and writes it to the response. */
+const startSession = async (req: Parameters<typeof wantsBearerToken>[0], res: Parameters<typeof setSessionCookie>[0], user: User) => {
+  const client = wantsBearerToken(req) ? 'mobile' : 'web';
+  const { token, session } = await issueSession(user.id, { client, ip: req.ip, userAgent: req.get('user-agent') });
+  if (client === 'web') setSessionCookie(res, token, client);
+  return {
+    user: publicUser(user),
+    session: { id: session.id, expiresAt: session.expiresAt },
+    ...(client === 'mobile' ? { token } : {}),
+  };
+};
+
+authRouter.post('/register', authLimiter, async (req, res) => {
   const body = parse(
     z.object({
       email: z.string().trim().toLowerCase().email().max(200),
@@ -113,37 +139,46 @@ authRouter.post('/register', limiter, async (req, res) => {
       locale: body.locale,
     },
   });
-  const token = signSession(user.id);
-  setSessionCookie(res, token);
-  res.status(201).json({ user: publicUser(user), ...(wantsBearerToken(req) ? { token } : {}) });
+  res.status(201).json(await startSession(req, res, user));
 });
 
-authRouter.post('/login', limiter, async (req, res) => {
+authRouter.post('/login', authLimiter, async (req, res) => {
   const body = parse(
-    z.object({ email: z.string().transform((s) => s.toLowerCase().trim()), password: z.string() }),
+    z.object({ email: z.string().max(200).transform((s) => s.toLowerCase().trim()), password: z.string().max(128) }),
     req.body,
   );
+  const lockedFor = loginLockedFor(body.email);
+  if (lockedFor > 0) {
+    res.setHeader('Retry-After', String(lockedFor));
+    throw new HttpError(429, 'ACCOUNT_LOCKED', `Too many failed attempts. Try again in ${lockedFor}s`);
+  }
   const user = await prisma.user.findUnique({ where: { email: body.email } });
-  if (!user || !user.isActive || !(await bcrypt.compare(body.password, user.passwordHash))) {
+  // Always run bcrypt so a missing account takes as long as a wrong password (no user enumeration by timing).
+  const hash = user?.passwordHash ?? '$2a$12$CwTycUXWue0Thq9StjUM0uJ8Z7gzXx5hQl1aQ2M0tVqF1q0uZ7m6W';
+  const ok = await bcrypt.compare(body.password, hash);
+  if (!user || !user.isActive || !ok) {
+    recordLoginFailure(body.email);
+    await audit(req, 'LOGIN_FAILED', user ? `user:${user.id}` : undefined, { email: body.email });
     throw new HttpError(401, 'INVALID_CREDENTIALS');
   }
-  const token = signSession(user.id);
-  setSessionCookie(res, token);
-  res.json({ user: publicUser(user), ...(wantsBearerToken(req) ? { token } : {}) });
+  recordLoginSuccess(body.email);
+  res.json(await startSession(req, res, user));
 });
 
-authRouter.post('/logout', (_req, res) => {
-  res.clearCookie(AUTH_COOKIE);
+authRouter.post('/logout', async (req, res) => {
+  if (req.session) await revokeSession(req.session.id);
+  clearSessionCookie(res);
   res.json({ ok: true });
 });
 
 authRouter.get('/me', async (req, res) => {
   if (!req.user) {
-    res.json({ user: null });
+    // Tell the client *why* its token no longer works so it can show "session expired" instead of a generic error.
+    res.json({ user: null, ...(req.authFailure ? { reason: req.authFailure } : {}) });
     return;
   }
   const user = await prisma.user.findUniqueOrThrow({ where: { id: req.user.id } });
-  res.json({ user: publicUser(user) });
+  res.json({ user: publicUser(user), session: { id: req.session!.id, expiresAt: req.session!.expiresAt } });
 });
 
 authRouter.patch('/me', requireAuth, async (req, res) => {
@@ -165,7 +200,7 @@ authRouter.patch('/me', requireAuth, async (req, res) => {
       about: optText(2000),
       emailNotifications: z.boolean().optional(),
       pushNotifications: z.boolean().optional(),
-      currentPassword: z.string().optional(),
+      currentPassword: z.string().max(128).optional(),
       newPassword: password.optional(),
     }),
     req.body,
@@ -180,8 +215,43 @@ authRouter.patch('/me', requireAuth, async (req, res) => {
     data.passwordHash = await bcrypt.hash(body.newPassword, 12);
   }
   const user = await prisma.user.update({ where: { id: req.user!.id }, data });
+  if (body.newPassword) {
+    // Every other device must log in again with the new password; this one keeps its session.
+    await revokeUserSessions(user.id, req.session!.id);
+    await audit(req, 'PASSWORD_CHANGED', `user:${user.id}`);
+  }
   res.json({ user: publicUser(user) });
 });
+
+// ─── Sessions (security page: "where am I logged in?") ─────────────────
+
+authRouter.get('/sessions', requireAuth, async (req, res) => {
+  const sessions = await prisma.session.findMany({
+    where: { userId: req.user!.id, revokedAt: null, expiresAt: { gt: new Date() } },
+    orderBy: { lastSeenAt: 'desc' },
+    select: { id: true, client: true, ip: true, userAgent: true, createdAt: true, lastSeenAt: true, expiresAt: true },
+  });
+  res.json({ sessions: sessions.map((s) => ({ ...s, current: s.id === req.session!.id })) });
+});
+
+/** Logs out every other device. */
+authRouter.delete('/sessions', requireAuth, async (req, res) => {
+  const { count } = await revokeUserSessions(req.user!.id, req.session!.id);
+  await audit(req, 'SESSIONS_REVOKED', `user:${req.user!.id}`, { count });
+  res.json({ ok: true, revoked: count });
+});
+
+authRouter.delete('/sessions/:id', requireAuth, async (req, res) => {
+  const { count } = await prisma.session.updateMany({
+    where: { id: String(req.params.id), userId: req.user!.id, revokedAt: null },
+    data: { revokedAt: new Date() },
+  });
+  if (!count) throw new HttpError(404, 'SESSION_NOT_FOUND');
+  if (req.params.id === req.session!.id) clearSessionCookie(res);
+  res.json({ ok: true });
+});
+
+// ─── Password reset ────────────────────────────────────────────────────
 
 const RESET_TEXT = {
   az: { title: 'Şifrənin bərpası', body: 'Şifrənizi yeniləmək üçün aşağıdakı düyməyə klikləyin. Link 1 saat etibarlıdır. Bu sorğunu siz göndərməmisinizsə, bu məktubu nəzərə almayın.', cta: 'Yeni şifrə təyin et' },
@@ -190,8 +260,8 @@ const RESET_TEXT = {
   ru: { title: 'Восстановление пароля', body: 'Нажмите кнопку ниже, чтобы сменить пароль. Ссылка действительна 1 час. Если вы не запрашивали восстановление, проигнорируйте это письмо.', cta: 'Задать новый пароль' },
 };
 
-authRouter.post('/forgot-password', limiter, async (req, res) => {
-  const { email } = parse(z.object({ email: z.string().transform((s) => s.toLowerCase().trim()) }), req.body);
+authRouter.post('/forgot-password', authLimiter, async (req, res) => {
+  const { email } = parse(z.object({ email: z.string().max(200).transform((s) => s.toLowerCase().trim()) }), req.body);
   const user = await prisma.user.findUnique({ where: { email } });
   // Always answer the same way so the endpoint cannot be used to discover registered emails.
   if (user && user.isActive) {
@@ -213,8 +283,8 @@ authRouter.post('/forgot-password', limiter, async (req, res) => {
   res.json({ ok: true });
 });
 
-authRouter.post('/reset-password', limiter, async (req, res) => {
-  const body = parse(z.object({ token: z.string().min(10), password }), req.body);
+authRouter.post('/reset-password', authLimiter, async (req, res) => {
+  const body = parse(z.object({ token: z.string().min(10).max(200), password }), req.body);
   const tokenHash = crypto.createHash('sha256').update(body.token).digest('hex');
   const record = await prisma.passwordResetToken.findUnique({ where: { tokenHash } });
   if (!record || record.usedAt || record.expiresAt < new Date()) throw new HttpError(400, 'INVALID_TOKEN');
@@ -222,6 +292,11 @@ authRouter.post('/reset-password', limiter, async (req, res) => {
   await prisma.$transaction([
     prisma.user.update({ where: { id: record.userId }, data: { passwordHash: await bcrypt.hash(body.password, 12) } }),
     prisma.passwordResetToken.update({ where: { id: record.id }, data: { usedAt: new Date() } }),
+    // Other unused reset links for this account become useless too.
+    prisma.passwordResetToken.updateMany({ where: { userId: record.userId, usedAt: null }, data: { usedAt: new Date() } }),
+    // A reset usually follows a compromise: log every device out.
+    prisma.session.updateMany({ where: { userId: record.userId, revokedAt: null }, data: { revokedAt: new Date() } }),
   ]);
+  await audit({ user: undefined, ip: req.ip }, 'PASSWORD_RESET', `user:${record.userId}`);
   res.json({ ok: true });
 });

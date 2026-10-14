@@ -1,13 +1,11 @@
-import { lazy, Suspense, useEffect, useRef, useState } from 'react';
-import { canAffordHeavyEffects, whenIdle } from '@/lib/idle';
+import { useRef } from 'react';
 import { RouteFlags } from '../ui/Flag';
+import { HeroGlobeLite } from './HeroGlobeLite';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import { ArrowRight, CheckCircle2, MousePointer2 } from 'lucide-react';
 import { Magnetic } from '../motion';
-
-const HeroGlobe = lazy(() => import('../three/HeroGlobe'));
 
 const BG = 'https://images.unsplash.com/photo-1587330979470-3595ac045ab0?auto=format&fit=crop&w=1600&q=60';
 const HANDSHAKE = 'https://images.unsplash.com/photo-1521791136064-7986c2920216?auto=format&fit=crop&w=640&q=70';
@@ -24,13 +22,6 @@ export const Hero = () => {
   const fade = useTransform(scrollYProgress, [0, 0.7], [1, 0]);
 
   const bullets = t('hero.bullets', { returnObjects: true }) as string[];
-
-  // The WebGL globe is decorative: start it only once the page is idle, and skip it on phones /
-  // low-end devices where it would cost frames for an element shown at 35% opacity behind text.
-  const [globe, setGlobe] = useState(false);
-  useEffect(() => {
-    if (canAffordHeavyEffects()) whenIdle(() => setGlobe(true), 1500);
-  }, []);
 
   return (
     <section ref={ref} className="relative isolate min-h-[100svh] overflow-hidden bg-navy-950 text-white">
@@ -52,13 +43,7 @@ export const Hero = () => {
         style={{ y: globeY, scale: globeScale }}
         className="will-change-transform absolute top-[58%] right-[-45%] -z-10 aspect-square w-[140vw] -translate-y-1/2 opacity-35 sm:top-1/2 sm:right-[-25%] sm:w-[100vw] sm:opacity-50 lg:right-[-8%] lg:w-[62vw] lg:max-w-[980px] lg:-translate-y-[45%] lg:opacity-100"
       >
-        {globe ? (
-          <Suspense fallback={null}>
-            <HeroGlobe />
-          </Suspense>
-        ) : (
-          <div className="size-full rounded-full bg-[radial-gradient(circle_at_40%_35%,rgba(92,155,255,0.45),rgba(21,101,232,0.18)_45%,transparent_70%)]" />
-        )}
+        <HeroGlobeLite />
       </motion.div>
 
       <div className="container-x relative flex min-h-[100svh] flex-col justify-center pt-28 pb-32 sm:pt-36 lg:pt-40 lg:pb-32">

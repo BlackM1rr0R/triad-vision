@@ -13,6 +13,7 @@ import {
   Menu,
   MessageCircle,
   Phone,
+  UserPlus,
   UserRound,
   X,
 } from 'lucide-react';
@@ -21,15 +22,18 @@ import { Logo } from '../ui/Logo';
 import { Icon } from '../ui/Icon';
 import { Flag } from '../ui/Flag';
 import { LanguageSwitcher } from './LanguageSwitcher';
+import { ThemeToggle } from '../a11y/ThemeToggle';
+import { setSmoothScrollPaused } from '@/lib/smoothScroll';
 import { SearchButton } from '../search/SearchPalette';
 import { useAuth } from '@/lib/auth';
 import { useSiteContent } from '@/lib/content';
 import { useL10n } from '@/lib/l10n';
-import { LOCALES } from '@/i18n';
+import { LOCALES, switchLanguage } from '@/i18n';
 import { sized } from '@/lib/img';
 
 /** Routes whose top section is light, so the header must start in its solid (dark-text) style. */
-const LIGHT_TOP = ['/login', '/register', '/forgot-password', '/reset-password', '/account'];
+/** Routes whose top is light, so the header is solid there from the start (everywhere else it floats over a dark hero). */
+export const LIGHT_TOP = ['/login', '/register', '/forgot-password', '/reset-password', '/account'];
 const EASE = [0.22, 1, 0.36, 1] as const;
 
 type MegaKey = 'services' | 'visas' | 'more';
@@ -61,8 +65,10 @@ export const Header = () => {
 
   useEffect(() => {
     document.body.style.overflow = mobileOpen ? 'hidden' : '';
+    setSmoothScrollPaused(mobileOpen);
     return () => {
       document.body.style.overflow = '';
+      setSmoothScrollPaused(false);
     };
   }, [mobileOpen]);
 
@@ -133,6 +139,7 @@ export const Header = () => {
               )}
               <span className="h-4 w-px bg-white/15" />
               <LanguageSwitcher variant="bar" />
+              <ThemeToggle variant="bar" />
               <span className="h-4 w-px bg-white/15" />
               {user ? (
                 <div className="flex items-center gap-3">
@@ -221,9 +228,33 @@ export const Header = () => {
 
             <div className="flex items-center gap-1 sm:gap-2">
               <SearchButton light={!solid} />
-              <div className="lg:hidden">
+              <div className="flex items-center gap-1 sm:gap-2 lg:hidden">
                 <LanguageSwitcher light={!solid} />
+                <ThemeToggle light={!solid} />
               </div>
+              {user ? (
+                <Link
+                  to={accountHref}
+                  className={clsx('hidden h-10 items-center gap-1.5 rounded-lg border px-3 text-sm font-semibold whitespace-nowrap transition lg:inline-flex', solid ? 'border-line text-navy-900 hover:border-brand-400' : 'border-white/25 text-white hover:bg-white/10')}
+                >
+                  <UserRound className="size-4" /> {user.role === 'CLIENT' ? t('nav.accountShort') : t('nav.admin')}
+                </Link>
+              ) : (
+                <>
+                  <Link
+                    to="/login"
+                    className={clsx('hidden h-10 items-center gap-1.5 rounded-lg px-3 text-sm font-semibold whitespace-nowrap transition lg:inline-flex', solid ? 'text-navy-900 hover:bg-surface' : 'text-white hover:bg-white/10')}
+                  >
+                    <LogIn className="size-4" /> {t('nav.login')}
+                  </Link>
+                  <Link
+                    to="/register"
+                    className={clsx('hidden h-10 items-center gap-1.5 rounded-lg border px-3.5 text-sm font-semibold whitespace-nowrap transition lg:inline-flex', solid ? 'border-navy-900 text-navy-900 hover:bg-navy-900 hover:text-white' : 'border-white/40 text-white hover:bg-white hover:text-navy-900')}
+                  >
+                    <UserPlus className="size-4" /> {t('nav.register')}
+                  </Link>
+                </>
+              )}
               <Link to="/cooperation" className="btn-primary group hidden h-10 px-4 whitespace-nowrap sm:inline-flex">
                 <span className="absolute inset-y-0 left-0 w-1/3 animate-shine bg-white/25" />
                 <span className="2xl:hidden">{t('nav.cooperationShort')}</span>
@@ -232,7 +263,7 @@ export const Header = () => {
               </Link>
               <button
                 type="button"
-                aria-label="Menu"
+                aria-label={t('a11y.menu')}
                 aria-expanded={mobileOpen}
                 onClick={() => setMobileOpen(true)}
                 className={clsx('grid size-10 place-items-center rounded-lg xl:hidden', solid ? 'text-navy-900 hover:bg-surface' : 'text-white hover:bg-white/10')}
@@ -355,7 +386,7 @@ export const Header = () => {
                     <button
                       key={l}
                       type="button"
-                      onClick={() => void i18n.changeLanguage(l)}
+                      onClick={() => switchLanguage(l)}
                       className={clsx(
                         'flex h-10 items-center gap-2 rounded-lg border px-3 text-sm font-semibold',
                         i18n.resolvedLanguage?.startsWith(l) ? 'border-brand-500 bg-brand-600/20 text-white' : 'border-white/15 text-white/70',
@@ -364,6 +395,7 @@ export const Header = () => {
                       <Flag code={l} /> {l.toUpperCase()}
                     </button>
                   ))}
+                  <ThemeToggle light className="ml-auto" />
                 </div>
 
                 <div className="mt-6 grid gap-3 sm:grid-cols-2">
@@ -375,9 +407,14 @@ export const Header = () => {
                       {user.role === 'CLIENT' ? t('nav.account') : t('nav.admin')}
                     </Link>
                   ) : (
-                    <Link to="/login" className="btn-outline w-full">
-                      <LogIn className="size-4" /> {t('nav.login')}
-                    </Link>
+                    <>
+                      <Link to="/login" className="btn-outline w-full">
+                        <LogIn className="size-4" /> {t('nav.login')}
+                      </Link>
+                      <Link to="/register" className="btn-white w-full border border-line sm:col-span-2">
+                        <UserPlus className="size-4" /> {t('nav.register')}
+                      </Link>
+                    </>
                   )}
                 </div>
 

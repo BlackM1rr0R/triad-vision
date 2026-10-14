@@ -1,11 +1,20 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { Download, ExternalLink, FileText, Image as ImageIcon } from 'lucide-react';
+import i18n from '@/i18n';
 import { api, fileUrl, formatBytes } from '@/lib/api';
 import type { CaseDetail, CaseDocument, DocStage, Requirement } from '@/lib/types';
-import { toastError } from '../labels';
+import { fmtDateTime, toastError } from '../labels';
+import type { CaseStats } from '../types';
 
 export const caseKey = (id: string) => ['admin-case', id] as const;
+
+/** GET /admin/cases/:id */
+export interface CaseDetailResponse {
+  case: CaseDetail;
+  stats: CaseStats;
+}
 
 export type ActionBody =
   | { action: 'REQUEST_CHANGES'; note: string }
@@ -33,10 +42,12 @@ export const useCaseAction = (id: string) => {
   return useMutation({
     mutationFn: async (body: ActionBody) => (await api.post<{ case: CaseDetail }>(`/admin/cases/${id}/actions`, body)).data.case,
     onSuccess: (c) => {
-      qc.setQueryData(caseKey(id), c);
+      // Show the new case state at once; the derived stats are refetched right after.
+      qc.setQueryData<CaseDetailResponse>(caseKey(id), (old) => (old ? { ...old, case: c } : old));
+      void qc.invalidateQueries({ queryKey: caseKey(id) });
       void qc.invalidateQueries({ queryKey: ['admin-cases'] });
       void qc.invalidateQueries({ queryKey: ['admin-dashboard'] });
-      toast.success('Əməliyyat yerinə yetirildi. Müştəriyə bildiriş göndərildi.');
+      toast.success(String(i18n.t('admin.case.action.done')));
     },
     onError: (err) => toastError(err),
   });
@@ -68,31 +79,37 @@ export const DocIcon = ({ mime, className }: { mime: string; className?: string 
   mime.startsWith('image/') ? <ImageIcon className={className} aria-hidden /> : <FileText className={className} aria-hidden />;
 
 /** Open-in-new-tab and download links for a stored document. */
-export const DocLinks = ({ doc }: { doc: CaseDocument }) => (
-  <span className="inline-flex shrink-0 items-center">
-    <a
-      href={fileUrl(doc.id)}
-      target="_blank"
-      rel="noreferrer"
-      className="grid size-10 place-items-center rounded-lg lg:size-8 text-muted transition hover:bg-brand-50 hover:text-brand-700"
-      title="Aç"
-      aria-label={`${doc.originalName} — aç`}
-    >
-      <ExternalLink className="size-3.5" />
-    </a>
-    <a
-      href={fileUrl(doc.id, true)}
-      className="grid size-10 place-items-center rounded-lg lg:size-8 text-muted transition hover:bg-brand-50 hover:text-brand-700"
-      title="Yüklə"
-      aria-label={`${doc.originalName} — yüklə`}
-    >
-      <Download className="size-3.5" />
-    </a>
-  </span>
-);
+export const DocLinks = ({ doc }: { doc: CaseDocument }) => {
+  const { t } = useTranslation();
+  return (
+    <span className="inline-flex shrink-0 items-center">
+      <a
+        href={fileUrl(doc.id)}
+        target="_blank"
+        rel="noreferrer"
+        className="grid size-10 place-items-center rounded-lg lg:size-8 text-muted transition hover:bg-brand-50 hover:text-brand-700"
+        title={t('admin.common.open')}
+        aria-label={t('admin.case.doc.openAria', { name: doc.originalName })}
+      >
+        <ExternalLink className="size-3.5" />
+      </a>
+      <a
+        href={fileUrl(doc.id, true)}
+        className="grid size-10 place-items-center rounded-lg lg:size-8 text-muted transition hover:bg-brand-50 hover:text-brand-700"
+        title={t('admin.common.download')}
+        aria-label={t('admin.case.doc.downloadAria', { name: doc.originalName })}
+      >
+        <Download className="size-3.5" />
+      </a>
+    </span>
+  );
+};
 
-export const DocMeta = ({ doc }: { doc: CaseDocument }) => (
-  <span className="block truncate text-[11px] text-muted">
-    {formatBytes(doc.size)} · {new Intl.DateTimeFormat('az-Latn-AZ', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(doc.createdAt))}
-  </span>
-);
+export const DocMeta = ({ doc }: { doc: CaseDocument }) => {
+  useTranslation(); // re-render the date on a language change
+  return (
+    <span className="block truncate text-[11px] text-muted">
+      {formatBytes(doc.size)} · {fmtDateTime(doc.createdAt)}
+    </span>
+  );
+};

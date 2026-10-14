@@ -1,6 +1,6 @@
 import { useId, useState, type InputHTMLAttributes, type ReactNode } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import clsx from 'clsx';
@@ -12,6 +12,7 @@ import {
   KeyRound,
   LogOut,
   Mail,
+  Monitor,
   Save,
   ShieldCheck,
   Smartphone,
@@ -22,7 +23,7 @@ import {
 import { api, errorCode } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { useL10n } from '@/lib/l10n';
-import type { User } from '@/lib/types';
+import { isStrongPassword, PASSWORD_MAX, PASSWORD_MIN, type User, type UserSession } from '@/lib/types';
 import { LOCALES, type Locale } from '@/i18n';
 import { Flag } from '@/components/ui/Flag';
 import { Spinner } from '@/components/ui/Spinner';
@@ -45,6 +46,7 @@ import {
 } from '@/components/portal/profileFields';
 import { registerCopy } from '@/i18n';
 import { pagesAccount } from '@/i18n/pagesAccount';
+import { usePageTitle } from '@/lib/usePageTitle';
 
 registerCopy(pagesAccount);
 
@@ -590,6 +592,103 @@ const NotificationsPanel = ({ user }: { user: User }) => {
 
 // ─── Security ──────────────────────────────────────────────────────────
 
+/** Short device description from a user-agent string (no library: only the coarse browser + OS). */
+const describeAgent = (ua: string | null, fallback: string) => {
+  if (!ua) return fallback;
+  const os = /windows/i.test(ua) ? 'Windows' : /android/i.test(ua) ? 'Android' : /iphone|ipad/i.test(ua) ? 'iOS' : /mac os/i.test(ua) ? 'macOS' : /linux/i.test(ua) ? 'Linux' : '';
+  const browser = /edg\//i.test(ua) ? 'Edge' : /opr\//i.test(ua) ? 'Opera' : /chrome\//i.test(ua) ? 'Chrome' : /firefox\//i.test(ua) ? 'Firefox' : /safari\//i.test(ua) ? 'Safari' : '';
+  const parts = [browser, os].filter(Boolean);
+  return parts.length ? parts.join(' · ') : fallback;
+};
+
+const SESSIONS_KEY = ['sessions'];
+
+const SessionsPanel = () => {
+  const { t } = useTranslation();
+  const { dateTime } = useL10n();
+  const qc = useQueryClient();
+  const onError = useApiError();
+  const uid = useId();
+  const { data, isLoading } = useQuery({
+    queryKey: SESSIONS_KEY,
+    queryFn: async () => (await api.get<{ sessions: UserSession[] }>('/auth/sessions')).data.sessions,
+  });
+  const revokeOne = useMutation({
+    mutationFn: (id: string) => api.delete(`/auth/sessions/${id}`),
+    onSuccess: () => {
+      toast.success(t('accountPage.profile.security.sessions.revoked'));
+      void qc.invalidateQueries({ queryKey: SESSIONS_KEY });
+    },
+    onError,
+  });
+  const revokeOthers = useMutation({
+    mutationFn: async () => (await api.delete<{ revoked: number }>('/auth/sessions')).data.revoked,
+    onSuccess: (count) => {
+      toast.success(t('accountPage.profile.security.sessions.revokedOthers', { count }));
+      void qc.invalidateQueries({ queryKey: SESSIONS_KEY });
+    },
+    onError,
+  });
+
+  const sessions = data ?? [];
+  const others = sessions.filter((x) => !x.current);
+  const k = (key: string) => t(`accountPage.profile.security.sessions.${key}`);
+
+  return (
+    <Panel id={`${uid}-title`} title={k('title')} icon={Monitor} intro={k('text')}>
+      {isLoading ? (
+        <div className="grid place-items-center py-6">
+          <Spinner className="size-5 text-brand-600" />
+        </div>
+      ) : (
+        <ul className="divide-y divide-line rounded-xl border border-line">
+          {sessions.map((x) => (
+            <li key={x.id} className="flex items-center gap-3 px-4 py-3">
+              <span className={clsx('grid size-9 shrink-0 place-items-center rounded-lg', x.current ? 'bg-brand-50 text-brand-600' : 'bg-surface text-muted')}>
+                {x.client === 'mobile' ? <Smartphone className="size-4" aria-hidden /> : <Monitor className="size-4" aria-hidden />}
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-sm font-semibold text-navy-900">
+                  <span className="truncate">{x.client === 'mobile' ? k('mobile') : describeAgent(x.userAgent, k('unknownDevice'))}</span>
+                  {x.current && <span className="badge bg-brand-100 text-[10px] text-brand-700">{k('current')}</span>}
+                </p>
+                <p className="truncate text-xs text-muted">
+                  {k('lastSeen')}: {dateTime(x.lastSeenAt)}
+                  {x.ip ? ` · ${x.ip}` : ''}
+                </p>
+              </div>
+              {!x.current && (
+                <button
+                  type="button"
+                  className="btn btn-sm min-h-9 shrink-0 border border-line text-navy-900 hover:border-red-200 hover:bg-red-50 hover:text-danger"
+                  disabled={revokeOne.isPending || revokeOthers.isPending}
+                  onClick={() => revokeOne.mutate(x.id)}
+                >
+                  {k('revoke')}
+                </button>
+              )}
+            </li>
+          ))}
+          {sessions.length === 0 && <li className="px-4 py-6 text-center text-sm text-muted">{k('none')}</li>}
+        </ul>
+      )}
+      {others.length > 0 && (
+        <div className="mt-4 flex justify-end">
+          <button
+            type="button"
+            className="btn min-h-11 w-full border border-line text-navy-900 hover:bg-surface sm:w-auto"
+            disabled={revokeOthers.isPending}
+            onClick={() => revokeOthers.mutate()}
+          >
+            {revokeOthers.isPending ? <Spinner className="size-4" /> : <LogOut className="size-4" aria-hidden />}
+            {k('revokeOthers')}
+          </button>
+        </div>
+      )}
+    </Panel>
+  );
+};
+
 const SecurityPanel = ({ user }: { user: User }) => {
   const { t } = useTranslation();
   const { date } = useL10n();
@@ -602,7 +701,7 @@ const SecurityPanel = ({ user }: { user: User }) => {
   const [newPassword, setNewPassword] = useState('');
   const [busy, setBusy] = useState(false);
   const [leaving, setLeaving] = useState(false);
-  const valid = currentPassword.length > 0 && newPassword.length >= 8 && newPassword.length <= 128;
+  const valid = currentPassword.length > 0 && isStrongPassword(newPassword);
 
   const submit = async () => {
     if (!valid) return;
@@ -658,9 +757,9 @@ const SecurityPanel = ({ user }: { user: User }) => {
               onChange={(e) => setNewPassword(e.target.value)}
               autoComplete="new-password"
               required
-              minLength={8}
-              maxLength={128}
-              error={newPassword && newPassword.length < 8 ? t('auth.passwordHint') : null}
+              minLength={PASSWORD_MIN}
+              maxLength={PASSWORD_MAX}
+              error={newPassword && !isStrongPassword(newPassword) ? t('auth.passwordHint') : null}
               hint={t('auth.passwordHint')}
             />
           </div>
@@ -672,6 +771,8 @@ const SecurityPanel = ({ user }: { user: User }) => {
           </div>
         </Panel>
       </form>
+
+      <SessionsPanel />
 
       <Panel id={`${uid}-logout`} title={t('accountPage.profile.security.logoutTitle')} icon={LogOut} intro={t('accountPage.profile.security.logoutText')}>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -816,6 +917,7 @@ const Completeness = ({ user, onJump }: { user: User; onJump: (tab: ProfileTab) 
 
 export default function Profile() {
   const { t } = useTranslation();
+  usePageTitle(t('portal.profile'));
   const { user } = useAuth();
   const [params, setParams] = useSearchParams();
   const uid = useId();

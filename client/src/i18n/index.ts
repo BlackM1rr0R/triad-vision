@@ -1,3 +1,4 @@
+import { startTransition } from 'react';
 import i18n from 'i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
 import { initReactI18next } from 'react-i18next';
@@ -45,6 +46,19 @@ export const currentLocale = (): Locale => {
 };
 
 export default i18n;
+
+/**
+ * Switches the UI language without blocking the page. Every component that calls useTranslation
+ * re-renders on a language change; marking that update as a React transition lets React split
+ * the work across frames, so the click is acknowledged instantly instead of freezing for the
+ * whole re-render. Resources are bundled, so i18next emits the change synchronously inside the
+ * transition scope.
+ */
+export const switchLanguage = (lng: Locale) => {
+  startTransition(() => {
+    void i18n.changeLanguage(lng);
+  });
+};
 
 /**
  * Page-specific copy (About, Visas, Account…) is registered by the page module itself, so its text in

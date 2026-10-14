@@ -9,6 +9,7 @@ import { FaqList } from '@/components/cards';
 import { Reveal } from '@/components/motion';
 import { useSiteContent } from '@/lib/content';
 import { useL10n } from '@/lib/l10n';
+import { usePageTitle } from '@/lib/usePageTitle';
 
 type Audience = 'all' | 'company' | 'candidate';
 
@@ -24,6 +25,7 @@ const norm = (s: string) =>
 
 export default function FaqPage() {
   const { t } = useTranslation();
+  usePageTitle(t('faq.title'));
   const { tr } = useL10n();
   const { data } = useSiteContent();
   const [tab, setTab] = useState<Audience>('all');

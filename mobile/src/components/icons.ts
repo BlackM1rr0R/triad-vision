@@ -63,6 +63,7 @@ export { default as MailCheck } from 'lucide-react-native/icons/mail-check';
 export { default as MapPin } from 'lucide-react-native/icons/map-pin';
 export { default as MessageCircle } from 'lucide-react-native/icons/message-circle';
 export { default as MessageSquareWarning } from 'lucide-react-native/icons/message-square-warning';
+export { default as MonitorSmartphone } from 'lucide-react-native/icons/monitor-smartphone';
 export { default as NotebookPen } from 'lucide-react-native/icons/notebook-pen';
 export { default as Package } from 'lucide-react-native/icons/package';
 export { default as PenLine } from 'lucide-react-native/icons/pen-line';

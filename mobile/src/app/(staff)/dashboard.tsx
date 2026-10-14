@@ -5,7 +5,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { Activity, BadgeCheck, Clock3, FolderKanban, Inbox, UserPlus, type LucideProps } from '@/components/icons';
 import type { ComponentType } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Card, EmptyState, ErrorState, NavyHeader, ScrollScreen, Section, SkeletonCard, SkeletonList, StatusBadge, Text } from '@/components/ui';
+import { Card, EmptyState, ErrorState, NavyHeader, ScrollScreen, Section, SkeletonCard, SkeletonList, StaleHint, StatusBadge, Text } from '@/components/ui';
 import { useAuth } from '@/lib/auth';
 import { ALL_STATUSES, FINAL, STATUS_TONE } from '@/lib/caseStatus';
 import { useFormat } from '@/lib/format';
@@ -53,10 +53,11 @@ export default function Dashboard() {
           <SkeletonCard lines={2} />
           <SkeletonList count={3} lines={1} />
         </>
-      ) : error || !data ? (
+      ) : !data ? (
         <ErrorState error={error} onRetry={() => void refetch()} />
       ) : (
         <>
+          {error ? <StaleHint error={error} onRetry={() => void refetch()} /> : null}
           <View style={styles.stats}>
             <Stat icon={FolderKanban} label={t('m.staff.dashboard.active')} value={active} tint={colors.blue} />
             <Stat icon={BadgeCheck} label={t('m.staff.dashboard.approved')} value={counts.APPROVED ?? 0} tint={colors.success} />

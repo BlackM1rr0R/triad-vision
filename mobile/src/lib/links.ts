@@ -1,12 +1,10 @@
-import type { Role } from '@/types';
+import { isStaffRole, type Role } from '@/types';
 
 export interface NotificationTarget {
   link?: string | null;
   caseId?: string | null;
   type?: string | null;
 }
-
-const isStaffRole = (role?: Role | null) => role === 'STAFF' || role === 'ADMIN';
 
 /**
  * Converts a server notification link (a web path such as /account/cases/:id or /admin/cases/:id)

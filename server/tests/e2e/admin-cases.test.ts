@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { asAdmin, asClient, asStaff, type Agent } from '../helpers/api';
 import { prisma, settle } from '../helpers/db';
 import { createClient, createVisaCategory, l10n } from '../helpers/factories';
-import { makePdf, PDF } from '../helpers/files';
+import { makePdf, PDF, sampleFor } from '../helpers/files';
 import { expectClientNotified } from '../helpers/notify';
 import { TEST_UPLOADS_DIR } from '../helpers/testEnv';
 import { adminCase, clientCase, createCaseVia, driveCaseTo, expectStatus, sendContract, uploadDoc, uploadRequired } from '../helpers/workflow';
@@ -22,7 +22,7 @@ const setup = async (clientOpts = {}) => {
 const staffUpload = async (admin: Agent, caseId: string, fields: Record<string, string>, file?: { name: string; type: string; data?: Buffer }) => {
   let t = admin.post(`/api/admin/cases/${caseId}/documents`);
   for (const [k, v] of Object.entries(fields)) t = t.field(k, v);
-  if (file) t = t.attach('file', file.data ?? (await makePdf()), { filename: file.name, contentType: file.type });
+  if (file) t = t.attach('file', file.data ?? (file.type === 'application/pdf' ? await makePdf() : sampleFor(file.type)), { filename: file.name, contentType: file.type });
   return t;
 };
 
@@ -219,9 +219,9 @@ describe('requirements', () => {
     expect(patched.body.requirement).toMatchObject({ required: true, title: l10n('Military ID card'), description: l10n('Both sides') });
     expect((await clientCase(client.agent, c.id)).requirements.some((r) => r.id === id)).toBe(true);
 
-    // description: null leaves the description unchanged
+    // description: null clears the description
     const nulled = await admin.agent.patch(`/api/admin/cases/${c.id}/requirements/${id}`).send({ description: null });
-    expect(nulled.body.requirement.description).toEqual(l10n('Both sides'));
+    expect(nulled.body.requirement.description).toBeNull();
 
     const del = await admin.agent.delete(`/api/admin/cases/${c.id}/requirements/${id}`);
     expect(del.status).toBe(200);
@@ -339,7 +339,7 @@ describe('staff uploads', () => {
 
   it.each(['VISA', 'OTHER'])('%s files are attached for the client to see', async (stage) => {
     const { client, admin, c } = await setup();
-    const res = await staffUpload(admin.agent, c.id, { stage }, { name: 'visa.png', type: 'image/png', data: Buffer.from('png') });
+    const res = await staffUpload(admin.agent, c.id, { stage }, { name: 'visa.png', type: 'image/png' });
     expect(res.status).toBe(201);
     expect(res.body.document).toMatchObject({ stage, status: 'ACCEPTED', requirementId: null });
     const detail = await clientCase(client.agent, c.id);
@@ -354,7 +354,7 @@ describe('staff uploads', () => {
     const res = await staffUpload(admin.agent, c.id, { stage: 'CONTRACT' }, {
       name: 'contract.docx',
       type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-      data: Buffer.from('docx'),
+      data: sampleFor('application/vnd.openxmlformats-officedocument.wordprocessingml.document'),
     });
     expect(res.status).toBe(400);
     expect(res.body.error).toBe('CONTRACT_MUST_BE_PDF');

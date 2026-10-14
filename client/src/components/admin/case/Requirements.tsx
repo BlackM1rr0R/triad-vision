@@ -1,30 +1,33 @@
 import { useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
 import { toast } from 'sonner';
 import { Check, CheckCheck, ClipboardList, Plus, Trash2, Upload, X } from 'lucide-react';
 import { api } from '@/lib/api';
+import { useL10n } from '@/lib/l10n';
 import type { CaseDetail, CaseDocument, Requirement } from '@/lib/types';
 import { Spinner } from '@/components/ui/Spinner';
 import { ConfirmDialog } from '../ConfirmDialog';
 import { L10nInput, emptyL10n, fillFromAz } from '../L10nInput';
 import { Modal } from '../Modal';
-import { DOC_STATUS_LABEL, DOC_STATUS_TONE, STAGE_LABEL, toastError } from '../labels';
+import { DOC_STATUS_TONE, docStatusLabel, stageLabel, toastError } from '../labels';
 import { Panel, Switch } from '../ui';
 import { DocIcon, DocLinks, DocMeta, isAccepted, stageRequirements, uploadCaseDocument, useCaseRefresh } from './shared';
 
 type Stage = 'INITIAL' | 'EMBASSY';
 
-const reqState = (r: Requirement) => {
-  if (isAccepted(r)) return { label: 'Qəbul edilib', tone: 'bg-emerald-100 text-emerald-800' };
-  if (r.documents.some((d) => d.status === 'PENDING')) return { label: 'Yoxlanılmalıdır', tone: 'bg-amber-100 text-amber-800' };
-  if (r.documents.length > 0) return { label: 'Rədd edilib', tone: 'bg-red-100 text-red-700' };
-  return { label: 'Yüklənməyib', tone: 'bg-slate-100 text-slate-600' };
+const reqState = (r: Requirement): { key: 'accepted' | 'review' | 'rejected' | 'missing'; tone: string } => {
+  if (isAccepted(r)) return { key: 'accepted', tone: 'bg-emerald-100 text-emerald-800' };
+  if (r.documents.some((d) => d.status === 'PENDING')) return { key: 'review', tone: 'bg-amber-100 text-amber-800' };
+  if (r.documents.length > 0) return { key: 'rejected', tone: 'bg-red-100 text-red-700' };
+  return { key: 'missing', tone: 'bg-slate-100 text-slate-600' };
 };
 
 // ─── Document row with review controls ─────────────────────────────────
 
 const DocRow = ({ c, doc }: { c: CaseDetail; doc: CaseDocument }) => {
+  const { t } = useTranslation();
   const refresh = useCaseRefresh(c.id);
   const [rejecting, setRejecting] = useState(false);
   const [note, setNote] = useState('');
@@ -35,7 +38,7 @@ const DocRow = ({ c, doc }: { c: CaseDetail; doc: CaseDocument }) => {
     try {
       await api.post(`/admin/cases/${c.id}/documents/${doc.id}/review`, { status, note: status === 'REJECTED' ? note.trim() : undefined });
       await refresh();
-      toast.success(status === 'ACCEPTED' ? 'Sənəd qəbul edildi.' : 'Sənəd rədd edildi, müştəriyə bildiriş göndərildi.');
+      toast.success(status === 'ACCEPTED' ? t('admin.case.req.docAccepted') : t('admin.case.req.docRejected'));
       setRejecting(false);
       setNote('');
     } catch (err) {
@@ -58,36 +61,36 @@ const DocRow = ({ c, doc }: { c: CaseDetail; doc: CaseDocument }) => {
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5">
-        <span className={clsx('badge whitespace-nowrap', DOC_STATUS_TONE[doc.status])}>{DOC_STATUS_LABEL[doc.status]}</span>
-        <DocLinks doc={doc} />
-        <div className="flex gap-1.5">
-          {doc.status !== 'ACCEPTED' && (
-            <button
-              type="button"
-              className="inline-flex min-h-9 items-center gap-1 rounded-md border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-semibold whitespace-nowrap text-emerald-800 lg:min-h-8 transition hover:bg-emerald-100 disabled:opacity-50"
-              onClick={() => review('ACCEPTED')}
-              disabled={!!busy}
-            >
-              {busy === 'ACCEPTED' ? <Spinner className="size-3" /> : <Check className="size-3" />} Qəbul et
-            </button>
-          )}
-          {doc.status !== 'REJECTED' && (
-            <button
-              type="button"
-              aria-expanded={rejecting}
-              className="inline-flex min-h-9 items-center gap-1 rounded-md border border-red-200 bg-red-50 px-2.5 py-1 text-xs font-semibold whitespace-nowrap text-red-700 lg:min-h-8 transition hover:bg-red-100 disabled:opacity-50"
-              onClick={() => setRejecting((v) => !v)}
-              disabled={!!busy}
-            >
-              <X className="size-3" /> Rədd et
-            </button>
-          )}
-        </div>
+          <span className={clsx('badge whitespace-nowrap', DOC_STATUS_TONE[doc.status])}>{docStatusLabel(doc.status)}</span>
+          <DocLinks doc={doc} />
+          <div className="flex gap-1.5">
+            {doc.status !== 'ACCEPTED' && (
+              <button
+                type="button"
+                className="inline-flex min-h-9 items-center gap-1 rounded-md border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-semibold whitespace-nowrap text-emerald-800 lg:min-h-8 transition hover:bg-emerald-100 disabled:opacity-50"
+                onClick={() => review('ACCEPTED')}
+                disabled={!!busy}
+              >
+                {busy === 'ACCEPTED' ? <Spinner className="size-3" /> : <Check className="size-3" />} {t('admin.case.req.accept')}
+              </button>
+            )}
+            {doc.status !== 'REJECTED' && (
+              <button
+                type="button"
+                aria-expanded={rejecting}
+                className="inline-flex min-h-9 items-center gap-1 rounded-md border border-red-200 bg-red-50 px-2.5 py-1 text-xs font-semibold whitespace-nowrap text-red-700 lg:min-h-8 transition hover:bg-red-100 disabled:opacity-50"
+                onClick={() => setRejecting((v) => !v)}
+                disabled={!!busy}
+              >
+                <X className="size-3" /> {t('admin.case.req.reject')}
+              </button>
+            )}
+          </div>
         </div>
       </div>
       {doc.status === 'REJECTED' && doc.reviewNote && (
         <p className="border-t border-line bg-red-50/50 px-3 py-1.5 text-xs text-red-800">
-          <span className="font-semibold">Rədd səbəbi:</span> {doc.reviewNote}
+          <span className="font-semibold">{t('admin.case.req.rejectReason')}</span> {doc.reviewNote}
         </p>
       )}
       <AnimatePresence initial={false}>
@@ -101,7 +104,7 @@ const DocRow = ({ c, doc }: { c: CaseDetail; doc: CaseDocument }) => {
               }}
             >
               <label htmlFor={`rej-${doc.id}`} className="label text-red-800">
-                Rədd səbəbi (müştəriyə göstəriləcək)
+                {t('admin.case.req.rejectReasonLabel')}
               </label>
               <textarea
                 id={`rej-${doc.id}`}
@@ -110,14 +113,14 @@ const DocRow = ({ c, doc }: { c: CaseDetail; doc: CaseDocument }) => {
                 value={note}
                 autoFocus
                 onChange={(e) => setNote(e.target.value)}
-                placeholder="Məs.: Şəkil bulanıqdır, yenidən skan edin."
+                placeholder={t('admin.case.req.rejectPlaceholder')}
               />
               <div className="flex gap-2">
                 <button type="submit" className="btn-danger btn-sm" disabled={!note.trim() || !!busy}>
-                  {busy === 'REJECTED' && <Spinner className="size-3" />} Rədd et
+                  {busy === 'REJECTED' && <Spinner className="size-3" />} {t('admin.case.req.reject')}
                 </button>
                 <button type="button" className="btn-white btn-sm border border-line" onClick={() => setRejecting(false)}>
-                  Bağla
+                  {t('admin.common.close')}
                 </button>
               </div>
             </form>
@@ -131,6 +134,8 @@ const DocRow = ({ c, doc }: { c: CaseDetail; doc: CaseDocument }) => {
 // ─── Requirement card ───────────────────────────────────────────────────
 
 const RequirementCard = ({ c, r }: { c: CaseDetail; r: Requirement }) => {
+  const { t } = useTranslation();
+  const { tr } = useL10n();
   const refresh = useCaseRefresh(c.id);
   const fileRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
@@ -144,9 +149,9 @@ const RequirementCard = ({ c, r }: { c: CaseDetail; r: Requirement }) => {
     try {
       await uploadCaseDocument(c.id, file, r.stage === 'EMBASSY' ? 'EMBASSY' : 'INITIAL', r.id);
       await refresh();
-      toast.success('Fayl müştəri adından yükləndi və qəbul edildi.');
+      toast.success(t('admin.case.req.uploadedForClient'));
     } catch (err) {
-      toastError(err, 'Fayl yüklənmədi.');
+      toastError(err, t('admin.case.req.uploadFailed'));
     } finally {
       setUploading(false);
       if (fileRef.current) fileRef.current.value = '';
@@ -170,7 +175,7 @@ const RequirementCard = ({ c, r }: { c: CaseDetail; r: Requirement }) => {
     try {
       await api.delete(`/admin/cases/${c.id}/requirements/${r.id}`);
       await refresh();
-      toast.success('Tələb silindi.');
+      toast.success(t('admin.case.req.reqDeleted'));
       setConfirmDelete(false);
     } catch (err) {
       toastError(err);
@@ -184,20 +189,20 @@ const RequirementCard = ({ c, r }: { c: CaseDetail; r: Requirement }) => {
       <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-1">
         <div className="min-w-0 flex-[1_1_14rem] pt-1">
           <p className="flex flex-wrap items-center gap-1.5 text-sm font-semibold text-navy-900">
-            {r.title.az}
+            {tr(r.title)}
             {r.required ? (
-              <span className="badge bg-navy-900/90 text-[10px] whitespace-nowrap text-white">Mütləq</span>
+              <span className="badge bg-navy-900/90 text-[10px] whitespace-nowrap text-white">{t('admin.case.req.required')}</span>
             ) : (
-              <span className="badge bg-slate-100 text-[10px] whitespace-nowrap text-slate-600">İstəyə bağlı</span>
+              <span className="badge bg-slate-100 text-[10px] whitespace-nowrap text-slate-600">{t('admin.case.req.optional')}</span>
             )}
-            <span className={clsx('badge text-[10px] whitespace-nowrap', state.tone)}>{state.label}</span>
+            <span className={clsx('badge text-[10px] whitespace-nowrap', state.tone)}>{t(`admin.case.req.state.${state.key}`)}</span>
           </p>
-          {r.description?.az && <p className="mt-0.5 text-xs text-muted">{r.description.az}</p>}
+          {r.description && tr(r.description) && <p className="mt-0.5 text-xs text-muted">{tr(r.description)}</p>}
         </div>
         <div className="-mr-1 flex shrink-0 items-center gap-1">
           <span className="mr-1 flex items-center gap-2 text-[11px] text-muted">
-            Mütləq
-            <Switch checked={r.required} onChange={toggleRequired} disabled={toggling} label="Mütləq sənəd" />
+            {t('admin.case.req.required')}
+            <Switch checked={r.required} onChange={toggleRequired} disabled={toggling} label={t('admin.case.req.requiredDoc')} />
           </span>
           <input
             ref={fileRef}
@@ -216,8 +221,8 @@ const RequirementCard = ({ c, r }: { c: CaseDetail; r: Requirement }) => {
             className="grid size-10 place-items-center rounded-lg text-muted transition hover:bg-white hover:text-brand-700 lg:size-8"
             onClick={() => fileRef.current?.click()}
             disabled={uploading}
-            title="Müştəri adından yüklə (avtomatik qəbul edilir)"
-            aria-label="Müştəri adından yüklə"
+            title={t('admin.case.req.uploadForClientTitle')}
+            aria-label={t('admin.case.req.uploadForClient')}
           >
             {uploading ? <Spinner className="size-3.5" /> : <Upload className="size-3.5" />}
           </button>
@@ -226,8 +231,8 @@ const RequirementCard = ({ c, r }: { c: CaseDetail; r: Requirement }) => {
             className="grid size-10 place-items-center rounded-lg text-muted transition hover:bg-white hover:text-danger disabled:cursor-not-allowed disabled:opacity-40 lg:size-8"
             onClick={() => setConfirmDelete(true)}
             disabled={r.documents.length > 0}
-            title={r.documents.length > 0 ? 'Sənədi olan tələbi silmək olmaz' : 'Tələbi sil'}
-            aria-label="Tələbi sil"
+            title={r.documents.length > 0 ? t('admin.case.req.cantDeleteWithDocs') : t('admin.case.req.deleteReq')}
+            aria-label={t('admin.case.req.deleteReq')}
           >
             <Trash2 className="size-3.5" />
           </button>
@@ -245,9 +250,9 @@ const RequirementCard = ({ c, r }: { c: CaseDetail; r: Requirement }) => {
         onClose={() => setConfirmDelete(false)}
         onConfirm={remove}
         loading={deleting}
-        title="Tələb silinsin?"
-        message={`“${r.title.az}” tələbi müştərinin siyahısından silinəcək.`}
-        confirmLabel="Sil"
+        title={t('admin.case.req.deleteReqTitle')}
+        message={t('admin.case.req.deleteReqMsg', { title: tr(r.title) })}
+        confirmLabel={t('admin.common.delete')}
       />
     </motion.li>
   );
@@ -256,6 +261,7 @@ const RequirementCard = ({ c, r }: { c: CaseDetail; r: Requirement }) => {
 // ─── Add requirement ────────────────────────────────────────────────────
 
 const AddRequirementModal = ({ c, stage, open, onClose }: { c: CaseDetail; stage: Stage; open: boolean; onClose: () => void }) => {
+  const { t } = useTranslation();
   const refresh = useCaseRefresh(c.id);
   const [title, setTitle] = useState(emptyL10n);
   const [description, setDescription] = useState(emptyL10n);
@@ -274,7 +280,7 @@ const AddRequirementModal = ({ c, stage, open, onClose }: { c: CaseDetail; stage
         required,
       });
       await refresh();
-      toast.success('Yeni sənəd tələbi əlavə edildi.');
+      toast.success(t('admin.case.req.reqAdded'));
       setTitle(emptyL10n());
       setDescription(emptyL10n());
       setRequired(true);
@@ -290,15 +296,15 @@ const AddRequirementModal = ({ c, stage, open, onClose }: { c: CaseDetail; stage
     <Modal
       open={open}
       onClose={onClose}
-      title={`Sənəd tələbi əlavə et — ${STAGE_LABEL[stage]}`}
-      description="Boş buraxılan dillər üçün Azərbaycan mətni istifadə olunacaq. Müştəri tələbi öz dilində görəcək."
+      title={t('admin.case.req.addReqTitle', { stage: stageLabel(stage) })}
+      description={t('admin.case.req.addReqDesc')}
       footer={
         <>
           <button type="button" className="btn-white btn-sm border border-line" onClick={onClose}>
-            İmtina et
+            {t('admin.common.cancel')}
           </button>
           <button type="submit" form="add-req-form" className="btn-primary btn-sm" disabled={!title.az.trim() || busy}>
-            {busy && <Spinner className="size-3.5" />} Əlavə et
+            {busy && <Spinner className="size-3.5" />} {t('admin.common.add')}
           </button>
         </>
       }
@@ -311,11 +317,11 @@ const AddRequirementModal = ({ c, stage, open, onClose }: { c: CaseDetail; stage
           void submit();
         }}
       >
-        <L10nInput label="Başlıq" value={title} onChange={setTitle} required />
-        <L10nInput label="Təsvir (istəyə bağlı)" value={description} onChange={setDescription} multiline rows={2} />
+        <L10nInput label={t('admin.case.req.titleLabel')} value={title} onChange={setTitle} required />
+        <L10nInput label={t('admin.case.req.descOptional')} value={description} onChange={setDescription} multiline rows={2} />
         <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-line px-3.5 py-3 text-sm">
           <input type="checkbox" checked={required} onChange={(e) => setRequired(e.target.checked)} className="mt-0.5 size-4 shrink-0 accent-brand-600" />
-          Mütləq sənəddir (növbəti mərhələyə keçmək üçün qəbul edilməlidir)
+          {t('admin.case.req.requiredCheckbox')}
         </label>
       </form>
     </Modal>
@@ -325,6 +331,7 @@ const AddRequirementModal = ({ c, stage, open, onClose }: { c: CaseDetail; stage
 // ─── Section ────────────────────────────────────────────────────────────
 
 export const RequirementsSection = ({ c, stage }: { c: CaseDetail; stage: Stage }) => {
+  const { t } = useTranslation();
   const refresh = useCaseRefresh(c.id);
   const reqs = stageRequirements(c, stage);
   const [adding, setAdding] = useState(false);
@@ -345,9 +352,9 @@ export const RequirementsSection = ({ c, stage }: { c: CaseDetail; stage: Stage 
     setBulkOpen(false);
     if (failed.length) {
       const first = failed[0];
-      toastError(first.status === 'rejected' ? first.reason : null, `${failed.length} sənəd qəbul edilmədi.`);
+      toastError(first.status === 'rejected' ? first.reason : null, t('admin.case.req.bulkFailed', { count: failed.length }));
     } else {
-      toast.success(`${pending.length} sənəd qəbul edildi.`);
+      toast.success(t('admin.case.req.bulkDone', { count: pending.length }));
     }
   };
 
@@ -355,14 +362,14 @@ export const RequirementsSection = ({ c, stage }: { c: CaseDetail; stage: Stage 
     <Panel
       title={
         <>
-          {STAGE_LABEL[stage]}
+          {stageLabel(stage)}
           {required.length > 0 && (
             <span
               className={clsx(
                 'badge ml-1 tabular-nums',
                 acceptedRequired === required.length ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-600',
               )}
-              title="Qəbul edilmiş mütləq sənədlər"
+              title={t('admin.case.req.acceptedRequiredTitle')}
             >
               {acceptedRequired}/{required.length}
             </span>
@@ -374,21 +381,17 @@ export const RequirementsSection = ({ c, stage }: { c: CaseDetail; stage: Stage 
         <>
           {pending.length > 0 && (
             <button type="button" className="btn-white btn-sm border border-emerald-200 text-emerald-800" onClick={() => setBulkOpen(true)}>
-              <CheckCheck className="size-3.5" /> Hamısını qəbul et ({pending.length})
+              <CheckCheck className="size-3.5" /> {t('admin.case.req.acceptAll', { count: pending.length })}
             </button>
           )}
           <button type="button" className="btn-white btn-sm border border-line" onClick={() => setAdding(true)}>
-            <Plus className="size-3.5" /> Tələb əlavə et
+            <Plus className="size-3.5" /> {t('admin.case.req.addReq')}
           </button>
         </>
       }
     >
       {reqs.length === 0 ? (
-        <p className="text-sm text-muted">
-          {stage === 'EMBASSY'
-            ? 'Səfirlik mərhələsi üçün tələblər müqavilə təsdiqləndikdə avtomatik yaradılır. İstəsəniz, indi əlavə edə bilərsiniz.'
-            : 'Bu mərhələ üçün sənəd tələbi yoxdur.'}
-        </p>
+        <p className="text-sm text-muted">{stage === 'EMBASSY' ? t('admin.case.req.embassyEmpty') : t('admin.case.req.empty')}</p>
       ) : (
         <ul className="space-y-3">
           {reqs.map((r) => (
@@ -403,9 +406,9 @@ export const RequirementsSection = ({ c, stage }: { c: CaseDetail; stage: Stage 
         onConfirm={acceptAll}
         loading={bulkBusy}
         tone="primary"
-        title="Bütün gözləyən sənədlər qəbul edilsin?"
-        message={`${STAGE_LABEL[stage]} bölməsində ${pending.length} yoxlanılmamış sənəd qəbul ediləcək. Hər biri üçün müştəriyə bildiriş göndəriləcək.`}
-        confirmLabel="Hamısını qəbul et"
+        title={t('admin.case.req.acceptAllTitle')}
+        message={t('admin.case.req.acceptAllMsg', { stage: stageLabel(stage), count: pending.length })}
+        confirmLabel={t('admin.case.req.acceptAllBtn')}
       />
     </Panel>
   );

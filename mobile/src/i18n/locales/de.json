@@ -21,6 +21,7 @@
   "search": "Suche",
   "accountShort": "Konto",
   "login": "Anmelden",
+  "register": "Registrieren",
   "apply": "Bewerben",
   "account": "Kundenbereich",
   "admin": "Admin-Panel",
@@ -335,7 +336,7 @@
   "email": "E-Mail",
   "phone": "Telefon",
   "password": "Passwort",
-  "passwordHint": "Mindestens 8 Zeichen",
+  "passwordHint": "Mindestens 8 Zeichen, mindestens ein Buchstabe und eine Ziffer",
   "login": "Anmelden",
   "register": "Registrieren",
   "noAccount": "Noch kein Konto?",
@@ -348,10 +349,20 @@
   "resetTitle": "Neues Passwort",
   "newPassword": "Neues Passwort",
   "resetDone": "Ihr Passwort wurde geändert. Sie können sich jetzt anmelden.",
+  "sessionExpired": "Ihre Sitzung ist abgelaufen. Bitte melden Sie sich erneut an.",
+  "sessionRevoked": "Die Sitzung wurde von einem anderen Gerät beendet. Bitte melden Sie sich erneut an.",
+  "sessionInvalid": "Die Sitzung ist ungültig. Bitte melden Sie sich erneut an.",
+  "idleWarning": "Wegen Inaktivität werden Sie in 2 Minuten abgemeldet.",
+  "idleLoggedOut": "Sie wurden wegen Inaktivität abgemeldet. Bitte melden Sie sich erneut an.",
   "errors": {
    "INVALID_CREDENTIALS": "E-Mail oder Passwort ist falsch.",
    "EMAIL_TAKEN": "Diese E-Mail ist bereits registriert.",
-   "INVALID_TOKEN": "Der Link ist ungültig oder abgelaufen."
+   "INVALID_TOKEN": "Der Link ist ungültig oder abgelaufen.",
+   "TOO_MANY_REQUESTS": "Zu viele Versuche. Bitte versuchen Sie es in einigen Minuten erneut.",
+   "ACCOUNT_LOCKED": "Nach zu vielen Fehlversuchen ist die Anmeldung vorübergehend gesperrt. Bitte versuchen Sie es in einigen Minuten erneut.",
+   "PASSWORD_TOO_WEAK": "Das Passwort muss mindestens 8 Zeichen lang sein und mindestens einen Buchstaben und eine Ziffer enthalten.",
+   "VALIDATION": "Die eingegebenen Daten sind ungültig.",
+   "NETWORK": "Keine Verbindung zum Server. Bitte prüfen Sie Ihre Internetverbindung."
   },
   "terms": "Mit der Registrierung akzeptiere ich die Datenschutzerklärung."
  },
@@ -421,7 +432,7 @@
    "upload": "Datei hochladen",
    "uploading": "Wird hochgeladen...",
    "replace": "Neu hochladen",
-   "formats": "PDF, JPG, PNG, WEBP, DOC, DOCX · max. 15 MB",
+   "formats": "PDF, JPG, PNG, WEBP, DOC, DOCX · max. 5 MB",
    "submit": "Zur Prüfung senden",
    "submitConfirm": "Möchten Sie die Dokumente zur Prüfung senden? Während der Prüfung sind keine Änderungen möglich.",
    "missing": "Laden Sie alle Pflichtdokumente hoch",
@@ -433,7 +444,7 @@
    },
    "notUploaded": "Nicht hochgeladen",
    "otherFiles": "Dateien für Sie",
-   "tooLarge": "Die Datei ist zu groß (max. 15 MB).",
+   "tooLarge": "Die Datei ist zu groß (max. 5 MB).",
    "badType": "Dieser Dateityp wird nicht akzeptiert.",
    "drop": "Datei hierher ziehen oder zum Auswählen klicken",
    "uploaded": "Datei hochgeladen",
@@ -506,6 +517,18 @@
   "personalData": "Persönliche Daten",
   "passwordChanged": "Passwort wurde geändert.",
   "errors": {
+   "UNAUTHENTICATED": "Ihre Sitzung ist abgelaufen. Bitte melden Sie sich erneut an.",
+   "SESSION_EXPIRED": "Ihre Sitzung ist abgelaufen. Bitte melden Sie sich erneut an.",
+   "SESSION_REVOKED": "Die Sitzung wurde beendet. Bitte melden Sie sich erneut an.",
+   "INVALID_TOKEN": "Die Sitzung ist ungültig. Bitte melden Sie sich erneut an.",
+   "TOO_MANY_REQUESTS": "Zu viele Anfragen. Bitte versuchen Sie es etwas später erneut.",
+   "PASSWORD_TOO_WEAK": "Das Passwort muss mindestens 8 Zeichen lang sein und mindestens einen Buchstaben und eine Ziffer enthalten.",
+   "CSRF_ORIGIN_REJECTED": "Die Anfrage wurde aus Sicherheitsgründen abgelehnt. Bitte laden Sie die Seite neu und versuchen Sie es erneut.",
+   "FILE_CONTENT_MISMATCH": "Der Dateiinhalt passt nicht zum angegebenen Dateityp.",
+   "INVALID_PDF": "Die PDF-Datei konnte nicht gelesen werden.",
+   "PAYLOAD_TOO_LARGE": "Die gesendeten Daten sind zu groß.",
+   "SESSION_NOT_FOUND": "Sitzung nicht gefunden oder bereits beendet.",
+   "INVALID_SIGNATURE": "Die Unterschrift konnte nicht gelesen werden. Bitte löschen und erneut unterschreiben.",
    "ACTIVE_CASE_EXISTS": "Sie haben bereits einen aktiven Antrag.",
    "REQUIRED_DOCUMENTS_MISSING": "Laden Sie alle Pflichtdokumente hoch.",
    "INVALID_TRANSITION": "Diese Aktion ist im aktuellen Schritt nicht möglich. Bitte laden Sie die Seite neu.",
@@ -513,7 +536,7 @@
    "WRONG_PASSWORD": "Das aktuelle Passwort ist falsch.",
    "DELETE_NOT_ALLOWED": "Diese Datei kann nicht gelöscht werden.",
    "UNSUPPORTED_FILE_TYPE": "Dieser Dateityp wird nicht akzeptiert.",
-   "FILE_TOO_LARGE": "Die Datei ist zu groß (max. 15 MB)."
+   "FILE_TOO_LARGE": "Die Datei ist zu groß (max. 5 MB)."
   }
  },
  "footer": {
@@ -530,6 +553,101 @@
   "title": "Seite nicht gefunden",
   "text": "Die gesuchte Seite existiert nicht oder wurde verschoben.",
   "home": "Zur Startseite"
+ },
+ "a11y": {
+  "open": "Barrierefreiheit-Menü (Alt+A)",
+  "title": "Barrierefreiheit",
+  "close": "Panel schließen",
+  "reset": "Zurücksetzen",
+  "statement": "Erklärung zur Barrierefreiheit",
+  "skip": "Zum Inhalt springen",
+  "toTop": "Nach oben",
+  "menu": "Menü",
+  "on": "An",
+  "off": "Aus",
+  "theme": {
+   "label": "Design",
+   "light": "Hell",
+   "dark": "Dunkel",
+   "system": "System",
+   "toLight": "Zum hellen Design wechseln",
+   "toDark": "Zum dunklen Design wechseln"
+  },
+  "groups": {
+   "vision": "Sehen",
+   "motion": "Bewegung",
+   "speech": "Blinde Nutzer / Vorlesen",
+   "hearing": "Gehörlose / Schwerhörige"
+  },
+  "vision": {
+   "contrast": "Hoher Kontrast",
+   "fontSize": "Textgröße",
+   "lineHeight": "Zeilenabstand",
+   "letterSpacing": "Zeichenabstand",
+   "normal": "Normal",
+   "readableFont": "Lesbare Schrift",
+   "bigCursor": "Großer Cursor",
+   "links": "Links hervorheben",
+   "hideImages": "Bilder ausblenden",
+   "colorMode": "Farbmodus",
+   "colorNormal": "Normal",
+   "colorGray": "Graustufen",
+   "colorInvert": "Invertiert",
+   "ruler": "Lesehilfe",
+   "focus": "Fokusanzeige",
+   "decrease": "Verkleinern",
+   "increase": "Vergrößern"
+  },
+  "motion": {
+   "stop": "Animationen stoppen",
+   "hint": "Alle Animationen, Übergänge und das sanfte Scrollen werden abgeschaltet."
+  },
+  "speech": {
+   "toggle": "Vorlesen",
+   "hint": "Zeigen Sie mit der Maus auf einen Text oder wählen Sie ein Element mit Tab – der Browser liest es vor.",
+   "readPage": "Seite vorlesen",
+   "pause": "Pause",
+   "resume": "Weiter",
+   "stop": "Stopp",
+   "rate": "Lesegeschwindigkeit",
+   "reading": "Wird vorgelesen",
+   "noVoice": "Ihr Browser hat keine Stimme für Aserbaidschanisch – es wird eine türkische oder englische Stimme verwendet.",
+   "unsupported": "Ihr Browser unterstützt das Vorlesen (Web Speech API) nicht.",
+   "keyboard": "Tastaturnavigation",
+   "keyboardHint": "Tab / Umschalt+Tab – zwischen Elementen wechseln · Enter – auswählen · Esc – schließen · Alt+A – dieses Panel."
+  },
+  "hearing": {
+   "info": "Die Website enthält keine Audioinhalte – alle Informationen liegen als Text vor. Unterstützung gibt es schriftlich per WhatsApp und über das Kontaktformular.",
+   "contactLink": "Kontaktformular",
+   "visualAlerts": "Visuelle Hinweise",
+   "visualAlertsHint": "Benachrichtigungen bleiben 10 Sekunden sichtbar und der Bildschirmrand blinkt."
+  },
+  "page": {
+   "title": "Erklärung zur Barrierefreiheit",
+   "lead": "Wir gestalten die Website und das Kundenportal von Triad Vision so, dass alle Menschen sie nutzen können – auch Nutzer mit Seh-, Hör-, Bewegungs- oder kognitiven Einschränkungen.",
+   "goalTitle": "Unser Ziel",
+   "goalText": "Unser Ziel ist die Konformität mit den WCAG 2.1 (Web Content Accessibility Guidelines) auf Stufe AA. Die Website wird regelmäßig geprüft und erkannte Mängel werden behoben.",
+   "measuresTitle": "Unsere Maßnahmen",
+   "measures": [
+    "Vollständige Tastaturbedienung: alle Menüs, Formulare und Dialoge lassen sich mit Tab, Enter und Esc bedienen; ein „Zum Inhalt springen“-Link steht am Anfang jeder Seite.",
+    "Farbkontrast: mindestens 4,5:1 zwischen Text und Hintergrund, zusätzlich ein Hochkontrast- und ein Dunkelmodus.",
+    "Die Textgröße lässt sich auf bis zu 150 % vergrößern; Zeilen- und Zeichenabstand sowie eine gut lesbare Schrift sind wählbar.",
+    "Vorlesemodus: das Element unter dem Mauszeiger bzw. im Fokus und die ganze Seite werden mit der Browserstimme vorgelesen.",
+    "Für Screenreader: semantisches HTML, ARIA-Beschriftungen, Überschriftenhierarchie und Alternativtexte für Bilder.",
+    "Animationen können abgeschaltet werden; die Systemeinstellung „Bewegung reduzieren“ wird automatisch berücksichtigt.",
+    "Alle Informationen liegen als Text vor – es gibt keine Audio- oder Videoinhalte; Unterstützung ist schriftlich verfügbar.",
+    "Die Website ist in 4 Sprachen (Aserbaidschanisch, Deutsch, Englisch, Russisch) verfügbar, das Sprachattribut der Seite ist korrekt gesetzt."
+   ],
+   "limitsTitle": "Bekannte Einschränkungen",
+   "limits": [
+    "Die meisten Browser haben keine Sprachsynthese für Aserbaidschanisch; das Vorlesen nutzt eine türkische oder englische Stimme.",
+    "Einzelne Dokumente von Dritten (PDF) sind möglicherweise nicht vollständig barrierefrei – auf Anfrage senden wir eine Textversion."
+   ],
+   "contactTitle": "Auf ein Problem gestoßen?",
+   "contactText": "Wenn Sie einen Teil der Website nicht nutzen können, schreiben Sie uns – wir antworten so schnell wie möglich und stellen die Information in einem für Sie passenden Format bereit.",
+   "contactCta": "Kontakt aufnehmen",
+   "openWidget": "Barrierefreiheit-Panel öffnen"
+  }
  },
  "svc": {
   "eyebrow": "Unsere Leistungen",
@@ -565,6 +683,34 @@
    "Unser Team spricht Aserbaidschanisch, Deutsch, Englisch und Russisch. Website, Kundenbereich und Benachrichtigungen gibt es ebenfalls in diesen 4 Sprachen.",
    "Auch nach dem Visum sind wir da: Abholung am Flughafen, Unterkunft, Anmeldung, Bank, Versicherung und Einarbeitung."
   ]
+ },
+ "authAside": {
+  "title": "Ihr gesamter Antrag an einem Ort",
+  "text": "Verwalten Sie jeden Schritt von den Unterlagen bis zur Visumentscheidung – ohne Bürobesuch und ohne Wartezeit.",
+  "features": [
+   "Dokumente mit dem Handy fotografieren und hochladen",
+   "Vertrag elektronisch am Bildschirm unterschreiben",
+   "Bei jedem Schritt E-Mail und Benachrichtigung",
+   "Ihre Daten sind nach DSGVO geschützt"
+  ],
+  "help": "Brauchen Sie Hilfe?",
+  "helpText": "Unser Team antwortet Mo–Fr 09:00–18:00.",
+  "secure": "Sichere Verbindung · DSGVO"
+ },
+ "faqPage": {
+  "searchPh": "Frage suchen… (z. B. Sprache, Dauer, Unterschrift)",
+  "noResults": "Nichts gefunden. Versuchen Sie einen anderen Begriff oder schreiben Sie uns.",
+  "stillTitle": "Sie wissen nicht, welches Visum zu Ihnen passt?",
+  "stillText": "Machen Sie den 2-Minuten-Check oder registrieren Sie sich und schreiben Sie direkt Ihrem Ansprechpartner.",
+  "quiz": "Visum-Check starten",
+  "register": "Registrieren",
+  "contact": "Schreiben Sie uns"
+ },
+ "article": {
+  "related": "Weitere Artikel",
+  "share": "Teilen",
+  "copy": "Link kopieren",
+  "copied": "Link kopiert"
  },
  "cookie": {
   "text": "Wir verwenden nur technisch notwendige Cookies (Anmeldesitzung und Spracheinstellung). Tracking- oder Werbe-Cookies werden nicht eingesetzt.",

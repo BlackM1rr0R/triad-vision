@@ -45,9 +45,11 @@ export const Reveal = ({
 );
 
 const staggerParent: Variants = { hidden: {}, show: { transition: { staggerChildren: 0.09 } } };
+// opacity + translate only: both are composited, so a grid of cards fading in never re-rasterises
+// (the previous scale step forced every card with images to repaint on each frame).
 const staggerChild: Variants = {
-  hidden: { opacity: 0, y: 36, scale: 0.97 },
-  show: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.8, ease: EASE } },
+  hidden: { opacity: 0, y: 32 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.7, ease: EASE } },
 };
 
 export const Stagger = ({ children, className }: { children: ReactNode; className?: string }) => (
@@ -134,6 +136,9 @@ export const TiltCard = ({ children, className, max = 10 }: { children: ReactNod
 
 const TiltCardInner = ({ children, className, max }: { children: ReactNode; className?: string; max: number }) => {
   const [hovered, setHovered] = useState(false);
+  // "active" keeps the 3D transform mounted until the springs have settled after the pointer left.
+  const [active, setActive] = useState(false);
+  const settle = useRef<number | undefined>(undefined);
   const mx = useMotionValue(0.5);
   const my = useMotionValue(0.5);
   const rx = useSpring(useTransform(my, [0, 1], [max, -max]), { stiffness: 200, damping: 20 });
@@ -141,12 +146,21 @@ const TiltCardInner = ({ children, className, max }: { children: ReactNode; clas
   const glareX = useTransform(mx, [0, 1], ['0%', '100%']);
   const glareY = useTransform(my, [0, 1], ['0%', '100%']);
   const glare = useMotionTemplate`radial-gradient(circle at ${glareX} ${glareY}, rgba(255,255,255,0.35), transparent 55%)`;
+  useEffect(() => () => window.clearTimeout(settle.current), []);
 
   return (
     <motion.div
-      className={clsx('relative [transform-style:preserve-3d]', className)}
-      style={{ rotateX: rx, rotateY: ry, transformPerspective: 900 }}
-      onPointerEnter={(e) => e.pointerType === 'mouse' && setHovered(true)}
+      // The perspective/3D transform exists only while the card is being tilted. Applied permanently
+      // it turned every card into its own compositor layer (dozens of large layers with images), which
+      // made scrolling stutter on integrated GPUs.
+      className={clsx('relative', active && '[transform-style:preserve-3d]', className)}
+      style={active ? { rotateX: rx, rotateY: ry, transformPerspective: 900 } : undefined}
+      onPointerEnter={(e) => {
+        if (e.pointerType !== 'mouse') return;
+        window.clearTimeout(settle.current);
+        setActive(true);
+        setHovered(true);
+      }}
       onPointerMove={(e) => {
         if (e.pointerType !== 'mouse') return;
         const r = e.currentTarget.getBoundingClientRect();
@@ -157,6 +171,7 @@ const TiltCardInner = ({ children, className, max }: { children: ReactNode; clas
         setHovered(false);
         mx.set(0.5);
         my.set(0.5);
+        settle.current = window.setTimeout(() => setActive(false), 400);
       }}
     >
       {children}

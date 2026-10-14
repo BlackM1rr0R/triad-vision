@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
-import { TEST_UPLOADS_DIR, testEnv } from './testEnv';
+import { TEST_DOCS_DIR, TEST_UPLOADS_DIR, testEnv } from './testEnv';
 
 const serverRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const require = createRequire(import.meta.url);
@@ -34,8 +34,11 @@ export default function setup() {
   fs.rmSync(TEST_UPLOADS_DIR, { recursive: true, force: true });
   fs.mkdirSync(path.join(TEST_UPLOADS_DIR, 'private'), { recursive: true });
   fs.mkdirSync(path.join(TEST_UPLOADS_DIR, 'public'), { recursive: true });
+  fs.rmSync(TEST_DOCS_DIR, { recursive: true, force: true });
+  fs.mkdirSync(TEST_DOCS_DIR, { recursive: true });
 
   return () => {
     fs.rmSync(TEST_UPLOADS_DIR, { recursive: true, force: true });
+    fs.rmSync(TEST_DOCS_DIR, { recursive: true, force: true });
   };
 }

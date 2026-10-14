@@ -13,6 +13,40 @@
       rel="stylesheet"
     />
     <title>Triad Vision — People · Work · Opportunities</title>
+    <script>
+      // Theme + accessibility preferences (same key as src/lib/prefs.ts) applied before the app loads, so
+      // the page never flashes light-on-dark or jumps in text size.
+      (function () {
+        var p = {};
+        try { p = JSON.parse(localStorage.getItem('tv_prefs') || '{}') || {}; } catch (e) {}
+        try {
+          var q = new URLSearchParams(location.search).get('theme');
+          if (q === 'dark' || q === 'light' || q === 'system') p.theme = q;
+        } catch (e) {}
+        var h = document.documentElement;
+        var dark = p.theme === 'dark' || (p.theme !== 'light' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+        h.setAttribute('data-theme', dark ? 'dark' : 'light');
+        h.style.colorScheme = dark ? 'dark' : 'light';
+        var c = [];
+        if (p.contrast) c.push('a11y-contrast');
+        if (p.lineHeight === 1.5) c.push('a11y-lineheight-15');
+        if (p.lineHeight === 2) c.push('a11y-lineheight-20');
+        if (p.letterSpacing === 0.05) c.push('a11y-spacing-05');
+        if (p.letterSpacing === 0.1) c.push('a11y-spacing-10');
+        if (p.readableFont) c.push('a11y-font');
+        if (p.bigCursor) c.push('a11y-cursor');
+        if (p.highlightLinks) c.push('a11y-links');
+        if (p.hideImages) c.push('a11y-noimg');
+        if (p.colorMode === 'gray') c.push('a11y-gray');
+        if (p.colorMode === 'invert') c.push('a11y-invert');
+        if (p.ruler) c.push('a11y-ruler');
+        if (p.focusRing) c.push('a11y-focus');
+        if (p.noMotion) c.push('a11y-nomotion');
+        if (p.visualAlerts) c.push('a11y-visual-alerts');
+        for (var i = 0; i < c.length; i++) h.classList.add(c[i]);
+        if ([112, 125, 150].indexOf(p.fontScale) !== -1) h.style.fontSize = p.fontScale + '%';
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

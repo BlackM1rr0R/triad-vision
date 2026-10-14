@@ -11,7 +11,7 @@ import { openDocument } from '@/lib/native';
 import { useErrorMessage } from '@/lib/queries';
 import type { CaseDocument } from '@/types';
 
-export const MAX_FILE_SIZE = 15 * 1024 * 1024;
+export const MAX_FILE_SIZE = 5 * 1024 * 1024;
 export const ACCEPTED_MIME = [
   'application/pdf',
   'image/jpeg',

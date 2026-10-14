@@ -21,7 +21,7 @@ import {
   UserRound,
 } from '@/components/icons';
 import { useTranslation } from 'react-i18next';
-import { ActionSheet, Button, Card, Section, SkeletonList, StatusBadge, Stepper, Text, ErrorState, useToast } from '@/components/ui';
+import { ActionSheet, Button, Card, Section, SkeletonList, StaleHint, StatusBadge, Stepper, Text, ErrorState, useToast } from '@/components/ui';
 import { api } from '@/lib/api';
 import { CLIENT_UPLOAD_STAGE, STATUS_STEP, STEP_KEYS, missingRequirements } from '@/lib/caseStatus';
 import { useFormat } from '@/lib/format';
@@ -324,7 +324,8 @@ export const ClientCaseView = ({ id }: { id: string }) => {
   const { open, openingId } = useOpenDocument();
 
   if (isLoading) return <SkeletonList count={4} lines={3} />;
-  if (error || !c) return <ErrorState error={error} onRetry={() => void refetch()} />;
+  // Keep the loaded case on screen when a background refetch fails (TanStack keeps `data` on error).
+  if (!c) return <ErrorState error={error} onRetry={() => void refetch()} />;
 
   const embassyFirst = c.status === 'EMBASSY_DOCUMENTS' || c.status === 'EMBASSY_REVIEW';
   const initial = <DocumentsSection key="initial" c={c} stage="INITIAL" title={t('portal.docs.initialTitle')} />;
@@ -332,6 +333,7 @@ export const ClientCaseView = ({ id }: { id: string }) => {
 
   return (
     <View style={{ gap: space.lg }}>
+      {error ? <StaleHint error={error} onRetry={() => void refetch()} /> : null}
       <CaseHeaderCard c={c} />
       <DecisionCard c={c} />
       <AppointmentCard c={c} />

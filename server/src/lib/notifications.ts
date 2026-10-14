@@ -157,8 +157,8 @@ export const notifyClient = async (
 export const notifyStaff = async (subject: string, body: string, opts: { caseId?: string; link?: string; type?: string } = {}) => {
   const recipients = await prisma.user.findMany({
     where: opts.caseId
-      ? { OR: [{ role: 'ADMIN' }, { assignedCases: { some: { id: opts.caseId } } }], isActive: true }
-      : { role: 'ADMIN', isActive: true },
+      ? { OR: [{ role: { in: ['ADMIN', 'SUPER_ADMIN'] } }, { assignedCases: { some: { id: opts.caseId } } }], isActive: true }
+      : { role: { in: ['ADMIN', 'SUPER_ADMIN'] }, isActive: true },
     select: { id: true },
   });
   if (recipients.length) {

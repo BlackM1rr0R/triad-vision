@@ -16,6 +16,7 @@ import { useL10n } from '@/lib/l10n';
 import type { VisaCategory, VisaSample } from '@/lib/types';
 import { registerCopy } from '@/i18n';
 import { pagesCompany } from '@/i18n/pagesCompany';
+import { usePageTitle } from '@/lib/usePageTitle';
 
 registerCopy(pagesCompany);
 
@@ -221,6 +222,7 @@ const PrivacyStrip = () => {
 
 export default function Stories() {
   const { t } = useTranslation();
+  usePageTitle(t('storiesPage.hero.title'));
   const { data } = useSiteContent();
   const samples = data?.samples ?? [];
   const candidates = data?.testimonials.filter((x) => x.kind === 'candidate') ?? [];

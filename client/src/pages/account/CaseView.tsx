@@ -19,6 +19,7 @@ import { CaseMessages } from '@/components/portal/CaseMessages';
 import { AppointmentCard, CaseTimeline, DecisionCard, OtherFiles } from '@/components/portal/CaseCards';
 import { useErrorMessage } from '@/components/portal/useApiError';
 import { OVERVIEW_KEY, useHashScroll } from '@/components/portal/useOverview';
+import { usePageTitle } from '@/lib/usePageTitle';
 
 const CurrentStepPanel = ({ data }: { data: CaseDetail }) => {
   const { t } = useTranslation();
@@ -112,6 +113,7 @@ export default function CaseView() {
     refetchInterval: 30_000,
     enabled: !!id,
   });
+  usePageTitle(data ? `${t('portal.caseNo')} ${data.number}` : t('portal.title'));
 
   const refresh = useCallback(
     () =>

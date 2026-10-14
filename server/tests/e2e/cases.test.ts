@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { anon, asAdmin, asClient, type Agent } from '../helpers/api';
 import { prisma } from '../helpers/db';
 import { createVisaCategory, l10n } from '../helpers/factories';
-import { makePdf, PDF, SIGNATURE_DATA_URL } from '../helpers/files';
+import { makePdf, PDF, SIGNATURE_DATA_URL, sampleFor } from '../helpers/files';
 import { staffNotifications } from '../helpers/notify';
 import { TEST_UPLOADS_DIR } from '../helpers/testEnv';
 import {
@@ -204,7 +204,7 @@ describe('POST /api/cases/:id/documents', () => {
       const res = await client.agent
         .post(`/api/cases/${c.id}/documents`)
         .field('requirementId', req.id)
-        .attach('file', Buffer.from('x'), { filename, contentType });
+        .attach('file', sampleFor(contentType), { filename, contentType });
       expect(res.status, filename).toBe(201);
     }
   });
@@ -230,7 +230,7 @@ describe('POST /api/cases/:id/documents', () => {
     const res = await client.agent
       .post(`/api/cases/${c.id}/documents`)
       .field('requirementId', req.id)
-      .attach('file', Buffer.alloc(15 * 1024 * 1024 + 1, 1), { filename: 'big.pdf', ...PDF });
+      .attach('file', Buffer.alloc(5 * 1024 * 1024 + 1, 1), { filename: 'big.pdf', ...PDF });
     expect(res.status).toBe(413);
     expect(res.body.error).toBe('FILE_TOO_LARGE');
     expect(await prisma.document.count()).toBe(0);

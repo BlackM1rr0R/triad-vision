@@ -3,7 +3,29 @@
 export type L10n = { az: string; de: string; en: string; ru: string };
 export type L10nList = { az: string[]; de: string[]; en: string[]; ru: string[] };
 export type Locale = 'az' | 'de' | 'en' | 'ru';
-export type Role = 'CLIENT' | 'STAFF' | 'ADMIN';
+export type Role = 'CLIENT' | 'STAFF' | 'ADMIN' | 'SUPER_ADMIN';
+
+/** Staff roles (STAFF < ADMIN < SUPER_ADMIN) — mirror of server ROLE_RANK. */
+export const STAFF_ROLES: readonly Role[] = ['STAFF', 'ADMIN', 'SUPER_ADMIN'];
+export const isStaffRole = (role?: Role | null) => !!role && STAFF_ROLES.includes(role);
+
+/** Why the server rejected a token (401 body / GET /auth/me reason). */
+export type AuthFailure = 'SESSION_EXPIRED' | 'SESSION_REVOKED' | 'INVALID_TOKEN' | 'UNAUTHENTICATED';
+
+export interface SessionInfo {
+  id: string;
+  expiresAt: string;
+}
+
+/** GET /auth/sessions item. */
+export interface SessionListItem extends SessionInfo {
+  client: string;
+  ip: string | null;
+  userAgent: string | null;
+  createdAt: string;
+  lastSeenAt: string;
+  current: boolean;
+}
 
 export interface User {
   id: string;

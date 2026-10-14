@@ -21,6 +21,7 @@ import NotFound from './NotFound';
 import { sized } from '@/lib/img';
 import { registerCopy } from '@/i18n';
 import { pagesVisa } from '@/i18n/pagesVisa';
+import { usePageTitle } from '@/lib/usePageTitle';
 
 registerCopy(pagesVisa);
 
@@ -41,6 +42,7 @@ export default function ServiceDetail() {
     queryFn: async () => (await api.get<{ service: Service }>(`/public/services/${slug}`)).data.service,
     placeholderData: () => content?.services.find((s) => s.slug === slug),
   });
+  usePageTitle(data ? tr(data.title) : t('nav.services'));
 
   if (isLoading) return <PageHeroSkeleton />;
   if (isError || !data) return <NotFound />;

@@ -21,6 +21,7 @@ import NotFound from './NotFound';
 import { sized } from '@/lib/img';
 import { registerCopy } from '@/i18n';
 import { pagesVisa } from '@/i18n/pagesVisa';
+import { usePageTitle } from '@/lib/usePageTitle';
 
 registerCopy(pagesVisa);
 
@@ -47,6 +48,7 @@ export default function VisaDetail() {
     // The site content already holds every published visa, so most visits render instantly.
     placeholderData: () => content?.visaCategories.find((v) => v.slug === slug),
   });
+  usePageTitle(data ? tr(data.title) : t('nav.visas'));
 
   if (isLoading) return <PageHeroSkeleton />;
   if (isError || !data) return <NotFound />;

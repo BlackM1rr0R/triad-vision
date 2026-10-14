@@ -11,6 +11,7 @@ import { api } from '@/lib/api';
 import { useL10n } from '@/lib/l10n';
 import type { Post } from '@/lib/types';
 import NotFound from './NotFound';
+import { usePageTitle } from '@/lib/usePageTitle';
 
 export default function NewsDetail() {
   const { slug } = useParams();
@@ -21,6 +22,7 @@ export default function NewsDetail() {
     queryKey: ['post', slug],
     queryFn: async () => (await api.get<{ post: Post }>(`/public/posts/${slug}`)).data.post,
   });
+  usePageTitle(data ? tr(data.title) : t('nav.news'));
   if (isLoading) return <PageHeroSkeleton />;
   if (isError || !data) return <NotFound />;
 

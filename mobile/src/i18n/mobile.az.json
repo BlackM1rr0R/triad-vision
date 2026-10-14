@@ -33,7 +33,10 @@
       "back": "Geri",
       "more": "Daha çox",
       "required": "Mütləq",
-      "optional": "İstəyə bağlı"
+      "optional": "İstəyə bağlı",
+      "staleHint": "Yeniləmək mümkün olmadı — son yüklənən məlumatlar göstərilir.",
+      "share": "Paylaş",
+      "loading": "Yüklənir"
     },
     "welcome": {
       "eyebrow": "Azərbaycandan Almaniyaya",
@@ -54,6 +57,11 @@
       "resetInfo": "Məktubda yeni şifrə təyin etmək üçün link var. O, Triad Vision saytında açılır; sonra burada yeni şifrə ilə daxil olun.",
       "passwordRule": "Ən azı 8 simvol",
       "staffHint": "Əməkdaşlar və adminlər eyni girişdən istifadə edir."
+    },
+    "session": {
+      "expired": "Sessiyanızın vaxtı bitib. Zəhmət olmasa yenidən daxil olun.",
+      "revoked": "Bu cihazdan administrator və ya başqa bir cihaz tərəfindən çıxış edilib.",
+      "invalid": "Sessiyanız artıq etibarlı deyil. Zəhmət olmasa yenidən daxil olun."
     },
     "home": {
       "hello": "Salam, {{name}}",
@@ -158,14 +166,24 @@
       "roles": {
         "CLIENT": "Müştəri",
         "STAFF": "Əməkdaş",
-        "ADMIN": "Administrator"
+        "ADMIN": "Administrator",
+        "SUPER_ADMIN": "Super admin"
       },
       "push": "Push bildirişlər",
       "pushOn": "Aktivdir",
       "pushOff": "Söndürülüb — telefon parametrlərində icazə verin",
       "pushExpoGo": "Quraşdırılmış tətbiq tələb olunur (Expo Go deyil)",
       "openSettings": "Parametrləri aç",
-      "webOnly": "Kontentin redaktəsi, istifadəçilər və sorğular veb admin paneldə idarə olunur."
+      "webOnly": "Kontentin redaktəsi, istifadəçilər və sorğular veb admin paneldə idarə olunur.",
+      "pushNotAsked": "Söndürülüb — aktivləşdirmək üçün toxunun",
+      "pushError": "Aktivləşdirmək mümkün olmadı — yenidən cəhd üçün toxunun",
+      "pushSimulator": "Simulyatorda mövcud deyil",
+      "pushDisable": "Bu telefonda push bildirişləri söndürülsün?",
+      "sessions": "Daxil olunmuş cihazlar",
+      "sessionsCount": "{{count}} aktiv · bu sessiya {{date}} tarixində bitir",
+      "logoutOthers": "Digər cihazlardan çıx",
+      "logoutOthersConfirm": "Bütün digər telefon və brauzerlərdən çıxış ediləcək. Bu telefon daxil qalır.",
+      "logoutOthersDone": "Digər cihazlardan çıxış edildi"
     },
     "apply": {
       "title": "Yeni müraciət",

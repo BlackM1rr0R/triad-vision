@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 import { Linking, ScrollView, RefreshControl, StyleSheet, View } from 'react-native';
-import { Stack, router, useLocalSearchParams } from 'expo-router';
+import { Stack, router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
 import { Ban, FileSignature, FolderOpen, Gavel, History, Landmark, Mail, NotebookPen, Phone, Route, UserCheck, UserRound } from '@/components/icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -14,6 +14,7 @@ import {
   PromptSheet,
   Section,
   SkeletonList,
+  StaleHint,
   StatusBadge,
   Stepper,
   Text,
@@ -301,6 +302,18 @@ export default function StaffCase() {
   const [tab, setTab] = useState<Tab>('overview');
   const [refreshing, setRefreshing] = useState(false);
 
+  // The chat has no push-to-screen channel: poll every 15 s while the messages tab is on screen
+  // (same cadence as the client chat).
+  const chatOpen = tab === 'messages';
+  useFocusEffect(
+    useCallback(() => {
+      if (!chatOpen) return undefined;
+      void refetch();
+      const timer = setInterval(() => void refetch(), 15_000);
+      return () => clearInterval(timer);
+    }, [chatOpen, refetch]),
+  );
+
   const refresh = async () => {
     haptic.select();
     setRefreshing(true);
@@ -313,9 +326,11 @@ export default function StaffCase() {
 
   const sendMessage = async (body: string) => {
     const { data } = await api.post<{ message: Omit<CaseMessage, 'author'> }>(`/admin/cases/${id}/messages`, { body });
+    // Show it immediately, then refetch so a poll that was already in flight cannot overwrite it.
     qc.setQueryData<CaseDetail>(qk.adminCase(id), (old) =>
       old ? { ...old, messages: [...old.messages, { ...data.message, author: { id: user!.id, firstName: user!.firstName, lastName: user!.lastName, role: user!.role } }] } : old,
     );
+    void qc.invalidateQueries({ queryKey: qk.adminCase(id) });
   };
 
   const title = c ? `${c.client.firstName} ${c.client.lastName}` : '';
@@ -327,10 +342,15 @@ export default function StaffCase() {
         <View style={{ padding: space.lg }}>
           <SkeletonList count={4} lines={3} />
         </View>
-      ) : error || !c ? (
+      ) : !c ? (
         <ErrorState error={error} onRetry={() => void refetch()} />
       ) : (
         <>
+          {error ? (
+            <View style={{ paddingHorizontal: space.lg, paddingTop: space.sm }}>
+              <StaleHint error={error} onRetry={() => void refetch()} />
+            </View>
+          ) : null}
           <View style={styles.tabs}>
             <Chips<Tab>
               value={tab}

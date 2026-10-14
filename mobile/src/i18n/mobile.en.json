@@ -33,7 +33,10 @@
       "back": "Back",
       "more": "More",
       "required": "Required",
-      "optional": "Optional"
+      "optional": "Optional",
+      "staleHint": "Could not refresh — showing the last loaded data.",
+      "share": "Share",
+      "loading": "Loading"
     },
     "welcome": {
       "eyebrow": "From Azerbaijan to Germany",
@@ -54,6 +57,11 @@
       "resetInfo": "The email contains a link to set a new password. It opens on the Triad Vision website; afterwards log in here with the new password.",
       "passwordRule": "At least 8 characters",
       "staffHint": "Staff and admins use the same login."
+    },
+    "session": {
+      "expired": "Your session has expired. Please log in again.",
+      "revoked": "You were logged out of this device by an administrator or from another device.",
+      "invalid": "Your session is no longer valid. Please log in again."
     },
     "home": {
       "hello": "Hello, {{name}}",
@@ -158,14 +166,24 @@
       "roles": {
         "CLIENT": "Client",
         "STAFF": "Staff",
-        "ADMIN": "Administrator"
+        "ADMIN": "Administrator",
+        "SUPER_ADMIN": "Super admin"
       },
       "push": "Push notifications",
       "pushOn": "On",
       "pushOff": "Off — allow in phone settings",
       "pushExpoGo": "Needs the installed app (not Expo Go)",
       "openSettings": "Open settings",
-      "webOnly": "Content editing, users and inquiries are managed in the web admin panel."
+      "webOnly": "Content editing, users and inquiries are managed in the web admin panel.",
+      "pushNotAsked": "Off — tap to enable",
+      "pushError": "Could not enable — tap to try again",
+      "pushSimulator": "Not available on a simulator",
+      "pushDisable": "Turn off push notifications on this phone?",
+      "sessions": "Logged-in devices",
+      "sessionsCount": "{{count}} active · this one expires {{date}}",
+      "logoutOthers": "Log out other devices",
+      "logoutOthersConfirm": "Every other phone and browser will be logged out. This phone stays logged in.",
+      "logoutOthersDone": "Other devices logged out"
     },
     "apply": {
       "title": "New application",

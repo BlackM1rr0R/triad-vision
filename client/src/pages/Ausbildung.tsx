@@ -14,6 +14,7 @@ import { useEuro } from '@/components/visa/utils';
 import { useSiteContent } from '@/lib/content';
 import { registerCopy } from '@/i18n';
 import { pagesVisa } from '@/i18n/pagesVisa';
+import { usePageTitle } from '@/lib/usePageTitle';
 
 registerCopy(pagesVisa);
 
@@ -35,6 +36,7 @@ const REQ_ICONS = [GraduationCap, Languages, FileSignature, Wallet, ShieldCheck,
 
 export default function Ausbildung() {
   const { t } = useTranslation();
+  usePageTitle(t('ausbildungPage.heroTitle'));
   const euro = useEuro();
   const { data } = useSiteContent();
   const facts = t('ausbildungPage.facts', { returnObjects: true }) as {
