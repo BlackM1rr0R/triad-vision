@@ -100,6 +100,28 @@ model User {
   interviewsAsCandidate Interview[]              @relation("InterviewCandidate")
   interviewsAsStaff     Interview[]              @relation("InterviewStaff")
   interviewsCreated     Interview[]              @relation("InterviewCreatedBy")
+  statusText            String?                  @db.VarChar(120) // workspace presence: "In a meeting", …
+  statusEmoji           String?                  @db.VarChar(16)
+  statusUntil           DateTime?
+  mailAccounts          MailAccount[]
+  mailLabels            MailLabel[]
+  mailRules             MailRule[]
+  mailTemplates         MailTemplate[]
+  chatChannelsCreated   ChatChannel[]            @relation("ChatChannelCreatedBy")
+  chatMemberships       ChatMember[]
+  chatMessages          ChatMessage[]
+  chatReactions         ChatReaction[]
+  calendarEvents        CalendarEvent[]          @relation("CalendarEventOwner")
+  calendarAttendance    CalendarAttendee[]
+  contactsCreated       Contact[]                @relation("ContactCreatedBy")
+  contactLinks          Contact[]                @relation("ContactUser")
+  announcements         Announcement[]
+  announcementReads     AnnouncementRead[]
+  notes                 Note[]
+  polls                 Poll[]
+  pollVotes             PollVote[]
+  leaveRequests         LeaveRequest[]           @relation("LeaveUser")
+  leaveDecisions        LeaveRequest[]           @relation("LeaveDecidedBy")
 
   @@index([companyId])
 }
@@ -298,6 +320,9 @@ model Case {
   tasks             Task[]
   outboundMessages  OutboundMessage[]
   onboarding        CaseOnboarding[]
+  mailMessages      MailMessage[]
+  chatChannels      ChatChannel[]
+  calendarEvents    CalendarEvent[]
 
   @@index([clientId])
   @@index([status])
@@ -604,6 +629,7 @@ model Company {
   interviews  Interview[]
   apiKeys     ApiKey[]
   webhooks    Webhook[]
+  contacts    Contact[]
 
   @@index([status])
 }
@@ -1239,4 +1265,485 @@ model WebhookDelivery {
 
   @@index([status, nextAttemptAt])
   @@index([webhookId, createdAt])
+}
+
+// ─── Team workspace: mail ───────────────────────────────────────────────
+
+enum MailProvider {
+  GMAIL
+  OUTLOOK
+  YANDEX
+  MAILRU
+  CUSTOM
+}
+
+enum MailSyncStatus {
+  IDLE
+  SYNCING
+  OK
+  ERROR
+}
+
+/// A staff member's own mailbox (IMAP + SMTP); the password is sealed with the server key.
+model MailAccount {
+  id            String         @id @default(cuid())
+  userId        String
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  email         String         @db.VarChar(190)
+  displayName   String?        @db.VarChar(120)
+  provider      MailProvider   @default(CUSTOM)
+  imapHost      String         @db.VarChar(190)
+  imapPort      Int            @default(993)
+  imapSecure    Boolean        @default(true)
+  smtpHost      String         @db.VarChar(190)
+  smtpPort      Int            @default(465)
+  smtpSecure    Boolean        @default(true)
+  username      String         @db.VarChar(190)
+  passwordEnc   String         @db.Text
+  signatureHtml String?        @db.Text
+  isDefault     Boolean        @default(false)
+  syncEnabled   Boolean        @default(true)
+  syncStatus    MailSyncStatus @default(IDLE)
+  syncError     String?        @db.VarChar(500)
+  lastSyncAt    DateTime?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  folders       MailFolder[]
+  messages      MailMessage[]
+  rules         MailRule[]
+
+  @@unique([userId, email])
+}
+
+enum MailFolderRole {
+  INBOX
+  SENT
+  DRAFTS
+  TRASH
+  JUNK
+  ARCHIVE
+  OTHER
+}
+
+model MailFolder {
+  id          String         @id @default(cuid())
+  accountId   String
+  account     MailAccount    @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  path        String         @db.VarChar(255) // IMAP mailbox path
+  name        String         @db.VarChar(120)
+  role        MailFolderRole @default(OTHER)
+  delimiter   String?        @db.VarChar(4)
+  uidValidity BigInt?
+  lastUid     BigInt         @default(0) // highest UID synced so far
+  total       Int            @default(0)
+  unread      Int            @default(0)
+  subscribed  Boolean        @default(true)
+  sortOrder   Int            @default(0)
+  messages    MailMessage[]
+
+  @@unique([accountId, path])
+}
+
+model MailMessage {
+  id             String             @id @default(cuid())
+  accountId      String
+  account        MailAccount        @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  folderId       String
+  folder         MailFolder         @relation(fields: [folderId], references: [id], onDelete: Cascade)
+  uid            BigInt? // IMAP UID inside the folder; null for local drafts
+  messageId      String?            @db.VarChar(500)
+  inReplyTo      String?            @db.VarChar(500)
+  refs           String?            @db.Text // References header
+  threadKey      String?            @db.VarChar(190) // root Message-ID of the conversation
+  subject        String?            @db.VarChar(1000)
+  fromName       String?            @db.VarChar(255)
+  fromAddr       String?            @db.VarChar(255)
+  toList         Json // [{ name, address }]
+  ccList         Json?
+  bccList        Json?
+  replyTo        String?            @db.VarChar(255)
+  date           DateTime
+  snippet        String?            @db.VarChar(300)
+  text           String?            @db.LongText
+  html           String?            @db.LongText // sanitised before storing
+  hasAttachments Boolean            @default(false)
+  size           Int?
+  seen           Boolean            @default(false)
+  flagged        Boolean            @default(false)
+  answered       Boolean            @default(false)
+  isDraft        Boolean            @default(false)
+  snoozedUntil   DateTime?
+  caseId         String? // linked visa case
+  case           Case?              @relation(fields: [caseId], references: [id], onDelete: SetNull)
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+  attachments    MailAttachment[]
+  labels         MailMessageLabel[]
+
+  @@unique([folderId, uid])
+  @@index([accountId, date])
+  @@index([accountId, threadKey])
+  @@index([accountId, seen])
+  @@index([messageId])
+  @@index([snoozedUntil])
+  @@fulltext([subject, text])
+}
+
+model MailAttachment {
+  id         String      @id @default(cuid())
+  messageId  String
+  message    MailMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  filename   String      @db.VarChar(255)
+  mimeType   String      @db.VarChar(120)
+  size       Int
+  contentId  String?     @db.VarChar(255) // inline images (cid:)
+  inline     Boolean     @default(false)
+  partId     String?     @db.VarChar(40) // IMAP body part, for lazy download
+  storageKey String?     @unique // <DOCS_DIR>/mail/<key> once fetched
+
+  @@index([messageId])
+}
+
+model MailLabel {
+  id        String             @id @default(cuid())
+  userId    String
+  user      User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String             @db.VarChar(60)
+  color     String             @db.VarChar(20)
+  sortOrder Int                @default(0)
+  messages  MailMessageLabel[]
+
+  @@unique([userId, name])
+}
+
+model MailMessageLabel {
+  messageId String
+  message   MailMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  labelId   String
+  label     MailLabel   @relation(fields: [labelId], references: [id], onDelete: Cascade)
+
+  @@id([messageId, labelId])
+}
+
+/// Inbox rule: when an incoming message matches `conditions`, apply `actions` (label, mark read, move, flag, link to case).
+model MailRule {
+  id         String       @id @default(cuid())
+  userId     String
+  user       User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accountId  String?
+  account    MailAccount? @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  name       String       @db.VarChar(80)
+  enabled    Boolean      @default(true)
+  conditions Json
+  actions    Json
+  sortOrder  Int          @default(0)
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+}
+
+/// Canned responses (personal, or shared with the whole team).
+model MailTemplate {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  shared    Boolean  @default(false)
+  name      String   @db.VarChar(80)
+  subject   String?  @db.VarChar(300)
+  html      String   @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ─── Team workspace: chat ───────────────────────────────────────────────
+
+enum ChatChannelKind {
+  PUBLIC
+  PRIVATE
+  DM
+}
+
+enum ChatMemberRole {
+  OWNER
+  MEMBER
+}
+
+model ChatChannel {
+  id          String          @id @default(cuid())
+  kind        ChatChannelKind
+  name        String?         @db.VarChar(80) // null for DMs
+  topic       String?         @db.VarChar(250)
+  caseId      String? // channel opened for a visa case
+  case        Case?           @relation(fields: [caseId], references: [id], onDelete: SetNull)
+  createdById String?
+  createdBy   User?           @relation("ChatChannelCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  archivedAt  DateTime?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  members     ChatMember[]
+  messages    ChatMessage[]
+  polls       Poll[]
+
+  @@index([kind, archivedAt])
+}
+
+model ChatMember {
+  id         String         @id @default(cuid())
+  channelId  String
+  channel    ChatChannel    @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  userId     String
+  user       User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role       ChatMemberRole @default(MEMBER)
+  joinedAt   DateTime       @default(now())
+  lastReadAt DateTime?
+  muted      Boolean        @default(false)
+  pinned     Boolean        @default(false)
+
+  @@unique([channelId, userId])
+  @@index([userId])
+}
+
+model ChatMessage {
+  id          String           @id @default(cuid())
+  channelId   String
+  channel     ChatChannel      @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  authorId    String?
+  author      User?            @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  body        String           @db.Text
+  parentId    String? // thread reply
+  parent      ChatMessage?     @relation("ChatThread", fields: [parentId], references: [id], onDelete: Cascade)
+  replies     ChatMessage[]    @relation("ChatThread")
+  replyCount  Int              @default(0)
+  mentions    Json? // user ids mentioned
+  editedAt    DateTime?
+  deletedAt   DateTime?
+  pinnedAt    DateTime?
+  createdAt   DateTime         @default(now())
+  attachments ChatAttachment[]
+  reactions   ChatReaction[]
+
+  @@index([channelId, createdAt])
+  @@index([parentId])
+  @@fulltext([body])
+}
+
+model ChatAttachment {
+  id          String      @id @default(cuid())
+  messageId   String
+  message     ChatMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  filename    String      @db.VarChar(255)
+  mimeType    String      @db.VarChar(120)
+  size        Int
+  storageKey  String      @unique // <DOCS_DIR>/chat/<key>
+  driveNodeId String? // when shared from the team drive instead of uploaded
+
+  @@index([messageId])
+}
+
+model ChatReaction {
+  messageId String
+  message   ChatMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  emoji     String      @db.VarChar(16)
+  createdAt DateTime    @default(now())
+
+  @@id([messageId, userId, emoji])
+}
+
+// ─── Team workspace: calendar ───────────────────────────────────────────
+
+enum EventVisibility {
+  PRIVATE
+  TEAM
+}
+
+enum AttendeeStatus {
+  NEEDS_ACTION
+  ACCEPTED
+  DECLINED
+  TENTATIVE
+}
+
+model CalendarEvent {
+  id              String             @id @default(cuid())
+  ownerId         String
+  owner           User               @relation("CalendarEventOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  title           String             @db.VarChar(200)
+  description     String?            @db.Text
+  location        String?            @db.VarChar(255)
+  meetingUrl      String?            @db.VarChar(500)
+  startsAt        DateTime
+  endsAt          DateTime
+  allDay          Boolean            @default(false)
+  color           String?            @db.VarChar(20)
+  visibility      EventVisibility    @default(TEAM)
+  rrule           String?            @db.VarChar(255) // RFC 5545 RRULE, e.g. FREQ=WEEKLY;BYDAY=MO
+  reminderMinutes Int?
+  caseId          String?
+  case            Case?              @relation(fields: [caseId], references: [id], onDelete: SetNull)
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+  attendees       CalendarAttendee[]
+
+  @@index([startsAt])
+  @@index([ownerId, startsAt])
+}
+
+model CalendarAttendee {
+  eventId String
+  event   CalendarEvent  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  userId  String
+  user    User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status  AttendeeStatus @default(NEEDS_ACTION)
+
+  @@id([eventId, userId])
+  @@index([userId])
+}
+
+// ─── Team workspace: contacts, announcements, notes, polls, leave ───────
+
+enum ContactSource {
+  MANUAL
+  MAIL
+  IMPORT
+}
+
+/// Shared address book (plus private contacts when shared = false).
+model Contact {
+  id            String        @id @default(cuid())
+  createdById   String?
+  createdBy     User?         @relation("ContactCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  shared        Boolean       @default(true)
+  firstName     String        @db.VarChar(80)
+  lastName      String?       @db.VarChar(80)
+  email         String?       @db.VarChar(190)
+  emails        Json? // additional addresses
+  phone         String?       @db.VarChar(40)
+  company       String?       @db.VarChar(120)
+  companyId     String?
+  companyRef    Company?      @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  position      String?       @db.VarChar(120)
+  address       String?       @db.VarChar(255)
+  notes         String?       @db.Text
+  tags          Json?
+  userId        String? // linked platform account (client / employer)
+  user          User?         @relation("ContactUser", fields: [userId], references: [id], onDelete: SetNull)
+  source        ContactSource @default(MANUAL)
+  lastContactAt DateTime?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@index([email])
+  @@index([createdById, shared])
+  @@fulltext([firstName, lastName, email, company])
+}
+
+model Announcement {
+  id          String             @id @default(cuid())
+  authorId    String
+  author      User               @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  title       String             @db.VarChar(200)
+  body        String             @db.Text
+  pinned      Boolean            @default(false)
+  publishedAt DateTime           @default(now())
+  expiresAt   DateTime?
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+  reads       AnnouncementRead[]
+
+  @@index([pinned, publishedAt])
+}
+
+model AnnouncementRead {
+  announcementId String
+  announcement   Announcement @relation(fields: [announcementId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  readAt         DateTime     @default(now())
+
+  @@id([announcementId, userId])
+}
+
+/// Personal sticky notes.
+model Note {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String?  @db.VarChar(120)
+  body      String   @db.Text
+  color     String?  @db.VarChar(20)
+  pinned    Boolean  @default(false)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId, pinned])
+}
+
+model Poll {
+  id        String       @id @default(cuid())
+  authorId  String
+  author    User         @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  channelId String? // posted into a chat channel
+  channel   ChatChannel? @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  question  String       @db.VarChar(300)
+  multiple  Boolean      @default(false)
+  anonymous Boolean      @default(false)
+  closesAt  DateTime?
+  closedAt  DateTime?
+  createdAt DateTime     @default(now())
+  options   PollOption[]
+}
+
+model PollOption {
+  id        String     @id @default(cuid())
+  pollId    String
+  poll      Poll       @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  text      String     @db.VarChar(200)
+  sortOrder Int        @default(0)
+  votes     PollVote[]
+}
+
+model PollVote {
+  optionId  String
+  option    PollOption @relation(fields: [optionId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime   @default(now())
+
+  @@id([optionId, userId])
+}
+
+enum LeaveType {
+  VACATION
+  SICK
+  REMOTE
+  OTHER
+}
+
+enum LeaveStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
+model LeaveRequest {
+  id           String      @id @default(cuid())
+  userId       String
+  user         User        @relation("LeaveUser", fields: [userId], references: [id], onDelete: Cascade)
+  type         LeaveType
+  status       LeaveStatus @default(PENDING)
+  startsAt     DateTime
+  endsAt       DateTime
+  note         String?     @db.VarChar(500)
+  decidedById  String?
+  decidedBy    User?       @relation("LeaveDecidedBy", fields: [decidedById], references: [id], onDelete: SetNull)
+  decidedAt    DateTime?
+  decisionNote String?     @db.VarChar(500)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  @@index([userId, startsAt])
+  @@index([status])
 }

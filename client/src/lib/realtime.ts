@@ -7,14 +7,33 @@ import { useAuth } from './auth';
  * tab: components subscribe to event types through `useRealtime`, the manager reconnects with
  * backoff, pauses after the tab has been hidden for a while and follows login / logout.
  *
- * Event types sent by the API: message.new, message.read, typing, notification.
+ * Event types sent by the API: see EVENT_TYPES (case messaging, mail, chat, calendar, presence).
  */
 
 export type RealtimePayload = Record<string, unknown>;
 type Handler = (payload: RealtimePayload) => void;
 export type RealtimeStatus = 'idle' | 'connecting' | 'open' | 'paused';
 
-const EVENT_TYPES = ['message.new', 'message.read', 'typing', 'notification'] as const;
+const EVENT_TYPES = [
+  'message.new',
+  'message.read',
+  'typing',
+  'notification',
+  'case.updated',
+  // team workspace
+  'mail.new',
+  'mail.updated',
+  'chat.message',
+  'chat.reaction',
+  'chat.read',
+  'chat.typing',
+  'chat.channel',
+  'calendar.updated',
+  'presence.updated',
+  'announcement.new',
+  'poll.updated',
+  'leave.updated',
+] as const;
 export type RealtimeEventType = (typeof EVENT_TYPES)[number];
 
 /** Hidden tabs keep the stream open this long before it is paused (reopened when visible again). */

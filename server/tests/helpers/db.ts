@@ -5,6 +5,31 @@ export { prisma };
 
 /** Deletes all rows, children before parents so foreign keys are never violated. */
 export const resetDb = async () => {
+  // Team workspace: mail / chat / calendar / contacts / announcements / notes / polls / leave
+  await prisma.pollVote.deleteMany();
+  await prisma.pollOption.deleteMany();
+  await prisma.poll.deleteMany();
+  await prisma.announcementRead.deleteMany();
+  await prisma.announcement.deleteMany();
+  await prisma.note.deleteMany();
+  await prisma.leaveRequest.deleteMany();
+  await prisma.contact.deleteMany();
+  await prisma.calendarAttendee.deleteMany();
+  await prisma.calendarEvent.deleteMany();
+  await prisma.chatReaction.deleteMany();
+  await prisma.chatAttachment.deleteMany();
+  await prisma.chatMessage.updateMany({ data: { parentId: null } });
+  await prisma.chatMessage.deleteMany();
+  await prisma.chatMember.deleteMany();
+  await prisma.chatChannel.deleteMany();
+  await prisma.mailMessageLabel.deleteMany();
+  await prisma.mailLabel.deleteMany();
+  await prisma.mailAttachment.deleteMany();
+  await prisma.mailMessage.deleteMany();
+  await prisma.mailRule.deleteMany();
+  await prisma.mailTemplate.deleteMany();
+  await prisma.mailFolder.deleteMany();
+  await prisma.mailAccount.deleteMany();
   // Operations / messaging / journey / document-intelligence rows (no dependants of their own)
   await prisma.webhookDelivery.deleteMany();
   await prisma.webhook.deleteMany();

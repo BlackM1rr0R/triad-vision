@@ -46,6 +46,12 @@ const AdminUsers = lazy(() => import('./pages/admin/Users'));
 const WorkspaceLayout = lazy(() => import('./pages/workspace/WorkspaceLayout'));
 const WorkspaceDrive = lazy(() => import('./pages/workspace/Drive'));
 const WorkspaceTasks = lazy(() => import('./pages/workspace/Tasks'));
+const WorkspaceHome = lazy(() => import('./pages/workspace/Home'));
+const WorkspaceMail = lazy(() => import('./pages/workspace/Mail'));
+const WorkspaceChat = lazy(() => import('./pages/workspace/Chat'));
+const WorkspaceCalendar = lazy(() => import('./pages/workspace/Calendar'));
+const WorkspaceContacts = lazy(() => import('./pages/workspace/Contacts'));
+const WorkspaceTeam = lazy(() => import('./pages/workspace/Team'));
 const AdminDocsAudit = lazy(() => import('./pages/admin/DocsAudit'));
 const AdminContent = lazy(() => import('./pages/admin/ContentManager'));
 const AdminSettings = lazy(() => import('./pages/admin/Settings'));
@@ -243,9 +249,15 @@ export default function App() {
               </RequireAuth>
             }
           >
-            <Route index element={<Navigate to="drive" replace />} />
+            <Route index element={<Navigate to="home" replace />} />
+            <Route path="home" element={<WorkspaceHome />} />
             <Route path="drive/*" element={<WorkspaceDrive />} />
             <Route path="tasks/*" element={<WorkspaceTasks />} />
+            <Route path="mail/*" element={<WorkspaceMail />} />
+            <Route path="chat/*" element={<WorkspaceChat />} />
+            <Route path="calendar/*" element={<WorkspaceCalendar />} />
+            <Route path="contacts/*" element={<WorkspaceContacts />} />
+            <Route path="team/*" element={<WorkspaceTeam />} />
           </Route>
 
           <Route

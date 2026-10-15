@@ -4,7 +4,13 @@ const az = {
   workspace: {
     title: 'İş mühiti',
     nav: {
+      home: 'Əsas',
       drive: 'Sənədlər',
+      mail: 'Poçt',
+      chat: 'Çat',
+      calendar: 'Təqvim',
+      contacts: 'Kontaktlar',
+      team: 'Komanda',
       tasks: 'Tapşırıqlar',
       admin: 'Admin panel',
       site: 'Sayta qayıt',
@@ -24,7 +30,13 @@ export const workspaceCopy: { az: typeof az; de: typeof az; en: typeof az; ru: t
     workspace: {
       title: 'Arbeitsbereich',
       nav: {
+        home: 'Start',
         drive: 'Dokumente',
+        mail: 'E-Mail',
+        chat: 'Chat',
+        calendar: 'Kalender',
+        contacts: 'Kontakte',
+        team: 'Team',
         tasks: 'Aufgaben',
         admin: 'Admin-Bereich',
         site: 'Zur Website',
@@ -41,7 +53,13 @@ export const workspaceCopy: { az: typeof az; de: typeof az; en: typeof az; ru: t
     workspace: {
       title: 'Workspace',
       nav: {
+        home: 'Home',
         drive: 'Documents',
+        mail: 'Mail',
+        chat: 'Chat',
+        calendar: 'Calendar',
+        contacts: 'Contacts',
+        team: 'Team',
         tasks: 'Tasks',
         admin: 'Admin panel',
         site: 'Back to site',
@@ -58,7 +76,13 @@ export const workspaceCopy: { az: typeof az; de: typeof az; en: typeof az; ru: t
     workspace: {
       title: 'Рабочая среда',
       nav: {
+        home: 'Главная',
         drive: 'Документы',
+        mail: 'Почта',
+        chat: 'Чат',
+        calendar: 'Календарь',
+        contacts: 'Контакты',
+        team: 'Команда',
         tasks: 'Задачи',
         admin: 'Админ-панель',
         site: 'На сайт',

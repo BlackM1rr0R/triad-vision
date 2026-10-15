@@ -7,6 +7,12 @@ const az = {
   admin: {
     nav: {
       tasks: 'Tapşırıqlar',
+      workspace: 'Workspace',
+      mail: 'Poçt',
+      chat: 'Çat',
+      calendar: 'Təqvim',
+      contacts: 'Kontaktlar',
+      team: 'Komanda',
       candidates: 'Namizədlər',
       vacancies: 'Vakansiyalar',
       companies: 'Şirkətlər',
@@ -1168,6 +1174,12 @@ const de: typeof az = {
   admin: {
     nav: {
       tasks: 'Aufgaben',
+      workspace: 'Workspace',
+      mail: 'E-Mail',
+      chat: 'Chat',
+      calendar: 'Kalender',
+      contacts: 'Kontakte',
+      team: 'Team',
       candidates: 'Kandidaten',
       vacancies: 'Stellen',
       companies: 'Unternehmen',
@@ -2329,6 +2341,12 @@ const en: typeof az = {
   admin: {
     nav: {
       tasks: 'Tasks',
+      workspace: 'Workspace',
+      mail: 'Mail',
+      chat: 'Chat',
+      calendar: 'Calendar',
+      contacts: 'Contacts',
+      team: 'Team',
       candidates: 'Candidates',
       vacancies: 'Vacancies',
       companies: 'Companies',
@@ -3492,6 +3510,12 @@ const ru = {
   admin: {
     nav: {
       tasks: 'Задачи',
+      workspace: 'Рабочее пространство',
+      mail: 'Почта',
+      chat: 'Чат',
+      calendar: 'Календарь',
+      contacts: 'Контакты',
+      team: 'Команда',
       candidates: 'Кандидаты',
       vacancies: 'Вакансии',
       companies: 'Компании',

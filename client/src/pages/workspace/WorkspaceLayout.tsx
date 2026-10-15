@@ -1,16 +1,17 @@
 import { Suspense, useEffect, useState } from 'react';
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
 import type { LucideIcon } from 'lucide-react';
-import { ArrowLeft, FolderOpen, Globe, ListTodo, LogOut, Menu, PanelLeftClose, PanelLeftOpen, X } from 'lucide-react';
+import { ArrowLeft, BookUser, CalendarDays, FolderOpen, Globe, LayoutDashboard, ListTodo, LogOut, Mail, Menu, MessagesSquare, PanelLeftClose, PanelLeftOpen, Users, X } from 'lucide-react';
 import { LogoMark } from '@/components/ui/Logo';
 import { LanguageSwitcher } from '@/components/layout/LanguageSwitcher';
 import { ThemeToggle } from '@/components/a11y/ThemeToggle';
 import { RouteErrorBoundary } from '@/components/ui/RouteErrorBoundary';
 import { Spinner } from '@/components/ui/Spinner';
 import { api } from '@/lib/api';
+import { useRealtime } from '@/lib/realtime';
 import { useAuth } from '@/lib/auth';
 import { registerCopy } from '@/i18n';
 import { workspaceCopy } from '@/i18n/workspace';
@@ -53,6 +54,26 @@ export default function WorkspaceLayout() {
     retry: false,
   });
 
+  // Unread mail / chat badges; the endpoints belong to the mail and chat modules (404 → no badge).
+  const mailSummary = useQuery({
+    queryKey: ['mail', 'summary'],
+    queryFn: async () => (await api.get<{ unread: number }>('/mail/summary')).data,
+    refetchInterval: 60_000,
+    retry: false,
+  });
+  const chatSummary = useQuery({
+    queryKey: ['chat', 'summary'],
+    queryFn: async () => (await api.get<{ unread: number; mentions: number }>('/chat/summary')).data,
+    refetchInterval: 60_000,
+    retry: false,
+  });
+  const qc = useQueryClient();
+  const bump = (keys: string[][]) => () => keys.forEach((k) => void qc.invalidateQueries({ queryKey: k }));
+  useRealtime('mail.new', bump([['mail', 'summary']]));
+  useRealtime('mail.updated', bump([['mail', 'summary']]));
+  useRealtime('chat.message', bump([['chat', 'summary']]));
+  useRealtime('chat.read', bump([['chat', 'summary']]));
+
   useEffect(() => setMobileOpen(false), [location.pathname]);
   useEffect(() => {
     try {
@@ -63,8 +84,14 @@ export default function WorkspaceLayout() {
   }, [collapsed]);
 
   const nav: NavItem[] = [
+    { to: '/workspace/home', label: t('workspace.nav.home'), icon: LayoutDashboard },
+    { to: '/workspace/mail', label: t('workspace.nav.mail'), icon: Mail, badge: mailSummary.data?.unread || undefined },
+    { to: '/workspace/chat', label: t('workspace.nav.chat'), icon: MessagesSquare, badge: chatSummary.data?.unread || undefined },
+    { to: '/workspace/calendar', label: t('workspace.nav.calendar'), icon: CalendarDays },
     { to: '/workspace/drive', label: t('workspace.nav.drive'), icon: FolderOpen },
     { to: '/workspace/tasks', label: t('workspace.nav.tasks'), icon: ListTodo, badge: summary.data?.open || undefined },
+    { to: '/workspace/contacts', label: t('workspace.nav.contacts'), icon: BookUser },
+    { to: '/workspace/team', label: t('workspace.nav.team'), icon: Users },
   ];
   const initials = user ? `${user.firstName[0] ?? ''}${user.lastName[0] ?? ''}`.toUpperCase() : '';
 
