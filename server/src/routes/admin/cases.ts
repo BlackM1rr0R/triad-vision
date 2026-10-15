@@ -19,8 +19,9 @@ import {
   staffSendContract,
 } from '../../lib/caseFlow.js';
 import { caseStats, loadCaseDetail } from '../../lib/caseView.js';
-import { badRequest, conflict, notFound, parse } from '../../lib/http.js';
+import { badRequest, conflict, HttpError, notFound, parse } from '../../lib/http.js';
 import { notifyClient } from '../../lib/notifications.js';
+import { createCaseMessage, listMessages, markMessagesRead, publishTyping } from '../../lib/messaging/caseMessages.js';
 
 export const adminCasesRouter = Router();
 
@@ -365,13 +366,37 @@ adminCasesRouter.post('/:id/actions', async (req, res) => {
 
 // ─── Messages & internal notes ─────────────────────────────────────────
 
+const caseOr404 = async (id: string) => {
+  const c = await prisma.case.findUnique({ where: { id }, select: { id: true, clientId: true, number: true } });
+  if (!c) throw notFound('CASE_NOT_FOUND');
+  return c;
+};
+
+adminCasesRouter.get('/:id/messages', async (req, res) => {
+  const c = await caseOr404(req.params.id);
+  res.json({ messages: await listMessages(c.id) });
+});
+
 adminCasesRouter.post('/:id/messages', async (req, res) => {
   const { body } = parse(z.object({ body: z.string().trim().min(1).max(4000) }), req.body);
-  const c = await prisma.case.findUnique({ where: { id: req.params.id } });
-  if (!c) throw notFound('CASE_NOT_FOUND');
-  const message = await prisma.caseMessage.create({ data: { caseId: c.id, authorId: req.user!.id, body } });
-  await notifyClient(c.id, 'NEW_MESSAGE');
+  const c = await caseOr404(req.params.id);
+  const message = await createCaseMessage({ caseId: c.id, authorId: req.user!.id, body, side: 'staff' });
   res.status(201).json({ message });
+});
+
+/** Marks every client message of the case as read (the client sees two blue ticks). */
+adminCasesRouter.post('/:id/messages/read', async (req, res) => {
+  const c = await caseOr404(req.params.id);
+  const { messageIds, readAt } = await markMessagesRead(c, 'staff');
+  res.json({ messageIds, readAt });
+});
+
+/** "… is typing" for the client; at most one event per 2 s per user (429 when faster). */
+adminCasesRouter.post('/:id/typing', async (req, res) => {
+  const c = await caseOr404(req.params.id);
+  const sent = await publishTyping(c, req.user!, 'staff');
+  if (!sent) throw new HttpError(429, 'TOO_MANY_REQUESTS');
+  res.json({ ok: true });
 });
 
 adminCasesRouter.post('/:id/notes', async (req, res) => {

@@ -6,11 +6,13 @@ import { useL10n } from '@/lib/l10n';
 import type { CaseSummary } from '@/lib/types';
 import { StatusBadge } from './StatusBadge';
 import { CaseStepper } from './CaseStepper';
+import { useRelationLabel } from '@/components/journey/Family';
 
 /** Compact card for a case in a list (dashboard "previous applications"). */
-export const CaseSummaryCard = ({ c }: { c: CaseSummary }) => {
+export const CaseSummaryCard = ({ c }: { c: CaseSummary & { relation?: string | null } }) => {
   const { t } = useTranslation();
   const { tr, date } = useL10n();
+  const relationLabel = useRelationLabel()(c.relation);
   const clientTurn = CLIENT_ACTION.includes(c.status);
   return (
     <Link
@@ -21,6 +23,7 @@ export const CaseSummaryCard = ({ c }: { c: CaseSummary }) => {
         <div className="min-w-0">
           <p className="text-xs font-semibold text-muted">{t('portal.caseNo')}</p>
           <p className="truncate font-display text-lg font-extrabold text-navy-900">{c.number}</p>
+          {relationLabel && <span className="badge mt-1 bg-rose-100 text-rose-800">{relationLabel}</span>}
         </div>
         <StatusBadge status={c.status} />
       </div>

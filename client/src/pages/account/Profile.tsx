@@ -12,6 +12,8 @@ import {
   KeyRound,
   LogOut,
   Mail,
+  MessageCircle,
+  MessageSquareText,
   Monitor,
   Save,
   ShieldCheck,
@@ -47,10 +49,12 @@ import {
 import { registerCopy } from '@/i18n';
 import { pagesAccount } from '@/i18n/pagesAccount';
 import { pagesGrowth } from '@/i18n/pagesGrowth';
+import { pagesMessaging } from '@/i18n/pagesMessaging';
 import { usePageTitle } from '@/lib/usePageTitle';
 
 registerCopy(pagesAccount);
 registerCopy(pagesGrowth);
+registerCopy(pagesMessaging);
 
 const TAB_ICON: Record<ProfileTab, LucideIcon> = {
   personal: UserRound,
@@ -532,6 +536,51 @@ const ProfessionalPanel = ({ user }: { user: User }) => {
 
 // ─── Notifications ─────────────────────────────────────────────────────
 
+/** WhatsApp / SMS toggles (messaging module). Current values come from GET /api/messaging/preferences; PATCH /auth/me saves them. */
+interface PhonePrefs {
+  phone: string | null;
+  whatsappOptIn: boolean;
+  smsNotifications: boolean;
+}
+const PHONE_PREFS_KEY = ['messaging-preferences'] as const;
+
+const PhoneChannels = ({ user, busy, update }: { user: User; busy: string | null; update: (key: string, body: Record<string, unknown>) => Promise<void> }) => {
+  const { t } = useTranslation();
+  const qc = useQueryClient();
+  const navigate = useNavigate();
+  const { data } = useQuery({
+    queryKey: PHONE_PREFS_KEY,
+    queryFn: async () => (await api.get<{ preferences: PhonePrefs }>('/messaging/preferences')).data.preferences,
+    staleTime: 60_000,
+  });
+  const prefs: PhonePrefs = data ?? { phone: user.phone, whatsappOptIn: true, smsNotifications: true };
+  const phone = user.phone ?? prefs.phone;
+  const toggle = async (key: 'whatsappOptIn' | 'smsNotifications', v: boolean) => {
+    qc.setQueryData<PhonePrefs>(PHONE_PREFS_KEY, (old) => ({ ...(old ?? prefs), [key]: v }));
+    try {
+      await update(key, { [key]: v });
+    } finally {
+      void qc.invalidateQueries({ queryKey: PHONE_PREFS_KEY });
+    }
+  };
+  return (
+    <>
+      <Toggle icon={MessageCircle} label={t('messaging.prefs.whatsapp')} hint={t('messaging.prefs.whatsappHint')} checked={prefs.whatsappOptIn !== false} busy={busy === 'whatsappOptIn'} onChange={(v) => void toggle('whatsappOptIn', v)} />
+      <Toggle icon={MessageSquareText} label={t('messaging.prefs.sms')} hint={t('messaging.prefs.smsHint')} checked={prefs.smsNotifications !== false} busy={busy === 'smsNotifications'} onChange={(v) => void toggle('smsNotifications', v)} />
+      {phone ? (
+        <p className="px-1 text-xs text-muted">{t('messaging.prefs.phoneLabel', { phone })}</p>
+      ) : (
+        <p className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-relaxed text-amber-900">
+          <span>{t('messaging.prefs.noPhone')}</span>
+          <button type="button" className="min-h-10 text-sm font-semibold text-brand-700 underline-offset-2 hover:underline" onClick={() => navigate('?tab=personal')}>
+            {t('messaging.prefs.addPhone')}
+          </button>
+        </p>
+      )}
+    </>
+  );
+};
+
 const NotificationsPanel = ({ user }: { user: User }) => {
   const { t, i18n } = useTranslation();
   const { setUser } = useAuth();
@@ -540,9 +589,9 @@ const NotificationsPanel = ({ user }: { user: User }) => {
   const uid = useId();
   const [busy, setBusy] = useState<string | null>(null);
 
-  const update = async (key: string, body: Partial<User>) => {
+  const update = async (key: string, body: Record<string, unknown>) => {
     const prev = user;
-    setUser({ ...user, ...body }); // optimistic
+    setUser({ ...user, ...(body as Partial<User>) }); // optimistic
     setBusy(key);
     try {
       await save(body);
@@ -588,6 +637,7 @@ const NotificationsPanel = ({ user }: { user: User }) => {
             {t('accountPage.profile.notif.warning')}
           </p>
         )}
+        <PhoneChannels user={user} busy={busy} update={update} />
       </div>
 
       <fieldset className="mt-6 border-t border-line pt-5">

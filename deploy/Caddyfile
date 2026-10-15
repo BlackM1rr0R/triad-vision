@@ -60,6 +60,19 @@ www.{$SITE_DOMAIN} {
 
 	# API and CMS images come from the Node service. X-Forwarded-For is replaced with the real visitor IP
 	# resolved above, so the API (TRUST_PROXY=1) rate-limits and audits per visitor, not per Cloudflare edge.
+	# Server-sent events (realtime chat/notifications): stream immediately, never buffer.
+	@sse path /api/messaging/events
+	handle @sse {
+		reverse_proxy api:4000 {
+			header_up X-Forwarded-For {client_ip}
+			header_up X-Forwarded-Proto {scheme}
+			flush_interval -1
+			transport http {
+				response_header_timeout 0
+			}
+		}
+	}
+
 	@backend path /api/* /uploads/*
 	handle @backend {
 		reverse_proxy api:4000 {

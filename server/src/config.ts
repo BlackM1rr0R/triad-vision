@@ -58,6 +58,8 @@ export const config = {
   isProd,
   isTest,
   trustProxy: parseTrustProxy(process.env.TRUST_PROXY),
+  /** Optional shared store for rate limits / login locks across several API instances (redis://host:6379). */
+  redisUrl: process.env.REDIS_URL ?? '',
   adminNotifyEmail: process.env.ADMIN_NOTIFY_EMAIL ?? '',
   session: {
     /** Web sessions end after this many minutes without a request (0 disables). */

@@ -19,6 +19,9 @@ import { CaseMessages } from '@/components/portal/CaseMessages';
 import { AppointmentCard, CaseTimeline, DecisionCard, OtherFiles } from '@/components/portal/CaseCards';
 import { useErrorMessage } from '@/components/portal/useApiError';
 import { OVERVIEW_KEY, useHashScroll } from '@/components/portal/useOverview';
+import DocIntelPanel from '@/components/portal/DocIntelPanel';
+import { ForecastStrip } from '@/components/journey/ForecastStrip';
+import { FamilyGroupCard, useRelationLabel } from '@/components/journey/Family';
 import { usePageTitle } from '@/lib/usePageTitle';
 
 const CurrentStepPanel = ({ data }: { data: CaseDetail }) => {
@@ -106,6 +109,7 @@ export default function CaseView() {
   const { tr, date } = useL10n();
   const qc = useQueryClient();
   const errorMessage = useErrorMessage();
+  const relationLabel = useRelationLabel();
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['case', id],
@@ -147,13 +151,17 @@ export default function CaseView() {
   const contract = data.contract ? <CaseContract key="contract" data={data} onChanged={refresh} /> : null;
   const initialDocs = <CaseDocuments key="initial" data={data} stage="INITIAL" onChanged={refresh} />;
   const embassyDocs = <CaseDocuments key="embassy" data={data} stage="EMBASSY" onChanged={refresh} />;
+  // Document intelligence (OCR / checks) sits right under the documents being worked on.
+  const docIntel = <DocIntelPanel key="doc-intel" caseId={data.id} />;
   const mainBlocks = contractFirst
-    ? [contract, initialDocs, embassyDocs]
+    ? [contract, initialDocs, docIntel, embassyDocs]
     : embassyFirst
-      ? [embassyDocs, contract, initialDocs]
+      ? [embassyDocs, docIntel, contract, initialDocs]
       : data.status === 'DOCUMENTS_PENDING' || data.status === 'DOCUMENTS_REVIEW'
-        ? [initialDocs, contract, embassyDocs]
-        : [embassyDocs, contract, initialDocs];
+        ? [initialDocs, docIntel, contract, embassyDocs]
+        : [embassyDocs, docIntel, contract, initialDocs];
+  const family = data as CaseDetail & { parentCaseId?: string | null; relation?: string | null };
+  const relation = relationLabel(family.relation);
 
   return (
     <div className="space-y-6 lg:space-y-8">
@@ -170,6 +178,7 @@ export default function CaseView() {
                 <span className="text-muted">{t('portal.caseNo')}</span> {data.number}
               </h1>
               <StatusBadge status={data.status} className="text-sm" />
+              {relation && <span className="badge bg-rose-100 text-rose-800">{relation}</span>}
             </div>
             <div className="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-sm text-muted">
               <span className="inline-flex min-w-0 items-center gap-1.5">
@@ -204,6 +213,8 @@ export default function CaseView() {
         <CaseStepper status={data.status} />
       </section>
 
+      <ForecastStrip caseId={data.id} />
+
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-8 xl:grid-cols-[minmax(0,1fr)_380px]">
         <div className="min-w-0 space-y-6">
           <CurrentStepPanel data={data} />
@@ -214,6 +225,7 @@ export default function CaseView() {
         </div>
         <aside className="min-w-0 space-y-6">
           <CaseMessages data={data} onChanged={refresh} />
+          <FamilyGroupCard caseId={data.id} parentCaseId={family.parentCaseId} />
           <CaseTimeline data={data} />
         </aside>
       </div>

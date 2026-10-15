@@ -6,6 +6,7 @@ import { requireAuth } from '../middleware/auth.js';
 import { requireVerifiedEmail } from '../middleware/verified.js';
 import { conflict, forbidden, limiter, notFound, parse } from '../lib/http.js';
 import { notifyStaff } from '../lib/notifications.js';
+import { emitWebhook } from '../lib/ops/webhooks.js';
 import { GERMAN_LEVELS, germanRank } from '../lib/matching.js';
 import {
   EMPLOYMENT_TYPES,
@@ -61,7 +62,7 @@ vacanciesRouter.get('/my/applications', requireAuth, requireCandidate, async (re
 vacanciesRouter.post('/my/applications/:id/withdraw', requireAuth, requireCandidate, async (req, res) => {
   const app = await prisma.vacancyApplication.findUnique({
     where: { id: String(req.params.id) },
-    include: { vacancy: { select: { title: true } } },
+    include: { vacancy: { select: { title: true, companyId: true } } },
   });
   if (!app || app.userId !== req.user!.id) throw notFound('APPLICATION_NOT_FOUND');
   const { count } = await prisma.vacancyApplication.updateMany({
@@ -69,6 +70,7 @@ vacanciesRouter.post('/my/applications/:id/withdraw', requireAuth, requireCandid
     data: { status: 'WITHDRAWN' },
   });
   if (!count) throw conflict('CANNOT_WITHDRAW');
+  await emitWebhook('application.status_changed', { id: app.id, vacancyId: app.vacancyId, from: app.status, to: 'WITHDRAWN', by: 'candidate' }, app.vacancy.companyId);
   const title = (app.vacancy.title as Record<string, string>).az ?? '';
   await notifyStaff(
     `Namizəd müraciəti geri götürdü`,
@@ -198,6 +200,7 @@ vacanciesRouter.post('/:slug/apply', applyLimiter, requireAuth, requireCandidate
       throw err;
     }
   }
+  await emitWebhook('application.created', { id: application.id, vacancyId: v.id, status: application.status, matchScore: application.matchScore, candidateId: user.id }, v.companyId);
   const title = (v.title as Record<string, string>).az ?? '';
   await notifyStaff(
     `Yeni vakansiya müraciəti: ${title}`.slice(0, 180),

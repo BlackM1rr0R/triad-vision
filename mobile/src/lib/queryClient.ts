@@ -35,6 +35,8 @@ export const qk = {
   myCases: ['cases'] as const,
   case: (id: string) => ['cases', id] as const,
   notifications: ['notifications'] as const,
+  interviews: ['interviews'] as const,
+  interview: (id: string) => ['interviews', id] as const,
   dashboard: ['admin', 'dashboard'] as const,
   adminCases: (status: string | null, search: string, mine: boolean) => ['admin', 'cases', { status, search, mine }] as const,
   adminCase: (id: string) => ['admin', 'case', id] as const,

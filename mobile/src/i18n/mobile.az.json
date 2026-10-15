@@ -7,7 +7,8 @@
       "notifications": "Bildirişlər",
       "profile": "Profil",
       "dashboard": "Panel",
-      "cases": "Müraciətlər"
+      "cases": "Müraciətlər",
+      "interviews": "Müsahibələr"
     },
     "common": {
       "retry": "Yenidən cəhd et",
@@ -78,7 +79,8 @@
       "appointment": "Görüş",
       "explore": "Kəşf edin",
       "newApplication": "Yeni müraciət",
-      "unread": "{{count}} oxunmamış"
+      "unread": "{{count}} oxunmamış",
+      "nextInterview": "Növbəti müsahibə"
     },
     "case": {
       "title": "Müraciətim",
@@ -142,7 +144,10 @@
       "empty": "Hələ mesaj yoxdur. Müraciətinizlə bağlı istənilən sualı burada yazın.",
       "noCase": "Mesajlar müraciət yaratdıqdan sonra əlçatan olur.",
       "team": "Triad Vision",
-      "failed": "Mesaj göndərilmədi. Yenidən cəhd üçün toxunun."
+      "failed": "Mesaj göndərilmədi. Yenidən cəhd üçün toxunun.",
+      "read": "Oxundu",
+      "typing": "… yazır",
+      "typingName": "{{name}} yazır…"
     },
     "notifications": {
       "title": "Bildirişlər",
@@ -183,7 +188,22 @@
       "sessionsCount": "{{count}} aktiv · bu sessiya {{date}} tarixində bitir",
       "logoutOthers": "Digər cihazlardan çıx",
       "logoutOthersConfirm": "Bütün digər telefon və brauzerlərdən çıxış ediləcək. Bu telefon daxil qalır.",
-      "logoutOthersDone": "Digər cihazlardan çıxış edildi"
+      "logoutOthersDone": "Digər cihazlardan çıxış edildi",
+      "biometric": "Biometrik giriş",
+      "biometricOn": "Aktivdir — tətbiq Face ID / barmaq izi ilə açılır",
+      "biometricOff": "Deaktivdir",
+      "biometricNotEnrolled": "Telefonda Face ID və ya barmaq izi qeydə alınmayıb. Əvvəlcə telefon parametrlərində əlavə edin.",
+      "biometricUnavailable": "Bu cihazda biometrik giriş dəstəklənmir.",
+      "biometricEnabled": "Biometrik giriş aktiv edildi",
+      "biometricDisabled": "Biometrik giriş deaktiv edildi",
+      "biometricCancelled": "Təsdiqlənmədi — parametr dəyişmədi.",
+      "whatsapp": "WhatsApp bildirişləri",
+      "whatsappHint": "Vacib yenilikləri WhatsApp-a da göndəririk.",
+      "sms": "SMS bildirişləri",
+      "smsHint": "Görüş xatırlatmaları və təcili mesajlar SMS ilə.",
+      "noPhone": "WhatsApp və SMS üçün yuxarıda telefon nömrənizi əlavə edin.",
+      "prefsSaved": "Seçim yadda saxlanıldı",
+      "interviewsHint": "İşəgötürənlərlə onlayn görüşləriniz"
     },
     "apply": {
       "title": "Yeni müraciət",
@@ -381,7 +401,88 @@
       "PASSWORD_SHORT": "Şifrə ən azı 8 simvoldan ibarət olmalıdır.",
       "REQUIRED_FIELDS": "Bütün mütləq sahələri doldurun.",
       "DUPLICATE": "Bu artıq mövcuddur.",
-      "INVALID_VISA_CATEGORY": "Bu viza növü artıq mövcud deyil."
+      "INVALID_VISA_CATEGORY": "Bu viza növü artıq mövcud deyil.",
+      "INVALID_TRANSITION": "Bu əməliyyat artıq mümkün deyil.",
+      "INTERVIEW_STARTED": "Müsahibə artıq başlayıb.",
+      "INTERVIEW_NOT_FOUND": "Müsahibə tapılmadı.",
+      "INTERVIEW_CLOSED": "Bağlanmış müsahibəni dəyişmək olmaz.",
+      "NO_MRZ": "Bu sənəddən pasport məlumatı oxunmayıb.",
+      "OCR_UNAVAILABLE": "Pasport oxuma funksiyası hazırda mövcud deyil.",
+      "UPLOAD_NOT_ALLOWED": "Bu mərhələdə sənəd yükləmək mümkün deyil."
+    },
+    "lock": {
+      "title": "Tətbiq kilidlidir",
+      "subtitle": "Davam etmək üçün kimliyinizi təsdiqləyin.",
+      "prompt": "Triad Vision-u açın",
+      "unlock": "Face ID / barmaq izi ilə açın",
+      "unlockFace": "Face ID ilə açın",
+      "usePassword": "Şifrə ilə giriş",
+      "failed": "Təsdiqlənmədi. Yenidən cəhd edin və ya şifrə ilə daxil olun."
+    },
+    "scan": {
+      "title": "Sənəd skaneri",
+      "action": "Skan et",
+      "rotate": "Döndər",
+      "retake": "Yenidən çək",
+      "remove": "Sil",
+      "addPage": "Səhifə əlavə et",
+      "upload": "Yüklə ({{count}})",
+      "pageOf": "Səhifə {{page}} / {{total}}",
+      "hint": "Mətn oxunaqlı olsun — kənarlar kəsilib.",
+      "uploadingPage": "Səhifə {{page}} / {{total}} yüklənir… {{percent}}%",
+      "done": "{{count}} səhifə yükləndi"
+    },
+    "ocr": {
+      "title": "Pasportdan oxunan məlumat",
+      "running": "Pasport oxunur…",
+      "runningHint": "Maşınla oxunan zona (MRZ) tanınır. Bu bir neçə saniyə çəkə bilər.",
+      "notFound": "Pasportun maşınla oxunan zonası tapılmadı. Şəkil aydın və bütöv olmalıdır — səhifənin aşağı iki sətri görünsün.",
+      "name": "Ad, soyad",
+      "number": "Pasport nömrəsi",
+      "expiry": "Etibarlılıq müddəti",
+      "birthDate": "Doğum tarixi",
+      "nationality": "Vətəndaşlıq",
+      "invalid": "Yoxlama rəqəmləri uyğun gəlmir — məlumatı pasportla tutuşdurun.",
+      "expired": "Pasportun müddəti bitib. Viza üçün yeni pasport lazımdır.",
+      "expiresSoon": "Pasportun müddəti 12 aydan az qalıb — səfirlik adətən daha uzun müddət tələb edir.",
+      "checkHint": "Məlumat düzgündürsə profilinizə köçürün.",
+      "apply": "Profilə tətbiq et",
+      "applied": "Profil pasport məlumatı ilə yeniləndi"
+    },
+    "interviews": {
+      "title": "Müsahibələrim",
+      "detailTitle": "Müsahibə",
+      "subtitle": "İşəgötürənlərlə onlayn görüşləriniz. Təklif olunan vaxtı təsdiqləyin və ya rədd edin.",
+      "upcoming": "Gələcək müsahibələr",
+      "past": "Keçmiş müsahibələr",
+      "emptyTitle": "Hələ müsahibə yoxdur",
+      "empty": "İşəgötürən sizi dəvət edəndə müsahibə burada görünəcək.",
+      "noPast": "Keçmiş müsahibə yoxdur.",
+      "with": "{{company}} ilə müsahibə",
+      "withTv": "Triad Vision ilə müsahibə",
+      "vacancy": "Vakansiya",
+      "minutes": "{{count}} dəq",
+      "online": "Onlayn (Jitsi)",
+      "join": "Qoşul",
+      "joinHint": "Link görüşə 15 dəqiqə qalmış aktiv olur.",
+      "link": "Görüş linki",
+      "calendarTitle": "Müsahibə: {{company}}",
+      "confirm": "Vaxtı təsdiqlə",
+      "decline": "Rədd et",
+      "declineTitle": "Müsahibəni rədd et",
+      "declineText": "İşəgötürənə yeni vaxt təklif etməsi üçün xəbər göndəriləcək.",
+      "declineReason": "Səbəb (istəyə bağlı)",
+      "confirmed": "Müsahibə təsdiqləndi",
+      "declined": "Müsahibə rədd edildi",
+      "awaiting": "Təsdiqiniz gözlənilir",
+      "updatedAt": "Yeniləndi: {{date}}",
+      "status": {
+        "PROPOSED": "Təklif edilib",
+        "CONFIRMED": "Təsdiqlənib",
+        "CANCELLED": "Ləğv edilib",
+        "DONE": "Keçirilib",
+        "NO_SHOW": "Gəlmədi"
+      }
     }
   }
 }

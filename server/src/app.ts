@@ -14,6 +14,12 @@ import { notificationsRouter } from './routes/notifications.js';
 import { publicRouter } from './routes/public.js';
 import { adminRouter } from './routes/admin/index.js';
 import { accountRouter } from './routes/account.js';
+import { messagingRouter } from './routes/messaging.js';
+import { documentsRouter } from './routes/documents.js';
+import { journeyRouter } from './routes/journey.js';
+import { interviewsRouter } from './routes/interviews.js';
+import { partnerRouter } from './routes/partner.js';
+import { calendarRouter } from './routes/calendar.js';
 import { twoFactorRouter } from './routes/twoFactor.js';
 import { companyRouter } from './routes/company.js';
 import { companyInvoicesRouter } from './routes/companyInvoices.js';
@@ -24,6 +30,8 @@ import { trackRouter } from './routes/track.js';
 import { seoRouter } from './routes/seo.js';
 import { driveRouter } from './routes/drive.js';
 import { tasksRouter } from './routes/tasks.js';
+
+type RequestWithRawBody = import('express').Request & { rawBody?: Buffer };
 
 /** Builds the Express app without listening, so tests can drive it with supertest. */
 export const createApp = () => {
@@ -59,7 +67,8 @@ export const createApp = () => {
     }),
   );
 
-  app.use(express.json({ limit: '3mb' }));
+  // Keep the raw body: webhook providers (WhatsApp/Meta) sign the exact bytes they sent.
+  app.use(express.json({ limit: '3mb', verify: (req, _res, buf) => { (req as RequestWithRawBody).rawBody = buf; } }));
   app.use(cookieParser());
   app.use(loadUser);
   app.use(csrfGuard);
@@ -88,6 +97,12 @@ export const createApp = () => {
   app.use('/api/booking', bookingRouter);
   app.use('/api/reviews', reviewsRouter);
   app.use('/api/track', trackRouter);
+  app.use('/api/messaging', messagingRouter);
+  app.use('/api/documents', documentsRouter);
+  app.use('/api/journey', journeyRouter);
+  app.use('/api/interviews', interviewsRouter);
+  app.use('/api/v1', partnerRouter);
+  app.use('/api/calendar', calendarRouter);
 
   // /sitemap.xml, /robots.txt and /api/seo/* (Caddy forwards the first two here).
   app.use(seoRouter);

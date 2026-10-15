@@ -2,7 +2,6 @@ import { useCallback, useState } from 'react';
 import { router } from 'expo-router';
 import * as DocumentPicker from 'expo-document-picker';
 import * as ImagePicker from 'expo-image-picker';
-import { useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { useToast } from '@/components/ui';
 import { uploadFile } from '@/lib/api';
@@ -92,14 +91,20 @@ export const useUploader = (invalidate: () => Promise<unknown>) => {
   const [progress, setProgress] = useState<Record<string, number>>({});
 
   const upload = useCallback(
-    async (key: string, path: string, source: PickSource, fields: Record<string, string>, opts: { pdfOnly?: boolean; successMessage?: string } = {}) => {
+    async (
+      key: string,
+      path: string,
+      source: PickSource,
+      fields: Record<string, string>,
+      opts: { pdfOnly?: boolean; successMessage?: string; onUploaded?: (doc: CaseDocument | null, file: PickedFile) => void } = {},
+    ) => {
       try {
         const file = await pickFile(source, opts);
         if (!file) return false;
         const invalid = validateFile(file, opts);
         if (invalid) throw new ApiError(0, invalid);
         setProgress((p) => ({ ...p, [key]: 0 }));
-        await uploadFile({
+        const res = await uploadFile({
           path,
           uri: file.uri,
           name: file.name,
@@ -109,6 +114,7 @@ export const useUploader = (invalidate: () => Promise<unknown>) => {
         });
         await invalidate();
         toast(opts.successMessage ?? t('m.case.uploaded'));
+        opts.onUploaded?.((res as { document?: CaseDocument } | null)?.document ?? null, file);
         return true;
       } catch (err) {
         toast(message(err), 'error');
@@ -124,7 +130,61 @@ export const useUploader = (invalidate: () => Promise<unknown>) => {
     [invalidate, message, t, toast],
   );
 
-  return { progress, upload };
+  /**
+   * Uploads several already-prepared files one after the other for the same requirement (scanner
+   * pages). Each source is produced lazily right before its upload so only one rendered page lives
+   * in memory at a time. Resolves with the created documents, or null when something failed (the
+   * error was shown; pages uploaded before the failure stay on the server).
+   */
+  const uploadFiles = useCallback(
+    async (
+      key: string,
+      path: string,
+      sources: (() => Promise<PickedFile>)[],
+      fields: Record<string, string>,
+      onPage?: (page: number, fraction: number) => void,
+    ): Promise<CaseDocument[] | null> => {
+      const docs: CaseDocument[] = [];
+      setProgress((p) => ({ ...p, [key]: 0 }));
+      try {
+        for (let i = 0; i < sources.length; i++) {
+          onPage?.(i + 1, 0);
+          const file = await sources[i]();
+          const invalid = validateFile(file);
+          if (invalid) throw new ApiError(0, invalid);
+          const res = await uploadFile({
+            path,
+            uri: file.uri,
+            name: file.name,
+            mimeType: file.mimeType,
+            fields,
+            onProgress: (f) => {
+              onPage?.(i + 1, f);
+              setProgress((p) => ({ ...p, [key]: (i + f) / sources.length }));
+            },
+          });
+          const doc = (res as { document?: CaseDocument } | null)?.document;
+          if (doc) docs.push(doc);
+        }
+        await invalidate();
+        toast(sources.length > 1 ? t('m.scan.done', { count: sources.length }) : t('m.case.uploaded'));
+        return docs;
+      } catch (err) {
+        toast(message(err), 'error');
+        if (docs.length) await invalidate();
+        return null;
+      } finally {
+        setProgress((p) => {
+          const next = { ...p };
+          delete next[key];
+          return next;
+        });
+      }
+    },
+    [invalidate, message, t, toast],
+  );
+
+  return { progress, upload, uploadFiles };
 };
 
 /** Images open in the in-app viewer; PDFs / Word files open in the phone's viewer. */

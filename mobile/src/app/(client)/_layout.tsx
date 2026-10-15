@@ -18,6 +18,8 @@ export default function ClientTabs() {
         options={{ title: t('m.tabs.notifications'), tabBarIcon: tabIcon(Bell), tabBarBadge: unread > 0 ? (unread > 99 ? '99+' : unread) : undefined }}
       />
       <Tabs.Screen name="profile" options={{ title: t('m.tabs.profile'), tabBarIcon: tabIcon(UserRound) }} />
+      {/* Interviews live inside the tab navigator (tab bar stays visible) but have no tab of their own: reached from home and the profile. */}
+      <Tabs.Screen name="interviews" options={{ href: null, title: t('m.interviews.title') }} />
     </Tabs>
   );
 }

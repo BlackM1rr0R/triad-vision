@@ -3,34 +3,50 @@ import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
 import { toast } from 'sonner';
-import { History, Lock, MessageCircle, Send, StickyNote } from 'lucide-react';
+import { History, Lock, MessageCircle, Send, StickyNote, X } from 'lucide-react';
 import { api } from '@/lib/api';
+import { useAuth } from '@/lib/auth';
+import { RealtimeBridge } from '@/lib/realtime';
 import type { CaseDetail } from '@/lib/types';
+import { registerCopy } from '@/i18n';
+import { pagesMessaging } from '@/i18n/pagesMessaging';
 import { Spinner } from '@/components/ui/Spinner';
+import { ChannelBadge, LiveDot, ReadTicks, TypingIndicator } from '@/components/messaging/ThreadBits';
+import { useThread } from '@/components/messaging/useThread';
 import { eventLabel, fmtDateTime, fullName, roleLabel, statusLabel, toastError } from '../labels';
 import { Panel } from '../ui';
 import { useCaseRefresh } from './shared';
 
+registerCopy(pagesMessaging);
+
 export const Messages = ({ c }: { c: CaseDetail }) => {
   const { t } = useTranslation();
+  const { user } = useAuth();
   const refresh = useCaseRefresh(c.id);
   const [body, setBody] = useState('');
   const [busy, setBusy] = useState(false);
-  const listRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement | null>(null);
+  const meId = user?.id ?? '';
+
+  const thread = useThread({ caseId: c.id, base: '/admin/cases', initial: c.messages, meId, onNewMessage: () => void refresh() });
+  const { messages, typingName } = thread;
+  const lastId = messages[messages.length - 1]?.id;
 
   useEffect(() => {
-    const el = listRef.current;
+    const el = scrollRef.current;
     if (el) el.scrollTop = el.scrollHeight;
-  }, [c.messages.length]);
+  }, [messages.length, lastId, typingName]);
 
   const send = async () => {
-    if (!body.trim()) return;
+    const text = body.trim();
+    if (!text || !user) return;
     setBusy(true);
+    setBody('');
     try {
-      await api.post(`/admin/cases/${c.id}/messages`, { body: body.trim() });
-      setBody('');
-      await refresh();
+      await thread.send(text, { id: user.id, firstName: user.firstName, lastName: user.lastName, role: user.role });
+      void refresh();
     } catch (err) {
+      setBody(text);
       toastError(err, t('admin.case.comm.sendFailed'));
     } finally {
       setBusy(false);
@@ -38,11 +54,19 @@ export const Messages = ({ c }: { c: CaseDetail }) => {
   };
 
   return (
-    <Panel id="messages" title={t('admin.case.comm.messagesTitle')} icon={MessageCircle} bodyClassName="p-0" className="scroll-mt-24">
-      <div ref={listRef} className="max-h-[420px] space-y-3 overflow-y-auto px-5 py-5 sm:px-6">
-        {c.messages.length === 0 && <p className="py-6 text-center text-sm text-muted">{t('admin.case.comm.noMessages')}</p>}
-        {c.messages.map((m) => {
+    <Panel id="messages" title={t('admin.case.comm.messagesTitle')} icon={MessageCircle} actions={<LiveDot connected={thread.connected} />} bodyClassName="p-0" className="scroll-mt-24">
+      <RealtimeBridge />
+      <div
+        ref={(el) => {
+          scrollRef.current = el;
+          thread.listRef(el);
+        }}
+        className="max-h-[420px] space-y-3 overflow-y-auto px-5 py-5 sm:px-6"
+      >
+        {messages.length === 0 && <p className="py-6 text-center text-sm text-muted">{t('admin.case.comm.noMessages')}</p>}
+        {messages.map((m) => {
           const fromClient = m.author.role === 'CLIENT';
+          const mine = m.author.id === meId;
           return (
             <motion.div
               key={m.id}
@@ -54,16 +78,28 @@ export const Messages = ({ c }: { c: CaseDetail }) => {
                 className={clsx(
                   'max-w-[85%] rounded-2xl px-3.5 py-2 text-sm',
                   fromClient ? 'rounded-bl-sm bg-surface text-ink' : 'rounded-br-sm bg-brand-600 text-white',
+                  m.pending && 'opacity-70',
+                  m.failed && 'bg-red-600',
                 )}
               >
                 <p className="whitespace-pre-wrap break-words">{m.body}</p>
-                <p className={clsx('mt-1 text-[10px]', fromClient ? 'text-muted' : 'text-white/70')}>
-                  {fullName(m.author)} · {fmtDateTime(m.createdAt)}
+                <p className={clsx('mt-1 flex flex-wrap items-center gap-1.5 text-[10px]', fromClient ? 'text-muted' : 'text-white/70')}>
+                  <ChannelBadge channel={m.channel} onDark={!fromClient} />
+                  <span>
+                    {fullName(m.author)} · {fmtDateTime(m.createdAt)}
+                  </span>
+                  {!fromClient && <ReadTicks m={m} onDark />}
+                  {mine && m.failed && (
+                    <button type="button" className="inline-flex items-center gap-0.5 underline" onClick={() => thread.dismissFailed(m.id)}>
+                      <X className="size-3" aria-hidden /> {t('messaging.chat.failed')}
+                    </button>
+                  )}
                 </p>
               </div>
             </motion.div>
           );
         })}
+        <TypingIndicator name={typingName} />
       </div>
       <form
         className="flex items-end gap-2 border-t border-line p-3 sm:px-4"
@@ -82,7 +118,10 @@ export const Messages = ({ c }: { c: CaseDetail }) => {
           value={body}
           maxLength={4000}
           placeholder={t('admin.case.comm.placeholder')}
-          onChange={(e) => setBody(e.target.value)}
+          onChange={(e) => {
+            setBody(e.target.value);
+            if (e.target.value.trim()) thread.notifyTyping();
+          }}
           onKeyDown={(e) => {
             if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
               e.preventDefault();

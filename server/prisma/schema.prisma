@@ -25,69 +25,81 @@ enum Locale {
 }
 
 model User {
-  id                 String                   @id @default(cuid())
-  email              String                   @unique
-  passwordHash       String
-  role               Role                     @default(CLIENT)
-  firstName          String
-  lastName           String
-  phone              String?
-  locale             Locale                   @default(az)
-  isActive           Boolean                  @default(true)
+  id                    String                   @id @default(cuid())
+  email                 String                   @unique
+  passwordHash          String
+  role                  Role                     @default(CLIENT)
+  firstName             String
+  lastName              String
+  phone                 String?
+  locale                Locale                   @default(az)
+  isActive              Boolean                  @default(true)
   // Candidate profile (all optional, filled in the portal)
-  birthDate          DateTime?
-  nationality        String?
-  city               String?
-  address            String?                  @db.Text
-  profession         String?
-  experienceYears    Int?
-  germanLevel        String? // none | A1 | A2 | B1 | B2 | C1 | C2
-  education          String? // school | vocational | university
-  drivingLicence     String? // e.g. "B, C, CE"
-  about              String?                  @db.Text
+  birthDate             DateTime?
+  nationality           String?
+  city                  String?
+  address               String?                  @db.Text
+  profession            String?
+  experienceYears       Int?
+  germanLevel           String? // none | A1 | A2 | B1 | B2 | C1 | C2
+  education             String? // school | vocational | university
+  drivingLicence        String? // e.g. "B, C, CE"
+  about                 String?                  @db.Text
   // Notification preferences (in-app notifications are always kept)
-  emailNotifications Boolean                  @default(true)
-  pushNotifications  Boolean                  @default(true)
-  passportExpiry     DateTime? // for the passport-expiry reminder
+  emailNotifications    Boolean                  @default(true)
+  pushNotifications     Boolean                  @default(true)
+  passportExpiry        DateTime? // for the passport-expiry reminder
+  passportNumber        String? // from passport OCR (MRZ) or typed by the client
+  whatsappOptIn         Boolean                  @default(true) // case updates via WhatsApp (needs a phone number)
+  smsNotifications      Boolean                  @default(true) // appointment reminders via SMS
+  calendarToken         String?                  @unique // secret for the personal ICS feed (staff)
   // Email verification and two-factor authentication
-  emailVerifiedAt    DateTime?
-  totpSecret         String?                  @db.Text // encrypted with the server key; set while enrolling
-  totpEnabledAt      DateTime?
-  recoveryCodes      Json? // sha256 hashes of unused one-time recovery codes
+  emailVerifiedAt       DateTime?
+  totpSecret            String?                  @db.Text // encrypted with the server key; set while enrolling
+  totpEnabledAt         DateTime?
+  recoveryCodes         Json? // sha256 hashes of unused one-time recovery codes
   // Employer accounts
-  companyId          String?
-  company            Company?                 @relation(fields: [companyId], references: [id], onDelete: SetNull)
-  createdAt          DateTime                 @default(now())
-  updatedAt          DateTime                 @updatedAt
-  cases              Case[]                   @relation("CaseClient")
-  assignedCases      Case[]                   @relation("CaseStaff")
-  notifications      Notification[]
-  events             CaseEvent[]
-  messages           CaseMessage[]
-  documents          Document[]
-  resetTokens        PasswordResetToken[]
-  devices            PushDevice[]
-  sessions           Session[]
-  auditLogs          AuditLog[]
-  docFolder          DocFolder?
-  docGrants          DocGrant[]               @relation("GrantUser")
-  grantsGiven        DocGrant[]               @relation("GrantedBy")
-  docFiles           DocFile[]
-  verifyTokens       EmailVerificationToken[]
-  applications       VacancyApplication[]
-  bookings           Booking[]                @relation("BookingUser")
-  slots              ConsultationSlot[]       @relation("SlotStaff")
-  reviews            Review[]
-  driveNodesCreated  DriveNode[]              @relation("DriveNodeCreatedBy")
-  driveNodesOwned    DriveNode[]              @relation("DriveNodeOwner")
-  driveNodesDeleted  DriveNode[]              @relation("DriveNodeDeletedBy")
-  driveGrants        DriveGrant[]             @relation("DriveGrantUser")
-  driveGrantsGiven   DriveGrant[]             @relation("DriveGrantGivenBy")
-  driveVersions      DriveFileVersion[]
-  driveFavorites     DriveFavorite[]
-  tasksCreated       Task[]                   @relation("TaskCreatedBy")
-  taskAssignments    TaskAssignee[]
-  taskComments       TaskComment[]
+  companyId             String?
+  company               Company?                 @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  createdAt             DateTime                 @default(now())
+  updatedAt             DateTime                 @updatedAt
+  cases                 Case[]                   @relation("CaseClient")
+  assignedCases         Case[]                   @relation("CaseStaff")
+  notifications         Notification[]
+  events                CaseEvent[]
+  messages              CaseMessage[]
+  documents             Document[]
+  resetTokens           PasswordResetToken[]
+  devices               PushDevice[]
+  sessions              Session[]
+  auditLogs             AuditLog[]
+  docFolder             DocFolder?
+  docGrants             DocGrant[]               @relation("GrantUser")
+  grantsGiven           DocGrant[]               @relation("GrantedBy")
+  docFiles              DocFile[]
+  verifyTokens          EmailVerificationToken[]
+  applications          VacancyApplication[]
+  bookings              Booking[]                @relation("BookingUser")
+  slots                 ConsultationSlot[]       @relation("SlotStaff")
+  reviews               Review[]
+  driveNodesCreated     DriveNode[]              @relation("DriveNodeCreatedBy")
+  driveNodesOwned       DriveNode[]              @relation("DriveNodeOwner")
+  driveNodesDeleted     DriveNode[]              @relation("DriveNodeDeletedBy")
+  driveGrants           DriveGrant[]             @relation("DriveGrantUser")
+  driveGrantsGiven      DriveGrant[]             @relation("DriveGrantGivenBy")
+  driveVersions         DriveFileVersion[]
+  driveFavorites        DriveFavorite[]
+  tasksCreated          Task[]                   @relation("TaskCreatedBy")
+  taskAssignments       TaskAssignee[]
+  taskComments          TaskComment[]
+  outboundMessages      OutboundMessage[]
+  templateEdits         NotificationTemplate[]
+  kbArticles            KbArticle[]
+  apiKeys               ApiKey[]
+  webhooks              Webhook[]
+  interviewsAsCandidate Interview[]              @relation("InterviewCandidate")
+  interviewsAsStaff     Interview[]              @relation("InterviewStaff")
+  interviewsCreated     Interview[]              @relation("InterviewCreatedBy")
 
   @@index([companyId])
 }
@@ -268,6 +280,11 @@ model Case {
   company           Company?              @relation(fields: [companyId], references: [id], onDelete: SetNull)
   vacancyId         String?
   vacancy           Vacancy?              @relation(fields: [vacancyId], references: [id], onDelete: SetNull)
+  // Family reunion (Familiennachzug): member cases hang under the main applicant's case.
+  parentCaseId      String?
+  parentCase        Case?                 @relation("CaseFamily", fields: [parentCaseId], references: [id], onDelete: SetNull)
+  familyMembers     Case[]                @relation("CaseFamily")
+  relation          String? // spouse | child | parent (for member cases)
   closedAt          DateTime? // set when the case reaches APPROVED / REJECTED / CANCELLED
   documentsPurgedAt DateTime? // DSGVO retention: files deleted after the retention period
   createdAt         DateTime              @default(now())
@@ -279,15 +296,19 @@ model Case {
   messages          CaseMessage[]
   notifications     Notification[]
   tasks             Task[]
+  outboundMessages  OutboundMessage[]
+  onboarding        CaseOnboarding[]
 
   @@index([clientId])
   @@index([status])
   @@index([companyId])
   @@index([closedAt])
+  @@index([parentCaseId])
 }
 
 model DocumentRequirement {
   id          String     @id @default(cuid())
+  key         String? // stable id from the template (e.g. PASSPORT, LANGUAGE_CERT) for automations
   caseId      String
   case        Case       @relation(fields: [caseId], references: [id], onDelete: Cascade)
   stage       DocStage
@@ -314,6 +335,8 @@ model Document {
   size          Int
   status        DocStatus            @default(PENDING)
   reviewNote    String?              @db.Text
+  ocr           Json? // fields extracted from the file (passport MRZ: number, names, birthDate, expiry…)
+  ocrAt         DateTime?
   uploadedById  String
   uploadedBy    User                 @relation(fields: [uploadedById], references: [id])
   createdAt     DateTime             @default(now())
@@ -353,13 +376,16 @@ model CaseEvent {
 }
 
 model CaseMessage {
-  id        String   @id @default(cuid())
-  caseId    String
-  case      Case     @relation(fields: [caseId], references: [id], onDelete: Cascade)
-  authorId  String
-  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  body      String   @db.Text
-  createdAt DateTime @default(now())
+  id         String    @id @default(cuid())
+  caseId     String
+  case       Case      @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  authorId   String
+  author     User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  body       String    @db.Text
+  channel    String    @default("app") // app | whatsapp | sms
+  externalId String?   @unique // provider message id (WhatsApp), for de-duplication
+  readAt     DateTime? // when the other side opened it (read receipt)
+  createdAt  DateTime  @default(now())
 
   @@index([caseId, createdAt])
 }
@@ -392,31 +418,33 @@ model EmailLog {
 // ─── Website content (CMS) ─────────────────────────────────────────────
 
 model VisaCategory {
-  id            String    @id @default(cuid())
-  slug          String    @unique
-  icon          String // lucide icon name
-  image         String    @db.Text
-  visaLabel     String // e.g. "§18b", "§16d", "Saisonarbeit"
-  title         Json
-  summary       Json
-  items         Json // { az: string[], de: string[], ... }
-  body          Json // long description per locale
+  id                   String                @id @default(cuid())
+  slug                 String                @unique
+  icon                 String // lucide icon name
+  image                String                @db.Text
+  visaLabel            String // e.g. "§18b", "§16d", "Saisonarbeit"
+  title                Json
+  summary              Json
+  items                Json // { az: string[], de: string[], ... }
+  body                 Json // long description per locale
   // Structured details for the visa page (all optional; figures are indicative and editable in the CMS)
-  germanLevel   String? // e.g. "A2", "B1"
-  salaryMin     Int? // EUR gross per month
-  salaryMax     Int?
-  processingMin Int? // weeks
-  processingMax Int?
-  familyReunion Boolean?
-  requirements  Json? // L10nList
-  documents     Json? // L10nList
-  faq           Json? // { q: L10n, a: L10n }[]
-  sortOrder     Int       @default(0)
-  published     Boolean   @default(true)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  cases         Case[]
-  vacancies     Vacancy[]
+  germanLevel          String? // e.g. "A2", "B1"
+  salaryMin            Int? // EUR gross per month
+  salaryMax            Int?
+  processingMin        Int? // weeks
+  processingMax        Int?
+  familyReunion        Boolean?
+  requirements         Json? // L10nList
+  documents            Json? // L10nList
+  faq                  Json? // { q: L10n, a: L10n }[]
+  forecast             Json? // optional per-step expected days { DOCUMENTS: [min,max], CONTRACT: …, EMBASSY: …, APPOINTMENT: …, DECISION: … }
+  sortOrder            Int                   @default(0)
+  published            Boolean               @default(true)
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+  cases                Case[]
+  vacancies            Vacancy[]
+  requirementTemplates RequirementTemplate[]
 }
 
 model Service {
@@ -573,6 +601,9 @@ model Company {
   vacancies   Vacancy[]
   cases       Case[]
   invoices    Invoice[]
+  interviews  Interview[]
+  apiKeys     ApiKey[]
+  webhooks    Webhook[]
 
   @@index([status])
 }
@@ -648,6 +679,7 @@ model VacancyApplication {
   companyNote String?           @db.Text // employer feedback
   createdAt   DateTime          @default(now())
   updatedAt   DateTime          @updatedAt
+  interviews  Interview[]
 
   @@unique([vacancyId, userId])
   @@index([userId])
@@ -973,4 +1005,238 @@ model TaskAttachment {
   createdAt DateTime  @default(now())
 
   @@id([taskId, nodeId])
+}
+
+// ─── Messaging: WhatsApp / SMS, templates ───────────────────────────────
+
+enum OutboundChannel {
+  WHATSAPP
+  SMS
+}
+
+enum OutboundStatus {
+  QUEUED
+  SENT
+  FAILED
+  CONSOLE
+}
+
+/// Every WhatsApp/SMS message the system tried to send (like EmailLog, with provider ids and errors).
+model OutboundMessage {
+  id          String          @id @default(cuid())
+  channel     OutboundChannel
+  to          String
+  userId      String?
+  user        User?           @relation(fields: [userId], references: [id], onDelete: SetNull)
+  caseId      String?
+  case        Case?           @relation(fields: [caseId], references: [id], onDelete: SetNull)
+  templateKey String?
+  body        String          @db.Text
+  status      OutboundStatus  @default(QUEUED)
+  providerId  String?
+  error       String?         @db.Text
+  createdAt   DateTime        @default(now())
+  sentAt      DateTime?
+
+  @@index([userId, createdAt])
+  @@index([caseId])
+  @@index([status, createdAt])
+}
+
+/// Admin-edited override of a notification text (title/body per type and locale). Missing rows fall back to code.
+model NotificationTemplate {
+  id          String   @id @default(cuid())
+  type        String
+  locale      Locale
+  title       String
+  body        String   @db.Text
+  updatedById String?
+  updatedBy   User?    @relation(fields: [updatedById], references: [id], onDelete: SetNull)
+  updatedAt   DateTime @updatedAt
+
+  @@unique([type, locale])
+}
+
+// ─── Document requirement templates per visa type ──────────────────────
+
+model RequirementTemplate {
+  id             String        @id @default(cuid())
+  visaCategoryId String? // null = default set used when the visa type has no own list
+  visaCategory   VisaCategory? @relation(fields: [visaCategoryId], references: [id], onDelete: Cascade)
+  stage          DocStage
+  key            String? // PASSPORT, PHOTO, CV, DIPLOMA, LANGUAGE_CERT, …
+  title          Json
+  description    Json?
+  required       Boolean       @default(true)
+  sortOrder      Int           @default(0)
+  createdAt      DateTime      @default(now())
+
+  @@index([visaCategoryId, stage])
+}
+
+// ─── Post-arrival onboarding, German preparation ───────────────────────
+
+model OnboardingItem {
+  id        String           @id @default(cuid())
+  slug      String           @unique
+  icon      String           @default("CheckCircle2")
+  title     Json
+  body      Json // L10n, paragraphs separated by blank lines
+  link      String?          @db.Text
+  dueDays   Int? // days after arrival by which it should be done (e.g. Anmeldung: 14)
+  sortOrder Int              @default(0)
+  published Boolean          @default(true)
+  progress  CaseOnboarding[]
+}
+
+model CaseOnboarding {
+  id     String         @id @default(cuid())
+  caseId String
+  case   Case           @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  itemId String
+  item   OnboardingItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  doneAt DateTime?
+  note   String?        @db.Text
+
+  @@unique([caseId, itemId])
+}
+
+model GermanQuestion {
+  id        String  @id @default(cuid())
+  level     String // A1 | A2 | B1 | B2
+  question  Json // L10n prompt (the sentence itself is German)
+  options   Json // string[]
+  answer    Int
+  sortOrder Int     @default(0)
+  published Boolean @default(true)
+}
+
+model LanguageCourse {
+  id          String  @id @default(cuid())
+  name        String
+  provider    String?
+  city        String?
+  url         String? @db.Text
+  levels      String? // e.g. "A1–B1"
+  format      String? // online | offline | hybrid
+  description Json? // L10n
+  sortOrder   Int     @default(0)
+  published   Boolean @default(true)
+}
+
+// ─── Interviews (employer ↔ candidate) ─────────────────────────────────
+
+enum InterviewStatus {
+  PROPOSED
+  CONFIRMED
+  CANCELLED
+  DONE
+  NO_SHOW
+}
+
+model Interview {
+  id            String              @id @default(cuid())
+  applicationId String?
+  application   VacancyApplication? @relation(fields: [applicationId], references: [id], onDelete: SetNull)
+  companyId     String?
+  company       Company?            @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  candidateId   String
+  candidate     User                @relation("InterviewCandidate", fields: [candidateId], references: [id], onDelete: Cascade)
+  staffId       String?
+  staff         User?               @relation("InterviewStaff", fields: [staffId], references: [id], onDelete: SetNull)
+  startsAt      DateTime
+  endsAt        DateTime
+  meetingUrl    String?             @db.Text
+  status        InterviewStatus     @default(PROPOSED)
+  notes         String?             @db.Text
+  createdById   String?
+  createdBy     User?               @relation("InterviewCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+
+  @@index([candidateId, startsAt])
+  @@index([companyId, startsAt])
+  @@index([startsAt])
+}
+
+// ─── Internal knowledge base ───────────────────────────────────────────
+
+model KbCategory {
+  id        String      @id @default(cuid())
+  name      String
+  sortOrder Int         @default(0)
+  articles  KbArticle[]
+}
+
+model KbArticle {
+  id          String      @id @default(cuid())
+  categoryId  String?
+  category    KbCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  title       String
+  body        String      @db.Text // markdown
+  tags        Json? // string[]
+  pinned      Boolean     @default(false)
+  published   Boolean     @default(true)
+  updatedById String?
+  updatedBy   User?       @relation(fields: [updatedById], references: [id], onDelete: SetNull)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@index([categoryId])
+  @@fulltext([title, body])
+}
+
+// ─── Partner API keys and webhooks ─────────────────────────────────────
+
+model ApiKey {
+  id          String    @id @default(cuid())
+  name        String
+  prefix      String // first 8 chars, shown in the UI
+  keyHash     String    @unique // sha256 of the full key
+  scopes      Json // string[] e.g. ["vacancies:read","applications:read","candidates:read"]
+  companyId   String?
+  company     Company?  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  createdById String?
+  createdBy   User?     @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  lastUsedAt  DateTime?
+  revokedAt   DateTime?
+  createdAt   DateTime  @default(now())
+}
+
+model Webhook {
+  id          String            @id @default(cuid())
+  url         String            @db.Text
+  secret      String // HMAC-SHA256 signing secret
+  events      Json // string[] e.g. ["case.status_changed","application.created"]
+  companyId   String?
+  company     Company?          @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  active      Boolean           @default(true)
+  createdById String?
+  createdBy   User?             @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt   DateTime          @default(now())
+  deliveries  WebhookDelivery[]
+}
+
+enum DeliveryStatus {
+  PENDING
+  DELIVERED
+  FAILED
+}
+
+model WebhookDelivery {
+  id            String         @id @default(cuid())
+  webhookId     String
+  webhook       Webhook        @relation(fields: [webhookId], references: [id], onDelete: Cascade)
+  event         String
+  payload       Json
+  status        DeliveryStatus @default(PENDING)
+  attempts      Int            @default(0)
+  responseCode  Int?
+  lastError     String?        @db.Text
+  nextAttemptAt DateTime?
+  deliveredAt   DateTime?
+  createdAt     DateTime       @default(now())
+
+  @@index([status, nextAttemptAt])
+  @@index([webhookId, createdAt])
 }

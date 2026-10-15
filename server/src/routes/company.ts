@@ -21,6 +21,7 @@ import {
   fillL10n,
 } from '../lib/vacancies.js';
 import { password, publicUser } from './auth.js';
+import { emitWebhook } from '../lib/ops/webhooks.js';
 
 // Employer portal API — mounted at /api/company (COMPANY role)
 export const companyRouter = Router();
@@ -403,6 +404,7 @@ companyRouter.post('/candidates/:id/decision', async (req, res) => {
   );
   await notifyApplicationStatus(app.userId, app.vacancy, rule.to);
   await audit(req, 'EMPLOYER_DECISION', `application:${app.id}`, { action: body.action });
+  await emitWebhook('application.status_changed', { id: app.id, vacancyId: app.vacancy.id, from: app.status, to: rule.to, by: 'company' }, company.id);
   res.json({ ok: true, status: rule.to });
 });
 

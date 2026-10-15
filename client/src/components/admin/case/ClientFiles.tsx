@@ -1,12 +1,32 @@
 import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
-import { FolderUp, Upload } from 'lucide-react';
+import { FileStack, FolderUp, Upload } from 'lucide-react';
 import type { CaseDetail } from '@/lib/types';
 import { Spinner } from '@/components/ui/Spinner';
 import { stageLabel, toastError } from '../labels';
 import { Panel } from '../ui';
 import { DocIcon, DocLinks, DocMeta, uploadCaseDocument, useCaseRefresh } from './shared';
+import { useCaseIntel } from '@/components/docsIntel/api';
+import { FormButtons, PacketActions } from '@/components/docsIntel/PacketAndForms';
+
+/** Embassy packet + pre-filled forms (document intelligence module). */
+const DocIntelPanels = ({ c }: { c: CaseDetail }) => {
+  const { t } = useTranslation();
+  const intel = useCaseIntel(c.id);
+  return (
+    <>
+      <Panel title={t('docsIntel.packet.title')} icon={FileStack}>
+        <p className="mb-3 text-xs text-muted">{t('docsIntel.packet.desc')}</p>
+        <PacketActions caseId={c.id} caseNumber={c.number} allowed canStore accepted={intel.data?.packet.accepted} total={intel.data?.packet.total} />
+      </Panel>
+      <Panel title={t('docsIntel.forms.title')} icon={FileStack}>
+        <p className="mb-3 text-xs text-muted">{t('docsIntel.forms.desc')}</p>
+        <FormButtons caseId={c.id} caseNumber={c.number} missing={intel.data?.forms} />
+      </Panel>
+    </>
+  );
+};
 
 /** Files staff attach for the client: the visa scan or any other document. */
 export const ClientFiles = ({ c }: { c: CaseDetail }) => {
@@ -31,6 +51,7 @@ export const ClientFiles = ({ c }: { c: CaseDetail }) => {
   };
 
   return (
+    <>
     <Panel title={t('admin.case.files.title')} icon={FolderUp}>
       <div className="mb-4 flex flex-wrap items-center gap-2">
         <label htmlFor="cf-stage" className="sr-only">
@@ -78,5 +99,7 @@ export const ClientFiles = ({ c }: { c: CaseDetail }) => {
         </ul>
       )}
     </Panel>
+    <DocIntelPanels c={c} />
+    </>
   );
 };

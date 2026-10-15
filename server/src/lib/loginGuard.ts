@@ -1,4 +1,5 @@
 import { config } from '../config.js';
+import { redis, redisEnabled } from './redis.js';
 
 /**
  * Per-account brute-force protection (in addition to the per-IP rate limit): after
@@ -15,6 +16,44 @@ const entries = new Map<string, Entry>();
 const WINDOW_MS = 15 * 60 * 1000;
 
 const key = (email: string) => email.trim().toLowerCase();
+
+// ─── Shared (Redis) variant: same rules, counters visible to every API instance ──────────────
+const rkey = (email: string) => `login:${key(email)}`;
+
+/** Seconds left on the lock, or 0. Async because the shared store is remote. */
+export const loginLockedForAsync = async (email: string): Promise<number> => {
+  const r = redisEnabled() ? redis() : null;
+  if (!r) return loginLockedFor(email);
+  try {
+    const ttl = await r.ttl(`${rkey(email)}:lock`);
+    return ttl > 0 ? ttl : 0;
+  } catch {
+    return loginLockedFor(email);
+  }
+};
+
+export const recordLoginFailureAsync = async (email: string) => {
+  const r = redisEnabled() ? redis() : null;
+  if (!r) return recordLoginFailure(email);
+  try {
+    const k = `${rkey(email)}:fail`;
+    const n = await r.incr(k);
+    if (n === 1) await r.expire(k, Math.floor(WINDOW_MS / 1000));
+    if (n >= config.login.maxFailures) await r.set(`${rkey(email)}:lock`, '1', 'EX', config.login.lockMinutes * 60);
+  } catch {
+    recordLoginFailure(email);
+  }
+};
+
+export const recordLoginSuccessAsync = async (email: string) => {
+  const r = redisEnabled() ? redis() : null;
+  if (!r) return recordLoginSuccess(email);
+  try {
+    await r.del(`${rkey(email)}:fail`, `${rkey(email)}:lock`);
+  } catch {
+    recordLoginSuccess(email);
+  }
+};
 
 export const loginLockedFor = (email: string): number => {
   const e = entries.get(key(email));

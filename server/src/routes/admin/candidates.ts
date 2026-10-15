@@ -7,6 +7,7 @@ import { audit } from '../../lib/audit.js';
 import { createCase, FINAL_STATUSES } from '../../lib/caseFlow.js';
 import { GERMAN_LEVELS, germanRank, licenceCovers, matchCandidate } from '../../lib/matching.js';
 import { notifyApplicationStatus, notifyCandidateProposed } from '../../lib/jobsNotifications.js';
+import { emitWebhook } from '../../lib/ops/webhooks.js';
 
 // Admin: candidates — mounted at /api/admin/candidates
 export const adminCandidatesRouter = Router();
@@ -216,6 +217,7 @@ adminCandidatesRouter.patch('/applications/:appId', async (req, res) => {
     if (status === 'PROPOSED') await notifyCandidateProposed(app.vacancy);
     await notifyApplicationStatus(app.userId, app.vacancy, status, body.message);
     await audit(req, 'APPLICATION_STATUS_CHANGED', `application:${app.id}`, { from: app.status, to: status });
+    await emitWebhook('application.status_changed', { id: app.id, vacancyId: app.vacancy.id, from: app.status, to: status, by: 'staff' }, app.vacancy.companyId);
   }
   res.json({ application: updated });
 });

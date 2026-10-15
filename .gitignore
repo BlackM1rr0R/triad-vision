@@ -11,3 +11,7 @@ server/docs/*
 *.tsbuildinfo
 .env.production
 data/
+
+# tesseract language data (fetch with server/scripts/fetch-ocr-data.mjs)
+server/ocr/*
+!server/ocr/.gitkeep

@@ -5,6 +5,20 @@ export { prisma };
 
 /** Deletes all rows, children before parents so foreign keys are never violated. */
 export const resetDb = async () => {
+  // Operations / messaging / journey / document-intelligence rows (no dependants of their own)
+  await prisma.webhookDelivery.deleteMany();
+  await prisma.webhook.deleteMany();
+  await prisma.apiKey.deleteMany();
+  await prisma.interview.deleteMany();
+  await prisma.kbArticle.deleteMany();
+  await prisma.kbCategory.deleteMany();
+  await prisma.outboundMessage.deleteMany();
+  await prisma.notificationTemplate.deleteMany();
+  await prisma.caseOnboarding.deleteMany();
+  await prisma.onboardingItem.deleteMany();
+  await prisma.germanQuestion.deleteMany();
+  await prisma.languageCourse.deleteMany();
+  await prisma.requirementTemplate.deleteMany();
   // Team tasks (children first; before cases, users and drive nodes)
   await prisma.taskAttachment.deleteMany();
   await prisma.taskChecklistItem.deleteMany();

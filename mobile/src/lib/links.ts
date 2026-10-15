@@ -20,6 +20,8 @@ export const routeForNotification = (target: NotificationTarget, role?: Role | n
     return '/dashboard';
   }
   if (!role) return null;
+  // Interview notifications link to the portal's interview page (no case involved).
+  if (/\/account\/interviews/.test(link) || target.type?.startsWith('INTERVIEW_')) return '/interviews';
   if (caseId) {
     if (target.type === 'NEW_MESSAGE') return `/chat/${caseId}`;
     return `/cases/${caseId}`;

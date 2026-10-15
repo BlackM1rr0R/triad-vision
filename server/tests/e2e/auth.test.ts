@@ -58,6 +58,8 @@ describe('POST /api/auth/register', () => {
       about: null,
       emailNotifications: true,
       pushNotifications: true,
+      whatsappOptIn: true,
+      smsNotifications: true,
       createdAt: expect.any(String),
       // new accounts must confirm their email; 2FA is optional for candidates
       emailVerified: false,

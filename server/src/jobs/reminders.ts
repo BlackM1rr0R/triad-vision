@@ -5,6 +5,7 @@ import { formatDateTime, notifyUser } from '../lib/notifications.js';
 import { formatDay, textsFor, type PassportLevel, type SlaRow } from '../lib/growthTexts.js';
 import { inviteForCase } from '../lib/reviewInvites.js';
 import { FINAL_STATUSES } from '../lib/caseFlow.js';
+import { preferredChannel, sendSms, sendWhatsApp } from '../lib/messaging/outbound.js';
 
 /**
  * Appointment, missing-document, passport-expiry, contract-signature and staff-SLA reminders,
@@ -78,6 +79,17 @@ const l10nTitle = (title: unknown, locale: Locale) => {
 
 // ─── Embassy appointment ───────────────────────────────────────────────
 
+/** WhatsApp (preferred) or SMS copy of the 24-hour appointment reminder; `appt-24h-<channel>:` keys keep it single-shot. */
+export const sendPhoneReminder = async (c: { id: string; clientId: string; client: User }, text: string, iso: string, now: Date) => {
+  const channel = preferredChannel(c.client);
+  if (!channel) return null;
+  const key = channel === 'WHATSAPP' ? `appt-24h-wa:${c.id}:${iso}` : `appt-24h-sms:${c.id}:${iso}`;
+  if (!(await claimReminder(key, now))) return null;
+  return channel === 'WHATSAPP'
+    ? sendWhatsApp({ userId: c.clientId, caseId: c.id, templateKey: 'APPOINTMENT_REMINDER' }, text)
+    : sendSms({ userId: c.clientId, caseId: c.id, templateKey: 'APPOINTMENT_REMINDER' }, text);
+};
+
 export const runAppointmentReminders = async (now = new Date()) => {
   const cases = await prisma.case.findMany({
     where: { status: 'APPOINTMENT_SCHEDULED', appointmentAt: { gt: now, lte: new Date(now.getTime() + 24 * HOUR) } },
@@ -94,6 +106,8 @@ export const runAppointmentReminders = async (now = new Date()) => {
       const tx = textsFor(c.client.locale);
       const { title, body } = tx.appointment({ when, number: c.number, date: formatDateTime(at, c.client.locale), place });
       await notifyUser(c.clientId, { type: 'APPOINTMENT_REMINDER', title, body, link, caseId: c.id, ctaLabel: tx.cta.openCase });
+      // 24-hour reminder also by phone: WhatsApp when opted in (preferred), otherwise SMS (one ReminderLog key per channel).
+      if (when === 'tomorrow') await sendPhoneReminder(c, `${title}\n\n${body}`, iso, now);
     };
 
     if (sameDay) {

@@ -2,6 +2,8 @@ import 'dotenv/config';
 import bcrypt from 'bcryptjs';
 import { PrismaClient } from '@prisma/client';
 import { services } from './seedServices';
+import { seedRequirements } from './seed/requirements';
+import { seedJourney } from './seed/journey';
 
 const prisma = new PrismaClient();
 const img = (id: string, w = 1200) => `https://images.unsplash.com/photo-${id}?auto=format&fit=crop&w=${w}&q=75`;
@@ -483,6 +485,9 @@ async function main() {
   for (const [key, value] of Object.entries(settings)) {
     await prisma.setting.upsert({ where: { key }, update: {}, create: { key, value: value as object } });
   }
+
+  await seedRequirements(prisma);
+  await seedJourney(prisma);
 
   console.log(`Seed complete. Admin login: ${adminEmail}`);
 }

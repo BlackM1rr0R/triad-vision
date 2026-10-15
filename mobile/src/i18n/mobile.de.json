@@ -7,7 +7,8 @@
       "notifications": "Mitteilungen",
       "profile": "Profil",
       "dashboard": "Übersicht",
-      "cases": "Anträge"
+      "cases": "Anträge",
+      "interviews": "Interviews"
     },
     "common": {
       "retry": "Erneut versuchen",
@@ -78,7 +79,8 @@
       "appointment": "Termin",
       "explore": "Entdecken",
       "newApplication": "Neuer Antrag",
-      "unread": "{{count}} ungelesen"
+      "unread": "{{count}} ungelesen",
+      "nextInterview": "Nächstes Vorstellungsgespräch"
     },
     "case": {
       "title": "Mein Antrag",
@@ -142,7 +144,10 @@
       "empty": "Noch keine Nachrichten. Stellen Sie hier jede Frage zu Ihrem Antrag.",
       "noCase": "Nachrichten sind verfügbar, sobald Sie einen Antrag haben.",
       "team": "Triad Vision",
-      "failed": "Nachricht nicht gesendet. Tippen zum Wiederholen."
+      "failed": "Nachricht nicht gesendet. Tippen zum Wiederholen.",
+      "read": "Gelesen",
+      "typing": "… schreibt",
+      "typingName": "{{name}} schreibt…"
     },
     "notifications": {
       "title": "Mitteilungen",
@@ -183,7 +188,22 @@
       "sessionsCount": "{{count}} aktiv · dieses läuft am {{date}} ab",
       "logoutOthers": "Andere Geräte abmelden",
       "logoutOthersConfirm": "Alle anderen Telefone und Browser werden abgemeldet. Dieses Telefon bleibt angemeldet.",
-      "logoutOthersDone": "Andere Geräte abgemeldet"
+      "logoutOthersDone": "Andere Geräte abgemeldet",
+      "biometric": "Biometrische Anmeldung",
+      "biometricOn": "Aktiv – die App wird mit Face ID / Fingerabdruck entsperrt",
+      "biometricOff": "Aus",
+      "biometricNotEnrolled": "Auf dem Telefon ist kein Face ID / Fingerabdruck eingerichtet. Richten Sie es zuerst in den Telefoneinstellungen ein.",
+      "biometricUnavailable": "Dieses Gerät unterstützt keine biometrische Anmeldung.",
+      "biometricEnabled": "Biometrische Anmeldung aktiviert",
+      "biometricDisabled": "Biometrische Anmeldung deaktiviert",
+      "biometricCancelled": "Nicht bestätigt – Einstellung unverändert.",
+      "whatsapp": "WhatsApp-Benachrichtigungen",
+      "whatsappHint": "Wichtige Neuigkeiten senden wir auch per WhatsApp.",
+      "sms": "SMS-Benachrichtigungen",
+      "smsHint": "Terminerinnerungen und dringende Nachrichten per SMS.",
+      "noPhone": "Für WhatsApp und SMS tragen Sie oben Ihre Telefonnummer ein.",
+      "prefsSaved": "Einstellung gespeichert",
+      "interviewsHint": "Ihre Online-Gespräche mit Arbeitgebern"
     },
     "apply": {
       "title": "Neuer Antrag",
@@ -381,7 +401,88 @@
       "PASSWORD_SHORT": "Das Passwort muss mindestens 8 Zeichen haben.",
       "REQUIRED_FIELDS": "Bitte füllen Sie alle Pflichtfelder aus.",
       "DUPLICATE": "Existiert bereits.",
-      "INVALID_VISA_CATEGORY": "Diese Visumart ist nicht mehr verfügbar."
+      "INVALID_VISA_CATEGORY": "Diese Visumart ist nicht mehr verfügbar.",
+      "INVALID_TRANSITION": "Dieser Schritt ist nicht mehr möglich.",
+      "INTERVIEW_STARTED": "Das Gespräch hat bereits begonnen.",
+      "INTERVIEW_NOT_FOUND": "Gespräch nicht gefunden.",
+      "INTERVIEW_CLOSED": "Ein abgeschlossenes Gespräch kann nicht geändert werden.",
+      "NO_MRZ": "Aus diesem Dokument wurden keine Passdaten gelesen.",
+      "OCR_UNAVAILABLE": "Das Auslesen des Passes ist derzeit nicht verfügbar.",
+      "UPLOAD_NOT_ALLOWED": "In diesem Schritt können keine Dokumente hochgeladen werden."
+    },
+    "lock": {
+      "title": "App gesperrt",
+      "subtitle": "Bestätigen Sie Ihre Identität, um fortzufahren.",
+      "prompt": "Triad Vision entsperren",
+      "unlock": "Mit Face ID / Fingerabdruck entsperren",
+      "unlockFace": "Mit Face ID entsperren",
+      "usePassword": "Mit Passwort anmelden",
+      "failed": "Nicht bestätigt. Versuchen Sie es erneut oder melden Sie sich mit Passwort an."
+    },
+    "scan": {
+      "title": "Dokumentenscanner",
+      "action": "Scannen",
+      "rotate": "Drehen",
+      "retake": "Neu aufnehmen",
+      "remove": "Entfernen",
+      "addPage": "Seite hinzufügen",
+      "upload": "Hochladen ({{count}})",
+      "pageOf": "Seite {{page}} / {{total}}",
+      "hint": "Text gut lesbar, Ränder zugeschnitten.",
+      "uploadingPage": "Seite {{page}} / {{total}} wird hochgeladen… {{percent}} %",
+      "done": "{{count}} Seiten hochgeladen"
+    },
+    "ocr": {
+      "title": "Aus dem Pass gelesen",
+      "running": "Pass wird gelesen…",
+      "runningHint": "Die maschinenlesbare Zone (MRZ) wird erkannt. Das kann einige Sekunden dauern.",
+      "notFound": "Die maschinenlesbare Zone des Passes wurde nicht gefunden. Das Foto muss scharf und vollständig sein – die zwei unteren Zeilen der Seite müssen sichtbar sein.",
+      "name": "Name",
+      "number": "Passnummer",
+      "expiry": "Gültig bis",
+      "birthDate": "Geburtsdatum",
+      "nationality": "Staatsangehörigkeit",
+      "invalid": "Die Prüfziffern stimmen nicht – vergleichen Sie die Daten mit dem Pass.",
+      "expired": "Der Pass ist abgelaufen. Für das Visum ist ein neuer Pass nötig.",
+      "expiresSoon": "Der Pass ist weniger als 12 Monate gültig – die Botschaft verlangt meist eine längere Gültigkeit.",
+      "checkHint": "Wenn die Daten stimmen, übernehmen Sie sie in Ihr Profil.",
+      "apply": "In Profil übernehmen",
+      "applied": "Profil mit den Passdaten aktualisiert"
+    },
+    "interviews": {
+      "title": "Meine Interviews",
+      "detailTitle": "Vorstellungsgespräch",
+      "subtitle": "Ihre Online-Gespräche mit Arbeitgebern. Bestätigen Sie den vorgeschlagenen Termin oder lehnen Sie ihn ab.",
+      "upcoming": "Bevorstehende Gespräche",
+      "past": "Vergangene Gespräche",
+      "emptyTitle": "Noch keine Gespräche",
+      "empty": "Sobald ein Arbeitgeber Sie einlädt, erscheint das Gespräch hier.",
+      "noPast": "Keine vergangenen Gespräche.",
+      "with": "Gespräch mit {{company}}",
+      "withTv": "Gespräch mit Triad Vision",
+      "vacancy": "Stelle",
+      "minutes": "{{count}} Min.",
+      "online": "Online (Jitsi)",
+      "join": "Beitreten",
+      "joinHint": "Der Link wird 15 Minuten vor Beginn aktiv.",
+      "link": "Meeting-Link",
+      "calendarTitle": "Vorstellungsgespräch: {{company}}",
+      "confirm": "Termin bestätigen",
+      "decline": "Ablehnen",
+      "declineTitle": "Gespräch ablehnen",
+      "declineText": "Der Arbeitgeber wird informiert und kann einen neuen Termin vorschlagen.",
+      "declineReason": "Grund (optional)",
+      "confirmed": "Gespräch bestätigt",
+      "declined": "Gespräch abgelehnt",
+      "awaiting": "Ihre Bestätigung steht aus",
+      "updatedAt": "Aktualisiert: {{date}}",
+      "status": {
+        "PROPOSED": "Vorgeschlagen",
+        "CONFIRMED": "Bestätigt",
+        "CANCELLED": "Abgesagt",
+        "DONE": "Durchgeführt",
+        "NO_SHOW": "Nicht erschienen"
+      }
     }
   }
 }

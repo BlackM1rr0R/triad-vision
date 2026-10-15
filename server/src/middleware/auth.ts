@@ -36,6 +36,8 @@ declare global {
       authFailure?: AuthFailure;
       /** True when the session came from the cookie (CSRF checks apply) rather than a Bearer token. */
       cookieAuth?: boolean;
+      /** Exact request bytes (set by the JSON parser) for webhook signature checks. */
+      rawBody?: Buffer;
     }
   }
 }

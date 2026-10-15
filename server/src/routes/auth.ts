@@ -16,7 +16,7 @@ import {
 } from '../middleware/auth.js';
 import { HttpError, conflict, limiter, parse } from '../lib/http.js';
 import { renderEmail, sendMail } from '../lib/mailer.js';
-import { loginLockedFor, recordLoginFailure, recordLoginSuccess } from '../lib/loginGuard.js';
+import { loginLockedForAsync as loginLockedFor, recordLoginFailureAsync as recordLoginFailure, recordLoginSuccessAsync as recordLoginSuccess } from '../lib/loginGuard.js';
 import { audit } from '../lib/audit.js';
 import { consumeVerificationToken, sendVerificationEmail } from '../lib/emailVerification.js';
 import { createLoginChallenge, securityFlags } from '../lib/twoFactor.js';
@@ -54,6 +54,8 @@ export const publicUser = (u: User) => ({
   about: u.about,
   emailNotifications: u.emailNotifications,
   pushNotifications: u.pushNotifications,
+  whatsappOptIn: u.whatsappOptIn,
+  smsNotifications: u.smsNotifications,
   createdAt: u.createdAt,
   // emailVerified, twoFactorEnabled, twoFactorRequired
   ...securityFlags(u),
@@ -152,7 +154,7 @@ authRouter.post('/login', authLimiter, async (req, res) => {
     z.object({ email: z.string().max(200).transform((s) => s.toLowerCase().trim()), password: z.string().max(128) }),
     req.body,
   );
-  const lockedFor = loginLockedFor(body.email);
+  const lockedFor = await loginLockedFor(body.email);
   if (lockedFor > 0) {
     res.setHeader('Retry-After', String(lockedFor));
     throw new HttpError(429, 'ACCOUNT_LOCKED', `Too many failed attempts. Try again in ${lockedFor}s`);
@@ -162,7 +164,7 @@ authRouter.post('/login', authLimiter, async (req, res) => {
   const hash = user?.passwordHash ?? '$2a$12$CwTycUXWue0Thq9StjUM0uJ8Z7gzXx5hQl1aQ2M0tVqF1q0uZ7m6W';
   const ok = await bcrypt.compare(body.password, hash);
   if (!user || !user.isActive || !ok) {
-    recordLoginFailure(body.email);
+    await recordLoginFailure(body.email);
     await audit(req, 'LOGIN_FAILED', user ? `user:${user.id}` : undefined, { email: body.email });
     throw new HttpError(401, 'INVALID_CREDENTIALS');
   }
@@ -174,7 +176,7 @@ authRouter.post('/login', authLimiter, async (req, res) => {
     res.json({ twoFactorRequired: true, challenge: createLoginChallenge(user.id) });
     return;
   }
-  recordLoginSuccess(body.email);
+  await recordLoginSuccess(body.email);
   res.json(await startSession(req, res, user));
 });
 
@@ -213,6 +215,9 @@ authRouter.patch('/me', requireAuth, async (req, res) => {
       about: optText(2000),
       emailNotifications: z.boolean().optional(),
       pushNotifications: z.boolean().optional(),
+      // Phone channels (messaging module); current values come from GET /api/messaging/preferences.
+      whatsappOptIn: z.boolean().optional(),
+      smsNotifications: z.boolean().optional(),
       currentPassword: z.string().max(128).optional(),
       newPassword: password.optional(),
     }),

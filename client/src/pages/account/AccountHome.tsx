@@ -21,6 +21,7 @@ import { StartCase } from '@/components/portal/StartCase';
 import { profileCompleteness } from '@/components/portal/profileFields';
 import { useHashScroll, useOverview } from '@/components/portal/useOverview';
 import type { ActiveCase, OverviewCaseRow } from '@/components/portal/accountTypes';
+import { OnboardingCard } from '@/components/journey/OnboardingCard';
 import { registerCopy } from '@/i18n';
 import { pagesAccount } from '@/i18n/pagesAccount';
 import { usePageTitle } from '@/lib/usePageTitle';
@@ -98,8 +99,12 @@ export default function AccountHome() {
   // The auth user updates immediately after a profile save; the overview may be a moment behind.
   const profile = user ? profileCompleteness(user) : data.profile;
   const past = cases.filter((c) => FINAL.includes(c.status));
+  // Everything except the active case: finished cases and family-member cases (shown with their relation).
+  const others = activeCase ? cases.filter((c) => c.id !== activeCase.id) : past;
+  const othersTitle = others.every((c) => FINAL.includes(c.status)) ? t('accountPage.dash.pastCases') : t('portal.myCases');
   const latest = cases[0] ?? null;
   const visaSlug = (activeCase ?? latest)?.visaCategory?.slug ?? null;
+  const hasApproved = cases.some((c) => c.status === 'APPROVED');
 
   if (activeCase) {
     return (
@@ -108,6 +113,7 @@ export default function AccountHome() {
           <div className="min-w-0 space-y-6">
             <JourneyCard c={activeCase} />
             <CaseNumbers c={activeCase} />
+            {hasApproved && <OnboardingCard />}
             {activeCase.appointment && (
               <div className="lg:hidden">
                 <AppointmentWidget c={activeCase} />
@@ -131,7 +137,7 @@ export default function AccountHome() {
             <QuickLinks visaSlug={visaSlug} />
           </aside>
         </div>
-        {past.length > 0 && <CaseList cases={past} title={t('accountPage.dash.pastCases')} />}
+        {others.length > 0 && <CaseList cases={others} title={othersTitle} />}
       </div>
     );
   }
@@ -141,6 +147,7 @@ export default function AccountHome() {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-8">
         <div className="min-w-0 space-y-6">
           <StartCase hasCases={cases.length > 0} defaultProfession={user?.profession} />
+          {hasApproved && <OnboardingCard />}
           <TipsCard status={latest?.status === 'APPROVED' ? 'APPROVED' : null} />
         </div>
         <aside className="min-w-0 space-y-6">

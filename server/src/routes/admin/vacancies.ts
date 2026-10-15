@@ -4,6 +4,7 @@ import type { Prisma } from '@prisma/client';
 import { prisma } from '../../db.js';
 import { badRequest, conflict, notFound, parse } from '../../lib/http.js';
 import { audit } from '../../lib/audit.js';
+import { emitWebhook } from '../../lib/ops/webhooks.js';
 import { notifyVacancyReviewed } from '../../lib/jobsNotifications.js';
 import { matchCandidate } from '../../lib/matching.js';
 import { fillL10n, staffVacancyInput, staffVacancyPatch, uniqueSlug, vacancyData } from '../../lib/vacancies.js';
@@ -127,6 +128,7 @@ adminVacanciesRouter.post('/', async (req, res) => {
     } as never,
   });
   await audit(req, 'VACANCY_CREATED', `vacancy:${vacancy.id}`, { companyId: vacancy.companyId, status: vacancy.status });
+  if (vacancy.status === 'OPEN') await emitWebhook('vacancy.published', { id: vacancy.id, slug: vacancy.slug, publishedAt: vacancy.publishedAt?.toISOString() ?? null }, vacancy.companyId);
   res.status(201).json({ vacancy });
 });
 
@@ -162,6 +164,7 @@ adminVacanciesRouter.post('/:id/approve', async (req, res) => {
   const wasPending = v.status === 'PENDING';
   const vacancy = await prisma.vacancy.update({ where: { id: v.id }, data: { status: 'OPEN', publishedAt: v.publishedAt ?? new Date() } });
   if (wasPending) await notifyVacancyReviewed(vacancy, true);
+  await emitWebhook('vacancy.published', { id: vacancy.id, slug: vacancy.slug, publishedAt: vacancy.publishedAt?.toISOString() ?? null }, vacancy.companyId);
   await audit(req, 'VACANCY_APPROVED', `vacancy:${v.id}`, { from: v.status });
   res.json({ vacancy });
 });

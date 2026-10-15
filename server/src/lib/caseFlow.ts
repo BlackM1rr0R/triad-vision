@@ -2,8 +2,9 @@ import type { CaseStatus, DocStage, Prisma } from '@prisma/client';
 import { prisma } from '../db.js';
 import { badRequest, conflict, notFound } from './http.js';
 import { formatDateTime, notifyClient, notifyStaff, type NotificationType, type NotifyParams } from './notifications.js';
-
-type L10n = { az: string; de: string; en: string; ru: string };
+import { createRequirements } from './docsIntel/requirementTemplates.js';
+import { pickAssignee } from './ops/autoAssign.js';
+import { emitWebhook } from './ops/webhooks.js';
 
 export const FINAL_STATUSES: CaseStatus[] = ['APPROVED', 'REJECTED', 'CANCELLED'];
 
@@ -12,39 +13,6 @@ export const CLIENT_UPLOAD_STAGE: Partial<Record<CaseStatus, DocStage>> = {
   DOCUMENTS_PENDING: 'INITIAL',
   EMBASSY_DOCUMENTS: 'EMBASSY',
 };
-
-const DEFAULT_REQUIREMENTS: Record<'INITIAL' | 'EMBASSY', { title: L10n; description?: L10n; required: boolean }[]> = {
-  INITIAL: [
-    { required: true, title: { az: 'Pasport (bütün səhifələr)', de: 'Reisepass (alle Seiten)', en: 'Passport (all pages)', ru: 'Паспорт (все страницы)' }, description: { az: 'Etibarlılıq müddəti ən azı 12 ay olmalıdır.', de: 'Mindestens 12 Monate gültig.', en: 'Must be valid for at least 12 months.', ru: 'Срок действия не менее 12 месяцев.' } },
-    { required: true, title: { az: 'Biometrik foto', de: 'Biometrisches Passfoto', en: 'Biometric photo', ru: 'Биометрическое фото' } },
-    { required: true, title: { az: 'CV (tərcümeyi-hal)', de: 'Lebenslauf (CV)', en: 'CV / résumé', ru: 'Резюме (CV)' } },
-    { required: true, title: { az: 'Diplom və sertifikatlar', de: 'Diplome und Zertifikate', en: 'Diplomas and certificates', ru: 'Дипломы и сертификаты' } },
-    { required: false, title: { az: 'İş təcrübəsi arayışları', de: 'Arbeitszeugnisse', en: 'Employment references', ru: 'Справки о стаже работы' } },
-    { required: false, title: { az: 'Sürücülük vəsiqəsi (sürücülər üçün)', de: 'Führerschein (für Fahrer)', en: 'Driving licence (for drivers)', ru: 'Водительское удостоверение (для водителей)' } },
-    { required: false, title: { az: 'Dil sertifikatı (varsa)', de: 'Sprachzertifikat (falls vorhanden)', en: 'Language certificate (if any)', ru: 'Языковой сертификат (если есть)' } },
-  ],
-  EMBASSY: [
-    { required: true, title: { az: 'Doldurulmuş viza ərizəsi (VIDEX)', de: 'Ausgefüllter Visumantrag (VIDEX)', en: 'Completed visa application form (VIDEX)', ru: 'Заполненная визовая анкета (VIDEX)' } },
-    { required: true, title: { az: '2 ədəd biometrik foto', de: '2 biometrische Passfotos', en: '2 biometric photos', ru: '2 биометрических фото' } },
-    { required: true, title: { az: 'Tibbi sığorta', de: 'Krankenversicherungsnachweis', en: 'Health insurance', ru: 'Медицинская страховка' } },
-    { required: true, title: { az: 'İmzalanmış iş təklifi / əmək müqaviləsi', de: 'Unterschriebenes Arbeitsangebot / Arbeitsvertrag', en: 'Signed job offer / employment contract', ru: 'Подписанное предложение о работе / трудовой договор' } },
-    { required: false, title: { az: 'Diplomun tanınması (Anerkennung)', de: 'Anerkennungsbescheid', en: 'Recognition of qualification (Anerkennung)', ru: 'Признание квалификации (Anerkennung)' } },
-    { required: false, title: { az: 'Alman dili sertifikatı', de: 'Deutsch-Sprachzertifikat', en: 'German language certificate', ru: 'Сертификат по немецкому языку' } },
-    { required: false, title: { az: 'Yaşayış yeri sübutu', de: 'Nachweis über Unterkunft', en: 'Proof of accommodation', ru: 'Подтверждение жилья' } },
-  ],
-};
-
-const createDefaultRequirements = (tx: Prisma.TransactionClient, caseId: string, stage: 'INITIAL' | 'EMBASSY') =>
-  tx.documentRequirement.createMany({
-    data: DEFAULT_REQUIREMENTS[stage].map((r, i) => ({
-      caseId,
-      stage,
-      title: r.title,
-      description: r.description,
-      required: r.required,
-      sortOrder: i,
-    })),
-  });
 
 const nextCaseNumber = async (tx: Prisma.TransactionClient) => {
   const year = new Date().getFullYear();
@@ -59,23 +27,49 @@ const nextCaseNumber = async (tx: Prisma.TransactionClient) => {
 
 export const createCase = async (
   clientId: string,
-  input: { profession: string; visaCategoryId?: string | null },
+  input: {
+    profession: string;
+    visaCategoryId?: string | null;
+    /** Family reunion: the main applicant's case this one belongs to (+ relation: spouse | child | parent). */
+    parentCaseId?: string | null;
+    relation?: string | null;
+    /** Staff creating a case on someone's behalf (actor for the event / assignment). */
+    actorId?: string;
+  },
 ) => {
-  const active = await prisma.case.count({ where: { clientId, status: { notIn: FINAL_STATUSES } } });
-  if (active > 0) throw conflict('ACTIVE_CASE_EXISTS');
+  // One active case per client — except family-member cases, which are separate applications.
+  if (!input.parentCaseId) {
+    const active = await prisma.case.count({ where: { clientId, status: { notIn: FINAL_STATUSES }, parentCaseId: null } });
+    if (active > 0) throw conflict('ACTIVE_CASE_EXISTS');
+  }
 
   // Retry on the (rare) race where two cases get the same number.
   for (let attempt = 0; attempt < 5; attempt++) {
     try {
       const created = await prisma.$transaction(async (tx) => {
         const number = await nextCaseNumber(tx);
+        // A family member inherits the main case's staff; otherwise auto-assignment (if enabled) picks one.
+        const parent = input.parentCaseId ? await tx.case.findUnique({ where: { id: input.parentCaseId }, select: { assignedStaffId: true, visaCategoryId: true } }) : null;
+        const assignedStaffId = parent?.assignedStaffId ?? (await pickAssignee(tx));
+        const visaCategoryId = input.visaCategoryId ?? parent?.visaCategoryId ?? null;
         const c = await tx.case.create({
-          data: { clientId, number, profession: input.profession, visaCategoryId: input.visaCategoryId ?? null },
+          data: {
+            clientId,
+            number,
+            profession: input.profession,
+            visaCategoryId,
+            assignedStaffId,
+            parentCaseId: input.parentCaseId ?? null,
+            relation: input.relation ?? null,
+          },
         });
-        await createDefaultRequirements(tx, c.id, 'INITIAL');
+        await createRequirements(tx, c.id, 'INITIAL', visaCategoryId);
         await tx.caseEvent.create({
-          data: { caseId: c.id, type: 'CASE_CREATED', toStatus: c.status, actorId: clientId },
+          data: { caseId: c.id, type: 'CASE_CREATED', toStatus: c.status, actorId: input.actorId ?? clientId },
         });
+        if (assignedStaffId) {
+          await tx.caseEvent.create({ data: { caseId: c.id, type: 'CASE_UPDATED', note: 'auto-assigned', actorId: null, visibleToClient: false } });
+        }
         return c;
       });
       await notifyClient(created.id, 'CASE_CREATED');
@@ -84,6 +78,7 @@ export const createCase = async (
         `Yeni müştəri müraciəti yaradıldı.\n\nPeşə: ${created.profession}`,
         { caseId: created.id, link: `/admin/cases/${created.id}` },
       );
+      void emitWebhook('case.created', { caseId: created.id, number: created.number, status: created.status, visaCategoryId: created.visaCategoryId }, created.companyId);
       return created;
     } catch (err) {
       if ((err as { code?: string }).code === 'P2002') continue;
@@ -131,6 +126,8 @@ const transition = async (
     });
     if (opts.extra) await opts.extra(tx);
   });
+  const after = await prisma.case.findUnique({ where: { id: caseId }, select: { number: true, companyId: true } });
+  if (after) void emitWebhook(FINAL_STATUSES.includes(to) && to !== 'CANCELLED' ? 'case.decided' : 'case.status_changed', { caseId, number: after.number, from: current.status, to }, after.companyId);
 };
 
 const requirementsSatisfied = async (caseId: string, stage: DocStage, mode: 'uploaded' | 'accepted') => {
@@ -275,7 +272,7 @@ export const staffConfirmContract = async (caseId: string, actorId: string) => {
     data: { staffNote: null },
     extra: async (tx) => {
       const has = await tx.documentRequirement.count({ where: { caseId, stage: 'EMBASSY' } });
-      if (!has) await createDefaultRequirements(tx, caseId, 'EMBASSY');
+      if (!has) await createRequirements(tx, caseId, 'EMBASSY', (await tx.case.findUniqueOrThrow({ where: { id: caseId }, select: { visaCategoryId: true } })).visaCategoryId);
     },
   });
   await after(caseId, 'EMBASSY_DOCS_REQUESTED');
@@ -367,7 +364,7 @@ export const staffReopen = async (
     extra: async (tx) => {
       if (to === 'EMBASSY_DOCUMENTS') {
         const has = await tx.documentRequirement.count({ where: { caseId, stage: 'EMBASSY' } });
-        if (!has) await createDefaultRequirements(tx, caseId, 'EMBASSY');
+        if (!has) await createRequirements(tx, caseId, 'EMBASSY', (await tx.case.findUniqueOrThrow({ where: { id: caseId }, select: { visaCategoryId: true } })).visaCategoryId);
       }
     },
   });

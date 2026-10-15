@@ -9,6 +9,7 @@ import {
   BarChart3,
   Bell,
   BookOpen,
+  BookOpenText,
   Briefcase,
   BriefcaseBusiness,
   Building2,
@@ -25,20 +26,26 @@ import {
   Handshake,
   HelpCircle,
   Inbox,
+  KanbanSquare,
   Layers,
   LayoutDashboard,
+  ListChecks,
   ListTodo,
   LogOut,
   Menu,
   MessageSquareQuote,
+  MessageSquareText,
   Newspaper,
+  Plug,
   Receipt,
+  Route,
   Settings,
   ShieldCheck,
   Star,
   TrendingUp,
   Users,
   UserSearch,
+  Video,
   X,
 } from 'lucide-react';
 import { Logo, LogoMark } from '@/components/ui/Logo';
@@ -46,6 +53,7 @@ import { LanguageSwitcher } from '@/components/layout/LanguageSwitcher';
 import { ThemeToggle } from '@/components/a11y/ThemeToggle';
 import { AccessibilityWidget } from '@/components/a11y/AccessibilityWidget';
 import { api } from '@/lib/api';
+import { useRealtimeNotifications } from '@/lib/realtime';
 import { useAuth } from '@/lib/auth';
 import { hasMinRole, type Notification } from '@/lib/types';
 import { registerCopy } from '@/i18n';
@@ -81,6 +89,13 @@ const MAIN_NAV: NavItem[] = [
   { to: '/admin/reviews', label: 'reviews', icon: Star },
   { to: '/admin/analytics', label: 'analytics', icon: BarChart3 },
   { to: '/admin/security', label: 'security', icon: ShieldCheck },
+  { to: '/admin/kanban', label: 'kanban', icon: KanbanSquare },
+  { to: '/admin/messaging', label: 'messaging', icon: MessageSquareText },
+  { to: '/admin/interviews', label: 'interviews', icon: Video },
+  { to: '/admin/journey', label: 'journey', icon: Route },
+  { to: '/admin/requirements', label: 'requirements', icon: ListChecks },
+  { to: '/admin/kb', label: 'kb', icon: BookOpenText },
+  { to: '/admin/integrations', label: 'integrations', icon: Plug, adminOnly: true },
 ];
 
 const CONTENT_NAV: (NavItem & { resource: string })[] = [
@@ -217,6 +232,8 @@ const NotificationBell = () => {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  // Server-sent events refresh the badge the moment a notification is created (polling stays as fallback).
+  useRealtimeNotifications();
 
   const { data } = useQuery({
     queryKey: ['admin-notifications'],

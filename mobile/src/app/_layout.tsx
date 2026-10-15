@@ -17,10 +17,13 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { OfflineBanner, ToastProvider, useToast } from '@/components/ui';
+import { LockScreen } from '@/features/auth/LockScreen';
 import { AuthProvider, useAuth } from '@/lib/auth';
+import { BiometricProvider, useBiometric } from '@/lib/biometric';
 import { routeForNotification } from '@/lib/links';
 import { dataOf } from '@/lib/push';
 import { queryClient } from '@/lib/queryClient';
+import { RealtimeBridge } from '@/lib/realtimeBridge';
 import { colors, fonts } from '@/theme';
 
 void SplashScreen.preventAutoHideAsync();
@@ -110,6 +113,7 @@ const RootStack = () => {
         <Stack.Screen name="(client)" options={{ headerShown: false, animation: 'fade' }} />
         <Stack.Screen name="cases/[id]" options={{ title: t('m.case.title') }} />
         <Stack.Screen name="chat/[id]" options={{ title: t('m.chat.title') }} />
+        <Stack.Screen name="interviews/[id]" options={{ title: t('m.interviews.detailTitle') }} />
         <Stack.Screen name="sign/[id]" options={{ title: t('m.sign.title'), presentation: 'modal', animation: 'slide_from_bottom' }} />
         <Stack.Screen name="apply" options={{ title: t('m.apply.title'), presentation: 'modal', animation: 'slide_from_bottom' }} />
       </Stack.Protected>
@@ -134,6 +138,7 @@ const RootStack = () => {
 
 const Gate = () => {
   const { status } = useAuth();
+  const biometric = useBiometric();
   const [fontsLoaded, fontError] = useFonts({
     Inter_400Regular,
     Inter_500Medium,
@@ -142,7 +147,8 @@ const Gate = () => {
     Montserrat_700Bold,
     Montserrat_800ExtraBold,
   });
-  const ready = (fontsLoaded || !!fontError) && status !== 'loading';
+  // The biometric preference must be known before anything is shown: a locked app never flashes its content.
+  const ready = (fontsLoaded || !!fontError) && status !== 'loading' && biometric.ready;
 
   useEffect(() => {
     if (ready) void SplashScreen.hideAsync();
@@ -152,6 +158,8 @@ const Gate = () => {
   return (
     <>
       <RootStack />
+      {status === 'authed' && biometric.locked ? <LockScreen /> : null}
+      <RealtimeBridge />
       <PushRouter />
       <SessionNotice />
       <OfflineBanner />
@@ -165,10 +173,12 @@ export default function RootLayout() {
       <SafeAreaProvider>
         <QueryClientProvider client={queryClient}>
           <AuthProvider>
-            <ToastProvider>
-              <StatusBar style="light" />
-              <Gate />
-            </ToastProvider>
+            <BiometricProvider>
+              <ToastProvider>
+                <StatusBar style="light" />
+                <Gate />
+              </ToastProvider>
+            </BiometricProvider>
           </AuthProvider>
         </QueryClientProvider>
       </SafeAreaProvider>

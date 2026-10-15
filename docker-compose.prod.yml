@@ -63,6 +63,15 @@ services:
       retries: 5
       start_period: 40s
 
+  # Optional shared store (enable by setting REDIS_URL=redis://redis:6379 in .env.production and
+  # uncommenting). Needed only when more than one API instance runs.
+  # redis:
+  #   <<: *hardening
+  #   image: redis:7-alpine
+  #   restart: unless-stopped
+  #   command: ['redis-server', '--save', '', '--appendonly', 'no', '--maxmemory', '128mb', '--maxmemory-policy', 'allkeys-lru']
+  #   mem_limit: 160m
+
   web:
     build:
       context: .

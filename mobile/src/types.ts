@@ -35,6 +35,9 @@ export interface User {
   lastName: string;
   phone: string | null;
   locale: Locale;
+  /** Phone-channel preferences (messaging module); absent in the offline cache → treated as on. */
+  whatsappOptIn?: boolean;
+  smsNotifications?: boolean;
 }
 
 export interface VisaCategory {
@@ -134,6 +137,8 @@ export interface CaseDocument {
 
 export interface Requirement {
   id: string;
+  /** Stable identifier of the requirement template (e.g. 'PASSPORT'); null for custom ones. */
+  key?: string | null;
   stage: DocStage;
   title: L10n;
   description: L10n | null;
@@ -153,10 +158,15 @@ export interface CaseEvent {
   actor: { firstName: string; lastName: string; role: Role } | null;
 }
 
+export type MessageChannel = 'app' | 'whatsapp' | 'sms';
+
 export interface CaseMessage {
   id: string;
   body: string;
   createdAt: string;
+  /** Set once the other side has opened the thread (read receipts). */
+  readAt?: string | null;
+  channel?: MessageChannel;
   author: { id: string; firstName: string; lastName: string; role: Role };
 }
 
@@ -242,3 +252,68 @@ export type StaffAction =
   | { action: 'DECIDE'; decision: 'APPROVED' | 'REJECTED'; reason?: string; validFrom?: string; validTo?: string }
   | { action: 'CANCEL'; reason: string }
   | { action: 'REOPEN'; to: 'DOCUMENTS_PENDING' | 'EMBASSY_DOCUMENTS'; note?: string };
+
+// ─── Interviews (employer ↔ candidate, /api/interviews) ─────────────────
+
+export type InterviewStatus = 'PROPOSED' | 'CONFIRMED' | 'CANCELLED' | 'DONE' | 'NO_SHOW';
+
+/** Candidate view returned by GET /api/interviews/mine and /:id (mirror of server interviewView). */
+export interface Interview {
+  id: string;
+  status: InterviewStatus;
+  startsAt: string;
+  endsAt: string;
+  /** Jitsi room; null once cancelled. */
+  meetingUrl: string | null;
+  notes: string | null;
+  createdAt: string;
+  updatedAt: string;
+  company: { id: string; name: string } | null;
+  application: { id: string; status: string; vacancy: { id: string; title: L10n; slug: string } } | null;
+  candidate: { id: string; name: string; profession: string | null };
+  staff: { id: string; name: string } | null;
+  createdBy: { id: string; name: string; role: Role } | null;
+}
+
+export interface MyInterviews {
+  upcoming: Interview[];
+  past: Interview[];
+}
+
+// ─── Passport OCR (/api/documents/:id/ocr) ──────────────────────────────
+
+export interface Mrz {
+  documentType: string;
+  issuingCountry: string;
+  surname: string;
+  givenNames: string;
+  documentNumber: string;
+  nationality: string;
+  /** YYYY-MM-DD */
+  birthDate: string;
+  sex: 'M' | 'F' | 'X';
+  /** YYYY-MM-DD */
+  expiryDate: string;
+  valid: boolean;
+}
+
+export type OcrRecord =
+  | { skipped: 'pdf' | 'unsupported'; at: string }
+  | { error: string; at: string; mrz?: undefined }
+  | { mrz: Mrz | null; raw: string; confidence: number; at: string; applied?: string[]; expiryWarning?: boolean; error?: 'MRZ_NOT_FOUND' };
+
+export interface PassportProfile {
+  passportNumber: string | null;
+  passportExpiry: string | null;
+  birthDate: string | null;
+  nationality: string | null;
+}
+
+export interface OcrResponse {
+  documentId: string;
+  ocr: OcrRecord | null;
+  ocrAt: string | null;
+  requirementKey: string | null;
+  profile: PassportProfile;
+  available?: boolean;
+}

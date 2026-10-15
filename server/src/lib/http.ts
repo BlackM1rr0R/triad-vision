@@ -1,6 +1,8 @@
 import crypto from 'node:crypto';
 import type { NextFunction, Request, Response } from 'express';
 import rateLimit, { type Options as RateLimitOptions } from 'express-rate-limit';
+import { RedisStore } from 'rate-limit-redis';
+import { redis, redisEnabled } from './redis.js';
 import { ZodError, type z, type ZodTypeAny } from 'zod';
 
 export class HttpError extends Error {
@@ -20,16 +22,25 @@ export const conflict = (code: string, message?: string) => new HttpError(409, c
 
 export const parse = <S extends ZodTypeAny>(schema: S, data: unknown): z.infer<S> => schema.parse(data);
 
-/** Rate limiter that answers with the same JSON error shape as everything else. */
-export const limiter = (opts: Partial<RateLimitOptions> & { windowMs: number; limit: number }) =>
-  rateLimit({
+let limiterSeq = 0;
+
+/**
+ * Rate limiter that answers with the same JSON error shape as everything else. With REDIS_URL the
+ * counters live in Redis (shared by every API instance, survive restarts); otherwise in memory.
+ */
+export const limiter = (opts: Partial<RateLimitOptions> & { windowMs: number; limit: number }) => {
+  const prefix = `rl:${limiterSeq++}:`;
+  const store = redisEnabled() && redis() ? new RedisStore({ prefix, sendCommand: (...args: string[]) => redis()!.call(...(args as [string, ...string[]])) as Promise<never> }) : undefined;
+  return rateLimit({
     standardHeaders: 'draft-7',
     legacyHeaders: false,
     handler: (_req, res) => {
       res.status(429).json({ error: 'TOO_MANY_REQUESTS' });
     },
+    ...(store ? { store } : {}),
     ...opts,
   });
+};
 
 /** Gives every request an id (echoed in X-Request-Id) so a 500 in the log can be matched to a client report. */
 export const requestId = (req: Request, res: Response, next: NextFunction) => {

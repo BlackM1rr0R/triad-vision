@@ -67,6 +67,16 @@ const AdminCandidates = lazy(() => import('./pages/admin/Candidates'));
 const AdminBookings = lazy(() => import('./pages/admin/Bookings'));
 const AdminInvoices = lazy(() => import('./pages/admin/Invoices'));
 const AdminReviews = lazy(() => import('./pages/admin/Reviews'));
+const AdminMessaging = lazy(() => import('./pages/admin/Messaging'));
+const AdminKanban = lazy(() => import('./pages/admin/Kanban'));
+const AdminKnowledgeBase = lazy(() => import('./pages/admin/KnowledgeBase'));
+const AdminIntegrations = lazy(() => import('./pages/admin/Integrations'));
+const AdminInterviews = lazy(() => import('./pages/admin/Interviews'));
+const AdminJourney = lazy(() => import('./pages/admin/Journey'));
+const AdminRequirements = lazy(() => import('./pages/admin/Requirements'));
+const AccountOnboarding = lazy(() => import('./pages/account/Onboarding'));
+const AccountGerman = lazy(() => import('./pages/account/German'));
+const AccountInterviews = lazy(() => import('./pages/account/Interviews'));
 const AdminAnalytics = lazy(() => import('./pages/admin/Analytics'));
 
 /**
@@ -217,6 +227,9 @@ export default function App() {
               <Route path="notifications" element={<Notifications />} />
               <Route path="profile" element={<Profile />} />
               <Route path="applications" element={<AccountApplications />} />
+              <Route path="onboarding" element={<AccountOnboarding />} />
+              <Route path="german" element={<AccountGerman />} />
+              <Route path="interviews" element={<AccountInterviews />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Route>
@@ -283,6 +296,13 @@ export default function App() {
             />
             <Route path="reviews" element={<AdminReviews />} />
             <Route path="analytics" element={<AdminAnalytics />} />
+            <Route path="messaging" element={<AdminMessaging />} />
+            <Route path="kanban" element={<AdminKanban />} />
+            <Route path="kb" element={<AdminKnowledgeBase />} />
+            <Route path="integrations" element={<AdminIntegrations />} />
+            <Route path="interviews" element={<AdminInterviews />} />
+            <Route path="journey" element={<AdminJourney />} />
+            <Route path="requirements" element={<AdminRequirements />} />
           </Route>
         </Routes>
       </AnimatePresence>

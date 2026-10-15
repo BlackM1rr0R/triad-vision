@@ -1,7 +1,7 @@
 import { memo, useCallback, useMemo, useState } from 'react';
 import { ActivityIndicator, FlatList, KeyboardAvoidingView, Platform, Pressable, StyleSheet, TextInput, View } from 'react-native';
-import Animated, { FadeInUp } from 'react-native-reanimated';
-import { SendHorizontal } from '@/components/icons';
+import Animated, { FadeIn, FadeInUp, FadeOut } from 'react-native-reanimated';
+import { Check, CheckCheck, MessageCircle, SendHorizontal } from '@/components/icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { EmptyState, Text, useToast } from '@/components/ui';
@@ -10,7 +10,6 @@ import { haptic } from '@/lib/haptics';
 import { useErrorMessage } from '@/lib/queries';
 import { colors, fonts, radius, space } from '@/theme';
 import type { CaseMessage } from '@/types';
-import { MessageCircle } from '@/components/icons';
 
 const Bubble = memo(({ m, mine, staffView, showName }: { m: CaseMessage; mine: boolean; staffView?: boolean; showName: boolean }) => {
   const { t } = useTranslation();
@@ -20,6 +19,8 @@ const Bubble = memo(({ m, mine, staffView, showName }: { m: CaseMessage; mine: b
     : m.author.role === 'CLIENT' || staffView
       ? `${m.author.firstName} ${m.author.lastName}`
       : `${m.author.firstName} · ${t('m.chat.team')}`;
+  const read = mine && !!m.readAt;
+  const metaColor = mine ? 'rgba(255,255,255,0.7)' : colors.muted;
   return (
     <Animated.View entering={FadeInUp.duration(220)} style={[styles.bubbleRow, mine ? { justifyContent: 'flex-end' } : null]}>
       <View style={[styles.bubble, mine ? styles.mine : styles.theirs]}>
@@ -27,20 +28,46 @@ const Bubble = memo(({ m, mine, staffView, showName }: { m: CaseMessage; mine: b
         <Text style={{ color: mine ? colors.white : colors.ink, fontFamily: fonts.body, fontSize: 15, lineHeight: 21 }} selectable>
           {m.body}
         </Text>
-        <Text style={{ color: mine ? 'rgba(255,255,255,0.7)' : colors.muted, fontSize: 10.5, fontFamily: fonts.medium, alignSelf: 'flex-end', marginTop: 4 }}>
-          {f.smart(m.createdAt)}
-        </Text>
+        <View style={styles.meta}>
+          <Text style={{ color: metaColor, fontSize: 10.5, fontFamily: fonts.medium }}>
+            {f.smart(m.createdAt)}
+            {m.channel === 'whatsapp' ? ' · WhatsApp' : m.channel === 'sms' ? ' · SMS' : ''}
+          </Text>
+          {mine ? (
+            <View style={styles.ticks} accessibilityLabel={read ? t('m.chat.read') : undefined}>
+              {read ? <CheckCheck size={13} color={colors.white} strokeWidth={2.4} /> : <Check size={13} color={metaColor} strokeWidth={2.4} />}
+              {read ? <Text style={{ color: colors.white, fontSize: 10.5, fontFamily: fonts.semibold }}>{t('m.chat.read')}</Text> : null}
+            </View>
+          ) : null}
+        </View>
       </View>
     </Animated.View>
   );
 });
 Bubble.displayName = 'Bubble';
 
+/** "… is typing" line above the composer. */
+const TypingLine = ({ name }: { name: string | null }) => {
+  const { t } = useTranslation();
+  return (
+    <Animated.View entering={FadeIn.duration(150)} exiting={FadeOut.duration(150)} style={styles.typing} accessibilityLiveRegion="polite">
+      <View style={styles.typingDots}>
+        {[0, 1, 2].map((i) => (
+          <View key={i} style={[styles.dot, { opacity: 0.35 + i * 0.3 }]} />
+        ))}
+      </View>
+      <Text variant="caption">{name ? t('m.chat.typingName', { name }) : t('m.chat.typing')}</Text>
+    </Animated.View>
+  );
+};
+
 /** Chat thread between a client and the Triad Vision team (used by both apps). */
 export const ChatView = ({
   messages,
   meId,
   onSend,
+  onTyping,
+  typing,
   staffView,
   placeholder,
   emptyText,
@@ -50,6 +77,10 @@ export const ChatView = ({
   messages: CaseMessage[];
   meId: string;
   onSend: (body: string) => Promise<unknown>;
+  /** Called on every keystroke with text present; the caller throttles the network call. */
+  onTyping?: () => void;
+  /** Name of the person typing on the other side (or true when unknown); hidden when falsy. */
+  typing?: string | boolean | null;
   staffView?: boolean;
   placeholder?: string;
   emptyText?: string;
@@ -86,6 +117,11 @@ export const ChatView = ({
     }
   };
 
+  const change = (v: string) => {
+    setText(v);
+    if (v.trim() && onTyping) onTyping();
+  };
+
   return (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}>
       <FlatList
@@ -105,10 +141,11 @@ export const ChatView = ({
         initialNumToRender={20}
         windowSize={11}
       />
+      {typing ? <TypingLine name={typeof typing === 'string' ? typing : null} /> : null}
       <View style={[styles.composer, { paddingBottom: (bottomInset ? insets.bottom : 0) + 10 }]}>
         <TextInput
           value={text}
-          onChangeText={setText}
+          onChangeText={change}
           placeholder={placeholder ?? t('m.chat.placeholder')}
           placeholderTextColor="#94a1b8"
           multiline
@@ -136,6 +173,11 @@ const styles = StyleSheet.create({
   mine: { backgroundColor: colors.blue, borderBottomRightRadius: 6 },
   theirs: { backgroundColor: colors.white, borderBottomLeftRadius: 6, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.line },
   author: { fontFamily: fonts.semibold, fontSize: 11.5, color: colors.blue, marginBottom: 2 },
+  meta: { flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 6, marginTop: 4 },
+  ticks: { flexDirection: 'row', alignItems: 'center', gap: 3 },
+  typing: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: space.lg, paddingVertical: 6 },
+  typingDots: { flexDirection: 'row', gap: 3 },
+  dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: colors.blue },
   composer: {
     flexDirection: 'row',
     alignItems: 'flex-end',

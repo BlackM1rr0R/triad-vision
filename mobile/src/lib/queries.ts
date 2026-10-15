@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { keepPreviousData, useInfiniteQuery, useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from './api';
 import { errorCode, errorKeys } from './errors';
 import { qk } from './queryClient';
@@ -11,6 +11,8 @@ import type {
   CaseStatus,
   CaseSummary,
   DashboardData,
+  Interview,
+  MyInterviews,
   SiteContent,
 } from '@/types';
 
@@ -55,6 +57,29 @@ export const useNotifications = (enabled = true) =>
     enabled,
     refetchInterval: 60_000,
   });
+
+/** The candidate's interviews, upcoming first (GET /interviews/mine). */
+export const useMyInterviews = (enabled = true) =>
+  useQuery({
+    queryKey: qk.interviews,
+    queryFn: async () => (await api.get<MyInterviews>('/interviews/mine')).data,
+    enabled,
+    staleTime: 60_000,
+  });
+
+/** One interview; starts from the list cache so the detail screen opens without a flash. */
+export const useInterview = (id: string | undefined) => {
+  const qc = useQueryClient();
+  return useQuery({
+    queryKey: qk.interview(id ?? ''),
+    queryFn: async () => (await api.get<{ interview: Interview }>(`/interviews/${id}`)).data.interview,
+    enabled: !!id,
+    placeholderData: () => {
+      const list = qc.getQueryData<MyInterviews>(qk.interviews);
+      return list ? [...list.upcoming, ...list.past].find((i) => i.id === id) : undefined;
+    },
+  });
+};
 
 export const useDashboard = () =>
   useQuery({

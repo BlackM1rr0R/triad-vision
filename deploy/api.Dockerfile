@@ -8,6 +8,10 @@ COPY server/package.json server/
 COPY client/package.json client/
 # Only the server workspace: the site's toolchain (vite, esbuild, three…) never enters this image.
 RUN npm ci --workspace server --include=dev --no-audit --no-fund
+# Passport OCR language data (~3 MB): fetched at build time so the API never downloads at runtime.
+# Copied before the source so the layer stays cached across deploys.
+COPY server/scripts/fetch-ocr-data.mjs server/scripts/
+RUN node server/scripts/fetch-ocr-data.mjs
 COPY server ./server
 RUN npx prisma generate --schema server/prisma/schema.prisma \
  && npm run build -w server \

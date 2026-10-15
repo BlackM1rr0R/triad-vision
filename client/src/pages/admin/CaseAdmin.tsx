@@ -16,6 +16,8 @@ import { RequirementsSection } from '@/components/admin/case/Requirements';
 import { WorkflowStepper } from '@/components/admin/case/WorkflowStepper';
 import { caseKey, type CaseDetailResponse } from '@/components/admin/case/shared';
 import { ErrorBlock, LoadingBlock, Panel } from '@/components/admin/ui';
+import { FamilyPanel } from '@/components/journey/Family';
+import { OnboardingAdminPanel } from '@/components/journey/OnboardingAdmin';
 
 // Team tasks linked to this case (own chunk).
 const CaseTasks = lazy(() => import('@/components/tasks/CaseTasks').then((m) => ({ default: m.CaseTasks })));
@@ -33,6 +35,7 @@ export default function CaseAdmin() {
   if (isLoading) return <LoadingBlock />;
   if (error || !data) return <ErrorBlock error={error} onRetry={() => refetch()} />;
   const c: CaseDetail = data.case;
+  const family = c as CaseDetail & { parentCaseId?: string | null };
 
   const step = STATUS_STEP[c.status];
   const hasEmbassy = c.requirements.some((r) => r.stage === 'EMBASSY');
@@ -64,6 +67,8 @@ export default function CaseAdmin() {
         </div>
         <div className="min-w-0 space-y-6">
           <CaseStatsPanel stats={data.stats} />
+          <FamilyPanel caseId={c.id} parentCaseId={family.parentCaseId} />
+          {c.status === 'APPROVED' && <OnboardingAdminPanel caseId={c.id} />}
           <Suspense fallback={null}>
             <CaseTasks caseId={c.id} number={c.number} clientName={`${c.client.firstName} ${c.client.lastName}`.trim()} />
           </Suspense>

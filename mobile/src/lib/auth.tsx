@@ -38,6 +38,9 @@ export interface MePatch {
   locale?: Locale;
   currentPassword?: string;
   newPassword?: string;
+  /** Phone-channel preferences (profile screen switches). */
+  whatsappOptIn?: boolean;
+  smsNotifications?: boolean;
 }
 
 /** Why the last session ended on the server side; shown once to the user, then cleared. */

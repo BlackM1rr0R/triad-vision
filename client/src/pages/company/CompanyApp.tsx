@@ -2,7 +2,7 @@ import { Link, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
 import clsx from 'clsx';
-import { Briefcase, Building2, Clock3, FileText, Handshake, LayoutDashboard, ShieldAlert, Users } from 'lucide-react';
+import { Briefcase, Building2, Clock3, FileText, Handshake, LayoutDashboard, ShieldAlert, Users, Video } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { registerCopy } from '@/i18n';
@@ -15,6 +15,7 @@ import { CompanyVacancies, CompanyVacancyEditor } from '@/components/company/Com
 import { CompanyCandidates } from '@/components/company/CompanyCandidates';
 import { CompanyWorkers } from '@/components/company/CompanyWorkers';
 import { CompanyProfile } from '@/components/company/CompanyProfile';
+import { CompanyInterviews } from '@/components/company/Interviews';
 import { Loading, Section, useCompany } from '@/components/company/shared';
 
 registerCopy(pagesJobs);
@@ -33,6 +34,7 @@ export default function CompanyApp() {
     { to: '/company/vacancies', label: t('jobsArea.portal.nav.vacancies'), icon: Briefcase, match: (p: string) => p.startsWith('/company/vacancies') },
     { to: '/company/candidates', label: t('jobsArea.portal.nav.candidates'), icon: Users, match: (p: string) => p.startsWith('/company/candidates') },
     { to: '/company/workers', label: t('jobsArea.portal.nav.workers'), icon: Handshake, match: (p: string) => p.startsWith('/company/workers') },
+    { to: '/company/interviews', label: t('ops.company.title'), icon: Video, match: (p: string) => p.startsWith('/company/interviews') },
     { to: '/company/invoices', label: t('jobsArea.portal.nav.invoices'), icon: FileText, match: (p: string) => p.startsWith('/company/invoices') },
     { to: '/company/profile', label: t('jobsArea.portal.nav.profile'), icon: Building2, match: (p: string) => p.startsWith('/company/profile') },
   ];
@@ -147,6 +149,7 @@ export default function CompanyApp() {
                 <Route path="vacancies/:id" element={<CompanyVacancyEditor company={company} />} />
                 <Route path="candidates" element={<CompanyCandidates />} />
                 <Route path="workers" element={<CompanyWorkers />} />
+                <Route path="interviews" element={<CompanyInterviews />} />
                 <Route path="invoices" element={<CompanyInvoices />} />
                 <Route path="profile" element={<CompanyProfile company={company} />} />
                 <Route path="*" element={<Navigate to="/company" replace />} />

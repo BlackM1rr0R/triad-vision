@@ -12,6 +12,7 @@ import { ErrorBlock, LoadingBlock, PageHead, Panel, Switch } from '@/components/
 import { fmtDate, fmtDateTime } from '@/components/admin/labels';
 import { registerCopy } from '@/i18n';
 import { pagesLegal } from '@/i18n/pagesLegal';
+import { AutoAssignSettings, normalizeAutoAssign } from '@/components/ops/AutoAssignSettings';
 import {
   LEGAL_FIELDS,
   normalizeLegal,
@@ -601,6 +602,7 @@ export default function Settings() {
   const legal = useMemo(() => normalizeLegal(raw?.legal), [raw?.legal]);
   const privacy = useMemo(() => normalizePrivacy(raw?.privacy), [raw?.privacy]);
   const retention = useMemo(() => normalizeRetention(raw?.retention), [raw?.retention]);
+  const autoAssign = useMemo(() => normalizeAutoAssign(raw?.autoAssign), [raw?.autoAssign]);
   useEffect(() => {
     if (!data) return;
     setContact(normalizeContact(data.contact));
@@ -620,6 +622,7 @@ export default function Settings() {
         <>
           <ContactForm initial={contact} />
           <SocialForm initial={social} />
+          <AutoAssignSettings initial={autoAssign} />
           <LawyerNote />
           <LegalForm initial={legal} />
           <PrivacyForm initial={privacy} />

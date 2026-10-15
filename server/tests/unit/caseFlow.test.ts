@@ -5,15 +5,22 @@ const db = vi.hoisted(() => {
   const prisma = {
     case: {
       findUnique: vi.fn(),
+      findUniqueOrThrow: vi.fn(),
       findFirst: vi.fn(),
+      findMany: vi.fn(),
       count: vi.fn(),
+      groupBy: vi.fn(),
       updateMany: vi.fn(),
       create: vi.fn(),
     },
+    setting: { findUnique: vi.fn() },
+    requirementTemplate: { findMany: vi.fn() },
+    webhook: { findMany: vi.fn() },
+    webhookDelivery: { createMany: vi.fn() },
     caseEvent: { create: vi.fn() },
     contract: { findUnique: vi.fn(), update: vi.fn(), create: vi.fn() },
     documentRequirement: { findMany: vi.fn(), count: vi.fn(), createMany: vi.fn() },
-    user: { findFirstOrThrow: vi.fn() },
+    user: { findFirstOrThrow: vi.fn(), findMany: vi.fn() },
     $transaction: vi.fn(),
     $queryRaw: vi.fn(),
   };
@@ -79,6 +86,14 @@ beforeEach(() => {
   p.documentRequirement.count.mockResolvedValue(0);
   p.contract.findUnique.mockResolvedValue(null);
   p.user.findFirstOrThrow.mockResolvedValue({ id: 'client1', locale: 'en' });
+  p.user.findMany.mockResolvedValue([]);
+  p.case.findUniqueOrThrow.mockImplementation(async () => ({ ...current, visaCategoryId: null }));
+  p.case.findMany.mockResolvedValue([]);
+  p.case.groupBy.mockResolvedValue([]);
+  // auto-assignment off, no templates (built-in defaults), no webhooks
+  p.setting.findUnique.mockResolvedValue(null);
+  p.requirementTemplate.findMany.mockResolvedValue([]);
+  p.webhook.findMany.mockResolvedValue([]);
 });
 
 /** Every staff/client action with the statuses it may start from (all others must give 409). */
@@ -355,7 +370,7 @@ describe('createCase', () => {
   it('refuses a second active case', async () => {
     p.case.count.mockResolvedValue(1);
     await expectHttp(flow.createCase('client1', { profession: 'Driver' }), 409, 'ACTIVE_CASE_EXISTS');
-    expect(p.case.count).toHaveBeenCalledWith({ where: { clientId: 'client1', status: { notIn: flow.FINAL_STATUSES } } });
+    expect(p.case.count).toHaveBeenCalledWith({ where: { clientId: 'client1', parentCaseId: null, status: { notIn: flow.FINAL_STATUSES } } });
     expect(p.case.create).not.toHaveBeenCalled();
   });
 

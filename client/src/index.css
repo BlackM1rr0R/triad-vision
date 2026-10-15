@@ -366,6 +366,24 @@
 [data-theme='dark'] .border-violet-200 {
   border-color: rgba(139, 92, 246, 0.45);
 }
+[data-theme='dark'] .bg-white\/60 {
+  background-color: var(--color-card);
+}
+[data-theme='dark'] .bg-sky-50 {
+  background-color: rgba(14, 165, 233, 0.12);
+}
+[data-theme='dark'] .bg-rose-50 {
+  background-color: rgba(244, 63, 94, 0.14);
+}
+[data-theme='dark'] .bg-rose-100 {
+  background-color: rgba(244, 63, 94, 0.22);
+}
+[data-theme='dark'] :is(.text-rose-700, .text-rose-800) {
+  color: #fda4af;
+}
+[data-theme='dark'] .border-rose-200 {
+  border-color: rgba(244, 63, 94, 0.45);
+}
 [data-theme='dark'] .bg-sky-100 {
   background-color: rgba(14, 165, 233, 0.18);
 }

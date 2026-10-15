@@ -44,6 +44,9 @@ export interface OverviewCaseRow {
   updatedAt: string;
   decisionAt: string | null;
   visaCategory: { id: string; slug: string; title: L10n; visaLabel: string } | null;
+  /** Family reunion: member cases carry the relation to the main applicant (spouse | child | parent). */
+  relation?: string | null;
+  parentCaseId?: string | null;
 }
 
 export interface ActiveCase extends OverviewCaseRow {

@@ -15,6 +15,8 @@ import { StatusBadge } from '../StatusBadge';
 import { fmtDate, fmtDateTime, fullName, toastError, waLink } from '../labels';
 import type { StaffMember } from '../types';
 import { useCaseRefresh } from './shared';
+import { ForecastChip } from '@/components/journey/ForecastStrip';
+import { useRelationLabel } from '@/components/journey/Family';
 
 const patchCase = (id: string, body: Record<string, string | null>) => api.patch(`/admin/cases/${id}`, body);
 
@@ -54,6 +56,8 @@ export const CaseHeader = ({ c }: { c: CaseDetail }) => {
     staleTime: 60_000,
   });
   const companyName = companies?.find((x) => x.id === link.companyId)?.name;
+  const family = c as CaseDetail & { relation?: string | null };
+  const relationLabel = useRelationLabel()(family.relation);
   const vacancyTitle = vacancies?.find((x) => x.id === link.vacancyId)?.title;
 
   const visaOptions = content?.visaCategories ?? [];
@@ -95,6 +99,8 @@ export const CaseHeader = ({ c }: { c: CaseDetail }) => {
           <div className="flex flex-wrap items-center gap-2">
             <h1 className="font-mono text-lg font-bold text-navy-900 sm:text-xl">{c.number}</h1>
             <StatusBadge status={c.status} />
+            {relationLabel && <span className="badge bg-rose-100 text-rose-800">{relationLabel}</span>}
+            <ForecastChip caseId={c.id} />
           </div>
           <p className="mt-1 text-lg font-semibold break-words text-ink">{fullName(client)}</p>
           <div className="mt-3 flex flex-wrap gap-2">

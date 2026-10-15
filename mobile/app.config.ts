@@ -42,6 +42,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       NSPhotoLibraryUsageDescription: 'Triad Vision needs access to your photos so you can upload document images for your visa application.',
       NSCalendarsUsageDescription: 'Triad Vision adds your embassy appointment to your calendar.',
       NSCalendarsWriteOnlyAccessUsageDescription: 'Triad Vision adds your embassy appointment to your calendar.',
+      NSFaceIDUsageDescription: 'Triad Vision uses Face ID to unlock the app without typing your password.',
       // The API runs over plain HTTP on the local network during development only.
       ...(IS_DEV_VARIANT ? { NSAppTransportSecurity: { NSAllowsArbitraryLoads: true } } : {}),
       ITSAppUsesNonExemptEncryption: false,
@@ -96,6 +97,12 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       },
     ],
     '@react-native-community/datetimepicker',
+    [
+      'expo-local-authentication',
+      {
+        faceIDPermission: 'Triad Vision uses Face ID to unlock the app without typing your password.',
+      },
+    ],
   ],
   experiments: {
     reactCompiler: true,

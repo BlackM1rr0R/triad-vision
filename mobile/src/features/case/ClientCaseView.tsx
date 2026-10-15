@@ -15,6 +15,7 @@ import {
   MapPin,
   MessageCircle,
   Route,
+  ScanLine,
   Send,
   ShieldX,
   Ban,
@@ -29,10 +30,17 @@ import { haptic } from '@/lib/haptics';
 import { addToCalendar } from '@/lib/native';
 import { useCase, useErrorMessage } from '@/lib/queries';
 import { qk } from '@/lib/queryClient';
+import { scanFileName } from '@/lib/scan';
 import { colors, fonts, space } from '@/theme';
 import type { CaseDetail, CaseDocument, DocStage, Requirement } from '@/types';
+import { OcrCard } from './OcrCard';
 import { FileItem, Note, RequirementCard, Timeline } from './parts';
+import { ScanSheet, type ScanProgress } from './ScanSheet';
+import { capturePage, renderPage, type ScanPage } from './scanner';
+import { useOcr } from './useOcr';
 import { useOpenDocument, useUploader, type PickSource } from './useDocuments';
+
+const NO_PAGES: ScanPage[] = [];
 
 const DecisionCard = ({ c }: { c: CaseDetail }) => {
   const { t } = useTranslation();
@@ -176,14 +184,18 @@ const DocumentsSection = ({
   index?: number;
 }) => {
   const { t } = useTranslation();
+  const f = useFormat();
   const qc = useQueryClient();
   const toast = useToast();
   const message = useErrorMessage();
   const { open, openingId } = useOpenDocument();
   const invalidate = useCallback(() => qc.invalidateQueries({ queryKey: qk.case(c.id) }), [qc, c.id]);
-  const { progress, upload } = useUploader(invalidate);
+  const { progress, upload, uploadFiles } = useUploader(invalidate);
+  const { ocr, applying, start: startOcr, apply: applyOcr, dismiss: dismissOcr } = useOcr();
   const [target, setTarget] = useState<Requirement | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [scan, setScan] = useState<{ req: Requirement; pages: ScanPage[] } | null>(null);
+  const [scanProgress, setScanProgress] = useState<ScanProgress | null>(null);
 
   const reqs = c.requirements.filter((r) => r.stage === stage);
   if (reqs.length === 0) return null;
@@ -191,10 +203,51 @@ const DocumentsSection = ({
   const required = reqs.filter((r) => r.required);
   const missing = missingRequirements(c.requirements, stage, 'uploaded');
   const done = required.length - missing.length;
+  const uploadPath = `/cases/${c.id}/documents`;
+
+  /** A passport image just landed: read its machine readable zone (quietly skipped where OCR is off). */
+  const afterUpload = (req: Requirement, docs: (CaseDocument | null)[]) => {
+    const image = docs.find((d): d is CaseDocument => !!d && d.mimeType.startsWith('image/'));
+    if (req.key === 'PASSPORT' && image) void startOcr(image.id, req.id);
+  };
 
   const pick = (source: PickSource) => {
     if (!target) return;
-    void upload(target.id, `/cases/${c.id}/documents`, source, { requirementId: target.id });
+    const req = target;
+    void upload(req.id, uploadPath, source, { requirementId: req.id }, { onUploaded: (doc) => afterUpload(req, [doc]) });
+  };
+
+  const startScan = async () => {
+    if (!target) return;
+    const req = target;
+    try {
+      const page = await capturePage();
+      if (page) setScan({ req, pages: [page] });
+    } catch (err) {
+      toast(message(err), 'error');
+    }
+  };
+
+  const uploadScan = async (pages: ScanPage[]) => {
+    if (!scan) return;
+    const req = scan.req;
+    const total = pages.length;
+    const now = new Date();
+    const docs = await uploadFiles(
+      req.id,
+      uploadPath,
+      pages.map((p, i) => async () => {
+        const rendered = await renderPage(p);
+        return { uri: rendered.uri, name: scanFileName(i + 1, total, now), mimeType: 'image/jpeg' };
+      }),
+      { requirementId: req.id },
+      (page, fraction) => setScanProgress({ page, total, fraction }),
+    );
+    setScanProgress(null);
+    if (docs) {
+      setScan(null);
+      afterUpload(req, docs);
+    }
   };
 
   const remove = (doc: CaseDocument) => {
@@ -247,16 +300,18 @@ const DocumentsSection = ({
     >
       {editable ? <Text variant="caption">{t('portal.docs.formats')}</Text> : <Text variant="caption">{t('portal.docs.locked')}</Text>}
       {reqs.map((r) => (
-        <RequirementCard
-          key={r.id}
-          req={r}
-          progress={progress[r.id]}
-          onUpload={editable ? setTarget : undefined}
-          onOpen={open}
-          openingId={openingId}
-          canDelete={(d) => editable && d.status !== 'ACCEPTED' && d.uploadedById === c.client.id}
-          onDelete={remove}
-        />
+        <View key={r.id}>
+          <RequirementCard
+            req={r}
+            progress={progress[r.id]}
+            onUpload={editable ? setTarget : undefined}
+            onOpen={open}
+            openingId={openingId}
+            canDelete={(d) => editable && d.status !== 'ACCEPTED' && d.uploadedById === c.client.id}
+            onDelete={remove}
+          />
+          {ocr && ocr.requirementId === r.id ? <OcrCard ocr={ocr} applying={applying} onApply={() => void applyOcr()} onDismiss={dismissOcr} /> : null}
+        </View>
       ))}
       {editable ? (
         <View style={{ gap: 8, marginTop: space.sm }}>
@@ -270,9 +325,19 @@ const DocumentsSection = ({
         title={target ? t('m.case.uploadTitle') : undefined}
         options={[
           { label: t('m.case.fromCamera'), icon: Camera, onPress: () => pick('camera') },
+          { label: t('m.scan.action'), icon: ScanLine, onPress: () => void startScan() },
           { label: t('m.case.fromGallery'), icon: Images, onPress: () => pick('gallery') },
           { label: t('m.case.fromFiles'), icon: FileText, onPress: () => pick('files') },
         ]}
+      />
+      <ScanSheet
+        key={scan?.pages[0]?.id ?? 'none'}
+        visible={!!scan}
+        title={scan ? f.tr(scan.req.title) : ''}
+        initialPages={scan?.pages ?? NO_PAGES}
+        progress={scanProgress}
+        onClose={() => setScan(null)}
+        onUpload={uploadScan}
       />
     </Section>
   );

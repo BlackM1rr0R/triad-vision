@@ -2,16 +2,53 @@ import { useCallback } from 'react';
 import { View } from 'react-native';
 import { router } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
-import { ArrowRight, FileSignature, MessageCircle, Plus, Upload } from '@/components/icons';
+import { ArrowRight, Clock3, FileSignature, MessageCircle, Plus, Upload, Video } from '@/components/icons';
 import { useTranslation } from 'react-i18next';
 import { Button, Card, NavyHeader, ScrollScreen, SkeletonCard, StatusBadge, StepBar, Text, ErrorState } from '@/components/ui';
 import { AppointmentCard } from '@/features/case/ClientCaseView';
 import { ExploreGrid } from '@/features/common/Explore';
+import { InterviewStatusPill, interviewTitle } from '@/features/interviews/InterviewCard';
 import { useAuth } from '@/lib/auth';
 import { CLIENT_UPLOAD_STAGE, STATUS_STEP, STEP_KEYS, hasActiveCase, missingRequirements, pickActiveCase } from '@/lib/caseStatus';
 import { useFormat } from '@/lib/format';
-import { useCase, useMyCases } from '@/lib/queries';
+import { nextInterview } from '@/lib/interviews';
+import { useCase, useMyCases, useMyInterviews } from '@/lib/queries';
 import { colors, fonts, space } from '@/theme';
+
+/** The next proposed/confirmed interview, when there is one (nothing otherwise — most clients never have interviews). */
+const UpcomingInterview = () => {
+  const { t } = useTranslation();
+  const f = useFormat();
+  const { data } = useMyInterviews();
+  const next = data ? nextInterview(data.upcoming) : undefined;
+  if (!next) return null;
+  return (
+    <Card index={2} onPress={() => router.push(`/interviews/${next.id}`)}>
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1 }}>
+          <Video size={16} color={colors.violet} />
+          <Text variant="caption">{t('m.home.nextInterview')}</Text>
+        </View>
+        <InterviewStatusPill status={next.status} />
+      </View>
+      <Text variant="h3" style={{ marginTop: 8 }} numberOfLines={2}>
+        {interviewTitle(next, t)}
+      </Text>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 6 }}>
+        <Clock3 size={15} color={colors.muted} />
+        <Text variant="small" style={{ flex: 1 }}>
+          {f.longDateTime(next.startsAt)}
+        </Text>
+        <ArrowRight size={18} color={colors.blue} />
+      </View>
+      {next.status === 'PROPOSED' ? (
+        <Text variant="small" color={colors.warning} style={{ fontFamily: fonts.semibold, marginTop: 6 }}>
+          {t('m.interviews.awaiting')}
+        </Text>
+      ) : null}
+    </Card>
+  );
+};
 
 const ActiveCase = ({ id }: { id: string }) => {
   const { t } = useTranslation();
@@ -85,6 +122,8 @@ export default function Home() {
       ) : active ? (
         <ActiveCase id={active.id} />
       ) : null}
+
+      <UpcomingInterview />
 
       {!isLoading && !error && canApply ? (
         <Card index={1} style={{ backgroundColor: colors.navy, borderColor: colors.navy }}>

@@ -4,6 +4,11 @@
   "short": "EN"
  },
  "nav": {
+  "jobs": "Jobs",
+  "booking": "Book a call",
+  "forEmployers": "For employers",
+  "impressum": "Legal notice",
+  "privacyPolicy": "Privacy policy",
   "home": "Home",
   "about": "About us",
   "services": "Services",

@@ -7,7 +7,8 @@
       "notifications": "Alerts",
       "profile": "Profile",
       "dashboard": "Dashboard",
-      "cases": "Cases"
+      "cases": "Cases",
+      "interviews": "Interviews"
     },
     "common": {
       "retry": "Try again",
@@ -78,7 +79,8 @@
       "appointment": "Appointment",
       "explore": "Discover",
       "newApplication": "New application",
-      "unread": "{{count}} unread"
+      "unread": "{{count}} unread",
+      "nextInterview": "Next interview"
     },
     "case": {
       "title": "My application",
@@ -142,7 +144,10 @@
       "empty": "No messages yet. Ask anything about your application here.",
       "noCase": "Messages are available once you have an application.",
       "team": "Triad Vision",
-      "failed": "Message not sent. Tap to retry."
+      "failed": "Message not sent. Tap to retry.",
+      "read": "Read",
+      "typing": "… is typing",
+      "typingName": "{{name}} is typing…"
     },
     "notifications": {
       "title": "Notifications",
@@ -183,7 +188,22 @@
       "sessionsCount": "{{count}} active · this one expires {{date}}",
       "logoutOthers": "Log out other devices",
       "logoutOthersConfirm": "Every other phone and browser will be logged out. This phone stays logged in.",
-      "logoutOthersDone": "Other devices logged out"
+      "logoutOthersDone": "Other devices logged out",
+      "biometric": "Biometric login",
+      "biometricOn": "On – the app unlocks with Face ID / fingerprint",
+      "biometricOff": "Off",
+      "biometricNotEnrolled": "No Face ID or fingerprint is set up on this phone. Add one in the phone settings first.",
+      "biometricUnavailable": "This device does not support biometric login.",
+      "biometricEnabled": "Biometric login turned on",
+      "biometricDisabled": "Biometric login turned off",
+      "biometricCancelled": "Not confirmed – setting unchanged.",
+      "whatsapp": "WhatsApp notifications",
+      "whatsappHint": "Important updates are also sent to WhatsApp.",
+      "sms": "SMS notifications",
+      "smsHint": "Appointment reminders and urgent messages by SMS.",
+      "noPhone": "Add your phone number above to receive WhatsApp and SMS.",
+      "prefsSaved": "Preference saved",
+      "interviewsHint": "Your online meetings with employers"
     },
     "apply": {
       "title": "New application",
@@ -381,7 +401,88 @@
       "PASSWORD_SHORT": "The password must have at least 8 characters.",
       "REQUIRED_FIELDS": "Please fill in all required fields.",
       "DUPLICATE": "This already exists.",
-      "INVALID_VISA_CATEGORY": "This visa type is not available anymore."
+      "INVALID_VISA_CATEGORY": "This visa type is not available anymore.",
+      "INVALID_TRANSITION": "This action is no longer possible.",
+      "INTERVIEW_STARTED": "The interview has already started.",
+      "INTERVIEW_NOT_FOUND": "Interview not found.",
+      "INTERVIEW_CLOSED": "A closed interview cannot be changed.",
+      "NO_MRZ": "No passport data was read from this document.",
+      "OCR_UNAVAILABLE": "Passport reading is not available right now.",
+      "UPLOAD_NOT_ALLOWED": "Documents cannot be uploaded at this step."
+    },
+    "lock": {
+      "title": "App locked",
+      "subtitle": "Confirm it's you to continue.",
+      "prompt": "Unlock Triad Vision",
+      "unlock": "Unlock with Face ID / fingerprint",
+      "unlockFace": "Unlock with Face ID",
+      "usePassword": "Sign in with password",
+      "failed": "Not confirmed. Try again or sign in with your password."
+    },
+    "scan": {
+      "title": "Document scanner",
+      "action": "Scan",
+      "rotate": "Rotate",
+      "retake": "Retake",
+      "remove": "Remove",
+      "addPage": "Add page",
+      "upload": "Upload ({{count}})",
+      "pageOf": "Page {{page}} / {{total}}",
+      "hint": "Keep the text readable and the edges trimmed.",
+      "uploadingPage": "Uploading page {{page}} / {{total}}… {{percent}}%",
+      "done": "{{count}} pages uploaded"
+    },
+    "ocr": {
+      "title": "Read from the passport",
+      "running": "Reading the passport…",
+      "runningHint": "Recognising the machine readable zone (MRZ). This can take a few seconds.",
+      "notFound": "The passport's machine readable zone was not found. The photo must be sharp and complete – the two lines at the bottom of the page must be visible.",
+      "name": "Name",
+      "number": "Passport number",
+      "expiry": "Valid until",
+      "birthDate": "Date of birth",
+      "nationality": "Nationality",
+      "invalid": "The check digits do not match – compare the data with the passport.",
+      "expired": "The passport has expired. A new passport is needed for the visa.",
+      "expiresSoon": "The passport is valid for less than 12 months – the embassy usually requires longer validity.",
+      "checkHint": "If the data is correct, copy it to your profile.",
+      "apply": "Apply to profile",
+      "applied": "Profile updated with the passport data"
+    },
+    "interviews": {
+      "title": "My interviews",
+      "detailTitle": "Interview",
+      "subtitle": "Your online interviews with employers. Confirm or decline the proposed time.",
+      "upcoming": "Upcoming interviews",
+      "past": "Past interviews",
+      "emptyTitle": "No interviews yet",
+      "empty": "When an employer invites you, the interview will appear here.",
+      "noPast": "No past interviews.",
+      "with": "Interview with {{company}}",
+      "withTv": "Interview with Triad Vision",
+      "vacancy": "Vacancy",
+      "minutes": "{{count}} min",
+      "online": "Online (Jitsi)",
+      "join": "Join",
+      "joinHint": "The link becomes active 15 minutes before the start.",
+      "link": "Meeting link",
+      "calendarTitle": "Interview: {{company}}",
+      "confirm": "Confirm the time",
+      "decline": "Decline",
+      "declineTitle": "Decline interview",
+      "declineText": "The employer will be told so they can propose a new time.",
+      "declineReason": "Reason (optional)",
+      "confirmed": "Interview confirmed",
+      "declined": "Interview declined",
+      "awaiting": "Waiting for your confirmation",
+      "updatedAt": "Updated: {{date}}",
+      "status": {
+        "PROPOSED": "Proposed",
+        "CONFIRMED": "Confirmed",
+        "CANCELLED": "Cancelled",
+        "DONE": "Done",
+        "NO_SHOW": "No-show"
+      }
     }
   }
 }

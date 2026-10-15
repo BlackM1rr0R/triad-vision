@@ -9,7 +9,7 @@ const TRANSLIT: Record<string, string> = {
 };
 
 /** Standard PDF fonts only cover WinAnsi; transliterate everything else so names never break the PDF. */
-const safeText = (font: PDFFont, text: string) =>
+export const safeText = (font: PDFFont, text: string) =>
   [...text]
     .map((ch) => {
       const lower = ch.toLowerCase();

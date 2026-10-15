@@ -73,8 +73,9 @@ describe('POST /api/booking', () => {
     expect(note.type).toBe('BOOKING_NEW');
     expect(note.link).toBe('/admin/bookings');
 
-    const metric = await prisma.analyticsDaily.findFirst({ where: { metric: 'booking' } });
-    expect(metric?.count).toBeGreaterThanOrEqual(1);
+    // The counter is bumped best-effort after the response; wait for it instead of racing it.
+    const metric = await waitFor(() => prisma.analyticsDaily.findFirst({ where: { metric: 'booking' } }));
+    expect(metric.count).toBeGreaterThanOrEqual(1);
   });
 
   it('links the booking to the logged-in user', async () => {

@@ -14,6 +14,8 @@ import { Modal } from '../Modal';
 import { DOC_STATUS_TONE, docStatusLabel, stageLabel, toastError } from '../labels';
 import { Panel, Switch } from '../ui';
 import { DocIcon, DocLinks, DocMeta, isAccepted, stageRequirements, uploadCaseDocument, useCaseRefresh } from './shared';
+import { OcrBadge } from '@/components/docsIntel/OcrBadge';
+import type { DocWithOcr } from '@/components/docsIntel/api';
 
 type Stage = 'INITIAL' | 'EMBASSY';
 
@@ -26,7 +28,7 @@ const reqState = (r: Requirement): { key: 'accepted' | 'review' | 'rejected' | '
 
 // ─── Document row with review controls ─────────────────────────────────
 
-const DocRow = ({ c, doc }: { c: CaseDetail; doc: CaseDocument }) => {
+const DocRow = ({ c, doc, requirementKey }: { c: CaseDetail; doc: CaseDocument; requirementKey?: string | null }) => {
   const { t } = useTranslation();
   const refresh = useCaseRefresh(c.id);
   const [rejecting, setRejecting] = useState(false);
@@ -93,6 +95,7 @@ const DocRow = ({ c, doc }: { c: CaseDetail; doc: CaseDocument }) => {
           <span className="font-semibold">{t('admin.case.req.rejectReason')}</span> {doc.reviewNote}
         </p>
       )}
+      <OcrBadge caseId={c.id} doc={doc as DocWithOcr} requirementKey={requirementKey} />
       <AnimatePresence initial={false}>
         {rejecting && (
           <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
@@ -241,7 +244,7 @@ const RequirementCard = ({ c, r }: { c: CaseDetail; r: Requirement }) => {
       {r.documents.length > 0 && (
         <ul className="mt-3 space-y-2">
           {r.documents.map((d) => (
-            <DocRow key={d.id} c={c} doc={d} />
+            <DocRow key={d.id} c={c} doc={d} requirementKey={(r as Requirement & { key?: string | null }).key ?? null} />
           ))}
         </ul>
       )}

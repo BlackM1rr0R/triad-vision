@@ -2,7 +2,7 @@ import { Link, useLocation, useOutlet } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
-import { Bell, Briefcase, FolderOpen, LayoutDashboard, UserRound } from 'lucide-react';
+import { Bell, Briefcase, Compass, FolderOpen, GraduationCap, LayoutDashboard, UserRound, Video } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { FINAL } from '@/lib/caseStatus';
 import { useNotifications } from '@/components/portal/useNotifications';
@@ -13,9 +13,11 @@ import { registerCopy } from '@/i18n';
 import { pagesAccount } from '@/i18n/pagesAccount';
 import { VerifyBanner } from '@/components/auth/VerifyBanner';
 import { pagesJobs } from '@/i18n/pagesJobs';
+import { pagesJourney } from '@/i18n/pagesJourney';
 
 registerCopy(pagesAccount);
 registerCopy(pagesJobs);
+registerCopy(pagesJourney);
 
 export default function AccountLayout() {
   const { t } = useTranslation();
@@ -32,6 +34,8 @@ export default function AccountLayout() {
   const primaryCase = cases.find((c) => !FINAL.includes(c.status)) ?? (cases.length === 1 ? cases[0] : null);
   const casesTo = primaryCase ? `/account/cases/${primaryCase.id}` : cases.length > 1 ? '/account#cases' : '/account#start';
   const completeness = profileCompleteness(user);
+  // Post-arrival checklist only makes sense once a visa was approved.
+  const hasApproved = cases.some((c) => c.status === 'APPROVED');
 
   const tabs = [
     { to: '/account', label: t('accountPage.tabs.dashboard'), icon: LayoutDashboard, match: (p: string) => p === '/account' || p === '/account/' },
@@ -42,6 +46,9 @@ export default function AccountLayout() {
       match: (p: string) => p.startsWith('/account/cases'),
     },
     { to: '/account/applications', label: t('jobsArea.applications.tab'), icon: Briefcase, match: (p: string) => p.startsWith('/account/applications') },
+    ...(isClient && hasApproved ? [{ to: '/account/onboarding', label: t('journey.nav.onboarding'), icon: Compass, match: (p: string) => p.startsWith('/account/onboarding') }] : []),
+    ...(isClient ? [{ to: '/account/german', label: t('journey.nav.german'), icon: GraduationCap, match: (p: string) => p.startsWith('/account/german') }] : []),
+    { to: '/account/interviews', label: t('journey.nav.interviews'), icon: Video, match: (p: string) => p.startsWith('/account/interviews') },
     { to: '/account/notifications', label: t('portal.notifications'), icon: Bell, badge: unread, match: (p: string) => p.startsWith('/account/notifications') },
     { to: '/account/profile', label: t('portal.profile'), icon: UserRound, match: (p: string) => p.startsWith('/account/profile') },
   ];

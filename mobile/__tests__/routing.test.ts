@@ -17,6 +17,13 @@ describe('notification → screen', () => {
     expect(routeForNotification({ link: '', caseId: 'xyz' }, 'SUPER_ADMIN')).toBe('/staff/cases/xyz');
   });
 
+  it('opens the interviews screen for interview notifications', () => {
+    expect(routeForNotification({ link: '/account/interviews', type: 'INTERVIEW_SCHEDULED' }, 'CLIENT')).toBe('/interviews');
+    expect(routeForNotification({ link: null, type: 'INTERVIEW_CONFIRMED' }, 'CLIENT')).toBe('/interviews');
+    // Staff manage interviews in the web admin panel.
+    expect(routeForNotification({ link: '/admin/interviews', type: 'INTERVIEW_DECLINED' }, 'ADMIN')).toBe('/dashboard');
+  });
+
   it('falls back sensibly without a case', () => {
     expect(routeForNotification({ link: '/admin/inquiries' }, 'ADMIN')).toBe('/dashboard');
     expect(routeForNotification({ link: null }, 'CLIENT')).toBe('/notifications');

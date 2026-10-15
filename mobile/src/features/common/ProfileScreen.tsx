@@ -3,11 +3,12 @@ import { Alert, Linking, Switch, View } from 'react-native';
 import { router } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Bell, CircleHelp, Globe, KeyRound, LogOut, MonitorSmartphone, Phone, Save } from '@/components/icons';
+import { Bell, CircleHelp, Fingerprint, Globe, KeyRound, LogOut, MessageCircle, MessageSquareText, MonitorSmartphone, Phone, Save, ScanFace, Video } from '@/components/icons';
 import { useTranslation } from 'react-i18next';
 import { Button, Card, Divider, Field, ListRow, NavyHeader, Pill, ScrollScreen, Section, Text, useToast } from '@/components/ui';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
+import { useBiometric, type BiometricAvailability } from '@/lib/biometric';
 import { APP_VERSION, WEB_URL } from '@/lib/config';
 import { useFormat } from '@/lib/format';
 import { haptic } from '@/lib/haptics';
@@ -27,9 +28,11 @@ export const ProfileScreen = () => {
   const f = useFormat();
   const qc = useQueryClient();
 
+  const biometric = useBiometric();
+
   const [form, setForm] = useState({ firstName: user?.firstName ?? '', lastName: user?.lastName ?? '', phone: user?.phone ?? '' });
   const [pw, setPw] = useState({ current: '', next: '' });
-  const [saving, setSaving] = useState<'profile' | 'password' | 'language' | 'push' | 'sessions' | null>(null);
+  const [saving, setSaving] = useState<'profile' | 'password' | 'language' | 'push' | 'sessions' | 'biometric' | 'whatsappOptIn' | 'smsNotifications' | null>(null);
   const sessions = useQuery({
     queryKey: ['auth', 'sessions'],
     queryFn: async () => (await api.get<{ sessions: SessionListItem[] }>('/auth/sessions')).data.sessions,
@@ -162,6 +165,46 @@ export const ProfileScreen = () => {
   const sessionCount = sessions.data?.length ?? 0;
   const expiresAt = session?.expiresAt ?? sessions.data?.find((s) => s.current)?.expiresAt;
 
+  // ─── Biometric lock ───
+  const BIOMETRIC_LABEL: Record<BiometricAvailability, string> = {
+    unknown: 'm.profile.biometricOff',
+    available: biometric.enabled ? 'm.profile.biometricOn' : 'm.profile.biometricOff',
+    'not-enrolled': 'm.profile.biometricNotEnrolled',
+    'no-hardware': 'm.profile.biometricUnavailable',
+  };
+  const biometricPossible = biometric.availability === 'available';
+  const BiometricIcon = biometric.kinds.includes('face') && !biometric.kinds.includes('fingerprint') ? ScanFace : Fingerprint;
+
+  const toggleBiometric = async (on: boolean) => {
+    if (saving === 'biometric') return;
+    setSaving('biometric');
+    try {
+      const result = await biometric.setEnabled(on);
+      if (result === 'ok') toast(t(on ? 'm.profile.biometricEnabled' : 'm.profile.biometricDisabled'));
+      else if (result === 'unavailable') toast(t('m.profile.biometricNotEnrolled'), 'error');
+      else toast(t('m.profile.biometricCancelled'), 'info');
+    } finally {
+      setSaving(null);
+    }
+  };
+
+  // ─── Phone channels (WhatsApp / SMS) — same switches as the web profile ───
+  const togglePref = async (key: 'whatsappOptIn' | 'smsNotifications', on: boolean) => {
+    if (saving === key) return;
+    setSaving(key);
+    try {
+      await updateMe({ [key]: on });
+      toast(t('m.profile.prefsSaved'));
+    } catch (err) {
+      toast(message(err), 'error');
+    } finally {
+      setSaving(null);
+    }
+  };
+  const prefSwitch = (key: 'whatsappOptIn' | 'smsNotifications', label: string) => (
+    <Switch value={user[key] !== false} disabled={saving === key} onValueChange={(v) => void togglePref(key, v)} trackColor={{ true: colors.blue }} accessibilityLabel={label} />
+  );
+
   return (
     <ScrollScreen
       keyboard
@@ -224,6 +267,31 @@ export const ProfileScreen = () => {
           }
         />
         <Divider style={{ marginVertical: 2 }} />
+        <ListRow
+          icon={BiometricIcon}
+          title={t('m.profile.biometric')}
+          subtitle={t(BIOMETRIC_LABEL[biometric.availability])}
+          onPress={biometricPossible ? () => void toggleBiometric(!biometric.enabled) : undefined}
+          chevron={false}
+          right={
+            <Switch
+              value={biometric.enabled}
+              disabled={!biometricPossible || saving === 'biometric'}
+              onValueChange={(v) => void toggleBiometric(v)}
+              trackColor={{ true: colors.blue }}
+              accessibilityLabel={t('m.profile.biometric')}
+            />
+          }
+        />
+        <Divider style={{ marginVertical: 2 }} />
+        <ListRow icon={MessageCircle} title={t('m.profile.whatsapp')} subtitle={t('m.profile.whatsappHint')} chevron={false} right={prefSwitch('whatsappOptIn', t('m.profile.whatsapp'))} />
+        <ListRow icon={MessageSquareText} title={t('m.profile.sms')} subtitle={t('m.profile.smsHint')} chevron={false} right={prefSwitch('smsNotifications', t('m.profile.sms'))} />
+        {!user.phone ? (
+          <Text variant="caption" style={{ paddingHorizontal: 4, paddingBottom: 6 }}>
+            {t('m.profile.noPhone')}
+          </Text>
+        ) : null}
+        <Divider style={{ marginVertical: 2 }} />
         {sessionCount > 0 ? (
           <>
             <ListRow
@@ -243,6 +311,7 @@ export const ProfileScreen = () => {
             <Divider style={{ marginVertical: 2 }} />
           </>
         ) : null}
+        {!isStaff ? <ListRow icon={Video} title={t('m.interviews.title')} subtitle={t('m.profile.interviewsHint')} onPress={() => router.push('/interviews')} /> : null}
         <ListRow icon={Phone} title={t('m.info.contact')} onPress={() => router.push('/info/contact')} />
         <ListRow icon={CircleHelp} title={t('m.profile.faq')} onPress={() => router.push('/info/faq')} />
         <ListRow icon={Globe} title={t('m.profile.website')} subtitle="triad-vision.de" onPress={() => void WebBrowser.openBrowserAsync(WEB_URL)} />

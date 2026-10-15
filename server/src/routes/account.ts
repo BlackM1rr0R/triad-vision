@@ -170,6 +170,8 @@ const caseSummarySelect = {
   id: true,
   number: true,
   profession: true,
+  relation: true,
+  parentCaseId: true,
   status: true,
   createdAt: true,
   updatedAt: true,

@@ -15,6 +15,10 @@ import { adminInvoicesRouter } from './invoices.js';
 import { adminReviewsRouter } from './reviews.js';
 import { adminAnalyticsRouter } from './analytics.js';
 import { oversightRouter } from './oversight.js';
+import { adminMessagingRouter } from './messaging.js';
+import { adminRequirementsRouter } from './requirements.js';
+import { adminJourneyRouter } from './journey.js';
+import { adminOpsRouter } from './ops.js';
 import { FINAL_STATUSES } from '../../lib/caseFlow.js';
 
 export const adminRouter = Router();
@@ -84,6 +88,10 @@ adminRouter.get('/dashboard', async (req, res) => {
 });
 
 adminRouter.use('/oversight', oversightRouter);
+adminRouter.use('/messaging', adminMessagingRouter);
+adminRouter.use('/requirements', adminRequirementsRouter);
+adminRouter.use('/journey', adminJourneyRouter);
+adminRouter.use('/ops', adminOpsRouter);
 // Any successful CMS write (incl. vacancy, employer and review moderation) must be visible on the public site right away.
 // The cache is cleared before the response is sent, so the admin's next public read is already fresh.
 adminRouter.use(['/content', '/settings', '/vacancies', '/companies', '/reviews'], (req, res, next) => {

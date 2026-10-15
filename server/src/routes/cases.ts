@@ -10,8 +10,8 @@ import { requireVerifiedEmail } from '../middleware/verified.js';
 import { decodeOriginalName, documentUpload, verifyUploadedFile } from '../middleware/upload.js';
 import { CLIENT_UPLOAD_STAGE, clientSignContract, clientSubmitDocuments, createCase } from '../lib/caseFlow.js';
 import { loadCaseDetail } from '../lib/caseView.js';
-import { badRequest, conflict, forbidden, notFound, parse } from '../lib/http.js';
-import { notifyStaff } from '../lib/notifications.js';
+import { badRequest, conflict, forbidden, HttpError, notFound, parse } from '../lib/http.js';
+import { createCaseMessage, listMessages, markMessagesRead, publishTyping } from '../lib/messaging/caseMessages.js';
 import { PDFDocument } from 'pdf-lib';
 import { signContractPdf } from '../lib/pdfSign.js';
 
@@ -174,10 +174,31 @@ casesRouter.post('/:id/contract/sign', async (req, res) => {
   res.json({ ok: true });
 });
 
+// ─── Messages (chat with the case manager; realtime events via /api/messaging/events) ──
+
+casesRouter.get('/:id/messages', async (req, res) => {
+  const c = await ownCase(req.params.id, req.user!.id);
+  res.json({ messages: await listMessages(c.id) });
+});
+
 casesRouter.post('/:id/messages', async (req, res) => {
   const { body } = parse(z.object({ body: z.string().trim().min(1).max(4000) }), req.body);
   const c = await ownCase(req.params.id, req.user!.id);
-  const message = await prisma.caseMessage.create({ data: { caseId: c.id, authorId: req.user!.id, body } });
-  await notifyStaff(`${c.number}: müştəridən yeni mesaj`, body, { caseId: c.id, link: `/admin/cases/${c.id}`, type: 'NEW_MESSAGE' });
+  const message = await createCaseMessage({ caseId: c.id, authorId: req.user!.id, body, side: 'client' });
   res.status(201).json({ message });
+});
+
+/** Marks every staff message of the case as read (read receipts for the team). */
+casesRouter.post('/:id/messages/read', async (req, res) => {
+  const c = await ownCase(req.params.id, req.user!.id);
+  const { messageIds, readAt } = await markMessagesRead(c, 'client');
+  res.json({ messageIds, readAt });
+});
+
+/** "… is typing" for the team; at most one event per 2 s per user (429 when faster). */
+casesRouter.post('/:id/typing', async (req, res) => {
+  const c = await ownCase(req.params.id, req.user!.id);
+  const sent = await publishTyping(c, req.user!, 'client');
+  if (!sent) throw new HttpError(429, 'TOO_MANY_REQUESTS');
+  res.json({ ok: true });
 });

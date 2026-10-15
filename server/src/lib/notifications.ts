@@ -3,6 +3,9 @@ import { config } from '../config.js';
 import { prisma } from '../db.js';
 import { renderEmail, sendMail } from './mailer.js';
 import { sendPush } from './push.js';
+import { publish } from './messaging/realtime.js';
+import { sendWhatsApp } from './messaging/outbound.js';
+import { getOverride, renderTemplate } from './messaging/templates.js';
 
 export type NotificationType =
   | 'CASE_CREATED'
@@ -119,6 +122,48 @@ const ctaLabel: Record<Locale, string> = {
 /** Types that are frequent and minor: in-app only, no email. */
 const IN_APP_ONLY = new Set<NotificationType>(['DOCUMENT_ACCEPTED', 'DOCUMENT_REJECTED']);
 
+export const NOTIFICATION_TYPES = Object.keys(az) as NotificationType[];
+
+/** Placeholders an admin may use in the template editor, per type (`number` and `firstName` always work). */
+export const PLACEHOLDERS: Record<NotificationType, string[]> = {
+  CASE_CREATED: ['number', 'firstName'],
+  DOCS_CHANGES_REQUESTED: ['number', 'firstName', 'note'],
+  CONTRACT_SENT: ['number', 'firstName'],
+  CONTRACT_RESIGN_REQUESTED: ['number', 'firstName', 'note'],
+  EMBASSY_DOCS_REQUESTED: ['number', 'firstName'],
+  EMBASSY_CHANGES_REQUESTED: ['number', 'firstName', 'note'],
+  APPOINTMENT_SCHEDULED: ['number', 'firstName', 'date', 'place', 'note'],
+  DECISION_PENDING: ['number', 'firstName'],
+  APPROVED: ['number', 'firstName', 'reason'],
+  REJECTED: ['number', 'firstName', 'reason'],
+  CANCELLED: ['number', 'firstName', 'reason'],
+  REOPENED: ['number', 'firstName', 'note'],
+  DOCUMENT_ACCEPTED: ['number', 'firstName', 'doc'],
+  DOCUMENT_REJECTED: ['number', 'firstName', 'doc', 'note'],
+  NEW_MESSAGE: ['number', 'firstName'],
+};
+
+/** Sample values for previews in the template editor. */
+export const SAMPLE_PARAMS: Record<Locale, NotifyParams & { firstName: string }> = {
+  az: { number: 'TV-2026-0042', firstName: 'Əli', note: 'Pasportun surəti aydın deyil', date: '20 noyabr 2026, 09:30 (Bakı / GMT+4)', place: 'Almaniya səfirliyi, Bakı', reason: 'Maliyyə sübutu çatışmır', doc: 'Pasport' },
+  de: { number: 'TV-2026-0042', firstName: 'Ali', note: 'Die Passkopie ist nicht lesbar', date: '20. November 2026, 09:30 (Baku / GMT+4)', place: 'Deutsche Botschaft Baku', reason: 'Finanzierungsnachweis fehlt', doc: 'Reisepass' },
+  en: { number: 'TV-2026-0042', firstName: 'Ali', note: 'The passport copy is not legible', date: '20 November 2026, 09:30 (Baku / GMT+4)', place: 'German Embassy Baku', reason: 'Proof of funds missing', doc: 'Passport' },
+  ru: { number: 'TV-2026-0042', firstName: 'Али', note: 'Копия паспорта нечитаема', date: '20 ноября 2026, 09:30 (Баку / GMT+4)', place: 'Посольство Германии, Баку', reason: 'Нет подтверждения средств', doc: 'Паспорт' },
+};
+
+/** Text from the code catalog (no admin override). */
+export const catalogText = (type: NotificationType, locale: Locale, params: NotifyParams = {}) => catalogs[locale][type](params);
+
+/**
+ * Title and body for a notification: the admin override for (type, locale) when one exists
+ * (rendered with {{placeholders}}), otherwise the code catalog.
+ */
+export const renderNotification = async (type: NotificationType, locale: Locale, params: NotifyParams & { firstName?: string } = {}) => {
+  const override = await getOverride(type, locale);
+  if (override) return { title: renderTemplate(override.title, params), body: renderTemplate(override.body, params) };
+  return catalogText(type, locale, params);
+};
+
 export const formatDateTime = (d: Date, locale: Locale) =>
   new Intl.DateTimeFormat({ az: 'az-Latn-AZ', de: 'de-DE', en: 'en-GB', ru: 'ru-RU' }[locale], {
     dateStyle: 'full',
@@ -134,14 +179,19 @@ export const notifyClient = async (
 ) => {
   const c = await prisma.case.findUniqueOrThrow({ where: { id: caseId }, include: { client: true } });
   const locale = c.client.locale;
-  const { title, body } = catalogs[locale][type]({ number: c.number, ...params });
+  const { title, body } = await renderNotification(type, locale, { number: c.number, firstName: c.client.firstName, ...params });
   const link = `/account/cases/${c.id}`;
 
-  await prisma.notification.create({
+  const n = await prisma.notification.create({
     data: { userId: c.clientId, caseId, type, title, body, link },
   });
+  publish(c.clientId, 'notification', { id: n?.id, type, title, body, link, caseId });
   // In-app notification is always kept; push and email follow the client's preferences.
   if (c.client.pushNotifications !== false) void sendPush([c.clientId], { title, body, data: { caseId, link, type } });
+  // WhatsApp mirrors the in-app text for clients with a phone number who opted in (minor types stay in-app only).
+  if (!IN_APP_ONLY.has(type) && c.client.phone && c.client.whatsappOptIn !== false) {
+    void sendWhatsApp({ userId: c.clientId, caseId, templateKey: type }, `${title}\n\n${body}`);
+  }
 
   if (!IN_APP_ONLY.has(type) && c.client.emailNotifications !== false) {
     const html = renderEmail(title, `${body}\n\n${c.number}`, {
@@ -176,6 +226,11 @@ export const notifyStaff = async (subject: string, body: string, opts: { caseId?
         link: opts.link,
       })),
     });
+    publish(
+      recipients.map((r) => r.id),
+      'notification',
+      { type: opts.type ?? 'STAFF', title: subject, body, link: opts.link ?? null, caseId: opts.caseId ?? null },
+    );
   }
   const url = opts.link ? `${config.clientUrl}${opts.link}` : undefined;
   void sendMail(
@@ -196,9 +251,10 @@ export const notifyUser = async (
 ) => {
   const user = await prisma.user.findUnique({ where: { id: userId } });
   if (!user || !user.isActive) return;
-  await prisma.notification.create({
+  const n = await prisma.notification.create({
     data: { userId, caseId: msg.caseId, type: msg.type, title: msg.title, body: msg.body, link: msg.link },
   });
+  publish(userId, 'notification', { id: n?.id, type: msg.type, title: msg.title, body: msg.body, link: msg.link ?? null, caseId: msg.caseId ?? null });
   if (msg.push !== false && user.pushNotifications !== false) {
     void sendPush([userId], { title: msg.title, body: msg.body, data: { link: msg.link ?? '', caseId: msg.caseId ?? '', type: msg.type } });
   }
