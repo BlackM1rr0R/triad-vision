@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
@@ -14,6 +15,9 @@ import { ALL_STATUSES, INQUIRY_STATUSES, eventLabel, fmtDateTime, fmtDays, fmtRe
 import type { DashboardResponse } from '@/components/admin/types';
 import { EmptyState, ErrorBlock, LoadingBlock, PageHead, Panel } from '@/components/admin/ui';
 import { BarList } from '@/components/admin/charts';
+
+// Team tasks widget (own chunk, so the dashboard does not carry the task UI and its copy).
+const MyTasksWidget = lazy(() => import('@/components/tasks/MyTasksWidget').then((m) => ({ default: m.MyTasksWidget })));
 
 const INQUIRY_TONE: Record<InquiryStatus, string> = { NEW: 'bg-brand-500', IN_PROGRESS: 'bg-amber-400', DONE: 'bg-emerald-500', ARCHIVED: 'bg-slate-400' };
 
@@ -120,6 +124,10 @@ export default function Dashboard() {
         <Kpi label={t('admin.dashboard.avgDecision')} value={fmtDays(data.avgDaysToDecision)} icon={Timer} tone="bg-sky-100 text-sky-700" hint={t('admin.dashboard.avgDecisionHint')} />
         <Kpi label={t('admin.dashboard.upcoming')} value={data.appointments.length} icon={CalendarClock} tone="bg-violet-100 text-violet-700" hint={t('admin.dashboard.next14')} to="/admin/cases?status=APPOINTMENT_SCHEDULED" />
       </div>
+
+      <Suspense fallback={null}>
+        <MyTasksWidget />
+      </Suspense>
 
       <div className="grid grid-cols-1 gap-6 lg:gap-8 xl:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)]">
         <Panel title={t('admin.dashboard.byStatus')} icon={BadgeCheck} actions={<span className="text-xs text-muted tabular-nums">{t('admin.dashboard.casesCount', { count: total })}</span>}>

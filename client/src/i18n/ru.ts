@@ -3,6 +3,11 @@ import type { Messages } from './az';
 const ru: Messages = {
   meta: { lang: 'Русский', short: 'RU' },
   nav: {
+    jobs: 'Вакансии',
+    booking: 'Записаться',
+    forEmployers: 'Работодателям',
+    impressum: 'Impressum',
+    privacyPolicy: 'Конфиденциальность',
     home: 'Главная',
     about: 'О нас',
     services: 'Услуги',

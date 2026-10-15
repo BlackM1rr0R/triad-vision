@@ -28,7 +28,12 @@ export default function Login() {
     setBusy(true);
     setError(null);
     try {
-      await login(email, password);
+      const user = await login(email, password);
+      if (!user) {
+        // Account with two-factor authentication: second step on its own screen.
+        router.push('/two-factor');
+        return;
+      }
       haptic.success();
       router.replace('/');
     } catch (err) {

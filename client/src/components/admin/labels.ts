@@ -46,6 +46,7 @@ export const roleLabel = (role: Role) => t(`admin.labels.role.${role}`);
 
 export const ROLE_TONE: Record<Role, string> = {
   CLIENT: 'bg-slate-100 text-slate-700',
+  COMPANY: 'bg-emerald-100 text-emerald-800',
   STAFF: 'bg-brand-100 text-brand-700',
   ADMIN: 'bg-violet-100 text-violet-800',
   SUPER_ADMIN: 'bg-amber-100 text-amber-800',
@@ -86,6 +87,19 @@ export const AUDIT_ACTIONS = [
   'DOC_COMPANY_CREATED',
   'DOC_FOLDER_EXPORTED',
   'DOC_GRANT_CHANGED',
+  'TWO_FACTOR_ENABLED',
+  'TWO_FACTOR_DISABLED',
+  'TWO_FACTOR_RESET',
+  'TWO_FACTOR_RECOVERY_CODES_REGENERATED',
+  'LOGIN_2FA_FAILED',
+  'LOGIN_2FA_RECOVERY_CODE_USED',
+  'EMAIL_VERIFIED',
+  'SETTING_UPDATED',
+  'RETENTION_PURGE',
+  'COMPANY_STATUS_CHANGED',
+  'VACANCY_APPROVED',
+  'INVOICE_PAID',
+  'INVOICE_CANCEL',
 ] as const;
 
 export const auditActionLabel = (action: string) => (has(`admin.labels.audit.${action}`) ? t(`admin.labels.audit.${action}`) : action);

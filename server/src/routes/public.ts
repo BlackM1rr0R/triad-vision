@@ -3,6 +3,8 @@ import { z } from 'zod';
 import { prisma } from '../db.js';
 import { limiter, notFound, parse } from '../lib/http.js';
 import { notifyStaff } from '../lib/notifications.js';
+
+const PRIVATE_SETTING_KEYS = ['invoicing', 'retention'];
 import { cached } from '../lib/cache.js';
 
 export const publicRouter = Router();
@@ -36,7 +38,8 @@ const loadContent = async () => {
       take: 6,
       select: { id: true, slug: true, cover: true, title: true, excerpt: true, publishedAt: true },
     }),
-    prisma.setting.findMany(),
+    // Internal settings (bank details for invoices, retention policy) never leave the admin API.
+    prisma.setting.findMany({ where: { key: { notIn: PRIVATE_SETTING_KEYS } } }),
   ]);
   return {
     stats,

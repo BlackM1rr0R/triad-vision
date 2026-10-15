@@ -26,6 +26,7 @@ import { ThemeToggle } from '../a11y/ThemeToggle';
 import { setSmoothScrollPaused } from '@/lib/smoothScroll';
 import { SearchButton } from '../search/SearchPalette';
 import { useAuth } from '@/lib/auth';
+import { isStaffRole } from '@/lib/types';
 import { useSiteContent } from '@/lib/content';
 import { useL10n } from '@/lib/l10n';
 import { LOCALES, switchLanguage } from '@/i18n';
@@ -33,7 +34,7 @@ import { sized } from '@/lib/img';
 
 /** Routes whose top section is light, so the header must start in its solid (dark-text) style. */
 /** Routes whose top is light, so the header is solid there from the start (everywhere else it floats over a dark hero). */
-export const LIGHT_TOP = ['/login', '/register', '/forgot-password', '/reset-password', '/account'];
+export const LIGHT_TOP = ['/login', '/register', '/forgot-password', '/reset-password', '/account', '/company', '/employers/register'];
 const EASE = [0.22, 1, 0.36, 1] as const;
 
 type MegaKey = 'services' | 'visas' | 'more';
@@ -74,7 +75,7 @@ export const Header = () => {
 
   const solid = scrolled || mega !== null || LIGHT_TOP.some((p) => pathname.startsWith(p));
   const contact = data?.settings.contact;
-  const accountHref = user && user.role !== 'CLIENT' ? '/admin' : '/account';
+  const accountHref = user?.role === 'COMPANY' ? '/company' : user && user.role !== 'CLIENT' ? '/admin' : '/account';
 
   const primary: { to: string; label: string; mega?: MegaKey }[] = [
     { to: '/', label: t('nav.home') },
@@ -85,6 +86,9 @@ export const Header = () => {
     { to: '/contact', label: t('nav.contact') },
   ];
   const more = [
+    { to: '/jobs', label: t('nav.jobs') },
+    { to: '/booking', label: t('nav.booking') },
+    { to: '/employers/register', label: t('nav.forEmployers') },
     { to: '/stories', label: t('nav.stories') },
     { to: '/ausbildung', label: t('nav.ausbildung') },
     { to: '/eligibility', label: t('nav.eligibility') },
@@ -144,8 +148,8 @@ export const Header = () => {
               {user ? (
                 <div className="flex items-center gap-3">
                   <Link to={accountHref} className="flex items-center gap-1.5 font-semibold whitespace-nowrap text-white hover:text-brand-400">
-                    {user.role === 'CLIENT' ? <UserRound className="size-3.5" /> : <LayoutDashboard className="size-3.5" />}
-                    {user.role === 'CLIENT' ? t('nav.account') : t('nav.admin')}
+                    {!isStaffRole(user.role) ? <UserRound className="size-3.5" /> : <LayoutDashboard className="size-3.5" />}
+                    {!isStaffRole(user.role) ? t('nav.account') : t('nav.admin')}
                   </Link>
                   <button
                     type="button"
@@ -237,7 +241,7 @@ export const Header = () => {
                   to={accountHref}
                   className={clsx('hidden h-10 items-center gap-1.5 rounded-lg border px-3 text-sm font-semibold whitespace-nowrap transition lg:inline-flex', solid ? 'border-line text-navy-900 hover:border-brand-400' : 'border-white/25 text-white hover:bg-white/10')}
                 >
-                  <UserRound className="size-4" /> {user.role === 'CLIENT' ? t('nav.accountShort') : t('nav.admin')}
+                  <UserRound className="size-4" /> {!isStaffRole(user.role) ? t('nav.accountShort') : t('nav.admin')}
                 </Link>
               ) : (
                 <>
@@ -298,7 +302,7 @@ export const Header = () => {
                     />
                   )}
                   {mega === 'more' && (
-                    <div className="grid grid-cols-5 gap-3">
+                    <div className="grid grid-cols-4 gap-3">
                       {more.map((m) => (
                         <Link
                           key={m.to}
@@ -404,7 +408,7 @@ export const Header = () => {
                   </Link>
                   {user ? (
                     <Link to={accountHref} className="btn-outline w-full">
-                      {user.role === 'CLIENT' ? t('nav.account') : t('nav.admin')}
+                      {!isStaffRole(user.role) ? t('nav.account') : t('nav.admin')}
                     </Link>
                   ) : (
                     <>

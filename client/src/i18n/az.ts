@@ -1,6 +1,11 @@
 const az = {
   meta: { lang: 'Azərbaycan', short: 'AZ' },
   nav: {
+    jobs: 'Vakansiyalar',
+    booking: 'Görüş təyin et',
+    forEmployers: 'İşəgötürənlər üçün',
+    impressum: 'Impressum',
+    privacyPolicy: 'Məxfilik siyasəti',
     home: 'Ana səhifə',
     about: 'Haqqımızda',
     services: 'Xidmətlər',

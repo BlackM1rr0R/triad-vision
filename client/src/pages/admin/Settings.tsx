@@ -1,14 +1,28 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
-import { AtSign, Building, MapPin, Plus, Save, Share2, Trash2 } from 'lucide-react';
+import { AlertTriangle, AtSign, Building, ExternalLink, FileText, Landmark, MapPin, Plus, Save, Scale, Share2, Timer, Trash2 } from 'lucide-react';
 import { api } from '@/lib/api';
 import type { L10n, Office, SiteSettings } from '@/lib/types';
 import { Spinner } from '@/components/ui/Spinner';
 import { L10nInput, emptyL10n, fillFromAz } from '@/components/admin/L10nInput';
 import { toastError } from '@/components/admin/labels';
-import { ErrorBlock, LoadingBlock, PageHead, Panel } from '@/components/admin/ui';
+import { ErrorBlock, LoadingBlock, PageHead, Panel, Switch } from '@/components/admin/ui';
+import { fmtDate, fmtDateTime } from '@/components/admin/labels';
+import { registerCopy } from '@/i18n';
+import { pagesLegal } from '@/i18n/pagesLegal';
+import {
+  LEGAL_FIELDS,
+  normalizeLegal,
+  normalizePrivacy,
+  normalizeRetention,
+  type LegalInfo,
+  type PrivacySetting,
+  type RetentionSetting,
+} from '@/pages/legal/legalData';
+
+registerCopy(pagesLegal);
 
 type Contact = NonNullable<SiteSettings['contact']>;
 
@@ -49,11 +63,15 @@ const useSaveSetting = () => {
   const { t } = useTranslation();
   const qc = useQueryClient();
   const [busy, setBusy] = useState(false);
-  const save = async (key: 'contact' | 'social', value: unknown) => {
+  const save = async (key: 'contact' | 'social' | 'legal' | 'privacy' | 'retention', value: unknown) => {
     setBusy(true);
     try {
       await api.put(`/admin/settings/${key}`, { value });
-      await Promise.all([qc.invalidateQueries({ queryKey: ['admin-settings'] }), qc.invalidateQueries({ queryKey: ['content'] })]);
+      await Promise.all([
+        qc.invalidateQueries({ queryKey: ['admin-settings'] }),
+        qc.invalidateQueries({ queryKey: ['content'] }),
+        qc.invalidateQueries({ queryKey: ['retention-status'] }),
+      ]);
       toast.success(t('admin.settings.saved'));
     } catch (err) {
       toastError(err);
@@ -311,6 +329,265 @@ const SocialForm = ({ initial }: { initial: Record<string, string> }) => {
   );
 };
 
+// ─── Legal & privacy (legal & security stream) ───────────────────────────
+
+const LawyerNote = () => {
+  const { t } = useTranslation();
+  return (
+    <div className="flex items-start gap-3 rounded-xl border border-warning/40 bg-warning/10 px-4 py-3 text-sm text-ink/85" role="note">
+      <Scale className="mt-0.5 size-5 shrink-0 text-warning" aria-hidden />
+      <p className="font-medium">{t('adminLegal.lawyerNote')}</p>
+    </div>
+  );
+};
+
+const WIDE_LEGAL_FIELDS = new Set<keyof LegalInfo>(['responsibleForContent', 'supervisoryNote']);
+
+const LegalForm = ({ initial }: { initial: LegalInfo }) => {
+  const { t } = useTranslation();
+  const [v, setV] = useState<LegalInfo>(initial);
+  const { save, busy } = useSaveSetting();
+  useEffect(() => setV(initial), [initial]);
+
+  const submit = () => {
+    if (v.email && !/\S+@\S+\.\S+/.test(v.email)) {
+      toast.error(t('admin.settings.invalidEmail'));
+      return;
+    }
+    void save('legal', Object.fromEntries(LEGAL_FIELDS.map((k) => [k, v[k].trim()])));
+  };
+
+  return (
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        submit();
+      }}
+    >
+      <Panel
+        title={t('adminLegal.legalTitle')}
+        icon={Landmark}
+        actions={
+          <>
+            <a href="/impressum" target="_blank" rel="noopener" className="btn-white btn-sm border border-line">
+              <ExternalLink className="size-3.5" /> {t('adminLegal.preview')}
+            </a>
+            <button type="submit" className="btn-primary btn-sm" disabled={busy}>
+              {busy ? <Spinner className="size-3.5" /> : <Save className="size-3.5" />} {t('admin.common.save')}
+            </button>
+          </>
+        }
+      >
+        <p className="mb-4 text-xs text-muted">{t('adminLegal.legalHint')}</p>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {LEGAL_FIELDS.map((k) => (
+            <div key={k} className={WIDE_LEGAL_FIELDS.has(k) ? 'sm:col-span-2 lg:col-span-3' : undefined}>
+              <label htmlFor={`lg-${k}`} className="label">
+                {t(`adminLegal.fields.${k}`)}
+              </label>
+              {WIDE_LEGAL_FIELDS.has(k) ? (
+                <textarea
+                  id={`lg-${k}`}
+                  rows={2}
+                  className="input"
+                  value={v[k]}
+                  maxLength={k === 'supervisoryNote' ? 2000 : 400}
+                  onChange={(e) => setV({ ...v, [k]: e.target.value })}
+                />
+              ) : (
+                <input
+                  id={`lg-${k}`}
+                  type={k === 'email' ? 'email' : k === 'phone' ? 'tel' : 'text'}
+                  className="input"
+                  value={v[k]}
+                  maxLength={200}
+                  onChange={(e) => setV({ ...v, [k]: e.target.value })}
+                />
+              )}
+            </div>
+          ))}
+        </div>
+      </Panel>
+    </form>
+  );
+};
+
+const PrivacyForm = ({ initial }: { initial: PrivacySetting }) => {
+  const { t } = useTranslation();
+  const [v, setV] = useState<PrivacySetting>(initial);
+  const { save, busy } = useSaveSetting();
+  useEffect(() => setV(initial), [initial]);
+
+  return (
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        void save('privacy', {
+          text: { az: v.text.az.trim(), de: v.text.de.trim(), en: v.text.en.trim(), ru: v.text.ru.trim() },
+          supervisoryAuthority: v.supervisoryAuthority.trim(),
+          dpo: v.dpo.trim(),
+          effectiveDate: v.effectiveDate,
+        });
+      }}
+    >
+      <Panel
+        title={t('adminLegal.privacyTitle')}
+        icon={FileText}
+        actions={
+          <>
+            <a href="/privacy" target="_blank" rel="noopener" className="btn-white btn-sm border border-line">
+              <ExternalLink className="size-3.5" /> {t('adminLegal.preview')}
+            </a>
+            <button type="submit" className="btn-primary btn-sm" disabled={busy}>
+              {busy ? <Spinner className="size-3.5" /> : <Save className="size-3.5" />} {t('admin.common.save')}
+            </button>
+          </>
+        }
+      >
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div>
+            <label htmlFor="pv-sa" className="label">
+              {t('adminLegal.supervisoryAuthority')}
+            </label>
+            <textarea
+              id="pv-sa"
+              rows={2}
+              maxLength={500}
+              className="input"
+              value={v.supervisoryAuthority}
+              onChange={(e) => setV({ ...v, supervisoryAuthority: e.target.value })}
+            />
+          </div>
+          <div>
+            <label htmlFor="pv-dpo" className="label">
+              {t('adminLegal.dpo')}
+            </label>
+            <textarea id="pv-dpo" rows={2} maxLength={1000} className="input" value={v.dpo} onChange={(e) => setV({ ...v, dpo: e.target.value })} />
+          </div>
+          <div>
+            <label htmlFor="pv-date" className="label">
+              {t('adminLegal.effectiveDate')}
+            </label>
+            <input id="pv-date" type="date" className="input" value={v.effectiveDate} onChange={(e) => setV({ ...v, effectiveDate: e.target.value })} />
+          </div>
+          <div className="sm:col-span-2">
+            <L10nInput
+              label={t('adminLegal.customText')}
+              value={v.text}
+              onChange={(text) => setV({ ...v, text })}
+              multiline
+              rows={10}
+              hint={t('adminLegal.privacyHint')}
+            />
+          </div>
+        </div>
+      </Panel>
+    </form>
+  );
+};
+
+interface RetentionStatus {
+  settings: RetentionSetting;
+  dueCases: number;
+  dueNext30Days: number;
+  purgedTotal: number;
+  lastRunAt: string | null;
+  nextRunAt: string | null;
+  lastPurge: { at: string; details: { cases?: number; documents?: number } | null } | null;
+}
+
+const RetentionForm = ({ initial }: { initial: RetentionSetting }) => {
+  const { t } = useTranslation();
+  const [v, setV] = useState<RetentionSetting>(initial);
+  const { save, busy } = useSaveSetting();
+  useEffect(() => setV(initial), [initial]);
+  const { data: status } = useQuery({
+    queryKey: ['retention-status'],
+    queryFn: async () => (await api.get<RetentionStatus>('/admin/settings/retention-status')).data,
+  });
+
+  const submit = () => {
+    if (!Number.isInteger(v.months) || v.months < 1 || v.months > 120) {
+      toast.error(t('adminLegal.invalidMonths'));
+      return;
+    }
+    void save('retention', { months: v.months, includeMessages: v.includeMessages });
+  };
+
+  const tiles: { label: string; value: string; warn?: boolean }[] = status
+    ? [
+        { label: t('adminLegal.due'), value: String(status.dueCases), warn: status.dueCases > 0 },
+        { label: t('adminLegal.dueSoon'), value: String(status.dueNext30Days) },
+        { label: t('adminLegal.purged'), value: String(status.purgedTotal) },
+        { label: t('adminLegal.nextRun'), value: status.nextRunAt ? fmtDateTime(status.nextRunAt) : '—' },
+        {
+          label: t('adminLegal.lastRun'),
+          value: status.lastPurge
+            ? `${fmtDate(status.lastPurge.at)} · ${t('adminLegal.lastPurgeDetails', {
+                cases: status.lastPurge.details?.cases ?? 0,
+                documents: status.lastPurge.details?.documents ?? 0,
+              })}`
+            : t('adminLegal.never'),
+        },
+      ]
+    : [];
+
+  return (
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        submit();
+      }}
+    >
+      <Panel
+        title={t('adminLegal.retentionTitle')}
+        icon={Timer}
+        actions={
+          <button type="submit" className="btn-primary btn-sm" disabled={busy}>
+            {busy ? <Spinner className="size-3.5" /> : <Save className="size-3.5" />} {t('admin.common.save')}
+          </button>
+        }
+      >
+        <p className="mb-4 flex items-start gap-2 text-xs text-muted">
+          <AlertTriangle className="mt-0.5 size-3.5 shrink-0 text-warning" aria-hidden /> {t('adminLegal.retentionHint')}
+        </p>
+        <div className="flex flex-wrap items-end gap-x-8 gap-y-4">
+          <div>
+            <label htmlFor="rt-months" className="label">
+              {t('adminLegal.months')}
+            </label>
+            <input
+              id="rt-months"
+              type="number"
+              min={1}
+              max={120}
+              step={1}
+              required
+              className="input w-32 tabular-nums"
+              value={Number.isNaN(v.months) ? '' : v.months}
+              onChange={(e) => setV({ ...v, months: e.target.valueAsNumber })}
+            />
+          </div>
+          <div className="flex min-h-11 items-center gap-3 text-sm font-medium text-navy-900">
+            <Switch checked={v.includeMessages} onChange={(includeMessages) => setV({ ...v, includeMessages })} label={t('adminLegal.includeMessages')} />
+            <span>{t('adminLegal.includeMessages')}</span>
+          </div>
+        </div>
+        {tiles.length > 0 && (
+          <dl className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+            {tiles.map((tile) => (
+              <div key={tile.label} className="min-w-0 rounded-lg border border-line bg-surface/40 px-3 py-2.5">
+                <dt className="text-[11px] font-semibold tracking-wide text-muted uppercase">{tile.label}</dt>
+                <dd className={`mt-0.5 text-sm font-semibold break-words ${tile.warn ? 'text-warning' : 'text-navy-900'}`}>{tile.value}</dd>
+              </div>
+            ))}
+          </dl>
+        )}
+      </Panel>
+    </form>
+  );
+};
+
 export default function Settings() {
   const { t } = useTranslation();
   const { data, isLoading, error, refetch } = useQuery({
@@ -320,6 +597,10 @@ export default function Settings() {
 
   const [contact, setContact] = useState<Contact>(emptyContact);
   const [social, setSocial] = useState<Record<string, string>>({});
+  const raw = data as Record<string, unknown> | undefined;
+  const legal = useMemo(() => normalizeLegal(raw?.legal), [raw?.legal]);
+  const privacy = useMemo(() => normalizePrivacy(raw?.privacy), [raw?.privacy]);
+  const retention = useMemo(() => normalizeRetention(raw?.retention), [raw?.retention]);
   useEffect(() => {
     if (!data) return;
     setContact(normalizeContact(data.contact));
@@ -339,6 +620,10 @@ export default function Settings() {
         <>
           <ContactForm initial={contact} />
           <SocialForm initial={social} />
+          <LawyerNote />
+          <LegalForm initial={legal} />
+          <PrivacyForm initial={privacy} />
+          <RetentionForm initial={retention} />
         </>
       )}
     </div>

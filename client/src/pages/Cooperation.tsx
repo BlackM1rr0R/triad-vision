@@ -13,6 +13,7 @@ import { useL10n } from '@/lib/l10n';
 import { registerCopy } from '@/i18n';
 import { pagesCompany } from '@/i18n/pagesCompany';
 import { usePageTitle } from '@/lib/usePageTitle';
+import { BookingCta } from '@/components/booking/BookingCta';
 
 registerCopy(pagesCompany);
 
@@ -279,6 +280,9 @@ export default function Cooperation() {
           </div>
         </div>
       </section>
+
+      {/* Free consultation booking (booking stream) */}
+      <BookingCta topic="company" />
 
       <section className="section bg-surface">
         <div className="container-x grid gap-8 lg:grid-cols-[0.8fr_1.2fr] lg:gap-14">

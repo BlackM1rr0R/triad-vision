@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect } from 'react';
-import { Route, Routes, useLocation } from 'react-router-dom';
+import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
 import { RequireAuth } from './lib/auth';
 import { whenIdle } from './lib/idle';
@@ -33,6 +33,7 @@ const AccountHome = lazy(() => import('./pages/account/AccountHome'));
 const CaseView = lazy(() => import('./pages/account/CaseView'));
 const Notifications = lazy(() => import('./pages/account/Notifications'));
 const Profile = lazy(() => import('./pages/account/Profile'));
+const AccountApplications = lazy(() => import('./pages/account/Applications'));
 
 const AdminLayout = lazy(() => import('./pages/admin/AdminLayout'));
 const AdminDashboard = lazy(() => import('./pages/admin/Dashboard'));
@@ -42,10 +43,31 @@ const AdminCases = lazy(() => import('./pages/admin/CasesList'));
 const AdminCase = lazy(() => import('./pages/admin/CaseAdmin'));
 const AdminInquiries = lazy(() => import('./pages/admin/Inquiries'));
 const AdminUsers = lazy(() => import('./pages/admin/Users'));
-const AdminDocs = lazy(() => import('./pages/admin/Docs'));
+const WorkspaceLayout = lazy(() => import('./pages/workspace/WorkspaceLayout'));
+const WorkspaceDrive = lazy(() => import('./pages/workspace/Drive'));
+const WorkspaceTasks = lazy(() => import('./pages/workspace/Tasks'));
 const AdminDocsAudit = lazy(() => import('./pages/admin/DocsAudit'));
 const AdminContent = lazy(() => import('./pages/admin/ContentManager'));
 const AdminSettings = lazy(() => import('./pages/admin/Settings'));
+const Impressum = lazy(() => import('./pages/legal/Impressum'));
+const Privacy = lazy(() => import('./pages/legal/Privacy'));
+const VerifyEmail = lazy(() => import('./pages/auth/VerifyEmail'));
+const TwoFactor = lazy(() => import('./pages/auth/TwoFactor'));
+const Jobs = lazy(() => import('./pages/jobs/Jobs'));
+const JobDetail = lazy(() => import('./pages/jobs/JobDetail'));
+const EmployerRegister = lazy(() => import('./pages/company/EmployerRegister'));
+const CompanyApp = lazy(() => import('./pages/company/CompanyApp'));
+const Booking = lazy(() => import('./pages/booking/Booking'));
+const BookingManage = lazy(() => import('./pages/booking/BookingManage'));
+const ReviewPage = lazy(() => import('./pages/ReviewPage'));
+const AdminSecurity = lazy(() => import('./pages/admin/Security'));
+const AdminCompanies = lazy(() => import('./pages/admin/Companies'));
+const AdminVacancies = lazy(() => import('./pages/admin/Vacancies'));
+const AdminCandidates = lazy(() => import('./pages/admin/Candidates'));
+const AdminBookings = lazy(() => import('./pages/admin/Bookings'));
+const AdminInvoices = lazy(() => import('./pages/admin/Invoices'));
+const AdminReviews = lazy(() => import('./pages/admin/Reviews'));
+const AdminAnalytics = lazy(() => import('./pages/admin/Analytics'));
 
 /**
  * Warm the route chunks once the first page is interactive, so later navigations render
@@ -164,6 +186,24 @@ export default function App() {
             <Route path="register" element={<Register />} />
             <Route path="forgot-password" element={<ForgotPassword />} />
             <Route path="reset-password" element={<ResetPassword />} />
+            <Route path="verify-email" element={<VerifyEmail />} />
+            <Route path="login/2fa" element={<TwoFactor />} />
+            <Route path="impressum" element={<Impressum />} />
+            <Route path="privacy" element={<Privacy />} />
+            <Route path="jobs" element={<Jobs />} />
+            <Route path="jobs/:slug" element={<JobDetail />} />
+            <Route path="employers/register" element={<EmployerRegister />} />
+            <Route
+              path="company/*"
+              element={
+                <RequireAuth roles={['COMPANY']}>
+                  <CompanyApp />
+                </RequireAuth>
+              }
+            />
+            <Route path="booking" element={<Booking />} />
+            <Route path="booking/manage" element={<BookingManage />} />
+            <Route path="review" element={<ReviewPage />} />
             <Route
               path="account"
               element={
@@ -176,8 +216,23 @@ export default function App() {
               <Route path="cases/:id" element={<CaseView />} />
               <Route path="notifications" element={<Notifications />} />
               <Route path="profile" element={<Profile />} />
+              <Route path="applications" element={<AccountApplications />} />
             </Route>
             <Route path="*" element={<NotFound />} />
+          </Route>
+
+          {/* Team workspace: full-screen documents + tasks for staff (outside the site and admin layouts). */}
+          <Route
+            path="workspace"
+            element={
+              <RequireAuth roles={['STAFF', 'ADMIN', 'SUPER_ADMIN']}>
+                <WorkspaceLayout />
+              </RequireAuth>
+            }
+          >
+            <Route index element={<Navigate to="drive" replace />} />
+            <Route path="drive/*" element={<WorkspaceDrive />} />
+            <Route path="tasks/*" element={<WorkspaceTasks />} />
           </Route>
 
           <Route
@@ -209,10 +264,25 @@ export default function App() {
             <Route path="cases/:id" element={<AdminCase />} />
             <Route path="inquiries" element={<AdminInquiries />} />
             <Route path="users" element={<AdminUsers />} />
-            <Route path="docs" element={<AdminDocs />} />
+            <Route path="docs" element={<Navigate to="/workspace/drive" replace />} />
             <Route path="docs/audit" element={<AdminDocsAudit />} />
             <Route path="content/:resource" element={<AdminContent />} />
             <Route path="settings" element={<AdminSettings />} />
+            <Route path="security" element={<AdminSecurity />} />
+            <Route path="companies" element={<AdminCompanies />} />
+            <Route path="vacancies" element={<AdminVacancies />} />
+            <Route path="candidates" element={<AdminCandidates />} />
+            <Route path="bookings" element={<AdminBookings />} />
+            <Route
+              path="invoices"
+              element={
+                <RequireAuth roles={['ADMIN', 'SUPER_ADMIN']}>
+                  <AdminInvoices />
+                </RequireAuth>
+              }
+            />
+            <Route path="reviews" element={<AdminReviews />} />
+            <Route path="analytics" element={<AdminAnalytics />} />
           </Route>
         </Routes>
       </AnimatePresence>

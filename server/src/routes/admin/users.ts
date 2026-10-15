@@ -5,7 +5,7 @@ import { prisma } from '../../db.js';
 import { requireMinRole, revokeUserSessions } from '../../middleware/auth.js';
 import { badRequest, conflict, notFound, parse } from '../../lib/http.js';
 import { audit } from '../../lib/audit.js';
-import { ensureFolder } from '../../lib/docs.js';
+import { ensurePersonalRoot } from '../../lib/drive/roots.js';
 import { password } from '../auth.js';
 
 export const adminUsersRouter = Router();
@@ -101,7 +101,7 @@ adminUsersRouter.post('/', requireMinRole('SUPER_ADMIN'), async (req, res) => {
     data: { ...rest, passwordHash: await bcrypt.hash(pw, 12) },
     select: userSelect,
   });
-  await ensureFolder(user.id);
+  await ensurePersonalRoot(user.id);
   await audit(req, 'USER_CREATED', `user:${user.id}`, { email: user.email, role: user.role });
   res.status(201).json({ user });
 });
@@ -131,7 +131,7 @@ adminUsersRouter.patch('/:id', requireMinRole('SUPER_ADMIN'), async (req, res) =
   // A new password or a deactivation must take effect on every device at once (a role change is
   // picked up by the next request, because the role is read from the user row each time).
   if (pw || body.isActive === false) await revokeUserSessions(id);
-  if (body.role && body.role !== 'CLIENT') await ensureFolder(id);
+  if (body.role && body.role !== 'CLIENT') await ensurePersonalRoot(id);
   await audit(req, 'USER_UPDATED', `user:${id}`, {
     ...(body.role ? { role: body.role } : {}),
     ...(body.isActive !== undefined ? { isActive: body.isActive } : {}),

@@ -36,12 +36,15 @@ export const Footer = () => {
     { to: '/cooperation', label: t('nav.cooperation') },
   ];
   const candidates = [
+    { to: '/jobs', label: t('nav.jobs') },
     { to: '/visas', label: t('nav.visas') },
     { to: '/ausbildung', label: t('nav.ausbildung') },
     { to: '/eligibility', label: t('nav.eligibility') },
     { to: '/faq', label: t('nav.faq') },
     { to: '/register', label: t('nav.apply') },
     { to: '/login', label: t('nav.login') },
+    { to: '/booking', label: t('nav.booking') },
+    { to: '/employers/register', label: t('nav.forEmployers') },
   ];
 
   return (
@@ -139,10 +142,10 @@ export const Footer = () => {
             © {new Date().getFullYear()} Triad Vision · triad-vision.de · {t('footer.rights')}
           </p>
           <div className="flex gap-5">
-            <Link to="/faq" className="hover:text-white">
+            <Link to="/privacy" className="hover:text-white">
               {t('footer.privacy')}
             </Link>
-            <Link to="/contact" className="hover:text-white">
+            <Link to="/impressum" className="hover:text-white">
               {t('footer.imprint')}
             </Link>
           </div>

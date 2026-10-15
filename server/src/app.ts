@@ -9,12 +9,21 @@ import { errorHandler, limiter, noStore, requestId } from './lib/http.js';
 import { authRouter } from './routes/auth.js';
 import { casesRouter } from './routes/cases.js';
 import { devicesRouter } from './routes/devices.js';
-import { docsRouter } from './routes/docs.js';
 import { filesRouter } from './routes/files.js';
 import { notificationsRouter } from './routes/notifications.js';
 import { publicRouter } from './routes/public.js';
 import { adminRouter } from './routes/admin/index.js';
 import { accountRouter } from './routes/account.js';
+import { twoFactorRouter } from './routes/twoFactor.js';
+import { companyRouter } from './routes/company.js';
+import { companyInvoicesRouter } from './routes/companyInvoices.js';
+import { vacanciesRouter } from './routes/vacancies.js';
+import { bookingRouter } from './routes/booking.js';
+import { reviewsRouter } from './routes/reviews.js';
+import { trackRouter } from './routes/track.js';
+import { seoRouter } from './routes/seo.js';
+import { driveRouter } from './routes/drive.js';
+import { tasksRouter } from './routes/tasks.js';
 
 /** Builds the Express app without listening, so tests can drive it with supertest. */
 export const createApp = () => {
@@ -62,15 +71,26 @@ export const createApp = () => {
   app.get('/api/health', (_req, res) => {
     res.json({ ok: true });
   });
+  app.use('/api/auth/2fa', twoFactorRouter);
   app.use('/api/auth', authRouter);
   app.use('/api/public', publicRouter);
   app.use('/api/cases', casesRouter);
   app.use('/api/files', filesRouter);
   app.use('/api/notifications', notificationsRouter);
   app.use('/api/devices', devicesRouter);
-  app.use('/api/docs', docsRouter);
+  app.use('/api/drive', driveRouter);
+  app.use('/api/tasks', tasksRouter);
   app.use('/api/admin', adminRouter);
   app.use('/api/account', accountRouter);
+  app.use('/api/company/invoices', companyInvoicesRouter);
+  app.use('/api/company', companyRouter);
+  app.use('/api/vacancies', vacanciesRouter);
+  app.use('/api/booking', bookingRouter);
+  app.use('/api/reviews', reviewsRouter);
+  app.use('/api/track', trackRouter);
+
+  // /sitemap.xml, /robots.txt and /api/seo/* (Caddy forwards the first two here).
+  app.use(seoRouter);
 
   app.use('/api', (_req, res) => {
     res.status(404).json({ error: 'NOT_FOUND' });

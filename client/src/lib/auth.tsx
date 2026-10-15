@@ -15,6 +15,29 @@ interface AuthState {
 
 const AuthContext = createContext<AuthState | null>(null);
 
+/** Security flags every user payload from the API carries (GET /auth/me, login, register). */
+export interface SecurityFlags {
+  emailVerified?: boolean;
+  twoFactorEnabled?: boolean;
+  /** Staff roles must use 2FA; until enrolled the admin API answers 403 TWO_FACTOR_ENROLLMENT_REQUIRED. */
+  twoFactorRequired?: boolean;
+}
+export const securityOf = (u: User | null | undefined): SecurityFlags => (u ?? {}) as SecurityFlags;
+/** Staff member who still has to finish the 2FA enrollment wizard. */
+export const needsTwoFactorEnrollment = (u: User | null | undefined) => {
+  const s = securityOf(u);
+  return !!u && isStaffRole(u.role) && !!s.twoFactorRequired && !s.twoFactorEnabled;
+};
+export const TWO_FACTOR_SETUP_PATH = '/admin/security';
+
+/** Answer of POST /auth/login when the account has 2FA: no session yet, only a short-lived challenge. */
+export interface TwoFactorChallenge {
+  twoFactorRequired: true;
+  challenge: string;
+}
+export const isTwoFactorChallenge = (d: unknown): d is TwoFactorChallenge =>
+  !!d && typeof d === 'object' && (d as { twoFactorRequired?: unknown }).twoFactorRequired === true && typeof (d as { challenge?: unknown }).challenge === 'string';
+
 /** Query keys holding public CMS data that is safe to keep after logout. */
 const PUBLIC_QUERY_KEYS = new Set(['content', 'posts', 'post', 'visa', 'service']);
 
@@ -62,6 +85,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const user = data ?? null;
+
+  // Mandatory 2FA for staff: until enrolled, every admin page leads to the enrollment wizard.
+  const mustEnroll = needsTwoFactorEnrollment(user);
+  useEffect(() => {
+    const staffArea = location.pathname.startsWith('/admin') || location.pathname.startsWith('/workspace');
+    if (mustEnroll && staffArea && location.pathname !== TWO_FACTOR_SETUP_PATH) {
+      navigate(TWO_FACTOR_SETUP_PATH, { replace: true });
+    }
+  }, [mustEnroll, location.pathname, navigate]);
 
   // Latest values for the long-lived listeners below (they are registered once per login).
   const latest = useRef({ location, t, i18n, user });
@@ -183,9 +215,10 @@ export const RequireAuth = ({ roles, children }: { roles?: Role[]; children: Rea
 /** Where a freshly logged-in user goes: back to the page they were bounced from, if it belongs to their area. */
 export const landingAfterLogin = (role: Role, from?: unknown) => {
   const staff = isStaffRole(role);
+  if (role === 'COMPANY') return typeof from === 'string' && (from === '/company' || from.startsWith('/company/')) ? from : '/company';
   const home = staff ? '/admin' : '/account';
   if (typeof from !== 'string' || !from.startsWith('/') || from.startsWith('//')) return home;
-  const adminTarget = from === '/admin' || from.startsWith('/admin/') || from.startsWith('/admin?');
+  const adminTarget = /^\/(admin|workspace)(\/|\?|$)/.test(from);
   if (staff) return adminTarget ? from : home;
   return adminTarget ? home : from;
 };

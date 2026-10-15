@@ -100,7 +100,7 @@ describe('loadUser', () => {
 
   it('reads the session cookie and marks the request as cookie-authenticated', async () => {
     const req = fakeReq({ cookie: tokenFor('u1') });
-    expect(await runLoad(req)).toEqual({ id: 'u1', role: 'CLIENT', email: 'c@test.local', firstName: 'C', lastName: 'L', locale: 'de' });
+    expect(await runLoad(req)).toEqual({ id: 'u1', role: 'CLIENT', email: 'c@test.local', firstName: 'C', lastName: 'L', locale: 'de', twoFactorEnabled: false });
     expect(req.cookieAuth).toBe(true);
     expect(req.session?.client).toBe('web');
   });
@@ -214,18 +214,28 @@ describe('requireAuth / requireRole / requireMinRole', () => {
     const guard = auth.requireRole('STAFF', 'ADMIN');
     expect(runGuard(guard, fakeReq())).toMatchObject({ status: 401, code: 'UNAUTHENTICATED' });
     expect(runGuard(guard, fakeReq({ user: { role: 'CLIENT' } }))).toMatchObject({ status: 403, code: 'FORBIDDEN' });
-    expect(runGuard(guard, fakeReq({ user: { role: 'STAFF' } }))).toBeUndefined();
-    expect(runGuard(guard, fakeReq({ user: { role: 'ADMIN' } }))).toBeUndefined();
-    expect(runGuard(auth.requireRole('ADMIN'), fakeReq({ user: { role: 'STAFF' } }))).toMatchObject({ status: 403 });
+    expect(runGuard(guard, fakeReq({ user: { role: 'STAFF', twoFactorEnabled: true } }))).toBeUndefined();
+    expect(runGuard(guard, fakeReq({ user: { role: 'ADMIN', twoFactorEnabled: true } }))).toBeUndefined();
+    expect(runGuard(auth.requireRole('ADMIN'), fakeReq({ user: { role: 'STAFF', twoFactorEnabled: true } }))).toMatchObject({ status: 403 });
   });
 
   it('requireMinRole follows the hierarchy CLIENT < STAFF < ADMIN < SUPER_ADMIN', () => {
     const admin = auth.requireMinRole('ADMIN');
-    expect(runGuard(admin, fakeReq({ user: { role: 'STAFF' } }))).toMatchObject({ status: 403 });
-    expect(runGuard(admin, fakeReq({ user: { role: 'ADMIN' } }))).toBeUndefined();
-    expect(runGuard(admin, fakeReq({ user: { role: 'SUPER_ADMIN' } }))).toBeUndefined();
-    expect(runGuard(auth.requireMinRole('SUPER_ADMIN'), fakeReq({ user: { role: 'ADMIN' } }))).toMatchObject({ status: 403 });
+    expect(runGuard(admin, fakeReq({ user: { role: 'STAFF', twoFactorEnabled: true } }))).toMatchObject({ status: 403 });
+    expect(runGuard(admin, fakeReq({ user: { role: 'ADMIN', twoFactorEnabled: true } }))).toBeUndefined();
+    expect(runGuard(admin, fakeReq({ user: { role: 'SUPER_ADMIN', twoFactorEnabled: true } }))).toBeUndefined();
+    expect(runGuard(auth.requireMinRole('SUPER_ADMIN'), fakeReq({ user: { role: 'ADMIN', twoFactorEnabled: true } }))).toMatchObject({ status: 403 });
     expect(runGuard(auth.requireMinRole('STAFF'), fakeReq({ user: { role: 'CLIENT' } }))).toMatchObject({ status: 403 });
+  });
+
+  it('staff-level checks require completed 2FA enrollment; client-level checks do not', () => {
+    const gate = { status: 403, code: 'TWO_FACTOR_ENROLLMENT_REQUIRED' };
+    expect(runGuard(auth.requireMinRole('STAFF'), fakeReq({ user: { role: 'STAFF' } }))).toMatchObject(gate);
+    expect(runGuard(auth.requireMinRole('ADMIN'), fakeReq({ user: { role: 'SUPER_ADMIN', twoFactorEnabled: false } }))).toMatchObject(gate);
+    expect(runGuard(auth.requireRole('STAFF', 'ADMIN'), fakeReq({ user: { role: 'ADMIN' } }))).toMatchObject(gate);
+    expect(runGuard(auth.requireRole('COMPANY'), fakeReq({ user: { role: 'COMPANY' } }))).toBeUndefined();
+    expect(runGuard(auth.requireRole('CLIENT', 'STAFF'), fakeReq({ user: { role: 'STAFF' } }))).toBeUndefined();
+    expect(runGuard(auth.requireAuth, fakeReq({ user: { role: 'ADMIN' } }))).toBeUndefined();
   });
 
   it('isStaff', () => {

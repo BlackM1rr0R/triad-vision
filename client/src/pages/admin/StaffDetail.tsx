@@ -168,7 +168,7 @@ export default function StaffDetail() {
               <Briefcase className="size-3.5" /> {t('admin.staff.cases')}
             </Link>
             {workspace && (
-              <Link to={`/admin/docs?folder=${workspace.folderId}`} className="btn-white btn-sm border border-line">
+              <Link to={`/workspace/drive/f/${workspace.folderId}`} className="btn-white btn-sm border border-line">
                 <FolderOpen className="size-3.5" /> {t('admin.staff.workspace')}
               </Link>
             )}
@@ -329,7 +329,7 @@ export default function StaffDetail() {
           <Panel
             title={t('admin.staff.workspace')}
             icon={FolderOpen}
-            actions={workspace && <Link to={`/admin/docs?folder=${workspace.folderId}`} className="text-xs font-semibold text-brand-600 hover:underline">{t('admin.staff.goDocs')}</Link>}
+            actions={workspace && <Link to={`/workspace/drive/f/${workspace.folderId}`} className="text-xs font-semibold text-brand-600 hover:underline">{t('admin.staff.goDocs')}</Link>}
           >
             {!workspace ? (
               <p className="text-sm text-muted">{t('admin.staff.noWorkspace')}</p>
@@ -370,7 +370,7 @@ export default function StaffDetail() {
                     <ul className="flex flex-wrap gap-1.5">
                       {workspace.accessTo.map((g) => (
                         <li key={g.folder.id}>
-                          <Link to={`/admin/docs?folder=${g.folder.id}`} className="inline-flex items-center gap-1.5 rounded-md border border-line px-2 py-1 text-xs transition hover:border-brand-400">
+                          <Link to={`/workspace/drive/f/${g.folder.id}`} className="inline-flex items-center gap-1.5 rounded-md border border-line px-2 py-1 text-xs transition hover:border-brand-400">
                             <span className="text-navy-900">{fullName(g.folder.owner)}</span>
                             <ToneBadge tone={DOC_ACCESS_TONE[g.access]} className="text-[10px]">
                               {docAccessLabel(g.access)}

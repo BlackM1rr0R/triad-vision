@@ -20,6 +20,10 @@ export interface UserOpts {
   phone?: string | null;
   isActive?: boolean;
   client?: 'web' | 'mobile';
+  /** Email confirmed (default true; register-flow tests opt out). */
+  emailVerified?: boolean;
+  /** TOTP enrolled (default: true for staff roles, which may not use /api/admin without it). */
+  twoFactor?: boolean;
 }
 
 /** Inserts a user directly (bypassing the rate-limited register route) and returns a web session token. */
@@ -34,6 +38,8 @@ export const createUser = async (opts: UserOpts = {}) => {
       lastName: opts.lastName ?? 'User',
       phone: opts.phone ?? null,
       isActive: opts.isActive ?? true,
+      emailVerifiedAt: opts.emailVerified === false ? null : new Date(),
+      totpEnabledAt: (opts.twoFactor ?? ['STAFF', 'ADMIN', 'SUPER_ADMIN'].includes(opts.role ?? 'CLIENT')) ? new Date() : null,
     },
   });
   const { token } = await issueSession(user.id, { client: opts.client ?? 'web' });

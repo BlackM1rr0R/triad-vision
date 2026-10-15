@@ -267,7 +267,7 @@ const StaffTable = ({ staff }: { staff: OversightStaffRow[] }) => {
                     </td>
                     <td className="px-3 py-3 text-right text-xs whitespace-nowrap">
                       {r.workspace ? (
-                        <Link to={`/admin/docs?folder=${r.workspace.folderId}`} className="inline-flex items-center gap-1 text-brand-600 hover:underline" onClick={(e) => e.stopPropagation()}>
+                        <Link to={`/workspace/drive/f/${r.workspace.folderId}`} className="inline-flex items-center gap-1 text-brand-600 hover:underline" onClick={(e) => e.stopPropagation()}>
                           <FolderOpen className="size-3.5" aria-hidden />
                           <span className="tabular-nums">
                             {t('admin.common.files', { count: r.workspace.files })} · {formatBytes(r.workspace.bytes)}

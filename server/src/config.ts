@@ -95,4 +95,11 @@ export const config = {
     /** Inside a company folder, documents go here. */
     companyDocsDir: 'senedler',
   },
+  drive: {
+    /** Team drive files live in <DOCS_DIR>/drive/<storageKey>. */
+    dir: path.join(docsRoot, 'drive'),
+    maxFileSize: int('DRIVE_MAX_FILE_MB', 50) * 1024 * 1024,
+    /** Items stay in the recycle bin this many days before they are purged for good. */
+    trashDays: int('DRIVE_TRASH_DAYS', 30),
+  },
 };

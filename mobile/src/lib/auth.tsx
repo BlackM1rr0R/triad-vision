@@ -6,9 +6,20 @@ import { clearDocumentCache } from './native';
 import { clearLastPushResponse, registerForPush, unregisterPush, type PushState } from './push';
 import { queryClient } from './queryClient';
 import { currentLanguage, restoreLanguage, setAppLanguage } from '@/i18n';
+import { registerLegalCopy } from '@/i18n/legal';
 import { isStaffRole, type AuthFailure, type Locale, type SessionInfo, type User } from '@/types';
 
 const USER_KEY = 'tv_user';
+
+registerLegalCopy();
+
+/** Login answer for accounts with two-factor authentication: no session yet, only a 5-minute challenge. */
+type TwoFactorChallengeResponse = { twoFactorRequired: true; challenge: string };
+const isChallenge = (d: unknown): d is TwoFactorChallengeResponse =>
+  !!d && typeof d === 'object' && (d as { twoFactorRequired?: unknown }).twoFactorRequired === true && typeof (d as { challenge?: unknown }).challenge === 'string';
+
+/** Second login factor: the 6-digit app code or a one-time recovery code. */
+export type TwoFactorInput = { code: string } | { recoveryCode: string };
 
 type Status = 'loading' | 'guest' | 'authed';
 
@@ -41,7 +52,15 @@ interface AuthContextValue {
   /** Set when the server ended the session (expired / revoked / invalid); consumed by SessionNotice. */
   sessionEndReason: SessionEndReason | null;
   clearSessionEndReason: () => void;
-  login: (email: string, password: string) => Promise<User>;
+  /**
+   * Resolves with the user, or with null when the account uses two-factor authentication: then
+   * `twoFactorPending` is set and the caller continues with verifyTwoFactor (screen /two-factor).
+   */
+  login: (email: string, password: string) => Promise<User | null>;
+  /** True between a password login that needs 2FA and its completion/cancellation. */
+  twoFactorPending: boolean;
+  verifyTwoFactor: (input: TwoFactorInput) => Promise<User>;
+  cancelTwoFactor: () => void;
   register: (input: RegisterInput) => Promise<User>;
   logout: () => Promise<void>;
   updateMe: (patch: MePatch) => Promise<User>;
@@ -93,6 +112,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [session, setSession] = useState<SessionInfo | null>(null);
   const [pushState, setPushState] = useState<PushState | null>(null);
   const [sessionEndReason, setSessionEndReason] = useState<SessionEndReason | null>(null);
+  // Kept in memory only (never persisted): the challenge is useless after 5 minutes anyway.
+  const [challenge, setChallenge] = useState<string | null>(null);
   // A 401 can arrive from several in-flight requests at once (and from our own best-effort
   // DELETE /devices during the clear): only the first one clears the session.
   const clearing = useRef(false);
@@ -204,11 +225,34 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const login = useCallback(
     async (email: string, password: string) => {
-      const { data } = await api.post<AuthResponse>('/auth/login', { email: email.trim(), password });
+      const { data } = await api.post<AuthResponse | TwoFactorChallengeResponse>('/auth/login', { email: email.trim(), password });
+      if (isChallenge(data)) {
+        setChallenge(data.challenge);
+        return null;
+      }
+      setChallenge(null);
       return startSession(data);
     },
     [startSession],
   );
+
+  const verifyTwoFactor = useCallback(
+    async (input: TwoFactorInput) => {
+      if (!challenge) throw Object.assign(new Error('TWO_FACTOR_CHALLENGE_INVALID'), { response: { status: 401, data: { error: 'TWO_FACTOR_CHALLENGE_INVALID' } } });
+      try {
+        const { data } = await api.post<AuthResponse>('/auth/2fa/verify', { challenge, ...input });
+        setChallenge(null);
+        return await startSession(data);
+      } catch (err) {
+        const code = (err as { response?: { data?: { error?: string } } })?.response?.data?.error;
+        if (code === 'TWO_FACTOR_CHALLENGE_INVALID' || code === 'ACCOUNT_LOCKED') setChallenge(null);
+        throw err;
+      }
+    },
+    [challenge, startSession],
+  );
+
+  const cancelTwoFactor = useCallback(() => setChallenge(null), []);
 
   const register = useCallback(
     async (input: RegisterInput) => {
@@ -262,13 +306,32 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       sessionEndReason,
       clearSessionEndReason,
       login,
+      twoFactorPending: !!challenge,
+      verifyTwoFactor,
+      cancelTwoFactor,
       register,
       logout,
       updateMe,
       refreshPush,
       disablePush,
     }),
-    [status, user, session, pushState, sessionEndReason, clearSessionEndReason, login, register, logout, updateMe, refreshPush, disablePush],
+    [
+      status,
+      user,
+      session,
+      pushState,
+      sessionEndReason,
+      clearSessionEndReason,
+      login,
+      challenge,
+      verifyTwoFactor,
+      cancelTwoFactor,
+      register,
+      logout,
+      updateMe,
+      refreshPush,
+      disablePush,
+    ],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

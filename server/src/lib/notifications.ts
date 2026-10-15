@@ -184,3 +184,26 @@ export const notifyStaff = async (subject: string, body: string, opts: { caseId?
     renderEmail(subject, body, url ? { label: 'Admin paneldə aç', url } : undefined),
   );
 };
+
+/**
+ * Generic notification for any user (candidate, employer or staff): always stores an in-app
+ * notification; push and email follow the user's preferences. Texts must already be in the user's
+ * language — callers pick them from their own catalogue using `user.locale`.
+ */
+export const notifyUser = async (
+  userId: string,
+  msg: { type: string; title: string; body: string; link?: string; caseId?: string; email?: boolean; push?: boolean; ctaLabel?: string },
+) => {
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user || !user.isActive) return;
+  await prisma.notification.create({
+    data: { userId, caseId: msg.caseId, type: msg.type, title: msg.title, body: msg.body, link: msg.link },
+  });
+  if (msg.push !== false && user.pushNotifications !== false) {
+    void sendPush([userId], { title: msg.title, body: msg.body, data: { link: msg.link ?? '', caseId: msg.caseId ?? '', type: msg.type } });
+  }
+  if (msg.email !== false && user.emailNotifications !== false) {
+    const cta = msg.link ? { label: msg.ctaLabel ?? ctaLabel[user.locale], url: `${config.clientUrl}${msg.link}` } : undefined;
+    void sendMail(user.email, `Triad Vision · ${msg.title}`, renderEmail(msg.title, msg.body, cta));
+  }
+};

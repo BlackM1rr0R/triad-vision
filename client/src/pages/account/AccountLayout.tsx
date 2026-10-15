@@ -2,7 +2,7 @@ import { Link, useLocation, useOutlet } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
-import { Bell, FolderOpen, LayoutDashboard, UserRound } from 'lucide-react';
+import { Bell, Briefcase, FolderOpen, LayoutDashboard, UserRound } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { FINAL } from '@/lib/caseStatus';
 import { useNotifications } from '@/components/portal/useNotifications';
@@ -11,8 +11,11 @@ import { profileCompleteness } from '@/components/portal/profileFields';
 import { ProgressRing } from '@/components/portal/ProgressRing';
 import { registerCopy } from '@/i18n';
 import { pagesAccount } from '@/i18n/pagesAccount';
+import { VerifyBanner } from '@/components/auth/VerifyBanner';
+import { pagesJobs } from '@/i18n/pagesJobs';
 
 registerCopy(pagesAccount);
+registerCopy(pagesJobs);
 
 export default function AccountLayout() {
   const { t } = useTranslation();
@@ -38,6 +41,7 @@ export default function AccountLayout() {
       icon: FolderOpen,
       match: (p: string) => p.startsWith('/account/cases'),
     },
+    { to: '/account/applications', label: t('jobsArea.applications.tab'), icon: Briefcase, match: (p: string) => p.startsWith('/account/applications') },
     { to: '/account/notifications', label: t('portal.notifications'), icon: Bell, badge: unread, match: (p: string) => p.startsWith('/account/notifications') },
     { to: '/account/profile', label: t('portal.profile'), icon: UserRound, match: (p: string) => p.startsWith('/account/profile') },
   ];
@@ -137,6 +141,8 @@ export default function AccountLayout() {
             </nav>
           </div>
         </header>
+
+        <VerifyBanner className="mt-6" />
 
         <div className="mt-6 lg:mt-8">
           <AnimatePresence mode="wait">

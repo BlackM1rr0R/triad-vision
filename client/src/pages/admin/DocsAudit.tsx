@@ -13,9 +13,11 @@ import { EmptyState, ErrorBlock, LoadingBlock, PageHead } from '@/components/adm
 const ACTION_TONE = (action: string) =>
   action === 'LOGIN_FAILED'
     ? 'bg-red-100 text-red-700'
-    : action.startsWith('DOC_')
+    : action === 'DOC_GRANT_CHANGED' || action.startsWith('DRIVE_GRANT') || action === 'DRIVE_INHERITANCE_CHANGED'
+      ? 'bg-violet-100 text-violet-800'
+      : action.startsWith('DOC_') || action.startsWith('DRIVE_')
       ? 'bg-brand-100 text-brand-700'
-      : action.startsWith('USER_') || action === 'DOC_GRANT_CHANGED'
+      : action.startsWith('USER_')
         ? 'bg-violet-100 text-violet-800'
         : 'bg-amber-100 text-amber-800';
 
@@ -39,7 +41,7 @@ export default function DocsAudit() {
   const q = useQuery({
     queryKey: ['docs-audit', { page, action }],
     queryFn: async () =>
-      (await api.get<{ items: AuditItem[]; total: number; pageSize: number }>('/docs/audit', { params: { page, action: action || undefined } })).data,
+      (await api.get<{ items: AuditItem[]; total: number; pageSize: number }>('/drive/audit', { params: { page, action: action || undefined } })).data,
     enabled: isSuper,
     placeholderData: keepPreviousData,
   });
@@ -86,7 +88,8 @@ export default function DocsAudit() {
               {t('admin.docsAudit.action')}
               <select className="input min-h-9 w-64 py-1 text-xs" value={action} onChange={(e) => set({ action: e.target.value })}>
                 <option value="">{t('admin.common.all')}</option>
-                <option value="DOC_">{t('admin.docsAudit.allDocOps')}</option>
+                <option value="DRIVE_">{t('admin.docsAudit.allDocOps')}</option>
+                <option value="DRIVE_GRANT">DRIVE_GRANT_*</option>
                 {AUDIT_ACTIONS.map((k) => (
                   <option key={k} value={k}>
                     {auditActionLabel(k)}

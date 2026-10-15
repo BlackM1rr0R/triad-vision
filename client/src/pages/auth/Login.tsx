@@ -4,11 +4,15 @@ import { useTranslation } from 'react-i18next';
 import { LogIn } from 'lucide-react';
 import { toast } from 'sonner';
 import { api, errorCode } from '@/lib/api';
-import { landingAfterLogin, useAuth } from '@/lib/auth';
+import { isTwoFactorChallenge, landingAfterLogin, useAuth, type TwoFactorChallenge } from '@/lib/auth';
 import type { SessionInfo, User } from '@/lib/types';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { Spinner } from '@/components/ui/Spinner';
 import { AuthShell } from './AuthShell';
+import { registerCopy } from '@/i18n';
+import { pagesLegal } from '@/i18n/pagesLegal';
+
+registerCopy(pagesLegal);
 
 export const authError = (t: (k: string) => string, code: string) => {
   const key = `auth.errors.${code}`;
@@ -29,9 +33,17 @@ export default function Login() {
     const fd = new FormData(e.currentTarget);
     setBusy(true);
     try {
-      const { data } = await api.post<{ user: User; session: SessionInfo }>('/auth/login', { email: fd.get('email'), password: fd.get('password') });
-      setUser(data.user);
+      const { data } = await api.post<{ user: User; session: SessionInfo } | TwoFactorChallenge>('/auth/login', {
+        email: fd.get('email'),
+        password: fd.get('password'),
+      });
       const from = (location.state as { from?: unknown } | null)?.from;
+      if (isTwoFactorChallenge(data)) {
+        // Second step: the challenge lives only in router state (never stored), valid for 5 minutes.
+        navigate('/login/2fa', { replace: true, state: { challenge: data.challenge, from } });
+        return;
+      }
+      setUser(data.user);
       navigate(landingAfterLogin(data.user.role, from), { replace: true });
     } catch (err) {
       toast.error(authError(t, errorCode(err)));

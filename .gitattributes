@@ -1,0 +1,7 @@
+# Files that run or are hashed on Linux must keep LF endings, also on Windows checkouts (core.autocrlf):
+# shell scripts break with CR, and the CSP hash in deploy/Caddyfile covers the exact bytes of the
+# inline script in client/index.html.
+*.sh            text eol=lf
+deploy/Caddyfile text eol=lf
+*.Dockerfile    text eol=lf
+client/index.html text eol=lf

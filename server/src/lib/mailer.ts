@@ -46,11 +46,19 @@ const log = async (data: { to: string; subject: string; status: string; error?: 
   }
 };
 
+/** Optional file attached to an email (invoice PDF, calendar .ics). */
+export interface MailAttachment {
+  filename: string;
+  content: Buffer | string;
+  contentType?: string;
+}
+
 /**
  * Sends an email. Never throws and never rejects: callers use `void sendMail(...)`, and an
- * unhandled rejection would take the whole process down.
+ * unhandled rejection would take the whole process down. `attachments` is optional; existing
+ * callers are unaffected.
  */
-export const sendMail = async (to: string, subject: string, html: string) => {
+export const sendMail = async (to: string, subject: string, html: string, attachments?: MailAttachment[]) => {
   if (!to) return;
   const safeSubject = headerSafe(subject);
   try {
@@ -60,7 +68,15 @@ export const sendMail = async (to: string, subject: string, html: string) => {
       return;
     }
     try {
-      await transporter.sendMail({ from: config.smtp.from, to: headerSafe(to), subject: safeSubject, html });
+      await transporter.sendMail({
+        from: config.smtp.from,
+        to: headerSafe(to),
+        subject: safeSubject,
+        html,
+        ...(attachments?.length
+          ? { attachments: attachments.map((a) => ({ filename: headerSafe(a.filename), content: a.content, contentType: a.contentType })) }
+          : {}),
+      });
       await log({ to, subject: safeSubject, status: 'SENT' });
     } catch (err) {
       // Email failures must never break the workflow; the in-app notification is the source of truth.

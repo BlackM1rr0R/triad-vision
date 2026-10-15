@@ -4,15 +4,19 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#0b1f44" />
-    <meta name="description" content="Triad Vision — Azərbaycandan Almaniyaya etibarlı işçi təminatı və viza həlləri." />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@600;700;800;900&display=swap"
-      rel="stylesheet"
-    />
+    <!--tv:/*
+      SEO head tags. In production Caddy runs this file through its `templates` handler; the "tv:"
+      comments below are its template actions (custom delimiters, see deploy/Caddyfile). They include the
+      page-specific tags from the API (/__seo/head) and drop the static fallbacks; if the API returns
+      nothing, the fallbacks stay. In the Vite dev server they are plain comments and the fallbacks apply.
+      src/lib/usePageTitle.ts updates the tags on client-side navigation (it replaces every data-seo element).
+    */:tv-->
+    <!--tv:$seo := httpInclude (printf "/__seo/head?path=%s&lng=%s" (urlquery .OriginalReq.URL.Path) (urlquery (.OriginalReq.URL.Query.Get "lng"))):tv-->
+    <!--tv:if $seo:tv--><!--tv:$seo:tv--><!--tv:else:tv-->
     <title>Triad Vision — People · Work · Opportunities</title>
+    <meta data-seo name="description" content="Triad Vision — Azərbaycandan Almaniyaya etibarlı işçi təminatı və viza həlləri." />
+    <!--tv:end:tv-->
     <script>
       // Theme + accessibility preferences (same key as src/lib/prefs.ts) applied before the app loads, so
       // the page never flashes light-on-dark or jumps in text size.

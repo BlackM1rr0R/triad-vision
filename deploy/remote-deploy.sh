@@ -20,10 +20,16 @@ fi
 # Secrets and data stay outside the source tree; compose reads both from the app root.
 ln -sfn "$APP_DIR/.env.production" src/.env.production
 ln -sfn "$APP_DIR/data" src/data
+# The API runs as the unprivileged `node` user (uid 1000); it must own the folders it writes to.
+mkdir -p "$APP_DIR/data/uploads" "$APP_DIR/data/docs"
+chown -R 1000:1000 "$APP_DIR/data/uploads" "$APP_DIR/data/docs"
 cd src
 
 echo "== build + start"
-$COMPOSE up -d --build --remove-orphans
+# --pull: always rebuild on top of the newest patched base images (node, caddy) and MySQL 8.4 patch.
+$COMPOSE pull db
+$COMPOSE build --pull
+$COMPOSE up -d --remove-orphans
 
 echo "== waiting for the API (migrations run on start)"
 for _ in $(seq 1 90); do

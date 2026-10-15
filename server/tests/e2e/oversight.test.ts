@@ -41,9 +41,9 @@ describe('super-admin oversight', () => {
     const doc = await uploadOne(client.agent, c.id);
     expect((await staff.agent.post(`/api/admin/cases/${c.id}/documents/${doc.id}/review`).send({ status: 'ACCEPTED' })).status).toBe(200);
     expect((await staff.agent.post(`/api/admin/cases/${c.id}/messages`).send({ body: 'Salam' })).status).toBe(201);
-    const folders = await staff.agent.get('/api/docs/folders');
-    const folderId = folders.body.folders[0].id as string;
-    expect((await staff.agent.post(`/api/docs/folders/${folderId}/files`).attach('file', await makePdf(), { filename: 'a.pdf', contentType: 'application/pdf' })).status).toBe(201);
+    const roots = await staff.agent.get('/api/drive/roots');
+    const folderId = roots.body.personal.id as string;
+    expect((await staff.agent.post(`/api/drive/nodes/${folderId}/files`).attach('file', await makePdf(), { filename: 'a.pdf', contentType: 'application/pdf' })).status).toBe(201);
 
     const res = await su.agent.get('/api/admin/oversight/summary');
     expect(res.status).toBe(200);
@@ -113,8 +113,8 @@ describe('super-admin oversight', () => {
     await prisma.case.update({ where: { id: c.id }, data: { assignedStaffId: staff.user.id } });
     expect((await act(su.agent, c.id, { action: 'CANCEL', reason: 'Test cancel' })).status).toBe(200);
     await staff.agent.post(`/api/admin/cases/${c.id}/notes`).send({ note: 'internal' });
-    const folderId = (await staff.agent.get('/api/docs/folders')).body.folders[0].id as string;
-    await su.agent.put(`/api/docs/folders/${folderId}/grants/${other.user.id}`).send({ access: 'VIEW' });
+    const folderId = (await staff.agent.get('/api/drive/roots')).body.personal.id as string;
+    expect((await su.agent.put(`/api/drive/nodes/${folderId}/grants`).send({ userId: other.user.id, access: 'VIEW' })).status).toBe(200);
 
     const res = await su.agent.get(`/api/admin/oversight/staff/${staff.user.id}`);
     expect(res.status).toBe(200);
@@ -130,7 +130,7 @@ describe('super-admin oversight', () => {
     expect(b.eventTypes30d.INTERNAL_NOTE).toBe(1);
     expect(b.assignedCases.closed.map((x: { id: string }) => x.id)).toEqual([c.id]);
     expect(b.assignedCases.open).toEqual([]);
-    expect(b.workspace).toMatchObject({ slug: 'rena', files: 0, sharedWith: [{ access: 'VIEW', user: { id: other.user.id } }], accessTo: [] });
+    expect(b.workspace).toMatchObject({ slug: 'Rena H', files: 0, sharedWith: [{ access: 'VIEW', user: { id: other.user.id } }], accessTo: [] });
     expect(b.totals).toMatchObject({ assignedCases: 1 });
 
     expect((await su.agent.get(`/api/admin/oversight/staff/${client.user.id}`)).status).toBe(404);

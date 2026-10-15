@@ -13,7 +13,9 @@ filesRouter.get('/:docId', requireAuth, async (req, res) => {
     where: { id: String(req.params.docId) },
     include: { case: { select: { clientId: true } } },
   });
-  if (!doc || (!isStaff(req.user) && doc.case.clientId !== req.user!.id)) throw notFound('DOCUMENT_NOT_FOUND');
+  // Staff access counts only once 2FA is enrolled (same gate as /api/admin and /api/docs).
+  const staffAccess = isStaff(req.user) && !!req.user!.twoFactorEnabled;
+  if (!doc || (!staffAccess && doc.case.clientId !== req.user!.id)) throw notFound('DOCUMENT_NOT_FOUND');
 
   const disposition = req.query.download ? 'attachment' : 'inline';
   res.setHeader('Content-Type', doc.mimeType);

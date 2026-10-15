@@ -1,8 +1,9 @@
 import { useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useInfiniteQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { useInView } from 'framer-motion';
-import { ArrowRight, ArrowUpRight, EyeOff, FileSignature, ShieldCheck, Stamp, Undo2 } from 'lucide-react';
+import { ArrowRight, ArrowUpRight, BadgeCheck, EyeOff, FileSignature, ShieldCheck, Stamp, Star, Undo2 } from 'lucide-react';
 import clsx from 'clsx';
 import { PageHero } from '@/components/layout/PageHero';
 import { Reveal, Stagger, StaggerItem } from '@/components/motion';
@@ -16,9 +17,12 @@ import { useL10n } from '@/lib/l10n';
 import type { VisaCategory, VisaSample } from '@/lib/types';
 import { registerCopy } from '@/i18n';
 import { pagesCompany } from '@/i18n/pagesCompany';
+import { pagesGrowth } from '@/i18n/pagesGrowth';
 import { usePageTitle } from '@/lib/usePageTitle';
+import { api } from '@/lib/api';
 
 registerCopy(pagesCompany);
+registerCopy(pagesGrowth);
 
 const labelsOf = (v: VisaCategory) => v.visaLabel.split('/').map((s) => s.trim());
 
@@ -186,6 +190,98 @@ const Breakdown = ({ samples }: { samples: VisaSample[] }) => {
   );
 };
 
+/* ───────────────────────── Candidate reviews (collected after approval) ───────────────────────── */
+interface PublicReview {
+  id: string;
+  rating: number;
+  text: string;
+  displayName: string;
+  submittedAt: string | null;
+}
+interface PublicReviewsPage {
+  items: PublicReview[];
+  page: number;
+  total: number;
+  count: number;
+  average: number | null;
+}
+const REVIEWS_PAGE = 6;
+
+const Stars = ({ value, className }: { value: number; className?: string }) => (
+  <span className={clsx('inline-flex gap-0.5', className)} aria-hidden>
+    {[1, 2, 3, 4, 5].map((n) => (
+      <Star key={n} className={clsx('size-4', n <= Math.round(value) ? 'fill-amber-400 text-amber-400' : 'text-slate-300')} />
+    ))}
+  </span>
+);
+
+const PublicReviews = () => {
+  const { t, i18n } = useTranslation();
+  const { data, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
+    queryKey: ['public-reviews'],
+    queryFn: async ({ pageParam }) => (await api.get<PublicReviewsPage>('/reviews/public', { params: { page: pageParam, pageSize: REVIEWS_PAGE } })).data,
+    initialPageParam: 1,
+    getNextPageParam: (last) => (last.page * REVIEWS_PAGE < last.total ? last.page + 1 : undefined),
+    staleTime: 5 * 60_000,
+  });
+  const first = data?.pages[0];
+  if (!first || first.count === 0) return null;
+  const items = data.pages.flatMap((p) => p.items);
+  // Browsers ship incomplete Azerbaijani month names, so az shows "10.2026".
+  const lng = i18n.resolvedLanguage ?? 'az';
+  const monthYear = (iso: string) => {
+    const d = new Date(iso);
+    return lng === 'az' ? `${String(d.getMonth() + 1).padStart(2, '0')}.${d.getFullYear()}` : new Intl.DateTimeFormat(lng, { month: 'long', year: 'numeric' }).format(d);
+  };
+
+  return (
+    <section className="section bg-surface">
+      <div className="container-x">
+        <SectionHeading eyebrow={t('growth.stories.eyebrow')} title={t('growth.stories.title')} subtitle={t('growth.stories.subtitle')} />
+        {first.average !== null && (
+          <div className="mx-auto mb-10 flex w-fit flex-col items-center gap-1 rounded-2xl border border-line bg-white px-8 py-5 text-center sm:flex-row sm:gap-5 sm:text-left">
+            <span className="font-display text-5xl font-extrabold text-navy-900 tabular-nums">{first.average.toFixed(1)}</span>
+            <span>
+              <span className="sr-only">{t('growth.stories.stars', { value: first.average.toFixed(1) })}</span>
+              <Stars value={first.average} className="[&_svg]:size-5" />
+              <span className="mt-1 block text-sm text-muted">
+                {t('growth.stories.average')} · {t('growth.stories.basedOn', { count: first.count })}
+              </span>
+            </span>
+          </div>
+        )}
+        <ul className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+          {items.map((r) => (
+            <li key={r.id}>
+              <figure className="card flex h-full flex-col p-6">
+                <span className="sr-only">{t('growth.stories.stars', { value: r.rating })}</span>
+                <Stars value={r.rating} />
+                <blockquote className="mt-4 flex-1 text-[0.97rem] leading-relaxed whitespace-pre-line text-navy-900/85">„{r.text}"</blockquote>
+                <figcaption className="mt-5 flex items-center justify-between gap-3 border-t border-line pt-4">
+                  <span className="min-w-0">
+                    <span className="block truncate text-sm font-bold text-navy-900">{r.displayName}</span>
+                    {r.submittedAt && <span className="text-xs text-muted">{monthYear(r.submittedAt)}</span>}
+                  </span>
+                  <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700">
+                    <BadgeCheck className="size-3.5" aria-hidden /> {t('growth.stories.verified')}
+                  </span>
+                </figcaption>
+              </figure>
+            </li>
+          ))}
+        </ul>
+        {hasNextPage && (
+          <div className="mt-8 text-center">
+            <button type="button" className="btn-ghost px-6" onClick={() => void fetchNextPage()} disabled={isFetchingNextPage}>
+              {t('growth.stories.more')}
+            </button>
+          </div>
+        )}
+      </div>
+    </section>
+  );
+};
+
 /* ───────────────────────── Privacy principles ───────────────────────── */
 const PRIVACY_ICONS = [FileSignature, EyeOff, Undo2];
 const PrivacyStrip = () => {
@@ -248,6 +344,8 @@ export default function Stories() {
           </div>
         </section>
       )}
+
+      <PublicReviews />
 
       <PrivacyStrip />
 

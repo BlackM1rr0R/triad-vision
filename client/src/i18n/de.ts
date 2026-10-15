@@ -3,6 +3,11 @@ import type { Messages } from './az';
 const de: Messages = {
   meta: { lang: 'Deutsch', short: 'DE' },
   nav: {
+    jobs: 'Stellenangebote',
+    booking: 'Termin buchen',
+    forEmployers: 'Für Arbeitgeber',
+    impressum: 'Impressum',
+    privacyPolicy: 'Datenschutz',
     home: 'Startseite',
     about: 'Über uns',
     services: 'Leistungen',

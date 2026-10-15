@@ -1,0 +1,74 @@
+// Shell of the team workspace (/workspace): navigation and common labels.
+// Each area has its own copy file (pagesDrive.ts, pagesTasks.ts).
+const az = {
+  workspace: {
+    title: 'İş mühiti',
+    nav: {
+      drive: 'Sənədlər',
+      tasks: 'Tapşırıqlar',
+      admin: 'Admin panel',
+      site: 'Sayta qayıt',
+    },
+    menu: 'Menyu',
+    collapse: 'Menyunu yığ',
+    expand: 'Menyunu aç',
+    logout: 'Çıxış',
+    openTasks: '{{count}} açıq tapşırıq',
+    role: { CLIENT: '', COMPANY: '', STAFF: 'İşçi', ADMIN: 'Administrator', SUPER_ADMIN: 'Super admin' },
+  },
+};
+
+export const workspaceCopy: { az: typeof az; de: typeof az; en: typeof az; ru: typeof az } = {
+  az,
+  de: {
+    workspace: {
+      title: 'Arbeitsbereich',
+      nav: {
+        drive: 'Dokumente',
+        tasks: 'Aufgaben',
+        admin: 'Admin-Bereich',
+        site: 'Zur Website',
+      },
+      menu: 'Menü',
+      collapse: 'Menü einklappen',
+      expand: 'Menü ausklappen',
+      logout: 'Abmelden',
+      openTasks: '{{count}} offene Aufgaben',
+      role: { CLIENT: '', COMPANY: '', STAFF: 'Mitarbeiter', ADMIN: 'Administrator', SUPER_ADMIN: 'Super-Admin' },
+    },
+  },
+  en: {
+    workspace: {
+      title: 'Workspace',
+      nav: {
+        drive: 'Documents',
+        tasks: 'Tasks',
+        admin: 'Admin panel',
+        site: 'Back to site',
+      },
+      menu: 'Menu',
+      collapse: 'Collapse menu',
+      expand: 'Expand menu',
+      logout: 'Log out',
+      openTasks: '{{count}} open tasks',
+      role: { CLIENT: '', COMPANY: '', STAFF: 'Staff', ADMIN: 'Administrator', SUPER_ADMIN: 'Super admin' },
+    },
+  },
+  ru: {
+    workspace: {
+      title: 'Рабочая среда',
+      nav: {
+        drive: 'Документы',
+        tasks: 'Задачи',
+        admin: 'Админ-панель',
+        site: 'На сайт',
+      },
+      menu: 'Меню',
+      collapse: 'Свернуть меню',
+      expand: 'Развернуть меню',
+      logout: 'Выйти',
+      openTasks: 'Открытых задач: {{count}}',
+      role: { CLIENT: '', COMPANY: '', STAFF: 'Сотрудник', ADMIN: 'Администратор', SUPER_ADMIN: 'Суперадмин' },
+    },
+  },
+};

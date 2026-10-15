@@ -6,9 +6,13 @@ import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
 import type { LucideIcon } from 'lucide-react';
 import {
+  BarChart3,
   Bell,
   BookOpen,
   Briefcase,
+  BriefcaseBusiness,
+  Building2,
+  CalendarClock,
   CheckCheck,
   ChevronDown,
   ChevronsLeft,
@@ -23,13 +27,18 @@ import {
   Inbox,
   Layers,
   LayoutDashboard,
+  ListTodo,
   LogOut,
   Menu,
   MessageSquareQuote,
   Newspaper,
+  Receipt,
   Settings,
+  ShieldCheck,
+  Star,
   TrendingUp,
   Users,
+  UserSearch,
   X,
 } from 'lucide-react';
 import { Logo, LogoMark } from '@/components/ui/Logo';
@@ -60,9 +69,18 @@ const MAIN_NAV: NavItem[] = [
   { to: '/admin', label: 'dashboard', icon: LayoutDashboard, end: true },
   { to: '/admin/oversight', label: 'oversight', icon: Eye, superOnly: true },
   { to: '/admin/cases', label: 'cases', icon: FolderKanban },
-  { to: '/admin/docs', label: 'docs', icon: FolderOpen },
+  { to: '/workspace/drive', label: 'docs', icon: FolderOpen },
+  { to: '/workspace/tasks', label: 'tasks', icon: ListTodo },
   { to: '/admin/inquiries', label: 'inquiries', icon: Inbox },
   { to: '/admin/users', label: 'users', icon: Users },
+  { to: '/admin/candidates', label: 'candidates', icon: UserSearch },
+  { to: '/admin/vacancies', label: 'vacancies', icon: BriefcaseBusiness },
+  { to: '/admin/companies', label: 'companies', icon: Building2 },
+  { to: '/admin/bookings', label: 'bookings', icon: CalendarClock },
+  { to: '/admin/invoices', label: 'invoices', icon: Receipt, adminOnly: true },
+  { to: '/admin/reviews', label: 'reviews', icon: Star },
+  { to: '/admin/analytics', label: 'analytics', icon: BarChart3 },
+  { to: '/admin/security', label: 'security', icon: ShieldCheck },
 ];
 
 const CONTENT_NAV: (NavItem & { resource: string })[] = [

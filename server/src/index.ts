@@ -1,6 +1,8 @@
 import { config } from './config.js';
 import { createApp } from './app.js';
 import { purgeDeadSessions } from './middleware/auth.js';
+import { startScheduler } from './lib/scheduler.js';
+import './jobs/index.js';
 
 const server = createApp().listen(config.port, () => {
   console.log(`Triad Vision API listening on http://localhost:${config.port}`);
@@ -17,8 +19,11 @@ const cleanup = setInterval(() => {
 }, 60 * 60 * 1000);
 cleanup.unref();
 
+const stopJobs = startScheduler();
+
 const shutdown = () => {
   clearInterval(cleanup);
+  stopJobs();
   server.close(() => process.exit(0));
   setTimeout(() => process.exit(1), 10_000).unref();
 };

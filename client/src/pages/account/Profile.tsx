@@ -46,9 +46,11 @@ import {
 } from '@/components/portal/profileFields';
 import { registerCopy } from '@/i18n';
 import { pagesAccount } from '@/i18n/pagesAccount';
+import { pagesGrowth } from '@/i18n/pagesGrowth';
 import { usePageTitle } from '@/lib/usePageTitle';
 
 registerCopy(pagesAccount);
+registerCopy(pagesGrowth);
 
 const TAB_ICON: Record<ProfileTab, LucideIcon> = {
   personal: UserRound,
@@ -179,6 +181,9 @@ const useSaveProfile = () => {
 
 const tooLong = (v: string, max: number) => v.trim().length > max;
 
+const PASSPORT_KEY = ['account-passport'];
+const PASSPORT_RE = /^\d{4}-\d{2}-\d{2}$/;
+
 // ─── Personal data ─────────────────────────────────────────────────────
 
 const PersonalPanel = ({ user }: { user: User }) => {
@@ -197,6 +202,16 @@ const PersonalPanel = ({ user }: { user: User }) => {
   });
   const [submitted, setSubmitted] = useState(false);
   const [busy, setBusy] = useState(false);
+  // Passport validity is stored separately (PATCH /account/passport) and drives the expiry reminders.
+  const passportQuery = useQuery({
+    queryKey: PASSPORT_KEY,
+    queryFn: async () => (await api.get<{ passportExpiry: string | null }>('/account/passport')).data,
+    staleTime: 5 * 60_000,
+  });
+  const qc = useQueryClient();
+  const [passport, setPassport] = useState<string | null>(null);
+  const savedPassport = passportQuery.data?.passportExpiry ?? '';
+  const passportValue = passport ?? savedPassport;
   const set = (k: keyof typeof f) => (e: { target: { value: string } }) => setF((p) => ({ ...p, [k]: e.target.value }));
   const bounds = birthDateBounds();
   const maxMsg = (max: number) => t('accountPage.profile.errors.tooLong', { max });
@@ -213,7 +228,8 @@ const PersonalPanel = ({ user }: { user: User }) => {
     city: tooLong(f.city, LIMITS.city) ? maxMsg(LIMITS.city) : null,
     address: tooLong(f.address, LIMITS.address) ? maxMsg(LIMITS.address) : null,
   };
-  const invalid = Object.values(errors).some(Boolean);
+  const passportError = passportValue && !PASSPORT_RE.test(passportValue) ? t('growth.passport.invalid') : null;
+  const invalid = Object.values(errors).some(Boolean) || !!passportError;
   // Required/limit errors show while typing; the rest after the first submit attempt.
   const show = (k: keyof typeof errors) => (submitted || k === 'birthDate' ? errors[k] : f[k] ? errors[k] : null);
 
@@ -234,6 +250,11 @@ const PersonalPanel = ({ user }: { user: User }) => {
         city: f.city.trim() || null,
         address: f.address.trim() || null,
       });
+      if (passport !== null && passport !== savedPassport) {
+        const res = await api.patch<{ passportExpiry: string | null }>('/account/passport', { passportExpiry: passport || null });
+        qc.setQueryData(PASSPORT_KEY, res.data);
+        setPassport(null);
+      }
       toast.success(t('portal.profileSaved'));
     } catch (err) {
       onError(err);
@@ -316,6 +337,17 @@ const PersonalPanel = ({ user }: { user: User }) => {
             maxLength={LIMITS.address}
             placeholder={t('accountPage.profile.placeholders.address')}
             error={show('address')}
+          />
+          <Field
+            id={`${uid}-passport`}
+            label={t('growth.passport.label')}
+            type="date"
+            value={passportValue}
+            onChange={(e) => setPassport(e.target.value)}
+            min="2000-01-01"
+            disabled={passportQuery.isLoading}
+            error={passportError}
+            hint={t('growth.passport.hint')}
           />
         </div>
         <SaveBar busy={busy} />

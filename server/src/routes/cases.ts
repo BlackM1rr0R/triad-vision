@@ -6,10 +6,11 @@ import { z } from 'zod';
 import { config } from '../config.js';
 import { prisma } from '../db.js';
 import { requireAuth } from '../middleware/auth.js';
+import { requireVerifiedEmail } from '../middleware/verified.js';
 import { decodeOriginalName, documentUpload, verifyUploadedFile } from '../middleware/upload.js';
 import { CLIENT_UPLOAD_STAGE, clientSignContract, clientSubmitDocuments, createCase } from '../lib/caseFlow.js';
 import { loadCaseDetail } from '../lib/caseView.js';
-import { badRequest, conflict, notFound, parse } from '../lib/http.js';
+import { badRequest, conflict, forbidden, notFound, parse } from '../lib/http.js';
 import { notifyStaff } from '../lib/notifications.js';
 import { PDFDocument } from 'pdf-lib';
 import { signContractPdf } from '../lib/pdfSign.js';
@@ -35,7 +36,9 @@ casesRouter.get('/', async (req, res) => {
   res.json({ cases });
 });
 
-casesRouter.post('/', async (req, res) => {
+casesRouter.post('/', requireVerifiedEmail, async (req, res) => {
+  // Visa cases belong to candidates; employer (and staff) accounts open cases through the admin flow.
+  if (req.user!.role !== 'CLIENT') throw forbidden('CANDIDATES_ONLY');
   const body = parse(
     z.object({ profession: z.string().trim().min(2).max(120), visaCategoryId: z.string().nullable().optional() }),
     req.body,

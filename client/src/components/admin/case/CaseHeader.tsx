@@ -2,7 +2,10 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
-import { CalendarClock, Mail, MessageCircle, Pencil, Phone, ShieldCheck, ShieldX, X } from 'lucide-react';
+import { Building2, CalendarClock, Mail, MessageCircle, Pencil, Phone, ShieldCheck, ShieldX, X } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { registerCopy } from '@/i18n';
+import { pagesJobs } from '@/i18n/pagesJobs';
 import { api } from '@/lib/api';
 import { useSiteContent } from '@/lib/content';
 import { useL10n } from '@/lib/l10n';
@@ -14,6 +17,13 @@ import type { StaffMember } from '../types';
 import { useCaseRefresh } from './shared';
 
 const patchCase = (id: string, body: Record<string, string | null>) => api.patch(`/admin/cases/${id}`, body);
+
+registerCopy(pagesJobs);
+
+/** The case's employer / vacancy link (company portal "our workers"); not in the shared CaseDetail type. */
+type CaseLink = { companyId?: string | null; vacancyId?: string | null };
+type CompanyOption = { id: string; name: string };
+type VacancyOption = { id: string; title: { az: string; de: string; en: string; ru: string }; companyId: string | null };
 
 export const CaseHeader = ({ c }: { c: CaseDetail }) => {
   const { t } = useTranslation();
@@ -30,6 +40,21 @@ export const CaseHeader = ({ c }: { c: CaseDetail }) => {
   const [profession, setProfession] = useState(c.profession);
   const [visaId, setVisaId] = useState(c.visaCategory?.id ?? '');
   const [saving, setSaving] = useState(false);
+  const link = c as CaseDetail & CaseLink;
+  const [companyId, setCompanyId] = useState(link.companyId ?? '');
+  const [vacancyId, setVacancyId] = useState(link.vacancyId ?? '');
+  const { data: companies } = useQuery({
+    queryKey: ['admin-company-options'],
+    queryFn: async () => (await api.get<{ items: CompanyOption[] }>('/admin/companies/options')).data.items,
+    staleTime: 60_000,
+  });
+  const { data: vacancies } = useQuery({
+    queryKey: ['admin-vacancy-options'],
+    queryFn: async () => (await api.get<{ items: VacancyOption[] }>('/admin/vacancies/options')).data.items,
+    staleTime: 60_000,
+  });
+  const companyName = companies?.find((x) => x.id === link.companyId)?.name;
+  const vacancyTitle = vacancies?.find((x) => x.id === link.vacancyId)?.title;
 
   const visaOptions = content?.visaCategories ?? [];
   const currentMissing = c.visaCategory && !visaOptions.some((v) => v.id === c.visaCategory?.id);
@@ -50,7 +75,7 @@ export const CaseHeader = ({ c }: { c: CaseDetail }) => {
   const save = async () => {
     setSaving(true);
     try {
-      await patchCase(c.id, { profession: profession.trim(), visaCategoryId: visaId || null });
+      await patchCase(c.id, { profession: profession.trim(), visaCategoryId: visaId || null, companyId: companyId || null, vacancyId: vacancyId || null });
       await refresh();
       setEditing(false);
       toast.success(t('admin.case.header.updated'));
@@ -126,7 +151,7 @@ export const CaseHeader = ({ c }: { c: CaseDetail }) => {
       <div className="border-t border-line px-5 py-4 sm:px-6">
         {editing ? (
           <form
-            className="grid gap-3 sm:grid-cols-[1fr_1fr_auto] sm:items-end"
+            className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_1fr_1fr_auto] lg:items-end"
             onSubmit={(e) => {
               e.preventDefault();
               void save();
@@ -152,7 +177,52 @@ export const CaseHeader = ({ c }: { c: CaseDetail }) => {
                 ))}
               </select>
             </div>
-            <div className="flex gap-2">
+            <div>
+              <label htmlFor="ed-company" className="label">
+                {t('jobsArea.admin.caseLink.company')}
+              </label>
+              <select
+                id="ed-company"
+                className="input"
+                value={companyId}
+                onChange={(e) => {
+                  setCompanyId(e.target.value);
+                  if (vacancyId && vacancies?.find((x) => x.id === vacancyId)?.companyId !== e.target.value) setVacancyId('');
+                }}
+              >
+                <option value="">{t('admin.case.header.notSelected')}</option>
+                {companies?.map((x) => (
+                  <option key={x.id} value={x.id}>
+                    {x.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label htmlFor="ed-vacancy" className="label">
+                {t('jobsArea.admin.caseLink.vacancy')}
+              </label>
+              <select
+                id="ed-vacancy"
+                className="input"
+                value={vacancyId}
+                onChange={(e) => {
+                  setVacancyId(e.target.value);
+                  const owner = vacancies?.find((x) => x.id === e.target.value)?.companyId;
+                  if (owner) setCompanyId(owner);
+                }}
+              >
+                <option value="">{t('admin.case.header.notSelected')}</option>
+                {vacancies
+                  ?.filter((x) => !companyId || x.companyId === companyId || x.id === vacancyId)
+                  .map((x) => (
+                    <option key={x.id} value={x.id}>
+                      {tr(x.title)}
+                    </option>
+                  ))}
+              </select>
+            </div>
+            <div className="flex gap-2 sm:col-span-2 lg:col-span-1">
               <button type="submit" className="btn-primary btn-sm" disabled={saving || profession.trim().length < 2}>
                 {saving && <Spinner className="size-3.5" />} {t('admin.common.save')}
               </button>
@@ -163,6 +233,8 @@ export const CaseHeader = ({ c }: { c: CaseDetail }) => {
                   setEditing(false);
                   setProfession(c.profession);
                   setVisaId(c.visaCategory?.id ?? '');
+                  setCompanyId(link.companyId ?? '');
+                  setVacancyId(link.vacancyId ?? '');
                 }}
                 aria-label={t('admin.case.header.cancelAria')}
               >
@@ -180,6 +252,22 @@ export const CaseHeader = ({ c }: { c: CaseDetail }) => {
               <dt className="text-[11px] text-muted">{t('admin.case.header.visa')}</dt>
               <dd className="font-medium text-ink">{c.visaCategory ? `${tr(c.visaCategory.title)} · ${c.visaCategory.visaLabel}` : '—'}</dd>
             </div>
+            {link.companyId && (
+              <div className="min-w-0">
+                <dt className="text-[11px] text-muted">{t('jobsArea.admin.caseLink.employer')}</dt>
+                <dd className="flex items-center gap-1 font-medium text-ink">
+                  <Building2 className="size-3.5 shrink-0 text-brand-600" />
+                  <Link to={`/admin/companies?id=${link.companyId}`} className="truncate hover:text-brand-700 hover:underline">
+                    {companyName ?? '…'}
+                  </Link>
+                  {link.vacancyId && (
+                    <Link to={`/admin/vacancies?id=${link.vacancyId}`} className="truncate text-muted hover:text-brand-700 hover:underline">
+                      · {vacancyTitle ? tr(vacancyTitle) : '…'}
+                    </Link>
+                  )}
+                </dd>
+              </div>
+            )}
             <div>
               <dt className="text-[11px] text-muted">{t('admin.case.header.createdAt')}</dt>
               <dd className="text-ink/80">{fmtDate(c.createdAt)}</dd>
@@ -214,6 +302,8 @@ export const CaseHeader = ({ c }: { c: CaseDetail }) => {
               onClick={() => {
                 setProfession(c.profession);
                 setVisaId(c.visaCategory?.id ?? '');
+                setCompanyId(link.companyId ?? '');
+                setVacancyId(link.vacancyId ?? '');
                 setEditing(true);
               }}
             >

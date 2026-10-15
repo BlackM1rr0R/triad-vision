@@ -5,6 +5,26 @@ export { prisma };
 
 /** Deletes all rows, children before parents so foreign keys are never violated. */
 export const resetDb = async () => {
+  // Team tasks (children first; before cases, users and drive nodes)
+  await prisma.taskAttachment.deleteMany();
+  await prisma.taskChecklistItem.deleteMany();
+  await prisma.taskComment.deleteMany();
+  await prisma.taskAssignee.deleteMany();
+  await prisma.task.deleteMany();
+  await prisma.reminderLog.deleteMany();
+  await prisma.analyticsDaily.deleteMany();
+  await prisma.review.deleteMany();
+  await prisma.booking.deleteMany();
+  await prisma.consultationSlot.deleteMany();
+  await prisma.invoice.deleteMany();
+  await prisma.vacancyApplication.deleteMany();
+  await prisma.emailVerificationToken.deleteMany();
+  // Team drive (task links cascade with the nodes; parents are detached first so no cascade chain is needed).
+  await prisma.driveFavorite.deleteMany();
+  await prisma.driveGrant.deleteMany();
+  await prisma.driveFileVersion.deleteMany();
+  await prisma.driveNode.updateMany({ data: { parentId: null } });
+  await prisma.driveNode.deleteMany();
   await prisma.docGrant.deleteMany();
   await prisma.docFile.deleteMany();
   await prisma.docDir.deleteMany();
@@ -20,6 +40,7 @@ export const resetDb = async () => {
   await prisma.document.deleteMany();
   await prisma.documentRequirement.deleteMany();
   await prisma.case.deleteMany();
+  await prisma.vacancy.deleteMany();
   await prisma.emailLog.deleteMany();
   await prisma.inquiry.deleteMany();
   await prisma.setting.deleteMany();
@@ -32,6 +53,7 @@ export const resetDb = async () => {
   await prisma.faq.deleteMany();
   await prisma.post.deleteMany();
   await prisma.user.deleteMany();
+  await prisma.company.deleteMany();
   // The public content cache lives in this module graph; drop it with the data.
   clearCache();
 };

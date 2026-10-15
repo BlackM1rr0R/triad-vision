@@ -18,6 +18,8 @@ import { HttpError, conflict, limiter, parse } from '../lib/http.js';
 import { renderEmail, sendMail } from '../lib/mailer.js';
 import { loginLockedFor, recordLoginFailure, recordLoginSuccess } from '../lib/loginGuard.js';
 import { audit } from '../lib/audit.js';
+import { consumeVerificationToken, sendVerificationEmail } from '../lib/emailVerification.js';
+import { createLoginChallenge, securityFlags } from '../lib/twoFactor.js';
 
 export const authRouter = Router();
 
@@ -53,6 +55,8 @@ export const publicUser = (u: User) => ({
   emailNotifications: u.emailNotifications,
   pushNotifications: u.pushNotifications,
   createdAt: u.createdAt,
+  // emailVerified, twoFactorEnabled, twoFactorRequired
+  ...securityFlags(u),
 });
 
 export const GERMAN_LEVELS = ['none', 'A1', 'A2', 'B1', 'B2', 'C1', 'C2'] as const;
@@ -103,7 +107,7 @@ const birthDate = z
   });
 
 /** Creates the session for a freshly authenticated user and writes it to the response. */
-const startSession = async (req: Parameters<typeof wantsBearerToken>[0], res: Parameters<typeof setSessionCookie>[0], user: User) => {
+export const startSession = async (req: Parameters<typeof wantsBearerToken>[0], res: Parameters<typeof setSessionCookie>[0], user: User) => {
   const client = wantsBearerToken(req) ? 'mobile' : 'web';
   const { token, session } = await issueSession(user.id, { client, ip: req.ip, userAgent: req.get('user-agent') });
   if (client === 'web') setSessionCookie(res, token, client);
@@ -139,6 +143,7 @@ authRouter.post('/register', authLimiter, async (req, res) => {
       locale: body.locale,
     },
   });
+  await sendVerificationEmail(user.id);
   res.status(201).json(await startSession(req, res, user));
 });
 
@@ -160,6 +165,14 @@ authRouter.post('/login', authLimiter, async (req, res) => {
     recordLoginFailure(body.email);
     await audit(req, 'LOGIN_FAILED', user ? `user:${user.id}` : undefined, { email: body.email });
     throw new HttpError(401, 'INVALID_CREDENTIALS');
+  }
+  if (user.totpEnabledAt) {
+    // Password accepted, but no session yet: the client must complete POST /api/auth/2fa/verify.
+    // The failure counter is only reset once the second factor succeeds, so a known password does
+    // not give unlimited code guesses.
+    await audit({ user: undefined, ip: req.ip }, 'LOGIN_2FA_CHALLENGE', `user:${user.id}`);
+    res.json({ twoFactorRequired: true, challenge: createLoginChallenge(user.id) });
+    return;
   }
   recordLoginSuccess(body.email);
   res.json(await startSession(req, res, user));
@@ -298,5 +311,45 @@ authRouter.post('/reset-password', authLimiter, async (req, res) => {
     prisma.session.updateMany({ where: { userId: record.userId, revokedAt: null }, data: { revokedAt: new Date() } }),
   ]);
   await audit({ user: undefined, ip: req.ip }, 'PASSWORD_RESET', `user:${record.userId}`);
+  res.json({ ok: true });
+});
+
+// ─── Email verification ────────────────────────────────────────────────
+
+const verifyLimiter = limiter({ windowMs: 15 * 60 * 1000, limit: 20 });
+const resendLimiter = limiter({ windowMs: 60 * 60 * 1000, limit: 5 });
+const verifyToken = z.object({ token: z.string().regex(/^[a-f0-9]{64}$/) });
+
+const verifyEmail = async (req: Parameters<typeof audit>[0], token: string) => {
+  const userId = await consumeVerificationToken(token);
+  if (!userId) throw new HttpError(400, 'INVALID_TOKEN');
+  await audit({ user: undefined, ip: req.ip }, 'EMAIL_VERIFIED', `user:${userId}`);
+  return { ok: true };
+};
+
+// The link in the email opens the site's /verify-email page, which POSTs the token. GET is accepted
+// too (e.g. for API clients), but it is a state change, so it is rate-limited the same way.
+authRouter.get('/verify-email', verifyLimiter, async (req, res) => {
+  const { token } = parse(verifyToken, req.query);
+  res.json(await verifyEmail(req, token));
+});
+
+authRouter.post('/verify-email', verifyLimiter, async (req, res) => {
+  const { token } = parse(verifyToken, req.body);
+  res.json(await verifyEmail(req, token));
+});
+
+authRouter.post('/resend-verification', resendLimiter, requireAuth, async (req, res) => {
+  const user = await prisma.user.findUniqueOrThrow({ where: { id: req.user!.id }, select: { emailVerifiedAt: true } });
+  if (user.emailVerifiedAt) {
+    res.json({ ok: true, alreadyVerified: true });
+    return;
+  }
+  // At most one new link per minute per account (on top of the per-IP limit).
+  const recent = await prisma.emailVerificationToken.count({
+    where: { userId: req.user!.id, createdAt: { gt: new Date(Date.now() - 60 * 1000) } },
+  });
+  if (recent > 0) throw new HttpError(429, 'TOO_MANY_REQUESTS');
+  await sendVerificationEmail(req.user!.id);
   res.json({ ok: true });
 });

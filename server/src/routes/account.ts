@@ -338,3 +338,32 @@ accountRouter.post('/delete-request', deleteLimiter, async (req, res) => {
   });
   res.json({ ok: true });
 });
+
+// ─── Passport validity (for the passport-expiry reminder) ──────────────
+
+accountRouter.get('/passport', async (req, res) => {
+  const u = await prisma.user.findUniqueOrThrow({ where: { id: req.user!.id }, select: { passportExpiry: true } });
+  res.json({ passportExpiry: u.passportExpiry ? u.passportExpiry.toISOString().slice(0, 10) : null });
+});
+
+accountRouter.patch('/passport', async (req, res) => {
+  const { passportExpiry } = parse(
+    z.object({
+      passportExpiry: z
+        .string()
+        .regex(/^\d{4}-\d{2}-\d{2}$/)
+        .refine((s) => {
+          const d = new Date(`${s}T00:00:00Z`);
+          return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === s && s >= '2000-01-01' && d.getTime() < Date.now() + 20 * 365 * 24 * 60 * 60 * 1000;
+        }, 'INVALID_DATE')
+        .nullable(),
+    }),
+    req.body ?? {},
+  );
+  const u = await prisma.user.update({
+    where: { id: req.user!.id },
+    data: { passportExpiry: passportExpiry ? new Date(`${passportExpiry}T00:00:00Z`) : null },
+    select: { passportExpiry: true },
+  });
+  res.json({ passportExpiry: u.passportExpiry ? u.passportExpiry.toISOString().slice(0, 10) : null });
+});

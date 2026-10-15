@@ -4,6 +4,9 @@ import { Prisma } from '@prisma/client';
 import { prisma } from '../../db.js';
 import { imageUpload, verifyUploadedFile } from '../../middleware/upload.js';
 import { badRequest, notFound, parse } from '../../lib/http.js';
+import { audit } from '../../lib/audit.js';
+import { LEGAL_SETTING_SCHEMAS } from '../../lib/legalSettings.js';
+import { retentionStatus } from '../../jobs/retention.js';
 
 export const adminContentRouter = Router();
 
@@ -194,10 +197,19 @@ adminSettingsRouter.get('/', async (_req, res) => {
   res.json({ settings: Object.fromEntries(settings.map((s) => [s.key, s.value])) });
 });
 
+/** DSGVO retention overview for Admin → Settings (period, schedule, cases due). */
+adminSettingsRouter.get('/retention-status', async (_req, res) => {
+  res.json(await retentionStatus());
+});
+
 adminSettingsRouter.put('/:key', async (req, res) => {
   const key = parse(z.string().regex(/^[a-zA-Z0-9_.-]{1,64}$/), req.params.key);
-  const { value } = parse(z.object({ value: z.unknown() }), req.body);
-  if (value === undefined) throw badRequest('VALUE_REQUIRED');
+  const body = parse(z.object({ value: z.unknown() }), req.body);
+  if (body.value === undefined) throw badRequest('VALUE_REQUIRED');
+  // Keys with a fixed shape (legal & security stream) are validated; others stay free-form.
+  const schema = LEGAL_SETTING_SCHEMAS[key];
+  const value = schema ? parse(schema, body.value) : body.value;
+  if (schema) await audit(req, 'SETTING_UPDATED', `setting:${key}`);
   const setting = await prisma.setting.upsert({
     where: { key },
     create: { key, value: value as object },

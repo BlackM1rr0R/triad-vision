@@ -115,7 +115,8 @@ const transition = async (
   await prisma.$transaction(async (tx) => {
     const res = await tx.case.updateMany({
       where: { id: caseId, status: { in: from } },
-      data: { ...opts.data, status: to },
+      // DSGVO retention clock: closedAt is set when a case reaches a final status and cleared on reopen.
+      data: { ...opts.data, status: to, closedAt: FINAL_STATUSES.includes(to) ? new Date() : null },
     });
     if (res.count === 0) throw conflict('INVALID_TRANSITION', `Cannot move case from ${current.status} to ${to}`);
     await tx.caseEvent.create({

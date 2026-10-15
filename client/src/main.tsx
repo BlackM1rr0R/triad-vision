@@ -4,6 +4,9 @@ import { BrowserRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MotionConfig } from 'framer-motion';
 import { Toaster } from 'sonner';
+// Fonts are bundled and served from our own domain (no requests to Google — DSGVO).
+import '@fontsource-variable/inter';
+import '@fontsource-variable/montserrat';
 import './i18n';
 import './index.css';
 import App from './App';

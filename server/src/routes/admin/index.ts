@@ -7,6 +7,13 @@ import { clearCache } from '../../lib/cache.js';
 import { adminCasesRouter } from './cases.js';
 import { adminContentRouter, adminSettingsRouter, adminUploadRouter } from './content.js';
 import { adminUsersRouter } from './users.js';
+import { adminCompaniesRouter } from './companies.js';
+import { adminVacanciesRouter } from './vacancies.js';
+import { adminCandidatesRouter } from './candidates.js';
+import { adminBookingRouter } from './booking.js';
+import { adminInvoicesRouter } from './invoices.js';
+import { adminReviewsRouter } from './reviews.js';
+import { adminAnalyticsRouter } from './analytics.js';
 import { oversightRouter } from './oversight.js';
 import { FINAL_STATUSES } from '../../lib/caseFlow.js';
 
@@ -77,10 +84,9 @@ adminRouter.get('/dashboard', async (req, res) => {
 });
 
 adminRouter.use('/oversight', oversightRouter);
-
-// Any successful CMS write must be visible on the public site right away.
+// Any successful CMS write (incl. vacancy, employer and review moderation) must be visible on the public site right away.
 // The cache is cleared before the response is sent, so the admin's next public read is already fresh.
-adminRouter.use(['/content', '/settings'], (req, res, next) => {
+adminRouter.use(['/content', '/settings', '/vacancies', '/companies', '/reviews'], (req, res, next) => {
   if (req.method !== 'GET') {
     const json = res.json.bind(res);
     res.json = (body) => {
@@ -93,6 +99,13 @@ adminRouter.use(['/content', '/settings'], (req, res, next) => {
 
 adminRouter.use('/cases', adminCasesRouter);
 adminRouter.use('/users', adminUsersRouter);
+adminRouter.use('/companies', adminCompaniesRouter);
+adminRouter.use('/vacancies', adminVacanciesRouter);
+adminRouter.use('/candidates', adminCandidatesRouter);
+adminRouter.use('/booking', adminBookingRouter);
+adminRouter.use('/invoices', requireMinRole('ADMIN'), adminInvoicesRouter);
+adminRouter.use('/reviews', adminReviewsRouter);
+adminRouter.use('/analytics', adminAnalyticsRouter);
 adminRouter.use('/upload', requireMinRole('ADMIN'), adminUploadRouter);
 adminRouter.use('/settings', requireMinRole('ADMIN'), adminSettingsRouter);
 adminRouter.use('/content', requireMinRole('ADMIN'), adminContentRouter);

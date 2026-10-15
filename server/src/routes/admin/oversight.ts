@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { z } from 'zod';
-import { Prisma, type Role } from '@prisma/client';
+import { Prisma, type DriveAccess, type Role } from '@prisma/client';
 import { prisma } from '../../db.js';
 import { requireMinRole } from '../../middleware/auth.js';
 import { notFound, parse } from '../../lib/http.js';
@@ -52,6 +52,9 @@ const addDailyMinutes = (into: Map<string, number>, s: SessionLite, now: number,
 const isOnline = (sessions: SessionLite[], now: number) =>
   sessions.some((s) => !s.revokedAt && s.expiresAt.getTime() > now && now - s.lastSeenAt.getTime() < ONLINE_MS);
 
+/** Drive levels mapped onto the three levels the oversight UI knows (VIEW / DOWNLOAD / EDIT). */
+const legacyAccess = (a: DriveAccess) => (a === 'VIEW' ? 'VIEW' : a === 'DOWNLOAD' || a === 'EXPORT' ? 'DOWNLOAD' : 'EDIT');
+
 const countBy = <K extends string>(rows: { key: K; n: number }[]) =>
   Object.fromEntries(rows.map((r) => [r.key, r.n])) as Record<K, number>;
 
@@ -92,6 +95,7 @@ oversightRouter.get('/summary', async (_req, res) => {
     filesByFolder,
     appointmentsNext7,
     waitingOverdue,
+    personalRoots,
   ] = await Promise.all([
     prisma.user.groupBy({ by: ['role'], _count: { _all: true } }),
     prisma.user.count({ where: { role: 'CLIENT', createdAt: { gte: since7 } } }),
@@ -104,14 +108,14 @@ oversightRouter.get('/summary', async (_req, res) => {
     prisma.inquiry.groupBy({ by: ['status'], _count: { _all: true } }),
     prisma.inquiry.groupBy({ by: ['kind'], _count: { _all: true } }),
     prisma.document.groupBy({ by: ['status'], _count: { _all: true } }),
-    prisma.docFile.aggregate({ _count: { _all: true }, _sum: { size: true } }),
-    prisma.docFolder.count(),
+    prisma.driveNode.aggregate({ where: { kind: 'FILE', deletedAt: null }, _count: { _all: true }, _sum: { size: true } }),
+    prisma.driveNode.count({ where: { kind: 'FOLDER', deletedAt: null, system: false } }),
     prisma.emailLog.groupBy({ by: ['status'], where: { createdAt: { gte: since30 } }, _count: { _all: true } }),
     prisma.auditLog.count({ where: { action: 'LOGIN_FAILED', createdAt: { gte: since1 } } }),
     prisma.auditLog.count({ where: { createdAt: { gte: since30 } } }),
     prisma.user.findMany({
       where: { role: { in: STAFF_ROLES } },
-      select: { id: true, firstName: true, lastName: true, email: true, role: true, isActive: true, createdAt: true, docFolder: { select: { id: true, slug: true } } },
+      select: { id: true, firstName: true, lastName: true, email: true, role: true, isActive: true, createdAt: true },
       orderBy: [{ role: 'desc' }, { firstName: 'asc' }],
     }),
     prisma.session.findMany({
@@ -121,13 +125,14 @@ oversightRouter.get('/summary', async (_req, res) => {
     prisma.caseEvent.groupBy({ by: ['actorId'], where: { createdAt: { gte: since30 }, actorId: { not: null } }, _count: { _all: true } }),
     prisma.caseMessage.groupBy({ by: ['authorId'], where: { createdAt: { gte: since30 } }, _count: { _all: true } }),
     prisma.caseEvent.groupBy({ by: ['actorId'], where: { createdAt: { gte: since30 }, type: { in: ['DOCUMENT_ACCEPTED', 'DOCUMENT_REJECTED'] } }, _count: { _all: true } }),
-    prisma.docFile.groupBy({ by: ['uploadedById'], where: { updatedAt: { gte: since30 } }, _count: { _all: true } }),
+    prisma.driveNode.groupBy({ by: ['createdById'], where: { kind: 'FILE', createdAt: { gte: since30 } }, _count: { _all: true } }),
     prisma.auditLog.groupBy({ by: ['actorId'], where: { createdAt: { gte: since30 }, actorId: { not: null }, action: { not: 'LOGIN_FAILED' } }, _count: { _all: true } }),
     prisma.case.groupBy({ by: ['assignedStaffId'], where: { assignedStaffId: { not: null }, status: { notIn: FINAL_STATUSES } }, _count: { _all: true } }),
     prisma.case.groupBy({ by: ['assignedStaffId'], where: { assignedStaffId: { not: null }, status: { in: FINAL_STATUSES } }, _count: { _all: true } }),
-    prisma.docFile.groupBy({ by: ['folderId'], _count: { _all: true }, _sum: { size: true }, _max: { updatedAt: true } }),
+    prisma.driveNode.groupBy({ by: ['ownerId'], where: { space: 'PERSONAL', kind: 'FILE', deletedAt: null }, _count: { _all: true }, _sum: { size: true }, _max: { updatedAt: true } }),
     prisma.case.count({ where: { status: 'APPOINTMENT_SCHEDULED', appointmentAt: { gte: new Date(now), lte: daysAgo(-7) } } }),
     prisma.case.count({ where: { status: { in: ['DOCUMENTS_REVIEW', 'CONTRACT_SIGNED', 'EMBASSY_REVIEW'] }, updatedAt: { lt: daysAgo(3) } } }),
+    prisma.driveNode.findMany({ where: { space: 'PERSONAL', parentId: null }, select: { id: true, name: true, ownerId: true } }),
   ]);
 
   const sessionsByUser = new Map<string, SessionLite[]>();
@@ -141,17 +146,20 @@ oversightRouter.get('/summary', async (_req, res) => {
   const events = byKey(eventsByActor30, (r) => r.actorId);
   const messages = byKey(messagesByAuthor30, (r) => r.authorId);
   const reviews = byKey(reviewsByActor30, (r) => r.actorId);
-  const uploads = byKey(uploadsByUser30, (r) => r.uploadedById);
+  const uploads = byKey(uploadsByUser30, (r) => r.createdById);
   const audits = byKey(auditByActor30, (r) => r.actorId);
   const open = byKey(assignedOpen, (r) => r.assignedStaffId);
   const closed = byKey(assignedClosed, (r) => r.assignedStaffId);
-  const files = new Map(filesByFolder.map((f) => [f.folderId, { count: f._count._all, bytes: f._sum.size ?? 0, lastUploadAt: f._max.updatedAt }]));
+  // Team drive: each staff member's "My files" root and what is in it.
+  const files = new Map(filesByFolder.map((f) => [f.ownerId, { count: f._count._all, bytes: f._sum.size ?? 0, lastUploadAt: f._max.updatedAt }]));
+  const rootOf = new Map(personalRoots.map((r) => [r.ownerId, r]));
 
   const staff = staffUsers.map((u) => {
     const sess = sessionsByUser.get(u.id) ?? [];
     const last7 = sess.filter((s) => sessionEnd(s, now) >= since7.getTime());
     const lastSeenAt = sess.reduce<Date | null>((m, s) => (!m || s.lastSeenAt > m ? s.lastSeenAt : m), null);
-    const ws = u.docFolder ? files.get(u.docFolder.id) : undefined;
+    const root = rootOf.get(u.id);
+    const ws = files.get(u.id);
     return {
       id: u.id,
       firstName: u.firstName,
@@ -177,7 +185,7 @@ oversightRouter.get('/summary', async (_req, res) => {
       adminActions30d: audits.get(u.id) ?? 0,
       assignedOpen: open.get(u.id) ?? 0,
       assignedClosed: closed.get(u.id) ?? 0,
-      workspace: u.docFolder ? { folderId: u.docFolder.id, slug: u.docFolder.slug, files: ws?.count ?? 0, bytes: ws?.bytes ?? 0, lastUploadAt: ws?.lastUploadAt ?? null } : null,
+      workspace: root ? { folderId: root.id, slug: root.name, files: ws?.count ?? 0, bytes: ws?.bytes ?? 0, lastUploadAt: ws?.lastUploadAt ?? null } : null,
     };
   });
 
@@ -252,7 +260,7 @@ oversightRouter.get('/activity', async (req, res) => {
     dailyCounts('Inquiry', 'createdAt', since),
     dailyCounts('User', 'createdAt', since, Prisma.sql`AND role = 'CLIENT'`),
     dailyCounts('Case', 'createdAt', since),
-    dailyCounts('DocFile', 'createdAt', since),
+    dailyCounts('DriveNode', 'createdAt', since, Prisma.sql`AND kind = 'FILE'`),
     dailyCounts('AuditLog', 'createdAt', since, Prisma.sql`AND action = 'LOGIN_FAILED'`),
     prisma.session.findMany({
       where: { user: { role: { in: STAFF_ROLES } }, OR: [{ createdAt: { gte: since } }, { lastSeenAt: { gte: since } }] },
@@ -292,11 +300,13 @@ oversightRouter.get('/staff/:id', async (req, res) => {
     where: { id },
     select: {
       id: true, firstName: true, lastName: true, email: true, phone: true, role: true, isActive: true, locale: true, createdAt: true,
-      docFolder: { select: { id: true, slug: true, createdAt: true, _count: { select: { files: true, grants: true } } } },
-      _count: { select: { assignedCases: true, events: true, messages: true, documents: true, docFiles: true, auditLogs: true, sessions: true } },
+      _count: {
+        select: { assignedCases: true, events: true, messages: true, documents: true, auditLogs: true, sessions: true, driveNodesCreated: { where: { kind: 'FILE' } } },
+      },
     },
   });
   if (!user || !STAFF_ROLES.includes(user.role)) throw notFound('USER_NOT_FOUND');
+  const root = await prisma.driveNode.findFirst({ where: { space: 'PERSONAL', ownerId: id, parentId: null }, select: { id: true, name: true } });
 
   const [sessions, events, audit, assigned, wsBytes, grantsOut, grantsIn, eventTypes30, reviewed] = await Promise.all([
     prisma.session.findMany({ where: { userId: id }, orderBy: { createdAt: 'desc' }, take: 60, select: { id: true, userId: true, client: true, ip: true, userAgent: true, createdAt: true, lastSeenAt: true, revokedAt: true, expiresAt: true } }),
@@ -312,9 +322,12 @@ oversightRouter.get('/staff/:id', async (req, res) => {
       orderBy: { updatedAt: 'desc' },
       select: { id: true, number: true, status: true, profession: true, updatedAt: true, createdAt: true, client: { select: { firstName: true, lastName: true } } },
     }),
-    user.docFolder ? prisma.docFile.aggregate({ where: { folderId: user.docFolder.id }, _sum: { size: true }, _max: { updatedAt: true } }) : Promise.resolve(null),
-    user.docFolder ? prisma.docGrant.findMany({ where: { folderId: user.docFolder.id }, select: { access: true, user: { select: { id: true, firstName: true, lastName: true } } } }) : Promise.resolve([]),
-    prisma.docGrant.findMany({ where: { userId: id }, select: { access: true, folder: { select: { id: true, slug: true, owner: { select: { firstName: true, lastName: true } } } } } }),
+    prisma.driveNode.aggregate({ where: { space: 'PERSONAL', ownerId: id, kind: 'FILE', deletedAt: null }, _count: { _all: true }, _sum: { size: true }, _max: { updatedAt: true } }),
+    root ? prisma.driveGrant.findMany({ where: { nodeId: root.id, userId: { not: null } }, select: { access: true, user: { select: { id: true, firstName: true, lastName: true } } } }) : Promise.resolve([]),
+    prisma.driveGrant.findMany({
+      where: { userId: id, node: { deletedAt: null } },
+      select: { access: true, node: { select: { id: true, name: true, owner: { select: { firstName: true, lastName: true } } } } },
+    }),
     prisma.caseEvent.groupBy({ by: ['type'], where: { actorId: id, createdAt: { gte: since30 } }, _count: { _all: true } }),
     prisma.caseEvent.groupBy({ by: ['type'], where: { actorId: id, type: { in: ['DOCUMENT_ACCEPTED', 'DOCUMENT_REJECTED'] } }, _count: { _all: true } }),
   ]);
@@ -330,8 +343,8 @@ oversightRouter.get('/staff/:id', async (req, res) => {
   for (const e of events) hourHistogram[e.createdAt.getUTCHours()] += 1;
 
   res.json({
-    user: { ...user, docFolder: undefined, _count: undefined },
-    totals: user._count,
+    user: { ...user, _count: undefined },
+    totals: { ...user._count, driveNodesCreated: undefined, docFiles: user._count.driveNodesCreated },
     online: isOnline(sessions, now),
     lastSeenAt: sessions[0]?.lastSeenAt ?? null,
     activeMinutes30d: Math.round(sessions.filter((s) => sessionEnd(s, now) >= since30.getTime()).reduce((a, s) => a + Math.max(s.createdAt >= since30 ? MIN_SESSION_MS : 0, sessionEnd(s, now) - Math.max(s.createdAt.getTime(), since30.getTime())) / 60000, 0)),
@@ -343,15 +356,19 @@ oversightRouter.get('/staff/:id', async (req, res) => {
     events,
     audit,
     assignedCases: { open: assigned.filter((c) => !FINAL_STATUSES.includes(c.status)), closed: assigned.filter((c) => FINAL_STATUSES.includes(c.status)) },
-    workspace: user.docFolder
+    // Team drive: the person's "My files" root, who it is shared with and what was shared with them.
+    workspace: root
       ? {
-          folderId: user.docFolder.id,
-          slug: user.docFolder.slug,
-          files: user.docFolder._count.files,
-          bytes: wsBytes?._sum.size ?? 0,
-          lastUploadAt: wsBytes?._max.updatedAt ?? null,
-          sharedWith: grantsOut,
-          accessTo: grantsIn.map((g) => ({ access: g.access, folder: g.folder })),
+          folderId: root.id,
+          slug: root.name,
+          files: wsBytes._count._all,
+          bytes: wsBytes._sum.size ?? 0,
+          lastUploadAt: wsBytes._max.updatedAt ?? null,
+          sharedWith: grantsOut.map((g) => ({ access: legacyAccess(g.access), user: g.user })),
+          accessTo: grantsIn.map((g) => ({
+            access: legacyAccess(g.access),
+            folder: { id: g.node.id, slug: g.node.name, owner: g.node.owner ?? { firstName: g.node.name, lastName: '' } },
+          })),
         }
       : null,
   });

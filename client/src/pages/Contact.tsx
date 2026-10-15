@@ -6,6 +6,7 @@ import { InquiryForm } from '@/components/InquiryForm';
 import { useSiteContent } from '@/lib/content';
 import { useL10n } from '@/lib/l10n';
 import { usePageTitle } from '@/lib/usePageTitle';
+import { BookingCta } from '@/components/booking/BookingCta';
 
 export default function Contact() {
   const { t } = useTranslation();
@@ -89,6 +90,9 @@ export default function Contact() {
           </div>
         </div>
       </section>
+
+      {/* Free consultation booking (booking stream) */}
+      <BookingCta />
     </>
   );
 }

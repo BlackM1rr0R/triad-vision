@@ -114,15 +114,29 @@ adminCasesRouter.patch('/:id', async (req, res) => {
       profession: z.string().trim().min(2).max(120).optional(),
       visaCategoryId: z.string().nullable().optional(),
       assignedStaffId: z.string().nullable().optional(),
+      // Employer / vacancy this candidate is placed with (company portal "our workers").
+      companyId: z.string().max(40).nullable().optional(),
+      vacancyId: z.string().max(40).nullable().optional(),
     }),
     req.body,
   );
   if (body.assignedStaffId) {
     const staff = await prisma.user.findUnique({ where: { id: body.assignedStaffId } });
-    if (!staff || staff.role === 'CLIENT') throw badRequest('INVALID_STAFF');
+    if (!staff || staff.role === 'CLIENT' || staff.role === 'COMPANY') throw badRequest('INVALID_STAFF');
   }
   if (body.visaCategoryId && !(await prisma.visaCategory.count({ where: { id: body.visaCategoryId } }))) {
     throw badRequest('INVALID_VISA_CATEGORY');
+  }
+  if (body.companyId && !(await prisma.company.count({ where: { id: body.companyId } }))) throw badRequest('INVALID_COMPANY');
+  if (body.vacancyId) {
+    const vacancy = await prisma.vacancy.findUnique({ where: { id: body.vacancyId }, select: { companyId: true } });
+    if (!vacancy) throw badRequest('INVALID_VACANCY');
+    if (body.companyId === undefined) {
+      // Linking a vacancy implies its employer.
+      if (vacancy.companyId) body.companyId = vacancy.companyId;
+    } else if (vacancy.companyId && vacancy.companyId !== body.companyId) {
+      throw badRequest('VACANCY_COMPANY_MISMATCH');
+    }
   }
   const updated = await prisma.case.update({ where: { id: req.params.id }, data: body });
   await prisma.caseEvent.create({

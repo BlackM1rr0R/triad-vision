@@ -1,4 +1,6 @@
 import { Suspense, useState } from 'react';
+import { TrackBeacon } from '../analytics/TrackBeacon';
+import { SeoManager } from '@/lib/usePageTitle';
 import { useTranslation } from 'react-i18next';
 import { Outlet, useLocation } from 'react-router-dom';
 import { AnimatePresence, motion, useMotionValueEvent, useScroll } from 'framer-motion';
@@ -114,6 +116,8 @@ export const SiteLayout = () => {
       <Footer />
       <FloatingActions />
       <SearchPalette />
+      <TrackBeacon />
+      <SeoManager />
       <CookieNotice />
     </>
   );

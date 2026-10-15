@@ -59,6 +59,10 @@ describe('POST /api/auth/register', () => {
       emailNotifications: true,
       pushNotifications: true,
       createdAt: expect.any(String),
+      // new accounts must confirm their email; 2FA is optional for candidates
+      emailVerified: false,
+      twoFactorEnabled: false,
+      twoFactorRequired: false,
     });
     expect(res.body.user.passwordHash).toBeUndefined();
     const cookie = sessionCookie(res);

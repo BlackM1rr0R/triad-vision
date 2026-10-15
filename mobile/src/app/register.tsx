@@ -3,7 +3,7 @@ import { View } from 'react-native';
 import { router } from 'expo-router';
 import { UserPlus } from '@/components/icons';
 import { useTranslation } from 'react-i18next';
-import { Button, Field, Text } from '@/components/ui';
+import { Button, Field, Text, useToast } from '@/components/ui';
 import { AuthShell, LinkText } from '@/features/auth/AuthShell';
 import { useAuth } from '@/lib/auth';
 import { haptic } from '@/lib/haptics';
@@ -15,6 +15,7 @@ export default function Register() {
   const { t } = useTranslation();
   const { register } = useAuth();
   const message = useErrorMessage();
+  const toast = useToast();
   const [form, setForm] = useState({ firstName: '', lastName: '', email: '', phone: '', password: '' });
   const [errors, setErrors] = useState<Partial<Record<keyof typeof form | 'form', string>>>({});
   const [busy, setBusy] = useState(false);
@@ -33,8 +34,10 @@ export default function Register() {
     }
     setBusy(true);
     try {
-      await register(form);
+      const user = await register(form);
       haptic.success();
+      // New accounts must confirm their email before starting a visa application.
+      if ((user as { emailVerified?: boolean }).emailVerified === false) toast(t('m.verify.checkInbox', { email: user.email }), 'info', 8000);
       router.replace('/');
     } catch (err) {
       haptic.error();

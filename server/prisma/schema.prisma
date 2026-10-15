@@ -11,6 +11,7 @@ datasource db {
 
 enum Role {
   CLIENT
+  COMPANY // employer account (belongs to a Company)
   STAFF
   ADMIN
   SUPER_ADMIN
@@ -24,33 +25,42 @@ enum Locale {
 }
 
 model User {
-  id                 String               @id @default(cuid())
-  email              String               @unique
+  id                 String                   @id @default(cuid())
+  email              String                   @unique
   passwordHash       String
-  role               Role                 @default(CLIENT)
+  role               Role                     @default(CLIENT)
   firstName          String
   lastName           String
   phone              String?
-  locale             Locale               @default(az)
-  isActive           Boolean              @default(true)
+  locale             Locale                   @default(az)
+  isActive           Boolean                  @default(true)
   // Candidate profile (all optional, filled in the portal)
   birthDate          DateTime?
   nationality        String?
   city               String?
-  address            String?              @db.Text
+  address            String?                  @db.Text
   profession         String?
   experienceYears    Int?
   germanLevel        String? // none | A1 | A2 | B1 | B2 | C1 | C2
   education          String? // school | vocational | university
   drivingLicence     String? // e.g. "B, C, CE"
-  about              String?              @db.Text
+  about              String?                  @db.Text
   // Notification preferences (in-app notifications are always kept)
-  emailNotifications Boolean              @default(true)
-  pushNotifications  Boolean              @default(true)
-  createdAt          DateTime             @default(now())
-  updatedAt          DateTime             @updatedAt
-  cases              Case[]               @relation("CaseClient")
-  assignedCases      Case[]               @relation("CaseStaff")
+  emailNotifications Boolean                  @default(true)
+  pushNotifications  Boolean                  @default(true)
+  passportExpiry     DateTime? // for the passport-expiry reminder
+  // Email verification and two-factor authentication
+  emailVerifiedAt    DateTime?
+  totpSecret         String?                  @db.Text // encrypted with the server key; set while enrolling
+  totpEnabledAt      DateTime?
+  recoveryCodes      Json? // sha256 hashes of unused one-time recovery codes
+  // Employer accounts
+  companyId          String?
+  company            Company?                 @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  createdAt          DateTime                 @default(now())
+  updatedAt          DateTime                 @updatedAt
+  cases              Case[]                   @relation("CaseClient")
+  assignedCases      Case[]                   @relation("CaseStaff")
   notifications      Notification[]
   events             CaseEvent[]
   messages           CaseMessage[]
@@ -60,9 +70,26 @@ model User {
   sessions           Session[]
   auditLogs          AuditLog[]
   docFolder          DocFolder?
-  docGrants          DocGrant[]           @relation("GrantUser")
-  grantsGiven        DocGrant[]           @relation("GrantedBy")
+  docGrants          DocGrant[]               @relation("GrantUser")
+  grantsGiven        DocGrant[]               @relation("GrantedBy")
   docFiles           DocFile[]
+  verifyTokens       EmailVerificationToken[]
+  applications       VacancyApplication[]
+  bookings           Booking[]                @relation("BookingUser")
+  slots              ConsultationSlot[]       @relation("SlotStaff")
+  reviews            Review[]
+  driveNodesCreated  DriveNode[]              @relation("DriveNodeCreatedBy")
+  driveNodesOwned    DriveNode[]              @relation("DriveNodeOwner")
+  driveNodesDeleted  DriveNode[]              @relation("DriveNodeDeletedBy")
+  driveGrants        DriveGrant[]             @relation("DriveGrantUser")
+  driveGrantsGiven   DriveGrant[]             @relation("DriveGrantGivenBy")
+  driveVersions      DriveFileVersion[]
+  driveFavorites     DriveFavorite[]
+  tasksCreated       Task[]                   @relation("TaskCreatedBy")
+  taskAssignments    TaskAssignee[]
+  taskComments       TaskComment[]
+
+  @@index([companyId])
 }
 
 /// Server-side login session. The JWT only carries the session id, so a session can be revoked
@@ -219,35 +246,44 @@ enum DocStatus {
 }
 
 model Case {
-  id               String                @id @default(cuid())
-  number           String                @unique
-  clientId         String
-  client           User                  @relation("CaseClient", fields: [clientId], references: [id], onDelete: Cascade)
-  assignedStaffId  String?
-  assignedStaff    User?                 @relation("CaseStaff", fields: [assignedStaffId], references: [id], onDelete: SetNull)
-  visaCategoryId   String?
-  visaCategory     VisaCategory?         @relation(fields: [visaCategoryId], references: [id], onDelete: SetNull)
-  profession       String
-  status           CaseStatus            @default(DOCUMENTS_PENDING)
-  staffNote        String?               @db.Text // latest note visible to client (e.g. what to fix)
-  appointmentAt    DateTime?
-  appointmentPlace String?               @db.Text
-  decisionAt       DateTime?
-  decisionReason   String?               @db.Text // rejection reason or approval remark
-  visaValidFrom    DateTime?
-  visaValidTo      DateTime?
-  cancelReason     String?               @db.Text
-  createdAt        DateTime              @default(now())
-  updatedAt        DateTime              @updatedAt
-  requirements     DocumentRequirement[]
-  documents        Document[]
-  contract         Contract?
-  events           CaseEvent[]
-  messages         CaseMessage[]
-  notifications    Notification[]
+  id                String                @id @default(cuid())
+  number            String                @unique
+  clientId          String
+  client            User                  @relation("CaseClient", fields: [clientId], references: [id], onDelete: Cascade)
+  assignedStaffId   String?
+  assignedStaff     User?                 @relation("CaseStaff", fields: [assignedStaffId], references: [id], onDelete: SetNull)
+  visaCategoryId    String?
+  visaCategory      VisaCategory?         @relation(fields: [visaCategoryId], references: [id], onDelete: SetNull)
+  profession        String
+  status            CaseStatus            @default(DOCUMENTS_PENDING)
+  staffNote         String?               @db.Text // latest note visible to client (e.g. what to fix)
+  appointmentAt     DateTime?
+  appointmentPlace  String?               @db.Text
+  decisionAt        DateTime?
+  decisionReason    String?               @db.Text // rejection reason or approval remark
+  visaValidFrom     DateTime?
+  visaValidTo       DateTime?
+  cancelReason      String?               @db.Text
+  companyId         String? // employer this candidate is placed with (company portal visibility)
+  company           Company?              @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  vacancyId         String?
+  vacancy           Vacancy?              @relation(fields: [vacancyId], references: [id], onDelete: SetNull)
+  closedAt          DateTime? // set when the case reaches APPROVED / REJECTED / CANCELLED
+  documentsPurgedAt DateTime? // DSGVO retention: files deleted after the retention period
+  createdAt         DateTime              @default(now())
+  updatedAt         DateTime              @updatedAt
+  requirements      DocumentRequirement[]
+  documents         Document[]
+  contract          Contract?
+  events            CaseEvent[]
+  messages          CaseMessage[]
+  notifications     Notification[]
+  tasks             Task[]
 
   @@index([clientId])
   @@index([status])
+  @@index([companyId])
+  @@index([closedAt])
 }
 
 model DocumentRequirement {
@@ -356,10 +392,10 @@ model EmailLog {
 // ─── Website content (CMS) ─────────────────────────────────────────────
 
 model VisaCategory {
-  id            String   @id @default(cuid())
-  slug          String   @unique
+  id            String    @id @default(cuid())
+  slug          String    @unique
   icon          String // lucide icon name
-  image         String   @db.Text
+  image         String    @db.Text
   visaLabel     String // e.g. "§18b", "§16d", "Saisonarbeit"
   title         Json
   summary       Json
@@ -375,11 +411,12 @@ model VisaCategory {
   requirements  Json? // L10nList
   documents     Json? // L10nList
   faq           Json? // { q: L10n, a: L10n }[]
-  sortOrder     Int      @default(0)
-  published     Boolean  @default(true)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  sortOrder     Int       @default(0)
+  published     Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
   cases         Case[]
+  vacancies     Vacancy[]
 }
 
 model Service {
@@ -492,4 +529,448 @@ model Inquiry {
 model Setting {
   key   String @id
   value Json
+}
+
+// ─── Email verification ──────────────────────────────────────────────
+
+model EmailVerificationToken {
+  id        String    @id @default(cuid())
+  tokenHash String    @unique
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
+}
+
+// ─── Employers, vacancies, applications ──────────────────────────────
+
+enum CompanyStatus {
+  PENDING // registered, waiting for staff approval
+  ACTIVE
+  SUSPENDED
+}
+
+model Company {
+  id          String        @id @default(cuid())
+  name        String
+  legalForm   String?
+  sector      String? // logistics | courier | industry | construction | hospitality | healthcare | agriculture | other
+  city        String?
+  address     String?       @db.Text
+  vatId       String?
+  website     String?       @db.Text
+  contactName String?
+  phone       String?
+  email       String?
+  status      CompanyStatus @default(PENDING)
+  note        String?       @db.Text // internal staff note
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  users       User[]
+  vacancies   Vacancy[]
+  cases       Case[]
+  invoices    Invoice[]
+
+  @@index([status])
+}
+
+enum VacancyStatus {
+  DRAFT
+  PENDING // submitted by a company, waiting for staff review
+  OPEN
+  CLOSED
+}
+
+enum EmploymentType {
+  FULL_TIME
+  PART_TIME
+  SEASONAL
+  AUSBILDUNG
+}
+
+model Vacancy {
+  id             String               @id @default(cuid())
+  slug           String               @unique
+  companyId      String?
+  company        Company?             @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  visaCategoryId String?
+  visaCategory   VisaCategory?        @relation(fields: [visaCategoryId], references: [id], onDelete: SetNull)
+  title          Json // L10n
+  description    Json // L10n
+  requirements   Json? // L10nList
+  benefits       Json? // L10nList
+  sector         String?
+  city           String?
+  profession     String? // normalised profession used for matching
+  germanLevel    String? // minimum: none | A1 | A2 | B1 | B2 | C1 | C2
+  minExperience  Int?
+  drivingLicence String? // e.g. "CE"
+  salaryMin      Int? // EUR gross per month
+  salaryMax      Int?
+  positions      Int                  @default(1)
+  employmentType EmploymentType       @default(FULL_TIME)
+  showCompany    Boolean              @default(false) // publish the employer's name on the public board
+  status         VacancyStatus        @default(DRAFT)
+  publishedAt    DateTime?
+  closesAt       DateTime?
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
+  applications   VacancyApplication[]
+  cases          Case[]
+
+  @@index([status, publishedAt])
+  @@index([companyId])
+}
+
+enum ApplicationStatus {
+  NEW
+  SHORTLISTED
+  PROPOSED // shown to the employer
+  INTERVIEW
+  ACCEPTED
+  REJECTED
+  WITHDRAWN
+}
+
+model VacancyApplication {
+  id          String            @id @default(cuid())
+  vacancyId   String
+  vacancy     Vacancy           @relation(fields: [vacancyId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status      ApplicationStatus @default(NEW)
+  matchScore  Int? // 0–100 at the time of applying / last recompute
+  message     String?           @db.Text // candidate's note
+  staffNote   String?           @db.Text // internal
+  companyNote String?           @db.Text // employer feedback
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  @@unique([vacancyId, userId])
+  @@index([userId])
+  @@index([status])
+}
+
+// ─── Consultation booking ────────────────────────────────────────────
+
+model ConsultationSlot {
+  id        String   @id @default(cuid())
+  staffId   String
+  staff     User     @relation("SlotStaff", fields: [staffId], references: [id], onDelete: Cascade)
+  startsAt  DateTime
+  endsAt    DateTime
+  createdAt DateTime @default(now())
+  booking   Booking?
+
+  @@unique([staffId, startsAt])
+  @@index([startsAt])
+}
+
+enum BookingStatus {
+  BOOKED
+  CANCELLED
+  DONE
+  NO_SHOW
+}
+
+model Booking {
+  id          String           @id @default(cuid())
+  slotId      String           @unique
+  slot        ConsultationSlot @relation(fields: [slotId], references: [id], onDelete: Cascade)
+  userId      String?
+  user        User?            @relation("BookingUser", fields: [userId], references: [id], onDelete: SetNull)
+  name        String
+  email       String
+  phone       String?
+  topic       String? // candidate | company | other
+  message     String?          @db.Text
+  locale      String           @default("az")
+  meetingUrl  String           @db.Text
+  manageToken String           @unique // sha256 of the cancel link token
+  status      BookingStatus    @default(BOOKED)
+  createdAt   DateTime         @default(now())
+
+  @@index([email])
+}
+
+// ─── Invoices ─────────────────────────────────────────────────────────
+
+enum InvoiceStatus {
+  DRAFT
+  SENT
+  PAID
+  OVERDUE
+  CANCELLED
+}
+
+model Invoice {
+  id         String        @id @default(cuid())
+  number     String        @unique // e.g. TV-RE-2026-0001
+  companyId  String
+  company    Company       @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  issueDate  DateTime
+  dueDate    DateTime
+  currency   String        @default("EUR")
+  items      Json // { description, quantity, unitPriceCents }[]
+  netCents   Int
+  vatRate    Int           @default(19) // percent
+  vatCents   Int
+  grossCents Int
+  status     InvoiceStatus @default(DRAFT)
+  sentAt     DateTime?
+  paidAt     DateTime?
+  note       String?       @db.Text
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+
+  @@index([companyId])
+  @@index([status, dueDate])
+}
+
+// ─── Reviews (collected after a visa approval) ───────────────────────
+
+enum ReviewStatus {
+  REQUESTED // invitation sent, not answered yet
+  PENDING // submitted, waiting for moderation
+  APPROVED
+  REJECTED
+}
+
+model Review {
+  id             String       @id @default(cuid())
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  caseId         String       @unique
+  tokenHash      String       @unique // link in the invitation email
+  rating         Int? // 1–5
+  text           String?      @db.Text
+  displayName    String? // e.g. "Ali M., truck driver"
+  consentPublish Boolean      @default(false)
+  locale         String       @default("az")
+  status         ReviewStatus @default(REQUESTED)
+  createdAt      DateTime     @default(now())
+  submittedAt    DateTime?
+
+  @@index([status])
+}
+
+// ─── Scheduled jobs and privacy-friendly analytics ───────────────────
+
+/// One row per reminder actually sent, so a job never sends the same reminder twice.
+model ReminderLog {
+  id     String   @id @default(cuid())
+  key    String   @unique // e.g. "appointment-24h:<caseId>:<appointmentAt ISO>"
+  sentAt DateTime @default(now())
+}
+
+/// Aggregated daily counters (no cookies, no IPs, no user ids) for the conversion funnel.
+model AnalyticsDaily {
+  id     String   @id @default(cuid())
+  day    DateTime @db.Date
+  metric String // visit | register | email_verified | case_created | approved | inquiry | booking | vacancy_apply
+  source String   @default("") // utm_source / referrer host, lower-cased, max 60 chars
+  count  Int      @default(0)
+
+  @@unique([day, metric, source])
+  @@index([metric, day])
+}
+
+// ─── Team workspace: drive (folders/files with inherited permissions) ───
+
+enum DriveSpace {
+  SHARED // the company drive everyone in the team works in
+  PERSONAL // one root per staff member ("My files")
+  CASES // system root; per-case sub-folders are virtual (built from Case/Document)
+}
+
+enum DriveNodeKind {
+  FOLDER
+  FILE
+}
+
+/// Ordered from least to most. Each level includes everything below it.
+enum DriveAccess {
+  VIEW // see the folder and preview files in the browser
+  DOWNLOAD // VIEW + download single files
+  EXPORT // DOWNLOAD + download whole folders as ZIP
+  EDIT // EXPORT + upload, create folders, rename, move, delete (to trash), new versions
+  MANAGE // EDIT + change who has access to this folder
+}
+
+/// One folder or file. Files are stored on disk under <DOCS_DIR>/drive/<storageKey> (renames and moves
+/// never touch the disk). Sibling names are unique among non-deleted nodes (enforced in code).
+model DriveNode {
+  id                 String             @id @default(cuid())
+  space              DriveSpace
+  kind               DriveNodeKind
+  parentId           String?
+  parent             DriveNode?         @relation("DriveTree", fields: [parentId], references: [id], onDelete: Cascade)
+  children           DriveNode[]        @relation("DriveTree")
+  name               String             @db.VarChar(255)
+  /// PERSONAL space: the staff member whose "My files" this is (set on every node of that tree).
+  ownerId            String?
+  owner              User?              @relation("DriveNodeOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  /// false = permissions are NOT inherited from the parent (only grants from this node down apply).
+  inheritPermissions Boolean            @default(true)
+  /// System nodes (space roots) cannot be renamed, moved or deleted.
+  system             Boolean            @default(false)
+  color              String?            @db.VarChar(20) // folder colour in the explorer
+  // File fields (kind = FILE)
+  storageKey         String?            @unique
+  mimeType           String?
+  size               Int?
+  version            Int                @default(1)
+  createdById        String?
+  createdBy          User?              @relation("DriveNodeCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+  /// Recycle bin: set when deleted; purged for good after the trash period.
+  deletedAt          DateTime?
+  deletedById        String?
+  deletedBy          User?              @relation("DriveNodeDeletedBy", fields: [deletedById], references: [id], onDelete: SetNull)
+  grants             DriveGrant[]
+  versions           DriveFileVersion[]
+  favorites          DriveFavorite[]
+  taskLinks          TaskAttachment[]
+
+  @@index([parentId, deletedAt])
+  @@index([space, ownerId])
+  @@index([deletedAt])
+  @@index([name])
+}
+
+/// Access to a node (and, by inheritance, everything below it) for one user OR every user of a role.
+model DriveGrant {
+  id          String      @id @default(cuid())
+  nodeId      String
+  node        DriveNode   @relation(fields: [nodeId], references: [id], onDelete: Cascade)
+  userId      String?
+  user        User?       @relation("DriveGrantUser", fields: [userId], references: [id], onDelete: Cascade)
+  role        Role? // e.g. STAFF = everyone on the team with that role (and above)
+  access      DriveAccess
+  grantedById String?
+  grantedBy   User?       @relation("DriveGrantGivenBy", fields: [grantedById], references: [id], onDelete: SetNull)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@unique([nodeId, userId])
+  @@unique([nodeId, role])
+  @@index([userId])
+}
+
+/// Previous versions of a file (the current one lives on the node itself).
+model DriveFileVersion {
+  id           String    @id @default(cuid())
+  nodeId       String
+  node         DriveNode @relation(fields: [nodeId], references: [id], onDelete: Cascade)
+  version      Int
+  storageKey   String    @unique
+  mimeType     String
+  size         Int
+  uploadedById String?
+  uploadedBy   User?     @relation(fields: [uploadedById], references: [id], onDelete: SetNull)
+  createdAt    DateTime  @default(now())
+
+  @@unique([nodeId, version])
+}
+
+model DriveFavorite {
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  nodeId    String
+  node      DriveNode @relation(fields: [nodeId], references: [id], onDelete: Cascade)
+  createdAt DateTime  @default(now())
+
+  @@id([userId, nodeId])
+}
+
+// ─── Team workspace: tasks ─────────────────────────────────────────────
+
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  REVIEW
+  DONE
+  CANCELLED
+}
+
+enum TaskPriority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
+model Task {
+  id          String              @id @default(cuid())
+  number      Int                 @unique // shown as T-0001; assigned as max+1 in code
+  title       String              @db.VarChar(200)
+  description String?             @db.Text
+  status      TaskStatus          @default(TODO)
+  priority    TaskPriority        @default(NORMAL)
+  startAt     DateTime?
+  dueAt       DateTime? // deadline: by when it must be solved
+  completedAt DateTime?
+  sortOrder   Int                 @default(0) // order inside a board column
+  caseId      String? // optional link to a visa case
+  case        Case?               @relation(fields: [caseId], references: [id], onDelete: SetNull)
+  createdById String?
+  createdBy   User?               @relation("TaskCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+  assignees   TaskAssignee[]
+  comments    TaskComment[]
+  checklist   TaskChecklistItem[]
+  attachments TaskAttachment[]
+
+  @@index([status, dueAt])
+  @@index([caseId])
+}
+
+model TaskAssignee {
+  taskId    String
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@id([taskId, userId])
+  @@index([userId])
+}
+
+model TaskComment {
+  id        String   @id @default(cuid())
+  taskId    String
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  authorId  String?
+  author    User?    @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  body      String   @db.Text
+  /// System entries ("status changed to Done") render as activity, not as a comment bubble.
+  system    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([taskId, createdAt])
+}
+
+model TaskChecklistItem {
+  id        String  @id @default(cuid())
+  taskId    String
+  task      Task    @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  text      String  @db.VarChar(300)
+  done      Boolean @default(false)
+  sortOrder Int     @default(0)
+}
+
+/// A drive file or folder linked to a task.
+model TaskAttachment {
+  taskId    String
+  task      Task      @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  nodeId    String
+  node      DriveNode @relation(fields: [nodeId], references: [id], onDelete: Cascade)
+  createdAt DateTime  @default(now())
+
+  @@id([taskId, nodeId])
 }

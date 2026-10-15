@@ -3,6 +3,11 @@ import type { Messages } from './az';
 const en: Messages = {
   meta: { lang: 'English', short: 'EN' },
   nav: {
+    jobs: 'Jobs',
+    booking: 'Book a call',
+    forEmployers: 'For employers',
+    impressum: 'Legal notice',
+    privacyPolicy: 'Privacy policy',
     home: 'Home',
     about: 'About us',
     services: 'Services',

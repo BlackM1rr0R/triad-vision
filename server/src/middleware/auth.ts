@@ -14,6 +14,8 @@ export interface AuthUser {
   firstName: string;
   lastName: string;
   locale: string;
+  /** True once the user has completed TOTP enrollment (see the 2FA gate below). */
+  twoFactorEnabled?: boolean;
 }
 
 export interface AuthSession {
@@ -38,7 +40,8 @@ declare global {
   }
 }
 
-export const ROLE_RANK: Record<Role, number> = { CLIENT: 0, STAFF: 1, ADMIN: 2, SUPER_ADMIN: 3 };
+// COMPANY (employer) sits at the client level: no staff powers. Client-only routes must check role === 'CLIENT'.
+export const ROLE_RANK: Record<Role, number> = { CLIENT: 0, COMPANY: 0, STAFF: 1, ADMIN: 2, SUPER_ADMIN: 3 };
 export const hasMinRole = (role: Role | undefined, min: Role) => role !== undefined && ROLE_RANK[role] >= ROLE_RANK[min];
 export const isStaff = (user?: AuthUser) => hasMinRole(user?.role, 'STAFF');
 
@@ -167,6 +170,7 @@ export const loadUser = async (req: Request, _res: Response, next: NextFunction)
       firstName: session.user.firstName,
       lastName: session.user.lastName,
       locale: session.user.locale,
+      twoFactorEnabled: !!session.user.totpEnabledAt,
     };
     req.session = { id: session.id, client: session.client === 'mobile' ? 'mobile' : 'web', expiresAt: session.expiresAt };
     req.cookieAuth = presented.fromCookie;
@@ -189,11 +193,27 @@ export const requireAuth = (req: Request, _res: Response, next: NextFunction) =>
   next();
 };
 
+// ─── 2FA enrollment gate (legal & security stream) ─────────────────────
+// Two-factor authentication is mandatory for staff roles. A staff member without completed TOTP
+// enrollment can still log in, read /api/auth/me and enroll via /api/auth/2fa/*, but every route
+// protected by a staff-level role check (all of /api/admin/* and /api/docs/*) answers
+// 403 TWO_FACTOR_ENROLLMENT_REQUIRED until enrollment is finished.
+const twoFactorGate = (req: Request) =>
+  req.user && hasMinRole(req.user.role, 'STAFF') && !req.user.twoFactorEnabled
+    ? new HttpError(403, 'TWO_FACTOR_ENROLLMENT_REQUIRED')
+    : undefined;
+// ─────────────────────────────────────────────────────────────────────────
+
 export const requireRole =
   (...roles: Role[]) =>
   (req: Request, _res: Response, next: NextFunction) => {
     if (!req.user) return next(new HttpError(401, req.authFailure ?? 'UNAUTHENTICATED'));
     if (!roles.includes(req.user.role)) return next(new HttpError(403, 'FORBIDDEN'));
+    // 2FA gate: only when the check grants staff powers.
+    if (roles.every((r) => hasMinRole(r, 'STAFF'))) {
+      const gate = twoFactorGate(req);
+      if (gate) return next(gate);
+    }
     next();
   };
 
@@ -201,6 +221,11 @@ export const requireRole =
 export const requireMinRole = (min: Role) => (req: Request, _res: Response, next: NextFunction) => {
   if (!req.user) return next(new HttpError(401, req.authFailure ?? 'UNAUTHENTICATED'));
   if (!hasMinRole(req.user.role, min)) return next(new HttpError(403, 'FORBIDDEN'));
+  // 2FA gate: only when the check grants staff powers.
+  if (hasMinRole(min, 'STAFF')) {
+    const gate = twoFactorGate(req);
+    if (gate) return next(gate);
+  }
   next();
 };
 

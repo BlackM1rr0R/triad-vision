@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
@@ -15,6 +16,9 @@ import { RequirementsSection } from '@/components/admin/case/Requirements';
 import { WorkflowStepper } from '@/components/admin/case/WorkflowStepper';
 import { caseKey, type CaseDetailResponse } from '@/components/admin/case/shared';
 import { ErrorBlock, LoadingBlock, Panel } from '@/components/admin/ui';
+
+// Team tasks linked to this case (own chunk).
+const CaseTasks = lazy(() => import('@/components/tasks/CaseTasks').then((m) => ({ default: m.CaseTasks })));
 
 export default function CaseAdmin() {
   const { t } = useTranslation();
@@ -60,6 +64,9 @@ export default function CaseAdmin() {
         </div>
         <div className="min-w-0 space-y-6">
           <CaseStatsPanel stats={data.stats} />
+          <Suspense fallback={null}>
+            <CaseTasks caseId={c.id} number={c.number} clientName={`${c.client.firstName} ${c.client.lastName}`.trim()} />
+          </Suspense>
           <Messages c={c} />
           <InternalNotes c={c} />
           <Timeline c={c} />

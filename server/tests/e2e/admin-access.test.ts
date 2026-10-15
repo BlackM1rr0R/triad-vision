@@ -197,6 +197,9 @@ describe('/api/admin/users', () => {
     const promoted = await agent.patch(`/api/admin/users/${target.user.id}`).send({ role: 'STAFF' });
     expect(promoted.status).toBe(200);
     expect(promoted.body.user.role).toBe('STAFF');
+    // New staff must enroll in 2FA before the admin API opens up.
+    expect((await target.agent.get('/api/admin/cases')).body.error).toBe('TWO_FACTOR_ENROLLMENT_REQUIRED');
+    await prisma.user.update({ where: { id: target.user.id }, data: { totpEnabledAt: new Date() } });
     expect((await target.agent.get('/api/admin/cases')).status).toBe(200);
 
     expect((await agent.patch(`/api/admin/users/${target.user.id}`).send({ password: 'ResetPass999' })).status).toBe(200);
