@@ -28,6 +28,12 @@ import {
 } from '../lib/tasks/core.js';
 import { notifyAssigned, notifyComment, notifyStatus } from '../lib/tasks/notify.js';
 import { viewableNodeIds } from '../lib/tasks/drive.js';
+import { ensureTaskFolder } from '../lib/tasks/files.js';
+import fs from 'node:fs/promises';
+import { decodeOriginalName, verifyUploadedFile } from '../middleware/upload.js';
+import { driveUpload } from '../lib/drive/upload.js';
+import { adoptUpload, removeStored } from '../lib/drive/storage.js';
+import { freeNameIn, safeUploadName } from '../lib/drive/names.js';
 
 /** Team tasks (/api/tasks): create, assign, deadlines, board, comments, checklist. */
 export const tasksRouter = Router();
@@ -620,6 +626,50 @@ tasksRouter.post('/:ref/attachments', async (req, res) => {
   await prisma.task.update({ where: { id: task.id }, data: { updatedAt: new Date() }, select: { id: true } });
   res.status(201).json({ task: await loadDetail(task.id, actor) });
 });
+
+/**
+ * POST /api/tasks/:ref/files (multipart, field "file") — uploads a file from the computer straight
+ * into the task. It is stored in the company drive under "Tapşırıq faylları/T-0001 · title" (every
+ * staff member can download it there) and linked to the task.
+ */
+tasksRouter.post(
+  '/:ref/files',
+  async (req, res, next) => {
+    // Permission is checked before a single byte is spooled to disk.
+    const { task, perms } = await loadTaskForActor(String(req.params.ref), actorOf(req));
+    requirePerm(perms, 'attach');
+    if ((await prisma.taskAttachment.count({ where: { taskId: task.id } })) >= 50) throw badRequest('ATTACHMENTS_FULL');
+    res.locals.task = task;
+    next();
+  },
+  driveUpload.single('file'),
+  async (req, res) => {
+    const file = req.file;
+    if (!file) throw badRequest('FILE_REQUIRED');
+    const task = res.locals.task as { id: string; number: number; title: string };
+    const actor = actorOf(req);
+    let storedKey: string | null = null;
+    try {
+      await verifyUploadedFile(file);
+      const folderId = await ensureTaskFolder(task, actor.id);
+      const name = await freeNameIn(folderId, safeUploadName(decodeOriginalName(file.originalname)), true);
+      storedKey = await adoptUpload(file.path);
+      const node = await prisma.driveNode.create({
+        data: { space: 'SHARED', kind: 'FILE', name, parentId: folderId, storageKey: storedKey, mimeType: file.mimetype, size: file.size, createdById: actor.id },
+        select: { id: true },
+      });
+      storedKey = null;
+      await prisma.taskAttachment.create({ data: { taskId: task.id, nodeId: node.id } });
+      await prisma.task.update({ where: { id: task.id }, data: { updatedAt: new Date() }, select: { id: true } });
+      await audit(req, 'TASK_FILE_UPLOADED', `task:${task.id}`, { nodeId: node.id, name, size: file.size });
+      res.status(201).json({ task: await loadDetail(task.id, actor) });
+    } catch (err) {
+      await fs.unlink(file.path).catch(() => undefined);
+      if (storedKey) await removeStored([storedKey]).catch(() => undefined);
+      throw err;
+    }
+  },
+);
 
 tasksRouter.delete('/:ref/attachments/:nodeId', async (req, res) => {
   const actor = actorOf(req);

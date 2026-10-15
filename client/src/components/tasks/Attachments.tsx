@@ -10,6 +10,7 @@ import type { TaskAttachment } from './types';
 import { useTaskActions } from './api';
 import { Popover } from './bits';
 import { errorText } from './utils';
+import { FileDrop, PendingFiles } from './FileDrop';
 
 interface DriveHit {
   id: string;
@@ -38,6 +39,8 @@ export const Attachments = ({ taskRef, items, canEdit }: { taskRef: string; item
   const { t } = useTranslation();
   const actions = useTaskActions();
   const [open, setOpen] = useState(false);
+  const [uploads, setUploads] = useState<File[]>([]);
+  const [progress, setProgress] = useState<Record<number, number>>({});
   const [q, setQ] = useState('');
   const [debounced, setDebounced] = useState('');
   useEffect(() => {
@@ -60,6 +63,22 @@ export const Attachments = ({ taskRef, items, canEdit }: { taskRef: string; item
     } catch (err) {
       toast.error(errorText(err));
     }
+  };
+
+  const uploadAll = async (files: File[]) => {
+    setUploads(files);
+    setProgress({});
+    for (let i = 0; i < files.length; i++) {
+      setProgress((p) => ({ ...p, [i]: 0 }));
+      try {
+        await actions.upload(taskRef, files[i], (pct) => setProgress((p) => ({ ...p, [i]: pct })));
+      } catch (err) {
+        toast.error(`${t('tasks.actions.uploadFailed', { name: files[i].name })} — ${errorText(err)}`);
+      }
+      setProgress((p) => ({ ...p, [i]: 100 }));
+    }
+    setUploads([]);
+    setProgress({});
   };
 
   return (
@@ -104,13 +123,16 @@ export const Attachments = ({ taskRef, items, canEdit }: { taskRef: string; item
           })}
         </ul>
       ) : (
-        <p className="text-sm text-muted">{t('tasks.empty.attachments')}</p>
+        uploads.length === 0 && <p className="text-sm text-muted">{t('tasks.empty.attachments')}</p>
       )}
+      {uploads.length > 0 && <PendingFiles files={uploads} progress={progress} />}
       {canEdit && (
         <div className="relative mt-3">
-          <button type="button" onClick={() => setOpen((o) => !o)} className="inline-flex items-center gap-1.5 rounded-lg border border-dashed border-line px-3 py-1.5 text-sm font-semibold text-muted hover:border-brand-400 hover:text-brand-600">
-            <Paperclip className="size-3.5" /> {t('tasks.actions.linkFile')}
-          </button>
+          <FileDrop compact disabled={uploads.length > 0} onFiles={(f) => void uploadAll(f)} onTooLarge={(f) => toast.error(`${f.name}: ${t('tasks.errors.FILE_TOO_LARGE')}`)}>
+            <button type="button" onClick={() => setOpen((o) => !o)} className="inline-flex items-center gap-1.5 rounded-lg border border-dashed border-line px-3 py-1.5 text-sm font-semibold text-muted hover:border-brand-400 hover:text-brand-600">
+              <Paperclip className="size-3.5" /> {t('tasks.actions.linkFile')}
+            </button>
+          </FileDrop>
           <Popover open={open} onClose={() => setOpen(false)} className="w-80 max-w-[calc(100vw-2rem)]">
             <label className="relative mb-1 block">
               <Search className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted" aria-hidden />

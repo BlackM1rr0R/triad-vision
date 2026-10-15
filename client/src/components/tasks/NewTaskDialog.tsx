@@ -10,6 +10,7 @@ import { TASK_STATUSES } from './types';
 import { useTaskActions } from './api';
 import { AssigneeField, CaseField, DateTimeField, PriorityPicker, StatusSelect } from './pickers';
 import { DEFAULT_DUE_TIME, errorText, fromInputs } from './utils';
+import { FileDrop, PendingFiles } from './FileDrop';
 
 export interface NewTaskDefaults {
   status?: TaskStatus;
@@ -44,6 +45,8 @@ export const NewTaskDialog = ({
   const [start, setStart] = useState({ date: '', time: '' });
   const [caseRef, setCaseRef] = useState<CaseRef | null>(null);
   const [busy, setBusy] = useState(false);
+  const [files, setFiles] = useState<File[]>([]);
+  const [progress, setProgress] = useState<Record<number, number>>({});
 
   useEffect(() => {
     if (!open) return;
@@ -56,6 +59,8 @@ export const NewTaskDialog = ({
     setStart({ date: '', time: '' });
     setCaseRef(defaults.case ?? null);
     setBusy(false);
+    setFiles([]);
+    setProgress({});
   }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
@@ -82,7 +87,18 @@ export const NewTaskDialog = ({
         startAt: fromInputs(start.date, start.time || '09:00'),
         caseId: caseRef?.id ?? null,
       });
-      onCreated(task);
+      // Files are uploaded one after another once the task exists; a failed file does not undo the task.
+      let latest = task;
+      for (let i = 0; i < files.length; i++) {
+        setProgress((p) => ({ ...p, [i]: 0 }));
+        try {
+          latest = await actions.upload(task.id, files[i], (pct) => setProgress((p) => ({ ...p, [i]: pct })));
+          setProgress((p) => ({ ...p, [i]: 100 }));
+        } catch (err) {
+          toast.error(`${t('tasks.actions.uploadFailed', { name: files[i].name })} — ${errorText(err)}`);
+        }
+      }
+      onCreated(latest);
     } catch (err) {
       toast.error(errorText(err));
       setBusy(false);
@@ -177,6 +193,16 @@ export const NewTaskDialog = ({
                   <CaseField value={caseRef} onChange={setCaseRef} />
                 </div>
               </div>
+              <div>
+                <span className="label">{t('tasks.fields.attachments')}</span>
+                <FileDrop
+                  disabled={busy}
+                  onFiles={(picked) => setFiles((cur) => [...cur, ...picked].slice(0, 50))}
+                  onTooLarge={(f) => toast.error(`${f.name}: ${t('tasks.errors.FILE_TOO_LARGE')}`)}
+                />
+                <PendingFiles files={files} progress={busy ? progress : undefined} onRemove={busy ? undefined : (i) => setFiles((cur) => cur.filter((_, j) => j !== i))} />
+                {files.length > 0 && !busy && <p className="mt-1.5 text-xs text-muted">{t('tasks.actions.filesPending', { count: files.length })}</p>}
+              </div>
               <p className="text-xs text-muted">{t('tasks.panel.timezone')}</p>
             </div>
             <footer className="flex items-center justify-end gap-2 border-t border-line bg-surface/60 px-5 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:px-6">
@@ -185,7 +211,11 @@ export const NewTaskDialog = ({
               </button>
               <button type="submit" className="btn-primary btn-sm" disabled={!title.trim() || busy}>
                 {busy && <Spinner className="size-3.5" />}
-                {busy ? t('tasks.actions.creating') : t('tasks.actions.create')}
+                {busy
+                  ? files.length && Object.keys(progress).length
+                    ? t('tasks.actions.uploading', { done: Object.values(progress).filter((v) => v >= 100).length, total: files.length })
+                    : t('tasks.actions.creating')
+                  : t('tasks.actions.create')}
               </button>
             </footer>
           </motion.form>

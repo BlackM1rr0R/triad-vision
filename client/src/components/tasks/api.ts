@@ -81,6 +81,16 @@ export const useTaskActions = () => {
     deleteComment: async (ref: string, id: string) => done((await api.delete<{ task: TaskDetail }>(`/tasks/${ref}/comments/${id}`)).data.task),
     attach: async (ref: string, nodeId: string) => done((await api.post<{ task: TaskDetail }>(`/tasks/${ref}/attachments`, { nodeId })).data.task),
     detach: async (ref: string, nodeId: string) => done((await api.delete<{ task: TaskDetail }>(`/tasks/${ref}/attachments/${nodeId}`)).data.task),
+    /** Uploads one file from the computer into the task (stored in the company drive, linked to the task). */
+    upload: async (ref: string, file: File, onProgress?: (pct: number) => void) => {
+      const form = new FormData();
+      form.append('file', file);
+      const res = await api.post<{ task: TaskDetail }>(`/tasks/${ref}/files`, form, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+        onUploadProgress: (e) => onProgress?.(e.total ? Math.round((e.loaded / e.total) * 100) : 0),
+      });
+      return done(res.data.task);
+    },
     checklistAdd: async (ref: string, text: string) =>
       withChecklist(ref, (await api.post<{ checklist: ChecklistItem[] }>(`/tasks/${ref}/checklist`, { text })).data.checklist),
     checklistUpdate: async (ref: string, id: string, body: { text?: string; done?: boolean }) =>
