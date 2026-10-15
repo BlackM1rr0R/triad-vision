@@ -5,7 +5,8 @@
 # Requires deploy/server-setup.sh to have run once on the server.
 set -euo pipefail
 
-TARGET=${1:?usage: deploy/push.sh user@host}
+# Default target: the production server (also reachable as `ssh triad` via ~/.ssh/config).
+TARGET=${1:-root@172.104.149.241}
 APP_DIR=${APP_DIR:-/opt/triad-vision}
 ROOT=$(git rev-parse --show-toplevel)
 cd "$ROOT"
