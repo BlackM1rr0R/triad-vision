@@ -190,7 +190,7 @@ describe('login brute-force protection', () => {
   });
 
   it('rejects weak passwords on register and change', async () => {
-    const res = await anon().post('/api/auth/register').send({ email: 'weak@test.local', password: 'abcdefgh', firstName: 'A', lastName: 'B', phone: '+994501234567', birthDate: '1990-05-14' });
+    const res = await anon().post('/api/auth/register').send({ email: 'weak@test.local', password: 'abcdefgh', firstName: 'A', lastName: 'B', phone: '+994501234567', birthDate: '1990-05-14', passportNumber: 'C01234567' });
     expect(res.status).toBe(400);
     const c = await asClient();
     expect((await c.agent.patch('/api/auth/me').send({ currentPassword: TEST_PASSWORD, newPassword: '12345678' })).status).toBe(400);

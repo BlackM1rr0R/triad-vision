@@ -496,8 +496,12 @@
       "errors": {
         "phone": "Telefon nömrəsini ölkə kodu ilə daxil edin (məs. +994 50 123 45 67).",
         "birthRequired": "Doğum tarixini seçin.",
-        "birthAge": "Yaş 16 ilə 80 arasında olmalıdır."
-      }
+        "birthAge": "Yaş 16 ilə 80 arasında olmalıdır.",
+        "passport": "Pasport nömrəsini düzgün daxil edin (yalnız hərf və rəqəm, 5–20 simvol)."
+      },
+      "passportNumber": "Xarici pasport nömrəsi",
+      "passportNumberHint": "Xarici (beynəlxalq) pasportun nömrəsi — şəxsiyyət vəsiqəsinin yox",
+      "notice": "Qeydiyyat xarici pasport ilə aparılır. Məlumatları pasportda yazıldığı kimi daxil edin."
     }
   }
 }

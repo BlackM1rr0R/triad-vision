@@ -45,6 +45,8 @@ export interface RegisterInput {
   phone: string;
   /** YYYY-MM-DD, as in the passport. */
   birthDate: string;
+  /** Foreign passport number (letters and digits, upper case). */
+  passportNumber: string;
   password: string;
 }
 

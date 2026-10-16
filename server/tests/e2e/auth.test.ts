@@ -8,7 +8,7 @@ import { createClient, TEST_PASSWORD } from '../helpers/factories';
 // per 15 minutes per IP. Each test file gets a fresh app, so keep this file well below that.
 
 /** Fields every candidate sign-up must send besides name, email and password. */
-const REQUIRED = { phone: '+994501234567', birthDate: '1990-05-14' };
+const REQUIRED = { phone: '+994501234567', birthDate: '1990-05-14', passportNumber: 'C01234567' };
 
 const sessionCookie = (res: request.Response) =>
   ([] as string[]).concat(res.headers['set-cookie'] ?? []).find((c) => c.startsWith('tv_session='));
@@ -37,7 +37,7 @@ describe('POST /api/auth/register', () => {
   it('creates a client, sets an httpOnly session cookie and returns no token for the web', async () => {
     const res = await anon()
       .post('/api/auth/register')
-      .send({ email: '  Ali.Mammadov@Example.COM ', password: 'Password123', firstName: ' Əli ', lastName: 'Məmmədov', phone: '+994 50 123-45-67', birthDate: '1990-05-14' });
+      .send({ email: '  Ali.Mammadov@Example.COM ', password: 'Password123', firstName: ' Əli ', lastName: 'Məmmədov', phone: '+994 50 123-45-67', birthDate: '1990-05-14', passportNumber: ' c 0123-4567 ' });
     expect(res.status).toBe(201);
     expect(res.body.token).toBeUndefined();
     expect(res.body.user).toEqual({
@@ -50,6 +50,7 @@ describe('POST /api/auth/register', () => {
       locale: 'az',
       // phone is normalised; the rest of the candidate profile starts empty; notification preferences default to on
       birthDate: '1990-05-14',
+      passportNumber: 'C01234567',
       nationality: null,
       city: null,
       address: null,

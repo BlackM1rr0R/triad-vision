@@ -42,6 +42,7 @@ export interface User {
   locale: 'az' | 'de' | 'en' | 'ru';
   // candidate profile (optional)
   birthDate?: string | null;
+  passportNumber?: string | null;
   nationality?: string | null;
   city?: string | null;
   address?: string | null;

@@ -496,8 +496,12 @@
       "errors": {
         "phone": "Enter the phone number with the country code (e.g. +994 50 123 45 67).",
         "birthRequired": "Please choose your date of birth.",
-        "birthAge": "Your age must be between 16 and 80."
-      }
+        "birthAge": "Your age must be between 16 and 80.",
+        "passport": "Enter a valid passport number (letters and digits only, 5–20 characters)."
+      },
+      "passportNumber": "Passport number",
+      "passportNumberHint": "Number of your international passport — not your ID card",
+      "notice": "Registration is done with your international passport. Enter the details exactly as in the passport."
     }
   }
 }

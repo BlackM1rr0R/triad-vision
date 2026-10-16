@@ -201,6 +201,7 @@ const PersonalPanel = ({ user }: { user: User }) => {
     lastName: user.lastName,
     phone: user.phone ?? '',
     birthDate: user.birthDate ?? '',
+    passportNumber: user.passportNumber ?? '',
     nationality: user.nationality ?? '',
     city: user.city ?? '',
     address: user.address ?? '',
@@ -229,6 +230,7 @@ const PersonalPanel = ({ user }: { user: User }) => {
       const e = birthDateError(f.birthDate);
       return e ? t(`accountPage.profile.errors.${e}`) : null;
     })(),
+    passportNumber: f.passportNumber.trim() && !/^[A-Z0-9]{5,20}$/.test(f.passportNumber.replace(/[\s-]/g, '').toUpperCase()) ? t('accountPage.profile.errors.passport') : null,
     nationality: tooLong(f.nationality, LIMITS.nationality) ? maxMsg(LIMITS.nationality) : null,
     city: tooLong(f.city, LIMITS.city) ? maxMsg(LIMITS.city) : null,
     address: tooLong(f.address, LIMITS.address) ? maxMsg(LIMITS.address) : null,
@@ -251,6 +253,7 @@ const PersonalPanel = ({ user }: { user: User }) => {
         lastName: f.lastName.trim(),
         phone: f.phone.trim() || null,
         birthDate: f.birthDate || null,
+        passportNumber: f.passportNumber.replace(/[\s-]/g, '').toUpperCase() || null,
         nationality: f.nationality.trim() || null,
         city: f.city.trim() || null,
         address: f.address.trim() || null,
@@ -313,6 +316,17 @@ const PersonalPanel = ({ user }: { user: User }) => {
             autoComplete="bday"
             error={show('birthDate')}
             hint={t('accountPage.profile.hints.birthDate')}
+          />
+          <Field
+            id={`${uid}-passport`}
+            label={t('accountPage.profile.fields.passportNumber')}
+            value={f.passportNumber}
+            onChange={(e: { target: { value: string } }) => setF((p) => ({ ...p, passportNumber: e.target.value.toUpperCase() }))}
+            maxLength={40}
+            autoComplete="off"
+            placeholder="C01234567"
+            error={show('passportNumber')}
+            hint={t('accountPage.profile.hints.passportNumber')}
           />
           <Field
             id={`${uid}-nat`}

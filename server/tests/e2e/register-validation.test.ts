@@ -21,13 +21,14 @@ const body = (over: Record<string, unknown> = {}) => ({
   lastName: 'Quliyeva',
   phone: '+994501234567',
   birthDate: '1995-03-01',
+  passportNumber: 'AA1234567',
   ...over,
 });
 
 const issueMessages = (res: { body: { issues?: { path: (string | number)[]; message: string }[] } }) =>
   (res.body.issues ?? []).map((i) => `${i.path.join('.')}:${i.message}`);
 
-describe('POST /api/auth/register — phone and date of birth', () => {
+describe('POST /api/auth/register — phone, date of birth and passport number', () => {
   it('stores the birth date and the normalised phone number', async () => {
     const res = await anon().post('/api/auth/register').send(body({ email: 'store@test.local', phone: ' +49 151-1234 5678 ', birthDate: '1988-12-31' }));
     expect(res.status).toBe(201);
@@ -35,6 +36,13 @@ describe('POST /api/auth/register — phone and date of birth', () => {
     const db = await prisma.user.findUniqueOrThrow({ where: { email: 'store@test.local' } });
     expect(db.phone).toBe('+4915112345678');
     expect(db.birthDate!.toISOString().slice(0, 10)).toBe('1988-12-31');
+  });
+
+  it('stores the passport number upper-cased without spaces or dashes', async () => {
+    const res = await anon().post('/api/auth/register').send(body({ email: 'passport@test.local', passportNumber: ' aa 123-4567 ' }));
+    expect(res.status).toBe(201);
+    expect(res.body.user.passportNumber).toBe('AA1234567');
+    expect((await prisma.user.findUniqueOrThrow({ where: { email: 'passport@test.local' } })).passportNumber).toBe('AA1234567');
   });
 
   it.each([
@@ -46,6 +54,9 @@ describe('POST /api/auth/register — phone and date of birth', () => {
     ['without a birth date', { birthDate: undefined }, 'birthDate'],
     ['with a birth date in the wrong format', { birthDate: '14.05.1990' }, 'birthDate:INVALID_DATE'],
     ['with an impossible birth date', { birthDate: '1990-02-30' }, 'birthDate:INVALID_DATE'],
+    ['without a passport number', { passportNumber: undefined }, 'passportNumber'],
+    ['with a too short passport number', { passportNumber: 'C12' }, 'passportNumber:INVALID_PASSPORT'],
+    ['with symbols in the passport number', { passportNumber: 'C0123/4567' }, 'passportNumber:INVALID_PASSPORT'],
     ['with a future birth date', { birthDate: isoDate(-1) }, 'birthDate:DATE_NOT_IN_PAST'],
     ['younger than 16', { birthDate: isoDate(16, 1) }, 'birthDate:AGE_OUT_OF_RANGE'],
     ['older than 80', { birthDate: isoDate(81) }, 'birthDate:AGE_OUT_OF_RANGE'],

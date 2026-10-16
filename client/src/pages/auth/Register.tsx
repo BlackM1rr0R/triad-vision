@@ -6,6 +6,7 @@ import { AxiosError } from 'axios';
 import clsx from 'clsx';
 import {
   ArrowRight,
+  BookUser,
   Calendar,
   ChevronRight,
   Eye,
@@ -62,9 +63,13 @@ const birthBounds = () => {
 const compactPhone = (v: string) => v.trim().replace(/[\s\-.()]/g, '');
 const phoneValid = (v: string) => /^\+\d{8,15}$/.test(compactPhone(v));
 
-type FieldKey = 'firstName' | 'lastName' | 'birthDate' | 'email' | 'phone' | 'password';
+type FieldKey = 'firstName' | 'lastName' | 'birthDate' | 'passportNumber' | 'email' | 'phone' | 'password';
 type Form = Record<FieldKey, string>;
-const EMPTY: Form = { firstName: '', lastName: '', birthDate: '', email: '', phone: '', password: '' };
+const EMPTY: Form = { firstName: '', lastName: '', birthDate: '', passportNumber: '', email: '', phone: '', password: '' };
+
+/** Foreign passport number as the API stores it: letters and digits, upper case ("c 0123-4567" → "C01234567"). */
+const compactPassport = (v: string) => v.replace(/[\s-]/g, '').toUpperCase();
+const passportValid = (v: string) => /^[A-Z0-9]{5,20}$/.test(compactPassport(v));
 
 /** Field-level error keys (registerPage.errors.*) from a 400 VALIDATION answer of the API. */
 const serverFieldErrors = (err: unknown): Partial<Record<FieldKey, string>> => {
@@ -74,6 +79,7 @@ const serverFieldErrors = (err: unknown): Partial<Record<FieldKey, string>> => {
   for (const i of issues) {
     const field = i.path?.[0];
     if (field === 'phone') out.phone = 'phone';
+    if (field === 'passportNumber') out.passportNumber = 'passport';
     if (field === 'birthDate') out.birthDate = i.message === 'AGE_OUT_OF_RANGE' || i.message === 'DATE_NOT_IN_PAST' ? 'birthAge' : 'birthInvalid';
   }
   return out;
@@ -223,6 +229,7 @@ export default function Register() {
     firstName: f.firstName.trim() ? null : 'required',
     lastName: f.lastName.trim() ? null : 'required',
     birthDate: birthError,
+    passportNumber: !f.passportNumber.trim() ? 'required' : passportValid(f.passportNumber) ? null : 'passport',
     email: !f.email.trim() ? 'required' : /^\S+@\S+\.\S+$/.test(f.email.trim()) ? null : 'email',
     phone: !f.phone.trim() ? 'required' : phoneValid(f.phone) ? null : 'phone',
     password: isStrongPassword(f.password) ? null : 'password',
@@ -253,6 +260,7 @@ export default function Register() {
         firstName: f.firstName.trim(),
         lastName: f.lastName.trim(),
         birthDate: f.birthDate,
+        passportNumber: compactPassport(f.passportNumber),
         email: f.email.trim(),
         phone: compactPhone(f.phone),
         password: f.password,
@@ -289,6 +297,10 @@ export default function Register() {
         >
           <h1 className="font-display text-[1.75rem] leading-tight font-extrabold text-ink sm:text-3xl">{t('registerPage.title')}</h1>
           <p className="mt-2 text-muted">{t('registerPage.subtitle')}</p>
+          <p className="mt-4 flex items-start gap-2.5 rounded-xl border border-brand-200 bg-brand-50 px-3.5 py-3 text-sm text-ink dark:border-brand-500/30">
+            <BookUser className="mt-0.5 size-4 shrink-0 text-brand-600" aria-hidden />
+            <span>{t('registerPage.passportNotice')}</span>
+          </p>
 
           <form onSubmit={submit} noValidate className="mt-7 space-y-4 sm:mt-8">
             <Field id={id('firstName')} label={t('registerPage.firstName')} icon={UserIcon} hint={t('registerPage.passportHint')} error={errorFor('firstName')}>
@@ -332,6 +344,23 @@ export default function Register() {
                 value={f.birthDate}
                 onChange={set('birthDate')}
                 {...aria('birthDate')}
+              />
+            </Field>
+            <Field id={id('passportNumber')} label={t('registerPage.passportNumber')} icon={BookUser} hint={t('registerPage.passportNoHint')} error={errorFor('passportNumber')}>
+              <input
+                id={id('passportNumber')}
+                name="passportNumber"
+                type="text"
+                required
+                maxLength={40}
+                autoComplete="off"
+                autoCapitalize="characters"
+                spellCheck={false}
+                placeholder={t('registerPage.passportPh')}
+                className={inputCls('passportNumber', 'uppercase tracking-wider placeholder:normal-case placeholder:tracking-normal')}
+                value={f.passportNumber}
+                onChange={set('passportNumber')}
+                {...aria('passportNumber')}
               />
             </Field>
             <Field id={id('email')} label={t('registerPage.email')} icon={Mail} hint={t('registerPage.emailHint')} error={errorFor('email')}>

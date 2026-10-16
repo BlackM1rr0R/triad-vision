@@ -190,6 +190,7 @@ const az = {
       fields: {
         phone: 'Telefon',
         birthDate: 'Doğum tarixi',
+        passportNumber: 'Xarici pasport nömrəsi',
         nationality: 'Vətəndaşlıq',
         city: 'Şəhər',
         address: 'Ünvan',
@@ -210,6 +211,7 @@ const az = {
       },
       hints: {
         birthDate: '16–80 yaş',
+        passportNumber: 'Pasportdakı kimi, məs. C01234567',
         drivingLicence: 'Kateqoriyaları vergüllə yazın. Yoxdursa, boş saxlayın.',
         professional: 'Bu məlumatlar menecerlərimizə sizə uyğun işəgötürən seçməyə kömək edir.',
         personal: 'Məlumatlar yalnız müraciətinizin hazırlanması üçün istifadə olunur.',
@@ -230,6 +232,7 @@ const az = {
       },
       select: 'Seçin',
       errors: {
+        passport: 'Yalnız hərf və rəqəm, 5–20 simvol.',
         birthFuture: 'Doğum tarixi keçmişdə olmalıdır.',
         birthAge: 'Yaş 16 ilə 80 arasında olmalıdır.',
         experience: '0 ilə 50 arasında tam ədəd daxil edin.',
@@ -475,6 +478,7 @@ const de: typeof az = {
       fields: {
         phone: 'Telefon',
         birthDate: 'Geburtsdatum',
+        passportNumber: 'Reisepassnummer',
         nationality: 'Staatsangehörigkeit',
         city: 'Stadt',
         address: 'Adresse',
@@ -495,6 +499,7 @@ const de: typeof az = {
       },
       hints: {
         birthDate: '16–80 Jahre',
+        passportNumber: 'Wie im Pass, z. B. C01234567',
         drivingLicence: 'Klassen mit Komma trennen. Leer lassen, falls nicht vorhanden.',
         professional: 'Diese Angaben helfen unseren Betreuern, den passenden Arbeitgeber für Sie zu finden.',
         personal: 'Ihre Daten werden nur zur Bearbeitung Ihres Antrags verwendet.',
@@ -515,6 +520,7 @@ const de: typeof az = {
       },
       select: 'Bitte wählen',
       errors: {
+        passport: 'Nur Buchstaben und Ziffern, 5–20 Zeichen.',
         birthFuture: 'Das Geburtsdatum muss in der Vergangenheit liegen.',
         birthAge: 'Das Alter muss zwischen 16 und 80 Jahren liegen.',
         experience: 'Bitte geben Sie eine ganze Zahl von 0 bis 50 ein.',
@@ -760,6 +766,7 @@ const en: typeof az = {
       fields: {
         phone: 'Phone',
         birthDate: 'Date of birth',
+        passportNumber: 'Passport number',
         nationality: 'Nationality',
         city: 'City',
         address: 'Address',
@@ -780,6 +787,7 @@ const en: typeof az = {
       },
       hints: {
         birthDate: '16–80 years',
+        passportNumber: 'As in the passport, e.g. C01234567',
         drivingLicence: 'Separate categories with commas. Leave empty if you have none.',
         professional: 'This helps our managers match you with the right employer.',
         personal: 'Your data is only used to prepare your application.',
@@ -800,6 +808,7 @@ const en: typeof az = {
       },
       select: 'Select',
       errors: {
+        passport: 'Letters and digits only, 5–20 characters.',
         birthFuture: 'The date of birth must be in the past.',
         birthAge: 'Age must be between 16 and 80.',
         experience: 'Enter a whole number from 0 to 50.',
@@ -1045,6 +1054,7 @@ const ru: typeof az = {
       fields: {
         phone: 'Телефон',
         birthDate: 'Дата рождения',
+        passportNumber: 'Номер загранпаспорта',
         nationality: 'Гражданство',
         city: 'Город',
         address: 'Адрес',
@@ -1065,6 +1075,7 @@ const ru: typeof az = {
       },
       hints: {
         birthDate: '16–80 лет',
+        passportNumber: 'Как в паспорте, напр. C01234567',
         drivingLicence: 'Категории через запятую. Оставьте пустым, если нет.',
         professional: 'Эти данные помогают нашим менеджерам подобрать вам подходящего работодателя.',
         personal: 'Ваши данные используются только для подготовки заявки.',
@@ -1085,6 +1096,7 @@ const ru: typeof az = {
       },
       select: 'Выберите',
       errors: {
+        passport: 'Только буквы и цифры, 5–20 символов.',
         birthFuture: 'Дата рождения должна быть в прошлом.',
         birthAge: 'Возраст должен быть от 16 до 80 лет.',
         experience: 'Введите целое число от 0 до 50.',

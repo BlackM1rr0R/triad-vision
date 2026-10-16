@@ -44,6 +44,7 @@ export const publicUser = (u: User) => ({
   phone: u.phone,
   locale: u.locale,
   birthDate: u.birthDate ? u.birthDate.toISOString().slice(0, 10) : null,
+  passportNumber: u.passportNumber,
   nationality: u.nationality,
   city: u.city,
   address: u.address,
@@ -121,6 +122,23 @@ const requiredBirthDate = z
   .transform((v, ctx) => checkBirthDate(v, ctx));
 
 /**
+ * Foreign (international) passport number, as printed in the passport: letters and digits only,
+ * 5–20 characters. Spaces and dashes are removed and letters upper-cased ("c 0123 4567" → "C01234567").
+ */
+export const passportNo = z
+  .string()
+  .trim()
+  .max(40)
+  .transform((v, ctx) => {
+    const compact = v.replace(/[\s-]/g, '').toUpperCase();
+    if (!/^[A-Z0-9]{5,20}$/.test(compact)) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'INVALID_PASSPORT' });
+      return z.NEVER;
+    }
+    return compact;
+  });
+
+/**
  * International phone number: "+" and 8–15 digits; spaces, dashes, dots and brackets between the
  * digits are allowed and removed ("+994 50 123-45-67" → "+994501234567").
  */
@@ -159,6 +177,8 @@ authRouter.post('/register', authLimiter, async (req, res) => {
       // Candidates: phone (with country code) and birth date are required at sign-up.
       phone: intlPhone,
       birthDate: requiredBirthDate,
+      // Registration is done with the foreign passport: its number is required.
+      passportNumber: passportNo,
       locale: locale.default('az'),
     }),
     req.body,
@@ -174,6 +194,7 @@ authRouter.post('/register', authLimiter, async (req, res) => {
       lastName: body.lastName,
       phone: body.phone,
       birthDate: body.birthDate,
+      passportNumber: body.passportNumber,
       locale: body.locale,
     },
   });
@@ -252,6 +273,7 @@ authRouter.patch('/me', requireAuth, async (req, res) => {
       phone: z.string().trim().max(40).nullable().optional(),
       locale: locale.optional(),
       birthDate,
+      passportNumber: z.union([z.literal(''), z.null(), passportNo]).optional().transform((v) => (v === '' ? null : v)),
       nationality: optText(80),
       city: optText(80),
       address: optText(300),

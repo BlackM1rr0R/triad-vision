@@ -3,7 +3,7 @@ import { View } from 'react-native';
 import { router } from 'expo-router';
 import { UserPlus } from '@/components/icons';
 import { useTranslation } from 'react-i18next';
-import { Button, Field, Text, useToast } from '@/components/ui';
+import { Button, Field, Muted, Text, useToast } from '@/components/ui';
 import { AuthShell, LinkText } from '@/features/auth/AuthShell';
 import { DateTimeField } from '@/features/staff/DateTimeField';
 import { useAuth } from '@/lib/auth';
@@ -19,6 +19,10 @@ const MAX_AGE = 80;
 const compactPhone = (v: string) => v.trim().replace(/[\s\-.()]/g, '');
 const phoneValid = (v: string) => /^\+\d{8,15}$/.test(compactPhone(v));
 
+/** "c 0123-4567" → "C01234567"; valid when 5–20 letters/digits remain (same rule as the API). */
+const compactPassport = (v: string) => v.replace(/[\s-]/g, '').toUpperCase();
+const passportValid = (v: string) => /^[A-Z0-9]{5,20}$/.test(compactPassport(v));
+
 const pad = (n: number) => String(n).padStart(2, '0');
 /** The picker returns a local Date; the API wants the calendar day as YYYY-MM-DD. */
 const ymd = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
@@ -31,7 +35,7 @@ const birthBounds = () => {
   return { min, max };
 };
 
-type FormKey = 'firstName' | 'lastName' | 'email' | 'phone' | 'password';
+type FormKey = 'firstName' | 'lastName' | 'passportNumber' | 'email' | 'phone' | 'password';
 
 export default function Register() {
   const { t } = useTranslation();
@@ -39,7 +43,7 @@ export default function Register() {
   const message = useErrorMessage();
   const toast = useToast();
   const bounds = useMemo(birthBounds, []);
-  const [form, setForm] = useState<Record<FormKey, string>>({ firstName: '', lastName: '', email: '', phone: '', password: '' });
+  const [form, setForm] = useState<Record<FormKey, string>>({ firstName: '', lastName: '', passportNumber: '', email: '', phone: '', password: '' });
   const [birth, setBirth] = useState<Date | null>(null);
   const [errors, setErrors] = useState<Partial<Record<FormKey | 'birthDate' | 'form', string>>>({});
   const [busy, setBusy] = useState(false);
@@ -51,6 +55,7 @@ export default function Register() {
     if (!form.lastName.trim()) next.lastName = t('m.errors.REQUIRED_FIELDS');
     if (!birth) next.birthDate = t('m.register.errors.birthRequired');
     else if (ymd(birth) > ymd(bounds.max) || ymd(birth) < ymd(bounds.min)) next.birthDate = t('m.register.errors.birthAge');
+    if (!passportValid(form.passportNumber)) next.passportNumber = form.passportNumber.trim() ? t('m.register.errors.passport') : t('m.errors.REQUIRED_FIELDS');
     if (!EMAIL.test(form.email.trim())) next.email = t('m.errors.INVALID_EMAIL');
     if (!phoneValid(form.phone)) next.phone = t('m.register.errors.phone');
     if (form.password.length < 8 || !/[A-Za-z]/.test(form.password) || !/\d/.test(form.password)) next.password = t('auth.errors.PASSWORD_TOO_WEAK');
@@ -61,7 +66,7 @@ export default function Register() {
     }
     setBusy(true);
     try {
-      const user = await register({ ...form, phone: compactPhone(form.phone), birthDate: ymd(birth) });
+      const user = await register({ ...form, phone: compactPhone(form.phone), passportNumber: compactPassport(form.passportNumber), birthDate: ymd(birth) });
       haptic.success();
       // New accounts must confirm their email before starting a visa application.
       if ((user as { emailVerified?: boolean }).emailVerified === false) toast(t('m.verify.checkInbox', { email: user.email }), 'info', 8000);
@@ -76,6 +81,9 @@ export default function Register() {
 
   return (
     <AuthShell title={t('auth.registerTitle')} subtitle={t('auth.registerSubtitle')}>
+      <Muted style={{ marginBottom: 12 }}>
+        {t('m.register.notice')}
+      </Muted>
       <Field
         label={t('auth.firstName')}
         value={form.firstName}
@@ -110,6 +118,17 @@ export default function Register() {
           error={errors.birthDate}
         />
       </View>
+      <Field
+        label={t('m.register.passportNumber')}
+        value={form.passportNumber}
+        onChangeText={(v) => set('passportNumber')(v.toUpperCase())}
+        autoCapitalize="characters"
+        autoCorrect={false}
+        autoComplete="off"
+        placeholder="C01234567"
+        hint={t('m.register.passportNumberHint')}
+        error={errors.passportNumber}
+      />
       <Field
         label={t('auth.email')}
         value={form.email}

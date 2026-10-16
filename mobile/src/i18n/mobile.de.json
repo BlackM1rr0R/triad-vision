@@ -496,8 +496,12 @@
       "errors": {
         "phone": "Bitte geben Sie die Telefonnummer mit Ländervorwahl ein (z. B. +994 50 123 45 67).",
         "birthRequired": "Bitte wählen Sie Ihr Geburtsdatum.",
-        "birthAge": "Das Alter muss zwischen 16 und 80 Jahren liegen."
-      }
+        "birthAge": "Das Alter muss zwischen 16 und 80 Jahren liegen.",
+        "passport": "Bitte geben Sie eine gültige Passnummer ein (nur Buchstaben und Ziffern, 5–20 Zeichen)."
+      },
+      "passportNumber": "Reisepassnummer",
+      "passportNumberHint": "Nummer des Reisepasses — nicht des Personalausweises",
+      "notice": "Die Registrierung erfolgt mit dem Reisepass. Geben Sie die Daten genau wie im Pass ein."
     }
   }
 }
