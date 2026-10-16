@@ -20,7 +20,7 @@ const db = vi.hoisted(() => {
     caseEvent: { create: vi.fn() },
     contract: { findUnique: vi.fn(), update: vi.fn(), create: vi.fn() },
     documentRequirement: { findMany: vi.fn(), count: vi.fn(), createMany: vi.fn() },
-    user: { findFirstOrThrow: vi.fn(), findMany: vi.fn() },
+    user: { findFirstOrThrow: vi.fn(), findMany: vi.fn(), findUnique: vi.fn() },
     $transaction: vi.fn(),
     $queryRaw: vi.fn(),
   };

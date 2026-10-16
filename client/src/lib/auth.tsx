@@ -227,6 +227,7 @@ export const RequireAuth = ({ roles, children }: { roles?: Role[]; children: Rea
 export const landingAfterLogin = (role: Role, from?: unknown) => {
   const staff = isStaffRole(role);
   if (role === 'COMPANY') return typeof from === 'string' && (from === '/company' || from.startsWith('/company/')) ? from : '/company';
+  if (role === 'AGENT') return typeof from === 'string' && (from === '/agent' || from.startsWith('/agent/')) ? from : '/agent';
   const home = staff ? '/admin' : '/account';
   if (typeof from !== 'string' || !from.startsWith('/') || from.startsWith('//')) return home;
   const adminTarget = /^\/(admin|workspace)(\/|\?|$)/.test(from);

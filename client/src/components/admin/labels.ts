@@ -47,6 +47,7 @@ export const roleLabel = (role: Role) => t(`admin.labels.role.${role}`);
 export const ROLE_TONE: Record<Role, string> = {
   CLIENT: 'bg-slate-100 text-slate-700',
   COMPANY: 'bg-emerald-100 text-emerald-800',
+  AGENT: 'bg-sky-100 text-sky-800',
   STAFF: 'bg-brand-100 text-brand-700',
   ADMIN: 'bg-violet-100 text-violet-800',
   SUPER_ADMIN: 'bg-amber-100 text-amber-800',

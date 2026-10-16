@@ -7,6 +7,8 @@ import { FINAL_STATUSES } from '../lib/caseFlow.js';
 import { limiter, parse } from '../lib/http.js';
 import { notifyStaff } from '../lib/notifications.js';
 import { publicUser } from './auth.js';
+import { buildUserExport, exportFilename } from '../lib/privacy/export.js';
+import { OPEN_STATUSES, dueFrom } from '../lib/privacy/requests.js';
 
 export const accountRouter = Router();
 accountRouter.use(requireAuth);
@@ -258,62 +260,9 @@ accountRouter.get('/overview', async (req, res) => {
 
 /** GDPR export: everything stored about the user, as a JSON download (file metadata only, no contents). */
 accountRouter.get('/export', async (req, res) => {
-  const userId = req.user!.id;
-  const [user, cases, notifications, devices] = await Promise.all([
-    prisma.user.findUniqueOrThrow({ where: { id: userId } }),
-    prisma.case.findMany({
-      where: { clientId: userId },
-      orderBy: { createdAt: 'asc' },
-      include: {
-        visaCategory: { select: { slug: true, title: true, visaLabel: true } },
-        assignedStaff: { select: { firstName: true, lastName: true } },
-        requirements: { orderBy: [{ stage: 'asc' }, { sortOrder: 'asc' }], select: { id: true, stage: true, title: true, required: true } },
-        documents: {
-          orderBy: { createdAt: 'asc' },
-          select: { id: true, requirementId: true, stage: true, originalName: true, mimeType: true, size: true, status: true, reviewNote: true, createdAt: true },
-        },
-        contract: {
-          select: { version: true, sentAt: true, signedAt: true, signerName: true, signerIp: true, signerUserAgent: true },
-        },
-        events: {
-          where: { visibleToClient: true },
-          orderBy: { createdAt: 'asc' },
-          select: { type: true, fromStatus: true, toStatus: true, note: true, createdAt: true },
-        },
-        messages: {
-          orderBy: { createdAt: 'asc' },
-          select: { body: true, createdAt: true, author: { select: { id: true, firstName: true, lastName: true, role: true } } },
-        },
-      },
-    }),
-    prisma.notification.findMany({
-      where: { userId },
-      orderBy: { createdAt: 'asc' },
-      select: { type: true, title: true, body: true, link: true, readAt: true, createdAt: true },
-    }),
-    prisma.pushDevice.findMany({ where: { userId }, select: { platform: true, createdAt: true, lastSeenAt: true } }),
-  ]);
-
-  const data = {
-    exportedAt: new Date().toISOString(),
-    service: 'Triad Vision',
-    profile: { ...publicUser(user), isActive: user.isActive, updatedAt: user.updatedAt },
-    cases: cases.map(({ clientId: _clientId, assignedStaffId: _staffId, visaCategoryId: _visaId, messages, ...c }) => ({
-      ...c,
-      messages: messages.map((m) => ({
-        body: m.body,
-        createdAt: m.createdAt,
-        from: m.author.id === userId ? 'me' : 'Triad Vision',
-        authorName: `${m.author.firstName} ${m.author.lastName}`,
-      })),
-    })),
-    notifications,
-    devices,
-  };
-
-  const day = new Date().toISOString().slice(0, 10);
+  const data = await buildUserExport(req.user!.id);
   res.setHeader('Content-Type', 'application/json; charset=utf-8');
-  res.setHeader('Content-Disposition', `attachment; filename="triad-vision-my-data-${day}.json"`);
+  res.setHeader('Content-Disposition', `attachment; filename="${exportFilename()}"`);
   res.setHeader('Cache-Control', 'no-store');
   res.send(JSON.stringify(data, null, 2));
 });
@@ -334,11 +283,15 @@ accountRouter.post('/delete-request', deleteLimiter, async (req, res) => {
     activeCases.length ? `Aktiv müraciətlər: ${activeCases.map((c) => c.number).join(', ')}` : 'Aktiv müraciət yoxdur.',
     reason ? `Səbəb: ${reason}` : 'Səbəb göstərilməyib.',
   ];
+  // The request is also tracked as a DSGVO deletion request (deadline, decision, proof of completion).
+  const open = await prisma.privacyRequest.findFirst({ where: { userId: user.id, type: 'DELETION', status: { in: [...OPEN_STATUSES] } }, select: { id: true } });
+  const request =
+    open ?? (await prisma.privacyRequest.create({ data: { userId: user.id, email: user.email, type: 'DELETION', message: reason ?? null, dueAt: dueFrom() }, select: { id: true } }));
   await notifyStaff(`Hesabın silinməsi sorğusu: ${user.email}`, lines.join('\n\n'), {
-    link: '/admin/users',
+    link: `/admin/privacy-requests/${request.id}`,
     type: 'ACCOUNT_DELETE_REQUEST',
   });
-  res.json({ ok: true });
+  res.json({ ok: true, requestId: request.id });
 });
 
 // ─── Passport validity (for the passport-expiry reminder) ──────────────

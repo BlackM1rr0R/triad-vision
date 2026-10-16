@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { asAdmin, asClient, asStaff, asSuperAdmin, type Agent } from '../helpers/api';
-import { prisma } from '../helpers/db';
+import { prisma, waitFor } from '../helpers/db';
 import { binaryParser, makePdf, SAMPLE } from '../helpers/files';
 import { clientCase, createCaseVia, expectStatus, uploadDoc } from '../helpers/workflow';
 import { TEST_DOCS_DIR } from '../helpers/testEnv';
@@ -399,7 +399,8 @@ describe('drive: files', () => {
     const all = await download(su.agent, `/api/drive/export?ids=${proj.id}`);
     expect(zipNames(all.body as Buffer)).toEqual(['Project/Secret/hidden.pdf', 'Project/plan.pdf']);
     expect((await staff.agent.get(`/api/drive/export?ids=${secret.id}`)).status).toBe(404);
-    expect(await prisma.auditLog.count({ where: { action: 'DRIVE_EXPORTED' } })).toBe(2);
+    // The audit row is written after the ZIP stream ends, so wait for it instead of racing the response.
+    await waitFor(async () => (await prisma.auditLog.count({ where: { action: 'DRIVE_EXPORTED' } })) === 2);
   });
 });
 

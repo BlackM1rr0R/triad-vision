@@ -5,6 +5,8 @@
 const az = {
   accountPage: {
     tabs: {
+      translations: 'Tərcümə və apostil',
+      privacy: 'Məxfilik',
       dashboard: 'İcmal',
       myCase: 'Müraciətim',
       myCases: 'Müraciətlərim',
@@ -293,6 +295,8 @@ const az = {
 const de: typeof az = {
   accountPage: {
     tabs: {
+      translations: 'Übersetzung & Apostille',
+      privacy: 'Datenschutz',
       dashboard: 'Übersicht',
       myCase: 'Mein Antrag',
       myCases: 'Meine Anträge',
@@ -581,6 +585,8 @@ const de: typeof az = {
 const en: typeof az = {
   accountPage: {
     tabs: {
+      translations: 'Translation & apostille',
+      privacy: 'Privacy',
       dashboard: 'Overview',
       myCase: 'My application',
       myCases: 'My applications',
@@ -869,6 +875,8 @@ const en: typeof az = {
 const ru: typeof az = {
   accountPage: {
     tabs: {
+      translations: 'Перевод и апостиль',
+      privacy: 'Конфиденциальность',
       dashboard: 'Обзор',
       myCase: 'Моя заявка',
       myCases: 'Мои заявки',

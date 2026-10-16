@@ -43,7 +43,7 @@ declare global {
 }
 
 // COMPANY (employer) sits at the client level: no staff powers. Client-only routes must check role === 'CLIENT'.
-export const ROLE_RANK: Record<Role, number> = { CLIENT: 0, COMPANY: 0, STAFF: 1, ADMIN: 2, SUPER_ADMIN: 3 };
+export const ROLE_RANK: Record<Role, number> = { CLIENT: 0, COMPANY: 0, AGENT: 0, STAFF: 1, ADMIN: 2, SUPER_ADMIN: 3 };
 export const hasMinRole = (role: Role | undefined, min: Role) => role !== undefined && ROLE_RANK[role] >= ROLE_RANK[min];
 export const isStaff = (user?: AuthUser) => hasMinRole(user?.role, 'STAFF');
 

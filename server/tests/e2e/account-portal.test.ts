@@ -332,14 +332,16 @@ describe('POST /api/account/delete-request', () => {
     const created = await createCaseVia(client.agent);
 
     const res = expectStatus(await client.agent.post('/api/account/delete-request').send({ reason: 'Plans changed' }), 200);
-    expect(res.body).toEqual({ ok: true });
+    expect(res.body).toEqual({ ok: true, requestId: expect.any(String) });
+    const pr = await prisma.privacyRequest.findUniqueOrThrow({ where: { id: res.body.requestId } });
+    expect(pr).toMatchObject({ type: 'DELETION', status: 'OPEN', email: 'leaving@test.local', message: 'Plans changed' });
 
     const notes = await staffNotifications(admin.user.id);
     const n = notes.find((x) => x.title.includes('leaving@test.local'));
     expect(n).toBeTruthy();
     expect(n!.body).toContain('Plans changed');
     expect(n!.body).toContain(created.number);
-    expect(n!.link).toBe('/admin/users');
+    expect(n!.link).toBe(`/admin/privacy-requests/${res.body.requestId}`);
 
     const mail = await waitFor(() =>
       prisma.emailLog.findFirst({ where: { to: ADMIN_INBOX, subject: { contains: 'leaving@test.local' } } }),

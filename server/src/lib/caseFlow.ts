@@ -5,6 +5,7 @@ import { formatDateTime, notifyClient, notifyStaff, type NotificationType, type 
 import { createRequirements } from './docsIntel/requirementTemplates.js';
 import { pickAssignee } from './ops/autoAssign.js';
 import { emitWebhook } from './ops/webhooks.js';
+import { awardCaseCommission } from './agents/commissions.js';
 
 export const FINAL_STATUSES: CaseStatus[] = ['APPROVED', 'REJECTED', 'CANCELLED'];
 
@@ -78,6 +79,7 @@ export const createCase = async (
         `Yeni müştəri müraciəti yaradıldı.\n\nPeşə: ${created.profession}`,
         { caseId: created.id, link: `/admin/cases/${created.id}` },
       );
+      await awardCaseCommission(created.id, 'CASE_CREATED'); // agent programme (never throws)
       void emitWebhook('case.created', { caseId: created.id, number: created.number, status: created.status, visaCategoryId: created.visaCategoryId }, created.companyId);
       return created;
     } catch (err) {
@@ -256,6 +258,7 @@ export const clientSignContract = async (
         },
       }),
   });
+  await awardCaseCommission(caseId, 'CONTRACT_SIGNED'); // agent programme (never throws)
   await notifyStaff(`${c.number}: müqavilə imzalandı`, `Müştəri müqaviləni elektron imzaladı (${signed.signerName}).`, {
     caseId,
     link: `/admin/cases/${caseId}`,
@@ -337,6 +340,7 @@ export const staffDecide = async (
       visaValidTo: input.decision === 'APPROVED' ? input.validTo ?? null : null,
     },
   });
+  if (input.decision === 'APPROVED') await awardCaseCommission(caseId, 'VISA_APPROVED'); // agent programme (never throws)
   await after(caseId, input.decision, { reason: input.reason ?? undefined });
 };
 

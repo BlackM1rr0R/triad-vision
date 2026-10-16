@@ -14,13 +14,19 @@ import {
   setSessionCookie,
   wantsBearerToken,
 } from '../middleware/auth.js';
-import { HttpError, conflict, limiter, parse } from '../lib/http.js';
+import { HttpError, badRequest, conflict, limiter, parse } from '../lib/http.js';
 import { renderEmail, sendMail } from '../lib/mailer.js';
 import { loginLockedForAsync as loginLockedFor, recordLoginFailureAsync as recordLoginFailure, recordLoginSuccessAsync as recordLoginSuccess } from '../lib/loginGuard.js';
 import { audit } from '../lib/audit.js';
 import { consumeVerificationToken, sendVerificationEmail } from '../lib/emailVerification.js';
 import { createLoginChallenge, securityFlags } from '../lib/twoFactor.js';
 import { issueEmailOtp, loginMethods, maskEmail } from '../lib/emailOtp.js';
+import multer from 'multer';
+import { bufferMatches } from '../lib/fileCheck.js';
+import { OCR_IMAGE_MIME, langDataAvailable } from '../lib/docsIntel/ocr.js';
+import { PASSPORT_SCAN_TIMEOUT_MS, scanPassportImage } from '../lib/docsIntel/passportScan.js';
+import { recordConsent } from '../lib/privacy/consents.js';
+import { attachReferral } from '../lib/agents/referral.js';
 
 export const authRouter = Router();
 
@@ -180,6 +186,10 @@ authRouter.post('/register', authLimiter, async (req, res) => {
       // Registration is done with the foreign passport: its number is required.
       passportNumber: passportNo,
       locale: locale.default('az'),
+      // Agent referral code from the sign-up link (?ref=CODE); unknown or paused codes are ignored.
+      ref: z.string().trim().max(64).optional().nullable(),
+      // The form was filled from a passport photo (POST /passport-scan): logged as a PASSPORT_OCR consent.
+      passportScanned: z.boolean().optional(),
     }),
     req.body,
   );
@@ -198,8 +208,48 @@ authRouter.post('/register', authLimiter, async (req, res) => {
       locale: body.locale,
     },
   });
+  // The sign-up form requires accepting the privacy policy; the consent log is the proof.
+  await recordConsent({ userId: user.id, email: user.email, type: 'PRIVACY_POLICY', granted: true, source: 'REGISTER', req });
+  if (body.passportScanned) {
+    await recordConsent({ userId: user.id, email: user.email, type: 'PASSPORT_OCR', granted: true, source: 'REGISTER', req });
+  }
+  if (body.ref) await attachReferral(user.id, body.ref);
   await sendVerificationEmail(user.id);
   res.status(201).json(await startSession(req, res, user));
+});
+
+// ─── Passport photo → sign-up fields (public) ─────────────────────────
+
+export const PASSPORT_SCAN_MAX_BYTES = 8 * 1024 * 1024;
+const passportScanLimiter = limiter({ windowMs: 10 * 60 * 1000, limit: 10 });
+/** Memory only: the photo is never written to disk or the database. */
+const passportUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: PASSPORT_SCAN_MAX_BYTES, files: 1, fields: 5, fieldSize: 1000 },
+  fileFilter: (_req, file, cb) => {
+    if (OCR_IMAGE_MIME.includes(file.mimetype)) cb(null, true);
+    else cb(badRequest('UNSUPPORTED_FILE_TYPE'));
+  },
+});
+
+authRouter.post('/passport-scan', passportScanLimiter, passportUpload.single('image'), async (req, res) => {
+  const file = req.file;
+  if (!file) throw badRequest('NO_FILE');
+  if (!bufferMatches(file.buffer, file.mimetype)) throw badRequest('FILE_CONTENT_MISMATCH');
+  if (!langDataAvailable()) throw new HttpError(503, 'OCR_UNAVAILABLE');
+  res.setHeader('Cache-Control', 'no-store');
+  let result;
+  try {
+    result = await scanPassportImage(file.buffer, { timeoutMs: PASSPORT_SCAN_TIMEOUT_MS });
+  } catch (err) {
+    console.error('[passport-scan] OCR failed', (err as Error)?.message);
+    throw new HttpError(503, 'OCR_UNAVAILABLE');
+  }
+  if (!result.ok) {
+    res.status(result.error === 'OCR_TIMEOUT' ? 504 : 422).json(result);
+    return;
+  }
+  res.json(result);
 });
 
 authRouter.post('/login', authLimiter, async (req, res) => {
@@ -295,6 +345,10 @@ authRouter.patch('/me', requireAuth, async (req, res) => {
   );
   const { currentPassword: _currentPassword, newPassword: _newPassword, ...fields } = body;
   const data: Record<string, unknown> = { ...fields };
+  const channelsTouched = body.whatsappOptIn !== undefined || body.smsNotifications !== undefined;
+  const before = channelsTouched
+    ? await prisma.user.findUniqueOrThrow({ where: { id: req.user!.id }, select: { whatsappOptIn: true, smsNotifications: true } })
+    : null;
   if (body.newPassword) {
     const user = await prisma.user.findUniqueOrThrow({ where: { id: req.user!.id } });
     if (!body.currentPassword || !(await bcrypt.compare(body.currentPassword, user.passwordHash))) {
@@ -307,6 +361,13 @@ authRouter.patch('/me', requireAuth, async (req, res) => {
     // Every other device must log in again with the new password; this one keeps its session.
     await revokeUserSessions(user.id, req.session!.id);
     await audit(req, 'PASSWORD_CHANGED', `user:${user.id}`);
+  }
+  // Phone channels are consents: every change is appended to the consent log.
+  if (before && body.whatsappOptIn !== undefined && body.whatsappOptIn !== before.whatsappOptIn) {
+    await recordConsent({ userId: user.id, email: user.email, type: 'WHATSAPP', granted: body.whatsappOptIn, source: 'PROFILE', req });
+  }
+  if (before && body.smsNotifications !== undefined && body.smsNotifications !== before.smsNotifications) {
+    await recordConsent({ userId: user.id, email: user.email, type: 'SMS', granted: body.smsNotifications, source: 'PROFILE', req });
   }
   res.json({ user: publicUser(user) });
 });

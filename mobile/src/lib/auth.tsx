@@ -48,6 +48,10 @@ export interface RegisterInput {
   /** Foreign passport number (letters and digits, upper case). */
   passportNumber: string;
   password: string;
+  /** Agent referral code (sign-up link ?ref=CODE); unknown or paused codes are ignored by the API. */
+  ref?: string;
+  /** The form was filled from a passport photo (logged as a PASSPORT_OCR consent). */
+  passportScanned?: boolean;
 }
 
 export interface MePatch {

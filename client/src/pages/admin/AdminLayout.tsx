@@ -31,6 +31,7 @@ import {
   HelpCircle,
   Inbox,
   KanbanSquare,
+  Languages,
   Layers,
   LayoutDashboard,
   LayoutGrid,
@@ -48,6 +49,7 @@ import {
   Route,
   Settings,
   ShieldCheck,
+  ShieldHalf,
   Star,
   TrendingUp,
   UserSearch,
@@ -111,6 +113,9 @@ const MAIN_NAV: NavItem[] = [
   { to: '/admin/journey', label: 'journey', icon: Route },
   { to: '/admin/requirements', label: 'requirements', icon: ListChecks },
   { to: '/admin/kb', label: 'kb', icon: BookOpenText },
+  { to: '/admin/agents', label: 'agents', icon: Handshake, adminOnly: true },
+  { to: '/admin/translations', label: 'translations', icon: Languages },
+  { to: '/admin/privacy-requests', label: 'privacyRequests', icon: ShieldHalf, adminOnly: true },
   { to: '/admin/integrations', label: 'integrations', icon: Plug, adminOnly: true },
 ];
 

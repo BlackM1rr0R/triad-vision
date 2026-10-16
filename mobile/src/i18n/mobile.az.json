@@ -501,7 +501,27 @@
       },
       "passportNumber": "Xarici pasport nömrəsi",
       "passportNumberHint": "Xarici (beynəlxalq) pasportun nömrəsi — şəxsiyyət vəsiqəsinin yox",
-      "notice": "Qeydiyyat xarici pasport ilə aparılır. Məlumatları pasportda yazıldığı kimi daxil edin."
+      "notice": "Qeydiyyat xarici pasport ilə aparılır. Məlumatları pasportda yazıldığı kimi daxil edin.",
+      "scan": {
+        "title": "Pasportun şəklini çəkin — məlumatlar avtomatik dolsun",
+        "text": "Ad, soyad, doğum tarixi və pasport nömrəsi özü doldurulacaq. Hər şeyi sonra düzəldə bilərsiniz.",
+        "takePhoto": "Şəkil çək",
+        "chooseFile": "Qalereyadan seç",
+        "reading": "Pasport oxunur…",
+        "done": "Məlumatlar pasportdan dolduruldu. Zəhmət olmasa yoxlayın.",
+        "retake": "Yenidən çək",
+        "filledTag": "Pasportdan dolduruldu",
+        "privacy": "Şəkil yalnız məlumatları oxumaq üçün istifadə olunur və saxlanılmır.",
+        "tips": "Şəkli düz, işıqlı yerdə, MRZ zolağı (aşağıdakı 2 sətir) görünəcək şəkildə çəkin.",
+        "agentCode": "Agent kodu: {{code}}",
+        "warnExpired": "Bu pasportun etibarlılıq müddəti bitib ({{date}}). Viza müraciəti üçün etibarlı pasport lazımdır.",
+        "warnExpiresSoon": "Pasportun müddəti {{date}} tarixində bitir — 12 aydan az qalıb. Səfirlik ən azı 12 ay etibarlı pasport tələb edir.",
+        "warnCheckDigit": "Bəzi simvollar dəqiq oxunmadı. Doldurulan sahələri pasportla müqayisə edin.",
+        "notFound": "Pasport məlumatlarını oxumaq olmadı.",
+        "unavailable": "Avtomatik oxuma hazırda əlçatan deyil. Məlumatları əl ilə daxil edin.",
+        "tooMany": "Çox cəhd edildi. Bir neçə dəqiqə sonra yenidən yoxlayın və ya məlumatları əl ilə daxil edin.",
+        "failed": "Şəkli göndərmək alınmadı. İnternet bağlantısını yoxlayıb yenidən cəhd edin."
+      }
     }
   }
 }

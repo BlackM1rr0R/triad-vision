@@ -2,7 +2,7 @@ import { Link, useLocation, useOutlet } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
-import { Bell, Briefcase, Compass, FileSignature, FolderOpen, GraduationCap, LayoutDashboard, UserRound, Video } from 'lucide-react';
+import { Bell, Briefcase, Compass, FileSignature, FolderOpen, GraduationCap, Languages, LayoutDashboard, ShieldCheck, UserRound, Video } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { FINAL } from '@/lib/caseStatus';
 import { useNotifications } from '@/components/portal/useNotifications';
@@ -58,8 +58,10 @@ export default function AccountLayout() {
     ...(signatures?.length
       ? [{ to: '/account/signatures', label: t('esign.portal.title'), icon: FileSignature, badge: toSign, match: (p: string) => p.startsWith('/account/signatures') }]
       : []),
+    ...(isClient ? [{ to: '/account/translations', label: t('accountPage.tabs.translations'), icon: Languages, match: (p: string) => p.startsWith('/account/translations') }] : []),
     { to: '/account/notifications', label: t('portal.notifications'), icon: Bell, badge: unread, match: (p: string) => p.startsWith('/account/notifications') },
     { to: '/account/profile', label: t('portal.profile'), icon: UserRound, match: (p: string) => p.startsWith('/account/profile') },
+    { to: '/account/privacy', label: t('accountPage.tabs.privacy'), icon: ShieldCheck, match: (p: string) => p.startsWith('/account/privacy') },
   ];
 
   return (

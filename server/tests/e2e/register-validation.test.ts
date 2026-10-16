@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { anon } from '../helpers/api';
+import { anon, sessionAgent } from '../helpers/api';
 import { prisma } from '../helpers/db';
+import { issueSession } from '../../src/middleware/auth.js';
 
 // Candidate sign-up: phone (with country code) and date of birth are required and validated.
 // /register shares the auth limiter (30 requests / 15 min per IP); this file stays well below it.
@@ -71,5 +72,58 @@ describe('POST /api/auth/register — phone, date of birth and passport number',
   it('accepts the age boundaries 16 and 80', async () => {
     expect((await anon().post('/api/auth/register').send(body({ birthDate: isoDate(16) }))).status).toBe(201);
     expect((await anon().post('/api/auth/register').send(body({ birthDate: isoDate(80) }))).status).toBe(201);
+  });
+});
+
+describe('POST /api/auth/register — consents and agent referral', () => {
+  const makeAgent = async (code: string, status: 'ACTIVE' | 'PAUSED' = 'ACTIVE') => {
+    const user = await prisma.user.create({
+      data: { email: `${code.toLowerCase()}@agents.test`, passwordHash: 'x', role: 'AGENT', firstName: 'Agent', lastName: code },
+    });
+    return prisma.agent.create({ data: { userId: user.id, code, status } });
+  };
+  const consents = async (email: string) => {
+    const user = await prisma.user.findUniqueOrThrow({ where: { email } });
+    return prisma.consentRecord.findMany({ where: { userId: user.id }, orderBy: { type: 'asc' } });
+  };
+
+  it('attaches the client to an active agent and records the privacy and passport-OCR consents', async () => {
+    const agent = await makeAgent('GANJA-ALI');
+    const res = await anon().post('/api/auth/register').send(body({ email: 'ref@test.local', ref: ' ganja-ali ', passportScanned: true }));
+    expect(res.status).toBe(201);
+    const db = await prisma.user.findUniqueOrThrow({ where: { email: 'ref@test.local' } });
+    expect(db.referredByAgentId).toBe(agent.id);
+    expect(db.referredAt).not.toBeNull();
+    const rows = await consents('ref@test.local');
+    expect(rows.map((r) => [r.type, r.granted, r.source])).toEqual([
+      ['PASSPORT_OCR', true, 'REGISTER'],
+      ['PRIVACY_POLICY', true, 'REGISTER'],
+    ]);
+    expect(rows[0].email).toBe('ref@test.local');
+  });
+
+  it('ignores unknown and paused agent codes; without a scan only the privacy consent is logged', async () => {
+    await makeAgent('PAUSED-1', 'PAUSED');
+    const paused = await anon().post('/api/auth/register').send(body({ email: 'paused@test.local', ref: 'PAUSED-1' }));
+    expect(paused.status).toBe(201);
+    const unknown = await anon().post('/api/auth/register').send(body({ email: 'unknown@test.local', ref: 'NOPE-404' }));
+    expect(unknown.status).toBe(201);
+    for (const email of ['paused@test.local', 'unknown@test.local']) {
+      expect((await prisma.user.findUniqueOrThrow({ where: { email } })).referredByAgentId).toBeNull();
+      expect((await consents(email)).map((r) => r.type)).toEqual(['PRIVACY_POLICY']);
+    }
+  });
+
+  it('logs WhatsApp / SMS consent changes made in the profile', async () => {
+    const res = await anon().post('/api/auth/register').send(body({ email: 'channels@test.local' }));
+    expect(res.status).toBe(201);
+    const { token } = await issueSession(res.body.user.id, { client: 'web' });
+    const me = sessionAgent(token);
+    // whatsappOptIn defaults to true: re-sending true is no change, false is.
+    expect((await me.patch('/api/auth/me').send({ whatsappOptIn: true })).status).toBe(200);
+    expect((await me.patch('/api/auth/me').send({ whatsappOptIn: false, smsNotifications: false })).status).toBe(200);
+    expect((await me.patch('/api/auth/me').send({ smsNotifications: true, firstName: 'Aysel' })).status).toBe(200);
+    const rows = (await consents('channels@test.local')).filter((r) => r.source === 'PROFILE');
+    expect(rows.map((r) => `${r.type}:${r.granted}`).sort()).toEqual(['SMS:false', 'SMS:true', 'WHATSAPP:false']);
   });
 });

@@ -3,7 +3,7 @@
 export type L10n = { az: string; de: string; en: string; ru: string };
 export type L10nList = { az: string[]; de: string[]; en: string[]; ru: string[] };
 export type Locale = 'az' | 'de' | 'en' | 'ru';
-export type Role = 'CLIENT' | 'COMPANY' | 'STAFF' | 'ADMIN' | 'SUPER_ADMIN';
+export type Role = 'CLIENT' | 'COMPANY' | 'AGENT' | 'STAFF' | 'ADMIN' | 'SUPER_ADMIN';
 
 /** Staff roles (STAFF < ADMIN < SUPER_ADMIN) — mirror of server ROLE_RANK. */
 export const STAFF_ROLES: readonly Role[] = ['STAFF', 'ADMIN', 'SUPER_ADMIN'];

@@ -1,10 +1,10 @@
 export type L10n = { az: string; de: string; en: string; ru: string };
 export type L10nList = { az: string[]; de: string[]; en: string[]; ru: string[] };
 
-export type Role = 'CLIENT' | 'COMPANY' | 'STAFF' | 'ADMIN' | 'SUPER_ADMIN';
+export type Role = 'CLIENT' | 'COMPANY' | 'AGENT' | 'STAFF' | 'ADMIN' | 'SUPER_ADMIN';
 
 /** Role hierarchy: every role includes the permissions of the ones below it. */
-export const ROLE_RANK: Record<Role, number> = { CLIENT: 0, COMPANY: 0, STAFF: 1, ADMIN: 2, SUPER_ADMIN: 3 };
+export const ROLE_RANK: Record<Role, number> = { CLIENT: 0, COMPANY: 0, AGENT: 0, STAFF: 1, ADMIN: 2, SUPER_ADMIN: 3 };
 export const hasMinRole = (role: Role | null | undefined, min: Role) => !!role && ROLE_RANK[role] >= ROLE_RANK[min];
 export const isStaffRole = (role: Role | null | undefined) => hasMinRole(role, 'STAFF');
 

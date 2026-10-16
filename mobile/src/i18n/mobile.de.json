@@ -501,7 +501,27 @@
       },
       "passportNumber": "Reisepassnummer",
       "passportNumberHint": "Nummer des Reisepasses — nicht des Personalausweises",
-      "notice": "Die Registrierung erfolgt mit dem Reisepass. Geben Sie die Daten genau wie im Pass ein."
+      "notice": "Die Registrierung erfolgt mit dem Reisepass. Geben Sie die Daten genau wie im Pass ein.",
+      "scan": {
+        "title": "Reisepass fotografieren – die Daten werden automatisch ausgefüllt",
+        "text": "Vorname, Nachname, Geburtsdatum und Passnummer werden automatisch eingetragen. Sie können alles danach noch ändern.",
+        "takePhoto": "Foto aufnehmen",
+        "chooseFile": "Aus Galerie wählen",
+        "reading": "Reisepass wird gelesen…",
+        "done": "Die Daten wurden aus dem Reisepass übernommen. Bitte prüfen Sie sie.",
+        "retake": "Neu aufnehmen",
+        "filledTag": "Aus dem Reisepass",
+        "privacy": "Das Foto wird nur zum Auslesen der Daten verwendet und nicht gespeichert.",
+        "tips": "Fotografieren Sie den Pass gerade und gut beleuchtet, sodass die MRZ (die zwei unteren Zeilen) sichtbar ist.",
+        "agentCode": "Agentencode: {{code}}",
+        "warnExpired": "Dieser Reisepass ist abgelaufen ({{date}}). Für den Visumantrag ist ein gültiger Pass erforderlich.",
+        "warnExpiresSoon": "Der Reisepass läuft am {{date}} ab – in weniger als 12 Monaten. Die Botschaft verlangt einen mindestens 12 Monate gültigen Pass.",
+        "warnCheckDigit": "Einige Zeichen wurden nicht sicher erkannt. Bitte vergleichen Sie die Felder mit Ihrem Pass.",
+        "notFound": "Die Passdaten konnten nicht gelesen werden.",
+        "unavailable": "Das automatische Auslesen ist gerade nicht verfügbar. Bitte geben Sie die Daten manuell ein.",
+        "tooMany": "Zu viele Versuche. Bitte versuchen Sie es in einigen Minuten erneut oder geben Sie die Daten manuell ein.",
+        "failed": "Das Foto konnte nicht gesendet werden. Bitte prüfen Sie die Internetverbindung und versuchen Sie es erneut."
+      }
     }
   }
 }

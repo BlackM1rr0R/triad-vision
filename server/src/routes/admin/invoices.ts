@@ -17,6 +17,7 @@ import {
 } from '../../lib/invoicePdf.js';
 import { asInvoiceLocale, formatEur, formatInvoiceDate, invoiceTexts } from '../../lib/invoiceTexts.js';
 import { config } from '../../config.js';
+import { awardInvoiceCommission } from '../../lib/agents/commissions.js';
 
 // Admin: invoices — mounted at /api/admin/invoices (ADMIN+, gated in admin/index.ts)
 export const adminInvoicesRouter = Router();
@@ -363,6 +364,7 @@ adminInvoicesRouter.post('/:id/paid', async (req, res) => {
   const r = await prisma.invoice.updateMany({ where: { id: current.id, status: { in: ['SENT', 'OVERDUE'] } }, data: { status: 'PAID', paidAt: when } });
   if (r.count === 0) throw new HttpError(409, 'INVOICE_NOT_OPEN');
   await audit(req, 'INVOICE_PAID', current.id, { number: current.number, paidAt: when.toISOString() });
+  await awardInvoiceCommission(current); // agent programme (never throws)
   res.json({ invoice: view(await findInvoice(current.id)) });
 });
 

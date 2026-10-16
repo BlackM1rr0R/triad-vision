@@ -501,7 +501,27 @@
       },
       "passportNumber": "Passport number",
       "passportNumberHint": "Number of your international passport — not your ID card",
-      "notice": "Registration is done with your international passport. Enter the details exactly as in the passport."
+      "notice": "Registration is done with your international passport. Enter the details exactly as in the passport.",
+      "scan": {
+        "title": "Take a photo of your passport — the form fills itself",
+        "text": "First name, last name, date of birth and passport number are filled in automatically. You can still edit everything.",
+        "takePhoto": "Take photo",
+        "chooseFile": "Choose from gallery",
+        "reading": "Reading the passport…",
+        "done": "The details were filled in from your passport. Please check them.",
+        "retake": "Retake",
+        "filledTag": "From passport",
+        "privacy": "The photo is only used to read the details and is not saved.",
+        "tips": "Take the photo straight on, in good light, with the MRZ (the two lines at the bottom) clearly visible.",
+        "agentCode": "Agent code: {{code}}",
+        "warnExpired": "This passport has expired ({{date}}). A valid passport is required for the visa application.",
+        "warnExpiresSoon": "The passport expires on {{date}} — in less than 12 months. The embassy requires a passport valid for at least 12 months.",
+        "warnCheckDigit": "Some characters could not be read reliably. Please compare the filled fields with your passport.",
+        "notFound": "The passport details could not be read.",
+        "unavailable": "Automatic reading is not available right now. Please enter the details manually.",
+        "tooMany": "Too many attempts. Please try again in a few minutes or enter the details manually.",
+        "failed": "The photo could not be sent. Check your internet connection and try again."
+      }
     }
   }
 }

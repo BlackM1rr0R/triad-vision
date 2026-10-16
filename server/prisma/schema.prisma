@@ -12,6 +12,7 @@ datasource db {
 enum Role {
   CLIENT
   COMPANY // employer account (belongs to a Company)
+  AGENT // regional partner who brings candidates (agent portal only)
   STAFF
   ADMIN
   SUPER_ADMIN
@@ -124,6 +125,17 @@ model User {
   pollVotes             PollVote[]
   leaveRequests         LeaveRequest[]           @relation("LeaveUser")
   leaveDecisions        LeaveRequest[]           @relation("LeaveDecidedBy")
+  referredByAgentId     String? // agent whose link / code the client signed up with
+  referredByAgent       Agent?                   @relation("AgentReferrals", fields: [referredByAgentId], references: [id], onDelete: SetNull)
+  referredAt            DateTime?
+  agentProfile          Agent?                   @relation("AgentUser")
+  agentCommissions      AgentCommission[]        @relation("CommissionClient")
+  translationOrders     TranslationOrder[]       @relation("TranslationClient")
+  translationAssigned   TranslationOrder[]       @relation("TranslationStaff")
+  translationEvents     TranslationOrderEvent[]
+  consents              ConsentRecord[]
+  privacyRequests       PrivacyRequest[]         @relation("PrivacyRequester")
+  privacyHandled        PrivacyRequest[]         @relation("PrivacyHandler")
   signatureRequests     SignatureRequest[]       @relation("SignatureRequestCreatedBy")
   signatureSignings     SignatureSigner[]        @relation("SignatureSignerUser")
 
@@ -327,6 +339,8 @@ model Case {
   mailMessages      MailMessage[]
   chatChannels      ChatChannel[]
   calendarEvents    CalendarEvent[]
+  agentCommissions  AgentCommission[]
+  translationOrders TranslationOrder[]
   signatureRequests SignatureRequest[]
 
   @@index([clientId])
@@ -375,17 +389,17 @@ model Document {
 }
 
 model Contract {
-  id               String    @id @default(cuid())
-  caseId           String    @unique
-  case             Case      @relation(fields: [caseId], references: [id], onDelete: Cascade)
-  fileDocumentId   String // unsigned contract (Document with stage CONTRACT)
-  signedDocumentId String? // signed PDF produced by the server (Document with stage CONTRACT_SIGNED)
-  signerName       String?
-  signedAt         DateTime?
-  signerIp         String?
-  signerUserAgent  String?   @db.Text
-  sentAt           DateTime  @default(now())
-  version          Int       @default(1)
+  id                 String    @id @default(cuid())
+  caseId             String    @unique
+  case               Case      @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  fileDocumentId     String // unsigned contract (Document with stage CONTRACT)
+  signedDocumentId   String? // signed PDF produced by the server (Document with stage CONTRACT_SIGNED)
+  signerName         String?
+  signedAt           DateTime?
+  signerIp           String?
+  signerUserAgent    String?   @db.Text
+  sentAt             DateTime  @default(now())
+  version            Int       @default(1)
   signatureRequestId String? // set when this version is signed through the multi-party module (SignatureRequest.id)
 }
 
@@ -630,29 +644,29 @@ enum CompanyStatus {
 }
 
 model Company {
-  id          String        @id @default(cuid())
-  name        String
-  legalForm   String?
-  sector      String? // logistics | courier | industry | construction | hospitality | healthcare | agriculture | other
-  city        String?
-  address     String?       @db.Text
-  vatId       String?
-  website     String?       @db.Text
-  contactName String?
-  phone       String?
-  email       String?
-  status      CompanyStatus @default(PENDING)
-  note        String?       @db.Text // internal staff note
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
-  users       User[]
-  vacancies   Vacancy[]
-  cases       Case[]
-  invoices    Invoice[]
-  interviews  Interview[]
-  apiKeys     ApiKey[]
-  webhooks    Webhook[]
-  contacts    Contact[]
+  id                String             @id @default(cuid())
+  name              String
+  legalForm         String?
+  sector            String? // logistics | courier | industry | construction | hospitality | healthcare | agriculture | other
+  city              String?
+  address           String?            @db.Text
+  vatId             String?
+  website           String?            @db.Text
+  contactName       String?
+  phone             String?
+  email             String?
+  status            CompanyStatus      @default(PENDING)
+  note              String?            @db.Text // internal staff note
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  users             User[]
+  vacancies         Vacancy[]
+  cases             Case[]
+  invoices          Invoice[]
+  interviews        Interview[]
+  apiKeys           ApiKey[]
+  webhooks          Webhook[]
+  contacts          Contact[]
   signatureRequests SignatureRequest[]
 
   @@index([status])
@@ -1922,4 +1936,229 @@ model SignatureEvent {
   at        DateTime           @default(now())
 
   @@index([requestId, at])
+}
+
+// ─── Agent / partner programme ──────────────────────────────────────────
+
+enum AgentStatus {
+  ACTIVE
+  PAUSED
+}
+
+enum CommissionType {
+  FIXED // amountCents per qualifying event
+  PERCENT // percent (basis points) of the paid invoice amount
+}
+
+/// A regional partner. Logs in with a User of role AGENT; clients who sign up with the agent's
+/// link or code are attributed to the agent and earn commissions on the configured events.
+model Agent {
+  id              String            @id @default(cuid())
+  userId          String            @unique
+  user            User              @relation("AgentUser", fields: [userId], references: [id], onDelete: Cascade)
+  code            String            @unique @db.VarChar(32) // referral code, e.g. GANJA-ALI
+  region          String?           @db.VarChar(120)
+  company         String?           @db.VarChar(160)
+  status          AgentStatus       @default(ACTIVE)
+  commissionType  CommissionType    @default(FIXED)
+  commissionValue Int               @default(0) // cents (FIXED) or basis points (PERCENT, 1000 = 10 %)
+  currency        String            @default("EUR") @db.VarChar(3)
+  /// Which case events pay a commission: ["CASE_CREATED","CONTRACT_SIGNED","VISA_APPROVED","INVOICE_PAID"]
+  payoutEvents    Json?
+  iban            String?           @db.VarChar(64)
+  notes           String?           @db.Text
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  referrals       User[]            @relation("AgentReferrals")
+  commissions     AgentCommission[]
+
+  @@index([status])
+}
+
+enum CommissionStatus {
+  PENDING
+  APPROVED
+  PAID
+  CANCELLED
+}
+
+model AgentCommission {
+  id          String           @id @default(cuid())
+  agentId     String
+  agent       Agent            @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  clientId    String?
+  client      User?            @relation("CommissionClient", fields: [clientId], references: [id], onDelete: SetNull)
+  caseId      String?
+  case        Case?            @relation(fields: [caseId], references: [id], onDelete: SetNull)
+  event       String           @db.VarChar(40) // CASE_CREATED | CONTRACT_SIGNED | VISA_APPROVED | INVOICE_PAID | MANUAL
+  sourceRef   String?          @db.VarChar(80) // e.g. invoice id; with event it keeps a commission from being created twice
+  amountCents Int
+  currency    String           @default("EUR") @db.VarChar(3)
+  status      CommissionStatus @default(PENDING)
+  note        String?          @db.VarChar(500)
+  payoutRef   String?          @db.VarChar(120) // bank transfer reference when paid
+  approvedAt  DateTime?
+  paidAt      DateTime?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  @@unique([agentId, event, caseId, sourceRef])
+  @@index([agentId, status])
+  @@index([status, createdAt])
+}
+
+// ─── Translation and apostille orders ───────────────────────────────────
+
+enum TranslationService {
+  TRANSLATION
+  APOSTILLE
+  TRANSLATION_APOSTILLE
+  NOTARY
+}
+
+enum TranslationStatus {
+  NEW // submitted by the client
+  QUOTED // staff sent price and due date
+  ACCEPTED // client accepted the quote
+  IN_PROGRESS
+  READY // finished, waiting for delivery / pick-up
+  DELIVERED
+  CANCELLED
+}
+
+enum TranslationUrgency {
+  STANDARD
+  EXPRESS
+}
+
+enum DeliveryMethod {
+  DIGITAL
+  PICKUP
+  COURIER
+}
+
+model TranslationOrder {
+  id              String                  @id @default(cuid())
+  number          Int                     @unique // shown as TR-0001
+  clientId        String
+  client          User                    @relation("TranslationClient", fields: [clientId], references: [id], onDelete: Cascade)
+  caseId          String?
+  case            Case?                   @relation(fields: [caseId], references: [id], onDelete: SetNull)
+  service         TranslationService
+  sourceLang      String                  @db.VarChar(8)
+  targetLang      String                  @db.VarChar(8)
+  documentTypes   Json? // ["DIPLOMA","BIRTH_CERT",...]
+  pages           Int                     @default(1)
+  urgency         TranslationUrgency      @default(STANDARD)
+  status          TranslationStatus       @default(NEW)
+  priceCents      Int?
+  currency        String                  @default("EUR") @db.VarChar(3)
+  quoteNote       String?                 @db.Text
+  dueAt           DateTime?
+  deliveryMethod  DeliveryMethod          @default(DIGITAL)
+  deliveryAddress String?                 @db.VarChar(300)
+  trackingNumber  String?                 @db.VarChar(80)
+  clientNote      String?                 @db.Text
+  staffNote       String?                 @db.Text // internal
+  assignedStaffId String?
+  assignedStaff   User?                   @relation("TranslationStaff", fields: [assignedStaffId], references: [id], onDelete: SetNull)
+  acceptedAt      DateTime?
+  completedAt     DateTime?
+  createdAt       DateTime                @default(now())
+  updatedAt       DateTime                @updatedAt
+  files           TranslationOrderFile[]
+  events          TranslationOrderEvent[]
+
+  @@index([clientId, createdAt])
+  @@index([status, createdAt])
+}
+
+enum TranslationFileKind {
+  SOURCE // uploaded by the client (or picked from the case documents)
+  RESULT // finished translation / apostilled scan uploaded by staff
+}
+
+model TranslationOrderFile {
+  id         String              @id @default(cuid())
+  orderId    String
+  order      TranslationOrder    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  kind       TranslationFileKind
+  documentId String? // case document reused as the source
+  storageKey String?             @unique // <UPLOADS>/private/translations/<key>
+  filename   String              @db.VarChar(255)
+  mimeType   String              @db.VarChar(120)
+  size       Int
+  createdAt  DateTime            @default(now())
+
+  @@index([orderId, kind])
+}
+
+model TranslationOrderEvent {
+  id              String             @id @default(cuid())
+  orderId         String
+  order           TranslationOrder   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  status          TranslationStatus?
+  note            String?            @db.Text
+  visibleToClient Boolean            @default(true)
+  actorId         String?
+  actor           User?              @relation(fields: [actorId], references: [id], onDelete: SetNull)
+  createdAt       DateTime           @default(now())
+
+  @@index([orderId, createdAt])
+}
+
+// ─── Privacy (DSGVO / GDPR) ─────────────────────────────────────────────
+
+/// Append-only log of consents given or withdrawn (who, what, which text version, when, from where).
+model ConsentRecord {
+  id        String   @id @default(cuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  email     String?  @db.VarChar(200) // for consents given before an account exists (booking, inquiry)
+  type      String   @db.VarChar(40) // PRIVACY_POLICY | TERMS | MARKETING_EMAIL | WHATSAPP | SMS | EMPLOYER_SHARING | PASSPORT_OCR ...
+  granted   Boolean
+  version   String   @db.VarChar(40) // version / date of the policy text shown
+  source    String   @db.VarChar(40) // REGISTER | PROFILE | PRIVACY_CENTER | BOOKING | INQUIRY | MOBILE ...
+  ip        String?  @db.VarChar(64)
+  userAgent String?  @db.VarChar(400)
+  createdAt DateTime @default(now())
+
+  @@index([userId, type, createdAt])
+  @@index([email])
+}
+
+enum PrivacyRequestType {
+  EXPORT // Art. 15 / 20
+  DELETION // Art. 17
+  RECTIFICATION // Art. 16
+  RESTRICTION // Art. 18
+  OBJECTION // Art. 21
+}
+
+enum PrivacyRequestStatus {
+  OPEN
+  IN_PROGRESS
+  COMPLETED
+  REJECTED
+  CANCELLED
+}
+
+model PrivacyRequest {
+  id           String               @id @default(cuid())
+  userId       String?
+  user         User?                @relation("PrivacyRequester", fields: [userId], references: [id], onDelete: SetNull)
+  email        String               @db.VarChar(200) // kept after the account is deleted (proof of completion)
+  type         PrivacyRequestType
+  status       PrivacyRequestStatus @default(OPEN)
+  message      String?              @db.Text
+  decisionNote String?              @db.Text
+  dueAt        DateTime // one month after the request (Art. 12(3))
+  handledById  String?
+  handledBy    User?                @relation("PrivacyHandler", fields: [handledById], references: [id], onDelete: SetNull)
+  completedAt  DateTime?
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
+
+  @@index([status, dueAt])
+  @@index([userId])
 }

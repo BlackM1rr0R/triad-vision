@@ -18,7 +18,9 @@ import {
   MailCheck,
   MessagesSquare,
   Phone,
+  ScanLine,
   SearchCheck,
+  Ticket,
   User as UserIcon,
   UserPlus,
   type LucideIcon,
@@ -34,6 +36,7 @@ import { Spinner } from '@/components/ui/Spinner';
 import { AuthShell } from './AuthShell';
 import { authError } from './Login';
 import { ResendVerificationButton } from '@/components/auth/VerifyBanner';
+import { PassportScan, type PassportScanFields } from '@/components/auth/PassportScan';
 import { registerCopy } from '@/i18n';
 import { pagesLegal } from '@/i18n/pagesLegal';
 
@@ -70,6 +73,26 @@ const EMPTY: Form = { firstName: '', lastName: '', birthDate: '', passportNumber
 /** Foreign passport number as the API stores it: letters and digits, upper case ("c 0123-4567" → "C01234567"). */
 const compactPassport = (v: string) => v.replace(/[\s-]/g, '').toUpperCase();
 const passportValid = (v: string) => /^[A-Z0-9]{5,20}$/.test(compactPassport(v));
+
+/** Agent referral code from the sign-up link (?ref=CODE), kept for the tab so it survives a visit to /privacy. */
+const REF_KEY = 'tv_ref';
+const normaliseRef = (v: string | null) => (v ?? '').trim().toUpperCase().replace(/[^A-Z0-9-]/g, '').slice(0, 32);
+const readRef = (search: string) => {
+  const fromUrl = normaliseRef(new URLSearchParams(search).get('ref'));
+  try {
+    if (fromUrl) sessionStorage.setItem(REF_KEY, fromUrl);
+    return fromUrl || normaliseRef(sessionStorage.getItem(REF_KEY));
+  } catch {
+    return fromUrl;
+  }
+};
+const forgetRef = () => {
+  try {
+    sessionStorage.removeItem(REF_KEY);
+  } catch {
+    // storage unavailable: nothing to forget
+  }
+};
 
 /** Field-level error keys (registerPage.errors.*) from a 400 VALIDATION answer of the API. */
 const serverFieldErrors = (err: unknown): Partial<Record<FieldKey, string>> => {
@@ -116,6 +139,7 @@ const Field = ({
   hint,
   error,
   trailing,
+  tag,
   children,
 }: {
   id: string;
@@ -124,12 +148,17 @@ const Field = ({
   hint: string;
   error?: string | null;
   trailing?: ReactNode;
+  /** Small badge next to the label (e.g. "filled from passport"). */
+  tag?: ReactNode;
   children: ReactNode;
 }) => (
   <div>
-    <label className="label" htmlFor={id}>
-      {label}
-    </label>
+    <div className="flex flex-wrap items-center justify-between gap-x-2">
+      <label className="label" htmlFor={id}>
+        {label}
+      </label>
+      {tag}
+    </div>
     <div className="relative">
       <Icon className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-muted" aria-hidden />
       {children}
@@ -211,7 +240,31 @@ export default function Register() {
   const [serverErrors, setServerErrors] = useState<Partial<Record<FieldKey, string>>>({});
   const [registered, setRegistered] = useState<{ email: string; next: string } | null>(null);
   const bounds = useMemo(birthBounds, []);
+  /** Values the passport scan put into the form (a field keeps its badge while it still holds that value). */
+  const [scanned, setScanned] = useState<Partial<Form> | null>(null);
+  const [refCode] = useState(() => readRef(location.search));
   usePageTitle(t('auth.registerTitle'));
+
+  const fillFromPassport = (p: PassportScanFields) => {
+    const values: Partial<Form> = {};
+    if (p.firstName) values.firstName = p.firstName;
+    if (p.lastName) values.lastName = p.lastName;
+    if (p.birthDate) values.birthDate = p.birthDate;
+    if (p.passportNumber) values.passportNumber = p.passportNumber;
+    setF((prev) => ({ ...prev, ...values }));
+    setServerErrors((prev) => {
+      const next = { ...prev };
+      for (const k of Object.keys(values) as FieldKey[]) delete next[k];
+      return next;
+    });
+    setScanned(values);
+  };
+  const fromPassport = (k: FieldKey) =>
+    scanned?.[k] && scanned[k] === f[k] ? (
+      <span className="mb-1.5 inline-flex items-center gap-1 rounded-full bg-brand-50 px-2 py-0.5 text-[0.7rem] font-semibold text-brand-700 ring-1 ring-brand-200 dark:text-brand-400 dark:ring-brand-500/30">
+        <ScanLine className="size-3" aria-hidden /> {t('registerPage.scan.filledTag')}
+      </span>
+    ) : null;
 
   const set = (k: FieldKey) => (e: { target: { value: string } }) => {
     setF((p) => ({ ...p, [k]: e.target.value }));
@@ -265,7 +318,10 @@ export default function Register() {
         phone: compactPhone(f.phone),
         password: f.password,
         locale,
+        ...(refCode ? { ref: refCode } : {}),
+        ...(scanned && Object.keys(scanned).length ? { passportScanned: true } : {}),
       });
+      forgetRef();
       setUser(data.user);
       const next = landingAfterLogin(data.user.role, from);
       // New accounts confirm their email first ("check your inbox"); pre-verified ones go straight on.
@@ -301,9 +357,20 @@ export default function Register() {
             <BookUser className="mt-0.5 size-4 shrink-0 text-brand-600" aria-hidden />
             <span>{t('registerPage.passportNotice')}</span>
           </p>
+          {refCode && (
+            <p className="mt-3">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-line bg-surface px-2.5 py-1 text-xs font-medium text-muted">
+                <Ticket className="size-3.5" aria-hidden /> {t('registerPage.scan.agentCode', { code: refCode })}
+              </span>
+            </p>
+          )}
+
+          <div className="mt-6">
+            <PassportScan onFilled={fillFromPassport} onCleared={() => setScanned(null)} />
+          </div>
 
           <form onSubmit={submit} noValidate className="mt-7 space-y-4 sm:mt-8">
-            <Field id={id('firstName')} label={t('registerPage.firstName')} icon={UserIcon} hint={t('registerPage.passportHint')} error={errorFor('firstName')}>
+            <Field id={id('firstName')} label={t('registerPage.firstName')} icon={UserIcon} hint={t('registerPage.passportHint')} error={errorFor('firstName')} tag={fromPassport('firstName')}>
               <input
                 id={id('firstName')}
                 name="firstName"
@@ -317,7 +384,7 @@ export default function Register() {
                 {...aria('firstName')}
               />
             </Field>
-            <Field id={id('lastName')} label={t('registerPage.lastName')} icon={UserIcon} hint={t('registerPage.passportHint')} error={errorFor('lastName')}>
+            <Field id={id('lastName')} label={t('registerPage.lastName')} icon={UserIcon} hint={t('registerPage.passportHint')} error={errorFor('lastName')} tag={fromPassport('lastName')}>
               <input
                 id={id('lastName')}
                 name="lastName"
@@ -331,7 +398,7 @@ export default function Register() {
                 {...aria('lastName')}
               />
             </Field>
-            <Field id={id('birthDate')} label={t('registerPage.birthDate')} icon={Calendar} hint={t('registerPage.birthHint')} error={errorFor('birthDate')}>
+            <Field id={id('birthDate')} label={t('registerPage.birthDate')} icon={Calendar} hint={t('registerPage.birthHint')} error={errorFor('birthDate')} tag={fromPassport('birthDate')}>
               <input
                 id={id('birthDate')}
                 name="birthDate"
@@ -346,7 +413,7 @@ export default function Register() {
                 {...aria('birthDate')}
               />
             </Field>
-            <Field id={id('passportNumber')} label={t('registerPage.passportNumber')} icon={BookUser} hint={t('registerPage.passportNoHint')} error={errorFor('passportNumber')}>
+            <Field id={id('passportNumber')} label={t('registerPage.passportNumber')} icon={BookUser} hint={t('registerPage.passportNoHint')} error={errorFor('passportNumber')} tag={fromPassport('passportNumber')}>
               <input
                 id={id('passportNumber')}
                 name="passportNumber"

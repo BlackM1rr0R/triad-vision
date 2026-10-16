@@ -26,6 +26,9 @@ import { chatRouter } from './routes/chat.js';
 import { eventsRouter } from './routes/events.js';
 import { contactsRouter } from './routes/contacts.js';
 import { workspaceRouter } from './routes/workspace.js';
+import { agentPortalRouter } from './routes/agentPortal.js';
+import { translationsRouter } from './routes/translations.js';
+import { privacyRouter } from './routes/privacy.js';
 import { twoFactorRouter } from './routes/twoFactor.js';
 import { companyRouter } from './routes/company.js';
 import { companyInvoicesRouter } from './routes/companyInvoices.js';
@@ -118,6 +121,9 @@ export const createApp = () => {
   app.use('/api/events', eventsRouter);
   app.use('/api/contacts', contactsRouter);
   app.use('/api/workspace', workspaceRouter);
+  app.use('/api/agent', agentPortalRouter);
+  app.use('/api/translations', translationsRouter);
+  app.use('/api/privacy', privacyRouter);
 
   // /sitemap.xml, /robots.txt and /api/seo/* (Caddy forwards the first two here).
   app.use(seoRouter);

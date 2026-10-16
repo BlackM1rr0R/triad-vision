@@ -67,6 +67,12 @@ const Jobs = lazy(() => import('./pages/jobs/Jobs'));
 const JobDetail = lazy(() => import('./pages/jobs/JobDetail'));
 const EmployerRegister = lazy(() => import('./pages/company/EmployerRegister'));
 const CompanyApp = lazy(() => import('./pages/company/CompanyApp'));
+const AgentApp = lazy(() => import('./pages/agent/AgentApp'));
+const AdminAgents = lazy(() => import('./pages/admin/Agents'));
+const AdminTranslations = lazy(() => import('./pages/admin/Translations'));
+const AdminPrivacyRequests = lazy(() => import('./pages/admin/PrivacyRequests'));
+const AccountTranslations = lazy(() => import('./pages/account/Translations'));
+const AccountPrivacyCenter = lazy(() => import('./pages/account/PrivacyCenter'));
 const Booking = lazy(() => import('./pages/booking/Booking'));
 const BookingManage = lazy(() => import('./pages/booking/BookingManage'));
 const ReviewPage = lazy(() => import('./pages/ReviewPage'));
@@ -221,6 +227,14 @@ export default function App() {
                 </RequireAuth>
               }
             />
+            <Route
+              path="agent/*"
+              element={
+                <RequireAuth roles={['AGENT']}>
+                  <AgentApp />
+                </RequireAuth>
+              }
+            />
             <Route path="booking" element={<Booking />} />
             <Route path="booking/manage" element={<BookingManage />} />
             <Route path="review" element={<ReviewPage />} />
@@ -241,6 +255,8 @@ export default function App() {
               <Route path="onboarding" element={<AccountOnboarding />} />
               <Route path="german" element={<AccountGerman />} />
               <Route path="interviews" element={<AccountInterviews />} />
+              <Route path="translations/*" element={<AccountTranslations />} />
+              <Route path="privacy" element={<AccountPrivacyCenter />} />
               <Route path="signatures" element={<AccountSignatures />} />
               <Route path="signatures/:signerId" element={<AccountSignatures />} />
             </Route>
@@ -326,6 +342,9 @@ export default function App() {
             <Route path="messaging" element={<AdminMessaging />} />
             <Route path="kanban" element={<AdminKanban />} />
             <Route path="kb" element={<AdminKnowledgeBase />} />
+            <Route path="agents/*" element={<AdminAgents />} />
+            <Route path="translations/*" element={<AdminTranslations />} />
+            <Route path="privacy-requests/*" element={<AdminPrivacyRequests />} />
             <Route path="integrations" element={<AdminIntegrations />} />
             <Route path="interviews" element={<AdminInterviews />} />
             <Route path="journey" element={<AdminJourney />} />

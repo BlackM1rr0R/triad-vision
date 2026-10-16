@@ -1,10 +1,11 @@
 import { useMemo, useState } from 'react';
 import { View } from 'react-native';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { UserPlus } from '@/components/icons';
 import { useTranslation } from 'react-i18next';
 import { Button, Field, Muted, Text, useToast } from '@/components/ui';
 import { AuthShell, LinkText } from '@/features/auth/AuthShell';
+import { FilledTag, PassportScanCard, type PassportScanFields } from '@/features/auth/PassportScanCard';
 import { DateTimeField } from '@/features/staff/DateTimeField';
 import { useAuth } from '@/lib/auth';
 import { haptic } from '@/lib/haptics';
@@ -37,6 +38,10 @@ const birthBounds = () => {
 
 type FormKey = 'firstName' | 'lastName' | 'passportNumber' | 'email' | 'phone' | 'password';
 
+/** Agent referral codes: letters, digits and dashes, upper case (same rule as the API). */
+const normaliseRef = (v: string | string[] | undefined) =>
+  (Array.isArray(v) ? v[0] : v ?? '').trim().toUpperCase().replace(/[^A-Z0-9-]/g, '').slice(0, 32);
+
 export default function Register() {
   const { t } = useTranslation();
   const { register } = useAuth();
@@ -48,6 +53,27 @@ export default function Register() {
   const [errors, setErrors] = useState<Partial<Record<FormKey | 'birthDate' | 'form', string>>>({});
   const [busy, setBusy] = useState(false);
   const set = (k: FormKey) => (v: string) => setForm((f) => ({ ...f, [k]: v }));
+  const params = useLocalSearchParams<{ ref?: string }>();
+  const refCode = normaliseRef(params.ref);
+  /** Values the passport scan filled in (a field keeps its badge while it still holds that value). */
+  const [scanned, setScanned] = useState<{ firstName?: string; lastName?: string; passportNumber?: string; birthDate?: string } | null>(null);
+
+  const fillFromPassport = (p: PassportScanFields) => {
+    const values: NonNullable<typeof scanned> = {};
+    if (p.firstName) values.firstName = p.firstName;
+    if (p.lastName) values.lastName = p.lastName;
+    if (p.passportNumber) values.passportNumber = p.passportNumber;
+    setForm((f) => ({ ...f, firstName: values.firstName ?? f.firstName, lastName: values.lastName ?? f.lastName, passportNumber: values.passportNumber ?? f.passportNumber }));
+    if (p.birthDate) {
+      const [y, m, d] = p.birthDate.split('-').map(Number);
+      setBirth(new Date(y, m - 1, d));
+      values.birthDate = p.birthDate;
+    }
+    setErrors((e) => ({ ...e, firstName: undefined, lastName: undefined, passportNumber: undefined, birthDate: undefined }));
+    setScanned(values);
+  };
+  const tag = (k: FormKey) => (scanned && scanned[k as keyof typeof scanned] && scanned[k as keyof typeof scanned] === form[k] ? <FilledTag label={t('m.register.scan.filledTag')} /> : null);
+  const birthTag = scanned?.birthDate && birth && ymd(birth) === scanned.birthDate ? <FilledTag label={t('m.register.scan.filledTag')} /> : null;
 
   const submit = async () => {
     const next: typeof errors = {};
@@ -66,7 +92,14 @@ export default function Register() {
     }
     setBusy(true);
     try {
-      const user = await register({ ...form, phone: compactPhone(form.phone), passportNumber: compactPassport(form.passportNumber), birthDate: ymd(birth) });
+      const user = await register({
+        ...form,
+        phone: compactPhone(form.phone),
+        passportNumber: compactPassport(form.passportNumber),
+        birthDate: ymd(birth),
+        ...(refCode ? { ref: refCode } : {}),
+        ...(scanned && Object.keys(scanned).length ? { passportScanned: true } : {}),
+      });
       haptic.success();
       // New accounts must confirm their email before starting a visa application.
       if ((user as { emailVerified?: boolean }).emailVerified === false) toast(t('m.verify.checkInbox', { email: user.email }), 'info', 8000);
@@ -84,6 +117,12 @@ export default function Register() {
       <Muted style={{ marginBottom: 12 }}>
         {t('m.register.notice')}
       </Muted>
+      {refCode ? (
+        <Text variant="caption" style={{ marginBottom: 8 }}>
+          {t('m.register.scan.agentCode', { code: refCode })}
+        </Text>
+      ) : null}
+      <PassportScanCard onFilled={fillFromPassport} />
       <Field
         label={t('auth.firstName')}
         value={form.firstName}
@@ -93,6 +132,7 @@ export default function Register() {
         hint={t('m.register.passportHint')}
         error={errors.firstName}
       />
+      {tag('firstName')}
       <Field
         label={t('auth.lastName')}
         value={form.lastName}
@@ -102,6 +142,7 @@ export default function Register() {
         hint={t('m.register.passportHint')}
         error={errors.lastName}
       />
+      {tag('lastName')}
       <View style={{ flexDirection: 'row' }}>
         <DateTimeField
           label={t('m.register.birthDate')}
@@ -118,6 +159,7 @@ export default function Register() {
           error={errors.birthDate}
         />
       </View>
+      {birthTag}
       <Field
         label={t('m.register.passportNumber')}
         value={form.passportNumber}
@@ -129,6 +171,7 @@ export default function Register() {
         hint={t('m.register.passportNumberHint')}
         error={errors.passportNumber}
       />
+      {tag('passportNumber')}
       <Field
         label={t('auth.email')}
         value={form.email}
