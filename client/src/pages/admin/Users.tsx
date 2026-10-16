@@ -4,13 +4,14 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tansta
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
 import { toast } from 'sonner';
-import { FolderOpen, KeyRound, LogOut, Mail, MessageSquare, MonitorSmartphone, Phone, Search, UserPlus, Users as UsersIcon, Wifi } from 'lucide-react';
+import { FolderOpen, KeyRound, LogOut, Mail, Trash2, MessageSquare, MonitorSmartphone, Phone, Search, UserPlus, Users as UsersIcon, Wifi } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { hasMinRole, isStrongPassword, PASSWORD_MAX, PASSWORD_MIN, type Role } from '@/lib/types';
 import { Spinner } from '@/components/ui/Spinner';
 import { Modal } from '@/components/admin/Modal';
 import { ConfirmDialog } from '@/components/admin/ConfirmDialog';
+import { DeleteUserDialog } from '@/components/admin/DeleteUserDialog';
 import { ROLE_TONE, fmtDate, fmtDateTime, fmtRelative, fullName, roleLabel, toastError } from '@/components/admin/labels';
 import type { AdminUser } from '@/components/admin/types';
 import { Chip, EmptyState, ErrorBlock, LoadingBlock, OnlineDot, PageHead, Switch } from '@/components/admin/ui';
@@ -319,7 +320,19 @@ const CountsCell = ({ u }: { u: AdminUser }) => {
   );
 };
 
-const RowActions = ({ u, onReset, onRevoke, compact }: { u: AdminUser; onReset: () => void; onRevoke: () => void; compact?: boolean }) => {
+const RowActions = ({
+  u,
+  onReset,
+  onRevoke,
+  onDelete,
+  compact,
+}: {
+  u: AdminUser;
+  onReset: () => void;
+  onRevoke: () => void;
+  onDelete: () => void;
+  compact?: boolean;
+}) => {
   const { t } = useTranslation();
   return (
     <span className={clsx('inline-flex items-center', compact ? '-my-2 -mr-2 gap-0.5' : 'gap-1')}>
@@ -340,6 +353,15 @@ const RowActions = ({ u, onReset, onRevoke, compact }: { u: AdminUser; onReset: 
       >
         <LogOut className="size-3.5" /> {t('admin.users.revoke')}
       </button>
+      <button
+        type="button"
+        className={clsx('inline-flex items-center gap-1 rounded-md px-2 text-xs font-semibold whitespace-nowrap text-danger hover:bg-red-50', compact ? 'min-h-10' : 'min-h-8 py-1')}
+        onClick={onDelete}
+        title={t('admin.users.deleteTitle')}
+        aria-label={t('admin.users.deleteAria', { name: fullName(u) })}
+      >
+        <Trash2 className="size-3.5" /> {t('admin.users.deleteBtn')}
+      </button>
     </span>
   );
 };
@@ -358,6 +380,7 @@ export default function Users() {
   const [creating, setCreating] = useState(false);
   const [resetFor, setResetFor] = useState<AdminUser | null>(null);
   const [revokeFor, setRevokeFor] = useState<AdminUser | null>(null);
+  const [deleteFor, setDeleteFor] = useState<AdminUser | null>(null);
 
   useEffect(() => {
     const t = window.setTimeout(() => setSearch(searchInput.trim()), 350);
@@ -502,7 +525,7 @@ export default function Users() {
                       <td className="px-4 py-3 text-xs whitespace-nowrap text-muted">{fmtDate(u.createdAt)}</td>
                       {canManage && (
                         <td className="px-4 py-3 text-right">
-                          {can && <RowActions u={u} onReset={() => setResetFor(u)} onRevoke={() => setRevokeFor(u)} />}
+                          {can && <RowActions u={u} onReset={() => setResetFor(u)} onRevoke={() => setRevokeFor(u)} onDelete={() => setDeleteFor(u)} />}
                         </td>
                       )}
                     </tr>
@@ -536,7 +559,7 @@ export default function Users() {
                   <div className="mt-3 flex flex-wrap items-center justify-between gap-3 border-t border-line pt-3">
                     <ActiveControl u={u} editable={can} />
                     <span className="text-[11px] text-muted">{t('admin.users.registeredAt', { date: fmtDate(u.createdAt) })}</span>
-                    {can && <RowActions u={u} compact onReset={() => setResetFor(u)} onRevoke={() => setRevokeFor(u)} />}
+                    {can && <RowActions u={u} compact onReset={() => setResetFor(u)} onRevoke={() => setRevokeFor(u)} onDelete={() => setDeleteFor(u)} />}
                   </div>
                 </li>
               );
@@ -548,6 +571,7 @@ export default function Users() {
       {canManage && <CreateUserModal open={creating} onClose={() => setCreating(false)} />}
       {canManage && <ResetPasswordModal user={resetFor} onClose={() => setResetFor(null)} />}
       {canManage && <RevokeSessionsDialog user={revokeFor} onClose={() => setRevokeFor(null)} />}
+      {canManage && <DeleteUserDialog user={deleteFor} onClose={() => setDeleteFor(null)} />}
     </div>
   );
 }

@@ -7,6 +7,9 @@ import { createClient, TEST_PASSWORD } from '../helpers/factories';
 // Note: /register, /login, /forgot-password and /reset-password share a limiter of 30 requests
 // per 15 minutes per IP. Each test file gets a fresh app, so keep this file well below that.
 
+/** Fields every candidate sign-up must send besides name, email and password. */
+const REQUIRED = { phone: '+994501234567', birthDate: '1990-05-14' };
+
 const sessionCookie = (res: request.Response) =>
   ([] as string[]).concat(res.headers['set-cookie'] ?? []).find((c) => c.startsWith('tv_session='));
 
@@ -34,7 +37,7 @@ describe('POST /api/auth/register', () => {
   it('creates a client, sets an httpOnly session cookie and returns no token for the web', async () => {
     const res = await anon()
       .post('/api/auth/register')
-      .send({ email: '  Ali.Mammadov@Example.COM ', password: 'Password123', firstName: ' Əli ', lastName: 'Məmmədov', phone: '+994501234567' });
+      .send({ email: '  Ali.Mammadov@Example.COM ', password: 'Password123', firstName: ' Əli ', lastName: 'Məmmədov', phone: '+994 50 123-45-67', birthDate: '1990-05-14' });
     expect(res.status).toBe(201);
     expect(res.body.token).toBeUndefined();
     expect(res.body.user).toEqual({
@@ -45,8 +48,8 @@ describe('POST /api/auth/register', () => {
       lastName: 'Məmmədov',
       phone: '+994501234567',
       locale: 'az',
-      // candidate profile starts empty; notification preferences default to on
-      birthDate: null,
+      // phone is normalised; the rest of the candidate profile starts empty; notification preferences default to on
+      birthDate: '1990-05-14',
       nationality: null,
       city: null,
       address: null,
@@ -65,6 +68,7 @@ describe('POST /api/auth/register', () => {
       emailVerified: false,
       twoFactorEnabled: false,
       twoFactorRequired: false,
+      emailOtpEnabled: false,
     });
     expect(res.body.user.passwordHash).toBeUndefined();
     const cookie = sessionCookie(res);
@@ -82,17 +86,17 @@ describe('POST /api/auth/register', () => {
   it('cannot be used to self-assign a role', async () => {
     const res = await anon()
       .post('/api/auth/register')
-      .send({ email: 'sneaky@test.local', password: 'Password123', firstName: 'S', lastName: 'N', role: 'ADMIN', locale: 'de' });
+      .send({ email: 'sneaky@test.local', password: 'Password123', firstName: 'S', lastName: 'N', role: 'ADMIN', locale: 'de', ...REQUIRED });
     expect(res.status).toBe(201);
     expect(res.body.user.role).toBe('CLIENT');
     expect(res.body.user.locale).toBe('de');
   });
 
   it.each([
-    ['short password', { email: 'a@test.local', password: 'short', firstName: 'A', lastName: 'B' }],
-    ['invalid email', { email: 'not-an-email', password: 'Password123', firstName: 'A', lastName: 'B' }],
-    ['missing first name', { email: 'b@test.local', password: 'Password123', firstName: '  ', lastName: 'B' }],
-    ['unknown locale', { email: 'c@test.local', password: 'Password123', firstName: 'A', lastName: 'B', locale: 'fr' }],
+    ['short password', { email: 'a@test.local', password: 'short', firstName: 'A', lastName: 'B', ...REQUIRED }],
+    ['invalid email', { email: 'not-an-email', password: 'Password123', firstName: 'A', lastName: 'B', ...REQUIRED }],
+    ['missing first name', { email: 'b@test.local', password: 'Password123', firstName: '  ', lastName: 'B', ...REQUIRED }],
+    ['unknown locale', { email: 'c@test.local', password: 'Password123', firstName: 'A', lastName: 'B', locale: 'fr', ...REQUIRED }],
   ])('rejects %s with 400 VALIDATION', async (_label, body) => {
     const res = await anon().post('/api/auth/register').send(body);
     expect(res.status).toBe(400);
@@ -104,7 +108,7 @@ describe('POST /api/auth/register', () => {
     await createClient({ email: 'taken@test.local' });
     const res = await anon()
       .post('/api/auth/register')
-      .send({ email: 'TAKEN@test.local', password: 'Password123', firstName: 'A', lastName: 'B' });
+      .send({ email: 'TAKEN@test.local', password: 'Password123', firstName: 'A', lastName: 'B', ...REQUIRED });
     expect(res.status).toBe(409);
     expect(res.body.error).toBe('EMAIL_TAKEN');
   });
@@ -113,7 +117,7 @@ describe('POST /api/auth/register', () => {
     const res = await anon()
       .post('/api/auth/register')
       .set('x-client', 'mobile')
-      .send({ email: 'mobile@test.local', password: 'Password123', firstName: 'M', lastName: 'B' });
+      .send({ email: 'mobile@test.local', password: 'Password123', firstName: 'M', lastName: 'B', ...REQUIRED });
     expect(res.status).toBe(201);
     expect(typeof res.body.token).toBe('string');
     const me = await anon().get('/api/auth/me').set('Authorization', `Bearer ${res.body.token}`);

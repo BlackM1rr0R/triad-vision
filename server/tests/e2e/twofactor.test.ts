@@ -135,7 +135,7 @@ describe('login with 2FA', () => {
     const sessionsBefore = await prisma.session.count({ where: { userId: c.user.id } });
     const step1 = await login(c.user.email);
     expect(step1.status).toBe(200);
-    expect(step1.body).toEqual({ twoFactorRequired: true, challenge: expect.any(String) });
+    expect(step1.body).toEqual({ twoFactorRequired: true, challenge: expect.any(String), method: 'totp', alternatives: ['recovery'] });
     expect(step1.headers['set-cookie']).toBeUndefined();
     expect(await prisma.session.count({ where: { userId: c.user.id } })).toBe(sessionsBefore);
 

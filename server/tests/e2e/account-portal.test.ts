@@ -227,7 +227,7 @@ describe('PATCH /api/auth/me profile fields', () => {
     ['future birth date', { birthDate: isoDate(-1) }],
     ['today', { birthDate: isoDate(0) }],
     ['younger than 16', { birthDate: isoDate(16, 1) }],
-    ['older than 70', { birthDate: isoDate(71) }],
+    ['older than 80', { birthDate: isoDate(81) }],
     ['not a date', { birthDate: '1990-02-30' }],
     ['bad format', { birthDate: '01.02.1990' }],
     ['unknown German level', { germanLevel: 'B3' }],
@@ -245,10 +245,10 @@ describe('PATCH /api/auth/me profile fields', () => {
     expect(res.body.error).toBe('VALIDATION');
   });
 
-  it('accepts the age boundaries 16 and 70', async () => {
+  it('accepts the age boundaries 16 and 80', async () => {
     const { agent } = await asClient();
     expectStatus(await agent.patch('/api/auth/me').send({ birthDate: isoDate(16) }), 200);
-    expectStatus(await agent.patch('/api/auth/me').send({ birthDate: isoDate(70) }), 200);
+    expectStatus(await agent.patch('/api/auth/me').send({ birthDate: isoDate(80) }), 200);
   });
 });
 

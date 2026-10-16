@@ -13,13 +13,27 @@ const USER_KEY = 'tv_user';
 
 registerLegalCopy();
 
-/** Login answer for accounts with two-factor authentication: no session yet, only a 5-minute challenge. */
-type TwoFactorChallengeResponse = { twoFactorRequired: true; challenge: string };
+/** Login answer for accounts with two-factor authentication: no session yet, only a 10-minute challenge. */
+type TwoFactorChallengeResponse = { twoFactorRequired: true; challenge: string } & Partial<TwoFactorInfo>;
+
+/** How the pending login can be finished (from POST /auth/login). */
+export interface TwoFactorInfo {
+  /** 'totp' = authenticator app; 'email' = a code was emailed. */
+  method: 'totp' | 'email';
+  /** Other ways ('email' = "send a code to my email instead", 'recovery' = recovery code). */
+  alternatives: ('email' | 'recovery')[];
+  /** Masked address the code goes to (a***@gmail.com). */
+  email?: string;
+  /** Email method: false when the send throttle kept the server from mailing a fresh code. */
+  emailSent?: boolean;
+  /** Seconds until another code may be requested. */
+  retryAfter?: number | null;
+}
 const isChallenge = (d: unknown): d is TwoFactorChallengeResponse =>
   !!d && typeof d === 'object' && (d as { twoFactorRequired?: unknown }).twoFactorRequired === true && typeof (d as { challenge?: unknown }).challenge === 'string';
 
-/** Second login factor: the 6-digit app code or a one-time recovery code. */
-export type TwoFactorInput = { code: string } | { recoveryCode: string };
+/** Second login factor: the 6-digit app code, a one-time recovery code or the code sent by email. */
+export type TwoFactorInput = { code: string } | { recoveryCode: string } | { emailCode: string };
 
 type Status = 'loading' | 'guest' | 'authed';
 
@@ -27,7 +41,10 @@ export interface RegisterInput {
   firstName: string;
   lastName: string;
   email: string;
-  phone?: string;
+  /** With country code; required for candidates (the API normalises spaces / dashes). */
+  phone: string;
+  /** YYYY-MM-DD, as in the passport. */
+  birthDate: string;
   password: string;
 }
 
@@ -62,7 +79,11 @@ interface AuthContextValue {
   login: (email: string, password: string) => Promise<User | null>;
   /** True between a password login that needs 2FA and its completion/cancellation. */
   twoFactorPending: boolean;
+  /** Method and alternatives of the pending 2FA login (null when none is pending). */
+  twoFactor: TwoFactorInfo | null;
   verifyTwoFactor: (input: TwoFactorInput) => Promise<User>;
+  /** Mails a (new) login code for the pending challenge: the email method or the fallback from TOTP. */
+  sendTwoFactorEmail: () => Promise<{ email: string; retryAfter: number }>;
   cancelTwoFactor: () => void;
   register: (input: RegisterInput) => Promise<User>;
   logout: () => Promise<void>;
@@ -115,8 +136,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [session, setSession] = useState<SessionInfo | null>(null);
   const [pushState, setPushState] = useState<PushState | null>(null);
   const [sessionEndReason, setSessionEndReason] = useState<SessionEndReason | null>(null);
-  // Kept in memory only (never persisted): the challenge is useless after 5 minutes anyway.
+  // Kept in memory only (never persisted): the challenge is useless after 10 minutes anyway.
   const [challenge, setChallenge] = useState<string | null>(null);
+  const [twoFactor, setTwoFactor] = useState<TwoFactorInfo | null>(null);
   // A 401 can arrive from several in-flight requests at once (and from our own best-effort
   // DELETE /devices during the clear): only the first one clears the session.
   const clearing = useRef(false);
@@ -231,6 +253,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const { data } = await api.post<AuthResponse | TwoFactorChallengeResponse>('/auth/login', { email: email.trim(), password });
       if (isChallenge(data)) {
         setChallenge(data.challenge);
+        setTwoFactor({
+          method: data.method === 'email' ? 'email' : 'totp',
+          alternatives: Array.isArray(data.alternatives) ? data.alternatives : ['recovery'],
+          email: data.email,
+          emailSent: data.emailSent,
+          retryAfter: data.retryAfter,
+        });
         return null;
       }
       setChallenge(null);
@@ -255,6 +284,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     [challenge, startSession],
   );
 
+  const sendTwoFactorEmail = useCallback(async () => {
+    if (!challenge) throw Object.assign(new Error('TWO_FACTOR_CHALLENGE_INVALID'), { response: { status: 401, data: { error: 'TWO_FACTOR_CHALLENGE_INVALID' } } });
+    try {
+      const { data } = await api.post<{ ok: true; email: string; retryAfter: number }>('/auth/2fa/email/send', { challenge });
+      return { email: data.email, retryAfter: data.retryAfter };
+    } catch (err) {
+      const code = (err as { response?: { data?: { error?: string } } })?.response?.data?.error;
+      if (code === 'TWO_FACTOR_CHALLENGE_INVALID' || code === 'ACCOUNT_LOCKED') setChallenge(null);
+      throw err;
+    }
+  }, [challenge]);
+
   const cancelTwoFactor = useCallback(() => setChallenge(null), []);
 
   const register = useCallback(
@@ -262,7 +303,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const { data } = await api.post<AuthResponse>('/auth/register', {
         ...input,
         email: input.email.trim(),
-        phone: input.phone?.trim() || undefined,
+        phone: input.phone.trim(),
         locale: currentLanguage(),
       });
       return startSession(data);
@@ -310,7 +351,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       clearSessionEndReason,
       login,
       twoFactorPending: !!challenge,
+      twoFactor: challenge ? twoFactor : null,
       verifyTwoFactor,
+      sendTwoFactorEmail,
       cancelTwoFactor,
       register,
       logout,
@@ -327,7 +370,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       clearSessionEndReason,
       login,
       challenge,
+      twoFactor,
       verifyTwoFactor,
+      sendTwoFactorEmail,
       cancelTwoFactor,
       register,
       logout,

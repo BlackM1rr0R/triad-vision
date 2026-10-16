@@ -48,7 +48,7 @@ export const LIMITS = {
   about: 2000,
   experienceMax: 50,
   minAge: 16,
-  maxAge: 70,
+  maxAge: 80, // same as the API (MAX_AGE in server/src/routes/auth.ts)
 } as const;
 
 export const profileCompleteness = (u: User | null | undefined) => {
@@ -71,7 +71,7 @@ export const ageOn = (birth: Date, now = new Date()) => {
   return age;
 };
 
-/** min/max attributes for the date input (age 16–70). */
+/** min/max attributes for the date input (age 16–80). */
 export const birthDateBounds = () => {
   const now = new Date();
   const max = new Date(Date.UTC(now.getUTCFullYear() - LIMITS.minAge, now.getUTCMonth(), now.getUTCDate()));

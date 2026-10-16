@@ -7,6 +7,7 @@ import { badRequest, conflict, notFound, parse } from '../../lib/http.js';
 import { audit } from '../../lib/audit.js';
 import { ensurePersonalRoot } from '../../lib/drive/roots.js';
 import { password } from '../auth.js';
+import { deleteUserAccount, loadDeletionTarget, userDeletionPreview } from '../../lib/userDeletion.js';
 
 export const adminUsersRouter = Router();
 
@@ -145,4 +146,22 @@ adminUsersRouter.post('/:id/revoke-sessions', requireMinRole('SUPER_ADMIN'), asy
   const { count } = await revokeUserSessions(String(req.params.id));
   await audit(req, 'SESSIONS_REVOKED', `user:${req.params.id}`, { count });
   res.json({ ok: true, revoked: count });
+});
+
+/** What deleting this account would remove or hand over (shown in the confirmation dialog). */
+adminUsersRouter.get('/:id/deletion-preview', requireMinRole('SUPER_ADMIN'), async (req, res) => {
+  res.json(await userDeletionPreview(req.user!.id, String(req.params.id)));
+});
+
+/**
+ * Hard delete (super admin only). The client must echo the account's email as confirmation.
+ * See lib/userDeletion.ts for what is removed, kept, reassigned and moved.
+ */
+adminUsersRouter.delete('/:id', requireMinRole('SUPER_ADMIN'), async (req, res) => {
+  const body = parse(z.object({ confirmEmail: z.string().trim().toLowerCase().max(200) }), req.body ?? {});
+  const id = String(req.params.id);
+  const target = await loadDeletionTarget(req.user!.id, id);
+  if (body.confirmEmail !== target.email.toLowerCase()) throw badRequest('CONFIRMATION_MISMATCH');
+  const { user, counts } = await deleteUserAccount(req.user!.id, id, req.ip);
+  res.json({ ok: true, user: { id: user.id, email: user.email, role: user.role }, counts });
 });

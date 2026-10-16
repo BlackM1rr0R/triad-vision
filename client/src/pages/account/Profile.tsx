@@ -30,6 +30,7 @@ import { LOCALES, type Locale } from '@/i18n';
 import { Flag } from '@/components/ui/Flag';
 import { Spinner } from '@/components/ui/Spinner';
 import { ConfirmDialog } from '@/components/portal/ConfirmDialog';
+import { EmailOtpCard } from '@/components/auth/EmailOtpCard';
 import { ProgressRing } from '@/components/portal/ProgressRing';
 import { useApiError } from '@/components/portal/useApiError';
 import { OVERVIEW_KEY } from '@/components/portal/useOverview';
@@ -853,6 +854,8 @@ const SecurityPanel = ({ user }: { user: User }) => {
           </div>
         </Panel>
       </form>
+
+      <EmailOtpCard />
 
       <SessionsPanel />
 

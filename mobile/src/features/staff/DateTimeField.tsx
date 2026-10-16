@@ -24,14 +24,22 @@ export const DateTimeField = ({
   value,
   onChange,
   minimumDate,
+  maximumDate,
   placeholder,
+  hint,
+  error,
 }: {
   label: string;
   mode: 'date' | 'time';
   value: Date | null;
   onChange: (d: Date) => void;
   minimumDate?: Date;
+  /** Latest selectable date (e.g. a birth date: today minus the minimum age). */
+  maximumDate?: Date;
   placeholder?: string;
+  /** Small text under the field; replaced by `error` (red) when set. */
+  hint?: string;
+  error?: string;
 }) => {
   const f = useFormat();
   const shown = value ? (mode === 'date' ? f.date(value) : f.time(value)) : placeholder ?? '—';
@@ -39,6 +47,20 @@ export const DateTimeField = ({
   // iOS: the inline picker only appears once the user taps the placeholder, so an untouched field
   // stays empty (and validation can tell) instead of silently showing "now".
   const [iosOpen, setIosOpen] = useState(false);
+  /** Where the picker starts when nothing is chosen yet: today, clamped into [minimumDate, maximumDate]. */
+  const startDate = () => {
+    const now = new Date();
+    if (maximumDate && maximumDate < now) return maximumDate;
+    if (minimumDate && minimumDate > now) return minimumDate;
+    return now;
+  };
+  const below = error ? (
+    <Text variant="caption" color={colors.danger}>
+      {error}
+    </Text>
+  ) : hint ? (
+    <Text variant="caption">{hint}</Text>
+  ) : null;
 
   if (Platform.OS === 'ios') {
     return (
@@ -53,6 +75,7 @@ export const DateTimeField = ({
               display="compact"
               locale={DATE_LOCALE[f.lang]}
               minimumDate={minimumDate}
+              maximumDate={maximumDate}
               minuteInterval={5}
               accentColor={colors.blue}
               onValueChange={(e, d) => {
@@ -69,7 +92,7 @@ export const DateTimeField = ({
             onPress={() => {
               haptic.tap();
               setIosOpen(true);
-              onChange(minimumDate && minimumDate > new Date() ? minimumDate : new Date());
+              onChange(startDate());
             }}
             style={({ pressed }) => [styles.button, pressed && { borderColor: colors.blue }]}
           >
@@ -77,6 +100,7 @@ export const DateTimeField = ({
             <Text style={{ fontFamily: fonts.medium, fontSize: 15, color: colors.muted }}>{shown}</Text>
           </Pressable>
         )}
+        {below}
       </View>
     );
   }
@@ -90,21 +114,23 @@ export const DateTimeField = ({
         onPress={() => {
           haptic.tap();
           DateTimePickerAndroid.open({
-            value: value ?? new Date(),
+            value: value ?? startDate(),
             mode,
             is24Hour: true,
             minimumDate,
+            maximumDate,
             onValueChange: (e, d) => {
               if (isDismissed(e) || !d) return;
               onChange(d);
             },
           });
         }}
-        style={({ pressed }) => [styles.button, pressed && { borderColor: colors.blue }]}
+        style={({ pressed }) => [styles.button, error ? { borderColor: colors.danger } : null, pressed && { borderColor: colors.blue }]}
       >
         <Icon size={18} color={colors.blue} />
         <Text style={{ fontFamily: fonts.medium, fontSize: 15, color: value ? colors.ink : colors.muted }}>{shown}</Text>
       </Pressable>
+      {below}
     </View>
   );
 };

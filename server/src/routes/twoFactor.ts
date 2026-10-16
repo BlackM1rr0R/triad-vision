@@ -1,11 +1,25 @@
-import { Router } from 'express';
+import { Router, type Response } from 'express';
 import bcrypt from 'bcryptjs';
 import { z } from 'zod';
 import { prisma } from '../db.js';
 import { requireAuth, requireMinRole, revokeUserSessions } from '../middleware/auth.js';
 import { HttpError, badRequest, conflict, limiter, notFound, parse } from '../lib/http.js';
 import { audit } from '../lib/audit.js';
-import { loginLockedFor, recordLoginFailure, recordLoginSuccess } from '../lib/loginGuard.js';
+import {
+  loginLockedForAsync as loginLockedFor,
+  recordLoginFailureAsync as recordLoginFailure,
+  recordLoginSuccessAsync as recordLoginSuccess,
+} from '../lib/loginGuard.js';
+import {
+  canEnableEmailOtp,
+  checkEmailOtp,
+  emailLoginAllowed,
+  emailOtpActive,
+  issueEmailOtp,
+  maskEmail,
+  revokeEmailOtps,
+  type IssueResult,
+} from '../lib/emailOtp.js';
 import { seal } from '../lib/secretBox.js';
 import { generateRecoveryCodes, generateTotpSecret, hashRecoveryCode, otpauthUri } from '../lib/totp.js';
 import {
@@ -27,9 +41,15 @@ import { startSession } from './auth.js';
  *   POST /enable          { code }     → { ok, recoveryCodes: string[10] } (shown once)
  *   POST /disable         { password, code }  (code = TOTP or a recovery code)
  *   POST /recovery-codes  { code }     → { recoveryCodes }                 (regenerates, old ones die)
- *   POST /verify          { challenge, code | recoveryCode } → same body as POST /api/auth/login
+ *   POST /verify          { challenge, code | recoveryCode | emailCode } → same body as POST /api/auth/login
  *   GET  /staff                        → SUPER_ADMIN: staff list with 2FA state
  *   POST /users/:id/reset              → SUPER_ADMIN resets another user's 2FA
+ *
+ * Email one-time codes (see lib/emailOtp.ts):
+ *   POST /email/send      { challenge } → { ok, email, retryAfter }   (login step: send / resend a code)
+ *   POST /email/start     { password }  → { ok, email, retryAfter }   (CLIENT / COMPANY: code to turn it on)
+ *   POST /email/enable    { code }      → { ok, emailOtpEnabled: true }
+ *   POST /email/disable   { password }  → { ok, emailOtpEnabled: false }
  */
 export const twoFactorRouter = Router();
 
@@ -60,6 +80,10 @@ twoFactorRouter.get('/status', requireAuth, async (req, res) => {
     pending: !u.totpEnabledAt && !!u.totpSecret,
     enabledAt: u.totpEnabledAt,
     recoveryCodesLeft: u.totpEnabledAt ? recoveryCodesLeft(u) : 0,
+    emailOtpEnabled: emailOtpActive(u),
+    emailOtpEnabledAt: emailOtpActive(u) ? u.emailOtpEnabledAt : null,
+    /** Can this account switch email two-step login on/off (candidates and employers only)? */
+    emailOtpAvailable: canEnableEmailOtp(u.role),
   });
 });
 
@@ -125,34 +149,54 @@ twoFactorRouter.post('/recovery-codes', manageLimiter, requireAuth, async (req, 
 twoFactorRouter.post('/verify', verifyLimiter, async (req, res) => {
   const body = parse(
     z
-      .object({ challenge: z.string().min(10).max(2000), code: totpCode.optional(), recoveryCode: anyCode.optional() })
-      .refine((b) => !!b.code !== !!b.recoveryCode, 'CODE_OR_RECOVERY_CODE'),
+      .object({
+        challenge: z.string().min(10).max(2000),
+        code: totpCode.optional(),
+        recoveryCode: anyCode.optional(),
+        emailCode: totpCode.optional(),
+      })
+      .refine((b) => [b.code, b.recoveryCode, b.emailCode].filter(Boolean).length === 1, 'CODE_OR_RECOVERY_CODE'),
     req.body,
   );
   const challenge = readLoginChallenge(body.challenge);
   if (!challenge.ok) throw new HttpError(401, 'TWO_FACTOR_CHALLENGE_INVALID');
   const user = await prisma.user.findUnique({ where: { id: challenge.userId } });
-  if (!user || !user.isActive || !user.totpEnabledAt) throw new HttpError(401, 'TWO_FACTOR_CHALLENGE_INVALID');
+  if (!user || !user.isActive || (!user.totpEnabledAt && !emailOtpActive(user))) throw new HttpError(401, 'TWO_FACTOR_CHALLENGE_INVALID');
+  if (body.emailCode && !emailLoginAllowed(user)) throw new HttpError(403, 'EMAIL_OTP_NOT_AVAILABLE');
 
   // Per-account lock shared with the password step (several challenges cannot multiply the guesses).
-  const lockedFor = loginLockedFor(user.email);
+  const lockedFor = await loginLockedFor(user.email);
   if (lockedFor > 0) {
     res.setHeader('Retry-After', String(lockedFor));
     throw new HttpError(429, 'ACCOUNT_LOCKED', `Too many failed attempts. Try again in ${lockedFor}s`);
   }
 
-  const ok = body.code ? checkTotp(user, body.code) : await consumeRecoveryCode(user.id, body.recoveryCode!);
-  if (!ok) {
-    recordLoginFailure(user.email);
+  const method = body.emailCode ? 'email' : body.code ? 'totp' : 'recovery';
+  let failure: 'INVALID_CODE' | 'CODE_EXPIRED' | null = null;
+  if (body.emailCode) {
+    const r = await checkEmailOtp(user.id, 'LOGIN', body.emailCode, challenge.jti);
+    if (!r.ok) failure = r.reason;
+  } else {
+    const ok = body.code ? checkTotp(user, body.code) : await consumeRecoveryCode(user.id, body.recoveryCode!);
+    if (!ok) failure = 'INVALID_CODE';
+  }
+  if (failure) {
+    // Wrong email codes count toward the per-account lockout exactly like wrong TOTP codes.
+    await recordLoginFailure(user.email);
     const attemptsLeft = challengeFailed(challenge.jti);
-    await audit({ user: undefined, ip: req.ip }, 'LOGIN_2FA_FAILED', `user:${user.id}`, {
-      method: body.code ? 'totp' : 'recovery',
+    await audit({ user: undefined, ip: req.ip }, method === 'email' ? 'LOGIN_EMAIL_OTP_FAILED' : 'LOGIN_2FA_FAILED', `user:${user.id}`, {
+      method,
+      ...(method === 'email' ? { reason: failure } : {}),
     });
-    res.status(401).json({ error: 'INVALID_CODE', attemptsLeft });
+    res.status(401).json({ error: failure, attemptsLeft });
     return;
   }
   challengeSucceeded(challenge.jti);
-  recordLoginSuccess(user.email);
+  await recordLoginSuccess(user.email);
+  if (method === 'email') {
+    await revokeEmailOtps(user.id, 'LOGIN');
+    await audit({ user: undefined, ip: req.ip }, 'LOGIN_EMAIL_OTP_USED', `user:${user.id}`, { fallback: !!user.totpEnabledAt });
+  }
   if (body.recoveryCode) {
     const fresh = await loadUser(user.id);
     await audit({ user: undefined, ip: req.ip }, 'LOGIN_2FA_RECOVERY_CODE_USED', `user:${user.id}`, {
@@ -160,6 +204,97 @@ twoFactorRouter.post('/verify', verifyLimiter, async (req, res) => {
     });
   }
   res.json(await startSession(req, res, user));
+});
+
+// ─── Email one-time codes ───────────────────────────────────────────────
+
+/** Per IP, on top of the per-account send limits in lib/emailOtp.ts. */
+const emailSendLimiter = limiter({ windowMs: 15 * 60 * 1000, limit: 20 });
+
+/** 429 with the seconds until the next code may be requested (null: start over with the password). */
+const sendRefused = (res: Response, r: Extract<IssueResult, { ok: false }>) => {
+  if (r.retryAfter) res.setHeader('Retry-After', String(r.retryAfter));
+  res.status(429).json({ error: r.error, retryAfter: r.retryAfter });
+};
+
+/** Login step: send (or re-send) a code for this challenge — the email method, or the fallback from TOTP. */
+twoFactorRouter.post('/email/send', emailSendLimiter, async (req, res) => {
+  const body = parse(z.object({ challenge: z.string().min(10).max(2000) }), req.body);
+  const challenge = readLoginChallenge(body.challenge);
+  if (!challenge.ok) throw new HttpError(401, 'TWO_FACTOR_CHALLENGE_INVALID');
+  const user = await prisma.user.findUnique({ where: { id: challenge.userId } });
+  if (!user || !user.isActive) throw new HttpError(401, 'TWO_FACTOR_CHALLENGE_INVALID');
+  if (!emailLoginAllowed(user)) throw new HttpError(403, 'EMAIL_OTP_NOT_AVAILABLE');
+  const lockedFor = await loginLockedFor(user.email);
+  if (lockedFor > 0) {
+    res.setHeader('Retry-After', String(lockedFor));
+    throw new HttpError(429, 'ACCOUNT_LOCKED', `Too many failed attempts. Try again in ${lockedFor}s`);
+  }
+  const r = await issueEmailOtp(user, 'LOGIN', challenge.jti);
+  if (!r.ok) {
+    sendRefused(res, r);
+    return;
+  }
+  await audit({ user: undefined, ip: req.ip }, 'LOGIN_EMAIL_OTP_SENT', `user:${user.id}`, {
+    trigger: user.totpEnabledAt ? 'fallback' : 'resend',
+  });
+  res.json({ ok: true, email: maskEmail(user.email), retryAfter: r.retryAfter });
+});
+
+/** Candidates / employers only: staff must keep the authenticator app as their factor. */
+const emailOtpUser = async (id: string) => {
+  const u = await loadUser(id);
+  if (!canEnableEmailOtp(u.role)) throw new HttpError(403, 'EMAIL_OTP_NOT_AVAILABLE');
+  return u;
+};
+
+const passwordBody = z.object({ password: z.string().min(1).max(128) });
+
+twoFactorRouter.post('/email/start', manageLimiter, requireAuth, async (req, res) => {
+  const { password } = parse(passwordBody, req.body);
+  const u = await emailOtpUser(req.user!.id);
+  if (u.emailOtpEnabledAt) throw conflict('EMAIL_OTP_ALREADY_ENABLED');
+  if (!u.emailVerifiedAt) throw new HttpError(403, 'EMAIL_NOT_VERIFIED');
+  if (!(await bcrypt.compare(password, u.passwordHash))) {
+    await audit(req, 'EMAIL_OTP_ENABLE_FAILED', `user:${u.id}`, { reason: 'password' });
+    throw new HttpError(400, 'WRONG_PASSWORD');
+  }
+  const r = await issueEmailOtp(u, 'ENABLE');
+  if (!r.ok) {
+    sendRefused(res, r);
+    return;
+  }
+  await audit(req, 'EMAIL_OTP_ENABLE_CODE_SENT', `user:${u.id}`);
+  res.json({ ok: true, email: maskEmail(u.email), retryAfter: r.retryAfter });
+});
+
+twoFactorRouter.post('/email/enable', manageLimiter, requireAuth, async (req, res) => {
+  const { code } = parse(z.object({ code: totpCode }), req.body);
+  const u = await emailOtpUser(req.user!.id);
+  if (u.emailOtpEnabledAt) throw conflict('EMAIL_OTP_ALREADY_ENABLED');
+  const r = await checkEmailOtp(u.id, 'ENABLE', code);
+  if (!r.ok) {
+    await audit(req, 'EMAIL_OTP_ENABLE_FAILED', `user:${u.id}`, { reason: r.reason });
+    res.status(400).json({ error: r.reason, attemptsLeft: r.attemptsLeft });
+    return;
+  }
+  await prisma.user.updateMany({ where: { id: u.id, emailOtpEnabledAt: null }, data: { emailOtpEnabledAt: new Date() } });
+  await audit(req, 'EMAIL_OTP_ENABLED', `user:${u.id}`);
+  res.json({ ok: true, emailOtpEnabled: true });
+});
+
+twoFactorRouter.post('/email/disable', manageLimiter, requireAuth, async (req, res) => {
+  const { password } = parse(passwordBody, req.body);
+  const u = await emailOtpUser(req.user!.id);
+  if (!u.emailOtpEnabledAt) throw conflict('EMAIL_OTP_NOT_ENABLED');
+  if (!(await bcrypt.compare(password, u.passwordHash))) {
+    await audit(req, 'EMAIL_OTP_DISABLE_FAILED', `user:${u.id}`, { reason: 'password' });
+    throw new HttpError(400, 'WRONG_PASSWORD');
+  }
+  await prisma.user.update({ where: { id: u.id }, data: { emailOtpEnabledAt: null } });
+  await revokeEmailOtps(u.id);
+  await audit(req, 'EMAIL_OTP_DISABLED', `user:${u.id}`);
+  res.json({ ok: true, emailOtpEnabled: false });
 });
 
 /** SUPER_ADMIN: who among the staff has 2FA set up (Admin → Security). */

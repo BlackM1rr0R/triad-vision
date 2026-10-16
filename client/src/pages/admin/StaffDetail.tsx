@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
@@ -18,8 +18,11 @@ import {
   Share2,
   Smartphone,
   Monitor,
+  Trash2,
 } from 'lucide-react';
 import { api, formatBytes } from '@/lib/api';
+import { useAuth } from '@/lib/auth';
+import { DeleteUserDialog } from '@/components/admin/DeleteUserDialog';
 import { StatusBadge, ToneBadge } from '@/components/admin/StatusBadge';
 import {
   DOC_ACCESS_TONE,
@@ -88,6 +91,9 @@ export default function StaffDetail() {
   const [allEvents, setAllEvents] = useState(false);
   const [allAudit, setAllAudit] = useState(false);
   const [caseTab, setCaseTab] = useState<'open' | 'closed'>('open');
+  const [deleting, setDeleting] = useState(false);
+  const { user: me } = useAuth();
+  const navigate = useNavigate();
 
   // UTC hour histogram → the viewer's local hours, so "14:00" means 14:00 on this screen.
   const hours = useMemo(() => {
@@ -171,6 +177,12 @@ export default function StaffDetail() {
               <Link to={`/workspace/drive/f/${workspace.folderId}`} className="btn-white btn-sm border border-line">
                 <FolderOpen className="size-3.5" /> {t('admin.staff.workspace')}
               </Link>
+            )}
+            {/* Only the super admin deletes accounts; never their own or another super admin's. */}
+            {me?.role === 'SUPER_ADMIN' && user.id !== me.id && user.role !== 'SUPER_ADMIN' && (
+              <button type="button" className="btn-white btn-sm border border-line text-danger hover:border-red-300 hover:bg-red-50" onClick={() => setDeleting(true)}>
+                <Trash2 className="size-3.5" /> {t('admin.users.deleteBtn')}
+              </button>
             )}
           </div>
         </div>
@@ -416,6 +428,7 @@ export default function StaffDetail() {
           </Panel>
         </div>
       </div>
+      <DeleteUserDialog user={deleting ? user : null} onClose={() => setDeleting(false)} onDeleted={() => navigate('/admin/users', { replace: true })} />
     </div>
   );
 }

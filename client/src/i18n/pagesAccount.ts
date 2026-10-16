@@ -209,7 +209,7 @@ const az = {
         about: 'Təcrübəniz, bacarıqlarınız və Almaniyada hansı işdə çalışmaq istədiyiniz barədə qısa yazın.',
       },
       hints: {
-        birthDate: '16–70 yaş',
+        birthDate: '16–80 yaş',
         drivingLicence: 'Kateqoriyaları vergüllə yazın. Yoxdursa, boş saxlayın.',
         professional: 'Bu məlumatlar menecerlərimizə sizə uyğun işəgötürən seçməyə kömək edir.',
         personal: 'Məlumatlar yalnız müraciətinizin hazırlanması üçün istifadə olunur.',
@@ -231,7 +231,7 @@ const az = {
       select: 'Seçin',
       errors: {
         birthFuture: 'Doğum tarixi keçmişdə olmalıdır.',
-        birthAge: 'Yaş 16 ilə 70 arasında olmalıdır.',
+        birthAge: 'Yaş 16 ilə 80 arasında olmalıdır.',
         experience: '0 ilə 50 arasında tam ədəd daxil edin.',
         required: 'Bu sahə mütləqdir.',
         tooLong: 'Maksimum {{max}} simvol.',
@@ -494,7 +494,7 @@ const de: typeof az = {
         about: 'Beschreiben Sie kurz Ihre Erfahrung, Ihre Fähigkeiten und welche Arbeit Sie in Deutschland suchen.',
       },
       hints: {
-        birthDate: '16–70 Jahre',
+        birthDate: '16–80 Jahre',
         drivingLicence: 'Klassen mit Komma trennen. Leer lassen, falls nicht vorhanden.',
         professional: 'Diese Angaben helfen unseren Betreuern, den passenden Arbeitgeber für Sie zu finden.',
         personal: 'Ihre Daten werden nur zur Bearbeitung Ihres Antrags verwendet.',
@@ -516,7 +516,7 @@ const de: typeof az = {
       select: 'Bitte wählen',
       errors: {
         birthFuture: 'Das Geburtsdatum muss in der Vergangenheit liegen.',
-        birthAge: 'Das Alter muss zwischen 16 und 70 Jahren liegen.',
+        birthAge: 'Das Alter muss zwischen 16 und 80 Jahren liegen.',
         experience: 'Bitte geben Sie eine ganze Zahl von 0 bis 50 ein.',
         required: 'Pflichtfeld.',
         tooLong: 'Maximal {{max}} Zeichen.',
@@ -779,7 +779,7 @@ const en: typeof az = {
         about: 'Briefly describe your experience, skills and the kind of work you are looking for in Germany.',
       },
       hints: {
-        birthDate: '16–70 years',
+        birthDate: '16–80 years',
         drivingLicence: 'Separate categories with commas. Leave empty if you have none.',
         professional: 'This helps our managers match you with the right employer.',
         personal: 'Your data is only used to prepare your application.',
@@ -801,7 +801,7 @@ const en: typeof az = {
       select: 'Select',
       errors: {
         birthFuture: 'The date of birth must be in the past.',
-        birthAge: 'Age must be between 16 and 70.',
+        birthAge: 'Age must be between 16 and 80.',
         experience: 'Enter a whole number from 0 to 50.',
         required: 'This field is required.',
         tooLong: 'At most {{max}} characters.',
@@ -1064,7 +1064,7 @@ const ru: typeof az = {
         about: 'Кратко опишите ваш опыт, навыки и какую работу вы ищете в Германии.',
       },
       hints: {
-        birthDate: '16–70 лет',
+        birthDate: '16–80 лет',
         drivingLicence: 'Категории через запятую. Оставьте пустым, если нет.',
         professional: 'Эти данные помогают нашим менеджерам подобрать вам подходящего работодателя.',
         personal: 'Ваши данные используются только для подготовки заявки.',
@@ -1086,7 +1086,7 @@ const ru: typeof az = {
       select: 'Выберите',
       errors: {
         birthFuture: 'Дата рождения должна быть в прошлом.',
-        birthAge: 'Возраст должен быть от 16 до 70 лет.',
+        birthAge: 'Возраст должен быть от 16 до 80 лет.',
         experience: 'Введите целое число от 0 до 50.',
         required: 'Обязательное поле.',
         tooLong: 'Не более {{max}} символов.',

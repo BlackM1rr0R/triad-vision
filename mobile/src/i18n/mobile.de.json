@@ -483,6 +483,20 @@
         "DONE": "Durchgeführt",
         "NO_SHOW": "Nicht erschienen"
       }
+    },
+    "register": {
+      "passportHint": "Wie im Reisepass angegeben",
+      "birthDate": "Geburtsdatum",
+      "birthPlaceholder": "Datum wählen",
+      "birthHint": "Wie im Reisepass angegeben",
+      "phone": "Telefonnummer",
+      "phoneHint": "Mit Ländervorwahl, z. B. +994 50 123 45 67",
+      "emailHint": "Geben Sie eine E-Mail-Adresse ein, die Sie aktiv nutzen",
+      "errors": {
+        "phone": "Bitte geben Sie die Telefonnummer mit Ländervorwahl ein (z. B. +994 50 123 45 67).",
+        "birthRequired": "Bitte wählen Sie Ihr Geburtsdatum.",
+        "birthAge": "Das Alter muss zwischen 16 und 80 Jahren liegen."
+      }
     }
   }
 }

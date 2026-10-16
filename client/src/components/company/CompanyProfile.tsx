@@ -7,6 +7,7 @@ import { api } from '@/lib/api';
 import { Spinner } from '@/components/ui/Spinner';
 import { toastJobsError, useJobLabels } from '@/components/jobs/labels';
 import { SECTORS, type Company } from '@/components/jobs/types';
+import { EmailOtpCard } from '@/components/auth/EmailOtpCard';
 import { Section } from './shared';
 
 const FIELDS = ['name', 'legalForm', 'city', 'phone', 'address', 'vatId', 'website', 'contactName'] as const;
@@ -63,34 +64,38 @@ export const CompanyProfile = ({ company }: { company: Company }) => {
   );
 
   return (
-    <Section title={t('jobsArea.portal.profile.title')} icon={Building2}>
-      <form onSubmit={submit} className="grid gap-4 sm:grid-cols-2">
-        {input('name', { required: true, span: true })}
-        {input('legalForm', { max: 40 })}
-        <div>
-          <label className="label" htmlFor="cp-sector">
-            {t('jobsArea.register.sector')}
-          </label>
-          <select id="cp-sector" className="input" value={f.sector} onChange={(e) => setF({ ...f, sector: e.target.value })}>
-            {SECTORS.map((s) => (
-              <option key={s} value={s}>
-                {L.sector(s)}
-              </option>
-            ))}
-          </select>
-        </div>
-        {input('city', { required: true, max: 80 })}
-        {input('phone', { required: true, type: 'tel', max: 40 })}
-        {input('address', { span: true, max: 300 })}
-        {input('vatId', { max: 40 })}
-        {input('website', { max: 300 })}
-        {input('contactName', { span: true, max: 120 })}
-        <div className="flex justify-end sm:col-span-2">
-          <button type="submit" className="btn-primary" disabled={save.isPending}>
-            {save.isPending && <Spinner className="size-4" />} {t('jobsArea.common.save')}
-          </button>
-        </div>
-      </form>
-    </Section>
+    <div className="space-y-6">
+      <Section title={t('jobsArea.portal.profile.title')} icon={Building2}>
+        <form onSubmit={submit} className="grid gap-4 sm:grid-cols-2">
+          {input('name', { required: true, span: true })}
+          {input('legalForm', { max: 40 })}
+          <div>
+            <label className="label" htmlFor="cp-sector">
+              {t('jobsArea.register.sector')}
+            </label>
+            <select id="cp-sector" className="input" value={f.sector} onChange={(e) => setF({ ...f, sector: e.target.value })}>
+              {SECTORS.map((s) => (
+                <option key={s} value={s}>
+                  {L.sector(s)}
+                </option>
+              ))}
+            </select>
+          </div>
+          {input('city', { required: true, max: 80 })}
+          {input('phone', { required: true, type: 'tel', max: 40 })}
+          {input('address', { span: true, max: 300 })}
+          {input('vatId', { max: 40 })}
+          {input('website', { max: 300 })}
+          {input('contactName', { span: true, max: 120 })}
+          <div className="flex justify-end sm:col-span-2">
+            <button type="submit" className="btn-primary" disabled={save.isPending}>
+              {save.isPending && <Spinner className="size-4" />} {t('jobsArea.common.save')}
+            </button>
+          </div>
+        </form>
+      </Section>
+      {/* Account security of the employer login: optional two-step login by email. */}
+      <EmailOtpCard />
+    </div>
   );
 };

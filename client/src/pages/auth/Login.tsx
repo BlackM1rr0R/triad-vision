@@ -39,8 +39,19 @@ export default function Login() {
       });
       const from = (location.state as { from?: unknown } | null)?.from;
       if (isTwoFactorChallenge(data)) {
-        // Second step: the challenge lives only in router state (never stored), valid for 5 minutes.
-        navigate('/login/2fa', { replace: true, state: { challenge: data.challenge, from } });
+        // Second step: the challenge lives only in router state (never stored), valid for 10 minutes.
+        navigate('/login/2fa', {
+          replace: true,
+          state: {
+            challenge: data.challenge,
+            from,
+            method: data.method ?? 'totp',
+            alternatives: data.alternatives ?? ['recovery'],
+            email: data.email,
+            emailSent: data.emailSent,
+            retryAfter: data.retryAfter,
+          },
+        });
         return;
       }
       setUser(data.user);
@@ -74,7 +85,7 @@ export default function Login() {
       </form>
       <p className="mt-6 text-center text-sm text-muted">
         {t('auth.noAccount')}{' '}
-        <Link to="/register" className="font-semibold text-brand-600 hover:underline">
+        <Link to="/register" state={location.state} className="font-semibold text-brand-600 hover:underline">
           {t('auth.register')}
         </Link>
       </p>

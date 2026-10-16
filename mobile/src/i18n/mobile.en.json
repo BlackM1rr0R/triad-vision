@@ -483,6 +483,20 @@
         "DONE": "Done",
         "NO_SHOW": "No-show"
       }
+    },
+    "register": {
+      "passportHint": "As shown in your passport",
+      "birthDate": "Date of birth",
+      "birthPlaceholder": "Choose a date",
+      "birthHint": "As shown in your passport",
+      "phone": "Phone number",
+      "phoneHint": "Including the country code, e.g. +994 50 123 45 67",
+      "emailHint": "Enter an email address you actively use",
+      "errors": {
+        "phone": "Enter the phone number with the country code (e.g. +994 50 123 45 67).",
+        "birthRequired": "Please choose your date of birth.",
+        "birthAge": "Your age must be between 16 and 80."
+      }
     }
   }
 }

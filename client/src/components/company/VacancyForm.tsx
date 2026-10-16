@@ -248,7 +248,7 @@ export const VacancyForm = ({
           <input id="vf-lic" className="input" maxLength={40} value={f.drivingLicence} onChange={(e) => set('drivingLicence', e.target.value)} placeholder="CE" />
         </Field>
         <Field id="vf-smin" label={t('jobsArea.form.salaryMin')}>
-          <input id="vf-smin" type="number" min={0} max={100000} step={50} inputMode="numeric" className="input" value={f.salaryMin} onChange={(e) => set('salaryMin', e.target.value)} />
+          <input id="vf-smin" type="number" min={0} max={100000} step={1} inputMode="numeric" className="input" value={f.salaryMin} onChange={(e) => set('salaryMin', e.target.value)} />
         </Field>
         <Field id="vf-smax" label={t('jobsArea.form.salaryMax')}>
           <input
@@ -256,7 +256,7 @@ export const VacancyForm = ({
             type="number"
             min={0}
             max={100000}
-            step={50}
+            step={1}
             inputMode="numeric"
             className={clsx('input', salaryBad && 'border-danger')}
             value={f.salaryMax}

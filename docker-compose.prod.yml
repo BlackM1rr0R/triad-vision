@@ -72,6 +72,37 @@ services:
   #   command: ['redis-server', '--save', '', '--appendonly', 'no', '--maxmemory', '128mb', '--maxmemory-policy', 'allkeys-lru']
   #   mem_limit: 160m
 
+  # Mail server for @triad-vision.de (Stalwart: SMTP + IMAP, DKIM/SPF/DMARC, spam filter).
+  # Public: 25 (inbound mail), 465 (SMTPS submission), 993 (IMAPS). The management API/WebUI (8080)
+  # listens on the host's loopback only — reach it through an SSH tunnel. Mail data: data/mail.
+  # TLS for mail.triad-vision.de comes from Let's Encrypt via DNS-01 (Cloudflare API token in
+  # data/mail/cloudflare-dns-token, readable by the container user only).
+  mail:
+    <<: *hardening
+    image: stalwartlabs/stalwart:v0.16.24
+    restart: unless-stopped
+    # Runs as the image's unprivileged `stalwart` user (uid 2000). Its binary carries the
+    # cap_net_bind_service file capability, so that one capability must stay in the bounding set
+    # (without it exec fails with "operation not permitted").
+    cap_drop: [ALL]
+    cap_add: [NET_BIND_SERVICE]
+    mem_limit: 512m
+    pids_limit: 256
+    ports:
+      - '25:25'
+      - '465:465'
+      - '993:993'
+      - '127.0.0.1:8080:8080'
+    # Containers reach the mail server by its public name directly over the internal network (the
+    # host can't hairpin its own public IP back into Docker), so TLS still matches mail.triad-vision.de.
+    networks:
+      default:
+        aliases: [mail.triad-vision.de]
+    volumes:
+      - ./data/mail/etc:/etc/stalwart
+      - ./data/mail/data:/var/lib/stalwart
+      - ./data/mail/cloudflare-dns-token:/run/secrets/cloudflare-dns-token:ro
+
   web:
     build:
       context: .

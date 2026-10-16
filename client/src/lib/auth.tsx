@@ -21,6 +21,8 @@ export interface SecurityFlags {
   twoFactorEnabled?: boolean;
   /** Staff roles must use 2FA; until enrolled the admin API answers 403 TWO_FACTOR_ENROLLMENT_REQUIRED. */
   twoFactorRequired?: boolean;
+  /** Candidates / employers: two-step login with a code sent by email. */
+  emailOtpEnabled?: boolean;
 }
 export const securityOf = (u: User | null | undefined): SecurityFlags => (u ?? {}) as SecurityFlags;
 /** Staff member who still has to finish the 2FA enrollment wizard. */
@@ -34,6 +36,15 @@ export const TWO_FACTOR_SETUP_PATH = '/admin/security';
 export interface TwoFactorChallenge {
   twoFactorRequired: true;
   challenge: string;
+  /** 'totp' = authenticator app; 'email' = a code was emailed (to the masked `email`). */
+  method?: 'totp' | 'email';
+  /** Other ways to finish this login ('email' = "send a code to my email instead"). */
+  alternatives?: ('email' | 'recovery')[];
+  email?: string;
+  /** Email method: false when the send throttle kept us from mailing a fresh code. */
+  emailSent?: boolean;
+  /** Seconds until another code may be requested. */
+  retryAfter?: number | null;
 }
 export const isTwoFactorChallenge = (d: unknown): d is TwoFactorChallenge =>
   !!d && typeof d === 'object' && (d as { twoFactorRequired?: unknown }).twoFactorRequired === true && typeof (d as { challenge?: unknown }).challenge === 'string';

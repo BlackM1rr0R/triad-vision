@@ -27,7 +27,20 @@ docker exec "$DB_CONTAINER" sh -c 'exec mysqldump -uroot -p"$MYSQL_ROOT_PASSWORD
 # a dump without the completion marker means mysqldump failed half-way
 tail -n 1 "$WORK/database.sql" | grep -q "Dump completed" || { echo "mysqldump failed" >&2; exit 1; }
 
-tar -czf "$WORK/backup.tar.gz" -C "$WORK" database.sql -C "$APP_DIR/data" uploads docs
+# Mail (Stalwart's RocksDB) is copied with the mail server stopped for a few seconds, so the copy is
+# consistent; senders simply retry during that window.
+MAIL_CONTAINER="${MAIL_CONTAINER:-src-mail-1}"
+MAIL_DIRS=()
+if [ -d "$APP_DIR/data/mail" ]; then
+  MAIL_DIRS=(mail)
+  if docker ps -q --filter "name=^${MAIL_CONTAINER}$" | grep -q .; then
+    docker stop -t 30 "$MAIL_CONTAINER" >/dev/null
+    trap 'docker start "$MAIL_CONTAINER" >/dev/null 2>&1 || true; rm -rf "$WORK"' EXIT
+    RESTART_MAIL=1
+  fi
+fi
+tar -czf "$WORK/backup.tar.gz" -C "$WORK" database.sql -C "$APP_DIR/data" uploads docs "${MAIL_DIRS[@]}"
+if [ "${RESTART_MAIL:-0}" = 1 ]; then docker start "$MAIL_CONTAINER" >/dev/null; fi
 OUT="$BACKUP_DIR/triad-$STAMP.tar.gz.enc"
 openssl enc -aes-256-cbc -pbkdf2 -iter 200000 -salt -pass "file:$KEY_FILE" -in "$WORK/backup.tar.gz" -out "$OUT"
 

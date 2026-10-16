@@ -14,7 +14,7 @@ describe('email verification', () => {
     const res = await anon()
       .post('/api/auth/register')
       .set('Origin', ORIGIN)
-      .send({ email: 'new.candidate@test.local', password: 'Password123', firstName: 'Aysel', lastName: 'Q', locale: 'de' });
+      .send({ email: 'new.candidate@test.local', password: 'Password123', firstName: 'Aysel', lastName: 'Q', locale: 'de', phone: '+4915112345678', birthDate: '1995-03-01' });
     expect(res.status).toBe(201);
     expect(res.body.user).toMatchObject({ emailVerified: false, twoFactorEnabled: false, twoFactorRequired: false });
     const [mail] = await emailsTo('new.candidate@test.local');

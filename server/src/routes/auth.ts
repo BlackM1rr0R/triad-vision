@@ -20,6 +20,7 @@ import { loginLockedForAsync as loginLockedFor, recordLoginFailureAsync as recor
 import { audit } from '../lib/audit.js';
 import { consumeVerificationToken, sendVerificationEmail } from '../lib/emailVerification.js';
 import { createLoginChallenge, securityFlags } from '../lib/twoFactor.js';
+import { issueEmailOtp, loginMethods, maskEmail } from '../lib/emailOtp.js';
 
 export const authRouter = Router();
 
@@ -64,7 +65,7 @@ export const publicUser = (u: User) => ({
 export const GERMAN_LEVELS = ['none', 'A1', 'A2', 'B1', 'B2', 'C1', 'C2'] as const;
 export const EDUCATION_LEVELS = ['school', 'vocational', 'university'] as const;
 export const MIN_AGE = 16;
-export const MAX_AGE = 70;
+export const MAX_AGE = 80;
 
 /** Optional free-text profile field: trimmed; an empty string clears it (stored as null). */
 const optText = (max: number) =>
@@ -84,6 +85,25 @@ export const ageOn = (birth: Date, now = new Date()) => {
   return age;
 };
 
+/** A YYYY-MM-DD birth date: a real calendar date, in the past, age MIN_AGE..MAX_AGE. */
+const checkBirthDate = (v: string, ctx: z.RefinementCtx): Date => {
+  const d = new Date(`${v}T00:00:00.000Z`);
+  if (Number.isNaN(d.getTime()) || d.toISOString().slice(0, 10) !== v) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'INVALID_DATE' });
+    return z.NEVER;
+  }
+  if (d.getTime() >= Date.now()) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'DATE_NOT_IN_PAST' });
+    return z.NEVER;
+  }
+  const age = ageOn(d);
+  if (age < MIN_AGE || age > MAX_AGE) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'AGE_OUT_OF_RANGE' });
+    return z.NEVER;
+  }
+  return d;
+};
+
 /** YYYY-MM-DD, in the past, age MIN_AGE..MAX_AGE. Empty string or null clears it. */
 const birthDate = z
   .union([z.literal(''), z.null(), z.string().regex(/^\d{4}-\d{2}-\d{2}$/)])
@@ -91,21 +111,30 @@ const birthDate = z
   .transform((v, ctx) => {
     if (v === undefined) return undefined;
     if (v === '' || v === null) return null;
-    const d = new Date(`${v}T00:00:00.000Z`);
-    if (Number.isNaN(d.getTime()) || d.toISOString().slice(0, 10) !== v) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'INVALID_DATE' });
+    return checkBirthDate(v, ctx);
+  });
+
+/** Registration: the birth date is required (as written in the foreign passport). */
+const requiredBirthDate = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/, 'INVALID_DATE')
+  .transform((v, ctx) => checkBirthDate(v, ctx));
+
+/**
+ * International phone number: "+" and 8–15 digits; spaces, dashes, dots and brackets between the
+ * digits are allowed and removed ("+994 50 123-45-67" → "+994501234567").
+ */
+export const intlPhone = z
+  .string()
+  .trim()
+  .max(40)
+  .transform((v, ctx) => {
+    const compact = v.replace(/[\s\-.()]/g, '');
+    if (!/^\+\d{8,15}$/.test(compact)) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'INVALID_PHONE' });
       return z.NEVER;
     }
-    if (d.getTime() >= Date.now()) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'DATE_NOT_IN_PAST' });
-      return z.NEVER;
-    }
-    const age = ageOn(d);
-    if (age < MIN_AGE || age > MAX_AGE) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'AGE_OUT_OF_RANGE' });
-      return z.NEVER;
-    }
-    return d;
+    return compact;
   });
 
 /** Creates the session for a freshly authenticated user and writes it to the response. */
@@ -127,7 +156,9 @@ authRouter.post('/register', authLimiter, async (req, res) => {
       password,
       firstName: z.string().trim().min(1).max(80),
       lastName: z.string().trim().min(1).max(80),
-      phone: z.string().trim().max(40).optional(),
+      // Candidates: phone (with country code) and birth date are required at sign-up.
+      phone: intlPhone,
+      birthDate: requiredBirthDate,
       locale: locale.default('az'),
     }),
     req.body,
@@ -142,6 +173,7 @@ authRouter.post('/register', authLimiter, async (req, res) => {
       firstName: body.firstName,
       lastName: body.lastName,
       phone: body.phone,
+      birthDate: body.birthDate,
       locale: body.locale,
     },
   });
@@ -168,12 +200,28 @@ authRouter.post('/login', authLimiter, async (req, res) => {
     await audit(req, 'LOGIN_FAILED', user ? `user:${user.id}` : undefined, { email: body.email });
     throw new HttpError(401, 'INVALID_CREDENTIALS');
   }
-  if (user.totpEnabledAt) {
+  const methods = loginMethods(user);
+  if (methods) {
     // Password accepted, but no session yet: the client must complete POST /api/auth/2fa/verify.
     // The failure counter is only reset once the second factor succeeds, so a known password does
     // not give unlimited code guesses.
-    await audit({ user: undefined, ip: req.ip }, 'LOGIN_2FA_CHALLENGE', `user:${user.id}`);
-    res.json({ twoFactorRequired: true, challenge: createLoginChallenge(user.id) });
+    const { token: challenge, jti } = createLoginChallenge(user.id);
+    await audit({ user: undefined, ip: req.ip }, 'LOGIN_2FA_CHALLENGE', `user:${user.id}`, { method: methods.method });
+    if (methods.method === 'email') {
+      // Email two-step login (candidates / employers without an authenticator app): send the code now.
+      const sent = await issueEmailOtp(user, 'LOGIN', jti);
+      if (sent.ok) await audit({ user: undefined, ip: req.ip }, 'LOGIN_EMAIL_OTP_SENT', `user:${user.id}`, { trigger: 'login' });
+      res.json({
+        twoFactorRequired: true,
+        challenge,
+        ...methods,
+        email: maskEmail(user.email),
+        emailSent: sent.ok,
+        retryAfter: sent.retryAfter,
+      });
+      return;
+    }
+    res.json({ twoFactorRequired: true, challenge, ...methods });
     return;
   }
   await recordLoginSuccess(body.email);

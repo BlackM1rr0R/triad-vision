@@ -23,6 +23,12 @@ ln -sfn "$APP_DIR/data" src/data
 # The API runs as the unprivileged `node` user (uid 1000); it must own the folders it writes to.
 mkdir -p "$APP_DIR/data/uploads" "$APP_DIR/data/docs"
 chown -R 1000:1000 "$APP_DIR/data/uploads" "$APP_DIR/data/docs"
+# The mail server runs as uid 2000. The Cloudflare token file must exist before compose starts, or
+# Docker would create a directory in its place; it stays readable by that user only.
+mkdir -p "$APP_DIR/data/mail/etc" "$APP_DIR/data/mail/data"
+[ -f "$APP_DIR/data/mail/cloudflare-dns-token" ] || install -m 400 /dev/null "$APP_DIR/data/mail/cloudflare-dns-token"
+chown -R 2000:2000 "$APP_DIR/data/mail"
+chmod 400 "$APP_DIR/data/mail/cloudflare-dns-token"
 cd src
 
 echo "== build + start"

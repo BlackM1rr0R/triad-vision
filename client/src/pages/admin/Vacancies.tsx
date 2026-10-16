@@ -196,7 +196,8 @@ const VacancyDrawer = ({ id, onClose }: { id: string | null; onClose: () => void
   const [rejecting, setRejecting] = useState(false);
   const [reason, setReason] = useState('');
   const [confirmDelete, setConfirmDelete] = useState(false);
-  const [publish, setPublish] = useState(false);
+  // Staff-created vacancies go live right away unless the box is unticked (a draft is invisible on /jobs).
+  const [publish, setPublish] = useState(true);
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['admin-vacancy', id],
     queryFn: async () => (await api.get<{ vacancy: Detail }>(`/admin/vacancies/${id}`)).data.vacancy,
@@ -218,7 +219,8 @@ const VacancyDrawer = ({ id, onClose }: { id: string | null; onClose: () => void
         ? (await api.post<{ vacancy: VacancyRow }>('/admin/vacancies', { ...payloadFromForm(f, true), publish })).data.vacancy
         : (await api.patch<{ vacancy: VacancyRow }>(`/admin/vacancies/${id}`, payloadFromForm(f, true))).data.vacancy,
     onSuccess: (v) => {
-      toast.success(t('jobsArea.admin.saved'));
+      if (isNew && v.status === 'DRAFT') toast.info(t('jobsArea.admin.savedDraft'));
+      else toast.success(t('jobsArea.admin.saved'));
       refresh();
       if (isNew) onClose();
       else qc.setQueryData(['admin-vacancy', id], (old: Detail | undefined) => (old ? { ...old, ...v } : old));

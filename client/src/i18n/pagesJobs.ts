@@ -368,6 +368,7 @@ const az = {
     },
     admin: {
       saved: 'Yadda saxlanıldı',
+      savedDraft: 'Qaralama kimi saxlanıldı — namizədlər onu dərc edildikdən sonra görəcək',
       added: 'Namizəd vakansiyaya əlavə edildi',
       shortlist: 'Vakansiyaya əlavə et',
       staffNote: 'Daxili qeyd',
@@ -828,6 +829,7 @@ const de: typeof az = {
     },
     admin: {
       saved: 'Gespeichert',
+      savedDraft: 'Als Entwurf gespeichert — Bewerber sehen die Stelle erst nach der Veröffentlichung',
       added: 'Kandidat zur Stelle hinzugefügt',
       shortlist: 'Zur Stelle hinzufügen',
       staffNote: 'Interne Notiz',
@@ -1288,6 +1290,7 @@ const en: typeof az = {
     },
     admin: {
       saved: 'Saved',
+      savedDraft: 'Saved as a draft — candidates will see it once it is published',
       added: 'Candidate added to the vacancy',
       shortlist: 'Add to vacancy',
       staffNote: 'Internal note',
@@ -1748,6 +1751,7 @@ const ru: typeof az = {
     },
     admin: {
       saved: 'Сохранено',
+      savedDraft: 'Сохранено как черновик — кандидаты увидят вакансию после публикации',
       added: 'Кандидат добавлен к вакансии',
       shortlist: 'Добавить к вакансии',
       staffNote: 'Внутренняя заметка',

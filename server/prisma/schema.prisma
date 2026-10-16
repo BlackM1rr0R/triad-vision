@@ -58,6 +58,8 @@ model User {
   totpSecret            String?                  @db.Text // encrypted with the server key; set while enrolling
   totpEnabledAt         DateTime?
   recoveryCodes         Json? // sha256 hashes of unused one-time recovery codes
+  emailOtpEnabledAt     DateTime? // two-step login with a code sent by email (CLIENT / COMPANY only)
+  emailOtpCodes         EmailOtpCode[]
   // Employer accounts
   companyId             String?
   company               Company?                 @relation(fields: [companyId], references: [id], onDelete: SetNull)
@@ -596,6 +598,23 @@ model EmailVerificationToken {
   createdAt DateTime  @default(now())
 
   @@index([userId])
+}
+
+/// One-time 6-digit codes sent by email: second login factor (LOGIN, tied to one login challenge)
+/// or confirmation when turning email two-step login on (ENABLE). Only a peppered sha256 is stored.
+model EmailOtpCode {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  purpose     String // LOGIN | ENABLE
+  challengeId String? // jti of the login challenge the code belongs to (LOGIN only)
+  codeHash    String
+  expiresAt   DateTime
+  attempts    Int       @default(0)
+  usedAt      DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@index([userId, purpose])
 }
 
 // ─── Employers, vacancies, applications ──────────────────────────────

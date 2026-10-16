@@ -4,6 +4,7 @@ import type { Role, User } from '@prisma/client';
 import { config } from '../config.js';
 import { prisma } from '../db.js';
 import { hasMinRole } from '../middleware/auth.js';
+import { emailOtpActive } from './emailOtp.js';
 import { open } from './secretBox.js';
 import { hashRecoveryCode, normalizeRecoveryCode, verifyTotp } from './totp.js';
 
@@ -11,16 +12,22 @@ import { hashRecoveryCode, normalizeRecoveryCode, verifyTotp } from './totp.js';
 export const isTwoFactorRequired = (role: Role) => hasMinRole(role, 'STAFF');
 
 /** The fields every "who am I" response carries so clients can drive the verify / 2FA flows. */
-export const securityFlags = (u: Pick<User, 'role' | 'emailVerifiedAt' | 'totpEnabledAt'>) => ({
+export const securityFlags = (u: Pick<User, 'role' | 'emailVerifiedAt' | 'totpEnabledAt' | 'emailOtpEnabledAt'>) => ({
   emailVerified: !!u.emailVerifiedAt,
   twoFactorEnabled: !!u.totpEnabledAt,
   twoFactorRequired: isTwoFactorRequired(u.role),
+  /** Two-step login with a code sent by email (candidates / employers only). */
+  emailOtpEnabled: emailOtpActive(u),
 });
 
 // ─── Login challenge ────────────────────────────────────────────────────
 
-/** How long the "enter your code" step stays open after the password was accepted. */
-export const CHALLENGE_TTL_SECONDS = 5 * 60;
+/**
+ * How long the "enter your code" step stays open after the password was accepted. 10 minutes for
+ * every method (it used to be 5): an emailed code is valid for 10 minutes and delivery can be slow,
+ * and the guess budget is bounded per challenge and per account anyway.
+ */
+export const CHALLENGE_TTL_SECONDS = 10 * 60;
 /** Wrong codes accepted per challenge before the user must start over with the password. */
 export const MAX_ATTEMPTS_PER_CHALLENGE = 5;
 const AUDIENCE = 'tv-2fa-login';
@@ -32,16 +39,20 @@ interface ChallengeState {
 }
 const challenges = new Map<string, ChallengeState>();
 
-/** Short-lived signed token proving the password step succeeded. It is not a session. */
+/**
+ * Short-lived signed token proving the password step succeeded. It is not a session.
+ * `jti` identifies the challenge server-side (emailed login codes are bound to it).
+ */
 export const createLoginChallenge = (userId: string) => {
   const jti = crypto.randomBytes(16).toString('hex');
   challenges.set(jti, { attempts: 0, used: false, expiresAt: Date.now() + CHALLENGE_TTL_SECONDS * 1000 });
-  return jwt.sign({ sub: userId, typ: '2fa' }, config.jwtSecret, {
+  const token = jwt.sign({ sub: userId, typ: '2fa' }, config.jwtSecret, {
     algorithm: 'HS256',
     audience: AUDIENCE,
     expiresIn: CHALLENGE_TTL_SECONDS,
     jwtid: jti,
   });
+  return { token, jti };
 };
 
 export type ChallengeResult = { ok: true; userId: string; jti: string } | { ok: false };

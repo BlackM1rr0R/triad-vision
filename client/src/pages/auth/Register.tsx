@@ -1,11 +1,32 @@
-import { useState, type FormEvent } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useId, useMemo, useState, type FormEvent, type ReactNode } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { ArrowRight, MailCheck, UserPlus } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { AxiosError } from 'axios';
+import clsx from 'clsx';
+import {
+  ArrowRight,
+  Calendar,
+  ChevronRight,
+  Eye,
+  EyeOff,
+  FileCheck2,
+  Handshake,
+  Lock,
+  Mail,
+  MailCheck,
+  MessagesSquare,
+  Phone,
+  SearchCheck,
+  User as UserIcon,
+  UserPlus,
+  type LucideIcon,
+} from 'lucide-react';
 import { toast } from 'sonner';
 import { api, errorCode } from '@/lib/api';
-import { useAuth } from '@/lib/auth';
+import { landingAfterLogin, useAuth } from '@/lib/auth';
 import { useL10n } from '@/lib/l10n';
+import { sized, srcSet } from '@/lib/img';
 import { isStrongPassword, PASSWORD_MAX, PASSWORD_MIN, type SessionInfo, type User } from '@/lib/types';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { Spinner } from '@/components/ui/Spinner';
@@ -17,8 +38,49 @@ import { pagesLegal } from '@/i18n/pagesLegal';
 
 registerCopy(pagesLegal);
 
+/** Same photo as the home hero (already cached for most visitors). */
+const ASIDE_IMG = 'https://images.unsplash.com/photo-1587330979470-3595ac045ab0?auto=format&fit=crop&w=1200&q=65';
+
+/** Age limits enforced by the API (POST /api/auth/register). */
+const MIN_AGE = 16;
+const MAX_AGE = 80;
+const EARLIEST_BIRTH = '1940-01-01';
+
+const pad = (n: number) => String(n).padStart(2, '0');
+const ymd = (d: Date) => `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())}`;
+
+/** min/max for the native date picker: at least 16 years old, at most 80 (and never before 1940). */
+const birthBounds = () => {
+  const now = new Date();
+  const max = new Date(Date.UTC(now.getUTCFullYear() - MIN_AGE, now.getUTCMonth(), now.getUTCDate()));
+  const oldest = new Date(Date.UTC(now.getUTCFullYear() - MAX_AGE - 1, now.getUTCMonth(), now.getUTCDate() + 1));
+  const min = ymd(oldest) > EARLIEST_BIRTH ? ymd(oldest) : EARLIEST_BIRTH;
+  return { min, max: ymd(max) };
+};
+
+/** "+994 50 123-45-67" → "+994501234567"; valid when "+" and 8–15 digits remain. */
+const compactPhone = (v: string) => v.trim().replace(/[\s\-.()]/g, '');
+const phoneValid = (v: string) => /^\+\d{8,15}$/.test(compactPhone(v));
+
+type FieldKey = 'firstName' | 'lastName' | 'birthDate' | 'email' | 'phone' | 'password';
+type Form = Record<FieldKey, string>;
+const EMPTY: Form = { firstName: '', lastName: '', birthDate: '', email: '', phone: '', password: '' };
+
+/** Field-level error keys (registerPage.errors.*) from a 400 VALIDATION answer of the API. */
+const serverFieldErrors = (err: unknown): Partial<Record<FieldKey, string>> => {
+  if (!(err instanceof AxiosError)) return {};
+  const issues = (err.response?.data as { issues?: { path?: (string | number)[]; message?: string }[] } | undefined)?.issues ?? [];
+  const out: Partial<Record<FieldKey, string>> = {};
+  for (const i of issues) {
+    const field = i.path?.[0];
+    if (field === 'phone') out.phone = 'phone';
+    if (field === 'birthDate') out.birthDate = i.message === 'AGE_OUT_OF_RANGE' || i.message === 'DATE_NOT_IN_PAST' ? 'birthAge' : 'birthInvalid';
+  }
+  return out;
+};
+
 /** After registration: the account exists and is logged in, but the email still has to be confirmed. */
-const CheckInbox = ({ email }: { email: string }) => {
+const CheckInbox = ({ email, next }: { email: string; next: string }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   return (
@@ -30,7 +92,7 @@ const CheckInbox = ({ email }: { email: string }) => {
         <p className="mt-5 break-words text-ink">{t('registerInbox.text', { email })}</p>
         <p className="mt-2 text-sm text-muted">{t('registerInbox.hint')}</p>
         <div className="mt-7 flex w-full flex-col gap-2 sm:flex-row sm:justify-center">
-          <button type="button" className="btn-primary" onClick={() => navigate('/account', { replace: true })}>
+          <button type="button" className="btn-primary" onClick={() => navigate(next, { replace: true })}>
             {t('registerInbox.continue')} <ArrowRight className="size-4" aria-hidden />
           </button>
           <ResendVerificationButton className="btn-ghost" label={t('registerInbox.resend')} />
@@ -40,102 +102,347 @@ const CheckInbox = ({ email }: { email: string }) => {
   );
 };
 
+/** Label, input with a leading icon, and a hint line below that turns into the error message. */
+const Field = ({
+  id,
+  label,
+  icon: Icon,
+  hint,
+  error,
+  trailing,
+  children,
+}: {
+  id: string;
+  label: string;
+  icon: LucideIcon;
+  hint: string;
+  error?: string | null;
+  trailing?: ReactNode;
+  children: ReactNode;
+}) => (
+  <div>
+    <label className="label" htmlFor={id}>
+      {label}
+    </label>
+    <div className="relative">
+      <Icon className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-muted" aria-hidden />
+      {children}
+      {trailing}
+    </div>
+    <p id={`${id}-hint`} className={clsx('mt-1.5 text-xs leading-snug', error ? 'text-danger' : 'text-muted')} aria-live={error ? 'polite' : undefined}>
+      {error ?? hint}
+    </p>
+  </div>
+);
+
+/** Desktop-only side panel: photo with a navy overlay and four shortcuts. */
+const Aside = () => {
+  const { t } = useTranslation();
+  const { user } = useAuth();
+  const rows: { key: string; icon: LucideIcon; to: string }[] = [
+    { key: 'consult', icon: MessagesSquare, to: '/booking' },
+    { key: 'docs', icon: FileCheck2, to: '/services' },
+    { key: 'tracking', icon: SearchCheck, to: user ? '/account' : '/login' },
+    { key: 'partners', icon: Handshake, to: '/partners' },
+  ];
+  return (
+    <motion.aside
+      initial={{ opacity: 0, x: 30 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ duration: 0.7, delay: 0.08, ease: [0.22, 1, 0.36, 1] }}
+      aria-label={t('registerPage.aside.label')}
+      className="relative isolate hidden min-h-[640px] overflow-hidden rounded-[2rem] bg-navy-950 p-10 text-white lg:flex lg:flex-col lg:justify-end xl:p-12"
+    >
+      <img
+        src={sized(ASIDE_IMG, 1200)}
+        srcSet={srcSet(ASIDE_IMG, [800, 1200, 1600])}
+        sizes="(min-width: 1024px) 50vw, 0px"
+        alt=""
+        decoding="async"
+        loading="lazy"
+        className="absolute inset-0 -z-10 size-full object-cover"
+      />
+      <div className="absolute inset-0 -z-10 bg-navy-950/70" />
+      <div className="absolute inset-0 -z-10 bg-gradient-to-t from-navy-950 via-navy-950/60 to-transparent" />
+      <h2 className="max-w-md font-display text-4xl leading-tight font-extrabold xl:text-[2.75rem]">{t('registerPage.aside.title')}</h2>
+      <p className="mt-4 max-w-md text-white/80">{t('registerPage.aside.text')}</p>
+      <ul className="mt-8 space-y-3">
+        {rows.map(({ key, icon: Icon, to }) => (
+          <li key={key}>
+            <Link
+              to={to}
+              className="glass group flex items-center gap-4 rounded-xl px-4 py-3.5 transition hover:border-white/30 hover:bg-white/[0.14] focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:outline-none"
+            >
+              <span className="grid size-10 shrink-0 place-items-center rounded-lg bg-brand-500/20 text-brand-400">
+                <Icon className="size-5" aria-hidden />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-sm font-bold">{t(`registerPage.aside.${key}`)}</span>
+                <span className="block text-xs text-white/70">{t(`registerPage.aside.${key}Text`)}</span>
+              </span>
+              <ChevronRight className="size-4 shrink-0 text-white/60 transition group-hover:translate-x-0.5 group-hover:text-white" aria-hidden />
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </motion.aside>
+  );
+};
+
 export default function Register() {
   const { t } = useTranslation();
   const { locale } = useL10n();
   const { setUser } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const from = (location.state as { from?: unknown } | null)?.from;
+  const uid = useId();
   const [busy, setBusy] = useState(false);
-  const [password, setPassword] = useState('');
-  const [registeredEmail, setRegisteredEmail] = useState<string | null>(null);
-  const weak = password.length > 0 && !isStrongPassword(password);
+  const [f, setF] = useState<Form>(EMPTY);
+  const [showPassword, setShowPassword] = useState(false);
+  const [privacy, setPrivacy] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const [serverErrors, setServerErrors] = useState<Partial<Record<FieldKey, string>>>({});
+  const [registered, setRegistered] = useState<{ email: string; next: string } | null>(null);
+  const bounds = useMemo(birthBounds, []);
   usePageTitle(t('auth.registerTitle'));
+
+  const set = (k: FieldKey) => (e: { target: { value: string } }) => {
+    setF((p) => ({ ...p, [k]: e.target.value }));
+    setServerErrors((s) => (s[k] ? { ...s, [k]: undefined } : s));
+  };
+
+  const birthError = !f.birthDate
+    ? 'required'
+    : !/^\d{4}-\d{2}-\d{2}$/.test(f.birthDate)
+      ? 'birthInvalid'
+      : f.birthDate < bounds.min || f.birthDate > bounds.max
+        ? 'birthAge'
+        : null;
+  const clientErrors: Record<FieldKey, string | null> = {
+    firstName: f.firstName.trim() ? null : 'required',
+    lastName: f.lastName.trim() ? null : 'required',
+    birthDate: birthError,
+    email: !f.email.trim() ? 'required' : /^\S+@\S+\.\S+$/.test(f.email.trim()) ? null : 'email',
+    phone: !f.phone.trim() ? 'required' : phoneValid(f.phone) ? null : 'phone',
+    password: isStrongPassword(f.password) ? null : 'password',
+  };
+  /** Errors appear after the first submit; format errors (phone, date, password) as soon as something was typed. */
+  const errorFor = (k: FieldKey): string | null => {
+    const key = serverErrors[k] ?? clientErrors[k];
+    if (!key) return null;
+    const typed = f[k].trim() !== '';
+    if (!submitted && !(typed && k !== 'email' && key !== 'required')) return null;
+    if (key === 'password') return t('registerPage.passwordHint');
+    return t(`registerPage.errors.${key}`);
+  };
 
   const submit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const fd = new FormData(e.currentTarget);
-    if (!isStrongPassword(String(fd.get('password') ?? ''))) {
-      toast.error(t('auth.errors.PASSWORD_TOO_WEAK'));
+    setSubmitted(true);
+    if (Object.values(clientErrors).some(Boolean) || !privacy) {
+      const failing = (Object.keys(clientErrors) as FieldKey[]).filter((k) => clientErrors[k]);
+      if (failing.length === 1 && failing[0] === 'password') toast.error(t('auth.errors.PASSWORD_TOO_WEAK'));
+      else if (!failing.length) toast.error(t('registerPage.errors.privacy'));
+      else toast.error(t('auth.errors.VALIDATION'));
       return;
     }
     setBusy(true);
     try {
       const { data } = await api.post<{ user: User; session: SessionInfo }>('/auth/register', {
-        firstName: fd.get('firstName'),
-        lastName: fd.get('lastName'),
-        email: fd.get('email'),
-        phone: fd.get('phone') || undefined,
-        password: fd.get('password'),
+        firstName: f.firstName.trim(),
+        lastName: f.lastName.trim(),
+        birthDate: f.birthDate,
+        email: f.email.trim(),
+        phone: compactPhone(f.phone),
+        password: f.password,
         locale,
       });
       setUser(data.user);
+      const next = landingAfterLogin(data.user.role, from);
       // New accounts confirm their email first ("check your inbox"); pre-verified ones go straight on.
-      if ((data.user as User & { emailVerified?: boolean }).emailVerified === false) setRegisteredEmail(data.user.email);
-      else navigate('/account', { replace: true });
+      if ((data.user as User & { emailVerified?: boolean }).emailVerified === false) setRegistered({ email: data.user.email, next });
+      else navigate(next, { replace: true });
     } catch (err) {
-      toast.error(authError(t, errorCode(err)));
+      const fields = serverFieldErrors(err);
+      setServerErrors(fields);
+      toast.error(Object.keys(fields).length ? t('auth.errors.VALIDATION') : authError(t, errorCode(err)));
     } finally {
       setBusy(false);
     }
   };
 
-  if (registeredEmail) return <CheckInbox email={registeredEmail} />;
+  if (registered) return <CheckInbox email={registered.email} next={registered.next} />;
+
+  const id = (k: string) => `${uid}-${k}`;
+  const inputCls = (k: FieldKey, extra?: string) => clsx('input h-11 pl-10', extra, errorFor(k) && 'border-danger focus:border-danger focus:ring-danger/15');
+  const aria = (k: FieldKey) => ({ 'aria-invalid': errorFor(k) ? true : undefined, 'aria-describedby': `${id(k)}-hint` });
 
   return (
-    <AuthShell title={t('auth.registerTitle')} subtitle={t('auth.registerSubtitle')}>
-      <form onSubmit={submit} className="grid gap-4 sm:grid-cols-2">
-        <div>
-          <label className="label" htmlFor="firstName">{t('auth.firstName')}</label>
-          <input id="firstName" name="firstName" required maxLength={80} autoComplete="given-name" className="input" />
-        </div>
-        <div>
-          <label className="label" htmlFor="lastName">{t('auth.lastName')}</label>
-          <input id="lastName" name="lastName" required maxLength={80} autoComplete="family-name" className="input" />
-        </div>
-        <div className="sm:col-span-2">
-          <label className="label" htmlFor="email">{t('auth.email')}</label>
-          <input id="email" name="email" type="email" required autoComplete="email" className="input" />
-        </div>
-        <div className="sm:col-span-2">
-          <label className="label" htmlFor="phone">{t('auth.phone')}</label>
-          <input id="phone" name="phone" type="tel" maxLength={40} autoComplete="tel" placeholder="+994 ..." className="input" />
-        </div>
-        <div className="sm:col-span-2">
-          <label className="label" htmlFor="password">{t('auth.password')}</label>
-          <input
-            id="password"
-            name="password"
-            type="password"
-            required
-            minLength={PASSWORD_MIN}
-            maxLength={PASSWORD_MAX}
-            autoComplete="new-password"
-            className={`input${weak ? ' border-danger' : ''}`}
-            aria-invalid={weak || undefined}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-          <p className={`mt-1 text-xs ${weak ? 'text-danger' : 'text-muted'}`}>{t('auth.passwordHint')}</p>
-        </div>
-        <label className="flex items-start gap-2.5 text-xs text-muted sm:col-span-2">
-          <input type="checkbox" required className="mt-0.5 size-4 accent-brand-600" />
-          <span>
-            {t('auth.terms')}{' '}
-            <Link to="/privacy" target="_blank" rel="noopener" className="font-semibold text-brand-600 hover:underline">
-              {t('legalPages.privacy.title')}
+    <section className="flex min-h-[100svh] items-center bg-surface pt-24 pb-12 sm:pt-28 lg:pt-36 lg:pb-16">
+      <div className="container-x grid items-stretch gap-6 lg:grid-cols-2 lg:gap-8">
+        <motion.div
+          initial={{ opacity: 0, y: 24 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+          className="card mx-auto w-full max-w-lg p-5 sm:p-10 lg:max-w-none"
+        >
+          <h1 className="font-display text-[1.75rem] leading-tight font-extrabold text-ink sm:text-3xl">{t('registerPage.title')}</h1>
+          <p className="mt-2 text-muted">{t('registerPage.subtitle')}</p>
+
+          <form onSubmit={submit} noValidate className="mt-7 space-y-4 sm:mt-8">
+            <Field id={id('firstName')} label={t('registerPage.firstName')} icon={UserIcon} hint={t('registerPage.passportHint')} error={errorFor('firstName')}>
+              <input
+                id={id('firstName')}
+                name="firstName"
+                required
+                maxLength={80}
+                autoComplete="given-name"
+                placeholder={t('registerPage.firstNamePh')}
+                className={inputCls('firstName')}
+                value={f.firstName}
+                onChange={set('firstName')}
+                {...aria('firstName')}
+              />
+            </Field>
+            <Field id={id('lastName')} label={t('registerPage.lastName')} icon={UserIcon} hint={t('registerPage.passportHint')} error={errorFor('lastName')}>
+              <input
+                id={id('lastName')}
+                name="lastName"
+                required
+                maxLength={80}
+                autoComplete="family-name"
+                placeholder={t('registerPage.lastNamePh')}
+                className={inputCls('lastName')}
+                value={f.lastName}
+                onChange={set('lastName')}
+                {...aria('lastName')}
+              />
+            </Field>
+            <Field id={id('birthDate')} label={t('registerPage.birthDate')} icon={Calendar} hint={t('registerPage.birthHint')} error={errorFor('birthDate')}>
+              <input
+                id={id('birthDate')}
+                name="birthDate"
+                type="date"
+                required
+                min={bounds.min}
+                max={bounds.max}
+                autoComplete="bday"
+                className={inputCls('birthDate', 'appearance-none')}
+                value={f.birthDate}
+                onChange={set('birthDate')}
+                {...aria('birthDate')}
+              />
+            </Field>
+            <Field id={id('email')} label={t('registerPage.email')} icon={Mail} hint={t('registerPage.emailHint')} error={errorFor('email')}>
+              <input
+                id={id('email')}
+                name="email"
+                type="email"
+                required
+                maxLength={200}
+                autoComplete="email"
+                inputMode="email"
+                placeholder={t('registerPage.emailPh')}
+                className={inputCls('email')}
+                value={f.email}
+                onChange={set('email')}
+                {...aria('email')}
+              />
+            </Field>
+            <Field id={id('phone')} label={t('registerPage.phone')} icon={Phone} hint={t('registerPage.phoneHint')} error={errorFor('phone')}>
+              <input
+                id={id('phone')}
+                name="phone"
+                type="tel"
+                required
+                maxLength={40}
+                autoComplete="tel"
+                inputMode="tel"
+                placeholder={t('registerPage.phonePh')}
+                className={inputCls('phone')}
+                value={f.phone}
+                onChange={set('phone')}
+                {...aria('phone')}
+              />
+            </Field>
+            <Field
+              id={id('password')}
+              label={t('registerPage.password')}
+              icon={Lock}
+              hint={t('registerPage.passwordHint')}
+              error={errorFor('password')}
+              trailing={
+                <button
+                  type="button"
+                  className="absolute top-1/2 right-1.5 grid size-9 -translate-y-1/2 place-items-center rounded-md text-muted transition hover:bg-surface hover:text-ink focus-visible:ring-2 focus-visible:ring-brand-500/40 focus-visible:outline-none"
+                  onClick={() => setShowPassword((v) => !v)}
+                  aria-label={showPassword ? t('registerPage.hidePassword') : t('registerPage.showPassword')}
+                  aria-pressed={showPassword}
+                  aria-controls={id('password')}
+                >
+                  {showPassword ? <EyeOff className="size-4" aria-hidden /> : <Eye className="size-4" aria-hidden />}
+                </button>
+              }
+            >
+              <input
+                id={id('password')}
+                name="password"
+                type={showPassword ? 'text' : 'password'}
+                required
+                minLength={PASSWORD_MIN}
+                maxLength={PASSWORD_MAX}
+                autoComplete="new-password"
+                placeholder={t('registerPage.passwordPh')}
+                className={inputCls('password', 'pr-12')}
+                value={f.password}
+                onChange={set('password')}
+                {...aria('password')}
+              />
+            </Field>
+
+            <div>
+              <label className="flex items-start gap-2.5 pt-1 text-sm text-ink/80">
+                <input
+                  type="checkbox"
+                  name="privacy"
+                  required
+                  checked={privacy}
+                  onChange={(e) => setPrivacy(e.target.checked)}
+                  aria-invalid={submitted && !privacy ? true : undefined}
+                  aria-describedby={submitted && !privacy ? id('privacy-error') : undefined}
+                  className="mt-0.5 size-4 shrink-0 accent-brand-600"
+                />
+                <span>
+                  {t('registerPage.privacyBefore')}
+                  <Link to="/privacy" target="_blank" rel="noopener" className="font-semibold text-brand-600 hover:underline">
+                    {t('registerPage.privacyLink')}
+                  </Link>
+                  {t('registerPage.privacyAfter')}
+                </span>
+              </label>
+              {submitted && !privacy && (
+                <p id={id('privacy-error')} className="mt-1.5 pl-6.5 text-xs text-danger" aria-live="polite">
+                  {t('registerPage.errors.privacy')}
+                </p>
+              )}
+            </div>
+
+            <button type="submit" disabled={busy} className="btn-primary h-12 w-full">
+              {busy ? <Spinner className="size-4" /> : <UserPlus className="size-4" aria-hidden />} {t('registerPage.submit')}
+            </button>
+          </form>
+
+          <p className="mt-6 text-center text-sm text-muted">
+            {t('registerPage.haveAccount')}{' '}
+            <Link to="/login" state={location.state} className="font-semibold text-brand-600 hover:underline">
+              {t('registerPage.login')}
             </Link>
-          </span>
-        </label>
-        <button type="submit" disabled={busy} className="btn-primary w-full sm:col-span-2">
-          {busy ? <Spinner className="size-4" /> : <UserPlus className="size-4" />} {t('auth.register')}
-        </button>
-      </form>
-      <p className="mt-6 text-center text-sm text-muted">
-        {t('auth.haveAccount')}{' '}
-        <Link to="/login" className="font-semibold text-brand-600 hover:underline">
-          {t('auth.login')}
-        </Link>
-      </p>
-    </AuthShell>
+          </p>
+        </motion.div>
+
+        <Aside />
+      </div>
+    </section>
   );
 }

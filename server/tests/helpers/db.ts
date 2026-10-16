@@ -58,6 +58,7 @@ export const resetDb = async () => {
   await prisma.invoice.deleteMany();
   await prisma.vacancyApplication.deleteMany();
   await prisma.emailVerificationToken.deleteMany();
+  await prisma.emailOtpCode.deleteMany();
   // Team drive (task links cascade with the nodes; parents are detached first so no cascade chain is needed).
   await prisma.driveFavorite.deleteMany();
   await prisma.driveGrant.deleteMany();
