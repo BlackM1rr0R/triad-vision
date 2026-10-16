@@ -263,6 +263,8 @@ export interface Contract {
   signerUserAgent?: string | null;
   file: CaseDocument | null;
   signedFile: CaseDocument | null;
+  /** Set when the contract is signed through the multi-party e-signature module. */
+  signatureRequestId?: string | null;
 }
 
 export interface CaseSummary {

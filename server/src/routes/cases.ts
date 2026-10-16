@@ -127,6 +127,8 @@ casesRouter.post('/:id/contract/sign', async (req, res) => {
   if (c.status !== 'CONTRACT_SENT') throw conflict('INVALID_TRANSITION');
   const contract = await prisma.contract.findUnique({ where: { caseId: c.id } });
   if (!contract) throw notFound('CONTRACT_NOT_FOUND');
+  // Contracts sent through the multi-party module are signed there (all parties, audit trail).
+  if (contract.signatureRequestId) throw conflict('USE_SIGNATURE_REQUEST');
   const original = await prisma.document.findUniqueOrThrow({ where: { id: contract.fileDocumentId } });
 
   const pngBuffer = Buffer.from(PNG_DATA_URL.exec(body.signature)![1], 'base64');

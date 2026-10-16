@@ -43,6 +43,10 @@ const AdminCases = lazy(() => import('./pages/admin/CasesList'));
 const AdminCase = lazy(() => import('./pages/admin/CaseAdmin'));
 const AdminInquiries = lazy(() => import('./pages/admin/Inquiries'));
 const AdminUsers = lazy(() => import('./pages/admin/Users'));
+const AdminMailboxes = lazy(() => import('./pages/admin/Mailboxes'));
+const AdminSignatures = lazy(() => import('./pages/admin/Signatures'));
+const SignPage = lazy(() => import('./pages/SignPage'));
+const AccountSignatures = lazy(() => import('./pages/account/Signatures'));
 const WorkspaceLayout = lazy(() => import('./pages/workspace/WorkspaceLayout'));
 const WorkspaceDrive = lazy(() => import('./pages/workspace/Drive'));
 const WorkspaceTasks = lazy(() => import('./pages/workspace/Tasks'));
@@ -220,6 +224,7 @@ export default function App() {
             <Route path="booking" element={<Booking />} />
             <Route path="booking/manage" element={<BookingManage />} />
             <Route path="review" element={<ReviewPage />} />
+            <Route path="sign/:token" element={<SignPage />} />
             <Route
               path="account"
               element={
@@ -236,6 +241,8 @@ export default function App() {
               <Route path="onboarding" element={<AccountOnboarding />} />
               <Route path="german" element={<AccountGerman />} />
               <Route path="interviews" element={<AccountInterviews />} />
+              <Route path="signatures" element={<AccountSignatures />} />
+              <Route path="signatures/:signerId" element={<AccountSignatures />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Route>
@@ -289,6 +296,14 @@ export default function App() {
             <Route path="cases/:id" element={<AdminCase />} />
             <Route path="inquiries" element={<AdminInquiries />} />
             <Route path="users" element={<AdminUsers />} />
+            <Route
+              path="mailboxes"
+              element={
+                <RequireAuth roles={['ADMIN', 'SUPER_ADMIN']}>
+                  <AdminMailboxes />
+                </RequireAuth>
+              }
+            />
             <Route path="docs" element={<Navigate to="/workspace/drive" replace />} />
             <Route path="docs/audit" element={<AdminDocsAudit />} />
             <Route path="content/:resource" element={<AdminContent />} />
@@ -315,6 +330,8 @@ export default function App() {
             <Route path="interviews" element={<AdminInterviews />} />
             <Route path="journey" element={<AdminJourney />} />
             <Route path="requirements" element={<AdminRequirements />} />
+            <Route path="signatures" element={<AdminSignatures />} />
+            <Route path="signatures/sign/:signerId" element={<AdminSignatures />} />
           </Route>
         </Routes>
       </AnimatePresence>

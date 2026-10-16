@@ -231,6 +231,97 @@ export const setImapFactory = (f: ImapFactory | null) => {
 
 export const createImapClient = (conn: ImapConnection) => factory(conn);
 
+// ─── IDLE watch (one long-lived connection per mailbox) ───────────────
+
+export type ImapChangeKind = 'exists' | 'expunge' | 'flags';
+
+export interface ImapWatchHandlers {
+  /** The server reported a change in the watched mailbox (new message, deletion, flag change). */
+  onChange(kind: ImapChangeKind): void;
+  /** The connection ended on its own (network error, server logout); not called after close(). */
+  onClose(err: Error): void;
+}
+
+export interface ImapWatchOptions {
+  /** IDLE is broken and re-issued after this long (RFC 2177 asks for less than 29 minutes). */
+  renewMs: number;
+}
+
+/**
+ * A connection that selects one mailbox read-only and sits in IDLE, reporting changes. It never
+ * fetches message contents (the sync does that on its own short-lived connection).
+ */
+export interface ImapWatch {
+  /** Connects, logs in, selects the mailbox and enters IDLE. Rejects when any step fails. */
+  start(): Promise<void>;
+  /** Logs out (or drops the socket); onClose is not called. */
+  close(): Promise<void>;
+}
+
+export type ImapWatchFactory = (conn: ImapConnection, path: string, handlers: ImapWatchHandlers, opts: ImapWatchOptions) => ImapWatch;
+
+/** Default watch on imapflow: auto-IDLE after the select, restarted by imapflow every `renewMs`. */
+class FlowWatch implements ImapWatch {
+  private client: ImapFlow;
+  private closed = false;
+
+  constructor(
+    conn: ImapConnection,
+    private path: string,
+    private handlers: ImapWatchHandlers,
+    opts: ImapWatchOptions,
+  ) {
+    this.client = new ImapFlow({
+      host: conn.host,
+      port: conn.port,
+      secure: conn.secure,
+      auth: { user: conn.username, pass: conn.password },
+      logger: false,
+      // imapflow enters IDLE by itself whenever the connection is quiet (also after a keep-alive
+      // NOOP) and breaks/re-issues it after maxIdleTime. The socket timeout stays at imapflow's
+      // default (5 min): an idle socket is probed with a NOOP rather than torn down.
+      maxIdleTime: opts.renewMs,
+      connectionTimeout: mailSettings.timeoutMs,
+      greetingTimeout: mailSettings.timeoutMs,
+      clientInfo: { name: 'Triad Vision Workspace', vendor: 'Triad Vision' },
+    });
+    this.client.on('error', () => undefined);
+    this.client.on('exists', () => this.handlers.onChange('exists'));
+    this.client.on('expunge', () => this.handlers.onChange('expunge'));
+    this.client.on('flags', () => this.handlers.onChange('flags'));
+    this.client.on('close', () => {
+      if (this.closed) return;
+      this.closed = true;
+      this.handlers.onClose(new Error('IMAP_CONNECTION_CLOSED'));
+    });
+  }
+
+  async start() {
+    await this.client.connect();
+    await this.client.mailboxOpen(this.path, { readOnly: true });
+    // Do not wait for the auto-IDLE delay; idle() resolves only when IDLE ends, so it is not awaited.
+    void this.client.idle().catch(() => undefined);
+  }
+
+  async close() {
+    this.closed = true;
+    try {
+      await this.client.logout();
+    } catch {
+      this.client.close();
+    }
+  }
+}
+
+let watchFactory: ImapWatchFactory = (conn, path, handlers, opts) => new FlowWatch(conn, path, handlers, opts);
+
+/** Tests swap the IDLE implementation here (see FakeImapServer.createWatchFactory). */
+export const setImapWatchFactory = (f: ImapWatchFactory | null) => {
+  watchFactory = f ?? ((conn, path, handlers, opts) => new FlowWatch(conn, path, handlers, opts));
+};
+
+export const createImapWatch: ImapWatchFactory = (conn, path, handlers, opts) => watchFactory(conn, path, handlers, opts);
+
 /** Opens a connection, runs `fn`, always logs out. */
 export const withImap = async <T>(conn: ImapConnection, fn: (client: ImapClient) => Promise<T>): Promise<T> => {
   const client = createImapClient(conn);

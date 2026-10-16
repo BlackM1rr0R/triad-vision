@@ -21,6 +21,7 @@ import { interviewsRouter } from './routes/interviews.js';
 import { partnerRouter } from './routes/partner.js';
 import { calendarRouter } from './routes/calendar.js';
 import { mailRouter } from './routes/mail.js';
+import { mailboxRouter } from './routes/mailbox.js';
 import { chatRouter } from './routes/chat.js';
 import { eventsRouter } from './routes/events.js';
 import { contactsRouter } from './routes/contacts.js';
@@ -35,6 +36,7 @@ import { trackRouter } from './routes/track.js';
 import { seoRouter } from './routes/seo.js';
 import { driveRouter } from './routes/drive.js';
 import { tasksRouter } from './routes/tasks.js';
+import { signRouter, signaturesRouter } from './routes/signatures.js';
 
 type RequestWithRawBody = import('express').Request & { rawBody?: Buffer };
 
@@ -94,6 +96,8 @@ export const createApp = () => {
   app.use('/api/devices', devicesRouter);
   app.use('/api/drive', driveRouter);
   app.use('/api/tasks', tasksRouter);
+  app.use('/api/sign', signRouter);
+  app.use('/api/signatures', signaturesRouter);
   app.use('/api/admin', adminRouter);
   app.use('/api/account', accountRouter);
   app.use('/api/company/invoices', companyInvoicesRouter);
@@ -109,6 +113,7 @@ export const createApp = () => {
   app.use('/api/v1', partnerRouter);
   app.use('/api/calendar', calendarRouter);
   app.use('/api/mail', mailRouter);
+  app.use('/api/mailbox', mailboxRouter);
   app.use('/api/chat', chatRouter);
   app.use('/api/events', eventsRouter);
   app.use('/api/contacts', contactsRouter);

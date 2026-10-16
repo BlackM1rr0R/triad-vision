@@ -2,6 +2,8 @@ import { config } from './config.js';
 import { createApp } from './app.js';
 import { purgeDeadSessions } from './middleware/auth.js';
 import { startScheduler } from './lib/scheduler.js';
+import { mailSettings } from './lib/mail/settings.js';
+import { startMailIdle, stopMailIdle } from './lib/mail/idle.js';
 import './jobs/index.js';
 
 const server = createApp().listen(config.port, () => {
@@ -21,9 +23,13 @@ cleanup.unref();
 
 const stopJobs = startScheduler();
 
+// Push mail: one IMAP IDLE connection per mailbox (lib/mail/idle.ts); the mail-sync job polls the rest.
+if (mailSettings.idleEnabled) void startMailIdle();
+
 const shutdown = () => {
   clearInterval(cleanup);
   stopJobs();
+  void stopMailIdle().catch(() => undefined);
   server.close(() => process.exit(0));
   setTimeout(() => process.exit(1), 10_000).unref();
 };

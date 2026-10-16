@@ -34,11 +34,34 @@ export interface SyncResult {
 
 export const isSyncing = (accountId: string) => running.has(accountId);
 
+/**
+ * Every run against an account's mailbox (full sync or a single-folder sync triggered by IDLE)
+ * goes through this per-account queue, so two of them never work on the same account at once.
+ */
+const accountLocks = new Map<string, Promise<unknown>>();
+
+const withAccountLock = <T>(accountId: string, fn: () => Promise<T>): Promise<T> => {
+  const prev = accountLocks.get(accountId) ?? Promise.resolve();
+  const p = prev.then(fn, fn);
+  const tail = p.then(
+    () => undefined,
+    () => undefined,
+  );
+  accountLocks.set(accountId, tail);
+  void tail.then(() => {
+    if (accountLocks.get(accountId) === tail) accountLocks.delete(accountId);
+  });
+  return p;
+};
+
+/** true while a full sync or a folder sync of the account runs or waits for its turn. */
+export const isAccountBusy = (accountId: string) => accountLocks.has(accountId);
+
 /** Syncs the account; a second call while a sync runs joins the running one. */
 export const syncAccount = (accountId: string): Promise<SyncResult> => {
   const inFlight = running.get(accountId);
   if (inFlight) return inFlight;
-  const p = doSync(accountId).finally(() => {
+  const p = withAccountLock(accountId, () => doSync(accountId)).finally(() => {
     if (running.get(accountId) === p) running.delete(accountId);
   });
   running.set(accountId, p);
@@ -454,7 +477,14 @@ const doSync = async (accountId: string): Promise<SyncResult> => {
     return { ok: false, error, newMessages: arrived.length, folders: folderCount };
   }
 
-  // Inbox rules for what just arrived, then realtime.
+  await announceArrivals(account, arrived);
+  publish(account.userId, 'mail.updated', { accountId, reason: 'sync', newMessages: arrived.filter((a) => a.isNew).length });
+  return { ok: true, newMessages: arrived.filter((a) => a.isNew).length, folders: folderCount };
+};
+
+/** Inbox rules for what just arrived, then one 'mail.new' per unread arrival. Returns the announced ids. */
+const announceArrivals = async (account: MailAccount, arrived: StoredNew[]) => {
+  const accountId = account.id;
   const inbox = await prisma.mailFolder.findFirst({ where: { accountId, role: 'INBOX' }, select: { id: true } });
   const newInbox = arrived.filter((a) => a.isNew && inbox && a.folderId === inbox.id);
   if (newInbox.length) {
@@ -466,20 +496,74 @@ const doSync = async (accountId: string): Promise<SyncResult> => {
   }
   const announce = newInbox.filter((a) => a.notify);
   const fresh = announce.length ? await prisma.mailMessage.findMany({ where: { id: { in: announce.map((a) => a.id) } }, select: { id: true, folderId: true, seen: true, fromName: true, fromAddr: true, subject: true } }) : [];
+  const announced: string[] = [];
   for (const m of fresh) {
-    if (!m.seen) publish(account.userId, 'mail.new', { accountId, folderId: m.folderId, messageId: m.id, from: m.fromName || m.fromAddr || '', subject: m.subject ?? '' });
+    if (m.seen) continue;
+    announced.push(m.id);
+    publish(account.userId, 'mail.new', { accountId, folderId: m.folderId, messageId: m.id, from: m.fromName || m.fromAddr || '', subject: m.subject ?? '' });
   }
-  publish(account.userId, 'mail.updated', { accountId, reason: 'sync', newMessages: arrived.filter((a) => a.isNew).length });
-  return { ok: true, newMessages: arrived.filter((a) => a.isNew).length, folders: folderCount };
+  return announced;
 };
+
+// ─── Single-folder sync (IDLE) ────────────────────────────────────────
+
+export interface FolderSyncResult {
+  ok: boolean;
+  error?: string;
+  folderId?: string;
+  /** unread count of the folder after the sync */
+  unread?: number;
+  /** rows inserted by this run */
+  newMessageIds: string[];
+}
+
+const doFolderSync = async (accountId: string, path: string): Promise<FolderSyncResult> => {
+  const account = await prisma.mailAccount.findUnique({ where: { id: accountId } });
+  if (!account) return { ok: false, error: 'MAIL_ACCOUNT_NOT_FOUND', newMessageIds: [] };
+  const folder = await prisma.mailFolder.findUnique({ where: { accountId_path: { accountId, path } } });
+  // Never synced (or the folder is new): the full sync creates the folder rows.
+  if (!folder) {
+    const full = await doSync(accountId);
+    const created = await prisma.mailFolder.findUnique({ where: { accountId_path: { accountId, path } }, select: { id: true, unread: true } });
+    return { ok: full.ok, error: full.error, folderId: created?.id, unread: created?.unread, newMessageIds: [] };
+  }
+  let arrived: StoredNew[] = [];
+  try {
+    await withImap(imapConnectionOf(account), async (client) => {
+      arrived = await syncFolder(client, account, folder);
+    });
+    await recountFolders([folder.id]);
+  } catch (err) {
+    const error = errorText(err);
+    console.error('[mail] folder sync failed', account.email, path, error);
+    return { ok: false, error, folderId: folder.id, newMessageIds: [] };
+  }
+  await announceArrivals(account, arrived);
+  // Rules may have moved arrivals elsewhere (applyRules recounts the folders it touched).
+  const after = await prisma.mailFolder.findUnique({ where: { id: folder.id }, select: { unread: true } });
+  const newMessageIds = arrived.filter((a) => a.isNew).map((a) => a.id);
+  const unread = after?.unread ?? 0;
+  publish(account.userId, 'mail.updated', { accountId, reason: 'idle', folderId: folder.id, unread, newMessages: newMessageIds.length, newMessageIds });
+  return { ok: true, folderId: folder.id, unread, newMessageIds };
+};
+
+/**
+ * Incremental sync of one folder (new UIDs, flags of the newest known messages, deletions) on a
+ * short-lived connection, queued behind any other sync of the account. Used by the IDLE watcher.
+ */
+export const syncMailbox = (accountId: string, path = 'INBOX'): Promise<FolderSyncResult> => withAccountLock(accountId, () => doFolderSync(accountId, path));
 
 // ─── Scheduler entry points ───────────────────────────────────────────
 
-/** Every account with sync enabled, one after another; never throws. */
-export const runMailSync = async () => {
-  const accounts = await prisma.mailAccount.findMany({ where: { syncEnabled: true }, select: { id: true } });
+/**
+ * Every account with sync enabled, one after another; never throws. `due` can skip accounts
+ * (the job polls accounts kept current by IDLE less often).
+ */
+export const runMailSync = async (opts: { due?: (a: { id: string; lastSyncAt: Date | null }) => boolean } = {}) => {
+  const accounts = await prisma.mailAccount.findMany({ where: { syncEnabled: true }, select: { id: true, lastSyncAt: true } });
   for (const a of accounts) {
     if (isSyncing(a.id)) continue;
+    if (opts.due && !opts.due(a)) continue;
     try {
       await syncAccount(a.id);
     } catch (err) {

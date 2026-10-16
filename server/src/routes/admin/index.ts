@@ -7,6 +7,7 @@ import { clearCache } from '../../lib/cache.js';
 import { adminCasesRouter } from './cases.js';
 import { adminContentRouter, adminSettingsRouter, adminUploadRouter } from './content.js';
 import { adminUsersRouter } from './users.js';
+import { adminMailboxesRouter } from './mailboxes.js';
 import { adminCompaniesRouter } from './companies.js';
 import { adminVacanciesRouter } from './vacancies.js';
 import { adminCandidatesRouter } from './candidates.js';
@@ -19,6 +20,7 @@ import { adminMessagingRouter } from './messaging.js';
 import { adminRequirementsRouter } from './requirements.js';
 import { adminJourneyRouter } from './journey.js';
 import { adminOpsRouter } from './ops.js';
+import { adminSignaturesRouter } from './signatures.js';
 import { FINAL_STATUSES } from '../../lib/caseFlow.js';
 
 export const adminRouter = Router();
@@ -92,6 +94,7 @@ adminRouter.use('/messaging', adminMessagingRouter);
 adminRouter.use('/requirements', adminRequirementsRouter);
 adminRouter.use('/journey', adminJourneyRouter);
 adminRouter.use('/ops', adminOpsRouter);
+adminRouter.use('/signatures', adminSignaturesRouter);
 // Any successful CMS write (incl. vacancy, employer and review moderation) must be visible on the public site right away.
 // The cache is cleared before the response is sent, so the admin's next public read is already fresh.
 adminRouter.use(['/content', '/settings', '/vacancies', '/companies', '/reviews'], (req, res, next) => {
@@ -107,6 +110,7 @@ adminRouter.use(['/content', '/settings', '/vacancies', '/companies', '/reviews'
 
 adminRouter.use('/cases', adminCasesRouter);
 adminRouter.use('/users', adminUsersRouter);
+adminRouter.use('/mailboxes', requireMinRole('ADMIN'), adminMailboxesRouter);
 adminRouter.use('/companies', adminCompaniesRouter);
 adminRouter.use('/vacancies', adminVacanciesRouter);
 adminRouter.use('/candidates', adminCandidatesRouter);

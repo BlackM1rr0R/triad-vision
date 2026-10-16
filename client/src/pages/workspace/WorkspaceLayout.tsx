@@ -11,7 +11,8 @@ import { ThemeToggle } from '@/components/a11y/ThemeToggle';
 import { RouteErrorBoundary } from '@/components/ui/RouteErrorBoundary';
 import { Spinner } from '@/components/ui/Spinner';
 import { api } from '@/lib/api';
-import { useRealtime } from '@/lib/realtime';
+import { useRealtime, useRealtimeStatus } from '@/lib/realtime';
+import { useMailPush } from '@/components/workspace/useMailPush';
 import { useAuth } from '@/lib/auth';
 import { registerCopy } from '@/i18n';
 import { workspaceCopy } from '@/i18n/workspace';
@@ -55,10 +56,13 @@ export default function WorkspaceLayout() {
   });
 
   // Unread mail / chat badges; the endpoints belong to the mail and chat modules (404 → no badge).
+  // Mail is pushed over the realtime stream (IMAP IDLE on the server); while it is connected the
+  // poll is only a slow safety net.
+  const live = useRealtimeStatus() === 'open';
   const mailSummary = useQuery({
     queryKey: ['mail', 'summary'],
     queryFn: async () => (await api.get<{ unread: number }>('/mail/summary')).data,
-    refetchInterval: 60_000,
+    refetchInterval: live ? 300_000 : 60_000,
     retry: false,
   });
   const chatSummary = useQuery({
@@ -69,8 +73,8 @@ export default function WorkspaceLayout() {
   });
   const qc = useQueryClient();
   const bump = (keys: string[][]) => () => keys.forEach((k) => void qc.invalidateQueries({ queryKey: k }));
-  useRealtime('mail.new', bump([['mail', 'summary']]));
-  useRealtime('mail.updated', bump([['mail', 'summary']]));
+  // Badge, "new mail" toast and "(n)" tab title.
+  useMailPush(mailSummary.data?.unread ?? 0);
   useRealtime('chat.message', bump([['chat', 'summary']]));
   useRealtime('chat.read', bump([['chat', 'summary']]));
 

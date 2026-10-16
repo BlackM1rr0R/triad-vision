@@ -18,6 +18,7 @@ import { fmtDate, fullName } from '@/components/admin/labels';
 import { Chip, DefRow, EmptyState, ErrorBlock, LoadingBlock, PageHead, Panel } from '@/components/admin/ui';
 import { toastJobsError, useJobLabels } from '@/components/jobs/labels';
 import { COMPANY_STATUS_TONE, SECTORS, VACANCY_STATUS_TONE, type Company, type CompanyStatus, type VacancyStatus } from '@/components/jobs/types';
+import { SignaturesPanel } from '@/components/esign/CaseSignatures';
 
 registerCopy(pagesJobs);
 
@@ -358,6 +359,8 @@ const CompanyDrawer = ({ id, onClose }: { id: string | null; onClose: () => void
                 <DefRow label={t('jobsArea.admin.companies.invoices')}>{data._count.invoices}</DefRow>
               </dl>
             </Panel>
+
+            <SignaturesPanel companyId={data.id} />
           </div>
         )
       )}

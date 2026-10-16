@@ -17,6 +17,12 @@ export const mailSettings = {
   initialSyncLimit: int('MAIL_INITIAL_SYNC_LIMIT', 500),
   /** Seconds between two background sync runs. */
   syncIntervalSec: int('MAIL_SYNC_INTERVAL_SEC', 60),
+  /** IMAP IDLE on/off (MAIL_IDLE=0 disables push; every account is polled every syncIntervalSec). */
+  idleEnabled: process.env.MAIL_IDLE !== '0' && process.env.MAIL_IDLE !== 'false',
+  /** Long-lived IDLE connections at most (one per account); accounts beyond the cap are polled. */
+  idleMaxConnections: int('MAIL_IDLE_MAX_CONNECTIONS', 50),
+  /** Safety-net full sync for accounts whose INBOX is watched by IDLE (seconds). */
+  idlePollIntervalSec: int('MAIL_IDLE_POLL_INTERVAL_SEC', 300),
   /** Per-attachment cap (uploads and IMAP downloads). */
   attachmentMaxBytes: int('MAIL_ATTACHMENT_MAX_MB', 25) * 1024 * 1024,
   /** How much of a message source is fetched during sync (text parts come first; attachments are fetched lazily). */

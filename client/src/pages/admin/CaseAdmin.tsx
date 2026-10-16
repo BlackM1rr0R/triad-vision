@@ -18,6 +18,7 @@ import { caseKey, type CaseDetailResponse } from '@/components/admin/case/shared
 import { ErrorBlock, LoadingBlock, Panel } from '@/components/admin/ui';
 import { FamilyPanel } from '@/components/journey/Family';
 import { OnboardingAdminPanel } from '@/components/journey/OnboardingAdmin';
+import { SignaturesPanel } from '@/components/esign/CaseSignatures';
 
 // Team tasks linked to this case (own chunk).
 const CaseTasks = lazy(() => import('@/components/tasks/CaseTasks').then((m) => ({ default: m.CaseTasks })));
@@ -62,6 +63,7 @@ export default function CaseAdmin() {
           {embassyFirst && showEmbassy && <RequirementsSection c={c} stage="EMBASSY" />}
           <RequirementsSection c={c} stage="INITIAL" />
           <ContractBox c={c} />
+          <SignaturesPanel caseId={c.id} />
           {!embassyFirst && showEmbassy && <RequirementsSection c={c} stage="EMBASSY" />}
           <ClientFiles c={c} />
         </div>

@@ -124,6 +124,8 @@ model User {
   pollVotes             PollVote[]
   leaveRequests         LeaveRequest[]           @relation("LeaveUser")
   leaveDecisions        LeaveRequest[]           @relation("LeaveDecidedBy")
+  signatureRequests     SignatureRequest[]       @relation("SignatureRequestCreatedBy")
+  signatureSignings     SignatureSigner[]        @relation("SignatureSignerUser")
 
   @@index([companyId])
 }
@@ -325,6 +327,7 @@ model Case {
   mailMessages      MailMessage[]
   chatChannels      ChatChannel[]
   calendarEvents    CalendarEvent[]
+  signatureRequests SignatureRequest[]
 
   @@index([clientId])
   @@index([status])
@@ -383,6 +386,7 @@ model Contract {
   signerUserAgent  String?   @db.Text
   sentAt           DateTime  @default(now())
   version          Int       @default(1)
+  signatureRequestId String? // set when this version is signed through the multi-party module (SignatureRequest.id)
 }
 
 model CaseEvent {
@@ -649,6 +653,7 @@ model Company {
   apiKeys     ApiKey[]
   webhooks    Webhook[]
   contacts    Contact[]
+  signatureRequests SignatureRequest[]
 
   @@index([status])
 }
@@ -1765,4 +1770,156 @@ model LeaveRequest {
 
   @@index([userId, startsAt])
   @@index([status])
+}
+
+// ─── Online electronic signatures (multi-party) ─────────────────────────
+// Simple electronic signature (einfache elektronische Signatur, eIDAS Art. 25(1)) with an audit trail.
+
+enum SignatureRequestStatus {
+  DRAFT
+  SENT
+  COMPLETED
+  DECLINED
+  CANCELLED
+  EXPIRED
+}
+
+enum SignatureOrder {
+  SEQUENTIAL // by signer order (candidate → company → Triad Vision); equal order numbers sign in parallel
+  PARALLEL
+}
+
+enum SignerRole {
+  CANDIDATE
+  COMPANY
+  STAFF
+  OTHER
+}
+
+enum SignerStatus {
+  PENDING
+  VIEWED
+  SIGNED
+  DECLINED
+}
+
+enum SignatureEventType {
+  CREATED
+  SENT
+  VIEWED
+  OTP_SENT
+  OTP_VERIFIED
+  SIGNED
+  DECLINED
+  REMINDED
+  COMPLETED
+  CANCELLED
+  EXPIRED
+  DOWNLOADED
+}
+
+/// A document sent to one or more parties for signature. PDFs live in the private upload dir
+/// (originalKey / finalKey = stored file names); the SHA-256 of every version is kept.
+model SignatureRequest {
+  id              String                 @id @default(cuid())
+  title           String                 @db.VarChar(200)
+  caseId          String?
+  case            Case?                  @relation(fields: [caseId], references: [id], onDelete: SetNull)
+  companyId       String?
+  company         Company?               @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  createdById     String?
+  createdBy       User?                  @relation("SignatureRequestCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  status          SignatureRequestStatus @default(DRAFT)
+  order           SignatureOrder         @default(SEQUENTIAL)
+  /// The case's employment contract: completion marks Case.contract as signed.
+  isCaseContract  Boolean                @default(false)
+  originalName    String                 @db.VarChar(255)
+  originalKey     String                 @unique @db.VarChar(191)
+  originalSha256  String                 @db.Char(64)
+  originalSize    Int
+  originalPages   Int
+  finalKey        String?                @unique @db.VarChar(191)
+  finalSha256     String?                @db.Char(64)
+  finalSize       Int?
+  /// Case Document (stage CONTRACT_SIGNED) holding a copy of the final PDF.
+  finalDocumentId String?
+  message         String?                @db.Text
+  expiresAt       DateTime?
+  sentAt          DateTime?
+  completedAt     DateTime?
+  cancelledAt     DateTime?
+  cancelReason    String?                @db.Text
+  createdAt       DateTime               @default(now())
+  updatedAt       DateTime               @updatedAt
+  signers         SignatureSigner[]
+  events          SignatureEvent[]
+
+  @@index([status, expiresAt])
+  @@index([caseId])
+  @@index([companyId])
+  @@index([createdAt])
+}
+
+/// One party of a request. The email link carries a random token; only its SHA-256 is stored.
+model SignatureSigner {
+  id                String           @id @default(cuid())
+  requestId         String
+  request           SignatureRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  role              SignerRole
+  userId            String?
+  user              User?            @relation("SignatureSignerUser", fields: [userId], references: [id], onDelete: SetNull)
+  name              String           @db.VarChar(160)
+  email             String           @db.VarChar(191)
+  locale            Locale           @default(az)
+  order             Int              @default(1)
+  status            SignerStatus     @default(PENDING)
+  /// sha256(hex) of the current link token; null until the signer is invited (sequential order).
+  tokenHash         String?          @unique @db.Char(64)
+  invitedAt         DateTime?
+  viewedAt          DateTime?
+  signedAt          DateTime?
+  declinedAt        DateTime?
+  declinedReason    String?          @db.Text
+  /// DRAW = hand-drawn image, TYPE = typed name.
+  signatureMode     String?          @db.VarChar(8)
+  signatureImageKey String?          @db.VarChar(191)
+  typedName         String?          @db.VarChar(160)
+  /// EMAIL_OTP (link + emailed code) or PORTAL (logged-in account).
+  authMethod        String?          @db.VarChar(16)
+  ip                String?          @db.VarChar(64)
+  userAgent         String?          @db.Text
+  // Email code (identity check before signing via the link)
+  otpHash           String?          @db.Char(64)
+  otpExpiresAt      DateTime?
+  otpAttempts       Int              @default(0)
+  otpSentAt         DateTime?
+  otpWindowAt       DateTime?
+  otpWindowCount    Int              @default(0)
+  otpVerifiedAt     DateTime?
+  /// sha256 of the short-lived signing session handed out after a correct code (HttpOnly cookie).
+  sessionHash       String?          @db.Char(64)
+  sessionExpiresAt  DateTime?
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  events            SignatureEvent[]
+
+  @@index([requestId, order])
+  @@index([userId])
+}
+
+/// Audit trail of a request (printed on the certificate of completion).
+model SignatureEvent {
+  id        String             @id @default(cuid())
+  requestId String
+  request   SignatureRequest   @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  signerId  String?
+  signer    SignatureSigner?   @relation(fields: [signerId], references: [id], onDelete: SetNull)
+  actorId   String?
+  type      SignatureEventType
+  note      String?            @db.Text
+  ip        String?            @db.VarChar(64)
+  userAgent String?            @db.Text
+  at        DateTime           @default(now())
+
+  @@index([requestId, at])
 }

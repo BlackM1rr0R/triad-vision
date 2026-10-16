@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
 import type { LucideIcon } from 'lucide-react';
 import {
+  AtSign,
   BarChart3,
   Bell,
   BookOpen,
@@ -23,6 +24,7 @@ import {
   ExternalLink,
   Eye,
   FileImage,
+  FileSignature,
   FolderKanban,
   FolderOpen,
   Handshake,
@@ -83,6 +85,7 @@ const MAIN_NAV: NavItem[] = [
   { to: '/admin', label: 'dashboard', icon: LayoutDashboard, end: true },
   { to: '/admin/oversight', label: 'oversight', icon: Eye, superOnly: true },
   { to: '/admin/cases', label: 'cases', icon: FolderKanban },
+  { to: '/admin/signatures', label: 'signatures', icon: FileSignature },
   { to: '/workspace/home', label: 'workspace', icon: LayoutGrid },
   { to: '/workspace/mail', label: 'mail', icon: Mail },
   { to: '/workspace/chat', label: 'chat', icon: MessagesSquare },
@@ -93,6 +96,7 @@ const MAIN_NAV: NavItem[] = [
   { to: '/workspace/team', label: 'team', icon: UsersRound },
   { to: '/admin/inquiries', label: 'inquiries', icon: Inbox },
   { to: '/admin/users', label: 'users', icon: Users },
+  { to: '/admin/mailboxes', label: 'mailboxes', icon: AtSign, adminOnly: true },
   { to: '/admin/candidates', label: 'candidates', icon: UserSearch },
   { to: '/admin/vacancies', label: 'vacancies', icon: BriefcaseBusiness },
   { to: '/admin/companies', label: 'companies', icon: Building2 },
@@ -134,6 +138,8 @@ const pageTitleKey = (pathname: string) => {
   if (matchPath('/admin/docs/audit', pathname)) return 'admin.layout.audit';
   if (matchPath('/admin/inquiries', pathname)) return 'admin.nav.inquiries';
   if (matchPath('/admin/users', pathname)) return 'admin.nav.users';
+  if (matchPath('/admin/signatures/*', pathname)) return 'admin.nav.signatures';
+  if (matchPath('/admin/mailboxes', pathname)) return 'admin.nav.mailboxes';
   if (matchPath('/admin/settings', pathname)) return 'admin.nav.settings';
   const m = matchPath('/admin/content/:resource', pathname);
   if (m) {
@@ -190,7 +196,7 @@ const SidebarNav = ({ collapsed, isAdmin, isSuper, onNavigate }: { collapsed: bo
 
   return (
     <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4" aria-label={t('admin.layout.navAria')}>
-      {MAIN_NAV.filter((item) => !item.superOnly || isSuper).map((item) => (
+      {MAIN_NAV.filter((item) => (!item.superOnly || isSuper) && (!item.adminOnly || isAdmin)).map((item) => (
         <SideLink key={item.to} item={item} collapsed={collapsed} onNavigate={onNavigate} />
       ))}
 

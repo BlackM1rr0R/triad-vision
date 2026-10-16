@@ -1,7 +1,7 @@
 import { simpleParser } from 'mailparser';
 import MailComposer from 'nodemailer/lib/mail-composer/index.js';
 import type { MessageStructureObject } from 'imapflow';
-import type { ImapClient, ImapConnection, ImapFactory, ImapFetched, ImapFolder, ImapMailboxState } from './imap.js';
+import type { ImapChangeKind, ImapClient, ImapConnection, ImapFactory, ImapFetched, ImapFolder, ImapMailboxState, ImapWatch, ImapWatchFactory, ImapWatchHandlers } from './imap.js';
 
 /**
  * In-memory IMAP server for tests and offline development. Holds folders with raw messages; the
@@ -93,6 +93,15 @@ export class FakeImapServer {
   /** every call recorded for assertions */
   log: { op: string; path?: string; uids?: number[]; args?: unknown }[] = [];
   connections = 0;
+  /** command connections currently logged in, and the most seen at once (sync mutex assertions) */
+  activeSessions = 0;
+  maxActiveSessions = 0;
+  /** awaited before every mailbox command of a command connection (tests slow a sync down with it) */
+  beforeCommand: ((op: string, path?: string) => Promise<void>) | null = null;
+  /** IDLE connections currently open */
+  watches = new Set<FakeWatch>();
+  /** IDLE connections ever started successfully */
+  watchStarts = 0;
 
   constructor(folders: { path: string; specialUse?: string }[] = [
     { path: 'INBOX', specialUse: '\\Inbox' },
@@ -135,7 +144,27 @@ export class FakeImapServer {
     const { bodyStructure, parts } = await structureOf(raw);
     const uid = f.uidNext++;
     f.messages.set(uid, { uid, flags: new Set(flags), raw, internalDate, bodyStructure, parts });
+    this.notify(path, 'exists');
     return uid;
+  }
+
+  /** Sends an untagged change to every IDLE connection watching `path` (what a real server pushes). */
+  notify(path: string, kind: ImapChangeKind) {
+    for (const w of [...this.watches]) if (w.path === path) w.handlers.onChange(kind);
+  }
+
+  /** Drops every IDLE connection as a network failure would (their onClose fires). */
+  dropWatches(reason = 'ECONNRESET') {
+    for (const w of [...this.watches]) w.drop(new Error(reason));
+  }
+
+  /** IDLE connections of the given login. */
+  watchesOf(username: string) {
+    return [...this.watches].filter((w) => w.conn.username === username);
+  }
+
+  createWatchFactory(): ImapWatchFactory {
+    return (conn, path, handlers) => new FakeWatch(this, conn, path, handlers);
   }
 
   /** Delivers a message to a folder (default INBOX); returns its UID. */
@@ -149,6 +178,40 @@ export class FakeImapServer {
 
   createFactory(): ImapFactory {
     return (conn) => new FakeClient(this, conn);
+  }
+}
+
+export class FakeWatch implements ImapWatch {
+  private open = false;
+
+  constructor(
+    private server: FakeImapServer,
+    readonly conn: ImapConnection,
+    readonly path: string,
+    readonly handlers: ImapWatchHandlers,
+  ) {}
+
+  async start() {
+    this.server.log.push({ op: 'idle', path: this.path, args: { username: this.conn.username } });
+    if (this.server.failConnect) throw new Error(this.server.failConnect);
+    const c = this.server.credentials;
+    if (c && (c.username !== this.conn.username || c.password !== this.conn.password)) throw new Error('AUTHENTICATIONFAILED');
+    this.server.folder(this.path);
+    this.open = true;
+    this.server.watches.add(this);
+    this.server.watchStarts++;
+  }
+
+  async close() {
+    this.open = false;
+    this.server.watches.delete(this);
+  }
+
+  drop(err: Error) {
+    if (!this.open) return;
+    this.open = false;
+    this.server.watches.delete(this);
+    this.handlers.onClose(err);
   }
 }
 
@@ -167,14 +230,21 @@ class FakeClient implements ImapClient {
     if (c && (c.username !== this.conn.username || c.password !== this.conn.password)) throw new Error('AUTHENTICATIONFAILED');
     this.connected = true;
     this.server.connections++;
+    this.server.activeSessions++;
+    this.server.maxActiveSessions = Math.max(this.server.maxActiveSessions, this.server.activeSessions);
   }
 
   async logout() {
+    if (this.connected) this.server.activeSessions--;
     this.connected = false;
   }
 
   private check() {
     if (!this.connected) throw new Error('NOT_CONNECTED');
+  }
+
+  private async hook(op: string, path?: string) {
+    if (this.server.beforeCommand) await this.server.beforeCommand(op, path);
   }
 
   async list(): Promise<ImapFolder[]> {
@@ -191,6 +261,7 @@ class FakeClient implements ImapClient {
 
   async open(path: string): Promise<ImapMailboxState> {
     this.check();
+    await this.hook('open', path);
     const f = this.server.folder(path);
     return { uidValidity: f.uidValidity, uidNext: f.uidNext, exists: f.messages.size };
   }
@@ -236,6 +307,7 @@ class FakeClient implements ImapClient {
     this.server.log.push({ op: 'addFlags', path, uids, args: flags });
     const f = this.server.folder(path);
     for (const uid of uids) for (const fl of flags) f.messages.get(uid)?.flags.add(fl);
+    if (uids.length) this.server.notify(path, 'flags');
   }
 
   async removeFlags(path: string, uids: number[], flags: string[]) {
@@ -243,6 +315,7 @@ class FakeClient implements ImapClient {
     this.server.log.push({ op: 'removeFlags', path, uids, args: flags });
     const f = this.server.folder(path);
     for (const uid of uids) for (const fl of flags) f.messages.get(uid)?.flags.delete(fl);
+    if (uids.length) this.server.notify(path, 'flags');
   }
 
   async move(path: string, uids: number[], destination: string) {
@@ -256,6 +329,10 @@ class FakeClient implements ImapClient {
       from.messages.delete(uid);
       m.uid = to.uidNext++;
       to.messages.set(m.uid, m);
+    }
+    if (uids.length) {
+      this.server.notify(path, 'expunge');
+      this.server.notify(destination, 'exists');
     }
   }
 

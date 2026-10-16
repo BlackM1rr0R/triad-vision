@@ -188,8 +188,17 @@ export const staffRequestChanges = async (caseId: string, actorId: string, note:
   }
 };
 
-/** Contract file must already be stored as a Document with stage CONTRACT. */
-export const staffSendContract = async (caseId: string, actorId: string, contractDocumentId: string) => {
+/**
+ * Contract file must already be stored as a Document with stage CONTRACT.
+ * `opts.signatureRequestId`: the contract is signed through the multi-party e-signature module
+ * (lib/esign); the module sends its own invitations, so `opts.notify` is false there.
+ */
+export const staffSendContract = async (
+  caseId: string,
+  actorId: string,
+  contractDocumentId: string,
+  opts: { notify?: boolean; signatureRequestId?: string } = {},
+) => {
   const c = await loadCase(caseId);
   if (c.status === 'DOCUMENTS_REVIEW') {
     const check = await requirementsSatisfied(caseId, 'INITIAL', 'accepted');
@@ -215,14 +224,15 @@ export const staffSendContract = async (caseId: string, actorId: string, contrac
             signerUserAgent: null,
             sentAt: new Date(),
             version: existing.version + 1,
+            signatureRequestId: opts.signatureRequestId ?? null,
           },
         });
       } else {
-        await tx.contract.create({ data: { caseId, fileDocumentId: contractDocumentId } });
+        await tx.contract.create({ data: { caseId, fileDocumentId: contractDocumentId, ...(opts.signatureRequestId ? { signatureRequestId: opts.signatureRequestId } : {}) } });
       }
     },
   });
-  await after(caseId, 'CONTRACT_SENT');
+  if (opts.notify !== false) await after(caseId, 'CONTRACT_SENT');
 };
 
 export const clientSignContract = async (

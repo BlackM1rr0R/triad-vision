@@ -101,6 +101,7 @@
       "submitted": "Yoxlamaya göndərildi",
       "contractTitle": "Müqavilə",
       "signNow": "Oxu və imzala",
+      "signInBrowser": "Brauzerdə imzala",
       "openContract": "Müqaviləni aç",
       "openSigned": "İmzalanmış müqaviləni aç",
       "signedOn": "{{date}} tarixində {{name}} tərəfindən imzalanıb",

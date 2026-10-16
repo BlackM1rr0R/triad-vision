@@ -44,6 +44,10 @@ export const resetDb = async () => {
   await prisma.germanQuestion.deleteMany();
   await prisma.languageCourse.deleteMany();
   await prisma.requirementTemplate.deleteMany();
+  // E-signatures (events and signers cascade with the request)
+  await prisma.signatureEvent.deleteMany();
+  await prisma.signatureSigner.deleteMany();
+  await prisma.signatureRequest.deleteMany();
   // Team tasks (children first; before cases, users and drive nodes)
   await prisma.taskAttachment.deleteMany();
   await prisma.taskChecklistItem.deleteMany();

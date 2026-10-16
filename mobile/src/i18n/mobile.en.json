@@ -101,6 +101,7 @@
       "submitted": "Submitted for review",
       "contractTitle": "Contract",
       "signNow": "Read and sign",
+      "signInBrowser": "Sign in the browser",
       "openContract": "Open contract",
       "openSigned": "Open signed contract",
       "signedOn": "Signed on {{date}} by {{name}}",

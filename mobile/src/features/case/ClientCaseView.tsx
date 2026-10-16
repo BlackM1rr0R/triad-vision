@@ -2,6 +2,9 @@ import { useCallback, useState } from 'react';
 import { Alert, View } from 'react-native';
 import { router } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
+import * as WebBrowser from 'expo-web-browser';
+import { WEB_URL } from '@/lib/config';
+import { currentLanguage } from '@/i18n';
 import {
   BadgeCheck,
   CalendarPlus,
@@ -163,7 +166,15 @@ const ContractCard = ({ c, onOpen, openingId }: { c: CaseDetail; onOpen: (d: Cas
             <Note tone="success" text={t('m.case.signedOn', { date: f.dateTime(c.contract.signedAt), name: c.contract.signerName })} />
           ) : null}
           {c.contract.signedFile ? <FileItem doc={c.contract.signedFile} onOpen={onOpen} opening={openingId === c.contract.signedFile.id} /> : null}
-          {c.status === 'CONTRACT_SENT' ? (
+          {c.status === 'CONTRACT_SENT' && c.contract.signatureRequestId ? (
+            // Multi-party contracts are signed on the website (same login), with every party's audit trail.
+            <Button
+              title={t('m.case.signInBrowser')}
+              icon={FileSignature}
+              onPress={() => void WebBrowser.openBrowserAsync(`${WEB_URL}/account/signatures?lng=${currentLanguage()}`)}
+              size="lg"
+            />
+          ) : c.status === 'CONTRACT_SENT' ? (
             <Button title={t('m.case.signNow')} icon={FileSignature} onPress={() => router.push(`/sign/${c.id}`)} size="lg" />
           ) : null}
         </View>

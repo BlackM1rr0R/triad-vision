@@ -33,6 +33,7 @@ import {
   recountFolders,
   type MessageRow,
 } from '../lib/mail/core.js';
+import { refreshMailIdle } from '../lib/mail/idle.js';
 import { verifyImap } from '../lib/mail/imap.js';
 import { PROVIDERS, providerForEmail } from '../lib/mail/providers.js';
 import { ruleActionsSchema, ruleConditionsSchema } from '../lib/mail/rules.js';
@@ -149,6 +150,7 @@ mailRouter.post('/accounts', async (req, res) => {
   });
   await audit(req, 'MAIL_ACCOUNT_CREATED', account.id, { email });
   if (account.syncEnabled) void syncAccount(account.id).catch(() => undefined);
+  refreshMailIdle();
   res.status(201).json({ account: accountDto(account) });
 });
 
@@ -170,6 +172,8 @@ mailRouter.patch('/accounts/:id', async (req, res) => {
     return tx.mailAccount.update({ where: { id: account.id }, data });
   });
   await audit(req, 'MAIL_ACCOUNT_UPDATED', account.id, { fields: Object.keys(data) });
+  // New login or sync switched on/off: the IDLE connection is reopened or closed.
+  refreshMailIdle();
   res.json({ account: accountDto(updated) });
 });
 
@@ -183,6 +187,7 @@ mailRouter.delete('/accounts/:id', async (req, res) => {
     if (next) await prisma.mailAccount.update({ where: { id: next.id }, data: { isDefault: true } });
   }
   await audit(req, 'MAIL_ACCOUNT_DELETED', account.id, { email: account.email });
+  refreshMailIdle();
   res.json({ ok: true });
 });
 

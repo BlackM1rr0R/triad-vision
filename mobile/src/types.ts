@@ -180,6 +180,8 @@ export interface Contract {
   signerUserAgent?: string | null;
   file: CaseDocument | null;
   signedFile: CaseDocument | null;
+  /** Set when the contract is signed online by all parties (web e-signature module). */
+  signatureRequestId?: string | null;
 }
 
 export interface CaseSummary {

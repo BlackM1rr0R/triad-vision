@@ -24,7 +24,7 @@ import { Spinner } from '@/components/ui/Spinner';
 import { ConfirmDialog } from '../ConfirmDialog';
 import { fmtDateTime, statusLabel, toLocalInput } from '../labels';
 import { Panel } from '../ui';
-import { ContractUpload } from './Contract';
+import { SendContractForSignature } from '@/components/esign/CaseSignatures';
 import { missingAccepted, useCaseAction, type ActionBody } from './shared';
 
 type ActionKey = 'SEND_CONTRACT' | 'REQUEST_CHANGES' | 'CONFIRM_CONTRACT' | 'REJECT_SIGNATURE' | 'SCHEDULE' | 'MARK_LODGED' | 'DECIDE' | 'REOPEN';
@@ -156,7 +156,7 @@ export const ActionPanel = ({ c }: { c: CaseDetail }) => {
           <div className="space-y-3">
             <p className="text-sm text-ink/80">{a('sendContractText', { status: statusLabel('CONTRACT_SENT') })}</p>
             <MissingHint missing={missingInitial} what={a('sendContractWhat')} />
-            <ContractUpload c={c} label={a('uploadPdf')} disabled={missingInitial.length > 0} />
+            <SendContractForSignature caseId={c.id} disabled={missingInitial.length > 0} />
           </div>
         );
 

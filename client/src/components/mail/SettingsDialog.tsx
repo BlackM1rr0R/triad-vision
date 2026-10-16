@@ -14,8 +14,9 @@ import { folderLabel } from './Sidebar';
 import type { CaseRef, MailAccount, MailLabel, MailProvider, MailRule, MailTemplate, RuleActions, RuleConditions } from './types';
 import { PROVIDERS } from './types';
 import { errorText } from './utils';
+import { MailboxSecurityTab, useMyMailboxes } from './MailboxSecurity';
 
-export type SettingsTab = 'accounts' | 'signatures' | 'labels' | 'rules' | 'templates';
+export type SettingsTab = 'accounts' | 'signatures' | 'labels' | 'rules' | 'templates' | 'security';
 const TABS: SettingsTab[] = ['accounts', 'signatures', 'labels', 'rules', 'templates'];
 
 const Field = ({ label, children, hint }: { label: string; children: ReactNode; hint?: string }) => (
@@ -771,6 +772,9 @@ export const MailSettingsDialog = ({ open, onClose, initialTab = 'accounts', acc
   useEffect(() => {
     if (open) setTab(initialTab);
   }, [open, initialTab]);
+  // "Mailbox security" only for staff with a mailbox on our own mail server.
+  const own = useMyMailboxes(open);
+  const tabs: SettingsTab[] = own.data?.mailboxes.length ? [...TABS, 'security'] : TABS;
   const content = useMemo(() => {
     switch (tab) {
       case 'accounts':
@@ -783,14 +787,16 @@ export const MailSettingsDialog = ({ open, onClose, initialTab = 'accounts', acc
         return <RulesTab accounts={accounts} />;
       case 'templates':
         return <TemplatesTab />;
+      case 'security':
+        return <MailboxSecurityTab />;
     }
   }, [tab, accounts]);
   return (
     <Dialog open={open} onClose={onClose} size="xl" title={t('mail.settings.title')}>
       <div className="-mt-1 mb-4 flex flex-wrap gap-1 border-b border-line">
-        {TABS.map((x) => (
+        {tabs.map((x) => (
           <button key={x} type="button" onClick={() => setTab(x)} className={clsx('-mb-px border-b-2 px-3 py-2 text-sm font-semibold', tab === x ? 'border-brand-600 text-brand-700' : 'border-transparent text-muted hover:text-ink')}>
-            {t(`mail.settings.tabs.${x}`)}
+            {x === 'security' ? t('mailAdmin.security.tab') : t(`mail.settings.tabs.${x}`)}
           </button>
         ))}
       </div>

@@ -135,15 +135,9 @@ export default function WorkspaceMail() {
   }, [message.data?.id, message.data?.seen]);
 
   // ─── Realtime ───
-  useRealtime('mail.new', (p) => {
-    invalidate();
-    const from = String(p.from ?? '');
-    const subject = String(p.subject ?? '');
-    toast(t('mail.toast.newMail', { from }), {
-      description: subject,
-      action: p.messageId ? { label: t('mail.actions.details'), onClick: () => go({ accountId: String(p.accountId), view: 'inbox', folderId: null, labelId: null }, String(p.messageId)) } : undefined,
-    });
-  });
+  // Lists and counts refresh on every push; the "new mail" toast is shown by the workspace shell
+  // (useMailPush), which skips it while this page shows the inbox the message landed in.
+  useRealtime('mail.new', () => invalidate());
   useRealtime('mail.updated', () => invalidate());
 
   // ─── Selection (checkboxes) ───

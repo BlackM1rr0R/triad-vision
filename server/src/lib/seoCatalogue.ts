@@ -300,6 +300,7 @@ export const PRIVATE_PREFIXES = [
   '/verify-email',
   '/login/2fa',
   '/reset-password',
+  '/sign',
 ];
 
 /** Static routes listed in sitemap.xml, in this order. */

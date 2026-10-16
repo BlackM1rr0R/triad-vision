@@ -12,3 +12,4 @@ import './interviews.js'; // interview reminders (24 h / 1 h)
 import './mail.js'; // mailbox sync (IMAP) and snooze wake-ups
 import './calendar.js'; // event reminders
 import './workspace.js'; // announcement expiry, poll closing, leave reminders
+import './signatures.js'; // e-signature reminders (3 / 7 days), expiry, completion retries

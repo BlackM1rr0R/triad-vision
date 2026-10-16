@@ -1,4 +1,5 @@
 import { useId, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
@@ -10,6 +11,7 @@ import type { CaseDetail } from '@/lib/types';
 import { Spinner } from '@/components/ui/Spinner';
 import { SignaturePad, type SignaturePadHandle } from './SignaturePad';
 import { useApiError } from './useApiError';
+import { useMySignatures } from '@/components/esign/MySignatures';
 
 /** Contract info, PDF links and — while the contract awaits signature — the e-signature form. */
 export const CaseContract = ({ data, onChanged }: { data: CaseDetail; onChanged: () => Promise<unknown> }) => {
@@ -26,11 +28,15 @@ export const CaseContract = ({ data, onChanged }: { data: CaseDetail; onChanged:
   const [agree, setAgree] = useState(false);
   const [padEmpty, setPadEmpty] = useState(true);
   const [signing, setSigning] = useState(false);
+  // Contracts sent through the multi-party e-signature module are signed on the "Documents to sign" page.
+  const viaModule = !!data.contract?.signatureRequestId;
+  const { data: mine } = useMySignatures({ caseId: data.id, enabled: viaModule });
 
   const contract = data.contract;
   if (!contract) return null;
 
-  const canSign = data.status === 'CONTRACT_SENT';
+  const pendingSigner = mine?.find((s) => s.requestId === contract.signatureRequestId && s.myTurn);
+  const canSign = data.status === 'CONTRACT_SENT' && !viaModule;
   const showSigned = !canSign && !!contract.signedAt;
 
   const sign = async () => {
@@ -106,6 +112,16 @@ export const CaseContract = ({ data, onChanged }: { data: CaseDetail; onChanged:
             </a>
           )}
         </motion.div>
+      )}
+
+      {viaModule && data.status === 'CONTRACT_SENT' && (
+        <div className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:p-6">
+          <p className="flex-1 text-sm text-muted">{t('esign.caseBox.viaModule')}</p>
+          <Link to={pendingSigner ? `/account/signatures/${pendingSigner.signerId}` : '/account/signatures'} className="btn-primary w-full sm:w-auto">
+            <FileSignature className="size-4" aria-hidden />
+            {t('esign.caseBox.signHere')}
+          </Link>
+        </div>
       )}
 
       {canSign && (

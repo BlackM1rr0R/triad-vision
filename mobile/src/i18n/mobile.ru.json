@@ -101,6 +101,7 @@
       "submitted": "Отправлено на проверку",
       "contractTitle": "Договор",
       "signNow": "Прочитать и подписать",
+      "signInBrowser": "Подписать в браузере",
       "openContract": "Открыть договор",
       "openSigned": "Открыть подписанный договор",
       "signedOn": "Подписан {{date}}, {{name}}",

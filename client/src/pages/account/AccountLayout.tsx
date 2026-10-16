@@ -2,7 +2,7 @@ import { Link, useLocation, useOutlet } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
-import { Bell, Briefcase, Compass, FolderOpen, GraduationCap, LayoutDashboard, UserRound, Video } from 'lucide-react';
+import { Bell, Briefcase, Compass, FileSignature, FolderOpen, GraduationCap, LayoutDashboard, UserRound, Video } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { FINAL } from '@/lib/caseStatus';
 import { useNotifications } from '@/components/portal/useNotifications';
@@ -14,8 +14,11 @@ import { pagesAccount } from '@/i18n/pagesAccount';
 import { VerifyBanner } from '@/components/auth/VerifyBanner';
 import { pagesJobs } from '@/i18n/pagesJobs';
 import { pagesJourney } from '@/i18n/pagesJourney';
+import { pagesSign } from '@/i18n/pagesSign';
+import { useMySignatures } from '@/components/esign/MySignatures';
 
 registerCopy(pagesAccount);
+registerCopy(pagesSign);
 registerCopy(pagesJobs);
 registerCopy(pagesJourney);
 
@@ -36,6 +39,9 @@ export default function AccountLayout() {
   const completeness = profileCompleteness(user);
   // Post-arrival checklist only makes sense once a visa was approved.
   const hasApproved = cases.some((c) => c.status === 'APPROVED');
+  // "Documents to sign" appears once something was sent to the user for signature.
+  const { data: signatures } = useMySignatures({ enabled: !!user });
+  const toSign = (signatures ?? []).filter((s) => s.myTurn).length;
 
   const tabs = [
     { to: '/account', label: t('accountPage.tabs.dashboard'), icon: LayoutDashboard, match: (p: string) => p === '/account' || p === '/account/' },
@@ -49,6 +55,9 @@ export default function AccountLayout() {
     ...(isClient && hasApproved ? [{ to: '/account/onboarding', label: t('journey.nav.onboarding'), icon: Compass, match: (p: string) => p.startsWith('/account/onboarding') }] : []),
     ...(isClient ? [{ to: '/account/german', label: t('journey.nav.german'), icon: GraduationCap, match: (p: string) => p.startsWith('/account/german') }] : []),
     { to: '/account/interviews', label: t('journey.nav.interviews'), icon: Video, match: (p: string) => p.startsWith('/account/interviews') },
+    ...(signatures?.length
+      ? [{ to: '/account/signatures', label: t('esign.portal.title'), icon: FileSignature, badge: toSign, match: (p: string) => p.startsWith('/account/signatures') }]
+      : []),
     { to: '/account/notifications', label: t('portal.notifications'), icon: Bell, badge: unread, match: (p: string) => p.startsWith('/account/notifications') },
     { to: '/account/profile', label: t('portal.profile'), icon: UserRound, match: (p: string) => p.startsWith('/account/profile') },
   ];

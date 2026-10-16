@@ -1,5 +1,6 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
+import { useRealtimeStatus } from '@/lib/realtime';
 import type { BulkAction, FoldersResponse, ListParams, ListResponse, MailAccount, MailLabel, MailRule, MailTemplate, MessageDetail, ProviderPreset, SnoozePreset } from './types';
 
 export const mailKeys = {
@@ -33,13 +34,16 @@ const listQuery = (p: ListParams, cursor?: string) => {
   return q;
 };
 
-export const useFolders = (accountId?: string) =>
-  useQuery({
+export const useFolders = (accountId?: string) => {
+  // Changes are pushed (mail.new / mail.updated invalidate this query); poll slowly while the stream is up.
+  const live = useRealtimeStatus() === 'open';
+  return useQuery({
     queryKey: mailKeys.folders(accountId),
     queryFn: async () => (await api.get<FoldersResponse>('/mail/folders', { params: accountId ? { accountId } : {} })).data,
     staleTime: 15_000,
-    refetchInterval: 60_000,
+    refetchInterval: live ? 300_000 : 60_000,
   });
+};
 
 export const useMessageList = (params: ListParams, enabled = true) =>
   useInfiniteQuery({

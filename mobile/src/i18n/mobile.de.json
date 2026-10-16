@@ -101,6 +101,7 @@
       "submitted": "Zur Prüfung eingereicht",
       "contractTitle": "Vertrag",
       "signNow": "Lesen und unterschreiben",
+      "signInBrowser": "Im Browser unterschreiben",
       "openContract": "Vertrag öffnen",
       "openSigned": "Unterschriebenen Vertrag öffnen",
       "signedOn": "Unterschrieben am {{date}} von {{name}}",
