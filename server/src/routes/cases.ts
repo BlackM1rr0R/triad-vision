@@ -14,6 +14,7 @@ import { badRequest, conflict, forbidden, HttpError, notFound, parse } from '../
 import { createCaseMessage, listMessages, markMessagesRead, publishTyping } from '../lib/messaging/caseMessages.js';
 import { PDFDocument } from 'pdf-lib';
 import { signContractPdf } from '../lib/pdfSign.js';
+import { checkCaseDocument } from '../lib/docCheck/index.js';
 
 export const casesRouter = Router();
 casesRouter.use(requireAuth);
@@ -86,7 +87,9 @@ casesRouter.post('/:id/documents', documentUpload.single('file'), async (req, re
     await prisma.caseEvent.create({
       data: { caseId: c.id, type: 'DOCUMENT_UPLOADED', note: doc.originalName, actorId: req.user!.id, visibleToClient: false },
     });
-    res.status(201).json({ document: doc });
+    // Automatic quality checks (PDF readable, photo is an image, resolution, passport MRZ/expiry); never throws.
+    const checks = await checkCaseDocument(doc.id);
+    res.status(201).json({ document: { ...doc, checks }, checks });
   } catch (err) {
     await removeFile(file.filename);
     throw err;

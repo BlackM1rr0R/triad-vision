@@ -9,6 +9,7 @@ import { api } from '@/lib/api';
 import { useL10n } from '@/lib/l10n';
 import type { CaseStatus, L10n } from '@/lib/types';
 import { registerCopy } from '@/i18n';
+import { CvDownloadButton } from '@/components/cv/CvDownloadButton';
 import { pagesJobs } from '@/i18n/pagesJobs';
 import { Spinner } from '@/components/ui/Spinner';
 import { Drawer } from '@/components/admin/Drawer';
@@ -252,6 +253,7 @@ const CandidateDrawer = ({ id, onClose, onAdd }: { id: string | null; onClose: (
                   <Phone className="size-3.5" /> {data.phone}
                 </a>
               )}
+              <CvDownloadButton url={`/admin/candidates/${data.id}/cv.pdf`} />
               <span className={clsx('badge', data.emailVerifiedAt ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800')}>
                 {data.emailVerifiedAt ? t('jobsArea.admin.verified') : t('jobsArea.admin.unverified')}
               </span>

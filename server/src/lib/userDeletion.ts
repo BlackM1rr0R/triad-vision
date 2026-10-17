@@ -1,4 +1,7 @@
+import fs from 'node:fs/promises';
+import path from 'node:path';
 import type { Prisma, Role } from '@prisma/client';
+import { config } from '../config.js';
 import { prisma } from '../db.js';
 import { conflict, forbidden, HttpError, notFound } from './http.js';
 import { removeStoredFile } from '../jobs/retention.js';
@@ -129,6 +132,9 @@ export const deleteUserAccount = async (actorId: string, userId: string, ip?: st
   const caseFiles = ownCaseIds.length
     ? await prisma.document.findMany({ where: { caseId: { in: ownCaseIds } }, select: { storedName: true } })
     : [];
+  // Vault documents and translation-order files are stored outside the case folder.
+  const vaultFiles = await prisma.vaultDocument.findMany({ where: { userId }, select: { storageKey: true } });
+  const translationFiles = await prisma.translationOrderFile.findMany({ where: { storageKey: { not: null }, order: { clientId: userId } }, select: { storageKey: true } });
   const mailFiles = await prisma.mailAttachment.findMany({
     where: { storageKey: { not: null }, message: { account: { userId } } },
     select: { storageKey: true },
@@ -252,6 +258,20 @@ export const deleteUserAccount = async (actorId: string, userId: string, ip?: st
     }
   }
   await removeMailStored(mailFiles.map((m) => m.storageKey));
+  for (const [dir, keys] of [
+    ['vault', vaultFiles.map((v) => v.storageKey)],
+    ['translations', translationFiles.map((t) => t.storageKey)],
+  ] as const) {
+    for (const key of keys) {
+      if (!key) continue;
+      const size = await fs.stat(path.join(config.uploads.privateDir, dir, key)).then((st) => st.size).catch(() => 0);
+      await fs.unlink(path.join(config.uploads.privateDir, dir, key)).catch(() => undefined);
+      if (size > 0) {
+        files++;
+        bytes += size;
+      }
+    }
+  }
 
   return { user: target, counts: { ...counts, files, bytes, mailAttachmentsRemoved: mailFiles.length } satisfies UserDeletionCounts };
 };

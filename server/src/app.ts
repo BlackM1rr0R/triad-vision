@@ -29,6 +29,9 @@ import { workspaceRouter } from './routes/workspace.js';
 import { agentPortalRouter } from './routes/agentPortal.js';
 import { translationsRouter } from './routes/translations.js';
 import { privacyRouter } from './routes/privacy.js';
+import { cvRouter } from './routes/cv.js';
+import { vaultRouter } from './routes/vault.js';
+import { arrivalRouter } from './routes/arrival.js';
 import { twoFactorRouter } from './routes/twoFactor.js';
 import { companyRouter } from './routes/company.js';
 import { companyInvoicesRouter } from './routes/companyInvoices.js';
@@ -124,6 +127,9 @@ export const createApp = () => {
   app.use('/api/agent', agentPortalRouter);
   app.use('/api/translations', translationsRouter);
   app.use('/api/privacy', privacyRouter);
+  app.use('/api/cv', cvRouter);
+  app.use('/api/vault', vaultRouter);
+  app.use('/api/arrival', arrivalRouter);
 
   // /sitemap.xml, /robots.txt and /api/seo/* (Caddy forwards the first two here).
   app.use(seoRouter);

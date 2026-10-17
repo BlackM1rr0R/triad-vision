@@ -25,6 +25,7 @@ import { FINAL_STATUSES } from '../../lib/caseFlow.js';
 import { adminAgentsRouter } from './agents.js';
 import { adminTranslationsRouter } from './translations.js';
 import { adminPrivacyRouter } from './privacy.js';
+import { adminArrivalsRouter } from './arrivals.js';
 
 export const adminRouter = Router();
 adminRouter.use(requireMinRole('STAFF'));
@@ -100,6 +101,7 @@ adminRouter.use('/ops', adminOpsRouter);
 adminRouter.use('/agents', adminAgentsRouter);
 adminRouter.use('/translations', adminTranslationsRouter);
 adminRouter.use('/privacy', adminPrivacyRouter);
+adminRouter.use('/arrivals', adminArrivalsRouter);
 adminRouter.use('/signatures', adminSignaturesRouter);
 // Any successful CMS write (incl. vacancy, employer and review moderation) must be visible on the public site right away.
 // The cache is cleared before the response is sent, so the admin's next public read is already fresh.

@@ -12,6 +12,11 @@ import { DocStatusBadge } from './StatusBadge';
 import { FileDrop } from './FileDrop';
 import { ConfirmDialog } from './ConfirmDialog';
 import { useApiError } from './useApiError';
+// Document vault + automatic checks: client-side check before upload, "choose from my vault", server check result.
+import { useDocCheckGate } from '@/components/vault/DocCheckDialog';
+import { VaultPicker } from '@/components/vault/VaultPicker';
+import { CheckResultNotice } from '@/components/vault/CheckResultNotice';
+import { DocCheckBadge } from '@/components/vault/DocCheckBadge';
 
 type UploadStage = 'INITIAL' | 'EMBASSY';
 
@@ -66,6 +71,8 @@ const DocRow = ({
           </div>
         </div>
         <div className="ml-auto flex shrink-0 items-center gap-1">
+        {/* automatic check findings (warnings / problems only) */}
+        <DocCheckBadge checks={(doc as CaseDocument & { checks?: unknown }).checks} showOk={false} />
         <DocStatusBadge status={doc.status} className="mr-1" />
           <a
             href={fileUrl(doc.id)}
@@ -118,18 +125,24 @@ const RequirementCard = ({
   const { user } = useAuth();
   const onError = useApiError();
   const [progress, setProgress] = useState<number | null>(null);
+  // Client-side quality check dialog and the server check result of the last upload.
+  const { gate, dialog: checkDialog } = useDocCheckGate();
+  const [lastChecks, setLastChecks] = useState<unknown>(null);
   const docs = [...req.documents].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   const description = tr(req.description);
 
   const upload = async (file: File) => {
+    if (!(await gate(file))) return; // the client chose another file
+    setLastChecks(null);
     const form = new FormData();
     form.append('requirementId', req.id);
     form.append('file', file);
     setProgress(0);
     try {
-      await api.post(`/cases/${caseId}/documents`, form, {
+      const { data } = await api.post<{ checks?: unknown }>(`/cases/${caseId}/documents`, form, {
         onUploadProgress: (e) => setProgress(e.total ? e.loaded / e.total : 0),
       });
+      setLastChecks(data.checks ?? null);
       toast.success(t('portal.docs.uploaded'));
       await onChanged();
     } catch (err) {
@@ -175,6 +188,7 @@ const RequirementCard = ({
         ) : (
           !open && <p className="text-xs text-muted italic">{t('portal.docs.notUploaded')}</p>
         )}
+        {open && lastChecks != null && <CheckResultNotice checks={lastChecks} onDismiss={() => setLastChecks(null)} />}
         {open && (
           <FileDrop
             onFile={upload}
@@ -183,6 +197,18 @@ const RequirementCard = ({
             label={docs.length > 0 ? t('portal.docs.replace') : t('portal.docs.upload')}
           />
         )}
+        {open && (
+          <VaultPicker
+            caseId={caseId}
+            requirementId={req.id}
+            compact
+            onAdded={async (checks) => {
+              setLastChecks(checks);
+              await onChanged();
+            }}
+          />
+        )}
+        {checkDialog}
       </div>
     </li>
   );

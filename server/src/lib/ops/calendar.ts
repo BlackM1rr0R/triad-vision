@@ -160,8 +160,29 @@ export const staffFeedEvents = async (user: { id: string; locale: Locale; firstN
       stamp: t.updatedAt,
     });
   }
+  // Client arrivals the staff member handles (or, without a handler, of their assigned cases). The UID
+  // keeps the "case-appointment-" prefix so the workspace calendar shows them as case items.
+  const arrivals = await prisma.arrivalPlan.findMany({
+    where: { status: { in: ['SUBMITTED', 'CONFIRMED', 'COMPLETED', 'CANCELLED'] }, arrivalTime: { gte: from, lte: to }, OR: [{ handledById: user.id }, { handledById: null, case: { assignedStaffId: user.id } }] },
+    select: { id: true, caseId: true, status: true, arrivalTime: true, flightNumber: true, arrivalAirport: true, pickupRequested: true, updatedAt: true, client: { select: { firstName: true, lastName: true } } },
+  });
+  for (const a of arrivals) {
+    events.push({
+      uid: `case-appointment-arrival-${a.id}@triad-vision.de`,
+      start: a.arrivalTime!,
+      end: new Date(a.arrivalTime!.getTime() + 60 * 60 * 1000),
+      summary: `${ARRIVAL_LABEL[user.locale]}: ${a.client.firstName} ${a.client.lastName}${a.flightNumber ? ` ${a.flightNumber}` : ''}`,
+      description: [a.arrivalAirport, a.pickupRequested ? 'Pickup' : null].filter(Boolean).join('\n') || undefined,
+      location: a.arrivalAirport ?? undefined,
+      url: `${admin}/admin/arrivals/${a.caseId}`,
+      cancelled: a.status === 'CANCELLED',
+      stamp: a.updatedAt,
+    });
+  }
   events.sort((a, b) => a.start.getTime() - b.start.getTime());
   return events;
 };
+
+const ARRIVAL_LABEL: Record<Locale, string> = { az: 'Gəliş', de: 'Ankunft', en: 'Arrival', ru: 'Прибытие' };
 
 export const calendarName = (locale: Locale) => LABEL[locale].calendar;

@@ -16,6 +16,7 @@ import { Panel, Switch } from '../ui';
 import { DocIcon, DocLinks, DocMeta, isAccepted, stageRequirements, uploadCaseDocument, useCaseRefresh } from './shared';
 import { OcrBadge } from '@/components/docsIntel/OcrBadge';
 import type { DocWithOcr } from '@/components/docsIntel/api';
+import { DocCheckBadge } from '@/components/vault/DocCheckBadge';
 
 type Stage = 'INITIAL' | 'EMBASSY';
 
@@ -64,6 +65,7 @@ const DocRow = ({ c, doc, requirementKey }: { c: CaseDetail; doc: CaseDocument; 
         </div>
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5">
           <span className={clsx('badge whitespace-nowrap', DOC_STATUS_TONE[doc.status])}>{docStatusLabel(doc.status)}</span>
+          <DocCheckBadge checks={(doc as CaseDocument & { checks?: unknown }).checks} />
           <DocLinks doc={doc} />
           <div className="flex gap-1.5">
             {doc.status !== 'ACCEPTED' && (

@@ -31,6 +31,7 @@ import { isStaffRole } from '@/lib/types';
 import { registerCopy } from '@/i18n';
 import { pagesJobs } from '@/i18n/pagesJobs';
 import { PageHero } from '@/components/layout/PageHero';
+import { SalaryEstimate } from '@/components/tools/SalaryEstimate';
 import { Spinner } from '@/components/ui/Spinner';
 import { fmtDate } from '@/components/admin/labels';
 import { GapList, ScoreRing } from '@/components/jobs/MatchMeter';
@@ -334,6 +335,7 @@ export default function JobDetail() {
                 {salary && (
                   <Fact icon={Euro} label={t('jobsArea.detail.facts.salary')}>
                     {salary} <span className="text-xs font-medium text-muted">{t('jobsArea.common.perMonth')}</span>
+                    <SalaryEstimate min={v.salaryMin} max={v.salaryMax} className="mt-1 font-normal" />
                   </Fact>
                 )}
                 {v.city && <Fact icon={MapPin} label={t('jobsArea.detail.facts.location')}>{v.city}</Fact>}

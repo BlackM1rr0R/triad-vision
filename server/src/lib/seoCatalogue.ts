@@ -114,6 +114,36 @@ export const STATIC_PAGES: Record<string, StaticPageMeta> = {
       ru: 'Ответьте на несколько вопросов и узнайте, какая виза в Германию вам подходит и что делать дальше.',
     },
   },
+  '/salary-calculator': {
+    name: { az: 'Maaş kalkulyatoru', de: 'Gehaltsrechner', en: 'Salary calculator', ru: 'Калькулятор зарплаты' },
+    title: { az: 'Almaniyada xalis maaş kalkulyatoru', de: 'Brutto-Netto-Rechner Deutschland', en: 'German net salary calculator', ru: 'Калькулятор зарплаты нетто в Германии' },
+    description: {
+      az: 'Almaniyada brutto maaşdan xalis maaşı hesablayın: vergi sinfi, kilsə vergisi, sığorta və pensiya ayırmaları ilə təxmini hesab.',
+      de: 'Berechnen Sie Ihr Nettogehalt in Deutschland: Steuerklasse, Kirchensteuer, Kranken-, Pflege-, Renten- und Arbeitslosenversicherung – als Schätzung.',
+      en: 'Estimate your net salary in Germany from the gross: tax class, church tax, health, care, pension and unemployment insurance.',
+      ru: 'Рассчитайте зарплату нетто в Германии из брутто: налоговый класс, церковный налог, медицинское, пенсионное страхование и др.',
+    },
+  },
+  '/anerkennung': {
+    name: { az: 'Diplomun tanınması', de: 'Anerkennung', en: 'Diploma recognition', ru: 'Признание диплома' },
+    title: { az: 'Almaniyada diplomun tanınması (Anerkennung)', de: 'Anerkennung ausländischer Abschlüsse', en: 'Recognising foreign diplomas in Germany', ru: 'Признание иностранного диплома в Германии' },
+    description: {
+      az: 'Peşənizə görə Almaniyada diplomun tanınması: hansı qurum, hansı sənədlər, nə qədər vaxt və xərc – addım-addım bələdçi.',
+      de: 'Anerkennung Ihres Berufsabschlusses in Deutschland: zuständige Stelle, Unterlagen, Dauer und Kosten – Schritt für Schritt.',
+      en: 'Getting your qualification recognised in Germany: the competent authority, documents, duration and cost — step by step.',
+      ru: 'Признание вашей квалификации в Германии: какое ведомство, какие документы, сроки и стоимость — пошагово.',
+    },
+  },
+  '/cities': {
+    name: { az: 'Alman şəhərləri', de: 'Deutsche Städte', en: 'German cities', ru: 'Города Германии' },
+    title: { az: 'Alman şəhərləri və yaşayış xərcləri', de: 'Deutsche Städte und Lebenshaltungskosten', en: 'German cities and cost of living', ru: 'Города Германии и стоимость жизни' },
+    description: {
+      az: 'Almaniyanın 14 şəhərini müqayisə edin: kirayə, nəqliyyat, ərzaq xərcləri və aylıq büdcə kalkulyatoru.',
+      de: 'Vergleichen Sie 14 deutsche Städte: Miete, Nahverkehr, Lebensmittel und ein Rechner für Ihr Monatsbudget.',
+      en: 'Compare 14 German cities: rent, public transport, groceries and a monthly budget calculator.',
+      ru: 'Сравните 14 городов Германии: аренда, транспорт, продукты и калькулятор месячного бюджета.',
+    },
+  },
   '/faq': {
     name: { az: 'FAQ', de: 'FAQ', en: 'FAQ', ru: 'FAQ' },
     title: { az: 'Tez-tez verilən suallar', de: 'Häufige Fragen', en: 'Frequently asked questions', ru: 'Частые вопросы' },

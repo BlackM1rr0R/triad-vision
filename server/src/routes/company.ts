@@ -22,6 +22,7 @@ import {
 } from '../lib/vacancies.js';
 import { password, publicUser } from './auth.js';
 import { emitWebhook } from '../lib/ops/webhooks.js';
+import { sendEmployerCv } from '../lib/cv/access.js';
 
 // Employer portal API — mounted at /api/company (COMPANY role)
 export const companyRouter = Router();
@@ -371,6 +372,9 @@ companyRouter.get('/candidates', async (req, res) => {
   });
   res.json({ items: items.map(({ user, ...a }) => ({ ...a, candidate: anonymisedProfile(user) })) });
 });
+
+/** Anonymised CV of a presented candidate (only when the candidate shares it). */
+companyRouter.get('/candidates/:applicationId/cv.pdf', (req, res) => sendEmployerCv(req, res, co(res).id));
 
 const DECISIONS: Record<'INTERVIEW' | 'ACCEPT' | 'REJECT', { to: ApplicationStatus; from: ApplicationStatus[] }> = {
   INTERVIEW: { to: 'INTERVIEW', from: ['PROPOSED'] },

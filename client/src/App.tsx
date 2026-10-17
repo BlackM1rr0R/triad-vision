@@ -69,6 +69,14 @@ const CompanyApp = lazy(() => import('./pages/company/CompanyApp'));
 const AgentApp = lazy(() => import('./pages/agent/AgentApp'));
 const AdminHelp = lazy(() => import('./pages/admin/Help'));
 const AdminAnnouncements = lazy(() => import('./pages/admin/Announcements'));
+const AccountCv = lazy(() => import('./pages/account/Cv'));
+const AccountLetters = lazy(() => import('./pages/account/Letters'));
+const AccountVault = lazy(() => import('./pages/account/Vault'));
+const AccountArrival = lazy(() => import('./pages/account/Arrival'));
+const SalaryCalculator = lazy(() => import('./pages/tools/SalaryCalculator'));
+const AnerkennungGuide = lazy(() => import('./pages/tools/Anerkennung'));
+const CitiesGuide = lazy(() => import('./pages/tools/Cities'));
+const AdminArrivals = lazy(() => import('./pages/admin/Arrivals'));
 const AdminAgents = lazy(() => import('./pages/admin/Agents'));
 const AdminTranslations = lazy(() => import('./pages/admin/Translations'));
 const AdminPrivacyRequests = lazy(() => import('./pages/admin/PrivacyRequests'));
@@ -204,6 +212,9 @@ export default function App() {
             <Route path="ausbildung" element={<Ausbildung />} />
             <Route path="faq" element={<FaqPage />} />
             <Route path="news" element={<News />} />
+            <Route path="salary-calculator" element={<SalaryCalculator />} />
+            <Route path="anerkennung" element={<AnerkennungGuide />} />
+            <Route path="cities" element={<CitiesGuide />} />
             <Route path="news/:slug" element={<NewsDetail />} />
             <Route path="contact" element={<Contact />} />
             <Route path="cooperation" element={<Cooperation />} />
@@ -257,6 +268,10 @@ export default function App() {
               <Route path="interviews" element={<AccountInterviews />} />
               <Route path="translations/*" element={<AccountTranslations />} />
               <Route path="privacy" element={<AccountPrivacyCenter />} />
+              <Route path="cv" element={<AccountCv />} />
+              <Route path="letters/*" element={<AccountLetters />} />
+              <Route path="vault" element={<AccountVault />} />
+              <Route path="arrival" element={<AccountArrival />} />
               <Route path="signatures" element={<AccountSignatures />} />
               <Route path="signatures/:signerId" element={<AccountSignatures />} />
             </Route>
@@ -345,6 +360,7 @@ export default function App() {
             <Route path="help" element={<AdminHelp />} />
             <Route path="tasks/*" element={<WorkspaceTasks />} />
             <Route path="announcements" element={<AdminAnnouncements />} />
+            <Route path="arrivals/*" element={<AdminArrivals />} />
             <Route path="agents/*" element={<AdminAgents />} />
             <Route path="translations/*" element={<AdminTranslations />} />
             <Route path="privacy-requests/*" element={<AdminPrivacyRequests />} />

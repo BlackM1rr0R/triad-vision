@@ -16,3 +16,5 @@ import './signatures.js'; // e-signature reminders (3 / 7 days), expiry, complet
 import './agents.js'; // agent commission housekeeping
 import './translations.js'; // translation order reminders
 import './privacy.js'; // privacy request deadlines
+import './vault.js'; // vault document expiry reminders
+import './arrival.js'; // arrival / pickup reminders

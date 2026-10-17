@@ -136,6 +136,11 @@ model User {
   consents              ConsentRecord[]
   privacyRequests       PrivacyRequest[]         @relation("PrivacyRequester")
   privacyHandled        PrivacyRequest[]         @relation("PrivacyHandler")
+  cv                    CandidateCv?
+  motivationLetters     MotivationLetter[]
+  vaultDocuments        VaultDocument[]
+  arrivalPlans          ArrivalPlan[]            @relation("ArrivalClient")
+  arrivalPlansHandled   ArrivalPlan[]            @relation("ArrivalStaff")
   signatureRequests     SignatureRequest[]       @relation("SignatureRequestCreatedBy")
   signatureSignings     SignatureSigner[]        @relation("SignatureSignerUser")
 
@@ -341,6 +346,8 @@ model Case {
   calendarEvents    CalendarEvent[]
   agentCommissions  AgentCommission[]
   translationOrders TranslationOrder[]
+  arrivalPlan       ArrivalPlan?
+  motivationLetters MotivationLetter[]
   signatureRequests SignatureRequest[]
 
   @@index([clientId])
@@ -367,23 +374,26 @@ model DocumentRequirement {
 }
 
 model Document {
-  id            String               @id @default(cuid())
-  caseId        String
-  case          Case                 @relation(fields: [caseId], references: [id], onDelete: Cascade)
-  requirementId String?
-  requirement   DocumentRequirement? @relation(fields: [requirementId], references: [id], onDelete: SetNull)
-  stage         DocStage
-  originalName  String
-  storedName    String               @unique
-  mimeType      String
-  size          Int
-  status        DocStatus            @default(PENDING)
-  reviewNote    String?              @db.Text
-  ocr           Json? // fields extracted from the file (passport MRZ: number, names, birthDate, expiry…)
-  ocrAt         DateTime?
-  uploadedById  String
-  uploadedBy    User                 @relation(fields: [uploadedById], references: [id])
-  createdAt     DateTime             @default(now())
+  id              String               @id @default(cuid())
+  caseId          String
+  case            Case                 @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  requirementId   String?
+  requirement     DocumentRequirement? @relation(fields: [requirementId], references: [id], onDelete: SetNull)
+  stage           DocStage
+  originalName    String
+  storedName      String               @unique
+  mimeType        String
+  size            Int
+  status          DocStatus            @default(PENDING)
+  reviewNote      String?              @db.Text
+  ocr             Json? // fields extracted from the file (passport MRZ: number, names, birthDate, expiry…)
+  ocrAt           DateTime?
+  checks          Json? // automatic quality checks right after upload (blur, darkness, cut-off, type, expiry)
+  checkedAt       DateTime?
+  vaultDocumentId String? // copied from the client's document vault
+  uploadedById    String
+  uploadedBy      User                 @relation(fields: [uploadedById], references: [id])
+  createdAt       DateTime             @default(now())
 
   @@index([caseId, stage])
 }
@@ -2161,4 +2171,136 @@ model PrivacyRequest {
 
   @@index([status, dueAt])
   @@index([userId])
+}
+
+// ─── Client tools: CV, motivation letters, document vault, arrival ──────
+
+/// Structured CV data (Lebenslauf / Europass) of a client; personal basics come from the User row.
+model CandidateCv {
+  id                 String   @id @default(cuid())
+  userId             String   @unique
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// { photoVaultId?, headline, summary, experience[], education[], languages[], skills[], certificates[], drivingLicences[], interests[] }
+  data               Json
+  template           String   @default("lebenslauf") @db.VarChar(20) // lebenslauf | europass
+  /// May staff present this CV (anonymised) to employers?
+  shareWithEmployers Boolean  @default(true)
+  updatedAt          DateTime @updatedAt
+  createdAt          DateTime @default(now())
+}
+
+enum LetterKind {
+  VISA // Motivationsschreiben for the embassy
+  JOB // Anschreiben for an employer / vacancy
+  ANERKENNUNG // cover letter for the recognition authority
+}
+
+model MotivationLetter {
+  id        String     @id @default(cuid())
+  userId    String
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  kind      LetterKind
+  caseId    String?
+  case      Case?      @relation(fields: [caseId], references: [id], onDelete: SetNull)
+  vacancyId String?
+  title     String     @db.VarChar(200)
+  language  String     @default("de") @db.VarChar(5)
+  /// answers the template was filled with (motivation, strengths, plans …)
+  answers   Json?
+  body      String     @db.Text
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  @@index([userId, kind])
+}
+
+enum VaultDocKind {
+  PASSPORT
+  ID_CARD
+  PHOTO
+  DIPLOMA
+  TRANSCRIPT
+  CERTIFICATE
+  EMPLOYMENT_REF
+  LANGUAGE_CERT
+  DRIVING_LICENCE
+  BIRTH_CERT
+  MARRIAGE_CERT
+  POLICE_CLEARANCE
+  CV
+  OTHER
+}
+
+/// Personal document vault: uploaded once, reused for later cases, translation orders and family members.
+model VaultDocument {
+  id         String       @id @default(cuid())
+  userId     String
+  user       User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  kind       VaultDocKind
+  title      String       @db.VarChar(200)
+  ownerName  String?      @db.VarChar(160) // whose document it is (the client or a family member)
+  storageKey String       @unique // <UPLOADS>/private/vault/<key>
+  filename   String       @db.VarChar(255)
+  mimeType   String       @db.VarChar(120)
+  size       Int
+  issuedAt   DateTime?
+  expiresAt  DateTime?
+  checks     Json? // same quality checks as case documents
+  ocr        Json?
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+
+  @@index([userId, kind])
+  @@index([expiresAt])
+}
+
+enum ArrivalStatus {
+  DRAFT // client is filling it in
+  SUBMITTED // sent to the team
+  CONFIRMED // pickup / housing organised
+  COMPLETED // arrived
+  CANCELLED
+}
+
+enum HousingStatus {
+  NONE // not requested
+  REQUESTED
+  SEARCHING
+  OFFERED
+  ARRANGED
+}
+
+/// Travel and arrival planning of an approved case: flight, airport pickup, first accommodation.
+model ArrivalPlan {
+  id               String        @id @default(cuid())
+  caseId           String        @unique
+  case             Case          @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  clientId         String
+  client           User          @relation("ArrivalClient", fields: [clientId], references: [id], onDelete: Cascade)
+  status           ArrivalStatus @default(DRAFT)
+  flightDate       DateTime?
+  flightNumber     String?       @db.VarChar(20)
+  departureAirport String?       @db.VarChar(80)
+  arrivalAirport   String?       @db.VarChar(80)
+  arrivalTime      DateTime?
+  travellers       Int           @default(1)
+  luggageNote      String?       @db.VarChar(300)
+  pickupRequested  Boolean       @default(false)
+  pickupConfirmed  Boolean       @default(false)
+  pickupDetails    String?       @db.Text // who picks up, meeting point, phone — written by staff
+  housingStatus    HousingStatus @default(NONE)
+  housingCity      String?       @db.VarChar(80)
+  housingBudget    Int? // EUR per month
+  housingFrom      DateTime?
+  housingNote      String?       @db.Text // client wishes
+  housingDetails   String?       @db.Text // address / contract details — written by staff
+  clientNote       String?       @db.Text
+  staffNote        String?       @db.Text // internal
+  handledById      String?
+  handledBy        User?         @relation("ArrivalStaff", fields: [handledById], references: [id], onDelete: SetNull)
+  submittedAt      DateTime?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  @@index([status, flightDate])
 }

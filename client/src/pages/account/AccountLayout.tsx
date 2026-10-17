@@ -2,7 +2,7 @@ import { Link, useLocation, useOutlet } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
-import { Bell, Briefcase, Compass, FileSignature, FolderOpen, GraduationCap, Languages, LayoutDashboard, ShieldCheck, UserRound, Video } from 'lucide-react';
+import { Bell, Briefcase, Compass, FileSignature, FileUser, FolderOpen, GraduationCap, Languages, LayoutDashboard, PenLine, PlaneLanding, ShieldCheck, UserRound, Vault, Video } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { FINAL } from '@/lib/caseStatus';
 import { useNotifications } from '@/components/portal/useNotifications';
@@ -52,6 +52,14 @@ export default function AccountLayout() {
       match: (p: string) => p.startsWith('/account/cases'),
     },
     { to: '/account/applications', label: t('jobsArea.applications.tab'), icon: Briefcase, match: (p: string) => p.startsWith('/account/applications') },
+    ...(isClient
+      ? [
+          { to: '/account/cv', label: t('accountPage.tabs.cv'), icon: FileUser, match: (p: string) => p.startsWith('/account/cv') },
+          { to: '/account/letters', label: t('accountPage.tabs.letters'), icon: PenLine, match: (p: string) => p.startsWith('/account/letters') },
+          { to: '/account/vault', label: t('accountPage.tabs.vault'), icon: Vault, match: (p: string) => p.startsWith('/account/vault') },
+        ]
+      : []),
+    ...(isClient && hasApproved ? [{ to: '/account/arrival', label: t('accountPage.tabs.arrival'), icon: PlaneLanding, match: (p: string) => p.startsWith('/account/arrival') }] : []),
     ...(isClient && hasApproved ? [{ to: '/account/onboarding', label: t('journey.nav.onboarding'), icon: Compass, match: (p: string) => p.startsWith('/account/onboarding') }] : []),
     ...(isClient ? [{ to: '/account/german', label: t('journey.nav.german'), icon: GraduationCap, match: (p: string) => p.startsWith('/account/german') }] : []),
     { to: '/account/interviews', label: t('journey.nav.interviews'), icon: Video, match: (p: string) => p.startsWith('/account/interviews') },

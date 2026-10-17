@@ -5,6 +5,10 @@
 const az = {
   accountPage: {
     tabs: {
+      cv: 'Mənim CV-m',
+      letters: 'Motivasiya məktubları',
+      vault: 'Sənəd seyfi',
+      arrival: 'Gəliş planı',
       translations: 'Tərcümə və apostil',
       privacy: 'Məxfilik',
       dashboard: 'İcmal',
@@ -295,6 +299,10 @@ const az = {
 const de: typeof az = {
   accountPage: {
     tabs: {
+      cv: 'Mein Lebenslauf',
+      letters: 'Anschreiben',
+      vault: 'Dokumententresor',
+      arrival: 'Anreise',
       translations: 'Übersetzung & Apostille',
       privacy: 'Datenschutz',
       dashboard: 'Übersicht',
@@ -585,6 +593,10 @@ const de: typeof az = {
 const en: typeof az = {
   accountPage: {
     tabs: {
+      cv: 'My CV',
+      letters: 'Cover letters',
+      vault: 'Document vault',
+      arrival: 'Arrival plan',
       translations: 'Translation & apostille',
       privacy: 'Privacy',
       dashboard: 'Overview',
@@ -875,6 +887,10 @@ const en: typeof az = {
 const ru: typeof az = {
   accountPage: {
     tabs: {
+      cv: 'Моё резюме',
+      letters: 'Мотивационные письма',
+      vault: 'Сейф документов',
+      arrival: 'План приезда',
       translations: 'Перевод и апостиль',
       privacy: 'Конфиденциальность',
       dashboard: 'Обзор',

@@ -14,6 +14,7 @@ import { ScoreRing } from '@/components/jobs/MatchMeter';
 import { toastJobsError, useJobLabels } from '@/components/jobs/labels';
 import { APPLICATION_STATUS_TONE, type AnonProfile, type ApplicationStatus } from '@/components/jobs/types';
 import { Empty, Loading, Section } from './shared';
+import { CvDownloadButton } from '@/components/cv/CvDownloadButton';
 
 interface Item {
   id: string;
@@ -175,6 +176,7 @@ export const CompanyCandidates = () => {
                 </div>
               </dl>
               {a.companyNote && <p className="mt-3 rounded-lg bg-surface px-3 py-2 text-xs text-ink/80">{a.companyNote}</p>}
+              <CvDownloadButton url={`/company/candidates/${a.id}/cv.pdf`} anonymised className="mt-3" />
               <p className="mt-3 text-[11px] text-muted">{t('jobsArea.portal.candidates.updated', { date: fmtDate(a.updatedAt) })}</p>
               {(a.status === 'PROPOSED' || a.status === 'INTERVIEW') && <DecisionBox item={a} onDone={refresh} />}
             </li>

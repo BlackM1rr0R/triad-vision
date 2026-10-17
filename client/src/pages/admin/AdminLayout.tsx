@@ -41,6 +41,7 @@ import {
   MessageSquareQuote,
   MessageSquareText,
   Newspaper,
+  PlaneLanding,
   Plug,
   Receipt,
   Route,
@@ -107,6 +108,7 @@ const MAIN_NAV: NavItem[] = [
   { to: '/admin/kb', label: 'kb', icon: BookOpenText },
   { to: '/admin/agents', label: 'agents', icon: Handshake, adminOnly: true },
   { to: '/admin/translations', label: 'translations', icon: Languages },
+  { to: '/admin/arrivals', label: 'arrivals', icon: PlaneLanding },
   { to: '/admin/privacy-requests', label: 'privacyRequests', icon: ShieldHalf, adminOnly: true },
   { to: '/admin/integrations', label: 'integrations', icon: Plug, adminOnly: true },
   { to: '/admin/help', label: 'help', icon: LifeBuoy },
@@ -142,6 +144,7 @@ const pageTitleKey = (pathname: string) => {
   if (matchPath('/admin/help', pathname)) return 'admin.nav.help';
   if (matchPath('/admin/tasks/*', pathname)) return 'admin.nav.tasks';
   if (matchPath('/admin/announcements', pathname)) return 'admin.nav.announcements';
+  if (matchPath('/admin/arrivals/*', pathname)) return 'admin.nav.arrivals';
   const m = matchPath('/admin/content/:resource', pathname);
   if (m) {
     const item = CONTENT_NAV.find((c) => c.resource === m.params.resource);

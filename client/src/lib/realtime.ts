@@ -34,6 +34,7 @@ const EVENT_TYPES = [
   'poll.updated',
   'leave.updated',
   'translation',
+  'arrival',
 ] as const;
 export type RealtimeEventType = (typeof EVENT_TYPES)[number];
 

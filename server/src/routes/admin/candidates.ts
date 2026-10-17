@@ -8,6 +8,7 @@ import { createCase, FINAL_STATUSES } from '../../lib/caseFlow.js';
 import { GERMAN_LEVELS, germanRank, licenceCovers, matchCandidate } from '../../lib/matching.js';
 import { notifyApplicationStatus, notifyCandidateProposed } from '../../lib/jobsNotifications.js';
 import { emitWebhook } from '../../lib/ops/webhooks.js';
+import { sendStaffCv } from '../../lib/cv/access.js';
 
 // Admin: candidates — mounted at /api/admin/candidates
 export const adminCandidatesRouter = Router();
@@ -154,6 +155,9 @@ adminCandidatesRouter.get('/:id', async (req, res) => {
     },
   });
 });
+
+/** Full CV PDF of a candidate (staff). */
+adminCandidatesRouter.get('/:userId/cv.pdf', sendStaffCv);
 
 /** Staff add a candidate to a vacancy (SHORTLISTED). A withdrawn / new application is re-used. */
 adminCandidatesRouter.post('/:id/applications', async (req, res) => {
