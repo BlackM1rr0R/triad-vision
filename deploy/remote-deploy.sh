@@ -50,5 +50,9 @@ echo "== seed (idempotent: super admin + initial content when the tables are emp
 $COMPOSE exec -T api npm run seed -w server </dev/null
 
 docker image prune -f >/dev/null
+echo "== cleanup (keep at most 4 GB of build cache, drop untagged images; the disk filled up without it)"
+docker builder prune -f --keep-storage 4GB >/dev/null 2>&1 || docker builder prune -f --max-used-space 4GB >/dev/null 2>&1 || true
+docker image prune -f >/dev/null 2>&1 || true
+
 echo "== containers"
 $COMPOSE ps
