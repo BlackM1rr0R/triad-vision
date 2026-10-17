@@ -21,6 +21,8 @@ export interface ForecastStep {
 
 export interface Forecast {
   status: CaseStatus;
+  /** WORK | AUSBILDUNG | JOB_SEEKER | STUDY | FAMILY | TOURIST — names the contract step. */
+  visaType?: string;
   currentStep: ForecastStepKey | null;
   currentSince: string | null;
   steps: ForecastStep[];

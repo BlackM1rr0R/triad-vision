@@ -271,6 +271,16 @@ model PasswordResetToken {
 
 // ─── Visa case workflow ────────────────────────────────────────────────
 
+/// Kind of application the client starts (chosen instead of typing a profession).
+enum VisaType {
+  WORK // skilled work / employment visa (§18a, §18b, §19c …)
+  AUSBILDUNG // vocational training (§16a)
+  JOB_SEEKER // Chancenkarte / job seeker visa
+  STUDY // university studies (§16b)
+  FAMILY // family reunion
+  TOURIST // Schengen visitor visa
+}
+
 enum CaseStatus {
   DOCUMENTS_PENDING // client uploads initial documents
   DOCUMENTS_REVIEW // client submitted, staff reviewing
@@ -310,6 +320,7 @@ model Case {
   visaCategoryId    String?
   visaCategory      VisaCategory?         @relation(fields: [visaCategoryId], references: [id], onDelete: SetNull)
   profession        String
+  visaType          VisaType              @default(WORK) // what the client applies for: drives step names and expected durations
   status            CaseStatus            @default(DOCUMENTS_PENDING)
   staffNote         String?               @db.Text // latest note visible to client (e.g. what to fix)
   appointmentAt     DateTime?

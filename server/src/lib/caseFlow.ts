@@ -1,4 +1,4 @@
-import type { CaseStatus, DocStage, Prisma } from '@prisma/client';
+import type { CaseStatus, DocStage, Prisma, VisaType } from '@prisma/client';
 import { prisma } from '../db.js';
 import { badRequest, conflict, notFound } from './http.js';
 import { formatDateTime, notifyClient, notifyStaff, type NotificationType, type NotifyParams } from './notifications.js';
@@ -30,6 +30,8 @@ export const createCase = async (
   clientId: string,
   input: {
     profession: string;
+    /** Kind of application (work visa, Ausbildung, tourist …); family members inherit the main case's. */
+    visaType?: VisaType;
     visaCategoryId?: string | null;
     /** Family reunion: the main applicant's case this one belongs to (+ relation: spouse | child | parent). */
     parentCaseId?: string | null;
@@ -50,7 +52,7 @@ export const createCase = async (
       const created = await prisma.$transaction(async (tx) => {
         const number = await nextCaseNumber(tx);
         // A family member inherits the main case's staff; otherwise auto-assignment (if enabled) picks one.
-        const parent = input.parentCaseId ? await tx.case.findUnique({ where: { id: input.parentCaseId }, select: { assignedStaffId: true, visaCategoryId: true } }) : null;
+        const parent = input.parentCaseId ? await tx.case.findUnique({ where: { id: input.parentCaseId }, select: { assignedStaffId: true, visaCategoryId: true, visaType: true } }) : null;
         const assignedStaffId = parent?.assignedStaffId ?? (await pickAssignee(tx));
         const visaCategoryId = input.visaCategoryId ?? parent?.visaCategoryId ?? null;
         const c = await tx.case.create({
@@ -58,6 +60,7 @@ export const createCase = async (
             clientId,
             number,
             profession: input.profession,
+            visaType: input.visaType ?? parent?.visaType ?? 'WORK',
             visaCategoryId,
             assignedStaffId,
             parentCaseId: input.parentCaseId ?? null,

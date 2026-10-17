@@ -27,6 +27,7 @@ import { OCR_IMAGE_MIME, langDataAvailable } from '../lib/docsIntel/ocr.js';
 import { PASSPORT_SCAN_TIMEOUT_MS, scanPassportImage } from '../lib/docsIntel/passportScan.js';
 import { recordConsent } from '../lib/privacy/consents.js';
 import { attachReferral } from '../lib/agents/referral.js';
+import { markClientsExcelDirty } from '../lib/clientsExcel.js';
 
 export const authRouter = Router();
 
@@ -215,6 +216,8 @@ authRouter.post('/register', authLimiter, async (req, res) => {
   }
   if (body.ref) await attachReferral(user.id, body.ref);
   await sendVerificationEmail(user.id);
+  // The super admins' client list (Excel) gets the new client within a minute.
+  markClientsExcelDirty();
   res.status(201).json(await startSession(req, res, user));
 });
 

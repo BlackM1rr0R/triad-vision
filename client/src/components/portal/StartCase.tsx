@@ -2,13 +2,26 @@ import { useId, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { FilePlus2, Rocket } from 'lucide-react';
+import { Briefcase, FilePlus2, GraduationCap, Plane, Rocket, School, Search, Users } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { api, errorCode } from '@/lib/api';
 import { useSiteContent } from '@/lib/content';
 import { useL10n } from '@/lib/l10n';
 import { Spinner } from '@/components/ui/Spinner';
 import { useApiError } from './useApiError';
 import { OVERVIEW_KEY } from './useOverview';
+
+type VisaTypeKey = 'WORK' | 'AUSBILDUNG' | 'JOB_SEEKER' | 'STUDY' | 'FAMILY' | 'TOURIST';
+
+/** The kinds of application a client can start (instead of typing a profession). */
+const VISA_TYPES: { key: VisaTypeKey; icon: LucideIcon }[] = [
+  { key: 'WORK', icon: Briefcase },
+  { key: 'AUSBILDUNG', icon: School },
+  { key: 'JOB_SEEKER', icon: Search },
+  { key: 'STUDY', icon: GraduationCap },
+  { key: 'FAMILY', icon: Users },
+  { key: 'TOURIST', icon: Plane },
+];
 
 /** Guided "start your application" card shown when the client has no active case. */
 export const StartCase = ({ hasCases, defaultProfession }: { hasCases: boolean; defaultProfession?: string | null }) => {
@@ -18,9 +31,8 @@ export const StartCase = ({ hasCases, defaultProfession }: { hasCases: boolean; 
   const qc = useQueryClient();
   const onError = useApiError();
   const { data: content } = useSiteContent();
-  const professionId = useId();
   const visaId = useId();
-  const [profession, setProfession] = useState(defaultProfession ?? '');
+  const [visaType, setVisaType] = useState<VisaTypeKey | ''>('');
   const [visaCategoryId, setVisaCategoryId] = useState('');
   const [busy, setBusy] = useState(false);
 
@@ -30,12 +42,22 @@ export const StartCase = ({ hasCases, defaultProfession }: { hasCases: boolean; 
   const refresh = () =>
     Promise.all([qc.invalidateQueries({ queryKey: ['cases'] }), qc.invalidateQueries({ queryKey: OVERVIEW_KEY })]);
 
+  /** Ausbildung has its own visa category; the sector list only applies to work visas. */
+  const pickType = (key: VisaTypeKey) => {
+    setVisaType(key);
+    if (key === 'AUSBILDUNG') setVisaCategoryId(categories.find((v) => v.slug === 'ausbildung')?.id ?? '');
+    else if (key !== 'WORK') setVisaCategoryId('');
+    else if (categories.find((v) => v.id === visaCategoryId)?.slug === 'ausbildung') setVisaCategoryId('');
+  };
+
   const submit = async () => {
-    if (profession.trim().length < 2) return;
+    if (!visaType) return;
     setBusy(true);
     try {
       const res = await api.post<{ case: { id: string } }>('/cases', {
-        profession: profession.trim(),
+        visaType,
+        // The profession comes from the profile (if filled); the server falls back to the visa type.
+        ...(defaultProfession ? { profession: defaultProfession } : {}),
         visaCategoryId: visaCategoryId || null,
       });
       await refresh();
@@ -87,38 +109,48 @@ export const StartCase = ({ hasCases, defaultProfession }: { hasCases: boolean; 
             void submit();
           }}
         >
-          <div>
-            <label htmlFor={professionId} className="label">
-              {t('portal.profession')}
-            </label>
-            <input
-              id={professionId}
-              className="input"
-              value={profession}
-              onChange={(e) => setProfession(e.target.value)}
-              placeholder={t('portal.professionPh')}
-              required
-              minLength={2}
-              maxLength={120}
-            />
-            {defaultProfession && profession === defaultProfession && (
-              <p className="mt-1.5 text-xs text-muted">{t('accountPage.dash.start.profileHint')}</p>
-            )}
-          </div>
-          <div>
-            <label htmlFor={visaId} className="label">
-              {t('portal.visaType')}
-            </label>
-            <select id={visaId} className="input" value={visaCategoryId} onChange={(e) => setVisaCategoryId(e.target.value)}>
-              <option value="">{t('portal.notSure')}</option>
-              {categories.map((v) => (
-                <option key={v.id} value={v.id}>
-                  {tr(v.title)} ({v.visaLabel})
-                </option>
+          <fieldset>
+            <legend className="label">{t('portal.applicationType')}</legend>
+            <div className="grid gap-2 sm:grid-cols-2">
+              {VISA_TYPES.map(({ key, icon: Icon }) => (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => pickType(key)}
+                  aria-pressed={visaType === key}
+                  className={`flex items-start gap-3 rounded-xl border p-3 text-left transition ${
+                    visaType === key ? 'border-brand-500 bg-brand-50 ring-2 ring-brand-500/20' : 'border-line hover:border-brand-400/60 hover:bg-surface'
+                  }`}
+                >
+                  <span className={`grid size-9 shrink-0 place-items-center rounded-lg ${visaType === key ? 'bg-brand-600 text-white' : 'bg-surface text-brand-600'}`}>
+                    <Icon className="size-4" aria-hidden />
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block text-sm font-semibold text-ink">{t(`portal.visaTypes.${key}`)}</span>
+                    <span className="block text-xs leading-snug text-muted">{t(`portal.visaTypeHints.${key}`)}</span>
+                  </span>
+                </button>
               ))}
-            </select>
-          </div>
-          <button type="submit" className="btn-primary min-h-11 w-full sm:w-auto" disabled={busy || profession.trim().length < 2}>
+            </div>
+          </fieldset>
+          {visaType === 'WORK' && categories.length > 0 && (
+            <div>
+              <label htmlFor={visaId} className="label">
+                {t('portal.sectorLabel')}
+              </label>
+              <select id={visaId} className="input" value={visaCategoryId} onChange={(e) => setVisaCategoryId(e.target.value)}>
+                <option value="">{t('portal.notSure')}</option>
+                {categories
+                  .filter((v) => v.slug !== 'ausbildung')
+                  .map((v) => (
+                    <option key={v.id} value={v.id}>
+                      {tr(v.title)} ({v.visaLabel})
+                    </option>
+                  ))}
+              </select>
+            </div>
+          )}
+          <button type="submit" className="btn-primary min-h-11 w-full sm:w-auto" disabled={busy || !visaType}>
             {busy ? <Spinner className="size-4" /> : <FilePlus2 className="size-4" aria-hidden />}
             {t('portal.create')}
           </button>

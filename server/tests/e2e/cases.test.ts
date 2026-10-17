@@ -102,7 +102,7 @@ describe('GET/POST /api/cases', () => {
     expect(res.body.case.visaCategoryId).toBeNull();
   });
 
-  it.each([[{}], [{ profession: 'x' }], [{ profession: 'a'.repeat(121) }]])('validates %j', async (body) => {
+  it.each([[{ visaType: 'SPACE' }], [{ profession: 'a'.repeat(121) }]])('validates %j', async (body) => {
     const { client } = await setup();
     const res = await client.agent.post('/api/cases').send(body);
     expect(res.status).toBe(400);

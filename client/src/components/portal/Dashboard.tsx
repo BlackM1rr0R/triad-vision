@@ -39,6 +39,7 @@ import { StatusBadge } from './StatusBadge';
 import { FIELD_TAB, type ProfileField } from './profileFields';
 import { OVERVIEW_KEY } from './useOverview';
 import { useWhen } from './useWhen';
+import { stepLabel } from './stepLabel';
 
 const caseLink = (c: { id: string }, anchor?: string | null) => `/account/cases/${c.id}${anchor ?? ''}`;
 
@@ -125,15 +126,15 @@ export const JourneyCard = ({ c }: { c: ActiveCase }) => {
                     current ? 'text-white' : done ? 'text-white/70' : 'text-white/40',
                   )}
                 >
-                  {t(`portal.steps.${key}`)}
+                  {stepLabel(t, key, c.visaType)}
                 </span>
-                <span className="sr-only">{t(`portal.steps.${key}`)}</span>
+                <span className="sr-only">{stepLabel(t, key, c.visaType)}</span>
               </li>
             );
           })}
         </ol>
         <p className="relative mt-2 text-xs font-semibold text-white/70 md:hidden">
-          {t('accountPage.dash.stepOf', { n: Math.max(1, c.step + 1), total: c.stepCount })} · {t(`portal.steps.${STEP_KEYS[Math.max(0, c.step)]}`)}
+          {t('accountPage.dash.stepOf', { n: Math.max(1, c.step + 1), total: c.stepCount })} · {stepLabel(t, STEP_KEYS[Math.max(0, c.step)], c.visaType)}
         </p>
       </div>
 

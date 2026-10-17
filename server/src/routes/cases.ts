@@ -37,18 +37,28 @@ casesRouter.get('/', async (req, res) => {
   res.json({ cases });
 });
 
+/** Shown where a profession is expected when the client did not name one (staff lists, notifications). */
+const VISA_TYPE_LABEL_AZ = { WORK: 'İş vizası', AUSBILDUNG: 'Ausbildung', JOB_SEEKER: 'İş axtarışı vizası', STUDY: 'Təhsil vizası', FAMILY: 'Ailə birləşməsi', TOURIST: 'Turist vizası' } as const;
+
 casesRouter.post('/', requireVerifiedEmail, async (req, res) => {
   // Visa cases belong to candidates; employer (and staff) accounts open cases through the admin flow.
   if (req.user!.role !== 'CLIENT') throw forbidden('CANDIDATES_ONLY');
   const body = parse(
-    z.object({ profession: z.string().trim().min(2).max(120), visaCategoryId: z.string().nullable().optional() }),
+    z.object({
+      // The client picks the kind of application; the profession is optional (taken from the profile).
+      visaType: z.enum(['WORK', 'AUSBILDUNG', 'JOB_SEEKER', 'STUDY', 'FAMILY', 'TOURIST']).default('WORK'),
+      profession: z.string().trim().max(120).optional(),
+      visaCategoryId: z.string().nullable().optional(),
+    }),
     req.body,
   );
   if (body.visaCategoryId) {
     const exists = await prisma.visaCategory.count({ where: { id: body.visaCategoryId, published: true } });
     if (!exists) throw badRequest('INVALID_VISA_CATEGORY');
   }
-  const created = await createCase(req.user!.id, body);
+  const me = await prisma.user.findUnique({ where: { id: req.user!.id }, select: { profession: true } });
+  const profession = body.profession || me?.profession || VISA_TYPE_LABEL_AZ[body.visaType];
+  const created = await createCase(req.user!.id, { profession, visaType: body.visaType, visaCategoryId: body.visaCategoryId });
   res.status(201).json({ case: created });
 });
 

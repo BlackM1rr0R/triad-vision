@@ -8,6 +8,7 @@ import { audit } from '../../lib/audit.js';
 import { ensurePersonalRoot } from '../../lib/drive/roots.js';
 import { password } from '../auth.js';
 import { deleteUserAccount, loadDeletionTarget, userDeletionPreview } from '../../lib/userDeletion.js';
+import { XLSX_MIME, buildClientsWorkbook } from '../../lib/clientsExcel.js';
 
 export const adminUsersRouter = Router();
 
@@ -149,6 +150,15 @@ adminUsersRouter.post('/:id/revoke-sessions', requireMinRole('SUPER_ADMIN'), asy
 });
 
 /** What deleting this account would remove or hand over (shown in the confirmation dialog). */
+/** GET /api/admin/users/clients.xlsx — every client as an Excel sheet (super admin; also kept in their drive). */
+adminUsersRouter.get('/clients.xlsx', requireMinRole('SUPER_ADMIN'), async (req, res) => {
+  const data = await buildClientsWorkbook();
+  await audit(req, 'CLIENTS_EXPORTED', undefined, { format: 'xlsx' });
+  res.setHeader('Content-Type', XLSX_MIME);
+  res.setHeader('Content-Disposition', `attachment; filename="Butun-musteriler-${new Date().toISOString().slice(0, 10)}.xlsx"`);
+  res.send(data);
+});
+
 adminUsersRouter.get('/:id/deletion-preview', requireMinRole('SUPER_ADMIN'), async (req, res) => {
   res.json(await userDeletionPreview(req.user!.id, String(req.params.id)));
 });

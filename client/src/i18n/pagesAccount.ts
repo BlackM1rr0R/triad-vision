@@ -16,6 +16,8 @@ const az = {
       myCases: 'Müraciətlərim',
     },
     header: {
+      birthDate: 'Doğum tarixi',
+      passport: 'Xarici pasport',
       profile: 'Profil',
       complete: 'tamamlanıb',
       completeProfile: 'Profili tamamla',
@@ -165,7 +167,7 @@ const az = {
       },
       start: {
         eyebrow: 'Başlayaq',
-        steps: ['Peşə və viza növünü seçin', 'Sənədləri yükləyin', 'Müqavilə, səfirlik və viza'],
+        steps: ['Müraciət növünü seçin', 'Sənədləri yükləyin', 'Müqavilə, səfirlik və viza'],
         profileHint: 'Profilinizdəki peşə avtomatik daxil edildi.',
       },
       profileCard: {
@@ -310,6 +312,8 @@ const de: typeof az = {
       myCases: 'Meine Anträge',
     },
     header: {
+      birthDate: 'Geburtsdatum',
+      passport: 'Reisepass',
       profile: 'Profil',
       complete: 'vollständig',
       completeProfile: 'Profil vervollständigen',
@@ -459,7 +463,7 @@ const de: typeof az = {
       },
       start: {
         eyebrow: 'Los geht’s',
-        steps: ['Beruf und Visumart wählen', 'Dokumente hochladen', 'Vertrag, Botschaft und Visum'],
+        steps: ['Antragsart wählen', 'Dokumente hochladen', 'Vertrag, Botschaft und Visum'],
         profileHint: 'Der Beruf aus Ihrem Profil wurde übernommen.',
       },
       profileCard: {
@@ -604,6 +608,8 @@ const en: typeof az = {
       myCases: 'My applications',
     },
     header: {
+      birthDate: 'Date of birth',
+      passport: 'Passport',
       profile: 'Profile',
       complete: 'complete',
       completeProfile: 'Complete your profile',
@@ -753,7 +759,7 @@ const en: typeof az = {
       },
       start: {
         eyebrow: 'Let’s start',
-        steps: ['Choose your profession and visa type', 'Upload your documents', 'Contract, embassy and visa'],
+        steps: ['Choose the type of application', 'Upload your documents', 'Contract, embassy and visa'],
         profileHint: 'We filled in the profession from your profile.',
       },
       profileCard: {
@@ -898,6 +904,8 @@ const ru: typeof az = {
       myCases: 'Мои заявки',
     },
     header: {
+      birthDate: 'Дата рождения',
+      passport: 'Загранпаспорт',
       profile: 'Профиль',
       complete: 'заполнен',
       completeProfile: 'Заполнить профиль',
@@ -1047,7 +1055,7 @@ const ru: typeof az = {
       },
       start: {
         eyebrow: 'Начнём',
-        steps: ['Выберите профессию и тип визы', 'Загрузите документы', 'Договор, посольство и виза'],
+        steps: ['Выберите тип заявки', 'Загрузите документы', 'Договор, посольство и виза'],
         profileHint: 'Профессия подставлена из вашего профиля.',
       },
       profileCard: {

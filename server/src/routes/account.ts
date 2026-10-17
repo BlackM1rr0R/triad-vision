@@ -172,6 +172,7 @@ const caseSummarySelect = {
   id: true,
   number: true,
   profession: true,
+  visaType: true,
   relation: true,
   parentCaseId: true,
   status: true,

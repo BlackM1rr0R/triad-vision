@@ -39,6 +39,8 @@ export interface OverviewCaseRow {
   id: string;
   number: string;
   profession: string;
+  /** WORK | AUSBILDUNG | JOB_SEEKER | STUDY | FAMILY | TOURIST */
+  visaType?: string;
   status: CaseStatus;
   createdAt: string;
   updatedAt: string;

@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Ban, Check, X } from 'lucide-react';
 import { STATUS_STEP, STEP_KEYS } from '@/lib/caseStatus';
 import type { CaseStatus } from '@/lib/types';
+import { stepLabel } from './stepLabel';
 
 export type StepState = 'done' | 'current' | 'failed' | 'idle';
 
@@ -31,10 +32,13 @@ export const CaseStepper = ({
   status,
   variant = 'full',
   className,
+  visaType,
 }: {
   status: CaseStatus;
   variant?: 'full' | 'mini';
   className?: string;
+  /** Names the contract step (employment / Ausbildung contract). */
+  visaType?: string | null;
 }) => {
   const { t } = useTranslation();
   const reduce = useReducedMotion();
@@ -135,7 +139,7 @@ export const CaseStepper = ({
                     s === 'idle' ? 'text-muted' : s === 'failed' ? 'text-danger' : 'text-navy-900',
                   )}
                 >
-                  {t(`portal.steps.${key}`)}
+                  {stepLabel(t, key, visaType)}
                 </span>
                 {(s === 'current' || s === 'failed' || (last && approved)) && (
                   <span className={clsx('mt-0.5 block text-xs', s === 'failed' ? 'text-danger/80' : approved ? 'text-success' : 'text-brand-600')}>

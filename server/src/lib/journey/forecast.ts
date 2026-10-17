@@ -1,4 +1,4 @@
-import type { CaseStatus } from '@prisma/client';
+import type { CaseStatus, VisaType } from '@prisma/client';
 import { prisma } from '../../db.js';
 
 /**
@@ -30,6 +30,19 @@ export const DEFAULT_RANGES: Record<StepKey, [number, number]> = {
   DECISION: [14, 42],
 };
 
+/**
+ * Fallback durations per kind of application (days), used until enough history exists. A Schengen
+ * visitor visa takes weeks, a family reunion months; work and Ausbildung visas sit in between.
+ */
+export const DEFAULTS_BY_TYPE: Record<VisaType, Record<StepKey, [number, number]>> = {
+  WORK: DEFAULT_RANGES,
+  AUSBILDUNG: { DOCUMENTS: [10, 21], CONTRACT: [7, 21], EMBASSY: [14, 28], APPOINTMENT: [21, 60], DECISION: [21, 56] },
+  JOB_SEEKER: { DOCUMENTS: [7, 14], CONTRACT: [2, 5], EMBASSY: [7, 21], APPOINTMENT: [21, 60], DECISION: [14, 42] },
+  STUDY: { DOCUMENTS: [14, 28], CONTRACT: [3, 7], EMBASSY: [14, 28], APPOINTMENT: [21, 60], DECISION: [21, 56] },
+  FAMILY: { DOCUMENTS: [10, 21], CONTRACT: [3, 7], EMBASSY: [14, 28], APPOINTMENT: [30, 90], DECISION: [30, 90] },
+  TOURIST: { DOCUMENTS: [3, 7], CONTRACT: [1, 3], EMBASSY: [3, 7], APPOINTMENT: [7, 21], DECISION: [7, 15] },
+};
+
 /** Fewer samples than this and the history is not trusted for a step. */
 export const MIN_SAMPLE = 3;
 export const CACHE_TTL_MS = 10 * 60 * 1000;
@@ -59,6 +72,8 @@ export interface ForecastStep extends StepRange {
 
 export interface Forecast {
   status: CaseStatus;
+  /** Kind of application: the client names the contract step after it (work / Ausbildung contract). */
+  visaType?: VisaType;
   currentStep: StepKey | null;
   currentSince: Date | null;
   steps: ForecastStep[];
@@ -126,6 +141,7 @@ export const stepDurations = (history: StatusPoint[]): Partial<Record<StepKey, n
 export const resolveRanges = (
   samples: { category: Partial<Record<StepKey, number[]>>; all: Partial<Record<StepKey, number[]>> },
   override: ForecastOverride | null | undefined,
+  defaults: Record<StepKey, [number, number]> = DEFAULT_RANGES,
 ): Ranges => {
   const out = {} as Ranges;
   for (const key of STEP_KEYS) {
@@ -141,7 +157,7 @@ export const resolveRanges = (
       const [minDays, maxDays] = rangeFromSample(use);
       out[key] = { minDays, maxDays, basedOn: 'history', sample: use.length };
     } else {
-      const [minDays, maxDays] = DEFAULT_RANGES[key];
+      const [minDays, maxDays] = defaults[key];
       out[key] = { minDays, maxDays, basedOn: 'default', sample: 0 };
     }
   }
@@ -277,13 +293,14 @@ export const parseOverride = (raw: unknown): ForecastOverride | null => {
 };
 
 /** Ranges for a visa category (null = cases without a category): history → defaults, overridden by the admin. */
-export const rangesFor = async (visaCategoryId: string | null): Promise<Ranges> => {
+export const rangesFor = async (visaCategoryId: string | null, visaType: VisaType = 'WORK'): Promise<Ranges> => {
   const [category, all, visa] = await Promise.all([
     visaCategoryId ? loadSamples(visaCategoryId) : Promise.resolve({} as Samples),
-    loadSamples(null),
+    // The history of all cases is mostly work visas, so it only stands in for work applications.
+    visaType === 'WORK' ? loadSamples(null) : Promise.resolve({} as Samples),
     visaCategoryId ? prisma.visaCategory.findUnique({ where: { id: visaCategoryId }, select: { forecast: true } }) : null,
   ]);
-  return resolveRanges({ category, all }, parseOverride(visa?.forecast));
+  return resolveRanges({ category, all }, parseOverride(visa?.forecast), DEFAULTS_BY_TYPE[visaType]);
 };
 
 /** Forecast of one case from its stored status events. */
@@ -293,12 +310,13 @@ export const forecastForCase = async (caseId: string): Promise<Forecast> => {
     select: {
       status: true,
       visaCategoryId: true,
+      visaType: true,
       createdAt: true,
       events: { where: { toStatus: { not: null } }, select: { toStatus: true, createdAt: true }, orderBy: { createdAt: 'asc' } },
     },
   });
-  const ranges = await rangesFor(c.visaCategoryId);
+  const ranges = await rangesFor(c.visaCategoryId, c.visaType);
   const history: StatusPoint[] = c.events.map((e) => ({ status: e.toStatus as CaseStatus, at: e.createdAt }));
   if (!history.length) history.push({ status: 'DOCUMENTS_PENDING', at: c.createdAt });
-  return computeForecast({ status: c.status, history, ranges });
+  return { ...computeForecast({ status: c.status, history, ranges }), visaType: c.visaType };
 };

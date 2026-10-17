@@ -18,6 +18,9 @@
   "ausbildung": "Ausbildung",
   "faq": "FAQ",
   "news": "News",
+  "salary": "Gehaltsrechner",
+  "anerkennung": "Anerkennung",
+  "cities": "Deutsche Städte",
   "contact": "Kontakt",
   "more": "Mehr",
   "cooperation": "Kooperationsanfrage",
@@ -380,8 +383,26 @@
   "noCases": "Sie haben noch keinen Antrag.",
   "newCase": "Neuer Antrag",
   "startTitle": "Visumantrag starten",
-  "startText": "Wählen Sie Ihren Beruf und die Visumart. Danach erscheint die Liste der benötigten Dokumente in Ihrem Kundenbereich.",
+  "startText": "Wählen Sie, wofür Sie beantragen: Arbeitsvisum, Ausbildung, Studium, Besuchervisum usw. Danach erscheint die Liste der benötigten Dokumente in Ihrem Kundenbereich.",
   "profession": "Ihr Beruf",
+  "applicationType": "Wofür beantragen Sie?",
+  "sectorLabel": "Branche (für das Arbeitsvisum)",
+  "visaTypes": {
+   "WORK": "Arbeitsvisum",
+   "AUSBILDUNG": "Ausbildung",
+   "JOB_SEEKER": "Jobsuche (Chancenkarte)",
+   "STUDY": "Studienvisum",
+   "FAMILY": "Familiennachzug",
+   "TOURIST": "Besuchervisum"
+  },
+  "visaTypeHints": {
+   "WORK": "Arbeiten bei einem Arbeitgeber in Deutschland",
+   "AUSBILDUNG": "Berufsausbildung in Deutschland (mit Vergütung)",
+   "JOB_SEEKER": "Visum für 1 Jahr Jobsuche in Deutschland",
+   "STUDY": "Studium an einer deutschen Hochschule",
+   "FAMILY": "Nachzug zu einem Familienmitglied in Deutschland",
+   "TOURIST": "Kurzer Aufenthalt (Schengen-Visum)"
+  },
   "professionPh": "z. B. LKW-Fahrer, Koch, Pflegekraft",
   "visaType": "Visumart",
   "notSure": "Weiß nicht / Beratung nötig",
@@ -398,12 +419,20 @@
   "staffNote": "Hinweis vom Mitarbeiter",
   "manager": "Manager",
   "steps": {
-   "documents": "Dokumente",
+   "documents": "Prüfung der Unterlagen",
    "contract": "Vertrag",
    "embassyDocs": "Botschaftsunterlagen",
    "appointment": "Botschaftstermin",
    "decision": "Entscheidung",
    "result": "Ergebnis"
+  },
+  "contractByType": {
+   "WORK": "Arbeitsvertrag",
+   "AUSBILDUNG": "Ausbildungsvertrag",
+   "JOB_SEEKER": "Dienstleistungsvertrag",
+   "STUDY": "Studienvertrag",
+   "FAMILY": "Dienstleistungsvertrag",
+   "TOURIST": "Dienstleistungsvertrag"
   },
   "status": {
    "DOCUMENTS_PENDING": "Dokumente hochladen",

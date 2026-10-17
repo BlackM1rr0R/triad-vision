@@ -2,7 +2,7 @@ import { Link, useLocation, useOutlet } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
-import { Bell, Briefcase, Compass, FileSignature, FileUser, FolderOpen, GraduationCap, Languages, LayoutDashboard, PenLine, PlaneLanding, ShieldCheck, UserRound, Vault, Video } from 'lucide-react';
+import { Bell, BookUser, Briefcase, Cake, Compass, FileSignature, FileUser, FolderOpen, GraduationCap, Languages, LayoutDashboard, PenLine, PlaneLanding, ShieldCheck, UserRound, Vault, Video } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { FINAL } from '@/lib/caseStatus';
 import { useNotifications } from '@/components/portal/useNotifications';
@@ -119,7 +119,25 @@ export default function AccountLayout() {
             >
               {t('portal.hello')}, {user?.firstName}
             </motion.h1>
-            {user?.email && <p className="mt-1 truncate text-sm text-white/60">{user.email}</p>}
+            {user?.email && (
+              <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-white/60">
+                <span className="truncate">{user.email}</span>
+                {user.birthDate && (
+                  <span className="inline-flex items-center gap-1.5">
+                    <Cake className="size-3.5" aria-hidden />
+                    <span className="sr-only">{t('accountPage.header.birthDate')}: </span>
+                    {user.birthDate.split('-').reverse().join('.')}
+                  </span>
+                )}
+                {user.passportNumber && (
+                  <span className="inline-flex items-center gap-1.5 font-mono tracking-wide">
+                    <BookUser className="size-3.5" aria-hidden />
+                    <span className="sr-only">{t('accountPage.header.passport')}: </span>
+                    {user.passportNumber}
+                  </span>
+                )}
+              </p>
+            )}
 
             <nav
               className="clear-both -mx-5 mt-6 flex snap-x gap-1 overflow-x-auto px-4 pb-1 [scrollbar-width:none] sm:mx-0 sm:mt-8 sm:px-0 [&::-webkit-scrollbar]:hidden"

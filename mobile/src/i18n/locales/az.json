@@ -18,6 +18,9 @@
   "ausbildung": "Ausbildung",
   "faq": "FAQ",
   "news": "Xəbərlər",
+  "salary": "Maaş kalkulyatoru",
+  "anerkennung": "Diplomun tanınması",
+  "cities": "Alman şəhərləri",
   "contact": "Əlaqə",
   "more": "Daha çox",
   "cooperation": "Əməkdaşlıq təklifi al",
@@ -380,8 +383,26 @@
   "noCases": "Hələ müraciətiniz yoxdur.",
   "newCase": "Yeni müraciət",
   "startTitle": "Viza müraciətinə başlayın",
-  "startText": "Peşənizi və viza növünü seçin. Sonra lazım olan sənədlərin siyahısı kabinetinizdə görünəcək.",
+  "startText": "Nə üçün müraciət etdiyinizi seçin: iş vizası, Ausbildung, təhsil, turist vizası və s. Sonra lazım olan sənədlərin siyahısı kabinetinizdə görünəcək.",
   "profession": "Peşəniz",
+  "applicationType": "Nə üçün müraciət edirsiniz?",
+  "sectorLabel": "Sahə (iş vizası üçün)",
+  "visaTypes": {
+   "WORK": "İş vizası",
+   "AUSBILDUNG": "Ausbildung",
+   "JOB_SEEKER": "İş axtarışı (Chancenkarte)",
+   "STUDY": "Təhsil vizası",
+   "FAMILY": "Ailə birləşməsi",
+   "TOURIST": "Turist vizası"
+  },
+  "visaTypeHints": {
+   "WORK": "Almaniyada işəgötürənlə işləmək üçün",
+   "AUSBILDUNG": "Almaniyada peşə təhsili (əmək haqqı ilə)",
+   "JOB_SEEKER": "Almaniyada iş axtarmaq üçün 1 illik viza",
+   "STUDY": "Almaniyada universitetdə təhsil",
+   "FAMILY": "Almaniyadakı ailə üzvünün yanına köçmək",
+   "TOURIST": "Qısamüddətli səfər (Şengen vizası)"
+  },
   "professionPh": "məs. LKW sürücüsü, aşpaz, tibb bacısı",
   "visaType": "Viza növü",
   "notSure": "Bilmirəm / məsləhət lazımdır",
@@ -398,12 +419,20 @@
   "staffNote": "Əməkdaşdan qeyd",
   "manager": "Menecer",
   "steps": {
-   "documents": "Sənədlər",
+   "documents": "Sənədlərin təsdiqlənməsi",
    "contract": "Müqavilə",
    "embassyDocs": "Səfirlik sənədləri",
    "appointment": "Səfirlik görüşü",
    "decision": "Qərar",
    "result": "Nəticə"
+  },
+  "contractByType": {
+   "WORK": "İş müqaviləsi",
+   "AUSBILDUNG": "Ausbildung müqaviləsi",
+   "JOB_SEEKER": "Xidmət müqaviləsi",
+   "STUDY": "Təhsil müqaviləsi",
+   "FAMILY": "Xidmət müqaviləsi",
+   "TOURIST": "Xidmət müqaviləsi"
   },
   "status": {
    "DOCUMENTS_PENDING": "Sənədlərin yüklənməsi",

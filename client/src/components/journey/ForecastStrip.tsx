@@ -26,7 +26,7 @@ const DateRange = ({ from, to }: { from: string; to: string }) => {
   );
 };
 
-const StepCell = ({ step, index }: { step: ForecastStep; index: number }) => {
+const StepCell = ({ step, index, visaType }: { step: ForecastStep; index: number; visaType?: string }) => {
   const { t } = useTranslation();
   const { date } = useL10n();
   const range = useRangeLabel();
@@ -45,7 +45,7 @@ const StepCell = ({ step, index }: { step: ForecastStep; index: number }) => {
         </span>
         <span className={clsx('h-px flex-1', step.status === 'done' ? 'bg-success/50' : 'bg-line')} aria-hidden />
       </div>
-      <p className={clsx('mt-2.5 text-sm font-bold', step.status === 'upcoming' ? 'text-navy-900/70' : 'text-navy-900')}>{t(`journey.forecast.steps.${step.key}`)}</p>
+      <p className={clsx('mt-2.5 text-sm font-bold', step.status === 'upcoming' ? 'text-navy-900/70' : 'text-navy-900')}>{step.key === 'CONTRACT' && visaType ? t(`journey.forecast.contractByType.${visaType}`, { defaultValue: t('journey.forecast.steps.CONTRACT') }) : t(`journey.forecast.steps.${step.key}`)}</p>
       <p className={clsx('mt-0.5 text-xs font-semibold', tone)}>{t(`journey.forecast.${step.status}`)}</p>
       <p className="mt-1 text-xs text-muted">
         {step.status === 'done' && step.enteredAt && step.leftAt ? (
@@ -103,7 +103,7 @@ export const ForecastView = ({ forecast, className }: { forecast: Forecast; clas
 
       <ol className="mt-5 flex gap-3 overflow-x-auto pb-1 [scrollbar-width:thin] sm:gap-4 [&>li]:min-w-[8.5rem] sm:[&>li]:min-w-0">
         {forecast.steps.map((s, i) => (
-          <StepCell key={s.key} step={s} index={i} />
+          <StepCell key={s.key} step={s} index={i} visaType={forecast.visaType} />
         ))}
       </ol>
 

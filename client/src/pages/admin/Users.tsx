@@ -4,7 +4,7 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tansta
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
 import { toast } from 'sonner';
-import { FolderOpen, KeyRound, LogOut, Mail, Trash2, MessageSquare, MonitorSmartphone, Phone, Search, UserPlus, Users as UsersIcon, Wifi } from 'lucide-react';
+import { FileSpreadsheet, FolderOpen, KeyRound, LogOut, Mail, Trash2, MessageSquare, MonitorSmartphone, Phone, Search, UserPlus, Users as UsersIcon, Wifi } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { hasMinRole, isStrongPassword, PASSWORD_MAX, PASSWORD_MIN, type Role } from '@/lib/types';
@@ -432,6 +432,16 @@ export default function Users() {
         actions={
           <>
             {isFetching && !isLoading && <Spinner className="size-4 text-brand-600" />}
+            {canManage && (
+              <a
+                href="/api/admin/users/clients.xlsx"
+                className="btn-white btn-sm border border-line"
+                title={t('admin.users.excelHint')}
+                download
+              >
+                <FileSpreadsheet className="size-3.5" /> {t('admin.users.excel')}
+              </a>
+            )}
             {canManage && (
               <button type="button" className="btn-primary btn-sm" onClick={() => setCreating(true)}>
                 <UserPlus className="size-3.5" /> {t('admin.users.newStaff')}

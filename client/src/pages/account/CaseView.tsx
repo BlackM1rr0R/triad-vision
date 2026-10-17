@@ -210,7 +210,7 @@ export default function CaseView() {
 
       {/* Stepper */}
       <section className="card p-5 sm:p-6 lg:p-8" aria-label={t('portal.currentStep')}>
-        <CaseStepper status={data.status} />
+        <CaseStepper status={data.status} visaType={(data as { visaType?: string }).visaType} />
       </section>
 
       <ForecastStrip caseId={data.id} />
