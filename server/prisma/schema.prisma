@@ -275,6 +275,7 @@ model PasswordResetToken {
 enum VisaType {
   WORK // skilled work / employment visa (§18a, §18b, §19c …)
   AUSBILDUNG // vocational training (§16a)
+  WEITERBILDUNG // further training / qualification measure for recognition (§16d)
   JOB_SEEKER // Chancenkarte / job seeker visa
   STUDY // university studies (§16b)
   FAMILY // family reunion

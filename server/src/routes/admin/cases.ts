@@ -22,6 +22,8 @@ import { caseStats, loadCaseDetail } from '../../lib/caseView.js';
 import { badRequest, conflict, HttpError, notFound, parse } from '../../lib/http.js';
 import { notifyClient } from '../../lib/notifications.js';
 import { createCaseMessage, listMessages, markMessagesRead, publishTyping } from '../../lib/messaging/caseMessages.js';
+import { deleteCaseDocument } from '../../lib/caseDocDelete.js';
+import { requireMinRole } from '../../middleware/auth.js';
 
 export const adminCasesRouter = Router();
 
@@ -196,6 +198,13 @@ adminCasesRouter.delete('/:id/requirements/:reqId', async (req, res) => {
 });
 
 // ─── Documents ─────────────────────────────────────────────────────────
+
+/** DELETE /api/admin/cases/:id/documents/:docId — permanent removal, super admin only. */
+adminCasesRouter.delete('/:id/documents/:docId', requireMinRole('SUPER_ADMIN'), async (req, res) => {
+  const doc = await prisma.document.findFirst({ where: { id: String(req.params.docId), caseId: String(req.params.id) }, select: { id: true } });
+  if (!doc) throw notFound('DOCUMENT_NOT_FOUND');
+  res.json({ ok: true, ...(await deleteCaseDocument(req, doc.id)) });
+});
 
 adminCasesRouter.post('/:id/documents/:docId/review', async (req, res) => {
   const body = parse(

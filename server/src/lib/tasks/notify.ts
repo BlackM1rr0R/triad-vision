@@ -53,7 +53,8 @@ export const notifyAssigned = (task: TaskRef, userIds: string[], actor: Person) 
         actor: fullName(actor),
         due: task.dueAt ? formatTaskDue(task.dueAt, u.locale) : undefined,
       });
-      await notifyUser(u.id, { type: 'TASK_ASSIGNED', ...msg, link: taskLink(task.number), ctaLabel: tx.cta.task });
+      // Being assigned is work, not a newsletter: the e-mail goes out whatever the notification settings say.
+      await notifyUser(u.id, { type: 'TASK_ASSIGNED', ...msg, link: taskLink(task.number), ctaLabel: tx.cta.task, forceEmail: true });
     }
   });
 

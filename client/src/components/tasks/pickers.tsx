@@ -198,6 +198,7 @@ export const DateTimeField = ({
   disabled,
   idPrefix,
   label,
+  min,
 }: {
   date: string;
   time: string;
@@ -205,6 +206,8 @@ export const DateTimeField = ({
   disabled?: boolean;
   idPrefix: string;
   label: string;
+  /** Earliest selectable day ('YYYY-MM-DD'). */
+  min?: string;
 }) => {
   const { t } = useTranslation();
   return (
@@ -214,6 +217,7 @@ export const DateTimeField = ({
         type="date"
         aria-label={label}
         value={date}
+        min={min}
         disabled={disabled}
         onChange={(e) => onChange(e.target.value, time)}
         className="input min-w-0 flex-1 py-2 disabled:opacity-70"

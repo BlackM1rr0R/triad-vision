@@ -31,6 +31,7 @@ const STATUS_AZ: Record<CaseStatus, string> = {
 const TYPE_AZ: Record<VisaType, string> = {
   WORK: 'İş vizası',
   AUSBILDUNG: 'Ausbildung',
+  WEITERBILDUNG: 'Weiterbildung',
   JOB_SEEKER: 'İş axtarışı',
   STUDY: 'Təhsil vizası',
   FAMILY: 'Ailə birləşməsi',

@@ -5,6 +5,7 @@ import clsx from 'clsx';
 import { toast } from 'sonner';
 import { Check, CheckCheck, ClipboardList, Plus, Trash2, Upload, X } from 'lucide-react';
 import { api } from '@/lib/api';
+import { useAuth } from '@/lib/auth';
 import { useL10n } from '@/lib/l10n';
 import type { CaseDetail, CaseDocument, Requirement } from '@/lib/types';
 import { Spinner } from '@/components/ui/Spinner';
@@ -35,6 +36,23 @@ const DocRow = ({ c, doc, requirementKey }: { c: CaseDetail; doc: CaseDocument; 
   const [rejecting, setRejecting] = useState(false);
   const [note, setNote] = useState('');
   const [busy, setBusy] = useState<'ACCEPTED' | 'REJECTED' | null>(null);
+  // Permanent removal of a case document is reserved for super admins.
+  const isSuper = useAuth().user?.role === 'SUPER_ADMIN';
+  const [askDelete, setAskDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const remove = async () => {
+    setDeleting(true);
+    try {
+      await api.delete(`/admin/cases/${c.id}/documents/${doc.id}`);
+      await refresh();
+      toast.success(t('admin.case.req.docDeleted'));
+      setAskDelete(false);
+    } catch (err) {
+      toastError(err);
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   const review = async (status: 'ACCEPTED' | 'REJECTED') => {
     setBusy(status);
@@ -67,6 +85,27 @@ const DocRow = ({ c, doc, requirementKey }: { c: CaseDetail; doc: CaseDocument; 
           <span className={clsx('badge whitespace-nowrap', DOC_STATUS_TONE[doc.status])}>{docStatusLabel(doc.status)}</span>
           <DocCheckBadge checks={(doc as CaseDocument & { checks?: unknown }).checks} />
           <DocLinks doc={doc} />
+          {isSuper && (
+            <button
+              type="button"
+              onClick={() => setAskDelete(true)}
+              className="grid size-8 place-items-center rounded-lg text-muted hover:bg-red-50 hover:text-danger"
+              aria-label={`${t('admin.case.req.deleteDoc')}: ${doc.originalName}`}
+              title={t('admin.case.req.deleteDoc')}
+            >
+              <Trash2 className="size-4" />
+            </button>
+          )}
+          <ConfirmDialog
+            open={askDelete}
+            onClose={() => setAskDelete(false)}
+            onConfirm={() => void remove()}
+            loading={deleting}
+            tone="danger"
+            title={t('admin.case.req.deleteDocTitle')}
+            message={t('admin.case.req.deleteDocBody', { name: doc.originalName })}
+            confirmLabel={t('admin.case.req.deleteDoc')}
+          />
           <div className="flex gap-1.5">
             {doc.status !== 'ACCEPTED' && (
               <button

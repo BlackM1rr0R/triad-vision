@@ -118,6 +118,7 @@ interface FlatResponse {
 type Confirm =
   | { kind: 'trash'; items: DriveItem[] }
   | { kind: 'purge'; items: DriveItem[] }
+  | { kind: 'caseDocs'; items: DriveItem[] }
   | { kind: 'empty' }
   | { kind: 'version'; item: DriveItem; v: VersionRow };
 
@@ -133,6 +134,8 @@ export default function WorkspaceDrive() {
   const { '*': splat = '' } = useParams();
   const [params] = useSearchParams();
   const { user } = useAuth();
+  /** A document inside the Cases area (virtual id "doc:…"). */
+  const isCaseDoc = (i: DriveItem) => i.kind === 'FILE' && i.id.startsWith('doc:');
   const myId = user?.id ?? '';
   const isSuper = user?.role === 'SUPER_ADMIN';
   const loc = useMemo(() => parseLocation(splat, params), [splat, params]);
@@ -330,6 +333,7 @@ export default function WorkspaceDrive() {
     void run(async () => {
       if (c.kind === 'trash') reportBatch(await batchCall('/drive/trash', { ids: c.items.map((i) => i.id) }), 'drive.toasts.trashed');
       else if (c.kind === 'purge') reportBatch(await batchCall('/drive/purge', { ids: c.items.map((i) => i.id) }), 'drive.toasts.purged');
+      else if (c.kind === 'caseDocs') reportBatch(await batchCall('/drive/case-documents/delete', { ids: c.items.map((i) => i.id) }), 'drive.toasts.purged');
       else if (c.kind === 'empty') {
         await api.delete('/drive/trash');
         toast.success(t('drive.toasts.emptied'));
@@ -458,6 +462,10 @@ export default function WorkspaceDrive() {
     if (editable(list)) {
       out.push({ kind: 'separator', id: 's3' }, { id: 'del', label: t('drive.actions.delete'), icon: Trash2, danger: true, onSelect: () => setConfirm({ kind: 'trash', items: list }) });
     }
+    // Case documents can only be removed by a super admin, and then permanently.
+    if (isSuper && list.length && list.every(isCaseDoc)) {
+      out.push({ kind: 'separator', id: 's4' }, { id: 'caseDel', label: t('drive.actions.deleteForever'), icon: XCircle, danger: true, onSelect: () => setConfirm({ kind: 'caseDocs', items: list }) });
+    }
     // No two separators in a row / at the ends.
     return out.filter((e, i, arr) => e.kind !== 'separator' || (i > 0 && i < arr.length - 1 && arr[i - 1].kind !== 'separator'));
   };
@@ -480,6 +488,7 @@ export default function WorkspaceDrive() {
     if (copyable(list)) out.push({ id: 'copyto', icon: Copy, label: t('drive.actions.copyTo'), onClick: () => setPicker({ mode: 'copy', items: list }) });
     if (single) out.push({ id: 'share', icon: Shield, label: t('drive.actions.share'), onClick: () => setShareItem(single), primary: true });
     if (editable(list)) out.push({ id: 'del', icon: Trash2, label: t('drive.actions.delete'), onClick: () => setConfirm({ kind: 'trash', items: list }), danger: true, primary: true });
+    if (isSuper && list.every(isCaseDoc)) out.push({ id: 'caseDel', icon: XCircle, label: t('drive.actions.deleteForever'), onClick: () => setConfirm({ kind: 'caseDocs', items: list }), danger: true });
     return out;
   };
 
@@ -989,7 +998,7 @@ export default function WorkspaceDrive() {
         title={
           confirm?.kind === 'trash'
             ? t('drive.dialogs.deleteTitle')
-            : confirm?.kind === 'purge'
+            : confirm?.kind === 'purge' || confirm?.kind === 'caseDocs'
               ? t('drive.dialogs.deleteForeverTitle')
               : confirm?.kind === 'empty'
                 ? t('drive.dialogs.emptyTrashTitle')
@@ -1002,6 +1011,8 @@ export default function WorkspaceDrive() {
             ? t('drive.dialogs.deleteBody', { count: confirm.items.length, days: trashDays })
             : confirm?.kind === 'purge'
               ? t('drive.dialogs.deleteForeverBody', { count: confirm.items.length })
+              : confirm?.kind === 'caseDocs'
+                ? t('drive.dialogs.caseDocsBody', { count: confirm.items.length })
               : confirm?.kind === 'empty'
                 ? t('drive.dialogs.emptyTrashBody')
                 : confirm?.kind === 'version'
@@ -1011,7 +1022,7 @@ export default function WorkspaceDrive() {
         confirmLabel={
           confirm?.kind === 'trash'
             ? t('drive.actions.delete')
-            : confirm?.kind === 'purge'
+            : confirm?.kind === 'purge' || confirm?.kind === 'caseDocs'
               ? t('drive.actions.deleteForever')
               : confirm?.kind === 'empty'
                 ? t('drive.actions.emptyTrash')

@@ -2,7 +2,7 @@ import { useId, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { Briefcase, FilePlus2, GraduationCap, Plane, Rocket, School, Search, Users } from 'lucide-react';
+import { Award, Briefcase, FilePlus2, GraduationCap, Plane, Rocket, School, Search, Users } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { api, errorCode } from '@/lib/api';
 import { useSiteContent } from '@/lib/content';
@@ -11,12 +11,13 @@ import { Spinner } from '@/components/ui/Spinner';
 import { useApiError } from './useApiError';
 import { OVERVIEW_KEY } from './useOverview';
 
-type VisaTypeKey = 'WORK' | 'AUSBILDUNG' | 'JOB_SEEKER' | 'STUDY' | 'FAMILY' | 'TOURIST';
+type VisaTypeKey = 'WORK' | 'AUSBILDUNG' | 'WEITERBILDUNG' | 'JOB_SEEKER' | 'STUDY' | 'FAMILY' | 'TOURIST';
 
 /** The kinds of application a client can start (instead of typing a profession). */
 const VISA_TYPES: { key: VisaTypeKey; icon: LucideIcon }[] = [
   { key: 'WORK', icon: Briefcase },
   { key: 'AUSBILDUNG', icon: School },
+  { key: 'WEITERBILDUNG', icon: Award },
   { key: 'JOB_SEEKER', icon: Search },
   { key: 'STUDY', icon: GraduationCap },
   { key: 'FAMILY', icon: Users },

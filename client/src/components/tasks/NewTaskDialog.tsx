@@ -9,7 +9,7 @@ import type { CaseRef, Person, TaskDetail, TaskPriority, TaskStatus } from './ty
 import { TASK_STATUSES } from './types';
 import { useTaskActions } from './api';
 import { AssigneeField, CaseField, DateTimeField, PriorityPicker, StatusSelect } from './pickers';
-import { DEFAULT_DUE_TIME, errorText, fromInputs } from './utils';
+import { DEFAULT_DUE_TIME, dayKey, errorText, fromInputs } from './utils';
 import { FileDrop, PendingFiles } from './FileDrop';
 
 export interface NewTaskDefaults {
@@ -45,6 +45,7 @@ export const NewTaskDialog = ({
   const [start, setStart] = useState({ date: '', time: '' });
   const [caseRef, setCaseRef] = useState<CaseRef | null>(null);
   const [busy, setBusy] = useState(false);
+  const today = dayKey(new Date());
   const [files, setFiles] = useState<File[]>([]);
   const [progress, setProgress] = useState<Record<number, number>>({});
 
@@ -56,7 +57,8 @@ export const NewTaskDialog = ({
     setPriority('NORMAL');
     setAssignees(defaults.assignees ?? []);
     setDue(defaults.dueDate ? { date: defaults.dueDate, time: DEFAULT_DUE_TIME } : { date: '', time: '' });
-    setStart({ date: '', time: '' });
+    // A new task starts today (it can be moved later, never into the past).
+    setStart({ date: dayKey(new Date()), time: '' });
     setCaseRef(defaults.case ?? null);
     setBusy(false);
     setFiles([]);
@@ -161,18 +163,6 @@ export const NewTaskDialog = ({
                   <StatusSelect id={`${titleId}-status`} value={status} options={TASK_STATUSES.filter((s) => s !== 'CANCELLED')} onChange={setStatus} />
                 </div>
                 <div>
-                  <label className="label" htmlFor={`${titleId}-due-date`}>
-                    {t('tasks.fields.dueAt')}
-                  </label>
-                  <DateTimeField
-                    idPrefix={`${titleId}-due`}
-                    label={t('tasks.fields.dueAt')}
-                    date={due.date}
-                    time={due.time}
-                    onChange={(date, time) => setDue({ date, time: date ? time || DEFAULT_DUE_TIME : '' })}
-                  />
-                </div>
-                <div>
                   <label className="label" htmlFor={`${titleId}-start-date`}>
                     {t('tasks.fields.startAt')}
                   </label>
@@ -181,7 +171,21 @@ export const NewTaskDialog = ({
                     label={t('tasks.fields.startAt')}
                     date={start.date}
                     time={start.time}
+                    min={today}
                     onChange={(date, time) => setStart({ date, time: date ? time || '09:00' : '' })}
+                  />
+                </div>
+                <div>
+                  <label className="label" htmlFor={`${titleId}-due-date`}>
+                    {t('tasks.fields.dueAt')}
+                  </label>
+                  <DateTimeField
+                    idPrefix={`${titleId}-due`}
+                    label={t('tasks.fields.dueAt')}
+                    date={due.date}
+                    time={due.time}
+                    min={start.date && start.date > today ? start.date : today}
+                    onChange={(date, time) => setDue({ date, time: date ? time || DEFAULT_DUE_TIME : '' })}
                   />
                 </div>
                 <div>

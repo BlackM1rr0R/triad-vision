@@ -38,7 +38,7 @@ casesRouter.get('/', async (req, res) => {
 });
 
 /** Shown where a profession is expected when the client did not name one (staff lists, notifications). */
-const VISA_TYPE_LABEL_AZ = { WORK: 'İş vizası', AUSBILDUNG: 'Ausbildung', JOB_SEEKER: 'İş axtarışı vizası', STUDY: 'Təhsil vizası', FAMILY: 'Ailə birləşməsi', TOURIST: 'Turist vizası' } as const;
+const VISA_TYPE_LABEL_AZ = { WORK: 'İş vizası', AUSBILDUNG: 'Ausbildung', WEITERBILDUNG: 'Weiterbildung', JOB_SEEKER: 'İş axtarışı vizası', STUDY: 'Təhsil vizası', FAMILY: 'Ailə birləşməsi', TOURIST: 'Turist vizası' } as const;
 
 casesRouter.post('/', requireVerifiedEmail, async (req, res) => {
   // Visa cases belong to candidates; employer (and staff) accounts open cases through the admin flow.
@@ -46,7 +46,7 @@ casesRouter.post('/', requireVerifiedEmail, async (req, res) => {
   const body = parse(
     z.object({
       // The client picks the kind of application; the profession is optional (taken from the profile).
-      visaType: z.enum(['WORK', 'AUSBILDUNG', 'JOB_SEEKER', 'STUDY', 'FAMILY', 'TOURIST']).default('WORK'),
+      visaType: z.enum(['WORK', 'AUSBILDUNG', 'WEITERBILDUNG', 'JOB_SEEKER', 'STUDY', 'FAMILY', 'TOURIST']).default('WORK'),
       profession: z.string().trim().max(120).optional(),
       visaCategoryId: z.string().nullable().optional(),
     }),

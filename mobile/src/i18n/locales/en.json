@@ -390,6 +390,7 @@
   "visaTypes": {
    "WORK": "Work visa",
    "AUSBILDUNG": "Ausbildung",
+   "WEITERBILDUNG": "Weiterbildung",
    "JOB_SEEKER": "Job seeker (Chancenkarte)",
    "STUDY": "Student visa",
    "FAMILY": "Family reunion",
@@ -398,6 +399,7 @@
   "visaTypeHints": {
    "WORK": "To work for an employer in Germany",
    "AUSBILDUNG": "Paid vocational training in Germany",
+   "WEITERBILDUNG": "Further training / recognition course in Germany",
    "JOB_SEEKER": "A 1-year visa to look for a job in Germany",
    "STUDY": "Studying at a German university",
    "FAMILY": "Joining a family member in Germany",
@@ -429,6 +431,7 @@
   "contractByType": {
    "WORK": "Employment contract",
    "AUSBILDUNG": "Ausbildung contract",
+   "WEITERBILDUNG": "Weiterbildung contract",
    "JOB_SEEKER": "Service contract",
    "STUDY": "Study contract",
    "FAMILY": "Service contract",

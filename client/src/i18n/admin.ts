@@ -510,6 +510,10 @@ const az = {
       req: {
         state: { accepted: 'Qəbul edilib', review: 'Yoxlanılmalıdır', rejected: 'Rədd edilib', missing: 'Yüklənməyib' },
         docAccepted: 'Sənəd qəbul edildi.',
+        deleteDoc: 'Sənədi həmişəlik sil',
+        deleteDocTitle: 'Sənəd həmişəlik silinsin?',
+        deleteDocBody: '«{{name}}» faylı müraciətdən və serverdən silinəcək. Bunu geri qaytarmaq olmaz.',
+        docDeleted: 'Sənəd silindi',
         docRejected: 'Sənəd rədd edildi, müştəriyə bildiriş göndərildi.',
         accept: 'Qəbul et',
         reject: 'Rədd et',
@@ -1721,6 +1725,10 @@ const de: typeof az = {
       req: {
         state: { accepted: 'Akzeptiert', review: 'Zu prüfen', rejected: 'Abgelehnt', missing: 'Nicht hochgeladen' },
         docAccepted: 'Dokument akzeptiert.',
+        deleteDoc: 'Dokument endgültig löschen',
+        deleteDocTitle: 'Dokument endgültig löschen?',
+        deleteDocBody: '„{{name}}“ wird aus dem Antrag und vom Server gelöscht. Das kann nicht rückgängig gemacht werden.',
+        docDeleted: 'Dokument gelöscht',
         docRejected: 'Dokument abgelehnt, der Kunde wurde benachrichtigt.',
         accept: 'Akzeptieren',
         reject: 'Ablehnen',
@@ -2932,6 +2940,10 @@ const en: typeof az = {
       req: {
         state: { accepted: 'Accepted', review: 'Needs review', rejected: 'Rejected', missing: 'Not uploaded' },
         docAccepted: 'Document accepted.',
+        deleteDoc: 'Delete document permanently',
+        deleteDocTitle: 'Delete the document permanently?',
+        deleteDocBody: '“{{name}}” will be removed from the case and from the server. This cannot be undone.',
+        docDeleted: 'Document deleted',
         docRejected: 'Document rejected; the client has been notified.',
         accept: 'Accept',
         reject: 'Reject',
@@ -4167,6 +4179,10 @@ const ru = {
       req: {
         state: { accepted: 'Принято', review: 'Требует проверки', rejected: 'Отклонено', missing: 'Не загружено' },
         docAccepted: 'Документ принят.',
+        deleteDoc: 'Удалить документ навсегда',
+        deleteDocTitle: 'Удалить документ навсегда?',
+        deleteDocBody: '«{{name}}» будет удалён из заявки и с сервера. Отменить это нельзя.',
+        docDeleted: 'Документ удалён',
         docRejected: 'Документ отклонён, клиент получил уведомление.',
         accept: 'Принять',
         reject: 'Отклонить',

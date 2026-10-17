@@ -247,7 +247,18 @@ export const notifyStaff = async (subject: string, body: string, opts: { caseId?
  */
 export const notifyUser = async (
   userId: string,
-  msg: { type: string; title: string; body: string; link?: string; caseId?: string; email?: boolean; push?: boolean; ctaLabel?: string },
+  msg: {
+    type: string;
+    title: string;
+    body: string;
+    link?: string;
+    caseId?: string;
+    email?: boolean;
+    push?: boolean;
+    ctaLabel?: string;
+    /** Send the e-mail even when the user turned e-mail notifications off (work assignments). */
+    forceEmail?: boolean;
+  },
 ) => {
   const user = await prisma.user.findUnique({ where: { id: userId } });
   if (!user || !user.isActive) return;
@@ -258,7 +269,7 @@ export const notifyUser = async (
   if (msg.push !== false && user.pushNotifications !== false) {
     void sendPush([userId], { title: msg.title, body: msg.body, data: { link: msg.link ?? '', caseId: msg.caseId ?? '', type: msg.type } });
   }
-  if (msg.email !== false && user.emailNotifications !== false) {
+  if (msg.email !== false && (msg.forceEmail || user.emailNotifications !== false)) {
     const cta = msg.link ? { label: msg.ctaLabel ?? ctaLabel[user.locale], url: `${config.clientUrl}${msg.link}` } : undefined;
     void sendMail(user.email, `Triad Vision · ${msg.title}`, renderEmail(msg.title, msg.body, cta));
   }

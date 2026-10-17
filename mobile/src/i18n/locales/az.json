@@ -390,6 +390,7 @@
   "visaTypes": {
    "WORK": "İş vizası",
    "AUSBILDUNG": "Ausbildung",
+   "WEITERBILDUNG": "Weiterbildung",
    "JOB_SEEKER": "İş axtarışı (Chancenkarte)",
    "STUDY": "Təhsil vizası",
    "FAMILY": "Ailə birləşməsi",
@@ -398,6 +399,7 @@
   "visaTypeHints": {
    "WORK": "Almaniyada işəgötürənlə işləmək üçün",
    "AUSBILDUNG": "Almaniyada peşə təhsili (əmək haqqı ilə)",
+   "WEITERBILDUNG": "Almaniyada ixtisasartırma / diplomun tanınması kursu",
    "JOB_SEEKER": "Almaniyada iş axtarmaq üçün 1 illik viza",
    "STUDY": "Almaniyada universitetdə təhsil",
    "FAMILY": "Almaniyadakı ailə üzvünün yanına köçmək",
@@ -429,6 +431,7 @@
   "contractByType": {
    "WORK": "İş müqaviləsi",
    "AUSBILDUNG": "Ausbildung müqaviləsi",
+   "WEITERBILDUNG": "Weiterbildung müqaviləsi",
    "JOB_SEEKER": "Xidmət müqaviləsi",
    "STUDY": "Təhsil müqaviləsi",
    "FAMILY": "Xidmət müqaviləsi",

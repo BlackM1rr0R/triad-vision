@@ -420,17 +420,22 @@ describe('drive: cases area (virtual, read-only)', () => {
     const admin = await asAdmin();
     const su = await asSuperAdmin();
     await prisma.case.update({ where: { id: c.id }, data: { assignedStaffId: assigned.user.id } });
+    // Only accepted documents appear in the drive.
+    await prisma.document.update({ where: { id: doc.id }, data: { status: 'ACCEPTED' } });
 
     const r = await roots(assigned.agent);
     expect(r.cases).toMatchObject({ myAccess: 'VIEW', childCount: 1 });
-    const casesList = expectStatus(await list(assigned.agent, r.cases.id), 200).body;
+    // Cases are grouped by kind of application (no visa category → directly in the type folder).
+    const types = expectStatus(await list(assigned.agent, r.cases.id), 200).body;
+    expect(types.items.map((i: { id: string; name: string }) => [i.id, i.name])).toEqual([['vt:WORK', 'İş vizası']]);
+    const casesList = expectStatus(await list(assigned.agent, 'vt:WORK'), 200).body;
     expect(casesList.items).toHaveLength(1);
-    expect(casesList.items[0]).toMatchObject({ id: `case:${c.id}`, name: `${c.number} — Kamran Aliyev`, virtual: true, myAccess: 'DOWNLOAD', caseStatus: 'DOCUMENTS_PENDING' });
+    expect(casesList.items[0]).toMatchObject({ id: `case:${c.id}`, parentId: 'vt:WORK', name: `${c.number} — Kamran Aliyev`, virtual: true, myAccess: 'DOWNLOAD', caseStatus: 'DOCUMENTS_PENDING' });
     const stages = expectStatus(await list(assigned.agent, `case:${c.id}`), 200).body;
     expect(stages.items.map((i: { id: string }) => i.id)).toEqual([`case:${c.id}:INITIAL`]);
     const docs = expectStatus(await list(assigned.agent, `case:${c.id}:INITIAL`), 200).body;
-    expect(docs.items[0]).toMatchObject({ id: `doc:${doc.id}`, name: 'passport.pdf', docStatus: 'PENDING', kind: 'FILE' });
-    expect(docs.path.map((p: { id: string }) => p.id)).toEqual([r.cases.id, `case:${c.id}`, `case:${c.id}:INITIAL`]);
+    expect(docs.items[0]).toMatchObject({ id: `doc:${doc.id}`, name: 'passport.pdf', docStatus: 'ACCEPTED', kind: 'FILE' });
+    expect(docs.path.map((p: { id: string }) => p.id)).toEqual([r.cases.id, 'vt:WORK', `case:${c.id}`, `case:${c.id}:INITIAL`]);
     const dl = await download(assigned.agent, `/api/drive/nodes/doc:${doc.id}/content?download=1`);
     expect(dl.status).toBe(200);
     expect((dl.body as Buffer).subarray(0, 5).toString()).toBe('%PDF-');
@@ -455,6 +460,13 @@ describe('drive: cases area (virtual, read-only)', () => {
     expect((await su.agent.patch(`/api/drive/nodes/doc:${doc.id}`).send({ name: 'x.pdf' })).body.error).toBe('READ_ONLY');
     expect((await su.agent.post('/api/drive/trash').send({ ids: [`doc:${doc.id}`] })).body.results[0].error).toBe('READ_ONLY');
 
+    // A rejected document disappears from the drive; it stays in the case flow.
+    await prisma.document.update({ where: { id: doc.id }, data: { status: 'REJECTED' } });
+    expect((await list(assigned.agent, `case:${c.id}:INITIAL`)).status).toBe(200);
+    expect(expectStatus(await list(assigned.agent, `case:${c.id}`), 200).body.items).toHaveLength(0);
+    expect((await assigned.agent.get(`/api/drive/nodes/doc:${doc.id}/content`)).status).toBe(404);
+    await prisma.document.update({ where: { id: doc.id }, data: { status: 'ACCEPTED' } });
+
     // A case document can be copied into the drive (DOWNLOAD).
     const { personal } = await roots(assigned.agent);
     expect(expectStatus(await assigned.agent.post('/api/drive/copy').send({ ids: [`doc:${doc.id}`], targetId: personal.id }), 200).body.results[0]).toMatchObject({ ok: true, name: 'passport.pdf' });
@@ -462,6 +474,12 @@ describe('drive: cases area (virtual, read-only)', () => {
     // Search finds cases and documents.
     const found = expectStatus(await assigned.agent.get('/api/drive/search?q=passport'), 200).body.items;
     expect(found.map((i: { id: string }) => i.id).sort()).toEqual(expect.arrayContaining([`doc:${doc.id}`]));
+
+    // Only a super admin can delete a case document — permanently, with an audit entry.
+    expect((await admin.agent.post('/api/drive/case-documents/delete').send({ ids: [`doc:${doc.id}`] })).status).toBe(403);
+    expect(expectStatus(await su.agent.post('/api/drive/case-documents/delete').send({ ids: [`doc:${doc.id}`] }), 200).body.results[0]).toMatchObject({ ok: true, name: 'passport.pdf' });
+    expect(await prisma.document.count({ where: { id: doc.id } })).toBe(0);
+    expect(await prisma.auditLog.count({ where: { action: 'CASE_DOCUMENT_DELETED' } })).toBe(1);
   });
 
   it('marks DSGVO-purged cases', async () => {

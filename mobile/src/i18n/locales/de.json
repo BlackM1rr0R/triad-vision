@@ -390,6 +390,7 @@
   "visaTypes": {
    "WORK": "Arbeitsvisum",
    "AUSBILDUNG": "Ausbildung",
+   "WEITERBILDUNG": "Weiterbildung",
    "JOB_SEEKER": "Jobsuche (Chancenkarte)",
    "STUDY": "Studienvisum",
    "FAMILY": "Familiennachzug",
@@ -398,6 +399,7 @@
   "visaTypeHints": {
    "WORK": "Arbeiten bei einem Arbeitgeber in Deutschland",
    "AUSBILDUNG": "Berufsausbildung in Deutschland (mit Vergütung)",
+   "WEITERBILDUNG": "Weiterbildung / Anpassungsqualifizierung in Deutschland",
    "JOB_SEEKER": "Visum für 1 Jahr Jobsuche in Deutschland",
    "STUDY": "Studium an einer deutschen Hochschule",
    "FAMILY": "Nachzug zu einem Familienmitglied in Deutschland",
@@ -429,6 +431,7 @@
   "contractByType": {
    "WORK": "Arbeitsvertrag",
    "AUSBILDUNG": "Ausbildungsvertrag",
+   "WEITERBILDUNG": "Weiterbildungsvertrag",
    "JOB_SEEKER": "Dienstleistungsvertrag",
    "STUDY": "Studienvertrag",
    "FAMILY": "Dienstleistungsvertrag",

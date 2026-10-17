@@ -390,6 +390,7 @@
   "visaTypes": {
    "WORK": "Рабочая виза",
    "AUSBILDUNG": "Ausbildung",
+   "WEITERBILDUNG": "Weiterbildung",
    "JOB_SEEKER": "Поиск работы (Chancenkarte)",
    "STUDY": "Учебная виза",
    "FAMILY": "Воссоединение семьи",
@@ -398,6 +399,7 @@
   "visaTypeHints": {
    "WORK": "Работа у работодателя в Германии",
    "AUSBILDUNG": "Оплачиваемое профобучение в Германии",
+   "WEITERBILDUNG": "Повышение квалификации / курс для признания диплома",
    "JOB_SEEKER": "Виза на 1 год для поиска работы в Германии",
    "STUDY": "Учёба в немецком вузе",
    "FAMILY": "Переезд к члену семьи в Германии",
@@ -429,6 +431,7 @@
   "contractByType": {
    "WORK": "Трудовой договор",
    "AUSBILDUNG": "Договор Ausbildung",
+   "WEITERBILDUNG": "Договор Weiterbildung",
    "JOB_SEEKER": "Договор об услугах",
    "STUDY": "Договор об обучении",
    "FAMILY": "Договор об услугах",

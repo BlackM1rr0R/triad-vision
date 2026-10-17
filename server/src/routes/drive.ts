@@ -18,6 +18,8 @@ import {
   docFilePath,
   isVirtualId,
   listCases,
+  listCaseTypes,
+  parseVirtualId,
   listVirtual,
   loadVirtual,
   searchCases,
@@ -33,6 +35,7 @@ import { adoptUpload, copyIntoStore, removeStored, storagePath } from '../lib/dr
 import { purgeNodes, restoreSubtree, softDelete, trashRootIds } from '../lib/drive/trash.js';
 import { sharedText } from '../lib/drive/texts.js';
 import { driveUpload } from '../lib/drive/upload.js';
+import { deleteCaseDocument } from '../lib/caseDocDelete.js';
 
 /**
  * Team drive (/api/drive): a shared company drive, a personal "My files" root per staff member and a
@@ -177,7 +180,8 @@ driveRouter.get('/nodes/:id/children', async (req, res) => {
   if (node && !node.deletedAt && node.space === 'CASES' && !node.parentId) {
     const folder = await casesRootItem(ctx);
     if (!folder) throw notFound('NODE_NOT_FOUND');
-    const { items } = q.kind === 'FILE' ? { items: [] } : await listCases(ctx, { status: q.status });
+    // Grouped by kind of application; a status filter shows the matching cases as one flat list.
+    const { items } = q.kind === 'FILE' ? { items: [] } : q.status ? await listCases(ctx, { status: q.status }) : await listCaseTypes(ctx);
     res.json({ folder, path: [{ id: folder.id, name: folder.name, space: folder.space, system: true, ownerId: null, myAccess: folder.myAccess }], truncated: false, items });
     return;
   }
@@ -211,7 +215,7 @@ driveRouter.get('/nodes/:id', async (req, res) => {
         versions: [],
         modifiedBy: v.item.createdBy,
         totals: v.item.kind === 'FOLDER' ? { files: files.length, folders: 0, bytes: files.reduce((a, f) => a + f.doc.size, 0) } : null,
-        caseLink: `/admin/cases/${v.caseRow.id}`,
+        caseLink: v.caseRow ? `/admin/cases/${v.caseRow.id}` : null,
         deletedAt: null,
         deletedBy: null,
       },
@@ -669,6 +673,18 @@ driveRouter.post('/copy', async (req, res) => {
 
 // ─── Recycle bin ──────────────────────────────────────────────────────
 
+/** POST /api/drive/case-documents/delete { ids: ['doc:…'] } — super admins permanently delete case documents. */
+driveRouter.post('/case-documents/delete', requireMinRole('SUPER_ADMIN'), async (req, res) => {
+  const { ids } = parse(z.object({ ids: idList }), req.body);
+  const results = await batch(ids, async (id) => {
+    const ref = parseVirtualId(id);
+    if (!ref || ref.kind !== 'doc') throw badRequest('NOT_A_CASE_DOCUMENT');
+    const { name } = await deleteCaseDocument(req, ref.docId);
+    return { name };
+  });
+  res.json({ results });
+});
+
 driveRouter.post('/trash', async (req, res) => {
   const ctx = ctxOf(req);
   const { ids } = parse(z.object({ ids: idList }), req.body);
@@ -951,7 +967,7 @@ driveRouter.get('/nodes/:id/access', async (req, res) => {
     chainNodes = [ctx.nodes.get(casesId)!];
     level = v.level;
     nodeInfo = { id, name: v.item.name, kind: v.item.kind, space: 'CASES', system: false, inheritPermissions: true, parentId: v.item.parentId, virtual: true };
-    assignedStaff = v.caseRow.assignedStaff;
+    assignedStaff = v.caseRow?.assignedStaff ?? null;
   } else {
     const r = await requireNode(ctx, id, 'VIEW', { allowDeleted: true });
     chainNodes = ctx.chain(id);

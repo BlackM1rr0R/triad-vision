@@ -26,6 +26,6 @@ export const crumbLabel = (c: Crumb, t: TFunction, myId?: string) => {
 };
 
 export const typeLabel = (item: DriveItem, t: TFunction) => {
-  if (item.virtual && item.kind === 'FOLDER') return String(t(item.stage ? 'drive.types.stage' : 'drive.types.caseFolder'));
+  if (item.virtual && item.kind === 'FOLDER') return String(t(item.stage ? 'drive.types.stage' : item.caseId ? 'drive.types.caseFolder' : 'drive.types.folder'));
   return String(t(`drive.types.${fileKind(item)}`));
 };
