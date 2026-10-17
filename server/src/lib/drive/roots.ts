@@ -10,8 +10,9 @@ import { hasMinRole } from '../../middleware/auth.js';
  *   CASES   "Cases"         — role grant ADMIN = DOWNLOAD (assigned staff additionally see their own cases)
  *   PERSONAL one per staff member, created lazily, owner has MANAGE (no grants needed)
  */
-export const SHARED_ROOT_NAME = 'Company drive';
-export const CASES_ROOT_NAME = 'Cases';
+// Folder names are German everywhere (the team works with German documents and authorities).
+export const SHARED_ROOT_NAME = 'Firmenlaufwerk';
+export const CASES_ROOT_NAME = 'Anträge';
 
 export interface DriveRoots {
   sharedId: string;

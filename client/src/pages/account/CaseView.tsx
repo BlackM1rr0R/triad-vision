@@ -12,7 +12,6 @@ import type { CaseDetail } from '@/lib/types';
 import { PageLoader } from '@/components/ui/Spinner';
 import { Reveal } from '@/components/motion';
 import { StatusBadge } from '@/components/portal/StatusBadge';
-import { CaseStepper } from '@/components/portal/CaseStepper';
 import { CaseDocuments, UPLOAD_STAGE } from '@/components/portal/CaseDocuments';
 import { CaseContract } from '@/components/portal/CaseContract';
 import { CaseMessages } from '@/components/portal/CaseMessages';
@@ -208,11 +207,7 @@ export default function CaseView() {
         </div>
       </Reveal>
 
-      {/* Stepper */}
-      <section className="card p-5 sm:p-6 lg:p-8" aria-label={t('portal.currentStep')}>
-        <CaseStepper status={data.status} visaType={(data as { visaType?: string }).visaType} />
-      </section>
-
+      {/* One timeline: steps with their dates (the separate stepper above it was a duplicate). */}
       <ForecastStrip caseId={data.id} />
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-8 xl:grid-cols-[minmax(0,1fr)_380px]">

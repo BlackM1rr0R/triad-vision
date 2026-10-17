@@ -5,7 +5,7 @@ import { freeNameIn } from '../drive/names.js';
 import { taskKey } from './core.js';
 
 /** Name of the company-drive folder that holds files uploaded straight into tasks. */
-export const TASK_FILES_FOLDER = 'Tapşırıq faylları';
+export const TASK_FILES_FOLDER = 'Aufgabendateien';
 
 let inflight: Promise<string> | null = null;
 

@@ -152,6 +152,7 @@ export const NewSignatureRequest = ({
         role: r.role,
         name: r.name.trim(),
         email: r.email.trim(),
+        phone: r.phone?.trim() || null,
         userId: r.userId ?? null,
         locale: r.locale ?? null,
         order: order === 'PARALLEL' ? 1 : i + 1,
@@ -418,6 +419,16 @@ export const NewSignatureRequest = ({
                         placeholder={t('esign.admin.form.email')}
                         aria-label={t('esign.admin.form.email')}
                         maxLength={191}
+                      />
+                      <input
+                        className="input py-2 sm:col-span-2"
+                        type="tel"
+                        inputMode="tel"
+                        value={r.phone ?? ''}
+                        onChange={(e) => update(r.key, { phone: e.target.value })}
+                        placeholder={t('esign.admin.form.phone')}
+                        aria-label={t('esign.admin.form.phone')}
+                        maxLength={32}
                       />
                     </div>
                   </li>

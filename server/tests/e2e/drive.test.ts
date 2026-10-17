@@ -43,7 +43,7 @@ describe('drive: roots and default permissions', () => {
   it('seeds the shared and cases roots once and gives every staff member a personal root', async () => {
     const staff = await asStaff({ firstName: 'Aynur', lastName: 'Q' });
     const r = await roots(staff.agent);
-    expect(r.shared).toMatchObject({ space: 'SHARED', system: true, myAccess: 'VIEW', name: 'Company drive' });
+    expect(r.shared).toMatchObject({ space: 'SHARED', system: true, myAccess: 'VIEW', name: 'Firmenlaufwerk' });
     expect(r.personal).toMatchObject({ space: 'PERSONAL', system: true, myAccess: 'MANAGE', name: 'Aynur Q', ownerId: staff.user.id });
     expect(r.cases).toBeNull();
     expect(r.team).toEqual([]);
@@ -99,7 +99,7 @@ describe('drive: permission engine end to end', () => {
     const listing = expectStatus(await list(staff.agent, hr.id), 200).body;
     expect(listing.folder.myAccess).toBe('VIEW');
     expect(listing.items.map((i: { name: string }) => i.name)).toEqual(['Contracts']);
-    expect(listing.path.map((c: { name: string }) => c.name)).toEqual(['Company drive', 'HR']);
+    expect(listing.path.map((c: { name: string }) => c.name)).toEqual(['Firmenlaufwerk', 'HR']);
 
     // Grant EDIT to one person on HR: inherited by Contracts.
     expectStatus(await grant(su.agent, hr.id, { userId: staff.user.id, access: 'EDIT' }), 200);
@@ -427,7 +427,7 @@ describe('drive: cases area (virtual, read-only)', () => {
     expect(r.cases).toMatchObject({ myAccess: 'VIEW', childCount: 1 });
     // Cases are grouped by kind of application (no visa category → directly in the type folder).
     const types = expectStatus(await list(assigned.agent, r.cases.id), 200).body;
-    expect(types.items.map((i: { id: string; name: string }) => [i.id, i.name])).toEqual([['vt:WORK', 'İş vizası']]);
+    expect(types.items.map((i: { id: string; name: string }) => [i.id, i.name])).toEqual([['vt:WORK', 'Arbeitsvisum']]);
     const casesList = expectStatus(await list(assigned.agent, 'vt:WORK'), 200).body;
     expect(casesList.items).toHaveLength(1);
     expect(casesList.items[0]).toMatchObject({ id: `case:${c.id}`, parentId: 'vt:WORK', name: `${c.number} — Kamran Aliyev`, virtual: true, myAccess: 'DOWNLOAD', caseStatus: 'DOCUMENTS_PENDING' });
@@ -452,7 +452,7 @@ describe('drive: cases area (virtual, read-only)', () => {
     // Super admin: capped at EXPORT (read-only area) and can export a case as ZIP.
     expect(expectStatus(await list(su.agent, `case:${c.id}`), 200).body.folder.myAccess).toBe('EXPORT');
     const zip = await download(su.agent, `/api/drive/export?ids=case:${c.id}`);
-    expect(zipNames(zip.body as Buffer)).toEqual([`${c.number} — Kamran Aliyev/INITIAL/passport.pdf`]);
+    expect(zipNames(zip.body as Buffer)).toEqual([`${c.number} — Kamran Aliyev/Erstdokumente/passport.pdf`]);
 
     // Read-only: nothing can be created, renamed, moved or deleted there.
     expect((await mkdir(su.agent, r.cases.id, 'x')).body.error).toBe('READ_ONLY');

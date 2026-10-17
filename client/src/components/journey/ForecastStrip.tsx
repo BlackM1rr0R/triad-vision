@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
+import { motion, useReducedMotion } from 'framer-motion';
 import { CalendarRange, Check, Info } from 'lucide-react';
 import { useL10n } from '@/lib/l10n';
 import { registerCopy } from '@/i18n';
@@ -26,24 +27,46 @@ const DateRange = ({ from, to }: { from: string; to: string }) => {
   );
 };
 
+const EASE = [0.22, 1, 0.36, 1] as const;
+
 const StepCell = ({ step, index, visaType }: { step: ForecastStep; index: number; visaType?: string }) => {
   const { t } = useTranslation();
+  const reduce = useReducedMotion();
   const { date } = useL10n();
   const range = useRangeLabel();
   const tone = step.status === 'done' ? 'text-success' : step.status === 'current' ? 'text-brand-700' : 'text-muted';
   return (
     <li className="relative min-w-0 flex-1" aria-current={step.status === 'current' ? 'step' : undefined}>
       <div className="flex items-center gap-2">
-        <span
+        <motion.span
           className={clsx(
-            'grid size-7 shrink-0 place-items-center rounded-full text-[11px] font-bold',
-            step.status === 'done' ? 'bg-success text-white' : step.status === 'current' ? 'bg-brand-600 text-white shadow-[0_0_0_4px_rgba(21,101,232,0.18)]' : 'bg-surface text-muted ring-1 ring-line',
+            'relative grid size-10 shrink-0 place-items-center rounded-full border-2 font-display text-sm font-bold',
+            step.status === 'done' && 'border-success bg-success text-white',
+            step.status === 'current' && 'border-brand-600 bg-card text-brand-600 shadow-lg shadow-brand-600/30',
+            step.status === 'upcoming' && 'border-line bg-card text-muted',
           )}
+          initial={reduce ? false : { scale: 0.6, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ duration: 0.5, delay: reduce ? 0 : index * 0.12, ease: EASE }}
           aria-hidden
         >
-          {step.status === 'done' ? <Check className="size-3.5" strokeWidth={3} /> : index + 1}
+          {step.status === 'current' && !reduce && (
+            <motion.span
+              className="absolute inset-0 rounded-full bg-brand-500"
+              animate={{ scale: [1, 1.7], opacity: [0.45, 0] }}
+              transition={{ duration: 1.8, repeat: Infinity, ease: 'easeOut' }}
+            />
+          )}
+          {step.status === 'done' ? <Check className="relative size-4" strokeWidth={3} /> : <span className="relative">{index + 1}</span>}
+        </motion.span>
+        <span className="relative h-0.5 flex-1 overflow-hidden rounded-full bg-line" aria-hidden>
+          <motion.span
+            className="absolute inset-0 rounded-full bg-success"
+            initial={{ clipPath: 'inset(0 100% 0 0)' }}
+            animate={{ clipPath: step.status === 'done' ? 'inset(0 0% 0 0)' : 'inset(0 100% 0 0)' }}
+            transition={{ duration: reduce ? 0 : 0.7, delay: reduce ? 0 : 0.15 + index * 0.12, ease: EASE }}
+          />
         </span>
-        <span className={clsx('h-px flex-1', step.status === 'done' ? 'bg-success/50' : 'bg-line')} aria-hidden />
       </div>
       <p className={clsx('mt-2.5 text-sm font-bold', step.status === 'upcoming' ? 'text-navy-900/70' : 'text-navy-900')}>{step.key === 'CONTRACT' && visaType ? t(`journey.forecast.contractByType.${visaType}`, { defaultValue: t('journey.forecast.steps.CONTRACT') }) : t(`journey.forecast.steps.${step.key}`)}</p>
       <p className={clsx('mt-0.5 text-xs font-semibold', tone)}>{t(`journey.forecast.${step.status}`)}</p>

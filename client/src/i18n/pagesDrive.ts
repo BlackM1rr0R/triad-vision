@@ -3,11 +3,11 @@
 const az = {
   drive: {
     title: 'Sənədlər',
-    roots: { SHARED: 'Şirkət diski', PERSONAL: 'Mənim fayllarım', CASES: 'Müraciətlər' },
+    roots: { SHARED: 'Firmenlaufwerk', PERSONAL: 'Meine Dateien', CASES: 'Anträge' },
     nav: {
       quickAccess: 'Sürətli giriş',
-      myFiles: 'Mənim fayllarım',
-      company: 'Şirkət diski',
+      myFiles: 'Meine Dateien',
+      company: 'Firmenlaufwerk',
       sharedWithMe: 'Mənimlə paylaşılanlar',
       cases: 'Müraciətlər',
       recent: 'Son fayllar',
@@ -178,7 +178,7 @@ const az = {
       deleteBody: '{{count}} element səbətə göndəriləcək. {{days}} gün ərzində bərpa etmək olar.',
       deleteForeverTitle: 'Həmişəlik silinsin?',
       deleteForeverBody: '{{count}} element və içindəkilər birdəfəlik silinəcək. Bu əməliyyatı geri qaytarmaq olmaz.',
-      caseDocsBody: 'Seçilmiş {{count}} müraciət sənədi həmişəlik silinəcək və müştərinin müraciətindən də çıxacaq. Bunu geri qaytarmaq olmaz.',
+      caseDocsBody: 'Seçilmiş {{count}} element (sənəd və ya qovluqdakı bütün sənədlər) həmişəlik silinəcək və müştərinin müraciətindən də çıxacaq. Müraciətin özü qalır. Bunu geri qaytarmaq olmaz.',
       emptyTrashTitle: 'Səbət boşaldılsın?',
       emptyTrashBody: 'Səbətdəki bütün elementlər birdəfəlik silinəcək.',
       restoreVersionTitle: 'Versiya {{version}} bərpa edilsin?',
@@ -350,7 +350,7 @@ const az = {
     },
     stats: {
       mine: 'Mənim fayllarım: {{size}}',
-      shared: 'Şirkət diski: {{size}}',
+      shared: 'Firmenlaufwerk: {{size}}',
       trash: 'Səbət: {{size}}',
       total: 'Cəmi: {{size}} · {{files}} fayl',
     },
@@ -577,7 +577,7 @@ const de: Copy = {
       deleteBody: 'Die ausgewählten Elemente ({{count}}) werden in den Papierkorb verschoben. Sie können sie {{days}} Tage lang wiederherstellen.',
       deleteForeverTitle: 'Endgültig löschen?',
       deleteForeverBody: 'Die ausgewählten Elemente ({{count}}) und ihr Inhalt werden endgültig gelöscht. Dies kann nicht rückgängig gemacht werden.',
-      caseDocsBody: '{{count}} Antragsdokument(e) werden endgültig gelöscht und auch aus dem Antrag des Kunden entfernt. Das kann nicht rückgängig gemacht werden.',
+      caseDocsBody: '{{count}} Element(e) (Dokumente oder alle Dokumente eines Ordners) werden endgültig gelöscht und aus dem Antrag des Kunden entfernt. Der Antrag selbst bleibt. Das kann nicht rückgängig gemacht werden.',
       emptyTrashTitle: 'Papierkorb leeren?',
       emptyTrashBody: 'Alle Elemente im Papierkorb werden endgültig gelöscht.',
       restoreVersionTitle: 'Version {{version}} wiederherstellen?',
@@ -799,11 +799,11 @@ const de: Copy = {
 const en: Copy = {
   drive: {
     title: 'Documents',
-    roots: { SHARED: 'Company drive', PERSONAL: 'My files', CASES: 'Cases' },
+    roots: { SHARED: 'Firmenlaufwerk', PERSONAL: 'Meine Dateien', CASES: 'Anträge' },
     nav: {
       quickAccess: 'Quick access',
-      myFiles: 'My files',
-      company: 'Company drive',
+      myFiles: 'Meine Dateien',
+      company: 'Firmenlaufwerk',
       sharedWithMe: 'Shared with me',
       cases: 'Cases',
       recent: 'Recent',
@@ -974,7 +974,7 @@ const en: Copy = {
       deleteBody: 'The selected items ({{count}}) will go to the recycle bin. You can restore them for {{days}} days.',
       deleteForeverTitle: 'Delete forever?',
       deleteForeverBody: 'The selected items ({{count}}) and everything inside them will be deleted for good. This cannot be undone.',
-      caseDocsBody: 'The {{count}} selected case document(s) will be deleted permanently and removed from the application of the client as well. This cannot be undone.',
+      caseDocsBody: 'The {{count}} selected item(s) (documents, or every document in a folder) will be deleted permanently and removed from the application of the client. The application itself stays. This cannot be undone.',
       emptyTrashTitle: 'Empty the recycle bin?',
       emptyTrashBody: 'Everything in the recycle bin will be deleted for good.',
       restoreVersionTitle: 'Restore version {{version}}?',
@@ -1146,7 +1146,7 @@ const en: Copy = {
     },
     stats: {
       mine: 'My files: {{size}}',
-      shared: 'Company drive: {{size}}',
+      shared: 'Firmenlaufwerk: {{size}}',
       trash: 'Recycle bin: {{size}}',
       total: 'Total: {{size}} · {{files}} files',
     },
@@ -1196,11 +1196,11 @@ const en: Copy = {
 const ru: Copy = {
   drive: {
     title: 'Документы',
-    roots: { SHARED: 'Диск компании', PERSONAL: 'Мои файлы', CASES: 'Заявки' },
+    roots: { SHARED: 'Firmenlaufwerk', PERSONAL: 'Meine Dateien', CASES: 'Anträge' },
     nav: {
       quickAccess: 'Быстрый доступ',
-      myFiles: 'Мои файлы',
-      company: 'Диск компании',
+      myFiles: 'Meine Dateien',
+      company: 'Firmenlaufwerk',
       sharedWithMe: 'Доступные мне',
       cases: 'Заявки',
       recent: 'Недавние',
@@ -1371,7 +1371,7 @@ const ru: Copy = {
       deleteBody: 'Элементы ({{count}}) будут перемещены в корзину. Их можно восстановить в течение {{days}} дней.',
       deleteForeverTitle: 'Удалить навсегда?',
       deleteForeverBody: 'Элементы ({{count}}) и всё их содержимое будут удалены безвозвратно. Это действие нельзя отменить.',
-      caseDocsBody: 'Выбранные документы заявки ({{count}}) будут удалены навсегда, в том числе из заявки клиента. Отменить это нельзя.',
+      caseDocsBody: 'Выбранные элементы ({{count}}) — документы или все документы папки — будут удалены навсегда, в том числе из заявки клиента. Сама заявка останется. Отменить это нельзя.',
       emptyTrashTitle: 'Очистить корзину?',
       emptyTrashBody: 'Все элементы в корзине будут удалены безвозвратно.',
       restoreVersionTitle: 'Восстановить версию {{version}}?',
@@ -1543,7 +1543,7 @@ const ru: Copy = {
     },
     stats: {
       mine: 'Мои файлы: {{size}}',
-      shared: 'Диск компании: {{size}}',
+      shared: 'Firmenlaufwerk: {{size}}',
       trash: 'Корзина: {{size}}',
       total: 'Всего: {{size}} · файлов: {{files}}',
     },

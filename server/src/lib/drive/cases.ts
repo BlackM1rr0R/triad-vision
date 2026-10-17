@@ -28,18 +28,27 @@ import { ensureRoots } from './roots.js';
  */
 
 export const STAGES: DocStage[] = ['INITIAL', 'EMBASSY', 'CONTRACT', 'CONTRACT_SIGNED', 'VISA', 'OTHER'];
+/** German names of the stage folders (exports and search locations; the client shows the same). */
+export const STAGE_FOLDER: Record<DocStage, string> = {
+  INITIAL: 'Erstdokumente',
+  EMBASSY: 'Botschaftsunterlagen',
+  CONTRACT: 'Vertrag',
+  CONTRACT_SIGNED: 'Unterschriebener Vertrag',
+  VISA: 'Visum',
+  OTHER: 'Sonstiges',
+} as Record<DocStage, string>;
 
 const ID = '[a-z0-9]{10,40}';
 export const VISA_TYPES: VisaType[] = ['WORK', 'AUSBILDUNG', 'WEITERBILDUNG', 'JOB_SEEKER', 'STUDY', 'FAMILY', 'TOURIST'];
-/** Folder names of the application types (Azerbaijani, the office language; German terms kept). */
+/** Folder names of the application types — German, like every folder name in the drive. */
 export const VISA_TYPE_FOLDER: Record<VisaType, string> = {
-  WORK: 'İş vizası',
+  WORK: 'Arbeitsvisum',
   AUSBILDUNG: 'Ausbildung',
   WEITERBILDUNG: 'Weiterbildung',
-  JOB_SEEKER: 'İş axtarışı (Chancenkarte)',
-  STUDY: 'Təhsil vizası',
-  FAMILY: 'Ailə birləşməsi',
-  TOURIST: 'Turist vizası',
+  JOB_SEEKER: 'Jobsuche (Chancenkarte)',
+  STUDY: 'Studienvisum',
+  FAMILY: 'Familiennachzug',
+  TOURIST: 'Besuchervisum',
 };
 const TYPE_RE = new RegExp(`^vt:(${VISA_TYPES.join('|')})$`);
 const CAT_RE = new RegExp(`^vc:(${VISA_TYPES.join('|')}):(${ID})$`);
@@ -122,8 +131,8 @@ export const VISIBLE_DOCS: Prisma.DocumentWhereInput = {
   OR: [{ status: 'ACCEPTED' }, { stage: { in: ['CONTRACT', 'CONTRACT_SIGNED', 'VISA', 'OTHER'] }, status: { not: 'REJECTED' } }],
 };
 
-const az = (v: unknown) => (v && typeof v === 'object' ? ((v as Record<string, string>).az ?? '') : '');
-export const categoryFolderName = (cat: { title: unknown; visaLabel: string }) => `${cat.visaLabel} · ${az(cat.title)}`.trim();
+const de = (v: unknown) => (v && typeof v === 'object' ? ((v as Record<string, string>).de || (v as Record<string, string>).az || '') : '');
+export const categoryFolderName = (cat: { title: unknown; visaLabel: string }) => `${cat.visaLabel} · ${de(cat.title)}`.trim();
 /** Parent folder of a case: its visa category inside the type, or the type folder itself. */
 const caseParentId = (c: Pick<CaseRow, 'visaType' | 'visaCategoryId'>) => (c.visaCategoryId ? `vc:${c.visaType}:${c.visaCategoryId}` : `vt:${c.visaType}`);
 
@@ -376,7 +385,7 @@ export const listVirtual = async (ctx: DriveAccessCtx, v: VirtualNode): Promise<
 
 /** Breadcrumb of a virtual node: Cases › case › stage (› document). */
 export const virtualBreadcrumb = (v: VirtualNode, rootLevel: Level): Crumb[] => {
-  const crumbs: Crumb[] = [{ id: v.casesId, name: 'Cases', space: 'CASES', system: true, ownerId: null, myAccess: rootLevel }];
+  const crumbs: Crumb[] = [{ id: v.casesId, name: 'Anträge', space: 'CASES', system: true, ownerId: null, myAccess: rootLevel }];
   const crumb = (id: string, name: string): Crumb => ({ id, name, space: 'CASES', system: false, ownerId: null, myAccess: v.level });
   if (v.ref.kind === 'type') return [...crumbs, crumb(v.item.id, v.item.name)];
   if (v.ref.kind === 'category') return [...crumbs, crumb(`vt:${v.ref.visaType}`, VISA_TYPE_FOLDER[v.ref.visaType]), crumb(v.item.id, v.item.name)];
@@ -403,12 +412,12 @@ export const virtualFiles = async (v: VirtualNode) => {
       orderBy: [{ caseId: 'asc' }, { stage: 'asc' }, { createdAt: 'asc' }],
       take: 5000,
     });
-    return docs.map((d) => ({ rel: `${caseFolderName(d.case)} · ${d.stage}/${d.originalName}`, doc: d }));
+    return docs.map((d) => ({ rel: `${caseFolderName(d.case)} · ${STAGE_FOLDER[d.stage]}/${d.originalName}`, doc: d }));
   }
   const c = v.caseRow!;
   const where: Prisma.DocumentWhereInput = { caseId: c.id, ...VISIBLE_DOCS, ...(v.ref.kind === 'stage' ? { stage: v.ref.stage } : {}) };
   const docs = await prisma.document.findMany({ where, select: docSelect, orderBy: [{ stage: 'asc' }, { createdAt: 'asc' }] });
-  return docs.map((d) => ({ rel: v.ref.kind === 'case' ? `${d.stage}/${d.originalName}` : d.originalName, doc: d }));
+  return docs.map((d) => ({ rel: v.ref.kind === 'case' ? `${STAGE_FOLDER[d.stage]}/${d.originalName}` : d.originalName, doc: d }));
 };
 
 /** Search in the Cases area: case numbers / client names and document names. */
@@ -429,9 +438,9 @@ export const searchCases = async (ctx: DriveAccessCtx, q: string, take = 50) => 
     const level = caseLevel(rootLevel, d.case.assignedStaffId, ctx.user.id);
     if (!level) continue;
     const item = docItem(d.case, d, level);
-    item.location = { id: `case:${d.case.id}:${d.stage}`, name: `${d.case.number} · ${d.stage}`, space: 'CASES', system: false };
+    item.location = { id: `case:${d.case.id}:${d.stage}`, name: `${d.case.number} · ${STAGE_FOLDER[d.stage]}`, space: 'CASES', system: false };
     docItems.push(item);
   }
-  for (const c of cases) c.location = { id: casesId, name: 'Cases', space: 'CASES', system: true };
+  for (const c of cases) c.location = { id: casesId, name: 'Anträge', space: 'CASES', system: true };
   return [...cases, ...docItems];
 };

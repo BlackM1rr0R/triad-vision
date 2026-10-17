@@ -23,7 +23,7 @@ describe('task files uploaded from the computer', () => {
     const node = await prisma.driveNode.findUniqueOrThrow({ where: { id: att.nodeId }, include: { parent: { include: { parent: true } } } });
     expect(node.space).toBe('SHARED');
     expect(node.parent?.name).toMatch(/^T-\d{4} · Xarici prava$/);
-    expect(node.parent?.parent).toMatchObject({ name: 'Tapşırıq faylları', system: true });
+    expect(node.parent?.parent).toMatchObject({ name: 'Aufgabendateien', system: true });
 
     // a second upload reuses the same task folder, a same-named file gets a free name
     const again = await creator.agent

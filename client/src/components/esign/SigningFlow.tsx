@@ -214,10 +214,10 @@ const VerifyStep = ({ view, base, onVerified }: { view: SigningView; base: strin
   const send = async () => {
     setBusy(true);
     try {
-      const res = await api.post<{ email: string; retryAfter: number }>(`${base}/otp`, {});
+      const res = await api.post<{ email: string; phone?: string; channel?: 'sms' | 'email'; retryAfter: number }>(`${base}/otp`, {});
       setSent(true);
       setWait(res.data.retryAfter);
-      setHint(t('esign.sign.codeSent', { email: res.data.email }));
+      setHint(res.data.channel === 'sms' && res.data.phone ? t('esign.sign.codeSentSms', { phone: res.data.phone }) : t('esign.sign.codeSent', { email: res.data.email }));
       window.setTimeout(() => inputRef.current?.focus(), 50);
     } catch (e) {
       const retry = (e as { response?: { data?: { retryAfter?: number } } }).response?.data?.retryAfter;
@@ -256,7 +256,7 @@ const VerifyStep = ({ view, base, onVerified }: { view: SigningView; base: strin
           <h2 id="esign-verify" className="text-lg font-bold text-navy-900">
             {t('esign.sign.verifyTitle')}
           </h2>
-          <p className="mt-1 text-sm text-muted">{t('esign.sign.verifyText', { email: view.me.email })}</p>
+          <p className="mt-1 text-sm text-muted">{view.me.codeChannel === 'sms' && view.me.phone ? t('esign.sign.verifyTextSms', { phone: view.me.phone }) : t('esign.sign.verifyText', { email: view.me.email })}</p>
         </div>
       </div>
 

@@ -12,6 +12,7 @@ import { clientSignContract, staffSendContract } from '../caseFlow.js';
 import { buildFinalPdf } from './pdf.js';
 import { esignText, formatDay } from './texts.js';
 import { maskEmail } from './otp.js';
+import { maskPhone, normalizePhone, smsConfigured } from '../messaging/providers.js';
 
 /**
  * Multi-party online signatures ("Signature requests").
@@ -220,6 +221,7 @@ export interface SignerInput {
   role: SignerRole;
   name: string;
   email: string;
+  phone?: string | null;
   userId?: string | null;
   locale?: Locale | null;
   order?: number | null;
@@ -265,6 +267,8 @@ export const createRequest = async (input: CreateInput, actor: Actor, meta: Meta
       role: s.role,
       name: s.name.trim().slice(0, 160),
       email: user?.email ?? email,
+      // Signing codes go by SMS to this number (the account's number unless one was typed in).
+      phone: normalizePhone(s.phone) ?? normalizePhone(user?.phone) ?? null,
       userId: user?.id ?? null,
       locale: (user?.locale ?? s.locale ?? (s.role === 'COMPANY' ? 'de' : s.role === 'CANDIDATE' ? 'az' : 'en')) as Locale,
       order: input.order === 'PARALLEL' ? 1 : Math.max(1, Math.min(99, s.order ?? i + 1)),
@@ -720,6 +724,9 @@ export const signerView = async (signerId: string, auth: { method: 'token' | 'po
       role: me.role,
       status: me.status,
       email: maskEmail(me.email),
+      /** Where the signing code will go: SMS when a number is known and SMS is set up, else e-mail. */
+      codeChannel: me.phone && smsConfigured() ? ('sms' as const) : ('email' as const),
+      phone: me.phone ? maskPhone(me.phone) : null,
       signedAt: me.signedAt,
       declinedReason: me.declinedReason,
       myTurn: fresh.status === 'SENT' && turn.some((x) => x.id === me.id),

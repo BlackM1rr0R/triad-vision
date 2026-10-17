@@ -1906,6 +1906,8 @@ model SignatureSigner {
   user              User?            @relation("SignatureSignerUser", fields: [userId], references: [id], onDelete: SetNull)
   name              String           @db.VarChar(160)
   email             String           @db.VarChar(191)
+  /// Mobile number for the signing code (SMS); falls back to e-mail when there is none or SMS is not set up.
+  phone             String?          @db.VarChar(32)
   locale            Locale           @default(az)
   order             Int              @default(1)
   status            SignerStatus     @default(PENDING)

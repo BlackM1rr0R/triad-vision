@@ -45,6 +45,9 @@ export interface SigningView {
     role: SignerRole;
     status: SignerStatus;
     email: string;
+    /** Where the signing code goes: SMS (masked number below) or e-mail. */
+    codeChannel?: 'sms' | 'email';
+    phone?: string | null;
     signedAt: string | null;
     declinedReason: string | null;
     myTurn: boolean;
@@ -133,6 +136,8 @@ export interface SignerDraft {
   role: SignerRole;
   name: string;
   email: string;
+  /** Mobile number for the SMS signing code (optional; the account's number is used otherwise). */
+  phone?: string | null;
   userId?: string | null;
   locale?: 'az' | 'de' | 'en' | 'ru' | null;
   order?: number | null;

@@ -80,6 +80,30 @@ export const sendRow = async (row: OutboundMessage): Promise<OutboundMessage | n
   }
 };
 
+/**
+ * SMS that carries a secret (one-time codes): the provider gets `text`, the outbound log only
+ * `logged` (the code masked), so nobody can read codes in the admin message log. Not retried from
+ * the log (a resend would deliver the masked text). Returns the log row or null.
+ */
+export const sendSecretSms = async (rawTo: string, text: string, logged: string, templateKey = 'OTP'): Promise<OutboundMessage | null> => {
+  const to = normalizePhone(rawTo);
+  if (!to || !smsConfigured()) return null;
+  let row: OutboundMessage;
+  try {
+    row = await record({ channel: 'SMS', to, body: logged, templateKey });
+  } catch (err) {
+    console.error('[messaging] could not write OutboundMessage', err);
+    return null;
+  }
+  try {
+    const res = await sms.send(to, text);
+    return finish(row.id, { status: 'SENT', providerId: res.id || undefined });
+  } catch (err) {
+    console.error('[messaging] secret SMS failed', err);
+    return finish(row.id, { status: 'FAILED', error: String((err as Error).message ?? err).slice(0, 2000) });
+  }
+};
+
 const templateLang = (row: OutboundMessage) => (process.env[`WHATSAPP_TEMPLATE_LANG_${row.templateKey ?? ''}`] ?? process.env.WHATSAPP_TEMPLATE_LANG ?? 'en').trim() || 'en';
 
 /**

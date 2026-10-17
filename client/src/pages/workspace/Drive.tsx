@@ -134,8 +134,8 @@ export default function WorkspaceDrive() {
   const { '*': splat = '' } = useParams();
   const [params] = useSearchParams();
   const { user } = useAuth();
-  /** A document inside the Cases area (virtual id "doc:…"). */
-  const isCaseDoc = (i: DriveItem) => i.kind === 'FILE' && i.id.startsWith('doc:');
+  /** A document, a case folder or a stage folder in the Cases area (what a super admin may delete). */
+  const isCaseDoc = (i: DriveItem) => i.id.startsWith('doc:') || i.id.startsWith('case:');
   const myId = user?.id ?? '';
   const isSuper = user?.role === 'SUPER_ADMIN';
   const loc = useMemo(() => parseLocation(splat, params), [splat, params]);

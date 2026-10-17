@@ -10,8 +10,8 @@ import { newStorageKey, storagePath } from './drive/storage.js';
  * "My files" (folder "Bütün müştərilər"). It is rebuilt shortly after every new registration (and
  * hourly, so case statuses stay current) and can also be downloaded on demand from Admin → Users.
  */
-export const CLIENTS_FOLDER = 'Bütün müştərilər';
-export const CLIENTS_FILE = 'Bütün müştərilər.xlsx';
+export const CLIENTS_FOLDER = 'Alle Kunden';
+export const CLIENTS_FILE = 'Alle Kunden.xlsx';
 export const XLSX_MIME = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
 
 const STATUS_AZ: Record<CaseStatus, string> = {

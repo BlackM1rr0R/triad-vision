@@ -76,6 +76,7 @@ interface SignerIn {
   role: 'CANDIDATE' | 'COMPANY' | 'STAFF' | 'OTHER';
   name: string;
   email: string;
+  phone?: string;
   userId?: string;
   order?: number;
   locale?: 'az' | 'de' | 'en' | 'ru';
@@ -92,6 +93,48 @@ const createRequest = async (
     .attach('file', pdf ?? (await makePdf('ARBEITSVERTRAG', 2)), { filename: 'vertrag.pdf', ...PDF });
 
 const download = (agent: Agent, url: string) => agent.get(url).buffer(true).parse(binaryParser);
+
+describe('signing code by SMS', () => {
+  it('sends the code to the signer phone when SMS is set up, masks it in the log, and falls back to e-mail', async () => {
+    const http = await import('node:http');
+    const got: { to: string; text: string }[] = [];
+    const server = http.createServer((req, res) => {
+      let body = '';
+      req.on('data', (c) => (body += c));
+      req.on('end', () => {
+        got.push(JSON.parse(body));
+        res.setHeader('content-type', 'application/json');
+        res.end(JSON.stringify({ id: 'sms-1' }));
+      });
+    });
+    await new Promise<void>((r) => server.listen(0, '127.0.0.1', () => r()));
+    const port = (server.address() as { port: number }).port;
+    process.env.SMS_PROVIDER = 'http';
+    process.env.SMS_HTTP_URL = `http://127.0.0.1:${port}/send`;
+    try {
+      const staff = await asStaff();
+      const res = expectStatus(
+        await createRequest(staff.agent, { signers: [{ role: 'OTHER', name: 'Ext Signer', email: 'ext.sms@test.local', phone: '+994 50 555 44 33' }] }),
+        201,
+      );
+      expect(await prisma.signatureSigner.findFirst({ where: { requestId: res.body.request.id } })).toMatchObject({ phone: '+994505554433' });
+      const token = lastToken('ext.sms@test.local');
+      const sent = expectStatus(await pub.post(`/api/sign/${token}/otp`).send({}), 200).body;
+      expect(sent).toMatchObject({ channel: 'sms' });
+      expect(sent.phone).not.toContain('555');
+      expect(got).toHaveLength(1);
+      const code = got[0].text.match(/(\d{6})/)![1];
+      const log = await prisma.outboundMessage.findFirstOrThrow({ where: { templateKey: 'ESIGN_OTP' } });
+      expect(log.body).not.toContain(code);
+      expect(mails.some((m) => m.to === 'ext.sms@test.local' && m.html.includes(code))).toBe(false);
+      expectStatus(await pub.post(`/api/sign/${token}/otp/verify`).send({ code }), 200);
+    } finally {
+      delete process.env.SMS_PROVIDER;
+      delete process.env.SMS_HTTP_URL;
+      server.close();
+    }
+  });
+});
 
 describe('creating and sending', () => {
   it('registers the reminder job', () => {

@@ -79,7 +79,7 @@ export interface UserDeletionTarget {
   lastName: string;
 }
 
-const DELETED_FOLDER_PREFIX = 'Silinmiş istifadəçi — ';
+const DELETED_FOLDER_PREFIX = 'Gelöschter Benutzer — ';
 
 /** The account to delete, after the rules (404 / self / super admin). */
 export const loadDeletionTarget = async (actorId: string, userId: string): Promise<UserDeletionTarget> => {

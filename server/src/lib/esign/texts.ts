@@ -27,6 +27,7 @@ export interface EsignCopy {
   otpSubject: string;
   otpTitle: string;
   otpBody: (code: string, title: string) => string;
+  otpSms: (code: string) => string;
   completedSubject: (title: string) => string;
   completedTitle: string;
   completedBody: (p: { title: string; sha: string }) => string;
@@ -59,6 +60,7 @@ const az: EsignCopy = {
   linkNote:
     'Bu link şəxsidir — onu heç kimə göndərməyin. Açdıqdan sonra şəxsiyyətinizi bu e-poçt ünvanına göndərilən 6 rəqəmli kodla təsdiqləyəcəksiniz. Əvvəlki linklər artıq etibarlı deyil.',
   legalNote: 'Bu, sadə elektron imzadır (eIDAS Art. 25(1)), audit izi ilə qeydə alınır; kvalifikasiyalı elektron imza deyil.',
+  otpSms: (c) => `Triad Vision: imza üçün təsdiq kodunuz ${c}. Kod 10 dəqiqə etibarlıdır, heç kimə deməyin.`,
   otpSubject: 'Triad Vision · İmza üçün təsdiq kodu',
   otpTitle: 'Təsdiq kodunuz',
   otpBody: (c, t) =>
@@ -96,6 +98,7 @@ const de: EsignCopy = {
   linkNote:
     'Dieser Link ist persönlich – bitte leiten Sie ihn nicht weiter. Nach dem Öffnen bestätigen Sie Ihre Identität mit einem 6-stelligen Code, den wir an diese E-Mail-Adresse senden. Frühere Links sind nicht mehr gültig.',
   legalNote: 'Es handelt sich um eine einfache elektronische Signatur (eIDAS Art. 25 Abs. 1) mit Prüfprotokoll, nicht um eine qualifizierte elektronische Signatur.',
+  otpSms: (c) => `Triad Vision: Ihr Code zum Unterschreiben lautet ${c}. Gültig 10 Minuten, nicht weitergeben.`,
   otpSubject: 'Triad Vision · Ihr Bestätigungscode zum Unterschreiben',
   otpTitle: 'Ihr Bestätigungscode',
   otpBody: (c, t) =>
@@ -133,6 +136,7 @@ const en: EsignCopy = {
   linkNote:
     'This link is personal — please do not forward it. After opening it you confirm your identity with a 6-digit code we send to this email address. Earlier links no longer work.',
   legalNote: 'This is a simple electronic signature (eIDAS Art. 25(1)) with an audit trail, not a qualified electronic signature.',
+  otpSms: (c) => `Triad Vision: your signing code is ${c}. Valid for 10 minutes, do not share it.`,
   otpSubject: 'Triad Vision · Your signing code',
   otpTitle: 'Your confirmation code',
   otpBody: (c, t) => `Your confirmation code to sign "${t}": ${c}\n\nThe code is valid for 10 minutes and can be used once. Never share it.`,
@@ -169,6 +173,7 @@ const ru: EsignCopy = {
   linkNote:
     'Это персональная ссылка — не пересылайте её. После открытия вы подтвердите личность 6-значным кодом, который мы отправим на этот адрес. Прежние ссылки больше не действуют.',
   legalNote: 'Это простая электронная подпись (eIDAS ст. 25(1)) с журналом аудита, а не квалифицированная электронная подпись.',
+  otpSms: (c) => `Triad Vision: код для подписи ${c}. Действует 10 минут, никому не сообщайте.`,
   otpSubject: 'Triad Vision · Код подтверждения для подписи',
   otpTitle: 'Ваш код подтверждения',
   otpBody: (c, t) => `Ваш код подтверждения для подписания «${t}»: ${c}\n\nКод действителен 10 минут и может быть использован один раз. Никому не сообщайте код.`,

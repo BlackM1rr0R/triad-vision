@@ -38,6 +38,7 @@ const signerSchema = z.object({
   role: z.enum(ROLES),
   name: z.string().trim().min(2).max(160),
   email: z.string().trim().toLowerCase().email().max(191),
+  phone: z.string().trim().max(32).nullish(),
   userId: id.nullish(),
   locale: z.enum(['az', 'de', 'en', 'ru']).nullish(),
   order: z.number().int().min(1).max(99).nullish(),
@@ -130,7 +131,7 @@ adminSignaturesRouter.get('/prefill', async (req, res) => {
   if (q.caseId) {
     const c = await prisma.case.findUnique({
       where: { id: q.caseId },
-      include: { client: { select: { id: true, firstName: true, lastName: true, email: true, locale: true } }, contract: { select: { signatureRequestId: true, signedAt: true } } },
+      include: { client: { select: { id: true, firstName: true, lastName: true, email: true, phone: true, locale: true } }, contract: { select: { signatureRequestId: true, signedAt: true } } },
     });
     if (!c) throw notFound('CASE_NOT_FOUND');
     caseInfo = {
@@ -141,7 +142,7 @@ adminSignaturesRouter.get('/prefill', async (req, res) => {
       contractAllowed: ['DOCUMENTS_REVIEW', 'CONTRACT_SENT', 'CONTRACT_SIGNED'].includes(c.status),
     };
     companyId = companyId ?? c.companyId;
-    signers.push({ role: 'CANDIDATE', name: `${c.client.firstName} ${c.client.lastName}`.trim(), email: c.client.email, userId: c.client.id, locale: c.client.locale, order: 1 });
+    signers.push({ role: 'CANDIDATE', name: `${c.client.firstName} ${c.client.lastName}`.trim(), email: c.client.email, phone: c.client.phone, userId: c.client.id, locale: c.client.locale, order: 1 });
     documents = await prisma.document.findMany({
       where: { caseId: c.id, mimeType: 'application/pdf' },
       orderBy: { createdAt: 'desc' },

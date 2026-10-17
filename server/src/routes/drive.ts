@@ -673,14 +673,18 @@ driveRouter.post('/copy', async (req, res) => {
 
 // ─── Recycle bin ──────────────────────────────────────────────────────
 
-/** POST /api/drive/case-documents/delete { ids: ['doc:…'] } — super admins permanently delete case documents. */
+/** POST /api/drive/case-documents/delete { ids: ['doc:…' | 'case:…' | 'case:…:STAGE'] } — super admins permanently delete case documents (single files or whole folders). */
 driveRouter.post('/case-documents/delete', requireMinRole('SUPER_ADMIN'), async (req, res) => {
   const { ids } = parse(z.object({ ids: idList }), req.body);
   const results = await batch(ids, async (id) => {
     const ref = parseVirtualId(id);
-    if (!ref || ref.kind !== 'doc') throw badRequest('NOT_A_CASE_DOCUMENT');
-    const { name } = await deleteCaseDocument(req, ref.docId);
-    return { name };
+    if (!ref || (ref.kind !== 'doc' && ref.kind !== 'case' && ref.kind !== 'stage')) throw badRequest('NOT_A_CASE_DOCUMENT');
+    if (ref.kind === 'doc') return { name: (await deleteCaseDocument(req, ref.docId)).name };
+    // A case folder or a stage folder: every document in it goes (whatever its review status); the case stays.
+    const docs = await prisma.document.findMany({ where: { caseId: ref.caseId, ...(ref.kind === 'stage' ? { stage: ref.stage } : {}) }, select: { id: true } });
+    if (!docs.length && !(await prisma.case.count({ where: { id: ref.caseId } }))) throw notFound('NODE_NOT_FOUND');
+    for (const d of docs) await deleteCaseDocument(req, d.id);
+    return { name: id, deleted: docs.length };
   });
   res.json({ results });
 });

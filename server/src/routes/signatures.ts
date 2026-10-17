@@ -19,6 +19,8 @@ import {
 import { issueSignOtp, maskEmail, signSessionValid, verifySignOtp, SIGN_SESSION_TTL_MS } from '../lib/esign/otp.js';
 import { esignText } from '../lib/esign/texts.js';
 import { metaOf, sendPdf } from '../lib/esign/http.js';
+import { maskPhone, smsConfigured } from '../lib/messaging/providers.js';
+import { sendSecretSms } from '../lib/messaging/outbound.js';
 
 /**
  * Signing endpoints for the parties:
@@ -104,10 +106,21 @@ signRouter.post('/:token/otp', otpLimiter, async (req, res) => {
     return;
   }
   const t = esignText(s.locale);
+  // SMS to the signer's phone when a number is known and an SMS provider is set up; otherwise
+  // (or when the SMS fails) the code goes by e-mail as before. The code is never logged.
+  if (s.phone && smsConfigured()) {
+    // The code goes to the phone; the message log only keeps it masked.
+    const sent = await sendSecretSms(s.phone, t.otpSms(issued.code), t.otpSms('••••••'), 'ESIGN_OTP');
+    if (sent && sent.status !== 'FAILED') {
+      await logEvent(r.id, 'OTP_SENT', { ...metaOf(req), signerId: s.id, note: 'sms' });
+      res.json({ ok: true, channel: 'sms', phone: maskPhone(s.phone), email: maskEmail(s.email), retryAfter: issued.retryAfter });
+      return;
+    }
+  }
   // The code is only in the body; the subject goes to the EmailLog.
   void sendMail(s.email, t.otpSubject, renderEmail(t.otpTitle, t.otpBody(issued.code, fresh.title)));
   await logEvent(r.id, 'OTP_SENT', { ...metaOf(req), signerId: s.id });
-  res.json({ ok: true, email: maskEmail(s.email), retryAfter: issued.retryAfter });
+  res.json({ ok: true, channel: 'email', email: maskEmail(s.email), retryAfter: issued.retryAfter });
 });
 
 signRouter.post('/:token/otp/verify', otpLimiter, async (req, res) => {

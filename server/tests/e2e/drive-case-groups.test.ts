@@ -20,7 +20,7 @@ describe('cases area grouped by application type and visa category', () => {
     expect(types.items.map((i) => i.id)).toEqual(['vt:WORK', 'vt:AUSBILDUNG']);
 
     const work = await children(su.agent, 'vt:WORK');
-    expect(work.items).toEqual([expect.objectContaining({ id: `vc:WORK:${courier.id}`, name: '§18b · Kuryer az' })]);
+    expect(work.items).toEqual([expect.objectContaining({ id: `vc:WORK:${courier.id}`, name: '§18b · Kuryer de' })]);
     const inCat = await children(su.agent, `vc:WORK:${courier.id}`);
     expect(inCat.items.map((i) => i.id)).toEqual([`case:${wCase.id}`]);
     expect(inCat.path.map((p) => p.id).slice(1)).toEqual(['vt:WORK', `vc:WORK:${courier.id}`]);
@@ -42,6 +42,25 @@ describe('cases area grouped by application type and visa category', () => {
     expect((await su.agent.delete(`/api/admin/cases/${c.id}/documents/${doc.id}`)).status).toBe(200);
     expect(await prisma.document.count({ where: { id: doc.id } })).toBe(0);
     expect(await prisma.caseEvent.count({ where: { caseId: c.id, note: { contains: 'cv.pdf' } } })).toBe(1);
+  });
+});
+
+describe('super admin deletes whole case folders', () => {
+  it('removes every document of a stage or a case folder, keeps the case', async () => {
+    const su = await asSuperAdmin();
+    const admin = await asAdmin();
+    const client = await asClient();
+    const c = (await client.agent.post('/api/cases').send({ visaType: 'WORK' })).body.case;
+    const reqs = await prisma.documentRequirement.findMany({ where: { caseId: c.id, stage: 'INITIAL' }, take: 2 });
+    for (const [i, r] of reqs.entries()) {
+      await prisma.document.create({ data: { caseId: c.id, requirementId: r.id, stage: 'INITIAL', originalName: `f${i}.pdf`, storedName: `missing-${i}-${Date.now()}.pdf`, mimeType: 'application/pdf', size: 1, status: i ? 'REJECTED' : 'ACCEPTED', uploadedById: client.user.id } });
+    }
+    expect((await admin.agent.post('/api/drive/case-documents/delete').send({ ids: [`case:${c.id}:INITIAL`] })).status).toBe(403);
+    const res = await su.agent.post('/api/drive/case-documents/delete').send({ ids: [`case:${c.id}:INITIAL`] });
+    expect(res.body.results[0]).toMatchObject({ ok: true, deleted: 2 });
+    expect(await prisma.document.count({ where: { caseId: c.id } })).toBe(0);
+    expect(await prisma.case.count({ where: { id: c.id } })).toBe(1);
+    expect((await su.agent.post('/api/drive/case-documents/delete').send({ ids: [`case:${c.id}`] })).body.results[0]).toMatchObject({ ok: true, deleted: 0 });
   });
 });
 
