@@ -75,10 +75,10 @@ describe('calendar feed', () => {
     expect(expectStatus(await staff.agent.get('/api/calendar/token'), 200).body.enabled).toBe(false);
   });
 
-  it('only staff may manage a feed; garbage and unknown tokens are refused; a deactivated account’s feed stops', async () => {
-    const client = await asClient();
-    expect((await client.agent.post('/api/calendar/token')).status).toBe(403);
-    expect((await client.agent.get('/api/calendar/token')).status).toBe(403);
+  it('employers may not manage a feed (staff and clients may); garbage and unknown tokens are refused; a deactivated account’s feed stops', async () => {
+    const employer = await asCompany();
+    expect((await employer.agent.post('/api/calendar/token')).status).toBe(403);
+    expect((await employer.agent.get('/api/calendar/token')).status).toBe(403);
     expect((await anon().post('/api/calendar/token')).status).toBe(401);
     expect((await anon().get('/api/calendar/short.ics')).status).toBe(400);
     expect((await anon().get(`/api/calendar/${'a'.repeat(32)}.ics`)).status).toBe(404);

@@ -77,6 +77,13 @@ const SalaryCalculator = lazy(() => import('./pages/tools/SalaryCalculator'));
 const AnerkennungGuide = lazy(() => import('./pages/tools/Anerkennung'));
 const CitiesGuide = lazy(() => import('./pages/tools/Cities'));
 const AdminArrivals = lazy(() => import('./pages/admin/Arrivals'));
+const AccountInterviewPrep = lazy(() => import('./pages/account/InterviewPrep'));
+const AdminInterviewPrep = lazy(() => import('./pages/admin/InterviewPrep'));
+const AdminFinance = lazy(() => import('./pages/admin/Finance'));
+const AdminSurveys = lazy(() => import('./pages/admin/Surveys'));
+const AdminContractTemplates = lazy(() => import('./pages/admin/ContractTemplates'));
+const AdminCandidateRequests = lazy(() => import('./pages/admin/CandidateRequests'));
+const SurveyAnswer = lazy(() => import('./pages/SurveyAnswer'));
 const AdminAgents = lazy(() => import('./pages/admin/Agents'));
 const AdminTranslations = lazy(() => import('./pages/admin/Translations'));
 const AdminPrivacyRequests = lazy(() => import('./pages/admin/PrivacyRequests'));
@@ -215,6 +222,7 @@ export default function App() {
             <Route path="salary-calculator" element={<SalaryCalculator />} />
             <Route path="anerkennung" element={<AnerkennungGuide />} />
             <Route path="cities" element={<CitiesGuide />} />
+            <Route path="survey/:token" element={<SurveyAnswer />} />
             <Route path="news/:slug" element={<NewsDetail />} />
             <Route path="contact" element={<Contact />} />
             <Route path="cooperation" element={<Cooperation />} />
@@ -272,6 +280,7 @@ export default function App() {
               <Route path="letters/*" element={<AccountLetters />} />
               <Route path="vault" element={<AccountVault />} />
               <Route path="arrival" element={<AccountArrival />} />
+              <Route path="interview-prep" element={<AccountInterviewPrep />} />
               <Route path="signatures" element={<AccountSignatures />} />
               <Route path="signatures/:signerId" element={<AccountSignatures />} />
             </Route>
@@ -361,6 +370,11 @@ export default function App() {
             <Route path="tasks/*" element={<WorkspaceTasks />} />
             <Route path="announcements" element={<AdminAnnouncements />} />
             <Route path="arrivals/*" element={<AdminArrivals />} />
+            <Route path="interview-prep" element={<AdminInterviewPrep />} />
+            <Route path="finance/*" element={<AdminFinance />} />
+            <Route path="surveys/*" element={<AdminSurveys />} />
+            <Route path="contract-templates/*" element={<AdminContractTemplates />} />
+            <Route path="candidate-requests/*" element={<AdminCandidateRequests />} />
             <Route path="agents/*" element={<AdminAgents />} />
             <Route path="translations/*" element={<AdminTranslations />} />
             <Route path="privacy-requests/*" element={<AdminPrivacyRequests />} />

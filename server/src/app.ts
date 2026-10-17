@@ -32,6 +32,9 @@ import { privacyRouter } from './routes/privacy.js';
 import { cvRouter } from './routes/cv.js';
 import { vaultRouter } from './routes/vault.js';
 import { arrivalRouter } from './routes/arrival.js';
+import { interviewPrepRouter } from './routes/interviewPrep.js';
+import { surveysRouter } from './routes/surveys.js';
+import { companyRequestsRouter } from './routes/companyRequests.js';
 import { twoFactorRouter } from './routes/twoFactor.js';
 import { companyRouter } from './routes/company.js';
 import { companyInvoicesRouter } from './routes/companyInvoices.js';
@@ -107,6 +110,7 @@ export const createApp = () => {
   app.use('/api/admin', adminRouter);
   app.use('/api/account', accountRouter);
   app.use('/api/company/invoices', companyInvoicesRouter);
+  app.use('/api/company/requests', companyRequestsRouter);
   app.use('/api/company', companyRouter);
   app.use('/api/vacancies', vacanciesRouter);
   app.use('/api/booking', bookingRouter);
@@ -130,6 +134,8 @@ export const createApp = () => {
   app.use('/api/cv', cvRouter);
   app.use('/api/vault', vaultRouter);
   app.use('/api/arrival', arrivalRouter);
+  app.use('/api/interview-prep', interviewPrepRouter);
+  app.use('/api/surveys', surveysRouter);
 
   // /sitemap.xml, /robots.txt and /api/seo/* (Caddy forwards the first two here).
   app.use(seoRouter);

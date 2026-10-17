@@ -23,6 +23,7 @@ import {
 import { password, publicUser } from './auth.js';
 import { emitWebhook } from '../lib/ops/webhooks.js';
 import { sendEmployerCv } from '../lib/cv/access.js';
+import { listWorkers, workerSummary, workersXlsx } from '../lib/requests/workers.js';
 
 // Employer portal API — mounted at /api/company (COMPANY role)
 export const companyRouter = Router();
@@ -415,46 +416,16 @@ companyRouter.post('/candidates/:id/decision', async (req, res) => {
 // ─── Our workers (cases placed with this company) ──────────────────────
 
 companyRouter.get('/workers', async (_req, res) => {
-  const cases = await prisma.case.findMany({
-    where: { companyId: co(res).id },
-    orderBy: { createdAt: 'desc' },
-    select: {
-      id: true,
-      status: true,
-      profession: true,
-      createdAt: true,
-      appointmentAt: true,
-      decisionAt: true,
-      visaValidFrom: true,
-      client: { select: anonymisedProfileSelect },
-      vacancy: { select: { id: true, title: true } },
-      visaCategory: { select: { title: true, visaLabel: true, processingMin: true, processingMax: true } },
-    },
-  });
-  const WEEK = 7 * 24 * 60 * 60 * 1000;
-  res.json({
-    stepCount: STEP_COUNT,
-    items: cases.map((c) => {
-      const vc = c.visaCategory;
-      // Expected decision window from the visa category's typical processing time.
-      const expected =
-        vc?.processingMin != null && vc.processingMax != null && !['APPROVED', 'REJECTED', 'CANCELLED'].includes(c.status)
-          ? { from: new Date(c.createdAt.getTime() + vc.processingMin * WEEK), to: new Date(c.createdAt.getTime() + vc.processingMax * WEEK) }
-          : null;
-      return {
-        id: c.id,
-        name: anonymisedProfile(c.client).name,
-        profession: c.profession,
-        status: c.status,
-        step: STEP[c.status],
-        startedAt: c.createdAt,
-        appointmentAt: c.appointmentAt,
-        decisionAt: c.decisionAt,
-        visaValidFrom: c.visaValidFrom,
-        expectedDecision: expected,
-        vacancy: c.vacancy,
-        visa: vc ? { title: vc.title, visaLabel: vc.visaLabel } : null,
-      };
-    }),
-  });
+  const items = await listWorkers(co(res).id);
+  res.json({ stepCount: STEP_COUNT, summary: workerSummary(items), items });
+});
+
+/** The worker panel as an Excel sheet (same fields as the panel). */
+companyRouter.get('/workers/export.xlsx', async (req, res) => {
+  const pickLang = (v: unknown) => (typeof v === 'string' && ['az', 'de', 'en', 'ru'].includes(v.slice(0, 2)) ? (v.slice(0, 2) as 'az' | 'de' | 'en' | 'ru') : null);
+  const locale = pickLang(req.query.lang) ?? pickLang(req.get('X-Locale')) ?? 'de';
+  const buf = workersXlsx(await listWorkers(co(res).id), locale);
+  res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+  res.setHeader('Content-Disposition', `attachment; filename="workers-${new Date().toISOString().slice(0, 10)}.xlsx"`);
+  res.send(buf);
 });

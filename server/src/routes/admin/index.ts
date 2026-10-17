@@ -26,6 +26,11 @@ import { adminAgentsRouter } from './agents.js';
 import { adminTranslationsRouter } from './translations.js';
 import { adminPrivacyRouter } from './privacy.js';
 import { adminArrivalsRouter } from './arrivals.js';
+import { adminInterviewPrepRouter } from './interviewPrep.js';
+import { adminFinanceRouter } from './finance.js';
+import { adminSurveysRouter } from './surveys.js';
+import { adminContractTemplatesRouter } from './contractTemplates.js';
+import { adminCandidateRequestsRouter } from './candidateRequests.js';
 
 export const adminRouter = Router();
 adminRouter.use(requireMinRole('STAFF'));
@@ -102,6 +107,11 @@ adminRouter.use('/agents', adminAgentsRouter);
 adminRouter.use('/translations', adminTranslationsRouter);
 adminRouter.use('/privacy', adminPrivacyRouter);
 adminRouter.use('/arrivals', adminArrivalsRouter);
+adminRouter.use('/interview-prep', adminInterviewPrepRouter);
+adminRouter.use('/finance', adminFinanceRouter);
+adminRouter.use('/surveys', adminSurveysRouter);
+adminRouter.use('/contract-templates', adminContractTemplatesRouter);
+adminRouter.use('/candidate-requests', adminCandidateRequestsRouter);
 adminRouter.use('/signatures', adminSignaturesRouter);
 // Any successful CMS write (incl. vacancy, employer and review moderation) must be visible on the public site right away.
 // The cache is cleared before the response is sent, so the admin's next public read is already fresh.

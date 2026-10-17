@@ -141,6 +141,10 @@ model User {
   vaultDocuments        VaultDocument[]
   arrivalPlans          ArrivalPlan[]            @relation("ArrivalClient")
   arrivalPlansHandled   ArrivalPlan[]            @relation("ArrivalStaff")
+  surveys               SatisfactionSurvey[]     @relation("SurveyClient")
+  surveysAbout          SatisfactionSurvey[]     @relation("SurveyStaff")
+  contractTemplates     ContractTemplate[]
+  candidateRequests     CandidateRequest[]
   signatureRequests     SignatureRequest[]       @relation("SignatureRequestCreatedBy")
   signatureSignings     SignatureSigner[]        @relation("SignatureSignerUser")
 
@@ -360,6 +364,7 @@ model Case {
   translationOrders TranslationOrder[]
   arrivalPlan       ArrivalPlan?
   motivationLetters MotivationLetter[]
+  surveys           SatisfactionSurvey[]
   signatureRequests SignatureRequest[]
 
   @@index([clientId])
@@ -690,6 +695,7 @@ model Company {
   webhooks          Webhook[]
   contacts          Contact[]
   signatureRequests SignatureRequest[]
+  candidateRequests CandidateRequest[]
 
   @@index([status])
 }
@@ -2317,4 +2323,115 @@ model ArrivalPlan {
   updatedAt        DateTime      @updatedAt
 
   @@index([status, flightDate])
+}
+
+// ─── Interview preparation, satisfaction, contract templates, employer requests ─
+
+enum InterviewKind {
+  EMBASSY // visa interview at the German embassy
+  EMPLOYER // job interview with the German employer
+}
+
+/// Question bank for interview preparation: the question in four languages, a model answer in German.
+model InterviewPrepQuestion {
+  id        String        @id @default(cuid())
+  kind      InterviewKind
+  category  String        @db.VarChar(40) // personal | motivation | job | germany | family | finances | language …
+  question  Json // { az, de, en, ru }
+  answerDe  String        @db.Text // model answer in German (the client adapts it)
+  tips      Json? // { az, de, en, ru } short advice
+  visaTypes Json? // ["WORK","AUSBILDUNG",…]; null = every type
+  sortOrder Int           @default(0)
+  published Boolean       @default(true)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  @@index([kind, published, sortOrder])
+}
+
+enum SurveyTrigger {
+  VISA_APPROVED
+  CASE_CLOSED // rejected or cancelled
+}
+
+/// Short satisfaction survey sent to the client when the visa is approved or the case is closed.
+model SatisfactionSurvey {
+  id         String        @id @default(cuid())
+  caseId     String        @unique
+  case       Case          @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  clientId   String
+  client     User          @relation("SurveyClient", fields: [clientId], references: [id], onDelete: Cascade)
+  staffId    String? // assigned staff member at the time (results per employee)
+  staff      User?         @relation("SurveyStaff", fields: [staffId], references: [id], onDelete: SetNull)
+  trigger    SurveyTrigger
+  tokenHash  String        @unique @db.Char(64) // sha256 of the link token (answer without logging in)
+  score      Int? // 0–10 recommendation score (NPS)
+  ratings    Json? // { communication, speed, clarity, support } 1–5
+  comment    String?       @db.Text
+  sentAt     DateTime      @default(now())
+  remindedAt DateTime?
+  answeredAt DateTime?
+  createdAt  DateTime      @default(now())
+
+  @@index([answeredAt])
+  @@index([staffId, answeredAt])
+}
+
+enum ContractKind {
+  WORK // Arbeitsvertrag
+  AUSBILDUNG // Ausbildungsvertrag
+  SERVICE // Dienstleistungsvertrag (Triad Vision ↔ client)
+}
+
+/// Contract template with {{placeholders}} filled from client / case / company data, then sent for e-signature.
+model ContractTemplate {
+  id          String       @id @default(cuid())
+  name        String       @db.VarChar(160)
+  kind        ContractKind
+  language    String       @default("de") @db.VarChar(5)
+  body        String       @db.LongText
+  isDefault   Boolean      @default(false)
+  active      Boolean      @default(true)
+  createdById String?
+  createdBy   User?        @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@index([kind, active])
+}
+
+enum CandidateRequestStatus {
+  OPEN
+  IN_PROGRESS
+  FILLED
+  CANCELLED
+}
+
+/// Employer's bulk request ("we need 10 truck drivers"); staff match and propose candidates.
+model CandidateRequest {
+  id             String                 @id @default(cuid())
+  companyId      String
+  company        Company                @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  createdById    String?
+  createdBy      User?                  @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  title          String                 @db.VarChar(200)
+  profession     String                 @db.VarChar(120)
+  quantity       Int
+  visaCategoryId String?
+  germanLevel    String?                @db.VarChar(4)
+  drivingLicence String?                @db.VarChar(40)
+  minExperience  Int?
+  city           String?                @db.VarChar(80)
+  startDate      DateTime?
+  salaryMin      Int?
+  salaryMax      Int?
+  notes          String?                @db.Text
+  status         CandidateRequestStatus @default(OPEN)
+  vacancyId      String? // vacancy created from the request (candidates are proposed through it)
+  staffNote      String?                @db.Text
+  createdAt      DateTime               @default(now())
+  updatedAt      DateTime               @updatedAt
+
+  @@index([companyId, status])
+  @@index([status, createdAt])
 }

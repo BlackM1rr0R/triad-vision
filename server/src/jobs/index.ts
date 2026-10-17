@@ -19,3 +19,4 @@ import './privacy.js'; // privacy request deadlines
 import './vault.js'; // vault document expiry reminders
 import './arrival.js'; // arrival / pickup reminders
 import './clientsExcel.js'; // super admin's Excel of all clients
+import './surveys.js'; // satisfaction surveys after visa approval / case closure

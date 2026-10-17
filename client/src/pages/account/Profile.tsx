@@ -31,6 +31,7 @@ import { Flag } from '@/components/ui/Flag';
 import { Spinner } from '@/components/ui/Spinner';
 import { ConfirmDialog } from '@/components/portal/ConfirmDialog';
 import { EmailOtpCard } from '@/components/auth/EmailOtpCard';
+import { CalendarSubscribe } from '@/components/prep/CalendarSubscribe';
 import { ProgressRing } from '@/components/portal/ProgressRing';
 import { useApiError } from '@/components/portal/useApiError';
 import { OVERVIEW_KEY } from '@/components/portal/useOverview';
@@ -1066,6 +1067,7 @@ export default function Profile() {
         {tab === 'personal' && <PersonalPanel key={user.id} user={user} />}
         {tab === 'professional' && <ProfessionalPanel key={user.id} user={user} />}
         {tab === 'notifications' && <NotificationsPanel user={user} />}
+        {tab === 'notifications' && <CalendarSubscribe className="mt-6" />}
         {tab === 'security' && <SecurityPanel user={user} />}
         {tab === 'privacy' && <PrivacyPanel />}
       </div>

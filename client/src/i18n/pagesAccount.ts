@@ -5,6 +5,7 @@
 const az = {
   accountPage: {
     tabs: {
+      interviewPrep: 'Müsahibəyə hazırlıq',
       cv: 'Mənim CV-m',
       letters: 'Motivasiya məktubları',
       vault: 'Sənəd seyfi',
@@ -301,6 +302,7 @@ const az = {
 const de: typeof az = {
   accountPage: {
     tabs: {
+      interviewPrep: 'Interview-Vorbereitung',
       cv: 'Mein Lebenslauf',
       letters: 'Anschreiben',
       vault: 'Dokumententresor',
@@ -597,6 +599,7 @@ const de: typeof az = {
 const en: typeof az = {
   accountPage: {
     tabs: {
+      interviewPrep: 'Interview preparation',
       cv: 'My CV',
       letters: 'Cover letters',
       vault: 'Document vault',
@@ -893,6 +896,7 @@ const en: typeof az = {
 const ru: typeof az = {
   accountPage: {
     tabs: {
+      interviewPrep: 'Подготовка к собеседованию',
       cv: 'Моё резюме',
       letters: 'Мотивационные письма',
       vault: 'Сейф документов',

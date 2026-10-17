@@ -17,6 +17,7 @@ import type { StaffMember } from '../types';
 import { useCaseRefresh } from './shared';
 import { ForecastChip } from '@/components/journey/ForecastStrip';
 import { useRelationLabel } from '@/components/journey/Family';
+import { FromTemplateButton } from '@/components/contracts/FromTemplateDialog';
 
 const patchCase = (id: string, body: Record<string, string | null>) => api.patch(`/admin/cases/${id}`, body);
 
@@ -315,6 +316,7 @@ export const CaseHeader = ({ c }: { c: CaseDetail }) => {
             >
               <Pencil className="size-3.5" /> {t('admin.common.edit')}
             </button>
+            <FromTemplateButton caseId={c.id} caseNumber={c.number} />
           </dl>
         )}
       </div>

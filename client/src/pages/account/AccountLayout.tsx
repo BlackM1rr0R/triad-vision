@@ -2,7 +2,7 @@ import { Link, useLocation, useOutlet } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
-import { Bell, BookUser, Briefcase, Cake, Compass, FileSignature, FileUser, FolderOpen, GraduationCap, Languages, LayoutDashboard, PenLine, PlaneLanding, ShieldCheck, UserRound, Vault, Video } from 'lucide-react';
+import { Bell, BookUser, Briefcase, Cake, Compass, FileSignature, FileUser, FolderOpen, GraduationCap, Languages, LayoutDashboard, MessageCircleQuestion, PenLine, PlaneLanding, ShieldCheck, UserRound, Vault, Video } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { FINAL } from '@/lib/caseStatus';
 import { useNotifications } from '@/components/portal/useNotifications';
@@ -63,6 +63,7 @@ export default function AccountLayout() {
     ...(isClient && hasApproved ? [{ to: '/account/onboarding', label: t('journey.nav.onboarding'), icon: Compass, match: (p: string) => p.startsWith('/account/onboarding') }] : []),
     ...(isClient ? [{ to: '/account/german', label: t('journey.nav.german'), icon: GraduationCap, match: (p: string) => p.startsWith('/account/german') }] : []),
     { to: '/account/interviews', label: t('journey.nav.interviews'), icon: Video, match: (p: string) => p.startsWith('/account/interviews') },
+    ...(isClient ? [{ to: '/account/interview-prep', label: t('accountPage.tabs.interviewPrep'), icon: MessageCircleQuestion, match: (p: string) => p.startsWith('/account/interview-prep') }] : []),
     ...(signatures?.length
       ? [{ to: '/account/signatures', label: t('esign.portal.title'), icon: FileSignature, badge: toSign, match: (p: string) => p.startsWith('/account/signatures') }]
       : []),

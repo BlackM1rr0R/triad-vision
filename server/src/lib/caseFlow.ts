@@ -6,6 +6,7 @@ import { createRequirements } from './docsIntel/requirementTemplates.js';
 import { pickAssignee } from './ops/autoAssign.js';
 import { emitWebhook } from './ops/webhooks.js';
 import { awardCaseCommission } from './agents/commissions.js';
+import { surveyOnCaseFinal } from './surveys/service.js';
 
 export const FINAL_STATUSES: CaseStatus[] = ['APPROVED', 'REJECTED', 'CANCELLED'];
 
@@ -133,6 +134,7 @@ const transition = async (
   });
   const after = await prisma.case.findUnique({ where: { id: caseId }, select: { number: true, companyId: true } });
   if (after) void emitWebhook(FINAL_STATUSES.includes(to) && to !== 'CANCELLED' ? 'case.decided' : 'case.status_changed', { caseId, number: after.number, from: current.status, to }, after.companyId);
+  if (FINAL_STATUSES.includes(to)) void surveyOnCaseFinal(caseId, to); // satisfaction survey (never throws)
 };
 
 const requirementsSatisfied = async (caseId: string, stage: DocStage, mode: 'uploaded' | 'accepted') => {

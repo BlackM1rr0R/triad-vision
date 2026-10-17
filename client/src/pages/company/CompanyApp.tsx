@@ -2,7 +2,7 @@ import { Link, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
 import clsx from 'clsx';
-import { Briefcase, Building2, Clock3, FileSignature, FileText, Handshake, LayoutDashboard, ShieldAlert, Users, Video } from 'lucide-react';
+import { Briefcase, Building2, ClipboardList, Clock3, FileSignature, FileText, Handshake, LayoutDashboard, ShieldAlert, Users, Video } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { registerCopy } from '@/i18n';
@@ -19,9 +19,12 @@ import { CompanyProfile } from '@/components/company/CompanyProfile';
 import { CompanyInterviews } from '@/components/company/Interviews';
 import { Loading, Section, useCompany } from '@/components/company/shared';
 import { CompanyContracts } from '@/components/company/CompanyContracts';
+import { CompanyRequests } from '@/components/requests/CompanyRequests';
+import { pagesRequests } from '@/i18n/pagesRequests';
 
 registerCopy(pagesJobs);
 registerCopy(pagesSign);
+registerCopy(pagesRequests);
 
 /** Employer portal, mounted at /company/* behind RequireAuth roles=['COMPANY']. */
 export default function CompanyApp() {
@@ -36,6 +39,7 @@ export default function CompanyApp() {
     { to: '/company', label: t('jobsArea.portal.nav.dashboard'), icon: LayoutDashboard, match: (p: string) => p === '/company' || p === '/company/' },
     { to: '/company/vacancies', label: t('jobsArea.portal.nav.vacancies'), icon: Briefcase, match: (p: string) => p.startsWith('/company/vacancies') },
     { to: '/company/candidates', label: t('jobsArea.portal.nav.candidates'), icon: Users, match: (p: string) => p.startsWith('/company/candidates') },
+    { to: '/company/requests', label: t('requests.nav'), icon: ClipboardList, match: (p: string) => p.startsWith('/company/requests') },
     { to: '/company/workers', label: t('jobsArea.portal.nav.workers'), icon: Handshake, match: (p: string) => p.startsWith('/company/workers') },
     { to: '/company/interviews', label: t('ops.company.title'), icon: Video, match: (p: string) => p.startsWith('/company/interviews') },
     { to: '/company/contracts', label: t('esign.portal.companyTitle'), icon: FileSignature, match: (p: string) => p.startsWith('/company/contracts') },
@@ -152,6 +156,7 @@ export default function CompanyApp() {
                 <Route path="vacancies/new" element={<CompanyVacancyEditor company={company} />} />
                 <Route path="vacancies/:id" element={<CompanyVacancyEditor company={company} />} />
                 <Route path="candidates" element={<CompanyCandidates />} />
+                <Route path="requests/*" element={<CompanyRequests />} />
                 <Route path="workers" element={<CompanyWorkers />} />
                 <Route path="interviews" element={<CompanyInterviews />} />
                 <Route path="contracts" element={<CompanyContracts />} />

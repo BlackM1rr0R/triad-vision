@@ -30,9 +30,17 @@ export interface FeedEvent {
   location?: string;
   cancelled?: boolean;
   stamp?: Date;
+  /** All-day entry (reminder): `start` names the day in Europe/Berlin; `end` is ignored. */
+  allDay?: boolean;
 }
 
 const icsDate = (d: Date) => d.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+
+/** YYYYMMDD of the calendar day `d` falls on in Germany (where every date of the process lives). */
+const berlinDay = (d: Date) =>
+  new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Berlin', year: 'numeric', month: '2-digit', day: '2-digit' }).format(d).replace(/-/g, '');
+const nextDay = (ymd: string) =>
+  new Date(Date.UTC(+ymd.slice(0, 4), +ymd.slice(4, 6) - 1, +ymd.slice(6, 8) + 1)).toISOString().slice(0, 10).replace(/-/g, '');
 
 /** Multi-event VCALENDAR (PUBLISH). Every time is UTC; readers see their own zone. */
 export const buildCalendar = (name: string, events: FeedEvent[]) => {
@@ -50,14 +58,14 @@ export const buildCalendar = (name: string, events: FeedEvent[]) => {
       'BEGIN:VEVENT',
       `UID:${ev.uid}`,
       `DTSTAMP:${icsDate(ev.stamp ?? ev.start)}`,
-      `DTSTART:${icsDate(ev.start)}`,
-      `DTEND:${icsDate(ev.end)}`,
+      ev.allDay ? `DTSTART;VALUE=DATE:${berlinDay(ev.start)}` : `DTSTART:${icsDate(ev.start)}`,
+      ev.allDay ? `DTEND;VALUE=DATE:${nextDay(berlinDay(ev.start))}` : `DTEND:${icsDate(ev.end)}`,
       `SUMMARY:${icsEscape(ev.summary)}`,
       ev.description ? `DESCRIPTION:${icsEscape(ev.description)}` : null,
       ev.location ? `LOCATION:${icsEscape(ev.location)}` : null,
       ev.url ? `URL:${ev.url}` : null,
       `STATUS:${ev.cancelled ? 'CANCELLED' : 'CONFIRMED'}`,
-      'TRANSP:OPAQUE',
+      ev.allDay ? 'TRANSP:TRANSPARENT' : 'TRANSP:OPAQUE',
       'END:VEVENT',
     );
   }

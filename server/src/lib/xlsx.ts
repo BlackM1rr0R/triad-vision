@@ -114,12 +114,30 @@ const zip = (files: { name: string; data: Buffer }[]) => {
   return Buffer.concat([...parts, cd, end]);
 };
 
-/** Builds a one-sheet workbook. `widths` are column widths in characters (default from the content). */
-export const buildXlsx = (sheetName: string, headers: string[], rows: Cell[][], widths?: number[]) => {
-  const w =
-    widths ??
-    headers.map((h, i) => Math.min(48, Math.max(8, h.length + 2, ...rows.slice(0, 500).map((r) => (r[i] == null ? 0 : String(r[i]).length + 2)))));
-  const safeName = esc(sheetName.replace(/[\\/?*[\]:]/g, ' ').slice(0, 31) || 'Sheet1');
+const autoWidths = (headers: string[], rows: Cell[][]) =>
+  headers.map((h, i) => Math.min(48, Math.max(8, h.length + 2, ...rows.slice(0, 500).map((r) => (r[i] == null ? 0 : String(r[i]).length + 2)))));
+
+const cleanSheetName = (name: string, fallback: string) => name.replace(/[\\/?*[\]:]/g, ' ').slice(0, 31) || fallback;
+
+export interface XlsxSheet {
+  name: string;
+  headers: string[];
+  rows: Cell[][];
+  /** Column widths in characters (default from the content). */
+  widths?: number[];
+}
+
+/** Builds a workbook with one or more sheets (names are cleaned and made unique, max 31 characters). */
+export const buildXlsxBook = (sheets: XlsxSheet[]) => {
+  if (sheets.length === 0) throw new Error('buildXlsxBook: at least one sheet is required');
+  const used = new Set<string>();
+  const names = sheets.map((sh, i) => {
+    const base = cleanSheetName(sh.name, `Sheet${i + 1}`);
+    let name = base;
+    for (let n = 2; used.has(name.toLowerCase()); n++) name = `${base.slice(0, 31 - String(n).length - 1)} ${n}`;
+    used.add(name.toLowerCase());
+    return name;
+  });
   const files = [
     {
       name: '[Content_Types].xml',
@@ -127,7 +145,7 @@ export const buildXlsx = (sheetName: string, headers: string[], rows: Cell[][], 
         '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">' +
           '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/>' +
           '<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>' +
-          '<Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>' +
+          sheets.map((_, i) => `<Override PartName="/xl/worksheets/sheet${i + 1}.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`).join('') +
           '<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>',
       ),
     },
@@ -142,20 +160,32 @@ export const buildXlsx = (sheetName: string, headers: string[], rows: Cell[][], 
       name: 'xl/workbook.xml',
       data: Buffer.from(
         '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">' +
-          `<sheets><sheet name="${safeName}" sheetId="1" r:id="rId1"/></sheets>` +
-          `<definedNames><definedName name="_xlnm._FilterDatabase" localSheetId="0" hidden="1">'${safeName}'!$A$1:$${colName(headers.length - 1)}$${rows.length + 1}</definedName></definedNames></workbook>`,
+          `<sheets>${names.map((n, i) => `<sheet name="${esc(n)}" sheetId="${i + 1}" r:id="rId${i + 1}"/>`).join('')}</sheets>` +
+          `<definedNames>${sheets
+            .map(
+              (sh, i) =>
+                `<definedName name="_xlnm._FilterDatabase" localSheetId="${i}" hidden="1">'${esc(names[i].replace(/'/g, "''"))}'!$A$1:$${colName(sh.headers.length - 1)}$${sh.rows.length + 1}</definedName>`,
+            )
+            .join('')}</definedNames></workbook>`,
       ),
     },
     {
       name: 'xl/_rels/workbook.xml.rels',
       data: Buffer.from(
         '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
-          '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/>' +
-          '<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>',
+          sheets.map((_, i) => `<Relationship Id="rId${i + 1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet${i + 1}.xml"/>`).join('') +
+          `<Relationship Id="rId${sheets.length + 1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>`,
       ),
     },
     { name: 'xl/styles.xml', data: Buffer.from(STYLES) },
-    { name: 'xl/worksheets/sheet1.xml', data: Buffer.from(sheetXml(headers, rows, w)) },
+    ...sheets.map((sh, i) => ({
+      name: `xl/worksheets/sheet${i + 1}.xml`,
+      data: Buffer.from(sheetXml(sh.headers, sh.rows, sh.widths ?? autoWidths(sh.headers, sh.rows))),
+    })),
   ];
   return zip(files);
 };
+
+/** Builds a one-sheet workbook. `widths` are column widths in characters (default from the content). */
+export const buildXlsx = (sheetName: string, headers: string[], rows: Cell[][], widths?: number[]) =>
+  buildXlsxBook([{ name: sheetName, headers, rows, widths }]);
