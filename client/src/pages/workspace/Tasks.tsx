@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
 import { useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
@@ -139,8 +139,10 @@ export default function WorkspaceTasks() {
 
   // ─── Navigation ───
   const qs = sp.toString();
-  const openTask = useCallback((task: { key: string }) => navigate(`/workspace/tasks/${task.key}${qs ? `?${qs}` : ''}`), [navigate, qs]);
-  const closeTask = useCallback(() => navigate(`/workspace/tasks${qs ? `?${qs}` : ''}`), [navigate, qs]);
+  // The page is mounted both in the workspace (/workspace/tasks) and in the admin panel (/admin/tasks).
+  const tasksPath = useLocation().pathname.startsWith('/admin') ? '/admin/tasks' : '/workspace/tasks';
+  const openTask = useCallback((task: { key: string }) => navigate(`${tasksPath}/${task.key}${qs ? `?${qs}` : ''}`), [navigate, qs, tasksPath]);
+  const closeTask = useCallback(() => navigate(`${tasksPath}${qs ? `?${qs}` : ''}`), [navigate, qs, tasksPath]);
 
   // ─── New task ───
   const [creating, setCreating] = useState<NewTaskDefaults | null>(null);

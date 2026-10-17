@@ -1,6 +1,5 @@
 import { lazy, Suspense, useEffect } from 'react';
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
-import { AnimatePresence } from 'framer-motion';
 import { RequireAuth } from './lib/auth';
 import { whenIdle } from './lib/idle';
 import { PageLoader } from './components/ui/Spinner';
@@ -68,6 +67,8 @@ const JobDetail = lazy(() => import('./pages/jobs/JobDetail'));
 const EmployerRegister = lazy(() => import('./pages/company/EmployerRegister'));
 const CompanyApp = lazy(() => import('./pages/company/CompanyApp'));
 const AgentApp = lazy(() => import('./pages/agent/AgentApp'));
+const AdminHelp = lazy(() => import('./pages/admin/Help'));
+const AdminAnnouncements = lazy(() => import('./pages/admin/Announcements'));
 const AdminAgents = lazy(() => import('./pages/admin/Agents'));
 const AdminTranslations = lazy(() => import('./pages/admin/Translations'));
 const AdminPrivacyRequests = lazy(() => import('./pages/admin/PrivacyRequests'));
@@ -189,8 +190,7 @@ export default function App() {
 
   return (
     <Suspense fallback={<PageLoader />}>
-      <AnimatePresence mode="wait">
-        <Routes location={location} key={area}>
+      <Routes location={location} key={area}>
           <Route element={<SiteLayout />}>
             <Route index element={<Home />} />
             <Route path="about" element={<About />} />
@@ -342,6 +342,9 @@ export default function App() {
             <Route path="messaging" element={<AdminMessaging />} />
             <Route path="kanban" element={<AdminKanban />} />
             <Route path="kb" element={<AdminKnowledgeBase />} />
+            <Route path="help" element={<AdminHelp />} />
+            <Route path="tasks/*" element={<WorkspaceTasks />} />
+            <Route path="announcements" element={<AdminAnnouncements />} />
             <Route path="agents/*" element={<AdminAgents />} />
             <Route path="translations/*" element={<AdminTranslations />} />
             <Route path="privacy-requests/*" element={<AdminPrivacyRequests />} />
@@ -353,7 +356,6 @@ export default function App() {
             <Route path="signatures/sign/:signerId" element={<AdminSignatures />} />
           </Route>
         </Routes>
-      </AnimatePresence>
     </Suspense>
   );
 }

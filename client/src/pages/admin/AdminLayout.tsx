@@ -11,12 +11,10 @@ import {
   Bell,
   BookOpen,
   BookOpenText,
-  BookUser,
   Briefcase,
   BriefcaseBusiness,
   Building2,
   CalendarClock,
-  CalendarDays,
   CheckCheck,
   ChevronDown,
   ChevronsLeft,
@@ -26,7 +24,6 @@ import {
   FileImage,
   FileSignature,
   FolderKanban,
-  FolderOpen,
   Handshake,
   HelpCircle,
   Inbox,
@@ -35,14 +32,14 @@ import {
   Layers,
   LayoutDashboard,
   LayoutGrid,
+  LifeBuoy,
   ListChecks,
   ListTodo,
   LogOut,
-  Mail,
+  Megaphone,
   Menu,
   MessageSquareQuote,
   MessageSquareText,
-  MessagesSquare,
   Newspaper,
   Plug,
   Receipt,
@@ -54,7 +51,6 @@ import {
   TrendingUp,
   UserSearch,
   Users,
-  UsersRound,
   Video,
   X,
 } from 'lucide-react';
@@ -69,6 +65,7 @@ import { hasMinRole, type Notification } from '@/lib/types';
 import { registerCopy } from '@/i18n';
 import { adminCopy } from '@/i18n/admin';
 import { roleLabel, fmtRelative } from '@/components/admin/labels';
+import { HelpButton } from '@/components/admin/help/HelpButton';
 
 registerCopy(adminCopy);
 
@@ -89,13 +86,8 @@ const MAIN_NAV: NavItem[] = [
   { to: '/admin/cases', label: 'cases', icon: FolderKanban },
   { to: '/admin/signatures', label: 'signatures', icon: FileSignature },
   { to: '/workspace/home', label: 'workspace', icon: LayoutGrid },
-  { to: '/workspace/mail', label: 'mail', icon: Mail },
-  { to: '/workspace/chat', label: 'chat', icon: MessagesSquare },
-  { to: '/workspace/calendar', label: 'calendar', icon: CalendarDays },
-  { to: '/workspace/drive', label: 'docs', icon: FolderOpen },
-  { to: '/workspace/tasks', label: 'tasks', icon: ListTodo },
-  { to: '/workspace/contacts', label: 'contacts', icon: BookUser },
-  { to: '/workspace/team', label: 'team', icon: UsersRound },
+  { to: '/admin/tasks', label: 'tasks', icon: ListTodo },
+  { to: '/admin/announcements', label: 'announcements', icon: Megaphone },
   { to: '/admin/inquiries', label: 'inquiries', icon: Inbox },
   { to: '/admin/users', label: 'users', icon: Users },
   { to: '/admin/mailboxes', label: 'mailboxes', icon: AtSign, adminOnly: true },
@@ -117,6 +109,7 @@ const MAIN_NAV: NavItem[] = [
   { to: '/admin/translations', label: 'translations', icon: Languages },
   { to: '/admin/privacy-requests', label: 'privacyRequests', icon: ShieldHalf, adminOnly: true },
   { to: '/admin/integrations', label: 'integrations', icon: Plug, adminOnly: true },
+  { to: '/admin/help', label: 'help', icon: LifeBuoy },
 ];
 
 const CONTENT_NAV: (NavItem & { resource: string })[] = [
@@ -146,6 +139,9 @@ const pageTitleKey = (pathname: string) => {
   if (matchPath('/admin/signatures/*', pathname)) return 'admin.nav.signatures';
   if (matchPath('/admin/mailboxes', pathname)) return 'admin.nav.mailboxes';
   if (matchPath('/admin/settings', pathname)) return 'admin.nav.settings';
+  if (matchPath('/admin/help', pathname)) return 'admin.nav.help';
+  if (matchPath('/admin/tasks/*', pathname)) return 'admin.nav.tasks';
+  if (matchPath('/admin/announcements', pathname)) return 'admin.nav.announcements';
   const m = matchPath('/admin/content/:resource', pathname);
   if (m) {
     const item = CONTENT_NAV.find((c) => c.resource === m.params.resource);
@@ -506,6 +502,7 @@ export default function AdminLayout() {
           </button>
           <p className="min-w-0 flex-1 truncate pl-1 font-display text-base font-bold text-navy-900 sm:text-lg lg:pl-0">{title}</p>
 
+          <HelpButton />
           <LanguageSwitcher variant="pill" />
           <ThemeToggle />
           <NotificationBell />

@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
+import i18n from 'i18next';
 import clsx from 'clsx';
 import { toast } from 'sonner';
 import { ArrowDown, ArrowUp, FileQuestion, ImageOff, LayoutList, Pencil, Plus, Trash2, X } from 'lucide-react';
@@ -71,7 +72,8 @@ const isL10nList = (v: unknown): v is L10nList => isObj(v) && LANGS.every((l) =>
 const isFaqList = (v: unknown): v is FaqItem[] => Array.isArray(v) && v.every((x) => isObj(x) && isL10n(x.q) && isL10n(x.a));
 const str = (v: unknown) => (typeof v === 'string' ? v : '');
 /** CMS items are listed by their Azerbaijani (source) text. */
-const l10nAz = (v: unknown) => (isL10n(v) ? v.az : '');
+/** List titles in the interface language (falls back to Azerbaijani when that language is empty). */
+const l10nAz = (v: unknown) => (isL10n(v) ? (v as unknown as Record<string, string>)[i18n.language.slice(0, 2)] || v.az : '');
 
 const AUDIENCES = ['all', 'company', 'candidate'] as const;
 const SECTORS = ['logistics', 'courier', 'industry', 'construction', 'hospitality', 'healthcare', 'agriculture', 'other'] as const;

@@ -163,17 +163,10 @@ export default function AccountLayout() {
         <VerifyBanner className="mt-6" />
 
         <div className="mt-6 lg:mt-8">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={location.pathname}
-              initial={{ opacity: 0, y: 14 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-            >
-              {outlet}
-            </motion.div>
-          </AnimatePresence>
+          {/* Tab change: mount at once and fade in (CSS, compositor only) instead of waiting for an exit animation. */}
+          <div key={location.pathname} className="page-in">
+            {outlet}
+          </div>
         </div>
       </div>
     </div>

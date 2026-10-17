@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Flag } from '../ui/Flag';
 
 /*
@@ -64,6 +65,9 @@ const STARS = Array.from({ length: 26 }, (_, i) => {
 });
 
 export const HeroGlobeLite = () => {
+  const { i18n } = useTranslation();
+  const bakuLabel = ({ az: 'Bakı', de: 'Baku', en: 'Baku', ru: 'Баку' } as Record<string, string>)[i18n.language.slice(0, 2)] ?? 'Baku';
+  const berlinLabel = i18n.language.startsWith('ru') ? 'Берлин' : 'Berlin';
   const grid = useMemo(() => {
     const meridians: string[] = [];
     for (let lon = LON0 - 180; lon < LON0 + 180; lon += 20) {
@@ -130,10 +134,10 @@ export const HeroGlobeLite = () => {
 
       {/* city markers */}
       {[
-        { p: baku, color: '#00b5e2', code: 'az' as const, label: 'Bakı', delay: '0s' },
-        { p: berlin, color: '#ffce00', code: 'de' as const, label: 'Berlin', delay: '1s' },
+        { p: baku, color: '#00b5e2', code: 'az' as const, label: bakuLabel, delay: '0s' },
+        { p: berlin, color: '#ffce00', code: 'de' as const, label: berlinLabel, delay: '1s' },
       ].map((c) => (
-        <div key={c.label} className="absolute -translate-x-1/2 -translate-y-1/2" style={pct({ x: c.p.x * 0.88 + CX * 0.12, y: c.p.y * 0.88 + CY * 0.12 })}>
+        <div key={c.code} className="absolute -translate-x-1/2 -translate-y-1/2" style={pct({ x: c.p.x * 0.88 + CX * 0.12, y: c.p.y * 0.88 + CY * 0.12 })}>
           <span className="absolute inset-0 -m-3 rounded-full motion-safe:animate-pulse-ring" style={{ backgroundColor: c.color, animationDelay: c.delay }} />
           <span className="relative block size-3 rounded-full shadow-[0_0_12px_2px_rgba(255,255,255,0.35)]" style={{ backgroundColor: c.color }} />
           <div className="absolute bottom-full left-1/2 mb-2 hidden -translate-x-1/2 items-center gap-1.5 rounded-full border border-white/20 bg-navy-950/80 px-2.5 py-1 text-[11px] font-bold whitespace-nowrap text-white shadow-lg lg:flex">

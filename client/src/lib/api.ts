@@ -2,6 +2,14 @@ import axios, { AxiosError } from 'axios';
 
 export const api = axios.create({ baseURL: '/api', withCredentials: true });
 
+// The interface language (set on <html lang> by i18n), so texts the API builds itself (calendar items,
+// generated labels) follow the language the user is looking at, not only their profile setting.
+api.interceptors.request.use((cfg) => {
+  const lang = typeof document !== 'undefined' ? document.documentElement.lang.slice(0, 2) : '';
+  if (lang) cfg.headers.set('X-Locale', lang);
+  return cfg;
+});
+
 /** Machine-readable error code returned by the server ({ error: 'CODE' }), or 'NETWORK'. */
 export const errorCode = (err: unknown): string => {
   if (err instanceof AxiosError) {

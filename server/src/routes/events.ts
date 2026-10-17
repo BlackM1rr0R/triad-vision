@@ -1,6 +1,6 @@
 import { Router, type Request } from 'express';
 import { z } from 'zod';
-import type { AttendeeStatus, Prisma } from '@prisma/client';
+import type { AttendeeStatus, Locale, Prisma } from '@prisma/client';
 import { config } from '../config.js';
 import { prisma } from '../db.js';
 import { requireMinRole } from '../middleware/auth.js';
@@ -122,9 +122,16 @@ const loadEvent = async (eventId: string, actor: Actor) => {
   return e;
 };
 
-const me = async (actor: Actor) => {
+/** Language of the interface the request comes from (X-Locale header), when it is one we support. */
+const uiLocale = (req: { get: (h: string) => string | undefined }): Locale | null => {
+  const l = (req.get('x-locale') ?? '').slice(0, 2).toLowerCase();
+  return (['az', 'de', 'en', 'ru'] as const).find((x) => x === l) ?? null;
+};
+
+const me = async (actor: Actor, req?: { get: (h: string) => string | undefined }) => {
   const u = await prisma.user.findUnique({ where: { id: actor.id }, select: { id: true, firstName: true, lastName: true, locale: true } });
-  return u ?? { id: actor.id, firstName: actor.firstName, lastName: actor.lastName, locale: actor.locale };
+  const base = u ?? { id: actor.id, firstName: actor.firstName, lastName: actor.lastName, locale: actor.locale };
+  return { ...base, locale: (req && uiLocale(req)) || base.locale };
 };
 
 // ─── Listing ───────────────────────────────────────────────────────────
@@ -170,10 +177,10 @@ eventsRouter.get('/', async (req, res) => {
   }
   const system: unknown[] = [];
   if (q.system !== '0') {
-    system.push(...(await systemItemsFor(await me(actor), q.from, q.to)));
+    system.push(...(await systemItemsFor(await me(actor, req), q.from, q.to)));
     if (others.length) {
       const users = await activeStaff(others.slice(0, 10));
-      for (const u of users) system.push(...(await systemItemsFor(u, q.from, q.to)));
+      for (const u of users) system.push(...(await systemItemsFor({ ...u, locale: uiLocale(req) ?? u.locale }, q.from, q.to)));
     }
   }
   res.json({ events, system });
@@ -195,7 +202,7 @@ eventsRouter.get('/summary', async (req, res) => {
   });
   const items: { id: string; title: string; startsAt: Date; endsAt: Date; source: string; link?: string | null }[] = [];
   for (const e of rows) for (const o of occurrencesOf(toEvent(e, actor), e, dayStart, horizon)) items.push({ id: o.id, title: o.title, startsAt: o.startsAt, endsAt: o.endsAt, source: 'event', link: eventLink(o.id) });
-  for (const s of await systemItemsFor(await me(actor), dayStart, horizon, now)) items.push({ id: s.id, title: s.title, startsAt: s.startsAt, endsAt: s.endsAt, source: s.source, link: s.link });
+  for (const s of await systemItemsFor(await me(actor, req), dayStart, horizon, now)) items.push({ id: s.id, title: s.title, startsAt: s.startsAt, endsAt: s.endsAt, source: s.source, link: s.link });
   items.sort((a, b) => a.startsAt.getTime() - b.startsAt.getTime());
   const today = items.filter((i) => i.startsAt.getTime() < dayEnd.getTime() && i.endsAt.getTime() > dayStart.getTime()).length;
   const next = items.find((i) => i.endsAt.getTime() > now.getTime()) ?? null;

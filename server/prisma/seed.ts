@@ -436,33 +436,38 @@ async function main() {
     },
   });
 
-  // Content is only seeded into empty tables so re-running never overwrites admin edits.
-  if ((await prisma.visaCategory.count()) === 0) {
+  // Starter website content is written once. A marker setting remembers it, so content the admin
+  // deletes later (even every visa type) is never re-created by a later deploy.
+  const CONTENT_MARKER = 'seed.contentDone';
+  const contentSeeded = !!(await prisma.setting.findUnique({ where: { key: CONTENT_MARKER } }));
+  const seedTable = async (table: { count: () => Promise<number> }) => !contentSeeded && (await table.count()) === 0;
+  if (await seedTable(prisma.visaCategory)) {
     await prisma.visaCategory.createMany({ data: visaCategories.map((v, i) => ({ ...v, sortOrder: i })) });
   }
-  if ((await prisma.service.count()) === 0) {
+  if (await seedTable(prisma.service)) {
     await prisma.service.createMany({ data: services.map((v, i) => ({ ...v, sortOrder: i })) });
   }
-  if ((await prisma.partner.count()) === 0) {
+  if (await seedTable(prisma.partner)) {
     await prisma.partner.createMany({ data: partners.map((name, i) => ({ name, sortOrder: i })) });
   }
-  if ((await prisma.visaSample.count()) === 0) {
+  if (await seedTable(prisma.visaSample)) {
     await prisma.visaSample.createMany({
       data: samples.map((s, i) => ({ ...s, image: img(portraits[i % portraits.length], 400), sortOrder: i })),
     });
   }
-  if ((await prisma.testimonial.count()) === 0) {
+  if (await seedTable(prisma.testimonial)) {
     await prisma.testimonial.createMany({ data: testimonials.map((t, i) => ({ ...t, sortOrder: i })) });
   }
-  if ((await prisma.stat.count()) === 0) {
+  if (await seedTable(prisma.stat)) {
     await prisma.stat.createMany({ data: stats.map((s, i) => ({ ...s, sortOrder: i })) });
   }
-  if ((await prisma.faq.count()) === 0) {
+  if (await seedTable(prisma.faq)) {
     await prisma.faq.createMany({ data: faqs.map((f, i) => ({ ...f, sortOrder: i })) });
   }
-  if ((await prisma.post.count()) === 0) {
+  if (await seedTable(prisma.post)) {
     await prisma.post.createMany({ data: posts });
   }
+  if (!contentSeeded) await prisma.setting.create({ data: { key: CONTENT_MARKER, value: { at: new Date().toISOString() } } });
 
   const settings: Record<string, unknown> = {
     contact: {

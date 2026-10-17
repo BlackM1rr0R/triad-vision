@@ -95,24 +95,19 @@ export const SiteLayout = () => {
       <SmoothScroll />
       <ScrollProgress />
       <Header />
-      <AnimatePresence mode="wait">
-        <motion.main
-          id="main"
-          tabIndex={-1}
-          className="min-h-[100svh] outline-none"
-          key={pathname}
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0, transition: { duration: 0.35, ease: [0.22, 1, 0.36, 1] } }}
-          exit={{ opacity: 0, transition: { duration: 0.12 } }}
-        >
-          {/* Suspense lives inside the layout so header/footer stay put while a page chunk loads. */}
-          <RouteErrorBoundary>
-            <Suspense fallback={<RouteFallback pathname={pathname} />}>
-              <Outlet />
-            </Suspense>
-          </RouteErrorBoundary>
-        </motion.main>
-      </AnimatePresence>
+      {/*
+        Page change: the new page mounts at once and fades in with a CSS animation (compositor only).
+        No exit animation / "wait" mode: holding the old page and then mounting the heavy new one in a
+        single frame is what made navigation stutter.
+      */}
+      <main id="main" tabIndex={-1} className="page-in min-h-[100svh] outline-none" key={pathname}>
+        {/* Suspense lives inside the layout so header/footer stay put while a page chunk loads. */}
+        <RouteErrorBoundary>
+          <Suspense fallback={<RouteFallback pathname={pathname} />}>
+            <Outlet />
+          </Suspense>
+        </RouteErrorBoundary>
+      </main>
       <Footer />
       <FloatingActions />
       <SearchPalette />

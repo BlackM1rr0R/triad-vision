@@ -568,3 +568,24 @@ html.a11y-visual-alerts.a11y-flash::after {
   outline-offset: 3px;
   background-color: rgba(255, 138, 0, 0.12);
 }
+
+/* Route change fade (SiteLayout): opacity only, so it never triggers layout or repaints. */
+@keyframes page-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.page-in {
+  animation: page-in 0.22s ease-out both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .page-in {
+    animation: none;
+  }
+}
+.a11y-nomotion .page-in {
+  animation: none;
+}

@@ -2,6 +2,7 @@ import { useCallback, useMemo, useState, type DragEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
+import i18n from 'i18next';
 import { toast } from 'sonner';
 import clsx from 'clsx';
 import { CalendarClock, FileWarning, MessageSquareWarning, RefreshCw, UserX } from 'lucide-react';
@@ -161,7 +162,7 @@ export default function Kanban() {
         <select id="kb-visa" className="input h-10 w-auto min-w-40 py-1 text-xs sm:h-8" value={visa} onChange={(e) => setVisa(e.target.value)}>
           <option value="">{t('ops.kanban.anyVisa')}</option>
           {data?.visas.map((v) => (
-            <option key={v.id} value={v.id}>{v.visaLabel} · {v.title.az}</option>
+            <option key={v.id} value={v.id}>{v.visaLabel} · {(v.title as Record<string, string>)[i18n.language.slice(0, 2)] || v.title.az}</option>
           ))}
         </select>
         <span className="flex items-center gap-2 text-xs text-muted">
