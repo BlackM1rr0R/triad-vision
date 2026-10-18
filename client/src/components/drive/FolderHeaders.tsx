@@ -37,7 +37,7 @@ const useRefreshDrive = () => {
   };
 };
 
-/** Description strip of a fixed section (Anträge, Partner, In Bearbeitung, …). */
+/** Description strip of a fixed section (Anträge, Partner, Mitarbeiter, …). */
 export const SectionHeader = ({ folder }: { folder: DriveItem }) => {
   const { t } = useTranslation();
   const s = sectionOf(folder);

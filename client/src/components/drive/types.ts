@@ -74,7 +74,9 @@ export interface Listing {
   items: DriveItem[];
 }
 
-/** The one shared workspace and its system folders (quick links). */
+export type SectionKey = 'cases' | 'partners' | 'staff' | 'templates' | 'clients' | 'tasks';
+
+/** The one shared workspace and its system folders (quick links). A section a super admin deleted is null. */
 export interface RootsResponse {
   shared: DriveItem | null;
   /** "Anträge": client folders by visa type. */
@@ -83,12 +85,14 @@ export interface RootsResponse {
   partners: DriveItem | null;
   /** "Mitarbeiter": former personal files. */
   staff: DriveItem | null;
-  /** "In Bearbeitung": documents being corrected. */
-  work: DriveItem | null;
   /** "Vorlagen": templates and forms. */
   templates: DriveItem | null;
   /** "Alle Kunden": the clients workbook (super admins only, else null). */
   clients: DriveItem | null;
+  /** "Aufgabendateien": files uploaded into tasks (null until the first one). */
+  tasks?: DriveItem | null;
+  /** Section key → folder id (sections are recognised by id, so renamed sections keep their icon). */
+  sections?: Partial<Record<SectionKey, string>>;
   limits: { maxFileBytes: number; trashDays: number };
 }
 
@@ -170,7 +174,7 @@ export interface OverviewItem {
 export interface OverviewResponse {
   user: StaffPerson;
   items: OverviewItem[];
-  cases: { rootId: string; rootLevel: DriveAccess | null; assignedCases: number };
+  cases: { rootId: string | null; rootLevel: DriveAccess | null; assignedCases: number };
 }
 
 /** Where the explorer is. */

@@ -1,4 +1,4 @@
-import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore, type CSSProperties, type ReactNode } from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
@@ -32,15 +32,22 @@ import {
   sortIndices,
   toTsv,
   translateFormula,
+  type CellStyle,
   type ColumnFilter,
   type Pos,
   type Range,
 } from './model';
-import type { CellChange, GridProps } from './types';
+import type { CellChange, GridProps, GridSource } from './types';
 import { DateEditor, SelectEditor, TextEditor, type EditEnd } from './Editors';
 import { ContextMenu, FilterMenu, type MenuItem } from './Popups';
 
 const HEADER_H = 26;
+const ROW_HEADER_W = 52;
+/** Highlight of selected row / column headers: tinted but opaque (headers are sticky over the cells). */
+const SELECTED_HEADER: CSSProperties = { background: 'linear-gradient(var(--color-brand-100), var(--color-brand-100)), var(--color-surface)' };
+const MIN_COL_W = 36;
+/** Selections up to this many cells get their status-bar figures synchronously, bigger ones a moment later. */
+const SYNC_STATS_CELLS = 20_000;
 
 /** True for light colours ("#RRGGBB"), by relative luminance. */
 const isLight = (hex: string) => {
@@ -49,10 +56,6 @@ const isLight = (hex: string) => {
   const [r, g, b] = [(n >> 16) & 255, (n >> 8) & 255, n & 255];
   return 0.2126 * r + 0.7152 * g + 0.0722 * b > 140;
 };
-const ROW_HEADER_W = 52;
-/** Highlight of selected row / column headers: tinted but opaque (headers are sticky over the cells). */
-const SELECTED_HEADER: CSSProperties = { background: 'linear-gradient(var(--color-brand-100), var(--color-brand-100)), var(--color-surface)' };
-const MIN_COL_W = 36;
 
 type Editing = { vr: number; c: number; mode: 'enter' | 'edit'; initial?: string; fromBar?: boolean } | null;
 
@@ -63,41 +66,102 @@ interface Clip {
   origin: Pos;
 }
 
-/** Display + interaction state of one cell, as primitives so React.memo can skip unchanged cells. */
+// ─── Draft store: the text being edited lives outside the grid's state ──────────────────────
+// Typing re-renders only the in-cell editor and the formula bar, never the grid.
+
+interface Draft {
+  get(): string;
+  set(v: string): void;
+  subscribe(fn: () => void): () => void;
+}
+
+const createDraft = (): Draft => {
+  let value = '';
+  const subs = new Set<() => void>();
+  return {
+    get: () => value,
+    set: (v) => {
+      if (v === value) return;
+      value = v;
+      subs.forEach((fn) => fn());
+    },
+    subscribe: (fn) => {
+      subs.add(fn);
+      return () => subs.delete(fn);
+    },
+  };
+};
+
+const useDraft = (d: Draft) => useSyncExternalStore(d.subscribe, d.get);
+
+// ─── Cell styles: one CSSProperties object per (cell style, alignment) so memoised cells can skip ─
+
+const styleCache = new WeakMap<CellStyle, Map<string, CSSProperties>>();
+const plainStyles = new Map<string, CSSProperties>();
+
+const buildStyle = (st: CellStyle | undefined, align: string | undefined, raised: boolean): CSSProperties => {
+  const style: CSSProperties = {};
+  if (st?.b) style.fontWeight = 700;
+  if (st?.i) style.fontStyle = 'italic';
+  if (st?.u) style.textDecoration = 'underline';
+  if (st?.color) style.color = st.color;
+  if (st?.fill) {
+    style.backgroundColor = st.fill;
+    // Excel's default text is black: keep it readable on a filled cell in dark mode too.
+    if (!st.color) style.color = isLight(st.fill) ? '#111827' : '#ffffff';
+  }
+  if (st?.wrap) {
+    style.whiteSpace = 'pre-wrap';
+    style.lineHeight = '16px';
+    style.paddingTop = 3;
+  }
+  if (align) style.textAlign = align as CSSProperties['textAlign'];
+  if (raised) style.zIndex = 1;
+  return style;
+};
+
+const cellStyle = (st: CellStyle | undefined, align: string | undefined, raised: boolean): CSSProperties => {
+  const key = `${align ?? ''}${raised ? '|z' : ''}`;
+  let map = plainStyles as Map<string, CSSProperties>;
+  if (st) {
+    let m = styleCache.get(st);
+    if (!m) styleCache.set(st, (m = new Map()));
+    map = m;
+  }
+  let s = map.get(key);
+  if (!s) map.set(key, (s = buildStyle(st, align, raised)));
+  return s;
+};
+
+/** One cell, as primitives so React.memo skips cells whose content did not change. */
 interface CellProps {
   left: number;
   width: number;
   height: number;
   text: string;
   content?: ReactNode;
-  style?: CSSProperties;
+  style: CSSProperties;
   className?: string;
   title?: string;
-  selected: boolean;
-  active: boolean;
   readOnly: boolean;
   checkbox?: boolean | null;
   vr: number;
   c: number;
-  colIndex: number;
 }
 
 const GridCell = memo(function GridCell(p: CellProps) {
   return (
     <div
       role="gridcell"
-      aria-colindex={p.colIndex}
-      aria-selected={p.selected}
+      aria-colindex={p.c + 1}
       aria-readonly={p.readOnly || undefined}
       data-vr={p.vr}
       data-c={p.c}
       title={p.title ?? (p.text.length > 30 ? p.text : undefined)}
       style={{ left: p.left, width: p.width, height: p.height, ...p.style }}
       className={clsx(
-        'absolute top-0 overflow-hidden border-r border-b border-line/80 px-1.5 text-[13px] leading-[22px] whitespace-nowrap text-ink select-none',
+        'absolute top-0 overflow-hidden border-r border-b border-line/80 px-1.5 text-[13px] leading-[22px] whitespace-nowrap text-ink select-none contain-strict',
         p.readOnly && 'bg-surface/70 text-ink/70',
-        p.selected && !p.active && 'bg-brand-500/12!',
-        p.active && 'z-10 outline-2 -outline-offset-2 outline-brand-600',
         p.className,
       )}
     >
@@ -110,10 +174,149 @@ const GridCell = memo(function GridCell(p: CellProps) {
   );
 });
 
+interface RowProps {
+  r: number;
+  vr: number;
+  top: number;
+  /** Visible column range (inclusive). */
+  c0: number;
+  c1: number;
+  source: GridSource;
+  colStarts: number[];
+  rowH: number;
+  mode: 'sheet' | 'table';
+  merges: GridSource['merges'];
+  readOnly: boolean;
+  opaque: boolean;
+}
+
+/**
+ * One row of visible cells. Memoised: the selection is an overlay and the row headers live in their own
+ * sticky column, so a row only re-renders when its data or the visible columns change.
+ */
+const GridRow = memo(function GridRow({ r, vr, top, c0, c1, source, colStarts, rowH, mode, merges, readOnly, opaque }: RowProps) {
+  const totalW = colStarts[source.colCount] ?? 0;
+  const cells: ReactNode[] = [];
+  for (let c = c0; c <= c1; c++) {
+    const key = `${r}:${c}`;
+    let width = colStarts[c + 1] - colStarts[c];
+    let height = rowH;
+    if (merges) {
+      // Covered cells of a merged area are painted by its master (display only).
+      if (merges.covered.has(key)) continue;
+      const m = merges.masters.get(key);
+      if (m) {
+        width = colStarts[Math.min(m.c1 + 1, source.colCount)] - colStarts[m.c0];
+        height = (m.r1 - m.r0 + 1) * rowH;
+      }
+    }
+    const col = source.column(c);
+    const st = source.style?.(r, c);
+    let align: string | undefined = st?.align ?? col.align;
+    if (!align && mode === 'sheet') {
+      const v = source.value(r, c);
+      if (typeof v === 'number') align = 'right';
+      else if (typeof v === 'boolean') align = 'center';
+    }
+    const ro = mode === 'table' && (readOnly || !!col.readOnly || !!source.readOnly?.(r, c));
+    cells.push(
+      <GridCell
+        key={c}
+        left={ROW_HEADER_W + colStarts[c]}
+        width={width}
+        height={height}
+        text={source.display(r, c)}
+        content={source.renderCell?.(r, c)}
+        style={cellStyle(st, align, height > rowH)}
+        className={source.cellClass?.(r, c)}
+        title={source.cellTitle?.(r, c)}
+        readOnly={ro}
+        checkbox={col.type === 'checkbox' ? !!source.value(r, c) : undefined}
+        vr={vr}
+        c={c}
+      />,
+    );
+  }
+  return (
+    // Layout containment: a row's cells never affect anything outside it (merged cells may still overflow).
+    <div role="row" aria-rowindex={vr + 2} className={clsx('absolute left-0', opaque && 'bg-card', source.rowClass?.(r))} style={{ top, height: rowH, width: ROW_HEADER_W + totalW, contain: 'layout style' }}>
+      {cells}
+    </div>
+  );
+});
+
+/** In-cell text editor bound to the draft store. */
+function DraftTextEditor({ draft, style, rowH, width, mode, autoFocus, align, onEnd }: { draft: Draft; style: CSSProperties; rowH: number; width: number; mode: 'enter' | 'edit'; autoFocus: boolean; align?: string; onEnd: (e: EditEnd) => void }) {
+  const value = useDraft(draft);
+  let lines = 1;
+  for (let i = 0; i < value.length && lines < 8; i++) if (value.charCodeAt(i) === 10) lines++;
+  return (
+    <TextEditor
+      style={{ ...style, height: Math.max(rowH, lines * 18 + 6), minWidth: Math.min(Math.max(width, value.length * 7.5 + 16), 600) }}
+      value={value}
+      mode={mode}
+      autoFocus={autoFocus}
+      align={align}
+      onChange={draft.set}
+      onEnd={onEnd}
+    />
+  );
+}
+
+/** Formula bar input: shows the active cell's raw text, or the draft while editing. */
+function FormulaInput({ draft, editing, idle, disabled, readOnly, label, onStart, onEnd }: { draft: Draft; editing: boolean; idle: string; disabled: boolean; readOnly: boolean; label: string; onStart: () => void; onEnd: (e: EditEnd) => void }) {
+  const d = useDraft(draft);
+  return (
+    <input
+      data-formula-bar=""
+      aria-label={label}
+      className="min-w-0 flex-1 rounded-md border border-transparent bg-transparent px-2 py-0.5 font-mono text-[13px] text-ink outline-none focus:border-brand-500 disabled:text-muted"
+      value={editing ? d : idle}
+      disabled={disabled}
+      readOnly={readOnly}
+      onFocus={() => {
+        if (!editing && !readOnly) onStart();
+      }}
+      onChange={(e) => draft.set(e.target.value)}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          onEnd({ commit: true, value: draft.get(), dr: 1, dc: 0 });
+        } else if (e.key === 'Escape') {
+          e.preventDefault();
+          onEnd({ commit: false });
+        } else if (e.key === 'Tab') {
+          e.preventDefault();
+          onEnd({ commit: true, value: draft.get(), dr: 0, dc: 1 });
+        }
+      }}
+      onBlur={(e) => {
+        // Moving into the in-cell editor keeps the edit open.
+        if (e.relatedTarget && (e.relatedTarget as HTMLElement).tagName === 'TEXTAREA') return;
+        if (editing) onEnd({ commit: true, value: e.currentTarget.value, dr: 0, dc: 0 });
+      }}
+    />
+  );
+}
+
+/** The parts of a range without its corner cell `ex` (the active cell keeps no tint, as in Excel). */
+const rangeWithout = (rg: Range, ex: Pos): Range[] => {
+  const out: Range[] = [];
+  const otherRows = ex.r === rg.r0 ? { r0: rg.r0 + 1, r1: rg.r1 } : { r0: rg.r0, r1: rg.r1 - 1 };
+  if (otherRows.r0 <= otherRows.r1) out.push({ ...otherRows, c0: rg.c0, c1: rg.c1 });
+  const otherCols = ex.c === rg.c0 ? { c0: rg.c0 + 1, c1: rg.c1 } : { c0: rg.c0, c1: rg.c1 - 1 };
+  if (otherCols.c0 <= otherCols.c1) out.push({ r0: ex.r, r1: ex.r, ...otherCols });
+  return out;
+};
+
 /**
  * Excel-like grid: virtualised rows and columns, sticky headers, keyboard navigation and range
  * selection, in-cell editors, clipboard as TSV, context menu, per-column filters, sort, find,
  * column resizing, formula bar and a status bar with SUM / AVERAGE / COUNT.
+ *
+ * Rendering: rows and cells are memoised and read their data from `source` on demand; the selection
+ * is an absolutely positioned overlay, and the text being edited lives in a small external store, so
+ * moving the cursor or typing never re-renders the cells.
  */
 export function Grid(props: GridProps) {
   const { source, mode, readOnly = false, onCommit } = props;
@@ -131,18 +334,28 @@ export function Grid(props: GridProps) {
     const active = Object.entries(filters)
       .filter(([, f]) => filterActive(f))
       .map(([c, f]) => [Number(c), f] as const);
+    const n = source.rowCount;
+    if (!active.length && !quick && !(viewSort && mode === 'table')) {
+      const all = new Array<number>(n);
+      for (let r = 0; r < n; r++) all[r] = r;
+      return all;
+    }
     const head: number[] = [];
     let body: number[] = [];
-    for (let r = 0; r < source.rowCount; r++) {
+    for (let r = 0; r < n; r++) {
       if (r < frozen) {
         head.push(r);
         continue;
       }
-      if (!active.every(([c, f]) => matchesFilter(source.display(r, c), f))) continue;
+      if (active.length && !active.every(([c, f]) => matchesFilter(source.display(r, c), f))) continue;
       if (quick) {
-        let hit = false;
-        for (let c = 0; c < source.colCount && !hit; c++) hit = source.display(r, c).toLocaleLowerCase().includes(quick);
-        if (!hit) continue;
+        if (source.searchText) {
+          if (!source.searchText(r).includes(quick)) continue;
+        } else {
+          let hit = false;
+          for (let c = 0; c < source.colCount && !hit; c++) hit = source.display(r, c).toLocaleLowerCase().includes(quick);
+          if (!hit) continue;
+        }
       }
       body.push(r);
     }
@@ -152,13 +365,17 @@ export function Grid(props: GridProps) {
   const viewCount = viewRows.length;
   const filtered = Object.values(filters).some(filterActive) || !!quick;
 
-  // ── column geometry ──
+  // ── column geometry (kept identical between renders unless a width changed) ──
   const [liveWidths, setLiveWidths] = useState<Record<number, number>>({});
   const widthOf = useCallback((c: number) => liveWidths[c] ?? source.column(c).width, [liveWidths, source]);
+  const prevStarts = useRef<number[]>([]);
   const colStarts = useMemo(() => {
     const a = new Array<number>(source.colCount + 1);
     a[0] = 0;
     for (let c = 0; c < source.colCount; c++) a[c + 1] = a[c] + widthOf(c);
+    const p = prevStarts.current;
+    if (p.length === a.length && p.every((x, i) => x === a[i])) return p;
+    prevStarts.current = a;
     return a;
   }, [source, widthOf]);
   const totalW = colStarts[source.colCount] ?? 0;
@@ -168,16 +385,19 @@ export function Grid(props: GridProps) {
     count: Math.max(0, viewCount - frozen),
     getScrollElement: () => scrollRef.current,
     estimateSize: () => rowH,
-    overscan: 12,
+    overscan: 10,
     scrollMargin: topH,
+    // Render after the scroll event instead of inside it: no forced layout per wheel event.
+    useFlushSync: false,
   });
   const colV = useVirtualizer({
     horizontal: true,
     count: source.colCount,
     getScrollElement: () => scrollRef.current,
-    estimateSize: (i) => widthOf(i),
-    overscan: 4,
+    estimateSize: (i) => colStarts[i + 1] - colStarts[i],
+    overscan: 3,
     scrollMargin: ROW_HEADER_W,
+    useFlushSync: false,
   });
   useLayoutEffect(() => {
     colV.measure();
@@ -189,7 +409,7 @@ export function Grid(props: GridProps) {
   // ── selection (view coordinates) ──
   const [active, setActive] = useState<Pos>({ r: 0, c: 0 });
   const [anchor, setAnchor] = useState<Pos>({ r: 0, c: 0 });
-  const sel: Range = rangeOf(anchor, active);
+  const sel: Range = useMemo(() => rangeOf(anchor, active), [anchor, active]);
   const dataRow = useCallback((vr: number) => viewRows[vr] ?? -1, [viewRows]);
   const activeR = dataRow(active.r);
 
@@ -211,11 +431,11 @@ export function Grid(props: GridProps) {
         else if (top + rowH > el.scrollTop + el.clientHeight - 14) el.scrollTop = top + rowH - el.clientHeight + 14;
       }
       const left = ROW_HEADER_W + (colStarts[p.c] ?? 0);
-      const w = widthOf(p.c);
+      const w = (colStarts[p.c + 1] ?? left) - (colStarts[p.c] ?? 0);
       if (left < el.scrollLeft + ROW_HEADER_W) el.scrollLeft = left - ROW_HEADER_W;
       else if (left + w > el.scrollLeft + el.clientWidth - 14) el.scrollLeft = left + w - el.clientWidth + 14;
     },
-    [frozen, topH, rowH, colStarts, widthOf],
+    [frozen, topH, rowH, colStarts],
   );
 
   const select = useCallback(
@@ -235,7 +455,7 @@ export function Grid(props: GridProps) {
 
   // ── editing ──
   const [editing, setEditing] = useState<Editing>(null);
-  const [draft, setDraft] = useState('');
+  const draft = useMemo(createDraft, []);
   const editingRef = useRef<Editing>(null);
   editingRef.current = editing;
   const focusGrid = () => rootRef.current?.focus({ preventScroll: true });
@@ -247,10 +467,10 @@ export function Grid(props: GridProps) {
       const col = source.column(active.c);
       if (col.type === 'checkbox') return;
       ensureVisible(active);
-      setDraft(initial ?? source.raw(r, active.c));
+      draft.set(initial ?? source.raw(r, active.c));
       setEditing({ vr: active.r, c: active.c, mode, initial });
     },
-    [active, dataRow, isReadOnly, source, ensureVisible],
+    [active, dataRow, isReadOnly, source, ensureVisible, draft],
   );
 
   const endEdit = useCallback(
@@ -286,7 +506,7 @@ export function Grid(props: GridProps) {
       }
       return out;
     },
-    [sel.r0, sel.r1, sel.c0, sel.c1, dataRow, source],
+    [sel, dataRow, source],
   );
 
   const clearSelection = useCallback(() => {
@@ -326,7 +546,9 @@ export function Grid(props: GridProps) {
       }
       const changes: CellChange[] = [];
       const needRows = top + grid.length;
-      const needCols = left + Math.max(...grid.map((g) => g.length));
+      let widest = 0;
+      for (const g of grid) if (g.length > widest) widest = g.length;
+      const needCols = left + widest;
       if (mode === 'sheet' && (needRows > viewCount || needCols > source.colCount) && props.onGrow && !filtered) {
         props.onGrow(Math.max(source.rowCount, needRows + 20), Math.max(source.colCount, needCols));
       }
@@ -353,28 +575,45 @@ export function Grid(props: GridProps) {
     [readOnly, sel, mode, viewCount, source, props, filtered, dataRow, isReadOnly, onCommit],
   );
 
-  // ── find ──
+  // ── find (debounced: the search runs once typing pauses) ──
   const [findOpen, setFindOpen] = useState(false);
   const [findText, setFindText] = useState('');
-  const findRef = useRef<HTMLInputElement>(null);
-  const findHits = useMemo(() => {
+  const [findQuery, setFindQuery] = useState('');
+  useEffect(() => {
     const q = findText.trim().toLocaleLowerCase();
-    if (!findOpen || !q) return [] as Pos[];
-    const hits: Pos[] = [];
-    for (let vr = 0; vr < viewCount && hits.length < 5000; vr++) {
-      const r = viewRows[vr];
-      for (let c = 0; c < source.colCount; c++) if (source.display(r, c).toLocaleLowerCase().includes(q) || source.raw(r, c).toLocaleLowerCase().includes(q)) hits.push({ r: vr, c });
+    if (!q) {
+      setFindQuery('');
+      return;
     }
-    return hits;
-  }, [findOpen, findText, viewCount, viewRows, source]);
+    const timer = window.setTimeout(() => setFindQuery(q), 150);
+    return () => window.clearTimeout(timer);
+  }, [findText]);
+  const findRef = useRef<HTMLInputElement>(null);
+  const searchHits = useCallback(
+    (q: string) => {
+      const hits: Pos[] = [];
+      if (!q) return hits;
+      for (let vr = 0; vr < viewCount && hits.length < 5000; vr++) {
+        const r = viewRows[vr];
+        for (let c = 0; c < source.colCount; c++) if (source.display(r, c).toLocaleLowerCase().includes(q) || source.raw(r, c).toLocaleLowerCase().includes(q)) hits.push({ r: vr, c });
+      }
+      return hits;
+    },
+    [viewCount, viewRows, source],
+  );
+  const findHits = useMemo(() => (findOpen ? searchHits(findQuery) : []), [findOpen, findQuery, searchHits]);
   const [findIdx, setFindIdx] = useState(0);
   const gotoHit = (delta: number) => {
-    if (!findHits.length) return;
-    const cur = findHits.findIndex((h) => h.r === active.r && h.c === active.c);
-    const i = cur < 0 ? (delta > 0 ? findHits.findIndex((h) => h.r > active.r || (h.r === active.r && h.c > active.c)) : -1) : cur + delta;
-    const n = ((i < 0 ? (delta > 0 ? 0 : findHits.length - 1) : i) + findHits.length) % findHits.length;
+    // Enter right after typing: search now instead of waiting for the debounce.
+    const q = findText.trim().toLocaleLowerCase();
+    const hits = q === findQuery ? findHits : searchHits(q);
+    if (q !== findQuery) setFindQuery(q);
+    if (!hits.length) return;
+    const cur = hits.findIndex((h) => h.r === active.r && h.c === active.c);
+    const i = cur < 0 ? (delta > 0 ? hits.findIndex((h) => h.r > active.r || (h.r === active.r && h.c > active.c)) : -1) : cur + delta;
+    const n = ((i < 0 ? (delta > 0 ? 0 : hits.length - 1) : i) + hits.length) % hits.length;
     setFindIdx(n);
-    select(findHits[n]);
+    select(hits[n]);
   };
   const openFind = () => {
     setFindOpen(true);
@@ -460,7 +699,6 @@ export function Grid(props: GridProps) {
   };
 
   // ── keyboard ──
-  const pageRows = Math.max(1, Math.floor(((scrollRef.current?.clientHeight ?? 600) - topH) / rowH) - 1);
   const onKeyDown = (e: React.KeyboardEvent) => {
     if (editing) return;
     const ctrl = e.ctrlKey || e.metaKey;
@@ -474,6 +712,7 @@ export function Grid(props: GridProps) {
       }
       select(target, e.shiftKey);
     };
+    const pageRows = () => Math.max(1, Math.floor(((scrollRef.current?.clientHeight ?? 600) - topH) / rowH) - 1);
     if (ctrl && (k === 'z' || k === 'Z') && !e.shiftKey) return (e.preventDefault(), props.onUndo?.());
     if (ctrl && (k === 'y' || k === 'Y' || ((k === 'z' || k === 'Z') && e.shiftKey))) return (e.preventDefault(), props.onRedo?.());
     if (ctrl && (k === 's' || k === 'S')) return (e.preventDefault(), props.onSave?.());
@@ -501,9 +740,9 @@ export function Grid(props: GridProps) {
       case 'ArrowRight':
         return move(0, ctrl ? source.colCount - 1 - active.c : 1);
       case 'PageDown':
-        return move(pageRows, 0);
+        return move(pageRows(), 0);
       case 'PageUp':
-        return move(-pageRows, 0);
+        return move(-pageRows(), 0);
       case 'Home':
         e.preventDefault();
         return select(ctrl ? { r: 0, c: 0 } : { r: active.r, c: 0 }, e.shiftKey);
@@ -568,32 +807,9 @@ export function Grid(props: GridProps) {
     if (!el) return null;
     return { r: Number(el.dataset.vr), c: Number(el.dataset.c) };
   };
-
-  const onCellMouseDown = (e: React.MouseEvent) => {
-    const p = cellAt(e.target);
-    if (!p) return;
-    if ((e.target as HTMLElement).closest('a,button')) return;
-    if (editing) endEdit({ commit: true, value: draft, dr: 0, dc: 0 });
-    if (e.button === 2) {
-      if (!(p.r >= sel.r0 && p.r <= sel.r1 && p.c >= sel.c0 && p.c <= sel.c1)) select(p);
-      return;
-    }
-    e.preventDefault();
-    focusGrid();
-    select(p, e.shiftKey);
-    dragging.current = 'cells';
-    const r = dataRow(p.r);
-    if (!e.shiftKey && r >= 0 && source.column(p.c).type === 'checkbox' && !isReadOnly(r, p.c) && p.r === active.r && p.c === active.c) toggleCheckbox(r, p.c);
-  };
-  const onCellMouseOver = (e: React.MouseEvent) => {
-    if (dragging.current !== 'cells' || !(e.buttons & 1)) return;
-    const p = cellAt(e.target);
-    if (p && (p.r !== active.r || p.c !== active.c)) setActive(p);
-  };
-  const onCellDoubleClick = (e: React.MouseEvent) => {
-    const p = cellAt(e.target);
-    if (!p || (e.target as HTMLElement).closest('a,button')) return;
-    startEdit('edit');
+  const rowHeaderAt = (target: EventTarget | null): number | null => {
+    const el = (target as HTMLElement | null)?.closest?.('[data-hvr]') as HTMLElement | null;
+    return el ? Number(el.dataset.hvr) : null;
   };
 
   const selectRows = (vr: number, extend: boolean) => {
@@ -613,6 +829,53 @@ export function Grid(props: GridProps) {
       setAnchor({ r: 0, c });
       setActive({ r: Math.max(0, viewCount - 1), c });
     }
+  };
+
+  const onCellMouseDown = (e: React.MouseEvent) => {
+    const hvr = rowHeaderAt(e.target);
+    if (hvr !== null) {
+      e.preventDefault();
+      if (editingRef.current) endEdit({ commit: true, value: draft.get(), dr: 0, dc: 0 });
+      focusGrid();
+      if (e.button === 2 && hvr >= sel.r0 && hvr <= sel.r1) return;
+      selectRows(hvr, e.shiftKey);
+      dragging.current = 'rows';
+      return;
+    }
+    const p = cellAt(e.target);
+    if (!p) return;
+    if ((e.target as HTMLElement).closest('a,button')) return;
+    if (editingRef.current) endEdit({ commit: true, value: draft.get(), dr: 0, dc: 0 });
+    if (e.button === 2) {
+      if (!(p.r >= sel.r0 && p.r <= sel.r1 && p.c >= sel.c0 && p.c <= sel.c1)) select(p);
+      return;
+    }
+    e.preventDefault();
+    focusGrid();
+    select(p, e.shiftKey);
+    dragging.current = 'cells';
+    const r = dataRow(p.r);
+    if (!e.shiftKey && r >= 0 && source.column(p.c).type === 'checkbox' && !isReadOnly(r, p.c) && p.r === active.r && p.c === active.c) toggleCheckbox(r, p.c);
+  };
+  const onCellMouseOver = (e: React.MouseEvent) => {
+    if (!(e.buttons & 1) || !dragging.current) return;
+    if (dragging.current === 'rows') {
+      const hvr = rowHeaderAt(e.target);
+      if (hvr !== null && (active.r !== hvr || active.c !== source.colCount - 1)) setActive({ r: hvr, c: source.colCount - 1 });
+      return;
+    }
+    if (dragging.current !== 'cells') return;
+    const p = cellAt(e.target);
+    if (p && (p.r !== active.r || p.c !== active.c)) setActive(p);
+  };
+  const onCellDoubleClick = (e: React.MouseEvent) => {
+    const p = cellAt(e.target);
+    if (!p || (e.target as HTMLElement).closest('a,button')) return;
+    startEdit('edit');
+  };
+  const onCellContextMenu = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setMenu({ x: e.clientX, y: e.clientY, kind: rowHeaderAt(e.target) !== null ? 'row' : 'cell' });
   };
 
   // ── column resize ──
@@ -641,10 +904,9 @@ export function Grid(props: GridProps) {
     window.addEventListener('mouseup', up);
   };
 
-  // ── status bar ──
-  const stats = useMemo(() => {
-    const cells = (sel.r1 - sel.r0 + 1) * (sel.c1 - sel.c0 + 1);
-    if (cells <= 1 || cells > 300_000) return null;
+  // ── status bar (big selections are summed once the selection settles) ──
+  const selCells = (sel.r1 - sel.r0 + 1) * (sel.c1 - sel.c0 + 1);
+  const computeStats = useCallback(() => {
     let sum = 0;
     let nums = 0;
     let count = 0;
@@ -662,7 +924,16 @@ export function Grid(props: GridProps) {
       }
     }
     return { sum, avg: nums ? sum / nums : null, count, nums };
-  }, [sel.r0, sel.r1, sel.c0, sel.c1, viewRows, source]);
+  }, [sel, viewRows, source]);
+  const syncStats = useMemo(() => (selCells > 1 && selCells <= SYNC_STATS_CELLS ? computeStats() : null), [selCells, computeStats]);
+  const [lateStats, setLateStats] = useState<ReturnType<typeof computeStats> | null>(null);
+  useEffect(() => {
+    setLateStats(null);
+    if (selCells <= SYNC_STATS_CELLS || selCells > 300_000) return;
+    const timer = window.setTimeout(() => setLateStats(computeStats()), 120);
+    return () => window.clearTimeout(timer);
+  }, [selCells, computeStats]);
+  const stats = syncStats ?? lateStats;
 
   // ── filter menu values ──
   const filterValues = useMemo(() => {
@@ -675,105 +946,79 @@ export function Grid(props: GridProps) {
   // ── rendering helpers ──
   const vCols = colV.getVirtualItems();
   const vRows = rowV.getVirtualItems();
+  const c0 = vCols.length ? vCols[0].index : 0;
+  const c1 = vCols.length ? vCols[vCols.length - 1].index : -1;
   const merges = mode === 'sheet' && !filtered ? source.merges : undefined;
 
-  const renderRow = (vr: number, top: number, opaque = false) => {
+  const row = (vr: number, top: number, opaque = false) => {
     const r = viewRows[vr];
     if (r === undefined) return null;
-    const rowSelected = vr >= sel.r0 && vr <= sel.r1;
-    const cells: ReactNode[] = [];
-    for (const vc of vCols) {
-      const c = vc.index;
-      const key = `${r}:${c}`;
-      let width = widthOf(c);
-      let height = rowH;
-      const rr = r;
-      if (merges) {
-        // Covered cells of a merged area are painted by its master (display only).
-        if (merges.covered.has(key)) continue;
-        const m = merges.masters.get(key);
-        if (m) {
-          width = colStarts[Math.min(m.c1 + 1, source.colCount)] - colStarts[m.c0];
-          height = (m.r1 - m.r0 + 1) * rowH;
-        }
-      }
-      const col = source.column(c);
-      const st = source.style?.(rr, c);
-      const ro = isReadOnly(rr, c);
-      const style: CSSProperties = {};
-      if (st?.b) style.fontWeight = 700;
-      if (st?.i) style.fontStyle = 'italic';
-      if (st?.u) style.textDecoration = 'underline';
-      if (st?.color) style.color = st.color;
-      if (st?.fill) {
-        style.backgroundColor = st.fill;
-        // Excel's default text is black: keep it readable on a filled cell in dark mode too.
-        if (!st.color) style.color = isLight(st.fill) ? '#111827' : '#ffffff';
-      }
-      const align = st?.align ?? col.align;
-      if (st?.wrap) {
-        style.whiteSpace = 'pre-wrap';
-        style.lineHeight = '16px';
-        style.paddingTop = 3;
-      }
-      const text = source.display(rr, c);
-      if (align) style.textAlign = align;
-      else if (mode === 'sheet') {
-        const v = source.value(rr, c);
-        if (typeof v === 'number') style.textAlign = 'right';
-        else if (typeof v === 'boolean') style.textAlign = 'center';
-      }
-      if (height > rowH) style.zIndex = 1;
-      cells.push(
-        <GridCell
-          key={c}
-          left={ROW_HEADER_W + colStarts[c]}
-          width={width}
-          height={height}
-          text={text}
-          content={source.renderCell?.(rr, c)}
-          style={style}
-          className={source.cellClass?.(rr, c)}
-          title={source.cellTitle?.(rr, c)}
-          selected={rowSelected && c >= sel.c0 && c <= sel.c1}
-          active={vr === active.r && c === active.c}
-          readOnly={ro && mode === 'table'}
-          checkbox={col.type === 'checkbox' ? !!source.value(rr, c) : undefined}
-          vr={vr}
-          c={c}
-          colIndex={c + 1}
-        />,
-      );
-    }
-    const label = source.rowLabel?.(r, vr) ?? String(mode === 'sheet' ? r + 1 : vr + 1);
     return (
-      <div key={r} role="row" aria-rowindex={vr + 2} className={clsx('absolute left-0', opaque && 'bg-card', source.rowClass?.(r))} style={{ top, height: rowH, width: ROW_HEADER_W + totalW }}>
-        <div
-          role="rowheader"
-          onMouseDown={(e) => {
-            e.preventDefault();
-            focusGrid();
-            if (e.button === 2 && rowSelected) return;
-            selectRows(vr, e.shiftKey);
-            dragging.current = 'rows';
-          }}
-          onMouseOver={(e) => {
-            if (dragging.current === 'rows' && e.buttons & 1) setActive({ r: vr, c: source.colCount - 1 });
-          }}
-          onContextMenu={(e) => {
-            e.preventDefault();
-            setMenu({ x: e.clientX, y: e.clientY, kind: 'row' });
-          }}
-          style={{ width: ROW_HEADER_W, height: rowH, ...(rowSelected ? SELECTED_HEADER : {}) }}
-          className={clsx(
-            'sticky left-0 z-[12] flex cursor-default items-center justify-center truncate border-r border-b border-line bg-surface px-1 text-[11px] font-medium text-muted select-none',
-            rowSelected && 'font-semibold text-brand-700',
-          )}
-        >
-          {label}
-        </div>
-        {cells}
+      <GridRow
+        key={r}
+        r={r}
+        vr={vr}
+        top={top}
+        c0={c0}
+        c1={c1}
+        source={source}
+        colStarts={colStarts}
+        rowH={rowH}
+        mode={mode}
+        merges={merges}
+        readOnly={readOnly}
+        opaque={opaque}
+      />
+    );
+  };
+
+  // Row headers: one sticky column (one sticky element instead of one per row).
+  const rowHeader = (vr: number, top: number) => {
+    const r = viewRows[vr];
+    if (r === undefined) return null;
+    const selected = vr >= sel.r0 && vr <= sel.r1;
+    return (
+      <div
+        key={r}
+        role="rowheader"
+        data-hvr={vr}
+        style={{ top, width: ROW_HEADER_W, height: rowH, ...(selected ? SELECTED_HEADER : {}) }}
+        className={clsx(
+          'pointer-events-auto absolute left-0 flex cursor-default items-center justify-center truncate border-r border-b border-line bg-surface px-1 text-[11px] font-medium text-muted select-none',
+          selected && 'font-semibold text-brand-700',
+        )}
+      >
+        {source.rowLabel?.(r, vr) ?? String(mode === 'sheet' ? r + 1 : vr + 1)}
       </div>
+    );
+  };
+
+  // ── selection overlay: one tinted area + the active cell's frame, split at the frozen rows ──
+  const activeSpan = (() => {
+    let rg: Range = { r0: active.r, c0: active.c, r1: active.r, c1: active.c };
+    const m = merges?.masters.get(`${activeR}:${active.c}`);
+    if (m) rg = { r0: active.r, c0: m.c0, r1: active.r + (m.r1 - m.r0), c1: m.c1 };
+    return rg;
+  })();
+  const overlay = (part: 'head' | 'body') => {
+    const lo = part === 'head' ? 0 : frozen;
+    const hi = part === 'head' ? frozen - 1 : viewCount - 1;
+    const yOf = (vr: number) => (part === 'head' ? HEADER_H + vr * rowH : (vr - frozen) * rowH);
+    const box = (rg: Range, key: string, className: string) => {
+      const r0 = Math.max(rg.r0, lo);
+      const r1 = Math.min(rg.r1, hi);
+      if (r0 > r1) return null;
+      const left = ROW_HEADER_W + (colStarts[rg.c0] ?? 0);
+      const width = (colStarts[Math.min(rg.c1 + 1, source.colCount)] ?? 0) - (colStarts[rg.c0] ?? 0);
+      return <div key={key} className={clsx('pointer-events-none absolute', className)} style={{ left, top: yOf(r0), width, height: (r1 - r0 + 1) * rowH }} />;
+    };
+    const multi = sel.r0 !== sel.r1 || sel.c0 !== sel.c1;
+    return (
+      <>
+        {multi && rangeWithout(sel, active).map((rg, i) => box(rg, `t${i}`, 'z-[11] bg-brand-500/12'))}
+        {multi && box(sel, 'frame', 'z-[11] border border-brand-500/70')}
+        {box(activeSpan, 'active', 'z-[11] outline-2 -outline-offset-2 outline-brand-600')}
+      </>
     );
   };
 
@@ -786,28 +1031,20 @@ export function Grid(props: GridProps) {
     const left = ROW_HEADER_W + colStarts[editing.c];
     const inHead = editing.vr < frozen;
     const top = inHead ? HEADER_H + editing.vr * rowH : topH + (editing.vr - frozen) * rowH;
-    const style: CSSProperties = { left, top, width: Math.max(widthOf(editing.c), 60), height: rowH, minHeight: rowH };
+    const w = widthOf(editing.c);
+    const style: CSSProperties = { left, top, width: Math.max(w, 60), height: rowH, minHeight: rowH };
     if (col.type === 'date') return <DateEditor style={style} value={source.raw(r, editing.c)} onEnd={endEdit} />;
     if (col.type === 'select') return <SelectEditor style={style} value={source.raw(r, editing.c)} initialFilter={editing.initial} options={col.options ?? []} onEnd={endEdit} />;
-    const lines = Math.min(8, draft.split('\n').length);
-    return (
-      <TextEditor
-        style={{ ...style, height: Math.max(rowH, lines * 18 + 6), minWidth: Math.min(Math.max(widthOf(editing.c), draft.length * 7.5 + 16), 600) }}
-        value={draft}
-        mode={editing.mode}
-        autoFocus={!editing.fromBar}
-        align={source.style?.(r, editing.c)?.align ?? col.align}
-        onChange={setDraft}
-        onEnd={endEdit}
-      />
-    );
+    return <DraftTextEditor draft={draft} style={style} rowH={rowH} width={w} mode={editing.mode} autoFocus={!editing.fromBar} align={source.style?.(r, editing.c)?.align ?? col.align} onEnd={endEdit} />;
   })();
 
   const activeAddress = mode === 'sheet' ? `${colName(active.c)}${activeR >= 0 ? activeR + 1 : ''}` : `${source.column(active.c).label ?? colName(active.c)}${activeR >= 0 ? ` · ${active.r + 1}` : ''}`;
-  const formulaValue = editing ? draft : activeR >= 0 ? source.raw(activeR, active.c) : '';
+  const idleFormula = activeR >= 0 ? source.raw(activeR, active.c) : '';
   const formulaReadOnly = activeR < 0 || isReadOnly(activeR, active.c) || source.column(active.c).type === 'checkbox' || source.column(active.c).type === 'select';
 
+  const filterOpenLabel = t('sheet.filter.open');
   const fmtNum = (n: number) => (Number.isInteger(n) ? n.toLocaleString() : n.toLocaleString(undefined, { maximumFractionDigits: 4 }));
+  const bodyH = Math.max(0, viewCount - frozen) * rowH;
 
   return (
     <div className="flex h-full min-h-0 flex-col bg-card">
@@ -850,37 +1087,18 @@ export function Grid(props: GridProps) {
           {activeAddress}
         </div>
         <span className="font-serif text-sm text-muted italic">fx</span>
-        <input
-          data-formula-bar=""
-          aria-label={t('sheet.formulaBar')}
-          className="min-w-0 flex-1 rounded-md border border-transparent bg-transparent px-2 py-0.5 font-mono text-[13px] text-ink outline-none focus:border-brand-500 disabled:text-muted"
-          value={formulaValue}
+        <FormulaInput
+          draft={draft}
+          editing={!!editing}
+          idle={idleFormula}
           disabled={formulaReadOnly && !editing}
           readOnly={formulaReadOnly}
-          onFocus={() => {
-            if (!editing && !formulaReadOnly) {
-              setDraft(formulaValue);
-              setEditing({ vr: active.r, c: active.c, mode: 'edit', fromBar: true });
-            }
+          label={t('sheet.formulaBar')}
+          onStart={() => {
+            draft.set(idleFormula);
+            setEditing({ vr: active.r, c: active.c, mode: 'edit', fromBar: true });
           }}
-          onChange={(e) => setDraft(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') {
-              e.preventDefault();
-              endEdit({ commit: true, value: draft, dr: 1, dc: 0 });
-            } else if (e.key === 'Escape') {
-              e.preventDefault();
-              endEdit({ commit: false });
-            } else if (e.key === 'Tab') {
-              e.preventDefault();
-              endEdit({ commit: true, value: draft, dr: 0, dc: 1 });
-            }
-          }}
-          onBlur={(e) => {
-            // Moving into the in-cell editor keeps the edit open.
-            if (e.relatedTarget && (e.relatedTarget as HTMLElement).tagName === 'TEXTAREA') return;
-            if (editingRef.current) endEdit({ commit: true, value: e.currentTarget.value, dr: 0, dc: 0 });
-          }}
+          onEnd={endEdit}
         />
       </div>
 
@@ -891,7 +1109,6 @@ export function Grid(props: GridProps) {
         role="grid"
         aria-rowcount={viewCount + 1}
         aria-colcount={source.colCount}
-        aria-multiselectable
         aria-readonly={readOnly || undefined}
         onKeyDown={onKeyDown}
         onCopy={(e) => {
@@ -915,8 +1132,8 @@ export function Grid(props: GridProps) {
         }}
         className="relative min-h-0 flex-1 outline-none"
       >
-        <div ref={scrollRef} className="absolute inset-0 overflow-auto overscroll-contain bg-card" onContextMenu={(e) => e.preventDefault()}>
-          <div style={{ width: ROW_HEADER_W + totalW, height: topH + Math.max(0, viewCount - frozen) * rowH, position: 'relative' }}>
+        <div ref={scrollRef} className="absolute inset-0 overflow-auto overscroll-contain bg-card" style={{ contain: 'strict' }} onContextMenu={(e) => e.preventDefault()}>
+          <div style={{ width: ROW_HEADER_W + totalW, height: topH + bodyH, position: 'relative' }}>
             {/* Sticky top: column headers + frozen rows */}
             <div className="sticky top-0 z-30" style={{ height: topH, width: ROW_HEADER_W + totalW }}>
               <div role="row" aria-rowindex={1} className="absolute top-0 left-0" style={{ height: HEADER_H, width: ROW_HEADER_W + totalW }}>
@@ -945,6 +1162,7 @@ export function Grid(props: GridProps) {
                       onMouseDown={(e) => {
                         if ((e.target as HTMLElement).closest('button,[data-resize]')) return;
                         e.preventDefault();
+                        if (editingRef.current) endEdit({ commit: true, value: draft.get(), dr: 0, dc: 0 });
                         focusGrid();
                         if (e.button === 2 && colSelected) return;
                         selectCols(c, e.shiftKey);
@@ -957,7 +1175,7 @@ export function Grid(props: GridProps) {
                         e.preventDefault();
                         setMenu({ x: e.clientX, y: e.clientY, kind: 'col' });
                       }}
-                      style={{ left: ROW_HEADER_W + colStarts[c], width: widthOf(c), height: HEADER_H, ...(colSelected ? SELECTED_HEADER : {}) }}
+                      style={{ left: ROW_HEADER_W + colStarts[c], width: colStarts[c + 1] - colStarts[c], height: HEADER_H, ...(colSelected ? SELECTED_HEADER : {}) }}
                       className={clsx(
                         'group absolute top-0 flex items-center border-r border-b border-line bg-surface pr-0.5 pl-1.5 text-xs text-muted select-none',
                         mode === 'sheet' ? 'justify-center font-medium' : 'justify-between font-semibold text-ink/80',
@@ -968,7 +1186,7 @@ export function Grid(props: GridProps) {
                       {viewSort?.c === c && (viewSort.dir === 'asc' ? <ChevronUp size={12} className="shrink-0" /> : <ChevronDown size={12} className="shrink-0" />)}
                       <button
                         type="button"
-                        aria-label={t('sheet.filter.open')}
+                        aria-label={filterOpenLabel}
                         onClick={(e) => {
                           const r = (e.currentTarget as HTMLElement).getBoundingClientRect();
                           setFilterMenu({ x: r.left - 200, y: r.bottom + 2, c });
@@ -986,14 +1204,15 @@ export function Grid(props: GridProps) {
                   );
                 })}
               </div>
-              {Array.from({ length: frozen }, (_, i) => (
-                <div key={`f${i}`} className="contents" onMouseDown={onCellMouseDown} onMouseOver={onCellMouseOver} onDoubleClick={onCellDoubleClick} onContextMenu={(e) => {
-                  e.preventDefault();
-                  setMenu({ x: e.clientX, y: e.clientY, kind: 'cell' });
-                }}>
-                  {renderRow(i, HEADER_H + i * rowH, true)}
+              {frozen > 0 && (
+                <div className="contents" onMouseDown={onCellMouseDown} onMouseOver={onCellMouseOver} onDoubleClick={onCellDoubleClick} onContextMenu={onCellContextMenu}>
+                  <div className="pointer-events-none sticky left-0 z-[12]" style={{ width: ROW_HEADER_W, height: topH }}>
+                    {Array.from({ length: frozen }, (_, i) => rowHeader(i, HEADER_H + i * rowH))}
+                  </div>
+                  {Array.from({ length: frozen }, (_, i) => row(i, HEADER_H + i * rowH, true))}
                 </div>
-              ))}
+              )}
+              {frozen > 0 && overlay('head')}
               {frozen > 0 && <div className="pointer-events-none absolute left-0 h-0.5 bg-line" style={{ top: topH - 1, width: ROW_HEADER_W + totalW }} />}
               {editing && editing.vr < frozen && editorNode}
             </div>
@@ -1001,17 +1220,17 @@ export function Grid(props: GridProps) {
             {/* Body */}
             <div
               className="absolute left-0"
-              style={{ top: topH, width: ROW_HEADER_W + totalW, height: Math.max(0, viewCount - frozen) * rowH }}
+              style={{ top: topH, width: ROW_HEADER_W + totalW, height: bodyH }}
               onMouseDown={onCellMouseDown}
               onMouseOver={onCellMouseOver}
               onDoubleClick={onCellDoubleClick}
-              onContextMenu={(e) => {
-                if ((e.target as HTMLElement).closest('[role=rowheader]')) return;
-                e.preventDefault();
-                setMenu({ x: e.clientX, y: e.clientY, kind: 'cell' });
-              }}
+              onContextMenu={onCellContextMenu}
             >
-              {vRows.map((vrw) => renderRow(vrw.index + frozen, vrw.start - topH))}
+              <div className="sticky left-0 z-[12]" style={{ width: ROW_HEADER_W, height: bodyH }}>
+                {vRows.map((vrw) => rowHeader(vrw.index + frozen, vrw.start - topH))}
+              </div>
+              {vRows.map((vrw) => row(vrw.index + frozen, vrw.start - topH))}
+              {overlay('body')}
             </div>
             {editing && editing.vr >= frozen && editorNode}
           </div>

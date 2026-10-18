@@ -9,6 +9,8 @@ export interface FinanceSummary {
   receivables: { grossCents: number; count: number; overdueGrossCents: number; overdueCount: number };
   translation: { cents: number; count: number };
   commissions: { pendingCents: number; pendingCount: number; approvedCents: number; approvedCount: number; paidCents: number; paidCount: number };
+  /** Referral partners (middlemen) — separate from the agent programme. */
+  partnerCommissions?: { pendingCents: number; pendingCount: number; approvedCents: number; approvedCount: number; paidCents: number; paidCount: number };
   netResultCents: number;
   cases: { new: number; approved: number; rejected: number; decided: number; conversionPct: number | null; avgDaysToDecision: number | null };
 }
@@ -20,6 +22,7 @@ export interface FinanceMonth {
   outstandingCents: number | null;
   translationCents: number;
   commissionsPaidCents: number;
+  partnerCommissionsPaidCents?: number;
   newCases: number;
   approved: number;
 }
@@ -63,6 +66,11 @@ export interface CommissionsResponse {
     totalCents: number;
   }[];
   totals: { referralsInRange: number; pendingCents: number; approvedCents: number; paidCents: number; cancelledCents: number; totalCents: number };
+  /** Referral partners (middlemen), separate section. */
+  partners?: {
+    rows: { id: string; name: string; active: boolean; pendingCents: number; approvedCents: number; paidCents: number; cancelledCents: number; totalCents: number }[];
+    totals: { pendingCents: number; approvedCents: number; paidCents: number; cancelledCents: number; totalCents: number };
+  };
 }
 
 export interface StaffRow {

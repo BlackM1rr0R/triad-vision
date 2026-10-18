@@ -431,7 +431,20 @@
       "pageOf": "Страница {{page}} / {{total}}",
       "hint": "Текст должен быть читаемым, края — обрезаны.",
       "uploadingPage": "Загружается страница {{page}} / {{total}}… {{percent}}%",
-      "done": "Загружено страниц: {{count}}"
+      "done": "Загружено страниц: {{count}}",
+      "pdfAction": "Сканировать (PDF)",
+      "general": "Сканировать документ",
+      "chooseRequirement": "Для какого документа сканируете?",
+      "uploadPdf": "Загрузить как PDF ({{count}})",
+      "pdfHint": "Расположите страницы по порядку — они загрузятся одним PDF.",
+      "preparing": "Подготовка страниц: {{total}}…",
+      "uploadingPdf": "Загрузка PDF… {{percent}}%",
+      "donePdf": "Загружен PDF из {{count}} стр.",
+      "failed": "Не удалось загрузить",
+      "retry": "Повторить",
+      "moveEarlier": "Раньше",
+      "moveLater": "Позже",
+      "maxPages": "Не более {{max}} страниц"
     },
     "ocr": {
       "title": "Данные из паспорта",

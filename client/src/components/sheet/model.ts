@@ -105,6 +105,26 @@ export const setCells = (rows: Rows, writes: { r: number; c: number; cell: Cell 
   return next;
 };
 
+/**
+ * Calls `fn` for every cell that differs between two versions of a sheet's rows (by identity: edits
+ * replace cell objects, untouched rows are shared, so only edited rows are looked at).
+ */
+export const diffRows = (a: Rows, b: Rows, fn: (r: number, c: number, cell: Cell | undefined) => void) => {
+  if (a === b) return;
+  for (const rk in b) {
+    const rb = b[rk];
+    const ra = a[rk];
+    if (ra === rb) continue;
+    const r = Number(rk);
+    for (const ck in rb) if (ra?.[ck as unknown as number] !== rb[ck as unknown as number]) fn(r, Number(ck), rb[ck as unknown as number]);
+    if (ra) for (const ck in ra) if (!(ck in rb)) fn(r, Number(ck), undefined);
+  }
+  for (const rk in a) {
+    if (rk in b) continue;
+    for (const ck in a[rk]) fn(Number(rk), Number(ck), undefined);
+  }
+};
+
 /** Highest used row / column index + 1. */
 export const usedSize = (rows: Rows) => {
   let rCount = 0;

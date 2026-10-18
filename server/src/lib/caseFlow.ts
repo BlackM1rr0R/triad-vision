@@ -8,6 +8,8 @@ import { emitWebhook } from './ops/webhooks.js';
 import { awardCaseCommission } from './agents/commissions.js';
 import { surveyOnCaseFinal } from './surveys/service.js';
 import { syncCaseFolder } from './drive/caseFolders.js';
+import { notifyPartnerCaseStatus } from './partnerPortal/notify.js';
+import { syncSettlementsForCase } from './settlement/service.js';
 
 export const FINAL_STATUSES: CaseStatus[] = ['APPROVED', 'REJECTED', 'CANCELLED'];
 
@@ -137,6 +139,8 @@ const transition = async (
   const after = await prisma.case.findUnique({ where: { id: caseId }, select: { number: true, companyId: true } });
   if (after) void emitWebhook(FINAL_STATUSES.includes(to) && to !== 'CANCELLED' ? 'case.decided' : 'case.status_changed', { caseId, number: after.number, from: current.status, to }, after.companyId);
   if (FINAL_STATUSES.includes(to)) void surveyOnCaseFinal(caseId, to); // satisfaction survey (never throws)
+  void notifyPartnerCaseStatus(caseId, to, opts.eventType); // referral partner portal (never throws)
+  void syncSettlementsForCase(caseId); // settlement ledger rows follow the case (never throws)
 };
 
 const requirementsSatisfied = async (caseId: string, stage: DocStage, mode: 'uploaded' | 'accepted') => {

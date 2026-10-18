@@ -8,6 +8,9 @@ import { audit } from '../../lib/audit.js';
 import { XLSX_MIME } from '../../lib/clientsExcel.js';
 import { buildPartnerWorkbook, partnerCases, partnerCounts, syncFoldersLater } from '../../lib/partners/index.js';
 import { syncPartnerFolder } from '../../lib/drive/caseFolders.js';
+import { partnerCommissionTotals, syncCaseCommissions } from '../../lib/partners/commissions.js';
+import { partnerLoginRouter, partnerLoginView } from '../../lib/partners/adminLoginRoutes.js';
+import { partnerCommissionsRouter } from '../../lib/partners/adminCommissionRoutes.js';
 
 /**
  * Referral partners (middlemen who bring visa clients) — /api/admin/partners.
@@ -36,6 +39,9 @@ const partnerBody = z.object({
     .transform((v) => (v === '' ? null : v)),
   note: opt(5000),
   active: z.boolean().optional(),
+  /** Default commission per client in cents (null = no automatic commission). */
+  commissionCents: z.number().int().min(0).max(100_000_000).nullable().optional(),
+  currency: z.string().trim().toUpperCase().regex(/^[A-Z]{3}$/).optional(),
 });
 
 /** Names are unique regardless of case/whitespace (the drive folder is named after the partner). */
@@ -59,9 +65,13 @@ adminPartnersRouter.get('/', async (req, res) => {
       : {}),
   };
   const partners = await prisma.referralPartner.findMany({ where, orderBy: [{ active: 'desc' }, { name: 'asc' }] });
-  const counts = await partnerCounts(partners.map((p) => p.id));
-  res.json({ items: partners.map((p) => ({ ...p, counts: counts.get(p.id) })) });
+  const [counts, totals] = await Promise.all([partnerCounts(partners.map((p) => p.id)), partnerCommissionTotals(partners.map((p) => p.id))]);
+  res.json({ items: partners.map((p) => ({ ...p, counts: counts.get(p.id), commissionTotals: totals.get(p.id) })) });
 });
+
+// Commissions (all partners) and portal logins live in their own routers; mounted before "/:id".
+adminPartnersRouter.use('/commissions', partnerCommissionsRouter);
+adminPartnersRouter.use('/', partnerLoginRouter);
 
 /** PATCH /assign { caseIds, partnerId | null } — staff link (or unlink) cases to a partner in bulk. */
 adminPartnersRouter.patch('/assign', async (req, res) => {
@@ -76,26 +86,39 @@ adminPartnersRouter.patch('/assign', async (req, res) => {
   }
   const existing = await prisma.case.findMany({ where: { id: { in: ids } }, select: { id: true, partnerId: true } });
   if (existing.length !== ids.length) throw badRequest('INVALID_CASE');
-  const changed = existing.filter((c) => c.partnerId !== body.partnerId).map((c) => c.id);
+  const changedRows = existing.filter((c) => c.partnerId !== body.partnerId);
+  const changed = changedRows.map((c) => c.id);
+  let commissionsCreated = 0;
   if (changed.length) {
     await prisma.case.updateMany({ where: { id: { in: changed } }, data: { partnerId: body.partnerId } });
     await prisma.caseEvent.createMany({
       data: changed.map((caseId) => ({ caseId, type: 'CASE_UPDATED' as const, actorId: req.user!.id, visibleToClient: false })),
     });
     syncFoldersLater(changed);
+    // Automatic commissions: PENDING row for the new partner (default amount), pending row of the old one cancelled.
+    commissionsCreated = await syncCaseCommissions(
+      changedRows.map((c) => ({ caseId: c.id, from: c.partnerId, to: body.partnerId })),
+      req.user!.id,
+    );
   }
   await audit(req, body.partnerId ? 'PARTNER_CASES_ASSIGNED' : 'PARTNER_CASES_UNASSIGNED', body.partnerId ?? undefined, {
     caseIds: ids,
     changed: changed.length,
+    commissionsCreated,
   });
-  res.json({ ok: true, updated: changed.length });
+  res.json({ ok: true, updated: changed.length, commissionsCreated });
 });
 
 adminPartnersRouter.get('/:id', async (req, res) => {
   const partner = await prisma.referralPartner.findUnique({ where: { id: String(req.params.id) } });
   if (!partner) throw notFound('PARTNER_NOT_FOUND');
-  const [cases, counts] = await Promise.all([partnerCases(partner.id), partnerCounts([partner.id])]);
-  res.json({ partner: { ...partner, counts: counts.get(partner.id) }, cases });
+  const [cases, counts, totals, login] = await Promise.all([
+    partnerCases(partner.id),
+    partnerCounts([partner.id]),
+    partnerCommissionTotals([partner.id]),
+    partnerLoginView(partner.userId),
+  ]);
+  res.json({ partner: { ...partner, counts: counts.get(partner.id), commissionTotals: totals.get(partner.id), login }, cases });
 });
 
 adminPartnersRouter.get('/:id/export.xlsx', async (req, res) => {
@@ -116,7 +139,15 @@ adminPartnersRouter.post('/', async (req, res) => {
   const body = parse(partnerBody, req.body);
   await assertNameFree(body.name);
   const partner = await prisma.referralPartner.create({
-    data: { name: body.name, phone: body.phone ?? null, email: body.email ?? null, note: body.note ?? null, active: body.active ?? true },
+    data: {
+      name: body.name,
+      phone: body.phone ?? null,
+      email: body.email ?? null,
+      note: body.note ?? null,
+      active: body.active ?? true,
+      commissionCents: body.commissionCents ?? null,
+      ...(body.currency ? { currency: body.currency } : {}),
+    },
   });
   await audit(req, 'PARTNER_CREATED', partner.id, { name: partner.name });
   // The partner's folder in "Gemeinsame Dokumente/Partner" exists from the start, even without clients.

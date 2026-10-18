@@ -10,6 +10,7 @@ import { HttpError, notFound } from '../http.js';
 import { notifyStaff, notifyUser } from '../notifications.js';
 import { parseMrzText, type MrzResult } from './mrz.js';
 import { syncClientFolders } from '../drive/caseFolders.js';
+import { fillExpiryFromOcr } from '../expiry/index.js';
 
 /**
  * Passport OCR: runs tesseract.js on an uploaded image, extracts the MRZ and stores the result on the
@@ -175,8 +176,11 @@ const warnPassportExpiry = async (c: { id: string; number: string; clientId: str
 
 // ─── Document OCR ──────────────────────────────────────────────────────
 
-const store = async (docId: string, record: OcrRecord) =>
-  prisma.document.update({ where: { id: docId }, data: { ocr: record as unknown as Prisma.InputJsonValue, ocrAt: new Date() } });
+const store = async (docId: string, record: OcrRecord) => {
+  const doc = await prisma.document.update({ where: { id: docId }, data: { ocr: record as unknown as Prisma.InputJsonValue, ocrAt: new Date() } });
+  await fillExpiryFromOcr(docId, record); // an MRZ expiry date fills an empty Document.expiresAt (never throws)
+  return doc;
+};
 
 /**
  * Runs OCR for one document and stores the outcome. Non-images are marked as skipped so the job never

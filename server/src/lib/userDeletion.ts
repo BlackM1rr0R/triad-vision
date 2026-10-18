@@ -6,7 +6,7 @@ import { prisma } from '../db.js';
 import { conflict, forbidden, HttpError, notFound } from './http.js';
 import { removeStoredFile } from '../jobs/retention.js';
 import { removeMailStored } from './mail/storage.js';
-import { ensureRoots } from './drive/roots.js';
+import { ensureSharedRoot } from './drive/roots.js';
 import { pickFreeName, safeUploadName } from './drive/names.js';
 import { purgeNodes } from './drive/trash.js';
 
@@ -125,7 +125,7 @@ const isFkViolation = (err: unknown) => {
 export const deleteUserAccount = async (actorId: string, userId: string, ip?: string) => {
   const target = await loadDeletionTarget(actorId, userId);
   // The company-drive root must exist before the transaction (it is created lazily, outside of it).
-  const { sharedId } = await ensureRoots();
+  const sharedId = await ensureSharedRoot();
 
   // Files that go away with the account; read up front, deleted from disk only after commit.
   const ownCaseRows = await prisma.case.findMany({ where: { clientId: userId }, select: { id: true, driveFolderId: true } });

@@ -46,6 +46,7 @@ describe('client register: rows', () => {
       data: {},
     });
     expect(rows[1]).toMatchObject({ kind: 'member', parentId: main.id, parentNumber: main.number, relation: 'child', firstName: 'Leyla', birthDate: '2015-02-01', passportNumber: null });
+    expect(rows[0]).not.toHaveProperty('clientId'); // lean rows: only what the table shows
     expect(body.options.partners).toEqual([{ id: partner.id, name: 'Baku Partner', active: true }]);
     expect(body.options.staff.map((s: { name: string }) => s.name)).toContain('Nigar S');
     expect(body.options.visaTypes).toContain('AUSBILDUNG');

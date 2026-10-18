@@ -228,14 +228,24 @@ const cellSchema = z
 
 const SHEET_NAME = /^[^\\/?*[\]:]{1,31}$/;
 
-export const sheetPayloadSchema = z.object({
-  id: z.number().int().positive().optional(),
-  name: z.string().trim().regex(SHEET_NAME, 'INVALID_SHEET_NAME'),
-  rows: z.record(z.string().regex(/^\d{1,7}$/), z.record(z.string().regex(/^\d{1,5}$/), cellSchema)),
-  colWidths: z.record(z.string().regex(/^\d{1,5}$/), z.number().min(10).max(2000)).default({}),
-  frozenRows: z.number().int().min(0).max(1000).default(0),
-  frozenCols: z.number().int().min(0).max(100).default(0),
-});
+const ROW_KEY = z.string().regex(/^\d{1,7}$/);
+const COL_KEY = z.string().regex(/^\d{1,5}$/);
+
+/**
+ * One sheet of a save: either `rows` (every cell) or, for a sheet that exists in the stored file,
+ * `patch` (only changed cells; null clears a cell) applied on top of the stored version.
+ */
+export const sheetPayloadSchema = z
+  .object({
+    id: z.number().int().positive().optional(),
+    name: z.string().trim().regex(SHEET_NAME, 'INVALID_SHEET_NAME'),
+    rows: z.record(ROW_KEY, z.record(COL_KEY, cellSchema)).optional(),
+    patch: z.record(ROW_KEY, z.record(COL_KEY, cellSchema.nullable())).optional(),
+    colWidths: z.record(COL_KEY, z.number().min(10).max(2000)).default({}),
+    frozenRows: z.number().int().min(0).max(1000).default(0),
+    frozenCols: z.number().int().min(0).max(100).default(0),
+  })
+  .refine((s) => !!s.rows !== !!s.patch, { message: 'ROWS_OR_PATCH' });
 
 export const savePayloadSchema = z.object({
   baseVersion: z.number().int().positive(),
@@ -245,14 +255,23 @@ export const savePayloadSchema = z.object({
 });
 
 export type SheetPayload = z.infer<typeof sheetPayloadSchema>;
+/** A sheet of a save with its full rows (patches resolved against the stored file). */
+export type ResolvedSheet = Omit<SheetPayload, 'rows' | 'patch'> & { rows: RowsJson };
 
-/** Validates names (unique, ignoring case) and cell counts / indices of a save payload. */
-export const checkPayload = (sheets: SheetPayload[]) => {
+/** Unique sheet names (ignoring case). */
+export const checkNames = (sheets: { name: string }[]) => {
   const names = new Set<string>();
   for (const s of sheets) {
     const key = s.name.toLocaleLowerCase('en');
     if (names.has(key)) throw badRequest('DUPLICATE_SHEET_NAME');
     names.add(key);
+  }
+};
+
+/** Validates names (unique, ignoring case) and cell counts / indices of a save payload. */
+export const checkPayload = (sheets: ResolvedSheet[]) => {
+  checkNames(sheets);
+  for (const s of sheets) {
     let count = 0;
     for (const [r, cols] of Object.entries(s.rows)) {
       if (Number(r) >= LIMITS.maxRow) throw badRequest('CELL_OUT_OF_RANGE');
@@ -263,6 +282,21 @@ export const checkPayload = (sheets: SheetPayload[]) => {
     }
     if (count > LIMITS.cellsPerSheet) throw tooLarge();
   }
+};
+
+/** Applies a patch (null = clear) on top of stored rows; the stored rows are not modified. */
+export const applyPatch = (base: RowsJson, patch: Record<string, Record<string, CellJson | null>>): RowsJson => {
+  const rows: RowsJson = { ...base };
+  for (const [r, cols] of Object.entries(patch)) {
+    const line: Record<string, CellJson> = { ...(rows[r] ?? {}) };
+    for (const [c, cell] of Object.entries(cols)) {
+      if (cell === null) delete line[c];
+      else line[c] = cell;
+    }
+    if (Object.keys(line).length) rows[r] = line;
+    else delete rows[r];
+  }
+  return rows;
 };
 
 // ─── Write ────────────────────────────────────────────────────────────
@@ -331,10 +365,10 @@ const unshareFormulas = (ws: ExcelJS.Worksheet) => {
   });
 };
 
-const writeSheet = (ws: ExcelJS.Worksheet, s: SheetPayload, fresh: boolean) => {
+/** Writes one sheet; `base` is what the browser was given for it (null for a new sheet). */
+const writeSheet = (ws: ExcelJS.Worksheet, s: ResolvedSheet, base: SheetJson | null) => {
+  const fresh = !base;
   if (!fresh) unshareFormulas(ws);
-  // What the browser was given for this sheet (the comparison base).
-  const base = fresh ? null : sheetJson(ws);
   const before = base?.rows ?? {};
   const positions = new Set<string>();
   for (const [r, cols] of Object.entries(before)) for (const c of Object.keys(cols)) positions.add(`${r}:${c}`);
@@ -380,12 +414,22 @@ const writeSheet = (ws: ExcelJS.Worksheet, s: SheetPayload, fresh: boolean) => {
 
 /**
  * Loads the original file, applies the browser's sheets (rename, add, delete, reorder, cells, widths,
- * frozen panes) and returns the new file.
+ * frozen panes) and returns the new file. `parsed` is the stored file as JSON when already known (the
+ * comparison base: what the browser was given), which saves parsing it a second time.
  */
-export const applySheets = async (original: Buffer, sheets: SheetPayload[]) => {
-  checkPayload(sheets);
+export const applySheets = async (original: Buffer, payload: SheetPayload[], parsed?: SheetJson[]) => {
+  checkNames(payload);
   const wb = await loadWorkbook(original);
   const existing = new Map(wb.worksheets.map((ws) => [ws.id, ws]));
+  const parsedById = new Map((parsed ?? []).map((p) => [p.id, p]));
+  const bases = payload.map((s) => {
+    const ws = s.id ? existing.get(s.id) : undefined;
+    return ws ? (parsedById.get(ws.id) ?? sheetJson(ws)) : null;
+  });
+  // A patch only makes sense on top of a sheet of the stored file (never silently on an empty one).
+  if (payload.some((s, i) => s.patch && !bases[i])) throw badRequest('UNKNOWN_SHEET');
+  const sheets: ResolvedSheet[] = payload.map(({ rows, patch, ...rest }, i) => ({ ...rest, rows: rows ?? applyPatch(bases[i]!.rows, patch ?? {}) }));
+  checkPayload(sheets);
   const keep = new Set(sheets.map((s) => s.id).filter((id): id is number => !!id && existing.has(id)));
   for (const ws of wb.worksheets) {
     if (!keep.has(ws.id) && ws.state !== 'veryHidden') wb.removeWorksheet(ws.id);
@@ -400,7 +444,7 @@ export const applySheets = async (original: Buffer, sheets: SheetPayload[]) => {
     const ws = known ?? wb.addWorksheet(s.name);
     if (known && ws.name !== s.name) ws.name = s.name;
     (ws as unknown as { orderNo: number }).orderNo = index + 1;
-    writeSheet(ws, s, !known);
+    writeSheet(ws, s, known ? bases[index] : null);
   });
   // Formulas edited in the browser carry its result; let Excel recalculate everything on open anyway.
   wb.calcProperties = { ...(wb.calcProperties ?? {}), fullCalcOnLoad: true };

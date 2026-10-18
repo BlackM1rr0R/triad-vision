@@ -124,11 +124,14 @@ export const applyChanges = async (changes: Change[], columns: ColumnDto[]) => {
       id: true,
       clientId: true,
       parentCaseId: true,
+      partnerId: true,
       registerData: true,
       events: { where: { type: FAMILY_EVENT }, orderBy: { createdAt: 'desc' }, take: 1, select: { id: true, note: true } },
     },
   });
   const caseById = new Map(cases.map((c) => [c.id, c]));
+  // Partner changes, so the automatic partner commissions follow (same as the bulk assign in admin/partners).
+  const partnerChanges: { caseId: string; from: string | null; to: string | null }[] = [];
 
   const wanted = (field: string) => [...new Set(list.filter((c) => c.field === field && !isBlank(c.value)).map((c) => String(c.value)))];
   const [partners, staff] = await Promise.all([
@@ -219,6 +222,7 @@ export const applyChanges = async (changes: Change[], columns: ColumnDto[]) => {
     }
     if (!ops.length) continue;
     await prisma.$transaction(ops);
+    if ('partnerId' in plan.kase && (plan.kase.partnerId ?? null) !== c.partnerId) partnerChanges.push({ caseId, from: c.partnerId, to: (plan.kase.partnerId as string | null) ?? null });
     const touched = Object.keys(plan.user).concat(Object.keys(plan.kase), Object.keys(plan.member));
     if (touched.some((k) => FOLDER_FIELDS.has(k))) folderSync.add(caseId);
   }
@@ -227,5 +231,5 @@ export const applyChanges = async (changes: Change[], columns: ColumnDto[]) => {
     const siblings = await prisma.case.findMany({ where: { clientId: { in: [...clientsRenamed] }, parentCaseId: null }, select: { id: true } });
     for (const s of siblings) folderSync.add(s.id);
   }
-  return { results, touchedCaseIds: [...plans.keys()], folderSync: [...folderSync] };
+  return { results, touchedCaseIds: [...plans.keys()], folderSync: [...folderSync], partnerChanges };
 };

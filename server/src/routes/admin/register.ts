@@ -7,8 +7,9 @@ import { badRequest, notFound, parse } from '../../lib/http.js';
 import { audit } from '../../lib/audit.js';
 import { syncCaseFolder } from '../../lib/drive/caseFolders.js';
 import { pickLang } from '../../lib/register/labels.js';
-import { columnDto, listColumns, loadRows, registerDataOf } from '../../lib/register/rows.js';
+import { columnDto, listColumns, loadRows, registerDataOf, type RegisterRow } from '../../lib/register/rows.js';
 import { applyChanges } from '../../lib/register/save.js';
+import { syncCaseCommissions } from '../../lib/partners/commissions.js';
 import { buildRegisterXlsx } from '../../lib/register/export.js';
 
 /**
@@ -27,6 +28,9 @@ export const adminRegisterRouter = Router();
 
 const adminOnly = requireMinRole('ADMIN');
 const langOf = (req: Request) => pickLang(req.get('x-locale'), pickLang(req.user?.locale));
+
+/** Rows as sent to the browser: without fields it never uses (the register is a few thousand rows). */
+const lean = (rows: RegisterRow[]) => rows.map(({ clientId: _clientId, ...r }) => r);
 
 const options = async () => {
   const [partners, staff] = await Promise.all([
@@ -47,7 +51,7 @@ const options = async () => {
 adminRegisterRouter.get('/', async (req, res) => {
   const q = parse(z.object({ q: z.string().max(100).optional() }), req.query);
   const [{ rows, truncated }, columns, opts] = await Promise.all([loadRows(langOf(req), { q: q.q }), listColumns(), options()]);
-  res.json({ rows, truncated, columns, options: opts, canManageColumns: hasMinRole(req.user!.role, 'ADMIN') });
+  res.json({ rows: lean(rows), truncated, columns, options: opts, canManageColumns: hasMinRole(req.user!.role, 'ADMIN') });
 });
 
 const changesSchema = z.object({
@@ -66,7 +70,8 @@ const changesSchema = z.object({
 adminRegisterRouter.patch('/', async (req, res) => {
   const { changes } = parse(changesSchema, req.body);
   const columns = await listColumns();
-  const { results, touchedCaseIds, folderSync } = await applyChanges(changes, columns);
+  const { results, touchedCaseIds, folderSync, partnerChanges } = await applyChanges(changes, columns);
+  if (partnerChanges.length) void syncCaseCommissions(partnerChanges, req.user!.id).catch(() => {});
   const saved = results.filter((r) => r.ok).length;
   const failed = results.length - saved;
   if (saved) {
@@ -79,7 +84,7 @@ adminRegisterRouter.patch('/', async (req, res) => {
   }
   for (const id of folderSync) void syncCaseFolder(id).catch(() => {});
   const { rows } = touchedCaseIds.length ? await loadRows(langOf(req), { ids: touchedCaseIds }) : { rows: [] };
-  res.json({ results, saved, failed, rows });
+  res.json({ results, saved, failed, rows: lean(rows) });
 });
 
 adminRegisterRouter.get('/export.xlsx', async (req, res) => {

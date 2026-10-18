@@ -1,6 +1,6 @@
 import type { Prisma } from '@prisma/client';
 import { prisma } from '../../db.js';
-import type { AgentInfo, CaseRow, CommissionRow, FinanceData, InvoiceRow, StaffInfo, TranslationRow } from './aggregate.js';
+import type { AgentInfo, CaseRow, CommissionRow, FinanceData, InvoiceRow, PartnerCommissionRow, PartnerInfo, StaffInfo, TranslationRow } from './aggregate.js';
 import type { Period } from './period.js';
 
 const FINAL = ['APPROVED', 'REJECTED', 'CANCELLED'] as const;
@@ -33,6 +33,14 @@ export const loadCommissions = (p: Period): Promise<CommissionRow[]> =>
     where: { OR: [{ createdAt: { gte: p.start, lt: p.end } }, { paidAt: { gte: p.start, lt: p.end } }] },
     select: { agentId: true, caseId: true, amountCents: true, status: true, createdAt: true, paidAt: true },
   });
+
+export const loadPartnerCommissions = (p: Period): Promise<PartnerCommissionRow[]> =>
+  prisma.partnerCommission.findMany({
+    where: { OR: [{ createdAt: { gte: p.start, lt: p.end } }, { paidAt: { gte: p.start, lt: p.end } }] },
+    select: { partnerId: true, caseId: true, amountCents: true, status: true, createdAt: true, paidAt: true },
+  });
+
+export const loadPartners = (): Promise<PartnerInfo[]> => prisma.referralPartner.findMany({ select: { id: true, name: true, active: true } });
 
 export const loadTranslations = (p: Period): Promise<TranslationRow[]> =>
   prisma.translationOrder.findMany({
@@ -72,11 +80,11 @@ export const loadCases = async (p: Period, extra: { companyIds: string[]; caseId
 };
 
 export const loadFinanceData = async (p: Period): Promise<FinanceData> => {
-  const [invoices, commissions, translations] = await Promise.all([loadInvoices(p), loadCommissions(p), loadTranslations(p)]);
+  const [invoices, commissions, translations, partnerCommissions] = await Promise.all([loadInvoices(p), loadCommissions(p), loadTranslations(p), loadPartnerCommissions(p)]);
   const companyIds = [...new Set(invoices.filter((i) => i.status === 'PAID' && i.paidAt && i.paidAt >= p.start && i.paidAt < p.end).map((i) => i.companyId))];
   const caseIds = [...new Set([...commissions.map((c) => c.caseId), ...translations.map((t) => t.caseId)].filter((x): x is string => !!x))];
   const cases = await loadCases(p, { companyIds, caseIds });
-  return { invoices, commissions, translations, cases };
+  return { invoices, commissions, translations, cases, partnerCommissions };
 };
 
 export const loadAgents = async (p: Period): Promise<AgentInfo[]> => {

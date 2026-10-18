@@ -2,7 +2,7 @@ import { memo, useEffect, useRef, useState, type KeyboardEvent, type MouseEvent 
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
-import { ArrowDown, ArrowUp, Briefcase, Lock, Star } from 'lucide-react';
+import { ArrowDown, ArrowUp, Briefcase, Lock, MessageSquare, PenLine, Star } from 'lucide-react';
 import { formatBytes } from '@/lib/api';
 import { fmtDateTime, fmtRelative, fullName, statusLabel } from '@/components/admin/labels';
 import type { CaseStatus } from '@/lib/types';
@@ -12,6 +12,30 @@ import { endItemDrag, startItemDrag, useDropTarget, type PickedFile } from './dn
 import { ItemIcon, extLabel, fileTone } from './fileIcons';
 import { displayName, typeLabel } from './labels';
 import { can, type DriveItem } from './types';
+import type { CollabItem } from './collab/api';
+
+/** Collaboration badges: open comment threads and "… is editing" (edit lock). */
+const CollabBadges = ({ item, t, compact }: { item: DriveItem; t: ReturnType<typeof useTranslation>['t']; compact?: boolean }) => {
+  const c = item as CollabItem;
+  if (!c.commentCount && !c.lock) return null;
+  const editing = c.lock ? t('driveCollab.lock.editing', { name: `${c.lock.by.firstName} ${c.lock.by.lastName}`.trim(), defaultValue: `${c.lock.by.firstName} ✎` }) : '';
+  return (
+    <>
+      {c.lock && (
+        <span title={editing} className="inline-flex max-w-full shrink-0 items-center gap-0.5 truncate rounded bg-amber-100 px-1 py-px text-[10px] font-semibold text-amber-800 dark:bg-amber-500/20 dark:text-amber-200">
+          <PenLine className="size-2.5 shrink-0" aria-hidden />
+          <span className="truncate">{compact ? c.lock.by.firstName : editing}</span>
+        </span>
+      )}
+      {!!c.commentCount && (
+        <span title={t('driveCollab.tabs.comments', { defaultValue: '' })} className="inline-flex shrink-0 items-center gap-0.5 rounded bg-violet-100 px-1 py-px text-[10px] font-semibold text-violet-800 dark:bg-violet-500/20 dark:text-violet-200">
+          <MessageSquare className="size-2.5" aria-hidden />
+          {c.commentCount}
+        </span>
+      )}
+    </>
+  );
+};
 
 export type ViewMode = 'grid' | 'list';
 export type SortKey = 'name' | 'modified' | 'size' | 'type' | 'owner';
@@ -289,6 +313,11 @@ const Tile = memo(function Tile({ item, p, click, toggle, context, dragStart, t 
         {item.starred && <Star className="absolute top-0 right-1 size-3.5 fill-amber-400 text-amber-400" aria-hidden />}
       </div>
       <span className="mt-1.5 line-clamp-2 w-full text-[13px] leading-snug font-medium break-words text-ink">{name}</span>
+      {!!((item as CollabItem).commentCount || (item as CollabItem).lock) && (
+        <span className="mt-0.5 flex max-w-full items-center justify-center gap-1">
+          <CollabBadges item={item} t={t} compact />
+        </span>
+      )}
       <span className="mt-0.5 w-full truncate text-[11px] text-muted">
         {item.caseId ? (
           <CaseBadge item={item} t={t} />
@@ -434,6 +463,7 @@ const Row = memo(function Row({ item, p, click, toggle, context, dragStart, t }:
           {name}
         </span>
         {item.starred && <Star className="size-3.5 shrink-0 fill-amber-400 text-amber-400" aria-hidden />}
+        <CollabBadges item={item} t={t} />
         {item.kind === 'FOLDER' && !item.inheritPermissions && !item.system && <Lock className="size-3 shrink-0 text-muted" aria-label={t('drive.details.inheritOff')} />}
         <CaseBadge item={item} t={t} className="hidden shrink-0 sm:inline-flex" />
         {item.kind === 'FOLDER' && item.caseStatus && (

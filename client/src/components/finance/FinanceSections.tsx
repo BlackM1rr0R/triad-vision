@@ -14,6 +14,7 @@ import {
   FileWarning,
   FolderPlus,
   HandCoins,
+  Handshake,
   Languages,
   Layers,
   LineChart as LineIcon,
@@ -110,6 +111,14 @@ export const FinanceOverview = ({ range }: { range: FinanceRange }) => {
               value={f.money(s.commissions.paidCents)}
               hint={t('finance.kpi.commissionsHint', { pending: f.money(s.commissions.pendingCents), approved: f.money(s.commissions.approvedCents) })}
             />
+            {s.partnerCommissions && (
+              <StatTile
+                icon={Handshake}
+                label={t('finance.kpi.partnerCommissions')}
+                value={f.money(s.partnerCommissions.paidCents)}
+                hint={t('finance.kpi.partnerCommissionsHint', { pending: f.money(s.partnerCommissions.pendingCents), approved: f.money(s.partnerCommissions.approvedCents) })}
+              />
+            )}
             <StatTile icon={Scale} tone={s.netResultCents < 0 ? 'danger' : 'good'} label={t('finance.kpi.net')} value={f.money(s.netResultCents)} hint={t('finance.kpi.netHint')} />
             <StatTile icon={FolderPlus} label={t('finance.kpi.newCases')} value={s.cases.new} />
             <StatTile icon={CheckCircle2} tone="good" label={t('finance.kpi.approved')} value={s.cases.approved} hint={t('finance.kpi.approvedHint', { rejected: s.cases.rejected })} />
@@ -126,12 +135,13 @@ export const FinanceOverview = ({ range }: { range: FinanceRange }) => {
             values: {
               paid: Math.round(m.paidCents / 100),
               outstanding: Math.round((m.outstandingCents ?? 0) / 100),
-              commissions: Math.round(m.commissionsPaidCents / 100),
+              // Agent and referral-partner payouts together.
+              commissions: Math.round((m.commissionsPaidCents + (m.partnerCommissionsPaidCents ?? 0)) / 100),
               translation: Math.round(m.translationCents / 100),
               invoiced: Math.round(m.invoicedCents / 100),
             },
           }));
-          const empty = months.every((m) => !m.invoicedCents && !m.paidCents && !m.outstandingCents && !m.translationCents && !m.commissionsPaidCents && !m.newCases);
+          const empty = months.every((m) => !m.invoicedCents && !m.paidCents && !m.outstandingCents && !m.translationCents && !m.commissionsPaidCents && !m.partnerCommissionsPaidCents && !m.newCases);
           return (
             <>
               <Panel title={t('finance.chart.title')} icon={LineIcon}>
@@ -164,7 +174,7 @@ export const FinanceOverview = ({ range }: { range: FinanceRange }) => {
                       <td className={clsx(TD, 'text-emerald-700')}>{f.money(m.paidCents)}</td>
                       <td className={TD}>{f.money(m.outstandingCents)}</td>
                       <td className={TD}>{f.money(m.translationCents)}</td>
-                      <td className={TD}>{f.money(m.commissionsPaidCents)}</td>
+                      <td className={TD}>{f.money(m.commissionsPaidCents + (m.partnerCommissionsPaidCents ?? 0))}</td>
                       <td className={TD}>{m.newCases}</td>
                       <td className={clsx(TD, 'pr-5 sm:pr-6')}>{m.approved}</td>
                     </tr>
@@ -285,6 +295,7 @@ export const FinanceCommissions = ({ range }: { range: FinanceRange }) => {
   return (
     <Async q={q}>
       {(r) => (
+        <div className="space-y-6">
         <Panel title={t('finance.commissions.title')} icon={HandCoins}>
           {r.rows.length === 0 ? (
             <EmptyState icon={HandCoins} title={t('finance.commissions.empty')}>
@@ -339,8 +350,72 @@ export const FinanceCommissions = ({ range }: { range: FinanceRange }) => {
             </Table>
           )}
         </Panel>
+        {r.partners && <PartnerCommissionsPanel data={r.partners} />}
+        </div>
       )}
     </Async>
+  );
+};
+
+/** Referral partners (middlemen) — their own commissions, separate from the agent programme. */
+const PartnerCommissionsPanel = ({ data }: { data: NonNullable<CommissionsResponse['partners']> }) => {
+  const { t } = useTranslation();
+  const f = useFinanceFormat();
+  return (
+    <Panel
+      title={t('finance.partnerCommissions.title')}
+      icon={Handshake}
+      actions={
+        <Link to="/admin/partners/commissions" className="text-xs font-semibold text-brand-700 hover:underline">
+          {t('finance.partnerCommissions.manage')}
+        </Link>
+      }
+    >
+      {data.rows.length === 0 ? (
+        <EmptyState icon={Handshake} title={t('finance.partnerCommissions.empty')}>
+          {t('finance.partnerCommissions.emptyHint')}
+        </EmptyState>
+      ) : (
+        <Table
+          minWidth={640}
+          head={
+            <>
+              <th className={TH_FIRST}>{t('finance.partnerCommissions.partner')}</th>
+              <th className={TH}>{t('finance.commissions.pending')}</th>
+              <th className={TH}>{t('finance.commissions.approved')}</th>
+              <th className={TH}>{t('finance.commissions.paid')}</th>
+              <th className={TH}>{t('finance.commissions.cancelled')}</th>
+              <th className={clsx(TH, 'pr-5 sm:pr-6')}>{t('finance.commissions.total')}</th>
+            </>
+          }
+          foot={
+            <tr>
+              <td className={TD_FIRST}>{t('finance.commissions.total')}</td>
+              <td className={TD}>{f.money(data.totals.pendingCents)}</td>
+              <td className={TD}>{f.money(data.totals.approvedCents)}</td>
+              <td className={TD}>{f.money(data.totals.paidCents)}</td>
+              <td className={TD}>{f.money(data.totals.cancelledCents)}</td>
+              <td className={clsx(TD, 'pr-5 sm:pr-6')}>{f.money(data.totals.totalCents)}</td>
+            </tr>
+          }
+        >
+          {data.rows.map((p) => (
+            <tr key={p.id}>
+              <td className={TD_FIRST}>
+                <Link to={`/admin/partners/${p.id}`} className="font-medium text-brand-700 hover:underline">
+                  {p.name}
+                </Link>
+              </td>
+              <td className={TD}>{f.money(p.pendingCents)}</td>
+              <td className={TD}>{f.money(p.approvedCents)}</td>
+              <td className={clsx(TD, 'text-emerald-700')}>{f.money(p.paidCents)}</td>
+              <td className={clsx(TD, 'text-muted')}>{f.money(p.cancelledCents)}</td>
+              <td className={clsx(TD, 'pr-5 font-semibold text-navy-900 sm:pr-6')}>{f.money(p.totalCents)}</td>
+            </tr>
+          ))}
+        </Table>
+      )}
+    </Panel>
   );
 };
 

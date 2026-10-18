@@ -431,7 +431,20 @@
       "pageOf": "Səhifə {{page}} / {{total}}",
       "hint": "Mətn oxunaqlı olsun — kənarlar kəsilib.",
       "uploadingPage": "Səhifə {{page}} / {{total}} yüklənir… {{percent}}%",
-      "done": "{{count}} səhifə yükləndi"
+      "done": "{{count}} səhifə yükləndi",
+      "pdfAction": "Skan et (PDF)",
+      "general": "Sənəd skan et",
+      "chooseRequirement": "Hansı sənəd üçün skan edirsiniz?",
+      "uploadPdf": "PDF kimi yüklə ({{count}})",
+      "pdfHint": "Səhifələri sıralayın — hamısı bir PDF faylı kimi yüklənəcək.",
+      "preparing": "{{total}} səhifə hazırlanır…",
+      "uploadingPdf": "PDF yüklənir… {{percent}}%",
+      "donePdf": "{{count}} səhifəlik PDF yükləndi",
+      "failed": "Yükləmə alınmadı",
+      "retry": "Yenidən cəhd et",
+      "moveEarlier": "Əvvələ",
+      "moveLater": "Sona",
+      "maxPages": "Ən çox {{max}} səhifə"
     },
     "ocr": {
       "title": "Pasportdan oxunan məlumat",

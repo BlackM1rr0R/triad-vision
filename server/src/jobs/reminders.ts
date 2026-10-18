@@ -6,6 +6,7 @@ import { formatDay, textsFor, type PassportLevel, type SlaRow } from '../lib/gro
 import { inviteForCase } from '../lib/reviewInvites.js';
 import { FINAL_STATUSES } from '../lib/caseFlow.js';
 import { preferredChannel, sendSms, sendWhatsApp } from '../lib/messaging/outbound.js';
+import { clientsWithTrackedPassport } from '../lib/expiry/index.js';
 
 /**
  * Appointment, missing-document, passport-expiry, contract-signature and staff-SLA reminders,
@@ -193,7 +194,10 @@ export const runPassportReminders = async (now = new Date()) => {
       cases: { where: { status: { notIn: FINAL_STATUSES } }, take: 1, orderBy: { createdAt: 'desc' }, include: { assignedStaff: true } },
     },
   });
+  // A passport whose validity is tracked on a case document is warned by jobs/expiry.ts (no double warning).
+  const tracked = await clientsWithTrackedPassport(users.map((u) => u.id));
   for (const u of users) {
+    if (tracked.has(u.id)) continue;
     const expiry = u.passportExpiry!;
     const level = passportLevel(expiry, now);
     if (!level) continue;

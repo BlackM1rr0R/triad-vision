@@ -4,7 +4,7 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tansta
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import clsx from 'clsx';
-import { ArrowLeft, Download, FolderOpen, Handshake, Mail, Pencil, Phone, Plus, Search, Trash2, Users } from 'lucide-react';
+import { ArrowLeft, Download, FolderOpen, HandCoins, Handshake, Mail, Pencil, Phone, Plus, Search, Trash2, Users } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { hasMinRole } from '@/lib/types';
@@ -17,6 +17,9 @@ import { StatusBadge } from '@/components/admin/StatusBadge';
 import { Chip, EmptyState, ErrorBlock, LoadingBlock, PageHead, Switch } from '@/components/admin/ui';
 import { fmtDate, fullName } from '@/components/admin/labels';
 import { PARTNERS_KEY, partnerError, type Partner, type PartnerCase, type PartnerCounts } from '@/components/partners/api';
+import { CommissionsPanel, fromCents, toCents } from '@/components/partners/Commissions';
+import { PortalLoginPanel } from '@/components/partners/PortalLogin';
+import { money } from '@/components/agents/format';
 
 type ActiveFilter = 'all' | 'true' | 'false';
 
@@ -46,13 +49,24 @@ const CountRow = ({ counts }: { counts: PartnerCounts }) => {
 const PartnerDialog = ({ open, partner, onClose }: { open: boolean; partner: Partner | null; onClose: () => void }) => {
   const { t } = useTranslation();
   const qc = useQueryClient();
-  const [form, setForm] = useState({ name: '', phone: '', email: '', note: '', active: true });
+  const [form, setForm] = useState({ name: '', phone: '', email: '', note: '', active: true, commission: '', currency: 'EUR' });
   useEffect(() => {
-    if (open) setForm({ name: partner?.name ?? '', phone: partner?.phone ?? '', email: partner?.email ?? '', note: partner?.note ?? '', active: partner?.active ?? true });
+    if (open)
+      setForm({
+        name: partner?.name ?? '',
+        phone: partner?.phone ?? '',
+        email: partner?.email ?? '',
+        note: partner?.note ?? '',
+        active: partner?.active ?? true,
+        commission: fromCents(partner?.commissionCents),
+        currency: partner?.currency ?? 'EUR',
+      });
   }, [open, partner]);
+  const commissionInvalid = form.commission.trim() !== '' && toCents(form.commission) === null;
   const save = useMutation({
     mutationFn: async () => {
-      const body = { ...form, name: form.name.trim() };
+      const { commission, ...rest } = form;
+      const body = { ...rest, name: form.name.trim(), commissionCents: toCents(commission), currency: form.currency.trim().toUpperCase() || 'EUR' };
       if (partner) await api.patch(`/admin/partners/${partner.id}`, body);
       else await api.post('/admin/partners', body);
     },
@@ -74,7 +88,7 @@ const PartnerDialog = ({ open, partner, onClose }: { open: boolean; partner: Par
           <button type="button" className="btn-white btn-sm border border-line" onClick={onClose} disabled={save.isPending}>
             {t('refPartners.form.cancel')}
           </button>
-          <button type="submit" form="partner-form" className="btn-primary btn-sm" disabled={save.isPending || !form.name.trim()}>
+          <button type="submit" form="partner-form" className="btn-primary btn-sm" disabled={save.isPending || !form.name.trim() || commissionInvalid}>
             {save.isPending && <Spinner className="size-3.5" />} {t('refPartners.form.save')}
           </button>
         </div>
@@ -85,7 +99,7 @@ const PartnerDialog = ({ open, partner, onClose }: { open: boolean; partner: Par
         className="space-y-4"
         onSubmit={(e) => {
           e.preventDefault();
-          if (form.name.trim()) save.mutate();
+          if (form.name.trim() && !commissionInvalid) save.mutate();
         }}
       >
         <label className="block">
@@ -101,6 +115,27 @@ const PartnerDialog = ({ open, partner, onClose }: { open: boolean; partner: Par
             <span className="label">{t('refPartners.form.email')}</span>
             <input className="input" type="email" maxLength={191} value={form.email} onChange={set('email')} />
           </label>
+        </div>
+        <div className="grid gap-4 sm:grid-cols-[1fr_7rem]">
+          <label className="block">
+            <span className="label">{t('refPartners.commissionField')}</span>
+            <input
+              className="input tabular-nums"
+              inputMode="decimal"
+              placeholder="150.00"
+              value={form.commission}
+              onChange={set('commission')}
+              aria-invalid={commissionInvalid || undefined}
+              aria-describedby="partner-commission-hint"
+            />
+          </label>
+          <label className="block">
+            <span className="label">{t('refPartners.currency')}</span>
+            <input className="input uppercase" maxLength={3} value={form.currency} onChange={set('currency')} />
+          </label>
+          <p id="partner-commission-hint" className="-mt-2 text-xs text-muted sm:col-span-2">
+            {t('refPartners.commissionHint')}
+          </p>
         </div>
         <label className="block">
           <span className="label">{t('refPartners.form.note')}</span>
@@ -140,6 +175,9 @@ const PartnerList = ({ isAdmin }: { isAdmin: boolean }) => {
         actions={
           <>
             {isFetching && !isLoading && <Spinner className="size-4 text-brand-600" />}
+            <Link to="/admin/partners/commissions" className="btn-white btn-sm border border-line">
+              <HandCoins className="size-4" /> {t('refPartners.allCommissions')}
+            </Link>
             {isAdmin && (
               <button type="button" className="btn-primary btn-sm" onClick={() => setDialog({ open: true, partner: null })}>
                 <Plus className="size-4" /> {t('refPartners.add')}
@@ -208,6 +246,16 @@ const PartnerList = ({ isAdmin }: { isAdmin: boolean }) => {
                 <CountRow counts={p.counts} />
               </div>
               <p className="mt-2 text-[11px] text-muted">{p.counts.lastCaseAt ? t('refPartners.lastCase', { date: fmtDate(p.counts.lastCaseAt) }) : t('refPartners.noCases')}</p>
+              {(p.commissionCents != null || (p.commissionTotals && p.commissionTotals.totalCents > 0)) && (
+                <p className="mt-1 flex flex-wrap gap-x-3 text-[11px] text-muted">
+                  {p.commissionCents != null && <span>{t('refPartners.perClient', { amount: money(p.commissionCents, p.currency ?? 'EUR') })}</span>}
+                  {p.commissionTotals && p.commissionTotals.pendingCents + p.commissionTotals.approvedCents > 0 && (
+                    <span className="text-amber-700">
+                      {t('refPartners.totals.pending')}: {money(p.commissionTotals.pendingCents + p.commissionTotals.approvedCents, p.currency ?? 'EUR')}
+                    </span>
+                  )}
+                </p>
+              )}
             </li>
           ))}
         </ul>
@@ -225,6 +273,7 @@ const PartnerDetail = ({ isAdmin }: { isAdmin: boolean }) => {
   const qc = useQueryClient();
   const [editing, setEditing] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [tab, setTab] = useState<'clients' | 'commissions'>('clients');
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: [...PARTNERS_KEY, 'one', id],
     queryFn: async () => (await api.get<{ partner: Partner; cases: PartnerCase[] }>(`/admin/partners/${id}`)).data,
@@ -301,10 +350,44 @@ const PartnerDetail = ({ isAdmin }: { isAdmin: boolean }) => {
         }
       />
       {partner.note && <p className="mb-4 rounded-xl border border-line bg-surface px-4 py-3 text-sm whitespace-pre-line text-ink/80">{partner.note}</p>}
-      <div className="mb-5 max-w-xl">
-        <CountRow counts={partner.counts} />
+      <div className="mb-5 grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,22rem)]">
+        <div className="space-y-3">
+          <div className="max-w-xl">
+            <CountRow counts={partner.counts} />
+          </div>
+          {partner.commissionTotals && (
+            <dl className="grid max-w-xl grid-cols-2 gap-2 sm:grid-cols-4">
+              {(
+                [
+                  ['pending', partner.commissionTotals.pendingCents, 'text-amber-700'],
+                  ['approved', partner.commissionTotals.approvedCents, 'text-brand-700'],
+                  ['paid', partner.commissionTotals.paidCents, 'text-emerald-700'],
+                  ['thisMonth', partner.commissionTotals.thisMonthCents, 'text-ink'],
+                ] as const
+              ).map(([k, v, tone]) => (
+                <div key={k} className="min-w-0 rounded-lg bg-surface px-2 py-1.5 text-center">
+                  <dd className={clsx('truncate text-sm font-bold tabular-nums', tone)}>{money(v, partner.currency ?? 'EUR')}</dd>
+                  <dt className="truncate text-[10px] text-muted">{t(`refPartners.totals.${k}`)}</dt>
+                </div>
+              ))}
+            </dl>
+          )}
+          {partner.commissionCents != null && <p className="text-xs text-muted">{t('refPartners.perClient', { amount: money(partner.commissionCents, partner.currency ?? 'EUR') })}</p>}
+        </div>
+        <PortalLoginPanel partner={partner} isAdmin={isAdmin} />
       </div>
 
+      <div className="mb-4 flex gap-1.5" role="tablist">
+        {(['clients', 'commissions'] as const).map((k) => (
+          <Chip key={k} active={tab === k} onClick={() => setTab(k)}>
+            {t(`refPartners.tabs.${k}`)}
+          </Chip>
+        ))}
+      </div>
+
+      {tab === 'commissions' ? (
+        <CommissionsPanel partnerId={partner.id} isAdmin={isAdmin} />
+      ) : (
       <section className="rounded-xl border border-line bg-card">
         <header className="flex items-center gap-2 border-b border-line px-5 py-3.5">
           <Users className="size-4 text-brand-600" aria-hidden />
@@ -361,6 +444,7 @@ const PartnerDetail = ({ isAdmin }: { isAdmin: boolean }) => {
           </div>
         )}
       </section>
+      )}
 
       <PartnerDialog open={editing} partner={partner} onClose={() => setEditing(false)} />
       {hasCases ? (
@@ -389,6 +473,21 @@ const PartnerDetail = ({ isAdmin }: { isAdmin: boolean }) => {
   );
 };
 
+/** /admin/partners/commissions — commissions of all partners with filters and the monthly Excel report. */
+const AllCommissions = ({ isAdmin }: { isAdmin: boolean }) => {
+  const { t } = useTranslation();
+  usePageTitle(t('refPartners.com.title'));
+  return (
+    <div>
+      <Link to="/admin/partners" className="mb-3 inline-flex items-center gap-1 text-xs font-semibold text-brand-600 hover:text-brand-700">
+        <ArrowLeft className="size-3.5" /> {t('refPartners.back')}
+      </Link>
+      <PageHead title={t('refPartners.com.title')} subtitle={t('refPartners.com.subtitle')} />
+      <CommissionsPanel isAdmin={isAdmin} />
+    </div>
+  );
+};
+
 /** /admin/partners/* — referral partners (middlemen who bring visa clients). */
 export default function AdminPartners() {
   const { user } = useAuth();
@@ -396,6 +495,7 @@ export default function AdminPartners() {
   return (
     <Routes>
       <Route index element={<PartnerList isAdmin={isAdmin} />} />
+      <Route path="commissions" element={<AllCommissions isAdmin={isAdmin} />} />
       <Route path=":id" element={<PartnerDetail isAdmin={isAdmin} />} />
     </Routes>
   );

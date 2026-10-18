@@ -3,7 +3,7 @@ import type { Prisma } from '@prisma/client';
 import { prisma } from '../../db.js';
 import { categoryFolderName, docFilePath, STAGE_FOLDER, VISA_TYPE_FOLDER } from './cases.js';
 import { cleanName, freeNameIn, safeUploadName } from './names.js';
-import { ensureRoots, FAMILY_FOLDER, NO_CATEGORY_FOLDER } from './roots.js';
+import { ensureSection, FAMILY_FOLDER, NO_CATEGORY_FOLDER } from './roots.js';
 import { copyIntoStore, removeStored } from './storage.js';
 import { purgeNodes } from './trash.js';
 
@@ -113,10 +113,10 @@ const canonical = async (c: CaseRow): Promise<{ parentId: string; base: string }
       return { parentId: await ensureChild(mainFolder, FAMILY_FOLDER), base: clientFolderBaseName(c, { name: await memberName(c.id), relation: c.relation }) };
     }
   }
-  const roots = await ensureRoots();
   const base = clientFolderBaseName(c);
-  if (c.partner) return { parentId: await ensureChild(roots.partnersId, cleanName(c.partner.name, 'Partner')), base };
-  const typeId = await ensureChild(roots.casesId, VISA_TYPE_FOLDER[c.visaType]);
+  // The sections are created again here when a super admin had deleted them (a client folder needs them).
+  if (c.partner) return { parentId: await ensureChild(await ensureSection('partners'), cleanName(c.partner.name, 'Partner')), base };
+  const typeId = await ensureChild(await ensureSection('cases'), VISA_TYPE_FOLDER[c.visaType]);
   const catName = c.visaCategory ? cleanName(categoryFolderName(c.visaCategory), NO_CATEGORY_FOLDER) : NO_CATEGORY_FOLDER;
   return { parentId: await ensureChild(typeId, catName), base };
 };
@@ -172,7 +172,7 @@ export async function syncPartnerFolder(partnerId: string, opts: { previousName?
   return serial(async () => {
     const partner = await prisma.referralPartner.findUnique({ where: { id: partnerId }, select: { name: true } });
     if (!partner) return null;
-    const { partnersId } = await ensureRoots();
+    const partnersId = await ensureSection('partners');
     const name = cleanName(partner.name, 'Partner');
     const find = async (n: string) => {
       const rows = await prisma.driveNode.findMany({ where: { parentId: partnersId, name: n, kind: 'FOLDER', deletedAt: null }, select: { id: true, name: true } });

@@ -7,6 +7,7 @@ import clsx from 'clsx';
 import type { LucideIcon } from 'lucide-react';
 import {
   AtSign,
+  Banknote,
   BarChart3,
   Bell,
   BookOpen,
@@ -44,6 +45,7 @@ import {
   MessageSquareText,
   Newspaper,
   PlaneLanding,
+  Hourglass,
   Plug,
   Receipt,
   Route,
@@ -92,6 +94,7 @@ const MAIN_NAV: NavItem[] = [
   { to: '/admin/oversight', label: 'oversight', icon: Eye, superOnly: true },
   { to: '/admin/cases', label: 'cases', icon: FolderKanban },
   { to: '/admin/register', label: 'register', icon: Sheet },
+  { to: '/admin/settlements', label: 'settlements', icon: Banknote },
   { to: '/admin/partners', label: 'referralPartners', icon: Handshake },
   { to: '/admin/signatures', label: 'signatures', icon: FileSignature },
   { to: '/workspace/home', label: 'workspace', icon: LayoutGrid },
@@ -113,6 +116,7 @@ const MAIN_NAV: NavItem[] = [
   { to: '/admin/interviews', label: 'interviews', icon: Video },
   { to: '/admin/journey', label: 'journey', icon: Route },
   { to: '/admin/requirements', label: 'requirements', icon: ListChecks },
+  { to: '/admin/expiring', label: 'expiring', icon: Hourglass },
   { to: '/admin/kb', label: 'kb', icon: BookOpenText },
   { to: '/admin/agents', label: 'agents', icon: Handshake, adminOnly: true },
   { to: '/admin/translations', label: 'translations', icon: Languages },

@@ -431,7 +431,20 @@
       "pageOf": "Page {{page}} / {{total}}",
       "hint": "Keep the text readable and the edges trimmed.",
       "uploadingPage": "Uploading page {{page}} / {{total}}… {{percent}}%",
-      "done": "{{count}} pages uploaded"
+      "done": "{{count}} pages uploaded",
+      "pdfAction": "Scan (PDF)",
+      "general": "Scan a document",
+      "chooseRequirement": "Which document are you scanning?",
+      "uploadPdf": "Upload as PDF ({{count}})",
+      "pdfHint": "Put the pages in order — they are uploaded as one PDF.",
+      "preparing": "Preparing {{total}} pages…",
+      "uploadingPdf": "Uploading PDF… {{percent}}%",
+      "donePdf": "{{count}}-page PDF uploaded",
+      "failed": "Upload failed",
+      "retry": "Try again",
+      "moveEarlier": "Earlier",
+      "moveLater": "Later",
+      "maxPages": "Up to {{max}} pages"
     },
     "ocr": {
       "title": "Read from the passport",

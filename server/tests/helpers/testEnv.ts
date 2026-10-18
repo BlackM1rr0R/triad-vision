@@ -13,8 +13,10 @@ export const TEST_DB_NAME = process.env.TEST_DB_NAME ?? 'triad_vision_test';
 if (TEST_DB_NAME === 'triad_vision') throw new Error('Refusing to run tests against the dev database');
 
 export const TEST_DATABASE_URL = `mysql://${DB_USER}:${DB_PASS}@${DB_HOST}/${TEST_DB_NAME}`;
-export const TEST_UPLOADS_DIR = path.join(os.tmpdir(), 'triad-vision-test-uploads');
-export const TEST_DOCS_DIR = path.join(os.tmpdir(), 'triad-vision-test-docs');
+// One temp folder per test database, so parallel runs on separate databases never wipe each other's files.
+const DIR_SUFFIX = TEST_DB_NAME === 'triad_vision_test' ? '' : `-${TEST_DB_NAME.replace(/[^a-z0-9_]/gi, '')}`;
+export const TEST_UPLOADS_DIR = path.join(os.tmpdir(), `triad-vision-test-uploads${DIR_SUFFIX}`);
+export const TEST_DOCS_DIR = path.join(os.tmpdir(), `triad-vision-test-docs${DIR_SUFFIX}`);
 export const ADMIN_INBOX = 'staff-inbox@test.local';
 
 export const testEnv: Record<string, string> = {

@@ -10,7 +10,9 @@ import {
   Check,
   ChevronDown,
   ChevronRight,
+  ClipboardType,
   FileSpreadsheet,
+  FileText,
   FolderPlus,
   FolderUp,
   LayoutGrid,
@@ -20,6 +22,7 @@ import {
   PanelRight,
   Plus,
   RefreshCw,
+  ScanText,
   Search,
   Upload,
   X,
@@ -97,6 +100,27 @@ const CrumbButton = ({
   );
 };
 
+/** "Mətn daxilində axtar": switch under the search box (search inside the indexed text of files). */
+const ContentToggle = ({ on, onChange, label, hint }: { on: boolean; onChange: (on: boolean) => void; label: string; hint: string }) => (
+  <button
+    type="button"
+    role="switch"
+    aria-checked={on}
+    onClick={() => onChange(!on)}
+    title={hint}
+    className={clsx(
+      'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[11px] font-semibold transition-colors',
+      on ? 'border-brand-300 bg-brand-50 text-brand-700 dark:border-brand-500/40 dark:bg-brand-500/15 dark:text-brand-300' : 'border-line text-muted hover:text-ink',
+    )}
+  >
+    <ScanText className="size-3.5" aria-hidden />
+    {label}
+    <span className={clsx('relative ml-0.5 inline-block h-3 w-5 rounded-full transition-colors', on ? 'bg-brand-600' : 'bg-line')} aria-hidden>
+      <span className={clsx('absolute top-0.5 size-2 rounded-full bg-white transition-all', on ? 'left-2.5' : 'left-0.5')} />
+    </span>
+  </button>
+);
+
 export interface ToolbarProps {
   canBack: boolean;
   canForward: boolean;
@@ -112,6 +136,9 @@ export interface ToolbarProps {
   onItems: (items: DriveItem[], targetId: string, copy: boolean) => void;
   searchValue: string;
   onSearch: (q: string) => void;
+  /** Search also inside the indexed text of files (document intelligence); the switch shows when the handler is given. */
+  searchInContent?: boolean;
+  onSearchInContent?: (on: boolean) => void;
   view: ViewMode;
   onView: (v: ViewMode) => void;
   sortKey: SortKey;
@@ -121,6 +148,10 @@ export interface ToolbarProps {
   onNewFolder: () => void;
   /** "New spreadsheet" next to "New folder" (opens the sheet editor). */
   onNewSheet?: () => void;
+  /** "New document (PDF)": the document editor. */
+  onNewDoc?: () => void;
+  /** "Text → PDF / Excel": paste box. */
+  onFromText?: () => void;
   onUploadFiles: () => void;
   onUploadFolder: () => void;
   selectionCount: number;
@@ -166,6 +197,8 @@ export const Toolbar = (p: ToolbarProps) => {
   const newEntries: MenuEntry[] = [
     { id: 'folder', label: t('drive.toolbar.newFolder'), icon: FolderPlus, onSelect: p.onNewFolder },
     ...(p.onNewSheet ? [{ id: 'sheet', label: t('drive.shared.newSheet'), icon: FileSpreadsheet, onSelect: p.onNewSheet }] : []),
+    ...(p.onNewDoc ? [{ id: 'doc', label: t('docCreate.menu.newDoc'), icon: FileText, onSelect: p.onNewDoc }] : []),
+    ...(p.onFromText ? [{ id: 'text', label: t('docCreate.menu.fromText'), icon: ClipboardType, onSelect: p.onFromText }] : []),
     { kind: 'separator', id: 'sep' },
     { id: 'files', label: t('drive.toolbar.uploadFiles'), icon: Upload, onSelect: p.onUploadFiles },
     { id: 'dir', label: t('drive.toolbar.uploadFolder'), icon: FolderUp, onSelect: p.onUploadFolder },
@@ -226,6 +259,11 @@ export const Toolbar = (p: ToolbarProps) => {
           )}
         </form>
       </div>
+      {p.onSearchInContent && !p.minimal && (
+        <div className="flex justify-end px-2 pt-1.5 sm:px-3">
+          <ContentToggle on={!!p.searchInContent} onChange={p.onSearchInContent} label={t('driveIntel.search.inContent')} hint={t('driveIntel.search.inContentHint')} />
+        </div>
+      )}
       {/* Mobile search */}
       <form
         className="relative px-2 pt-2 md:hidden"

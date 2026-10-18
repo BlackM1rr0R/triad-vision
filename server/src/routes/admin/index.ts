@@ -33,6 +33,8 @@ import { adminContractTemplatesRouter } from './contractTemplates.js';
 import { adminCandidateRequestsRouter } from './candidateRequests.js';
 import { adminPartnersRouter } from './partners.js';
 import { adminRegisterRouter } from './register.js';
+import { adminDocumentExpiryRouter } from './documentExpiry.js';
+import { adminSettlementsRouter } from './settlements.js';
 
 export const adminRouter = Router();
 adminRouter.use(requireMinRole('STAFF'));
@@ -116,6 +118,7 @@ adminRouter.use('/contract-templates', adminContractTemplatesRouter);
 adminRouter.use('/candidate-requests', adminCandidateRequestsRouter);
 adminRouter.use('/partners', adminPartnersRouter);
 adminRouter.use('/register', adminRegisterRouter);
+adminRouter.use('/settlements', adminSettlementsRouter);
 adminRouter.use('/signatures', adminSignaturesRouter);
 // Any successful CMS write (incl. vacancy, employer and review moderation) must be visible on the public site right away.
 // The cache is cleared before the response is sent, so the admin's next public read is already fresh.
@@ -130,6 +133,7 @@ adminRouter.use(['/content', '/settings', '/vacancies', '/companies', '/reviews'
   next();
 });
 
+adminRouter.use(adminDocumentExpiryRouter); // /cases/:caseId/documents/:docId/expiry, /expiring
 adminRouter.use('/cases', adminCasesRouter);
 adminRouter.use('/users', adminUsersRouter);
 adminRouter.use('/mailboxes', requireMinRole('ADMIN'), adminMailboxesRouter);

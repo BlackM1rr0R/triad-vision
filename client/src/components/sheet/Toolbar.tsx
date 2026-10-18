@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { memo, useCallback, useRef, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
 import { AlignCenter, AlignLeft, AlignRight, ArrowDownAZ, ArrowUpAZ, Baseline, Bold, ChevronDown, Italic, PaintBucket, Snowflake, Underline, WrapText } from 'lucide-react';
@@ -106,17 +106,7 @@ function FormatPicker({ value, onPick }: { value?: string; onPick: (fmt: string 
   );
 }
 
-/** Formatting controls of the .xlsx editor (bold … number format, freeze, sort). */
-export function FormatBar({
-  style,
-  active,
-  cells,
-  onFormat,
-  frozen,
-  onToggleFreeze,
-  onSort,
-  disabled,
-}: {
+interface FormatBarProps {
   style: CellStyle | undefined;
   active: Pos | null;
   cells: () => Pos[];
@@ -125,11 +115,43 @@ export function FormatBar({
   onToggleFreeze: () => void;
   onSort: (c: number, dir: 'asc' | 'desc') => void;
   disabled?: boolean;
+}
+
+/**
+ * Formatting controls of the .xlsx editor (bold … number format, freeze, sort). The callbacks read the
+ * latest props through a ref, so the controls only re-render when the active cell's style changes —
+ * not on every cursor move.
+ */
+export function FormatBar(props: FormatBarProps) {
+  const latest = useRef(props);
+  latest.current = props;
+  const set = useCallback((patch: Partial<CellStyle>) => latest.current.onFormat(latest.current.cells(), patch), []);
+  const sort = useCallback((dir: 'asc' | 'desc') => {
+    const a = latest.current.active;
+    if (a) latest.current.onSort(a.c, dir);
+  }, []);
+  const freeze = useCallback(() => latest.current.onToggleFreeze(), []);
+  if (props.disabled) return null;
+  return <FormatControls style={props.style} hasActive={!!props.active} frozen={props.frozen} set={set} sort={sort} freeze={freeze} />;
+}
+
+const FormatControls = memo(function FormatControls({
+  style,
+  hasActive,
+  frozen,
+  set,
+  sort,
+  freeze,
+}: {
+  style: CellStyle | undefined;
+  hasActive: boolean;
+  frozen: boolean;
+  set: (patch: Partial<CellStyle>) => void;
+  sort: (dir: 'asc' | 'desc') => void;
+  freeze: () => void;
 }) {
   const { t } = useTranslation();
   const s = style ?? {};
-  const set = (patch: Partial<CellStyle>) => onFormat(cells(), patch);
-  if (disabled) return null;
   return (
     <>
       <ToolButton label={t('sheet.format.bold')} shortcut="Ctrl+B" active={!!s.b} onClick={() => set({ b: !s.b })}>
@@ -158,16 +180,16 @@ export function FormatBar({
       </ToolButton>
       <FormatPicker value={s.numFmt} onPick={(numFmt) => set({ numFmt })} />
       <Sep />
-      <ToolButton label={t('sheet.freezeFirstRow')} active={frozen} onClick={onToggleFreeze}>
+      <ToolButton label={t('sheet.freezeFirstRow')} active={frozen} onClick={freeze}>
         <Snowflake size={16} />
       </ToolButton>
-      <ToolButton label={t('sheet.sortAsc')} disabled={!active} onClick={() => active && onSort(active.c, 'asc')}>
+      <ToolButton label={t('sheet.sortAsc')} disabled={!hasActive} onClick={() => sort('asc')}>
         <ArrowDownAZ size={16} />
       </ToolButton>
-      <ToolButton label={t('sheet.sortDesc')} disabled={!active} onClick={() => active && onSort(active.c, 'desc')}>
+      <ToolButton label={t('sheet.sortDesc')} disabled={!hasActive} onClick={() => sort('desc')}>
         <ArrowUpAZ size={16} />
       </ToolButton>
       <Sep />
     </>
   );
-}
+});

@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
 import type { LucideIcon } from 'lucide-react';
-import { ArrowLeft, BookUser, CalendarDays, FolderOpen, Globe, LayoutDashboard, ListTodo, LogOut, Mail, Menu, MessagesSquare, PanelLeftClose, PanelLeftOpen, Users, X } from 'lucide-react';
+import { ArrowLeft, Banknote, BookUser, CalendarDays, FolderOpen, Globe, LayoutDashboard, ListTodo, LogOut, Mail, Menu, MessagesSquare, PanelLeftClose, PanelLeftOpen, Users, X } from 'lucide-react';
 import { LogoMark } from '@/components/ui/Logo';
 import { LanguageSwitcher } from '@/components/layout/LanguageSwitcher';
 import { ThemeToggle } from '@/components/a11y/ThemeToggle';
@@ -93,6 +93,7 @@ export default function WorkspaceLayout() {
     { to: '/workspace/chat', label: t('workspace.nav.chat'), icon: MessagesSquare, badge: chatSummary.data?.unread || undefined },
     { to: '/workspace/calendar', label: t('workspace.nav.calendar'), icon: CalendarDays },
     { to: '/workspace/drive', label: t('workspace.nav.drive'), icon: FolderOpen },
+    { to: '/workspace/settlements', label: t('workspace.nav.settlements'), icon: Banknote },
     { to: '/workspace/tasks', label: t('workspace.nav.tasks'), icon: ListTodo, badge: summary.data?.open || undefined },
     { to: '/workspace/contacts', label: t('workspace.nav.contacts'), icon: BookUser },
     { to: '/workspace/team', label: t('workspace.nav.team'), icon: Users },

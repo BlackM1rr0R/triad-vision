@@ -11,6 +11,7 @@ import { Modal } from '@/components/admin/Modal';
 import { Spinner } from '@/components/ui/Spinner';
 import { driveKeys, invalidateDrive, toastDriveError } from './api';
 import { crumbLabel } from './labels';
+import { ShareLinksSection } from './collab/ShareLinks';
 import { RANK, type AccessEntry, type AccessResponse, type DriveAccess, type DriveItem, type StaffPerson } from './types';
 
 /**
@@ -382,6 +383,13 @@ export const ShareDialog = ({ item, onClose, myId }: { item: DriveItem | null; o
                 </div>
               )}
             </section>
+          )}
+
+          {/* 5. links for people outside the team (employer, translator) */}
+          {item && !isRoot && !a.node.system && (a.myAccess === 'EDIT' || a.myAccess === 'MANAGE') && (
+            <div className="border-t border-line pt-5">
+              <ShareLinksSection item={item} />
+            </div>
           )}
         </div>
       )}

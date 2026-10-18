@@ -35,6 +35,9 @@ const EVENT_TYPES = [
   'leave.updated',
   'translation',
   'arrival',
+  // team drive collaboration (comments, edit locks)
+  'drive.comment',
+  'drive.lock',
 ] as const;
 export type RealtimeEventType = (typeof EVENT_TYPES)[number];
 

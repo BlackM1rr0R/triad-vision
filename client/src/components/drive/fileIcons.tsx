@@ -7,7 +7,6 @@ import {
   FileImage,
   FileSpreadsheet,
   FileText,
-  FilePen,
   LayoutTemplate,
   Sheet,
   FileType2,
@@ -20,7 +19,7 @@ import {
   Presentation,
   Users,
 } from 'lucide-react';
-import type { DriveItem, FolderColor } from './types';
+import type { DriveItem, FolderColor, SectionKey } from './types';
 
 export type FileKind = 'folder' | 'pdf' | 'word' | 'excel' | 'presentation' | 'image' | 'archive' | 'text' | 'file';
 
@@ -97,26 +96,52 @@ export const FOLDER_SWATCH: Record<FolderColor, string> = {
   slate: 'bg-slate-400',
 };
 
-/** Icons of the system sections below "Gemeinsame Dokumente" (matched by their German names). */
-export const SECTION_ICON: Record<string, { icon: LucideIcon; tone: string; bg: string; desc: string }> = {
-  Anträge: { icon: Briefcase, tone: 'text-violet-600', bg: 'bg-violet-50 dark:bg-violet-500/10', desc: 'drive.sections.cases' },
-  Partner: { icon: Handshake, tone: 'text-teal-600', bg: 'bg-teal-50 dark:bg-teal-500/10', desc: 'drive.sections.partners' },
-  'In Bearbeitung': { icon: FilePen, tone: 'text-amber-600', bg: 'bg-amber-50 dark:bg-amber-500/10', desc: 'drive.sections.work' },
-  Mitarbeiter: { icon: Users, tone: 'text-sky-600', bg: 'bg-sky-50 dark:bg-sky-500/10', desc: 'drive.sections.staff' },
-  Vorlagen: { icon: LayoutTemplate, tone: 'text-pink-600', bg: 'bg-pink-50 dark:bg-pink-500/10', desc: 'drive.sections.templates' },
-  'Alle Kunden': { icon: Sheet, tone: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-500/10', desc: 'drive.sections.clients' },
-  Aufgabendateien: { icon: ClipboardList, tone: 'text-orange-600', bg: 'bg-orange-50 dark:bg-orange-500/10', desc: 'drive.sections.tasks' },
+interface SectionInfo {
+  icon: LucideIcon;
+  tone: string;
+  bg: string;
+  desc: string;
+}
+
+/** Icons of the sections of "Gemeinsame Dokumente", by section key. */
+export const SECTION_INFO: Record<SectionKey, SectionInfo> = {
+  cases: { icon: Briefcase, tone: 'text-violet-600', bg: 'bg-violet-50 dark:bg-violet-500/10', desc: 'drive.sections.cases' },
+  partners: { icon: Handshake, tone: 'text-teal-600', bg: 'bg-teal-50 dark:bg-teal-500/10', desc: 'drive.sections.partners' },
+  staff: { icon: Users, tone: 'text-sky-600', bg: 'bg-sky-50 dark:bg-sky-500/10', desc: 'drive.sections.staff' },
+  templates: { icon: LayoutTemplate, tone: 'text-pink-600', bg: 'bg-pink-50 dark:bg-pink-500/10', desc: 'drive.sections.templates' },
+  clients: { icon: Sheet, tone: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-500/10', desc: 'drive.sections.clients' },
+  tasks: { icon: ClipboardList, tone: 'text-orange-600', bg: 'bg-orange-50 dark:bg-orange-500/10', desc: 'drive.sections.tasks' },
 };
 
-/** The section info of a system folder directly below the shared root (null for any other folder). */
-export const sectionOf = (item: Pick<DriveItem, 'system' | 'name' | 'parentId'> | null | undefined) => (item && item.system && item.parentId ? (SECTION_ICON[item.name] ?? null) : null);
+/** Default German names of the sections (fallback before the section ids are known). */
+const SECTION_BY_NAME: Record<string, SectionKey> = {
+  Anträge: 'cases',
+  Partner: 'partners',
+  Mitarbeiter: 'staff',
+  Vorlagen: 'templates',
+  'Alle Kunden': 'clients',
+  Aufgabendateien: 'tasks',
+};
+
+/** Section ids from /drive/roots (sections are recognised by id, so a renamed section keeps its icon). */
+let sectionIds = new Map<string, SectionKey>();
+export const setSectionIds = (map: Partial<Record<SectionKey, string>> | undefined) => {
+  sectionIds = new Map(Object.entries(map ?? {}).map(([k, id]) => [id as string, k as SectionKey]));
+};
+
+/** The section info of a section folder (null for any other folder). */
+export const sectionOf = (item: Pick<DriveItem, 'id' | 'system' | 'name' | 'parentId'> | null | undefined): SectionInfo | null => {
+  if (!item || !item.system || !item.parentId) return null;
+  const key = sectionIds.get(item.id) ?? (sectionIds.size === 0 ? SECTION_BY_NAME[item.name] : undefined);
+  return key ? SECTION_INFO[key] : null;
+};
 
 /** The icon of a drive item: coloured folders, special icons for roots and case folders, file types by MIME. */
 export const ItemIcon = ({ item, open = false, className }: { item: DriveItem; open?: boolean; className?: string }) => {
   if (item.kind === 'FOLDER') {
     if (item.system && !item.parentId) return <HardDrive className={clsx('text-brand-600', className)} strokeWidth={1.6} aria-hidden />;
     // The system sections of the shared workspace.
-    const section = item.system ? SECTION_ICON[item.name] : undefined;
+    const section = sectionOf(item);
     if (section) return <section.icon className={clsx(section.tone, className)} strokeWidth={1.6} aria-hidden />;
     const Icon = !item.inheritPermissions ? FolderLock : open ? FolderOpen : Folder;
     // Client folders (linked to a case) are violet unless staff picked a colour.

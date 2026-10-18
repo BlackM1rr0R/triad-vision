@@ -9,14 +9,18 @@ import { allows } from '../lib/drive/levels.js';
 import { breadcrumb } from '../lib/drive/items.js';
 import { checkName, freeNameIn } from '../lib/drive/names.js';
 import { removeStored } from '../lib/drive/storage.js';
-import { readCurrent, saveNewVersion, storeBuffer } from '../lib/sheets/store.js';
+import { currentRow, readStoredFile, saveNewVersion, storeBuffer } from '../lib/sheets/store.js';
+import { getParsed, putParsed, sheetsJsonOf } from '../lib/sheets/cache.js';
 import { LIMITS, XLSX_MIME, applySheets, emptyWorkbook, loadWorkbook, savePayloadSchema, workbookJson } from '../lib/sheets/workbook.js';
+import { assertNotLockedByOther } from '../lib/driveCollab/lock.js';
+import { logSheetSave } from '../lib/driveCollab/activity.js';
 
 /**
  * Spreadsheet editor for .xlsx files of the team drive (/api/drive/sheets).
  *
  *   GET  /:nodeId   workbook as JSON (VIEW)
- *   PUT  /:nodeId   { baseVersion, sheets, force? } → new version of the same drive file (EDIT)
+ *   PUT  /:nodeId   { baseVersion, sheets, force? } → new version of the same drive file (EDIT); each sheet
+ *                   carries `rows` (all cells) or `patch` (changed cells only, null = cleared)
  *   POST /          { parentId, name } → new empty .xlsx in a folder (EDIT on the folder)
  *
  * Access is the drive's own (lib/drive/access.ts); staff only, with the staff 2FA gate.
@@ -48,12 +52,19 @@ const loadSheetNode = async (req: Request, need: 'VIEW' | 'EDIT') => {
   return { ctx, node, level };
 };
 
+/** The stored file parsed to JSON, from the LRU when this version was parsed before. */
+const parsedOf = async (row: { storageKey: string }) => {
+  const hit = getParsed(row.storageKey);
+  if (hit) return hit;
+  const wb = await loadWorkbook(await readStoredFile(row));
+  return putParsed(row.storageKey, workbookJson(wb));
+};
+
 sheetsRouter.get('/:nodeId', async (req, res) => {
   const { ctx, node, level } = await loadSheetNode(req, 'VIEW');
-  const { row, buf } = await readCurrent(node.id);
-  const wb = await loadWorkbook(buf);
-  const sheets = workbookJson(wb);
-  res.json({
+  const row = await currentRow(node.id);
+  const parsed = await parsedOf(row);
+  const head = {
     id: row.id,
     name: row.name,
     version: row.version,
@@ -64,19 +75,22 @@ sheetsRouter.get('/:nodeId', async (req, res) => {
     canDownload: allows(level, 'DOWNLOAD'),
     ...breadcrumb(ctx, node.id),
     limits: { cellsPerSheet: LIMITS.cellsPerSheet, fileBytes: LIMITS.fileBytes, sheets: LIMITS.sheets },
-    sheets,
-  });
+  };
+  // The sheets are serialised once per stored version (cached); only the small head is built per request.
+  res.type('application/json').send(`${JSON.stringify(head).slice(0, -1)},"sheets":${sheetsJsonOf(parsed)}}`);
 });
 
 sheetsRouter.put('/:nodeId', async (req, res) => {
   const { node } = await loadSheetNode(req, 'EDIT');
+  await assertNotLockedByOther(node.id, req.user!.id);
   const body = parse(savePayloadSchema, req.body);
-  const { row, buf } = await readCurrent(node.id);
+  const row = await currentRow(node.id);
   if (!body.force && row.version !== body.baseVersion) {
     res.status(409).json({ error: 'VERSION_CONFLICT', currentVersion: row.version });
     return;
   }
-  const out = await applySheets(buf, body.sheets);
+  const buf = await readStoredFile(row);
+  const out = await applySheets(buf, body.sheets, getParsed(row.storageKey)?.sheets);
   let saved: { version: number; size: number };
   try {
     saved = await saveNewVersion(node.id, out, XLSX_MIME, { baseVersion: row.version, force: body.force });
@@ -87,7 +101,7 @@ sheetsRouter.put('/:nodeId', async (req, res) => {
     }
     throw err;
   }
-  const cells = body.sheets.reduce((n, s) => n + Object.values(s.rows).reduce((m, r) => m + Object.keys(r).length, 0), 0);
+  const cells = body.sheets.reduce((n, s) => n + Object.values(s.rows ?? s.patch ?? {}).reduce((m, r) => m + Object.keys(r).length, 0), 0);
   // Same action as a replace-upload, so the drive's version history names who saved each version.
   await audit(req, 'DRIVE_FILE_VERSION_ADDED', `drive:${node.id}`, {
     name: node.name,
@@ -98,6 +112,7 @@ sheetsRouter.put('/:nodeId', async (req, res) => {
     cells,
     forced: !!body.force && body.baseVersion !== row.version,
   });
+  await logSheetSave(node.id, req.user!.id, { version: saved.version });
   res.json({ id: node.id, version: saved.version, size: saved.size });
 });
 

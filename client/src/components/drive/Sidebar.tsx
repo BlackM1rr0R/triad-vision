@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
 import type { LucideIcon } from 'lucide-react';
-import { ChevronRight, Clock, Star, Trash2 } from 'lucide-react';
+import { ChevronRight, Clock, MoreHorizontal, Star, Trash2 } from 'lucide-react';
 import { formatBytes } from '@/lib/api';
 import { driveKeys, fetchChildren } from './api';
 import { useDropTarget, type PickedFile } from './dnd';
@@ -23,7 +23,8 @@ export interface SidebarProps {
   onOpen: (href: string) => void;
   onFiles: (files: PickedFile[], targetId: string) => void;
   onItems: (items: DriveItem[], targetId: string, copy: boolean) => void;
-  onContext?: (e: React.MouseEvent, item: DriveItem) => void;
+  /** Right-click or the row's "⋯" button: the folder's context menu at that point. */
+  onContext?: (at: { x: number; y: number }, item: DriveItem) => void;
 }
 
 const folderHref = (item: DriveItem) => `/workspace/drive/f/${encodeURIComponent(item.id)}`;
@@ -45,18 +46,25 @@ const TreeNode = memo(function TreeNode({
   useEffect(() => {
     if (auto) setExpanded(true);
   }, [auto]);
-  // Stage folders only hold files; a folder whose children turned out to be files has nothing to expand.
-  const mayHaveFolders = (item.childCount ?? 0) > 0;
+  // Every folder has a chevron; sub-folders are loaded when it is opened (nothing to load for an empty one).
+  const knownEmpty = item.childCount === 0;
   const q = useQuery({
     queryKey: driveKeys.children(item.id, 'FOLDER'),
     queryFn: () => fetchChildren(item.id, 'FOLDER'),
-    enabled: expanded && mayHaveFolders,
+    enabled: expanded && !knownEmpty,
     staleTime: 30_000,
   });
   const folders = q.data?.items.filter((i) => i.kind === 'FOLDER') ?? [];
-  const hasChildren = mayHaveFolders && !(q.data && folders.length === 0);
+  const noFolders = knownEmpty || (!!q.data && folders.length === 0);
   const writable = can(item.myAccess, 'EDIT');
   const drop = useDropTarget({ targetId: item.id, enabled: writable, onFiles: props.onFiles, onItems: props.onItems });
+  // Hovering a closed folder while dragging opens it, so items can go deeper.
+  useEffect(() => {
+    if (!drop.over || expanded) return;
+    const id = window.setTimeout(() => setExpanded(true), 700);
+    return () => window.clearTimeout(id);
+  }, [drop.over, expanded]);
+  const indent = 30 + depth * 14;
   const active = props.activeId === item.id;
   const text = label ?? displayName(item, t, props.myId);
 
@@ -70,15 +78,21 @@ const TreeNode = memo(function TreeNode({
           drop.over && 'ring-2 ring-brand-500 ring-inset bg-brand-50',
         )}
         style={{ paddingLeft: `${4 + depth * 14}px` }}
-        onContextMenu={props.onContext ? (e) => props.onContext!(e, item) : undefined}
+        onContextMenu={
+          props.onContext
+            ? (e) => {
+                e.preventDefault();
+                props.onContext!({ x: e.clientX, y: e.clientY }, item);
+              }
+            : undefined
+        }
       >
         <button
           type="button"
           onClick={() => setExpanded((x) => !x)}
-          className={clsx('grid size-6 shrink-0 place-items-center rounded-md', hasChildren ? 'opacity-70 hover:opacity-100' : 'invisible')}
+          className="grid size-6 shrink-0 place-items-center rounded-md opacity-70 hover:opacity-100"
           aria-label={expanded ? t('drive.nav.collapse') : t('drive.nav.expand')}
           aria-expanded={expanded}
-          tabIndex={hasChildren ? 0 : -1}
         >
           <ChevronRight className={clsx('size-3.5 transition-transform', expanded && 'rotate-90')} />
         </button>
@@ -94,10 +108,36 @@ const TreeNode = memo(function TreeNode({
           <ItemIcon item={item} open={expanded} className={clsx('size-[18px] shrink-0', active && '!text-white')} />
           <span className="truncate font-medium">{text}</span>
         </a>
+        {props.onContext && (
+          <button
+            type="button"
+            onClick={(e) => {
+              const r = e.currentTarget.getBoundingClientRect();
+              props.onContext!({ x: r.left, y: r.bottom + 2 }, item);
+            }}
+            className={clsx(
+              'ml-0.5 grid size-6 shrink-0 place-items-center rounded-md opacity-0 transition group-hover:opacity-100 focus-visible:opacity-100 [@media(hover:none)]:opacity-70',
+              active ? 'hover:bg-white/15' : 'text-muted hover:bg-brand-100 hover:text-ink dark:hover:bg-white/10',
+            )}
+            aria-label={t('docCreate.menu.folderActions')}
+            title={t('docCreate.menu.folderActions')}
+          >
+            <MoreHorizontal className="size-4" />
+          </button>
+        )}
       </div>
-      {expanded && hasChildren && (
+      {expanded && (
         <ul>
-          {q.isLoading && <li className="py-1 text-xs text-muted" style={{ paddingLeft: `${30 + depth * 14}px` }}>…</li>}
+          {!noFolders && q.isLoading && (
+            <li className="py-1 text-xs text-muted" style={{ paddingLeft: `${indent}px` }}>
+              …
+            </li>
+          )}
+          {noFolders && (
+            <li className="py-0.5 text-[11px] text-muted/80 italic select-none" style={{ paddingLeft: `${indent}px` }}>
+              {knownEmpty ? t('docCreate.menu.emptyFolder') : t('docCreate.menu.filesOnly', { count: item.childCount ?? 0 })}
+            </li>
+          )}
           {folders.map((f) => (
             <TreeNode key={f.id} item={f} depth={depth + 1} props={props} />
           ))}

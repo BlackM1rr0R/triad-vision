@@ -54,7 +54,9 @@ describe('drive: one shared workspace', () => {
     expect(r.cases).toMatchObject({ name: 'Anträge', system: true, parentId: r.shared.id, myAccess: 'EDIT' });
     expect(r.partners).toMatchObject({ name: 'Partner', system: true, parentId: r.shared.id });
     expect(r.staff).toMatchObject({ name: 'Mitarbeiter', system: true, parentId: r.shared.id });
-    expect(r.work).toMatchObject({ name: 'In Bearbeitung', system: true, parentId: r.shared.id, myAccess: 'EDIT' });
+    // "In Bearbeitung" is no longer part of the layout.
+    expect(r.work).toBeUndefined();
+    expect(r.sections).toMatchObject({ cases: r.cases.id, partners: r.partners.id, staff: r.staff.id, templates: r.templates.id });
     expect(r.templates).toMatchObject({ name: 'Vorlagen', system: true, parentId: r.shared.id });
     // The clients workbook folder is for super admins only.
     expect(r.clients).toBeNull();
@@ -233,7 +235,7 @@ describe('drive: files', () => {
     expect((await staff.agent.get(`/api/drive/nodes/does-not-exist/content`)).status).toBe(404);
   });
 
-  it('renames (keeping the extension), colours folders (MANAGE) and protects the system folders', async () => {
+  it('renames (keeping the extension), colours folders (MANAGE) and protects the system folders from everyone but super admins', async () => {
     const su = await asSuperAdmin();
     const staff = await asStaff();
     const { shared, cases, partners, staff: staffRoot } = await roots(staff.agent);
@@ -243,10 +245,16 @@ describe('drive: files', () => {
     expect((await staff.agent.patch(`/api/drive/nodes/${f.id}`).send({ name: 'Invoice.exe' })).body.error).toBe('EXTENSION_CHANGE_NOT_ALLOWED');
     expect((await staff.agent.patch(`/api/drive/nodes/${f.id}`).send({ name: 'b.pdf' })).body.error).toBe('NAME_EXISTS');
     expect((await staff.agent.patch(`/api/drive/nodes/${f.id}`).send({ name: '../x.pdf' })).body.error).toBe('INVALID_FILE_NAME');
+    const admin = await asAdmin();
     for (const sys of [shared, cases, partners, staffRoot]) {
-      expect((await su.agent.patch(`/api/drive/nodes/${sys.id}`).send({ name: 'Other' })).body.error).toBe('SYSTEM_NODE');
-      expect((await su.agent.post('/api/drive/trash').send({ ids: [sys.id] })).body.results[0].error).toBe('SYSTEM_NODE');
+      expect((await staff.agent.patch(`/api/drive/nodes/${sys.id}`).send({ name: 'Other' })).body.error).toBe('SYSTEM_NODE');
+      expect((await admin.agent.patch(`/api/drive/nodes/${sys.id}`).send({ name: 'Other' })).body.error).toBe('SYSTEM_NODE');
+      expect((await staff.agent.post('/api/drive/trash').send({ ids: [sys.id] })).body.results[0].error).toBe('SYSTEM_NODE');
+      expect((await admin.agent.post('/api/drive/trash').send({ ids: [sys.id] })).body.results[0].error).toBe('SYSTEM_NODE');
     }
+    // The shared root stays untouchable even for super admins.
+    expect((await su.agent.patch(`/api/drive/nodes/${shared.id}`).send({ name: 'Other' })).body.error).toBe('SYSTEM_NODE');
+    expect((await su.agent.post('/api/drive/trash').send({ ids: [shared.id] })).body.results[0].error).toBe('SYSTEM_NODE');
     const dir = expectStatus(await mkdir(staff.agent, shared.id, 'Blue'), 201).body.item;
     expect((await staff.agent.patch(`/api/drive/nodes/${dir.id}`).send({ color: 'blue' })).status).toBe(403);
     expect(expectStatus(await su.agent.patch(`/api/drive/nodes/${dir.id}`).send({ color: 'blue' }), 200).body.item.color).toBe('blue');

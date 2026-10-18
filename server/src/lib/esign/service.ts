@@ -13,6 +13,7 @@ import { buildFinalPdf } from './pdf.js';
 import { esignText, formatDay } from './texts.js';
 import { maskEmail } from './otp.js';
 import { maskPhone, normalizePhone, smsConfigured } from '../messaging/providers.js';
+import { saveSignedCopyToDrive } from '../driveIntel/signedCopy.js';
 
 /**
  * Multi-party online signatures ("Signature requests").
@@ -666,6 +667,8 @@ const afterCompletion = async (r: RequestWithSigners, built: { pdf: Buffer; sha2
         }
       }
     }
+
+    await saveSignedCopyToDrive(id, built.pdf).catch((err) => console.error('[esign] signed copy for the drive failed', id, err)); // started from the drive: signed PDF next to the original
 
     // Everyone gets the signed PDF.
     const attachment = { filename: `${safeFileBase(r.title)}-signed.pdf`, content: built.pdf, contentType: 'application/pdf' };

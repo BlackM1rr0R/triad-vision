@@ -17,12 +17,15 @@ import { breadcrumb, buildItems, collectSubtree, itemSelect } from '../lib/drive
 import { LEVELS, RANK, allows, maxLevel, type Level } from '../lib/drive/levels.js';
 import { STAGES } from '../lib/drive/cases.js';
 import { checkName, findSibling, freeNameIn, pickFreeName, safeUploadName, siblingNames } from '../lib/drive/names.js';
-import { ensureRoots } from '../lib/drive/roots.js';
+import { SECTION_KEYS, sectionIds } from '../lib/drive/roots.js';
 import { adoptUpload, copyIntoStore, removeStored, storagePath } from '../lib/drive/storage.js';
 import { purgeNodes, restoreSubtree, softDelete, trashRootIds } from '../lib/drive/trash.js';
 import { sharedText } from '../lib/drive/texts.js';
 import { driveUpload } from '../lib/drive/upload.js';
 import { deleteCaseDocument } from '../lib/caseDocDelete.js';
+import { CONTENT_LIMIT, contentSnippets, contentWhere } from '../lib/driveIntel/search.js';
+import { logDriveActivity } from '../lib/driveCollab/activity.js';
+import { assertNotLockedByOther } from '../lib/driveCollab/lock.js';
 
 /**
  * Team drive (/api/drive): ONE shared workspace ("Gemeinsame Dokumente") where every staff member works —
@@ -46,6 +49,16 @@ const idParam = (req: Request, key = 'id') => {
   return id;
 };
 const idList = z.array(z.string().min(1).max(120)).min(1).max(500);
+
+/**
+ * System nodes (the sections, the clients workbook) are protected from renaming, moving and deleting —
+ * except for super admins, who may do everything everywhere. The shared root itself is never renamed,
+ * moved or deleted.
+ */
+const assertNotProtected = (ctx: DriveAccessCtx, n: NodeLite) => {
+  if (!n.parentId) throw badRequest('SYSTEM_NODE');
+  if (n.system && !ctx.isSuper) throw badRequest('SYSTEM_NODE');
+};
 
 /** Folders that accept new content. */
 const assertWritableFolder = (n: NodeLite) => {
@@ -106,22 +119,30 @@ const versionUploaders = async (nodeId: string, createdBy: { id: string; firstNa
 
 // ─── Navigation ────────────────────────────────────────────────────────
 
-/** The shared workspace and its quick links (Anträge, Partner, Mitarbeiter). */
+/**
+ * The shared workspace and its sections (Anträge, Partner, Mitarbeiter, …). A section a super admin deleted
+ * is null until something needs it again; `sections` maps each live section key to its folder id (the
+ * client recognises renamed sections by id).
+ */
 driveRouter.get('/roots', async (req, res) => {
   const ctx = ctxOf(req);
-  const r = await ensureRoots();
-  const rows = await prisma.driveNode.findMany({ where: { id: { in: [r.sharedId, r.casesId, r.partnersId, r.staffId, r.workId, r.templatesId, r.clientsId] } }, select: itemSelect });
+  const { sharedId, sections } = await sectionIds();
+  const ids = [sharedId, ...Object.values(sections)];
+  const rows = await prisma.driveNode.findMany({ where: { id: { in: ids } }, select: itemSelect });
   const items = await buildItems(ctx, rows);
-  const pick = (id: string) => items.find((i) => i.id === id) ?? null;
+  const pick = (id: string | undefined) => (id ? (items.find((i) => i.id === id) ?? null) : null);
+  const visible: Record<string, string> = {};
+  for (const k of SECTION_KEYS) if (pick(sections[k])) visible[k] = sections[k]!;
   res.json({
-    shared: pick(r.sharedId),
-    cases: pick(r.casesId),
-    partners: pick(r.partnersId),
-    staff: pick(r.staffId),
-    work: pick(r.workId),
-    templates: pick(r.templatesId),
+    shared: pick(sharedId),
+    cases: pick(sections.cases),
+    partners: pick(sections.partners),
+    staff: pick(sections.staff),
+    templates: pick(sections.templates),
     // Only super admins see the clients workbook folder (null for everyone else).
-    clients: pick(r.clientsId),
+    clients: pick(sections.clients),
+    tasks: pick(sections.tasks),
+    sections: visible,
     limits: { maxFileBytes: config.drive.maxFileSize, trashDays: config.drive.trashDays },
   });
 });
@@ -234,24 +255,33 @@ const searchQuery = z.object({
   modifiedFrom: z.coerce.date().optional(),
   modifiedTo: z.coerce.date().optional(),
   ownerId: z.string().max(40).optional(),
+  /** '0' = names only; otherwise the indexed text of files is searched too (lib/driveIntel). */
+  content: z.enum(['0', '1']).optional(),
 });
 
 /**
  * Name search across the shared workspace. Client folders are also found by case number and passport
- * number (they are named "Vorname Nachname · Pass-Nr. …").
+ * number (they are named "Vorname Nachname · Pass-Nr. …"). Files are also found by their text (PDF text
+ * layer, DOCX, XLSX, OCR — see jobs/driveIndex.ts); such rows carry `contentMatch: { snippet }`.
  */
 driveRouter.get('/search', async (req, res) => {
   const ctx = ctxOf(req);
   const q = parse(searchQuery, req.query);
-  const where: Prisma.DriveNodeWhereInput = {
+  const filters: Prisma.DriveNodeWhereInput = {
     deletedAt: null,
     system: false,
-    name: { contains: q.q },
     ...(q.type === 'folder' ? { kind: 'FOLDER' } : q.type === 'image' ? { mimeType: { startsWith: 'image/' } } : q.type ? { mimeType: { in: TYPE_MIME[q.type] } } : {}),
     ...(q.modifiedFrom || q.modifiedTo ? { updatedAt: { ...(q.modifiedFrom ? { gte: q.modifiedFrom } : {}), ...(q.modifiedTo ? { lte: q.modifiedTo } : {}) } } : {}),
     ...(q.ownerId ? { createdById: q.ownerId } : {}),
   };
-  const rows = await prisma.driveNode.findMany({ where, select: itemSelect, orderBy: { updatedAt: 'desc' }, take: 600 });
+  const rows = await prisma.driveNode.findMany({ where: { ...filters, name: { contains: q.q } }, select: itemSelect, orderBy: { updatedAt: 'desc' }, take: 600 });
+  const inContent = q.content !== '0' && q.type !== 'folder' ? contentWhere(q.q) : null;
+  let contentIds = new Set<string>();
+  if (inContent) {
+    const hits = await prisma.driveNode.findMany({ where: { ...filters, ...inContent }, select: itemSelect, orderBy: { updatedAt: 'desc' }, take: CONTENT_LIMIT });
+    contentIds = new Set(hits.map((h) => h.id));
+    rows.push(...hits.filter((h) => !rows.some((r) => r.id === h.id)));
+  }
   if (!q.type || q.type === 'folder') {
     const cases = await prisma.case.findMany({
       where: { driveFolderId: { not: null }, OR: [{ number: { contains: q.q } }, { client: { passportNumber: { contains: q.q } } }] },
@@ -261,7 +291,9 @@ driveRouter.get('/search', async (req, res) => {
     const extra = cases.map((c) => c.driveFolderId!).filter((fid) => !rows.some((r) => r.id === fid));
     if (extra.length) rows.unshift(...(await prisma.driveNode.findMany({ where: { id: { in: extra }, deletedAt: null }, select: itemSelect })));
   }
-  res.json({ items: (await buildItems(ctx, rows, { withLocation: true })).slice(0, 300) });
+  const items = (await buildItems(ctx, rows, { withLocation: true })).slice(0, 300);
+  const matches = contentIds.size ? await contentSnippets(items.filter((i) => contentIds.has(i.id)).map((i) => i.id), q.q) : new Map();
+  res.json({ items: items.map((i) => (matches.has(i.id) ? { ...i, contentMatch: matches.get(i.id) } : i)) });
 });
 
 /** Storage usage. */
@@ -311,6 +343,7 @@ driveRouter.post('/nodes/:id/folders', async (req, res) => {
     data: { space: node.space, ownerId: node.ownerId, kind: 'FOLDER', name, parentId: id, createdById: req.user!.id },
     select: { id: true },
   });
+  await logDriveActivity({ nodeId: created.id, folderId: id, actorId: req.user!.id, action: 'CREATE_FOLDER', name, meta: { kind: 'FOLDER' } });
   res.status(201).json({ item: await loadItem(ctxOf(req), created.id) });
 });
 
@@ -375,6 +408,7 @@ driveRouter.post(
       if (clash && clash.kind === 'FILE' && body.onConflict === 'replace') {
         const ctx = ctxOf(req);
         await requireNode(ctx, clash.id, 'EDIT');
+        await assertNotLockedByOther(clash.id, user.id);
         const current = await prisma.driveNode.findUniqueOrThrow({
           where: { id: clash.id },
           select: { id: true, version: true, storageKey: true, mimeType: true, size: true, createdBy: person },
@@ -396,6 +430,7 @@ driveRouter.post(
           prisma.driveNode.update({ where: { id: current.id }, data: { storageKey: storedKey, mimeType: file.mimetype, size: file.size, version: next } }),
         ]);
         await audit(req, 'DRIVE_FILE_VERSION_ADDED', `drive:${current.id}`, { name, version: next, size: file.size });
+        await logDriveActivity({ nodeId: current.id, folderId: target.id, actorId: user.id, action: 'NEW_VERSION', name, meta: { version: next, size: file.size, kind: 'FILE' } });
         res.status(201).json({ item: await loadItem(ctxOf(req), current.id), replaced: true });
         return;
       }
@@ -424,6 +459,7 @@ driveRouter.post(
       });
       storedKey = null;
       await audit(req, 'DRIVE_FILE_UPLOADED', `drive:${created.id}`, { name: finalName, size: file.size, parentId: target.id });
+      await logDriveActivity({ nodeId: created.id, folderId: target.id, actorId: user.id, action: 'UPLOAD', name: finalName, meta: { size: file.size, kind: 'FILE' } });
       res.status(201).json({ item: await loadItem(ctxOf(req), created.id), replaced: false });
     } catch (err) {
       await fs.unlink(file.path).catch(() => undefined);
@@ -457,12 +493,14 @@ driveRouter.patch('/nodes/:id', async (req, res) => {
   const { node } = await requireNode(ctx, id, body.color !== undefined ? 'MANAGE' : 'EDIT');
   if (body.name !== undefined && node.name !== body.name) {
     await requireNode(ctx, id, 'EDIT');
-    if (node.system) throw badRequest('SYSTEM_NODE');
+    assertNotProtected(ctx, node);
     const name = checkName(body.name, node.kind === 'FILE' ? 'FILE' : 'FOLDER');
     if (node.kind === 'FILE' && extOf(name) !== extOf(node.name)) throw badRequest('EXTENSION_CHANGE_NOT_ALLOWED');
     if (node.parentId && (await findSibling(node.parentId, name, id))) throw conflict('NAME_EXISTS');
+    await assertNotLockedByOther(id, req.user!.id);
     await prisma.driveNode.update({ where: { id }, data: { name } });
     await audit(req, 'DRIVE_RENAMED', `drive:${id}`, { from: node.name, to: name });
+    await logDriveActivity({ nodeId: id, folderId: node.parentId, actorId: req.user!.id, action: 'RENAME', name, meta: { from: node.name, to: name, kind: node.kind } });
   }
   if (body.color !== undefined) {
     if (node.kind !== 'FOLDER') throw badRequest('NOT_A_FOLDER');
@@ -489,11 +527,13 @@ const mover = async (ctx: DriveAccessCtx, targetId: string) => {
   const targetChain = new Set(ctx.chain(targetId).map((n) => n.id));
   return async (id: string) => {
     const { node } = await requireNode(ctx, id, 'EDIT');
-    if (node.system) throw badRequest('SYSTEM_NODE');
+    assertNotProtected(ctx, node);
     if (targetChain.has(id)) throw badRequest('INTO_ITSELF');
     if (node.parentId === targetId) return { name: node.name, from: node.parentId, moved: false };
+    await assertNotLockedByOther(id, ctx.user.id);
     const name = pickFreeName(taken, node.name, node.kind === 'FILE');
     await prisma.driveNode.update({ where: { id }, data: { parentId: targetId, name } });
+    await logDriveActivity({ nodeId: id, folderId: targetId, actorId: ctx.user.id, action: 'MOVE', name, meta: { fromId: node.parentId, fromName: node.parentId ? (ctx.nodes.get(node.parentId)?.name ?? null) : null, toId: targetId, toName: target.name, kind: node.kind, ...(name !== node.name ? { oldName: node.name } : {}) } });
     if (node.space !== target.space || node.ownerId !== target.ownerId) {
       const sub = await collectSubtree([id], { id: true }, { includeDeleted: true });
       await prisma.driveNode.updateMany({ where: { id: { in: sub.map((s) => s.id) } }, data: { space: target.space, ownerId: target.ownerId } });
@@ -564,6 +604,7 @@ driveRouter.post('/copy', async (req, res) => {
       }
     }
     await audit(req, 'DRIVE_COPIED', `drive:${id}`, { name: node.name, to: targetId, nodes: sub.length });
+    await logDriveActivity({ nodeId: newIds.get(id) ?? null, folderId: targetId, actorId: me, action: 'COPY', name: node.name, meta: { sourceId: id, fromId: node.parentId, toId: targetId, toName: target.name, kind: node.kind } });
     return { name: node.name };
   });
   res.json({ results });
@@ -593,12 +634,14 @@ driveRouter.post('/case-documents/delete', requireMinRole('SUPER_ADMIN'), async 
   res.json({ results });
 });
 
-/** Moves one node (and its live subtree) to the recycle bin; system folders are refused. */
+/** Moves one node (and its live subtree) to the recycle bin; system folders only for super admins, never the root. */
 const trashOne = async (ctx: DriveAccessCtx, id: string, at: Date) => {
   const { node } = await requireNode(ctx, id, 'EDIT', { allowDeleted: true });
   if (node.deletedAt) return { name: node.name, kind: node.kind, nodes: 0 };
-  if (node.system) throw badRequest('SYSTEM_NODE');
+  assertNotProtected(ctx, node);
+  await assertNotLockedByOther(id, ctx.user.id);
   const nodes = await softDelete(id, ctx.user.id, at);
+  if (nodes) await logDriveActivity({ nodeId: id, folderId: node.parentId, actorId: ctx.user.id, action: 'DELETE', name: node.name, meta: { kind: node.kind, nodes } });
   return { name: node.name, kind: node.kind, nodes };
 };
 
@@ -674,6 +717,7 @@ driveRouter.post('/restore', async (req, res) => {
     }
     const count = await restoreSubtree(id, node.deletedAt);
     await audit(req, 'DRIVE_RESTORED', `drive:${id}`, { name, nodes: count });
+    await logDriveActivity({ nodeId: id, folderId: node.parentId, actorId: req.user!.id, action: 'RESTORE', name, meta: { kind: node.kind, nodes: count } });
     return { name };
   });
   res.json({ results });
@@ -694,6 +738,7 @@ driveRouter.post('/purge', async (req, res) => {
     const node = await purgeAllowed(ctx, id);
     const r = await purgeNodes([id]);
     await audit(req, 'DRIVE_PURGED', `drive:${id}`, { name: node.name, kind: node.kind, ...r });
+    await logDriveActivity({ nodeId: id, folderId: node.parentId, actorId: req.user!.id, action: 'PURGE', name: node.name, meta: { kind: node.kind, nodes: r.nodes } });
     return { name: node.name };
   });
   res.json({ results });
@@ -706,13 +751,15 @@ driveRouter.delete('/trash', requireMinRole('ADMIN'), async (req, res) => {
   let purged = 0;
   let bytes = 0;
   for (const id of ids) {
+    let purgedNode: NodeLite;
     try {
-      await purgeAllowed(ctx, id);
+      purgedNode = await purgeAllowed(ctx, id);
     } catch (err) {
       if (err instanceof HttpError) continue;
       throw err;
     }
     const r = await purgeNodes([id]);
+    await logDriveActivity({ nodeId: id, folderId: purgedNode.parentId, actorId: req.user!.id, action: 'PURGE', name: purgedNode.name, meta: { kind: purgedNode.kind, nodes: r.nodes, emptied: true } });
     purged += r.nodes;
     bytes += r.bytes;
   }
@@ -821,6 +868,7 @@ driveRouter.get('/nodes/:id/versions/:versionId/content', async (req, res) => {
 /** Makes an old version the current one again (as a new version; history is kept). */
 driveRouter.post('/nodes/:id/versions/:versionId/restore', async (req, res) => {
   const { node, v } = await loadVersion(req, 'EDIT');
+  await assertNotLockedByOther(node.id, req.user!.id);
   const current = await prisma.driveNode.findUniqueOrThrow({
     where: { id: node.id },
     select: { id: true, version: true, storageKey: true, mimeType: true, size: true, createdBy: person },
@@ -847,6 +895,7 @@ driveRouter.post('/nodes/:id/versions/:versionId/restore', async (req, res) => {
     throw err;
   }
   await audit(req, 'DRIVE_FILE_VERSION_RESTORED', `drive:${current.id}`, { name: node.name, version: next, from: v.version });
+  await logDriveActivity({ nodeId: current.id, folderId: node.parentId, actorId: req.user!.id, action: 'NEW_VERSION', name: node.name, meta: { version: next, restoredFrom: v.version, kind: 'FILE' } });
   res.json({ item: await loadItem(ctxOf(req), current.id) });
 });
 
@@ -1013,7 +1062,7 @@ driveRouter.patch('/nodes/:id/inheritance', async (req, res) => {
 driveRouter.get('/overview/:userId', requireMinRole('SUPER_ADMIN'), async (req, res) => {
   const target = await prisma.user.findUnique({ where: { id: String(req.params.userId) }, select: userSelect });
   if (!target || !hasMinRole(target.role, 'STAFF')) throw notFound('USER_NOT_FOUND');
-  const { casesId } = await ensureRoots();
+  const casesId = (await sectionIds()).sections.cases ?? null;
   const ctx = new DriveAccessCtx({ id: target.id, role: target.role });
   const rows = await prisma.driveNode.findMany({
     where: { deletedAt: null, OR: [{ kind: 'FOLDER' }, { grants: { some: {} } }] },
@@ -1029,7 +1078,7 @@ driveRouter.get('/overview/:userId', requireMinRole('SUPER_ADMIN'), async (req, 
       return { id: n.id, parentId: n.parentId, name: n.name, kind: n.kind, space: n.space, system: n.system, ownerId: n.ownerId, inheritPermissions: n.inheritPermissions, level: ctx.level(n.id), source };
     });
   const assigned = await prisma.case.count({ where: { assignedStaffId: target.id } });
-  res.json({ user: target, items, cases: { rootId: casesId, rootLevel: ctx.level(casesId), assignedCases: assigned }, levels: LEVELS });
+  res.json({ user: target, items, cases: { rootId: casesId, rootLevel: casesId ? ctx.level(casesId) : null, assignedCases: assigned }, levels: LEVELS });
 });
 
 /** Security audit trail (super admin), filterable by action prefix. */

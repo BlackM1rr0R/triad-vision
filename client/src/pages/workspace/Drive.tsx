@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent, type MouseEvent } from 'react';
+import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent, type MouseEvent } from 'react';
 import { Link, Navigate, useLocation, useNavigate, useNavigationType, useParams, useSearchParams } from 'react-router-dom';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
@@ -8,17 +8,22 @@ import {
   Briefcase,
   Clipboard,
   ClipboardPaste,
+  ClipboardType,
   Copy,
   Download,
   ExternalLink,
   Eye,
   FileArchive,
+  FileOutput,
+  FilePen,
   FileSpreadsheet,
+  FileText,
   FolderInput,
   FolderOpen,
   FolderPlus,
   FolderUp,
   History,
+  Merge,
   Info,
   Palette,
   Pencil,
@@ -38,6 +43,7 @@ import {
 import { registerCopy } from '@/i18n';
 import { adminCopy } from '@/i18n/admin';
 import { driveCopy } from '@/i18n/pagesDrive';
+import { docCreateCopy } from '@/i18n/pagesDocCreate';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { usePageTitle } from '@/lib/usePageTitle';
@@ -54,7 +60,7 @@ import { Sidebar } from '@/components/drive/Sidebar';
 import { Toolbar, type CrumbView, type ToolAction } from '@/components/drive/Toolbar';
 import { UploadPanel } from '@/components/drive/UploadPanel';
 import { useDropTarget, type PickedFile } from '@/components/drive/dnd';
-import { FOLDER_SWATCH, sectionOf } from '@/components/drive/fileIcons';
+import { FOLDER_SWATCH, sectionOf, setSectionIds } from '@/components/drive/fileIcons';
 import { ClientFolderHeader, PartnerFolderHeader, PartnersOverview, SectionHeader } from '@/components/drive/FolderHeaders';
 import { crumbLabel, rootLabel } from '@/components/drive/labels';
 import {
@@ -62,6 +68,7 @@ import {
   bulkCall,
   contentUrl,
   createSheet,
+  driveError,
   driveKeys,
   exportUrl,
   fetchChildren,
@@ -74,10 +81,19 @@ import {
   toastDriveError,
 } from '@/components/drive/api';
 import { ACCEPT_ATTR, useUploads, type ConflictChoice } from '@/components/drive/useUploads';
+import { useCollabRealtime } from '@/components/drive/collab/useCollabRealtime';
 import { FOLDER_COLORS, can, type DriveItem, type DriveLocation, type FolderColor, type StatsResponse, type VersionRow } from '@/components/drive/types';
+import { convertFiles, convertKind } from '@/components/docCreate/api';
+import type { DocEditorTarget } from '@/components/docCreate/DocEditor';
+import { useDriveIntel, useSearchInContent } from '@/components/drive/intel/useDriveIntel';
+
+// The document editor and the text converter load only when opened (keeps the drive bundle small).
+const DocEditor = lazy(() => import('@/components/docCreate/DocEditor'));
+const TextConvertDialog = lazy(() => import('@/components/docCreate/TextConvertDialog'));
 
 registerCopy(adminCopy);
 registerCopy(driveCopy);
+registerCopy(docCreateCopy);
 
 const BASE = '/workspace/drive';
 const folderHref = (id: string) => `${BASE}/f/${encodeURIComponent(id)}`;
@@ -143,6 +159,8 @@ export default function WorkspaceDrive() {
   const loc = useMemo(() => parseLocation(splat, params), [splat, params]);
 
   const roots = useQuery({ queryKey: driveKeys.roots, queryFn: fetchRoots, staleTime: 60_000 });
+  // Sections are recognised by id (a renamed section keeps its icon and description).
+  useMemo(() => setSectionIds(roots.data?.sections), [roots.data]);
   const stats = useQuery({ queryKey: driveKeys.stats, queryFn: async () => (await api.get<StatsResponse>('/drive/stats')).data, staleTime: 60_000 });
   const maxBytes = roots.data?.limits.maxFileBytes ?? 50 * 1024 * 1024;
   const trashDays = roots.data?.limits.trashDays ?? 30;
@@ -156,7 +174,8 @@ export default function WorkspaceDrive() {
     retry: (n, err) => n < 1 && (err as { response?: { status?: number } })?.response?.status !== 404,
   });
   const flatKind = loc.kind === 'shared' || loc.kind === 'recent' || loc.kind === 'starred' || loc.kind === 'trash' || loc.kind === 'search' ? loc.kind : null;
-  const flatParams = loc.kind === 'search' ? { q: loc.q, type: loc.type || undefined, modifiedFrom: loc.after || undefined } : undefined;
+  const [inContent, setInContent] = useSearchInContent();
+  const flatParams = loc.kind === 'search' ? { q: loc.q, type: loc.type || undefined, modifiedFrom: loc.after || undefined, content: inContent ? undefined : '0' } : undefined;
   const flat = useQuery({
     queryKey: driveKeys.list(flatKind ?? '', flatParams),
     queryFn: async () => (await api.get<FlatResponse>(`/drive/${flatKind}`, { params: flatParams })).data,
@@ -214,11 +233,25 @@ export default function WorkspaceDrive() {
     });
   }, [items]);
   const selectedItems = useMemo(() => items.filter((i) => selected.has(i.id)), [items, selected]);
+  const intel = useDriveIntel({ roots: roots.data, items, folderId, trail: listing.data?.path.map((c) => c.id), onOpenFolder: (id) => navigate(folderHref(id)) });
   const select = useCallback((ids: Set<string>, focus: string | null, anchor?: string | null) => {
     setSelected(ids);
     setFocusId(focus);
     if (anchor !== undefined) setAnchorId(anchor);
   }, []);
+
+  // ── collaboration: live comment / lock updates; links to an item or comment (?item=…&comment=…) ──
+  useCollabRealtime();
+  const linkedItem = params.get('item');
+  const linkedComment = params.get('comment');
+  const linkedDone = useRef('');
+  useEffect(() => {
+    const key = `${folderId}:${linkedItem}:${linkedComment}`;
+    if (!linkedItem || linkedDone.current === key || !items.some((i) => i.id === linkedItem)) return;
+    linkedDone.current = key;
+    select(new Set([linkedItem]), linkedItem, linkedItem);
+    setDetailsOpen(true);
+  }, [linkedItem, linkedComment, folderId, items, select]);
 
   // ── history (back / forward) ──
   const navType = useNavigationType();
@@ -294,12 +327,12 @@ export default function WorkspaceDrive() {
     });
 
   const createFolder = useMutation({
-    mutationFn: async (name: string) => (await api.post<{ item: DriveItem }>(`/drive/nodes/${encodeURIComponent(folderId!)}/folders`, { name })).data.item,
+    mutationFn: async ({ name, parentId }: { name: string; parentId: string }) => (await api.post<{ item: DriveItem }>(`/drive/nodes/${encodeURIComponent(parentId)}/folders`, { name })).data.item,
     onSuccess: (item) => {
       toast.success(t('drive.toasts.folderCreated'));
       setDialog(null);
       refresh();
-      select(new Set([item.id]), item.id, item.id);
+      if (item.parentId === folderId) select(new Set([item.id]), item.id, item.id);
     },
     onError: toastDriveError,
   });
@@ -334,20 +367,28 @@ export default function WorkspaceDrive() {
     });
 
   // ── dialogs ──
-  const [dialog, setDialog] = useState<{ kind: 'newFolder' } | { kind: 'newSheet'; parentId?: string } | { kind: 'rename'; item: DriveItem } | null>(null);
+  const [dialog, setDialog] = useState<{ kind: 'newFolder'; parentId?: string } | { kind: 'newSheet'; parentId?: string } | { kind: 'rename'; item: DriveItem } | null>(null);
+  const [docEditor, setDocEditor] = useState<{ target: DocEditorTarget; folderName?: string } | null>(null);
+  const [textFor, setTextFor] = useState<string | null>(null);
   const [picker, setPicker] = useState<{ mode: 'move' | 'copy'; items: DriveItem[] } | null>(null);
   const [confirm, setConfirm] = useState<Confirm | null>(null);
   const [shareItem, setShareItem] = useState<DriveItem | null>(null);
   const [previewItem, setPreviewItem] = useState<DriveItem | null>(null);
   const [colorFor, setColorFor] = useState<DriveItem | null>(null);
-  const [menu, setMenu] = useState<{ at: MenuPosition; items: DriveItem[] | null } | null>(null);
+  const [menu, setMenu] = useState<{ at: MenuPosition; items: DriveItem[] | null; tree?: boolean } | null>(null);
   const [clipboard, setClipboard] = useState<{ mode: 'cut' | 'copy'; items: DriveItem[] } | null>(null);
 
   const doConfirm = () => {
     const c = confirm;
     if (!c) return;
     void run(async () => {
-      if (c.kind === 'trash') reportBatch(await bulkCall('delete', { ids: c.items.map((i) => i.id) }), 'drive.toasts.trashed');
+      if (c.kind === 'trash') {
+        const done = new Set(reportBatch(await bulkCall('delete', { ids: c.items.map((i) => i.id) }), 'drive.toasts.trashed'));
+        // The open folder (or one above it) went to the bin: go to the closest folder that is left.
+        const path = listing.data?.path ?? [];
+        const hit = path.findIndex((p) => done.has(p.id));
+        if (hit >= 0) go(hit > 0 ? folderHref(path[hit - 1].id) : BASE);
+      }
       else if (c.kind === 'purge') reportBatch(await batchCall('/drive/purge', { ids: c.items.map((i) => i.id) }), 'drive.toasts.purged');
       else if (c.kind === 'empty') {
         await api.delete('/drive/trash');
@@ -400,7 +441,9 @@ export default function WorkspaceDrive() {
   const canUp = !!folderId && ((listing.data?.path.length ?? 0) > 1 || !!listing.data?.truncated);
 
   // ── action sets ──
-  const editable = (list: DriveItem[]) => list.length > 0 && list.every((i) => can(i.myAccess, 'EDIT') && !i.system);
+  /** System folders (the sections) only for super admins — never the shared root itself. */
+  const unprotected = (i: DriveItem) => !!i.parentId && (!i.system || isSuper);
+  const editable = (list: DriveItem[]) => list.length > 0 && list.every((i) => can(i.myAccess, 'EDIT') && unprotected(i));
   /** Access settings are offered only to people who manage a folder (by default everyone just edits). */
   const manageable = (i: DriveItem | null | undefined) => !!i && can(i.myAccess, 'MANAGE');
   const copyable = (list: DriveItem[]) => list.length > 0 && list.every((i) => can(i.myAccess, i.kind === 'FILE' ? 'DOWNLOAD' : 'EXPORT'));
@@ -422,14 +465,38 @@ export default function WorkspaceDrive() {
     toast(t('drive.toasts.exportStarted'));
     startDownload(exportUrl(list.map((i) => i.id)));
   };
+  /** Images / sheets → PDF, several files → one PDF, CSV → Excel; the result lands next to the sources. */
+  const convert = (list: DriveItem[], to: 'pdf' | 'xlsx', merge = false) =>
+    run(async () => {
+      toast(t('docCreate.convert.working'));
+      const r = await convertFiles({ ids: list.map((i) => i.id), to, merge, parentId: mode === 'folder' && folderId ? folderId : undefined });
+      const failed = r.results.filter((x) => !x.ok);
+      if (r.items.length) toast.success(merge ? t('docCreate.convert.merged') : t('docCreate.convert.done', { count: r.items.length }));
+      if (failed.length) toast.error(t('drive.toasts.partial', { failed: failed.length, reason: driveError(failed[0].error) }));
+      if (r.items.length && mode === 'folder') select(new Set(r.items.map((i) => i.id)), r.items[0].id, r.items[0].id);
+    });
+  const convertEntries = (list: DriveItem[]): MenuEntry[] => {
+    if (!list.length || !list.every((i) => i.kind === 'FILE' && can(i.myAccess, 'DOWNLOAD'))) return [];
+    const kinds = list.map(convertKind);
+    if (!kinds.every(Boolean)) return [];
+    const out: MenuEntry[] = [];
+    if (kinds.some((k) => k !== 'pdf')) out.push({ id: 'toPdf', label: t('docCreate.menu.toPdf'), icon: FileOutput, onSelect: () => void convert(list, 'pdf') });
+    if (list.length > 1) out.push({ id: 'merge', label: t('docCreate.menu.toOnePdf'), icon: Merge, onSelect: () => void convert(list, 'pdf', true) });
+    if (kinds.every((k) => k === 'csv')) out.push({ id: 'toXlsx', label: t('docCreate.menu.toXlsx'), icon: FileSpreadsheet, onSelect: () => void convert(list, 'xlsx') });
+    return out;
+  };
+  const folderNameOf = (id: string) => (id === folder?.id ? rootLabel(folder, t, myId) : (items.find((i) => i.id === id)?.name ?? undefined));
+  const newDocIn = (parentId: string, name?: string) => setDocEditor({ target: { mode: 'new', parentId }, folderName: name ?? folderNameOf(parentId) });
 
-  const menuEntries = (list: DriveItem[] | null): MenuEntry[] => {
+  const menuEntries = (list: DriveItem[] | null, tree = false): MenuEntry[] => {
     if (!list || list.length === 0) {
       const out: MenuEntry[] = [];
       if (canCreateHere) {
         out.push(
           { id: 'new', label: t('drive.toolbar.newFolder'), icon: FolderPlus, onSelect: () => setDialog({ kind: 'newFolder' }) },
           { id: 'sheet', label: t('drive.shared.newSheet'), icon: FileSpreadsheet, onSelect: () => setDialog({ kind: 'newSheet' }) },
+          { id: 'doc', label: t('docCreate.menu.newDoc'), icon: FileText, onSelect: () => newDocIn(folderId!) },
+          { id: 'text', label: t('docCreate.menu.fromText'), icon: ClipboardType, onSelect: () => setTextFor(folderId!) },
           { id: 'up', label: t('drive.toolbar.uploadFiles'), icon: Upload, onSelect: () => pickFiles(folderId!) },
           { id: 'updir', label: t('drive.toolbar.uploadFolder'), icon: FolderUp, onSelect: () => pickDir(folderId!) },
         );
@@ -467,12 +534,25 @@ export default function WorkspaceDrive() {
       if (flatKind && single.location) out.push({ id: 'loc', label: t('drive.actions.openLocation'), icon: ExternalLink, onSelect: () => go(folderHref(single.location!.id)) });
       out.push({ kind: 'separator', id: 's0' });
     }
+    if (single && convertKind(single) === 'pdf' && can(single.myAccess, 'EDIT')) out.push({ id: 'editDoc', label: t('docCreate.menu.editDoc'), icon: FilePen, onSelect: () => setDocEditor({ target: { mode: 'edit', nodeId: single.id } }) });
     if (single?.kind === 'FILE' && can(single.myAccess, 'DOWNLOAD')) out.push({ id: 'dl', label: t('drive.actions.download'), icon: Download, onSelect: () => startDownload(contentUrl(single.id, true)) });
     if (zippable(list) && (list.length > 1 || single?.kind === 'FOLDER')) out.push({ id: 'zip', label: t('drive.actions.downloadZip'), icon: FileArchive, onSelect: () => zip(list) });
+    const conv = convertEntries(list);
+    if (conv.length) out.push({ kind: 'separator', id: 'sc' }, ...conv);
+    out.push(...intel.menuEntries(list));
     out.push({ kind: 'separator', id: 's1' });
+    if (single && writable(single)) {
+      out.push(
+        { id: 'folderIn', label: t('docCreate.menu.newFolderIn'), icon: FolderPlus, onSelect: () => setDialog({ kind: 'newFolder', parentId: single.id }) },
+        { id: 'sheetIn', label: t('drive.shared.newSheet'), icon: FileSpreadsheet, onSelect: () => setDialog({ kind: 'newSheet', parentId: single.id }) },
+        { id: 'docIn', label: t('docCreate.menu.newDoc'), icon: FileText, onSelect: () => newDocIn(single.id, single.name) },
+        { id: 'textIn', label: t('docCreate.menu.fromText'), icon: ClipboardType, onSelect: () => setTextFor(single.id) },
+        { id: 'uploadIn', label: t('docCreate.menu.uploadIn'), icon: Upload, onSelect: () => pickFiles(single.id) },
+        { kind: 'separator', id: 'sIn' },
+      );
+    }
     if (editable(list)) out.push({ id: 'cut', label: t('drive.actions.cut'), icon: Scissors, onSelect: () => cut(list) });
     if (copyable(list)) out.push({ id: 'copy', label: t('drive.actions.copy'), icon: Copy, onSelect: () => copyToClipboard(list) });
-    if (single && writable(single)) out.push({ id: 'sheetIn', label: t('drive.shared.newSheet'), icon: FileSpreadsheet, onSelect: () => setDialog({ kind: 'newSheet', parentId: single.id }) });
     if (single && clipboard && writable(single)) out.push({ id: 'paste', label: t('drive.actions.pasteN', { count: clipboard.items.length }), icon: ClipboardPaste, onSelect: () => paste(single.id) });
     if (editable(list)) out.push({ id: 'move', label: t('drive.actions.moveTo'), icon: FolderInput, onSelect: () => setPicker({ mode: 'move', items: list }) });
     if (copyable(list)) out.push({ id: 'copyto', label: t('drive.actions.copyTo'), icon: Copy, onSelect: () => setPicker({ mode: 'copy', items: list }) });
@@ -485,8 +565,9 @@ export default function WorkspaceDrive() {
     }
     if (single) {
       if (manageable(single)) out.push({ id: 'share', label: t('drive.actions.share'), icon: Shield, onSelect: () => setShareItem(single) });
-      out.push({ id: 'props', label: t('drive.actions.properties'), icon: Info, onSelect: () => setDetailsOpen(true) });
-      if (single.kind === 'FILE') out.push({ id: 'versions', label: t('drive.actions.versions'), icon: History, onSelect: () => setDetailsOpen(true) });
+      // The details panel follows the selection of the main view, so the tree menu leaves these out.
+      if (!tree) out.push({ id: 'props', label: t('drive.actions.properties'), icon: Info, onSelect: () => setDetailsOpen(true) });
+      if (!tree && single.kind === 'FILE') out.push({ id: 'versions', label: t('drive.actions.versions'), icon: History, onSelect: () => setDetailsOpen(true) });
     }
     if (editable(list)) {
       out.push({ kind: 'separator', id: 's3' }, { id: 'del', label: t('drive.actions.delete'), icon: Trash2, danger: true, onSelect: () => setConfirm({ kind: 'trash', items: list }) });
@@ -513,6 +594,7 @@ export default function WorkspaceDrive() {
     if (editable(list)) out.push({ id: 'move', icon: FolderInput, label: t('drive.actions.moveTo'), onClick: () => setPicker({ mode: 'move', items: list }), primary: true });
     if (copyable(list)) out.push({ id: 'copyto', icon: Copy, label: t('drive.actions.copyTo'), onClick: () => setPicker({ mode: 'copy', items: list }) });
     if (single && manageable(single)) out.push({ id: 'share', icon: Shield, label: t('drive.actions.share'), onClick: () => setShareItem(single) });
+    out.push(...intel.toolActions(list));
     if (editable(list)) out.push({ id: 'del', icon: Trash2, label: t('drive.actions.delete'), onClick: () => setConfirm({ kind: 'trash', items: list }), danger: true, primary: true });
     return out;
   };
@@ -672,6 +754,7 @@ export default function WorkspaceDrive() {
       onOpen={go}
       onFiles={onFiles}
       onItems={onItems}
+      onContext={(at, item) => setMenu({ at, items: [item], tree: true })}
     />
   );
 
@@ -804,6 +887,9 @@ export default function WorkspaceDrive() {
               onItems={onItems}
               searchValue={loc.kind === 'search' ? loc.q : ''}
               onSearch={(q) => go(`${BASE}/search?${new URLSearchParams({ q })}`)}
+              searchInContent={inContent}
+              onSearchInContent={setInContent}
+              extra={intel.toolbarExtra(selectedItems)}
               view={view}
               onView={setView}
               sortKey={sortKey}
@@ -819,6 +905,8 @@ export default function WorkspaceDrive() {
               canCreate={canCreateHere}
               onNewFolder={() => setDialog({ kind: 'newFolder' })}
               onNewSheet={() => setDialog({ kind: 'newSheet' })}
+              onNewDoc={() => folderId && newDocIn(folderId)}
+              onFromText={() => folderId && setTextFor(folderId)}
               onUploadFiles={() => folderId && pickFiles(folderId)}
               onUploadFolder={() => folderId && pickDir(folderId)}
               selectionCount={selectedItems.length}
@@ -829,6 +917,7 @@ export default function WorkspaceDrive() {
               onToggleSidebar={() => setSidebarOpen(true)}
             />
             {searchBar}
+            {loc.kind === 'search' && intel.searchPanel(rawItems)}
             <div className="flex min-h-0 flex-1">
               <main className="relative min-w-0 flex-1 bg-card" {...paneDrop.handlers}>
                 {loading ? (
@@ -921,7 +1010,7 @@ export default function WorkspaceDrive() {
                         onKey={onKey}
                         onFiles={onFiles}
                         onItems={onItems}
-                        canDrag={(i) => loc.kind !== 'trash' && (can(i.myAccess, 'EDIT') && !i.system ? true : can(i.myAccess, i.kind === 'FILE' ? 'DOWNLOAD' : 'EXPORT'))}
+                        canDrag={(i) => loc.kind !== 'trash' && (can(i.myAccess, 'EDIT') && unprotected(i) ? true : can(i.myAccess, i.kind === 'FILE' ? 'DOWNLOAD' : 'EXPORT'))}
                       />
                     </div>
                   </div>
@@ -953,6 +1042,8 @@ export default function WorkspaceDrive() {
                       onShare={setShareItem}
                       onRestoreVersion={(item, v) => setConfirm({ kind: 'version', item, v })}
                       onPreview={setPreviewItem}
+                      focusCommentId={subject?.id === linkedItem ? linkedComment : null}
+                      isSuper={isSuper}
                     />
                   </aside>
                   {selectedItems.length > 0 && (
@@ -968,6 +1059,8 @@ export default function WorkspaceDrive() {
                           onShare={setShareItem}
                           onRestoreVersion={(item, v) => setConfirm({ kind: 'version', item, v })}
                           onPreview={setPreviewItem}
+                          focusCommentId={subject?.id === linkedItem ? linkedComment : null}
+                          isSuper={isSuper}
                         />
                       </aside>
                     </div>
@@ -994,7 +1087,7 @@ export default function WorkspaceDrive() {
         }}
       />
 
-      <ContextMenu open={!!menu} at={menu?.at ?? null} items={menu ? menuEntries(menu.items) : []} onClose={() => setMenu(null)} label={t('drive.toolbar.more')} />
+      <ContextMenu open={!!menu} at={menu?.at ?? null} items={menu ? menuEntries(menu.items, menu.tree) : []} onClose={() => setMenu(null)} label={t('drive.toolbar.more')} />
 
       <NameDialog
         open={dialog?.kind === 'newFolder'}
@@ -1003,7 +1096,10 @@ export default function WorkspaceDrive() {
         initial={t('drive.dialogs.untitled')}
         submitLabel={t('drive.dialogs.create')}
         busy={createFolder.isPending}
-        onSubmit={(name) => createFolder.mutate(name)}
+        onSubmit={(name) => {
+          const parentId = (dialog?.kind === 'newFolder' && dialog.parentId) || folderId;
+          if (parentId) createFolder.mutate({ name, parentId });
+        }}
         onClose={() => setDialog(null)}
       />
       <NameDialog
@@ -1110,6 +1206,32 @@ export default function WorkspaceDrive() {
           ))}
         </div>
       </Modal>
+      <Suspense fallback={null}>
+        {docEditor && (
+          <DocEditor
+            target={docEditor.target}
+            folderName={docEditor.folderName}
+            onClose={() => setDocEditor(null)}
+            onSaved={(item, created) => {
+              refresh();
+              if (created && item.parentId === folderId) select(new Set([item.id]), item.id, item.id);
+            }}
+          />
+        )}
+        {textFor && (
+          <TextConvertDialog
+            parentId={textFor}
+            onClose={() => setTextFor(null)}
+            onCreated={(item, format) => {
+              setTextFor(null);
+              refresh();
+              if (format === 'xlsx') go(sheetHref(item.id));
+              else if (item.parentId === folderId) select(new Set([item.id]), item.id, item.id);
+            }}
+          />
+        )}
+      </Suspense>
+      {intel.dialogs}
       <UploadPanel tasks={uploads.tasks} onCancel={uploads.cancel} onCancelAll={uploads.cancelAll} onClear={uploads.clearFinished} />
     </div>
   );

@@ -1,6 +1,6 @@
 import { buildXlsxBook, type Cell } from '../xlsx.js';
-import { asOfFor, byType, commissionsByAgent, monthly, receivables, staffStats, summarize } from './aggregate.js';
-import { loadAgents, loadCategories, loadDocsReviewed, loadFinanceData, loadSatisfaction, loadStaff } from './load.js';
+import { asOfFor, byType, commissionsByAgent, commissionsByPartner, monthly, receivables, staffStats, summarize } from './aggregate.js';
+import { loadAgents, loadCategories, loadDocsReviewed, loadFinanceData, loadPartners, loadSatisfaction, loadStaff } from './load.js';
 import { isoDay, type Period } from './period.js';
 
 /** Report sections as served by the API (amounts in cents). */
@@ -14,8 +14,9 @@ export const receivablesReport = async (p: Period, now = new Date()) => {
 };
 
 export const commissionsReport = async (p: Period) => {
-  const d = await loadFinanceData(p);
-  return commissionsByAgent(await loadAgents(p), d.commissions, p);
+  const [d, agents, partners] = await Promise.all([loadFinanceData(p), loadAgents(p), loadPartners()]);
+  // Agent programme rows at the top level (as before); referral partners as a separate section.
+  return { ...commissionsByAgent(agents, d.commissions, p), partners: commissionsByPartner(partners, d.partnerCommissions ?? [], p) };
 };
 
 export const staffReport = async (p: Period) => {
@@ -55,15 +56,17 @@ const STATUS_AZ: Record<string, string> = { SENT: 'Göndərilib', OVERDUE: 'Geci
 const NONE = '— (təyin edilməyib)';
 
 export const financeWorkbook = async (p: Period, now = new Date()) => {
-  const [d, agents, staff, docs, sat, categories] = await Promise.all([
+  const [d, agents, staff, docs, sat, categories, partners] = await Promise.all([
     loadFinanceData(p),
     loadAgents(p),
     loadStaff(),
     loadDocsReviewed(p),
     loadSatisfaction(p),
     loadCategories(),
+    loadPartners(),
   ]);
   const s = summarize(d, p, now);
+  const pc = commissionsByPartner(partners, d.partnerCommissions ?? [], p);
   const months = monthly(d, p, now);
   const rec = receivables(d.invoices, asOfFor(p, now));
   const com = commissionsByAgent(agents, d.commissions, p);
@@ -93,7 +96,10 @@ export const financeWorkbook = async (p: Period, now = new Date()) => {
     ['Agent komissiyaları — gözləyən, EUR', eur(s.commissions.pendingCents)],
     ['Agent komissiyaları — təsdiqlənmiş (ödənilməmiş), EUR', eur(s.commissions.approvedCents)],
     ['Agent komissiyaları — ödənilmiş, EUR', eur(s.commissions.paidCents)],
-    ['Təxmini nəticə (netto gəlir + tərcümə − ödənilmiş komissiya), EUR', eur(s.netResultCents)],
+    ['Partnyor komissiyaları — gözləyən, EUR', eur(s.partnerCommissions.pendingCents)],
+    ['Partnyor komissiyaları — təsdiqlənmiş (ödənilməmiş), EUR', eur(s.partnerCommissions.approvedCents)],
+    ['Partnyor komissiyaları — ödənilmiş, EUR', eur(s.partnerCommissions.paidCents)],
+    ['Təxmini nəticə (netto gəlir + tərcümə − ödənilmiş komissiyalar), EUR', eur(s.netResultCents)],
     ['Yeni müraciətlər', s.cases.new],
     ['Təsdiqlənmiş vizalar', s.cases.approved],
     ['İmtina', s.cases.rejected],
@@ -139,6 +145,15 @@ export const financeWorkbook = async (p: Period, now = new Date()) => {
         ...bt.byCategory.map((r) => ['Kateqoriya', catName(r.key), r.newCases, r.active, r.approved, r.rejected, r.approvalPct, eur(r.invoiceRevenueCents), eur(r.translationCents), eur(r.revenueCents), eur(r.commissionsPaidCents)]),
       ],
     },
+    // Last sheet, so the existing sheet order (and positions) stays unchanged.
+    {
+      name: 'Partnyor komissiyaları',
+      headers: ['Partnyor', 'Gözləyən, EUR', 'Təsdiqlənmiş, EUR', 'Ödənilmiş, EUR', 'Ləğv edilmiş, EUR', 'Cəmi, EUR'],
+      rows: [
+        ...pc.rows.map((r) => [r.name, eur(r.pendingCents), eur(r.approvedCents), eur(r.paidCents), eur(r.cancelledCents), eur(r.totalCents)]),
+        ['Cəmi', eur(pc.totals.pendingCents), eur(pc.totals.approvedCents), eur(pc.totals.paidCents), eur(pc.totals.cancelledCents), eur(pc.totals.totalCents)],
+      ],
+    },
   ]);
-  return { buffer: book, filename: `Finanzbericht-${p.from}-${p.to}.xlsx`, rows: { receivables: rec.rows.length, agents: com.rows.length, staff: st.length } };
+  return { buffer: book, filename: `Finanzbericht-${p.from}-${p.to}.xlsx`, rows: { receivables: rec.rows.length, agents: com.rows.length, partners: pc.rows.length, staff: st.length } };
 };

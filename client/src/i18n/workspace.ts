@@ -6,6 +6,7 @@ const az = {
     nav: {
       home: 'Əsas',
       drive: 'Sənədlər',
+      settlements: 'Hesablaşmalar',
       mail: 'Poçt',
       chat: 'Çat',
       calendar: 'Təqvim',
@@ -33,6 +34,7 @@ export const workspaceCopy: { az: typeof az; de: typeof az; en: typeof az; ru: t
       nav: {
         home: 'Start',
         drive: 'Dokumente',
+        settlements: 'Abrechnungen',
         mail: 'E-Mail',
         chat: 'Chat',
         calendar: 'Kalender',
@@ -57,6 +59,7 @@ export const workspaceCopy: { az: typeof az; de: typeof az; en: typeof az; ru: t
       nav: {
         home: 'Home',
         drive: 'Documents',
+        settlements: 'Settlements',
         mail: 'Mail',
         chat: 'Chat',
         calendar: 'Calendar',
@@ -81,6 +84,7 @@ export const workspaceCopy: { az: typeof az; de: typeof az; en: typeof az; ru: t
       nav: {
         home: 'Главная',
         drive: 'Документы',
+        settlements: 'Расчёты',
         mail: 'Почта',
         chat: 'Чат',
         calendar: 'Календарь',

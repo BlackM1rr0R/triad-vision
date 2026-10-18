@@ -18,6 +18,7 @@ import { DocIcon, DocLinks, DocMeta, isAccepted, stageRequirements, uploadCaseDo
 import { OcrBadge } from '@/components/docsIntel/OcrBadge';
 import type { DocWithOcr } from '@/components/docsIntel/api';
 import { DocCheckBadge } from '@/components/vault/DocCheckBadge';
+import { ExpiryEditor } from '@/components/expiry/Expiry';
 
 type Stage = 'INITIAL' | 'EMBASSY';
 
@@ -84,6 +85,8 @@ const DocRow = ({ c, doc, requirementKey }: { c: CaseDetail; doc: CaseDocument; 
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5">
           <span className={clsx('badge whitespace-nowrap', DOC_STATUS_TONE[doc.status])}>{docStatusLabel(doc.status)}</span>
           <DocCheckBadge checks={(doc as CaseDocument & { checks?: unknown }).checks} />
+          {/* validity date: chip (green/amber/red) + date picker to set or clear it */}
+          <ExpiryEditor caseId={c.id} docId={doc.id} expiresAt={(doc as CaseDocument & { expiresAt?: string | null }).expiresAt} requirementKey={requirementKey} onSaved={refresh} />
           <DocLinks doc={doc} />
           {isSuper && (
             <button

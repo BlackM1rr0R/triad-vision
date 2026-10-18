@@ -1,9 +1,9 @@
-import { useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
-import { Download, ExternalLink, History, Info, RotateCcw, Shield, Users, X } from 'lucide-react';
+import { Activity, Download, ExternalLink, Globe, History, Info, MessageSquare, RotateCcw, Shield, Users, X } from 'lucide-react';
 import { api, formatBytes } from '@/lib/api';
 import { docStatusLabel, fmtDateTime, fullName, roleLabel, stageLabel, statusLabel } from '@/components/admin/labels';
 import type { CaseStatus, DocStage, DocStatus } from '@/lib/types';
@@ -11,6 +11,13 @@ import { contentUrl, driveKeys, versionUrl } from './api';
 import { ItemIcon } from './fileIcons';
 import { crumbLabel, displayName, typeLabel } from './labels';
 import { can, type AccessResponse, type DriveItem, type NodeDetails, type VersionRow } from './types';
+import { ActivityJournal, ActivityTab } from './collab/ActivityViews';
+import { CommentsTab } from './collab/CommentsTab';
+import { LockSection } from './collab/LockSection';
+import { ShareLinksDialog } from './collab/ShareLinks';
+import type { CollabItem } from './collab/api';
+
+type Tab = 'info' | 'comments' | 'activity';
 
 const Def = ({ label, children }: { label: string; children: ReactNode }) => (
   <div className="grid grid-cols-[7.5rem_minmax(0,1fr)] gap-2 py-1 text-xs">
@@ -38,6 +45,8 @@ export const DetailsPanel = ({
   onShare,
   onRestoreVersion,
   onPreview,
+  focusCommentId,
+  isSuper = false,
 }: {
   subject: DriveItem | null;
   multi: DriveItem[];
@@ -47,6 +56,9 @@ export const DetailsPanel = ({
   onShare: (item: DriveItem) => void;
   onRestoreVersion: (item: DriveItem, v: VersionRow) => void;
   onPreview: (item: DriveItem) => void;
+  /** Opened from a link to a comment (?item=…&comment=…): the comments tab with that comment highlighted. */
+  focusCommentId?: string | null;
+  isSuper?: boolean;
 }) => {
   const { t } = useTranslation();
   const id = subject?.id ?? null;
@@ -61,6 +73,15 @@ export const DetailsPanel = ({
     enabled: !!id,
   });
   const [imgFailed, setImgFailed] = useState<string | null>(null);
+  // Comments open first when the item has open threads (or a comment link was followed).
+  const openThreads = (subject as CollabItem | null)?.commentCount ?? 0;
+  const [tab, setTab] = useState<Tab>('info');
+  useEffect(() => {
+    setTab(focusCommentId || openThreads > 0 ? 'comments' : 'info');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id, focusCommentId]);
+  const [journalFor, setJournalFor] = useState<DriveItem | null>(null);
+  const [linksFor, setLinksFor] = useState<DriveItem | null>(null);
 
   const header = (
     <div className="flex items-center justify-between border-b border-line px-4 py-2.5">
@@ -101,11 +122,45 @@ export const DetailsPanel = ({
   const isPdf = item.kind === 'FILE' && item.mimeType === 'application/pdf';
   const path = details.data?.path ?? [];
   const a = access.data;
+  const canLink = can(item.myAccess, 'EDIT') && !!item.parentId && !item.system && !d?.deletedAt && !item.deletedAt;
+  const tabs: { key: Tab; icon: typeof Info; label: string; badge?: number }[] = [
+    { key: 'info', icon: Info, label: t('driveCollab.tabs.info') },
+    { key: 'comments', icon: MessageSquare, label: t('driveCollab.tabs.comments'), badge: openThreads || undefined },
+    { key: 'activity', icon: Activity, label: t('driveCollab.tabs.activity') },
+  ];
 
   return (
     <div className="flex h-full min-h-0 flex-col">
       {header}
+      <div role="tablist" className="flex shrink-0 gap-1 border-b border-line px-2 pt-1">
+        {tabs.map(({ key, icon: Icon, label, badge }) => (
+          <button
+            key={key}
+            type="button"
+            role="tab"
+            aria-selected={tab === key}
+            onClick={() => setTab(key)}
+            className={clsx(
+              '-mb-px inline-flex items-center gap-1.5 border-b-2 px-2.5 py-2 text-xs font-semibold transition',
+              tab === key ? 'border-brand-600 text-brand-700 dark:text-brand-200' : 'border-transparent text-muted hover:text-ink',
+            )}
+          >
+            <Icon className="size-3.5" /> {label}
+            {badge ? <span className="rounded-full bg-brand-600 px-1.5 text-[10px] leading-4 font-bold text-white">{badge}</span> : null}
+          </button>
+        ))}
+      </div>
+      {tab === 'comments' ? (
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+          <CommentsTab item={item} focusCommentId={focusCommentId} />
+        </div>
+      ) : tab === 'activity' ? (
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+          <ActivityTab item={item} onOpenJournal={() => setJournalFor(item)} />
+        </div>
+      ) : (
       <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+        {item.kind === 'FILE' && <LockSection item={item} isSuper={isSuper} />}
         {/* Preview */}
         <div className="border-b border-line bg-surface/60 p-4">
           {isImage && imgFailed !== item.id ? (
@@ -133,6 +188,18 @@ export const DetailsPanel = ({
                   <Download className="size-3.5" /> {t('drive.actions.download')}
                 </a>
               )}
+              {canLink && (
+                <button type="button" onClick={() => setLinksFor(item)} className="btn-white btn-sm border border-line">
+                  <Globe className="size-3.5" /> {t('driveCollab.links.open')}
+                </button>
+              )}
+            </div>
+          )}
+          {item.kind === 'FOLDER' && canLink && (
+            <div className="mt-3 flex justify-center">
+              <button type="button" onClick={() => setLinksFor(item)} className="btn-white btn-sm border border-line">
+                <Globe className="size-3.5" /> {t('driveCollab.links.open')}
+              </button>
             </div>
           )}
         </div>
@@ -269,6 +336,9 @@ export const DetailsPanel = ({
         )}
         {d?.deletedAt && <p className="px-4 py-3 text-xs text-muted">{t('drive.details.trashHint', { days: trashDays })}</p>}
       </div>
+      )}
+      <ActivityJournal folder={journalFor} title={journalFor ? displayName(journalFor, t, myId) : ''} onClose={() => setJournalFor(null)} />
+      <ShareLinksDialog item={linksFor} onClose={() => setLinksFor(null)} />
     </div>
   );
 };

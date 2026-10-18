@@ -39,6 +39,8 @@ export interface GridSource {
   /** Row header text (default: data row + 1 in sheet mode, view row + 1 in table mode). */
   rowLabel?(r: number, viewIndex: number): string;
   rowClass?(r: number): string | undefined;
+  /** Lower-case text of the whole row for the quick filter (default: every displayed cell, on each search). */
+  searchText?(r: number): string;
   /** Merged areas (sheet mode, display only): master "r:c" → span, covered "r:c" → master. */
   merges?: { masters: Map<string, { r0: number; c0: number; r1: number; c1: number }>; covered: Map<string, Pos> };
 }

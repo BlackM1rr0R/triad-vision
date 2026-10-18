@@ -45,6 +45,7 @@ const AdminUsers = lazy(() => import('./pages/admin/Users'));
 const AdminMailboxes = lazy(() => import('./pages/admin/Mailboxes'));
 const AdminSignatures = lazy(() => import('./pages/admin/Signatures'));
 const SignPage = lazy(() => import('./pages/SignPage'));
+const SharePage = lazy(() => import('./pages/SharePage'));
 const AccountSignatures = lazy(() => import('./pages/account/Signatures'));
 const WorkspaceLayout = lazy(() => import('./pages/workspace/WorkspaceLayout'));
 const WorkspaceDrive = lazy(() => import('./pages/workspace/Drive'));
@@ -67,6 +68,7 @@ const JobDetail = lazy(() => import('./pages/jobs/JobDetail'));
 const EmployerRegister = lazy(() => import('./pages/company/EmployerRegister'));
 const CompanyApp = lazy(() => import('./pages/company/CompanyApp'));
 const AgentApp = lazy(() => import('./pages/agent/AgentApp'));
+const PartnerApp = lazy(() => import('./pages/partner/PartnerApp'));
 const AdminHelp = lazy(() => import('./pages/admin/Help'));
 const AdminAnnouncements = lazy(() => import('./pages/admin/Announcements'));
 const AccountCv = lazy(() => import('./pages/account/Cv'));
@@ -77,8 +79,10 @@ const SalaryCalculator = lazy(() => import('./pages/tools/SalaryCalculator'));
 const AnerkennungGuide = lazy(() => import('./pages/tools/Anerkennung'));
 const CitiesGuide = lazy(() => import('./pages/tools/Cities'));
 const AdminArrivals = lazy(() => import('./pages/admin/Arrivals'));
+const AdminExpiring = lazy(() => import('./pages/admin/Expiring'));
 const AdminPartners = lazy(() => import('./pages/admin/Partners'));
 const AdminClientRegister = lazy(() => import('./pages/admin/ClientRegister'));
+const AdminSettlements = lazy(() => import('./pages/admin/Settlements'));
 const SheetEditor = lazy(() => import('./pages/workspace/SheetEditor'));
 const AccountInterviewPrep = lazy(() => import('./pages/account/InterviewPrep'));
 const AdminInterviewPrep = lazy(() => import('./pages/admin/InterviewPrep'));
@@ -257,10 +261,19 @@ export default function App() {
                 </RequireAuth>
               }
             />
+            <Route
+              path="partner/*"
+              element={
+                <RequireAuth roles={['AGENT']}>
+                  <PartnerApp />
+                </RequireAuth>
+              }
+            />
             <Route path="booking" element={<Booking />} />
             <Route path="booking/manage" element={<BookingManage />} />
             <Route path="review" element={<ReviewPage />} />
             <Route path="sign/:token" element={<SignPage />} />
+            <Route path="share/:token" element={<SharePage />} />
             <Route
               path="account"
               element={
@@ -309,6 +322,7 @@ export default function App() {
             <Route path="calendar/*" element={<WorkspaceCalendar />} />
             <Route path="contacts/*" element={<WorkspaceContacts />} />
             <Route path="team/*" element={<WorkspaceTeam />} />
+            <Route path="settlements/*" element={<AdminSettlements />} />
           </Route>
 
           <Route
@@ -374,8 +388,10 @@ export default function App() {
             <Route path="tasks/*" element={<WorkspaceTasks />} />
             <Route path="announcements" element={<AdminAnnouncements />} />
             <Route path="arrivals/*" element={<AdminArrivals />} />
+            <Route path="expiring" element={<AdminExpiring />} />
             <Route path="partners/*" element={<AdminPartners />} />
             <Route path="register" element={<AdminClientRegister />} />
+            <Route path="settlements/*" element={<AdminSettlements />} />
             <Route path="interview-prep" element={<AdminInterviewPrep />} />
             <Route path="finance/*" element={<AdminFinance />} />
             <Route path="surveys/*" element={<AdminSurveys />} />

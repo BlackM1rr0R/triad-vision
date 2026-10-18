@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
@@ -178,6 +178,12 @@ export default function AdminClientRegister() {
   const [errors, setErrors] = useState<Map<string, string>>(new Map());
   const [saving, setSaving] = useState(false);
   const [search, setSearch] = useState('');
+  // The grid filters once typing pauses (the input itself stays instant).
+  const [quickFilter, setQuickFilter] = useState('');
+  useEffect(() => {
+    const timer = window.setTimeout(() => setQuickFilter(search), search ? 150 : 0);
+    return () => window.clearTimeout(timer);
+  }, [search]);
   const [widths, setWidths] = useState(readWidths);
   const [manageOpen, setManageOpen] = useState(false);
 
@@ -227,8 +233,19 @@ export default function AdminClientRegister() {
     [valueOf, t],
   );
 
+  // Per-row caches, kept while the labels stay the same: search text and the custom cell content (links),
+  // so memoised grid cells keep the same elements and skip re-rendering.
+  const searchCache = useMemo(() => new WeakMap<Row, string>(), [fields, t]);
+  const nodeCache = useMemo(() => new WeakMap<Row, Partial<Record<'number' | 'status', ReactNode>>>(), [t]);
+  const pendingRows = useMemo(() => {
+    const ids = new Set<string>();
+    for (const k of pending.keys()) ids.add(k.slice(0, k.indexOf('\u0000')));
+    return ids;
+  }, [pending]);
+
   const source = useMemo<GridSource | null>(() => {
     if (!data) return null;
+    const rowText = (row: Row) => fields.map((f) => display(row, f)).join('\u0001').toLocaleLowerCase();
     return {
       rowCount: rows.length,
       colCount: fields.length,
@@ -262,11 +279,23 @@ export default function AdminClientRegister() {
         const e = errors.get(pkey(rows[r].id, fields[c].field));
         return e ? t(`register.errors.${e}`, { defaultValue: e }) : undefined;
       },
+      searchText: (r) => {
+        const row = rows[r];
+        if (pendingRows.has(row.id)) return rowText(row);
+        let s = searchCache.get(row);
+        if (s === undefined) searchCache.set(row, (s = rowText(row)));
+        return s;
+      },
       renderCell: (r, c) => {
         const f = fields[c];
+        if (f.field !== 'number' && f.field !== 'status') return undefined;
         const row = rows[r];
+        let nodes = nodeCache.get(row);
+        if (!nodes) nodeCache.set(row, (nodes = {}));
+        if (f.field in nodes) return nodes[f.field as 'number' | 'status'];
+        let node: ReactNode;
         if (f.field === 'number') {
-          return (
+          node = (
             <span className="flex items-center gap-1">
               {row.kind === 'member' && <CornerDownRight size={12} className="shrink-0 text-muted" aria-label={t('register.member')} />}
               <Link to={`/admin/cases/${row.id}`} className="truncate font-semibold text-brand-600 hover:underline" title={t('register.openCase')}>
@@ -275,13 +304,29 @@ export default function AdminClientRegister() {
               <ExternalLink size={11} className="shrink-0 text-muted" />
             </span>
           );
-        }
-        if (f.field === 'status') return <span className="truncate text-xs font-semibold">{display(row, f)}</span>;
-        return undefined;
+        } else node = <span className="truncate text-xs font-semibold">{display(row, f)}</span>;
+        nodes[f.field as 'number' | 'status'] = node;
+        return node;
       },
       rowClass: (r) => (rows[r].kind === 'member' ? 'opacity-95 [&_[role=gridcell]]:bg-surface/40' : undefined),
     };
-  }, [data, rows, fields, valueOf, display, errors, pending, t]);
+  }, [data, rows, fields, valueOf, display, errors, pending, pendingRows, searchCache, nodeCache, t]);
+
+  // Fill the search cache in idle time, so the first search does not stall the page.
+  useEffect(() => {
+    const text = source?.searchText;
+    if (!source || !text) return;
+    const idle = window.requestIdleCallback ?? ((cb: IdleRequestCallback) => window.setTimeout(() => cb({ didTimeout: false, timeRemaining: () => 8 }), 50));
+    const cancel = window.cancelIdleCallback ?? window.clearTimeout;
+    let r = 0;
+    let handle = 0;
+    const step = (d: IdleDeadline) => {
+      while (r < source.rowCount && d.timeRemaining() > 2) text(r++);
+      if (r < source.rowCount) handle = idle(step);
+    };
+    handle = idle(step);
+    return () => cancel(handle);
+  }, [source]);
 
   const onCommit = useCallback(
     (changes: CellChange[]) => {
@@ -435,7 +480,7 @@ export default function AdminClientRegister() {
             canRedo={future.current.length > 0}
             onSave={() => void save()}
             onColWidth={onColWidth}
-            quickFilter={search}
+            quickFilter={quickFilter}
             toolbarStart={
               <>
                 <button type="button" onClick={() => void save()} disabled={!pending.size || saving} className={clsx('btn-primary btn-sm mr-1', (!pending.size || saving) && 'opacity-60')} title="Ctrl+S">

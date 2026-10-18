@@ -9,6 +9,7 @@ import { registerCopy } from '@/i18n';
 import { pagesAgents } from '@/i18n/pagesAgents';
 import { ErrorRetry, Loading, Section, useAgentMe } from '@/components/agents/portal';
 import { errorCode } from '@/lib/api';
+import { usePartnerMe } from '@/components/partnerPortal/api';
 import AgentDashboardPage from './Dashboard';
 import AgentReferralsPage from './Referrals';
 import AgentEarningsPage from './Earnings';
@@ -24,6 +25,10 @@ export default function AgentApp() {
   const location = useLocation();
   const { data: me, isLoading, isError, error, refetch } = useAgentMe();
   usePageTitle(t('agents.portal.title'));
+  // A referral partner's login without an Agent row belongs in the partner portal.
+  const noAgent = isError && errorCode(error) === 'NO_AGENT_PROFILE';
+  const partnerMe = usePartnerMe(noAgent);
+  if (noAgent && partnerMe.data) return <Navigate to="/partner" replace />;
 
   const tabs = [
     { to: '/agent', label: t('agents.portal.nav.dashboard'), icon: LayoutDashboard, match: (p: string) => p === '/agent' || p === '/agent/' },
@@ -91,7 +96,7 @@ export default function AgentApp() {
         </header>
 
         <div className="mt-6 space-y-6 lg:mt-8">
-          {isLoading ? (
+          {isLoading || (noAgent && partnerMe.isLoading) ? (
             <Loading />
           ) : isError || !me ? (
             errorCode(error) === 'NO_AGENT_PROFILE' ? (

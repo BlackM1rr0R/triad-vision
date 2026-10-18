@@ -289,6 +289,7 @@ vaultRouter.post('/:id/use', async (req, res) => {
         size: v.size,
         uploadedById: req.user!.id,
         vaultDocumentId: v.id,
+        expiresAt: v.expiresAt, // the vault's validity date drives the case document's expiry warnings
       },
     });
     await prisma.caseEvent.create({

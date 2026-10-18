@@ -33,13 +33,13 @@ import { haptic } from '@/lib/haptics';
 import { addToCalendar } from '@/lib/native';
 import { useCase, useErrorMessage } from '@/lib/queries';
 import { qk } from '@/lib/queryClient';
-import { scanFileName } from '@/lib/scan';
 import { colors, fonts, space } from '@/theme';
 import type { CaseDetail, CaseDocument, DocStage, Requirement } from '@/types';
 import { OcrCard } from './OcrCard';
 import { FileItem, Note, RequirementCard, Timeline } from './parts';
-import { ScanSheet, type ScanProgress } from './ScanSheet';
-import { capturePage, renderPage, type ScanPage } from './scanner';
+import { ScanSheet } from './ScanSheet';
+import { capturePage, type ScanPage } from './scanner';
+import { uploadScanPdf } from './scanUpload';
 import { useOcr } from './useOcr';
 import { useOpenDocument, useUploader, type PickSource } from './useDocuments';
 
@@ -201,12 +201,14 @@ const DocumentsSection = ({
   const message = useErrorMessage();
   const { open, openingId } = useOpenDocument();
   const invalidate = useCallback(() => qc.invalidateQueries({ queryKey: qk.case(c.id) }), [qc, c.id]);
-  const { progress, upload, uploadFiles } = useUploader(invalidate);
+  const { progress, upload } = useUploader(invalidate);
   const { ocr, applying, start: startOcr, apply: applyOcr, dismiss: dismissOcr } = useOcr();
   const [target, setTarget] = useState<Requirement | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [scan, setScan] = useState<{ req: Requirement; pages: ScanPage[] } | null>(null);
-  const [scanProgress, setScanProgress] = useState<ScanProgress | null>(null);
+  const [scanProgress, setScanProgress] = useState<number | null>(null);
+  const [scanError, setScanError] = useState<string | null>(null);
+  const [pickScanReq, setPickScanReq] = useState(false);
 
   const reqs = c.requirements.filter((r) => r.stage === stage);
   if (reqs.length === 0) return null;
@@ -228,12 +230,15 @@ const DocumentsSection = ({
     void upload(req.id, uploadPath, source, { requirementId: req.id }, { onUploaded: (doc) => afterUpload(req, [doc]) });
   };
 
-  const startScan = async () => {
-    if (!target) return;
-    const req = target;
+  /** Opens the camera for the first page of a multi-page scan (uploaded as one PDF). */
+  const startScan = async (req: Requirement | null) => {
+    if (!req) return;
     try {
       const page = await capturePage();
-      if (page) setScan({ req, pages: [page] });
+      if (page) {
+        setScanError(null);
+        setScan({ req, pages: [page] });
+      }
     } catch (err) {
       toast(message(err), 'error');
     }
@@ -242,22 +247,19 @@ const DocumentsSection = ({
   const uploadScan = async (pages: ScanPage[]) => {
     if (!scan) return;
     const req = scan.req;
-    const total = pages.length;
-    const now = new Date();
-    const docs = await uploadFiles(
-      req.id,
-      uploadPath,
-      pages.map((p, i) => async () => {
-        const rendered = await renderPage(p);
-        return { uri: rendered.uri, name: scanFileName(i + 1, total, now), mimeType: 'image/jpeg' };
-      }),
-      { requirementId: req.id },
-      (page, fraction) => setScanProgress({ page, total, fraction }),
-    );
-    setScanProgress(null);
-    if (docs) {
+    setScanError(null);
+    setScanProgress(0);
+    try {
+      const res = await uploadScanPdf({ caseId: c.id, requirementId: req.id, title: f.tr(req.title), pages, onProgress: setScanProgress });
+      haptic.success();
       setScan(null);
-      afterUpload(req, docs);
+      toast(t('m.scan.donePdf', { count: res.pages }));
+      await invalidate();
+    } catch (err) {
+      // The pages stay in the sheet; the button turns into "retry".
+      setScanError(message(err));
+    } finally {
+      setScanProgress(null);
     }
   };
 
@@ -316,6 +318,7 @@ const DocumentsSection = ({
             req={r}
             progress={progress[r.id]}
             onUpload={editable ? setTarget : undefined}
+            onScan={editable ? (req) => void startScan(req) : undefined}
             onOpen={open}
             openingId={openingId}
             canDelete={(d) => editable && d.status !== 'ACCEPTED' && d.uploadedById === c.client.id}
@@ -326,6 +329,7 @@ const DocumentsSection = ({
       ))}
       {editable ? (
         <View style={{ gap: 8, marginTop: space.sm }}>
+          <Button title={t('m.scan.general')} icon={ScanLine} variant="secondary" onPress={() => setPickScanReq(true)} />
           {missing.length > 0 ? <Text variant="caption">{t('portal.docs.missing')}</Text> : null}
           <Button title={t('portal.docs.submit')} icon={Send} size="lg" disabled={missing.length > 0} loading={submitting} onPress={submit} />
         </View>
@@ -336,10 +340,16 @@ const DocumentsSection = ({
         title={target ? t('m.case.uploadTitle') : undefined}
         options={[
           { label: t('m.case.fromCamera'), icon: Camera, onPress: () => pick('camera') },
-          { label: t('m.scan.action'), icon: ScanLine, onPress: () => void startScan() },
+          { label: t('m.scan.pdfAction'), icon: ScanLine, onPress: () => void startScan(target) },
           { label: t('m.case.fromGallery'), icon: Images, onPress: () => pick('gallery') },
           { label: t('m.case.fromFiles'), icon: FileText, onPress: () => pick('files') },
         ]}
+      />
+      <ActionSheet
+        visible={pickScanReq}
+        onClose={() => setPickScanReq(false)}
+        title={t('m.scan.chooseRequirement')}
+        options={reqs.map((r) => ({ label: f.tr(r.title), icon: ScanLine, onPress: () => void startScan(r) }))}
       />
       <ScanSheet
         key={scan?.pages[0]?.id ?? 'none'}
@@ -347,7 +357,11 @@ const DocumentsSection = ({
         title={scan ? f.tr(scan.req.title) : ''}
         initialPages={scan?.pages ?? NO_PAGES}
         progress={scanProgress}
-        onClose={() => setScan(null)}
+        error={scanError}
+        onClose={() => {
+          setScan(null);
+          setScanError(null);
+        }}
         onUpload={uploadScan}
       />
     </Section>

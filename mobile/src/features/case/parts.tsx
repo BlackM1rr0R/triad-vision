@@ -8,6 +8,7 @@ import {
   FileImage,
   FileText,
   Plus,
+  ScanLine,
   RotateCcw,
   Trash2,
   X,
@@ -131,6 +132,7 @@ export const RequirementCard = memo(
     req,
     progress,
     onUpload,
+    onScan,
     onOpen,
     openingId,
     canDelete,
@@ -140,6 +142,8 @@ export const RequirementCard = memo(
     req: Requirement;
     progress?: number;
     onUpload?: (r: Requirement) => void;
+    /** Multi-page scan uploaded as one PDF (shown next to the upload button). */
+    onScan?: (r: Requirement) => void;
     onOpen: (d: CaseDocument) => void;
     openingId?: string | null;
     canDelete?: (d: CaseDocument) => boolean;
@@ -198,14 +202,17 @@ export const RequirementCard = memo(
                 <Text variant="caption">{t('m.case.uploading', { percent: Math.round(progress * 100) })}</Text>
               </View>
             ) : (
-              <Button
-                title={latest && latest.status !== 'REJECTED' ? t('portal.docs.replace') : t('m.case.addFile')}
-                icon={Plus}
-                size="sm"
-                variant={latest && latest.status !== 'REJECTED' ? 'secondary' : 'primary'}
-                onPress={() => onUpload(req)}
-                style={{ alignSelf: 'flex-start' }}
-              />
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                <Button
+                  title={latest && latest.status !== 'REJECTED' ? t('portal.docs.replace') : t('m.case.addFile')}
+                  icon={Plus}
+                  size="sm"
+                  variant={latest && latest.status !== 'REJECTED' ? 'secondary' : 'primary'}
+                  onPress={() => onUpload(req)}
+                  style={{ alignSelf: 'flex-start' }}
+                />
+                {onScan ? <Button title={t('m.scan.pdfAction')} icon={ScanLine} size="sm" variant="secondary" onPress={() => onScan(req)} style={{ alignSelf: 'flex-start' }} /> : null}
+              </View>
             )}
           </View>
         ) : null}

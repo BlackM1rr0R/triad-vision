@@ -188,6 +188,70 @@ describe('sheets: save', () => {
     expect((await prisma.driveNode.findUniqueOrThrow({ where: { id: file.id } })).version).toBe(1);
   });
 
+  it('saves only the changed cells (patch) on top of the stored version', async () => {
+    const staff = await asStaff();
+    const { file } = await placeFile({ editors: [staff.user.id] });
+    const opened = expectStatus(await staff.agent.get(`/api/drive/sheets/${file.id}`), 200).body;
+    const [kunden, notizen] = opened.sheets as SheetJson[];
+    // Same answer twice (the second one comes from the parsed-workbook cache).
+    expect(expectStatus(await staff.agent.get(`/api/drive/sheets/${file.id}`), 200).body.sheets).toEqual(opened.sheets);
+    const meta = (s: SheetJson) => ({ id: s.id, name: s.name, colWidths: s.colWidths, frozenRows: s.frozenRows, frozenCols: s.frozenCols });
+    const patch = {
+      '1': { '1': { v: 99 } }, // B2 changed
+      '2': { '0': null }, // A3 cleared
+      '5': { '0': { v: 'Neu', s: { b: true } }, '1': { f: 'B2*2', v: 198 } }, // new row 6
+    };
+    const res = expectStatus(
+      await staff.agent
+        .put(`/api/drive/sheets/${file.id}`)
+        .set('Content-Type', 'application/vnd.triad.sheet+json')
+        .send(JSON.stringify({ baseVersion: 1, sheets: [{ ...meta(kunden), patch }, { ...meta(notizen), name: 'Notes', patch: {} }] })),
+      200,
+    );
+    expect(res.body.version).toBe(2);
+    const { wb } = await readStored(file.id);
+    expect(wb.worksheets.map((w) => w.name)).toEqual(['Kunden', 'Notes']);
+    const ws = wb.getWorksheet('Kunden')!;
+    expect(ws.getCell('B2').value).toBe(99);
+    expect(ws.getCell('A3').value).toBeNull();
+    expect(ws.getCell('B3').value).toBe(32); // untouched cells stay
+    expect(ws.getCell('A2').value).toBe('Aysel');
+    expect(ws.getCell('B4').formula).toBe('SUM(B2:B3)');
+    expect(ws.getCell('A1').font?.bold).toBe(true);
+    expect(ws.getCell('B1').border?.bottom?.style).toBe('thin');
+    expect(ws.getCell('A6').value).toBe('Neu');
+    expect(ws.getCell('A6').font?.bold).toBe(true);
+    expect(ws.getCell('B6').formula).toBe('B2*2');
+    expect(wb.getWorksheet('Notes')!.getCell('A1').value).toBe('Hallo');
+
+    // Reopening shows the saved version (the cache is per stored version, never stale).
+    const again = expectStatus(await staff.agent.get(`/api/drive/sheets/${file.id}`), 200).body;
+    expect(again.version).toBe(2);
+    const k2 = (again.sheets as SheetJson[])[0];
+    expect(k2.rows['1']['1'].v).toBe(99);
+    expect(k2.rows['2']?.['0']).toBeUndefined();
+    expect(k2.rows['5']['1'].f).toBe('B2*2');
+
+    // A second patch builds on version 2.
+    expectStatus(await staff.agent.put(`/api/drive/sheets/${file.id}`).send({ baseVersion: 2, sheets: [{ ...meta(k2), patch: { '1': { '1': { v: 7 } } } }] }), 200);
+    const { wb: wb3 } = await readStored(file.id);
+    expect(wb3.worksheets.map((w) => w.name)).toEqual(['Kunden']);
+    expect(wb3.getWorksheet('Kunden')!.getCell('B2').value).toBe(7);
+    expect(wb3.getWorksheet('Kunden')!.getCell('A6').value).toBe('Neu');
+  });
+
+  it('refuses a patch for a sheet that is not in the file, and rows together with a patch', async () => {
+    const staff = await asStaff();
+    const { file } = await placeFile({ editors: [staff.user.id] });
+    const [kunden] = expectStatus(await staff.agent.get(`/api/drive/sheets/${file.id}`), 200).body.sheets as SheetJson[];
+    const unknown = await staff.agent.put(`/api/drive/sheets/${file.id}`).send({ baseVersion: 1, sheets: [{ name: 'Neu', patch: { '0': { '0': { v: 1 } } } }] });
+    expect(unknown.status).toBe(400);
+    expect(unknown.body.error).toBe('UNKNOWN_SHEET');
+    const both = await staff.agent.put(`/api/drive/sheets/${file.id}`).send({ baseVersion: 1, sheets: [{ ...kunden, patch: {} }] });
+    expect(both.status).toBe(400);
+    expect((await prisma.driveNode.findUniqueOrThrow({ where: { id: file.id } })).version).toBe(1);
+  });
+
   it('refuses sheets with more than 50 000 cells (413)', async () => {
     const editor = await asStaff();
     const { file } = await placeFile({ editors: [editor.user.id] });

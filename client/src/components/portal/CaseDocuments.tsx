@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import clsx from 'clsx';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
-import { AlertCircle, CheckCircle2, Circle, Clock, ExternalLink, FileText, Lock, Send, Trash2, XCircle } from 'lucide-react';
+import { AlertCircle, CheckCircle2, Circle, Clock, ExternalLink, FileStack, FileText, Lock, Send, Trash2, XCircle } from 'lucide-react';
 import { api, fileUrl, formatBytes } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { useL10n } from '@/lib/l10n';
@@ -17,6 +17,8 @@ import { useDocCheckGate } from '@/components/vault/DocCheckDialog';
 import { VaultPicker } from '@/components/vault/VaultPicker';
 import { CheckResultNotice } from '@/components/vault/CheckResultNotice';
 import { DocCheckBadge } from '@/components/vault/DocCheckBadge';
+// Validity chip + hint, and several images → one PDF (same endpoint as the phone scanner).
+import { ExpiryChip, ExpiryHint } from '@/components/expiry/Expiry';
 
 type UploadStage = 'INITIAL' | 'EMBASSY';
 
@@ -40,11 +42,14 @@ const DocRow = ({
   doc,
   canDelete,
   onDelete,
+  requirementKey,
 }: {
   doc: CaseDocument;
   canDelete: boolean;
   onDelete: (doc: CaseDocument) => void;
+  requirementKey?: string | null;
 }) => {
+  const expiresAt = (doc as CaseDocument & { expiresAt?: string | null }).expiresAt;
   const { t } = useTranslation();
   const { dateTime } = useL10n();
   return (
@@ -73,6 +78,7 @@ const DocRow = ({
         <div className="ml-auto flex shrink-0 items-center gap-1">
         {/* automatic check findings (warnings / problems only) */}
         <DocCheckBadge checks={(doc as CaseDocument & { checks?: unknown }).checks} showOk={false} />
+        {doc.status !== 'REJECTED' && <ExpiryChip expiresAt={expiresAt} requirementKey={requirementKey} />}
         <DocStatusBadge status={doc.status} className="mr-1" />
           <a
             href={fileUrl(doc.id)}
@@ -97,6 +103,7 @@ const DocRow = ({
           )}
         </div>
       </div>
+      {doc.status !== 'REJECTED' && <ExpiryHint expiresAt={expiresAt} requirementKey={requirementKey} />}
       {doc.status === 'REJECTED' && doc.reviewNote && (
         <p className="mt-1.5 mb-1.5 mr-1.5 flex gap-2 rounded-md bg-red-50 px-2.5 py-1.5 text-xs leading-relaxed whitespace-pre-line text-danger">
           <AlertCircle className="mt-0.5 size-3.5 shrink-0" aria-hidden />
@@ -152,6 +159,36 @@ const RequirementCard = ({
     }
   };
 
+  // Several page images → one PDF on the server (POST /cases/:id/documents/scan).
+  const pagesRef = useRef<HTMLInputElement>(null);
+  const [pdfProgress, setPdfProgress] = useState<number | null>(null);
+  const uploadAsPdf = async (list: FileList | null) => {
+    const files = Array.from(list ?? []);
+    if (pagesRef.current) pagesRef.current.value = '';
+    if (!files.length) return;
+    if (files.length > 20) return void toast.error(t('expiry.scan.tooMany'));
+    if (files.some((f) => !['image/jpeg', 'image/png'].includes(f.type))) return void toast.error(t('expiry.scan.onlyImages'));
+    const form = new FormData();
+    form.append('requirementId', req.id);
+    form.append('name', tr(req.title));
+    for (const f of files) form.append('pages', f);
+    setLastChecks(null);
+    setPdfProgress(0);
+    try {
+      const { data } = await api.post<{ checks?: unknown; pages: number }>(`/cases/${caseId}/documents/scan`, form, {
+        onUploadProgress: (e) => setPdfProgress(e.total ? e.loaded / e.total : 0),
+        timeout: 180_000,
+      });
+      setLastChecks(data.checks ?? null);
+      toast.success(t('expiry.scan.done', { count: data.pages }));
+      await onChanged();
+    } catch (err) {
+      onError(err);
+    } finally {
+      setPdfProgress(null);
+    }
+  };
+
   const missing = req.required && !isSatisfied(req);
 
   return (
@@ -181,6 +218,7 @@ const RequirementCard = ({
                   doc={d}
                   canDelete={open && d.uploadedById === user?.id && d.status !== 'ACCEPTED'}
                   onDelete={onDelete}
+                  requirementKey={(req as Requirement & { key?: string | null }).key ?? null}
                 />
               ))}
             </AnimatePresence>
@@ -196,6 +234,37 @@ const RequirementCard = ({
             compact={docs.length > 0}
             label={docs.length > 0 ? t('portal.docs.replace') : t('portal.docs.upload')}
           />
+        )}
+        {open && (
+          <div className="flex flex-wrap items-center gap-2">
+            <input
+              ref={pagesRef}
+              type="file"
+              multiple
+              accept="image/jpeg,image/png"
+              className="sr-only"
+              tabIndex={-1}
+              aria-hidden
+              onChange={(e) => void uploadAsPdf(e.target.files)}
+            />
+            <button
+              type="button"
+              className="btn-white btn-sm border border-line"
+              onClick={() => pagesRef.current?.click()}
+              disabled={pdfProgress !== null || progress !== null}
+              title={t('expiry.scan.hint')}
+            >
+              <FileStack className="size-4" aria-hidden />
+              {t('expiry.scan.button')}
+            </button>
+            {pdfProgress !== null ? (
+              <span className="text-xs text-muted" role="status">
+                {t('expiry.scan.uploading', { percent: Math.round(pdfProgress * 100) })}
+              </span>
+            ) : (
+              <span className="text-xs text-muted">{t('expiry.scan.title')}</span>
+            )}
+          </div>
         )}
         {open && (
           <VaultPicker

@@ -1,45 +1,18 @@
 import type { Prisma } from '@prisma/client';
 import { prisma } from '../../db.js';
-import { ensureRoots } from '../drive/roots.js';
+import { ensureSection } from '../drive/roots.js';
 import { freeNameIn } from '../drive/names.js';
 import { taskKey } from './core.js';
 
 /** Name of the company-drive folder that holds files uploaded straight into tasks. */
 export const TASK_FILES_FOLDER = 'Aufgabendateien';
 
-let inflight: Promise<string> | null = null;
-
 /**
- * The "Tapşırıq faylları" folder in the company drive (created on first use). It is a system folder
- * (cannot be renamed or deleted) and every staff member may download from it, because every staff
- * member can open every task.
+ * The "Aufgabendateien" section of the shared workspace (created on first use, found by its stored id so a
+ * renamed or moved folder keeps working; see lib/drive/roots.ts). Every staff member may download from it,
+ * because every staff member can open every task.
  */
-export const ensureTaskFilesRoot = (): Promise<string> => {
-  inflight ??= (async () => {
-    const { sharedId } = await ensureRoots();
-    const existing = await prisma.driveNode.findFirst({
-      where: { parentId: sharedId, kind: 'FOLDER', system: true, name: TASK_FILES_FOLDER, deletedAt: null },
-      select: { id: true },
-    });
-    if (existing) return existing.id;
-    const created = await prisma.driveNode.create({
-      data: {
-        space: 'SHARED',
-        kind: 'FOLDER',
-        name: TASK_FILES_FOLDER,
-        parentId: sharedId,
-        system: true,
-        color: 'amber',
-        grants: { create: { role: 'STAFF', access: 'DOWNLOAD' } },
-      },
-      select: { id: true },
-    });
-    return created.id;
-  })().finally(() => {
-    inflight = null;
-  });
-  return inflight;
-};
+export const ensureTaskFilesRoot = (): Promise<string> => ensureSection('tasks');
 
 /** "T-0004 · Xarici prava" folder for one task inside the task-files folder (created on demand). */
 export const ensureTaskFolder = async (task: { id: string; number: number; title: string }, userId: string, db: Prisma.TransactionClient = prisma) => {

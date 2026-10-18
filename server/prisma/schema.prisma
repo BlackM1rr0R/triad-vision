@@ -143,6 +143,11 @@ model User {
   arrivalPlansHandled   ArrivalPlan[]            @relation("ArrivalStaff")
   surveys               SatisfactionSurvey[]     @relation("SurveyClient")
   surveysAbout          SatisfactionSurvey[]     @relation("SurveyStaff")
+  driveLocks            DriveNode[]              @relation("DriveNodeLockedBy")
+  driveComments         DriveComment[]           @relation("DriveCommentAuthor")
+  driveShareLinks       DriveShareLink[]         @relation("DriveShareCreatedBy")
+  driveActivities       DriveActivity[]          @relation("DriveActivityActor")
+  referralPartner       ReferralPartner?         @relation("PartnerUser")
   contractTemplates     ContractTemplate[]
   candidateRequests     CandidateRequest[]
   signatureRequests     SignatureRequest[]       @relation("SignatureRequestCreatedBy")
@@ -366,6 +371,7 @@ model Case {
   motivationLetters MotivationLetter[]
   surveys           SatisfactionSurvey[]
   signatureRequests SignatureRequest[]
+  settlements       SettlementEntry[]
   /// Partner (middleman) who brought this client; their folder in the shared drive holds the client folder.
   partnerId         String?
   partner           ReferralPartner?      @relation(fields: [partnerId], references: [id], onDelete: SetNull)
@@ -399,26 +405,28 @@ model DocumentRequirement {
 }
 
 model Document {
-  id              String               @id @default(cuid())
-  caseId          String
-  case            Case                 @relation(fields: [caseId], references: [id], onDelete: Cascade)
-  requirementId   String?
-  requirement     DocumentRequirement? @relation(fields: [requirementId], references: [id], onDelete: SetNull)
-  stage           DocStage
-  originalName    String
-  storedName      String               @unique
-  mimeType        String
-  size            Int
-  status          DocStatus            @default(PENDING)
-  reviewNote      String?              @db.Text
-  ocr             Json? // fields extracted from the file (passport MRZ: number, names, birthDate, expiry…)
-  ocrAt           DateTime?
-  checks          Json? // automatic quality checks right after upload (blur, darkness, cut-off, type, expiry)
-  checkedAt       DateTime?
-  vaultDocumentId String? // copied from the client's document vault
-  uploadedById    String
-  uploadedBy      User                 @relation(fields: [uploadedById], references: [id])
-  createdAt       DateTime             @default(now())
+  id               String               @id @default(cuid())
+  caseId           String
+  case             Case                 @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  requirementId    String?
+  requirement      DocumentRequirement? @relation(fields: [requirementId], references: [id], onDelete: SetNull)
+  stage            DocStage
+  originalName     String
+  storedName       String               @unique
+  mimeType         String
+  size             Int
+  status           DocStatus            @default(PENDING)
+  reviewNote       String?              @db.Text
+  ocr              Json? // fields extracted from the file (passport MRZ: number, names, birthDate, expiry…)
+  ocrAt            DateTime?
+  checks           Json? // automatic quality checks right after upload (blur, darkness, cut-off, type, expiry)
+  checkedAt        DateTime?
+  vaultDocumentId  String? // copied from the client's document vault
+  expiresAt        DateTime? // validity end (passport, diploma copy, certificates) — from OCR or set by staff
+  expiryRemindedAt DateTime? // last expiry warning sent
+  uploadedById     String
+  uploadedBy       User                 @relation(fields: [uploadedById], references: [id])
+  createdAt        DateTime             @default(now())
 
   @@index([caseId, stage])
 }
@@ -969,6 +977,15 @@ model DriveNode {
   taskLinks          TaskAttachment[]
   /// Copy of a case document (accepted upload) placed in the client's folder; the link to the case stays.
   documentId         String?            @unique
+  /// Edit lock: who is editing the file right now (released on save/close or after it goes stale).
+  lockedById         String?
+  lockedBy           User?              @relation("DriveNodeLockedBy", fields: [lockedById], references: [id], onDelete: SetNull)
+  lockedAt           DateTime?
+  /// Text extracted from the file (PDF text layer or OCR of scans/images) for full-text search.
+  textContent        String?            @db.LongText
+  textIndexedAt      DateTime?
+  comments           DriveComment[]
+  shareLinks         DriveShareLink[]
 
   @@index([parentId, deletedAt])
   @@index([space, ownerId])
@@ -2450,15 +2467,23 @@ model CandidateRequest {
 
 /// Person who brings clients and cooperates on visas (e.g. Ilqar, Ənvər); own folder in the shared drive.
 model ReferralPartner {
-  id        String   @id @default(cuid())
-  name      String   @unique @db.VarChar(120)
-  phone     String?  @db.VarChar(40)
-  email     String?  @db.VarChar(191)
-  note      String?  @db.Text
-  active    Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  cases     Case[]
+  id              String              @id @default(cuid())
+  name            String              @unique @db.VarChar(120)
+  phone           String?             @db.VarChar(40)
+  email           String?             @db.VarChar(191)
+  note            String?             @db.Text
+  active          Boolean             @default(true)
+  /// Login of the partner for the partner portal (own clients, commissions, uploads).
+  userId          String?             @unique
+  user            User?               @relation("PartnerUser", fields: [userId], references: [id], onDelete: SetNull)
+  /// Default commission per client in cents (copied into each new commission row).
+  commissionCents Int?
+  currency        String              @default("EUR") @db.VarChar(3)
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  cases           Case[]
+  commissions     PartnerCommission[]
+  settlements     SettlementEntry[]
 }
 
 enum RegisterColumnType {
@@ -2479,4 +2504,167 @@ model ClientRegisterColumn {
   sortOrder Int                @default(0)
   createdAt DateTime           @default(now())
   updatedAt DateTime           @updatedAt
+}
+
+// ─── Drive collaboration: comments, share links, activity; partner commissions ─
+
+/// Comment on a drive file or folder; @mentions notify staff; can be turned into a task.
+model DriveComment {
+  id         String    @id @default(cuid())
+  nodeId     String
+  node       DriveNode @relation(fields: [nodeId], references: [id], onDelete: Cascade)
+  authorId   String?
+  author     User?     @relation("DriveCommentAuthor", fields: [authorId], references: [id], onDelete: SetNull)
+  parentId   String? // reply to another comment
+  body       String    @db.Text
+  mentions   Json? // user ids
+  taskId     String? // task created from this comment
+  resolvedAt DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  @@index([nodeId, createdAt])
+}
+
+/// Link to share a file/folder with an outside person (employer, translator): expiry, optional password.
+model DriveShareLink {
+  id           String             @id @default(cuid())
+  nodeId       String
+  node         DriveNode          @relation(fields: [nodeId], references: [id], onDelete: Cascade)
+  tokenHash    String             @unique @db.Char(64)
+  passwordHash String?
+  label        String?            @db.VarChar(160) // who it is for
+  expiresAt    DateTime
+  maxDownloads Int?
+  downloads    Int                @default(0)
+  allowUpload  Boolean            @default(false)
+  createdById  String?
+  createdBy    User?              @relation("DriveShareCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  revokedAt    DateTime?
+  createdAt    DateTime           @default(now())
+  accesses     DriveShareAccess[]
+
+  @@index([nodeId])
+}
+
+/// Every opening / download through a share link (who opened it and when).
+model DriveShareAccess {
+  id        String         @id @default(cuid())
+  linkId    String
+  link      DriveShareLink @relation(fields: [linkId], references: [id], onDelete: Cascade)
+  action    String         @db.VarChar(20) // VIEW | DOWNLOAD | UPLOAD | BAD_PASSWORD
+  fileName  String?        @db.VarChar(255)
+  ip        String?        @db.VarChar(64)
+  userAgent String?        @db.VarChar(255)
+  createdAt DateTime       @default(now())
+
+  @@index([linkId, createdAt])
+}
+
+/// Activity journal of the drive: who uploaded, moved, renamed, deleted… what and when (per folder).
+model DriveActivity {
+  id        String   @id @default(cuid())
+  nodeId    String? // the item (kept as a plain id: the item may be purged later)
+  folderId  String? // the folder the action happened in (for the per-folder journal)
+  actorId   String?
+  actor     User?    @relation("DriveActivityActor", fields: [actorId], references: [id], onDelete: SetNull)
+  action    String   @db.VarChar(40) // UPLOAD | NEW_VERSION | MOVE | RENAME | DELETE | RESTORE | CREATE_FOLDER | COPY | SHARE | COMMENT | LOCK …
+  name      String   @db.VarChar(255) // item name at that moment
+  meta      Json?
+  createdAt DateTime @default(now())
+
+  @@index([folderId, createdAt])
+  @@index([nodeId, createdAt])
+  @@index([actorId, createdAt])
+}
+
+/// Commission owed to a referral partner for a client (amount per client, paid or not).
+model PartnerCommission {
+  id                String           @id @default(cuid())
+  partnerId         String
+  partner           ReferralPartner  @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  caseId            String?
+  amountCents       Int
+  currency          String           @default("EUR") @db.VarChar(3)
+  status            CommissionStatus @default(PENDING)
+  note              String?          @db.VarChar(500)
+  dueAt             DateTime?
+  paidAt            DateTime?
+  createdById       String?
+  /// Set when the commission comes from a settlement (Hesablaşma) row — kept in sync with its partner share.
+  settlementEntryId String?          @unique
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+
+  @@unique([partnerId, caseId])
+  @@index([partnerId, status])
+  @@index([status, createdAt])
+}
+
+// ─── Settlements (Hesablaşmalar): who brought the client, what was paid, how it is split ─
+
+enum SettlementStage {
+  NEW // blue in the old Excel: not started
+  IN_PROGRESS // yellow: TLS appointment / waiting
+  VISA // green: visa issued
+  REFUSED // red: refusal ("atkaz")
+  CANCELLED
+}
+
+/// One client row of the settlement ledger (mirrors the team's Excel: Zwischen Person, Name, Transporte,
+/// Status TLS/…-viza/…, Bezahlung, partner share, owner shares, team, expenses). Linked to a case when known.
+model SettlementEntry {
+  id                   String           @id @default(cuid())
+  project              String           @default("Ümumi") @db.VarChar(80) // sheet / project: "Proyekt 2", "Privat" …
+  caseId               String?
+  case                 Case?            @relation(fields: [caseId], references: [id], onDelete: SetNull)
+  partnerId            String? // Zwischen Person
+  partner              ReferralPartner? @relation(fields: [partnerId], references: [id], onDelete: SetNull)
+  clientName           String           @db.VarChar(160)
+  licence              String?          @db.VarChar(20) // CE, BC … (from "(CE)" in the name)
+  employer             String?          @db.VarChar(160) // Transporte
+  tlsDate              DateTime? // TLS appointment
+  visaDate             DateTime? // visa issued
+  stage                SettlementStage  @default(NEW)
+  stageAuto            Boolean          @default(true) // follow the linked case automatically
+  amountCents          Int? // Bezahlung (total agreed)
+  currency             String           @default("AZN") @db.VarChar(3) // AZN | EUR
+  payAfterVisa         Boolean          @default(false) // "viza sonrası"
+  paidCents            Int              @default(0) // received so far
+  partnerShareCents    Int? // the middleman's commission (Sanani)
+  partnerShareCurrency String           @default("EUR") @db.VarChar(3)
+  expensesCents        Int? // Rasxod
+  /// Shares per beneficiary id: { [beneficiaryId]: { cents, currency, status: "PENDING"|"PAID"|"NONE", text?, manual? } }
+  shares               Json?
+  note                 String?          @db.Text
+  sortOrder            Int              @default(0)
+  createdById          String?
+  createdAt            DateTime         @default(now())
+  updatedAt            DateTime         @updatedAt
+
+  @@index([project, sortOrder])
+  @@index([partnerId])
+  @@index([caseId])
+  @@index([stage])
+}
+
+enum BeneficiaryRule {
+  THIRD_OF_NET // net ÷ 3 (Xalid)
+  PERCENT_OF_NET // value = basis points of net
+  FIXED // value = cents in currency (Team 200 AZN)
+  REMAINDER // what is left, split equally between all REMAINDER beneficiaries (Tofiq, Abdulla)
+}
+
+/// Who receives a share of each payment and by which rule (configurable; default Xalid / Tofiq / Abdulla / Team).
+model SettlementBeneficiary {
+  id        String          @id @default(cuid())
+  name      String          @unique @db.VarChar(80)
+  rule      BeneficiaryRule @default(REMAINDER)
+  value     Int             @default(0)
+  currency  String?         @db.VarChar(3) // for FIXED
+  userId    String? // the team member, if any
+  active    Boolean         @default(true)
+  sortOrder Int             @default(0)
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
 }

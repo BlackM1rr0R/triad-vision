@@ -22,6 +22,34 @@ export interface PartnerCounts {
   lastCaseAt: string | null;
 }
 
+export interface PartnerCommissionTotals {
+  pendingCents: number;
+  pendingCount: number;
+  approvedCents: number;
+  approvedCount: number;
+  paidCents: number;
+  paidCount: number;
+  cancelledCents: number;
+  cancelledCount: number;
+  totalCents: number;
+  thisMonthCents: number;
+  paidThisMonthCents: number;
+}
+
+/** The partner's portal login (an AGENT user linked as ReferralPartner.userId). */
+export interface PartnerLogin {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  phone: string | null;
+  locale: string;
+  isActive: boolean;
+  createdAt: string;
+  lastSeenAt: string | null;
+  agentCode: string | null;
+}
+
 export interface Partner extends PartnerRef {
   phone: string | null;
   email: string | null;
@@ -30,6 +58,13 @@ export interface Partner extends PartnerRef {
   createdAt: string;
   updatedAt: string;
   counts: PartnerCounts;
+  /** Default commission per client in cents (null = no automatic commission). */
+  commissionCents?: number | null;
+  currency?: string;
+  userId?: string | null;
+  commissionTotals?: PartnerCommissionTotals;
+  /** Only on GET /admin/partners/:id. */
+  login?: PartnerLogin | null;
 }
 
 export interface PartnerCase {
@@ -61,6 +96,7 @@ export const casePartner = (c: object): PartnerRef | null => (c as { partner?: P
 export const partnerError = (err: unknown) => {
   const code = errorCode(err);
   if (code && i18n.exists(`refPartners.errors.${code}`)) toast.error(i18n.t(`refPartners.errors.${code}`));
+  else if (code && i18n.exists(`refPartners.errors2.${code}`)) toast.error(i18n.t(`refPartners.errors2.${code}`));
   else toastError(err);
 };
 

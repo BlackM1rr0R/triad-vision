@@ -5,7 +5,8 @@ import { badRequest } from '../http.js';
 import { nodeLiteSelect, type DriveAccessCtx, type NodeLite } from './access.js';
 import { allows, type Level } from './levels.js';
 import { cleanName } from './names.js';
-import { PARTNERS_FOLDER_NAME } from './roots.js';
+import { peekSection } from './roots.js';
+import { isStale } from '../driveCollab/lock.js';
 
 /** Everything a listing row needs (grants come along for the access calculation). */
 export const itemSelect = {
@@ -19,6 +20,8 @@ export const itemSelect = {
   deletedById: true,
   documentId: true,
   createdBy: { select: { id: true, firstName: true, lastName: true } },
+  lockedAt: true,
+  lockedBy: { select: { id: true, firstName: true, lastName: true } },
 } satisfies Prisma.DriveNodeSelect;
 
 export type ItemRow = Prisma.DriveNodeGetPayload<{ select: typeof itemSelect }>;
@@ -65,6 +68,10 @@ export interface DriveItem {
   docStatus?: string;
   purged?: boolean;
   assignedStaff?: PersonRef | null;
+  /** Open (unresolved) comment threads on the item. */
+  commentCount?: number;
+  /** Live edit lock ("… is editing"); stale locks are left out. */
+  lock?: { by: PersonRef; at: Date };
   /** Search / recent / starred rows: where the item lives. */
   location?: { id: string; name: string; space: DriveSpace; system: boolean } | null;
 }
@@ -91,6 +98,7 @@ export const toItem = (row: ItemRow, myAccess: DriveAccess, extra: { childCount?
   starred: extra.starred ?? false,
   ...(row.kind === 'FOLDER' ? { childCount: extra.childCount ?? 0 } : {}),
   ...(row.documentId ? { documentId: row.documentId } : {}),
+  ...(row.lockedBy && row.lockedAt && !isStale(row.lockedAt) ? { lock: { by: row.lockedBy, at: row.lockedAt } } : {}),
 });
 
 /**
@@ -99,11 +107,9 @@ export const toItem = (row: ItemRow, myAccess: DriveAccess, extra: { childCount?
  */
 export const decorateCaseLinks = async (items: DriveItem[]) => {
   const folderIds = items.filter((i) => i.kind === 'FOLDER').map((i) => i.id);
-  // Partner folders: matched by name among the children of "Partner".
-  const partnersFolder = items.some((i) => i.kind === 'FOLDER' && i.parentId)
-    ? await prisma.driveNode.findFirst({ where: { name: PARTNERS_FOLDER_NAME, system: true, parent: { parentId: null } }, select: { id: true } })
-    : null;
-  const partnerFolders = partnersFolder ? items.filter((i) => i.kind === 'FOLDER' && i.parentId === partnersFolder.id) : [];
+  // Partner folders: matched by name among the children of the "Partner" section (found by id, so a renamed section works).
+  const partnersId = items.some((i) => i.kind === 'FOLDER' && i.parentId) ? await peekSection('partners') : null;
+  const partnerFolders = partnersId ? items.filter((i) => i.kind === 'FOLDER' && i.parentId === partnersId) : [];
   if (partnerFolders.length) {
     const partners = await prisma.referralPartner.findMany({ select: { id: true, name: true, phone: true, email: true, active: true } });
     const byName = new Map(partners.map((p) => [cleanName(p.name, 'Partner').toLocaleLowerCase('en'), p]));
@@ -145,6 +151,13 @@ export const childCounts = async (folderIds: string[]) => {
   return new Map(rows.map((r) => [r.parentId as string, r._count._all]));
 };
 
+/** Open comment threads per node (one query). */
+export const openCommentCounts = async (ids: string[]) => {
+  if (ids.length === 0) return new Map<string, number>();
+  const rows = await prisma.driveComment.groupBy({ by: ['nodeId'], where: { nodeId: { in: ids }, parentId: null, resolvedAt: null }, _count: { _all: true } });
+  return new Map(rows.map((r) => [r.nodeId, r._count._all]));
+};
+
 export const starredSet = async (userId: string, ids: string[]) => {
   if (ids.length === 0) return new Set<string>();
   const rows = await prisma.driveFavorite.findMany({ where: { userId, nodeId: { in: ids } }, select: { nodeId: true } });
@@ -159,9 +172,10 @@ export const buildItems = async (ctx: DriveAccessCtx, rows: ItemRow[], opts: { w
   await ctx.addWithAncestors(rows as unknown as NodeLite[]);
   const visible = rows.filter((r) => allows(ctx.level(r.id), 'VIEW'));
   const ids = visible.map((r) => r.id);
-  const [counts, stars] = await Promise.all([childCounts(visible.filter((r) => r.kind === 'FOLDER').map((r) => r.id)), starredSet(ctx.user.id, ids)]);
+  const [counts, stars, comments] = await Promise.all([childCounts(visible.filter((r) => r.kind === 'FOLDER').map((r) => r.id)), starredSet(ctx.user.id, ids), openCommentCounts(ids)]);
   const items = visible.map((r) => {
     const item = toItem(r, ctx.level(r.id) as DriveAccess, { childCount: counts.get(r.id), starred: stars.has(r.id) });
+    if (comments.get(r.id)) item.commentCount = comments.get(r.id);
     if (opts.withLocation) {
       const parent = r.parentId ? ctx.nodes.get(r.parentId) : undefined;
       item.location = parent ? { id: parent.id, name: parent.name, space: parent.space, system: parent.system } : null;

@@ -2,7 +2,7 @@ import fs from 'node:fs/promises';
 import type { CaseStatus, VisaType } from '@prisma/client';
 import { prisma } from '../db.js';
 import { buildXlsx } from './xlsx.js';
-import { CLIENTS_FOLDER_NAME, ensureRoots } from './drive/roots.js';
+import { CLIENTS_FOLDER_NAME, ensureSection } from './drive/roots.js';
 import { newStorageKey, storagePath } from './drive/storage.js';
 
 /**
@@ -154,7 +154,7 @@ const findNode = (parentId: string, name: string, kind: 'FOLDER' | 'FILE') =>
  * The "Alle Kunden" system folder directly in the shared workspace. Permissions are not inherited and it
  * has no grants, so — like the super admins' own files before — only super admins see it.
  */
-const ensureClientsFolder = async () => (await ensureRoots()).clientsId;
+const ensureClientsFolder = () => ensureSection('clients');
 
 /** Rebuilds the workbook and writes it into "Gemeinsame Dokumente/Alle Kunden". Returns the byte size. */
 export const refreshClientsExcel = async () => {

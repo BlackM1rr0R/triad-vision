@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
+import { useDriveLock } from '@/components/drive/collab/useDriveLock';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
@@ -15,7 +16,7 @@ import { Grid } from '@/components/sheet/Grid';
 import { FormatBar } from '@/components/sheet/Toolbar';
 import { SheetTabs } from '@/components/sheet/SheetTabs';
 import { useLeaveGuard } from '@/components/sheet/useLeaveGuard';
-import { fromApi, toApi, useWorkbook, validSheetName, type ApiSheet } from '@/components/sheet/useWorkbook';
+import { fromApi, toApi, toApiPatch, useWorkbook, validSheetName, type ApiSheet } from '@/components/sheet/useWorkbook';
 import { formatValue } from '@/components/sheet/format';
 import { impliedFormat } from '@/components/sheet/formula';
 import { DEFAULT_COL_WIDTH, countCells, getCell, mergeIndex, rawOf, type Sheet } from '@/components/sheet/model';
@@ -55,7 +56,7 @@ const readAutosave = () => {
 const folderHref = (id: string) => `/workspace/drive/f/${encodeURIComponent(id)}`;
 
 /** Grid source over one sheet of the workbook (values computed by the formula engine). */
-const useSheetSource = (sheet: Sheet | undefined, index: number, engine: ReturnType<typeof useWorkbook>['engine']): GridSource | null =>
+const useSheetSource = (sheet: Sheet | undefined, index: number, engine: ReturnType<typeof useWorkbook>['engine'], engineRev: number): GridSource | null =>
   useMemo(() => {
     if (!sheet) return null;
     const rows = sheet.rows;
@@ -75,7 +76,9 @@ const useSheetSource = (sheet: Sheet | undefined, index: number, engine: ReturnT
       style: (r, c) => getCell(rows, r, c)?.s,
       merges,
     };
-  }, [sheet, index, engine]);
+    // engineRev: computed values changed (an edit elsewhere can change formulas of this sheet).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sheet, index, engine, engineRev]);
 
 /**
  * .xlsx editor of the team drive (/workspace/sheet/:id): an Excel-like grid with formulas, formatting
@@ -113,14 +116,17 @@ export default function SheetEditor() {
   }, [query.data]);
 
   usePageTitle(meta?.name ?? t('sheet.title'));
-  const readOnly = !meta?.canEdit;
+  // Edit lock: while someone else edits this file the sheet opens read-only (it is retried every minute).
+  const lock = useDriveLock(id, { enabled: !!meta?.canEdit });
+  const readOnly = !meta?.canEdit || lock.status === 'other';
   useLeaveGuard(wb.dirty && !readOnly, t('sheet.leaveWarning'));
 
   const savingRef = useRef(false);
   const save = useCallback(
     async (force = false) => {
       if (!meta || readOnly || savingRef.current) return;
-      const sent = wb.sheets;
+      const state = wb.saveState();
+      const sent = state.sheets;
       const tooBig = sent.find((s) => countCells(s.rows) > meta.limits.cellsPerSheet);
       if (tooBig) {
         toast.error(t('sheet.errors.SHEET_TOO_LARGE'));
@@ -129,12 +135,14 @@ export default function SheetEditor() {
       savingRef.current = true;
       setSaving(true);
       try {
-        const body = JSON.stringify({ baseVersion: meta.version, force: force || undefined, sheets: toApi(sent) });
+        // Only the changed cells of existing sheets (a forced overwrite sends everything).
+        const sheets = force || !state.saved ? toApi(sent, state.engine) : toApiPatch(sent, state.saved.sheets, state.engine);
+        const body = JSON.stringify({ baseVersion: meta.version, force: force || undefined, sheets });
         const res = await api.put<{ version: number; size: number }>(`/drive/sheets/${encodeURIComponent(id)}`, body, {
           headers: { 'Content-Type': 'application/vnd.triad.sheet+json' },
         });
         setMeta((m) => (m ? { ...m, version: res.data.version, size: res.data.size } : m));
-        wb.markSaved(sent);
+        wb.markSaved({ sheets: sent, id: state.id });
         setLastSaved(new Date());
         setConflict(null);
         void qc.invalidateQueries({ queryKey: ['drive'] });
@@ -184,7 +192,7 @@ export default function SheetEditor() {
     return () => window.removeEventListener('keydown', onKey);
   }, []);
 
-  const source = useSheetSource(wb.sheet, wb.active, wb.engine);
+  const source = useSheetSource(wb.sheet, wb.active, wb.engine, wb.engineRev);
 
   const rename = async (name: string) => {
     if (!meta) return;
@@ -340,6 +348,15 @@ export default function SheetEditor() {
         </div>
       )}
 
+      {(lock.status === 'other' || lock.status === 'error') && (
+        <div role="status" className="flex shrink-0 items-center gap-2 border-b border-amber-300 bg-amber-50 px-4 py-2 text-xs text-amber-900 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-200">
+          <span className="min-w-0 flex-1">{lock.status === 'other' ? t('driveCollab.lock.bannerOther', { name: lock.lockedBy.name }) : t('driveCollab.lock.bannerError')}</span>
+          <button type="button" onClick={lock.retry} className="shrink-0 font-semibold underline">
+            {t('driveCollab.lock.retry')}
+          </button>
+        </div>
+      )}
+
       <div className="min-h-0 flex-1">
         <Grid
           key={wb.sheet?.key}
@@ -350,7 +367,7 @@ export default function SheetEditor() {
           onCommit={wb.commit}
           onFormat={wb.format}
           onStructure={wb.structure}
-          onSort={(c, dir) => wb.sort(c, dir, wb.engine)}
+          onSort={wb.sort}
           onColWidth={wb.setColWidth}
           onUndo={wb.undo}
           onRedo={wb.redo}
@@ -368,7 +385,7 @@ export default function SheetEditor() {
               onFormat={wb.format}
               frozen={(wb.sheet?.frozenRows ?? 0) > 0}
               onToggleFreeze={wb.toggleFreeze}
-              onSort={(c, dir) => wb.sort(c, dir, wb.engine)}
+              onSort={wb.sort}
             />
           )}
           footer={

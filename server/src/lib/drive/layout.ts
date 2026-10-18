@@ -3,7 +3,7 @@ import { CLIENTS_FOLDER } from '../clientsExcel.js';
 import { backfillCaseDrive, type BackfillSummary } from './caseFolders.js';
 import { collectSubtree } from './items.js';
 import { pickFreeName, siblingNames } from './names.js';
-import { ensureRoots, staffFolderName } from './roots.js';
+import { ensureSection, ensureSharedRoot, LEGACY_WORK_FOLDER_NAME, sectionIds, staffFolderName } from './roots.js';
 import { purgeNodes } from './trash.js';
 
 /**
@@ -28,7 +28,7 @@ export interface PersonalMoveSummary {
 export const migratePersonalSpaces = async (log?: (line: string) => void): Promise<PersonalMoveSummary> => {
   const s: PersonalMoveSummary = { moved: 0, emptyRemoved: 0, nodes: 0, folders: [] };
   if ((await prisma.driveNode.count({ where: { space: 'PERSONAL' } })) === 0) return s;
-  const { staffId } = await ensureRoots();
+  const staffId = await ensureSection('staff');
   const roots = await prisma.driveNode.findMany({
     where: { space: 'PERSONAL', parentId: null },
     select: { id: true, name: true, owner: { select: { firstName: true, lastName: true } } },
@@ -63,14 +63,48 @@ export const migratePersonalSpaces = async (log?: (line: string) => void): Promi
   return s;
 };
 
+export interface WorkCleanupSummary {
+  trashed: number;
+  kept: string[];
+}
+
+/**
+ * The "In Bearbeitung" section was removed from the layout. Old copies (system folders directly below the
+ * shared root) go to the recycle bin when they are empty; one that still holds something becomes an
+ * ordinary folder, so no file is lost. Idempotent: afterwards no such system folder is left.
+ */
+export const cleanupWorkFolders = async (log?: (line: string) => void): Promise<WorkCleanupSummary> => {
+  const s: WorkCleanupSummary = { trashed: 0, kept: [] };
+  const sharedId = await ensureSharedRoot();
+  const rows = await prisma.driveNode.findMany({
+    where: { parentId: sharedId, system: true, kind: 'FOLDER', name: LEGACY_WORK_FOLDER_NAME, deletedAt: null },
+    select: { id: true, name: true },
+  });
+  for (const r of rows.filter((x) => x.name.toLocaleLowerCase('en') === LEGACY_WORK_FOLDER_NAME.toLocaleLowerCase('en'))) {
+    const children = await prisma.driveNode.count({ where: { parentId: r.id, deletedAt: null } });
+    if (children === 0) {
+      await prisma.driveNode.update({ where: { id: r.id }, data: { deletedAt: new Date(), deletedById: null } });
+      s.trashed++;
+    } else {
+      await prisma.driveNode.update({ where: { id: r.id }, data: { system: false } });
+      s.kept.push(r.id);
+    }
+  }
+  if (rows.length) log?.(`[drive] "${LEGACY_WORK_FOLDER_NAME}": ${s.trashed} empty folder(s) moved to the recycle bin, ${s.kept.length} kept as ordinary folder(s)`);
+  return s;
+};
+
 const BACKFILL_FLAG = 'drive.caseDocsBackfill';
 
 /**
- * Start-up task of the shared workspace: personal spaces → shared, client folders for every case,
+ * Start-up task of the shared workspace: initial layout, old "In Bearbeitung" cleanup, personal spaces →
+ * shared, client folders for every case,
  * and (once — remembered in Setting) a drive copy of every accepted case document.
  */
-export const runDriveStartup = async (log: (line: string) => void = console.log): Promise<{ personal: PersonalMoveSummary; cases: BackfillSummary }> => {
-  await ensureRoots();
+export const runDriveStartup = async (log: (line: string) => void = console.log): Promise<{ personal: PersonalMoveSummary; cases: BackfillSummary; work: WorkCleanupSummary }> => {
+  // Sets the layout up the first time; a section a super admin deleted is NOT created again here.
+  await sectionIds();
+  const work = await cleanupWorkFolders(log);
   const personal = await migratePersonalSpaces(log);
   const done = await prisma.setting.findUnique({ where: { key: BACKFILL_FLAG } });
   const cases = await backfillCaseDrive({ docs: !done, log });
@@ -81,5 +115,5 @@ export const runDriveStartup = async (log: (line: string) => void = console.log)
       update: {},
     });
   }
-  return { personal, cases };
+  return { personal, cases, work };
 };

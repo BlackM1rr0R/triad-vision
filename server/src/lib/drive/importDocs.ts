@@ -4,7 +4,7 @@ import type { DocAccess, DriveAccess } from '@prisma/client';
 import { config } from '../../config.js';
 import { prisma } from '../../db.js';
 import { findSibling } from './names.js';
-import { ensureRoots, ensureStaffFolder, staffFolderName, STAFF_FOLDER_NAME } from './roots.js';
+import { ensureSection, ensureStaffFolder, staffFolderName, STAFF_FOLDER_NAME } from './roots.js';
 import { copyIntoStore } from './storage.js';
 
 /**
@@ -61,7 +61,7 @@ export const importDocsToDrive = async (opts: { dryRun?: boolean; log?: (line: s
     grantsUpserted: 0,
     errors: [],
   };
-  if (!dryRun) await ensureRoots();
+  if (!dryRun) await ensureSection('staff');
 
   const folders = await prisma.docFolder.findMany({
     include: { owner: { select: { id: true, firstName: true, lastName: true, role: true } }, dirs: true, files: true, grants: true },

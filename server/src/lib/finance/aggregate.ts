@@ -11,7 +11,8 @@ import { DAY_MS, inRange, monthsOf, type Period } from './period.js';
  *   one whole day past its due date at T. Receivables of a period are taken at min(period end, now).
  * - Translation revenue: DELIVERED translation orders with a price, dated by `completedAt` (fallback `updatedAt`).
  * - Commissions: PENDING / APPROVED / CANCELLED by `createdAt` in the period; PAID by `paidAt` in the period.
- * - Net result estimate: net invoice revenue + translation revenue − commissions paid.
+ * - Partner commissions (referral partners / middlemen): the same rules as agent commissions, reported separately.
+ * - Net result estimate: net invoice revenue + translation revenue − commissions paid (agents and partners).
  * - Cases: new = `createdAt` in the period; decided = APPROVED / REJECTED with decision date
  *   (`decisionAt`, fallback `closedAt`) in the period; conversion = approved / decided.
  */
@@ -33,6 +34,16 @@ export interface InvoiceRow {
 
 export interface CommissionRow {
   agentId: string;
+  caseId: string | null;
+  amountCents: number;
+  status: 'PENDING' | 'APPROVED' | 'PAID' | 'CANCELLED';
+  createdAt: Date;
+  paidAt: Date | null;
+}
+
+/** Commission of a referral partner (middleman); `partnerCommissions` is optional in FinanceData. */
+export interface PartnerCommissionRow {
+  partnerId: string;
   caseId: string | null;
   amountCents: number;
   status: 'PENDING' | 'APPROVED' | 'PAID' | 'CANCELLED';
@@ -65,6 +76,8 @@ export interface FinanceData {
   commissions: CommissionRow[];
   translations: TranslationRow[];
   cases: CaseRow[];
+  /** Referral-partner commissions (separate from the agent programme). */
+  partnerCommissions?: PartnerCommissionRow[];
 }
 
 const FINAL = new Set(['APPROVED', 'REJECTED', 'CANCELLED']);
@@ -138,22 +151,28 @@ export const receivables = (invoices: InvoiceRow[], at: Date) => {
 /** The instant receivables are measured at: the end of the period, or now for a period that is still running. */
 export const asOfFor = (p: Period, now: Date) => (p.end < now ? p.end : now);
 
+/** PENDING / APPROVED by `createdAt` in [start, end), PAID by `paidAt`. */
+const commissionSums = (rows: { amountCents: number; status: CommissionRow['status']; createdAt: Date; paidAt: Date | null }[], start: Date, end: Date) => {
+  const created = (status: CommissionRow['status']) => rows.filter((c) => c.status === status && inRange(c.createdAt, start, end));
+  const paid = rows.filter((c) => c.status === 'PAID' && inRange(c.paidAt, start, end));
+  return {
+    pendingCents: sum(created('PENDING').map((c) => c.amountCents)),
+    pendingCount: created('PENDING').length,
+    approvedCents: sum(created('APPROVED').map((c) => c.amountCents)),
+    approvedCount: created('APPROVED').length,
+    paidCents: sum(paid.map((c) => c.amountCents)),
+    paidCount: paid.length,
+  };
+};
+
 export const summarize = (d: FinanceData, p: Period, now: Date) => {
   const { start, end } = p;
   const paid = d.invoices.filter((i) => i.status === 'PAID' && inRange(i.paidAt, start, end));
   const revenue = { grossCents: sum(paid.map((i) => i.grossCents)), netCents: sum(paid.map((i) => i.netCents)), count: paid.length };
   const translations = d.translations.filter((t) => isTranslationRevenue(t) && inRange(translationDate(t), start, end));
   const translation = { cents: sum(translations.map((t) => t.priceCents ?? 0)), count: translations.length };
-  const created = (status: CommissionRow['status']) => d.commissions.filter((c) => c.status === status && inRange(c.createdAt, start, end));
-  const paidCommissions = d.commissions.filter((c) => c.status === 'PAID' && inRange(c.paidAt, start, end));
-  const commissions = {
-    pendingCents: sum(created('PENDING').map((c) => c.amountCents)),
-    pendingCount: created('PENDING').length,
-    approvedCents: sum(created('APPROVED').map((c) => c.amountCents)),
-    approvedCount: created('APPROVED').length,
-    paidCents: sum(paidCommissions.map((c) => c.amountCents)),
-    paidCount: paidCommissions.length,
-  };
+  const commissions = commissionSums(d.commissions, start, end);
+  const partnerCommissions = commissionSums(d.partnerCommissions ?? [], start, end);
   const newCases = d.cases.filter((c) => inRange(c.createdAt, start, end)).length;
   const decided = d.cases.filter((c) => isDecided(c) && inRange(decisionDate(c), start, end));
   const approved = decided.filter((c) => c.status === 'APPROVED').length;
@@ -162,7 +181,8 @@ export const summarize = (d: FinanceData, p: Period, now: Date) => {
     receivables: outstandingAt(d.invoices, asOfFor(p, now)),
     translation,
     commissions,
-    netResultCents: revenue.netCents + translation.cents - commissions.paidCents,
+    partnerCommissions,
+    netResultCents: revenue.netCents + translation.cents - commissions.paidCents - partnerCommissions.paidCents,
     cases: {
       new: newCases,
       approved,
@@ -188,6 +208,7 @@ export const monthly = (d: FinanceData, p: Period, now: Date) =>
       outstandingCents: start > now ? null : outstandingAt(d.invoices, end < now ? end : now).grossCents,
       translationCents: sum(d.translations.filter((t) => isTranslationRevenue(t) && inRange(translationDate(t), start, end)).map((t) => t.priceCents ?? 0)),
       commissionsPaidCents: sum(d.commissions.filter((c) => c.status === 'PAID' && inRange(c.paidAt, start, end)).map((c) => c.amountCents)),
+      partnerCommissionsPaidCents: sum((d.partnerCommissions ?? []).filter((c) => c.status === 'PAID' && inRange(c.paidAt, start, end)).map((c) => c.amountCents)),
       newCases: d.cases.filter((c) => inRange(c.createdAt, start, end)).length,
       approved: d.cases.filter((c) => c.status === 'APPROVED' && inRange(decisionDate(c), start, end)).length,
     };
@@ -225,6 +246,35 @@ export const commissionsByAgent = (agents: AgentInfo[], commissions: CommissionR
   visible.sort((a, b) => b.totalCents - a.totalCents || b.referralsInRange - a.referralsInRange || a.name.localeCompare(b.name));
   const totals = {
     referralsInRange: sum(visible.map((r) => r.referralsInRange)),
+    pendingCents: sum(visible.map((r) => r.pendingCents)),
+    approvedCents: sum(visible.map((r) => r.approvedCents)),
+    paidCents: sum(visible.map((r) => r.paidCents)),
+    cancelledCents: sum(visible.map((r) => r.cancelledCents)),
+    totalCents: sum(visible.map((r) => r.totalCents)),
+  };
+  return { rows: visible, totals };
+};
+
+// ─── Commissions per referral partner ───────────────────────────────────
+
+export interface PartnerInfo {
+  id: string;
+  name: string;
+  active: boolean;
+}
+
+export const commissionsByPartner = (partners: PartnerInfo[], rows: PartnerCommissionRow[], p: Period) => {
+  const list = partners.map((pt) => {
+    const mine = rows.filter((c) => c.partnerId === pt.id);
+    const created = (s: PartnerCommissionRow['status']) => sum(mine.filter((c) => c.status === s && inRange(c.createdAt, p.start, p.end)).map((c) => c.amountCents));
+    const paidCents = sum(mine.filter((c) => c.status === 'PAID' && inRange(c.paidAt, p.start, p.end)).map((c) => c.amountCents));
+    const pendingCents = created('PENDING');
+    const approvedCents = created('APPROVED');
+    return { ...pt, pendingCents, approvedCents, paidCents, cancelledCents: created('CANCELLED'), totalCents: pendingCents + approvedCents + paidCents };
+  });
+  const visible = list.filter((r) => r.totalCents > 0 || r.cancelledCents > 0);
+  visible.sort((a, b) => b.totalCents - a.totalCents || a.name.localeCompare(b.name));
+  const totals = {
     pendingCents: sum(visible.map((r) => r.pendingCents)),
     approvedCents: sum(visible.map((r) => r.approvedCents)),
     paidCents: sum(visible.map((r) => r.paidCents)),

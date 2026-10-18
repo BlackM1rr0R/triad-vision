@@ -11,13 +11,19 @@ import { LIMITS } from './workbook.js';
  * "replace" uploads and version restores (the previous file moves to DriveFileVersion, history kept).
  */
 
-export const readCurrent = async (nodeId: string) => {
+/** The current file row of a drive node (no file read). */
+export const currentRow = async (nodeId: string) => {
   const row = await prisma.driveNode.findUniqueOrThrow({
     where: { id: nodeId },
     select: { id: true, name: true, version: true, storageKey: true, mimeType: true, size: true, parentId: true },
   });
   if (!row.storageKey) throw new HttpError(404, 'FILE_MISSING_ON_DISK');
   if ((row.size ?? 0) > LIMITS.fileBytes) throw new HttpError(413, 'FILE_TOO_LARGE');
+  return row as typeof row & { storageKey: string };
+};
+
+/** The stored bytes of a file row. */
+export const readStoredFile = async (row: { storageKey: string }) => {
   let buf: Buffer;
   try {
     buf = await fsp.readFile(storagePath(row.storageKey));
@@ -25,7 +31,12 @@ export const readCurrent = async (nodeId: string) => {
     throw new HttpError(404, 'FILE_MISSING_ON_DISK');
   }
   if (buf.length > LIMITS.fileBytes) throw new HttpError(413, 'FILE_TOO_LARGE');
-  return { row, buf };
+  return buf;
+};
+
+export const readCurrent = async (nodeId: string) => {
+  const row = await currentRow(nodeId);
+  return { row, buf: await readStoredFile(row) };
 };
 
 /** Writes bytes into the drive store under a fresh key. */

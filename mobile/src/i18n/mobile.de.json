@@ -431,7 +431,20 @@
       "pageOf": "Seite {{page}} / {{total}}",
       "hint": "Text gut lesbar, Ränder zugeschnitten.",
       "uploadingPage": "Seite {{page}} / {{total}} wird hochgeladen… {{percent}} %",
-      "done": "{{count}} Seiten hochgeladen"
+      "done": "{{count}} Seiten hochgeladen",
+      "pdfAction": "Scannen (PDF)",
+      "general": "Dokument scannen",
+      "chooseRequirement": "Für welches Dokument scannen Sie?",
+      "uploadPdf": "Als PDF hochladen ({{count}})",
+      "pdfHint": "Seiten ordnen – alles wird als ein PDF hochgeladen.",
+      "preparing": "{{total}} Seiten werden vorbereitet…",
+      "uploadingPdf": "PDF wird hochgeladen… {{percent}} %",
+      "donePdf": "PDF mit {{count}} Seiten hochgeladen",
+      "failed": "Hochladen fehlgeschlagen",
+      "retry": "Erneut versuchen",
+      "moveEarlier": "Nach vorne",
+      "moveLater": "Nach hinten",
+      "maxPages": "Höchstens {{max}} Seiten"
     },
     "ocr": {
       "title": "Aus dem Pass gelesen",
