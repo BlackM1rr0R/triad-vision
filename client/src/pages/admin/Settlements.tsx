@@ -1,3 +1,4 @@
+import { useLocation } from 'react-router-dom';
 import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
@@ -74,6 +75,7 @@ const fold = (s: string) =>
 const sameTab = (a: Tab, b: Tab) => a.kind === b.kind && (a.kind === 'project' ? a.name === (b as { name: string }).name : a.kind === 'partner' ? a.id === (b as { id: string }).id : true);
 
 export default function Settlements() {
+  const inWorkspace = useLocation().pathname.startsWith('/workspace');
   const { t } = useTranslation();
   usePageTitle(t('settlement.title'));
   const qc = useQueryClient();
@@ -426,7 +428,8 @@ export default function Settlements() {
   );
 
   return (
-    <div className="flex min-w-0 flex-col gap-3">
+    // The workspace shell has no page padding (the admin shell does).
+    <div className={clsx('flex min-w-0 flex-col gap-3', inWorkspace && 'p-4 sm:p-6')}>
       <header className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           <h1 className="flex items-center gap-2 font-display text-2xl font-extrabold text-ink">
