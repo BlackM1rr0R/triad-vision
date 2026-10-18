@@ -34,7 +34,9 @@ cd src
 echo "== build + start"
 # --pull: always rebuild on top of the newest patched base images (node, caddy) and MySQL 8.4 patch.
 $COMPOSE pull db
-$COMPOSE build --pull
+# One image at a time: the server has 2 GB RAM, and the API compile and the site build together run out of memory.
+$COMPOSE build --pull api
+$COMPOSE build --pull web
 $COMPOSE up -d --remove-orphans
 
 echo "== waiting for the API (migrations run on start)"
