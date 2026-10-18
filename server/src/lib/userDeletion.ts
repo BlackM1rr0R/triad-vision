@@ -8,6 +8,7 @@ import { removeStoredFile } from '../jobs/retention.js';
 import { removeMailStored } from './mail/storage.js';
 import { ensureRoots } from './drive/roots.js';
 import { pickFreeName, safeUploadName } from './drive/names.js';
+import { purgeNodes } from './drive/trash.js';
 
 /**
  * Hard delete of a user account by the super admin (Admin → Users → "Delete").
@@ -127,7 +128,7 @@ export const deleteUserAccount = async (actorId: string, userId: string, ip?: st
   const { sharedId } = await ensureRoots();
 
   // Files that go away with the account; read up front, deleted from disk only after commit.
-  const ownCaseRows = await prisma.case.findMany({ where: { clientId: userId }, select: { id: true } });
+  const ownCaseRows = await prisma.case.findMany({ where: { clientId: userId }, select: { id: true, driveFolderId: true } });
   const ownCaseIds = ownCaseRows.map((c) => c.id);
   const caseFiles = ownCaseIds.length
     ? await prisma.document.findMany({ where: { caseId: { in: ownCaseIds } }, select: { storedName: true } })
@@ -258,6 +259,16 @@ export const deleteUserAccount = async (actorId: string, userId: string, ip?: st
     }
   }
   await removeMailStored(mailFiles.map((m) => m.storageKey));
+  // The client's folders in the shared drive (copies of their case documents) go with the cases.
+  const clientFolders = ownCaseRows.map((c) => c.driveFolderId).filter((id): id is string => !!id);
+  if (clientFolders.length) {
+    const existing = (await prisma.driveNode.findMany({ where: { id: { in: clientFolders } }, select: { id: true } })).map((n) => n.id);
+    const r = await purgeNodes(existing).catch((err) => {
+      console.error('[user-delete] could not remove client folders from the drive', err);
+      return { nodes: 0, bytes: 0 };
+    });
+    bytes += r.bytes;
+  }
   for (const [dir, keys] of [
     ['vault', vaultFiles.map((v) => v.storageKey)],
     ['translations', translationFiles.map((t) => t.storageKey)],

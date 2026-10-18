@@ -246,8 +246,8 @@ export const DrivePickerDialog = ({ open, onClose, onPick }: { open: boolean; on
   }, [open]);
   const roots = useQuery({ queryKey: driveKeys.roots, queryFn: fetchRoots, enabled: open });
   const current = path[path.length - 1] ?? null;
-  const listing = useQuery({ queryKey: driveKeys.children(current?.id ?? '', undefined, undefined), queryFn: () => fetchChildren(current!.id), enabled: open && !!current });
-  const rootItems: DriveItem[] = useMemo(() => (roots.data ? [roots.data.personal, roots.data.shared, roots.data.cases, ...roots.data.team].filter((x): x is DriveItem => !!x) : []), [roots.data]);
+  const listing = useQuery({ queryKey: driveKeys.children(current?.id ?? ''), queryFn: () => fetchChildren(current!.id), enabled: open && !!current });
+  const rootItems: DriveItem[] = useMemo(() => (roots.data ? [roots.data.shared, roots.data.cases, roots.data.partners, roots.data.staff].filter((x): x is DriveItem => !!x) : []), [roots.data]);
   const items = current ? (listing.data?.items ?? []) : rootItems;
   const loading = current ? listing.isLoading : roots.isLoading;
   return (

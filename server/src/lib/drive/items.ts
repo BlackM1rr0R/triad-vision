@@ -4,6 +4,8 @@ import { INLINE_MIME } from '../fileCheck.js';
 import { badRequest } from '../http.js';
 import { nodeLiteSelect, type DriveAccessCtx, type NodeLite } from './access.js';
 import { allows, type Level } from './levels.js';
+import { cleanName } from './names.js';
+import { PARTNERS_FOLDER_NAME } from './roots.js';
 
 /** Everything a listing row needs (grants come along for the access calculation). */
 export const itemSelect = {
@@ -15,6 +17,7 @@ export const itemSelect = {
   createdAt: true,
   updatedAt: true,
   deletedById: true,
+  documentId: true,
   createdBy: { select: { id: true, firstName: true, lastName: true } },
 } satisfies Prisma.DriveNodeSelect;
 
@@ -26,7 +29,7 @@ export interface PersonRef {
   lastName: string;
 }
 
-/** One file or folder as the explorer sees it (real or virtual). */
+/** One file or folder as the explorer sees it. */
 export interface DriveItem {
   id: string;
   kind: DriveNodeKind;
@@ -48,8 +51,14 @@ export interface DriveItem {
   previewable: boolean;
   starred: boolean;
   childCount?: number;
-  /** Virtual (Cases area) extras. */
+  /** Copy of a case document (DriveNode.documentId). */
+  documentId?: string | null;
+  /** Client folders and case document copies: the case they belong to. */
   caseId?: string;
+  /** Client folders: who the client is (header strip in the explorer). */
+  caseInfo?: { clientName: string; passportNumber: string | null; visaType: string; partner: { id: string; name: string } | null };
+  /** Partner folders below "Partner": the referral partner. */
+  partner?: { id: string; name: string; phone: string | null; email: string | null; active: boolean };
   caseNumber?: string;
   caseStatus?: string;
   stage?: string;
@@ -81,7 +90,53 @@ export const toItem = (row: ItemRow, myAccess: DriveAccess, extra: { childCount?
   previewable: !!row.mimeType && INLINE_MIME.has(row.mimeType),
   starred: extra.starred ?? false,
   ...(row.kind === 'FOLDER' ? { childCount: extra.childCount ?? 0 } : {}),
+  ...(row.documentId ? { documentId: row.documentId } : {}),
 });
+
+/**
+ * Links items to their case: a client folder (Case.driveFolderId) and a copy of a case document
+ * (DriveNode.documentId) get the case id, number and status (badge "Müraciət sənədi · TV-…" in the UI).
+ */
+export const decorateCaseLinks = async (items: DriveItem[]) => {
+  const folderIds = items.filter((i) => i.kind === 'FOLDER').map((i) => i.id);
+  // Partner folders: matched by name among the children of "Partner".
+  const partnersFolder = items.some((i) => i.kind === 'FOLDER' && i.parentId)
+    ? await prisma.driveNode.findFirst({ where: { name: PARTNERS_FOLDER_NAME, system: true, parent: { parentId: null } }, select: { id: true } })
+    : null;
+  const partnerFolders = partnersFolder ? items.filter((i) => i.kind === 'FOLDER' && i.parentId === partnersFolder.id) : [];
+  if (partnerFolders.length) {
+    const partners = await prisma.referralPartner.findMany({ select: { id: true, name: true, phone: true, email: true, active: true } });
+    const byName = new Map(partners.map((p) => [cleanName(p.name, 'Partner').toLocaleLowerCase('en'), p]));
+    for (const f of partnerFolders) {
+      const p = byName.get(f.name.toLocaleLowerCase('en'));
+      if (p) f.partner = p;
+    }
+  }
+  const docIds = items.map((i) => i.documentId).filter((d): d is string => !!d);
+  const [cases, docs] = await Promise.all([
+    folderIds.length
+      ? prisma.case.findMany({
+          where: { driveFolderId: { in: folderIds } },
+          select: { id: true, number: true, status: true, driveFolderId: true, visaType: true, partner: { select: { id: true, name: true } }, client: { select: { firstName: true, lastName: true, passportNumber: true } } },
+        })
+      : Promise.resolve([]),
+    docIds.length
+      ? prisma.document.findMany({ where: { id: { in: docIds } }, select: { id: true, stage: true, status: true, case: { select: { id: true, number: true, status: true } } } })
+      : Promise.resolve([]),
+  ]);
+  const byFolder = new Map(cases.map((c) => [c.driveFolderId!, c]));
+  const byDoc = new Map(docs.map((d) => [d.id, d]));
+  for (const item of items) {
+    const c = byFolder.get(item.id);
+    if (c) {
+      Object.assign(item, { caseId: c.id, caseNumber: c.number, caseStatus: c.status });
+      item.caseInfo = { clientName: `${c.client.firstName} ${c.client.lastName}`.trim(), passportNumber: c.client.passportNumber, visaType: c.visaType, partner: c.partner };
+    }
+    const d = item.documentId ? byDoc.get(item.documentId) : undefined;
+    if (d) Object.assign(item, { caseId: d.case.id, caseNumber: d.case.number, caseStatus: d.case.status, stage: d.stage, docStatus: d.status });
+  }
+  return items;
+};
 
 /** Live child counts of the given folders (one query). */
 export const childCounts = async (folderIds: string[]) => {
@@ -105,7 +160,7 @@ export const buildItems = async (ctx: DriveAccessCtx, rows: ItemRow[], opts: { w
   const visible = rows.filter((r) => allows(ctx.level(r.id), 'VIEW'));
   const ids = visible.map((r) => r.id);
   const [counts, stars] = await Promise.all([childCounts(visible.filter((r) => r.kind === 'FOLDER').map((r) => r.id)), starredSet(ctx.user.id, ids)]);
-  return visible.map((r) => {
+  const items = visible.map((r) => {
     const item = toItem(r, ctx.level(r.id) as DriveAccess, { childCount: counts.get(r.id), starred: stars.has(r.id) });
     if (opts.withLocation) {
       const parent = r.parentId ? ctx.nodes.get(r.parentId) : undefined;
@@ -113,6 +168,7 @@ export const buildItems = async (ctx: DriveAccessCtx, rows: ItemRow[], opts: { w
     }
     return item;
   });
+  return decorateCaseLinks(items);
 };
 
 export interface Crumb {

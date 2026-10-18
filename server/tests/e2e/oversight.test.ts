@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { asAdmin, asClient, asStaff, asSuperAdmin } from '../helpers/api';
-import { prisma } from '../helpers/db';
+import { prisma, waitFor } from '../helpers/db';
 import { createClient, createStaff } from '../helpers/factories';
 import { makePdf } from '../helpers/files';
 import { act, clientCase, createCaseVia, uploadDoc } from '../helpers/workflow';
@@ -42,7 +42,7 @@ describe('super-admin oversight', () => {
     expect((await staff.agent.post(`/api/admin/cases/${c.id}/documents/${doc.id}/review`).send({ status: 'ACCEPTED' })).status).toBe(200);
     expect((await staff.agent.post(`/api/admin/cases/${c.id}/messages`).send({ body: 'Salam' })).status).toBe(201);
     const roots = await staff.agent.get('/api/drive/roots');
-    const folderId = roots.body.personal.id as string;
+    const folderId = roots.body.shared.id as string;
     expect((await staff.agent.post(`/api/drive/nodes/${folderId}/files`).attach('file', await makePdf(), { filename: 'a.pdf', contentType: 'application/pdf' })).status).toBe(201);
 
     const res = await su.agent.get('/api/admin/oversight/summary');
@@ -58,7 +58,9 @@ describe('super-admin oversight', () => {
     expect(b.inquiries.byStatus).toEqual({ NEW: 1 });
     expect(b.inquiries.byKind).toEqual({ company: 1 });
     expect(b.documents.byStatus).toEqual({ ACCEPTED: 1 });
-    expect(b.workspaces).toMatchObject({ files: 1 });
+    // The upload plus the drive copy of the accepted document (made in the background).
+    await waitFor(async () => (await prisma.driveNode.count({ where: { documentId: doc.id } })) === 1);
+    expect((await su.agent.get('/api/admin/oversight/summary')).body.workspaces).toMatchObject({ files: 2 });
     expect(b.workspaces.bytes).toBeGreaterThan(0);
     expect(b.security.auditEntries30d).toBeGreaterThan(0);
 
@@ -67,7 +69,7 @@ describe('super-admin oversight', () => {
     const a = rows.find((r) => r.id === staff.user.id)!;
     expect(a).toMatchObject({ online: true, documentsReviewed30d: 1, messages30d: 1, workspaceUploads30d: 1, assignedOpen: 1, logins30d: 1 });
     expect(a.caseActions30d).toBeGreaterThanOrEqual(1);
-    expect(a.workspace?.files).toBe(1);
+    expect(a.workspace).toBeNull(); // nobody has a personal space any more
     expect(a.lastSeenAt).not.toBeNull();
     const i = rows.find((r) => r.id === idle.user.id)!;
     expect(i).toMatchObject({ caseActions30d: 0, messages30d: 0, assignedOpen: 0 });
@@ -113,7 +115,8 @@ describe('super-admin oversight', () => {
     await prisma.case.update({ where: { id: c.id }, data: { assignedStaffId: staff.user.id } });
     expect((await act(su.agent, c.id, { action: 'CANCEL', reason: 'Test cancel' })).status).toBe(200);
     await staff.agent.post(`/api/admin/cases/${c.id}/notes`).send({ note: 'internal' });
-    const folderId = (await staff.agent.get('/api/drive/roots')).body.personal.id as string;
+    // A personal space from before the shared workspace (moved away by the start-up task).
+    const folderId = (await prisma.driveNode.create({ data: { space: 'PERSONAL', kind: 'FOLDER', name: 'Rena H', ownerId: staff.user.id, system: true, inheritPermissions: false } })).id;
     expect((await su.agent.put(`/api/drive/nodes/${folderId}/grants`).send({ userId: other.user.id, access: 'VIEW' })).status).toBe(200);
 
     const res = await su.agent.get(`/api/admin/oversight/staff/${staff.user.id}`);

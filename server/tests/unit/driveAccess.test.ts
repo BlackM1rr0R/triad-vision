@@ -5,8 +5,8 @@ vi.mock('../../src/db.js', () => ({ prisma: {} }));
 
 const { DriveAccessCtx } = await import('../../src/lib/drive/access.js');
 const { maxLevel, minLevel, allows } = await import('../../src/lib/drive/levels.js');
-const { checkName, safeUploadName, pickFreeName } = await import('../../src/lib/drive/names.js');
-const { parseVirtualId, caseLevel } = await import('../../src/lib/drive/cases.js');
+const { checkName, safeUploadName, pickFreeName, cleanName } = await import('../../src/lib/drive/names.js');
+const { clientFolderBaseName } = await import('../../src/lib/drive/caseFolders.js');
 
 type G = { userId?: string; role?: Role; access: DriveAccess };
 const node = (id: string, parentId: string | null, grants: G[] = [], over: Partial<{ inherit: boolean; space: 'SHARED' | 'PERSONAL' | 'CASES'; ownerId: string | null }> = {}) => ({
@@ -82,15 +82,9 @@ describe('drive permission engine', () => {
     expect(allows(null, 'VIEW')).toBe(false);
   });
 
-  it('case folders: root level or assigned staff, capped at EXPORT', () => {
-    expect(caseLevel(null, 'me', 'me')).toBe('DOWNLOAD');
-    expect(caseLevel(null, 'other', 'me')).toBeNull();
-    expect(caseLevel('MANAGE', null, 'me')).toBe('EXPORT');
-    expect(caseLevel('VIEW', 'me', 'me')).toBe('DOWNLOAD');
-  });
 });
 
-describe('drive names and virtual ids', () => {
+describe('drive names', () => {
   it.each(['', '.', '..', 'a/b', 'a\\b', 'a:b', 'x*y', 'CON', 'lpt1.txt', 'name.', ' lead', 'trail ', 'x\u0000y', 'a'.repeat(201)])('rejects %j', (n) => {
     expect(() => checkName(n)).toThrow();
   });
@@ -115,12 +109,19 @@ describe('drive names and virtual ids', () => {
     expect(taken.has('report (3).pdf')).toBe(true);
   });
 
-  it('parses only well-formed virtual ids', () => {
-    expect(parseVirtualId('case:clx1234567890abcdefghij')).toEqual({ kind: 'case', caseId: 'clx1234567890abcdefghij' });
-    expect(parseVirtualId('case:clx1234567890abcdefghij:EMBASSY')).toEqual({ kind: 'stage', caseId: 'clx1234567890abcdefghij', stage: 'EMBASSY' });
-    expect(parseVirtualId('doc:clx1234567890abcdefghij')).toEqual({ kind: 'doc', docId: 'clx1234567890abcdefghij' });
-    for (const bad of ['case:', 'case:../x', 'case:abc:EMBASSY', 'case:clx1234567890abcdefghij:FOO', 'doc:CLX1234567890ABCDEFGHIJ', 'doc:x/y', 'file:abc']) {
-      expect(parseVirtualId(bad), bad).toBeNull();
-    }
+  it('builds safe folder names from data', () => {
+    expect(cleanName('Ali / Veli: "X"')).toBe('Ali Veli X');
+    expect(cleanName('  ...  ')).toBe('Ohne Namen');
+    expect(cleanName('CON')).toBe('_CON');
+    expect(cleanName('name.')).toBe('name');
+  });
+
+  it('names client folders by name and passport number, else by case number', () => {
+    const c = { number: 'TV-2026-0012', client: { firstName: 'Ayan', lastName: 'Quliyeva', passportNumber: 'C01234567' } };
+    expect(clientFolderBaseName(c)).toBe('Ayan Quliyeva · Pass-Nr. C01234567');
+    expect(clientFolderBaseName({ ...c, client: { ...c.client, passportNumber: null } })).toBe('Ayan Quliyeva · TV-2026-0012');
+    expect(clientFolderBaseName({ ...c, client: { ...c.client, passportNumber: '  ' } })).toBe('Ayan Quliyeva · TV-2026-0012');
+    expect(clientFolderBaseName(c, { name: 'Leyla Q', relation: 'spouse' })).toBe('Leyla Q');
+    expect(clientFolderBaseName(c, { name: null, relation: 'child' })).toBe('Kind · TV-2026-0012');
   });
 });

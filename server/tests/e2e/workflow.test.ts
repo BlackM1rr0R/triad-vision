@@ -146,8 +146,10 @@ describe('full journey (client in German)', () => {
     await expectClientNotified(user, 'NEW_MESSAGE', 'Neue Nachricht');
     expectStatus(await client.agent.post(`/api/cases/${id}/messages`).send({ body: 'Danke!' }), 201);
 
-    // every client-facing step, in order
-    expect(await clientNotificationTypes(user.id)).toEqual([
+    // every client-facing step, in order (the satisfaction survey is sent once, in the background, after the first final status)
+    const types = await clientNotificationTypes(user.id);
+    expect(types.filter((t) => t === 'SURVEY')).toHaveLength(1);
+    expect(types.filter((t) => t !== 'SURVEY')).toEqual([
       'CASE_CREATED',
       'DOCUMENT_REJECTED',
       'DOCS_CHANGES_REQUESTED',

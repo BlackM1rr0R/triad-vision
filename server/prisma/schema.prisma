@@ -366,12 +366,20 @@ model Case {
   motivationLetters MotivationLetter[]
   surveys           SatisfactionSurvey[]
   signatureRequests SignatureRequest[]
+  /// Partner (middleman) who brought this client; their folder in the shared drive holds the client folder.
+  partnerId         String?
+  partner           ReferralPartner?      @relation(fields: [partnerId], references: [id], onDelete: SetNull)
+  /// The client's real folder in the shared drive ("Ad Soyad · Pass-Nr."), created with the case.
+  driveFolderId     String?               @unique
+  /// Extra columns of the client register (admin-defined), keyed by ClientRegisterColumn.id.
+  registerData      Json?
 
   @@index([clientId])
   @@index([status])
   @@index([companyId])
   @@index([closedAt])
   @@index([parentCaseId])
+  @@index([partnerId])
 }
 
 model DocumentRequirement {
@@ -959,6 +967,8 @@ model DriveNode {
   versions           DriveFileVersion[]
   favorites          DriveFavorite[]
   taskLinks          TaskAttachment[]
+  /// Copy of a case document (accepted upload) placed in the client's folder; the link to the case stays.
+  documentId         String?            @unique
 
   @@index([parentId, deletedAt])
   @@index([space, ownerId])
@@ -2434,4 +2444,39 @@ model CandidateRequest {
 
   @@index([companyId, status])
   @@index([status, createdAt])
+}
+
+// ─── Shared documents: partners (middlemen) and the client register ─────────
+
+/// Person who brings clients and cooperates on visas (e.g. Ilqar, Ənvər); own folder in the shared drive.
+model ReferralPartner {
+  id        String   @id @default(cuid())
+  name      String   @unique @db.VarChar(120)
+  phone     String?  @db.VarChar(40)
+  email     String?  @db.VarChar(191)
+  note      String?  @db.Text
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  cases     Case[]
+}
+
+enum RegisterColumnType {
+  TEXT
+  NUMBER
+  DATE
+  SELECT
+  CHECKBOX
+}
+
+/// Extra (admin-defined) column of the Excel-like client register; values live in Case.registerData.
+model ClientRegisterColumn {
+  id        String             @id @default(cuid())
+  label     String             @db.VarChar(80)
+  type      RegisterColumnType @default(TEXT)
+  options   Json? // SELECT choices: string[]
+  width     Int                @default(160)
+  sortOrder Int                @default(0)
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
 }

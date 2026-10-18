@@ -7,7 +7,7 @@ import { Download, ExternalLink, History, Info, RotateCcw, Shield, Users, X } fr
 import { api, formatBytes } from '@/lib/api';
 import { docStatusLabel, fmtDateTime, fullName, roleLabel, stageLabel, statusLabel } from '@/components/admin/labels';
 import type { CaseStatus, DocStage, DocStatus } from '@/lib/types';
-import { contentUrl, driveKeys, isVirtual, versionUrl } from './api';
+import { contentUrl, driveKeys, versionUrl } from './api';
 import { ItemIcon } from './fileIcons';
 import { crumbLabel, displayName, typeLabel } from './labels';
 import { can, type AccessResponse, type DriveItem, type NodeDetails, type VersionRow } from './types';
@@ -139,13 +139,12 @@ export const DetailsPanel = ({
 
         {/* Properties */}
         <dl className="border-b border-line px-4 py-3">
-          {item.virtual && item.caseNumber && (
+          {item.caseNumber && (
             <>
               <Def label={t('drive.details.caseNumber')}>{item.caseNumber}</Def>
               {item.caseStatus && <Def label={t('drive.details.caseStatus')}>{statusLabel(item.caseStatus as CaseStatus)}</Def>}
               {item.stage && <Def label={t('drive.details.stage')}>{stageLabel(item.stage as DocStage)}</Def>}
               {item.docStatus && <Def label={t('drive.details.docStatus')}>{docStatusLabel(item.docStatus as DocStatus)}</Def>}
-              {item.assignedStaff !== undefined && <Def label={t('drive.details.assignedStaff')}>{item.assignedStaff ? fullName(item.assignedStaff) : '—'}</Def>}
             </>
           )}
           {item.kind === 'FILE' && <Def label={t('drive.details.size')}>{formatBytes(item.size ?? 0)}</Def>}
@@ -162,25 +161,27 @@ export const DetailsPanel = ({
           {item.createdBy && <Def label={t('drive.details.createdBy')}>{fullName(item.createdBy)}</Def>}
           <Def label={t('drive.details.modified')}>{fmtDateTime(item.updatedAt)}</Def>
           {d?.modifiedBy && item.kind === 'FILE' && item.version > 1 && <Def label={t('drive.details.modifiedBy')}>{fullName(d.modifiedBy)}</Def>}
-          {item.kind === 'FILE' && !item.virtual && <Def label={t('drive.details.version')}>{item.version}</Def>}
+          {item.kind === 'FILE' && <Def label={t('drive.details.version')}>{item.version}</Def>}
           <Def label={t('drive.details.myAccess')}>{t(`drive.levels.${item.myAccess}`)}</Def>
           {d?.deletedAt && <Def label={t('drive.details.deletedAt')}>{fmtDateTime(d.deletedAt)}</Def>}
           {d?.deletedBy && <Def label={t('drive.details.deletedBy')}>{fullName(d.deletedBy)}</Def>}
         </dl>
-        {item.virtual && (
+        {item.caseId && (
           <div className="border-b border-line px-4 py-3 text-xs text-muted">
-            <p>{t('drive.details.readOnlyCases')}</p>
-            {item.purged && <p className="mt-2 font-semibold text-amber-700">{t('drive.empty.purged')}</p>}
-            {item.caseId && (
-              <Link to={`/admin/cases/${item.caseId}`} className="mt-2 inline-flex items-center gap-1 font-semibold text-brand-600 hover:underline">
-                <ExternalLink className="size-3.5" /> {t('drive.actions.openCase')}
-              </Link>
-            )}
+            <p>{item.kind === 'FILE' ? t('drive.shared.caseDoc', { number: item.caseNumber }) : t('drive.shared.clientFolderBanner', { number: item.caseNumber })}</p>
+            <Link to={`/admin/cases/${item.caseId}`} className="mt-2 inline-flex items-center gap-1 font-semibold text-brand-600 hover:underline">
+              <ExternalLink className="size-3.5" /> {t('drive.actions.openCase')}
+            </Link>
           </div>
         )}
 
-        {/* Access summary */}
-        {a && (
+        {/* Access: the whole team edits everything; only people who can manage a folder see the details. */}
+        {a && !a.canManage && a.myAccess && (a.myAccess === 'EDIT' || a.myAccess === 'MANAGE') && (
+          <p className="flex items-center gap-1.5 border-b border-line px-4 py-3 text-xs text-muted">
+            <Users className="size-3.5 shrink-0" /> {t('drive.shared.teamEdits')}
+          </p>
+        )}
+        {a && a.canManage && (
           <section className="border-b border-line px-4 py-3">
             <div className="mb-2 flex items-center justify-between">
               <h3 className="flex items-center gap-1.5 text-xs font-bold tracking-wide text-muted uppercase">
@@ -227,7 +228,7 @@ export const DetailsPanel = ({
         )}
 
         {/* Versions */}
-        {item.kind === 'FILE' && !isVirtual(item) && (
+        {item.kind === 'FILE' && (
           <section className="px-4 py-3">
             <h3 className="mb-2 flex items-center gap-1.5 text-xs font-bold tracking-wide text-muted uppercase">
               <History className="size-3.5" /> {t('drive.details.versions')}

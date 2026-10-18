@@ -2,7 +2,7 @@ import fs from 'node:fs/promises';
 import type { CaseStatus, VisaType } from '@prisma/client';
 import { prisma } from '../db.js';
 import { buildXlsx } from './xlsx.js';
-import { ensurePersonalRoot } from './drive/roots.js';
+import { CLIENTS_FOLDER_NAME, ensureRoots } from './drive/roots.js';
 import { newStorageKey, storagePath } from './drive/storage.js';
 
 /**
@@ -10,7 +10,7 @@ import { newStorageKey, storagePath } from './drive/storage.js';
  * "My files" (folder "Bütün müştərilər"). It is rebuilt shortly after every new registration (and
  * hourly, so case statuses stay current) and can also be downloaded on demand from Admin → Users.
  */
-export const CLIENTS_FOLDER = 'Alle Kunden';
+export const CLIENTS_FOLDER = CLIENTS_FOLDER_NAME;
 export const CLIENTS_FILE = 'Alle Kunden.xlsx';
 export const XLSX_MIME = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
 
@@ -71,6 +71,7 @@ export const CLIENT_HEADERS = [
   'Məsul əməkdaş',
   'Müraciət sayı',
   'Agent kodu',
+  'Partnyor', // referral partner (middleman) of the latest case
 ];
 
 /** All client accounts as spreadsheet rows (newest registration last, so new clients are appended). */
@@ -101,6 +102,7 @@ export const clientRows = async () => {
           status: true,
           visaCategory: { select: { title: true, visaLabel: true } },
           assignedStaff: { select: { firstName: true, lastName: true } },
+          partner: { select: { name: true } },
         },
       },
     },
@@ -129,6 +131,7 @@ export const clientRows = async () => {
       c?.assignedStaff ? `${c.assignedStaff.firstName} ${c.assignedStaff.lastName}` : '',
       u.cases.length,
       u.referredByAgent?.code ?? '',
+      c?.partner?.name ?? '',
     ];
   });
 };
@@ -143,38 +146,33 @@ export const markClientsExcelDirty = () => {
 };
 export const clientsExcelDirty = () => dirty;
 
-/** A folder or file of the clients workbook in a super admin's "My files" (not trashed). */
+/** A folder or file of the clients workbook (not trashed). */
 const findNode = (parentId: string, name: string, kind: 'FOLDER' | 'FILE') =>
   prisma.driveNode.findFirst({ where: { parentId, name, kind, deletedAt: null }, select: { id: true, storageKey: true, version: true } });
 
-/** Rebuilds the workbook and writes it into every active super admin's drive. Returns the row count. */
+/**
+ * The "Alle Kunden" system folder directly in the shared workspace. Permissions are not inherited and it
+ * has no grants, so — like the super admins' own files before — only super admins see it.
+ */
+const ensureClientsFolder = async () => (await ensureRoots()).clientsId;
+
+/** Rebuilds the workbook and writes it into "Gemeinsame Dokumente/Alle Kunden". Returns the byte size. */
 export const refreshClientsExcel = async () => {
   dirty = false;
   const data = await buildClientsWorkbook();
-  const supers = await prisma.user.findMany({ where: { role: 'SUPER_ADMIN', isActive: true }, select: { id: true } });
-  for (const s of supers) {
-    const root = await ensurePersonalRoot(s.id);
-    if (!root) continue;
-    let folder = await findNode(root, CLIENTS_FOLDER, 'FOLDER');
-    if (!folder) {
-      folder = await prisma.driveNode.create({
-        data: { space: 'PERSONAL', kind: 'FOLDER', name: CLIENTS_FOLDER, parentId: root, ownerId: s.id, system: true, color: 'emerald' },
-        select: { id: true, storageKey: true, version: true },
-      });
-    }
-    const file = await findNode(folder.id, CLIENTS_FILE, 'FILE');
-    const key = file?.storageKey ?? newStorageKey();
-    // Write next to the target and rename, so a download never sees a half-written file.
-    const target = storagePath(key);
-    await fs.writeFile(`${target}.tmp`, data);
-    await fs.rename(`${target}.tmp`, target);
-    if (file) {
-      await prisma.driveNode.update({ where: { id: file.id }, data: { size: data.length, mimeType: XLSX_MIME, version: file.version + 1 } });
-    } else {
-      await prisma.driveNode.create({
-        data: { space: 'PERSONAL', kind: 'FILE', name: CLIENTS_FILE, parentId: folder.id, ownerId: s.id, system: true, storageKey: key, mimeType: XLSX_MIME, size: data.length },
-      });
-    }
+  const folderId = await ensureClientsFolder();
+  const file = await findNode(folderId, CLIENTS_FILE, 'FILE');
+  const key = file?.storageKey ?? newStorageKey();
+  // Write next to the target and rename, so a download never sees a half-written file.
+  const target = storagePath(key);
+  await fs.writeFile(`${target}.tmp`, data);
+  await fs.rename(`${target}.tmp`, target);
+  if (file) {
+    await prisma.driveNode.update({ where: { id: file.id }, data: { size: data.length, mimeType: XLSX_MIME, version: file.version + 1 } });
+  } else {
+    await prisma.driveNode.create({
+      data: { space: 'SHARED', kind: 'FILE', name: CLIENTS_FILE, parentId: folderId, system: true, storageKey: key, mimeType: XLSX_MIME, size: data.length },
+    });
   }
   return data.length;
 };

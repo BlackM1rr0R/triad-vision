@@ -3,7 +3,7 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import { describe, expect, it } from 'vitest';
 import { asAdmin, asClient, asStaff, asSuperAdmin } from '../helpers/api';
-import { prisma } from '../helpers/db';
+import { prisma, waitFor } from '../helpers/db';
 import { TEST_DOCS_DIR, TEST_UPLOADS_DIR } from '../helpers/testEnv';
 import { createCaseVia, expectStatus, uploadRequired } from '../helpers/workflow';
 import { ensureRoots } from '../../src/lib/drive/roots.js';
@@ -74,6 +74,9 @@ describe('DELETE /api/admin/users/:id — candidate', () => {
     await uploadRequired(other.agent, otherCase.id, 'INITIAL');
     const otherDocs = await prisma.document.findMany({ where: { caseId: otherCase.id } });
 
+    // The client's folder in the shared drive goes with the account.
+    const clientFolder = await waitFor(async () => (await prisma.case.findUnique({ where: { id: c.id } }))?.driveFolderId ?? null);
+
     const preview = expectStatus(await sa.agent.get(`/api/admin/users/${client.user.id}/deletion-preview`), 200).body;
     expect(preview.user).toMatchObject({ id: client.user.id, email: client.user.email, role: 'CLIENT' });
     expect(preview.counts).toMatchObject({ cases: 1, documents: docs.length, caseMessages: 2 });
@@ -90,6 +93,7 @@ describe('DELETE /api/admin/users/:id — candidate', () => {
     expect(await prisma.session.count({ where: { userId: client.user.id } })).toBe(0);
     expect(await prisma.notification.count({ where: { userId: client.user.id } })).toBe(0);
     for (const d of docs) expect(fs.existsSync(privateFile(d.storedName))).toBe(false);
+    expect(await prisma.driveNode.findUnique({ where: { id: clientFolder } })).toBeNull();
     // The old session no longer works.
     expectStatus(await client.agent.get('/api/cases'), 401);
 
@@ -157,7 +161,7 @@ describe('DELETE /api/admin/users/:id — staff member', () => {
       messagesReassigned: 1,
       announcementsReassigned: 1,
       driveNodesMoved: 3,
-      driveFolder: 'Silinmiş istifadəçi — Kamran Əliyev',
+      driveFolder: 'Gelöschter Benutzer — Kamran Əliyev',
     });
 
     expect(await prisma.user.findUnique({ where: { id: staff.user.id } })).toBeNull();
@@ -172,7 +176,7 @@ describe('DELETE /api/admin/users/:id — staff member', () => {
     expect((await prisma.driveNode.findUniqueOrThrow({ where: { id: sharedFile.id } })).createdById).toBeNull();
 
     const moved = await prisma.driveNode.findUniqueOrThrow({ where: { id: root.id } });
-    expect(moved).toMatchObject({ space: 'SHARED', parentId: sharedId, ownerId: null, system: false, inheritPermissions: false, name: 'Silinmiş istifadəçi — Kamran Əliyev' });
+    expect(moved).toMatchObject({ space: 'SHARED', parentId: sharedId, ownerId: null, system: false, inheritPermissions: false, name: 'Gelöschter Benutzer — Kamran Əliyev' });
     expect(await prisma.driveNode.findUniqueOrThrow({ where: { id: folder.id } })).toMatchObject({ space: 'SHARED', ownerId: null, parentId: root.id });
     expect(await prisma.driveNode.findUniqueOrThrow({ where: { id: file.id } })).toMatchObject({ space: 'SHARED', ownerId: null, parentId: folder.id, storageKey: key });
     expect(fs.existsSync(driveFile(key))).toBe(true);
@@ -194,8 +198,8 @@ describe('DELETE /api/admin/users/:id — staff member', () => {
       await prisma.driveNode.create({ data: { space: 'PERSONAL', kind: 'FOLDER', name: 'x', parentId: root.id, ownerId: u.user.id } });
     }
     const emptyRoot = await prisma.driveNode.create({ data: { space: 'PERSONAL', kind: 'FOLDER', name: 'E', ownerId: empty.user.id, system: true, inheritPermissions: false } });
-    expect(expectStatus(await del(sa.agent, a.user.id, a.user.email), 200).body.counts.driveFolder).toBe('Silinmiş istifadəçi — Ali V');
-    expect(expectStatus(await del(sa.agent, b.user.id, b.user.email), 200).body.counts.driveFolder).toBe('Silinmiş istifadəçi — Ali V (2)');
+    expect(expectStatus(await del(sa.agent, a.user.id, a.user.email), 200).body.counts.driveFolder).toBe('Gelöschter Benutzer — Ali V');
+    expect(expectStatus(await del(sa.agent, b.user.id, b.user.email), 200).body.counts.driveFolder).toBe('Gelöschter Benutzer — Ali V (2)');
     expect(expectStatus(await del(sa.agent, empty.user.id, empty.user.email), 200).body.counts.driveFolder).toBeNull();
     expect(await prisma.driveNode.findUnique({ where: { id: emptyRoot.id } })).toBeNull();
   });

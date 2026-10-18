@@ -77,6 +77,9 @@ const SalaryCalculator = lazy(() => import('./pages/tools/SalaryCalculator'));
 const AnerkennungGuide = lazy(() => import('./pages/tools/Anerkennung'));
 const CitiesGuide = lazy(() => import('./pages/tools/Cities'));
 const AdminArrivals = lazy(() => import('./pages/admin/Arrivals'));
+const AdminPartners = lazy(() => import('./pages/admin/Partners'));
+const AdminClientRegister = lazy(() => import('./pages/admin/ClientRegister'));
+const SheetEditor = lazy(() => import('./pages/workspace/SheetEditor'));
 const AccountInterviewPrep = lazy(() => import('./pages/account/InterviewPrep'));
 const AdminInterviewPrep = lazy(() => import('./pages/admin/InterviewPrep'));
 const AdminFinance = lazy(() => import('./pages/admin/Finance'));
@@ -298,6 +301,7 @@ export default function App() {
           >
             <Route index element={<Navigate to="home" replace />} />
             <Route path="home" element={<WorkspaceHome />} />
+            <Route path="sheet/:id" element={<SheetEditor />} />
             <Route path="drive/*" element={<WorkspaceDrive />} />
             <Route path="tasks/*" element={<WorkspaceTasks />} />
             <Route path="mail/*" element={<WorkspaceMail />} />
@@ -370,6 +374,8 @@ export default function App() {
             <Route path="tasks/*" element={<WorkspaceTasks />} />
             <Route path="announcements" element={<AdminAnnouncements />} />
             <Route path="arrivals/*" element={<AdminArrivals />} />
+            <Route path="partners/*" element={<AdminPartners />} />
+            <Route path="register" element={<AdminClientRegister />} />
             <Route path="interview-prep" element={<AdminInterviewPrep />} />
             <Route path="finance/*" element={<AdminFinance />} />
             <Route path="surveys/*" element={<AdminSurveys />} />

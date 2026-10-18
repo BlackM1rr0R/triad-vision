@@ -28,6 +28,7 @@ import { PASSPORT_SCAN_TIMEOUT_MS, scanPassportImage } from '../lib/docsIntel/pa
 import { recordConsent } from '../lib/privacy/consents.js';
 import { attachReferral } from '../lib/agents/referral.js';
 import { markClientsExcelDirty } from '../lib/clientsExcel.js';
+import { syncClientFolders } from '../lib/drive/caseFolders.js';
 
 export const authRouter = Router();
 
@@ -360,6 +361,7 @@ authRouter.patch('/me', requireAuth, async (req, res) => {
     data.passwordHash = await bcrypt.hash(body.newPassword, 12);
   }
   const user = await prisma.user.update({ where: { id: req.user!.id }, data });
+  if (body.firstName !== undefined || body.lastName !== undefined || body.passportNumber !== undefined) void syncClientFolders(user.id); // folder names
   if (body.newPassword) {
     // Every other device must log in again with the new password; this one keeps its session.
     await revokeUserSessions(user.id, req.session!.id);

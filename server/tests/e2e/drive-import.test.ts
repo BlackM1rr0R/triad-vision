@@ -37,10 +37,11 @@ describe('import of the old /docs workspaces into the drive', () => {
 
     const run = await importDocsToDrive();
     expect(run).toMatchObject({ dryRun: false, foldersCreated: 4, filesImported: 2, filesSkipped: 0, grantsUpserted: 2, errors: [] });
-    const root = await prisma.driveNode.findFirstOrThrow({ where: { space: 'PERSONAL', ownerId: owner.user.id, parentId: null } });
-    expect(root.name).toBe('Tofig M');
+    // Each old workspace lands in the shared space as "Mitarbeiter/<owner>".
+    const root = await prisma.driveNode.findFirstOrThrow({ where: { name: 'Tofig M', parent: { name: 'Mitarbeiter', system: true } } });
+    expect(root).toMatchObject({ space: 'SHARED', ownerId: null, system: false });
     const contract = await prisma.driveNode.findFirstOrThrow({ where: { name: 'Müqavilə.pdf' }, include: { parent: { include: { parent: { include: { parent: true } } } } } });
-    expect(contract).toMatchObject({ space: 'PERSONAL', ownerId: owner.user.id, kind: 'FILE', version: 2, size: 13, createdById: owner.user.id });
+    expect(contract).toMatchObject({ space: 'SHARED', ownerId: null, kind: 'FILE', version: 2, size: 13, createdById: owner.user.id });
     expect(contract.createdAt.toISOString()).toBe('2026-03-01T10:00:00.000Z');
     expect(contract.parent?.name).toBe('senedler');
     expect(contract.parent?.parent?.name).toBe('Firma A');

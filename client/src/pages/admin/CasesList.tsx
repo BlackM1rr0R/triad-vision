@@ -12,6 +12,7 @@ import { StatusBadge } from '@/components/admin/StatusBadge';
 import { ALL_STATUSES, actorSideLabel, eventLabel, fmtDate, fmtDateTime, fmtRelative, fullName, statusLabel } from '@/components/admin/labels';
 import type { AdminCaseListItem, AdminCasesResponse } from '@/components/admin/types';
 import { Chip, EmptyState, ErrorBlock, LoadingBlock, PageHead } from '@/components/admin/ui';
+import { BulkPartnerBar, CasePartnerCell, PartnerFilterSelect, SelectBox } from '@/components/partners/CasesPartnerTools';
 
 const isStatus = (v: string | null): v is CaseStatus => !!v && (ALL_STATUSES as string[]).includes(v);
 
@@ -80,6 +81,9 @@ export default function CasesList() {
   const sortParam = params.get('sort');
   const sort: SortKey = isSort(sortParam) ? sortParam : 'updated';
   const page = Math.max(1, Number(params.get('page')) || 1);
+  // Referral partner filter ('none' = without partner) and the rows picked for a bulk partner change.
+  const partner = params.get('partner') ?? '';
+  const [picked, setPicked] = useState<string[]>([]);
 
   const [searchInput, setSearchInput] = useState(search);
   useEffect(() => setSearchInput(search), [search]);
@@ -108,11 +112,11 @@ export default function CasesList() {
   }, [searchInput]);
 
   const { data, isLoading, isFetching, error, refetch } = useQuery({
-    queryKey: ['admin-cases', { status, search, mine, page }],
+    queryKey: ['admin-cases', { status, search, mine, page, partner }],
     queryFn: async () =>
       (
         await api.get<AdminCasesResponse>('/admin/cases', {
-          params: { status: status ?? undefined, search: search || undefined, mine: mine ? '1' : undefined, page },
+          params: { status: status ?? undefined, search: search || undefined, mine: mine ? '1' : undefined, page, partnerId: partner || undefined },
         })
       ).data,
     placeholderData: keepPreviousData,
@@ -129,6 +133,8 @@ export default function CasesList() {
     if (sort === 'age') return [...list].sort((a, b) => b.ageDays - a.ageDays);
     return list;
   }, [data, overdue, sort]);
+  useEffect(() => setPicked([]), [status, search, mine, page, partner]);
+  const togglePick = (id: string, on: boolean) => setPicked((prev) => (on ? [...new Set([...prev, id])] : prev.filter((x) => x !== id)));
 
   return (
     <div>
@@ -172,6 +178,7 @@ export default function CasesList() {
               ))}
             </select>
           </label>
+          <PartnerFilterSelect value={partner} onChange={(v) => update({ partner: v })} />
         </div>
         <div className="-mx-4 flex gap-1.5 overflow-x-auto px-4 pb-1 [scrollbar-width:none] sm:mx-0 sm:flex-wrap sm:px-0 sm:pb-0">
           <Chip active={overdue} onClick={() => update({ overdue: overdue ? null : '1' })}>
@@ -196,7 +203,7 @@ export default function CasesList() {
         <div className="rounded-xl border border-line bg-white">
           <EmptyState icon={FolderSearch} title={t('admin.cases.notFound')}>
             {t('admin.cases.notFoundText')}
-            {(status || search || mine || overdue) && (
+            {(status || search || mine || overdue || partner) && (
               <div className="mt-3">
                 <button type="button" className="btn-white btn-sm border border-line" onClick={() => setParams({}, { replace: true })}>
                   <X className="size-3.5" /> {t('admin.cases.resetFilters')}
@@ -207,17 +214,26 @@ export default function CasesList() {
         </div>
       ) : (
         <>
+          <BulkPartnerBar ids={picked} onDone={() => setPicked([])} />
           {/* Desktop table */}
           <div className="hidden overflow-x-auto rounded-xl border border-line bg-white xl:block">
-            <table className="w-full min-w-[1080px] text-left text-sm">
+            <table className="w-full min-w-[1180px] text-left text-sm">
               <thead className="border-b border-line bg-surface/70 text-[11px] font-semibold tracking-wide whitespace-nowrap text-muted uppercase">
                 <tr>
+                  <th className="w-8 py-2.5 pl-4">
+                    <SelectBox
+                      label={t('refPartners.selectAll')}
+                      checked={items.length > 0 && items.every((c) => picked.includes(c.id))}
+                      onChange={(on) => setPicked(on ? items.map((c) => c.id) : [])}
+                    />
+                  </th>
                   <th className="px-4 py-2.5">{t('admin.cases.th.number')}</th>
                   <th className="px-4 py-2.5">{t('admin.cases.th.client')}</th>
                   <th className="px-4 py-2.5">{t('admin.cases.th.profession')}</th>
                   <th className="px-4 py-2.5">{t('admin.cases.th.status')}</th>
                   <th className="px-4 py-2.5">{t('admin.cases.th.lastEvent')}</th>
                   <th className="px-4 py-2.5">{t('admin.cases.th.staff')}</th>
+                  <th className="px-4 py-2.5">{t('refPartners.field')}</th>
                   <th className="px-4 py-2.5 text-right">{t('admin.cases.th.updated')}</th>
                 </tr>
               </thead>
@@ -228,6 +244,9 @@ export default function CasesList() {
                     className="cursor-pointer transition hover:bg-brand-50/50"
                     onClick={() => navigate(`/admin/cases/${c.id}`)}
                   >
+                    <td className="py-3 pl-4 align-top" onClick={(e) => e.stopPropagation()}>
+                      <SelectBox label={t('refPartners.selectRow')} checked={picked.includes(c.id)} onChange={(on) => togglePick(c.id, on)} />
+                    </td>
                     <td className="px-4 py-3 align-top">
                       <Link
                         to={`/admin/cases/${c.id}`}
@@ -270,6 +289,9 @@ export default function CasesList() {
                     <td className="px-4 py-3 align-top whitespace-nowrap text-ink/80">
                       {c.assignedStaff ? fullName(c.assignedStaff) : <span className="text-muted">{t('admin.cases.unassigned')}</span>}
                     </td>
+                    <td className="max-w-[10rem] px-4 py-3 align-top">
+                      <CasePartnerCell c={c} />
+                    </td>
                     <td className="px-4 py-3 text-right align-top text-xs whitespace-nowrap text-muted" title={fmtDate(c.updatedAt)}>
                       {fmtRelative(c.updatedAt)}
                     </td>
@@ -301,6 +323,7 @@ export default function CasesList() {
                   </div>
                   <div className="mt-2.5 flex items-center justify-between gap-2 text-[11px] text-muted">
                     <span className="truncate">{c.assignedStaff ? fullName(c.assignedStaff) : t('admin.cases.unassigned')}</span>
+                    <CasePartnerCell c={c} empty="" />
                     <span className="shrink-0">{fmtRelative(c.updatedAt)}</span>
                   </div>
                 </Link>

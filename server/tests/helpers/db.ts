@@ -5,6 +5,8 @@ export { prisma };
 
 /** Deletes all rows, children before parents so foreign keys are never violated. */
 export const resetDb = async () => {
+  await prisma.clientRegisterColumn.deleteMany();
+  await prisma.referralPartner.deleteMany(); // cases keep partnerId = null (SetNull)
   // Interview prep, surveys, contract templates, employer requests
   await prisma.satisfactionSurvey.deleteMany();
   await prisma.interviewPrepQuestion.deleteMany();

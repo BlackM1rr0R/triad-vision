@@ -11,6 +11,7 @@ import { audit } from '../lib/audit.js';
 import { badRequest, forbidden, notFound, parse } from '../lib/http.js';
 import { applyMrzToProfile, langDataAvailable, mrzOf, OCR_IMAGE_MIME, ocrDocument, profileFromMrz } from '../lib/docsIntel/ocr.js';
 import { buildPacket, packetFileName, type PacketItem } from '../lib/docsIntel/packet.js';
+import { copyDocumentToDrive } from '../lib/drive/caseFolders.js';
 import { buildForm, FORM_KINDS, formFileName, loadFormData, missingFields, type FormKind } from '../lib/docsIntel/forms.js';
 
 /**
@@ -165,6 +166,7 @@ documentsRouter.get('/cases/:caseId/packet', async (req, res) => {
       data: { caseId: c.id, stage: 'OTHER', originalName: name, storedName, mimeType: 'application/pdf', size: pdf.length, status: 'ACCEPTED', uploadedById: req.user!.id },
     });
     await prisma.caseEvent.create({ data: { caseId: c.id, type: 'STAFF_DOCUMENT_UPLOADED', note: name, actorId: req.user!.id, visibleToClient: true } });
+    void copyDocumentToDrive(doc.id); // a copy in the client's drive folder
     res.status(201).json({ document: doc, pages, entries });
     return;
   }

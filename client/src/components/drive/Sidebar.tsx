@@ -3,9 +3,9 @@ import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
 import type { LucideIcon } from 'lucide-react';
-import { ChevronRight, Clock, Share2, ShieldCheck, Star, Trash2 } from 'lucide-react';
+import { ChevronRight, Clock, Star, Trash2 } from 'lucide-react';
 import { formatBytes } from '@/lib/api';
-import { driveKeys, fetchChildren, isVirtual } from './api';
+import { driveKeys, fetchChildren } from './api';
 import { useDropTarget, type PickedFile } from './dnd';
 import { ItemIcon } from './fileIcons';
 import { can, type DriveItem, type RootsResponse, type StatsResponse } from './types';
@@ -41,12 +41,12 @@ const TreeNode = memo(function TreeNode({
 }) {
   const { t } = useTranslation();
   const auto = props.trail.includes(item.id);
-  const [expanded, setExpanded] = useState(auto);
+  const [expanded, setExpanded] = useState(auto || depth === 0);
   useEffect(() => {
     if (auto) setExpanded(true);
   }, [auto]);
   // Stage folders only hold files; a folder whose children turned out to be files has nothing to expand.
-  const mayHaveFolders = (item.childCount ?? 0) > 0 && !(item.virtual && item.stage);
+  const mayHaveFolders = (item.childCount ?? 0) > 0;
   const q = useQuery({
     queryKey: driveKeys.children(item.id, 'FOLDER'),
     queryFn: () => fetchChildren(item.id, 'FOLDER'),
@@ -55,7 +55,7 @@ const TreeNode = memo(function TreeNode({
   });
   const folders = q.data?.items.filter((i) => i.kind === 'FOLDER') ?? [];
   const hasChildren = mayHaveFolders && !(q.data && folders.length === 0);
-  const writable = can(item.myAccess, 'EDIT') && !isVirtual(item) && item.space !== 'CASES';
+  const writable = can(item.myAccess, 'EDIT');
   const drop = useDropTarget({ targetId: item.id, enabled: writable, onFiles: props.onFiles, onItems: props.onItems });
   const active = props.activeId === item.id;
   const text = label ?? displayName(item, t, props.myId);
@@ -107,10 +107,11 @@ const TreeNode = memo(function TreeNode({
   );
 });
 
-const QuickLink = ({ icon: Icon, label, href, active, onOpen, tone, children }: { icon: LucideIcon; label: string; href: string; active: boolean; onOpen: (h: string) => void; tone: string; children?: ReactNode }) => (
+const QuickLink = ({ icon: Icon, label, hint, href, active, onOpen, tone, children }: { icon: LucideIcon; label: string; hint?: string; href: string; active: boolean; onOpen: (h: string) => void; tone: string; children?: ReactNode }) => (
   <li>
     <a
       href={href}
+      title={hint ? `${label} — ${hint}` : label}
       onClick={(e) => {
         e.preventDefault();
         onOpen(href);
@@ -121,13 +122,16 @@ const QuickLink = ({ icon: Icon, label, href, active, onOpen, tone, children }: 
       )}
     >
       <Icon className={clsx('size-[18px] shrink-0', active ? 'text-white' : tone)} strokeWidth={1.7} />
-      <span className="truncate">{label}</span>
+      <span className="min-w-0">
+        <span className="block truncate">{label}</span>
+        {hint && <span className={clsx('block truncate text-[11px] font-normal', active ? 'text-white/80' : 'text-muted')}>{hint}</span>}
+      </span>
       {children}
     </a>
   </li>
 );
 
-/** Left pane: folder tree (lazy, drop targets) and quick access views. */
+/** Left pane: the shared workspace (folder tree), its sections and quick access views. */
 export const Sidebar = (props: SidebarProps) => {
   const { t } = useTranslation();
   const { roots, stats, activeView, onOpen } = props;
@@ -136,40 +140,22 @@ export const Sidebar = (props: SidebarProps) => {
     <nav className="flex h-full min-h-0 flex-col" aria-label={t('drive.nav.folders')}>
       <div className="min-h-0 flex-1 space-y-5 overflow-y-auto overscroll-contain px-2 py-3">
         <section>
-          <h2 className="px-2.5 pb-1.5 text-[11px] font-bold tracking-wider text-muted uppercase">{t('drive.nav.folders')}</h2>
-          <ul className="space-y-0.5">
-            {roots?.personal && <TreeNode item={roots.personal} depth={0} props={props} label={rootLabel(roots.personal, t)} />}
-            {roots?.shared && <TreeNode item={roots.shared} depth={0} props={props} label={rootLabel(roots.shared, t)} />}
-            {roots?.cases && <TreeNode item={roots.cases} depth={0} props={props} label={rootLabel(roots.cases, t)} />}
-          </ul>
+          <h2 className="px-2.5 pb-0.5 text-[11px] font-bold tracking-wider text-muted uppercase">{t('drive.shared.title')}</h2>
+          <p className="px-2.5 pb-1.5 text-[11px] leading-snug text-muted">{t('drive.shared.subtitle')}</p>
+          <ul className="space-y-0.5">{roots?.shared && <TreeNode item={roots.shared} depth={0} props={props} label={rootLabel(roots.shared, t)} />}</ul>
         </section>
         <section>
           <h2 className="px-2.5 pb-1.5 text-[11px] font-bold tracking-wider text-muted uppercase">{t('drive.nav.quickAccess')}</h2>
           <ul className="space-y-0.5">
-            <QuickLink icon={Share2} tone="text-brand-600" label={t('drive.nav.sharedWithMe')} href={`${base}/shared`} active={activeView === 'shared'} onOpen={onOpen} />
+            <QuickLink icon={Star} tone="text-amber-500" label={t('drive.shared.favorites')} href={`${base}/starred`} active={activeView === 'starred'} onOpen={onOpen} />
             <QuickLink icon={Clock} tone="text-sky-600" label={t('drive.nav.recent')} href={`${base}/recent`} active={activeView === 'recent'} onOpen={onOpen} />
-            <QuickLink icon={Star} tone="text-amber-500" label={t('drive.nav.starred')} href={`${base}/starred`} active={activeView === 'starred'} onOpen={onOpen} />
             <QuickLink icon={Trash2} tone="text-muted" label={t('drive.nav.trash')} href={`${base}/trash`} active={activeView === 'trash'} onOpen={onOpen} />
-            {props.isSuper && (
-              <QuickLink icon={ShieldCheck} tone="text-violet-600" label={t('drive.nav.access')} href={`${base}/access`} active={activeView === 'access'} onOpen={onOpen} />
-            )}
           </ul>
         </section>
-        {props.isSuper && !!roots?.team.length && (
-          <section>
-            <h2 className="px-2.5 pb-1.5 text-[11px] font-bold tracking-wider text-muted uppercase">{t('drive.nav.team')}</h2>
-            <ul className="space-y-0.5">
-              {roots.team.map((r) => (
-                <TreeNode key={r.id} item={r} depth={0} props={props} />
-              ))}
-            </ul>
-          </section>
-        )}
       </div>
       {stats && (
         <div className="shrink-0 border-t border-line px-4 py-3 text-xs text-muted">
           <p className="mb-1 font-semibold text-ink">{t('drive.nav.storage')}</p>
-          <p>{t('drive.stats.mine', { size: formatBytes(stats.personal.bytes) })}</p>
           <p>{t('drive.stats.shared', { size: formatBytes(stats.shared.bytes) })}</p>
           {stats.trash.bytes > 0 && <p>{t('drive.stats.trash', { size: formatBytes(stats.trash.bytes) })}</p>}
           {stats.total && <p className="mt-1 font-medium text-ink/80">{t('drive.stats.total', { size: formatBytes(stats.total.bytes), files: stats.total.files })}</p>}

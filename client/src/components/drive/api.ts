@@ -9,7 +9,7 @@ const enc = encodeURIComponent;
 export const driveKeys = {
   all: ['drive'] as const,
   roots: ['drive', 'roots'] as const,
-  children: (id: string, kind?: 'FOLDER', status?: string) => ['drive', 'children', id, kind ?? 'ALL', status ?? ''] as const,
+  children: (id: string, kind?: 'FOLDER') => ['drive', 'children', id, kind ?? 'ALL'] as const,
   node: (id: string) => ['drive', 'node', id] as const,
   access: (id: string) => ['drive', 'access', id] as const,
   list: (name: string, extra?: unknown) => ['drive', 'list', name, extra ?? null] as const,
@@ -17,8 +17,7 @@ export const driveKeys = {
 };
 
 export const fetchRoots = async () => (await api.get<RootsResponse>('/drive/roots')).data;
-export const fetchChildren = async (id: string, kind?: 'FOLDER', status?: string) =>
-  (await api.get<Listing>(`/drive/nodes/${enc(id)}/children`, { params: { kind, status: status || undefined } })).data;
+export const fetchChildren = async (id: string, kind?: 'FOLDER') => (await api.get<Listing>(`/drive/nodes/${enc(id)}/children`, { params: { kind } })).data;
 
 export const contentUrl = (id: string, download = false) => `/api/drive/nodes/${enc(id)}/content${download ? '?download=1' : ''}`;
 export const versionUrl = (id: string, versionId: string) => `/api/drive/nodes/${enc(id)}/versions/${enc(versionId)}/content`;
@@ -57,4 +56,18 @@ export const invalidateDrive = (qc: QueryClient) => qc.invalidateQueries({ query
 
 export const batchCall = async (url: string, body: unknown) => (await api.post<{ results: BatchResult[] }>(url, body)).data.results;
 
-export const isVirtual = (i: Pick<DriveItem, 'id'>) => i.id.startsWith('case:') || i.id.startsWith('doc:');
+/** Bulk actions (multi-select): one request, per-item results, one audit entry on the server. */
+export const bulkCall = async (action: 'delete' | 'move', body: { ids: string[]; targetId?: string }) =>
+  (await api.post<{ results: BatchResult[]; ok: number; failed: number }>(`/drive/bulk/${action}`, body)).data.results;
+
+/** Creates an empty spreadsheet (.xlsx) in a folder; the sheet editor opens it at /workspace/sheet/<id>. */
+export const createSheet = async (parentId: string, name: string) => (await api.post<{ id: string }>('/drive/sheets', { parentId, name })).data.id;
+
+export const sheetHref = (id: string) => `/workspace/sheet/${encodeURIComponent(id)}`;
+
+const XLSX = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+/** An .xlsx file the sheet editor can open as a table. */
+export const isSheet = (i: Pick<DriveItem, 'kind' | 'name' | 'mimeType'>) => i.kind === 'FILE' && (i.mimeType === XLSX || /\.xlsx$/i.test(i.name));
+
+/** There are no virtual items any more (the cases area is a real folder); kept for older callers. */
+export const isVirtual = (_i: Pick<DriveItem, 'id'>) => false;

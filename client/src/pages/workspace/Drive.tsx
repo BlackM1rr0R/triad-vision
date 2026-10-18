@@ -13,6 +13,7 @@ import {
   ExternalLink,
   Eye,
   FileArchive,
+  FileSpreadsheet,
   FolderInput,
   FolderOpen,
   FolderPlus,
@@ -35,8 +36,6 @@ import {
   XCircle,
 } from 'lucide-react';
 import { registerCopy } from '@/i18n';
-import { statusLabel } from '@/components/admin/labels';
-import type { CaseStatus } from '@/lib/types';
 import { adminCopy } from '@/i18n/admin';
 import { driveCopy } from '@/i18n/pagesDrive';
 import { api } from '@/lib/api';
@@ -55,18 +54,22 @@ import { Sidebar } from '@/components/drive/Sidebar';
 import { Toolbar, type CrumbView, type ToolAction } from '@/components/drive/Toolbar';
 import { UploadPanel } from '@/components/drive/UploadPanel';
 import { useDropTarget, type PickedFile } from '@/components/drive/dnd';
-import { FOLDER_SWATCH } from '@/components/drive/fileIcons';
+import { FOLDER_SWATCH, sectionOf } from '@/components/drive/fileIcons';
+import { ClientFolderHeader, PartnerFolderHeader, PartnersOverview, SectionHeader } from '@/components/drive/FolderHeaders';
 import { crumbLabel, rootLabel } from '@/components/drive/labels';
 import {
   batchCall,
+  bulkCall,
   contentUrl,
+  createSheet,
   driveKeys,
   exportUrl,
   fetchChildren,
   fetchRoots,
   invalidateDrive,
-  isVirtual,
+  isSheet,
   reportBatch,
+  sheetHref,
   startDownload,
   toastDriveError,
 } from '@/components/drive/api';
@@ -104,8 +107,6 @@ const parseLocation = (splat: string, params: URLSearchParams): DriveLocation =>
   return { kind: 'home' };
 };
 
-const CASE_STATUSES: CaseStatus[] = ['DOCUMENTS_PENDING', 'DOCUMENTS_REVIEW', 'CONTRACT_SENT', 'CONTRACT_SIGNED', 'EMBASSY_DOCUMENTS', 'EMBASSY_REVIEW', 'APPOINTMENT_SCHEDULED', 'DECISION_PENDING', 'APPROVED', 'REJECTED', 'CANCELLED'];
-
 const TYPE_FILTERS = ['folder', 'pdf', 'word', 'excel', 'presentation', 'image', 'archive', 'text'] as const;
 
 const collator = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' });
@@ -118,13 +119,14 @@ interface FlatResponse {
 type Confirm =
   | { kind: 'trash'; items: DriveItem[] }
   | { kind: 'purge'; items: DriveItem[] }
-  | { kind: 'caseDocs'; items: DriveItem[] }
   | { kind: 'empty' }
   | { kind: 'version'; item: DriveItem; v: VersionRow };
 
 /**
- * Team drive: a full-screen, Explorer-like document environment (folder tree, address bar, large icons
- * or details, multi-select, keyboard, context menu, drag & drop, uploads, sharing, recycle bin).
+ * Team drive: ONE shared workspace ("Gemeinsame Dokumente") where the whole team works — client folders
+ * (Anträge / Partner), former personal files (Mitarbeiter) and everything else. A full-screen, Explorer-like
+ * environment: folder tree, address bar, large icons or details, multi-select with checkboxes (shift ranges,
+ * select all) and bulk delete / move / ZIP, keyboard, context menu, drag & drop, uploads, recycle bin.
  */
 export default function WorkspaceDrive() {
   const { t } = useTranslation();
@@ -134,10 +136,10 @@ export default function WorkspaceDrive() {
   const { '*': splat = '' } = useParams();
   const [params] = useSearchParams();
   const { user } = useAuth();
-  /** A document, a case folder or a stage folder in the Cases area (what a super admin may delete). */
-  const isCaseDoc = (i: DriveItem) => i.id.startsWith('doc:') || i.id.startsWith('case:');
   const myId = user?.id ?? '';
   const isSuper = user?.role === 'SUPER_ADMIN';
+  /** Deleting for good (and emptying the bin) is for admins and above. */
+  const isAdmin = user?.role === 'ADMIN' || isSuper;
   const loc = useMemo(() => parseLocation(splat, params), [splat, params]);
 
   const roots = useQuery({ queryKey: driveKeys.roots, queryFn: fetchRoots, staleTime: 60_000 });
@@ -146,11 +148,9 @@ export default function WorkspaceDrive() {
   const trashDays = roots.data?.limits.trashDays ?? 30;
 
   const folderId = loc.kind === 'folder' ? loc.id : loc.kind === 'cases' ? (roots.data?.cases?.id ?? null) : null;
-  // The Cases root can be filtered by case status (?status=APPROVED).
-  const caseStatus = folderId && folderId === roots.data?.cases?.id ? (params.get('status') ?? '') : '';
   const listing = useQuery({
-    queryKey: driveKeys.children(folderId ?? '', undefined, caseStatus),
-    queryFn: () => fetchChildren(folderId!, undefined, caseStatus),
+    queryKey: driveKeys.children(folderId ?? ''),
+    queryFn: () => fetchChildren(folderId!),
     enabled: !!folderId,
     placeholderData: keepPreviousData,
     retry: (n, err) => n < 1 && (err as { response?: { status?: number } })?.response?.status !== 404,
@@ -165,7 +165,7 @@ export default function WorkspaceDrive() {
 
   // ── view preferences ──
   const [view, setView] = useState<ViewMode>(() => readPref('tv-drive-view', ['grid', 'list'] as const, 'grid'));
-  const [sortKey, setSortKey] = useState<SortKey>(() => readPref('tv-drive-sort', ['name', 'modified', 'size', 'type'] as const, 'name'));
+  const [sortKey, setSortKey] = useState<SortKey>(() => readPref('tv-drive-sort', ['name', 'modified', 'size', 'type', 'owner'] as const, 'name'));
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>(() => readPref('tv-drive-dir', ['asc', 'desc'] as const, 'asc'));
   const [detailsOpen, setDetailsOpen] = useState(() => readPref('tv-drive-details', ['1', '0'] as const, '1') === '1');
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -187,6 +187,7 @@ export default function WorkspaceDrive() {
       if (sortKey === 'modified') r = new Date(loc.kind === 'trash' ? (a.deletedAt ?? a.updatedAt) : a.updatedAt).getTime() - new Date(loc.kind === 'trash' ? (b.deletedAt ?? b.updatedAt) : b.updatedAt).getTime();
       else if (sortKey === 'size') r = (a.size ?? a.childCount ?? 0) - (b.size ?? b.childCount ?? 0);
       else if (sortKey === 'type') r = collator.compare(a.mimeType ?? '', b.mimeType ?? '');
+      else if (sortKey === 'owner') r = collator.compare(a.createdBy ? `${a.createdBy.firstName} ${a.createdBy.lastName}` : '', b.createdBy ? `${b.createdBy.firstName} ${b.createdBy.lastName}` : '');
       if (r === 0) r = collator.compare(a.name, b.name);
       return r * dir;
     });
@@ -256,7 +257,7 @@ export default function WorkspaceDrive() {
   const dirInput = useRef<HTMLInputElement>(null);
   const uploadTarget = useRef<string | null>(null);
 
-  const writable = (i: DriveItem | undefined | null) => !!i && i.kind === 'FOLDER' && can(i.myAccess, 'EDIT') && !isVirtual(i) && i.space !== 'CASES';
+  const writable = (i: DriveItem | undefined | null) => !!i && i.kind === 'FOLDER' && can(i.myAccess, 'EDIT');
   const canCreateHere = writable(folder);
 
   const onFiles = useCallback((files: PickedFile[], targetId: string) => uploads.enqueue(files, targetId), [uploads]);
@@ -285,6 +286,12 @@ export default function WorkspaceDrive() {
     });
   const onItems = useCallback((list: DriveItem[], targetId: string, copy: boolean) => void moveOrCopy(list, targetId, copy), // eslint-disable-next-line react-hooks/exhaustive-deps
   []);
+  /** "Move to…" with the folder picker: one bulk request for the whole selection. */
+  const bulkMove = (list: DriveItem[], targetId: string) =>
+    run(async () => {
+      reportBatch(await bulkCall('move', { ids: list.map((i) => i.id), targetId }), 'drive.toasts.moved');
+      clear();
+    });
 
   const createFolder = useMutation({
     mutationFn: async (name: string) => (await api.post<{ item: DriveItem }>(`/drive/nodes/${encodeURIComponent(folderId!)}/folders`, { name })).data.item,
@@ -293,6 +300,15 @@ export default function WorkspaceDrive() {
       setDialog(null);
       refresh();
       select(new Set([item.id]), item.id, item.id);
+    },
+    onError: toastDriveError,
+  });
+  const newSheet = useMutation({
+    mutationFn: async ({ parentId, name }: { parentId: string; name: string }) => createSheet(parentId, /\.xlsx$/i.test(name) ? name : `${name}.xlsx`),
+    onSuccess: (id) => {
+      setDialog(null);
+      refresh();
+      go(sheetHref(id));
     },
     onError: toastDriveError,
   });
@@ -318,7 +334,7 @@ export default function WorkspaceDrive() {
     });
 
   // ── dialogs ──
-  const [dialog, setDialog] = useState<{ kind: 'newFolder' } | { kind: 'rename'; item: DriveItem } | null>(null);
+  const [dialog, setDialog] = useState<{ kind: 'newFolder' } | { kind: 'newSheet'; parentId?: string } | { kind: 'rename'; item: DriveItem } | null>(null);
   const [picker, setPicker] = useState<{ mode: 'move' | 'copy'; items: DriveItem[] } | null>(null);
   const [confirm, setConfirm] = useState<Confirm | null>(null);
   const [shareItem, setShareItem] = useState<DriveItem | null>(null);
@@ -331,9 +347,8 @@ export default function WorkspaceDrive() {
     const c = confirm;
     if (!c) return;
     void run(async () => {
-      if (c.kind === 'trash') reportBatch(await batchCall('/drive/trash', { ids: c.items.map((i) => i.id) }), 'drive.toasts.trashed');
+      if (c.kind === 'trash') reportBatch(await bulkCall('delete', { ids: c.items.map((i) => i.id) }), 'drive.toasts.trashed');
       else if (c.kind === 'purge') reportBatch(await batchCall('/drive/purge', { ids: c.items.map((i) => i.id) }), 'drive.toasts.purged');
-      else if (c.kind === 'caseDocs') reportBatch(await batchCall('/drive/case-documents/delete', { ids: c.items.map((i) => i.id) }), 'drive.toasts.purged');
       else if (c.kind === 'empty') {
         await api.delete('/drive/trash');
         toast.success(t('drive.toasts.emptied'));
@@ -363,6 +378,11 @@ export default function WorkspaceDrive() {
       go(folderHref(item.id));
       return;
     }
+    // Spreadsheets open as a table in the sheet editor.
+    if (isSheet(item) && can(item.myAccess, 'VIEW')) {
+      go(sheetHref(item.id));
+      return;
+    }
     if (item.previewable && item.mimeType?.startsWith('image/')) setPreviewItem(item);
     else if (item.previewable) window.open(contentUrl(item.id), '_blank', 'noopener');
     else if (can(item.myAccess, 'DOWNLOAD')) startDownload(contentUrl(item.id, true));
@@ -380,7 +400,9 @@ export default function WorkspaceDrive() {
   const canUp = !!folderId && ((listing.data?.path.length ?? 0) > 1 || !!listing.data?.truncated);
 
   // ── action sets ──
-  const editable = (list: DriveItem[]) => list.length > 0 && list.every((i) => can(i.myAccess, 'EDIT') && !i.system && !isVirtual(i));
+  const editable = (list: DriveItem[]) => list.length > 0 && list.every((i) => can(i.myAccess, 'EDIT') && !i.system);
+  /** Access settings are offered only to people who manage a folder (by default everyone just edits). */
+  const manageable = (i: DriveItem | null | undefined) => !!i && can(i.myAccess, 'MANAGE');
   const copyable = (list: DriveItem[]) => list.length > 0 && list.every((i) => can(i.myAccess, i.kind === 'FILE' ? 'DOWNLOAD' : 'EXPORT'));
   const zippable = (list: DriveItem[]) => list.length > 0 && list.some((i) => can(i.myAccess, 'EXPORT'));
   const paste = (targetId: string) => {
@@ -407,17 +429,19 @@ export default function WorkspaceDrive() {
       if (canCreateHere) {
         out.push(
           { id: 'new', label: t('drive.toolbar.newFolder'), icon: FolderPlus, onSelect: () => setDialog({ kind: 'newFolder' }) },
+          { id: 'sheet', label: t('drive.shared.newSheet'), icon: FileSpreadsheet, onSelect: () => setDialog({ kind: 'newSheet' }) },
           { id: 'up', label: t('drive.toolbar.uploadFiles'), icon: Upload, onSelect: () => pickFiles(folderId!) },
           { id: 'updir', label: t('drive.toolbar.uploadFolder'), icon: FolderUp, onSelect: () => pickDir(folderId!) },
         );
         if (clipboard) out.push({ id: 'paste', label: t('drive.actions.pasteN', { count: clipboard.items.length }), icon: ClipboardPaste, onSelect: () => paste(folderId!) });
         out.push({ kind: 'separator', id: 's1' });
       }
-      if (loc.kind === 'trash' && items.length) out.push({ id: 'empty', label: t('drive.actions.emptyTrash'), icon: Trash2, danger: true, onSelect: () => setConfirm({ kind: 'empty' }) });
+      if (loc.kind === 'trash' && items.length && isAdmin) out.push({ id: 'empty', label: t('drive.actions.emptyTrash'), icon: Trash2, danger: true, onSelect: () => setConfirm({ kind: 'empty' }) });
       out.push({ id: 'refresh', label: t('drive.toolbar.refresh'), icon: RefreshCw, onSelect: refresh });
       if (items.length) out.push({ id: 'all', label: t('drive.actions.selectAll'), icon: Clipboard, onSelect: () => select(new Set(items.map((i) => i.id)), null, null) });
       if (folder) {
-        out.push({ kind: 'separator', id: 's2' }, { id: 'share', label: t('drive.actions.share'), icon: Shield, onSelect: () => setShareItem(folder) });
+        out.push({ kind: 'separator', id: 's2' });
+        if (manageable(folder)) out.push({ id: 'share', label: t('drive.actions.share'), icon: Shield, onSelect: () => setShareItem(folder) });
         if (folder.kind === 'FOLDER' && zippable([folder])) out.push({ id: 'zip', label: t('drive.actions.downloadZip'), icon: FileArchive, onSelect: () => zip([folder]) });
       }
       return out;
@@ -427,13 +451,18 @@ export default function WorkspaceDrive() {
       return [
         { id: 'restore', label: t('drive.actions.restore'), icon: RotateCcw, onSelect: () => restore(list), disabled: !list.every((i) => can(i.myAccess, 'EDIT')) },
         { id: 'props', label: t('drive.actions.properties'), icon: Info, onSelect: () => setDetailsOpen(true), disabled: !single },
-        { kind: 'separator', id: 's' },
-        { id: 'purge', label: t('drive.actions.deleteForever'), icon: XCircle, danger: true, onSelect: () => setConfirm({ kind: 'purge', items: list }) },
+        ...(isAdmin
+          ? ([{ kind: 'separator', id: 's' }, { id: 'purge', label: t('drive.actions.deleteForever'), icon: XCircle, danger: true, onSelect: () => setConfirm({ kind: 'purge', items: list }) }] as MenuEntry[])
+          : []),
       ];
     }
     const out: MenuEntry[] = [];
     if (single) {
       out.push({ id: 'open', label: t('drive.actions.open'), icon: single.kind === 'FOLDER' ? FolderOpen : Eye, onSelect: () => open(single) });
+      if (isSheet(single)) {
+        out.push({ id: 'table', label: t('drive.shared.openAsTable'), icon: FileSpreadsheet, onSelect: () => go(sheetHref(single.id)) });
+        if (single.previewable) out.push({ id: 'preview', label: t('drive.details.openPreview'), icon: Eye, onSelect: () => window.open(contentUrl(single.id), '_blank', 'noopener') });
+      }
       if (single.caseId) out.push({ id: 'case', label: t('drive.actions.openCase'), icon: Briefcase, onSelect: () => go(`/admin/cases/${single.caseId}`) });
       if (flatKind && single.location) out.push({ id: 'loc', label: t('drive.actions.openLocation'), icon: ExternalLink, onSelect: () => go(folderHref(single.location!.id)) });
       out.push({ kind: 'separator', id: 's0' });
@@ -443,28 +472,24 @@ export default function WorkspaceDrive() {
     out.push({ kind: 'separator', id: 's1' });
     if (editable(list)) out.push({ id: 'cut', label: t('drive.actions.cut'), icon: Scissors, onSelect: () => cut(list) });
     if (copyable(list)) out.push({ id: 'copy', label: t('drive.actions.copy'), icon: Copy, onSelect: () => copyToClipboard(list) });
+    if (single && writable(single)) out.push({ id: 'sheetIn', label: t('drive.shared.newSheet'), icon: FileSpreadsheet, onSelect: () => setDialog({ kind: 'newSheet', parentId: single.id }) });
     if (single && clipboard && writable(single)) out.push({ id: 'paste', label: t('drive.actions.pasteN', { count: clipboard.items.length }), icon: ClipboardPaste, onSelect: () => paste(single.id) });
     if (editable(list)) out.push({ id: 'move', label: t('drive.actions.moveTo'), icon: FolderInput, onSelect: () => setPicker({ mode: 'move', items: list }) });
     if (copyable(list)) out.push({ id: 'copyto', label: t('drive.actions.copyTo'), icon: Copy, onSelect: () => setPicker({ mode: 'copy', items: list }) });
     if (single && editable([single])) out.push({ id: 'rename', label: t('drive.actions.rename'), icon: Pencil, onSelect: () => setDialog({ kind: 'rename', item: single }) });
-    if (single?.kind === 'FOLDER' && can(single.myAccess, 'MANAGE') && !isVirtual(single)) out.push({ id: 'color', label: t('drive.actions.color'), icon: Palette, onSelect: () => setColorFor(single) });
+    if (single?.kind === 'FOLDER' && can(single.myAccess, 'MANAGE')) out.push({ id: 'color', label: t('drive.actions.color'), icon: Palette, onSelect: () => setColorFor(single) });
     out.push({ kind: 'separator', id: 's2' });
-    const real = list.filter((i) => !isVirtual(i));
-    if (real.length) {
-      const allStarred = real.every((i) => i.starred);
-      out.push({ id: 'star', label: t(allStarred ? 'drive.actions.unstar' : 'drive.actions.star'), icon: allStarred ? StarOff : Star, onSelect: () => star(real, !allStarred) });
+    if (list.length) {
+      const allStarred = list.every((i) => i.starred);
+      out.push({ id: 'star', label: t(allStarred ? 'drive.actions.unstar' : 'drive.actions.star'), icon: allStarred ? StarOff : Star, onSelect: () => star(list, !allStarred) });
     }
     if (single) {
-      out.push({ id: 'share', label: t('drive.actions.share'), icon: Shield, onSelect: () => setShareItem(single) });
+      if (manageable(single)) out.push({ id: 'share', label: t('drive.actions.share'), icon: Shield, onSelect: () => setShareItem(single) });
       out.push({ id: 'props', label: t('drive.actions.properties'), icon: Info, onSelect: () => setDetailsOpen(true) });
-      if (single.kind === 'FILE' && !isVirtual(single)) out.push({ id: 'versions', label: t('drive.actions.versions'), icon: History, onSelect: () => setDetailsOpen(true) });
+      if (single.kind === 'FILE') out.push({ id: 'versions', label: t('drive.actions.versions'), icon: History, onSelect: () => setDetailsOpen(true) });
     }
     if (editable(list)) {
       out.push({ kind: 'separator', id: 's3' }, { id: 'del', label: t('drive.actions.delete'), icon: Trash2, danger: true, onSelect: () => setConfirm({ kind: 'trash', items: list }) });
-    }
-    // Case documents can only be removed by a super admin, and then permanently.
-    if (isSuper && list.length && list.every(isCaseDoc)) {
-      out.push({ kind: 'separator', id: 's4' }, { id: 'caseDel', label: t('drive.actions.deleteForever'), icon: XCircle, danger: true, onSelect: () => setConfirm({ kind: 'caseDocs', items: list }) });
     }
     // No two separators in a row / at the ends.
     return out.filter((e, i, arr) => e.kind !== 'separator' || (i > 0 && i < arr.length - 1 && arr[i - 1].kind !== 'separator'));
@@ -476,19 +501,19 @@ export default function WorkspaceDrive() {
     if (loc.kind === 'trash') {
       return [
         { id: 'restore', icon: RotateCcw, label: t('drive.actions.restore'), onClick: () => restore(list), primary: true },
-        { id: 'purge', icon: XCircle, label: t('drive.actions.deleteForever'), onClick: () => setConfirm({ kind: 'purge', items: list }), danger: true, primary: true },
+        ...(isAdmin ? [{ id: 'purge', icon: XCircle, label: t('drive.actions.deleteForever'), onClick: () => setConfirm({ kind: 'purge', items: list }), danger: true, primary: true }] : []),
       ];
     }
     const single = list.length === 1 ? list[0] : null;
     const out: ToolAction[] = [];
+    if (single && isSheet(single)) out.push({ id: 'table', icon: FileSpreadsheet, label: t('drive.shared.openAsTable'), onClick: () => go(sheetHref(single.id)), primary: true });
     if (single?.kind === 'FILE' && can(single.myAccess, 'DOWNLOAD')) out.push({ id: 'dl', icon: Download, label: t('drive.actions.download'), onClick: () => startDownload(contentUrl(single.id, true)), primary: true });
     if (zippable(list) && (list.length > 1 || single?.kind === 'FOLDER')) out.push({ id: 'zip', icon: FileArchive, label: t('drive.actions.downloadZip'), onClick: () => zip(list), primary: true });
     if (single && editable([single])) out.push({ id: 'rename', icon: Pencil, label: t('drive.actions.rename'), onClick: () => setDialog({ kind: 'rename', item: single }), primary: true });
     if (editable(list)) out.push({ id: 'move', icon: FolderInput, label: t('drive.actions.moveTo'), onClick: () => setPicker({ mode: 'move', items: list }), primary: true });
     if (copyable(list)) out.push({ id: 'copyto', icon: Copy, label: t('drive.actions.copyTo'), onClick: () => setPicker({ mode: 'copy', items: list }) });
-    if (single) out.push({ id: 'share', icon: Shield, label: t('drive.actions.share'), onClick: () => setShareItem(single), primary: true });
+    if (single && manageable(single)) out.push({ id: 'share', icon: Shield, label: t('drive.actions.share'), onClick: () => setShareItem(single) });
     if (editable(list)) out.push({ id: 'del', icon: Trash2, label: t('drive.actions.delete'), onClick: () => setConfirm({ kind: 'trash', items: list }), danger: true, primary: true });
-    if (isSuper && list.every(isCaseDoc)) out.push({ id: 'caseDel', icon: XCircle, label: t('drive.actions.deleteForever'), onClick: () => setConfirm({ kind: 'caseDocs', items: list }), danger: true });
     return out;
   };
 
@@ -539,7 +564,9 @@ export default function WorkspaceDrive() {
         up();
         return true;
       case 'Delete':
-        if (loc.kind === 'trash' && selectedItems.length) setConfirm({ kind: 'purge', items: selectedItems });
+        if (loc.kind === 'trash' && selectedItems.length) {
+          if (isAdmin) setConfirm({ kind: 'purge', items: selectedItems });
+        }
         else if (editable(selectedItems)) setConfirm({ kind: 'trash', items: selectedItems });
         return true;
       case 'F2':
@@ -599,17 +626,14 @@ export default function WorkspaceDrive() {
         id: c.id,
         label: crumbLabel(c, t, myId),
         href: folderHref(c.id),
-        droppable: !!c.myAccess && can(c.myAccess, 'EDIT') && c.space !== 'CASES',
+        droppable: !!c.myAccess && can(c.myAccess, 'EDIT'),
       }));
     }
     return [{ id: `view:${loc.kind}`, label: viewTitle, href: routerLocation.pathname + routerLocation.search, droppable: false }];
   }, [folderId, listing.data, loc.kind, viewTitle, routerLocation.pathname, routerLocation.search, t, myId]);
 
   // ── redirects ──
-  if (loc.kind === 'home') {
-    if (roots.data?.personal) return <Navigate to={folderHref(roots.data.personal.id)} replace />;
-    if (roots.data?.shared) return <Navigate to={folderHref(roots.data.shared.id)} replace />;
-  }
+  if (loc.kind === 'home' && roots.data?.shared) return <Navigate to={folderHref(roots.data.shared.id)} replace />;
   if (loc.kind === 'access' && user && !isSuper) return <Navigate to={BASE} replace />;
 
   const subject = selectedItems.length === 1 ? selectedItems[0] : selectedItems.length === 0 ? (folder ?? null) : null;
@@ -626,11 +650,13 @@ export default function WorkspaceDrive() {
             ? t('drive.empty.trash')
             : loc.kind === 'search'
               ? t('drive.empty.search')
-              : folder?.purged
-                ? t('drive.empty.purged')
-                : folder?.space === 'CASES' && !folder.parentId
-                  ? t('drive.empty.cases')
-                  : canCreateHere
+              : folder && folder.id === roots.data?.cases?.id
+                ? t('drive.shared.emptyCases')
+                : folder && folder.id === roots.data?.partners?.id
+                  ? t('drive.shared.emptyPartners')
+                  : folder && folder.id === roots.data?.staff?.id
+                    ? t('drive.shared.emptyStaff')
+                    : canCreateHere
                     ? t('drive.empty.folder')
                     : t('drive.empty.readOnly');
 
@@ -682,37 +708,35 @@ export default function WorkspaceDrive() {
     ) : loc.kind === 'trash' ? (
       <div className="flex flex-wrap items-center gap-2 border-b border-line bg-surface/60 px-3 py-2 text-xs text-muted sm:px-4">
         <span>{t('drive.details.trashHint', { days: trashDays })}</span>
-        {items.length > 0 && (
+        {!isAdmin && <span>· {t('drive.shared.purgeAdminsOnly')}</span>}
+        {items.length > 0 && isAdmin && (
           <button type="button" onClick={() => setConfirm({ kind: 'empty' })} className="ml-auto inline-flex items-center gap-1 font-semibold text-danger hover:underline">
             <Trash2 className="size-3.5" /> {t('drive.actions.emptyTrash')}
           </button>
         )}
       </div>
-    ) : folder?.virtual || (folder?.space === 'CASES' && folder) ? (
-      <div className="flex flex-wrap items-center gap-2 border-b border-line bg-violet-50/60 px-3 py-2 text-xs text-violet-800 sm:px-4">
-        <Briefcase className="size-3.5" /> <span>{t('drive.details.readOnlyCases')}</span>
-        {!folder.parentId && (
-          <select
-            value={caseStatus}
-            onChange={(e) => go(`${routerLocation.pathname}${e.target.value ? `?status=${e.target.value}` : ''}`)}
-            className="input ml-auto !w-auto !py-1 !text-xs"
-            aria-label={t('drive.details.caseStatus')}
-          >
-            <option value="">{t('admin.common.all')}</option>
-            {CASE_STATUSES.map((st) => (
-              <option key={st} value={st}>
-                {statusLabel(st)}
-              </option>
-            ))}
-          </select>
-        )}
-        {folder.caseId && (
-          <Link to={`/admin/cases/${folder.caseId}`} className="ml-auto inline-flex items-center gap-1 font-semibold hover:underline">
-            <ExternalLink className="size-3.5" /> {t('drive.actions.openCase')}
-          </Link>
-        )}
-      </div>
+    ) : folder?.caseId ? (
+      <ClientFolderHeader folder={folder} />
+    ) : folder?.partner ? (
+      <PartnerFolderHeader folder={folder} />
+    ) : folder && sectionOf(folder) ? (
+      <>
+        <SectionHeader folder={folder} />
+        {folder.id === roots.data?.partners?.id && <PartnersOverview items={items} onOpen={(id) => go(folderHref(id))} />}
+      </>
+    ) : folder && folder.system && !folder.parentId ? (
+      <div className="border-b border-line bg-surface/60 px-3 py-2 text-xs text-muted sm:px-4">{t('drive.shared.subtitle')}</div>
     ) : null;
+
+  /** Empty-state hint of the system sections (client folders appear by themselves). */
+  const sectionHint =
+    folder && folder.id === roots.data?.cases?.id
+      ? t('drive.shared.emptyCasesHint')
+      : folder && folder.id === roots.data?.partners?.id
+        ? t('drive.shared.emptyPartnersHint')
+        : folder && folder.id === roots.data?.staff?.id
+          ? t('drive.shared.emptyStaffHint')
+          : null;
 
   return (
     <div className="flex h-full min-h-0 bg-surface">
@@ -794,6 +818,7 @@ export default function WorkspaceDrive() {
               }}
               canCreate={canCreateHere}
               onNewFolder={() => setDialog({ kind: 'newFolder' })}
+              onNewSheet={() => setDialog({ kind: 'newSheet' })}
               onUploadFiles={() => folderId && pickFiles(folderId)}
               onUploadFolder={() => folderId && pickDir(folderId)}
               selectionCount={selectedItems.length}
@@ -839,7 +864,7 @@ export default function WorkspaceDrive() {
                         {loc.kind === 'trash' ? <Trash2 className="size-9 text-muted" strokeWidth={1.4} /> : loc.kind === 'starred' ? <Star className="size-9 text-amber-400" strokeWidth={1.4} /> : <FolderOpen className="size-9 text-amber-400" strokeWidth={1.4} />}
                       </div>
                       <h2 className="mt-4 text-base font-bold text-ink">{emptyText}</h2>
-                      {canCreateHere && <p className="mt-1 text-sm text-muted">{t('drive.empty.folderHint')}</p>}
+                      {sectionHint ? <p className="mx-auto mt-1 max-w-md text-sm text-muted">{sectionHint}</p> : canCreateHere && <p className="mt-1 text-sm text-muted">{t('drive.empty.folderHint')}</p>}
                       {loc.kind === 'starred' && <p className="mt-1 text-sm text-muted">{t('drive.empty.starredHint')}</p>}
                       {canCreateHere && (
                         <div className="mt-4 flex flex-wrap justify-center gap-2">
@@ -854,33 +879,52 @@ export default function WorkspaceDrive() {
                     </div>
                   </div>
                 ) : (
-                  <ItemsView
-                    items={items}
-                    view={view}
-                    mode={mode}
-                    selected={selected}
-                    focusId={focusId}
-                    anchorId={anchorId}
-                    myId={myId}
-                    sortKey={sortKey}
-                    sortDir={sortDir}
-                    onSort={(k) => {
-                      if (k === sortKey) setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
-                      else {
-                        setSortKey(k);
-                        setSortDir('asc');
-                      }
-                    }}
-                    onSelect={select}
-                    onOpen={open}
-                    onContext={(e: MouseEvent, item) =>
-                      setMenu({ at: { x: e.clientX, y: e.clientY }, items: item ? (selected.has(item.id) ? selectedItems : [item]) : null })
-                    }
-                    onKey={onKey}
-                    onFiles={onFiles}
-                    onItems={onItems}
-                    canDrag={(i) => loc.kind !== 'trash' && (can(i.myAccess, 'EDIT') && !i.system && !isVirtual(i) ? true : can(i.myAccess, i.kind === 'FILE' ? 'DOWNLOAD' : 'EXPORT'))}
-                  />
+                  <div className="flex h-full min-h-0 flex-col">
+                    <div className="flex shrink-0 items-center gap-2 border-b border-line/70 px-4 py-1.5 text-xs text-muted">
+                      <label className="inline-flex cursor-pointer items-center gap-2 font-medium select-none hover:text-ink">
+                        <input
+                          type="checkbox"
+                          className="size-4 rounded accent-brand-600"
+                          checked={items.length > 0 && selectedItems.length === items.length}
+                          ref={(el) => {
+                            if (el) el.indeterminate = selectedItems.length > 0 && selectedItems.length < items.length;
+                          }}
+                          onChange={() => (selectedItems.length === items.length ? clear() : select(new Set(items.map((i) => i.id)), null, null))}
+                        />
+                        {t('drive.shared.selectAll', { count: items.length })}
+                      </label>
+                      {selectedItems.length > 0 && <span className="ml-auto font-semibold text-ink">{t('drive.toolbar.selected', { count: selectedItems.length })}</span>}
+                    </div>
+                    <div className="min-h-0 flex-1">
+                      <ItemsView
+                        items={items}
+                        view={view}
+                        mode={mode}
+                        selected={selected}
+                        focusId={focusId}
+                        anchorId={anchorId}
+                        myId={myId}
+                        sortKey={sortKey}
+                        sortDir={sortDir}
+                        onSort={(k) => {
+                          if (k === sortKey) setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
+                          else {
+                            setSortKey(k);
+                            setSortDir('asc');
+                          }
+                        }}
+                        onSelect={select}
+                        onOpen={open}
+                        onContext={(e: MouseEvent, item) =>
+                          setMenu({ at: { x: e.clientX, y: e.clientY }, items: item ? (selected.has(item.id) ? selectedItems : [item]) : null })
+                        }
+                        onKey={onKey}
+                        onFiles={onFiles}
+                        onItems={onItems}
+                        canDrag={(i) => loc.kind !== 'trash' && (can(i.myAccess, 'EDIT') && !i.system ? true : can(i.myAccess, i.kind === 'FILE' ? 'DOWNLOAD' : 'EXPORT'))}
+                      />
+                    </div>
+                  </div>
                 )}
                 {paneDrop.over === 'files' && folder && (
                   <div className="pointer-events-none absolute inset-2 z-20 grid place-items-center rounded-2xl border-2 border-dashed border-brand-500 bg-brand-50/90 dark:bg-navy-950/85">
@@ -963,6 +1007,19 @@ export default function WorkspaceDrive() {
         onClose={() => setDialog(null)}
       />
       <NameDialog
+        open={dialog?.kind === 'newSheet'}
+        title={t('drive.shared.newSheet')}
+        label={t('drive.shared.sheetName')}
+        initial={t('drive.shared.sheetDefault')}
+        submitLabel={t('drive.shared.create')}
+        busy={newSheet.isPending}
+        onSubmit={(name) => {
+          const parentId = (dialog?.kind === 'newSheet' && dialog.parentId) || folderId;
+          if (parentId) newSheet.mutate({ parentId, name });
+        }}
+        onClose={() => setDialog(null)}
+      />
+      <NameDialog
         open={dialog?.kind === 'rename'}
         title={t('drive.dialogs.rename')}
         label={t('drive.dialogs.newName')}
@@ -985,7 +1042,8 @@ export default function WorkspaceDrive() {
         onPick={(targetId) => {
           const p = picker!;
           setPicker(null);
-          void moveOrCopy(p.items, targetId, p.mode === 'copy');
+          if (p.mode === 'move') void bulkMove(p.items, targetId);
+          else void moveOrCopy(p.items, targetId, true);
         }}
         onClose={() => setPicker(null)}
       />
@@ -997,8 +1055,10 @@ export default function WorkspaceDrive() {
         tone={confirm?.kind === 'version' ? 'primary' : 'danger'}
         title={
           confirm?.kind === 'trash'
-            ? t('drive.dialogs.deleteTitle')
-            : confirm?.kind === 'purge' || confirm?.kind === 'caseDocs'
+            ? confirm.items.length > 1
+              ? t('drive.shared.bulkDeleteTitle', { count: confirm.items.length })
+              : t('drive.dialogs.deleteTitle')
+            : confirm?.kind === 'purge'
               ? t('drive.dialogs.deleteForeverTitle')
               : confirm?.kind === 'empty'
                 ? t('drive.dialogs.emptyTrashTitle')
@@ -1011,8 +1071,6 @@ export default function WorkspaceDrive() {
             ? t('drive.dialogs.deleteBody', { count: confirm.items.length, days: trashDays })
             : confirm?.kind === 'purge'
               ? t('drive.dialogs.deleteForeverBody', { count: confirm.items.length })
-              : confirm?.kind === 'caseDocs'
-                ? t('drive.dialogs.caseDocsBody', { count: confirm.items.length })
               : confirm?.kind === 'empty'
                 ? t('drive.dialogs.emptyTrashBody')
                 : confirm?.kind === 'version'
@@ -1022,7 +1080,7 @@ export default function WorkspaceDrive() {
         confirmLabel={
           confirm?.kind === 'trash'
             ? t('drive.actions.delete')
-            : confirm?.kind === 'purge' || confirm?.kind === 'caseDocs'
+            : confirm?.kind === 'purge'
               ? t('drive.actions.deleteForever')
               : confirm?.kind === 'empty'
                 ? t('drive.actions.emptyTrash')

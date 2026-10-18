@@ -3,14 +3,15 @@ import path from 'node:path';
 import type { DocAccess, DriveAccess } from '@prisma/client';
 import { config } from '../../config.js';
 import { prisma } from '../../db.js';
-import { ensurePersonalRoot, ensureRoots } from './roots.js';
+import { findSibling } from './names.js';
+import { ensureRoots, ensureStaffFolder, staffFolderName, STAFF_FOLDER_NAME } from './roots.js';
 import { copyIntoStore } from './storage.js';
 
 /**
  * One-time import of the old staff workspaces (/docs: DocFolder / DocDir / DocFile / DocGrant) into
- * the team drive. Every workspace becomes the owner's "My files"; directories become folders; files are
+ * the shared workspace. Every workspace becomes "Mitarbeiter/<owner>"; directories become folders; files are
  * COPIED (never moved) from <DOCS_DIR>/<slug>/<path>/<name> into <DOCS_DIR>/drive/<new key>; grants
- * become grants on the personal root (VIEW→VIEW, DOWNLOAD→EXPORT, EDIT→EDIT).
+ * become grants on that folder (VIEW→VIEW, DOWNLOAD→EXPORT, EDIT→EDIT; the whole team edits it anyway).
  *
  * Idempotent: a folder is matched by parent + name, a file by parent + name + size, so a re-run only
  * adds what is missing. With `dryRun` nothing is written (neither rows nor files).
@@ -35,6 +36,14 @@ const resolveInside = (root: string, ...parts: string[]) => {
   const full = path.resolve(root, ...parts);
   if (full !== root && !full.startsWith(root + path.sep)) throw new Error(`path escapes the workspace: ${parts.join('/')}`);
   return full;
+};
+
+/** The owner's folder below "Mitarbeiter" if it exists (dry runs never create anything). */
+const existingStaffFolder = async (owner: { firstName: string; lastName: string }) => {
+  const staff = await prisma.driveNode.findFirst({ where: { name: STAFF_FOLDER_NAME, system: true, parent: { parentId: null, space: 'SHARED' } }, select: { id: true } });
+  if (!staff) return null;
+  const hit = await findSibling(staff.id, staffFolderName(owner));
+  return hit?.kind === 'FOLDER' ? hit.id : null;
 };
 
 export const importDocsToDrive = async (opts: { dryRun?: boolean; log?: (line: string) => void } = {}): Promise<ImportSummary> => {
@@ -63,9 +72,7 @@ export const importDocsToDrive = async (opts: { dryRun?: boolean; log?: (line: s
     s.workspaces++;
     const who = `${folder.owner.firstName} ${folder.owner.lastName}`;
     log(`workspace /docs/${folder.slug} (${who}): ${folder.dirs.length} dirs, ${folder.files.length} files, ${folder.grants.length} grants`);
-    const rootId = dryRun
-      ? (await prisma.driveNode.findFirst({ where: { space: 'PERSONAL', ownerId: folder.ownerId, parentId: null }, select: { id: true } }))?.id ?? null
-      : await ensurePersonalRoot(folder.ownerId);
+    const rootId = dryRun ? await existingStaffFolder(folder.owner) : await ensureStaffFolder(folder.ownerId);
     if (!dryRun && !rootId) {
       s.errors.push(`/docs/${folder.slug}: owner ${who} is not a staff member any more, skipped`);
       continue;
@@ -88,7 +95,7 @@ export const importDocsToDrive = async (opts: { dryRun?: boolean; log?: (line: s
         s.foldersCreated++;
         if (!dryRun && parentId) {
           const created = await prisma.driveNode.create({
-            data: { space: 'PERSONAL', kind: 'FOLDER', name, parentId, ownerId: folder.ownerId, createdById: folder.ownerId, createdAt: folder.createdAt },
+            data: { space: 'SHARED', kind: 'FOLDER', name, parentId, createdById: folder.ownerId, createdAt: folder.createdAt },
             select: { id: true },
           });
           id = created.id;
@@ -122,11 +129,10 @@ export const importDocsToDrive = async (opts: { dryRun?: boolean; log?: (line: s
           const storageKey = await copyIntoStore(src);
           await prisma.driveNode.create({
             data: {
-              space: 'PERSONAL',
+              space: 'SHARED',
               kind: 'FILE',
               name: f.name,
               parentId,
-              ownerId: folder.ownerId,
               storageKey,
               mimeType: f.mimeType,
               size: stat.size,

@@ -23,6 +23,7 @@ import { badRequest, conflict, HttpError, notFound, parse } from '../../lib/http
 import { notifyClient } from '../../lib/notifications.js';
 import { createCaseMessage, listMessages, markMessagesRead, publishTyping } from '../../lib/messaging/caseMessages.js';
 import { deleteCaseDocument } from '../../lib/caseDocDelete.js';
+import { copyDocumentToDrive, syncCaseFolder } from '../../lib/drive/caseFolders.js';
 import { requireMinRole } from '../../middleware/auth.js';
 
 export const adminCasesRouter = Router();
@@ -38,13 +39,16 @@ adminCasesRouter.get('/', async (req, res) => {
     z.object({
       status: z.enum(STATUSES).optional(),
       search: z.string().trim().max(120).optional(),
-      mine: z.enum(['true', 'false']).transform((v) => v === 'true').optional(),
+      mine: z.enum(['true', 'false', '1', '0']).transform((v) => v === 'true' || v === '1').optional(),
       page: z.coerce.number().int().min(1).default(1),
+      // Referral partner who brought the client ('none' = cases without a partner).
+      partnerId: z.string().trim().min(1).max(40).optional(),
     }),
     req.query,
   );
   const where: Prisma.CaseWhereInput = {
     ...(q.status ? { status: q.status } : {}),
+    ...(q.partnerId ? { partnerId: q.partnerId === 'none' ? null : q.partnerId } : {}),
     ...(q.mine ? { assignedStaffId: req.user!.id } : {}),
     ...(q.search
       ? {
@@ -69,6 +73,7 @@ adminCasesRouter.get('/', async (req, res) => {
         client: { select: { firstName: true, lastName: true, email: true, phone: true } },
         assignedStaff: { select: { firstName: true, lastName: true } },
         visaCategory: { select: { title: true, visaLabel: true } },
+        partner: { select: { id: true, name: true } },
         events: { orderBy: { createdAt: 'desc' }, take: 1, select: { type: true, createdAt: true, actor: { select: { role: true } } } },
         _count: { select: { messages: true, documents: { where: { status: 'PENDING', stage: { in: ['INITIAL', 'EMBASSY'] } } } } },
       },
@@ -108,7 +113,9 @@ adminCasesRouter.get('/', async (req, res) => {
 
 adminCasesRouter.get('/:id', async (req, res) => {
   const detail = await loadCaseDetail(req.params.id, { forStaff: true });
-  res.json({ case: detail, stats: caseStats(detail) });
+  // Referral partner who brought the client (shown and edited in the case header).
+  const partner = (await prisma.case.findUnique({ where: { id: detail.id }, select: { partner: { select: { id: true, name: true } } } }))?.partner ?? null;
+  res.json({ case: { ...detail, partner }, stats: caseStats(detail) });
 });
 
 adminCasesRouter.patch('/:id', async (req, res) => {
@@ -142,6 +149,7 @@ adminCasesRouter.patch('/:id', async (req, res) => {
     }
   }
   const updated = await prisma.case.update({ where: { id: req.params.id }, data: body });
+  if (body.visaCategoryId !== undefined) void syncCaseFolder(updated.id); // client folder follows the category
   await prisma.caseEvent.create({
     data: { caseId: updated.id, type: 'CASE_UPDATED', actorId: req.user!.id, visibleToClient: false },
   });
@@ -219,6 +227,7 @@ adminCasesRouter.post('/:id/documents/:docId/review', async (req, res) => {
     where: { id: doc.id },
     data: { status: body.status, reviewNote: body.status === 'REJECTED' ? body.note : null },
   });
+  if (body.status === 'ACCEPTED') void copyDocumentToDrive(doc.id); // a copy in the client's drive folder
   await prisma.caseEvent.create({
     data: {
       caseId: doc.caseId,
@@ -285,6 +294,7 @@ adminCasesRouter.post('/:id/documents', documentUpload.single('file'), async (re
         uploadedById: req.user!.id,
       },
     });
+    if (doc.status === 'ACCEPTED') void copyDocumentToDrive(doc.id); // a copy in the client's drive folder
 
     if (body.stage === 'CONTRACT') {
       try {

@@ -1,34 +1,59 @@
 import { memo, useEffect, useRef, useState, type KeyboardEvent, type MouseEvent } from 'react';
+import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
-import { ArrowDown, ArrowUp, Lock, Star } from 'lucide-react';
+import { ArrowDown, ArrowUp, Briefcase, Lock, Star } from 'lucide-react';
 import { formatBytes } from '@/lib/api';
-import { docStatusLabel, fmtDateTime, fmtRelative, fullName, statusLabel } from '@/components/admin/labels';
-import type { CaseStatus, DocStatus } from '@/lib/types';
+import { fmtDateTime, fmtRelative, fullName, statusLabel } from '@/components/admin/labels';
+import type { CaseStatus } from '@/lib/types';
 import { STATUS_TONE } from '@/lib/caseStatus';
-import { contentUrl, isVirtual } from './api';
+import { contentUrl, isSheet } from './api';
 import { endItemDrag, startItemDrag, useDropTarget, type PickedFile } from './dnd';
 import { ItemIcon, extLabel, fileTone } from './fileIcons';
 import { displayName, typeLabel } from './labels';
 import { can, type DriveItem } from './types';
 
 export type ViewMode = 'grid' | 'list';
-export type SortKey = 'name' | 'modified' | 'size' | 'type';
+export type SortKey = 'name' | 'modified' | 'size' | 'type' | 'owner';
 export type ListMode = 'folder' | 'flat' | 'trash';
 
-const DOC_TONE: Record<string, string> = {
-  PENDING: 'bg-amber-100 text-amber-800',
-  ACCEPTED: 'bg-emerald-100 text-emerald-800',
-  REJECTED: 'bg-red-100 text-red-700',
-};
+/** "Müraciət sənədi · TV-…" on copies of case documents, "Müraciət TV-…" on client folders; links to the case. */
+const CaseBadge = ({ item, t, className }: { item: DriveItem; t: ReturnType<typeof useTranslation>['t']; className?: string }) =>
+  item.caseId && item.caseNumber ? (
+    <Link
+      to={`/admin/cases/${item.caseId}`}
+      onClick={(e) => e.stopPropagation()}
+      onDoubleClick={(e) => e.stopPropagation()}
+      draggable={false}
+      title={item.caseStatus ? statusLabel(item.caseStatus as CaseStatus) : undefined}
+      className={clsx(
+        'inline-flex max-w-full items-center gap-1 truncate rounded px-1.5 py-px text-[10px] font-semibold hover:underline',
+        item.kind === 'FILE' ? 'bg-violet-100 text-violet-800 dark:bg-violet-500/20 dark:text-violet-200' : 'bg-violet-50 text-violet-700 dark:bg-violet-500/10 dark:text-violet-300',
+        className,
+      )}
+    >
+      <Briefcase className="size-2.5 shrink-0" aria-hidden />
+      <span className="truncate">{item.kind === 'FILE' ? t('drive.shared.caseDoc', { number: item.caseNumber }) : t('drive.shared.clientFolder', { number: item.caseNumber })}</span>
+    </Link>
+  ) : null;
 
-const ACCESS_TONE: Record<string, string> = {
-  VIEW: 'bg-slate-100 text-slate-600',
-  DOWNLOAD: 'bg-sky-100 text-sky-800',
-  EXPORT: 'bg-sky-100 text-sky-800',
-  EDIT: 'bg-emerald-100 text-emerald-800',
-  MANAGE: 'bg-violet-100 text-violet-800',
-};
+/** Selection checkbox of a tile / row (shift extends the range from the anchor). */
+const SelectBox = ({ checked, onToggle, label, className }: { checked: boolean; onToggle: (e: MouseEvent) => void; label: string; className?: string }) => (
+  <input
+    type="checkbox"
+    checked={checked}
+    aria-label={label}
+    title={label}
+    onChange={() => undefined}
+    onClick={(e) => {
+      e.stopPropagation();
+      onToggle(e);
+    }}
+    onDoubleClick={(e) => e.stopPropagation()}
+    className={clsx('size-4 shrink-0 cursor-pointer rounded accent-brand-600', className)}
+  />
+);
+
 
 export interface ItemsViewProps {
   items: DriveItem[];
@@ -117,6 +142,22 @@ export const ItemsView = (p: ItemsViewProps) => {
     }
   };
 
+  /** Checkbox: toggles one item, or with shift adds the range from the anchor (keeps the rest). */
+  const toggle = (e: MouseEvent, item: DriveItem) => {
+    const next = new Set(p.selected);
+    if (e.shiftKey && p.anchorId) {
+      const a = p.items.findIndex((i) => i.id === p.anchorId);
+      const b = p.items.findIndex((i) => i.id === item.id);
+      const [from, to] = a < b ? [a, b] : [b, a];
+      for (const i of p.items.slice(from, to + 1)) next.add(i.id);
+      p.onSelect(next, item.id, p.anchorId);
+      return;
+    }
+    if (next.has(item.id)) next.delete(item.id);
+    else next.add(item.id);
+    p.onSelect(next, item.id, item.id);
+  };
+
   const context = (e: MouseEvent, item: DriveItem) => {
     e.preventDefault();
     e.stopPropagation();
@@ -135,7 +176,7 @@ export const ItemsView = (p: ItemsViewProps) => {
   };
 
   const shown = p.items.slice(0, limit);
-  const common = { p, click, context, dragStart, t };
+  const common = { p, click, toggle, context, dragStart, t };
 
   return (
     <div
@@ -156,7 +197,7 @@ export const ItemsView = (p: ItemsViewProps) => {
       className="h-full min-h-0 overflow-y-auto overscroll-contain outline-none focus-visible:ring-2 focus-visible:ring-brand-500/40 focus-visible:ring-inset"
     >
       {p.view === 'grid' ? (
-        <div className="grid grid-cols-[repeat(auto-fill,minmax(118px,1fr))] gap-1.5 p-3 sm:grid-cols-[repeat(auto-fill,minmax(136px,1fr))] sm:gap-2 sm:p-4">
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(124px,1fr))] gap-2 p-3 sm:grid-cols-[repeat(auto-fill,minmax(148px,1fr))] sm:gap-3 sm:p-5">
           {shown.map((item) => (
             <Tile key={item.id} item={item} {...common} />
           ))}
@@ -175,6 +216,7 @@ interface RowProps {
   item: DriveItem;
   p: ItemsViewProps;
   click: (e: MouseEvent, item: DriveItem) => void;
+  toggle: (e: MouseEvent, item: DriveItem) => void;
   context: (e: MouseEvent, item: DriveItem) => void;
   dragStart: (e: React.DragEvent, item: DriveItem) => void;
   t: ReturnType<typeof useTranslation>['t'];
@@ -183,12 +225,12 @@ interface RowProps {
 const useItemDrop = (item: DriveItem, p: ItemsViewProps) =>
   useDropTarget({
     targetId: item.id,
-    enabled: item.kind === 'FOLDER' && can(item.myAccess, 'EDIT') && !isVirtual(item) && item.space !== 'CASES' && p.mode !== 'trash',
+    enabled: item.kind === 'FOLDER' && can(item.myAccess, 'EDIT') && p.mode !== 'trash',
     onFiles: p.onFiles,
     onItems: p.onItems,
   });
 
-const Tile = memo(function Tile({ item, p, click, context, dragStart, t }: RowProps) {
+const Tile = memo(function Tile({ item, p, click, toggle, context, dragStart, t }: RowProps) {
   const selected = p.selected.has(item.id);
   const focused = p.focusId === item.id;
   const drop = useItemDrop(item, p);
@@ -216,6 +258,12 @@ const Tile = memo(function Tile({ item, p, click, context, dragStart, t }: RowPr
         drop.over && '!border-brand-500 !bg-brand-100',
       )}
     >
+      <SelectBox
+        checked={selected}
+        onToggle={(e) => toggle(e, item)}
+        label={t('drive.shared.selectItem')}
+        className={clsx('absolute top-2 left-2 z-10 transition-opacity', selected || p.selected.size > 0 ? 'opacity-100' : 'opacity-0 group-hover:opacity-100 focus-visible:opacity-100')}
+      />
       <div className="relative grid h-[76px] w-full place-items-center">
         {thumb ? (
           <img
@@ -230,6 +278,9 @@ const Tile = memo(function Tile({ item, p, click, context, dragStart, t }: RowPr
         ) : (
           <ItemIcon item={item} className="size-16" />
         )}
+        {isSheet(item) && (
+          <span className="absolute top-0 left-1/2 -translate-x-1/2 rounded bg-emerald-600 px-1.5 py-px text-[9px] font-bold tracking-wide text-white shadow-sm">{t('drive.partner.sheetBadge')}</span>
+        )}
         {item.kind === 'FILE' && !thumb && extLabel(item.name) && (
           <span className={clsx('absolute bottom-0.5 left-1/2 -translate-x-1/2 rounded px-1 text-[9px] font-bold tracking-wide', fileTone(item).bg, fileTone(item).tone)}>
             {extLabel(item.name)}
@@ -239,10 +290,8 @@ const Tile = memo(function Tile({ item, p, click, context, dragStart, t }: RowPr
       </div>
       <span className="mt-1.5 line-clamp-2 w-full text-[13px] leading-snug font-medium break-words text-ink">{name}</span>
       <span className="mt-0.5 w-full truncate text-[11px] text-muted">
-        {item.virtual && item.docStatus ? (
-          <span className={clsx('rounded px-1 py-px font-semibold', DOC_TONE[item.docStatus])}>{docStatusLabel(item.docStatus as DocStatus)}</span>
-        ) : item.virtual && item.caseStatus && !item.stage ? (
-          statusLabel(item.caseStatus as CaseStatus)
+        {item.caseId ? (
+          <CaseBadge item={item} t={t} />
         ) : item.kind === 'FOLDER' ? (
           t('drive.details.items', { count: item.childCount ?? 0 })
         ) : (
@@ -252,6 +301,28 @@ const Tile = memo(function Tile({ item, p, click, context, dragStart, t }: RowPr
     </div>
   );
 });
+
+/** Header checkbox of the details list: selects every item in the view (or clears). */
+const SelectAllBox = ({ p, t }: { p: ItemsViewProps; t: ReturnType<typeof useTranslation>['t'] }) => {
+  const ref = useRef<HTMLInputElement>(null);
+  const all = p.items.length > 0 && p.items.every((i) => p.selected.has(i.id));
+  const some = !all && p.items.some((i) => p.selected.has(i.id));
+  useEffect(() => {
+    if (ref.current) ref.current.indeterminate = some;
+  }, [some]);
+  return (
+    <input
+      ref={ref}
+      type="checkbox"
+      checked={all}
+      aria-label={t('drive.shared.selectAll', { count: p.items.length })}
+      title={t('drive.shared.selectAll', { count: p.items.length })}
+      onChange={() => p.onSelect(all ? new Set() : new Set(p.items.map((i) => i.id)), null, null)}
+      onClick={(e) => e.stopPropagation()}
+      className="ml-2.5 size-4 shrink-0 cursor-pointer rounded accent-brand-600"
+    />
+  );
+};
 
 const HeaderCell = ({ k, label, p, className }: { k: SortKey | null; label: string; p: ItemsViewProps; className?: string }) => (
   <div className={clsx('flex items-center', className)} role="columnheader">
@@ -278,7 +349,7 @@ const HeaderCell = ({ k, label, p, className }: { k: SortKey | null; label: stri
  * the list shares the screen with the folder tree and the details pane.
  */
 const COLS: Record<ListMode, string> = {
-  folder: 'grid-cols-[minmax(0,1fr)_6.5rem] @xl:grid-cols-[minmax(0,1fr)_8rem_5.5rem] @3xl:grid-cols-[minmax(0,1fr)_9rem_9rem_5.5rem] @5xl:grid-cols-[minmax(0,1fr)_10rem_10rem_6rem_10rem_9rem]',
+  folder: 'grid-cols-[minmax(0,1fr)_6.5rem] @xl:grid-cols-[minmax(0,1fr)_8rem_5.5rem] @3xl:grid-cols-[minmax(0,1fr)_9rem_9rem_5.5rem] @5xl:grid-cols-[minmax(0,1fr)_10rem_10rem_6rem_11rem]',
   flat: 'grid-cols-[minmax(0,1fr)_6.5rem] @xl:grid-cols-[minmax(0,1fr)_8rem_5.5rem] @3xl:grid-cols-[minmax(0,1fr)_11rem_9rem_5.5rem] @5xl:grid-cols-[minmax(0,1fr)_13rem_10rem_6rem_10rem]',
   trash: 'grid-cols-[minmax(0,1fr)_6.5rem] @xl:grid-cols-[minmax(0,1fr)_8rem_5.5rem] @3xl:grid-cols-[minmax(0,1fr)_11rem_9rem_5.5rem] @5xl:grid-cols-[minmax(0,1fr)_13rem_10rem_10rem_6rem]',
 };
@@ -290,17 +361,19 @@ const AT_XL_F = 'hidden @xl:flex';
 const AT_3XL_F = 'hidden @3xl:flex';
 const AT_5XL_F = 'hidden @5xl:flex';
 
-const ListTable = ({ shown, p, click, context, dragStart, t }: Omit<RowProps, 'item'> & { shown: DriveItem[] }) => (
+const ListTable = ({ shown, p, click, toggle, context, dragStart, t }: Omit<RowProps, 'item'> & { shown: DriveItem[] }) => (
   <div role="table" className="@container min-w-0 text-sm">
     <div role="row" className={clsx('sticky top-0 z-10 grid gap-2 border-b border-line bg-card px-4 py-2 text-xs font-semibold text-muted', COLS[p.mode])}>
-      <HeaderCell k="name" label={t('drive.columns.name')} p={p} />
+      <div className="flex min-w-0 items-center gap-2.5">
+        <SelectAllBox p={p} t={t} />
+        <HeaderCell k="name" label={t('drive.columns.name')} p={p} className="min-w-0" />
+      </div>
       {p.mode === 'folder' && (
         <>
           <HeaderCell k="modified" label={t('drive.columns.modified')} p={p} />
           <HeaderCell k="type" label={t('drive.columns.type')} p={p} className={AT_3XL_F} />
           <HeaderCell k="size" label={t('drive.columns.size')} p={p} className={AT_XL_F} />
-          <HeaderCell k={null} label={t('drive.columns.owner')} p={p} className={AT_5XL_F} />
-          <HeaderCell k={null} label={t('drive.columns.access')} p={p} className={AT_5XL_F} />
+          <HeaderCell k="owner" label={t('drive.columns.owner')} p={p} className={AT_5XL_F} />
         </>
       )}
       {p.mode === 'flat' && (
@@ -322,13 +395,13 @@ const ListTable = ({ shown, p, click, context, dragStart, t }: Omit<RowProps, 'i
     </div>
     <div role="rowgroup" className="px-1.5 py-1">
       {shown.map((item) => (
-        <Row key={item.id} item={item} p={p} click={click} context={context} dragStart={dragStart} t={t} />
+        <Row key={item.id} item={item} p={p} click={click} toggle={toggle} context={context} dragStart={dragStart} t={t} />
       ))}
     </div>
   </div>
 );
 
-const Row = memo(function Row({ item, p, click, context, dragStart, t }: RowProps) {
+const Row = memo(function Row({ item, p, click, toggle, context, dragStart, t }: RowProps) {
   const selected = p.selected.has(item.id);
   const focused = p.focusId === item.id;
   const drop = useItemDrop(item, p);
@@ -355,17 +428,16 @@ const Row = memo(function Row({ item, p, click, context, dragStart, t }: RowProp
       )}
     >
       <div className="flex min-w-0 items-center gap-2.5" role="cell">
+        <SelectBox checked={selected} onToggle={(e) => toggle(e, item)} label={t('drive.shared.selectItem')} />
         <ItemIcon item={item} className="size-6 shrink-0" />
         <span className="truncate font-medium text-ink" title={name}>
           {name}
         </span>
         {item.starred && <Star className="size-3.5 shrink-0 fill-amber-400 text-amber-400" aria-hidden />}
         {item.kind === 'FOLDER' && !item.inheritPermissions && !item.system && <Lock className="size-3 shrink-0 text-muted" aria-label={t('drive.details.inheritOff')} />}
-        {item.virtual && item.docStatus && (
-          <span className={clsx('shrink-0 rounded px-1.5 py-px text-[10px] font-semibold', DOC_TONE[item.docStatus])}>{docStatusLabel(item.docStatus as DocStatus)}</span>
-        )}
-        {item.virtual && item.caseStatus && !item.stage && item.kind === 'FOLDER' && (
-          <span className={clsx('hidden shrink-0 rounded px-1.5 py-px text-[10px] font-semibold sm:inline', STATUS_TONE[item.caseStatus as CaseStatus])}>
+        <CaseBadge item={item} t={t} className="hidden shrink-0 sm:inline-flex" />
+        {item.kind === 'FOLDER' && item.caseStatus && (
+          <span className={clsx('hidden shrink-0 rounded px-1.5 py-px text-[10px] font-semibold @3xl:inline', STATUS_TONE[item.caseStatus as CaseStatus])}>
             {statusLabel(item.caseStatus as CaseStatus)}
           </span>
         )}
@@ -384,15 +456,12 @@ const Row = memo(function Row({ item, p, click, context, dragStart, t }: RowProp
           <div className={clsx(AT_5XL, 'truncate text-xs text-muted')} role="cell">
             {item.createdBy ? fullName(item.createdBy) : '—'}
           </div>
-          <div className={AT_5XL} role="cell">
-            <span className={clsx('rounded px-1.5 py-px text-[10px] font-semibold', ACCESS_TONE[item.myAccess])}>{t(`drive.levels.${item.myAccess}`)}</span>
-          </div>
         </>
       )}
       {p.mode === 'flat' && (
         <>
           <div className={clsx(AT_3XL, 'truncate text-xs text-muted')} role="cell">
-            {item.location ? (item.location.system && item.location.space !== 'PERSONAL' ? t(`drive.roots.${item.location.space}`) : item.location.name) : '—'}
+            {item.location?.name ?? '—'}
           </div>
           <div className="truncate text-xs text-muted" role="cell" title={fmtDateTime(item.updatedAt)}>
             {fmtRelative(item.updatedAt)}
@@ -408,7 +477,7 @@ const Row = memo(function Row({ item, p, click, context, dragStart, t }: RowProp
       {p.mode === 'trash' && (
         <>
           <div className={clsx(AT_3XL, 'truncate text-xs text-muted')} role="cell">
-            {item.location ? (item.location.system && item.location.space !== 'PERSONAL' ? t(`drive.roots.${item.location.space}`) : item.location.name) : '—'}
+            {item.location?.name ?? '—'}
           </div>
           <div className="truncate text-xs text-muted" role="cell">
             {item.deletedAt ? fmtRelative(item.deletedAt) : '—'}

@@ -120,9 +120,9 @@ export const FolderPicker = ({
     if (open) setAt(startId);
   }, [open, startId]);
   const q = useQuery({ queryKey: driveKeys.children(at ?? '', 'FOLDER'), queryFn: () => fetchChildren(at!, 'FOLDER'), enabled: open && !!at });
-  const top = [roots?.personal, roots?.shared, ...(roots?.team ?? [])].filter((x): x is DriveItem => !!x);
+  const top = [roots?.shared, roots?.cases, roots?.partners, roots?.work, roots?.staff, roots?.templates].filter((x): x is DriveItem => !!x);
   const folder = q.data?.folder;
-  const usable = !!folder && can(folder.myAccess, 'EDIT') && folder.space !== 'CASES' && !folder.virtual && !exclude.includes(folder.id);
+  const usable = !!folder && can(folder.myAccess, 'EDIT') && !exclude.includes(folder.id);
   const children = (q.data?.items ?? []).filter((i) => i.kind === 'FOLDER' && !exclude.includes(i.id));
   return (
     <Modal

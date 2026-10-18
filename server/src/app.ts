@@ -44,6 +44,7 @@ import { reviewsRouter } from './routes/reviews.js';
 import { trackRouter } from './routes/track.js';
 import { seoRouter } from './routes/seo.js';
 import { driveRouter } from './routes/drive.js';
+import { sheetsRouter } from './routes/sheets.js';
 import { tasksRouter } from './routes/tasks.js';
 import { signRouter, signaturesRouter } from './routes/signatures.js';
 
@@ -103,6 +104,7 @@ export const createApp = () => {
   app.use('/api/files', filesRouter);
   app.use('/api/notifications', notificationsRouter);
   app.use('/api/devices', devicesRouter);
+  app.use('/api/drive/sheets', sheetsRouter);
   app.use('/api/drive', driveRouter);
   app.use('/api/tasks', tasksRouter);
   app.use('/api/sign', signRouter);

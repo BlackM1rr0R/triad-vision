@@ -13,24 +13,11 @@ import { INLINE_MIME } from '../lib/fileCheck.js';
 import { notifyUser } from '../lib/notifications.js';
 import { ZipWriter } from '../lib/zip.js';
 import { DriveAccessCtx, grantMatches, nodeLiteSelect, requireNode, type NodeLite } from '../lib/drive/access.js';
-import {
-  casesRootAccess,
-  docFilePath,
-  isVirtualId,
-  listCases,
-  listCaseTypes,
-  parseVirtualId,
-  listVirtual,
-  loadVirtual,
-  searchCases,
-  seesCases,
-  virtualBreadcrumb,
-  virtualFiles,
-} from '../lib/drive/cases.js';
-import { breadcrumb, buildItems, collectSubtree, itemSelect, toItem, type DriveItem } from '../lib/drive/items.js';
+import { breadcrumb, buildItems, collectSubtree, itemSelect } from '../lib/drive/items.js';
 import { LEVELS, RANK, allows, maxLevel, type Level } from '../lib/drive/levels.js';
+import { STAGES } from '../lib/drive/cases.js';
 import { checkName, findSibling, freeNameIn, pickFreeName, safeUploadName, siblingNames } from '../lib/drive/names.js';
-import { ensureAllPersonalRoots, ensurePersonalRoot, ensureRoots } from '../lib/drive/roots.js';
+import { ensureRoots } from '../lib/drive/roots.js';
 import { adoptUpload, copyIntoStore, removeStored, storagePath } from '../lib/drive/storage.js';
 import { purgeNodes, restoreSubtree, softDelete, trashRootIds } from '../lib/drive/trash.js';
 import { sharedText } from '../lib/drive/texts.js';
@@ -38,10 +25,11 @@ import { driveUpload } from '../lib/drive/upload.js';
 import { deleteCaseDocument } from '../lib/caseDocDelete.js';
 
 /**
- * Team drive (/api/drive): a shared company drive, a personal "My files" root per staff member and a
- * virtual, read-only "Cases" area — folders and files with Windows-like inherited permissions
- * (see lib/drive/access.ts). Every endpoint resolves the caller's effective access server-side; a node
- * the caller may not VIEW answers 404.
+ * Team drive (/api/drive): ONE shared workspace ("Gemeinsame Dokumente") where every staff member works —
+ * client folders (Anträge / Partner), the former personal files (Mitarbeiter) and everything else. Folders
+ * and files keep Windows-like inherited permissions (see lib/drive/access.ts) for the rare restricted
+ * folder; by default the whole team edits everything. Every endpoint resolves the caller's effective access
+ * server-side; a node the caller may not VIEW answers 404.
  */
 export const driveRouter = Router();
 driveRouter.use(requireMinRole('STAFF'));
@@ -59,10 +47,9 @@ const idParam = (req: Request, key = 'id') => {
 };
 const idList = z.array(z.string().min(1).max(120)).min(1).max(500);
 
-/** Folders that accept new content (the Cases area is read-only). */
+/** Folders that accept new content. */
 const assertWritableFolder = (n: NodeLite) => {
   if (n.kind !== 'FOLDER') throw badRequest('NOT_A_FOLDER');
-  if (n.space === 'CASES') throw badRequest('READ_ONLY');
 };
 
 const loadItem = async (ctx: DriveAccessCtx, id: string) => {
@@ -119,73 +106,33 @@ const versionUploaders = async (nodeId: string, createdBy: { id: string; firstNa
 
 // ─── Navigation ────────────────────────────────────────────────────────
 
-const casesRootItem = async (ctx: DriveAccessCtx): Promise<DriveItem | null> => {
-  const { casesId, rootLevel, visible } = await seesCases(ctx);
-  if (!visible) return null;
-  const row = await prisma.driveNode.findUnique({ where: { id: casesId }, select: itemSelect });
-  if (!row) return null;
-  const count = await prisma.case.count({ where: allows(rootLevel, 'VIEW') ? {} : { assignedStaffId: ctx.user.id } });
-  // Without a grant on the root, assigned staff still browse their own cases (read-only listing).
-  return toItem(row, rootLevel ?? 'VIEW', { childCount: count });
-};
-
-/** Quick-access roots: company drive, my files, cases, and (super admin) everyone's personal roots. */
+/** The shared workspace and its quick links (Anträge, Partner, Mitarbeiter). */
 driveRouter.get('/roots', async (req, res) => {
   const ctx = ctxOf(req);
-  const { sharedId } = await ensureRoots();
-  const personalId = await ensurePersonalRoot(req.user!.id);
-  if (ctx.isSuper) await ensureAllPersonalRoots();
-  const team = ctx.isSuper
-    ? await prisma.driveNode.findMany({
-        where: { space: 'PERSONAL', parentId: null, ownerId: { not: req.user!.id }, owner: { isActive: true } },
-        select: itemSelect,
-        orderBy: { name: 'asc' },
-      })
-    : [];
-  const rows = await prisma.driveNode.findMany({ where: { id: { in: [sharedId, personalId ?? ''] } }, select: itemSelect });
-  const items = await buildItems(ctx, [...rows, ...team]);
+  const r = await ensureRoots();
+  const rows = await prisma.driveNode.findMany({ where: { id: { in: [r.sharedId, r.casesId, r.partnersId, r.staffId, r.workId, r.templatesId, r.clientsId] } }, select: itemSelect });
+  const items = await buildItems(ctx, rows);
+  const pick = (id: string) => items.find((i) => i.id === id) ?? null;
   res.json({
-    shared: items.find((i) => i.id === sharedId) ?? null,
-    personal: items.find((i) => i.id === personalId) ?? null,
-    cases: await casesRootItem(ctx),
-    team: items.filter((i) => i.space === 'PERSONAL' && i.id !== personalId),
+    shared: pick(r.sharedId),
+    cases: pick(r.casesId),
+    partners: pick(r.partnersId),
+    staff: pick(r.staffId),
+    work: pick(r.workId),
+    templates: pick(r.templatesId),
+    // Only super admins see the clients workbook folder (null for everyone else).
+    clients: pick(r.clientsId),
     limits: { maxFileBytes: config.drive.maxFileSize, trashDays: config.drive.trashDays },
   });
 });
 
-const listingQuery = z.object({
-  kind: z.enum(['FOLDER', 'FILE']).optional(),
-  status: z
-    .enum(['DOCUMENTS_PENDING', 'DOCUMENTS_REVIEW', 'CONTRACT_SENT', 'CONTRACT_SIGNED', 'EMBASSY_DOCUMENTS', 'EMBASSY_REVIEW', 'APPOINTMENT_SCHEDULED', 'DECISION_PENDING', 'APPROVED', 'REJECTED', 'CANCELLED'])
-    .optional(),
-});
+const listingQuery = z.object({ kind: z.enum(['FOLDER', 'FILE']).optional() });
 
-/** Contents of a folder (real or virtual) with its breadcrumb. */
+/** Contents of a folder with its breadcrumb. */
 driveRouter.get('/nodes/:id/children', async (req, res) => {
   const ctx = ctxOf(req);
   const id = idParam(req);
   const q = parse(listingQuery, req.query);
-
-  if (isVirtualId(id)) {
-    const v = await loadVirtual(ctx, id, 'VIEW');
-    if (v.item.kind !== 'FOLDER') throw badRequest('NOT_A_FOLDER');
-    const { rootLevel } = await casesRootAccess(ctx);
-    const items = await listVirtual(ctx, v);
-    res.json({ folder: v.item, path: virtualBreadcrumb(v, rootLevel), truncated: false, items: q.kind ? items.filter((i) => i.kind === q.kind) : items });
-    return;
-  }
-
-  await ctx.load([id]);
-  const node = ctx.nodes.get(id);
-  if (node && !node.deletedAt && node.space === 'CASES' && !node.parentId) {
-    const folder = await casesRootItem(ctx);
-    if (!folder) throw notFound('NODE_NOT_FOUND');
-    // Grouped by kind of application; a status filter shows the matching cases as one flat list.
-    const { items } = q.kind === 'FILE' ? { items: [] } : q.status ? await listCases(ctx, { status: q.status }) : await listCaseTypes(ctx);
-    res.json({ folder, path: [{ id: folder.id, name: folder.name, space: folder.space, system: true, ownerId: null, myAccess: folder.myAccess }], truncated: false, items });
-    return;
-  }
-
   const { node: folderNode } = await requireNode(ctx, id, 'VIEW');
   if (folderNode.kind !== 'FOLDER') throw badRequest('NOT_A_FOLDER');
   const rows = await prisma.driveNode.findMany({
@@ -194,34 +141,15 @@ driveRouter.get('/nodes/:id/children', async (req, res) => {
     orderBy: [{ kind: 'asc' }, { name: 'asc' }],
     take: 20_000,
   });
-  const [folder] = await buildItems(ctx, [(await prisma.driveNode.findUniqueOrThrow({ where: { id }, select: itemSelect }))]);
+  const [folder] = await buildItems(ctx, [await prisma.driveNode.findUniqueOrThrow({ where: { id }, select: itemSelect })]);
   const items = await buildItems(ctx, rows);
   res.json({ folder, ...breadcrumb(ctx, id), items });
 });
 
-/** Properties of one node: item, path, versions, folder totals, current uploader. */
+/** Properties of one node: item, path, versions, folder totals, current uploader, case link. */
 driveRouter.get('/nodes/:id', async (req, res) => {
   const ctx = ctxOf(req);
   const id = idParam(req);
-  if (isVirtualId(id)) {
-    const v = await loadVirtual(ctx, id, 'VIEW');
-    const { rootLevel } = await casesRootAccess(ctx);
-    const files = v.item.kind === 'FOLDER' ? await virtualFiles(v) : [];
-    res.json({
-      item: v.item,
-      path: virtualBreadcrumb(v, rootLevel),
-      truncated: false,
-      details: {
-        versions: [],
-        modifiedBy: v.item.createdBy,
-        totals: v.item.kind === 'FOLDER' ? { files: files.length, folders: 0, bytes: files.reduce((a, f) => a + f.doc.size, 0) } : null,
-        caseLink: v.caseRow ? `/admin/cases/${v.caseRow.id}` : null,
-        deletedAt: null,
-        deletedBy: null,
-      },
-    });
-    return;
-  }
   const { node } = await requireNode(ctx, id, 'VIEW', { allowDeleted: true });
   const row = await prisma.driveNode.findUniqueOrThrow({ where: { id }, select: { ...itemSelect, deletedBy: person } });
   const [item] = await buildItems(ctx, [row]);
@@ -230,14 +158,13 @@ driveRouter.get('/nodes/:id', async (req, res) => {
   let totals = null;
   if (node.kind === 'FILE') {
     const uploaderOf = await versionUploaders(id, row.createdBy);
-    const rows = await prisma.driveFileVersion.findMany({
+    versions = await prisma.driveFileVersion.findMany({
       where: { nodeId: id },
       orderBy: { version: 'desc' },
       select: { id: true, version: true, size: true, mimeType: true, createdAt: true, uploadedBy: person },
     });
-    versions = rows;
     modifiedBy = uploaderOf(row.version) ?? row.createdBy;
-  } else if (node.space !== 'CASES') {
+  } else {
     try {
       const sub = await collectSubtree([id], { size: true }, { limit: 20_000 });
       totals = {
@@ -252,11 +179,11 @@ driveRouter.get('/nodes/:id', async (req, res) => {
   res.json({
     item,
     ...breadcrumb(ctx, id),
-    details: { versions, modifiedBy, totals, caseLink: null, deletedAt: row.deletedAt, deletedBy: row.deletedBy },
+    details: { versions, modifiedBy, totals, caseLink: item?.caseId ? `/admin/cases/${item.caseId}` : null, deletedAt: row.deletedAt, deletedBy: row.deletedBy },
   });
 });
 
-/** Top-most items shared with me that I cannot reach from a parent. */
+/** Top-most items shared with me that I cannot reach from a parent (only used when folders are restricted). */
 driveRouter.get('/shared', async (req, res) => {
   const ctx = ctxOf(req);
   if (ctx.isSuper) {
@@ -265,13 +192,7 @@ driveRouter.get('/shared', async (req, res) => {
   }
   const roles = STAFF_ROLES.filter((r) => hasMinRole(req.user!.role, r));
   const grants = await prisma.driveGrant.findMany({
-    where: {
-      OR: [{ userId: req.user!.id }, { role: { in: roles } }],
-      node: {
-        deletedAt: null,
-        NOT: [{ space: 'PERSONAL', ownerId: req.user!.id }, { parentId: null, space: { in: ['SHARED', 'CASES'] } }],
-      },
-    },
+    where: { OR: [{ userId: req.user!.id }, { role: { in: roles } }], node: { deletedAt: null, parentId: { not: null } } },
     select: { nodeId: true },
     take: 5000,
   });
@@ -315,7 +236,10 @@ const searchQuery = z.object({
   ownerId: z.string().max(40).optional(),
 });
 
-/** Name search across everything the caller can see (cases included when no other filter is set). */
+/**
+ * Name search across the shared workspace. Client folders are also found by case number and passport
+ * number (they are named "Vorname Nachname · Pass-Nr. …").
+ */
 driveRouter.get('/search', async (req, res) => {
   const ctx = ctxOf(req);
   const q = parse(searchQuery, req.query);
@@ -328,22 +252,24 @@ driveRouter.get('/search', async (req, res) => {
     ...(q.ownerId ? { createdById: q.ownerId } : {}),
   };
   const rows = await prisma.driveNode.findMany({ where, select: itemSelect, orderBy: { updatedAt: 'desc' }, take: 600 });
-  const items = (await buildItems(ctx, rows, { withLocation: true })).slice(0, 300);
-  const plain = !q.type && !q.modifiedFrom && !q.modifiedTo && !q.ownerId;
-  res.json({ items: plain ? [...items, ...(await searchCases(ctx, q.q, 50))] : items });
+  if (!q.type || q.type === 'folder') {
+    const cases = await prisma.case.findMany({
+      where: { driveFolderId: { not: null }, OR: [{ number: { contains: q.q } }, { client: { passportNumber: { contains: q.q } } }] },
+      select: { driveFolderId: true },
+      take: 50,
+    });
+    const extra = cases.map((c) => c.driveFolderId!).filter((fid) => !rows.some((r) => r.id === fid));
+    if (extra.length) rows.unshift(...(await prisma.driveNode.findMany({ where: { id: { in: extra }, deletedAt: null }, select: itemSelect })));
+  }
+  res.json({ items: (await buildItems(ctx, rows, { withLocation: true })).slice(0, 300) });
 });
 
 /** Storage usage. */
 driveRouter.get('/stats', async (req, res) => {
   const ctx = ctxOf(req);
-  const me = req.user!.id;
   const sum = (where: Prisma.DriveNodeWhereInput) => prisma.driveNode.aggregate({ where: { kind: 'FILE', ...where }, _count: { _all: true }, _sum: { size: true } });
   const out = (a: Awaited<ReturnType<typeof sum>>) => ({ files: a._count._all, bytes: a._sum.size ?? 0 });
-  const [personal, shared, trash] = await Promise.all([
-    sum({ space: 'PERSONAL', ownerId: me, deletedAt: null }),
-    sum({ space: 'SHARED', deletedAt: null }),
-    sum({ deletedAt: { not: null }, ...(ctx.isSuper ? {} : { OR: [{ deletedById: me }, { space: 'PERSONAL', ownerId: me }] }) }),
-  ]);
+  const [shared, trash] = await Promise.all([sum({ deletedAt: null }), sum({ deletedAt: { not: null } })]);
   let total = null;
   let versions = null;
   if (ctx.isSuper) {
@@ -351,7 +277,7 @@ driveRouter.get('/stats', async (req, res) => {
     total = out(all);
     versions = { files: v._count._all, bytes: v._sum.size ?? 0 };
   }
-  res.json({ personal: out(personal), shared: out(shared), trash: out(trash), total, versions, limits: { maxFileBytes: config.drive.maxFileSize, trashDays: config.drive.trashDays } });
+  res.json({ shared: out(shared), trash: out(trash), total, versions, limits: { maxFileBytes: config.drive.maxFileSize, trashDays: config.drive.trashDays } });
 });
 
 /** Staff picker for the share dialog. */
@@ -375,7 +301,6 @@ driveRouter.get('/people', async (req, res) => {
 driveRouter.post('/nodes/:id/folders', async (req, res) => {
   const ctx = ctxOf(req);
   const id = idParam(req);
-  if (isVirtualId(id)) throw badRequest('READ_ONLY');
   const { node } = await requireNode(ctx, id, 'EDIT');
   assertWritableFolder(node);
   const { name: raw } = parse(z.object({ name: z.string().max(300) }), req.body);
@@ -425,8 +350,7 @@ driveRouter.post(
     // Access is checked before a single byte is spooled to disk.
     const ctx = ctxOf(req);
     const id = idParam(req);
-    if (isVirtualId(id)) throw badRequest('READ_ONLY');
-    const { node } = await requireNode(ctx, id, 'EDIT');
+      const { node } = await requireNode(ctx, id, 'EDIT');
     assertWritableFolder(node);
     res.locals.driveFolder = node;
     next();
@@ -515,14 +439,6 @@ driveRouter.get('/nodes/:id/content', async (req, res) => {
   const ctx = ctxOf(req);
   const id = idParam(req);
   const download = wantsDownload(req);
-  if (isVirtualId(id)) {
-    const v = await loadVirtual(ctx, id, 'VIEW');
-    if (!v.doc) throw badRequest('NOT_A_FILE');
-    const inline = !download && INLINE_MIME.has(v.doc.mimeType);
-    if (!inline && !allows(v.level, 'DOWNLOAD')) throw new HttpError(403, 'INSUFFICIENT_ACCESS');
-    sendStored(res, docFilePath(v.doc.storedName), v.doc.originalName, v.doc.mimeType, inline);
-    return;
-  }
   const { node, level } = await requireNode(ctx, id, 'VIEW');
   if (node.kind !== 'FILE') throw badRequest('NOT_A_FILE');
   const row = await prisma.driveNode.findUniqueOrThrow({ where: { id }, select: { storageKey: true, mimeType: true, name: true } });
@@ -537,7 +453,6 @@ driveRouter.get('/nodes/:id/content', async (req, res) => {
 driveRouter.patch('/nodes/:id', async (req, res) => {
   const ctx = ctxOf(req);
   const id = idParam(req);
-  if (isVirtualId(id)) throw badRequest('READ_ONLY');
   const body = parse(z.object({ name: z.string().max(300).optional(), color: z.enum(COLORS).nullable().optional() }), req.body);
   const { node } = await requireNode(ctx, id, body.color !== undefined ? 'MANAGE' : 'EDIT');
   if (body.name !== undefined && node.name !== body.name) {
@@ -563,29 +478,39 @@ const extOf = (name: string) => {
 
 const moveBody = z.object({ ids: idList, targetId: z.string().min(1).max(120) });
 
-/** Moves nodes into a folder. Needs EDIT on every source and on the target; names clash → "name (2)". */
-driveRouter.post('/move', async (req, res) => {
-  const ctx = ctxOf(req);
-  const { ids, targetId } = parse(moveBody, req.body);
-  if (isVirtualId(targetId)) throw badRequest('READ_ONLY');
+/**
+ * Prepares moving nodes into a folder: EDIT on the target; per node EDIT, not a system folder, not into
+ * itself. Names that clash in the target become "name (2)".
+ */
+const mover = async (ctx: DriveAccessCtx, targetId: string) => {
   const { node: target } = await requireNode(ctx, targetId, 'EDIT');
   assertWritableFolder(target);
   const taken = await siblingNames(targetId);
   const targetChain = new Set(ctx.chain(targetId).map((n) => n.id));
-  const results = await batch(ids, async (id) => {
-    if (isVirtualId(id)) throw badRequest('READ_ONLY');
+  return async (id: string) => {
     const { node } = await requireNode(ctx, id, 'EDIT');
     if (node.system) throw badRequest('SYSTEM_NODE');
     if (targetChain.has(id)) throw badRequest('INTO_ITSELF');
-    if (node.parentId === targetId) return { name: node.name };
+    if (node.parentId === targetId) return { name: node.name, from: node.parentId, moved: false };
     const name = pickFreeName(taken, node.name, node.kind === 'FILE');
     await prisma.driveNode.update({ where: { id }, data: { parentId: targetId, name } });
     if (node.space !== target.space || node.ownerId !== target.ownerId) {
       const sub = await collectSubtree([id], { id: true }, { includeDeleted: true });
       await prisma.driveNode.updateMany({ where: { id: { in: sub.map((s) => s.id) } }, data: { space: target.space, ownerId: target.ownerId } });
     }
-    await audit(req, 'DRIVE_MOVED', `drive:${id}`, { name, from: node.parentId, to: targetId });
-    return { name };
+    return { name, from: node.parentId, moved: true };
+  };
+};
+
+/** Moves nodes into a folder (drag & drop, cut / paste). One audit entry per node. */
+driveRouter.post('/move', async (req, res) => {
+  const ctx = ctxOf(req);
+  const { ids, targetId } = parse(moveBody, req.body);
+  const moveOne = await mover(ctx, targetId);
+  const results = await batch(ids, async (id) => {
+    const r = await moveOne(id);
+    if (r.moved) await audit(req, 'DRIVE_MOVED', `drive:${id}`, { name: r.name, from: r.from, to: targetId });
+    return { name: r.name };
   });
   res.json({ results });
 });
@@ -594,13 +519,11 @@ const copySelect = { ...nodeLiteSelect, storageKey: true, mimeType: true, size: 
 
 /**
  * Copies nodes (files need DOWNLOAD, folders EXPORT) into a folder (EDIT). Copies get fresh storage
- * keys, no grants (they inherit from the target) and no version history. Case documents can be copied
- * into the drive too.
+ * keys, no grants (they inherit from the target), no version history and no link to a case document.
  */
 driveRouter.post('/copy', async (req, res) => {
   const ctx = ctxOf(req);
   const { ids, targetId } = parse(moveBody, req.body);
-  if (isVirtualId(targetId)) throw badRequest('READ_ONLY');
   const { node: target } = await requireNode(ctx, targetId, 'EDIT');
   assertWritableFolder(target);
   const taken = await siblingNames(targetId);
@@ -621,31 +544,6 @@ driveRouter.post('/copy', async (req, res) => {
     (await prisma.driveNode.create({ data: { ...base, kind: 'FOLDER', name, parentId }, select: { id: true } })).id;
 
   const results = await batch(ids, async (id) => {
-    if (isVirtualId(id)) {
-      const v = await loadVirtual(ctx, id, 'VIEW');
-      if (!allows(v.level, v.doc ? 'DOWNLOAD' : 'EXPORT')) throw new HttpError(403, 'INSUFFICIENT_ACCESS');
-      const files = await virtualFiles(v);
-      if (v.doc) {
-        const name = pickFreeName(taken, safeUploadName(v.doc.originalName), true);
-        await copyFile(targetId, name, docFilePath(v.doc.storedName), v.doc.mimeType, v.doc.size);
-        return { name };
-      }
-      const name = pickFreeName(taken, safeUploadName(v.item.name), false);
-      const rootId = await newFolder(targetId, name);
-      const dirs = new Map<string, string>([['', rootId]]);
-      const dirTaken = new Map<string, Set<string>>();
-      for (const f of files) {
-        const cut = f.rel.lastIndexOf('/');
-        const dir = cut === -1 ? '' : f.rel.slice(0, cut);
-        if (!dirs.has(dir)) dirs.set(dir, await newFolder(rootId, dir));
-        const set = dirTaken.get(dir) ?? new Set<string>();
-        dirTaken.set(dir, set);
-        await copyFile(dirs.get(dir)!, pickFreeName(set, safeUploadName(f.doc.originalName), true), docFilePath(f.doc.storedName), f.doc.mimeType, f.doc.size).catch((err) => {
-          if ((err as NodeJS.ErrnoException).code !== 'ENOENT') throw err;
-        });
-      }
-      return { name };
-    }
     const { node, level } = await requireNode(ctx, id, 'VIEW');
     if (!allows(level, node.kind === 'FILE' ? 'DOWNLOAD' : 'EXPORT')) throw new HttpError(403, 'INSUFFICIENT_ACCESS');
     if (node.kind === 'FOLDER' && targetChain.has(id)) throw badRequest('INTO_ITSELF');
@@ -673,52 +571,91 @@ driveRouter.post('/copy', async (req, res) => {
 
 // ─── Recycle bin ──────────────────────────────────────────────────────
 
-/** POST /api/drive/case-documents/delete { ids: ['doc:…' | 'case:…' | 'case:…:STAGE'] } — super admins permanently delete case documents (single files or whole folders). */
+const CASE_DOC_ID = new RegExp(`^(?:doc:([a-z0-9]{10,40})|case:([a-z0-9]{10,40})(?::(${STAGES.join('|')}))?)$`);
+
+/**
+ * POST /api/drive/case-documents/delete { ids: ['doc:…' | 'case:…' | 'case:…:STAGE'] } — super admins
+ * permanently delete case documents (single documents, a whole case or one stage). Their drive copies go too.
+ */
 driveRouter.post('/case-documents/delete', requireMinRole('SUPER_ADMIN'), async (req, res) => {
   const { ids } = parse(z.object({ ids: idList }), req.body);
   const results = await batch(ids, async (id) => {
-    const ref = parseVirtualId(id);
-    if (!ref || (ref.kind !== 'doc' && ref.kind !== 'case' && ref.kind !== 'stage')) throw badRequest('NOT_A_CASE_DOCUMENT');
-    if (ref.kind === 'doc') return { name: (await deleteCaseDocument(req, ref.docId)).name };
-    // A case folder or a stage folder: every document in it goes (whatever its review status); the case stays.
-    const docs = await prisma.document.findMany({ where: { caseId: ref.caseId, ...(ref.kind === 'stage' ? { stage: ref.stage } : {}) }, select: { id: true } });
-    if (!docs.length && !(await prisma.case.count({ where: { id: ref.caseId } }))) throw notFound('NODE_NOT_FOUND');
+    const m = CASE_DOC_ID.exec(id);
+    if (!m) throw badRequest('NOT_A_CASE_DOCUMENT');
+    if (m[1]) return { name: (await deleteCaseDocument(req, m[1])).name };
+    const caseId = m[2];
+    // A case or a stage: every document in it goes (whatever its review status); the case stays.
+    const docs = await prisma.document.findMany({ where: { caseId, ...(m[3] ? { stage: m[3] as (typeof STAGES)[number] } : {}) }, select: { id: true } });
+    if (!docs.length && !(await prisma.case.count({ where: { id: caseId } }))) throw notFound('NODE_NOT_FOUND');
     for (const d of docs) await deleteCaseDocument(req, d.id);
     return { name: id, deleted: docs.length };
   });
   res.json({ results });
 });
 
+/** Moves one node (and its live subtree) to the recycle bin; system folders are refused. */
+const trashOne = async (ctx: DriveAccessCtx, id: string, at: Date) => {
+  const { node } = await requireNode(ctx, id, 'EDIT', { allowDeleted: true });
+  if (node.deletedAt) return { name: node.name, kind: node.kind, nodes: 0 };
+  if (node.system) throw badRequest('SYSTEM_NODE');
+  const nodes = await softDelete(id, ctx.user.id, at);
+  return { name: node.name, kind: node.kind, nodes };
+};
+
 driveRouter.post('/trash', async (req, res) => {
   const ctx = ctxOf(req);
   const { ids } = parse(z.object({ ids: idList }), req.body);
   const at = new Date();
   const results = await batch(ids, async (id) => {
-    if (isVirtualId(id)) throw badRequest('READ_ONLY');
-    const { node } = await requireNode(ctx, id, 'EDIT', { allowDeleted: true });
-    if (node.deletedAt) return {};
-    if (node.system) throw badRequest('SYSTEM_NODE');
-    const count = await softDelete(id, req.user!.id, at);
-    await audit(req, 'DRIVE_TRASHED', `drive:${id}`, { name: node.name, kind: node.kind, nodes: count });
-    return { name: node.name };
+    const r = await trashOne(ctx, id, at);
+    if (r.nodes) await audit(req, 'DRIVE_TRASHED', `drive:${id}`, { name: r.name, kind: r.kind, nodes: r.nodes });
+    return { name: r.name };
   });
   res.json({ results });
 });
 
-const trashScope = (req: Request, all: boolean): Prisma.DriveNodeWhereInput =>
-  req.user!.role === 'SUPER_ADMIN' && all ? {} : { OR: [{ deletedById: req.user!.id }, { space: 'PERSONAL', ownerId: req.user!.id }] };
+// ─── Bulk actions (multi-select in the explorer) ─────────────────────
 
-/** Trash roots: mine (deleted by me or in my files) or, for the super admin with ?all=1, everyone's. */
+const counts = (results: BatchResult[]) => ({ ok: results.filter((r) => r.ok).length, failed: results.filter((r) => !r.ok).length });
+
+/** POST /api/drive/bulk/delete { ids } — moves many items to the recycle bin; one audit entry with the counts. */
+driveRouter.post('/bulk/delete', async (req, res) => {
+  const ctx = ctxOf(req);
+  const { ids } = parse(z.object({ ids: idList }), req.body);
+  const at = new Date();
+  let nodes = 0;
+  const results = await batch(ids, async (id) => {
+    const r = await trashOne(ctx, id, at);
+    nodes += r.nodes;
+    return { name: r.name };
+  });
+  const c = counts(results);
+  await audit(req, 'DRIVE_BULK_TRASHED', undefined, { requested: results.length, deleted: c.ok, failed: c.failed, nodes, ids: ids.slice(0, 50) });
+  res.json({ results, ...c });
+});
+
+/** POST /api/drive/bulk/move { ids, targetId } — moves many items into one folder; one audit entry with the counts. */
+driveRouter.post('/bulk/move', async (req, res) => {
+  const ctx = ctxOf(req);
+  const { ids, targetId } = parse(moveBody, req.body);
+  const moveOne = await mover(ctx, targetId);
+  const results = await batch(ids, async (id) => ({ name: (await moveOne(id)).name }));
+  const c = counts(results);
+  await audit(req, 'DRIVE_BULK_MOVED', `drive:${targetId}`, { requested: results.length, moved: c.ok, failed: c.failed, ids: ids.slice(0, 50) });
+  res.json({ results, ...c });
+});
+
+/** Trash roots of the shared workspace (everyone works in one place, so everyone sees the one bin). */
 driveRouter.get('/trash', async (req, res) => {
   const ctx = ctxOf(req);
-  const all = req.query.all === '1' || req.query.all === 'true';
-  const ids = await trashRootIds(trashScope(req, all));
+  const ids = await trashRootIds({});
   const rows = await prisma.driveNode.findMany({ where: { id: { in: ids } }, select: { ...itemSelect, deletedBy: person }, orderBy: { deletedAt: 'desc' } });
   const items = await buildItems(ctx, rows, { withLocation: true });
   const extra = new Map(rows.map((r) => [r.id, r]));
   res.json({
     items: items.map((i) => ({ ...i, deletedAt: extra.get(i.id)!.deletedAt, deletedBy: extra.get(i.id)!.deletedBy })),
     trashDays: config.drive.trashDays,
+    canPurge: hasMinRole(req.user!.role, 'ADMIN'),
   });
 });
 
@@ -726,7 +663,6 @@ driveRouter.post('/restore', async (req, res) => {
   const ctx = ctxOf(req);
   const { ids } = parse(z.object({ ids: idList }), req.body);
   const results = await batch(ids, async (id) => {
-    if (isVirtualId(id)) throw notFound('NODE_NOT_FOUND');
     const { node } = await requireNode(ctx, id, 'EDIT', { allowDeleted: true });
     if (!node.deletedAt) throw badRequest('NOT_IN_TRASH');
     const parent = node.parentId ? ctx.nodes.get(node.parentId) : undefined;
@@ -743,14 +679,11 @@ driveRouter.post('/restore', async (req, res) => {
   res.json({ results });
 });
 
-/** Deleting for good: the super admin, a MANAGE holder, or the person who put it in the bin. */
+/** Deleting for good: admins and above (or a MANAGE holder of a restricted folder). */
 const purgeAllowed = async (ctx: DriveAccessCtx, id: string) => {
   const { node, level } = await requireNode(ctx, id, 'EDIT', { allowDeleted: true });
   if (!node.deletedAt) throw badRequest('NOT_IN_TRASH');
-  if (!ctx.isSuper && level !== 'MANAGE') {
-    const row = await prisma.driveNode.findUnique({ where: { id }, select: { deletedById: true } });
-    if (row?.deletedById !== ctx.user.id) throw forbidden('INSUFFICIENT_ACCESS');
-  }
+  if (!hasMinRole(ctx.user.role, 'ADMIN') && level !== 'MANAGE') throw forbidden('INSUFFICIENT_ACCESS');
   return node;
 };
 
@@ -758,7 +691,6 @@ driveRouter.post('/purge', async (req, res) => {
   const ctx = ctxOf(req);
   const { ids } = parse(z.object({ ids: idList }), req.body);
   const results = await batch(ids, async (id) => {
-    if (isVirtualId(id)) throw notFound('NODE_NOT_FOUND');
     const node = await purgeAllowed(ctx, id);
     const r = await purgeNodes([id]);
     await audit(req, 'DRIVE_PURGED', `drive:${id}`, { name: node.name, kind: node.kind, ...r });
@@ -767,11 +699,10 @@ driveRouter.post('/purge', async (req, res) => {
   res.json({ results });
 });
 
-/** Empty the bin (mine, or everyone's for the super admin with ?all=1). */
-driveRouter.delete('/trash', async (req, res) => {
+/** Empty the bin (admins and above). */
+driveRouter.delete('/trash', requireMinRole('ADMIN'), async (req, res) => {
   const ctx = ctxOf(req);
-  const all = req.query.all === '1' || req.query.all === 'true';
-  const ids = await trashRootIds(trashScope(req, all));
+  const ids = await trashRootIds({});
   let purged = 0;
   let bytes = 0;
   for (const id of ids) {
@@ -785,7 +716,7 @@ driveRouter.delete('/trash', async (req, res) => {
     purged += r.nodes;
     bytes += r.bytes;
   }
-  await audit(req, 'DRIVE_TRASH_EMPTIED', undefined, { all, roots: ids.length, nodes: purged, bytes });
+  await audit(req, 'DRIVE_TRASH_EMPTIED', undefined, { roots: ids.length, nodes: purged, bytes });
   res.json({ ok: true, nodes: purged, bytes });
 });
 
@@ -815,16 +746,6 @@ driveRouter.get('/export', async (req, res) => {
   let archive = '';
 
   for (const id of ids) {
-    if (isVirtualId(id)) {
-      const v = await loadVirtual(ctx, id, 'EXPORT');
-      const prefix = v.doc ? '' : `${safeUploadName(v.item.name)}/`;
-      for (const f of await virtualFiles(v)) {
-        const parts = f.rel.split('/').map((p) => safeUploadName(p));
-        add(prefix + parts.join('/'), docFilePath(f.doc.storedName), f.doc.createdAt);
-      }
-      archive ||= v.item.name;
-      continue;
-    }
     const { node, level } = await requireNode(ctx, id, 'VIEW');
     archive ||= node.name;
     if (node.kind === 'FILE') {
@@ -872,10 +793,6 @@ driveRouter.get('/export', async (req, res) => {
 driveRouter.get('/nodes/:id/versions', async (req, res) => {
   const ctx = ctxOf(req);
   const id = idParam(req);
-  if (isVirtualId(id)) {
-    res.json({ versions: [] });
-    return;
-  }
   await requireNode(ctx, id, 'VIEW');
   const versions = await prisma.driveFileVersion.findMany({
     where: { nodeId: id },
@@ -888,7 +805,6 @@ driveRouter.get('/nodes/:id/versions', async (req, res) => {
 const loadVersion = async (req: Request, need: DriveAccess) => {
   const ctx = ctxOf(req);
   const id = idParam(req);
-  if (isVirtualId(id)) throw notFound('VERSION_NOT_FOUND');
   const { node } = await requireNode(ctx, id, need);
   const v = await prisma.driveFileVersion.findFirst({ where: { id: String(req.params.versionId), nodeId: id } });
   if (!v) throw notFound('VERSION_NOT_FOUND');
@@ -938,7 +854,6 @@ driveRouter.post('/nodes/:id/versions/:versionId/restore', async (req, res) => {
 
 driveRouter.put('/nodes/:id/star', async (req, res) => {
   const id = idParam(req);
-  if (isVirtualId(id)) throw badRequest('READ_ONLY');
   await requireNode(ctxOf(req), id, 'VIEW');
   await prisma.driveFavorite.upsert({ where: { userId_nodeId: { userId: req.user!.id, nodeId: id } }, create: { userId: req.user!.id, nodeId: id }, update: {} });
   res.json({ ok: true, starred: true });
@@ -956,33 +871,20 @@ const userSelect = { id: true, firstName: true, lastName: true, email: true, rol
 
 /**
  * Who has access to a node: its own grants and the inherited ones (with the folder they come from), plus
- * the implicit holders (super admins, the owner of a personal tree, assigned staff for case folders).
+ * the implicit holders (super admins, the owner of an old personal tree).
  */
 driveRouter.get('/nodes/:id/access', async (req, res) => {
   const ctx = ctxOf(req);
   const id = idParam(req);
-  let chainNodes: NodeLite[];
-  let level: Level;
-  let nodeInfo: { id: string; name: string; kind: string; space: string; system: boolean; inheritPermissions: boolean; parentId: string | null; virtual: boolean };
-  let assignedStaff = null;
-  if (isVirtualId(id)) {
-    const v = await loadVirtual(ctx, id, 'VIEW');
-    const { casesId } = await casesRootAccess(ctx);
-    chainNodes = [ctx.nodes.get(casesId)!];
-    level = v.level;
-    nodeInfo = { id, name: v.item.name, kind: v.item.kind, space: 'CASES', system: false, inheritPermissions: true, parentId: v.item.parentId, virtual: true };
-    assignedStaff = v.caseRow?.assignedStaff ?? null;
-  } else {
-    const r = await requireNode(ctx, id, 'VIEW', { allowDeleted: true });
-    chainNodes = ctx.chain(id);
-    level = r.level;
-    nodeInfo = { id, name: r.node.name, kind: r.node.kind, space: r.node.space, system: r.node.system, inheritPermissions: r.node.inheritPermissions, parentId: r.node.parentId, virtual: false };
-  }
+  const r = await requireNode(ctx, id, 'VIEW', { allowDeleted: true });
+  const chainNodes: NodeLite[] = ctx.chain(id);
+  const level: Level = r.level;
+  const nodeInfo = { id, name: r.node.name, kind: r.node.kind, space: r.node.space, system: r.node.system, inheritPermissions: r.node.inheritPermissions, parentId: r.node.parentId, virtual: false };
+  const assignedStaff = null;
   const entries: { grantId: string; userId: string | null; role: Role | null; access: DriveAccess; inherited: boolean; from: { id: string; name: string; space: string; system: boolean } | null }[] = [];
-  const virtual = nodeInfo.virtual;
   for (let i = chainNodes.length - 1; i >= 0; i--) {
     const n = chainNodes[i];
-    const inherited = virtual || i !== chainNodes.length - 1;
+    const inherited = i !== chainNodes.length - 1;
     for (const g of n.grants) {
       entries.push({ grantId: g.id, userId: g.userId, role: g.role, access: g.access, inherited, from: inherited ? { id: n.id, name: n.name, space: n.space, system: n.system } : null });
     }
@@ -995,7 +897,7 @@ driveRouter.get('/nodes/:id/access', async (req, res) => {
   res.json({
     node: nodeInfo,
     myAccess: level,
-    canManage: !virtual && level === 'MANAGE',
+    canManage: level === 'MANAGE',
     entries: entries.map((e) => ({ ...e, user: e.userId ? (byId.get(e.userId) ?? null) : null })),
     implicit: { superAdmins: true, owner: owner ? (byId.get(owner) ?? null) : null, assignedStaff },
   });
@@ -1009,7 +911,6 @@ const grantBody = z
 driveRouter.put('/nodes/:id/grants', async (req, res) => {
   const ctx = ctxOf(req);
   const id = idParam(req);
-  if (isVirtualId(id)) throw badRequest('READ_ONLY');
   const body = parse(grantBody, req.body);
   const { node, level } = await requireNode(ctx, id, 'MANAGE');
   if (RANK[body.access] > RANK[level!]) throw forbidden('LEVEL_TOO_HIGH');
@@ -1043,7 +944,6 @@ driveRouter.put('/nodes/:id/grants', async (req, res) => {
 driveRouter.delete('/nodes/:id/grants/:grantId', async (req, res) => {
   const ctx = ctxOf(req);
   const id = idParam(req);
-  if (isVirtualId(id)) throw badRequest('READ_ONLY');
   const { node } = await requireNode(ctx, id, 'MANAGE');
   const grant = await prisma.driveGrant.findFirst({ where: { id: String(req.params.grantId), nodeId: id } });
   if (!grant) throw notFound('GRANT_NOT_FOUND');
@@ -1059,7 +959,6 @@ driveRouter.delete('/nodes/:id/grants/:grantId', async (req, res) => {
 driveRouter.patch('/nodes/:id/inheritance', async (req, res) => {
   const ctx = ctxOf(req);
   const id = idParam(req);
-  if (isVirtualId(id)) throw badRequest('READ_ONLY');
   const body = parse(z.object({ inherit: z.boolean(), copyInherited: z.boolean().optional() }), req.body);
   const { node } = await requireNode(ctx, id, 'MANAGE');
   if (!node.parentId) throw badRequest('ROOT_HAS_NO_PARENT');
@@ -1114,8 +1013,7 @@ driveRouter.patch('/nodes/:id/inheritance', async (req, res) => {
 driveRouter.get('/overview/:userId', requireMinRole('SUPER_ADMIN'), async (req, res) => {
   const target = await prisma.user.findUnique({ where: { id: String(req.params.userId) }, select: userSelect });
   if (!target || !hasMinRole(target.role, 'STAFF')) throw notFound('USER_NOT_FOUND');
-  await ensureRoots();
-  await ensurePersonalRoot(target.id);
+  const { casesId } = await ensureRoots();
   const ctx = new DriveAccessCtx({ id: target.id, role: target.role });
   const rows = await prisma.driveNode.findMany({
     where: { deletedAt: null, OR: [{ kind: 'FOLDER' }, { grants: { some: {} } }] },
@@ -1130,7 +1028,6 @@ driveRouter.get('/overview/:userId', requireMinRole('SUPER_ADMIN'), async (req, 
       const source = ctx.isSuper ? 'super' : n.space === 'PERSONAL' && n.ownerId === target.id ? 'owner' : own.length ? (own.some((g) => g.userId) ? 'user' : 'role') : 'inherited';
       return { id: n.id, parentId: n.parentId, name: n.name, kind: n.kind, space: n.space, system: n.system, ownerId: n.ownerId, inheritPermissions: n.inheritPermissions, level: ctx.level(n.id), source };
     });
-  const { casesId } = await ensureRoots();
   const assigned = await prisma.case.count({ where: { assignedStaffId: target.id } });
   res.json({ user: target, items, cases: { rootId: casesId, rootLevel: ctx.level(casesId), assignedCases: assigned }, levels: LEVELS });
 });

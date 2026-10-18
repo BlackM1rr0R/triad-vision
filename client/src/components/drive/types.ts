@@ -38,7 +38,14 @@ export interface DriveItem {
   previewable: boolean;
   starred: boolean;
   childCount?: number;
+  /** Copy of a case document (accepted upload) in the client's folder. */
+  documentId?: string | null;
+  /** Client folders and case document copies: the case they belong to. */
   caseId?: string;
+  /** Client folders: who the client is (header strip). */
+  caseInfo?: { clientName: string; passportNumber: string | null; visaType: string; partner: { id: string; name: string } | null };
+  /** Partner folders below "Partner": the referral partner. */
+  partner?: { id: string; name: string; phone: string | null; email: string | null; active: boolean };
   caseNumber?: string;
   caseStatus?: string;
   stage?: string;
@@ -67,11 +74,21 @@ export interface Listing {
   items: DriveItem[];
 }
 
+/** The one shared workspace and its system folders (quick links). */
 export interface RootsResponse {
   shared: DriveItem | null;
-  personal: DriveItem | null;
+  /** "Anträge": client folders by visa type. */
   cases: DriveItem | null;
-  team: DriveItem[];
+  /** "Partner": one folder per referral partner. */
+  partners: DriveItem | null;
+  /** "Mitarbeiter": former personal files. */
+  staff: DriveItem | null;
+  /** "In Bearbeitung": documents being corrected. */
+  work: DriveItem | null;
+  /** "Vorlagen": templates and forms. */
+  templates: DriveItem | null;
+  /** "Alle Kunden": the clients workbook (super admins only, else null). */
+  clients: DriveItem | null;
   limits: { maxFileBytes: number; trashDays: number };
 }
 
@@ -130,7 +147,6 @@ export interface BatchResult {
 }
 
 export interface StatsResponse {
-  personal: { files: number; bytes: number };
   shared: { files: number; bytes: number };
   trash: { files: number; bytes: number };
   total: { files: number; bytes: number } | null;

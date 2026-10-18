@@ -10,6 +10,7 @@ import {
   Check,
   ChevronDown,
   ChevronRight,
+  FileSpreadsheet,
   FolderPlus,
   FolderUp,
   LayoutGrid,
@@ -118,6 +119,8 @@ export interface ToolbarProps {
   onSort: (k: SortKey, dir?: 'asc' | 'desc') => void;
   canCreate: boolean;
   onNewFolder: () => void;
+  /** "New spreadsheet" next to "New folder" (opens the sheet editor). */
+  onNewSheet?: () => void;
   onUploadFiles: () => void;
   onUploadFolder: () => void;
   selectionCount: number;
@@ -149,7 +152,7 @@ export const Toolbar = (p: ToolbarProps) => {
   };
 
   const sortEntries: MenuEntry[] = [
-    ...(['name', 'modified', 'size', 'type'] as SortKey[]).map((k) => ({
+    ...(['name', 'modified', 'size', 'type', 'owner'] as SortKey[]).map((k) => ({
       id: k,
       label: t(`drive.toolbar.sort${k[0].toUpperCase()}${k.slice(1)}`),
       icon: p.sortKey === k ? Check : undefined,
@@ -162,6 +165,7 @@ export const Toolbar = (p: ToolbarProps) => {
   ];
   const newEntries: MenuEntry[] = [
     { id: 'folder', label: t('drive.toolbar.newFolder'), icon: FolderPlus, onSelect: p.onNewFolder },
+    ...(p.onNewSheet ? [{ id: 'sheet', label: t('drive.shared.newSheet'), icon: FileSpreadsheet, onSelect: p.onNewSheet }] : []),
     { kind: 'separator', id: 'sep' },
     { id: 'files', label: t('drive.toolbar.uploadFiles'), icon: Upload, onSelect: p.onUploadFiles },
     { id: 'dir', label: t('drive.toolbar.uploadFolder'), icon: FolderUp, onSelect: p.onUploadFolder },

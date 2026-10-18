@@ -62,7 +62,7 @@ describe('clients workbook', () => {
     expect(zipEntry(buf, '[Content_Types].xml')).toContain('spreadsheetml');
   });
 
-  it('keeps an up-to-date "Bütün müştərilər.xlsx" in every super admin drive and serves it to super admins only', async () => {
+  it('keeps one up-to-date "Alle Kunden.xlsx" in the shared drive, visible and served to super admins only', async () => {
     const su = await asSuperAdmin();
     const admin = await asAdmin();
     const a = await asClient({ firstName: 'Ayan', lastName: 'Quliyeva' });
@@ -70,7 +70,10 @@ describe('clients workbook', () => {
     await asClient({ firstName: 'Rauf', lastName: 'Məmmədov' });
 
     await refreshClientsExcel();
-    const folder = await prisma.driveNode.findFirst({ where: { ownerId: su.user.id, name: CLIENTS_FOLDER, kind: 'FOLDER' } });
+    const folder = await prisma.driveNode.findFirst({ where: { name: CLIENTS_FOLDER, kind: 'FOLDER' }, include: { parent: true } });
+    expect(folder).toMatchObject({ space: 'SHARED', system: true, inheritPermissions: false, parent: { name: 'Gemeinsame Dokumente', parentId: null } });
+    expect((await su.agent.get(`/api/drive/nodes/${folder!.id}/children`)).status).toBe(200);
+    expect((await admin.agent.get(`/api/drive/nodes/${folder!.id}/children`)).status).toBe(404);
     const file = await prisma.driveNode.findFirst({ where: { parentId: folder!.id, name: CLIENTS_FILE } });
     expect(file).toMatchObject({ kind: 'FILE', system: true });
     const v1 = file!.version;

@@ -9,6 +9,7 @@ import { prisma } from '../../db.js';
 import { HttpError, notFound } from '../http.js';
 import { notifyStaff, notifyUser } from '../notifications.js';
 import { parseMrzText, type MrzResult } from './mrz.js';
+import { syncClientFolders } from '../drive/caseFolders.js';
 
 /**
  * Passport OCR: runs tesseract.js on an uploaded image, extracts the MRZ and stores the result on the
@@ -145,6 +146,7 @@ export const fillEmptyProfileFields = async (userId: string, mrz: MrzResult) => 
   }
   const applied = Object.keys(data);
   if (applied.length) await prisma.user.update({ where: { id: userId }, data });
+  if (applied.includes('passportNumber')) void syncClientFolders(userId); // "… · Pass-Nr." folder names
   return applied;
 };
 
@@ -152,6 +154,7 @@ export const fillEmptyProfileFields = async (userId: string, mrz: MrzResult) => 
 export const applyMrzToProfile = async (userId: string, mrz: MrzResult) => {
   const data = profileFromMrz(mrz);
   await prisma.user.update({ where: { id: userId }, data });
+  void syncClientFolders(userId); // "… · Pass-Nr." folder names
   return data;
 };
 

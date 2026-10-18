@@ -78,3 +78,15 @@ export const findSibling = async (parentId: string, name: string, exceptId?: str
   });
   return rows.find((r) => lower(r.name) === lower(name)) ?? null;
 };
+
+/**
+ * A folder name built by the server from data (client names, partner names, categories): characters a
+ * file system would refuse become spaces, trailing dots go, reserved device names get a prefix.
+ */
+export const cleanName = (raw: string, fallback = 'Ohne Namen') => {
+  // eslint-disable-next-line no-control-regex
+  let n = raw.normalize('NFC').replace(/[\/:*?"<>|\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim().replace(/[. ]+$/, '').replace(/^\.+/, '').trim();
+  if (RESERVED.test(n)) n = `_${n}`;
+  if (n.length > 180) n = n.slice(0, 180).trim();
+  return n || fallback;
+};

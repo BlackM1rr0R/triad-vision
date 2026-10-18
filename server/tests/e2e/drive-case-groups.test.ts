@@ -1,12 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import { asAdmin, asClient, asStaff, asSuperAdmin } from '../helpers/api';
-import { prisma, emailsTo } from '../helpers/db';
+import { prisma, emailsTo, waitFor } from '../helpers/db';
 import { createVisaCategory, l10n } from '../helpers/factories';
 
 const children = async (agent: Awaited<ReturnType<typeof asSuperAdmin>>['agent'], id: string) =>
-  (await agent.get(`/api/drive/nodes/${encodeURIComponent(id)}/children`)).body as { items: { id: string; name: string; parentId: string }[]; path: { id: string }[] };
+  (await agent.get(`/api/drive/nodes/${encodeURIComponent(id)}/children`)).body as { items: { id: string; name: string; parentId: string; caseId?: string }[]; path: { id: string; name: string }[] };
 
-describe('cases area grouped by application type and visa category', () => {
+const folderOf = (caseId: string) => waitFor(async () => (await prisma.case.findUnique({ where: { id: caseId } }))?.driveFolderId ?? null);
+
+describe('client folders grouped by application type and visa category', () => {
   it('nests Ausbildung and work cases by type, then category, then client', async () => {
     const su = await asSuperAdmin();
     const courier = await createVisaCategory({ slug: 'kuryer', title: l10n('Kuryer'), visaLabel: '§18b' });
@@ -14,19 +16,22 @@ describe('cases area grouped by application type and visa category', () => {
     const w = await asClient({ firstName: 'Kamran', lastName: 'Kuryer' });
     const aCase = (await a.agent.post('/api/cases').send({ visaType: 'AUSBILDUNG' })).body.case;
     const wCase = (await w.agent.post('/api/cases').send({ visaType: 'WORK', visaCategoryId: courier.id })).body.case;
+    const [aFolder, wFolder] = [await folderOf(aCase.id), await folderOf(wCase.id)];
 
     const casesRoot = (await su.agent.get('/api/drive/roots')).body.cases.id as string;
     const types = await children(su.agent, casesRoot);
-    expect(types.items.map((i) => i.id)).toEqual(['vt:WORK', 'vt:AUSBILDUNG']);
+    expect(types.items.map((i) => i.name).sort()).toEqual(['Arbeitsvisum', 'Ausbildung']);
 
-    const work = await children(su.agent, 'vt:WORK');
-    expect(work.items).toEqual([expect.objectContaining({ id: `vc:WORK:${courier.id}`, name: '§18b · Kuryer de' })]);
-    const inCat = await children(su.agent, `vc:WORK:${courier.id}`);
-    expect(inCat.items.map((i) => i.id)).toEqual([`case:${wCase.id}`]);
-    expect(inCat.path.map((p) => p.id).slice(1)).toEqual(['vt:WORK', `vc:WORK:${courier.id}`]);
+    const work = types.items.find((i) => i.name === 'Arbeitsvisum')!;
+    const cats = await children(su.agent, work.id);
+    expect(cats.items.map((i) => i.name)).toEqual(['§18b · Kuryer de']);
+    const inCat = await children(su.agent, cats.items[0].id);
+    expect(inCat.items).toEqual([expect.objectContaining({ id: wFolder, name: `Kamran Kuryer · ${wCase.number}`, caseId: wCase.id })]);
+    expect(inCat.path.map((p) => p.name)).toEqual(['Gemeinsame Dokumente', 'Anträge', 'Arbeitsvisum', '§18b · Kuryer de']);
 
-    const ausb = await children(su.agent, 'vt:AUSBILDUNG');
-    expect(ausb.items.map((i) => i.id)).toEqual([`case:${aCase.id}`]);
+    const ausb = await children(su.agent, types.items.find((i) => i.name === 'Ausbildung')!.id);
+    expect(ausb.items.map((i) => i.name)).toEqual(['Ohne Kategorie']);
+    expect((await children(su.agent, ausb.items[0].id)).items.map((i) => i.id)).toEqual([aFolder]);
   });
 
   it('lets only a super admin delete a case document from the case page', async () => {

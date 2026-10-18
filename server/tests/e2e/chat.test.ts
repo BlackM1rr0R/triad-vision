@@ -5,6 +5,7 @@ import { createClient, createStaff, uniq } from '../helpers/factories';
 import { binaryParser, makePdf, SAMPLE } from '../helpers/files';
 import { expectStatus } from '../helpers/workflow';
 import { subscribe } from '../../src/lib/messaging/realtime.js';
+import { ensureRoots } from '../../src/lib/drive/roots.js';
 
 const notes = (userId: string, type?: string) => prisma.notification.findMany({ where: { userId, ...(type ? { type } : {}) }, orderBy: { createdAt: 'asc' } });
 
@@ -370,12 +371,14 @@ describe('chat: attachments', () => {
     expect(png.status).toBe(201);
   });
 
-  it('links team-drive files the sender may view; other people’s personal files are refused', async () => {
+  it('links team-drive files the sender may view; files in folders others cannot open are refused', async () => {
     const a = await asStaff();
     const b = await asStaff();
     const ch = await mkChannel(a.agent, { memberIds: [b.user.id] });
-    const roots = expectStatus(await a.agent.get('/api/drive/roots'), 200).body;
-    const up = await a.agent.post(`/api/drive/nodes/${roots.personal.id}/files`).attach('file', await makePdf('Drive'), { filename: 'contract.pdf', contentType: 'application/pdf' });
+    // A restricted folder in the shared workspace: only A may open it.
+    const { sharedId } = await ensureRoots();
+    const locked = await prisma.driveNode.create({ data: { space: 'SHARED', kind: 'FOLDER', name: 'A only', parentId: sharedId, inheritPermissions: false, grants: { create: { userId: a.user.id, access: 'EDIT' } } } });
+    const up = await a.agent.post(`/api/drive/nodes/${locked.id}/files`).attach('file', await makePdf('Drive'), { filename: 'contract.pdf', contentType: 'application/pdf' });
     expect(up.status).toBe(201);
     const nodeId = up.body.item.id as string;
 
@@ -386,10 +389,10 @@ describe('chat: attachments', () => {
     const m = await post(a.agent, ch.id, { body: 'see the contract', attachmentIds: [link.body.attachment.id] });
     const att = (m.attachments as { id: string; driveNodeId: string }[])[0];
     expect(att.driveNodeId).toBe(nodeId);
-    // Shared into the channel: a member who has no drive access to the personal file can open it from the chat.
+    // Shared into the channel: a member who has no drive access to the file can open it from the chat.
     const got = await b.agent.get(`/api/chat/attachments/${att.id}`).buffer(true).parse(binaryParser);
     expect(got.status).toBe(200);
     expect(got.body.subarray(0, 5).toString()).toBe('%PDF-');
-    expect((await a.agent.post('/api/chat/attachments/from-drive').send({ driveNodeId: roots.personal.id })).status).toBe(400);
+    expect((await a.agent.post('/api/chat/attachments/from-drive').send({ driveNodeId: locked.id })).status).toBe(400);
   });
 });

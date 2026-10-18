@@ -7,14 +7,18 @@ import {
   FileImage,
   FileSpreadsheet,
   FileText,
+  FilePen,
+  LayoutTemplate,
+  Sheet,
   FileType2,
+  ClipboardList,
   Folder,
   FolderLock,
   FolderOpen,
+  Handshake,
   HardDrive,
-  Layers,
   Presentation,
-  User,
+  Users,
 } from 'lucide-react';
 import type { DriveItem, FolderColor } from './types';
 
@@ -93,18 +97,31 @@ export const FOLDER_SWATCH: Record<FolderColor, string> = {
   slate: 'bg-slate-400',
 };
 
+/** Icons of the system sections below "Gemeinsame Dokumente" (matched by their German names). */
+export const SECTION_ICON: Record<string, { icon: LucideIcon; tone: string; bg: string; desc: string }> = {
+  Anträge: { icon: Briefcase, tone: 'text-violet-600', bg: 'bg-violet-50 dark:bg-violet-500/10', desc: 'drive.sections.cases' },
+  Partner: { icon: Handshake, tone: 'text-teal-600', bg: 'bg-teal-50 dark:bg-teal-500/10', desc: 'drive.sections.partners' },
+  'In Bearbeitung': { icon: FilePen, tone: 'text-amber-600', bg: 'bg-amber-50 dark:bg-amber-500/10', desc: 'drive.sections.work' },
+  Mitarbeiter: { icon: Users, tone: 'text-sky-600', bg: 'bg-sky-50 dark:bg-sky-500/10', desc: 'drive.sections.staff' },
+  Vorlagen: { icon: LayoutTemplate, tone: 'text-pink-600', bg: 'bg-pink-50 dark:bg-pink-500/10', desc: 'drive.sections.templates' },
+  'Alle Kunden': { icon: Sheet, tone: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-500/10', desc: 'drive.sections.clients' },
+  Aufgabendateien: { icon: ClipboardList, tone: 'text-orange-600', bg: 'bg-orange-50 dark:bg-orange-500/10', desc: 'drive.sections.tasks' },
+};
+
+/** The section info of a system folder directly below the shared root (null for any other folder). */
+export const sectionOf = (item: Pick<DriveItem, 'system' | 'name' | 'parentId'> | null | undefined) => (item && item.system && item.parentId ? (SECTION_ICON[item.name] ?? null) : null);
+
 /** The icon of a drive item: coloured folders, special icons for roots and case folders, file types by MIME. */
 export const ItemIcon = ({ item, open = false, className }: { item: DriveItem; open?: boolean; className?: string }) => {
   if (item.kind === 'FOLDER') {
-    if (item.system && !item.parentId) {
-      const Icon = item.space === 'SHARED' ? HardDrive : item.space === 'CASES' ? Briefcase : User;
-      const tone = item.space === 'SHARED' ? 'text-brand-600' : item.space === 'CASES' ? 'text-violet-600' : 'text-teal-600';
-      return <Icon className={clsx(tone, className)} strokeWidth={1.6} aria-hidden />;
-    }
-    if (item.virtual && item.id.startsWith('case:') && !item.stage) return <Briefcase className={clsx('text-violet-500', className)} strokeWidth={1.5} aria-hidden />;
-    if (item.virtual && item.stage) return <Layers className={clsx('text-violet-400', className)} strokeWidth={1.5} aria-hidden />;
+    if (item.system && !item.parentId) return <HardDrive className={clsx('text-brand-600', className)} strokeWidth={1.6} aria-hidden />;
+    // The system sections of the shared workspace.
+    const section = item.system ? SECTION_ICON[item.name] : undefined;
+    if (section) return <section.icon className={clsx(section.tone, className)} strokeWidth={1.6} aria-hidden />;
     const Icon = !item.inheritPermissions ? FolderLock : open ? FolderOpen : Folder;
-    return <Icon className={clsx(item.color ? FOLDER_TONE[item.color] : 'text-amber-400', className)} fill="currentColor" fillOpacity={0.22} strokeWidth={1.5} aria-hidden />;
+    // Client folders (linked to a case) are violet unless staff picked a colour.
+    const tone = item.color ? FOLDER_TONE[item.color] : item.caseId ? 'text-violet-500' : 'text-amber-400';
+    return <Icon className={clsx(tone, className)} fill="currentColor" fillOpacity={0.22} strokeWidth={1.5} aria-hidden />;
   }
   const k = FILE_ICON[fileKind(item)];
   return <k.icon className={clsx(k.tone, className)} strokeWidth={1.5} aria-hidden />;

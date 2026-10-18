@@ -7,6 +7,7 @@ import { pickAssignee } from './ops/autoAssign.js';
 import { emitWebhook } from './ops/webhooks.js';
 import { awardCaseCommission } from './agents/commissions.js';
 import { surveyOnCaseFinal } from './surveys/service.js';
+import { syncCaseFolder } from './drive/caseFolders.js';
 
 export const FINAL_STATUSES: CaseStatus[] = ['APPROVED', 'REJECTED', 'CANCELLED'];
 
@@ -85,6 +86,7 @@ export const createCase = async (
       );
       await awardCaseCommission(created.id, 'CASE_CREATED'); // agent programme (never throws)
       void emitWebhook('case.created', { caseId: created.id, number: created.number, status: created.status, visaCategoryId: created.visaCategoryId }, created.companyId);
+      void syncCaseFolder(created.id); // the client's folder in the shared drive
       return created;
     } catch (err) {
       if ((err as { code?: string }).code === 'P2002') continue;

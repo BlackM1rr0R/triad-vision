@@ -1,6 +1,7 @@
 import type { CaseStatus, Prisma } from '@prisma/client';
 import { prisma } from '../../db.js';
 import { createCase } from '../caseFlow.js';
+import { syncCaseFolder } from '../drive/caseFolders.js';
 import { badRequest, conflict, notFound } from '../http.js';
 import { documentSummary, progressPercent, STATUS_STEP, STEP_COUNT } from '../../routes/account.js';
 
@@ -128,6 +129,7 @@ export const addFamilyMember = async (
   await prisma.caseEvent.create({
     data: { caseId: main.id, type: 'CASE_UPDATED', note: `Family member added: ${info.firstName} ${info.lastName} (${info.relation}) → ${created.number}`, actorId, visibleToClient: false },
   });
+  void syncCaseFolder(created.id); // folder named after the member, inside the main applicant's folder
   return created;
 };
 
