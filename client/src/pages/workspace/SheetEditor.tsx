@@ -21,6 +21,8 @@ import { formatValue } from '@/components/sheet/format';
 import { impliedFormat } from '@/components/sheet/formula';
 import { DEFAULT_COL_WIDTH, countCells, getCell, mergeIndex, rawOf, type Sheet } from '@/components/sheet/model';
 import type { GridSource } from '@/components/sheet/types';
+import { useAuth } from '@/lib/auth';
+import { AdminAiButton, AdminAiPanel, useAiActionDone } from '@/components/aiAdmin/AdminAiPanel';
 
 registerCopy(pagesSheet);
 
@@ -54,6 +56,8 @@ const readAutosave = () => {
 };
 
 const folderHref = (id: string) => `/workspace/drive/f/${encodeURIComponent(id)}`;
+/** AI tools that change a spreadsheet (a confirmed one reloads the open workbook). */
+const SHEET_AI_TOOLS = /^sheet_/;
 
 /** Grid source over one sheet of the workbook (values computed by the formula engine). */
 const useSheetSource = (sheet: Sheet | undefined, index: number, engine: ReturnType<typeof useWorkbook>['engine'], engineRev: number): GridSource | null =>
@@ -120,6 +124,22 @@ export default function SheetEditor() {
   const lock = useDriveLock(id, { enabled: !!meta?.canEdit });
   const readOnly = !meta?.canEdit || lock.status === 'other';
   useLeaveGuard(wb.dirty && !readOnly, t('sheet.leaveWarning'));
+
+  // Super-admin AI assistant: after a confirmed sheet action the workbook is reloaded, unless there are
+  // unsaved local edits (then a banner offers the reload).
+  const { user } = useAuth();
+  const isSuper = user?.role === 'SUPER_ADMIN';
+  const [aiOpen, setAiOpen] = useState(false);
+  const [aiChanged, setAiChanged] = useState(false);
+  const aiContext = useMemo(() => ({ nodeId: id }), [id]);
+  useAiActionDone((detail) => {
+    if (typeof detail.nodeId === 'string' && detail.nodeId !== id) return;
+    if (wb.dirty) setAiChanged(true);
+    else {
+      setConflict(null);
+      void query.refetch().then(() => toast.success(t('aiAdmin.sheetReloaded')));
+    }
+  }, SHEET_AI_TOOLS);
 
   const savingRef = useRef(false);
   const save = useCallback(
@@ -312,6 +332,7 @@ export default function SheetEditor() {
               <Download size={15} /> <span className="hidden sm:inline">{t('sheet.download')}</span>
             </button>
           )}
+          {isSuper && <AdminAiButton open={aiOpen} onClick={() => setAiOpen((o) => !o)} />}
           {!readOnly && (
             <>
               <label className="flex cursor-pointer items-center gap-1.5 text-xs font-semibold text-muted select-none" title={t('sheet.autosaveHint')}>
@@ -348,6 +369,25 @@ export default function SheetEditor() {
         </div>
       )}
 
+      {aiChanged && (
+        <div role="alert" className="flex flex-wrap items-center gap-3 border-b border-brand-200 bg-brand-50 px-4 py-2 text-sm text-ink dark:border-navy-700 dark:bg-navy-900">
+          <span className="flex-1">{t('aiAdmin.sheetChanged')}</span>
+          <button
+            type="button"
+            onClick={() => {
+              setAiChanged(false);
+              void reload();
+            }}
+            className="flex items-center gap-1 rounded-lg border border-line bg-card px-3 py-1 text-xs font-semibold hover:bg-surface"
+          >
+            <RefreshCw size={13} /> {t('aiAdmin.reload')}
+          </button>
+          <button type="button" onClick={() => setAiChanged(false)} className="rounded p-1 text-muted hover:bg-card" aria-label={t('aiAdmin.dismiss')}>
+            <X size={14} />
+          </button>
+        </div>
+      )}
+
       {(lock.status === 'other' || lock.status === 'error') && (
         <div role="status" className="flex shrink-0 items-center gap-2 border-b border-amber-300 bg-amber-50 px-4 py-2 text-xs text-amber-900 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-200">
           <span className="min-w-0 flex-1">{lock.status === 'other' ? t('driveCollab.lock.bannerOther', { name: lock.lockedBy.name }) : t('driveCollab.lock.bannerError')}</span>
@@ -357,52 +397,55 @@ export default function SheetEditor() {
         </div>
       )}
 
-      <div className="min-h-0 flex-1">
-        <Grid
-          key={wb.sheet?.key}
-          source={source}
-          mode="sheet"
-          readOnly={readOnly}
-          frozenRows={wb.sheet?.frozenRows ?? 0}
-          onCommit={wb.commit}
-          onFormat={wb.format}
-          onStructure={wb.structure}
-          onSort={wb.sort}
-          onColWidth={wb.setColWidth}
-          onUndo={wb.undo}
-          onRedo={wb.redo}
-          canUndo={wb.canUndo}
-          canRedo={wb.canRedo}
-          onSave={() => void save()}
-          onToggleFreeze={wb.toggleFreeze}
-          onGrow={wb.grow}
-          formatBar={({ style, active, cells }) => (
-            <FormatBar
-              disabled={readOnly}
-              style={style}
-              active={active}
-              cells={cells}
-              onFormat={wb.format}
-              frozen={(wb.sheet?.frozenRows ?? 0) > 0}
-              onToggleFreeze={wb.toggleFreeze}
-              onSort={wb.sort}
-            />
-          )}
-          footer={
-            <SheetTabs
-              sheets={wb.sheets}
-              active={wb.active}
-              readOnly={readOnly}
-              onSelect={wb.setActive}
-              onAdd={wb.addSheet}
-              onRename={wb.renameSheet}
-              onDelete={wb.deleteSheet}
-              onMove={wb.moveSheet}
-              isValidName={(name, key) => validSheetName(name, wb.sheets, key)}
-            />
-          }
-          statusExtra={wb.sheet && wb.sheet.merges.length > 0 ? <span>{t('sheet.mergesNote')}</span> : null}
-        />
+      <div className="flex min-h-0 flex-1">
+        <div className="min-h-0 min-w-0 flex-1">
+          <Grid
+            key={wb.sheet?.key}
+            source={source}
+            mode="sheet"
+            readOnly={readOnly}
+            frozenRows={wb.sheet?.frozenRows ?? 0}
+            onCommit={wb.commit}
+            onFormat={wb.format}
+            onStructure={wb.structure}
+            onSort={wb.sort}
+            onColWidth={wb.setColWidth}
+            onUndo={wb.undo}
+            onRedo={wb.redo}
+            canUndo={wb.canUndo}
+            canRedo={wb.canRedo}
+            onSave={() => void save()}
+            onToggleFreeze={wb.toggleFreeze}
+            onGrow={wb.grow}
+            formatBar={({ style, active, cells }) => (
+              <FormatBar
+                disabled={readOnly}
+                style={style}
+                active={active}
+                cells={cells}
+                onFormat={wb.format}
+                frozen={(wb.sheet?.frozenRows ?? 0) > 0}
+                onToggleFreeze={wb.toggleFreeze}
+                onSort={wb.sort}
+              />
+            )}
+            footer={
+              <SheetTabs
+                sheets={wb.sheets}
+                active={wb.active}
+                readOnly={readOnly}
+                onSelect={wb.setActive}
+                onAdd={wb.addSheet}
+                onRename={wb.renameSheet}
+                onDelete={wb.deleteSheet}
+                onMove={wb.moveSheet}
+                isValidName={(name, key) => validSheetName(name, wb.sheets, key)}
+              />
+            }
+            statusExtra={wb.sheet && wb.sheet.merges.length > 0 ? <span>{t('sheet.mergesNote')}</span> : null}
+          />
+        </div>
+        {isSuper && <AdminAiPanel open={aiOpen} onClose={() => setAiOpen(false)} context={aiContext} hint={t('aiAdmin.sheetHint')} />}
       </div>
     </div>
   );

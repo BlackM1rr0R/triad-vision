@@ -152,6 +152,8 @@ model User {
   candidateRequests     CandidateRequest[]
   signatureRequests     SignatureRequest[]       @relation("SignatureRequestCreatedBy")
   signatureSignings     SignatureSigner[]        @relation("SignatureSignerUser")
+  aiConversations       AiConversation[]
+  aiActions             AiAction[]
 
   @@index([companyId])
 }
@@ -2667,4 +2669,74 @@ model SettlementBeneficiary {
   sortOrder Int             @default(0)
   createdAt DateTime        @default(now())
   updatedAt DateTime        @updatedAt
+}
+
+// ─── AI assistant (OpenRouter): clients ask about their application, the super admin manages documents ─
+
+enum AiScope {
+  CLIENT // a client asking about their own application
+  ADMIN // the super admin operating the drive, spreadsheets, settlements …
+}
+
+model AiConversation {
+  id        String      @id @default(cuid())
+  userId    String
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  scope     AiScope
+  title     String?     @db.VarChar(200)
+  model     String?     @db.VarChar(120)
+  context   Json? // where it was opened: { nodeId?, folderId?, caseId?, page? }
+  archived  Boolean     @default(false)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  messages  AiMessage[]
+  actions   AiAction[]
+
+  @@index([userId, scope, updatedAt])
+}
+
+model AiMessage {
+  id             String         @id @default(cuid())
+  conversationId String
+  conversation   AiConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  role           String         @db.VarChar(12) // user | assistant | tool
+  content        String?        @db.LongText
+  toolCalls      Json? // assistant tool calls [{id, name, arguments}]
+  toolCallId     String?        @db.VarChar(80) // for role = tool
+  toolName       String?        @db.VarChar(80)
+  model          String?        @db.VarChar(120)
+  tokensIn       Int            @default(0)
+  tokensOut      Int            @default(0)
+  costMicros     Int            @default(0) // USD × 1,000,000 as reported by OpenRouter
+  createdAt      DateTime       @default(now())
+
+  @@index([conversationId, createdAt])
+  @@index([createdAt])
+}
+
+enum AiActionStatus {
+  PENDING // proposed by the assistant, waiting for the user's confirmation
+  DONE
+  REJECTED
+  FAILED
+  EXPIRED
+}
+
+/// A change the assistant wants to make (move/delete/rename files, edit cells …): runs only after the user confirms.
+model AiAction {
+  id             String         @id @default(cuid())
+  conversationId String
+  conversation   AiConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  toolCallId     String?        @db.VarChar(80)
+  tool           String         @db.VarChar(80)
+  args           Json
+  summary        String         @db.Text // human sentence shown on the confirm card
+  status         AiActionStatus @default(PENDING)
+  result         Json?
+  createdAt      DateTime       @default(now())
+  decidedAt      DateTime?
+
+  @@index([conversationId, status])
 }

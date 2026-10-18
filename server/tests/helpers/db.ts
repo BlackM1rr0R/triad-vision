@@ -5,6 +5,7 @@ export { prisma };
 
 /** Deletes all rows, children before parents so foreign keys are never violated. */
 export const resetDb = async () => {
+  await prisma.aiConversation.deleteMany();
   await prisma.settlementEntry.deleteMany();
   await prisma.settlementBeneficiary.deleteMany();
   await prisma.driveActivity.deleteMany();

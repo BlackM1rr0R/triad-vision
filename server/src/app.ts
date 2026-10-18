@@ -54,6 +54,7 @@ import { fileLockedHandler } from './lib/driveCollab/lock.js';
 import { sheetsRouter } from './routes/sheets.js';
 import { tasksRouter } from './routes/tasks.js';
 import { signRouter, signaturesRouter } from './routes/signatures.js';
+import { aiRouter } from './routes/ai.js';
 
 type RequestWithRawBody = import('express').Request & { rawBody?: Buffer };
 
@@ -151,6 +152,7 @@ export const createApp = () => {
   app.use('/api/arrival', arrivalRouter);
   app.use('/api/interview-prep', interviewPrepRouter);
   app.use('/api/surveys', surveysRouter);
+  app.use('/api/ai', aiRouter);
 
   // /sitemap.xml, /robots.txt and /api/seo/* (Caddy forwards the first two here).
   app.use(seoRouter);

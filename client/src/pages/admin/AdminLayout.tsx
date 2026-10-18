@@ -54,6 +54,7 @@ import {
   ShieldCheck,
   ShieldHalf,
   Smile,
+  Sparkles,
   Star,
   TrendingUp,
   UserSearch,
@@ -92,6 +93,7 @@ interface NavItem {
 const MAIN_NAV: NavItem[] = [
   { to: '/admin', label: 'dashboard', icon: LayoutDashboard, end: true },
   { to: '/admin/oversight', label: 'oversight', icon: Eye, superOnly: true },
+  { to: '/admin/ai', label: 'ai', icon: Sparkles, superOnly: true },
   { to: '/admin/cases', label: 'cases', icon: FolderKanban },
   { to: '/admin/register', label: 'register', icon: Sheet },
   { to: '/admin/settlements', label: 'settlements', icon: Banknote },
@@ -148,6 +150,7 @@ const SETTINGS_NAV: NavItem = { to: '/admin/settings', label: 'settings', icon: 
 const pageTitleKey = (pathname: string) => {
   if (matchPath('/admin', pathname)) return 'admin.nav.dashboard';
   if (matchPath('/admin/oversight', pathname)) return 'admin.nav.oversight';
+  if (matchPath('/admin/ai/*', pathname)) return 'admin.nav.ai';
   if (matchPath('/admin/oversight/staff/:id', pathname)) return 'admin.layout.staff';
   if (matchPath('/admin/cases', pathname)) return 'admin.nav.cases';
   if (matchPath('/admin/cases/:id', pathname)) return 'admin.layout.case';

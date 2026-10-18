@@ -16,6 +16,7 @@ import { pagesJobs } from '@/i18n/pagesJobs';
 import { pagesJourney } from '@/i18n/pagesJourney';
 import { pagesSign } from '@/i18n/pagesSign';
 import { useMySignatures } from '@/components/esign/MySignatures';
+import AiLauncher from '@/components/ai/AiLauncher';
 
 registerCopy(pagesAccount);
 registerCopy(pagesSign);
@@ -196,6 +197,7 @@ export default function AccountLayout() {
           </div>
         </div>
       </div>
+      {isClient && <AiLauncher />}
     </div>
   );
 }

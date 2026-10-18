@@ -87,6 +87,8 @@ const SheetEditor = lazy(() => import('./pages/workspace/SheetEditor'));
 const AccountInterviewPrep = lazy(() => import('./pages/account/InterviewPrep'));
 const AdminInterviewPrep = lazy(() => import('./pages/admin/InterviewPrep'));
 const AdminFinance = lazy(() => import('./pages/admin/Finance'));
+const AdminAi = lazy(() => import('./pages/admin/Ai'));
+const AdminAiSettings = lazy(() => import('./pages/admin/AiSettings'));
 const AdminSurveys = lazy(() => import('./pages/admin/Surveys'));
 const AdminContractTemplates = lazy(() => import('./pages/admin/ContractTemplates'));
 const AdminCandidateRequests = lazy(() => import('./pages/admin/CandidateRequests'));
@@ -347,6 +349,22 @@ export default function App() {
               element={
                 <RequireAuth roles={['SUPER_ADMIN']}>
                   <AdminStaffDetail />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="ai"
+              element={
+                <RequireAuth roles={['SUPER_ADMIN']}>
+                  <AdminAi />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="ai/settings"
+              element={
+                <RequireAuth roles={['SUPER_ADMIN']}>
+                  <AdminAiSettings />
                 </RequireAuth>
               }
             />

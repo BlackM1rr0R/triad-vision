@@ -18,6 +18,8 @@ import { RulesDialog } from '@/components/settlement/RulesDialog';
 import { LinkDialog } from '@/components/settlement/LinkDialog';
 import { addBag, fmtBag } from '@/components/settlement/money';
 import { STAGES, type Bag, type CellValue, type ListResponse, type Row, type Stage, type Summary, type Tab } from '@/components/settlement/types';
+import { useAuth } from '@/lib/auth';
+import { AdminAiButton, AdminAiPanel, useAiActionDone } from '@/components/aiAdmin/AdminAiPanel';
 
 registerCopy(pagesSettlement);
 
@@ -61,6 +63,10 @@ const applyDraft = (r: Row, d: Record<string, CellValue>): ViewRow => {
 
 const isUnpaid = (r: Row) => Object.values(r.shares).some((s) => s && s.status === 'PENDING' && s.cents > 0) || (!!r.partnerShareCents && !!r.partnerId && !r.partnerPaid);
 
+/** AI tools that change ledger rows or partners (a confirmed one reloads the page data). */
+const SETTLEMENT_AI_TOOLS = /^(settlement|partner|register)_/;
+const AI_CONTEXT = { page: 'settlements' };
+
 const fold = (s: string) =>
   s
     .toLocaleLowerCase('az')
@@ -79,6 +85,10 @@ export default function Settlements() {
   const { t } = useTranslation();
   usePageTitle(t('settlement.title'));
   const qc = useQueryClient();
+  // Super-admin AI assistant; unsaved drafts stay (they are kept apart from the fetched rows).
+  const isSuper = useAuth().user?.role === 'SUPER_ADMIN';
+  const [aiOpen, setAiOpen] = useState(false);
+  useAiActionDone(() => void qc.invalidateQueries({ queryKey: ['settlements'] }), SETTLEMENT_AI_TOOLS);
 
   const list = useQuery({ queryKey: KEY, queryFn: async () => (await api.get<ListResponse>('/admin/settlements')).data });
   const [month, setMonth] = useState('');
@@ -429,7 +439,7 @@ export default function Settlements() {
 
   return (
     // The workspace shell has no page padding (the admin shell does).
-    <div className={clsx('flex min-w-0 flex-col gap-3', inWorkspace && 'p-4 sm:p-6')}>
+    <div className={clsx('flex min-w-0 flex-col gap-3', inWorkspace && 'p-4 sm:p-6', aiOpen && 'lg:pr-[25rem]')}>
       <header className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           <h1 className="flex items-center gap-2 font-display text-2xl font-extrabold text-ink">
@@ -438,6 +448,7 @@ export default function Settlements() {
           <p className="text-sm text-muted">{t('settlement.subtitle')}</p>
         </div>
         <div className="flex flex-wrap gap-2">
+          {isSuper && <AdminAiButton open={aiOpen} onClick={() => setAiOpen((o) => !o)} />}
           {canManage && (
             <button type="button" className="btn-ghost btn-sm" onClick={() => setDialog('import')}>
               <FileUp className="size-4" /> {t('settlement.toolbar.import')}
@@ -582,6 +593,7 @@ export default function Settlements() {
       {dialog === 'import' && <ImportDialog onClose={() => setDialog(null)} onDone={reloadAll} />}
       {dialog === 'rules' && <RulesDialog beneficiaries={beneficiaries} rate={data.settings.eurAzn} canManage={canManage} onClose={() => setDialog(null)} onSaved={reloadAll} />}
       {linkRow && <LinkDialog row={linkRow} onClose={() => setLinkRow(null)} onLinked={(r) => mergeRows([r])} />}
+      {isSuper && <AdminAiPanel variant="float" open={aiOpen} onClose={() => setAiOpen(false)} context={AI_CONTEXT} hint={t('aiAdmin.settlementsHint')} />}
     </div>
   );
 }

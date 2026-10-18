@@ -58,6 +58,7 @@ import { ItemsView, type ListMode, type SortKey, type ViewMode } from '@/compone
 import { ShareDialog } from '@/components/drive/ShareDialog';
 import { Sidebar } from '@/components/drive/Sidebar';
 import { Toolbar, type CrumbView, type ToolAction } from '@/components/drive/Toolbar';
+import { AdminAiButton, AdminAiPanel, useAiActionDone } from '@/components/aiAdmin/AdminAiPanel';
 import { UploadPanel } from '@/components/drive/UploadPanel';
 import { useDropTarget, type PickedFile } from '@/components/drive/dnd';
 import { FOLDER_SWATCH, sectionOf, setSectionIds } from '@/components/drive/fileIcons';
@@ -233,6 +234,15 @@ export default function WorkspaceDrive() {
     });
   }, [items]);
   const selectedItems = useMemo(() => items.filter((i) => selected.has(i.id)), [items, selected]);
+  // ── super-admin AI assistant (right panel); confirmed AI actions refresh the drive ──
+  const [aiOpen, setAiOpen] = useState(false);
+  useAiActionDone(() => void invalidateDrive(qc));
+  const aiSelectedId = selectedItems.length === 1 ? selectedItems[0].id : undefined;
+  const aiContext = useMemo(() => ({ folderId: folderId ?? undefined, nodeId: aiSelectedId }), [folderId, aiSelectedId]);
+  const closeAi = useCallback(() => {
+    setAiOpen(false);
+    void invalidateDrive(qc);
+  }, [qc]);
   const intel = useDriveIntel({ roots: roots.data, items, folderId, trail: listing.data?.path.map((c) => c.id), onOpenFolder: (id) => navigate(folderHref(id)) });
   const select = useCallback((ids: Set<string>, focus: string | null, anchor?: string | null) => {
     setSelected(ids);
@@ -889,7 +899,12 @@ export default function WorkspaceDrive() {
               onSearch={(q) => go(`${BASE}/search?${new URLSearchParams({ q })}`)}
               searchInContent={inContent}
               onSearchInContent={setInContent}
-              extra={intel.toolbarExtra(selectedItems)}
+              extra={
+                <>
+                  {intel.toolbarExtra(selectedItems)}
+                  {isSuper && <AdminAiButton open={aiOpen} onClick={() => (aiOpen ? closeAi() : setAiOpen(true))} />}
+                </>
+              }
               view={view}
               onView={setView}
               sortKey={sortKey}
@@ -1067,6 +1082,7 @@ export default function WorkspaceDrive() {
                   )}
                 </>
               )}
+              {isSuper && <AdminAiPanel open={aiOpen} onClose={closeAi} context={aiContext} hint={t('aiAdmin.driveHint')} />}
             </div>
           </>
         )}
