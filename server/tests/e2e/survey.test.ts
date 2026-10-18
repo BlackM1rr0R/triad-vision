@@ -304,6 +304,7 @@ describe('admin results', () => {
     await prisma.satisfactionSurvey.update({ where: { id: open }, data: { sentAt: new Date(Date.now() - 40 * DAY) } });
     expect(expectStatus(await admin.agent.post(`/api/admin/surveys/${open}/resend`), 409).body.error).toBe('SURVEY_EXPIRED');
     expectStatus(await admin.agent.post('/api/admin/surveys/nope/resend'), 404);
-    expect(await prisma.auditLog.count({ where: { action: 'survey.resend' } })).toBe(1);
+    // the audit row is written after the response — wait for it under load
+    await waitFor(async () => (await prisma.auditLog.count({ where: { action: 'survey.resend' } })) === 1);
   });
 });
