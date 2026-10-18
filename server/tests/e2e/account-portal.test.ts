@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { anon, asAdmin, asClient, asStaff } from '../helpers/api';
 import { emailsTo, prisma, settle, waitFor } from '../helpers/db';
 import { ADMIN_INBOX } from '../helpers/testEnv';
+import { surveyTexts } from '../../src/lib/surveys/texts';
 import { staffNotifications } from '../helpers/notify';
 import { act, adminCase, createCaseVia, driveCaseTo, expectStatus, reviewAll, uploadDoc, uploadRequired } from '../helpers/workflow';
 
@@ -273,7 +274,9 @@ describe('notification preferences', () => {
 
     expectStatus(await client.agent.patch('/api/auth/me').send({ emailNotifications: true }), 200);
     expectStatus(await act(admin.agent, created.id, { action: 'CANCEL', reason: 'Test' }), 200);
-    const rows = await emailsTo(client.user.email, 1);
+    // the cancellation e-mail (the satisfaction survey invitation also goes out, in the background)
+    const survey = surveyTexts(client.user.locale).inviteTitle;
+    const rows = (await emailsTo(client.user.email, 1)).filter((r) => !r.subject.includes(survey));
     expect(rows).toHaveLength(1);
   });
 });
