@@ -7,11 +7,15 @@ import { Coins, KeyRound, Save, Sparkles, Wallet } from 'lucide-react';
 import { api, errorCode } from '@/lib/api';
 import { registerCopy } from '@/i18n';
 import { pagesAi } from '@/i18n/pagesAi';
+import { pagesAiDocs } from '@/i18n/pagesAiDocs';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { LoadingBlock, ErrorBlock, PageHead, Panel, StatTile, Switch, EmptyState } from '@/components/admin/ui';
 import { BarList, LineChart, SERIES_COLORS } from '@/components/admin/charts';
+import { BriefingSettings } from '@/components/aiStaff/BriefingSettings';
+import { AdminPublicAdvisor } from '@/components/publicAi/AdminPublicAdvisor';
 
 registerCopy(pagesAi);
+registerCopy(pagesAiDocs);
 
 type Scope = 'CLIENT' | 'ADMIN';
 
@@ -23,6 +27,8 @@ interface Settings {
   clientDailyCostUsd: number;
   adminDailyCostUsd: number;
   maxOutputTokens: Record<Scope, number>;
+  /** Automatic AI check of client uploads (default on). */
+  docCheckEnabled?: boolean;
   keySource: 'env' | 'settings' | 'none';
 }
 
@@ -158,6 +164,14 @@ export default function AdminAiSettings() {
               </div>
               <Switch checked={form.clientEnabled} onChange={(v) => set('clientEnabled', v)} label={t('ai.settings.clientEnabled')} />
             </div>
+            {/* AI document check of client uploads: saved right away */}
+            <div className="flex items-start justify-between gap-4 rounded-lg border border-line bg-surface p-3">
+              <div>
+                <p className="text-sm font-semibold text-ink">{t('aiDocs.settings.docCheck')}</p>
+                <p className="mt-0.5 text-xs text-muted">{t('aiDocs.settings.docCheckHint')}</p>
+              </div>
+              <Switch checked={form.docCheckEnabled !== false} disabled={saving} onChange={(v) => void save({ docCheckEnabled: v })} label={t('aiDocs.settings.docCheck')} />
+            </div>
             <div>
               <label className="block">
                 <span className="text-xs font-semibold text-ink">
@@ -290,6 +304,10 @@ export default function AdminAiSettings() {
           </div>
         ) : null}
       </Panel>
+
+      <BriefingSettings />
+
+      <AdminPublicAdvisor />
     </div>
   );
 }

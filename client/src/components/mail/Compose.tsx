@@ -11,6 +11,7 @@ import { Confirm } from './Dialog';
 import { MenuItem } from './menus';
 import { RecipientInput } from './RecipientInput';
 import { RichEditor, type RichEditorHandle } from './RichEditor';
+import { ReplyDraftButton, textToHtml } from '@/components/aiStaff/ReplyDraftButton';
 import type { Address, ComposeSeed, MailAccount, MailAttachment, MessageDetail } from './types';
 import { EMAIL_RE, errorText, formatBytes, forwardSubject, htmlToText, isEmptyHtml, quoteForForward, quoteForReply, replyRecipients, replySubject, signatureBlock, subjectOf } from './utils';
 
@@ -338,6 +339,16 @@ export const ComposeWindow = ({ seed, accounts, onClose, onSent }: { seed: Compo
       </div>
 
       <RichEditor ref={editor} initialHtml={initial.html} placeholder={t('mail.compose.body')} onChange={markDirty} onSend={() => void send()} className="min-h-0 flex-1" autoFocus={seed.mode === 'reply' || seed.mode === 'replyAll' || seed.mode === 'draft'} />
+
+      {(seed.mode === 'reply' || seed.mode === 'replyAll') && original && (
+        <div className="shrink-0 border-t border-line px-3 pt-2 pb-1">
+          {/* AI reply suggestion (staff AI): only for mail linked to a case or coming from a client; inserted, never sent. */}
+          <ReplyDraftButton
+            endpoint={`/admin/ai-staff/mail/${original.id}/reply-draft`}
+            onInsert={(text) => editor.current?.insertHtml(textToHtml(text))}
+          />
+        </div>
+      )}
 
       {(attachments.length > 0 || uploads.length > 0 || forwardIds.length > 0) && (
         <div className="flex shrink-0 flex-wrap gap-1.5 border-t border-line px-3 py-2">

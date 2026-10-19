@@ -18,6 +18,8 @@ import { BarList } from '@/components/admin/charts';
 
 // Team tasks widget (own chunk, so the dashboard does not carry the task UI and its copy).
 const MyTasksWidget = lazy(() => import('@/components/tasks/MyTasksWidget').then((m) => ({ default: m.MyTasksWidget })));
+// Risky / stuck cases (staff AI rules, own chunk).
+const RiskyCasesWidget = lazy(() => import('@/components/aiStaff/RiskyCasesWidget').then((m) => ({ default: m.RiskyCasesWidget })));
 
 const INQUIRY_TONE: Record<InquiryStatus, string> = { NEW: 'bg-brand-500', IN_PROGRESS: 'bg-amber-400', DONE: 'bg-emerald-500', ARCHIVED: 'bg-slate-400' };
 
@@ -127,6 +129,10 @@ export default function Dashboard() {
 
       <Suspense fallback={null}>
         <MyTasksWidget />
+      </Suspense>
+
+      <Suspense fallback={null}>
+        <RiskyCasesWidget showBriefing={user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN'} />
       </Suspense>
 
       <div className="grid grid-cols-1 gap-6 lg:gap-8 xl:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)]">

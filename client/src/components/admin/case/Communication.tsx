@@ -16,6 +16,7 @@ import { useThread } from '@/components/messaging/useThread';
 import { eventLabel, fmtDateTime, fullName, roleLabel, statusLabel, toastError } from '../labels';
 import { Panel } from '../ui';
 import { useCaseRefresh } from './shared';
+import { ReplyDraftButton } from '@/components/aiStaff/ReplyDraftButton';
 
 registerCopy(pagesMessaging);
 
@@ -101,8 +102,11 @@ export const Messages = ({ c }: { c: CaseDetail }) => {
         })}
         <TypingIndicator name={typingName} />
       </div>
+      <div className="border-t border-line px-3 pt-2 sm:px-4">
+        <ReplyDraftButton endpoint={`/admin/ai-staff/cases/${c.id}/reply-draft`} onInsert={(text) => setBody(text)} />
+      </div>
       <form
-        className="flex items-end gap-2 border-t border-line p-3 sm:px-4"
+        className="flex items-end gap-2 p-3 sm:px-4"
         onSubmit={(e) => {
           e.preventDefault();
           void send();

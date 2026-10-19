@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import { ArrowRight, CheckCircle2, MousePointer2 } from 'lucide-react';
 import { Magnetic } from '../motion';
+import { QuizCta } from '../publicAi/QuizCta';
 
 const BG = 'https://images.unsplash.com/photo-1587330979470-3595ac045ab0?auto=format&fit=crop&w=1600&q=60';
 const HANDSHAKE = 'https://images.unsplash.com/photo-1521791136064-7986c2920216?auto=format&fit=crop&w=640&q=70';
@@ -101,6 +102,7 @@ export const Hero = () => {
               </Link>
             </Magnetic>
           </motion.div>
+          <QuizCta className="mt-4" />
 
           <motion.ul
             initial="hidden"

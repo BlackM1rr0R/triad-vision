@@ -1,9 +1,10 @@
 import { Suspense, lazy, useCallback, useMemo, useState, type ReactNode } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { FileDiff, PenLine, Signature, Users, WandSparkles } from 'lucide-react';
+import { FileDiff, Languages, PenLine, Signature, Users, WandSparkles } from 'lucide-react';
 import { registerCopy } from '@/i18n';
 import { driveIntelCopy } from '@/i18n/pagesDriveIntel';
+import { pagesAiDocs } from '@/i18n/pagesAiDocs';
 import type { MenuEntry } from '../ContextMenu';
 import type { ToolAction } from '../Toolbar';
 import { invalidateDrive } from '../api';
@@ -12,12 +13,15 @@ import { comparable, fetchEsignStatus, intelKeys, isPdf, isTemplateCandidate, ty
 import { SearchHits } from './SearchHits';
 
 registerCopy(driveIntelCopy);
+registerCopy(pagesAiDocs);
 
 const CompareDialog = lazy(() => import('./CompareDialog'));
 const FillDialog = lazy(() => import('./FillDialog'));
 const EsignDialog = lazy(() => import('./EsignDialog'));
+// "AI layihə tərcüməsi": German draft PDF next to the file (components/aiDocs).
+const TranslateDraftDialog = lazy(() => import('@/components/aiDocs/TranslateDraftDialog'));
 
-type Dialog = { kind: 'compare'; item: DriveItem } | { kind: 'fill'; item: DriveItem; bulk: boolean } | { kind: 'esign'; item: DriveItem } | null;
+type Dialog = { kind: 'compare'; item: DriveItem } | { kind: 'fill'; item: DriveItem; bulk: boolean } | { kind: 'esign'; item: DriveItem } | { kind: 'aiDraft'; item: DriveItem } | null;
 
 const PREF = 'tv-drive-search-content';
 const readPref = () => {
@@ -104,6 +108,9 @@ export const useDriveIntel = ({ roots, items, folderId, trail = [], onOpenFolder
     if (isPdf(it) && can(it.myAccess, 'DOWNLOAD')) {
       out.push({ id: 'intel-esign', label: t('driveIntel.menu.esign'), icon: PenLine, trailing: <EsignChip status={statusOf(it.id)} />, onSelect: () => setDialog({ kind: 'esign', item: it }) });
     }
+    if ((isPdf(it) || (it.mimeType ?? '').startsWith('image/')) && can(it.myAccess, 'DOWNLOAD')) {
+      out.push({ id: 'intel-ai-draft', label: t('aiDocs.draft.action'), icon: Languages, onSelect: () => setDialog({ kind: 'aiDraft', item: it }) });
+    }
     if (comparable(it) || it.version > 1) out.push({ id: 'intel-compare', label: t('driveIntel.menu.compare'), icon: FileDiff, onSelect: () => setDialog({ kind: 'compare', item: it }) });
     return out.length ? [{ kind: 'separator', id: 'intel-s' }, ...out] : [];
   };
@@ -135,6 +142,7 @@ export const useDriveIntel = ({ roots, items, folderId, trail = [], onOpenFolder
       {dialog?.kind === 'compare' && <CompareDialog item={dialog.item} onClose={close} />}
       {dialog?.kind === 'fill' && <FillDialog item={dialog.item} bulk={dialog.bulk} folderId={folderId} onClose={close} onCreated={changed} onOpenFolder={onOpenFolder} />}
       {dialog?.kind === 'esign' && <EsignDialog item={dialog.item} onClose={close} onSent={changed} />}
+      {dialog?.kind === 'aiDraft' && <TranslateDraftDialog source={{ nodeId: dialog.item.id }} fileName={dialog.item.name} where="drive" onClose={close} onCreated={changed} />}
     </Suspense>
   );
 

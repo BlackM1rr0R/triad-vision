@@ -4,6 +4,7 @@ import { sheetTools } from './sheetTools.js';
 import { settlementTools } from './settlementTools.js';
 import { registerTools } from './registerTools.js';
 import { statsTools } from './statsTools.js';
+import { reportPrompt, reportTools } from './reportTools.js';
 import { adminSystemPrompt } from './prompt.js';
 
 /**
@@ -12,8 +13,10 @@ import { adminSystemPrompt } from './prompt.js';
  * the logged-in super admin through the modules' own services (drive permission engine, sheets store,
  * settlement save, register save, partners), so audit log, activity journal, locks and syncs keep working.
  */
-export const adminTools: AnyAiTool[] = [...driveTools, ...sheetTools, ...settlementTools, ...registerTools, ...statsTools];
+export const adminTools: AnyAiTool[] = [...driveTools, ...sheetTools, ...settlementTools, ...registerTools, ...statsTools, ...reportTools];
 
 export { adminSystemPrompt };
 /** Same text under the name the core's registry reads. */
-export const adminPrompt = adminSystemPrompt;
+export const adminPrompt = `${adminSystemPrompt}
+
+${reportPrompt}`;

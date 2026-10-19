@@ -216,13 +216,18 @@ const SAMPLES: Record<string, unknown> = {
   partner_create: { name: 'Ilqar' },
   partner_assign_cases: { cases: ['TV-2026-0001'], partner: 'Ilqar' },
   stats_overview: {},
+  report_query: { metric: 'cases' },
+  settlement_anomalies: {},
+  risky_cases: {},
 };
 
-const READ_ONLY = new Set(['drive_list', 'drive_search', 'drive_info', 'drive_read_text', 'drive_activity', 'drive_tree_summary', 'drive_trash', 'sheet_read', 'sheet_find', 'sheet_stats', 'settlement_query', 'settlement_summary', 'settlement_case_suggestions', 'register_query', 'case_lookup', 'partner_list', 'partner_info', 'stats_overview']);
+const READ_ONLY = new Set(['drive_list', 'drive_search', 'drive_info', 'drive_read_text', 'drive_activity', 'drive_tree_summary', 'drive_trash', 'sheet_read', 'sheet_find', 'sheet_stats', 'settlement_query', 'settlement_summary', 'settlement_case_suggestions', 'register_query', 'case_lookup', 'partner_list', 'partner_info', 'stats_overview', 'report_query', 'settlement_anomalies', 'risky_cases']);
 
 describe('ai admin: tool definitions', () => {
   it('exports the system prompt under both names, with the drive layout and the split rule', () => {
-    expect(adminPrompt).toBe(adminSystemPrompt);
+    // The registry reads adminPrompt: the base prompt plus the report tools' section (lib/ai/admin/reportTools.ts).
+    expect(adminPrompt.startsWith(adminSystemPrompt)).toBe(true);
+    expect(adminPrompt).toContain('report_query');
     for (const s of ['Gemeinsame Dokumente', 'Anträge', 'Partner', 'Mitarbeiter', 'Vorlagen', 'Alle Kunden', 'net / 3', '200 AZN', 'Tofig = Abdulla', 'untrusted_document_text']) expect(adminSystemPrompt).toContain(s);
   });
 

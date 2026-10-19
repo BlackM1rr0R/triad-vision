@@ -128,7 +128,9 @@ export const finishPendingChecks = async (now = new Date(), limit = 10) => {
     const checks = checksOf(d.checks);
     if (!checks) continue;
     const extra = issuesFromOcrRecord(targetForRequirement(d.requirement?.key), d.ocr, now);
-    await prisma.document.update({ where: { id: d.id }, data: { checks: json(merge(checks, extra, now)), checkedAt: now } });
+    // The AI result (checks.ai, lib/aiDocs) stays next to the finished checks.
+    const ai = (d.checks as { ai?: unknown } | null)?.ai;
+    await prisma.document.update({ where: { id: d.id }, data: { checks: json({ ...merge(checks, extra, now), ...(ai ? { ai } : {}) } as DocChecks), checkedAt: now } });
     if (d.uploadedById === d.case.clientId) await notifyCheckProblems(d.case.clientId, extra, `/account/cases/${d.case.id}`, d.case.id);
     done++;
   }

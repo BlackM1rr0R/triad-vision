@@ -31,6 +31,12 @@ export const aiSettingsSchema = z.object({
   maxOutputTokens: z
     .object({ CLIENT: z.coerce.number().int().min(50).max(4000).catch(600), ADMIN: z.coerce.number().int().min(50).max(8000).catch(1500) })
     .catch({ CLIENT: 600, ADMIN: 1500 }),
+  /** Public site advisor + eligibility explanations for anonymous visitors (no login). */
+  publicAdvisorEnabled: z.boolean().catch(true),
+  /** Spend cap per UTC day for all anonymous (public) AI use together. */
+  publicDailyUsd: money(100).catch(0.5),
+  /** Automatic AI check of documents clients upload (lib/aiDocs/docCheck.ts). */
+  docCheckEnabled: z.boolean().catch(true),
   /** Optional OpenRouter key entered in the UI (sealed with secretBox); the env key is used otherwise. */
   apiKeySealed: z.string().max(2000).nullable().catch(null),
 });
@@ -65,6 +71,9 @@ export const aiSettingsUpdateSchema = z
     clientDailyCostUsd: z.number().min(0).max(100),
     adminDailyCostUsd: z.number().min(0).max(1000),
     maxOutputTokens: z.object({ CLIENT: z.number().int().min(50).max(4000), ADMIN: z.number().int().min(50).max(8000) }).partial(),
+    publicAdvisorEnabled: z.boolean(),
+    publicDailyUsd: z.number().min(0).max(100),
+    docCheckEnabled: z.boolean(),
     apiKey: z.string().max(400),
   })
   .partial()

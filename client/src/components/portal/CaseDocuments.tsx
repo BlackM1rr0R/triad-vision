@@ -19,6 +19,8 @@ import { CheckResultNotice } from '@/components/vault/CheckResultNotice';
 import { DocCheckBadge } from '@/components/vault/DocCheckBadge';
 // Validity chip + hint, and several images → one PDF (same endpoint as the phone scanner).
 import { ExpiryChip, ExpiryHint } from '@/components/expiry/Expiry';
+// AI check of the upload against the requirement (Document.checks.ai), with "Yenidən yüklə".
+import { AiCheckCard } from '@/components/aiDocs/AiCheckCard';
 
 type UploadStage = 'INITIAL' | 'EMBASSY';
 
@@ -43,11 +45,13 @@ const DocRow = ({
   canDelete,
   onDelete,
   requirementKey,
+  onReupload,
 }: {
   doc: CaseDocument;
   canDelete: boolean;
   onDelete: (doc: CaseDocument) => void;
   requirementKey?: string | null;
+  onReupload?: (file: File) => void;
 }) => {
   const expiresAt = (doc as CaseDocument & { expiresAt?: string | null }).expiresAt;
   const { t } = useTranslation();
@@ -104,6 +108,7 @@ const DocRow = ({
         </div>
       </div>
       {doc.status !== 'REJECTED' && <ExpiryHint expiresAt={expiresAt} requirementKey={requirementKey} />}
+      <AiCheckCard docId={doc.id} checks={(doc as CaseDocument & { checks?: unknown }).checks} createdAt={doc.createdAt} rejected={doc.status === 'REJECTED'} onReupload={onReupload} />
       {doc.status === 'REJECTED' && doc.reviewNote && (
         <p className="mt-1.5 mb-1.5 mr-1.5 flex gap-2 rounded-md bg-red-50 px-2.5 py-1.5 text-xs leading-relaxed whitespace-pre-line text-danger">
           <AlertCircle className="mt-0.5 size-3.5 shrink-0" aria-hidden />
@@ -219,6 +224,7 @@ const RequirementCard = ({
                   canDelete={open && d.uploadedById === user?.id && d.status !== 'ACCEPTED'}
                   onDelete={onDelete}
                   requirementKey={(req as Requirement & { key?: string | null }).key ?? null}
+                  onReupload={open && d.status !== 'ACCEPTED' ? (f) => void upload(f) : undefined}
                 />
               ))}
             </AnimatePresence>

@@ -22,3 +22,4 @@ import './clientsExcel.js'; // super admin's Excel of all clients
 import './surveys.js'; // satisfaction surveys after visa approval / case closure
 import './expiry.js'; // document expiry warnings (client, staff, daily admin digest)
 import './driveIndex.js'; // drive full-text index (text layer, DOCX, XLSX, OCR)
+import './aiBriefing.js'; // daily AI briefing e-mail for opted-in admins (08:00 Baku)

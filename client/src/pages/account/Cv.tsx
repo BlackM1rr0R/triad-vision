@@ -13,6 +13,7 @@ import { PageLoader, Spinner } from '@/components/ui/Spinner';
 import { ProgressRing } from '@/components/portal/ProgressRing';
 import { useApiError } from '@/components/portal/useApiError';
 import { useBlobDownload } from '@/components/cv/CvDownloadButton';
+import { AiCvWizard } from '@/components/aiWriting/AiCvWizard';
 import { EntryToolbar, MonthPicker, SaveIndicator, SectionCard, Switch, TagInput, TemplatePreview, TextField, moveItem, type SaveState } from '@/components/cv/fields';
 import {
   CV_LEVELS,
@@ -488,6 +489,7 @@ const Editor = ({ cv, profile }: { cv: CvState; profile: CvProfile }) => {
             <button type="button" className="btn-ghost btn-sm mt-4 w-full" onClick={() => void prefill()} disabled={prefilling}>
               {prefilling ? <Spinner className="size-4" /> : <Wand2 className="size-4" aria-hidden />} {t('cvb.prefill')}
             </button>
+            <AiCvWizard className="mt-2" current={fromDraft(draft)} onApply={(data) => setDraft(() => toDraft(data))} />
           </div>
 
           <div className="card space-y-4 p-5">

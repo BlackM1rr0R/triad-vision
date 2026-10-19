@@ -15,6 +15,7 @@ import { Spinner } from '@/components/ui/Spinner';
 import { EmptyState, ErrorBlock, LoadingBlock, PageHead, Panel, StatTile, Switch } from '@/components/admin/ui';
 import { MultiFileDrop } from '@/components/translations/MultiFileDrop';
 import { PricingDialog } from '@/components/translations/PricingDialog';
+import { OrderDraftButton } from '@/components/aiDocs/OrderDraftButton';
 import {
   SERVICES,
   STATUSES,
@@ -603,6 +604,8 @@ const OrderAdmin = () => {
               <p className="text-sm text-muted">{t('trOrders.admin.noFiles')}</p>
             )}
             {order.clientNote && <p className="mt-4 rounded-lg bg-surface p-3 text-sm whitespace-pre-line text-ink">{order.clientNote}</p>}
+            {/* AI draft translation of a source file for the translator (drive: client folder "Übersetzungen") */}
+            <OrderDraftButton orderId={order.id} files={sources} onCreated={() => void q.refetch()} />
           </Panel>
 
           <Panel title={t('trOrders.admin.results')} icon={CheckCircle2} className="bg-card">

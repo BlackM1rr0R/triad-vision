@@ -22,6 +22,7 @@ import { profileCompleteness } from '@/components/portal/profileFields';
 import { useHashScroll, useOverview } from '@/components/portal/useOverview';
 import type { ActiveCase, OverviewCaseRow } from '@/components/portal/accountTypes';
 import { OnboardingCard } from '@/components/journey/OnboardingCard';
+import { RecommendationsCard } from '@/components/aiWriting/Recommendations';
 import { registerCopy } from '@/i18n';
 import { pagesAccount } from '@/i18n/pagesAccount';
 import { usePageTitle } from '@/lib/usePageTitle';
@@ -135,6 +136,7 @@ export default function AccountHome() {
             <ManagerCard c={activeCase} />
             {profile.percent < 100 && <ProfileCard percent={profile.percent} missing={profile.missing} />}
             <QuickLinks visaSlug={visaSlug} />
+            <RecommendationsCard />
           </aside>
         </div>
         {others.length > 0 && <CaseList cases={others} title={othersTitle} />}
@@ -147,6 +149,7 @@ export default function AccountHome() {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-8">
         <div className="min-w-0 space-y-6">
           <StartCase hasCases={cases.length > 0} defaultProfession={user?.profession} />
+          <RecommendationsCard />
           {hasApproved && <OnboardingCard />}
           <TipsCard status={latest?.status === 'APPROVED' ? 'APPROVED' : null} />
         </div>

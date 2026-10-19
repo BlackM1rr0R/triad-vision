@@ -10,6 +10,7 @@ const About = lazy(() => import('./pages/About'));
 const Services = lazy(() => import('./pages/Services'));
 const ServiceDetail = lazy(() => import('./pages/ServiceDetail'));
 const Eligibility = lazy(() => import('./pages/Eligibility'));
+const EligibilityQuiz = lazy(() => import('./pages/EligibilityQuiz'));
 const Visas = lazy(() => import('./pages/Visas'));
 const VisaDetail = lazy(() => import('./pages/VisaDetail'));
 const Partners = lazy(() => import('./pages/Partners'));
@@ -73,6 +74,7 @@ const AdminHelp = lazy(() => import('./pages/admin/Help'));
 const AdminAnnouncements = lazy(() => import('./pages/admin/Announcements'));
 const AccountCv = lazy(() => import('./pages/account/Cv'));
 const AccountLetters = lazy(() => import('./pages/account/Letters'));
+const AccountLetterExplain = lazy(() => import('./pages/account/LetterExplain'));
 const AccountVault = lazy(() => import('./pages/account/Vault'));
 const AccountArrival = lazy(() => import('./pages/account/Arrival'));
 const SalaryCalculator = lazy(() => import('./pages/tools/SalaryCalculator'));
@@ -176,6 +178,7 @@ const INTENT: [string, () => Promise<unknown>][] = [
   ['/stories', () => import('./pages/Stories')],
   ['/ausbildung', () => import('./pages/Ausbildung')],
   ['/eligibility', () => import('./pages/Eligibility')],
+  ['/uygunluq-testi', () => import('./pages/EligibilityQuiz')],
   ['/faq', () => import('./pages/FaqPage')],
   ['/news/', () => import('./pages/NewsDetail')],
   ['/news', () => import('./pages/News')],
@@ -221,6 +224,7 @@ export default function App() {
             <Route path="services" element={<Services />} />
             <Route path="services/:slug" element={<ServiceDetail />} />
             <Route path="eligibility" element={<Eligibility />} />
+            <Route path="uygunluq-testi" element={<EligibilityQuiz />} />
             <Route path="visas" element={<Visas />} />
             <Route path="visas/:slug" element={<VisaDetail />} />
             <Route path="partners" element={<Partners />} />
@@ -296,6 +300,7 @@ export default function App() {
               <Route path="privacy" element={<AccountPrivacyCenter />} />
               <Route path="cv" element={<AccountCv />} />
               <Route path="letters/*" element={<AccountLetters />} />
+              <Route path="letters-explain" element={<AccountLetterExplain />} />
               <Route path="vault" element={<AccountVault />} />
               <Route path="arrival" element={<AccountArrival />} />
               <Route path="interview-prep" element={<AccountInterviewPrep />} />

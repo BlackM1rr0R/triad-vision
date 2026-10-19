@@ -17,6 +17,7 @@ import { ImageField } from '@/components/admin/ImageField';
 import { L10nInput, L10nListInput, emptyL10n, emptyL10nList, fillFromAz, fillListFromAz, LANGS } from '@/components/admin/L10nInput';
 import { fmtDate, toDateInput, toastError } from '@/components/admin/labels';
 import { EmptyState, ErrorBlock, LoadingBlock, PageHead, Switch } from '@/components/admin/ui';
+import { PostAiTools } from '@/components/aiStaff/PostAiDraft';
 
 // ─── Config ─────────────────────────────────────────────────────────────
 
@@ -786,9 +787,19 @@ function ResourcePage({ resource }: { resource: string }) {
         title={def.title}
         subtitle={def.description}
         actions={
-          <button type="button" className="btn-primary btn-sm" onClick={() => openEditor('new')}>
-            <Plus className="size-3.5" /> {t('admin.common.add')}
-          </button>
+          <>
+            {resource === 'posts' && (
+              <PostAiTools
+                onCreated={(post) => {
+                  void invalidate();
+                  openEditor(post as unknown as Item);
+                }}
+              />
+            )}
+            <button type="button" className="btn-primary btn-sm" onClick={() => openEditor('new')}>
+              <Plus className="size-3.5" /> {t('admin.common.add')}
+            </button>
+          </>
         }
       />
 

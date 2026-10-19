@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import clsx from 'clsx';
-import { ArrowLeft, ArrowRight, BriefcaseBusiness, Check, ChevronDown, Copy, Download, FileText, FolderOpen, Lightbulb, Plane, Plus, RefreshCw, ScrollText, Stamp, Trash2, type LucideIcon } from 'lucide-react';
+import { ArrowLeft, ArrowRight, BriefcaseBusiness, Check, ChevronDown, Copy, Download, FileText, FolderOpen, Lightbulb, Plane, Plus, RefreshCw, ScrollText, Sparkles, Stamp, Trash2, type LucideIcon } from 'lucide-react';
 import { api } from '@/lib/api';
 import { registerCopy } from '@/i18n';
 import { pagesCv } from '@/i18n/pagesCv';
@@ -15,8 +15,11 @@ import { useErrorMessage } from '@/components/portal/useApiError';
 import { useBlobDownload } from '@/components/cv/CvDownloadButton';
 import { SaveIndicator, type SaveState } from '@/components/cv/fields';
 import { errorCode } from '@/lib/api';
+import { AiLetterWizard } from '@/components/aiWriting/AiLetterWizard';
+import { pagesAiWriting } from '@/i18n/pagesAiWriting';
 
 registerCopy(pagesCv);
+registerCopy(pagesAiWriting);
 
 type Kind = 'VISA' | 'JOB' | 'ANERKENNUNG';
 type Lang = 'de' | 'en';
@@ -82,9 +85,14 @@ const LettersList = () => {
           <h1 className="text-xl font-extrabold text-ink sm:text-2xl">{t('letters.title')}</h1>
           <p className="mt-1 max-w-2xl text-sm text-muted">{t('letters.subtitle')}</p>
         </div>
-        <Link to="new" className="btn-primary btn-sm">
-          <Plus className="size-4" aria-hidden /> {t('letters.new')}
-        </Link>
+        <div className="flex flex-wrap gap-2">
+          <Link to="ai" className="btn-ghost btn-sm">
+            <Sparkles className="size-4" aria-hidden /> {t('aiw.letter.button')}
+          </Link>
+          <Link to="new" className="btn-primary btn-sm">
+            <Plus className="size-4" aria-hidden /> {t('letters.new')}
+          </Link>
+        </div>
       </div>
       {items.length === 0 ? (
         <div className="card flex flex-col items-center px-6 py-12 text-center">
@@ -618,6 +626,7 @@ export default function AccountLetters() {
     <Routes>
       <Route index element={<LettersList />} />
       <Route path="new" element={<NewLetter />} />
+      <Route path="ai" element={<AiLetterWizard />} />
       <Route path=":id" element={<LetterEditor />} />
     </Routes>
   );

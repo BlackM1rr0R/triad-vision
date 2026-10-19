@@ -2,7 +2,7 @@ import { Link, useLocation, useOutlet } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
-import { Bell, BookUser, Briefcase, Cake, Compass, FileSignature, FileUser, FolderOpen, GraduationCap, Languages, LayoutDashboard, MessageCircleQuestion, PenLine, PlaneLanding, ShieldCheck, UserRound, Vault, Video } from 'lucide-react';
+import { Bell, BookUser, Briefcase, Cake, Compass, FileSignature, FileUser, FolderOpen, GraduationCap, Languages, LayoutDashboard, MailQuestion, MessageCircleQuestion, PenLine, PlaneLanding, ShieldCheck, UserRound, Vault, Video } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { FINAL } from '@/lib/caseStatus';
 import { useNotifications } from '@/components/portal/useNotifications';
@@ -56,7 +56,8 @@ export default function AccountLayout() {
     ...(isClient
       ? [
           { to: '/account/cv', label: t('accountPage.tabs.cv'), icon: FileUser, match: (p: string) => p.startsWith('/account/cv') },
-          { to: '/account/letters', label: t('accountPage.tabs.letters'), icon: PenLine, match: (p: string) => p.startsWith('/account/letters') },
+          { to: '/account/letters', label: t('accountPage.tabs.letters'), icon: PenLine, match: (p: string) => p === '/account/letters' || p.startsWith('/account/letters/') },
+          { to: '/account/letters-explain', label: t('accountPage.tabs.lettersExplain'), icon: MailQuestion, match: (p: string) => p.startsWith('/account/letters-explain') },
           { to: '/account/vault', label: t('accountPage.tabs.vault'), icon: Vault, match: (p: string) => p.startsWith('/account/vault') },
         ]
       : []),

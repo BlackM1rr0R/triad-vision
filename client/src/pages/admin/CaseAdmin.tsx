@@ -22,6 +22,8 @@ import { SignaturesPanel } from '@/components/esign/CaseSignatures';
 
 // Team tasks linked to this case (own chunk).
 const CaseTasks = lazy(() => import('@/components/tasks/CaseTasks').then((m) => ({ default: m.CaseTasks })));
+// AI summary of the case (staff AI, own chunk).
+const CaseAiSummary = lazy(() => import('@/components/aiStaff/CaseAiSummary').then((m) => ({ default: m.CaseAiSummary })));
 
 export default function CaseAdmin() {
   const { t } = useTranslation();
@@ -52,6 +54,10 @@ export default function CaseAdmin() {
       </Link>
 
       <CaseHeader key={c.id} c={c} />
+
+      <Suspense fallback={null}>
+        <CaseAiSummary key={`ai-${c.id}`} caseId={c.id} />
+      </Suspense>
 
       <Panel title={t('admin.cases.workflow')} icon={Route}>
         <WorkflowStepper status={c.status} />

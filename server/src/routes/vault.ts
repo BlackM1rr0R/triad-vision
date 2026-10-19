@@ -16,6 +16,7 @@ import { CASE_DOC_MIME, resolveMime } from '../lib/fileCheck.js';
 import { badRequest, conflict, notFound, parse } from '../lib/http.js';
 import { checkCaseDocument, runChecks, targetForVaultKind, vaultDir } from '../lib/docCheck/index.js';
 import { vaultDto, vaultKindsFor } from '../lib/docCheck/vault.js';
+import { scheduleAiDocCheck } from '../lib/aiDocs/docCheck.js';
 
 /**
  * Personal document vault: clients keep their documents (passport, diplomas, photos…) once and reuse
@@ -298,6 +299,7 @@ vaultRouter.post('/:id/use', async (req, res) => {
     const checks = await checkCaseDocument(doc.id);
     await audit(req, 'vault.use', v.id, { caseId: c.id, documentId: doc.id });
     res.status(201).json({ document: { ...doc, checks }, checks });
+    scheduleAiDocCheck(doc.id); // AI check against the requirement (checks.ai)
   } catch (err) {
     await fsp.unlink(casePath(storedName)).catch(() => undefined);
     throw err;

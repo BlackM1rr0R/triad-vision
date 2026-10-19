@@ -114,6 +114,16 @@ export const STATIC_PAGES: Record<string, StaticPageMeta> = {
       ru: 'Ответьте на несколько вопросов и узнайте, какая виза в Германию вам подходит и что делать дальше.',
     },
   },
+  '/uygunluq-testi': {
+    name: { az: 'Uyğunluq testi', de: 'Eignungstest', en: 'Eligibility quiz', ru: 'Тест на соответствие' },
+    title: { az: 'Almaniya üçün uyğunluq testi', de: 'Eignungstest: Ihr Weg nach Deutschland', en: 'Eligibility quiz for Germany', ru: 'Тест: ваш путь в Германию' },
+    description: {
+      az: '7 suala cavab verin: iş vizası, Ausbildung, Chancenkarte və ya ailə birləşməsi — sizə uyğun yol, müddət və çatışmayanlar.',
+      de: '7 Fragen: Arbeitsvisum, Ausbildung, Chancenkarte oder Familiennachzug — Ihr passender Weg, typische Dauer und was noch fehlt.',
+      en: '7 questions: work visa, Ausbildung, Opportunity Card or family reunion — your best path to Germany, typical duration and what is missing.',
+      ru: '7 вопросов: рабочая виза, Ausbildung, Chancenkarte или воссоединение семьи — ваш путь в Германию, сроки и чего не хватает.',
+    },
+  },
   '/salary-calculator': {
     name: { az: 'Maaş kalkulyatoru', de: 'Gehaltsrechner', en: 'Salary calculator', ru: 'Калькулятор зарплаты' },
     title: { az: 'Almaniyada xalis maaş kalkulyatoru', de: 'Brutto-Netto-Rechner Deutschland', en: 'German net salary calculator', ru: 'Калькулятор зарплаты нетто в Германии' },
