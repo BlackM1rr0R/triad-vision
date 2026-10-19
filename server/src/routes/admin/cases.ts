@@ -25,6 +25,7 @@ import { createCaseMessage, listMessages, markMessagesRead, publishTyping } from
 import { deleteCaseDocument } from '../../lib/caseDocDelete.js';
 import { copyDocumentToDrive, syncCaseFolder } from '../../lib/drive/caseFolders.js';
 import { requireMinRole } from '../../middleware/auth.js';
+import { hasMissing, translateMany } from '../../lib/ai/translate.js';
 
 export const adminCasesRouter = Router();
 
@@ -170,14 +171,29 @@ adminCasesRouter.post('/:id/requirements', async (req, res) => {
   );
   const c = await prisma.case.findUnique({ where: { id: req.params.id } });
   if (!c) throw notFound('CASE_NOT_FOUND');
+  if (!Object.values(body.title).some((s) => s.trim())) throw badRequest('TITLE_REQUIRED');
   const max = await prisma.documentRequirement.aggregate({
     where: { caseId: c.id, stage: body.stage },
     _max: { sortOrder: true },
   });
+  // A requirement typed in one language reaches the client in theirs: the empty languages are translated (AI, ≤ 8 s;
+  // without the AI the source text is copied).
+  const description = body.description && Object.values(body.description).some((s) => s.trim()) ? body.description : undefined;
+  const fields: Record<string, typeof body.title> = { title: body.title, ...(description ? { description } : {}) };
+  const tx = hasMissing(body.title) || (description && hasMissing(description))
+    ? await translateMany(fields, { userId: req.user!.id, context: 'title / description of a document a client must upload for a German visa application' })
+    : null;
   const requirement = await prisma.documentRequirement.create({
-    data: { caseId: c.id, ...body, sortOrder: (max._max.sortOrder ?? -1) + 1 },
+    data: {
+      caseId: c.id,
+      stage: body.stage,
+      required: body.required,
+      title: tx?.values.title ?? body.title,
+      ...(description ? { description: tx?.values.description ?? description } : {}),
+      sortOrder: (max._max.sortOrder ?? -1) + 1,
+    },
   });
-  res.status(201).json({ requirement });
+  res.status(201).json({ requirement, translation: tx ? { autoTranslated: tx.autoTranslated, reason: tx.reason ?? null } : null });
 });
 
 adminCasesRouter.patch('/:id/requirements/:reqId', async (req, res) => {

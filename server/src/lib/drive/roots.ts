@@ -19,9 +19,10 @@ import { cleanName, findSibling } from './names.js';
  *
  * Sections are found by a stable marker, not by name: their ids live in the Setting row `drive.sections`
  * ({ cases: id, partners: id, … }). A super admin may rename, move or delete any section; a renamed or moved
- * section keeps working, and a deleted one is only created again when something needs it (a new client
- * folder needs "Anträge", a partner needs "Partner", the clients workbook needs "Alle Kunden", …) — never by
- * the periodic layout job. The initial layout is created once, the first time the drive is used.
+ * section keeps working, and a deleted one only comes back when something needs it (a new client folder
+ * needs "Anträge", a partner needs "Partner", the clients workbook needs "Alle Kunden", …) — never by the
+ * periodic layout job. A section still in the recycle bin is restored (with what was deleted together with
+ * it); only a purged one is created anew. The initial layout is created once, the first time the drive is used.
  *
  * Folder names are German everywhere (the team works with German documents and authorities).
  */
@@ -223,17 +224,49 @@ export const peekSection = async (key: SectionKey): Promise<string | null> => {
   return (await liveIds([id])).has(id) ? id : null;
 };
 
+/**
+ * A section folder that sits in the recycle bin as a trash root (its parent is alive) comes back with
+ * everything that was deleted together with it (same `deletedAt`), so the partner and client folders inside
+ * are not lost and no second "Partner" appears next to the trashed one. A name clash with a live sibling gets
+ * " (2)". Returns false when the node cannot be restored (purged, no folder, parent in the bin too).
+ */
+const restoreTrashedSection = async (id: string) => {
+  const node = await prisma.driveNode.findUnique({ where: { id }, select: { id: true, kind: true, name: true, parentId: true, deletedAt: true, parent: { select: { deletedAt: true } } } });
+  if (!node || node.kind !== 'FOLDER' || !node.deletedAt || !node.parentId || node.parent?.deletedAt) return false;
+  const at = node.deletedAt;
+  const ids = [node.id];
+  let frontier = [node.id];
+  for (let depth = 0; frontier.length && depth < 100; depth++) {
+    const rows = await prisma.driveNode.findMany({ where: { parentId: { in: frontier }, deletedAt: at }, select: { id: true, kind: true } });
+    ids.push(...rows.map((r) => r.id));
+    frontier = rows.filter((r) => r.kind === 'FOLDER').map((r) => r.id);
+  }
+  const clash = await findSibling(node.parentId, node.name, node.id);
+  let name = node.name;
+  if (clash) {
+    const taken = new Set((await prisma.driveNode.findMany({ where: { parentId: node.parentId, deletedAt: null }, select: { name: true } })).map((r) => lower(r.name)));
+    for (let i = 2; taken.has(lower(name)); i++) name = `${node.name} (${i})`;
+  }
+  await prisma.$transaction([
+    prisma.driveNode.updateMany({ where: { id: { in: ids }, deletedAt: at }, data: { deletedAt: null, deletedById: null } }),
+    prisma.driveNode.update({ where: { id: node.id }, data: { name } }),
+  ]);
+  return true;
+};
+
 const ensureSectionInner = async (key: SectionKey) => {
   const sharedId = await ensureSharedRootInner();
   const stored = await storedOrInit(sharedId);
   const id = stored[key];
   if (id && (await liveIds([id])).has(id)) return id;
+  // The section was moved to the recycle bin: bring it back instead of creating a second one.
+  if (id && (await restoreTrashedSection(id))) return id;
   const fresh = await adoptOrCreate(sharedId, key);
   await writeStored({ ...stored, [key]: fresh });
   return fresh;
 };
 
-/** The folder of a section; created again (below the shared root) when it is missing — call it when you need it. */
+/** The folder of a section; restored from the bin or created again (below the shared root) when it is missing — call it when you need it. */
 export const ensureSection = (key: SectionKey): Promise<string> => serial(() => ensureSectionInner(key));
 
 /**

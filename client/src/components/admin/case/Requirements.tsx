@@ -10,7 +10,7 @@ import { useL10n } from '@/lib/l10n';
 import type { CaseDetail, CaseDocument, Requirement } from '@/lib/types';
 import { Spinner } from '@/components/ui/Spinner';
 import { ConfirmDialog } from '../ConfirmDialog';
-import { L10nInput, emptyL10n, fillFromAz } from '../L10nInput';
+import { L10nInput, emptyL10n } from '../L10nInput';
 import { Modal } from '../Modal';
 import { DOC_STATUS_TONE, docStatusLabel, stageLabel, toastError } from '../labels';
 import { Panel, Switch } from '../ui';
@@ -314,20 +314,24 @@ const AddRequirementModal = ({ c, stage, open, onClose }: { c: CaseDetail; stage
   const [description, setDescription] = useState(emptyL10n);
   const [required, setRequired] = useState(true);
   const [busy, setBusy] = useState(false);
+  const hasTitle = !!(title.az.trim() || title.de.trim() || title.en.trim() || title.ru.trim());
 
   const submit = async () => {
-    if (!title.az.trim()) return;
+    if (!hasTitle) return;
     setBusy(true);
     try {
       const hasDesc = description.az.trim() || description.de.trim() || description.en.trim() || description.ru.trim();
-      await api.post(`/admin/cases/${c.id}/requirements`, {
+      // Empty languages are translated by the server (AI); without the AI it copies the text that was written.
+      const res = await api.post<{ translation: { autoTranslated: boolean; reason: string | null } | null }>(`/admin/cases/${c.id}/requirements`, {
         stage,
-        title: fillFromAz(title),
-        description: hasDesc ? fillFromAz(description) : undefined,
+        title,
+        description: hasDesc ? description : undefined,
         required,
       });
       await refresh();
-      toast.success(t('admin.case.req.reqAdded'));
+      const tx = res.data.translation;
+      if (tx && !tx.autoTranslated && tx.reason && tx.reason !== 'NOTHING_TO_TRANSLATE') toast.warning(t('admin.l10n.savedCopied', { reason: tx.reason }));
+      else toast.success(t('admin.case.req.reqAdded'));
       setTitle(emptyL10n());
       setDescription(emptyL10n());
       setRequired(true);
@@ -350,7 +354,7 @@ const AddRequirementModal = ({ c, stage, open, onClose }: { c: CaseDetail; stage
           <button type="button" className="btn-white btn-sm border border-line" onClick={onClose}>
             {t('admin.common.cancel')}
           </button>
-          <button type="submit" form="add-req-form" className="btn-primary btn-sm" disabled={!title.az.trim() || busy}>
+          <button type="submit" form="add-req-form" className="btn-primary btn-sm" disabled={!hasTitle || busy}>
             {busy && <Spinner className="size-3.5" />} {t('admin.common.add')}
           </button>
         </>
@@ -364,8 +368,8 @@ const AddRequirementModal = ({ c, stage, open, onClose }: { c: CaseDetail; stage
           void submit();
         }}
       >
-        <L10nInput label={t('admin.case.req.titleLabel')} value={title} onChange={setTitle} required />
-        <L10nInput label={t('admin.case.req.descOptional')} value={description} onChange={setDescription} multiline rows={2} />
+        <L10nInput label={t('admin.case.req.titleLabel')} value={title} onChange={setTitle} required anyLang hint={t('admin.l10n.anyLangHint')} />
+        <L10nInput label={t('admin.case.req.descOptional')} value={description} onChange={setDescription} multiline rows={2} anyLang />
         <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-line px-3.5 py-3 text-sm">
           <input type="checkbox" checked={required} onChange={(e) => setRequired(e.target.checked)} className="mt-0.5 size-4 shrink-0 accent-brand-600" />
           {t('admin.case.req.requiredCheckbox')}

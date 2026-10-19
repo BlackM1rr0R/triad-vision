@@ -86,13 +86,17 @@ describe('content CRUD', () => {
     expect((await agent.post('/api/admin/content/users').send({})).status).toBe(404);
   });
 
-  it('a visa category in use can be deleted; its cases keep running without it', async () => {
+  it('a visa category in use cannot be deleted (deactivate it instead); once unused it can', async () => {
     const { agent } = await asAdmin();
     const visa = (await agent.post('/api/admin/content/visa-categories').send(contentPayload['visa-categories']())).body.item;
     const client = await prisma.user.create({ data: { email: 'c@test.local', passwordHash: 'x', firstName: 'C', lastName: 'L' } });
     const c = await prisma.case.create({ data: { clientId: client.id, number: 'TV-2000-0001', profession: 'Driver', visaCategoryId: visa.id } });
+    const res = await agent.delete(`/api/admin/content/visa-categories/${visa.id}`);
+    expect(res.status).toBe(409);
+    expect(res.body).toMatchObject({ error: 'VISA_CATEGORY_IN_USE', cases: 1, vacancies: 0 });
+    expect((await prisma.case.findUniqueOrThrow({ where: { id: c.id } })).visaCategoryId).toBe(visa.id);
+    await prisma.case.delete({ where: { id: c.id } });
     expect((await agent.delete(`/api/admin/content/visa-categories/${visa.id}`)).status).toBe(200);
-    expect((await prisma.case.findUniqueOrThrow({ where: { id: c.id } })).visaCategoryId).toBeNull();
   });
 
   it('published=false hides content from the public site immediately', async () => {

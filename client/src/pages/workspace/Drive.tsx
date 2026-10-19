@@ -63,6 +63,7 @@ import { UploadPanel } from '@/components/drive/UploadPanel';
 import { useDropTarget, type PickedFile } from '@/components/drive/dnd';
 import { FOLDER_SWATCH, sectionOf, setSectionIds } from '@/components/drive/fileIcons';
 import { ClientFolderHeader, PartnerFolderHeader, PartnersOverview, SectionHeader } from '@/components/drive/FolderHeaders';
+import { PARTNERS_KEY, usePartnerOptions } from '@/components/partners/api';
 import { crumbLabel, rootLabel } from '@/components/drive/labels';
 import {
   batchCall,
@@ -306,7 +307,11 @@ export default function WorkspaceDrive() {
   const onFiles = useCallback((files: PickedFile[], targetId: string) => uploads.enqueue(files, targetId), [uploads]);
 
   // ── mutations ──
-  const refresh = () => void invalidateDrive(qc);
+  // Partner cards follow the drive (a deleted / restored partner folder changes them).
+  const refresh = () => {
+    void invalidateDrive(qc);
+    void qc.invalidateQueries({ queryKey: PARTNERS_KEY });
+  };
   const clear = () => select(new Set(), null, null);
   const [busy, setBusy] = useState(false);
   const run = async (fn: () => Promise<void>) => {
@@ -382,6 +387,11 @@ export default function WorkspaceDrive() {
   const [textFor, setTextFor] = useState<string | null>(null);
   const [picker, setPicker] = useState<{ mode: 'move' | 'copy'; items: DriveItem[] } | null>(null);
   const [confirm, setConfirm] = useState<Confirm | null>(null);
+  /** Trashing partner folders (admins): delete the partners as well ("Partnyoru da silək?"). */
+  const [alsoDeletePartners, setAlsoDeletePartners] = useState(false);
+  useEffect(() => setAlsoDeletePartners(false), [confirm]);
+  const partnerOptions = usePartnerOptions();
+  const trashedPartners = confirm?.kind === 'trash' && isAdmin ? confirm.items.filter((i) => i.kind === 'FOLDER' && i.partner).map((i) => i.partner!) : [];
   const [shareItem, setShareItem] = useState<DriveItem | null>(null);
   const [previewItem, setPreviewItem] = useState<DriveItem | null>(null);
   const [colorFor, setColorFor] = useState<DriveItem | null>(null);
@@ -393,6 +403,15 @@ export default function WorkspaceDrive() {
     if (!c) return;
     void run(async () => {
       if (c.kind === 'trash') {
+        if (alsoDeletePartners && trashedPartners.length) {
+          // Partner first: its client folders move back to "Anträge" before the folder goes to the bin.
+          let deleted = 0;
+          for (const p of trashedPartners) {
+            await api.delete(`/admin/partners/${encodeURIComponent(p.id)}`, { params: { force: 1 } });
+            deleted++;
+          }
+          toast.success(t('drive.partner.partnersDeleted', { count: deleted }));
+        }
         const done = new Set(reportBatch(await bulkCall('delete', { ids: c.items.map((i) => i.id) }), 'drive.toasts.trashed'));
         // The open folder (or one above it) went to the bin: go to the closest folder that is left.
         const path = listing.data?.path ?? [];
@@ -1200,7 +1219,22 @@ export default function WorkspaceDrive() {
                   ? t('drive.details.restoreVersion')
                   : undefined
         }
-      />
+      >
+        {trashedPartners.length > 0 && (
+          <label className="flex items-start gap-2 rounded-lg border border-line bg-surface px-3 py-2">
+            <input type="checkbox" className="mt-0.5 size-4 accent-brand-600" checked={alsoDeletePartners} onChange={(e) => setAlsoDeletePartners(e.target.checked)} disabled={busy} />
+            <span>
+              <span className="block font-semibold text-ink">{t('drive.partner.alsoDelete')}</span>
+              <span className="block text-xs text-muted">
+                {t('drive.partner.alsoDeleteHint', {
+                  names: trashedPartners.map((p) => p.name).join(', '),
+                  count: trashedPartners.reduce((a, p) => a + (partnerOptions.data?.find((x) => x.id === p.id)?.counts?.clients ?? 0), 0),
+                })}
+              </span>
+            </span>
+          </label>
+        )}
+      </ConfirmDialog>
       <ShareDialog item={shareItem} onClose={() => setShareItem(null)} myId={myId} />
       <ImagePreview item={previewItem} src={previewItem ? contentUrl(previewItem.id) : ''} onClose={() => setPreviewItem(null)} />
       <ConflictDialog

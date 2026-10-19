@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import clsx from 'clsx';
-import { Briefcase, ExternalLink, FileSpreadsheet, FolderOpen, Handshake, Pencil, Phone, Plus, Search, UserPlus, Users } from 'lucide-react';
+import { Briefcase, ExternalLink, FileSpreadsheet, FolderOpen, FolderPlus, Handshake, Pencil, Phone, Plus, Search, Trash2, UserPlus, Users } from 'lucide-react';
 import { api } from '@/lib/api';
 import { statusLabel } from '@/components/admin/labels';
 import { STATUS_TONE } from '@/lib/caseStatus';
@@ -12,6 +12,8 @@ import type { CaseStatus } from '@/lib/types';
 import { Modal } from '@/components/admin/Modal';
 import { Spinner } from '@/components/ui/Spinner';
 import { PARTNERS_KEY, partnerError, useAssignPartner, usePartnerOptions, type Partner } from '@/components/partners/api';
+import { DeletePartnerDialog } from '@/components/partners/DeletePartnerDialog';
+import { useAuth } from '@/lib/auth';
 import { driveKeys, startDownload } from './api';
 import { sectionOf } from './fileIcons';
 import type { DriveItem } from './types';
@@ -258,10 +260,26 @@ const Count = ({ icon: Icon, label }: { icon: typeof Users; label: string }) => 
  */
 export const PartnersOverview = ({ items, onOpen }: { items: DriveItem[]; onOpen: (folderId: string) => void }) => {
   const { t } = useTranslation();
+  const { user } = useAuth();
+  const canDelete = user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN';
+  const refresh = useRefreshDrive();
   const partners = usePartnerOptions();
   const [edit, setEdit] = useState<{ partner: Partner | null } | null>(null);
   const [assignTo, setAssignTo] = useState<Partner | null>(null);
-  const folderOf = (p: Partner) => items.find((i) => i.partner?.id === p.id)?.id ?? null;
+  const [deleting, setDeleting] = useState<Partner | null>(null);
+  // The listing of this section is the truth; the partner list's folderId covers the moment before it loads.
+  const folderOf = (p: Partner) => items.find((i) => i.partner?.id === p.id)?.id ?? (items.length ? null : (p.folderId ?? null));
+  /** A partner whose folder was deleted (or never made): restored from the bin or created again, then opened. */
+  const ensureFolder = useMutation({
+    mutationFn: async (p: Partner) => (await api.post<{ folderId: string; restored: boolean; created: boolean }>(`/admin/partners/${encodeURIComponent(p.id)}/folder`)).data,
+    onSuccess: (r) => {
+      if (r.restored) toast.success(t('drive.partner.folderRestored'));
+      else if (r.created) toast.success(t('drive.partner.folderCreated'));
+      refresh();
+      onOpen(r.folderId);
+    },
+    onError: partnerError,
+  });
   return (
     <div className="border-b border-line px-3 py-3 sm:px-4">
       <div className="mb-2 flex items-center gap-2">
@@ -279,8 +297,9 @@ export const PartnersOverview = ({ items, onOpen }: { items: DriveItem[]; onOpen
         <div className="grid grid-cols-[repeat(auto-fill,minmax(15rem,1fr))] gap-2">
           {(partners.data ?? []).map((p) => {
             const folderId = folderOf(p);
+            const creating = ensureFolder.isPending && ensureFolder.variables?.id === p.id;
             return (
-              <div key={p.id} className={clsx('flex flex-col rounded-xl border border-line bg-card p-3 shadow-sm', !p.active && 'opacity-70')}>
+              <div key={p.id} className={clsx('flex flex-col rounded-xl border bg-card p-3 shadow-sm', folderId ? 'border-line' : 'border-dashed border-line', !p.active && 'opacity-70')}>
                 <div className="flex items-start gap-2">
                   <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-teal-50 text-sm font-bold text-teal-700 dark:bg-teal-500/15 dark:text-teal-300">{p.name.slice(0, 1).toUpperCase()}</span>
                   <div className="min-w-0 flex-1">
@@ -297,9 +316,15 @@ export const PartnersOverview = ({ items, onOpen }: { items: DriveItem[]; onOpen
                   <Count icon={FolderOpen} label={t('drive.partner.approved', { count: p.counts?.approved ?? 0 })} />
                 </div>
                 <div className="mt-3 flex flex-wrap gap-1.5">
-                  <button type="button" disabled={!folderId} className="btn-white btn-sm border border-line !px-2" onClick={() => folderId && onOpen(folderId)}>
-                    <FolderOpen className="size-3.5" /> {t('drive.partner.openFolder')}
-                  </button>
+                  {folderId ? (
+                    <button type="button" className="btn-white btn-sm border border-line !px-2" onClick={() => onOpen(folderId)}>
+                      <FolderOpen className="size-3.5" /> {t('drive.partner.openFolder')}
+                    </button>
+                  ) : (
+                    <button type="button" className="btn-white btn-sm border border-dashed border-teal-400 !px-2 text-teal-700 dark:text-teal-300" disabled={ensureFolder.isPending} onClick={() => ensureFolder.mutate(p)}>
+                      {creating ? <Spinner className="size-3.5" /> : <FolderPlus className="size-3.5" />} {t('drive.partner.noFolder')}
+                    </button>
+                  )}
                   <button type="button" className="btn-white btn-sm border border-line !px-2" onClick={() => setAssignTo(p)} title={t('drive.partner.assign')}>
                     <UserPlus className="size-3.5" />
                     <span className="sr-only">{t('drive.partner.assign')}</span>
@@ -308,6 +333,12 @@ export const PartnersOverview = ({ items, onOpen }: { items: DriveItem[]; onOpen
                     <Pencil className="size-3.5" />
                     <span className="sr-only">{t('drive.partner.edit')}</span>
                   </button>
+                  {canDelete && (
+                    <button type="button" className="btn-white btn-sm border border-line !px-2 text-danger" onClick={() => setDeleting(p)} title={t('drive.partner.deletePartner')}>
+                      <Trash2 className="size-3.5" />
+                      <span className="sr-only">{t('drive.partner.deletePartner')}</span>
+                    </button>
+                  )}
                 </div>
               </div>
             );
@@ -316,6 +347,7 @@ export const PartnersOverview = ({ items, onOpen }: { items: DriveItem[]; onOpen
       )}
       <PartnerDialog open={!!edit} partner={edit?.partner ?? null} onClose={() => setEdit(null)} onSaved={(id) => id && onOpen(id)} />
       <AssignClientsDialog partner={assignTo} onClose={() => setAssignTo(null)} />
+      <DeletePartnerDialog partner={deleting} onClose={() => setDeleting(null)} />
     </div>
   );
 };
@@ -326,6 +358,10 @@ export const PartnerFolderHeader = ({ folder }: { folder: DriveItem }) => {
   const partners = usePartnerOptions();
   const [editing, setEditing] = useState(false);
   const [assigning, setAssigning] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const canDelete = user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN';
   const p = partners.data?.find((x) => x.id === folder.partner?.id) ?? null;
   if (!folder.partner) return null;
   return (
@@ -351,8 +387,19 @@ export const PartnerFolderHeader = ({ folder }: { folder: DriveItem }) => {
         <button type="button" className="btn-white btn-sm border border-line !px-2" disabled={!p} onClick={() => setEditing(true)}>
           <Pencil className="size-3.5" /> {t('drive.partner.edit')}
         </button>
+        {canDelete && (
+          <button type="button" className="btn-white btn-sm border border-line !px-2 text-danger" disabled={!p} onClick={() => setDeleting(true)}>
+            <Trash2 className="size-3.5" /> {t('drive.partner.deletePartner')}
+          </button>
+        )}
       </span>
       <PartnerDialog open={editing} partner={p} onClose={() => setEditing(false)} />
+      <DeletePartnerDialog
+        partner={deleting ? p : null}
+        onClose={() => setDeleting(false)}
+        // The (now empty) folder may have gone to the bin: back to the "Partner" section.
+        onDeleted={() => folder.parentId && navigate(`/workspace/drive/f/${encodeURIComponent(folder.parentId)}`)}
+      />
       <AssignClientsDialog partner={assigning ? folder.partner : null} onClose={() => setAssigning(false)} />
     </div>
   );

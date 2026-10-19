@@ -65,6 +65,8 @@ export interface Partner extends PartnerRef {
   commissionTotals?: PartnerCommissionTotals;
   /** Only on GET /admin/partners/:id. */
   login?: PartnerLogin | null;
+  /** The partner's live folder in the drive ("Partner/<name>"); null when it was deleted there. */
+  folderId?: string | null;
 }
 
 export interface PartnerCase {

@@ -12,7 +12,8 @@ import { registerCopy } from '@/i18n';
 import { pagesDocsIntel } from '@/i18n/pagesDocsIntel';
 import { Spinner } from '@/components/ui/Spinner';
 import { ConfirmDialog } from '@/components/admin/ConfirmDialog';
-import { L10nInput, emptyL10n, fillFromAz } from '@/components/admin/L10nInput';
+import { L10nInput, LANGS, type Lang } from '@/components/admin/L10nInput';
+import { TranslateButton, aiLangsOf, plainL10n, type L10nWithAi } from '@/components/admin/TranslateButton';
 import { EmptyState, ErrorBlock, LoadingBlock, PageHead, Panel, Switch } from '@/components/admin/ui';
 
 registerCopy(pagesDocsIntel);
@@ -25,8 +26,8 @@ interface Template {
   visaCategoryId: string | null;
   stage: Stage;
   key: string | null;
-  title: L10n;
-  description: L10n | null;
+  title: L10nWithAi;
+  description: L10nWithAi | null;
   required: boolean;
   sortOrder: number;
 }
@@ -56,7 +57,20 @@ interface Draft {
   title: L10n;
   description: L10n;
   required: boolean;
+  /** Languages still holding the AI's text (shown with a badge, kept as the marker on save). */
+  ai: { title: Lang[]; description: Lang[] };
 }
+
+const hasText = (v: L10n) => LANGS.some((l) => v[l].trim());
+const draftOf = (tpl: Template | null): Draft => ({
+  key: tpl?.key ?? '',
+  title: plainL10n(tpl?.title),
+  description: plainL10n(tpl?.description),
+  required: tpl?.required ?? true,
+  ai: { title: aiLangsOf(tpl?.title), description: aiLangsOf(tpl?.description) },
+});
+/** Drops the AI mark of every language whose text changed. */
+const keepAi = (ai: Lang[], before: L10n, after: L10n) => ai.filter((l) => before[l] === after[l]);
 
 const TemplateForm = ({
   initial,
@@ -73,16 +87,49 @@ const TemplateForm = ({
 }) => {
   const { t } = useTranslation();
   const [d, setD] = useState<Draft>(initial);
+  const translate = (
+    <TranslateButton
+      fields={{ title: d.title, description: d.description }}
+      ai={d.ai}
+      context="title / description of a document a client must upload for a German visa application"
+      disabled={busy}
+      onTranslated={(values, translated) =>
+        setD((cur) => ({
+          ...cur,
+          title: values.title,
+          description: values.description,
+          ai: { title: [...new Set([...cur.ai.title, ...translated.title])], description: [...new Set([...cur.ai.description, ...translated.description])] },
+        }))
+      }
+    />
+  );
   return (
     <form
       className="space-y-3 rounded-lg border border-brand-200 bg-brand-50/40 p-3"
       onSubmit={(e) => {
         e.preventDefault();
-        if (d.title.az.trim()) onSave(d);
+        if (hasText(d.title)) onSave(d);
       }}
     >
-      <L10nInput label={t('docsIntel.admin.titleField')} value={d.title} onChange={(title) => setD({ ...d, title })} required />
-      <L10nInput label={t('docsIntel.admin.description')} value={d.description} onChange={(description) => setD({ ...d, description })} multiline rows={2} />
+      <L10nInput
+        label={t('docsIntel.admin.titleField')}
+        value={d.title}
+        onChange={(title) => setD({ ...d, title, ai: { ...d.ai, title: keepAi(d.ai.title, d.title, title) } })}
+        required
+        anyLang
+        aiLangs={d.ai.title}
+        actions={translate}
+        hint={t('admin.l10n.anyLangHint')}
+      />
+      <L10nInput
+        label={t('docsIntel.admin.description')}
+        value={d.description}
+        onChange={(description) => setD({ ...d, description, ai: { ...d.ai, description: keepAi(d.ai.description, d.description, description) } })}
+        multiline
+        rows={2}
+        anyLang
+        aiLangs={d.ai.description}
+      />
       <div className="grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end">
         <div>
           <label className="label" htmlFor={`key-${initial.key}`}>
@@ -110,7 +157,7 @@ const TemplateForm = ({
         </label>
       </div>
       <div className="flex gap-2">
-        <button type="submit" className="btn-primary btn-sm" disabled={busy || !d.title.az.trim()}>
+        <button type="submit" className="btn-primary btn-sm" disabled={busy || !hasText(d.title)}>
           {busy && <Spinner className="size-3.5" />} {t('docsIntel.admin.save')}
         </button>
         <button type="button" className="btn-white btn-sm border border-line" onClick={onCancel} disabled={busy}>
@@ -149,9 +196,11 @@ const StageList = ({
   const run = async (id: string, fn: () => Promise<unknown>, done?: string) => {
     setBusy(id);
     try {
-      await fn();
+      const res = (await fn()) as { data?: { translation?: { autoTranslated: boolean; reason: string | null } | null } } | undefined;
       await onChanged();
-      if (done) toast.success(done);
+      const tx = res?.data?.translation;
+      if (tx && !tx.autoTranslated && tx.reason && tx.reason !== 'NOTHING_TO_TRANSLATE' && tx.reason !== 'NO_SOURCE') toast.warning(t('admin.l10n.savedCopied', { reason: tx.reason }));
+      else if (done) toast.success(done);
       return true;
     } catch (err) {
       onError(err);
@@ -161,11 +210,14 @@ const StageList = ({
     }
   };
 
+  // Languages left empty are translated by the server (AI); nothing is copied from AZ here any more.
+  const trimmed = (v: L10n): L10n => ({ az: v.az.trim(), de: v.de.trim(), en: v.en.trim(), ru: v.ru.trim() });
   const payload = (d: Draft) => ({
     key: d.key.trim() || null,
-    title: fillFromAz(d.title),
-    description: Object.values(d.description).some((s) => s.trim()) ? fillFromAz(d.description) : null,
+    title: trimmed(d.title),
+    description: hasText(d.description) ? trimmed(d.description) : null,
     required: d.required,
+    ai: d.ai,
   });
 
   const move = async (index: number, dir: -1 | 1) => {
@@ -201,7 +253,7 @@ const StageList = ({
             {editing === tpl.id ? (
               <div className="p-2">
                 <TemplateForm
-                  initial={{ key: tpl.key ?? '', title: tpl.title, description: tpl.description ?? emptyL10n(), required: tpl.required }}
+                  initial={draftOf(tpl)}
                   keys={keys}
                   busy={busy === tpl.id}
                   onCancel={() => setEditing(null)}
@@ -220,6 +272,11 @@ const StageList = ({
                       <span className="badge bg-navy-900/90 text-[10px] text-white">{t('docsIntel.admin.required')}</span>
                     ) : (
                       <span className="badge bg-slate-100 text-[10px] text-slate-600">{t('docsIntel.admin.optional')}</span>
+                    )}
+                    {(aiLangsOf(tpl.title).length > 0 || aiLangsOf(tpl.description).length > 0) && (
+                      <span className="badge bg-brand-50 text-[10px] text-brand-700" title={t('admin.l10n.aiBadgeTitle')}>
+                        {t('admin.l10n.aiBadge')}: {[...new Set([...aiLangsOf(tpl.title), ...aiLangsOf(tpl.description)])].map((l) => l.toUpperCase()).join(', ')}
+                      </span>
                     )}
                     {tpl.key ? (
                       <span className="badge bg-brand-100 font-mono text-[10px] text-brand-700">{tpl.key}</span>
@@ -254,7 +311,7 @@ const StageList = ({
       {adding && (
         <div className="mt-3">
           <TemplateForm
-            initial={{ key: '', title: emptyL10n(), description: emptyL10n(), required: true }}
+            initial={draftOf(null)}
             keys={keys}
             busy={busy === 'new'}
             onCancel={() => setAdding(false)}

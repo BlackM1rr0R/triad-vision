@@ -182,8 +182,25 @@ adminContentRouter.put('/:resource/:id', async (req, res) => {
   res.json({ item: await r.delegate().update({ where: { id: req.params.id }, data }) });
 });
 
+/**
+ * Cases and vacancies still pointing at a visa category. Deleting it would silently detach them (the relation is
+ * SET NULL), so DELETE refuses while it is in use — the admin deactivates it (published = false) instead: it then
+ * disappears from the public site and from new applications, but existing cases keep it.
+ */
+export const visaCategoryUsage = async (id: string) => {
+  const [cases, vacancies] = await Promise.all([prisma.case.count({ where: { visaCategoryId: id } }), prisma.vacancy.count({ where: { visaCategoryId: id } })]);
+  return { cases, vacancies };
+};
+
 adminContentRouter.delete('/:resource/:id', async (req, res) => {
   const r = resource(req.params.resource);
+  if (req.params.resource === 'visa-categories') {
+    const usage = await visaCategoryUsage(req.params.id);
+    if (usage.cases || usage.vacancies) {
+      res.status(409).json({ error: 'VISA_CATEGORY_IN_USE', message: 'VISA_CATEGORY_IN_USE', ...usage });
+      return;
+    }
+  }
   await r.delegate().delete({ where: { id: req.params.id } });
   res.json({ ok: true });
 });

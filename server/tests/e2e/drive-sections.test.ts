@@ -78,7 +78,7 @@ describe('drive sections: super admins may change everything', () => {
     expect((await roots(staff.agent)).staff).toBeNull();
   });
 
-  it('a deleted "Partner" section comes back when a partner needs it, "Anträge" when a case needs it', async () => {
+  it('a deleted "Partner" section comes back (restored from the bin) when a partner needs it, "Anträge" when a case needs it', async () => {
     const su = await asSuperAdmin();
     const staff = await asStaff();
     const r = await roots(staff.agent);
@@ -88,7 +88,8 @@ describe('drive sections: super admins may change everything', () => {
     const created = expectStatus(await staff.agent.post('/api/admin/partners').send({ name: 'Elvin' }), 201).body;
     const folder = await prisma.driveNode.findUniqueOrThrow({ where: { id: created.folderId }, include: { parent: true } });
     expect(folder.parent).toMatchObject({ name: 'Partner', system: true, parentId: r.shared.id, deletedAt: null });
-    expect(folder.parentId).not.toBe(r.partners.id);
+    // The trashed section itself is restored (same id), not duplicated.
+    expect(folder.parentId).toBe(r.partners.id);
     expect((await roots(staff.agent)).partners).toMatchObject({ id: folder.parentId });
 
     const client = await asClient({ firstName: 'Orxan', lastName: 'Bayramov' });
@@ -96,7 +97,7 @@ describe('drive sections: super admins may change everything', () => {
     const caseFolder = await folderOfCase(c.id);
     expect(await pathOf(caseFolder)).toBe(`Gemeinsame Dokumente/Anträge/Arbeitsvisum/Ohne Kategorie/Orxan Bayramov · ${c.number}`);
     const fresh = await roots(staff.agent);
-    expect(fresh.cases.id).not.toBe(r.cases.id);
+    expect(fresh.cases.id).toBe(r.cases.id);
     // Only one live section of each kind.
     expect(await prisma.driveNode.count({ where: { name: 'Partner', system: true, deletedAt: null } })).toBe(1);
     expect(await prisma.driveNode.count({ where: { name: 'Anträge', system: true, deletedAt: null } })).toBe(1);

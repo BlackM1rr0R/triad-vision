@@ -293,6 +293,17 @@ export const parseOverride = (raw: unknown): ForecastOverride | null => {
   return out;
 };
 
+/** Unit the admin enters a step in on the forecast page; the stored values are always days (week × 7). */
+export const FORECAST_UNITS = ['day', 'week'] as const;
+export type ForecastUnit = (typeof FORECAST_UNITS)[number];
+
+/** Per-step display units stored next to the override (`VisaCategory.forecast.units`); missing = days. */
+export const parseUnits = (raw: unknown): Partial<Record<StepKey, ForecastUnit>> => {
+  const units = raw && typeof raw === 'object' && !Array.isArray(raw) ? (raw as Record<string, unknown>).units : null;
+  if (!units || typeof units !== 'object' || Array.isArray(units)) return {};
+  return Object.fromEntries(STEP_KEYS.filter((k) => (units as Record<string, unknown>)[k] === 'week').map((k) => [k, 'week' as const]));
+};
+
 /** Ranges for a visa category (null = cases without a category): history → defaults, overridden by the admin. */
 export const rangesFor = async (visaCategoryId: string | null, visaType: VisaType = 'WORK'): Promise<Ranges> => {
   const [category, all, visa] = await Promise.all([

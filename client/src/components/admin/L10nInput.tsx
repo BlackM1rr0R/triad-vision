@@ -1,4 +1,4 @@
-import { useId, useState } from 'react';
+import { useId, useState, type ReactNode } from 'react';
 import clsx from 'clsx';
 import { useTranslation } from 'react-i18next';
 import type { L10n, L10nList } from '@/lib/types';
@@ -42,11 +42,13 @@ const Tabs = ({
   onChange,
   filled,
   id,
+  ai = [],
 }: {
   active: Lang;
   onChange: (l: Lang) => void;
   filled: Record<Lang, boolean>;
   id: string;
+  ai?: Lang[];
 }) => {
   const { t } = useTranslation();
   return (
@@ -68,6 +70,7 @@ const Tabs = ({
         >
           {LANG_META[l].short}
           {!filled[l] && <span className="absolute top-0.5 right-0.5 size-1.5 rounded-full bg-warning" aria-label={t('admin.l10n.empty')} />}
+          {filled[l] && ai.includes(l) && <span className="absolute top-0.5 right-0.5 size-1.5 rounded-full bg-brand-500" aria-label={t('admin.l10n.aiBadge')} />}
         </button>
       ))}
     </div>
@@ -83,6 +86,9 @@ export const L10nInput = ({
   rows = 4,
   required = false,
   hint,
+  anyLang = false,
+  aiLangs,
+  actions,
 }: {
   label: string;
   value: L10n;
@@ -91,6 +97,12 @@ export const L10nInput = ({
   rows?: number;
   required?: boolean;
   hint?: string;
+  /** Text may be written in any language (the others are translated on save): `required` then means "at least one". */
+  anyLang?: boolean;
+  /** Languages filled by the AI and not edited since: marked on the tab and with a badge under the field. */
+  aiLangs?: Lang[];
+  /** Extra controls next to the language tabs (e.g. a "Translate" button). */
+  actions?: ReactNode;
 }) => {
   const { t } = useTranslation();
   const id = useId();
@@ -101,9 +113,10 @@ export const L10nInput = ({
     'aria-labelledby': `${id}-label ${id}-tab-${lang}`,
     className: 'input',
     value: value[lang],
-    required: required && lang === 'az',
-    placeholder: lang === 'az' ? '' : value.az ? t('admin.l10n.fallbackPlaceholder') : '',
+    required: anyLang ? required && !Object.values(filled).some(Boolean) : required && lang === 'az',
+    placeholder: anyLang || lang === 'az' ? '' : value.az ? t('admin.l10n.fallbackPlaceholder') : '',
   };
+  const aiHere = !!aiLangs?.includes(lang) && filled[lang];
   return (
     <div>
       <div className="mb-1.5 flex items-center justify-between gap-2">
@@ -111,12 +124,22 @@ export const L10nInput = ({
           {label}
           {required && <span className="text-danger"> *</span>}
         </span>
-        <Tabs active={lang} onChange={setLang} filled={filled} id={id} />
+        <div className="flex items-center gap-1.5">
+          {actions}
+          <Tabs active={lang} onChange={setLang} filled={filled} id={id} ai={aiLangs} />
+        </div>
       </div>
       {multiline ? (
         <textarea {...common} rows={rows} onChange={(e) => onChange({ ...value, [lang]: e.target.value })} />
       ) : (
         <input {...common} onChange={(e) => onChange({ ...value, [lang]: e.target.value })} />
+      )}
+      {aiHere && (
+        <p className="mt-1">
+          <span className="badge bg-brand-50 text-[10px] text-brand-700" title={t('admin.l10n.aiBadgeTitle')}>
+            {t('admin.l10n.aiBadge')}
+          </span>
+        </p>
       )}
       {hint && <p className="mt-1 text-xs text-muted">{hint}</p>}
     </div>

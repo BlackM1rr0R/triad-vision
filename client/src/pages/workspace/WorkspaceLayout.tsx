@@ -144,7 +144,8 @@ export default function WorkspaceLayout() {
           {wide && <span className="truncate">{t('workspace.nav.site')}</span>}
         </Link>
         <div className={clsx('flex items-center gap-2 px-1 py-1', wide ? 'justify-between' : 'flex-col')}>
-          <LanguageSwitcher variant="pill" />
+          {/* Opens upward here (bottom of the sidebar); flag only in the collapsed rail. */}
+          <LanguageSwitcher variant="pill" compact={!wide} />
           <ThemeToggle />
         </div>
         <div className={clsx('flex items-center gap-2.5 rounded-xl px-2 py-2', !wide && 'flex-col')}>

@@ -6,6 +6,7 @@ import { requireMinRole } from '../../middleware/auth.js';
 import { audit } from '../../lib/audit.js';
 import { badRequest, conflict, notFound, parse } from '../../lib/http.js';
 import { DEFAULT_REQUIREMENTS, seedDefaultTemplates } from '../../lib/docsIntel/requirementTemplates.js';
+import { hasMissing, LANGS, mergeAiFlag, translateMany, withAiFlag, type L10nFull, type Lang, type TranslateFailure } from '../../lib/ai/translate.js';
 
 /**
  * Requirement templates: which documents a NEW case asks for, per stage, globally or per visa type.
@@ -20,7 +21,10 @@ export const REQUIREMENT_KEYS = [
   'VIDEX', 'PHOTO_2', 'HEALTH_INSURANCE', 'SIGNED_CONTRACT', 'ANERKENNUNG', 'GERMAN_CERT', 'ACCOMMODATION',
 ] as const;
 
-const l10n = z.object({ az: z.string().trim().min(1).max(200), de: z.string().trim().max(200), en: z.string().trim().max(200), ru: z.string().trim().max(200) });
+// The title may be typed in any one language: the others are translated automatically on save.
+const l10n = z
+  .object({ az: z.string().trim().max(200), de: z.string().trim().max(200), en: z.string().trim().max(200), ru: z.string().trim().max(200) })
+  .refine((v) => Object.values(v).some((s) => s), { message: 'TITLE_REQUIRED', path: ['az'] });
 const l10nDesc = z.object({ az: z.string().trim().max(1000), de: z.string().trim().max(1000), en: z.string().trim().max(1000), ru: z.string().trim().max(1000) });
 const key = z.string().trim().toUpperCase().regex(/^[A-Z][A-Z0-9_]{1,39}$/, 'Use A-Z, 0-9 and _');
 const stage = z.enum(['INITIAL', 'EMBASSY']);
@@ -32,6 +36,8 @@ const bodySchema = z.object({
   title: l10n,
   description: l10nDesc.nullable().optional(),
   required: z.boolean().default(true),
+  /** Languages the editor filled with the "Translate" button and nobody changed since (kept as the AI marker). */
+  ai: z.object({ title: z.array(z.enum(LANGS)).max(4), description: z.array(z.enum(LANGS)).max(4) }).partial().optional(),
 });
 
 const grouped = (rows: { stage: string }[]) => ({
@@ -47,6 +53,32 @@ const ensureVisa = async (id: string | null | undefined) => {
 };
 
 const isEmptyDesc = (d: z.infer<typeof l10nDesc> | null | undefined) => !d || !Object.values(d).some((s) => s.trim());
+
+const TRANSLATE_CONTEXT = 'title / description of a document a client must upload for a German visa application (requirement list)';
+
+/**
+ * Fills the languages left empty in a title / description with the AI (8 s at most, never throws). Without
+ * the AI (no key, budget used up, timeout) the source text is copied, as the form did before.
+ */
+const translateTexts = async (
+  userId: string,
+  title: L10nFull | undefined,
+  description: L10nFull | null | undefined,
+  previous: { title?: unknown; description?: unknown } = {},
+  clientAi: { title?: Lang[]; description?: Lang[] } = {},
+) => {
+  const fields: Record<string, L10nFull> = {};
+  if (title && hasMissing(title)) fields.title = title;
+  if (description && hasMissing(description)) fields.description = description;
+  const r = Object.keys(fields).length ? await translateMany(fields, { userId, context: TRANSLATE_CONTEXT }) : null;
+  const out = (name: 'title' | 'description', value: L10nFull | null | undefined) => {
+    if (!value) return value;
+    const next = r?.values[name] ?? value;
+    return withAiFlag(next, mergeAiFlag(previous[name], next, [...(r?.translated[name] ?? []), ...(clientAi[name] ?? [])]));
+  };
+  const translation: { autoTranslated: boolean; reason: TranslateFailure | null } | null = r ? { autoTranslated: r.autoTranslated, reason: r.reason ?? null } : null;
+  return { title: out('title', title), description: out('description', description), translation };
+};
 
 adminRequirementsRouter.get('/', async (_req, res) => {
   const [visaCategories, templates] = await Promise.all([
@@ -67,37 +99,40 @@ adminRequirementsRouter.post('/', async (req, res) => {
   const body = parse(bodySchema, req.body);
   const visaCategoryId = await ensureVisa(body.visaCategoryId);
   const max = await prisma.requirementTemplate.aggregate({ where: { visaCategoryId, stage: body.stage }, _max: { sortOrder: true } });
+  const texts = await translateTexts(req.user!.id, body.title, isEmptyDesc(body.description) ? null : body.description, {}, body.ai);
   const template = await prisma.requirementTemplate.create({
     data: {
       visaCategoryId,
       stage: body.stage,
       key: body.key ?? null,
-      title: body.title,
-      description: isEmptyDesc(body.description) ? Prisma.DbNull : body.description!,
+      title: texts.title!,
+      description: texts.description ? texts.description : Prisma.DbNull,
       required: body.required,
       sortOrder: (max._max.sortOrder ?? -1) + 1,
     },
   });
   await audit(req, 'REQUIREMENT_TEMPLATE_CREATED', template.id, { visaCategoryId, stage: body.stage, key: body.key ?? null });
-  res.status(201).json({ template });
+  res.status(201).json({ template, translation: texts.translation });
 });
 
 adminRequirementsRouter.put('/:id', async (req, res) => {
   const body = parse(bodySchema.partial().omit({ visaCategoryId: true }), req.body);
   const existing = await prisma.requirementTemplate.findUnique({ where: { id: String(req.params.id) } });
   if (!existing) throw notFound('TEMPLATE_NOT_FOUND');
+  const desc = body.description === undefined ? undefined : isEmptyDesc(body.description) ? null : body.description;
+  const texts = await translateTexts(req.user!.id, body.title, desc, { title: existing.title, description: existing.description }, body.ai);
   const template = await prisma.requirementTemplate.update({
     where: { id: existing.id },
     data: {
       ...(body.stage ? { stage: body.stage } : {}),
       ...(body.key !== undefined ? { key: body.key } : {}),
-      ...(body.title ? { title: body.title } : {}),
-      ...(body.description !== undefined ? { description: isEmptyDesc(body.description) ? Prisma.DbNull : body.description! } : {}),
+      ...(texts.title ? { title: texts.title } : {}),
+      ...(desc !== undefined ? { description: texts.description ? texts.description : Prisma.DbNull } : {}),
       ...(body.required !== undefined ? { required: body.required } : {}),
     },
   });
   await audit(req, 'REQUIREMENT_TEMPLATE_UPDATED', template.id, { changed: Object.keys(body) });
-  res.json({ template });
+  res.json({ template, translation: texts.translation });
 });
 
 adminRequirementsRouter.delete('/:id', async (req, res) => {

@@ -3,12 +3,13 @@ import { z } from 'zod';
 import type { Prisma } from '@prisma/client';
 import { prisma } from '../../db.js';
 import { requireMinRole } from '../../middleware/auth.js';
-import { badRequest, conflict, notFound, parse } from '../../lib/http.js';
+import { HttpError, badRequest, conflict, notFound, parse } from '../../lib/http.js';
 import { audit } from '../../lib/audit.js';
 import { XLSX_MIME } from '../../lib/clientsExcel.js';
 import { buildPartnerWorkbook, partnerCases, partnerCounts, syncFoldersLater } from '../../lib/partners/index.js';
-import { syncPartnerFolder } from '../../lib/drive/caseFolders.js';
-import { partnerCommissionTotals, syncCaseCommissions } from '../../lib/partners/commissions.js';
+import { ensurePartnerFolder, partnerFolderId, partnerFolderIds, syncPartnerFolder } from '../../lib/drive/caseFolders.js';
+import { partnerCommissionTotals } from '../../lib/partners/commissions.js';
+import { assignCases, deletePartner } from '../../lib/partners/manage.js';
 import { partnerLoginRouter, partnerLoginView } from '../../lib/partners/adminLoginRoutes.js';
 import { partnerCommissionsRouter } from '../../lib/partners/adminCommissionRoutes.js';
 
@@ -65,8 +66,9 @@ adminPartnersRouter.get('/', async (req, res) => {
       : {}),
   };
   const partners = await prisma.referralPartner.findMany({ where, orderBy: [{ active: 'desc' }, { name: 'asc' }] });
-  const [counts, totals] = await Promise.all([partnerCounts(partners.map((p) => p.id)), partnerCommissionTotals(partners.map((p) => p.id))]);
-  res.json({ items: partners.map((p) => ({ ...p, counts: counts.get(p.id), commissionTotals: totals.get(p.id) })) });
+  const [counts, totals, folders] = await Promise.all([partnerCounts(partners.map((p) => p.id)), partnerCommissionTotals(partners.map((p) => p.id)), partnerFolderIds(partners)]);
+  // folderId: the partner's live folder below "Partner" (null when it was deleted in the drive — the card offers to recreate it).
+  res.json({ items: partners.map((p) => ({ ...p, counts: counts.get(p.id), commissionTotals: totals.get(p.id), folderId: folders.get(p.id) ?? null })) });
 });
 
 // Commissions (all partners) and portal logins live in their own routers; mounted before "/:id".
@@ -84,23 +86,9 @@ adminPartnersRouter.patch('/assign', async (req, res) => {
     const p = await prisma.referralPartner.findUnique({ where: { id: body.partnerId }, select: { id: true } });
     if (!p) throw badRequest('INVALID_PARTNER');
   }
-  const existing = await prisma.case.findMany({ where: { id: { in: ids } }, select: { id: true, partnerId: true } });
-  if (existing.length !== ids.length) throw badRequest('INVALID_CASE');
-  const changedRows = existing.filter((c) => c.partnerId !== body.partnerId);
-  const changed = changedRows.map((c) => c.id);
-  let commissionsCreated = 0;
-  if (changed.length) {
-    await prisma.case.updateMany({ where: { id: { in: changed } }, data: { partnerId: body.partnerId } });
-    await prisma.caseEvent.createMany({
-      data: changed.map((caseId) => ({ caseId, type: 'CASE_UPDATED' as const, actorId: req.user!.id, visibleToClient: false })),
-    });
-    syncFoldersLater(changed);
-    // Automatic commissions: PENDING row for the new partner (default amount), pending row of the old one cancelled.
-    commissionsCreated = await syncCaseCommissions(
-      changedRows.map((c) => ({ caseId: c.id, from: c.partnerId, to: body.partnerId })),
-      req.user!.id,
-    );
-  }
+  if ((await prisma.case.count({ where: { id: { in: ids } } })) !== ids.length) throw badRequest('INVALID_CASE');
+  // Folders move in the background; automatic commissions follow (lib/partners/manage.ts).
+  const { changed, commissionsCreated } = await assignCases(ids, body.partnerId, req.user!.id);
   await audit(req, body.partnerId ? 'PARTNER_CASES_ASSIGNED' : 'PARTNER_CASES_UNASSIGNED', body.partnerId ?? undefined, {
     caseIds: ids,
     changed: changed.length,
@@ -118,7 +106,25 @@ adminPartnersRouter.get('/:id', async (req, res) => {
     partnerCommissionTotals([partner.id]),
     partnerLoginView(partner.userId),
   ]);
-  res.json({ partner: { ...partner, counts: counts.get(partner.id), commissionTotals: totals.get(partner.id), login }, cases });
+  res.json({ partner: { ...partner, counts: counts.get(partner.id), commissionTotals: totals.get(partner.id), login, folderId: await partnerFolderId(partner) }, cases });
+});
+
+/**
+ * POST /:id/folder — the partner's drive folder, made available again: the live one, else the one in the
+ * recycle bin (restored with its client folders), else a new one. Staff and above.
+ */
+adminPartnersRouter.post('/:id/folder', async (req, res) => {
+  const partner = await prisma.referralPartner.findUnique({ where: { id: String(req.params.id) }, select: { id: true, name: true } });
+  if (!partner) throw notFound('PARTNER_NOT_FOUND');
+  const r = await ensurePartnerFolder(partner.id, { restore: true });
+  if (!r) throw new HttpError(500, 'PARTNER_FOLDER_FAILED');
+  if (r.restored || r.created) {
+    await audit(req, r.restored ? 'PARTNER_FOLDER_RESTORED' : 'PARTNER_FOLDER_CREATED', partner.id, { name: partner.name, folderId: r.folderId });
+    // Client folders that ended up elsewhere move (back) into the partner's folder.
+    const cases = await prisma.case.findMany({ where: { partnerId: partner.id }, select: { id: true } });
+    syncFoldersLater(cases.map((c) => c.id));
+  }
+  res.json(r);
 });
 
 adminPartnersRouter.get('/:id/export.xlsx', async (req, res) => {
@@ -171,12 +177,23 @@ adminPartnersRouter.patch('/:id', async (req, res) => {
   res.json({ partner });
 });
 
+/**
+ * DELETE /:id (admins) — without `?force=1` a partner with cases answers 409 PARTNER_HAS_CASES (with the
+ * counts, so the UI can ask first). With force the partner is deleted anyway: cases unassigned (client
+ * folders back to "Anträge", automatic commissions cancelled), settlement rows kept without the partner,
+ * portal login unlinked, empty partner folder to the recycle bin (lib/partners/manage.ts).
+ */
 adminPartnersRouter.delete('/:id', requireMinRole('ADMIN'), async (req, res) => {
-  const partner = await prisma.referralPartner.findUnique({ where: { id: String(req.params.id) }, include: { _count: { select: { cases: true } } } });
+  const { force } = parse(z.object({ force: z.enum(['1', 'true', '0', 'false']).optional() }), req.query);
+  const partner = await prisma.referralPartner.findUnique({ where: { id: String(req.params.id) }, include: { _count: { select: { cases: true, settlements: true } } } });
   if (!partner) throw notFound('PARTNER_NOT_FOUND');
-  // A partner with clients is part of the accounts history: deactivate instead.
-  if (partner._count.cases > 0) throw conflict('PARTNER_HAS_CASES');
-  await prisma.referralPartner.delete({ where: { id: partner.id } });
-  await audit(req, 'PARTNER_DELETED', partner.id, { name: partner.name });
-  res.json({ ok: true });
+  if (partner._count.cases > 0 && force !== '1' && force !== 'true') {
+    const clients = (await partnerCounts([partner.id])).get(partner.id)?.clients ?? 0;
+    res.status(409).json({ error: 'PARTNER_HAS_CASES', message: 'PARTNER_HAS_CASES', cases: partner._count.cases, clients, settlements: partner._count.settlements });
+    return;
+  }
+  const summary = await deletePartner(partner.id, req.user!.id);
+  if (!summary) throw notFound('PARTNER_NOT_FOUND');
+  await audit(req, 'PARTNER_DELETED', partner.id, { ...summary, force: partner._count.cases > 0 });
+  res.json({ ok: true, ...summary });
 });

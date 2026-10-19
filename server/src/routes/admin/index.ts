@@ -35,6 +35,7 @@ import { adminPartnersRouter } from './partners.js';
 import { adminRegisterRouter } from './register.js';
 import { adminDocumentExpiryRouter } from './documentExpiry.js';
 import { adminSettlementsRouter } from './settlements.js';
+import { adminTranslateRouter } from './translate.js';
 
 export const adminRouter = Router();
 adminRouter.use(requireMinRole('STAFF'));
@@ -120,6 +121,7 @@ adminRouter.use('/partners', adminPartnersRouter);
 adminRouter.use('/register', adminRegisterRouter);
 adminRouter.use('/settlements', adminSettlementsRouter);
 adminRouter.use('/signatures', adminSignaturesRouter);
+adminRouter.use('/translate', adminTranslateRouter);
 // Any successful CMS write (incl. vacancy, employer and review moderation) must be visible on the public site right away.
 // The cache is cleared before the response is sent, so the admin's next public read is already fresh.
 adminRouter.use(['/content', '/settings', '/vacancies', '/companies', '/reviews'], (req, res, next) => {

@@ -10,11 +10,23 @@ import type { Forecast, ForecastStep } from './types';
 
 registerCopy(pagesJourney);
 
-/** "about 3–5 weeks" when the range is long enough, else days. */
+/**
+ * Durations of two weeks or more read in weeks ("about 2–4 weeks"), shorter ones in days. A range that only crosses
+ * the two-week mark is shown in weeks when the team entered it in whole weeks, else in days ("about 10–20 days").
+ */
+export const rangeUnit = (minDays: number, maxDays: number): 'week' | 'day' =>
+  minDays >= 14 || (maxDays >= 14 && minDays % 7 === 0 && maxDays % 7 === 0) ? 'week' : 'day';
+
 export const useRangeLabel = () => {
   const { t } = useTranslation();
-  return (minDays: number, maxDays: number) =>
-    maxDays >= 14 ? t('journey.forecast.weeks', { min: Math.max(1, Math.round(minDays / 7)), max: Math.max(1, Math.round(maxDays / 7)) }) : t('journey.forecast.days', { min: minDays, max: maxDays });
+  return (minDays: number, maxDays: number) => {
+    if (rangeUnit(minDays, maxDays) === 'week') {
+      const min = Math.max(1, Math.round(minDays / 7));
+      const max = Math.max(min, Math.round(maxDays / 7));
+      return min === max ? t('journey.forecast.weeksExact', { count: min }) : t('journey.forecast.weeks', { min, max });
+    }
+    return minDays === maxDays ? t('journey.forecast.daysExact', { count: minDays }) : t('journey.forecast.days', { min: minDays, max: maxDays });
+  };
 };
 
 const DateRange = ({ from, to }: { from: string; to: string }) => {

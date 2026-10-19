@@ -116,6 +116,75 @@ describe('journey: forecast', () => {
   });
 });
 
+describe('journey: forecast units (days / weeks)', () => {
+  it('stores days, remembers the unit per step and keeps it when only the values change', async () => {
+    const admin = await asAdmin();
+    const visa = await makeVisa();
+
+    // The admin entered 2–4 weeks for the embassy step: sent as days plus the unit.
+    const put = expectStatus(await admin.agent.put(`/api/admin/journey/forecast/${visa.id}`).send({ EMBASSY: [14, 28], DOCUMENTS: [5, 10], units: { EMBASSY: 'week', DOCUMENTS: 'day' } }), 200);
+    expect(put.body.override).toEqual({ EMBASSY: [14, 28], DOCUMENTS: [5, 10] });
+    expect(put.body.units).toEqual({ EMBASSY: 'week' });
+    expect(put.body.effective.EMBASSY).toMatchObject({ minDays: 14, maxDays: 28, basedOn: 'override' });
+    expect((await prisma.visaCategory.findUniqueOrThrow({ where: { id: visa.id } })).forecast).toEqual({ EMBASSY: [14, 28], DOCUMENTS: [5, 10], units: { EMBASSY: 'week' } });
+
+    const row = (await admin.agent.get('/api/admin/journey/forecast')).body.items.find((v: { id: string }) => v.id === visa.id);
+    expect(row).toMatchObject({ override: { EMBASSY: [14, 28] }, units: { EMBASSY: 'week' }, usage: { cases: 0, vacancies: 0 } });
+
+    // Without `units` the stored ones are kept; clearing all values keeps the unit choice.
+    expect(expectStatus(await admin.agent.put(`/api/admin/journey/forecast/${visa.id}`).send({ EMBASSY: [21, 35] }), 200).body.units).toEqual({ EMBASSY: 'week' });
+    const cleared = expectStatus(await admin.agent.put(`/api/admin/journey/forecast/${visa.id}`).send({}), 200).body;
+    expect(cleared.override).toEqual({});
+    expect(cleared.units).toEqual({ EMBASSY: 'week' });
+    expect(cleared.effective.EMBASSY.basedOn).not.toBe('override');
+    // Back to days everywhere → nothing stored.
+    expectStatus(await admin.agent.put(`/api/admin/journey/forecast/${visa.id}`).send({ units: {} }), 200);
+    expect((await prisma.visaCategory.findUniqueOrThrow({ where: { id: visa.id } })).forecast).toBeNull();
+
+    expect((await admin.agent.put(`/api/admin/journey/forecast/${visa.id}`).send({ units: { EMBASSY: 'month' } })).status).toBe(400);
+    expect((await admin.agent.put(`/api/admin/journey/forecast/${visa.id}`).send({ EMBASSY: [7, 1000] })).status).toBe(400);
+  });
+});
+
+describe('journey: managing visa types from the forecast page', () => {
+  it('creates, deactivates (hidden for new applications, kept on cases) and refuses to delete a visa type in use', async () => {
+    const admin = await asAdmin();
+    const staff = await asStaff();
+    const client = await asClient();
+
+    // "+ New visa type" reuses the content API (admins only).
+    const payload = contentPayload['visa-categories']({ slug: 'kuryer-18b', visaLabel: '§18b', title: { az: 'Kuryer', de: 'Kurier', en: 'Courier', ru: 'Курьер' } });
+    expect((await staff.agent.post('/api/admin/content/visa-categories').send(payload)).status).toBe(403);
+    const visa = expectStatus(await admin.agent.post('/api/admin/content/visa-categories').send(payload), 201).body.item;
+    const listed = (await admin.agent.get('/api/admin/journey/forecast')).body.items.find((v: { id: string }) => v.id === visa.id);
+    expect(listed).toMatchObject({ visaLabel: '§18b', published: true, usage: { cases: 0, vacancies: 0 } });
+
+    const existing = expectStatus(await client.agent.post('/api/cases').send({ profession: 'Courier', visaCategoryId: visa.id }), 201).body.case;
+    expect((await anon().get('/api/public/visa/kuryer-18b')).status).toBe(200);
+
+    // Deactivate: gone from the public site and from new applications, still on the existing case.
+    expectStatus(await admin.agent.put(`/api/admin/content/visa-categories/${visa.id}`).send({ published: false }), 200);
+    expect((await anon().get('/api/public/visa/kuryer-18b')).status).toBe(404);
+    expect((await anon().get('/api/public/content')).body.visaCategories.map((v: { id: string }) => v.id)).not.toContain(visa.id);
+    const other = await asClient();
+    expect((await other.agent.post('/api/cases').send({ profession: 'Courier', visaCategoryId: visa.id })).body.error).toBe('INVALID_VISA_CATEGORY');
+    expect((await prisma.case.findUniqueOrThrow({ where: { id: existing.id } })).visaCategoryId).toBe(visa.id);
+
+    // Delete is refused while a case uses it — with the numbers for the dialog.
+    const row = (await admin.agent.get('/api/admin/journey/forecast')).body.items.find((v: { id: string }) => v.id === visa.id);
+    expect(row).toMatchObject({ published: false, usage: { cases: 1, vacancies: 0 } });
+    const del = await admin.agent.delete(`/api/admin/content/visa-categories/${visa.id}`);
+    expect(del.status).toBe(409);
+    expect(del.body).toMatchObject({ error: 'VISA_CATEGORY_IN_USE', cases: 1, vacancies: 0 });
+    expect(await prisma.visaCategory.count({ where: { id: visa.id } })).toBe(1);
+
+    // An unused visa type can be deleted.
+    const unused = expectStatus(await admin.agent.post('/api/admin/content/visa-categories').send(contentPayload['visa-categories']()), 201).body.item;
+    expectStatus(await admin.agent.delete(`/api/admin/content/visa-categories/${unused.id}`), 200);
+    expect(await prisma.visaCategory.count({ where: { id: unused.id } })).toBe(0);
+  });
+});
+
 // ─── Onboarding ────────────────────────────────────────────────────────
 
 describe('journey: onboarding', () => {

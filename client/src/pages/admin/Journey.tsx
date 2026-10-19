@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
 import { toast } from 'sonner';
-import { ArrowDown, ArrowUp, BookOpen, CalendarRange, Compass, Eraser, Languages, ListChecks, Pencil, Plus, Trash2 } from 'lucide-react';
-import { api } from '@/lib/api';
+import { ArrowDown, ArrowUp, BookOpen, CalendarRange, Compass, Eraser, Eye, EyeOff, Languages, ListChecks, Pencil, Plus, Trash2 } from 'lucide-react';
+import { api, errorCode } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { useL10n } from '@/lib/l10n';
 import { hasMinRole, type L10n } from '@/lib/types';
@@ -15,10 +15,11 @@ import { ICON_NAMES, Icon, hasIcon } from '@/components/ui/Icon';
 import { Spinner } from '@/components/ui/Spinner';
 import { ConfirmDialog } from '@/components/admin/ConfirmDialog';
 import { Drawer } from '@/components/admin/Drawer';
-import { L10nInput, emptyL10n, fillFromAz } from '@/components/admin/L10nInput';
+import { L10nInput, LANGS, emptyL10n, fillFromAz, type Lang } from '@/components/admin/L10nInput';
+import { TranslateButton } from '@/components/admin/TranslateButton';
 import { toastError } from '@/components/admin/labels';
 import { Chip, EmptyState, ErrorBlock, LoadingBlock, PageHead, Switch } from '@/components/admin/ui';
-import { FORECAST_STEPS, GERMAN_LEVELS, type AdminForecastRow, type ForecastOverride, type ForecastRanges, type ForecastStepKey, type GermanQuestionAdmin, type LanguageCourse, type OnboardingItem } from '@/components/journey/types';
+import { FORECAST_STEPS, GERMAN_LEVELS, type AdminForecastRow, type ForecastOverride, type ForecastRanges, type ForecastStepKey, type ForecastUnit, type GermanQuestionAdmin, type LanguageCourse, type OnboardingItem } from '@/components/journey/types';
 
 registerCopy(pagesJourney);
 
@@ -109,28 +110,74 @@ const PublishedSwitch = ({ item, patch, canWrite }: { item: { id: string; publis
 
 // ─── Forecast overrides ────────────────────────────────────────────────
 
-type Draft = Record<ForecastStepKey, { min: string; max: string }>;
-const toDraft = (o: ForecastOverride | null): Draft =>
-  Object.fromEntries(FORECAST_STEPS.map((k) => [k, { min: o?.[k]?.[0]?.toString() ?? '', max: o?.[k]?.[1]?.toString() ?? '' }])) as Draft;
+/** Values are stored in days; each cell is entered in days or weeks (week × 7), the unit is remembered per visa type. */
+type Unit = ForecastUnit;
+type Cell = { min: string; max: string; unit: Unit };
+type Draft = Record<ForecastStepKey, Cell>;
+const MAX_DAYS = 730;
+const inUnit = (days: number, unit: Unit) => (unit === 'week' ? String(Math.round((days / 7) * 10) / 10) : String(days));
+const toDays = (v: string, unit: Unit) => Math.round(Number(v) * (unit === 'week' ? 7 : 1));
+const toDraft = (o: ForecastOverride | null, units: AdminForecastRow['units']): Draft =>
+  Object.fromEntries(
+    FORECAST_STEPS.map((k) => {
+      const unit: Unit = units?.[k] ?? 'day';
+      const r = o?.[k];
+      return [k, { min: r ? inUnit(r[0], unit) : '', max: r ? inUnit(r[1], unit) : '', unit }];
+    }),
+  ) as Draft;
+/** What the draft means in days (null = no override for the step) — compared to detect changes and sent on save. */
+const draftDays = (d: Draft) =>
+  Object.fromEntries(FORECAST_STEPS.map((k) => [k, d[k].min && d[k].max ? [toDays(d[k].min, d[k].unit), toDays(d[k].max, d[k].unit)] : null])) as Record<ForecastStepKey, [number, number] | null>;
+const draftUnits = (d: Draft) => Object.fromEntries(FORECAST_STEPS.filter((k) => d[k].unit === 'week').map((k) => [k, 'week'])) as Partial<Record<ForecastStepKey, Unit>>;
 
-const ForecastRow = ({ row, canWrite }: { row: AdminForecastRow; canWrite: boolean }) => {
+const UnitToggle = ({ unit, onChange, disabled, label }: { unit: Unit; onChange: (u: Unit) => void; disabled?: boolean; label: string }) => {
+  const { t } = useTranslation();
+  return (
+    <div role="radiogroup" aria-label={label} className="mt-1 inline-flex rounded-md border border-line bg-surface p-0.5 text-[10px] font-semibold">
+      {(['day', 'week'] as const).map((u) => (
+        <button
+          key={u}
+          type="button"
+          role="radio"
+          aria-checked={unit === u}
+          disabled={disabled}
+          onClick={() => onChange(u)}
+          className={clsx('min-h-6 rounded px-1.5 transition', unit === u ? 'bg-card text-ink shadow-sm' : 'text-muted hover:text-ink')}
+        >
+          {t(`journey.admin.forecast.unit.${u}`)}
+        </button>
+      ))}
+    </div>
+  );
+};
+
+const iconBtn = 'grid size-9 place-items-center rounded-lg text-muted transition hover:bg-brand-50 hover:text-brand-700 disabled:opacity-40';
+
+const ForecastRow = ({ row, canWrite, onDelete, onToggle, toggling }: { row: AdminForecastRow; canWrite: boolean; onDelete: () => void; onToggle: () => void; toggling: boolean }) => {
   const { t } = useTranslation();
   const { tr } = useL10n();
   const qc = useQueryClient();
-  const [draft, setDraft] = useState<Draft>(() => toDraft(row.override));
-  useEffect(() => setDraft(toDraft(row.override)), [row.override]);
-  const dirty = JSON.stringify(draft) !== JSON.stringify(toDraft(row.override));
+  const [draft, setDraft] = useState<Draft>(() => toDraft(row.override, row.units));
+  useEffect(() => setDraft(toDraft(row.override, row.units)), [row.override, row.units]);
+  const initial = toDraft(row.override, row.units);
+  const dirty = JSON.stringify([draftDays(draft), draftUnits(draft)]) !== JSON.stringify([draftDays(initial), draftUnits(initial)]);
   const invalid = FORECAST_STEPS.some((k) => {
-    const { min, max } = draft[k];
+    const { min, max, unit } = draft[k];
     if (!min && !max) return false;
-    return !min || !max || Number(max) < Number(min) || Number(min) < 0;
+    if (!min || !max) return true;
+    const a = toDays(min, unit);
+    const b = toDays(max, unit);
+    return !Number.isFinite(a) || !Number.isFinite(b) || a < 0 || b < a || b > MAX_DAYS;
   });
+  const setUnit = (k: ForecastStepKey, unit: Unit) =>
+    setDraft((d) => {
+      const c = d[k];
+      if (c.unit === unit) return d;
+      const conv = (v: string) => (v === '' || !Number.isFinite(Number(v)) ? v : inUnit(toDays(v, c.unit), unit));
+      return { ...d, [k]: { min: conv(c.min), max: conv(c.max), unit } };
+    });
   const save = useMutation({
-    mutationFn: async () => {
-      const body: Record<string, [number, number] | null> = {};
-      for (const k of FORECAST_STEPS) body[k] = draft[k].min && draft[k].max ? [Number(draft[k].min), Number(draft[k].max)] : null;
-      return api.put(`/admin/journey/forecast/${row.id}`, body);
-    },
+    mutationFn: async () => api.put(`/admin/journey/forecast/${row.id}`, { ...draftDays(draft), units: draftUnits(draft) }),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ['admin-journey', 'forecast'] });
       void qc.invalidateQueries({ queryKey: ['journey-forecast'] });
@@ -140,40 +187,53 @@ const ForecastRow = ({ row, canWrite }: { row: AdminForecastRow; canWrite: boole
   });
 
   return (
-    <tr className="align-top">
+    <tr className={clsx('align-top', !row.published && 'bg-surface/50')}>
       <td className="px-4 py-3">
-        <p className="font-semibold text-navy-900">{tr(row.title)}</p>
-        <p className="text-xs text-muted">{row.visaLabel}{!row.published && ` · ${t('journey.admin.common.draft')}`}</p>
+        <p className={clsx('font-semibold', row.published ? 'text-ink' : 'text-muted')}>{tr(row.title)}</p>
+        <p className="text-xs text-muted">
+          {row.visaLabel}
+          {!row.published && (
+            <span className="badge ml-1.5 bg-slate-100 text-[10px] text-slate-600">{t('journey.admin.visa.inactive')}</span>
+          )}
+        </p>
+        {(row.usage.cases > 0 || row.usage.vacancies > 0) && <p className="mt-0.5 text-[11px] text-muted">{t('journey.admin.visa.usage', { cases: row.usage.cases, vacancies: row.usage.vacancies })}</p>}
       </td>
       {FORECAST_STEPS.map((k) => {
         const eff = row.effective[k];
+        const cell = draft[k];
+        const max = cell.unit === 'week' ? Math.floor(MAX_DAYS / 7) : MAX_DAYS;
+        const step = cell.unit === 'week' ? 0.5 : 1;
+        const name = `${tr(row.title)} · ${t(`journey.forecast.steps.${k}`)}`;
         return (
           <td key={k} className="px-2 py-3">
             <div className="flex items-center gap-1">
               <input
                 type="number"
                 min={0}
-                max={730}
+                max={max}
+                step={step}
                 className="input h-9 w-16 px-2 text-center text-sm tabular-nums"
-                aria-label={`${tr(row.title)} · ${t(`journey.forecast.steps.${k}`)} · ${t('journey.admin.forecast.min')}`}
-                value={draft[k].min}
+                aria-label={`${name} · ${t('journey.admin.forecast.min')} (${t(`journey.admin.forecast.unit.${cell.unit}`)})`}
+                value={cell.min}
                 disabled={!canWrite}
-                placeholder={String(eff.minDays)}
+                placeholder={inUnit(eff.minDays, cell.unit)}
                 onChange={(e) => setDraft((d) => ({ ...d, [k]: { ...d[k], min: e.target.value } }))}
               />
               <span className="text-muted">–</span>
               <input
                 type="number"
                 min={0}
-                max={730}
+                max={max}
+                step={step}
                 className="input h-9 w-16 px-2 text-center text-sm tabular-nums"
-                aria-label={`${tr(row.title)} · ${t(`journey.forecast.steps.${k}`)} · ${t('journey.admin.forecast.max')}`}
-                value={draft[k].max}
+                aria-label={`${name} · ${t('journey.admin.forecast.max')} (${t(`journey.admin.forecast.unit.${cell.unit}`)})`}
+                value={cell.max}
                 disabled={!canWrite}
-                placeholder={String(eff.maxDays)}
+                placeholder={inUnit(eff.maxDays, cell.unit)}
                 onChange={(e) => setDraft((d) => ({ ...d, [k]: { ...d[k], max: e.target.value } }))}
               />
             </div>
+            <UnitToggle unit={cell.unit} disabled={!canWrite} onChange={(u) => setUnit(k, u)} label={`${name} · ${t('journey.admin.forecast.unitLabel')}`} />
             <p className={clsx('mt-1 text-[11px]', eff.basedOn === 'override' ? 'text-brand-700' : 'text-muted')}>
               {t(`journey.admin.forecast.source.${eff.basedOn}`, { count: eff.sample })}
             </p>
@@ -182,12 +242,25 @@ const ForecastRow = ({ row, canWrite }: { row: AdminForecastRow; canWrite: boole
       })}
       <td className="px-3 py-3 text-right">
         {canWrite && (
-          <div className="inline-flex items-center gap-1">
+          <div className="inline-flex flex-wrap items-center justify-end gap-1">
             <button type="button" className="btn-primary btn-sm" disabled={!dirty || invalid || save.isPending} onClick={() => save.mutate()} title={invalid ? t('journey.admin.forecast.invalid') : undefined}>
               {save.isPending && <Spinner className="size-3.5" />} {t('journey.admin.common.save')}
             </button>
-            <button type="button" className="grid size-9 place-items-center rounded-lg text-muted transition hover:bg-brand-50 hover:text-brand-700" title={t('journey.admin.forecast.clear')} aria-label={t('journey.admin.forecast.clear')} onClick={() => setDraft(toDraft(null))}>
+            <button type="button" className={iconBtn} title={t('journey.admin.forecast.clear')} aria-label={t('journey.admin.forecast.clear')} onClick={() => setDraft(toDraft(null, draftUnits(draft)))}>
               <Eraser className="size-3.5" />
+            </button>
+            <button
+              type="button"
+              className={iconBtn}
+              disabled={toggling}
+              onClick={onToggle}
+              title={row.published ? t('journey.admin.visa.deactivate') : t('journey.admin.visa.activate')}
+              aria-label={`${row.published ? t('journey.admin.visa.deactivate') : t('journey.admin.visa.activate')} · ${tr(row.title)}`}
+            >
+              {toggling ? <Spinner className="size-3.5" /> : row.published ? <EyeOff className="size-3.5" /> : <Eye className="size-3.5" />}
+            </button>
+            <button type="button" className={clsx(iconBtn, 'hover:bg-red-50 hover:text-red-700')} onClick={onDelete} title={t('journey.admin.visa.delete')} aria-label={`${t('journey.admin.visa.delete')} · ${tr(row.title)}`}>
+              <Trash2 className="size-3.5" />
             </button>
           </div>
         )}
@@ -196,47 +269,267 @@ const ForecastRow = ({ row, canWrite }: { row: AdminForecastRow; canWrite: boole
   );
 };
 
+// ─── Visa types (VisaCategory, the same records as Content → Visa categories) ──
+
+const slugify = (s: string) =>
+  s
+    .toLowerCase()
+    .replace(/ə/g, 'e').replace(/ı/g, 'i').replace(/ö/g, 'o').replace(/ü/g, 'u').replace(/ş/g, 's').replace(/ç/g, 'c').replace(/ğ/g, 'g').replace(/ß/g, 'ss').replace(/ä/g, 'a')
+    .normalize('NFKD')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 60);
+
+type VisaForm = { title: L10n; summary: L10n; visaLabel: string; slug: string; slugTouched: boolean; published: boolean; ai: { title: Lang[]; summary: Lang[] } };
+const emptyVisa = (): VisaForm => ({ title: emptyL10n(), summary: emptyL10n(), visaLabel: '', slug: '', slugTouched: false, published: true, ai: { title: [], summary: [] } });
+const hasText = (v: L10n) => LANGS.some((l) => v[l].trim());
+const firstText = (v: L10n) => LANGS.map((l) => v[l].trim()).find(Boolean) ?? '';
+/** Missing languages: the AI translation when available, else the text that was written. */
+const completeL10n = async (fields: Record<'title' | 'summary', L10n>) => {
+  const missing = (v: L10n) => hasText(v) && LANGS.some((l) => !v[l].trim());
+  let values = fields;
+  if (missing(fields.title) || missing(fields.summary)) {
+    try {
+      const res = await api.post<{ values: Record<'title' | 'summary', L10n> }>('/admin/translate', { fields, context: 'name and short summary of a German visa / job category (e.g. truck drivers §19c)' });
+      values = res.data.values;
+    } catch {
+      /* fall back to copies below */
+    }
+  }
+  const fill = (v: L10n): L10n => ({ az: v.az.trim() || firstText(v), de: v.de.trim() || firstText(v), en: v.en.trim() || firstText(v), ru: v.ru.trim() || firstText(v) });
+  return { title: fill(values.title), summary: fill(values.summary) };
+};
+
+const NewVisaDrawer = ({ open, onClose, nextSortOrder }: { open: boolean; onClose: () => void; nextSortOrder: number }) => {
+  const { t } = useTranslation();
+  const qc = useQueryClient();
+  const [f, setF] = useState<VisaForm>(emptyVisa);
+  useEffect(() => {
+    if (open) setF(emptyVisa());
+  }, [open]);
+  const keepAi = (ai: Lang[], before: L10n, after: L10n) => ai.filter((l) => before[l] === after[l]);
+  const create = useMutation({
+    mutationFn: async () => {
+      const { title, summary } = await completeL10n({ title: f.title, summary: f.summary });
+      return api.post('/admin/content/visa-categories', {
+        slug: f.slug || slugify(title.de || title.en || title.az),
+        icon: 'BadgeCheck',
+        image: '',
+        visaLabel: f.visaLabel.trim(),
+        title,
+        summary,
+        items: { az: [], de: [], en: [], ru: [] },
+        body: summary,
+        sortOrder: nextSortOrder,
+        published: f.published,
+      });
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['admin-journey', 'forecast'] });
+      void qc.invalidateQueries({ queryKey: ['admin-content', 'visa-categories'] });
+      void qc.invalidateQueries({ queryKey: ['content'] });
+      toast.success(t('journey.admin.visa.created'));
+      onClose();
+    },
+    onError: (err) => (errorCode(err) === 'DUPLICATE' ? toast.error(t('journey.admin.visa.duplicate')) : toastError(err)),
+  });
+  const valid = hasText(f.title) && !!f.visaLabel.trim() && /^[a-z0-9-]+$/.test(f.slug || slugify(firstText(f.title)) || '-');
+  const translate = (
+    <TranslateButton
+      fields={{ title: f.title, summary: f.summary }}
+      ai={f.ai}
+      context="name and short summary of a German visa / job category (e.g. truck drivers §19c)"
+      onTranslated={(values, translated) =>
+        setF((cur) => ({ ...cur, title: values.title, summary: values.summary, ai: { title: [...new Set([...cur.ai.title, ...translated.title])], summary: [...new Set([...cur.ai.summary, ...translated.summary])] } }))
+      }
+    />
+  );
+  return (
+    <Drawer open={open} onClose={onClose} title={t('journey.admin.visa.new')} footer={<DrawerFooter onCancel={onClose} saving={create.isPending} disabled={!valid} />}>
+      <form
+        id="journey-form"
+        className="space-y-4"
+        onSubmit={(e) => {
+          e.preventDefault();
+          if (!valid) {
+            toast.error(t('journey.admin.common.required'));
+            return;
+          }
+          create.mutate();
+        }}
+      >
+        <L10nInput
+          label={t('journey.admin.visa.name')}
+          value={f.title}
+          required
+          anyLang
+          aiLangs={f.ai.title}
+          actions={translate}
+          hint={t('admin.l10n.anyLangHint')}
+          onChange={(title) =>
+            setF((cur) => ({ ...cur, title, slug: cur.slugTouched ? cur.slug : slugify(title.de || title.en || title.az || title.ru), ai: { ...cur.ai, title: keepAi(cur.ai.title, cur.title, title) } }))
+          }
+        />
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div>
+            <label htmlFor="visa-label" className="label">
+              {t('journey.admin.visa.label')} <span className="text-danger">*</span>
+            </label>
+            <input id="visa-label" className="input" maxLength={40} required value={f.visaLabel} placeholder="§19c" onChange={(e) => setF({ ...f, visaLabel: e.target.value })} />
+          </div>
+          <div>
+            <label htmlFor="visa-slug" className="label">
+              {t('journey.admin.visa.slug')}
+            </label>
+            <input
+              id="visa-slug"
+              className="input font-mono text-sm"
+              maxLength={60}
+              value={f.slug}
+              onChange={(e) => setF({ ...f, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''), slugTouched: true })}
+            />
+          </div>
+        </div>
+        <L10nInput
+          label={t('journey.admin.visa.summary')}
+          value={f.summary}
+          multiline
+          rows={3}
+          anyLang
+          aiLangs={f.ai.summary}
+          onChange={(summary) => setF((cur) => ({ ...cur, summary, ai: { ...cur.ai, summary: keepAi(cur.ai.summary, cur.summary, summary) } }))}
+        />
+        <label className="flex items-center gap-3 text-sm">
+          <Switch checked={f.published} label={t('journey.admin.visa.active')} onChange={(v) => setF({ ...f, published: v })} />
+          {f.published ? t('journey.admin.visa.active') : t('journey.admin.visa.inactive')}
+        </label>
+        <p className="rounded-lg bg-surface px-3 py-2 text-xs text-muted">
+          {t('journey.admin.visa.contentHint')}{' '}
+          <Link to="/admin/content/visa-categories" className="font-semibold text-brand-700 hover:underline">
+            {t('journey.admin.visa.contentLink')}
+          </Link>
+        </p>
+      </form>
+    </Drawer>
+  );
+};
+
 const ForecastTab = ({ canWrite }: { canWrite: boolean }) => {
   const { t } = useTranslation();
+  const { tr } = useL10n();
+  const qc = useQueryClient();
+  const [creating, setCreating] = useState(false);
+  const [deleting, setDeleting] = useState<{ row: AdminForecastRow; blocked: { cases: number; vacancies: number } | null } | null>(null);
   const q = useQuery({
     queryKey: ['admin-journey', 'forecast'],
     queryFn: async () => (await api.get<{ items: AdminForecastRow[]; fallback: ForecastRanges }>('/admin/journey/forecast')).data,
   });
+  const refresh = () =>
+    Promise.all([
+      qc.invalidateQueries({ queryKey: ['admin-journey', 'forecast'] }),
+      qc.invalidateQueries({ queryKey: ['admin-content', 'visa-categories'] }),
+      qc.invalidateQueries({ queryKey: ['content'] }),
+    ]);
+  const toggle = useMutation({
+    mutationFn: async (row: AdminForecastRow) => api.put(`/admin/content/visa-categories/${row.id}`, { published: !row.published }),
+    onSuccess: (_r, row) => {
+      void refresh();
+      toast.success(row.published ? t('journey.admin.visa.deactivated') : t('journey.admin.visa.activated'));
+      setDeleting(null);
+    },
+    onError: (err) => toastError(err),
+  });
+  const remove = useMutation({
+    mutationFn: async (row: AdminForecastRow) => api.delete(`/admin/content/visa-categories/${row.id}`),
+    onSuccess: () => {
+      void refresh();
+      toast.success(t('journey.admin.common.deleted'));
+      setDeleting(null);
+    },
+    onError: (err, row) => {
+      if (errorCode(err) === 'VISA_CATEGORY_IN_USE') {
+        const data = (err as { response?: { data?: { cases?: number; vacancies?: number } } }).response?.data;
+        setDeleting({ row, blocked: { cases: data?.cases ?? 0, vacancies: data?.vacancies ?? 0 } });
+      } else toastError(err);
+    },
+  });
+
   if (q.isLoading) return <LoadingBlock />;
   if (q.error || !q.data) return <ErrorBlock error={q.error} onRetry={() => q.refetch()} />;
+  const items = q.data.items;
+  const blocked = deleting?.blocked ?? (deleting && (deleting.row.usage.cases || deleting.row.usage.vacancies) ? deleting.row.usage : null);
   return (
-    <div className="rounded-xl border border-line bg-white">
-      <p className="border-b border-line px-5 py-4 text-sm text-muted">{t('journey.admin.forecast.intro')}</p>
-      <div className="overflow-x-auto">
-        <table className="w-full min-w-[60rem] text-sm">
-          <thead className="bg-surface text-left text-[11px] font-semibold tracking-wide text-muted uppercase">
-            <tr>
-              <th className="px-4 py-2.5">{t('journey.admin.forecast.visa')}</th>
-              {FORECAST_STEPS.map((k) => (
-                <th key={k} className="px-2 py-2.5">
-                  {t(`journey.forecast.steps.${k}`)} <span className="font-normal normal-case">({t('journey.admin.forecast.days')})</span>
-                </th>
-              ))}
-              <th className="px-3 py-2.5" />
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-line">
-            {q.data.items.map((row) => (
-              <ForecastRow key={row.id} row={row} canWrite={canWrite} />
-            ))}
-            <tr className="bg-surface/60 text-xs text-muted">
-              <td className="px-4 py-3 font-semibold">{t('journey.admin.forecast.fallback')}</td>
-              {FORECAST_STEPS.map((k) => (
-                <td key={k} className="px-2 py-3">
-                  {t('journey.admin.forecast.effective', { min: q.data.fallback[k].minDays, max: q.data.fallback[k].maxDays })}
-                  <span className="block">{t(`journey.admin.forecast.source.${q.data.fallback[k].basedOn}`, { count: q.data.fallback[k].sample })}</span>
-                </td>
-              ))}
-              <td />
-            </tr>
-          </tbody>
-        </table>
+    <div className="rounded-xl border border-line bg-card">
+      <div className="flex flex-wrap items-start justify-between gap-3 border-b border-line px-5 py-4">
+        <p className="max-w-3xl text-sm text-muted">{t('journey.admin.forecast.intro')}</p>
+        {canWrite && (
+          <button type="button" className="btn-primary btn-sm shrink-0" onClick={() => setCreating(true)}>
+            <Plus className="size-3.5" aria-hidden /> {t('journey.admin.visa.new')}
+          </button>
+        )}
       </div>
+      {items.length === 0 ? (
+        <EmptyState icon={CalendarRange} title={t('journey.admin.visa.empty')} />
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[64rem] text-sm">
+            <thead className="bg-surface text-left text-[11px] font-semibold tracking-wide text-muted uppercase">
+              <tr>
+                <th className="px-4 py-2.5">{t('journey.admin.forecast.visa')}</th>
+                {FORECAST_STEPS.map((k) => (
+                  <th key={k} className="px-2 py-2.5">
+                    {t(`journey.forecast.steps.${k}`)}
+                  </th>
+                ))}
+                <th className="px-3 py-2.5" />
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-line">
+              {items.map((row) => (
+                <ForecastRow
+                  key={row.id}
+                  row={row}
+                  canWrite={canWrite}
+                  toggling={toggle.isPending && toggle.variables?.id === row.id}
+                  onToggle={() => toggle.mutate(row)}
+                  onDelete={() => setDeleting({ row, blocked: null })}
+                />
+              ))}
+              <tr className="bg-surface/60 text-xs text-muted">
+                <td className="px-4 py-3 font-semibold">{t('journey.admin.forecast.fallback')}</td>
+                {FORECAST_STEPS.map((k) => (
+                  <td key={k} className="px-2 py-3">
+                    {t('journey.admin.forecast.effective', { min: q.data.fallback[k].minDays, max: q.data.fallback[k].maxDays })}
+                    <span className="block">{t(`journey.admin.forecast.source.${q.data.fallback[k].basedOn}`, { count: q.data.fallback[k].sample })}</span>
+                  </td>
+                ))}
+                <td />
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      )}
+      <NewVisaDrawer open={creating} onClose={() => setCreating(false)} nextSortOrder={items.reduce((m, r) => Math.max(m, r.sortOrder ?? 0), -1) + 1} />
+      <ConfirmDialog
+        open={!!deleting}
+        onClose={() => setDeleting(null)}
+        loading={remove.isPending || toggle.isPending}
+        title={blocked ? t('journey.admin.visa.inUseTitle') : t('journey.admin.visa.deleteTitle')}
+        tone={blocked ? 'primary' : 'danger'}
+        confirmLabel={blocked ? (deleting?.row.published ? t('journey.admin.visa.deactivate') : t('journey.admin.common.cancel')) : t('journey.admin.visa.delete')}
+        message={
+          deleting &&
+          (blocked
+            ? t(deleting.row.published ? 'journey.admin.visa.inUse' : 'journey.admin.visa.inUseInactive', { name: tr(deleting.row.title), cases: blocked.cases, vacancies: blocked.vacancies })
+            : t('journey.admin.visa.deleteMsg', { name: tr(deleting.row.title) }))
+        }
+        onConfirm={() => {
+          if (!deleting) return;
+          if (!blocked) remove.mutate(deleting.row);
+          else if (deleting.row.published) toggle.mutate(deleting.row);
+          else setDeleting(null);
+        }}
+      />
     </div>
   );
 };

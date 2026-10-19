@@ -22,13 +22,24 @@ export const ocrLanguages = () => {
   return { langs: langs.length ? langs : ['eng'], gzip: !plain };
 };
 
-let worker: Promise<Worker> | null = null;
+/**
+ * Two passes instead of one worker with all four languages (mixing scripts makes tesseract misread plain
+ * Latin text, e.g. "hello" → "hellü"): Latin scripts first (eng primary + deu + aze), and only when that
+ * result is weak, Cyrillic (rus + eng); the more confident text wins.
+ */
+type Pass = 'latin' | 'cyrillic';
+const PASS_LANGS: Record<Pass, string[]> = { latin: ['eng', 'deu', 'aze'], cyrillic: ['rus', 'eng'] };
+const WEAK_CONFIDENCE = 60;
 
-const createTextWorker = async () => {
+const workers: Partial<Record<Pass, Promise<Worker>>> = {};
+
+const createTextWorker = async (pass: Pass) => {
   const avail = ocrLanguages();
   if (!avail) throw new Error('OCR_UNAVAILABLE');
+  const langs = PASS_LANGS[pass].filter((l) => (avail.langs as readonly string[]).includes(l));
+  if (!langs.length) throw new Error('OCR_UNAVAILABLE');
   const { createWorker, OEM } = await import('tesseract.js');
-  return createWorker(avail.langs.join('+'), OEM.LSTM_ONLY, {
+  return createWorker(langs.join('+'), OEM.LSTM_ONLY, {
     langPath: ocrDataDir,
     cachePath: ocrDataDir,
     cacheMethod: 'none',
@@ -38,21 +49,21 @@ const createTextWorker = async () => {
   });
 };
 
-const getWorker = () => {
-  if (!worker) {
-    worker = createTextWorker().catch((err) => {
-      worker = null;
+const getWorker = (pass: Pass) => {
+  if (!workers[pass]) {
+    workers[pass] = createTextWorker(pass).catch((err) => {
+      delete workers[pass];
       throw err;
     });
   }
-  return worker;
+  return workers[pass]!;
 };
 
-/** Frees the worker (the indexer calls it after each batch: OCR is rare, memory is not free). */
+/** Frees the workers (the indexer calls it after each batch: OCR is rare, memory is not free). */
 export const releaseOcr = async () => {
-  const w = worker;
-  worker = null;
-  if (w) await w.then((x) => x.terminate()).catch(() => undefined);
+  const all = Object.values(workers);
+  for (const k of Object.keys(workers) as Pass[]) delete workers[k];
+  await Promise.all(all.map((w) => w!.then((x) => x.terminate()).catch(() => undefined)));
 };
 
 const withTimeout = <T>(p: Promise<T>, ms: number) =>
@@ -70,13 +81,21 @@ const withTimeout = <T>(p: Promise<T>, ms: number) =>
     );
   });
 
+const recognise = async (pass: Pass, image: Buffer, timeoutMs: number) => {
+  const w = await withTimeout(getWorker(pass), timeoutMs);
+  const { data } = await withTimeout(w.recognize(image), timeoutMs);
+  return { text: data.text ?? '', confidence: data.confidence ?? 0 };
+};
+
 /** Text of one image (JPEG / PNG bytes); '' when OCR is unavailable. */
 export const ocrImage = async (image: Buffer, timeoutMs = 60_000) => {
-  if (!ocrLanguages()) return '';
-  const w = await withTimeout(getWorker(), timeoutMs);
+  const avail = ocrLanguages();
+  if (!avail) return '';
   try {
-    const { data } = await withTimeout(w.recognize(image), timeoutMs);
-    return data.text ?? '';
+    const latin = await recognise('latin', image, timeoutMs);
+    if (latin.confidence >= WEAK_CONFIDENCE || !avail.langs.includes('rus')) return latin.text;
+    const cyr = await recognise('cyrillic', image, timeoutMs);
+    return cyr.confidence > latin.confidence ? cyr.text : latin.text;
   } catch (err) {
     await releaseOcr();
     throw err;

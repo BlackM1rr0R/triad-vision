@@ -32,13 +32,20 @@ export interface Forecast {
 export type ForecastOverride = Partial<Record<ForecastStepKey, [number, number] | null>>;
 export type ForecastRanges = Record<ForecastStepKey, { minDays: number; maxDays: number; basedOn: ForecastBasis; sample: number }>;
 
+/** Unit a forecast step is entered in on the admin page (values are stored in days). */
+export type ForecastUnit = 'day' | 'week';
+
 export interface AdminForecastRow {
   id: string;
   slug: string;
   title: L10n;
   visaLabel: string;
   published: boolean;
+  sortOrder: number;
   override: ForecastOverride | null;
+  units: Partial<Record<ForecastStepKey, ForecastUnit>>;
+  /** Cases and vacancies using the visa type (deleting is refused while > 0). */
+  usage: { cases: number; vacancies: number };
   effective: ForecastRanges;
 }
 

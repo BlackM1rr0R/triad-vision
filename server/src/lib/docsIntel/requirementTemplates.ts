@@ -1,5 +1,6 @@
 import type { DocStage, Prisma } from '@prisma/client';
 import { prisma } from '../../db.js';
+import { stripAiFlag } from '../ai/translate.js';
 
 type L10n = { az: string; de: string; en: string; ru: string };
 
@@ -39,7 +40,7 @@ export const requirementsFor = async (
   const own = visaCategoryId ? await pick({ visaCategoryId }) : [];
   const rows = own.length ? own : await pick({ visaCategoryId: null });
   if (rows.length) {
-    return rows.map((r, i) => ({ key: r.key, title: r.title as Prisma.InputJsonValue, description: (r.description ?? undefined) as Prisma.InputJsonValue | undefined, required: r.required, sortOrder: i }));
+    return rows.map((r, i) => ({ key: r.key, title: stripAiFlag(r.title) as Prisma.InputJsonValue, description: (stripAiFlag(r.description) ?? undefined) as Prisma.InputJsonValue | undefined, required: r.required, sortOrder: i }));
   }
   return DEFAULT_REQUIREMENTS[stage].map((r, i) => ({ key: r.key, title: r.title, description: r.description, required: r.required, sortOrder: i }));
 };

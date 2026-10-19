@@ -4,7 +4,7 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tansta
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import clsx from 'clsx';
-import { ArrowLeft, Download, FolderOpen, HandCoins, Handshake, Mail, Pencil, Phone, Plus, Search, Trash2, Users } from 'lucide-react';
+import { ArrowLeft, Download, FolderOpen, FolderPlus, HandCoins, Handshake, Mail, Pencil, Phone, Plus, Search, Trash2, Users } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { hasMinRole } from '@/lib/types';
@@ -12,13 +12,13 @@ import { useL10n } from '@/lib/l10n';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { Spinner } from '@/components/ui/Spinner';
 import { Modal } from '@/components/admin/Modal';
-import { ConfirmDialog } from '@/components/admin/ConfirmDialog';
 import { StatusBadge } from '@/components/admin/StatusBadge';
 import { Chip, EmptyState, ErrorBlock, LoadingBlock, PageHead, Switch } from '@/components/admin/ui';
 import { fmtDate, fullName } from '@/components/admin/labels';
 import { PARTNERS_KEY, partnerError, type Partner, type PartnerCase, type PartnerCounts } from '@/components/partners/api';
 import { CommissionsPanel, fromCents, toCents } from '@/components/partners/Commissions';
 import { PortalLoginPanel } from '@/components/partners/PortalLogin';
+import { DeletePartnerDialog, invalidatePartnerViews } from '@/components/partners/DeletePartnerDialog';
 import { money } from '@/components/agents/format';
 
 type ActiveFilter = 'all' | 'true' | 'false';
@@ -279,24 +279,14 @@ const PartnerDetail = ({ isAdmin }: { isAdmin: boolean }) => {
     queryFn: async () => (await api.get<{ partner: Partner; cases: PartnerCase[] }>(`/admin/partners/${id}`)).data,
   });
   usePageTitle(data?.partner.name ?? t('refPartners.title'));
-  const remove = useMutation({
-    mutationFn: async () => api.delete(`/admin/partners/${id}`),
-    onSuccess: async () => {
-      toast.success(t('refPartners.deleted'));
-      await qc.invalidateQueries({ queryKey: PARTNERS_KEY });
-      navigate('/admin/partners');
-    },
-    onError: (err) => {
-      setConfirmDelete(false);
-      partnerError(err);
-    },
-  });
-  const deactivate = useMutation({
-    mutationFn: async () => api.patch(`/admin/partners/${id}`, { active: false }),
-    onSuccess: async () => {
-      toast.success(t('refPartners.saved'));
-      setConfirmDelete(false);
-      await qc.invalidateQueries({ queryKey: PARTNERS_KEY });
+  // The partner's drive folder: opened when it exists, restored from the bin or created when it does not.
+  const openFolder = useMutation({
+    mutationFn: async () => (await api.post<{ folderId: string; restored: boolean; created: boolean }>(`/admin/partners/${id}/folder`)).data,
+    onSuccess: (r) => {
+      if (r.restored) toast.success(t('refPartners.folderRestored'));
+      else if (r.created) toast.success(t('refPartners.folderCreated'));
+      void invalidatePartnerViews(qc);
+      navigate(`/workspace/drive/f/${encodeURIComponent(r.folderId)}`);
     },
     onError: partnerError,
   });
@@ -333,9 +323,10 @@ const PartnerDetail = ({ isAdmin }: { isAdmin: boolean }) => {
             <a href={`/api/admin/partners/${partner.id}/export.xlsx`} className="btn-white btn-sm border border-line" download>
               <Download className="size-3.5" /> {t('refPartners.download')}
             </a>
-            <Link to="/workspace/drive" className="btn-white btn-sm border border-line">
-              <FolderOpen className="size-3.5" /> {t('refPartners.openFolder')}
-            </Link>
+            <button type="button" className="btn-white btn-sm border border-line" onClick={() => openFolder.mutate()} disabled={openFolder.isPending}>
+              {openFolder.isPending ? <Spinner className="size-3.5" /> : partner.folderId === null ? <FolderPlus className="size-3.5" /> : <FolderOpen className="size-3.5" />}{' '}
+              {partner.folderId === null ? t('refPartners.noFolder') : t('refPartners.openFolder')}
+            </button>
             {isAdmin && (
               <>
                 <button type="button" className="btn-white btn-sm border border-line" onClick={() => setEditing(true)}>
@@ -447,28 +438,7 @@ const PartnerDetail = ({ isAdmin }: { isAdmin: boolean }) => {
       )}
 
       <PartnerDialog open={editing} partner={partner} onClose={() => setEditing(false)} />
-      {hasCases ? (
-        <ConfirmDialog
-          open={confirmDelete}
-          onClose={() => setConfirmDelete(false)}
-          onConfirm={() => deactivate.mutate()}
-          title={t('refPartners.deleteTitle')}
-          message={t('refPartners.hasCases')}
-          confirmLabel={t('refPartners.deactivate')}
-          tone="primary"
-          loading={deactivate.isPending}
-        />
-      ) : (
-        <ConfirmDialog
-          open={confirmDelete}
-          onClose={() => setConfirmDelete(false)}
-          onConfirm={() => remove.mutate()}
-          title={t('refPartners.deleteTitle')}
-          message={t('refPartners.deleteText', { name: partner.name })}
-          confirmLabel={t('refPartners.delete')}
-          loading={remove.isPending}
-        />
-      )}
+      <DeletePartnerDialog partner={confirmDelete ? partner : null} onClose={() => setConfirmDelete(false)} onDeleted={() => navigate('/admin/partners')} />
     </div>
   );
 };

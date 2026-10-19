@@ -71,15 +71,40 @@ adminVacanciesRouter.get('/', async (req, res) => {
   });
 });
 
-adminVacanciesRouter.get('/options', async (_req, res) => {
-  // Small list for selects (rank candidates for a vacancy, link a case).
-  const items = await prisma.vacancy.findMany({
-    where: { status: { in: ['OPEN', 'PENDING', 'DRAFT'] } },
+/** Statuses a candidate can be added to (CLOSED is refused by POST /admin/candidates/:id/applications). */
+export const ASSIGNABLE_STATUSES = ['OPEN', 'PENDING', 'DRAFT'] as const;
+const STATUS_ORDER: Record<string, number> = { OPEN: 0, PENDING: 1, DRAFT: 2 };
+
+adminVacanciesRouter.get('/options', async (req, res) => {
+  // Small list for selects (add a candidate to a vacancy, rank candidates, link a case): every vacancy that is not
+  // closed, open ones first. `userId` marks the vacancies that candidate already has an application for.
+  const q = parse(z.object({ search: z.string().trim().max(120).optional(), userId: z.string().max(40).optional() }), req.query);
+  const rows = await prisma.vacancy.findMany({
+    where: {
+      status: { in: [...ASSIGNABLE_STATUSES] },
+      ...(q.search
+        ? {
+            OR: [
+              { slug: { contains: q.search } },
+              { profession: { contains: q.search } },
+              { city: { contains: q.search } },
+              { company: { name: { contains: q.search } } },
+              ...(['az', 'de', 'en', 'ru'] as const).map((l) => ({ title: { path: `$.${l}`, string_contains: q.search } })),
+            ],
+          }
+        : {}),
+    },
     orderBy: { createdAt: 'desc' },
     take: 500,
-    select: { id: true, title: true, city: true, status: true, companyId: true, company: { select: { name: true } } },
+    select: {
+      id: true, title: true, city: true, status: true, companyId: true, company: { select: { name: true } },
+      ...(q.userId ? { applications: { where: { userId: q.userId }, select: { status: true }, take: 1 } } : {}),
+    },
   });
-  res.json({ items });
+  const items = rows
+    .map(({ applications, ...v }: (typeof rows)[number] & { applications?: { status: string }[] }) => ({ ...v, ...(q.userId ? { applicationStatus: applications?.[0]?.status ?? null } : {}) }))
+    .sort((a, b) => STATUS_ORDER[a.status] - STATUS_ORDER[b.status]);
+  res.json({ items, total: items.length });
 });
 
 adminVacanciesRouter.get('/:id', async (req, res) => {

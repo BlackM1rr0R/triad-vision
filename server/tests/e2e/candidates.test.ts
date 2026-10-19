@@ -3,6 +3,11 @@ import { asAdmin, asClient, asStaff } from '../helpers/api';
 import { prisma, waitFor } from '../helpers/db';
 import { asCandidate, asCompany, cleanJobs, createCompany, createVacancy } from './vacancies.fixtures';
 
+const expectAdd = (res: { status: number; body: any }) => {
+  expect(res.status, JSON.stringify(res.body)).toBe(201);
+  return res.body as { application: Record<string, unknown> };
+};
+
 beforeEach(cleanJobs);
 
 describe('admin candidates', () => {
@@ -62,6 +67,59 @@ describe('admin candidates', () => {
     expect(res.body.candidate.applications[0].match.score).toBe(100);
     const staff = await asStaff();
     expect((await agent.get(`/api/admin/candidates/${staff.user.id}`)).status).toBe(404);
+  });
+});
+
+describe('add to vacancy (Admin → Candidates)', () => {
+  it('lists every assignable vacancy (open first, with status) and supports search and the candidate marker', async () => {
+    const staff = await asStaff();
+    const company = await createCompany({ name: 'Nord Logistik' });
+    const draft = await createVacancy({ status: 'DRAFT', publishedAt: null, title: { az: 'Kuryer', de: 'Kurier', en: 'Courier', ru: 'Курьер' }, city: 'Berlin' });
+    const pending = await createVacancy({ status: 'PENDING', publishedAt: null, companyId: company.id });
+    const open = await createVacancy({ status: 'OPEN' });
+    await createVacancy({ status: 'CLOSED' });
+
+    const res = await staff.agent.get('/api/admin/vacancies/options');
+    expect(res.status).toBe(200);
+    expect(res.body.items.map((v: { id: string }) => v.id)).toEqual([open.id, pending.id, draft.id]);
+    expect(res.body.items[1]).toMatchObject({ status: 'PENDING', company: { name: 'Nord Logistik' } });
+    expect(res.body.total).toBe(3);
+
+    const ids = async (qs: string) => (await staff.agent.get(`/api/admin/vacancies/options?${qs}`)).body.items.map((v: { id: string }) => v.id);
+    expect(await ids('search=Kurier')).toEqual([draft.id]);
+    expect(await ids('search=Nord')).toEqual([pending.id]);
+
+    const cand = await asCandidate();
+    expectAdd(await staff.agent.post(`/api/admin/candidates/${cand.user.id}/applications`).send({ vacancyId: open.id }));
+    const marked = (await staff.agent.get(`/api/admin/vacancies/options?userId=${cand.user.id}`)).body.items;
+    expect(marked.find((v: { id: string }) => v.id === open.id).applicationStatus).toBe('SHORTLISTED');
+    expect(marked.find((v: { id: string }) => v.id === draft.id).applicationStatus).toBeNull();
+
+    // Clients and employers never see the list.
+    expect((await cand.agent.get('/api/admin/vacancies/options')).status).toBe(403);
+    expect((await (await asCompany()).agent.get('/api/admin/vacancies/options')).status).toBe(403);
+  });
+
+  it('adds a candidate to a draft or pending vacancy as SHORTLISTED (in-app notification only), refuses closed ones', async () => {
+    const staff = await asStaff();
+    const cand = await asCandidate({}, { locale: 'az' });
+    const draft = await createVacancy({ status: 'DRAFT', publishedAt: null, title: { az: 'Kuryer', de: 'Kurier', en: 'Courier', ru: 'Курьер' } });
+    const closed = await createVacancy({ status: 'CLOSED' });
+
+    const add = expectAdd(await staff.agent.post(`/api/admin/candidates/${cand.user.id}/applications`).send({ vacancyId: draft.id, note: 'Phone screen ok' }));
+    expect(add.application).toMatchObject({ status: 'SHORTLISTED', staffNote: 'Phone screen ok', vacancyId: draft.id, userId: cand.user.id });
+    const n = await prisma.notification.findFirst({ where: { userId: cand.user.id, type: 'APPLICATION_STATUS' } });
+    expect(n?.title).toContain('Kuryer');
+    expect(await prisma.auditLog.count({ where: { action: 'APPLICATION_ADDED' } })).toBe(1);
+    // Shortlisting is minor: no e-mail.
+    expect(await prisma.emailLog.count({ where: { to: cand.user.email } })).toBe(0);
+
+    const detail = await staff.agent.get(`/api/admin/candidates/${cand.user.id}`);
+    expect(detail.body.candidate.applications.map((a: { vacancy: { id: string }; status: string }) => [a.vacancy.id, a.status])).toEqual([[draft.id, 'SHORTLISTED']]);
+
+    expect((await staff.agent.post(`/api/admin/candidates/${cand.user.id}/applications`).send({ vacancyId: closed.id })).body.error).toBe('VACANCY_CLOSED');
+    expect((await staff.agent.post(`/api/admin/candidates/${cand.user.id}/applications`).send({ vacancyId: 'nope' })).body.error).toBe('INVALID_VACANCY');
+    expect((await staff.agent.post(`/api/admin/candidates/${cand.user.id}/applications`).send({ vacancyId: draft.id })).body.error).toBe('ALREADY_APPLIED');
   });
 });
 

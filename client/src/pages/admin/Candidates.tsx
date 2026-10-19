@@ -83,24 +83,40 @@ const useVacancyOptions = () =>
 const AddToVacancyModal = ({ userId, onClose, presetVacancy }: { userId: string | null; onClose: () => void; presetVacancy?: string }) => {
   const { t } = useTranslation();
   const { tr } = useL10n();
+  const L = useJobLabels();
   const qc = useQueryClient();
-  const { data: vacancies } = useVacancyOptions();
+  // Own query (per candidate): marks the vacancies the candidate already applied to.
+  const options = useQuery({
+    queryKey: ['admin-vacancy-options', 'for', userId],
+    queryFn: async () => (await api.get<{ items: (VacancyOption & { applicationStatus?: ApplicationStatus | null })[] }>('/admin/vacancies/options', { params: { userId } })).data.items,
+    enabled: !!userId,
+  });
+  const vacancies = options.data;
   const [vacancyId, setVacancyId] = useState(presetVacancy ?? '');
   const [note, setNote] = useState('');
+  const [search, setSearch] = useState('');
   useEffect(() => {
     setVacancyId(presetVacancy ?? '');
     setNote('');
+    setSearch('');
   }, [userId, presetVacancy]);
+  const blocked = (v: { applicationStatus?: ApplicationStatus | null }) => !!v.applicationStatus && !['NEW', 'WITHDRAWN'].includes(v.applicationStatus);
+  const needle = search.trim().toLowerCase();
+  const shown = (vacancies ?? []).filter(
+    (v) => !needle || v.id === vacancyId || [tr(v.title), v.company?.name, v.city].filter(Boolean).join(' ').toLowerCase().includes(needle),
+  );
   const m = useMutation({
     mutationFn: () => api.post(`/admin/candidates/${userId}/applications`, { vacancyId, note: note.trim() || undefined }),
     onSuccess: () => {
       toast.success(t('jobsArea.admin.added'));
       void qc.invalidateQueries({ queryKey: ['admin-candidates'] });
       void qc.invalidateQueries({ queryKey: ['admin-candidate', userId] });
+      void qc.invalidateQueries({ queryKey: ['admin-vacancy-options'] });
       onClose();
     },
     onError: toastJobsError,
   });
+  const empty = options.isSuccess && !vacancies?.length;
   return (
     <Modal
       open={!!userId}
@@ -112,29 +128,63 @@ const AddToVacancyModal = ({ userId, onClose, presetVacancy }: { userId: string 
           <button type="button" className="btn-white btn-sm border border-line" onClick={onClose}>
             {t('admin.common.cancel')}
           </button>
-          <button type="button" className="btn-primary btn-sm" disabled={!vacancyId || m.isPending} onClick={() => m.mutate()}>
+          <button type="button" className="btn-primary btn-sm" disabled={!vacancyId || m.isPending || empty} onClick={() => m.mutate()}>
             {m.isPending && <Spinner className="size-3.5" />} {t('jobsArea.admin.shortlist')}
           </button>
         </>
       }
     >
-      <label className="label" htmlFor="atv-vacancy">
-        {t('jobsArea.admin.candidates.vacancy')}
-      </label>
-      <select id="atv-vacancy" className="input" value={vacancyId} onChange={(e) => setVacancyId(e.target.value)}>
-        <option value="">—</option>
-        {vacancies?.map((v) => (
-          <option key={v.id} value={v.id}>
-            {tr(v.title)}
-            {v.company ? ` · ${v.company.name}` : ''}
-            {v.city ? ` · ${v.city}` : ''}
-          </option>
-        ))}
-      </select>
-      <label className="label mt-3" htmlFor="atv-note">
-        {t('jobsArea.admin.staffNote')}
-      </label>
-      <textarea id="atv-note" className="input min-h-20" maxLength={2000} value={note} onChange={(e) => setNote(e.target.value)} />
+      {options.isLoading ? (
+        <div className="grid place-items-center py-6">
+          <Spinner className="size-5" />
+        </div>
+      ) : options.error ? (
+        <ErrorBlock error={options.error} onRetry={() => void options.refetch()} />
+      ) : empty ? (
+        <div className="rounded-lg border border-dashed border-line bg-surface px-4 py-5 text-center">
+          <p className="text-sm font-semibold text-ink">{t('jobsArea.admin.candidates.noVacancies')}</p>
+          <p className="mt-1 text-xs text-muted">{t('jobsArea.admin.candidates.noVacanciesHint')}</p>
+          <Link to="/admin/vacancies" className="btn-primary btn-sm mt-3 inline-flex" onClick={onClose}>
+            <FolderPlus className="size-3.5" aria-hidden /> {t('jobsArea.admin.candidates.createVacancy')}
+          </Link>
+        </div>
+      ) : (
+        <>
+          {(vacancies?.length ?? 0) > 8 && (
+            <div className="relative mb-2">
+              <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted" aria-hidden />
+              <input
+                type="search"
+                className="input pl-9"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder={t('jobsArea.admin.candidates.vacancySearch')}
+                aria-label={t('jobsArea.admin.candidates.vacancySearch')}
+              />
+            </div>
+          )}
+          <label className="label" htmlFor="atv-vacancy">
+            {t('jobsArea.admin.candidates.vacancy')}
+          </label>
+          <select id="atv-vacancy" className="input" value={vacancyId} onChange={(e) => setVacancyId(e.target.value)}>
+            <option value="">{shown.length ? t('jobsArea.admin.candidates.chooseVacancy') : t('jobsArea.admin.candidates.noMatch')}</option>
+            {shown.map((v) => (
+              <option key={v.id} value={v.id} disabled={blocked(v)}>
+                {tr(v.title)}
+                {v.company ? ` · ${v.company.name}` : ''}
+                {v.city ? ` · ${v.city}` : ''}
+                {` · ${L.vacancyStatus(v.status)}`}
+                {v.applicationStatus ? ` · ${L.appStatus(v.applicationStatus)}` : ''}
+              </option>
+            ))}
+          </select>
+          {vacancies?.some((v) => v.status !== 'OPEN') && <p className="mt-1 text-xs text-muted">{t('jobsArea.admin.candidates.notOpenHint')}</p>}
+          <label className="label mt-3" htmlFor="atv-note">
+            {t('jobsArea.admin.staffNote')}
+          </label>
+          <textarea id="atv-note" className="input min-h-20" maxLength={2000} value={note} onChange={(e) => setNote(e.target.value)} />
+        </>
+      )}
     </Modal>
   );
 };

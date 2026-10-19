@@ -23,6 +23,7 @@ import { purgeNodes, restoreSubtree, softDelete, trashRootIds } from '../lib/dri
 import { sharedText } from '../lib/drive/texts.js';
 import { driveUpload } from '../lib/drive/upload.js';
 import { deleteCaseDocument } from '../lib/caseDocDelete.js';
+import { relinkRestoredPartnerFolder } from '../lib/drive/caseFolders.js';
 import { CONTENT_LIMIT, contentSnippets, contentWhere } from '../lib/driveIntel/search.js';
 import { logDriveActivity } from '../lib/driveCollab/activity.js';
 import { assertNotLockedByOther } from '../lib/driveCollab/lock.js';
@@ -716,6 +717,8 @@ driveRouter.post('/restore', async (req, res) => {
       await prisma.driveNode.update({ where: { id }, data: { name } });
     }
     const count = await restoreSubtree(id, node.deletedAt);
+    // A partner folder that came back as "Name (2)" joins the partner's live folder (one folder per partner).
+    if (node.kind === 'FOLDER' && name !== node.name) await relinkRestoredPartnerFolder(id);
     await audit(req, 'DRIVE_RESTORED', `drive:${id}`, { name, nodes: count });
     await logDriveActivity({ nodeId: id, folderId: node.parentId, actorId: req.user!.id, action: 'RESTORE', name, meta: { kind: node.kind, nodes: count } });
     return { name };

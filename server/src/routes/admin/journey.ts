@@ -5,7 +5,7 @@ import { prisma } from '../../db.js';
 import { requireMinRole } from '../../middleware/auth.js';
 import { audit } from '../../lib/audit.js';
 import { badRequest, notFound, parse } from '../../lib/http.js';
-import { clearForecastCache, parseOverride, rangesFor, STEP_KEYS } from '../../lib/journey/forecast.js';
+import { clearForecastCache, FORECAST_UNITS, parseOverride, parseUnits, rangesFor, STEP_KEYS, type ForecastUnit } from '../../lib/journey/forecast.js';
 import { onboardingForCase } from '../../lib/journey/onboarding.js';
 import { addFamilyMember, familyGroup, RELATIONS, removeFamilyMember } from '../../lib/journey/family.js';
 import { GERMAN_TEST_LEVELS } from '../../lib/journey/german.js';
@@ -25,29 +25,46 @@ const safeUrl = z.string().max(2000).refine((v) => /^(https?:\/\/[^\s]+|\/[^\s]*
 
 const range = z.tuple([z.number().int().min(0).max(730), z.number().int().min(0).max(730)]).refine(([a, b]) => b >= a, 'MAX_BELOW_MIN');
 const overrideSchema = z.object(Object.fromEntries(STEP_KEYS.map((k) => [k, range.nullable().optional()])) as Record<(typeof STEP_KEYS)[number], z.ZodOptional<z.ZodNullable<typeof range>>>);
+/** Unit the admin last entered a row in (display only — values are always stored in days). */
+const unitsSchema = z.record(z.enum(STEP_KEYS), z.enum(FORECAST_UNITS)) as z.ZodType<Partial<Record<(typeof STEP_KEYS)[number], ForecastUnit>>>;
 
 /** Every visa category with its override and the ranges currently in effect (history / default). */
 adminJourneyRouter.get('/forecast', async (_req, res) => {
-  const visas = await prisma.visaCategory.findMany({ orderBy: { sortOrder: 'asc' }, select: { id: true, slug: true, title: true, visaLabel: true, forecast: true, published: true } });
+  const visas = await prisma.visaCategory.findMany({
+    orderBy: { sortOrder: 'asc' },
+    select: { id: true, slug: true, title: true, visaLabel: true, forecast: true, published: true, sortOrder: true, _count: { select: { cases: true, vacancies: true } } },
+  });
   const items = await Promise.all(
-    visas.map(async (v) => ({ ...v, override: parseOverride(v.forecast), forecast: undefined, effective: await rangesFor(v.id) })),
+    visas.map(async ({ _count, ...v }) => ({
+      ...v,
+      override: parseOverride(v.forecast),
+      units: parseUnits(v.forecast),
+      usage: { cases: _count.cases, vacancies: _count.vacancies },
+      forecast: undefined,
+      effective: await rangesFor(v.id),
+    })),
   );
   res.json({ items, steps: STEP_KEYS, fallback: await rangesFor(null) });
 });
 
 adminJourneyRouter.put('/forecast/:visaCategoryId', adminOnly, async (req, res) => {
-  const body = parse(overrideSchema, req.body ?? {});
-  const visa = await prisma.visaCategory.findUnique({ where: { id: String(req.params.visaCategoryId) }, select: { id: true } });
+  const { units: unitsIn, ...rest } = (req.body ?? {}) as Record<string, unknown>;
+  const body = parse(overrideSchema, rest);
+  const visa = await prisma.visaCategory.findUnique({ where: { id: String(req.params.visaCategoryId) }, select: { id: true, forecast: true } });
   if (!visa) throw notFound('VISA_CATEGORY_NOT_FOUND');
   const override = Object.fromEntries(STEP_KEYS.filter((k) => Array.isArray(body[k])).map((k) => [k, body[k]]));
+  // Units are kept when the request does not send them; only "week" is stored ("day" is the default).
+  const unitsParsed = unitsIn === undefined ? parseUnits(visa.forecast) : parse(unitsSchema, unitsIn ?? {});
+  const units = Object.fromEntries(STEP_KEYS.filter((k) => unitsParsed[k] === 'week').map((k) => [k, 'week']));
+  const stored = { ...override, ...(Object.keys(units).length ? { units } : {}) };
   const updated = await prisma.visaCategory.update({
     where: { id: visa.id },
-    data: { forecast: Object.keys(override).length ? (override as Prisma.InputJsonValue) : Prisma.DbNull },
+    data: { forecast: Object.keys(stored).length ? (stored as Prisma.InputJsonValue) : Prisma.DbNull },
     select: { id: true, forecast: true },
   });
   clearForecastCache();
-  await audit(req, 'FORECAST_OVERRIDE_UPDATED', `visa:${visa.id}`, override as Prisma.InputJsonValue);
-  res.json({ id: updated.id, override: parseOverride(updated.forecast), effective: await rangesFor(updated.id) });
+  await audit(req, 'FORECAST_OVERRIDE_UPDATED', `visa:${visa.id}`, stored as Prisma.InputJsonValue);
+  res.json({ id: updated.id, override: parseOverride(updated.forecast), units: parseUnits(updated.forecast), effective: await rangesFor(updated.id) });
 });
 
 // ─── Onboarding: a client's progress + item CRUD ───────────────────────
