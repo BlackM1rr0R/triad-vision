@@ -15,6 +15,7 @@ import { toastJobsError, useJobLabels } from '@/components/jobs/labels';
 import { APPLICATION_STATUS_TONE, type AnonProfile, type ApplicationStatus } from '@/components/jobs/types';
 import { Empty, Loading, Section } from './shared';
 import { CvDownloadButton } from '@/components/cv/CvDownloadButton';
+import { SharedProfile, useSharedProfiles } from '@/components/aiEmployer/SharedProfile';
 
 interface Item {
   id: string;
@@ -90,6 +91,7 @@ export const CompanyCandidates = () => {
     queryFn: async () =>
       (await api.get<{ items: Item[] }>('/company/candidates', { params: { status: status || undefined, vacancyId: vacancyId || undefined } })).data.items,
   });
+  const profiles = useSharedProfiles();
   const refresh = () => {
     void qc.invalidateQueries({ queryKey: ['company-candidates'] });
     void qc.invalidateQueries({ queryKey: ['company-dashboard'] });
@@ -176,6 +178,7 @@ export const CompanyCandidates = () => {
                 </div>
               </dl>
               {a.companyNote && <p className="mt-3 rounded-lg bg-surface px-3 py-2 text-xs text-ink/80">{a.companyNote}</p>}
+              {profiles.data?.get(a.id) && <SharedProfile profile={profiles.data.get(a.id)!} />}
               <CvDownloadButton url={`/company/candidates/${a.id}/cv.pdf`} anonymised className="mt-3" />
               <p className="mt-3 text-[11px] text-muted">{t('jobsArea.portal.candidates.updated', { date: fmtDate(a.updatedAt) })}</p>
               {(a.status === 'PROPOSED' || a.status === 'INTERVIEW') && <DecisionBox item={a} onDone={refresh} />}

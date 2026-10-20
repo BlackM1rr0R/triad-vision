@@ -43,7 +43,8 @@ export const ComposeWindow = ({ seed, accounts, onClose, onSent }: { seed: Compo
     if (seed.draft) return { to: seed.draft.to, cc: seed.draft.cc, bcc: seed.draft.bcc, subject: seed.draft.subject ?? '', html: seed.draft.html ?? '', attachments: seed.draft.attachments };
     if (seed.mode === 'reply' || seed.mode === 'replyAll') {
       const r = replyRecipients(original!, acc?.email ?? '', seed.mode === 'replyAll');
-      return { to: r.to, cc: r.cc, bcc: [], subject: replySubject(original!.subject), html: `<p><br></p>${signatureBlock(acc?.signatureHtml)}${quoteForReply(original!)}`, attachments: [] };
+      // seed.html / seed.subject: a prepared reply (e.g. the AI triage reply draft), still quoted and editable.
+      return { to: r.to, cc: r.cc, bcc: [], subject: seed.subject || replySubject(original!.subject), html: `${seed.html ?? '<p><br></p>'}${signatureBlock(acc?.signatureHtml)}${quoteForReply(original!)}`, attachments: [] };
     }
     if (seed.mode === 'forward') return { to: [], cc: [], bcc: [], subject: forwardSubject(original!.subject), html: `<p><br></p>${signatureBlock(acc?.signatureHtml)}${quoteForForward(original!)}`, attachments: [] };
     return { to: seed.to ?? [], cc: [], bcc: [], subject: seed.subject ?? '', html: `${seed.html ?? '<p><br></p>'}${signatureBlock(acc?.signatureHtml)}`, attachments: [] };

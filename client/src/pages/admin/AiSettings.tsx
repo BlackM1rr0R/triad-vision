@@ -13,6 +13,7 @@ import { LoadingBlock, ErrorBlock, PageHead, Panel, StatTile, Switch, EmptyState
 import { BarList, LineChart, SERIES_COLORS } from '@/components/admin/charts';
 import { BriefingSettings } from '@/components/aiStaff/BriefingSettings';
 import { AdminPublicAdvisor } from '@/components/publicAi/AdminPublicAdvisor';
+import { PrivacySetting } from '@/components/aiMgmt/PrivacySetting';
 
 registerCopy(pagesAi);
 registerCopy(pagesAiDocs);
@@ -304,6 +305,8 @@ export default function AdminAiSettings() {
           </div>
         ) : null}
       </Panel>
+
+      <PrivacySetting />
 
       <BriefingSettings />
 

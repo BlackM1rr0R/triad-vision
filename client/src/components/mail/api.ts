@@ -30,6 +30,7 @@ const listQuery = (p: ListParams, cursor?: string) => {
   if (p.hasAttachments) q.hasAttachments = '1';
   if (p.unread) q.unread = '1';
   if (p.threads) q.threads = '1';
+  if (p.ai) q.ai = p.ai;
   if (cursor) q.cursor = cursor;
   return q;
 };

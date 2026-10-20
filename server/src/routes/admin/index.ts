@@ -37,6 +37,9 @@ import { adminDocumentExpiryRouter } from './documentExpiry.js';
 import { adminSettlementsRouter } from './settlements.js';
 import { adminTranslateRouter } from './translate.js';
 import { adminAiStaffRouter } from './aiStaff.js';
+import { adminCaseAiRouter } from './caseAi.js';
+import { adminAiEmployerRouter } from './aiEmployer.js';
+import { adminMgmtRouter } from './aiMgmt.js';
 
 export const adminRouter = Router();
 adminRouter.use(requireMinRole('STAFF'));
@@ -124,6 +127,8 @@ adminRouter.use('/settlements', adminSettlementsRouter);
 adminRouter.use('/signatures', adminSignaturesRouter);
 adminRouter.use('/translate', adminTranslateRouter);
 adminRouter.use('/ai-staff', adminAiStaffRouter);
+adminRouter.use('/mgmt', adminMgmtRouter); // weekly management report + security alerts (SUPER_ADMIN)
+adminRouter.use('/ai/employer', adminAiEmployerRouter);
 // Any successful CMS write (incl. vacancy, employer and review moderation) must be visible on the public site right away.
 // The cache is cleared before the response is sent, so the admin's next public read is already fresh.
 adminRouter.use(['/content', '/settings', '/vacancies', '/companies', '/reviews'], (req, res, next) => {
@@ -137,6 +142,7 @@ adminRouter.use(['/content', '/settings', '/vacancies', '/companies', '/reviews'
   next();
 });
 
+adminRouter.use(adminCaseAiRouter); // /cases/:id/ai/*, /case-ai/settings
 adminRouter.use(adminDocumentExpiryRouter); // /cases/:caseId/documents/:docId/expiry, /expiring
 adminRouter.use('/cases', adminCasesRouter);
 adminRouter.use('/users', adminUsersRouter);

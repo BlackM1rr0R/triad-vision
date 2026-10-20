@@ -45,6 +45,7 @@ import { SNOOZE_PRESETS, snoozeUntil } from '../lib/mail/snooze.js';
 import { adoptMailUpload, mailPath, removeMailStored } from '../lib/mail/storage.js';
 import { applyRules, syncAccount, withRemote } from '../lib/mail/sync.js';
 import { threadKeyOf } from '../lib/mail/thread.js';
+import { AI_FILTERS, aiFilterWhere } from '../lib/ai/features/mailTriage.js';
 
 /**
  * Workspace mail (/api/mail): every staff member's own IMAP/SMTP mailboxes. Accounts, folders and
@@ -292,6 +293,8 @@ const listSchema = z.object({
   hasAttachments: z.enum(['1', 'true']).optional(),
   unread: z.enum(['1', 'true']).optional(),
   threads: z.enum(['1', 'true']).optional(),
+  /** AI triage filter (urgent, candidate, employer, …) */
+  ai: z.enum(AI_FILTERS).optional(),
   cursor: z.string().max(80).optional(),
   page: z.coerce.number().int().min(1).optional(),
   limit: z.coerce.number().int().min(1).max(100).default(50),
@@ -400,6 +403,7 @@ const listWhere = async (userId: string, q: z.infer<typeof listSchema>): Promise
   if (q.labelId) and.push({ labels: { some: { labelId: q.labelId, label: { userId } } } });
   if (q.hasAttachments) and.push({ hasAttachments: true });
   if (q.unread) and.push({ seen: false });
+  if (q.ai) and.push(aiFilterWhere(q.ai));
   if (q.q || q.from || q.to) and.push({ id: { in: await searchIds(accountIds, q.q, q.from, q.to) } });
   return { AND: and };
 };

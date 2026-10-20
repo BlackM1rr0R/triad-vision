@@ -56,8 +56,10 @@ import { tasksRouter } from './routes/tasks.js';
 import { signRouter, signaturesRouter } from './routes/signatures.js';
 import { aiRouter } from './routes/ai.js';
 import { aiWritingRouter } from './routes/aiWriting.js';
+import { companyAiRouter } from './routes/companyAi.js';
 import { publicAiRouter } from './routes/publicAi.js';
 import { aiDocsRouter } from './routes/aiDocs.js';
+import { aiMailRouter } from './routes/aiMail.js';
 
 type RequestWithRawBody = import('express').Request & { rawBody?: Buffer };
 
@@ -129,6 +131,7 @@ export const createApp = () => {
   app.use('/api/account', accountRouter);
   app.use('/api/company/invoices', companyInvoicesRouter);
   app.use('/api/company/requests', companyRequestsRouter);
+  app.use('/api/company/ai', companyAiRouter);
   app.use('/api/company', companyRouter);
   app.use('/api/vacancies', vacanciesRouter);
   app.use('/api/booking', bookingRouter);
@@ -156,6 +159,7 @@ export const createApp = () => {
   app.use('/api/interview-prep', interviewPrepRouter);
   app.use('/api/surveys', surveysRouter);
   app.use('/api/ai-docs', aiDocsRouter);
+  app.use('/api/ai-mail', aiMailRouter);
   app.use('/api/ai', aiRouter);
   app.use('/api/ai-writing', aiWritingRouter);
   app.use('/api/public-ai', publicAiRouter);

@@ -1,6 +1,6 @@
 import { prisma } from '../../db.js';
 import { AiError, getAiTransport, getModelMeta, estimateCostMicros, noteKeySpend, reasoningFor, type ChatRequest } from './openrouter.js';
-import { getAiSettings, resolveApiKey } from './settings.js';
+import { getAiSettings, privacyRouting, resolveApiKey } from './settings.js';
 import { checkLimits, monthSpentUsd } from './limits.js';
 
 /**
@@ -168,6 +168,7 @@ export const translateMany = async <K extends string>(input: Record<K, L10nInput
       model: TRANSLATE_MODEL,
       temperature: 0,
       ...reasoningFor(meta, answerTokens),
+      ...privacyRouting(settings),
       messages: [
         { role: 'system', content: SYSTEM_PROMPT },
         {

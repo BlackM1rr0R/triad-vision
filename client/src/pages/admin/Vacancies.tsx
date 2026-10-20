@@ -18,6 +18,9 @@ import { fmtDate, fmtRelative, fullName } from '@/components/admin/labels';
 import { Chip, EmptyState, ErrorBlock, LoadingBlock, PageHead, Panel } from '@/components/admin/ui';
 import { VacancyForm, formFromVacancy, payloadFromForm, type VacancyFormState } from '@/components/company/VacancyForm';
 import { ScorePill } from '@/components/jobs/MatchMeter';
+import { CandidateProfileCard } from '@/components/aiEmployer/CandidateProfileCard';
+import { EmployerAiToggle } from '@/components/aiEmployer/EmployerAiToggle';
+import { reportAiSaved } from '@/components/aiEmployer/shared';
 import { toastJobsError, useJobLabels } from '@/components/jobs/labels';
 import {
   APPLICATION_STATUS_TONE,
@@ -118,7 +121,7 @@ const StaffFields = ({ f, set }: { f: VacancyFormState; set: <K extends keyof Va
   );
 };
 
-const ApplicationRow = ({ a, onChanged }: { a: DetailApplication; onChanged: () => void }) => {
+const ApplicationRow = ({ a, onChanged, hasCompany }: { a: DetailApplication; onChanged: () => void; hasCompany: boolean }) => {
   const { t } = useTranslation();
   const L = useJobLabels();
   const [note, setNote] = useState(a.staffNote ?? '');
@@ -184,6 +187,9 @@ const ApplicationRow = ({ a, onChanged }: { a: DetailApplication; onChanged: () 
           </button>
         )}
       </div>
+      <div className="mt-2">
+        <CandidateProfileCard userId={a.user.id} applicationId={a.id} canPropose={hasCompany && a.status !== 'WITHDRAWN'} onChanged={onChanged} />
+      </div>
     </li>
   );
 };
@@ -214,11 +220,12 @@ const VacancyDrawer = ({ id, onClose }: { id: string | null; onClose: () => void
     void qc.invalidateQueries({ queryKey: ['admin-vacancy-suggestions', id] });
   };
   const save = useMutation({
-    mutationFn: async (f: VacancyFormState) =>
+    mutationFn: async ({ f }: { f: VacancyFormState; ai: string[] }) =>
       isNew
         ? (await api.post<{ vacancy: VacancyRow }>('/admin/vacancies', { ...payloadFromForm(f, true), publish })).data.vacancy
         : (await api.patch<{ vacancy: VacancyRow }>(`/admin/vacancies/${id}`, payloadFromForm(f, true))).data.vacancy,
-    onSuccess: (v) => {
+    onSuccess: (v, { ai }) => {
+      reportAiSaved('staff', v.id, ai);
       if (isNew && v.status === 'DRAFT') toast.info(t('jobsArea.admin.savedDraft'));
       else toast.success(t('jobsArea.admin.saved'));
       refresh();
@@ -256,10 +263,11 @@ const VacancyDrawer = ({ id, onClose }: { id: string | null; onClose: () => void
       {isNew ? (
         <VacancyForm
           staff
+          ai="staff"
           initial={formFromVacancy(null)}
           busy={save.isPending}
           submitLabel={t('admin.common.create')}
-          onSubmit={(f) => save.mutate(f)}
+          onSubmit={(f, ai) => save.mutate({ f, ai })}
           extra={(f, set) => (
             <>
               <StaffFields f={f} set={set} />
@@ -331,7 +339,7 @@ const VacancyDrawer = ({ id, onClose }: { id: string | null; onClose: () => void
             ) : (
               <ul className="divide-y divide-line">
                 {v.applications.map((a) => (
-                  <ApplicationRow key={`${a.id}-${a.status}`} a={a} onChanged={refresh} />
+                  <ApplicationRow key={`${a.id}-${a.status}`} a={a} onChanged={refresh} hasCompany={v.company?.status === 'ACTIVE'} />
                 ))}
               </ul>
             )}
@@ -368,10 +376,11 @@ const VacancyDrawer = ({ id, onClose }: { id: string | null; onClose: () => void
             <VacancyForm
               key={v.updatedAt}
               staff
+              ai="staff"
               initial={formFromVacancy(v)}
               busy={save.isPending}
               submitLabel={t('admin.common.save')}
-              onSubmit={(f) => save.mutate(f)}
+              onSubmit={(f, ai) => save.mutate({ f, ai })}
               extra={(f, set) => <StaffFields f={f} set={set} />}
             />
           </Panel>
@@ -437,6 +446,7 @@ export default function AdminVacancies() {
         actions={
           <>
             {isFetching && !isLoading && <Spinner className="size-4 text-brand-600" />}
+            <EmployerAiToggle />
             <button type="button" className="btn-primary btn-sm" onClick={() => setParam('id', 'new')}>
               <Plus className="size-3.5" /> {t('jobsArea.admin.vacancies.new')}
             </button>

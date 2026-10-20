@@ -17,8 +17,11 @@ const escapeHtml = (s: string) =>
 /** Header values must be a single line; anything else would let user input inject mail headers. */
 const headerSafe = (s: string) => s.replace(/[\r\n]+/g, ' ').slice(0, 300);
 
-/** Branded HTML wrapper. `body` is plain text; paragraphs are split on blank lines. */
-export const renderEmail = (title: string, body: string, cta?: { label: string; url: string }) => {
+/**
+ * Branded HTML wrapper. `body` is plain text; paragraphs are split on blank lines. `opts.html` is an optional
+ * block of already-escaped HTML (tables of a report) placed after the paragraphs — callers must escape their data.
+ */
+export const renderEmail = (title: string, body: string, cta?: { label: string; url: string }, opts: { html?: string } = {}) => {
   const paragraphs = body
     .split(/\n{2,}/)
     .map((p) => `<p style="margin:0 0 14px;line-height:1.6">${escapeHtml(p).replace(/\n/g, '<br>')}</p>`)
@@ -32,7 +35,7 @@ export const renderEmail = (title: string, body: string, cta?: { label: string; 
 <tr><td style="background:#0b1f44;padding:22px 28px;color:#fff;font-size:20px;font-weight:700;letter-spacing:2px">TRIAD VISION
 <div style="font-size:10px;letter-spacing:3px;opacity:.7;font-weight:400">PEOPLE · WORK · OPPORTUNITIES</div></td></tr>
 <tr><td style="padding:28px">
-<h2 style="margin:0 0 18px;font-size:20px">${escapeHtml(title)}</h2>${paragraphs}${button}
+<h2 style="margin:0 0 18px;font-size:20px">${escapeHtml(title)}</h2>${paragraphs}${opts.html ?? ''}${button}
 </td></tr>
 <tr><td style="background:#f5f8fd;padding:16px 28px;font-size:12px;color:#5b6b88">Triad Vision · triad-vision.de · +994 50 748 70 48</td></tr>
 </table></td></tr></table></body></html>`;

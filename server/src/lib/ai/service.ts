@@ -6,7 +6,7 @@ import { repairToolPairs, trimHistory, messageTokens, estimateTokens, type ChatM
 import { AiError, estimateCostMicros, getAiTransport, getModelMeta, noteKeySpend, reasoningFor, type ChatRequest } from './openrouter.js';
 import { ensureToolsLoaded, getTool, toolSpecs } from './registry.js';
 import { systemPrompt } from './prompts.js';
-import { getAiSettings, resolveApiKey, type AiSettings } from './settings.js';
+import { getAiSettings, privacyRouting, resolveApiKey, type AiSettings } from './settings.js';
 import { checkLimits, checkSpendDuringTurn, limitMessage, type LimitReason } from './limits.js';
 
 /**
@@ -302,6 +302,7 @@ export const runTurn = async ({ conversation, user, content, emit, signal }: Tur
         model,
         messages,
         ...reasoningFor(meta, answerCap),
+        ...privacyRouting(settings),
         ...(tools.length ? { tools, tool_choice: forceText ? 'none' : 'auto' } : {}),
       };
       const r = await streamRound(req, apiKey, signal, emit);

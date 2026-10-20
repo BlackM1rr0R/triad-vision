@@ -24,6 +24,8 @@ import { SignaturesPanel } from '@/components/esign/CaseSignatures';
 const CaseTasks = lazy(() => import('@/components/tasks/CaseTasks').then((m) => ({ default: m.CaseTasks })));
 // AI summary of the case (staff AI, own chunk).
 const CaseAiSummary = lazy(() => import('@/components/aiStaff/CaseAiSummary').then((m) => ({ default: m.CaseAiSummary })));
+// One-click AI checks: consistency, contract, VIDEX (own chunk).
+const CaseAiChecks = lazy(() => import('@/components/aiCase/CaseAiChecks').then((m) => ({ default: m.CaseAiChecks })));
 
 export default function CaseAdmin() {
   const { t } = useTranslation();
@@ -66,6 +68,9 @@ export default function CaseAdmin() {
       <div className="grid grid-cols-1 gap-6 lg:gap-8 xl:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
         <div className="min-w-0 space-y-6">
           <ActionPanel c={c} />
+          <Suspense fallback={null}>
+            <CaseAiChecks key={`ai-checks-${c.id}`} caseId={c.id} />
+          </Suspense>
           {embassyFirst && showEmbassy && <RequirementsSection c={c} stage="EMBASSY" />}
           <RequirementsSection c={c} stage="INITIAL" />
           <ContractBox c={c} />

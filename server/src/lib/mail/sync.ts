@@ -12,6 +12,8 @@ import { htmlToText, sanitizeMailHtml, snippetOf } from './sanitize.js';
 import { mailSettings } from './settings.js';
 import { storeBuffer } from './storage.js';
 import { cleanMessageId, threadCandidates, threadKeyOf } from './thread.js';
+// AI mail triage hook (see announceArrivals); the feature lives in lib/ai/features/mailTriage.ts.
+import { detectAutoMail, onNewInboundMessage, type SkipReason } from '../ai/features/mailTriage.js';
 
 /**
  * IMAP → database synchronisation. One run per account: list folders, fetch new messages by UID,
@@ -196,6 +198,8 @@ export interface StoredNew {
   isNew: boolean;
   /** inserted after the first sync of the folder (realtime notification) */
   notify: boolean;
+  /** AI triage: auto-reply / bounce detected from the headers (no AI call for these) */
+  autoReason?: SkipReason | null;
 }
 
 /** Parses one fetched message and inserts/updates its row. Returns the row id and whether it was new. */
@@ -295,7 +299,7 @@ export const storeFetched = async (account: MailAccount, folder: MailFolder, m: 
     prisma.mailMessage.create({ data: { id, accountId: account.id, folderId: folder.id, uid: BigInt(m.uid), ...data } }),
     ...(attachmentRows.length ? [prisma.mailAttachment.createMany({ data: attachmentRows.map((a) => ({ ...a, messageId: id })) })] : []),
   ]);
-  return { id, folderId: folder.id, fromName: data.fromName, fromAddr: data.fromAddr, subject, seen: data.seen, isNew: true, notify: true };
+  return { id, folderId: folder.id, fromName: data.fromName, fromAddr: data.fromAddr, subject, seen: data.seen, isNew: true, notify: true, autoReason: detectAutoMail(parsed.headers) };
 };
 
 // ─── Rules ────────────────────────────────────────────────────────────
@@ -493,6 +497,8 @@ const announceArrivals = async (account: MailAccount, arrived: StoredNew[]) => {
     } catch (err) {
       console.error('[mail] rules failed', errorText(err));
     }
+    // ── AI mail triage hook: queued in the background (fire-and-forget), never breaks the sync ──
+    for (const a of newInbox) onNewInboundMessage(a.id, { autoReason: a.autoReason ?? null, initial: !a.notify });
   }
   const announce = newInbox.filter((a) => a.notify);
   const fresh = announce.length ? await prisma.mailMessage.findMany({ where: { id: { in: announce.map((a) => a.id) } }, select: { id: true, folderId: true, seen: true, fromName: true, fromAddr: true, subject: true } }) : [];

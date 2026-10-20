@@ -2,7 +2,7 @@ import type { AiScope } from '@prisma/client';
 import { prisma } from '../../db.js';
 import type { ChatMessage } from './context.js';
 import { AiError, estimateCostMicros, getAiTransport, getModelMeta, noteKeySpend, reasoningFor, type ChatRequest } from './openrouter.js';
-import { getAiSettings, resolveApiKey } from './settings.js';
+import { getAiSettings, privacyRouting, resolveApiKey } from './settings.js';
 import { checkLimits, monthSpentUsd, type LimitReason } from './limits.js';
 import { parseModelJson } from './translate.js';
 
@@ -96,6 +96,7 @@ export const aiComplete = async (opts: AiCompleteOptions): Promise<AiCompleteRes
       model,
       temperature: opts.temperature ?? 0.2,
       ...reasoningFor(meta, answerTokens),
+      ...privacyRouting(settings),
       messages: [{ role: 'system', content: opts.system }, { role: 'user', content: toContent(opts.input) } as unknown as ChatMessage],
     };
 

@@ -2,6 +2,7 @@ import { z } from 'zod';
 import type { AiScope } from '@prisma/client';
 import { prisma } from '../../db.js';
 import { open, seal } from '../secretBox.js';
+import type { ProviderPreferences } from './openrouter.js';
 
 /**
  * Assistant settings, one Setting row (`ai.assistant`), edited by the super admin on /admin/ai/settings.
@@ -37,6 +38,13 @@ export const aiSettingsSchema = z.object({
   publicDailyUsd: money(100).catch(0.5),
   /** Automatic AI check of documents clients upload (lib/aiDocs/docCheck.ts). */
   docCheckEnabled: z.boolean().catch(true),
+  /**
+   * DSGVO privacy routing (default on): every OpenRouter request only goes to providers that neither store nor
+   * train on the data (`provider.data_collection: "deny"`). Rows saved before this field existed read as on.
+   */
+  privacyMode: z.boolean().catch(true),
+  /** Stricter: only endpoints with a Zero Data Retention policy (`provider.zdr: true`). Off by default — fewer models qualify. */
+  zeroDataRetention: z.boolean().catch(false),
   /** Optional OpenRouter key entered in the UI (sealed with secretBox); the env key is used otherwise. */
   apiKeySealed: z.string().max(2000).nullable().catch(null),
 });
@@ -74,6 +82,8 @@ export const aiSettingsUpdateSchema = z
     publicAdvisorEnabled: z.boolean(),
     publicDailyUsd: z.number().min(0).max(100),
     docCheckEnabled: z.boolean(),
+    privacyMode: z.boolean(),
+    zeroDataRetention: z.boolean(),
     apiKey: z.string().max(400),
   })
   .partial()
@@ -92,6 +102,12 @@ export const saveAiSettings = async (patch: z.infer<typeof aiSettingsUpdateSchem
   await prisma.setting.upsert({ where: { key: SETTING_KEY }, create: { key: SETTING_KEY, value: next }, update: { value: next } });
   cache = { value: next, at: Date.now() };
   return next;
+};
+
+/** OpenRouter provider routing for the privacy settings, spread into every ChatRequest (complete, chat, translate). */
+export const privacyRouting = (s: Pick<AiSettings, 'privacyMode' | 'zeroDataRetention'>): { provider?: ProviderPreferences } => {
+  if (!s.privacyMode && !s.zeroDataRetention) return {};
+  return { provider: { ...(s.privacyMode ? { data_collection: 'deny' as const } : {}), ...(s.zeroDataRetention ? { zdr: true } : {}) } };
 };
 
 /** The OpenRouter key: the one stored in settings when present, else OPENROUTER_API_KEY. Never sent to a client. */

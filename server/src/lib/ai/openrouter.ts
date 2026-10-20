@@ -33,6 +33,14 @@ export interface ReasoningParam {
   exclude?: boolean;
 }
 
+/** OpenRouter provider routing (openrouter.ai/docs → provider selection); only the fields we use. */
+export interface ProviderPreferences {
+  /** "deny": only providers that do not store user data non-transiently or train on it. */
+  data_collection?: 'allow' | 'deny';
+  /** true: only endpoints with a Zero Data Retention policy. */
+  zdr?: boolean;
+}
+
 export interface ChatRequest {
   model: string;
   messages: ChatMessage[];
@@ -41,6 +49,8 @@ export interface ChatRequest {
   max_tokens: number;
   reasoning?: ReasoningParam;
   temperature?: number;
+  /** From the AI privacy settings (settings.ts privacyRouting); absent when privacy routing is off. */
+  provider?: ProviderPreferences;
 }
 
 /** One parsed `data:` object of the stream (OpenAI chunk format plus OpenRouter's usage/error fields). */

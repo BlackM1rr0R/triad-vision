@@ -10,6 +10,7 @@ import { pagesSign } from '@/i18n/pagesSign';
 import { Drawer } from '@/components/admin/Drawer';
 import { Spinner } from '@/components/ui/Spinner';
 import { useEsignError, type Prefill, type SignOrder, type SignerDraft, type SignerRole, type StaffRequestDetail } from './api';
+import { ContractCheckButton } from '@/components/aiCase/ContractCheckButton';
 
 registerCopy(pagesSign);
 
@@ -336,6 +337,16 @@ export const NewSignatureRequest = ({
                 </div>
               )}
             </div>
+            {/* AI contract check of the chosen PDF before sending (case requests only). */}
+            {caseId && (
+              <div className="mt-2">
+                <ContractCheckButton
+                  caseId={caseId}
+                  source={source === 'upload' ? (file ? { file } : null) : source === 'caseDocument' ? (documentId ? { documentId } : null) : drivePick ? { nodeId: drivePick.id } : null}
+                  onSendAnyway={() => void submit(true)}
+                />
+              </div>
+            )}
           </fieldset>
 
           {/* Parties */}

@@ -10,6 +10,7 @@ import { hasMinRole } from '@/lib/types';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { useRealtime } from '@/lib/realtime';
 import { MyTasksWidget } from '@/components/tasks/MyTasksWidget';
+import { InboxTodayWidget } from '@/components/aiMail/InboxTodayWidget';
 import { useHome, useOptionalSummary, useWorkspaceInvalidate } from '@/components/workspace/api';
 import { AnnouncementsCard } from '@/components/workspace/Announcements';
 import { NotesBoard } from '@/components/workspace/NotesBoard';
@@ -99,6 +100,9 @@ export default function WorkspaceHome() {
             <QuickLink to="/workspace/contacts?new=1" icon={BookUser} label={t('ws.home.quick.contact')} />
           </div>
         </header>
+
+        {/* AI mail triage: today's shared inbox (info@…) by urgency / category, hidden without such a mailbox */}
+        <InboxTodayWidget />
 
         {(mail.data || chat.data || events.data) && (
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">

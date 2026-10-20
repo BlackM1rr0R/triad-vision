@@ -154,6 +154,7 @@ model User {
   signatureSignings     SignatureSigner[]        @relation("SignatureSignerUser")
   aiConversations       AiConversation[]
   aiActions             AiAction[]
+  candidateProfiles     CandidateProfileDraft[]
 
   @@index([companyId])
 }
@@ -374,6 +375,8 @@ model Case {
   surveys           SatisfactionSurvey[]
   signatureRequests SignatureRequest[]
   settlements       SettlementEntry[]
+  aiRuns            CaseAiRun[]
+  aiFindingStates   CaseAiFindingState[]
   /// Partner (middleman) who brought this client; their folder in the shared drive holds the client folder.
   partnerId         String?
   partner           ReferralPartner?      @relation(fields: [partnerId], references: [id], onDelete: SetNull)
@@ -777,19 +780,20 @@ enum ApplicationStatus {
 }
 
 model VacancyApplication {
-  id          String            @id @default(cuid())
-  vacancyId   String
-  vacancy     Vacancy           @relation(fields: [vacancyId], references: [id], onDelete: Cascade)
-  userId      String
-  user        User              @relation(fields: [userId], references: [id], onDelete: Cascade)
-  status      ApplicationStatus @default(NEW)
-  matchScore  Int? // 0–100 at the time of applying / last recompute
-  message     String?           @db.Text // candidate's note
-  staffNote   String?           @db.Text // internal
-  companyNote String?           @db.Text // employer feedback
-  createdAt   DateTime          @default(now())
-  updatedAt   DateTime          @updatedAt
-  interviews  Interview[]
+  id           String                 @id @default(cuid())
+  vacancyId    String
+  vacancy      Vacancy                @relation(fields: [vacancyId], references: [id], onDelete: Cascade)
+  userId       String
+  user         User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status       ApplicationStatus      @default(NEW)
+  matchScore   Int? // 0–100 at the time of applying / last recompute
+  message      String?                @db.Text // candidate's note
+  staffNote    String?                @db.Text // internal
+  companyNote  String?                @db.Text // employer feedback
+  createdAt    DateTime               @default(now())
+  updatedAt    DateTime               @updatedAt
+  interviews   Interview[]
+  profileDraft CandidateProfileDraft?
 
   @@unique([vacancyId, userId])
   @@index([userId])
@@ -1474,6 +1478,7 @@ model MailMessage {
   updatedAt      DateTime           @updatedAt
   attachments    MailAttachment[]
   labels         MailMessageLabel[]
+  triage         MailTriage? // AI triage of an incoming message (lib/ai/features/mailTriage.ts)
 
   @@unique([folderId, uid])
   @@index([accountId, date])
@@ -2739,4 +2744,176 @@ model AiAction {
   decidedAt      DateTime?
 
   @@index([conversationId, status])
+}
+
+// ─── Employer AI tools ────────────────────────────────────────────────
+
+/// German candidate profile ("Kandidatenprofil") for an employer, drafted by AI from anonymised data and
+/// edited by staff. One per application (or several candidate-level drafts without a vacancy). Visible in the
+/// employer portal once `sharedAt` is set ("Propose to employer") and the application is employer-visible.
+model CandidateProfileDraft {
+  id            String              @id @default(cuid())
+  applicationId String?             @unique
+  application   VacancyApplication? @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  userId        String
+  user          User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  vacancyId     String?
+  language      String              @default("de") @db.VarChar(5) // de | en
+  content       Json // {headline, summary, experience[], languages[], licences[], education, availability, whyFit[], openPoints[]}
+  model         String?             @db.VarChar(120)
+  costMicros    Int                 @default(0)
+  createdById   String?
+  sharedAt      DateTime?
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+
+  @@index([userId])
+}
+
+// ─── Case AI checks (consistency, contract, VIDEX) ──────────────────────
+
+enum CaseAiKind {
+  CONSISTENCY
+  CONTRACT
+  VIDEX
+}
+
+enum CaseAiFindingStatus {
+  OK
+  FIXED
+  IGNORED
+}
+
+/// One click on an AI case check (lib/ai/features/caseAi): the structured result the staff member works through.
+/// The model only proposes; changes are applied by staff through the case AI routes (audited, in the timeline).
+model CaseAiRun {
+  id          String     @id @default(cuid())
+  caseId      String
+  case        Case       @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  kind        CaseAiKind
+  /// Document checked (contract check) when it was a case document.
+  subjectId   String?    @db.VarChar(191)
+  result      Json
+  model       String?    @db.VarChar(120)
+  costMicros  Int        @default(0)
+  createdById String?    @db.VarChar(191)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  @@index([caseId, kind, createdAt])
+}
+
+/// Staff decision on one finding of a case AI check ("Mark as OK", fixed, ignored); survives re-runs by `key`.
+model CaseAiFindingState {
+  id     String              @id @default(cuid())
+  caseId String
+  case   Case                @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  kind   CaseAiKind
+  key    String              @db.VarChar(191)
+  status CaseAiFindingStatus
+  note   String?             @db.VarChar(300)
+  byId   String?             @db.VarChar(191)
+  at     DateTime            @default(now())
+
+  @@unique([caseId, kind, key])
+}
+
+// ─── AI mail triage ───────────────────────────────────────────────────
+
+enum MailTriageCategory {
+  CANDIDATE
+  EMPLOYER
+  PARTNER
+  EXISTING_CLIENT
+  SUPPLIER
+  SPAM
+  OTHER
+}
+
+enum MailTriageUrgency {
+  URGENT
+  NORMAL
+  LOW
+}
+
+enum MailTriageStatus {
+  PENDING // queued / running
+  NEW // analysed, waiting for a click
+  ACTIONED // lead created, assigned, answered or marked as spam
+  DISMISSED
+  SKIPPED // auto-reply, bounce, own message (no AI call)
+  FAILED // AI not available or unusable answer (see error)
+}
+
+/// AI triage of one incoming e-mail in a shared mailbox (info@…): category, urgency, summary, extracted
+/// contact and a reply draft. The model only proposes; every action is a staff click (or an auto-action the
+/// super admin switched on in the routing rules).
+model MailTriage {
+  id                  String              @id @default(cuid())
+  messageId           String              @unique
+  message             MailMessage         @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  accountId           String
+  rfcMessageId        String?             @db.VarChar(500) // Message-ID header (dedupe across mailboxes)
+  status              MailTriageStatus    @default(PENDING)
+  category            MailTriageCategory?
+  urgency             MailTriageUrgency?
+  language            String?             @db.VarChar(8) // az | de | en | ru | other
+  summary             Json? // { lang, text, en }
+  contact             Json? // { name, email, phone, company, country }
+  intent              String?             @db.VarChar(300)
+  visaCategorySlug    String?             @db.VarChar(120)
+  assigneeRole        String?             @db.VarChar(40)
+  existingClient      Json? // resolved server-side: { userId, name, role, caseId, caseNumber }
+  suggestedAssigneeId String?
+  replyDraft          Json? // { language, subject, body }
+  leadInquiryId       String?
+  assignedToId        String?
+  actions             Json? // [{ type, by, at, ... }]
+  skipReason          String?             @db.VarChar(40)
+  error               String?             @db.VarChar(120)
+  model               String?             @db.VarChar(120)
+  costMicros          Int                 @default(0)
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+
+  @@index([accountId, createdAt])
+  @@index([rfcMessageId])
+  @@index([status])
+}
+
+/// Weekly management report (lib/aiMgmt/report.ts): deterministic numbers for one Baku week (Mon–Sun) and the AI narrative per locale.
+model ManagementReport {
+  id         String   @id @default(cuid())
+  weekStart  DateTime @unique // Monday 00:00 Asia/Baku of the reported week, as a UTC instant
+  data       Json // numbers: this week vs the week before, stuck cases, staff metrics …
+  narrative  Json? // { az?: { headline, highlights[], problems[], recommendations[{ text, metric }] }, de?: … }
+  model      String?  @db.VarChar(120)
+  costMicros Int      @default(0)
+  sentTo     Int      @default(0) // e-mails sent by the Monday job
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+/// Suspicious activity found by the deterministic rules in lib/aiMgmt/security (no AI needed for detection).
+model SecurityAlert {
+  id           String    @id @default(cuid())
+  rule         String    @db.VarChar(40) // failedLoginsAccount | failedLoginsIp | newIpLogin | unusualHourLogin | bulkDownload | bulkDelete | twoFactorDisabled | roleEscalation | apiKeyCreated
+  severity     String    @db.VarChar(8) // LOW | MEDIUM | HIGH
+  status       String    @default("OPEN") @db.VarChar(16) // OPEN | ACKNOWLEDGED | FALSE_POSITIVE
+  fingerprint  String    @db.VarChar(191) // rule + subject: dedupe and false-positive suppression
+  userId       String? // the account concerned (plain id: kept when the user is deleted)
+  ip           String?   @db.VarChar(64)
+  facts        Json // structured facts shown in the UI and given to the AI
+  eventIds     Json // audit / session ids already covered (an event never raises two alerts)
+  hits         Int       @default(1)
+  explanation  Json? // AI: { az?: { summary, actions[] }, … }
+  actions      Json? // [{ action, by, at }]
+  firstSeenAt  DateTime  @default(now())
+  lastSeenAt   DateTime  @default(now())
+  resolvedAt   DateTime?
+  resolvedById String?
+  createdAt    DateTime  @default(now())
+
+  @@index([status, createdAt])
+  @@index([fingerprint, lastSeenAt])
 }
