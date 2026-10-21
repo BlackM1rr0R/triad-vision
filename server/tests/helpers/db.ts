@@ -8,6 +8,8 @@ export const resetDb = async () => {
   await prisma.driveSmartFolder.deleteMany();
   await prisma.driveFolderTemplate.deleteMany();
   await prisma.driveTag.deleteMany();
+  await prisma.managementReport.deleteMany(); // management AI (no foreign keys)
+  await prisma.securityAlert.deleteMany();
   await prisma.aiConversation.deleteMany();
   await prisma.settlementEntry.deleteMany();
   await prisma.settlementBeneficiary.deleteMany();

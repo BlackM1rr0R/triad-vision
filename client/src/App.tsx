@@ -95,6 +95,9 @@ const AdminInterviewPrep = lazy(() => import('./pages/admin/InterviewPrep'));
 const AdminFinance = lazy(() => import('./pages/admin/Finance'));
 const AdminAi = lazy(() => import('./pages/admin/Ai'));
 const AdminAiSettings = lazy(() => import('./pages/admin/AiSettings'));
+const AdminWeeklyReports = lazy(() => import('./pages/admin/WeeklyReports'));
+const AdminSecurityAlerts = lazy(() => import('./pages/admin/SecurityAlerts'));
+const AdminAiMailTriage = lazy(() => import('./pages/admin/AiMailTriage'));
 const AdminSurveys = lazy(() => import('./pages/admin/Surveys'));
 const AdminContractTemplates = lazy(() => import('./pages/admin/ContractTemplates'));
 const AdminCandidateRequests = lazy(() => import('./pages/admin/CandidateRequests'));
@@ -376,6 +379,30 @@ export default function App() {
               element={
                 <RequireAuth roles={['SUPER_ADMIN']}>
                   <AdminAiSettings />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="weekly-reports"
+              element={
+                <RequireAuth roles={['SUPER_ADMIN']}>
+                  <AdminWeeklyReports />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="security-alerts"
+              element={
+                <RequireAuth roles={['SUPER_ADMIN']}>
+                  <AdminSecurityAlerts />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="ai/mail-triage"
+              element={
+                <RequireAuth roles={['SUPER_ADMIN']}>
+                  <AdminAiMailTriage />
                 </RequireAuth>
               }
             />

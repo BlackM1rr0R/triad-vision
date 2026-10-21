@@ -18,6 +18,7 @@ import { StatusBadge } from '@/components/admin/StatusBadge';
 import { fmtDate, fullName } from '@/components/admin/labels';
 import { DefRow, EmptyState, ErrorBlock, LoadingBlock, PageHead, Panel } from '@/components/admin/ui';
 import { ScorePill } from '@/components/jobs/MatchMeter';
+import { CandidateProfileCard } from '@/components/aiEmployer/CandidateProfileCard';
 import { toastJobsError, useJobLabels } from '@/components/jobs/labels';
 import { APPLICATION_STATUS_TONE, EDUCATION_LEVELS, GERMAN_LEVELS, type ApplicationStatus, type Match, type VacancyStatus } from '@/components/jobs/types';
 
@@ -189,7 +190,7 @@ const AddToVacancyModal = ({ userId, onClose, presetVacancy }: { userId: string 
   );
 };
 
-const ApplicationCard = ({ a, onChanged }: { a: CandidateDetail['applications'][number]; onChanged: () => void }) => {
+const ApplicationCard = ({ a, userId, onChanged }: { a: CandidateDetail['applications'][number]; userId: string; onChanged: () => void }) => {
   const { t } = useTranslation();
   const { tr } = useL10n();
   const L = useJobLabels();
@@ -265,6 +266,9 @@ const ApplicationCard = ({ a, onChanged }: { a: CandidateDetail['applications'][
           </button>
         )}
       </div>
+      <div className="mt-3">
+        <CandidateProfileCard userId={userId} applicationId={a.id} canPropose={!!a.vacancy.company && a.status !== 'WITHDRAWN'} onChanged={onChanged} />
+      </div>
       {a.status === 'ACCEPTED' && (
         <button type="button" className="btn-primary btn-sm mt-3" disabled={linkCase.isPending} onClick={() => linkCase.mutate()}>
           {linkCase.isPending ? <Spinner className="size-3.5" /> : <FolderPlus className="size-3.5" />} {t('jobsArea.admin.candidates.createCase')}
@@ -320,6 +324,9 @@ const CandidateDrawer = ({ id, onClose, onAdd }: { id: string | null; onClose: (
               <DefRow label={t('jobsArea.profile.registered')}>{fmtDate(data.createdAt)}</DefRow>
             </dl>
             {data.about && <p className="mt-3 rounded-md bg-surface px-3 py-2 text-xs whitespace-pre-line text-ink/80">{data.about}</p>}
+            <div className="mt-3">
+              <CandidateProfileCard userId={data.id} />
+            </div>
           </Panel>
 
           <Panel
@@ -335,7 +342,7 @@ const CandidateDrawer = ({ id, onClose, onAdd }: { id: string | null; onClose: (
             ) : (
               <ul className="space-y-3">
                 {data.applications.map((a) => (
-                  <ApplicationCard key={`${a.id}-${a.status}`} a={a} onChanged={refresh} />
+                  <ApplicationCard key={`${a.id}-${a.status}`} a={a} userId={data.id} onChanged={refresh} />
                 ))}
               </ul>
             )}

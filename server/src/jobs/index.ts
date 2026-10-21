@@ -25,3 +25,4 @@ import './driveIndex.js'; // drive full-text index (text layer, DOCX, XLSX, OCR)
 import './aiBriefing.js'; // daily AI briefing e-mail for opted-in admins (08:00 Baku)
 import './originals.js'; // overdue physical originals (given out / apostille / courier) → assigned staff
 import './retention-drive.js'; // DSGVO retention of drive client folders (archive, warnings, recycle bin)
+import './aiMgmt.js'; // weekly management report (Monday 08:00 Baku) + security alert rules (every 10 min)

@@ -124,6 +124,8 @@ export const messageInclude = {
   labels: { include: { label: true } },
   folder: { select: { id: true, role: true, name: true, path: true } },
   case: { select: { id: true, number: true, client: { select: { firstName: true, lastName: true } } } },
+  // AI mail triage chips (lib/ai/features/mailTriage.ts)
+  triage: { select: { status: true, category: true, urgency: true } },
 } satisfies Prisma.MailMessageInclude;
 
 export type MessageRow = Prisma.MailMessageGetPayload<{ include: typeof messageInclude }>;
@@ -171,6 +173,7 @@ export const messageListDto = (m: MessageRow, extra: { threadCount?: number } = 
   caseId: m.caseId,
   labels: m.labels.map((l) => labelDto(l.label)),
   threadCount: extra.threadCount ?? 1,
+  ai: m.triage ? { status: m.triage.status, category: m.triage.category, urgency: m.triage.urgency } : null,
 });
 
 export const messageDetailDto = (m: MessageRow) => ({

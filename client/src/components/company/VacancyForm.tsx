@@ -7,6 +7,7 @@ import { Flag } from '@/components/ui/Flag';
 import { Switch } from '@/components/admin/ui';
 import { useJobLabels } from '@/components/jobs/labels';
 import { EMPLOYMENT_TYPES, GERMAN_LEVELS, SECTORS, type VacancyRow } from '@/components/jobs/types';
+import { VacancyAiPanel, type AiFeature } from '@/components/aiEmployer/VacancyAiPanel';
 
 type L10nText = Record<Locale, string>;
 
@@ -132,19 +133,24 @@ export const VacancyForm = ({
   formId = 'vacancy-form',
   hideSubmit,
   staff = false,
+  ai,
 }: {
   initial: VacancyFormState;
-  onSubmit: (state: VacancyFormState) => void;
+  /** `aiFeatures`: which AI tools filled text in this form (for the audit entry after saving). */
+  onSubmit: (state: VacancyFormState, aiFeatures: AiFeature[]) => void;
   busy?: boolean;
   submitLabel: string;
   extra?: (state: VacancyFormState, set: <K extends keyof VacancyFormState>(k: K, v: VacancyFormState[K]) => void) => ReactNode;
   formId?: string;
   hideSubmit?: boolean;
   staff?: boolean;
+  /** Shows the "Write with AI" panel (staff or employer portal). */
+  ai?: 'staff' | 'company';
 }) => {
   const { t, i18n } = useTranslation();
   const L = useJobLabels();
   const [f, setF] = useState<VacancyFormState>(initial);
+  const [aiUsed, setAiUsed] = useState<AiFeature[]>([]);
   const uiLang = (i18n.resolvedLanguage ?? 'de').slice(0, 2) as Locale;
   const [lang, setLang] = useState<Locale>(LOCALES.find((l) => initial.title[l]) ?? (staff ? 'az' : uiLang));
   const set = <K extends keyof VacancyFormState>(k: K, v: VacancyFormState[K]) => setF((s) => ({ ...s, [k]: v }));
@@ -155,7 +161,7 @@ export const VacancyForm = ({
 
   const submit = (e: FormEvent) => {
     e.preventDefault();
-    if (valid) onSubmit(f);
+    if (valid) onSubmit(f, aiUsed);
   };
 
   const placeholder = (k: 'title' | 'description' | 'requirements' | 'benefits') =>
@@ -163,6 +169,14 @@ export const VacancyForm = ({
 
   return (
     <form id={formId} onSubmit={submit} className="space-y-8">
+      {ai && (
+        <VacancyAiPanel
+          mode={ai}
+          f={f}
+          apply={(patch) => setF((s) => ({ ...s, ...patch }))}
+          onUsed={(x) => setAiUsed((u) => (u.includes(x) ? u : [...u, x]))}
+        />
+      )}
       <section className="space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <p className="flex items-center gap-2 text-sm font-bold text-navy-900">

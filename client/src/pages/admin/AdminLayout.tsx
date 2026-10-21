@@ -78,6 +78,7 @@ import { registerCopy } from '@/i18n';
 import { adminCopy } from '@/i18n/admin';
 import { roleLabel, fmtRelative } from '@/components/admin/labels';
 import { HelpButton } from '@/components/admin/help/HelpButton';
+import { FileBarChart2, ShieldAlert } from 'lucide-react'; // weekly reports, security alerts
 
 registerCopy(adminCopy);
 
@@ -96,6 +97,8 @@ const MAIN_NAV: NavItem[] = [
   { to: '/admin', label: 'dashboard', icon: LayoutDashboard, end: true },
   { to: '/admin/oversight', label: 'oversight', icon: Eye, superOnly: true },
   { to: '/admin/ai', label: 'ai', icon: Sparkles, superOnly: true },
+  { to: '/admin/weekly-reports', label: 'weeklyReports', icon: FileBarChart2, superOnly: true },
+  { to: '/admin/security-alerts', label: 'securityAlerts', icon: ShieldAlert, superOnly: true },
   { to: '/admin/cases', label: 'cases', icon: FolderKanban },
   { to: '/admin/register', label: 'register', icon: Sheet },
   { to: '/admin/settlements', label: 'settlements', icon: Banknote },
@@ -155,6 +158,8 @@ const pageTitleKey = (pathname: string) => {
   if (matchPath('/admin', pathname)) return 'admin.nav.dashboard';
   if (matchPath('/admin/oversight', pathname)) return 'admin.nav.oversight';
   if (matchPath('/admin/ai/*', pathname)) return 'admin.nav.ai';
+  if (matchPath('/admin/weekly-reports', pathname)) return 'admin.nav.weeklyReports';
+  if (matchPath('/admin/security-alerts', pathname)) return 'admin.nav.securityAlerts';
   if (matchPath('/admin/oversight/staff/:id', pathname)) return 'admin.layout.staff';
   if (matchPath('/admin/cases', pathname)) return 'admin.nav.cases';
   if (matchPath('/admin/cases/:id', pathname)) return 'admin.layout.case';

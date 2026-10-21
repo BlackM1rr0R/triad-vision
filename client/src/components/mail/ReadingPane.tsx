@@ -123,6 +123,7 @@ export const ReadingPane = ({
   onAction,
   onBack,
   onClose,
+  aiSlot,
 }: {
   message: MessageDetail | undefined;
   thread: MessageDetail[] | undefined;
@@ -134,6 +135,8 @@ export const ReadingPane = ({
   onAction: (a: PaneAction) => void;
   onBack?: () => void;
   onClose: () => void;
+  /** AI triage card shown above the message body */
+  aiSlot?: ReactNode;
 }) => {
   const { t } = useTranslation();
   const [menu, setMenu] = useState<null | 'snooze' | 'move' | 'labels' | 'more'>(null);
@@ -323,6 +326,7 @@ export const ReadingPane = ({
             {conversation && thread && thread.length > 1 && <span className="text-[0.65rem] font-semibold text-muted">{thread.length} ✉</span>}
           </div>
         </div>
+        {aiSlot}
         <div className={clsx('space-y-2 px-2 pb-6', list.length === 1 && 'px-0')}>
           {list.map((m) => (
             <MessageCard

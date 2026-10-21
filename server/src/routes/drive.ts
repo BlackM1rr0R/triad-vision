@@ -505,6 +505,8 @@ driveRouter.get('/nodes/:id/content', async (req, res) => {
   const mime = row.mimeType ?? 'application/octet-stream';
   const inline = !download && INLINE_MIME.has(mime);
   if (!inline && !allows(level, 'DOWNLOAD')) throw new HttpError(403, 'INSUFFICIENT_ACCESS');
+  // Explicit staff downloads feed the bulk-download security rule (lib/aiMgmt/security).
+  if (download && hasMinRole(req.user!.role, 'STAFF')) void audit(req, 'DRIVE_DOWNLOADED', `drive:${id}`, { name: row.name });
   sendStored(res, storagePath(row.storageKey!), row.name, mime, inline);
 });
 

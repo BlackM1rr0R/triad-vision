@@ -1,3 +1,5 @@
+import type { AiFilter, TriageChip } from '@/components/aiMail/api';
+
 export type MailProvider = 'GMAIL' | 'OUTLOOK' | 'YANDEX' | 'MAILRU' | 'CUSTOM';
 export type SyncStatus = 'IDLE' | 'SYNCING' | 'OK' | 'ERROR';
 export type FolderRole = 'INBOX' | 'SENT' | 'DRAFTS' | 'TRASH' | 'JUNK' | 'ARCHIVE' | 'OTHER';
@@ -107,6 +109,8 @@ export interface MessageRow {
   caseId: string | null;
   labels: MailLabel[];
   threadCount: number;
+  /** AI mail triage chips (null: not analysed) */
+  ai?: TriageChip | null;
 }
 
 export interface MessageDetail extends MessageRow {
@@ -139,6 +143,8 @@ export interface ListParams {
   hasAttachments?: boolean;
   unread?: boolean;
   threads?: boolean;
+  /** AI triage filter */
+  ai?: AiFilter;
 }
 
 export type BulkAction = 'read' | 'unread' | 'flag' | 'unflag' | 'move' | 'trash' | 'archive' | 'snooze' | 'unsnooze' | 'label' | 'unlabel' | 'delete' | 'spam';

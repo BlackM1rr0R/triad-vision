@@ -9,6 +9,7 @@ import { fmtDateTime, toastError } from '../labels';
 import { Panel } from '../ui';
 import { DocIcon, DocLinks, uploadCaseDocument, useCaseRefresh } from './shared';
 import { SendContractForSignature } from '@/components/esign/CaseSignatures';
+import { ContractCheckButton } from '@/components/aiCase/ContractCheckButton';
 
 /** PDF picker that uploads a contract (stage CONTRACT). The server sends it to the client and moves the status. */
 export const ContractUpload = ({
@@ -91,7 +92,14 @@ export const ContractBox = ({ c }: { c: CaseDetail }) => {
     <Panel
       title={t('admin.case.contract.title')}
       icon={FileSignature}
-      actions={canReupload ? <SendContractForSignature caseId={c.id} label={t('admin.case.contract.newVersion')} variant="ghost" /> : undefined}
+      actions={
+        k?.file || canReupload ? (
+          <>
+            {k?.file && <ContractCheckButton caseId={c.id} source={{ documentId: k.file.id }} />}
+            {canReupload && <SendContractForSignature caseId={c.id} label={t('admin.case.contract.newVersion')} variant="ghost" />}
+          </>
+        ) : undefined
+      }
     >
       {!k ? (
         <p className="text-sm text-muted">{t('admin.case.contract.notSent')}</p>

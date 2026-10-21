@@ -23,6 +23,8 @@ import { SHORTCUT_LIST, useMailShortcuts } from '@/components/mail/shortcuts';
 import type { ComposeSeed, ListParams, MessageDetail, MessageRow, View } from '@/components/mail/types';
 import { VIEWS } from '@/components/mail/types';
 import { errorText, subjectOf } from '@/components/mail/utils';
+import { TriageCard } from '@/components/aiMail/TriageCard';
+import { AI_FILTERS, draftToHtml, useTriageStatus, type AiFilter } from '@/components/aiMail/api';
 
 registerCopy(pagesMail);
 
@@ -70,6 +72,16 @@ export default function WorkspaceMail() {
   const selection: Selection = useMemo(() => ({ accountId: state.accountId, view: state.view, folderId: state.folderId, labelId: state.labelId }), [state]);
   const messageId = state.messageId;
   const filters: ListFilters = useMemo(() => ({ q: sp.get('q') ?? '', from: sp.get('from') ?? '', to: sp.get('to') ?? '', unread: sp.get('unread') === '1', hasAttachments: sp.get('att') === '1' }), [sp]);
+  const aiParam = sp.get('ai');
+  const aiFilter: AiFilter | null = aiParam && (AI_FILTERS as string[]).includes(aiParam) ? (aiParam as AiFilter) : null;
+  const setAiFilter = (f: AiFilter | null) => {
+    const next = new URLSearchParams(sp);
+    if (f) next.set('ai', f);
+    else next.delete('ai');
+    setSp(next, { replace: true });
+  };
+  const triageStatus = useTriageStatus();
+  const triageOn = !!triageStatus.data?.enabled;
   const [threads, setThreadsState] = useState(readThreads);
   const setThreads = (on: boolean) => {
     setThreadsState(on);
@@ -115,8 +127,9 @@ export default function WorkspaceMail() {
       unread: filters.unread || undefined,
       hasAttachments: filters.hasAttachments || undefined,
       threads: threads || undefined,
+      ai: aiFilter ?? undefined,
     }),
-    [selection, filters, threads],
+    [selection, filters, threads, aiFilter],
   );
   const list = useMessageList(listParams, accounts.length > 0);
   const items: MessageRow[] = useMemo(() => list.data?.pages.flatMap((p) => p.items) ?? [], [list.data]);
@@ -138,7 +151,11 @@ export default function WorkspaceMail() {
   // Lists and counts refresh on every push; the "new mail" toast is shown by the workspace shell
   // (useMailPush), which skips it while this page shows the inbox the message landed in.
   useRealtime('mail.new', () => invalidate());
-  useRealtime('mail.updated', () => invalidate());
+  useRealtime('mail.updated', (p) => {
+    invalidate();
+    // AI triage finished in the background: refresh the card and the "Inbox today" counts.
+    if ((p as { reason?: string } | undefined)?.reason === 'triage') void qc.invalidateQueries({ queryKey: ['ai-mail'] });
+  });
 
   // ─── Selection (checkboxes) ───
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -411,6 +428,8 @@ export default function WorkspaceMail() {
             myEmails={myEmails}
             searchRef={searchRef}
             title={title}
+            aiFilter={aiFilter}
+            onAiFilter={triageOn || aiFilter ? setAiFilter : undefined}
           />
         </div>
         <div className="relative">
@@ -452,6 +471,15 @@ export default function WorkspaceMail() {
           onAction={(a) => act(a)}
           onBack={messageId ? () => openMessage(null) : undefined}
           onClose={() => openMessage(null)}
+          aiSlot={
+            current && triageOn ? (
+              <TriageCard
+                message={current}
+                onUseDraft={(d) => startCompose({ mode: 'reply', original: current, accountId: current.accountId, subject: d.subject, html: draftToHtml(d.body) })}
+                onSpam={() => act({ type: 'spam' })}
+              />
+            ) : null
+          }
         />
         {!messageId && (
           <button type="button" onClick={() => setShortcutsOpen(true)} className="absolute right-3 bottom-3 hidden items-center gap-1.5 rounded-lg border border-line bg-card px-2.5 py-1.5 text-xs text-muted hover:text-ink lg:inline-flex">

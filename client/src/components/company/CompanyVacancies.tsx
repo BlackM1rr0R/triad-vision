@@ -13,6 +13,7 @@ import { fmtDate } from '@/components/admin/labels';
 import { toastJobsError, useJobLabels } from '@/components/jobs/labels';
 import { VACANCY_STATUS_TONE, type Company, type VacancyRow } from '@/components/jobs/types';
 import { VacancyForm, formFromVacancy, payloadFromForm } from './VacancyForm';
+import { reportAiSaved } from '@/components/aiEmployer/shared';
 import { Empty, Loading, Section } from './shared';
 
 type Row = VacancyRow & { candidates: Partial<Record<string, number>> };
@@ -170,11 +171,12 @@ export const CompanyVacancyEditor = ({ company }: { company: Company }) => {
     enabled: !isNew,
   });
   const save = useMutation({
-    mutationFn: async (body: ReturnType<typeof payloadFromForm>) =>
+    mutationFn: async ({ body }: { body: ReturnType<typeof payloadFromForm>; ai: string[] }) =>
       isNew
         ? (await api.post<{ vacancy: VacancyRow }>('/company/vacancies', body)).data.vacancy
         : (await api.patch<{ vacancy: VacancyRow }>(`/company/vacancies/${id}`, body)).data.vacancy,
-    onSuccess: (v) => {
+    onSuccess: (v, { ai }) => {
+      reportAiSaved('company', v.id, ai);
       toast.success(isNew ? t('jobsArea.portal.vacancies.created') : t('jobsArea.portal.vacancies.saved'));
       invalidate();
       if (isNew) navigate(`/company/vacancies/${v.id}`, { replace: true });
@@ -229,9 +231,10 @@ export const CompanyVacancyEditor = ({ company }: { company: Company }) => {
           <VacancyForm
             key={v?.updatedAt ?? 'new'}
             initial={formFromVacancy(v)}
+            ai="company"
             busy={save.isPending}
             submitLabel={isNew ? t('jobsArea.portal.vacancies.saveDraft') : t('jobsArea.common.save')}
-            onSubmit={(f) => save.mutate(payloadFromForm(f, false))}
+            onSubmit={(f, ai) => save.mutate({ body: payloadFromForm(f, false), ai })}
           />
         )}
       </Section>

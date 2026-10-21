@@ -3,6 +3,8 @@ import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
 import { Archive, CheckSquare, Clock, Flag, Inbox, Mail, MailOpen, MessagesSquare, Paperclip, Search, SlidersHorizontal, Square, Tag, Trash2, X } from 'lucide-react';
 import { Spinner } from '@/components/ui/Spinner';
+import { AiFilterChips, TriageRowChips } from '@/components/aiMail/TriageChips';
+import type { AiFilter } from '@/components/aiMail/api';
 import type { MessageRow, View } from './types';
 import { avatarTone, displayName, fmtListDate, initialsOf, subjectOf } from './utils';
 
@@ -44,6 +46,8 @@ export const MessageList = ({
   myEmails,
   searchRef,
   title,
+  aiFilter = null,
+  onAiFilter,
 }: {
   items: MessageRow[];
   view: View | null;
@@ -66,6 +70,9 @@ export const MessageList = ({
   myEmails: Set<string>;
   searchRef: React.RefObject<HTMLInputElement | null>;
   title: string;
+  /** AI triage filter chips (shown when onAiFilter is given) */
+  aiFilter?: AiFilter | null;
+  onAiFilter?: (f: AiFilter | null) => void;
 }) => {
   const { t } = useTranslation();
   const [q, setQ] = useState(filters.q);
@@ -100,7 +107,7 @@ export const MessageList = ({
 
   const allSelected = items.length > 0 && items.every((m) => selected.has(m.id));
   const isSent = view === 'sent' || view === 'drafts';
-  const searching = !!(filters.q || filters.from || filters.to || filters.unread || filters.hasAttachments);
+  const searching = !!(filters.q || filters.from || filters.to || filters.unread || filters.hasAttachments || aiFilter);
 
   return (
     <div className="flex h-full min-w-0 flex-col">
@@ -139,6 +146,7 @@ export const MessageList = ({
             </>
           )}
         </div>
+        {onAiFilter && <AiFilterChips value={aiFilter} onChange={onAiFilter} />}
       </div>
 
       {selected.size > 0 ? (
@@ -240,6 +248,7 @@ export const MessageList = ({
                         {m.isDraft && <span className="mr-1 text-danger">{t('mail.list.draft')}:</span>}
                         {subjectOf(m)}
                       </span>
+                      <TriageRowChips ai={m.ai} />
                       {m.hasAttachments && <Paperclip className="size-3.5 shrink-0 text-muted" aria-hidden />}
                       {m.flagged && <Flag className="size-3.5 shrink-0 fill-amber-400 text-amber-500" aria-hidden />}
                       {m.snoozedUntil && <Clock className="size-3.5 shrink-0 text-violet-500" aria-hidden />}

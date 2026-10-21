@@ -119,8 +119,13 @@ const compact = (l: string) => l.replace(/\s/g, '').toUpperCase().replace(/[^A-Z
 export const mrzCandidates = (text: string, now = new Date()): MrzResult[] => {
   const scored: { mrz: MrzResult; score: number }[] = [];
   const plain = parseMrzText(text, now);
-  if (plain) scored.push({ mrz: plain, score: (plain.valid ? 100 : 0) - 1 });
   const lines = text.split(/\r?\n/).map(compact).filter((l) => l.length >= 30);
+  // The plain parse reads the same raw lines, so it pays the same noise penalty as the repaired
+  // variants (plus one): otherwise a reading whose check digits hold but whose names still carry
+  // tesseract's K/L filler junk would beat its own cleaned-up repair.
+  const pair = lines.findIndex((l, i) => i + 1 < lines.length && /^P[A-Z<]/.test(l) && l.includes('<<', 2) && /[0-9]/.test(lines[i + 1]));
+  const plainNoise = pair < 0 ? 0 : Math.abs(lines[pair].length - 44) + Math.abs(lines[pair + 1].length - 44);
+  if (plain) scored.push({ mrz: plain, score: (plain.valid ? 100 : 0) - 1 - plainNoise });
   for (let i = 0; i + 1 < lines.length; i++) {
     const l1 = lines[i];
     const l2 = lines[i + 1];

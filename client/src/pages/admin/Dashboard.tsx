@@ -19,7 +19,11 @@ import { BarList } from '@/components/admin/charts';
 // Team tasks widget (own chunk, so the dashboard does not carry the task UI and its copy).
 const MyTasksWidget = lazy(() => import('@/components/tasks/MyTasksWidget').then((m) => ({ default: m.MyTasksWidget })));
 // Risky / stuck cases (staff AI rules, own chunk).
+// AI mail triage: "Inbox today" of the shared mailboxes (own chunk, hidden without one).
+const InboxTodayWidget = lazy(() => import('@/components/aiMail/InboxTodayWidget'));
 const RiskyCasesWidget = lazy(() => import('@/components/aiStaff/RiskyCasesWidget').then((m) => ({ default: m.RiskyCasesWidget })));
+// Open security alerts (super admin only, own chunk).
+const SecurityAlertsWidget = lazy(() => import('@/components/aiMgmt/SecurityAlertsWidget').then((m) => ({ default: m.SecurityAlertsWidget })));
 
 const INQUIRY_TONE: Record<InquiryStatus, string> = { NEW: 'bg-brand-500', IN_PROGRESS: 'bg-amber-400', DONE: 'bg-emerald-500', ARCHIVED: 'bg-slate-400' };
 
@@ -126,6 +130,16 @@ export default function Dashboard() {
         <Kpi label={t('admin.dashboard.avgDecision')} value={fmtDays(data.avgDaysToDecision)} icon={Timer} tone="bg-sky-100 text-sky-700" hint={t('admin.dashboard.avgDecisionHint')} />
         <Kpi label={t('admin.dashboard.upcoming')} value={data.appointments.length} icon={CalendarClock} tone="bg-violet-100 text-violet-700" hint={t('admin.dashboard.next14')} to="/admin/cases?status=APPOINTMENT_SCHEDULED" />
       </div>
+
+      {user?.role === 'SUPER_ADMIN' && (
+        <Suspense fallback={null}>
+          <SecurityAlertsWidget />
+        </Suspense>
+      )}
+
+      <Suspense fallback={null}>
+        <InboxTodayWidget />
+      </Suspense>
 
       <Suspense fallback={null}>
         <MyTasksWidget />
