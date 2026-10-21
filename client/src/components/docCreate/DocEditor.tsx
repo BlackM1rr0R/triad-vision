@@ -31,6 +31,7 @@ import {
 import { Spinner } from '@/components/ui/Spinner';
 import { driveError } from '@/components/drive/api';
 import { useDriveLock } from '@/components/drive/collab/useDriveLock';
+import { FinalBanner } from '@/components/drive/org/FinalBanner';
 import type { DriveItem } from '@/components/drive/types';
 import { createPdf, fetchLetterhead, fetchSource, isText, newId, updatePdf, type Align, type Block, type DocModel, type Run, type TableBlock, type TextBlock, type TextType } from './api';
 import { getOffsets, insertText, normalize, runsLength, runsText, sliceRuns, toggleMark } from './richText';
@@ -539,6 +540,7 @@ export default function DocEditor({ target, folderName, onClose, onSaved }: { ta
           {saving && <Spinner className="size-3.5" />} {saving ? t('docCreate.editor.saving') : t('docCreate.editor.save')}
         </button>
       </header>
+      {nodeId && <FinalBanner nodeId={nodeId} />}
       {(lock.status === 'other' || lock.status === 'error') && (
         <div role="status" className="flex shrink-0 items-center gap-2 border-b border-amber-300 bg-amber-50 px-4 py-2 text-xs text-amber-900 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-200">
           <span className="min-w-0 flex-1">{lock.status === 'other' ? t('driveCollab.lock.bannerOther', { name: lock.lockedBy.name }) : t('driveCollab.lock.bannerError')}</span>

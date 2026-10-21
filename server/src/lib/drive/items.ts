@@ -1,4 +1,4 @@
-import type { DriveAccess, DriveNodeKind, DriveSpace, Prisma } from '@prisma/client';
+import type { DocWorkflowStage, DriveAccess, DriveNodeKind, DriveSpace, Prisma } from '@prisma/client';
 import { prisma } from '../../db.js';
 import { INLINE_MIME } from '../fileCheck.js';
 import { badRequest } from '../http.js';
@@ -22,6 +22,11 @@ export const itemSelect = {
   createdBy: { select: { id: true, firstName: true, lastName: true } },
   lockedAt: true,
   lockedBy: { select: { id: true, firstName: true, lastName: true } },
+  // Document organisation (lib/drive/org): workflow column, "Final" lock, tags.
+  workflowStage: true,
+  workflowAt: true,
+  finalAt: true,
+  tags: { select: { tag: { select: { id: true, name: true, color: true } } }, orderBy: { createdAt: 'asc' } },
 } satisfies Prisma.DriveNodeSelect;
 
 export type ItemRow = Prisma.DriveNodeGetPayload<{ select: typeof itemSelect }>;
@@ -72,6 +77,12 @@ export interface DriveItem {
   commentCount?: number;
   /** Live edit lock ("… is editing"); stale locks are left out. */
   lock?: { by: PersonRef; at: Date };
+  /** Workflow board column (documents in client folders start in INCOMING). */
+  workflowStage?: DocWorkflowStage | null;
+  workflowAt?: Date | null;
+  /** "Final": nobody may change the file any more (super admins can lift it). */
+  finalAt?: Date | null;
+  tags?: { id: string; name: string; color: string }[];
   /** Search / recent / starred rows: where the item lives. */
   location?: { id: string; name: string; space: DriveSpace; system: boolean } | null;
 }
@@ -99,6 +110,10 @@ export const toItem = (row: ItemRow, myAccess: DriveAccess, extra: { childCount?
   ...(row.kind === 'FOLDER' ? { childCount: extra.childCount ?? 0 } : {}),
   ...(row.documentId ? { documentId: row.documentId } : {}),
   ...(row.lockedBy && row.lockedAt && !isStale(row.lockedAt) ? { lock: { by: row.lockedBy, at: row.lockedAt } } : {}),
+  workflowStage: row.workflowStage,
+  workflowAt: row.workflowAt,
+  finalAt: row.finalAt,
+  tags: row.tags.map((t) => t.tag),
 });
 
 /**

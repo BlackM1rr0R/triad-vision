@@ -6,6 +6,9 @@ import { cleanName, freeNameIn, safeUploadName } from './names.js';
 import { ensureSection, FAMILY_FOLDER, NO_CATEGORY_FOLDER, peekSection } from './roots.js';
 import { copyIntoStore, removeStored } from './storage.js';
 import { purgeNodes, restoreSubtree } from './trash.js';
+import { hashStored } from './org/hash.js';
+import { autoNameFor, caseNaming, requirementTitle } from './org/naming.js';
+import { applyTemplateToCaseFolder } from './org/templates.js';
 
 /**
  * Real client folders in the shared workspace. Every case gets one folder ("Vorname Nachname · Pass-Nr.
@@ -36,6 +39,7 @@ const caseSelect = {
   id: true,
   number: true,
   visaType: true,
+  visaCategoryId: true,
   parentCaseId: true,
   driveFolderId: true,
   relation: true,
@@ -101,7 +105,7 @@ const loadCase = (caseId: string) => prisma.case.findUnique({ where: { id: caseI
 
 const liveFolder = async (id: string | null) => {
   if (!id) return null;
-  const n = await prisma.driveNode.findUnique({ where: { id }, select: { id: true, name: true, parentId: true, kind: true, deletedAt: true } });
+  const n = await prisma.driveNode.findUnique({ where: { id }, select: { id: true, name: true, parentId: true, kind: true, deletedAt: true, archivedAt: true } });
   return n && !n.deletedAt && n.kind === 'FOLDER' ? n : null;
 };
 
@@ -126,6 +130,8 @@ const createFolder = async (c: CaseRow) => {
   const name = await uniqueName(parentId, base, c.number);
   const created = await prisma.driveNode.create({ data: { space: 'SHARED', kind: 'FOLDER', name, parentId }, select: { id: true } });
   await prisma.case.update({ where: { id: c.id }, data: { driveFolderId: created.id } });
+  // Sub-folders of the best matching folder template (lib/drive/org/templates.ts); never fails the folder.
+  await applyTemplateToCaseFolder(c, created.id);
   return created.id;
 };
 
@@ -153,6 +159,12 @@ export async function syncCaseFolder(caseId: string): Promise<void> {
     const folder = await liveFolder(c.driveFolderId);
     if (!folder) {
       await createFolder(c);
+      return;
+    }
+    // An archived client folder (moved to "Archiv/<Jahr>" by the retention policy) stays where it is; only its name follows.
+    if (folder.archivedAt && folder.parentId) {
+      const name = await uniqueName(folder.parentId, c.parentCaseId ? (await canonical(c)).base : clientFolderBaseName(c), c.number, folder.id);
+      if (folder.name !== name) await prisma.driveNode.update({ where: { id: folder.id }, data: { name } });
       return;
     }
     const { parentId, base } = await canonical(c);
@@ -312,7 +324,7 @@ export type CopyResult = 'copied' | 'exists' | 'missing' | 'skipped';
 const copyInner = async (documentId: string): Promise<CopyResult> => {
   const doc = await prisma.document.findUnique({
     where: { id: documentId },
-    select: { id: true, caseId: true, stage: true, originalName: true, storedName: true, mimeType: true, size: true, status: true, uploadedById: true },
+    select: { id: true, caseId: true, stage: true, originalName: true, storedName: true, mimeType: true, size: true, status: true, uploadedById: true, createdAt: true, requirement: { select: { title: true } } },
   });
   if (!doc || doc.status !== 'ACCEPTED') return 'skipped';
   if (await prisma.driveNode.findUnique({ where: { documentId: doc.id }, select: { id: true } })) return 'exists';
@@ -322,11 +334,29 @@ const copyInner = async (documentId: string): Promise<CopyResult> => {
   const folderId = await ensureFolderInner(doc.caseId);
   if (!folderId) return 'skipped';
   const stageId = await ensureChild(folderId, STAGE_FOLDER[doc.stage]);
-  const name = await freeNameIn(stageId, safeUploadName(doc.originalName), true);
+  // Automatic name "<Nachname>_<Vorname>_<requirement title>_<date>.pdf" when it is switched on.
+  const naming = await caseNaming(doc.caseId);
+  const auto = naming ? await autoNameFor(naming, { typ: requirementTitle(doc.requirement?.title), date: doc.createdAt, originalName: doc.originalName }) : null;
+  const name = await freeNameIn(stageId, auto ?? safeUploadName(doc.originalName), true);
   const key = await copyIntoStore(src);
   try {
+    const contentHash = await hashStored(key);
     await prisma.driveNode.create({
-      data: { space: 'SHARED', kind: 'FILE', name, parentId: stageId, storageKey: key, mimeType: doc.mimeType, size: stat.size, createdById: doc.uploadedById, documentId: doc.id },
+      data: {
+        space: 'SHARED',
+        kind: 'FILE',
+        name,
+        parentId: stageId,
+        storageKey: key,
+        mimeType: doc.mimeType,
+        size: stat.size,
+        createdById: doc.uploadedById,
+        documentId: doc.id,
+        contentHash,
+        // New case documents start on the workflow board in "Gələn".
+        workflowStage: 'INCOMING',
+        workflowAt: new Date(),
+      },
     });
   } catch (err) {
     await removeStored([key]);

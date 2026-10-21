@@ -82,10 +82,14 @@ const AnerkennungGuide = lazy(() => import('./pages/tools/Anerkennung'));
 const CitiesGuide = lazy(() => import('./pages/tools/Cities'));
 const AdminArrivals = lazy(() => import('./pages/admin/Arrivals'));
 const AdminExpiring = lazy(() => import('./pages/admin/Expiring'));
+const AdminOriginals = lazy(() => import('./pages/admin/Originals'));
+const AdminStorageReport = lazy(() => import('./pages/admin/StorageReport'));
+const QrRedirect = lazy(() => import('./pages/QrRedirect'));
 const AdminPartners = lazy(() => import('./pages/admin/Partners'));
 const AdminClientRegister = lazy(() => import('./pages/admin/ClientRegister'));
 const AdminSettlements = lazy(() => import('./pages/admin/Settlements'));
 const SheetEditor = lazy(() => import('./pages/workspace/SheetEditor'));
+const PdfEditor = lazy(() => import('./pages/workspace/PdfEditor'));
 const AccountInterviewPrep = lazy(() => import('./pages/account/InterviewPrep'));
 const AdminInterviewPrep = lazy(() => import('./pages/admin/InterviewPrep'));
 const AdminFinance = lazy(() => import('./pages/admin/Finance'));
@@ -280,6 +284,7 @@ export default function App() {
             <Route path="review" element={<ReviewPage />} />
             <Route path="sign/:token" element={<SignPage />} />
             <Route path="share/:token" element={<SharePage />} />
+            <Route path="q/:caseId" element={<QrRedirect />} />
             <Route
               path="account"
               element={
@@ -322,6 +327,7 @@ export default function App() {
             <Route index element={<Navigate to="home" replace />} />
             <Route path="home" element={<WorkspaceHome />} />
             <Route path="sheet/:id" element={<SheetEditor />} />
+            <Route path="pdf/:nodeId" element={<PdfEditor />} />
             <Route path="drive/*" element={<WorkspaceDrive />} />
             <Route path="tasks/*" element={<WorkspaceTasks />} />
             <Route path="mail/*" element={<WorkspaceMail />} />
@@ -412,6 +418,16 @@ export default function App() {
             <Route path="announcements" element={<AdminAnnouncements />} />
             <Route path="arrivals/*" element={<AdminArrivals />} />
             <Route path="expiring" element={<AdminExpiring />} />
+            <Route path="originals" element={<AdminOriginals />} />
+            <Route path="q/:caseId" element={<QrRedirect />} />
+            <Route
+              path="storage"
+              element={
+                <RequireAuth roles={['ADMIN', 'SUPER_ADMIN']}>
+                  <AdminStorageReport />
+                </RequireAuth>
+              }
+            />
             <Route path="partners/*" element={<AdminPartners />} />
             <Route path="register" element={<AdminClientRegister />} />
             <Route path="settlements/*" element={<AdminSettlements />} />

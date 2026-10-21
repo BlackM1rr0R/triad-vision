@@ -2,6 +2,8 @@ import { audit } from '../lib/audit.js';
 import { registerJob } from '../lib/scheduler.js';
 import { purgeExpiredTrash } from '../lib/drive/trash.js';
 import { runDriveStartup } from '../lib/drive/layout.js';
+import { backfillContentHashes } from '../lib/drive/org/hash.js';
+import { config } from '../config.js';
 
 /** Drive housekeeping: items in the recycle bin longer than DRIVE_TRASH_DAYS (30) are deleted for good. */
 registerJob({
@@ -26,5 +28,7 @@ registerJob({
   firstRunAfterMs: 20 * 1000,
   run: async () => {
     await runDriveStartup();
+    // Duplicate detection: sha256 of older files, a small low-priority batch per run.
+    if (!config.isTest) await backfillContentHashes({ maxFiles: 5000, pauseMs: 10 });
   },
 });

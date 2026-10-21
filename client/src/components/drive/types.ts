@@ -8,6 +8,15 @@ export const LEVELS: DriveAccess[] = ['VIEW', 'DOWNLOAD', 'EXPORT', 'EDIT', 'MAN
 export const RANK: Record<DriveAccess, number> = { VIEW: 1, DOWNLOAD: 2, EXPORT: 3, EDIT: 4, MANAGE: 5 };
 export const can = (have: DriveAccess | null | undefined, need: DriveAccess) => !!have && RANK[have] >= RANK[need];
 
+export const WORKFLOW_STAGES = ['INCOMING', 'REVIEW', 'TRANSLATION', 'APOSTILLE', 'READY', 'SENT_TO_EMBASSY'] as const;
+export type WorkflowStage = (typeof WORKFLOW_STAGES)[number];
+
+export interface TagRef {
+  id: string;
+  name: string;
+  color: string;
+}
+
 export const FOLDER_COLORS = ['blue', 'green', 'amber', 'red', 'violet', 'pink', 'teal', 'slate'] as const;
 export type FolderColor = (typeof FOLDER_COLORS)[number];
 
@@ -53,6 +62,13 @@ export interface DriveItem {
   purged?: boolean;
   assignedStaff?: PersonRef | null;
   location?: { id: string; name: string; space: DriveSpace; system: boolean } | null;
+  /** Document organisation (components/drive/org): workflow column, "Final" lock, tags. */
+  workflowStage?: WorkflowStage | null;
+  workflowAt?: string | null;
+  finalAt?: string | null;
+  tags?: TagRef[];
+  /** Board / smart folder rows: the client folder the item belongs to. */
+  client?: { caseId: string; caseNumber: string; folderId: string; name: string } | null;
   /** Trash rows only. */
   deletedAt?: string | null;
   deletedBy?: PersonRef | null;
@@ -187,4 +203,6 @@ export type DriveLocation =
   | { kind: 'starred' }
   | { kind: 'trash' }
   | { kind: 'search'; q: string; type: string; after: string }
+  | { kind: 'smart'; id: string }
+  | { kind: 'tag'; id: string }
   | { kind: 'access' };

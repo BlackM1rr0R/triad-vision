@@ -25,6 +25,8 @@ export interface SidebarProps {
   onItems: (items: DriveItem[], targetId: string, copy: boolean) => void;
   /** Right-click or the row's "⋯" button: the folder's context menu at that point. */
   onContext?: (at: { x: number; y: number }, item: DriveItem) => void;
+  /** Extra sections below quick access (smart folders and tags, components/drive/org). */
+  extra?: ReactNode;
 }
 
 const folderHref = (item: DriveItem) => `/workspace/drive/f/${encodeURIComponent(item.id)}`;
@@ -192,6 +194,7 @@ export const Sidebar = (props: SidebarProps) => {
             <QuickLink icon={Trash2} tone="text-muted" label={t('drive.nav.trash')} href={`${base}/trash`} active={activeView === 'trash'} onOpen={onOpen} />
           </ul>
         </section>
+        {props.extra}
       </div>
       {stats && (
         <div className="shrink-0 border-t border-line px-4 py-3 text-xs text-muted">

@@ -15,6 +15,7 @@ import {
   FileText,
   FolderPlus,
   FolderUp,
+  Columns3,
   LayoutGrid,
   List,
   MoreHorizontal,
@@ -163,6 +164,8 @@ export interface ToolbarProps {
   onToggleSidebar: () => void;
   /** Only navigation + address + search (pages that are not a file listing). */
   minimal?: boolean;
+  /** Offer the third view "Lövhə" (workflow board). */
+  boardView?: boolean;
 }
 
 /** Explorer chrome: navigation buttons, address bar (breadcrumb with drop targets), search, command bar. */
@@ -325,6 +328,11 @@ export const Toolbar = (p: ToolbarProps) => {
           <IconBtn label={t('drive.toolbar.viewList')} onClick={() => p.onView('list')} active={p.view === 'list'}>
             <List className="size-4" />
           </IconBtn>
+          {p.boardView && (
+            <IconBtn label={t('driveOrg.board.view')} onClick={() => p.onView('board')} active={p.view === 'board'}>
+              <Columns3 className="size-4" />
+            </IconBtn>
+          )}
         </div>
         <IconBtn label={t('drive.toolbar.details')} onClick={p.onToggleDetails} active={p.detailsOpen}>
           <PanelRight className="size-[18px]" />

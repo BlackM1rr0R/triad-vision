@@ -16,6 +16,7 @@ import { DeletePartnerDialog } from '@/components/partners/DeletePartnerDialog';
 import { useAuth } from '@/lib/auth';
 import { driveKeys, startDownload } from './api';
 import { sectionOf } from './fileIcons';
+import { ReadinessIndicator } from './org/Readiness';
 import type { DriveItem } from './types';
 
 /** German names of the application types (the same names the drive folders carry). */
@@ -464,6 +465,7 @@ export const ClientFolderHeader = ({ folder }: { folder: DriveItem }) => {
           {assign.isPending && <Spinner className="size-3.5" />}
         </label>
       )}
+      <ReadinessIndicator caseId={folder.caseId} />
       <Link to={`/admin/cases/${folder.caseId}`} className="ml-auto inline-flex items-center gap-1 font-semibold hover:underline">
         <ExternalLink className="size-3.5" /> {t('drive.actions.openCase')} {folder.caseNumber}
       </Link>

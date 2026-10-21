@@ -88,6 +88,8 @@ import { FOLDER_COLORS, can, type DriveItem, type DriveLocation, type FolderColo
 import { convertFiles, convertKind } from '@/components/docCreate/api';
 import type { DocEditorTarget } from '@/components/docCreate/DocEditor';
 import { useDriveIntel, useSearchInContent } from '@/components/drive/intel/useDriveIntel';
+import { BoardView, useDriveOrg } from '@/components/drive/org/useDriveOrg';
+import { usePdfTools } from '@/components/pdfTools/usePdfTools';
 
 // The document editor and the text converter load only when opened (keeps the drive bundle small).
 const DocEditor = lazy(() => import('@/components/docCreate/DocEditor'));
@@ -122,6 +124,7 @@ const parseLocation = (splat: string, params: URLSearchParams): DriveLocation =>
   if (head === 'cases') return { kind: 'cases' };
   if (head === 'shared' || head === 'recent' || head === 'starred' || head === 'trash' || head === 'access') return { kind: head };
   if (head === 'search') return { kind: 'search', q: params.get('q') ?? '', type: params.get('type') ?? '', after: params.get('after') ?? '' };
+  if ((head === 'smart' || head === 'tag') && rest[0]) return { kind: head, id: decodeURIComponent(rest[0]) };
   return { kind: 'home' };
 };
 
@@ -175,17 +178,20 @@ export default function WorkspaceDrive() {
     placeholderData: keepPreviousData,
     retry: (n, err) => n < 1 && (err as { response?: { status?: number } })?.response?.status !== 404,
   });
-  const flatKind = loc.kind === 'shared' || loc.kind === 'recent' || loc.kind === 'starred' || loc.kind === 'trash' || loc.kind === 'search' ? loc.kind : null;
+  // Document organisation (tags, board, Final, templates, naming, smart folders, duplicates): components/drive/org.
+  const org = useDriveOrg({ folder: folderId ? listing.data?.folder : undefined, loc, isAdmin, isSuper, onNavigate: (href) => navigate(href) });
+  const orgSource = org.flatSource(loc);
+  const flatKind = loc.kind === 'shared' || loc.kind === 'recent' || loc.kind === 'starred' || loc.kind === 'trash' || loc.kind === 'search' || orgSource ? loc.kind : null;
   const [inContent, setInContent] = useSearchInContent();
   const flatParams = loc.kind === 'search' ? { q: loc.q, type: loc.type || undefined, modifiedFrom: loc.after || undefined, content: inContent ? undefined : '0' } : undefined;
   const flat = useQuery({
-    queryKey: driveKeys.list(flatKind ?? '', flatParams),
-    queryFn: async () => (await api.get<FlatResponse>(`/drive/${flatKind}`, { params: flatParams })).data,
+    queryKey: driveKeys.list(orgSource?.key ?? flatKind ?? '', flatParams),
+    queryFn: async () => (await api.get<FlatResponse>(orgSource?.url ?? `/drive/${flatKind}`, { params: flatParams })).data,
     enabled: !!flatKind && (loc.kind !== 'search' || !!loc.q),
   });
 
   // ── view preferences ──
-  const [view, setView] = useState<ViewMode>(() => readPref('tv-drive-view', ['grid', 'list'] as const, 'grid'));
+  const [view, setView] = useState<ViewMode>(() => readPref('tv-drive-view', ['grid', 'list', 'board'] as const, 'grid'));
   const [sortKey, setSortKey] = useState<SortKey>(() => readPref('tv-drive-sort', ['name', 'modified', 'size', 'type', 'owner'] as const, 'name'));
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>(() => readPref('tv-drive-dir', ['asc', 'desc'] as const, 'asc'));
   const [detailsOpen, setDetailsOpen] = useState(() => readPref('tv-drive-details', ['1', '0'] as const, '1') === '1');
@@ -212,8 +218,8 @@ export default function WorkspaceDrive() {
       if (r === 0) r = collator.compare(a.name, b.name);
       return r * dir;
     });
-    return keyed;
-  }, [rawItems, sortKey, sortDir, loc.kind]);
+    return org.filterItems(keyed);
+  }, [rawItems, sortKey, sortDir, loc.kind, org.filterItems]);
   const mode: ListMode = loc.kind === 'trash' ? 'trash' : folderId ? 'folder' : 'flat';
 
   // ── selection ──
@@ -245,6 +251,7 @@ export default function WorkspaceDrive() {
     void invalidateDrive(qc);
   }, [qc]);
   const intel = useDriveIntel({ roots: roots.data, items, folderId, trail: listing.data?.path.map((c) => c.id), onOpenFolder: (id) => navigate(folderHref(id)) });
+  const pdfTools = usePdfTools({ folderId }); // PDF tools: menu entries, dialogs, HEIC suggestion
   const select = useCallback((ids: Set<string>, focus: string | null, anchor?: string | null) => {
     setSelected(ids);
     setFocusId(focus);
@@ -288,7 +295,9 @@ export default function WorkspaceDrive() {
               ? t('drive.nav.search')
               : loc.kind === 'access'
                 ? t('drive.nav.access')
-                : folder
+                : loc.kind === 'smart' || loc.kind === 'tag'
+                  ? (org.viewTitle(loc) ?? t('drive.title'))
+                  : folder
                   ? rootLabel(folder, t, myId)
                   : t('drive.title');
   usePageTitle(viewTitle);
@@ -296,7 +305,7 @@ export default function WorkspaceDrive() {
   // ── uploads ──
   const [conflict, setConflict] = useState<{ name: string; resolve: (a: { choice: ConflictChoice; all: boolean }) => void } | null>(null);
   const askConflict = useCallback((name: string) => new Promise<{ choice: ConflictChoice; all: boolean }>((resolve) => setConflict({ name, resolve })), []);
-  const uploads = useUploads(maxBytes, askConflict);
+  const uploads = useUploads(maxBytes, askConflict, org.uploadOptions);
   const fileInput = useRef<HTMLInputElement>(null);
   const dirInput = useRef<HTMLInputElement>(null);
   const uploadTarget = useRef<string | null>(null);
@@ -533,6 +542,7 @@ export default function WorkspaceDrive() {
         out.push({ kind: 'separator', id: 's1' });
       }
       if (loc.kind === 'trash' && items.length && isAdmin) out.push({ id: 'empty', label: t('drive.actions.emptyTrash'), icon: Trash2, danger: true, onSelect: () => setConfirm({ kind: 'empty' }) });
+      out.push(...org.menuEntries(null));
       out.push({ id: 'refresh', label: t('drive.toolbar.refresh'), icon: RefreshCw, onSelect: refresh });
       if (items.length) out.push({ id: 'all', label: t('drive.actions.selectAll'), icon: Clipboard, onSelect: () => select(new Set(items.map((i) => i.id)), null, null) });
       if (folder) {
@@ -568,7 +578,8 @@ export default function WorkspaceDrive() {
     if (zippable(list) && (list.length > 1 || single?.kind === 'FOLDER')) out.push({ id: 'zip', label: t('drive.actions.downloadZip'), icon: FileArchive, onSelect: () => zip(list) });
     const conv = convertEntries(list);
     if (conv.length) out.push({ kind: 'separator', id: 'sc' }, ...conv);
-    out.push(...intel.menuEntries(list));
+    out.push(...intel.menuEntries(list), ...pdfTools.menuEntries(list));
+    out.push(...org.menuEntries(list));
     out.push({ kind: 'separator', id: 's1' });
     if (single && writable(single)) {
       out.push(
@@ -624,6 +635,7 @@ export default function WorkspaceDrive() {
     if (copyable(list)) out.push({ id: 'copyto', icon: Copy, label: t('drive.actions.copyTo'), onClick: () => setPicker({ mode: 'copy', items: list }) });
     if (single && manageable(single)) out.push({ id: 'share', icon: Shield, label: t('drive.actions.share'), onClick: () => setShareItem(single) });
     out.push(...intel.toolActions(list));
+    out.push(...org.toolActions(list));
     if (editable(list)) out.push({ id: 'del', icon: Trash2, label: t('drive.actions.delete'), onClick: () => setConfirm({ kind: 'trash', items: list }), danger: true, primary: true });
     return out;
   };
@@ -784,6 +796,7 @@ export default function WorkspaceDrive() {
       onFiles={onFiles}
       onItems={onItems}
       onContext={(at, item) => setMenu({ at, items: [item], tree: true })}
+      extra={org.sidebar}
     />
   );
 
@@ -813,10 +826,13 @@ export default function WorkspaceDrive() {
             className="input !w-auto !py-1 !text-xs"
           />
         </label>
+        {org.viewBar(loc, loc)}
         <Link to={BASE} className="ml-auto inline-flex items-center gap-1 text-muted hover:text-ink">
           <X className="size-3.5" /> {t('drive.toolbar.clearSearch')}
         </Link>
       </div>
+    ) : loc.kind === 'smart' || loc.kind === 'tag' ? (
+      org.viewBar(loc)
     ) : loc.kind === 'trash' ? (
       <div className="flex flex-wrap items-center gap-2 border-b border-line bg-surface/60 px-3 py-2 text-xs text-muted sm:px-4">
         <span>{t('drive.details.trashHint', { days: trashDays })}</span>
@@ -921,6 +937,7 @@ export default function WorkspaceDrive() {
               extra={
                 <>
                   {intel.toolbarExtra(selectedItems)}
+                  {org.toolbarExtra}
                   {isSuper && <AdminAiButton open={aiOpen} onClick={() => (aiOpen ? closeAi() : setAiOpen(true))} />}
                 </>
               }
@@ -949,12 +966,18 @@ export default function WorkspaceDrive() {
               detailsOpen={detailsOpen}
               onToggleDetails={() => setDetailsOpen((o) => !o)}
               onToggleSidebar={() => setSidebarOpen(true)}
+              boardView={loc.kind !== 'trash'}
             />
             {searchBar}
+            {view !== 'board' && org.filterBar(rawItems)}
             {loc.kind === 'search' && intel.searchPanel(rawItems)}
             <div className="flex min-h-0 flex-1">
               <main className="relative min-w-0 flex-1 bg-card" {...paneDrop.handlers}>
-                {loading ? (
+                {view === 'board' && loc.kind !== 'trash' && !notFound ? (
+                  <Suspense fallback={<Spinner className="m-6 size-5" />}>
+                    <BoardView folderId={folderId} folderName={folder ? rootLabel(folder, t, myId) : undefined} onOpen={open} onOpenFolder={(id) => go(folderHref(id))} />
+                  </Suspense>
+                ) : loading ? (
                   <div className="grid grid-cols-[repeat(auto-fill,minmax(136px,1fr))] gap-2 p-4" aria-busy="true">
                     {Array.from({ length: 12 }, (_, i) => (
                       <div key={i} className="flex flex-col items-center gap-2 rounded-xl p-3">
@@ -1282,7 +1305,9 @@ export default function WorkspaceDrive() {
         )}
       </Suspense>
       {intel.dialogs}
-      <UploadPanel tasks={uploads.tasks} onCancel={uploads.cancel} onCancelAll={uploads.cancelAll} onClear={uploads.clearFinished} />
+      {pdfTools.dialogs}
+      {org.dialogs}
+      <UploadPanel tasks={uploads.tasks} onCancel={uploads.cancel} onCancelAll={uploads.cancelAll} onClear={uploads.clearFinished} extra={org.uploadExtra} />
     </div>
   );
 }

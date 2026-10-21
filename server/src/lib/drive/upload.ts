@@ -2,7 +2,7 @@ import crypto from 'node:crypto';
 import multer from 'multer';
 import { config } from '../../config.js';
 import { decodeOriginalName } from '../../middleware/upload.js';
-import { WORKSPACE_MIME, resolveMime } from '../fileCheck.js';
+import { DRIVE_MIME, resolveMime } from '../fileCheck.js';
 import { badRequest } from '../http.js';
 import { incomingDir } from './storage.js';
 
@@ -19,7 +19,7 @@ export const driveUpload = multer({
   limits: { fileSize: config.drive.maxFileSize, files: 1, fields: 10, fieldSize: 4096 },
   fileFilter: (_req, file, cb) => {
     const mime = resolveMime(file.mimetype, decodeOriginalName(file.originalname));
-    if (mime && WORKSPACE_MIME.has(mime)) {
+    if (mime && DRIVE_MIME.has(mime)) {
       file.mimetype = mime;
       cb(null, true);
     } else cb(badRequest('UNSUPPORTED_FILE_TYPE'));

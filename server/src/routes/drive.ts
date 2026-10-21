@@ -27,6 +27,10 @@ import { relinkRestoredPartnerFolder } from '../lib/drive/caseFolders.js';
 import { CONTENT_LIMIT, contentSnippets, contentWhere } from '../lib/driveIntel/search.js';
 import { logDriveActivity } from '../lib/driveCollab/activity.js';
 import { assertNotLockedByOther } from '../lib/driveCollab/lock.js';
+import { findDuplicates, hashFile, hashStored } from '../lib/drive/org/hash.js';
+import { assertNoFinalInside } from '../lib/drive/org/final.js';
+import { autoNameFor, caseOfChain } from '../lib/drive/org/naming.js';
+import { driveOrgRouter } from './driveOrg.js';
 
 /**
  * Team drive (/api/drive): ONE shared workspace ("Gemeinsame Dokumente") where every staff member works —
@@ -37,6 +41,8 @@ import { assertNotLockedByOther } from '../lib/driveCollab/lock.js';
  */
 export const driveRouter = Router();
 driveRouter.use(requireMinRole('STAFF'));
+// Document organisation: tags, workflow board, smart folders, templates, naming, duplicates, Final (routes/driveOrg.ts).
+driveRouter.use(driveOrgRouter);
 
 const ACCESS = z.enum(['VIEW', 'DOWNLOAD', 'EXPORT', 'EDIT', 'MANAGE']);
 const COLORS = ['blue', 'green', 'amber', 'red', 'violet', 'pink', 'teal', 'slate'] as const;
@@ -275,7 +281,8 @@ driveRouter.get('/search', async (req, res) => {
     ...(q.modifiedFrom || q.modifiedTo ? { updatedAt: { ...(q.modifiedFrom ? { gte: q.modifiedFrom } : {}), ...(q.modifiedTo ? { lte: q.modifiedTo } : {}) } } : {}),
     ...(q.ownerId ? { createdById: q.ownerId } : {}),
   };
-  const rows = await prisma.driveNode.findMany({ where: { ...filters, name: { contains: q.q } }, select: itemSelect, orderBy: { updatedAt: 'desc' }, take: 600 });
+  // Names, and tag names ("Təcili" finds every item tagged so).
+  const rows = await prisma.driveNode.findMany({ where: { ...filters, OR: [{ name: { contains: q.q } }, { tags: { some: { tag: { name: { contains: q.q } } } } }] }, select: itemSelect, orderBy: { updatedAt: 'desc' }, take: 600 });
   const inContent = q.content !== '0' && q.type !== 'folder' ? contentWhere(q.q) : null;
   let contentIds = new Set<string>();
   if (inContent) {
@@ -371,6 +378,8 @@ const ensureFolderPath = async (parent: NodeLite, rel: string, userId: string) =
 const uploadBody = z.object({
   onConflict: z.enum(['fail', 'rename', 'replace']).default('fail'),
   relativeDir: z.string().max(2000).optional(),
+  /** "Sənəd növü" of the upload panel: the document type in the automatic name (client folders). */
+  docType: z.string().trim().max(80).optional(),
 });
 
 /**
@@ -403,10 +412,20 @@ driveRouter.post(
         const targetId = await ensureFolderPath(target, body.relativeDir, user.id);
         target = (await requireNode(ctxOf(req), targetId, 'EDIT')).node;
       }
-      const name = safeUploadName(decodeOriginalName(file.originalname));
+      const original = decodeOriginalName(file.originalname);
+      const contentHash = await hashFile(file.path);
+      // Inside a client folder: the file starts on the workflow board ("Gələn") and, when automatic naming is
+      // on, gets "<Nachname>_<Vorname>_<Typ>_<Datum>.ext" (Typ: the picked type, else the sub-folder name).
+      const uploadCtx = ctxOf(req);
+      await uploadCtx.load([target.id]);
+      const clientCase = await caseOfChain(uploadCtx.chain(target.id).map((n) => n.id));
+      const autoName = clientCase
+        ? await autoNameFor(clientCase, { typ: body.docType || (target.id !== clientCase.folderId ? target.name : null), date: new Date(), originalName: original })
+        : null;
+      const name = autoName ?? safeUploadName(original);
       const clash = await findSibling(target.id, name);
       let finalName = name;
-      if (clash && clash.kind === 'FILE' && body.onConflict === 'replace') {
+      if (clash && clash.kind === 'FILE' && body.onConflict === 'replace' && !autoName) {
         const ctx = ctxOf(req);
         await requireNode(ctx, clash.id, 'EDIT');
         await assertNotLockedByOther(clash.id, user.id);
@@ -428,15 +447,15 @@ driveRouter.post(
               uploadedById: uploaderOf(current.version)?.id ?? null,
             },
           }),
-          prisma.driveNode.update({ where: { id: current.id }, data: { storageKey: storedKey, mimeType: file.mimetype, size: file.size, version: next } }),
+          prisma.driveNode.update({ where: { id: current.id }, data: { storageKey: storedKey, mimeType: file.mimetype, size: file.size, version: next, contentHash } }),
         ]);
         await audit(req, 'DRIVE_FILE_VERSION_ADDED', `drive:${current.id}`, { name, version: next, size: file.size });
         await logDriveActivity({ nodeId: current.id, folderId: target.id, actorId: user.id, action: 'NEW_VERSION', name, meta: { version: next, size: file.size, kind: 'FILE' } });
-        res.status(201).json({ item: await loadItem(ctxOf(req), current.id), replaced: true });
+        res.status(201).json({ item: await loadItem(ctxOf(req), current.id), replaced: true, duplicates: await findDuplicates(ctxOf(req), contentHash, [current.id]) });
         return;
       }
       if (clash) {
-        if (body.onConflict === 'fail') {
+        if (body.onConflict === 'fail' && !autoName) {
           await fs.unlink(file.path).catch(() => undefined);
           res.status(409).json({ error: 'NAME_EXISTS', existingId: clash.id, existingKind: clash.kind });
           return;
@@ -455,13 +474,17 @@ driveRouter.post(
           mimeType: file.mimetype,
           size: file.size,
           createdById: user.id,
+          contentHash,
+          ...(clientCase ? { workflowStage: 'INCOMING' as const, workflowAt: new Date() } : {}),
         },
         select: { id: true },
       });
       storedKey = null;
-      await audit(req, 'DRIVE_FILE_UPLOADED', `drive:${created.id}`, { name: finalName, size: file.size, parentId: target.id });
-      await logDriveActivity({ nodeId: created.id, folderId: target.id, actorId: user.id, action: 'UPLOAD', name: finalName, meta: { size: file.size, kind: 'FILE' } });
-      res.status(201).json({ item: await loadItem(ctxOf(req), created.id), replaced: false });
+      await audit(req, 'DRIVE_FILE_UPLOADED', `drive:${created.id}`, { name: finalName, size: file.size, parentId: target.id, ...(autoName ? { originalName: original } : {}) });
+      await logDriveActivity({ nodeId: created.id, folderId: target.id, actorId: user.id, action: 'UPLOAD', name: finalName, meta: { size: file.size, kind: 'FILE', ...(autoName ? { originalName: original } : {}) } });
+      // Same content elsewhere: the client offers "keep anyway / delete the upload / go to the existing one".
+      const duplicates = await findDuplicates(ctxOf(req), contentHash, [created.id]);
+      res.status(201).json({ item: await loadItem(ctxOf(req), created.id), replaced: false, duplicates, ...(autoName ? { originalName: original } : {}) });
     } catch (err) {
       await fs.unlink(file.path).catch(() => undefined);
       // A file adopted into the store but never recorded must not linger.
@@ -532,6 +555,7 @@ const mover = async (ctx: DriveAccessCtx, targetId: string) => {
     if (targetChain.has(id)) throw badRequest('INTO_ITSELF');
     if (node.parentId === targetId) return { name: node.name, from: node.parentId, moved: false };
     await assertNotLockedByOther(id, ctx.user.id);
+    if (node.kind === 'FOLDER') await assertNoFinalInside(id);
     const name = pickFreeName(taken, node.name, node.kind === 'FILE');
     await prisma.driveNode.update({ where: { id }, data: { parentId: targetId, name } });
     await logDriveActivity({ nodeId: id, folderId: targetId, actorId: ctx.user.id, action: 'MOVE', name, meta: { fromId: node.parentId, fromName: node.parentId ? (ctx.nodes.get(node.parentId)?.name ?? null) : null, toId: targetId, toName: target.name, kind: node.kind, ...(name !== node.name ? { oldName: node.name } : {}) } });
@@ -556,7 +580,7 @@ driveRouter.post('/move', async (req, res) => {
   res.json({ results });
 });
 
-const copySelect = { ...nodeLiteSelect, storageKey: true, mimeType: true, size: true } satisfies Prisma.DriveNodeSelect;
+const copySelect = { ...nodeLiteSelect, storageKey: true, mimeType: true, size: true, contentHash: true } satisfies Prisma.DriveNodeSelect;
 
 /**
  * Copies nodes (files need DOWNLOAD, folders EXPORT) into a folder (EDIT). Copies get fresh storage
@@ -572,10 +596,10 @@ driveRouter.post('/copy', async (req, res) => {
   const me = req.user!.id;
   const base = { space: target.space, ownerId: target.ownerId, createdById: me };
 
-  const copyFile = async (parentId: string, name: string, src: string, mimeType: string, size: number) => {
+  const copyFile = async (parentId: string, name: string, src: string, mimeType: string, size: number, contentHash: string | null) => {
     const key = await copyIntoStore(src);
     try {
-      await prisma.driveNode.create({ data: { ...base, kind: 'FILE', name, parentId, storageKey: key, mimeType, size } });
+      await prisma.driveNode.create({ data: { ...base, kind: 'FILE', name, parentId, storageKey: key, mimeType, size, contentHash: contentHash ?? (await hashStored(key)) } });
     } catch (err) {
       await removeStored([key]);
       throw err;
@@ -599,7 +623,7 @@ driveRouter.post('/copy', async (req, res) => {
         if (!allows(ctx.level(n.id), 'VIEW')) continue;
         newIds.set(n.id, await newFolder(parentNew, isRoot ? pickFreeName(taken, n.name, false) : n.name));
       } else if (allows(ctx.level(n.id), 'DOWNLOAD') && n.storageKey) {
-        await copyFile(parentNew, isRoot ? pickFreeName(taken, n.name, true) : n.name, storagePath(n.storageKey), n.mimeType ?? 'application/octet-stream', n.size ?? 0).catch((err) => {
+        await copyFile(parentNew, isRoot ? pickFreeName(taken, n.name, true) : n.name, storagePath(n.storageKey), n.mimeType ?? 'application/octet-stream', n.size ?? 0, n.contentHash).catch((err) => {
           if ((err as NodeJS.ErrnoException).code !== 'ENOENT') throw err;
         });
       }
@@ -641,6 +665,7 @@ const trashOne = async (ctx: DriveAccessCtx, id: string, at: Date) => {
   if (node.deletedAt) return { name: node.name, kind: node.kind, nodes: 0 };
   assertNotProtected(ctx, node);
   await assertNotLockedByOther(id, ctx.user.id);
+  if (node.kind === 'FOLDER') await assertNoFinalInside(id);
   const nodes = await softDelete(id, ctx.user.id, at);
   if (nodes) await logDriveActivity({ nodeId: id, folderId: node.parentId, actorId: ctx.user.id, action: 'DELETE', name: node.name, meta: { kind: node.kind, nodes } });
   return { name: node.name, kind: node.kind, nodes };
@@ -891,7 +916,7 @@ driveRouter.post('/nodes/:id/versions/:versionId/restore', async (req, res) => {
           uploadedById: uploaderOf(current.version)?.id ?? null,
         },
       }),
-      prisma.driveNode.update({ where: { id: current.id }, data: { storageKey: key, mimeType: v.mimeType, size: v.size, version: next } }),
+      prisma.driveNode.update({ where: { id: current.id }, data: { storageKey: key, mimeType: v.mimeType, size: v.size, version: next, contentHash: await hashStored(key) } }),
     ]);
   } catch (err) {
     await removeStored([key]);

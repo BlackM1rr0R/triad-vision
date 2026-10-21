@@ -13,6 +13,7 @@ import { ItemIcon, extLabel, fileTone } from './fileIcons';
 import { displayName, typeLabel } from './labels';
 import { can, type DriveItem } from './types';
 import type { CollabItem } from './collab/api';
+import { OrgBadges } from './org/Chips';
 
 /** Collaboration badges: open comment threads and "… is editing" (edit lock). */
 const CollabBadges = ({ item, t, compact }: { item: DriveItem; t: ReturnType<typeof useTranslation>['t']; compact?: boolean }) => {
@@ -37,7 +38,8 @@ const CollabBadges = ({ item, t, compact }: { item: DriveItem; t: ReturnType<typ
   );
 };
 
-export type ViewMode = 'grid' | 'list';
+/** 'board' is the workflow board (components/drive/org/BoardView, rendered by Drive.tsx instead of this view). */
+export type ViewMode = 'grid' | 'list' | 'board';
 export type SortKey = 'name' | 'modified' | 'size' | 'type' | 'owner';
 export type ListMode = 'folder' | 'flat' | 'trash';
 
@@ -318,6 +320,11 @@ const Tile = memo(function Tile({ item, p, click, toggle, context, dragStart, t 
           <CollabBadges item={item} t={t} compact />
         </span>
       )}
+      {!!(item.finalAt || item.tags?.length) && (
+        <span className="mt-0.5 flex max-w-full flex-wrap items-center justify-center gap-0.5">
+          <OrgBadges item={item} compact />
+        </span>
+      )}
       <span className="mt-0.5 w-full truncate text-[11px] text-muted">
         {item.caseId ? (
           <CaseBadge item={item} t={t} />
@@ -464,6 +471,7 @@ const Row = memo(function Row({ item, p, click, toggle, context, dragStart, t }:
         </span>
         {item.starred && <Star className="size-3.5 shrink-0 fill-amber-400 text-amber-400" aria-hidden />}
         <CollabBadges item={item} t={t} />
+        <OrgBadges item={item} />
         {item.kind === 'FOLDER' && !item.inheritPermissions && !item.system && <Lock className="size-3 shrink-0 text-muted" aria-label={t('drive.details.inheritOff')} />}
         <CaseBadge item={item} t={t} className="hidden shrink-0 sm:inline-flex" />
         {item.kind === 'FOLDER' && item.caseStatus && (

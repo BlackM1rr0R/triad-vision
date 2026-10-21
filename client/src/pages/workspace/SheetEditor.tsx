@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useDriveLock } from '@/components/drive/collab/useDriveLock';
+import { FinalBanner, useIsFinal } from '@/components/drive/org/FinalBanner';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
@@ -122,7 +123,8 @@ export default function SheetEditor() {
   usePageTitle(meta?.name ?? t('sheet.title'));
   // Edit lock: while someone else edits this file the sheet opens read-only (it is retried every minute).
   const lock = useDriveLock(id, { enabled: !!meta?.canEdit });
-  const readOnly = !meta?.canEdit || lock.status === 'other';
+  const final = useIsFinal(id); // "Final" files open read-only (components/drive/org)
+  const readOnly = !meta?.canEdit || lock.status === 'other' || final;
   useLeaveGuard(wb.dirty && !readOnly, t('sheet.leaveWarning'));
 
   // Super-admin AI assistant: after a confirmed sheet action the workbook is reloaded, unless there are
@@ -388,6 +390,7 @@ export default function SheetEditor() {
         </div>
       )}
 
+      <FinalBanner final={final} />
       {(lock.status === 'other' || lock.status === 'error') && (
         <div role="status" className="flex shrink-0 items-center gap-2 border-b border-amber-300 bg-amber-50 px-4 py-2 text-xs text-amber-900 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-200">
           <span className="min-w-0 flex-1">{lock.status === 'other' ? t('driveCollab.lock.bannerOther', { name: lock.lockedBy.name }) : t('driveCollab.lock.bannerError')}</span>

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
 import { AlertCircle, Ban, CheckCircle2, ChevronDown, ChevronUp, Loader2, SkipForward, UploadCloud, X } from 'lucide-react';
@@ -11,11 +11,14 @@ export const UploadPanel = ({
   onCancel,
   onCancelAll,
   onClear,
+  extra,
 }: {
   tasks: UploadTask[];
   onCancel: (id: number) => void;
   onCancelAll: () => void;
   onClear: () => void;
+  /** Extra controls under the header (the "Sənəd növü" picker of automatic naming). */
+  extra?: ReactNode;
 }) => {
   const { t } = useTranslation();
   const [open, setOpen] = useState(true);
@@ -43,6 +46,7 @@ export const UploadPanel = ({
           {open ? <ChevronDown className="size-4" /> : <ChevronUp className="size-4" />}
         </button>
       </div>
+      {open && extra}
       {open && (
         <ul className="max-h-72 overflow-y-auto overscroll-contain py-1">
           {tasks.map((x) => (

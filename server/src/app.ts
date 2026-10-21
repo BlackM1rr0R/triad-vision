@@ -47,6 +47,7 @@ import { trackRouter } from './routes/track.js';
 import { seoRouter } from './routes/seo.js';
 import { driveRouter } from './routes/drive.js';
 import { driveCreateRouter } from './routes/driveCreate.js';
+import { pdfToolsRouter } from './routes/pdfTools.js';
 import { driveIntelRouter } from './routes/driveIntel.js';
 import { driveCollabRouter } from './routes/driveCollab.js';
 import { shareRouter } from './routes/share.js';
@@ -58,6 +59,7 @@ import { aiRouter } from './routes/ai.js';
 import { aiWritingRouter } from './routes/aiWriting.js';
 import { publicAiRouter } from './routes/publicAi.js';
 import { aiDocsRouter } from './routes/aiDocs.js';
+import { originalsRouter } from './routes/originals.js';
 
 type RequestWithRawBody = import('express').Request & { rawBody?: Buffer };
 
@@ -118,6 +120,7 @@ export const createApp = () => {
   app.use('/api/devices', devicesRouter);
   app.use('/api/drive/sheets', sheetsRouter);
   app.use('/api/drive/create', driveCreateRouter);
+  app.use('/api/drive/pdf-tools', pdfToolsRouter);
   app.use('/api/drive/intel', driveIntelRouter);
   app.use('/api/drive/collab', driveCollabRouter);
   app.use('/api/drive', driveRouter);
@@ -159,6 +162,7 @@ export const createApp = () => {
   app.use('/api/ai', aiRouter);
   app.use('/api/ai-writing', aiWritingRouter);
   app.use('/api/public-ai', publicAiRouter);
+  app.use('/api/originals', originalsRouter); // physical originals, QR labels, drive retention + storage report
 
   // /sitemap.xml, /robots.txt and /api/seo/* (Caddy forwards the first two here).
   app.use(seoRouter);

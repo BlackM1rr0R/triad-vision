@@ -26,6 +26,9 @@ const isText: Matcher = (b) => {
   return !text.includes('<script') && !text.includes('<html') && !text.includes('<?php');
 };
 
+const HEIF_BRANDS = ['ftypheic', 'ftypheix', 'ftypmif1', 'ftyphevc'];
+const isHeif: Matcher = (b) => HEIF_BRANDS.some((brand) => ascii(brand, 4)(b));
+
 /** MIME type → matcher + allowed extensions. */
 const KINDS: Record<string, { match: Matcher; ext: string[] }> = {
   'application/pdf': { match: ascii('%PDF-'), ext: ['.pdf'] },
@@ -34,6 +37,9 @@ const KINDS: Record<string, { match: Matcher; ext: string[] }> = {
   'image/webp': { match: (b) => ascii('RIFF')(b) && ascii('WEBP', 8)(b), ext: ['.webp'] },
   'image/gif': { match: (b) => ascii('GIF87a')(b) || ascii('GIF89a')(b), ext: ['.gif'] },
   'image/avif': { match: ascii('ftypavif', 4), ext: ['.avif'] },
+  // iPhone photos (HEIC/HEIF): the ISO-BMFF "ftyp" box with a HEIF brand at offset 4. Drive uploads only.
+  'image/heic': { match: (b) => isHeif(b), ext: ['.heic'] },
+  'image/heif': { match: (b) => isHeif(b), ext: ['.heif'] },
   'image/svg+xml': {
     match: (b) => {
       const t = b.subarray(0, 2048).toString('utf8').toLowerCase();
@@ -76,8 +82,14 @@ export const CASE_DOC_MIME = new Set([
 /** Public CMS images. */
 export const IMAGE_MIME = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/svg+xml', 'image/avif']);
 
-/** Staff workspace: everything above except SVG (served inline to other staff). */
-export const WORKSPACE_MIME = new Set([...KNOWN_MIME].filter((m) => m !== 'image/svg+xml'));
+/** HEIC / HEIF photos: accepted by the team drive only (it offers "JPG-yə çevir"), nowhere else. */
+export const HEIF_MIME = new Set(['image/heic', 'image/heif']);
+
+/** Staff workspace: everything above except SVG (served inline to other staff) and HEIC/HEIF. */
+export const WORKSPACE_MIME = new Set([...KNOWN_MIME].filter((m) => m !== 'image/svg+xml' && !HEIF_MIME.has(m)));
+
+/** Team drive uploads: the workspace types plus HEIC/HEIF photos. */
+export const DRIVE_MIME = new Set([...WORKSPACE_MIME, ...HEIF_MIME]);
 
 /** Types browsers can show inline safely (with nosniff + a sandboxed CSP). */
 export const INLINE_MIME = new Set(['application/pdf', 'image/jpeg', 'image/png', 'image/webp', 'image/gif', 'text/plain', 'text/csv']);

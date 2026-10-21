@@ -30,6 +30,12 @@ export const DRIVE_ACTIONS = [
   'LOCK',
   'UNLOCK',
   'SHEET_SAVE',
+  // Document organisation (lib/drive/org)
+  'TAG',
+  'UNTAG',
+  'STAGE',
+  'FINAL',
+  'UNFINAL',
 ] as const;
 export type DriveAction = (typeof DRIVE_ACTIONS)[number];
 

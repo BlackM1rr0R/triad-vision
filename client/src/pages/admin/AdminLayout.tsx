@@ -46,6 +46,8 @@ import {
   Newspaper,
   PlaneLanding,
   Hourglass,
+  HardDrive,
+  Vault,
   Plug,
   Receipt,
   Route,
@@ -119,6 +121,8 @@ const MAIN_NAV: NavItem[] = [
   { to: '/admin/journey', label: 'journey', icon: Route },
   { to: '/admin/requirements', label: 'requirements', icon: ListChecks },
   { to: '/admin/expiring', label: 'expiring', icon: Hourglass },
+  { to: '/admin/originals', label: 'originals', icon: Vault },
+  { to: '/admin/storage', label: 'storage', icon: HardDrive, adminOnly: true },
   { to: '/admin/kb', label: 'kb', icon: BookOpenText },
   { to: '/admin/agents', label: 'agents', icon: Handshake, adminOnly: true },
   { to: '/admin/translations', label: 'translations', icon: Languages },
@@ -165,6 +169,8 @@ const pageTitleKey = (pathname: string) => {
   if (matchPath('/admin/tasks/*', pathname)) return 'admin.nav.tasks';
   if (matchPath('/admin/announcements', pathname)) return 'admin.nav.announcements';
   if (matchPath('/admin/arrivals/*', pathname)) return 'admin.nav.arrivals';
+  if (matchPath('/admin/originals', pathname)) return 'admin.nav.originals';
+  if (matchPath('/admin/storage', pathname)) return 'admin.nav.storage';
   const m = matchPath('/admin/content/:resource', pathname);
   if (m) {
     const item = CONTENT_NAV.find((c) => c.resource === m.params.resource);

@@ -1,6 +1,7 @@
 import type { NextFunction, Request, Response } from 'express';
 import { prisma } from '../../db.js';
 import { HttpError } from '../http.js';
+import { assertNotFinal } from '../drive/org/finalCheck.js';
 
 /**
  * Edit locks of drive files ("Ilqar is editing"). An editor takes the lock when it opens a file and
@@ -40,8 +41,12 @@ export const liveLock = async (nodeId: string) => {
   return { lockedBy: holderOf(n.lockedBy), lockedAt: n.lockedAt! };
 };
 
-/** Throws 423 FILE_LOCKED when someone other than `userId` holds a live lock on the node. */
+/**
+ * Throws 423 FILE_LOCKED when someone other than `userId` holds a live lock on the node — and 423 FILE_FINAL
+ * when the node is marked "Final" (lib/drive/org/final.ts): every mutation that honours edit locks honours it.
+ */
 export const assertNotLockedByOther = async (nodeId: string, userId: string) => {
+  await assertNotFinal(nodeId);
   const lock = await liveLock(nodeId);
   if (lock && lock.lockedBy.id !== userId) throw new FileLockedError(lock.lockedBy, lock.lockedAt);
 };

@@ -373,6 +373,7 @@ model Case {
   motivationLetters MotivationLetter[]
   surveys           SatisfactionSurvey[]
   signatureRequests SignatureRequest[]
+  originals         OriginalDocument[]
   settlements       SettlementEntry[]
   /// Partner (middleman) who brought this client; their folder in the shared drive holds the client folder.
   partnerId         String?
@@ -986,6 +987,17 @@ model DriveNode {
   /// Text extracted from the file (PDF text layer or OCR of scans/images) for full-text search.
   textContent        String?            @db.LongText
   textIndexedAt      DateTime?
+  /// Document workflow column on the board (Gələn → Yoxlanılır → Tərcümədə → Apostildə → Hazır → Səfirliyə göndərildi).
+  workflowStage      DocWorkflowStage?
+  workflowAt         DateTime?
+  /// "Final" lock: signed contract / sent embassy package — nobody may change it any more (super admin can unlock).
+  finalAt            DateTime?
+  finalById          String?
+  /// sha256 of the current file content (duplicate detection).
+  contentHash        String?            @db.Char(64)
+  /// Moved to the archive by the retention policy.
+  archivedAt         DateTime?
+  tags               DriveNodeTag[]
   comments           DriveComment[]
   shareLinks         DriveShareLink[]
 
@@ -993,6 +1005,8 @@ model DriveNode {
   @@index([space, ownerId])
   @@index([deletedAt])
   @@index([name])
+  @@index([contentHash])
+  @@index([workflowStage])
 }
 
 /// Access to a node (and, by inheritance, everything below it) for one user OR every user of a role.
@@ -2739,4 +2753,113 @@ model AiAction {
   decidedAt      DateTime?
 
   @@index([conversationId, status])
+}
+
+// ─── Document organisation: tags, workflow board, smart folders, folder templates; physical originals ─
+
+enum DocWorkflowStage {
+  INCOMING // Gələn
+  REVIEW // Yoxlanılır
+  TRANSLATION // Tərcümədə
+  APOSTILLE // Apostildə
+  READY // Hazır
+  SENT_TO_EMBASSY // Səfirliyə göndərildi
+}
+
+model DriveTag {
+  id        String         @id @default(cuid())
+  name      String         @unique @db.VarChar(60)
+  color     String         @default("amber") @db.VarChar(20)
+  sortOrder Int            @default(0)
+  createdAt DateTime       @default(now())
+  nodes     DriveNodeTag[]
+}
+
+model DriveNodeTag {
+  nodeId    String
+  node      DriveNode @relation(fields: [nodeId], references: [id], onDelete: Cascade)
+  tagId     String
+  tag       DriveTag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  createdAt DateTime  @default(now())
+
+  @@id([nodeId, tagId])
+  @@index([tagId])
+}
+
+/// Saved search ("Bu həftə yüklənən pasportlar"): private to its owner or shared with the team.
+model DriveSmartFolder {
+  id        String   @id @default(cuid())
+  name      String   @db.VarChar(120)
+  ownerId   String?
+  shared    Boolean  @default(false)
+  icon      String?  @db.VarChar(30)
+  query     Json // { text?, tags?, types?, stage?, uploadedWithin?, folderId?, … }
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([ownerId])
+}
+
+/// Sub-folders created inside every new client folder, per visa type and optionally per category.
+model DriveFolderTemplate {
+  id             String    @id @default(cuid())
+  name           String    @db.VarChar(120)
+  visaType       VisaType?
+  visaCategoryId String?
+  folders        Json // ["Pasport", "Diplom", "Dil sertifikatı", …] (nested with "/")
+  active         Boolean   @default(true)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+}
+
+enum OriginalStatus {
+  IN_OFFICE // in the safe / office
+  GIVEN_OUT // handed to someone (staff, translator, authority)
+  AT_APOSTILLE // sent for apostille / legalisation
+  IN_TRANSIT // with a courier
+  DELIVERED // arrived (e.g. at the employer / authority in Germany)
+  RETURNED_TO_CLIENT
+}
+
+/// A physical original (passport, diploma …) the office holds or tracks for a client.
+model OriginalDocument {
+  id          String          @id @default(cuid())
+  caseId      String
+  case        Case            @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  title       String          @db.VarChar(160)
+  kind        String          @db.VarChar(40) // PASSPORT | DIPLOMA | CERTIFICATE | BIRTH | MARRIAGE | OTHER
+  status      OriginalStatus  @default(IN_OFFICE)
+  location    String?         @db.VarChar(120) // safe / shelf, e.g. "Seyf A · rəf 3"
+  holder      String?         @db.VarChar(160) // who has it now when given out
+  carrier     String?         @db.VarChar(60)
+  trackingNo  String?         @db.VarChar(80)
+  note        String?         @db.Text
+  receivedAt  DateTime        @default(now())
+  createdById String?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  events      OriginalEvent[]
+
+  @@index([caseId])
+  @@index([status])
+}
+
+/// Every movement of an original: received, stored, given out, sent to apostille, back, courier, delivered, returned.
+model OriginalEvent {
+  id         String           @id @default(cuid())
+  originalId String
+  original   OriginalDocument @relation(fields: [originalId], references: [id], onDelete: Cascade)
+  action     String           @db.VarChar(30)
+  status     OriginalStatus
+  location   String?          @db.VarChar(120)
+  holder     String?          @db.VarChar(160)
+  carrier    String?          @db.VarChar(60)
+  trackingNo String?          @db.VarChar(80)
+  note       String?          @db.Text
+  actNodeId  String? // drive file of the signed hand-over act (Qəbul-təhvil aktı)
+  actorId    String?
+  at         DateTime         @default(now())
+
+  @@index([originalId, at])
 }

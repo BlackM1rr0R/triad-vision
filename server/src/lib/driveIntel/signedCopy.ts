@@ -72,6 +72,8 @@ export const saveSignedCopyToDrive = async (requestId: string, pdf: Buffer): Pro
   const parent = await prisma.driveNode.findUnique({ where: { id: parentId }, select: nodeLiteSelect });
   if (!parent || parent.deletedAt || parent.kind !== 'FOLDER') return null;
   const created = await createFileIn(parent, signedName(original?.name ?? link.name), pdf, 'application/pdf', link.userId);
+  // A signed copy is "Final" right away (lib/drive/org/final.ts): nobody may change it any more.
+  await prisma.driveNode.update({ where: { id: created.id }, data: { finalAt: new Date(), finalById: null } });
   await prisma.setting.update({ where: { key: reqKey(requestId) }, data: { value: { ...link, signedNodeId: created.id } as unknown as Prisma.InputJsonValue } });
   await prisma.auditLog
     .create({ data: { actorId: null, action: 'DRIVE_SIGNED_COPY_SAVED', target: `drive:${created.id}`, details: { requestId, originalId: link.nodeId, name: created.name } } })

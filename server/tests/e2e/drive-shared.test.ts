@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { asAdmin, asClient, asStaff, asSuperAdmin, type Agent } from '../helpers/api';
 import { prisma, waitFor } from '../helpers/db';
 import { createVisaCategory, l10n } from '../helpers/factories';
@@ -11,6 +11,11 @@ import { backfillCaseDrive, syncCaseFolder } from '../../src/lib/drive/caseFolde
 import { migratePersonalSpaces } from '../../src/lib/drive/layout.js';
 import { ensureRoots } from '../../src/lib/drive/roots.js';
 import { addFamilyMember } from '../../src/lib/journey/family.js';
+
+// These tests check folder structure and copies with their original names: automatic naming (drive-org.test.ts) off.
+beforeEach(async () => {
+  await prisma.setting.create({ data: { key: 'drive.autoNaming', value: { enabled: false, pattern: '{Nachname}_{Vorname}_{Typ}_{Datum}' } } });
+});
 
 const roots = async (a: Agent) => expectStatus(await a.get('/api/drive/roots'), 200).body;
 const list = async (a: Agent, id: string) => expectStatus(await a.get(`/api/drive/nodes/${encodeURIComponent(id)}/children`), 200).body;

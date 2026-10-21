@@ -22,6 +22,7 @@ import DocIntelPanel from '@/components/portal/DocIntelPanel';
 import { ForecastStrip } from '@/components/journey/ForecastStrip';
 import { FamilyGroupCard, useRelationLabel } from '@/components/journey/Family';
 import { usePageTitle } from '@/lib/usePageTitle';
+import { ClientOriginals } from '@/components/originals/ClientOriginals';
 
 const CurrentStepPanel = ({ data }: { data: CaseDetail }) => {
   const { t } = useTranslation();
@@ -221,6 +222,7 @@ export default function CaseView() {
         <aside className="min-w-0 space-y-6">
           <CaseMessages data={data} onChanged={refresh} />
           <FamilyGroupCard caseId={data.id} parentCaseId={family.parentCaseId} />
+          <ClientOriginals caseId={data.id} />
           <CaseTimeline data={data} />
         </aside>
       </div>

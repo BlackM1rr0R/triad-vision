@@ -4,6 +4,7 @@ import { HttpError } from '../http.js';
 import type { NodeLite } from './access.js';
 import { checkName, freeNameIn } from './names.js';
 import { newStorageKey, removeStored, storagePath } from './storage.js';
+import { hashBuffer } from './org/hash.js';
 
 /**
  * Server-generated drive files (documents made in the drive, conversions): writing bytes into the store,
@@ -41,7 +42,7 @@ export const createFileIn = async (parent: NodeLite, wantedName: string, buf: Bu
   const key = await storeBuffer(buf);
   try {
     const created = await prisma.driveNode.create({
-      data: { space: parent.space, ownerId: parent.ownerId, kind: 'FILE', name, parentId: parent.id, storageKey: key, mimeType, size: buf.length, createdById: userId },
+      data: { space: parent.space, ownerId: parent.ownerId, kind: 'FILE', name, parentId: parent.id, storageKey: key, mimeType, size: buf.length, createdById: userId, contentHash: hashBuffer(buf) },
       select: { id: true },
     });
     return { id: created.id, name };
@@ -78,7 +79,7 @@ export const saveFileVersion = async (nodeId: string, buf: Buffer, mimeType: str
   const next = current.version + 1;
   try {
     await prisma.$transaction(async (tx) => {
-      const moved = await tx.driveNode.updateMany({ where: { id: current.id, version: current.version }, data: { storageKey: key, mimeType, size: buf.length, version: next } });
+      const moved = await tx.driveNode.updateMany({ where: { id: current.id, version: current.version }, data: { storageKey: key, mimeType, size: buf.length, version: next, contentHash: hashBuffer(buf) } });
       if (moved.count !== 1) throw new HttpError(409, 'VERSION_CONFLICT');
       await tx.driveFileVersion.create({
         data: { nodeId: current.id, version: current.version, storageKey: current.storageKey!, mimeType: current.mimeType ?? 'application/octet-stream', size: current.size ?? 0, uploadedById },

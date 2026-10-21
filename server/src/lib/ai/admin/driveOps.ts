@@ -16,6 +16,7 @@ import { ensureCaseFolder } from '../../drive/caseFolders.js';
 import { STAGE_FOLDER } from '../../drive/cases.js';
 import { logDriveActivity } from '../../driveCollab/activity.js';
 import { assertNotLockedByOther } from '../../driveCollab/lock.js';
+import { assertNoFinalInside } from '../../drive/org/final.js';
 import { publishDrive } from '../../driveCollab/realtime.js';
 import { MAX_LINK_DAYS, maxExpiry, newShareToken, sha256, shareUrl } from '../../driveCollab/share.js';
 import { collabTexts } from '../../driveCollab/texts.js';
@@ -119,6 +120,7 @@ const mover = async (ai: AiToolContext, ctx: DriveAccessCtx, targetId: string) =
     if (targetChain.has(id)) throw badRequest('INTO_ITSELF');
     if (node.parentId === targetId) return { name: node.name, moved: false };
     await assertNotLockedByOther(id, ai.user.id);
+    if (node.kind === 'FOLDER') await assertNoFinalInside(id);
     const name = pickFreeName(taken, node.name, node.kind === 'FILE');
     await prisma.driveNode.update({ where: { id }, data: { parentId: targetId, name } });
     await logDriveActivity({
@@ -226,6 +228,7 @@ export const trashNodes = async (ai: AiToolContext, ids: string[]) => {
     if (node.deletedAt) return { name: node.name };
     assertNotProtected(ctx, node);
     await assertNotLockedByOther(id, ai.user.id);
+    if (node.kind === 'FOLDER') await assertNoFinalInside(id);
     const n = await softDelete(id, ai.user.id, at);
     nodes += n;
     if (n) {

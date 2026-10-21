@@ -23,6 +23,8 @@ import { SignaturesPanel } from '@/components/esign/CaseSignatures';
 // Team tasks linked to this case (own chunk).
 const CaseTasks = lazy(() => import('@/components/tasks/CaseTasks').then((m) => ({ default: m.CaseTasks })));
 // AI summary of the case (staff AI, own chunk).
+// Physical originals, acts and QR labels (own chunk).
+const CaseOriginalsPanel = lazy(() => import('@/components/originals/CaseOriginalsPanel'));
 const CaseAiSummary = lazy(() => import('@/components/aiStaff/CaseAiSummary').then((m) => ({ default: m.CaseAiSummary })));
 
 export default function CaseAdmin() {
@@ -76,6 +78,9 @@ export default function CaseAdmin() {
         <div className="min-w-0 space-y-6">
           <CaseStatsPanel stats={data.stats} />
           <FamilyPanel caseId={c.id} parentCaseId={family.parentCaseId} />
+          <Suspense fallback={null}>
+            <CaseOriginalsPanel caseId={c.id} />
+          </Suspense>
           {c.status === 'APPROVED' && <OnboardingAdminPanel caseId={c.id} />}
           <Suspense fallback={null}>
             <CaseTasks caseId={c.id} number={c.number} clientName={`${c.client.firstName} ${c.client.lastName}`.trim()} />

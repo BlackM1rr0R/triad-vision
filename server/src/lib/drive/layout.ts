@@ -5,6 +5,8 @@ import { collectSubtree } from './items.js';
 import { pickFreeName, siblingNames } from './names.js';
 import { ensureSection, ensureSharedRoot, LEGACY_WORK_FOLDER_NAME, sectionIds, staffFolderName } from './roots.js';
 import { purgeNodes } from './trash.js';
+import { seedSmartFolders } from './org/smart.js';
+import { seedFolderTemplates } from './org/templates.js';
 
 /**
  * One-time moves into the single shared workspace. Everything here is idempotent: once no PERSONAL node
@@ -108,6 +110,9 @@ export const runDriveStartup = async (log: (line: string) => void = console.log)
   const personal = await migratePersonalSpaces(log);
   const done = await prisma.setting.findUnique({ where: { key: BACKFILL_FLAG } });
   const cases = await backfillCaseDrive({ docs: !done, log });
+  // Document organisation defaults (once each): folder templates, tags, two shared smart folders.
+  await seedFolderTemplates().catch((err) => console.error('[drive] folder template seed failed', err));
+  await seedSmartFolders().catch((err) => console.error('[drive] smart folder seed failed', err));
   if (!done) {
     await prisma.setting.upsert({
       where: { key: BACKFILL_FLAG },
