@@ -535,6 +535,29 @@
         "tooMany": "Çox cəhd edildi. Bir neçə dəqiqə sonra yenidən yoxlayın və ya məlumatları əl ilə daxil edin.",
         "failed": "Şəkli göndərmək alınmadı. İnternet bağlantısını yoxlayıb yenidən cəhd edin."
       }
+    },
+    "uploadQuality": {
+      "titleBAD": "Şəkil keyfiyyəti aşağıdır",
+      "titleWARN": "Şəkil daha aydın ola bilər",
+      "tips": "Sənədi düz səthə qoyun, gün işığında, flaşsız çəkin, dörd kənarın hamısı görünsün.",
+      "kept": "Fayl saxlanıldı, amma aşağı keyfiyyət kimi işarələndi.",
+      "retake": "Yenidən çək",
+      "keep": "Saxla",
+      "reasons": {
+        "LOW_RESOLUTION": "Şəklin ölçüsü çox kiçikdir",
+        "BLURRY": "Şəkil bulanıqdır",
+        "TOO_DARK": "Şəkil çox qaranlıqdır",
+        "OVEREXPOSED": "Şəkil çox açıqdır",
+        "NO_CONTENT": "Şəkildə sənəd görünmür",
+        "GLARE": "Parıltı mətnin bir hissəsini örtür",
+        "CUT_OFF": "Sənədin kənarları kəsilib",
+        "TOO_COMPRESSED": "Şəkil çox sıxılıb",
+        "UNREADABLE": "Fayl zədələnib",
+        "PDF_UNREADABLE": "PDF açılmır",
+        "PDF_LOW_DPI": "Skanın keyfiyyəti aşağıdır",
+        "PDF_SMALL_PAGE": "PDF səhifəsi çox kiçikdir",
+        "PDF_NO_PAGES": "PDF-də səhifə yoxdur"
+      }
     }
   }
 }

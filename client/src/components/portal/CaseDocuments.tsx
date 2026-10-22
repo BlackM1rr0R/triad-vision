@@ -21,6 +21,10 @@ import { DocCheckBadge } from '@/components/vault/DocCheckBadge';
 import { ExpiryChip, ExpiryHint } from '@/components/expiry/Expiry';
 // AI check of the upload against the requirement (Document.checks.ai), with "Yenidən yüklə".
 import { AiCheckCard } from '@/components/aiDocs/AiCheckCard';
+// Smart uploads: instant scan-quality feedback and "Recognised as: …" / wrong-document warning per upload.
+import { QualityNotice } from '@/components/uploadAi/QualityNotice';
+import { RecognitionNotice } from '@/components/uploadAi/RecognitionNotice';
+import { qualityOf, type Quality } from '@/components/uploadAi/api';
 
 type UploadStage = 'INITIAL' | 'EMBASSY';
 
@@ -41,12 +45,14 @@ const RequirementIcon = ({ req }: { req: Requirement }) => {
 };
 
 const DocRow = ({
+  caseId,
   doc,
   canDelete,
   onDelete,
   requirementKey,
   onReupload,
 }: {
+  caseId: string;
   doc: CaseDocument;
   canDelete: boolean;
   onDelete: (doc: CaseDocument) => void;
@@ -109,6 +115,21 @@ const DocRow = ({
       </div>
       {doc.status !== 'REJECTED' && <ExpiryHint expiresAt={expiresAt} requirementKey={requirementKey} />}
       <AiCheckCard docId={doc.id} checks={(doc as CaseDocument & { checks?: unknown }).checks} createdAt={doc.createdAt} rejected={doc.status === 'REJECTED'} onReupload={onReupload} />
+      <RecognitionNotice
+        caseId={caseId}
+        docId={doc.id}
+        createdAt={doc.createdAt}
+        rejected={doc.status === 'REJECTED'}
+        onReplace={
+          onReupload
+            ? async (file) => {
+                // "Choose another file": the wrong / poor upload goes, the new one takes its place.
+                if (canDelete) await api.delete(`/cases/${caseId}/documents/${doc.id}`).catch(() => undefined);
+                onReupload(file);
+              }
+            : undefined
+        }
+      />
       {doc.status === 'REJECTED' && doc.reviewNote && (
         <p className="mt-1.5 mb-1.5 mr-1.5 flex gap-2 rounded-md bg-red-50 px-2.5 py-1.5 text-xs leading-relaxed whitespace-pre-line text-danger">
           <AlertCircle className="mt-0.5 size-3.5 shrink-0" aria-hidden />
@@ -140,12 +161,14 @@ const RequirementCard = ({
   // Client-side quality check dialog and the server check result of the last upload.
   const { gate, dialog: checkDialog } = useDocCheckGate();
   const [lastChecks, setLastChecks] = useState<unknown>(null);
+  const [lastQuality, setLastQuality] = useState<Quality | null>(null);
   const docs = [...req.documents].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   const description = tr(req.description);
 
   const upload = async (file: File) => {
     if (!(await gate(file))) return; // the client chose another file
     setLastChecks(null);
+    setLastQuality(null);
     const form = new FormData();
     form.append('requirementId', req.id);
     form.append('file', file);
@@ -155,6 +178,7 @@ const RequirementCard = ({
         onUploadProgress: (e) => setProgress(e.total ? e.loaded / e.total : 0),
       });
       setLastChecks(data.checks ?? null);
+      setLastQuality(qualityOf(data));
       toast.success(t('portal.docs.uploaded'));
       await onChanged();
     } catch (err) {
@@ -185,6 +209,7 @@ const RequirementCard = ({
         timeout: 180_000,
       });
       setLastChecks(data.checks ?? null);
+      setLastQuality(qualityOf(data));
       toast.success(t('expiry.scan.done', { count: data.pages }));
       await onChanged();
     } catch (err) {
@@ -220,6 +245,7 @@ const RequirementCard = ({
               {docs.map((d) => (
                 <DocRow
                   key={d.id}
+                  caseId={caseId}
                   doc={d}
                   canDelete={open && d.uploadedById === user?.id && d.status !== 'ACCEPTED'}
                   onDelete={onDelete}
@@ -233,6 +259,7 @@ const RequirementCard = ({
           !open && <p className="text-xs text-muted italic">{t('portal.docs.notUploaded')}</p>
         )}
         {open && lastChecks != null && <CheckResultNotice checks={lastChecks} onDismiss={() => setLastChecks(null)} />}
+        {open && <QualityNotice quality={lastQuality} onRetake={(f) => void upload(f)} onDismiss={() => setLastQuality(null)} />}
         {open && (
           <FileDrop
             onFile={upload}

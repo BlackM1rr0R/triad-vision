@@ -535,6 +535,29 @@
         "tooMany": "Zu viele Versuche. Bitte versuchen Sie es in einigen Minuten erneut oder geben Sie die Daten manuell ein.",
         "failed": "Das Foto konnte nicht gesendet werden. Bitte prüfen Sie die Internetverbindung und versuchen Sie es erneut."
       }
+    },
+    "uploadQuality": {
+      "titleBAD": "Die Bildqualität ist zu gering",
+      "titleWARN": "Das Bild könnte schärfer sein",
+      "tips": "Legen Sie das Dokument flach hin und fotografieren Sie es bei Tageslicht ohne Blitz, alle vier Ränder sichtbar.",
+      "kept": "Die Datei wurde gespeichert, ist aber als geringe Qualität markiert.",
+      "retake": "Neu aufnehmen",
+      "keep": "Behalten",
+      "reasons": {
+        "LOW_RESOLUTION": "Das Bild ist zu klein",
+        "BLURRY": "Das Foto ist unscharf",
+        "TOO_DARK": "Das Foto ist zu dunkel",
+        "OVEREXPOSED": "Das Foto ist überbelichtet",
+        "NO_CONTENT": "Kein Dokument zu erkennen",
+        "GLARE": "Eine Spiegelung verdeckt Text",
+        "CUT_OFF": "Die Ränder sind abgeschnitten",
+        "TOO_COMPRESSED": "Das Bild ist zu stark komprimiert",
+        "UNREADABLE": "Die Datei ist beschädigt",
+        "PDF_UNREADABLE": "Die PDF lässt sich nicht öffnen",
+        "PDF_LOW_DPI": "Der Scan ist zu grob",
+        "PDF_SMALL_PAGE": "Die PDF-Seite ist sehr klein",
+        "PDF_NO_PAGES": "Die PDF hat keine Seiten"
+      }
     }
   }
 }

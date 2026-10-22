@@ -17,6 +17,7 @@ import { badRequest, conflict, notFound, parse } from '../lib/http.js';
 import { checkCaseDocument, runChecks, targetForVaultKind, vaultDir } from '../lib/docCheck/index.js';
 import { vaultDto, vaultKindsFor } from '../lib/docCheck/vault.js';
 import { scheduleAiDocCheck } from '../lib/aiDocs/docCheck.js';
+import { prepareCaseDocument, publicQuality, scheduleUploadAnalysis } from '../lib/uploadAi/index.js';
 
 /**
  * Personal document vault: clients keep their documents (passport, diplomas, photos…) once and reuse
@@ -298,8 +299,10 @@ vaultRouter.post('/:id/use', async (req, res) => {
     });
     const checks = await checkCaseDocument(doc.id);
     await audit(req, 'vault.use', v.id, { caseId: c.id, documentId: doc.id });
-    res.status(201).json({ document: { ...doc, checks }, checks });
+    const quality = publicQuality(await prepareCaseDocument(doc.id)); // smart uploads: scan quality, never throws
+    res.status(201).json({ document: { ...doc, checks }, checks, quality });
     scheduleAiDocCheck(doc.id); // AI check against the requirement (checks.ai)
+    scheduleUploadAnalysis({ documentId: doc.id }); // recognition + proposals, in the background
   } catch (err) {
     await fsp.unlink(casePath(storedName)).catch(() => undefined);
     throw err;

@@ -38,6 +38,8 @@ const EVENT_TYPES = [
   // team drive collaboration (comments, edit locks)
   'drive.comment',
   'drive.lock',
+  // smart uploads: recognition of an upload finished (components/uploadAi)
+  'upload-ai.ready',
 ] as const;
 export type RealtimeEventType = (typeof EVENT_TYPES)[number];
 

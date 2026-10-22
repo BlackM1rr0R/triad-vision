@@ -38,8 +38,10 @@ import { adminSettlementsRouter } from './settlements.js';
 import { adminTranslateRouter } from './translate.js';
 import { adminAiStaffRouter } from './aiStaff.js';
 import { adminCaseAiRouter } from './caseAi.js';
+import { adminCaseNextRouter } from './caseNext.js';
 import { adminAiEmployerRouter } from './aiEmployer.js';
 import { adminMgmtRouter } from './aiMgmt.js';
+import { adminMyWorkRouter } from './myWork.js';
 
 export const adminRouter = Router();
 adminRouter.use(requireMinRole('STAFF'));
@@ -107,6 +109,7 @@ adminRouter.get('/dashboard', async (req, res) => {
   });
 });
 
+adminRouter.use('/my-work', adminMyWorkRouter); // "my work today" queue + snooze / expiry remind
 adminRouter.use('/oversight', oversightRouter);
 adminRouter.use('/messaging', adminMessagingRouter);
 adminRouter.use('/requirements', adminRequirementsRouter);
@@ -143,6 +146,7 @@ adminRouter.use(['/content', '/settings', '/vacancies', '/companies', '/reviews'
 });
 
 adminRouter.use(adminCaseAiRouter); // /cases/:id/ai/*, /case-ai/settings
+adminRouter.use(adminCaseNextRouter); // /cases/:id/next-step*, /cases/:id/embassy-package*
 adminRouter.use(adminDocumentExpiryRouter); // /cases/:caseId/documents/:docId/expiry, /expiring
 adminRouter.use('/cases', adminCasesRouter);
 adminRouter.use('/users', adminUsersRouter);

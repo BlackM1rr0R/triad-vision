@@ -1,5 +1,6 @@
 import type { CaseStatus, DocAccess, DocStatus, L10n, Role } from '@/lib/types';
 import type { InquiryStatus } from './labels';
+import type { NextStepSummary } from '@/components/caseNext/api';
 
 export interface AdminCaseListItem {
   id: string;
@@ -17,6 +18,8 @@ export interface AdminCaseListItem {
   statusSince: string;
   daysInStatus: number;
   ageDays: number;
+  /** Top "next step" from the server rules (lib/caseNext), null for closed cases. */
+  nextStep?: NextStepSummary | null;
 }
 
 export interface AdminCasesResponse {

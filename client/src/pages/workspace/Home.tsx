@@ -11,6 +11,7 @@ import { usePageTitle } from '@/lib/usePageTitle';
 import { useRealtime } from '@/lib/realtime';
 import { MyTasksWidget } from '@/components/tasks/MyTasksWidget';
 import { InboxTodayWidget } from '@/components/aiMail/InboxTodayWidget';
+import { TodayCard } from '@/components/today/TodayCard';
 import { useHome, useOptionalSummary, useWorkspaceInvalidate } from '@/components/workspace/api';
 import { AnnouncementsCard } from '@/components/workspace/Announcements';
 import { NotesBoard } from '@/components/workspace/NotesBoard';
@@ -100,6 +101,9 @@ export default function WorkspaceHome() {
             <QuickLink to="/workspace/contacts?new=1" icon={BookUser} label={t('ws.home.quick.contact')} />
           </div>
         </header>
+
+        {/* "My work today": everything waiting for me (full queue at /admin/today) */}
+        <TodayCard />
 
         {/* AI mail triage: today's shared inbox (info@…) by urgency / category, hidden without such a mailbox */}
         <InboxTodayWidget />

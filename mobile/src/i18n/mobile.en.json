@@ -535,6 +535,29 @@
         "tooMany": "Too many attempts. Please try again in a few minutes or enter the details manually.",
         "failed": "The photo could not be sent. Check your internet connection and try again."
       }
+    },
+    "uploadQuality": {
+      "titleBAD": "The image quality is too low",
+      "titleWARN": "The image could be clearer",
+      "tips": "Lay the document flat and retake it in daylight, without flash, with all four edges visible.",
+      "kept": "The file was saved but marked as low quality.",
+      "retake": "Retake",
+      "keep": "Keep",
+      "reasons": {
+        "LOW_RESOLUTION": "The image is too small",
+        "BLURRY": "The photo is blurry",
+        "TOO_DARK": "The photo is too dark",
+        "OVEREXPOSED": "The photo is overexposed",
+        "NO_CONTENT": "No document can be seen",
+        "GLARE": "Glare hides part of the text",
+        "CUT_OFF": "The edges are cut off",
+        "TOO_COMPRESSED": "The image is heavily compressed",
+        "UNREADABLE": "The file is damaged",
+        "PDF_UNREADABLE": "The PDF cannot be opened",
+        "PDF_LOW_DPI": "The scan resolution is too low",
+        "PDF_SMALL_PAGE": "The PDF page is very small",
+        "PDF_NO_PAGES": "The PDF has no pages"
+      }
     }
   }
 }

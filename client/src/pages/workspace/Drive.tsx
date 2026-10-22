@@ -55,6 +55,7 @@ import { ContextMenu, type MenuEntry, type MenuPosition } from '@/components/dri
 import { ConflictDialog, FolderPicker, ImagePreview, NameDialog } from '@/components/drive/Dialogs';
 import { DetailsPanel } from '@/components/drive/DetailsPanel';
 import { ItemsView, type ListMode, type SortKey, type ViewMode } from '@/components/drive/ItemsView';
+import { DriveAcceptAllBar } from '@/components/uploadAi/StaffChips';
 import { ShareDialog } from '@/components/drive/ShareDialog';
 import { Sidebar } from '@/components/drive/Sidebar';
 import { Toolbar, type CrumbView, type ToolAction } from '@/components/drive/Toolbar';
@@ -1016,6 +1017,10 @@ export default function WorkspaceDrive() {
                         />
                         {t('drive.shared.selectAll', { count: items.length })}
                       </label>
+                      {/* Smart uploads: one click applies every AI suggestion of the files in this folder */}
+                      <span className={selectedItems.length > 0 ? '' : 'ml-auto'}>
+                        <DriveAcceptAllBar folderId={folderId} items={items} />
+                      </span>
                       {selectedItems.length > 0 && <span className="ml-auto font-semibold text-ink">{t('drive.toolbar.selected', { count: selectedItems.length })}</span>}
                     </div>
                     <div className="min-h-0 flex-1">

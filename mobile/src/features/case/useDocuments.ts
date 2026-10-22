@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { router } from 'expo-router';
 import * as DocumentPicker from 'expo-document-picker';
 import * as ImagePicker from 'expo-image-picker';
@@ -9,6 +9,7 @@ import { ApiError } from '@/lib/errors';
 import { openDocument } from '@/lib/native';
 import { useErrorMessage } from '@/lib/queries';
 import type { CaseDocument } from '@/types';
+import { showQualityFeedback } from './qualityFeedback';
 
 export const MAX_FILE_SIZE = 5 * 1024 * 1024;
 export const ACCEPTED_MIME = [
@@ -89,6 +90,8 @@ export const useUploader = (invalidate: () => Promise<unknown>) => {
   const toast = useToast();
   const message = useErrorMessage();
   const [progress, setProgress] = useState<Record<string, number>>({});
+  // "Retake" in the quality alert runs the same upload again (same requirement, same source).
+  const again = useRef<(() => void) | null>(null);
 
   const upload = useCallback(
     async (
@@ -113,7 +116,8 @@ export const useUploader = (invalidate: () => Promise<unknown>) => {
           onProgress: (f) => setProgress((p) => ({ ...p, [key]: f })),
         });
         await invalidate();
-        toast(opts.successMessage ?? t('m.case.uploaded'));
+        // Scan quality measured by the server (blur, darkness, glare, cut-off): an alert with "Retake".
+        if (!showQualityFeedback(t, res, () => again.current?.())) toast(opts.successMessage ?? t('m.case.uploaded'));
         opts.onUploaded?.((res as { document?: CaseDocument } | null)?.document ?? null, file);
         return true;
       } catch (err) {
@@ -128,6 +132,13 @@ export const useUploader = (invalidate: () => Promise<unknown>) => {
       }
     },
     [invalidate, message, t, toast],
+  );
+  const uploadWithRetake: typeof upload = useCallback(
+    (key, path, source, fields, opts = {}) => {
+      again.current = () => void upload(key, path, source, fields, opts);
+      return upload(key, path, source, fields, opts);
+    },
+    [upload],
   );
 
   /**
@@ -184,7 +195,7 @@ export const useUploader = (invalidate: () => Promise<unknown>) => {
     [invalidate, message, t, toast],
   );
 
-  return { progress, upload, uploadFiles };
+  return { progress, upload: uploadWithRetake, uploadFiles };
 };
 
 /** Images open in the in-app viewer; PDFs / Word files open in the phone's viewer. */

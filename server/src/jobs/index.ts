@@ -24,3 +24,4 @@ import './expiry.js'; // document expiry warnings (client, staff, daily admin di
 import './driveIndex.js'; // drive full-text index (text layer, DOCX, XLSX, OCR)
 import './aiBriefing.js'; // daily AI briefing e-mail for opted-in admins (08:00 Baku)
 import './aiMgmt.js'; // weekly management report (Monday 08:00 Baku) + security alert rules (every 10 min)
+import './uploadAi.js'; // smart uploads: finish recognitions left pending by a restart

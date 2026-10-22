@@ -5,6 +5,7 @@ export { prisma };
 
 /** Deletes all rows, children before parents so foreign keys are never violated. */
 export const resetDb = async () => {
+  await prisma.documentInsight.deleteMany(); // smart uploads (no foreign keys)
   await prisma.managementReport.deleteMany(); // management AI (no foreign keys)
   await prisma.securityAlert.deleteMany();
   await prisma.aiConversation.deleteMany();

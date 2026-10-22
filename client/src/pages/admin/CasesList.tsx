@@ -13,6 +13,7 @@ import { ALL_STATUSES, actorSideLabel, eventLabel, fmtDate, fmtDateTime, fmtRela
 import type { AdminCaseListItem, AdminCasesResponse } from '@/components/admin/types';
 import { Chip, EmptyState, ErrorBlock, LoadingBlock, PageHead } from '@/components/admin/ui';
 import { BulkPartnerBar, CasePartnerCell, PartnerFilterSelect, SelectBox } from '@/components/partners/CasesPartnerTools';
+import { NextStepChip } from '@/components/caseNext/NextStepChip';
 
 const isStatus = (v: string | null): v is CaseStatus => !!v && (ALL_STATUSES as string[]).includes(v);
 
@@ -217,7 +218,7 @@ export default function CasesList() {
           <BulkPartnerBar ids={picked} onDone={() => setPicked([])} />
           {/* Desktop table */}
           <div className="hidden overflow-x-auto rounded-xl border border-line bg-white xl:block">
-            <table className="w-full min-w-[1180px] text-left text-sm">
+            <table className="w-full min-w-[1320px] text-left text-sm">
               <thead className="border-b border-line bg-surface/70 text-[11px] font-semibold tracking-wide whitespace-nowrap text-muted uppercase">
                 <tr>
                   <th className="w-8 py-2.5 pl-4">
@@ -231,6 +232,7 @@ export default function CasesList() {
                   <th className="px-4 py-2.5">{t('admin.cases.th.client')}</th>
                   <th className="px-4 py-2.5">{t('admin.cases.th.profession')}</th>
                   <th className="px-4 py-2.5">{t('admin.cases.th.status')}</th>
+                  <th className="px-4 py-2.5">{t('caseNext.chip.column')}</th>
                   <th className="px-4 py-2.5">{t('admin.cases.th.lastEvent')}</th>
                   <th className="px-4 py-2.5">{t('admin.cases.th.staff')}</th>
                   <th className="px-4 py-2.5">{t('refPartners.field')}</th>
@@ -283,6 +285,9 @@ export default function CasesList() {
                         <RowMeta c={c} />
                       </div>
                     </td>
+                    <td className="w-56 max-w-[15rem] px-4 py-3 align-top">
+                      <NextStepChip step={c.nextStep} />
+                    </td>
                     <td className="px-4 py-3 align-top">
                       <LastEvent c={c} />
                     </td>
@@ -318,6 +323,7 @@ export default function CasesList() {
                     <DaysInStatus c={c} />
                     <RowMeta c={c} />
                   </div>
+                  {c.nextStep && <NextStepChip step={c.nextStep} className="mt-2.5" />}
                   <div className="mt-2.5 border-t border-line pt-2.5">
                     <LastEvent c={c} />
                   </div>

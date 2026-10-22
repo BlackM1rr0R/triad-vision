@@ -6,6 +6,8 @@ import { overallProgress, scanPdfName } from './scanPages';
 export interface ScanPdfResult {
   document: CaseDocument;
   pages: number;
+  /** Scan quality the server measured (smart uploads); null when the check is off. */
+  quality?: { level: 'OK' | 'WARN' | 'BAD'; reasons: { code: string; level: 'WARN' | 'BAD' }[] } | null;
 }
 
 /**

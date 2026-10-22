@@ -2917,3 +2917,43 @@ model SecurityAlert {
   @@index([status, createdAt])
   @@index([fingerprint, lastSeenAt])
 }
+
+/// Smart uploads (lib/uploadAi): what a case document or a drive file in a client folder was recognised as
+/// (type, fields, confidence), the proposals made from it (standard name, requirement, folder, expiry) and the
+/// scan quality measured right after the upload. Proposals are advisory: nothing changes until staff accept
+/// them (or the super admin's auto-apply setting does). Plain ids, no foreign keys (like the other AI rows).
+model DocumentInsight {
+  id                    String    @id @default(cuid())
+  documentId            String?   @unique // case Document
+  driveNodeId           String?   @unique // drive file (staff upload into a client folder)
+  caseId                String? // the case the file belongs to (Document.caseId, or the case of the client folder)
+  folderId              String? // drive: parent folder when analysed (bulk "accept all" per folder)
+  uploadedById          String?
+  sha256                String    @db.Char(64)
+  docType               String    @default("OTHER") @db.VarChar(32) // PASSPORT | ID_CARD | DIPLOMA | … | OTHER
+  fields                Json // { holderName, firstName, lastName, documentNumber, issueDate, expiryDate, birthDate, issuingCountry, issuingAuthority, language }
+  confidence            Float     @default(0)
+  source                String    @default("NONE") @db.VarChar(16) // MRZ | TEXT | FILENAME | AI | DOC_CHECK | CACHE | STAFF | NONE
+  proposedName          String?   @db.VarChar(255)
+  proposedRequirementId String?
+  proposedFolderId      String?
+  proposals             Json? // { actions[], folder: { parentId, name }, requirementTitle, currentName … }
+  expiryDate            DateTime?
+  flags                 Json? // ["NAME_MISMATCH", "EXPIRED", "EXPIRES_SOON", "WRONG_REQUIREMENT"]
+  quality               Json? // { level, reasons[{ code, level, params }], metrics }
+  qualityLevel          String?   @db.VarChar(8) // OK | WARN | BAD
+  status                String    @default("PENDING") @db.VarChar(16) // PENDING | PROPOSED | ACCEPTED | REJECTED | AUTO_APPLIED | FAILED
+  applied               Json? // [{ action, from, to }]
+  clientAckAt           DateTime? // the client kept a file flagged as the wrong document ("upload anyway")
+  model                 String?   @db.VarChar(120)
+  costMicros            Int       @default(0)
+  error                 String?   @db.VarChar(120)
+  decidedById           String?
+  decidedAt             DateTime?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([caseId, status])
+  @@index([folderId, status])
+  @@index([sha256])
+}

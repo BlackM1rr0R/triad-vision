@@ -104,8 +104,8 @@ export const loadCaseDetail = async (caseId: string, opts: { forStaff: boolean }
       signerIp: opts.forStaff ? c.contract.signerIp : undefined,
       signerUserAgent: opts.forStaff ? c.contract.signerUserAgent : undefined,
     },
-    // Documents not tied to a requirement (contract, visa scan, other files uploaded by staff)
-    otherDocuments: c.documents.filter((d) => d.stage === 'VISA' || d.stage === 'OTHER'),
+    // Documents not tied to a requirement (contract, visa scan, other files uploaded by staff, embassy packages)
+    otherDocuments: c.documents.filter((d) => d.stage === 'VISA' || d.stage === 'OTHER' || d.stage === 'EMBASSY'),
     documents: undefined,
   };
 };

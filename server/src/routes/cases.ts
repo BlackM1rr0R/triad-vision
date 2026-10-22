@@ -16,6 +16,7 @@ import { PDFDocument } from 'pdf-lib';
 import { signContractPdf } from '../lib/pdfSign.js';
 import { checkCaseDocument } from '../lib/docCheck/index.js';
 import { scheduleAiDocCheck } from '../lib/aiDocs/docCheck.js';
+import { prepareCaseDocument, publicQuality, scheduleUploadAnalysis } from '../lib/uploadAi/index.js';
 
 export const casesRouter = Router();
 casesRouter.use(requireAuth);
@@ -100,8 +101,11 @@ casesRouter.post('/:id/documents', documentUpload.single('file'), async (req, re
     });
     // Automatic quality checks (PDF readable, photo is an image, resolution, passport MRZ/expiry); never throws.
     const checks = await checkCaseDocument(doc.id);
-    res.status(201).json({ document: { ...doc, checks }, checks });
+    // Smart uploads: scan quality (blur, darkness, glare, cut-off) for instant feedback; never throws.
+    const quality = publicQuality(await prepareCaseDocument(doc.id));
+    res.status(201).json({ document: { ...doc, checks }, checks, quality });
     scheduleAiDocCheck(doc.id); // AI check against the requirement, in the background (checks.ai)
+    scheduleUploadAnalysis({ documentId: doc.id }); // recognition + proposals, in the background
   } catch (err) {
     await removeFile(file.filename);
     throw err;

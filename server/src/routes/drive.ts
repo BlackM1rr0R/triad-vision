@@ -27,6 +27,7 @@ import { relinkRestoredPartnerFolder } from '../lib/drive/caseFolders.js';
 import { CONTENT_LIMIT, contentSnippets, contentWhere } from '../lib/driveIntel/search.js';
 import { logDriveActivity } from '../lib/driveCollab/activity.js';
 import { assertNotLockedByOther } from '../lib/driveCollab/lock.js';
+import { prepareDriveFile, publicQuality, scheduleUploadAnalysis } from '../lib/uploadAi/index.js';
 
 /**
  * Team drive (/api/drive): ONE shared workspace ("Gemeinsame Dokumente") where every staff member works —
@@ -432,7 +433,11 @@ driveRouter.post(
         ]);
         await audit(req, 'DRIVE_FILE_VERSION_ADDED', `drive:${current.id}`, { name, version: next, size: file.size });
         await logDriveActivity({ nodeId: current.id, folderId: target.id, actorId: user.id, action: 'NEW_VERSION', name, meta: { version: next, size: file.size, kind: 'FILE' } });
-        res.status(201).json({ item: await loadItem(ctxOf(req), current.id), replaced: true });
+        // Smart uploads (files in client folders): scan quality now, recognition in the background; never throws.
+        const prep = await prepareDriveFile(current.id);
+        const quality = publicQuality(prep?.quality ?? null);
+        res.status(201).json({ item: await loadItem(ctxOf(req), current.id), replaced: true, quality });
+        if (prep) scheduleUploadAnalysis({ driveNodeId: current.id });
         return;
       }
       if (clash) {
@@ -461,7 +466,11 @@ driveRouter.post(
       storedKey = null;
       await audit(req, 'DRIVE_FILE_UPLOADED', `drive:${created.id}`, { name: finalName, size: file.size, parentId: target.id });
       await logDriveActivity({ nodeId: created.id, folderId: target.id, actorId: user.id, action: 'UPLOAD', name: finalName, meta: { size: file.size, kind: 'FILE' } });
-      res.status(201).json({ item: await loadItem(ctxOf(req), created.id), replaced: false });
+      // Smart uploads (files in client folders): scan quality now, recognition in the background; never throws.
+      const prep = await prepareDriveFile(created.id);
+      const quality = publicQuality(prep?.quality ?? null);
+      res.status(201).json({ item: await loadItem(ctxOf(req), created.id), replaced: false, quality });
+      if (prep) scheduleUploadAnalysis({ driveNodeId: created.id });
     } catch (err) {
       await fs.unlink(file.path).catch(() => undefined);
       // A file adopted into the store but never recorded must not linger.
