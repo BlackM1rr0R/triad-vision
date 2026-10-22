@@ -79,6 +79,8 @@ import { adminCopy } from '@/i18n/admin';
 import { roleLabel, fmtRelative } from '@/components/admin/labels';
 import { HelpButton } from '@/components/admin/help/HelpButton';
 import { FileBarChart2, ShieldAlert } from 'lucide-react'; // weekly reports, security alerts
+import { ListChecks as TodayIcon } from 'lucide-react';
+import { TodayNavBadge } from '@/components/today/TodayNavBadge'; // urgent count of "my work today"
 
 registerCopy(adminCopy);
 
@@ -94,6 +96,7 @@ interface NavItem {
 }
 
 const MAIN_NAV: NavItem[] = [
+  { to: '/admin/today', label: 'today', icon: TodayIcon },
   { to: '/admin', label: 'dashboard', icon: LayoutDashboard, end: true },
   { to: '/admin/oversight', label: 'oversight', icon: Eye, superOnly: true },
   { to: '/admin/ai', label: 'ai', icon: Sparkles, superOnly: true },
@@ -156,6 +159,8 @@ const SETTINGS_NAV: NavItem = { to: '/admin/settings', label: 'settings', icon: 
 /** Translation key of the page title for a pathname. */
 const pageTitleKey = (pathname: string) => {
   if (matchPath('/admin', pathname)) return 'admin.nav.dashboard';
+  if (matchPath('/admin/dashboard', pathname)) return 'admin.nav.dashboard';
+  if (matchPath('/admin/today', pathname)) return 'admin.nav.today';
   if (matchPath('/admin/oversight', pathname)) return 'admin.nav.oversight';
   if (matchPath('/admin/ai/*', pathname)) return 'admin.nav.ai';
   if (matchPath('/admin/weekly-reports', pathname)) return 'admin.nav.weeklyReports';
@@ -217,6 +222,7 @@ const SideLink = ({ item, collapsed, onNavigate }: { item: NavItem; collapsed: b
           {isActive && <span className="absolute top-1.5 bottom-1.5 left-0 w-0.5 rounded-full bg-brand-400" aria-hidden />}
           <item.icon className={clsx('size-[18px] shrink-0', isActive ? 'text-brand-400' : 'text-white/50 group-hover:text-white/80')} aria-hidden />
           {!collapsed && <span className="truncate">{label}</span>}
+          {item.label === 'today' && <TodayNavBadge collapsed={collapsed} />}
         </>
       )}
     </NavLink>
@@ -231,7 +237,7 @@ const SidebarNav = ({ collapsed, isAdmin, isSuper, onNavigate }: { collapsed: bo
 
   return (
     <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4" aria-label={t('admin.layout.navAria')}>
-      {MAIN_NAV.filter((item) => (!item.superOnly || isSuper) && (!item.adminOnly || isAdmin)).map((item) => (
+      {MAIN_NAV.filter((item) => (!item.superOnly || isSuper) && (!item.adminOnly || isAdmin)).map((item) => (!isAdmin && item.label === 'dashboard' ? { ...item, to: '/admin/dashboard' } : item)).map((item) => (
         <SideLink key={item.to} item={item} collapsed={collapsed} onNavigate={onNavigate} />
       ))}
 

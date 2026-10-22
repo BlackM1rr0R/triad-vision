@@ -14,6 +14,9 @@ import { displayName, typeLabel } from './labels';
 import { can, type DriveItem } from './types';
 import type { CollabItem } from './collab/api';
 import { OrgBadges } from './org/Chips';
+// Smart uploads: "AI · Passport" chip / "Low quality" on files in client folders (item.uploadAi).
+import { DriveAiChip } from '@/components/uploadAi/StaffChips';
+import type { UploadAiChipData } from '@/components/uploadAi/api';
 
 /** Collaboration badges: open comment threads and "… is editing" (edit lock). */
 const CollabBadges = ({ item, t, compact }: { item: DriveItem; t: ReturnType<typeof useTranslation>['t']; compact?: boolean }) => {
@@ -315,9 +318,10 @@ const Tile = memo(function Tile({ item, p, click, toggle, context, dragStart, t 
         {item.starred && <Star className="absolute top-0 right-1 size-3.5 fill-amber-400 text-amber-400" aria-hidden />}
       </div>
       <span className="mt-1.5 line-clamp-2 w-full text-[13px] leading-snug font-medium break-words text-ink">{name}</span>
-      {!!((item as CollabItem).commentCount || (item as CollabItem).lock) && (
+      {!!((item as CollabItem).commentCount || (item as CollabItem).lock || (item as { uploadAi?: UploadAiChipData }).uploadAi) && (
         <span className="mt-0.5 flex max-w-full items-center justify-center gap-1">
           <CollabBadges item={item} t={t} compact />
+          <DriveAiChip item={item} compact />
         </span>
       )}
       {!!(item.finalAt || item.tags?.length) && (
@@ -472,6 +476,7 @@ const Row = memo(function Row({ item, p, click, toggle, context, dragStart, t }:
         {item.starred && <Star className="size-3.5 shrink-0 fill-amber-400 text-amber-400" aria-hidden />}
         <CollabBadges item={item} t={t} />
         <OrgBadges item={item} />
+        <DriveAiChip item={item} />
         {item.kind === 'FOLDER' && !item.inheritPermissions && !item.system && <Lock className="size-3 shrink-0 text-muted" aria-label={t('drive.details.inheritOff')} />}
         <CaseBadge item={item} t={t} className="hidden shrink-0 sm:inline-flex" />
         {item.kind === 'FOLDER' && item.caseStatus && (

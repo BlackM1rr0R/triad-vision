@@ -46,7 +46,13 @@ const REQUEST_TEXT: Record<Locale, { title: string; body: (doc: string) => strin
  * Asks the client for a document: an existing requirement only gets a reminder; otherwise a new requirement
  * (stage INITIAL until the case reached the embassy stage) is created. The client is notified in their language.
  */
-export const requestDocument = async (caseId: string, input: { requirementId?: string; requirementKey?: string; title?: L10n }, actorId: string) => {
+export const requestDocument = async (
+  caseId: string,
+  input: { requirementId?: string; requirementKey?: string; title?: L10n },
+  actorId: string,
+  /** notify: false — the caller sends one combined notification for several requests (embassy package, next step). */
+  opts: { notify?: boolean } = {},
+) => {
   const c = await prisma.case.findUnique({ where: { id: caseId }, select: { id: true, status: true, clientId: true, client: { select: { locale: true } } } });
   if (!c) throw notFound('CASE_NOT_FOUND');
   let requirement = input.requirementId ? await prisma.documentRequirement.findUnique({ where: { id: input.requirementId } }) : null;
@@ -73,7 +79,7 @@ export const requestDocument = async (caseId: string, input: { requirementId?: s
   }
   const title = (requirement.title as Record<string, string>)[c.client.locale] || (requirement.title as Record<string, string>).de || '';
   const tx = REQUEST_TEXT[c.client.locale];
-  await notifyUser(c.clientId, { type: 'DOCUMENT_REQUESTED', title: tx.title, body: created ? tx.body(title) : tx.reminder(title), link: `/account/cases/${c.id}`, caseId: c.id });
+  if (opts.notify !== false) await notifyUser(c.clientId, { type: 'DOCUMENT_REQUESTED', title: tx.title, body: created ? tx.body(title) : tx.reminder(title), link: `/account/cases/${c.id}`, caseId: c.id });
   await caseEvent(c.id, 'AI_CASE_DOCUMENT_REQUESTED', actorId, `${created ? 'neu' : 'Erinnerung'}: ${(requirement.title as Record<string, string>).de ?? title}`);
   return { requirement, created };
 };

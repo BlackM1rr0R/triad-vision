@@ -6,6 +6,7 @@
 const az = {
   admin: {
     nav: {
+      today: 'Bu günün işləri',
       tasks: 'Tapşırıqlar',
       workspace: 'Workspace',
       mail: 'Poçt',
@@ -1247,6 +1248,7 @@ const az = {
 const de: typeof az = {
   admin: {
     nav: {
+      today: 'Meine Arbeit heute',
       tasks: 'Aufgaben',
       workspace: 'Workspace',
       mail: 'E-Mail',
@@ -2488,6 +2490,7 @@ const de: typeof az = {
 const en: typeof az = {
   admin: {
     nav: {
+      today: 'My work today',
       tasks: 'Tasks',
       workspace: 'Workspace',
       mail: 'Mail',
@@ -3731,6 +3734,7 @@ const en: typeof az = {
 const ru = {
   admin: {
     nav: {
+      today: 'Мои дела на сегодня',
       tasks: 'Задачи',
       workspace: 'Рабочее пространство',
       mail: 'Почта',

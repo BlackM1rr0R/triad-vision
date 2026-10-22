@@ -1,6 +1,6 @@
 import { lazy, Suspense, useEffect } from 'react';
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
-import { RequireAuth } from './lib/auth';
+import { RequireAuth, useAuth } from './lib/auth';
 import { whenIdle } from './lib/idle';
 import { PageLoader } from './components/ui/Spinner';
 import { SiteLayout } from './components/layout/SiteLayout';
@@ -85,6 +85,13 @@ const AdminExpiring = lazy(() => import('./pages/admin/Expiring'));
 const AdminOriginals = lazy(() => import('./pages/admin/Originals'));
 const AdminStorageReport = lazy(() => import('./pages/admin/StorageReport'));
 const QrRedirect = lazy(() => import('./pages/QrRedirect'));
+const AdminToday = lazy(() => import('./pages/admin/Today'));
+
+/** /admin: STAFF land on their "my work today" queue, ADMIN / SUPER_ADMIN on the dashboard (also at /admin/dashboard). */
+const AdminIndex = () => {
+  const { user } = useAuth();
+  return user?.role === 'STAFF' ? <Navigate to="/admin/today" replace /> : <AdminDashboard />;
+};
 const AdminPartners = lazy(() => import('./pages/admin/Partners'));
 const AdminClientRegister = lazy(() => import('./pages/admin/ClientRegister'));
 const AdminSettlements = lazy(() => import('./pages/admin/Settlements'));
@@ -349,7 +356,9 @@ export default function App() {
               </RequireAuth>
             }
           >
-            <Route index element={<AdminDashboard />} />
+            <Route index element={<AdminIndex />} />
+            <Route path="today" element={<AdminToday />} />
+            <Route path="dashboard" element={<AdminDashboard />} />
             <Route
               path="oversight"
               element={

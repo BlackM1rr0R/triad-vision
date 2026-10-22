@@ -40,6 +40,7 @@ import { FileItem, Note, RequirementCard, Timeline } from './parts';
 import { ScanSheet } from './ScanSheet';
 import { capturePage, type ScanPage } from './scanner';
 import { uploadScanPdf } from './scanUpload';
+import { showQualityFeedback } from './qualityFeedback';
 import { useOcr } from './useOcr';
 import { useOpenDocument, useUploader, type PickSource } from './useDocuments';
 
@@ -253,7 +254,8 @@ const DocumentsSection = ({
       const res = await uploadScanPdf({ caseId: c.id, requirementId: req.id, title: f.tr(req.title), pages, onProgress: setScanProgress });
       haptic.success();
       setScan(null);
-      toast(t('m.scan.donePdf', { count: res.pages }));
+      // Scan quality of the first page (blur, darkness, glare) measured by the server: alert with "Retake".
+      if (!showQualityFeedback(t, res, () => void startScan(req))) toast(t('m.scan.donePdf', { count: res.pages }));
       await invalidate();
     } catch (err) {
       // The pages stay in the sheet; the button turns into "retry".

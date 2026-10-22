@@ -62,6 +62,7 @@ import { publicAiRouter } from './routes/publicAi.js';
 import { aiDocsRouter } from './routes/aiDocs.js';
 import { originalsRouter } from './routes/originals.js';
 import { aiMailRouter } from './routes/aiMail.js';
+import { uploadAiRouter } from './routes/uploadAi.js';
 
 type RequestWithRawBody = import('express').Request & { rawBody?: Buffer };
 
@@ -163,6 +164,7 @@ export const createApp = () => {
   app.use('/api/surveys', surveysRouter);
   app.use('/api/ai-docs', aiDocsRouter);
   app.use('/api/ai-mail', aiMailRouter);
+  app.use('/api/upload-ai', uploadAiRouter); // smart uploads: recognition proposals + scan quality
   app.use('/api/ai', aiRouter);
   app.use('/api/ai-writing', aiWritingRouter);
   app.use('/api/public-ai', publicAiRouter);

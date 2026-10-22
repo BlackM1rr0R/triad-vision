@@ -22,6 +22,8 @@ const MyTasksWidget = lazy(() => import('@/components/tasks/MyTasksWidget').then
 // AI mail triage: "Inbox today" of the shared mailboxes (own chunk, hidden without one).
 const InboxTodayWidget = lazy(() => import('@/components/aiMail/InboxTodayWidget'));
 const RiskyCasesWidget = lazy(() => import('@/components/aiStaff/RiskyCasesWidget').then((m) => ({ default: m.RiskyCasesWidget })));
+// "My work today" queue: counters + first rows, links to /admin/today (own chunk).
+const TodayCard = lazy(() => import('@/components/today/TodayCard'));
 // Open security alerts (super admin only, own chunk).
 const SecurityAlertsWidget = lazy(() => import('@/components/aiMgmt/SecurityAlertsWidget').then((m) => ({ default: m.SecurityAlertsWidget })));
 
@@ -93,11 +95,20 @@ export default function Dashboard() {
         title={`${greeting}, ${user?.firstName ?? ''}`}
         subtitle={t('admin.dashboard.subtitle')}
         actions={
-          <Link to="/admin/cases" className="btn-primary btn-sm">
-            {t('admin.dashboard.allCases')} <ArrowRight className="size-3.5" />
-          </Link>
+          <div className="flex flex-wrap gap-2">
+            <Link to="/admin/today" className="btn-ghost btn-sm">
+              {t('admin.nav.today')} <ArrowRight className="size-3.5" />
+            </Link>
+            <Link to="/admin/cases" className="btn-primary btn-sm">
+              {t('admin.dashboard.allCases')} <ArrowRight className="size-3.5" />
+            </Link>
+          </div>
         }
       />
+
+      <Suspense fallback={null}>
+        <TodayCard limit={4} />
+      </Suspense>
 
       <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         <Kpi label={t('admin.dashboard.activeCases')} value={active} icon={FolderOpen} tone="bg-brand-100 text-brand-700" to="/admin/cases" hint={t('admin.dashboard.total', { count: total })} />

@@ -14,6 +14,7 @@ import { BarList, LineChart, SERIES_COLORS } from '@/components/admin/charts';
 import { BriefingSettings } from '@/components/aiStaff/BriefingSettings';
 import { AdminPublicAdvisor } from '@/components/publicAi/AdminPublicAdvisor';
 import { PrivacySetting } from '@/components/aiMgmt/PrivacySetting';
+import { UploadAiSettingsPanel } from '@/components/uploadAi/UploadAiSettings';
 
 registerCopy(pagesAi);
 registerCopy(pagesAiDocs);
@@ -307,6 +308,9 @@ export default function AdminAiSettings() {
       </Panel>
 
       <PrivacySetting />
+
+      {/* Smart uploads: recognition, scan quality and auto-apply rules */}
+      <UploadAiSettingsPanel />
 
       <BriefingSettings />
 

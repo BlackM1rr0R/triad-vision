@@ -359,6 +359,13 @@ export const runAiDocCheck = async (
 // ─── Background scheduling ──────────────────────────────────────────────
 
 const running = new Set<Promise<void>>();
+/** The scheduled check of each document while it runs (smart uploads wait for it to reuse its result). */
+const runningByDoc = new Map<string, Promise<void>>();
+
+/** Resolves when the scheduled AI check of this document (if any) finished. */
+export const aiDocCheckSettled = async (docId: string) => {
+  await runningByDoc.get(docId);
+};
 
 /**
  * Replaceable switch: the automatic check is off in the test environment (other e2e files upload documents
@@ -381,8 +388,12 @@ export const scheduleAiDocCheck = (docId: string) => {
     await runAiDocCheck(docId, { userId: doc.uploadedById, scope: 'CLIENT' }, 'auto');
   })()
     .catch((err) => console.error('[aiDocs] scheduled check failed', err))
-    .finally(() => running.delete(p));
+    .finally(() => {
+      running.delete(p);
+      if (runningByDoc.get(docId) === p) runningByDoc.delete(docId);
+    });
   running.add(p);
+  runningByDoc.set(docId, p);
 };
 
 /** Resolves once every scheduled check finished (tests, graceful shutdown). */

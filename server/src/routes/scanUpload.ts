@@ -12,6 +12,7 @@ import { badRequest, HttpError, parse } from '../lib/http.js';
 import { FileCheckError, verifyStoredFile } from '../lib/fileCheck.js';
 import { buildScanPdf, SCAN_IMAGE_MIME, SCAN_MAX_PAGES, SCAN_MAX_PDF_BYTES, ScanImageError } from '../lib/scan/pdf.js';
 import { scheduleAiDocCheck } from '../lib/aiDocs/docCheck.js';
+import { prepareCaseDocument, publicQuality, scheduleUploadAnalysis } from '../lib/uploadAi/index.js';
 import { resolveScanTarget, scanFileName, STAFF_SCAN_STAGES, storeScanDocument } from '../lib/scan/store.js';
 
 /**
@@ -85,8 +86,10 @@ scanUploadRouter.post('/:caseId/documents/scan', receivePages, async (req, res) 
 
     const result = await storeScanDocument(actor, target, pdf, scanFileName(body.name), pages.length);
     await audit(req, 'DOCUMENT_SCAN_UPLOADED', result.document.id, { caseId: target.c.id, pages: pages.length, size: pdf.length, staff: target.asStaff });
-    res.status(201).json({ ...result, pages: pages.length });
+    const quality = publicQuality(await prepareCaseDocument(result.document.id)); // smart uploads: scan quality, never throws
+    res.status(201).json({ ...result, pages: pages.length, quality });
     if (!target.asStaff) scheduleAiDocCheck(result.document.id); // AI check of client scans (checks.ai)
+    scheduleUploadAnalysis({ documentId: result.document.id }); // recognition + proposals, in the background
   } finally {
     await Promise.all(files.map((f) => fs.unlink(f.path).catch(() => undefined)));
   }

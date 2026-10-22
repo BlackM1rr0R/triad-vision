@@ -28,6 +28,9 @@ const CaseOriginalsPanel = lazy(() => import('@/components/originals/CaseOrigina
 const CaseAiSummary = lazy(() => import('@/components/aiStaff/CaseAiSummary').then((m) => ({ default: m.CaseAiSummary })));
 // One-click AI checks: consistency, contract, VIDEX (own chunk).
 const CaseAiChecks = lazy(() => import('@/components/aiCase/CaseAiChecks').then((m) => ({ default: m.CaseAiChecks })));
+// "Next step" card (rules + AI explanation) and the one-click embassy package (own chunks).
+const NextStepCard = lazy(() => import('@/components/caseNext/NextStepCard').then((m) => ({ default: m.NextStepCard })));
+const EmbassyPackagePanel = lazy(() => import('@/components/caseNext/EmbassyPackagePanel').then((m) => ({ default: m.EmbassyPackagePanel })));
 
 export default function CaseAdmin() {
   const { t } = useTranslation();
@@ -60,6 +63,10 @@ export default function CaseAdmin() {
       <CaseHeader key={c.id} c={c} />
 
       <Suspense fallback={null}>
+        <NextStepCard key={`next-${c.id}`} c={c} />
+      </Suspense>
+
+      <Suspense fallback={null}>
         <CaseAiSummary key={`ai-${c.id}`} caseId={c.id} />
       </Suspense>
 
@@ -69,9 +76,14 @@ export default function CaseAdmin() {
 
       <div className="grid grid-cols-1 gap-6 lg:gap-8 xl:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
         <div className="min-w-0 space-y-6">
-          <ActionPanel c={c} />
+          <div id="case-actions" className="scroll-mt-24">
+            <ActionPanel c={c} />
+          </div>
           <Suspense fallback={null}>
             <CaseAiChecks key={`ai-checks-${c.id}`} caseId={c.id} />
+          </Suspense>
+          <Suspense fallback={null}>
+            <EmbassyPackagePanel key={`pkg-${c.id}`} c={c} />
           </Suspense>
           {embassyFirst && showEmbassy && <RequirementsSection c={c} stage="EMBASSY" />}
           <RequirementsSection c={c} stage="INITIAL" />
@@ -86,11 +98,19 @@ export default function CaseAdmin() {
           <Suspense fallback={null}>
             <CaseOriginalsPanel caseId={c.id} />
           </Suspense>
-          {c.status === 'APPROVED' && <OnboardingAdminPanel caseId={c.id} />}
-          <Suspense fallback={null}>
-            <CaseTasks caseId={c.id} number={c.number} clientName={`${c.client.firstName} ${c.client.lastName}`.trim()} />
-          </Suspense>
-          <Messages c={c} />
+                    {c.status === 'APPROVED' && (
+            <div id="case-onboarding" className="scroll-mt-24">
+              <OnboardingAdminPanel caseId={c.id} />
+            </div>
+          )}
+          <div id="case-tasks" className="scroll-mt-24">
+            <Suspense fallback={null}>
+              <CaseTasks caseId={c.id} number={c.number} clientName={`${c.client.firstName} ${c.client.lastName}`.trim()} />
+            </Suspense>
+          </div>
+          <div id="case-messages" className="scroll-mt-24">
+            <Messages c={c} />
+          </div>
           <InternalNotes c={c} />
           <Timeline c={c} />
         </div>

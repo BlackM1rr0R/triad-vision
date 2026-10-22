@@ -7,6 +7,7 @@ import { allows, type Level } from './levels.js';
 import { cleanName } from './names.js';
 import { peekSection } from './roots.js';
 import { isStale } from '../driveCollab/lock.js';
+import { decorateUploadAi, type UploadAiChip } from '../uploadAi/chips.js';
 
 /** Everything a listing row needs (grants come along for the access calculation). */
 export const itemSelect = {
@@ -83,6 +84,8 @@ export interface DriveItem {
   /** "Final": nobody may change the file any more (super admins can lift it). */
   finalAt?: Date | null;
   tags?: { id: string; name: string; color: string }[];
+  /** Smart uploads: recognised type / open proposals / low quality of a file in a client folder. */
+  uploadAi?: UploadAiChip;
   /** Search / recent / starred rows: where the item lives. */
   location?: { id: string; name: string; space: DriveSpace; system: boolean } | null;
 }
@@ -197,7 +200,7 @@ export const buildItems = async (ctx: DriveAccessCtx, rows: ItemRow[], opts: { w
     }
     return item;
   });
-  return decorateCaseLinks(items);
+  return decorateUploadAi(await decorateCaseLinks(items));
 };
 
 export interface Crumb {

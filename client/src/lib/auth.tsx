@@ -230,7 +230,8 @@ export const landingAfterLogin = (role: Role, from?: unknown) => {
   // AGENT logins: referral partners use /partner, the agent programme /agent. The partner portal sends a
   // login without a partner link on to /agent (and the agent portal sends partner-only logins to /partner).
   if (role === 'AGENT') return typeof from === 'string' && /^\/(agent|partner)(\/|\?|$)/.test(from) ? from : '/partner';
-  const home = staff ? '/admin' : '/account';
+  // STAFF start on their "my work today" queue; ADMIN / SUPER_ADMIN on the dashboard.
+  const home = role === 'STAFF' ? '/admin/today' : staff ? '/admin' : '/account';
   if (typeof from !== 'string' || !from.startsWith('/') || from.startsWith('//')) return home;
   const adminTarget = /^\/(admin|workspace)(\/|\?|$)/.test(from);
   if (staff) return adminTarget ? from : home;

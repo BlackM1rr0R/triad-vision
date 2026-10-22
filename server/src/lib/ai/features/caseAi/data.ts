@@ -58,6 +58,8 @@ export const loadCaseContext = async (caseId: string, now = new Date()) => {
       contract: { select: { fileDocumentId: true, signedDocumentId: true, version: true, sentAt: true, signedAt: true } },
       requirements: { orderBy: [{ stage: 'asc' }, { sortOrder: 'asc' }], select: { id: true, key: true, stage: true, title: true, required: true } },
       documents: {
+        // Generated embassy packages (stage EMBASSY without a requirement) only repeat the other documents.
+        where: { NOT: { stage: 'EMBASSY', requirementId: null } },
         orderBy: { createdAt: 'desc' },
         select: {
           id: true, originalName: true, stage: true, status: true, mimeType: true, requirementId: true, createdAt: true, expiresAt: true, ocr: true, checks: true, storedName: true,

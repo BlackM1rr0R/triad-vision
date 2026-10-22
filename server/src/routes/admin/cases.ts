@@ -26,6 +26,8 @@ import { deleteCaseDocument } from '../../lib/caseDocDelete.js';
 import { copyDocumentToDrive, syncCaseFolder } from '../../lib/drive/caseFolders.js';
 import { requireMinRole } from '../../middleware/auth.js';
 import { hasMissing, translateMany } from '../../lib/ai/translate.js';
+import { prepareCaseDocument, publicQuality, scheduleUploadAnalysis } from '../../lib/uploadAi/index.js';
+import { nextStepSummaries } from '../../lib/caseNext/nextStep.js';
 
 export const adminCasesRouter = Router();
 
@@ -96,9 +98,12 @@ adminCasesRouter.get('/', async (req, res) => {
     statusSince.set(c.id, e?.createdAt ?? c.createdAt);
   }
   const DAY = 24 * 60 * 60 * 1000;
+  // "Next step" chip per row: deterministic rules only (lib/caseNext), a fixed number of batched queries.
+  const nextSteps = await nextStepSummaries(items.map((c) => c.id), { statusSince });
   res.json({
     items: items.map(({ events, _count, ...c }) => ({
       ...c,
+      nextStep: nextSteps.get(c.id) ?? null,
       lastEvent: events[0] ?? null,
       messagesCount: _count.messages,
       pendingDocs: _count.documents,
@@ -330,7 +335,10 @@ adminCasesRouter.post('/:id/documents', documentUpload.single('file'), async (re
         },
       });
     }
-    res.status(201).json({ document: doc });
+    // Smart uploads (not for contracts the agency sends): scan quality now, recognition in the background.
+    const quality = body.stage === 'CONTRACT' ? null : publicQuality(await prepareCaseDocument(doc.id));
+    res.status(201).json({ document: doc, quality });
+    if (body.stage !== 'CONTRACT') scheduleUploadAnalysis({ documentId: doc.id });
   } catch (err) {
     await fs.unlink(path.join(config.uploads.privateDir, file.filename)).catch(() => undefined);
     throw err;
