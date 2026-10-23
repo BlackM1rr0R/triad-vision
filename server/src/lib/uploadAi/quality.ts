@@ -451,9 +451,13 @@ export const analyzeQuality = async (buf: Buffer, mime: string, opts: { target?:
     console.error('[uploadAi] quality check failed', err);
     return { level: 'OK', reasons: [], kind: 'other', metrics: {}, partial: true };
   });
-  const timeout = new Promise<Omit<QualityReport, 'ms'>>((resolve) =>
-    setTimeout(() => resolve({ level: 'OK', reasons: [], kind: IMAGE_MIME.has(mime) ? 'image' : mime === 'application/pdf' ? 'pdf' : 'other', metrics: { timeout: true }, partial: true }), opts.budgetMs ?? 2500).unref?.(),
-  );
+  // Out of time: a valid image always has a header that parses instantly, so an image without one is
+  // corrupt (on Linux Skia spins on such data past the budget instead of failing fast) — never "OK".
+  const timedOut = (): Omit<QualityReport, 'ms'> =>
+    IMAGE_MIME.has(mime) && !imageSize(buf)
+      ? { level: 'BAD', reasons: [{ code: 'UNREADABLE', level: 'BAD' }], kind: 'image', metrics: { timeout: true }, partial: true }
+      : { level: 'OK', reasons: [], kind: IMAGE_MIME.has(mime) ? 'image' : mime === 'application/pdf' ? 'pdf' : 'other', metrics: { timeout: true }, partial: true };
+  const timeout = new Promise<Omit<QualityReport, 'ms'>>((resolve) => setTimeout(() => resolve(timedOut()), opts.budgetMs ?? 2500).unref?.());
   const r = await Promise.race([work, timeout]);
   return { ...r, ms: Date.now() - started };
 };
