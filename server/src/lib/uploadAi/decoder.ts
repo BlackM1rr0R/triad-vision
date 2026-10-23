@@ -137,7 +137,10 @@ const start = (modulePath: string) => {
     if (pending.size) console.warn(`[uploadAi] image decoder exited (${signal ?? code}) — a malformed image?`);
     failAll('DECODER_CRASHED');
   });
-  c.on('error', () => failAll('DECODER_UNAVAILABLE'));
+  // A child that never started (spawn failed: no pid) means no decoder. One that was running and errors —
+  // on Linux a SIGSEGV usually surfaces as an IPC 'error' (EPIPE) before 'exit' — crashed on the image:
+  // reporting that as "unavailable" would let a corrupt upload pass as OK.
+  c.on('error', () => failAll(c.pid ? 'DECODER_CRASHED' : 'DECODER_UNAVAILABLE'));
   // The child never keeps the API (or a test run) alive on its own.
   c.unref();
   (c as unknown as { channel?: { unref?: () => void } }).channel?.unref?.();

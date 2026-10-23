@@ -166,6 +166,8 @@ describe('public status check', () => {
     expect((await lookup(c.number, '1990-05-18')).status).toBe(404);
     expect((await lookup('TV-2026-0000', '1990-05-17')).status).toBe(404);
     // Audited.
+    // Lookups are audited fire-and-forget (the answer is never delayed by the audit write), so wait for the rows.
+    await waitFor(async () => (await prisma.auditLog.count({ where: { action: 'PUBLIC_STATUS_LOOKUP' } })) >= 4);
     expect(await prisma.auditLog.count({ where: { action: 'PUBLIC_STATUS_LOOKUP' } })).toBe(4);
     expect(await prisma.auditLog.count({ where: { action: 'PUBLIC_STATUS_ENABLED', target: `case:${c.id}` } })).toBe(1);
   });
