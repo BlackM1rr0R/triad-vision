@@ -18,6 +18,7 @@ import {
 import { asInvoiceLocale, formatEur, formatInvoiceDate, invoiceTexts } from '../../lib/invoiceTexts.js';
 import { config } from '../../config.js';
 import { awardInvoiceCommission } from '../../lib/agents/commissions.js';
+import { requestMaskGroups } from '../../lib/privacy/mask.js';
 
 // Admin: invoices — mounted at /api/admin/invoices (ADMIN+, gated in admin/index.ts)
 export const adminInvoicesRouter = Router();
@@ -200,7 +201,13 @@ const settingsSchema = z.object({
 });
 
 adminInvoicesRouter.put('/settings', async (req, res) => {
-  const value = parse(settingsSchema, req.body?.invoicing ?? req.body);
+  const raw = { ...((req.body?.invoicing ?? req.body ?? {}) as Record<string, unknown>) };
+  // Masked bank details (sensitive-data settings) come back without iban / bic: keep the stored ones.
+  if (requestMaskGroups(res).has('IBAN')) {
+    const current = (await loadInvoiceSettings()).invoicing;
+    for (const k of ['iban', 'bic'] as const) if (raw[k] === undefined) raw[k] = current[k];
+  }
+  const value = parse(settingsSchema, raw);
   await prisma.setting.upsert({ where: { key: INVOICE_SETTING_KEY }, create: { key: INVOICE_SETTING_KEY, value }, update: { value } });
   await audit(req, 'INVOICE_SETTINGS', INVOICE_SETTING_KEY);
   res.json(await loadInvoiceSettings());
@@ -383,3 +390,16 @@ adminInvoicesRouter.post('/:id/cancel', async (req, res) => {
   await audit(req, 'INVOICE_CANCEL', inv.id, { number: inv.number, reason: reason ?? null });
   res.json({ invoice: view(inv) });
 });
+
+// ─── For other features (quote → invoice conversion) ────────────────
+
+/** Creates a DRAFT invoice through the same validation and totals as POST /. */
+export const createDraftInvoice = async (input: { companyId: string; items: { description: string; quantity: number; unitPriceCents: number }[]; vatRate?: number; note?: string | null }) => {
+  const body = parse(invoiceInput, input);
+  await requireCompany(body.companyId);
+  const { invoicing } = await loadInvoiceSettings();
+  return prisma.invoice.create({
+    data: { number: draftNumber(), companyId: body.companyId, status: 'DRAFT', ...buildData(body, invoicing) },
+    include: withCompany,
+  });
+};

@@ -23,6 +23,7 @@ import { MAX_CONTRACT_BYTES, runContractCheck, type ContractResult } from '../..
 import { FIELD_DEFS, FIELD_KEYS, runVidex, videxFileName, videxPdf, type VidexResult } from '../../lib/ai/features/caseAi/videx.js';
 import { applyFieldValue, askClientForFields, createCaseTask, requestDocument } from '../../lib/ai/features/caseAi/actions.js';
 import { dmy } from '../../lib/ai/features/caseAi/texts.js';
+import { maskJson, requestMaskGroups } from '../../lib/privacy/mask.js';
 
 /**
  * Case AI checks — mounted on the admin router (STAFF+, 2FA enforced there):
@@ -204,7 +205,8 @@ adminCaseAiRouter.patch('/cases/:id/ai/videx/:runId/fields', async (req, res) =>
 adminCaseAiRouter.get('/cases/:id/ai/videx/:runId/pdf', async (req, res) => {
   const { c, run, result } = await videxRun(req);
   const client = await prisma.case.findUniqueOrThrow({ where: { id: c.id }, select: { client: { select: { firstName: true, lastName: true } } } });
-  const pdf = await videxPdf(result, { caseNumber: c.number, clientName: `${client.client.firstName} ${client.client.lastName}`, date: run.updatedAt });
+  // STAFF (per masking settings) get the sheet with "•••• 3456" instead of the passport number.
+  const pdf = await videxPdf(maskJson(requestMaskGroups(res), result) as typeof result, { caseNumber: c.number, clientName: `${client.client.firstName} ${client.client.lastName}`, date: run.updatedAt });
   await audit(req, 'AI_CASE_VIDEX_PDF', c.id, { runId: run.id });
   res.setHeader('Content-Type', 'application/pdf');
   res.setHeader('Content-Disposition', `attachment; filename="${videxFileName(c.number)}"`);

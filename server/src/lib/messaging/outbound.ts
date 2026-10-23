@@ -2,6 +2,7 @@ import type { OutboundChannel, OutboundMessage, User } from '@prisma/client';
 import { config } from '../../config.js';
 import { prisma } from '../../db.js';
 import { normalizePhone, sms, smsConfigured, whatsapp, whatsappConfigured } from './providers.js';
+import { isImpersonating } from '../privacy/impersonationContext.js';
 
 /**
  * Outbound WhatsApp / SMS. Every attempt is written to OutboundMessage (QUEUED → SENT | FAILED |
@@ -43,6 +44,7 @@ export const deliver = async (
   body: string,
   meta: { userId?: string | null; caseId?: string | null; templateKey?: string | null } = {},
 ): Promise<OutboundMessage | null> => {
+  if (isImpersonating()) return null; // "view as client" never sends WhatsApp / SMS
   let row: OutboundMessage;
   try {
     row = await record({ channel, to, body, userId: meta.userId ?? null, caseId: meta.caseId ?? null, templateKey: meta.templateKey ?? null });

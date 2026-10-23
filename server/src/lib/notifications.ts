@@ -6,6 +6,7 @@ import { sendPush } from './push.js';
 import { publish } from './messaging/realtime.js';
 import { sendWhatsApp } from './messaging/outbound.js';
 import { getOverride, renderTemplate } from './messaging/templates.js';
+import { isImpersonating } from './privacy/impersonationContext.js';
 
 export type NotificationType =
   | 'CASE_CREATED'
@@ -177,6 +178,7 @@ export const notifyClient = async (
   type: NotificationType,
   params: NotifyParams = {},
 ) => {
+  if (isImpersonating()) return; // "view as client" never notifies
   const c = await prisma.case.findUniqueOrThrow({ where: { id: caseId }, include: { client: true } });
   const locale = c.client.locale;
   const { title, body } = await renderNotification(type, locale, { number: c.number, firstName: c.client.firstName, ...params });
@@ -205,6 +207,7 @@ export const notifyClient = async (
 
 /** Notify staff (admin inbox + in-app for assigned staff / all admins). */
 export const notifyStaff = async (subject: string, body: string, opts: { caseId?: string; link?: string; type?: string } = {}) => {
+  if (isImpersonating()) return; // "view as client" never notifies
   const recipients = await prisma.user.findMany({
     where: opts.caseId
       ? { OR: [{ role: { in: ['ADMIN', 'SUPER_ADMIN'] } }, { assignedCases: { some: { id: opts.caseId } } }], isActive: true }
@@ -260,6 +263,7 @@ export const notifyUser = async (
     forceEmail?: boolean;
   },
 ) => {
+  if (isImpersonating()) return; // "view as client" never notifies
   const user = await prisma.user.findUnique({ where: { id: userId } });
   if (!user || !user.isActive) return;
   const n = await prisma.notification.create({

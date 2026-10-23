@@ -15,6 +15,7 @@ import { badRequest, conflict, notFound } from '../http.js';
 import type { QualityReason } from './quality.js';
 import { reuploadNote } from './texts.js';
 import { ACTIONS, isDocType, type DocType, type InsightAction, type Proposals } from './types.js';
+import { emitAutomationEvent } from '../automation/events.js';
 
 /**
  * Applying proposals — the only place smart uploads change anything, always on a staff click ("Accept",
@@ -216,6 +217,7 @@ export const requestReupload = async (documentId: string, actor: { id: string; i
 
   await prisma.document.update({ where: { id: doc.id }, data: { status: 'REJECTED', reviewNote: note } });
   await prisma.caseEvent.create({ data: { caseId: doc.caseId, type: 'DOCUMENT_REJECTED', note: `${doc.originalName}: ${note}`, actorId: actor.id } });
+  void emitAutomationEvent({ type: 'DOCUMENT_REJECTED', entityType: 'document', entityId: doc.id, caseId: doc.caseId }); // automation hook
   const title = (doc.requirement?.title as Record<string, string> | null)?.[locale] ?? doc.originalName;
   await notifyClient(doc.caseId, 'DOCUMENT_REJECTED', { doc: title, note });
   if (insight?.status === 'PROPOSED') await prisma.documentInsight.update({ where: { id: insight.id }, data: { status: 'REJECTED', decidedById: actor.id, decidedAt: new Date() } });

@@ -52,7 +52,7 @@ export interface DriveItem {
   /** Client folders and case document copies: the case they belong to. */
   caseId?: string;
   /** Client folders: who the client is (header strip). */
-  caseInfo?: { clientName: string; passportNumber: string | null; visaType: string; partner: { id: string; name: string } | null };
+  caseInfo?: { clientId?: string; clientName: string; passportNumber: string | null; visaType: string; partner: { id: string; name: string } | null };
   /** Partner folders below "Partner": the referral partner. */
   partner?: { id: string; name: string; phone: string | null; email: string | null; active: boolean };
   caseNumber?: string;

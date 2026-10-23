@@ -18,6 +18,7 @@ import { driveKeys, startDownload } from './api';
 import { sectionOf } from './fileIcons';
 import { ReadinessIndicator } from './org/Readiness';
 import type { DriveItem } from './types';
+import { SensitiveValue } from '@/components/privacyTools/SensitiveValue';
 
 /** German names of the application types (the same names the drive folders carry). */
 const VISA_TYPE_DE: Record<string, string> = {
@@ -423,7 +424,8 @@ export const ClientFolderHeader = ({ folder }: { folder: DriveItem }) => {
       {info && <span className="font-bold">{info.clientName}</span>}
       {info?.passportNumber && (
         <span>
-          {t('drive.partner.passport')}: <span className="font-semibold">{info.passportNumber}</span>
+          {t('drive.partner.passport')}:{' '}
+          {info.clientId ? <SensitiveValue value={info.passportNumber} entity="user" id={info.clientId} field="passportNumber" className="font-semibold" /> : <span className="font-semibold">{info.passportNumber}</span>}
         </span>
       )}
       {info && <span>{VISA_TYPE_DE[info.visaType] ?? info.visaType}</span>}

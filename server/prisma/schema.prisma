@@ -155,8 +155,25 @@ model User {
   aiConversations       AiConversation[]
   aiActions             AiAction[]
   candidateProfiles     CandidateProfileDraft[]
+  /// Marketing consent for campaigns (UWG § 7 / DSGVO Art. 7): current state, when and where it was set
+  /// (REGISTER | PROFILE | PRIVACY_CENTER | UNSUBSCRIBE). Every change is also logged in ConsentRecord (MARKETING_EMAIL).
+  marketingOptIn        Boolean                  @default(false)
+  marketingOptInAt      DateTime?
+  marketingOptInSource  String?                  @db.VarChar(40)
+  campaignSegments      CampaignSegment[]        @relation("CampaignSegmentCreatedBy")
+  campaignsCreated      Campaign[]               @relation("CampaignCreatedBy")
+  campaignRecipients    CampaignRecipient[]      @relation("CampaignRecipientUser")
+  quotesCreated         Quote[]                  @relation("QuoteCreatedBy")
+  /// Duplicate merge (lib/userMerge.ts): this account was merged into another one and is closed.
+  mergedIntoId          String?
+  mergedInto            User?                    @relation("UserMergedInto", fields: [mergedIntoId], references: [id], onDelete: SetNull)
+  mergedFrom            User[]                   @relation("UserMergedInto")
+  mergedAt              DateTime?
+  duplicatesA           DuplicatePair[]          @relation("DuplicateA")
+  duplicatesB           DuplicatePair[]          @relation("DuplicateB")
 
   @@index([companyId])
+  @@index([mergedIntoId])
 }
 
 /// Server-side login session. The JWT only carries the session id, so a session can be revoked
@@ -378,6 +395,7 @@ model Case {
   settlements       SettlementEntry[]
   aiRuns            CaseAiRun[]
   aiFindingStates   CaseAiFindingState[]
+  costs             CaseCost[] // manual costs for the profitability view (lib/profitability)
   /// Partner (middleman) who brought this client; their folder in the shared drive holds the client folder.
   partnerId         String?
   partner           ReferralPartner?      @relation(fields: [partnerId], references: [id], onDelete: SetNull)
@@ -718,6 +736,7 @@ model Company {
   contacts          Contact[]
   signatureRequests SignatureRequest[]
   candidateRequests CandidateRequest[]
+  quotes            Quote[]
 
   @@index([status])
 }
@@ -872,6 +891,7 @@ model Invoice {
   note       String?       @db.Text
   createdAt  DateTime      @default(now())
   updatedAt  DateTime      @updatedAt
+  quotes     Quote[]
 
   @@index([companyId])
   @@index([status, dueDate])
@@ -3079,4 +3099,548 @@ model DocumentInsight {
   @@index([caseId, status])
   @@index([folderId, status])
   @@index([sha256])
+}
+
+// ─── Quotes (Angebote) for German employers ──────────────────────────
+
+enum QuoteStatus {
+  DRAFT
+  SENT
+  VIEWED
+  ACCEPTED
+  DECLINED
+  EXPIRED
+  CONVERTED
+}
+
+enum QuoteDiscountType {
+  NONE
+  PERCENT // discountValue in basis points (10 % = 1000)
+  AMOUNT // discountValue in cents
+}
+
+/// Angebot (quote) to an employer, numbered TV-AN-YYYY-NNNN on first send. Items are
+/// { description, quantity, unit (PERSON|PIECE|FLAT|MONTH), unitPriceCents, vatRate?, catalogueId?, convertedQty? }[].
+/// The employer accepts or declines through a secret link (/angebot/:token) or the company portal.
+model Quote {
+  id             String            @id @default(cuid())
+  number         String?           @unique @db.VarChar(32)
+  companyId      String
+  company        Company           @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  vacancyId      String? // optional source vacancy (plain id; positions prefill the quantities)
+  contactName    String?           @db.VarChar(160)
+  contactEmail   String?           @db.VarChar(200)
+  locale         String            @default("de") @db.VarChar(2) // e-mail language: de | en (the document is always German)
+  title          String            @db.VarChar(200)
+  salutation     String?           @db.VarChar(200)
+  introText      String?           @db.Text
+  closingText    String?           @db.Text
+  items          Json
+  discountType   QuoteDiscountType @default(NONE)
+  discountValue  Int               @default(0)
+  vatRate        Int               @default(19) // default rate for items without their own
+  subtotalCents  Int               @default(0)
+  discountCents  Int               @default(0)
+  netCents       Int               @default(0)
+  vatCents       Int               @default(0)
+  grossCents     Int               @default(0)
+  currency       String            @default("EUR") @db.VarChar(3)
+  validUntil     DateTime // calendar day at 12:00 UTC
+  paymentTerms   String?           @db.Text
+  deliveryTerms  String?           @db.Text
+  status         QuoteStatus       @default(DRAFT)
+  tokenHash      String?           @unique @db.Char(64)
+  tokenSealed    String?           @db.VarChar(255) // the link token, encrypted, so a resend keeps the same link
+  sentAt         DateTime?
+  viewedAt       DateTime?
+  acceptedAt     DateTime?
+  acceptedByName String?           @db.VarChar(160)
+  acceptedIp     String?           @db.VarChar(64)
+  acceptedUa     String?           @db.VarChar(1000)
+  declinedAt     DateTime?
+  declinedReason String?           @db.Text
+  expiredAt      DateTime?
+  convertedAt    DateTime?
+  invoiceId      String?
+  invoice        Invoice?          @relation(fields: [invoiceId], references: [id], onDelete: SetNull)
+  createdById    String?
+  createdBy      User?             @relation("QuoteCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+  events         QuoteEvent[]
+
+  @@index([companyId, status])
+  @@index([status, validUntil])
+  @@index([invoiceId])
+  @@index([createdById])
+}
+
+/// Audit trail of a quote: CREATED, UPDATED, SENT, RESENT, VIEWED, ACCEPTED, DECLINED, EXPIRED, REMINDED, CONVERTED, DUPLICATED.
+model QuoteEvent {
+  id        String   @id @default(cuid())
+  quoteId   String
+  quote     Quote    @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  type      String   @db.VarChar(32)
+  actorId   String? // staff or employer user; null for the public link and jobs
+  actorName String?  @db.VarChar(160)
+  note      String?  @db.Text
+  meta      Json?
+  ip        String?  @db.VarChar(64)
+  userAgent String?  @db.VarChar(1000)
+  createdAt DateTime @default(now())
+
+  @@index([quoteId, createdAt])
+}
+
+/// Field-level change history (lib/history): one row per changed field of a tracked record (Case, User,
+/// Company), written by the Prisma client extension in src/db.ts inside the same transaction as the update.
+/// Sensitive values (passport number, VAT/tax id) are stored sealed with lib/secretBox ({ "$enc": "v1:…" }).
+/// Plain ids, no foreign keys: history must survive the actor's or the record's deletion.
+model FieldChange {
+  id           String    @id @default(cuid())
+  entity       String    @db.VarChar(16) // CASE | USER | COMPANY
+  entityId     String    @db.VarChar(40)
+  field        String    @db.VarChar(120) // dot path: status, assignedStaffId, registerData.<columnId>
+  oldValue     Json?
+  newValue     Json?
+  actorId      String?   @db.VarChar(40)
+  actorRole    String?   @db.VarChar(16)
+  source       String    @default("system") @db.VarChar(16) // admin | client | system | ai | automation | revert
+  requestId    String?   @db.VarChar(64) // groups the changes of one request / batch
+  revertOfId   String?   @db.VarChar(40) // this change undid that one
+  revertedById String?   @db.VarChar(40) // the change that undid this one
+  revertedAt   DateTime?
+  sensitive    Boolean   @default(false)
+  createdAt    DateTime  @default(now())
+
+  @@index([entity, entityId, createdAt])
+  @@index([actorId, createdAt])
+  @@index([requestId])
+  @@index([createdAt])
+}
+
+// ─── Report builder (lib/reports) and profitability per case (lib/profitability) ─────────────
+
+enum ReportFrequency {
+  DAILY
+  WEEKLY
+  MONTHLY
+}
+
+/// A saved no-code report: dataset key + JSON config (columns, filters, groupBy, aggregations, sort).
+/// Private to its owner unless `shared` (then visible to every ADMIN+). Plain owner id, no foreign key.
+model SavedReport {
+  id        String           @id @default(cuid())
+  name      String           @db.VarChar(160)
+  dataset   String           @db.VarChar(40)
+  config    Json
+  shared    Boolean          @default(false)
+  ownerId   String?          @db.VarChar(40)
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+  schedules ReportSchedule[]
+
+  @@index([ownerId])
+  @@index([shared])
+}
+
+/// "Send this report": daily / weekly (weekday 1 = Monday … 7 = Sunday) / monthly (day of month, clamped to
+/// the month's last day) at HH:mm Asia/Baku, as an Excel attachment to staff users and allow-listed e-mails.
+model ReportSchedule {
+  id               String           @id @default(cuid())
+  reportId         String
+  report           SavedReport      @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  frequency        ReportFrequency
+  weekday          Int?
+  monthDay         Int?
+  time             String           @default("08:00") @db.VarChar(5)
+  recipientUserIds Json // string[]
+  externalEmails   Json // string[]
+  active           Boolean          @default(true)
+  createdById      String?          @db.VarChar(40)
+  lastPeriodKey    String?          @db.VarChar(20)
+  lastRunAt        DateTime?
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  deliveries       ReportDelivery[]
+
+  @@index([active])
+}
+
+/// One delivery of a schedule; (scheduleId, periodKey) is unique, so a period is sent at most once.
+model ReportDelivery {
+  id         String         @id @default(cuid())
+  scheduleId String
+  schedule   ReportSchedule @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+  periodKey  String         @db.VarChar(20)
+  status     String         @db.VarChar(16) // PENDING | SENT | FAILED
+  rows       Int            @default(0)
+  recipients Json? // string[] e-mails actually sent to
+  error      String?        @db.Text
+  createdAt  DateTime       @default(now())
+
+  @@unique([scheduleId, periodKey])
+  @@index([scheduleId, createdAt])
+}
+
+enum CaseCostCategory {
+  TRANSLATION
+  COURIER
+  EMBASSY_FEE
+  VISA_FEE
+  AGENT_COMMISSION
+  PARTNER_COMMISSION
+  TRAVEL
+  OTHER
+}
+
+/// A manual cost of a case (profitability): amount in EUR or AZN with the AZN-per-EUR rate of its date.
+model CaseCost {
+  id          String           @id @default(cuid())
+  caseId      String
+  case        Case             @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  category    CaseCostCategory
+  amountCents Int
+  currency    String           @default("EUR") @db.VarChar(3) // EUR | AZN
+  fxRate      Float // AZN per 1 EUR at incurredAt (stored, so later rate changes never alter old costs)
+  incurredAt  DateTime
+  note        String?          @db.Text
+  documentId  String?          @db.VarChar(40) // optional case Document (receipt)
+  createdById String?          @db.VarChar(40)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  @@index([caseId])
+  @@index([incurredAt])
+}
+
+// ─── Duplicate clients: detection (lib/duplicates) and one-click merge (lib/userMerge.ts) ─
+
+enum DuplicateStatus {
+  OPEN
+  MERGED
+  NOT_DUPLICATE
+}
+
+/// A pair of CLIENT accounts that may belong to the same person. Ordered (userAId < userBId), so one row per
+/// pair; a NOT_DUPLICATE decision sticks across detection runs.
+model DuplicatePair {
+  id          String          @id @default(cuid())
+  userAId     String
+  userA       User            @relation("DuplicateA", fields: [userAId], references: [id], onDelete: Cascade)
+  userBId     String
+  userB       User            @relation("DuplicateB", fields: [userBId], references: [id], onDelete: Cascade)
+  score       Int // 0–100
+  reasons     Json // [{ rule, strength, value? }]
+  status      DuplicateStatus @default(OPEN)
+  decidedById String? // plain id: the decision survives the admin's deletion
+  decidedAt   DateTime?
+  detectedAt  DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  @@unique([userAId, userBId])
+  @@index([status, score])
+  @@index([userBId])
+}
+
+/// One merge of a secondary client account into a primary one: chosen fields, counts per relation and a JSON
+/// snapshot of every moved id (no unmerge — support traces moves manually). Plain ids, no foreign keys.
+model UserMerge {
+  id          String   @id @default(cuid())
+  primaryId   String   @db.VarChar(40)
+  secondaryId String   @db.VarChar(40)
+  actorId     String?  @db.VarChar(40)
+  pairId      String?  @db.VarChar(40)
+  fields      Json // { field: { kept: "primary" | "secondary", before, after } }
+  counts      Json // { "Model.field": n }
+  snapshot    Json // { "Model.field": [ids or key tuples], drive: { moved, renamed, trashed } }
+  secondary   Json // the secondary's profile before anonymisation (support only)
+  createdAt   DateTime @default(now())
+
+  @@index([primaryId])
+  @@index([secondaryId])
+  @@index([createdAt])
+}
+
+/// "View as client" (lib/privacy/impersonation): an ADMIN+ opens a CLIENT's / COMPANY user's portal read-only.
+/// Bound to the admin's own web session (adminSessionId); the browser holds an extra httpOnly cookie with a
+/// random token whose sha256 is stored here. 30 minutes, never renewed. Plain ids, no foreign keys.
+model ImpersonationSession {
+  id             String    @id @default(cuid())
+  adminId        String
+  adminSessionId String
+  targetUserId   String
+  reason         String    @db.VarChar(24) // SUPPORT_REQUEST | BUG_CHECK | OTHER
+  note           String?   @db.VarChar(500)
+  tokenHash      String    @unique @db.Char(64)
+  returnTo       String?   @db.VarChar(300)
+  ip             String?   @db.VarChar(64)
+  userAgent      String?   @db.VarChar(300)
+  startedAt      DateTime  @default(now())
+  expiresAt      DateTime
+  endedAt        DateTime?
+  endReason      String?   @db.VarChar(16) // STOPPED | EXPIRED | LOGOUT | REPLACED
+  requestCount   Int       @default(0)
+
+  @@index([targetUserId, startedAt])
+  @@index([adminId, startedAt])
+}
+
+/// What was viewed during an impersonation session: one row per session and minute window with the
+/// distinct API paths (and portal pages) requested in that minute.
+model ImpersonationLog {
+  id          String   @id @default(cuid())
+  sessionId   String
+  windowStart DateTime
+  paths       Json // ["GET /api/cases/…", "PAGE /account/cases/…"]
+  hits        Int      @default(0)
+  createdAt   DateTime @default(now())
+
+  @@index([sessionId, windowStart])
+}
+
+// ─── No-code automation rules + automatic case assignment ───────────────
+// Plain ids (no foreign keys) so the rule log survives deleted cases / users and other models stay untouched.
+
+/// An admin-built "WHEN trigger IF conditions THEN actions" rule (lib/automation). Disabled by default.
+model AutomationRule {
+  id          String          @id @default(cuid())
+  name        String          @db.VarChar(160)
+  description String?         @db.Text
+  enabled     Boolean         @default(false)
+  triggerType String          @db.VarChar(40) // CASE_STATUS_CHANGED, DOCUMENT_REJECTED, CLIENT_INACTIVE, …
+  trigger     Json // { type, from?, to?, days?, stages?, … }
+  conditions  Json // [{ type, op, values? / key? }] — all must hold (AND)
+  actions     Json // [{ type, delay?: { amount, unit }, onlyIfStillTrue?, … }] in order
+  exampleKey  String?         @unique @db.VarChar(60) // shipped example rules (created once, never re-created)
+  runCount    Int             @default(0)
+  lastRunAt   DateTime?
+  createdById String?         @db.VarChar(40)
+  updatedById String?         @db.VarChar(40)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  runs        AutomationRun[]
+
+  @@index([enabled, triggerType])
+}
+
+/// Queue of domain events (case status changed, document rejected, booking created …), processed off the request path.
+model AutomationEvent {
+  id          String    @id @default(cuid())
+  type        String    @db.VarChar(40)
+  entityType  String    @db.VarChar(20) // case | document | application | booking | inquiry
+  entityId    String    @db.VarChar(40)
+  caseId      String?   @db.VarChar(40)
+  payload     Json?
+  chain       Json? // rule ids whose actions caused this event (loop protection)
+  depth       Int       @default(0)
+  processedAt DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@index([processedAt, createdAt])
+}
+
+enum AutomationRunStatus {
+  RUNNING
+  WAITING // delayed steps still pending
+  SUCCEEDED
+  PARTIAL // some steps failed or were skipped
+  SKIPPED
+  FAILED
+}
+
+enum AutomationStepStatus {
+  PENDING
+  RUNNING
+  SUCCEEDED
+  SKIPPED
+  FAILED
+}
+
+/// One firing of a rule for one trigger occurrence. idempotencyKey = rule + entity + occurrence (unique).
+model AutomationRun {
+  id             String              @id @default(cuid())
+  ruleId         String
+  rule           AutomationRule      @relation(fields: [ruleId], references: [id], onDelete: Cascade)
+  idempotencyKey String              @unique @db.VarChar(191)
+  triggerType    String              @db.VarChar(40)
+  entityType     String              @db.VarChar(20)
+  entityId       String              @db.VarChar(40)
+  caseId         String?             @db.VarChar(40)
+  eventId        String?             @db.VarChar(40)
+  status         AutomationRunStatus @default(RUNNING)
+  reason         String?             @db.Text
+  context        Json? // trigger snapshot used for "only if still true" re-checks
+  chain          Json?
+  depth          Int                 @default(0)
+  createdAt      DateTime            @default(now())
+  finishedAt     DateTime?
+  steps          AutomationStep[]
+
+  @@index([ruleId, createdAt])
+  @@index([entityId, createdAt])
+}
+
+/// One action of a run; delayed actions wait here until runAt.
+model AutomationStep {
+  id              String               @id @default(cuid())
+  runId           String
+  run             AutomationRun        @relation(fields: [runId], references: [id], onDelete: Cascade)
+  index           Int
+  actionType      String               @db.VarChar(40)
+  status          AutomationStepStatus @default(PENDING)
+  runAt           DateTime
+  onlyIfStillTrue Boolean              @default(false)
+  reason          String?              @db.Text
+  result          Json?
+  executedAt      DateTime?
+
+  @@unique([runId, index])
+  @@index([status, runAt])
+}
+
+/// Per staff member: what they handle for automatic assignment (empty lists = no restriction).
+model StaffPreferences {
+  userId          String   @id @db.VarChar(40)
+  languages       Json? // ["az","ru"]
+  visaTypes       Json? // ["WORK","AUSBILDUNG"]
+  visaCategoryIds Json?
+  maxOpenCases    Int?
+  workingDays     Json? // ISO weekdays [1..7], Baku time
+  autoAssign      Boolean  @default(true)
+  updatedAt       DateTime @updatedAt
+}
+
+enum CaseHandoverStatus {
+  ACTIVE
+  RETURNED // went back to the original owner
+  KEPT // reassigned manually meanwhile, left as is
+}
+
+/// Temporary reassignment of a case while its owner is on approved leave.
+model CaseHandover {
+  id              String             @id @default(cuid())
+  caseId          String             @db.VarChar(40)
+  originalStaffId String             @db.VarChar(40)
+  substituteId    String             @db.VarChar(40)
+  leaveId         String?            @db.VarChar(40)
+  status          CaseHandoverStatus @default(ACTIVE)
+  startedAt       DateTime           @default(now())
+  plannedEndAt    DateTime?
+  endedAt         DateTime?
+
+  @@index([status])
+  @@index([originalStaffId, status])
+  @@index([caseId, status])
+}
+
+// ─── Campaigns to client segments (Admin → Kampaniyalar, lib/campaigns) ───────
+
+enum CampaignKind {
+  SERVICE // service information (case / account related); respects emailNotifications / smsNotifications
+  MARKETING // advertising: only recipients with an explicit opt-in (User.marketingOptIn)
+}
+
+enum CampaignStatus {
+  DRAFT
+  SCHEDULED
+  SENDING
+  PAUSED
+  COMPLETED
+  CANCELLED
+}
+
+enum CampaignChannel {
+  EMAIL
+  SMS
+  IN_APP
+}
+
+enum CampaignRecipientStatus {
+  QUEUED
+  SENDING // claimed by the worker (never sent twice: a crash leaves it FAILED / INTERRUPTED)
+  SENT
+  FAILED
+  SKIPPED // see skipReason
+  BOUNCED // permanent reject (SMTP 5xx, SMS undelivered)
+}
+
+/// Saved, click-built recipient filter (definition: { op, groups: [{ op, conditions: [...] }] }, see lib/campaigns/segments.ts).
+model CampaignSegment {
+  id          String     @id @default(cuid())
+  name        String     @db.VarChar(160)
+  description String?    @db.Text
+  definition  Json
+  createdById String?
+  createdBy   User?      @relation("CampaignSegmentCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  campaigns   Campaign[]
+}
+
+model Campaign {
+  id              String              @id @default(cuid())
+  name            String              @db.VarChar(200)
+  kind            CampaignKind        @default(SERVICE)
+  status          CampaignStatus      @default(DRAFT)
+  segmentId       String?
+  segment         CampaignSegment?    @relation(fields: [segmentId], references: [id], onDelete: SetNull)
+  segmentSnapshot Json? // definition frozen when the campaign was scheduled / queued
+  channels        Json // ["EMAIL", "SMS", "IN_APP"]
+  content         Json // { az: { subject, body, sms }, de: …, en: …, ru: … }
+  links           Json? // allow-listed destinations of tracked links (index = /c/:token/:index), frozen when scheduled
+  scheduledAt     DateTime?
+  startedAt       DateTime?
+  completedAt     DateTime?
+  pausedAt        DateTime?
+  cancelledAt     DateTime?
+  emailsPerMinute Int                 @default(30)
+  smsPerMinute    Int                 @default(10)
+  quietHours      Boolean             @default(true) // no SMS 21:00–09:00 Baku
+  createdById     String?
+  createdBy       User?               @relation("CampaignCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  recipients      CampaignRecipient[]
+
+  @@index([status, scheduledAt])
+  @@index([segmentId])
+}
+
+/// Send queue + tracking: one row per campaign, person and channel (unique → never sent twice).
+model CampaignRecipient {
+  id             String                  @id @default(cuid())
+  campaignId     String
+  campaign       Campaign                @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User                    @relation("CampaignRecipientUser", fields: [userId], references: [id], onDelete: Cascade)
+  channel        CampaignChannel
+  locale         Locale
+  status         CampaignRecipientStatus @default(QUEUED)
+  skipReason     String?                 @db.VarChar(40) // NO_MARKETING_CONSENT | EMAIL_OPTED_OUT | SMS_OPTED_OUT | NO_PHONE | NO_CONTENT | UNSUBSCRIBED | CANCELLED | INACTIVE
+  token          String                  @unique @db.VarChar(64) // pixel, click and unsubscribe links
+  address        String?                 @db.VarChar(200) // e-mail / phone used
+  attempts       Int                     @default(0)
+  nextAttemptAt  DateTime?
+  lastAttemptAt  DateTime?
+  sentAt         DateTime?
+  deliveredAt    DateTime?
+  openedAt       DateTime? // e-mail pixel (approximate: Apple MPP / image proxies)
+  clickedAt      DateTime? // first click
+  clicks         Int                     @default(0)
+  unsubscribedAt DateTime?
+  notificationId String? // in-app: Notification.id (read = Notification.readAt)
+  outboundId     String? // SMS: OutboundMessage.id
+  providerId     String?                 @db.VarChar(120) // SMS provider message id (delivery reports)
+  error          String?                 @db.Text
+  createdAt      DateTime                @default(now())
+  updatedAt      DateTime                @updatedAt
+
+  @@unique([campaignId, userId, channel])
+  @@index([campaignId, status])
+  @@index([campaignId, channel, status])
+  @@index([channel, lastAttemptAt])
+  @@index([userId])
+  @@index([providerId])
+  @@index([status, lastAttemptAt])
 }

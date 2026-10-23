@@ -21,7 +21,7 @@ const DEFAULT_TITLE = 'Triad Vision';
 
 const LOCALES = ['az', 'de', 'en', 'ru'];
 /** Mirrors PRIVATE_PREFIXES in server/src/lib/seoCatalogue.ts (and robots.txt). */
-const PRIVATE = ['/admin', '/workspace', '/account', '/company', '/api', '/booking/manage', '/review', '/verify-email', '/login/2fa', '/reset-password', '/sign'];
+const PRIVATE = ['/admin', '/workspace', '/account', '/company', '/api', '/booking/manage', '/review', '/verify-email', '/login/2fa', '/reset-password', '/sign', '/angebot'];
 const isPrivate = (path: string) => PRIVATE.some((p) => path === p || path.startsWith(`${p}/`));
 
 const keyFor = (pathname: string, search: string) => {

@@ -2,11 +2,13 @@ import ExcelJS from 'exceljs';
 import { prisma } from '../../db.js';
 import { FIXED_KEYS, HEADERS, STATUS_LABELS, VISA_TYPE_LABELS, type FixedKey, type Lang } from './labels.js';
 import { listColumns, loadRows, type RegisterRow } from './rows.js';
+import { maskWith, type MaskGroup } from '../privacy/mask.js';
 
 const SHEET_NAME: Record<Lang, string> = { az: 'Müştəri reyestri', de: 'Kundenregister', en: 'Client register', ru: 'Реестр клиентов' };
 
 /** The client register as a styled Excel workbook (bold header, frozen first row, autofilter, widths). */
-export const buildRegisterXlsx = async (lang: Lang) => {
+/** `mask`: groups masked for the viewer (STAFF exports show "•••• 3456" instead of passport numbers). */
+export const buildRegisterXlsx = async (lang: Lang, mask: Set<MaskGroup> = new Set()) => {
   const [{ rows }, columns, partners, staff] = await Promise.all([
     loadRows(lang),
     listColumns(),
@@ -59,6 +61,8 @@ export const buildRegisterXlsx = async (lang: Lang) => {
         return r.partnerId ? (partnerName.get(r.partnerId) ?? '') : '';
       case 'assignedStaffId':
         return r.assignedStaffId ? (staffName.get(r.assignedStaffId) ?? '') : '';
+      case 'passportNumber':
+        return maskWith(mask, 'passportNumber', r.passportNumber) ?? '';
       default:
         return (r[k] as string | null) ?? '';
     }

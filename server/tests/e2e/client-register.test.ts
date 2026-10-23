@@ -36,7 +36,7 @@ describe('client register: rows', () => {
       number: main.number,
       firstName: 'Aysel',
       lastName: 'Məmmədova',
-      passportNumber: 'C01234567',
+      passportNumber: '•••• 567', // staff see passport numbers masked (sensitive-data masking)
       birthDate: '1995-04-12',
       phone: '+994501112233',
       visaType: 'WORK',

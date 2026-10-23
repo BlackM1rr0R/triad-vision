@@ -3,6 +3,7 @@ import { prisma } from '../../db.js';
 import { checkCaseDocument } from '../docCheck/index.js';
 import { badRequest, conflict, notFound } from '../http.js';
 import { CLIENT_UPLOAD_STAGE } from '../caseFlow.js';
+import { emitAutomationEvent } from '../automation/events.js';
 
 /**
  * What a referral partner may see of "their" clients' cases (data minimisation):
@@ -249,6 +250,7 @@ export const storePartnerUpload = async (input: {
   await prisma.caseEvent.create({
     data: { caseId: c.id, type: 'DOCUMENT_UPLOADED', note: `${doc.originalName} (partnyor)`, actorId: input.userId, visibleToClient: false },
   });
+  void emitAutomationEvent({ type: 'DOCUMENT_UPLOADED', entityType: 'document', entityId: doc.id, caseId: c.id }); // automation hook
   const checks = await checkCaseDocument(doc.id);
   return { document: { id: doc.id, name: doc.originalName, status: doc.status, createdAt: doc.createdAt }, checks, caseNumber: c.number };
 };

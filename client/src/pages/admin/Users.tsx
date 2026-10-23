@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
@@ -15,6 +15,10 @@ import { DeleteUserDialog } from '@/components/admin/DeleteUserDialog';
 import { ROLE_TONE, fmtDate, fmtDateTime, fmtRelative, fullName, roleLabel, toastError } from '@/components/admin/labels';
 import type { AdminUser } from '@/components/admin/types';
 import { Chip, EmptyState, ErrorBlock, LoadingBlock, OnlineDot, PageHead, Switch } from '@/components/admin/ui';
+import { DuplicateChip, useOpenDuplicateIds } from '@/components/duplicates/DuplicateBadge';
+import { ViewAsClientButton } from '@/components/privacyTools/ViewAsClientButton';
+// Field-level change history of the user (ADMIN+, own chunk).
+const HistoryButton = lazy(() => import('@/components/history/HistoryButton'));
 
 /** Roles that can be filtered on. */
 const ROLES: Role[] = ['CLIENT', 'STAFF', 'ADMIN', 'SUPER_ADMIN'];
@@ -417,6 +421,10 @@ export default function Users() {
   const all = data ?? [];
   const onlineCount = all.filter((u) => u.online).length;
   const users = onlineOnly ? all.filter((u) => u.online) : all;
+  // Possible duplicate clients (badge) and merged-away accounts (link to the primary).
+  const dupIds = useOpenDuplicateIds(all.filter((u) => u.role === 'CLIENT' && !u.mergedIntoId).map((u) => u.id));
+  const dupMark = (u: AdminUser) =>
+    u.mergedIntoId ? <DuplicateChip userId={u.id} merged className="mt-1" /> : dupIds.has(u.id) ? <DuplicateChip userId={u.id} className="mt-1" /> : null;
   /** The super admin account itself and the viewer's own row are never editable. */
   const editable = (u: AdminUser) => canManage && u.id !== me?.id && u.role !== 'SUPER_ADMIN';
 
@@ -509,6 +517,11 @@ export default function Users() {
                           {fullName(u)} {self && <span className="badge ml-1 bg-brand-100 text-[10px] text-brand-700">{t('admin.common.you')}</span>}
                         </p>
                         <OnlineDot online={u.online} lastSeenAt={u.lastSeenAt} className="mt-0.5" />
+                        {dupMark(u)}
+                        <ViewAsClientButton user={u} compact className="mt-1.5" />
+                        <Suspense fallback={null}>
+                          <HistoryButton entity="USER" entityId={u.id} name={fullName(u)} className="-ml-2" />
+                        </Suspense>
                       </td>
                       <td className="px-4 py-3 text-xs">
                         <a href={`mailto:${u.email}`} className="flex items-center gap-1 whitespace-nowrap text-ink/80 hover:text-brand-700">
@@ -559,6 +572,11 @@ export default function Users() {
                       <p className="truncate text-xs text-muted">{u.email}</p>
                       {u.phone && <p className="text-xs text-muted">{u.phone}</p>}
                       <OnlineDot online={u.online} lastSeenAt={u.lastSeenAt} className="mt-1" />
+                      {dupMark(u)}
+                      <ViewAsClientButton user={u} compact className="mt-2" />
+                      <Suspense fallback={null}>
+                        <HistoryButton entity="USER" entityId={u.id} name={fullName(u)} compact className="-ml-2" />
+                      </Suspense>
                     </div>
                     <RoleControl u={u} editable={can} />
                   </div>

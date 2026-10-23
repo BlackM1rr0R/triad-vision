@@ -39,8 +39,10 @@ import { ResendVerificationButton } from '@/components/auth/VerifyBanner';
 import { PassportScan, type PassportScanFields } from '@/components/auth/PassportScan';
 import { registerCopy } from '@/i18n';
 import { pagesLegal } from '@/i18n/pagesLegal';
+import { campaignConsentCopy } from '@/i18n/pagesCampaigns';
 
 registerCopy(pagesLegal);
+registerCopy(campaignConsentCopy);
 
 /** Same photo as the home hero (already cached for most visitors). */
 const ASIDE_IMG = 'https://images.unsplash.com/photo-1587330979470-3595ac045ab0?auto=format&fit=crop&w=1200&q=65';
@@ -236,6 +238,8 @@ export default function Register() {
   const [f, setF] = useState<Form>(EMPTY);
   const [showPassword, setShowPassword] = useState(false);
   const [privacy, setPrivacy] = useState(false);
+  // Optional marketing consent: unchecked by default (UWG / DSGVO), logged on the server.
+  const [marketing, setMarketing] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [serverErrors, setServerErrors] = useState<Partial<Record<FieldKey, string>>>({});
   const [registered, setRegistered] = useState<{ email: string; next: string } | null>(null);
@@ -320,6 +324,7 @@ export default function Register() {
         locale,
         ...(refCode ? { ref: refCode } : {}),
         ...(scanned && Object.keys(scanned).length ? { passportScanned: true } : {}),
+        ...(marketing ? { marketingOptIn: true } : {}),
       });
       forgetRef();
       setUser(data.user);
@@ -523,6 +528,11 @@ export default function Register() {
                 </p>
               )}
             </div>
+
+            <label className="flex items-start gap-2.5 text-sm text-ink/80">
+              <input type="checkbox" name="marketing" checked={marketing} onChange={(e) => setMarketing(e.target.checked)} className="mt-0.5 size-4 shrink-0 accent-brand-600" />
+              <span>{t('campaignConsent.register')}</span>
+            </label>
 
             <button type="submit" disabled={busy} className="btn-primary h-12 w-full">
               {busy ? <Spinner className="size-4" /> : <UserPlus className="size-4" aria-hidden />} {t('registerPage.submit')}

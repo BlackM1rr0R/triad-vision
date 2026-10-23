@@ -16,6 +16,7 @@ import { bookPublicUsage, publicUsageMonth, publicUsageToday } from '../lib/publ
 import { retrieve } from '../lib/publicAi/knowledge.js';
 import { INTENT_RE, MAX_TOKENS, OFFER_AFTER_TURNS, advisorInput, advisorSystem, chatSchema, chatSummary, detectLang, splitLead } from '../lib/publicAi/advisor.js';
 import { PATH_LABEL_RE, answersSummary, eligibilityAnswersSchema, evaluateEligibility, weeksFromRanges, type PathResult } from '../lib/publicAi/eligibility.js';
+import { onInquiryCreated } from '../lib/assignment/inquiry.js';
 
 /**
  * Public AI for visitors (no login) — mounted at /api/public-ai:
@@ -207,6 +208,7 @@ publicAiRouter.post('/lead', async (req, res) => {
   const inquiry = await prisma.inquiry.create({
     data: { kind: 'contact', contactName: body.name, email: body.email ?? '', phone: body.phone ?? null, sector: 'AI advisor', message, locale: body.lang },
   });
+  void onInquiryCreated(inquiry.id); // automation rules + optional auto-assignment (never throws)
   void bookPublicUsage({ leads: 1 });
   const lines = [
     'Növ: AI məsləhətçi (sayt)',

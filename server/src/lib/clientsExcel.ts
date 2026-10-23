@@ -77,7 +77,7 @@ export const CLIENT_HEADERS = [
 /** All client accounts as spreadsheet rows (newest registration last, so new clients are appended). */
 export const clientRows = async () => {
   const users = await prisma.user.findMany({
-    where: { role: 'CLIENT' },
+    where: { role: 'CLIENT', mergedIntoId: null }, // merged-away duplicates are closed stubs
     orderBy: { createdAt: 'asc' },
     select: {
       firstName: true,

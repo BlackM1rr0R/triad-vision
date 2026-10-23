@@ -246,7 +246,9 @@ describe('admin companies', () => {
     expect(dup.status).toBe(409);
 
     const patch = await agent.patch(`/api/admin/companies/${res.body.company.id}`).send({ note: 'Key account', vatId: 'DE999' });
-    expect(patch.body.company).toMatchObject({ note: 'Key account', vatId: 'DE999' });
+    // Staff see tax ids masked (sensitive-data masking); the stored value is the plaintext.
+    expect(patch.body.company).toMatchObject({ note: 'Key account', vatId: '••••' });
+    expect((await prisma.company.findUniqueOrThrow({ where: { id: res.body.company.id } })).vatId).toBe('DE999');
     expect(await prisma.auditLog.count({ where: { action: { in: ['COMPANY_CREATED', 'COMPANY_UPDATED'] } } })).toBe(2);
   });
 });

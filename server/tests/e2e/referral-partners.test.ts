@@ -99,14 +99,15 @@ describe('referral partners', () => {
     const p = await staff.agent.get(`/api/admin/partners/${partner.id}`);
     expect(p.body.partner.counts).toMatchObject({ clients: 2, activeCases: 1, approved: 1, closedNegative: 0 });
     expect(p.body.cases).toHaveLength(2);
-    expect(p.body.cases.find((c: { id: string }) => c.id === c1.id).client).toMatchObject({ firstName: 'Ayan', passportNumber: 'C01234567' });
+    expect(p.body.cases.find((c: { id: string }) => c.id === c1.id).client).toMatchObject({ firstName: 'Ayan', passportNumber: '•••• 567' }); // masked for staff
 
     // Excel: the partner's client list.
     const xlsx = await staff.agent.get(`/api/admin/partners/${partner.id}/export.xlsx`).buffer(true).parse(binaryParser);
     expect(xlsx.status).toBe(200);
     expect(xlsx.headers['content-type']).toContain('spreadsheetml');
     const sheet = zipEntry(xlsx.body as Buffer, 'xl/worksheets/sheet1.xml')!;
-    for (const s of ['Müraciət №', 'Pasport №', 'Qərar tarixi', 'Ayan', 'C01234567', 'Məmmədov', 'Viza verilib', '01.09.2026', c1.number]) {
+    expect(sheet).not.toContain('C01234567'); // staff exports carry masked passport numbers
+    for (const s of ['Müraciət №', 'Pasport №', 'Qərar tarixi', 'Ayan', '•••• 567', 'Məmmədov', 'Viza verilib', '01.09.2026', c1.number]) {
       expect(sheet).toContain(s);
     }
     expect(sheet).not.toContain('Həsənova');

@@ -31,6 +31,7 @@ import { Modal } from '@/components/admin/Modal';
 import { ConfirmDialog } from '@/components/admin/ConfirmDialog';
 import { errorMessage, fmtDate } from '@/components/admin/labels';
 import { Spinner } from '@/components/ui/Spinner';
+import { isMaskedValue, SensitiveValue } from '@/components/privacyTools/SensitiveValue';
 
 registerCopy(adminInvoicesCopy);
 
@@ -146,6 +147,21 @@ export default function AdminInvoices() {
     setParams(next, { replace: true });
   };
   const [editing, setEditing] = useState<Invoice | 'new' | null>(null);
+  // ?edit=<id> (e.g. right after converting a quote) opens that draft in the editor.
+  const editId = params.get('edit');
+  useEffect(() => {
+    if (!editId) return;
+    void api
+      .get<{ invoice: Invoice }>(`/admin/invoices/${editId}`)
+      .then((r) => r.data.invoice.status === 'DRAFT' && setEditing(r.data.invoice))
+      .catch(() => undefined)
+      .finally(() => {
+        const next = new URLSearchParams(window.location.search);
+        next.delete('edit');
+        setParams(next, { replace: true });
+      });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editId]);
 
   const settingsQ = useQuery({
     queryKey: ['admin-invoice-settings'],
@@ -733,6 +749,7 @@ const SettingsTab = ({ q }: { q: { data?: SettingsResponse; isLoading: boolean; 
             </Field>
             <Field label={t('adminInvoices.settings.iban')} id="is-iban">
               <input id="is-iban" className="input font-mono uppercase" maxLength={42} autoComplete="off" value={form.iban} onChange={(e) => set('iban', e.target.value)} />
+              {isMaskedValue(form.iban) && <SensitiveValue value={form.iban} entity="invoiceSettings" id="invoicing" field="iban" className="mt-1 text-xs" />}
             </Field>
             <Field label={t('adminInvoices.settings.bic')} id="is-bic">
               <input id="is-bic" className="input font-mono uppercase" maxLength={11} autoComplete="off" value={form.bic} onChange={(e) => set('bic', e.target.value)} />

@@ -3,6 +3,7 @@ import { prisma } from '../../db.js';
 import { FINAL_STATUSES } from '../caseFlow.js';
 import { buildXlsx } from '../xlsx.js';
 import { syncCaseFolder } from '../drive/caseFolders.js';
+import { maskWith, type MaskGroup } from '../privacy/mask.js';
 
 /**
  * Referral partners — middlemen (Ilqar, Ənvər, …) who bring visa clients. Each case can name the
@@ -113,14 +114,14 @@ export const PARTNER_EXPORT_HEADERS = [
 ];
 
 /** The partner's client list as an .xlsx workbook (for settling accounts). */
-export const buildPartnerWorkbook = async (partner: { id: string; name: string }) => {
+export const buildPartnerWorkbook = async (partner: { id: string; name: string }, mask: Set<MaskGroup> = new Set()) => {
   const cases = await partnerCases(partner.id);
   const rows = cases.map((c, i) => [
     i + 1,
     c.number,
     c.client.firstName,
     c.client.lastName,
-    c.client.passportNumber ?? '',
+    maskWith(mask, 'passportNumber', c.client.passportNumber) ?? '',
     c.client.phone ?? '',
     TYPE_AZ[c.visaType] ?? c.visaType,
     c.visaCategory ? `${az(c.visaCategory.title)} (${c.visaCategory.visaLabel})` : '',

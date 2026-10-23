@@ -6,6 +6,7 @@ import { notifyStaff } from '../lib/notifications.js';
 
 const PRIVATE_SETTING_KEYS = ['invoicing', 'retention'];
 import { cached } from '../lib/cache.js';
+import { onInquiryCreated } from '../lib/assignment/inquiry.js';
 
 export const publicRouter = Router();
 
@@ -115,6 +116,7 @@ publicRouter.post('/inquiries', inquiryLimiter, async (req, res) => {
     return;
   }
   const inquiry = await prisma.inquiry.create({ data });
+  void onInquiryCreated(inquiry.id); // automation rules + optional auto-assignment (never throws)
 
   const lines = [
     body.kind === 'company' ? 'Növ: Şirkət əməkdaşlıq təklifi' : 'Növ: Əlaqə formu',

@@ -79,8 +79,11 @@ import { adminCopy } from '@/i18n/admin';
 import { roleLabel, fmtRelative } from '@/components/admin/labels';
 import { HelpButton } from '@/components/admin/help/HelpButton';
 import { FileBarChart2, ShieldAlert } from 'lucide-react'; // weekly reports, security alerts
+import { Copy as DuplicatesIcon } from 'lucide-react'; // duplicate clients
+import { History as HistoryIcon } from 'lucide-react'; // field-level change history
 import { ListChecks as TodayIcon } from 'lucide-react';
 import { TodayNavBadge } from '@/components/today/TodayNavBadge'; // urgent count of "my work today"
+import { Workflow } from 'lucide-react'; // automation rules + assignment
 
 registerCopy(adminCopy);
 
@@ -102,6 +105,7 @@ const MAIN_NAV: NavItem[] = [
   { to: '/admin/ai', label: 'ai', icon: Sparkles, superOnly: true },
   { to: '/admin/weekly-reports', label: 'weeklyReports', icon: FileBarChart2, superOnly: true },
   { to: '/admin/security-alerts', label: 'securityAlerts', icon: ShieldAlert, superOnly: true },
+  { to: '/admin/sensitive-access', label: 'sensitiveAccess', icon: ShieldHalf, superOnly: true },
   { to: '/admin/cases', label: 'cases', icon: FolderKanban },
   { to: '/admin/register', label: 'register', icon: Sheet },
   { to: '/admin/settlements', label: 'settlements', icon: Banknote },
@@ -112,12 +116,15 @@ const MAIN_NAV: NavItem[] = [
   { to: '/admin/announcements', label: 'announcements', icon: Megaphone },
   { to: '/admin/inquiries', label: 'inquiries', icon: Inbox },
   { to: '/admin/users', label: 'users', icon: Users },
+  { to: '/admin/duplicates', label: 'duplicates', icon: DuplicatesIcon, adminOnly: true },
+  { to: '/admin/history', label: 'history', icon: HistoryIcon, adminOnly: true },
   { to: '/admin/mailboxes', label: 'mailboxes', icon: AtSign, adminOnly: true },
   { to: '/admin/candidates', label: 'candidates', icon: UserSearch },
   { to: '/admin/vacancies', label: 'vacancies', icon: BriefcaseBusiness },
   { to: '/admin/companies', label: 'companies', icon: Building2 },
   { to: '/admin/bookings', label: 'bookings', icon: CalendarClock },
   { to: '/admin/invoices', label: 'invoices', icon: Receipt, adminOnly: true },
+  { to: '/admin/quotes', label: 'quotes', icon: FileSignature, adminOnly: true },
   { to: '/admin/reviews', label: 'reviews', icon: Star },
   { to: '/admin/analytics', label: 'analytics', icon: BarChart3 },
   { to: '/admin/security', label: 'security', icon: ShieldCheck },
@@ -137,9 +144,13 @@ const MAIN_NAV: NavItem[] = [
   { to: '/admin/contract-templates', label: 'contractTemplates', icon: FileText, adminOnly: true },
   { to: '/admin/interview-prep', label: 'interviewPrep', icon: MessageCircleQuestion },
   { to: '/admin/surveys', label: 'surveys', icon: Smile },
+  { to: '/admin/campaigns', label: 'campaigns', icon: Megaphone, adminOnly: true },
   { to: '/admin/finance', label: 'finance', icon: Wallet, adminOnly: true },
+  { to: '/admin/reports', label: 'reports', icon: FileBarChart2, adminOnly: true },
+  { to: '/admin/profitability', label: 'profitability', icon: TrendingUp, adminOnly: true },
   { to: '/admin/privacy-requests', label: 'privacyRequests', icon: ShieldHalf, adminOnly: true },
   { to: '/admin/integrations', label: 'integrations', icon: Plug, adminOnly: true },
+  { to: '/admin/automation', label: 'automation', icon: Workflow, adminOnly: true },
   { to: '/admin/help', label: 'help', icon: LifeBuoy },
 ];
 
@@ -165,6 +176,7 @@ const pageTitleKey = (pathname: string) => {
   if (matchPath('/admin/ai/*', pathname)) return 'admin.nav.ai';
   if (matchPath('/admin/weekly-reports', pathname)) return 'admin.nav.weeklyReports';
   if (matchPath('/admin/security-alerts', pathname)) return 'admin.nav.securityAlerts';
+  if (matchPath('/admin/sensitive-access', pathname)) return 'admin.nav.sensitiveAccess';
   if (matchPath('/admin/oversight/staff/:id', pathname)) return 'admin.layout.staff';
   if (matchPath('/admin/cases', pathname)) return 'admin.nav.cases';
   if (matchPath('/admin/cases/:id', pathname)) return 'admin.layout.case';
@@ -172,15 +184,20 @@ const pageTitleKey = (pathname: string) => {
   if (matchPath('/admin/docs/audit', pathname)) return 'admin.layout.audit';
   if (matchPath('/admin/inquiries', pathname)) return 'admin.nav.inquiries';
   if (matchPath('/admin/users', pathname)) return 'admin.nav.users';
+  if (matchPath('/admin/duplicates', pathname)) return 'admin.nav.duplicates';
+  if (matchPath('/admin/history', pathname)) return 'admin.nav.history';
   if (matchPath('/admin/signatures/*', pathname)) return 'admin.nav.signatures';
   if (matchPath('/admin/mailboxes', pathname)) return 'admin.nav.mailboxes';
   if (matchPath('/admin/settings', pathname)) return 'admin.nav.settings';
   if (matchPath('/admin/help', pathname)) return 'admin.nav.help';
   if (matchPath('/admin/tasks/*', pathname)) return 'admin.nav.tasks';
   if (matchPath('/admin/announcements', pathname)) return 'admin.nav.announcements';
+  if (matchPath('/admin/campaigns/*', pathname)) return 'admin.nav.campaigns';
   if (matchPath('/admin/arrivals/*', pathname)) return 'admin.nav.arrivals';
   if (matchPath('/admin/originals', pathname)) return 'admin.nav.originals';
   if (matchPath('/admin/storage', pathname)) return 'admin.nav.storage';
+  if (matchPath('/admin/reports', pathname)) return 'admin.nav.reports';
+  if (matchPath('/admin/profitability', pathname)) return 'admin.nav.profitability';
   const m = matchPath('/admin/content/:resource', pathname);
   if (m) {
     const item = CONTENT_NAV.find((c) => c.resource === m.params.resource);

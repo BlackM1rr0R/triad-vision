@@ -6,6 +6,7 @@ import { config } from '../../config.js';
 import { emptyCv, readCv, readTemplate, type CvData, type CvLang, type CvTemplate } from './schema.js';
 import { renderCvPdf, cvFileName, type CvPerson } from './pdf.js';
 import { prefillCv } from './prefill.js';
+import { isImpersonating } from '../privacy/impersonationContext.js';
 
 /** Profile fields the CV editor shows next to the CV (edited on the profile page, not here). */
 export const cvProfileSelect = {
@@ -30,7 +31,10 @@ export type CvProfile = Prisma.UserGetPayload<{ select: typeof cvProfileSelect }
 /** The client's CV row, created empty on first access. */
 export const ensureCv = async (userId: string) =>
   (await prisma.candidateCv.findUnique({ where: { userId } })) ??
-  prisma.candidateCv.upsert({ where: { userId }, update: {}, create: { userId, data: emptyCv() as unknown as Prisma.InputJsonValue } });
+  // "View as client" is read-only: show the empty CV without creating the row.
+  (isImpersonating()
+    ? { id: '', userId, data: emptyCv() as unknown as Prisma.JsonValue, template: 'lebenslauf', shareWithEmployers: true, updatedAt: new Date(), createdAt: new Date() }
+    : prisma.candidateCv.upsert({ where: { userId }, update: {}, create: { userId, data: emptyCv() as unknown as Prisma.InputJsonValue } }));
 
 export const cvView = (row: { data: unknown; template: string; shareWithEmployers: boolean; updatedAt: Date }) => ({
   data: readCv(row.data),

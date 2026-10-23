@@ -2,6 +2,7 @@ import { z } from 'zod';
 import type { CandidateRequest, CandidateRequestStatus } from '@prisma/client';
 import { prisma } from '../../db.js';
 import { GERMAN_LEVELS } from '../matching.js';
+import { isImpersonating } from '../privacy/impersonationContext.js';
 
 /**
  * Employer bulk candidate requests ("Personalanfrage"): shared validation, progress counters and the
@@ -115,7 +116,8 @@ export const syncStatuses = async <T extends Pick<CandidateRequest, 'id' | 'vaca
       else if (r.status === 'OPEN' && pr.proposed + pr.interviewing + pr.accepted + pr.rejected > 0) next = 'IN_PROGRESS';
     }
     if (next !== r.status) {
-      await prisma.candidateRequest.updateMany({ where: { id: r.id, status: r.status }, data: { status: next } });
+      // "View as client" is read-only: show the derived status without storing it.
+      if (!isImpersonating()) await prisma.candidateRequest.updateMany({ where: { id: r.id, status: r.status }, data: { status: next } });
       out.push({ ...r, status: next });
     } else out.push(r);
   }

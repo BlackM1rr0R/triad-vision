@@ -5,6 +5,18 @@ export { prisma };
 
 /** Deletes all rows, children before parents so foreign keys are never violated. */
 export const resetDb = async () => {
+  // Automation rules + automatic assignment (plain ids, no dependants)
+  await prisma.automationStep.deleteMany();
+  await prisma.automationRun.deleteMany();
+  await prisma.automationRule.deleteMany();
+  await prisma.automationEvent.deleteMany();
+  await prisma.staffPreferences.deleteMany();
+  await prisma.caseHandover.deleteMany();
+  await prisma.savedReport.deleteMany(); // report builder (schedules and deliveries cascade; CaseCost cascades with the case)
+  await prisma.userMerge.deleteMany(); // duplicate merges (no foreign keys; pairs cascade with the users)
+  await prisma.user.updateMany({ where: { mergedIntoId: { not: null } }, data: { mergedIntoId: null } });
+  await prisma.impersonationLog.deleteMany(); // view as client (no foreign keys)
+  await prisma.impersonationSession.deleteMany();
   await prisma.driveSmartFolder.deleteMany();
   await prisma.driveFolderTemplate.deleteMany();
   await prisma.driveTag.deleteMany();
@@ -130,6 +142,7 @@ export const resetDb = async () => {
   await prisma.post.deleteMany();
   await prisma.user.deleteMany();
   await prisma.company.deleteMany();
+  await prisma.fieldChange.deleteMany(); // field history (no foreign keys; last: the deletes above may record rows)
   // The public content cache lives in this module graph; drop it with the data.
   clearCache();
 };

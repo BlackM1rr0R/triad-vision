@@ -2,6 +2,7 @@ import type { ArrivalStatus, Locale, Prisma } from '@prisma/client';
 import { prisma } from '../../db.js';
 import { notifyUser } from '../notifications.js';
 import { arrivalNotice, formatArrival, housingLabel, type ArrivalNoticeKind, type ArrivalNoticeParams } from './texts.js';
+import { isImpersonating } from '../privacy/impersonationContext.js';
 
 /**
  * Arrival planning: one plan per APPROVED case (created lazily the first time the client opens the
@@ -35,7 +36,8 @@ export const fullName = (u: { firstName: string; lastName: string } | null | und
 /** Lazily creates a DRAFT plan for every APPROVED case of the client (idempotent). */
 export const ensurePlans = async (clientId: string) => {
   const cases = await prisma.case.findMany({ where: { clientId, status: 'APPROVED' }, select: { id: true } });
-  if (cases.length) {
+  // "View as client" is read-only: existing plans are shown, missing drafts are not created.
+  if (cases.length && !isImpersonating()) {
     await prisma.arrivalPlan.createMany({ data: cases.map((c) => ({ caseId: c.id, clientId })), skipDuplicates: true });
   }
   return cases.map((c) => c.id);

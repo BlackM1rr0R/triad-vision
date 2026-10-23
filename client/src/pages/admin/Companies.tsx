@@ -19,6 +19,8 @@ import { Chip, DefRow, EmptyState, ErrorBlock, LoadingBlock, PageHead, Panel } f
 import { toastJobsError, useJobLabels } from '@/components/jobs/labels';
 import { COMPANY_STATUS_TONE, SECTORS, VACANCY_STATUS_TONE, type Company, type CompanyStatus, type VacancyStatus } from '@/components/jobs/types';
 import { SignaturesPanel } from '@/components/esign/CaseSignatures';
+import { CompanyQuotesPanel } from '@/components/quotes/CompanyQuotesPanel';
+import RecordHistoryPanel from '@/components/history/RecordHistoryPanel';
 
 registerCopy(pagesJobs);
 
@@ -360,7 +362,9 @@ const CompanyDrawer = ({ id, onClose }: { id: string | null; onClose: () => void
               </dl>
             </Panel>
 
+            <CompanyQuotesPanel companyId={data.id} />
             <SignaturesPanel companyId={data.id} />
+            <RecordHistoryPanel entity="COMPANY" entityId={data.id} />
           </div>
         )
       )}

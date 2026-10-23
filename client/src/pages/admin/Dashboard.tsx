@@ -26,6 +26,8 @@ const RiskyCasesWidget = lazy(() => import('@/components/aiStaff/RiskyCasesWidge
 const TodayCard = lazy(() => import('@/components/today/TodayCard'));
 // Open security alerts (super admin only, own chunk).
 const SecurityAlertsWidget = lazy(() => import('@/components/aiMgmt/SecurityAlertsWidget').then((m) => ({ default: m.SecurityAlertsWidget })));
+// Team workload + rebalance suggestion (automatic assignment, ADMIN+, own chunk).
+const AssignmentLoadCard = lazy(() => import('@/components/automation/LoadCard'));
 
 const INQUIRY_TONE: Record<InquiryStatus, string> = { NEW: 'bg-brand-500', IN_PROGRESS: 'bg-amber-400', DONE: 'bg-emerald-500', ARCHIVED: 'bg-slate-400' };
 
@@ -159,6 +161,11 @@ export default function Dashboard() {
       <Suspense fallback={null}>
         <RiskyCasesWidget showBriefing={user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN'} />
       </Suspense>
+      {(user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN') && (
+        <Suspense fallback={null}>
+          <div className="mb-6"><AssignmentLoadCard compact /></div>
+        </Suspense>
+      )}
 
       <div className="grid grid-cols-1 gap-6 lg:gap-8 xl:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)]">
         <Panel title={t('admin.dashboard.byStatus')} icon={BadgeCheck} actions={<span className="text-xs text-muted tabular-nums">{t('admin.dashboard.casesCount', { count: total })}</span>}>

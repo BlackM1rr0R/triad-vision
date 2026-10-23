@@ -13,6 +13,7 @@ import {
   LogOut,
   Mail,
   MessageCircle,
+  Megaphone,
   MessageSquareText,
   Monitor,
   Save,
@@ -49,6 +50,7 @@ import {
   type ProfileTab,
 } from '@/components/portal/profileFields';
 import { registerCopy } from '@/i18n';
+import { campaignConsentCopy } from '@/i18n/pagesCampaigns';
 import { pagesAccount } from '@/i18n/pagesAccount';
 import { pagesGrowth } from '@/i18n/pagesGrowth';
 import { pagesMessaging } from '@/i18n/pagesMessaging';
@@ -57,6 +59,7 @@ import { usePageTitle } from '@/lib/usePageTitle';
 registerCopy(pagesAccount);
 registerCopy(pagesGrowth);
 registerCopy(pagesMessaging);
+registerCopy(campaignConsentCopy);
 
 const TAB_ICON: Record<ProfileTab, LucideIcon> = {
   personal: UserRound,
@@ -647,6 +650,14 @@ const NotificationsPanel = ({ user }: { user: User }) => {
           checked={pushOn}
           busy={busy === 'push'}
           onChange={(v) => void update('push', { pushNotifications: v })}
+        />
+        <Toggle
+          icon={Megaphone}
+          label={t('campaignConsent.profileLabel')}
+          hint={t('campaignConsent.profileHint')}
+          checked={user.marketingOptIn === true}
+          busy={busy === 'marketing'}
+          onChange={(v) => void update('marketing', { marketingOptIn: v })}
         />
         {!emailOn && (
           <p className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-relaxed text-amber-900">

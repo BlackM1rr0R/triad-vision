@@ -2,6 +2,7 @@ import type { CaseMessage } from '@prisma/client';
 import { prisma } from '../../db.js';
 import { notifyClient, notifyStaff } from '../notifications.js';
 import { publish } from './realtime.js';
+import { isImpersonating } from '../privacy/impersonationContext.js';
 
 /**
  * Shared logic for the case chat (portal + admin + WhatsApp inbound): who receives realtime events,
@@ -82,6 +83,7 @@ export const createCaseMessage = async (opts: {
  * `message.read`. Returns the ids that were marked (empty when nothing was unread).
  */
 export const markMessagesRead = async (c: { id: string; clientId: string }, readerSide: 'client' | 'staff') => {
+  if (isImpersonating()) return { messageIds: [] as string[], readAt: null as Date | null }; // no read receipts while viewing as the client
   const where = { caseId: c.id, readAt: null, authorId: readerSide === 'client' ? { not: c.clientId } : c.clientId };
   const unread = await prisma.caseMessage.findMany({ where, select: { id: true } });
   if (!unread.length) return { messageIds: [] as string[], readAt: null as Date | null };

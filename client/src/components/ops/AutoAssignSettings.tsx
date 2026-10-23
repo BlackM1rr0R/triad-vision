@@ -15,7 +15,8 @@ import { toastOpsError } from './shared';
 registerCopy(pagesOps);
 
 type Mode = 'off' | 'roundRobin' | 'leastLoaded';
-export interface AutoAssignValue { mode: Mode; staffIds?: string[] }
+// Other fields (eligibility filters, weights, handover — edited in Admin → Automation) are kept as they are.
+export interface AutoAssignValue { mode: Mode; staffIds?: string[]; [extra: string]: unknown }
 interface Staff { id: string; firstName: string; lastName: string; role: string }
 interface Workload { staff: (Staff & { open: number; waitingForStaff: number })[]; unassigned: number }
 
@@ -23,7 +24,7 @@ const MODES: Mode[] = ['off', 'roundRobin', 'leastLoaded'];
 
 export const normalizeAutoAssign = (v: unknown): AutoAssignValue => {
   const o = (typeof v === 'object' && v !== null ? v : {}) as Partial<AutoAssignValue>;
-  return { mode: MODES.includes(o.mode as Mode) ? (o.mode as Mode) : 'off', staffIds: Array.isArray(o.staffIds) ? o.staffIds.filter((s): s is string => typeof s === 'string') : [] };
+  return { ...o, mode: MODES.includes(o.mode as Mode) ? (o.mode as Mode) : 'off', staffIds: Array.isArray(o.staffIds) ? o.staffIds.filter((s): s is string => typeof s === 'string') : [] };
 };
 
 /** Admin → Settings: "Avtomatik təyinat" (mode + staff pool) and the "Balans" workload preview. */
@@ -39,7 +40,7 @@ export const AutoAssignSettings = ({ initial }: { initial: AutoAssignValue }) =>
   const { data: staff } = useQuery({ queryKey: ['staff-list'], queryFn: async () => (await api.get<{ staff: Staff[] }>('/admin/users/staff')).data.staff, staleTime: 300_000 });
   const workload = useQuery({ queryKey: ['ops-workload'], queryFn: async () => (await api.get<Workload>('/admin/ops/workload')).data, refetchInterval: 60_000 });
   const save = useMutation({
-    mutationFn: () => api.put('/admin/settings/autoAssign', { value: { mode, staffIds: pool } }),
+    mutationFn: () => api.put('/admin/settings/autoAssign', { value: { ...initial, mode, staffIds: pool } }),
     onSuccess: () => {
       toast.success(t('ops.settings.autoAssign.saved'));
       void qc.invalidateQueries({ queryKey: ['admin-settings'] });

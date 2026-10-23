@@ -332,6 +332,7 @@ const az = {
           'interview.scheduled': 'Müsahibə planlaşdırıldı',
           'interview.updated': 'Müsahibə dəyişdi',
           'vacancy.published': 'Vakansiya dərc edildi',
+          'automation.triggered': 'Avtomatlaşdırma qaydası işlədi',
         },
       },
       docs: {
@@ -465,7 +466,7 @@ export const pagesOps: { az: Copy; de: Copy; en: Copy; ru: Copy } = {
           testOk: 'Ping zugestellt (HTTP {{code}})', testFail: 'Ping fehlgeschlagen: {{error}}', deliveries: 'Zustellungen', noDeliveries: 'Noch keine Zustellungen.', retry: 'Erneut senden', retried: 'In die Warteschlange gestellt', rotate: 'Secret erneuern',
           rotated: 'Secret erneuert', delete: 'Löschen', confirmDelete: 'Webhook löschen? Die Zustellungshistorie wird ebenfalls gelöscht.', deleted: 'Webhook gelöscht', empty: 'Noch keine Webhooks.',
           status: { PENDING: 'Ausstehend', DELIVERED: 'Zugestellt', FAILED: 'Fehlgeschlagen' }, attempts: 'Versuche', response: 'Antwort', lastError: 'Letzter Fehler', nextAttempt: 'Nächster Versuch', stats: '{{failed}} fehlgeschlagen · {{pending}} ausstehend', event: 'Ereignis',
-          eventLabels: { 'case.created': 'Antrag erstellt', 'case.status_changed': 'Antragsstatus geändert', 'case.decided': 'Visumentscheidung', 'application.created': 'Bewerbung eingegangen', 'application.status_changed': 'Bewerbungsstatus geändert', 'interview.scheduled': 'Interview geplant', 'interview.updated': 'Interview geändert', 'vacancy.published': 'Stelle veröffentlicht' },
+          eventLabels: { 'case.created': 'Antrag erstellt', 'case.status_changed': 'Antragsstatus geändert', 'case.decided': 'Visumentscheidung', 'application.created': 'Bewerbung eingegangen', 'application.status_changed': 'Bewerbungsstatus geändert', 'interview.scheduled': 'Interview geplant', 'interview.updated': 'Interview geändert', 'vacancy.published': 'Stelle veröffentlicht', 'automation.triggered': 'Automatisierungsregel ausgelöst' },
         },
         docs: {
           title: 'API-Dokumentation', hint: 'Partner-API: Basis-URL {{base}}. Jede Anfrage trägt den Header Authorization: Bearer tv_… Limit: 600 Anfragen pro Minute und Schlüssel.', openapi: 'OpenAPI (JSON)', endpoints: 'Endpunkte', scope: 'Berechtigung',
@@ -553,7 +554,7 @@ export const pagesOps: { az: Copy; de: Copy; en: Copy; ru: Copy } = {
           testFail: 'Ping failed: {{error}}', deliveries: 'Deliveries', noDeliveries: 'No deliveries yet.', retry: 'Resend', retried: 'Queued again', rotate: 'Rotate secret', rotated: 'Secret rotated', delete: 'Delete',
           confirmDelete: 'Delete this webhook? Its delivery history is deleted too.', deleted: 'Webhook deleted', empty: 'No webhooks yet.', status: { PENDING: 'Pending', DELIVERED: 'Delivered', FAILED: 'Failed' }, attempts: 'Attempts', response: 'Response',
           lastError: 'Last error', nextAttempt: 'Next attempt', stats: '{{failed}} failed · {{pending}} pending', event: 'Event',
-          eventLabels: { 'case.created': 'Case created', 'case.status_changed': 'Case status changed', 'case.decided': 'Visa decision', 'application.created': 'Application received', 'application.status_changed': 'Application status changed', 'interview.scheduled': 'Interview scheduled', 'interview.updated': 'Interview updated', 'vacancy.published': 'Vacancy published' },
+          eventLabels: { 'case.created': 'Case created', 'case.status_changed': 'Case status changed', 'case.decided': 'Visa decision', 'application.created': 'Application received', 'application.status_changed': 'Application status changed', 'interview.scheduled': 'Interview scheduled', 'interview.updated': 'Interview updated', 'vacancy.published': 'Vacancy published', 'automation.triggered': 'Automation rule fired' },
         },
         docs: {
           title: 'API docs', hint: 'Partner API: base URL {{base}}. Every request carries Authorization: Bearer tv_… Limit: 600 requests per minute per key.', openapi: 'OpenAPI (JSON)', endpoints: 'Endpoints', scope: 'Scope', example: 'Example (curl)',
@@ -638,7 +639,7 @@ export const pagesOps: { az: Copy; de: Copy; en: Copy; ru: Copy } = {
           secret: 'Секрет подписи', showOnce: 'Секрет показывается только сейчас. Используйте его для проверки заголовка X-TV-Signature.', created: 'Вебхук создан', test: 'Отправить тест', testOk: 'Ping доставлен (HTTP {{code}})', testFail: 'Ping не доставлен: {{error}}',
           deliveries: 'Доставки', noDeliveries: 'Доставок пока нет.', retry: 'Отправить снова', retried: 'Поставлено в очередь', rotate: 'Обновить секрет', rotated: 'Секрет обновлён', delete: 'Удалить', confirmDelete: 'Удалить вебхук? История доставок тоже удалится.',
           deleted: 'Вебхук удалён', empty: 'Вебхуков пока нет.', status: { PENDING: 'Ожидает', DELIVERED: 'Доставлено', FAILED: 'Ошибка' }, attempts: 'Попытки', response: 'Ответ', lastError: 'Последняя ошибка', nextAttempt: 'Следующая попытка', stats: '{{failed}} ошибок · {{pending}} в очереди', event: 'Событие',
-          eventLabels: { 'case.created': 'Заявка создана', 'case.status_changed': 'Статус заявки изменён', 'case.decided': 'Решение по визе', 'application.created': 'Получен отклик', 'application.status_changed': 'Статус отклика изменён', 'interview.scheduled': 'Собеседование назначено', 'interview.updated': 'Собеседование изменено', 'vacancy.published': 'Вакансия опубликована' },
+          eventLabels: { 'case.created': 'Заявка создана', 'case.status_changed': 'Статус заявки изменён', 'case.decided': 'Решение по визе', 'application.created': 'Получен отклик', 'application.status_changed': 'Статус отклика изменён', 'interview.scheduled': 'Собеседование назначено', 'interview.updated': 'Собеседование изменено', 'vacancy.published': 'Вакансия опубликована', 'automation.triggered': 'Сработало правило автоматизации' },
         },
         docs: {
           title: 'Документация API', hint: 'Партнёрский API: базовый URL {{base}}. Каждый запрос содержит Authorization: Bearer tv_… Лимит: 600 запросов в минуту на ключ.', openapi: 'OpenAPI (JSON)', endpoints: 'Эндпоинты', scope: 'Право', example: 'Пример (curl)',

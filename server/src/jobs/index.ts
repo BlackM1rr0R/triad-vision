@@ -27,3 +27,8 @@ import './originals.js'; // overdue physical originals (given out / apostille / 
 import './retention-drive.js'; // DSGVO retention of drive client folders (archive, warnings, recycle bin)
 import './aiMgmt.js'; // weekly management report (Monday 08:00 Baku) + security alert rules (every 10 min)
 import './uploadAi.js'; // smart uploads: finish recognitions left pending by a restart
+import './quotes.js'; // quotes (Angebote): expiry + reminder to the employer before expiry
+import './campaigns.js'; // campaigns: scheduled start + throttled sending of the queue (every 10 s)
+import './duplicates.js'; // duplicate client detection (nightly full scan)
+import './reports.js'; // scheduled report e-mails (report builder)
+import './automation.js'; // automation rules (event queue, delayed actions, time triggers) + absence handover

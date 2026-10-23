@@ -14,6 +14,7 @@ import { esignText, formatDay } from './texts.js';
 import { maskEmail } from './otp.js';
 import { maskPhone, normalizePhone, smsConfigured } from '../messaging/providers.js';
 import { saveSignedCopyToDrive } from '../driveIntel/signedCopy.js';
+import { isImpersonating } from '../privacy/impersonationContext.js';
 
 /**
  * Multi-party online signatures ("Signature requests").
@@ -389,6 +390,7 @@ const assertCanAct = async (r: RequestWithSigners, s: SignatureSigner) => {
 };
 
 export const markViewed = async (signerId: string, meta: Meta) => {
+  if (isImpersonating()) return; // an admin viewing the portal is not the signer
   const { count } = await prisma.signatureSigner.updateMany({
     where: { id: signerId, status: 'PENDING' },
     data: { status: 'VIEWED', viewedAt: new Date() },

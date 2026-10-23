@@ -12,6 +12,7 @@ import { partnerCommissionTotals } from '../../lib/partners/commissions.js';
 import { assignCases, deletePartner } from '../../lib/partners/manage.js';
 import { partnerLoginRouter, partnerLoginView } from '../../lib/partners/adminLoginRoutes.js';
 import { partnerCommissionsRouter } from '../../lib/partners/adminCommissionRoutes.js';
+import { requestMaskGroups } from '../../lib/privacy/mask.js';
 
 /**
  * Referral partners (middlemen who bring visa clients) — /api/admin/partners.
@@ -130,7 +131,7 @@ adminPartnersRouter.post('/:id/folder', async (req, res) => {
 adminPartnersRouter.get('/:id/export.xlsx', async (req, res) => {
   const partner = await prisma.referralPartner.findUnique({ where: { id: String(req.params.id) }, select: { id: true, name: true } });
   if (!partner) throw notFound('PARTNER_NOT_FOUND');
-  const data = await buildPartnerWorkbook(partner);
+  const data = await buildPartnerWorkbook(partner, requestMaskGroups(res)); // masked for STAFF per settings
   await audit(req, 'PARTNER_EXPORTED', partner.id, { format: 'xlsx' });
   const ascii = partner.name.normalize('NFKD').replace(/[^\w.-]+/g, '-').replace(/^-+|-+$/g, '') || 'partner';
   res.setHeader('Content-Type', XLSX_MIME);

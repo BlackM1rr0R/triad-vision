@@ -1,6 +1,7 @@
 import crypto from 'node:crypto';
 import type { Prisma } from '@prisma/client';
 import { prisma } from '../../db.js';
+import { emitAutomationEvent } from '../automation/events.js';
 
 /**
  * Outgoing webhooks for partners. `emitWebhook` only records deliveries (one per subscribed,
@@ -15,7 +16,8 @@ export type WebhookEvent =
   | 'application.status_changed'
   | 'interview.scheduled'
   | 'interview.updated'
-  | 'vacancy.published';
+  | 'vacancy.published'
+  | 'automation.triggered'; // automation rule action 'send to webhook'
 
 export const WEBHOOK_EVENTS: WebhookEvent[] = [
   'case.created',
@@ -26,9 +28,15 @@ export const WEBHOOK_EVENTS: WebhookEvent[] = [
   'interview.scheduled',
   'interview.updated',
   'vacancy.published',
+  'automation.triggered',
 ];
 
 export const emitWebhook = async (event: WebhookEvent, payload: Prisma.InputJsonValue, companyId?: string | null) => {
+  // Automation hook: every vacancy application status change already passes here (staff, employer, partner API).
+  if (event === 'application.status_changed') {
+    const p = payload as { id?: string; to?: string; from?: string | null };
+    if (p?.id) void emitAutomationEvent({ type: 'APPLICATION_STATUS_CHANGED', entityType: 'application', entityId: p.id, payload: { from: p.from ?? null, to: p.to ?? null } });
+  }
   try {
     const hooks = await prisma.webhook.findMany({
       where: { active: true, ...(companyId ? { OR: [{ companyId }, { companyId: null }] } : { companyId: null }) },

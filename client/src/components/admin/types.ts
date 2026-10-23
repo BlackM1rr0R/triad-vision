@@ -127,6 +127,8 @@ export interface AdminUser {
   online: boolean;
   liveSessions: number;
   logins30d: number;
+  /** Set on a client account that was merged into another one (closed stub). */
+  mergedIntoId?: string | null;
   _count: { cases: number; assignedCases: number; docFiles: number; messages: number };
 }
 

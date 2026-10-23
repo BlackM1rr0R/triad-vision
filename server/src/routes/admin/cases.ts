@@ -28,6 +28,7 @@ import { requireMinRole } from '../../middleware/auth.js';
 import { hasMissing, translateMany } from '../../lib/ai/translate.js';
 import { prepareCaseDocument, publicQuality, scheduleUploadAnalysis } from '../../lib/uploadAi/index.js';
 import { nextStepSummaries } from '../../lib/caseNext/nextStep.js';
+import { emitAutomationEvent } from '../../lib/automation/events.js';
 
 export const adminCasesRouter = Router();
 
@@ -257,6 +258,7 @@ adminCasesRouter.post('/:id/documents/:docId/review', async (req, res) => {
       actorId: req.user!.id,
     },
   });
+  if (body.status !== 'PENDING') void emitAutomationEvent({ type: body.status === 'ACCEPTED' ? 'DOCUMENT_ACCEPTED' : 'DOCUMENT_REJECTED', entityType: 'document', entityId: doc.id, caseId: doc.caseId }); // automation hook
   if (body.status !== 'PENDING') {
     const client = await prisma.user.findFirstOrThrow({ where: { cases: { some: { id: doc.caseId } } } });
     const title = (doc.requirement?.title as Record<string, string> | null)?.[client.locale] ?? doc.originalName;
@@ -334,6 +336,7 @@ adminCasesRouter.post('/:id/documents', documentUpload.single('file'), async (re
           visibleToClient: body.stage === 'VISA' || body.stage === 'OTHER',
         },
       });
+      void emitAutomationEvent({ type: 'DOCUMENT_UPLOADED', entityType: 'document', entityId: doc.id, caseId: c.id }); // automation hook
     }
     // Smart uploads (not for contracts the agency sends): scan quality now, recognition in the background.
     const quality = body.stage === 'CONTRACT' ? null : publicQuality(await prepareCaseDocument(doc.id));

@@ -1,6 +1,7 @@
 import crypto from 'node:crypto';
 import { prisma } from '../../db.js';
 import { FINAL_STATUSES } from '../caseFlow.js';
+import { onInquiryCreated } from '../assignment/inquiry.js';
 import { notifyStaff } from '../notifications.js';
 import { createCaseMessage } from './caseMessages.js';
 import { normalizePhone } from './providers.js';
@@ -171,7 +172,7 @@ export const storeInbound = async (m: { externalId: string; from: string; text: 
   const marker = `[whatsapp:${m.externalId}]`;
   if (await prisma.inquiry.count({ where: { message: { contains: marker } } })) return 'duplicates';
   const contactName = user ? `${user.firstName} ${user.lastName}`.trim() : m.name || m.from;
-  await prisma.inquiry.create({
+  const inquiry = await prisma.inquiry.create({
     data: {
       kind: 'contact',
       contactName: contactName.slice(0, 120),
@@ -181,6 +182,7 @@ export const storeInbound = async (m: { externalId: string; from: string; text: 
       locale: user?.locale ?? 'az',
     },
   });
+  void onInquiryCreated(inquiry.id); // automation rules + optional auto-assignment (never throws)
   await notifyStaff(`WhatsApp: ${contactName}`, m.text, { link: '/admin/inquiries', type: 'INQUIRY' });
   return 'inquiries';
 };

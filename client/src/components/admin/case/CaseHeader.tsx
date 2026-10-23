@@ -19,6 +19,7 @@ import { ForecastChip } from '@/components/journey/ForecastStrip';
 import { useRelationLabel } from '@/components/journey/Family';
 import { FromTemplateButton } from '@/components/contracts/FromTemplateDialog';
 import { CasePartnerSelect } from '@/components/partners/CasePartnerSelect';
+import { ViewAsClientButton } from '@/components/privacyTools/ViewAsClientButton';
 
 const patchCase = (id: string, body: Record<string, string | null>) => api.patch(`/admin/cases/${id}`, body);
 
@@ -127,6 +128,7 @@ export const CaseHeader = ({ c }: { c: CaseDetail }) => {
             <span className="inline-flex min-h-8 items-center rounded-md bg-surface px-2.5 py-1 text-xs whitespace-nowrap text-muted uppercase">
               {t('admin.case.header.language', { value: client.locale })}
             </span>
+            <ViewAsClientButton user={{ ...client, role: 'CLIENT' }} compact />
           </div>
         </div>
         <div className="w-full sm:w-64">

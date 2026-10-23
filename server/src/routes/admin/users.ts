@@ -22,6 +22,7 @@ const userSelect = {
   locale: true,
   isActive: true,
   createdAt: true,
+  mergedIntoId: true, // merged duplicate (closed stub) → link to the primary
   _count: { select: { cases: true, assignedCases: true, docFiles: true, messages: true } },
 } as const;
 

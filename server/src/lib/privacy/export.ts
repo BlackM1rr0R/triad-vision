@@ -8,7 +8,7 @@ import { publicUser } from '../../routes/auth.js';
  * Team chat and mailboxes belong to staff accounts (company data) and are not part of the export.
  */
 export const buildUserExport = async (userId: string) => {
-  const [user, cases, notifications, devices, translationOrders, interviews, applications, consents, privacyRequests] = await Promise.all([
+  const [user, cases, notifications, devices, translationOrders, interviews, applications, consents, privacyRequests, supportViews] = await Promise.all([
     prisma.user.findUniqueOrThrow({ where: { id: userId } }),
     prisma.case.findMany({
       where: { clientId: userId },
@@ -88,6 +88,12 @@ export const buildUserExport = async (userId: string) => {
       orderBy: { createdAt: 'asc' },
       select: { type: true, status: true, message: true, decisionNote: true, dueAt: true, completedAt: true, createdAt: true },
     }),
+    // Transparency: every time a team member opened the portal "as" this user (read-only support view).
+    prisma.impersonationSession.findMany({
+      where: { targetUserId: userId },
+      orderBy: { startedAt: 'asc' },
+      select: { startedAt: true, endedAt: true, reason: true, requestCount: true },
+    }),
   ]);
 
   return {
@@ -110,6 +116,13 @@ export const buildUserExport = async (userId: string) => {
     privacyRequests,
     notifications,
     devices,
+    supportViews: supportViews.map((v) => ({
+      startedAt: v.startedAt,
+      endedAt: v.endedAt,
+      reason: v.reason,
+      pagesViewed: v.requestCount,
+      note: 'A Triad Vision team member viewed your portal read-only (no changes possible).',
+    })),
   };
 };
 

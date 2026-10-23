@@ -10,6 +10,7 @@ import { HttpError, notFound } from '../http.js';
 import { notifyStaff, notifyUser } from '../notifications.js';
 import { parseMrzText, type MrzResult } from './mrz.js';
 import { syncClientFolders } from '../drive/caseFolders.js';
+import { scanUserDuplicates } from '../duplicates/detect.js';
 import { fillExpiryFromOcr } from '../expiry/index.js';
 
 /**
@@ -148,6 +149,7 @@ export const fillEmptyProfileFields = async (userId: string, mrz: MrzResult) => 
   const applied = Object.keys(data);
   if (applied.length) await prisma.user.update({ where: { id: userId }, data });
   if (applied.includes('passportNumber')) void syncClientFolders(userId); // "… · Pass-Nr." folder names
+  if (applied.length) void scanUserDuplicates(userId);
   return applied;
 };
 
@@ -156,6 +158,7 @@ export const applyMrzToProfile = async (userId: string, mrz: MrzResult) => {
   const data = profileFromMrz(mrz);
   await prisma.user.update({ where: { id: userId }, data });
   void syncClientFolders(userId); // "… · Pass-Nr." folder names
+  void scanUserDuplicates(userId);
   return data;
 };
 

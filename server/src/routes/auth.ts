@@ -26,9 +26,11 @@ import { bufferMatches } from '../lib/fileCheck.js';
 import { OCR_IMAGE_MIME, langDataAvailable } from '../lib/docsIntel/ocr.js';
 import { PASSPORT_SCAN_TIMEOUT_MS, scanPassportImage } from '../lib/docsIntel/passportScan.js';
 import { recordConsent } from '../lib/privacy/consents.js';
+import { setMarketingOptIn } from '../lib/campaigns/consent.js';
 import { attachReferral } from '../lib/agents/referral.js';
 import { markClientsExcelDirty } from '../lib/clientsExcel.js';
 import { syncClientFolders } from '../lib/drive/caseFolders.js';
+import { scanUserDuplicates } from '../lib/duplicates/detect.js';
 
 export const authRouter = Router();
 
@@ -66,6 +68,7 @@ export const publicUser = (u: User) => ({
   pushNotifications: u.pushNotifications,
   whatsappOptIn: u.whatsappOptIn,
   smsNotifications: u.smsNotifications,
+  marketingOptIn: u.marketingOptIn, // news & offers (campaigns); consent log type MARKETING_EMAIL
   createdAt: u.createdAt,
   // emailVerified, twoFactorEnabled, twoFactorRequired
   ...securityFlags(u),
@@ -192,6 +195,8 @@ authRouter.post('/register', authLimiter, async (req, res) => {
       ref: z.string().trim().max(64).optional().nullable(),
       // The form was filled from a passport photo (POST /passport-scan): logged as a PASSPORT_OCR consent.
       passportScanned: z.boolean().optional(),
+      // Optional, unchecked by default: news and offers by e-mail (marketing consent, logged).
+      marketingOptIn: z.boolean().optional(),
     }),
     req.body,
   );
@@ -215,10 +220,12 @@ authRouter.post('/register', authLimiter, async (req, res) => {
   if (body.passportScanned) {
     await recordConsent({ userId: user.id, email: user.email, type: 'PASSPORT_OCR', granted: true, source: 'REGISTER', req });
   }
+  if (body.marketingOptIn === true) await setMarketingOptIn(user.id, true, 'REGISTER', req);
   if (body.ref) await attachReferral(user.id, body.ref);
   await sendVerificationEmail(user.id);
   // The super admins' client list (Excel) gets the new client within a minute.
   markClientsExcelDirty();
+  void scanUserDuplicates(user.id); // possible duplicate accounts (Admin → Dublikatlar)
   res.status(201).json(await startSession(req, res, user));
 });
 
@@ -316,7 +323,19 @@ authRouter.get('/me', async (req, res) => {
     return;
   }
   const user = await prisma.user.findUniqueOrThrow({ where: { id: req.user.id } });
-  res.json({ user: publicUser(user), session: { id: req.session!.id, expiresAt: req.session!.expiresAt } });
+  // "View as client": the portal renders as the viewed user; the banner needs the admin and the deadline.
+  const impersonation =
+    req.impersonation && req.impersonator
+      ? {
+          id: req.impersonation.id,
+          reason: req.impersonation.reason,
+          startedAt: req.impersonation.startedAt,
+          expiresAt: req.impersonation.expiresAt,
+          returnTo: req.impersonation.returnTo,
+          admin: { id: req.impersonator.id, firstName: req.impersonator.firstName, lastName: req.impersonator.lastName, role: req.impersonator.role },
+        }
+      : undefined;
+  res.json({ user: publicUser(user), session: { id: req.session!.id, expiresAt: req.session!.expiresAt }, ...(impersonation ? { impersonation } : {}) });
 });
 
 authRouter.patch('/me', requireAuth, async (req, res) => {
@@ -342,12 +361,14 @@ authRouter.patch('/me', requireAuth, async (req, res) => {
       // Phone channels (messaging module); current values come from GET /api/messaging/preferences.
       whatsappOptIn: z.boolean().optional(),
       smsNotifications: z.boolean().optional(),
+      // Marketing consent (campaigns): saved with date and source, logged as MARKETING_EMAIL.
+      marketingOptIn: z.boolean().optional(),
       currentPassword: z.string().max(128).optional(),
       newPassword: password.optional(),
     }),
     req.body,
   );
-  const { currentPassword: _currentPassword, newPassword: _newPassword, ...fields } = body;
+  const { currentPassword: _currentPassword, newPassword: _newPassword, marketingOptIn, ...fields } = body;
   const data: Record<string, unknown> = { ...fields };
   const channelsTouched = body.whatsappOptIn !== undefined || body.smsNotifications !== undefined;
   const before = channelsTouched
@@ -360,8 +381,12 @@ authRouter.patch('/me', requireAuth, async (req, res) => {
     }
     data.passwordHash = await bcrypt.hash(body.newPassword, 12);
   }
-  const user = await prisma.user.update({ where: { id: req.user!.id }, data });
+  let user = await prisma.user.update({ where: { id: req.user!.id }, data });
+  if (marketingOptIn !== undefined && (await setMarketingOptIn(user.id, marketingOptIn, 'PROFILE', req))) {
+    user = await prisma.user.findUniqueOrThrow({ where: { id: user.id } });
+  }
   if (body.firstName !== undefined || body.lastName !== undefined || body.passportNumber !== undefined) void syncClientFolders(user.id); // folder names
+  if (['firstName', 'lastName', 'phone', 'birthDate', 'passportNumber', 'city'].some((k) => k in body)) void scanUserDuplicates(user.id);
   if (body.newPassword) {
     // Every other device must log in again with the new password; this one keeps its session.
     await revokeUserSessions(user.id, req.session!.id);

@@ -9,6 +9,7 @@ import { renderEmail, sendMail } from '../lib/mailer.js';
 import { notifyUser } from '../lib/notifications.js';
 import { buildIcs } from '../lib/ics.js';
 import { asBookingLocale, bookingTexts, formatSlot, topicLabel, type BookingLocale } from '../lib/bookingTexts.js';
+import { emitAutomationEvent } from '../lib/automation/events.js';
 
 // Public consultation booking — mounted at /api/booking
 export const bookingRouter = Router();
@@ -213,6 +214,7 @@ bookingRouter.post('/', createLimiter, async (req, res) => {
   }
 
   void mailBooker(booking, 'confirmed').catch(() => undefined);
+  void emitAutomationEvent({ type: 'BOOKING_CREATED', entityType: 'booking', entityId: booking.id }); // automation hook
   await notifySlotStaff(booking, 'staffNew').catch((e) => console.error('[booking] staff notify failed', e));
   void bumpAnalytics();
 

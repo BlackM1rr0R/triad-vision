@@ -10,6 +10,7 @@ import { surveyOnCaseFinal } from './surveys/service.js';
 import { syncCaseFolder } from './drive/caseFolders.js';
 import { notifyPartnerCaseStatus } from './partnerPortal/notify.js';
 import { syncSettlementsForCase } from './settlement/service.js';
+import { emitAutomationEvent } from './automation/events.js'; // automation rules: domain events (never throws)
 
 export const FINAL_STATUSES: CaseStatus[] = ['APPROVED', 'REJECTED', 'CANCELLED'];
 
@@ -57,8 +58,9 @@ export const createCase = async (
         const number = await nextCaseNumber(tx);
         // A family member inherits the main case's staff; otherwise auto-assignment (if enabled) picks one.
         const parent = input.parentCaseId ? await tx.case.findUnique({ where: { id: input.parentCaseId }, select: { assignedStaffId: true, visaCategoryId: true, visaType: true } }) : null;
-        const assignedStaffId = parent?.assignedStaffId ?? (await pickAssignee(tx));
         const visaCategoryId = input.visaCategoryId ?? parent?.visaCategoryId ?? null;
+        const clientLocale = (await tx.user.findUnique({ where: { id: clientId }, select: { locale: true } }))?.locale ?? null;
+        const assignedStaffId = parent?.assignedStaffId ?? (await pickAssignee(tx, { clientLocale, visaType: input.visaType ?? parent?.visaType ?? 'WORK', visaCategoryId }));
         const c = await tx.case.create({
           data: {
             clientId,
@@ -89,6 +91,7 @@ export const createCase = async (
       await awardCaseCommission(created.id, 'CASE_CREATED'); // agent programme (never throws)
       void emitWebhook('case.created', { caseId: created.id, number: created.number, status: created.status, visaCategoryId: created.visaCategoryId }, created.companyId);
       void syncCaseFolder(created.id); // the client's folder in the shared drive
+      void emitAutomationEvent({ type: 'CASE_CREATED', entityType: 'case', entityId: created.id, caseId: created.id, payload: { to: created.status } }); // automation hook
       return created;
     } catch (err) {
       if ((err as { code?: string }).code === 'P2002') continue;
@@ -141,6 +144,14 @@ const transition = async (
   if (FINAL_STATUSES.includes(to)) void surveyOnCaseFinal(caseId, to); // satisfaction survey (never throws)
   void notifyPartnerCaseStatus(caseId, to, opts.eventType); // referral partner portal (never throws)
   void syncSettlementsForCase(caseId); // settlement ledger rows follow the case (never throws)
+  // ── Automation hook: one central place for every status change, contract signature and appointment ──
+  const eventType = opts.eventType ?? 'STATUS_CHANGED';
+  void emitAutomationEvent({ type: 'CASE_STATUS_CHANGED', entityType: 'case', entityId: caseId, caseId, payload: { from: current.status, to, eventType } });
+  if (eventType === 'CONTRACT_SIGNED') void emitAutomationEvent({ type: 'CONTRACT_SIGNED', entityType: 'case', entityId: caseId, caseId, payload: { to } });
+  if (eventType === 'APPOINTMENT_SCHEDULED' || eventType === 'APPOINTMENT_RESCHEDULED') {
+    const at = opts.data?.appointmentAt instanceof Date ? opts.data.appointmentAt.toISOString() : null;
+    void emitAutomationEvent({ type: 'APPOINTMENT_SET', entityType: 'case', entityId: caseId, caseId, payload: { at, rescheduled: eventType === 'APPOINTMENT_RESCHEDULED' } });
+  }
 };
 
 const requirementsSatisfied = async (caseId: string, stage: DocStage, mode: 'uploaded' | 'accepted') => {

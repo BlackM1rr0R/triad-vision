@@ -54,6 +54,8 @@ export interface User {
   about?: string | null;
   emailNotifications?: boolean;
   pushNotifications?: boolean;
+  /** Marketing consent (campaigns): news and offers; off unless the user opted in. */
+  marketingOptIn?: boolean;
   createdAt?: string;
 }
 

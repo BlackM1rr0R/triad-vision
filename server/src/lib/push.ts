@@ -1,5 +1,6 @@
 import { config } from '../config.js';
 import { prisma } from '../db.js';
+import { isImpersonating } from './privacy/impersonationContext.js';
 
 const EXPO_PUSH_URL = 'https://exp.host/--/api/v2/push/send';
 const EXPO_TOKEN = /^Expo(nent)?PushToken\[.+\]$/;
@@ -17,6 +18,7 @@ interface ExpoTicket {
  */
 export const sendPush = async (userIds: string[], msg: { title: string; body: string; data?: Record<string, string> }) => {
   if (config.isTest || userIds.length === 0) return;
+  if (isImpersonating()) return; // "view as client" never pushes
   try {
     const devices = await prisma.pushDevice.findMany({ where: { userId: { in: userIds } } });
     if (!devices.length) return;

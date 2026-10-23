@@ -20,6 +20,7 @@ import { CommissionsPanel, fromCents, toCents } from '@/components/partners/Comm
 import { PortalLoginPanel } from '@/components/partners/PortalLogin';
 import { DeletePartnerDialog, invalidatePartnerViews } from '@/components/partners/DeletePartnerDialog';
 import { money } from '@/components/agents/format';
+import { SensitiveValue } from '@/components/privacyTools/SensitiveValue';
 
 type ActiveFilter = 'all' | 'true' | 'false';
 
@@ -413,7 +414,9 @@ const PartnerDetail = ({ isAdmin }: { isAdmin: boolean }) => {
                       <p className="font-semibold whitespace-nowrap text-ink">{fullName(c.client)}</p>
                       {c.client.phone && <p className="text-xs text-muted">{c.client.phone}</p>}
                     </td>
-                    <td className="px-4 py-3 align-top font-mono text-xs text-ink/80">{c.client.passportNumber ?? '—'}</td>
+                    <td className="px-4 py-3 align-top font-mono text-xs text-ink/80">
+                      <SensitiveValue value={c.client.passportNumber} entity="user" id={c.client.id} field="passportNumber" />
+                    </td>
                     <td className="px-4 py-3 align-top">
                       <p className="text-ink">{t(`refPartners.types.${c.visaType}`, { defaultValue: c.visaType })}</p>
                       {c.visaCategory && (

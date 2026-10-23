@@ -9,6 +9,7 @@ import { badRequest, conflict, forbidden, notFound } from '../http.js';
 import { checkCaseDocument } from '../docCheck/index.js';
 import { copyDocumentToDrive } from '../drive/caseFolders.js';
 import { fillExpiryFromOcr } from '../expiry/index.js';
+import { emitAutomationEvent } from '../automation/events.js';
 
 /**
  * Stores a generated PDF as a normal case Document, following the same rules as the two upload routes:
@@ -81,6 +82,7 @@ export const storeScanDocument = async (
         ? { caseId: resolved.c.id, type: 'STAFF_DOCUMENT_UPLOADED', note: `${doc.originalName} (${pages})`, actorId: actor.id, visibleToClient: resolved.stage === 'VISA' || resolved.stage === 'OTHER' }
         : { caseId: resolved.c.id, type: 'DOCUMENT_UPLOADED', note: `${doc.originalName} (${pages})`, actorId: actor.id, visibleToClient: false },
     });
+    void emitAutomationEvent({ type: 'DOCUMENT_UPLOADED', entityType: 'document', entityId: doc.id, caseId: resolved.c.id }); // automation hook
     if (doc.status === 'ACCEPTED') void copyDocumentToDrive(doc.id); // a copy in the client's drive folder
     // Automatic quality checks (PDF readable, …); never throws.
     const checks = await checkCaseDocument(doc.id);

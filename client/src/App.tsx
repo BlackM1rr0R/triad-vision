@@ -4,6 +4,7 @@ import { RequireAuth, useAuth } from './lib/auth';
 import { whenIdle } from './lib/idle';
 import { PageLoader } from './components/ui/Spinner';
 import { SiteLayout } from './components/layout/SiteLayout';
+import { ImpersonationBanner } from './components/privacyTools/ImpersonationBanner';
 
 const Home = lazy(() => import('./pages/Home'));
 const About = lazy(() => import('./pages/About'));
@@ -46,6 +47,7 @@ const AdminUsers = lazy(() => import('./pages/admin/Users'));
 const AdminMailboxes = lazy(() => import('./pages/admin/Mailboxes'));
 const AdminSignatures = lazy(() => import('./pages/admin/Signatures'));
 const SignPage = lazy(() => import('./pages/SignPage'));
+const QuotePage = lazy(() => import('./pages/QuotePage'));
 const SharePage = lazy(() => import('./pages/SharePage'));
 const AccountSignatures = lazy(() => import('./pages/account/Signatures'));
 const WorkspaceLayout = lazy(() => import('./pages/workspace/WorkspaceLayout'));
@@ -83,6 +85,8 @@ const CitiesGuide = lazy(() => import('./pages/tools/Cities'));
 const AdminArrivals = lazy(() => import('./pages/admin/Arrivals'));
 const AdminExpiring = lazy(() => import('./pages/admin/Expiring'));
 const AdminOriginals = lazy(() => import('./pages/admin/Originals'));
+const AdminDuplicates = lazy(() => import('./pages/admin/Duplicates'));
+const AdminHistory = lazy(() => import('./pages/admin/History')); // field-level change history + revert
 const AdminStorageReport = lazy(() => import('./pages/admin/StorageReport'));
 const QrRedirect = lazy(() => import('./pages/QrRedirect'));
 const AdminToday = lazy(() => import('./pages/admin/Today'));
@@ -100,12 +104,17 @@ const PdfEditor = lazy(() => import('./pages/workspace/PdfEditor'));
 const AccountInterviewPrep = lazy(() => import('./pages/account/InterviewPrep'));
 const AdminInterviewPrep = lazy(() => import('./pages/admin/InterviewPrep'));
 const AdminFinance = lazy(() => import('./pages/admin/Finance'));
+const AdminReports = lazy(() => import('./pages/admin/Reports'));
+const AdminProfitability = lazy(() => import('./pages/admin/Profitability'));
 const AdminAi = lazy(() => import('./pages/admin/Ai'));
 const AdminAiSettings = lazy(() => import('./pages/admin/AiSettings'));
 const AdminWeeklyReports = lazy(() => import('./pages/admin/WeeklyReports'));
 const AdminSecurityAlerts = lazy(() => import('./pages/admin/SecurityAlerts'));
+const AdminSensitiveAccess = lazy(() => import('./pages/admin/SensitiveAccess'));
 const AdminAiMailTriage = lazy(() => import('./pages/admin/AiMailTriage'));
 const AdminSurveys = lazy(() => import('./pages/admin/Surveys'));
+const AdminCampaigns = lazy(() => import('./pages/admin/Campaigns'));
+const Unsubscribe = lazy(() => import('./pages/Unsubscribe'));
 const AdminContractTemplates = lazy(() => import('./pages/admin/ContractTemplates'));
 const AdminCandidateRequests = lazy(() => import('./pages/admin/CandidateRequests'));
 const SurveyAnswer = lazy(() => import('./pages/SurveyAnswer'));
@@ -123,11 +132,13 @@ const AdminVacancies = lazy(() => import('./pages/admin/Vacancies'));
 const AdminCandidates = lazy(() => import('./pages/admin/Candidates'));
 const AdminBookings = lazy(() => import('./pages/admin/Bookings'));
 const AdminInvoices = lazy(() => import('./pages/admin/Invoices'));
+const AdminQuotes = lazy(() => import('./pages/admin/Quotes'));
 const AdminReviews = lazy(() => import('./pages/admin/Reviews'));
 const AdminMessaging = lazy(() => import('./pages/admin/Messaging'));
 const AdminKanban = lazy(() => import('./pages/admin/Kanban'));
 const AdminKnowledgeBase = lazy(() => import('./pages/admin/KnowledgeBase'));
 const AdminIntegrations = lazy(() => import('./pages/admin/Integrations'));
+const AdminAutomation = lazy(() => import('./pages/admin/Automation')); // automation rules + automatic assignment
 const AdminInterviews = lazy(() => import('./pages/admin/Interviews'));
 const AdminJourney = lazy(() => import('./pages/admin/Journey'));
 const AdminRequirements = lazy(() => import('./pages/admin/Requirements'));
@@ -230,6 +241,9 @@ export default function App() {
   const area = location.pathname.startsWith('/admin') ? 'admin' : 'site';
 
   return (
+    <>
+    {/* "View as client": persistent read-only bar (renders nothing otherwise). */}
+    <ImpersonationBanner />
     <Suspense fallback={<PageLoader />}>
       <Routes location={location} key={area}>
           <Route element={<SiteLayout />}>
@@ -250,6 +264,7 @@ export default function App() {
             <Route path="anerkennung" element={<AnerkennungGuide />} />
             <Route path="cities" element={<CitiesGuide />} />
             <Route path="survey/:token" element={<SurveyAnswer />} />
+            <Route path="unsubscribe" element={<Unsubscribe />} />
             <Route path="news/:slug" element={<NewsDetail />} />
             <Route path="contact" element={<Contact />} />
             <Route path="cooperation" element={<Cooperation />} />
@@ -293,6 +308,7 @@ export default function App() {
             <Route path="booking/manage" element={<BookingManage />} />
             <Route path="review" element={<ReviewPage />} />
             <Route path="sign/:token" element={<SignPage />} />
+            <Route path="angebot/:token" element={<QuotePage />} />
             <Route path="share/:token" element={<SharePage />} />
             <Route path="q/:caseId" element={<QrRedirect />} />
             <Route
@@ -408,6 +424,14 @@ export default function App() {
               }
             />
             <Route
+              path="sensitive-access"
+              element={
+                <RequireAuth roles={['SUPER_ADMIN']}>
+                  <AdminSensitiveAccess />
+                </RequireAuth>
+              }
+            />
+            <Route
               path="ai/mail-triage"
               element={
                 <RequireAuth roles={['SUPER_ADMIN']}>
@@ -444,6 +468,14 @@ export default function App() {
                 </RequireAuth>
               }
             />
+            <Route
+              path="quotes"
+              element={
+                <RequireAuth roles={['ADMIN', 'SUPER_ADMIN']}>
+                  <AdminQuotes />
+                </RequireAuth>
+              }
+            />
             <Route path="reviews" element={<AdminReviews />} />
             <Route path="analytics" element={<AdminAnalytics />} />
             <Route path="messaging" element={<AdminMessaging />} />
@@ -455,6 +487,22 @@ export default function App() {
             <Route path="arrivals/*" element={<AdminArrivals />} />
             <Route path="expiring" element={<AdminExpiring />} />
             <Route path="originals" element={<AdminOriginals />} />
+            <Route
+              path="duplicates"
+              element={
+                <RequireAuth roles={['ADMIN', 'SUPER_ADMIN']}>
+                  <AdminDuplicates />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="history"
+              element={
+                <RequireAuth roles={['ADMIN', 'SUPER_ADMIN']}>
+                  <AdminHistory />
+                </RequireAuth>
+              }
+            />
             <Route path="q/:caseId" element={<QrRedirect />} />
             <Route
               path="storage"
@@ -469,13 +517,31 @@ export default function App() {
             <Route path="settlements/*" element={<AdminSettlements />} />
             <Route path="interview-prep" element={<AdminInterviewPrep />} />
             <Route path="finance/*" element={<AdminFinance />} />
+            <Route path="reports" element={<AdminReports />} />
+            <Route path="profitability" element={<AdminProfitability />} />
             <Route path="surveys/*" element={<AdminSurveys />} />
+            <Route
+              path="campaigns/*"
+              element={
+                <RequireAuth roles={['ADMIN', 'SUPER_ADMIN']}>
+                  <AdminCampaigns />
+                </RequireAuth>
+              }
+            />
             <Route path="contract-templates/*" element={<AdminContractTemplates />} />
             <Route path="candidate-requests/*" element={<AdminCandidateRequests />} />
             <Route path="agents/*" element={<AdminAgents />} />
             <Route path="translations/*" element={<AdminTranslations />} />
             <Route path="privacy-requests/*" element={<AdminPrivacyRequests />} />
             <Route path="integrations" element={<AdminIntegrations />} />
+            <Route
+              path="automation"
+              element={
+                <RequireAuth roles={['ADMIN', 'SUPER_ADMIN']}>
+                  <AdminAutomation />
+                </RequireAuth>
+              }
+            />
             <Route path="interviews" element={<AdminInterviews />} />
             <Route path="journey" element={<AdminJourney />} />
             <Route path="requirements" element={<AdminRequirements />} />
@@ -484,5 +550,6 @@ export default function App() {
           </Route>
         </Routes>
     </Suspense>
+    </>
   );
 }

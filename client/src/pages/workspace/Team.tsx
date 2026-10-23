@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { lazy, Suspense, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
@@ -13,6 +13,8 @@ import { type LeaveRequest, useLeave, useLeaveBalance, usePresence, useWorkspace
 import { PersonCard, StatusEditor } from '@/components/workspace/People';
 import { BalanceStrip, LeaveDialog, LeaveMonthStrip, LeaveRow, NewLeaveButton } from '@/components/workspace/Leave';
 import { Card, Chip, Empty, Skeleton, fullName } from '@/components/workspace/ui';
+// Own assignment profile for automatic case assignment (own chunk).
+const MyAssignmentCard = lazy(() => import('@/components/automation/MyAssignmentCard'));
 
 registerCopy(pagesWorkspace);
 
@@ -165,6 +167,9 @@ export default function WorkspaceTeam() {
                 <Card title={t('ws.leave.title')}>
                   <BalanceStrip balance={balance.data} />
                 </Card>
+                <Suspense fallback={null}>
+                  <MyAssignmentCard />
+                </Suspense>
               </div>
               <div className="xl:col-span-3">
                 <LeaveMonthStrip />

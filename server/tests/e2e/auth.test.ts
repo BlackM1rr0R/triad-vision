@@ -64,6 +64,8 @@ describe('POST /api/auth/register', () => {
       pushNotifications: true,
       whatsappOptIn: true,
       smsNotifications: true,
+      // marketing consent (campaigns) is opt-in: off unless the optional sign-up box is ticked
+      marketingOptIn: false,
       createdAt: expect.any(String),
       // new accounts must confirm their email; 2FA is optional for candidates
       emailVerified: false,

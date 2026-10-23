@@ -65,7 +65,7 @@ export interface DriveItem {
   /** Client folders and case document copies: the case they belong to. */
   caseId?: string;
   /** Client folders: who the client is (header strip in the explorer). */
-  caseInfo?: { clientName: string; passportNumber: string | null; visaType: string; partner: { id: string; name: string } | null };
+  caseInfo?: { clientId?: string; clientName: string; passportNumber: string | null; visaType: string; partner: { id: string; name: string } | null };
   /** Partner folders below "Partner": the referral partner. */
   partner?: { id: string; name: string; phone: string | null; email: string | null; active: boolean };
   caseNumber?: string;
@@ -141,7 +141,7 @@ export const decorateCaseLinks = async (items: DriveItem[]) => {
     folderIds.length
       ? prisma.case.findMany({
           where: { driveFolderId: { in: folderIds } },
-          select: { id: true, number: true, status: true, driveFolderId: true, visaType: true, partner: { select: { id: true, name: true } }, client: { select: { firstName: true, lastName: true, passportNumber: true } } },
+          select: { id: true, number: true, status: true, driveFolderId: true, visaType: true, partner: { select: { id: true, name: true } }, client: { select: { id: true, firstName: true, lastName: true, passportNumber: true } } },
         })
       : Promise.resolve([]),
     docIds.length
@@ -154,7 +154,7 @@ export const decorateCaseLinks = async (items: DriveItem[]) => {
     const c = byFolder.get(item.id);
     if (c) {
       Object.assign(item, { caseId: c.id, caseNumber: c.number, caseStatus: c.status });
-      item.caseInfo = { clientName: `${c.client.firstName} ${c.client.lastName}`.trim(), passportNumber: c.client.passportNumber, visaType: c.visaType, partner: c.partner };
+      item.caseInfo = { clientId: c.client.id, clientName: `${c.client.firstName} ${c.client.lastName}`.trim(), passportNumber: c.client.passportNumber, visaType: c.visaType, partner: c.partner };
     }
     const d = item.documentId ? byDoc.get(item.documentId) : undefined;
     if (d) Object.assign(item, { caseId: d.case.id, caseNumber: d.case.number, caseStatus: d.case.status, stage: d.stage, docStatus: d.status });

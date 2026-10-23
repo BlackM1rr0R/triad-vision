@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { api, onSessionLost, type SessionLostReason } from './api';
+import { api, onSessionLost, setImpersonation, type ImpersonationState, type SessionLostReason } from './api';
 import { isStaffRole, type Role, type SessionInfo, type User } from './types';
 
 interface AuthState {
@@ -73,7 +73,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const location = useLocation();
   const { data, isLoading } = useQuery({
     queryKey: ['me'],
-    queryFn: async () => (await api.get<{ user: User | null; session?: SessionInfo }>('/auth/me')).data.user,
+    queryFn: async () => {
+      const d = (await api.get<{ user: User | null; session?: SessionInfo; impersonation?: ImpersonationState }>('/auth/me')).data;
+      // "View as client": the portal renders as the viewed user, read-only (components/privacyTools).
+      setImpersonation(d.user ? (d.impersonation ?? null) : null);
+      return d.user;
+    },
     staleTime: 5 * 60 * 1000,
   });
 

@@ -11,6 +11,7 @@ import { columnDto, listColumns, loadRows, registerDataOf, type RegisterRow } fr
 import { applyChanges } from '../../lib/register/save.js';
 import { syncCaseCommissions } from '../../lib/partners/commissions.js';
 import { buildRegisterXlsx } from '../../lib/register/export.js';
+import { requestMaskGroups } from '../../lib/privacy/mask.js';
 
 /**
  * Excel-like client register (/api/admin/register; the admin router is already STAFF+ with 2FA).
@@ -88,7 +89,7 @@ adminRegisterRouter.patch('/', async (req, res) => {
 });
 
 adminRegisterRouter.get('/export.xlsx', async (req, res) => {
-  const buf = await buildRegisterXlsx(langOf(req));
+  const buf = await buildRegisterXlsx(langOf(req), requestMaskGroups(res)); // masked for STAFF per settings
   const name = `Register ${new Date().toISOString().slice(0, 10)}.xlsx`;
   await audit(req, 'CLIENT_REGISTER_EXPORTED', undefined, { bytes: buf.length });
   res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');

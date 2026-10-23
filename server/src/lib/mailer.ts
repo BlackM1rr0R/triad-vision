@@ -1,6 +1,7 @@
 import nodemailer from 'nodemailer';
 import { config } from '../config.js';
 import { prisma } from '../db.js';
+import { isImpersonating } from './privacy/impersonationContext.js';
 
 const transporter = config.smtp.host
   ? nodemailer.createTransport({
@@ -63,6 +64,7 @@ export interface MailAttachment {
  */
 export const sendMail = async (to: string, subject: string, html: string, attachments?: MailAttachment[]) => {
   if (!to) return;
+  if (isImpersonating()) return; // "view as client" never sends mail
   const safeSubject = headerSafe(subject);
   try {
     if (!transporter) {
@@ -88,5 +90,46 @@ export const sendMail = async (to: string, subject: string, html: string, attach
     }
   } catch (err) {
     console.error('[mail] unexpected', err);
+  }
+};
+
+/** Outcome of sendMailDetailed: CONSOLE = no SMTP configured (dev/test), recorded in EmailLog only. */
+export interface MailResult {
+  status: 'SENT' | 'CONSOLE' | 'FAILED';
+  error?: string;
+  /** SMTP reply code of a rejection (5xx = permanent, e.g. unknown mailbox). */
+  responseCode?: number;
+}
+
+/**
+ * Like sendMail, but reports the outcome and accepts extra headers (List-Unsubscribe …) and a plain
+ * text part. Used by bulk senders (campaigns) that throttle, retry and mark rejects themselves.
+ * Never throws. Header names and values are made single-line.
+ */
+export const sendMailDetailed = async (msg: { to: string; subject: string; html: string; text?: string; headers?: Record<string, string> }): Promise<MailResult> => {
+  const safeSubject = headerSafe(msg.subject);
+  try {
+    if (!msg.to) return { status: 'FAILED', error: 'NO_ADDRESS' };
+    if (!transporter) {
+      if (!config.isTest) console.log(`\n[mail:console] to=${msg.to}\n  subject=${safeSubject}\n`);
+      await log({ to: msg.to, subject: safeSubject, status: 'CONSOLE' });
+      return { status: 'CONSOLE' };
+    }
+    const headers = Object.fromEntries(
+      Object.entries(msg.headers ?? {}).map(([k, v]) => [k.replace(/[^A-Za-z0-9-]/g, ''), headerSafe(v).slice(0, 900)]),
+    );
+    try {
+      await transporter.sendMail({ from: config.smtp.from, to: headerSafe(msg.to), subject: safeSubject, html: msg.html, text: msg.text, headers });
+      await log({ to: msg.to, subject: safeSubject, status: 'SENT' });
+      return { status: 'SENT' };
+    } catch (err) {
+      const e = err as { responseCode?: number; message?: string };
+      const error = String(e.message ?? err).slice(0, 2000);
+      await log({ to: msg.to, subject: safeSubject, status: 'FAILED', error });
+      return { status: 'FAILED', error, responseCode: typeof e.responseCode === 'number' ? e.responseCode : undefined };
+    }
+  } catch (err) {
+    console.error('[mail] unexpected', err);
+    return { status: 'FAILED', error: String(err).slice(0, 2000) };
   }
 };

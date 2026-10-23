@@ -133,10 +133,12 @@ privacyRouter.put('/consents', async (req, res) => {
     if (next === undefined || current[type].granted === next) continue;
     changed.push({ type, granted: next });
   }
-  const fields: { whatsappOptIn?: boolean; smsNotifications?: boolean } = {};
+  const fields: { whatsappOptIn?: boolean; smsNotifications?: boolean; marketingOptIn?: boolean; marketingOptInAt?: Date; marketingOptInSource?: string } = {};
   for (const c of changed) {
     if (c.type === 'WHATSAPP') fields.whatsappOptIn = c.granted;
     if (c.type === 'SMS') fields.smsNotifications = c.granted;
+    // Campaigns read the marketing consent from the user row (kept in sync with the log).
+    if (c.type === 'MARKETING_EMAIL') Object.assign(fields, { marketingOptIn: c.granted, marketingOptInAt: new Date(), marketingOptInSource: 'PRIVACY_CENTER' });
   }
   if (Object.keys(fields).length) await prisma.user.update({ where: { id: userId }, data: fields });
   for (const c of changed) await recordConsent({ userId, email: user.email, type: c.type, granted: c.granted, source: 'PRIVACY_CENTER', req });

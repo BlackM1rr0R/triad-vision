@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft, Route } from 'lucide-react';
 import { api } from '@/lib/api';
+import { useAuth } from '@/lib/auth';
 import { STATUS_STEP } from '@/lib/caseStatus';
 import type { CaseDetail } from '@/lib/types';
 import { ActionPanel } from '@/components/admin/case/ActionPanel';
@@ -30,11 +31,17 @@ const CaseAiSummary = lazy(() => import('@/components/aiStaff/CaseAiSummary').th
 const CaseAiChecks = lazy(() => import('@/components/aiCase/CaseAiChecks').then((m) => ({ default: m.CaseAiChecks })));
 // "Next step" card (rules + AI explanation) and the one-click embassy package (own chunks).
 const NextStepCard = lazy(() => import('@/components/caseNext/NextStepCard').then((m) => ({ default: m.NextStepCard })));
+// "Possible duplicate" badge of the client (ADMIN+, own chunk).
+const DuplicateBadge = lazy(() => import('@/components/duplicates/DuplicateBadge'));
 const EmbassyPackagePanel = lazy(() => import('@/components/caseNext/EmbassyPackagePanel').then((m) => ({ default: m.EmbassyPackagePanel })));
+const CaseProfitCard = lazy(() => import('@/components/reports/CaseProfitCard'));
+// Field-level change history + one-click revert (own chunk).
+const CaseHistoryPanel = lazy(() => import('@/components/history/CaseHistoryPanel'));
 
 export default function CaseAdmin() {
   const { t } = useTranslation();
   const { id = '' } = useParams();
+  const { user } = useAuth();
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: caseKey(id),
     queryFn: async () => (await api.get<CaseDetailResponse>(`/admin/cases/${id}`)).data,
@@ -61,6 +68,9 @@ export default function CaseAdmin() {
       </Link>
 
       <CaseHeader key={c.id} c={c} />
+      <Suspense fallback={null}>
+        <DuplicateBadge userId={c.client.id} className="-mt-3" />
+      </Suspense>
 
       <Suspense fallback={null}>
         <NextStepCard key={`next-${c.id}`} c={c} />
@@ -98,6 +108,11 @@ export default function CaseAdmin() {
           <Suspense fallback={null}>
             <CaseOriginalsPanel caseId={c.id} />
           </Suspense>
+          {(user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN') && (
+            <Suspense fallback={null}>
+              <CaseProfitCard key={`profit-${c.id}`} caseId={c.id} />
+            </Suspense>
+          )}
                     {c.status === 'APPROVED' && (
             <div id="case-onboarding" className="scroll-mt-24">
               <OnboardingAdminPanel caseId={c.id} />
@@ -113,6 +128,9 @@ export default function CaseAdmin() {
           </div>
           <InternalNotes c={c} />
           <Timeline c={c} />
+          <Suspense fallback={null}>
+            <CaseHistoryPanel key={`history-${c.id}`} caseId={c.id} clientId={c.client.id} clientName={`${c.client.firstName} ${c.client.lastName}`.trim()} />
+          </Suspense>
         </div>
       </div>
     </div>

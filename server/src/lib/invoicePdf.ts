@@ -159,7 +159,7 @@ export const pdfSafe = (font: PDFFont, text: string) =>
     })
     .join('');
 
-const wrap = (font: PDFFont, text: string, size: number, width: number) => {
+export const wrap = (font: PDFFont, text: string, size: number, width: number) => {
   const out: string[] = [];
   for (const para of text.split(/\r?\n/)) {
     const words = pdfSafe(font, para).split(/\s+/).filter(Boolean);

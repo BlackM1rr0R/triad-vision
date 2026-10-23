@@ -42,6 +42,14 @@ import { adminCaseNextRouter } from './caseNext.js';
 import { adminAiEmployerRouter } from './aiEmployer.js';
 import { adminMgmtRouter } from './aiMgmt.js';
 import { adminMyWorkRouter } from './myWork.js';
+import { adminHistoryRouter } from './history.js';
+import { adminAssignmentRouter, adminAutomationRouter } from './automation.js'; // no-code automation rules + automatic assignment
+import { adminReportsRouter } from './reports.js';
+import { adminProfitabilityRouter } from './profitability.js';
+import { adminDuplicatesRouter } from './duplicates.js';
+import { adminQuotesRouter } from './quotes.js';
+import { adminSensitiveRouter } from './privacyTools.js';
+import { adminCampaignsRouter } from './campaigns.js';
 
 export const adminRouter = Router();
 adminRouter.use(requireMinRole('STAFF'));
@@ -109,7 +117,12 @@ adminRouter.get('/dashboard', async (req, res) => {
   });
 });
 
+adminRouter.use(adminSensitiveRouter); // /reveal, /sensitive/* (masked fields: reveal with reason, settings, reveal log)
 adminRouter.use('/my-work', adminMyWorkRouter); // "my work today" queue + snooze / expiry remind
+adminRouter.use('/history', adminHistoryRouter); // field-level change history + one-click revert
+adminRouter.use('/automation', adminAutomationRouter); // automation rules (ADMIN+)
+adminRouter.use('/assignment', adminAssignmentRouter); // auto-assignment settings, load, rebalance, handovers
+adminRouter.use('/campaigns', adminCampaignsRouter); // campaigns to client segments (ADMIN+)
 adminRouter.use('/oversight', oversightRouter);
 adminRouter.use('/messaging', adminMessagingRouter);
 adminRouter.use('/requirements', adminRequirementsRouter);
@@ -121,6 +134,8 @@ adminRouter.use('/privacy', adminPrivacyRouter);
 adminRouter.use('/arrivals', adminArrivalsRouter);
 adminRouter.use('/interview-prep', adminInterviewPrepRouter);
 adminRouter.use('/finance', adminFinanceRouter);
+adminRouter.use('/reports', adminReportsRouter); // report builder (ADMIN+)
+adminRouter.use('/profitability', adminProfitabilityRouter); // profitability per case (ADMIN+)
 adminRouter.use('/surveys', adminSurveysRouter);
 adminRouter.use('/contract-templates', adminContractTemplatesRouter);
 adminRouter.use('/candidate-requests', adminCandidateRequestsRouter);
@@ -150,12 +165,14 @@ adminRouter.use(adminCaseNextRouter); // /cases/:id/next-step*, /cases/:id/embas
 adminRouter.use(adminDocumentExpiryRouter); // /cases/:caseId/documents/:docId/expiry, /expiring
 adminRouter.use('/cases', adminCasesRouter);
 adminRouter.use('/users', adminUsersRouter);
+adminRouter.use('/duplicates', requireMinRole('ADMIN'), adminDuplicatesRouter); // duplicate clients: review, not-a-duplicate, merge
 adminRouter.use('/mailboxes', requireMinRole('ADMIN'), adminMailboxesRouter);
 adminRouter.use('/companies', adminCompaniesRouter);
 adminRouter.use('/vacancies', adminVacanciesRouter);
 adminRouter.use('/candidates', adminCandidatesRouter);
 adminRouter.use('/booking', adminBookingRouter);
 adminRouter.use('/invoices', requireMinRole('ADMIN'), adminInvoicesRouter);
+adminRouter.use('/quotes', requireMinRole('ADMIN'), adminQuotesRouter); // Angebote for employers
 adminRouter.use('/reviews', adminReviewsRouter);
 adminRouter.use('/analytics', adminAnalyticsRouter);
 adminRouter.use('/upload', requireMinRole('ADMIN'), adminUploadRouter);

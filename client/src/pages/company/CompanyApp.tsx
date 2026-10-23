@@ -11,6 +11,8 @@ import { pagesSign } from '@/i18n/pagesSign';
 import { useJobLabels } from '@/components/jobs/labels';
 import { COMPANY_STATUS_TONE } from '@/components/jobs/types';
 import { CompanyInvoices } from '@/components/company/CompanyInvoices';
+import { CompanyQuotes } from '@/components/company/CompanyQuotes';
+import { pagesQuotes } from '@/i18n/pagesQuotes';
 import { CompanyDashboard } from '@/components/company/CompanyDashboard';
 import { CompanyVacancies, CompanyVacancyEditor } from '@/components/company/CompanyVacancies';
 import { CompanyCandidates } from '@/components/company/CompanyCandidates';
@@ -25,6 +27,7 @@ import { pagesRequests } from '@/i18n/pagesRequests';
 registerCopy(pagesJobs);
 registerCopy(pagesSign);
 registerCopy(pagesRequests);
+registerCopy(pagesQuotes);
 
 /** Employer portal, mounted at /company/* behind RequireAuth roles=['COMPANY']. */
 export default function CompanyApp() {
@@ -43,6 +46,7 @@ export default function CompanyApp() {
     { to: '/company/workers', label: t('jobsArea.portal.nav.workers'), icon: Handshake, match: (p: string) => p.startsWith('/company/workers') },
     { to: '/company/interviews', label: t('ops.company.title'), icon: Video, match: (p: string) => p.startsWith('/company/interviews') },
     { to: '/company/contracts', label: t('esign.portal.companyTitle'), icon: FileSignature, match: (p: string) => p.startsWith('/company/contracts') },
+    { to: '/company/quotes', label: t('companyQuotes.nav'), icon: FileSignature, match: (p: string) => p.startsWith('/company/quotes') },
     { to: '/company/invoices', label: t('jobsArea.portal.nav.invoices'), icon: FileText, match: (p: string) => p.startsWith('/company/invoices') },
     { to: '/company/profile', label: t('jobsArea.portal.nav.profile'), icon: Building2, match: (p: string) => p.startsWith('/company/profile') },
   ];
@@ -161,6 +165,8 @@ export default function CompanyApp() {
                 <Route path="interviews" element={<CompanyInterviews />} />
                 <Route path="contracts" element={<CompanyContracts />} />
                 <Route path="contracts/:signerId" element={<CompanyContracts />} />
+                <Route path="quotes" element={<CompanyQuotes />} />
+                <Route path="quotes/:id" element={<CompanyQuotes />} />
                 <Route path="invoices" element={<CompanyInvoices />} />
                 <Route path="profile" element={<CompanyProfile company={company} />} />
                 <Route path="*" element={<Navigate to="/company" replace />} />

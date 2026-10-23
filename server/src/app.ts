@@ -14,6 +14,9 @@ import { filesRouter } from './routes/files.js';
 import { notificationsRouter } from './routes/notifications.js';
 import { publicRouter } from './routes/public.js';
 import { adminRouter } from './routes/admin/index.js';
+import { impersonationRouter } from './routes/admin/privacyTools.js';
+import { impersonation } from './lib/privacy/impersonation.js';
+import { maskResponses } from './lib/privacy/mask.js';
 import { accountRouter } from './routes/account.js';
 import { messagingRouter } from './routes/messaging.js';
 import { documentsRouter } from './routes/documents.js';
@@ -40,6 +43,7 @@ import { companyRequestsRouter } from './routes/companyRequests.js';
 import { twoFactorRouter } from './routes/twoFactor.js';
 import { companyRouter } from './routes/company.js';
 import { companyInvoicesRouter } from './routes/companyInvoices.js';
+import { companyQuotesRouter, quotePublicRouter } from './routes/quotes.js';
 import { vacanciesRouter } from './routes/vacancies.js';
 import { bookingRouter } from './routes/booking.js';
 import { reviewsRouter } from './routes/reviews.js';
@@ -61,8 +65,10 @@ import { companyAiRouter } from './routes/companyAi.js';
 import { publicAiRouter } from './routes/publicAi.js';
 import { aiDocsRouter } from './routes/aiDocs.js';
 import { originalsRouter } from './routes/originals.js';
+import { campaignPublicRouter } from './routes/campaignPublic.js';
 import { aiMailRouter } from './routes/aiMail.js';
 import { uploadAiRouter } from './routes/uploadAi.js';
+import { historyMiddleware } from './lib/history/context.js';
 
 type RequestWithRawBody = import('express').Request & { rawBody?: Buffer };
 
@@ -104,7 +110,10 @@ export const createApp = () => {
   app.use(express.json({ limit: '3mb', verify: (req, _res, buf) => { (req as RequestWithRawBody).rawBody = buf; } }));
   app.use(cookieParser());
   app.use(loadUser);
+  app.use(impersonation); // "view as client": req.user = viewed user, read-only (lib/privacy/impersonation.ts)
   app.use(csrfGuard);
+  app.use(historyMiddleware); // field history: actor / source / request id for every Prisma update
+  app.use(maskResponses); // sensitive fields masked for STAFF / ADMIN per settings (lib/privacy/mask.ts)
   // A broad per-IP ceiling for everything; sensitive routes add their own tighter limits.
   // (Skipped in tests: hundreds of requests go through one in-process app there.)
   app.use('/api', limiter({ windowMs: 60 * 1000, limit: 600, skip: () => config.isTest }));
@@ -129,11 +138,14 @@ export const createApp = () => {
   app.use('/api/drive', driveRouter);
   app.use('/api/tasks', tasksRouter);
   app.use('/api/sign', signRouter);
+  app.use('/api/angebot', quotePublicRouter); // public quote link (accept / decline)
   app.use('/api/share', shareRouter);
   app.use('/api/signatures', signaturesRouter);
+  app.use('/api/admin/impersonate', impersonationRouter); // before the staff-only admin router (req.user is the client then)
   app.use('/api/admin', adminRouter);
   app.use('/api/account', accountRouter);
   app.use('/api/company/invoices', companyInvoicesRouter);
+  app.use('/api/company/quotes', companyQuotesRouter);
   app.use('/api/company/requests', companyRequestsRouter);
   app.use('/api/company/ai', companyAiRouter);
   app.use('/api/company', companyRouter);
@@ -169,6 +181,7 @@ export const createApp = () => {
   app.use('/api/ai-writing', aiWritingRouter);
   app.use('/api/public-ai', publicAiRouter);
   app.use('/api/originals', originalsRouter); // physical originals, QR labels, drive retention + storage report
+  app.use('/api', campaignPublicRouter); // campaigns: /o/:token.gif, /c/:token/:link, /unsubscribe/:token
 
   // /sitemap.xml, /robots.txt and /api/seo/* (Caddy forwards the first two here).
   app.use(seoRouter);

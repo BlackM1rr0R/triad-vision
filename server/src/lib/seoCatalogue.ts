@@ -341,6 +341,7 @@ export const PRIVATE_PREFIXES = [
   '/login/2fa',
   '/reset-password',
   '/sign',
+  '/angebot',
 ];
 
 /** Static routes listed in sitemap.xml, in this order. */

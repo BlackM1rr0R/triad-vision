@@ -18,6 +18,7 @@ import { checkCaseDocument, runChecks, targetForVaultKind, vaultDir } from '../l
 import { vaultDto, vaultKindsFor } from '../lib/docCheck/vault.js';
 import { scheduleAiDocCheck } from '../lib/aiDocs/docCheck.js';
 import { prepareCaseDocument, publicQuality, scheduleUploadAnalysis } from '../lib/uploadAi/index.js';
+import { emitAutomationEvent } from '../lib/automation/events.js';
 
 /**
  * Personal document vault: clients keep their documents (passport, diplomas, photos…) once and reuse
@@ -297,6 +298,7 @@ vaultRouter.post('/:id/use', async (req, res) => {
     await prisma.caseEvent.create({
       data: { caseId: c.id, type: 'DOCUMENT_UPLOADED', note: doc.originalName, actorId: req.user!.id, visibleToClient: false },
     });
+    void emitAutomationEvent({ type: 'DOCUMENT_UPLOADED', entityType: 'document', entityId: doc.id, caseId: c.id }); // automation hook
     const checks = await checkCaseDocument(doc.id);
     await audit(req, 'vault.use', v.id, { caseId: c.id, documentId: doc.id });
     const quality = publicQuality(await prepareCaseDocument(doc.id)); // smart uploads: scan quality, never throws

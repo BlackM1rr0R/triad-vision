@@ -17,6 +17,7 @@ import { signContractPdf } from '../lib/pdfSign.js';
 import { checkCaseDocument } from '../lib/docCheck/index.js';
 import { scheduleAiDocCheck } from '../lib/aiDocs/docCheck.js';
 import { prepareCaseDocument, publicQuality, scheduleUploadAnalysis } from '../lib/uploadAi/index.js';
+import { emitAutomationEvent } from '../lib/automation/events.js';
 
 export const casesRouter = Router();
 casesRouter.use(requireAuth);
@@ -99,6 +100,7 @@ casesRouter.post('/:id/documents', documentUpload.single('file'), async (req, re
     await prisma.caseEvent.create({
       data: { caseId: c.id, type: 'DOCUMENT_UPLOADED', note: doc.originalName, actorId: req.user!.id, visibleToClient: false },
     });
+    void emitAutomationEvent({ type: 'DOCUMENT_UPLOADED', entityType: 'document', entityId: doc.id, caseId: c.id }); // automation hook
     // Automatic quality checks (PDF readable, photo is an image, resolution, passport MRZ/expiry); never throws.
     const checks = await checkCaseDocument(doc.id);
     // Smart uploads: scan quality (blur, darkness, glare, cut-off) for instant feedback; never throws.

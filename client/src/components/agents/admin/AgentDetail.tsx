@@ -17,6 +17,7 @@ import { CommissionsTable } from './CommissionsTable';
 import { ManualCommissionDialog } from './ManualCommissionDialog';
 import { TermsFields, type TermsValue } from './TermsFields';
 import { fromUnits, toUnits, useAgentToastError } from './shared';
+import { isMaskedValue, SensitiveValue } from '@/components/privacyTools/SensitiveValue';
 
 interface DetailResp {
   agent: AdminAgent;
@@ -105,6 +106,7 @@ const ProfileForm = ({ agent }: { agent: AdminAgent }) => {
           {input('company', t('agents.admin.create.company'), { maxLength: 160 })}
         </div>
         {input('iban', t('agents.admin.terms.iban'), { maxLength: 64, className: 'input font-mono uppercase' })}
+        {isMaskedValue(agent.iban) && <SensitiveValue value={agent.iban} entity="agent" id={agent.id} field="iban" className="-mt-2 text-xs" />}
         <div>
           <label className="label" htmlFor="agent-notes">
             {t('agents.admin.terms.notes')}
