@@ -348,7 +348,10 @@ export const imageQuality = async (buf: Buffer, mime: string, target: 'document'
   const raw = big ? null : await qualityDeps.decode(buf, 'gray', { edge: ANALYSIS_EDGE }).catch(() => null);
   const decoded = raw?.ok && raw.gray ? { width: raw.width, height: raw.height, gray: raw.gray } : null;
   // The decoder could run but not read the file (or crashed on it): the image itself is broken.
-  if (raw && !raw.ok && raw.error !== 'DECODER_UNAVAILABLE' && raw.error !== 'DECODE_TIMEOUT') {
+  // A timeout is only "slow, fine" for a file whose header parses (a big, valid image). Without a readable
+  // header it is a corrupt file: on Linux Skia spins on such data until the timeout, then segfaults.
+  const brokenTimeout = raw && !raw.ok && raw.error === 'DECODE_TIMEOUT' && !header;
+  if (raw && !raw.ok && raw.error !== 'DECODER_UNAVAILABLE' && (raw.error !== 'DECODE_TIMEOUT' || brokenTimeout)) {
     return { level: 'BAD', reasons: [{ code: 'UNREADABLE', level: 'BAD' }], kind: 'image', metrics: { ...metrics, decodeError: raw.error } };
   }
   const width = decoded?.width ?? header?.width;
