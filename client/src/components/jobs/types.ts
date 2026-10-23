@@ -1,4 +1,5 @@
 import type { L10n, L10nList } from '@/lib/types';
+import { STATUS_TONES, toneClasses } from '@/components/ui/status';
 
 export const SECTORS = ['logistics', 'courier', 'industry', 'construction', 'hospitality', 'healthcare', 'agriculture', 'other'] as const;
 export type Sector = (typeof SECTORS)[number];
@@ -96,23 +97,6 @@ export interface Company {
   createdAt: string;
 }
 
-export const VACANCY_STATUS_TONE: Record<VacancyStatus, string> = {
-  DRAFT: 'bg-slate-100 text-slate-700',
-  PENDING: 'bg-amber-100 text-amber-800',
-  OPEN: 'bg-emerald-100 text-emerald-800',
-  CLOSED: 'bg-slate-200 text-slate-600',
-};
-export const COMPANY_STATUS_TONE: Record<CompanyStatus, string> = {
-  PENDING: 'bg-amber-100 text-amber-800',
-  ACTIVE: 'bg-emerald-100 text-emerald-800',
-  SUSPENDED: 'bg-red-100 text-red-700',
-};
-export const APPLICATION_STATUS_TONE: Record<ApplicationStatus, string> = {
-  NEW: 'bg-brand-100 text-brand-700',
-  SHORTLISTED: 'bg-sky-100 text-sky-800',
-  PROPOSED: 'bg-violet-100 text-violet-800',
-  INTERVIEW: 'bg-amber-100 text-amber-800',
-  ACCEPTED: 'bg-emerald-100 text-emerald-800',
-  REJECTED: 'bg-red-100 text-red-700',
-  WITHDRAWN: 'bg-slate-200 text-slate-600',
-};
+export const VACANCY_STATUS_TONE: Record<VacancyStatus, string> = toneClasses(STATUS_TONES.vacancy);
+export const COMPANY_STATUS_TONE: Record<CompanyStatus, string> = toneClasses(STATUS_TONES.company);
+export const APPLICATION_STATUS_TONE: Record<ApplicationStatus, string> = toneClasses(STATUS_TONES.application);

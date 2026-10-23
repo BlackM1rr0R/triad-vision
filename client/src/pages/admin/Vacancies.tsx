@@ -182,7 +182,7 @@ const ApplicationRow = ({ a, onChanged, hasCompany }: { a: DetailApplication; on
           onChange={(e) => setNote(e.target.value)}
         />
         {note !== (a.staffNote ?? '') && (
-          <button type="button" className="btn-white btn-sm border border-line" disabled={m.isPending} onClick={() => m.mutate({ staffNote: note.trim() || null })}>
+          <button type="button" className="btn-secondary btn-sm" disabled={m.isPending} onClick={() => m.mutate({ staffNote: note.trim() || null })}>
             {t('admin.common.save')}
           </button>
         )}
@@ -305,17 +305,17 @@ const VacancyDrawer = ({ id, onClose }: { id: string | null; onClose: () => void
                 </button>
               )}
               {v.status === 'PENDING' && (
-                <button type="button" className="btn-white btn-sm border border-line" onClick={() => setRejecting((r) => !r)}>
+                <button type="button" className="btn-secondary btn-sm" onClick={() => setRejecting((r) => !r)}>
                   <Undo2 className="size-3.5" /> {t('jobsArea.admin.vacancies.reject')}
                 </button>
               )}
               {v.status !== 'CLOSED' && (
-                <button type="button" className="btn-white btn-sm border border-line" disabled={action.isPending} onClick={() => action.mutate('close')}>
+                <button type="button" className="btn-secondary btn-sm" disabled={action.isPending} onClick={() => action.mutate('close')}>
                   <XCircle className="size-3.5" /> {t('jobsArea.admin.vacancies.close')}
                 </button>
               )}
               {v.applications.length === 0 && (
-                <button type="button" className="btn-white btn-sm border border-line text-danger" onClick={() => setConfirmDelete(true)}>
+                <button type="button" className="btn-secondary btn-sm text-danger" onClick={() => setConfirmDelete(true)}>
                   <Trash2 className="size-3.5" /> {t('admin.common.delete')}
                 </button>
               )}
@@ -362,7 +362,7 @@ const VacancyDrawer = ({ id, onClose }: { id: string | null; onClose: () => void
                     </div>
                     <div className="flex items-center gap-2">
                       <ScorePill score={s.match.score} />
-                      <button type="button" className="btn-white btn-sm border border-line" disabled={addSuggestion.isPending || v.status === 'CLOSED'} onClick={() => addSuggestion.mutate(s.id)}>
+                      <button type="button" className="btn-secondary btn-sm" disabled={addSuggestion.isPending || v.status === 'CLOSED'} onClick={() => addSuggestion.mutate(s.id)}>
                         <UserPlus className="size-3.5" /> {t('jobsArea.admin.shortlist')}
                       </button>
                     </div>
@@ -522,11 +522,11 @@ export default function AdminVacancies() {
 
       {pages > 1 && (
         <nav className="mt-6 flex items-center justify-center gap-2" aria-label={t('admin.common.pagination')}>
-          <button type="button" className="btn-white btn-sm border border-line" disabled={page <= 1} onClick={() => setParam('page', String(page - 1))} aria-label={t('admin.common.prev')}>
+          <button type="button" className="btn-secondary btn-sm" disabled={page <= 1} onClick={() => setParam('page', String(page - 1))} aria-label={t('admin.common.prev')}>
             <ChevronLeft className="size-4" />
           </button>
           <span className="text-xs text-muted">{t('admin.common.pageOf', { page, pages })}</span>
-          <button type="button" className="btn-white btn-sm border border-line" disabled={page >= pages} onClick={() => setParam('page', String(page + 1))} aria-label={t('admin.common.next')}>
+          <button type="button" className="btn-secondary btn-sm" disabled={page >= pages} onClick={() => setParam('page', String(page + 1))} aria-label={t('admin.common.next')}>
             <ChevronRight className="size-4" />
           </button>
         </nav>

@@ -84,6 +84,7 @@ export default function Notifications() {
 
       {items.length === 0 ? (
         <div className="flex flex-col items-center gap-3 px-6 py-16 text-center text-muted">
+          {/* TODO(ui): large portal empty state (size-14 icon, display title) -> <EmptyState size="lg" tone="brand"> (portal rework) */}
           <span className="grid size-14 place-items-center rounded-full bg-surface">
             <BellOff className="size-6" aria-hidden />
           </span>

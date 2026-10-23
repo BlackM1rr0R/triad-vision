@@ -33,6 +33,7 @@ import { api, errorCode } from '@/lib/api';
 import i18n, { registerCopy } from '@/i18n';
 import { pagesQuotes } from '@/i18n/pagesQuotes';
 import { Chip, DefRow, EmptyState, ErrorBlock, LoadingBlock, PageHead, Panel, StatTile, Switch } from '@/components/admin/ui';
+import { Tabs } from '@/components/ui/Tabs';
 import { Modal } from '@/components/admin/Modal';
 import { Drawer } from '@/components/admin/Drawer';
 import { ConfirmDialog } from '@/components/admin/ConfirmDialog';
@@ -273,24 +274,13 @@ export default function AdminQuotes() {
         }
       />
 
-      <div className="mb-5 flex gap-1 border-b border-line" role="tablist">
-        {(['list', 'settings'] as const).map((v) => (
-          <button
-            key={v}
-            type="button"
-            role="tab"
-            aria-selected={tab === v}
-            onClick={() => setParam('tab', v === 'settings' ? 'settings' : null)}
-            className={clsx(
-              '-mb-px inline-flex min-h-10 items-center gap-1.5 border-b-2 px-3 text-sm font-semibold transition',
-              tab === v ? 'border-brand-600 text-navy-900' : 'border-transparent text-muted hover:text-navy-900',
-            )}
-          >
-            {v === 'list' ? <FileSignature className="size-4" aria-hidden /> : <Settings2 className="size-4" aria-hidden />}
-            {t(`adminQuotes.tabs.${v}`)}
-          </button>
-        ))}
-      </div>
+      <Tabs
+        className="mb-5"
+        label={t('adminQuotes.tabs.list')}
+        items={(['list', 'settings'] as const).map((v) => ({ key: v, icon: v === 'list' ? FileSignature : Settings2, label: t(`adminQuotes.tabs.${v}`) }))}
+        value={tab}
+        onChange={(v) => setParam('tab', v === 'settings' ? 'settings' : null)}
+      />
 
       {tab === 'list' ? <QuoteList onOpen={(id) => setParam('id', id)} /> : <SettingsTab q={settingsQ} />}
 
@@ -485,16 +475,16 @@ const QuoteDrawer = ({ id, onClose, onEdit, onOpen }: { id: string | null; onClo
           <p className="text-sm font-semibold text-navy-900">{q.title}</p>
 
           <div className="flex flex-wrap gap-2">
-            <a href={pdfUrl(q.id)} className="btn-white btn-sm border border-line" download>
+            <a href={pdfUrl(q.id)} className="btn-secondary btn-sm" download>
               <Download className="size-3.5" aria-hidden /> {t('adminQuotes.actions.pdf')}
             </a>
             {q.status === 'DRAFT' && (
-              <button type="button" className="btn-white btn-sm border border-line" onClick={() => onEdit(q)}>
+              <button type="button" className="btn-secondary btn-sm" onClick={() => onEdit(q)}>
                 <Pencil className="size-3.5" aria-hidden /> {t('adminQuotes.actions.edit')}
               </button>
             )}
             {(q.status === 'DRAFT' || q.status === 'SENT' || q.status === 'VIEWED') && (
-              <button type="button" className={clsx('btn-sm', q.status === 'DRAFT' ? 'btn-primary' : 'btn-white border border-line')} onClick={() => setDialog('send')}>
+              <button type="button" className={clsx('btn-sm', q.status === 'DRAFT' ? 'btn-primary' : 'btn-secondary')} onClick={() => setDialog('send')}>
                 <Send className="size-3.5" aria-hidden /> {q.status === 'DRAFT' ? t('adminQuotes.actions.send') : t('adminQuotes.actions.resend')}
               </button>
             )}
@@ -504,15 +494,15 @@ const QuoteDrawer = ({ id, onClose, onEdit, onOpen }: { id: string | null; onClo
               </button>
             )}
             {q.publicUrl && (
-              <button type="button" className="btn-white btn-sm border border-line" onClick={() => void copyLink()}>
+              <button type="button" className="btn-secondary btn-sm" onClick={() => void copyLink()}>
                 <Link2 className="size-3.5" aria-hidden /> {t('adminQuotes.actions.copyLink')}
               </button>
             )}
-            <button type="button" className="btn-white btn-sm border border-line" disabled={duplicate.isPending} onClick={() => duplicate.mutate()}>
+            <button type="button" className="btn-secondary btn-sm" disabled={duplicate.isPending} onClick={() => duplicate.mutate()}>
               <Copy className="size-3.5" aria-hidden /> {t('adminQuotes.actions.duplicate')}
             </button>
             {q.status === 'DRAFT' && (
-              <button type="button" className="btn-white btn-sm border border-line text-danger" onClick={() => setDialog('delete')}>
+              <button type="button" className="btn-secondary btn-sm text-danger" onClick={() => setDialog('delete')}>
                 <Trash2 className="size-3.5" aria-hidden /> {t('adminQuotes.actions.delete')}
               </button>
             )}
@@ -744,7 +734,7 @@ const ConvertDialog = ({ quote, onClose, onDone }: { quote: DetailQuote; onClose
       description={t('adminQuotes.convert.text')}
       footer={
         <>
-          <button type="button" className="btn-white btn-sm border border-line" onClick={onClose} disabled={m.isPending}>
+          <button type="button" className="btn-secondary btn-sm" onClick={onClose} disabled={m.isPending}>
             {t('adminQuotes.wizard.close')}
           </button>
           <button type="button" className="btn-primary btn-sm" disabled={!valid || rates.size > 1 || m.isPending} onClick={() => m.mutate()}>
@@ -1004,7 +994,7 @@ const Wizard = ({ initial, settings, onClose, onSaved }: { initial: NonNullable<
             </button>
           ) : (
             <>
-              <button type="button" className="btn-white btn-sm border border-line" disabled={!valid || busy} onClick={() => save.mutate(false)}>
+              <button type="button" className="btn-secondary btn-sm" disabled={!valid || busy} onClick={() => save.mutate(false)}>
                 {busy && save.variables === false && <Spinner className="size-3.5" />} {t('adminQuotes.wizard.saveDraft')}
               </button>
               <button type="button" className="btn-primary btn-sm" disabled={!valid || busy} onClick={() => save.mutate(true)}>
@@ -1063,7 +1053,7 @@ const Wizard = ({ initial, settings, onClose, onSaved }: { initial: NonNullable<
                   <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted" aria-hidden />
                   <input type="search" className="input pl-9" placeholder={t('adminQuotes.wizard.searchCompany')} value={companySearch} onChange={(e) => setCompanySearch(e.target.value)} />
                 </label>
-                <button type="button" className="btn-white btn-sm border border-line" onClick={() => setProspectOpen(true)}>
+                <button type="button" className="btn-secondary btn-sm" onClick={() => setProspectOpen(true)}>
                   <Plus className="size-3.5" aria-hidden /> {t('adminQuotes.wizard.newProspect')}
                 </button>
               </div>
@@ -1295,7 +1285,7 @@ const Wizard = ({ initial, settings, onClose, onSaved }: { initial: NonNullable<
             <TotalsBox totals={totals} />
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <button type="button" className="btn-white btn-sm border border-line" disabled={!valid || preview.isPending} onClick={() => preview.mutate()}>
+            <button type="button" className="btn-secondary btn-sm" disabled={!valid || preview.isPending} onClick={() => preview.mutate()}>
               {preview.isPending ? <Spinner className="size-3.5" /> : <FileText className="size-3.5" aria-hidden />} {t('adminQuotes.wizard.previewPdf')}
             </button>
             {previewUrl && (
@@ -1445,7 +1435,7 @@ const ProspectForm = ({ onCancel, onCreated }: { onCancel: () => void; onCreated
         </div>
       </div>
       <div className="flex flex-wrap justify-end gap-2">
-        <button type="button" className="btn-white btn-sm border border-line" onClick={onCancel} disabled={m.isPending}>
+        <button type="button" className="btn-secondary btn-sm" onClick={onCancel} disabled={m.isPending}>
           {t('adminQuotes.wizard.prospect.cancel')}
         </button>
         <button type="submit" className="btn-primary btn-sm" disabled={f.name.trim().length < 2 || m.isPending}>
@@ -1506,7 +1496,7 @@ const SettingsTab = ({ q }: { q: { data?: SettingsResponse; isLoading: boolean; 
       icon={FileText}
       actions={
         form[k].length < 20 && (
-          <button type="button" className="btn-white btn-sm border border-line" onClick={() => set(k, [...form[k], { id: newId('t'), name: '', text: '' }])}>
+          <button type="button" className="btn-secondary btn-sm" onClick={() => set(k, [...form[k], { id: newId('t'), name: '', text: '' }])}>
             <Plus className="size-3.5" aria-hidden /> {t('adminQuotes.settings.addTemplate')}
           </button>
         )
@@ -1545,7 +1535,7 @@ const SettingsTab = ({ q }: { q: { data?: SettingsResponse; isLoading: boolean; 
           form.catalogue.length < 100 && (
             <button
               type="button"
-              className="btn-white btn-sm border border-line"
+              className="btn-secondary btn-sm"
               onClick={() => {
                 const id = newId('c');
                 set('catalogue', [...form.catalogue, { id, name: '', unit: 'PERSON', unitPriceCents: 0, vatRate: null, active: true }]);

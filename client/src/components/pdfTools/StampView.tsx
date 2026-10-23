@@ -216,10 +216,10 @@ export const StampView = ({ doc, info, onSaved }: { doc: PDFDocumentProxy; info:
             </div>
             {lib.data.canAdd && (
               <div className="flex flex-wrap gap-2">
-                <button type="button" className="btn-white btn-sm border border-line" disabled={add.isPending} onClick={() => fileInput.current?.click()}>
+                <button type="button" className="btn-secondary btn-sm" disabled={add.isPending} onClick={() => fileInput.current?.click()}>
                   <Upload className="size-4" /> {t('pdfTools.stamp.upload')}
                 </button>
-                <button type="button" className="btn-white btn-sm border border-line" onClick={() => setDrawing(true)}>
+                <button type="button" className="btn-secondary btn-sm" onClick={() => setDrawing(true)}>
                   <PenLine className="size-4" /> {t('pdfTools.stamp.draw')}
                 </button>
                 <input

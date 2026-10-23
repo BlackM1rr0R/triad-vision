@@ -10,19 +10,14 @@ import type { CaseDetail, L10n } from '@/lib/types';
 import { Drawer } from '@/components/admin/Drawer';
 import { EmptyState, LoadingBlock, Panel } from '@/components/admin/ui';
 import { Spinner } from '@/components/ui/Spinner';
+import { STATUS_TONES, toneClasses } from '@/components/ui/status';
 import { fmtDate, fmtDateTime, toastError } from '@/components/admin/labels';
 import { caseKey } from '@/components/admin/case/shared';
 import { nextStepKey, packageKey } from '@/components/caseNext/api';
 import { caseFormsKey, confirmKey, CONFIRM_TONE, fetchConfirmation, type ConfirmationView, type FormStatus, type StaffForm } from './api';
 import { FormRenderer } from './FormRenderer';
 
-const FORM_TONE: Record<FormStatus, string> = {
-  SENT: 'bg-sky-100 text-sky-800 dark:bg-sky-950/50 dark:text-sky-200',
-  DRAFT: 'bg-slate-100 text-slate-700',
-  SUBMITTED: 'bg-amber-100 text-amber-800 dark:bg-amber-950/50 dark:text-amber-200',
-  APPLIED: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200',
-  CANCELLED: 'bg-slate-100 text-slate-500',
-};
+const FORM_TONE: Record<FormStatus, string> = toneClasses(STATUS_TONES.form);
 
 interface FormsData {
   forms: StaffForm[];
@@ -74,7 +69,7 @@ const ConfirmationSection = ({ caseId }: { caseId: string }) => {
         </h3>
         <div className="flex flex-wrap gap-2">
           {canAsk && (
-            <button type="button" className="btn-white btn-sm border border-line" disabled={!!busy} onClick={async () => setPreview((await fetchConfirmation(caseId, true)).preview ?? [])}>
+            <button type="button" className="btn-secondary btn-sm" disabled={!!busy} onClick={async () => setPreview((await fetchConfirmation(caseId, true)).preview ?? [])}>
               <Eye className="size-3.5" aria-hidden /> {t('clientData.admin.confirm.preview')}
             </button>
           )}
@@ -85,10 +80,10 @@ const ConfirmationSection = ({ caseId }: { caseId: string }) => {
           )}
           {state.state === 'PENDING' && conf && (
             <>
-              <button type="button" className="btn-white btn-sm border border-line" disabled={!!busy} onClick={() => void run('remind', async () => (await api.post<ConfirmationView>(`/admin/cases/${caseId}/data-confirmation/${conf.id}/remind`, {})).data, t('clientData.admin.reminded'))}>
+              <button type="button" className="btn-secondary btn-sm" disabled={!!busy} onClick={() => void run('remind', async () => (await api.post<ConfirmationView>(`/admin/cases/${caseId}/data-confirmation/${conf.id}/remind`, {})).data, t('clientData.admin.reminded'))}>
                 <Bell className="size-3.5" aria-hidden /> {t('clientData.admin.remind')}
               </button>
-              <button type="button" className="btn-white btn-sm border border-line" disabled={!!busy} onClick={() => void run('cancel', async () => (await api.delete<ConfirmationView>(`/admin/cases/${caseId}/data-confirmation/${conf.id}`)).data)}>
+              <button type="button" className="btn-secondary btn-sm" disabled={!!busy} onClick={() => void run('cancel', async () => (await api.delete<ConfirmationView>(`/admin/cases/${caseId}/data-confirmation/${conf.id}`)).data)}>
                 <X className="size-3.5" aria-hidden /> {t('clientData.common.cancel')}
               </button>
             </>
@@ -148,7 +143,7 @@ const ConfirmationSection = ({ caseId }: { caseId: string }) => {
                                 <button type="button" className="btn-primary btn-sm" disabled={!!busy} onClick={() => void decide(i.key, 'ACCEPT')} title={i.profileTarget ? t('clientData.admin.confirm.acceptHint') : undefined}>
                                   {busy === `decide:${i.key}` ? <Spinner className="size-3" /> : <Check className="size-3" aria-hidden />} {t('clientData.admin.confirm.accept')}
                                 </button>
-                                <button type="button" className="btn-white btn-sm border border-line" disabled={!!busy} onClick={() => void decide(i.key, 'REJECT')}>
+                                <button type="button" className="btn-secondary btn-sm" disabled={!!busy} onClick={() => void decide(i.key, 'REJECT')}>
                                   <X className="size-3" aria-hidden /> {t('clientData.admin.confirm.reject')}
                                 </button>
                               </div>
@@ -236,7 +231,7 @@ const FormReviewDrawer = ({ caseId, formId, onClose }: { caseId: string; formId:
   const reviewable = data && (data.status === 'SUBMITTED' || data.status === 'APPLIED');
   const footer = reviewable ? (
     <>
-      <button type="button" className="btn-white btn-sm border border-line" disabled={!!busy} onClick={() => setReopenOpen((v) => !v)}>
+      <button type="button" className="btn-secondary btn-sm" disabled={!!busy} onClick={() => setReopenOpen((v) => !v)}>
         <RotateCcw className="size-3.5" aria-hidden /> {t('clientData.admin.reopen')}
       </button>
       <button type="button" className="btn-primary btn-sm" disabled={!!busy || !selected.size} onClick={() => void apply()}>
@@ -415,11 +410,11 @@ const FormsSection = ({ caseId }: { caseId: string }) => {
                 </div>
                 <span className={clsx('badge', FORM_TONE[f.status])}>{t(`clientData.status.${f.status}`)}</span>
                 <div className="flex gap-1.5">
-                  <button type="button" className={clsx('btn-sm', f.status === 'SUBMITTED' ? 'btn-primary' : 'btn-white border border-line')} onClick={() => setReview(f.id)}>
+                  <button type="button" className={clsx('btn-sm', f.status === 'SUBMITTED' ? 'btn-primary' : 'btn-secondary')} onClick={() => setReview(f.id)}>
                     <Eye className="size-3.5" aria-hidden /> {f.status === 'SUBMITTED' ? t('clientData.admin.review') : t('clientData.admin.view')}
                   </button>
                   {open && (
-                    <button type="button" className="btn-white btn-sm border border-line" disabled={!!busy} aria-label={t('clientData.admin.remind')} title={t('clientData.admin.remind')} onClick={() => void act(`remind:${f.id}`, () => api.post(`/admin/cases/${caseId}/forms/${f.id}/remind`, {}), t('clientData.admin.reminded'))}>
+                    <button type="button" className="btn-secondary btn-sm" disabled={!!busy} aria-label={t('clientData.admin.remind')} title={t('clientData.admin.remind')} onClick={() => void act(`remind:${f.id}`, () => api.post(`/admin/cases/${caseId}/forms/${f.id}/remind`, {}), t('clientData.admin.reminded'))}>
                       {busy === `remind:${f.id}` ? <Spinner className="size-3.5" /> : <Bell className="size-3.5" aria-hidden />}
                     </button>
                   )}
@@ -429,7 +424,7 @@ const FormsSection = ({ caseId }: { caseId: string }) => {
                         <Trash2 className="size-3.5" aria-hidden /> {t('clientData.admin.cancelConfirm')}
                       </button>
                     ) : (
-                      <button type="button" className="btn-white btn-sm border border-line" aria-label={t('clientData.admin.cancelForm')} title={t('clientData.admin.cancelForm')} onClick={() => setCancel(f.id)}>
+                      <button type="button" className="btn-secondary btn-sm" aria-label={t('clientData.admin.cancelForm')} title={t('clientData.admin.cancelForm')} onClick={() => setCancel(f.id)}>
                         <Trash2 className="size-3.5" aria-hidden />
                       </button>
                     ))}

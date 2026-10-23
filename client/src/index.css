@@ -34,6 +34,34 @@
   --color-success: #12a150;
   --color-warning: #e08a00;
   --color-danger: #d92d3a;
+  --color-info: #0e8fd6;
+  --color-neutral: #94a3b8;
+  --color-accent: #8b5cf6;
+
+  /* Status tones (components/ui/status.ts). Every tone has a tint background (-bg), a text colour for
+     use ON that tint (-fg, >= 4.5:1 in light and dark), a border (-border) and the bare name above as
+     the solid colour (bars, dots, progress). Redefined for dark mode further down. */
+  --color-success-bg: #e6f6ec;
+  --color-success-fg: #0b6535;
+  --color-success-border: #a6dcbc;
+  --color-warning-bg: #fff3d9;
+  --color-warning-fg: #8a4500;
+  --color-warning-border: #f3cd84;
+  --color-danger-bg: #fdecee;
+  --color-danger-fg: #ac1527;
+  --color-danger-border: #f4b4bb;
+  --color-info-bg: #e3f2fc;
+  --color-info-fg: #075a8a;
+  --color-info-border: #a6d4f1;
+  --color-neutral-bg: #eef2f7;
+  --color-neutral-fg: #46546a;
+  --color-neutral-border: #d5dde8;
+  --color-accent-bg: #f1ebff;
+  --color-accent-fg: #5a2bb3;
+  --color-accent-border: #d3c3f7;
+
+  /* Overlay scrim behind modals / drawers: a plain dim, no backdrop-filter. */
+  --color-scrim: rgba(5, 15, 36, 0.5);
 
   --animate-marquee: marquee 40s linear infinite;
   --animate-float: float 6s ease-in-out infinite;
@@ -166,6 +194,14 @@
   .btn-danger {
     @apply btn bg-danger text-white hover:brightness-110;
   }
+  /* <Button variant="secondary">: bordered neutral (replaces the ad-hoc "btn-white border border-line") */
+  .btn-secondary {
+    @apply btn border border-line bg-card text-ink hover:border-brand-400/60 hover:bg-surface;
+  }
+  /* <Button variant="ghost">: no chrome until hover */
+  .btn-quiet {
+    @apply btn text-ink hover:bg-surface;
+  }
   .btn-sm {
     @apply px-3.5 py-2 text-xs;
   }
@@ -193,6 +229,41 @@
   }
   .prose-tv p {
     @apply mb-4 leading-relaxed text-muted;
+  }
+
+  /* ── App typography scale (portal, company, admin, workspace). The marketing site keeps .h-section.
+     See components/ui/README.md. ── */
+  .type-page-title {
+    @apply font-display text-xl leading-tight font-bold text-ink sm:text-2xl;
+  }
+  .type-section-title {
+    @apply font-display text-lg leading-snug font-bold text-ink;
+  }
+  .type-card-title {
+    @apply font-sans text-sm leading-snug font-semibold text-ink;
+  }
+  .type-body {
+    @apply text-sm leading-relaxed text-ink;
+  }
+  .type-small {
+    @apply text-[0.8125rem] leading-snug text-muted;
+  }
+  .type-caption {
+    @apply text-xs leading-snug text-muted;
+  }
+
+  /* ── App spacing rhythm ── */
+  .app-page {
+    @apply px-4 py-5 sm:px-6 sm:py-6 lg:px-8 lg:py-8;
+  }
+  .stack-page {
+    @apply flex flex-col gap-6;
+  }
+  .stack-section {
+    @apply flex flex-col gap-4;
+  }
+  .card-body {
+    @apply p-4 sm:p-5;
   }
 }
 
@@ -226,6 +297,30 @@
   --color-muted: #9fb0c8;
   --color-brand-50: rgba(47, 123, 255, 0.1);
   --color-brand-100: rgba(47, 123, 255, 0.2);
+
+  /* --color-success / -warning / -danger solids stay as in light: white text on them keeps 4.5:1. */
+  --color-info: #0ea5e9;
+  --color-neutral: #64748b;
+  --color-accent: #8b5cf6;
+  --color-success-bg: rgba(34, 197, 94, 0.16);
+  --color-success-fg: #7ee2a8;
+  --color-success-border: rgba(34, 197, 94, 0.42);
+  --color-warning-bg: rgba(245, 158, 11, 0.16);
+  --color-warning-fg: #fcd34d;
+  --color-warning-border: rgba(245, 158, 11, 0.42);
+  --color-danger-bg: rgba(239, 68, 68, 0.18);
+  --color-danger-fg: #fca5a5;
+  --color-danger-border: rgba(239, 68, 68, 0.45);
+  --color-info-bg: rgba(14, 165, 233, 0.16);
+  --color-info-fg: #7dd3fc;
+  --color-info-border: rgba(14, 165, 233, 0.42);
+  --color-neutral-bg: rgba(255, 255, 255, 0.08);
+  --color-neutral-fg: #c3cfdf;
+  --color-neutral-border: rgba(255, 255, 255, 0.18);
+  --color-accent-bg: rgba(139, 92, 246, 0.2);
+  --color-accent-fg: #c9b8fd;
+  --color-accent-border: rgba(139, 92, 246, 0.45);
+  --color-scrim: rgba(0, 0, 0, 0.6);
 }
 [data-theme='dark'] body {
   background-color: var(--color-page);
@@ -436,6 +531,23 @@ html.a11y-contrast[data-theme='dark'] {
   --color-line: #ffffff;
   --color-brand-400: #9cc3ff;
   --color-brand-500: #9cc3ff;
+}
+/* status text on tints: pure black / white */
+html.a11y-contrast {
+  --color-success-fg: #000000;
+  --color-warning-fg: #000000;
+  --color-danger-fg: #000000;
+  --color-info-fg: #000000;
+  --color-neutral-fg: #000000;
+  --color-accent-fg: #000000;
+}
+html.a11y-contrast[data-theme='dark'] {
+  --color-success-fg: #ffffff;
+  --color-warning-fg: #ffffff;
+  --color-danger-fg: #ffffff;
+  --color-info-fg: #ffffff;
+  --color-neutral-fg: #ffffff;
+  --color-accent-fg: #ffffff;
 }
 html.a11y-contrast :is(.card, .input, .glass, .badge, .btn-ghost, .btn-outline) {
   border-width: 2px;

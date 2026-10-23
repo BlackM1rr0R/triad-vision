@@ -1,4 +1,5 @@
 import { lazy, Suspense } from 'react';
+import { STATUS_TONES, toneSolids } from '@/components/ui/status';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
@@ -29,7 +30,7 @@ const SecurityAlertsWidget = lazy(() => import('@/components/aiMgmt/SecurityAler
 // Team workload + rebalance suggestion (automatic assignment, ADMIN+, own chunk).
 const AssignmentLoadCard = lazy(() => import('@/components/automation/LoadCard'));
 
-const INQUIRY_TONE: Record<InquiryStatus, string> = { NEW: 'bg-brand-500', IN_PROGRESS: 'bg-amber-400', DONE: 'bg-emerald-500', ARCHIVED: 'bg-slate-400' };
+const INQUIRY_TONE: Record<InquiryStatus, string> = toneSolids(STATUS_TONES.inquiry);
 
 const BAR_TONE = STATUS_BAR_TONE;
 
@@ -197,7 +198,7 @@ export default function Dashboard() {
           title={t('admin.dashboard.waitingTitle')}
           icon={Clock}
           bodyClassName="p-0"
-          actions={<span className="badge bg-amber-100 text-amber-800 tabular-nums">{data.waiting.length}</span>}
+          actions={<span className="badge bg-warning-bg text-warning-fg tabular-nums">{data.waiting.length}</span>}
         >
           {data.waiting.length === 0 ? (
             <EmptyState icon={BadgeCheck} title={t('admin.dashboard.allGood')}>
@@ -289,7 +290,7 @@ export default function Dashboard() {
                     <span className="font-semibold text-navy-900">{eventLabel(e.type)}</span>
                     {e.toStatus && e.type !== 'CASE_CREATED' && <span className="text-muted"> → {statusLabel(e.toStatus)}</span>}
                     {!e.visibleToClient && (
-                      <span className="badge ml-2 bg-slate-100 align-middle whitespace-nowrap text-slate-600">
+                      <span className="badge ml-2 bg-neutral-bg align-middle whitespace-nowrap text-neutral-fg">
                         <Lock className="size-3" aria-hidden /> {t('admin.common.internal')}
                       </span>
                     )}

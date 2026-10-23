@@ -1,4 +1,5 @@
 import { useCallback } from 'react';
+import { STATUS_TONES, toneClasses } from '@/components/ui/status';
 import clsx from 'clsx';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
@@ -145,15 +146,7 @@ export const useTrError = () => {
 
 // ─── Status pill and stepper ──────────────────────────────────────────────
 
-export const STATUS_TONE: Record<TrStatus, string> = {
-  NEW: 'bg-sky-100 text-sky-800',
-  QUOTED: 'bg-amber-100 text-amber-800',
-  ACCEPTED: 'bg-indigo-100 text-indigo-800',
-  IN_PROGRESS: 'bg-brand-100 text-brand-700',
-  READY: 'bg-emerald-100 text-emerald-800',
-  DELIVERED: 'bg-emerald-600 text-white',
-  CANCELLED: 'bg-slate-200 text-slate-700',
-};
+export const STATUS_TONE: Record<TrStatus, string> = { ...toneClasses(STATUS_TONES.translation), DELIVERED: 'bg-success text-white' };
 
 export const TrStatusPill = ({ status, className }: { status: TrStatus; className?: string }) => {
   const { t } = useTranslation();

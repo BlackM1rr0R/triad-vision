@@ -192,7 +192,7 @@ export const CommissionsTable = ({ items, showAgent = true }: { items: AdminComm
         description={t('agents.admin.com.markPaidText')}
         footer={
           <>
-            <button type="button" className="btn-white btn-sm border border-line" onClick={() => setPayOpen(false)}>
+            <button type="button" className="btn-secondary btn-sm" onClick={() => setPayOpen(false)}>
               {t('agents.common.cancel')}
             </button>
             <button type="button" className="btn-primary btn-sm" disabled={!payoutRef.trim() || markPaid.isPending} onClick={() => markPaid.mutate()}>

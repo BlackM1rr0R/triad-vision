@@ -66,10 +66,10 @@ export const PortalLoginPanel = ({ partner, isAdmin }: { partner: Partner; isAdm
           {login.agentCode && <p className="text-xs text-muted">{t('refPartners.login.agent', { code: login.agentCode })}</p>}
           {isAdmin ? (
             <div className="flex flex-wrap gap-2 pt-1">
-              <button type="button" className="btn-white btn-sm border border-line" onClick={() => resend.mutate()} disabled={resend.isPending}>
+              <button type="button" className="btn-secondary btn-sm" onClick={() => resend.mutate()} disabled={resend.isPending}>
                 {resend.isPending ? <Spinner className="size-3.5" /> : <Send className="size-3.5" />} {t('refPartners.login.resend')}
               </button>
-              <button type="button" className="btn-white btn-sm border border-line text-danger" onClick={() => setConfirmUnlink(true)}>
+              <button type="button" className="btn-secondary btn-sm text-danger" onClick={() => setConfirmUnlink(true)}>
                 <Unlink className="size-3.5" /> {t('refPartners.login.unlink')}
               </button>
             </div>
@@ -97,7 +97,7 @@ export const PortalLoginPanel = ({ partner, isAdmin }: { partner: Partner; isAdm
         size="sm"
         footer={
           <div className="flex justify-end gap-2">
-            <button type="button" className="btn-white btn-sm border border-line" onClick={() => setCreating(false)} disabled={create.isPending}>
+            <button type="button" className="btn-secondary btn-sm" onClick={() => setCreating(false)} disabled={create.isPending}>
               {t('refPartners.form.cancel')}
             </button>
             <button type="submit" form="partner-login-form" className="btn-primary btn-sm" disabled={create.isPending || !form.email.trim()}>

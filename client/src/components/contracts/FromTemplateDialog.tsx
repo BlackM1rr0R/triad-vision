@@ -138,7 +138,7 @@ export const FromTemplateDialog = ({ open, onClose, caseId, caseNumber }: { open
         description={t('contractTpl.dialog.description', { number: caseNumber })}
         footer={
           <>
-            <button type="button" className="btn-white btn-sm border border-line" disabled={!template || downloading} onClick={() => void download()}>
+            <button type="button" className="btn-secondary btn-sm" disabled={!template || downloading} onClick={() => void download()}>
               {downloading ? <Spinner className="size-3.5" /> : <Download className="size-3.5" />} {t('contractTpl.dialog.download')}
             </button>
             <button type="button" className="btn-primary btn-sm" disabled={!template || sending || !!sentId} onClick={() => setConfirming(true)}>

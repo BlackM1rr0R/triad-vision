@@ -81,7 +81,7 @@ const PassportSection = ({ intel, caseId }: { intel: CaseIntel; caseId: string }
         <div className="flex flex-wrap items-center gap-2 text-sm">
           <span className={clsx(st.tone === 'warn' ? 'text-amber-700' : st.tone === 'danger' ? 'text-danger' : 'text-muted')}>{st.text}</span>
           {p.isImage && intel.ocrAvailable && !p.ocrAt && (
-            <button type="button" className="btn-white btn-sm border border-line" onClick={run} disabled={!!busy}>
+            <button type="button" className="btn-secondary btn-sm" onClick={run} disabled={!!busy}>
               {busy === 'run' ? <Spinner className="size-3.5" /> : <ScanLine className="size-3.5" aria-hidden />} {t('docsIntel.ocr.run')}
             </button>
           )}
@@ -126,7 +126,7 @@ const PassportSection = ({ intel, caseId }: { intel: CaseIntel; caseId: string }
                 <button type="button" className="btn-primary btn-sm" onClick={confirm} disabled={!!busy}>
                   {busy === 'apply' ? <Spinner className="size-3.5" /> : <CheckCircle2 className="size-3.5" aria-hidden />} {t('docsIntel.ocr.correct')}
                 </button>
-                <Link to="/account/profile" className="btn-white btn-sm border border-line">
+                <Link to="/account/profile" className="btn-secondary btn-sm">
                   <Pencil className="size-3.5" aria-hidden /> {t('docsIntel.ocr.fix')}
                 </Link>
               </div>

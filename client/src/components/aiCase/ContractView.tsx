@@ -120,16 +120,16 @@ export const ContractView = ({ caseId, run, onSendAnyway, compact = false }: { c
 
       <div className="flex flex-wrap gap-1.5">
         {onSendAnyway && (
-          <button type="button" className={problems ? 'btn-white btn-sm border border-line' : 'btn-primary btn-sm'} disabled={!!busy} onClick={() => (problems ? setConfirmSend(true) : onSendAnyway())}>
+          <button type="button" className={problems ? 'btn-secondary btn-sm' : 'btn-primary btn-sm'} disabled={!!busy} onClick={() => (problems ? setConfirmSend(true) : onSendAnyway())}>
             <FileSignature className="size-3.5" aria-hidden /> {problems ? t('aiCase.contract.sendAnyway') : t('aiCase.contract.send')}
           </button>
         )}
         {problems > 0 && (
           <>
-            <button type="button" className="btn-white btn-sm border border-line" disabled={!!busy} onClick={() => void task('employer')}>
+            <button type="button" className="btn-secondary btn-sm" disabled={!!busy} onClick={() => void task('employer')}>
               {busy === 'employer:' ? <Spinner className="size-3.5" /> : <ClipboardList className="size-3.5" aria-hidden />} {t('aiCase.contract.employerTask')}
             </button>
-            <button type="button" className="btn-white btn-sm border border-line" onClick={() => void copyEmail()}>
+            <button type="button" className="btn-secondary btn-sm" onClick={() => void copyEmail()}>
               <Copy className="size-3.5" aria-hidden /> {t('aiCase.contract.copyEmail')}
             </button>
           </>

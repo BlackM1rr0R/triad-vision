@@ -44,6 +44,7 @@ import {
 } from '@/components/admin/labels';
 import type { StaffAssignedCase, StaffDetailResponse } from '@/components/admin/types';
 import { DefRow, EmptyState, ErrorBlock, LoadingBlock, OnlineDot, Panel, StatTile } from '@/components/admin/ui';
+import { Tabs } from '@/components/ui/Tabs';
 import { ACCENT, BarChart, BarList, SERIES_COLORS } from '@/components/admin/charts';
 
 /** Compact, human-readable rendering of an audit details JSON. */
@@ -170,17 +171,17 @@ export default function StaffDetail() {
             </div>
           </div>
           <div className="flex flex-wrap gap-2">
-            <Link to={`/admin/cases?search=${encodeURIComponent(user.email)}`} className="btn-white btn-sm border border-line">
+            <Link to={`/admin/cases?search=${encodeURIComponent(user.email)}`} className="btn-secondary btn-sm">
               <Briefcase className="size-3.5" /> {t('admin.staff.cases')}
             </Link>
             {workspace && (
-              <Link to={`/workspace/drive/f/${workspace.folderId}`} className="btn-white btn-sm border border-line">
+              <Link to={`/workspace/drive/f/${workspace.folderId}`} className="btn-secondary btn-sm">
                 <FolderOpen className="size-3.5" /> {t('admin.staff.workspace')}
               </Link>
             )}
             {/* Only the super admin deletes accounts; never their own or another super admin's. */}
             {me?.role === 'SUPER_ADMIN' && user.id !== me.id && user.role !== 'SUPER_ADMIN' && (
-              <button type="button" className="btn-white btn-sm border border-line text-danger hover:border-red-300 hover:bg-red-50" onClick={() => setDeleting(true)}>
+              <button type="button" className="btn-secondary btn-sm text-danger hover:border-red-300 hover:bg-red-50" onClick={() => setDeleting(true)}>
                 <Trash2 className="size-3.5" /> {t('admin.users.deleteBtn')}
               </button>
             )}
@@ -318,20 +319,16 @@ export default function StaffDetail() {
             icon={Briefcase}
             bodyClassName="p-0"
             actions={
-              <div className="flex gap-1" role="tablist" aria-label={t('admin.staff.caseListAria')}>
-                {(['open', 'closed'] as const).map((tab) => (
-                  <button
-                    key={tab}
-                    type="button"
-                    role="tab"
-                    aria-selected={caseTab === tab}
-                    onClick={() => setCaseTab(tab)}
-                    className={clsx('min-h-8 rounded-md px-2.5 text-xs font-semibold transition', caseTab === tab ? 'bg-navy-900 text-white' : 'text-muted hover:bg-surface hover:text-navy-900')}
-                  >
-                    {tab === 'open' ? t('admin.staff.openTab', { count: data.assignedCases.open.length }) : t('admin.staff.closedTab', { count: data.assignedCases.closed.length })}
-                  </button>
-                ))}
-              </div>
+              <Tabs
+                variant="pills"
+                label={t('admin.staff.caseListAria')}
+                items={(['open', 'closed'] as const).map((tab) => ({
+                  key: tab,
+                  label: tab === 'open' ? t('admin.staff.openTab', { count: data.assignedCases.open.length }) : t('admin.staff.closedTab', { count: data.assignedCases.closed.length }),
+                }))}
+                value={caseTab}
+                onChange={setCaseTab}
+              />
             }
           >
             <CaseRows cases={data.assignedCases[caseTab]} empty={caseTab === 'open' ? t('admin.staff.noOpen') : t('admin.staff.noClosed')} />

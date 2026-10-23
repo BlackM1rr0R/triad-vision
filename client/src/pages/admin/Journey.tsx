@@ -19,6 +19,7 @@ import { L10nInput, LANGS, emptyL10n, fillFromAz, type Lang } from '@/components
 import { TranslateButton } from '@/components/admin/TranslateButton';
 import { toastError } from '@/components/admin/labels';
 import { Chip, EmptyState, ErrorBlock, LoadingBlock, PageHead, Switch } from '@/components/admin/ui';
+import { Tabs } from '@/components/ui/Tabs';
 import { FORECAST_STEPS, GERMAN_LEVELS, type AdminForecastRow, type ForecastOverride, type ForecastRanges, type ForecastStepKey, type ForecastUnit, type GermanQuestionAdmin, type LanguageCourse, type OnboardingItem } from '@/components/journey/types';
 
 registerCopy(pagesJourney);
@@ -64,7 +65,7 @@ const DrawerFooter = ({ onCancel, saving, disabled }: { onCancel: () => void; sa
   const { t } = useTranslation();
   return (
     <div className="flex justify-end gap-2">
-      <button type="button" className="btn-white btn-sm border border-line" onClick={onCancel}>
+      <button type="button" className="btn-secondary btn-sm" onClick={onCancel}>
         {t('journey.admin.common.cancel')}
       </button>
       <button type="submit" form="journey-form" className="btn-primary btn-sm" disabled={saving || disabled}>
@@ -193,7 +194,7 @@ const ForecastRow = ({ row, canWrite, onDelete, onToggle, toggling }: { row: Adm
         <p className="text-xs text-muted">
           {row.visaLabel}
           {!row.published && (
-            <span className="badge ml-1.5 bg-slate-100 text-[10px] text-slate-600">{t('journey.admin.visa.inactive')}</span>
+            <span className="badge ml-1.5 bg-neutral-bg text-[10px] text-neutral-fg">{t('journey.admin.visa.inactive')}</span>
           )}
         </p>
         {(row.usage.cases > 0 || row.usage.vacancies > 0) && <p className="mt-0.5 text-[11px] text-muted">{t('journey.admin.visa.usage', { cases: row.usage.cases, vacancies: row.usage.vacancies })}</p>}
@@ -888,21 +889,13 @@ export default function Journey() {
   return (
     <div>
       <PageHead title={t('journey.admin.title')} subtitle={canWrite ? t('journey.admin.subtitle') : t('journey.admin.readOnly')} />
-      <div role="tablist" className="mb-5 flex gap-1 overflow-x-auto rounded-xl border border-line bg-white p-1 [scrollbar-width:none]">
-        {TABS.map(({ key, icon: TabIcon }) => (
-          <button
-            key={key}
-            type="button"
-            role="tab"
-            aria-selected={tab === key}
-            onClick={() => setParams({ tab: key }, { replace: true })}
-            className={clsx('inline-flex min-h-10 shrink-0 items-center gap-2 rounded-lg px-3.5 text-sm font-semibold whitespace-nowrap transition', tab === key ? 'bg-navy-900 text-white' : 'text-muted hover:bg-surface hover:text-navy-900')}
-          >
-            <TabIcon className="size-4" aria-hidden />
-            {t(`journey.admin.tabs.${key}`)}
-          </button>
-        ))}
-      </div>
+      <Tabs
+        className="mb-5"
+        label={t('journey.admin.title')}
+        items={TABS.map(({ key, icon }) => ({ key, icon, label: t(`journey.admin.tabs.${key}`) }))}
+        value={tab}
+        onChange={(key) => setParams({ tab: key }, { replace: true })}
+      />
       {tab === 'forecast' && <ForecastTab canWrite={canWrite} />}
       {tab === 'onboarding' && <OnboardingTab canWrite={canWrite} />}
       {tab === 'questions' && <QuestionsTab canWrite={canWrite} />}

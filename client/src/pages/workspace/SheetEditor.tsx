@@ -359,6 +359,7 @@ export default function SheetEditor() {
           <button
             type="button"
             onClick={() => {
+              // TODO(ui): ConfirmDialog
               if (window.confirm(t('sheet.conflictOverwriteConfirm'))) void save(true);
             }}
             className="flex items-center gap-1 rounded-lg bg-danger px-3 py-1 text-xs font-semibold text-white hover:brightness-110"

@@ -116,7 +116,7 @@ export const SigningFlow = ({ view, base, onChange }: { view: SigningView; base:
                     <ExternalLink className="size-4" aria-hidden />
                     {t('esign.sign.open')}
                   </a>
-                  <a href={`${docUrl}?download=1`} className="btn-white btn-sm border border-line">
+                  <a href={`${docUrl}?download=1`} className="btn-secondary btn-sm">
                     <Download className="size-4" aria-hidden />
                     {t('esign.sign.download')}
                   </a>
@@ -374,7 +374,7 @@ const SignForm = ({ view, base, onDone }: { view: SigningView; base: string; onD
           <textarea id={reasonId} className="input min-h-28" value={reason} onChange={(e) => setReason(e.target.value)} maxLength={1000} required minLength={3} />
         </div>
         <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-          <button type="button" className="btn-white btn-sm border border-line" onClick={() => setDeclining(false)} disabled={busy}>
+          <button type="button" className="btn-secondary btn-sm" onClick={() => setDeclining(false)} disabled={busy}>
             {t('esign.sign.cancel')}
           </button>
           <button type="button" className="btn-danger btn-sm" onClick={() => void decline()} disabled={busy || reason.trim().length < 3}>

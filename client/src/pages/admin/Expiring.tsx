@@ -160,7 +160,7 @@ const Expiring = () => {
                     <span className="block text-navy-900">{r.document}</span>
                     <span className="flex items-center gap-1 text-[11px] text-muted">
                       {r.source === 'vault' && (
-                        <span className="badge inline-flex items-center gap-1 bg-slate-100 text-[10px] text-slate-600" title={t('expiry.page.vaultHint')}>
+                        <span className="badge inline-flex items-center gap-1 bg-neutral-bg text-[10px] text-neutral-fg" title={t('expiry.page.vaultHint')}>
                           <Archive className="size-3" aria-hidden />
                           {t('expiry.page.vault')}
                         </span>

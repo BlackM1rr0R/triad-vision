@@ -9,6 +9,7 @@ import { api } from '@/lib/api';
 import { EmptyState, LoadingBlock, PageHead, Panel } from '@/components/admin/ui';
 import { Modal } from '@/components/admin/Modal';
 import { fmtDateTime } from '@/components/admin/labels';
+import { STATUS_TONES, toneClasses } from '@/components/ui/status';
 import { cpKeys, useCpError, type VisitReason } from './api';
 
 type Office = { index: number; city: string; address: string };
@@ -29,7 +30,7 @@ type DayVisit = {
 type SlotGroup = { id: string; staff: { id: string; firstName: string; lastName: string }; startsAt: string; endsAt: string; location: string | null; capacity: number; visits: { id: string; name: string; reason: VisitReason; case: { id: string; number: string } | null }[] };
 
 const bakuDay = (d = new Date()) => new Date(d.getTime() + 4 * 3600 * 1000).toISOString().slice(0, 10);
-const STATUS_TONE: Record<DayVisit['status'], string> = { BOOKED: 'bg-emerald-100 text-emerald-800', CANCELLED: 'bg-slate-100 text-slate-500', DONE: 'bg-sky-100 text-sky-800', NO_SHOW: 'bg-red-100 text-red-700' };
+const STATUS_TONE: Record<DayVisit['status'], string> = toneClasses(STATUS_TONES.officeVisit);
 
 const CreateModal = ({ open, onClose, offices }: { open: boolean; onClose: () => void; offices: Office[] }) => {
   const { t } = useTranslation();
@@ -223,22 +224,22 @@ export default function OfficeVisitsAdmin() {
                   </div>
                   <div className="flex flex-wrap gap-1.5">
                     {v.caseId && (
-                      <Link to={`/admin/cases/${v.caseId}`} className="btn-white btn-sm border border-line">
+                      <Link to={`/admin/cases/${v.caseId}`} className="btn-secondary btn-sm">
                         {v.caseNumber ?? t('cp.office.openCase')}
                       </Link>
                     )}
                     {v.status === 'BOOKED' && (
                       <>
-                        <button type="button" className="btn-white btn-sm border border-line" disabled={!started} onClick={() => mark.mutate({ id: v.id, status: 'DONE' })}>
+                        <button type="button" className="btn-secondary btn-sm" disabled={!started} onClick={() => mark.mutate({ id: v.id, status: 'DONE' })}>
                           {t('cp.office.done')}
                         </button>
-                        <button type="button" className="btn-white btn-sm border border-line" disabled={!started} onClick={() => mark.mutate({ id: v.id, status: 'NO_SHOW' })}>
+                        <button type="button" className="btn-secondary btn-sm" disabled={!started} onClick={() => mark.mutate({ id: v.id, status: 'NO_SHOW' })}>
                           {t('cp.office.noShow')}
                         </button>
                         {!started && (
                           <button
                             type="button"
-                            className="btn-white btn-sm border border-line text-danger"
+                            className="btn-secondary btn-sm text-danger"
                             onClick={() => {
                               const message = window.prompt(t('cp.office.cancelMessage')) ;
                               if (message !== null) cancel.mutate({ id: v.id, message: message.trim() });
@@ -279,7 +280,7 @@ export default function OfficeVisitsAdmin() {
                     )}
                   </div>
                   {s.visits.length < s.capacity && (
-                    <button type="button" className="btn-white btn-sm border border-line text-danger" aria-label={t('cp.office.deleteFree')} title={t('cp.office.deleteFree')} onClick={() => removeSlot.mutate(s.id)}>
+                    <button type="button" className="btn-secondary btn-sm text-danger" aria-label={t('cp.office.deleteFree')} title={t('cp.office.deleteFree')} onClick={() => removeSlot.mutate(s.id)}>
                       <Trash2 className="size-3.5" aria-hidden />
                     </button>
                   )}

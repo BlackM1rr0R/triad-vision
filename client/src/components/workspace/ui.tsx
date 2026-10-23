@@ -1,9 +1,11 @@
-import { useEffect, useId, type ReactNode } from 'react';
-import { createPortal } from 'react-dom';
-import { AnimatePresence, motion } from 'framer-motion';
+import type { ReactNode } from 'react';
 import clsx from 'clsx';
 import type { LucideIcon } from 'lucide-react';
-import { X } from 'lucide-react';
+import { Modal as UiModal } from '@/components/ui/Modal';
+import { IconButton as UiIconButton } from '@/components/ui/Button';
+import { EmptyState as UiEmptyState } from '@/components/ui/EmptyState';
+import { Skeleton as UiSkeleton } from '@/components/ui/Skeleton';
+import { TONE_CLASS } from '@/components/ui/status';
 import i18n from '@/i18n';
 import { errorCode } from '@/lib/api';
 
@@ -98,29 +100,27 @@ export const Card = ({ title, icon: Icon, actions, children, className, bodyClas
   </section>
 );
 
-export const Empty = ({ icon: Icon, children, className }: { icon?: LucideIcon; children: ReactNode; className?: string }) => (
-  <div className={clsx('flex flex-col items-center justify-center px-4 py-8 text-center text-sm text-muted', className)}>
-    {Icon && (
-      <span className="mb-2 grid size-10 place-items-center rounded-full bg-surface text-muted">
-        <Icon className="size-5" aria-hidden />
-      </span>
-    )}
-    <p className="max-w-sm">{children}</p>
-  </div>
+/** Legacy workspace empty state (text as children): adapter over the design-system EmptyState. */
+export const Empty = ({ icon, children, className }: { icon?: LucideIcon; children: ReactNode; className?: string }) => (
+  <UiEmptyState icon={icon} text={children} padding="none" className={clsx(!/(^|\s)py-/.test(className ?? '') && 'py-8', className)} />
 );
 
-export const Skeleton = ({ className }: { className?: string }) => <div className={clsx('animate-pulse rounded-lg bg-surface', className)} aria-hidden />;
+/** Loading block: adapter over the design-system Skeleton (pass size classes; "rounded-full" for avatars). */
+export const Skeleton = ({ className }: { className?: string }) => (
+  <UiSkeleton rounded={className?.includes('rounded-full') ? 'full' : 'lg'} className={clsx(className?.replace(/(^|\s)rounded-full(?=\s|$)/, ' ').trim() || 'h-4 w-full')} />
+);
 
+/** Small label pill; colours come from the design-system tones (components/ui/status.ts). */
 export const Chip = ({ children, tone = 'neutral', className }: { children: ReactNode; tone?: 'neutral' | 'brand' | 'success' | 'warn' | 'danger' | 'muted'; className?: string }) => (
   <span
     className={clsx(
       'badge whitespace-nowrap',
       {
         neutral: 'bg-surface text-ink ring-1 ring-line',
-        brand: 'bg-brand-100 text-brand-700',
-        success: 'bg-emerald-100 text-emerald-800',
-        warn: 'bg-amber-100 text-amber-800',
-        danger: 'bg-red-100 text-red-700',
+        brand: TONE_CLASS.brand,
+        success: TONE_CLASS.success,
+        warn: TONE_CLASS.warning,
+        danger: TONE_CLASS.danger,
         muted: 'bg-surface text-muted',
       }[tone],
       className,
@@ -130,6 +130,7 @@ export const Chip = ({ children, tone = 'neutral', className }: { children: Reac
   </span>
 );
 
+// TODO(ui): Field wraps the control in a <label> (implicit association); move callers to components/ui/Field.
 export const Field = ({ label, hint, children, className }: { label: ReactNode; hint?: ReactNode; children: ReactNode; className?: string }) => (
   <label className={clsx('block', className)}>
     <span className="label">
@@ -147,7 +148,7 @@ export const Toggle = ({ checked, onChange, label }: { checked: boolean; onChang
   </label>
 );
 
-/** Modal dialog in a portal; closes on Escape and backdrop click (unless busy). */
+/** Workspace modal (full screen on phones, top-aligned on desktop): adapter over the design-system Modal. */
 export const Modal = ({
   open,
   onClose,
@@ -168,66 +169,28 @@ export const Modal = ({
   size?: 'sm' | 'md' | 'lg';
   as?: 'div' | 'form';
   onSubmit?: (e: React.FormEvent) => void;
-}) => {
-  const titleId = useId();
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && !busy) onClose();
-    };
-    document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
-  }, [open, busy, onClose]);
-  if (typeof document === 'undefined') return null;
-  const Panel = as === 'form' ? motion.form : motion.div;
-  return createPortal(
-    <AnimatePresence>
-      {open && (
-        <div className="fixed inset-0 z-[70] flex items-stretch justify-center sm:items-start sm:p-6 sm:pt-[8vh]">
-          <motion.div className="absolute inset-0 bg-navy-950/45" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => !busy && onClose()} aria-hidden />
-          <Panel
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby={titleId}
-            onSubmit={onSubmit}
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 12 }}
-            transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
-            className={clsx(
-              'relative flex max-h-full w-full flex-col overflow-hidden bg-card shadow-2xl sm:max-h-[84vh] sm:rounded-2xl sm:border sm:border-line',
-              { sm: 'sm:max-w-md', md: 'sm:max-w-2xl', lg: 'sm:max-w-4xl' }[size],
-            )}
-          >
-            <header className="flex items-center justify-between gap-3 border-b border-line px-5 py-3.5 sm:px-6">
-              <h2 id={titleId} className="font-display text-base font-bold text-ink">
-                {title}
-              </h2>
-              <button type="button" onClick={onClose} className="grid size-9 place-items-center rounded-lg text-muted hover:bg-surface hover:text-ink" aria-label={t('ws.common.close')}>
-                <X className="size-4" />
-              </button>
-            </header>
-            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-5 sm:px-6">{children}</div>
-            {footer && <footer className="flex flex-wrap items-center justify-end gap-2 border-t border-line px-5 py-3 sm:px-6">{footer}</footer>}
-          </Panel>
-        </div>
-      )}
-    </AnimatePresence>,
-    document.body,
-  );
-};
-
-export const IconButton = ({ icon: Icon, label, onClick, className, danger = false, disabled = false, type = 'button' }: { icon: LucideIcon; label: string; onClick?: () => void; className?: string; danger?: boolean; disabled?: boolean; type?: 'button' | 'submit' }) => (
-  <button
-    type={type}
-    onClick={onClick}
-    disabled={disabled}
-    title={label}
-    aria-label={label}
-    className={clsx('grid size-8 place-items-center rounded-lg transition disabled:opacity-50', danger ? 'text-muted hover:bg-red-50 hover:text-red-600' : 'text-muted hover:bg-surface hover:text-ink', className)}
+}) => (
+  <UiModal
+    open={open}
+    onClose={onClose}
+    title={title}
+    footer={footer}
+    busy={busy}
+    size={({ sm: 'sm', md: 'lg', lg: 'xl' } as const)[size]}
+    mobile="full"
+    align="top"
+    zIndex={70}
+    as={as}
+    onSubmit={onSubmit}
+    closeLabel={t('ws.common.close')}
   >
-    <Icon className="size-4" />
-  </button>
+    {children}
+  </UiModal>
+);
+
+/** Icon-only button (size-8): adapter over the design-system IconButton. */
+export const IconButton = ({ icon, label, onClick, className, danger = false, disabled = false, type = 'button' }: { icon: LucideIcon; label: string; onClick?: () => void; className?: string; danger?: boolean; disabled?: boolean; type?: 'button' | 'submit' }) => (
+  <UiIconButton icon={icon} label={label} onClick={onClick} className={className} variant={danger ? 'danger' : 'ghost'} size="sm" disabled={disabled} type={type} />
 );
 
 export const EMOJIS = ['😀', '😎', '🤔', '📞', '💻', '🏖️', '🤒', '🏠', '🍽️', '☕', '🚗', '✈️', '🎯', '🔥', '🙏', '🎉'];

@@ -13,6 +13,7 @@ import { ContractView } from './ContractView';
 import { VidexView } from './VidexView';
 import { SettingsModal } from './SettingsModal';
 import { fetchOverview, overviewKey, reasonText, runContract, usd, type ConsistencyResult, type Kind, type Overview, type RunResponse, type VidexResult } from './api';
+import { Skeleton as UiSkeleton } from '@/components/ui/Skeleton';
 
 const KINDS: { kind: Kind; icon: typeof FileText; path: string }[] = [
   { kind: 'CONSISTENCY', icon: FileSearch, path: 'consistency' },
@@ -23,7 +24,7 @@ const KINDS: { kind: Kind; icon: typeof FileText; path: string }[] = [
 const Skeleton = () => (
   <div className="space-y-2" aria-hidden>
     {[0, 1, 2].map((i) => (
-      <div key={i} className="h-16 animate-pulse rounded-lg bg-surface" />
+      <UiSkeleton key={i} className="h-16" />
     ))}
   </div>
 );
@@ -80,7 +81,7 @@ export const CaseAiChecks = ({ caseId }: { caseId: string }) => {
       icon={BrainCircuit}
       id="case-ai"
       actions={
-        <button type="button" className="btn-white btn-sm border border-line" onClick={() => setSettingsOpen(true)}>
+        <button type="button" className="btn-secondary btn-sm" onClick={() => setSettingsOpen(true)}>
           <Settings2 className="size-3.5" aria-hidden /> {t('aiCase.panel.settings')}
         </button>
       }
@@ -135,7 +136,7 @@ export const CaseAiChecks = ({ caseId }: { caseId: string }) => {
                 {kind === 'CONTRACT' && (
                   <>
                     <input ref={fileRef} type="file" accept="application/pdf,.pdf" className="sr-only" tabIndex={-1} aria-hidden onChange={(e) => e.target.files?.[0] && void run('CONTRACT', e.target.files[0])} />
-                    <button type="button" className="btn-white btn-sm border border-line" disabled={!!running || !!blocked} onClick={() => fileRef.current?.click()}>
+                    <button type="button" className="btn-secondary btn-sm" disabled={!!running || !!blocked} onClick={() => fileRef.current?.click()}>
                       {t('aiCase.contract.upload')}
                     </button>
                   </>

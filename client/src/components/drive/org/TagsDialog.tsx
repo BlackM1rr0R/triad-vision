@@ -115,7 +115,7 @@ export default function TagsDialog({ items, manage, onClose }: { items: DriveIte
           </button>
         ) : (
           <>
-            <button type="button" className="btn-white btn-sm border border-line" onClick={onClose}>
+            <button type="button" className="btn-secondary btn-sm" onClick={onClose}>
               {t('driveOrg.common.cancel')}
             </button>
             <button type="button" className="btn-primary btn-sm" disabled={save.isPending} onClick={() => save.mutate()}>
@@ -185,7 +185,7 @@ export default function TagsDialog({ items, manage, onClose }: { items: DriveIte
           <p className="text-xs font-semibold text-muted">{t('driveOrg.tags.newTag')}</p>
           <div className="flex items-center gap-2">
             <input className="input !h-8 min-w-0 flex-1 !py-0 text-sm" value={newName} maxLength={60} onChange={(e) => setNewName(e.target.value)} placeholder={t('driveOrg.tags.name')} aria-label={t('driveOrg.tags.name')} />
-            <button type="submit" className="btn-white btn-sm border border-line" disabled={!newName.trim() || create.isPending}>
+            <button type="submit" className="btn-secondary btn-sm" disabled={!newName.trim() || create.isPending}>
               <Plus className="size-4" /> {t('driveOrg.common.add')}
             </button>
           </div>

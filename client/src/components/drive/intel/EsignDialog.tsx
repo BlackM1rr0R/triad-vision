@@ -97,7 +97,7 @@ export default function EsignDialog({ item, onClose, onSent }: { item: DriveItem
       description={item.name}
       footer={
         <>
-          <button type="button" className="btn-white btn-sm border border-line" onClick={onClose}>
+          <button type="button" className="btn-secondary btn-sm" onClick={onClose}>
             {t('admin.common.close')}
           </button>
           <button type="button" className="btn-primary btn-sm" disabled={busy || title.trim().length < 2} onClick={() => void submit()}>

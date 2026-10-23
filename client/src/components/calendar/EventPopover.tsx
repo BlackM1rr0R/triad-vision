@@ -5,11 +5,12 @@ import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { AlignLeft, Briefcase, Check, Clock, Download, ExternalLink, HelpCircle, MapPin, Pencil, Repeat, Trash2, Users, Video, X } from 'lucide-react';
 import { Avatar } from '@/components/chat/bits';
+import { STATUS_TONES, toneTexts } from '@/components/ui/status';
 import { calendarApi } from './api';
 import type { AttendeeStatus, CalItem, EventDto, SystemDto } from './types';
 import { fmtRange, fullName, parseRecurrence, recurrenceLabel, systemLink, systemLinkLabel } from './utils';
 
-const STATUS_TONE: Record<AttendeeStatus, string> = { NEEDS_ACTION: 'text-muted', ACCEPTED: 'text-success', DECLINED: 'text-danger', TENTATIVE: 'text-warning' };
+const STATUS_TONE: Record<AttendeeStatus, string> = { ...toneTexts(STATUS_TONES.attendee), NEEDS_ACTION: 'text-muted' };
 
 /** Details card anchored next to the clicked chip (fixed position, flips to stay on screen). */
 export const EventPopover = ({

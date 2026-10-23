@@ -219,10 +219,10 @@ export default function ServiceDetail() {
                     </Link>
                     {contact && (
                       <div className="grid grid-cols-2 gap-2">
-                        <a href={`tel:${contact.phone.replace(/\s/g, '')}`} className="btn-white btn-sm border border-line">
+                        <a href={`tel:${contact.phone.replace(/\s/g, '')}`} className="btn-secondary btn-sm">
                           <Phone className="size-4" /> {t('contact.phone')}
                         </a>
-                        <a href={`https://wa.me/${contact.whatsapp.replace(/\D/g, '')}`} target="_blank" rel="noreferrer" className="btn-white btn-sm border border-line">
+                        <a href={`https://wa.me/${contact.whatsapp.replace(/\D/g, '')}`} target="_blank" rel="noreferrer" className="btn-secondary btn-sm">
                           <MessageCircle className="size-4" /> WhatsApp
                         </a>
                       </div>

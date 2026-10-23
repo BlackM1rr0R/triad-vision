@@ -87,10 +87,10 @@ export const CompanyInterviews = () => {
     if (!live) return null;
     return (
       <>
-        <button type="button" className="btn-white btn-sm border border-line" onClick={() => setReschedule({ id: i.id, at: toLocalInput(i.startsAt) })}>
+        <button type="button" className="btn-secondary btn-sm" onClick={() => setReschedule({ id: i.id, at: toLocalInput(i.startsAt) })}>
           <CalendarDays className="size-3.5" /> {t('ops.interviews.actions.reschedule')}
         </button>
-        <button type="button" className="btn-white btn-sm border border-line text-danger" onClick={() => setCancelling({ id: i.id, reason: '' })}>
+        <button type="button" className="btn-secondary btn-sm text-danger" onClick={() => setCancelling({ id: i.id, reason: '' })}>
           <Ban className="size-3.5" /> {t('ops.interviews.actions.cancel')}
         </button>
       </>
@@ -136,7 +136,7 @@ export const CompanyInterviews = () => {
         description={t('ops.company.hint')}
         footer={
           <>
-            <button type="button" className="btn-white btn-sm border border-line" onClick={() => setProposing(false)}>{t('ops.common.cancel')}</button>
+            <button type="button" className="btn-secondary btn-sm" onClick={() => setProposing(false)}>{t('ops.common.cancel')}</button>
             <button type="button" className="btn-primary btn-sm" disabled={!applicationId || !startsAt || propose.isPending} onClick={() => propose.mutate()}>
               {propose.isPending ? <Spinner className="size-3.5" /> : <Plus className="size-3.5" />} {t('ops.interviews.actions.propose')}
             </button>
@@ -184,7 +184,7 @@ export const CompanyInterviews = () => {
         title={t('ops.interviews.actions.reschedule')}
         footer={
           <>
-            <button type="button" className="btn-white btn-sm border border-line" onClick={() => setReschedule(null)}>{t('ops.common.cancel')}</button>
+            <button type="button" className="btn-secondary btn-sm" onClick={() => setReschedule(null)}>{t('ops.common.cancel')}</button>
             <button type="button" className="btn-primary btn-sm" disabled={!reschedule?.at || patch.isPending} onClick={() => reschedule && patch.mutate({ id: reschedule.id, body: { startsAt: new Date(reschedule.at).toISOString() } })}>
               {patch.isPending ? <Spinner className="size-3.5" /> : null} {t('ops.common.save')}
             </button>
@@ -202,7 +202,7 @@ export const CompanyInterviews = () => {
         title={t('ops.interviews.cancelTitle')}
         footer={
           <>
-            <button type="button" className="btn-white btn-sm border border-line" onClick={() => setCancelling(null)}>{t('ops.common.cancel')}</button>
+            <button type="button" className="btn-secondary btn-sm" onClick={() => setCancelling(null)}>{t('ops.common.cancel')}</button>
             <button type="button" className="btn-danger btn-sm" disabled={patch.isPending} onClick={() => cancelling && patch.mutate({ id: cancelling.id, body: { status: 'CANCELLED', reason: cancelling.reason.trim() || undefined } })}>
               {patch.isPending ? <Spinner className="size-3.5" /> : <Ban className="size-3.5" />} {t('ops.interviews.actions.cancel')}
             </button>

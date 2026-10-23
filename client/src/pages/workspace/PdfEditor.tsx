@@ -299,6 +299,7 @@ export default function PdfEditor() {
   };
 
   const setMode = (m: Mode) => {
+    // TODO(ui): ConfirmDialog
     if (dirty && m !== 'pages' && !window.confirm(t('pdfTools.editor.leaveUnsaved'))) return;
     if (dirty && m !== 'pages' && doc) {
       setEntries(initial(doc.numPages));
@@ -347,6 +348,7 @@ export default function PdfEditor() {
         <Link
           to={backHref}
           onClick={(e) => {
+            // TODO(ui): ConfirmDialog
             if (dirty && !window.confirm(t('pdfTools.editor.leaveUnsaved'))) e.preventDefault();
           }}
           className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-sm text-muted hover:bg-surface hover:text-ink"
@@ -411,7 +413,7 @@ export default function PdfEditor() {
             <div className="ml-auto flex items-center gap-2">
               {dirty && <span className="text-xs text-amber-700 dark:text-amber-300">{t('pdfTools.editor.unsaved', { count: history.length })}</span>}
               <ToolButton icon={Undo2} label={t('pdfTools.editor.undo')} disabled={!dirty || saving} onClick={undo} />
-              <button type="button" className="btn-white btn-sm border border-line" disabled={!dirty || saving || !canCopy} onClick={() => void save('copy')}>
+              <button type="button" className="btn-secondary btn-sm" disabled={!dirty || saving || !canCopy} onClick={() => void save('copy')}>
                 <CopyPlus className="size-4" /> {t('pdfTools.editor.saveCopy')}
               </button>
               <button type="button" className="btn-primary btn-sm" disabled={!dirty || saving || !editable} onClick={() => void save('version')}>

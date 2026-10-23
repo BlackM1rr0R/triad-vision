@@ -68,7 +68,7 @@ export const RedactView = ({ doc, info, onSaved }: { doc: PDFDocumentProxy; info
       <div className="flex flex-wrap items-center gap-3 border-b border-line bg-card px-4 py-2 text-sm">
         <p className="text-muted">{t('pdfTools.redact.hint')}</p>
         <span className="ml-auto font-medium text-ink">{t('pdfTools.redact.boxes', { count: total, pages: pagesWith.length })}</span>
-        <button type="button" className="btn-white btn-sm border border-line" disabled={!boxes[page]?.length || busy} onClick={() => setBoxes((b) => ({ ...b, [page]: [] }))}>
+        <button type="button" className="btn-secondary btn-sm" disabled={!boxes[page]?.length || busy} onClick={() => setBoxes((b) => ({ ...b, [page]: [] }))}>
           <Trash2 className="size-4" /> {t('pdfTools.redact.clear')}
         </button>
         {info.canEdit && (

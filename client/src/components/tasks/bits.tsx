@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import clsx from 'clsx';
+import { Skeleton as UiSkeleton } from '@/components/ui/Skeleton';
 import { useTranslation } from 'react-i18next';
 import { AlertTriangle, Check, Clock, Flag, Search } from 'lucide-react';
 import type { Person, TaskPriority, TaskStatus } from './types';
@@ -267,4 +268,5 @@ export const PeopleList = ({
   );
 };
 
-export const Skeleton = ({ className }: { className?: string }) => <span className={clsx('block animate-pulse rounded-lg bg-slate-100', className)} />;
+/** Loading block: the design-system Skeleton (kept under this name for the task views). */
+export const Skeleton = ({ className }: { className?: string }) => <UiSkeleton className={className} />;

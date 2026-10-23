@@ -75,11 +75,11 @@ export const DeletePartnerDialog = ({
       }
       footer={
         <>
-          <button type="button" className="btn-white btn-sm border border-line" onClick={onClose} disabled={busy}>
+          <button type="button" className="btn-secondary btn-sm" onClick={onClose} disabled={busy}>
             {t('admin.common.cancel')}
           </button>
           {partner && partner.active !== false && clients > 0 && (
-            <button type="button" className="btn-white btn-sm border border-line" onClick={() => deactivate.mutate(partner)} disabled={busy}>
+            <button type="button" className="btn-secondary btn-sm" onClick={() => deactivate.mutate(partner)} disabled={busy}>
               {deactivate.isPending && <Spinner className="size-3.5" />} {t('refPartners.deactivate')}
             </button>
           )}

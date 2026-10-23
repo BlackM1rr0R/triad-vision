@@ -12,6 +12,7 @@ import { pagesPrivacy } from '@/i18n/pagesPrivacy';
 import { Spinner } from '@/components/ui/Spinner';
 import { Modal } from '@/components/admin/Modal';
 import { Chip, DefRow, EmptyState, ErrorBlock, LoadingBlock, PageHead, Panel, StatTile } from '@/components/admin/ui';
+import { Tabs } from '@/components/ui/Tabs';
 import { fmtDate, fmtDateTime, fullName } from '@/components/admin/labels';
 import {
   CONSENT_TYPES,
@@ -249,7 +250,7 @@ const DeletionPanel = ({ detail }: { detail: AdminRequestDetail }) => {
         }
         footer={
           <div className="flex justify-end gap-2">
-            <button type="button" className="btn-white btn-sm border border-line" onClick={close} disabled={m.isPending}>
+            <button type="button" className="btn-secondary btn-sm" onClick={close} disabled={m.isPending}>
               {t('admin.common.cancel')}
             </button>
             {step === 1 ? (
@@ -369,7 +370,7 @@ const RequestDetail = () => {
                       type="button"
                       disabled={m.isPending}
                       onClick={() => m.mutate(a)}
-                      className={clsx('btn-sm min-h-10', a === 'REJECTED' ? 'btn-danger' : a === 'COMPLETED' ? 'btn-primary' : 'btn-white border border-line')}
+                      className={clsx('btn-sm min-h-10', a === 'REJECTED' ? 'btn-danger' : a === 'COMPLETED' ? 'btn-primary' : 'btn-secondary')}
                     >
                       {t(`privacy.admin.act.${a}`)}
                     </button>
@@ -560,23 +561,13 @@ const ListPage = () => {
   const tab = params.get('tab') === 'consents' ? 'consents' : 'requests';
   return (
     <>
-      <div className="mb-5 flex gap-1 border-b border-line" role="tablist">
-        {(['requests', 'consents'] as const).map((k) => (
-          <button
-            key={k}
-            type="button"
-            role="tab"
-            aria-selected={tab === k}
-            onClick={() => setParams(k === 'consents' ? { tab: 'consents' } : {}, { replace: true })}
-            className={clsx(
-              '-mb-px min-h-10 border-b-2 px-3 text-sm font-semibold transition',
-              tab === k ? 'border-brand-600 text-navy-900' : 'border-transparent text-muted hover:text-navy-900',
-            )}
-          >
-            {t(`privacy.admin.tabs.${k}`)}
-          </button>
-        ))}
-      </div>
+      <Tabs
+        className="mb-5"
+        label={t('privacy.admin.tabs.requests')}
+        items={(['requests', 'consents'] as const).map((k) => ({ key: k, label: t(`privacy.admin.tabs.${k}`) }))}
+        value={tab}
+        onChange={(k) => setParams(k === 'consents' ? { tab: 'consents' } : {}, { replace: true })}
+      />
       {tab === 'consents' ? <ConsentLog /> : <RequestsList />}
     </>
   );

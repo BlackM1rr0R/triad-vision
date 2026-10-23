@@ -165,7 +165,7 @@ const AlertCard = ({ alert, highlighted, onChanged }: { alert: Alert; highlighte
               )}
             </>
           ) : (
-            <button type="button" className="btn-white btn-sm border border-line" disabled={!!busy} onClick={() => void explain()}>
+            <button type="button" className="btn-secondary btn-sm" disabled={!!busy} onClick={() => void explain()}>
               {busy === 'explain' ? <Spinner className="size-3.5" /> : <Sparkles className="size-3.5" aria-hidden />} {t('aiMgmt.security.explain')}
             </button>
           )}

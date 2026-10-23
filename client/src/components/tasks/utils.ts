@@ -1,4 +1,5 @@
 import i18n, { currentLocale } from '@/i18n';
+import { STATUS_TONES, toneClasses } from '@/components/ui/status';
 import { errorCode } from '@/lib/api';
 import type { Person, TaskFilters, TaskPriority, TaskStatus } from './types';
 
@@ -24,13 +25,7 @@ export const avatarTone = (id: string) => {
 export const statusLabel = (s: TaskStatus) => t(`tasks.status.${s}`);
 export const priorityLabel = (p: TaskPriority) => t(`tasks.priority.${p}`);
 
-export const STATUS_TONE: Record<TaskStatus, string> = {
-  TODO: 'bg-slate-100 text-slate-700',
-  IN_PROGRESS: 'bg-brand-100 text-brand-700',
-  REVIEW: 'bg-violet-100 text-violet-700',
-  DONE: 'bg-emerald-100 text-emerald-700',
-  CANCELLED: 'bg-slate-100 text-slate-500',
-};
+export const STATUS_TONE: Record<TaskStatus, string> = toneClasses(STATUS_TONES.task);
 export const STATUS_DOT: Record<TaskStatus, string> = {
   TODO: 'bg-slate-400',
   IN_PROGRESS: 'bg-brand-500',
@@ -38,12 +33,7 @@ export const STATUS_DOT: Record<TaskStatus, string> = {
   DONE: 'bg-emerald-500',
   CANCELLED: 'bg-slate-300',
 };
-export const PRIORITY_TONE: Record<TaskPriority, string> = {
-  LOW: 'bg-slate-100 text-slate-600',
-  NORMAL: 'bg-sky-100 text-sky-800',
-  HIGH: 'bg-amber-100 text-amber-800',
-  URGENT: 'bg-red-100 text-red-700',
-};
+export const PRIORITY_TONE: Record<TaskPriority, string> = toneClasses(STATUS_TONES.taskPriority);
 
 export const errorText = (err: unknown) => {
   const code = errorCode(err);
@@ -101,13 +91,7 @@ export const dueState = (dueAt: string | null, status: TaskStatus, now = new Dat
   return 'later';
 };
 
-export const DUE_TONE: Record<DueState, string> = {
-  overdue: 'bg-red-100 text-red-700',
-  today: 'bg-amber-100 text-amber-800',
-  soon: 'bg-sky-100 text-sky-800',
-  later: 'bg-slate-100 text-slate-600',
-  done: 'bg-slate-100 text-slate-500',
-};
+export const DUE_TONE: Record<DueState, string> = toneClasses(STATUS_TONES.taskDue);
 
 /** "Today 14:00", "Tomorrow", "15 Oct", … for chips. */
 export const dueLabel = (dueAt: string) => {

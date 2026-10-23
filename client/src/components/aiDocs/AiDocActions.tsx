@@ -7,20 +7,14 @@ import { AlertTriangle, Bot, CheckCircle2, Languages, MinusCircle, RefreshCw, XC
 import { registerCopy } from '@/i18n';
 import { pagesAiDocs } from '@/i18n/pagesAiDocs';
 import { Spinner } from '@/components/ui/Spinner';
+import { STATUS_TONES, toneClasses } from '@/components/ui/status';
 import { aiLimitMessage, aiOfChecks, errorCode, issueText, recheckDoc, type AiDocCheck, type AiFields } from './api';
 
 registerCopy(pagesAiDocs);
 
 const TranslateDraftDialog = lazy(() => import('./TranslateDraftDialog'));
 
-const TONE: Record<AiDocCheck['verdict'] | 'none', string> = {
-  ok: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300',
-  warn: 'bg-amber-100 text-amber-800 dark:bg-amber-950/40 dark:text-amber-200',
-  wrong_document: 'bg-red-100 text-red-700 dark:bg-red-950/40 dark:text-red-300',
-  unreadable: 'bg-red-100 text-red-700 dark:bg-red-950/40 dark:text-red-300',
-  skipped: 'bg-surface text-muted',
-  none: 'bg-surface text-muted',
-};
+const TONE: Record<AiDocCheck['verdict'] | 'none', string> = toneClasses(STATUS_TONES.check);
 
 const ICON = { ok: CheckCircle2, warn: AlertTriangle, wrong_document: XCircle, unreadable: XCircle, skipped: MinusCircle, none: Bot } as const;
 

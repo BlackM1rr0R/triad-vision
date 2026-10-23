@@ -110,7 +110,7 @@ export const AiCheckCard = ({
                 if (f) onReupload(f);
               }}
             />
-            <button type="button" className="btn-white btn-sm border border-line text-ink" onClick={() => inputRef.current?.click()}>
+            <button type="button" className="btn-secondary btn-sm text-ink" onClick={() => inputRef.current?.click()}>
               <RefreshCw className="size-3.5" aria-hidden />
               {t('aiDocs.check.reupload')}
             </button>

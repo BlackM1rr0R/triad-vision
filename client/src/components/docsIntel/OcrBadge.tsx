@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import { AlertTriangle, ScanLine, UserCheck } from 'lucide-react';
 import { api, errorCode } from '@/lib/api';
 import { Spinner } from '@/components/ui/Spinner';
+import { STATUS_TONES, toneTexts } from '@/components/ui/status';
 import { ConfirmDialog } from '@/components/admin/ConfirmDialog';
 import {
   applyOcr,
@@ -37,7 +38,7 @@ export const useOcrStatus = () => {
   };
 };
 
-const TONE = { muted: 'text-muted', warn: 'text-amber-700', ok: 'text-emerald-700', danger: 'text-red-700' } as const;
+const TONE = { ...toneTexts(STATUS_TONES.check), muted: 'text-muted' } as const;
 
 /**
  * Staff view under a case document: OCR state, the extracted MRZ fields next to the profile values and an

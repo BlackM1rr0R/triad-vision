@@ -57,7 +57,7 @@ export const FilePicker = ({
       description={t('pdfTools.picker.onlyPdfImages')}
       footer={
         <>
-          <button type="button" className="btn-white btn-sm border border-line" onClick={onClose}>
+          <button type="button" className="btn-secondary btn-sm" onClick={onClose}>
             {t('pdfTools.common.cancel')}
           </button>
           {multiple && (

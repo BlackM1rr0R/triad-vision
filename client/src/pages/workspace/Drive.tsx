@@ -91,6 +91,7 @@ import type { DocEditorTarget } from '@/components/docCreate/DocEditor';
 import { useDriveIntel, useSearchInContent } from '@/components/drive/intel/useDriveIntel';
 import { BoardView, useDriveOrg } from '@/components/drive/org/useDriveOrg';
 import { usePdfTools } from '@/components/pdfTools/usePdfTools';
+import { Skeleton } from '@/components/ui/Skeleton';
 
 // The document editor and the text converter load only when opened (keeps the drive bundle small).
 const DocEditor = lazy(() => import('@/components/docCreate/DocEditor'));
@@ -982,8 +983,8 @@ export default function WorkspaceDrive() {
                   <div className="grid grid-cols-[repeat(auto-fill,minmax(136px,1fr))] gap-2 p-4" aria-busy="true">
                     {Array.from({ length: 12 }, (_, i) => (
                       <div key={i} className="flex flex-col items-center gap-2 rounded-xl p-3">
-                        <div className="size-16 animate-pulse rounded-xl bg-surface" />
-                        <div className="h-3 w-20 animate-pulse rounded bg-surface" />
+                        <Skeleton className="size-16" rounded="xl" />
+                        <Skeleton className="h-3 w-20" rounded="md" />
                       </div>
                     ))}
                   </div>
@@ -1018,7 +1019,7 @@ export default function WorkspaceDrive() {
                           <button type="button" className="btn-primary btn-sm" onClick={() => pickFiles(folderId!)}>
                             <Upload className="size-4" /> {t('drive.toolbar.uploadFiles')}
                           </button>
-                          <button type="button" className="btn-white btn-sm border border-line" onClick={() => setDialog({ kind: 'newFolder' })}>
+                          <button type="button" className="btn-secondary btn-sm" onClick={() => setDialog({ kind: 'newFolder' })}>
                             <FolderPlus className="size-4" /> {t('drive.toolbar.newFolder')}
                           </button>
                         </div>

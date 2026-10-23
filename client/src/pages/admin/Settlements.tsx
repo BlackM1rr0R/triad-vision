@@ -366,6 +366,7 @@ export default function Settlements() {
   const allSelected = viewRows.length > 0 && selectedIds.length === viewRows.length;
 
   const bulkDelete = async () => {
+    // TODO(ui): ConfirmDialog
     if (!window.confirm(t('settlement.bulk.confirmDelete', { count: selectedIds.length }))) return;
     try {
       await api.delete('/admin/settlements/bulk', { data: { ids: selectedIds } });

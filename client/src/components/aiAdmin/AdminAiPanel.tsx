@@ -162,6 +162,8 @@ export const AdminAiPanel = ({ open, onClose, context, hint, variant = 'dock', c
       {body}
     </aside>
   ) : (
+    // TODO(ui): same chat body is docked on lg+ and an overlay below lg (body has its own header / close),
+    // so it is not the design-system Drawer yet; it lacks focus trap / Escape. Revisit with the admin layout rework.
     <div className="fixed inset-0 z-50">
       <button type="button" className="absolute inset-0 bg-navy-900/50" onClick={onClose} aria-label={t('aiAdmin.close')} />
       <aside className="absolute inset-y-0 right-0 w-[26rem] max-w-[94vw] border-l border-line shadow-xl" aria-label={t('aiAdmin.title')}>

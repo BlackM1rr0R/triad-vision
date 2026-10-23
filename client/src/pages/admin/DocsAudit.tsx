@@ -70,7 +70,7 @@ export default function DocsAudit() {
         actions={
           <>
             {q.isFetching && !q.isLoading && <Spinner className="size-4 text-brand-600" />}
-            <Link to="/admin/docs" className="btn-white btn-sm border border-line">
+            <Link to="/admin/docs" className="btn-secondary btn-sm">
               <ArrowLeft className="size-3.5" /> {t('admin.nav.docs')}
             </Link>
           </>
@@ -151,11 +151,11 @@ export default function DocsAudit() {
 
           {pages > 1 && (
             <nav className="mt-4 flex items-center justify-between gap-3" aria-label={t('admin.common.pagination')}>
-              <button type="button" className="btn-white btn-sm border border-line" disabled={page <= 1} onClick={() => set({ page: page - 1 })}>
+              <button type="button" className="btn-secondary btn-sm" disabled={page <= 1} onClick={() => set({ page: page - 1 })}>
                 <ChevronLeft className="size-3.5" /> {t('admin.common.prev')}
               </button>
               <span className="text-xs text-muted tabular-nums">{t('admin.common.pageOf', { page, pages })}</span>
-              <button type="button" className="btn-white btn-sm border border-line" disabled={page >= pages} onClick={() => set({ page: page + 1 })}>
+              <button type="button" className="btn-secondary btn-sm" disabled={page >= pages} onClick={() => set({ page: page + 1 })}>
                 {t('admin.common.next')} <ChevronRight className="size-3.5" />
               </button>
             </nav>

@@ -180,7 +180,7 @@ export const EmailOtpCard = ({ className }: { className?: string }) => {
           </span>
           {k('title')}
         </h2>
-        <span className={clsx('badge', on ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-700')}>
+        <span className={clsx('badge', on ? 'bg-success-bg text-success-fg' : 'bg-neutral-bg text-neutral-fg')}>
           {on ? k('statusOn') : k('statusOff')}
         </span>
       </div>

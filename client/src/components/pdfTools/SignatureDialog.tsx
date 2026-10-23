@@ -46,7 +46,7 @@ export const SignatureDialog = ({ busy, onSave, onClose }: { busy: boolean; onSa
       description={t('pdfTools.stamp.drawHint')}
       footer={
         <>
-          <button type="button" className="btn-white btn-sm border border-line" onClick={onClose} disabled={busy}>
+          <button type="button" className="btn-secondary btn-sm" onClick={onClose} disabled={busy}>
             {t('pdfTools.common.cancel')}
           </button>
           <button

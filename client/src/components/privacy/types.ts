@@ -1,4 +1,5 @@
 import type { Role } from '@/lib/types';
+import { STATUS_TONES, toneClasses } from '@/components/ui/status';
 
 export const CONSENT_TYPES = ['PRIVACY_POLICY', 'TERMS', 'MARKETING_EMAIL', 'WHATSAPP', 'SMS', 'EMPLOYER_SHARING', 'PASSPORT_OCR'] as const;
 export type ConsentType = (typeof CONSENT_TYPES)[number];
@@ -15,13 +16,7 @@ export const REQUEST_STATUSES = ['OPEN', 'IN_PROGRESS', 'COMPLETED', 'REJECTED',
 export type RequestStatus = (typeof REQUEST_STATUSES)[number];
 export const isOpenStatus = (s: RequestStatus) => s === 'OPEN' || s === 'IN_PROGRESS';
 
-export const STATUS_TONE: Record<RequestStatus, string> = {
-  OPEN: 'bg-brand-100 text-brand-800',
-  IN_PROGRESS: 'bg-amber-100 text-amber-800',
-  COMPLETED: 'bg-emerald-100 text-emerald-800',
-  REJECTED: 'bg-red-100 text-red-800',
-  CANCELLED: 'bg-slate-200 text-slate-700',
-};
+export const STATUS_TONE: Record<RequestStatus, string> = toneClasses(STATUS_TONES.privacy);
 
 export interface EffectiveConsent {
   granted: boolean | null;

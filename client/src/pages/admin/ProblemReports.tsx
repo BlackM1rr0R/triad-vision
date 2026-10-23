@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { STATUS_TONES, toneClasses } from '@/components/ui/status';
 import { Link, useSearchParams } from 'react-router-dom';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
@@ -17,12 +18,7 @@ registerCopy(pagesSite);
 const STATUSES = ['NEW', 'IN_PROGRESS', 'DONE', 'WONT_FIX'] as const;
 type Status = (typeof STATUSES)[number];
 
-const TONE: Record<Status, string> = {
-  NEW: 'bg-amber-100 text-amber-800',
-  IN_PROGRESS: 'bg-brand-100 text-brand-700',
-  DONE: 'bg-emerald-100 text-emerald-800',
-  WONT_FIX: 'bg-slate-200 text-slate-700',
-};
+const TONE: Record<Status, string> = toneClasses(STATUS_TONES.problemReport);
 
 interface ListItem {
   id: string;

@@ -75,7 +75,7 @@ export const ImportExportDialog = ({ open, onClose }: { open: boolean; onClose: 
           <button type="button" onClick={() => void exportCsv()} className="btn-white btn-sm mr-auto border border-line">
             <Download className="size-4" /> {t('ws.contacts.actions.export')}
           </button>
-          <button type="button" onClick={onClose} className="btn-white btn-sm border border-line" disabled={busy}>
+          <button type="button" onClick={onClose} className="btn-secondary btn-sm" disabled={busy}>
             {t('ws.common.close')}
           </button>
           <button type="button" onClick={() => void run()} className="btn-primary btn-sm" disabled={busy || !csv.trim()}>
@@ -143,7 +143,7 @@ export const MergeDialog = ({ open, onClose, contacts, onMerged }: { open: boole
       size="sm"
       footer={
         <>
-          <button type="button" onClick={onClose} className="btn-white btn-sm border border-line" disabled={busy}>
+          <button type="button" onClick={onClose} className="btn-secondary btn-sm" disabled={busy}>
             {t('ws.common.cancel')}
           </button>
           <button type="button" onClick={() => void run()} className="btn-primary btn-sm" disabled={busy || contacts.length < 2 || !keepId}>

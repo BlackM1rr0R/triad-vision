@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import clsx from 'clsx';
+import { Tabs } from '@/components/ui/Tabs';
 import { Check, Eye, Megaphone, Pencil, Pin, Plus, Trash2 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { Markdown } from '@/components/ops/Markdown';
@@ -65,7 +66,7 @@ export const AnnouncementDialog = ({ open, onClose, editing }: { open: boolean; 
       busy={busy}
       footer={
         <>
-          <button type="button" onClick={onClose} className="btn-white btn-sm border border-line" disabled={busy}>
+          <button type="button" onClick={onClose} className="btn-secondary btn-sm" disabled={busy}>
             {t('ws.common.cancel')}
           </button>
           <button type="submit" className="btn-primary btn-sm" disabled={busy || !title.trim() || !body.trim()}>
@@ -81,13 +82,13 @@ export const AnnouncementDialog = ({ open, onClose, editing }: { open: boolean; 
         <div>
           <div className="mb-1.5 flex items-center justify-between">
             <span className="label mb-0">{t('ws.ann.fields.body')}</span>
-            <div className="flex rounded-lg border border-line bg-surface p-0.5" role="tablist">
-              {(['write', 'preview'] as const).map((k) => (
-                <button key={k} type="button" role="tab" aria-selected={tab === k} onClick={() => setTab(k)} className={clsx('rounded-md px-2.5 py-1 text-xs font-semibold', tab === k ? 'bg-card text-ink shadow-sm ring-1 ring-line' : 'text-muted hover:text-ink')}>
-                  {k === 'write' ? t('ws.ann.write') : t('ws.ann.preview')}
-                </button>
-              ))}
-            </div>
+            <Tabs
+              variant="pills"
+              label={t('ws.ann.fields.body')}
+              items={(['write', 'preview'] as const).map((k) => ({ key: k, label: k === 'write' ? t('ws.ann.write') : t('ws.ann.preview') }))}
+              value={tab}
+              onChange={setTab}
+            />
           </div>
           {tab === 'write' ? (
             <textarea value={body} onChange={(e) => setBody(e.target.value)} rows={8} maxLength={20000} placeholder={t('ws.ann.ph.body')} className="input resize-y font-mono text-[0.8rem] leading-relaxed" required />
@@ -124,6 +125,7 @@ export const AnnouncementItem = ({ a, highlight, onEdit }: { a: Announcement; hi
     }
   };
   const remove = async () => {
+    // TODO(ui): ConfirmDialog
     if (!window.confirm(t('ws.common.confirmDelete'))) return;
     try {
       await api.delete(`/workspace/announcements/${a.id}`);

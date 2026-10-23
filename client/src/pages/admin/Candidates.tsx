@@ -127,7 +127,7 @@ const AddToVacancyModal = ({ userId, onClose, presetVacancy }: { userId: string 
       title={t('jobsArea.admin.candidates.addToVacancy')}
       footer={
         <>
-          <button type="button" className="btn-white btn-sm border border-line" onClick={onClose}>
+          <button type="button" className="btn-secondary btn-sm" onClick={onClose}>
             {t('admin.common.cancel')}
           </button>
           <button type="button" className="btn-primary btn-sm" disabled={!vacancyId || m.isPending || empty} onClick={() => m.mutate()}>
@@ -262,7 +262,7 @@ const ApplicationCard = ({ a, userId, onChanged }: { a: CandidateDetail['applica
       <div className="mt-2 flex gap-2">
         <input aria-label={t('jobsArea.admin.staffNote')} className="input py-1.5 text-xs" placeholder={t('jobsArea.admin.staffNote')} value={note} maxLength={5000} onChange={(e) => setNote(e.target.value)} />
         {note !== (a.staffNote ?? '') && (
-          <button type="button" className="btn-white btn-sm border border-line" disabled={patch.isPending} onClick={() => patch.mutate({ staffNote: note.trim() || null })}>
+          <button type="button" className="btn-secondary btn-sm" disabled={patch.isPending} onClick={() => patch.mutate({ staffNote: note.trim() || null })}>
             {t('admin.common.save')}
           </button>
         )}
@@ -311,7 +311,7 @@ const CandidateDrawer = ({ id, onClose, onAdd }: { id: string | null; onClose: (
                 </a>
               )}
               <CvDownloadButton url={`/admin/candidates/${data.id}/cv.pdf`} />
-              <span className={clsx('badge', data.emailVerifiedAt ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800')}>
+              <span className={clsx('badge', data.emailVerifiedAt ? 'bg-success-bg text-success-fg' : 'bg-warning-bg text-warning-fg')}>
                 {data.emailVerifiedAt ? t('jobsArea.admin.verified') : t('jobsArea.admin.unverified')}
               </span>
             </div>
@@ -335,7 +335,7 @@ const CandidateDrawer = ({ id, onClose, onAdd }: { id: string | null; onClose: (
           <Panel
             title={t('jobsArea.admin.candidates.applications', { count: data.applications.length })}
             actions={
-              <button type="button" className="btn-white btn-sm border border-line" onClick={() => onAdd(data.id)}>
+              <button type="button" className="btn-secondary btn-sm" onClick={() => onAdd(data.id)}>
                 <UserPlus className="size-3.5" /> {t('jobsArea.admin.candidates.addToVacancy')}
               </button>
             }
@@ -557,11 +557,11 @@ export default function AdminCandidates() {
 
       {pages > 1 && (
         <nav className="mt-6 flex items-center justify-center gap-2" aria-label={t('admin.common.pagination')}>
-          <button type="button" className="btn-white btn-sm border border-line" disabled={page <= 1} onClick={() => setParam('page', String(page - 1))} aria-label={t('admin.common.prev')}>
+          <button type="button" className="btn-secondary btn-sm" disabled={page <= 1} onClick={() => setParam('page', String(page - 1))} aria-label={t('admin.common.prev')}>
             <ChevronLeft className="size-4" />
           </button>
           <span className="text-xs text-muted">{t('admin.common.pageOf', { page, pages })}</span>
-          <button type="button" className="btn-white btn-sm border border-line" disabled={page >= pages} onClick={() => setParam('page', String(page + 1))} aria-label={t('admin.common.next')}>
+          <button type="button" className="btn-secondary btn-sm" disabled={page >= pages} onClick={() => setParam('page', String(page + 1))} aria-label={t('admin.common.next')}>
             <ChevronRight className="size-4" />
           </button>
         </nav>

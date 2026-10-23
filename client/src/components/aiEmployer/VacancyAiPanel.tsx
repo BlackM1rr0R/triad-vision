@@ -6,6 +6,7 @@ import { AlertTriangle, CheckCircle2, ChevronDown, Info, Languages, Search, Spar
 import { api } from '@/lib/api';
 import { LOCALES, type Locale } from '@/i18n';
 import { Spinner } from '@/components/ui/Spinner';
+import { STATUS_TONES, toneTexts } from '@/components/ui/status';
 import { useJobLabels } from '@/components/jobs/labels';
 import { SECTORS } from '@/components/jobs/types';
 import type { VacancyFormState } from '@/components/company/VacancyForm';
@@ -61,7 +62,7 @@ const fullText = (v: Partial<Record<Locale, string>>): L10nText => ({ az: v.az ?
 const fullLines = (v: Partial<Record<Locale, string[]>>): L10nText => ({ az: (v.az ?? []).join('\n'), de: (v.de ?? []).join('\n'), en: (v.en ?? []).join('\n'), ru: (v.ru ?? []).join('\n') });
 
 const STATUS_ICON = { ok: CheckCircle2, warn: AlertTriangle, fail: XCircle } as const;
-const STATUS_TONE = { ok: 'text-emerald-700', warn: 'text-amber-800', fail: 'text-red-700' } as const;
+const STATUS_TONE = toneTexts(STATUS_TONES.check);
 
 export const VacancyAiPanel = ({
   mode,
@@ -280,10 +281,10 @@ export const VacancyAiPanel = ({
           <div className="border-t border-line pt-3">
             <p className="mb-2 text-xs font-semibold text-ink/80">{t('aiEmployer.vacancy.tools')}</p>
             <div className="flex flex-wrap gap-2">
-              <button type="button" className="btn-white btn-sm border border-line" disabled={!!busy || aiOff || !hasTitle || !hasDesc} onClick={() => void translate()} title={!hasTitle || !hasDesc ? t('aiEmployer.vacancy.needText') : undefined}>
+              <button type="button" className="btn-secondary btn-sm" disabled={!!busy || aiOff || !hasTitle || !hasDesc} onClick={() => void translate()} title={!hasTitle || !hasDesc ? t('aiEmployer.vacancy.needText') : undefined}>
                 {busy === 'translate' ? <Spinner className="size-3.5" /> : <Languages className="size-3.5" />} {t('aiEmployer.vacancy.translate')}
               </button>
-              <button type="button" className="btn-white btn-sm border border-line" disabled={!!busy || aiOff || !hasTitle || !hasDesc} onClick={() => void improve()} title={!hasTitle || !hasDesc ? t('aiEmployer.vacancy.needText') : undefined}>
+              <button type="button" className="btn-secondary btn-sm" disabled={!!busy || aiOff || !hasTitle || !hasDesc} onClick={() => void improve()} title={!hasTitle || !hasDesc ? t('aiEmployer.vacancy.needText') : undefined}>
                 {busy === 'google' ? <Spinner className="size-3.5" /> : <Search className="size-3.5" />} {t('aiEmployer.vacancy.google')}
               </button>
             </div>
@@ -321,7 +322,7 @@ export const VacancyAiPanel = ({
                     <button type="button" className="btn-primary btn-sm" onClick={() => applyGoogle('title')}>
                       {t('aiEmployer.vacancy.applyTitle')}
                     </button>
-                    <button type="button" className="btn-white btn-sm border border-line" onClick={() => setGoogle((g) => (g?.suggestion ? { ...g, suggestion: { ...g.suggestion, title: null } } : g))}>
+                    <button type="button" className="btn-secondary btn-sm" onClick={() => setGoogle((g) => (g?.suggestion ? { ...g, suggestion: { ...g.suggestion, title: null } } : g))}>
                       {t('aiEmployer.common.ignore')}
                     </button>
                   </div>
@@ -340,7 +341,7 @@ export const VacancyAiPanel = ({
                     <button type="button" className="btn-primary btn-sm" onClick={() => applyGoogle('description')}>
                       {t('aiEmployer.vacancy.applyDescription')}
                     </button>
-                    <button type="button" className="btn-white btn-sm border border-line" onClick={() => setGoogle((g) => (g?.suggestion ? { ...g, suggestion: { ...g.suggestion, description: fullText({}) } } : g))}>
+                    <button type="button" className="btn-secondary btn-sm" onClick={() => setGoogle((g) => (g?.suggestion ? { ...g, suggestion: { ...g.suggestion, description: fullText({}) } } : g))}>
                       {t('aiEmployer.common.ignore')}
                     </button>
                   </div>

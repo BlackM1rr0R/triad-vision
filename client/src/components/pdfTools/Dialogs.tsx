@@ -68,7 +68,7 @@ const Footer = ({ busy, disabled, run, onClose }: { busy: boolean; disabled?: bo
   const { t } = useTranslation();
   return (
     <>
-      <button type="button" className="btn-white btn-sm border border-line" onClick={onClose} disabled={busy}>
+      <button type="button" className="btn-secondary btn-sm" onClick={onClose} disabled={busy}>
         {t('pdfTools.common.cancel')}
       </button>
       <button type="submit" form="pdf-tool-form" className="btn-primary btn-sm" disabled={busy || disabled}>
@@ -377,7 +377,7 @@ export const MergeDialog = ({ items, onClose, onDone }: { items: DriveItem[]; on
           ))}
         </ol>
         {list.length < 2 && <p className="text-xs text-amber-700">{t('pdfTools.merge.needTwo')}</p>}
-        <button type="button" className="btn-white btn-sm border border-line" onClick={() => setPicking(true)}>
+        <button type="button" className="btn-secondary btn-sm" onClick={() => setPicking(true)}>
           <Plus className="size-4" /> {t('pdfTools.merge.add')}
         </button>
         <label className="block">

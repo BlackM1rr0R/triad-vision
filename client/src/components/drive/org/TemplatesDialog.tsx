@@ -185,7 +185,7 @@ export default function TemplatesDialog({ onClose }: { onClose: () => void }) {
                 {draft.id && (
                   <button
                     type="button"
-                    className="btn-white btn-sm border border-line text-danger"
+                    className="btn-secondary btn-sm text-danger"
                     disabled={remove.isPending}
                     onClick={() => window.confirm(t('driveOrg.templates.deleteConfirm', { name: draft.name })) && remove.mutate(draft.id!)}
                   >

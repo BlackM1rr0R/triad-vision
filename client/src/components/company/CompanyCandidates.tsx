@@ -64,14 +64,14 @@ const DecisionBox = ({ item, onDone }: { item: Item; onDone: () => void }) => {
       />
       <div className="flex flex-wrap gap-2">
         {item.status === 'PROPOSED' && (
-          <button type="button" className="btn-white btn-sm border border-line" disabled={m.isPending} onClick={() => run('INTERVIEW')}>
+          <button type="button" className="btn-secondary btn-sm" disabled={m.isPending} onClick={() => run('INTERVIEW')}>
             {pending === 'INTERVIEW' ? <Spinner className="size-3.5" /> : <Video className="size-3.5" />} {t('jobsArea.portal.candidates.interview')}
           </button>
         )}
         <button type="button" className="btn-primary btn-sm" disabled={m.isPending} onClick={() => run('ACCEPT')}>
           {pending === 'ACCEPT' ? <Spinner className="size-3.5" /> : <CheckCircle2 className="size-3.5" />} {t('jobsArea.portal.candidates.accept')}
         </button>
-        <button type="button" className="btn-white btn-sm border border-line text-danger" disabled={m.isPending} onClick={() => run('REJECT')}>
+        <button type="button" className="btn-secondary btn-sm text-danger" disabled={m.isPending} onClick={() => run('REJECT')}>
           {pending === 'REJECT' ? <Spinner className="size-3.5" /> : <XCircle className="size-3.5" />} {t('jobsArea.portal.candidates.reject')}
         </button>
       </div>

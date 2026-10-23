@@ -1,4 +1,5 @@
 import { useRef, useState, type ReactNode } from 'react';
+import { STATUS_TONES, toneClasses } from '@/components/ui/status';
 import { compressImage } from '@/lib/imageCompress';
 import { Link } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -31,11 +32,7 @@ const daysUntil = (iso: string) => {
   return Math.round((d.getTime() - now.getTime()) / 86_400_000);
 };
 
-const URGENCY_TONE = {
-  low: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300',
-  medium: 'bg-amber-100 text-amber-800 dark:bg-amber-950/40 dark:text-amber-200',
-  high: 'bg-red-100 text-red-700 dark:bg-red-950/40 dark:text-red-300',
-} as const;
+const URGENCY_TONE = toneClasses(STATUS_TONES.urgency);
 
 const Section = ({ icon: Icon, title, children }: { icon: typeof FileText; title: string; children: ReactNode }) => (
   <section>
@@ -188,11 +185,11 @@ const LetterCard = ({ item, defaultOpen }: { item: LetterItem; defaultOpen?: boo
           <div className="flex flex-wrap items-center gap-2">
             {item.letter.sentAt ? (
               <>
-                <span className="badge bg-emerald-100 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300">
+                <span className="badge bg-success-bg text-success-fg">
                   <CheckCircle2 className="size-3.5" aria-hidden /> {t('aiDocs.letters.sentAt')} · {date(item.letter.sentAt)}
                 </span>
                 {item.letter.sentCaseId && (
-                  <Link to={`/account/cases/${item.letter.sentCaseId}#messages`} className="btn-white btn-sm border border-line">
+                  <Link to={`/account/cases/${item.letter.sentCaseId}#messages`} className="btn-secondary btn-sm">
                     {t('aiDocs.letters.openCase')}
                   </Link>
                 )}
@@ -203,7 +200,7 @@ const LetterCard = ({ item, defaultOpen }: { item: LetterItem; defaultOpen?: boo
                 {send.isPending ? t('aiDocs.letters.sending') : t('aiDocs.letters.sendManager')}
               </button>
             )}
-            <a href={item.fileUrl} target="_blank" rel="noreferrer" className="btn-white btn-sm border border-line">
+            <a href={item.fileUrl} target="_blank" rel="noreferrer" className="btn-secondary btn-sm">
               <ExternalLink className="size-4" aria-hidden /> {t('aiDocs.letters.open')}
             </a>
             <button
@@ -335,6 +332,7 @@ export default function LetterExplain() {
           </div>
         ) : items.length === 0 ? (
           <div className="card flex flex-col items-center px-6 py-10 text-center">
+            {/* TODO(ui): large portal empty state (size-14 icon, display title) -> <EmptyState size="lg" tone="brand"> (portal rework) */}
             <span className="grid size-12 place-items-center rounded-2xl bg-brand-100 text-brand-600">
               <MailQuestion className="size-6" aria-hidden />
             </span>

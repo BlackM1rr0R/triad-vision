@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { STATUS_TONES, toneClasses } from '@/components/ui/status';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
@@ -43,12 +44,7 @@ interface Detail {
   messages: { id: string; author: 'VISITOR' | 'STAFF' | 'SYSTEM'; staffName: string | null; body: string; createdAt: string }[];
 }
 
-const TONE: Record<Status, string> = {
-  WAITING: 'bg-amber-100 text-amber-800',
-  ACTIVE: 'bg-emerald-100 text-emerald-800',
-  CLOSED: 'bg-surface text-muted',
-  MISSED: 'bg-red-100 text-red-700',
-};
+const TONE: Record<Status, string> = toneClasses(STATUS_TONES.liveChat);
 
 /** Workspace → "Canlı söhbətlər": queue of visitor chats handed over by the AI advisor, accept and chat live. */
 export default function LiveChats() {

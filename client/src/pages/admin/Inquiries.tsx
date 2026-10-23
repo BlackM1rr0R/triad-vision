@@ -235,7 +235,7 @@ export default function Inquiries() {
                           </a>
                           {i.phone && (
                             <>
-                              <a href={`tel:${i.phone}`} className="btn-white btn-sm border border-line">
+                              <a href={`tel:${i.phone}`} className="btn-secondary btn-sm">
                                 <Phone className="size-3.5" /> {i.phone}
                               </a>
                               <CallButton target={{ inquiryId: i.id }} phone={i.phone} name={i.contactName} />

@@ -88,7 +88,7 @@ const NewTaskModal = ({ c, open, onClose }: { c: CaseDetail; open: boolean; onCl
       size="lg"
       footer={
         <>
-          <button type="button" className="btn-white btn-sm border border-line" onClick={onClose}>
+          <button type="button" className="btn-secondary btn-sm" onClick={onClose}>
             {t('cp.tasks.cancel')}
           </button>
           <button type="button" className="btn-primary btn-sm" disabled={title.trim().length < 2 || create.isPending} onClick={() => create.mutate()}>
@@ -206,42 +206,43 @@ export const AdminCaseTasks = ({ c }: { c: CaseDetail }) => {
               {task.clientNote && <p className="mt-1 text-xs text-slate-700">{t('cp.tasks.clientNote', { note: task.clientNote })}</p>}
               <div className="mt-2 flex flex-wrap items-center gap-1.5">
                 {task.linkUrl && (
-                  <a href={task.linkUrl} target="_blank" rel="noopener noreferrer" className="btn-white btn-sm border border-line">
+                  <a href={task.linkUrl} target="_blank" rel="noopener noreferrer" className="btn-secondary btn-sm">
                     <ExternalLink className="size-3.5" aria-hidden /> {t('cp.tasks.openLink')}
                   </a>
                 )}
                 {task.attachmentId && (
-                  <a href={fileUrl(task.attachmentId)} target="_blank" rel="noopener noreferrer" className="btn-white btn-sm border border-line">
+                  <a href={fileUrl(task.attachmentId)} target="_blank" rel="noopener noreferrer" className="btn-secondary btn-sm">
                     <Paperclip className="size-3.5" aria-hidden /> {t('cp.tasks.attachment')}
                   </a>
                 )}
                 {task.clientDocumentId && (
-                  <a href={fileUrl(task.clientDocumentId)} target="_blank" rel="noopener noreferrer" className="btn-white btn-sm border border-line">
+                  <a href={fileUrl(task.clientDocumentId)} target="_blank" rel="noopener noreferrer" className="btn-secondary btn-sm">
                     <Paperclip className="size-3.5" aria-hidden /> {t('cp.tasks.clientFile')}
                   </a>
                 )}
                 {task.status === 'OPEN' ? (
                   <>
-                    <button type="button" className="btn-white btn-sm border border-line" onClick={() => remind.mutate(task.id)} disabled={remind.isPending}>
+                    <button type="button" className="btn-secondary btn-sm" onClick={() => remind.mutate(task.id)} disabled={remind.isPending}>
                       <BellRing className="size-3.5" aria-hidden /> {t('cp.tasks.remind')}
                     </button>
-                    <button type="button" className="btn-white btn-sm border border-line" onClick={() => patch.mutate({ id: task.id, status: 'DONE' })}>
+                    <button type="button" className="btn-secondary btn-sm" onClick={() => patch.mutate({ id: task.id, status: 'DONE' })}>
                       <CheckCircle2 className="size-3.5" aria-hidden /> {t('cp.tasks.markDone')}
                     </button>
-                    <button type="button" className="btn-white btn-sm border border-line" onClick={() => patch.mutate({ id: task.id, status: 'CANCELLED' })}>
+                    <button type="button" className="btn-secondary btn-sm" onClick={() => patch.mutate({ id: task.id, status: 'CANCELLED' })}>
                       <XCircle className="size-3.5" aria-hidden /> {t('cp.tasks.cancelTask')}
                     </button>
                   </>
                 ) : (
-                  <button type="button" className="btn-white btn-sm border border-line" onClick={() => patch.mutate({ id: task.id, status: 'OPEN' })}>
+                  <button type="button" className="btn-secondary btn-sm" onClick={() => patch.mutate({ id: task.id, status: 'OPEN' })}>
                     <RotateCcw className="size-3.5" aria-hidden /> {t('cp.tasks.reopen')}
                   </button>
                 )}
                 <button
                   type="button"
-                  className="btn-white btn-sm border border-line text-danger"
+                  className="btn-secondary btn-sm text-danger"
                   aria-label={t('cp.tasks.delete')}
                   onClick={() => {
+                    // TODO(ui): ConfirmDialog
                     if (window.confirm(t('cp.tasks.deleteConfirm'))) remove.mutate(task.id);
                   }}
                 >

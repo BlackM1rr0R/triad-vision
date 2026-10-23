@@ -14,7 +14,7 @@ export const StatusChip = ({ status, className }: { status: OriginalStatus; clas
 export const DaysChip = ({ o }: { o: Pick<Original, 'daysInStatus' | 'overdue'> }) => {
   const { t } = useTranslation();
   return (
-    <span className={clsx('badge inline-flex items-center gap-1 whitespace-nowrap tabular-nums', o.overdue ? 'bg-red-100 text-red-800' : 'bg-surface text-muted')}>
+    <span className={clsx('badge inline-flex items-center gap-1 whitespace-nowrap tabular-nums', o.overdue ? 'bg-danger-bg text-danger-fg' : 'bg-surface text-muted')}>
       {o.overdue && <AlertTriangle className="size-3" aria-hidden />}
       {t('originals.days', { count: o.daysInStatus })}
       {o.overdue && <span className="sr-only">{t('originals.overdue')}</span>}
@@ -60,7 +60,7 @@ export const LabelMenu = ({ caseId, compact }: { caseId: string; compact?: boole
   }, [open]);
   return (
     <div className="relative" ref={ref}>
-      <button type="button" className="btn-white btn-sm border border-line" aria-expanded={open} aria-haspopup="menu" onClick={() => setOpen((v) => !v)} title={t('originals.label.button')}>
+      <button type="button" className="btn-secondary btn-sm" aria-expanded={open} aria-haspopup="menu" onClick={() => setOpen((v) => !v)} title={t('originals.label.button')}>
         <Printer className="size-4" aria-hidden />
         {compact ? <span className="sr-only">{t('originals.label.button')}</span> : t('originals.label.button')}
       </button>
@@ -128,10 +128,10 @@ export const TimelineDrawer = ({ original, open, onClose, onSign }: { original: 
                   </div>
                   {e.actNodeId && (
                     <div className="mt-2 flex flex-wrap gap-2">
-                      <a href={actUrl(e.id)} target="_blank" rel="noopener noreferrer" className="btn-white btn-sm border border-line">
+                      <a href={actUrl(e.id)} target="_blank" rel="noopener noreferrer" className="btn-secondary btn-sm">
                         <FileText className="size-4" aria-hidden /> {t('originals.timeline.openAct')}
                       </a>
-                      <button type="button" className="btn-white btn-sm border border-line" onClick={() => onSign(e.id)}>
+                      <button type="button" className="btn-secondary btn-sm" onClick={() => onSign(e.id)}>
                         <PenLine className="size-4" aria-hidden /> {t('originals.timeline.sign')}
                       </button>
                     </div>

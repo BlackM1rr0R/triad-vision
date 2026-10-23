@@ -22,7 +22,7 @@ export const AgendaView = ({ from, days = 30, items, onOpenItem }: { from: Date;
     <div className="h-full overflow-y-auto overscroll-contain">
       {groups.map(({ day, list }) => (
         <section key={dayKey(day)} className="border-b border-line">
-          <h3 className={clsx('sticky top-0 z-[1] bg-card/95 px-4 py-2 text-xs font-bold tracking-wide uppercase backdrop-blur', isToday(day) ? 'text-brand-600' : 'text-muted')}>{fmtDayLong(day)}</h3>
+          <h3 className={clsx('sticky top-0 z-[1] bg-card px-4 py-2 text-xs font-bold tracking-wide uppercase', isToday(day) ? 'text-brand-600' : 'text-muted')}>{fmtDayLong(day)}</h3>
           <ul className="pb-2">
             {list.map((it) => {
               const raw = it.raw;

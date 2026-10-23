@@ -1,4 +1,5 @@
 import { useEffect, useState, type ReactNode } from 'react';
+import { scoreTone as scoreToneOf, TONE_CLASS } from '@/components/ui/status';
 import { Link, Route, Routes, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
@@ -78,7 +79,7 @@ const StatusPill = ({ status }: { status: RequestStatus }) => {
   return <span className={clsx('badge', REQUEST_STATUS_TONE[status])}>{t(`requests.status.${status}`)}</span>;
 };
 
-const scoreTone = (n: number) => (n >= 80 ? 'bg-emerald-100 text-emerald-800' : n >= 55 ? 'bg-amber-100 text-amber-800' : 'bg-red-100 text-red-700');
+const scoreTone = (n: number) => TONE_CLASS[scoreToneOf(n)];
 
 // ─── List ──────────────────────────────────────────────────────────────
 

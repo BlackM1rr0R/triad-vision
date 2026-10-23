@@ -5,12 +5,16 @@ import type { LucideIcon } from 'lucide-react';
 import { AlertCircle, RefreshCw } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Spinner } from '@/components/ui/Spinner';
+import { Card } from '@/components/ui/Card';
+import { EmptyState as UiEmptyState } from '@/components/ui/EmptyState';
+import { PageHeader } from '@/components/ui/PageHeader';
+import { TONE_CLASS, TONE_TEXT } from '@/components/ui/status';
 import { errorMessage, fmtRelative } from './labels';
 
-/** Bordered admin panel with optional header row. */
+/** Bordered admin panel with optional header row (the design-system Card with admin spacing). */
 export const Panel = ({
   title,
-  icon: IconCmp,
+  icon,
   actions,
   children,
   className,
@@ -25,30 +29,25 @@ export const Panel = ({
   bodyClassName?: string;
   id?: string;
 }) => (
-  <section id={id} className={clsx('min-w-0 rounded-xl border border-line bg-white shadow-[0_1px_2px_rgba(11,31,68,0.04)]', className)}>
-    {(title || actions) && (
-      <header className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 border-b border-line px-5 py-3.5 sm:px-6">
-        {title && (
-          <h2 className="flex min-w-0 items-center gap-2 font-sans text-sm font-semibold text-navy-900">
-            {IconCmp && <IconCmp className="size-4 shrink-0 text-brand-600" aria-hidden />}
-            {title}
-          </h2>
-        )}
-        {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
-      </header>
-    )}
-    <div className={clsx('p-5 sm:p-6', bodyClassName)}>{children}</div>
-  </section>
+  <Card
+    id={id}
+    title={title}
+    icon={icon}
+    actions={actions}
+    className={className}
+    headerClassName="px-5 py-3.5 sm:px-6"
+    padding="none"
+    bodyClassName={clsx('p-5 sm:p-6', bodyClassName)}
+  >
+    {children}
+  </Card>
 );
 
-export const EmptyState = ({ icon: IconCmp, title, children }: { icon: LucideIcon; title: string; children?: ReactNode }) => (
-  <div className="flex flex-col items-center justify-center px-4 py-10 text-center">
-    <div className="mb-3 grid size-11 place-items-center rounded-full bg-surface text-muted">
-      <IconCmp className="size-5" aria-hidden />
-    </div>
-    <p className="text-sm font-semibold text-navy-900">{title}</p>
-    {children && <div className="mt-1 max-w-sm text-sm text-muted">{children}</div>}
-  </div>
+/** Legacy admin signature (icon required, text as children) of the design-system EmptyState. */
+export const EmptyState = ({ icon, title, children }: { icon: LucideIcon; title: string; children?: ReactNode }) => (
+  <UiEmptyState icon={icon} title={title}>
+    {children}
+  </UiEmptyState>
 );
 
 export const LoadingBlock = ({ className }: { className?: string }) => {
@@ -67,7 +66,7 @@ export const ErrorBlock = ({ error, onRetry }: { error: unknown; onRetry?: () =>
       <AlertCircle className="size-6 text-danger" aria-hidden />
       <p className="text-sm font-medium text-red-800">{errorMessage(error, t('admin.common.loadFailed'))}</p>
       {onRetry && (
-        <button type="button" className="btn-white btn-sm border border-line" onClick={onRetry}>
+        <button type="button" className="btn-secondary btn-sm" onClick={onRetry}>
           <RefreshCw className="size-3.5" /> {t('admin.common.retry')}
         </button>
       )}
@@ -76,13 +75,7 @@ export const ErrorBlock = ({ error, onRetry }: { error: unknown; onRetry?: () =>
 };
 
 export const PageHead = ({ title, subtitle, actions }: { title: string; subtitle?: ReactNode; actions?: ReactNode }) => (
-  <div className="mb-6 flex flex-wrap items-end justify-between gap-x-4 gap-y-3">
-    <div className="min-w-0">
-      <h1 className="text-xl font-bold text-navy-900 sm:text-2xl">{title}</h1>
-      {subtitle && <p className="mt-1 text-sm text-muted">{subtitle}</p>}
-    </div>
-    {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
-  </div>
+  <PageHeader title={title} subtitle={subtitle} actions={actions} />
 );
 
 /** Pill toggle (filter chips). */
@@ -174,7 +167,7 @@ export const StatTile = ({
         <p
           className={clsx(
             'mt-1.5 font-display text-2xl font-bold sm:text-[1.75rem]',
-            tone === 'danger' ? 'text-danger' : tone === 'warn' ? 'text-amber-700' : tone === 'good' ? 'text-emerald-700' : 'text-navy-900',
+            tone === 'danger' ? TONE_TEXT.danger : tone === 'warn' ? TONE_TEXT.warning : tone === 'good' ? TONE_TEXT.success : 'text-navy-900',
           )}
         >
           {value}
@@ -185,7 +178,7 @@ export const StatTile = ({
         <span
           className={clsx(
             'grid size-9 shrink-0 place-items-center rounded-lg',
-            tone === 'danger' ? 'bg-red-100 text-red-700' : tone === 'warn' ? 'bg-amber-100 text-amber-700' : tone === 'good' ? 'bg-emerald-100 text-emerald-700' : 'bg-brand-100 text-brand-700',
+            TONE_CLASS[tone === 'danger' ? 'danger' : tone === 'warn' ? 'warning' : tone === 'good' ? 'success' : 'brand'],
           )}
         >
           <IconCmp className="size-[18px]" aria-hidden />

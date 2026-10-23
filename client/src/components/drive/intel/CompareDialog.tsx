@@ -1,11 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
-import { createPortal } from 'react-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
-import { ArrowRight, Download, FileDiff, X } from 'lucide-react';
+import { ArrowRight, Download, FileDiff } from 'lucide-react';
 import { api, formatBytes } from '@/lib/api';
-import { useOverlay } from '@/components/admin/Modal';
+import { Modal } from '@/components/ui/Modal';
 import { Spinner } from '@/components/ui/Spinner';
 import { driveError, startDownload } from '../api';
 import type { DriveItem, VersionRow } from '../types';
@@ -155,7 +154,6 @@ const Result = ({ data }: { data: CompareResponse }) => {
 /** "Versiyaları müqayisə et": version pickers (left = older, right = newer) and the diff by file type. */
 export default function CompareDialog({ item, onClose }: { item: DriveItem; onClose: () => void }) {
   const { t, i18n } = useTranslation();
-  const panelRef = useOverlay(true, onClose);
   const versions = useQuery({
     queryKey: ['drive', 'versions', item.id],
     queryFn: async () => (await api.get<{ versions: VersionRow[] }>(`/drive/nodes/${enc(item.id)}/versions`)).data.versions,
@@ -186,19 +184,21 @@ export default function CompareDialog({ item, onClose }: { item: DriveItem; onCl
     </label>
   );
 
-  return createPortal(
-    <div className="fixed inset-0 z-[85] flex items-stretch justify-center bg-navy-950/50 p-0 sm:p-4" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
-      <div ref={panelRef} role="dialog" aria-modal="true" aria-label={t('driveIntel.compare.title')} tabIndex={-1} className="flex w-full max-w-6xl flex-col overflow-hidden bg-card shadow-2xl outline-none sm:rounded-2xl">
-        <div className="flex items-start gap-3 border-b border-line px-4 py-3 sm:px-5">
-          <FileDiff className="mt-1 size-5 shrink-0 text-brand-600" aria-hidden />
-          <div className="min-w-0 flex-1">
-            <h2 className="text-base font-bold text-ink">{t('driveIntel.compare.title')}</h2>
-            <p className="truncate text-sm text-muted">{item.name}</p>
-          </div>
-          <button type="button" onClick={onClose} className="grid size-10 shrink-0 place-items-center rounded-lg text-muted hover:bg-surface hover:text-ink" aria-label={t('admin.common.close')}>
-            <X className="size-4" />
-          </button>
-        </div>
+  return (
+    <Modal
+      open
+      onClose={onClose}
+      title={t('driveIntel.compare.title')}
+      description={<span className="block truncate">{item.name}</span>}
+      icon={<FileDiff className="mt-1 size-5 shrink-0 text-brand-600" aria-hidden />}
+      closeLabel={t('admin.common.close')}
+      size="2xl"
+      mobile="full"
+      zIndex={85}
+      padded={false}
+      className="sm:min-h-full"
+      bodyClassName="flex flex-col"
+    >
         {versions.isLoading ? (
           <div className="grid flex-1 place-items-center p-10">
             <Spinner className="size-6" />
@@ -214,7 +214,7 @@ export default function CompareDialog({ item, onClose }: { item: DriveItem; onCl
               {cmp.data && (
                 <div className="flex shrink-0 gap-1">
                   {[cmp.data.a, cmp.data.b].map((s) => (
-                    <button key={s.ref} type="button" className="btn-white btn-sm border border-line" onClick={() => startDownload(s.ref === 'current' ? `${s.url}?download=1` : s.url)} title={t('driveIntel.compare.download')}>
+                    <button key={s.ref} type="button" className="btn-secondary btn-sm" onClick={() => startDownload(s.ref === 'current' ? `${s.url}?download=1` : s.url)} title={t('driveIntel.compare.download')}>
                       <Download className="size-3.5" /> v{s.version}
                     </button>
                   ))}
@@ -236,8 +236,6 @@ export default function CompareDialog({ item, onClose }: { item: DriveItem; onCl
             </div>
           </>
         )}
-      </div>
-    </div>,
-    document.body,
+    </Modal>
   );
 }

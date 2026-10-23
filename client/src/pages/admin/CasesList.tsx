@@ -207,7 +207,7 @@ export default function CasesList() {
             {t('admin.cases.notFoundText')}
             {(status || search || mine || overdue || partner) && (
               <div className="mt-3">
-                <button type="button" className="btn-white btn-sm border border-line" onClick={() => setParams({}, { replace: true })}>
+                <button type="button" className="btn-secondary btn-sm" onClick={() => setParams({}, { replace: true })}>
                   <X className="size-3.5" /> {t('admin.cases.resetFilters')}
                 </button>
               </div>
@@ -353,7 +353,7 @@ export default function CasesList() {
               <div className="flex gap-1.5">
                 <button
                   type="button"
-                  className="btn-white btn-sm border border-line"
+                  className="btn-secondary btn-sm"
                   disabled={page <= 1}
                   onClick={() => update({ page: page - 1 > 1 ? String(page - 1) : null })}
                 >
@@ -361,7 +361,7 @@ export default function CasesList() {
                 </button>
                 <button
                   type="button"
-                  className="btn-white btn-sm border border-line"
+                  className="btn-secondary btn-sm"
                   disabled={page >= pages}
                   onClick={() => update({ page: String(page + 1) })}
                 >

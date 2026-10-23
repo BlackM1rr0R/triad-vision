@@ -52,6 +52,7 @@ const Tabs = ({
 }) => {
   const { t } = useTranslation();
   return (
+    // TODO(ui): <Tabs variant="pills" size="sm"> once TabItem supports `title` and a compact size; ids feed the single `${id}-panel`
     <div role="tablist" className="flex gap-1 rounded-lg bg-surface p-0.5">
       {LANGS.map((l) => (
         <button

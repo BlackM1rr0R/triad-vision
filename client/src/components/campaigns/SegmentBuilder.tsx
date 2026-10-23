@@ -273,7 +273,7 @@ export const SegmentBuilder = ({ value, onChange }: { value: Definition; onChang
           </button>
         </fieldset>
       ))}
-      <button type="button" className="btn-white btn-sm border border-line" onClick={() => onChange({ ...value, groups: [...value.groups, { op: 'AND', conditions: [blankCondition('role')] }] })}>
+      <button type="button" className="btn-secondary btn-sm" onClick={() => onChange({ ...value, groups: [...value.groups, { op: 'AND', conditions: [blankCondition('role')] }] })}>
         <Plus className="size-3.5" aria-hidden /> {s('addGroup')}
       </button>
     </div>

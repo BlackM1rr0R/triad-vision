@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { STATUS_TONES, toneClasses } from '@/components/ui/status';
 import { Link } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -159,7 +160,7 @@ const LevelTest = ({ requiredLevel }: { requiredLevel: string | null }) => {
                     </motion.div>
                   </AnimatePresence>
                   <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
-                    <button type="button" className="btn-white border border-line" disabled={index === 0} onClick={() => setIndex((i) => Math.max(0, i - 1))}>
+                    <button type="button" className="btn-secondary" disabled={index === 0} onClick={() => setIndex((i) => Math.max(0, i - 1))}>
                       <ArrowLeft className="size-4" aria-hidden />
                       {t('journey.german.test.back')}
                     </button>
@@ -233,10 +234,10 @@ const LevelTest = ({ requiredLevel }: { requiredLevel: string | null }) => {
                     <CheckCircle2 className="size-4" aria-hidden /> {t('journey.german.test.result.confirmed')}
                   </span>
                 )}
-                <button type="button" className="btn-white border border-line" onClick={() => setReviewing((r) => !r)}>
+                <button type="button" className="btn-secondary" onClick={() => setReviewing((r) => !r)}>
                   {t('journey.german.test.result.review')}
                 </button>
-                <button type="button" className="btn-white border border-line" onClick={() => void restart()}>
+                <button type="button" className="btn-secondary" onClick={() => void restart()}>
                   <RotateCcw className="size-4" aria-hidden />
                   {t('journey.german.test.restart')}
                 </button>
@@ -332,7 +333,7 @@ const CourseCard = ({ c, index }: { c: LanguageCourse; index: number }) => {
 
 // ─── Certificate ────────────────────────────────────────────────────────
 
-const CERT_TONE: Record<CertificateState, string> = { accepted: 'bg-emerald-100 text-emerald-800', pending: 'bg-brand-100 text-brand-700', rejected: 'bg-red-100 text-red-700', missing: 'bg-amber-100 text-amber-800' };
+const CERT_TONE: Record<CertificateState, string> = toneClasses(STATUS_TONES.certificate);
 
 const CertificateCard = ({ status }: { status: ReturnType<typeof useGermanStatus>['data'] }) => {
   const { t } = useTranslation();
@@ -351,7 +352,7 @@ const CertificateCard = ({ status }: { status: ReturnType<typeof useGermanStatus
       {cert ? (
         <>
           {cert.uploadedAt && <p className="mt-2 text-xs text-muted">{date(cert.uploadedAt)}</p>}
-          <Link to={cert.link} className={clsx('mt-4 min-h-10 px-4 py-2 text-sm', cert.status === 'missing' || cert.status === 'rejected' ? 'btn-primary' : 'btn-white border border-line')}>
+          <Link to={cert.link} className={clsx('mt-4 min-h-10 px-4 py-2 text-sm', cert.status === 'missing' || cert.status === 'rejected' ? 'btn-primary' : 'btn-secondary')}>
             {cert.status === 'missing' || cert.status === 'rejected' ? <Upload className="size-4" aria-hidden /> : <ArrowRight className="size-4" aria-hidden />}
             {cert.status === 'missing' || cert.status === 'rejected' ? t('journey.german.certificate.upload') : t('journey.german.certificate.open')}
           </Link>

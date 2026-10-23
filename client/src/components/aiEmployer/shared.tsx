@@ -6,6 +6,7 @@ import { Sparkles } from 'lucide-react';
 import { api } from '@/lib/api';
 import { registerCopy } from '@/i18n';
 import { pagesAiEmployer } from '@/i18n/pagesAiEmployer';
+import { Skeleton } from '@/components/ui/Skeleton';
 
 registerCopy(pagesAiEmployer);
 
@@ -59,7 +60,7 @@ export const AiWorking = ({ lines = 4 }: { lines?: number }) => {
         <Sparkles className="size-3.5 animate-pulse" aria-hidden /> {t('aiEmployer.common.working')}
       </p>
       {Array.from({ length: lines }, (_, i) => (
-        <div key={i} className="h-3 animate-pulse rounded bg-surface" style={{ width: `${92 - ((i * 17) % 40)}%` }} />
+        <Skeleton key={i} className="h-3" rounded="md" style={{ width: `${92 - ((i * 17) % 40)}%` }} />
       ))}
     </div>
   );

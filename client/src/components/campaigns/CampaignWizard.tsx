@@ -213,7 +213,7 @@ export const CampaignWizard = ({ campaign }: { campaign?: Campaign }) => {
       <PageHead
         title={campaign ? w('titleEdit') : w('titleNew')}
         actions={
-          <button type="button" className="btn-white btn-sm border border-line" disabled={!!busy} onClick={() => void run('save')}>
+          <button type="button" className="btn-secondary btn-sm" disabled={!!busy} onClick={() => void run('save')}>
             {busy === 'save' ? <Spinner className="size-3.5" /> : <Save className="size-3.5" aria-hidden />} {w('saveDraft')}
           </button>
         }
@@ -277,7 +277,7 @@ export const CampaignWizard = ({ campaign }: { campaign?: Campaign }) => {
                       </option>
                     ))}
                   </select>
-                  <Link to="/admin/campaigns/segments/new" className="btn-white btn-sm border border-line">
+                  <Link to="/admin/campaigns/segments/new" className="btn-secondary btn-sm">
                     {w('newSegment')}
                   </Link>
                 </div>
@@ -331,7 +331,7 @@ export const CampaignWizard = ({ campaign }: { campaign?: Campaign }) => {
           </Panel>
           <div className="space-y-3">
             <PreviewPane draft={draft} />
-            <button type="button" className="btn-white btn-sm border border-line" disabled={!!busy} onClick={() => void run('test')}>
+            <button type="button" className="btn-secondary btn-sm" disabled={!!busy} onClick={() => void run('test')}>
               {busy === 'test' ? <Spinner className="size-3.5" /> : <FlaskConical className="size-3.5" aria-hidden />} {w('sendTest')}
             </button>
           </div>
@@ -433,7 +433,7 @@ export const CampaignWizard = ({ campaign }: { campaign?: Campaign }) => {
               <button type="button" className="btn-primary" disabled={!!busy || !draft.segmentId || !draft.channels.length} onClick={() => void run('send')}>
                 {busy === 'send' ? <Spinner className="size-4" /> : <Send className="size-4" aria-hidden />} {when === 'now' ? w('sendNow') : w('schedule')}
               </button>
-              <button type="button" className="btn-white border border-line" disabled={!!busy} onClick={() => void run('test')}>
+              <button type="button" className="btn-secondary" disabled={!!busy} onClick={() => void run('test')}>
                 {busy === 'test' ? <Spinner className="size-4" /> : <FlaskConical className="size-4" aria-hidden />} {w('sendTest')}
               </button>
             </div>
@@ -443,7 +443,7 @@ export const CampaignWizard = ({ campaign }: { campaign?: Campaign }) => {
       )}
 
       <div className="mt-5 flex items-center justify-between gap-2">
-        <button type="button" className="btn-white btn-sm border border-line" disabled={idx === 0} onClick={() => setStep(STEPS[Math.max(0, idx - 1)]!)}>
+        <button type="button" className="btn-secondary btn-sm" disabled={idx === 0} onClick={() => setStep(STEPS[Math.max(0, idx - 1)]!)}>
           <ArrowLeft className="size-3.5" aria-hidden /> {w('back')}
         </button>
         {idx < STEPS.length - 1 && (

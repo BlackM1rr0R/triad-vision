@@ -29,6 +29,7 @@ import { api } from '@/lib/api';
 import { useL10n } from '@/lib/l10n';
 import { EmptyState, ErrorBlock, LoadingBlock, Panel, StatTile } from '@/components/admin/ui';
 import { LineChart, SERIES_COLORS, type Series } from '@/components/admin/charts';
+import { statusTone, TONE_BORDER, TONE_CLASS } from '@/components/ui/status';
 import { useFinanceFormat } from './format';
 import type { AgingBucket, ByTypeResponse, CommissionsResponse, FinanceMonth, FinanceRange, FinanceSummary, ReceivablesResponse, StaffRow, TypeRow } from './types';
 
@@ -191,12 +192,12 @@ export const FinanceOverview = ({ range }: { range: FinanceRange }) => {
 
 // ─── Receivables ────────────────────────────────────────────────────────
 
-const BUCKET_TONE: Record<AgingBucket, string> = {
-  '0-30': 'border-emerald-200 bg-emerald-50 text-emerald-800',
-  '31-60': 'border-amber-200 bg-amber-50 text-amber-800',
-  '61-90': 'border-orange-200 bg-orange-50 text-orange-800',
-  '90+': 'border-red-200 bg-red-50 text-red-800',
-};
+const BUCKET_TONE: Record<AgingBucket, string> = Object.fromEntries(
+  (['0-30', '31-60', '61-90', '90+'] as AgingBucket[]).map((b) => {
+    const tone = statusTone('aging', b);
+    return [b, `${TONE_CLASS[tone]} ${TONE_BORDER[tone]}`];
+  }),
+) as Record<AgingBucket, string>;
 
 const BucketChip = ({ bucket }: { bucket: AgingBucket }) => {
   const { t } = useTranslation();

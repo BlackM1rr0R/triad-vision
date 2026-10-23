@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
 import { useSearchParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import clsx from 'clsx';
@@ -12,6 +11,7 @@ import { useRealtime } from '@/lib/realtime';
 import { registerCopy } from '@/i18n';
 import { pagesMessagingPlus } from '@/i18n/pagesMessagingPlus';
 import { Spinner } from '@/components/ui/Spinner';
+import { Modal } from '@/components/ui/Modal';
 import { MessageBody, ShowOriginalsToggle, TranslationNote } from './MessageBody';
 import { VoiceRecorder } from './VoiceRecorder';
 import { LANGS, translatableText, useMessageTranslations, useShowOriginals, type Lang, type TranslationMap, type VoiceInfo } from './useTranslations';
@@ -102,7 +102,7 @@ const StatusTag = ({ m }: { m: PartyMessage }) => {
   const label =
     m.status === 'HELD' ? (m.mine ? null : t('msgPlus.party.heldStaff')) : m.status === 'REJECTED' ? t('msgPlus.party.rejected') : m.status === 'HIDDEN' ? t('msgPlus.party.hidden') : null;
   if (!label) return null;
-  return <span className="badge bg-amber-100 text-[10px] text-amber-800">{label}</span>;
+  return <span className="badge bg-warning-bg text-[10px] text-warning-fg">{label}</span>;
 };
 
 const ModerationBar = ({ m, onAction, busy }: { m: PartyMessage; onAction: (a: string) => void; busy: boolean }) => {
@@ -136,6 +136,7 @@ const ModerationBar = ({ m, onAction, busy }: { m: PartyMessage; onAction: (a: s
         className={clsx(btn, 'text-danger')}
         disabled={busy}
         onClick={() => {
+          // TODO(ui): ConfirmDialog
           if (window.confirm(t('msgPlus.party.deleteConfirm'))) onAction('DELETE');
         }}
       >
@@ -202,14 +203,14 @@ const StaffTools = ({ view, refresh }: { view: ThreadView; refresh: () => void }
         </label>
         <button
           type="button"
-          className="btn-white btn-sm border border-line"
+          className="btn-secondary btn-sm"
           disabled={patch.isPending}
           onClick={() => patch.mutate({ status: view.thread.status === 'OPEN' ? 'CLOSED' : 'OPEN' })}
         >
           {view.thread.status === 'OPEN' ? <Lock className="size-3.5" aria-hidden /> : <Unlock className="size-3.5" aria-hidden />}
           {view.thread.status === 'OPEN' ? t('msgPlus.party.close') : t('msgPlus.party.reopen')}
         </button>
-        {!!view.heldCount && <span className="badge bg-amber-100 text-amber-800">{t('msgPlus.party.heldCount', { count: view.heldCount })}</span>}
+        {!!view.heldCount && <span className="badge bg-warning-bg text-warning-fg">{t('msgPlus.party.heldCount', { count: view.heldCount })}</span>}
       </div>
       <form
         className="flex flex-wrap items-center gap-2"
@@ -226,7 +227,7 @@ const StaffTools = ({ view, refresh }: { view: ThreadView; refresh: () => void }
           ))}
         </select>
         <input aria-label={t('msgPlus.party.pinText')} className="input min-h-9 min-w-0 flex-1 py-1 text-xs" maxLength={300} placeholder={t('msgPlus.party.pinText')} value={text} onChange={(e) => setText(e.target.value)} />
-        <button type="submit" className="btn-white btn-sm border border-line" disabled={!text.trim() || pin.isPending}>
+        <button type="submit" className="btn-secondary btn-sm" disabled={!text.trim() || pin.isPending}>
           <Pin className="size-3.5" aria-hidden /> {t('msgPlus.party.addPin')}
         </button>
       </form>
@@ -410,35 +411,25 @@ const ThreadBody = ({ id }: { id: string }) => {
 /** Dialog with one three-party thread (bottom sheet on phones). No backdrop blur. */
 export const PartyThreadDialog = ({ id, onClose }: { id: string | null; onClose: () => void }) => {
   const { t } = useTranslation();
-  useEffect(() => {
-    if (!id) return;
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    window.addEventListener('keydown', onKey);
-    return () => {
-      document.body.style.overflow = prev;
-      window.removeEventListener('keydown', onKey);
-    };
-  }, [id, onClose]);
-  if (!id) return null;
-  return createPortal(
-    <div className="fixed inset-0 z-[90] flex items-end justify-center sm:items-center sm:p-6">
-      <div className="absolute inset-0 bg-navy-950/60" onClick={onClose} aria-hidden />
-      <div role="dialog" aria-modal="true" aria-label={t('msgPlus.party.title')} className="relative flex h-[92svh] w-full flex-col overflow-hidden rounded-t-3xl bg-white shadow-2xl sm:h-[85vh] sm:max-w-2xl sm:rounded-3xl">
-        <div className="flex items-center gap-3 border-b border-line px-4 py-3">
-          <span className="grid size-9 shrink-0 place-items-center rounded-full bg-brand-100 text-brand-600">
-            <MessagesSquare className="size-4.5" aria-hidden />
-          </span>
-          <h2 className="min-w-0 flex-1 truncate font-display text-base font-bold text-navy-900">{t('msgPlus.party.title')}</h2>
-          <button type="button" onClick={onClose} className="grid size-10 shrink-0 place-items-center rounded-full bg-surface text-navy-900 hover:bg-brand-50" aria-label={t('msgPlus.party.dialogClose')}>
-            <X className="size-5" aria-hidden />
-          </button>
-        </div>
-        <ThreadBody id={id} />
-      </div>
-    </div>,
-    document.body,
+  return (
+    <Modal
+      open={!!id}
+      onClose={onClose}
+      title={t('msgPlus.party.title')}
+      closeLabel={t('msgPlus.party.dialogClose')}
+      icon={
+        <span className="grid size-9 shrink-0 place-items-center rounded-full bg-brand-100 text-brand-600">
+          <MessagesSquare className="size-4.5" aria-hidden />
+        </span>
+      }
+      size="lg"
+      zIndex={90}
+      padded={false}
+      className="h-[92svh] sm:h-[85vh]"
+      bodyClassName="flex flex-col"
+    >
+      {id && <ThreadBody id={id} />}
+    </Modal>
   );
 };
 
@@ -465,7 +456,7 @@ export const PartyThreadButton = ({ applicationId, caseId, className }: { applic
     },
   });
   return (
-    <button type="button" className={clsx('btn-white btn-sm border border-line', className)} disabled={open.isPending} onClick={() => open.mutate()}>
+    <button type="button" className={clsx('btn-secondary btn-sm', className)} disabled={open.isPending} onClick={() => open.mutate()}>
       {open.isPending ? <Spinner className="size-3.5" /> : <MessagesSquare className="size-3.5" aria-hidden />} {t('msgPlus.party.openStaff')}
     </button>
   );

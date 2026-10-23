@@ -103,7 +103,7 @@ export const ReceiveDialog = ({ caseId, open, onClose }: { caseId: string; open:
       description={t('originals.receive.hint')}
       footer={
         <>
-          <button type="button" className="btn-white btn-sm border border-line" onClick={onClose}>
+          <button type="button" className="btn-secondary btn-sm" onClick={onClose}>
             {t('originals.form.cancel')}
           </button>
           <button type="button" className="btn-primary btn-sm" disabled={!valid || save.isPending} onClick={() => save.mutate()}>
@@ -195,7 +195,7 @@ export const EventDialog = ({ originals, open, onClose, initial }: { originals: 
       description={originals.length === 1 ? `${originals[0].title} · ${originals[0].case.client.name}` : t('originals.event.several', { count: originals.length })}
       footer={
         <>
-          <button type="button" className="btn-white btn-sm border border-line" onClick={onClose}>
+          <button type="button" className="btn-secondary btn-sm" onClick={onClose}>
             {t('originals.form.cancel')}
           </button>
           <button type="button" className="btn-primary btn-sm" disabled={!valid || save.isPending} onClick={() => save.mutate()}>
@@ -288,7 +288,7 @@ export const SignActDialog = ({ eventId, open, onClose }: { eventId: string | nu
       title={t('originals.act.signTitle')}
       footer={
         <>
-          <button type="button" className="btn-white btn-sm border border-line" onClick={onClose}>
+          <button type="button" className="btn-secondary btn-sm" onClick={onClose}>
             {t('originals.form.cancel')}
           </button>
           <button type="button" className="btn-primary btn-sm" disabled={(!sig.client && !sig.staff) || save.isPending} onClick={() => save.mutate()}>

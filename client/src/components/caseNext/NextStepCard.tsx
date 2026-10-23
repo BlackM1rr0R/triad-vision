@@ -136,7 +136,7 @@ export const NextStepCard = ({ c }: { c: CaseDetail }) => {
       </label>
       <textarea id="next-msg" className="input min-h-40 text-sm" value={message.body} onChange={(e) => setMessage({ ...message, body: e.target.value })} />
       <div className="mt-2 flex flex-wrap justify-end gap-2">
-        <button type="button" className="btn-white btn-sm border border-line" onClick={() => setMessage(null)} disabled={busy === 'message'}>
+        <button type="button" className="btn-secondary btn-sm" onClick={() => setMessage(null)} disabled={busy === 'message'}>
           {t('admin.common.cancel')}
         </button>
         <button type="button" className="btn-primary btn-sm" disabled={busy === 'message' || !message.body.trim()} onClick={() => void sendMessage()}>
@@ -202,7 +202,7 @@ export const NextStepCard = ({ c }: { c: CaseDetail }) => {
                       <button
                         key={`${a.id}-${ai2}`}
                         type="button"
-                        className={ai2 === 0 ? 'btn-primary btn-sm' : 'btn-white btn-sm border border-line'}
+                        className={ai2 === 0 ? 'btn-primary btn-sm' : 'btn-secondary btn-sm'}
                         disabled={!!busy}
                         onClick={() => void runAction(s, a)}
                       >

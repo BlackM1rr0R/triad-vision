@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { AxiosError } from 'axios';
+import { STATUS_TONES, toneClasses } from '@/components/ui/status';
 import type { TFunction } from 'i18next';
 import { api } from '@/lib/api';
 import { registerCopy } from '@/i18n';
@@ -127,11 +128,7 @@ export const CATEGORY_TONE: Record<TriageCategory, string> = {
   OTHER: 'bg-slate-100 text-slate-600',
 };
 
-export const URGENCY_TONE: Record<TriageUrgency, string> = {
-  URGENT: 'bg-red-100 text-red-700',
-  NORMAL: 'bg-slate-100 text-slate-600',
-  LOW: 'bg-slate-100 text-slate-500',
-};
+export const URGENCY_TONE: Record<TriageUrgency, string> = toneClasses(STATUS_TONES.urgency);
 
 /** Plain text → minimal html for the editor (paragraphs, escaped). */
 export const draftToHtml = (text: string) =>

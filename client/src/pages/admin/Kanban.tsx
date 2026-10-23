@@ -139,7 +139,7 @@ export default function Kanban() {
             <span className="hidden text-xs text-muted sm:inline" title={t('ops.common.autoRefresh')}>
               {data ? t('ops.common.updated', { time: fmtTime(data.generatedAt) }) : null}
             </span>
-            <button type="button" className="btn-white btn-sm border border-line" onClick={() => refetch()} disabled={isFetching}>
+            <button type="button" className="btn-secondary btn-sm" onClick={() => refetch()} disabled={isFetching}>
               <RefreshCw className={clsx('size-3.5', isFetching && 'animate-spin')} /> {t('ops.common.refresh')}
             </button>
           </>

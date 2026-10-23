@@ -14,6 +14,7 @@ import { Spinner } from '@/components/ui/Spinner';
 import { Modal } from '@/components/admin/Modal';
 import { StatusBadge } from '@/components/admin/StatusBadge';
 import { Chip, EmptyState, ErrorBlock, LoadingBlock, PageHead, Switch } from '@/components/admin/ui';
+import { Tabs } from '@/components/ui/Tabs';
 import { fmtDate, fullName } from '@/components/admin/labels';
 import { PARTNERS_KEY, partnerError, type Partner, type PartnerCase, type PartnerCounts } from '@/components/partners/api';
 import { CommissionsPanel, fromCents, toCents } from '@/components/partners/Commissions';
@@ -86,7 +87,7 @@ const PartnerDialog = ({ open, partner, onClose }: { open: boolean; partner: Par
       title={partner ? t('refPartners.edit') : t('refPartners.add')}
       footer={
         <div className="flex justify-end gap-2">
-          <button type="button" className="btn-white btn-sm border border-line" onClick={onClose} disabled={save.isPending}>
+          <button type="button" className="btn-secondary btn-sm" onClick={onClose} disabled={save.isPending}>
             {t('refPartners.form.cancel')}
           </button>
           <button type="submit" form="partner-form" className="btn-primary btn-sm" disabled={save.isPending || !form.name.trim() || commissionInvalid}>
@@ -176,7 +177,7 @@ const PartnerList = ({ isAdmin }: { isAdmin: boolean }) => {
         actions={
           <>
             {isFetching && !isLoading && <Spinner className="size-4 text-brand-600" />}
-            <Link to="/admin/partners/commissions" className="btn-white btn-sm border border-line">
+            <Link to="/admin/partners/commissions" className="btn-secondary btn-sm">
               <HandCoins className="size-4" /> {t('refPartners.allCommissions')}
             </Link>
             {isAdmin && (
@@ -321,19 +322,19 @@ const PartnerDetail = ({ isAdmin }: { isAdmin: boolean }) => {
         }
         actions={
           <>
-            <a href={`/api/admin/partners/${partner.id}/export.xlsx`} className="btn-white btn-sm border border-line" download>
+            <a href={`/api/admin/partners/${partner.id}/export.xlsx`} className="btn-secondary btn-sm" download>
               <Download className="size-3.5" /> {t('refPartners.download')}
             </a>
-            <button type="button" className="btn-white btn-sm border border-line" onClick={() => openFolder.mutate()} disabled={openFolder.isPending}>
+            <button type="button" className="btn-secondary btn-sm" onClick={() => openFolder.mutate()} disabled={openFolder.isPending}>
               {openFolder.isPending ? <Spinner className="size-3.5" /> : partner.folderId === null ? <FolderPlus className="size-3.5" /> : <FolderOpen className="size-3.5" />}{' '}
               {partner.folderId === null ? t('refPartners.noFolder') : t('refPartners.openFolder')}
             </button>
             {isAdmin && (
               <>
-                <button type="button" className="btn-white btn-sm border border-line" onClick={() => setEditing(true)}>
+                <button type="button" className="btn-secondary btn-sm" onClick={() => setEditing(true)}>
                   <Pencil className="size-3.5" /> {t('refPartners.edit')}
                 </button>
-                <button type="button" className="btn-white btn-sm border border-line text-danger" onClick={() => setConfirmDelete(true)}>
+                <button type="button" className="btn-secondary btn-sm text-danger" onClick={() => setConfirmDelete(true)}>
                   <Trash2 className="size-3.5" /> {t('refPartners.delete')}
                 </button>
               </>
@@ -369,13 +370,7 @@ const PartnerDetail = ({ isAdmin }: { isAdmin: boolean }) => {
         <PortalLoginPanel partner={partner} isAdmin={isAdmin} />
       </div>
 
-      <div className="mb-4 flex gap-1.5" role="tablist">
-        {(['clients', 'commissions'] as const).map((k) => (
-          <Chip key={k} active={tab === k} onClick={() => setTab(k)}>
-            {t(`refPartners.tabs.${k}`)}
-          </Chip>
-        ))}
-      </div>
+      <Tabs className="mb-4" label={partner.name} items={(['clients', 'commissions'] as const).map((k) => ({ key: k, label: t(`refPartners.tabs.${k}`) }))} value={tab} onChange={setTab} />
 
       {tab === 'commissions' ? (
         <CommissionsPanel partnerId={partner.id} isAdmin={isAdmin} />

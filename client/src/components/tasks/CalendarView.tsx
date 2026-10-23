@@ -1,5 +1,8 @@
 import { useMemo, useRef, useState } from 'react';
+import { TONE_CLASS } from '@/components/ui/status';
 import clsx from 'clsx';
+import { Spinner } from '@/components/ui/Spinner';
+import { Modal } from '@/components/ui/Modal';
 import { useTranslation } from 'react-i18next';
 import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import type { TaskCard } from './types';
@@ -20,9 +23,9 @@ export const calendarRange = (month: Date) => {
 
 const chipTone = (task: TaskCard) => {
   const s = dueState(task.dueAt, task.status);
-  if (s === 'done') return 'bg-slate-100 text-slate-500 line-through decoration-1';
-  if (s === 'overdue') return 'bg-red-100 text-red-700';
-  if (task.priority === 'URGENT' || task.priority === 'HIGH') return 'bg-amber-100 text-amber-800';
+  if (s === 'done') return `${TONE_CLASS.neutral} line-through decoration-1`;
+  if (s === 'overdue') return TONE_CLASS.danger;
+  if (task.priority === 'URGENT' || task.priority === 'HIGH') return TONE_CLASS.warning;
   return 'bg-brand-50 text-ink';
 };
 
@@ -110,7 +113,7 @@ export const CalendarView = ({
         <button type="button" onClick={() => onMonth(new Date(new Date().getFullYear(), new Date().getMonth(), 1))} className="h-9 rounded-lg border border-line bg-card px-3 text-sm font-semibold text-ink hover:bg-surface">
           {t('tasks.actions.today')}
         </button>
-        {loading && <span className="ml-2 size-4 animate-spin rounded-full border-2 border-brand-500 border-t-transparent" aria-hidden />}
+        {loading && <Spinner className="ml-2 size-4 text-brand-500" />}
         <p className="ml-auto hidden text-xs text-muted xl:block">{t('tasks.calendar.noDue')}</p>
       </div>
 
@@ -208,22 +211,17 @@ export const CalendarView = ({
         </div>
       </div>
 
-      {expanded && (
-        <div className="fixed inset-0 z-[60] grid place-items-center p-4" role="dialog" aria-modal="true">
-          <button type="button" className="absolute inset-0 bg-navy-950/40" onClick={() => setExpanded(null)} aria-label={t('tasks.actions.close')} />
-          <div className="relative w-full max-w-sm rounded-2xl border border-line bg-card p-4 shadow-2xl">
-            <div className="mb-3 flex items-center justify-between">
-              <h3 className="text-sm font-bold text-ink">
-                {weekdayNames()[(new Date(`${expanded}T12:00:00`).getDay() + 6) % 7]}, {Number(expanded.slice(8))} {monthNames()[Number(expanded.slice(5, 7)) - 1]}
-              </h3>
-              <button type="button" onClick={() => setExpanded(null)} className="rounded-lg px-2 py-1 text-xs font-semibold text-muted hover:text-ink">
-                {t('tasks.actions.close')}
-              </button>
-            </div>
-            <div className="max-h-[60vh] space-y-1 overflow-y-auto">{(byDay.get(expanded) ?? []).map(chip)}</div>
-          </div>
-        </div>
-      )}
+      <Modal
+        open={!!expanded}
+        onClose={() => setExpanded(null)}
+        size="sm"
+        zIndex={60}
+        closeLabel={t('tasks.actions.close')}
+        title={expanded ? `${weekdayNames()[(new Date(`${expanded}T12:00:00`).getDay() + 6) % 7]}, ${Number(expanded.slice(8))} ${monthNames()[Number(expanded.slice(5, 7)) - 1]}` : ''}
+        bodyClassName="space-y-1"
+      >
+        {expanded && (byDay.get(expanded) ?? []).map(chip)}
+      </Modal>
     </div>
   );
 };

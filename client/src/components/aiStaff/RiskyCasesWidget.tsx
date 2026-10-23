@@ -7,6 +7,7 @@ import { ShieldAlert, Lightbulb } from 'lucide-react';
 import { api } from '@/lib/api';
 import { Panel } from '@/components/admin/ui';
 import { Spinner } from '@/components/ui/Spinner';
+import { STATUS_TONES, toneClasses } from '@/components/ui/status';
 import { uiLocale } from './shared';
 import { BriefingToggle } from './BriefingSettings';
 
@@ -24,11 +25,7 @@ interface RisksResponse {
   staff: { id: string; name: string }[];
 }
 
-const TONE: Record<Severity, string> = {
-  high: 'bg-red-100 text-red-700',
-  medium: 'bg-amber-100 text-amber-800',
-  low: 'bg-slate-100 text-slate-600',
-};
+const TONE: Record<Severity, string> = toneClasses(STATUS_TONES.severity);
 const SHOWN = 6;
 
 /** "Diqqət tələb edən müraciətlər" on the admin dashboard: deterministic risk rules, own cases by default. */

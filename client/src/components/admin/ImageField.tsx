@@ -89,7 +89,7 @@ export const ImageField = ({
               if (f) void upload(f);
             }}
           />
-          <button type="button" className="btn-white btn-sm border border-line" onClick={() => fileRef.current?.click()} disabled={uploading}>
+          <button type="button" className="btn-secondary btn-sm" onClick={() => fileRef.current?.click()} disabled={uploading}>
             {uploading ? <Spinner className="size-3.5" /> : <Upload className="size-3.5" />}
             {t('admin.image.upload')}
           </button>

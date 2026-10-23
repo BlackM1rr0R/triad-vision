@@ -235,7 +235,7 @@ export default function AdminAnalytics() {
         title={t('growth.analytics.title')}
         subtitle={t('growth.analytics.subtitle')}
         actions={
-          <button type="button" className="btn-white btn-sm border border-line" onClick={() => data && exportCsv(data, stageLabel)} disabled={!data}>
+          <button type="button" className="btn-secondary btn-sm" onClick={() => data && exportCsv(data, stageLabel)} disabled={!data}>
             <Download className="size-3.5" aria-hidden /> {t('growth.analytics.exportCsv')}
           </button>
         }

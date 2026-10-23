@@ -8,6 +8,7 @@ import { ArrowDown, ArrowUp, Columns3, CornerDownRight, ExternalLink, FileDown, 
 import { api, errorCode } from '@/lib/api';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { Spinner } from '@/components/ui/Spinner';
+import { Modal } from '@/components/ui/Modal';
 import { registerCopy } from '@/i18n';
 import { pagesSheet } from '@/i18n/pagesSheet';
 import { Grid, Sep, ToolButton } from '@/components/sheet/Grid';
@@ -409,12 +410,14 @@ export default function AdminClientRegister() {
   }, []);
 
   const discard = () => {
+    // TODO(ui): ConfirmDialog
     if (!pending.size || !window.confirm(t('register.discardConfirm'))) return;
     setPending(new Map());
     setErrors(new Map());
   };
 
   const refresh = async () => {
+    // TODO(ui): ConfirmDialog
     if (pending.size && !window.confirm(t('register.refreshConfirm'))) return;
     setPending(new Map(), false);
     setErrors(new Map());
@@ -539,11 +542,6 @@ function ManageColumns({ columns, onClose, onChanged }: { columns: CustomColumn[
   const [draft, setDraft] = useState<{ label: string; type: ColType; options: string }>({ label: '', type: 'TEXT', options: '' });
   const [busy, setBusy] = useState(false);
   useEffect(() => setList(columns), [columns]);
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [onClose]);
 
   const run = async (fn: () => Promise<unknown>) => {
     setBusy(true);
@@ -576,6 +574,7 @@ function ManageColumns({ columns, onClose, onChanged }: { columns: CustomColumn[
     });
 
   const remove = (c: CustomColumn) => {
+    // TODO(ui): ConfirmDialog
     if (!window.confirm(t('register.manage.confirmDelete', { label: c.label }))) return;
     void run(async () => {
       await api.delete(`/admin/register/columns/${c.id}`);
@@ -593,27 +592,19 @@ function ManageColumns({ columns, onClose, onChanged }: { columns: CustomColumn[
   };
 
   return (
-    <div className="fixed inset-0 z-[90] flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-label={t('register.manageColumns')}>
-      <div className="absolute inset-0 bg-navy-950/60" onClick={onClose} aria-hidden />
-      <div className="relative flex max-h-[88dvh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-line bg-card shadow-2xl">
-        <div className="flex items-center justify-between border-b border-line px-5 py-4">
-          <h2 className="flex items-center gap-2 font-display text-lg font-bold text-ink">
-            <Columns3 size={18} /> {t('register.manageColumns')}
-          </h2>
-          <button type="button" onClick={onClose} className="rounded-full p-2 text-muted hover:bg-surface" aria-label={t('sheet.close')}>
-            <X size={18} />
-          </button>
-        </div>
-        <div className="flex-1 overflow-y-auto px-5 py-4">
-          <p className="mb-3 text-sm text-muted">{t('register.manage.hint')}</p>
-          {!list.length && <p className="rounded-lg border border-dashed border-line p-4 text-center text-sm text-muted">{t('register.manage.empty')}</p>}
-          <ul className="space-y-2">
-            {list.map((c, i) => (
-              <ColumnRow key={c.id} column={c} first={i === 0} last={i === list.length - 1} busy={busy} onUp={() => move(i, -1)} onDown={() => move(i, 1)} onSave={(p) => void update(c, p)} onDelete={() => remove(c)} />
-            ))}
-          </ul>
-        </div>
-        <div className="border-t border-line bg-surface px-5 py-4">
+    <Modal
+      open
+      onClose={onClose}
+      size="xl"
+      zIndex={90}
+      closeLabel={t('sheet.close')}
+      title={
+        <span className="flex items-center gap-2">
+          <Columns3 size={18} /> {t('register.manageColumns')}
+        </span>
+      }
+      footer={
+        <div className="w-full">
           <div className="mb-2 text-xs font-bold tracking-wide text-muted uppercase">{t('register.manage.add')}</div>
           <div className="flex flex-wrap items-start gap-2">
             <input className="input w-48 py-2" placeholder={t('register.manage.label')} value={draft.label} maxLength={80} onChange={(e) => setDraft({ ...draft, label: e.target.value })} />
@@ -630,8 +621,16 @@ function ManageColumns({ columns, onClose, onChanged }: { columns: CustomColumn[
             </button>
           </div>
         </div>
-      </div>
-    </div>
+      }
+    >
+          <p className="mb-3 text-sm text-muted">{t('register.manage.hint')}</p>
+          {!list.length && <p className="rounded-lg border border-dashed border-line p-4 text-center text-sm text-muted">{t('register.manage.empty')}</p>}
+          <ul className="space-y-2">
+            {list.map((c, i) => (
+              <ColumnRow key={c.id} column={c} first={i === 0} last={i === list.length - 1} busy={busy} onUp={() => move(i, -1)} onDown={() => move(i, 1)} onSave={(p) => void update(c, p)} onDelete={() => remove(c)} />
+            ))}
+          </ul>
+    </Modal>
   );
 }
 

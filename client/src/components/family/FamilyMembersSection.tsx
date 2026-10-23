@@ -11,6 +11,7 @@ import type { CaseDetail } from '@/lib/types';
 import { registerCopy } from '@/i18n';
 import { pagesFamilyLanguage } from '@/i18n/pagesFamilyLanguage';
 import { Spinner } from '@/components/ui/Spinner';
+import { STATUS_TONES, toneClasses } from '@/components/ui/status';
 import { StatusBadge } from '@/components/portal/StatusBadge';
 import { CaseDocuments, UPLOAD_STAGE } from '@/components/portal/CaseDocuments';
 import { useApiError } from '@/components/portal/useApiError';
@@ -23,12 +24,7 @@ import { bodyFromForm, emptyMemberForm, formFromProfile, memberName, type Checkl
 registerCopy(pagesFamilyLanguage);
 
 export const RELATION_ICON: Record<FamilyRelation, typeof Heart> = { spouse: Heart, child: Baby, parent: UserRound, other: UserRound };
-export const STATE_TONE: Record<ChecklistState, string> = {
-  accepted: 'bg-emerald-100 text-emerald-800',
-  pending: 'bg-sky-100 text-sky-800',
-  rejected: 'bg-red-100 text-red-700',
-  missing: 'bg-amber-100 text-amber-800',
-};
+export const STATE_TONE: Record<ChecklistState, string> = toneClasses(STATUS_TONES.checklist);
 
 /** Progress bar of the member's required documents. */
 export const MemberProgress = ({ m }: { m: FamilyMemberSummary }) => {
@@ -98,7 +94,7 @@ const MemberCard = ({ m, onEdit, onRemove }: { m: FamilyMemberSummary; onEdit: (
         </div>
         <div className="flex shrink-0 flex-wrap items-center gap-1.5">
           {!m.final && (
-            <button type="button" className="btn-white btn-sm border border-line" onClick={onEdit}>
+            <button type="button" className="btn-secondary btn-sm" onClick={onEdit}>
               <Pencil className="size-3.5" aria-hidden /> {t('familyMembers.edit')}
             </button>
           )}

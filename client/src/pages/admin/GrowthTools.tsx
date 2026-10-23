@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import clsx from 'clsx';
 import { AlertTriangle, Calculator, Gift, Map as MapIcon, Plus, Trash2 } from 'lucide-react';
 import { Chip, LoadingBlock, PageHead, Panel, Switch } from '@/components/admin/ui';
+import { Tabs } from '@/components/ui/Tabs';
 import { L10nInput, emptyL10n } from '@/components/admin/L10nInput';
 import { useCalcConfig } from '@/components/growth/api';
 import { registerCopy } from '@/i18n';
@@ -545,13 +546,7 @@ export default function AdminGrowthTools() {
   return (
     <div>
       <PageHead title={t('gp.admin.toolsTitle')} subtitle={t('gp.admin.toolsSubtitle')} />
-      <div className="mb-5 flex flex-wrap gap-2" role="tablist">
-        {(['calculator', 'map', 'referrals'] as const).map((k) => (
-          <Chip key={k} active={tab === k} onClick={() => setTab(k)}>
-            {t(`gp.admin.tabs.${k}`)}
-          </Chip>
-        ))}
-      </div>
+      <Tabs className="mb-5" label={t('gp.admin.toolsTitle')} items={(['calculator', 'map', 'referrals'] as const).map((k) => ({ key: k, label: t(`gp.admin.tabs.${k}`) }))} value={tab} onChange={setTab} />
       {tab === 'calculator' && <CalculatorTab canEdit={canEdit} />}
       {tab === 'map' && <MapTab canEdit={canEdit} />}
       {tab === 'referrals' && <ReferralsTab canEdit={canEdit} />}

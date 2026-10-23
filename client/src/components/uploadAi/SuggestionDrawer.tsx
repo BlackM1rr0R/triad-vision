@@ -113,7 +113,7 @@ export const SuggestionDrawer = ({
               </button>
             )}
             {i.status === 'PROPOSED' && (
-              <button type="button" className="btn-white btn-sm border border-line" disabled={busy} onClick={() => reject.mutate()}>
+              <button type="button" className="btn-secondary btn-sm" disabled={busy} onClick={() => reject.mutate()}>
                 <X className="size-4" aria-hidden /> {t('uploadAi.staff.reject')}
               </button>
             )}
@@ -122,7 +122,7 @@ export const SuggestionDrawer = ({
                 {reupload.isPending ? <Spinner className="size-3.5" /> : <Undo2 className="size-4" aria-hidden />} {t('uploadAi.staff.reupload')}
               </button>
             )}
-            <button type="button" className="ml-auto btn-white btn-sm border border-line" disabled={busy} onClick={onClose}>
+            <button type="button" className="ml-auto btn-secondary btn-sm" disabled={busy} onClick={onClose}>
               {t('uploadAi.staff.close')}
             </button>
           </div>

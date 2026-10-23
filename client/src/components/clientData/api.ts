@@ -1,5 +1,6 @@
 import { optimizeImage } from '@/lib/imageCompress';
 import { api } from '@/lib/api';
+import { STATUS_TONES, toneClasses } from '@/components/ui/status';
 import { registerCopy } from '@/i18n';
 import { pagesClientData } from '@/i18n/pagesClientData';
 import type { L10n } from '@/lib/types';
@@ -228,10 +229,4 @@ export const uploadCaseFile = async (caseId: string, file: File) => {
   return (await api.post<{ document: { id: string; originalName: string; mimeType: string; size: number } }>(`/client-data/cases/${caseId}/files`, fd)).data.document;
 };
 
-export const CONFIRM_TONE: Record<ConfirmState, string> = {
-  NONE: 'bg-slate-100 text-slate-700',
-  PENDING: 'bg-sky-100 text-sky-800 dark:bg-sky-950/50 dark:text-sky-200',
-  REVIEW: 'bg-amber-100 text-amber-800 dark:bg-amber-950/50 dark:text-amber-200',
-  CONFIRMED: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200',
-  STALE: 'bg-orange-100 text-orange-800 dark:bg-orange-950/50 dark:text-orange-200',
-};
+export const CONFIRM_TONE: Record<ConfirmState, string> = toneClasses(STATUS_TONES.confirmation);

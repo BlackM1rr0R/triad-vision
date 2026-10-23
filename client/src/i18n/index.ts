@@ -8,6 +8,7 @@ import en from './en';
 import ru from './ru';
 import { details } from './details';
 import { extra } from './extra';
+import { uiCopy } from './ui';
 
 export const LOCALES = ['az', 'de', 'en', 'ru'] as const;
 export type Locale = (typeof LOCALES)[number];
@@ -17,10 +18,10 @@ void i18n
   .use(initReactI18next)
   .init({
     resources: {
-      az: { translation: { ...az, ...details.az, ...extra.az } },
-      de: { translation: { ...de, ...details.de, ...extra.de } },
-      en: { translation: { ...en, ...details.en, ...extra.en } },
-      ru: { translation: { ...ru, ...details.ru, ...extra.ru } },
+      az: { translation: { ...az, ...details.az, ...extra.az, ...uiCopy.az } },
+      de: { translation: { ...de, ...details.de, ...extra.de, ...uiCopy.de } },
+      en: { translation: { ...en, ...details.en, ...extra.en, ...uiCopy.en } },
+      ru: { translation: { ...ru, ...details.ru, ...extra.ru, ...uiCopy.ru } },
     },
     fallbackLng: 'az',
     supportedLngs: LOCALES,

@@ -82,7 +82,7 @@ const RequirementRow = ({ caseId, r }: { caseId: string; r: PartnerRequirement }
         {r.canUpload && (
           <>
             <input ref={input} type="file" className="sr-only" accept="application/pdf,image/jpeg,image/png,image/webp,image/heic" onChange={onPick} tabIndex={-1} aria-hidden />
-            <button type="button" className="btn-white btn-sm border border-line" disabled={upload.isPending} onClick={() => input.current?.click()}>
+            <button type="button" className="btn-secondary btn-sm" disabled={upload.isPending} onClick={() => input.current?.click()}>
               {upload.isPending ? <Spinner className="size-3.5" /> : <Upload className="size-3.5" aria-hidden />} {upload.isPending ? t('partnerPortal.detail.uploading') : t('partnerPortal.detail.upload')}
             </button>
           </>

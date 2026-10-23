@@ -185,7 +185,7 @@ const AddMemberModal = ({ caseId, open, onClose }: { caseId: string; open: boole
           <input id="fm-prof" className="input" value={form.profession} onChange={set('profession')} maxLength={120} placeholder={t('journey.family.professionHint')} />
         </div>
         <div className="flex justify-end gap-2 sm:col-span-2">
-          <button type="button" className="btn-white btn-sm border border-line" onClick={onClose}>
+          <button type="button" className="btn-secondary btn-sm" onClick={onClose}>
             {t('journey.admin.common.cancel')}
           </button>
           <button type="submit" className="btn-primary btn-sm" disabled={saving || !form.firstName.trim() || !form.lastName.trim()}>

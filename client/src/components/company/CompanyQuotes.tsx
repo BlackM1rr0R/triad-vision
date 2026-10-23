@@ -8,6 +8,7 @@ import i18n, { registerCopy } from '@/i18n';
 import { pagesQuotes } from '@/i18n/pagesQuotes';
 import { Spinner } from '@/components/ui/Spinner';
 import { QUOTE_STATUS_TONE, QuoteDocument, QuoteRespond, deDate, fmtEur, type CustomerQuote, type QuoteStatus } from '@/components/quotes/QuoteDocument';
+import { EmptyState } from '@/components/ui/EmptyState';
 
 registerCopy(pagesQuotes);
 
@@ -38,7 +39,7 @@ const Failed = ({ onRetry }: { onRetry: () => void }) => {
     <div className="flex flex-col items-center gap-3 rounded-2xl border border-red-200 bg-red-50 p-8 text-center text-sm text-red-800" role="alert">
       <AlertCircle className="size-5" aria-hidden />
       {t('companyQuotes.loadFailed')}
-      <button type="button" className="btn-white btn-sm border border-line" onClick={onRetry}>
+      <button type="button" className="btn-secondary btn-sm" onClick={onRetry}>
         <RefreshCw className="size-3.5" aria-hidden /> {t('companyQuotes.retry')}
       </button>
     </div>
@@ -69,13 +70,7 @@ const QuoteList = () => {
       ) : q.error || !q.data ? (
         <Failed onRetry={() => q.refetch()} />
       ) : q.data.length === 0 ? (
-        <div className="card flex flex-col items-center px-4 py-12 text-center">
-          <span className="grid size-12 place-items-center rounded-full bg-surface text-muted">
-            <FileText className="size-6" aria-hidden />
-          </span>
-          <p className="mt-3 font-semibold text-navy-900">{t('companyQuotes.empty')}</p>
-          <p className="mt-1 text-sm text-muted">{t('companyQuotes.emptyText')}</p>
-        </div>
+        <EmptyState className="card" icon={FileText} title={t('companyQuotes.empty')} text={t('companyQuotes.emptyText')} />
       ) : (
         <ul className="card divide-y divide-line overflow-hidden">
           {q.data.map((x) => (

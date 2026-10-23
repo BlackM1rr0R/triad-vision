@@ -5,6 +5,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import clsx from 'clsx';
+import { Tabs } from '@/components/ui/Tabs';
 import { CalendarDays, Columns3, List, ListTodo, Plus, User, Users } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { registerCopy } from '@/i18n';
@@ -245,24 +246,13 @@ export default function WorkspaceTasks() {
             </div>
           </div>
 
-          <div className="flex rounded-xl border border-line bg-surface p-1" role="tablist" aria-label={t('tasks.title')}>
-            {views.map((v) => (
-              <button
-                key={v.id}
-                type="button"
-                role="tab"
-                aria-selected={view === v.id}
-                onClick={() => setView(v.id)}
-                className={clsx(
-                  'inline-flex h-8 items-center gap-1.5 rounded-lg px-3 text-sm font-semibold transition',
-                  view === v.id ? 'bg-card text-ink shadow-sm ring-1 ring-line' : 'text-muted hover:text-ink',
-                )}
-              >
-                <v.icon className="size-4" aria-hidden />
-                <span className="hidden sm:inline">{v.label}</span>
-              </button>
-            ))}
-          </div>
+          <Tabs
+            variant="pills"
+            label={t('tasks.title')}
+            items={views.map((v) => ({ key: v.id, icon: v.icon, label: <span className="sr-only sm:not-sr-only">{v.label}</span> }))}
+            value={view}
+            onChange={setView}
+          />
 
           <div className="ml-auto flex items-center gap-2">
             <div className="flex rounded-xl border border-line bg-surface p-1">
@@ -356,12 +346,12 @@ export default function WorkspaceTasks() {
               <p className="mt-1.5 text-sm text-muted">{anyFilter ? t('tasks.empty.filteredHint') : t('tasks.empty.boardHint')}</p>
               <div className="mt-5 flex flex-wrap justify-center gap-2">
                 {anyFilter && (
-                  <button type="button" onClick={() => setFilters(EMPTY_FILTERS)} className="btn-white btn-sm border border-line">
+                  <button type="button" onClick={() => setFilters(EMPTY_FILTERS)} className="btn-secondary btn-sm">
                     {t('tasks.filters.clear')}
                   </button>
                 )}
                 {mine && !anyFilter && (
-                  <button type="button" onClick={() => patchSp({ scope: 'all' })} className="btn-white btn-sm border border-line">
+                  <button type="button" onClick={() => patchSp({ scope: 'all' })} className="btn-secondary btn-sm">
                     {t('tasks.scope.allHint')}
                   </button>
                 )}

@@ -315,7 +315,7 @@ export default function AdminInterviewPrep() {
                         </td>
                       )}
                       <td className="px-3 py-2.5">
-                        <span className={clsx('badge mb-1', q.kind === 'EMBASSY' ? 'bg-brand-100 text-brand-800' : 'bg-violet-100 text-violet-800')}>{t(`prep.page.tabs.${q.kind}`)}</span>
+                        <span className={clsx('badge mb-1', q.kind === 'EMBASSY' ? 'bg-brand-100 text-brand-800' : 'bg-accent-bg text-accent-fg')}>{t(`prep.page.tabs.${q.kind}`)}</span>
                         <p className="font-semibold text-ink">{tr(q.question)}</p>
                         <p className="mt-0.5 line-clamp-2 text-xs text-muted" lang="de">
                           {q.answerDe}

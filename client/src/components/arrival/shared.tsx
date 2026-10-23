@@ -4,6 +4,7 @@ import { toast } from 'sonner';
 import clsx from 'clsx';
 import { Check } from 'lucide-react';
 import { errorCode } from '@/lib/api';
+import { STATUS_TONES, toneClasses } from '@/components/ui/status';
 import type { Locale } from '@/i18n';
 
 export type ArrivalStatus = 'DRAFT' | 'SUBMITTED' | 'CONFIRMED' | 'COMPLETED' | 'CANCELLED';
@@ -170,26 +171,14 @@ export const useArrivalError = () => {
 
 // ─── Status pill and timeline ─────────────────────────────────────────────
 
-const TONE: Record<ArrivalStatus, string> = {
-  DRAFT: 'bg-slate-100 text-slate-700',
-  SUBMITTED: 'bg-sky-100 text-sky-800',
-  CONFIRMED: 'bg-emerald-100 text-emerald-800',
-  COMPLETED: 'bg-brand-100 text-brand-800',
-  CANCELLED: 'bg-red-100 text-red-700',
-};
+const TONE: Record<ArrivalStatus, string> = toneClasses(STATUS_TONES.arrival);
 
 export const ArrivalStatusPill = ({ status, className }: { status: ArrivalStatus; className?: string }) => {
   const { t } = useTranslation();
   return <span className={clsx('badge whitespace-nowrap', TONE[status], className)}>{t(`arrival.status.${status}`)}</span>;
 };
 
-const HOUSING_TONE: Record<HousingStatus, string> = {
-  NONE: 'text-muted',
-  REQUESTED: 'bg-amber-100 text-amber-800',
-  SEARCHING: 'bg-sky-100 text-sky-800',
-  OFFERED: 'bg-violet-100 text-violet-800',
-  ARRANGED: 'bg-emerald-100 text-emerald-800',
-};
+const HOUSING_TONE: Record<HousingStatus, string> = { ...toneClasses(STATUS_TONES.housing), NONE: 'text-muted' };
 
 export const HousingPill = ({ status }: { status: HousingStatus }) => {
   const { t } = useTranslation();

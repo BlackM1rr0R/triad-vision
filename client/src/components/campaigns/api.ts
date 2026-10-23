@@ -4,6 +4,7 @@ import { toast } from 'sonner';
 import i18n from '@/i18n';
 import { api, errorCode } from '@/lib/api';
 import { errorMessage } from '@/components/admin/labels';
+import { STATUS_TONES, toneClasses } from '@/components/ui/status';
 import type { CaseStatus, Role } from '@/lib/types';
 
 export type Lang = 'az' | 'de' | 'en' | 'ru';
@@ -242,20 +243,6 @@ export const campaignError = (err: unknown) => {
   } else toast.error(errorMessage(err));
 };
 
-export const STATUS_TONE: Record<CampaignStatus, string> = {
-  DRAFT: 'bg-slate-100 text-slate-700',
-  SCHEDULED: 'bg-sky-100 text-sky-800',
-  SENDING: 'bg-amber-100 text-amber-800',
-  PAUSED: 'bg-orange-100 text-orange-800',
-  COMPLETED: 'bg-emerald-100 text-emerald-800',
-  CANCELLED: 'bg-red-100 text-red-700',
-};
+export const STATUS_TONE: Record<CampaignStatus, string> = toneClasses(STATUS_TONES.campaign);
 
-export const RECIPIENT_TONE: Record<RecipientStatus, string> = {
-  QUEUED: 'bg-slate-100 text-slate-700',
-  SENDING: 'bg-amber-100 text-amber-800',
-  SENT: 'bg-emerald-100 text-emerald-800',
-  FAILED: 'bg-red-100 text-red-700',
-  SKIPPED: 'bg-slate-100 text-slate-600',
-  BOUNCED: 'bg-red-100 text-red-700',
-};
+export const RECIPIENT_TONE: Record<RecipientStatus, string> = toneClasses(STATUS_TONES.recipient);

@@ -8,21 +8,12 @@ import { api } from '@/lib/api';
 import { useRealtime } from '@/lib/realtime';
 import { registerCopy } from '@/i18n';
 import { pagesCalls } from '@/i18n/pagesCalls';
+import { STATUS_TONES, toneClasses } from '@/components/ui/status';
 import { callError, fmtDuration, useCalls, type Call } from './api';
 
 registerCopy(pagesCalls);
 
-const STATUS_TONE: Record<string, string> = {
-  COMPLETED: 'bg-emerald-100 text-emerald-800',
-  IN_PROGRESS: 'bg-brand-100 text-brand-700',
-  RINGING: 'bg-brand-100 text-brand-700',
-  RINGING_STAFF: 'bg-brand-100 text-brand-700',
-  NO_ANSWER: 'bg-amber-100 text-amber-800',
-  BUSY: 'bg-amber-100 text-amber-800',
-  FAILED: 'bg-red-100 text-red-700',
-  CANCELED: 'bg-surface text-muted',
-  QUEUED: 'bg-surface text-muted',
-};
+const STATUS_TONE: Record<string, string> = toneClasses(STATUS_TONES.call);
 
 const fullName = (p: { firstName: string; lastName: string } | null) => (p ? `${p.firstName} ${p.lastName}`.trim() : '');
 

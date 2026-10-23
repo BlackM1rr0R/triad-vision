@@ -83,7 +83,7 @@ const CreateUserModal = ({ open, onClose }: { open: boolean; onClose: () => void
       description={t('admin.users.newStaffDesc')}
       footer={
         <>
-          <button type="button" className="btn-white btn-sm border border-line" onClick={onClose}>
+          <button type="button" className="btn-secondary btn-sm" onClick={onClose}>
             {t('admin.common.cancel')}
           </button>
           <button type="submit" form="create-user" className="btn-primary btn-sm" disabled={!valid || m.isPending}>
@@ -171,7 +171,7 @@ const ResetPasswordModal = ({ user, onClose }: { user: AdminUser | null; onClose
       description={user ? t('admin.users.resetDesc', { name: fullName(user), email: user.email }) : undefined}
       footer={
         <>
-          <button type="button" className="btn-white btn-sm border border-line" onClick={onClose}>
+          <button type="button" className="btn-secondary btn-sm" onClick={onClose}>
             {t('admin.common.cancel')}
           </button>
           <button type="submit" form="reset-pass" className="btn-primary btn-sm" disabled={!ok || patch.isPending}>
@@ -444,7 +444,7 @@ export default function Users() {
             {canManage && (
               <a
                 href="/api/admin/users/clients.xlsx"
-                className="btn-white btn-sm border border-line"
+                className="btn-secondary btn-sm"
                 title={t('admin.users.excelHint')}
                 download
               >

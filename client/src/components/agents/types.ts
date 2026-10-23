@@ -1,3 +1,5 @@
+import { STATUS_TONES, toneClasses } from '@/components/ui/status';
+
 export type PayoutEvent = 'CASE_CREATED' | 'CONTRACT_SIGNED' | 'VISA_APPROVED' | 'INVOICE_PAID';
 export const PAYOUT_EVENTS: PayoutEvent[] = ['CASE_CREATED', 'CONTRACT_SIGNED', 'VISA_APPROVED', 'INVOICE_PAID'];
 export type CommissionStatus = 'PENDING' | 'APPROVED' | 'PAID' | 'CANCELLED';
@@ -61,21 +63,9 @@ export interface AdminReferral {
   case: { id: string; number: string; status: string } | null;
 }
 
-export const STATUS_TONE: Record<CommissionStatus, string> = {
-  PENDING: 'bg-amber-100 text-amber-800',
-  APPROVED: 'bg-brand-100 text-brand-700',
-  PAID: 'bg-emerald-100 text-emerald-800',
-  CANCELLED: 'bg-slate-200 text-slate-600',
-};
+export const STATUS_TONE: Record<CommissionStatus, string> = toneClasses(STATUS_TONES.commission);
 
-export const STAGE_TONE: Record<Stage, string> = {
-  REGISTERED: 'bg-slate-200 text-slate-700',
-  DOCUMENTS: 'bg-amber-100 text-amber-800',
-  CONTRACT: 'bg-violet-100 text-violet-800',
-  EMBASSY: 'bg-brand-100 text-brand-700',
-  APPROVED: 'bg-emerald-100 text-emerald-800',
-  CLOSED: 'bg-slate-200 text-slate-600',
-};
+export const STAGE_TONE: Record<Stage, string> = toneClasses(STATUS_TONES.agentStage);
 
 /** Translated API error for agent pages. */
 export const agentError = (t: (k: string) => string, code: string) => {

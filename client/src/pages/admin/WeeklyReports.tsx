@@ -233,11 +233,11 @@ const ReportView = ({ id }: { id: string }) => {
         </div>
         <div className="flex flex-wrap gap-2">
           {!n && (
-            <button type="button" className="btn-white btn-sm border border-line" disabled={!!busy} onClick={() => void writeNarrative()}>
+            <button type="button" className="btn-secondary btn-sm" disabled={!!busy} onClick={() => void writeNarrative()}>
               {busy === 'narrative' ? <Spinner className="size-3.5" /> : <Languages className="size-3.5" aria-hidden />} {t('aiMgmt.reports.writeInMyLang')}
             </button>
           )}
-          <button type="button" className="btn-white btn-sm border border-line" disabled={!!busy} onClick={() => void emailMe()}>
+          <button type="button" className="btn-secondary btn-sm" disabled={!!busy} onClick={() => void emailMe()}>
             {busy === 'email' ? <Spinner className="size-3.5" /> : <Mail className="size-3.5" aria-hidden />} {t('aiMgmt.reports.emailMe')}
           </button>
         </div>

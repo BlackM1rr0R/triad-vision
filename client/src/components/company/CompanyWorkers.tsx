@@ -9,6 +9,7 @@ import { pagesRequests } from '@/i18n/pagesRequests';
 import { useL10n } from '@/lib/l10n';
 import type { CaseStatus, L10n } from '@/lib/types';
 import { fmtDate, fmtDateTime } from '@/components/admin/labels';
+import { statusTone, TONE_CLASS } from '@/components/ui/status';
 import { Empty, Kpi, Loading, Section } from './shared';
 
 registerCopy(pagesRequests);
@@ -16,17 +17,21 @@ registerCopy(pagesRequests);
 type Stage = 'DOCUMENTS' | 'CONTRACT' | 'EMBASSY' | 'APPOINTMENT' | 'DECISION' | 'APPROVED' | 'ARRIVED' | 'REJECTED' | 'CANCELLED';
 const STAGE_ORDER: Stage[] = ['DOCUMENTS', 'CONTRACT', 'EMBASSY', 'APPOINTMENT', 'DECISION', 'APPROVED', 'ARRIVED', 'REJECTED', 'CANCELLED'];
 
-const STAGE_TONE: Record<Stage, { bar: string; pill: string }> = {
-  DOCUMENTS: { bar: 'bg-slate-400', pill: 'bg-slate-100 text-slate-700' },
-  CONTRACT: { bar: 'bg-sky-500', pill: 'bg-sky-100 text-sky-800' },
-  EMBASSY: { bar: 'bg-indigo-500', pill: 'bg-indigo-100 text-indigo-800' },
-  APPOINTMENT: { bar: 'bg-violet-500', pill: 'bg-violet-100 text-violet-800' },
-  DECISION: { bar: 'bg-amber-500', pill: 'bg-amber-100 text-amber-800' },
-  APPROVED: { bar: 'bg-emerald-500', pill: 'bg-emerald-100 text-emerald-800' },
-  ARRIVED: { bar: 'bg-emerald-700', pill: 'bg-emerald-600 text-white' },
-  REJECTED: { bar: 'bg-red-500', pill: 'bg-red-100 text-red-700' },
-  CANCELLED: { bar: 'bg-slate-300', pill: 'bg-slate-200 text-slate-600' },
+/** `bar` = timeline chart series (categorical: every stage keeps its own hue); `pill` = status tone from status.ts. */
+const STAGE_BAR: Record<Stage, string> = {
+  DOCUMENTS: 'bg-slate-400',
+  CONTRACT: 'bg-sky-500',
+  EMBASSY: 'bg-indigo-500',
+  APPOINTMENT: 'bg-violet-500',
+  DECISION: 'bg-amber-500',
+  APPROVED: 'bg-emerald-500',
+  ARRIVED: 'bg-emerald-700',
+  REJECTED: 'bg-red-500',
+  CANCELLED: 'bg-slate-300',
 };
+const STAGE_TONE: Record<Stage, { bar: string; pill: string }> = Object.fromEntries(
+  STAGE_ORDER.map((s) => [s, { bar: STAGE_BAR[s], pill: s === 'ARRIVED' ? 'bg-success text-white' : TONE_CLASS[statusTone('workerStage', s)] }]),
+) as Record<Stage, { bar: string; pill: string }>;
 
 interface Worker {
   id: string;

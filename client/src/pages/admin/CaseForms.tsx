@@ -121,7 +121,7 @@ const FieldEditor = ({
             </div>
           ))}
           {!readOnly && (
-            <button type="button" className="btn-white btn-sm border border-line" onClick={() => set({ options: [...(f.options ?? []), { value: `option${(f.options?.length ?? 0) + 1}`, label: emptyL10n() }] })}>
+            <button type="button" className="btn-secondary btn-sm" onClick={() => set({ options: [...(f.options ?? []), { value: `option${(f.options?.length ?? 0) + 1}`, label: emptyL10n() }] })}>
               <Plus className="size-3.5" aria-hidden /> {t('clientData.builder.addOption')}
             </button>
           )}
@@ -158,7 +158,7 @@ const FieldEditor = ({
             />
           ))}
           {!readOnly && (
-            <button type="button" className="btn-white btn-sm border border-line" onClick={() => set({ fields: [...(f.fields ?? []), newField('text', (f.fields ?? []).map((x) => x.key))] })}>
+            <button type="button" className="btn-secondary btn-sm" onClick={() => set({ fields: [...(f.fields ?? []), newField('text', (f.fields ?? []).map((x) => x.key))] })}>
               <Plus className="size-3.5" aria-hidden /> {t('clientData.builder.addSubField')}
             </button>
           )}
@@ -302,8 +302,8 @@ export default function CaseFormsPage() {
                 <button type="button" onClick={() => { setDraft(fromTemplate(tp)); setPreview(false); }} className={clsx('flex min-h-11 w-full items-center justify-between gap-2 rounded-lg px-3 py-2 text-left text-sm transition', draft?.id === tp.id ? 'bg-brand-50 font-semibold text-brand-800 dark:bg-brand-950/40 dark:text-brand-200' : 'text-ink hover:bg-surface')}>
                   <span className="min-w-0 break-words">{tr(tp.title)}</span>
                   <span className="flex shrink-0 gap-1">
-                    {tp.builtIn && <span className="badge bg-slate-100 text-[10px] text-slate-600">{t('clientData.builder.builtIn')}</span>}
-                    {!tp.active && <span className="badge bg-amber-100 text-[10px] text-amber-800">{t('clientData.builder.inactive')}</span>}
+                    {tp.builtIn && <span className="badge bg-neutral-bg text-[10px] text-neutral-fg">{t('clientData.builder.builtIn')}</span>}
+                    {!tp.active && <span className="badge bg-warning-bg text-[10px] text-warning-fg">{t('clientData.builder.inactive')}</span>}
                   </span>
                 </button>
               </li>
@@ -321,16 +321,16 @@ export default function CaseFormsPage() {
             icon={ClipboardList}
             actions={
               <>
-                <button type="button" className="btn-white btn-sm border border-line" onClick={() => { setPreview((v) => !v); setPreviewAnswers({}); }}>
+                <button type="button" className="btn-secondary btn-sm" onClick={() => { setPreview((v) => !v); setPreviewAnswers({}); }}>
                   <Eye className="size-3.5" aria-hidden /> {preview ? t('clientData.builder.edit') : t('clientData.builder.preview')}
                 </button>
                 {canEdit && draft.id && (
-                  <button type="button" className="btn-white btn-sm border border-line" onClick={() => setDraft({ ...draft, id: null, builtIn: false, title: { az: `${draft.title.az} (2)`, de: `${draft.title.de} (2)`, en: `${draft.title.en} (2)`, ru: `${draft.title.ru} (2)` } })}>
+                  <button type="button" className="btn-secondary btn-sm" onClick={() => setDraft({ ...draft, id: null, builtIn: false, title: { az: `${draft.title.az} (2)`, de: `${draft.title.de} (2)`, en: `${draft.title.en} (2)`, ru: `${draft.title.ru} (2)` } })}>
                     <Copy className="size-3.5" aria-hidden /> {t('clientData.builder.duplicate')}
                   </button>
                 )}
                 {canEdit && draft.id && (
-                  <button type="button" className="btn-white btn-sm border border-line text-red-700" disabled={busy} onClick={() => void remove()}>
+                  <button type="button" className="btn-secondary btn-sm text-red-700" disabled={busy} onClick={() => void remove()}>
                     <Trash2 className="size-3.5" aria-hidden /> {draft.builtIn ? t('clientData.builder.deactivate') : t('clientData.builder.delete')}
                   </button>
                 )}

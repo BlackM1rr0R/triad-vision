@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { STATUS_TONES, TONE_CLASS, toneClasses } from '@/components/ui/status';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
 import type { LucideIcon } from 'lucide-react';
@@ -58,31 +59,14 @@ export const Kpi = ({ label, value, icon: Icon, tone = 'bg-brand-100 text-brand-
   </div>
 );
 
-const STATUS_TONE: Record<CaseStatus, string> = {
-  DOCUMENTS_PENDING: 'bg-amber-100 text-amber-800',
-  DOCUMENTS_REVIEW: 'bg-sky-100 text-sky-800',
-  CONTRACT_SENT: 'bg-violet-100 text-violet-800',
-  CONTRACT_SIGNED: 'bg-violet-100 text-violet-800',
-  EMBASSY_DOCUMENTS: 'bg-amber-100 text-amber-800',
-  EMBASSY_REVIEW: 'bg-sky-100 text-sky-800',
-  APPOINTMENT_SCHEDULED: 'bg-brand-100 text-brand-800',
-  DECISION_PENDING: 'bg-brand-100 text-brand-800',
-  APPROVED: 'bg-emerald-100 text-emerald-800',
-  REJECTED: 'bg-red-100 text-red-800',
-  CANCELLED: 'bg-surface text-muted',
-};
+const STATUS_TONE: Record<CaseStatus, string> = toneClasses(STATUS_TONES.case);
 
 export const StatusPill = ({ status }: { status: CaseStatus }) => {
   const { t } = useTranslation();
   return <span className={clsx('badge whitespace-nowrap', STATUS_TONE[status])}>{t(`partnerPortal.status.${status}`)}</span>;
 };
 
-const COMMISSION_TONE: Record<CommissionStatus, string> = {
-  PENDING: 'bg-amber-100 text-amber-800',
-  APPROVED: 'bg-brand-100 text-brand-800',
-  PAID: 'bg-emerald-100 text-emerald-800',
-  CANCELLED: 'bg-surface text-muted line-through',
-};
+const COMMISSION_TONE: Record<CommissionStatus, string> = { ...toneClasses(STATUS_TONES.commission), CANCELLED: `${TONE_CLASS.danger} line-through` };
 
 export const CommissionPill = ({ status }: { status: CommissionStatus }) => {
   const { t } = useTranslation();

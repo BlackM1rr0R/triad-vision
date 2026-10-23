@@ -381,7 +381,7 @@ const PaletteDialog = () => {
       onKeyDown={onKeyDown}
       data-lenis-prevent
     >
-      <div className="absolute inset-0 bg-navy-950/60 backdrop-blur-sm" onClick={closeSearch} aria-hidden />
+      <div className="absolute inset-0 bg-scrim" onClick={closeSearch} aria-hidden />
 
       <motion.div
         role="dialog"

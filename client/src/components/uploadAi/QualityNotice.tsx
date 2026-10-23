@@ -67,7 +67,7 @@ export const QualityNotice = ({
                   if (f) onRetake(f);
                 }}
               />
-              <button type="button" className="btn-white btn-sm border border-line" onClick={() => input.current?.click()}>
+              <button type="button" className="btn-secondary btn-sm" onClick={() => input.current?.click()}>
                 <Camera className="size-4" aria-hidden />
                 {t('uploadAi.quality.retake')}
               </button>

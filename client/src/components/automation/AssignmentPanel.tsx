@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { STATUS_TONES, toneClasses } from '@/components/ui/status';
 import { Link } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
@@ -126,7 +127,7 @@ const PrefsModal = ({ row, meta, onClose }: { row: StaffLoadRow | null; meta: Me
       description={t('automation.staff.hint')}
       footer={
         <>
-          <button type="button" className="btn-white btn-sm border border-line" onClick={onClose}>{t('automation.common.cancel')}</button>
+          <button type="button" className="btn-secondary btn-sm" onClick={onClose}>{t('automation.common.cancel')}</button>
           <button type="button" className="btn-primary btn-sm" disabled={save.isPending} onClick={() => save.mutate()}>{save.isPending ? <Spinner className="size-3.5" /> : <Save className="size-3.5" />} {t('automation.common.save')}</button>
         </>
       }
@@ -177,7 +178,7 @@ const StaffTable = ({ staff, meta }: { staff: StaffLoadRow[]; meta: Meta | undef
               <span className="text-xs text-muted">{t('automation.staff.visaTypes')}: {summary(s.prefs.visaTypes, 'visaTypes')}</span>
               <span className="text-xs text-muted">{t('automation.staff.maxOpen')}: {s.prefs.maxOpenCases ?? t('automation.staff.unlimited')}</span>
               <span className="text-xs text-muted">{t('automation.staff.workingDays')}: {s.prefs.workingDays.length ? s.prefs.workingDays.map((d) => t(`automation.staff.weekdays.${d}`)).join(' ') : t('automation.staff.everyDay')}</span>
-              <button type="button" className="btn-white btn-sm border border-line" onClick={() => setEdit(s)}><Pencil className="size-3.5" /> {t('automation.common.edit')}</button>
+              <button type="button" className="btn-secondary btn-sm" onClick={() => setEdit(s)}><Pencil className="size-3.5" /> {t('automation.common.edit')}</button>
             </li>
           ))}
         </ul>
@@ -200,12 +201,12 @@ export const HandoversPanel = () => {
     },
     onError: toastAutomationError,
   });
-  const tone = { ACTIVE: 'bg-amber-100 text-amber-800', RETURNED: 'bg-emerald-100 text-emerald-800', KEPT: 'bg-slate-100 text-slate-700' } as const;
+  const tone = toneClasses(STATUS_TONES.assignment);
   return (
     <Panel
       title={t('automation.handovers.title')}
       icon={RefreshCw}
-      actions={<button type="button" className="btn-white btn-sm border border-line" disabled={run.isPending} onClick={() => run.mutate()}>{run.isPending ? <Spinner className="size-3.5" /> : <RefreshCw className="size-3.5" />} {t('automation.handovers.runNow')}</button>}
+      actions={<button type="button" className="btn-secondary btn-sm" disabled={run.isPending} onClick={() => run.mutate()}>{run.isPending ? <Spinner className="size-3.5" /> : <RefreshCw className="size-3.5" />} {t('automation.handovers.runNow')}</button>}
     >
       {isLoading ? (
         <LoadingBlock className="min-h-32" />

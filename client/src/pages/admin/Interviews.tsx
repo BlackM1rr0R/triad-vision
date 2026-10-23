@@ -106,7 +106,7 @@ const CreateModal = ({ open, onClose, onCreated, staff, companies }: { open: boo
       size="lg"
       footer={
         <>
-          <button type="button" className="btn-white btn-sm border border-line" onClick={onClose}>{t('ops.common.cancel')}</button>
+          <button type="button" className="btn-secondary btn-sm" onClick={onClose}>{t('ops.common.cancel')}</button>
           <button type="button" className="btn-primary btn-sm" disabled={!candidate || !startsAt || create.isPending} onClick={() => create.mutate()}>
             {create.isPending ? <Spinner className="size-3.5" /> : <Plus className="size-3.5" />} {t('ops.common.create')}
           </button>
@@ -121,7 +121,7 @@ const CreateModal = ({ open, onClose, onCreated, staff, companies }: { open: boo
               <span className="min-w-0 truncate">
                 <span className="font-semibold text-navy-900">{fullName(candidate)}</span> <span className="text-muted">· {candidate.email}{candidate.profession ? ` · ${candidate.profession}` : ''}</span>
               </span>
-              <button type="button" className="btn-white btn-sm border border-line" onClick={() => { setCandidate(null); setApplicationId(''); }}>{t('ops.common.edit')}</button>
+              <button type="button" className="btn-secondary btn-sm" onClick={() => { setCandidate(null); setApplicationId(''); }}>{t('ops.common.edit')}</button>
             </div>
           ) : (
             <div className="relative">
@@ -257,20 +257,20 @@ const DetailDrawer = ({ interview: i, onClose, staff }: { interview: Interview |
                 <Check className="size-3.5" /> {t('ops.interviews.actions.confirm')}
               </button>
             )}
-            <button type="button" className="btn-white btn-sm border border-line" onClick={() => setReschedule(toLocalInput(i.startsAt))}>
+            <button type="button" className="btn-secondary btn-sm" onClick={() => setReschedule(toLocalInput(i.startsAt))}>
               <CalendarDays className="size-3.5" /> {t('ops.interviews.actions.reschedule')}
             </button>
             {started && (
               <>
-                <button type="button" className="btn-white btn-sm border border-line" disabled={patch.isPending} onClick={() => patch.mutate({ status: 'DONE' })}>
+                <button type="button" className="btn-secondary btn-sm" disabled={patch.isPending} onClick={() => patch.mutate({ status: 'DONE' })}>
                   <Video className="size-3.5" /> {t('ops.interviews.actions.done')}
                 </button>
-                <button type="button" className="btn-white btn-sm border border-line" disabled={patch.isPending} onClick={() => patch.mutate({ status: 'NO_SHOW' })}>
+                <button type="button" className="btn-secondary btn-sm" disabled={patch.isPending} onClick={() => patch.mutate({ status: 'NO_SHOW' })}>
                   <UserX className="size-3.5" /> {t('ops.interviews.actions.noShow')}
                 </button>
               </>
             )}
-            <button type="button" className="btn-white btn-sm border border-line text-danger" onClick={() => setCancelReason('')}>
+            <button type="button" className="btn-secondary btn-sm text-danger" onClick={() => setCancelReason('')}>
               <Ban className="size-3.5" /> {t('ops.interviews.actions.cancel')}
             </button>
           </div>
@@ -284,7 +284,7 @@ const DetailDrawer = ({ interview: i, onClose, staff }: { interview: Interview |
               <button type="button" className="btn-primary btn-sm" disabled={!reschedule || patch.isPending} onClick={() => patch.mutate({ startsAt: new Date(reschedule).toISOString() })}>
                 {t('ops.common.save')}
               </button>
-              <button type="button" className="btn-white btn-sm border border-line" onClick={() => setReschedule(null)}>{t('ops.common.cancel')}</button>
+              <button type="button" className="btn-secondary btn-sm" onClick={() => setReschedule(null)}>{t('ops.common.cancel')}</button>
             </div>
           </div>
         )}
@@ -296,7 +296,7 @@ const DetailDrawer = ({ interview: i, onClose, staff }: { interview: Interview |
               <button type="button" className="btn-danger btn-sm" disabled={patch.isPending} onClick={() => patch.mutate({ status: 'CANCELLED', reason: cancelReason.trim() || undefined })}>
                 {t('ops.interviews.cancelTitle')}
               </button>
-              <button type="button" className="btn-white btn-sm border border-line" onClick={() => setCancelReason(null)}>{t('ops.common.cancel')}</button>
+              <button type="button" className="btn-secondary btn-sm" onClick={() => setCancelReason(null)}>{t('ops.common.cancel')}</button>
             </div>
           </div>
         )}
@@ -317,7 +317,7 @@ const DetailDrawer = ({ interview: i, onClose, staff }: { interview: Interview |
         </div>
 
         <div className="border-t border-line pt-4">
-          <button type="button" className="btn-white btn-sm border border-line text-danger" onClick={() => setConfirmDelete(true)}>
+          <button type="button" className="btn-secondary btn-sm text-danger" onClick={() => setConfirmDelete(true)}>
             <Trash2 className="size-3.5" /> {t('ops.interviews.actions.delete')}
           </button>
         </div>
@@ -374,7 +374,7 @@ export default function Interviews() {
         {view === 'week' && (
           <div className="flex items-center gap-1">
             <button type="button" className="grid size-9 place-items-center rounded-lg border border-line bg-white hover:bg-surface" onClick={() => setWeekStart(addDays(weekStart, -7))} aria-label={t('ops.interviews.prevWeek')}><ChevronLeft className="size-4" /></button>
-            <button type="button" className="btn-white btn-sm border border-line" onClick={() => setWeekStart(startOfWeek(new Date()))}>{t('ops.interviews.today')}</button>
+            <button type="button" className="btn-secondary btn-sm" onClick={() => setWeekStart(startOfWeek(new Date()))}>{t('ops.interviews.today')}</button>
             <button type="button" className="grid size-9 place-items-center rounded-lg border border-line bg-white hover:bg-surface" onClick={() => setWeekStart(addDays(weekStart, 7))} aria-label={t('ops.interviews.nextWeek')}><ChevronRight className="size-4" /></button>
             <span className="ml-2 text-sm font-semibold text-navy-900">{t('ops.interviews.weekOf', { from: fmtDate(days[0]), to: fmtDate(days[6]) })}</span>
           </div>

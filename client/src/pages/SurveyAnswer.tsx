@@ -198,7 +198,7 @@ export default function SurveyAnswer() {
               <Link to="/review" className="btn-primary">
                 {t('surveyPage.reviewCta')}
               </Link>
-              <Link to="/" className="btn-white border border-line">
+              <Link to="/" className="btn-secondary">
                 {t('surveyPage.home')}
               </Link>
             </div>

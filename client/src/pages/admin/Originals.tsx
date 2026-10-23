@@ -190,7 +190,7 @@ const Originals = () => {
                   </td>
                   <td className="px-3 py-2.5">
                     <div className="flex items-center justify-end gap-1">
-                      <button type="button" className="btn-white btn-sm border border-line" onClick={() => setMoving([r])}>
+                      <button type="button" className="btn-secondary btn-sm" onClick={() => setMoving([r])}>
                         <ArrowRightLeft className="size-4" aria-hidden />
                         <span className="hidden lg:inline">{t('originals.event.title')}</span>
                       </button>

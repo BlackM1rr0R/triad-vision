@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
 import { AlertTriangle, CheckCircle2, Clock3, Download, ThumbsDown, ThumbsUp, XCircle } from 'lucide-react';
 import { Spinner } from '@/components/ui/Spinner';
+import { STATUS_TONES, toneClasses } from '@/components/ui/status';
 
 /** The quote as the employer sees it (GET /api/angebot/:token, GET /api/company/quotes/:id). */
 export type QuoteStatus = 'DRAFT' | 'SENT' | 'VIEWED' | 'ACCEPTED' | 'DECLINED' | 'EXPIRED' | 'CONVERTED';
@@ -38,15 +39,7 @@ export interface CustomerQuote {
   canRespond: boolean;
 }
 
-export const QUOTE_STATUS_TONE: Record<QuoteStatus, string> = {
-  DRAFT: 'bg-slate-100 text-slate-700',
-  SENT: 'bg-brand-100 text-brand-700',
-  VIEWED: 'bg-violet-100 text-violet-700',
-  ACCEPTED: 'bg-emerald-100 text-emerald-800',
-  DECLINED: 'bg-red-100 text-red-700',
-  EXPIRED: 'bg-amber-100 text-amber-800',
-  CONVERTED: 'bg-emerald-100 text-emerald-800',
-};
+export const QUOTE_STATUS_TONE: Record<QuoteStatus, string> = toneClasses(STATUS_TONES.quote);
 
 const eur = new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' });
 export const fmtEur = (cents: number) => eur.format(cents / 100);
@@ -270,7 +263,7 @@ export const QuoteRespond = ({
           <button type="button" className="btn-primary" onClick={() => setMode('accept')}>
             <ThumbsUp className="size-4" aria-hidden /> {t('quotePublic.accept')}
           </button>
-          <button type="button" className="btn-white border border-line" onClick={() => setMode('decline')}>
+          <button type="button" className="btn-secondary" onClick={() => setMode('decline')}>
             <ThumbsDown className="size-4" aria-hidden /> {t('quotePublic.decline')}
           </button>
         </div>
@@ -299,7 +292,7 @@ export const QuoteRespond = ({
             <button type="submit" className="btn-primary" disabled={busy || name.trim().length < 2 || !confirm}>
               {busy && <Spinner className="size-4" />} {t('quotePublic.acceptCta')}
             </button>
-            <button type="button" className="btn-white border border-line" onClick={() => setMode(null)} disabled={busy}>
+            <button type="button" className="btn-secondary" onClick={() => setMode(null)} disabled={busy}>
               {t('quotePublic.cancel')}
             </button>
           </div>
@@ -325,7 +318,7 @@ export const QuoteRespond = ({
             <button type="submit" className="btn-danger" disabled={busy || reason.trim().length < 3}>
               {busy && <Spinner className="size-4" />} {t('quotePublic.declineCta')}
             </button>
-            <button type="button" className="btn-white border border-line" onClick={() => setMode(null)} disabled={busy}>
+            <button type="button" className="btn-secondary" onClick={() => setMode(null)} disabled={busy}>
               {t('quotePublic.cancel')}
             </button>
           </div>

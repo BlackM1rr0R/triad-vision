@@ -108,7 +108,7 @@ const TemplateList = () => {
                 <div className="flex flex-wrap items-center gap-1.5">
                   <span className={clsx('badge', KIND_TONE[x.kind])}>{t(`contractTpl.kinds.${x.kind}`)}</span>
                   <span className="badge bg-surface text-muted uppercase">{x.language}</span>
-                  {x.isDefault && <span className="badge bg-amber-100 text-amber-800">{t('contractTpl.default')}</span>}
+                  {x.isDefault && <span className="badge bg-warning-bg text-warning-fg">{t('contractTpl.default')}</span>}
                   {!x.active && <span className="badge bg-surface text-muted">{t('contractTpl.inactive')}</span>}
                 </div>
                 <p className="mt-2 font-semibold break-words text-ink">{x.name}</p>
@@ -149,7 +149,7 @@ const PlaceholderPicker = ({ defs, onPick, disabled }: { defs: PlaceholderDef[];
                         <span className="block truncate font-medium text-ink">{t(placeholderLabelKey(d.key))}</span>
                         <code className="block truncate text-[10px] text-muted">{`{{${d.key}}}`}</code>
                       </span>
-                      {d.input && <span className="badge shrink-0 bg-amber-100 text-amber-800">{t('contractTpl.inputBadge')}</span>}
+                      {d.input && <span className="badge shrink-0 bg-warning-bg text-warning-fg">{t('contractTpl.inputBadge')}</span>}
                     </button>
                   </li>
                 ))}
@@ -257,7 +257,7 @@ const TemplateEditor = () => {
           canEdit && (
             <>
               {!isNew && (
-                <button type="button" className="btn-white btn-sm border border-line text-danger" onClick={() => setConfirmDelete(true)}>
+                <button type="button" className="btn-secondary btn-sm text-danger" onClick={() => setConfirmDelete(true)}>
                   <Trash2 className="size-3.5" /> {t('contractTpl.delete')}
                 </button>
               )}

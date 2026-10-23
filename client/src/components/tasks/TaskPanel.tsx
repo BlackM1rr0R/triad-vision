@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { AlertCircle, ArrowUpRight, CheckSquare, Hand, Link as LinkIcon, MessageSquare, Paperclip, Pencil, RefreshCw, Trash2, X } from 'lucide-react';
-import { Spinner } from '@/components/ui/Spinner';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { useAuth } from '@/lib/auth';
 import { errorCode } from '@/lib/api';
 import type { Person, TaskDetail, TaskStatus } from './types';
@@ -42,7 +42,7 @@ const Field = ({ label, htmlFor, children }: { label: string; htmlFor?: string; 
   </div>
 );
 
-/** Small confirm dialog (own copy, so the workspace never depends on the admin bundle). */
+/** Task delete confirmation (the design-system ConfirmDialog with the task copy). */
 export const ConfirmBox = ({
   open,
   title,
@@ -61,26 +61,17 @@ export const ConfirmBox = ({
   onClose: () => void;
 }) => {
   const { t } = useTranslation();
-  if (!open) return null;
   return (
-    <div className="fixed inset-0 z-[80] grid place-items-center p-4" role="alertdialog" aria-modal="true" aria-label={title}>
-      <button type="button" className="absolute inset-0 bg-navy-950/45" onClick={() => !busy && onClose()} aria-label={t('tasks.actions.cancel')} />
-      <div className="relative w-full max-w-sm rounded-2xl border border-line bg-card p-5 shadow-2xl">
-        <h3 className="flex items-center gap-2 text-base font-bold text-ink">
-          <AlertCircle className="size-4 text-danger" aria-hidden /> {title}
-        </h3>
-        {message && <p className="mt-2 text-sm leading-relaxed text-muted">{message}</p>}
-        <div className="mt-5 flex justify-end gap-2">
-          <button type="button" autoFocus className="btn-white btn-sm border border-line" onClick={onClose} disabled={busy}>
-            {t('tasks.actions.cancel')}
-          </button>
-          <button type="button" className="btn-danger btn-sm" onClick={onConfirm} disabled={busy}>
-            {busy && <Spinner className="size-3.5" />}
-            {confirmLabel}
-          </button>
-        </div>
-      </div>
-    </div>
+    <ConfirmDialog
+      open={open}
+      busy={busy}
+      title={title}
+      message={message}
+      confirmLabel={confirmLabel}
+      cancelLabel={t('tasks.actions.cancel')}
+      onConfirm={onConfirm}
+      onClose={onClose}
+    />
   );
 };
 
@@ -95,6 +86,8 @@ export const TaskPanel = ({ taskRef, onClose, onDeleted }: { taskRef: string; on
   const actions = useTaskActions();
   const task = query.data;
 
+  // TODO(ui): docked panel (absolute inside the Tasks board on md+, full screen on phones), not a modal
+  // overlay, so it is not the design-system Drawer. Revisit with the workspace layout rework.
   return (
     <motion.aside
       initial={{ x: 40, opacity: 0 }}
@@ -370,7 +363,7 @@ const PanelBody = ({
                 }}
               />
               <div className="mt-2 flex justify-end gap-2">
-                <button type="button" className="btn-white btn-sm border border-line" onClick={() => setEditingDesc(false)}>
+                <button type="button" className="btn-secondary btn-sm" onClick={() => setEditingDesc(false)}>
                   {t('tasks.actions.cancel')}
                 </button>
                 <button

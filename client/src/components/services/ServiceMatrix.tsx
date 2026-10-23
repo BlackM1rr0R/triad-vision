@@ -106,7 +106,7 @@ export const ServiceMatrix = ({ services }: { services: Service[] }) => {
                 </p>
                 <div className="mt-2 flex flex-wrap gap-1.5 text-[11px] font-semibold">
                   {forCompany(s) && <span className="badge bg-brand-50 text-brand-700">{col('company')}</span>}
-                  {forCandidate(s) && <span className="badge bg-emerald-50 text-emerald-700">{col('candidate')}</span>}
+                  {forCandidate(s) && <span className="badge bg-success-bg text-success-fg">{col('candidate')}</span>}
                 </div>
               </div>
             </Link>

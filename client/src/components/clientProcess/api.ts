@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { errorCode } from '@/lib/api';
+import { STATUS_TONES, statusTone, TONE_CLASS, TONE_SOLID, toneClasses } from '@/components/ui/status';
 import { registerCopy } from '@/i18n';
 import { pagesClientProcess } from '@/i18n/pagesClientProcess';
 
@@ -144,17 +145,15 @@ export const useCpError = (area: 'portal' | 'admin' = 'portal') => {
   );
 };
 
-export const STATE_TONE: Record<TaskState, string> = {
-  open: 'bg-slate-100 text-slate-700',
-  due_soon: 'bg-amber-100 text-amber-800',
-  overdue: 'bg-red-100 text-red-700',
-  done: 'bg-emerald-100 text-emerald-800',
-  cancelled: 'bg-slate-100 text-slate-500',
-};
+export const STATE_TONE: Record<TaskState, string> = toneClasses(STATUS_TONES.clientTask);
 
-export const SIDE_TONE: Record<BallSide, { chip: string; bar: string }> = {
-  CLIENT: { chip: 'bg-amber-100 text-amber-800', bar: 'bg-amber-400' },
-  TEAM: { chip: 'bg-sky-100 text-sky-800', bar: 'bg-sky-400' },
-  EMBASSY: { chip: 'bg-violet-100 text-violet-800', bar: 'bg-violet-400' },
-  NONE: { chip: 'bg-slate-100 text-slate-600', bar: 'bg-slate-300' },
-};
+/** Whose move it is: chip tint + solid bar, both from one tone (status.ts `ballSide`). */
+export const SIDE_TONE: Record<BallSide, { chip: string; bar: string }> = (() => {
+  const sides: BallSide[] = ['CLIENT', 'TEAM', 'EMBASSY', 'NONE'];
+  return Object.fromEntries(
+    sides.map((s) => {
+      const tone = statusTone('ballSide', s);
+      return [s, { chip: TONE_CLASS[tone], bar: TONE_SOLID[tone] }];
+    }),
+  ) as Record<BallSide, { chip: string; bar: string }>;
+})();

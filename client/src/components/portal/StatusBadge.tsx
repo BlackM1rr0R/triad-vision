@@ -2,6 +2,7 @@ import clsx from 'clsx';
 import { useTranslation } from 'react-i18next';
 import { CheckCircle2, Clock, XCircle } from 'lucide-react';
 import { STATUS_TONE } from '@/lib/caseStatus';
+import { STATUS_TONES, toneClasses } from '@/components/ui/status';
 import type { CaseStatus, DocStatus } from '@/lib/types';
 
 /** Case status pill (shared by the client portal and the admin panel). */
@@ -15,11 +16,7 @@ export const StatusBadge = ({ status, className }: { status: CaseStatus; classNa
   );
 };
 
-const DOC_TONE: Record<DocStatus, string> = {
-  PENDING: 'bg-brand-100 text-brand-700',
-  ACCEPTED: 'bg-emerald-100 text-emerald-800',
-  REJECTED: 'bg-red-100 text-red-700',
-};
+const DOC_TONE: Record<DocStatus, string> = toneClasses(STATUS_TONES.document);
 
 const DOC_ICON = { PENDING: Clock, ACCEPTED: CheckCircle2, REJECTED: XCircle } as const;
 

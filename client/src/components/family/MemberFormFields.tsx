@@ -139,7 +139,7 @@ export const MemberFormFields = ({
       </div>
 
       <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-        <button type="button" className="btn-white btn-sm border border-line" onClick={onCancel}>
+        <button type="button" className="btn-secondary btn-sm" onClick={onCancel}>
           {t('familyMembers.cancel')}
         </button>
         <button type="submit" className="btn-primary btn-sm" disabled={busy || !f.firstName.trim() || !f.lastName.trim()}>

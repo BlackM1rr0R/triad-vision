@@ -167,7 +167,7 @@ const CreateCompanyModal = ({ open, onClose }: { open: boolean; onClose: () => v
       title={t('jobsArea.admin.companies.new')}
       footer={
         <>
-          <button type="button" className="btn-white btn-sm border border-line" onClick={onClose}>
+          <button type="button" className="btn-secondary btn-sm" onClick={onClose}>
             {t('admin.common.cancel')}
           </button>
           <button type="submit" form="create-company" className="btn-primary btn-sm" disabled={m.isPending || f.name.trim().length < 2 || f.city.trim().length < 2}>
@@ -277,7 +277,7 @@ const CompanyDrawer = ({ id, onClose }: { id: string | null; onClose: () => void
                   </button>
                 )}
                 {data.status !== 'PENDING' && (
-                  <button type="button" className="btn-white btn-sm border border-line" disabled={status.isPending} onClick={() => status.mutate('PENDING')}>
+                  <button type="button" className="btn-secondary btn-sm" disabled={status.isPending} onClick={() => status.mutate('PENDING')}>
                     <RotateCcw className="size-3.5" /> {t('jobsArea.admin.companies.backToPending')}
                   </button>
                 )}
@@ -312,7 +312,7 @@ const CompanyDrawer = ({ id, onClose }: { id: string | null; onClose: () => void
                         {u.email} · {u.locale.toUpperCase()}
                       </p>
                     </div>
-                    <span className={clsx('badge', u.emailVerifiedAt ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800')}>
+                    <span className={clsx('badge', u.emailVerifiedAt ? 'bg-success-bg text-success-fg' : 'bg-warning-bg text-warning-fg')}>
                       {u.emailVerifiedAt ? t('jobsArea.admin.verified') : t('jobsArea.admin.unverified')}
                     </span>
                   </li>
@@ -495,11 +495,11 @@ export default function AdminCompanies() {
 
       {pages > 1 && (
         <nav className="mt-6 flex items-center justify-center gap-2" aria-label={t('admin.common.pagination')}>
-          <button type="button" className="btn-white btn-sm border border-line" disabled={page <= 1} onClick={() => setParam('page', String(page - 1))} aria-label={t('admin.common.prev')}>
+          <button type="button" className="btn-secondary btn-sm" disabled={page <= 1} onClick={() => setParam('page', String(page - 1))} aria-label={t('admin.common.prev')}>
             <ChevronLeft className="size-4" />
           </button>
           <span className="text-xs text-muted">{t('admin.common.pageOf', { page, pages })}</span>
-          <button type="button" className="btn-white btn-sm border border-line" disabled={page >= pages} onClick={() => setParam('page', String(page + 1))} aria-label={t('admin.common.next')}>
+          <button type="button" className="btn-secondary btn-sm" disabled={page >= pages} onClick={() => setParam('page', String(page + 1))} aria-label={t('admin.common.next')}>
             <ChevronRight className="size-4" />
           </button>
         </nav>

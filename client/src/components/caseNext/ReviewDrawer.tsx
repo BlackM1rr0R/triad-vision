@@ -108,7 +108,7 @@ export const ReviewDrawer = ({ open, onClose, c, documentIds, onChanged }: { ope
                     <button type="button" className="btn-primary btn-sm" disabled={!!busy} onClick={() => void one(doc.id, 'ACCEPTED')}>
                       {busy === doc.id ? <Spinner className="size-3.5" /> : <Check className="size-3.5" aria-hidden />} {t('caseNext.review.accept')}
                     </button>
-                    <button type="button" className="btn-white btn-sm border border-line" disabled={!!busy} aria-expanded={rejecting === doc.id} onClick={() => setRejecting(rejecting === doc.id ? null : doc.id)}>
+                    <button type="button" className="btn-secondary btn-sm" disabled={!!busy} aria-expanded={rejecting === doc.id} onClick={() => setRejecting(rejecting === doc.id ? null : doc.id)}>
                       <X className="size-3.5" aria-hidden /> {t('caseNext.review.reject')}
                     </button>
                   </div>
@@ -118,7 +118,7 @@ export const ReviewDrawer = ({ open, onClose, c, documentIds, onChanged }: { ope
                     <p className="mb-2 text-xs text-muted">{t('caseNext.review.reasonsTitle')}</p>
                     <div className="flex flex-wrap gap-2">
                       {REASONS.map((r) => (
-                        <button key={r} type="button" className="btn-white btn-sm border border-line" disabled={!!busy} onClick={() => void one(doc.id, 'REJECTED', (REASON_TEXT[clientLocale] ?? REASON_TEXT.az)[r])}>
+                        <button key={r} type="button" className="btn-secondary btn-sm" disabled={!!busy} onClick={() => void one(doc.id, 'REJECTED', (REASON_TEXT[clientLocale] ?? REASON_TEXT.az)[r])}>
                           {t(`caseNext.review.reasons.${r}`)}
                         </button>
                       ))}

@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { CalendarClock, X } from 'lucide-react';
 import { api } from '@/lib/api';
+import { STATUS_TONES, toneClasses } from '@/components/ui/status';
 import { registerCopy } from '@/i18n';
 import { pagesExpiry } from '@/i18n/pagesExpiry';
 import { useL10n } from '@/lib/l10n';
@@ -32,12 +33,7 @@ export const expiryState = (expiresAt: string, key?: string | null, now = Date.n
   return { days, tone };
 };
 
-export const TONE_CLASS: Record<ExpiryTone, string> = {
-  ok: 'bg-emerald-100 text-emerald-800',
-  soon: 'bg-amber-100 text-amber-800',
-  urgent: 'bg-red-100 text-red-700',
-  expired: 'bg-red-600 text-white',
-};
+export const TONE_CLASS: Record<ExpiryTone, string> = { ...toneClasses(STATUS_TONES.expiry), expired: 'bg-danger text-white' };
 
 /** "valid until 12 Mar 2027 · 40 days left" with the tone colour; nothing when there is no date. */
 export const ExpiryChip = ({ expiresAt, requirementKey, className }: { expiresAt?: string | null; requirementKey?: string | null; className?: string }) => {
@@ -137,7 +133,7 @@ export const ExpiryEditor = ({
         {t('expiry.editor.save')}
       </button>
       {expiresAt && (
-        <button type="button" className="btn-white btn-sm border border-line text-danger" disabled={busy} onClick={() => void save(null)}>
+        <button type="button" className="btn-secondary btn-sm text-danger" disabled={busy} onClick={() => void save(null)}>
           {t('expiry.editor.clear')}
         </button>
       )}

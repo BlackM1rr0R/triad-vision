@@ -159,7 +159,7 @@ const FileInput = ({ caseId, value, onChange, fileNames }: { caseId?: string; va
           }
         }}
       />
-      <button type="button" className="btn-white btn-sm border border-line" disabled={busy || ids.length >= 10} onClick={() => ref.current?.click()}>
+      <button type="button" className="btn-secondary btn-sm" disabled={busy || ids.length >= 10} onClick={() => ref.current?.click()}>
         {busy ? <Spinner className="size-4" /> : <FileUp className="size-4" aria-hidden />} {busy ? t('clientData.common.uploading') : t('clientData.common.upload')}
       </button>
       {error && <p className="text-xs text-red-600">{t('clientData.errors.UPLOAD_FAILED')}</p>}

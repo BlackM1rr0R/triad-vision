@@ -172,6 +172,7 @@ export default function ChatPanel({ scope, context, compact = false, className, 
   };
 
   const deleteConversation = async (id: string) => {
+    // TODO(ui): ConfirmDialog
     if (!window.confirm(t('ai.deleteConfirm'))) return;
     try {
       await api.delete(`/ai/conversations/${id}`);

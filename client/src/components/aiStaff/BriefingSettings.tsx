@@ -75,7 +75,7 @@ export const BriefingSettings = () => {
           {data && <Switch checked={data.enabled} disabled={saving} onChange={(v) => void set(v, t)} label={t('aiStaff.briefing.toggle')} />}
         </span>
         {data?.canTest && (
-          <button type="button" className="btn-white btn-sm border border-line" onClick={() => void test()} disabled={testing}>
+          <button type="button" className="btn-secondary btn-sm" onClick={() => void test()} disabled={testing}>
             {testing ? <Spinner className="size-3.5" /> : <Send className="size-3.5" />} {t('aiStaff.briefing.test')}
           </button>
         )}

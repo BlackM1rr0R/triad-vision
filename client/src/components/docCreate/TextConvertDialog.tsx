@@ -63,7 +63,7 @@ export default function TextConvertDialog({ parentId, onClose, onCreated }: { pa
       title={t('docCreate.fromText.title')}
       footer={
         <>
-          <button type="button" className="btn-white btn-sm border border-line" onClick={onClose} disabled={create.isPending}>
+          <button type="button" className="btn-secondary btn-sm" onClick={onClose} disabled={create.isPending}>
             {t('docCreate.editor.close')}
           </button>
           <button type="button" className="btn-primary btn-sm" disabled={!text.trim() || create.isPending || text.length > MAX_CHARS} onClick={() => create.mutate()}>

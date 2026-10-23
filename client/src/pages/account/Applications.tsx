@@ -90,6 +90,7 @@ export default function AccountApplications() {
 
       {items.length === 0 ? (
         <div className="card flex flex-col items-center px-6 py-14 text-center">
+          {/* TODO(ui): large portal empty state (size-14 icon, display title) -> <EmptyState size="lg" tone="brand"> (portal rework) */}
           <span className="grid size-14 place-items-center rounded-full bg-brand-50 text-brand-600">
             <Briefcase className="size-6" aria-hidden />
           </span>
@@ -122,7 +123,7 @@ export default function AccountApplications() {
                         </span>
                       )}
                       <span>{t('jobsArea.applications.appliedOn', { date: fmtDate(a.createdAt) })}</span>
-                      {!a.vacancy.isOpen && <span className="badge bg-slate-100 text-slate-600">{t('jobsArea.applications.closedVacancy')}</span>}
+                      {!a.vacancy.isOpen && <span className="badge bg-neutral-bg text-neutral-fg">{t('jobsArea.applications.closedVacancy')}</span>}
                     </p>
                   </div>
                   <span className={clsx('badge shrink-0', APPLICATION_STATUS_TONE[a.status])}>{L.appStatus(a.status)}</span>

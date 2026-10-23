@@ -54,7 +54,7 @@ const ChangeLine = ({ it, showEntity, onRevert }: { it: HistoryItem; showEntity:
         </p>
         {(reverted || it.revertOfId) && (
           <p className="mt-0.5 flex flex-wrap gap-1.5">
-            {reverted && <span className="badge bg-amber-100 text-amber-800">{t('history.reverted')}</span>}
+            {reverted && <span className="badge bg-warning-bg text-warning-fg">{t('history.reverted')}</span>}
             {it.revertOfId && <span className="badge bg-surface text-muted">{t('history.isRevert')}</span>}
           </p>
         )}

@@ -70,7 +70,7 @@ export default function AccountInterviews() {
         <button type="button" className="btn-primary btn-sm" disabled={confirm.isPending} onClick={() => confirm.mutate(i.id)}>
           {confirm.isPending && confirm.variables === i.id ? <Spinner className="size-3.5" /> : <CheckCircle2 className="size-3.5" />} {t('ops.account.confirm')}
         </button>
-        <button type="button" className="btn-white btn-sm border border-line text-danger" onClick={() => setDeclining(i)}>
+        <button type="button" className="btn-secondary btn-sm text-danger" onClick={() => setDeclining(i)}>
           <XCircle className="size-3.5" /> {t('ops.account.decline')}
         </button>
       </>
@@ -91,6 +91,7 @@ export default function AccountInterviews() {
         <h3 className="mb-3 text-sm font-bold text-navy-900">{t('ops.account.upcoming')}</h3>
         {data.upcoming.length === 0 ? (
           <div className="card flex flex-col items-center px-6 py-12 text-center">
+            {/* TODO(ui): large portal empty state (size-14 icon, display title) -> <EmptyState size="lg" tone="brand"> (portal rework) */}
             <span className="grid size-14 place-items-center rounded-full bg-brand-50 text-brand-600">
               <Video className="size-6" aria-hidden />
             </span>
@@ -130,7 +131,7 @@ export default function AccountInterviews() {
         description={t('ops.account.declineText')}
         footer={
           <>
-            <button type="button" className="btn-white btn-sm border border-line" onClick={() => setDeclining(null)}>{t('ops.common.cancel')}</button>
+            <button type="button" className="btn-secondary btn-sm" onClick={() => setDeclining(null)}>{t('ops.common.cancel')}</button>
             <button type="button" className="btn-danger btn-sm" disabled={decline.isPending} onClick={() => declining && decline.mutate({ id: declining.id, reason })}>
               {decline.isPending ? <Spinner className="size-3.5" /> : <XCircle className="size-3.5" />} {t('ops.account.decline')}
             </button>

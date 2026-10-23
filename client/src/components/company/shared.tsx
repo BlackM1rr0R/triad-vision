@@ -3,6 +3,8 @@ import { useQuery } from '@tanstack/react-query';
 import clsx from 'clsx';
 import type { LucideIcon } from 'lucide-react';
 import { api } from '@/lib/api';
+import { TONE_CLASS } from '@/components/ui/status';
+import { EmptyState as UiEmptyState } from '@/components/ui/EmptyState';
 import type { Company } from '@/components/jobs/types';
 
 export const useCompany = () =>
@@ -41,15 +43,9 @@ export const Section = ({
   </section>
 );
 
-export const Empty = ({ icon: Icon, title, text, children }: { icon: LucideIcon; title: string; text?: string; children?: ReactNode }) => (
-  <div className="flex flex-col items-center px-4 py-10 text-center">
-    <span className="grid size-12 place-items-center rounded-full bg-brand-50 text-brand-600">
-      <Icon className="size-5" aria-hidden />
-    </span>
-    <p className="mt-3 font-semibold text-navy-900">{title}</p>
-    {text && <p className="mt-1 max-w-md text-sm text-muted">{text}</p>}
-    {children && <div className="mt-4">{children}</div>}
-  </div>
+/** Employer-portal empty state: the design-system EmptyState with the brand-tinted icon; `children` is the action. */
+export const Empty = ({ icon, title, text, children }: { icon: LucideIcon; title: string; text?: string; children?: ReactNode }) => (
+  <UiEmptyState icon={icon} title={title} text={text} action={children} tone="brand" />
 );
 
 export const Kpi = ({ label, value, hint, icon: Icon, tone }: { label: string; value: ReactNode; hint?: string; icon: LucideIcon; tone?: 'brand' | 'good' | 'warn' | 'violet' }) => (
@@ -62,7 +58,7 @@ export const Kpi = ({ label, value, hint, icon: Icon, tone }: { label: string; v
     <span
       className={clsx(
         'grid size-10 shrink-0 place-items-center rounded-xl',
-        tone === 'good' ? 'bg-emerald-100 text-emerald-700' : tone === 'warn' ? 'bg-amber-100 text-amber-700' : tone === 'violet' ? 'bg-violet-100 text-violet-700' : 'bg-brand-100 text-brand-700',
+        TONE_CLASS[tone === 'good' ? 'success' : tone === 'warn' ? 'warning' : tone === 'violet' ? 'accent' : 'brand'],
       )}
     >
       <Icon className="size-5" aria-hidden />

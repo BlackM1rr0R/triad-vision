@@ -69,7 +69,7 @@ export const ManualCommissionDialog = ({
       description={t('agents.admin.com.manualText')}
       footer={
         <>
-          <button type="button" className="btn-white btn-sm border border-line" onClick={onClose}>
+          <button type="button" className="btn-secondary btn-sm" onClick={onClose}>
             {t('agents.common.cancel')}
           </button>
           <button type="button" className="btn-primary btn-sm" disabled={!valid || save.isPending} onClick={() => save.mutate()}>

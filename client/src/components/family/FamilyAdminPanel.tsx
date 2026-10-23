@@ -238,7 +238,7 @@ export const FamilyAdminPanel = ({ caseId, parentCaseId }: { caseId: string; par
         title={`${t('familyMembers.member')}: ${memberName(me)}`}
         icon={IdCard}
         actions={
-          <button type="button" className="btn-white btn-sm border border-line" onClick={() => setEditing(me)}>
+          <button type="button" className="btn-secondary btn-sm" onClick={() => setEditing(me)}>
             <Pencil className="size-3.5" aria-hidden /> {t('familyMembers.edit')}
           </button>
         }

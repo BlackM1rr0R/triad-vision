@@ -50,7 +50,7 @@ export const GermanStaffPanel = ({ userId }: { userId: string }) => {
       icon={GraduationCap}
       id="case-german"
       actions={
-        <button type="button" className="btn-white btn-sm border border-line" onClick={() => setOpen(true)} aria-label={t('germanProgress.title')}>
+        <button type="button" className="btn-secondary btn-sm" onClick={() => setOpen(true)} aria-label={t('germanProgress.title')}>
           <Maximize2 className="size-3.5" aria-hidden />
         </button>
       }

@@ -105,7 +105,7 @@ export const PartnerDialog = ({ open, partner, onClose, onSaved }: { open: boole
       title={t(partner ? 'drive.partner.editTitle' : 'drive.partner.newPartner')}
       footer={
         <>
-          <button type="button" className="btn-white btn-sm border border-line" onClick={onClose} disabled={save.isPending}>
+          <button type="button" className="btn-secondary btn-sm" onClick={onClose} disabled={save.isPending}>
             {t('drive.partner.cancel')}
           </button>
           <button type="button" className="btn-primary btn-sm" disabled={!f.name.trim() || save.isPending} onClick={() => save.mutate()}>
@@ -187,7 +187,7 @@ export const AssignClientsDialog = ({ partner, onClose }: { partner: { id: strin
       footer={
         <>
           <span className="mr-auto text-xs text-muted">{t('drive.partner.selectedN', { count: picked.size })}</span>
-          <button type="button" className="btn-white btn-sm border border-line" onClick={onClose} disabled={assign.isPending}>
+          <button type="button" className="btn-secondary btn-sm" onClick={onClose} disabled={assign.isPending}>
             {t('drive.partner.cancel')}
           </button>
           <button
@@ -319,7 +319,7 @@ export const PartnersOverview = ({ items, onOpen }: { items: DriveItem[]; onOpen
                 </div>
                 <div className="mt-3 flex flex-wrap gap-1.5">
                   {folderId ? (
-                    <button type="button" className="btn-white btn-sm border border-line !px-2" onClick={() => onOpen(folderId)}>
+                    <button type="button" className="btn-secondary btn-sm !px-2" onClick={() => onOpen(folderId)}>
                       <FolderOpen className="size-3.5" /> {t('drive.partner.openFolder')}
                     </button>
                   ) : (
@@ -327,16 +327,16 @@ export const PartnersOverview = ({ items, onOpen }: { items: DriveItem[]; onOpen
                       {creating ? <Spinner className="size-3.5" /> : <FolderPlus className="size-3.5" />} {t('drive.partner.noFolder')}
                     </button>
                   )}
-                  <button type="button" className="btn-white btn-sm border border-line !px-2" onClick={() => setAssignTo(p)} title={t('drive.partner.assign')}>
+                  <button type="button" className="btn-secondary btn-sm !px-2" onClick={() => setAssignTo(p)} title={t('drive.partner.assign')}>
                     <UserPlus className="size-3.5" />
                     <span className="sr-only">{t('drive.partner.assign')}</span>
                   </button>
-                  <button type="button" className="btn-white btn-sm border border-line !px-2" onClick={() => setEdit({ partner: p })} title={t('drive.partner.edit')}>
+                  <button type="button" className="btn-secondary btn-sm !px-2" onClick={() => setEdit({ partner: p })} title={t('drive.partner.edit')}>
                     <Pencil className="size-3.5" />
                     <span className="sr-only">{t('drive.partner.edit')}</span>
                   </button>
                   {canDelete && (
-                    <button type="button" className="btn-white btn-sm border border-line !px-2 text-danger" onClick={() => setDeleting(p)} title={t('drive.partner.deletePartner')}>
+                    <button type="button" className="btn-secondary btn-sm !px-2 text-danger" onClick={() => setDeleting(p)} title={t('drive.partner.deletePartner')}>
                       <Trash2 className="size-3.5" />
                       <span className="sr-only">{t('drive.partner.deletePartner')}</span>
                     </button>
@@ -380,17 +380,17 @@ export const PartnerFolderHeader = ({ folder }: { folder: DriveItem }) => {
       </span>
       {!folder.partner.active && <span className="rounded bg-card px-1.5 py-px font-semibold text-muted">{t('drive.partner.inactive')}</span>}
       <span className="ml-auto flex flex-wrap gap-1.5">
-        <button type="button" className="btn-white btn-sm border border-line !px-2" onClick={() => startDownload(`/api/admin/partners/${encodeURIComponent(folder.partner!.id)}/export.xlsx`)}>
+        <button type="button" className="btn-secondary btn-sm !px-2" onClick={() => startDownload(`/api/admin/partners/${encodeURIComponent(folder.partner!.id)}/export.xlsx`)}>
           <FileSpreadsheet className="size-3.5 text-emerald-600" /> {t('drive.partner.excel')}
         </button>
-        <button type="button" className="btn-white btn-sm border border-line !px-2" onClick={() => setAssigning(true)}>
+        <button type="button" className="btn-secondary btn-sm !px-2" onClick={() => setAssigning(true)}>
           <UserPlus className="size-3.5" /> {t('drive.partner.assign')}
         </button>
-        <button type="button" className="btn-white btn-sm border border-line !px-2" disabled={!p} onClick={() => setEditing(true)}>
+        <button type="button" className="btn-secondary btn-sm !px-2" disabled={!p} onClick={() => setEditing(true)}>
           <Pencil className="size-3.5" /> {t('drive.partner.edit')}
         </button>
         {canDelete && (
-          <button type="button" className="btn-white btn-sm border border-line !px-2 text-danger" disabled={!p} onClick={() => setDeleting(true)}>
+          <button type="button" className="btn-secondary btn-sm !px-2 text-danger" disabled={!p} onClick={() => setDeleting(true)}>
             <Trash2 className="size-3.5" /> {t('drive.partner.deletePartner')}
           </button>
         )}

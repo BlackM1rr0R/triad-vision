@@ -38,7 +38,7 @@ export const ContractCheckButton = ({ caseId, source, onSendAnyway, className }:
 
   return (
     <>
-      <button type="button" className={className ?? 'btn-white btn-sm border border-line'} onClick={() => void check()} disabled={busy || !source} aria-busy={busy}>
+      <button type="button" className={className ?? 'btn-secondary btn-sm'} onClick={() => void check()} disabled={busy || !source} aria-busy={busy}>
         {busy ? <Spinner className="size-3.5" /> : <Sparkles className="size-3.5 text-brand-600" aria-hidden />}
         {busy ? t('aiCase.panel.working') : t('aiCase.contract.button')}
       </button>

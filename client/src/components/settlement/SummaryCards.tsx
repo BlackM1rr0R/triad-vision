@@ -2,11 +2,12 @@ import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
 import { STAGE_DOT, fmtBag } from './money';
 import { STAGES, type Summary } from './types';
+import { SkeletonBlock } from '@/components/ui/Skeleton';
 
 /** Cards above the table: per beneficiary owed / paid this month (and owed overall), partner commissions, stages. */
 export const SummaryCards = ({ summary }: { summary: Summary | undefined }) => {
   const { t } = useTranslation();
-  if (!summary) return <div className="h-[104px] animate-pulse rounded-xl bg-surface" />;
+  if (!summary) return <SkeletonBlock className="h-[104px] w-full" />;
   return (
     <div className="flex gap-3 overflow-x-auto pb-1 [scrollbar-width:thin]">
       {summary.beneficiaries.map((b) => (

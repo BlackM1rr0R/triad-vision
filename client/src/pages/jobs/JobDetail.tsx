@@ -177,7 +177,7 @@ const ApplyBox = ({ v }: { v: PublicVacancy }) => {
             <button type="submit" className="btn-primary flex-1" disabled={apply.isPending}>
               {apply.isPending ? <Spinner className="size-4" /> : <Send className="size-4" />} {t('jobsArea.detail.send')}
             </button>
-            <button type="button" className="btn-white border border-line" onClick={() => setOpen(false)}>
+            <button type="button" className="btn-secondary" onClick={() => setOpen(false)}>
               {t('jobsArea.common.cancel')}
             </button>
           </div>

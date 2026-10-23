@@ -6,6 +6,8 @@ import { api } from '@/lib/api';
 import { registerCopy } from '@/i18n';
 import { companyInvoicesCopy } from '@/i18n/pagesBooking';
 import { Spinner } from '@/components/ui/Spinner';
+import { STATUS_TONES, toneClasses } from '@/components/ui/status';
+import { EmptyState } from '@/components/ui/EmptyState';
 
 registerCopy(companyInvoicesCopy);
 
@@ -24,12 +26,7 @@ interface Response {
   summary: { openCents: number; openCount: number; overdueCents: number; overdueCount: number };
 }
 
-const TONE: Record<Status, string> = {
-  SENT: 'bg-brand-100 text-brand-700',
-  OVERDUE: 'bg-red-100 text-red-700',
-  PAID: 'bg-emerald-100 text-emerald-800',
-  CANCELLED: 'bg-slate-200 text-slate-600',
-};
+const TONE: Record<Status, string> = toneClasses(STATUS_TONES.invoice);
 
 const eur = new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' });
 const INTL = { az: 'az-Latn-AZ', de: 'de-DE', en: 'en-GB', ru: 'ru-RU' } as const;
@@ -62,7 +59,7 @@ export const CompanyInvoices = () => {
         <div className="flex flex-col items-center gap-3 rounded-2xl border border-red-200 bg-red-50 p-8 text-center text-sm text-red-800" role="alert">
           <AlertCircle className="size-5" aria-hidden />
           {t('companyInvoices.loadFailed')}
-          <button type="button" className="btn-white btn-sm border border-line" onClick={() => q.refetch()}>
+          <button type="button" className="btn-secondary btn-sm" onClick={() => q.refetch()}>
             <RefreshCw className="size-3.5" aria-hidden /> {t('companyInvoices.retry')}
           </button>
         </div>
@@ -92,13 +89,7 @@ export const CompanyInvoices = () => {
           </div>
 
           {q.data.invoices.length === 0 ? (
-            <div className="card flex flex-col items-center px-4 py-12 text-center">
-              <span className="grid size-12 place-items-center rounded-full bg-surface text-muted">
-                <Receipt className="size-6" aria-hidden />
-              </span>
-              <p className="mt-3 font-semibold text-navy-900">{t('companyInvoices.empty')}</p>
-              <p className="mt-1 text-sm text-muted">{t('companyInvoices.emptyText')}</p>
-            </div>
+            <EmptyState className="card" icon={Receipt} title={t('companyInvoices.empty')} text={t('companyInvoices.emptyText')} />
           ) : (
             <ul className="card divide-y divide-line overflow-hidden">
               {q.data.invoices.map((inv) => (
@@ -118,7 +109,7 @@ export const CompanyInvoices = () => {
                   </div>
                   <span className={clsx('font-semibold tabular-nums', inv.status === 'CANCELLED' ? 'text-muted line-through' : 'text-navy-900')}>{eur.format(inv.grossCents / 100)}</span>
                   <span className={clsx('badge', TONE[inv.status])}>{t(`companyInvoices.status.${inv.status}`)}</span>
-                  <a href={`/api/company/invoices/${inv.id}/pdf`} className="btn-white btn-sm border border-line" download aria-label={`${t('companyInvoices.download')} ${inv.number}`}>
+                  <a href={`/api/company/invoices/${inv.id}/pdf`} className="btn-secondary btn-sm" download aria-label={`${t('companyInvoices.download')} ${inv.number}`}>
                     <Download className="size-3.5" aria-hidden /> PDF
                   </a>
                 </li>

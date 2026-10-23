@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { STATUS_TONES, toneClasses } from '@/components/ui/status';
 import { Link } from 'react-router-dom';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
@@ -20,12 +21,7 @@ registerCopy(pagesGrowth);
 
 type ReviewStatus = 'REQUESTED' | 'PENDING' | 'APPROVED' | 'REJECTED';
 const STATUSES: ReviewStatus[] = ['PENDING', 'APPROVED', 'REJECTED', 'REQUESTED'];
-const STATUS_TONE: Record<ReviewStatus, string> = {
-  REQUESTED: 'bg-slate-200 text-slate-700',
-  PENDING: 'bg-amber-100 text-amber-800',
-  APPROVED: 'bg-emerald-100 text-emerald-800',
-  REJECTED: 'bg-red-100 text-red-700',
-};
+const STATUS_TONE: Record<ReviewStatus, string> = toneClasses(STATUS_TONES.review);
 
 interface AdminReview {
   id: string;
@@ -132,7 +128,7 @@ const ReviewCard = ({ r, canModerate }: { r: AdminReview; canModerate: boolean }
         {canModerate && (
           <div className="flex flex-wrap gap-2">
             {r.status === 'REQUESTED' ? (
-              <button type="button" className="btn-white btn-sm border border-line" onClick={() => resend.mutate()} disabled={busy}>
+              <button type="button" className="btn-secondary btn-sm" onClick={() => resend.mutate()} disabled={busy}>
                 {resend.isPending ? <Spinner className="size-3.5" /> : <Send className="size-3.5" aria-hidden />} {t('growth.adminReviews.resend')}
               </button>
             ) : (
@@ -144,11 +140,11 @@ const ReviewCard = ({ r, canModerate }: { r: AdminReview; canModerate: boolean }
                     </button>
                   )}
                   {r.status !== 'REJECTED' && (
-                    <button type="button" className="btn-white btn-sm border border-line text-danger" onClick={() => patch.mutate({ status: 'REJECTED' })} disabled={busy}>
+                    <button type="button" className="btn-secondary btn-sm text-danger" onClick={() => patch.mutate({ status: 'REJECTED' })} disabled={busy}>
                       <X className="size-3.5" aria-hidden /> {t('growth.adminReviews.reject')}
                     </button>
                   )}
-                  <button type="button" className="btn-white btn-sm border border-line" onClick={() => setEditing(true)} disabled={busy}>
+                  <button type="button" className="btn-secondary btn-sm" onClick={() => setEditing(true)} disabled={busy}>
                     <Pencil className="size-3.5" aria-hidden /> {t('growth.adminReviews.edit')}
                   </button>
                 </>
@@ -186,7 +182,7 @@ const ReviewCard = ({ r, canModerate }: { r: AdminReview; canModerate: boolean }
           <div className="flex flex-wrap justify-end gap-2">
             <button
               type="button"
-              className="btn-white btn-sm border border-line"
+              className="btn-secondary btn-sm"
               onClick={() => {
                 setEditing(false);
                 setName(r.displayName ?? '');
@@ -238,7 +234,7 @@ const Candidates = () => {
               </Link>{' '}
               <span className="text-navy-900">{fullName(c.client)}</span> <span className="text-muted">· {c.profession} · {fmtDate(c.decisionAt)}</span>
             </span>
-            <button type="button" className="btn-white btn-sm border border-line" onClick={() => invite.mutate(c.id)} disabled={invite.isPending}>
+            <button type="button" className="btn-secondary btn-sm" onClick={() => invite.mutate(c.id)} disabled={invite.isPending}>
               <Send className="size-3.5" aria-hidden /> {t('growth.adminReviews.invite')}
             </button>
           </li>

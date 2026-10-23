@@ -10,6 +10,7 @@ import { useAuth } from '@/lib/auth';
 import { registerCopy } from '@/i18n';
 import { pagesCalls } from '@/i18n/pagesCalls';
 import { PageHead, Panel } from '@/components/admin/ui';
+import { Tabs } from '@/components/ui/Tabs';
 import { CallLog } from '@/components/calls/CallLog';
 import { CallButton } from '@/components/calls/CallButton';
 import { bakuDateTime, bakuTime, callError } from '@/components/calls/api';
@@ -30,20 +31,7 @@ export default function Calls() {
   return (
     <div className="space-y-5">
       <PageHead title={t('calls.page.title')} subtitle={t('calls.page.subtitle')} />
-      <div role="tablist" className="flex flex-wrap gap-1.5">
-        {tabs.map((k) => (
-          <button
-            key={k}
-            role="tab"
-            aria-selected={tab === k}
-            type="button"
-            onClick={() => setParams({ tab: k }, { replace: true })}
-            className={clsx('min-h-9 rounded-lg px-3 text-sm font-semibold transition', tab === k ? 'bg-brand-600 text-white' : 'border border-line bg-card text-ink hover:border-brand-400')}
-          >
-            {t(`calls.page.tabs.${k}`)}
-          </button>
-        ))}
-      </div>
+      <Tabs label={t('calls.page.title')} items={tabs.map((k) => ({ key: k, label: t(`calls.page.tabs.${k}`) }))} value={tab} onChange={(k) => setParams({ tab: k }, { replace: true })} />
       {tab === 'calls' && <CallsTab />}
       {tab === 'callbacks' && <CallbacksTab highlight={params.get('callback')} />}
       {tab === 'settings' && admin && <SettingsTab />}

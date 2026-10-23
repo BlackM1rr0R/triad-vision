@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { errorCode } from '@/lib/api';
+import { STATUS_TONES, toneClasses } from '@/components/ui/status';
 
 export type RequestStatus = 'DRAFT' | 'SENT' | 'COMPLETED' | 'DECLINED' | 'CANCELLED' | 'EXPIRED';
 export type SignerStatus = 'PENDING' | 'VIEWED' | 'SIGNED' | 'DECLINED';
@@ -152,21 +153,9 @@ export interface Prefill {
   defaults: { expiresInDays: number; maxBytes: number };
 }
 
-export const STATUS_TONE: Record<RequestStatus, string> = {
-  DRAFT: 'bg-slate-100 text-slate-700',
-  SENT: 'bg-brand-100 text-brand-700',
-  COMPLETED: 'bg-emerald-100 text-emerald-800',
-  DECLINED: 'bg-red-100 text-red-700',
-  CANCELLED: 'bg-slate-200 text-slate-700',
-  EXPIRED: 'bg-amber-100 text-amber-800',
-};
+export const STATUS_TONE: Record<RequestStatus, string> = toneClasses(STATUS_TONES.signature);
 
-export const SIGNER_TONE: Record<SignerStatus, string> = {
-  PENDING: 'bg-slate-100 text-slate-700',
-  VIEWED: 'bg-brand-100 text-brand-700',
-  SIGNED: 'bg-emerald-100 text-emerald-800',
-  DECLINED: 'bg-red-100 text-red-700',
-};
+export const SIGNER_TONE: Record<SignerStatus, string> = toneClasses(STATUS_TONES.signer);
 
 /** Translated message for an e-signature API error. */
 export const useEsignError = () => {

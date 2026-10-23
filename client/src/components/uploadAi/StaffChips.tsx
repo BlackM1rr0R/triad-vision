@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { TONE_CLASS } from '@/components/ui/status';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
@@ -16,9 +17,9 @@ registerCopy(pagesUploadAi);
 
 const chipTone = (status: StaffInsight['status'], open: number, warn: boolean) => {
   if (status === 'PENDING') return 'bg-surface text-muted';
-  if (warn) return 'bg-amber-100 text-amber-800 dark:bg-amber-950/40 dark:text-amber-200';
-  if (open > 0) return 'bg-violet-100 text-violet-800 dark:bg-violet-500/20 dark:text-violet-200';
-  return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300';
+  if (warn) return TONE_CLASS.warning;
+  if (open > 0) return TONE_CLASS.accent;
+  return TONE_CLASS.success;
 };
 
 /** "AI · Passport" chip (+ open proposals count) and the red "Low quality" badge. Click → suggestion card. */

@@ -10,6 +10,7 @@ import { hasMinRole } from '@/lib/types';
 import { ImageField } from '@/components/admin/ImageField';
 import { LANGS, type Lang } from '@/components/admin/L10nInput';
 import { EmptyState, ErrorBlock, LoadingBlock, PageHead, Panel, Switch } from '@/components/admin/ui';
+import { Tabs } from '@/components/ui/Tabs';
 import { Spinner } from '@/components/ui/Spinner';
 import { fmtDateTime, toastError } from '@/components/admin/labels';
 import { GUIDE_FIELDS, GUIDES_KEY, type AdminGuide, type GuideLink, type GuideText } from '@/components/clientData/api';
@@ -87,11 +88,11 @@ export default function DocGuidesPage() {
 
   const status = (g: AdminGuide | null) =>
     !g ? (
-      <span className="badge bg-slate-100 text-[10px] text-slate-500">{t('clientData.guides.none')}</span>
+      <span className="badge bg-neutral-bg text-[10px] text-neutral-fg">{t('clientData.guides.none')}</span>
     ) : g.builtIn || !g.verified ? (
-      <span className="badge bg-amber-100 text-[10px] text-amber-800">{t('clientData.guides.draft')}</span>
+      <span className="badge bg-warning-bg text-[10px] text-warning-fg">{t('clientData.guides.draft')}</span>
     ) : (
-      <span className="badge bg-emerald-100 text-[10px] text-emerald-800">{t('clientData.guides.verified')}</span>
+      <span className="badge bg-success-bg text-[10px] text-success-fg">{t('clientData.guides.verified')}</span>
     );
 
   return (
@@ -122,7 +123,7 @@ export default function DocGuidesPage() {
               }}
             >
               <input className="input min-w-0 flex-1 py-1.5 font-mono text-xs" placeholder="POLICE_CERT" value={newKey} onChange={(e) => setNewKey(e.target.value)} aria-label={t('clientData.guides.newKey')} />
-              <button type="submit" className="btn-white btn-sm border border-line" aria-label={t('clientData.guides.newKey')}>
+              <button type="submit" className="btn-secondary btn-sm" aria-label={t('clientData.guides.newKey')}>
                 <Plus className="size-3.5" aria-hidden />
               </button>
             </form>
@@ -139,11 +140,11 @@ export default function DocGuidesPage() {
             icon={BookOpen}
             actions={
               <>
-                <button type="button" className="btn-white btn-sm border border-line" onClick={() => setPreview((v) => !v)}>
+                <button type="button" className="btn-secondary btn-sm" onClick={() => setPreview((v) => !v)}>
                   {preview ? <Pencil className="size-3.5" aria-hidden /> : <Eye className="size-3.5" aria-hidden />} {preview ? t('clientData.common.edit') : t('clientData.common.preview')}
                 </button>
                 {canEdit && row?.guide && !row.guide.builtIn && (
-                  <button type="button" className="btn-white btn-sm border border-line" disabled={busy} onClick={() => void reset()}>
+                  <button type="button" className="btn-secondary btn-sm" disabled={busy} onClick={() => void reset()}>
                     <RotateCcw className="size-3.5" aria-hidden /> {row.guide.hasDefault ? t('clientData.guides.reset') : t('clientData.common.delete')}
                   </button>
                 )}
@@ -160,13 +161,7 @@ export default function DocGuidesPage() {
                 <AlertTriangle className="mt-0.5 size-3.5 shrink-0" aria-hidden /> {t('clientData.guides.draftHint')}
               </p>
             )}
-            <div className="mb-4 flex flex-wrap gap-1" role="tablist">
-              {LANGS.map((l) => (
-                <button key={l} type="button" role="tab" aria-selected={lang === l} onClick={() => setLang(l)} className={clsx('min-h-9 rounded-md px-3 text-xs font-semibold uppercase', lang === l ? 'bg-navy-900 text-white' : 'bg-surface text-muted hover:text-ink')}>
-                  {l}
-                </button>
-              ))}
-            </div>
+            <Tabs className="mb-4" variant="pills" label={t('clientData.guides.title')} items={LANGS.map((l) => ({ key: l, label: <span className="uppercase">{l}</span> }))} value={lang} onChange={setLang} />
             {preview ? (
               <div className="mx-auto max-w-lg rounded-xl border border-line p-4">
                 <GuideView guide={{ text: draft.content[lang], links: draft.links, sampleImage: draft.sampleImage, verified: draft.verified }} />
@@ -194,7 +189,7 @@ export default function DocGuidesPage() {
                     </div>
                   ))}
                   {draft.links.length < 10 && (
-                    <button type="button" className="btn-white btn-sm border border-line" onClick={() => setLinks([...draft.links, { label: '', url: '' }])}>
+                    <button type="button" className="btn-secondary btn-sm" onClick={() => setLinks([...draft.links, { label: '', url: '' }])}>
                       <Plus className="size-3.5" aria-hidden /> {t('clientData.guides.addLink')}
                     </button>
                   )}

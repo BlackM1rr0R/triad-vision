@@ -1,7 +1,7 @@
 import { lazy, Suspense, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import clsx from 'clsx';
+import { Tabs } from '@/components/ui/Tabs';
 import { ClipboardCheck, Palmtree, Search, Users } from 'lucide-react';
 import { registerCopy } from '@/i18n';
 import { pagesWorkspace } from '@/i18n/pagesWorkspace';
@@ -77,15 +77,22 @@ export default function WorkspaceTeam() {
               <p className="hidden truncate text-xs text-muted sm:block">{t('ws.team.subtitle')}</p>
             </div>
           </div>
-          <div className="flex rounded-xl border border-line bg-surface p-1" role="tablist">
-            {(['people', 'leave'] as Tab[]).map((k) => (
-              <button key={k} type="button" role="tab" aria-selected={tab === k} onClick={() => setTab(k)} className={clsx('inline-flex h-8 items-center gap-1.5 rounded-lg px-3 text-sm font-semibold transition', tab === k ? 'bg-card text-ink shadow-sm ring-1 ring-line' : 'text-muted hover:text-ink')}>
-                {k === 'people' ? <Users className="size-4" aria-hidden /> : <Palmtree className="size-4" aria-hidden />}
-                {t(`ws.team.tabs.${k}`)}
-                {k === 'leave' && isAdmin && queue.length > 0 && <Chip tone="warn">{queue.length}</Chip>}
-              </button>
-            ))}
-          </div>
+          <Tabs
+            variant="pills"
+            label={t('ws.team.tabs.people')}
+            items={(['people', 'leave'] as Tab[]).map((k) => ({
+              key: k,
+              icon: k === 'people' ? Users : Palmtree,
+              label: (
+                <>
+                  {t(`ws.team.tabs.${k}`)}
+                  {k === 'leave' && isAdmin && queue.length > 0 && <Chip tone="warn">{queue.length}</Chip>}
+                </>
+              ),
+            }))}
+            value={tab}
+            onChange={setTab}
+          />
           {tab === 'people' ? (
             <label className="relative ml-auto w-full sm:w-64">
               <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted" aria-hidden />

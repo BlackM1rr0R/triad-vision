@@ -266,6 +266,7 @@ export default function WorkspaceChat() {
       }
     },
     remove: (m) => {
+      // TODO(ui): ConfirmDialog
       if (!window.confirm(t('chat.actions.confirmDelete'))) return;
       chatApi
         .remove(m.id)
@@ -301,6 +302,7 @@ export default function WorkspaceChat() {
 
   const join = () => channel && run(async () => updateChannelCache(await chatApi.join(channel.id)), t('chat.toasts.joined'));
   const leave = () => {
+    // TODO(ui): ConfirmDialog
     if (!channel || !window.confirm(t('chat.actions.confirmLeave', { name: channel.name }))) return;
     void run(async () => {
       await chatApi.leave(channel.id);
@@ -309,6 +311,7 @@ export default function WorkspaceChat() {
     }, t('chat.toasts.left'));
   };
   const archive = () => {
+    // TODO(ui): ConfirmDialog
     if (!channel || !window.confirm(t('chat.actions.confirmArchive', { name: channel.name }))) return;
     void run(async () => updateChannelCache(await chatApi.archive(channel.id)), t('chat.toasts.archived'));
   };

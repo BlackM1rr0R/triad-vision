@@ -59,7 +59,7 @@ export const CaseAiSummary = ({ caseId }: { caseId: string }) => {
       className="bg-card"
       actions={
         s ? (
-          <button type="button" className="btn-white btn-sm border border-line" onClick={() => void run(true)} disabled={busy}>
+          <button type="button" className="btn-secondary btn-sm" onClick={() => void run(true)} disabled={busy}>
             {busy ? <Spinner className="size-3.5" /> : <RefreshCw className="size-3.5" />} {t('aiStaff.summary.refresh')}
           </button>
         ) : null

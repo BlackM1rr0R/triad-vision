@@ -29,7 +29,7 @@ export const SignaturesPanel = ({ caseId, companyId, contractAllowed = false }: 
       title={t('esign.caseBox.title')}
       icon={FileSignature}
       actions={
-        <button type="button" className="btn-white btn-sm border border-line" onClick={() => setCreating({ contract: false })}>
+        <button type="button" className="btn-secondary btn-sm" onClick={() => setCreating({ contract: false })}>
           <Plus className="size-3.5" aria-hidden />
           {t('esign.admin.sendForSignature')}
         </button>
@@ -54,7 +54,7 @@ export const SendContractForSignature = ({ caseId, label, disabled = false, vari
   const [open, setOpen] = useState(false);
   return (
     <>
-      <button type="button" className={variant === 'primary' ? 'btn-primary btn-sm' : 'btn-white btn-sm border border-line'} onClick={() => setOpen(true)} disabled={disabled}>
+      <button type="button" className={variant === 'primary' ? 'btn-primary btn-sm' : 'btn-secondary btn-sm'} onClick={() => setOpen(true)} disabled={disabled}>
         <FileSignature className="size-3.5" aria-hidden />
         {label ?? t('esign.admin.sendForSignature')}
       </button>

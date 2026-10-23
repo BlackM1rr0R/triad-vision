@@ -122,7 +122,7 @@ export const RevertDialog = ({ target, onClose, onDone }: { target: RevertTarget
       }
       footer={
         <>
-          <button type="button" className="btn-white btn-sm border border-line" onClick={onClose} disabled={run.isPending}>
+          <button type="button" className="btn-secondary btn-sm" onClick={onClose} disabled={run.isPending}>
             {t('admin.common.cancel')}
           </button>
           <button

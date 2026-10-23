@@ -1,4 +1,5 @@
 import { api } from '@/lib/api';
+import { STATUS_TONES, toneClasses } from '@/components/ui/status';
 
 export const KINDS = ['PASSPORT', 'DIPLOMA', 'CERTIFICATE', 'BIRTH', 'MARRIAGE', 'OTHER'] as const;
 export type Kind = (typeof KINDS)[number];
@@ -23,14 +24,7 @@ export const ACTION_FROM: Record<Action, OriginalStatus[]> = {
 export const ACT_ACTIONS: Action[] = ['RECEIVED', 'GIVEN_OUT', 'RETURNED_TO_CLIENT'];
 export const allowedActions = (status: OriginalStatus) => ACTIONS.filter((a) => ACTION_FROM[a].includes(status));
 
-export const STATUS_TONE: Record<OriginalStatus, string> = {
-  IN_OFFICE: 'bg-emerald-100 text-emerald-800',
-  GIVEN_OUT: 'bg-amber-100 text-amber-800',
-  AT_APOSTILLE: 'bg-violet-100 text-violet-800',
-  IN_TRANSIT: 'bg-sky-100 text-sky-800',
-  DELIVERED: 'bg-teal-100 text-teal-800',
-  RETURNED_TO_CLIENT: 'bg-slate-100 text-slate-700',
-};
+export const STATUS_TONE: Record<OriginalStatus, string> = toneClasses(STATUS_TONES.original);
 
 export interface OriginalEvent {
   id: string;

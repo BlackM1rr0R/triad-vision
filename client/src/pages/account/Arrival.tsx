@@ -30,6 +30,7 @@ import { pagesArrival } from '@/i18n/pagesArrival';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { useRealtime } from '@/lib/realtime';
 import { PageLoader, Spinner } from '@/components/ui/Spinner';
+import { Tabs } from '@/components/ui/Tabs';
 import { ConfirmDialog } from '@/components/portal/ConfirmDialog';
 import { CITIES } from '@/lib/cities/data';
 import {
@@ -332,12 +333,12 @@ const PlanView = ({ plan }: { plan: ArrivalPlan }) => {
         </div>
         <div className="mt-4 flex flex-wrap gap-2">
           {plan.arrivalTime && plan.status !== 'CANCELLED' && (
-            <a href={`/api/arrival/${plan.caseId}/ics`} className="btn-white btn-sm border border-line">
+            <a href={`/api/arrival/${plan.caseId}/ics`} className="btn-secondary btn-sm">
               <CalendarPlus className="size-4" aria-hidden /> {t('arrival.actions.calendar')}
             </a>
           )}
           {plan.editable && !editing && (
-            <button type="button" className="btn-white btn-sm border border-line" onClick={() => setEditing(true)}>
+            <button type="button" className="btn-secondary btn-sm" onClick={() => setEditing(true)}>
               <Pencil className="size-4" aria-hidden /> {t('arrival.actions.edit')}
             </button>
           )}
@@ -509,7 +510,7 @@ const PlanView = ({ plan }: { plan: ArrivalPlan }) => {
 
           <div className="flex flex-wrap items-center justify-between gap-2 border-t border-line px-5 py-4 sm:px-6">
             {idx > 0 ? (
-              <button type="button" className="btn-white btn-sm border border-line" disabled={busy} onClick={() => void go(STEPS[idx - 1])}>
+              <button type="button" className="btn-secondary btn-sm" disabled={busy} onClick={() => void go(STEPS[idx - 1])}>
                 <ArrowLeft className="size-4" aria-hidden /> {t('arrival.actions.back')}
               </button>
             ) : (
@@ -517,7 +518,7 @@ const PlanView = ({ plan }: { plan: ArrivalPlan }) => {
             )}
             <div className="flex flex-wrap gap-2">
               {dirty && step !== 'summary' && (
-                <button type="button" className="btn-white btn-sm border border-line" disabled={busy} onClick={() => save.mutate(undefined, { onSuccess: () => toast.success(t('arrival.actions.saved')) })}>
+                <button type="button" className="btn-secondary btn-sm" disabled={busy} onClick={() => save.mutate(undefined, { onSuccess: () => toast.success(t('arrival.actions.saved')) })}>
                   {save.isPending && <Spinner className="size-4" />} {t('arrival.actions.save')}
                 </button>
               )}
@@ -611,6 +612,7 @@ export default function AccountArrival() {
         </div>
       ) : !plan ? (
         <div className="card flex flex-col items-center px-6 py-12 text-center">
+          {/* TODO(ui): large portal empty state (size-14 icon, display title) -> <EmptyState size="lg" tone="brand"> (portal rework) */}
           <span className="grid size-14 place-items-center rounded-2xl bg-brand-100 text-brand-600">
             <PlaneLanding className="size-7" aria-hidden />
           </span>
@@ -620,20 +622,7 @@ export default function AccountArrival() {
       ) : (
         <>
           {items.length > 1 && (
-            <div role="tablist" className="flex flex-wrap gap-2">
-              {items.map((p) => (
-                <button
-                  key={p.caseId}
-                  type="button"
-                  role="tab"
-                  aria-selected={p.caseId === plan.caseId}
-                  onClick={() => setActive(p.caseId)}
-                  className={clsx('rounded-full border px-3 py-1.5 text-sm font-semibold transition-colors', p.caseId === plan.caseId ? 'border-brand-600 bg-brand-600 text-white' : 'border-line bg-card text-ink/80 hover:border-brand-400')}
-                >
-                  {p.case.number}
-                </button>
-              ))}
-            </div>
+            <Tabs variant="pills" label={t('arrival.title')} items={items.map((p) => ({ key: p.caseId, label: p.case.number }))} value={plan.caseId} onChange={setActive} />
           )}
           <PlanView key={plan.caseId} plan={plan} />
         </>

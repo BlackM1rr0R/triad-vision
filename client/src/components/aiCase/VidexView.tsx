@@ -96,7 +96,7 @@ export const VidexView = ({ caseId, run, states }: { caseId: string; run: Run<Vi
             {busy === 'ask' ? <Spinner className="size-3.5" /> : <MessageCircleQuestion className="size-3.5" aria-hidden />} {t('aiCase.videx.askSelected', { count: selected.length })}
           </button>
         )}
-        <a className="btn-white btn-sm border border-line" href={`/api/admin/cases/${caseId}/ai/videx/${run.id}/pdf`} download>
+        <a className="btn-secondary btn-sm" href={`/api/admin/cases/${caseId}/ai/videx/${run.id}/pdf`} download>
           <Download className="size-3.5" aria-hidden /> {t('aiCase.videx.pdf')}
         </a>
       </div>
@@ -124,7 +124,7 @@ export const VidexView = ({ caseId, run, states }: { caseId: string; run: Run<Vi
                       <button type="button" className="btn-primary btn-sm" disabled={!!busy} onClick={() => void save(f)} aria-label={t('aiCase.videx.save')}>
                         {busy === `save:${f.key}` ? <Spinner className="size-3.5" /> : <Check className="size-3.5" aria-hidden />}
                       </button>
-                      <button type="button" className="btn-white btn-sm border border-line" onClick={() => setEditing(null)} aria-label={t('aiCase.actions.cancel')}>
+                      <button type="button" className="btn-secondary btn-sm" onClick={() => setEditing(null)} aria-label={t('aiCase.actions.cancel')}>
                         <X className="size-3.5" aria-hidden />
                       </button>
                     </div>
@@ -185,11 +185,11 @@ export const VidexView = ({ caseId, run, states }: { caseId: string; run: Run<Vi
                 {c.status !== 'present' && !st && (
                   <span className="flex gap-1">
                     {c.requirementKey && (
-                      <button type="button" className="btn-white btn-sm border border-line" disabled={!!busy} onClick={() => void requestItem(c)}>
+                      <button type="button" className="btn-secondary btn-sm" disabled={!!busy} onClick={() => void requestItem(c)}>
                         {busy === `req:${c.key}` ? <Spinner className="size-3.5" /> : <FileQuestion className="size-3.5" aria-hidden />} {t('aiCase.videx.requestDoc')}
                       </button>
                     )}
-                    <button type="button" className="btn-white btn-sm border border-line" disabled={!!busy} onClick={() => void taskItem(c)} aria-label={t('aiCase.actions.task')} title={t('aiCase.actions.task')}>
+                    <button type="button" className="btn-secondary btn-sm" disabled={!!busy} onClick={() => void taskItem(c)} aria-label={t('aiCase.actions.task')} title={t('aiCase.actions.task')}>
                       {busy === `task:${c.key}` ? <Spinner className="size-3.5" /> : <ClipboardList className="size-3.5" aria-hidden />}
                     </button>
                   </span>

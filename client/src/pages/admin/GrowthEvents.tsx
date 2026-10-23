@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { STATUS_TONES, toneClasses } from '@/components/ui/status';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
@@ -94,7 +95,7 @@ const formOf = (e: AdminEvent | null, defaultAddress: string): Form => {
   };
 };
 
-const STATUS_TONE: Record<Status, string> = { DRAFT: 'bg-surface text-muted', PUBLISHED: 'bg-success/10 text-success', CANCELLED: 'bg-danger/10 text-danger' };
+const STATUS_TONE: Record<Status, string> = toneClasses(STATUS_TONES.publication);
 
 const EventForm = ({ event, onClose }: { event: AdminEvent | null; onClose: () => void }) => {
   const { t } = useTranslation();

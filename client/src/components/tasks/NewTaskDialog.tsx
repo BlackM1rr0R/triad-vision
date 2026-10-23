@@ -1,10 +1,8 @@
-import { useEffect, useId, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
-import { AnimatePresence, motion } from 'framer-motion';
+import { useEffect, useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
-import { X } from 'lucide-react';
-import { Spinner } from '@/components/ui/Spinner';
+import { Modal } from '@/components/ui/Modal';
+import { Button } from '@/components/ui/Button';
 import type { CaseRef, Person, TaskDetail, TaskPriority, TaskStatus } from './types';
 import { TASK_STATUSES } from './types';
 import { useTaskActions } from './api';
@@ -35,7 +33,6 @@ export const NewTaskDialog = ({
   const { t } = useTranslation();
   const actions = useTaskActions();
   const titleId = useId();
-  const panelRef = useRef<HTMLFormElement>(null);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [status, setStatus] = useState<TaskStatus>('TODO');
@@ -64,15 +61,6 @@ export const NewTaskDialog = ({
     setFiles([]);
     setProgress({});
   }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && !busy) onClose();
-    };
-    document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
-  }, [open, busy, onClose]);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -107,32 +95,35 @@ export const NewTaskDialog = ({
     }
   };
 
-  return createPortal(
-    <AnimatePresence>
-      {open && (
-        <div className="fixed inset-0 z-[70] flex items-stretch justify-center sm:items-start sm:p-6 sm:pt-[8vh]">
-          <motion.div className="absolute inset-0 bg-navy-950/45" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => !busy && onClose()} aria-hidden />
-          <motion.form
-            ref={panelRef}
-            onSubmit={submit}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby={titleId}
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 12 }}
-            transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
-            className="relative flex max-h-full w-full flex-col overflow-hidden bg-card shadow-2xl sm:max-h-[84vh] sm:max-w-2xl sm:rounded-2xl sm:border sm:border-line"
-          >
-            <header className="flex items-center justify-between gap-3 border-b border-line px-5 py-3.5 sm:px-6">
-              <h2 id={titleId} className="font-display text-base font-bold text-ink">
-                {t('tasks.newTask')}
-              </h2>
-              <button type="button" onClick={onClose} className="grid size-9 place-items-center rounded-lg text-muted hover:bg-surface hover:text-ink" aria-label={t('tasks.actions.close')}>
-                <X className="size-4" />
-              </button>
-            </header>
-            <div className="min-h-0 flex-1 space-y-5 overflow-y-auto overscroll-contain px-5 py-5 sm:px-6">
+  return (
+    <Modal
+      open={open}
+      onClose={onClose}
+      busy={busy}
+      title={t('tasks.newTask')}
+      closeLabel={t('tasks.actions.close')}
+      size="lg"
+      mobile="full"
+      align="top"
+      zIndex={70}
+      as="form"
+      onSubmit={submit}
+      bodyClassName="space-y-5"
+      footer={
+        <>
+          <Button variant="secondary" size="sm" onClick={onClose} disabled={busy}>
+            {t('tasks.actions.cancel')}
+          </Button>
+          <Button type="submit" size="sm" loading={busy} disabled={!title.trim()}>
+            {busy
+              ? files.length && Object.keys(progress).length
+                ? t('tasks.actions.uploading', { done: Object.values(progress).filter((v) => v >= 100).length, total: files.length })
+                : t('tasks.actions.creating')
+              : t('tasks.actions.create')}
+          </Button>
+        </>
+      }
+    >
               <input
                 autoFocus
                 value={title}
@@ -208,24 +199,6 @@ export const NewTaskDialog = ({
                 {files.length > 0 && !busy && <p className="mt-1.5 text-xs text-muted">{t('tasks.actions.filesPending', { count: files.length })}</p>}
               </div>
               <p className="text-xs text-muted">{t('tasks.panel.timezone')}</p>
-            </div>
-            <footer className="flex items-center justify-end gap-2 border-t border-line bg-surface/60 px-5 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:px-6">
-              <button type="button" onClick={onClose} className="btn-white btn-sm border border-line" disabled={busy}>
-                {t('tasks.actions.cancel')}
-              </button>
-              <button type="submit" className="btn-primary btn-sm" disabled={!title.trim() || busy}>
-                {busy && <Spinner className="size-3.5" />}
-                {busy
-                  ? files.length && Object.keys(progress).length
-                    ? t('tasks.actions.uploading', { done: Object.values(progress).filter((v) => v >= 100).length, total: files.length })
-                    : t('tasks.actions.creating')
-                  : t('tasks.actions.create')}
-              </button>
-            </footer>
-          </motion.form>
-        </div>
-      )}
-    </AnimatePresence>,
-    document.body,
+    </Modal>
   );
 };

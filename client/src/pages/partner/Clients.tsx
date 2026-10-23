@@ -9,6 +9,7 @@ import { useL10n } from '@/lib/l10n';
 import { day } from '@/components/agents/format';
 import type { PartnerCaseRow } from '@/components/partnerPortal/api';
 import { ErrorRetry, Loading, Section, StatusPill, StepBar } from '@/components/partnerPortal/ui';
+import { EmptyState } from '@/components/ui/EmptyState';
 
 type Filter = 'all' | 'active' | 'closed';
 
@@ -56,10 +57,10 @@ export default function PartnerClientsPage() {
       ) : q.isError || !q.data ? (
         <ErrorRetry onRetry={() => q.refetch()} />
       ) : q.data.length === 0 ? (
-        <div className="py-10 text-center">
-          <p className="font-semibold text-ink">{search || filter !== 'all' ? t('partnerPortal.clients.notFound') : t('partnerPortal.clients.empty')}</p>
-          {!search && filter === 'all' && <p className="mt-1 text-sm text-muted">{t('partnerPortal.clients.emptyHint')}</p>}
-        </div>
+        <EmptyState
+          title={search || filter !== 'all' ? t('partnerPortal.clients.notFound') : t('partnerPortal.clients.empty')}
+          text={!search && filter === 'all' ? t('partnerPortal.clients.emptyHint') : undefined}
+        />
       ) : (
         <ul className="space-y-3">
           {q.data.map((c) => (

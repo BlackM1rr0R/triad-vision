@@ -1,4 +1,5 @@
 import { useEffect, useState, type ReactNode } from 'react';
+import { STATUS_TONES, TONE_CLASS, toneClasses } from '@/components/ui/status';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
@@ -27,6 +28,7 @@ import { api, errorCode } from '@/lib/api';
 import i18n, { registerCopy } from '@/i18n';
 import { adminInvoicesCopy } from '@/i18n/pagesBooking';
 import { Chip, EmptyState, ErrorBlock, LoadingBlock, PageHead, Panel, StatTile, Switch } from '@/components/admin/ui';
+import { Tabs } from '@/components/ui/Tabs';
 import { Modal } from '@/components/admin/Modal';
 import { ConfirmDialog } from '@/components/admin/ConfirmDialog';
 import { errorMessage, fmtDate } from '@/components/admin/labels';
@@ -96,13 +98,7 @@ interface SettingsResponse {
   legalMissing: ('name' | 'address' | 'vatId')[];
 }
 
-const STATUS_TONE: Record<InvoiceStatus, string> = {
-  DRAFT: 'bg-slate-100 text-slate-700',
-  SENT: 'bg-brand-100 text-brand-700',
-  OVERDUE: 'bg-red-100 text-red-700',
-  PAID: 'bg-emerald-100 text-emerald-800',
-  CANCELLED: 'bg-slate-200 text-slate-500 line-through',
-};
+const STATUS_TONE: Record<InvoiceStatus, string> = { ...toneClasses(STATUS_TONES.invoice), CANCELLED: `${TONE_CLASS.danger} line-through` };
 
 const eur = new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' });
 const fmtEur = (cents: number) => eur.format(cents / 100);
@@ -183,25 +179,22 @@ export default function AdminInvoices() {
         }
       />
 
-      <div className="mb-5 flex gap-1 border-b border-line" role="tablist">
-        {(['list', 'settings'] as const).map((v) => (
-          <button
-            key={v}
-            type="button"
-            role="tab"
-            aria-selected={tab === v}
-            onClick={() => setTab(v)}
-            className={clsx(
-              '-mb-px inline-flex min-h-10 items-center gap-1.5 border-b-2 px-3 text-sm font-semibold transition',
-              tab === v ? 'border-brand-600 text-navy-900' : 'border-transparent text-muted hover:text-navy-900',
-            )}
-          >
-            {v === 'list' ? <Receipt className="size-4" aria-hidden /> : <Settings2 className="size-4" aria-hidden />}
-            {t(`adminInvoices.tabs.${v}`)}
-            {v === 'settings' && (settingsQ.data?.legalMissing.length ?? 0) > 0 && <span className="size-2 rounded-full bg-amber-500" aria-hidden />}
-          </button>
-        ))}
-      </div>
+      <Tabs
+        className="mb-5"
+        label={t('adminInvoices.tabs.list')}
+        items={(['list', 'settings'] as const).map((v) => ({
+          key: v,
+          icon: v === 'list' ? Receipt : Settings2,
+          label: (
+            <>
+              {t(`adminInvoices.tabs.${v}`)}
+              {v === 'settings' && (settingsQ.data?.legalMissing.length ?? 0) > 0 && <span className="size-2 rounded-full bg-warning" aria-hidden />}
+            </>
+          ),
+        }))}
+        value={tab}
+        onChange={setTab}
+      />
 
       {tab === 'list' ? <InvoiceList onEdit={setEditing} legalMissing={settingsQ.data?.legalMissing ?? []} /> : <SettingsTab q={settingsQ} />}
 
@@ -567,7 +560,7 @@ const Editor = ({ invoice, settings, onClose }: { invoice: Invoice | null; setti
       footer={
         <>
           {!valid && <span className="mr-auto self-center text-xs text-muted">{t('adminInvoices.editor.invalid')}</span>}
-          <button type="button" className="btn-white btn-sm border border-line" onClick={onClose} disabled={save.isPending}>
+          <button type="button" className="btn-secondary btn-sm" onClick={onClose} disabled={save.isPending}>
             {t('adminInvoices.editor.close')}
           </button>
           <button type="button" className="btn-primary btn-sm" onClick={() => save.mutate()} disabled={!valid || save.isPending}>

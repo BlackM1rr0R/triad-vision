@@ -112,6 +112,7 @@ export function SheetTabs({
               danger: true,
               disabled: sheets.length <= 1,
               onClick: () => {
+                // TODO(ui): ConfirmDialog
                 if (window.confirm(t('sheet.tabs.confirmDelete', { name: sheets[menu.i].name }))) onDelete(sheets[menu.i].key);
               },
             },

@@ -60,7 +60,7 @@ export const NameDialog = ({
       title={title}
       footer={
         <>
-          <button type="button" className="btn-white btn-sm border border-line" onClick={onClose} disabled={busy}>
+          <button type="button" className="btn-secondary btn-sm" onClick={onClose} disabled={busy}>
             {t('drive.dialogs.cancel')}
           </button>
           <button type="button" className="btn-primary btn-sm" onClick={submit} disabled={busy || !value.trim()}>
@@ -132,7 +132,7 @@ export const FolderPicker = ({
       title={t(mode === 'move' ? 'drive.dialogs.moveTitle' : 'drive.dialogs.copyTitle', { count })}
       footer={
         <>
-          <button type="button" className="btn-white btn-sm border border-line" onClick={onClose} disabled={busy}>
+          <button type="button" className="btn-secondary btn-sm" onClick={onClose} disabled={busy}>
             {t('drive.dialogs.cancel')}
           </button>
           <button type="button" className="btn-primary btn-sm" disabled={!usable || busy} onClick={() => folder && onPick(folder.id)}>

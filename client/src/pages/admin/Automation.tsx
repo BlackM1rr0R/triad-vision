@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { STATUS_TONES, toneClasses, toneTexts } from '@/components/ui/status';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
@@ -12,6 +13,7 @@ import { pagesAutomation } from '@/i18n/pagesAutomation';
 import { ConfirmDialog } from '@/components/admin/ConfirmDialog';
 import { Drawer } from '@/components/admin/Drawer';
 import { Chip, EmptyState, ErrorBlock, LoadingBlock, PageHead, Switch } from '@/components/admin/ui';
+import { Tabs } from '@/components/ui/Tabs';
 import { fmtDateTime, fmtRelative } from '@/components/admin/labels';
 import { RuleEditor, blankRule } from '@/components/automation/RuleEditor';
 import { AssignmentPanel, HandoversPanel } from '@/components/automation/AssignmentPanel';
@@ -19,15 +21,8 @@ import { reasonText, toastAutomationError, type Meta, type Rule, type RuleDraft,
 
 registerCopy(pagesAutomation);
 
-const RUN_TONE: Record<RunStatus, string> = {
-  RUNNING: 'bg-brand-50 text-brand-700',
-  WAITING: 'bg-amber-100 text-amber-800',
-  SUCCEEDED: 'bg-emerald-100 text-emerald-800',
-  PARTIAL: 'bg-orange-100 text-orange-800',
-  SKIPPED: 'bg-slate-100 text-slate-700',
-  FAILED: 'bg-red-100 text-red-800',
-};
-const STEP_TONE: Record<string, string> = { PENDING: 'text-amber-700', RUNNING: 'text-brand-700', SUCCEEDED: 'text-emerald-700', SKIPPED: 'text-slate-500', FAILED: 'text-red-700' };
+const RUN_TONE: Record<RunStatus, string> = toneClasses(STATUS_TONES.automationRun);
+const STEP_TONE: Record<string, string> = toneTexts(STATUS_TONES.automationRun);
 
 const RunLog = ({ rule, onClose }: { rule: Rule | null; onClose: () => void }) => {
   const { t } = useTranslation();
@@ -100,8 +95,8 @@ const RuleCard = ({ rule, onEdit, onLog, onDelete }: { rule: Rule; onEdit: () =>
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <h3 className="font-semibold text-navy-900">{rule.name}</h3>
-            {rule.exampleKey && <span className="badge bg-slate-100 text-slate-700">{t('automation.rules.example')}</span>}
-            {!rule.valid && <span className="badge bg-red-100 text-red-800">{t('automation.rules.invalid')}</span>}
+            {rule.exampleKey && <span className="badge bg-neutral-bg text-neutral-fg">{t('automation.rules.example')}</span>}
+            {!rule.valid && <span className="badge bg-danger-bg text-danger-fg">{t('automation.rules.invalid')}</span>}
           </div>
           {rule.description && <p className="mt-0.5 text-sm text-muted">{rule.description}</p>}
           <p className="mt-1.5 text-xs text-ink/80">
@@ -122,9 +117,9 @@ const RuleCard = ({ rule, onEdit, onLog, onDelete }: { rule: Rule; onEdit: () =>
         <Switch checked={rule.enabled} disabled={toggle.isPending || !rule.valid} onChange={(v) => toggle.mutate(v)} label={t('automation.rules.toggle')} />
       </div>
       <div className="mt-3 flex flex-wrap justify-end gap-2">
-        <button type="button" className="btn-white btn-sm border border-line" onClick={onLog}><History className="size-3.5" /> {t('automation.rules.log')}</button>
-        <button type="button" className="btn-white btn-sm border border-line" onClick={onEdit}><Pencil className="size-3.5" /> {t('automation.common.edit')}</button>
-        <button type="button" className="btn-white btn-sm border border-line text-danger" onClick={onDelete}><Trash2 className="size-3.5" /> {t('automation.common.delete')}</button>
+        <button type="button" className="btn-secondary btn-sm" onClick={onLog}><History className="size-3.5" /> {t('automation.rules.log')}</button>
+        <button type="button" className="btn-secondary btn-sm" onClick={onEdit}><Pencil className="size-3.5" /> {t('automation.common.edit')}</button>
+        <button type="button" className="btn-secondary btn-sm text-danger" onClick={onDelete}><Trash2 className="size-3.5" /> {t('automation.common.delete')}</button>
       </div>
     </li>
   );
@@ -198,11 +193,13 @@ export default function AdminAutomation() {
   return (
     <div>
       <PageHead title={t('automation.title')} subtitle={t('automation.subtitle')} />
-      <div className="mb-5 flex gap-2 overflow-x-auto pb-1" role="tablist">
-        {(['rules', 'assignment', 'handovers'] as Tab[]).map((k) => (
-          <Chip key={k} active={tab === k} onClick={() => setParams(k === 'rules' ? {} : { tab: k }, { replace: true })}>{t(`automation.tabs.${k}`)}</Chip>
-        ))}
-      </div>
+      <Tabs
+        className="mb-5"
+        label={t('automation.title')}
+        items={(['rules', 'assignment', 'handovers'] as Tab[]).map((k) => ({ key: k, label: t(`automation.tabs.${k}`) }))}
+        value={tab}
+        onChange={(k) => setParams(k === 'rules' ? {} : { tab: k }, { replace: true })}
+      />
       {tab === 'rules' && <RulesTab meta={meta.data} />}
       {tab === 'assignment' && <AssignmentPanel meta={meta.data} />}
       {tab === 'handovers' && <HandoversPanel />}

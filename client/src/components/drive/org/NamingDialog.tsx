@@ -51,7 +51,7 @@ export const NamingSettingsDialog = ({ onClose }: { onClose: () => void }) => {
       description={t('driveOrg.naming.settingsIntro')}
       footer={
         <>
-          <button type="button" className="btn-white btn-sm border border-line" onClick={onClose}>
+          <button type="button" className="btn-secondary btn-sm" onClick={onClose}>
             {t('driveOrg.common.cancel')}
           </button>
           <button type="button" className="btn-primary btn-sm" disabled={save.isPending || !q.data?.canManage} onClick={() => save.mutate()}>
@@ -119,7 +119,7 @@ export const TidyDialog = ({ folderId, folderName, onClose }: { folderId: string
       description={preview.data ? t('driveOrg.naming.tidyIntro', { pattern: preview.data.pattern }) : undefined}
       footer={
         <>
-          <button type="button" className="btn-white btn-sm border border-line" onClick={onClose}>
+          <button type="button" className="btn-secondary btn-sm" onClick={onClose}>
             {t('driveOrg.common.cancel')}
           </button>
           <button type="button" className="btn-primary btn-sm" disabled={apply.isPending || picked.size === 0} onClick={() => apply.mutate()}>

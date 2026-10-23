@@ -160,7 +160,7 @@ const TemplateForm = ({
         <button type="submit" className="btn-primary btn-sm" disabled={busy || !hasText(d.title)}>
           {busy && <Spinner className="size-3.5" />} {t('docsIntel.admin.save')}
         </button>
-        <button type="button" className="btn-white btn-sm border border-line" onClick={onCancel} disabled={busy}>
+        <button type="button" className="btn-secondary btn-sm" onClick={onCancel} disabled={busy}>
           {t('docsIntel.admin.cancel')}
         </button>
       </div>
@@ -233,13 +233,13 @@ const StageList = ({
       title={
         <>
           {t(`docsIntel.admin.stage.${stage}`)}
-          <span className="badge ml-1 bg-slate-100 text-slate-600 tabular-nums">{items.length}</span>
+          <span className="badge ml-1 bg-neutral-bg text-neutral-fg tabular-nums">{items.length}</span>
         </>
       }
       icon={ListChecks}
       actions={
         canEdit && (
-          <button type="button" className="btn-white btn-sm border border-line" onClick={() => setAdding(true)} disabled={adding}>
+          <button type="button" className="btn-secondary btn-sm" onClick={() => setAdding(true)} disabled={adding}>
             <Plus className="size-3.5" aria-hidden /> {t('docsIntel.admin.add')}
           </button>
         )
@@ -271,7 +271,7 @@ const StageList = ({
                     {tpl.required ? (
                       <span className="badge bg-navy-900/90 text-[10px] text-white">{t('docsIntel.admin.required')}</span>
                     ) : (
-                      <span className="badge bg-slate-100 text-[10px] text-slate-600">{t('docsIntel.admin.optional')}</span>
+                      <span className="badge bg-neutral-bg text-[10px] text-neutral-fg">{t('docsIntel.admin.optional')}</span>
                     )}
                     {(aiLangsOf(tpl.title).length > 0 || aiLangsOf(tpl.description).length > 0) && (
                       <span className="badge bg-brand-50 text-[10px] text-brand-700" title={t('admin.l10n.aiBadgeTitle')}>
@@ -457,7 +457,7 @@ export default function Requirements() {
                 <p className="mt-0.5 text-xs text-muted">{selectedCount ? t('docsIntel.admin.copyDefaultsHint') : t('docsIntel.admin.emptyVisa')}</p>
               </div>
               {canEdit && (
-                <button type="button" className="btn-white btn-sm border border-line" onClick={() => (selectedCount ? setReplace(true) : copy(false))} disabled={!!busy}>
+                <button type="button" className="btn-secondary btn-sm" onClick={() => (selectedCount ? setReplace(true) : copy(false))} disabled={!!busy}>
                   {busy === 'copy' ? <Spinner className="size-3.5" /> : <Copy className="size-3.5" aria-hidden />} {t('docsIntel.admin.copyDefaults')}
                 </button>
               )}

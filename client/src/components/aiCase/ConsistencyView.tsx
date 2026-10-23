@@ -100,7 +100,7 @@ export const ConsistencyView = ({ caseId, run, states }: { caseId: string; run: 
             )}
             <div className="mt-2.5 flex flex-wrap gap-1.5">
               {st ? (
-                <button type="button" className="btn-white btn-sm border border-line" disabled={!!busy} onClick={() => void setStatus(f, null)}>
+                <button type="button" className="btn-secondary btn-sm" disabled={!!busy} onClick={() => void setStatus(f, null)}>
                   {busy === `${f.key}:state` ? <Spinner className="size-3.5" /> : <RotateCcw className="size-3.5" aria-hidden />} {t('aiCase.actions.reopen')}
                 </button>
               ) : (
@@ -111,18 +111,18 @@ export const ConsistencyView = ({ caseId, run, states }: { caseId: string; run: 
                     </button>
                   )}
                   {fix?.kind === 'REQUEST_DOCUMENT' && (
-                    <button type="button" className="btn-white btn-sm border border-line" disabled={!!busy} onClick={() => void request(f)}>
+                    <button type="button" className="btn-secondary btn-sm" disabled={!!busy} onClick={() => void request(f)}>
                       {busy === `${f.key}:request` ? <Spinner className="size-3.5" /> : <FileQuestion className="size-3.5" aria-hidden />} {t('aiCase.actions.request')}
                     </button>
                   )}
-                  <button type="button" className="btn-white btn-sm border border-line" disabled={!!busy} onClick={() => void task(f)}>
+                  <button type="button" className="btn-secondary btn-sm" disabled={!!busy} onClick={() => void task(f)}>
                     {busy === `${f.key}:task` ? <Spinner className="size-3.5" /> : <ClipboardList className="size-3.5" aria-hidden />} {t('aiCase.actions.task')}
                   </button>
-                  <button type="button" className="btn-white btn-sm border border-line" disabled={!!busy} onClick={() => void setStatus(f, 'OK')}>
+                  <button type="button" className="btn-secondary btn-sm" disabled={!!busy} onClick={() => void setStatus(f, 'OK')}>
                     {busy === `${f.key}:state` ? <Spinner className="size-3.5" /> : <Check className="size-3.5" aria-hidden />} {t('aiCase.actions.ok')}
                   </button>
                   {f.severity !== 'BLOCKER' && (
-                    <button type="button" className="btn-white btn-sm border border-line" disabled={!!busy} onClick={() => void setStatus(f, 'IGNORED')}>
+                    <button type="button" className="btn-secondary btn-sm" disabled={!!busy} onClick={() => void setStatus(f, 'IGNORED')}>
                       <X className="size-3.5" aria-hidden /> {t('aiCase.actions.ignore')}
                     </button>
                   )}

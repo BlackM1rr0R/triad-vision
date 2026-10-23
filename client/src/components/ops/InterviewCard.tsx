@@ -88,14 +88,14 @@ export const InterviewCard = ({
             href={i.meetingUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className={clsx('btn-sm', joinable ? 'btn-primary' : 'btn-white border border-line')}
+            className={clsx('btn-sm', joinable ? 'btn-primary' : 'btn-secondary')}
             title={joinable ? undefined : t('ops.account.joinHint')}
           >
             {joinable ? <Video className="size-3.5" /> : <ExternalLink className="size-3.5" />} {t('ops.interviews.actions.join')}
           </a>
         )}
         {i.status !== 'CANCELLED' && (
-          <a href={icsUrl(i.id)} className="btn-white btn-sm border border-line" download>
+          <a href={icsUrl(i.id)} className="btn-secondary btn-sm" download>
             <CalendarPlus className="size-3.5" /> {t('ops.account.ics')}
           </a>
         )}

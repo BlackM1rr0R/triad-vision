@@ -1,6 +1,7 @@
 import { useState, type FormEvent, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
+import { Tabs } from '@/components/ui/Tabs';
 import { Languages } from 'lucide-react';
 import { LOCALES, type Locale } from '@/i18n';
 import { Flag } from '@/components/ui/Flag';
@@ -182,24 +183,21 @@ export const VacancyForm = ({
           <p className="flex items-center gap-2 text-sm font-bold text-navy-900">
             <Languages className="size-4 text-brand-600" aria-hidden /> {t('jobsArea.form.texts')}
           </p>
-          <div className="flex gap-1 rounded-xl bg-surface p-1" role="tablist" aria-label={t('jobsArea.form.language')}>
-            {LOCALES.map((l) => (
-              <button
-                key={l}
-                type="button"
-                role="tab"
-                aria-selected={lang === l}
-                onClick={() => setLang(l)}
-                className={clsx(
-                  'relative inline-flex min-h-9 items-center gap-1.5 rounded-lg px-2.5 text-xs font-bold uppercase transition',
-                  lang === l ? 'bg-white text-navy-900 shadow' : 'text-muted hover:text-navy-900',
-                )}
-              >
-                <Flag code={l} className="h-3 w-4" /> {l}
-                {f.title[l].trim() && <span className="size-1.5 rounded-full bg-emerald-500" aria-label={t('jobsArea.form.filled')} />}
-              </button>
-            ))}
-          </div>
+          <Tabs
+            variant="pills"
+            label={t('jobsArea.form.language')}
+            items={LOCALES.map((l) => ({
+              key: l,
+              label: (
+                <>
+                  <Flag code={l} className="h-3 w-4" /> <span className="uppercase">{l}</span>
+                  {f.title[l].trim() && <span className="size-1.5 rounded-full bg-success" aria-label={t('jobsArea.form.filled')} />}
+                </>
+              ),
+            }))}
+            value={lang}
+            onChange={setLang}
+          />
         </div>
         <p className="text-xs text-muted">{t(staff ? 'jobsArea.form.langHintStaff' : 'jobsArea.form.langHint')}</p>
         <Field id="vf-title" label={`${t('jobsArea.form.title')} (${lang.toUpperCase()})`}>

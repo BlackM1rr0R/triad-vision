@@ -107,6 +107,7 @@ const OrdersList = () => {
 
       {items.length === 0 ? (
         <div className="card flex flex-col items-center px-6 py-12 text-center">
+          {/* TODO(ui): large portal empty state (size-14 icon, display title) -> <EmptyState size="lg" tone="brand"> (portal rework) */}
           <span className="grid size-14 place-items-center rounded-2xl bg-brand-100 text-brand-600">
             <Languages className="size-7" aria-hidden />
           </span>

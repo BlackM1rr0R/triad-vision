@@ -868,7 +868,7 @@ function ResourcePage({ resource }: { resource: string }) {
                   <button type="button" className="min-w-0 flex-1 py-1 text-left" onClick={() => openEditor(item)}>
                     <p className="flex min-w-0 items-center gap-1.5 text-sm font-semibold text-navy-900">
                       <span className="truncate">{def.titleOf(item) || '—'}</span>
-                      {def.publishable && !published && <span className="badge shrink-0 bg-slate-100 text-[10px] text-slate-600 sm:hidden">{t('admin.content.hiddenBadge')}</span>}
+                      {def.publishable && !published && <span className="badge shrink-0 bg-neutral-bg text-[10px] text-neutral-fg sm:hidden">{t('admin.content.hiddenBadge')}</span>}
                     </p>
                     {def.subtitleOf && <p className="truncate text-xs text-muted">{def.subtitleOf(item)}</p>}
                   </button>
@@ -919,7 +919,7 @@ function ResourcePage({ resource }: { resource: string }) {
         title={editingTitle}
         footer={
           <>
-            <button type="button" className="btn-white btn-sm border border-line" onClick={() => setEditing(null)} disabled={saving}>
+            <button type="button" className="btn-secondary btn-sm" onClick={() => setEditing(null)} disabled={saving}>
               {t('admin.common.cancel')}
             </button>
             <button type="submit" form="content-form" className="btn-primary btn-sm" disabled={saving}>

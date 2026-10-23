@@ -101,7 +101,7 @@ export default function ClientTasks() {
     <div className="space-y-6">
       <PageHead title={t('cp.page.title')} subtitle={t('cp.page.subtitle')} />
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-        <div className="flex flex-wrap gap-2" role="tablist">
+        <div className="flex flex-wrap gap-2" role="group" aria-label={t('cp.page.title')}>
           {FILTERS.map((f) => (
             <Chip key={f} active={filter === f} onClick={() => setParam('filter', f)}>
               {t(`cp.page.filter.${f}`)}
@@ -148,10 +148,10 @@ export default function ClientTasks() {
                 </p>
                 {task.status === 'OPEN' && (
                   <div className="flex gap-1.5">
-                    <button type="button" className="btn-white btn-sm border border-line" onClick={() => remind.mutate(task.id)}>
+                    <button type="button" className="btn-secondary btn-sm" onClick={() => remind.mutate(task.id)}>
                       <BellRing className="size-3.5" aria-hidden /> {t('cp.tasks.remind')}
                     </button>
-                    <button type="button" className="btn-white btn-sm border border-line" onClick={() => done.mutate(task.id)}>
+                    <button type="button" className="btn-secondary btn-sm" onClick={() => done.mutate(task.id)}>
                       <CheckCircle2 className="size-3.5" aria-hidden /> {t('cp.tasks.markDone')}
                     </button>
                   </div>

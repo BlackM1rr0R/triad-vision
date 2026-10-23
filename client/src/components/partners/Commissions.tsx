@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { STATUS_TONES, toneClasses } from '@/components/ui/status';
 import { Link } from 'react-router-dom';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
@@ -44,12 +45,7 @@ interface ListResponse {
   totals: { pendingCents: number; approvedCents: number; paidCents: number; cancelledCents: number; totalCents: number };
 }
 
-const TONE: Record<CommissionStatus, string> = {
-  PENDING: 'bg-amber-100 text-amber-800',
-  APPROVED: 'bg-brand-100 text-brand-800',
-  PAID: 'bg-emerald-100 text-emerald-800',
-  CANCELLED: 'bg-surface text-muted',
-};
+const TONE: Record<CommissionStatus, string> = toneClasses(STATUS_TONES.commission);
 
 export const COMMISSIONS_KEY = [...PARTNERS_KEY, 'commissions'] as const;
 
@@ -142,7 +138,7 @@ const CommissionDialog = ({
       title={commission ? t('refPartners.com.edit') : t('refPartners.com.add')}
       footer={
         <div className="flex justify-end gap-2">
-          <button type="button" className="btn-white btn-sm border border-line" onClick={onClose} disabled={save.isPending}>
+          <button type="button" className="btn-secondary btn-sm" onClick={onClose} disabled={save.isPending}>
             {t('refPartners.form.cancel')}
           </button>
           <button type="submit" form="commission-form" className="btn-primary btn-sm" disabled={save.isPending || !valid}>
@@ -249,7 +245,7 @@ const PayDialog = ({ ids, onClose }: { ids: string[] | null; onClose: (done: boo
       size="sm"
       footer={
         <div className="flex justify-end gap-2">
-          <button type="button" className="btn-white btn-sm border border-line" onClick={() => onClose(false)} disabled={pay.isPending}>
+          <button type="button" className="btn-secondary btn-sm" onClick={() => onClose(false)} disabled={pay.isPending}>
             {t('refPartners.form.cancel')}
           </button>
           <button type="button" className="btn-primary btn-sm" onClick={() => pay.mutate()} disabled={pay.isPending}>
@@ -346,10 +342,10 @@ export const CommissionsPanel = ({ partnerId, isAdmin }: { partnerId?: string; i
               <Wallet className="size-3.5" /> {t('refPartners.com.payBulk', { count: selected.size })}
             </button>
           )}
-          <a href={exportHref} className="btn-white btn-sm border border-line" download>
+          <a href={exportHref} className="btn-secondary btn-sm" download>
             <Download className="size-3.5" /> {t('refPartners.com.export')}
           </a>
-          <button type="button" className="btn-white btn-sm border border-line" onClick={() => setDialog({ open: true, commission: null })}>
+          <button type="button" className="btn-secondary btn-sm" onClick={() => setDialog({ open: true, commission: null })}>
             <Plus className="size-3.5" /> {t('refPartners.com.add')}
           </button>
         </div>

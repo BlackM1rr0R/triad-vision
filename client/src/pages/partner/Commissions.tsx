@@ -9,6 +9,7 @@ import { Spinner } from '@/components/ui/Spinner';
 import { day, money } from '@/components/agents/format';
 import { downloadFile, type PartnerCommissionRow, type Totals } from '@/components/partnerPortal/api';
 import { CommissionPill, ErrorRetry, Kpi, Loading, Section } from '@/components/partnerPortal/ui';
+import { EmptyState } from '@/components/ui/EmptyState';
 
 /** Last 24 months as YYYY-MM, newest first. */
 const recentMonths = () => {
@@ -51,7 +52,7 @@ export default function PartnerCommissionsPage() {
                 </option>
               ))}
             </select>
-            <button type="button" className="btn-white btn-sm border border-line" onClick={() => download.mutate()} disabled={download.isPending}>
+            <button type="button" className="btn-secondary btn-sm" onClick={() => download.mutate()} disabled={download.isPending}>
               {download.isPending ? <Spinner className="size-3.5" /> : <Download className="size-3.5" aria-hidden />} {t('partnerPortal.common.download')}
             </button>
           </>
@@ -70,10 +71,7 @@ export default function PartnerCommissionsPage() {
             </div>
 
             {q.data.items.length === 0 ? (
-              <div className="py-10 text-center">
-                <p className="font-semibold text-ink">{t('partnerPortal.commissions.empty')}</p>
-                <p className="mt-1 text-sm text-muted">{t('partnerPortal.commissions.emptyHint')}</p>
-              </div>
+              <EmptyState title={t('partnerPortal.commissions.empty')} text={t('partnerPortal.commissions.emptyHint')} />
             ) : (
               <>
                 {/* Cards on phones, a table from sm up. */}

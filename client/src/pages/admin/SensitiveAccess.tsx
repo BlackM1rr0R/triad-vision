@@ -146,7 +146,7 @@ const RevealLog = () => {
       title={t('privacyTools.access.logTitle')}
       icon={KeyRound}
       actions={
-        <a href={csvHref} className="btn-white btn-sm border border-line" download>
+        <a href={csvHref} className="btn-secondary btn-sm" download>
           <Download className="size-4" aria-hidden /> {t('privacyTools.access.exportCsv')}
         </a>
       }

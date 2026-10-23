@@ -127,7 +127,7 @@ const Editor = ({ article, categories, isAdmin, onSaved, onCancel }: { article: 
         </div>
       </div>
       <div className="mt-auto flex flex-wrap justify-end gap-2 border-t border-line pt-4">
-        <button type="button" className="btn-white btn-sm border border-line" onClick={onCancel}>{t('ops.common.cancel')}</button>
+        <button type="button" className="btn-secondary btn-sm" onClick={onCancel}>{t('ops.common.cancel')}</button>
         <button type="submit" className="btn-primary btn-sm" disabled={save.isPending || title.trim().length < 2}>
           {save.isPending ? <Spinner className="size-3.5" /> : <Save className="size-3.5" />} {t('ops.common.save')}
         </button>
@@ -226,7 +226,7 @@ export default function KnowledgeBase() {
         actions={
           <>
             {isAdmin && (
-              <button type="button" className="btn-white btn-sm border border-line" onClick={() => setCatModal({ name: '' })}>
+              <button type="button" className="btn-secondary btn-sm" onClick={() => setCatModal({ name: '' })}>
                 <FolderPlus className="size-3.5" /> {t('ops.kb.newCategory')}
               </button>
             )}
@@ -257,7 +257,7 @@ export default function KnowledgeBase() {
                 {search.data.items.map((h) => (
                   <li key={h.id}>
                     <button type="button" className="block w-full px-4 py-2.5 text-left hover:bg-surface" onClick={() => open(h.id)}>
-                      <span className="flex items-center gap-2 text-sm font-semibold text-navy-900">{h.pinned && <Pin className="size-3 text-amber-600" />}{h.title}{!h.published && <span className="badge bg-slate-200 text-slate-600">{t('ops.kb.draftBadge')}</span>}</span>
+                      <span className="flex items-center gap-2 text-sm font-semibold text-navy-900">{h.pinned && <Pin className="size-3 text-amber-600" />}{h.title}{!h.published && <span className="badge bg-neutral-bg text-neutral-fg">{t('ops.kb.draftBadge')}</span>}</span>
                       <span className="mt-0.5 block text-xs text-muted">{h.excerpt}</span>
                     </button>
                   </li>
@@ -328,7 +328,7 @@ export default function KnowledgeBase() {
                     <span className="flex items-center gap-1.5 text-sm font-semibold text-navy-900">
                       {a.pinned && <Pin className="size-3 shrink-0 text-amber-600" />}
                       <span className="truncate">{a.title}</span>
-                      {!a.published && <span className="badge shrink-0 bg-slate-200 text-slate-600">{t('ops.kb.draftBadge')}</span>}
+                      {!a.published && <span className="badge shrink-0 bg-neutral-bg text-neutral-fg">{t('ops.kb.draftBadge')}</span>}
                     </span>
                     <span className="mt-0.5 block truncate text-[11px] text-muted">
                       {a.category?.name ?? t('ops.kb.uncategorised')} · {fmtDateTime(a.updatedAt)}{a.tags.length ? ` · ${a.tags.map((x) => `#${x}`).join(' ')}` : ''}
@@ -368,7 +368,7 @@ export default function KnowledgeBase() {
                   <h2 className="flex items-center gap-2 font-display text-xl font-bold text-navy-900">
                     {current.pinned && <Pin className="size-4 text-amber-600" />}
                     {current.title}
-                    {!current.published && <span className="badge bg-slate-200 text-slate-600">{t('ops.kb.draftBadge')}</span>}
+                    {!current.published && <span className="badge bg-neutral-bg text-neutral-fg">{t('ops.kb.draftBadge')}</span>}
                   </h2>
                   <p className="mt-1 text-xs text-muted">
                     {current.category?.name ?? t('ops.kb.uncategorised')} · {t('ops.kb.lastEdited', { name: current.updatedBy ? fullName(current.updatedBy) : '—', date: fmtDateTime(current.updatedAt) })}
@@ -384,16 +384,16 @@ export default function KnowledgeBase() {
                     <Copy className="size-3.5" /> {t('ops.kb.copyAnswer')}
                   </button>
                   {canEdit(current) && (
-                    <button type="button" className="btn-white btn-sm border border-line" onClick={() => setMode('edit')}>
+                    <button type="button" className="btn-secondary btn-sm" onClick={() => setMode('edit')}>
                       <Pencil className="size-3.5" /> {t('ops.common.edit')}
                     </button>
                   )}
                   {isAdmin && (
                     <>
-                      <button type="button" className="btn-white btn-sm border border-line" disabled={togglePin.isPending} onClick={() => togglePin.mutate(current)}>
+                      <button type="button" className="btn-secondary btn-sm" disabled={togglePin.isPending} onClick={() => togglePin.mutate(current)}>
                         {current.pinned ? <PinOff className="size-3.5" /> : <Pin className="size-3.5" />} {current.pinned ? t('ops.kb.unpin') : t('ops.kb.pin')}
                       </button>
-                      <button type="button" className="btn-white btn-sm border border-line text-danger" onClick={() => setConfirm({ kind: 'article', id: current.id })}>
+                      <button type="button" className="btn-secondary btn-sm text-danger" onClick={() => setConfirm({ kind: 'article', id: current.id })}>
                         <Trash2 className="size-3.5" /> {t('ops.common.delete')}
                       </button>
                     </>
@@ -413,7 +413,7 @@ export default function KnowledgeBase() {
         title={catModal?.id ? t('ops.kb.renameCategory') : t('ops.kb.newCategory')}
         footer={
           <>
-            <button type="button" className="btn-white btn-sm border border-line" onClick={() => setCatModal(null)}>{t('ops.common.cancel')}</button>
+            <button type="button" className="btn-secondary btn-sm" onClick={() => setCatModal(null)}>{t('ops.common.cancel')}</button>
             <button type="button" className="btn-primary btn-sm" disabled={!catModal?.name.trim() || saveCategory.isPending} onClick={() => catModal && saveCategory.mutate({ id: catModal.id, name: catModal.name.trim() })}>
               {saveCategory.isPending ? <Spinner className="size-3.5" /> : <Save className="size-3.5" />} {t('ops.common.save')}
             </button>

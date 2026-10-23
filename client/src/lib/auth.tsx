@@ -5,6 +5,7 @@ import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { api, onSessionLost, setImpersonation, type ImpersonationState, type SessionLostReason } from './api';
 import { isStaffRole, type Role, type SessionInfo, type User } from './types';
+import { Spinner } from '@/components/ui/Spinner';
 
 interface AuthState {
   user: User | null;
@@ -220,7 +221,7 @@ export const RequireAuth = ({ roles, children }: { roles?: Role[]; children: Rea
   if (loading) {
     return (
       <div className="grid min-h-[60vh] place-items-center">
-        <div className="size-10 animate-spin rounded-full border-4 border-brand-100 border-t-brand-600" />
+        <Spinner className="size-10 border-4 text-brand-600" />
       </div>
     );
   }

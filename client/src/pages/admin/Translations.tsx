@@ -152,7 +152,7 @@ const OrdersTable = () => {
         subtitle={t('trOrders.admin.subtitle')}
         actions={
           isAdmin && (
-            <button type="button" className="btn-white btn-sm border border-line" onClick={() => setPricingOpen(true)}>
+            <button type="button" className="btn-secondary btn-sm" onClick={() => setPricingOpen(true)}>
               <Settings2 className="size-4" aria-hidden /> {t('trOrders.admin.prices')}
             </button>
           )
@@ -230,7 +230,7 @@ const OrdersTable = () => {
                       <Link to={o.id} className="font-semibold text-brand-700 tabular-nums hover:underline">
                         {o.key}
                       </Link>
-                      {o.urgency === 'EXPRESS' && <span className="ml-1.5 badge bg-amber-100 text-amber-800">{t('trOrders.urgency.EXPRESS')}</span>}
+                      {o.urgency === 'EXPRESS' && <span className="ml-1.5 badge bg-warning-bg text-warning-fg">{t('trOrders.urgency.EXPRESS')}</span>}
                       <span className="block text-[11px] text-muted">{f.day(o.createdAt)}</span>
                     </td>
                     <td className="px-4 py-3">
@@ -573,9 +573,9 @@ const OrderAdmin = () => {
         <div className="flex flex-wrap items-center gap-2">
           <h1 className="text-xl font-bold text-ink tabular-nums sm:text-2xl">{order.key}</h1>
           <TrStatusPill status={order.status} />
-          {order.urgency === 'EXPRESS' && <span className="badge bg-amber-100 text-amber-800">{t('trOrders.urgency.EXPRESS')}</span>}
+          {order.urgency === 'EXPRESS' && <span className="badge bg-warning-bg text-warning-fg">{t('trOrders.urgency.EXPRESS')}</span>}
           {order.overdue && (
-            <span className="badge bg-red-100 text-red-700">
+            <span className="badge bg-danger-bg text-danger-fg">
               <AlertTriangle className="size-3.5" aria-hidden /> {t('trOrders.admin.overdueBadge')}
             </span>
           )}

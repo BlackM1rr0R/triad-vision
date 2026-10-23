@@ -240,7 +240,7 @@ export default function Booking() {
                       <div className="flex flex-col items-center gap-3 rounded-xl bg-red-50 p-6 text-center text-sm text-red-800" role="alert">
                         <AlertCircle className="size-5" aria-hidden />
                         {t('bookingPage.loadFailed')}
-                        <button type="button" className="btn-white btn-sm border border-line" onClick={() => slotsQ.refetch()}>
+                        <button type="button" className="btn-secondary btn-sm" onClick={() => slotsQ.refetch()}>
                           <RefreshCw className="size-3.5" aria-hidden /> {t('bookingPage.retry')}
                         </button>
                       </div>
@@ -425,10 +425,10 @@ const Success = ({ result, email, tz, onAnother }: { result: BookResult; email: 
           <a href={`/api/booking/ics?token=${token}`} className="btn-ghost" download>
             <CalendarPlus className="size-4" aria-hidden /> {t('bookingPage.addCalendar')}
           </a>
-          <Link to={`/booking/manage?token=${token}`} className="btn-white border border-line">
+          <Link to={`/booking/manage?token=${token}`} className="btn-secondary">
             <Settings2 className="size-4" aria-hidden /> {t('bookingPage.manage')}
           </Link>
-          <button type="button" className="btn-white border border-line" onClick={onAnother}>
+          <button type="button" className="btn-secondary" onClick={onAnother}>
             <CalendarCheck2 className="size-4" aria-hidden /> {t('bookingPage.another')}
           </button>
         </div>

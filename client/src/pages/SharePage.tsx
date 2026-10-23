@@ -224,7 +224,7 @@ export default function SharePage() {
               ))}
             </nav>
             {!exhausted && (meta.totals?.files ?? 0) > 0 && (
-              <a href={dl(dir ?? undefined)} onClick={afterDownload} className="btn-white btn-sm border border-line" download>
+              <a href={dl(dir ?? undefined)} onClick={afterDownload} className="btn-secondary btn-sm" download>
                 <FileArchive className="size-3.5" /> {t('driveCollab.share.downloadAll')}
               </a>
             )}

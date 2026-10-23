@@ -95,7 +95,7 @@ export const AgentsList = () => {
                     </td>
                     <td className="px-3 py-3">
                       <span className="font-mono text-xs font-semibold text-ink">{a.code}</span>
-                      {a.status === 'PAUSED' && <span className="badge ml-1.5 bg-amber-100 text-amber-800">{t('agents.agentStatus.PAUSED')}</span>}
+                      {a.status === 'PAUSED' && <span className="badge ml-1.5 bg-warning-bg text-warning-fg">{t('agents.agentStatus.PAUSED')}</span>}
                     </td>
                     <td className="px-3 py-3 text-muted">{a.region ?? '—'}</td>
                     <td className="px-3 py-3 whitespace-nowrap text-ink">{a.commissionValue > 0 ? termsSummary(a) : '—'}</td>

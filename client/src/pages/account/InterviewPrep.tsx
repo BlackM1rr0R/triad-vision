@@ -268,6 +268,7 @@ export default function AccountInterviewPrep() {
 
       <CalendarSubscribe />
 
+      {/* TODO(ui): <Tabs> once it has a "segmented grid" layout (2 equal columns on phones, 44px targets) */}
       <div role="tablist" aria-label={t('prep.page.title')} className="grid grid-cols-2 gap-2 rounded-2xl border border-line bg-card p-1.5 sm:inline-grid sm:w-auto">
         {PREP_KINDS.map((k) => {
           const Icon = KIND_ICON[k];
@@ -355,6 +356,7 @@ export default function AccountInterviewPrep() {
 
           {visible.length === 0 ? (
             <div className="card flex flex-col items-center px-6 py-12 text-center">
+              {/* TODO(ui): large portal empty state (size-14 icon, display title) -> <EmptyState size="lg" tone="brand"> (portal rework) */}
               {(() => {
                 const Icon = KIND_ICON[kind];
                 return <Icon className="size-6 text-muted" aria-hidden />;

@@ -473,8 +473,8 @@ const TestPanel = ({ draft }: { draft: RuleDraft }) => {
                 <li key={a.index} className="rounded-md border border-line bg-white p-2">
                   <p className="flex flex-wrap items-center gap-2 font-semibold text-navy-900">
                     {a.index + 1}. {t(`automation.actions.${a.type}`)}
-                    {a.delayMs > 0 && <span className="badge bg-amber-100 text-amber-800">{t('automation.test.delayed', { time: fmtDelay(a.delayMs) })}</span>}
-                    <span className={clsx('badge', a.status === 'SUCCEEDED' ? 'bg-emerald-100 text-emerald-800' : a.status === 'SKIPPED' ? 'bg-slate-100 text-slate-700' : 'bg-red-100 text-red-800')}>{t(`automation.runs.step.${a.status}`)}</span>
+                    {a.delayMs > 0 && <span className="badge bg-warning-bg text-warning-fg">{t('automation.test.delayed', { time: fmtDelay(a.delayMs) })}</span>}
+                    <span className={clsx('badge', a.status === 'SUCCEEDED' ? 'bg-success-bg text-success-fg' : a.status === 'SKIPPED' ? 'bg-neutral-bg text-neutral-fg' : 'bg-danger-bg text-danger-fg')}>{t(`automation.runs.step.${a.status}`)}</span>
                   </p>
                   {a.reason && <p className="text-xs text-muted">{reasonText(a.reason)}</p>}
                   {resultLine(a) && <p className="mt-1 text-xs whitespace-pre-wrap text-ink/80">{resultLine(a)}</p>}
@@ -536,8 +536,8 @@ export const RuleEditor = ({ open, ruleId, initial, meta, onClose }: { open: boo
       title={ruleId ? t('automation.editor.titleEdit') : t('automation.editor.titleNew')}
       footer={
         <>
-          <button type="button" className="btn-white btn-sm border border-line" onClick={() => setShowTest((v) => !v)}><FlaskConical className="size-3.5" /> {t('automation.test.button')}</button>
-          <button type="button" className="btn-white btn-sm border border-line" onClick={onClose}>{t('automation.common.cancel')}</button>
+          <button type="button" className="btn-secondary btn-sm" onClick={() => setShowTest((v) => !v)}><FlaskConical className="size-3.5" /> {t('automation.test.button')}</button>
+          <button type="button" className="btn-secondary btn-sm" onClick={onClose}>{t('automation.common.cancel')}</button>
           <button type="button" className="btn-primary btn-sm" disabled={save.isPending || !draft.name.trim()} onClick={() => save.mutate()}>
             {save.isPending ? <Spinner className="size-3.5" /> : <Save className="size-3.5" />} {t('automation.common.save')}
           </button>
@@ -558,7 +558,7 @@ export const RuleEditor = ({ open, ruleId, initial, meta, onClose }: { open: boo
           {draft.conditions.map((c, i) => (
             <ConditionRow key={i} value={c} meta={meta} onChange={(nc) => setDraft((d) => ({ ...d, conditions: d.conditions.map((x, j) => (j === i ? nc : x)) }))} onRemove={() => setDraft((d) => ({ ...d, conditions: d.conditions.filter((_, j) => j !== i) }))} />
           ))}
-          <button type="button" className="btn-white btn-sm border border-line" disabled={draft.conditions.length >= 20} onClick={() => setDraft((d) => ({ ...d, conditions: [...d.conditions, defaultCondition('VISA_TYPE')] }))}>
+          <button type="button" className="btn-secondary btn-sm" disabled={draft.conditions.length >= 20} onClick={() => setDraft((d) => ({ ...d, conditions: [...d.conditions, defaultCondition('VISA_TYPE')] }))}>
             <Plus className="size-3.5" /> {t('automation.editor.addCondition')}
           </button>
         </Section>
@@ -567,7 +567,7 @@ export const RuleEditor = ({ open, ruleId, initial, meta, onClose }: { open: boo
           {draft.actions.map((a, i) => (
             <ActionCard key={i} index={i} count={draft.actions.length} value={a} meta={meta} target={target.ref} onChange={(na) => setAction(i, na)} onMove={(d) => moveAction(i, d)} onRemove={() => setDraft((d) => ({ ...d, actions: d.actions.filter((_, j) => j !== i) }))} />
           ))}
-          <button type="button" className="btn-white btn-sm border border-line" disabled={draft.actions.length >= 10} onClick={() => setDraft((d) => ({ ...d, actions: [...d.actions, defaultAction('NOTIFY_STAFF')] }))}>
+          <button type="button" className="btn-secondary btn-sm" disabled={draft.actions.length >= 10} onClick={() => setDraft((d) => ({ ...d, actions: [...d.actions, defaultAction('NOTIFY_STAFF')] }))}>
             <Plus className="size-3.5" /> {t('automation.editor.addAction')}
           </button>
         </Section>

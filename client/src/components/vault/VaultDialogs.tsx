@@ -434,7 +434,7 @@ export const UseInCaseDialog = ({ doc, onClose }: { doc: VaultDoc | null; onClos
                     >
                       <input type="radio" name={`${ids}-req`} checked={requirementId === r.requirementId} onChange={() => setRequirementId(r.requirementId)} />
                       <span className="min-w-0 flex-1 text-ink">{tr(r.title)}</span>
-                      {match && <span className="badge bg-emerald-100 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300">{t('vault.use.match')}</span>}
+                      {match && <span className="badge bg-success-bg text-success-fg">{t('vault.use.match')}</span>}
                       {r.satisfied && <Check className="size-4 shrink-0 text-success" aria-hidden />}
                     </label>
                   );

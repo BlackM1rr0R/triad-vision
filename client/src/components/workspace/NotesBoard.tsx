@@ -55,6 +55,7 @@ const NoteCard = ({ note, onDragStart, onDragOver, onDrop, dragging }: { note: N
     void save({ title: title.trim() || null, body });
   };
   const remove = async () => {
+    // TODO(ui): ConfirmDialog
     if ((note.body.trim() || note.title) && !window.confirm(t('ws.common.confirmDelete'))) return;
     try {
       await api.delete(`/workspace/notes/${note.id}`);

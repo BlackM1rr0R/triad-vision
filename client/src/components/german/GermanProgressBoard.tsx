@@ -1,4 +1,5 @@
 import { useRef, useState, type FormEvent } from 'react';
+import { statusTone, TONE_CLASS } from '@/components/ui/status';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
 import { toast } from 'sonner';
@@ -48,7 +49,7 @@ export const LevelProgress = ({ ov, compact = false }: { ov: GermanOverview; com
   );
 };
 
-const resultTone = (passed: boolean | null) => (passed === true ? 'bg-emerald-100 text-emerald-800' : passed === false ? 'bg-red-100 text-red-700' : 'bg-slate-100 text-slate-700');
+const resultTone = (passed: boolean | null) => TONE_CLASS[statusTone('result', passed === true ? 'passed' : passed === false ? 'failed' : 'pending')];
 
 // ─── Course form ───────────────────────────────────────────────────────
 
@@ -112,7 +113,7 @@ const CourseForm = ({ initial, onSubmit, onCancel }: { initial: GermanCourse | n
         </select>
       </div>
       <div className="flex flex-col-reverse gap-2 sm:col-span-2 sm:flex-row sm:justify-end">
-        <button type="button" className="btn-white btn-sm border border-line" onClick={onCancel}>{t('germanProgress.cancel')}</button>
+        <button type="button" className="btn-secondary btn-sm" onClick={onCancel}>{t('germanProgress.cancel')}</button>
         <button type="submit" className="btn-primary btn-sm" disabled={busy || !f.school.trim()}>{busy && <Spinner className="size-3.5" />} {t('germanProgress.save')}</button>
       </div>
     </form>
@@ -253,7 +254,7 @@ const ExamForm = ({ ov, initial, onSubmit, onCancel }: { ov: GermanOverview; ini
       )}
 
       <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-        <button type="button" className="btn-white btn-sm border border-line" onClick={onCancel}>{t('germanProgress.cancel')}</button>
+        <button type="button" className="btn-secondary btn-sm" onClick={onCancel}>{t('germanProgress.cancel')}</button>
         <button type="submit" className="btn-primary btn-sm" disabled={busy}>{busy && <Spinner className="size-3.5" />} {t('germanProgress.save')}</button>
       </div>
     </form>
@@ -358,7 +359,7 @@ export const GermanProgressBoard = ({ userId }: { userId?: string }) => {
             <h2 id="gp-courses" className="flex items-center gap-2.5 text-base font-bold text-navy-900">
               <BookOpen className="size-4 text-brand-600" aria-hidden /> {t('germanProgress.courses.title')}
             </h2>
-            <button type="button" className="btn-white btn-sm border border-line" onClick={() => setCourse('new')}>
+            <button type="button" className="btn-secondary btn-sm" onClick={() => setCourse('new')}>
               <Plus className="size-3.5" aria-hidden /> {t('germanProgress.courses.add')}
             </button>
           </div>
@@ -372,7 +373,7 @@ export const GermanProgressBoard = ({ userId }: { userId?: string }) => {
                     <p className="flex flex-wrap items-center gap-2 font-semibold text-navy-900">
                       <span className="break-words">{c.school}</span>
                       <span className="badge bg-brand-100 text-brand-700">{c.level}</span>
-                      <span className="badge bg-slate-100 text-slate-700">{t(`germanProgress.courses.statuses.${c.status}`)}</span>
+                      <span className="badge bg-neutral-bg text-neutral-fg">{t(`germanProgress.courses.statuses.${c.status}`)}</span>
                     </p>
                     <p className="mt-0.5 text-xs text-muted">
                       {[c.startsAt && date(c.startsAt), c.endsAt && date(c.endsAt)].filter(Boolean).join(' – ') || '—'}
@@ -400,7 +401,7 @@ export const GermanProgressBoard = ({ userId }: { userId?: string }) => {
             <h2 id="gp-exams" className="flex items-center gap-2.5 text-base font-bold text-navy-900">
               <Award className="size-4 text-brand-600" aria-hidden /> {t('germanProgress.exams.title')}
             </h2>
-            <button type="button" className="btn-white btn-sm border border-line" onClick={() => setExam('new')}>
+            <button type="button" className="btn-secondary btn-sm" onClick={() => setExam('new')}>
               <Plus className="size-3.5" aria-hidden /> {t('germanProgress.exams.add')}
             </button>
           </div>

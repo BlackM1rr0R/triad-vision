@@ -1,4 +1,5 @@
 import { useEffect, useState, type ReactNode } from 'react';
+import { STATUS_TONES, toneTexts } from '@/components/ui/status';
 import { Link, useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
@@ -142,12 +143,12 @@ export const JourneyCard = ({ c }: { c: ActiveCase }) => {
         <div className="flex flex-wrap items-center gap-2">
           <StatusBadge status={c.status} />
           {clientTurn ? (
-            <span className="badge bg-amber-100 text-amber-800">
+            <span className="badge bg-warning-bg text-warning-fg">
               <span className="size-2 rounded-full bg-amber-500" aria-hidden />
               {t('portal.actionRequired')}
             </span>
           ) : c.turn === 'staff' ? (
-            <span className="badge bg-sky-100 text-sky-800">
+            <span className="badge bg-info-bg text-info-fg">
               <Hourglass className="size-3.5" aria-hidden />
               {t('accountPage.dash.ourTurn')}
             </span>
@@ -208,12 +209,7 @@ const DOC_ICON: Record<DocItemState, typeof CheckCircle2> = {
   accepted: CheckCircle2,
   rejected: XCircle,
 };
-const DOC_TONE: Record<DocItemState, string> = {
-  missing: 'text-muted',
-  pending: 'text-brand-600',
-  accepted: 'text-success',
-  rejected: 'text-danger',
-};
+const DOC_TONE: Record<DocItemState, string> = { ...toneTexts(STATUS_TONES.docItem), missing: 'text-muted' };
 
 export const DocumentChecklist = ({ c }: { c: ActiveCase }) => {
   const { t } = useTranslation();

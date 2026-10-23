@@ -6,14 +6,10 @@ import { toast } from 'sonner';
 import { CalendarPlus, MapPin, Store } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useL10n } from '@/lib/l10n';
+import { STATUS_TONES, toneClasses } from '@/components/ui/status';
 import { cpKeys, useCpError, VISIT_REASONS, type OfficeSlot, type OfficeVisit, type VisitReason } from './api';
 
-const STATUS_TONE: Record<OfficeVisit['status'], string> = {
-  BOOKED: 'bg-emerald-100 text-emerald-800',
-  CANCELLED: 'bg-slate-100 text-slate-500',
-  DONE: 'bg-sky-100 text-sky-800',
-  NO_SHOW: 'bg-red-100 text-red-700',
-};
+const STATUS_TONE: Record<OfficeVisit['status'], string> = toneClasses(STATUS_TONES.officeVisit);
 
 /** Free office slots, grouped per day; `onPick(slotId)`. */
 const SlotPicker = ({ selected, onPick }: { selected: string | null; onPick: (id: string) => void }) => {
@@ -210,6 +206,7 @@ export const PortalOfficeVisits = ({ caseId, closed }: { caseId: string; closed?
                     className="btn-ghost btn-sm text-red-600"
                     disabled={cancel.isPending}
                     onClick={() => {
+                      // TODO(ui): ConfirmDialog
                       if (window.confirm(t('cp.office.cancelConfirm'))) cancel.mutate(v.id);
                     }}
                   >

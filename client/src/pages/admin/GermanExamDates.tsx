@@ -115,7 +115,7 @@ const DateForm = ({ initial, onDone }: { initial: GermanExamDate | null; onDone:
         <Switch checked={f.published} onChange={(v) => setF((s) => ({ ...s, published: v }))} label={t('germanProgress.examDates.published')} />
       </label>
       <div className="flex flex-col-reverse gap-2 sm:col-span-2 sm:flex-row sm:justify-end">
-        <button type="button" className="btn-white btn-sm border border-line" onClick={onDone}>{t('germanProgress.cancel')}</button>
+        <button type="button" className="btn-secondary btn-sm" onClick={onDone}>{t('germanProgress.cancel')}</button>
         <button type="submit" className="btn-primary btn-sm" disabled={busy || !f.examDate}>{busy && <Spinner className="size-3.5" />} {t('germanProgress.save')}</button>
       </div>
     </form>
@@ -188,7 +188,7 @@ export default function GermanExamDates() {
                   <p className="flex flex-wrap items-center gap-2 font-semibold text-navy-900">
                     {t(`germanProgress.exams.providers.${d.provider}`)}
                     {d.level && <span className="badge bg-brand-100 text-brand-700">{d.level}</span>}
-                    {!d.published && <span className="badge bg-slate-100 text-slate-700">{t('germanProgress.examDates.hidden')}</span>}
+                    {!d.published && <span className="badge bg-neutral-bg text-neutral-fg">{t('germanProgress.examDates.hidden')}</span>}
                   </p>
                   <p className="mt-0.5 text-sm text-ink/80">
                     {dateTime(d.examDate)} · {[d.location, d.city].filter(Boolean).join(', ')}

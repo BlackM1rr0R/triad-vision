@@ -4,13 +4,14 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tansta
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import clsx from 'clsx';
-import { AlertTriangle, BedDouble, Car, CheckCircle2, ChevronLeft, ChevronRight, Clock, ExternalLink, Inbox, Mail, Phone, Plane, PlaneLanding, Search, X, XCircle } from 'lucide-react';
+import { AlertTriangle, BedDouble, Car, CheckCircle2, ChevronLeft, ChevronRight, Clock, ExternalLink, Inbox, Mail, Phone, Plane, PlaneLanding, Search, XCircle } from 'lucide-react';
 import { api } from '@/lib/api';
 import { registerCopy } from '@/i18n';
 import { pagesArrival } from '@/i18n/pagesArrival';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { useRealtime } from '@/lib/realtime';
 import { Spinner } from '@/components/ui/Spinner';
+import { Drawer as UiDrawer } from '@/components/ui/Drawer';
 import { EmptyState, ErrorBlock, LoadingBlock, PageHead, StatTile, Switch } from '@/components/admin/ui';
 import {
   ARRIVAL_STATUSES,
@@ -86,11 +87,6 @@ const Drawer = ({ caseId, onClose }: { caseId: string; onClose: () => void }) =>
       });
   }, [plan]);
 
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [onClose]);
 
   const save = useMutation({
     mutationFn: async (status?: 'CONFIRMED' | 'COMPLETED' | 'CANCELLED') =>
@@ -119,22 +115,46 @@ const Drawer = ({ caseId, onClose }: { caseId: string; onClose: () => void }) =>
     !!plan && ({ CONFIRMED: ['DRAFT', 'SUBMITTED'], COMPLETED: ['SUBMITTED', 'CONFIRMED'], CANCELLED: ['DRAFT', 'SUBMITTED', 'CONFIRMED'] }[target] as string[]).includes(plan.status);
 
   return (
-    <div className="fixed inset-0 z-[70] flex justify-end" role="dialog" aria-modal="true" aria-label={t('arrival.admin.title')}>
-      <div className="page-in absolute inset-0 bg-navy-950/40" onClick={onClose} aria-hidden />
-      <div className="page-in relative flex h-full w-full max-w-xl flex-col bg-surface shadow-2xl">
-        <header className="flex items-center gap-3 border-b border-line bg-card px-5 py-4">
-          <PlaneLanding className="size-5 text-brand-600" aria-hidden />
-          <div className="min-w-0 flex-1">
-            <p className="truncate font-bold text-ink">{plan ? personName(plan.client) : '…'}</p>
-            {plan && <p className="truncate text-xs text-muted">{plan.case.number} · {plan.case.profession}</p>}
+    <UiDrawer
+      open
+      onClose={onClose}
+      width="md"
+      closeLabel={t('arrival.admin.detail.back')}
+      title={
+        <span className="flex items-center gap-2">
+          <PlaneLanding className="size-5 shrink-0 text-brand-600" aria-hidden />
+          <span className="truncate">{plan ? personName(plan.client) : '…'}</span>
+        </span>
+      }
+      description={plan ? <span className="block truncate text-xs">{plan.case.number} · {plan.case.profession}</span> : undefined}
+      headerActions={plan ? <ArrivalStatusPill status={plan.status} /> : undefined}
+      bodyClassName="space-y-4 bg-surface"
+      footer={
+        plan && (
+          <div className="flex w-full flex-wrap items-center gap-2">
+            <button type="button" className="btn-primary btn-sm" disabled={save.isPending} onClick={() => save.mutate(undefined)}>
+              {save.isPending && <Spinner className="size-4" />} {t('arrival.admin.detail.save')}
+            </button>
+            <span className="flex-1" />
+            {can('CONFIRMED') && (
+              <button type="button" className="btn-secondary btn-sm" disabled={save.isPending} onClick={() => save.mutate('CONFIRMED')}>
+                <CheckCircle2 className="size-4 text-success" aria-hidden /> {t('arrival.admin.detail.confirm')}
+              </button>
+            )}
+            {can('COMPLETED') && (
+              <button type="button" className="btn-secondary btn-sm" disabled={save.isPending} onClick={() => save.mutate('COMPLETED')}>
+                <PlaneLanding className="size-4 text-brand-600" aria-hidden /> {t('arrival.admin.detail.complete')}
+              </button>
+            )}
+            {can('CANCELLED') && (
+              <button type="button" className="btn-sm inline-flex items-center gap-1.5 rounded-lg px-3 font-semibold text-danger hover:bg-red-50" disabled={save.isPending} onClick={() => save.mutate('CANCELLED')}>
+                <XCircle className="size-4" aria-hidden /> {t('arrival.admin.detail.cancel')}
+              </button>
+            )}
           </div>
-          {plan && <ArrivalStatusPill status={plan.status} />}
-          <button type="button" onClick={onClose} className="grid size-9 place-items-center rounded-lg text-muted hover:bg-surface hover:text-ink" aria-label={t('arrival.admin.detail.back')}>
-            <X className="size-5" aria-hidden />
-          </button>
-        </header>
-
-        <div className="flex-1 space-y-4 overflow-y-auto p-5">
+        )
+      }
+    >
           {detail.isLoading ? (
             <LoadingBlock />
           ) : detail.isError || !plan ? (
@@ -241,33 +261,7 @@ const Drawer = ({ caseId, onClose }: { caseId: string; onClose: () => void }) =>
               </Section>
             </>
           )}
-        </div>
-
-        {plan && (
-          <footer className="flex flex-wrap items-center gap-2 border-t border-line bg-card px-5 py-3">
-            <button type="button" className="btn-primary btn-sm" disabled={save.isPending} onClick={() => save.mutate(undefined)}>
-              {save.isPending && <Spinner className="size-4" />} {t('arrival.admin.detail.save')}
-            </button>
-            <span className="flex-1" />
-            {can('CONFIRMED') && (
-              <button type="button" className="btn-white btn-sm border border-line" disabled={save.isPending} onClick={() => save.mutate('CONFIRMED')}>
-                <CheckCircle2 className="size-4 text-success" aria-hidden /> {t('arrival.admin.detail.confirm')}
-              </button>
-            )}
-            {can('COMPLETED') && (
-              <button type="button" className="btn-white btn-sm border border-line" disabled={save.isPending} onClick={() => save.mutate('COMPLETED')}>
-                <PlaneLanding className="size-4 text-brand-600" aria-hidden /> {t('arrival.admin.detail.complete')}
-              </button>
-            )}
-            {can('CANCELLED') && (
-              <button type="button" className="btn-sm inline-flex items-center gap-1.5 rounded-lg px-3 font-semibold text-danger hover:bg-red-50" disabled={save.isPending} onClick={() => save.mutate('CANCELLED')}>
-                <XCircle className="size-4" aria-hidden /> {t('arrival.admin.detail.cancel')}
-              </button>
-            )}
-          </footer>
-        )}
-      </div>
-    </div>
+    </UiDrawer>
   );
 };
 
@@ -432,7 +426,7 @@ export default function AdminArrivals() {
                     <td className="px-4 py-3 whitespace-nowrap">{p.arrivalAirport ?? <span className="text-muted">—</span>}</td>
                     <td className="px-4 py-3">
                       {p.pickupRequested ? (
-                        <span className={clsx('badge whitespace-nowrap', p.pickupConfirmed ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800')}>{p.pickupConfirmed ? t('arrival.admin.pickupDone') : t('arrival.admin.pickupYes')}</span>
+                        <span className={clsx('badge whitespace-nowrap', p.pickupConfirmed ? 'bg-success-bg text-success-fg' : 'bg-warning-bg text-warning-fg')}>{p.pickupConfirmed ? t('arrival.admin.pickupDone') : t('arrival.admin.pickupYes')}</span>
                       ) : (
                         <span className="text-muted">—</span>
                       )}

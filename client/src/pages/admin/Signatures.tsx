@@ -117,13 +117,13 @@ export default function AdminSignatures() {
         </div>
         {pages > 1 && (
           <div className="flex items-center justify-end gap-2 border-t border-line p-3">
-            <button type="button" className="btn-white btn-sm border border-line" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
+            <button type="button" className="btn-secondary btn-sm" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
               ←
             </button>
             <span className="text-xs text-muted tabular-nums">
               {page}/{pages}
             </span>
-            <button type="button" className="btn-white btn-sm border border-line" disabled={page >= pages} onClick={() => setPage((p) => p + 1)}>
+            <button type="button" className="btn-secondary btn-sm" disabled={page >= pages} onClick={() => setPage((p) => p + 1)}>
               →
             </button>
           </div>

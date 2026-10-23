@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import { STATUS_TONES, toneClasses } from '@/components/ui/status';
 
 /** The visitor's IANA time zone (falls back to Baku). */
 export const browserTimeZone = () => {
@@ -70,9 +71,4 @@ export const TOPICS = ['candidate', 'company', 'other'] as const;
 export type Topic = (typeof TOPICS)[number];
 export type BookingStatus = 'BOOKED' | 'CANCELLED' | 'DONE' | 'NO_SHOW';
 
-export const BOOKING_STATUS_TONE: Record<BookingStatus, string> = {
-  BOOKED: 'bg-brand-100 text-brand-700',
-  DONE: 'bg-emerald-100 text-emerald-800',
-  NO_SHOW: 'bg-amber-100 text-amber-800',
-  CANCELLED: 'bg-slate-200 text-slate-700',
-};
+export const BOOKING_STATUS_TONE: Record<BookingStatus, string> = toneClasses(STATUS_TONES.booking);

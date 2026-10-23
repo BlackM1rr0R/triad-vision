@@ -11,18 +11,18 @@ export const FamilyBadge = ({ value, className }: { value: boolean | null | unde
   const { t } = useTranslation();
   if (value === true)
     return (
-      <span className={clsx('badge bg-emerald-50 text-emerald-700', className)}>
+      <span className={clsx('badge bg-success-bg text-success-fg', className)}>
         <Check className="size-3.5" /> {t('visaDetail.facts.yes')}
       </span>
     );
   if (value === false)
     return (
-      <span className={clsx('badge bg-slate-100 text-slate-600', className)}>
+      <span className={clsx('badge bg-neutral-bg text-neutral-fg', className)}>
         <X className="size-3.5" /> {t('visaDetail.facts.no')}
       </span>
     );
   return (
-    <span className={clsx('badge bg-amber-50 text-amber-700', className)}>
+    <span className={clsx('badge bg-warning-bg text-warning-fg', className)}>
       <Minus className="size-3.5" /> {t('visaDetail.facts.depends')}
     </span>
   );

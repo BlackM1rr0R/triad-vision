@@ -152,7 +152,7 @@ export const CommentEditor = ({
       <div className="mt-2 flex items-center justify-end gap-2">
         <span className="mr-auto hidden text-[0.7rem] text-muted sm:inline">Ctrl + Enter</span>
         {onCancel && (
-          <button type="button" onClick={onCancel} className="btn-white btn-sm border border-line">
+          <button type="button" onClick={onCancel} className="btn-secondary btn-sm">
             {t('tasks.actions.cancel')}
           </button>
         )}

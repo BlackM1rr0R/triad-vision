@@ -1,3 +1,4 @@
+import { STATUS_TONES, toneClasses, toneSolids } from '@/components/ui/status';
 import type { CaseStatus } from './types';
 
 export const STEP_KEYS = ['documents', 'contract', 'embassyDocs', 'appointment', 'decision', 'result'] as const;
@@ -22,31 +23,8 @@ export const CLIENT_ACTION: CaseStatus[] = ['DOCUMENTS_PENDING', 'CONTRACT_SENT'
 export const STAFF_ACTION: CaseStatus[] = ['DOCUMENTS_REVIEW', 'CONTRACT_SIGNED', 'EMBASSY_REVIEW', 'APPOINTMENT_SCHEDULED', 'DECISION_PENDING'];
 export const FINAL: CaseStatus[] = ['APPROVED', 'REJECTED', 'CANCELLED'];
 
-export const STATUS_TONE: Record<CaseStatus, string> = {
-  DOCUMENTS_PENDING: 'bg-amber-100 text-amber-800',
-  DOCUMENTS_REVIEW: 'bg-brand-100 text-brand-700',
-  CONTRACT_SENT: 'bg-amber-100 text-amber-800',
-  CONTRACT_SIGNED: 'bg-brand-100 text-brand-700',
-  EMBASSY_DOCUMENTS: 'bg-amber-100 text-amber-800',
-  EMBASSY_REVIEW: 'bg-brand-100 text-brand-700',
-  APPOINTMENT_SCHEDULED: 'bg-violet-100 text-violet-800',
-  DECISION_PENDING: 'bg-sky-100 text-sky-800',
-  APPROVED: 'bg-emerald-100 text-emerald-800',
-  REJECTED: 'bg-red-100 text-red-700',
-  CANCELLED: 'bg-slate-200 text-slate-600',
-};
+/** Badge classes per case status; tones come from the central vocabulary (components/ui/status.ts). */
+export const STATUS_TONE: Record<CaseStatus, string> = toneClasses(STATUS_TONES.case);
 
 /** Solid bar colour per status (status breakdown bars, status-history timeline). */
-export const STATUS_BAR_TONE: Record<CaseStatus, string> = {
-  DOCUMENTS_PENDING: 'bg-amber-400',
-  DOCUMENTS_REVIEW: 'bg-brand-500',
-  CONTRACT_SENT: 'bg-amber-400',
-  CONTRACT_SIGNED: 'bg-brand-500',
-  EMBASSY_DOCUMENTS: 'bg-amber-400',
-  EMBASSY_REVIEW: 'bg-brand-500',
-  APPOINTMENT_SCHEDULED: 'bg-violet-500',
-  DECISION_PENDING: 'bg-sky-500',
-  APPROVED: 'bg-emerald-500',
-  REJECTED: 'bg-red-500',
-  CANCELLED: 'bg-slate-400',
-};
+export const STATUS_BAR_TONE: Record<CaseStatus, string> = toneSolids(STATUS_TONES.case);

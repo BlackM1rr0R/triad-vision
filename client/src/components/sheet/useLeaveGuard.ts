@@ -20,6 +20,7 @@ export function useLeaveGuard(dirty: boolean, message: string) {
       if (!a || a.target === '_blank' || a.hasAttribute('download')) return;
       const url = new URL(a.href, window.location.href);
       if (url.origin !== window.location.origin || url.pathname === window.location.pathname) return;
+      // TODO(ui): ConfirmDialog
       if (!window.confirm(state.current.message)) {
         e.preventDefault();
         e.stopPropagation();

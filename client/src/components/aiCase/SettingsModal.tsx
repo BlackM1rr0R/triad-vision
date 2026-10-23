@@ -119,7 +119,7 @@ export const SettingsModal = ({ open, onClose }: { open: boolean; onClose: () =>
       footer={
         canEdit ? (
           <>
-            <button type="button" className="btn-white btn-sm border border-line" onClick={onClose}>
+            <button type="button" className="btn-secondary btn-sm" onClick={onClose}>
               {t('aiCase.actions.cancel')}
             </button>
             <button type="button" className="btn-primary btn-sm" onClick={() => void save()} disabled={busy || !s}>
@@ -203,7 +203,7 @@ export const SettingsModal = ({ open, onClose }: { open: boolean; onClose: () =>
                       <div className="flex items-center gap-2 sm:col-span-2">
                         <input className="input w-48" value={it.requirementKey ?? ''} maxLength={40} placeholder={t('aiCase.settings.requirementKey')} aria-label={t('aiCase.settings.requirementKey')} onChange={(e) => setItem(i, { requirementKey: e.target.value.trim().toUpperCase() || null })} />
                         <span className="flex-1" />
-                        <button type="button" className="btn-white btn-sm border border-line" onClick={() => setS({ ...s, checklists: { ...s.checklists, [visa]: s.checklists[visa].filter((_, n) => n !== i) } })}>
+                        <button type="button" className="btn-secondary btn-sm" onClick={() => setS({ ...s, checklists: { ...s.checklists, [visa]: s.checklists[visa].filter((_, n) => n !== i) } })}>
                           <Trash2 className="size-3.5" aria-hidden /> {t('aiCase.settings.remove')}
                         </button>
                       </div>
@@ -218,12 +218,12 @@ export const SettingsModal = ({ open, onClose }: { open: boolean; onClose: () =>
               <div className="mt-2 flex flex-wrap gap-2">
                 <button
                   type="button"
-                  className="btn-white btn-sm border border-line"
+                  className="btn-secondary btn-sm"
                   onClick={() => setS({ ...s, checklists: { ...s.checklists, [visa]: [...s.checklists[visa], { key: `item${Date.now().toString(36)}`, requirementKey: null, label: { az: '', de: '', en: '', ru: '' } }] } })}
                 >
                   <Plus className="size-3.5" aria-hidden /> {t('aiCase.settings.addItem')}
                 </button>
-                <button type="button" className="btn-white btn-sm border border-line" onClick={() => setS({ ...s, checklists: { ...s.checklists, [visa]: [] } })}>
+                <button type="button" className="btn-secondary btn-sm" onClick={() => setS({ ...s, checklists: { ...s.checklists, [visa]: [] } })}>
                   <RotateCcw className="size-3.5" aria-hidden /> {t('aiCase.settings.reset')}
                 </button>
               </div>

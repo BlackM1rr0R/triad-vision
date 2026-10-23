@@ -1,5 +1,4 @@
-import { useEffect, useId, useMemo, useState } from 'react';
-import { createPortal } from 'react-dom';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
@@ -13,7 +12,7 @@ import { useAuth } from '@/lib/auth';
 import { hasMinRole } from '@/lib/types';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { Spinner } from '@/components/ui/Spinner';
-import { useOverlay } from '@/components/admin/Modal';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { Chip, EmptyState, ErrorBlock, LoadingBlock, PageHead, Panel } from '@/components/admin/ui';
 import { fmtDate, fmtDateTime, statusLabel, toastError } from '@/components/admin/labels';
 import { duplicatesKey, useUserDuplicates } from '@/components/duplicates/DuplicateBadge';
@@ -179,12 +178,12 @@ const PairRow = ({ p, onCompare }: { p: Pair; onCompare: () => void }) => {
       </div>
       <div className="mt-3 flex flex-wrap justify-end gap-2">
         {p.status === 'OPEN' && (
-          <button type="button" className="btn-white btn-sm border border-line" disabled={decide.isPending} onClick={() => decide.mutate('not-duplicate')}>
+          <button type="button" className="btn-secondary btn-sm" disabled={decide.isPending} onClick={() => decide.mutate('not-duplicate')}>
             <X className="size-3.5" aria-hidden /> {t('duplicates.notDuplicate')}
           </button>
         )}
         {p.status === 'NOT_DUPLICATE' && (
-          <button type="button" className="btn-white btn-sm border border-line" disabled={decide.isPending} onClick={() => decide.mutate('reopen')}>
+          <button type="button" className="btn-secondary btn-sm" disabled={decide.isPending} onClick={() => decide.mutate('reopen')}>
             <RotateCcw className="size-3.5" aria-hidden /> {t('duplicates.reopen')}
           </button>
         )}
@@ -202,53 +201,27 @@ const PairRow = ({ p, onCompare }: { p: Pair; onCompare: () => void }) => {
 
 const ConfirmMerge = ({ open, onClose, onConfirm, pending, primary, secondary }: { open: boolean; onClose: () => void; onConfirm: () => void; pending: boolean; primary: string; secondary: string }) => {
   const { t } = useTranslation();
-  const [text, setText] = useState('');
-  const close = () => !pending && onClose();
-  const panelRef = useOverlay(open, close);
-  const id = useId();
-  useEffect(() => {
-    if (open) setText('');
-  }, [open]);
-  if (!open) return null;
-  return createPortal(
-    <div className="fixed inset-0 z-[80] flex items-end justify-center sm:items-center sm:p-4">
-      <div className="absolute inset-0 bg-navy-950/60" onClick={close} aria-hidden />
-      <div
-        ref={panelRef}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby={`${id}-t`}
-        tabIndex={-1}
-        className="relative w-full max-w-md rounded-t-2xl border border-line bg-white p-5 shadow-xl outline-none sm:rounded-2xl"
-      >
-        <h2 id={`${id}-t`} className="flex items-center gap-2 text-base font-bold text-navy-900">
-          <AlertTriangle className="size-4 text-danger" aria-hidden /> {t('duplicates.confirm.title')}
-        </h2>
-        <p className="mt-3 text-sm text-ink/80">{t('duplicates.confirm.intro', { primary, secondary })}</p>
-        <p className="mt-2 text-xs text-muted">{t('duplicates.options.noUndo')}</p>
-        <form
-          className="mt-4"
-          onSubmit={(e) => {
-            e.preventDefault();
-            if (text === 'MERGE' && !pending) onConfirm();
-          }}
-        >
-          <label className="label" htmlFor={`${id}-i`}>
-            {t('duplicates.confirm.type')}
-          </label>
-          <input id={`${id}-i`} className="input font-mono" value={text} onChange={(e) => setText(e.target.value)} autoComplete="off" spellCheck={false} data-autofocus />
-          <div className="mt-4 flex flex-wrap justify-end gap-2">
-            <button type="button" className="btn-white btn-sm border border-line" onClick={close} disabled={pending}>
-              {t('duplicates.confirm.cancel')}
-            </button>
-            <button type="submit" className="btn-danger btn-sm" disabled={text !== 'MERGE' || pending}>
-              {pending ? <Spinner className="size-3.5" /> : <GitMerge className="size-3.5" aria-hidden />} {t('duplicates.confirm.submit')}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>,
-    document.body,
+  return (
+    <ConfirmDialog
+      open={open}
+      onClose={onClose}
+      onConfirm={onConfirm}
+      loading={pending}
+      title={t('duplicates.confirm.title')}
+      message={
+        <>
+          <p>{t('duplicates.confirm.intro', { primary, secondary })}</p>
+          <p className="mt-2 text-xs text-muted">{t('duplicates.options.noUndo')}</p>
+        </>
+      }
+      confirmText="MERGE"
+      cancelLabel={t('duplicates.confirm.cancel')}
+      confirmLabel={
+        <>
+          <GitMerge className="size-3.5" aria-hidden /> {t('duplicates.confirm.submit')}
+        </>
+      }
+    />
   );
 };
 
@@ -612,7 +585,7 @@ export default function Duplicates() {
                 </select>
               </label>
             )}
-            <button type="button" className="btn-white btn-sm border border-line" onClick={() => scan.mutate()} disabled={scan.isPending}>
+            <button type="button" className="btn-secondary btn-sm" onClick={() => scan.mutate()} disabled={scan.isPending}>
               {scan.isPending ? <Spinner className="size-3.5" /> : <RefreshCw className="size-3.5" aria-hidden />} {t('duplicates.scan')}
             </button>
           </>

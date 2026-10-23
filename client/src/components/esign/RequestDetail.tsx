@@ -67,7 +67,7 @@ export const RequestDetail = ({ id, onClose }: { id: string | null; onClose: () 
               </button>
             )}
             {active && (
-              <button type="button" className="btn-white btn-sm border border-line" disabled={!!busy} onClick={() => void run('remind', () => api.post(`/admin/signatures/${r.id}/remind`, {}), t('esign.admin.detail.reminded'))}>
+              <button type="button" className="btn-secondary btn-sm" disabled={!!busy} onClick={() => void run('remind', () => api.post(`/admin/signatures/${r.id}/remind`, {}), t('esign.admin.detail.reminded'))}>
                 {busy === 'remind' ? <Spinner className="size-3.5" /> : <BellRing className="size-3.5" aria-hidden />}
                 {t('esign.admin.detail.remind')}
               </button>
@@ -157,13 +157,13 @@ export const RequestDetail = ({ id, onClose }: { id: string | null; onClose: () 
                     )}
                     {turn && (
                       <div className="mt-2 flex flex-wrap gap-2 pl-8">
-                        <button type="button" className="btn-white btn-sm border border-line" disabled={!!busy} onClick={() => void run(`remind-${s.id}`, () => api.post(`/admin/signatures/${r.id}/remind`, { signerId: s.id }), t('esign.admin.detail.reminded'))}>
+                        <button type="button" className="btn-secondary btn-sm" disabled={!!busy} onClick={() => void run(`remind-${s.id}`, () => api.post(`/admin/signatures/${r.id}/remind`, { signerId: s.id }), t('esign.admin.detail.reminded'))}>
                           <BellRing className="size-3.5" aria-hidden />
                           {t('esign.admin.detail.remind')}
                         </button>
                         <button
                           type="button"
-                          className="btn-white btn-sm border border-line"
+                          className="btn-secondary btn-sm"
                           disabled={!!busy}
                           onClick={() => {
                             setResendFor(s);
@@ -196,7 +196,7 @@ export const RequestDetail = ({ id, onClose }: { id: string | null; onClose: () 
                           <button type="submit" className="btn-primary btn-sm" disabled={!!busy}>
                             {t('esign.admin.detail.send')}
                           </button>
-                          <button type="button" className="btn-white btn-sm border border-line" onClick={() => setResendFor(null)}>
+                          <button type="button" className="btn-secondary btn-sm" onClick={() => setResendFor(null)}>
                             {t('esign.sign.cancel')}
                           </button>
                         </div>
@@ -223,7 +223,7 @@ export const RequestDetail = ({ id, onClose }: { id: string | null; onClose: () 
                 >
                   {t('esign.admin.detail.cancelConfirm')}
                 </button>
-                <button type="button" className="btn-white btn-sm border border-line" onClick={() => setCancelOpen(false)}>
+                <button type="button" className="btn-secondary btn-sm" onClick={() => setCancelOpen(false)}>
                   {t('esign.sign.cancel')}
                 </button>
               </div>

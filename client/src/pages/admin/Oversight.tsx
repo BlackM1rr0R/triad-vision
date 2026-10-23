@@ -357,10 +357,10 @@ export default function Oversight() {
         subtitle={t('admin.oversight.subtitle', { date: fmtDateTime(data.generatedAt) })}
         actions={
           <>
-            <button type="button" className="btn-white btn-sm border border-line" onClick={() => refetch()} disabled={isFetching}>
+            <button type="button" className="btn-secondary btn-sm" onClick={() => refetch()} disabled={isFetching}>
               {isFetching ? <Spinner className="size-3.5" /> : <RefreshCw className="size-3.5" />} {t('admin.common.refresh')}
             </button>
-            <Link to="/admin/docs/audit" className="btn-white btn-sm border border-line">
+            <Link to="/admin/docs/audit" className="btn-secondary btn-sm">
               <ScrollText className="size-3.5" /> {t('admin.layout.audit')}
             </Link>
           </>

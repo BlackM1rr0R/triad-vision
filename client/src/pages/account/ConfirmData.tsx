@@ -182,7 +182,7 @@ export default function ConfirmDataPage() {
                       <div className="flex flex-wrap items-center gap-2">
                         <button
                           type="button"
-                          className="btn-white btn-sm border border-line"
+                          className="btn-secondary btn-sm"
                           disabled={!!busy}
                           onClick={() => {
                             setProofFor(f.key);

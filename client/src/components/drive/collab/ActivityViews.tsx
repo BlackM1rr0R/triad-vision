@@ -124,7 +124,7 @@ export const ActivityList = ({ filters, compact = false, onNavigate }: { filters
       </ol>
       {q.hasNextPage && (
         <div className="px-4 py-3 text-center">
-          <button type="button" className="btn-white btn-sm border border-line" disabled={q.isFetchingNextPage} onClick={() => void q.fetchNextPage()}>
+          <button type="button" className="btn-secondary btn-sm" disabled={q.isFetchingNextPage} onClick={() => void q.fetchNextPage()}>
             {q.isFetchingNextPage && <Spinner className="size-3.5" />} {t('driveCollab.activity.loadMore')}
           </button>
         </div>

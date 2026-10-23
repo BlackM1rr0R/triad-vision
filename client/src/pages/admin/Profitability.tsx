@@ -11,6 +11,7 @@ import { pagesReports } from '@/i18n/pagesReports';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { RequireAuth } from '@/lib/auth';
 import { ErrorBlock, LoadingBlock, PageHead, StatTile } from '@/components/admin/ui';
+import { Tabs } from '@/components/ui/Tabs';
 import { BarChart, BarList, CRITICAL, ACCENT } from '@/components/admin/charts';
 import { useReportFormat } from '@/components/reports/types';
 import { COST_KEYS, type Bucket, type CaseProfitRow, type ProfitOverview } from '@/components/reports/profitTypes';
@@ -144,13 +145,7 @@ function ProfitPage() {
       </div>
 
       <section className="min-w-0 rounded-xl border border-line bg-card p-4 sm:p-5">
-        <div className="mb-4 flex flex-wrap items-center gap-1" role="tablist" aria-label={t('profit.breakdown')}>
-          {BREAKDOWNS.map((b) => (
-            <button key={b} type="button" role="tab" aria-selected={tab === b} onClick={() => setTab(b)} className={clsx('rounded-lg px-3 py-1.5 text-xs font-semibold', tab === b ? 'bg-brand-600 text-white' : 'text-muted hover:bg-surface hover:text-ink')}>
-              {t(`profit.by.${b}`)}
-            </button>
-          ))}
-        </div>
+        <Tabs className="mb-4" variant="pills" label={t('profit.breakdown')} items={BREAKDOWNS.map((b) => ({ key: b, label: t(`profit.by.${b}`) }))} value={tab} onChange={setTab} />
         {buckets.length === 0 ? (
           <p className="py-8 text-center text-sm text-muted">{t('profit.empty')}</p>
         ) : (
@@ -207,13 +202,14 @@ function ProfitPage() {
       </div>
 
       <section className="min-w-0 rounded-xl border border-line bg-card p-4 sm:p-5">
-        <div className="mb-3 flex flex-wrap items-center gap-1" role="tablist">
-          {(['top', 'bottom', 'all'] as const).map((l) => (
-            <button key={l} type="button" role="tab" aria-selected={list === l} onClick={() => setList(l)} className={clsx('rounded-lg px-3 py-1.5 text-xs font-semibold', list === l ? 'bg-brand-600 text-white' : 'text-muted hover:bg-surface hover:text-ink')}>
-              {l === 'top' ? t('profit.top') : l === 'bottom' ? t('profit.bottom') : t('profit.allCases')}
-            </button>
-          ))}
-        </div>
+        <Tabs
+          className="mb-3"
+          variant="pills"
+          label={t('profit.allCases')}
+          items={(['top', 'bottom', 'all'] as const).map((l) => ({ key: l, label: l === 'top' ? t('profit.top') : l === 'bottom' ? t('profit.bottom') : t('profit.allCases') }))}
+          value={list}
+          onChange={setList}
+        />
         <CaseTable rows={caseRows} paged={list === 'all'} />
         {list === 'all' && d.rowsTruncated && <p className="mt-2 text-xs text-muted">{t('profit.rowsTruncated')}</p>}
       </section>

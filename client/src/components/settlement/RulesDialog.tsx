@@ -68,6 +68,7 @@ export const RulesDialog = ({ beneficiaries, rate, canManage, onClose, onSaved }
 
   const remove = async (i: number) => {
     const d = rows[i]!;
+    // TODO(ui): ConfirmDialog
     if (d.id && !window.confirm(t('settlement.rules.confirmDelete', { name: d.name }))) return;
     try {
       if (d.id) await api.delete(`/admin/settlements/beneficiaries/${d.id}`);

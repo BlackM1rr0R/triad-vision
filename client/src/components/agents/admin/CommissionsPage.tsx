@@ -64,10 +64,10 @@ export const CommissionsPage = () => {
         }
         actions={
           <>
-            <button type="button" className="btn-white btn-sm border border-line" onClick={() => setManual(true)}>
+            <button type="button" className="btn-secondary btn-sm" onClick={() => setManual(true)}>
               <Plus className="size-3.5" aria-hidden /> {t('agents.admin.com.manual')}
             </button>
-            <a href={exportUrl} className="btn-white btn-sm border border-line" download>
+            <a href={exportUrl} className="btn-secondary btn-sm" download>
               <Download className="size-3.5" aria-hidden /> {t('agents.admin.com.exportCsv')}
             </a>
           </>

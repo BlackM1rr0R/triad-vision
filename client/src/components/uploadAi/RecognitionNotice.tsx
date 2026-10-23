@@ -115,7 +115,7 @@ export const RecognitionNotice = ({
                 <RefreshCw className="size-3.5" aria-hidden /> {t('uploadAi.client.chooseAnother')}
               </button>
             )}
-            <button type="button" className="btn-white btn-sm border border-line" onClick={() => void ack()} disabled={acking}>
+            <button type="button" className="btn-secondary btn-sm" onClick={() => void ack()} disabled={acking}>
               {acking && <Spinner className="size-3" />} {t('uploadAi.client.uploadAnyway')}
             </button>
           </div>

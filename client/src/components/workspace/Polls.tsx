@@ -38,6 +38,7 @@ export const PollCard = ({ poll, compact = false, onChanged }: { poll: Poll; com
     }
   };
   const remove = async () => {
+    // TODO(ui): ConfirmDialog
     if (!window.confirm(t('ws.common.confirmDelete'))) return;
     try {
       await api.delete(`/workspace/polls/${poll.id}`);
@@ -149,7 +150,7 @@ export const NewPollDialog = ({ open, onClose, channelId }: { open: boolean; onC
       busy={busy}
       footer={
         <>
-          <button type="button" onClick={onClose} className="btn-white btn-sm border border-line" disabled={busy}>
+          <button type="button" onClick={onClose} className="btn-secondary btn-sm" disabled={busy}>
             {t('ws.common.cancel')}
           </button>
           <button type="submit" className="btn-primary btn-sm" disabled={busy || !question.trim() || clean.length < 2}>

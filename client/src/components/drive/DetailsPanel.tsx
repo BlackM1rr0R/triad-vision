@@ -179,17 +179,17 @@ export const DetailsPanel = ({
           {item.kind === 'FILE' && (
             <div className="mt-3 flex flex-wrap justify-center gap-2">
               {(isPdf || isText) && item.previewable && (
-                <a href={contentUrl(item.id)} target="_blank" rel="noopener noreferrer" className="btn-white btn-sm border border-line">
+                <a href={contentUrl(item.id)} target="_blank" rel="noopener noreferrer" className="btn-secondary btn-sm">
                   <ExternalLink className="size-3.5" /> {t('drive.details.openPreview')}
                 </a>
               )}
               {can(item.myAccess, 'DOWNLOAD') && (
-                <a href={contentUrl(item.id, true)} className="btn-white btn-sm border border-line" download>
+                <a href={contentUrl(item.id, true)} className="btn-secondary btn-sm" download>
                   <Download className="size-3.5" /> {t('drive.actions.download')}
                 </a>
               )}
               {canLink && (
-                <button type="button" onClick={() => setLinksFor(item)} className="btn-white btn-sm border border-line">
+                <button type="button" onClick={() => setLinksFor(item)} className="btn-secondary btn-sm">
                   <Globe className="size-3.5" /> {t('driveCollab.links.open')}
                 </button>
               )}
@@ -197,7 +197,7 @@ export const DetailsPanel = ({
           )}
           {item.kind === 'FOLDER' && canLink && (
             <div className="mt-3 flex justify-center">
-              <button type="button" onClick={() => setLinksFor(item)} className="btn-white btn-sm border border-line">
+              <button type="button" onClick={() => setLinksFor(item)} className="btn-secondary btn-sm">
                 <Globe className="size-3.5" /> {t('driveCollab.links.open')}
               </button>
             </div>

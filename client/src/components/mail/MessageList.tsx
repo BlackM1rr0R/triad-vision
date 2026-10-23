@@ -7,6 +7,7 @@ import { AiFilterChips, TriageRowChips } from '@/components/aiMail/TriageChips';
 import type { AiFilter } from '@/components/aiMail/api';
 import type { MessageRow, View } from './types';
 import { avatarTone, displayName, fmtListDate, initialsOf, subjectOf } from './utils';
+import { EmptyState } from '@/components/ui/EmptyState';
 
 export interface ListFilters {
   q: string;
@@ -208,11 +209,12 @@ export const MessageList = ({
           </div>
         )}
         {!loading && !error && !items.length && (
-          <div className="px-6 py-14 text-center">
-            <span className="mx-auto mb-3 grid size-12 place-items-center rounded-full bg-brand-50 text-brand-600">{searching ? <Search className="size-5" /> : <Inbox className="size-5" />}</span>
-            <p className="text-sm font-semibold text-ink">{searching ? t('mail.empty.search') : view === 'snoozed' ? t('mail.empty.snoozed') : view === 'drafts' ? t('mail.empty.drafts') : t('mail.empty.folder')}</p>
-            {searching && <p className="mt-1 text-xs text-muted">{t('mail.empty.searchBody')}</p>}
-          </div>
+          <EmptyState
+            tone="brand"
+            icon={searching ? Search : Inbox}
+            title={searching ? t('mail.empty.search') : view === 'snoozed' ? t('mail.empty.snoozed') : view === 'drafts' ? t('mail.empty.drafts') : t('mail.empty.folder')}
+            text={searching ? t('mail.empty.searchBody') : undefined}
+          />
         )}
         <ul>
           {items.map((m) => {

@@ -90,7 +90,7 @@ export default function SmartFolderDialog({
               <Trash2 className="size-4" /> {t('driveOrg.common.delete')}
             </button>
           )}
-          <button type="button" className="btn-white btn-sm border border-line" onClick={onClose}>
+          <button type="button" className="btn-secondary btn-sm" onClick={onClose}>
             {t('driveOrg.common.cancel')}
           </button>
           <button type="button" className="btn-primary btn-sm" disabled={save.isPending || !name.trim()} onClick={() => save.mutate()}>

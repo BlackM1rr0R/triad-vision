@@ -154,7 +154,7 @@ const ContactForm = ({ initial }: { initial: Contact }) => {
             <h3 className="flex items-center gap-2 font-sans text-sm font-semibold text-navy-900">
               <Building className="size-4 text-brand-600" aria-hidden /> {t('admin.settings.offices')}
             </h3>
-            <button type="button" className="btn-white btn-sm border border-line" onClick={() => setC({ ...c, offices: [...c.offices, emptyOffice()] })}>
+            <button type="button" className="btn-secondary btn-sm" onClick={() => setC({ ...c, offices: [...c.offices, emptyOffice()] })}>
               <Plus className="size-3.5" /> {t('admin.settings.addOffice')}
             </button>
           </div>
@@ -370,7 +370,7 @@ const LegalForm = ({ initial }: { initial: LegalInfo }) => {
         icon={Landmark}
         actions={
           <>
-            <a href="/impressum" target="_blank" rel="noopener" className="btn-white btn-sm border border-line">
+            <a href="/impressum" target="_blank" rel="noopener" className="btn-secondary btn-sm">
               <ExternalLink className="size-3.5" /> {t('adminLegal.preview')}
             </a>
             <button type="submit" className="btn-primary btn-sm" disabled={busy}>
@@ -436,7 +436,7 @@ const PrivacyForm = ({ initial }: { initial: PrivacySetting }) => {
         icon={FileText}
         actions={
           <>
-            <a href="/privacy" target="_blank" rel="noopener" className="btn-white btn-sm border border-line">
+            <a href="/privacy" target="_blank" rel="noopener" className="btn-secondary btn-sm">
               <ExternalLink className="size-3.5" /> {t('adminLegal.preview')}
             </a>
             <button type="submit" className="btn-primary btn-sm" disabled={busy}>

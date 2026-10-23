@@ -87,7 +87,7 @@ export const ReplyDraftButton = ({ endpoint, onInsert, className }: { endpoint: 
             <CornerDownLeft className="size-3.5" /> {t('aiStaff.reply.insert')}
           </button>
         )}
-        <button type="button" className="btn-white btn-sm border border-line" disabled={busy} onClick={() => void run(!!draft)}>
+        <button type="button" className="btn-secondary btn-sm" disabled={busy} onClick={() => void run(!!draft)}>
           {busy ? <Spinner className="size-3.5" /> : <RefreshCw className="size-3.5" />} {draft ? t('aiStaff.reply.again') : t('aiStaff.reply.generate')}
         </button>
         <span className="text-[11px] text-muted">{t('aiStaff.reply.note')}</span>

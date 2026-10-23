@@ -101,12 +101,12 @@ export const CompanyVacancies = ({ company }: { company: Company }) => {
                 </div>
                 <div className="flex shrink-0 flex-wrap items-center gap-1.5">
                   {v.status === 'OPEN' && (
-                    <a href={`/jobs/${v.slug}`} target="_blank" rel="noreferrer" className="btn-white btn-sm border border-line">
+                    <a href={`/jobs/${v.slug}`} target="_blank" rel="noreferrer" className="btn-secondary btn-sm">
                       <ExternalLink className="size-3.5" /> {t('jobsArea.portal.vacancies.viewPublic')}
                     </a>
                   )}
                   {v.status !== 'CLOSED' && (
-                    <Link to={`/company/vacancies/${v.id}`} className="btn-white btn-sm border border-line">
+                    <Link to={`/company/vacancies/${v.id}`} className="btn-secondary btn-sm">
                       <Pencil className="size-3.5" /> {t('jobsArea.common.edit')}
                     </Link>
                   )}
@@ -122,12 +122,12 @@ export const CompanyVacancies = ({ company }: { company: Company }) => {
                     </button>
                   )}
                   {v.status === 'DRAFT' && (
-                    <button type="button" className="btn-white btn-sm border border-line text-danger" onClick={() => setConfirm({ id: v.id, kind: 'delete' })} aria-label={t('jobsArea.common.delete')}>
+                    <button type="button" className="btn-secondary btn-sm text-danger" onClick={() => setConfirm({ id: v.id, kind: 'delete' })} aria-label={t('jobsArea.common.delete')}>
                       <Trash2 className="size-3.5" />
                     </button>
                   )}
                   {(v.status === 'OPEN' || v.status === 'PENDING') && (
-                    <button type="button" className="btn-white btn-sm border border-line" onClick={() => setConfirm({ id: v.id, kind: 'close' })}>
+                    <button type="button" className="btn-secondary btn-sm" onClick={() => setConfirm({ id: v.id, kind: 'close' })}>
                       <XCircle className="size-3.5" /> {t('jobsArea.portal.vacancies.close')}
                     </button>
                   )}

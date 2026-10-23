@@ -30,6 +30,7 @@ import { useAuth } from '@/lib/auth';
 import i18n, { registerCopy } from '@/i18n';
 import { adminBookingsCopy, bookingCopy } from '@/i18n/pagesBooking';
 import { Chip, EmptyState, ErrorBlock, LoadingBlock, PageHead, StatTile } from '@/components/admin/ui';
+import { Tabs } from '@/components/ui/Tabs';
 import { Modal } from '@/components/admin/Modal';
 import { Drawer } from '@/components/admin/Drawer';
 import { ConfirmDialog } from '@/components/admin/ConfirmDialog';
@@ -201,7 +202,7 @@ function ConsultationBookings() {
         subtitle={t('adminBookings.subtitle')}
         actions={
           <>
-            <button type="button" className="btn-white btn-sm border border-line" onClick={() => setTplOpen(true)}>
+            <button type="button" className="btn-secondary btn-sm" onClick={() => setTplOpen(true)}>
               <Repeat className="size-4" aria-hidden /> {t('adminBookings.template')}
             </button>
             <button type="button" className="btn-primary btn-sm" onClick={() => setAddOpen(true)}>
@@ -221,23 +222,13 @@ function ConsultationBookings() {
       {/* Toolbar */}
       <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex flex-wrap items-center gap-2">
-          <div className="inline-flex rounded-lg border border-line bg-white p-0.5" role="tablist" aria-label="view">
-            {(['day', 'week', 'list'] as const).map((v) => {
-              const I = v === 'day' ? CalendarDays : v === 'week' ? CalendarClock : List;
-              return (
-                <button
-                  key={v}
-                  type="button"
-                  role="tab"
-                  aria-selected={view === v}
-                  onClick={() => setView(v)}
-                  className={clsx('inline-flex min-h-9 items-center gap-1.5 rounded-md px-3 text-xs font-semibold transition', view === v ? 'bg-navy-900 text-white' : 'text-ink/70 hover:text-navy-900')}
-                >
-                  <I className="size-3.5" aria-hidden /> {t(`adminBookings.views.${v}`)}
-                </button>
-              );
-            })}
-          </div>
+          <Tabs
+            variant="pills"
+            label={t('admin.nav.bookings')}
+            items={(['day', 'week', 'list'] as const).map((v) => ({ key: v, label: t(`adminBookings.views.${v}`), icon: v === 'day' ? CalendarDays : v === 'week' ? CalendarClock : List }))}
+            value={view}
+            onChange={setView}
+          />
           {view !== 'list' && (
             <div className="flex items-center gap-1">
               <button type="button" className="grid size-9 place-items-center rounded-lg border border-line bg-white text-navy-900 hover:border-brand-400" onClick={() => shift(-1)} aria-label={t('adminBookings.prev')}>
@@ -500,10 +491,10 @@ const BookingDrawer = ({ selected, onClose, onChanged, tz }: { selected: Selecte
             <div className="flex w-full flex-wrap justify-end gap-2">
               {b.status === 'BOOKED' ? (
                 <>
-                  <button type="button" className="btn-white btn-sm border border-line" disabled={!started || setStatus.isPending} title={!started ? t('adminBookings.detail.notStarted') : undefined} onClick={() => setStatus.mutate('NO_SHOW')}>
+                  <button type="button" className="btn-secondary btn-sm" disabled={!started || setStatus.isPending} title={!started ? t('adminBookings.detail.notStarted') : undefined} onClick={() => setStatus.mutate('NO_SHOW')}>
                     <UserX className="size-4" aria-hidden /> {t('adminBookings.detail.markNoShow')}
                   </button>
-                  <button type="button" className="btn-white btn-sm border border-line" disabled={!started || setStatus.isPending} title={!started ? t('adminBookings.detail.notStarted') : undefined} onClick={() => setStatus.mutate('DONE')}>
+                  <button type="button" className="btn-secondary btn-sm" disabled={!started || setStatus.isPending} title={!started ? t('adminBookings.detail.notStarted') : undefined} onClick={() => setStatus.mutate('DONE')}>
                     <UserCheck className="size-4" aria-hidden /> {t('adminBookings.detail.markDone')}
                   </button>
                   {!started && (
@@ -513,7 +504,7 @@ const BookingDrawer = ({ selected, onClose, onChanged, tz }: { selected: Selecte
                   )}
                 </>
               ) : (
-                <button type="button" className="btn-white btn-sm border border-line" disabled={setStatus.isPending} onClick={() => setStatus.mutate('BOOKED')}>
+                <button type="button" className="btn-secondary btn-sm" disabled={setStatus.isPending} onClick={() => setStatus.mutate('BOOKED')}>
                   {t('adminBookings.detail.reopen')}
                 </button>
               )}
@@ -547,15 +538,15 @@ const BookingDrawer = ({ selected, onClose, onChanged, tz }: { selected: Selecte
               <h3 className="mb-2 text-xs font-semibold text-muted uppercase">{t('adminBookings.detail.contact')}</h3>
               <p className="text-base font-semibold text-navy-900">{b.name}</p>
               <div className="mt-2 flex flex-wrap gap-2">
-                <a href={`mailto:${b.email}`} className="btn-white btn-sm border border-line">
+                <a href={`mailto:${b.email}`} className="btn-secondary btn-sm">
                   <Mail className="size-3.5" aria-hidden /> {b.email}
                 </a>
                 {b.phone && (
                   <>
-                    <a href={`tel:${b.phone.replace(/\s/g, '')}`} className="btn-white btn-sm border border-line">
+                    <a href={`tel:${b.phone.replace(/\s/g, '')}`} className="btn-secondary btn-sm">
                       <Phone className="size-3.5" aria-hidden /> {b.phone}
                     </a>
-                    <a href={waLink(b.phone)} target="_blank" rel="noopener noreferrer" className="btn-white btn-sm border border-line">
+                    <a href={waLink(b.phone)} target="_blank" rel="noopener noreferrer" className="btn-secondary btn-sm">
                       <MessageCircle className="size-3.5" aria-hidden /> WhatsApp
                     </a>
                   </>
@@ -597,7 +588,7 @@ const BookingDrawer = ({ selected, onClose, onChanged, tz }: { selected: Selecte
         description={t('adminBookings.detail.cancelText')}
         footer={
           <>
-            <button type="button" className="btn-white btn-sm border border-line" onClick={() => setCancelOpen(false)} disabled={cancel.isPending}>
+            <button type="button" className="btn-secondary btn-sm" onClick={() => setCancelOpen(false)} disabled={cancel.isPending}>
               {t('admin.common.close')}
             </button>
             <button type="button" className="btn-danger btn-sm" onClick={() => cancel.mutate()} disabled={cancel.isPending}>
@@ -681,7 +672,7 @@ const AddSlotModal = ({ open, onClose, onDone, staff, defaultStaff }: { open: bo
       description={t('adminBookings.form.browserTz', { tz: browserTimeZone() })}
       footer={
         <>
-          <button type="button" className="btn-white btn-sm border border-line" onClick={onClose}>
+          <button type="button" className="btn-secondary btn-sm" onClick={onClose}>
             {t('adminBookings.form.cancel')}
           </button>
           <button type="button" className="btn-primary btn-sm" onClick={() => m.mutate()} disabled={m.isPending || !date || !time}>
@@ -786,7 +777,7 @@ const TemplateModal = ({
       footer={
         <>
           <span className="mr-auto self-center text-xs text-muted">{selectedDays.length ? t('adminBookings.tpl.preview', { count: preview }) : t('adminBookings.tpl.pickDay')}</span>
-          <button type="button" className="btn-white btn-sm border border-line" onClick={onClose}>
+          <button type="button" className="btn-secondary btn-sm" onClick={onClose}>
             {t('adminBookings.form.cancel')}
           </button>
           <button type="button" className="btn-primary btn-sm" disabled={!selectedDays.length || m.isPending} onClick={() => m.mutate()}>
@@ -874,13 +865,13 @@ export default function AdminBookings() {
   const tab = params.get('tab') === 'office' ? 'office' : 'online';
   return (
     <div>
-      <div className="mb-4 flex gap-2" role="tablist" aria-label={t('admin.nav.bookings')}>
-        {(['online', 'office'] as const).map((k) => (
-          <Chip key={k} active={tab === k} onClick={() => setParams(k === 'office' ? { tab: 'office' } : {}, { replace: true })}>
-            {t(k === 'office' ? 'cp.office.tab' : 'cp.office.tabOnline')}
-          </Chip>
-        ))}
-      </div>
+      <Tabs
+        className="mb-4"
+        label={t('admin.nav.bookings')}
+        items={(['online', 'office'] as const).map((k) => ({ key: k, label: t(k === 'office' ? 'cp.office.tab' : 'cp.office.tabOnline') }))}
+        value={tab}
+        onChange={(k) => setParams(k === 'office' ? { tab: 'office' } : {}, { replace: true })}
+      />
       {tab === 'office' ? (
         <Suspense fallback={<LoadingBlock />}>
           <OfficeVisitsAdmin />

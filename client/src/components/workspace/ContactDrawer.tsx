@@ -64,6 +64,7 @@ export const ContactDrawer = ({ id, onClose, onDeleted }: { id: string | null; o
     }
   };
   const remove = async () => {
+    // TODO(ui): ConfirmDialog
     if (!c || !window.confirm(t('ws.common.confirmDelete'))) return;
     setBusy(true);
     try {
@@ -167,7 +168,7 @@ export const ContactDrawer = ({ id, onClose, onDeleted }: { id: string | null; o
               >
                 <ContactFields value={draft} onChange={setDraft} autoFocus canToggleShared={c.canDelete} />
                 <div className="flex justify-end gap-2">
-                  <button type="button" onClick={() => setEditing(false)} className="btn-white btn-sm border border-line" disabled={busy}>
+                  <button type="button" onClick={() => setEditing(false)} className="btn-secondary btn-sm" disabled={busy}>
                     {t('ws.common.cancel')}
                   </button>
                   <button type="submit" className="btn-primary btn-sm" disabled={busy || !draft.firstName.trim()}>

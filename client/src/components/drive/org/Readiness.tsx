@@ -4,10 +4,11 @@ import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
 import { AlertCircle, CheckCircle2, Clock, FileQuestion } from 'lucide-react';
+import { STATUS_TONES, toneTexts } from '@/components/ui/status';
 import { fetchReadiness, l10nText, orgKeys, type Readiness } from './api';
 
 const ICON = { missing: FileQuestion, rejected: AlertCircle, pending: Clock, ready: CheckCircle2 } as const;
-const TONE = { missing: 'text-muted', rejected: 'text-danger', pending: 'text-amber-600', ready: 'text-emerald-600' } as const;
+const TONE = { ...toneTexts(STATUS_TONES.readiness), missing: 'text-muted' } as const;
 
 /**
  * "12/15 sənəd hazır" in the client folder header: progress of the case's required documents (all stages),

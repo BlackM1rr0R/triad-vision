@@ -1,4 +1,5 @@
 import { toast } from 'sonner';
+import { STATUS_TONES, toneClasses } from '@/components/ui/status';
 import i18n from '@/i18n';
 import { errorCode } from '@/lib/api';
 import { errorMessage } from '@/components/admin/labels';
@@ -28,13 +29,7 @@ export interface Interview {
   createdBy: { id: string; name: string; role: string } | null;
 }
 
-export const INTERVIEW_TONE: Record<InterviewStatus, string> = {
-  PROPOSED: 'bg-amber-100 text-amber-800',
-  CONFIRMED: 'bg-emerald-100 text-emerald-800',
-  CANCELLED: 'bg-slate-200 text-slate-600',
-  DONE: 'bg-brand-100 text-brand-700',
-  NO_SHOW: 'bg-red-100 text-red-700',
-};
+export const INTERVIEW_TONE: Record<InterviewStatus, string> = toneClasses(STATUS_TONES.interview);
 
 /** Error toast that knows the ops error codes first, then the admin catalogue. */
 export const opsErrorMessage = (err: unknown) => {

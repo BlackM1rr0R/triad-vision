@@ -50,7 +50,7 @@ export const BallCard = ({ ball }: { ball: BallInCourt | null | undefined }) => 
           <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted">
             {ball.side !== 'NONE' && <span>{ball.days > 0 ? t('cp.ball.since', { count: ball.days }) : t('cp.ball.sinceToday')}</span>}
             {ball.overdue && (
-              <span className="badge bg-red-100 text-red-700">
+              <span className="badge bg-danger-bg text-danger-fg">
                 <AlertTriangle className="size-3.5" aria-hidden /> {clientTurn ? t('cp.ball.overdue') : t('cp.ball.late')}
               </span>
             )}

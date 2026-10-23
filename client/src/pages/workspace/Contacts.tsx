@@ -270,7 +270,7 @@ export default function WorkspaceContacts() {
             <div className="divide-y divide-line">
               {groups.map(([company, rows]) => (
                 <section key={company || '__none'}>
-                  <h2 className="sticky top-0 z-10 flex items-center gap-2 border-b border-line bg-card/95 px-4 py-1.5 text-xs font-bold text-muted uppercase backdrop-blur lg:px-6">
+                  <h2 className="sticky top-0 z-10 flex items-center gap-2 border-b border-line bg-card px-4 py-1.5 text-xs font-bold text-muted uppercase lg:px-6">
                     <Building2 className="size-3.5" aria-hidden /> {company || t('ws.contacts.noCompany')} <span className="font-normal tabular-nums">· {rows.length}</span>
                   </h2>
                   <ul className="divide-y divide-line bg-card">{rows.map(row)}</ul>
@@ -282,7 +282,7 @@ export default function WorkspaceContacts() {
           )}
           {hasMore && !list.isLoading && (
             <div className="p-4 text-center">
-              <button type="button" onClick={() => setPages((p) => p + 1)} className="btn-white btn-sm border border-line">
+              <button type="button" onClick={() => setPages((p) => p + 1)} className="btn-secondary btn-sm">
                 {t('ws.common.more')}
               </button>
             </div>

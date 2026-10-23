@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { scoreTone as scoreToneOf, TONE_TEXT } from '@/components/ui/status';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import i18n from '@/i18n';
@@ -46,5 +47,5 @@ export const useJobLabels = () => {
   }, [t, tr, locale]);
 };
 
-export const scoreTone = (score: number) => (score >= 80 ? 'text-emerald-700' : score >= 55 ? 'text-amber-700' : 'text-red-700');
+export const scoreTone = (score: number) => TONE_TEXT[scoreToneOf(score)];
 export const scoreBg = (score: number) => (score >= 80 ? 'bg-emerald-500' : score >= 55 ? 'bg-amber-500' : 'bg-red-500');

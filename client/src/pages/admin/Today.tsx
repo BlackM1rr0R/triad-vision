@@ -288,6 +288,7 @@ export default function Today() {
         <ErrorBlock error={query.error} onRetry={() => void query.refetch()} />
       ) : !flat.length ? (
         <div className="grid place-items-center rounded-2xl border border-line bg-card px-6 py-16 text-center">
+          {/* TODO(ui): large portal empty state (size-14 icon, display title) -> <EmptyState size="lg" tone="brand"> (portal rework) */}
           <PartyPopper className="size-10 text-brand-600" aria-hidden />
           <p className="mt-3 font-display text-xl font-bold text-ink">{all.length ? t('today.empty.filtered') : t('today.empty.title')}</p>
           {!all.length && <p className="mt-1 max-w-md text-sm text-muted">{t('today.empty.body')}</p>}

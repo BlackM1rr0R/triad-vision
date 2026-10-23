@@ -1,6 +1,7 @@
 import { toast } from 'sonner';
 import i18n, { currentLocale, type Locale } from '@/i18n';
 import { errorCode } from '@/lib/api';
+import { STATUS_TONES, TONE_CLASS, toneClasses } from '@/components/ui/status';
 import type { CaseStatus, DocAccess, DocEffectiveAccess, DocStage, DocStatus, Role } from '@/lib/types';
 
 /**
@@ -36,21 +37,18 @@ export const stageLabel = (stage: DocStage) => t(`admin.labels.stage.${stage}`);
 
 export const docStatusLabel = (status: DocStatus) => t(`admin.labels.docStatus.${status}`);
 
-export const DOC_STATUS_TONE: Record<DocStatus, string> = {
-  PENDING: 'bg-amber-100 text-amber-800',
-  ACCEPTED: 'bg-emerald-100 text-emerald-800',
-  REJECTED: 'bg-red-100 text-red-700',
-};
+export const DOC_STATUS_TONE: Record<DocStatus, string> = toneClasses(STATUS_TONES.document);
 
 export const roleLabel = (role: Role) => t(`admin.labels.role.${role}`);
 
+/** Role labels are categories, not statuses: badge tones from the design system. */
 export const ROLE_TONE: Record<Role, string> = {
-  CLIENT: 'bg-slate-100 text-slate-700',
-  COMPANY: 'bg-emerald-100 text-emerald-800',
-  AGENT: 'bg-sky-100 text-sky-800',
-  STAFF: 'bg-brand-100 text-brand-700',
-  ADMIN: 'bg-violet-100 text-violet-800',
-  SUPER_ADMIN: 'bg-amber-100 text-amber-800',
+  CLIENT: TONE_CLASS.neutral,
+  COMPANY: TONE_CLASS.success,
+  AGENT: TONE_CLASS.info,
+  STAFF: TONE_CLASS.brand,
+  ADMIN: TONE_CLASS.accent,
+  SUPER_ADMIN: TONE_CLASS.warning,
 };
 
 // ─── Document workspaces ────────────────────────────────────────────────
@@ -58,10 +56,10 @@ export const ROLE_TONE: Record<Role, string> = {
 export const docAccessLabel = (access: DocEffectiveAccess) => t(`admin.labels.docAccess.${access}`);
 
 export const DOC_ACCESS_TONE: Record<DocEffectiveAccess, string> = {
-  VIEW: 'bg-slate-100 text-slate-700',
-  DOWNLOAD: 'bg-brand-100 text-brand-700',
-  EDIT: 'bg-emerald-100 text-emerald-800',
-  OWNER: 'bg-amber-100 text-amber-800',
+  VIEW: TONE_CLASS.neutral,
+  DOWNLOAD: TONE_CLASS.brand,
+  EDIT: TONE_CLASS.success,
+  OWNER: TONE_CLASS.warning,
 };
 
 /** Options for the grant select (null = no access). */
@@ -114,12 +112,7 @@ export const INQUIRY_STATUSES: InquiryStatus[] = ['NEW', 'IN_PROGRESS', 'DONE', 
 
 export const inquiryStatusLabel = (status: InquiryStatus) => t(`admin.labels.inquiryStatus.${status}`);
 
-export const INQUIRY_STATUS_TONE: Record<InquiryStatus, string> = {
-  NEW: 'bg-brand-100 text-brand-700',
-  IN_PROGRESS: 'bg-amber-100 text-amber-800',
-  DONE: 'bg-emerald-100 text-emerald-800',
-  ARCHIVED: 'bg-slate-200 text-slate-600',
-};
+export const INQUIRY_STATUS_TONE: Record<InquiryStatus, string> = toneClasses(STATUS_TONES.inquiry);
 
 export const INQUIRY_KINDS = ['company', 'contact'] as const;
 

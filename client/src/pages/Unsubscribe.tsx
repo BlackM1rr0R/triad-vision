@@ -75,10 +75,10 @@ export default function Unsubscribe() {
 
   const links = (
     <div className="mt-6 flex flex-wrap justify-center gap-2">
-      <Link to="/account/profile?tab=notifications" className="btn-white btn-sm border border-line">
+      <Link to="/account/profile?tab=notifications" className="btn-secondary btn-sm">
         {u('settings')}
       </Link>
-      <Link to="/" className="btn-white btn-sm border border-line">
+      <Link to="/" className="btn-secondary btn-sm">
         {u('home')}
       </Link>
     </div>

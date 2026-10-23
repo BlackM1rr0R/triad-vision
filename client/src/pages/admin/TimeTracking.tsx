@@ -9,7 +9,8 @@ import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { hasMinRole } from '@/lib/types';
 import { usePageTitle } from '@/lib/usePageTitle';
-import { Chip, ErrorBlock, LoadingBlock, PageHead, Panel } from '@/components/admin/ui';
+import { ErrorBlock, LoadingBlock, PageHead, Panel } from '@/components/admin/ui';
+import { Tabs } from '@/components/ui/Tabs';
 import { ACTIVITIES, fmtDuration, timeError, type Activity, type TimeEntry } from '@/components/timeCare/api';
 import { EntryDialog } from '@/components/timeCare/EntryDialog';
 
@@ -59,13 +60,7 @@ export default function TimeTracking() {
   return (
     <div>
       <PageHead title={t('time.page.title')} subtitle={t('time.page.subtitle')} />
-      <div className="mb-4 flex flex-wrap gap-2" role="tablist">
-        {TABS.filter((x) => x !== 'rates' || isSuper).map((x) => (
-          <Chip key={x} active={tab === x} onClick={() => setTab(x)}>
-            {t(`time.page.tabs.${x}`)}
-          </Chip>
-        ))}
-      </div>
+      <Tabs className="mb-4" label={t('time.page.title')} items={TABS.filter((x) => x !== 'rates' || isSuper).map((x) => ({ key: x, label: t(`time.page.tabs.${x}`) }))} value={tab} onChange={setTab} />
       {tab !== 'rates' && <Filters value={filters} onChange={setFilters} showStaff={isAdmin} />}
       {tab === 'entries' && <Entries filters={filters} isAdmin={isAdmin} />}
       {tab === 'reports' && <Reports filters={filters} isAdmin={isAdmin} />}

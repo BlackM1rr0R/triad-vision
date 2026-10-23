@@ -458,6 +458,7 @@ export default function DocEditor({ target, folderName, onClose, onSaved }: { ta
   };
 
   const close = () => {
+    // TODO(ui): ConfirmDialog
     if (dirty && !window.confirm(t('docCreate.editor.discard'))) return;
     onClose();
   };

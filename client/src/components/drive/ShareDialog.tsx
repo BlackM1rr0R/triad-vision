@@ -371,7 +371,7 @@ export const ShareDialog = ({ item, onClose, myId }: { item: DriveItem | null; o
                         <button type="button" className="btn-primary btn-sm" disabled={inherit.isPending} onClick={() => inherit.mutate({ inherit: false, copyInherited: true })}>
                           {t('drive.simple.keepPeople')}
                         </button>
-                        <button type="button" className="btn-white btn-sm border border-line" disabled={inherit.isPending} onClick={() => inherit.mutate({ inherit: false, copyInherited: false })}>
+                        <button type="button" className="btn-secondary btn-sm" disabled={inherit.isPending} onClick={() => inherit.mutate({ inherit: false, copyInherited: false })}>
                           {t('drive.simple.startEmpty')}
                         </button>
                         <button type="button" className="btn-sm px-2 text-xs text-muted" onClick={() => setAskInherit(false)}>

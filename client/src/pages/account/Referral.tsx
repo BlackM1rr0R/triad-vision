@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { STATUS_TONES, toneClasses } from '@/components/ui/status';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
@@ -33,13 +34,7 @@ interface ReferralData {
 }
 
 const STEP_OF: Record<Stage, number> = { REGISTERED: 0, CASE_OPENED: 1, VISA_APPROVED: 2, BLOCKED: -1 };
-const REWARD_TONE: Record<RewardStatus, string> = {
-  PENDING: 'bg-surface text-muted',
-  EARNED: 'bg-success/10 text-success',
-  PAID: 'bg-brand-50 text-brand-700',
-  USED: 'bg-brand-50 text-brand-700',
-  CANCELLED: 'bg-danger/10 text-danger',
-};
+const REWARD_TONE: Record<RewardStatus, string> = toneClasses(STATUS_TONES.reward);
 
 export default function AccountReferral() {
   const { t } = useTranslation();

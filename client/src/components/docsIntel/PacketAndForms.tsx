@@ -65,7 +65,7 @@ export const PacketActions = ({
         {busy === 'download' ? <Spinner className="size-3.5" /> : <Download className="size-3.5" aria-hidden />} {busy === 'download' ? t('docsIntel.packet.building') : t('docsIntel.packet.download')}
       </button>
       {canStore && (
-        <button type="button" className="btn-white btn-sm border border-line" onClick={store} disabled={!!busy}>
+        <button type="button" className="btn-secondary btn-sm" onClick={store} disabled={!!busy}>
           {busy === 'store' ? <Spinner className="size-3.5" /> : <Save className="size-3.5" aria-hidden />} {t('docsIntel.packet.save')}
         </button>
       )}

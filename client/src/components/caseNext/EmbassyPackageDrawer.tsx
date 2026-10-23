@@ -143,7 +143,7 @@ export const EmbassyPackageDrawer = ({ caseId, open, onClose }: { caseId: string
   const footer = data ? (
     <>
       {missing.length > 0 && (
-        <button type="button" className="btn-white btn-sm border border-line" disabled={!!busy} onClick={() => void requestMissing()}>
+        <button type="button" className="btn-secondary btn-sm" disabled={!!busy} onClick={() => void requestMissing()}>
           {busy === 'request' ? <Spinner className="size-3.5" /> : <Send className="size-3.5" aria-hidden />} {t('caseNext.pkg.requestMissing', { count: missing.length })}
         </button>
       )}
@@ -177,7 +177,7 @@ export const EmbassyPackageDrawer = ({ caseId, open, onClose }: { caseId: string
               <span className="flex items-center gap-2">
                 <CheckCircle2 className="size-4 shrink-0" aria-hidden /> {t('caseNext.pkg.built', { pages: result.pages, size: formatBytes(result.sizeBytes) })}
               </span>
-              <a className="btn-white btn-sm border border-line" href={fileUrl(result.document.id, true)}>
+              <a className="btn-secondary btn-sm" href={fileUrl(result.document.id, true)}>
                 <Download className="size-3.5" aria-hidden /> {t('caseNext.pkg.download')}
               </a>
             </div>

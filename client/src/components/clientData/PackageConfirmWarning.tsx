@@ -41,7 +41,7 @@ export default function PackageConfirmWarning({ caseId, onBlockedChange }: { cas
       <p>{t(`clientData.pkg.${state}`)}</p>
       <div className="flex flex-wrap items-center gap-3">
         {state !== 'PENDING' && state !== 'REVIEW' && (
-          <button type="button" className="btn-white btn-sm border border-line" disabled={busy} onClick={() => void ask()}>
+          <button type="button" className="btn-secondary btn-sm" disabled={busy} onClick={() => void ask()}>
             {busy ? <Spinner className="size-3.5" /> : <Send className="size-3.5" aria-hidden />} {t('clientData.pkg.ask')}
           </button>
         )}

@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { TONE_CLASS, TONE_TEXT } from '@/components/ui/status';
 import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
 import { ArrowRight, BookOpen, CheckCircle2, CircleAlert, ClipboardList, MessageCircle, RotateCcw, Send, Sparkles } from 'lucide-react';
@@ -19,9 +20,9 @@ const fadeUp = (delay: number) => ({
 });
 
 const TONE_STYLE: Record<ChecklistItem['tone'], { icon: typeof CheckCircle2; box: string; badge: string }> = {
-  todo: { icon: CircleAlert, box: 'text-warning', badge: 'bg-warning/10 text-warning' },
-  info: { icon: ClipboardList, box: 'text-brand-600', badge: 'bg-brand-50 text-brand-700' },
-  ok: { icon: CheckCircle2, box: 'text-success', badge: 'bg-success/10 text-success' },
+  todo: { icon: CircleAlert, box: TONE_TEXT.warning, badge: TONE_CLASS.warning },
+  info: { icon: ClipboardList, box: 'text-brand-600', badge: TONE_CLASS.brand },
+  ok: { icon: CheckCircle2, box: TONE_TEXT.success, badge: TONE_CLASS.success },
 };
 
 /** Result screen of the eligibility quiz: best match, alternatives, readiness gauge and checklist. */
@@ -71,7 +72,7 @@ export const QuizResult = ({
                 <Sparkles className="size-3.5" />
                 {t('quiz.result.topMatch')}
               </span>
-              <span className="absolute top-4 right-4 rounded-md bg-white/90 px-2 py-1 text-xs font-bold text-brand-700 backdrop-blur">{top.visaLabel}</span>
+              <span className="absolute top-4 right-4 rounded-md bg-white/95 px-2 py-1 text-xs font-bold text-brand-700">{top.visaLabel}</span>
               <div className="absolute inset-x-4 bottom-4 flex items-end gap-3 sm:inset-x-6">
                 <span className="grid size-12 shrink-0 place-items-center rounded-xl bg-brand-600 text-white shadow-lg">
                   <Icon name={top.icon} className="size-6" />

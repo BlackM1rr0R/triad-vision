@@ -46,7 +46,7 @@ const ConfirmButton = ({ label, confirm, onConfirm, icon, danger, busy }: { labe
       <button type="button" className="btn-danger btn-sm" onClick={() => { setOpen(false); onConfirm(); }}>
         {label}
       </button>
-      <button type="button" className="btn-white btn-sm border border-line" onClick={() => setOpen(false)}>
+      <button type="button" className="btn-secondary btn-sm" onClick={() => setOpen(false)}>
         {t('admin.common.cancel')}
       </button>
     </span>
@@ -73,7 +73,7 @@ const CampaignList = () => {
         subtitle={t('campaigns.subtitle')}
         actions={
           <>
-            <Link to="/admin/campaigns/segments" className="btn-white btn-sm border border-line">
+            <Link to="/admin/campaigns/segments" className="btn-secondary btn-sm">
               <Filter className="size-3.5" aria-hidden /> {t('campaigns.segmentsLink')}
             </Link>
             <Link to="/admin/campaigns/new" className="btn-primary btn-sm">
@@ -191,7 +191,7 @@ const RecipientTable = ({ campaignId, live }: { campaignId: string; live: boolea
       icon={Users}
       bodyClassName="p-0"
       actions={
-        <a href={`/api/admin/campaigns/${campaignId}/recipients.csv`} className="btn-white btn-sm border border-line" download>
+        <a href={`/api/admin/campaigns/${campaignId}/recipients.csv`} className="btn-secondary btn-sm" download>
           <Download className="size-3.5" aria-hidden /> {t('campaigns.actions.exportCsv')}
         </a>
       }
@@ -265,11 +265,11 @@ const RecipientTable = ({ campaignId, live }: { campaignId: string; live: boolea
       )}
       {pages > 1 && (
         <div className="flex items-center justify-end gap-2 border-t border-line px-4 py-2 text-xs">
-          <button type="button" className="btn-white btn-sm border border-line" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
+          <button type="button" className="btn-secondary btn-sm" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
             ‹
           </button>
           <span>{d('page', { page, pages })}</span>
-          <button type="button" className="btn-white btn-sm border border-line" disabled={page >= pages} onClick={() => setPage((p) => p + 1)}>
+          <button type="button" className="btn-secondary btn-sm" disabled={page >= pages} onClick={() => setPage((p) => p + 1)}>
             ›
           </button>
         </div>
@@ -324,17 +324,17 @@ const CampaignDetail = () => {
         actions={
           <>
             {(c.status === 'DRAFT' || c.status === 'SCHEDULED') && (
-              <Link to={`/admin/campaigns/${c.id}/edit`} className="btn-white btn-sm border border-line">
+              <Link to={`/admin/campaigns/${c.id}/edit`} className="btn-secondary btn-sm">
                 <Pencil className="size-3.5" aria-hidden /> {t('campaigns.actions.edit')}
               </Link>
             )}
             {c.status === 'SCHEDULED' && (
-              <button type="button" className="btn-white btn-sm border border-line" disabled={busy} onClick={() => void act('unschedule')}>
+              <button type="button" className="btn-secondary btn-sm" disabled={busy} onClick={() => void act('unschedule')}>
                 <Undo2 className="size-3.5" aria-hidden /> {t('campaigns.actions.unschedule')}
               </button>
             )}
             {(c.status === 'SENDING' || c.status === 'SCHEDULED') && (
-              <button type="button" className="btn-white btn-sm border border-line" disabled={busy} onClick={() => void act('pause')}>
+              <button type="button" className="btn-secondary btn-sm" disabled={busy} onClick={() => void act('pause')}>
                 <Pause className="size-3.5" aria-hidden /> {t('campaigns.actions.pause')}
               </button>
             )}

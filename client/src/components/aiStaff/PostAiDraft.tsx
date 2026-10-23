@@ -89,7 +89,7 @@ export const PostAiTools = ({ onCreated }: { onCreated: (post: DraftPost) => voi
 
   return (
     <>
-      <button type="button" className="btn-white btn-sm border border-line" onClick={() => setImproveOpen(true)}>
+      <button type="button" className="btn-secondary btn-sm" onClick={() => setImproveOpen(true)}>
         <Wand2 className="size-3.5" /> {t('aiStaff.post.improve')}
       </button>
       <button type="button" className="btn-white btn-sm border border-brand-200 text-brand-700" onClick={() => setOpen(true)}>
@@ -103,7 +103,7 @@ export const PostAiTools = ({ onCreated }: { onCreated: (post: DraftPost) => voi
         description={t('aiStaff.post.seoNote')}
         footer={
           <>
-            <button type="button" className="btn-white btn-sm border border-line" onClick={() => setOpen(false)} disabled={busy}>
+            <button type="button" className="btn-secondary btn-sm" onClick={() => setOpen(false)} disabled={busy}>
               {t('aiStaff.post.cancel')}
             </button>
             <button type="button" className="btn-primary btn-sm" onClick={() => void create()} disabled={busy || topic.trim().length < 3}>

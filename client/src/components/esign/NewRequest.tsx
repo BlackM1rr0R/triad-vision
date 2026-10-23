@@ -193,7 +193,7 @@ export const NewSignatureRequest = ({
       title={t('esign.admin.new')}
       footer={
         <>
-          <button type="button" className="btn-white btn-sm border border-line" onClick={() => void submit(false)} disabled={busy || isContract}>
+          <button type="button" className="btn-secondary btn-sm" onClick={() => void submit(false)} disabled={busy || isContract}>
             {t('esign.admin.form.saveDraft')}
           </button>
           <button type="button" className="btn-primary btn-sm" onClick={() => void submit(true)} disabled={busy || title.trim().length < 2}>
@@ -285,7 +285,7 @@ export const NewSignatureRequest = ({
               {source === 'upload' && (
                 <div className="flex flex-wrap items-center gap-3 rounded-lg border border-dashed border-line p-3">
                   <input ref={fileRef} type="file" accept="application/pdf,.pdf" className="sr-only" tabIndex={-1} aria-hidden onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
-                  <button type="button" className="btn-white btn-sm border border-line" onClick={() => fileRef.current?.click()}>
+                  <button type="button" className="btn-secondary btn-sm" onClick={() => fileRef.current?.click()}>
                     <FileUp className="size-3.5" aria-hidden />
                     {t('esign.admin.form.chooseFile')}
                   </button>
@@ -447,12 +447,12 @@ export const NewSignatureRequest = ({
               })}
             </ol>
             <div className="mt-2 flex flex-wrap gap-2">
-              <button type="button" className="btn-white btn-sm border border-line" onClick={() => setRows((rs) => [...rs, row({ role: 'OTHER', name: '', email: '', locale: 'de' })])}>
+              <button type="button" className="btn-secondary btn-sm" onClick={() => setRows((rs) => [...rs, row({ role: 'OTHER', name: '', email: '', locale: 'de' })])}>
                 <Plus className="size-3.5" aria-hidden />
                 {t('esign.admin.form.addSigner')}
               </button>
               {p && !rows.some((r) => r.userId === p.staff.userId) && (
-                <button type="button" className="btn-white btn-sm border border-line" onClick={() => setRows((rs) => [...rs, row(p.staff)])}>
+                <button type="button" className="btn-secondary btn-sm" onClick={() => setRows((rs) => [...rs, row(p.staff)])}>
                   <UserPlus className="size-3.5" aria-hidden />
                   {t('esign.admin.form.addMe')}
                 </button>

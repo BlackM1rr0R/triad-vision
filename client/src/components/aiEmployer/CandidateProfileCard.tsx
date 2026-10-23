@@ -220,7 +220,7 @@ export const CandidateProfileCard = ({
   if (!open) {
     return (
       <div className="space-y-1">
-        <button type="button" className="btn-white btn-sm border border-line" onClick={() => void openCard()} disabled={status.isLoading}>
+        <button type="button" className="btn-secondary btn-sm" onClick={() => void openCard()} disabled={status.isLoading}>
           <Sparkles className="size-3.5 text-brand-600" /> {t('aiEmployer.profile.button')}
         </button>
         <UnavailableNote status={status.data} />
@@ -239,7 +239,7 @@ export const CandidateProfileCard = ({
         </p>
         <div className="flex items-center gap-2">
           {profile?.sharedAt && (
-            <span className="badge bg-emerald-100 text-emerald-800">
+            <span className="badge bg-success-bg text-success-fg">
               <Eye className="size-3" aria-hidden /> {t('aiEmployer.profile.shared')}
             </span>
           )}
@@ -353,13 +353,13 @@ export const CandidateProfileCard = ({
           </Field>
 
           <div className="flex flex-wrap items-center gap-2 border-t border-line pt-3">
-            <button type="button" className="btn-white btn-sm border border-line" disabled={!!busy || aiOff} onClick={() => void generate()}>
+            <button type="button" className="btn-secondary btn-sm" disabled={!!busy || aiOff} onClick={() => void generate()}>
               <RefreshCw className="size-3.5" /> {t('aiEmployer.profile.regenerate')}
             </button>
-            <button type="button" className="btn-white btn-sm border border-line" disabled={!!busy || !valid} onClick={() => void save()}>
+            <button type="button" className="btn-secondary btn-sm" disabled={!!busy || !valid} onClick={() => void save()}>
               {busy === 'save' ? <Spinner className="size-3.5" /> : <Save className="size-3.5" />} {t('aiEmployer.profile.save')}
             </button>
-            <button type="button" className="btn-white btn-sm border border-line" disabled={!!busy || !valid} onClick={() => void pdf()}>
+            <button type="button" className="btn-secondary btn-sm" disabled={!!busy || !valid} onClick={() => void pdf()}>
               {busy === 'pdf' ? <Spinner className="size-3.5" /> : <FileDown className="size-3.5" />} {t('aiEmployer.profile.pdf')}
             </button>
             {applicationId && (

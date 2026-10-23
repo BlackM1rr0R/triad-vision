@@ -61,7 +61,7 @@ export default function AgentApp() {
               </div>
               <div className="flex items-center gap-2">
                 {me && (
-                  <span className={clsx('badge mt-1', me.agent.status === 'ACTIVE' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800')}>
+                  <span className={clsx('badge mt-1', me.agent.status === 'ACTIVE' ? 'bg-success-bg text-success-fg' : 'bg-warning-bg text-warning-fg')}>
                     {t(`agents.agentStatus.${me.agent.status}`)}
                   </span>
                 )}

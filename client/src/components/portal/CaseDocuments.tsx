@@ -285,7 +285,7 @@ const RequirementCard = ({
             />
             <button
               type="button"
-              className="btn-white btn-sm border border-line"
+              className="btn-secondary btn-sm"
               onClick={() => pagesRef.current?.click()}
               disabled={pdfProgress !== null || progress !== null}
               title={t('expiry.scan.hint')}

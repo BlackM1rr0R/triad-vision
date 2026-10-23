@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { scoreTone as scoreToneOf, TONE_CLASS, TONE_TEXT } from '@/components/ui/status';
 import { Link } from 'react-router-dom';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
@@ -59,8 +60,8 @@ interface Item {
 const PAGE_SIZE = 20;
 const pct = (v: number | null) => (v === null ? '—' : `${Math.round(v * 100)} %`);
 const npsText = (v: number | null) => (v === null ? '—' : v > 0 ? `+${v}` : String(v));
-const npsTone = (v: number | null) => (v === null ? 'text-muted' : v >= 30 ? 'text-emerald-700' : v >= 0 ? 'text-amber-700' : 'text-red-700');
-const scoreTone = (s: number) => (s >= 9 ? 'bg-emerald-100 text-emerald-800' : s >= 7 ? 'bg-amber-100 text-amber-800' : 'bg-red-100 text-red-800');
+const npsTone = (v: number | null) => (v === null ? 'text-muted' : TONE_TEXT[scoreToneOf(v, 30, 0)]);
+const scoreTone = (s: number) => TONE_CLASS[scoreToneOf(s, 9, 7)];
 const monthLabel = (m: string, long = false) =>
   new Intl.DateTimeFormat(currentLocale() === 'az' ? 'az-Latn-AZ' : currentLocale(), { month: long ? 'long' : 'short', year: long ? 'numeric' : '2-digit', timeZone: 'UTC' }).format(new Date(`${m}-01T00:00:00Z`));
 
@@ -406,7 +407,7 @@ export default function AdminSurveys() {
                     {isAdmin && state === 'open' && (
                       <button
                         type="button"
-                        className="btn-white btn-sm border border-line"
+                        className="btn-secondary btn-sm"
                         disabled={resend.isPending && resend.variables === it.id}
                         onClick={() => resend.mutate(it.id)}
                       >
@@ -423,13 +424,13 @@ export default function AdminSurveys() {
           <div className="flex items-center justify-between gap-3 border-t border-line px-5 py-3 text-xs text-muted sm:px-6">
             <span>{t('surveyAdmin.total', { count: list.data?.total ?? 0 })}</span>
             <div className="flex gap-2">
-              <button type="button" className="btn-white btn-sm border border-line" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
+              <button type="button" className="btn-secondary btn-sm" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
                 {t('surveyAdmin.prev')}
               </button>
               <span className="self-center tabular-nums">
                 {page} / {pages}
               </span>
-              <button type="button" className="btn-white btn-sm border border-line" disabled={page >= pages} onClick={() => setPage((p) => p + 1)}>
+              <button type="button" className="btn-secondary btn-sm" disabled={page >= pages} onClick={() => setPage((p) => p + 1)}>
                 {t('surveyAdmin.next')}
               </button>
             </div>

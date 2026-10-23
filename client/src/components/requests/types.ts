@@ -1,15 +1,11 @@
 import type { L10n } from '@/lib/types';
+import { STATUS_TONES, toneClasses } from '@/components/ui/status';
 import type { AnonProfile, ApplicationStatus, GermanLevel, MatchGap } from '@/components/jobs/types';
 
 export type RequestStatus = 'OPEN' | 'IN_PROGRESS' | 'FILLED' | 'CANCELLED';
 export const REQUEST_STATUSES: RequestStatus[] = ['OPEN', 'IN_PROGRESS', 'FILLED', 'CANCELLED'];
 
-export const REQUEST_STATUS_TONE: Record<RequestStatus, string> = {
-  OPEN: 'bg-brand-100 text-brand-700',
-  IN_PROGRESS: 'bg-amber-100 text-amber-800',
-  FILLED: 'bg-emerald-100 text-emerald-800',
-  CANCELLED: 'bg-slate-200 text-slate-600',
-};
+export const REQUEST_STATUS_TONE: Record<RequestStatus, string> = toneClasses(STATUS_TONES.request);
 
 export interface RequestProgress {
   proposed: number;

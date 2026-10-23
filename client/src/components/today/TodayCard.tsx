@@ -6,6 +6,7 @@ import { registerCopy } from '@/i18n';
 import { pagesToday } from '@/i18n/pagesToday';
 import { dueText, useMyWork } from './api';
 import { CATEGORY_TONE, KIND_ICON } from './kinds';
+import { Skeleton } from '@/components/ui/Skeleton';
 
 registerCopy(pagesToday);
 
@@ -27,8 +28,8 @@ export const TodayCard = ({ limit = 5, className }: { limit?: number; className?
           {t('today.card.title')}
         </h2>
         <div className="flex flex-wrap items-center gap-1.5">
-          {!!counts?.urgent && <span className="badge bg-red-100 text-red-700 tabular-nums">{t('today.card.urgent', { count: counts.urgent })}</span>}
-          {!!counts?.overdue && <span className="badge bg-amber-100 text-amber-800 tabular-nums">{t('today.card.overdue', { count: counts.overdue })}</span>}
+          {!!counts?.urgent && <span className="badge bg-danger-bg text-danger-fg tabular-nums">{t('today.card.urgent', { count: counts.urgent })}</span>}
+          {!!counts?.overdue && <span className="badge bg-warning-bg text-warning-fg tabular-nums">{t('today.card.overdue', { count: counts.overdue })}</span>}
           <Link to="/admin/today" className="inline-flex items-center gap-0.5 text-xs font-semibold text-brand-600 hover:underline">
             {t('today.card.open')} <ArrowUpRight className="size-3" aria-hidden />
           </Link>
@@ -37,7 +38,7 @@ export const TodayCard = ({ limit = 5, className }: { limit?: number; className?
       {isLoading ? (
         <div className="space-y-2 p-4" aria-hidden>
           {[0, 1, 2].map((i) => (
-            <div key={i} className="h-9 animate-pulse rounded-lg bg-surface" />
+            <Skeleton key={i} className="h-9" />
           ))}
         </div>
       ) : !items.length ? (

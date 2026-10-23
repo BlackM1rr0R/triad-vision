@@ -111,12 +111,12 @@ const RecoveryCodes = ({ codes, onDone }: { codes: string[]; onDone: () => void 
         ))}
       </ul>
       <div className="mt-4 flex flex-wrap gap-2">
-        <button type="button" className="btn-white btn-sm border border-line" onClick={download}>
+        <button type="button" className="btn-secondary btn-sm" onClick={download}>
           <Download className="size-3.5" /> {t('adminSecurity.download')}
         </button>
         <button
           type="button"
-          className="btn-white btn-sm border border-line"
+          className="btn-secondary btn-sm"
           onClick={async () => setCopied(await copyText(codes.join('\n')))}
         >
           {copied ? <Check className="size-3.5" /> : <Copy className="size-3.5" />} {copied ? t('adminSecurity.copied') : t('adminSecurity.copyAll')}
@@ -215,7 +215,7 @@ const Enroll = ({ onEnabled }: { onEnabled: (codes: string[]) => void }) => {
           <p className="mt-3 text-xs text-muted">{t('adminSecurity.manual')}</p>
           <div className="mt-1.5 flex flex-wrap items-center gap-2">
             <code className="rounded-md bg-surface px-2.5 py-1.5 font-mono text-sm break-all text-navy-900 select-all">{groupedSecret}</code>
-            <button type="button" className="btn-white btn-sm border border-line" onClick={async () => setCopied(await copyText(setup.secret))}>
+            <button type="button" className="btn-secondary btn-sm" onClick={async () => setCopied(await copyText(setup.secret))}>
               {copied ? <Check className="size-3.5" /> : <Copy className="size-3.5" />} {copied ? t('adminSecurity.copied') : t('adminSecurity.copy')}
             </button>
           </div>
@@ -291,10 +291,10 @@ const Manage = ({ status, onCodes, onDisabled }: { status: Status; onCodes: (c: 
 
       {mode === null && (
         <div className="flex flex-wrap gap-2">
-          <button type="button" className="btn-white btn-sm border border-line" onClick={() => setMode('regen')}>
+          <button type="button" className="btn-secondary btn-sm" onClick={() => setMode('regen')}>
             <RefreshCw className="size-3.5" /> {t('adminSecurity.regenerate')}
           </button>
-          <button type="button" className="btn-white btn-sm border border-line text-danger" onClick={() => setMode('disable')}>
+          <button type="button" className="btn-secondary btn-sm text-danger" onClick={() => setMode('disable')}>
             <ShieldOff className="size-3.5" /> {t('adminSecurity.disable')}
           </button>
         </div>
@@ -305,7 +305,7 @@ const Manage = ({ status, onCodes, onDisabled }: { status: Status; onCodes: (c: 
           <p className="text-sm text-muted">{t('adminSecurity.regenerateText')}</p>
           <CodeInput id="tf-regen" value={code} onChange={setCode} label={t('adminSecurity.codeLabel')} />
           <div className="flex flex-wrap gap-2">
-            <button type="button" className="btn-white btn-sm border border-line" onClick={close}>
+            <button type="button" className="btn-secondary btn-sm" onClick={close}>
               {t('adminSecurity.cancel')}
             </button>
             <button type="submit" className="btn-primary btn-sm" disabled={busy || code.replace(/\D/g, '').length !== 6}>
@@ -346,7 +346,7 @@ const Manage = ({ status, onCodes, onDisabled }: { status: Status; onCodes: (c: 
             </div>
           </div>
           <div className="flex flex-wrap gap-2">
-            <button type="button" className="btn-white btn-sm border border-line" onClick={close}>
+            <button type="button" className="btn-secondary btn-sm" onClick={close}>
               {t('adminSecurity.cancel')}
             </button>
             <button type="submit" className="btn-danger btn-sm" disabled={busy || !password || code.trim().length < 6}>
@@ -420,7 +420,7 @@ const StaffTwoFactor = () => {
                 {s.twoFactorEnabled ? t('adminSecurity.on') : t('adminSecurity.off')}
               </span>
               {s.id !== user?.id && s.twoFactorEnabled && (
-                <button type="button" className="btn-white btn-sm border border-line" onClick={() => setTarget(s)}>
+                <button type="button" className="btn-secondary btn-sm" onClick={() => setTarget(s)}>
                   <RefreshCw className="size-3.5" /> {t('adminSecurity.reset')}
                 </button>
               )}

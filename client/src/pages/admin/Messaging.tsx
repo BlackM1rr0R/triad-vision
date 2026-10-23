@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { STATUS_TONES, toneClasses } from '@/components/ui/status';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
@@ -14,6 +15,7 @@ import { Flag } from '@/components/ui/Flag';
 import { Spinner } from '@/components/ui/Spinner';
 import { fmtDateTime, fmtRelative, fullName, toastError } from '@/components/admin/labels';
 import { Chip, EmptyState, ErrorBlock, LoadingBlock, PageHead, Panel, StatTile } from '@/components/admin/ui';
+import { TabPanel, Tabs } from '@/components/ui/Tabs';
 
 registerCopy(pagesMessaging);
 
@@ -67,12 +69,7 @@ const TABS = ['outbound', 'providers', 'templates'] as const;
 type Tab = (typeof TABS)[number];
 const TAB_ICON = { outbound: Inbox, providers: Plug, templates: FileText } as const;
 
-const STATUS_TONE: Record<OutboundStatus, string> = {
-  QUEUED: 'bg-slate-100 text-slate-700',
-  SENT: 'bg-emerald-100 text-emerald-800',
-  FAILED: 'bg-red-100 text-red-800',
-  CONSOLE: 'bg-amber-100 text-amber-800',
-};
+const STATUS_TONE: Record<OutboundStatus, string> = toneClasses(STATUS_TONES.outbound);
 
 const OUTBOUND_KEY = 'admin-messaging-outbound';
 const PROVIDERS_KEY = ['admin-messaging-providers'] as const;
@@ -164,7 +161,7 @@ const OutboundTab = () => {
             <option value="WHATSAPP">WhatsApp</option>
             <option value="SMS">SMS</option>
           </select>
-          <button type="button" className="btn-white btn-sm border border-line" onClick={() => void refetch()} disabled={isFetching}>
+          <button type="button" className="btn-secondary btn-sm" onClick={() => void refetch()} disabled={isFetching}>
             <RefreshCw className={clsx('size-3.5', isFetching && 'animate-spin')} /> {t('admin.common.refresh')}
           </button>
         </div>
@@ -214,11 +211,11 @@ const OutboundTab = () => {
           </div>
           {pages > 1 && (
             <nav className="flex items-center justify-between gap-3 border-t border-line px-4 py-3 text-xs" aria-label={t('admin.common.pagination')}>
-              <button type="button" className="btn-white btn-sm border border-line" disabled={page <= 1} onClick={() => setParam('page', String(page - 1))}>
+              <button type="button" className="btn-secondary btn-sm" disabled={page <= 1} onClick={() => setParam('page', String(page - 1))}>
                 {t('admin.common.prev')}
               </button>
               <span className="text-muted">{t('admin.common.pageOf', { page, pages })}</span>
-              <button type="button" className="btn-white btn-sm border border-line" disabled={page >= pages} onClick={() => setParam('page', String(page + 1))}>
+              <button type="button" className="btn-secondary btn-sm" disabled={page >= pages} onClick={() => setParam('page', String(page + 1))}>
                 {t('admin.common.next')}
               </button>
             </nav>
@@ -283,7 +280,7 @@ const RowGroup = ({
           {canResend && (m.status === 'FAILED' || m.status === 'QUEUED') && (
             <button
               type="button"
-              className="btn-white btn-sm border border-line"
+              className="btn-secondary btn-sm"
               disabled={resend.isPending && resend.variables === m.id}
               onClick={(e) => {
                 e.stopPropagation();
@@ -506,6 +503,7 @@ const TemplatesTab = () => {
 
   const select = (type: string) => {
     if (type === selected) return;
+    // TODO(ui): ConfirmDialog
     if (dirty && !window.confirm(t('messaging.admin.templates.unsavedLeave'))) return;
     setSelected(type);
     setDraft(null);
@@ -701,10 +699,11 @@ const TemplatesTab = () => {
                       {(loc.override || hasOverride) && (
                         <button
                           type="button"
-                          className="btn-white btn-sm border border-line"
+                          className="btn-secondary btn-sm"
                           disabled={save.isPending}
                           onClick={() => {
                             if (loc.override) {
+                              // TODO(ui): ConfirmDialog
                               if (!window.confirm(t('messaging.admin.templates.resetConfirm', { locale: l.toUpperCase() }))) return;
                               save.mutate({ locale: l, title: '', body: '' });
                             } else {
@@ -744,32 +743,19 @@ export default function Messaging() {
   return (
     <div>
       <PageHead title={t('messaging.admin.title')} subtitle={t('messaging.admin.subtitle')} />
-      <div className="mb-5 flex gap-1 overflow-x-auto rounded-xl border border-line bg-white p-1" role="tablist" aria-label={t('messaging.admin.title')}>
-        {TABS.map((k) => {
-          const Icon = TAB_ICON[k];
-          const active = tab === k;
-          return (
-            <button
-              key={k}
-              type="button"
-              role="tab"
-              aria-selected={active}
-              onClick={() => setTab(k)}
-              className={clsx(
-                'inline-flex min-h-10 shrink-0 items-center gap-2 rounded-lg px-3.5 text-sm font-semibold transition',
-                active ? 'bg-navy-900 text-white' : 'text-ink/75 hover:bg-surface hover:text-navy-900',
-              )}
-            >
-              <Icon className="size-4" aria-hidden /> {t(`messaging.admin.tabs.${k}`)}
-            </button>
-          );
-        })}
-      </div>
-      <div role="tabpanel">
+      <Tabs
+        className="mb-5"
+        idPrefix="msg"
+        label={t('messaging.admin.title')}
+        items={TABS.map((k) => ({ key: k, icon: TAB_ICON[k], label: t(`messaging.admin.tabs.${k}`) }))}
+        value={tab}
+        onChange={setTab}
+      />
+      <TabPanel idPrefix="msg" tabKey={tab}>
         {tab === 'outbound' && <OutboundTab />}
         {tab === 'providers' && <ProvidersTab />}
         {tab === 'templates' && <TemplatesTab />}
-      </div>
+      </TabPanel>
     </div>
   );
 }

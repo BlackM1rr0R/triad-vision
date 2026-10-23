@@ -59,7 +59,7 @@ export const LeaveDialog = ({ open, onClose, editing }: { open: boolean; onClose
       size="sm"
       footer={
         <>
-          <button type="button" onClick={onClose} className="btn-white btn-sm border border-line" disabled={busy}>
+          <button type="button" onClick={onClose} className="btn-secondary btn-sm" disabled={busy}>
             {t('ws.common.cancel')}
           </button>
           <button type="submit" className="btn-primary btn-sm" disabled={busy || !from || !to || to < from}>

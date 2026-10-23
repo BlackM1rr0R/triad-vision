@@ -148,7 +148,7 @@ const Row = ({ m, onOpen }: { m: Mailbox; onOpen: (d: NonNullable<DialogState>) 
 const CancelButton = ({ onClick, disabled, label }: { onClick: () => void; disabled?: boolean; label?: string }) => {
   const { t } = useTranslation();
   return (
-    <button type="button" className="btn-white btn-sm border border-line" onClick={onClick} disabled={disabled}>
+    <button type="button" className="btn-secondary btn-sm" onClick={onClick} disabled={disabled}>
       {label ?? t('mailAdmin.actions.cancel')}
     </button>
   );
@@ -496,7 +496,7 @@ export default function Mailboxes() {
         actions={
           data?.configured ? (
             <>
-              <button type="button" className="btn-white btn-sm border border-line" onClick={() => void refetch()} disabled={isFetching} aria-label={t('mailAdmin.refresh')}>
+              <button type="button" className="btn-secondary btn-sm" onClick={() => void refetch()} disabled={isFetching} aria-label={t('mailAdmin.refresh')}>
                 <RefreshCw className={clsx('size-3.5', isFetching && 'animate-spin')} aria-hidden /> <span className="hidden sm:inline">{t('mailAdmin.refresh')}</span>
               </button>
               <button type="button" className="btn-primary btn-sm" onClick={() => setCreating(true)}>
@@ -513,7 +513,7 @@ export default function Mailboxes() {
         <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-10 text-center" role="alert">
           <Unplug className="size-6 text-danger" aria-hidden />
           <p className="text-sm font-medium text-red-800">{mailboxErrorText(error)}</p>
-          <button type="button" className="btn-white btn-sm border border-line" onClick={() => void refetch()}>
+          <button type="button" className="btn-secondary btn-sm" onClick={() => void refetch()}>
             <RefreshCw className="size-3.5" aria-hidden /> {t('mailAdmin.refresh')}
           </button>
         </div>

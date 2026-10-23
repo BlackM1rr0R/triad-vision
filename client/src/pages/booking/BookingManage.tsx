@@ -152,7 +152,7 @@ export default function BookingManage() {
                       <label className="label mt-3" htmlFor="bm-reason">{t('bookingManage.reason')}</label>
                       <textarea id="bm-reason" className="input resize-y" rows={3} maxLength={1000} value={reason} onChange={(e) => setReason(e.target.value)} autoFocus />
                       <div className="mt-3 flex flex-wrap justify-end gap-2">
-                        <button type="button" className="btn-white btn-sm border border-line" onClick={() => setConfirm(false)} disabled={cancel.isPending}>
+                        <button type="button" className="btn-secondary btn-sm" onClick={() => setConfirm(false)} disabled={cancel.isPending}>
                           {t('bookingManage.keep')}
                         </button>
                         <button type="button" className="btn-danger btn-sm" onClick={() => cancel.mutate()} disabled={cancel.isPending}>
@@ -195,6 +195,7 @@ const Notice = ({ icon: I, title, text }: { icon: typeof AlertTriangle; title: s
   const { t } = useTranslation();
   return (
     <div className="card card-pad flex flex-col items-center py-12 text-center">
+      {/* TODO(ui): large portal empty state (size-14 icon, display title) -> <EmptyState size="lg" tone="brand"> (portal rework) */}
       <span className="grid size-14 place-items-center rounded-full bg-surface text-muted">
         <I className="size-7" aria-hidden />
       </span>

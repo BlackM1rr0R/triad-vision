@@ -11,6 +11,7 @@ import { api } from '@/lib/api';
 import { fmtDateTime, fmtRelative } from '@/components/admin/labels';
 import { Modal } from '@/components/admin/Modal';
 import { Spinner } from '@/components/ui/Spinner';
+import { STATUS_TONES, toneClasses } from '@/components/ui/status';
 import { toastDriveError } from '../api';
 import type { DriveItem, StaffPerson } from '../types';
 import { collabKeys, deleteComment, fetchComments, patchComment, postComment, taskFromComment, MENTION_RE, type DriveComment, type TaskStatus } from './api';
@@ -18,13 +19,7 @@ import { CommentBody, MentionInput, type MentionInputHandle } from './MentionInp
 
 registerCopy(driveCollabCopy);
 
-const STATUS_TONE: Record<TaskStatus, string> = {
-  TODO: 'bg-slate-100 text-slate-700 dark:bg-white/10 dark:text-slate-200',
-  IN_PROGRESS: 'bg-sky-100 text-sky-800 dark:bg-sky-500/20 dark:text-sky-200',
-  REVIEW: 'bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-200',
-  DONE: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-200',
-  CANCELLED: 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-200',
-};
+const STATUS_TONE: Record<TaskStatus, string> = toneClasses(STATUS_TONES.task);
 
 const initials = (p: { firstName: string; lastName: string } | null) => (p ? (p.firstName[0] ?? '') + (p.lastName[0] ?? '') : '?');
 const plain = (body: string) => body.replace(MENTION_RE, (_m, name: string) => `@${name}`).replace(/\s+/g, ' ').trim();
@@ -67,7 +62,7 @@ const TaskDialog = ({ comment, item, onClose, onCreated }: { comment: DriveComme
       title={t('driveCollab.task.title')}
       footer={
         <div className="flex justify-end gap-2">
-          <button type="button" className="btn-white btn-sm border border-line" onClick={onClose}>
+          <button type="button" className="btn-secondary btn-sm" onClick={onClose}>
             {t('driveCollab.comments.cancel')}
           </button>
           <button type="button" className="btn-primary btn-sm" disabled={!title.trim() || create.isPending} onClick={() => create.mutate()}>
@@ -177,6 +172,7 @@ const CommentItem = ({ c, reply, focused, onReply, onTask, refresh }: ItemProps)
                       onMouseDown={(e) => e.preventDefault()}
                       onClick={() => {
                         setMenu(false);
+                        // TODO(ui): ConfirmDialog
                         if (window.confirm(t('driveCollab.comments.deleteConfirm'))) remove.mutate();
                       }}
                       className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs text-danger hover:bg-red-50 dark:hover:bg-red-500/10"

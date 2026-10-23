@@ -233,18 +233,18 @@ export const AgentDetail = () => {
           </h2>
           <p className="mt-0.5 flex flex-wrap items-center gap-2 text-sm text-muted">
             <span className="font-mono font-semibold text-ink">{agent.code}</span>
-            <span className={`badge ${agent.status === 'ACTIVE' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}`}>{t(`agents.agentStatus.${agent.status}`)}</span>
+            <span className={`badge ${agent.status === 'ACTIVE' ? 'bg-success-bg text-success-fg' : 'bg-warning-bg text-warning-fg'}`}>{t(`agents.agentStatus.${agent.status}`)}</span>
             <a href={`mailto:${agent.user.email}`} className="hover:underline">
               {agent.user.email}
             </a>
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <button type="button" className="btn-white btn-sm border border-line" onClick={() => invite.mutate()} disabled={invite.isPending}>
+          <button type="button" className="btn-secondary btn-sm" onClick={() => invite.mutate()} disabled={invite.isPending}>
             <Mail className="size-3.5" aria-hidden /> {t('agents.admin.detail.resendInvite')}
           </button>
           {agent.status === 'ACTIVE' ? (
-            <button type="button" className="btn-white btn-sm border border-line" onClick={() => setStatus.mutate('PAUSED')} disabled={setStatus.isPending}>
+            <button type="button" className="btn-secondary btn-sm" onClick={() => setStatus.mutate('PAUSED')} disabled={setStatus.isPending}>
               <Pause className="size-3.5" aria-hidden /> {t('agents.admin.detail.pause')}
             </button>
           ) : (
@@ -330,10 +330,10 @@ export const AgentDetail = () => {
         icon={Coins}
         actions={
           <>
-            <button type="button" className="btn-white btn-sm border border-line" onClick={() => setManual(true)}>
+            <button type="button" className="btn-secondary btn-sm" onClick={() => setManual(true)}>
               <Plus className="size-3.5" aria-hidden /> {t('agents.admin.com.manual')}
             </button>
-            <Link to={`/admin/agents/commissions?agentId=${agent.id}`} className="btn-white btn-sm border border-line">
+            <Link to={`/admin/agents/commissions?agentId=${agent.id}`} className="btn-secondary btn-sm">
               {t('agents.admin.tabs.commissions')}
             </Link>
           </>

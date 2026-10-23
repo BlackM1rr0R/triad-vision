@@ -1,10 +1,8 @@
-import { useEffect, useId, useRef, type ReactNode } from 'react';
-import { createPortal } from 'react-dom';
-import { AnimatePresence, motion } from 'framer-motion';
+import type { ReactNode } from 'react';
 import clsx from 'clsx';
 import { useTranslation } from 'react-i18next';
-import { X } from 'lucide-react';
 import { Popover } from '@/components/tasks/bits';
+import { Modal as UiModal } from '@/components/ui/Modal';
 import type { Person } from './types';
 import { EMOJIS, avatarTone, fullName, initials } from './utils';
 
@@ -44,56 +42,17 @@ export const EmojiPicker = ({ open, onClose, onPick, align = 'left' }: { open: b
   </Popover>
 );
 
-/** Centered modal (full screen on phones). Closes on backdrop click and Escape. */
+/** Centered modal (full screen on phones): adapter over the design-system Modal. Escape closes only this layer. */
 export const Modal = ({ open, onClose, title, children, footer, size = 'md' }: { open: boolean; onClose: () => void; title: ReactNode; children: ReactNode; footer?: ReactNode; size?: 'sm' | 'md' | 'lg' }) => {
   const { t } = useTranslation();
-  const titleId = useId();
-  const closeRef = useRef(onClose);
-  closeRef.current = onClose;
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        e.stopPropagation();
-        closeRef.current();
-      }
-    };
-    document.addEventListener('keydown', onKey, true);
-    return () => document.removeEventListener('keydown', onKey, true);
-  }, [open]);
-  return createPortal(
-    <AnimatePresence>
-      {open && (
-        <div className="fixed inset-0 z-[70] flex items-stretch justify-center sm:items-start sm:p-6 sm:pt-[8vh]">
-          <motion.div className="absolute inset-0 bg-navy-950/45" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose} aria-hidden />
-          <motion.div
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby={titleId}
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 12 }}
-            transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
-            className={clsx('relative flex max-h-full w-full flex-col overflow-hidden bg-card shadow-2xl sm:max-h-[84vh] sm:rounded-2xl sm:border sm:border-line', { sm: 'sm:max-w-md', md: 'sm:max-w-xl', lg: 'sm:max-w-3xl' }[size])}
-          >
-            <header className="flex items-center justify-between gap-3 border-b border-line px-5 py-3.5">
-              <h2 id={titleId} className="font-display text-base font-bold text-ink">
-                {title}
-              </h2>
-              <button type="button" onClick={onClose} className="grid size-9 place-items-center rounded-lg text-muted hover:bg-surface hover:text-ink" aria-label={t('chat.actions.close')}>
-                <X className="size-4" />
-              </button>
-            </header>
-            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-4">{children}</div>
-            {footer && <footer className="flex items-center justify-end gap-2 border-t border-line px-5 py-3">{footer}</footer>}
-          </motion.div>
-        </div>
-      )}
-    </AnimatePresence>,
-    document.body,
+  return (
+    <UiModal open={open} onClose={onClose} title={title} footer={footer} size={({ sm: 'sm', md: 'lg', lg: 'xl' } as const)[size]} mobile="full" align="top" zIndex={70} closeLabel={t('chat.actions.close')}>
+      {children}
+    </UiModal>
   );
 };
 
+// TODO(ui): Field wraps the control in a <label>; migrate to components/ui/Field once callers pass ids.
 export const Field = ({ label, hint, children }: { label: string; hint?: string; children: ReactNode }) => (
   <label className="block">
     <span className="label">{label}</span>

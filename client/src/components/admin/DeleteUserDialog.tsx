@@ -100,7 +100,7 @@ export const DeleteUserDialog = ({ user, onClose, onDeleted }: { user: Deletable
       }
       footer={
         <>
-          <button type="button" className="btn-white btn-sm border border-line" onClick={close} disabled={m.isPending}>
+          <button type="button" className="btn-secondary btn-sm" onClick={close} disabled={m.isPending}>
             {t('admin.common.cancel')}
           </button>
           <button type="submit" form={`${inputId}-form`} className="btn-danger btn-sm" disabled={!matches || m.isPending}>

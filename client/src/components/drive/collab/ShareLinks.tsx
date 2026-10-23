@@ -9,18 +9,14 @@ import { driveCollabCopy } from '@/i18n/pagesDriveCollab';
 import { fmtDate, fmtDateTime } from '@/components/admin/labels';
 import { Modal } from '@/components/admin/Modal';
 import { Spinner } from '@/components/ui/Spinner';
+import { STATUS_TONES, toneClasses } from '@/components/ui/status';
 import { toastDriveError } from '../api';
 import type { DriveItem } from '../types';
 import { collabKeys, createLink, fetchAccesses, fetchLinks, revokeLink, type LinkStatus, type ShareLink } from './api';
 
 registerCopy(driveCollabCopy);
 
-const STATUS_TONE: Record<LinkStatus, string> = {
-  active: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-200',
-  expired: 'bg-slate-100 text-slate-600 dark:bg-white/10 dark:text-slate-300',
-  revoked: 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-200',
-  exhausted: 'bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-200',
-};
+const STATUS_TONE: Record<LinkStatus, string> = toneClasses(STATUS_TONES.shareLink);
 const DAY_CHOICES = [1, 7, 30] as const;
 
 const copyText = async (text: string) => {

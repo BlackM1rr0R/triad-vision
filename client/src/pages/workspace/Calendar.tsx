@@ -140,6 +140,7 @@ export default function WorkspaceCalendar() {
     }
   };
   const remove = async (e: EventDto) => {
+    // TODO(ui): ConfirmDialog
     if (!window.confirm(t('calendar.actions.confirmDelete', { title: e.title }))) return;
     try {
       await calendarApi.remove(e.id);
@@ -226,6 +227,7 @@ export default function WorkspaceCalendar() {
             <div className="hidden md:block md:w-72 lg:w-96">
               <QuickAdd onCreated={(e) => (refreshCalendar(qc), setDate(new Date(e.startsAt)))} />
             </div>
+            {/* TODO(ui): <Tabs variant="pills"> once TabItem supports a per-item className (month/week are hidden below sm) */}
             <div className="flex rounded-lg border border-line p-0.5" role="tablist">
               {VIEWS.map((v) => (
                 <button key={v} type="button" role="tab" aria-selected={view === v} onClick={() => setView(v)} className={clsx('rounded-md px-2.5 py-1 text-xs font-semibold', view === v ? 'bg-brand-600 text-white' : 'text-muted hover:text-ink', (v === 'month' || v === 'week') && 'hidden sm:block')}>

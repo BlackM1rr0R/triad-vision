@@ -27,7 +27,7 @@ interface CompanyOption { id: string; name: string }
 const CopyButton = ({ text, label }: { text: string; label?: string }) => {
   const { t } = useTranslation();
   return (
-    <button type="button" className="btn-white btn-sm border border-line" onClick={async () => { if (await copyText(text)) toast.success(t('ops.common.copied')); }}>
+    <button type="button" className="btn-secondary btn-sm" onClick={async () => { if (await copyText(text)) toast.success(t('ops.common.copied')); }}>
       <Copy className="size-3.5" /> {label ?? t('ops.common.copy')}
     </button>
   );
@@ -42,7 +42,7 @@ const SecretBox = ({ secret, hint, onClose }: { secret: string; hint: string; on
       <div className="mt-2 flex flex-wrap items-center gap-2">
         <code className="min-w-0 flex-1 rounded-lg bg-white px-3 py-2 font-mono text-xs break-all text-navy-900">{secret}</code>
         <CopyButton text={secret} />
-        <button type="button" className="btn-white btn-sm border border-line" onClick={onClose}>{t('ops.common.close')}</button>
+        <button type="button" className="btn-secondary btn-sm" onClick={onClose}>{t('ops.common.close')}</button>
       </div>
     </div>
   );
@@ -80,10 +80,10 @@ const CalendarFeed = () => {
             <div className="flex flex-wrap items-center gap-2">
               <code className="min-w-0 flex-1 rounded-lg border border-line bg-surface/60 px-3 py-2 font-mono text-xs break-all">{data.url}</code>
               <CopyButton text={data.url} />
-              <button type="button" className="btn-white btn-sm border border-line" disabled={create.isPending} onClick={() => create.mutate()} title={t('ops.integrations.calendar.rotateHint')}>
+              <button type="button" className="btn-secondary btn-sm" disabled={create.isPending} onClick={() => create.mutate()} title={t('ops.integrations.calendar.rotateHint')}>
                 <RotateCw className="size-3.5" /> {t('ops.integrations.calendar.rotate')}
               </button>
-              <button type="button" className="btn-white btn-sm border border-line text-danger" onClick={() => setConfirmOff(true)}>
+              <button type="button" className="btn-secondary btn-sm text-danger" onClick={() => setConfirmOff(true)}>
                 <ShieldOff className="size-3.5" /> {t('ops.integrations.calendar.disable')}
               </button>
             </div>
@@ -187,10 +187,10 @@ const ApiKeys = ({ companies }: { companies: CompanyOption[] }) => {
                   </td>
                   <td className="py-2.5 pr-3 text-xs">{k.company?.name ?? <span className="text-muted">{t('ops.integrations.apiKeys.platformWide')}</span>}</td>
                   <td className="py-2.5 pr-3 text-xs text-muted">{k.lastUsedAt ? fmtRelative(k.lastUsedAt) : t('ops.integrations.apiKeys.never')}</td>
-                  <td className="py-2.5 pr-3">{k.revokedAt ? <span className="badge bg-slate-200 text-slate-600">{t('ops.integrations.apiKeys.revoked')}</span> : <span className="badge bg-emerald-100 text-emerald-800">{t('ops.integrations.apiKeys.active')}</span>}</td>
+                  <td className="py-2.5 pr-3">{k.revokedAt ? <span className="badge bg-neutral-bg text-neutral-fg">{t('ops.integrations.apiKeys.revoked')}</span> : <span className="badge bg-success-bg text-success-fg">{t('ops.integrations.apiKeys.active')}</span>}</td>
                   <td className="py-2.5 text-right">
                     {!k.revokedAt && (
-                      <button type="button" className="btn-white btn-sm border border-line text-danger" onClick={() => setRevoking(k)}>
+                      <button type="button" className="btn-secondary btn-sm text-danger" onClick={() => setRevoking(k)}>
                         <ShieldOff className="size-3.5" /> {t('ops.integrations.apiKeys.revoke')}
                       </button>
                     )}
@@ -207,7 +207,7 @@ const ApiKeys = ({ companies }: { companies: CompanyOption[] }) => {
         title={t('ops.integrations.apiKeys.new')}
         footer={
           <>
-            <button type="button" className="btn-white btn-sm border border-line" onClick={() => setCreating(false)}>{t('ops.common.cancel')}</button>
+            <button type="button" className="btn-secondary btn-sm" onClick={() => setCreating(false)}>{t('ops.common.cancel')}</button>
             <button type="button" className="btn-primary btn-sm" disabled={name.trim().length < 2 || !scopes.length || create.isPending} onClick={() => create.mutate()}>
               {create.isPending ? <Spinner className="size-3.5" /> : <Plus className="size-3.5" />} {t('ops.common.create')}
             </button>
@@ -286,7 +286,7 @@ const DeliveriesLog = ({ hook }: { hook: Hook }) => {
               <td className="py-1.5 pr-3 text-muted">{d.status === 'PENDING' && d.nextAttemptAt ? fmtDateTime(d.nextAttemptAt) : d.deliveredAt ? fmtDateTime(d.deliveredAt) : '—'}</td>
               <td className="py-1.5 text-right">
                 {d.status !== 'DELIVERED' && (
-                  <button type="button" className="btn-white btn-sm border border-line" disabled={retry.isPending} onClick={() => retry.mutate(d.id)}>
+                  <button type="button" className="btn-secondary btn-sm" disabled={retry.isPending} onClick={() => retry.mutate(d.id)}>
                     <RefreshCw className="size-3" /> {t('ops.integrations.webhooks.retry')}
                   </button>
                 )}
@@ -386,16 +386,16 @@ const Webhooks = ({ companies }: { companies: CompanyOption[] }) => {
                 </div>
                 <span className={clsx('text-[11px] tabular-nums', h.failed ? 'text-red-700' : 'text-muted')}>{t('ops.integrations.webhooks.stats', { failed: h.failed, pending: h.pending })}</span>
                 <div className="flex flex-wrap gap-1.5">
-                  <button type="button" className="btn-white btn-sm border border-line" disabled={test.isPending} onClick={() => test.mutate(h.id)}>
+                  <button type="button" className="btn-secondary btn-sm" disabled={test.isPending} onClick={() => test.mutate(h.id)}>
                     <Send className="size-3.5" /> {t('ops.integrations.webhooks.test')}
                   </button>
-                  <button type="button" className="btn-white btn-sm border border-line" onClick={() => setOpenId(openId === h.id ? null : h.id)}>
+                  <button type="button" className="btn-secondary btn-sm" onClick={() => setOpenId(openId === h.id ? null : h.id)}>
                     {t('ops.integrations.webhooks.deliveries')} ({h.deliveries})
                   </button>
-                  <button type="button" className="btn-white btn-sm border border-line" disabled={rotate.isPending} onClick={() => rotate.mutate(h.id)}>
+                  <button type="button" className="btn-secondary btn-sm" disabled={rotate.isPending} onClick={() => rotate.mutate(h.id)}>
                     <RotateCw className="size-3.5" /> {t('ops.integrations.webhooks.rotate')}
                   </button>
-                  <button type="button" className="btn-white btn-sm border border-line text-danger" onClick={() => setDeleting(h)} aria-label={t('ops.integrations.webhooks.delete')}>
+                  <button type="button" className="btn-secondary btn-sm text-danger" onClick={() => setDeleting(h)} aria-label={t('ops.integrations.webhooks.delete')}>
                     <Trash2 className="size-3.5" />
                   </button>
                 </div>
@@ -411,7 +411,7 @@ const Webhooks = ({ companies }: { companies: CompanyOption[] }) => {
         title={t('ops.integrations.webhooks.new')}
         footer={
           <>
-            <button type="button" className="btn-white btn-sm border border-line" onClick={() => setCreating(false)}>{t('ops.common.cancel')}</button>
+            <button type="button" className="btn-secondary btn-sm" onClick={() => setCreating(false)}>{t('ops.common.cancel')}</button>
             <button type="button" className="btn-primary btn-sm" disabled={!/^https?:\/\/.+/.test(url.trim()) || !events.length || create.isPending} onClick={() => create.mutate()}>
               {create.isPending ? <Spinner className="size-3.5" /> : <Plus className="size-3.5" />} {t('ops.common.create')}
             </button>
@@ -467,7 +467,7 @@ const ApiDocs = ({ events }: { events: string[] }) => {
   const curl = `curl -H "Authorization: Bearer tv_XXXXXXXX" \\\n  "${base}/vacancies"\n\ncurl -X PATCH -H "Authorization: Bearer tv_XXXXXXXX" \\\n  -H "Content-Type: application/json" \\\n  -d '{"status":"INTERVIEW","note":"Next Tuesday 10:00"}' \\\n  "${base}/applications/APPLICATION_ID"`;
   const verify = `import crypto from 'node:crypto';\n\n// Express: keep the raw body (express.raw) and compare in constant time.\nconst verify = (secret, rawBody, header) => {\n  const expected = 'sha256=' + crypto.createHmac('sha256', secret).update(rawBody).digest('hex');\n  return header.length === expected.length && crypto.timingSafeEqual(Buffer.from(header), Buffer.from(expected));\n};\n\napp.post('/hook', express.raw({ type: 'application/json' }), (req, res) => {\n  if (!verify(process.env.TV_WEBHOOK_SECRET, req.body, req.get('X-TV-Signature') ?? '')) return res.sendStatus(401);\n  const { event, at, data } = JSON.parse(req.body.toString());\n  // req.get('X-TV-Delivery') is unique per delivery: use it to ignore retries you already handled.\n  res.sendStatus(204);\n});`;
   return (
-    <Panel title={t('ops.integrations.docs.title')} icon={BookText} actions={<a href="/api/v1/openapi.json" target="_blank" rel="noreferrer" className="btn-white btn-sm border border-line"><ExternalLink className="size-3.5" /> {t('ops.integrations.docs.openapi')}</a>}>
+    <Panel title={t('ops.integrations.docs.title')} icon={BookText} actions={<a href="/api/v1/openapi.json" target="_blank" rel="noreferrer" className="btn-secondary btn-sm"><ExternalLink className="size-3.5" /> {t('ops.integrations.docs.openapi')}</a>}>
       <p className="mb-4 text-sm text-muted">{t('ops.integrations.docs.hint', { base })}</p>
       <h3 className="mb-2 text-sm font-semibold text-navy-900">{t('ops.integrations.docs.endpoints')}</h3>
       <div className="overflow-x-auto rounded-lg border border-line">

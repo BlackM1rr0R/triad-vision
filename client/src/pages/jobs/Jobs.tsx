@@ -177,7 +177,7 @@ export default function Jobs() {
                 {isFetching && !isLoading && <Spinner className="size-3.5 text-brand-600" />}
               </p>
               <div className="flex items-center gap-2">
-                <button type="button" className="btn-white btn-sm border border-line lg:hidden" onClick={() => setFiltersOpen((o) => !o)} aria-expanded={filtersOpen}>
+                <button type="button" className="btn-secondary btn-sm lg:hidden" onClick={() => setFiltersOpen((o) => !o)} aria-expanded={filtersOpen}>
                   <SlidersHorizontal className="size-3.5" /> {t('jobsArea.board.filters')}
                   {activeFilters > 0 && <span className="rounded-full bg-brand-600 px-1.5 text-[10px] text-white">{activeFilters}</span>}
                 </button>
@@ -207,6 +207,7 @@ export default function Jobs() {
               </div>
             ) : !data?.items.length ? (
               <div className="card flex flex-col items-center px-6 py-14 text-center">
+                {/* TODO(ui): large portal empty state (size-14 icon, display title) -> <EmptyState size="lg" tone="brand"> (portal rework) */}
                 <span className="grid size-14 place-items-center rounded-full bg-brand-50 text-brand-600">
                   <Briefcase className="size-6" aria-hidden />
                 </span>
@@ -232,11 +233,11 @@ export default function Jobs() {
                 </div>
                 {pages > 1 && (
                   <nav className="mt-8 flex items-center justify-center gap-2" aria-label={t('jobsArea.board.pagination')}>
-                    <button type="button" className="btn-white btn-sm border border-line" disabled={page <= 1} onClick={() => set('page', String(page - 1))}>
+                    <button type="button" className="btn-secondary btn-sm" disabled={page <= 1} onClick={() => set('page', String(page - 1))}>
                       <ChevronLeft className="size-4" /> <span className="hidden sm:inline">{t('jobsArea.common.prev')}</span>
                     </button>
                     <span className="px-2 text-sm text-muted tabular-nums">{t('jobsArea.board.pageOf', { page, pages })}</span>
-                    <button type="button" className="btn-white btn-sm border border-line" disabled={page >= pages} onClick={() => set('page', String(page + 1))}>
+                    <button type="button" className="btn-secondary btn-sm" disabled={page >= pages} onClick={() => set('page', String(page + 1))}>
                       <span className="hidden sm:inline">{t('jobsArea.common.next')}</span> <ChevronRight className="size-4" />
                     </button>
                   </nav>

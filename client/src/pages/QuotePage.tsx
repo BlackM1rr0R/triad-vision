@@ -46,6 +46,7 @@ export default function QuotePage() {
           </div>
         ) : q.error || !q.data ? (
           <div className="card flex flex-col items-center px-6 py-14 text-center">
+            {/* TODO(ui): large portal empty state (size-14 icon, display title) -> <EmptyState size="lg" tone="brand"> (portal rework) */}
             <span className="grid size-12 place-items-center rounded-full bg-red-50 text-danger">
               <LinkIcon className="size-5" aria-hidden />
             </span>

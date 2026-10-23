@@ -4,6 +4,7 @@ import { api } from '@/lib/api';
 import { registerCopy, type Locale } from '@/i18n';
 import { pagesCaseNext } from '@/i18n/pagesCaseNext';
 import { fmtDate, fmtDateTime } from '@/components/admin/labels';
+import { statusTone, TONE_CLASS } from '@/components/ui/status';
 import type { CaseStatus, L10n } from '@/lib/types';
 import type { FamilyPackageMember } from '@/components/family/FamilyPackageOption';
 
@@ -79,10 +80,11 @@ export const ruleText = (t: TFunction, s: { code: string; params: Record<string,
   return t(`caseNext.rule.${s.code}`, { ...p, defaultValue: s.code });
 };
 
+/** Next-step callouts (ring-1 is added by the caller): tint + ring from the central tones. */
 export const TONE_STYLE: Record<NextStep['tone'], string> = {
-  urgent: 'bg-red-50 text-red-800 ring-red-200 dark:bg-red-950/40 dark:text-red-300 dark:ring-red-900',
-  action: 'bg-amber-50 text-amber-900 ring-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:ring-amber-900',
-  info: 'bg-brand-50 text-brand-700 ring-brand-100',
+  urgent: `${TONE_CLASS[statusTone('nextStep', 'urgent')]} ring-danger-border`,
+  action: `${TONE_CLASS[statusTone('nextStep', 'action')]} ring-warning-border`,
+  info: `${TONE_CLASS[statusTone('nextStep', 'info')]} ring-info-border`,
 };
 
 // ─── Embassy package ───────────────────────────────────────────────

@@ -80,7 +80,7 @@ export const CreateAgentDialog = ({ open, onClose }: { open: boolean; onClose: (
       description={t('agents.admin.create.description')}
       footer={
         <>
-          <button type="button" className="btn-white btn-sm border border-line" onClick={onClose}>
+          <button type="button" className="btn-secondary btn-sm" onClick={onClose}>
             {t('agents.common.cancel')}
           </button>
           <button type="submit" form="agent-create-form" className="btn-primary btn-sm" disabled={create.isPending}>

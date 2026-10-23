@@ -1,6 +1,7 @@
 import type { TFunction } from 'i18next';
 import { registerCopy } from '@/i18n';
 import { pagesAiMgmt } from '@/i18n/pagesAiMgmt';
+import { STATUS_TONES, toneClasses } from '@/components/ui/status';
 
 registerCopy(pagesAiMgmt);
 
@@ -8,11 +9,7 @@ const KNOWN = ['NO_API_KEY', 'MONTHLY_BUDGET', 'DAILY_COST', 'KEY_CREDIT', 'TIME
 export const aiMgmtReason = (t: TFunction, reason: string | null | undefined) => t(`aiMgmt.errors.${reason && KNOWN.includes(reason) ? reason : 'generic'}`);
 
 export type Severity = 'LOW' | 'MEDIUM' | 'HIGH';
-export const SEVERITY_TONE: Record<Severity, string> = {
-  HIGH: 'bg-red-100 text-red-700',
-  MEDIUM: 'bg-amber-100 text-amber-800',
-  LOW: 'bg-slate-100 text-slate-600',
-};
+export const SEVERITY_TONE: Record<Severity, string> = toneClasses(STATUS_TONES.severity);
 
 /** Amounts in cents per currency → "1.234,00 EUR, 50,00 AZN". */
 export const fmtMoney = (m: Record<string, number> | undefined, locale: string) => {

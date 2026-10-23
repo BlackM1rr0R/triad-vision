@@ -3,6 +3,7 @@ import { Scale, X } from 'lucide-react';
 import { DEUTSCHLANDTICKET, type City } from '@/lib/cities/data';
 import { estimate, flatRent } from '@/lib/cities/calc';
 import { useCityFormat } from './format';
+import { EmptyState } from '@/components/ui/EmptyState';
 
 /** Side-by-side comparison of up to three cities. */
 export const CompareTable = ({ cities, onRemove, onClear }: { cities: City[]; onRemove: (slug: string) => void; onClear: () => void }) => {
@@ -11,11 +12,7 @@ export const CompareTable = ({ cities, onRemove, onClear }: { cities: City[]; on
 
   if (!cities.length) {
     return (
-      <div className="flex flex-col items-center rounded-2xl border border-dashed border-line bg-card px-6 py-10 text-center">
-        <Scale className="size-8 text-muted" aria-hidden />
-        <p className="mt-3 font-semibold text-ink">{t('citiesPage.compare.empty')}</p>
-        <p className="mt-1 text-sm text-muted">{t('citiesPage.compare.hint')}</p>
-      </div>
+      <EmptyState className="rounded-2xl border border-dashed border-line bg-card" icon={Scale} title={t('citiesPage.compare.empty')} text={t('citiesPage.compare.hint')} />
     );
   }
 

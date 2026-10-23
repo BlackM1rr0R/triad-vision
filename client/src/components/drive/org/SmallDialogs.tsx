@@ -5,18 +5,12 @@ import { toast } from 'sonner';
 import clsx from 'clsx';
 import { Lock, LockOpen } from 'lucide-react';
 import { Modal } from '@/components/admin/Modal';
+import { STATUS_TONES, toneClasses } from '@/components/ui/status';
 import { invalidateDrive, reportBatch, toastDriveError } from '../api';
 import { WORKFLOW_STAGES, type DriveItem, type WorkflowStage } from '../types';
 import { markFinal, setStage, unmarkFinal, type DuplicateRef } from './api';
 
-export const STAGE_TONE: Record<WorkflowStage, string> = {
-  INCOMING: 'bg-slate-100 text-slate-700 dark:bg-slate-500/20 dark:text-slate-200',
-  REVIEW: 'bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-200',
-  TRANSLATION: 'bg-sky-100 text-sky-800 dark:bg-sky-500/20 dark:text-sky-200',
-  APOSTILLE: 'bg-violet-100 text-violet-800 dark:bg-violet-500/20 dark:text-violet-200',
-  READY: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-200',
-  SENT_TO_EMBASSY: 'bg-brand-100 text-brand-800 dark:bg-brand-500/20 dark:text-brand-200',
-};
+export const STAGE_TONE: Record<WorkflowStage, string> = toneClasses(STATUS_TONES.driveStage);
 
 /** Workflow column for the selected files (keyboard-friendly alternative to dragging cards). */
 export const StageDialog = ({ items, onClose }: { items: DriveItem[]; onClose: () => void }) => {
@@ -41,7 +35,7 @@ export const StageDialog = ({ items, onClose }: { items: DriveItem[]; onClose: (
       title={t('driveOrg.stage.dialogTitle', { count: items.length })}
       footer={
         <>
-          <button type="button" className="btn-white btn-sm border border-line" onClick={onClose}>
+          <button type="button" className="btn-secondary btn-sm" onClick={onClose}>
             {t('driveOrg.common.cancel')}
           </button>
           <button type="button" className="btn-primary btn-sm" disabled={save.isPending} onClick={() => save.mutate()}>
@@ -85,7 +79,7 @@ export const FinalDialog = ({ items, mode, onClose }: { items: DriveItem[]; mode
       title={mode === 'set' ? t('driveOrg.final.setTitle', { count: items.length }) : t('driveOrg.final.unsetTitle', { count: items.length })}
       footer={
         <>
-          <button type="button" className="btn-white btn-sm border border-line" onClick={onClose}>
+          <button type="button" className="btn-secondary btn-sm" onClick={onClose}>
             {t('driveOrg.common.cancel')}
           </button>
           <button type="button" className={mode === 'set' ? 'btn-primary btn-sm' : 'btn-danger btn-sm'} disabled={run.isPending || (mode === 'unset' && reason.trim().length < 3)} onClick={() => run.mutate()}>
@@ -144,7 +138,7 @@ export const DuplicateDialog = ({
         <>
           <button
             type="button"
-            className="btn-white btn-sm border border-line text-danger"
+            className="btn-secondary btn-sm text-danger"
             disabled={busy}
             onClick={async () => {
               setBusy(true);
@@ -161,7 +155,7 @@ export const DuplicateDialog = ({
           >
             {t('driveOrg.duplicates.deleteUpload')}
           </button>
-          <button type="button" className="btn-white btn-sm border border-line" disabled={busy} onClick={() => onOpenExisting(first)}>
+          <button type="button" className="btn-secondary btn-sm" disabled={busy} onClick={() => onOpenExisting(first)}>
             {t('driveOrg.duplicates.goExisting')}
           </button>
           <button type="button" className="btn-primary btn-sm" disabled={busy} onClick={onClose}>

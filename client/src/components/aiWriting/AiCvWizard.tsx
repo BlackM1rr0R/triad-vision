@@ -1,13 +1,13 @@
-import { useEffect, useId, useState } from 'react';
-import { createPortal } from 'react-dom';
+import { useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import clsx from 'clsx';
-import { ArrowLeft, ArrowRight, Sparkles, X } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Sparkles } from 'lucide-react';
 import { api } from '@/lib/api';
 import { registerCopy } from '@/i18n';
 import { pagesAiWriting } from '@/i18n/pagesAiWriting';
 import { Spinner } from '@/components/ui/Spinner';
+import { Modal } from '@/components/ui/Modal';
 import type { CvData } from '@/components/cv/types';
 import { mergeCv, useAiWritingError, type CvDraftResponse } from './api';
 
@@ -127,19 +127,11 @@ const Preview = ({ cv }: { cv: CvData }) => {
 export const AiCvWizard = ({ current, onApply, className }: { current: CvData; onApply: (data: CvData) => void; className?: string }) => {
   const { t } = useTranslation();
   const onError = useAiWritingError();
-  const titleId = useId();
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<Answers>(EMPTY);
   const [busy, setBusy] = useState(false);
   const [draft, setDraft] = useState<CvData | null>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && !busy && setOpen(false);
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [open, busy]);
 
   const start = () => {
     setStep(0);
@@ -174,42 +166,21 @@ export const AiCvWizard = ({ current, onApply, className }: { current: CvData; o
       <button type="button" className={clsx('btn-primary btn-sm w-full', className)} onClick={start}>
         <Sparkles className="size-4" aria-hidden /> {t('aiw.button')}
       </button>
-      {open &&
-        createPortal(
-          <div className="fixed inset-0 z-[100] flex items-end justify-center bg-navy-950/50 p-0 backdrop-blur-sm sm:items-center sm:p-4" onClick={() => !busy && setOpen(false)}>
-            <div
-              role="dialog"
-              aria-modal="true"
-              aria-labelledby={titleId}
-              className="card flex max-h-[100dvh] w-full max-w-2xl flex-col overflow-hidden rounded-b-none sm:max-h-[90dvh] sm:rounded-b-2xl"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="flex items-start justify-between gap-3 border-b border-line p-4 sm:p-5">
-                <div className="min-w-0">
-                  <h2 id={titleId} className="flex items-center gap-2 text-lg font-bold text-ink">
-                    <Sparkles className="size-5 text-brand-600" aria-hidden /> {draft ? t('aiw.cv.previewTitle') : t('aiw.cv.title')}
-                  </h2>
-                  <p className="mt-1 text-xs text-muted">{draft ? t('aiw.cv.previewHint') : t('aiw.cv.intro')}</p>
-                </div>
-                <button type="button" className="grid size-9 shrink-0 place-items-center rounded-lg text-muted hover:bg-surface" aria-label={t('aiw.cv.discard')} onClick={() => !busy && setOpen(false)}>
-                  <X className="size-5" aria-hidden />
-                </button>
-              </div>
-
-              <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 sm:p-5">
-                {draft ? (
-                  <Preview cv={draft} />
-                ) : (
-                  <div className="space-y-4">
-                    <p className="text-xs font-semibold text-brand-600">{t('aiw.cv.step', { n: step + 1, total: STEPS.length })}</p>
-                    {STEPS[step].map((name) => (
-                      <Field key={name} name={name} value={answers[name]} onChange={(v) => setAnswers((a) => ({ ...a, [name]: v }))} />
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              <div className="flex flex-col-reverse gap-2 border-t border-line p-4 sm:flex-row sm:justify-between sm:p-5">
+      <Modal
+        open={open}
+        onClose={() => setOpen(false)}
+        busy={busy}
+        size="lg"
+        zIndex={100}
+        closeLabel={t('aiw.cv.discard')}
+        title={
+          <span className="flex items-center gap-2">
+            <Sparkles className="size-5 text-brand-600" aria-hidden /> {draft ? t('aiw.cv.previewTitle') : t('aiw.cv.title')}
+          </span>
+        }
+        description={draft ? t('aiw.cv.previewHint') : t('aiw.cv.intro')}
+        footer={
+          <div className="flex w-full flex-col-reverse gap-2 sm:flex-row sm:justify-between">
                 {draft ? (
                   <>
                     <button type="button" className="btn min-h-11 border border-line text-ink hover:bg-surface" onClick={() => setDraft(null)}>
@@ -240,11 +211,20 @@ export const AiCvWizard = ({ current, onApply, className }: { current: CvData; o
                     )}
                   </>
                 )}
-              </div>
-            </div>
-          </div>,
-          document.body,
-        )}
+          </div>
+        }
+      >
+                {draft ? (
+                  <Preview cv={draft} />
+                ) : (
+                  <div className="space-y-4">
+                    <p className="text-xs font-semibold text-brand-600">{t('aiw.cv.step', { n: step + 1, total: STEPS.length })}</p>
+                    {STEPS[step].map((name) => (
+                      <Field key={name} name={name} value={answers[name]} onChange={(v) => setAnswers((a) => ({ ...a, [name]: v }))} />
+                    ))}
+                  </div>
+                )}
+      </Modal>
     </>
   );
 };

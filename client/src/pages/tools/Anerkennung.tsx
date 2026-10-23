@@ -90,7 +90,7 @@ const ExtLink = ({ href, children, className }: { href: string; children: ReactN
 const RegBadge = ({ regulated }: { regulated: boolean }) => {
   const { t } = useTranslation();
   return (
-    <span className={clsx('badge', regulated ? 'bg-amber-100 text-amber-800' : 'bg-emerald-50 text-emerald-700')}>
+    <span className={clsx('badge', regulated ? 'bg-warning-bg text-warning-fg' : 'bg-success-bg text-success-fg')}>
       {regulated ? t('anerkPage.regulated') : t('anerkPage.notRegulated')}
     </span>
   );
