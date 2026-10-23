@@ -4,8 +4,10 @@ import { AlertTriangle, BarChart3, FileCheck2, MessageSquare, Route } from 'luci
 import { formatBytes } from '@/lib/api';
 import { STATUS_BAR_TONE } from '@/lib/caseStatus';
 import { actorSideLabel, eventLabel, fmtDate, fmtDateTime, fmtDays, fmtRelative, statusLabel } from '../labels';
+import type { CaseStatus } from '@/lib/types';
 import type { CaseStats as Stats } from '../types';
 import { DefRow, Panel } from '../ui';
+import { WorkflowStepper } from './WorkflowStepper';
 
 const Mini = ({ label, value, hint, tone }: { label: string; value: string; hint?: string; tone?: 'warn' | 'danger' }) => (
   <div className="rounded-lg border border-line bg-surface/60 px-3 py-2.5">
@@ -15,8 +17,11 @@ const Mini = ({ label, value, hint, tone }: { label: string; value: string; hint
   </div>
 );
 
-/** Derived figures for one case: how long each step took, document and message balance, last activity. */
-export const CaseStatsPanel = ({ stats }: { stats: Stats }) => {
+/**
+ * Status timeline of one case (Ümumi tab): the workflow stepper, how long each step took, document and message
+ * balance, last activity. `onOpenMessages` opens the messages on the Ünsiyyət tab.
+ */
+export const CaseStatsPanel = ({ stats, status, onOpenMessages, id }: { stats: Stats; status?: CaseStatus; onOpenMessages?: () => void; id?: string }) => {
   const { t } = useTranslation();
   const d = stats.documents;
   const m = stats.messages;
@@ -24,7 +29,12 @@ export const CaseStatsPanel = ({ stats }: { stats: Stats }) => {
   const inStatusTone = stats.daysInStatus >= 7 ? 'danger' : stats.daysInStatus >= 3 ? 'warn' : undefined;
 
   return (
-    <Panel title={t('admin.case.stats.title')} icon={BarChart3} actions={<span className="text-[11px] text-muted tabular-nums">{t('admin.case.stats.events', { count: stats.eventsTotal })}</span>}>
+    <Panel id={id} title={t('caseLayout.statusTitle')} icon={BarChart3} actions={<span className="text-[11px] text-muted tabular-nums">{t('admin.case.stats.events', { count: stats.eventsTotal })}</span>}>
+      {status && (
+        <div className="mb-5">
+          <WorkflowStepper status={status} />
+        </div>
+      )}
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
         <Mini label={t('admin.case.stats.age')} value={fmtDays(stats.ageDays)} />
         <Mini label={t('admin.case.stats.inStatus')} value={fmtDays(stats.daysInStatus)} hint={t('admin.case.stats.since', { date: fmtDate(stats.statusSince) })} tone={inStatusTone} />
@@ -94,10 +104,14 @@ export const CaseStatsPanel = ({ stats }: { stats: Stats }) => {
             <MessageSquare className="size-3.5 text-muted" aria-hidden /> {t('admin.common.messages')}
           </h3>
           {m.awaitingStaffReply && (
-            <a href="#messages" className="mb-2 flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-800 transition hover:bg-amber-100" role="alert">
+            <button
+              type="button"
+              onClick={onOpenMessages}
+              className="mb-2 flex w-full items-center gap-2 rounded-lg border border-warning-border bg-warning-bg px-3 py-2 text-left text-xs font-semibold text-warning-fg transition hover:brightness-95"
+            >
               <AlertTriangle className="size-3.5 shrink-0" aria-hidden /> {t('admin.case.stats.awaiting')}
               {m.lastClientAt && <span className="ml-auto font-normal">{fmtRelative(m.lastClientAt)}</span>}
-            </a>
+            </button>
           )}
           <dl className="divide-y divide-line">
             <DefRow label={t('admin.case.stats.total')}>{m.total}</DefRow>

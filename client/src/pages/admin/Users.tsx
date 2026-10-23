@@ -18,6 +18,7 @@ import type { AdminUser } from '@/components/admin/types';
 import { Chip, EmptyState, ErrorBlock, LoadingBlock, OnlineDot, PageHead, Switch } from '@/components/admin/ui';
 import { DuplicateChip, useOpenDuplicateIds } from '@/components/duplicates/DuplicateBadge';
 import { ViewAsClientButton } from '@/components/privacyTools/ViewAsClientButton';
+import { useNewParam } from '@/components/command/useNewParam'; // ?new=1 deep link (Ctrl+K palette)
 // Field-level change history of the user (ADMIN+, own chunk).
 const HistoryButton = lazy(() => import('@/components/history/HistoryButton'));
 
@@ -383,6 +384,7 @@ export default function Users() {
   const [searchInput, setSearchInput] = useState(params.get('search') ?? '');
   const [search, setSearch] = useState(searchInput);
   const [creating, setCreating] = useState(false);
+  useNewParam(() => canManage && setCreating(true));
   const [resetFor, setResetFor] = useState<AdminUser | null>(null);
   const [revokeFor, setRevokeFor] = useState<AdminUser | null>(null);
   const [deleteFor, setDeleteFor] = useState<AdminUser | null>(null);

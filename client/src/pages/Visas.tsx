@@ -77,6 +77,14 @@ export default function Visas() {
         subtitle={t('visasPage.heroSubtitle')}
         image="https://images.unsplash.com/photo-1560969184-10fe8719e047?auto=format&fit=crop&w=2000&q=70"
       >
+        {/* While the catalogue loads, invisible chips hold the space so the page below does not jump (CLS). */}
+        {isLoading && (
+          <ul className="invisible mt-6 flex flex-wrap gap-2 text-sm font-semibold" aria-hidden>
+            {['w-40', 'w-48', 'w-44'].map((w) => (
+              <li key={w} className={clsx('h-9 rounded-full', w)} />
+            ))}
+          </ul>
+        )}
         {visas.length > 0 && (
           <ul className="mt-6 flex flex-wrap gap-2 text-sm font-semibold">
             <li className="glass inline-flex items-center gap-2 rounded-full px-4 py-2">

@@ -80,10 +80,11 @@ export const LoadCard = ({ compact = false }: { compact?: boolean }) => {
               <p className="text-xs text-muted">{t('automation.load.noSuggestion')}</p>
             ) : (
               <>
-                <ul className="mb-3 space-y-1 text-xs">
+                <ul className="mb-3 text-xs">
                   {data.suggestion.slice(0, compact ? 5 : 50).map((m) => (
                     <li key={m.caseId}>
-                      <Link to={`/admin/cases/${m.caseId}`} className="hover:underline">{t('automation.load.move', { number: m.number, from: m.fromName ?? t('automation.load.unassignedFrom'), to: m.toName })}</Link>
+                      {/* min-h-6: 24 px touch target (WCAG 2.5.8) */}
+                      <Link to={`/admin/cases/${m.caseId}`} className="inline-flex min-h-6 items-center hover:underline">{t('automation.load.move', { number: m.number, from: m.fromName ?? t('automation.load.unassignedFrom'), to: m.toName })}</Link>
                     </li>
                   ))}
                   {compact && data.suggestion.length > 5 && <li className="text-muted">+{data.suggestion.length - 5}</li>}

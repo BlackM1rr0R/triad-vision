@@ -38,6 +38,7 @@ export const CookieNotice = () => {
           initial={{ y: 40, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: 40, opacity: 0 }}
+          data-bnav-lift
           className="fixed inset-x-3 bottom-3 z-[45] flex flex-col gap-3 rounded-2xl border border-line bg-white p-4 shadow-2xl sm:right-auto sm:bottom-6 sm:left-6 sm:max-w-md sm:flex-row sm:items-center sm:p-5"
         >
           <span className="hidden size-10 shrink-0 place-items-center rounded-xl bg-brand-50 text-brand-700 sm:grid">

@@ -111,7 +111,7 @@ export const FileDrop = ({
         </span>
       </label>
       {uploading && (
-        <div className="absolute inset-x-0 bottom-0 h-1 bg-brand-100" role="progressbar" aria-valuenow={Math.round((progress ?? 0) * 100)} aria-valuemin={0} aria-valuemax={100}>
+        <div className="absolute inset-x-0 bottom-0 h-1 bg-brand-100" role="progressbar" aria-label={t('ui.uploadProgress')} aria-valuenow={Math.round((progress ?? 0) * 100)} aria-valuemin={0} aria-valuemax={100}>
           <motion.div className="h-full bg-brand-600" animate={{ width: `${Math.round((progress ?? 0) * 100)}%` }} transition={{ ease: 'easeOut' }} />
         </div>
       )}

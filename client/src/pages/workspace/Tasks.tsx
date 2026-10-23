@@ -24,6 +24,7 @@ import { FilterBar } from '@/components/tasks/FilterBar';
 import { TaskPanel } from '@/components/tasks/TaskPanel';
 import { NewTaskDialog, type NewTaskDefaults } from '@/components/tasks/NewTaskDialog';
 import { EMPTY_FILTERS, activeFilterCount, errorText, filterParams, fromInputs, toTimeInput } from '@/components/tasks/utils';
+import { useNewParam } from '@/components/command/useNewParam'; // ?new=1 deep link (Ctrl+K palette)
 
 registerCopy(pagesTasks);
 
@@ -149,6 +150,7 @@ export default function WorkspaceTasks() {
   const [creating, setCreating] = useState<NewTaskDefaults | null>(null);
   const meAsAssignee = user ? [{ id: user.id, firstName: user.firstName, lastName: user.lastName }] : [];
   const startCreate = (d: NewTaskDefaults = {}) => setCreating({ assignees: mine ? meAsAssignee : [], ...d });
+  useNewParam(() => startCreate()); // /workspace/tasks?new=1 (workspace home, Ctrl+K palette)
 
   const searchRef = useRef<HTMLInputElement>(null);
   useEffect(() => {

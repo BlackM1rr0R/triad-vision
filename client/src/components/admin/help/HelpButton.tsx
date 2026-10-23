@@ -5,7 +5,8 @@ import { CircleHelp, LifeBuoy } from 'lucide-react';
 import { Drawer } from '../Drawer';
 import { HelpGuide } from './HelpGuide';
 import { helpKeyFor } from './helpKeys';
-import { registerHelpCopy } from './registerHelp';
+import { loadHelpGuides, registerHelpCopy, useHelpGuides } from './registerHelp';
+import { Spinner } from '@/components/ui/Spinner';
 
 registerHelpCopy();
 
@@ -15,11 +16,14 @@ export const HelpButton = () => {
   const { pathname } = useLocation();
   const [open, setOpen] = useState(false);
   const key = helpKeyFor(pathname);
+  const ready = useHelpGuides(open);
   return (
     <>
       <button
         type="button"
         onClick={() => setOpen(true)}
+        onPointerEnter={() => void loadHelpGuides().catch(() => undefined)}
+        onFocus={() => void loadHelpGuides().catch(() => undefined)}
         className="inline-flex min-h-10 items-center gap-1.5 rounded-lg border border-line px-2.5 py-2 text-xs font-semibold whitespace-nowrap text-ink/80 transition hover:border-brand-400 hover:bg-brand-50 hover:text-brand-700"
         aria-label={t('adminHelpUi.open')}
         title={t('adminHelpUi.open')}
@@ -40,7 +44,13 @@ export const HelpButton = () => {
           </Link>
         }
       >
-        <HelpGuide helpKey={key} compact />
+        {ready ? (
+          <HelpGuide helpKey={key} compact />
+        ) : (
+          <div className="grid min-h-40 place-items-center text-brand-600" role="status" aria-label={t('ui.loading')}>
+            <Spinner className="size-6" />
+          </div>
+        )}
       </Drawer>
     </>
   );

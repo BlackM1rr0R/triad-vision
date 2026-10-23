@@ -34,6 +34,7 @@ import { ConfirmDialog } from '@/components/admin/ConfirmDialog';
 import { errorMessage, fmtDate } from '@/components/admin/labels';
 import { Spinner } from '@/components/ui/Spinner';
 import { isMaskedValue, SensitiveValue } from '@/components/privacyTools/SensitiveValue';
+import { useNewParam } from '@/components/command/useNewParam'; // ?new=1 deep link (Ctrl+K palette)
 
 registerCopy(adminInvoicesCopy);
 
@@ -143,6 +144,7 @@ export default function AdminInvoices() {
     setParams(next, { replace: true });
   };
   const [editing, setEditing] = useState<Invoice | 'new' | null>(null);
+  useNewParam(() => setEditing('new'));
   // ?edit=<id> (e.g. right after converting a quote) opens that draft in the editor.
   const editId = params.get('edit');
   useEffect(() => {

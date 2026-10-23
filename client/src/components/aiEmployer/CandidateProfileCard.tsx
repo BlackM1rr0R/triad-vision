@@ -156,7 +156,7 @@ export const CandidateProfileCard = ({
   const openCard = async () => {
     setOpen(true);
     if (form) return;
-    const r = await qc.fetchQuery({ queryKey: key, queryFn: async () => (await api.get<{ profile: SavedProfile | null; name: string; applicationStatus: string | null }>('/admin/ai/employer/profile', { params: target })).data });
+    const r = await qc.fetchQuery({ queryKey: key, staleTime: 0, queryFn: async () => (await api.get<{ profile: SavedProfile | null; name: string; applicationStatus: string | null }>('/admin/ai/employer/profile', { params: target })).data });
     if (r.profile?.content) {
       setForm(toForm(r.profile.content));
       setLang(r.profile.language);

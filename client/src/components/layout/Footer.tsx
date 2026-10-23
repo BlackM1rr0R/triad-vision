@@ -1,4 +1,4 @@
-import { CallbackButton } from '@/components/calls/CallbackForm'; // "Mənə zəng edin"
+import { lazy, Suspense, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
@@ -6,6 +6,21 @@ import { ArrowUpRight, Mail, MapPin, Phone } from 'lucide-react';
 import { Logo } from '../ui/Logo';
 import { useSiteContent } from '@/lib/content';
 import { useL10n } from '@/lib/l10n';
+import { whenIdle } from '@/lib/idle';
+
+// "Mənə zəng edin": the form, its copy and the dialog are their own chunk, loaded when the browser is idle.
+const CallbackButton = lazy(() => import('@/components/calls/CallbackForm'));
+const LateCallbackButton = ({ className }: { className: string }) => {
+  const [ready, setReady] = useState(false);
+  useEffect(() => whenIdle(() => setReady(true), 3000), []);
+  const placeholder = <span className={className} aria-hidden style={{ visibility: 'hidden' }} />;
+  if (!ready) return placeholder;
+  return (
+    <Suspense fallback={placeholder}>
+      <CallbackButton source="footer" className={className} />
+    </Suspense>
+  );
+};
 
 const SocialIcon = ({ name }: { name: string }) => {
   const paths: Record<string, string> = {
@@ -84,7 +99,7 @@ export const Footer = () => {
         </div>
 
         <div>
-          <h4 className="mb-4 text-xs font-bold tracking-widest text-white/40 uppercase sm:mb-5 sm:text-sm">{t('footer.company')}</h4>
+          <h2 className="mb-4 text-xs font-bold tracking-widest text-white/60 uppercase sm:mb-5 sm:text-sm">{t('footer.company')}</h2>
           <ul className="space-y-3">
             {company.map((l) => (
               <li key={l.to}>
@@ -98,7 +113,7 @@ export const Footer = () => {
         </div>
 
         <div>
-          <h4 className="mb-4 text-xs font-bold tracking-widest text-white/40 uppercase sm:mb-5 sm:text-sm">{t('footer.forCandidates')}</h4>
+          <h2 className="mb-4 text-xs font-bold tracking-widest text-white/60 uppercase sm:mb-5 sm:text-sm">{t('footer.forCandidates')}</h2>
           <ul className="space-y-3">
             {candidates.map((l) => (
               <li key={l.to}>
@@ -112,7 +127,7 @@ export const Footer = () => {
         </div>
 
         <div className="col-span-2 lg:col-span-1">
-          <h4 className="mb-4 text-xs font-bold tracking-widest text-white/40 uppercase sm:mb-5 sm:text-sm">{t('footer.contact')}</h4>
+          <h2 className="mb-4 text-xs font-bold tracking-widest text-white/60 uppercase sm:mb-5 sm:text-sm">{t('footer.contact')}</h2>
           {contact && (
             <ul className="space-y-4 text-sm text-white/75">
               <li>
@@ -121,7 +136,7 @@ export const Footer = () => {
                 </a>
               </li>
               <li>
-                <CallbackButton source="footer" className="inline-flex min-h-9 items-center gap-2 rounded-lg border border-white/20 px-3 py-1.5 text-sm font-semibold text-white hover:bg-white/10" />
+                <LateCallbackButton className="inline-flex min-h-9 items-center gap-2 rounded-lg border border-white/20 px-3 py-1.5 text-sm font-semibold text-white hover:bg-white/10" />
               </li>
               <li>
                 <a href={`mailto:${contact.email}`} className="flex items-center gap-3 break-all hover:text-white">
@@ -143,23 +158,27 @@ export const Footer = () => {
       </div>
 
       <div className="relative border-t border-white/10">
-        <div className="container-x flex flex-col items-center justify-between gap-3 py-6 text-center text-xs text-white/45 sm:flex-row sm:text-left">
+        <div className="container-x flex flex-col items-center justify-between gap-3 py-6 text-center text-xs text-white/60 sm:flex-row sm:text-left">
           <p>
             © {new Date().getFullYear()} Triad Vision · triad-vision.de · {t('footer.rights')}
           </p>
-          <div className="flex gap-5">
+          <nav aria-label={t('a11y.footerNav')} className="flex flex-wrap justify-center gap-x-5 gap-y-2">
             <Link to="/privacy" className="hover:text-white">
               {t('footer.privacy')}
             </Link>
             <Link to="/impressum" className="hover:text-white">
               {t('footer.imprint')}
             </Link>
-          </div>
+            <Link to="/accessibility" className="hover:text-white">
+              {t('a11y.statementLink')}
+            </Link>
+          </nav>
         </div>
       </div>
 
       <div aria-hidden className="pointer-events-none overflow-hidden">
-        <p className="-mb-[3vw] text-center font-display text-[13vw] leading-none font-black tracking-tight text-white/[0.03] select-none">TRIAD VISION</p>
+        {/* Decorative wordmark drawn as CSS generated content: not text for screen readers or contrast checks. */}
+        <p data-text="TRIAD VISION" className="-mb-[3vw] text-center font-display text-[13vw] leading-none font-black tracking-tight text-white/[0.03] select-none before:content-[attr(data-text)]" />
       </div>
     </footer>
   );

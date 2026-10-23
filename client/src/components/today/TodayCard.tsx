@@ -36,9 +36,12 @@ export const TodayCard = ({ limit = 5, className }: { limit?: number; className?
         </div>
       </header>
       {isLoading ? (
-        <div className="space-y-2 p-4" aria-hidden>
-          {[0, 1, 2].map((i) => (
-            <Skeleton key={i} className="h-9" />
+        // One placeholder per row the list will show, at the real row height (52 px), so nothing below jumps.
+        <div className="divide-y divide-line" aria-hidden>
+          {Array.from({ length: limit }, (_, i) => (
+            <div key={i} className="flex h-[52px] items-center px-4 sm:px-5">
+              <Skeleton className="h-8 w-full" />
+            </div>
           ))}
         </div>
       ) : !items.length ? (

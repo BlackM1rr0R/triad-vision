@@ -57,6 +57,7 @@ import { adminCheckInsRouter } from './checkIns.js'; // post-arrival check-ins +
 import { adminAccessLogRouter } from '../accessLog.js'; // client access log (ADMIN+)
 import { adminClientProcessRouter } from './clientProcess.js';
 import { adminGrowthRouter } from './growth.js';
+import { adminCommandSearchRouter } from './commandSearch.js'; // Ctrl+K command palette search
 
 export const adminRouter = Router();
 adminRouter.use(requireMinRole('STAFF'));
@@ -124,6 +125,7 @@ adminRouter.get('/dashboard', async (req, res) => {
   });
 });
 
+adminRouter.use('/command-search', adminCommandSearchRouter); // staff command palette: cases, people, companies, vacancies, drive, tasks
 adminRouter.use(adminSensitiveRouter); // /reveal, /sensitive/* (masked fields: reveal with reason, settings, reveal log)
 adminRouter.use('/client-process', adminClientProcessRouter); // client tasks, office visits, ball-in-court ETA settings
 adminRouter.use('/my-work', adminMyWorkRouter); // "my work today" queue + snooze / expiry remind

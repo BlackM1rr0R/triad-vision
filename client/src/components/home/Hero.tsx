@@ -7,6 +7,7 @@ import { motion, useScroll, useTransform } from 'framer-motion';
 import { ArrowRight, CheckCircle2, MousePointer2 } from 'lucide-react';
 import { Magnetic } from '../motion';
 import { QuizCta } from '../publicAi/QuizCta';
+import { sized, srcSet } from '@/lib/img';
 
 const BG = 'https://images.unsplash.com/photo-1587330979470-3595ac045ab0?auto=format&fit=crop&w=1600&q=60';
 const HANDSHAKE = 'https://images.unsplash.com/photo-1521791136064-7986c2920216?auto=format&fit=crop&w=640&q=70';
@@ -28,7 +29,7 @@ export const Hero = () => {
     <section ref={ref} className="relative isolate min-h-[100svh] overflow-hidden bg-navy-950 text-white">
       {/* background layers */}
       <motion.div style={{ y: bgY }} className="absolute inset-0 -z-20 will-change-transform">
-        <img src={BG} alt="" className="size-full scale-110 object-cover opacity-30" />
+        <img src={sized(BG, 1600)} srcSet={srcSet(BG, [640, 960, 1280, 1600])} sizes="100vw" alt="" fetchPriority="high" decoding="async" className="size-full scale-110 object-cover opacity-30" />
       </motion.div>
       <div className="absolute inset-0 -z-10 bg-gradient-to-r from-navy-950 via-navy-950/85 to-navy-900/30" />
       <div className="absolute inset-0 -z-10 bg-gradient-to-t from-navy-950 via-transparent to-navy-950/60" />
@@ -130,7 +131,7 @@ export const Hero = () => {
           transition={{ delay: 1.3, duration: 1, ease: EASE }}
           className="absolute right-8 bottom-36 hidden w-80 animate-float overflow-hidden rounded-2xl border border-white/15 bg-white/95 text-navy-900 shadow-2xl xl:block 2xl:right-16"
         >
-          <img src={HANDSHAKE} alt="" className="h-36 w-full object-cover" />
+          <img src={sized(HANDSHAKE, 320)} srcSet={srcSet(HANDSHAKE, [320, 640])} sizes="320px" width={320} height={144} alt="" loading="lazy" decoding="async" className="h-36 w-full object-cover" />
           <div className="p-5">
             <p className="font-display text-base leading-snug font-bold">{t('hero.cardTitle')}</p>
             <p className="mt-2 text-xs leading-relaxed text-muted">{t('hero.cardText')}</p>

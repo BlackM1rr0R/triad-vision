@@ -17,11 +17,15 @@ import { pagesJourney } from '@/i18n/pagesJourney';
 import { pagesSign } from '@/i18n/pagesSign';
 import { useMySignatures } from '@/components/esign/MySignatures';
 import AiLauncher from '@/components/ai/AiLauncher';
+import { BottomNavPortal } from '@/components/nav/BottomNavPortal';
+import { CLIENT_TOUR, TourHost, TourRestartButton } from '@/components/onboarding';
+import { pagesPortalUx } from '@/i18n/pagesPortalUx';
 
 registerCopy(pagesAccount);
 registerCopy(pagesSign);
 registerCopy(pagesJobs);
 registerCopy(pagesJourney);
+registerCopy(pagesPortalUx);
 
 export default function AccountLayout() {
   const { t } = useTranslation();
@@ -44,12 +48,14 @@ export default function AccountLayout() {
   const { data: signatures } = useMySignatures({ enabled: !!user });
   const toSign = (signatures ?? []).filter((s) => s.myTurn).length;
 
-  const tabs = [
-    { to: '/account', label: t('accountPage.tabs.dashboard'), icon: LayoutDashboard, match: (p: string) => p === '/account' || p === '/account/' },
+  const tabs: { to: string; label: string; icon: typeof Bell; match: (p: string) => boolean; badge?: number; inBottomNav?: boolean; tour?: string }[] = [
+    { to: '/account', label: t('accountPage.tabs.dashboard'), icon: LayoutDashboard, inBottomNav: true, match: (p: string) => p === '/account' || p === '/account/' },
     {
       to: casesTo,
       label: cases.length > 1 ? t('accountPage.tabs.myCases') : t('accountPage.tabs.myCase'),
       icon: FolderOpen,
+      inBottomNav: true,
+      tour: 'portal-tab-case',
       match: (p: string) => p.startsWith('/account/cases'),
     },
     { to: '/account/applications', label: t('jobsArea.applications.tab'), icon: Briefcase, match: (p: string) => p.startsWith('/account/applications') },
@@ -72,7 +78,7 @@ export default function AccountLayout() {
       : []),
     ...(isClient ? [{ to: '/account/translations', label: t('accountPage.tabs.translations'), icon: Languages, match: (p: string) => p.startsWith('/account/translations') }] : []),
     { to: '/account/notifications', label: t('portal.notifications'), icon: Bell, badge: unread, match: (p: string) => p.startsWith('/account/notifications') },
-    { to: '/account/profile', label: t('portal.profile'), icon: UserRound, match: (p: string) => p.startsWith('/account/profile') },
+    { to: '/account/profile', label: t('portal.profile'), icon: UserRound, inBottomNav: true, match: (p: string) => p.startsWith('/account/profile') },
     { to: '/account/privacy', label: t('accountPage.tabs.privacy'), icon: ShieldCheck, match: (p: string) => p.startsWith('/account/privacy') },
   ];
 
@@ -97,6 +103,7 @@ export default function AccountLayout() {
                 to="/account/profile"
                 className="group float-right ml-4 flex items-center gap-3 rounded-2xl py-1 pr-1 pl-1 transition-colors hover:bg-white/10 sm:pl-3"
                 aria-label={`${t('accountPage.header.profile')}: ${completeness.percent}% ${t('accountPage.header.complete')}`}
+                data-tour="portal-profile"
               >
                 <span className="hidden text-right sm:block">
                   <span className="block text-xs font-semibold text-white/60">{t('accountPage.header.profile')}</span>
@@ -140,6 +147,7 @@ export default function AccountLayout() {
                     {user.passportNumber}
                   </span>
                 )}
+                <TourRestartButton tourId={CLIENT_TOUR} className="min-h-8 rounded-lg text-white/70 hover:text-white" />
               </p>
             )}
 
@@ -157,8 +165,11 @@ export default function AccountLayout() {
                     className={clsx(
                       'relative flex min-h-11 shrink-0 snap-start items-center gap-2 rounded-xl px-3.5 py-2.5 text-sm font-semibold whitespace-nowrap transition-colors sm:px-4',
                       active ? 'text-navy-900' : 'text-white/75 hover:bg-white/10 hover:text-white',
+                      // Phones: these live in the bottom bar.
+                      tab.inBottomNav && 'max-md:hidden',
                     )}
                     aria-current={active ? 'page' : undefined}
+                    data-tour={tab.tour}
                   >
                     {active && (
                       <motion.span
@@ -200,6 +211,8 @@ export default function AccountLayout() {
         </div>
       </div>
       {isClient && <AiLauncher />}
+      <BottomNavPortal />
+      <TourHost />
     </div>
   );
 }

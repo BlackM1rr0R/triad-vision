@@ -17,6 +17,8 @@ const az = {
     typeToConfirm: 'Təsdiq üçün {{text}} yazın',
     sortAscending: 'Artan sıra ilə',
     sortDescending: 'Azalan sıra ilə',
+    progress: 'Gedişat',
+    uploadProgress: 'Yükləmə gedişatı',
   },
 };
 
@@ -35,6 +37,8 @@ const de: Shape = {
     typeToConfirm: 'Zum Bestätigen {{text}} eingeben',
     sortAscending: 'Aufsteigend',
     sortDescending: 'Absteigend',
+    progress: 'Fortschritt',
+    uploadProgress: 'Upload-Fortschritt',
   },
 };
 
@@ -51,6 +55,8 @@ const en: Shape = {
     typeToConfirm: 'Type {{text}} to confirm',
     sortAscending: 'Ascending',
     sortDescending: 'Descending',
+    progress: 'Progress',
+    uploadProgress: 'Upload progress',
   },
 };
 
@@ -67,6 +73,8 @@ const ru: Shape = {
     typeToConfirm: 'Введите {{text}} для подтверждения',
     sortAscending: 'По возрастанию',
     sortDescending: 'По убыванию',
+    progress: 'Прогресс',
+    uploadProgress: 'Ход загрузки',
   },
 };
 

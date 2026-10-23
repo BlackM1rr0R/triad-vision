@@ -1,7 +1,6 @@
 import { PortalCallbackCard } from '@/components/calls/CallbackForm'; // "Mənə zəng edin" from the portal
 import { useTranslation } from 'react-i18next';
-import { AlertTriangle, BellRing, CalendarDays, FileUp, FolderOpen, Hourglass, MessageCircle, RotateCw } from 'lucide-react';
-import type { LucideIcon } from 'lucide-react';
+import { AlertTriangle, FolderOpen, RotateCw } from 'lucide-react';
 import { FINAL } from '@/lib/caseStatus';
 import { useAuth } from '@/lib/auth';
 import { Stagger, StaggerItem } from '@/components/motion';
@@ -9,8 +8,6 @@ import { CaseSummaryCard } from '@/components/portal/CaseSummaryCard';
 import {
   AppointmentWidget,
   DashboardSkeleton,
-  DocumentChecklist,
-  JourneyCard,
   LastMessageCard,
   LatestNotifications,
   ManagerCard,
@@ -21,19 +18,26 @@ import {
 import { StartCase } from '@/components/portal/StartCase';
 import { profileCompleteness } from '@/components/portal/profileFields';
 import { useHashScroll, useOverview } from '@/components/portal/useOverview';
-import type { ActiveCase, OverviewCaseRow } from '@/components/portal/accountTypes';
+import type { AccountOverview, ActiveCase, OverviewCaseRow } from '@/components/portal/accountTypes';
 import { OnboardingCard } from '@/components/journey/OnboardingCard';
 import { RecommendationsCard } from '@/components/aiWriting/Recommendations';
+import { CLIENT_TOUR, useAutoStartTour } from '@/components/onboarding';
 import { registerCopy } from '@/i18n';
 import { pagesAccount } from '@/i18n/pagesAccount';
+import { pagesPortalUx } from '@/i18n/pagesPortalUx';
 import { usePageTitle } from '@/lib/usePageTitle';
-import { PortalTasks } from '@/components/clientProcess/PortalTasks'; // "MÉ™nim tapÅŸÄ±rÄ±qlarÄ±m" across cases
+import { NextUpCard } from './portal/NextUpCard';
+import { NextItems } from './portal/NextItems';
+import { ProgressSteps } from './portal/ProgressSteps';
+import { GermanTeaser, ReferralTeaser } from './portal/SecondaryCards';
+import { caseHref, useNextUp } from './portal/useNextUp';
 
 registerCopy(pagesAccount);
+registerCopy(pagesPortalUx);
 
 const CaseList = ({ cases, title }: { cases: OverviewCaseRow[]; title: string }) => (
   <section id="cases" className="scroll-mt-28 lg:scroll-mt-36" aria-labelledby="cases-title">
-    <h2 id="cases-title" className="mb-4 flex items-center gap-2 text-xl font-bold text-navy-900">
+    <h2 id="cases-title" className="type-section-title mb-4 flex items-center gap-2">
       <FolderOpen className="size-5 text-brand-600" aria-hidden />
       {title}
       <span className="badge bg-brand-100 text-brand-700">{cases.length}</span>
@@ -48,32 +52,36 @@ const CaseList = ({ cases, title }: { cases: OverviewCaseRow[]; title: string })
   </section>
 );
 
-/** "Your application in numbers": compact counters under the journey card. */
-const CaseNumbers = ({ c }: { c: ActiveCase }) => {
-  const { t } = useTranslation();
-  const items: { icon: LucideIcon; label: string; value: number }[] = [
-    { icon: CalendarDays, label: t('accountPage.dash.numbers.age'), value: c.stats.ageDays },
-    { icon: Hourglass, label: t('accountPage.dash.numbers.step'), value: c.stats.daysInStatus },
-    { icon: FileUp, label: t('accountPage.dash.numbers.uploads'), value: c.stats.uploads },
-    { icon: MessageCircle, label: t('accountPage.dash.numbers.messages'), value: c.stats.messages },
-    { icon: BellRing, label: t('accountPage.dash.numbers.updates'), value: c.stats.events },
-  ];
+/**
+ * Portal home with an active case, top to bottom: one "what do I need to do now?" card, the 6-step
+ * progress, the other open items, then calm secondary cards (each hides itself when empty).
+ */
+type HomeRest = Pick<AccountOverview, 'notifications' | 'lastMessage' | 'profile'> & { hasApproved: boolean; visaSlug: string | null };
+
+const ActiveHome = ({ c, rest }: { c: ActiveCase; rest: HomeRest }) => {
+  const next = useNextUp(c.id);
   return (
-    <section className="card" aria-label={t('accountPage.dash.numbers.title')}>
-      <ul className="grid grid-cols-2 divide-y divide-line sm:grid-cols-5 sm:divide-x sm:divide-y-0 [&>*]:min-w-0">
-        {items.map((it) => (
-          <li key={it.label} className="flex items-center gap-3 px-4 py-3 sm:flex-col sm:items-start sm:gap-1.5 sm:px-5 sm:py-4">
-            <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-brand-50 text-brand-600">
-              <it.icon className="size-4" aria-hidden />
-            </span>
-            <span className="min-w-0">
-              <span className="block text-xl leading-tight font-extrabold text-navy-900">{it.value}</span>
-              <span className="block truncate text-[11px] font-medium text-muted">{it.label}</span>
-            </span>
-          </li>
-        ))}
-      </ul>
-    </section>
+    <div className="space-y-6 lg:space-y-8">
+      <NextUpCard next={next} tour="portal-next" caseLink={caseHref(c.id, 'overview')} />
+      <ProgressSteps status={c.status} visaType={c.visaType} number={c.number} detailsTo={caseHref(c.id, 'overview', '#forecast')} tour="portal-progress" />
+      <NextItems items={next.items} short={next.short} />
+
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3 [&>*]:min-w-0">
+        <div data-tour="portal-messages" className="[&>section]:h-full">
+          <LastMessageCard message={rest.lastMessage} caseId={c.id} />
+        </div>
+        {c.appointment && <AppointmentWidget c={c} />}
+        <ManagerCard c={c} />
+        <GermanTeaser />
+        {rest.profile.percent < 100 && <ProfileCard percent={rest.profile.percent} missing={rest.profile.missing} />}
+        {rest.hasApproved && <OnboardingCard />}
+        {rest.notifications.unread > 0 && <LatestNotifications items={rest.notifications.items} unread={rest.notifications.unread} />}
+        <ReferralTeaser />
+        <PortalCallbackCard />
+        <QuickLinks visaSlug={rest.visaSlug} />
+      </div>
+      <RecommendationsCard />
+    </div>
   );
 };
 
@@ -83,13 +91,14 @@ export default function AccountHome() {
   const { user } = useAuth();
   const { data, isLoading, isError, refetch, isFetching } = useOverview();
   useHashScroll(!!data);
+  useAutoStartTour(CLIENT_TOUR, user?.id, !!data);
 
   if (isLoading) return <DashboardSkeleton />;
   if (isError || !data) {
     return (
       <div className="card mx-auto max-w-lg p-8 text-center">
         <AlertTriangle className="mx-auto size-10 text-warning" aria-hidden />
-        <p className="mt-4 font-semibold text-navy-900">{t('accountPage.dash.error')}</p>
+        <p className="mt-4 font-semibold text-ink">{t('accountPage.dash.error')}</p>
         <button type="button" className="btn-primary mt-6 min-h-11" onClick={() => void refetch()} disabled={isFetching}>
           <RotateCw className="size-4" aria-hidden />
           {t('accountPage.dash.retry')}
@@ -112,58 +121,33 @@ export default function AccountHome() {
   if (activeCase) {
     return (
       <div className="space-y-8 lg:space-y-10">
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-8">
-          <div className="min-w-0 space-y-6">
-            <JourneyCard c={activeCase} />
-            <CaseNumbers c={activeCase} />
-            <PortalTasks />
-            <PortalCallbackCard />
-            {hasApproved && <OnboardingCard />}
-            {activeCase.appointment && (
-              <div className="lg:hidden">
-                <AppointmentWidget c={activeCase} />
-              </div>
-            )}
-            <DocumentChecklist c={activeCase} />
-            <TipsCard status={activeCase.status} />
-            <div className="grid gap-6 md:grid-cols-2 [&>*]:min-w-0">
-              <LastMessageCard message={lastMessage} caseId={activeCase.id} />
-              <LatestNotifications items={notifications.items} unread={notifications.unread} />
-            </div>
-          </div>
-          <aside className="min-w-0 space-y-6">
-            {activeCase.appointment && (
-              <div className="hidden lg:block">
-                <AppointmentWidget c={activeCase} />
-              </div>
-            )}
-            <ManagerCard c={activeCase} />
-            {profile.percent < 100 && <ProfileCard percent={profile.percent} missing={profile.missing} />}
-            <QuickLinks visaSlug={visaSlug} />
-            <RecommendationsCard />
-          </aside>
-        </div>
+        <ActiveHome c={activeCase} rest={{ notifications, lastMessage, profile, hasApproved, visaSlug }} />
         {others.length > 0 && <CaseList cases={others} title={othersTitle} />}
       </div>
     );
   }
 
+  // No active case: starting a case is the one thing to do.
   return (
     <div className="space-y-8 lg:space-y-10">
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-8">
-        <div className="min-w-0 space-y-6">
-          <StartCase hasCases={cases.length > 0} defaultProfession={user?.profession} />
-          <RecommendationsCard />
-          {hasApproved && <OnboardingCard />}
-          <TipsCard status={latest?.status === 'APPROVED' ? 'APPROVED' : null} />
-        </div>
-        <aside className="min-w-0 space-y-6">
-          <ProfileCard percent={profile.percent} missing={profile.missing} />
-          <LatestNotifications items={notifications.items} unread={notifications.unread} />
-          {lastMessage && <LastMessageCard message={lastMessage} caseId={null} />}
-          <QuickLinks visaSlug={visaSlug} />
-        </aside>
+      <div data-tour="portal-next">
+        <StartCase hasCases={cases.length > 0} defaultProfession={user?.profession} />
       </div>
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3 [&>*]:min-w-0">
+        {profile.percent < 100 && <ProfileCard percent={profile.percent} missing={profile.missing} />}
+        {lastMessage && (
+          <div data-tour="portal-messages" className="[&>section]:h-full">
+            <LastMessageCard message={lastMessage} caseId={null} />
+          </div>
+        )}
+        {notifications.items.length > 0 && <LatestNotifications items={notifications.items} unread={notifications.unread} />}
+        {hasApproved && <OnboardingCard />}
+        <GermanTeaser />
+        <ReferralTeaser />
+        <TipsCard status={latest?.status === 'APPROVED' ? 'APPROVED' : null} />
+        <QuickLinks visaSlug={visaSlug} />
+      </div>
+      <RecommendationsCard />
       {cases.length > 0 && <CaseList cases={cases} title={t('accountPage.dash.pastCases')} />}
     </div>
   );

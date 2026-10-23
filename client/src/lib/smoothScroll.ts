@@ -1,4 +1,4 @@
-import Lenis from 'lenis';
+import type Lenis from 'lenis';
 
 /**
  * Inertial ("smooth") wheel scrolling, shared by the layout and anything that needs to scroll
@@ -9,6 +9,10 @@ import Lenis from 'lenis';
  * because the main thread is otherwise idle (no WebGL, no per-frame React work).
  */
 let lenis: Lenis | null = null;
+/** Bumped by every start/stop, so a Lenis that finishes downloading after a stop is never created. */
+let generation = 0;
+/** An overlay asked for a pause (it may do so before Lenis has finished loading). */
+let paused = false;
 
 const wanted = () =>
   typeof window !== 'undefined' &&
@@ -19,7 +23,16 @@ const wanted = () =>
 
 export const startSmoothScroll = () => {
   if (lenis || !wanted()) return;
-  lenis = new Lenis({
+  // Lenis is its own chunk, fetched only for desktop pointers (touch devices never download it).
+  const gen = ++generation;
+  void import('lenis').then(({ default: LenisCtor }) => {
+    if (gen !== generation || lenis) return;
+    create(LenisCtor);
+  });
+};
+
+const create = (LenisCtor: typeof Lenis) => {
+  lenis = new LenisCtor({
     lerp: 0.11,
     wheelMultiplier: 1,
     smoothWheel: true,
@@ -29,9 +42,11 @@ export const startSmoothScroll = () => {
     // Scrollable panels (modals, mobile rails, admin tables) keep native wheel behaviour.
     prevent: (node) => node.closest('[data-lenis-prevent], [role="dialog"], .overflow-y-auto, .overflow-auto') !== null,
   });
+  if (paused) lenis.stop();
 };
 
 export const stopSmoothScroll = () => {
+  generation++;
   lenis?.destroy();
   lenis = null;
 };
@@ -47,8 +62,9 @@ export const smoothScrollTo = (target: number | HTMLElement | string, opts: { im
 };
 
 /** Pause while an overlay locks the page (body overflow hidden), resume afterwards. */
-export const setSmoothScrollPaused = (paused: boolean) => {
+export const setSmoothScrollPaused = (pause: boolean) => {
+  paused = pause;
   if (!lenis) return;
-  if (paused) lenis.stop();
+  if (pause) lenis.stop();
   else lenis.start();
 };

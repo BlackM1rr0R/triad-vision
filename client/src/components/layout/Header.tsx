@@ -23,7 +23,7 @@ import { Icon } from '../ui/Icon';
 import { Flag } from '../ui/Flag';
 import { LanguageSwitcher } from './LanguageSwitcher';
 import { ThemeToggle } from '../a11y/ThemeToggle';
-import { setSmoothScrollPaused } from '@/lib/smoothScroll';
+import { useOverlay } from '../ui/overlay';
 import { SearchButton } from '../search/SearchPalette';
 import { useAuth } from '@/lib/auth';
 import { isStaffRole } from '@/lib/types';
@@ -64,14 +64,8 @@ export const Header = () => {
     setMega(null);
   }, [pathname]);
 
-  useEffect(() => {
-    document.body.style.overflow = mobileOpen ? 'hidden' : '';
-    setSmoothScrollPaused(mobileOpen);
-    return () => {
-      document.body.style.overflow = '';
-      setSmoothScrollPaused(false);
-    };
-  }, [mobileOpen]);
+  // Mobile menu is a modal layer: scroll lock (and Lenis pause), Esc closes, Tab stays inside, focus returns to the menu button.
+  const mobilePanel = useOverlay(mobileOpen, () => setMobileOpen(false));
 
   const solid = scrolled || mega !== null || LIGHT_TOP.some((p) => pathname.startsWith(p));
   const contact = data?.settings.contact;
@@ -189,7 +183,7 @@ export const Header = () => {
           <div className="container-x flex h-16 items-center justify-between gap-3 sm:h-[72px] xl:gap-6">
             <Logo light={!solid} />
 
-            <nav className="hidden items-center xl:flex" aria-label="Main">
+            <nav className="hidden items-center xl:flex" aria-label={t('a11y.mainNav')}>
               {primary.map((l) => (
                 <div key={l.to} onMouseEnter={() => setMega(l.mega ?? null)}>
                   <NavLink
@@ -275,6 +269,7 @@ export const Header = () => {
                 type="button"
                 aria-label={t('a11y.menu')}
                 aria-expanded={mobileOpen}
+                aria-haspopup="dialog"
                 onClick={() => setMobileOpen(true)}
                 className={clsx('grid size-10 place-items-center rounded-lg xl:hidden', solid ? 'text-navy-900 hover:bg-surface' : 'text-white hover:bg-white/10')}
               >
@@ -332,7 +327,12 @@ export const Header = () => {
       <AnimatePresence>
         {mobileOpen && (
           <motion.div
-            className="fixed inset-0 z-[80] flex flex-col bg-navy-950 text-white"
+            ref={mobilePanel}
+            role="dialog"
+            aria-modal="true"
+            aria-label={t('a11y.menu')}
+            tabIndex={-1}
+            className="fixed inset-0 z-[80] flex flex-col bg-navy-950 text-white outline-none"
             initial={{ clipPath: 'circle(0% at 100% 0%)' }}
             animate={{ clipPath: 'circle(150% at 100% 0%)' }}
             exit={{ clipPath: 'circle(0% at 100% 0%)' }}
@@ -346,7 +346,7 @@ export const Header = () => {
             </div>
 
             <div className="flex-1 overflow-y-auto overscroll-contain">
-              <nav className="container-x flex flex-col pt-2 pb-8">
+              <nav className="container-x flex flex-col pt-2 pb-8" aria-label={t('a11y.mainNav')}>
                 {primary.map((l, i) => (
                   <motion.div key={l.to} initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.15 + i * 0.035 }} className="border-b border-white/10">
                     {l.mega === 'services' || l.mega === 'visas' ? (

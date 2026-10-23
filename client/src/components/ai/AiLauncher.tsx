@@ -55,6 +55,7 @@ export default function AiLauncher() {
         }}
         aria-haspopup="dialog"
         aria-expanded={open}
+        data-bnav-lift
         className={clsx(
           'fixed right-[5.25rem] bottom-4 z-40 inline-flex h-14 items-center gap-2 rounded-full bg-gradient-to-br from-brand-500 to-brand-700 px-4 text-sm font-bold text-white shadow-xl shadow-brand-600/30 transition hover:brightness-110 sm:right-[5.75rem] sm:bottom-6 sm:px-5',
           open && 'pointer-events-none opacity-0',

@@ -36,7 +36,7 @@ export const OnboardingAdminPanel = ({ caseId }: { caseId: string }) => {
       ) : (
         <>
           {progress && (
-            <div className="h-1.5 bg-line" role="progressbar" aria-valuenow={progress.percent} aria-valuemin={0} aria-valuemax={100}>
+            <div className="h-1.5 bg-line" role="progressbar" aria-label={t('ui.progress')} aria-valuenow={progress.percent} aria-valuemin={0} aria-valuemax={100}>
               <div className="h-full bg-brand-600 transition-[width]" style={{ width: `${progress.percent}%` }} />
             </div>
           )}

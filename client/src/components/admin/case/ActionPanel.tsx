@@ -397,7 +397,7 @@ export const ActionPanel = ({ c }: { c: CaseDetail }) => {
   };
 
   return (
-    <Panel title={a('nextStep')} icon={Zap} className="border-brand-400/50 ring-1 ring-brand-500/10">
+    <Panel title={t('caseLayout.actionsTitle')} icon={Zap} className="border-brand-400/50 ring-1 ring-brand-500/10">
       <div className="space-y-4">
         <div className="flex items-start gap-2.5 rounded-lg bg-surface px-3 py-2.5 text-sm text-ink/85">
           {actions.length === 0 && !isFinal ? (

@@ -51,7 +51,7 @@ const Checklist = () => {
             <p className="shrink-0 font-display font-bold text-navy-900" aria-live="polite">
               {t('cooperationPage.checklist.progress', { done: count, total })}
             </p>
-            <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-white" role="progressbar" aria-valuemin={0} aria-valuemax={total} aria-valuenow={count}>
+            <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-white" role="progressbar" aria-label={t('cooperationPage.checklist.title')} aria-valuemin={0} aria-valuemax={total} aria-valuenow={count}>
               <div className="h-full rounded-full bg-success transition-[width] duration-500" style={{ width: `${(count / total) * 100}%` }} />
             </div>
             <p className="text-xs text-muted sm:max-w-xs">{t('cooperationPage.checklist.hint')}</p>
@@ -144,7 +144,7 @@ const Timeline = () => {
           eyebrow={t('cooperationPage.timeline.eyebrow')}
           title={t('cooperationPage.timeline.title')}
           subtitle={t('cooperationPage.timeline.subtitle')}
-          action={<span className="badge bg-warning/15 px-3 py-1.5 text-warning">{t('cooperationPage.timeline.indicative')}</span>}
+          action={<span className="badge bg-warning-bg px-3 py-1.5 text-warning-fg">{t('cooperationPage.timeline.indicative')}</span>}
         />
         <div ref={ref} className="grid gap-5 lg:grid-cols-[1.2fr_1fr] lg:gap-8">
           <Reveal>
@@ -314,7 +314,7 @@ export default function Cooperation() {
                     <Phone className="size-4" /> {t('cooperationPage.cta.call')}
                   </a>
                   {wa && (
-                    <a href={wa} target="_blank" rel="noopener noreferrer" className="btn bg-[#25d366] px-6 py-3.5 text-white hover:brightness-105">
+                    <a href={wa} target="_blank" rel="noopener noreferrer" className="btn bg-[#25d366] px-6 py-3.5 font-bold text-[#052e16] hover:brightness-105">
                       <MessageCircle className="size-4" /> {t('cooperationPage.cta.whatsapp')}
                     </a>
                   )}

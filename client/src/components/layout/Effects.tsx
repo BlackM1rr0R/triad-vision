@@ -94,15 +94,20 @@ export const ScrollProgress = () => {
   const scaleX = useSpring(scrollYProgress, { stiffness: 120, damping: 25 });
   return (
     <motion.div
+      aria-hidden
       className="fixed inset-x-0 top-0 z-[70] h-[3px] origin-left bg-gradient-to-r from-az-blue via-brand-500 to-de-gold"
       style={{ scaleX }}
     />
   );
 };
 
-/** Intro animation shown once per browser session. */
+/**
+ * Intro animation shown once per browser session. Skipped for visitors who asked for less motion (OS
+ * setting or "stop animations" in the accessibility panel): it is pure motion and only delays the page.
+ */
 export const Preloader = () => {
   const [show, setShow] = useState(() => {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches || document.documentElement.classList.contains('a11y-nomotion')) return false;
     try {
       return !sessionStorage.getItem('tv_intro');
     } catch {
@@ -126,6 +131,7 @@ export const Preloader = () => {
     <AnimatePresence>
       {show && (
         <motion.div
+          aria-hidden
           className="fixed inset-0 z-[200] grid place-items-center bg-navy-950"
           exit={{ clipPath: 'inset(0 0 100% 0)' }}
           transition={{ duration: 0.9, ease: [0.76, 0, 0.24, 1] }}

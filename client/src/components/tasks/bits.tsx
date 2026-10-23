@@ -87,9 +87,10 @@ export const DueChip = ({ dueAt, status, className }: { dueAt: string | null; st
 };
 
 export const ProgressBar = ({ done, total, className }: { done: number; total: number; className?: string }) => {
+  const { t } = useTranslation();
   const pct = total ? Math.round((done / total) * 100) : 0;
   return (
-    <span className={clsx('block h-1.5 overflow-hidden rounded-full bg-slate-100', className)} role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100}>
+    <span className={clsx('block h-1.5 overflow-hidden rounded-full bg-slate-100', className)} role="progressbar" aria-label={t('ui.progress')} aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100}>
       <span className={clsx('block h-full rounded-full transition-[width] duration-300', pct === 100 ? 'bg-success' : 'bg-brand-500')} style={{ width: `${pct}%` }} />
     </span>
   );

@@ -6,7 +6,8 @@ import { ChevronRight, LifeBuoy, Search } from 'lucide-react';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { HelpGuide } from '@/components/admin/help/HelpGuide';
 import { HELP_GROUPS, HELP_KEYS, type HelpKey } from '@/components/admin/help/helpKeys';
-import { registerHelpCopy } from '@/components/admin/help/registerHelp';
+import { registerHelpCopy, useHelpGuides } from '@/components/admin/help/registerHelp';
+import { PageLoader } from '@/components/ui/Spinner';
 
 registerHelpCopy();
 
@@ -16,6 +17,7 @@ export default function AdminHelp() {
   usePageTitle(t('adminHelpUi.centerTitle'));
   const [params, setParams] = useSearchParams();
   const [q, setQ] = useState('');
+  const ready = useHelpGuides();
   const selected = (HELP_KEYS as readonly string[]).includes(params.get('g') ?? '') ? (params.get('g') as HelpKey) : 'general';
 
   /** Search matches the title, summary, steps and tips in the current language. */
@@ -30,8 +32,9 @@ export default function AdminHelp() {
   const needle = q.trim().toLowerCase();
   const groups = useMemo(
     () => HELP_GROUPS.map((g) => ({ ...g, keys: needle ? g.keys.filter((k) => haystack(k).includes(needle)) : g.keys })).filter((g) => g.keys.length),
-    [needle, t], // eslint-disable-line react-hooks/exhaustive-deps
+    [needle, t, ready], // eslint-disable-line react-hooks/exhaustive-deps
   );
+  if (!ready) return <PageLoader />;
 
   return (
     <div className="mx-auto max-w-6xl">

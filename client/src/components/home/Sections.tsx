@@ -28,6 +28,10 @@ import { Magnetic, Marquee, Reveal, Stagger, StaggerItem, TiltCard } from '../mo
 import { SectionHeading } from '../ui/SectionHeading';
 import { DetailModal } from '../ui/DetailModal';
 import { FaqList, PartnerLogo, PostCard, ServiceCard, TestimonialCard, VisaCard, VisaSticker } from '../cards';
+import { sized, srcSet } from '@/lib/img';
+
+const ELIGIBILITY_IMG = 'https://images.unsplash.com/photo-1576765608535-5f04d1e3f289?auto=format&fit=crop&w=1200&q=70';
+const CTA_IMG = 'https://images.unsplash.com/photo-1521791136064-7986c2920216?auto=format&fit=crop&w=1600&q=70';
 import { useSiteContent } from '@/lib/content';
 
 const ViewAll = ({ to, label }: { to: string; label: string }) => (
@@ -118,7 +122,7 @@ export const AudienceSection = () => {
               <Reveal key={c.key} delay={i * 0.12}>
                 <TiltCard max={4} className="h-full rounded-3xl">
                   <div className="group relative isolate flex h-full min-h-[420px] flex-col justify-end overflow-hidden rounded-3xl bg-navy-950 p-6 text-white sm:min-h-[460px] sm:p-10">
-                    <img src={c.img} alt="" loading="lazy" className="absolute inset-0 -z-10 size-full object-cover opacity-40 transition duration-[1.5s] group-hover:scale-110 group-hover:opacity-30" />
+                    <img src={sized(c.img, 800)} srcSet={srcSet(c.img, [480, 800, 1200])} sizes="(min-width: 1024px) 50vw, 100vw" alt="" loading="lazy" decoding="async" className="absolute inset-0 -z-10 size-full object-cover opacity-40 transition duration-[1.5s] group-hover:scale-110 group-hover:opacity-30" />
                     <div className="absolute inset-0 -z-10 bg-gradient-to-t from-navy-950 via-navy-950/85 to-navy-900/20" />
                     <span className="mb-4 grid size-12 place-items-center rounded-2xl bg-brand-600 shadow-lg shadow-brand-600/40 sm:mb-5 sm:size-14">
                       <c.icon className="size-6 sm:size-7" />
@@ -183,7 +187,8 @@ export const ProcessSection = () => {
                   data-step
                   initial="off"
                   whileInView="on"
-                  viewport={{ amount: 0.6, margin: '0px 0px -10% 0px' }}
+                  // once: a step that has been read stays lit (dimmed 30 % text scrolling back into view failed contrast)
+                  viewport={{ once: true, amount: 0.6, margin: '0px 0px -10% 0px' }}
                   variants={{ off: { opacity: 0.3, y: 24 }, on: { opacity: 1, y: 0, transition: { duration: 0.6, delay: i * 0.05 } } }}
                 >
                   <button
@@ -277,7 +282,8 @@ export const WhySection = () => {
                       <span className="grid size-12 place-items-center rounded-xl bg-brand-50 text-brand-700 transition group-hover:bg-white/15 group-hover:text-white">
                         <WhyIcon className="size-6" />
                       </span>
-                      <span className="font-display text-4xl leading-none font-black text-navy-900/5 transition group-hover:text-white/15">0{i + 1}</span>
+                      {/* Decorative watermark: CSS generated content, so it is neither read out nor judged as text. */}
+                      <span aria-hidden data-n={`0${i + 1}`} className="font-display text-4xl leading-none font-black text-navy-900/5 transition group-hover:text-white/15 before:content-[attr(data-n)]" />
                     </div>
                     <h3 className="mt-5 font-display text-lg font-bold text-navy-900 transition group-hover:text-white">{it.title}</h3>
                     <p className="mt-2 text-sm leading-relaxed text-muted transition group-hover:text-white/80">{it.text}</p>
@@ -321,7 +327,7 @@ export const SamplesSection = () => {
       <div className="container-x grid gap-10 xl:grid-cols-[1fr_360px] xl:gap-12">
         <div className="min-w-0">
           <SectionHeading eyebrow={t('samples.eyebrow')} title={t('samples.title')} subtitle={`${t('samples.subtitle')} ${t('samples.privacy')}`} />
-          <div ref={track} className="-mx-4 flex snap-x snap-mandatory gap-5 overflow-x-auto scroll-smooth px-4 pb-4 [scrollbar-width:none] sm:mx-0 sm:px-0 [&::-webkit-scrollbar]:hidden">
+          <div ref={track} role="region" aria-label={t('samples.title')} tabIndex={0} className="-mx-4 flex snap-x snap-mandatory gap-5 overflow-x-auto scroll-smooth px-4 pb-4 [scrollbar-width:none] sm:mx-0 sm:px-0 [&::-webkit-scrollbar]:hidden">
             {data?.samples.map((s, i) => (
               <motion.div key={s.id} className="snap-start" initial={{ opacity: 0, x: 40 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.06, duration: 0.6 }}>
                 <VisaSticker sample={s} />
@@ -333,7 +339,7 @@ export const SamplesSection = () => {
               <button
                 key={d}
                 type="button"
-                aria-label={d < 0 ? 'Prev' : 'Next'}
+                aria-label={d < 0 ? t('a11y.prev') : t('a11y.next')}
                 onClick={() => scroll(d)}
                 className="grid size-11 place-items-center rounded-full border border-line bg-white text-navy-900 transition hover:border-brand-500 hover:bg-brand-600 hover:text-white"
               >
@@ -384,9 +390,12 @@ export const AusbildungSection = () => {
           <div className="relative min-h-[240px] overflow-hidden sm:min-h-[300px]">
             <motion.img
               style={{ y }}
-              src="https://images.unsplash.com/photo-1576765608535-5f04d1e3f289?auto=format&fit=crop&w=1200&q=70"
+              src={sized(ELIGIBILITY_IMG, 960)}
+              srcSet={srcSet(ELIGIBILITY_IMG, [640, 960, 1280])}
+              sizes="(min-width: 1024px) 50vw, 100vw"
               alt=""
               loading="lazy"
+              decoding="async"
               className="absolute inset-0 h-[130%] w-full object-cover"
             />
             <div className="absolute inset-0 bg-gradient-to-b from-brand-700/60 to-transparent lg:bg-gradient-to-r lg:from-brand-600/90" />
@@ -470,9 +479,12 @@ export const CtaSection = () => {
         <Reveal>
           <div className="relative isolate overflow-hidden rounded-3xl bg-navy-950 px-6 py-10 text-white sm:px-12 sm:py-14 lg:flex lg:items-center lg:justify-between lg:gap-10 lg:rounded-[2rem]">
             <img
-              src="https://images.unsplash.com/photo-1521791136064-7986c2920216?auto=format&fit=crop&w=1600&q=70"
+              src={sized(CTA_IMG, 1280)}
+              srcSet={srcSet(CTA_IMG, [640, 960, 1280, 1600])}
+              sizes="(min-width: 1280px) 1200px, 100vw"
               alt=""
               loading="lazy"
+              decoding="async"
               className="absolute inset-0 -z-10 size-full object-cover opacity-25"
             />
             <div className="absolute inset-0 -z-10 bg-gradient-to-r from-navy-950 via-navy-950/90 to-brand-700/60" />

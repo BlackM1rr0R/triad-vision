@@ -1,6 +1,5 @@
+import { useEffect, useState } from 'react';
 import { registerCopy } from '@/i18n';
-import { adminHelpPart1 } from '@/i18n/adminHelp/part1';
-import { adminHelpPart2 } from '@/i18n/adminHelp/part2';
 
 const ui = {
   az: {
@@ -70,11 +69,42 @@ const ui = {
 };
 
 let done = false;
-/** Registers the help UI texts and all guide bundles once. */
+/** Registers the help UI texts (button, drawer, help centre chrome) once. */
 export const registerHelpCopy = () => {
   if (done) return;
   done = true;
   registerCopy(ui);
-  registerCopy(adminHelpPart1);
-  registerCopy(adminHelpPart2);
+};
+
+// The guides themselves (~300 kB in four languages) are their own chunk: fetched when a guide is first
+// shown (help drawer opened, help centre visited), not with every admin page.
+let guides: Promise<void> | null = null;
+let guidesReady = false;
+export const loadHelpGuides = () =>
+  (guides ??= Promise.all([import('@/i18n/adminHelp/part1'), import('@/i18n/adminHelp/part2')])
+    .then(([p1, p2]) => {
+      registerCopy(p1.adminHelpPart1);
+      registerCopy(p2.adminHelpPart2);
+      guidesReady = true;
+    })
+    .catch((err) => {
+      guides = null; // allow a retry (e.g. offline, or a new deployment replaced the chunk)
+      throw err;
+    }));
+
+/** True once the guide texts are registered; starts loading them when `load` is true. */
+export const useHelpGuides = (load = true) => {
+  const [ready, setReady] = useState(guidesReady);
+  useEffect(() => {
+    if (!load || ready) return;
+    let alive = true;
+    loadHelpGuides().then(
+      () => alive && setReady(true),
+      () => undefined,
+    );
+    return () => {
+      alive = false;
+    };
+  }, [load, ready]);
+  return ready;
 };

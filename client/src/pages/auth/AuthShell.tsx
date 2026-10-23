@@ -4,6 +4,9 @@ import { motion } from 'framer-motion';
 import { Bell, Camera, Lock, MessageCircle, PenLine, Phone, ShieldCheck } from 'lucide-react';
 import { RouteFlags } from '@/components/ui/Flag';
 import { useSiteContent } from '@/lib/content';
+import { sized, srcSet } from '@/lib/img';
+
+const ASIDE_IMG = 'https://images.unsplash.com/photo-1587330979470-3595ac045ab0?auto=format&fit=crop&w=1200&q=65';
 
 const ASIDE_ICONS = [Camera, PenLine, Bell, ShieldCheck];
 
@@ -58,9 +61,12 @@ export const AuthShell = ({ title, subtitle, children }: { title: string; subtit
           className="relative isolate hidden overflow-hidden rounded-[2rem] bg-navy-950 p-10 text-white lg:flex lg:flex-col lg:justify-end xl:p-12"
         >
           <img
-            src="https://images.unsplash.com/photo-1587330979470-3595ac045ab0?auto=format&fit=crop&w=1200&q=65"
+            src={sized(ASIDE_IMG, 1200)}
+            srcSet={srcSet(ASIDE_IMG, [800, 1200, 1600])}
+            sizes="(min-width: 1024px) 50vw, 0px"
             alt=""
             decoding="async"
+            loading="lazy"
             className="absolute inset-0 -z-10 size-full object-cover opacity-35"
           />
           <div className="absolute inset-0 -z-10 bg-gradient-to-t from-navy-950 via-navy-950/70 to-brand-700/30" />

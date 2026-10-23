@@ -1,0 +1,23 @@
+/*
+ * Mobile bottom navigation (components/nav/BottomNav.tsx). While a fixed bar is shown, <html> gets
+ * .has-bottom-nav: the page gets bottom padding so nothing hides behind the bar, and floating buttons
+ * marked [data-bnav-lift] (WhatsApp / a11y / AI launcher / cookie notice) move above it.
+ * Plain (unlayered) CSS, so it wins over the Tailwind utilities it adjusts.
+ */
+:root {
+  --bnav-h: 4rem;
+}
+
+@media (max-width: 767.98px) {
+  html.has-bottom-nav body {
+    padding-bottom: calc(var(--bnav-h) + env(safe-area-inset-bottom));
+  }
+
+  html.has-bottom-nav [data-bnav-lift] {
+    bottom: calc(var(--bnav-h) + env(safe-area-inset-bottom) + 0.75rem);
+  }
+
+  html.has-bottom-nav.bnav-hidden [data-bnav-lift] {
+    bottom: 1rem;
+  }
+}

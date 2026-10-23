@@ -158,8 +158,13 @@ export const usePackageOpen = (caseId: string) =>
     () => openFor === caseId,
   );
 
-/** Scroll to a section of the case page (ids set in CaseAdmin). */
+/** Event the tabbed admin case page listens to: it switches to the tab holding the section, then scrolls (cancelable). */
+export const CASE_SECTION_EVENT = 'tv:case-section';
+
+/** Scroll to a section of the case page (ids set in CaseAdmin / components/admin/case). */
 export const scrollToSection = (id: string) => {
+  // Handled by the case page (the section may live in another tab).
+  if (!window.dispatchEvent(new CustomEvent(CASE_SECTION_EVENT, { detail: id, cancelable: true }))) return;
   const el = document.getElementById(id);
   if (!el) return;
   el.scrollIntoView({ behavior: 'smooth', block: 'start' });

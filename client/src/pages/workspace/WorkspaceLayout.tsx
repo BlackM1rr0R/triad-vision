@@ -20,6 +20,9 @@ import { pagesCalls } from '@/i18n/pagesCalls';
 import { Headset } from 'lucide-react'; // live chats
 import { LiveChatAlerts, useLiveChatWaiting } from '@/components/livechat/LiveChatAlerts'; // AI → human chat queue: badge, sound + toast
 import { HeaderTimer } from '@/components/timeCare/HeaderTimer'; // running staff timer
+import { BottomNavWorkspace } from '@/components/nav/BottomNavWorkspace'; // phones: tab bar
+import { STAFF_TOUR, TourHost, TourRestartButton } from '@/components/onboarding'; // first-login tour
+import { CommandPaletteButton, CommandPaletteHotkey } from '@/components/command'; // Ctrl+K
 
 registerCopy(workspaceCopy);
 registerCopy(pagesCalls);
@@ -113,10 +116,12 @@ export default function WorkspaceLayout() {
         <LogoMark className="h-7 w-8 shrink-0 text-ink" />
         {wide && <span className="truncate font-display text-sm font-extrabold tracking-[0.08em] text-ink">{t('workspace.title')}</span>}
       </Link>
+      <CommandPaletteButton variant="rail" compact={!wide} className="mb-2" />
       {nav.map((item) => (
         <NavLink
           key={item.to}
           to={item.to}
+          data-tour={`ws-nav-${item.to.split('/').pop()}`}
           title={wide ? undefined : item.label}
           className={({ isActive }) =>
             clsx(
@@ -155,6 +160,12 @@ export default function WorkspaceLayout() {
             <HeaderTimer />
           </div>
         )}
+        <TourRestartButton
+          tourId={STAFF_TOUR}
+          tour="ws-help"
+          compact={!wide}
+          className={clsx('rounded-xl px-3 py-2.5 text-sm text-muted hover:bg-brand-50 hover:text-ink', !wide && 'justify-center')}
+        />
         <div className={clsx('flex items-center gap-2 px-1 py-1', wide ? 'justify-between' : 'flex-col')}>
           {/* Opens upward here (bottom of the sidebar); flag only in the collapsed rail. */}
           <LanguageSwitcher variant="pill" compact={!wide} />
@@ -179,7 +190,7 @@ export default function WorkspaceLayout() {
   return (
     <div className="flex h-dvh overflow-hidden bg-surface text-ink">
       {/* Desktop rail */}
-      <aside className={clsx('relative hidden shrink-0 border-r border-line bg-card transition-[width] duration-200 lg:block', collapsed ? 'w-[4.5rem]' : 'w-60')}>
+      <aside className={clsx('relative hidden shrink-0 border-r border-line bg-card transition-[width] duration-200 lg:block', collapsed ? 'w-[4.5rem]' : 'w-60')} data-tour="ws-rail">
         {rail(!collapsed)}
         <button
           type="button"
@@ -207,13 +218,15 @@ export default function WorkspaceLayout() {
       <div className="flex min-w-0 flex-1 flex-col">
         {/* Mobile top bar */}
         <div className="flex items-center gap-3 border-b border-line bg-card px-4 py-2.5 lg:hidden">
-          <button type="button" onClick={() => setMobileOpen(true)} className="-ml-1 rounded-lg p-2 text-ink" aria-label={t('workspace.menu')}>
+          {/* Phones open the rail from the bottom bar ("Daha çox"). */}
+          <button type="button" onClick={() => setMobileOpen(true)} className="-ml-1 rounded-lg p-2 text-ink max-md:hidden" aria-label={t('workspace.menu')} data-tour="ws-menu">
             <Menu className="size-5" />
           </button>
           <LogoMark className="h-6 w-7 text-ink" />
           <span className="font-display text-sm font-extrabold tracking-[0.08em]">{t('workspace.title')}</span>
-          <div className="ml-auto">
+          <div className="ml-auto flex items-center gap-1">
             <HeaderTimer />
+            <TourRestartButton tourId={STAFF_TOUR} tour="ws-help-mobile" compact className="rounded-lg p-2 text-muted hover:text-ink" />
           </div>
         </div>
         <main className="min-h-0 flex-1">
@@ -230,6 +243,15 @@ export default function WorkspaceLayout() {
             </Suspense>
           </RouteErrorBoundary>
         </main>
+        <BottomNavWorkspace
+          tasks={summary.data?.open || undefined}
+          mail={mailSummary.data?.unread || undefined}
+          chat={chatSummary.data?.unread || undefined}
+          onMore={() => setMobileOpen(true)}
+          moreOpen={mobileOpen}
+        />
+        <TourHost autoStart={STAFF_TOUR} />
+        <CommandPaletteHotkey />
       </div>
     </div>
   );

@@ -38,7 +38,7 @@ const FloatingActions = () => {
   const wa = data?.settings.contact?.whatsapp.replace(/\D/g, '');
 
   return (
-    <div className="fixed right-4 bottom-4 z-40 flex flex-col items-end gap-3 sm:right-6 sm:bottom-6">
+    <div className="fixed right-4 bottom-4 z-40 flex flex-col items-end gap-3 sm:right-6 sm:bottom-6" data-bnav-lift>
       <AnimatePresence>
         {showTop && (
           <motion.button

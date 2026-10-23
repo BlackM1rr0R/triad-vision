@@ -1,232 +1,58 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, NavLink, Outlet, matchPath, useLocation, useNavigate } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
 import type { LucideIcon } from 'lucide-react';
-import {
-  AtSign,
-  Banknote,
-  BarChart3,
-  Bell,
-  BookOpen,
-  BookOpenText,
-  Briefcase,
-  BriefcaseBusiness,
-  Building2,
-  CalendarClock,
-  CheckCheck,
-  ChevronDown,
-  ChevronsLeft,
-  ChevronsRight,
-  ExternalLink,
-  Eye,
-  FileImage,
-  FileSignature,
-  FileText,
-  FolderKanban,
-  Handshake,
-  HelpCircle,
-  Inbox,
-  KanbanSquare,
-  Languages,
-  Layers,
-  LayoutDashboard,
-  LayoutGrid,
-  LifeBuoy,
-  ListChecks,
-  ListTodo,
-  LogOut,
-  Megaphone,
-  Menu,
-  MessageCircleQuestion,
-  MessageSquareQuote,
-  MessageSquareText,
-  Newspaper,
-  PlaneLanding,
-  Hourglass,
-  HardDrive,
-  Bug as ProblemIcon,
-  Vault,
-  Plug,
-  Receipt,
-  Route,
-  Settings,
-  Sheet,
-  ShieldCheck,
-  ShieldHalf,
-  Smile,
-  Sparkles,
-  Star,
-  TrendingUp,
-  UserSearch,
-  Users,
-  UsersRound,
-  Video,
-  Wallet,
-  X,
-} from 'lucide-react';
+import { Bell, BookOpen, CheckCheck, ChevronDown, ChevronsLeft, ChevronsRight, ExternalLink, LogOut, Menu, Star, X } from 'lucide-react';
 import { Logo, LogoMark } from '@/components/ui/Logo';
+import { Tooltip } from '@/components/ui/Tooltip';
 import { LanguageSwitcher } from '@/components/layout/LanguageSwitcher';
 import { ThemeToggle } from '@/components/a11y/ThemeToggle';
 import { AccessibilityWidget } from '@/components/a11y/AccessibilityWidget';
 import { api } from '@/lib/api';
 import { useRealtimeNotifications } from '@/lib/realtime';
 import { useAuth } from '@/lib/auth';
-import { hasMinRole, type Notification } from '@/lib/types';
+import type { Notification, Role } from '@/lib/types';
 import { registerCopy } from '@/i18n';
 import { adminCopy } from '@/i18n/admin';
 import { roleLabel, fmtRelative } from '@/components/admin/labels';
 import { HelpButton } from '@/components/admin/help/HelpButton';
-import { FileBarChart2, ShieldAlert } from 'lucide-react'; // weekly reports, security alerts
-import { Copy as DuplicatesIcon } from 'lucide-react'; // duplicate clients
-import { History as HistoryIcon } from 'lucide-react'; // field-level change history
-import { ListChecks as TodayIcon } from 'lucide-react';
 import { TodayNavBadge } from '@/components/today/TodayNavBadge'; // urgent count of "my work today"
-import { Workflow } from 'lucide-react'; // automation rules + assignment
-import { PhoneCall } from 'lucide-react'; // calls + callback requests
 import { pagesCalls } from '@/i18n/pagesCalls';
 import { LiveChatAlerts } from '@/components/livechat/LiveChatAlerts'; // live chat queue sound + toast, incoming calls
-import { CalendarHeart, Wand2 } from 'lucide-react'; // info sessions (Tədbirlər), site tools (calculator, map, referrals)
-import { HeartHandshake, Timer as TimerIcon } from 'lucide-react'; // post-arrival check-ins, time tracking
 import { HeaderTimer } from '@/components/timeCare/HeaderTimer'; // running staff timer (registers its copy)
+import { CommandPaletteButton, CommandPaletteHotkey } from '@/components/command/CommandPaletteHost'; // Ctrl+K staff palette
+import { NAV_GROUPS, STAFF_NAV, activeNavItem, canSee, hrefFor, type NavGroupKey, type StaffNavItem } from '@/components/command/navRegistry';
+import { isStringArray, navGroupsKey, navPinsKey, readJson, writeJson } from '@/components/command/storage';
 
 registerCopy(adminCopy);
 registerCopy(pagesCalls);
 
-interface NavItem {
-  to: string;
-  /** Key under admin.nav. */
-  label: string;
-  icon: LucideIcon;
-  end?: boolean;
-  adminOnly?: boolean;
-  /** Shown only to the super admin. */
-  superOnly?: boolean;
-}
-
-const MAIN_NAV: NavItem[] = [
-  { to: '/admin/today', label: 'today', icon: TodayIcon },
-  { to: '/admin', label: 'dashboard', icon: LayoutDashboard, end: true },
-  { to: '/admin/oversight', label: 'oversight', icon: Eye, superOnly: true },
-  { to: '/admin/ai', label: 'ai', icon: Sparkles, superOnly: true },
-  { to: '/admin/weekly-reports', label: 'weeklyReports', icon: FileBarChart2, superOnly: true },
-  { to: '/admin/security-alerts', label: 'securityAlerts', icon: ShieldAlert, superOnly: true },
-  { to: '/admin/sensitive-access', label: 'sensitiveAccess', icon: ShieldHalf, superOnly: true },
-  { to: '/admin/cases', label: 'cases', icon: FolderKanban },
-  { to: '/admin/register', label: 'register', icon: Sheet },
-  { to: '/admin/settlements', label: 'settlements', icon: Banknote },
-  { to: '/admin/partners', label: 'referralPartners', icon: Handshake },
-  { to: '/admin/signatures', label: 'signatures', icon: FileSignature },
-  { to: '/workspace/home', label: 'workspace', icon: LayoutGrid },
-  { to: '/admin/tasks', label: 'tasks', icon: ListTodo },
-  { to: '/admin/client-tasks', label: 'clientTasks', icon: ListTodo },
-  { to: '/admin/announcements', label: 'announcements', icon: Megaphone },
-  { to: '/admin/inquiries', label: 'inquiries', icon: Inbox },
-  { to: '/admin/calls', label: 'calls', icon: PhoneCall },
-  { to: '/admin/users', label: 'users', icon: Users },
-  { to: '/admin/duplicates', label: 'duplicates', icon: DuplicatesIcon, adminOnly: true },
-  { to: '/admin/history', label: 'history', icon: HistoryIcon, adminOnly: true },
-  { to: '/admin/mailboxes', label: 'mailboxes', icon: AtSign, adminOnly: true },
-  { to: '/admin/candidates', label: 'candidates', icon: UserSearch },
-  { to: '/admin/vacancies', label: 'vacancies', icon: BriefcaseBusiness },
-  { to: '/admin/companies', label: 'companies', icon: Building2 },
-  { to: '/admin/bookings', label: 'bookings', icon: CalendarClock },
-  { to: '/admin/invoices', label: 'invoices', icon: Receipt, adminOnly: true },
-  { to: '/admin/quotes', label: 'quotes', icon: FileSignature, adminOnly: true },
-  { to: '/admin/reviews', label: 'reviews', icon: Star },
-  { to: '/admin/analytics', label: 'analytics', icon: BarChart3 },
-  { to: '/admin/security', label: 'security', icon: ShieldCheck },
-  { to: '/admin/kanban', label: 'kanban', icon: KanbanSquare },
-  { to: '/admin/messaging', label: 'messaging', icon: MessageSquareText },
-  { to: '/admin/interviews', label: 'interviews', icon: Video },
-  { to: '/admin/journey', label: 'journey', icon: Route },
-  { to: '/admin/exam-dates', label: 'examDates', icon: CalendarClock },
-  { to: '/admin/requirements', label: 'requirements', icon: ListChecks },
-  { to: '/admin/case-forms', label: 'caseForms', icon: ListChecks },
-  { to: '/admin/doc-guides', label: 'docGuides', icon: BookOpen },
-  { to: '/admin/expiring', label: 'expiring', icon: Hourglass },
-  { to: '/admin/originals', label: 'originals', icon: Vault },
-  { to: '/admin/storage', label: 'storage', icon: HardDrive, adminOnly: true },
-  { to: '/admin/problems', label: 'problemReports', icon: ProblemIcon, adminOnly: true },
-  { to: '/admin/kb', label: 'kb', icon: BookOpenText },
-  { to: '/admin/agents', label: 'agents', icon: Handshake, adminOnly: true },
-  { to: '/admin/translations', label: 'translations', icon: Languages },
-  { to: '/admin/arrivals', label: 'arrivals', icon: PlaneLanding },
-  { to: '/admin/candidate-requests', label: 'candidateRequests', icon: UsersRound },
-  { to: '/admin/contract-templates', label: 'contractTemplates', icon: FileText, adminOnly: true },
-  { to: '/admin/interview-prep', label: 'interviewPrep', icon: MessageCircleQuestion },
-  { to: '/admin/surveys', label: 'surveys', icon: Smile },
-  { to: '/admin/time', label: 'timeTracking', icon: TimerIcon },
-  { to: '/admin/check-ins', label: 'checkIns', icon: HeartHandshake },
-  { to: '/admin/campaigns', label: 'campaigns', icon: Megaphone, adminOnly: true },
-  { to: '/admin/events', label: 'events', icon: CalendarHeart },
-  { to: '/admin/site-tools', label: 'siteTools', icon: Wand2 },
-  { to: '/admin/finance', label: 'finance', icon: Wallet, adminOnly: true },
-  { to: '/admin/reports', label: 'reports', icon: FileBarChart2, adminOnly: true },
-  { to: '/admin/profitability', label: 'profitability', icon: TrendingUp, adminOnly: true },
-  { to: '/admin/privacy-requests', label: 'privacyRequests', icon: ShieldHalf, adminOnly: true },
-  { to: '/admin/integrations', label: 'integrations', icon: Plug, adminOnly: true },
-  { to: '/admin/automation', label: 'automation', icon: Workflow, adminOnly: true },
-  { to: '/admin/help', label: 'help', icon: LifeBuoy },
-];
-
-const CONTENT_NAV: (NavItem & { resource: string })[] = [
-  { resource: 'services', to: '/admin/content/services', label: 'services', icon: Layers },
-  { resource: 'visa-categories', to: '/admin/content/visa-categories', label: 'visaCategories', icon: Briefcase },
-  { resource: 'partners', to: '/admin/content/partners', label: 'partners', icon: Handshake },
-  { resource: 'visa-samples', to: '/admin/content/visa-samples', label: 'visaSamples', icon: FileImage },
-  { resource: 'testimonials', to: '/admin/content/testimonials', label: 'testimonials', icon: MessageSquareQuote },
-  { resource: 'stats', to: '/admin/content/stats', label: 'stats', icon: TrendingUp },
-  { resource: 'faqs', to: '/admin/content/faqs', label: 'faqs', icon: HelpCircle },
-  { resource: 'posts', to: '/admin/content/posts', label: 'posts', icon: Newspaper },
-];
-
-const SETTINGS_NAV: NavItem = { to: '/admin/settings', label: 'settings', icon: Settings, adminOnly: true };
+/**
+ * Sidebar entries come from components/command/navRegistry.ts (shared with the Ctrl+K palette): eight
+ * collapsible groups, plus "Sevimlilər" (pinned favourites) on top. Role rules (adminOnly / superOnly)
+ * live there too and match the route guards in App.tsx.
+ */
+const ADMIN_NAV = STAFF_NAV.filter((i) => i.area === 'admin' || i.id === 'workspace');
+const SIDEBAR_NAV = ADMIN_NAV.filter((i) => i.group);
+type GroupKey = NavGroupKey | 'favourites';
+const DEFAULT_OPEN: GroupKey[] = ['favourites', 'today', 'work'];
+const PREFS_EVENT = 'tv:admin-nav-prefs';
 
 /** Translation key of the page title for a pathname. */
 const pageTitleKey = (pathname: string) => {
   if (matchPath('/admin', pathname)) return 'admin.nav.dashboard';
   if (matchPath('/admin/dashboard', pathname)) return 'admin.nav.dashboard';
-  if (matchPath('/admin/today', pathname)) return 'admin.nav.today';
-  if (matchPath('/admin/oversight', pathname)) return 'admin.nav.oversight';
-  if (matchPath('/admin/ai/*', pathname)) return 'admin.nav.ai';
-  if (matchPath('/admin/weekly-reports', pathname)) return 'admin.nav.weeklyReports';
-  if (matchPath('/admin/security-alerts', pathname)) return 'admin.nav.securityAlerts';
-  if (matchPath('/admin/sensitive-access', pathname)) return 'admin.nav.sensitiveAccess';
   if (matchPath('/admin/oversight/staff/:id', pathname)) return 'admin.layout.staff';
-  if (matchPath('/admin/cases', pathname)) return 'admin.nav.cases';
   if (matchPath('/admin/cases/:id', pathname)) return 'admin.layout.case';
   if (matchPath('/admin/docs', pathname)) return 'admin.nav.docs';
   if (matchPath('/admin/docs/audit', pathname)) return 'admin.layout.audit';
-  if (matchPath('/admin/inquiries', pathname)) return 'admin.nav.inquiries';
-  if (matchPath('/admin/calls', pathname)) return 'admin.nav.calls';
-  if (matchPath('/admin/users', pathname)) return 'admin.nav.users';
-  if (matchPath('/admin/duplicates', pathname)) return 'admin.nav.duplicates';
-  if (matchPath('/admin/history', pathname)) return 'admin.nav.history';
-  if (matchPath('/admin/signatures/*', pathname)) return 'admin.nav.signatures';
-  if (matchPath('/admin/mailboxes', pathname)) return 'admin.nav.mailboxes';
-  if (matchPath('/admin/settings', pathname)) return 'admin.nav.settings';
-  if (matchPath('/admin/help', pathname)) return 'admin.nav.help';
-  if (matchPath('/admin/tasks/*', pathname)) return 'admin.nav.tasks';
-  if (matchPath('/admin/announcements', pathname)) return 'admin.nav.announcements';
-  if (matchPath('/admin/campaigns/*', pathname)) return 'admin.nav.campaigns';
-  if (matchPath('/admin/events', pathname)) return 'admin.nav.events';
-  if (matchPath('/admin/site-tools', pathname)) return 'admin.nav.siteTools';
-  if (matchPath('/admin/arrivals/*', pathname)) return 'admin.nav.arrivals';
-  if (matchPath('/admin/originals', pathname)) return 'admin.nav.originals';
-  if (matchPath('/admin/storage', pathname)) return 'admin.nav.storage';
-  if (matchPath('/admin/reports', pathname)) return 'admin.nav.reports';
-  if (matchPath('/admin/profitability', pathname)) return 'admin.nav.profitability';
-  if (matchPath('/admin/case-forms', pathname)) return 'admin.nav.caseForms';
-  if (matchPath('/admin/doc-guides', pathname)) return 'admin.nav.docGuides';
   const m = matchPath('/admin/content/:resource', pathname);
-  if (m) {
-    const item = CONTENT_NAV.find((c) => c.resource === m.params.resource);
-    return item ? `admin.nav.${item.label}` : 'admin.nav.content';
-  }
-  return 'admin.layout.panel';
+  if (m) return STAFF_NAV.find((i) => i.to === `/admin/content/${m.params.resource}`)?.labelKey ?? 'admin.nav.content';
+  // Every other page: the sidebar / palette entry whose route contains it.
+  return activeNavItem(pathname, ADMIN_NAV)?.labelKey ?? 'admin.layout.panel';
 };
 
 const COLLAPSE_KEY = 'tv-admin-sidebar-collapsed';
@@ -240,19 +66,59 @@ const readCollapsed = () => {
 
 // ─── Sidebar ────────────────────────────────────────────────────────────
 
-const SideLink = ({ item, collapsed, onNavigate }: { item: NavItem; collapsed: boolean; onNavigate?: () => void }) => {
+/**
+ * Open groups and pinned favourites, per user in localStorage. The desktop sidebar and the mobile drawer
+ * are separate instances: a change in one is broadcast so the other follows.
+ */
+const useNavPrefs = (userId: string | undefined) => {
+  const read = useCallback(
+    () => ({
+      open: readJson<string[]>(navGroupsKey(userId), DEFAULT_OPEN, isStringArray),
+      pins: readJson<string[]>(navPinsKey(userId), [], isStringArray),
+    }),
+    [userId],
+  );
+  const [prefs, setPrefs] = useState(read);
+  useEffect(() => {
+    setPrefs(read());
+    const sync = () => setPrefs(read());
+    window.addEventListener(PREFS_EVENT, sync);
+    return () => window.removeEventListener(PREFS_EVENT, sync);
+  }, [read]);
+  const save = useCallback(
+    (next: { open: string[]; pins: string[] }) => {
+      writeJson(navGroupsKey(userId), next.open);
+      writeJson(navPinsKey(userId), next.pins);
+      setPrefs(next);
+      window.dispatchEvent(new Event(PREFS_EVENT));
+    },
+    [userId],
+  );
+  return { prefs, save };
+};
+
+type SideLinkProps = {
+  item: StaffNavItem;
+  role: Role | undefined;
+  collapsed: boolean;
+  pinned: boolean;
+  onTogglePin: (id: string) => void;
+  onNavigate?: () => void;
+};
+
+const SideLink = ({ item, role, collapsed, pinned, onTogglePin, onNavigate }: SideLinkProps) => {
   const { t } = useTranslation();
-  const label = t(`admin.nav.${item.label}`);
-  return (
+  const label = t(item.labelKey);
+  const link = (
     <NavLink
-      to={item.to}
+      to={hrefFor(item, role)}
       end={item.end}
       onClick={onNavigate}
-      title={collapsed ? label : undefined}
+      aria-label={collapsed ? label : undefined}
       className={({ isActive }) =>
         clsx(
-          'group relative flex min-h-10 items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition',
-          collapsed && 'justify-center px-0',
+          'group relative flex min-h-10 items-center gap-3 rounded-lg py-2 text-sm font-medium transition',
+          collapsed ? 'w-11 justify-center' : 'pr-9 pl-3',
           isActive ? 'bg-white/10 text-white' : 'text-white/60 hover:bg-white/5 hover:text-white',
         )
       }
@@ -262,63 +128,151 @@ const SideLink = ({ item, collapsed, onNavigate }: { item: NavItem; collapsed: b
           {isActive && <span className="absolute top-1.5 bottom-1.5 left-0 w-0.5 rounded-full bg-brand-400" aria-hidden />}
           <item.icon className={clsx('size-[18px] shrink-0', isActive ? 'text-brand-400' : 'text-white/50 group-hover:text-white/80')} aria-hidden />
           {!collapsed && <span className="truncate">{label}</span>}
-          {item.label === 'today' && <TodayNavBadge collapsed={collapsed} />}
+          {item.badge === 'today' && <TodayNavBadge collapsed={collapsed} />}
         </>
       )}
     </NavLink>
   );
+  if (collapsed) {
+    return (
+      <div className="pointer-events-auto flex w-11 justify-center">
+        <Tooltip content={label} side="right">
+          {link}
+        </Tooltip>
+      </div>
+    );
+  }
+  const pinLabel = pinned ? t('admin.layout.unpin') : t('admin.layout.pin');
+  return (
+    <div className="group/row relative">
+      {link}
+      <button
+        type="button"
+        onClick={() => onTogglePin(item.id)}
+        aria-pressed={pinned}
+        aria-label={`${pinLabel}: ${label}`}
+        title={pinLabel}
+        className={clsx(
+          'absolute top-1/2 right-1 grid size-8 -translate-y-1/2 place-items-center rounded-md opacity-0 transition group-hover/row:opacity-100 focus-visible:opacity-100 pointer-coarse:opacity-60',
+          pinned ? 'text-amber-300' : 'text-white/40 hover:text-white',
+        )}
+      >
+        <Star className={clsx('size-3.5', pinned && 'fill-current')} aria-hidden />
+      </button>
+    </div>
+  );
 };
 
-const SidebarNav = ({ collapsed, isAdmin, isSuper, onNavigate }: { collapsed: boolean; isAdmin: boolean; isSuper: boolean; onNavigate?: () => void }) => {
+type SidebarNavProps = { collapsed: boolean; role: Role | undefined; userId: string | undefined; idSuffix: string; onNavigate?: () => void };
+
+const SidebarNav = ({ collapsed, role, userId, idSuffix, onNavigate }: SidebarNavProps) => {
   const { t } = useTranslation();
   const location = useLocation();
-  const inContent = location.pathname.startsWith('/admin/content');
-  const [contentOpen, setContentOpen] = useState(true);
+  const { prefs, save } = useNavPrefs(userId);
+  const items = SIDEBAR_NAV.filter((i) => canSee(i, role));
+  const active = activeNavItem(location.pathname, items);
+  const pinned = prefs.pins.map((id) => items.find((i) => i.id === id)).filter((i): i is StaffNavItem => !!i);
+
+  const toggleGroup = (key: GroupKey) => save({ ...prefs, open: prefs.open.includes(key) ? prefs.open.filter((k) => k !== key) : [...prefs.open, key] });
+  const togglePin = (id: string) => save({ ...prefs, pins: prefs.pins.includes(id) ? prefs.pins.filter((p) => p !== id) : [...prefs.pins, id] });
+
+  // The group of the current page opens by itself (and stays open).
+  const activeGroup = active?.group;
+  useEffect(() => {
+    if (activeGroup && !prefs.open.includes(activeGroup)) save({ ...prefs, open: [...prefs.open, activeGroup] });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeGroup]);
+
+  const groups: { key: GroupKey; icon: LucideIcon; items: StaffNavItem[] }[] = [
+    ...(pinned.length ? [{ key: 'favourites' as const, icon: Star, items: pinned }] : []),
+    ...NAV_GROUPS.map((g) => ({ key: g.key, icon: g.icon, items: items.filter((i) => i.group === g.key) })).filter((g) => g.items.length > 0),
+  ];
 
   return (
-    <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4" aria-label={t('admin.layout.navAria')}>
-      {MAIN_NAV.filter((item) => (!item.superOnly || isSuper) && (!item.adminOnly || isAdmin)).map((item) => (!isAdmin && item.label === 'dashboard' ? { ...item, to: '/admin/dashboard' } : item)).map((item) => (
-        <SideLink key={item.to} item={item} collapsed={collapsed} onNavigate={onNavigate} />
-      ))}
-
-      {isAdmin && (
-        <div className="pt-4">
-          {collapsed ? (
-            <div className="mx-auto mb-2 h-px w-6 bg-white/10" aria-hidden />
-          ) : (
-            <button
-              type="button"
-              onClick={() => setContentOpen((v) => !v)}
-              aria-expanded={contentOpen}
-              className={clsx(
-                'flex min-h-8 w-full items-center justify-between rounded-md px-3 pb-1.5 text-[11px] font-bold tracking-[0.14em] uppercase transition',
-                inContent ? 'text-brand-400' : 'text-white/40 hover:text-white/70',
-              )}
-            >
-              {t('admin.nav.content')}
-              <ChevronDown className={clsx('size-3.5 transition-transform', !contentOpen && '-rotate-90')} aria-hidden />
-            </button>
-          )}
-          <AnimatePresence initial={false}>
-            {(contentOpen || collapsed) && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: 'auto', opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                transition={{ duration: 0.2 }}
-                className="space-y-1 overflow-hidden"
-              >
-                {CONTENT_NAV.map((item) => (
-                  <SideLink key={item.to} item={item} collapsed={collapsed} onNavigate={onNavigate} />
-                ))}
-              </motion.div>
-            )}
-          </AnimatePresence>
-          <div className="pt-4">
-            <SideLink item={SETTINGS_NAV} collapsed={collapsed} onNavigate={onNavigate} />
-          </div>
-        </div>
+    <nav
+      className={clsx(
+        'flex-1 overflow-y-auto py-3',
+        // Rail: the scroll box reaches 16rem past the rail (transparent and click-through) so the tooltips
+        // to the right of each icon are not clipped by it.
+        collapsed ? 'pointer-events-none -mr-64 pr-64 pl-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden' : 'px-3',
       )}
+      aria-label={t('admin.layout.navAria')}
+    >
+      {groups.map((g, gi) => {
+        const open = prefs.open.includes(g.key);
+        const name = g.key === 'favourites' ? t('admin.nav.favourites') : t(`admin.nav.groups.${g.key}`);
+        const listId = `admin-nav-${g.key}-${idSuffix}`;
+        const holdsActive = !!active && g.items.some((i) => i.id === active.id);
+        return (
+          <div key={g.key} className={clsx(gi > 0 && (collapsed ? 'mt-1.5 w-11 border-t border-white/10 pt-1.5' : 'mt-2'))}>
+            {collapsed ? (
+              <div className="pointer-events-auto flex w-11 justify-center">
+                <Tooltip content={name} side="right">
+                  <button
+                    type="button"
+                    onClick={() => toggleGroup(g.key)}
+                    aria-expanded={open}
+                    aria-controls={listId}
+                    aria-label={t('admin.layout.toggleGroup', { group: name })}
+                    className={clsx(
+                      'relative grid h-7 w-11 place-items-center rounded-md transition hover:bg-white/5',
+                      holdsActive && !open ? 'text-brand-400' : 'text-white/35 hover:text-white/70',
+                    )}
+                  >
+                    <g.icon className="size-3.5" aria-hidden />
+                    <ChevronDown className={clsx('absolute right-1 bottom-0.5 size-2.5 transition-transform', !open && '-rotate-90')} aria-hidden />
+                  </button>
+                </Tooltip>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => toggleGroup(g.key)}
+                aria-expanded={open}
+                aria-controls={listId}
+                className={clsx(
+                  'flex min-h-8 w-full items-center justify-between gap-2 rounded-md px-3 text-[11px] font-bold tracking-[0.14em] uppercase transition',
+                  holdsActive && !open ? 'text-brand-400' : 'text-white/60 hover:text-white/80',
+                )}
+              >
+                <span className="flex min-w-0 items-center gap-2">
+                  {g.key === 'favourites' && <Star className="size-3 fill-current text-amber-300" aria-hidden />}
+                  <span className="truncate">{name}</span>
+                </span>
+                <span className="flex items-center gap-1.5">
+                  {!open && <span className="text-[10px] font-semibold tracking-normal text-white/30 tabular-nums">{g.items.length}</span>}
+                  <ChevronDown className={clsx('size-3.5 transition-transform', !open && '-rotate-90')} aria-hidden />
+                </span>
+              </button>
+            )}
+            <AnimatePresence initial={false}>
+              {open && (
+                <motion.div
+                  id={listId}
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.18 }}
+                  // The rail must not clip the tooltips; the full sidebar clips while animating.
+                  className={clsx('space-y-0.5', collapsed ? 'pt-0.5' : 'overflow-hidden')}
+                >
+                  {g.items.map((item) => (
+                    <SideLink
+                      key={`${g.key}:${item.id}`}
+                      item={item}
+                      role={role}
+                      collapsed={collapsed}
+                      pinned={prefs.pins.includes(item.id)}
+                      onTogglePin={togglePin}
+                      onNavigate={onNavigate}
+                    />
+                  ))}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        );
+      })}
     </nav>
   );
 };
@@ -449,8 +403,6 @@ export default function AdminLayout() {
   const location = useLocation();
   const [collapsed, setCollapsed] = useState(readCollapsed);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const isAdmin = hasMinRole(user?.role, 'ADMIN');
-  const isSuper = hasMinRole(user?.role, 'SUPER_ADMIN');
   const title = t(pageTitleKey(location.pathname));
 
   useEffect(() => {
@@ -495,7 +447,8 @@ export default function AdminLayout() {
       {/* Desktop sidebar */}
       <aside
         className={clsx(
-          'sticky top-0 hidden h-screen shrink-0 flex-col bg-navy-950 transition-[width] duration-300 lg:flex',
+          // z-50: the rail's tooltips overlap the sticky page header (z-40).
+          'sticky top-0 z-50 hidden h-screen shrink-0 flex-col bg-navy-950 transition-[width] duration-300 lg:flex',
           collapsed ? 'w-[68px]' : 'w-64',
         )}
       >
@@ -508,7 +461,7 @@ export default function AdminLayout() {
             <Logo light className="origin-left scale-[0.82]" />
           )}
         </div>
-        <SidebarNav collapsed={collapsed} isAdmin={isAdmin} isSuper={isSuper} />
+        <SidebarNav collapsed={collapsed} role={user?.role} userId={user?.id} idSuffix={collapsed ? 'rail' : 'side'} />
         <button
           type="button"
           onClick={() => setCollapsed((v) => !v)}
@@ -556,7 +509,7 @@ export default function AdminLayout() {
                   <X className="size-5" />
                 </button>
               </div>
-              <SidebarNav collapsed={false} isAdmin={isAdmin} isSuper={isSuper} onNavigate={() => setMobileOpen(false)} />
+              <SidebarNav collapsed={false} role={user?.role} userId={user?.id} idSuffix="drawer" onNavigate={() => setMobileOpen(false)} />
               <div className="border-t border-white/10 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
                 <a
                   href="/"
@@ -582,6 +535,7 @@ export default function AdminLayout() {
           </button>
           <p className="min-w-0 flex-1 truncate pl-1 font-display text-base font-bold text-navy-900 sm:text-lg lg:pl-0">{title}</p>
 
+          <CommandPaletteButton className="lg:min-w-[15rem]" />
           <HelpButton />
           <LanguageSwitcher variant="pill" />
           <ThemeToggle />
@@ -624,6 +578,7 @@ export default function AdminLayout() {
           <BookOpen className="size-3" aria-hidden /> {t('admin.layout.footer')}
         </footer>
       </div>
+      <CommandPaletteHotkey />
       <AccessibilityWidget standalone panelClass="sm:bottom-[5.75rem] sm:max-h-[calc(100dvh-6.75rem)]" />
     </div>
   );

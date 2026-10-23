@@ -1,8 +1,7 @@
-import { useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AnimatePresence, motion } from 'framer-motion';
 import { CheckCircle2, Send } from 'lucide-react';
-import { toast } from 'sonner';
 import { api } from '@/lib/api';
 import { useL10n } from '@/lib/l10n';
 import { useSiteContent } from '@/lib/content';
@@ -15,6 +14,12 @@ export const InquiryForm = ({ kind }: { kind: 'company' | 'contact' }) => {
   const { data } = useSiteContent();
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const doneRef = useRef<HTMLDivElement>(null);
+  // The form is replaced by the confirmation: move focus there so keyboard / screen-reader users are not lost.
+  useEffect(() => {
+    if (sent) doneRef.current?.focus({ preventScroll: true });
+  }, [sent]);
 
   const submit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -24,11 +29,12 @@ export const InquiryForm = ({ kind }: { kind: 'company' | 'contact' }) => {
       if (typeof v === 'string' && v.trim() !== '') body[k] = v.trim();
     });
     setSending(true);
+    setError(null);
     try {
       await api.post('/public/inquiries', body);
       setSent(true);
     } catch {
-      toast.error(t('common.error'));
+      setError(t('common.error'));
     } finally {
       setSending(false);
     }
@@ -37,9 +43,9 @@ export const InquiryForm = ({ kind }: { kind: 'company' | 'contact' }) => {
   return (
     <AnimatePresence mode="wait">
       {sent ? (
-        <motion.div key="ok" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="flex flex-col items-center py-12 text-center">
+        <motion.div key="ok" ref={doneRef} tabIndex={-1} role="status" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="flex flex-col items-center py-12 text-center outline-none">
           <motion.span initial={{ scale: 0, rotate: -90 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: 'spring', delay: 0.1 }} className="grid size-20 place-items-center rounded-full bg-emerald-100 text-success">
-            <CheckCircle2 className="size-10" />
+            <CheckCircle2 className="size-10" aria-hidden />
           </motion.span>
           <p className="mt-6 max-w-sm text-lg font-semibold text-navy-900">{t('form.sent')}</p>
         </motion.div>
@@ -49,16 +55,16 @@ export const InquiryForm = ({ kind }: { kind: 'company' | 'contact' }) => {
           <input type="text" name="website" tabIndex={-1} autoComplete="off" className="hidden" aria-hidden />
           {kind === 'company' && (
             <div className="sm:col-span-2">
-              <label className="label" htmlFor="companyName">{t('form.company')} *</label>
+              <label className="label" htmlFor="companyName">{t('form.company')} <span aria-hidden>*</span></label>
               <input id="companyName" name="companyName" required maxLength={160} className="input" />
             </div>
           )}
           <div>
-            <label className="label" htmlFor="contactName">{t('form.name')} *</label>
+            <label className="label" htmlFor="contactName">{t('form.name')} <span aria-hidden>*</span></label>
             <input id="contactName" name="contactName" required minLength={2} maxLength={120} className="input" autoComplete="name" />
           </div>
           <div>
-            <label className="label" htmlFor="email">{t('form.email')} *</label>
+            <label className="label" htmlFor="email">{t('form.email')} <span aria-hidden>*</span></label>
             <input id="email" name="email" type="email" required className="input" autoComplete="email" />
           </div>
           <div>
@@ -87,16 +93,21 @@ export const InquiryForm = ({ kind }: { kind: 'company' | 'contact' }) => {
             <div />
           )}
           <div className="sm:col-span-2">
-            <label className="label" htmlFor="message">{t('form.message')} *</label>
+            <label className="label" htmlFor="message">{t('form.message')} <span aria-hidden>*</span></label>
             <textarea id="message" name="message" required minLength={5} maxLength={5000} rows={5} className="input resize-y" />
           </div>
           <label className="flex items-start gap-2.5 text-xs text-muted sm:col-span-2">
             <input type="checkbox" required className="mt-0.5 size-4 accent-brand-600" />
             {t('form.privacy')}
           </label>
+          {error && (
+            <p role="alert" className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800 sm:col-span-2">
+              {error}
+            </p>
+          )}
           <div className="sm:col-span-2">
             <button type="submit" disabled={sending} className="btn-primary w-full sm:w-auto">
-              {sending ? <Spinner className="size-4" /> : <Send className="size-4" />}
+              {sending ? <Spinner className="size-4" /> : <Send className="size-4" aria-hidden />}
               {sending ? t('form.sending') : t('form.send')}
             </button>
           </div>

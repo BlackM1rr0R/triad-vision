@@ -16,6 +16,7 @@ import { ALL_STATUSES, INQUIRY_STATUSES, eventLabel, fmtDateTime, fmtDays, fmtRe
 import type { DashboardResponse } from '@/components/admin/types';
 import { EmptyState, ErrorBlock, LoadingBlock, PageHead, Panel } from '@/components/admin/ui';
 import { BarList } from '@/components/admin/charts';
+import { Skeleton } from '@/components/ui/Skeleton';
 
 // Team tasks widget (own chunk, so the dashboard does not carry the task UI and its copy).
 const MyTasksWidget = lazy(() => import('@/components/tasks/MyTasksWidget').then((m) => ({ default: m.MyTasksWidget })));
@@ -72,6 +73,20 @@ const Kpi = ({
   );
 };
 
+/** Same footprint as TodayCard while its chunk loads, so the KPI grid below does not jump (CLS). */
+const TodayCardFallback = ({ rows }: { rows: number }) => (
+  <div className="min-w-0 rounded-2xl border border-line bg-card" aria-hidden>
+    <div className="h-[45px] border-b border-line" />
+    <div className="divide-y divide-line">
+      {Array.from({ length: rows }, (_, i) => (
+        <div key={i} className="flex h-[52px] items-center px-4 sm:px-5">
+          <Skeleton className="h-8 w-full" />
+        </div>
+      ))}
+    </div>
+  </div>
+);
+
 export default function Dashboard() {
   const { t } = useTranslation();
   const { user } = useAuth();
@@ -109,7 +124,7 @@ export default function Dashboard() {
         }
       />
 
-      <Suspense fallback={null}>
+      <Suspense fallback={<TodayCardFallback rows={4} />}>
         <TodayCard limit={4} />
       </Suspense>
 

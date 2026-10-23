@@ -43,7 +43,10 @@ window.addEventListener('vite:preloadError', (event) => {
 });
 
 const queryClient = new QueryClient({
-  defaultOptions: { queries: { retry: 1, refetchOnWindowFocus: false } },
+  // staleTime: data fetched in the last 20 s is reused when another widget or page mounts the same query
+  // (dashboards mount several widgets sharing queries; back/forward navigation re-mounts whole pages).
+  // Mutations still refresh at once through invalidateQueries; queries that need it set their own value.
+  defaultOptions: { queries: { retry: 1, refetchOnWindowFocus: false, staleTime: 20_000 } },
 });
 
 /** Motion and toast settings follow the accessibility preferences (src/lib/prefs.ts). */

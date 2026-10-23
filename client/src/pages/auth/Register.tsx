@@ -304,6 +304,8 @@ export default function Register() {
     return t(`registerPage.errors.${key}`);
   };
 
+  const focusField = (k: string) => window.requestAnimationFrame(() => document.getElementById(`${uid}-${k}`)?.focus());
+
   const submit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setSubmitted(true);
@@ -312,6 +314,8 @@ export default function Register() {
       if (failing.length === 1 && failing[0] === 'password') toast.error(t('auth.errors.PASSWORD_TOO_WEAK'));
       else if (!failing.length) toast.error(t('registerPage.errors.privacy'));
       else toast.error(t('auth.errors.VALIDATION'));
+      // Keyboard and screen-reader users land on the first field to fix (its message is linked via aria-describedby).
+      focusField(failing[0] ?? 'privacy');
       return;
     }
     setBusy(true);
@@ -339,6 +343,8 @@ export default function Register() {
     } catch (err) {
       const fields = serverFieldErrors(err);
       setServerErrors(fields);
+      const first = (Object.keys(fields) as FieldKey[])[0];
+      if (first) focusField(first);
       toast.error(Object.keys(fields).length ? t('auth.errors.VALIDATION') : authError(t, errorCode(err)));
     } finally {
       setBusy(false);
@@ -510,6 +516,7 @@ export default function Register() {
               <label className="flex items-start gap-2.5 pt-1 text-sm text-ink/80">
                 <input
                   type="checkbox"
+                  id={id('privacy')}
                   name="privacy"
                   required
                   checked={privacy}

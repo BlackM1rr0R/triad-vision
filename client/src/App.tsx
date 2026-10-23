@@ -1,10 +1,21 @@
-import { lazy, Suspense, useEffect } from 'react';
+import { lazy, Suspense, useEffect, useSyncExternalStore } from 'react';
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { RequireAuth, useAuth } from './lib/auth';
 import { whenIdle } from './lib/idle';
 import { PageLoader } from './components/ui/Spinner';
 import { SiteLayout } from './components/layout/SiteLayout';
-import { ImpersonationBanner } from './components/privacyTools/ImpersonationBanner';
+import { getImpersonation, subscribeImpersonation } from './lib/api';
+
+// "View as client" bar: its chunk (and copy) loads only while an admin is actually viewing a portal.
+const ImpersonationBanner = lazy(() => import('./components/privacyTools/ImpersonationBanner').then((m) => ({ default: m.ImpersonationBanner })));
+const ImpersonationGate = () => {
+  const active = useSyncExternalStore(subscribeImpersonation, getImpersonation, getImpersonation) !== null;
+  return active ? (
+    <Suspense fallback={null}>
+      <ImpersonationBanner />
+    </Suspense>
+  ) : null;
+};
 
 const Home = lazy(() => import('./pages/Home'));
 const About = lazy(() => import('./pages/About'));
@@ -200,7 +211,10 @@ const PREFETCH = [
 ];
 const prefetchRoutes = () => {
   // One chunk per idle period, starting a few seconds after load, so warming never competes with
-  // scrolling or the first interactions.
+  // scrolling or the first interactions. Skipped on metered / very slow connections (Save-Data, 2G):
+  // those visitors only download the pages they open (hover/focus intent still warms the next one).
+  const conn = (navigator as Navigator & { connection?: { saveData?: boolean; effectiveType?: string } }).connection;
+  if (conn?.saveData || /(^|-)2g$/.test(conn?.effectiveType ?? '')) return;
   const queue = [...PREFETCH];
   const next = () => {
     const load = queue.shift();
@@ -263,7 +277,7 @@ export default function App() {
   return (
     <>
     {/* "View as client": persistent read-only bar (renders nothing otherwise). */}
-    <ImpersonationBanner />
+    <ImpersonationGate />
     <Suspense fallback={<PageLoader />}>
       <Routes location={location} key={area}>
           <Route element={<SiteLayout />}>

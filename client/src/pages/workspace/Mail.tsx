@@ -334,7 +334,7 @@ export default function WorkspaceMail() {
   const openDraft = (m: MessageRow) => {
     if (m.isDraft) {
       void qc
-        .fetchQuery({ queryKey: mailKeys.message(m.id), queryFn: async () => (await api.get<{ message: MessageDetail }>(`/mail/messages/${m.id}`)).data.message })
+        .fetchQuery({ queryKey: mailKeys.message(m.id), staleTime: 0, queryFn: async () => (await api.get<{ message: MessageDetail }>(`/mail/messages/${m.id}`)).data.message })
         .then((d) => startCompose({ mode: 'draft', draft: d, accountId: d.accountId }))
         .catch((err) => toast.error(errorText(err)));
       return;

@@ -21,6 +21,7 @@ import { COMPANY_STATUS_TONE, SECTORS, VACANCY_STATUS_TONE, type Company, type C
 import { SignaturesPanel } from '@/components/esign/CaseSignatures';
 import { CompanyQuotesPanel } from '@/components/quotes/CompanyQuotesPanel';
 import RecordHistoryPanel from '@/components/history/RecordHistoryPanel';
+import { useNewParam } from '@/components/command/useNewParam'; // ?new=1 deep link (Ctrl+K palette)
 
 registerCopy(pagesJobs);
 
@@ -381,6 +382,7 @@ export default function AdminCompanies() {
   const page = Math.max(1, Number(params.get('page')) || 1);
   const [searchInput, setSearchInput] = useState(params.get('search') ?? '');
   const [creating, setCreating] = useState(false);
+  useNewParam(() => setCreating(true));
   const search = params.get('search') ?? '';
 
   const setParam = (k: string, v: string | null) => {

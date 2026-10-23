@@ -67,7 +67,7 @@ const UsageBar = ({ used, quota }: { used: number; quota: number | null }) => {
     <div className="min-w-0">
       <div className="text-xs text-muted tabular-nums">{t('mailAdmin.usageOf', { used: formatBytes(used), quota: quota ? formatBytes(quota) : t('mailAdmin.unlimited') })}</div>
       {pct !== null && (
-        <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-surface" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100}>
+        <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-surface" role="progressbar" aria-label={t('ui.progress')} aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100}>
           <div className={clsx('h-full rounded-full', pct >= 90 ? 'bg-danger' : pct >= 75 ? 'bg-amber-500' : 'bg-brand-600')} style={{ width: `${Math.max(pct, 2)}%` }} />
         </div>
       )}

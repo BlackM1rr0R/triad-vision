@@ -15,6 +15,9 @@ import { Spinner } from '@/components/ui/Spinner';
 import { RouteFlags } from '@/components/ui/Flag';
 import { jobsError, useJobLabels } from '@/components/jobs/labels';
 import { SECTORS } from '@/components/jobs/types';
+import { sized, srcSet } from '@/lib/img';
+
+const ASIDE_IMG = 'https://images.unsplash.com/photo-1553413077-190dd305871c?auto=format&fit=crop&w=1200&q=65';
 
 registerCopy(pagesJobs);
 
@@ -192,7 +195,9 @@ export default function EmployerRegister() {
           className="relative isolate overflow-hidden rounded-[2rem] bg-navy-950 p-7 text-white sm:p-10 lg:sticky lg:top-28"
         >
           <img
-            src="https://images.unsplash.com/photo-1553413077-190dd305871c?auto=format&fit=crop&w=1200&q=65"
+            src={sized(ASIDE_IMG, 1200)}
+            srcSet={srcSet(ASIDE_IMG, [600, 900, 1200])}
+            sizes="(min-width: 1024px) 40vw, 100vw"
             alt=""
             decoding="async"
             loading="lazy"
