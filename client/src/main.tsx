@@ -1,4 +1,4 @@
-import { StrictMode } from 'react';
+import { lazy, StrictMode, Suspense, useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -13,6 +13,28 @@ import App from './App';
 import { AuthProvider } from './lib/auth';
 import { reloadOnce } from './components/ui/RouteErrorBoundary';
 import { usePrefs, useResolvedTheme } from './lib/prefs';
+import { installDiagnostics } from './lib/diagnostics';
+import { initPwa } from './lib/pwa';
+import { whenIdle } from './lib/idle';
+import { captureRefFromUrl } from './lib/referralCookie';
+
+// "Problem bildir" diagnostics (console errors ring buffer, last API error) and the service worker (PWA).
+installDiagnostics();
+initPwa();
+// ?ref=CODE (agent or client referral) → first-party cookie for 60 days.
+captureRefFromUrl();
+
+// Update toast, install banner, push prompt and the "Problem bildir" button: own chunk, loaded when idle.
+const SiteExtras = lazy(() => import('./components/site/SiteExtras'));
+const LateExtras = () => {
+  const [ready, setReady] = useState(false);
+  useEffect(() => whenIdle(() => setReady(true), 2000), []);
+  return ready ? (
+    <Suspense fallback={null}>
+      <SiteExtras />
+    </Suspense>
+  ) : null;
+};
 
 // After a deployment the old page may try to load chunks that no longer exist; a reload fixes it.
 window.addEventListener('vite:preloadError', (event) => {
@@ -36,6 +58,7 @@ const Shell = () => {
         <App />
       </MotionConfig>
       <Toaster position="top-right" richColors closeButton theme={theme} duration={visualAlerts ? 10000 : 4000} />
+      <LateExtras />
     </>
   );
 };

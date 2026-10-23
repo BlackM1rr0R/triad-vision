@@ -11,6 +11,7 @@ import { usePageTitle } from '@/lib/usePageTitle';
 import { fmtDate } from '@/components/admin/labels';
 import { LogoMark } from '@/components/ui/Logo';
 import { Spinner } from '@/components/ui/Spinner';
+import { optimizeImages } from '@/lib/imageCompress';
 
 registerCopy(driveCollabCopy);
 
@@ -89,8 +90,8 @@ export default function SharePage() {
   const [over, setOver] = useState(false);
   const input = useRef<HTMLInputElement>(null);
   const seq = useRef(0);
-  const sendFiles = async (files: File[]) => {
-    for (const file of files) {
+  const sendFiles = async (picked: File[]) => {
+    for (const file of await optimizeImages(picked)) {
       const id = ++seq.current;
       setUploads((u) => [...u, { id, name: file.name, state: 'busy', progress: 0 }]);
       const set = (patch: Partial<UploadRow>) => setUploads((u) => u.map((row) => (row.id === id ? { ...row, ...patch } : row)));

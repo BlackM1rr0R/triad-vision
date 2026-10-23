@@ -10,6 +10,7 @@ import { useL10n } from '@/lib/l10n';
 import { Spinner } from '@/components/ui/Spinner';
 import { useApiError } from './useApiError';
 import { OVERVIEW_KEY } from './useOverview';
+import { forgetVisa, rememberedVisa } from '@/lib/referralCookie';
 
 type VisaTypeKey = 'WORK' | 'AUSBILDUNG' | 'WEITERBILDUNG' | 'JOB_SEEKER' | 'STUDY' | 'FAMILY' | 'TOURIST';
 
@@ -35,6 +36,17 @@ export const StartCase = ({ hasCases, defaultProfession }: { hasCases: boolean; 
   const visaId = useId();
   const [visaType, setVisaType] = useState<VisaTypeKey | ''>('');
   const [visaCategoryId, setVisaCategoryId] = useState('');
+  // Visa chosen before registering (calculator → /register?visa=<slug>): preselect it once.
+  const [prefill, setPrefill] = useState(rememberedVisa);
+  if (prefill && content?.visaCategories?.length) {
+    const cat = content.visaCategories.find((v) => v.slug === prefill);
+    setPrefill('');
+    forgetVisa();
+    if (cat) {
+      setVisaType(cat.slug === 'ausbildung' ? 'AUSBILDUNG' : 'WORK');
+      setVisaCategoryId(cat.id);
+    }
+  }
   const [busy, setBusy] = useState(false);
 
   const categories = [...(content?.visaCategories ?? [])].sort((a, b) => a.sortOrder - b.sortOrder);

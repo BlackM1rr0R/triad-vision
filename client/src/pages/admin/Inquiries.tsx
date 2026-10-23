@@ -1,3 +1,4 @@
+import { CallButton } from '@/components/calls/CallButton'; // click-to-call (Twilio / sipgate) or manual call log
 import { useMemo, useState, type ReactNode } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -237,6 +238,7 @@ export default function Inquiries() {
                               <a href={`tel:${i.phone}`} className="btn-white btn-sm border border-line">
                                 <Phone className="size-3.5" /> {i.phone}
                               </a>
+                              <CallButton target={{ inquiryId: i.id }} phone={i.phone} name={i.contactName} />
                               <a href={waLink(i.phone)} target="_blank" rel="noreferrer" className="btn-white btn-sm border border-emerald-200 text-emerald-800">
                                 <MessageCircle className="size-3.5" /> {t('admin.common.whatsapp')}
                               </a>

@@ -29,6 +29,8 @@ import { hasMissing, translateMany } from '../../lib/ai/translate.js';
 import { prepareCaseDocument, publicQuality, scheduleUploadAnalysis } from '../../lib/uploadAi/index.js';
 import { nextStepSummaries } from '../../lib/caseNext/nextStep.js';
 import { emitAutomationEvent } from '../../lib/automation/events.js';
+import { onLanguageCertAccepted } from '../../lib/german/progress.js';
+import { ballInCourtMany } from '../../lib/clientProcess/ballInCourt.js';
 
 export const adminCasesRouter = Router();
 
@@ -101,10 +103,13 @@ adminCasesRouter.get('/', async (req, res) => {
   const DAY = 24 * 60 * 60 * 1000;
   // "Next step" chip per row: deterministic rules only (lib/caseNext), a fixed number of batched queries.
   const nextSteps = await nextStepSummaries(items.map((c) => c.id), { statusSince });
+  // "Top kimdÉ™dir?" column: who acts next, batched (lib/clientProcess/ballInCourt).
+  const balls = await ballInCourtMany(items.map((c) => c.id)).catch(() => new Map());
   res.json({
     items: items.map(({ events, _count, ...c }) => ({
       ...c,
       nextStep: nextSteps.get(c.id) ?? null,
+      ballInCourt: balls.get(c.id) ?? null,
       lastEvent: events[0] ?? null,
       messagesCount: _count.messages,
       pendingDocs: _count.documents,
@@ -250,6 +255,7 @@ adminCasesRouter.post('/:id/documents/:docId/review', async (req, res) => {
     data: { status: body.status, reviewNote: body.status === 'REJECTED' ? body.note : null },
   });
   if (body.status === 'ACCEPTED') void copyDocumentToDrive(doc.id); // a copy in the client's drive folder
+  if (body.status === 'ACCEPTED') await onLanguageCertAccepted(doc.id, req.user!.id); // language certificate → profile German level (never throws)
   await prisma.caseEvent.create({
     data: {
       caseId: doc.caseId,
@@ -318,6 +324,7 @@ adminCasesRouter.post('/:id/documents', documentUpload.single('file'), async (re
       },
     });
     if (doc.status === 'ACCEPTED') void copyDocumentToDrive(doc.id); // a copy in the client's drive folder
+    if (doc.status === 'ACCEPTED') await onLanguageCertAccepted(doc.id, req.user!.id); // staff-uploaded certificate → German level
 
     if (body.stage === 'CONTRACT') {
       try {

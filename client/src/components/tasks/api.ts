@@ -1,6 +1,7 @@
 import { useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import type { CaseRef, ChecklistItem, Person, TaskDetail, TaskListResponse } from './types';
+import { optimizeImage } from '@/lib/imageCompress';
 
 export const taskKeys = {
   all: ['tasks'] as const,
@@ -84,7 +85,7 @@ export const useTaskActions = () => {
     /** Uploads one file from the computer into the task (stored in the company drive, linked to the task). */
     upload: async (ref: string, file: File, onProgress?: (pct: number) => void) => {
       const form = new FormData();
-      form.append('file', file);
+      form.append('file', await optimizeImage(file));
       const res = await api.post<{ task: TaskDetail }>(`/tasks/${ref}/files`, form, {
         headers: { 'Content-Type': 'multipart/form-data' },
         onUploadProgress: (e) => onProgress?.(e.total ? Math.round((e.loaded / e.total) * 100) : 0),

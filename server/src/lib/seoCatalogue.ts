@@ -144,6 +144,36 @@ export const STATIC_PAGES: Record<string, StaticPageMeta> = {
       ru: 'Признание вашей квалификации в Германии: какое ведомство, какие документы, сроки и стоимость — пошагово.',
     },
   },
+  '/calculator': {
+    name: { az: 'Başlama tarixi kalkulyatoru', de: 'Startdatum-Rechner', en: 'Start date calculator', ru: 'Калькулятор срока' },
+    title: { az: 'Nə vaxt işə başlaya bilərəm?', de: 'Wann kann ich in Deutschland anfangen?', en: 'When can I start working in Germany?', ru: 'Когда я смогу начать работать?' },
+    description: {
+      az: 'Viza növü, alman dili səviyyəsi və sənədlərə görə Almaniyada işə başlama tarixinizi və mərhələlərin müddətini təxmini hesablayın.',
+      de: 'Schätzen Sie Ihren Arbeitsbeginn in Deutschland: nach Visumart, Deutschniveau und Unterlagen – mit Dauer jeder Etappe.',
+      en: 'Estimate when you can start working in Germany from your visa type, German level and documents — with each stage and its duration.',
+      ru: 'Оцените, когда вы сможете начать работать в Германии: по типу визы, уровню немецкого и документам — с длительностью каждого этапа.',
+    },
+  },
+  '/map': {
+    name: { az: 'İşçilərimizin xəritəsi', de: 'Karte unserer Fachkräfte', en: 'Placement map', ru: 'Карта трудоустройства' },
+    title: { az: 'Almaniyada işçilərimiz harada çalışır', de: 'Wo unsere Fachkräfte arbeiten', en: 'Where our workers are in Germany', ru: 'Где работают наши специалисты' },
+    description: {
+      az: 'Triad Vision vasitəsilə Almaniyaya gedən işçilər hansı şəhərlərdə və hansı peşələrdə çalışır — şəhərlər üzrə xəritə.',
+      de: 'In welchen deutschen Städten und Berufen die über Triad Vision vermittelten Fachkräfte arbeiten – die Karte nach Städten.',
+      en: 'Which German cities and jobs the workers placed by Triad Vision went to — a map by city.',
+      ru: 'В каких городах и профессиях Германии работают специалисты, трудоустроенные через Triad Vision, — карта по городам.',
+    },
+  },
+  '/events': {
+    name: { az: 'Tədbirlər', de: 'Veranstaltungen', en: 'Events', ru: 'Мероприятия' },
+    title: { az: 'Vebinarlar və məlumat sessiyaları', de: 'Webinare und Infoveranstaltungen', en: 'Webinars and info sessions', ru: 'Вебинары и инфосессии' },
+    description: {
+      az: 'Almaniyada iş və viza haqqında pulsuz onlayn vebinarlar və Bakı ofisində məlumat sessiyaları — qeydiyyatdan keçin, suallarınızı verin.',
+      de: 'Kostenlose Webinare und Infoveranstaltungen in Baku zu Arbeit und Visum in Deutschland – melden Sie sich an und stellen Sie Ihre Fragen.',
+      en: 'Free webinars and info sessions in our Baku office about working in Germany and visas — register and ask your questions.',
+      ru: 'Бесплатные вебинары и встречи в офисе в Баку о работе и визах в Германию — зарегистрируйтесь и задайте свои вопросы.',
+    },
+  },
   '/cities': {
     name: { az: 'Alman şəhərləri', de: 'Deutsche Städte', en: 'German cities', ru: 'Города Германии' },
     title: { az: 'Alman şəhərləri və yaşayış xərcləri', de: 'Deutsche Städte und Lebenshaltungskosten', en: 'German cities and cost of living', ru: 'Города Германии и стоимость жизни' },
@@ -355,4 +385,5 @@ export const SECTION_OF: Record<string, string> = {
   services: '/services',
   news: '/news',
   jobs: '/jobs',
+  events: '/events',
 };

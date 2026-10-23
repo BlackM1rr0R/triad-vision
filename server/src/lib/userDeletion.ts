@@ -204,6 +204,9 @@ export const deleteUserAccount = async (actorId: string, userId: string, ip?: st
 
         // The user's own cases (documents, requirements, contract, events, messages cascade with them).
         const cases = ownCaseIds.length ? (await tx.case.deleteMany({ where: { id: { in: ownCaseIds } } })).count : 0;
+        // Site features keep plain ids (no cascade): browser push subscriptions and the cases' public status switches.
+        await tx.webPushSubscription.deleteMany({ where: { userId } });
+        if (ownCaseIds.length) await tx.casePublicStatus.deleteMany({ where: { caseId: { in: ownCaseIds } } });
 
         await tx.user.delete({ where: { id: userId } });
 

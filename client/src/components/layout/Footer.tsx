@@ -1,3 +1,4 @@
+import { CallbackButton } from '@/components/calls/CallbackForm'; // "Mənə zəng edin"
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
@@ -40,6 +41,8 @@ export const Footer = () => {
     { to: '/visas', label: t('nav.visas') },
     { to: '/ausbildung', label: t('nav.ausbildung') },
     { to: '/eligibility', label: t('nav.eligibility') },
+    { to: '/calculator', label: t('nav.calculator') },
+    { to: '/events', label: t('nav.events') },
     { to: '/faq', label: t('nav.faq') },
     { to: '/register', label: t('nav.apply') },
     { to: '/login', label: t('nav.login') },
@@ -116,6 +119,9 @@ export const Footer = () => {
                 <a href={`tel:${contact.phone.replace(/\s/g, '')}`} className="flex items-center gap-3 hover:text-white">
                   <Phone className="size-4 text-brand-400" /> {contact.phone}
                 </a>
+              </li>
+              <li>
+                <CallbackButton source="footer" className="inline-flex min-h-9 items-center gap-2 rounded-lg border border-white/20 px-3 py-1.5 text-sm font-semibold text-white hover:bg-white/10" />
               </li>
               <li>
                 <a href={`mailto:${contact.email}`} className="flex items-center gap-3 break-all hover:text-white">

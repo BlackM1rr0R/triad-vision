@@ -14,6 +14,7 @@ import type { AdminCaseListItem, AdminCasesResponse } from '@/components/admin/t
 import { Chip, EmptyState, ErrorBlock, LoadingBlock, PageHead } from '@/components/admin/ui';
 import { BulkPartnerBar, CasePartnerCell, PartnerFilterSelect, SelectBox } from '@/components/partners/CasesPartnerTools';
 import { NextStepChip } from '@/components/caseNext/NextStepChip';
+import { BallChip } from '@/components/clientProcess/Ball'; // "Top kimdÉ™dir?" column
 
 const isStatus = (v: string | null): v is CaseStatus => !!v && (ALL_STATUSES as string[]).includes(v);
 
@@ -233,6 +234,7 @@ export default function CasesList() {
                   <th className="px-4 py-2.5">{t('admin.cases.th.profession')}</th>
                   <th className="px-4 py-2.5">{t('admin.cases.th.status')}</th>
                   <th className="px-4 py-2.5">{t('caseNext.chip.column')}</th>
+                  <th className="px-4 py-2.5">{t('cp.ball.column')}</th>
                   <th className="px-4 py-2.5">{t('admin.cases.th.lastEvent')}</th>
                   <th className="px-4 py-2.5">{t('admin.cases.th.staff')}</th>
                   <th className="px-4 py-2.5">{t('refPartners.field')}</th>
@@ -289,6 +291,9 @@ export default function CasesList() {
                       <NextStepChip step={c.nextStep} />
                     </td>
                     <td className="px-4 py-3 align-top">
+                      <BallChip ball={c.ballInCourt} />
+                    </td>
+                    <td className="px-4 py-3 align-top">
                       <LastEvent c={c} />
                     </td>
                     <td className="px-4 py-3 align-top whitespace-nowrap text-ink/80">
@@ -324,6 +329,11 @@ export default function CasesList() {
                     <RowMeta c={c} />
                   </div>
                   {c.nextStep && <NextStepChip step={c.nextStep} className="mt-2.5" />}
+                  {c.ballInCourt && (
+                    <div className="mt-2.5">
+                      <BallChip ball={c.ballInCourt} />
+                    </div>
+                  )}
                   <div className="mt-2.5 border-t border-line pt-2.5">
                     <LastEvent c={c} />
                   </div>

@@ -84,6 +84,7 @@ export const storeScanDocument = async (
     });
     void emitAutomationEvent({ type: 'DOCUMENT_UPLOADED', entityType: 'document', entityId: doc.id, caseId: resolved.c.id }); // automation hook
     if (doc.status === 'ACCEPTED') void copyDocumentToDrive(doc.id); // a copy in the client's drive folder
+    if (!resolved.asStaff) void import('../clientProcess/tasks.js').then((m) => m.completeTasksForUpload(doc.id)); // linked client tasks
     // Automatic quality checks (PDF readable, …); never throws.
     const checks = await checkCaseDocument(doc.id);
     if (checks) await fillExpiryFromOcr(doc.id, null, checks);

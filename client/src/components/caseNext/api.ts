@@ -5,6 +5,7 @@ import { registerCopy, type Locale } from '@/i18n';
 import { pagesCaseNext } from '@/i18n/pagesCaseNext';
 import { fmtDate, fmtDateTime } from '@/components/admin/labels';
 import type { CaseStatus, L10n } from '@/lib/types';
+import type { FamilyPackageMember } from '@/components/family/FamilyPackageOption';
 
 registerCopy(pagesCaseNext);
 
@@ -121,6 +122,8 @@ export interface PackagePreview {
   appointmentPlace: string | null;
   maxBytes: number;
   lastPackage: { documentId: string; name: string; createdAt: string } | null;
+  /** Family members of a main case (each can be added as a section, build option `family`). */
+  family?: FamilyPackageMember[];
 }
 
 export interface BuildResult {

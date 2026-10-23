@@ -22,6 +22,7 @@ import { sized } from '@/lib/img';
 import { registerCopy } from '@/i18n';
 import { pagesVisa } from '@/i18n/pagesVisa';
 import { usePageTitle } from '@/lib/usePageTitle';
+import { CalculatorTeaser } from '@/components/growth/CalculatorTeaser';
 
 registerCopy(pagesVisa);
 
@@ -302,6 +303,8 @@ export default function VisaDetail() {
           </aside>
         </div>
       </section>
+
+      <CalculatorTeaser visa={data.slug} />
 
       {services.length > 0 && (
         <section className="section bg-surface">

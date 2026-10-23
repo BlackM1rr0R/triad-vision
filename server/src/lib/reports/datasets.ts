@@ -3,6 +3,7 @@ import { computeProfitability, COST_KEYS } from '../profitability/compute.js';
 import { getProfitSettings } from '../profitability/settings.js';
 import * as LB from './labels.js';
 import { L, type ColumnDef, type DatasetDef, type FilterOp, type Rec } from './types.js';
+import { timeEntriesDataset } from '../timeTracking/reportDataset.js'; // "timeEntries" dataset
 
 /**
  * The curated datasets of the report builder. Columns read Prisma paths (to-one relations, resolved in the
@@ -575,6 +576,7 @@ export const DATASETS: DatasetDef[] = [
   signatures,
   campaignRecipients,
   profitability,
+  timeEntriesDataset, // staff time tracking (lib/timeTracking)
 ];
 
 export const datasetByKey = (key: string) => DATASETS.find((d) => d.key === key && (d.available?.() ?? true));

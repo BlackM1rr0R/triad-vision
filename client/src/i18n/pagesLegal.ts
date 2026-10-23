@@ -166,7 +166,7 @@ const az = {
       privacy: 'Şəkil yalnız məlumatları oxumaq üçün istifadə olunur və saxlanılmır.',
       tips: 'Şəkli düz, işıqlı yerdə, MRZ zolağı (aşağıdakı 2 sətir) görünəcək şəkildə çəkin.',
       previewAlt: 'Pasport şəklinin önizləməsi',
-      agentCode: 'Agent kodu: {{code}}',
+      agentCode: 'Dəvət kodu: {{code}}',
       warn: {
         EXPIRED: 'Bu pasportun etibarlılıq müddəti bitib ({{date}}). Viza müraciəti üçün etibarlı pasport lazımdır.',
         EXPIRES_SOON: 'Pasportun müddəti {{date}} tarixində bitir — 12 aydan az qalıb. Səfirlik ən azı 12 ay etibarlı pasport tələb edir.',
@@ -498,7 +498,7 @@ const de: LegalCopy = {
       privacy: 'Das Foto wird nur zum Auslesen der Daten verwendet und nicht gespeichert.',
       tips: 'Fotografieren Sie den Pass gerade und gut beleuchtet, sodass die MRZ (die zwei unteren Zeilen) sichtbar ist.',
       previewAlt: 'Vorschau des Passfotos',
-      agentCode: 'Agentencode: {{code}}',
+      agentCode: 'Empfehlungscode: {{code}}',
       warn: {
         EXPIRED: 'Dieser Reisepass ist abgelaufen ({{date}}). Für den Visumantrag ist ein gültiger Pass erforderlich.',
         EXPIRES_SOON: 'Der Reisepass läuft am {{date}} ab – in weniger als 12 Monaten. Die Botschaft verlangt einen mindestens 12 Monate gültigen Pass.',
@@ -828,7 +828,7 @@ const en: LegalCopy = {
       privacy: 'The photo is only used to read the details and is not saved.',
       tips: 'Take the photo straight on, in good light, with the MRZ (the two lines at the bottom) clearly visible.',
       previewAlt: 'Passport photo preview',
-      agentCode: 'Agent code: {{code}}',
+      agentCode: 'Referral code: {{code}}',
       warn: {
         EXPIRED: 'This passport has expired ({{date}}). A valid passport is required for the visa application.',
         EXPIRES_SOON: 'The passport expires on {{date}} — in less than 12 months. The embassy requires a passport valid for at least 12 months.',
@@ -1158,7 +1158,7 @@ const ru: LegalCopy = {
       privacy: 'Фото используется только для чтения данных и не сохраняется.',
       tips: 'Снимайте ровно, при хорошем освещении, так чтобы зона MRZ (две нижние строки) была видна.',
       previewAlt: 'Предпросмотр фото паспорта',
-      agentCode: 'Код агента: {{code}}',
+      agentCode: 'Код приглашения: {{code}}',
       warn: {
         EXPIRED: 'Срок действия паспорта истёк ({{date}}). Для визы нужен действительный паспорт.',
         EXPIRES_SOON: 'Паспорт действителен до {{date}} — меньше 12 месяцев. Посольство требует паспорт, действительный не менее 12 месяцев.',

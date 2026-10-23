@@ -1,5 +1,6 @@
 import { prisma } from '../../db.js';
 import { publicUser } from '../../routes/auth.js';
+import { buildAccessLog } from './accessLog.js'; // "who viewed my documents"
 
 /**
  * GDPR export (Art. 15 / 20): everything stored about the user, as plain JSON (file metadata only,
@@ -123,6 +124,8 @@ export const buildUserExport = async (userId: string) => {
       pagesViewed: v.requestCount,
       note: 'A Triad Vision team member viewed your portal read-only (no changes possible).',
     })),
+    // Who on the team accessed your documents and sensitive data (previews, downloads, reveals, checks).
+    accessLog: (await buildAccessLog(userId)).days.flatMap((d) => d.items.map(({ id: _id, ...i }) => i)),
   };
 };
 

@@ -47,6 +47,7 @@ const az = {
       AWAIT_DECISION: 'Səfirlik qərarı gözlənilir ({{days}} gün)',
       VISA_APPROVED: 'Viza verilib — gəlişi planlaşdırın',
       VISA_REFUSED: 'Viza rədd edilib — lazım olsa müraciəti yenidən açın',
+      CONFIRM_DATA: 'Müştəri səfirlik məlumatlarını təsdiqləməyib (və ya sonra dəyişib)',
     },
     action: {
       REVIEW_NOW: 'İndi yoxla',
@@ -66,6 +67,8 @@ const az = {
       CREATE_TASK: 'Tapşırıq yarat',
       REQUEST_TRANSLATION: 'Tərcüməni tələb et',
       ORDER_TRANSLATION: 'Tərcümə sifarişi (tapşırıq)',
+      ASK_CONFIRM_DATA: 'Müştəridən təsdiq istə',
+      OPEN_DATA: 'Müştəri məlumatlarına bax',
     },
     confirm: {
       title: 'Təsdiq edin',
@@ -185,6 +188,7 @@ const de: Copy = {
       AWAIT_DECISION: 'Warten auf die Entscheidung der Botschaft ({{days}} Tage)',
       VISA_APPROVED: 'Visum erteilt — Einreise planen',
       VISA_REFUSED: 'Visum abgelehnt — Akte bei Bedarf wieder öffnen',
+      CONFIRM_DATA: 'Kunde hat die Botschaftsdaten nicht bestätigt (oder sie wurden seitdem geändert)',
     },
     action: {
       REVIEW_NOW: 'Jetzt prüfen',
@@ -204,6 +208,8 @@ const de: Copy = {
       CREATE_TASK: 'Aufgabe erstellen',
       REQUEST_TRANSLATION: 'Übersetzung anfordern',
       ORDER_TRANSLATION: 'Übersetzung beauftragen (Aufgabe)',
+      ASK_CONFIRM_DATA: 'Kunden um Bestätigung bitten',
+      OPEN_DATA: 'Kundendaten öffnen',
     },
     confirm: {
       title: 'Bitte bestätigen',
@@ -321,6 +327,7 @@ const en: Copy = {
       AWAIT_DECISION: 'Waiting for the embassy decision ({{days}} days)',
       VISA_APPROVED: 'Visa approved — plan the arrival',
       VISA_REFUSED: 'Visa refused — reopen the case if needed',
+      CONFIRM_DATA: 'Client has not confirmed the embassy data (or it changed since)',
     },
     action: {
       REVIEW_NOW: 'Review now',
@@ -340,6 +347,8 @@ const en: Copy = {
       CREATE_TASK: 'Create task',
       REQUEST_TRANSLATION: 'Request translation',
       ORDER_TRANSLATION: 'Order translation (task)',
+      ASK_CONFIRM_DATA: 'Ask client to confirm data',
+      OPEN_DATA: 'Open client data',
     },
     confirm: {
       title: 'Please confirm',
@@ -457,6 +466,7 @@ const ru: Copy = {
       AWAIT_DECISION: 'Ожидаем решение посольства ({{days}} дн.)',
       VISA_APPROVED: 'Виза выдана — спланируйте приезд',
       VISA_REFUSED: 'В визе отказано — при необходимости откройте дело заново',
+      CONFIRM_DATA: 'Клиент не подтвердил данные для посольства (или они изменились)',
     },
     action: {
       REVIEW_NOW: 'Проверить',
@@ -476,6 +486,8 @@ const ru: Copy = {
       CREATE_TASK: 'Создать задачу',
       REQUEST_TRANSLATION: 'Запросить перевод',
       ORDER_TRANSLATION: 'Заказать перевод (задача)',
+      ASK_CONFIRM_DATA: 'Попросить клиента подтвердить данные',
+      OPEN_DATA: 'Открыть данные клиента',
     },
     confirm: {
       title: 'Подтвердите',

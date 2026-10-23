@@ -2,6 +2,7 @@
 import './retention.js'; // DSGVO document retention
 import './reminders.js'; // appointment / missing-documents / passport / staff-SLA reminders, review invitations
 import './booking.js'; // consultation reminders
+import './clientProcess.js'; // client task reminders (2 d / due day / overdue Ã—3), office visit reminders (24 h / 2 h)
 import './invoices.js'; // overdue invoices
 import './drive.js'; // recycle-bin purge
 import './tasks.js'; // task deadline reminders
@@ -31,4 +32,9 @@ import './quotes.js'; // quotes (Angebote): expiry + reminder to the employer be
 import './campaigns.js'; // campaigns: scheduled start + throttled sending of the queue (every 10 s)
 import './duplicates.js'; // duplicate client detection (nightly full scan)
 import './reports.js'; // scheduled report e-mails (report builder)
+import './german.js'; // German language: exam registration deadline, exam day-before, course start
+import './growth.js'; // info-session reminders (24 h / 1 h) + client referral stages / rewards
+import './timeCare.js'; // staff timer idle protection (10 / 12 h) + post-arrival check-ins (+7 / +30 / +90 days)
+import './calls.js'; // callback reminders (10 min before) + live chats nobody accepted in 2 min
 import './automation.js'; // automation rules (event queue, delayed actions, time triggers) + absence handover
+import './clientData.js'; // reminders for unsubmitted questionnaires and open data confirmations

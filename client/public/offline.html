@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="az">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#0b1f44" />
+    <meta name="robots" content="noindex" />
+    <title>Triad Vision — offline</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <!-- Served by the service worker (public/sw.js) when a page cannot be loaded. No scripts (CSP), all four languages. -->
+    <style>
+      :root { color-scheme: light dark; --bg: #f5f8fd; --card: #ffffff; --ink: #0b1f44; --muted: #5b6b88; --line: #dfe7f3; --brand: #1565e8; }
+      @media (prefers-color-scheme: dark) { :root { --bg: #050f24; --card: #0b1f44; --ink: #e8eefb; --muted: #9fb0cf; --line: #18397a; --brand: #5c9bff; } }
+      * { box-sizing: border-box; }
+      body { margin: 0; min-height: 100vh; display: grid; place-items: center; padding: 16px; background: var(--bg); color: var(--ink); font: 16px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+      main { width: 100%; max-width: 560px; background: var(--card); border: 1px solid var(--line); border-radius: 20px; padding: 28px 24px; }
+      img { display: block; width: 56px; height: 56px; margin-bottom: 16px; }
+      section + section { border-top: 1px solid var(--line); margin-top: 16px; padding-top: 16px; }
+      h1, h2 { margin: 0 0 4px; font-size: 1.15rem; }
+      p { margin: 0; color: var(--muted); font-size: 0.95rem; }
+      a { display: inline-flex; align-items: center; min-height: 44px; margin-top: 20px; padding: 0 20px; border-radius: 999px; background: var(--brand); color: #fff; font-weight: 600; text-decoration: none; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <img src="/icons/icon-192.png" alt="Triad Vision" width="56" height="56" />
+      <section lang="az">
+        <h1>İnternet bağlantısı yoxdur</h1>
+        <p>Səhifəni açmaq mümkün olmadı. Bağlantını yoxlayın və yenidən cəhd edin.</p>
+      </section>
+      <section lang="de">
+        <h2>Keine Internetverbindung</h2>
+        <p>Die Seite konnte nicht geladen werden. Bitte prüfen Sie Ihre Verbindung und versuchen Sie es erneut.</p>
+      </section>
+      <section lang="en">
+        <h2>No internet connection</h2>
+        <p>The page could not be loaded. Please check your connection and try again.</p>
+      </section>
+      <section lang="ru">
+        <h2>Нет подключения к интернету</h2>
+        <p>Не удалось загрузить страницу. Проверьте подключение и попробуйте ещё раз.</p>
+      </section>
+      <a href="">Yenidən cəhd et · Erneut versuchen · Try again · Повторить</a>
+    </main>
+  </body>
+</html>

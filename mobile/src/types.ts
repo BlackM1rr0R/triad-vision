@@ -168,6 +168,19 @@ export interface CaseMessage {
   readAt?: string | null;
   channel?: MessageChannel;
   author: { id: string; firstName: string; lastName: string; role: Role };
+  /** Messaging plus: detected language (automatic translation) and voice message. */
+  lang?: 'az' | 'de' | 'en' | 'ru' | null;
+  voice?: VoiceInfo | null;
+}
+
+/** Voice message (audio served by /api/messaging-plus/voice/:id; mobile plays it through a signed link). */
+export interface VoiceInfo {
+  id: string;
+  mimeType: string;
+  durationMs: number;
+  transcriptStatus: string;
+  transcript: string | null;
+  transcriptLang?: 'az' | 'de' | 'en' | 'ru' | null;
 }
 
 export interface Contract {

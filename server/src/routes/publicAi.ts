@@ -14,7 +14,7 @@ import { LANG_NAMES, str } from '../lib/aiWriting/common.js';
 import { IP_PER_DAY, IP_PER_HOUR, LEADS_PER_HOUR, QUIZ_EXPLAIN_PER_HOUR, SESSION_TURNS, sessionTurns, takeHit, takeSessionTurn } from '../lib/publicAi/guard.js';
 import { bookPublicUsage, publicUsageMonth, publicUsageToday } from '../lib/publicAi/usage.js';
 import { retrieve } from '../lib/publicAi/knowledge.js';
-import { INTENT_RE, MAX_TOKENS, OFFER_AFTER_TURNS, advisorInput, advisorSystem, chatSchema, chatSummary, detectLang, splitLead } from '../lib/publicAi/advisor.js';
+import { HUMAN_RE, INTENT_RE, MAX_TOKENS, OFFER_AFTER_TURNS, advisorInput, advisorSystem, chatSchema, chatSummary, detectLang, splitLead } from '../lib/publicAi/advisor.js';
 import { PATH_LABEL_RE, answersSummary, eligibilityAnswersSchema, evaluateEligibility, weeksFromRanges, type PathResult } from '../lib/publicAi/eligibility.js';
 import { onInquiryCreated } from '../lib/assignment/inquiry.js';
 
@@ -101,11 +101,12 @@ publicAiRouter.post('/chat', async (req, res) => {
     return;
   }
   void bookPublicUsage({ usd: r.costUsd, messages: 1 });
-  const { reply, intent } = splitLead(r.text);
+  const { reply, intent, human } = splitLead(r.text);
   res.json({
     reply: reply.slice(0, 2500),
     lang,
     offerLead: intent || INTENT_RE.test(body.message) || turns >= OFFER_AFTER_TURNS,
+    offerHuman: human || HUMAN_RE.test(body.message), // live chat handover (routes/livechat.ts)
     turnsLeft: Math.max(0, SESSION_TURNS - turns),
   });
 });

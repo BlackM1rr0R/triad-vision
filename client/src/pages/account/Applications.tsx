@@ -16,6 +16,7 @@ import { ScorePill } from '@/components/jobs/MatchMeter';
 import { toastJobsError, useJobLabels } from '@/components/jobs/labels';
 import { APPLICATION_STATUS_TONE, type ApplicationStatus, type EmploymentType } from '@/components/jobs/types';
 import type { L10n } from '@/lib/types';
+import { PartyChatButton, PartyConversations, PartyThreadFromQuery, usePartyThreads } from '@/components/messagingPlus/PartyThread';
 
 registerCopy(pagesJobs);
 
@@ -43,6 +44,9 @@ export default function AccountApplications() {
     queryKey: ['my-applications'],
     queryFn: async () => (await api.get<{ items: MyApplication[] }>('/vacancies/my/applications')).data.items,
   });
+  // Three-party threads (messaging plus): "Söhbət" on an application once Triad Vision opened it.
+  const threads = usePartyThreads();
+  const threadByApp = new Map((threads.data ?? []).filter((th) => th.applicationId).map((th) => [th.applicationId!, th]));
   const withdraw = useMutation({
     mutationFn: (id: string) => api.post(`/vacancies/my/applications/${id}/withdraw`),
     onSuccess: () => {
@@ -142,6 +146,7 @@ export default function AccountApplications() {
                   <span className="inline-flex items-center gap-2 text-xs text-muted">
                     {t('jobsArea.common.match')} <ScorePill score={a.matchScore} />
                   </span>
+                  <PartyChatButton thread={threadByApp.get(a.id)} />
                   {WITHDRAWABLE.includes(a.status) && (
                     <button
                       type="button"
@@ -157,6 +162,9 @@ export default function AccountApplications() {
           })}
         </ul>
       )}
+
+      <PartyConversations threads={threads.data} exclude={new Set(items.map((a) => a.id))} />
+      <PartyThreadFromQuery />
 
       <ConfirmDialog
         open={!!withdrawId}

@@ -5,6 +5,7 @@ import { prisma } from '../db.js';
 import { isStaff, requireAuth } from '../middleware/auth.js';
 import { notFound } from '../lib/http.js';
 import { audit } from '../lib/audit.js';
+import { logDocumentAccess } from '../lib/privacy/accessLog.js'; // "who viewed my documents"
 
 export const filesRouter = Router();
 
@@ -21,6 +22,8 @@ filesRouter.get('/:docId', requireAuth, async (req, res) => {
   const disposition = req.query.download ? 'attachment' : 'inline';
   // Explicit staff downloads feed the bulk-download security rule (lib/aiMgmt/security).
   if (req.query.download && doc.case.clientId !== req.user!.id) void audit(req, 'FILE_DOWNLOADED', `document:${doc.id}`, { caseId: doc.caseId });
+  // Client access log: staff previews / downloads (aggregated per 10 minutes, never blocks the response).
+  void logDocumentAccess(req.user, { id: doc.id, caseId: doc.caseId, name: doc.originalName, clientId: doc.case.clientId }, req.query.download ? 'DOWNLOAD' : 'VIEW', 'FILES');
   res.setHeader('Content-Type', doc.mimeType);
   res.setHeader('Content-Disposition', `${disposition}; filename*=UTF-8''${encodeURIComponent(doc.originalName)}`);
   res.setHeader('X-Content-Type-Options', 'nosniff');

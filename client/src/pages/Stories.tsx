@@ -20,6 +20,7 @@ import { pagesCompany } from '@/i18n/pagesCompany';
 import { pagesGrowth } from '@/i18n/pagesGrowth';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { api } from '@/lib/api';
+import { PlacementMapSection } from '@/components/growth/PlacementMap';
 
 registerCopy(pagesCompany);
 registerCopy(pagesGrowth);
@@ -346,6 +347,8 @@ export default function Stories() {
       )}
 
       <PublicReviews />
+
+      <PlacementMapSection where="stories" />
 
       <PrivacyStrip />
 

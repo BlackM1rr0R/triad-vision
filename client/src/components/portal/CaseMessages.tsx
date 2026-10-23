@@ -13,6 +13,9 @@ import { Spinner } from '@/components/ui/Spinner';
 import { ChannelBadge, LiveDot, ReadTicks, TypingIndicator } from '@/components/messaging/ThreadBits';
 import { useThread } from '@/components/messaging/useThread';
 import { useApiError } from './useApiError';
+import { MessageBody, ShowOriginalsToggle, TranslationNote } from '@/components/messagingPlus/MessageBody';
+import { VoiceRecorder } from '@/components/messagingPlus/VoiceRecorder';
+import { translatableText, useMessageTranslations, useShowOriginals } from '@/components/messagingPlus/useTranslations';
 
 registerCopy(pagesMessaging);
 
@@ -36,6 +39,13 @@ export const CaseMessages = ({ data, onChanged }: { data: CaseDetail; onChanged:
   const { messages, typingName } = thread;
   const count = messages.length;
   const lastId = messages[count - 1]?.id;
+  // Messaging plus: messages in the reader's language (translated on demand, cached on the server).
+  const prefs = useShowOriginals();
+  const tx = useMessageTranslations({
+    scope: 'case',
+    id: data.id,
+    items: messages.filter((m) => !m.pending && !m.failed).map((m) => ({ id: m.id, text: translatableText(m), lang: m.lang ?? m.voice?.transcriptLang })),
+  });
 
   useEffect(() => {
     const el = scrollRef.current;
@@ -105,7 +115,7 @@ export const CaseMessages = ({ data, onChanged }: { data: CaseDetail; onChanged:
                       m.failed && 'bg-red-600',
                     )}
                   >
-                    {m.body}
+                    <MessageBody m={m} tx={tx} onDark={mine} />
                   </div>
                   <span className="mt-1 flex items-center gap-1.5 px-1 text-[10px] text-muted">
                     <time dateTime={m.createdAt}>{dateTime(m.createdAt)}</time>
@@ -122,6 +132,10 @@ export const CaseMessages = ({ data, onChanged }: { data: CaseDetail; onChanged:
           </AnimatePresence>
         )}
         <TypingIndicator name={typingName} />
+        <TranslationNote tx={tx} />
+      </div>
+      <div className="border-t border-line px-4 pt-2">
+        <ShowOriginalsToggle tx={tx} setter={prefs.set} />
       </div>
 
       <form
@@ -150,6 +164,14 @@ export const CaseMessages = ({ data, onChanged }: { data: CaseDetail; onChanged:
               e.preventDefault();
               void send();
             }
+          }}
+        />
+        <VoiceRecorder
+          uploadUrl={`/messaging-plus/cases/${data.id}/voice`}
+          onSent={(d) => {
+            const m = (d as { message?: Parameters<typeof thread.upsert>[0] }).message;
+            if (m) thread.upsert(m);
+            void onChanged();
           }}
         />
         <button type="submit" className="btn-primary size-11 shrink-0 p-0" disabled={!body.trim() || sending} aria-label={t('common.send')}>

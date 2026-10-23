@@ -151,11 +151,23 @@ export interface SeoData {
   }[];
   settings: Record<string, unknown>;
   rating: { count: number; average: number } | null;
+  /** Upcoming published info sessions / webinars (/events/:slug). Optional so older fixtures stay valid. */
+  events?: {
+    slug: string;
+    title: unknown;
+    description: unknown;
+    mode: string;
+    address: string | null;
+    startsAt: Date;
+    endsAt: Date;
+    language: string;
+    updatedAt: Date;
+  }[];
 }
 
 const loadSeoData = async (): Promise<SeoData> => {
   const now = new Date();
-  const [visas, services, posts, faqs, jobs, settings, rating] = await Promise.all([
+  const [visas, services, posts, faqs, jobs, settings, rating, events] = await Promise.all([
     prisma.visaCategory.findMany({
       where: { published: true },
       orderBy: { sortOrder: 'asc' },
@@ -205,6 +217,12 @@ const loadSeoData = async (): Promise<SeoData> => {
       _count: { rating: true },
       _avg: { rating: true },
     }),
+    prisma.infoEvent.findMany({
+      where: { status: 'PUBLISHED', endsAt: { gt: now } },
+      orderBy: { startsAt: 'asc' },
+      take: 200,
+      select: { slug: true, title: true, description: true, mode: true, address: true, startsAt: true, endsAt: true, language: true, updatedAt: true },
+    }),
   ]);
   const count = rating._count.rating;
   return {
@@ -213,6 +231,7 @@ const loadSeoData = async (): Promise<SeoData> => {
     posts,
     faqs,
     jobs,
+    events,
     settings: Object.fromEntries(settings.map((s) => [s.key, s.value])),
     rating: count >= 3 && rating._avg.rating != null ? { count, average: Math.round(rating._avg.rating * 10) / 10 } : null,
   };
@@ -435,7 +454,7 @@ const resolvePage = (path: string, lng: SeoLocale, data: SeoData, requestLng: Se
     return resolved;
   }
 
-  const m = /^\/(visas|services|news|jobs)\/([^/]+)$/.exec(path);
+  const m = /^\/(visas|services|news|jobs|events)\/([^/]+)$/.exec(path);
   if (!m) return generic;
   const [, section, slug] = m;
   const sectionPath = SECTION_OF[section];
@@ -523,6 +542,43 @@ const resolvePage = (path: string, lng: SeoLocale, data: SeoData, requestLng: Se
         ['article:published_time', post.publishedAt.toISOString()],
         ['article:modified_time', post.updatedAt.toISOString()],
       ],
+    };
+  }
+
+  if (section === 'events') {
+    const ev = (data.events ?? []).find((e) => e.slug === slug && e.endsAt.getTime() > Date.now());
+    if (!ev) return generic;
+    const name = collapse(pick(ev.title, lng));
+    const description = truncate(pick(ev.description, lng) || STATIC_PAGES['/events'].description[lng], DESCRIPTION_MAX);
+    const online = ev.mode === 'ONLINE';
+    return {
+      title: pageTitle(name),
+      description,
+      index: true,
+      image: null,
+      ogType: 'website',
+      crumbs: crumbsFor(name),
+      jsonLd: [
+        {
+          '@context': 'https://schema.org',
+          '@type': 'Event',
+          name,
+          description,
+          startDate: ev.startsAt.toISOString(),
+          endDate: ev.endsAt.toISOString(),
+          eventStatus: 'https://schema.org/EventScheduled',
+          eventAttendanceMode: online ? 'https://schema.org/OnlineEventAttendanceMode' : 'https://schema.org/OfflineEventAttendanceMode',
+          location: online
+            ? { '@type': 'VirtualLocation', url }
+            : { '@type': 'Place', name: SITE_NAME, address: collapse(ev.address ?? '') || 'Baku, Azerbaijan' },
+          inLanguage: ev.language,
+          isAccessibleForFree: true,
+          url,
+          organizer: { '@id': organizationId() },
+          offers: { '@type': 'Offer', price: 0, priceCurrency: 'AZN', availability: 'https://schema.org/InStock', url },
+        },
+      ],
+      extraMeta: [],
     };
   }
 
@@ -637,6 +693,7 @@ export const renderSitemap = (data: SeoData) => {
     '/services': latest(data.services.map((s) => s.updatedAt)),
     '/news': latest(data.posts.map((p) => p.updatedAt)),
     '/jobs': latest(jobs.map((j) => j.updatedAt)),
+    '/events': latest((data.events ?? []).map((e) => e.updatedAt)),
   };
   for (const path of SITEMAP_STATIC) {
     const lastmod = path === '/' ? latest(Object.values(sectionLastmod)) : (sectionLastmod[path] ?? STATIC_LASTMOD);
@@ -646,6 +703,7 @@ export const renderSitemap = (data: SeoData) => {
   for (const s of data.services) entries.push({ path: `/services/${s.slug}`, lastmod: s.updatedAt });
   for (const p of data.posts) entries.push({ path: `/news/${p.slug}`, lastmod: p.updatedAt });
   for (const j of jobs) entries.push({ path: `/jobs/${j.slug}`, lastmod: j.updatedAt });
+  for (const e of data.events ?? []) entries.push({ path: `/events/${e.slug}`, lastmod: e.updatedAt });
 
   const out: string[] = [
     '<?xml version="1.0" encoding="UTF-8"?>',

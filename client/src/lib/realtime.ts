@@ -17,6 +17,8 @@ export type RealtimeStatus = 'idle' | 'connecting' | 'open' | 'paused';
 const EVENT_TYPES = [
   'message.new',
   'message.read',
+  'message.updated', // messaging plus: voice transcript ready
+  'party.updated', // messaging plus: three-party thread changed (payload: threadId only)
   'typing',
   'notification',
   'case.updated',
@@ -40,6 +42,12 @@ const EVENT_TYPES = [
   'drive.lock',
   // smart uploads: recognition of an upload finished (components/uploadAi)
   'upload-ai.ready',
+  // calls + live chat (components/calls, components/livechat)
+  'call.updated',
+  'call.inbound',
+  'callback.new',
+  'livechat.queue',
+  'livechat.message',
 ] as const;
 export type RealtimeEventType = (typeof EVENT_TYPES)[number];
 

@@ -70,6 +70,20 @@ export interface PackagePreview {
   appointmentPlace: string | null;
   maxBytes: number;
   lastPackage: { documentId: string; name: string; createdAt: string } | null;
+  /** Family members (main case only): each can be added to the package as its own section (build option `family`). */
+  family: FamilyPackageMember[];
+}
+
+export interface FamilyPackageMember {
+  caseId: string;
+  number: string;
+  name: string;
+  relation: string | null;
+  /** German heading of the member's section ("Ehepartner/in: Leyla Məmmədova"). */
+  heading: string;
+  summary: PackagePreview['summary'];
+  /** Documents that would go in (accepted checklist items + accepted embassy-stage extras). */
+  included: number;
 }
 
 const embeddable = (mime: string, name: string) => mime === 'application/pdf' || mime === 'image/jpeg' || mime === 'image/png' || /\.(pdf|jpe?g|png)$/i.test(name);
@@ -93,6 +107,7 @@ const loadPackageCase = async (caseId: string) => {
     where: { id: caseId },
     include: {
       client: { select: { firstName: true, lastName: true, passportNumber: true } },
+      familyProfile: { select: { firstName: true, lastName: true, passportNumber: true } }, // member case: the member is the applicant
       assignedStaff: { select: { firstName: true, lastName: true } },
       visaCategory: { select: { visaLabel: true } },
       contract: { select: { signedDocumentId: true } },
@@ -176,10 +191,47 @@ const previewFrom = async ({ c, signed }: PackageCase): Promise<PackagePreview> 
     appointmentPlace: c.appointmentPlace,
     maxBytes: packageMaxBytes(),
     lastPackage: last ? { documentId: last.id, name: last.originalName, createdAt: last.createdAt.toISOString() } : null,
+    family: [],
   };
 };
 
-export const packagePreview = async (caseId: string) => previewFrom(await loadPackageCase(caseId));
+// ─── Family members (Familiennachzug): one section per member ───────────
+
+const RELATION_DE: Record<string, string> = { spouse: 'Ehepartner/in', child: 'Kind', parent: 'Elternteil', other: 'Familienangehörige/r' };
+
+const familyPreviews = async (mainCaseId: string) => {
+  const members = await prisma.case.findMany({
+    where: { parentCaseId: mainCaseId },
+    orderBy: { createdAt: 'asc' },
+    select: { id: true, relation: true, familyProfile: { select: { firstName: true, lastName: true } } },
+  });
+  const out: { member: FamilyPackageMember; preview: PackagePreview }[] = [];
+  for (const m of members) {
+    const preview = await previewFrom(await loadPackageCase(m.id));
+    const loaded = await prisma.case.findUniqueOrThrow({ where: { id: m.id }, select: { client: { select: { firstName: true, lastName: true } } } });
+    const name = m.familyProfile ? `${m.familyProfile.firstName} ${m.familyProfile.lastName}`.trim() : `${loaded.client.firstName} ${loaded.client.lastName}`.trim();
+    out.push({
+      preview,
+      member: {
+        caseId: m.id,
+        number: preview.number,
+        name,
+        relation: m.relation,
+        heading: `${RELATION_DE[m.relation ?? ''] ?? RELATION_DE.other}: ${name}`,
+        summary: preview.summary,
+        included: preview.items.filter((i) => i.include && i.document).length,
+      },
+    });
+  }
+  return out;
+};
+
+export const packagePreview = async (caseId: string) => {
+  const loaded = await loadPackageCase(caseId);
+  const preview = await previewFrom(loaded);
+  if (!loaded.c.parentCaseId) preview.family = (await familyPreviews(caseId)).map((f) => f.member);
+  return preview;
+};
 
 // ─── Build ─────────────────────────────────────────────────────────
 
@@ -190,6 +242,8 @@ export interface BuildOptions {
   /** Default copies for every included item. */
   copies?: number;
   format?: 'pdf' | 'zip';
+  /** Main case: append one section per family member (their accepted documents, headed with the member's name). */
+  family?: boolean;
 }
 
 const asciiName = (s: string) =>
@@ -252,12 +306,22 @@ export const buildEmbassyPackage = async (caseId: string, opts: BuildOptions, ac
     if (!doc) continue;
     chosen.push({ item, doc, copies: Math.min(MAX_COPIES, Math.max(1, Math.round(o?.copies ?? defaultCopies))) });
   }
-  if (!chosen.length) throw badRequest('NOTHING_TO_BUILD');
+  // Family members' sections: their default selection (accepted items), after the main applicant's documents.
+  const memberSections: { title: string; doc: CandidateDoc; key: string; copies: number }[] = [];
+  if (opts.family && !c.parentCaseId) {
+    for (const f of await familyPreviews(c.id)) {
+      for (const item of f.preview.items) {
+        if (!item.include || !item.document) continue;
+        memberSections.push({ key: `family:${f.member.caseId}:${item.key}`, title: `${f.member.heading} – ${item.label.de}`, doc: item.document, copies: defaultCopies });
+      }
+    }
+  }
+  if (!chosen.length && !memberSections.length) throw badRequest('NOTHING_TO_BUILD');
 
-  const estimate = chosen.reduce((a, x) => a + x.doc.size * x.copies, 0);
+  const estimate = chosen.reduce((a, x) => a + x.doc.size * x.copies, 0) + memberSections.reduce((a, x) => a + x.doc.size * x.copies, 0);
   if (estimate > packageMaxBytes()) throw tooLarge(estimate);
 
-  const docs = await prisma.document.findMany({ where: { id: { in: chosen.map((x) => x.doc.id) } }, select: { id: true, storedName: true } });
+  const docs = await prisma.document.findMany({ where: { id: { in: [...chosen.map((x) => x.doc.id), ...memberSections.map((x) => x.doc.id)] } }, select: { id: true, storedName: true } });
   const stored = new Map(docs.map((d) => [d.id, d.storedName]));
   const read = async (id: string) => {
     const name = stored.get(id);
@@ -271,12 +335,18 @@ export const buildEmbassyPackage = async (caseId: string, opts: BuildOptions, ac
     const mime = bytes && x.doc.mimeType !== 'application/pdf' && !x.doc.mimeType.startsWith('image/') ? (isPdfBytes(bytes) ? 'application/pdf' : imageKind(bytes) ? `image/${imageKind(bytes)}` : x.doc.mimeType) : x.doc.mimeType;
     sections.push({ key: x.item.key, documentId: x.doc.id, title: x.item.label.de, file: { name: x.doc.name, mimeType: mime, bytes }, copies: x.copies });
   }
+  for (const x of memberSections) {
+    const bytes = await read(x.doc.id);
+    const mime = bytes && x.doc.mimeType !== 'application/pdf' && !x.doc.mimeType.startsWith('image/') ? (isPdfBytes(bytes) ? 'application/pdf' : imageKind(bytes) ? `image/${imageKind(bytes)}` : x.doc.mimeType) : x.doc.mimeType;
+    sections.push({ key: x.key, documentId: x.doc.id, title: x.title, file: { name: x.doc.name, mimeType: mime, bytes }, copies: x.copies });
+  }
 
   const now = new Date();
+  const person = c.familyProfile ?? c.client;
   const info: PackageInfo = {
     caseNumber: c.number,
-    applicant: `${c.client.lastName.toUpperCase()}, ${c.client.firstName}`,
-    passportNumber: c.client.passportNumber,
+    applicant: `${person.lastName.toUpperCase()}, ${person.firstName}`,
+    passportNumber: person.passportNumber,
     visaType: [PURPOSE_DE[c.visaType], c.visaCategory?.visaLabel].filter(Boolean).join(' – '),
     appointment: c.appointmentAt ? `${fmtDateTime(c.appointmentAt, 'de')} Uhr` : null,
     appointmentPlace: c.appointmentPlace,
@@ -305,7 +375,7 @@ export const buildEmbassyPackage = async (caseId: string, opts: BuildOptions, ac
   }
   if (file.length > packageMaxBytes()) throw tooLarge(file.length);
 
-  const name = packageFileName(c.client.lastName, c.client.firstName, now, format);
+  const name = packageFileName(person.lastName, person.firstName, now, format);
   const storedName = `${Date.now()}-${crypto.randomBytes(12).toString('hex')}.${format}`;
   await fs.mkdir(config.uploads.privateDir, { recursive: true });
   await fs.writeFile(path.join(config.uploads.privateDir, storedName), file);
@@ -326,7 +396,7 @@ export const buildEmbassyPackage = async (caseId: string, opts: BuildOptions, ac
     data: {
       caseId: c.id,
       type: PACKAGE_EVENT,
-      note: `${name} · ${pages} S. · ${chosen.length} Unterlagen${notIncluded.length ? ` · fehlt/nicht enthalten: ${notIncluded.map((i) => i.label.de).join(', ')}` : ''}`.slice(0, 2000),
+      note: `${name} · ${pages} S. · ${chosen.length + memberSections.length} Unterlagen${memberSections.length ? ` (davon ${memberSections.length} Familienangehörige)` : ''}${notIncluded.length ? ` · fehlt/nicht enthalten: ${notIncluded.map((i) => i.label.de).join(', ')}` : ''}`.slice(0, 2000),
       actorId: actor.id,
       visibleToClient: false,
     },

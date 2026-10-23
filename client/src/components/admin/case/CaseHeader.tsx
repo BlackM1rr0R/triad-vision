@@ -1,3 +1,4 @@
+import { CallButton } from '@/components/calls/CallButton'; // click-to-call (Twilio / sipgate) or manual call log
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
@@ -20,6 +21,7 @@ import { useRelationLabel } from '@/components/journey/Family';
 import { FromTemplateButton } from '@/components/contracts/FromTemplateDialog';
 import { CasePartnerSelect } from '@/components/partners/CasePartnerSelect';
 import { ViewAsClientButton } from '@/components/privacyTools/ViewAsClientButton';
+import ConfirmationChip from '@/components/clientData/ConfirmationChip';
 
 const patchCase = (id: string, body: Record<string, string | null>) => api.patch(`/admin/cases/${id}`, body);
 
@@ -104,6 +106,7 @@ export const CaseHeader = ({ c }: { c: CaseDetail }) => {
             <StatusBadge status={c.status} />
             {relationLabel && <span className="badge bg-rose-100 text-rose-800">{relationLabel}</span>}
             <ForecastChip caseId={c.id} />
+            <ConfirmationChip caseId={c.id} />
           </div>
           <p className="mt-1 text-lg font-semibold break-words text-ink">{fullName(client)}</p>
           <div className="mt-3 flex flex-wrap gap-2">
@@ -115,6 +118,7 @@ export const CaseHeader = ({ c }: { c: CaseDetail }) => {
                 <a href={`tel:${client.phone}`} className="inline-flex min-h-8 items-center gap-1.5 rounded-md border border-line px-2.5 py-1 text-xs whitespace-nowrap text-ink/80 transition hover:border-brand-400 hover:text-brand-700">
                   <Phone className="size-3.5" /> {client.phone}
                 </a>
+                <CallButton target={{ caseId: c.id }} phone={client.phone} name={fullName(client)} />
                 <a
                   href={waLink(client.phone)}
                   target="_blank"

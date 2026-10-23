@@ -8,6 +8,9 @@ import { useRealtime, useRealtimeStatus } from '@/lib/realtime';
 export interface ThreadMessage extends CaseMessage {
   channel?: 'app' | 'whatsapp' | 'sms' | string;
   readAt?: string | null;
+  /** Messaging plus: detected language (automatic translation) and voice message (audio + transcript). */
+  lang?: 'az' | 'de' | 'en' | 'ru' | null;
+  voice?: import('@/components/messagingPlus/useTranslations').VoiceInfo | null;
   /** Client-side only: optimistic message waiting for the server (`failed` when the POST failed). */
   pending?: boolean;
   failed?: boolean;
@@ -181,6 +184,12 @@ export const useThread = (opts: { caseId: string; base: '/cases' | '/admin/cases
     if (p.message.author?.id !== meId) scheduleMarkRead();
   });
 
+  // Messaging plus: a voice message got its transcript.
+  useRealtime('message.updated', (p: NewMessagePayload) => {
+    if (p.caseId !== caseId || !p.message) return;
+    upsert(p.message);
+  });
+
   useRealtime('message.read', (p: ReadPayload) => {
     if (p.caseId !== caseId || !p.messageIds?.length) return;
     const ids = new Set(p.messageIds);
@@ -211,5 +220,5 @@ export const useThread = (opts: { caseId: string; base: '/cases' | '/admin/cases
 
   const dismissFailed = useCallback((id: string) => setPending((p) => p.filter((m) => m.id !== id)), []);
 
-  return { messages, typingName, notifyTyping, listRef, send, dismissFailed, connected, status };
+  return { messages, typingName, notifyTyping, listRef, send, dismissFailed, connected, status, upsert };
 };

@@ -16,6 +16,7 @@ import { APPLICATION_STATUS_TONE, type AnonProfile, type ApplicationStatus } fro
 import { Empty, Loading, Section } from './shared';
 import { CvDownloadButton } from '@/components/cv/CvDownloadButton';
 import { SharedProfile, useSharedProfiles } from '@/components/aiEmployer/SharedProfile';
+import { PartyChatButton, PartyConversations, PartyThreadFromQuery, usePartyThreads } from '@/components/messagingPlus/PartyThread';
 
 interface Item {
   id: string;
@@ -92,6 +93,9 @@ export const CompanyCandidates = () => {
       (await api.get<{ items: Item[] }>('/company/candidates', { params: { status: status || undefined, vacancyId: vacancyId || undefined } })).data.items,
   });
   const profiles = useSharedProfiles();
+  // Three-party threads (messaging plus): "Söhbət" on a card once Triad Vision opened the conversation.
+  const threads = usePartyThreads();
+  const threadByApp = new Map((threads.data ?? []).filter((th) => th.applicationId).map((th) => [th.applicationId!, th]));
   const refresh = () => {
     void qc.invalidateQueries({ queryKey: ['company-candidates'] });
     void qc.invalidateQueries({ queryKey: ['company-dashboard'] });
@@ -108,6 +112,10 @@ export const CompanyCandidates = () => {
       <p className="-mt-2 mb-5 flex items-start gap-2 text-xs text-muted">
         <ShieldCheck className="mt-0.5 size-3.5 shrink-0 text-brand-600" aria-hidden /> {t('jobsArea.portal.candidates.privacy')}
       </p>
+      <PartyThreadFromQuery />
+      <div className="mb-5 empty:hidden">
+        <PartyConversations threads={threads.data} exclude={new Set((data ?? []).map((a) => a.id))} />
+      </div>
       <div className="mb-5 flex flex-wrap items-center gap-1.5">
         {FILTERS.map((f) => (
           <button
@@ -180,6 +188,7 @@ export const CompanyCandidates = () => {
               {a.companyNote && <p className="mt-3 rounded-lg bg-surface px-3 py-2 text-xs text-ink/80">{a.companyNote}</p>}
               {profiles.data?.get(a.id) && <SharedProfile profile={profiles.data.get(a.id)!} />}
               <CvDownloadButton url={`/company/candidates/${a.id}/cv.pdf`} anonymised className="mt-3" />
+              <PartyChatButton thread={threadByApp.get(a.id)} className="mt-3 ml-2" />
               <p className="mt-3 text-[11px] text-muted">{t('jobsArea.portal.candidates.updated', { date: fmtDate(a.updatedAt) })}</p>
               {(a.status === 'PROPOSED' || a.status === 'INTERVIEW') && <DecisionBox item={a} onDone={refresh} />}
             </li>

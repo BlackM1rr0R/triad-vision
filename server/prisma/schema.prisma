@@ -84,6 +84,7 @@ model User {
   applications          VacancyApplication[]
   bookings              Booking[]                @relation("BookingUser")
   slots                 ConsultationSlot[]       @relation("SlotStaff")
+  clientTasksCreated    ClientTask[]             @relation("ClientTaskCreatedBy")
   reviews               Review[]
   driveNodesCreated     DriveNode[]              @relation("DriveNodeCreatedBy")
   driveNodesOwned       DriveNode[]              @relation("DriveNodeOwner")
@@ -155,6 +156,7 @@ model User {
   aiConversations       AiConversation[]
   aiActions             AiAction[]
   candidateProfiles     CandidateProfileDraft[]
+  timeEntries           TimeEntry[]              @relation("TimeEntryUser") // staff time tracking
   /// Marketing consent for campaigns (UWG § 7 / DSGVO Art. 7): current state, when and where it was set
   /// (REGISTER | PROFILE | PRIVACY_CENTER | UNSUBSCRIBE). Every change is also logged in ConsentRecord (MARKETING_EMAIL).
   marketingOptIn        Boolean                  @default(false)
@@ -171,6 +173,19 @@ model User {
   mergedAt              DateTime?
   duplicatesA           DuplicatePair[]          @relation("DuplicateA")
   duplicatesB           DuplicatePair[]          @relation("DuplicateB")
+  /// Messaging plus: show messages in their original language instead of the automatic translation.
+  showOriginalMessages  Boolean                  @default(false)
+  partyThreadsAsCandidate PartyThread[]          @relation("PartyThreadCandidate")
+  partyThreadsCreated   PartyThread[]            @relation("PartyThreadCreatedBy")
+  partyThreadMembers    PartyThreadMember[]      @relation("PartyThreadMemberUser")
+  partyThreadMessages   PartyThreadMessage[]     @relation("PartyThreadMessageAuthor")
+  voiceClips            VoiceClip[]              @relation("VoiceClipUploader")
+  germanPlan            GermanPlan?              @relation("GermanPlanUser")
+  germanCourses         GermanCourse[]           @relation("GermanCourseUser")
+  germanExams           GermanExam[]             @relation("GermanExamUser")
+  referralCode          ClientReferralCode?      @relation("ReferralCodeOwner")
+  referralsMade         ClientReferral[]         @relation("ReferralReferrer")
+  referredBy            ClientReferral?          @relation("ReferralReferred")
 
   @@index([companyId])
   @@index([mergedIntoId])
@@ -396,6 +411,16 @@ model Case {
   aiRuns            CaseAiRun[]
   aiFindingStates   CaseAiFindingState[]
   costs             CaseCost[] // manual costs for the profitability view (lib/profitability)
+  partyThread       PartyThread?          @relation("PartyThreadCase")
+  timeEntries       TimeEntry[] // staff time tracking (lib/timeTracking)
+  arrivalFollowUp   ArrivalFollowUp? // post-arrival check-ins (lib/checkIns)
+  familyProfiles    FamilyMember[]        @relation("FamilyMemberMain") // members of this main case (details)
+  familyProfile     FamilyMember?         @relation("FamilyMemberCase") // this case is a member's case
+  clientTasks       ClientTask[] // to-dos the team gives the client (lib/clientProcess)
+  officeVisits      Booking[] // office visits booked from the portal (lib/clientProcess)
+  caseForms         CaseForm[] // smart questionnaires (lib/clientData)
+  dataConfirmations DataConfirmation[] // client confirms the embassy data (lib/clientData)
+  dataValues        CaseDataValue[] // client-provided VIDEX values (lib/clientData)
   /// Partner (middleman) who brought this client; their folder in the shared drive holds the client folder.
   partnerId         String?
   partner           ReferralPartner?      @relation(fields: [partnerId], references: [id], onDelete: SetNull)
@@ -413,17 +438,18 @@ model Case {
 }
 
 model DocumentRequirement {
-  id          String     @id @default(cuid())
+  id          String       @id @default(cuid())
   key         String? // stable id from the template (e.g. PASSPORT, LANGUAGE_CERT) for automations
   caseId      String
-  case        Case       @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  case        Case         @relation(fields: [caseId], references: [id], onDelete: Cascade)
   stage       DocStage
   title       Json
   description Json?
-  required    Boolean    @default(true)
-  sortOrder   Int        @default(0)
-  createdAt   DateTime   @default(now())
+  required    Boolean      @default(true)
+  sortOrder   Int          @default(0)
+  createdAt   DateTime     @default(now())
   documents   Document[]
+  clientTasks ClientTask[] // tasks completed by an upload to this requirement
 
   @@index([caseId, stage])
 }
@@ -497,6 +523,10 @@ model CaseMessage {
   channel    String    @default("app") // app | whatsapp | sms
   externalId String?   @unique // provider message id (WhatsApp), for de-duplication
   readAt     DateTime? // when the other side opened it (read receipt)
+  lang       Locale? // detected language of the text (messaging plus: automatic translation)
+  voiceId    String?   @unique // voice message (VoiceClip); body is then empty
+  voice      VoiceClip? @relation("CaseMessageVoice", fields: [voiceId], references: [id], onDelete: SetNull)
+  translations MessageTranslation[]
   createdAt  DateTime  @default(now())
 
   @@index([caseId, createdAt])
@@ -660,6 +690,7 @@ model Inquiry {
   workersNeeded Int?
   message       String        @db.Text
   locale        String
+  source        String?       @db.VarChar(80) // e.g. "event:<id>" (info-session registrant)
   status        InquiryStatus @default(NEW)
   createdAt     DateTime      @default(now())
 
@@ -737,6 +768,7 @@ model Company {
   signatureRequests SignatureRequest[]
   candidateRequests CandidateRequest[]
   quotes            Quote[]
+  partyThreads      PartyThread[]
 
   @@index([status])
 }
@@ -814,6 +846,7 @@ model VacancyApplication {
   updatedAt    DateTime               @updatedAt
   interviews   Interview[]
   profileDraft CandidateProfileDraft?
+  partyThread  PartyThread?           @relation("PartyThreadApplication")
 
   @@unique([vacancyId, userId])
   @@index([userId])
@@ -830,9 +863,16 @@ model ConsultationSlot {
   endsAt    DateTime
   createdAt DateTime @default(now())
   booking   Booking?
+  /// ONLINE consultation (Jitsi) or OFFICE visit (address from Setting 'contact' offices).
+  kind      SlotKind @default(ONLINE)
+  /// Office visits: the office address shown to the client.
+  location  String?  @db.Text
+  /// Office visits: seat number at the same time (capacity = seats sharing staffId + startsAt).
+  seat      Int      @default(0)
 
-  @@unique([staffId, startsAt])
+  @@unique([staffId, startsAt, seat])
   @@index([startsAt])
+  @@index([kind, startsAt])
 }
 
 enum BookingStatus {
@@ -858,8 +898,12 @@ model Booking {
   manageToken String           @unique // sha256 of the cancel link token
   status      BookingStatus    @default(BOOKED)
   createdAt   DateTime         @default(now())
+  /// Office visits: the case the visit belongs to (topic = originals | passport | sign | other).
+  caseId      String?
+  case        Case?            @relation(fields: [caseId], references: [id], onDelete: SetNull)
 
   @@index([email])
+  @@index([caseId])
 }
 
 // ─── Invoices ─────────────────────────────────────────────────────────
@@ -3643,4 +3687,964 @@ model CampaignRecipient {
   @@index([userId])
   @@index([providerId])
   @@index([status, lastAttemptAt])
+}
+
+// ─── Client process: ball-in-court, client tasks, office visits (lib/clientProcess) ───
+
+/// Kind of a booking slot: online consultation (public booking page) or a visit to the office (client portal).
+enum SlotKind {
+  ONLINE
+  OFFICE
+}
+
+enum ClientTaskStatus {
+  OPEN
+  DONE
+  CANCELLED
+}
+
+/// A to-do the team gives the client on a case ("Polis arayışı alın"), with a deadline and reminders
+/// (2 days before, on the due date, overdue: once then every 3 days, max 3; ReminderLog keys).
+model ClientTask {
+  id               String               @id @default(cuid())
+  caseId           String
+  case             Case                 @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  /// POLICE_CERT | GOETHE_EXAM | PASSPORT_PHOTO | … (lib/clientProcess/texts.ts); null = custom
+  template         String?              @db.VarChar(40)
+  title            String               @db.VarChar(200)
+  description      String?              @db.Text
+  dueAt            DateTime?
+  status           ClientTaskStatus     @default(OPEN)
+  /// Uploading a document to this requirement completes the task automatically.
+  requirementId    String?
+  requirement      DocumentRequirement? @relation(fields: [requirementId], references: [id], onDelete: SetNull)
+  linkUrl          String?              @db.Text
+  /// Case Document (stage OTHER) the team attached (form, instructions).
+  attachmentId     String?              @db.VarChar(40)
+  /// Case Document (stage OTHER) the client uploaded when marking the task done.
+  clientDocumentId String?              @db.VarChar(40)
+  clientNote       String?              @db.Text
+  /// CLIENT | STAFF | UPLOAD (auto-completed by the linked requirement)
+  completedVia     String?              @db.VarChar(12)
+  completedAt      DateTime?
+  completedById    String?              @db.VarChar(40)
+  createdById      String?
+  createdBy        User?                @relation("ClientTaskCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt        DateTime             @default(now())
+  updatedAt        DateTime             @updatedAt
+
+  @@index([caseId, status])
+  @@index([status, dueAt])
+  @@index([requirementId])
+}
+
+// ─── Site growth: start-date calculator settings live in Setting ("growthCalculator", "growthMap", "growthReferral") ───
+
+/// Germany placement map: manual numbers per city (admin). OVERRIDE replaces the computed count, ADD is added
+/// to it, HIDE removes the city. Public output only shows cities with at least 3 workers (privacy).
+model PlacementMapEntry {
+  id          String   @id @default(cuid())
+  cityKey     String   @unique @db.VarChar(80) // lower-case city name ("hamburg")
+  city        String   @db.VarChar(80) // display name ("Hamburg")
+  mode        String   @default("OVERRIDE") @db.VarChar(12) // OVERRIDE | ADD | HIDE
+  workers     Int      @default(0)
+  professions Json? // string[] shown in the tooltip ("LKW-Fahrer", "Lager")
+  lat         Float?
+  lng         Float?
+  note        String?  @db.VarChar(300) // internal
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+enum InfoEventMode {
+  ONLINE
+  OFFLINE
+}
+
+enum InfoEventStatus {
+  DRAFT
+  PUBLISHED
+  CANCELLED
+}
+
+enum InfoEventAttendance {
+  REGISTERED
+  CHECKED_IN
+  NO_SHOW
+}
+
+/// Webinars / info sessions (Admin → Tədbirlər, public /events).
+model InfoEvent {
+  id             String                  @id @default(cuid())
+  slug           String                  @unique @db.VarChar(120)
+  title          Json // L10n
+  description    Json // L10n
+  mode           InfoEventMode           @default(ONLINE)
+  meetingUrl     String?                 @db.Text // online: Jitsi room (generated like consultations)
+  address        String?                 @db.Text // offline: e.g. the Baku office
+  startsAt       DateTime
+  endsAt         DateTime
+  capacity       Int? // null = unlimited
+  language       String                  @default("az") @db.VarChar(8) // az | de | en | ru
+  status         InfoEventStatus         @default(DRAFT)
+  followUpNote   Json? // optional L10n paragraph added to the post-event follow-up email
+  followUpSentAt DateTime?
+  createdById    String? // plain id (staff)
+  createdAt      DateTime                @default(now())
+  updatedAt      DateTime                @updatedAt
+  registrations  InfoEventRegistration[]
+
+  @@index([status, startsAt])
+}
+
+model InfoEventRegistration {
+  id             String              @id @default(cuid())
+  eventId        String
+  event          InfoEvent           @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  name           String              @db.VarChar(120)
+  email          String              @db.VarChar(200)
+  phone          String?             @db.VarChar(40)
+  locale         String              @default("az") @db.VarChar(8)
+  attendance     InfoEventAttendance @default(REGISTERED)
+  checkedInAt    DateTime?
+  markedById     String? // plain id (staff who marked attendance)
+  inquiryId      String? // lead created (or the existing one it matched)
+  consentAt      DateTime            @default(now())
+  followUpSentAt DateTime?
+  createdAt      DateTime            @default(now())
+
+  @@unique([eventId, email])
+  @@index([eventId, attendance])
+}
+
+/// Client referral programme ("Dostunu gətir"): one personal code per CLIENT. Separate from the B2B agent
+/// programme (Agent.code); when a sign-up carries an agent code the agent attribution wins.
+model ClientReferralCode {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation("ReferralCodeOwner", fields: [userId], references: [id], onDelete: Cascade)
+  code      String   @unique @db.VarChar(16)
+  createdAt DateTime @default(now())
+}
+
+enum ReferralStage {
+  REGISTERED
+  CASE_OPENED
+  VISA_APPROVED
+  BLOCKED // anti-fraud: self-referral (same e-mail / phone / passport)
+}
+
+enum ReferralRewardStatus {
+  PENDING
+  EARNED
+  PAID // payout made
+  USED // used as a discount
+  CANCELLED
+}
+
+model ClientReferral {
+  id            String          @id @default(cuid())
+  referrerId    String
+  referrer      User            @relation("ReferralReferrer", fields: [referrerId], references: [id], onDelete: Cascade)
+  referredId    String          @unique // one attribution (and so one reward) per referred client
+  referred      User            @relation("ReferralReferred", fields: [referredId], references: [id], onDelete: Cascade)
+  code          String          @db.VarChar(16)
+  stage         ReferralStage   @default(REGISTERED)
+  blockedReason String?         @db.VarChar(40) // SAME_EMAIL | SAME_PHONE | SAME_PASSPORT
+  caseOpenedAt  DateTime?
+  approvedAt    DateTime?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  reward        ReferralReward?
+
+  @@index([referrerId])
+}
+
+model ReferralReward {
+  id          String               @id @default(cuid())
+  referralId  String               @unique
+  referral    ClientReferral       @relation(fields: [referralId], references: [id], onDelete: Cascade)
+  referrerId  String // plain id (= referral.referrerId), for the ledger queries
+  kind        String               @default("DISCOUNT") @db.VarChar(12) // DISCOUNT | PAYOUT (rule at creation)
+  trigger     String               @default("VISA_APPROVED") @db.VarChar(16) // CASE_OPENED | VISA_APPROVED
+  amount      Int // whole currency units
+  currency    String               @default("AZN") @db.VarChar(3)
+  status      ReferralRewardStatus @default(PENDING)
+  earnedAt    DateTime?
+  settledAt   DateTime?
+  settledById String? // plain id (admin)
+  note        String?              @db.VarChar(300)
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+
+  @@index([referrerId, status])
+  @@index([status])
+}
+
+// ─── Family members (Familiennachzug) + German language progress ─────
+
+enum FamilyRelation {
+  SPOUSE
+  CHILD
+  PARENT
+  OTHER
+}
+
+enum FamilyJoinsWhen {
+  WITH_MAIN // travels together with the main applicant
+  LATER // follows later (separate appointment)
+}
+
+/// Personal details of a family member of a main applicant's case. The member's own visa application
+/// is a linked sub-case (Case.parentCaseId / Case.relation): its requirements, uploads, review, AI checks,
+/// VIDEX and embassy package are the normal case flows. Status = the member case's status.
+model FamilyMember {
+  id                String          @id @default(cuid())
+  mainCaseId        String
+  mainCase          Case            @relation("FamilyMemberMain", fields: [mainCaseId], references: [id], onDelete: Cascade)
+  memberCaseId      String          @unique
+  memberCase        Case            @relation("FamilyMemberCase", fields: [memberCaseId], references: [id], onDelete: Cascade)
+  relation          FamilyRelation
+  firstName         String          @db.VarChar(80) // as in the passport (Latin)
+  lastName          String          @db.VarChar(80)
+  birthDate         DateTime?
+  birthPlace        String?         @db.VarChar(120) // sensitive (BIRTH_PLACE mask group)
+  sex               String?         @db.VarChar(1) // M | F | X
+  nationality       String?         @db.VarChar(60)
+  passportNumber    String?         @db.VarChar(40) // sensitive (PASSPORT mask group)
+  passportIssuedAt  DateTime?
+  passportExpiresAt DateTime?
+  email             String?         @db.VarChar(190)
+  joinsWhen         FamilyJoinsWhen @default(WITH_MAIN)
+  plannedEntryAt    DateTime?
+  /// Spouse: German A1 not required (exception, e.g. main applicant holds a Blue Card / ICT, EU-Daueraufenthalt …).
+  germanExempt      Boolean         @default(false)
+  germanExemptNote  String?         @db.VarChar(300)
+  notes             String?         @db.Text
+  createdById       String? // plain id (staff or the client)
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  @@index([mainCaseId])
+}
+
+enum GermanCourseStatus {
+  PLANNED
+  ACTIVE
+  COMPLETED
+  CANCELLED
+}
+
+enum GermanExamProvider {
+  GOETHE
+  TELC
+  OESD
+  TESTDAF
+  OTHER
+}
+
+enum GermanExamStatus {
+  PLANNED // the candidate intends to take it
+  REGISTERED // registered with the provider
+  TAKEN // written, result outstanding
+  PASSED
+  FAILED
+  CANCELLED
+}
+
+/// The candidate's language goal. The CURRENT level is User.germanLevel (single source of truth, used by
+/// matching and vacancies); it is raised automatically when staff accept a language certificate.
+model GermanPlan {
+  id          String    @id @default(cuid())
+  userId      String    @unique
+  user        User      @relation("GermanPlanUser", fields: [userId], references: [id], onDelete: Cascade)
+  targetLevel String?   @db.VarChar(4) // A1 … C2
+  targetDate  DateTime?
+  notes       String?   @db.Text
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model GermanCourse {
+  id              String             @id @default(cuid())
+  userId          String
+  user            User               @relation("GermanCourseUser", fields: [userId], references: [id], onDelete: Cascade)
+  school          String             @db.VarChar(160)
+  level           String             @db.VarChar(4) // A1 … C2
+  startsAt        DateTime?
+  endsAt          DateTime?
+  schedule        String?            @db.VarChar(200) // "Mo–Fr 09:00–13:00"
+  format          String?            @db.VarChar(10) // online | offline | hybrid
+  status          GermanCourseStatus @default(PLANNED)
+  catalogCourseId String? // plain id of a LanguageCourse (catalogue) the course was picked from
+  notes           String?            @db.Text
+  createdById     String?
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+
+  @@index([userId])
+  @@index([startsAt])
+}
+
+/// Upcoming exam dates entered by admins (Admin → İmtahan tarixləri); clients pick one for their exam.
+model GermanExamDate {
+  id                   String             @id @default(cuid())
+  provider             GermanExamProvider
+  level                String?            @db.VarChar(4)
+  city                 String             @default("Baku") @db.VarChar(80)
+  location             String?            @db.VarChar(200)
+  examDate             DateTime
+  registrationDeadline DateTime?
+  link                 String?            @db.Text
+  notes                String?            @db.VarChar(500)
+  published            Boolean            @default(true)
+  createdById          String?
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+  exams                GermanExam[]
+
+  @@index([examDate])
+}
+
+model GermanExam {
+  id                    String             @id @default(cuid())
+  userId                String
+  user                  User               @relation("GermanExamUser", fields: [userId], references: [id], onDelete: Cascade)
+  provider              GermanExamProvider
+  level                 String             @db.VarChar(4)
+  examDateId            String?
+  examDateRef           GermanExamDate?    @relation(fields: [examDateId], references: [id], onDelete: SetNull)
+  examDate              DateTime?
+  location              String?            @db.VarChar(200)
+  registrationDeadline  DateTime?
+  registeredAt          DateTime?
+  status                GermanExamStatus   @default(PLANNED)
+  /// Per module: { LESEN|HOEREN|SCHREIBEN|SPRECHEN: { score, max, passed } }
+  results               Json?
+  passed                Boolean? // overall result
+  /// Case document holding the certificate (plain id; the document lives in the client's case).
+  certificateDocumentId String?
+  notes                 String?            @db.Text
+  createdById           String?
+  createdAt             DateTime           @default(now())
+  updatedAt             DateTime           @updatedAt
+
+  @@index([userId])
+  @@index([examDate])
+  @@index([registrationDeadline])
+  @@index([certificateDocumentId])
+}
+
+// ─── Staff time tracking, post-arrival check-ins, client access log ─────
+
+enum TimeActivity {
+  DOCUMENTS
+  CLIENT_COMMUNICATION
+  EMPLOYER_COMMUNICATION
+  TRANSLATION
+  EMBASSY
+  OTHER
+}
+
+/// Staff time on a case (lib/timeTracking): a running timer (endedAt = null) or a finished timer / manual entry.
+model TimeEntry {
+  id           String       @id @default(cuid())
+  userId       String
+  user         User         @relation("TimeEntryUser", fields: [userId], references: [id], onDelete: Cascade)
+  caseId       String?
+  case         Case?        @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  /// Optional link to a team task (plain id: the entry stays when the task is deleted).
+  taskId       String?
+  activity     TimeActivity @default(OTHER)
+  note         String?      @db.VarChar(1000)
+  source       String       @default("TIMER") @db.VarChar(10) // TIMER | MANUAL
+  startedAt    DateTime
+  endedAt      DateTime?
+  minutes      Int          @default(0)
+  /// = userId while the timer runs, null once stopped: at most one running timer per staff member.
+  runningKey   String?      @unique @db.VarChar(64)
+  /// "Still working?" prompt sent (timer running > 10 h).
+  idleWarnedAt DateTime?
+  autoStopped  Boolean      @default(false)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  @@index([userId, startedAt])
+  @@index([caseId, startedAt])
+  @@index([taskId])
+}
+
+/// Hourly labour cost of a staff member from a date on (EUR cents; SUPER_ADMIN only). Plain ids.
+model StaffCostRate {
+  id            String   @id @default(cuid())
+  userId        String
+  centsPerHour  Int
+  effectiveFrom DateTime @db.Date
+  createdById   String?
+  createdAt     DateTime @default(now())
+
+  @@unique([userId, effectiveFrom])
+}
+
+enum CheckInAudience {
+  WORKER
+  EMPLOYER
+}
+
+enum CheckInAnswer {
+  OK
+  ISSUE
+}
+
+/// Follow-up of a worker who arrived in Germany (one per case): arrival date + employment (retention).
+model ArrivalFollowUp {
+  id             String           @id @default(cuid())
+  caseId         String           @unique
+  case           Case             @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  clientId       String
+  companyId      String?
+  arrivedAt      DateTime
+  leftJobAt      DateTime?
+  leftReason     String?          @db.VarChar(40)
+  leftNote       String?          @db.VarChar(1000)
+  leftMarkedById String?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  checkIns       ArrivalCheckIn[]
+
+  @@index([arrivedAt])
+}
+
+/// One post-arrival check-in (+7 / +30 / +90 days) to the worker, or the employer's short check-in.
+model ArrivalCheckIn {
+  id           String          @id @default(cuid())
+  followUpId   String
+  followUp     ArrivalFollowUp @relation(fields: [followUpId], references: [id], onDelete: Cascade)
+  caseId       String
+  audience     CheckInAudience
+  offsetDays   Int
+  dueAt        DateTime
+  sentAt       DateTime?
+  /// sha256 of the link token (answer from the e-mail without logging in).
+  tokenHash    String          @unique @db.Char(64)
+  answer       CheckInAnswer?
+  topics       Json?
+  comment      String?         @db.Text
+  answeredAt   DateTime?
+  answeredById String?
+  taskId       String?
+  resolvedAt   DateTime?
+  resolvedById String?
+  createdAt    DateTime        @default(now())
+
+  @@unique([followUpId, audience, offsetDays])
+  @@index([caseId])
+  @@index([answer, resolvedAt])
+}
+
+/// Staff previews / downloads of a client's documents (aggregated per 10 minutes) — "who viewed my documents".
+model DocumentAccessLog {
+  id         String   @id @default(cuid())
+  clientId   String
+  actorId    String?
+  actorRole  String?  @db.VarChar(16)
+  documentId String?
+  caseId     String?
+  action     String   @db.VarChar(16) // VIEW | DOWNLOAD
+  source     String   @db.VarChar(16) // FILES | DRIVE
+  name       String   @db.VarChar(255)
+  count      Int      @default(1)
+  firstAt    DateTime @default(now())
+  lastAt     DateTime @default(now())
+
+  @@index([clientId, lastAt])
+  @@index([actorId, documentId, action, lastAt])
+}
+
+// ─── Phone calls, callback requests, AI → human live chat (stream: calls_livechat) ───
+// Plain ids (no foreign keys): calls outlive deleted users / inquiries as a log; staff, client, case and
+// inquiry are resolved by the routes. Provider settings live in Setting 'calls' (secrets sealed with secretBox).
+
+enum CallDirection {
+  OUTBOUND
+  INBOUND
+}
+
+enum CallStatus {
+  QUEUED
+  RINGING_STAFF
+  RINGING
+  IN_PROGRESS
+  COMPLETED
+  BUSY
+  NO_ANSWER
+  FAILED
+  CANCELED
+}
+
+enum CallOutcome {
+  REACHED
+  NO_ANSWER
+  WRONG_NUMBER
+  CALL_BACK
+}
+
+model Call {
+  id             String        @id @default(cuid())
+  /// twilio | sipgate | fake | manual (logged by hand, no provider)
+  provider       String        @db.VarChar(16)
+  /// Twilio CallSid of the first leg / sipgate sessionId
+  providerCallId String?       @db.VarChar(80)
+  /// second identifier from webhooks (Twilio child leg CallSid, sipgate push callId)
+  providerLegId  String?       @db.VarChar(80)
+  direction      CallDirection
+  fromNumber     String        @db.VarChar(40)
+  toNumber       String        @db.VarChar(40)
+  staffId        String?
+  clientId       String?
+  caseId         String?
+  inquiryId      String?
+  callbackId     String?
+  liveChatId     String?
+  status         CallStatus    @default(QUEUED)
+  startedAt      DateTime      @default(now())
+  answeredAt     DateTime?
+  endedAt        DateTime?
+  durationSec    Int?
+  recorded       Boolean       @default(false)
+  /// provider recording reference (Twilio RecordingSid); played through the API only
+  recordingKey   String?       @db.VarChar(200)
+  transcript     String?       @db.Text
+  summary        String?       @db.Text
+  /// [{ title, dueInDays }] extracted by the AI summary
+  followUps      Json?
+  outcome        CallOutcome?
+  note           String?       @db.Text
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  @@index([providerCallId])
+  @@index([providerLegId])
+  @@index([clientId, startedAt])
+  @@index([caseId, startedAt])
+  @@index([inquiryId])
+  @@index([staffId, startedAt])
+  @@index([callbackId])
+}
+
+enum CallbackStatus {
+  PENDING
+  DONE
+  CANCELLED
+}
+
+model CallbackRequest {
+  id          String         @id @default(cuid())
+  name        String         @db.VarChar(120)
+  phone       String         @db.VarChar(40)
+  email       String?        @db.VarChar(200)
+  locale      String         @db.VarChar(2)
+  topic       String?        @db.VarChar(40)
+  message     String?        @db.Text
+  asap        Boolean        @default(false)
+  windowStart DateTime
+  windowEnd   DateTime
+  /// contact | footer | advisor | portal | livechat
+  source      String         @db.VarChar(16)
+  clientId    String?
+  inquiryId   String?
+  taskId      String?
+  assigneeIds Json?
+  status      CallbackStatus @default(PENDING)
+  outcome     CallOutcome?
+  note        String?        @db.Text
+  callId      String?
+  remindedAt  DateTime?
+  doneAt      DateTime?
+  doneById    String?
+  createdAt   DateTime       @default(now())
+
+  @@index([status, windowStart])
+  @@index([clientId])
+}
+
+enum LiveChatStatus {
+  WAITING
+  ACTIVE
+  CLOSED
+  MISSED
+}
+
+model LiveChat {
+  id            String            @id @default(cuid())
+  status        LiveChatStatus    @default(WAITING)
+  locale        String            @db.VarChar(2)
+  visitorName   String?           @db.VarChar(120)
+  visitorEmail  String?           @db.VarChar(200)
+  visitorPhone  String?           @db.VarChar(40)
+  /// AI advisor turns before the handover: [{ role, content }]
+  transcript    Json?
+  pageUrl       String?           @db.VarChar(300)
+  reason        String?           @db.VarChar(20)
+  staffId       String?
+  clientId      String?
+  inquiryId     String?
+  callbackId    String?
+  acceptedAt    DateTime?
+  closedAt      DateTime?
+  lastVisitorAt DateTime?
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+  messages      LiveChatMessage[]
+
+  @@index([status, createdAt])
+  @@index([staffId, status])
+}
+
+model LiveChatMessage {
+  id        String   @id @default(cuid())
+  chatId    String
+  chat      LiveChat @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  /// VISITOR | STAFF | SYSTEM
+  author    String   @db.VarChar(8)
+  staffId   String?
+  body      String   @db.Text
+  createdAt DateTime @default(now())
+
+  @@index([chatId, createdAt])
+}
+
+// ─── Site: installable app (web push), public status check, problem reports ─────────
+
+/// A browser's Web Push subscription (PWA) of a logged-in user. Plain user id (no relation): removed on
+/// logout, with the account (lib/userDeletion.ts) and when the push service answers 404/410.
+model WebPushSubscription {
+  id           String   @id @default(cuid())
+  /// sha256 of the endpoint (endpoints are too long for a unique index).
+  endpointHash String   @unique @db.Char(64)
+  endpoint     String   @db.Text
+  p256dh       String   @db.VarChar(200)
+  auth         String   @db.VarChar(64)
+  userId       String
+  userAgent    String?  @db.VarChar(300)
+  lastError    String?  @db.VarChar(200)
+  createdAt    DateTime @default(now())
+  lastSeenAt   DateTime @default(now())
+
+  @@index([userId])
+}
+
+/// Public status check (/status) of one case: off until the client turns it on in the portal privacy settings.
+/// Plain case id (rows are removed with the client account, lib/userDeletion.ts).
+model CasePublicStatus {
+  caseId         String    @id
+  enabled        Boolean   @default(false)
+  /// "For my family" link: sha256 of the random token (the token itself is only shown once).
+  tokenHash      String?   @unique @db.Char(64)
+  tokenCreatedAt DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+}
+
+/// One public status lookup: counts towards the lockout (5 wrong tries per hour per case number / IP) and is the audit trail.
+model PublicStatusAttempt {
+  id         String   @id @default(cuid())
+  caseNumber String   @db.VarChar(40)
+  ipHash     String   @db.Char(64)
+  success    Boolean
+  via        String   @db.VarChar(10) // DOB | LINK
+  createdAt  DateTime @default(now())
+
+  @@index([caseNumber, createdAt])
+  @@index([ipHash, createdAt])
+}
+
+enum ProblemReportStatus {
+  NEW
+  IN_PROGRESS
+  DONE
+  WONT_FIX
+}
+
+/// "Problem bildir": a bug report from any page (visitors too), with the diagnostics the browser collected.
+model ProblemReport {
+  id            String              @id @default(cuid())
+  status        ProblemReportStatus @default(NEW)
+  message       String              @db.Text
+  pageUrl       String              @db.VarChar(500)
+  appVersion    String?             @db.VarChar(40)
+  userAgent     String?             @db.VarChar(400)
+  platform      String?             @db.VarChar(100)
+  screen        String?             @db.VarChar(40)
+  language      String?             @db.VarChar(10)
+  /// Last client-side console errors (ring buffer, at most 20 short strings).
+  consoleErrors Json?
+  /// Last failed API call: { method, url, status, code, at }.
+  lastApiError  Json?
+  /// Reporter (plain ids; anonymous visitors leave an optional e-mail for the answer).
+  userId        String?
+  userRole      String?             @db.VarChar(20)
+  contactEmail  String?             @db.VarChar(200)
+  ipHash        String              @db.Char(64)
+  /// Attached image (re-encoded, metadata stripped) under uploads/private/problem-reports/.
+  imageFile     String?             @db.VarChar(120)
+  imageMime     String?             @db.VarChar(40)
+  /// Team task created for the report (plain id).
+  taskId        String?
+  /// Answers sent to the reporter: [{ at, byId, byName, message, channel }].
+  replies       Json?
+  internalNote  String?             @db.Text
+  resolvedAt    DateTime?
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+
+  @@index([status, createdAt])
+  @@index([userId])
+  @@index([ipHash, createdAt])
+}
+
+// ─── Messaging plus: automatic translation, three-party threads, voice messages ─────
+
+/// Cached machine translation of one message into one reader language (lib/messagingPlus/translate.ts).
+/// sourceHash = hash of the text that was translated (body or voice transcript); a change re-translates.
+model MessageTranslation {
+  id             String              @id @default(cuid())
+  caseMessageId  String?
+  caseMessage    CaseMessage?        @relation(fields: [caseMessageId], references: [id], onDelete: Cascade)
+  partyMessageId String?
+  partyMessage   PartyThreadMessage? @relation(fields: [partyMessageId], references: [id], onDelete: Cascade)
+  lang           Locale
+  sourceHash     String              @db.VarChar(64)
+  text           String              @db.Text
+  model          String?             @db.VarChar(120)
+  createdAt      DateTime            @default(now())
+
+  @@unique([caseMessageId, lang])
+  @@unique([partyMessageId, lang])
+}
+
+enum PartyThreadStatus {
+  OPEN
+  CLOSED
+}
+
+enum PartySide {
+  CANDIDATE
+  COMPANY
+  STAFF
+}
+
+enum PartyMessageStatus {
+  VISIBLE
+  HELD // contact details / voice under staff review: only the author and staff see it
+  REJECTED // staff declined a held message: only the author (marked) and staff see it
+  HIDDEN // hidden by staff: staff only
+  DELETED // content removed by staff
+}
+
+/// Moderated group thread candidate + employer + Triad Vision, per vacancy application or per case linked to a company.
+model PartyThread {
+  id            String               @id @default(cuid())
+  applicationId String?              @unique
+  application   VacancyApplication?  @relation("PartyThreadApplication", fields: [applicationId], references: [id], onDelete: Cascade)
+  caseId        String?              @unique
+  case          Case?                @relation("PartyThreadCase", fields: [caseId], references: [id], onDelete: Cascade)
+  companyId     String
+  company       Company              @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  candidateId   String
+  candidate     User                 @relation("PartyThreadCandidate", fields: [candidateId], references: [id], onDelete: Cascade)
+  status        PartyThreadStatus    @default(OPEN)
+  /// The candidate sees the employer's name (default: the vacancy's showCompany).
+  showCompany   Boolean              @default(false)
+  /// Pinned topics: [{ id, topic: INTERVIEW_TIME | START_DATE | ACCOMMODATION | OTHER, text, at, byId }]
+  pins          Json?
+  createdById   String?
+  createdBy     User?                @relation("PartyThreadCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  closedAt      DateTime?
+  lastMessageAt DateTime?
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
+  members       PartyThreadMember[]
+  messages      PartyThreadMessage[]
+
+  @@index([companyId])
+  @@index([candidateId])
+  @@index([status, lastMessageAt])
+}
+
+/// Participant state: staff and the candidate are added when the thread opens; employer users on first visit.
+model PartyThreadMember {
+  id         String      @id @default(cuid())
+  threadId   String
+  thread     PartyThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  userId     String
+  user       User        @relation("PartyThreadMemberUser", fields: [userId], references: [id], onDelete: Cascade)
+  side       PartySide
+  lastReadAt DateTime?
+  notifiedAt DateTime?
+  createdAt  DateTime    @default(now())
+
+  @@unique([threadId, userId])
+  @@index([userId])
+}
+
+model PartyThreadMessage {
+  id           String               @id @default(cuid())
+  threadId     String
+  thread       PartyThread          @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  authorId     String
+  author       User                 @relation("PartyThreadMessageAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  side         PartySide
+  body         String               @db.Text
+  lang         Locale?
+  voiceId      String?              @unique
+  voice        VoiceClip?           @relation("PartyMessageVoice", fields: [voiceId], references: [id], onDelete: SetNull)
+  status       PartyMessageStatus   @default(VISIBLE)
+  holdReason   String?              @db.VarChar(40) // CONTACT_DETAILS | VOICE_REVIEW
+  reviewedById String?
+  reviewedAt   DateTime?
+  createdAt    DateTime             @default(now())
+  translations MessageTranslation[]
+
+  @@index([threadId, createdAt])
+  @@index([status])
+}
+
+/// Voice message audio (private upload) + transcript (lib/messagingPlus/voice.ts).
+model VoiceClip {
+  id               String              @id @default(cuid())
+  uploaderId       String
+  uploader         User                @relation("VoiceClipUploader", fields: [uploaderId], references: [id], onDelete: Cascade)
+  storedName       String              @db.VarChar(160)
+  mimeType         String              @db.VarChar(60)
+  size             Int
+  durationMs       Int
+  /// PENDING | DONE | EMPTY | FAILED | NOT_CONFIGURED
+  transcriptStatus String              @default("PENDING") @db.VarChar(20)
+  transcript       String?             @db.Text
+  transcriptLang   Locale?
+  transcriptError  String?             @db.VarChar(120)
+  createdAt        DateTime            @default(now())
+  caseMessage      CaseMessage?        @relation("CaseMessageVoice")
+  partyMessage     PartyThreadMessage? @relation("PartyMessageVoice")
+}
+
+// ─── Client data: smart questionnaires, data confirmation, document guides (lib/clientData) ───
+
+enum CaseFormStatus {
+  SENT
+  DRAFT
+  SUBMITTED
+  APPLIED
+  CANCELLED
+}
+
+enum DataConfirmationStatus {
+  PENDING
+  SUBMITTED
+  CONFIRMED
+  CANCELLED
+}
+
+/// Questionnaire template ("Ağıllı anket"). Built-in ones carry a key and are created on first use;
+/// admins edit them or build their own in the form builder (fields: lib/clientData/formSchema.ts).
+model CaseFormTemplate {
+  id          String     @id @default(cuid())
+  key         String?    @unique @db.VarChar(60)
+  title       Json
+  description Json?
+  fields      Json
+  active      Boolean    @default(true)
+  builtIn     Boolean    @default(false)
+  sortOrder   Int        @default(0)
+  createdById String?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  forms       CaseForm[]
+}
+
+/// A questionnaire sent to the client of one case (title + fields copied at send time).
+model CaseForm {
+  id          String            @id @default(cuid())
+  caseId      String
+  case        Case              @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  templateId  String?
+  template    CaseFormTemplate? @relation(fields: [templateId], references: [id], onDelete: SetNull)
+  title       Json
+  fields      Json
+  answers     Json?
+  status      CaseFormStatus    @default(SENT)
+  note        String?           @db.Text
+  dueAt       DateTime?
+  sentById    String?
+  sentAt      DateTime          @default(now())
+  draftAt     DateTime?
+  submittedAt DateTime?
+  submitIp    String?           @db.VarChar(64)
+  appliedAt   DateTime?
+  appliedById String?
+  /// [{ target, field, before, after }] of every "Apply to profile"
+  applied     Json?
+  remindedAt  DateTime?
+  reminders   Int               @default(0)
+
+  @@index([caseId, status])
+  @@index([status, sentAt])
+  @@index([templateId])
+}
+
+/// "Client confirms their data" before the embassy: the values asked (snapshot), the client's answers
+/// (ok / correction + proof), staff decisions and the confirmed snapshot with time, IP and user agent.
+model DataConfirmation {
+  id              String                 @id @default(cuid())
+  caseId          String
+  case            Case                   @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  status          DataConfirmationStatus @default(PENDING)
+  fields          Json
+  answers         Json?
+  decisions       Json?
+  snapshot        Json?
+  requestedById   String?
+  requestedAt     DateTime               @default(now())
+  submittedAt     DateTime?
+  submitIp        String?                @db.VarChar(64)
+  submitUserAgent String?                @db.Text
+  reviewedAt      DateTime?
+  reviewedById    String?
+  remindedAt      DateTime?
+  reminders       Int                    @default(0)
+
+  @@index([caseId, requestedAt])
+  @@index([status, requestedAt])
+}
+
+/// VIDEX values provided by the client (applied questionnaire answers, accepted corrections), keyed by the
+/// VIDEX field key; mapVidex uses them before every other source.
+model CaseDataValue {
+  id          String   @id @default(cuid())
+  caseId      String
+  case        Case     @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  key         String   @db.VarChar(60)
+  value       String   @db.Text
+  source      String   @db.VarChar(20) // form | confirmation
+  sourceId    String?
+  updatedById String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([caseId, key])
+}
+
+/// "Necə almalı?" guide per requirement key (4 languages, sample image, links); built-in drafts until saved.
+model DocumentGuide {
+  id          String   @id @default(cuid())
+  key         String   @unique @db.VarChar(40)
+  content     Json
+  links       Json?
+  sampleImage String?  @db.VarChar(300)
+  verified    Boolean  @default(false)
+  published   Boolean  @default(true)
+  updatedById String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }

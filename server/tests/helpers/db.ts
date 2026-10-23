@@ -5,6 +5,27 @@ export { prisma };
 
 /** Deletes all rows, children before parents so foreign keys are never violated. */
 export const resetDb = async () => {
+  // German exam dates (admin list, no user FK; candidates' exams / courses / plans cascade with the user)
+  await prisma.germanExamDate.deleteMany();
+  // Client data: templates and guides have no case (forms, confirmations, values cascade with the case)
+  await prisma.caseForm.deleteMany();
+  await prisma.caseFormTemplate.deleteMany();
+  await prisma.documentGuide.deleteMany();
+  // Time tracking, post-arrival check-ins, client access log (plain ids / cascades)
+  await prisma.timeEntry.deleteMany();
+  await prisma.staffCostRate.deleteMany();
+  await prisma.arrivalCheckIn.deleteMany();
+  await prisma.arrivalFollowUp.deleteMany();
+  await prisma.documentAccessLog.deleteMany();
+  // Calls, callback requests, live chat (plain ids; messages cascade with the chat)
+  await prisma.call.deleteMany();
+  await prisma.callbackRequest.deleteMany();
+  await prisma.liveChat.deleteMany();
+  // Site features: web push, public status check, problem reports (plain ids, no dependants)
+  await prisma.webPushSubscription.deleteMany();
+  await prisma.casePublicStatus.deleteMany();
+  await prisma.publicStatusAttempt.deleteMany();
+  await prisma.problemReport.deleteMany();
   // Automation rules + automatic assignment (plain ids, no dependants)
   await prisma.automationStep.deleteMany();
   await prisma.automationRun.deleteMany();
@@ -93,11 +114,14 @@ export const resetDb = async () => {
   await prisma.signatureSigner.deleteMany();
   await prisma.signatureRequest.deleteMany();
   // Team tasks (children first; before cases, users and drive nodes)
+  await prisma.clientTask.deleteMany(); // client tasks (cascade with the case; explicit for clarity)
   await prisma.taskAttachment.deleteMany();
   await prisma.taskChecklistItem.deleteMany();
   await prisma.taskComment.deleteMany();
   await prisma.taskAssignee.deleteMany();
   await prisma.task.deleteMany();
+  await prisma.infoEvent.deleteMany(); // info sessions (registrations cascade); client referrals cascade with the users
+  await prisma.placementMapEntry.deleteMany();
   await prisma.reminderLog.deleteMany();
   await prisma.analyticsDaily.deleteMany();
   await prisma.review.deleteMany();

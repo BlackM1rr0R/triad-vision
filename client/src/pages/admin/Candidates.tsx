@@ -19,6 +19,7 @@ import { fmtDate, fullName } from '@/components/admin/labels';
 import { DefRow, EmptyState, ErrorBlock, LoadingBlock, PageHead, Panel } from '@/components/admin/ui';
 import { ScorePill } from '@/components/jobs/MatchMeter';
 import { CandidateProfileCard } from '@/components/aiEmployer/CandidateProfileCard';
+import { PartyThreadButton, PartyThreadFromQuery } from '@/components/messagingPlus/PartyThread';
 import { toastJobsError, useJobLabels } from '@/components/jobs/labels';
 import { APPLICATION_STATUS_TONE, EDUCATION_LEVELS, GERMAN_LEVELS, type ApplicationStatus, type Match, type VacancyStatus } from '@/components/jobs/types';
 
@@ -269,6 +270,8 @@ const ApplicationCard = ({ a, userId, onChanged }: { a: CandidateDetail['applica
       <div className="mt-3">
         <CandidateProfileCard userId={userId} applicationId={a.id} canPropose={!!a.vacancy.company && a.status !== 'WITHDRAWN'} onChanged={onChanged} />
       </div>
+      {/* Messaging plus: moderated candidate + employer + Triad Vision thread (from PROPOSED on). */}
+      {!!a.vacancy.company && ['PROPOSED', 'INTERVIEW', 'ACCEPTED'].includes(a.status) && <PartyThreadButton applicationId={a.id} className="mt-3 mr-2" />}
       {a.status === 'ACCEPTED' && (
         <button type="button" className="btn-primary btn-sm mt-3" disabled={linkCase.isPending} onClick={() => linkCase.mutate()}>
           {linkCase.isPending ? <Spinner className="size-3.5" /> : <FolderPlus className="size-3.5" />} {t('jobsArea.admin.candidates.createCase')}
@@ -565,6 +568,7 @@ export default function AdminCandidates() {
       )}
 
       <CandidateDrawer id={openId} onClose={() => setParam('id', null)} onAdd={(id) => setAddFor(id)} />
+      <PartyThreadFromQuery />
       <AddToVacancyModal userId={addFor} presetVacancy={filters.vacancyId || undefined} onClose={() => setAddFor(null)} />
     </div>
   );

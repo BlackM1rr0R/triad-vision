@@ -14,6 +14,7 @@ import { useTask, useTaskActions } from './api';
 import { DueChip, RichText, Skeleton } from './bits';
 import { AssigneeField, CaseField, DateTimeField, PriorityPicker, StatusSelect } from './pickers';
 import { Checklist } from './Checklist';
+import { TimerButton } from '@/components/timeCare/TimerButton'; // time tracking: task ↔ time entry
 import { Attachments } from './Attachments';
 import { CommentEditor, Timeline } from './Comments';
 import { DEFAULT_DUE_TIME, errorText, fmtDayTime, fromInputs, fullName, toDateInput, toTimeInput } from './utils';
@@ -239,6 +240,7 @@ const PanelBody = ({
         <span className="rounded-md bg-surface px-2 py-1 font-mono text-xs font-bold text-muted ring-1 ring-line">{task.key}</span>
         <DueChip dueAt={task.dueAt} status={task.status} />
         <div className="ml-auto flex items-center gap-1">
+          <TimerButton taskId={task.id} caseId={task.case?.id ?? null} compact />
           <button type="button" onClick={() => void copyLink()} className="grid size-9 place-items-center rounded-lg text-muted hover:bg-surface hover:text-ink" title={t('tasks.actions.copyLink')} aria-label={t('tasks.actions.copyLink')}>
             <LinkIcon className="size-4" />
           </button>

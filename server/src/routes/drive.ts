@@ -31,6 +31,7 @@ import { findDuplicates, hashFile, hashStored } from '../lib/drive/org/hash.js';
 import { assertNoFinalInside } from '../lib/drive/org/final.js';
 import { autoNameFor, caseOfChain } from '../lib/drive/org/naming.js';
 import { driveOrgRouter } from './driveOrg.js';
+import { logDriveDocumentAccess } from '../lib/privacy/accessLog.js'; // client access log
 import { prepareDriveFile, publicQuality, scheduleUploadAnalysis } from '../lib/uploadAi/index.js';
 
 /**
@@ -510,12 +511,13 @@ driveRouter.get('/nodes/:id/content', async (req, res) => {
   const download = wantsDownload(req);
   const { node, level } = await requireNode(ctx, id, 'VIEW');
   if (node.kind !== 'FILE') throw badRequest('NOT_A_FILE');
-  const row = await prisma.driveNode.findUniqueOrThrow({ where: { id }, select: { storageKey: true, mimeType: true, name: true } });
+  const row = await prisma.driveNode.findUniqueOrThrow({ where: { id }, select: { storageKey: true, mimeType: true, name: true, documentId: true } });
   const mime = row.mimeType ?? 'application/octet-stream';
   const inline = !download && INLINE_MIME.has(mime);
   if (!inline && !allows(level, 'DOWNLOAD')) throw new HttpError(403, 'INSUFFICIENT_ACCESS');
   // Explicit staff downloads feed the bulk-download security rule (lib/aiMgmt/security).
   if (download && hasMinRole(req.user!.role, 'STAFF')) void audit(req, 'DRIVE_DOWNLOADED', `drive:${id}`, { name: row.name });
+  if (row.documentId) void logDriveDocumentAccess(req.user, row.documentId, row.name, download ? 'DOWNLOAD' : 'VIEW'); // client access log
   sendStored(res, storagePath(row.storageKey!), row.name, mime, inline);
 });
 

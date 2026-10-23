@@ -34,9 +34,21 @@ const NextStepCard = lazy(() => import('@/components/caseNext/NextStepCard').the
 // "Possible duplicate" badge of the client (ADMIN+, own chunk).
 const DuplicateBadge = lazy(() => import('@/components/duplicates/DuplicateBadge'));
 const EmbassyPackagePanel = lazy(() => import('@/components/caseNext/EmbassyPackagePanel').then((m) => ({ default: m.EmbassyPackagePanel })));
+const CaseDataPanel = lazy(() => import('@/components/clientData/CaseDataPanel')); // questionnaires + client confirms their data
 const CaseProfitCard = lazy(() => import('@/components/reports/CaseProfitCard'));
 // Field-level change history + one-click revert (own chunk).
 const CaseHistoryPanel = lazy(() => import('@/components/history/CaseHistoryPanel'));
+// Call log + click-to-call (own chunk).
+const CaseCallsPanel = lazy(() => import('@/components/calls/CaseCallsPanel'));
+// Family members (details, per-member checklist + review) and German progress (own chunks).
+const FamilyAdminPanel = lazy(() => import('@/components/family/FamilyAdminPanel'));
+const GermanStaffPanel = lazy(() => import('@/components/german/GermanStaffPanel'));
+// Client process: "Top kimdÉ™dir?" panel and the client's tasks (own chunks).
+const BallPanel = lazy(() => import('@/components/clientProcess/Ball').then((m) => ({ default: m.BallPanel })));
+const AdminCaseTasks = lazy(() => import('@/components/clientProcess/AdminCaseTasks'));
+// Staff time tracking ("⏱ Başlat", manual entries) and the client's access log (own chunks).
+const CaseTimePanel = lazy(() => import('@/components/timeCare/CaseTimePanel'));
+const ClientAccessLogPanel = lazy(() => import('@/components/privacy/ClientAccessLogPanel'));
 
 export default function CaseAdmin() {
   const { t } = useTranslation();
@@ -69,6 +81,9 @@ export default function CaseAdmin() {
 
       <CaseHeader key={c.id} c={c} />
       <Suspense fallback={null}>
+        <BallPanel ball={(c as CaseDetail & { ballInCourt?: import('@/components/clientProcess/api').BallInCourt | null }).ballInCourt} />
+      </Suspense>
+      <Suspense fallback={null}>
         <DuplicateBadge userId={c.client.id} className="-mt-3" />
       </Suspense>
 
@@ -95,16 +110,31 @@ export default function CaseAdmin() {
           <Suspense fallback={null}>
             <EmbassyPackagePanel key={`pkg-${c.id}`} c={c} />
           </Suspense>
+          <Suspense fallback={null}>
+            <CaseDataPanel key={`data-${c.id}`} c={c} />
+          </Suspense>
           {embassyFirst && showEmbassy && <RequirementsSection c={c} stage="EMBASSY" />}
           <RequirementsSection c={c} stage="INITIAL" />
           <ContractBox c={c} />
           <SignaturesPanel caseId={c.id} />
           {!embassyFirst && showEmbassy && <RequirementsSection c={c} stage="EMBASSY" />}
           <ClientFiles c={c} />
+          <Suspense fallback={null}>
+            <FamilyAdminPanel key={`family-${c.id}`} caseId={c.id} parentCaseId={family.parentCaseId} />
+          </Suspense>
         </div>
         <div className="min-w-0 space-y-6">
           <CaseStatsPanel stats={data.stats} />
-          <FamilyPanel caseId={c.id} parentCaseId={family.parentCaseId} />
+          <Suspense fallback={null}>
+            <CaseTimePanel key={`time-${c.id}`} caseId={c.id} />
+          </Suspense>
+          {/* Main cases: the family panel lives in the main column (FamilyAdminPanel); members keep the group links here. */}
+          {family.parentCaseId && <FamilyPanel caseId={c.id} parentCaseId={family.parentCaseId} />}
+          {!family.parentCaseId && (
+            <Suspense fallback={null}>
+              <GermanStaffPanel key={`german-${c.client.id}`} userId={c.client.id} />
+            </Suspense>
+          )}
           <Suspense fallback={null}>
             <CaseOriginalsPanel caseId={c.id} />
           </Suspense>
@@ -118,6 +148,9 @@ export default function CaseAdmin() {
               <OnboardingAdminPanel caseId={c.id} />
             </div>
           )}
+          <Suspense fallback={null}>
+            <AdminCaseTasks key={`client-tasks-${c.id}`} c={c} />
+          </Suspense>
           <div id="case-tasks" className="scroll-mt-24">
             <Suspense fallback={null}>
               <CaseTasks caseId={c.id} number={c.number} clientName={`${c.client.firstName} ${c.client.lastName}`.trim()} />
@@ -126,11 +159,21 @@ export default function CaseAdmin() {
           <div id="case-messages" className="scroll-mt-24">
             <Messages c={c} />
           </div>
+          <div id="case-calls" className="scroll-mt-24">
+            <Suspense fallback={null}>
+              <CaseCallsPanel key={`calls-${c.id}`} caseId={c.id} clientId={c.client.id} phone={c.client.phone} name={`${c.client.firstName} ${c.client.lastName}`.trim()} />
+            </Suspense>
+          </div>
           <InternalNotes c={c} />
           <Timeline c={c} />
           <Suspense fallback={null}>
             <CaseHistoryPanel key={`history-${c.id}`} caseId={c.id} clientId={c.client.id} clientName={`${c.client.firstName} ${c.client.lastName}`.trim()} />
           </Suspense>
+          {(user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN') && (
+            <Suspense fallback={null}>
+              <ClientAccessLogPanel key={`access-${c.client.id}`} clientId={c.client.id} />
+            </Suspense>
+          )}
         </div>
       </div>
     </div>

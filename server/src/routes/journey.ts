@@ -128,7 +128,7 @@ journeyRouter.get('/german/courses', async (_req, res) => {
 journeyRouter.get('/german/status', async (req, res) => {
   const user = await prisma.user.findUniqueOrThrow({ where: { id: req.user!.id }, select: { germanLevel: true } });
   const cases = await prisma.case.findMany({
-    where: { clientId: req.user!.id },
+    where: { clientId: req.user!.id, parentCaseId: null }, // the main applicant's level (family members have their own A1 item)
     orderBy: { createdAt: 'desc' },
     select: {
       id: true,

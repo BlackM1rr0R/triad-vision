@@ -558,6 +558,41 @@
         "PDF_SMALL_PAGE": "PDF səhifəsi çox kiçikdir",
         "PDF_NO_PAGES": "PDF-də səhifə yoxdur"
       }
+    },
+    "checkin": {
+      "title": "Almaniyada necəsiniz?",
+      "intro": "Salam, {{name}}! Gəlişinizdən {{days}} gün keçdi. Hər şey qaydasındadırmı?",
+      "ok": "Hər şey qaydasındadır 👍",
+      "issue": "Problem var ⚠️",
+      "topicsTitle": "Nə ilə bağlıdır?",
+      "topics": {
+        "HOUSING": "Mənzil",
+        "SALARY": "Maaş",
+        "WORKPLACE": "İş yeri",
+        "HEALTH": "Sağlamlıq",
+        "DOCUMENTS": "Sənədlər",
+        "OTHER": "Digər"
+      },
+      "comment": "Şərh (istəyə görə)",
+      "send": "Göndər",
+      "back": "Geri",
+      "thanksOk": "Təşəkkür edirik! Şadıq ki, hər şey qaydasındadır.",
+      "thanksIssue": "Mesajınızı aldıq — əməkdaşımız tezliklə sizinlə əlaqə saxlayacaq.",
+      "error": "Göndərmək alınmadı. Yenidən cəhd edin."
+    },
+    "family": {
+      "title": "Ailə üzvləri",
+      "open": "Müraciəti aç",
+      "progress": "{{accepted}}/{{required}} qəbul edilib",
+      "optional": "istəyə bağlı",
+      "upload": "Sənədləri yükləmək üçün toxunun",
+      "addOnWeb": "Yeni ailə üzvünü veb-portalda (Müraciətim → Ailə üzvləri) və ya menecerinizlə əlavə edə bilərsiniz.",
+      "relation": {
+        "spouse": "Həyat yoldaşı",
+        "child": "Uşaq",
+        "parent": "Valideyn",
+        "other": "Digər qohum"
+      }
     }
   }
 }

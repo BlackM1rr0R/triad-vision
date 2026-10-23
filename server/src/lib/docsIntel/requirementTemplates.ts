@@ -1,6 +1,7 @@
 import type { DocStage, Prisma } from '@prisma/client';
 import { prisma } from '../../db.js';
 import { stripAiFlag } from '../ai/translate.js';
+import { familyRequirementsFor } from '../family/requirements.js';
 
 type L10n = { az: string; de: string; en: string; ru: string };
 
@@ -47,7 +48,8 @@ export const requirementsFor = async (
 
 /** Creates the requirement rows of a stage for a case (used when a case is created / reaches the embassy step). */
 export const createRequirements = async (tx: Prisma.TransactionClient, caseId: string, stage: DocStage & ('INITIAL' | 'EMBASSY'), visaCategoryId: string | null | undefined) => {
-  const list = await requirementsFor(tx, stage, visaCategoryId);
+  // Family members (Familiennachzug) get their relation's own list (lib/family/requirements.ts).
+  const list = (await familyRequirementsFor(tx, caseId, stage)) ?? (await requirementsFor(tx, stage, visaCategoryId));
   await tx.documentRequirement.createMany({
     data: list.map((r) => ({ caseId, stage, key: r.key ?? null, title: r.title, description: r.description, required: r.required, sortOrder: r.sortOrder })),
   });

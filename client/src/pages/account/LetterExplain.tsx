@@ -1,4 +1,5 @@
 import { useRef, useState, type ReactNode } from 'react';
+import { compressImage } from '@/lib/imageCompress';
 import { Link } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
@@ -20,22 +21,8 @@ const TYPES = ['image/jpeg', 'image/png', 'application/pdf'];
 /** Photos are shrunk in the browser before the upload (the AI budget is small; the server cannot resize). */
 const MAX_EDGE = 2000;
 
-const downscale = async (file: File): Promise<File> => {
-  if (!file.type.startsWith('image/') || file.size < 900 * 1024) return file;
-  try {
-    const bmp = await createImageBitmap(file);
-    const scale = Math.min(1, MAX_EDGE / Math.max(bmp.width, bmp.height));
-    const canvas = document.createElement('canvas');
-    canvas.width = Math.round(bmp.width * scale);
-    canvas.height = Math.round(bmp.height * scale);
-    canvas.getContext('2d')!.drawImage(bmp, 0, 0, canvas.width, canvas.height);
-    const blob = await new Promise<Blob | null>((r) => canvas.toBlob(r, 'image/jpeg', 0.82));
-    if (!blob || blob.size >= file.size) return file;
-    return new File([blob], file.name.replace(/\.[a-z0-9]+$/i, '') + '.jpg', { type: 'image/jpeg' });
-  } catch {
-    return file;
-  }
-};
+// Shared helper (lib/imageCompress): photos from 900 KB up, long edge 2000 px, JPEG 0.82.
+const downscale = (file: File): Promise<File> => compressImage(file, { maxLongEdge: MAX_EDGE, minBytes: 900 * 1024 });
 
 const daysUntil = (iso: string) => {
   const d = new Date(`${iso}T00:00:00`);

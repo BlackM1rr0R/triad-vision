@@ -41,6 +41,19 @@ const l10nDe = (v: unknown) => {
   return t.de || t.en || t.az || '';
 };
 
+/**
+ * A family member's case belongs to the main client's account: VIDEX and the checks must use the MEMBER's
+ * person and passport data (address / phone stay the household's). Profession, education and German level
+ * of the account are the main applicant's, so they are left empty.
+ */
+const memberAsClient = <T extends { firstName: string; lastName: string; email: string; birthDate: Date | null; nationality: string | null; passportNumber: string | null; passportExpiry: Date | null; profession: string | null; germanLevel: string | null; education: string | null; experienceYears: number | null }>(
+  client: T,
+  m: { firstName: string; lastName: string; email: string | null; birthDate: Date | null; nationality: string | null; passportNumber: string | null; passportExpiresAt: Date | null } | null,
+): T =>
+  m
+    ? { ...client, firstName: m.firstName, lastName: m.lastName, email: m.email ?? client.email, birthDate: m.birthDate, nationality: m.nationality ?? client.nationality, passportNumber: m.passportNumber, passportExpiry: m.passportExpiresAt, profession: null, germanLevel: null, education: null, experienceYears: null }
+    : client;
+
 export const loadCaseContext = async (caseId: string, now = new Date()) => {
   const c = await prisma.case.findUnique({
     where: { id: caseId },
@@ -55,6 +68,7 @@ export const loadCaseContext = async (caseId: string, now = new Date()) => {
       company: { select: { id: true, name: true, legalForm: true, address: true, city: true, contactName: true, phone: true, email: true } },
       vacancy: { select: { id: true, city: true, salaryMin: true, salaryMax: true, germanLevel: true, employmentType: true, title: true } },
       arrivalPlan: { select: { flightDate: true, housingCity: true } },
+      familyProfile: true, // family member's case: the member's own names / passport (lib/family/members.ts)
       contract: { select: { fileDocumentId: true, signedDocumentId: true, version: true, sentAt: true, signedAt: true } },
       requirements: { orderBy: [{ stage: 'asc' }, { sortOrder: 'asc' }], select: { id: true, key: true, stage: true, title: true, required: true } },
       documents: {
@@ -107,7 +121,8 @@ export const loadCaseContext = async (caseId: string, now = new Date()) => {
     visaType: c.visaType,
     profession: c.profession,
     appointmentAt: isoDay(c.appointmentAt),
-    client: c.client,
+    client: memberAsClient(c.client, c.familyProfile),
+    familyMember: !!c.familyProfile,
     visaCategory: c.visaCategory ? { ...c.visaCategory, titleDe: l10nDe(c.visaCategory.title) } : null,
     company: c.company,
     vacancy: c.vacancy ? { ...c.vacancy, titleDe: l10nDe(c.vacancy.title) } : null,
@@ -117,6 +132,8 @@ export const loadCaseContext = async (caseId: string, now = new Date()) => {
     documents,
     purged,
     plannedEntry,
+    /** VIDEX values the client provided (applied questionnaire answers, accepted corrections; lib/clientData). */
+    clientData: Object.fromEntries((await prisma.caseDataValue.findMany({ where: { caseId: c.id }, select: { key: true, value: true } })).map((v) => [v.key, v.value])) as Record<string, string>,
     now,
   };
 };

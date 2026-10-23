@@ -1,0 +1,173 @@
+# CI/CD for triad-vision.de
+#
+#   every push / pull request:  typecheck + build + unit tests + e2e tests (12 parallel shards)
+#   push to main, all green:    deploy to production (backup first) and check the live site
+#
+# Secrets (Settings → Secrets and variables → Actions): DEPLOY_HOST, DEPLOY_SSH_KEY, DEPLOY_KNOWN_HOSTS.
+# The deploy key can only run deploy/ci-deploy.sh on the server (forced command), see deploy/README-ci.md.
+name: CI/CD
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      deploy:
+        description: 'Deploy after the checks (main only)'
+        type: boolean
+        default: true
+
+concurrency:
+  group: ci-${{ github.ref }}
+  # A newer push to the same branch cancels the older run, but never a deploy that already started
+  # (the deploy job has its own, non-cancelling group).
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  NODE_VERSION: '22'
+  NPM_CONFIG_FUND: 'false'
+  NPM_CONFIG_AUDIT: 'false'
+
+jobs:
+  checks:
+    name: Typecheck & build
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            mobile/package-lock.json
+      - run: npm ci
+      - run: npx prisma generate --schema server/prisma/schema.prisma
+      - name: Server typecheck (src + tests)
+        run: npm run typecheck -w server
+      - name: Client typecheck + build
+        run: npm run build -w client
+      - name: CSP allows the inline scripts of the built page
+        run: node scripts/ci/check-csp-hash.mjs client/dist/index.html
+      - name: Caddyfile is valid
+        run: docker run --rm -e SITE_DOMAIN=localhost -e ACME_EMAIL=ci@example.com -v "$PWD/deploy/Caddyfile:/etc/caddy/Caddyfile:ro" caddy:2-alpine caddy validate --config /etc/caddy/Caddyfile
+      - name: Mobile install
+        working-directory: mobile
+        run: npm ci
+      - name: Mobile typecheck
+        working-directory: mobile
+        run: npx tsc --noEmit
+      - name: Mobile tests
+        working-directory: mobile
+        run: npx jest --ci
+
+  unit:
+    name: Unit tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - run: npx prisma generate --schema server/prisma/schema.prisma
+      - name: OCR language data (cached)
+        uses: actions/cache@v4
+        with:
+          path: server/ocr
+          key: ocr-${{ hashFiles('server/scripts/fetch-ocr-data.mjs') }}
+      - run: node server/scripts/fetch-ocr-data.mjs
+      - working-directory: server
+        run: npx vitest run --project unit
+
+  e2e:
+    name: E2E tests (${{ matrix.shard }}/12)
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: root
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -proot --silent"
+          --health-interval=5s --health-timeout=5s --health-retries=40
+    env:
+      TEST_DB_HOST: 127.0.0.1:3306
+      TEST_DB_USER: root
+      TEST_DB_PASSWORD: root
+      TEST_DB_NAME: triad_vision_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - run: npx prisma generate --schema server/prisma/schema.prisma
+      - name: OCR language data (cached)
+        uses: actions/cache@v4
+        with:
+          path: server/ocr
+          key: ocr-${{ hashFiles('server/scripts/fetch-ocr-data.mjs') }}
+      - run: node server/scripts/fetch-ocr-data.mjs
+      - name: E2E shard ${{ matrix.shard }}
+        working-directory: server
+        run: npx vitest run --project e2e --shard=${{ matrix.shard }}/12
+
+  deploy:
+    name: Deploy to production
+    needs: [checks, unit, e2e]
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.deploy))
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    environment:
+      name: production
+      url: https://triad-vision.de
+    concurrency:
+      group: production-deploy
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+      - name: SSH key and pinned host key
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+        run: |
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > ~/.ssh/known_hosts
+      - name: Ship the commit and deploy (backup runs on the server first)
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+        run: |
+          git archive --format=tar.gz HEAD \
+            | ssh -i ~/.ssh/deploy_key -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o ServerAliveInterval=30 \
+                "root@$DEPLOY_HOST" deploy
+      - name: Live site answers
+        run: |
+          for i in $(seq 1 30); do
+            code=$(curl -s -o /dev/null -w '%{http_code}' https://triad-vision.de/api/health || true)
+            [ "$code" = 200 ] && { echo "health: 200"; exit 0; }
+            sleep 10
+          done
+          echo "health check failed (last status: $code)"; exit 1
+      - name: Forget the key
+        if: always()
+        run: rm -f ~/.ssh/deploy_key

@@ -97,6 +97,9 @@ export const Header = () => {
     { to: '/salary-calculator', label: t('nav.salary') },
     { to: '/anerkennung', label: t('nav.anerkennung') },
     { to: '/cities', label: t('nav.cities') },
+    { to: '/calculator', label: t('nav.calculator') },
+    { to: '/events', label: t('nav.events') },
+    { to: '/map', label: t('nav.map') },
   ];
   const moreActive = more.some((m) => pathname.startsWith(m.to));
 

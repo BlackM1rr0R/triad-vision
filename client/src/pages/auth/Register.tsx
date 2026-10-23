@@ -40,6 +40,7 @@ import { PassportScan, type PassportScanFields } from '@/components/auth/Passpor
 import { registerCopy } from '@/i18n';
 import { pagesLegal } from '@/i18n/pagesLegal';
 import { campaignConsentCopy } from '@/i18n/pagesCampaigns';
+import { clearRefCookie, readRefCookie, rememberVisa } from '@/lib/referralCookie';
 
 registerCopy(pagesLegal);
 registerCopy(campaignConsentCopy);
@@ -81,11 +82,13 @@ const REF_KEY = 'tv_ref';
 const normaliseRef = (v: string | null) => (v ?? '').trim().toUpperCase().replace(/[^A-Z0-9-]/g, '').slice(0, 32);
 const readRef = (search: string) => {
   const fromUrl = normaliseRef(new URLSearchParams(search).get('ref'));
+  // ?visa=<slug> (calculator "Apply" button): preselected later in the "start your application" card.
+  rememberVisa(new URLSearchParams(search).get('visa'));
   try {
     if (fromUrl) sessionStorage.setItem(REF_KEY, fromUrl);
-    return fromUrl || normaliseRef(sessionStorage.getItem(REF_KEY));
+    return fromUrl || normaliseRef(sessionStorage.getItem(REF_KEY)) || readRefCookie();
   } catch {
-    return fromUrl;
+    return fromUrl || readRefCookie();
   }
 };
 const forgetRef = () => {
@@ -327,6 +330,7 @@ export default function Register() {
         ...(marketing ? { marketingOptIn: true } : {}),
       });
       forgetRef();
+      clearRefCookie();
       setUser(data.user);
       const next = landingAfterLogin(data.user.role, from);
       // New accounts confirm their email first ("check your inbox"); pre-verified ones go straight on.

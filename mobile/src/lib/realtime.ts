@@ -19,7 +19,7 @@ export type RealtimePayload = Record<string, unknown>;
 type Handler = (payload: RealtimePayload) => void;
 /** idle: nobody logged in / stream unsupported · connecting: (re)connecting · open: live · paused: app in background */
 export type RealtimeStatus = 'idle' | 'connecting' | 'open' | 'paused';
-export type RealtimeEventType = 'message.new' | 'message.read' | 'typing' | 'notification' | 'case.updated';
+export type RealtimeEventType = 'message.new' | 'message.read' | 'message.updated' | 'party.updated' | 'typing' | 'notification' | 'case.updated';
 
 const BACKOFF_MIN_MS = 1000;
 const BACKOFF_MAX_MS = 30_000;

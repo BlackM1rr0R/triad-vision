@@ -28,6 +28,7 @@ import { PASSPORT_SCAN_TIMEOUT_MS, scanPassportImage } from '../lib/docsIntel/pa
 import { recordConsent } from '../lib/privacy/consents.js';
 import { setMarketingOptIn } from '../lib/campaigns/consent.js';
 import { attachReferral } from '../lib/agents/referral.js';
+import { attachClientReferral, REF_COOKIE } from '../lib/growth/referral.js';
 import { markClientsExcelDirty } from '../lib/clientsExcel.js';
 import { syncClientFolders } from '../lib/drive/caseFolders.js';
 import { scanUserDuplicates } from '../lib/duplicates/detect.js';
@@ -221,7 +222,14 @@ authRouter.post('/register', authLimiter, async (req, res) => {
     await recordConsent({ userId: user.id, email: user.email, type: 'PASSPORT_OCR', granted: true, source: 'REGISTER', req });
   }
   if (body.marketingOptIn === true) await setMarketingOptIn(user.id, true, 'REGISTER', req);
-  if (body.ref) await attachReferral(user.id, body.ref);
+  // `ref` from the form or the 60-day first-party cookie (?ref= on any page). An agent code wins; otherwise
+  // it may be a client's "bring a friend" code (lib/growth/referral.ts).
+  const refCode = body.ref || (typeof req.cookies?.[REF_COOKIE] === 'string' ? String(req.cookies[REF_COOKIE]).slice(0, 64) : null);
+  if (refCode) {
+    const agentId = await attachReferral(user.id, refCode);
+    if (!agentId) await attachClientReferral(user.id, refCode);
+    res.clearCookie(REF_COOKIE, { path: '/' });
+  }
   await sendVerificationEmail(user.id);
   // The super admins' client list (Excel) gets the new client within a minute.
   markClientsExcelDirty();

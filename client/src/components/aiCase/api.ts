@@ -2,6 +2,7 @@ import type { TFunction } from 'i18next';
 import { api } from '@/lib/api';
 import { currentLocale, registerCopy } from '@/i18n';
 import { pagesAiCase } from '@/i18n/pagesAiCase';
+import { optimizeImage } from '@/lib/imageCompress';
 
 registerCopy(pagesAiCase);
 
@@ -155,7 +156,7 @@ export type ContractSource = { documentId?: string; nodeId?: string; file?: File
 export const runContract = async (caseId: string, src: ContractSource = {}) => {
   if (src.file) {
     const fd = new FormData();
-    fd.append('file', src.file);
+    fd.append('file', await optimizeImage(src.file));
     return (await api.post<ContractResponse>(`/admin/cases/${caseId}/ai/contract`, fd)).data;
   }
   return (await api.post<ContractResponse>(`/admin/cases/${caseId}/ai/contract`, { documentId: src.documentId, nodeId: src.nodeId })).data;

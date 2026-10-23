@@ -1,3 +1,4 @@
+import { CallButton } from '@/components/calls/CallButton'; // click-to-call (Twilio / sipgate) or manual call log
 import { lazy, Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -532,6 +533,7 @@ export default function Users() {
                             <Phone className="size-3" /> {u.phone}
                           </a>
                         )}
+                        {u.phone && <CallButton target={{ clientId: u.id }} phone={u.phone} name={fullName(u)} compact className="mt-1" />}
                       </td>
                       <td className="px-4 py-3">
                         <RoleControl u={u} editable={can} />

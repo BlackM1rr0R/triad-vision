@@ -14,6 +14,7 @@ import { RichEditor, type RichEditorHandle } from './RichEditor';
 import { ReplyDraftButton, textToHtml } from '@/components/aiStaff/ReplyDraftButton';
 import type { Address, ComposeSeed, MailAccount, MailAttachment, MessageDetail } from './types';
 import { EMAIL_RE, errorText, formatBytes, forwardSubject, htmlToText, isEmptyHtml, quoteForForward, quoteForReply, replyRecipients, replySubject, signatureBlock, subjectOf } from './utils';
+import { optimizeImages } from '@/lib/imageCompress';
 
 /**
  * Docked compose window (bottom-right, minimisable, maximisable). Drafts are created lazily on the
@@ -142,7 +143,7 @@ export const ComposeWindow = ({ seed, accounts, onClose, onSent }: { seed: Compo
   const upload = async (files: FileList | File[]) => {
     const id = await ensureDraft();
     if (!id) return;
-    for (const file of Array.from(files)) {
+    for (const file of await optimizeImages(Array.from(files))) {
       const uid = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
       setUploads((u) => [...u, { id: uid, name: file.name, size: file.size, percent: 0 }]);
       const form = new FormData();

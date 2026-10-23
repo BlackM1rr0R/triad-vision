@@ -126,7 +126,8 @@ describe('next step: rules on real cases and their actions', () => {
     const s = (await nextStep(admin.agent, c.id)).steps[0];
     expect(s).toMatchObject({ code: 'APPOINTMENT_PACKAGE', tone: 'urgent' });
     expectStatus(await admin.agent.post(`/api/admin/cases/${c.id}/embassy-package`).send({}), 201);
-    expect((await nextStep(admin.agent, c.id)).steps.map((x) => x.code)).toEqual(['APPOINTMENT_REMIND']);
+    // The client never confirmed the embassy data (lib/clientData) → that rule stays next to the reminder.
+    expect((await nextStep(admin.agent, c.id)).steps.map((x) => x.code)).toEqual(['CONFIRM_DATA', 'APPOINTMENT_REMIND']);
   });
 
   it('cases list returns a compact next step per row (rules only, no AI)', async () => {

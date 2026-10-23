@@ -558,6 +558,41 @@
         "PDF_SMALL_PAGE": "The PDF page is very small",
         "PDF_NO_PAGES": "The PDF has no pages"
       }
+    },
+    "checkin": {
+      "title": "How are you doing in Germany?",
+      "intro": "Hello {{name}}, it has been {{days}} days since you arrived. Is everything fine?",
+      "ok": "Everything is fine 👍",
+      "issue": "There is a problem ⚠️",
+      "topicsTitle": "What is it about?",
+      "topics": {
+        "HOUSING": "Housing",
+        "SALARY": "Salary",
+        "WORKPLACE": "Workplace",
+        "HEALTH": "Health",
+        "DOCUMENTS": "Documents",
+        "OTHER": "Other"
+      },
+      "comment": "Comment (optional)",
+      "send": "Send",
+      "back": "Back",
+      "thanksOk": "Thank you! We are glad everything is fine.",
+      "thanksIssue": "We have received your message — our team will contact you soon.",
+      "error": "Sending failed. Please try again."
+    },
+    "family": {
+      "title": "Family members",
+      "open": "Open application",
+      "progress": "{{accepted}}/{{required}} accepted",
+      "optional": "optional",
+      "upload": "Tap to upload documents",
+      "addOnWeb": "Add more family members in the web portal (My application → Family members) or via your manager.",
+      "relation": {
+        "spouse": "Spouse",
+        "child": "Child",
+        "parent": "Parent",
+        "other": "Other relative"
+      }
     }
   }
 }

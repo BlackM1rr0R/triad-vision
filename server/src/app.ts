@@ -19,8 +19,11 @@ import { impersonation } from './lib/privacy/impersonation.js';
 import { maskResponses } from './lib/privacy/mask.js';
 import { accountRouter } from './routes/account.js';
 import { messagingRouter } from './routes/messaging.js';
+import { messagingPlusRouter } from './routes/messagingPlus.js';
 import { documentsRouter } from './routes/documents.js';
 import { journeyRouter } from './routes/journey.js';
+import { familyRouter } from './routes/family.js';
+import { germanRouter } from './routes/german.js';
 import { interviewsRouter } from './routes/interviews.js';
 import { partnerRouter } from './routes/partner.js';
 import { calendarRouter } from './routes/calendar.js';
@@ -39,6 +42,8 @@ import { vaultRouter } from './routes/vault.js';
 import { arrivalRouter } from './routes/arrival.js';
 import { interviewPrepRouter } from './routes/interviewPrep.js';
 import { surveysRouter } from './routes/surveys.js';
+import { checkInsRouter } from './routes/checkIns.js'; // post-arrival check-ins (answer side)
+import { accessLogRouter } from './routes/accessLog.js'; // "who viewed my documents"
 import { companyRequestsRouter } from './routes/companyRequests.js';
 import { twoFactorRouter } from './routes/twoFactor.js';
 import { companyRouter } from './routes/company.js';
@@ -68,7 +73,15 @@ import { originalsRouter } from './routes/originals.js';
 import { campaignPublicRouter } from './routes/campaignPublic.js';
 import { aiMailRouter } from './routes/aiMail.js';
 import { uploadAiRouter } from './routes/uploadAi.js';
+import { clientDataRouter } from './routes/clientData.js';
+import { clientProcessRouter } from './routes/clientProcess.js';
+import { siteRouter } from './routes/site.js';
+import { growthRouter } from './routes/growth.js';
 import { historyMiddleware } from './lib/history/context.js';
+import { callsRouter } from './routes/calls.js';
+import { callWebhooksRouter } from './routes/callWebhooks.js';
+import { callbackRouter } from './routes/callback.js';
+import { livechatRouter } from './routes/livechat.js';
 
 type RequestWithRawBody = import('express').Request & { rawBody?: Buffer };
 
@@ -108,6 +121,8 @@ export const createApp = () => {
 
   // Keep the raw body: webhook providers (WhatsApp/Meta) sign the exact bytes they sent.
   app.use(express.json({ limit: '3mb', verify: (req, _res, buf) => { (req as RequestWithRawBody).rawBody = buf; } }));
+  // Telephony provider webhooks (Twilio / sipgate / fake): no session, no CSRF — each request is signature-checked.
+  app.use('/api/calls/webhooks', callWebhooksRouter);
   app.use(cookieParser());
   app.use(loadUser);
   app.use(impersonation); // "view as client": req.user = viewed user, read-only (lib/privacy/impersonation.ts)
@@ -151,11 +166,15 @@ export const createApp = () => {
   app.use('/api/company', companyRouter);
   app.use('/api/vacancies', vacanciesRouter);
   app.use('/api/booking', bookingRouter);
+  app.use('/api/growth', growthRouter); // start-date calculator, placement map, info sessions, client referrals
   app.use('/api/reviews', reviewsRouter);
   app.use('/api/track', trackRouter);
+  app.use('/api/messaging-plus', messagingPlusRouter); // translation, three-party threads, voice messages
   app.use('/api/messaging', messagingRouter);
   app.use('/api/documents', documentsRouter);
   app.use('/api/journey', journeyRouter);
+  app.use('/api/family', familyRouter); // family members (Familiennachzug): details + checklists per member
+  app.use('/api/german', germanRouter); // German language progress: goal, courses, exams, certificate
   app.use('/api/interviews', interviewsRouter);
   app.use('/api/v1', partnerRouter);
   app.use('/api/calendar', calendarRouter);
@@ -168,19 +187,27 @@ export const createApp = () => {
   app.use('/api/agent', agentPortalRouter);
   app.use('/api/partner', partnerPortalRouter);
   app.use('/api/translations', translationsRouter);
+  app.use('/api/privacy/access-log', accessLogRouter); // before the privacy centre router
   app.use('/api/privacy', privacyRouter);
   app.use('/api/cv', cvRouter);
   app.use('/api/vault', vaultRouter);
   app.use('/api/arrival', arrivalRouter);
   app.use('/api/interview-prep', interviewPrepRouter);
   app.use('/api/surveys', surveysRouter);
+  app.use('/api/check-ins', checkInsRouter);
   app.use('/api/ai-docs', aiDocsRouter);
   app.use('/api/ai-mail', aiMailRouter);
   app.use('/api/upload-ai', uploadAiRouter); // smart uploads: recognition proposals + scan quality
+  app.use('/api/client-data', clientDataRouter); // questionnaires, data confirmation, document guides (portal)
+  app.use('/api/client-process', clientProcessRouter); // ball in court, client tasks, office visits (portal / app)
   app.use('/api/ai', aiRouter);
   app.use('/api/ai-writing', aiWritingRouter);
   app.use('/api/public-ai', publicAiRouter);
+  app.use('/api/calls', callsRouter); // click-to-call, call log, notes / AI summary, callback requests (staff)
+  app.use('/api/callback', callbackRouter); // public / portal "call me back" requests
+  app.use('/api/livechat', livechatRouter); // AI advisor → human live chat (visitor token + staff queue)
   app.use('/api/originals', originalsRouter); // physical originals, QR labels, drive retention + storage report
+  app.use('/api/site', siteRouter); // web push (PWA), public status check, "Problem bildir" reports
   app.use('/api', campaignPublicRouter); // campaigns: /o/:token.gif, /c/:token/:link, /unsubscribe/:token
 
   // /sitemap.xml, /robots.txt and /api/seo/* (Caddy forwards the first two here).

@@ -31,6 +31,8 @@ import { pagesPrivacy } from '@/i18n/pagesPrivacy';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { Spinner } from '@/components/ui/Spinner';
 import { ConfirmDialog } from '@/components/portal/ConfirmDialog';
+import { PublicStatusSettings } from '@/components/site/PublicStatusSettings';
+import { AccessLogSection } from '@/components/privacy/AccessLogSection'; // "who viewed my documents"
 import {
   CLIENT_REQUEST_TYPES,
   STATUS_TONE,
@@ -487,6 +489,9 @@ export default function AccountPrivacyCenter() {
         </div>
       </section>
 
+      {/* Public status check (/status) + family link + browser notifications (site features) */}
+      <PublicStatusSettings />
+
       <Panel id="privacy-export" title={t('privacy.export.title')} icon={Download} intro={t('privacy.export.text')}>
         <a
           href="/api/privacy/export"
@@ -507,6 +512,10 @@ export default function AccountPrivacyCenter() {
 
       <RequestForm state={data} />
       <MyRequests state={data} />
+
+      <Panel id="privacy-access-log" title={t('accessLog.title')} icon={ShieldCheck} intro={t('accessLog.subtitle')}>
+        <AccessLogSection endpoint="/privacy/access-log" />
+      </Panel>
     </div>
   );
 }

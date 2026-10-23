@@ -43,6 +43,14 @@ export const RealtimeBridge = () => {
     void qc.invalidateQueries({ queryKey: qk.notifications });
   });
 
+  // Messaging plus: a voice message got its transcript.
+  useRealtime('message.updated', (p: RealtimePayload) => {
+    const caseId = str(p.caseId);
+    const message = p.message;
+    if (!caseId || !isMessage(message)) return;
+    patchCase(caseId, (c) => ({ ...c, messages: c.messages.map((m) => (m.id === message.id ? { ...m, ...message } : m)) }));
+  });
+
   useRealtime('message.read', (p) => {
     const caseId = str(p.caseId);
     const readAt = str(p.readAt);

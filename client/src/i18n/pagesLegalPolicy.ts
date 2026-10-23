@@ -55,6 +55,7 @@ const azSections: PolicySection[] = [
       [
         'tv_session – girişdən sonra sessiya kukisi (httpOnly); 30 dəqiqə fəaliyyətsizlikdən sonra, ən gec isə 12 saatdan sonra etibarsız olur.',
         'tv_lang – seçilmiş dil (Local Storage).',
+        'tv_ref – yalnız tövsiyə linki ilə (?ref=KOD) gəldikdə: agentin və ya sizi dəvət edən müştərinin kodu, qeydiyyatda dəvəti nəzərə almaq üçün; birinci tərəf kukisi, 60 gün, qeydiyyatdan sonra silinir, üçüncü tərəflərə ötürülmür.',
         'Görünüş və əlçatanlıq ayarları (məs. tünd rejim, şrift ölçüsü) və kuki bildirişini gördüyünüz barədə qeyd (Local Storage).',
         'Mobil tətbiqdə: giriş tokeniniz cihazın şifrələnmiş yaddaşında (Keychain/Keystore).',
       ],
@@ -256,6 +257,7 @@ const deSections: PolicySection[] = [
       [
         'tv_session – Sitzungs-Cookie (httpOnly) nach der Anmeldung; er verliert nach 30 Minuten Inaktivität, spätestens nach 12 Stunden seine Gültigkeit.',
         'tv_lang – die gewählte Sprache (Local Storage).',
+        'tv_ref – nur wenn Sie über einen Empfehlungslink (?ref=CODE) kommen: der Code des Agenten oder der Kundin bzw. des Kunden, die Sie eingeladen haben, damit die Empfehlung bei der Registrierung zugeordnet wird; eigenes (First-Party-)Cookie, 60 Tage, nach der Registrierung gelöscht, keine Weitergabe an Dritte.',
         'Darstellungs- und Barrierefreiheitseinstellungen (z. B. dunkles Design, Schriftgröße) sowie die Information, dass Sie den Cookie-Hinweis gesehen haben (Local Storage).',
         'In der mobilen App: Ihr Anmelde-Token im verschlüsselten Speicher des Geräts (Keychain/Keystore).',
       ],
@@ -457,6 +459,7 @@ const enSections: PolicySection[] = [
       [
         'tv_session – session cookie (httpOnly) after login; it expires after 30 minutes of inactivity and at the latest after 12 hours.',
         'tv_lang – the selected language (local storage).',
+        'tv_ref – only when you arrive via a referral link (?ref=CODE): the code of the agent or client who invited you, so the referral is credited at registration; first-party cookie, 60 days, deleted after registration, never shared with third parties.',
         'Display and accessibility settings (e.g. dark mode, font size) and the fact that you have seen the cookie notice (local storage).',
         'In the mobile app: your login token in the device’s encrypted storage (Keychain/Keystore).',
       ],
@@ -658,6 +661,7 @@ const ruSections: PolicySection[] = [
       [
         'tv_session – сессионный cookie (httpOnly) после входа; перестаёт действовать после 30 минут бездействия, но не позднее чем через 12 часов.',
         'tv_lang – выбранный язык (Local Storage).',
+        'tv_ref – только если вы перешли по реферальной ссылке (?ref=КОД): код агента или клиента, который вас пригласил, чтобы приглашение было учтено при регистрации; собственный (first-party) cookie, 60 дней, удаляется после регистрации, третьим лицам не передаётся.',
         'Настройки отображения и доступности (напр. тёмная тема, размер шрифта), а также отметка о том, что вы видели уведомление о cookies (Local Storage).',
         'В мобильном приложении: ваш токен входа в зашифрованном хранилище устройства (Keychain/Keystore).',
       ],

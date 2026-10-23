@@ -17,6 +17,11 @@ import { eventLabel, fmtDateTime, fullName, roleLabel, statusLabel, toastError }
 import { Panel } from '../ui';
 import { useCaseRefresh } from './shared';
 import { ReplyDraftButton } from '@/components/aiStaff/ReplyDraftButton';
+import { MessageBody, ShowOriginalsToggle, TranslationNote } from '@/components/messagingPlus/MessageBody';
+import { VoiceRecorder } from '@/components/messagingPlus/VoiceRecorder';
+import { PartyThreadButton, PartyThreadFromQuery } from '@/components/messagingPlus/PartyThread';
+import { translatableText, useMessageTranslations, useShowOriginals } from '@/components/messagingPlus/useTranslations';
+import { CaseDraftPreview } from '@/components/messagingPlus/DraftPreview';
 
 registerCopy(pagesMessaging);
 
@@ -32,6 +37,14 @@ export const Messages = ({ c }: { c: CaseDetail }) => {
   const thread = useThread({ caseId: c.id, base: '/admin/cases', initial: c.messages, meId, onNewMessage: () => void refresh() });
   const { messages, typingName } = thread;
   const lastId = messages[messages.length - 1]?.id;
+  // Messaging plus: translation into the staff member's language, voice messages, three-party thread.
+  const prefs = useShowOriginals();
+  const tx = useMessageTranslations({
+    scope: 'case',
+    id: c.id,
+    items: messages.filter((m) => !m.pending && !m.failed).map((m) => ({ id: m.id, text: translatableText(m), lang: m.lang ?? m.voice?.transcriptLang })),
+  });
+  const companyId = (c as CaseDetail & { companyId?: string | null }).companyId;
 
   useEffect(() => {
     const el = scrollRef.current;
@@ -55,8 +68,21 @@ export const Messages = ({ c }: { c: CaseDetail }) => {
   };
 
   return (
-    <Panel id="messages" title={t('admin.case.comm.messagesTitle')} icon={MessageCircle} actions={<LiveDot connected={thread.connected} />} bodyClassName="p-0" className="scroll-mt-24">
+    <Panel
+      id="messages"
+      title={t('admin.case.comm.messagesTitle')}
+      icon={MessageCircle}
+      actions={
+        <span className="flex flex-wrap items-center gap-2">
+          {companyId && <PartyThreadButton caseId={c.id} />}
+          <LiveDot connected={thread.connected} />
+        </span>
+      }
+      bodyClassName="p-0"
+      className="scroll-mt-24"
+    >
       <RealtimeBridge />
+      <PartyThreadFromQuery />
       <div
         ref={(el) => {
           scrollRef.current = el;
@@ -83,7 +109,7 @@ export const Messages = ({ c }: { c: CaseDetail }) => {
                   m.failed && 'bg-red-600',
                 )}
               >
-                <p className="whitespace-pre-wrap break-words">{m.body}</p>
+                <MessageBody m={m} tx={tx} onDark={!fromClient} />
                 <p className={clsx('mt-1 flex flex-wrap items-center gap-1.5 text-[10px]', fromClient ? 'text-muted' : 'text-white/70')}>
                   <ChannelBadge channel={m.channel} onDark={!fromClient} />
                   <span>
@@ -101,10 +127,13 @@ export const Messages = ({ c }: { c: CaseDetail }) => {
           );
         })}
         <TypingIndicator name={typingName} />
+        <TranslationNote tx={tx} />
       </div>
-      <div className="border-t border-line px-3 pt-2 sm:px-4">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-t border-line px-3 pt-2 sm:px-4">
         <ReplyDraftButton endpoint={`/admin/ai-staff/cases/${c.id}/reply-draft`} onInsert={(text) => setBody(text)} />
+        <ShowOriginalsToggle tx={tx} setter={prefs.set} />
       </div>
+      <CaseDraftPreview text={body} clientLocale={c.client.locale} />
       <form
         className="flex items-end gap-2 p-3 sm:px-4"
         onSubmit={(e) => {
@@ -131,6 +160,14 @@ export const Messages = ({ c }: { c: CaseDetail }) => {
               e.preventDefault();
               void send();
             }
+          }}
+        />
+        <VoiceRecorder
+          uploadUrl={`/messaging-plus/cases/${c.id}/voice`}
+          onSent={(d) => {
+            const m = (d as { message?: Parameters<typeof thread.upsert>[0] }).message;
+            if (m) thread.upsert(m);
+            void refresh();
           }}
         />
         <button type="submit" className="btn-primary size-11 shrink-0 p-0" disabled={!body.trim() || busy} aria-label={t('admin.case.comm.send')}>

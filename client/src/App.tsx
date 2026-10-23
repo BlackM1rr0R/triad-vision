@@ -59,6 +59,8 @@ const WorkspaceChat = lazy(() => import('./pages/workspace/Chat'));
 const WorkspaceCalendar = lazy(() => import('./pages/workspace/Calendar'));
 const WorkspaceContacts = lazy(() => import('./pages/workspace/Contacts'));
 const WorkspaceTeam = lazy(() => import('./pages/workspace/Team'));
+const WorkspaceLiveChats = lazy(() => import('./pages/workspace/LiveChats')); // AI → human live chat queue
+const AdminCalls = lazy(() => import('./pages/admin/Calls')); // call log, callback requests, phone provider
 const AdminDocsAudit = lazy(() => import('./pages/admin/DocsAudit'));
 const AdminContent = lazy(() => import('./pages/admin/ContentManager'));
 const AdminSettings = lazy(() => import('./pages/admin/Settings'));
@@ -80,6 +82,13 @@ const AccountLetterExplain = lazy(() => import('./pages/account/LetterExplain'))
 const AccountVault = lazy(() => import('./pages/account/Vault'));
 const AccountArrival = lazy(() => import('./pages/account/Arrival'));
 const SalaryCalculator = lazy(() => import('./pages/tools/SalaryCalculator'));
+const StartCalculator = lazy(() => import('./pages/growth/Calculator'));
+const PlacementMapPage = lazy(() => import('./pages/growth/MapPage'));
+const InfoEvents = lazy(() => import('./pages/growth/Events'));
+const InfoEventDetail = lazy(() => import('./pages/growth/EventDetail'));
+const AccountReferral = lazy(() => import('./pages/account/Referral'));
+const AdminGrowthEvents = lazy(() => import('./pages/admin/GrowthEvents'));
+const AdminGrowthTools = lazy(() => import('./pages/admin/GrowthTools'));
 const AnerkennungGuide = lazy(() => import('./pages/tools/Anerkennung'));
 const CitiesGuide = lazy(() => import('./pages/tools/Cities'));
 const AdminArrivals = lazy(() => import('./pages/admin/Arrivals'));
@@ -90,6 +99,8 @@ const AdminHistory = lazy(() => import('./pages/admin/History')); // field-level
 const AdminStorageReport = lazy(() => import('./pages/admin/StorageReport'));
 const QrRedirect = lazy(() => import('./pages/QrRedirect'));
 const AdminToday = lazy(() => import('./pages/admin/Today'));
+const StatusPage = lazy(() => import('./pages/Status')); // public status check without login
+const AdminProblemReports = lazy(() => import('./pages/admin/ProblemReports')); // "Problem bildirişləri"
 
 /** /admin: STAFF land on their "my work today" queue, ADMIN / SUPER_ADMIN on the dashboard (also at /admin/dashboard). */
 const AdminIndex = () => {
@@ -118,6 +129,9 @@ const Unsubscribe = lazy(() => import('./pages/Unsubscribe'));
 const AdminContractTemplates = lazy(() => import('./pages/admin/ContractTemplates'));
 const AdminCandidateRequests = lazy(() => import('./pages/admin/CandidateRequests'));
 const SurveyAnswer = lazy(() => import('./pages/SurveyAnswer'));
+const CheckInAnswer = lazy(() => import('./pages/CheckInAnswer')); // post-arrival check-in (one tap)
+const AdminTimeTracking = lazy(() => import('./pages/admin/TimeTracking')); // staff time tracking
+const AdminCheckIns = lazy(() => import('./pages/admin/CheckIns')); // post-arrival check-ins + retention
 const AdminAgents = lazy(() => import('./pages/admin/Agents'));
 const AdminTranslations = lazy(() => import('./pages/admin/Translations'));
 const AdminPrivacyRequests = lazy(() => import('./pages/admin/PrivacyRequests'));
@@ -131,6 +145,7 @@ const AdminCompanies = lazy(() => import('./pages/admin/Companies'));
 const AdminVacancies = lazy(() => import('./pages/admin/Vacancies'));
 const AdminCandidates = lazy(() => import('./pages/admin/Candidates'));
 const AdminBookings = lazy(() => import('./pages/admin/Bookings'));
+const AdminClientTasks = lazy(() => import('./pages/admin/ClientTasks')); // client tasks across cases (client process)
 const AdminInvoices = lazy(() => import('./pages/admin/Invoices'));
 const AdminQuotes = lazy(() => import('./pages/admin/Quotes'));
 const AdminReviews = lazy(() => import('./pages/admin/Reviews'));
@@ -141,7 +156,12 @@ const AdminIntegrations = lazy(() => import('./pages/admin/Integrations'));
 const AdminAutomation = lazy(() => import('./pages/admin/Automation')); // automation rules + automatic assignment
 const AdminInterviews = lazy(() => import('./pages/admin/Interviews'));
 const AdminJourney = lazy(() => import('./pages/admin/Journey'));
+const AdminGermanExamDates = lazy(() => import('./pages/admin/GermanExamDates'));
 const AdminRequirements = lazy(() => import('./pages/admin/Requirements'));
+const AdminCaseForms = lazy(() => import('./pages/admin/CaseForms')); // smart questionnaire builder
+const AdminDocGuides = lazy(() => import('./pages/admin/DocGuides')); // "Necə almalı?" document guides
+const AccountCaseForm = lazy(() => import('./pages/account/CaseForm'));
+const AccountConfirmData = lazy(() => import('./pages/account/ConfirmData'));
 const AccountOnboarding = lazy(() => import('./pages/account/Onboarding'));
 const AccountGerman = lazy(() => import('./pages/account/German'));
 const AccountInterviews = lazy(() => import('./pages/account/Interviews'));
@@ -263,12 +283,18 @@ export default function App() {
             <Route path="salary-calculator" element={<SalaryCalculator />} />
             <Route path="anerkennung" element={<AnerkennungGuide />} />
             <Route path="cities" element={<CitiesGuide />} />
+            <Route path="calculator" element={<StartCalculator />} />
+            <Route path="map" element={<PlacementMapPage />} />
+            <Route path="events" element={<InfoEvents />} />
+            <Route path="events/:slug" element={<InfoEventDetail />} />
             <Route path="survey/:token" element={<SurveyAnswer />} />
+            <Route path="check-in/:key" element={<CheckInAnswer />} />
             <Route path="unsubscribe" element={<Unsubscribe />} />
             <Route path="news/:slug" element={<NewsDetail />} />
             <Route path="contact" element={<Contact />} />
             <Route path="cooperation" element={<Cooperation />} />
             <Route path="accessibility" element={<AccessibilityPage />} />
+            <Route path="status" element={<StatusPage />} />
             <Route path="login" element={<Login />} />
             <Route path="register" element={<Register />} />
             <Route path="forgot-password" element={<ForgotPassword />} />
@@ -321,6 +347,8 @@ export default function App() {
             >
               <Route index element={<AccountHome />} />
               <Route path="cases/:id" element={<CaseView />} />
+              <Route path="cases/:id/forms/:formId" element={<AccountCaseForm />} />
+              <Route path="cases/:id/confirm" element={<AccountConfirmData />} />
               <Route path="notifications" element={<Notifications />} />
               <Route path="profile" element={<Profile />} />
               <Route path="applications" element={<AccountApplications />} />
@@ -333,6 +361,7 @@ export default function App() {
               <Route path="letters/*" element={<AccountLetters />} />
               <Route path="letters-explain" element={<AccountLetterExplain />} />
               <Route path="vault" element={<AccountVault />} />
+              <Route path="referral" element={<AccountReferral />} />
               <Route path="arrival" element={<AccountArrival />} />
               <Route path="interview-prep" element={<AccountInterviewPrep />} />
               <Route path="signatures" element={<AccountSignatures />} />
@@ -361,6 +390,7 @@ export default function App() {
             <Route path="calendar/*" element={<WorkspaceCalendar />} />
             <Route path="contacts/*" element={<WorkspaceContacts />} />
             <Route path="team/*" element={<WorkspaceTeam />} />
+            <Route path="live-chats" element={<WorkspaceLiveChats />} />
             <Route path="settlements/*" element={<AdminSettlements />} />
           </Route>
 
@@ -442,6 +472,7 @@ export default function App() {
             <Route path="cases" element={<AdminCases />} />
             <Route path="cases/:id" element={<AdminCase />} />
             <Route path="inquiries" element={<AdminInquiries />} />
+            <Route path="calls" element={<AdminCalls />} />
             <Route path="users" element={<AdminUsers />} />
             <Route
               path="mailboxes"
@@ -460,6 +491,7 @@ export default function App() {
             <Route path="vacancies" element={<AdminVacancies />} />
             <Route path="candidates" element={<AdminCandidates />} />
             <Route path="bookings" element={<AdminBookings />} />
+            <Route path="client-tasks" element={<AdminClientTasks />} />
             <Route
               path="invoices"
               element={
@@ -512,6 +544,8 @@ export default function App() {
                 </RequireAuth>
               }
             />
+            {/* Admins + the staff member chosen in its settings (the API decides; others see "no access"). */}
+            <Route path="problems" element={<AdminProblemReports />} />
             <Route path="partners/*" element={<AdminPartners />} />
             <Route path="register" element={<AdminClientRegister />} />
             <Route path="settlements/*" element={<AdminSettlements />} />
@@ -520,6 +554,8 @@ export default function App() {
             <Route path="reports" element={<AdminReports />} />
             <Route path="profitability" element={<AdminProfitability />} />
             <Route path="surveys/*" element={<AdminSurveys />} />
+            <Route path="time" element={<AdminTimeTracking />} />
+            <Route path="check-ins" element={<AdminCheckIns />} />
             <Route
               path="campaigns/*"
               element={
@@ -528,6 +564,8 @@ export default function App() {
                 </RequireAuth>
               }
             />
+            <Route path="events" element={<AdminGrowthEvents />} />
+            <Route path="site-tools" element={<AdminGrowthTools />} />
             <Route path="contract-templates/*" element={<AdminContractTemplates />} />
             <Route path="candidate-requests/*" element={<AdminCandidateRequests />} />
             <Route path="agents/*" element={<AdminAgents />} />
@@ -544,7 +582,10 @@ export default function App() {
             />
             <Route path="interviews" element={<AdminInterviews />} />
             <Route path="journey" element={<AdminJourney />} />
+            <Route path="exam-dates" element={<AdminGermanExamDates />} />
             <Route path="requirements" element={<AdminRequirements />} />
+            <Route path="case-forms" element={<AdminCaseForms />} />
+            <Route path="doc-guides" element={<AdminDocGuides />} />
             <Route path="signatures" element={<AdminSignatures />} />
             <Route path="signatures/sign/:signerId" element={<AdminSignatures />} />
           </Route>

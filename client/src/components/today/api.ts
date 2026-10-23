@@ -22,7 +22,9 @@ export type WorkKind =
   | 'candidate_request'
   | 'expiring'
   | 'security_alert'
-  | 'privacy';
+  | 'privacy'
+  | 'client_task_overdue'
+  | 'arrival_issue';
 export type WorkCategory = 'documents' | 'tasks' | 'mail' | 'signatures' | 'bookings' | 'leads' | 'other';
 export type WorkPriority = 'URGENT' | 'HIGH' | 'NORMAL';
 export type WorkBucket = 'overdue' | 'today' | 'week' | 'later';

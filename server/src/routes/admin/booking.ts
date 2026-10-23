@@ -1,3 +1,4 @@
+import { cancelOfficeVisit, loadVisit } from '../../lib/clientProcess/office.js';
 import { Router, type Request } from 'express';
 import { z } from 'zod';
 import type { Prisma } from '@prisma/client';
@@ -60,7 +61,7 @@ adminBookingRouter.get('/slots', async (req, res) => {
   if (to.getTime() - from.getTime() > 120 * DAY) throw badRequest('RANGE_TOO_LARGE');
   const staffId = staffScope(req, q.staffId);
   const slots = await prisma.consultationSlot.findMany({
-    where: { startsAt: { gte: from, lt: to }, ...(staffId ? { staffId } : {}) },
+    where: { startsAt: { gte: from, lt: to }, kind: 'ONLINE', ...(staffId ? { staffId } : {}) }, // office seats: /admin/client-process/office/slots
     orderBy: { startsAt: 'asc' },
     include: {
       staff: { select: { id: true, firstName: true, lastName: true } },
@@ -247,6 +248,13 @@ adminBookingRouter.post('/bookings/:id/cancel', async (req, res) => {
   const { message } = parse(z.object({ message: z.string().trim().max(2000).optional() }), req.body);
   const booking = await loadOwnBooking(req);
   if (booking.status !== 'BOOKED') throw new HttpError(409, 'BOOKING_NOT_ACTIVE');
+  // Office visits (client portal) have their own wording, .ics and notices — never the consultation e-mail.
+  if (booking.slot.kind === 'OFFICE') {
+    await cancelOfficeVisit(await loadVisit(booking.id), 'staff', message ?? null);
+    await audit(req, 'BOOKING_CANCEL', booking.id, { by: 'staff', kind: 'OFFICE' });
+    res.json({ ok: true });
+    return;
+  }
   const updated = await prisma.booking.updateMany({ where: { id: booking.id, status: 'BOOKED' }, data: { status: 'CANCELLED' } });
   if (updated.count === 0) throw new HttpError(409, 'BOOKING_NOT_ACTIVE');
   const cancelled = { ...booking, status: 'CANCELLED' as const };

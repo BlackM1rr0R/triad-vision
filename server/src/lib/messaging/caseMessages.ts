@@ -3,6 +3,8 @@ import { prisma } from '../../db.js';
 import { notifyClient, notifyStaff } from '../notifications.js';
 import { publish } from './realtime.js';
 import { isImpersonating } from '../privacy/impersonationContext.js';
+import { detectLanguage } from '../messagingPlus/language.js';
+import { serializeVoice, VOICE_SELECT } from '../messagingPlus/voice.js';
 
 /**
  * Shared logic for the case chat (portal + admin + WhatsApp inbound): who receives realtime events,
@@ -26,7 +28,9 @@ export const staffRecipientsFor = async (caseId: string) =>
 export const otherSide = async (c: { id: string; clientId: string }, side: 'client' | 'staff') =>
   side === 'client' ? staffRecipientsFor(c.id) : [c.clientId];
 
-export const serializeMessage = (m: CaseMessage & { author: { id: string; firstName: string; lastName: string; role: string } }) => ({
+type VoiceRow = Parameters<typeof serializeVoice>[0];
+
+export const serializeMessage = (m: CaseMessage & { author: { id: string; firstName: string; lastName: string; role: string }; voice?: VoiceRow }) => ({
   id: m.id,
   caseId: m.caseId,
   authorId: m.authorId,
@@ -35,13 +39,16 @@ export const serializeMessage = (m: CaseMessage & { author: { id: string; firstN
   readAt: m.readAt,
   createdAt: m.createdAt,
   author: m.author,
+  // Messaging plus: detected language (automatic translation) and voice message (audio + transcript).
+  lang: m.lang ?? detectLanguage(m.body),
+  voice: serializeVoice(m.voice),
 });
 
 export type SerializedMessage = ReturnType<typeof serializeMessage>;
 
 /** Messages of a case, oldest first, with channel and read receipts. */
 export const listMessages = async (caseId: string) =>
-  (await prisma.caseMessage.findMany({ where: { caseId }, orderBy: { createdAt: 'asc' }, include: { author: AUTHOR } })).map(serializeMessage);
+  (await prisma.caseMessage.findMany({ where: { caseId }, orderBy: { createdAt: 'asc' }, include: { author: AUTHOR, voice: { select: VOICE_SELECT } } })).map(serializeMessage);
 
 /**
  * Stores a message, notifies the other side (in-app/email/push) and pushes `message.new` to
@@ -55,13 +62,19 @@ export const createCaseMessage = async (opts: {
   side: 'client' | 'staff';
   channel?: MessageChannel;
   externalId?: string | null;
+  /** Voice message (VoiceClip uploaded by the author); the body may then be empty. */
+  voiceId?: string | null;
 }) => {
   const c = await prisma.case.findUniqueOrThrow({ where: { id: opts.caseId }, select: { id: true, number: true, clientId: true } });
-  let created: CaseMessage & { author: { id: string; firstName: string; lastName: string; role: string } };
+  // Detected language (cheap heuristic, never an AI call); falls back to the author's UI language.
+  const lang = opts.body.trim()
+    ? detectLanguage(opts.body) ?? (await prisma.user.findUnique({ where: { id: opts.authorId }, select: { locale: true } }))?.locale ?? null
+    : null;
+  let created: CaseMessage & { author: { id: string; firstName: string; lastName: string; role: string }; voice: VoiceRow };
   try {
     created = await prisma.caseMessage.create({
-      data: { caseId: c.id, authorId: opts.authorId, body: opts.body, channel: opts.channel ?? 'app', externalId: opts.externalId ?? null },
-      include: { author: AUTHOR },
+      data: { caseId: c.id, authorId: opts.authorId, body: opts.body, lang, voiceId: opts.voiceId ?? null, channel: opts.channel ?? 'app', externalId: opts.externalId ?? null },
+      include: { author: AUTHOR, voice: { select: VOICE_SELECT } },
     });
   } catch (err) {
     if ((err as { code?: string }).code === 'P2002' && opts.externalId) return null; // duplicate webhook delivery
@@ -70,7 +83,7 @@ export const createCaseMessage = async (opts: {
   const message = serializeMessage(created);
   if (opts.side === 'client') {
     const via = opts.channel === 'whatsapp' ? ' (WhatsApp)' : '';
-    await notifyStaff(`${c.number}: müştəridən yeni mesaj${via}`, opts.body, { caseId: c.id, link: `/admin/cases/${c.id}`, type: 'NEW_MESSAGE' });
+    await notifyStaff(`${c.number}: müştəridən yeni mesaj${via}`, opts.body || (opts.voiceId ? '🎤 Səsli mesaj' : ''), { caseId: c.id, link: `/admin/cases/${c.id}`, type: 'NEW_MESSAGE' });
   } else {
     await notifyClient(c.id, 'NEW_MESSAGE');
   }

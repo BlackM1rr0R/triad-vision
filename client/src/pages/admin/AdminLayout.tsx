@@ -47,6 +47,7 @@ import {
   PlaneLanding,
   Hourglass,
   HardDrive,
+  Bug as ProblemIcon,
   Vault,
   Plug,
   Receipt,
@@ -84,8 +85,15 @@ import { History as HistoryIcon } from 'lucide-react'; // field-level change his
 import { ListChecks as TodayIcon } from 'lucide-react';
 import { TodayNavBadge } from '@/components/today/TodayNavBadge'; // urgent count of "my work today"
 import { Workflow } from 'lucide-react'; // automation rules + assignment
+import { PhoneCall } from 'lucide-react'; // calls + callback requests
+import { pagesCalls } from '@/i18n/pagesCalls';
+import { LiveChatAlerts } from '@/components/livechat/LiveChatAlerts'; // live chat queue sound + toast, incoming calls
+import { CalendarHeart, Wand2 } from 'lucide-react'; // info sessions (Tədbirlər), site tools (calculator, map, referrals)
+import { HeartHandshake, Timer as TimerIcon } from 'lucide-react'; // post-arrival check-ins, time tracking
+import { HeaderTimer } from '@/components/timeCare/HeaderTimer'; // running staff timer (registers its copy)
 
 registerCopy(adminCopy);
+registerCopy(pagesCalls);
 
 interface NavItem {
   to: string;
@@ -113,8 +121,10 @@ const MAIN_NAV: NavItem[] = [
   { to: '/admin/signatures', label: 'signatures', icon: FileSignature },
   { to: '/workspace/home', label: 'workspace', icon: LayoutGrid },
   { to: '/admin/tasks', label: 'tasks', icon: ListTodo },
+  { to: '/admin/client-tasks', label: 'clientTasks', icon: ListTodo },
   { to: '/admin/announcements', label: 'announcements', icon: Megaphone },
   { to: '/admin/inquiries', label: 'inquiries', icon: Inbox },
+  { to: '/admin/calls', label: 'calls', icon: PhoneCall },
   { to: '/admin/users', label: 'users', icon: Users },
   { to: '/admin/duplicates', label: 'duplicates', icon: DuplicatesIcon, adminOnly: true },
   { to: '/admin/history', label: 'history', icon: HistoryIcon, adminOnly: true },
@@ -132,10 +142,14 @@ const MAIN_NAV: NavItem[] = [
   { to: '/admin/messaging', label: 'messaging', icon: MessageSquareText },
   { to: '/admin/interviews', label: 'interviews', icon: Video },
   { to: '/admin/journey', label: 'journey', icon: Route },
+  { to: '/admin/exam-dates', label: 'examDates', icon: CalendarClock },
   { to: '/admin/requirements', label: 'requirements', icon: ListChecks },
+  { to: '/admin/case-forms', label: 'caseForms', icon: ListChecks },
+  { to: '/admin/doc-guides', label: 'docGuides', icon: BookOpen },
   { to: '/admin/expiring', label: 'expiring', icon: Hourglass },
   { to: '/admin/originals', label: 'originals', icon: Vault },
   { to: '/admin/storage', label: 'storage', icon: HardDrive, adminOnly: true },
+  { to: '/admin/problems', label: 'problemReports', icon: ProblemIcon, adminOnly: true },
   { to: '/admin/kb', label: 'kb', icon: BookOpenText },
   { to: '/admin/agents', label: 'agents', icon: Handshake, adminOnly: true },
   { to: '/admin/translations', label: 'translations', icon: Languages },
@@ -144,7 +158,11 @@ const MAIN_NAV: NavItem[] = [
   { to: '/admin/contract-templates', label: 'contractTemplates', icon: FileText, adminOnly: true },
   { to: '/admin/interview-prep', label: 'interviewPrep', icon: MessageCircleQuestion },
   { to: '/admin/surveys', label: 'surveys', icon: Smile },
+  { to: '/admin/time', label: 'timeTracking', icon: TimerIcon },
+  { to: '/admin/check-ins', label: 'checkIns', icon: HeartHandshake },
   { to: '/admin/campaigns', label: 'campaigns', icon: Megaphone, adminOnly: true },
+  { to: '/admin/events', label: 'events', icon: CalendarHeart },
+  { to: '/admin/site-tools', label: 'siteTools', icon: Wand2 },
   { to: '/admin/finance', label: 'finance', icon: Wallet, adminOnly: true },
   { to: '/admin/reports', label: 'reports', icon: FileBarChart2, adminOnly: true },
   { to: '/admin/profitability', label: 'profitability', icon: TrendingUp, adminOnly: true },
@@ -183,6 +201,7 @@ const pageTitleKey = (pathname: string) => {
   if (matchPath('/admin/docs', pathname)) return 'admin.nav.docs';
   if (matchPath('/admin/docs/audit', pathname)) return 'admin.layout.audit';
   if (matchPath('/admin/inquiries', pathname)) return 'admin.nav.inquiries';
+  if (matchPath('/admin/calls', pathname)) return 'admin.nav.calls';
   if (matchPath('/admin/users', pathname)) return 'admin.nav.users';
   if (matchPath('/admin/duplicates', pathname)) return 'admin.nav.duplicates';
   if (matchPath('/admin/history', pathname)) return 'admin.nav.history';
@@ -193,11 +212,15 @@ const pageTitleKey = (pathname: string) => {
   if (matchPath('/admin/tasks/*', pathname)) return 'admin.nav.tasks';
   if (matchPath('/admin/announcements', pathname)) return 'admin.nav.announcements';
   if (matchPath('/admin/campaigns/*', pathname)) return 'admin.nav.campaigns';
+  if (matchPath('/admin/events', pathname)) return 'admin.nav.events';
+  if (matchPath('/admin/site-tools', pathname)) return 'admin.nav.siteTools';
   if (matchPath('/admin/arrivals/*', pathname)) return 'admin.nav.arrivals';
   if (matchPath('/admin/originals', pathname)) return 'admin.nav.originals';
   if (matchPath('/admin/storage', pathname)) return 'admin.nav.storage';
   if (matchPath('/admin/reports', pathname)) return 'admin.nav.reports';
   if (matchPath('/admin/profitability', pathname)) return 'admin.nav.profitability';
+  if (matchPath('/admin/case-forms', pathname)) return 'admin.nav.caseForms';
+  if (matchPath('/admin/doc-guides', pathname)) return 'admin.nav.docGuides';
   const m = matchPath('/admin/content/:resource', pathname);
   if (m) {
     const item = CONTENT_NAV.find((c) => c.resource === m.params.resource);
@@ -562,6 +585,7 @@ export default function AdminLayout() {
           <HelpButton />
           <LanguageSwitcher variant="pill" />
           <ThemeToggle />
+          <HeaderTimer />
           <NotificationBell />
           <a
             href="/"
@@ -594,6 +618,7 @@ export default function AdminLayout() {
 
         <main id="admin-main" tabIndex={-1} className="mx-auto w-full max-w-[1440px] min-w-0 flex-1 p-4 outline-none sm:p-6 lg:p-8">
           <Outlet />
+          <LiveChatAlerts />
         </main>
         <footer className="flex items-center justify-center gap-1.5 px-4 pb-5 text-[11px] text-muted/70">
           <BookOpen className="size-3" aria-hidden /> {t('admin.layout.footer')}

@@ -20,6 +20,8 @@ export interface AdminCaseListItem {
   ageDays: number;
   /** Top "next step" from the server rules (lib/caseNext), null for closed cases. */
   nextStep?: NextStepSummary | null;
+  /** "Top kimdÉ™dir?" â€” who acts next (lib/clientProcess/ballInCourt). */
+  ballInCourt?: import('@/components/clientProcess/api').BallInCourt | null;
 }
 
 export interface AdminCasesResponse {

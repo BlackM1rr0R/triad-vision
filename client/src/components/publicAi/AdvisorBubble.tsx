@@ -4,12 +4,14 @@ import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { AnimatePresence, motion } from 'framer-motion';
 import clsx from 'clsx';
-import { CalendarCheck, ClipboardCheck, MessageCircleQuestion, PhoneCall, RotateCcw, Send, Sparkles, UserPlus, X } from 'lucide-react';
+import { CalendarCheck, ClipboardCheck, Headset, MessageCircleQuestion, PhoneCall, RotateCcw, Send, Sparkles, UserPlus, X } from 'lucide-react';
 import { api, errorCode } from '@/lib/api';
 import { AxiosError } from 'axios';
 import { registerCopy } from '@/i18n';
 import { pagesPublicAi } from '@/i18n/pagesPublicAi';
 import { LeadForm, type ChatTurn } from './LeadForm';
+import { VisitorLiveChat } from '@/components/livechat/VisitorLiveChat'; // AI → human handover ("Əməkdaşla danışın")
+import { CallbackButton } from '@/components/calls/CallbackForm'; // "Mənə zəng edin"
 
 registerCopy(pagesPublicAi);
 
@@ -71,6 +73,15 @@ export const AdvisorBubble = () => {
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [showLead, setShowLead] = useState(false);
+  // Live chat handover: offered when the AI is unsure / the visitor asks for a person; null = AI mode.
+  const [offerHuman, setOfferHuman] = useState(false);
+  const [human, setHuman] = useState<null | 'button' | 'ai_unsure' | 'asked' | 'ai_error'>(() => {
+    try {
+      return sessionStorage.getItem('tv.livechat') ? 'button' : null;
+    } catch {
+      return null;
+    }
+  });
   const listRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const titleId = useId();
@@ -99,7 +110,7 @@ export const AdvisorBubble = () => {
     setState((s) => ({ ...s, messages: [...s.messages, { role: 'user', content: message }] }));
     setBusy(true);
     try {
-      const { data } = await api.post<{ reply: string; offerLead: boolean; turnsLeft: number }>('/public-ai/chat', {
+      const { data } = await api.post<{ reply: string; offerLead: boolean; offerHuman?: boolean; turnsLeft: number }>('/public-ai/chat', {
         sessionId: state.sessionId,
         message,
         history,
@@ -107,6 +118,7 @@ export const AdvisorBubble = () => {
         ...(honeypot ? { website: honeypot } : {}),
       });
       setState((s) => ({ ...s, messages: [...s.messages, { role: 'assistant', content: data.reply }], offerLead: s.offerLead || data.offerLead, turnsLeft: data.turnsLeft }));
+      if (data.offerHuman) setOfferHuman(true);
     } catch (err) {
       const code = errorCode(err);
       const scope = err instanceof AxiosError ? (err.response?.data as { scope?: string } | undefined)?.scope : undefined;
@@ -114,6 +126,7 @@ export const AdvisorBubble = () => {
         code === 'TOO_MANY_REQUESTS' ? (scope === 'session' ? t('pai.bubble.limitSession') : t('pai.bubble.limitHour')) : code === 'PUBLIC_AI_BUSY' || code === 'PUBLIC_AI_DISABLED' ? t('pai.bubble.busy') : t('pai.bubble.error'),
       );
       if (code !== 'NETWORK' && code !== 'AI_UNAVAILABLE') setState((s) => ({ ...s, offerLead: true, ...(scope === 'session' ? { turnsLeft: 0 } : {}) }));
+      setOfferHuman(true);
     } finally {
       setBusy(false);
     }
@@ -164,7 +177,12 @@ export const AdvisorBubble = () => {
                 </h2>
                 <p className="truncate text-[11px] text-white/70">{t('pai.bubble.subtitle')}</p>
               </div>
-              {state.messages.length > 0 && (
+              {!human && (
+                <button type="button" className="grid size-9 place-items-center rounded-lg text-white/80 hover:bg-white/10" aria-label={t('livechat.talkToHuman')} title={t('livechat.talkToHuman')} onClick={() => setHuman('button')}>
+                  <Headset className="size-4" aria-hidden />
+                </button>
+              )}
+              {state.messages.length > 0 && !human && (
                 <button type="button" className="grid size-9 place-items-center rounded-lg text-white/80 hover:bg-white/10" aria-label={t('pai.bubble.restart')} title={t('pai.bubble.restart')} onClick={restart}>
                   <RotateCcw className="size-4" aria-hidden />
                 </button>
@@ -174,6 +192,10 @@ export const AdvisorBubble = () => {
               </button>
             </header>
 
+            {human ? (
+              <VisitorLiveChat transcript={state.messages} lang={lang} reason={human} onBack={() => setHuman(null)} />
+            ) : (
+            <>
             <div ref={listRef} className="min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain bg-surface/60 p-3" aria-live="polite">
               <div className="max-w-[85%] rounded-2xl rounded-tl-sm bg-card px-3 py-2 text-sm text-ink shadow-sm">{t('pai.bubble.greeting')}</div>
               {state.messages.length === 0 && (
@@ -220,6 +242,15 @@ export const AdvisorBubble = () => {
                   </div>
                 </div>
               )}
+              {offerHuman && (
+                <div className="space-y-2 rounded-xl border border-line bg-card p-2.5">
+                  <p className="text-xs text-ink">{t('livechat.offerHuman')}</p>
+                  <button type="button" className="btn-primary btn-sm w-full" onClick={() => setHuman(notice ? 'ai_error' : 'ai_unsure')}>
+                    <Headset className="size-4" aria-hidden /> {t('livechat.talkToHuman')}
+                  </button>
+                </div>
+              )}
+              {state.offerLead && <CallbackButton source="advisor" className="btn-ghost btn-sm w-full bg-card" />}
               {showLead && <LeadForm compact source="advisor" transcript={state.messages} onCancel={() => setShowLead(false)} />}
             </div>
 
@@ -263,6 +294,8 @@ export const AdvisorBubble = () => {
                 {state.turnsLeft !== null && state.turnsLeft <= 5 && <span className="shrink-0 font-semibold">{t('pai.bubble.turnsLeft', { count: state.turnsLeft })}</span>}
               </p>
             </form>
+            </>
+            )}
           </motion.div>
         )}
       </AnimatePresence>

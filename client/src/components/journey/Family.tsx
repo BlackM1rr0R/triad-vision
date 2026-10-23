@@ -9,6 +9,7 @@ import { api } from '@/lib/api';
 import { useL10n } from '@/lib/l10n';
 import { registerCopy } from '@/i18n';
 import { pagesJourney } from '@/i18n/pagesJourney';
+import { pagesFamilyLanguage } from '@/i18n/pagesFamilyLanguage';
 import { Spinner } from '@/components/ui/Spinner';
 import { StatusBadge } from '@/components/portal/StatusBadge';
 import { CaseStepper } from '@/components/portal/CaseStepper';
@@ -21,8 +22,9 @@ import { familyKey, useFamilyGroup } from './api';
 import { RELATIONS, type FamilyCase, type FamilyGroup, type Relation } from './types';
 
 registerCopy(pagesJourney);
+registerCopy(pagesFamilyLanguage); // relation 'other'
 
-const RELATION_ICON: Record<Relation, typeof Heart> = { spouse: Heart, child: Baby, parent: Crown };
+const RELATION_ICON: Record<Relation, typeof Heart> = { spouse: Heart, child: Baby, parent: Crown, other: UserRound };
 
 const memberName = (c: FamilyCase) => (c.member ? `${c.member.firstName} ${c.member.lastName}`.trim() : c.profession);
 

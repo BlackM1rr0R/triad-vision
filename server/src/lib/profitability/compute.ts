@@ -1,6 +1,7 @@
 import type { Prisma } from '@prisma/client';
 import { prisma } from '../../db.js';
 import { toEur, type ProfitSettings } from './settings.js';
+import { labourByCase } from '../timeTracking/rates.js'; // LABOUR cost (time tracking)
 
 /**
  * Profitability per case (Gəlirlilik): lifetime revenue and costs of each case, in EUR cents.
@@ -20,6 +21,7 @@ import { toEur, type ProfitSettings } from './settings.js';
  *  - The partner share of a settlement row, unless a PartnerCommission row is synced from it (no double count).
  *  - Settlement expenses ("Rasxod").
  *  - Manual costs (CaseCost): translation, courier, embassy / visa fees paid on behalf, travel, other.
+ *  - LABOUR: staff time on the case (TimeEntry minutes × the staff member's hourly cost rate in force that day).
  *  Owner shares of the settlement ledger (beneficiaries) are a split of the profit, not costs.
  * Records without a case link fall back to the client: translation orders and agent commissions with only a
  * client go to the client's latest case opened on or before the record (else the client's first case).
@@ -28,12 +30,13 @@ import { toEur, type ProfitSettings } from './settings.js';
  */
 
 export type RevenueSource = 'INVOICE' | 'SETTLEMENT' | 'TRANSLATION';
-export type CostKey = 'TRANSLATION' | 'COURIER' | 'EMBASSY_FEE' | 'VISA_FEE' | 'AGENT_COMMISSION' | 'PARTNER_COMMISSION' | 'TRAVEL' | 'OTHER' | 'LEDGER_EXPENSES';
-export const COST_KEYS: CostKey[] = ['TRANSLATION', 'COURIER', 'EMBASSY_FEE', 'VISA_FEE', 'AGENT_COMMISSION', 'PARTNER_COMMISSION', 'TRAVEL', 'OTHER', 'LEDGER_EXPENSES'];
+// LABOUR = staff time × hourly cost rate (lib/timeTracking).
+export type CostKey = 'TRANSLATION' | 'COURIER' | 'EMBASSY_FEE' | 'VISA_FEE' | 'AGENT_COMMISSION' | 'PARTNER_COMMISSION' | 'TRAVEL' | 'OTHER' | 'LEDGER_EXPENSES' | 'LABOUR';
+export const COST_KEYS: CostKey[] = ['TRANSLATION', 'COURIER', 'EMBASSY_FEE', 'VISA_FEE', 'AGENT_COMMISSION', 'PARTNER_COMMISSION', 'TRAVEL', 'OTHER', 'LEDGER_EXPENSES', 'LABOUR'];
 
 export interface ProfitLine {
   kind: 'revenue' | 'cost';
-  source: RevenueSource | 'AGENT_COMMISSION' | 'PARTNER_COMMISSION' | 'SETTLEMENT_PARTNER' | 'SETTLEMENT_EXPENSES' | 'CASE_COST';
+  source: RevenueSource | 'AGENT_COMMISSION' | 'PARTNER_COMMISSION' | 'SETTLEMENT_PARTNER' | 'SETTLEMENT_EXPENSES' | 'CASE_COST' | 'LABOUR';
   category: CostKey | null;
   ref: string;
   date: Date | null;
@@ -128,7 +131,7 @@ export const computeProfitability = async (where: Prisma.CaseWhereInput, s: Pick
   const agentIds = [...new Set(cases.map((c) => c.client.referredByAgentId).filter((x): x is string => !!x))];
   const rate = s.eurAzn;
 
-  const [invoices, companyCases, clientCases, settlements, translations, agentComms, partnerComms, manual, agents] = await Promise.all([
+  const [invoices, companyCases, clientCases, settlements, translations, agentComms, partnerComms, manual, agents, labour] = await Promise.all([
     companyIds.length
       ? prisma.invoice.findMany({ where: { companyId: { in: companyIds }, status: 'PAID' }, select: { id: true, number: true, companyId: true, netCents: true, currency: true, items: true, paidAt: true } })
       : [],
@@ -152,6 +155,7 @@ export const computeProfitability = async (where: Prisma.CaseWhereInput, s: Pick
     }),
     prisma.caseCost.findMany({ where: { caseId: { in: ids } }, orderBy: [{ incurredAt: 'asc' }, { id: 'asc' }] }),
     agentIds.length ? prisma.agent.findMany({ where: { id: { in: agentIds } }, select: { id: true, code: true, user: { select: { firstName: true, lastName: true } } } }) : [],
+    labourByCase(ids), // LABOUR (time tracking)
   ]);
 
   const lines = new Map<string, ProfitLine[]>(ids.map((id) => [id, []]));
@@ -295,6 +299,11 @@ export const computeProfitability = async (where: Prisma.CaseWhereInput, s: Pick
       costId: m.id,
       note: m.note,
     });
+  }
+
+  // ── LABOUR: staff time × hourly cost rate — one line per case (the rates themselves stay SUPER_ADMIN-only) ──
+  for (const [caseId, l] of labour) {
+    if (l.cents) add(caseId, { kind: 'cost', source: 'LABOUR', category: 'LABOUR', ref: `${Math.round((l.minutes / 60) * 10) / 10} h`, date: l.lastAt, amountCents: l.cents, currency: 'EUR', eurCents: l.cents });
   }
 
   const agentById = new Map(agents.map((a) => [a.id, a]));

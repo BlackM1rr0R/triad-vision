@@ -558,6 +558,41 @@
         "PDF_SMALL_PAGE": "Die PDF-Seite ist sehr klein",
         "PDF_NO_PAGES": "Die PDF hat keine Seiten"
       }
+    },
+    "checkin": {
+      "title": "Wie geht es Ihnen in Deutschland?",
+      "intro": "Hallo {{name}}, seit Ihrer Ankunft sind {{days}} Tage vergangen. Ist alles in Ordnung?",
+      "ok": "Alles in Ordnung 👍",
+      "issue": "Es gibt ein Problem ⚠️",
+      "topicsTitle": "Worum geht es?",
+      "topics": {
+        "HOUSING": "Wohnung",
+        "SALARY": "Gehalt",
+        "WORKPLACE": "Arbeitsplatz",
+        "HEALTH": "Gesundheit",
+        "DOCUMENTS": "Dokumente",
+        "OTHER": "Sonstiges"
+      },
+      "comment": "Kommentar (optional)",
+      "send": "Senden",
+      "back": "Zurück",
+      "thanksOk": "Vielen Dank! Schön, dass alles in Ordnung ist.",
+      "thanksIssue": "Ihre Nachricht ist angekommen — wir melden uns in Kürze bei Ihnen.",
+      "error": "Senden fehlgeschlagen. Bitte versuchen Sie es erneut."
+    },
+    "family": {
+      "title": "Familienangehörige",
+      "open": "Antrag öffnen",
+      "progress": "{{accepted}}/{{required}} akzeptiert",
+      "optional": "optional",
+      "upload": "Tippen Sie hier, um Unterlagen hochzuladen",
+      "addOnWeb": "Weitere Familienangehörige fügen Sie im Webportal (Mein Antrag → Familienangehörige) oder über Ihren Betreuer hinzu.",
+      "relation": {
+        "spouse": "Ehepartner/in",
+        "child": "Kind",
+        "parent": "Elternteil",
+        "other": "Andere/r Angehörige/r"
+      }
     }
   }
 }

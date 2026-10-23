@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { api } from '@/lib/api';
 import { Spinner } from '@/components/ui/Spinner';
 import { toastError } from './labels';
+import { optimizeImage } from '@/lib/imageCompress';
 
 /** Image URL input with upload (POST /admin/upload) and live preview. */
 export const ImageField = ({
@@ -27,7 +28,7 @@ export const ImageField = ({
     setUploading(true);
     try {
       const fd = new FormData();
-      fd.append('file', file);
+      fd.append('file', await optimizeImage(file));
       const { data } = await api.post<{ url: string }>('/admin/upload', fd);
       setBroken(false);
       onChange(data.url);

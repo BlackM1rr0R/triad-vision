@@ -25,6 +25,8 @@ import { AiCheckCard } from '@/components/aiDocs/AiCheckCard';
 import { QualityNotice } from '@/components/uploadAi/QualityNotice';
 import { RecognitionNotice } from '@/components/uploadAi/RecognitionNotice';
 import { qualityOf, type Quality } from '@/components/uploadAi/api';
+import { optimizeImages } from '@/lib/imageCompress';
+import DocGuideButton from '@/components/clientData/DocGuideButton'; // "Necə almalı?" guide per requirement key
 
 type UploadStage = 'INITIAL' | 'EMBASSY';
 
@@ -171,7 +173,7 @@ const RequirementCard = ({
     setLastQuality(null);
     const form = new FormData();
     form.append('requirementId', req.id);
-    form.append('file', file);
+    form.append('file', await optimizeImages([file]).then((l) => l[0]));
     setProgress(0);
     try {
       const { data } = await api.post<{ checks?: unknown }>(`/cases/${caseId}/documents`, form, {
@@ -200,7 +202,7 @@ const RequirementCard = ({
     const form = new FormData();
     form.append('requirementId', req.id);
     form.append('name', tr(req.title));
-    for (const f of files) form.append('pages', f);
+    for (const f of await optimizeImages(files)) form.append('pages', f);
     setLastChecks(null);
     setPdfProgress(0);
     try {
@@ -230,6 +232,7 @@ const RequirementCard = ({
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <h4 className="min-w-0 font-sans text-[0.95rem] font-semibold break-words text-navy-900">{tr(req.title)}</h4>
+            <DocGuideButton requirementKey={(req as Requirement & { key?: string | null }).key} title={tr(req.title)} />
             <span className={clsx('badge whitespace-nowrap', req.required ? 'bg-navy-900/8 text-navy-900' : 'bg-surface text-muted')}>
               {req.required ? t('common.required') : t('common.optional')}
             </span>

@@ -1,10 +1,36 @@
-import { defineConfig } from 'vite';
+import { defineConfig, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import { fileURLToPath } from 'node:url';
+import { createHash } from 'node:crypto';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import path from 'node:path';
+
+/**
+ * Stamps public/sw.js with a hash of the emitted file names, so every deployment ships a changed service
+ * worker and open tabs get the "New version available" prompt (src/lib/pwa.ts).
+ */
+const swBuildStamp = (): Plugin => {
+  let outDir = 'dist';
+  let id = 'dev';
+  return {
+    name: 'tv-sw-build-stamp',
+    apply: 'build',
+    configResolved(c) {
+      outDir = path.resolve(c.root, c.build.outDir);
+    },
+    generateBundle(_opts, bundle) {
+      id = createHash('sha256').update(Object.keys(bundle).sort().join('\n')).digest('hex').slice(0, 12);
+    },
+    closeBundle() {
+      const file = path.join(outDir, 'sw.js');
+      if (existsSync(file)) writeFileSync(file, readFileSync(file, 'utf8').replace(/__TV_BUILD__/g, id));
+    },
+  };
+};
 
 export default defineConfig({
-  plugins: [react(), tailwindcss()],
+  plugins: [react(), tailwindcss(), swBuildStamp()],
   resolve: { alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) } },
   // Pre-bundle heavy deps up front so the dev server never stops mid-navigation to re-optimise and reload.
   optimizeDeps: {

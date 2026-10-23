@@ -18,7 +18,12 @@ import {
   UserSearch,
   UsersRound,
 } from 'lucide-react';
+import { HeartHandshake } from 'lucide-react';
 import type { WorkCategory, WorkKind, WorkPriority } from './api';
+import { registerCopy } from '@/i18n';
+import { pagesClientProcessToday } from '@/i18n/pagesClientProcess';
+
+registerCopy(pagesClientProcessToday); // client_task_overdue kind + office-visit notes (client process)
 
 export const KIND_ICON: Record<WorkKind, LucideIcon> = {
   doc_review: FileCheck2,
@@ -38,6 +43,8 @@ export const KIND_ICON: Record<WorkKind, LucideIcon> = {
   expiring: Hourglass,
   security_alert: ShieldAlert,
   privacy: ShieldHalf,
+  client_task_overdue: ListTodo, // client tasks past their deadline (client process)
+  arrival_issue: HeartHandshake, // post-arrival check-in: "Problem var"
 };
 
 /** Icon tile colours per category (light + dark via the brand / status tokens used across the admin). */

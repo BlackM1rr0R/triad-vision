@@ -43,6 +43,9 @@ import { uploadScanPdf } from './scanUpload';
 import { showQualityFeedback } from './qualityFeedback';
 import { useOcr } from './useOcr';
 import { useOpenDocument, useUploader, type PickSource } from './useDocuments';
+import { BallCard, ClientTasksSection, OfficeVisitsSection } from './ClientProcess';
+import { FamilySection } from './FamilySection';
+import { ClientDataSection } from '@/features/clientData/ClientData'; // questionnaires + data confirmation
 
 const NO_PAGES: ScanPage[] = [];
 
@@ -427,8 +430,11 @@ export const ClientCaseView = ({ id }: { id: string }) => {
     <View style={{ gap: space.lg }}>
       {error ? <StaleHint error={error} onRetry={() => void refetch()} /> : null}
       <CaseHeaderCard c={c} />
+      <BallCard c={c} />
       <DecisionCard c={c} />
       <AppointmentCard c={c} />
+      <ClientTasksSection c={c} />
+      <ClientDataSection caseId={c.id} />
       {c.status === 'CONTRACT_SENT' ? <ContractCard c={c} onOpen={open} openingId={openingId} /> : null}
       {embassyFirst ? [embassy, initial] : [initial]}
       {c.status !== 'CONTRACT_SENT' ? <ContractCard c={c} onOpen={open} openingId={openingId} /> : null}
@@ -442,6 +448,9 @@ export const ClientCaseView = ({ id }: { id: string }) => {
           </View>
         </Section>
       ) : null}
+      {/* Main applicant: family members' checklists (each opens the member's case to upload). */}
+      <FamilySection caseId={c.id} />
+      <OfficeVisitsSection c={c} />
       <Section title={t('portal.currentStep')} icon={Route}>
         <Stepper status={c.status} />
       </Section>

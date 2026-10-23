@@ -18,6 +18,7 @@ import { checkCaseDocument } from '../lib/docCheck/index.js';
 import { scheduleAiDocCheck } from '../lib/aiDocs/docCheck.js';
 import { prepareCaseDocument, publicQuality, scheduleUploadAnalysis } from '../lib/uploadAi/index.js';
 import { emitAutomationEvent } from '../lib/automation/events.js';
+import { completeTasksForUpload } from '../lib/clientProcess/tasks.js';
 
 export const casesRouter = Router();
 casesRouter.use(requireAuth);
@@ -108,6 +109,7 @@ casesRouter.post('/:id/documents', documentUpload.single('file'), async (req, re
     res.status(201).json({ document: { ...doc, checks }, checks, quality });
     scheduleAiDocCheck(doc.id); // AI check against the requirement, in the background (checks.ai)
     scheduleUploadAnalysis({ documentId: doc.id }); // recognition + proposals, in the background
+    void completeTasksForUpload(doc.id); // client tasks linked to this requirement are done (never throws)
   } catch (err) {
     await removeFile(file.filename);
     throw err;

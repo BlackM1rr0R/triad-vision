@@ -11,6 +11,7 @@ import { Spinner } from '@/components/ui/Spinner';
 import { day } from '@/components/agents/format';
 import { portalError, type DocState, type PartnerCaseDetail, type PartnerRequirement } from '@/components/partnerPortal/api';
 import { ErrorRetry, Loading, Section, StatusPill, StepBar } from '@/components/partnerPortal/ui';
+import { optimizeImage } from '@/lib/imageCompress';
 
 const STATE_ICON: Record<DocState, { icon: typeof CheckCircle2; tone: string }> = {
   MISSING: { icon: CircleDashed, tone: 'text-muted' },
@@ -35,7 +36,7 @@ const RequirementRow = ({ caseId, r }: { caseId: string; r: PartnerRequirement }
     mutationFn: async (file: File) => {
       const fd = new FormData();
       fd.append('requirementId', r.id);
-      fd.append('file', file);
+      fd.append('file', await optimizeImage(file));
       return (await api.post(`/partner/cases/${caseId}/documents`, fd)).data;
     },
     onSuccess: async () => {

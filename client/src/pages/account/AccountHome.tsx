@@ -1,3 +1,4 @@
+import { PortalCallbackCard } from '@/components/calls/CallbackForm'; // "Mənə zəng edin" from the portal
 import { useTranslation } from 'react-i18next';
 import { AlertTriangle, BellRing, CalendarDays, FileUp, FolderOpen, Hourglass, MessageCircle, RotateCw } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
@@ -26,6 +27,7 @@ import { RecommendationsCard } from '@/components/aiWriting/Recommendations';
 import { registerCopy } from '@/i18n';
 import { pagesAccount } from '@/i18n/pagesAccount';
 import { usePageTitle } from '@/lib/usePageTitle';
+import { PortalTasks } from '@/components/clientProcess/PortalTasks'; // "MÉ™nim tapÅŸÄ±rÄ±qlarÄ±m" across cases
 
 registerCopy(pagesAccount);
 
@@ -114,6 +116,8 @@ export default function AccountHome() {
           <div className="min-w-0 space-y-6">
             <JourneyCard c={activeCase} />
             <CaseNumbers c={activeCase} />
+            <PortalTasks />
+            <PortalCallbackCard />
             {hasApproved && <OnboardingCard />}
             {activeCase.appointment && (
               <div className="lg:hidden">

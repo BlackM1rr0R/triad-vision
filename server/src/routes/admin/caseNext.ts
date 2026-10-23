@@ -1,6 +1,6 @@
 import { Router, type Request } from 'express';
 import { z } from 'zod';
-import type { Locale } from '@prisma/client';
+import type { Locale, Prisma } from '@prisma/client';
 import { config } from '../../config.js';
 import { prisma } from '../../db.js';
 import { audit } from '../../lib/audit.js';
@@ -9,6 +9,7 @@ import { auditDetails, buildEmbassyPackage, MAX_COPIES, packagePreview } from '.
 import { requestDocuments } from '../../lib/caseNext/requests.js';
 import { nextStepFor } from '../../lib/caseNext/nextStep.js';
 import { nextStepAi } from '../../lib/caseNext/ai.js';
+import { confirmationState } from '../../lib/clientData/confirmation.js';
 
 /**
  * Admin case page: "Next step" card and the one-click embassy package. Mounted on the admin router
@@ -73,7 +74,8 @@ adminCaseNextRouter.post('/cases/:id/next-step/request-documents', async (req, r
 
 adminCaseNextRouter.get('/cases/:id/embassy-package', async (req, res) => {
   const c = await ensureCase(String(req.params.id));
-  res.json({ preview: await packagePreview(c.id) });
+  // dataConfirmation: the UI warns (not blocks) when the client has not confirmed the data or it changed since.
+  res.json({ preview: await packagePreview(c.id), dataConfirmation: await confirmationState(c.id) });
 });
 
 const buildBody = z.object({
@@ -84,13 +86,15 @@ const buildBody = z.object({
   separators: z.boolean().optional(),
   copies: z.number().int().min(1).max(MAX_COPIES).optional(),
   format: z.enum(['pdf', 'zip']).optional(),
+  family: z.boolean().optional(), // add a section per family member (main case)
 });
 
 adminCaseNextRouter.post('/cases/:id/embassy-package', buildLimiter, async (req, res) => {
   const body = parse(buildBody, req.body ?? {});
   const c = await ensureCase(String(req.params.id));
   const result = await buildEmbassyPackage(c.id, body, { id: req.user!.id });
-  await audit(req, 'EMBASSY_PACKAGE_BUILT', c.id, auditDetails(result));
+  const confirmed = await confirmationState(c.id);
+  await audit(req, 'EMBASSY_PACKAGE_BUILT', c.id, { ...(auditDetails(result) as Record<string, Prisma.InputJsonValue>), dataConfirmation: confirmed.state });
   res.status(201).json(result);
 });
 

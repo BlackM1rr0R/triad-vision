@@ -131,6 +131,7 @@ bookingRouter.get('/slots', async (_req, res) => {
     where: {
       startsAt: { gte: new Date(now + BOOKING_MIN_NOTICE_MS), lte: new Date(now + BOOKING_WINDOW_DAYS * 24 * 60 * 60 * 1000) },
       staff: { isActive: true },
+      kind: 'ONLINE', // office-visit slots are booked from the client portal (lib/clientProcess/office)
       ...freeSlotWhere(),
     },
     orderBy: [{ startsAt: 'asc' }, { createdAt: 'asc' }],
@@ -178,7 +179,7 @@ bookingRouter.post('/', createLimiter, async (req, res) => {
     where: { id: body.slotId },
     include: { booking: { select: { status: true } }, staff: { select: { isActive: true } } },
   });
-  if (!slot || !slot.staff.isActive) throw notFound('SLOT_NOT_FOUND');
+  if (!slot || !slot.staff.isActive || slot.kind !== 'ONLINE') throw notFound('SLOT_NOT_FOUND');
   if (slot.startsAt.getTime() < Date.now() + BOOKING_MIN_NOTICE_MS) throw new HttpError(400, 'SLOT_TOO_SOON');
   if (slot.booking && slot.booking.status !== 'CANCELLED') throw new HttpError(409, 'SLOT_TAKEN');
 

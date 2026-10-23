@@ -23,6 +23,12 @@ import { ForecastStrip } from '@/components/journey/ForecastStrip';
 import { FamilyGroupCard, useRelationLabel } from '@/components/journey/Family';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { ClientOriginals } from '@/components/originals/ClientOriginals';
+import ClientDataTasks from '@/components/clientData/ClientDataTasks';
+import { FamilyMembersSection } from '@/components/family/FamilyMembersSection';
+import { BallCard } from '@/components/clientProcess/Ball'; // "Top kimdÉ™dir?"
+import { PortalTasks } from '@/components/clientProcess/PortalTasks'; // "MÉ™nim tapÅŸÄ±rÄ±qlarÄ±m"
+import { PortalOfficeVisits } from '@/components/clientProcess/PortalOfficeVisits'; // "OfisÉ™ gÉ™liÅŸ tÉ™yin et"
+import type { BallInCourt } from '@/components/clientProcess/api';
 
 const CurrentStepPanel = ({ data }: { data: CaseDetail }) => {
   const { t } = useTranslation();
@@ -213,15 +219,21 @@ export default function CaseView() {
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-8 xl:grid-cols-[minmax(0,1fr)_380px]">
         <div className="min-w-0 space-y-6">
+          <BallCard ball={(data as CaseDetail & { ballInCourt?: BallInCourt | null }).ballInCourt} />
           <CurrentStepPanel data={data} />
+          <ClientDataTasks caseId={data.id} />
           <DecisionCard data={data} />
           <AppointmentCard data={data} />
+          <PortalTasks caseId={data.id} onChanged={refresh} />
           {mainBlocks}
           <OtherFiles data={data} />
+          {/* Main applicant: "Ailə üzvləri" with each member's checklist and uploads. */}
+          {!family.parentCaseId && <FamilyMembersSection caseId={data.id} />}
+          <PortalOfficeVisits caseId={data.id} closed={['APPROVED', 'REJECTED', 'CANCELLED'].includes(data.status)} />
         </div>
         <aside className="min-w-0 space-y-6">
           <CaseMessages data={data} onChanged={refresh} />
-          <FamilyGroupCard caseId={data.id} parentCaseId={family.parentCaseId} />
+          {family.parentCaseId && <FamilyGroupCard caseId={data.id} parentCaseId={family.parentCaseId} />}
           <ClientOriginals caseId={data.id} />
           <CaseTimeline data={data} />
         </aside>

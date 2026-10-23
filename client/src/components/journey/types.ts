@@ -135,8 +135,8 @@ export interface GermanStatus {
 
 // ─── Family ────────────────────────────────────────────────────────────
 
-export type Relation = 'spouse' | 'child' | 'parent';
-export const RELATIONS: Relation[] = ['spouse', 'child', 'parent'];
+export type Relation = 'spouse' | 'child' | 'parent' | 'other';
+export const RELATIONS: Relation[] = ['spouse', 'child', 'parent', 'other'];
 
 export interface FamilyMemberInfo {
   firstName: string;

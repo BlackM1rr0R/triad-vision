@@ -2,6 +2,7 @@ import { useCallback, useRef, useState } from 'react';
 import { router } from 'expo-router';
 import * as DocumentPicker from 'expo-document-picker';
 import * as ImagePicker from 'expo-image-picker';
+import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
 import { useTranslation } from 'react-i18next';
 import { useToast } from '@/components/ui';
 import { uploadFile } from '@/lib/api';
@@ -47,6 +48,50 @@ export type PickSource = 'camera' | 'gallery' | 'files';
 
 const stamp = () => new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
 
+/** Same rules as the web client (client/src/lib/imageCompress.ts): long side ≤ 2200 px, short side ≥ 1200 px, JPEG 0.82. */
+export const PHOTO_MAX_EDGE = 2200;
+export const PHOTO_MIN_SHORT = 1200;
+export const PHOTO_QUALITY = 0.82;
+
+export const photoResize = (width: number, height: number): { width: number } | { height: number } | null => {
+  if (!(width > 0) || !(height > 0)) return null;
+  const long = Math.max(width, height);
+  const short = Math.min(width, height);
+  let scale = Math.min(1, PHOTO_MAX_EDGE / long);
+  if (short * scale < PHOTO_MIN_SHORT) scale = Math.min(1, PHOTO_MIN_SHORT / short);
+  if (scale >= 1) return null;
+  return width >= height ? { width: Math.round(width * scale) } : { height: Math.round(height * scale) };
+};
+
+/** Shrinks a camera / gallery photo before upload; any failure keeps the original. */
+const shrinkPhoto = async (a: ImagePicker.ImagePickerAsset, name: string): Promise<PickedFile | null> => {
+  const resize = photoResize(a.width, a.height);
+  if (!resize) return null;
+  const ctx = ImageManipulator.manipulate(a.uri);
+  try {
+    ctx.resize(resize);
+    const image = await ctx.renderAsync();
+    try {
+      const out = await image.saveAsync({ compress: PHOTO_QUALITY, format: SaveFormat.JPEG });
+      return { uri: out.uri, name: name.replace(/\.[a-z0-9]{1,5}$/i, '') + '.jpg', mimeType: 'image/jpeg', size: null };
+    } finally {
+      try {
+        image.release();
+      } catch {
+        /* already released */
+      }
+    }
+  } catch {
+    return null;
+  } finally {
+    try {
+      ctx.release();
+    } catch {
+      /* already released */
+    }
+  }
+};
+
 /** Opens the camera, the photo library or the document picker. Returns null when cancelled. */
 export const pickFile = async (source: PickSource, opts: { pdfOnly?: boolean } = {}): Promise<PickedFile | null> => {
   if (source === 'camera') {
@@ -55,7 +100,8 @@ export const pickFile = async (source: PickSource, opts: { pdfOnly?: boolean } =
     const res = await ImagePicker.launchCameraAsync({ mediaTypes: ['images'], quality: 0.75, exif: false });
     if (res.canceled || !res.assets[0]) return null;
     const a = res.assets[0];
-    return { uri: a.uri, name: a.fileName || `photo-${stamp()}.jpg`, mimeType: a.mimeType || 'image/jpeg', size: a.fileSize };
+    const name = a.fileName || `photo-${stamp()}.jpg`;
+    return (await shrinkPhoto(a, name)) ?? { uri: a.uri, name, mimeType: a.mimeType || 'image/jpeg', size: a.fileSize };
   }
   if (source === 'gallery') {
     const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -65,7 +111,7 @@ export const pickFile = async (source: PickSource, opts: { pdfOnly?: boolean } =
     const a = res.assets[0];
     // quality < 1 makes iOS re-encode HEIC photos as JPEG.
     const name = (a.fileName || `image-${stamp()}.jpg`).replace(/\.heic$/i, '.jpg');
-    return { uri: a.uri, name, mimeType: a.mimeType === 'image/heic' ? 'image/jpeg' : a.mimeType || mimeFromName(name), size: a.fileSize };
+    return (await shrinkPhoto(a, name)) ?? { uri: a.uri, name, mimeType: a.mimeType === 'image/heic' ? 'image/jpeg' : a.mimeType || mimeFromName(name), size: a.fileSize };
   }
   const res = await DocumentPicker.getDocumentAsync({
     type: opts.pdfOnly ? ['application/pdf'] : ACCEPTED_MIME,

@@ -16,8 +16,13 @@ import { useMailPush } from '@/components/workspace/useMailPush';
 import { useAuth } from '@/lib/auth';
 import { registerCopy } from '@/i18n';
 import { workspaceCopy } from '@/i18n/workspace';
+import { pagesCalls } from '@/i18n/pagesCalls';
+import { Headset } from 'lucide-react'; // live chats
+import { LiveChatAlerts, useLiveChatWaiting } from '@/components/livechat/LiveChatAlerts'; // AI → human chat queue: badge, sound + toast
+import { HeaderTimer } from '@/components/timeCare/HeaderTimer'; // running staff timer
 
 registerCopy(workspaceCopy);
+registerCopy(pagesCalls);
 
 interface NavItem {
   to: string;
@@ -78,6 +83,7 @@ export default function WorkspaceLayout() {
   useRealtime('chat.message', bump([['chat', 'summary']]));
   useRealtime('chat.read', bump([['chat', 'summary']]));
 
+  const liveWaiting = useLiveChatWaiting();
   useEffect(() => setMobileOpen(false), [location.pathname]);
   useEffect(() => {
     try {
@@ -97,6 +103,7 @@ export default function WorkspaceLayout() {
     { to: '/workspace/tasks', label: t('workspace.nav.tasks'), icon: ListTodo, badge: summary.data?.open || undefined },
     { to: '/workspace/contacts', label: t('workspace.nav.contacts'), icon: BookUser },
     { to: '/workspace/team', label: t('workspace.nav.team'), icon: Users },
+    { to: '/workspace/live-chats', label: t('workspace.nav.liveChats'), icon: Headset, badge: liveWaiting || undefined },
   ];
   const initials = user ? `${user.firstName[0] ?? ''}${user.lastName[0] ?? ''}`.toUpperCase() : '';
 
@@ -143,6 +150,11 @@ export default function WorkspaceLayout() {
           <Globe className="size-5 shrink-0" />
           {wide && <span className="truncate">{t('workspace.nav.site')}</span>}
         </Link>
+        {wide && (
+          <div className="px-1 py-1">
+            <HeaderTimer />
+          </div>
+        )}
         <div className={clsx('flex items-center gap-2 px-1 py-1', wide ? 'justify-between' : 'flex-col')}>
           {/* Opens upward here (bottom of the sidebar); flag only in the collapsed rail. */}
           <LanguageSwitcher variant="pill" compact={!wide} />
@@ -200,6 +212,9 @@ export default function WorkspaceLayout() {
           </button>
           <LogoMark className="h-6 w-7 text-ink" />
           <span className="font-display text-sm font-extrabold tracking-[0.08em]">{t('workspace.title')}</span>
+          <div className="ml-auto">
+            <HeaderTimer />
+          </div>
         </div>
         <main className="min-h-0 flex-1">
           <RouteErrorBoundary>
@@ -211,6 +226,7 @@ export default function WorkspaceLayout() {
               }
             >
               <Outlet />
+              <LiveChatAlerts />
             </Suspense>
           </RouteErrorBoundary>
         </main>

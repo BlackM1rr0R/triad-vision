@@ -1,3 +1,4 @@
+import { ContactCallbackCard } from '@/components/calls/CallbackForm';
 import { useTranslation } from 'react-i18next';
 import { Clock, Mail, MapPin, MessageCircle, Phone } from 'lucide-react';
 import { PageHero } from '@/components/layout/PageHero';
@@ -7,6 +8,7 @@ import { useSiteContent } from '@/lib/content';
 import { useL10n } from '@/lib/l10n';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { BookingCta } from '@/components/booking/BookingCta';
+import { StatusBox } from '@/components/site/StatusBox';
 
 export default function Contact() {
   const { t } = useTranslation();
@@ -67,6 +69,10 @@ export default function Contact() {
             </div>
           </Reveal>
           <div className="space-y-6">
+            {/* Public status check without login (/status) */}
+            <StatusBox />
+            {/* "Mənə zəng edin": callback request in a Baku office-hours window */}
+            <ContactCallbackCard />
             <h2 className="font-display text-2xl font-extrabold text-navy-900">{t('contact.offices')}</h2>
             {c?.offices.map((o, i) => (
               <Reveal key={o.address} delay={i * 0.1}>

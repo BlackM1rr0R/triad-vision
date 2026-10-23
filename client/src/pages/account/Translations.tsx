@@ -45,6 +45,7 @@ import {
   type TrService,
   type TrUrgency,
 } from '@/components/translations/shared';
+import { optimizeImages } from '@/lib/imageCompress';
 
 registerCopy(pagesTranslations);
 
@@ -67,7 +68,7 @@ const useLiveOrders = () => {
 
 const uploadFiles = async (orderId: string, files: File[], onProgress?: (p: number) => void) => {
   const form = new FormData();
-  files.forEach((f) => form.append('file', f));
+  (await optimizeImages(files)).forEach((f) => form.append('file', f));
   return (
     await api.post<{ order: TrClientOrder }>(`/translations/${orderId}/files`, form, {
       onUploadProgress: (e) => onProgress?.(e.total ? e.loaded / e.total : 0),

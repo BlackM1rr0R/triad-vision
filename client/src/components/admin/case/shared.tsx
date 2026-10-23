@@ -7,6 +7,7 @@ import { api, fileUrl, formatBytes } from '@/lib/api';
 import type { CaseDetail, CaseDocument, DocStage, Requirement } from '@/lib/types';
 import { fmtDateTime, toastError } from '../labels';
 import type { CaseStats } from '../types';
+import { optimizeImage } from '@/lib/imageCompress';
 
 export const caseKey = (id: string) => ['admin-case', id] as const;
 
@@ -62,7 +63,7 @@ export const uploadCaseDocument = async (
   const fd = new FormData();
   fd.append('stage', stage);
   if (requirementId) fd.append('requirementId', requirementId);
-  fd.append('file', file);
+  fd.append('file', await optimizeImage(file)); // photos > 1 MB shrunk in the browser (lib/imageCompress)
   return (await api.post<{ document: CaseDocument }>(`/admin/cases/${caseId}/documents`, fd)).data.document;
 };
 

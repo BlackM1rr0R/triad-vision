@@ -14,6 +14,7 @@ import { useDocCheckGate } from './DocCheckDialog';
 import { CheckResultNotice } from './CheckResultNotice';
 import { VaultModal } from './VaultModal';
 import { useVaultError } from './useVaultError';
+import { optimizeImage } from '@/lib/imageCompress';
 
 const toDateInput = (iso: string | null) => (iso ? iso.slice(0, 10) : '');
 
@@ -77,7 +78,7 @@ export const VaultUploadDialog = ({
   const submit = async () => {
     if (!file) return;
     const form = new FormData();
-    form.append('file', file);
+    form.append('file', await optimizeImage(file));
     form.append('kind', kind);
     form.append('title', title.trim() || t(`vault.kinds.${kind}`));
     if (ownerName.trim()) form.append('ownerName', ownerName.trim());

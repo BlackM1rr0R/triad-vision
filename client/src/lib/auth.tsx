@@ -94,6 +94,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     qc.setQueryData(['me'], null);
     dropPrivateQueries();
     try {
+      // This browser stops getting the user's push notifications (shared computers). Needs the session, so first.
+      await import('./pwa').then((m) => m.forgetPush()).catch(() => undefined);
       await api.post('/auth/logout');
     } catch {
       // cookie is short-lived anyway; the UI is already logged out

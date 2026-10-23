@@ -1,5 +1,6 @@
 import { prisma } from '../db.js';
 import { notFound } from './http.js';
+import { ballInCourtFor } from './clientProcess/ballInCourt.js'; // "who acts next" (client process)
 
 type DetailForStats = {
   status: string;
@@ -85,7 +86,8 @@ export const loadCaseDetail = async (caseId: string, opts: { forStaff: boolean }
       },
       messages: {
         orderBy: { createdAt: 'asc' },
-        include: { author: { select: { id: true, firstName: true, lastName: true, role: true } } },
+        // voice: messaging plus (voice messages); the audio itself is served by /api/messaging-plus/voice/:id
+        include: { author: { select: { id: true, firstName: true, lastName: true, role: true } }, voice: { select: { id: true, mimeType: true, durationMs: true, transcriptStatus: true, transcript: true, transcriptLang: true } } },
       },
     },
   });
@@ -107,5 +109,7 @@ export const loadCaseDetail = async (caseId: string, opts: { forStaff: boolean }
     // Documents not tied to a requirement (contract, visa scan, other files uploaded by staff, embassy packages)
     otherDocuments: c.documents.filter((d) => d.stage === 'VISA' || d.stage === 'OTHER' || d.stage === 'EMBASSY'),
     documents: undefined,
+    // "Top kimdÉ™dir?": who must act next, ETA, time per side (lib/clientProcess/ballInCourt)
+    ballInCourt: await ballInCourtFor(c.id),
   };
 };

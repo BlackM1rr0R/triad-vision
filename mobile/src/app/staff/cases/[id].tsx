@@ -366,6 +366,7 @@ export default function StaffCase() {
           </View>
           {tab === 'messages' ? (
             <ChatView
+              caseId={c.id}
               messages={c.messages}
               meId={user?.id ?? ''}
               staffView

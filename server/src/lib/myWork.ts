@@ -31,6 +31,8 @@ export const WORK_KINDS = [
   'expiring',
   'security_alert',
   'privacy',
+  'arrival_issue', // post-arrival check-in answered "Problem var" (lib/checkIns)
+  'client_task_overdue',
 ] as const;
 export type WorkKind = (typeof WORK_KINDS)[number];
 
@@ -55,6 +57,8 @@ const CATEGORY: Record<WorkKind, WorkCategory> = {
   appointment: 'other',
   security_alert: 'other',
   privacy: 'other',
+  arrival_issue: 'other',
+  client_task_overdue: 'tasks',
 };
 
 /** Page that lists all items of a kind (the "+N more" link). */
@@ -76,6 +80,8 @@ const MORE_LINK: Record<WorkKind, string> = {
   appointment: '/admin/cases?status=APPOINTMENT_SCHEDULED',
   security_alert: '/admin/security-alerts',
   privacy: '/admin/privacy-requests',
+  arrival_issue: '/admin/check-ins?status=issue',
+  client_task_overdue: '/admin/client-tasks?filter=overdue',
 };
 
 export type WorkPriority = 'URGENT' | 'HIGH' | 'NORMAL';
@@ -637,7 +643,7 @@ const inquiries = async (): Promise<Source> => {
         dueAt: new Date(q.createdAt.getTime() + DAY),
         since: q.createdAt,
         link: '/admin/inquiries?status=NEW',
-        refs: { inquiryId: q.id },
+        refs: { inquiryId: q.id, phone: q.phone ?? null }, // phone: "call" button (components/calls)
         assignee: null,
         actions: [
           { key: 'take', label: 'take', type: 'api', method: 'PATCH', endpoint, body: { status: 'IN_PROGRESS' }, primary: true },
@@ -661,7 +667,7 @@ const bookings = async (ctx: Ctx): Promise<Source> => {
       where,
       orderBy: { slot: { startsAt: 'asc' } },
       take: LIMIT_PER_KIND,
-      select: { id: true, name: true, email: true, phone: true, topic: true, meetingUrl: true, createdAt: true, slot: { select: { startsAt: true, endsAt: true, staff: staffSelect } } },
+      select: { id: true, name: true, email: true, phone: true, topic: true, meetingUrl: true, createdAt: true, caseId: true, slot: { select: { startsAt: true, endsAt: true, kind: true, location: true, staff: staffSelect } } },
     }),
     prisma.booking.count({ where }),
   ]);
@@ -677,13 +683,14 @@ const bookings = async (ctx: Ctx): Promise<Source> => {
         kind: 'booking',
         title: b.name,
         subtitle: join(b.email, b.phone),
-        note: b.topic ? { key: `bookingTopic.${['candidate', 'company'].includes(b.topic) ? b.topic : 'other'}` } : undefined,
+        // Office visits (client portal): the reason as note (lib/clientProcess/office).
+        note: b.slot.kind === 'OFFICE' ? { key: `officeVisit.${['originals', 'passport', 'sign'].includes(b.topic ?? '') ? b.topic : 'other'}` } : b.topic ? { key: `bookingTopic.${['candidate', 'company'].includes(b.topic) ? b.topic : 'other'}` } : undefined,
         priority: startsIn < HOUR ? 'URGENT' : 'HIGH',
         // A past consultation still to be marked is due at its end.
         dueAt: startsIn > 0 ? b.slot.startsAt : b.slot.endsAt,
         since: b.createdAt,
-        link: '/admin/bookings',
-        refs: { bookingId: b.id },
+        link: b.slot.kind === 'OFFICE' && b.caseId ? caseLink(b.caseId) : '/admin/bookings',
+        refs: { bookingId: b.id, phone: b.phone ?? null, ...(b.caseId ? { caseId: b.caseId } : {}) },
         assignee: person(b.slot.staff),
         actions: [
           ...(b.meetingUrl && startsIn > -2 * HOUR ? [{ key: 'join', label: 'join', type: 'url' as const, href: b.meetingUrl, primary: startsIn < 15 * 60_000 }] : []),
@@ -888,6 +895,81 @@ const privacyRequests = async (ctx: Ctx): Promise<Source> => {
   };
 };
 
+/** Client tasks past their deadline on the viewer's cases (lib/clientProcess). */
+const clientTasksOverdue = async (ctx: Ctx): Promise<Source> => {
+  const where: Prisma.ClientTaskWhereInput = { status: 'OPEN', dueAt: { lt: ctx.c.now }, case: { status: { notIn: FINAL_STATUSES }, ...myCases(ctx) } };
+  const [rows, total] = await Promise.all([
+    prisma.clientTask.findMany({
+      where,
+      orderBy: { dueAt: 'asc' },
+      take: LIMIT_PER_KIND,
+      select: { id: true, title: true, dueAt: true, createdAt: true, case: { select: { id: true, number: true, client: { select: { firstName: true, lastName: true } }, assignedStaff: staffSelect } } },
+    }),
+    prisma.clientTask.count({ where }),
+  ]);
+  return {
+    kind: 'client_task_overdue',
+    total,
+    items: rows.map((t) => ({
+      id: `client_task_overdue:${t.id}`,
+      kind: 'client_task_overdue' as const,
+      title: t.title,
+      subtitle: join(name(t.case.client), t.case.number),
+      note: { key: 'clientTaskOverdue', params: { days: Math.max(1, Math.floor((ctx.c.now.getTime() - t.dueAt!.getTime()) / DAY)) } },
+      priority: 'HIGH' as const,
+      dueAt: t.dueAt,
+      since: t.createdAt,
+      link: `${caseLink(t.case.id)}#client-tasks`,
+      refs: { caseId: t.case.id, caseNumber: t.case.number, clientTaskId: t.id },
+      assignee: person(t.case.assignedStaff),
+      actions: [
+        { key: 'remind', label: 'remindClient', type: 'api' as const, method: 'POST' as const, endpoint: `/admin/client-process/tasks/${t.id}/remind`, body: {}, primary: true },
+        { key: 'done', label: 'done', type: 'api' as const, method: 'PATCH' as const, endpoint: `/admin/client-process/tasks/${t.id}`, body: { status: 'DONE' }, confirm: true },
+        open(`${caseLink(t.case.id)}#client-tasks`),
+      ],
+    })),
+  };
+};
+
+/** Post-arrival check-ins answered "Problem var" that nobody marked resolved yet (lib/checkIns). */
+const arrivalIssues = async (ctx: Ctx): Promise<Source> => {
+  const where: Prisma.ArrivalCheckInWhereInput = { answer: 'ISSUE', resolvedAt: null, followUp: { case: myCases(ctx) } };
+  const [rows, total] = await Promise.all([
+    prisma.arrivalCheckIn.findMany({
+      where,
+      orderBy: { answeredAt: 'asc' },
+      take: LIMIT_PER_KIND,
+      select: { id: true, audience: true, offsetDays: true, topics: true, comment: true, answeredAt: true, createdAt: true, followUp: { select: { case: { select: { id: true, number: true, client: { select: { firstName: true, lastName: true } }, assignedStaff: staffSelect } } } } },
+    }),
+    prisma.arrivalCheckIn.count({ where }),
+  ]);
+  return {
+    kind: 'arrival_issue',
+    total,
+    items: rows.map((r) => {
+      const c = r.followUp.case;
+      const since = r.answeredAt ?? r.createdAt;
+      return {
+        id: `arrival_issue:${r.id}`,
+        kind: 'arrival_issue' as const,
+        title: name(c.client) || c.number,
+        subtitle: join(c.number, ((r.topics as string[] | null) ?? []).join(', ') || null, r.comment),
+        note: { key: `checkIn.${r.audience}`, params: { days: r.offsetDays } },
+        priority: 'URGENT' as const,
+        dueAt: new Date(since.getTime() + DAY),
+        since,
+        link: caseLink(c.id),
+        refs: { caseId: c.id, caseNumber: c.number, checkInId: r.id },
+        assignee: person(c.assignedStaff),
+        actions: [
+          { key: 'resolve', label: 'resolveIssue', type: 'api' as const, method: 'POST' as const, endpoint: `/admin/check-ins/${r.id}/resolve`, body: {}, primary: true, confirm: true },
+          open(caseLink(c.id)),
+        ],
+      };
+    }),
+  };
+};
+
 // ─── Assembly ─────────────────────────────────────────────────────────
 
 export const buildMyWork = async (viewer: WorkViewer, opts: { team: boolean; tz?: number; now?: Date }): Promise<WorkResult> => {
@@ -908,8 +990,10 @@ export const buildMyWork = async (viewer: WorkViewer, opts: { team: boolean; tz?
     bookings(ctx),
     applications(ctx),
     expiring(ctx),
+    clientTasksOverdue(ctx),
     ctx.isSuper ? securityAlerts(ctx) : null,
     ctx.isAdmin ? privacyRequests(ctx) : null,
+    arrivalIssues(ctx), // post-arrival check-ins
   ]);
   const sources = groups.flat().filter((s): s is Source => !!s);
   const items = sources.flatMap((s) => s.items.map((d) => finish(d, ctx.c))).sort(compareItems);

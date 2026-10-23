@@ -118,7 +118,7 @@ impersonationRouter.post('/:userId', requireMinRole('ADMIN'), startLimiter, asyn
 
 export const adminSensitiveRouter = Router();
 
-const REVEAL_ENTITIES = ['user', 'company', 'agent', 'invoiceSettings', 'document', 'insight'] as const;
+const REVEAL_ENTITIES = ['user', 'company', 'agent', 'invoiceSettings', 'document', 'insight', 'familyMember'] as const;
 type RevealEntity = (typeof REVEAL_ENTITIES)[number];
 
 const str = (v: unknown) => (typeof v === 'string' && v ? v : null);
@@ -172,6 +172,14 @@ const REVEALERS: Record<RevealEntity, { fields: string[]; minRole: Role; load: (
     load: async (id, field) => {
       const d = await prisma.document.findUnique({ where: { id }, select: { ocr: true } });
       return { found: !!d, value: jsonField(d?.ocr, field) };
+    },
+  },
+  familyMember: {
+    fields: ['passportNumber', 'birthPlace'], // FamilyMember (Familiennachzug), id = FamilyMember.id
+    minRole: 'STAFF',
+    load: async (id, field) => {
+      const m = await prisma.familyMember.findUnique({ where: { id }, select: { passportNumber: true, birthPlace: true } });
+      return { found: !!m, value: m ? (field === 'birthPlace' ? m.birthPlace : m.passportNumber) : null };
     },
   },
   insight: {

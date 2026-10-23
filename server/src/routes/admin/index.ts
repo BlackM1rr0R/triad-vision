@@ -19,6 +19,7 @@ import { oversightRouter } from './oversight.js';
 import { adminMessagingRouter } from './messaging.js';
 import { adminRequirementsRouter } from './requirements.js';
 import { adminJourneyRouter } from './journey.js';
+import { adminGermanRouter } from './german.js';
 import { adminOpsRouter } from './ops.js';
 import { adminSignaturesRouter } from './signatures.js';
 import { FINAL_STATUSES } from '../../lib/caseFlow.js';
@@ -50,6 +51,12 @@ import { adminDuplicatesRouter } from './duplicates.js';
 import { adminQuotesRouter } from './quotes.js';
 import { adminSensitiveRouter } from './privacyTools.js';
 import { adminCampaignsRouter } from './campaigns.js';
+import { adminClientDataRouter } from './clientData.js';
+import { adminTimeRouter } from './time.js'; // staff time tracking
+import { adminCheckInsRouter } from './checkIns.js'; // post-arrival check-ins + retention
+import { adminAccessLogRouter } from '../accessLog.js'; // client access log (ADMIN+)
+import { adminClientProcessRouter } from './clientProcess.js';
+import { adminGrowthRouter } from './growth.js';
 
 export const adminRouter = Router();
 adminRouter.use(requireMinRole('STAFF'));
@@ -118,15 +125,21 @@ adminRouter.get('/dashboard', async (req, res) => {
 });
 
 adminRouter.use(adminSensitiveRouter); // /reveal, /sensitive/* (masked fields: reveal with reason, settings, reveal log)
+adminRouter.use('/client-process', adminClientProcessRouter); // client tasks, office visits, ball-in-court ETA settings
 adminRouter.use('/my-work', adminMyWorkRouter); // "my work today" queue + snooze / expiry remind
 adminRouter.use('/history', adminHistoryRouter); // field-level change history + one-click revert
 adminRouter.use('/automation', adminAutomationRouter); // automation rules (ADMIN+)
 adminRouter.use('/assignment', adminAssignmentRouter); // auto-assignment settings, load, rebalance, handovers
 adminRouter.use('/campaigns', adminCampaignsRouter); // campaigns to client segments (ADMIN+)
+adminRouter.use('/time', adminTimeRouter); // time tracking (STAFF: own entries; rates SUPER_ADMIN)
+adminRouter.use('/check-ins', adminCheckInsRouter); // post-arrival check-ins, retention
+adminRouter.use('/access-log', adminAccessLogRouter); // "who viewed my documents" per client
+adminRouter.use('/growth', adminGrowthRouter); // events (Tədbirlər), calculator assumptions, placement map, client referrals
 adminRouter.use('/oversight', oversightRouter);
 adminRouter.use('/messaging', adminMessagingRouter);
 adminRouter.use('/requirements', adminRequirementsRouter);
 adminRouter.use('/journey', adminJourneyRouter);
+adminRouter.use('/german', adminGermanRouter); // German progress per candidate + exam dates (İmtahan tarixləri)
 adminRouter.use('/ops', adminOpsRouter);
 adminRouter.use('/agents', adminAgentsRouter);
 adminRouter.use('/translations', adminTranslationsRouter);
@@ -162,6 +175,7 @@ adminRouter.use(['/content', '/settings', '/vacancies', '/companies', '/reviews'
 
 adminRouter.use(adminCaseAiRouter); // /cases/:id/ai/*, /case-ai/settings
 adminRouter.use(adminCaseNextRouter); // /cases/:id/next-step*, /cases/:id/embassy-package*
+adminRouter.use(adminClientDataRouter); // /case-forms/*, /cases/:id/forms*, /cases/:id/data-confirmation*, /doc-guides*
 adminRouter.use(adminDocumentExpiryRouter); // /cases/:caseId/documents/:docId/expiry, /expiring
 adminRouter.use('/cases', adminCasesRouter);
 adminRouter.use('/users', adminUsersRouter);

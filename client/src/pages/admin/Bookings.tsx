@@ -1,4 +1,6 @@
-import { useMemo, useState } from 'react';
+import { lazy, Suspense, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import '@/components/clientProcess/api'; // cp.* copy for the office-visits tab
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
@@ -96,7 +98,7 @@ const initials = (p: StaffRef) => `${p.firstName[0] ?? ''}${p.lastName[0] ?? ''}
 
 // ─── Page ───────────────────────────────────────────────────────────
 
-export default function AdminBookings() {
+function ConsultationBookings() {
   const { t } = useTranslation();
   const { user } = useAuth();
   const qc = useQueryClient();
@@ -862,3 +864,30 @@ const TemplateModal = ({
     </Modal>
   );
 };
+
+// Office visits (client portal bookings) live in their own tab: ConsultationSlot kind OFFICE (lib/clientProcess/office).
+const OfficeVisitsAdmin = lazy(() => import('@/components/clientProcess/OfficeVisitsAdmin'));
+
+export default function AdminBookings() {
+  const { t } = useTranslation();
+  const [params, setParams] = useSearchParams();
+  const tab = params.get('tab') === 'office' ? 'office' : 'online';
+  return (
+    <div>
+      <div className="mb-4 flex gap-2" role="tablist" aria-label={t('admin.nav.bookings')}>
+        {(['online', 'office'] as const).map((k) => (
+          <Chip key={k} active={tab === k} onClick={() => setParams(k === 'office' ? { tab: 'office' } : {}, { replace: true })}>
+            {t(k === 'office' ? 'cp.office.tab' : 'cp.office.tabOnline')}
+          </Chip>
+        ))}
+      </div>
+      {tab === 'office' ? (
+        <Suspense fallback={<LoadingBlock />}>
+          <OfficeVisitsAdmin />
+        </Suspense>
+      ) : (
+        <ConsultationBookings />
+      )}
+    </div>
+  );
+}

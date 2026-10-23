@@ -22,7 +22,7 @@ const claim = async (key: string) => {
  */
 export const runBookingReminders = async (now = new Date()) => {
   const bookings = await prisma.booking.findMany({
-    where: { status: 'BOOKED', slot: { startsAt: { gt: now, lte: new Date(now.getTime() + 24 * HOUR) } } },
+    where: { status: 'BOOKED', slot: { kind: 'ONLINE', startsAt: { gt: now, lte: new Date(now.getTime() + 24 * HOUR) } } }, // office visits: jobs/clientProcess.ts
     include: bookingInclude,
   });
   let sent = 0;

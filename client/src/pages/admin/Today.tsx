@@ -1,3 +1,4 @@
+import { CallButton } from '@/components/calls/CallButton'; // click-to-call (Twilio / sipgate) or manual call log
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -15,6 +16,7 @@ import { toastError } from '@/components/admin/labels';
 import { ErrorBlock, LoadingBlock, PageHead } from '@/components/admin/ui';
 import { dueText, noteText, runAction, useMyWork, useRefreshMyWork, type WorkAction, type WorkBucket, type WorkItem, type WorkScope } from '@/components/today/api';
 import { CATEGORY_TONE, FILTERS, KIND_ICON, PRIORITY_DOT, type WorkFilter } from '@/components/today/kinds';
+import { TimerButton } from '@/components/timeCare/TimerButton'; // "⏱ Başlat" on rows with a case
 
 registerCopy(pagesToday);
 
@@ -428,6 +430,8 @@ const Row = ({
           <DueChip text={due.text} late={due.late} />
         </span>
         {showAssignee && item.assignee?.name && <span className="max-w-[9rem] truncate rounded-full bg-surface px-2 py-0.5 text-[11px] text-muted">{item.assignee.name}</span>}
+        {item.refs.caseId && <TimerButton caseId={item.refs.caseId} compact />}
+        {item.refs.phone && <CallButton target={item.refs.inquiryId ? { inquiryId: item.refs.inquiryId } : { phone: item.refs.phone }} phone={item.refs.phone} name={item.title} compact />}
         {item.actions.map((a) => {
           const locked = !!a.notBefore && Date.parse(a.notBefore) > now;
           const isArmed = armed === `${item.id}:${a.key}`;

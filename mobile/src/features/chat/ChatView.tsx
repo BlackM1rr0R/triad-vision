@@ -10,8 +10,9 @@ import { haptic } from '@/lib/haptics';
 import { useErrorMessage } from '@/lib/queries';
 import { colors, fonts, radius, space } from '@/theme';
 import type { CaseMessage } from '@/types';
+import { TranslatedText, VoiceBubble, useCaseTranslations } from './messagingPlus';
 
-const Bubble = memo(({ m, mine, staffView, showName }: { m: CaseMessage; mine: boolean; staffView?: boolean; showName: boolean }) => {
+const Bubble = memo(({ m, mine, staffView, showName, translation }: { m: CaseMessage; mine: boolean; staffView?: boolean; showName: boolean; translation?: { text: string } | null }) => {
   const { t } = useTranslation();
   const f = useFormat();
   const author = mine
@@ -25,9 +26,9 @@ const Bubble = memo(({ m, mine, staffView, showName }: { m: CaseMessage; mine: b
     <Animated.View entering={FadeInUp.duration(220)} style={[styles.bubbleRow, mine ? { justifyContent: 'flex-end' } : null]}>
       <View style={[styles.bubble, mine ? styles.mine : styles.theirs]}>
         {showName && !mine ? <Text style={styles.author}>{author}</Text> : null}
-        <Text style={{ color: mine ? colors.white : colors.ink, fontFamily: fonts.body, fontSize: 15, lineHeight: 21 }} selectable>
-          {m.body}
-        </Text>
+        {/* Messaging plus: voice messages and automatic translation into the app language. */}
+        {m.voice ? <VoiceBubble voice={m.voice} mine={mine} translation={translation} /> : null}
+        {m.body ? <TranslatedText text={m.body} translation={m.voice ? null : translation} mine={mine} /> : null}
         <View style={styles.meta}>
           <Text style={{ color: metaColor, fontSize: 10.5, fontFamily: fonts.medium }}>
             {f.smart(m.createdAt)}
@@ -73,7 +74,10 @@ export const ChatView = ({
   emptyText,
   header,
   bottomInset = true,
+  caseId,
 }: {
+  /** Messaging plus: enables automatic translation of the thread into the app language. */
+  caseId?: string;
   messages: CaseMessage[];
   meId: string;
   onSend: (body: string) => Promise<unknown>;
@@ -96,6 +100,7 @@ export const ChatView = ({
 
   // Inverted list: newest at the bottom, keyboard-friendly.
   const data = useMemo(() => [...messages].reverse(), [messages]);
+  const { translations, unavailable } = useCaseTranslations(caseId, messages);
 
   const isMine = useCallback(
     (m: CaseMessage) => (staffView ? m.author.role !== 'CLIENT' && m.author.id === meId : m.author.id === meId),
@@ -131,8 +136,9 @@ export const ChatView = ({
         contentContainerStyle={{ padding: space.lg, gap: 8, flexGrow: 1 }}
         renderItem={({ item, index }) => {
           const older = data[index + 1];
-          return <Bubble m={item} mine={isMine(item)} staffView={staffView} showName={!older || older.author.id !== item.author.id} />;
+          return <Bubble m={item} mine={isMine(item)} staffView={staffView} showName={!older || older.author.id !== item.author.id} translation={translations[item.id]} />;
         }}
+        extraData={translations}
         ListEmptyComponent={<EmptyState icon={MessageCircle} title={t('m.chat.title')} text={emptyText ?? t('m.chat.empty')} />}
         ListFooterComponent={data.length > 0 && header ? <View style={{ marginBottom: space.md }}>{header}</View> : null}
         ListHeaderComponent={data.length === 0 && header ? <View style={{ marginBottom: space.md }}>{header}</View> : null}
@@ -141,6 +147,11 @@ export const ChatView = ({
         initialNumToRender={20}
         windowSize={11}
       />
+      {unavailable ? (
+        <Text variant="caption" style={{ paddingHorizontal: space.lg, paddingVertical: 4 }}>
+          {t('m.msgPlus.unavailable')}
+        </Text>
+      ) : null}
       {typing ? <TypingLine name={typeof typing === 'string' ? typing : null} /> : null}
       <View style={[styles.composer, { paddingBottom: (bottomInset ? insets.bottom : 0) + 10 }]}>
         <TextInput

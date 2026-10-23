@@ -29,6 +29,7 @@ import {
   type TrStaffOrder,
   type TrStatus,
 } from '@/components/translations/shared';
+import { optimizeImages } from '@/lib/imageCompress';
 
 registerCopy(pagesTranslations);
 
@@ -536,7 +537,7 @@ const OrderAdmin = () => {
   const upload = useMutation({
     mutationFn: async (files: File[]) => {
       const form = new FormData();
-      files.forEach((file) => form.append('file', file));
+      (await optimizeImages(files)).forEach((file) => form.append('file', file));
       setProgress(0);
       try {
         return (await api.post<{ order: TrStaffOrder }>(`/admin/translations/${id}/files`, form, { onUploadProgress: (e) => setProgress(e.total ? e.loaded / e.total : 0) })).data.order;

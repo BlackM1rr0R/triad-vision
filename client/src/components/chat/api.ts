@@ -1,6 +1,7 @@
 import { useInfiniteQuery, useQuery, type QueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import type { Attachment, Channel, Message, MessagePage, Person, SharedFile } from './types';
+import { optimizeImage } from '@/lib/imageCompress';
 
 export const chatKeys = {
   all: ['chat'] as const,
@@ -95,7 +96,8 @@ export const chatApi = {
   pin: async (id: string, pinned: boolean) => (await api.post<{ message: Message }>(`/chat/messages/${enc(id)}/${pinned ? 'pin' : 'unpin'}`)).data.message,
   react: async (id: string, emoji: string) => (await api.post<{ reactions: Message['reactions']; added: boolean }>(`/chat/messages/${enc(id)}/reactions`, { emoji })).data,
   message: async (id: string) => (await api.get<{ message: Message }>(`/chat/messages/${enc(id)}`)).data.message,
-  upload: async (file: File, onProgress: (percent: number) => void) => {
+  upload: async (original: File, onProgress: (percent: number) => void) => {
+    const file = await optimizeImage(original);
     const form = new FormData();
     form.append('file', file, file.name);
     return (

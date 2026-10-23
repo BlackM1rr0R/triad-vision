@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { Button, Card, NavyHeader, ScrollScreen, SkeletonCard, StatusBadge, StepBar, Text, ErrorState } from '@/components/ui';
 import { AppointmentCard } from '@/features/case/ClientCaseView';
 import { ExploreGrid } from '@/features/common/Explore';
+import { CheckInCard } from '@/features/checkin/CheckInCard'; // post-arrival check-in (one tap)
 import { InterviewStatusPill, interviewTitle } from '@/features/interviews/InterviewCard';
 import { useAuth } from '@/lib/auth';
 import { CLIENT_UPLOAD_STAGE, STATUS_STEP, STEP_KEYS, hasActiveCase, missingRequirements, pickActiveCase } from '@/lib/caseStatus';
@@ -123,6 +124,7 @@ export default function Home() {
         <ActiveCase id={active.id} />
       ) : null}
 
+      <CheckInCard />
       <UpcomingInterview />
 
       {!isLoading && !error && canApply ? (

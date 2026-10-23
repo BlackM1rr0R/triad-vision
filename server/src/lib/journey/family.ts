@@ -4,6 +4,7 @@ import { createCase } from '../caseFlow.js';
 import { syncCaseFolder } from '../drive/caseFolders.js';
 import { badRequest, conflict, notFound } from '../http.js';
 import { documentSummary, progressPercent, STATUS_STEP, STEP_COUNT } from '../../routes/account.js';
+import { createProfile, serializeProfile, type CreateMemberInput } from '../family/members.js';
 
 /**
  * Family reunion (Familiennachzug). A member's case hangs under the main applicant's case
@@ -14,7 +15,7 @@ import { documentSummary, progressPercent, STATUS_STEP, STEP_COUNT } from '../..
  */
 
 export const FAMILY_EVENT = 'FAMILY_MEMBER';
-export const RELATIONS = ['spouse', 'child', 'parent'] as const;
+export const RELATIONS = ['spouse', 'child', 'parent', 'other'] as const;
 export type Relation = (typeof RELATIONS)[number];
 
 export interface FamilyMemberInfo {
@@ -57,6 +58,7 @@ const memberSelect = {
   requirements: { include: { documents: { select: { status: true, reviewNote: true, createdAt: true } } } },
   events: { where: { type: FAMILY_EVENT }, orderBy: { createdAt: 'desc' }, take: 1, select: { note: true } },
   _count: { select: { documents: true } },
+  familyProfile: true, // details (lib/family/members.ts)
 } satisfies Prisma.CaseSelect;
 
 type MemberRow = Prisma.CaseGetPayload<{ select: typeof memberSelect }>;
@@ -65,10 +67,11 @@ const summarize = (c: MemberRow) => {
   const hasEmbassy = c.requirements.some((r) => r.stage === 'EMBASSY');
   const stage: 'INITIAL' | 'EMBASSY' = STATUS_STEP[c.status] >= 2 && hasEmbassy ? 'EMBASSY' : 'INITIAL';
   const docs = documentSummary(c.requirements, stage);
-  const { requirements: _r, events, _count, ...rest } = c;
+  const { requirements: _r, events, _count, familyProfile, ...rest } = c;
   return {
     ...rest,
     member: parseMemberInfo(events[0]?.note),
+    profile: familyProfile ? serializeProfile(familyProfile) : null,
     step: STATUS_STEP[c.status],
     stepCount: STEP_COUNT,
     percent: progressPercent(c.status, docs),
@@ -102,7 +105,7 @@ export const familyGroup = async (caseId: string) => {
 export const addFamilyMember = async (
   mainCaseId: string,
   actorId: string,
-  input: { firstName: string; lastName: string; relation: Relation; birthDate?: string | null; email?: string | null; profession?: string | null },
+  input: { firstName: string; lastName: string; relation: Relation; birthDate?: string | null; email?: string | null; profession?: string | null } & Partial<Omit<CreateMemberInput, 'firstName' | 'lastName' | 'relation'>>,
 ) => {
   const main = await prisma.case.findUnique({ where: { id: mainCaseId }, select: { id: true, clientId: true, parentCaseId: true, status: true, visaCategoryId: true } });
   if (!main) throw notFound('CASE_NOT_FOUND');
@@ -111,6 +114,7 @@ export const addFamilyMember = async (
 
   const created = await createCase(main.clientId, {
     profession: input.profession?.trim() || `Familiennachzug – ${input.relation}`,
+    visaType: 'FAMILY', // the member applies for a family reunion visa (FAMILY checklist, VIDEX purpose)
     visaCategoryId: main.visaCategoryId,
     parentCaseId: main.id,
     relation: input.relation,
@@ -126,6 +130,8 @@ export const addFamilyMember = async (
   await prisma.caseEvent.create({
     data: { caseId: created.id, type: FAMILY_EVENT, note: JSON.stringify(info), actorId, visibleToClient: false },
   });
+  const { profession: _p, ...profile } = input;
+  await createProfile(main.id, created.id, { ...profile, email: info.email }, actorId);
   await prisma.caseEvent.create({
     data: { caseId: main.id, type: 'CASE_UPDATED', note: `Family member added: ${info.firstName} ${info.lastName} (${info.relation}) → ${created.number}`, actorId, visibleToClient: false },
   });

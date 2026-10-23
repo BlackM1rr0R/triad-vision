@@ -12,6 +12,8 @@ import { Spinner } from '@/components/ui/Spinner';
 import { fmtDateTime, toastError } from '@/components/admin/labels';
 import { caseKey } from '@/components/admin/case/shared';
 import { fetchPackagePreview, fmtAppointment, nextStepKey, packageKey, type BuildResult, type ItemStatus, type PackagePreview, type PreviewItem } from './api';
+import { FamilyPackageOption } from '@/components/family/FamilyPackageOption';
+import PackageConfirmWarning from '@/components/clientData/PackageConfirmWarning'; // client data not confirmed → warning + "build anyway"
 
 const STATUS_ICON: Record<ItemStatus, typeof CheckCircle2> = { found: CheckCircle2, pending: Hourglass, missing: CircleSlash, manual: FileStack };
 const STATUS_STYLE: Record<ItemStatus, string> = {
@@ -41,9 +43,11 @@ export const EmbassyPackageDrawer = ({ caseId, open, onClose }: { caseId: string
   const [separators, setSeparators] = useState(true);
   const [copies, setCopies] = useState(1);
   const [zip, setZip] = useState(false);
+  const [family, setFamily] = useState(true); // family members' sections (main case with members)
   const [busy, setBusy] = useState<'build' | 'request' | null>(null);
   const [result, setResult] = useState<BuildResult | null>(null);
   const [dragKey, setDragKey] = useState<string | null>(null);
+  const [dataBlocked, setDataBlocked] = useState(false);
 
   // (Re)initialise from the server defaults whenever a fresh preview arrives.
   useEffect(() => {
@@ -100,6 +104,7 @@ export const EmbassyPackageDrawer = ({ caseId, open, onClose }: { caseId: string
         separators,
         copies,
         format: zip ? 'zip' : 'pdf',
+        ...(data?.family?.length ? { family } : {}),
         items: items.map((i) => ({ key: i.key, include: buildable(i) && !!choice[i.key]?.include, ...(choice[i.key]?.copies ? { copies: choice[i.key].copies } : {}), ...(choice[i.key]?.documentId ? { documentId: choice[i.key].documentId } : {}) })),
       };
       const res = (await api.post<BuildResult>(`/admin/cases/${caseId}/embassy-package`, body)).data;
@@ -142,7 +147,7 @@ export const EmbassyPackageDrawer = ({ caseId, open, onClose }: { caseId: string
           {busy === 'request' ? <Spinner className="size-3.5" /> : <Send className="size-3.5" aria-hidden />} {t('caseNext.pkg.requestMissing', { count: missing.length })}
         </button>
       )}
-      <button type="button" className="btn-primary btn-sm" disabled={!!busy || !included.length} onClick={() => void build()} title={!included.length ? t('caseNext.pkg.nothingSelected') : undefined}>
+      <button type="button" className="btn-primary btn-sm" disabled={!!busy || !included.length || dataBlocked} onClick={() => void build()} title={!included.length ? t('caseNext.pkg.nothingSelected') : undefined}>
         {busy === 'build' ? <Spinner className="size-3.5" /> : <FileStack className="size-3.5" aria-hidden />}
         {busy === 'build' ? t('caseNext.pkg.building') : notIn.length ? t('caseNext.pkg.buildAnyway') : t('caseNext.pkg.build')}
       </button>
@@ -198,6 +203,10 @@ export const EmbassyPackageDrawer = ({ caseId, open, onClose }: { caseId: string
               <Switch checked={zip} onChange={setZip} label={t('caseNext.pkg.zip')} />
             </label>
           </div>
+
+          <FamilyPackageOption members={data.family ?? []} checked={family} onChange={setFamily} />
+
+          <PackageConfirmWarning caseId={caseId} onBlockedChange={setDataBlocked} />
 
           {notIn.length > 0 && (
             <p className="flex items-start gap-2 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:bg-amber-950/40 dark:text-amber-300">

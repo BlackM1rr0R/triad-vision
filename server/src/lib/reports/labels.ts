@@ -150,6 +150,7 @@ export const COST_CATEGORY: Labels = {
   TRAVEL: L('Yol xərci', 'Reisekosten', 'Travel', 'Дорожные расходы'),
   OTHER: L('Digər', 'Sonstiges', 'Other', 'Другое'),
   LEDGER_EXPENSES: L('Hesablaşma xərcləri (Rasxod)', 'Ausgaben laut Abrechnung', 'Ledger expenses', 'Расходы по расчётам'),
+  LABOUR: L('Əmək (iş vaxtı)', 'Personalkosten (Arbeitszeit)', 'Labour (staff time)', 'Труд (рабочее время)'), // time tracking
 };
 
 export const NONE_LABEL = L('— (təyin edilməyib)', '— (nicht zugeordnet)', '— (not set)', '— (не указано)');

@@ -4,6 +4,7 @@ import { FINAL_STATUSES } from '../caseFlow.js';
 import { checklistFor, getCaseAiSettings, STATUTORY, type ChecklistItem } from '../ai/features/caseAi/config.js';
 import type { L10n } from '../ai/features/caseAi/texts.js';
 import { PACKAGE_EVENT } from './embassyPackage.js';
+import { confirmationStates, type ConfirmState } from '../clientData/confirmation.js';
 import { CHANGES_NOTE, fmtDate, fmtDateTime, message, MESSAGE_TEXT, TRANSLATION_TITLE } from './texts.js';
 
 /**
@@ -85,6 +86,8 @@ export interface CaseFacts {
   translationPresent: boolean;
   checklist: ChecklistItem[];
   purged: boolean;
+  /** "Client confirms their data" (lib/clientData/confirmation.ts); undefined = not loaded (no rule). */
+  dataConfirmation?: ConfirmState;
 }
 
 const l10n = (v: unknown): L10n => {
@@ -100,7 +103,7 @@ export const loadFacts = async (caseIds: string[], opts: { statusSince?: Map<str
   if (!caseIds.length) return [];
   const now = opts.now ?? new Date();
   const ids = [...new Set(caseIds)];
-  const [cases, entered, msgs, actorEvents, tasks, packages, translations, settings] = await Promise.all([
+  const [cases, entered, msgs, actorEvents, tasks, packages, translations, settings, confirmations] = await Promise.all([
     prisma.case.findMany({
       where: { id: { in: ids } },
       select: {
@@ -128,6 +131,7 @@ export const loadFacts = async (caseIds: string[], opts: { statusSince?: Map<str
     prisma.caseEvent.groupBy({ by: ['caseId'], where: { caseId: { in: ids }, type: PACKAGE_EVENT }, _max: { createdAt: true } }),
     prisma.translationOrder.groupBy({ by: ['caseId'], where: { caseId: { in: ids }, status: { not: 'CANCELLED' } }, _count: { _all: true } }),
     getCaseAiSettings(),
+    confirmationStates(ids),
   ]);
 
   return cases.map((c) => {
@@ -180,6 +184,7 @@ export const loadFacts = async (caseIds: string[], opts: { statusSince?: Map<str
         c.documents.some((d) => TRANSLATION_RE.test(d.originalName)),
       checklist: checklistFor(settings, c.visaType),
       purged: !!c.documentsPurgedAt,
+      dataConfirmation: confirmations.get(c.id)?.state ?? 'NONE',
     };
   });
 };
@@ -209,7 +214,8 @@ export type RuleCode =
   | 'AWAIT_CLIENT_SUBMIT'
   | 'AWAIT_DECISION'
   | 'VISA_APPROVED'
-  | 'VISA_REFUSED';
+  | 'VISA_REFUSED'
+  | 'CONFIRM_DATA';
 
 export type ActionId =
   | 'REVIEW_NOW'
@@ -228,7 +234,9 @@ export type ActionId =
   | 'BUILD_PACKAGE'
   | 'CREATE_TASK'
   | 'REQUEST_TRANSLATION'
-  | 'ORDER_TRANSLATION';
+  | 'ORDER_TRANSLATION'
+  | 'ASK_CONFIRM_DATA'
+  | 'OPEN_DATA';
 
 export interface ApiCall {
   method: 'POST';
@@ -244,7 +252,7 @@ export type NextAction =
   | { id: ActionId; kind: 'task'; request: ApiCall; title: string }
   | { id: ActionId; kind: 'transition'; request: ApiCall; confirm: true; note?: string }
   | { id: ActionId; kind: 'package' }
-  | { id: ActionId; kind: 'scroll'; target: 'case-actions' | 'case-messages' | 'case-tasks' | 'case-onboarding' };
+  | { id: ActionId; kind: 'scroll'; target: 'case-actions' | 'case-messages' | 'case-tasks' | 'case-onboarding' | 'case-data' };
 
 export interface NextStep {
   code: RuleCode;
@@ -450,6 +458,20 @@ export const computeSteps = (f: CaseFacts, opts: { now?: Date; staffLocale?: Loc
         actions: [requestAction(f, 'REQUEST_TRANSLATION', [{ requirementKey: 'DIPLOMA_TRANSLATION', title }]), taskAction(f, 'translation', staffLocale, 3, now), messageAction(f, 'SEND_MESSAGE', T.translation(diploma.title[L] || diploma.title.de))],
       });
     }
+  }
+
+  // Client has not confirmed the embassy data (or it changed since): ask before the package / appointment.
+  if (['EMBASSY_DOCUMENTS', 'EMBASSY_REVIEW', 'APPOINTMENT_SCHEDULED'].includes(f.status) && f.dataConfirmation && f.dataConfirmation !== 'CONFIRMED' && f.dataConfirmation !== 'PENDING') {
+    const review = f.dataConfirmation === 'REVIEW';
+    add({
+      code: 'CONFIRM_DATA',
+      priority: f.status === 'APPOINTMENT_SCHEDULED' ? 81 : review ? 70 : 57,
+      tone: 'action',
+      params: { state: f.dataConfirmation },
+      actions: review
+        ? [{ id: 'OPEN_DATA', kind: 'scroll', target: 'case-data' }]
+        : [{ id: 'ASK_CONFIRM_DATA', kind: 'request', request: { method: 'POST', path: casePath(f, '/data-confirmation'), body: {} }, items: [] }, { id: 'OPEN_DATA', kind: 'scroll', target: 'case-data' }],
+    });
   }
 
   if (f.overdueTasks > 0) add({ code: 'OVERDUE_TASKS', priority: 68, tone: 'action', params: { count: f.overdueTasks }, actions: [{ id: 'OPEN_TASKS', kind: 'scroll', target: 'case-tasks' }] });

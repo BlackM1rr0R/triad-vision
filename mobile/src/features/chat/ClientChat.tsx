@@ -121,6 +121,7 @@ export const ClientChat = ({ caseId, bottomInset = true }: { caseId: string; bot
 
   return (
     <ChatView
+      caseId={caseId}
       messages={c.messages}
       meId={user?.id ?? ''}
       onSend={send}

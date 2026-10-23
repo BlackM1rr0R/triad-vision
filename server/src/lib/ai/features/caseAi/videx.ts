@@ -160,6 +160,8 @@ export const mapVidex = (ctx: CaseContext, lastContract: ContractTerms | null): 
     if (!value || values[key]) return;
     values[key] = { value: value.trim(), source, confidence, documentId };
   };
+  // Values the client gave (questionnaire / data confirmation, applied by staff) win over every other source.
+  for (const [k, v] of Object.entries(ctx.clientData ?? {})) set(k, v, 'manual', 'high');
 
   if (mrz) {
     set('surname', mrz.surname, 'passport', mrz.valid ? 'high' : 'medium', mrzDoc!.id);

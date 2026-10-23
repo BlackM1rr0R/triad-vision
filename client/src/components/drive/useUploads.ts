@@ -3,6 +3,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import i18n from '@/i18n';
 import { api, errorCode } from '@/lib/api';
+import { optimizeImage } from '@/lib/imageCompress';
 import { driveError, invalidateDrive } from './api';
 import type { PickedFile } from './dnd';
 import type { DriveItem } from './types';
@@ -104,6 +105,8 @@ export const useUploads = (maxBytes: number, askConflict: AskConflict, options: 
       if (cancelled.current.has(task.id)) continue;
       patch(task.id, { status: 'uploading', progress: 0 });
       try {
+        // Photos over 1 MB are shrunk in the browser first (lib/imageCompress; PDFs, HEIC, Office files untouched).
+        task.file = await optimizeImage(task.file);
         try {
           await send(task, policy.current ?? 'fail');
         } catch (err) {

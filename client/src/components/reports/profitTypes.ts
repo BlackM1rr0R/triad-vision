@@ -1,6 +1,12 @@
+import { registerCopy } from '@/i18n';
+import { pagesTimeCare } from '@/i18n/pagesTimeCare';
+
+registerCopy(pagesTimeCare); // profit.costCats.LABOUR
+
 /** Shapes of /api/admin/profitability. Amounts are EUR cents. */
 
-export const COST_KEYS = ['TRANSLATION', 'COURIER', 'EMBASSY_FEE', 'VISA_FEE', 'AGENT_COMMISSION', 'PARTNER_COMMISSION', 'TRAVEL', 'OTHER', 'LEDGER_EXPENSES'] as const;
+// LABOUR = staff time × hourly cost rate (time tracking; its label comes from pagesTimeCare).
+export const COST_KEYS = ['TRANSLATION', 'COURIER', 'EMBASSY_FEE', 'VISA_FEE', 'AGENT_COMMISSION', 'PARTNER_COMMISSION', 'TRAVEL', 'OTHER', 'LEDGER_EXPENSES', 'LABOUR'] as const;
 export type CostKey = (typeof COST_KEYS)[number];
 export const MANUAL_CATEGORIES = ['TRANSLATION', 'COURIER', 'EMBASSY_FEE', 'VISA_FEE', 'AGENT_COMMISSION', 'PARTNER_COMMISSION', 'TRAVEL', 'OTHER'] as const;
 export type ManualCategory = (typeof MANUAL_CATEGORIES)[number];

@@ -16,6 +16,7 @@ import { Spinner } from '@/components/ui/Spinner';
 import { OptionCard } from '@/components/quiz/OptionCard';
 import { useApiError } from '@/components/portal/useApiError';
 import { GERMAN_STATUS_KEY, useGermanCourses, useGermanStatus } from '@/components/journey/api';
+import { GermanProgressBoard } from '@/components/german/GermanProgressBoard';
 import { GERMAN_LEVELS, type CertificateState, type EstimatedLevel, type GermanQuestion, type GermanTestResult, type LanguageCourse } from '@/components/journey/types';
 
 registerCopy(pagesJourney);
@@ -417,6 +418,9 @@ export default function German() {
           status?.case && <p className="relative mt-4 text-xs text-white/60">{t('journey.german.requiredNone')}</p>
         )}
       </section>
+
+      {/* Goal, courses, exams (Baku exam dates), timeline and certificate upload. */}
+      <GermanProgressBoard />
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-8">
         <div className="min-w-0 space-y-6">

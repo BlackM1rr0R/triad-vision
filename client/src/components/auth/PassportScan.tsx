@@ -4,6 +4,7 @@ import { AxiosError } from 'axios';
 import clsx from 'clsx';
 import { AlertTriangle, Camera, CheckCircle2, ImageUp, RotateCcw, ScanLine, ShieldCheck, X } from 'lucide-react';
 import { api } from '@/lib/api';
+import { compressImage } from '@/lib/imageCompress';
 import { Spinner } from '@/components/ui/Spinner';
 
 /** Fields POST /api/auth/passport-scan reads from the MRZ. */
@@ -32,54 +33,11 @@ const SERVER_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 
 type ErrorKey = 'notFound' | 'unavailable' | 'tooMany' | 'badFile' | 'failed';
 
-const decode = async (file: Blob): Promise<{ source: CanvasImageSource; width: number; height: number; close: () => void }> => {
-  if (typeof createImageBitmap === 'function') {
-    try {
-      const bmp = await createImageBitmap(file, { imageOrientation: 'from-image' });
-      return { source: bmp, width: bmp.width, height: bmp.height, close: () => bmp.close() };
-    } catch {
-      // fall through to <img> (older Safari)
-    }
-  }
-  const url = URL.createObjectURL(file);
-  try {
-    const img = new Image();
-    img.decoding = 'async';
-    img.src = url;
-    await img.decode();
-    return { source: img, width: img.naturalWidth, height: img.naturalHeight, close: () => undefined };
-  } finally {
-    URL.revokeObjectURL(url);
-  }
-};
-
 /**
- * Re-encodes the photo as JPEG 0.9 with the long edge at most 2000 px (this also applies the EXIF
- * rotation and drops the EXIF metadata). Returns the original when the browser cannot decode it.
+ * Re-encodes the photo as JPEG 0.9 with the long edge at most 2000 px (shared helper lib/imageCompress: applies
+ * the EXIF rotation and drops the EXIF metadata). Returns the original when the browser cannot decode it.
  */
-export const downscaleImage = async (file: File): Promise<Blob> => {
-  let decoded;
-  try {
-    decoded = await decode(file);
-  } catch {
-    return file;
-  }
-  try {
-    const scale = Math.min(1, MAX_EDGE / Math.max(decoded.width, decoded.height));
-    const w = Math.max(1, Math.round(decoded.width * scale));
-    const h = Math.max(1, Math.round(decoded.height * scale));
-    const canvas = document.createElement('canvas');
-    canvas.width = w;
-    canvas.height = h;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return file;
-    ctx.drawImage(decoded.source, 0, 0, w, h);
-    const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.9));
-    return blob ?? file;
-  } finally {
-    decoded.close();
-  }
-};
+export const downscaleImage = async (file: File): Promise<Blob> => compressImage(file, { force: true, maxLongEdge: MAX_EDGE, quality: 0.9 });
 
 const errorKeyOf = (err: unknown): ErrorKey => {
   if (!(err instanceof AxiosError) || !err.response) return 'failed';

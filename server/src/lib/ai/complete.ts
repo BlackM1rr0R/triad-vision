@@ -23,7 +23,9 @@ export const STRONG_MODEL = 'anthropic/claude-sonnet-5.5';
 export type AiPart =
   | { type: 'text'; text: string }
   | { type: 'image'; mime: string; data: Buffer }
-  | { type: 'pdf'; filename: string; data: Buffer };
+  | { type: 'pdf'; filename: string; data: Buffer }
+  /** Audio for audio-capable models (OpenRouter `input_audio`; used by lib/messagingPlus/voice.ts). */
+  | { type: 'audio'; format: string; data: Buffer };
 
 export interface AiCompleteOptions {
   /** Who pays (limits + usage). Without a user only the monthly budget is checked and nothing is recorded (jobs, public visitors). */
@@ -54,6 +56,7 @@ const toContent = (input: string | AiPart[]) => {
   return input.map((p) => {
     if (p.type === 'text') return { type: 'text', text: p.text };
     if (p.type === 'image') return { type: 'image_url', image_url: { url: `data:${p.mime};base64,${p.data.toString('base64')}` } };
+    if (p.type === 'audio') return { type: 'input_audio', input_audio: { data: p.data.toString('base64'), format: p.format } };
     return { type: 'file', file: { filename: p.filename, file_data: `data:application/pdf;base64,${p.data.toString('base64')}` } };
   });
 };
