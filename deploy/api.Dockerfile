@@ -13,10 +13,11 @@ RUN npm ci --workspace server --include=dev --no-audit --no-fund
 COPY server/scripts/fetch-ocr-data.mjs server/scripts/
 RUN node server/scripts/fetch-ocr-data.mjs
 COPY server ./server
-# The production server has 2 GB RAM (+ swap): the TypeScript compile gets a fixed, larger heap so it does
-# not hit Node's default limit as the code base grows.
+# The production server has 2 GB RAM: a full `tsc` run (Prisma's generated types included) needs ~2.5 GB, so
+# the image transpiles with esbuild instead (scripts/build-prod.mjs, file by file, little memory). Types are
+# checked in CI (npm run typecheck) before every deploy. esbuild comes with the dev tooling (vite).
 RUN npx prisma generate --schema server/prisma/schema.prisma \
- && NODE_OPTIONS=--max-old-space-size=1792 npm run build -w server \
+ && node server/scripts/build-prod.mjs \
  && npm uninstall --workspace server vitest @vitest/coverage-v8 supertest @types/supertest --no-audit --no-fund \
  && rm -rf node_modules/vite node_modules/vitest node_modules/@vitest node_modules/rollup node_modules/@rollup
 # ^ test tooling never runs in production; dropping it removes vite and its bundled esbuild binary
