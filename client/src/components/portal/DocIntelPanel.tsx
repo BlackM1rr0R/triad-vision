@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import { AlertTriangle, CheckCircle2, FileStack, Pencil, ScanLine, Sparkles } from 'lucide-react';
 import { errorCode } from '@/lib/api';
 import { Spinner } from '@/components/ui/Spinner';
+import { Skeleton, SkeletonText } from '@/components/ui/Skeleton';
 import {
   applyOcr,
   expiryState,
@@ -165,8 +166,10 @@ export default function DocIntelPanel({ caseId, caseNumber }: { caseId: string; 
       </div>
       <div className="space-y-4 p-5 sm:p-6">
         {q.isLoading && (
-          <div className="grid min-h-24 place-items-center text-brand-600" role="status">
-            <Spinner className="size-6 border-[3px]" />
+          <div className="space-y-3" role="status" aria-label={t('ui.loading')}>
+            <Skeleton className="h-4 w-40" />
+            <SkeletonText lines={2} />
+            <Skeleton className="h-9 w-32" />
           </div>
         )}
         {q.isError && <p className="text-sm text-danger">{t('common.error')}</p>}

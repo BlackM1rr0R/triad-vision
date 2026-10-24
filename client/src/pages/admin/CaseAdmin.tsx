@@ -16,6 +16,8 @@ import type { CaseTabProps } from '@/components/admin/case/tabs/types';
 import type { BallInCourt } from '@/components/clientProcess/api';
 import { openIssues, useCaseCheckIns } from '@/components/postArrival/caseCheckIns'; // "After arrival" tab badge
 import { ErrorBlock } from '@/components/admin/ui';
+import { usePresence, useEditSignal } from '@/components/presence/usePresence'; // who else is on this case
+import { EditingBanner, PresenceAvatars } from '@/components/presence/PresenceAvatars';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { TabPanel, Tabs, useTabParam, type TabItem } from '@/components/ui/Tabs';
 
@@ -99,6 +101,9 @@ function CasePage({ data }: { data: CaseDetailResponse }) {
   useEffect(() => mount(tab), [tab, mount]);
 
   const [editing, setEditing] = useState(false);
+  // Live presence: avatars in the header; the details dialog counts as editing the "details" section.
+  const presence = usePresence('case', c.id);
+  useEditSignal('case', c.id, 'details', editing);
   const [template, setTemplate] = useState(false);
 
   // ─── Sections: switch to the tab that holds them, then scroll ─────────
@@ -219,7 +224,16 @@ function CasePage({ data }: { data: CaseDetailResponse }) {
 
   return (
     <div ref={shellRef} className="stack-page" style={{ ['--case-header-h' as string]: '88px' }}>
-      <CaseTopBar c={c} stats={stats} goTo={goTo} onEdit={() => setEditing(true)} onTemplate={() => setTemplate(true)} onPackage={openPackage} />
+      <CaseTopBar
+        c={c}
+        stats={stats}
+        goTo={goTo}
+        onEdit={() => setEditing(true)}
+        onTemplate={() => setTemplate(true)}
+        onPackage={openPackage}
+        presence={<PresenceAvatars viewers={presence.others} className="mr-1 hidden sm:flex" />}
+      />
+      <EditingBanner editors={presence.editors} />
 
       {/* The two things to look at first, on every tab. */}
       <div className="flex flex-col gap-3">

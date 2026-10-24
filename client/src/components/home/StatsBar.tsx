@@ -3,12 +3,29 @@ import { Counter } from '../motion';
 import { Icon } from '../ui/Icon';
 import { useSiteContent } from '@/lib/content';
 import { useL10n } from '@/lib/l10n';
+import { Skeleton } from '../ui/Skeleton';
 
 /** Overlaps the bottom of the hero, like the design mockup. */
 export const StatsBar = () => {
   const { data } = useSiteContent();
   const { tr } = useL10n();
-  if (!data) return <div className="h-32" />;
+  // Placeholder tiles in the same card / grid, so the bar does not pop in over the hero edge.
+  if (!data)
+    return (
+      <div className="container-x relative z-10 -mt-20 sm:-mt-24" aria-hidden>
+        <div className="card grid grid-cols-2 gap-px overflow-hidden bg-line md:grid-cols-3 lg:grid-cols-5">
+          {Array.from({ length: 5 }, (_, i) => (
+            <div key={i} className={`flex min-w-0 flex-col items-start gap-3 bg-white p-4 sm:flex-row sm:items-center sm:gap-4 sm:p-6 ${i === 4 ? 'col-span-2 md:col-span-1' : ''}`}>
+              <Skeleton rounded="xl" className="size-10 shrink-0 sm:size-12" />
+              <div className="w-full min-w-0 space-y-2">
+                <Skeleton className="h-7 w-16 sm:h-8" />
+                <Skeleton className="h-3 w-24" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
 
   return (
     <div className="container-x relative z-10 -mt-20 sm:-mt-24">

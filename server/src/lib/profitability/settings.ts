@@ -34,5 +34,19 @@ export const saveProfitSettings = async (s: ProfitSettings) => {
 export const CURRENCIES = ['EUR', 'AZN'] as const;
 export type Currency = (typeof CURRENCIES)[number];
 
-/** Cents in EUR (unrounded). `rate` = AZN per 1 EUR; anything that is not AZN is treated as EUR. */
-export const toEur = (cents: number, currency: string | null | undefined, rate: number) => (currency === 'AZN' ? cents / rate : cents);
+export type EurRates = number | { AZN: number; TRY?: number | null };
+
+/**
+ * Cents in EUR (unrounded). `rate` = AZN per 1 EUR, or { AZN, TRY } (TRY per 1 EUR from Setting `exchangeRates`,
+ * lib/billing/currency.ts). TRY without a rate counts 0 here (never guessed — the profitability view lists such
+ * records as unconverted); any other code is treated as EUR.
+ */
+export const toEur = (cents: number, currency: string | null | undefined, rate: EurRates) => {
+  const azn = typeof rate === 'number' ? rate : rate.AZN;
+  if (currency === 'AZN') return cents / azn;
+  if (currency === 'TRY') {
+    const t = typeof rate === 'number' ? null : rate.TRY;
+    return t && t > 0 ? cents / t : 0;
+  }
+  return cents;
+};

@@ -2,33 +2,15 @@ import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
 import { ArrowRight, MapPin, ShieldCheck } from 'lucide-react';
-import { AZERBAIJAN, GERMANY, NAKHCHIVAN, cityCoords, makeProjection, type LngLat } from '@/components/about/geo';
+import { cityCoords, makeProjection } from '@/components/about/geo';
 import { registerCopy } from '@/i18n';
 import { pagesMarketing } from '@/i18n/pagesMarketing';
 import type { OriginCountry, PublicOrigins } from '@/components/marketing/api';
-import { TURKEY, UKRAINE } from './originGeo';
+import { COUNTRY_LABELS as LABELS, COUNTRY_SHAPES, DE_CENTRE, ORIGIN_MAP_BOUNDS, arc } from './originMapShapes';
 
 registerCopy(pagesMarketing);
 
-const proj = makeProjection({ w: 5.4, e: 50.8, s: 35.4, n: 55.4 }, 900, 10);
-
-const COUNTRY_SHAPES: { code: OriginCountry | 'DE'; rings: LngLat[][] }[] = [
-  { code: 'DE', rings: [GERMANY] },
-  { code: 'UA', rings: [UKRAINE] },
-  { code: 'TR', rings: [TURKEY] },
-  { code: 'AZ', rings: [AZERBAIJAN, NAKHCHIVAN] },
-];
-/** Label anchors of the countries [lng, lat]. */
-const LABELS: Record<OriginCountry | 'DE', LngLat> = { DE: [10.3, 51.1], UA: [31.5, 49.3], TR: [34.5, 39.0], AZ: [47.6, 40.6] };
-/** Destination when the German city has no known coordinates: the middle of Germany. */
-const DE_CENTRE: LngLat = [10.4, 51.2];
-
-/** Curved arc from origin to destination (quadratic Bézier lifted towards the north). */
-const arc = (a: [number, number], b: [number, number]) => {
-  const mx = (a[0] + b[0]) / 2;
-  const my = (a[1] + b[1]) / 2 - Math.min(140, Math.hypot(b[0] - a[0], b[1] - a[1]) * 0.28);
-  return `M${a[0].toFixed(1)} ${a[1].toFixed(1)} Q${mx.toFixed(1)} ${my.toFixed(1)} ${b[0].toFixed(1)} ${b[1].toFixed(1)}`;
-};
+const proj = makeProjection(ORIGIN_MAP_BOUNDS, 900, 10);
 
 /**
  * "From → To" view of the public map: our clients' home cities (AZ / TR / UA, ≥ 3 people per point) and

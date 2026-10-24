@@ -18,16 +18,21 @@ import {
   UserSearch,
   UsersRound,
 } from 'lucide-react';
-import { ArrowRightLeft, HeartHandshake, ScanEye } from 'lucide-react';
+import { ArrowRightLeft, GraduationCap, HeartHandshake, Rocket, ScanEye } from 'lucide-react';
+import { Signature as SignatureIcon } from 'lucide-react';
 import type { WorkCategory, WorkKind, WorkPriority } from './api';
 import { registerCopy } from '@/i18n';
 import { pagesClientProcessToday } from '@/i18n/pagesClientProcess';
 import { pagesPostArrival } from '@/i18n/pagesPostArrival';
 import { pagesTeam } from '@/i18n/pagesTeam';
+import { pagesAccounting } from '@/i18n/pagesAccounting';
+import { pagesRecognition } from '@/i18n/pagesRecognition';
 
 registerCopy(pagesClientProcessToday); // client_task_overdue kind + office-visit notes (client process)
 registerCopy(pagesPostArrival); // embassy_review kind (four-eyes check of the embassy package)
 registerCopy(pagesTeam); // handover kind + notes (absence handover)
+registerCopy(pagesAccounting); // countersign kind (Triad Vision countersignature)
+registerCopy(pagesRecognition); // recognition_deadline / accelerated_deadline kinds + notes
 
 export const KIND_ICON: Record<WorkKind, LucideIcon> = {
   doc_review: FileCheck2,
@@ -36,6 +41,7 @@ export const KIND_ICON: Record<WorkKind, LucideIcon> = {
   appointment: CalendarCheck2,
   sign_mine: PenLine,
   sign_waiting: FileSignature,
+  countersign: SignatureIcon, // client signed, Triad Vision countersignature pending
   task: ListTodo,
   mail_triage: MailWarning,
   mail_unread: Mail,
@@ -51,6 +57,8 @@ export const KIND_ICON: Record<WorkKind, LucideIcon> = {
   arrival_issue: HeartHandshake, // post-arrival check-in: "Problem var"
   embassy_review: ScanEye, // four-eyes check of an embassy package
   handover: ArrowRightLeft, // covering an absent colleague's case (handover note / checklist)
+  recognition_deadline: GraduationCap, // Anerkennung: next deadline / end of the adaptation measure
+  accelerated_deadline: Rocket, // § 81a: embassy appointment / decision, fee, reply to the authority
 };
 
 /** Icon tile colours per category (light + dark via the brand / status tokens used across the admin). */

@@ -115,7 +115,7 @@ export default function VisaDetail() {
 
   return (
     <>
-      <PageHero title={tr(data.title)} subtitle={tr(data.summary)} image={data.image.replace('w=1200', 'w=2000')} crumb={{ to: '/visas', label: t('nav.visas') }}>
+      <PageHero title={tr(data.title)} subtitle={tr(data.summary)} image={data.image.replace('w=1200', 'w=2000')} crumb={{ to: '/visas', label: t('nav.visas') }} morph={{ kind: 'visa', id: data.slug }}>
         <div className="mt-6 flex flex-wrap items-center gap-2">
           <span className="glass inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-bold">
             <Icon name={data.icon} className="size-4" /> {data.visaLabel}

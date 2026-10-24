@@ -33,11 +33,27 @@ export interface PublicPackage {
   features: L10nList;
   priceCents: number;
   currency: string;
+  /** Base + optional fixed prices per currency (server billing/packagePrices.ts). */
+  prices?: Partial<Record<string, number>>;
   installments: { label: L10n; percent: number; trigger: string }[];
   highlight: boolean;
 }
 
-const money = (cents: number, currency = 'EUR') => new Intl.NumberFormat('de-DE', { style: 'currency', currency, maximumFractionDigits: cents % 100 ? 2 : 0 }).format(cents / 100);
+const LOCALE_TAG: Record<string, string> = { az: 'az-Latn-AZ', de: 'de-DE', en: 'en-GB', ru: 'ru-RU', tr: 'tr-TR', uk: 'uk-UA' };
+/** Money in the site language's format with the currency symbol (₼ AZN, ₺ TRY, € EUR). */
+const money = (cents: number, currency = 'EUR') =>
+  new Intl.NumberFormat(LOCALE_TAG[currentSiteLocale()] ?? 'de-DE', { style: 'currency', currency, currencyDisplay: 'narrowSymbol', maximumFractionDigits: cents % 100 ? 2 : 0 }).format(cents / 100);
+/** Visitor currency by site language (az → AZN, tr → TRY, else EUR) where the package has a price in it, else the base price. */
+const VISITOR_CURRENCY: Record<string, string> = { az: 'AZN', tr: 'TRY' };
+const shownPrice = (p: Pick<PublicPackage, 'priceCents' | 'currency' | 'prices'>) => {
+  const want = VISITOR_CURRENCY[currentSiteLocale()] ?? 'EUR';
+  const v = p.prices?.[want];
+  return v ? { cents: v, currency: want } : { cents: p.priceCents, currency: p.currency };
+};
+const priceText = (p: Pick<PublicPackage, 'priceCents' | 'currency' | 'prices'>) => {
+  const x = shownPrice(p);
+  return money(x.cents, x.currency);
+};
 
 /** "40 % bei Unterschrift" — one line of a package's payment schedule. */
 export const useScheduleLine = () => {
@@ -129,7 +145,7 @@ export default function Packages() {
                   <h2 className="mt-1 font-display text-2xl font-bold text-navy-900">{tr(p.title)}</h2>
                   <p className="mt-2 text-sm text-muted">{tr(p.summary)}</p>
                   <p className="mt-5">
-                    <span className="font-display text-4xl font-extrabold text-navy-900">{money(p.priceCents, p.currency)}</span>{' '}
+                    <span className="font-display text-4xl font-extrabold text-navy-900">{priceText(p)}</span>{' '}
                     <span className="text-xs text-muted">
                       {t('pkgs.perCase')} · {t('pkgs.vat')}
                     </span>
@@ -201,7 +217,7 @@ export default function Packages() {
                     </th>
                     {shown.map((p) => (
                       <td key={p.id} className="px-4 py-2.5 text-center font-semibold">
-                        {money(p.priceCents, p.currency)}
+                        {priceText(p)}
                       </td>
                     ))}
                   </tr>
@@ -259,6 +275,7 @@ const OrderForm = ({ pkg, termsVersion, defaultVisa, onClose }: { pkg: PublicPac
           visaType: form.visaType || null,
           profession: form.profession || null,
           locale: currentSiteLocale(),
+          currency: shownPrice(pkg).currency,
           acceptTerms: form.terms,
           acceptPrivacy: form.privacy,
           token,
@@ -294,7 +311,7 @@ const OrderForm = ({ pkg, termsVersion, defaultVisa, onClose }: { pkg: PublicPac
     >
       <div className="space-y-3">
         <p className="rounded-lg bg-surface p-3 text-sm">
-          <strong>{tr(pkg.title)}</strong> · {money(pkg.priceCents, pkg.currency)} ({t('pkgs.vat')})
+          <strong>{tr(pkg.title)}</strong> · {priceText(pkg)} ({t('pkgs.vat')})
         </p>
         <div>
           <label className="label" htmlFor="po-name">

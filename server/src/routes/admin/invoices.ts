@@ -15,7 +15,9 @@ import {
   type InvoiceLine,
   type InvoicingSettings,
 } from '../../lib/invoicePdf.js';
-import { asInvoiceLocale, formatEur, formatInvoiceDate, invoiceTexts } from '../../lib/invoiceTexts.js';
+import { asInvoiceLocale, formatInvoiceDate, invoiceTexts } from '../../lib/invoiceTexts.js';
+import { currencySchema, formatMoney, groupByCurrency } from '../../lib/billing/currency.js';
+import { companyEInvoiceSchema, companyXRechnung, getCompanyEInvoice, saveCompanyEInvoice } from '../../lib/accounting/eInvoice.js';
 import { config } from '../../config.js';
 import { awardInvoiceCommission } from '../../lib/agents/commissions.js';
 import { requestMaskGroups } from '../../lib/privacy/mask.js';
@@ -91,7 +93,7 @@ export const notifyCompanyAboutInvoice = async (
   const ctx = {
     number: invoice.number,
     company: invoice.company.name,
-    amount: formatEur(invoice.grossCents),
+    amount: formatMoney(invoice.grossCents, invoice.currency),
     due: formatInvoiceDate(invoice.dueDate, locale),
     days: opts.days,
     note: opts.note ?? null,
@@ -99,7 +101,13 @@ export const notifyCompanyAboutInvoice = async (
   const t = invoiceTexts[locale];
   const msg = t[kind](ctx);
   if (billing) {
-    const attachments = opts.attachPdf !== false ? [{ filename: pdfFileName(invoice), content: await renderInvoicePdf(invoice), contentType: 'application/pdf' }] : undefined;
+    const attachments: { filename: string; content: Buffer | string; contentType: string }[] | undefined =
+      opts.attachPdf !== false ? [{ filename: pdfFileName(invoice), content: await renderInvoicePdf(invoice), contentType: 'application/pdf' }] : undefined;
+    // E-Rechnung: the XRechnung XML next to the PDF when the company asked for it (Setting companyEInvoice).
+    if (attachments && kind !== 'cancelled' && invoice.status !== 'DRAFT') {
+      const x = await companyXRechnung(invoice).catch(() => null);
+      if (x?.attachXml) attachments.push({ filename: x.fileName, content: x.xml, contentType: 'application/xml' });
+    }
     void sendMail(billing, `Triad Vision · ${msg.title}`, renderEmail(msg.title, msg.body, { label: t.cta, url: `${config.clientUrl}${COMPANY_LINK}` }), attachments);
   }
   for (const u of users) {
@@ -128,6 +136,8 @@ const invoiceInput = z.object({
   issueDate: day.optional(),
   dueDate: day.optional(),
   vatRate: z.coerce.number().int().min(0).max(100).optional(),
+  /** EUR (default) / AZN / TRY — the invoice is always issued by the German entity with German VAT rules. */
+  currency: currencySchema.optional(),
   items: z.array(lineSchema).min(1).max(60),
   servicePeriodFrom: day.optional().nullable().or(z.literal('').transform(() => null)),
   servicePeriodTo: day.optional().nullable().or(z.literal('').transform(() => null)),
@@ -146,7 +156,7 @@ const buildData = (body: z.infer<typeof invoiceInput>, settings: InvoicingSettin
   const items = body.items.map((l) => ({ ...l, ...(servicePeriod ? { servicePeriod } : {}) }));
   const totals = computeTotals(items, vatRate);
   if (totals.grossCents < 0) throw badRequest('NEGATIVE_TOTAL');
-  return { issueDate, dueDate, vatRate, items: items as Prisma.InputJsonValue, ...totals, note: body.note || null };
+  return { issueDate, dueDate, vatRate, currency: body.currency ?? 'EUR', items: items as Prisma.InputJsonValue, ...totals, note: body.note || null };
 };
 
 const draftNumber = () => `DRAFT-${crypto.randomUUID()}`;
@@ -243,16 +253,26 @@ adminInvoicesRouter.get('/', async (req, res) => {
   };
   const now = new Date();
   const monthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
-  const [invoices, open, overdue, paid, drafts] = await Promise.all([
+  // Totals in EUR only (the flat fields); other currencies are listed separately — currencies are never added up.
+  const eur = { currency: 'EUR' };
+  const [invoices, open, overdue, paid, drafts, live] = await Promise.all([
     prisma.invoice.findMany({ where, include: withCompany, orderBy: [{ issueDate: 'desc' }, { createdAt: 'desc' }], take: 500 }),
-    prisma.invoice.aggregate({ where: { status: { in: ['SENT', 'OVERDUE'] } }, _sum: { grossCents: true }, _count: { _all: true } }),
-    prisma.invoice.aggregate({ where: { status: 'OVERDUE' }, _sum: { grossCents: true }, _count: { _all: true } }),
-    prisma.invoice.aggregate({ where: { status: 'PAID', paidAt: { gte: monthStart } }, _sum: { grossCents: true }, _count: { _all: true } }),
+    prisma.invoice.aggregate({ where: { ...eur, status: { in: ['SENT', 'OVERDUE'] } }, _sum: { grossCents: true }, _count: { _all: true } }),
+    prisma.invoice.aggregate({ where: { ...eur, status: 'OVERDUE' }, _sum: { grossCents: true }, _count: { _all: true } }),
+    prisma.invoice.aggregate({ where: { ...eur, status: 'PAID', paidAt: { gte: monthStart } }, _sum: { grossCents: true }, _count: { _all: true } }),
     prisma.invoice.count({ where: { status: 'DRAFT' } }),
+    prisma.invoice.findMany({ where: { OR: [{ status: { in: ['SENT', 'OVERDUE'] } }, { status: 'PAID', paidAt: { gte: monthStart } }] }, select: { currency: true, status: true, grossCents: true } }),
   ]);
+  const byCurrency = groupByCurrency(live, (i) => i.currency, (i) => ({
+    openCents: i.status === 'SENT' || i.status === 'OVERDUE' ? i.grossCents : 0,
+    overdueCents: i.status === 'OVERDUE' ? i.grossCents : 0,
+    paidThisMonthCents: i.status === 'PAID' ? i.grossCents : 0,
+  })).map(({ count: _c, ...t }) => t);
   res.json({
     invoices: invoices.map(view),
     totals: {
+      currency: 'EUR',
+      byCurrency,
       openCents: open._sum.grossCents ?? 0,
       openCount: open._count._all,
       overdueCents: overdue._sum.grossCents ?? 0,
@@ -266,6 +286,33 @@ adminInvoicesRouter.get('/', async (req, res) => {
 
 adminInvoicesRouter.get('/:id', async (req, res) => {
   res.json({ invoice: view(await findInvoice(req.params.id)) });
+});
+
+/** E-Rechnung data of a company (Leitweg-ID, buyer reference, electronic address, XML attachment). */
+adminInvoicesRouter.get('/companies/:id/e-invoice', async (req, res) => {
+  await requireCompany(req.params.id);
+  res.json({ eInvoice: await getCompanyEInvoice(req.params.id) });
+});
+
+adminInvoicesRouter.put('/companies/:id/e-invoice', async (req, res) => {
+  await requireCompany(req.params.id);
+  const parsed = companyEInvoiceSchema.safeParse(req.body ?? {});
+  if (!parsed.success) throw badRequest(parsed.error.issues[0]?.message ?? 'VALIDATION_ERROR');
+  const eInvoice = await saveCompanyEInvoice(req.params.id, parsed.data);
+  await audit(req, 'COMPANY_EINVOICE_UPDATE', req.params.id, { leitwegId: !!eInvoice.leitwegId, attachXml: eInvoice.attachXml });
+  res.json({ eInvoice });
+});
+
+/** XRechnung 3.0 (UBL) of an issued invoice; X-XRechnung-Missing lists mandatory data that is not maintained. */
+adminInvoicesRouter.get('/:id/xrechnung', async (req, res) => {
+  const inv = await findInvoice(req.params.id);
+  const x = await companyXRechnung(inv);
+  await audit(req, 'INVOICE_XRECHNUNG', inv.id, { number: inv.number, missing: x.missing.length });
+  res.setHeader('Content-Type', 'application/xml; charset=utf-8');
+  res.setHeader('Content-Disposition', `attachment; filename="${x.fileName}"`);
+  res.setHeader('X-XRechnung-Missing', encodeURIComponent(x.missing.join('; ')));
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.send(x.xml);
 });
 
 adminInvoicesRouter.get('/:id/pdf', async (req, res) => {
@@ -323,7 +370,7 @@ adminInvoicesRouter.post('/:id/duplicate', async (req, res) => {
   const { invoicing } = await loadInvoiceSettings();
   const lines = invoiceLines(src.items).map(({ servicePeriod: _p, ...l }) => l);
   const data = buildData(
-    { companyId: src.companyId, items: lines, vatRate: src.vatRate, note: src.status === 'CANCELLED' ? null : src.note },
+    { companyId: src.companyId, items: lines, vatRate: src.vatRate, currency: currencySchema.catch('EUR').parse(src.currency), note: src.status === 'CANCELLED' ? null : src.note },
     invoicing,
   );
   const inv = await prisma.invoice.create({ data: { number: draftNumber(), companyId: src.companyId, status: 'DRAFT', ...data }, include: withCompany });

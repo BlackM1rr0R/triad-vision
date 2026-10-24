@@ -1,0 +1,55 @@
+import type { QueryClient, QueryKey } from '@tanstack/react-query';
+import { toast } from 'sonner';
+import { toastError } from '@/components/admin/labels';
+
+/**
+ * Optimistic edit of cached list rows: every cached query under `queryKey` is updated at once, the request
+ * runs, and on error every snapshot is restored (rollback) with an error toast. On success the lists are
+ * refetched in the background (server-side counts, derived columns).
+ */
+export const optimisticListEdit = async <T>({
+  qc,
+  queryKey,
+  update,
+  request,
+  success,
+  invalidate = [],
+}: {
+  qc: QueryClient;
+  queryKey: QueryKey;
+  /** Maps one cached query value to its optimistic version (return it unchanged when not affected). */
+  update: (old: T) => T;
+  request: () => Promise<unknown>;
+  success?: string;
+  /** Extra query keys to refresh afterwards (dashboard, detail). */
+  invalidate?: QueryKey[];
+}) => {
+  await qc.cancelQueries({ queryKey });
+  const snapshots = qc.getQueriesData<T>({ queryKey });
+  qc.setQueriesData<T>({ queryKey }, (old) => (old === undefined ? old : update(old)));
+  try {
+    await request();
+    if (success) toast.success(success);
+    void qc.invalidateQueries({ queryKey });
+    invalidate.forEach((k) => void qc.invalidateQueries({ queryKey: k }));
+    return true;
+  } catch (err) {
+    snapshots.forEach(([key, data]) => qc.setQueryData(key, data));
+    toastError(err);
+    return false;
+  }
+};
+
+const EDIT_EVENT = 'tv:inline-edit';
+
+/** Asks the inline editor of one row / field to open (keyboard "E" on the selected row). */
+export const requestInlineEdit = (rowId: string, field?: string) => window.dispatchEvent(new CustomEvent(EDIT_EVENT, { detail: { rowId, field } }));
+
+export const onInlineEditRequest = (cb: (detail: { rowId: string; field?: string }) => void) => {
+  const h = (e: Event) => {
+    const d = (e as CustomEvent<{ rowId: string; field?: string }>).detail;
+    if (d && typeof d.rowId === 'string') cb(d);
+  };
+  window.addEventListener(EDIT_EVENT, h);
+  return () => window.removeEventListener(EDIT_EVENT, h);
+};

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
+import { celebrate } from '@/components/motion/celebrate';
 import { Plus, X } from 'lucide-react';
 import { api } from '@/lib/api';
 import { ConfirmDialog } from '@/components/admin/ConfirmDialog';
@@ -14,6 +15,7 @@ import {
   TRIGGERS,
   billingErrText,
   centsToInput,
+  CURRENCIES,
   fmtEur,
   isoDay,
   parseEuro,
@@ -58,7 +60,10 @@ export function InvoiceActionDialogs({ action, onClose }: { action: InvoiceActio
         const r = data as { invoice: ClientInvoice; emailed: boolean };
         if (r.emailed) toast.success(t('bill.admin.toasts.sent', { number: r.invoice.number }));
         else toast.warning(t('bill.admin.toasts.sentNoMail', { number: r.invoice.number }));
-      } else if (action?.kind === 'pay') toast.success(t('bill.admin.toasts.paid'));
+      } else if (action?.kind === 'pay') {
+        toast.success(t('bill.admin.toasts.paid'));
+        celebrate({ count: 45 }); // payment recorded: light success moment
+      }
       else if (action?.kind === 'cancel') toast.success(t('bill.admin.toasts.cancelled'));
       else toast.success(t('bill.admin.toasts.deleted'));
       void qc.invalidateQueries({ queryKey: BILLING_KEY });
@@ -107,7 +112,7 @@ export function InvoiceActionDialogs({ action, onClose }: { action: InvoiceActio
         {inv && (
           <div className="space-y-3">
             <p className="text-sm text-muted">
-              {inv.number} · {t('bill.admin.payment.open', { amount: fmtEur(inv.openCents) })}
+              {inv.number} · {t('bill.admin.payment.open', { amount: fmtEur(inv.openCents, inv.currency) })}
             </p>
             <div>
               <label className="label" htmlFor="cb-pay-amount">
@@ -181,8 +186,11 @@ const TriggerSelect = ({ value, onChange, id }: { value: string; onChange: (v: s
 export function PlanDialog({ clientId, caseId, clientLocale, onClose }: { clientId: string; caseId: string | null; clientLocale: string; onClose: () => void }) {
   const { t } = useTranslation();
   const qc = useQueryClient();
-  const templates = useBillingSettings().data?.templates ?? [];
+  const settings = useBillingSettings().data;
+  const templates = settings?.templates ?? [];
   const lang = (['az', 'de', 'en', 'ru'].includes(clientLocale) ? clientLocale : 'de') as 'az' | 'de' | 'en' | 'ru';
+  const [currency, setCurrency] = useState<string>('');
+  const cur = currency || settings?.defaultCurrency || 'EUR';
   const [tplKey, setTplKey] = useState('standard');
   const [total, setTotal] = useState('');
   const [title, setTitle] = useState('');
@@ -217,7 +225,7 @@ export function PlanDialog({ clientId, caseId, clientLocale, onClose }: { client
   const setRow = (key: number, patch: Partial<Row>) => setRows((rs) => rs.map((r) => (r.key === key ? { ...r, ...patch } : r)));
 
   const save = useMutation({
-    mutationFn: async () => (await api.post<{ invoiced: string[] }>('/admin/client-billing/plans', { clientId, caseId, title: title.trim(), installments: parsed })).data,
+    mutationFn: async () => (await api.post<{ invoiced: string[] }>('/admin/client-billing/plans', { clientId, caseId, title: title.trim(), installments: parsed, currency: cur })).data,
     onSuccess: (d) => {
       toast.success(t('bill.admin.toasts.planCreated'));
       if (d.invoiced.length) toast.info(t('bill.admin.plan.catchUp'));
@@ -266,11 +274,23 @@ export function PlanDialog({ clientId, caseId, clientLocale, onClose }: { client
           <input id="pl-total" className="input text-right tabular-nums" inputMode="decimal" value={total} onChange={(e) => setTotal(e.target.value)} />
           <p className="mt-1 text-[11px] text-muted">{t('bill.admin.plan.totalHint')}</p>
         </div>
-        <div className="sm:col-span-2">
+        <div>
           <label className="label" htmlFor="pl-title">
             {t('bill.admin.plan.planTitle')}
           </label>
           <input id="pl-title" className="input" maxLength={200} value={title} onChange={(e) => setTitle(e.target.value)} />
+        </div>
+        <div>
+          <label className="label" htmlFor="pl-currency">
+            {t('acct.currency.label')}
+          </label>
+          <select id="pl-currency" className="input" value={cur} onChange={(e) => setCurrency(e.target.value)}>
+            {(settings?.currencies ?? CURRENCIES).map((c) => (
+              <option key={c} value={c}>
+                {t(`acct.currency.names.${c}`)}
+              </option>
+            ))}
+          </select>
         </div>
       </div>
       <ul className="mt-5 space-y-2">
@@ -290,7 +310,7 @@ export function PlanDialog({ clientId, caseId, clientLocale, onClose }: { client
         <button type="button" className="inline-flex min-h-9 items-center gap-1.5 rounded-lg px-2 text-sm font-semibold text-brand-600 hover:bg-brand-50" onClick={() => setRows((rs) => [...rs, { key: ++rowSeq, label: '', trigger: 'ON_SIGN', dueDate: '', amount: '' }])}>
           <Plus className="size-4" aria-hidden /> {t('bill.admin.plan.addRow')}
         </button>
-        <span className="text-sm font-semibold text-navy-900 tabular-nums">{t('bill.admin.plan.sum', { sum: fmtEur(sum) })}</span>
+        <span className="text-sm font-semibold text-navy-900 tabular-nums">{t('bill.admin.plan.sum', { sum: fmtEur(sum, cur) })}</span>
       </div>
       <p className="mt-3 text-xs text-muted">{t('bill.admin.plan.catchUp')}</p>
     </Modal>

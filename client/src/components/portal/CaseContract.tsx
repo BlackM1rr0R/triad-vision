@@ -9,6 +9,7 @@ import { useAuth } from '@/lib/auth';
 import { useL10n } from '@/lib/l10n';
 import type { CaseDetail } from '@/lib/types';
 import { Spinner } from '@/components/ui/Spinner';
+import { celebrate } from '@/components/motion/celebrate';
 import { SignaturePad, type SignaturePadHandle } from './SignaturePad';
 import { useApiError } from './useApiError';
 import { useMySignatures } from '@/components/esign/MySignatures';
@@ -58,6 +59,7 @@ export const CaseContract = ({ data, onChanged }: { data: CaseDetail; onChanged:
         agree: true,
       });
       toast.success(t('portal.contract.signed'));
+      celebrate(); // success moment (no-op for reduced motion)
       await onChanged();
     } catch (err) {
       onError(err);

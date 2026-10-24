@@ -55,6 +55,7 @@ adminGuidesRouter.post('/preview', async (req, res) => {
   const guides = await prisma.guidePage.findMany({ where: { locale }, select: { key: true, slug: true } });
   res.json(
     renderGuideMarkdown(body, {
+      locale,
       localize: (p) => localizedPath(p, locale),
       guideHref: (key) => {
         const g = guides.find((x) => x.key === key);

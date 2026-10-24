@@ -1,4 +1,4 @@
-import { useCallback, useId, useRef, type KeyboardEvent, type ReactNode } from 'react';
+import { useCallback, useId, useLayoutEffect, useRef, useState, type KeyboardEvent, type ReactNode, type RefObject } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import clsx from 'clsx';
 import type { LucideIcon } from 'lucide-react';
@@ -49,6 +49,7 @@ export function Tabs<K extends string>({ items, value, onChange, label, variant 
   const prefix = idPrefix ?? `tabs${autoId}`;
   const listRef = useRef<HTMLDivElement>(null);
   const enabled = items.filter((i) => !i.disabled);
+  const indicator = useTabIndicator(listRef, prefix, value);
 
   const move = (e: KeyboardEvent<HTMLDivElement>) => {
     const idx = enabled.findIndex((i) => i.key === value);
@@ -71,13 +72,26 @@ export function Tabs<K extends string>({ items, value, onChange, label, variant 
       aria-label={label}
       onKeyDown={move}
       className={clsx(
-        'flex min-w-0 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden',
+        'relative flex min-w-0 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden',
         variant === 'underline' ? 'gap-1 border-b border-line' : ['max-w-full gap-1 rounded-xl bg-surface p-1', fullWidth ? 'w-full' : 'w-fit'],
         className,
       )}
     >
+      {/* One indicator that slides to the active tab (falls back to the per-tab border / background until measured). */}
+      {indicator && (
+        <span
+          aria-hidden
+          className={clsx(
+            'pointer-events-none absolute left-0',
+            indicator.animate && 'transition-[transform,width] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)]',
+            variant === 'underline' ? 'bottom-0 h-0.5 bg-brand-600' : 'top-1 bottom-1 rounded-lg bg-card shadow-sm',
+          )}
+          style={{ width: indicator.width, transform: `translateX(${indicator.left}px)` }}
+        />
+      )}
       {items.map((it) => {
         const active = it.key === value;
+        const slid = active && !!indicator;
         const ids = tabIds(prefix, it.key);
         const Icon = it.icon;
         return (
@@ -93,12 +107,12 @@ export function Tabs<K extends string>({ items, value, onChange, label, variant 
             title={it.title}
             onClick={() => onChange(it.key)}
             className={clsx(
-              'inline-flex items-center justify-center gap-1.5 font-semibold whitespace-nowrap transition disabled:cursor-not-allowed disabled:opacity-50',
+              'relative inline-flex items-center justify-center gap-1.5 font-semibold whitespace-nowrap transition disabled:cursor-not-allowed disabled:opacity-50',
               fullWidth ? 'min-w-0 flex-1' : 'shrink-0',
               size === 'sm' ? 'text-xs' : 'text-sm',
               variant === 'underline'
-                ? ['-mb-px border-b-2', size === 'sm' ? 'min-h-9 px-2.5 py-1.5' : 'min-h-11 px-3 py-2', active ? 'border-brand-600 text-ink' : 'border-transparent text-muted hover:border-line hover:text-ink']
-                : ['rounded-lg', size === 'sm' ? 'min-h-8 px-2.5 py-1' : 'min-h-9 px-3 py-1.5', active ? 'bg-card text-ink shadow-sm' : 'text-muted hover:text-ink'],
+                ? ['-mb-px border-b-2', size === 'sm' ? 'min-h-9 px-2.5 py-1.5' : 'min-h-11 px-3 py-2', active ? clsx(slid ? 'border-transparent' : 'border-brand-600', 'text-ink') : 'border-transparent text-muted hover:border-line hover:text-ink']
+                : ['rounded-lg', size === 'sm' ? 'min-h-8 px-2.5 py-1' : 'min-h-9 px-3 py-1.5', active ? clsx(!slid && 'bg-card shadow-sm', 'text-ink') : 'text-muted hover:text-ink'],
               it.className,
             )}
           >
@@ -112,6 +126,35 @@ export function Tabs<K extends string>({ items, value, onChange, label, variant 
       })}
     </div>
   );
+}
+
+/**
+ * Position of the active tab inside the tab list, for the sliding indicator. Measured before paint; the
+ * first position is applied without a transition (no slide-in from the left on mount). CSS transitions are
+ * off for reduced motion (index.css), so the indicator then simply jumps.
+ */
+function useTabIndicator(listRef: RefObject<HTMLDivElement | null>, prefix: string, value: string) {
+  const [pos, setPos] = useState<{ left: number; width: number; animate: boolean } | null>(null);
+  useLayoutEffect(() => {
+    const list = listRef.current;
+    if (!list) return;
+    const measure = () => {
+      const tab = list.querySelector<HTMLElement>(`#${CSS.escape(tabIds(prefix, value).tab)}`);
+      if (!tab || !tab.offsetWidth) return setPos(null);
+      setPos((prev) => {
+        const next = { left: tab.offsetLeft, width: tab.offsetWidth };
+        if (prev && prev.left === next.left && prev.width === next.width) return prev;
+        return { ...next, animate: prev !== null };
+      });
+    };
+    measure();
+    if (typeof ResizeObserver === 'undefined') return;
+    const ro = new ResizeObserver(measure);
+    ro.observe(list);
+    Array.from(list.children).forEach((c) => ro.observe(c));
+    return () => ro.disconnect();
+  }, [listRef, prefix, value]);
+  return pos;
 }
 
 /** Panel for the active tab (role="tabpanel", labelled by its tab). */

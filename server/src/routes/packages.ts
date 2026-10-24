@@ -5,6 +5,7 @@ import { config } from '../config.js';
 import { cached } from '../lib/cache.js';
 import { currentRef } from '../lib/legal/documents.js';
 import { createOrder, orderStatus, publicPackageView, publishedPackages, resendOrderLink } from '../lib/billing/packages.js';
+import { getPackagePrices } from '../lib/billing/packagePrices.js';
 
 /**
  * Public service packages (/packages) and the online order — mounted at /api/packages. No login: the order's
@@ -18,8 +19,8 @@ const resendLimiter = limiter({ windowMs: 60 * 60 * 1000, limit: 5, skip: () => 
 
 packagesRouter.get('/', async (_req, res) => {
   const data = await cached('packages:public', async () => {
-    const [packages, terms, privacy] = await Promise.all([publishedPackages(), currentRef('TERMS'), currentRef('PRIVACY')]);
-    return { packages: packages.map(publicPackageView), terms: { version: terms.version }, privacy: { version: privacy.version } };
+    const [packages, terms, privacy, prices] = await Promise.all([publishedPackages(), currentRef('TERMS'), currentRef('PRIVACY'), getPackagePrices()]);
+    return { packages: packages.map((p) => publicPackageView(p, prices)), terms: { version: terms.version }, privacy: { version: privacy.version } };
   });
   res.json(data);
 });

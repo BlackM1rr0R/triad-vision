@@ -17,7 +17,7 @@ import { Spinner } from '@/components/ui/Spinner';
 import { L10nInput, L10nListInput, LANGS, emptyL10n, emptyL10nList } from '@/components/admin/L10nInput';
 import { errorMessage, fmtDate } from '@/components/admin/labels';
 import { useNewParam } from '@/components/command/useNewParam';
-import { TRIGGER_STATUSES, centsToInput, fmtEur, parseEuro, triggerLabel } from '@/components/billing/api';
+import { CURRENCIES, TRIGGER_STATUSES, centsToInput, fmtEur, parseEuro, triggerLabel, type Currency } from '@/components/billing/api';
 import type { L10n, L10nList } from '@/lib/types';
 
 registerCopy(pagesPackages);
@@ -36,6 +36,10 @@ interface Pkg {
   summary: L10n;
   features: L10nList;
   priceCents: number;
+  /** Base currency of priceCents. */
+  currency: string;
+  /** Base + optional fixed prices in other currencies. */
+  prices?: Partial<Record<Currency, number>>;
   installments: { label: L10n; percent: number; trigger: string }[];
   contractTemplateId: string | null;
   highlight: boolean;
@@ -56,8 +60,10 @@ interface Order {
   email: string;
   phone: string | null;
   priceCents: number;
+  currency: string;
   status: 'STARTED' | 'SIGNED' | 'ACTIVE' | 'CANCELLED';
   signatureStatus: string | null;
+  countersignPending?: boolean;
   caseId: string | null;
   caseNumber: string | null;
   createdAt: string;
@@ -158,7 +164,14 @@ const PackageList = ({ packages, onEdit }: { packages: Pkg[]; onEdit: (p: Pkg) =
             </div>
             <h2 className="mt-2 font-display text-lg font-bold text-navy-900">{p.title.az || p.title.de || p.slug}</h2>
             <p className="text-xs text-muted">/{p.slug}</p>
-            <p className="mt-2 font-display text-2xl font-bold text-navy-900">{fmtEur(p.priceCents)}</p>
+            <p className="mt-2 font-display text-2xl font-bold text-navy-900">{fmtEur(p.priceCents, p.currency)}</p>
+            {Object.entries(p.prices ?? {})
+              .filter(([c]) => c !== p.currency)
+              .map(([c, v]) => (
+                <p key={c} className="text-xs text-muted tabular-nums">
+                  {fmtEur(v ?? 0, c)}
+                </p>
+              ))}
             <p className="mt-1 text-xs text-muted">{p.visaTypes?.length ? p.visaTypes.map((v) => t(`pkgs.visaType.${v}`)).join(', ') : t('apkg.allVisas')}</p>
             {p.installments.length > 0 && <p className="mt-1 text-xs text-muted">{p.installments.map((i) => `${i.percent} %`).join(' / ')}</p>}
             <p className="mt-1 text-xs text-muted">{t('apkg.orders', { count: p.orders })}</p>
@@ -197,6 +210,12 @@ const Editor = ({ pkg, templates, onClose }: { pkg: Pkg | null; templates: Tpl[]
   const [summary, setSummary] = useState<L10n>(pkg?.summary ?? emptyL10n());
   const [features, setFeatures] = useState<L10nList>(pkg?.features ?? emptyL10nList());
   const [price, setPrice] = useState(pkg ? centsToInput(pkg.priceCents) : '');
+  const [baseCurrency, setBaseCurrency] = useState<Currency>((pkg?.currency as Currency | undefined) ?? 'EUR');
+  const [extra, setExtra] = useState<Partial<Record<Currency, string>>>(() =>
+    Object.fromEntries(Object.entries(pkg?.prices ?? {}).filter(([c]) => c !== (pkg?.currency ?? 'EUR')).map(([c, v]) => [c, centsToInput(v ?? 0)])),
+  );
+  const extraCents = Object.fromEntries(CURRENCIES.filter((c) => c !== baseCurrency).map((c) => [c, extra[c]?.trim() ? parseEuro(extra[c]!) : null])) as Partial<Record<Currency, number | null>>;
+  const extraValid = Object.values(extraCents).every((v) => v === null || v === undefined || (Number.isFinite(v) && v >= 100));
   const [visaTypes, setVisaTypes] = useState<string[]>(pkg?.visaTypes ?? []);
   const [insts, setInsts] = useState<InstDraft[]>(() => (pkg?.installments ?? []).map((i) => ({ key: ++instSeq, label: i.label, percent: String(i.percent), trigger: i.trigger })));
   const [templateId, setTemplateId] = useState(pkg?.contractTemplateId ?? '');
@@ -205,7 +224,7 @@ const Editor = ({ pkg, templates, onClose }: { pkg: Pkg | null; templates: Tpl[]
   const [sortOrder, setSortOrder] = useState(String(pkg?.sortOrder ?? 0));
   const cents = parseEuro(price);
   const sum = insts.reduce((a, i) => a + (Number(i.percent) || 0), 0);
-  const valid = /^[a-z0-9]+(-[a-z0-9]+)*$/.test(slug) && !!(title.az || title.de || title.en || title.ru) && Number.isFinite(cents) && cents >= 100 && (insts.length === 0 || Math.round(sum) === 100);
+  const valid = /^[a-z0-9]+(-[a-z0-9]+)*$/.test(slug) && !!(title.az || title.de || title.en || title.ru) && Number.isFinite(cents) && cents >= 100 && extraValid && (insts.length === 0 || Math.round(sum) === 100);
   const setInst = (key: number, patch: Partial<InstDraft>) => setInsts((xs) => xs.map((x) => (x.key === key ? { ...x, ...patch } : x)));
 
   const save = useMutation({
@@ -218,6 +237,8 @@ const Editor = ({ pkg, templates, onClose }: { pkg: Pkg | null; templates: Tpl[]
         summary,
         features,
         priceCents: cents,
+        currency: baseCurrency,
+        prices: Object.fromEntries(Object.entries(extraCents).filter(([, v]) => v !== null && v !== undefined)),
         installments: insts.length ? insts.map((i) => ({ label: i.label, percent: Number(i.percent), trigger: i.trigger })) : null,
         contractTemplateId: templateId || null,
         highlight,
@@ -277,8 +298,29 @@ const Editor = ({ pkg, templates, onClose }: { pkg: Pkg | null; templates: Tpl[]
           <label className="label" htmlFor="pk-price">
             {t('apkg.editor.price')} *
           </label>
-          <input id="pk-price" className="input text-right tabular-nums" inputMode="decimal" value={price} onChange={(e) => setPrice(e.target.value)} />
+          <div className="flex gap-1.5">
+            <input id="pk-price" className="input min-w-0 flex-1 text-right tabular-nums" inputMode="decimal" value={price} onChange={(e) => setPrice(e.target.value)} />
+            <select className="input w-20" aria-label={t('acct.pkg.baseCurrency')} value={baseCurrency} onChange={(e) => setBaseCurrency(e.target.value as Currency)}>
+              {CURRENCIES.map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
+        <fieldset className="sm:col-span-4">
+          <legend className="label">{t('acct.pkg.prices')}</legend>
+          <div className="grid gap-2 sm:grid-cols-2">
+            {CURRENCIES.filter((c) => c !== baseCurrency).map((c) => (
+              <label key={c} className="flex items-center gap-2">
+                <span className="w-12 text-sm font-semibold text-navy-900">{c}</span>
+                <input className="input text-right tabular-nums" inputMode="decimal" placeholder="—" value={extra[c] ?? ''} onChange={(e) => setExtra((x) => ({ ...x, [c]: e.target.value }))} />
+              </label>
+            ))}
+          </div>
+          <p className="mt-1 text-[11px] text-muted">{t('acct.pkg.pricesHint')}</p>
+        </fieldset>
         <div className="sm:col-span-4">
           <L10nInput label={t('apkg.editor.title')} value={title} onChange={setTitle} required />
         </div>
@@ -424,11 +466,14 @@ const Orders = () => {
                     <span className="text-xs text-muted">{o.email}</span>
                   </td>
                   <td className="px-4 py-3">{o.package ? `${o.package.title.az || o.package.title.de} (${o.package.tier})` : '—'}</td>
-                  <td className="px-4 py-3 tabular-nums">{fmtEur(o.priceCents)}</td>
+                  <td className="px-4 py-3 tabular-nums">{fmtEur(o.priceCents, o.currency)}</td>
                   <td className="px-4 py-3">
                     <span className={clsx('badge', ORDER_TONE[o.status])}>{t(`apkg.orderStatus.${o.status}`)}</span>
                   </td>
-                  <td className="px-4 py-3 text-xs">{o.signatureStatus ? t(`apkg.sigStatus.${o.signatureStatus}`, { defaultValue: o.signatureStatus }) : '—'}</td>
+                  <td className="px-4 py-3 text-xs">
+                    {o.signatureStatus ? t(`apkg.sigStatus.${o.signatureStatus}`, { defaultValue: o.signatureStatus }) : '—'}
+                    {o.countersignPending && <span className="mt-0.5 block font-semibold text-warning-fg">{t('today.kind.countersign')}</span>}
+                  </td>
                   <td className="px-4 py-3">
                     {o.caseId ? (
                       <Link to={`/admin/cases/${o.caseId}?tab=finance`} className="text-brand-600 hover:underline">

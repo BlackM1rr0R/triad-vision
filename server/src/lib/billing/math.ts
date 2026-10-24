@@ -106,15 +106,16 @@ export const openCents = (inv: { status: string; grossCents: number; paidCents: 
 
 /** Yearly invoice number TV-KR-YYYY-NNNN after the highest existing number of that year. */
 export const CLIENT_INVOICE_PREFIX = 'TV-KR';
-export const formatClientNumber = (year: number, n: number) => `${CLIENT_INVOICE_PREFIX}-${year}-${String(n).padStart(4, '0')}`;
-export const nextNumberFrom = (existing: string[], year: number) => {
-  const prefix = `${CLIENT_INVOICE_PREFIX}-${year}-`;
+export const formatClientNumber = (year: number, n: number, base = CLIENT_INVOICE_PREFIX) => `${base}-${year}-${String(n).padStart(4, '0')}`;
+/** `base`: TV-KR (German entity, default) or TV-AZ (Baku entity, own number range — billing/entities.ts). */
+export const nextNumberFrom = (existing: string[], year: number, base = CLIENT_INVOICE_PREFIX) => {
+  const prefix = `${base}-${year}-`;
   const max = existing.reduce((m, s) => {
     if (!s.startsWith(prefix)) return m;
     const n = Number(s.slice(prefix.length));
     return Number.isInteger(n) && n > m ? n : m;
   }, 0);
-  return formatClientNumber(year, max + 1);
+  return formatClientNumber(year, max + 1, base);
 };
 
 // ─── Instalment plans ────────────────────────────────────────────────

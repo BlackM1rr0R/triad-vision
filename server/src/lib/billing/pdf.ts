@@ -1,6 +1,8 @@
 import { degrees, rgb, type PDFFont, type PDFPage } from 'pdf-lib';
 import { A4, createDoc, fit, wrap, type Fonts } from '../cv/pdfKit.js';
-import { formatEur, formatInvoiceDate } from '../invoiceTexts.js';
+import { formatInvoiceDate } from '../invoiceTexts.js';
+import { pdfMoney } from './currency.js';
+import type { BillingEntity } from './entities.js';
 import type { SellerInfo } from '../invoicePdf.js';
 import { computeClientTotals, isPassThrough, lineTotal, type ClientLine } from './math.js';
 import { DE_PDF, secondaryPdfLabels, type BillingLocale, type PdfLabels } from './texts.js';
@@ -52,11 +54,15 @@ export interface ClientInvoicePdfInput {
     grossCents: number;
     paidCents: number;
     note: string | null;
+    /** EUR / AZN / TRY (DejaVu has € and ₺; AZN is printed as the code because the font has no ₼). */
+    currency?: string | null;
   };
   client: ClientParty;
   seller: SellerInfo;
   bank: BankInfo;
   billing: Pick<ClientBillingSettings, 'vatMode' | 'exemptionNote' | 'footer'>;
+  /** Issuing entity: AZ prints the Azerbaijani tax number (VÖEN) instead of USt-IdNr. / Steuernummer. */
+  entity?: BillingEntity;
 }
 
 const isoDay = (s?: string | null) => (s && /^\d{4}-\d{2}-\d{2}$/.test(s) ? formatInvoiceDate(new Date(`${s}T12:00:00Z`)) : '');
@@ -85,7 +91,7 @@ const painter = (fonts: Fonts) => {
   return { text, textRight };
 };
 
-const sellerFooter = (page: PDFPage, fonts: Fonts, seller: SellerInfo, bank: BankInfo, footerNote: string, pageNo: number, pageLabel: string) => {
+const sellerFooter = (page: PDFPage, fonts: Fonts, seller: SellerInfo, bank: BankInfo, footerNote: string, pageNo: number, pageLabel: string, entity: BillingEntity = 'DE') => {
   const { text, textRight } = painter(fonts);
   const y0 = 92;
   page.drawLine({ start: { x: M, y: y0 + 12 }, end: { x: RIGHT, y: y0 + 12 }, thickness: 0.5, color: GREY });
@@ -94,7 +100,9 @@ const sellerFooter = (page: PDFPage, fonts: Fonts, seller: SellerInfo, bank: Ban
     [seller.name || PLACEHOLDER, seller.street || PLACEHOLDER, seller.zipCity || PLACEHOLDER, seller.country],
     [seller.phone && `Tel. ${seller.phone}`, seller.email, seller.website, seller.managingDirector && `GF: ${seller.managingDirector}`].filter(Boolean) as string[],
     [bank.bank ? `Bank: ${bank.bank}` : 'Bank: -', `IBAN: ${bank.iban || PLACEHOLDER}`, `BIC: ${bank.bic || '-'}`, bank.accountHolder ? `Inhaber: ${bank.accountHolder}` : ''].filter(Boolean),
-    [seller.vatId ? `USt-IdNr.: ${seller.vatId}` : '', seller.taxNumber ? `Steuernr.: ${seller.taxNumber}` : '', !seller.vatId && !seller.taxNumber ? `USt-IdNr.: ${PLACEHOLDER}` : '', seller.register].filter(Boolean),
+    entity === 'AZ'
+      ? [seller.taxNumber ? `VÖEN: ${seller.taxNumber}` : `VÖEN: ${PLACEHOLDER}`, seller.vatId ? `ƏDV: ${seller.vatId}` : '', seller.register].filter(Boolean)
+      : [seller.vatId ? `USt-IdNr.: ${seller.vatId}` : '', seller.taxNumber ? `Steuernr.: ${seller.taxNumber}` : '', !seller.vatId && !seller.taxNumber ? `USt-IdNr.: ${PLACEHOLDER}` : '', seller.register].filter(Boolean),
   ];
   cols.forEach((lines, i) => {
     let y = y0;
@@ -156,7 +164,9 @@ export const buildClientInvoicePdf = async (input: ClientInvoicePdfInput) => {
   const isDraft = invoice.status === 'DRAFT';
   const isCancelled = invoice.status === 'CANCELLED';
   const sign = isCancelled ? -1 : 1;
-  const money = (c: number) => formatEur(sign * c);
+  const fmt = pdfMoney(invoice.currency, 'dejavu');
+  const money = (c: number) => fmt(sign * c);
+  const entity = input.entity ?? 'DE';
   const { pdf, fonts } = await createDoc({ title: `${isCancelled ? 'Stornorechnung' : 'Rechnung'} ${invoice.number}`, author: seller.name || 'Triad Vision', lang: 'de' });
   const { text, textRight } = painter(fonts);
 
@@ -178,7 +188,14 @@ export const buildClientInvoicePdf = async (input: ClientInvoicePdfInput) => {
 
   let y = recipient(page, fonts, seller, client);
   const service = serviceDateLabel(invoice.items);
-  const taxRow: [string, string, string] = seller.vatId ? [L.vatId, L2.vatId, seller.vatId] : seller.taxNumber ? [L.taxNo, L2.taxNo, seller.taxNumber] : [L.vatId, L2.vatId, PLACEHOLDER];
+  const taxRow: [string, string, string] =
+    entity === 'AZ'
+      ? ['VÖEN', L2.taxNo, seller.taxNumber || seller.vatId || PLACEHOLDER]
+      : seller.vatId
+        ? [L.vatId, L2.vatId, seller.vatId]
+        : seller.taxNumber
+          ? [L.taxNo, L2.taxNo, seller.taxNumber]
+          : [L.vatId, L2.vatId, PLACEHOLDER];
   const my = metaBlock(page, fonts, [
     [L.invoiceNo, L2.invoiceNo, isDraft ? 'ENTWURF' : invoice.number],
     [L.invoiceDate, L2.invoiceDate, formatInvoiceDate(invoice.issueDate)],
@@ -261,8 +278,8 @@ export const buildClientInvoicePdf = async (input: ClientInvoicePdfInput) => {
   y -= 10;
   row(isCancelled ? L.cancelledTotal : L.total, isCancelled ? L2.cancelledTotal : L2.total, money(invoice.grossCents), true);
   if (!isCancelled && !isDraft && invoice.paidCents > 0) {
-    row(L.paid, L2.paid, formatEur(-invoice.paidCents));
-    row(L.open, L2.open, formatEur(Math.max(0, invoice.grossCents - invoice.paidCents)), true);
+    row(L.paid, L2.paid, fmt(-invoice.paidCents));
+    row(L.open, L2.open, fmt(Math.max(0, invoice.grossCents - invoice.paidCents)), true);
   }
 
   // ── Notes ──
@@ -299,7 +316,7 @@ export const buildClientInvoicePdf = async (input: ClientInvoicePdfInput) => {
   }
   if (invoice.note) para(invoice.note);
 
-  pages.forEach((p, i) => sellerFooter(p, fonts, seller, bank, billing.footer, i + 1, `${L.page}`));
+  pages.forEach((p, i) => sellerFooter(p, fonts, seller, bank, billing.footer, i + 1, `${L.page}`, entity));
   return Buffer.from(await pdf.save());
 };
 
@@ -307,18 +324,20 @@ export const buildClientInvoicePdf = async (input: ClientInvoicePdfInput) => {
 
 export interface ReceiptPdfInput {
   receiptNo: string;
-  payment: { amountCents: number; method: string; paidAt: Date; reference: string | null; note: string | null };
+  payment: { amountCents: number; method: string; paidAt: Date; reference: string | null; note: string | null; currency?: string | null };
   invoice: { number: string; grossCents: number; paidCents: number; issueDate: Date };
   client: ClientParty;
   seller: SellerInfo;
   bank: BankInfo;
   footer: string;
+  entity?: BillingEntity;
 }
 
 export const buildReceiptPdf = async (input: ReceiptPdfInput) => {
   const { payment, invoice, client, seller, bank } = input;
   const L = DE_PDF;
   const L2: PdfLabels = secondaryPdfLabels(client.locale);
+  const formatEur = pdfMoney(payment.currency, 'dejavu');
   const { pdf, fonts } = await createDoc({ title: `Zahlungsbestätigung ${input.receiptNo}`, author: seller.name || 'Triad Vision', lang: 'de' });
   const { text, textRight } = painter(fonts);
   const page = pdf.addPage(A4);
@@ -357,6 +376,6 @@ export const buildReceiptPdf = async (input: ReceiptPdfInput) => {
     text(page, l, M, y, 8.5);
     y -= 12;
   }
-  sellerFooter(page, fonts, seller, bank, input.footer, 1, L.page);
+  sellerFooter(page, fonts, seller, bank, input.footer, 1, L.page, input.entity);
   return Buffer.from(await pdf.save());
 };

@@ -1,4 +1,5 @@
 import { hasAnalyticsConsent, onConsentChange } from './consent';
+import { isPrivatePath, splitLocalePath } from './siteLocale';
 
 /*
  * Google Analytics 4 — optional and consent-gated.
@@ -20,8 +21,20 @@ declare global {
 
 let started = false;
 
+/**
+ * Pages whose URL carries a secret: portals and token links (/kandidat/<token>, /sign/…, /reset-password?token=…,
+ * /packages/order/<token>, /events/<slug>?r=<registrant token>). GA4 sends the full page URL to Google, so it is
+ * never started on them (people reach these pages from e-mail links, i.e. with a fresh page load).
+ */
+const TOKEN_PATH = /^\/packages\/order\//;
+const TOKEN_QUERY = /[?&](token|r|t|code|key)=/i;
+export const urlCarriesSecret = (pathname: string, search: string) => {
+  const { rest } = splitLocalePath(pathname);
+  return isPrivatePath(rest) || TOKEN_PATH.test(rest) || TOKEN_QUERY.test(search);
+};
+
 const load = async () => {
-  if (started || !hasAnalyticsConsent()) return;
+  if (started || !hasAnalyticsConsent() || urlCarriesSecret(location.pathname, location.search)) return;
   started = true;
   try {
     const res = await fetch('/api/seo/config', { credentials: 'omit' });

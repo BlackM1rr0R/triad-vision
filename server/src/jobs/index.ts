@@ -42,3 +42,4 @@ import './automation.js'; // automation rules (event queue, delayed actions, tim
 import './clientData.js'; // reminders for unsubmitted questionnaires and open data confirmations
 import './clientBilling.js'; // client invoices: DATE instalments, overdue + reminders (3 / 10 days) + staff task, package order activation retries
 import './employerReports.js'; // monthly employer PDF report (1st of the month, 08:00 Baku) to the company's portal users
+import './recognition.js'; // Anerkennung + § 81a deadline reminders / escalation, signed Vollmacht pick-up

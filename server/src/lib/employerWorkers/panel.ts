@@ -5,6 +5,7 @@ import { isExpired as signatureExpired } from '../esign/service.js';
 import { getCheckInSettings, ANSWER_TTL_DAYS } from '../checkIns/service.js';
 import { RISK_RULES, type RiskReason } from '../checkIns/risk.js';
 import { listWorkers, plannedArrival, workerSummary, type Stage, type WorkerRow } from '../requests/workers.js';
+import { employerAccelerated, employerAcceleratedTodos } from '../recognition/accelerated.js';
 
 /**
  * "My workers" panel of the employer portal (/company/workers) and the data of the monthly employer report.
@@ -34,7 +35,7 @@ export type DateWarn = 'OK' | 'WARN' | 'CRITICAL' | 'EXPIRED';
 export type CheckInState = 'OK' | 'ISSUE' | 'RESOLVED' | 'OVERDUE' | 'PENDING';
 export const SAFE_RISK_CODES = ['EMPLOYER_FEEDBACK', 'WORKER_FEEDBACK', 'OPEN_ISSUE', 'NO_RESPONSE', 'TREND_WORSE', 'PROBATION_SOON'] as const;
 export type SafeRiskCode = (typeof SAFE_RISK_CODES)[number];
-export const NEXT_ACTIONS = ['SIGN_DOCUMENT', 'COMPLETE_FORM', 'ANSWER_CHECKIN', 'PREPARE_ARRIVAL', 'PROBATION_REVIEW', 'CONFIRM_EMPLOYMENT', 'TALK_TO_MANAGER', 'NONE'] as const;
+export const NEXT_ACTIONS = ['SIGN_DOCUMENT', 'COMPLETE_FORM', 'ACCELERATED_STEP', 'ANSWER_CHECKIN', 'PREPARE_ARRIVAL', 'PROBATION_REVIEW', 'CONFIRM_EMPLOYMENT', 'TALK_TO_MANAGER', 'NONE'] as const;
 export type NextAction = (typeof NEXT_ACTIONS)[number];
 export type MilestoneCode = 'CONTRACT' | 'EMBASSY' | 'APPOINTMENT' | 'DECISION' | 'ARRIVAL' | 'PROBATION_END' | 'TITLE_EXPIRY' | 'CHECKIN';
 
@@ -43,7 +44,8 @@ export const TITLE_CRITICAL_DAYS = 30;
 export const PROBATION_WARN_DAYS = 14;
 
 export interface OpenItem {
-  kind: 'SIGNATURE' | 'FORM' | 'CHECKIN';
+  /** ACCELERATED: § 81a step of the employer (title = SIGN_AGREEMENT | PAY_FEE, translated by the portal). */
+  kind: 'SIGNATURE' | 'FORM' | 'CHECKIN' | 'ACCELERATED';
   id: string;
   title: string;
   /** Portal link of the item (sign page / check-in page) when there is one. */
@@ -206,6 +208,11 @@ export const buildPanel = async (companyId: string, now = new Date()): Promise<P
   );
   if (!x) return [];
   const settings = await getCheckInSettings();
+  // § 81a accelerated procedure: what the employer still has to do (lib/recognition/accelerated).
+  const accelTodos = await employerAcceleratedTodos(
+    companyId,
+    base.map((w) => w.id),
+  );
   // Forecast ranges per (visa category, type): cached in lib/journey, one lookup per distinct pair.
   const rangeCache = new Map<string, Awaited<ReturnType<typeof rangesFor>>>();
   const ranges = async (visaCategoryId: string | null, visaType: Parameters<typeof rangesFor>[1]) => {
@@ -291,11 +298,19 @@ export const buildPanel = async (companyId: string, now = new Date()): Promise<P
       }
     }
 
+    // id = `<caseId>:<SIGN_AGREEMENT | PAY_FEE>` (the portal translates the code); the title is the German label (reports, CSV).
+    for (const a of accelTodos.get(w.id) ?? []) {
+      const title = a.todo === 'PAY_FEE' ? 'Gebühr für das beschleunigte Fachkräfteverfahren zahlen' : 'Vereinbarung mit der Ausländerbehörde unterzeichnen';
+      openItems.push({ kind: 'ACCELERATED', id: `${w.id}:${a.todo}`, title, link: null, since: a.since });
+    }
+
     const arrival = plannedArrival(w);
     const nextAction: NextAction = openItems.some((i) => i.kind === 'SIGNATURE')
       ? 'SIGN_DOCUMENT'
       : openItems.some((i) => i.kind === 'FORM')
         ? 'COMPLETE_FORM'
+        : openItems.some((i) => i.kind === 'ACCELERATED')
+          ? 'ACCELERATED_STEP'
         : openItems.some((i) => i.kind === 'CHECKIN')
           ? 'ANSWER_CHECKIN'
           : phase === 'TRAVELLING' && arrival && arrival.getTime() - now.getTime() <= 14 * DAY && arrival > now
@@ -477,6 +492,8 @@ export const workerDetail = async (companyId: string, caseId: string, now = new 
     documents,
     checkIns,
     contact: { manager: row.manager, office: { phone: str(contactValue.phone), email: str(contactValue.email) } },
+    // § 81a accelerated procedure (read-only steps + what the employer has to do), null when none runs.
+    accelerated: await employerAccelerated(companyId, caseId),
   };
 };
 

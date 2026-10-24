@@ -1,7 +1,8 @@
 import { prisma } from '../db.js';
 import { registerJob } from '../lib/scheduler.js';
 import { notifyStaff } from '../lib/notifications.js';
-import { formatEur, formatInvoiceDate, staffInvoiceTexts } from '../lib/invoiceTexts.js';
+import { formatInvoiceDate, staffInvoiceTexts } from '../lib/invoiceTexts.js';
+import { formatMoney } from '../lib/billing/currency.js';
 import { notifyCompanyAboutInvoice } from '../routes/admin/invoices.js';
 
 const HOUR = 60 * 60 * 1000;
@@ -37,7 +38,7 @@ export const runInvoiceOverdue = async (now = new Date()) => {
   const overdue = await prisma.invoice.findMany({ where: { status: 'OVERDUE' }, include: { company: true } });
   for (const inv of overdue) {
     const daysLate = Math.max(0, Math.floor((now.getTime() - inv.dueDate.getTime() - 12 * HOUR) / DAY));
-    const ctx = { number: inv.number, company: inv.company.name, amount: formatEur(inv.grossCents), due: formatInvoiceDate(inv.dueDate), days: daysLate };
+    const ctx = { number: inv.number, company: inv.company.name, amount: formatMoney(inv.grossCents, inv.currency), due: formatInvoiceDate(inv.dueDate), days: daysLate };
     const notice = await prisma.reminderLog.findUnique({ where: { key: `invoice-overdue:${inv.id}` } });
     if (!notice) {
       if (!(await claim(`invoice-overdue:${inv.id}`))) continue;

@@ -19,6 +19,7 @@ import { CATEGORY_TONE, FILTERS, KIND_ICON, PRIORITY_DOT, type WorkFilter } from
 import { TimerButton } from '@/components/timeCare/TimerButton'; // "⏱ Başlat" on rows with a case
 import { RequiredTrainingBanner } from '@/components/team/training/TrainingNotice'; // unfinished required courses
 import { useStaffNav } from '@/components/command/navPrefs'; // training banner follows the module toggle
+import { useShortcuts } from '@/components/shortcuts/registry'; // lists this page's keys in the ? cheat sheet
 
 registerCopy(pagesToday);
 
@@ -196,6 +197,17 @@ export default function Today() {
   }, [flat.length, active]);
 
   const openItem = (item: WorkItem) => (isExternal(item.link) ? window.open(item.link, '_blank', 'noopener') : navigate(item.link));
+
+  // The keys below are handled here; registered without handlers only so the "?" cheat sheet lists them.
+  useShortcuts(
+    [
+      { id: 'next', keys: ['j'], labelKey: 'ux.shortcuts.keys.next' },
+      { id: 'prev', keys: ['k'], labelKey: 'ux.shortcuts.keys.prev' },
+      { id: 'open', keys: ['Enter'], labelKey: 'ux.shortcuts.keys.open' },
+      { id: 'accept', keys: ['a'], labelKey: 'ux.shortcuts.keys.accept' },
+    ],
+    { titleKey: 'ux.shortcuts.lists.today' },
+  );
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {

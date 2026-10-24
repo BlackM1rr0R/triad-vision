@@ -4,12 +4,14 @@ import { CLIENT_UPLOAD_STAGE, FINAL_STATUSES } from '../caseFlow.js';
 import { ballInCourtFor, type BallInCourt } from '../clientProcess/ballInCourt.js';
 import { currentTurn } from '../esign/service.js';
 import { isExpired as checkInExpired } from '../checkIns/service.js';
-import { forecastForCase } from '../journey/forecast.js';
+import { forecastForCase, type Forecast } from '../journey/forecast.js';
+import { normaliseOrigin } from '../marketing/originMap.js';
 import { onboardingForCase } from '../journey/onboarding.js';
 import { pendingAcceptances } from '../legal/documents.js';
 import { getRenewalSettings } from '../renewals/service.js';
 import { openInvoicesOf } from '../billing/service.js';
 import { isPastDue } from '../billing/math.js';
+import { recognitionClientAction } from '../recognition/service.js';
 import { documentSummary, profileCompleteness, progressPercent, STATUS_STEP, STEP_COUNT } from '../../routes/account.js';
 
 /**
@@ -34,6 +36,7 @@ export type NextKind =
   | 'CONFIRM_DATA'
   | 'FILL_FORM'
   | 'CLIENT_TASK'
+  | 'RECOGNITION_DOCS'
   | 'ANSWER_CHECKIN'
   | 'ARRIVAL_PLAN'
   | 'RENEW_RESIDENCE'
@@ -69,6 +72,8 @@ export const KIND_RANK: Record<NextKind, number> = {
   CONFIRM_DATA: 16,
   FILL_FORM: 17,
   CLIENT_TASK: 18,
+  // Recognition (Anerkennung): a document the client still has to send (certified translation, certificate …).
+  RECOGNITION_DOCS: 19,
   ANSWER_CHECKIN: 20,
   ARRIVAL_PLAN: 21,
   RENEW_RESIDENCE: 22,
@@ -109,6 +114,8 @@ export interface NextStepFacts {
   profilePercent: number;
   /** Open client invoices (lib/billing): issued, not fully paid. */
   invoices?: { id: string; number: string; openCents: number; dueAt: Date; overdue: boolean }[];
+  /** Running recognition process with checklist items the client provides (lib/recognition): the first one names the card. */
+  recognition?: { caseId: string; count: number; key: string; dueAt: Date | null } | null;
 }
 
 const iso = (d: Date | null | undefined) => (d ? d.toISOString() : null);
@@ -171,6 +178,7 @@ export const collectActions = (f: NextStepFacts): NextAction[] => {
     });
   }
   for (const task of f.tasks) add('CLIENT_TASK', caseUrl(task.caseId, undefined, '#client-tasks'), { dueAt: task.dueAt, detail: task.title });
+  if (f.recognition) add('RECOGNITION_DOCS', caseUrl(f.recognition.caseId, undefined, '#recognition'), { count: f.recognition.count, dueAt: f.recognition.dueAt, detail: f.recognition.key });
 
   if (f.checkIns.length) {
     const first = [...f.checkIns].sort((a, b) => a.dueAt.getTime() - b.dueAt.getTime())[0];
@@ -229,6 +237,9 @@ const caseSelect = {
   appointmentPlace: true,
   residenceTitleExpiresAt: true,
   renewalCaseCreatedAt: true,
+  // German destination of the portal journey map (employer city, else the vacancy city).
+  company: { select: { city: true } },
+  vacancy: { select: { city: true } },
 } as const;
 
 /** The case the portal is about: the open main application, else an open member case, else the latest approval, else the latest. */
@@ -300,6 +311,7 @@ export const loadNextStep = async (userId: string, now = new Date()) => {
   });
 
   const renewal = await (approved?.residenceTitleExpiresAt ? getRenewalSettings() : Promise.resolve(null));
+  const recognition = await recognitionClientAction(cases.filter((c) => !FINAL_STATUSES.includes(c.status)).map((c) => c.id));
   const facts: NextStepFacts = {
     now,
     pendingLegal: legal.length,
@@ -324,28 +336,35 @@ export const loadNextStep = async (userId: string, now = new Date()) => {
     passportExpiry: user.passportExpiry,
     profilePercent: profileCompleteness(user).percent,
     invoices: invoices.map((i) => ({ id: i.id, number: i.number, openCents: i.grossCents - i.paidCents, dueAt: i.dueDate, overdue: i.status === 'OVERDUE' || isPastDue(i.dueDate, now) })),
+    recognition,
   };
   const { actionCount, ...picked } = pickNextStep(facts);
 
   // Progress of the case the portal is about, and the next date to expect.
   let progress: number | null = null;
   let milestone: { key: string; from: string | null; to: string | null } | null = null;
+  // Forecast of the case the portal is about (open or decided): the milestone below and the journey map.
+  let fc: Forecast | null = null;
+  if (primary) {
+    try {
+      fc = await forecastForCase(primary.id);
+    } catch {
+      fc = null; // the forecast is a nice-to-have
+    }
+  }
+  const flight = plan?.arrivalTime ?? plan?.flightDate ?? null;
   if (primary) {
     if (open) {
       const hasEmbassy = requirements.some((r) => r.stage === 'EMBASSY');
       const docsStage = ['DOCUMENTS_PENDING', 'DOCUMENTS_REVIEW', 'CONTRACT_SENT', 'CONTRACT_SIGNED'].includes(open.status) || !hasEmbassy ? 'INITIAL' : 'EMBASSY';
       progress = progressPercent(open.status, documentSummary(requirements, docsStage));
-      try {
-        const fc = await forecastForCase(open.id);
+      if (fc) {
         const current = fc.steps.find((s) => s.status === 'current');
         if (current?.expectedTo) milestone = { key: current.key, from: iso(current.expectedFrom), to: iso(current.expectedTo) };
         else if (fc.estimatedDecision) milestone = { key: 'DECISION', from: iso(fc.estimatedDecision.from), to: iso(fc.estimatedDecision.to) };
-      } catch {
-        milestone = null; // the forecast is a nice-to-have
       }
     } else {
       progress = primary.status === 'CANCELLED' ? 0 : 100;
-      const flight = plan?.arrivalTime ?? plan?.flightDate ?? null;
       if (approved && !arrived && flight && flight > now) milestone = { key: 'ARRIVAL', from: null, to: iso(flight) };
       else if (approved?.residenceTitleExpiresAt && arrived) milestone = { key: 'RESIDENCE_EXPIRY', from: null, to: iso(approved.residenceTitleExpiresAt) };
     }
@@ -367,6 +386,7 @@ export const loadNextStep = async (userId: string, now = new Date()) => {
     arrived,
     arrivedAt: arrived ? iso(followUp?.arrivedAt ?? null) : null,
     onboarding: onboarding?.progress ?? null,
+    journey: primary ? buildJourney(user, primary, fc, { flight, arrived, arrivedAt: followUp?.arrivedAt ?? null, travelPlanned: !!plan && plan.status !== 'DRAFT', now }) : null,
     ...picked,
     counts: {
       actions: actionCount,
@@ -382,3 +402,37 @@ export const loadNextStep = async (userId: string, now = new Date()) => {
 };
 
 export type NextStepResponse = Awaited<ReturnType<typeof loadNextStep>>;
+
+/**
+ * Data of the portal journey map: where the client starts (User.city / nationality, normalised like the
+ * public origin map), where in Germany they go (employer / vacancy city) and the dated steps of the case
+ * (forecast) plus travel and arrival. The client turns it into milestones (components/portal/journey.ts).
+ */
+export const buildJourney = (
+  user: { city: string | null; nationality: string | null },
+  c: { status: CaseStatus; decisionAt: Date | null; company: { city: string | null } | null; vacancy: { city: string | null } | null },
+  fc: Forecast | null,
+  o: { flight: Date | null; arrived: boolean; arrivedAt: Date | null; travelPlanned: boolean; now: Date },
+) => {
+  const origin = normaliseOrigin(user.city, user.nationality);
+  const rawCity = user.city?.trim() || null;
+  const dest = c.company?.city?.trim() || c.vacancy?.city?.trim() || null;
+  return {
+    origin: origin
+      ? { country: origin.country, city: origin.city ?? rawCity, lat: origin.lat, lng: origin.lng, exact: !!origin.cityKey }
+      : { country: null, city: rawCity, lat: null, lng: null, exact: false },
+    destination: { city: dest ? dest.split(',')[0].trim() : null },
+    outcome: c.status === 'APPROVED' ? ('APPROVED' as const) : c.status === 'REJECTED' ? ('REJECTED' as const) : c.status === 'CANCELLED' ? ('CANCELLED' as const) : null,
+    decisionAt: iso(c.decisionAt),
+    steps: (fc?.steps ?? []).map((st) => ({
+      key: st.key,
+      status: st.status,
+      enteredAt: iso(st.enteredAt),
+      leftAt: iso(st.leftAt),
+      expectedFrom: iso(st.expectedFrom),
+      expectedTo: iso(st.expectedTo),
+    })),
+    travel: { at: iso(o.flight), planned: o.travelPlanned, done: o.arrived || (!!o.flight && o.flight <= o.now) },
+    arrival: { at: iso(o.arrivedAt), done: o.arrived },
+  };
+};

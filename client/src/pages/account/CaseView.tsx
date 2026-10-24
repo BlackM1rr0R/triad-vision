@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, type ReactNode } from 'react';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
@@ -11,7 +11,7 @@ import { useL10n } from '@/lib/l10n';
 import { smoothScrollTo } from '@/lib/smoothScroll';
 import type { CaseDetail } from '@/lib/types';
 import { Tabs, TabPanel, useTabParam } from '@/components/ui/Tabs';
-import { PageLoader } from '@/components/ui/Spinner';
+import { CaseViewSkeleton } from '@/components/portal/PortalSkeletons';
 import { Reveal } from '@/components/motion';
 import { StatusBadge } from '@/components/portal/StatusBadge';
 import { CaseDocuments } from '@/components/portal/CaseDocuments';
@@ -23,12 +23,17 @@ import { OVERVIEW_KEY, useHashScroll, useOverview } from '@/components/portal/us
 import { TipsCard } from '@/components/portal/Dashboard';
 import DocIntelPanel from '@/components/portal/DocIntelPanel';
 import { ForecastStrip } from '@/components/journey/ForecastStrip';
+import { JourneyCard } from '@/components/portal/JourneyCard';
+import { useNextStep } from '@/components/portal/usePortalNav';
+import { useMorphTarget } from '@/lib/viewTransition';
+import { celebrateOnce } from '@/components/motion/celebrate';
 import { FamilyGroupCard, useRelationLabel } from '@/components/journey/Family';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { ClientOriginals } from '@/components/originals/ClientOriginals';
 import ClientDataTasks from '@/components/clientData/ClientDataTasks';
 import { FamilyMembersSection } from '@/components/family/FamilyMembersSection';
 import { PortalTasks } from '@/components/clientProcess/PortalTasks'; // "MÉ™nim tapÅŸÄ±rÄ±qlarÄ±m"
+import { ClientRecognitionCard } from '@/components/recognition/ClientRecognitionCard'; // Anerkennung status (read-only)
 import { PortalOfficeVisits } from '@/components/clientProcess/PortalOfficeVisits'; // "OfisÉ™ gÉ™liÅŸ tÉ™yin et"
 import { useFamilyOverview } from '@/components/family/api';
 import { useAuth } from '@/lib/auth';
@@ -114,6 +119,9 @@ const CurrentStepPanel = ({ data }: { data: CaseDetail }) => {
 
 type MsgWithRead = CaseDetail['messages'][number] & { readAt?: string | null };
 
+/** The header slides in, except when it is the end of a morph from the portal home (it is already in place). */
+const HeaderReveal = ({ still, children }: { still: boolean; children: ReactNode }) => (still ? <>{children}</> : <Reveal y={16}>{children}</Reveal>);
+
 export default function CaseView() {
   const { id = '' } = useParams();
   const { t } = useTranslation();
@@ -135,6 +143,10 @@ export default function CaseView() {
   });
   usePageTitle(data ? `${t('portal.caseNo')} ${data.number}` : t('portal.title'));
   const next = useNextUp(id);
+  // Journey map: the portal's next-step data is about one case (the primary one), shown only on that case.
+  const nextStep = useNextStep(user?.role === 'CLIENT');
+  // The portal home's next-step card morphs into this heading (View Transitions; off with reduced motion).
+  const morph = useMorphTarget('portal-next', 'step');
   const { data: overview } = useOverview();
   const familyQ = useFamilyOverview(id);
   const family = data as (CaseDetail & { parentCaseId?: string | null; relation?: string | null }) | undefined;
@@ -187,7 +199,15 @@ export default function CaseView() {
     if (below) window.setTimeout(() => tabsRef.current && smoothScrollTo(tabsRef.current, { immediate: true, offset: -150 }), 30);
   };
 
-  if (isLoading) return <PageLoader />;
+  // Visa approved: one confetti burst the first time the client sees it on this device (no-op for reduced motion).
+  const approvedId = data?.status === 'APPROVED' ? data.id : null;
+  useEffect(() => {
+    if (!approvedId) return;
+    const timer = window.setTimeout(() => celebrateOnce(`visa-approved:${approvedId}`, { count: 110 }), 450);
+    return () => window.clearTimeout(timer);
+  }, [approvedId]);
+
+  if (isLoading) return <CaseViewSkeleton />;
   if (error || !data || !family) {
     return (
       <div className="card mx-auto max-w-lg p-8 text-center">
@@ -232,14 +252,14 @@ export default function CaseView() {
   return (
     <div className="space-y-5 lg:space-y-6">
       {/* Header */}
-      <Reveal y={16}>
+      <HeaderReveal still={morph.arrived}>
         <div className="min-w-0">
           <Link to="/account" className="-my-2 inline-flex min-h-10 items-center gap-1.5 text-sm font-semibold text-brand-600 hover:text-brand-700">
             <ArrowLeft className="size-4" aria-hidden />
             {t('portal.myCases')}
           </Link>
           <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-2">
-            <h1 className="type-page-title break-words">
+            <h1 className="type-page-title break-words" {...morph.part('title')}>
               <span className="text-muted">{t('portal.caseNo')}</span> {data.number}
             </h1>
             <StatusBadge status={data.status} className="text-sm" />
@@ -267,7 +287,7 @@ export default function CaseView() {
             )}
           </div>
         </div>
-      </Reveal>
+      </HeaderReveal>
 
       {/* "What's next" stays on screen while scrolling through any tab. */}
       <StickyBelowHeader>
@@ -288,6 +308,10 @@ export default function CaseView() {
             <DecisionCard data={data} />
             <AppointmentCard data={data} />
             <PortalTasks caseId={data.id} onChanged={refresh} />
+            {/* Recognition of the qualification (read-only; nothing when the case has none). */}
+            <ClientRecognitionCard caseId={data.id} />
+            {/* Home city → German city with the six milestones (primary case only). */}
+            {nextStep.data?.case?.id === data.id && <JourneyCard next={nextStep.data} />}
             {/* One timeline: steps with their dates. */}
             <div id="forecast" className="scroll-mt-40">
               <ForecastStrip caseId={data.id} />

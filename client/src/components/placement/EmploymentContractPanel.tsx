@@ -7,6 +7,7 @@ import { AlertTriangle, CheckCircle2, FileSignature, Pencil, Plus, Sparkles } fr
 import { api, errorCode } from '@/lib/api';
 import { registerCopy } from '@/i18n';
 import { pagesPlacement } from '@/i18n/pagesPlacement';
+import { PanelBodySkeleton } from '@/components/admin/case/TabSkeleton';
 import { Spinner } from '@/components/ui/Spinner';
 import { Panel } from '@/components/admin/ui';
 import { fmtDate } from '@/components/admin/labels';
@@ -180,7 +181,7 @@ export const EmploymentContractPanel = ({ caseId }: { caseId: string }) => {
     >
       <p className="-mt-1 mb-3 text-xs text-muted">{t('placement.contract.subtitle')}</p>
       {isLoading || !data ? (
-        <Spinner className="size-5 text-brand-600" />
+        <PanelBodySkeleton rows={3} />
       ) : form ? (
         <form
           className="space-y-4"

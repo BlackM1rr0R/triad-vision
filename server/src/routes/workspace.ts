@@ -13,6 +13,7 @@ import {
   adminIds,
   fullName,
   leaveBalance,
+  leaveForViewer,
   leaveSelect,
   overlapWhere,
   parseLeaveDate,
@@ -163,7 +164,8 @@ workspaceRouter.get('/leave/calendar', async (req, res) => {
     select: leaveSelect,
     orderBy: [{ startsAt: 'asc' }],
   });
-  res.json({ items: rows.map(toLeave), from, to });
+  // Colleagues see when someone is away, not why (sick leave / notes only for the person and ADMIN+).
+  res.json({ items: rows.map((r) => leaveForViewer(toLeave(r), req.user!)), from, to });
 });
 
 /** GET /api/workspace/leave/balance → weekdays used (approved) and pending this year, per type. */

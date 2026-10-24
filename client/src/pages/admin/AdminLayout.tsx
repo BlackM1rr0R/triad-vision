@@ -25,6 +25,7 @@ import { pagesCalls } from '@/i18n/pagesCalls';
 import { LiveChatAlerts } from '@/components/livechat/LiveChatAlerts'; // live chat queue sound + toast, incoming calls
 import { HeaderTimer } from '@/components/timeCare/HeaderTimer'; // running staff timer (registers its copy)
 import { CommandPaletteButton, CommandPaletteHotkey } from '@/components/command/CommandPaletteHost'; // Ctrl+K staff palette
+import { ShortcutLayer } from '@/components/shortcuts/ShortcutLayer'; // ? cheat sheet, g+c/i/t/d, page shortcuts (J/K, E, /)
 import { NAV_GROUPS, STAFF_NAV, activeNavItem, hrefFor, isVisible, type NavGroupKey, type StaffNavItem } from '@/components/command/navRegistry';
 import { usePageVisits, useStaffNav } from '@/components/command/navPrefs'; // server-side pins (shared with Ctrl+K), modules, page usage
 import { ModuleDisabled } from '@/components/admin/nav/ModuleDisabled';
@@ -458,7 +459,7 @@ export default function AdminLayout() {
       <aside
         className={clsx(
           // z-50: the rail's tooltips overlap the sticky page header (z-40).
-          'sticky top-0 z-50 hidden h-screen shrink-0 flex-col bg-navy-950 transition-[width] duration-300 lg:flex',
+          'vt-admin-sidebar sticky top-0 z-50 hidden h-screen shrink-0 flex-col bg-navy-950 transition-[width] duration-300 lg:flex',
           collapsed ? 'w-[68px]' : 'w-64',
         )}
       >
@@ -534,7 +535,7 @@ export default function AdminLayout() {
       </AnimatePresence>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-40 flex h-16 items-center gap-1.5 border-b border-line bg-white/[0.97] px-2 sm:gap-2 sm:px-6 lg:px-8">
+        <header className="vt-admin-topbar sticky top-0 z-40 flex h-16 items-center gap-1.5 border-b border-line bg-white/[0.97] px-2 sm:gap-2 sm:px-6 lg:px-8">
           <button
             type="button"
             onClick={() => setMobileOpen(true)}
@@ -589,6 +590,7 @@ export default function AdminLayout() {
         </footer>
       </div>
       <CommandPaletteHotkey />
+      <ShortcutLayer />
       <AccessibilityWidget standalone panelClass="sm:bottom-[5.75rem] sm:max-h-[calc(100dvh-6.75rem)]" />
     </div>
   );

@@ -160,7 +160,7 @@ export const Header = () => {
 
   return (
     <>
-      <motion.header className="fixed inset-x-0 top-0 z-50" animate={{ y: hidden ? '-100%' : '0%' }} transition={{ duration: 0.35, ease: EASE }}>
+      <motion.header className="vt-site-header fixed inset-x-0 top-0 z-50" animate={{ y: hidden ? '-100%' : '0%' }} transition={{ duration: 0.35, ease: EASE }}>
         {/* ── Top bar (desktop): reach us directly ─────────── */}
         <motion.div
           initial={false}

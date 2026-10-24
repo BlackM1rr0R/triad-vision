@@ -5,6 +5,7 @@ import type { LucideIcon } from 'lucide-react';
 import { AlertCircle, RefreshCw } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Spinner } from '@/components/ui/Spinner';
+import { AnimatedNumber } from '@/components/ui/AnimatedNumber';
 import { Card } from '@/components/ui/Card';
 import { EmptyState as UiEmptyState } from '@/components/ui/EmptyState';
 import { PageHeader } from '@/components/ui/PageHeader';
@@ -170,7 +171,7 @@ export const StatTile = ({
             tone === 'danger' ? TONE_TEXT.danger : tone === 'warn' ? TONE_TEXT.warning : tone === 'good' ? TONE_TEXT.success : 'text-navy-900',
           )}
         >
-          {value}
+          {typeof value === 'number' ? <AnimatedNumber value={value} /> : value}
         </p>
         {hint && <p className="mt-1 text-[11px] leading-snug text-muted">{hint}</p>}
       </div>

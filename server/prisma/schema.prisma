@@ -3604,6 +3604,8 @@ model StaffPreferences {
   navPins         Json? // nav item ids
   navRecent       Json? // [{ id, at }]
   updatedAt       DateTime @updatedAt
+  /// Personal admin dashboard: widget ids, order and sizes.
+  dashboardLayout Json?
 }
 
 enum CaseHandoverStatus {
@@ -5205,4 +5207,98 @@ model EmployerReport {
   createdAt DateTime  @default(now())
 
   @@unique([companyId, month])
+}
+
+// ─── Recognition (Anerkennung) and the accelerated skilled-worker procedure (§81a AufenthG) ─
+
+/// Recognition of a foreign qualification for a case: authority, procedure, deficits, adaptation measure.
+model RecognitionProcess {
+  id                String    @id @default(cuid())
+  caseId            String    @db.VarChar(40)
+  clientId          String    @db.VarChar(40)
+  profession        String    @db.VarChar(160) // German reference profession (Referenzberuf)
+  regulated         Boolean   @default(false)
+  procedureType     String    @db.VarChar(30) // ZAB_STATEMENT | FULL_RECOGNITION | PARTIAL_RECOGNITION | IHK_FOSA | HWK
+  authority         String?   @db.VarChar(200) // e.g. ZAB, Landesamt für Gesundheit, IHK FOSA
+  federalState      String?   @db.VarChar(40)
+  reference         String?   @db.VarChar(120) // Aktenzeichen
+  status            String    @default("PREPARING") @db.VarChar(20) // PREPARING | SUBMITTED | IN_REVIEW | DEFICIT_NOTICE | ADAPTATION | RECOGNISED | PARTIALLY_RECOGNISED | REJECTED | WITHDRAWN
+  checklist         Json? // [{ key, label, done, documentId? }]
+  submittedAt       DateTime?
+  feeCents          Int?
+  feePaidAt         DateTime?
+  decisionAt        DateTime?
+  deficitNotes      String?   @db.Text
+  adaptationMeasure String?   @db.VarChar(30) // ANPASSUNGSLEHRGANG | KENNTNISPRUEFUNG | EIGNUNGSPRUEFUNG
+  adaptationUntil   DateTime?
+  nextDeadline      DateTime?
+  nextDeadlineNote  String?   @db.VarChar(300)
+  note              String?   @db.Text
+  createdById       String?   @db.VarChar(40)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  @@index([caseId])
+  @@index([status, nextDeadline])
+}
+
+model RecognitionEvent {
+  id         String   @id @default(cuid())
+  processId  String   @db.VarChar(40)
+  type       String   @db.VarChar(30) // STATUS | NOTE | DOCUMENT | LETTER_IN | LETTER_OUT | DEADLINE
+  fromStatus String?  @db.VarChar(20)
+  toStatus   String?  @db.VarChar(20)
+  note       String?  @db.Text
+  documentId String?  @db.VarChar(40)
+  actorId    String?  @db.VarChar(40)
+  at         DateTime @default(now())
+
+  @@index([processId, at])
+}
+
+/// Beschleunigtes Fachkräfteverfahren (§81a AufenthG) run by the employer via the Ausländerbehörde.
+model AcceleratedProcedure {
+  id                  String    @id @default(cuid())
+  caseId              String    @unique @db.VarChar(40)
+  companyId           String?   @db.VarChar(40)
+  authority           String?   @db.VarChar(200) // zuständige Ausländerbehörde
+  authorityEmail      String?   @db.VarChar(190)
+  reference           String?   @db.VarChar(120)
+  status              String    @default("PREPARING") @db.VarChar(24) // PREPARING | POWER_OF_ATTORNEY | AGREEMENT_SIGNED | SUBMITTED | FEE_REQUESTED | FEE_PAID | IN_REVIEW | PRE_APPROVAL | SENT_TO_EMBASSY | APPOINTMENT_BOOKED | VISA_DECIDED | REJECTED | CANCELLED
+  powerOfAttorneyAt   DateTime?
+  agreementSignedAt   DateTime? // Vereinbarung employer ↔ Ausländerbehörde
+  submittedAt         DateTime?
+  feeCents            Int?
+  feeRequestedAt      DateTime?
+  feePaidAt           DateTime?
+  preApprovalAt       DateTime? // Vorabzustimmung
+  preApprovalDocId    String?   @db.VarChar(40)
+  embassyNotifiedAt   DateTime?
+  appointmentDeadline DateTime? // embassy appointment within 3 weeks of the pre-approval
+  appointmentAt       DateTime?
+  decisionDeadline    DateTime? // embassy decision usually within 3 weeks of the complete application
+  decidedAt           DateTime?
+  note                String?   @db.Text
+  createdById         String?   @db.VarChar(40)
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  @@index([status])
+  @@index([companyId])
+}
+
+/// Correspondence log with the Ausländerbehörde / embassy for a §81a procedure.
+model AcceleratedMessage {
+  id          String    @id @default(cuid())
+  procedureId String    @db.VarChar(40)
+  direction   String    @db.VarChar(4) // IN | OUT
+  channel     String    @db.VarChar(10) // EMAIL | LETTER | PORTAL | PHONE | FAX
+  subject     String?   @db.VarChar(300)
+  body        String?   @db.Text
+  documentId  String?   @db.VarChar(40)
+  dueAt       DateTime? // reply deadline set by the authority
+  actorId     String?   @db.VarChar(40)
+  at          DateTime  @default(now())
+
+  @@index([procedureId, at])
 }

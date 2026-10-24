@@ -1,12 +1,10 @@
-import { CallButton } from '@/components/calls/CallButton'; // click-to-call (Twilio / sipgate) or manual call log
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
-import { toast } from 'sonner';
-import { Building2, ChevronDown, Flame, Inbox, Mail, MessageCircle, Phone, Search, SlidersHorizontal, User, Users } from 'lucide-react';
+import { Building2, ChevronDown, Columns2, Flame, Inbox, Search, SlidersHorizontal, User, Users } from 'lucide-react';
 import { api } from '@/lib/api';
 import {
   INQUIRY_KINDS,
@@ -16,21 +14,26 @@ import {
   fmtRelative,
   inquiryKindLabel,
   inquiryStatusLabel,
-  toastError,
-  waLink,
   type InquiryStatus,
 } from '@/components/admin/labels';
 import type { InquiriesResponse, Inquiry } from '@/components/admin/types';
-import { Chip, EmptyState, ErrorBlock, LoadingBlock, PageHead, StatTile } from '@/components/admin/ui';
+import { Chip, EmptyState, ErrorBlock, PageHead, StatTile } from '@/components/admin/ui';
+import { Skeleton, SkeletonStat } from '@/components/ui/Skeleton';
 import { LEAD_LEVELS, useLeadScoring, type LeadLevel, type ScoreReason } from '@/components/marketing/api';
-import { LeadDetailsPanel, LeadScoreBadge } from '@/components/marketing/LeadScore';
+import { LeadScoreBadge } from '@/components/marketing/LeadScore';
 import { LeadScoringSettingsDrawer } from '@/components/marketing/LeadScoringSettings';
 import { registerCopy } from '@/i18n';
 import { pagesMarketing } from '@/i18n/pagesMarketing';
+import { pagesAdminUx } from '@/i18n/pagesAdminUx';
+import { InquiryDetailBody, InquiryPresence, InquirySplitPanel, InquiryStatusCell } from '@/components/admin/split/InquiryDetail'; // inline status, split panel, presence
+import { useSplitView } from '@/components/admin/split/useSplitView';
+import { useListNav } from '@/components/shortcuts/useListNav';
+import { requestInlineEdit } from '@/components/inline/optimistic';
 import { useAuth } from '@/lib/auth';
 import { hasMinRole } from '@/lib/types';
 
 registerCopy(pagesMarketing);
+registerCopy(pagesAdminUx);
 
 /** Lead scoring fields on every inquiry (server lib/marketing/leadScoring.ts). */
 type Scored = Inquiry & { score?: number; scoreLevel?: LeadLevel | null; scoreReasons?: ScoreReason[] | null; source?: string | null };
@@ -40,46 +43,6 @@ const rank = (i: Scored) => (i.scoreLevel ? LEVEL_RANK[i.scoreLevel] : 0);
 const OPEN = new Set(['NEW', 'IN_PROGRESS']);
 
 const KEY = ['admin-inquiries'] as const;
-
-const StatusSelect = ({ item }: { item: Inquiry }) => {
-  const { t } = useTranslation();
-  const qc = useQueryClient();
-  const m = useMutation({
-    mutationFn: async (status: InquiryStatus) => (await api.patch<{ item: Inquiry }>(`/admin/inquiries/${item.id}`, { status })).data.item,
-    onSuccess: (updated) => {
-      qc.setQueryData<InquiriesResponse>(KEY, (old) => old && { ...old, items: old.items.map((i) => (i.id === updated.id ? updated : i)) });
-      // The summary counts come from the server: refresh them after the optimistic row update.
-      void qc.invalidateQueries({ queryKey: KEY });
-      void qc.invalidateQueries({ queryKey: ['admin-dashboard'] });
-      toast.success(t('admin.inquiries.statusToast', { status: inquiryStatusLabel(updated.status) }));
-    },
-    onError: (err) => toastError(err),
-  });
-  return (
-    <select
-      aria-label={t('admin.inquiries.statusAria')}
-      className={clsx('min-h-8 cursor-pointer rounded-md border-0 py-1 pr-7 pl-2 text-xs font-semibold outline-none focus:ring-2 focus:ring-brand-500/30', INQUIRY_STATUS_TONE[item.status])}
-      value={item.status}
-      disabled={m.isPending}
-      onClick={(e) => e.stopPropagation()}
-      onKeyDown={(e) => e.stopPropagation()}
-      onChange={(e) => m.mutate(e.target.value as InquiryStatus)}
-    >
-      {INQUIRY_STATUSES.map((s) => (
-        <option key={s} value={s}>
-          {inquiryStatusLabel(s)}
-        </option>
-      ))}
-    </select>
-  );
-};
-
-const Detail = ({ label, children }: { label: string; children: ReactNode }) => (
-  <div>
-    <dt className="text-[11px] text-muted">{label}</dt>
-    <dd className="text-sm text-ink">{children}</dd>
-  </div>
-);
 
 export default function Inquiries() {
   const { t } = useTranslation();
@@ -143,6 +106,22 @@ export default function Inquiries() {
     return bo - ao || (bo ? rank(b) - rank(a) || (b.score ?? 0) - (a.score ?? 0) : 0) || date;
   });
 
+  // Split view (list left, inquiry right) and keyboard selection (?selected=<id>): J / K, Enter, E, "/", Esc.
+  const split = useSplitView('inquiries');
+  const searchRef = useRef<HTMLInputElement>(null);
+  const selectedItem = sorted.find((i) => i.id === split.selected);
+  useListNav({
+    ids: sorted.map((i) => i.id),
+    selected: split.selected,
+    onSelect: split.select,
+    onOpen: split.active ? undefined : (id) => setOpen((cur) => (cur === id ? null : id)),
+    onEdit: (id) => requestInlineEdit(id),
+    onEscape: () => (open && !split.active ? setOpen(null) : split.select(null)),
+    searchRef,
+    titleKey: 'ux.shortcuts.lists.inquiries',
+    extra: split.wide ? [{ id: 'split', keys: ['s'], labelKey: 'ux.shortcuts.keys.split', handler: split.toggle }] : [],
+  });
+
   return (
     <div>
       <PageHead
@@ -156,6 +135,13 @@ export default function Inquiries() {
       />
       <LeadScoringSettingsDrawer open={rulesOpen} onClose={() => setRulesOpen(false)} canEdit={hasMinRole(user?.role, 'ADMIN')} />
 
+      {isLoading && (
+        <div className="mb-6 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-5" role="status" aria-label={t('admin.common.loading')}>
+          {Array.from({ length: 5 }, (_, n) => (
+            <SkeletonStat key={n} />
+          ))}
+        </div>
+      )}
       {summary && (
         <div className="mb-6 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-5">
           <StatTile label={t('admin.inquiries.new7d')} value={summary.new7d} icon={Inbox} />
@@ -176,8 +162,20 @@ export default function Inquiries() {
           <label className="relative flex-1">
             <span className="sr-only">{t('admin.common.search')}</span>
             <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted" aria-hidden />
-            <input type="search" className="input pl-9" placeholder={t('admin.inquiries.searchPlaceholder')} value={q} onChange={(e) => setQ(e.target.value)} />
+            <input ref={searchRef} type="search" className="input pl-9" placeholder={t('admin.inquiries.searchPlaceholder')} value={q} onChange={(e) => setQ(e.target.value)} />
           </label>
+          <button
+            type="button"
+            aria-pressed={split.enabled}
+            onClick={split.toggle}
+            title={t('ux.split.toggleHint')}
+            className={clsx(
+              'hidden min-h-11 shrink-0 items-center justify-center gap-2 rounded-lg border px-3.5 text-sm font-semibold whitespace-nowrap transition lg:inline-flex',
+              split.enabled ? 'border-navy-900 bg-navy-900 text-white' : 'border-line bg-white text-ink/80 hover:border-brand-400',
+            )}
+          >
+            <Columns2 className="size-4" aria-hidden /> {t('ux.split.toggle')}
+          </button>
           <select aria-label={t('mk.lead.filterLevel')} className="input sm:w-44" value={level ?? ''} onChange={(e) => setParam('level', e.target.value || null)}>
             <option value="">{t('mk.lead.allLevels')}</option>
             {LEAD_LEVELS.map((l) => (
@@ -213,19 +211,73 @@ export default function Inquiries() {
       </div>
 
       {isLoading ? (
-        <LoadingBlock />
+        <ul className="divide-y divide-line overflow-hidden rounded-xl border border-line bg-card" aria-hidden>
+          {Array.from({ length: 6 }, (_, n) => (
+            <li key={n} className="flex items-start gap-3 px-4 py-3.5 sm:px-5">
+              <Skeleton className="mt-0.5 size-8 shrink-0" />
+              <div className="min-w-0 flex-1 space-y-1.5">
+                <Skeleton className="h-4 w-1/3" />
+                <Skeleton className="h-3 w-2/3" />
+              </div>
+              <Skeleton className="h-5 w-20 shrink-0" rounded="full" />
+            </li>
+          ))}
+        </ul>
       ) : error ? (
         <ErrorBlock error={error} onRetry={() => refetch()} />
       ) : sorted.length === 0 ? (
         <div className="rounded-xl border border-line bg-white">
           <EmptyState icon={Inbox} title={t('admin.inquiries.notFound')} />
         </div>
+      ) : split.active ? (
+        <div className="grid items-start gap-4 lg:grid-cols-[minmax(17rem,22rem)_minmax(0,1fr)] xl:gap-6">
+          <ul className="max-h-[calc(100dvh-12rem)] divide-y divide-line overflow-y-auto rounded-xl border border-line bg-white lg:sticky lg:top-20" aria-label={t('admin.nav.inquiries')}>
+            {sorted.map((i) => {
+              const on = i.id === split.selected;
+              return (
+                <li key={i.id} data-row-id={i.id}>
+                  <button
+                    type="button"
+                    aria-current={on || undefined}
+                    onClick={() => split.select(i.id)}
+                    className={clsx(
+                      'block w-full px-4 py-3 text-left transition outline-none focus-visible:ring-2 focus-visible:ring-brand-500/40 focus-visible:ring-inset',
+                      on ? 'bg-brand-50 shadow-[inset_3px_0_0_var(--color-brand-600)]' : i.status === 'NEW' ? 'bg-brand-50/40 hover:bg-surface' : 'hover:bg-surface',
+                    )}
+                  >
+                    <span className="flex items-start justify-between gap-2">
+                      <span className="min-w-0 truncate text-sm font-semibold text-navy-900">{i.companyName || i.contactName}</span>
+                      <span className={clsx('badge shrink-0', INQUIRY_STATUS_TONE[i.status])}>{inquiryStatusLabel(i.status)}</span>
+                    </span>
+                    <span className="mt-0.5 line-clamp-1 block text-xs text-ink/70">{i.message}</span>
+                    <span className="mt-1 block text-[11px] text-muted">
+                      {inquiryKindLabel(i.kind)} · {fmtRelative(i.createdAt)}
+                    </span>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+          {selectedItem ? (
+            <div className="lg:sticky lg:top-20 lg:flex lg:max-h-[calc(100dvh-6rem)] lg:flex-col">
+              <InquirySplitPanel key={selectedItem.id} i={selectedItem} onClose={() => split.select(null)} />
+            </div>
+          ) : (
+            <div className="grid min-h-64 place-items-center rounded-xl border border-dashed border-line bg-white p-8 text-center">
+              <div>
+                <Columns2 className="mx-auto size-8 text-muted/60" aria-hidden />
+                <p className="mt-2 text-sm font-semibold text-navy-900">{t('ux.split.empty')}</p>
+                <p className="mt-1 text-xs text-muted">{t('ux.split.emptyHint')}</p>
+              </div>
+            </div>
+          )}
+        </div>
       ) : (
         <ul className="divide-y divide-line overflow-hidden rounded-xl border border-line bg-white">
           {sorted.map((i) => {
             const expanded = open === i.id;
             return (
-              <li key={i.id} className={clsx(i.status === 'NEW' && 'bg-brand-50/40')}>
+              <li key={i.id} data-row-id={i.id} className={clsx(i.status === 'NEW' && 'bg-brand-50/40', i.id === split.selected && 'shadow-[inset_3px_0_0_var(--color-brand-600)]')}>
                 <div
                   role="button"
                   tabIndex={0}
@@ -261,7 +313,7 @@ export default function Inquiries() {
                     <span className="text-[11px] whitespace-nowrap text-muted" title={fmtDateTime(i.createdAt)}>
                       {fmtRelative(i.createdAt)}
                     </span>
-                    <StatusSelect item={i} />
+                    <InquiryStatusCell item={i} />
                     <ChevronDown className={clsx('hidden size-4 text-muted transition-transform sm:block', expanded && 'rotate-180')} aria-hidden />
                   </div>
                 </div>
@@ -274,39 +326,9 @@ export default function Inquiries() {
                       transition={{ duration: 0.2 }}
                       className="overflow-hidden"
                     >
-                      <div className="space-y-4 border-t border-line bg-surface/50 px-4 py-4 sm:pr-5 sm:pl-16">
-                        <p className="rounded-lg border border-line bg-white px-3.5 py-3 text-sm break-words whitespace-pre-wrap text-ink">{i.message}</p>
-                        <LeadDetailsPanel inquiryId={i.id} />
-                        <dl className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                          <Detail label={t('admin.inquiries.contactPerson')}>{i.contactName}</Detail>
-                          {i.companyName && <Detail label={t('admin.inquiries.company')}>{i.companyName}</Detail>}
-                          {i.sector && <Detail label={t('admin.inquiries.sector')}>{i.sector}</Detail>}
-                          {i.workersNeeded != null && (
-                            <Detail label={t('admin.inquiries.workersNeeded')}>
-                              <span className="inline-flex items-center gap-1">
-                                <Users className="size-3.5 text-muted" /> {i.workersNeeded}
-                              </span>
-                            </Detail>
-                          )}
-                          <Detail label={t('admin.common.language')}>{i.locale.toUpperCase()}</Detail>
-                          <Detail label={t('admin.common.date')}>{fmtDateTime(i.createdAt)}</Detail>
-                        </dl>
-                        <div className="flex flex-wrap gap-2">
-                          <a href={`mailto:${i.email}`} className="btn-white btn-sm max-w-full min-w-0 border border-line">
-                            <Mail className="size-3.5 shrink-0" /> <span className="truncate">{i.email}</span>
-                          </a>
-                          {i.phone && (
-                            <>
-                              <a href={`tel:${i.phone}`} className="btn-secondary btn-sm">
-                                <Phone className="size-3.5" /> {i.phone}
-                              </a>
-                              <CallButton target={{ inquiryId: i.id }} phone={i.phone} name={i.contactName} />
-                              <a href={waLink(i.phone)} target="_blank" rel="noreferrer" className="btn-white btn-sm border border-emerald-200 text-emerald-800">
-                                <MessageCircle className="size-3.5" /> {t('admin.common.whatsapp')}
-                              </a>
-                            </>
-                          )}
-                        </div>
+                      <div className="border-t border-line bg-surface/50 px-4 py-4 sm:pr-5 sm:pl-16">
+                        <InquiryPresence id={i.id} className="mb-3 justify-end" />
+                        <InquiryDetailBody i={i} />
                       </div>
                     </motion.div>
                   )}

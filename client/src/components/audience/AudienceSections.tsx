@@ -1,7 +1,8 @@
+import { useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ArrowRight, BadgeCheck, Briefcase, CalendarCheck, GraduationCap, HeartHandshake, Map as MapIcon, Scale, UserCheck, Users, Wrench, type LucideIcon } from 'lucide-react';
-import { Magnetic, Reveal, Stagger, StaggerItem } from '../motion';
+import { Magnetic, Reveal, ScrollFillLine, Stagger, StaggerItem } from '../motion';
 import { SectionHeading } from '../ui/SectionHeading';
 import { FaqList, ServiceCard, TestimonialCard } from '../cards';
 import { useSiteContent } from '@/lib/content';
@@ -174,12 +175,16 @@ export const EmployerBenefits = () => {
 export const EmployerProcess = () => {
   const { t } = useTranslation();
   const steps = t('employersPage.process.steps', { returnObjects: true }) as { title: string; text: string }[];
+  const timeline = useRef<HTMLOListElement>(null);
   return (
     <section id="process" className="section relative scroll-mt-20 overflow-hidden bg-navy-950 text-white">
       <div className="pointer-events-none absolute top-0 right-0 size-[600px] rounded-full bg-[radial-gradient(closest-side,var(--color-brand-600),transparent)] opacity-20" />
       <div className="container-x relative">
         <SectionHeading eyebrow={t('employersPage.process.eyebrow')} title={t('employersPage.process.title')} light />
-        <ol className="grid gap-4 md:grid-cols-5">
+        <div className="relative">
+          {/* A progress line under the row that fills as the steps scroll by (decorative). */}
+          <ScrollFillLine target={timeline} className="inset-x-0 -bottom-4 hidden rounded-full md:block" />
+        <ol ref={timeline} className="relative grid gap-4 md:grid-cols-5">
           {steps.map((s, i) => (
             <li key={s.title}>
               <Reveal delay={i * 0.06} className="h-full">
@@ -192,6 +197,7 @@ export const EmployerProcess = () => {
             </li>
           ))}
         </ol>
+        </div>
         <div className="mt-8">
           <Link to="/cooperation#form" className="btn-white group">
             {t('employersPage.ctaPrimary')} <ArrowRight className="size-4 transition group-hover:translate-x-1" />

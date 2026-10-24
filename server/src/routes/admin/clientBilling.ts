@@ -24,7 +24,9 @@ import {
   updateDraft,
   voidPayment,
 } from '../../lib/billing/service.js';
-import { clientBillingSchema, loadBillingContext, saveClientBillingSettings } from '../../lib/billing/settings.js';
+import { clientBillingSchema, effectiveVatRate, loadBillingContext, saveClientBillingSettings } from '../../lib/billing/settings.js';
+import { CURRENCIES } from '../../lib/billing/currency.js';
+import { entityForCurrency } from '../../lib/billing/entities.js';
 import {
   PLAN_TEMPLATES,
   addInstallment,
@@ -55,17 +57,34 @@ const sendPdf = (res: import('express').Response, pdf: Buffer, name: string, inl
 
 // ─── Settings ────────────────────────────────────────────────────────
 
-adminClientBillingRouter.get('/settings', async (_req, res) => {
+/** Settings + the document currencies (default currency, entity per currency) for the invoice / plan editors. */
+const settingsView = async () => {
   const ctx = await loadBillingContext();
-  res.json({ settings: ctx.billing, seller: ctx.seller, legalMissing: ctx.legalMissing, bank: ctx.bank, templates: PLAN_TEMPLATES });
+  return {
+    settings: ctx.billing,
+    seller: ctx.seller,
+    legalMissing: ctx.legalMissing,
+    bank: ctx.bank,
+    templates: PLAN_TEMPLATES,
+    currencies: CURRENCIES,
+    defaultCurrency: ctx.entities.defaultCurrency,
+    entityByCurrency: Object.fromEntries(CURRENCIES.map((c) => [c, entityForCurrency(c, ctx.entities)])),
+    /** VAT rate a new invoice gets per currency (the issuing entity's VAT mode / rate). */
+    vatRateByCurrency: Object.fromEntries(
+      await Promise.all(CURRENCIES.map(async (c) => [c, effectiveVatRate((await loadBillingContext({ currency: c })).billing)] as const)),
+    ),
+  };
+};
+
+adminClientBillingRouter.get('/settings', async (_req, res) => {
+  res.json(await settingsView());
 });
 
 adminClientBillingRouter.put('/settings', admin, async (req, res) => {
   const value = parse(clientBillingSchema, req.body?.settings ?? req.body ?? {});
   await saveClientBillingSettings(value);
   await audit(req, 'CLIENT_BILLING_SETTINGS', 'clientBilling');
-  const ctx = await loadBillingContext();
-  res.json({ settings: ctx.billing, seller: ctx.seller, legalMissing: ctx.legalMissing, bank: ctx.bank, templates: PLAN_TEMPLATES });
+  res.json(await settingsView());
 });
 
 // ─── Lists ───────────────────────────────────────────────────────────

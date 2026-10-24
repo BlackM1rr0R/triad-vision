@@ -7,13 +7,14 @@ import clsx from 'clsx';
 import { toast } from 'sonner';
 import { AlertTriangle, ArrowRight, Check, ChevronDown, Compass, ExternalLink, PartyPopper, Sparkles, StickyNote, Undo2 } from 'lucide-react';
 import { api } from '@/lib/api';
+import { optimistic } from '@/lib/optimistic';
 import { useAuth } from '@/lib/auth';
 import { useL10n } from '@/lib/l10n';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { registerCopy } from '@/i18n';
 import { pagesJourney } from '@/i18n/pagesJourney';
 import { Icon, hasIcon } from '@/components/ui/Icon';
-import { PageLoader, Spinner } from '@/components/ui/Spinner';
+import { PageLoader } from '@/components/ui/Spinner';
 import { ProgressRing } from '@/components/portal/ProgressRing';
 import { useApiError } from '@/components/portal/useApiError';
 import { daysUntil, ONBOARDING_KEY, useOnboarding } from '@/components/journey/api';
@@ -47,12 +48,27 @@ const ItemCard = ({ row, index, canEdit, defaultOpen }: { row: OnboardingRow; in
   const mutation = useMutation({
     mutationFn: async (body: { done: boolean; note?: string | null }) =>
       (await api.put<{ item: { id: string; done: boolean; doneAt: string | null; note: string | null }; progress: OnboardingProgress }>(`/journey/onboarding/${row.id}`, body)).data,
+    // Optimistic tick: the check, strike-through and progress move at once; the server's values replace
+    // them on success, a failure restores the previous state (with the error toast).
+    ...optimistic<OnboardingResponse, { done: boolean; note?: string | null }>(qc, {
+      key: ONBOARDING_KEY,
+      update: (old, body) => {
+        if (!old) return old;
+        const items = old.items.map((i) =>
+          i.id === row.id ? { ...i, done: body.done, doneAt: body.done ? (i.doneAt ?? new Date().toISOString()) : null, ...(body.note !== undefined ? { note: body.note } : {}) } : i,
+        );
+        const done = items.filter((i) => i.done).length;
+        const progress = old.progress ? { ...old.progress, done, percent: old.progress.total ? Math.round((done / old.progress.total) * 100) : old.progress.percent } : old.progress;
+        return { ...old, items, progress };
+      },
+      onError: (err) => apiError(err),
+      keepOnSuccess: true,
+    }),
     onSuccess: (res) => {
       qc.setQueryData<OnboardingResponse>(ONBOARDING_KEY, (old) =>
         old ? { ...old, progress: res.progress, items: old.items.map((i) => (i.id === row.id ? { ...i, done: res.item.done, doneAt: res.item.doneAt, note: res.item.note } : i)) } : old,
       );
     },
-    onError: (err) => apiError(err),
   });
 
   const paragraphs = tr(row.body)
@@ -83,7 +99,7 @@ const ItemCard = ({ row, index, canEdit, defaultOpen }: { row: OnboardingRow; in
               row.done ? 'border-success bg-success text-white' : 'border-line bg-white text-transparent hover:border-brand-500',
             )}
           >
-            {mutation.isPending ? <Spinner className="size-3.5 text-brand-600" /> : <Check className="size-4" strokeWidth={3} />}
+            <Check className="size-4" strokeWidth={3} />
           </button>
         ) : (
           <span className="mt-0.5 grid size-7 shrink-0 place-items-center rounded-full border-2 border-dashed border-line text-muted" aria-hidden>

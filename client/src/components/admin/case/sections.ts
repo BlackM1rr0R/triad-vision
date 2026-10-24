@@ -49,6 +49,8 @@ export const SECTION_TAB: Record<string, CaseTab | null> = {
   'docs-initial': 'documents',
   'docs-embassy': 'documents',
   'case-contract': 'documents',
+  'case-recognition': 'documents', // Anerkennung tracker (components/recognition)
+  'case-81a': 'documents', // § 81a accelerated skilled-worker procedure
   'case-employment': 'documents', // employment contract tracker (Arbeitsvertrag)
   'case-official-forms': 'documents', // official forms (national visa, Erklärung zum Beschäftigungsverhältnis)
   'case-signatures': 'documents',

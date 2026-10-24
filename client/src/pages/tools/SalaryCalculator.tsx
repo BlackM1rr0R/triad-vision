@@ -18,6 +18,7 @@ import {
   FEDERAL_STATES,
   sanitizeInput,
   SOCIAL,
+  STATE_NAMES,
   TAX,
   type FederalState,
   type SalaryInput,
@@ -27,26 +28,6 @@ import {
 registerCopy(pagesTools);
 
 const HERO = 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=2000&q=70';
-
-/** Proper names, identical in every language. */
-const STATE_NAMES: Record<FederalState, string> = {
-  BW: 'Baden-Württemberg',
-  BY: 'Bayern',
-  BE: 'Berlin',
-  BB: 'Brandenburg',
-  HB: 'Bremen',
-  HH: 'Hamburg',
-  HE: 'Hessen',
-  MV: 'Mecklenburg-Vorpommern',
-  NI: 'Niedersachsen',
-  NW: 'Nordrhein-Westfalen',
-  RP: 'Rheinland-Pfalz',
-  SL: 'Saarland',
-  SN: 'Sachsen',
-  ST: 'Sachsen-Anhalt',
-  SH: 'Schleswig-Holstein',
-  TH: 'Thüringen',
-};
 
 /** Form state keeps raw strings for the number fields so users can clear and retype freely. */
 type Form = {

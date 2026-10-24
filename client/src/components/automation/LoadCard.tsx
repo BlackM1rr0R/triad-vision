@@ -11,6 +11,7 @@ import { registerCopy } from '@/i18n';
 import { pagesAutomation } from '@/i18n/pagesAutomation';
 import { Panel } from '@/components/admin/ui';
 import { Spinner } from '@/components/ui/Spinner';
+import { Skeleton } from '@/components/ui/Skeleton';
 import { fmtDate, fullName } from '@/components/admin/labels';
 import { toastAutomationError, type Overview } from './types';
 
@@ -49,7 +50,15 @@ export const LoadCard = ({ compact = false }: { compact?: boolean }) => {
       actions={compact ? <Link to="/admin/automation?tab=assignment" className="inline-flex items-center gap-1 text-xs font-semibold text-brand-700 hover:underline">{t('automation.load.open_link')} <ArrowRight className="size-3.5" /></Link> : undefined}
     >
       {isLoading || !data ? (
-        <Spinner className="size-5 text-brand-600" />
+        <div className="space-y-3" aria-hidden>
+          <Skeleton className="h-4 w-1/2" />
+          {[0, 1, 2].map((i) => (
+            <div key={i} className="space-y-1.5">
+              <Skeleton className="h-3 w-1/3" />
+              <Skeleton className="h-2 w-full" rounded="full" />
+            </div>
+          ))}
+        </div>
       ) : (
         <div className="space-y-4">
           <p className={clsx('text-sm', data.unassigned ? 'font-semibold text-amber-800' : 'text-muted')}>{t('automation.load.unassigned', { count: data.unassigned })}</p>

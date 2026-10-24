@@ -24,6 +24,7 @@ import {
   type Actor,
 } from '../../lib/esign/service.js';
 import { metaOf, pdfUpload, sendPdf } from '../../lib/esign/http.js';
+import { withCountersigner } from '../../lib/esign/countersign.js';
 
 /** Staff side of the e-signature module, mounted at /api/admin/signatures (STAFF+ with 2FA). */
 export const adminSignaturesRouter = Router();
@@ -222,7 +223,8 @@ adminSignaturesRouter.post('/', pdfUpload.single('file'), async (req, res) => {
       expiresAt: new Date(Date.now() + body.expiresInDays * 24 * 60 * 60 * 1000),
       order: body.order,
       caseContract: body.caseContract,
-      signers: body.signers,
+      // The case's (service) contract is countersigned by an authorised Triad Vision signatory after the client (esign/countersign.ts).
+      signers: body.caseContract ? await withCountersigner(body.signers, 'CASE_CONTRACT') : body.signers,
       pdf,
       fileName,
     },

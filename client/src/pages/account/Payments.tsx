@@ -7,9 +7,10 @@ import { api } from '@/lib/api';
 import { registerCopy } from '@/i18n';
 import { pagesBilling } from '@/i18n/pagesBilling';
 import { usePageTitle } from '@/lib/usePageTitle';
+import { useMorphTarget } from '@/lib/viewTransition';
 import { useL10n } from '@/lib/l10n';
-import { PageLoader } from '@/components/ui/Spinner';
-import { INSTALLMENT_BADGE, OPEN_STATUSES, STATUS_BADGE, fmtEur, triggerLabel, type BillingTotals, type ClientInvoice, type ClientPayment, type PaymentPlan } from '@/components/billing/api';
+import { Skeleton, SkeletonList } from '@/components/ui/Skeleton';
+import { INSTALLMENT_BADGE, OPEN_STATUSES, STATUS_BADGE, fmtEur, otherCurrencies, triggerLabel, type BillingTotals, type ClientInvoice, type ClientPayment, type PaymentPlan } from '@/components/billing/api';
 
 registerCopy(pagesBilling);
 
@@ -41,13 +42,39 @@ const CopyButton = ({ value }: { value: string }) => {
   );
 };
 
+/** Same footprint as the loaded page (heading, four totals tiles, invoice list), so nothing jumps. */
+const PaymentsSkeleton = () => (
+  <div className="space-y-6">
+    <div aria-hidden>
+      <Skeleton className="h-7 w-48" />
+      <Skeleton className="mt-2 h-4 w-80 max-w-full" />
+    </div>
+    <div className="grid grid-cols-2 gap-3 lg:grid-cols-4" aria-hidden>
+      {Array.from({ length: 4 }, (_, i) => (
+        <div key={i} className="card p-4">
+          <Skeleton className="h-3 w-20" />
+          <Skeleton className="mt-2 h-7 w-24" />
+        </div>
+      ))}
+    </div>
+    <div>
+      <Skeleton className="mb-3 h-5 w-32" />
+      <div className="card p-4">
+        <SkeletonList count={3} />
+      </div>
+    </div>
+  </div>
+);
+
 /** Portal › Documents › Payments: invoices (PDF), receipts, payment plan, balance, bank transfer details. */
 export default function AccountPayments() {
   const { t } = useTranslation();
   const { date } = useL10n();
   usePageTitle(t('bill.portal.title'));
+  // the portal home's next-step card ("pay the invoice") morphs into this heading
+  const morph = useMorphTarget('portal-next', 'step');
   const q = useQuery({ queryKey: ['account-billing'], queryFn: async () => (await api.get<Billing>('/account/billing')).data });
-  if (q.isLoading) return <PageLoader />;
+  if (q.isLoading) return <PaymentsSkeleton />;
   const d = q.data;
   if (!d) return <p className="text-sm text-danger">{t('bill.admin.errors.default')}</p>;
   const open = d.invoices.filter((i) => OPEN_STATUSES.includes(i.status));
@@ -56,7 +83,9 @@ export default function AccountPayments() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-extrabold text-ink sm:text-2xl">{t('bill.portal.title')}</h2>
+        <h2 className="text-xl font-extrabold text-ink sm:text-2xl" {...morph.part('title')}>
+          {t('bill.portal.title')}
+        </h2>
         <p className="mt-1 max-w-2xl text-sm text-muted">{t('bill.portal.subtitle')}</p>
       </div>
 
@@ -71,10 +100,17 @@ export default function AccountPayments() {
         ).map(([k, v, tone]) => (
           <div key={k} className="card p-4">
             <dt className="text-xs text-muted">{t(`bill.portal.tiles.${k}`)}</dt>
-            <dd className={clsx('mt-1 font-display text-xl font-bold text-ink tabular-nums', tone)}>{fmtEur(v)}</dd>
+            <dd className={clsx('mt-1 font-display text-xl font-bold text-ink tabular-nums', tone)}>{fmtEur(v, d.totals.currency)}</dd>
           </div>
         ))}
       </dl>
+      {otherCurrencies(d.totals).length > 0 && (
+        <p className="-mt-2 text-xs text-muted">
+          {otherCurrencies(d.totals)
+            .map((c) => t('acct.currency.otherLine', { open: fmtEur(c.openCents, c.currency), invoiced: fmtEur(c.invoicedCents, c.currency) }))
+            .join(' · ')}
+        </p>
+      )}
 
       {open.length > 0 && (
         <section className="card p-5" aria-labelledby="pay-how">
@@ -110,7 +146,7 @@ export default function AccountPayments() {
                 <div key={i.id} className="sm:col-span-2">
                   <dt className="text-xs text-muted">{t('bill.portal.referenceFor', { number: i.number })}</dt>
                   <dd className="flex flex-wrap items-center gap-1 font-mono text-ink">
-                    {i.number} · {fmtEur(i.openCents)} <CopyButton value={i.number ?? ''} />
+                    {i.number} · {fmtEur(i.openCents, i.currency)} <CopyButton value={i.number ?? ''} />
                   </dd>
                 </div>
               ))}
@@ -139,10 +175,10 @@ export default function AccountPayments() {
                   <p className="font-semibold text-ink tabular-nums">{i.number}</p>
                   <p className={clsx('text-xs', i.status === 'OVERDUE' ? 'font-semibold text-danger-fg' : 'text-muted')}>
                     {i.status === 'PAID' && i.paidAt ? t('bill.portal.paidOn', { date: day(i.paidAt) }) : t('bill.portal.due', { date: day(i.dueDate) })}
-                    {i.openCents > 0 && i.paidCents > 0 && ` · ${t('bill.portal.openAmount', { amount: fmtEur(i.openCents) })}`}
+                    {i.openCents > 0 && i.paidCents > 0 && ` · ${t('bill.portal.openAmount', { amount: fmtEur(i.openCents, i.currency) })}`}
                   </p>
                 </div>
-                <span className="font-semibold text-ink tabular-nums">{fmtEur(i.grossCents)}</span>
+                <span className="font-semibold text-ink tabular-nums">{fmtEur(i.grossCents, i.currency)}</span>
                 <span className={clsx('badge', STATUS_BADGE[i.status])}>{t(`bill.status.${i.status}`)}</span>
                 <a href={`/api/account/billing/invoices/${i.id}/pdf`} className="btn-secondary btn-sm" download>
                   <Download className="size-3.5" aria-hidden /> {t('bill.portal.pdf')}
@@ -164,7 +200,7 @@ export default function AccountPayments() {
               <div key={p.id} className="card">
                 <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line px-4 py-3">
                   <p className="font-semibold text-ink">{p.title}</p>
-                  <span className="text-sm font-semibold tabular-nums">{fmtEur(p.totalCents)}</span>
+                  <span className="text-sm font-semibold tabular-nums">{fmtEur(p.totalCents, p.currency)}</span>
                 </div>
                 <ol className="divide-y divide-line">
                   {p.installments
@@ -179,7 +215,7 @@ export default function AccountPayments() {
                             {i.dueDate && ` · ${day(i.dueDate)}`}
                           </span>
                         </span>
-                        <span className="tabular-nums">{fmtEur(i.amountCents)}</span>
+                        <span className="tabular-nums">{fmtEur(i.amountCents, p.currency)}</span>
                         <span className={clsx('badge', INSTALLMENT_BADGE[i.status])}>{t(`bill.instStatus.${i.status}`)}</span>
                       </li>
                     ))}
@@ -204,7 +240,7 @@ export default function AccountPayments() {
                   </span>
                   <span className="text-xs text-muted">{p.invoiceNumber ?? '—'}</span>
                 </span>
-                <span className="font-semibold text-success-fg tabular-nums">{fmtEur(p.amountCents)}</span>
+                <span className="font-semibold text-success-fg tabular-nums">{fmtEur(p.amountCents, p.currency)}</span>
                 <a href={`/api/account/billing/payments/${p.id}/receipt`} className="btn-secondary btn-sm" download>
                   <Download className="size-3.5" aria-hidden /> {t('bill.portal.receipt')}
                 </a>

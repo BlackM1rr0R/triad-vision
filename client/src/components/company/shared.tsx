@@ -5,6 +5,7 @@ import type { LucideIcon } from 'lucide-react';
 import { api } from '@/lib/api';
 import { TONE_CLASS } from '@/components/ui/status';
 import { EmptyState as UiEmptyState } from '@/components/ui/EmptyState';
+import { AnimatedNumber } from '@/components/ui/AnimatedNumber';
 import type { Company } from '@/components/jobs/types';
 
 export const useCompany = () =>
@@ -52,7 +53,7 @@ export const Kpi = ({ label, value, hint, icon: Icon, tone }: { label: string; v
   <div className="card flex items-start justify-between gap-3 p-4 sm:p-5">
     <div className="min-w-0">
       <p className="text-xs font-medium text-muted">{label}</p>
-      <p className="mt-1 font-display text-2xl font-extrabold text-navy-900 tabular-nums sm:text-3xl">{value}</p>
+      <p className="mt-1 font-display text-2xl font-extrabold text-navy-900 tabular-nums sm:text-3xl">{typeof value === 'number' ? <AnimatedNumber value={value} /> : value}</p>
       {hint && <p className="mt-0.5 text-[11px] text-muted">{hint}</p>}
     </div>
     <span

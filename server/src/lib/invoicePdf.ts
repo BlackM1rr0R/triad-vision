@@ -1,5 +1,6 @@
 import { PDFDocument, StandardFonts, degrees, rgb, type PDFFont, type PDFPage } from 'pdf-lib';
-import { formatEur, formatInvoiceDate } from './invoiceTexts.js';
+import { formatInvoiceDate } from './invoiceTexts.js';
+import { pdfMoney } from './billing/currency.js';
 
 /**
  * German invoice (Rechnung) as an A4 PDF, covering the §14 Abs. 4 UStG basics: full name and address of
@@ -200,6 +201,8 @@ export interface InvoicePdfInput {
     vatCents: number;
     grossCents: number;
     note: string | null;
+    /** EUR / AZN / TRY: Helvetica (WinAnsi) only has €, so AZN / TRY amounts carry the ISO code. */
+    currency?: string | null;
   };
   company: { name: string; legalForm?: string | null; contactName?: string | null; address?: string | null; city?: string | null; vatId?: string | null };
   seller: SellerInfo;
@@ -230,6 +233,7 @@ const qtyFmt = new Intl.NumberFormat('de-DE', { maximumFractionDigits: 2 });
 
 export const buildInvoicePdf = async (input: InvoicePdfInput) => {
   const { invoice, company, seller, invoicing } = input;
+  const formatEur = pdfMoney(invoice.currency, 'winansi');
   const pdf = await PDFDocument.create();
   pdf.setTitle(`Rechnung ${invoice.number}`);
   pdf.setAuthor(seller.name || 'Triad Vision');

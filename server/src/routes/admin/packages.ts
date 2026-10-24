@@ -14,6 +14,7 @@ import {
   updatePackage,
 } from '../../lib/billing/packages.js';
 import { remindRequest, type Actor } from '../../lib/esign/service.js';
+import { getPackagePrices } from '../../lib/billing/packagePrices.js';
 
 /**
  * Service packages and their online orders — mounted at /api/admin/packages (ADMIN+). Package texts are
@@ -26,27 +27,28 @@ const id = (req: Request) => String(req.params.id);
 const actorOf = (req: Request): Actor => ({ id: req.user!.id, role: req.user!.role, firstName: req.user!.firstName, lastName: req.user!.lastName });
 
 adminPackagesRouter.get('/', async (_req, res) => {
-  const [packages, templates, orderCounts] = await Promise.all([
+  const [packages, templates, orderCounts, prices] = await Promise.all([
     prisma.servicePackage.findMany({ orderBy: [{ sortOrder: 'asc' }, { priceCents: 'asc' }] }),
     prisma.contractTemplate.findMany({ where: { kind: 'SERVICE' }, select: { id: true, name: true, language: true, active: true, isDefault: true }, orderBy: [{ isDefault: 'desc' }, { name: 'asc' }] }),
     prisma.packageOrder.groupBy({ by: ['packageId'], _count: { _all: true } }),
+    getPackagePrices(),
   ]);
   const counts = new Map(orderCounts.map((c) => [c.packageId, c._count._all]));
-  res.json({ packages: packages.map((p) => ({ ...adminPackageView(p), orders: counts.get(p.id) ?? 0 })), templates });
+  res.json({ packages: packages.map((p) => ({ ...adminPackageView(p, prices), orders: counts.get(p.id) ?? 0 })), templates });
 });
 
 adminPackagesRouter.post('/', async (req, res) => {
   const p = await createPackage(req.body ?? {});
   clearCache();
   await audit(req, 'SERVICE_PACKAGE_CREATE', p.id, { slug: p.slug });
-  res.status(201).json({ package: adminPackageView(p) });
+  res.status(201).json({ package: adminPackageView(p, await getPackagePrices()) });
 });
 
 adminPackagesRouter.put('/:id', async (req, res) => {
   const p = await updatePackage(id(req), req.body ?? {});
   clearCache();
   await audit(req, 'SERVICE_PACKAGE_UPDATE', p.id, { slug: p.slug, published: p.published });
-  res.json({ package: adminPackageView(p) });
+  res.json({ package: adminPackageView(p, await getPackagePrices()) });
 });
 
 adminPackagesRouter.delete('/:id', async (req, res) => {

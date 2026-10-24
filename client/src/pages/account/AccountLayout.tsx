@@ -115,7 +115,7 @@ export default function AccountLayout() {
   return (
     <div className="min-h-screen bg-surface pt-24 pb-16 sm:pt-28 sm:pb-24 lg:pt-40">
       <div className="container-x">
-        <header className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-navy-950 via-navy-900 to-navy-700 px-5 pt-6 pb-3 text-white shadow-[0_30px_60px_-30px_rgba(5,15,36,0.8)] sm:px-8 sm:pt-8 sm:pb-4">
+        <header className="vt-portal-header relative overflow-hidden rounded-3xl bg-gradient-to-br from-navy-950 via-navy-900 to-navy-700 px-5 pt-6 pb-3 text-white shadow-[0_30px_60px_-30px_rgba(5,15,36,0.8)] sm:px-8 sm:pt-8 sm:pb-4">
           <div className="pointer-events-none absolute -top-24 -right-16 size-80 rounded-full bg-[radial-gradient(closest-side,var(--color-brand-500),transparent)] opacity-30" aria-hidden />
           <div className="pointer-events-none absolute -bottom-32 left-1/3 size-72 rounded-full bg-[radial-gradient(closest-side,var(--color-brand-400),transparent)] opacity-15" aria-hidden />
           <svg className="pointer-events-none absolute inset-0 size-full opacity-[0.07]" aria-hidden>

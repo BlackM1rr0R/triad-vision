@@ -1,6 +1,7 @@
 import type { Prisma } from '@prisma/client';
 import { prisma } from '../../db.js';
 import { toEur, type ProfitSettings } from './settings.js';
+import { getExchangeRates } from '../billing/currency.js';
 import { labourByCase } from '../timeTracking/rates.js'; // LABOUR cost (time tracking)
 import { recognisedRevenue } from '../billing/math.js'; // client invoices (private clients)
 
@@ -134,7 +135,8 @@ export const computeProfitability = async (where: Prisma.CaseWhereInput, s: Pick
   const clientIds = [...new Set(cases.map((c) => c.clientId))];
   const companyIds = [...new Set(cases.map((c) => c.companyId).filter((x): x is string => !!x))];
   const agentIds = [...new Set(cases.map((c) => c.client.referredByAgentId).filter((x): x is string => !!x))];
-  const rate = s.eurAzn;
+  // AZN: the profitability rate; TRY: the admin-set exchange rate (none → left out, see toEur).
+  const rate = { AZN: s.eurAzn, TRY: (await getExchangeRates()).rates.TRY };
 
   const [invoices, companyCases, clientCases, settlements, translations, agentComms, partnerComms, manual, agents, labour, clientInvoices] = await Promise.all([
     companyIds.length

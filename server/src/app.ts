@@ -98,6 +98,7 @@ import { searchRouter } from './routes/search.js';
 import { compareRouter } from './routes/compare.js';
 import { leadMagnetsRouter } from './routes/leadMagnets.js';
 import { jobAlertsRouter } from './routes/jobAlerts.js';
+import { accountRecognitionRouter } from './routes/accountRecognition.js'; // client portal: recognition status card
 
 type RequestWithRawBody = import('express').Request & { rawBody?: Buffer };
 
@@ -179,6 +180,7 @@ export const createApp = () => {
   app.use('/api/admin/impersonate', impersonationRouter); // before the staff-only admin router (req.user is the client then)
   app.use('/api/admin', adminRouter);
   app.use('/api/account/billing', accountBillingRouter); // before the account router
+  app.use('/api/account/recognition', accountRecognitionRouter); // read-only Anerkennung status of the own case
   app.use('/api/account', accountRouter);
   app.use('/api/company/invoices', companyInvoicesRouter);
   app.use('/api/company/quotes', companyQuotesRouter);

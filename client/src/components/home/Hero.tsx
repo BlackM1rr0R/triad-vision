@@ -1,6 +1,7 @@
 import { useRef } from 'react';
 import { RouteFlags } from '../ui/Flag';
 import { HeroGlobeLite } from './HeroGlobeLite';
+import { useMotionOK } from '../motion';
 import { useTranslation } from 'react-i18next';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import { ArrowRight, Building2, CheckCircle2, HardHat, MousePointer2, type LucideIcon } from 'lucide-react';
@@ -26,13 +27,15 @@ export const Hero = ({ audience, onChoose }: { audience: Audience | null; onChoo
   const globeScale = useTransform(scrollYProgress, [0, 1], [1, 0.85]);
   const textY = useTransform(scrollYProgress, [0, 1], ['0%', '40%']);
   const fade = useTransform(scrollYProgress, [0, 0.7], [1, 0]);
+  // Parallax only when motion is welcome (scroll-linked styles are not covered by MotionConfig).
+  const parallax = useMotionOK();
 
   const bullets = t('hero.bullets', { returnObjects: true }) as string[];
 
   return (
     <section ref={ref} className="relative isolate min-h-[100svh] overflow-hidden bg-navy-950 text-white">
       {/* background layers */}
-      <motion.div style={{ y: bgY }} className="absolute inset-0 -z-20 will-change-transform">
+      <motion.div style={parallax ? { y: bgY } : undefined} className="absolute inset-0 -z-20 will-change-transform">
         <img src={sized(BG, 1600)} srcSet={srcSet(BG, [640, 960, 1280, 1600])} sizes="100vw" alt="" fetchPriority="high" decoding="async" className="size-full scale-110 object-cover opacity-30" />
       </motion.div>
       <div className="absolute inset-0 -z-10 bg-gradient-to-r from-navy-950 via-navy-950/85 to-navy-900/30" />
@@ -46,14 +49,14 @@ export const Hero = ({ audience, onChoose }: { audience: Audience | null; onChoo
 
       {/* globe */}
       <motion.div
-        style={{ y: globeY, scale: globeScale }}
+        style={parallax ? { y: globeY, scale: globeScale } : undefined}
         className="will-change-transform absolute top-[58%] right-[-45%] -z-10 aspect-square w-[140vw] -translate-y-1/2 opacity-35 sm:top-1/2 sm:right-[-25%] sm:w-[100vw] sm:opacity-50 lg:right-[-8%] lg:w-[62vw] lg:max-w-[980px] lg:-translate-y-[45%] lg:opacity-100"
       >
         <HeroGlobeLite />
       </motion.div>
 
       <div className="container-x relative flex min-h-[100svh] flex-col justify-center pt-28 pb-32 sm:pt-36 lg:pt-40 lg:pb-32">
-        <motion.div style={{ y: textY, opacity: fade }} className="max-w-2xl">
+        <motion.div style={parallax ? { y: textY, opacity: fade } : undefined} className="max-w-2xl">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}

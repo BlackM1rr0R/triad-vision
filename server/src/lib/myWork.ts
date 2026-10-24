@@ -3,9 +3,11 @@ import { prisma } from '../db.js';
 import { hasMinRole } from '../middleware/auth.js';
 import { FINAL_STATUSES } from './caseFlow.js';
 import { currentTurn } from './esign/service.js';
+import { pendingCountersignatures } from './esign/countersign.js';
 import { l10nTitle, trackedDocuments, daysLeft, kindForKey, toneOf } from './expiry/index.js';
 import { presentAlert } from './aiMgmt/security/alerts.js';
 import { taskKey } from './tasks/core.js';
+import { acceleratedWork, recognitionWork } from './recognition/work.js'; // recognition + § 81a deadlines
 
 /**
  * "My work today" (GET /api/admin/my-work): one queue of everything that waits for the signed-in staff
@@ -20,6 +22,7 @@ export const WORK_KINDS = [
   'appointment',
   'sign_mine',
   'sign_waiting',
+  'countersign', // service contract signed by the client, waiting for the Triad Vision countersignature (lib/esign/countersign)
   'task',
   'mail_triage',
   'mail_unread',
@@ -35,6 +38,8 @@ export const WORK_KINDS = [
   'embassy_review', // four-eyes check of an embassy package waiting for the viewer (lib/caseNext/fourEyes)
   'client_task_overdue',
   'handover', // cases covered for an absent colleague with a handover note / open checklist (lib/shifts/handoverNotes)
+  'recognition_deadline', // Anerkennung: next deadline / end of the adaptation measure (lib/recognition)
+  'accelerated_deadline', // § 81a: embassy appointment / decision, fee, reply to the authority (lib/recognition)
 ] as const;
 export type WorkKind = (typeof WORK_KINDS)[number];
 
@@ -49,6 +54,7 @@ const CATEGORY: Record<WorkKind, WorkCategory> = {
   mail_unread: 'mail',
   sign_mine: 'signatures',
   sign_waiting: 'signatures',
+  countersign: 'signatures',
   booking: 'bookings',
   inquiry: 'leads',
   application: 'leads',
@@ -63,6 +69,8 @@ const CATEGORY: Record<WorkKind, WorkCategory> = {
   embassy_review: 'documents',
   client_task_overdue: 'tasks',
   handover: 'other',
+  recognition_deadline: 'documents',
+  accelerated_deadline: 'documents',
 };
 
 /** Page that lists all items of a kind (the "+N more" link). */
@@ -74,6 +82,7 @@ const MORE_LINK: Record<WorkKind, string> = {
   mail_unread: '/workspace/mail',
   sign_mine: '/admin/signatures',
   sign_waiting: '/admin/signatures?status=SENT',
+  countersign: '/admin/countersign',
   booking: '/admin/bookings',
   inquiry: '/admin/inquiries',
   application: '/admin/candidates',
@@ -88,6 +97,8 @@ const MORE_LINK: Record<WorkKind, string> = {
   embassy_review: '/admin/cases?status=APPOINTMENT_SCHEDULED',
   client_task_overdue: '/admin/client-tasks?filter=overdue',
   handover: '/workspace/team?tab=handover',
+  recognition_deadline: '/admin/recognition?soon=14',
+  accelerated_deadline: '/admin/accelerated?soon=7',
 };
 
 export type WorkPriority = 'URGENT' | 'HIGH' | 'NORMAL';
@@ -390,7 +401,7 @@ const caseItems = async (ctx: Ctx): Promise<Source[]> => {
 const signatures = async (ctx: Ctx): Promise<Source[]> => {
   const { now } = ctx.c;
   const live = { status: 'SENT' as const, OR: [{ expiresAt: null }, { expiresAt: { gt: now } }] };
-  const signerSel = { select: { id: true, order: true, status: true, name: true, userId: true, invitedAt: true } } as const;
+  const signerSel = { select: { id: true, order: true, status: true, name: true, userId: true, invitedAt: true, role: true } } as const;
   const waitingWhere: Prisma.SignatureRequestWhereInput = {
     ...live,
     sentAt: { lt: new Date(now.getTime() - SIGN_WAIT_DAYS * DAY) },
@@ -436,6 +447,11 @@ const signatures = async (ctx: Ctx): Promise<Source[]> => {
       },
     }),
   ]);
+  // Countersignatures (client signed, Triad Vision open): the assigned signer sees them under "sign" (with a
+  // countersign note + button); every other authorised signatory gets them as their own kind.
+  const pendingCs = await pendingCountersignatures({ id: ctx.viewer.id, role: ctx.viewer.role });
+  const csBySigner = new Map(pendingCs.map((p) => [p.signerId, p]));
+  const counter = pendingCs.filter((p) => !p.mine && (ctx.team || p.canSign));
   const myTurn = mine.filter((s) => currentTurn(s.request.signers, s.request.order).some((x) => x.id === s.id));
   // Waiting on others = somebody else's turn (the viewer's own turn is listed as "sign").
   const others = waiting
@@ -460,7 +476,11 @@ const signatures = async (ctx: Ctx): Promise<Source[]> => {
           link: href,
           refs: { requestId: r.id, signerId: s.id, caseId: r.case?.id ?? null },
           assignee: person(ctx.viewer),
-          actions: [{ key: 'sign', label: 'sign', type: 'link' as const, href, primary: true }],
+          ...(csBySigner.has(s.id) ? { note: { key: 'countersign', params: { days: csBySigner.get(s.id)!.waitingDays } } } : {}),
+          actions: [
+            { key: 'sign', label: 'sign', type: 'link' as const, href, primary: true },
+            ...(csBySigner.has(s.id) ? [{ key: 'countersign', label: 'countersign', type: 'link' as const, href: `/admin/countersign?open=${s.id}` }] : []),
+          ],
         };
       }),
     },
@@ -484,6 +504,27 @@ const signatures = async (ctx: Ctx): Promise<Source[]> => {
           open(`/admin/signatures?open=${r.id}`),
         ],
       })),
+    },
+    {
+      kind: 'countersign',
+      total: counter.length,
+      items: counter.slice(0, LIMIT_PER_KIND).map((p) => {
+        const href = `/admin/countersign?open=${p.signerId}`;
+        return {
+          id: `countersign:${p.signerId}`,
+          kind: 'countersign' as const,
+          title: p.title,
+          subtitle: join(p.case?.number, p.clientSigners.map((x) => x.name).join(', ')),
+          note: { key: 'countersign', params: { days: p.waitingDays } },
+          priority: p.overdue ? ('URGENT' as const) : ('HIGH' as const),
+          dueAt: null,
+          since: p.since,
+          link: href,
+          refs: { requestId: p.requestId, signerId: p.signerId, caseId: p.case?.id ?? null },
+          assignee: p.assignedTo.userId ? { id: p.assignedTo.userId, name: p.assignedTo.name } : null,
+          actions: [{ key: 'countersign', label: 'countersign', type: 'link' as const, href, primary: true }],
+        };
+      }),
     },
   ];
 };
@@ -1089,6 +1130,8 @@ export const buildMyWork = async (viewer: WorkViewer, opts: { team: boolean; tz?
     arrivalIssues(ctx), // post-arrival check-ins
     handovers(ctx), // absence handover notes / checklists
     embassyReviews(ctx), // four-eyes check of embassy packages
+    recognitionWork({ status: { not: 'CANCELLED' }, ...myCases(ctx) }, ctx.c.now), // Anerkennung deadlines (lib/recognition/work)
+    acceleratedWork({ status: { not: 'CANCELLED' }, ...myCases(ctx) }, ctx.c.now), // § 81a deadlines
   ]);
   const sources = groups.flat().filter((s): s is Source => !!s);
   const items = sources.flatMap((s) => s.items.map((d) => finish(d, ctx.c))).sort(compareItems);

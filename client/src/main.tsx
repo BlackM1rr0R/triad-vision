@@ -61,7 +61,8 @@ const Shell = () => {
       <MotionConfig reducedMotion={noMotion ? 'always' : 'user'}>
         <App />
       </MotionConfig>
-      <Toaster position="top-right" richColors closeButton theme={theme} duration={visualAlerts ? 10000 : 4000} />
+      {/* gap / visibleToasts: a burst of toasts stacks compactly instead of filling the corner (polish in index.css). */}
+      <Toaster position="top-right" richColors closeButton theme={theme} duration={visualAlerts ? 10000 : 4000} gap={10} visibleToasts={4} />
       <LateExtras />
     </>
   );

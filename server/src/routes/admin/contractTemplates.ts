@@ -10,6 +10,7 @@ import { INPUT_KEYS, PLACEHOLDERS, renderContract, usedKeys } from '../../lib/co
 import { asContractLang, contractValues, loadContractCase, type ContractCase } from '../../lib/contracts/values.js';
 import { renderContractPdf } from '../../lib/contracts/pdf.js';
 import { DEFAULT_EXPIRY_DAYS, MAX_SIGNERS, createRequest, sendRequest, storedPath, type Actor, type SignerInput } from '../../lib/esign/service.js';
+import { withCountersigner } from '../../lib/esign/countersign.js';
 import { metaOf } from '../../lib/esign/http.js';
 
 /**
@@ -181,6 +182,9 @@ const defaultSigners = async (kind: ContractKind, c: ContractCase, req: Request)
     else if (c.company.email) signers.push({ role: 'COMPANY', name: c.company.contactName?.trim() || c.company.name, email: c.company.email.toLowerCase(), phone: c.company.phone, locale: 'de', order: 2 });
   }
   if (kind === 'SERVICE') {
+    // Countersignature configured: the default authorised signatory signs for Triad Vision after the client.
+    const withCs = await withCountersigner(signers, 'CASE_CONTRACT');
+    if (withCs.length > signers.length) return withCs;
     const me = await prisma.user.findUniqueOrThrow({ where: { id: req.user!.id }, select: { id: true, firstName: true, lastName: true, email: true, locale: true } });
     signers.push({ role: 'STAFF', name: `${me.firstName} ${me.lastName}`.trim(), email: me.email, userId: me.id, locale: me.locale, order: 2 });
   }

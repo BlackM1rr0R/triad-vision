@@ -1,13 +1,15 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { AlertTriangle, ArrowLeft, Calculator, Calendar, ChevronDown, Clock, Euro, ListChecks } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import clsx from 'clsx';
 import { PageHero, PageHeroSkeleton } from '@/components/layout/PageHero';
 import { PageCta } from '@/components/visa/PageCta';
-import { onRichContentClick, PathLink, type GuideDetail as Guide } from '@/components/guides/shared';
+import { onRichContentClick, PathLink, type GuideDetail as Guide, type GuideSummary } from '@/components/guides/shared';
+import { GuideBody } from '@/components/guides/GuideBody';
+import { Skeleton, SkeletonText } from '@/components/ui/Skeleton';
 import { currentSiteLocale, registerCopy } from '@/i18n';
 import { pagesSeo } from '@/i18n/pagesSeo';
 import { api } from '@/lib/api';
@@ -32,6 +34,35 @@ const TOOLS: Record<string, { to: string; key: 'ckCalc.title' | 'bcCheck.title' 
   pflege: [{ to: '/anerkennung', key: 'nav.anerkennung', icon: ListChecks }],
 };
 
+/** Body / sidebar placeholder with the same grid as the loaded guide, so nothing jumps when it arrives. */
+const GuideBodySkeleton = () => {
+  const { t } = useTranslation();
+  return (
+    <section className="section" role="status" aria-label={t('ui.loading')}>
+      <div className="container-x grid items-start gap-10 lg:grid-cols-[minmax(0,1fr)_18rem]" aria-hidden>
+        <div className="min-w-0 space-y-4">
+          <SkeletonText lines={4} />
+          <Skeleton className="mt-10 h-7 w-1/2" />
+          <SkeletonText lines={5} />
+          <Skeleton className="mt-10 h-7 w-2/5" />
+          <SkeletonText lines={4} />
+        </div>
+        <div className="hidden space-y-6 lg:block">
+          <div className="card card-pad space-y-3">
+            <Skeleton className="h-3 w-1/2" />
+            <SkeletonText lines={5} />
+          </div>
+          <div className="card card-pad space-y-3">
+            <Skeleton className="h-3 w-1/3" />
+            <Skeleton className="h-4 w-3/4" />
+            <Skeleton className="h-4 w-2/3" />
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+};
+
 /** Plain-text word count of the rendered HTML, for the reading time. */
 const words = (html: string) => html.replace(/<[^>]+>/g, ' ').split(/\s+/).filter(Boolean).length;
 
@@ -46,6 +77,11 @@ export default function GuideDetail() {
     queryFn: async () => (await api.get<{ guide?: Guide; redirect?: string }>(`/guides/${encodeURIComponent(slug)}`, { params: { lng } })).data,
   });
   const guide = data?.guide;
+  // The guides list is usually cached: its title / description fill the hero at once (and the card can morph
+  // into it) while the body loads.
+  const summary = useQueryClient()
+    .getQueryData<GuideSummary[]>(['guides', lng])
+    ?.find((g) => g.slug === slug);
   usePageTitle(guide?.title ?? t('guidesPage.title'));
   const [openFaq, setOpenFaq] = useState<number | null>(0);
 
@@ -54,7 +90,15 @@ export default function GuideDetail() {
     if (data?.redirect) navigateToUrl(data.redirect, { replace: true });
   }, [data?.redirect]);
 
-  if (isLoading || data?.redirect) return <PageHeroSkeleton />;
+  if (isLoading || data?.redirect) {
+    if (!summary || data?.redirect) return <PageHeroSkeleton />;
+    return (
+      <>
+        <PageHero title={summary.title} subtitle={summary.description} image={HERO} crumb={{ to: '/guides', label: t('guidesPage.title') }} morph={{ kind: 'guide', id: slug }} />
+        <GuideBodySkeleton />
+      </>
+    );
+  }
   if (isError || !guide) return <NotFound />;
 
   const minutes = Math.max(1, Math.round(words(guide.html) / 200));
@@ -62,7 +106,7 @@ export default function GuideDetail() {
 
   return (
     <>
-      <PageHero title={guide.title} subtitle={guide.description} image={HERO} crumb={{ to: '/guides', label: t('guidesPage.title') }}>
+      <PageHero title={guide.title} subtitle={guide.description} image={HERO} crumb={{ to: '/guides', label: t('guidesPage.title') }} morph={{ kind: 'guide', id: guide.slug }}>
         <div className="mt-6 flex flex-wrap gap-4 text-sm text-white/70">
           <span className="flex items-center gap-1.5">
             <Calendar className="size-4" aria-hidden />
@@ -92,8 +136,9 @@ export default function GuideDetail() {
               </nav>
             )}
 
-            {/* Server-rendered from the guide's markdown (lib/guides/markdown.ts): all source text is escaped. */}
-            <div className="prose-guide" onClick={onRichContentClick} dangerouslySetInnerHTML={{ __html: guide.html }} />
+            {/* Server-rendered from the guide's markdown (lib/guides/markdown.ts): all source text is escaped.
+                Calculator shortcodes become live calculators (components/guides/GuideBody.tsx). */}
+            <GuideBody html={guide.html} onClick={onRichContentClick} />
 
             {guide.faq.length > 0 && (
               <section className="mt-14" aria-labelledby="guide-faq">

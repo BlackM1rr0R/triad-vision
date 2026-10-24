@@ -7,7 +7,7 @@ import { PageHero } from '@/components/layout/PageHero';
 import { Magnetic, Reveal, Stagger, StaggerItem } from '@/components/motion';
 import { SectionHeading } from '@/components/ui/SectionHeading';
 import { VisaCard } from '@/components/cards';
-import { PageLoader } from '@/components/ui/Spinner';
+import { SkeletonGrid } from '@/components/ui/Skeleton';
 import { ComparisonTable } from '@/components/visa/ComparisonTable';
 import { RangeBars } from '@/components/visa/Charts';
 import { PageCta } from '@/components/visa/PageCta';
@@ -153,7 +153,7 @@ export default function Visas() {
             })}
           </p>
           {isLoading ? (
-            <PageLoader />
+            <SkeletonGrid count={6} media mediaClassName="aspect-[16/11]" lines={3} className="grid-cards sm:grid-cols-2 lg:grid-cols-3" />
           ) : shown.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-line bg-surface px-6 py-14 text-center">
               <p className="font-semibold text-navy-900">{t('visasPage.grid.empty')}</p>

@@ -84,6 +84,7 @@ export const renderGuide = (guides: GuideRow[], g: GuideRow): RenderedGuide => {
   const lng = g.locale as SeoLocale;
   const inLang = guidesFor(guides, lng);
   const { html, toc } = renderGuideMarkdown(g.body, {
+    locale: lng,
     localize: (p) => localizedPath(p, lng),
     guideHref: (key) => {
       const target = inLang.find((x) => x.key === key);

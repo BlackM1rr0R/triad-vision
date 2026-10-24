@@ -17,6 +17,7 @@ import { useMySignatures } from '@/components/esign/MySignatures';
 import { PENDING_KEY, type PendingAcceptance } from '@/components/legal/api';
 import { useNotifications } from './useNotifications';
 import { useOverview } from './useOverview';
+import type { JourneyData } from './journey';
 
 /** Kinds of GET /api/account/next-step (server: lib/account/nextStep.ts). */
 export type NextKind =
@@ -31,6 +32,7 @@ export type NextKind =
   | 'CONFIRM_DATA'
   | 'FILL_FORM'
   | 'CLIENT_TASK'
+  | 'RECOGNITION_DOCS'
   | 'ANSWER_CHECKIN'
   | 'ARRIVAL_PLAN'
   | 'RENEW_RESIDENCE'
@@ -55,6 +57,8 @@ export interface NextStep {
   arrived: boolean;
   arrivedAt: string | null;
   onboarding: { done: number; total: number; percent: number } | null;
+  /** Home city → German city and dated steps for the journey map (components/portal/JourneyCard). */
+  journey?: JourneyData | null;
   primary: NextAction | null;
   secondary: NextAction[];
   waiting: { side: 'TEAM' | 'EMBASSY' | 'NONE'; expectedBy: string | null } | null;

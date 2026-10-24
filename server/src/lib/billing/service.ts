@@ -6,7 +6,9 @@ import { badRequest, conflict, notFound, parse } from '../http.js';
 import { renderEmail, sendMail } from '../mailer.js';
 import { notifyStaff, notifyUser } from '../notifications.js';
 import { config } from '../../config.js';
-import { formatEur, formatInvoiceDate } from '../invoiceTexts.js';
+import { formatInvoiceDate } from '../invoiceTexts.js';
+import { currencySchema, formatMoney, groupByCurrency } from './currency.js';
+import { NUMBER_PREFIX, entityForCurrency, entityOfInvoice, getBillingEntities } from './entities.js';
 import {
   LINE_CATEGORIES,
   OPEN_STATUSES,
@@ -25,6 +27,7 @@ import { effectiveVatRate, loadBillingContext, type BillingContext, type ClientB
 import { asBillingLocale, billingTexts, staffBillingTexts, type BillingLocale } from './texts.js';
 import { buildClientInvoicePdf, buildReceiptPdf } from './pdf.js';
 import { createAutomationTask } from '../automation/tasks.js';
+import { csvSafe } from '../csvSafe.js';
 
 /**
  * Client invoices and payments (private clients). Mirrors the company invoices (routes/admin/invoices.ts):
@@ -61,6 +64,8 @@ export const invoiceInput = z.object({
   serviceTo: day.optional().nullable().or(emptyToNull),
   items: z.array(lineSchema).min(1).max(60),
   note: z.string().trim().max(2000).optional().nullable(),
+  /** Document currency (EUR / AZN / TRY); default: the billing default currency (billing/entities.ts). */
+  currency: currencySchema.optional(),
 });
 export type InvoiceInput = z.input<typeof invoiceInput>;
 
@@ -146,12 +151,14 @@ export const createDraft = async (input: InvoiceInput, actorId: string | null, l
   const body = parse(invoiceInput, input);
   await loadClient(body.clientId);
   const caseId = await checkCase(body.clientId, body.caseId);
-  const { billing } = await loadBillingContext();
+  const currency = body.currency ?? (await getBillingEntities()).defaultCurrency;
+  const { billing } = await loadBillingContext({ currency });
   return prisma.clientInvoice.create({
     data: {
       number: draftNumber(),
       clientId: body.clientId,
       caseId,
+      currency,
       status: 'DRAFT',
       createdById: actorId,
       planId: link.planId ?? null,
@@ -168,8 +175,9 @@ export const updateDraft = async (id: string, input: InvoiceInput) => {
   if (current.status !== 'DRAFT') throw conflict('INVOICE_NOT_DRAFT');
   await loadClient(body.clientId);
   const caseId = await checkCase(body.clientId, body.caseId);
-  const { billing } = await loadBillingContext();
-  const r = await prisma.clientInvoice.updateMany({ where: { id, status: 'DRAFT' }, data: { clientId: body.clientId, caseId, ...buildData(body, billing) } });
+  const currency = body.currency ?? current.currency;
+  const { billing } = await loadBillingContext({ currency });
+  const r = await prisma.clientInvoice.updateMany({ where: { id, status: 'DRAFT' }, data: { clientId: body.clientId, caseId, currency, ...buildData(body, billing) } });
   if (!r.count) throw conflict('INVOICE_NOT_DRAFT');
   return findInvoice(id);
 };
@@ -187,11 +195,13 @@ const issue = async (id: string, now = new Date()) => {
   if (inv.status !== 'DRAFT') return inv;
   if (!clientLines(inv.items).length) throw badRequest('INVOICE_EMPTY');
   const year = inv.issueDate.getUTCFullYear();
+  // The issuing entity (by currency) picks the number range: TV-KR (German company) or TV-AZ (Baku entity).
+  const base = NUMBER_PREFIX[entityForCurrency(inv.currency, await getBillingEntities())];
   for (let attempt = 0; attempt < 6; attempt++) {
     try {
       await prisma.$transaction(async (tx) => {
-        const rows = await tx.clientInvoice.findMany({ where: { number: { startsWith: `TV-KR-${year}-` } }, select: { number: true } });
-        const number = nextNumberFrom(rows.map((r) => r.number), year);
+        const rows = await tx.clientInvoice.findMany({ where: { number: { startsWith: `${base}-${year}-` } }, select: { number: true } });
+        const number = nextNumberFrom(rows.map((r) => r.number), year, base);
         const r = await tx.clientInvoice.updateMany({ where: { id, status: 'DRAFT' }, data: { number, status: 'SENT', sentAt: now } });
         if (!r.count) throw conflict('INVOICE_NOT_DRAFT');
       });
@@ -215,8 +225,14 @@ const REF_LABEL: Record<BillingLocale, string> = { az: 'Təyinat', de: 'Verwendu
 const bankText = (ctx: BillingContext) =>
   ctx.bank.iban ? [ctx.bank.accountHolder, `IBAN: ${ctx.bank.iban}`, ctx.bank.bic ? `BIC: ${ctx.bank.bic}` : '', ctx.bank.bank].filter(Boolean).join('\n') : '';
 
+/** Billing context of the invoice's issuing entity (a passed context is reused when it is of the same entity). */
+export const contextFor = async (inv: Pick<ClientInvoice, 'number' | 'status' | 'currency'>, ctx?: BillingContext) => {
+  const entity = entityOfInvoice(inv, ctx?.entities ?? (await getBillingEntities()));
+  return ctx && ctx.entity === entity ? ctx : loadBillingContext({ entity });
+};
+
 export const renderInvoicePdf = async (inv: ClientInvoice, ctx?: BillingContext, client?: ClientUser) => {
-  const c = ctx ?? (await loadBillingContext());
+  const c = await contextFor(inv, ctx);
   const u = client ?? (await prisma.user.findUniqueOrThrow({ where: { id: inv.clientId }, select: CLIENT_SELECT }));
   return buildClientInvoicePdf({
     invoice: { ...inv, items: clientLines(inv.items) },
@@ -224,6 +240,7 @@ export const renderInvoicePdf = async (inv: ClientInvoice, ctx?: BillingContext,
     seller: c.seller,
     bank: c.bank,
     billing: c.billing,
+    entity: c.entity,
   });
 };
 
@@ -231,7 +248,7 @@ export type ClientMailKind = 'sent' | 'reminder1' | 'reminder2' | 'cancelled';
 
 /** E-mails the client (PDF attached except for cancellations get the Storno PDF too) + in-app notification. */
 export const mailClient = async (inv: ClientInvoice, kind: ClientMailKind, opts: { note?: string | null; ctx?: BillingContext } = {}) => {
-  const ctx = opts.ctx ?? (await loadBillingContext());
+  const ctx = await contextFor(inv, opts.ctx);
   const u = await prisma.user.findUnique({ where: { id: inv.clientId }, select: CLIENT_SELECT });
   if (!u || !u.isActive) return { emailed: false };
   const locale = asBillingLocale(u.locale);
@@ -239,8 +256,8 @@ export const mailClient = async (inv: ClientInvoice, kind: ClientMailKind, opts:
   const msg = t[kind]({
     name: u.firstName || fullName(u),
     number: inv.number,
-    amount: formatEur(inv.grossCents),
-    open: formatEur(Math.max(0, inv.grossCents - inv.paidCents)),
+    amount: formatMoney(inv.grossCents, inv.currency),
+    open: formatMoney(Math.max(0, inv.grossCents - inv.paidCents), inv.currency),
     due: formatInvoiceDate(inv.dueDate, locale),
     days: daysPastDue(inv.dueDate),
     bank: kind === 'cancelled' ? '' : bankText(ctx),
@@ -282,9 +299,9 @@ export const receiptNumber = async (p: ClientPayment) => {
 };
 
 export const renderReceiptPdf = async (p: ClientPayment, ctx?: BillingContext) => {
-  const c = ctx ?? (await loadBillingContext());
   const u = await prisma.user.findUniqueOrThrow({ where: { id: p.clientId }, select: CLIENT_SELECT });
   const inv = p.invoiceId ? await prisma.clientInvoice.findUnique({ where: { id: p.invoiceId } }) : null;
+  const c = inv ? await contextFor(inv, ctx) : (ctx ?? (await loadBillingContext({ currency: p.currency })));
   // Paid amount as of this payment (later payments are not on this receipt).
   const paidUpTo = p.invoiceId
     ? ((await prisma.clientPayment.aggregate({ where: { invoiceId: p.invoiceId, OR: [{ createdAt: { lt: p.createdAt } }, { id: p.id }] }, _sum: { amountCents: true } }))._sum.amountCents ?? 0)
@@ -297,6 +314,7 @@ export const renderReceiptPdf = async (p: ClientPayment, ctx?: BillingContext) =
     seller: c.seller,
     bank: c.bank,
     footer: c.billing.footer,
+    entity: c.entity,
   });
 };
 
@@ -344,8 +362,8 @@ const mailReceipt = async (p: ClientPayment, inv: ClientInvoice) => {
     const msg = (inv.status === 'PAID' ? t.paid : t.partial)({
       name: u.firstName || fullName(u),
       number: inv.number,
-      amount: formatEur(p.amountCents),
-      open: formatEur(Math.max(0, inv.grossCents - inv.paidCents)),
+      amount: formatMoney(p.amountCents, p.currency),
+      open: formatMoney(Math.max(0, inv.grossCents - inv.paidCents), inv.currency),
       due: formatInvoiceDate(inv.dueDate, locale),
     });
     const pdf = await renderReceiptPdf(p);
@@ -428,15 +446,30 @@ export const refreshPlanStatus = async (planId: string) => {
 
 // ─── Overviews ───────────────────────────────────────────────────────
 
-const totalsOf = (invoices: ClientInvoice[]) => {
+/**
+ * Totals per currency — amounts of different currencies are never added up. `byCurrency` lists every currency;
+ * the flat fields are those of the main currency (most issued invoices; EUR when there are none) together with
+ * `currency`, so a single-currency client keeps the simple view.
+ */
+export const totalsOf = (invoices: Pick<ClientInvoice, 'status' | 'grossCents' | 'paidCents' | 'currency'>[]) => {
   const live = invoices.filter((i) => i.status !== 'DRAFT' && i.status !== 'CANCELLED');
+  const groups = groupByCurrency(live, (i) => i.currency, (i) => ({
+    invoicedCents: i.grossCents,
+    paidCents: i.paidCents,
+    openCents: openCents(i),
+    overdueCents: i.status === 'OVERDUE' ? openCents(i) : 0,
+    overdueCount: i.status === 'OVERDUE' ? 1 : 0,
+  }));
+  const main = [...groups].sort((a, b) => b.count - a.count)[0];
   return {
-    invoicedCents: live.reduce((a, i) => a + i.grossCents, 0),
-    paidCents: live.reduce((a, i) => a + i.paidCents, 0),
-    openCents: live.reduce((a, i) => a + openCents(i), 0),
-    overdueCents: live.filter((i) => i.status === 'OVERDUE').reduce((a, i) => a + openCents(i), 0),
+    currency: main?.currency ?? 'EUR',
+    invoicedCents: main?.invoicedCents ?? 0,
+    paidCents: main?.paidCents ?? 0,
+    openCents: main?.openCents ?? 0,
+    overdueCents: main?.overdueCents ?? 0,
     overdueCount: live.filter((i) => i.status === 'OVERDUE').length,
     draftCount: invoices.filter((i) => i.status === 'DRAFT').length,
+    byCurrency: groups.map(({ count: _c, ...t }) => t),
   };
 };
 
@@ -501,11 +534,13 @@ export const listQuery = z.object({
   from: day.optional(),
   to: day.optional(),
   q: z.string().trim().max(80).optional(),
+  currency: currencySchema.optional(),
 });
 
 export const listInvoices = async (q: z.infer<typeof listQuery>, take = 500) => {
   const and: Prisma.ClientInvoiceWhereInput[] = [];
   if (q.status) and.push({ status: q.status });
+  if (q.currency) and.push({ currency: q.currency });
   if (q.overdue) and.push({ status: 'OVERDUE' });
   if (q.clientId) and.push({ clientId: q.clientId });
   if (q.caseId) and.push({ caseId: q.caseId });
@@ -535,16 +570,16 @@ export const listInvoices = async (q: z.infer<typeof listQuery>, take = 500) => 
 };
 
 const csvCell = (v: string | number) => {
-  const s = String(v);
+  const s = csvSafe(String(v)); // client names / e-mails are user input: no spreadsheet formulas
   return /[";\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
 };
 const euro = (c: number) => (c / 100).toFixed(2).replace('.', ',');
 
 /** Semicolon CSV with BOM and German decimals (opens directly in Excel / DATEV-style tools). */
 export const invoicesCsv = (rows: Awaited<ReturnType<typeof listInvoices>>['invoices']) => {
-  const head = ['Rechnungsnummer', 'Rechnungsdatum', 'Fällig', 'Kunde', 'E-Mail', 'Fall', 'Netto', 'USt-Satz', 'USt', 'Durchlaufende Posten', 'Brutto', 'Bezahlt', 'Offen', 'Status'];
+  const head = ['Rechnungsnummer', 'Rechnungsdatum', 'Fällig', 'Kunde', 'E-Mail', 'Fall', 'Netto', 'USt-Satz', 'USt', 'Durchlaufende Posten', 'Brutto', 'Bezahlt', 'Offen', 'Status', 'Währung'];
   const lines = rows.map((r) =>
-    [r.number ?? 'ENTWURF', todayIso(r.issueDate), todayIso(r.dueDate), r.clientName ?? '', r.clientEmail ?? '', r.caseNumber ?? '', euro(r.taxableCents), r.vatRate, euro(r.vatCents), euro(r.passThroughCents), euro(r.grossCents), euro(r.paidCents), euro(r.openCents), r.status]
+    [r.number ?? 'ENTWURF', todayIso(r.issueDate), todayIso(r.dueDate), r.clientName ?? '', r.clientEmail ?? '', r.caseNumber ?? '', euro(r.taxableCents), r.vatRate, euro(r.vatCents), euro(r.passThroughCents), euro(r.grossCents), euro(r.paidCents), euro(r.openCents), r.status, r.currency]
       .map(csvCell)
       .join(';'),
   );
@@ -607,7 +642,7 @@ const escalate = async (inv: ClientInvoice, days: number) => {
   const kase = inv.caseId ? await prisma.case.findUnique({ where: { id: inv.caseId }, select: { assignedStaffId: true } }) : null;
   const admins = await prisma.user.findMany({ where: { role: { in: ['ADMIN', 'SUPER_ADMIN'] }, isActive: true }, select: { id: true }, take: 3, orderBy: { createdAt: 'asc' } });
   const assignees = kase?.assignedStaffId ? [kase.assignedStaffId] : admins.map((a) => a.id);
-  const msg = staffBillingTexts.escalation({ number: inv.number, name: u ? fullName(u) : '—', open: formatEur(inv.grossCents - inv.paidCents), days });
+  const msg = staffBillingTexts.escalation({ number: inv.number, name: u ? fullName(u) : '—', open: formatMoney(inv.grossCents - inv.paidCents, inv.currency), days });
   try {
     await createAutomationTask({ title: msg.title, description: msg.body, assigneeIds: assignees, dueAt: new Date(Date.now() + 2 * DAY), priority: 'HIGH', caseId: inv.caseId });
   } catch (err) {

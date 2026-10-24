@@ -20,6 +20,7 @@ import {
   shiftSchema,
   updateShift,
 } from '../../lib/shifts/service.js';
+import { leaveForViewer } from '../../lib/workspace/team.js';
 
 /**
  * Team calendar — /api/admin/shifts (STAFF+ read; changes ADMIN+).
@@ -39,7 +40,9 @@ const rangeQuery = z.object({ from: z.string().refine(isDayKey, 'INVALID_DAY'), 
 adminShiftsRouter.get('/calendar', async (req, res) => {
   const q = parse(rangeQuery, req.query);
   if (q.to < q.from) throw badRequest('INVALID_RANGE');
-  res.json(await calendar(q.from, q.to));
+  const cal = await calendar(q.from, q.to);
+  // Coverage is computed on the real data; colleagues below ADMIN only see that someone is away, not why.
+  res.json({ ...cal, leave: cal.leave.map((l) => leaveForViewer(l, req.user!)) });
 });
 
 adminShiftsRouter.get('/coverage', async (_req, res) => {

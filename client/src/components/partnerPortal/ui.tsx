@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
 import type { LucideIcon } from 'lucide-react';
 import { Spinner } from '@/components/ui/Spinner';
+import { AnimatedNumber } from '@/components/ui/AnimatedNumber';
 import type { CaseStatus } from '@/lib/types';
 import { STEPS, type CommissionStatus, type PortalStep } from './api';
 
@@ -50,7 +51,7 @@ export const Kpi = ({ label, value, icon: Icon, tone = 'bg-brand-100 text-brand-
   <div className="card flex items-start justify-between gap-3 p-4 sm:p-5">
     <div className="min-w-0">
       <p className="text-xs font-medium text-muted">{label}</p>
-      <p className="mt-1 truncate font-display text-xl font-extrabold text-ink tabular-nums sm:text-2xl">{value}</p>
+      <p className="mt-1 truncate font-display text-xl font-extrabold text-ink tabular-nums sm:text-2xl">{typeof value === 'number' ? <AnimatedNumber value={value} /> : value}</p>
       {hint && <p className="mt-0.5 text-[11px] text-muted">{hint}</p>}
     </div>
     <span className={clsx('grid size-10 shrink-0 place-items-center rounded-xl', tone)}>

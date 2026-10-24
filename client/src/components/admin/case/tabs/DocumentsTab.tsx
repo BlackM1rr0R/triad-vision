@@ -5,6 +5,8 @@ import { FourEyesPanel } from '@/components/caseNext/FourEyesPanel';
 import CaseOriginalsPanel from '@/components/originals/CaseOriginalsPanel';
 import { EmploymentContractPanel } from '@/components/placement/EmploymentContractPanel';
 import { CaseOfficialFormsPanel } from '@/components/officialForms/CaseOfficialFormsPanel';
+import { RecognitionPanel } from '@/components/recognition/RecognitionPanel';
+import { AcceleratedPanel } from '@/components/recognition/AcceleratedPanel';
 import { ClientFiles } from '../ClientFiles';
 import { ContractBox } from '../Contract';
 import { RequirementsSection } from '../Requirements';
@@ -14,7 +16,7 @@ import type { CaseTabProps } from './types';
  * Sənədlər: requirement review (accept / reject / request, smart-upload suggestions), the embassy package,
  * contract + e-signatures, staff files with the document-intelligence packet / forms, physical originals.
  */
-export default function DocumentsTab({ c }: CaseTabProps) {
+export default function DocumentsTab({ c, isAdmin }: CaseTabProps) {
   const step = STATUS_STEP[c.status];
   // The embassy stage shows once the case reached it (or was reopened there / requirements exist).
   const showEmbassy = c.requirements.some((r) => r.stage === 'EMBASSY') || step >= 2;
@@ -42,6 +44,10 @@ export default function DocumentsTab({ c }: CaseTabProps) {
       <EmploymentContractPanel caseId={c.id} />
       {/* Official forms: national visa application, Erklärung zum Beschäftigungsverhältnis … (fill, missing data, employer signature). */}
       <CaseOfficialFormsPanel caseId={c.id} />
+      {/* Recognition of the qualification (Anerkennung): procedures, checklist, letters, deficits, fee, deadline. */}
+      <RecognitionPanel caseId={c.id} isAdmin={isAdmin} />
+      {/* § 81a accelerated skilled-worker procedure (needs the case's employer): stepper, correspondence, deadlines. */}
+      <AcceleratedPanel caseId={c.id} />
       <div id="case-signatures">
         <SignaturesPanel caseId={c.id} />
       </div>

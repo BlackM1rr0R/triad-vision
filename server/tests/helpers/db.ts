@@ -6,6 +6,11 @@ export { prisma };
 
 /** Deletes all rows, children before parents so foreign keys are never violated. */
 export const resetDb = async () => {
+  // Recognition tracker + § 81a accelerated procedure (plain ids, no foreign keys)
+  await prisma.recognitionEvent.deleteMany();
+  await prisma.recognitionProcess.deleteMany();
+  await prisma.acceleratedMessage.deleteMany();
+  await prisma.acceleratedProcedure.deleteMany();
   // Official forms: fills and templates (plain ids, no foreign keys)
   await prisma.officialFormFill.deleteMany();
   await prisma.officialFormTemplate.deleteMany();

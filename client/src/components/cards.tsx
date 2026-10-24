@@ -8,20 +8,25 @@ import { TiltCard } from './motion';
 import { Icon } from './ui/Icon';
 import { useL10n } from '@/lib/l10n';
 import { sized, srcSet } from '@/lib/img';
+import { useMorphSource } from '@/lib/viewTransition';
 import type { Faq, Partner, PostSummary, Service, Testimonial, VisaCategory, VisaSample } from '@/lib/types';
 
 export const VisaCard = ({ visa }: { visa: VisaCategory }) => {
   const { t } = useTranslation();
   const { tr, trList } = useL10n();
+  // The image box and title morph into the detail page's hero (lib/viewTransition.ts).
+  const morph = useMorphSource('visa', visa.slug);
   return (
     <TiltCard className="h-full rounded-2xl" max={6}>
       <Link
+        ref={morph.ref}
+        onClick={morph.onClick}
         to={`/visas/${visa.slug}`}
         className="group flex h-full flex-col overflow-hidden rounded-2xl border border-line bg-white shadow-[0_8px_30px_-12px_rgba(11,31,68,0.18)] transition-shadow duration-500 hover:shadow-[0_30px_60px_-20px_rgba(21,101,232,0.45)]"
       >
         {/* The icon badge sits on the image edge, so it must live OUTSIDE the clipped image box. */}
         <div className="relative">
-          <div className="relative aspect-[16/11] overflow-hidden">
+          <div {...morph.part('card')} className="relative aspect-[16/11] overflow-hidden">
             <img src={sized(visa.image, 640)} srcSet={srcSet(visa.image, [400, 640, 900])} sizes="(min-width:1280px) 300px, (min-width:640px) 45vw, 82vw" alt="" loading="lazy" decoding="async" className="size-full object-cover object-[center_35%] transition duration-[1.2s] ease-out group-hover:scale-105" />
             <div className="absolute inset-0 bg-gradient-to-t from-navy-950/60 via-transparent to-transparent" />
             <span className="absolute top-3 right-3 rounded-md bg-white/95 px-2 py-1 text-xs font-bold text-brand-700 shadow-sm">{visa.visaLabel}</span>
@@ -31,7 +36,9 @@ export const VisaCard = ({ visa }: { visa: VisaCategory }) => {
           </span>
         </div>
         <div className="flex flex-1 flex-col p-5 pt-10">
-          <h3 className="text-lg font-bold text-navy-900">{tr(visa.title)}</h3>
+          <h3 {...morph.part('title')} className="w-fit text-lg font-bold text-navy-900">
+            {tr(visa.title)}
+          </h3>
           <ul className="mt-3 flex-1 space-y-1.5">
             {trList(visa.items).map((item) => (
               <li key={item} className="flex gap-2 text-sm text-muted">
@@ -54,9 +61,13 @@ export const ServiceCard = ({ service, index }: { service: Service; index: numbe
   const { t } = useTranslation();
   const { tr } = useL10n();
   const audience = service.audience === 'company' ? t('svc.forCompany') : service.audience === 'candidate' ? t('svc.forCandidate') : t('svc.forAll');
+  const morph = useMorphSource('service', service.slug);
   return (
     <TiltCard className="h-full rounded-2xl" max={5}>
       <Link
+        ref={morph.ref}
+        onClick={morph.onClick}
+        {...morph.part('card')}
         to={`/services/${service.slug}`}
         className="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-line bg-white card-pad transition-shadow duration-500 hover:border-transparent hover:shadow-[0_30px_60px_-20px_rgba(21,101,232,0.45)]"
       >
@@ -69,7 +80,9 @@ export const ServiceCard = ({ service, index }: { service: Service; index: numbe
             <Icon name={service.icon} className="size-6" />
           </span>
           <span className="mt-5 text-[0.7rem] font-bold tracking-widest text-brand-600 uppercase transition group-hover:text-brand-100">{audience}</span>
-          <h3 className="mt-1.5 font-display text-lg leading-snug font-bold text-navy-900 transition group-hover:text-white">{tr(service.title)}</h3>
+          <h3 {...morph.part('title')} className="mt-1.5 w-fit font-display text-lg leading-snug font-bold text-navy-900 transition group-hover:text-white">
+            {tr(service.title)}
+          </h3>
           <p className="mt-2 flex-1 text-sm leading-relaxed text-muted transition group-hover:text-white/80">{tr(service.summary)}</p>
           <span className="mt-5 inline-flex items-center gap-1.5 text-sm font-semibold text-brand-600 transition group-hover:text-white">
             {t('common.learnMore')} <ArrowRight className="size-4 transition-transform duration-300 group-hover:translate-x-1.5" />

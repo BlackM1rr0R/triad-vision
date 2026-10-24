@@ -72,9 +72,14 @@ import { adminHandoverNotesRouter } from './handoverNotes.js'; // handover notes
 import { adminGuidesRouter } from './guides.js'; // topic guides (/guides) CMS, per-language versions
 import { adminNavRouter } from './nav.js'; // role desks, favourites, recent pages, module toggles, page usage
 import { adminClientBillingRouter } from './clientBilling.js'; // client invoices, payments, payment plans
+import { adminCountersignRouter } from './countersign.js'; // Triad Vision countersignature of service contracts
+import { adminAccountingRouter } from './accounting.js'; // currencies, billing entities, exchange rates, DATEV export, XRechnung
 import { adminPackagesRouter } from './packages.js'; // service packages + online orders
 import { adminSiteFeaturesRouter } from './siteFeatures.js'; // search stats, job alert stats, story video upload, e-book lead magnets
 import { adminOfficialFormsRouter } from './officialForms.js'; // official fillable PDFs: templates, mapping, case fills, employer declaration
+import { adminAcceleratedRouter, adminRecognitionRouter } from './recognition.js'; // Anerkennung tracker + § 81a accelerated procedure
+import { adminDashboardLayoutRouter } from './dashboardLayout.js'; // personal dashboard widget layout
+import { adminPresenceRouter } from './presence.js'; // live "who is viewing this case / inquiry"
 
 export const adminRouter = Router();
 adminRouter.use(requireMinRole('STAFF'));
@@ -143,6 +148,8 @@ adminRouter.get('/dashboard', async (req, res) => {
 });
 
 adminRouter.use(adminNavRouter); // /me/nav*, /nav/* (desks, usage, modules)
+adminRouter.use(adminDashboardLayoutRouter); // /me/dashboard (widget order, sizes, hidden widgets)
+adminRouter.use('/presence', adminPresenceRouter); // /presence/:kind/:id (join / heartbeat / leave)
 adminRouter.use('/command-search', adminCommandSearchRouter); // staff command palette: cases, people, companies, vacancies, drive, tasks
 adminRouter.use(adminSensitiveRouter); // /reveal, /sensitive/* (masked fields: reveal with reason, settings, reveal log)
 adminRouter.use('/client-process', adminClientProcessRouter); // client tasks, office visits, ball-in-court ETA settings
@@ -158,6 +165,8 @@ adminRouter.use('/shifts', adminShiftsRouter); // team calendar (STAFF read, ADM
 adminRouter.use('/handover-notes', adminHandoverNotesRouter); // handover notes / checklists
 adminRouter.use('/check-ins', adminCheckInsRouter); // post-arrival check-ins, retention
 adminRouter.use('/renewals', adminRenewalsRouter); // residence-title renewal cases, probation reminders
+adminRouter.use('/recognition', adminRecognitionRouter); // Anerkennung: processes, checklist, letters, deficits, fee, deadlines
+adminRouter.use('/accelerated', adminAcceleratedRouter); // § 81a beschleunigtes Fachkräfteverfahren: stepper, correspondence, deadlines
 adminRouter.use(adminFourEyesRouter); // /cases/:id/four-eyes*, /four-eyes/* (embassy package review)
 adminRouter.use('/access-log', adminAccessLogRouter); // "who viewed my documents" per client
 adminRouter.use('/placement', adminPlacementRouter); // recognition, employer share links, interview evaluations, Arbeitsvertrag tracker
@@ -220,6 +229,8 @@ adminRouter.use('/booking', adminBookingRouter);
 adminRouter.use('/invoices', requireMinRole('ADMIN'), adminInvoicesRouter);
 adminRouter.use('/client-billing', adminClientBillingRouter); // case-level STAFF; list, CSV, settings ADMIN (per route)
 adminRouter.use('/packages', requireMinRole('ADMIN'), adminPackagesRouter);
+adminRouter.use('/countersign', requireMinRole('ADMIN'), adminCountersignRouter);
+adminRouter.use('/accounting', requireMinRole('ADMIN'), adminAccountingRouter);
 adminRouter.use('/quotes', requireMinRole('ADMIN'), adminQuotesRouter); // Angebote for employers
 adminRouter.use('/reviews', adminReviewsRouter);
 adminRouter.use('/analytics', adminAnalyticsRouter);

@@ -5,14 +5,20 @@ import { ArrowUpRight, Building2, CalendarClock, Clock, Euro, Languages, MapPin,
 import { fmtDate } from '@/components/admin/labels';
 import { useJobLabels } from './labels';
 import type { PublicVacancy } from './types';
+import { useMorphSource } from '@/lib/viewTransition';
 
 /** Vacancy card on the public board. */
 export const JobCard = ({ v, className }: { v: PublicVacancy; className?: string }) => {
   const { t } = useTranslation();
   const L = useJobLabels();
   const salary = L.salary(v.salaryMin, v.salaryMax);
+  // The card grows into the vacancy page's hero and its title moves into the hero title (lib/viewTransition.ts).
+  const morph = useMorphSource('job', v.slug);
   return (
     <Link
+      ref={morph.ref}
+      onClick={morph.onClick}
+      {...morph.part('card')}
       to={`/jobs/${v.slug}`}
       className={clsx(
         'group card flex h-full flex-col p-5 transition duration-300 hover:-translate-y-0.5 hover:border-brand-400/60 hover:shadow-[0_20px_40px_-20px_rgba(11,31,68,0.35)] sm:p-6',
@@ -25,7 +31,9 @@ export const JobCard = ({ v, className }: { v: PublicVacancy; className?: string
             {v.sector && <span className="badge bg-brand-50 text-brand-700">{L.sector(v.sector)}</span>}
             <span className="badge bg-surface text-ink/70">{L.employmentType(v.employmentType)}</span>
           </div>
-          <h3 className="mt-3 font-display text-lg leading-snug font-bold break-words text-navy-900 group-hover:text-brand-700">{L.title(v.title)}</h3>
+          <h3 {...morph.part('title')} className="mt-3 w-fit font-display text-lg leading-snug font-bold break-words text-navy-900 group-hover:text-brand-700">
+            {L.title(v.title)}
+          </h3>
           <p className="mt-1 flex items-center gap-1.5 text-sm text-muted">
             <Building2 className="size-3.5 shrink-0" aria-hidden />
             <span className="truncate">{v.companyName ?? t('jobsArea.common.confidentialEmployer')}</span>

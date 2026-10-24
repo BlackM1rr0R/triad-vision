@@ -1,7 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { STATUS_TONES, toneTexts } from '@/components/ui/status';
 import { Link, useNavigate } from 'react-router-dom';
-import { useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
 import {
@@ -28,7 +27,6 @@ import {
   UserRound,
   XCircle,
 } from 'lucide-react';
-import { api } from '@/lib/api';
 import { STEP_KEYS } from '@/lib/caseStatus';
 import { useSiteContent } from '@/lib/content';
 import { useL10n } from '@/lib/l10n';
@@ -38,7 +36,7 @@ import { downloadIcs } from './CaseCards';
 import { ProgressRing } from './ProgressRing';
 import { StatusBadge } from './StatusBadge';
 import { FIELD_TAB, type ProfileField } from './profileFields';
-import { OVERVIEW_KEY } from './useOverview';
+import { useMarkNotificationsRead } from './useNotifications';
 import { useWhen } from './useWhen';
 import { stepLabel } from './stepLabel';
 
@@ -455,18 +453,11 @@ export const LatestNotifications = ({ items, unread }: { items: Notification[]; 
   const { t } = useTranslation();
   const when = useWhen();
   const navigate = useNavigate();
-  const qc = useQueryClient();
+  const markRead = useMarkNotificationsRead();
 
   const open = (n: Notification) => {
-    if (!n.readAt) {
-      void api
-        .post('/notifications/read', { ids: [n.id] })
-        .catch(() => undefined)
-        .finally(() => {
-          void qc.invalidateQueries({ queryKey: ['notifications'] });
-          void qc.invalidateQueries({ queryKey: OVERVIEW_KEY });
-        });
-    }
+    // optimistic: the dot and the badge clear before the request returns (rolled back on error)
+    if (!n.readAt) markRead.mutate([n.id]);
     navigate(n.link ?? '/account/notifications');
   };
 

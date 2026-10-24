@@ -16,6 +16,7 @@ import { maskPhone, normalizePhone, smsConfigured } from '../messaging/providers
 import { saveSignedCopyToDrive } from '../driveIntel/signedCopy.js';
 import { officialFormSigned } from '../officialForms/signedHook.js';
 import { isImpersonating } from '../privacy/impersonationContext.js';
+import { onClientPartSigned, runCountersignReminders } from './countersign.js';
 
 /**
  * Multi-party online signatures ("Signature requests").
@@ -466,6 +467,8 @@ const afterSignature = async (requestId: string, signerId: string) => {
   await inviteActive(r.id);
   const signer = r.signers.find((x) => x.id === signerId);
   await notifyCreator(r, (t) => ({ title: t.signedTitle, body: t.signedBody({ title: r.title, name: signer?.name ?? '', done, total: r.signers.length }) }));
+  // Only the Triad Vision countersignature is missing: longer deadline + package order activation (never throws).
+  await onClientPartSigned(r.id);
 };
 
 export const declineAsSigner = async (signerId: string, reason: string, authMethod: 'EMAIL_OTP' | 'PORTAL', meta: Meta) => {
@@ -852,7 +855,7 @@ const claimKey = async (key: string, now: Date) => {
  * retries completions that failed. `now` is injectable for tests.
  */
 export const runSignatureJobs = async (now = new Date()) => {
-  const result = { expired: 0, reminded: 0, completed: 0 };
+  const result = { expired: 0, reminded: 0, completed: 0, countersignReminded: 0 };
   const due = await prisma.signatureRequest.findMany({ where: { status: 'SENT', expiresAt: { lte: now } }, select: { id: true, status: true, expiresAt: true } });
   for (const r of due) if (await expireIfDue(r, now)) result.expired++;
 
@@ -881,5 +884,10 @@ export const runSignatureJobs = async (now = new Date()) => {
       result.reminded++;
     }
   }
+  // Countersignatures pending longer than the configured days (default 2) → staff reminders.
+  result.countersignReminded = await runCountersignReminders(now).catch((err) => {
+    console.error('[esign] countersign reminders failed', err);
+    return 0;
+  });
   return result;
 };

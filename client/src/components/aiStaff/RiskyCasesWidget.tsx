@@ -6,7 +6,7 @@ import clsx from 'clsx';
 import { ShieldAlert, Lightbulb } from 'lucide-react';
 import { api } from '@/lib/api';
 import { Panel } from '@/components/admin/ui';
-import { Spinner } from '@/components/ui/Spinner';
+import { Skeleton } from '@/components/ui/Skeleton';
 import { STATUS_TONES, toneClasses } from '@/components/ui/status';
 import { uiLocale } from './shared';
 import { BriefingToggle } from './BriefingSettings';
@@ -67,8 +67,13 @@ export const RiskyCasesWidget = ({ showBriefing = false }: { showBriefing?: bool
       }
     >
       {isLoading ? (
-        <div className="grid place-items-center py-8 text-brand-600">
-          <Spinner className="size-5" />
+        <div className="divide-y divide-line" aria-hidden>
+          {[0, 1, 2].map((i) => (
+            <div key={i} className="space-y-1.5 px-5 py-3 sm:px-6">
+              <Skeleton className="h-3.5 w-1/2" />
+              <Skeleton className="h-3 w-3/4" />
+            </div>
+          ))}
         </div>
       ) : items.length === 0 ? (
         <p className="px-5 py-8 text-center text-sm text-muted sm:px-6">{t('aiStaff.risks.empty')}</p>

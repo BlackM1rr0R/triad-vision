@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
-import { ArrowLeft, Headset, Send, X } from 'lucide-react';
+import { ArrowLeft, Clock, Headset, RotateCw, Send, X } from 'lucide-react';
 import { api, errorCode } from '@/lib/api';
+import { tempId } from '@/lib/optimistic';
 import { registerCopy } from '@/i18n';
 import { pagesCalls } from '@/i18n/pagesCalls';
 import { CallbackForm } from '@/components/calls/CallbackForm';
@@ -67,6 +68,8 @@ export const VisitorLiveChat = ({
   const [name, setName] = useState('');
   const [input, setInput] = useState('');
   const [busy, setBusy] = useState(false);
+  // Optimistic outbox: visitor messages shown at once, removed when the server's copy arrives.
+  const [outbox, setOutbox] = useState<{ id: string; body: string; failed: boolean }[]>([]);
   const [now, setNow] = useState(Date.now());
   const listRef = useRef<HTMLDivElement>(null);
 
@@ -150,7 +153,7 @@ export const VisitorLiveChat = ({
 
   useEffect(() => {
     listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: 'smooth' });
-  }, [chat?.messages.length, status]);
+  }, [chat?.messages.length, outbox.length, status]);
 
   const start = async () => {
     setBusy(true);
@@ -174,19 +177,31 @@ export const VisitorLiveChat = ({
     }
   };
 
-  const send = async () => {
+  const post = (id: string, body: string) => {
+    if (!session) return;
+    api
+      .post<{ message: Msg }>(`/livechat/${session.id}/messages`, { body }, { headers: { 'x-livechat-token': session.token } })
+      .then(({ data }) => {
+        merge(data.message);
+        setOutbox((o) => o.filter((m) => m.id !== id));
+      })
+      .catch(() => setOutbox((o) => o.map((m) => (m.id === id ? { ...m, failed: true } : m))));
+  };
+
+  const send = () => {
     const body = input.trim();
-    if (!body || !session || busy) return;
+    if (!body || !session) return;
     setInput('');
-    setBusy(true);
-    try {
-      const { data } = await api.post<{ message: Msg }>(`/livechat/${session.id}/messages`, { body }, { headers: { 'x-livechat-token': session.token } });
-      merge(data.message);
-    } catch {
-      setInput(body);
-    } finally {
-      setBusy(false);
-    }
+    const id = tempId();
+    setOutbox((o) => [...o, { id, body, failed: false }]);
+    post(id, body);
+  };
+
+  const retry = (id: string) => {
+    const m = outbox.find((x) => x.id === id);
+    if (!m) return;
+    setOutbox((o) => o.map((x) => (x.id === id ? { ...x, failed: false } : x)));
+    post(id, m.body);
   };
 
   const end = async () => {
@@ -269,6 +284,26 @@ export const VisitorLiveChat = ({
             </div>
           ),
         )}
+        {outbox.map((m) => (
+          <div key={m.id} className="ml-auto flex max-w-[85%] flex-col items-end">
+            <div className={clsx('rounded-2xl rounded-tr-sm px-3 py-2 text-sm break-words whitespace-pre-wrap text-white shadow-sm', m.failed ? 'bg-danger' : 'bg-brand-600 opacity-70')}>{m.body}</div>
+            {m.failed ? (
+              <span className="mt-0.5 flex items-center gap-1.5 text-[10px]">
+                <span className="text-danger-fg" role="alert">{t('livechat.msgFailed')}</span>
+                <button type="button" className="inline-flex items-center gap-0.5 font-semibold text-brand-700 hover:underline" onClick={() => retry(m.id)}>
+                  <RotateCw className="size-3" aria-hidden /> {t('livechat.msgRetry')}
+                </button>
+                <button type="button" className="inline-flex items-center text-muted" aria-label={t('common.delete')} onClick={() => setOutbox((o) => o.filter((x) => x.id !== m.id))}>
+                  <X className="size-3" aria-hidden />
+                </button>
+              </span>
+            ) : (
+              <span className="mt-0.5 inline-flex items-center gap-1 text-[10px] text-muted">
+                <Clock className="size-3" aria-hidden /> {t('livechat.msgSending')}
+              </span>
+            )}
+          </div>
+        ))}
         {status === 'WAITING' && (
           <p className="rounded-xl border border-brand-200 bg-brand-50/70 p-2.5 text-xs text-ink" role="status">
             <span className="mr-1.5 inline-block size-2 animate-pulse rounded-full bg-brand-600" aria-hidden />
@@ -311,7 +346,7 @@ export const VisitorLiveChat = ({
               }
             }}
           />
-          <button type="submit" className="btn-primary grid size-11 shrink-0 place-items-center p-0" aria-label={t('livechat.send')} disabled={busy || !input.trim()}>
+          <button type="submit" className="btn-primary grid size-11 shrink-0 place-items-center p-0" aria-label={t('livechat.send')} disabled={!input.trim()}>
             <Send className="size-4" aria-hidden />
           </button>
         </form>

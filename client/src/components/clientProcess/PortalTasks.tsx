@@ -6,6 +6,7 @@ import clsx from 'clsx';
 import { toast } from 'sonner';
 import { CheckCircle2, ExternalLink, FileText, ListChecks, Paperclip, RotateCcw } from 'lucide-react';
 import { api, fileUrl } from '@/lib/api';
+import { optimistic } from '@/lib/optimistic';
 import { useL10n } from '@/lib/l10n';
 import { cpKeys, STATE_TONE, useCpError, type ClientTaskView } from './api';
 
@@ -18,10 +19,21 @@ export const useMyTasks = (caseId?: string) =>
     refetchInterval: 60_000,
   });
 
+/** A task list with one task set to DONE / OPEN (optimistic state; the server recomputes the counts). */
+const setStatus = (prev: TasksResponse | undefined, id: string, status: 'DONE' | 'OPEN'): TasksResponse | undefined => {
+  if (!prev) return prev;
+  const was = prev.tasks.find((x) => x.id === id);
+  if (!was) return prev;
+  const tasks = prev.tasks.map((x) => (x.id === id ? { ...x, status, state: status === 'DONE' ? ('done' as const) : ('open' as const) } : x));
+  const delta = status === 'DONE' && was.status === 'OPEN' ? -1 : status === 'OPEN' && was.status !== 'OPEN' ? 1 : 0;
+  return { ...prev, tasks, counts: { ...prev.counts, open: Math.max(0, prev.counts.open + delta), overdue: status === 'DONE' && was.state === 'overdue' ? Math.max(0, prev.counts.overdue - 1) : prev.counts.overdue } };
+};
+
 const TaskRow = ({ task, showCase, onChanged }: { task: ClientTaskView; showCase?: boolean; onChanged: () => void }) => {
   const { t } = useTranslation();
   const { date } = useL10n();
   const onError = useCpError();
+  const qc = useQueryClient();
   const [open, setOpen] = useState(false);
   const [note, setNote] = useState('');
   const [file, setFile] = useState<File | null>(null);
@@ -32,14 +44,19 @@ const TaskRow = ({ task, showCase, onChanged }: { task: ClientTaskView; showCase
       if (file) fd.append('file', file);
       return api.post(`/client-process/tasks/${task.id}/done`, fd);
     },
+    // Optimistic: the task moves to "done" at once; a refused request puts it back (error toast).
+    ...optimistic<TasksResponse, void>(qc, { key: ['client-process', 'tasks'], update: (prev) => setStatus(prev, task.id, 'DONE'), onError }),
     onSuccess: () => {
       toast.success(t('cp.tasks.doneOk'));
       setOpen(false);
       onChanged();
     },
-    onError,
   });
-  const undo = useMutation({ mutationFn: () => api.post(`/client-process/tasks/${task.id}/reopen`), onSuccess: onChanged, onError });
+  const undo = useMutation({
+    mutationFn: () => api.post(`/client-process/tasks/${task.id}/reopen`),
+    ...optimistic<TasksResponse, void>(qc, { key: ['client-process', 'tasks'], update: (prev) => setStatus(prev, task.id, 'OPEN'), onError }),
+    onSuccess: onChanged,
+  });
   const isOpen = task.status === 'OPEN';
 
   return (

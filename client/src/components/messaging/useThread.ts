@@ -220,5 +220,16 @@ export const useThread = (opts: { caseId: string; base: '/cases' | '/admin/cases
 
   const dismissFailed = useCallback((id: string) => setPending((p) => p.filter((m) => m.id !== id)), []);
 
-  return { messages, typingName, notifyTyping, listRef, send, dismissFailed, connected, status, upsert };
+  /** Sends a failed optimistic message again (it goes back to "pending" in place, at the end of the thread). */
+  const retry = useCallback(
+    (id: string) => {
+      const failed = pending.find((m) => m.id === id && m.failed);
+      if (!failed) return Promise.resolve(false);
+      setPending((p) => p.filter((m) => m.id !== id));
+      return send(failed.body ?? '', failed.author);
+    },
+    [pending, send],
+  );
+
+  return { messages, typingName, notifyTyping, listRef, send, retry, dismissFailed, connected, status, upsert };
 };

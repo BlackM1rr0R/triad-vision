@@ -45,6 +45,7 @@ export const PANEL_TEXTS: Record<Loc, PanelTexts> = {
     action: {
       SIGN_DOCUMENT: 'Dokument unterschreiben',
       COMPLETE_FORM: 'Formular prüfen und ausfüllen',
+      ACCELERATED_STEP: '§ 81a: Vereinbarung unterzeichnen / Gebühr zahlen',
       ANSWER_CHECKIN: 'Check-in beantworten',
       PREPARE_ARRIVAL: 'Ersten Arbeitstag vorbereiten',
       PROBATION_REVIEW: 'Probezeitgespräch führen',
@@ -82,6 +83,7 @@ export const PANEL_TEXTS: Record<Loc, PanelTexts> = {
     action: {
       SIGN_DOCUMENT: 'Sign document',
       COMPLETE_FORM: 'Review and complete form',
+      ACCELERATED_STEP: '§ 81a: sign the agreement / pay the fee',
       ANSWER_CHECKIN: 'Answer check-in',
       PREPARE_ARRIVAL: 'Prepare the first working day',
       PROBATION_REVIEW: 'Hold the probation review',
@@ -119,6 +121,7 @@ export const PANEL_TEXTS: Record<Loc, PanelTexts> = {
     action: {
       SIGN_DOCUMENT: 'Sənədi imzalayın',
       COMPLETE_FORM: 'Formu yoxlayıb doldurun',
+      ACCELERATED_STEP: '§ 81a: razılaşmanı imzalayın / rüsumu ödəyin',
       ANSWER_CHECKIN: 'Yoxlamaya cavab verin',
       PREPARE_ARRIVAL: 'İlk iş gününü hazırlayın',
       PROBATION_REVIEW: 'Sınaq müddəti söhbətini keçirin',
@@ -156,6 +159,7 @@ export const PANEL_TEXTS: Record<Loc, PanelTexts> = {
     action: {
       SIGN_DOCUMENT: 'Подписать документ',
       COMPLETE_FORM: 'Проверить и заполнить форму',
+      ACCELERATED_STEP: '§ 81a: подписать соглашение / оплатить сбор',
       ANSWER_CHECKIN: 'Ответить на опрос',
       PREPARE_ARRIVAL: 'Подготовить первый рабочий день',
       PROBATION_REVIEW: 'Провести беседу по итогам испытательного срока',

@@ -1,12 +1,12 @@
 import { useEffect, useId, useMemo, useState, type FormEvent, type ReactNode } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
 import { CheckCircle2, Info, Minus, PiggyBank, Plus, Receipt, Send, Wallet } from 'lucide-react';
 import { PageHero } from '@/components/layout/PageHero';
 import { Spinner } from '@/components/ui/Spinner';
-import { CURRENCIES, fmtMoney, useCostConfig, type CostEstimate, type Money } from '@/components/marketing/api';
+import { CURRENCIES, fmtMoney, useCostConfig, type Money } from '@/components/marketing/api';
+import { costInput, resolveCostChoices, useCostEstimate } from '@/lib/calculators/cost';
 import { registerCopy } from '@/i18n';
 import { pagesMarketing } from '@/i18n/pagesMarketing';
 import { api, errorCode } from '@/lib/api';
@@ -178,24 +178,11 @@ export default function CostCalculator() {
     if (match) setVisaId(match.id);
   }, [categories, params, visaId]);
   const category = categories.find((c) => c.id === visaId) ?? null;
-  const d = category?.defaults;
-  const docs = documents ?? d?.documents ?? 0;
-  const apos = apostilles ?? d?.apostilles ?? 0;
-  const rec = recognition ?? d?.recognition ?? false;
-  const lang = language ?? d?.language ?? false;
-
-  const input = useMemo(
-    () => (category ? { category: category.slug, adults, children, documents: docs, apostilles: apos, recognition: rec ? '1' : '0', language: lang ? '1' : '0' } : null),
-    [category, adults, children, docs, apos, rec, lang],
-  );
-  const query = input ? new URLSearchParams(Object.entries(input).map(([k, v]) => [k, String(v)])).toString() : null;
-  const { data: est, isFetching } = useQuery({
-    queryKey: ['growth', 'cost-estimate', query],
-    queryFn: async () => (await api.get<CostEstimate>(`/growth/cost-calculator/estimate?${query}`)).data,
-    enabled: !!query,
-    placeholderData: (prev) => prev,
-    staleTime: 5 * 60 * 1000,
-  });
+  const choices = { adults, children, documents, apostilles, recognition, language };
+  const { documents: docs, apostilles: apos, recognition: rec, language: lang } = resolveCostChoices(category, choices);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const input = useMemo(() => costInput(category, choices), [category, adults, children, documents, apostilles, recognition, language]);
+  const { data: est, isFetching } = useCostEstimate(input);
   // One "used the calculator" event per category the visitor looks at (lead scoring, consent only).
   useEffect(() => {
     if (category) trackLead('cost_calc');

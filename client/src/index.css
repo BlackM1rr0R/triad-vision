@@ -757,3 +757,106 @@ html.a11y-visual-alerts.a11y-flash::after {
     @apply rounded bg-surface px-1.5 py-0.5 text-[0.9em];
   }
 }
+
+/* ── View transitions (lib/viewTransition.ts) ─────────────────────────────────────────────────────────
+   Route changes cross-fade in ~200 ms; cards morph into the detail page's hero (shared view-transition-name).
+   Only started when motion is welcome, so these rules never run for reduced-motion users; the media query
+   below is a second guard. The fixed chrome (site header, admin sidebar / top bar, portal header) has its own
+   name, so it stays put instead of fading with the page. */
+@supports (view-transition-name: none) {
+  .page-in {
+    /* the view transition already fades the page in */
+    animation: none;
+  }
+  .vt-site-header { view-transition-name: site-header; }
+  .vt-admin-sidebar { view-transition-name: admin-sidebar; }
+  .vt-admin-topbar { view-transition-name: admin-topbar; }
+  .vt-portal-header { view-transition-name: portal-header; }
+}
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 180ms;
+  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+}
+::view-transition-group(*) {
+  animation-duration: 240ms;
+  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+}
+/* the chrome does not cross-fade (identical before and after, or it would flicker) */
+::view-transition-old(site-header),
+::view-transition-old(admin-sidebar),
+::view-transition-old(admin-topbar),
+::view-transition-old(portal-header) {
+  display: none;
+}
+::view-transition-new(site-header),
+::view-transition-new(admin-sidebar),
+::view-transition-new(admin-topbar),
+::view-transition-new(portal-header) {
+  animation: none;
+}
+/* morphing images keep their aspect while the box grows (no stretching); titles scale by their height */
+::view-transition-old(*.vt-media),
+::view-transition-new(*.vt-media) {
+  object-fit: cover;
+}
+::view-transition-old(*.vt-text),
+::view-transition-new(*.vt-text) {
+  width: auto;
+  height: 100%;
+  object-fit: fill;
+}
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+}
+
+/* ── Button feedback (components/ui/Button.tsx: Button, IconButton, buttonClass) ─────────────────────────
+   A quick press (scale 0.97) and, on mouse pointers, a 1px lift on hover. Transform only (compositor), no
+   change to colours or shape. Reduced motion / "Stop animations": none. */
+@media (prefers-reduced-motion: no-preference) {
+  .btn-press {
+    transition-property: color, background-color, border-color, box-shadow, opacity, filter, transform;
+    transition-duration: 200ms;
+    transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .btn-press:not(:disabled):active {
+    transform: scale(0.97);
+    transition-duration: 80ms;
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .btn-primary.btn-press:not(:disabled):hover,
+    .btn-danger.btn-press:not(:disabled):hover {
+      transform: translateY(-1px);
+    }
+    .btn-primary.btn-press:not(:disabled):active,
+    .btn-danger.btn-press:not(:disabled):active {
+      transform: translateY(0) scale(0.97);
+    }
+  }
+}
+html.a11y-nomotion .btn-press,
+html.a11y-nomotion .btn-press:active,
+html.a11y-nomotion .btn-press:hover {
+  transform: none !important;
+}
+
+/* ── Toasts (sonner) ────────────────────────────────────────────────────────────────────────────────────
+   Softer enter / exit curve and a small "pop" of the status icon (success / error / warning). Sonner already
+   switches its own motion off for prefers-reduced-motion; "Stop animations" removes these too (rule above). */
+[data-sonner-toaster] [data-sonner-toast] {
+  transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1) !important;
+}
+@media (prefers-reduced-motion: no-preference) {
+  [data-sonner-toast][data-mounted='true'] [data-icon] {
+    animation: toast-icon-pop 0.42s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  }
+}
+@keyframes toast-icon-pop {
+  0% { transform: scale(0.4); opacity: 0; }
+  60% { transform: scale(1.15); opacity: 1; }
+  100% { transform: scale(1); }
+}

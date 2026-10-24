@@ -11,7 +11,7 @@ export { Drawer, type DrawerProps, type DrawerWidth } from './Drawer';
 export { ConfirmDialog, type ConfirmDialogProps } from './ConfirmDialog';
 export { Badge, StatusPill, StatusDot, type BadgeProps, type StatusPillProps } from './Badge';
 export { EmptyState, type EmptyStateProps } from './EmptyState';
-export { Skeleton, SkeletonText, SkeletonBlock, SkeletonList, SkeletonRows } from './Skeleton';
+export { Skeleton, SkeletonText, SkeletonBlock, SkeletonList, SkeletonRows, SkeletonAvatar, SkeletonCard, SkeletonGrid, SkeletonStat, SkeletonStats, SkeletonTable, SkeletonHero } from './Skeleton';
 export { Field, Input, Select, Textarea, Checkbox, useFieldControl, type FieldProps, type InputProps, type SelectProps, type TextareaProps } from './Field';
 export { Card, CardHeader, type CardProps } from './Card';
 export { PageHeader, Breadcrumbs, Section, Toolbar, FilterBar, type PageHeaderProps, type Crumb } from './PageHeader';

@@ -8,6 +8,7 @@ import { api } from '@/lib/api';
 import { useL10n } from '@/lib/l10n';
 import { registerCopy } from '@/i18n';
 import { pagesPlacement } from '@/i18n/pagesPlacement';
+import { PanelBodySkeleton } from '@/components/admin/case/TabSkeleton';
 import { Spinner } from '@/components/ui/Spinner';
 import { Modal } from '@/components/admin/Modal';
 import { Panel } from '@/components/admin/ui';
@@ -279,7 +280,7 @@ export const CandidateEvaluations = ({ candidateId, hideEmpty = false }: { candi
   return (
     <Panel title={t('placement.evaluations.title')} icon={ClipboardCheck}>
       {isLoading || !data ? (
-        <Spinner className="size-5 text-brand-600" />
+        <PanelBodySkeleton rows={3} />
       ) : !data.items.length ? (
         <p className="text-sm text-muted">{t('placement.evaluations.empty')}</p>
       ) : (

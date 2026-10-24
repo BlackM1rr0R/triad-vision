@@ -1,7 +1,6 @@
 import { useEffect, useId, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { useQuery } from '@tanstack/react-query';
 import { BookOpen, CheckCircle2, Info, XCircle } from 'lucide-react';
 import clsx from 'clsx';
 import { PageHero } from '@/components/layout/PageHero';
@@ -9,32 +8,24 @@ import { PageCta } from '@/components/visa/PageCta';
 import { PathLink, useGuidePath } from '@/components/guides/shared';
 import { currentSiteLocale, registerCopy } from '@/i18n';
 import { pagesSeo } from '@/i18n/pagesSeo';
-import { api } from '@/lib/api';
+import { BLUE_CARD_GROUPS, checkBlueCard, euroFormat, useBlueCardThresholds, type BlueCardGroup as Group } from '@/lib/calculators/blueCard';
 import { usePageTitle } from '@/lib/usePageTitle';
 
 registerCopy(pagesSeo);
 
 const HERO = 'https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=2000&q=70';
 
-type Group = 'standard' | 'shortage' | 'newEntrant' | 'it';
-type Thresholds = Record<string, { standard: number; shortage: number }>;
-
-const NUMBER_LOCALE: Record<string, string> = { az: 'az-Latn-AZ', de: 'de-DE', en: 'en-GB', ru: 'ru-RU', tr: 'tr-TR', uk: 'uk-UA' };
-
 /**
  * EU Blue Card salary check (/blue-card-check). The thresholds come from the server (GET /api/seo/blue-card),
- * i.e. the admin-maintained values the case checks use; nothing is duplicated in the client.
+ * i.e. the admin-maintained values the case checks use; nothing is duplicated in the client. The check itself
+ * is shared with the compact calculator in the guides (lib/calculators/blueCard.ts).
  */
 export default function BlueCardCheck() {
   const { t } = useTranslation();
   usePageTitle(t('bcCheck.title'));
   const id = useId();
   const guidePath = useGuidePath('blue-card');
-  const { data } = useQuery({
-    queryKey: ['blue-card-thresholds'],
-    queryFn: async () => (await api.get<{ year: string; thresholds: Thresholds }>('/seo/blue-card')).data,
-    staleTime: 60 * 60_000,
-  });
+  const { data } = useBlueCardThresholds();
   const [salary, setSalary] = useState('52000');
   const [period, setPeriod] = useState<'year' | 'month'>('year');
   const [group, setGroup] = useState<Group>('standard');
@@ -45,14 +36,8 @@ export default function BlueCardCheck() {
     if (data?.year && !year) setYear(data.year);
   }, [data?.year, year]);
 
-  const fmt = useMemo(() => new Intl.NumberFormat(NUMBER_LOCALE[currentSiteLocale()] ?? 'en-GB', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }), [t]); // t changes with the language
-  const yearly = (Number(salary.replace(/\s/g, '').replace(',', '.')) || 0) * (period === 'month' ? 12 : 1);
-  const t0 = data && year ? data.thresholds[year] : null;
-  const threshold = t0 ? (group === 'standard' ? t0.standard : t0.shortage) : null;
-  const salaryOk = threshold != null && yearly >= threshold;
-  const degreeOk = group === 'it' || degree;
-  const ok = salaryOk && degreeOk && contract;
-  const diff = threshold != null ? Math.abs(yearly - threshold) : 0;
+  const fmt = useMemo(() => euroFormat(currentSiteLocale()), [t]); // t changes with the language
+  const { yearly, threshold, salaryOk, degreeOk, ok, diff } = checkBlueCard({ salary, period, group, degree, contract }, data?.thresholds, year);
   const years = data ? Object.keys(data.thresholds).sort() : [];
 
   return (
@@ -103,7 +88,7 @@ export default function BlueCardCheck() {
             <fieldset>
               <legend className="label">{t('bcCheck.group')}</legend>
               <div className="grid gap-2">
-                {(['standard', 'shortage', 'newEntrant', 'it'] as Group[]).map((g) => (
+                {BLUE_CARD_GROUPS.map((g) => (
                   <label
                     key={g}
                     className="flex cursor-pointer items-start gap-3 rounded-lg border border-line p-3 text-sm leading-snug hover:border-brand-400 has-[:checked]:border-brand-500 has-[:checked]:bg-brand-50"

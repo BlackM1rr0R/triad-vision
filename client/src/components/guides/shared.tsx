@@ -1,4 +1,4 @@
-import type { AnchorHTMLAttributes, MouseEvent } from 'react';
+import type { AnchorHTMLAttributes, MouseEvent, Ref } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { currentSiteLocale, type SiteLocale } from '@/i18n';
@@ -47,8 +47,9 @@ export const useGuidePath = (key: string) => {
 const plainClick = (e: MouseEvent) => e.button === 0 && !e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey;
 
 /** Link to a full site path from the API (keeps its own language prefix), navigating client-side. */
-export const PathLink = ({ path, ...rest }: { path: string } & AnchorHTMLAttributes<HTMLAnchorElement>) => (
+export const PathLink = ({ path, ref, ...rest }: { path: string; ref?: Ref<HTMLAnchorElement> } & AnchorHTMLAttributes<HTMLAnchorElement>) => (
   <a
+    ref={ref}
     href={path}
     {...rest}
     onClick={(e) => {
@@ -62,6 +63,8 @@ export const PathLink = ({ path, ...rest }: { path: string } & AnchorHTMLAttribu
 
 /** Click handler for server-rendered HTML: internal links navigate client-side, #anchors scroll. */
 export const onRichContentClick = (e: MouseEvent<HTMLElement>) => {
+  // Already handled (a router <Link> inside an embedded calculator).
+  if (e.defaultPrevented) return;
   const a = (e.target as HTMLElement).closest('a');
   const href = a?.getAttribute('href');
   if (!a || !href || a.target === '_blank' || !plainClick(e)) return;

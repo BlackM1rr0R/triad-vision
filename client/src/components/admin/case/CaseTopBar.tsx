@@ -20,6 +20,7 @@ import {
   StickyNote,
 } from 'lucide-react';
 import { useL10n } from '@/lib/l10n';
+import { useMorphTarget } from '@/lib/viewTransition';
 import type { CaseDetail } from '@/lib/types';
 import { CallButton } from '@/components/calls/CallButton';
 import { StatusPill } from '@/components/ui/Badge';
@@ -51,6 +52,7 @@ export const CaseTopBar = ({
   onEdit,
   onTemplate,
   onPackage,
+  presence,
 }: {
   c: CaseDetail;
   stats: CaseStats;
@@ -58,8 +60,12 @@ export const CaseTopBar = ({
   onEdit: () => void;
   onTemplate: () => void;
   onPackage: () => void;
+  /** Avatars of the other staff on this case (components/presence), left of the quick actions. */
+  presence?: React.ReactNode;
 }) => {
   const { t } = useTranslation();
+  // The case number morphs in from the cases list row (lib/viewTransition.ts, components/admin/caseMorph.ts).
+  const morph = useMorphTarget('case', c.id);
   const { tr } = useL10n();
   const relation = (c as CaseDetail & { relation?: string | null }).relation ?? null;
   const client = c.client;
@@ -105,7 +111,9 @@ export const CaseTopBar = ({
         </Link>
         <div className="min-w-0 flex-1">
           <div className="flex min-h-9 flex-wrap items-center gap-x-2 gap-y-1">
-            <h1 className="font-mono text-base font-bold text-ink sm:text-lg">{c.number}</h1>
+            <h1 className="font-mono text-base font-bold text-ink sm:text-lg" {...morph.part('title')}>
+              {c.number}
+            </h1>
             <StatusPill domain="case" status={c.status} label={statusLabel(c.status)} />
             <span className="hidden flex-wrap items-center gap-1.5 sm:inline-flex">
               <Suspense fallback={null}>
@@ -140,6 +148,7 @@ export const CaseTopBar = ({
           </p>
         </div>
         <div className="flex shrink-0 items-center gap-1.5">
+          {presence}
           {client.phone && <CallButton target={{ caseId: c.id }} phone={client.phone} name={name} compact className="min-h-9 px-2.5 sm:px-3" />}
           <Button variant="secondary" size="sm" icon={MessageSquare} onClick={() => goTo('case-messages', { focus: 'msg-body' })} className="hidden sm:inline-flex">
             {t('caseLayout.message')}

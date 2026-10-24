@@ -2,6 +2,7 @@ import { startTransition, useLayoutEffect, useState, type ReactNode } from 'reac
 import { Router, UNSAFE_createBrowserHistory, parsePath, type Navigator, type To } from 'react-router-dom';
 import i18n, { currentSiteLocale, setLocaleNavigator, setUiLanguage } from '@/i18n';
 import { isPrivatePath, splitLocalePath, withLocale, type SiteLocale } from './siteLocale';
+import { navigateWithTransition } from './viewTransition';
 
 /*
  * Router for language-prefixed URLs (see lib/siteLocale.ts).
@@ -79,7 +80,18 @@ export const navigateToUrl = (url: string, opts: { replace?: boolean } = {}) => 
 
 export const LocaleRouter = ({ children }: { children: ReactNode }) => {
   const [state, setState] = useState({ action: history.action, location: history.location });
-  useLayoutEffect(() => history.listen((next) => startTransition(() => setState({ action: next.action, location: next.location }))), []);
+  useLayoutEffect(() => {
+    let shownPath = history.location.pathname;
+    return history.listen((next) => {
+      const update = () => setState({ action: next.action, location: next.location });
+      // A new page (pathname change) cross-fades / morphs through the View Transitions API where supported
+      // and motion is welcome (lib/viewTransition.ts); query / hash changes (tabs, filters) stay instant.
+      const newPage = next.location.pathname !== shownPath;
+      shownPath = next.location.pathname;
+      if (newPage) navigateWithTransition(update, (u) => startTransition(u));
+      else startTransition(update);
+    });
+  }, []);
 
   const { lang, rest } = splitLocalePath(state.location.pathname);
   const isPublic = !isPrivatePath(rest);

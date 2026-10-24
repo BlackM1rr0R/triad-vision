@@ -3,6 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { BellOff, BellRing, CheckCircle2, CircleAlert } from 'lucide-react';
 import { api } from '@/lib/api';
+import { toast } from 'sonner';
 import { Spinner } from '@/components/ui/Spinner';
 import { ProfessionPicker, useAlertOptions } from '@/components/jobs/JobAlertForm';
 import { usePageTitle } from '@/lib/usePageTitle';
@@ -64,11 +65,18 @@ export default function JobAlertManage() {
     void run();
   }, [action, token, t]);
 
+  // Pause / resume is optimistic: the status flips at once, and flips back (with an error toast) on failure.
   const post = async (path: 'unsubscribe' | 'resume') => {
+    const before = alert;
     setBusy(true);
+    setAlert((a) => (a ? { ...a, unsubscribed: path === 'unsubscribe' } : a));
+    setNotice(path === 'unsubscribe' ? t('discover.alerts.manage.unsubscribed') : t('discover.alerts.confirmedTitle'));
     try {
       load((await api.post<{ alert: AlertView }>(`/job-alerts/${path}`, { token })).data.alert);
-      setNotice(path === 'unsubscribe' ? t('discover.alerts.manage.unsubscribed') : t('discover.alerts.confirmedTitle'));
+    } catch {
+      setAlert(before);
+      setNotice(null);
+      toast.error(t('discover.alerts.error'));
     } finally {
       setBusy(false);
     }

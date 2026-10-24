@@ -3,7 +3,8 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { AlertTriangle, RotateCw } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
-import { AppointmentWidget, DashboardSkeleton, LastMessageCard } from '@/components/portal/Dashboard';
+import { AppointmentWidget, LastMessageCard } from '@/components/portal/Dashboard';
+import { JourneyCard } from '@/components/portal/JourneyCard';
 import { StartCase } from '@/components/portal/StartCase';
 import { useHashScroll, useOverview } from '@/components/portal/useOverview';
 import { usePortalNav } from '@/components/portal/usePortalNav';
@@ -17,6 +18,7 @@ import { NextWhileYouWait } from '@/components/waitingRoom/NextWhileYouWait'; //
 import { NextStepCard } from './portal/NextStepCard';
 import { HomeProgress } from './portal/HomeProgress';
 import { caseHref } from './portal/useNextUp';
+import { AccountHomeSkeleton } from './portal/HomeSkeleton';
 
 registerCopy(pagesAccount);
 registerCopy(pagesPortalUx);
@@ -43,7 +45,7 @@ export default function AccountHome() {
     if (hash === '#cases') navigate('/account/cases', { replace: true });
   }, [hash, navigate]);
 
-  if (isLoading) return <DashboardSkeleton />;
+  if (isLoading) return <AccountHomeSkeleton />;
   if (isError || !data || next.isError) {
     return (
       <div className="card mx-auto max-w-lg p-8 text-center">
@@ -80,6 +82,9 @@ export default function AccountHome() {
       )}
 
       {step?.case && <HomeProgress next={step} stage={stage} detailsTo={caseId && activeCase ? caseHref(caseId, 'overview', '#forecast') : null} tour="portal-progress" />}
+
+      {/* Home city → German city with the six milestones (map on tablet / desktop, list on phones). */}
+      {step?.case && <JourneyCard next={step} />}
 
       {(lastMessage || appointmentAhead || waitingStage) && (
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3 [&>*]:min-w-0">

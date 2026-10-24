@@ -28,7 +28,7 @@ import {
 import { api, formatBytes } from '@/lib/api';
 import { useL10n } from '@/lib/l10n';
 import { usePageTitle } from '@/lib/usePageTitle';
-import { PageLoader } from '@/components/ui/Spinner';
+import { VaultSkeleton } from '@/components/portal/PortalSkeletons';
 import { ConfirmDialog } from '@/components/portal/ConfirmDialog';
 import { VAULT_KINDS, VAULT_QUERY, isImageMime, vaultFileUrl, type VaultDoc, type VaultKind } from '@/components/vault/api';
 import { ExpiryBadge } from '@/components/vault/ExpiryBadge';
@@ -173,7 +173,7 @@ export default function AccountVault() {
     else window.open(vaultFileUrl(d.id), '_blank', 'noopener');
   };
 
-  if (isLoading) return <PageLoader />;
+  if (isLoading) return <VaultSkeleton />;
   const documents = data?.documents ?? [];
   const groups = data?.groups ?? {};
   const kinds = VAULT_KINDS.filter((k) => groups[k]?.length);

@@ -12,6 +12,7 @@ export type WorkKind =
   | 'appointment'
   | 'sign_mine'
   | 'sign_waiting'
+  | 'countersign' // service contract waiting for the Triad Vision countersignature (pages/admin/Countersign)
   | 'task'
   | 'mail_triage'
   | 'mail_unread'
@@ -26,7 +27,9 @@ export type WorkKind =
   | 'client_task_overdue'
   | 'arrival_issue'
   | 'embassy_review'
-  | 'handover'; // absence handover with a note / open checklist (components/team)
+  | 'handover' // absence handover with a note / open checklist (components/team)
+  | 'recognition_deadline' // Anerkennung deadline (components/recognition)
+  | 'accelerated_deadline'; // § 81a deadline (components/recognition)
 export type WorkCategory = 'documents' | 'tasks' | 'mail' | 'signatures' | 'bookings' | 'leads' | 'other';
 export type WorkPriority = 'URGENT' | 'HIGH' | 'NORMAL';
 export type WorkBucket = 'overdue' | 'today' | 'week' | 'later';

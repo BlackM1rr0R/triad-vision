@@ -1,9 +1,12 @@
-import i18n from '@/i18n';
+import i18n, { registerCopy } from '@/i18n';
+import { pagesAccounting } from '@/i18n/pagesAccounting';
 import { errorCode } from '@/lib/api';
 import { errorMessage } from '@/components/admin/labels';
 import { TONE_CLASS } from '@/components/ui/status';
 
 /** Client billing (server lib/billing): shared types, money helpers and error text. */
+
+registerCopy(pagesAccounting); // currency labels (acct.currency.*) of the billing editors and the portal
 
 export type InvoiceStatus = 'DRAFT' | 'SENT' | 'PARTIALLY_PAID' | 'PAID' | 'OVERDUE' | 'CANCELLED';
 export const INVOICE_STATUSES: InvoiceStatus[] = ['DRAFT', 'SENT', 'PARTIALLY_PAID', 'OVERDUE', 'PAID', 'CANCELLED'];
@@ -85,13 +88,24 @@ export interface PaymentPlan {
   installments: Installment[];
 }
 
+export interface CurrencyTotals {
+  currency: string;
+  invoicedCents: number;
+  paidCents: number;
+  openCents: number;
+  overdueCents: number;
+  overdueCount: number;
+}
+/** Flat fields = the main currency (`currency`); `byCurrency` lists every currency — never added together. */
 export interface BillingTotals {
+  currency?: string;
   invoicedCents: number;
   paidCents: number;
   openCents: number;
   overdueCents: number;
   overdueCount: number;
   draftCount: number;
+  byCurrency?: CurrencyTotals[];
 }
 
 export interface CaseBilling {
@@ -125,6 +139,12 @@ export interface BillingSettingsResponse {
   legalMissing: string[];
   bank: { accountHolder: string; iban: string; bic: string; bank: string };
   templates: PlanTemplate[];
+  currencies?: Currency[];
+  defaultCurrency?: Currency;
+  /** Issuing entity per currency: DE (German company) or AZ (Baku office). */
+  entityByCurrency?: Partial<Record<Currency, 'DE' | 'AZ'>>;
+  /** VAT rate a new invoice gets per currency (the issuing entity's rules). */
+  vatRateByCurrency?: Partial<Record<Currency, number>>;
 }
 
 /** Case statuses a CASE_STATUS trigger can name, in workflow order. */
@@ -138,15 +158,39 @@ export const triggerLabel = (trigger: string | null | undefined) => {
   return i18n.t('bill.trigger.CASE_STATUS', { status: i18n.t(`bill.caseStatus.${status}`, { defaultValue: status }) });
 };
 
-const eur = new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' });
-export const fmtEur = (cents: number) => eur.format(cents / 100);
-const eurWhole = new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 });
-/** Whole euros for stat tiles. */
-export const fmtEurShort = (cents: number) => eurWhole.format(Math.round(cents / 100));
+/** Document currencies (server lib/billing/currency.ts): amounts are minor units (cent / qəpik / kuruş). */
+export type Currency = 'EUR' | 'AZN' | 'TRY';
+export const CURRENCIES: Currency[] = ['EUR', 'AZN', 'TRY'];
+const LOCALE_TAG: Record<string, string> = { az: 'az-Latn-AZ', de: 'de-DE', en: 'en-GB', ru: 'ru-RU', tr: 'tr-TR', uk: 'uk-UA' };
+const fmtCache = new Map<string, Intl.NumberFormat>();
+const formatter = (currency: string, whole: boolean) => {
+  const tag = LOCALE_TAG[i18n.language] ?? 'de-DE';
+  const key = `${tag}|${currency}|${whole}`;
+  let f = fmtCache.get(key);
+  if (!f) {
+    try {
+      // narrowSymbol: ₼ / ₺ / € instead of "AZN" / "TRY" in locales without a local symbol.
+      f = new Intl.NumberFormat(tag, { style: 'currency', currency, currencyDisplay: 'narrowSymbol', ...(whole ? { maximumFractionDigits: 0 } : {}) });
+    } catch {
+      f = new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR', ...(whole ? { maximumFractionDigits: 0 } : {}) });
+    }
+    fmtCache.set(key, f);
+  }
+  return f;
+};
+/** Minor units → money in the UI language's number format with the currency symbol (₼ AZN, ₺ TRY, € EUR). */
+export const fmtMoney = (cents: number, currency: string | null | undefined = 'EUR') => formatter(currency || 'EUR', false).format(cents / 100);
+/** Kept for the existing call sites: EUR unless a currency is given. */
+export const fmtEur = (cents: number, currency: string | null | undefined = 'EUR') => fmtMoney(cents, currency);
+/** "₼ 390 open · ₼ 590 invoiced" for each currency other than the main one (totals are never added up). */
+export const otherCurrencies = (totals: Pick<BillingTotals, 'currency' | 'byCurrency'> | undefined) =>
+  (totals?.byCurrency ?? []).filter((c) => c.currency !== (totals?.currency ?? 'EUR'));
+/** Whole units for stat tiles. */
+export const fmtEurShort = (cents: number, currency: string | null | undefined = 'EUR') => formatter(currency || 'EUR', true).format(Math.round(cents / 100));
 
 /** "1.234,56" / "1234.56" / "1234,5" → cents (NaN when not a number). */
 export const parseEuro = (s: string) => {
-  const raw = s.replace(/[\s€]/g, '');
+  const raw = s.replace(/[\s€₼₺]/g, '');
   if (!raw) return NaN;
   const normalised = raw.includes(',') ? raw.replace(/\./g, '').replace(',', '.') : raw;
   if (!/^-?\d+(\.\d{0,2})?$/.test(normalised)) return NaN;

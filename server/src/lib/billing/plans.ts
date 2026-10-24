@@ -4,7 +4,9 @@ import { prisma } from '../../db.js';
 import { badRequest, conflict, notFound, parse } from '../http.js';
 import { firesOnStatus, isValidTrigger, parseTrigger, splitByPercent } from './math.js';
 import { createAndSendInvoice, refreshPlanStatus, todayIso } from './service.js';
-import { effectiveVatRate, getClientBillingSettings } from './settings.js';
+import { effectiveVatRate, loadBillingContext } from './settings.js';
+import { currencySchema } from './currency.js';
+import { getBillingEntities } from './entities.js';
 
 /**
  * Payment plans: a total split into instalments, each with a trigger —
@@ -76,6 +78,8 @@ export const planInput = z.object({
   caseId: z.string().trim().max(40).optional().nullable(),
   title: z.string().trim().min(2).max(200),
   installments: z.array(installmentInput).min(1).max(24),
+  /** Currency of the plan and of every instalment invoice (default: the billing default currency). */
+  currency: currencySchema.optional(),
 });
 
 /**
@@ -125,9 +129,10 @@ export const createPlan = async (input: z.input<typeof planInput>, actorId: stri
     if (!c || c.clientId !== body.clientId) throw badRequest('CASE_NOT_OF_CLIENT');
   }
   const total = body.installments.reduce((a, i) => a + i.amountCents, 0);
+  const currency = body.currency ?? (await getBillingEntities()).defaultCurrency;
   const plan = await prisma.$transaction(async (tx) => {
     const p = await tx.paymentPlan.create({
-      data: { clientId: body.clientId, caseId: body.caseId ?? null, title: body.title, totalCents: total, orderId: opts.orderId ?? null, createdById: actorId },
+      data: { clientId: body.clientId, caseId: body.caseId ?? null, title: body.title, totalCents: total, currency, orderId: opts.orderId ?? null, createdById: actorId },
     });
     await tx.paymentInstallment.createMany({
       data: body.installments.map((i, k) => ({ planId: p.id, seq: k + 1, label: i.label, trigger: i.trigger, dueDate: i.dueDate ? atNoon(i.dueDate) : null, amountCents: i.amountCents })),
@@ -168,11 +173,12 @@ export const invoiceInstallment = async (installmentId: string, actorId: string 
   const claimed = await prisma.paymentInstallment.updateMany({ where: { id: inst.id, status: 'PENDING', invoiceId: null }, data: { status: 'INVOICED' } });
   if (!claimed.count) return null;
   try {
-    const settings = await getClientBillingSettings();
+    // VAT of the entity that issues documents in the plan's currency (billing/entities.ts).
+    const { billing } = await loadBillingContext({ currency: plan.currency });
     const count = await prisma.paymentInstallment.count({ where: { planId: plan.id, status: { not: 'CANCELLED' } } });
-    const unit = netForGross(inst.amountCents, effectiveVatRate(settings));
+    const unit = netForGross(inst.amountCents, effectiveVatRate(billing));
     const inv = await createAndSendInvoice(
-      { clientId: plan.clientId, caseId: plan.caseId, issueDate: todayIso(), items: [{ description: lineFor(inst, plan, count), quantity: 1, unitPriceCents: unit, category: 'SERVICE_FEE' }] },
+      { clientId: plan.clientId, caseId: plan.caseId, issueDate: todayIso(), currency: currencySchema.catch('EUR').parse(plan.currency), items: [{ description: lineFor(inst, plan, count), quantity: 1, unitPriceCents: unit, category: 'SERVICE_FEE' }] },
       actorId,
       { planId: plan.id, installmentId: inst.id, orderId: plan.orderId ?? undefined },
     );

@@ -1,4 +1,5 @@
 import type { CaseStatus, L10n } from '@/lib/types';
+import type { EmployerAccelerated } from '@/components/recognition/api';
 
 /** Shapes of /api/company/workers (lib/employerWorkers/panel.ts on the server). */
 
@@ -8,11 +9,12 @@ export const PHASES: Phase[] = ['IN_PROCESS', 'TRAVELLING', 'WORKING', 'LEFT', '
 export type DateWarn = 'OK' | 'WARN' | 'CRITICAL' | 'EXPIRED';
 export type CheckInState = 'OK' | 'ISSUE' | 'RESOLVED' | 'OVERDUE' | 'PENDING';
 export type RiskLevel = 'LOW' | 'MEDIUM' | 'HIGH';
-export type NextAction = 'SIGN_DOCUMENT' | 'COMPLETE_FORM' | 'ANSWER_CHECKIN' | 'PREPARE_ARRIVAL' | 'PROBATION_REVIEW' | 'CONFIRM_EMPLOYMENT' | 'TALK_TO_MANAGER' | 'NONE';
+export type NextAction = 'SIGN_DOCUMENT' | 'COMPLETE_FORM' | 'ACCELERATED_STEP' | 'ANSWER_CHECKIN' | 'PREPARE_ARRIVAL' | 'PROBATION_REVIEW' | 'CONFIRM_EMPLOYMENT' | 'TALK_TO_MANAGER' | 'NONE';
 export type MilestoneCode = 'CONTRACT' | 'EMBASSY' | 'APPOINTMENT' | 'DECISION' | 'ARRIVAL' | 'PROBATION_END' | 'TITLE_EXPIRY' | 'CHECKIN';
 
 export interface OpenItem {
-  kind: 'SIGNATURE' | 'FORM' | 'CHECKIN';
+  /** ACCELERATED: § 81a step of the employer; id = `<caseId>:<SIGN_AGREEMENT | PAY_FEE>`. */
+  kind: 'SIGNATURE' | 'FORM' | 'CHECKIN' | 'ACCELERATED';
   id: string;
   title: string;
   link: string | null;
@@ -71,6 +73,8 @@ export interface WorkerDetail {
   documents: { kind: 'SIGNATURE' | 'FORM'; id: string; title: string; status: string; isContract: boolean; date: string | null; signLink: string | null; downloadable: boolean }[];
   checkIns: { id: string; audience: 'EMPLOYER' | 'WORKER'; offsetDays: number; dueAt: string; state: CheckInState | null; answeredAt: string | null; topics: string[]; comment: string | null; link: string | null }[];
   contact: { manager: { name: string; email: string } | null; office: { phone: string | null; email: string | null } };
+  /** § 81a accelerated procedure (components/recognition/EmployerAcceleratedBlock), null when none runs. */
+  accelerated?: EmployerAccelerated | null;
 }
 
 export const plannedArrival = (w: Pick<WorkerRow, 'arrival'>) => w.arrival?.arrivalTime ?? w.arrival?.flightDate ?? null;

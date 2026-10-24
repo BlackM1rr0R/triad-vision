@@ -7,7 +7,7 @@ import { PageHero } from '@/components/layout/PageHero';
 import { Reveal, Stagger, StaggerItem } from '@/components/motion';
 import { SectionHeading } from '@/components/ui/SectionHeading';
 import { ServiceCard } from '@/components/cards';
-import { PageLoader } from '@/components/ui/Spinner';
+import { SkeletonGrid } from '@/components/ui/Skeleton';
 import { ServiceMatrix } from '@/components/services/ServiceMatrix';
 import { JourneyFlow } from '@/components/services/JourneyFlow';
 import { PageCta } from '@/components/visa/PageCta';
@@ -68,7 +68,7 @@ export default function Services() {
             }
           />
           {isLoading ? (
-            <PageLoader />
+            <SkeletonGrid count={8} lines={3} footer className="grid-cards sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" />
           ) : (
             <Stagger key={filter} className="grid-cards sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {items.map((s) => (

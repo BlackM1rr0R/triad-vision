@@ -554,7 +554,7 @@ describe('reminders and expiry job', () => {
     const t0 = lastToken('slow@test.local');
     const invitedAt = (await prisma.signatureSigner.findUniqueOrThrow({ where: { id: r.signers[0].id } })).invitedAt!;
 
-    expect(await runSignatureJobs(new Date(invitedAt.getTime() + 2 * DAY))).toEqual({ expired: 0, reminded: 0, completed: 0 });
+    expect(await runSignatureJobs(new Date(invitedAt.getTime() + 2 * DAY))).toEqual({ expired: 0, reminded: 0, completed: 0, countersignReminded: 0 });
     expect((await runSignatureJobs(new Date(invitedAt.getTime() + 3 * DAY + 60_000))).reminded).toBe(1);
     expect((await runSignatureJobs(new Date(invitedAt.getTime() + 3 * DAY + 120_000))).reminded).toBe(0);
     await settle();

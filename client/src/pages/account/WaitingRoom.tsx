@@ -26,6 +26,7 @@ import {
   Trophy,
 } from 'lucide-react';
 import { api } from '@/lib/api';
+import { optimistic } from '@/lib/optimistic';
 import { useL10n } from '@/lib/l10n';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { registerCopy } from '@/i18n';
@@ -223,17 +224,31 @@ const ItemCard = ({ item, open, onToggle }: { item: WrItem; open: boolean; onTog
   const { tr } = useL10n();
   const onError = useApiError();
   const patch = usePatchCache();
+  const qc = useQueryClient();
   const done = !!item.progress?.completedAt;
   const Icon = KIND_ICON[item.kind];
   const body = tr(item.body);
 
+  // Optimistic: the item shows as done (and the stats move) at once; the server's numbers replace the
+  // estimate on success, a failure restores the previous state and shows the error.
   const complete = useMutation({
     mutationFn: async () => (await api.post<{ progress: WrProgress; stats: WrStats }>(`/waiting-room/${item.id}/complete`)).data,
+    ...optimistic<WrResponse, void>(qc, {
+      key: WR_KEY,
+      update: (old) => {
+        if (!old || done) return old;
+        const completed = Math.min(old.stats.total, old.stats.completed + 1);
+        const stats = { ...old.stats, completed, points: old.stats.points + 10, percent: old.stats.total ? Math.round((completed / old.stats.total) * 100) : old.stats.percent };
+        const items = old.items.map((i) => (i.id === item.id ? { ...i, progress: { completedAt: new Date().toISOString(), score: i.progress?.score ?? null } } : i));
+        return { ...old, items, stats, nextId: items.find((i) => !i.progress?.completedAt)?.id ?? null };
+      },
+      onError,
+      keepOnSuccess: true,
+    }),
     onSuccess: (r) => {
-      if (!done) toast.success(t('waitingRoom.completedToast', { points: 10 }));
+      toast.success(t('waitingRoom.completedToast', { points: 10 }));
       patch(item.id, r.progress, r.stats);
     },
-    onError,
   });
 
   return (
@@ -277,7 +292,7 @@ const ItemCard = ({ item, open, onToggle }: { item: WrItem; open: boolean; onTog
           {item.kind === 'EXERCISE' ? (
             <Exercise item={item} onGraded={(g) => patch(item.id, g.progress, g.stats)} />
           ) : (
-            <Button size="sm" variant={done ? 'secondary' : 'primary'} icon={CheckCircle2} onClick={() => complete.mutate()} loading={complete.isPending} disabled={done}>
+            <Button size="sm" variant={done ? 'secondary' : 'primary'} icon={CheckCircle2} onClick={() => complete.mutate()} disabled={done || complete.isPending}>
               {done ? t('waitingRoom.done') : t('waitingRoom.markDone')}
             </Button>
           )}

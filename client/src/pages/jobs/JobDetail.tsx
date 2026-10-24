@@ -30,9 +30,10 @@ import { usePageTitle } from '@/lib/usePageTitle';
 import { isStaffRole } from '@/lib/types';
 import { registerCopy } from '@/i18n';
 import { pagesJobs } from '@/i18n/pagesJobs';
-import { PageHero } from '@/components/layout/PageHero';
+import { PageHero, PageHeroSkeleton } from '@/components/layout/PageHero';
 import { SalaryEstimate } from '@/components/tools/SalaryEstimate';
 import { Spinner } from '@/components/ui/Spinner';
+import { Skeleton, SkeletonText } from '@/components/ui/Skeleton';
 import { fmtDate } from '@/components/admin/labels';
 import { GapList, ScoreRing } from '@/components/jobs/MatchMeter';
 import { jobsError, useJobLabels } from '@/components/jobs/labels';
@@ -193,6 +194,57 @@ const ApplyBox = ({ v }: { v: PublicVacancy }) => {
   );
 };
 
+/**
+ * Loading state in the final layout: the hero (with the title already known from the board's cached list, so
+ * the clicked card can morph into it) and placeholders for the description and the side column.
+ */
+const JobDetailSkeleton = ({ slug }: { slug: string }) => {
+  const { t } = useTranslation();
+  const { tr } = useL10n();
+  const qc = useQueryClient();
+  const cached = qc
+    .getQueriesData<{ items: PublicVacancy[] }>({ queryKey: ['jobs'] })
+    .flatMap(([, d]) => d?.items ?? [])
+    .find((x) => x.slug === slug);
+  return (
+    <>
+      {cached ? (
+        <PageHero title={tr(cached.title)} image={HERO} crumb={{ to: '/jobs', label: t('nav.jobs') }} morph={{ kind: 'job', id: slug }} />
+      ) : (
+        <PageHeroSkeleton />
+      )}
+      <section className="section-sm bg-surface" role="status" aria-label={t('ui.loading')}>
+        <div className="container-x grid gap-6 lg:grid-cols-[minmax(0,1fr)_23rem] lg:gap-10">
+          <div className="min-w-0 space-y-6">
+            <Skeleton className="h-4 w-24" />
+            <div className="card card-pad space-y-4">
+              <Skeleton className="h-5 w-40" />
+              <SkeletonText lines={5} />
+            </div>
+            <div className="grid gap-6 md:grid-cols-2">
+              <div className="card card-pad space-y-3">
+                <Skeleton className="h-5 w-32" />
+                <SkeletonText lines={3} />
+              </div>
+              <div className="card card-pad space-y-3">
+                <Skeleton className="h-5 w-32" />
+                <SkeletonText lines={3} />
+              </div>
+            </div>
+          </div>
+          <div className="space-y-6">
+            <div className="card card-pad space-y-3">
+              <Skeleton className="h-5 w-1/2" />
+              <SkeletonText lines={4} />
+              <Skeleton className="h-11 w-full" />
+            </div>
+          </div>
+        </div>
+      </section>
+    </>
+  );
+};
+
 export default function JobDetail() {
   const { slug = '' } = useParams();
   const { t } = useTranslation();
@@ -205,13 +257,7 @@ export default function JobDetail() {
   });
   usePageTitle(data ? tr(data.title) : t('jobsArea.board.title'));
 
-  if (isLoading) {
-    return (
-      <div className="grid min-h-[70vh] place-items-center">
-        <Spinner className="size-8 text-brand-600" />
-      </div>
-    );
-  }
+  if (isLoading) return <JobDetailSkeleton slug={slug} />;
   if (error || !data) {
     return (
       <section className="flex min-h-[80vh] items-center bg-surface pt-28">
@@ -239,7 +285,7 @@ export default function JobDetail() {
 
   return (
     <>
-      <PageHero title={tr(v.title)} image={HERO} crumb={{ to: '/jobs', label: t('nav.jobs') }}>
+      <PageHero title={tr(v.title)} image={HERO} crumb={{ to: '/jobs', label: t('nav.jobs') }} morph={{ kind: 'job', id: v.slug }}>
         <div className="mt-5 flex flex-wrap gap-2 text-sm">
           <span className="glass inline-flex items-center gap-1.5 rounded-full px-3 py-1.5">
             <Building2 className="size-4 text-brand-400" aria-hidden /> {v.companyName ?? t('jobsArea.common.confidentialEmployer')}

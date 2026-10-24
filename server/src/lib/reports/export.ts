@@ -4,6 +4,7 @@ import { bakuDay } from './dates.js';
 import { NO, NONE_LABEL, YES } from './labels.js';
 import type { OutColumn, ReportResult } from './engine.js';
 import { L, type Lang } from './types.js';
+import { csvSafe } from '../csvSafe.js';
 
 /**
  * Report exports: Excel (exceljs: styled frozen header, autofilter, auto-fit widths, number / money / date
@@ -97,7 +98,10 @@ export const buildXlsx = async (r: ReportResult, title: string, lang: Lang): Pro
   return Buffer.from(await wb.xlsx.writeBuffer());
 };
 
-const csvCell = (s: string) => (/[";\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s);
+const csvCell = (raw: string) => {
+  const s = csvSafe(raw); // report cells carry client / company input: no spreadsheet formulas
+  return /[";\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+};
 
 export const buildCsv = (r: ReportResult, lang: Lang): Buffer => {
   const lines = [r.columns.map((c) => csvCell(label(c, lang))).join(';')];

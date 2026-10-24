@@ -322,7 +322,7 @@ export default function AdminAnalytics() {
           </div>
 
           <Panel title={t('growth.analytics.series')} icon={LineIcon}>
-            <LineChart points={points} series={series} hidden={hidden} onToggle={toggle} xLabel={xLabel} xTitle={xTitle} ariaLabel={t('growth.analytics.seriesAria')} emptyText={t('growth.analytics.empty')} />
+            <LineChart points={points} series={series} hidden={hidden} onToggle={toggle} xLabel={xLabel} xTitle={xTitle} ariaLabel={t('growth.analytics.seriesAria')} emptyText={t('growth.analytics.empty')} area />
           </Panel>
 
           <div className="grid gap-6 lg:grid-cols-2">

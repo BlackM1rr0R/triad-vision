@@ -1,21 +1,29 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode, type RefObject } from 'react';
 import {
-  animate,
   motion,
-  useInView,
   useMotionTemplate,
   useMotionValue,
   useReducedMotion,
+  useReducedMotionConfig,
+  useScroll,
   useSpring,
   useTransform,
   type Variants,
 } from 'framer-motion';
 import clsx from 'clsx';
+import { AnimatedNumber } from '../ui/AnimatedNumber';
 
 /** True on devices with a precise hover pointer (mouse/trackpad). Touch screens never see tilt effects. */
 const finePointer = typeof window !== 'undefined' && window.matchMedia('(hover: hover) and (pointer: fine)').matches;
 
 const EASE = [0.22, 1, 0.36, 1] as const;
+
+/**
+ * False when motion should be reduced: the OS setting or "Stop animations" in the accessibility widget
+ * (both reach framer-motion through <MotionConfig> in main.tsx). Scroll-linked styles (parallax, scroll
+ * progress fills) are motion values, which MotionConfig does NOT tame, so they check this themselves.
+ */
+export const useMotionOK = () => !useReducedMotionConfig();
 
 /** Fades/slides children in when they scroll into view. */
 export const Reveal = ({
@@ -101,27 +109,13 @@ export const SplitText = ({
   );
 };
 
-/** Number that counts up once it scrolls into view. Writes to the DOM directly instead of re-rendering per frame. */
-export const Counter = ({ to, prefix = '', suffix = '', className }: { to: number; prefix?: string; suffix?: string; className?: string }) => {
-  const ref = useRef<HTMLSpanElement>(null);
-  const inView = useInView(ref, { once: true, margin: '-40px' });
-  useEffect(() => {
-    if (!inView) return;
-    const controls = animate(0, to, {
-      duration: 2.2,
-      ease: EASE,
-      onUpdate: (v) => {
-        if (ref.current) ref.current.textContent = `${prefix}${Math.round(v)}${suffix}`;
-      },
-    });
-    return () => controls.stop();
-  }, [inView, to, prefix, suffix]);
-  return (
-    <span ref={ref} className={className}>
-      {prefix}0{suffix}
-    </span>
-  );
-};
+/**
+ * Number that counts up once it scrolls into view (public stats). Same component as the app's KPI numbers
+ * (components/ui/AnimatedNumber): DOM writes per frame, final value for screen readers and reduced motion.
+ */
+export const Counter = ({ to, prefix = '', suffix = '', className }: { to: number; prefix?: string; suffix?: string; className?: string }) => (
+  <AnimatedNumber value={to} prefix={prefix} suffix={suffix} duration={2200} format={(n) => `${prefix}${Math.round(n)}${suffix}`} className={className} />
+);
 
 /** Card that tilts in 3D towards the cursor, with a moving glare. Plain wrapper on touch devices. */
 export const TiltCard = ({ children, className, max = 10 }: { children: ReactNode; className?: string; max?: number }) => {
@@ -224,3 +218,35 @@ export const Marquee = ({ children, reverse = false, className }: { children: Re
     </div>
   </div>
 );
+
+/**
+ * A progress line that fills as its `target` scrolls through the viewport ("how it works" timelines).
+ * Scroll-linked scaleX / scaleY only (compositor); full and static when motion is reduced.
+ * Place it inside the (position: relative) timeline container; it is decorative (aria-hidden).
+ */
+export const ScrollFillLine = ({
+  target,
+  className,
+  vertical = false,
+  fillClassName,
+}: {
+  target: RefObject<HTMLElement | null>;
+  className?: string;
+  vertical?: boolean;
+  fillClassName?: string;
+}) => {
+  const { scrollYProgress } = useScroll({ target, offset: ['start 75%', 'end 55%'] });
+  const progress = useSpring(scrollYProgress, { stiffness: 120, damping: 30 });
+  const fill = useMotionOK() ? progress : 1;
+  return (
+    <div aria-hidden className={clsx('pointer-events-none absolute', vertical ? 'w-[2px]' : 'h-[2px]', 'bg-white/10', className)}>
+      <motion.div
+        style={vertical ? { scaleY: fill } : { scaleX: fill }}
+        className={clsx(
+          vertical ? 'h-full origin-top bg-gradient-to-b' : 'h-full origin-left bg-gradient-to-r',
+          fillClassName ?? 'from-az-blue via-brand-500 to-de-gold',
+        )}
+      />
+    </div>
+  );
+};

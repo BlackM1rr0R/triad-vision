@@ -1,6 +1,7 @@
 import { Prisma, type Contact, type Role } from '@prisma/client';
 import { prisma } from '../../db.js';
 import { hasMinRole } from '../../middleware/auth.js';
+import { csvSafe, csvUnsafe } from '../csvSafe.js';
 
 /** Shared address book: visibility, response shape, search and the hand-written CSV codec. */
 
@@ -238,7 +239,7 @@ export const csvToRecords = (text: string): { records: CsvRecord[]; columns: Csv
   for (const cells of rows.slice(1)) {
     const rec: Partial<Record<CsvColumn, string>> = {};
     header.forEach((col, i) => {
-      if (col && cells[i] !== undefined && !rec[col]) rec[col] = cells[i].trim();
+      if (col && cells[i] !== undefined && !rec[col]) rec[col] = csvUnsafe(cells[i].trim());
     });
     let firstName = trim(rec.firstName, 80);
     let lastName = trim(rec.lastName, 80);
@@ -266,7 +267,7 @@ export const csvToRecords = (text: string): { records: CsvRecord[]; columns: Csv
 };
 
 const csvCell = (v: string | null | undefined) => {
-  const s = v ?? '';
+  const s = csvSafe(v ?? ''); // no spreadsheet formulas (CSV injection)
   return /[",\r\n;]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
 };
 

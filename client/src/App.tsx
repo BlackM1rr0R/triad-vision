@@ -80,6 +80,8 @@ const PackageOrderStatus = lazy(() => import('./pages/PackageOrderStatus'));
 const AccountPayments = lazy(() => import('./pages/account/Payments')); // Documents › Payments
 const AdminClientInvoices = lazy(() => import('./pages/admin/ClientInvoices'));
 const AdminPackages = lazy(() => import('./pages/admin/Packages'));
+const AdminAccounting = lazy(() => import('./pages/admin/Accounting'));
+const AdminCountersign = lazy(() => import('./pages/admin/Countersign'));
 const SharePage = lazy(() => import('./pages/SharePage'));
 const CandidateSharePage = lazy(() => import('./pages/CandidateSharePage')); // employer share link of a candidate
 const AccountSignatures = lazy(() => import('./pages/account/Signatures'));
@@ -149,6 +151,8 @@ const BlueCardCheck = lazy(() => import('./pages/tools/BlueCardCheck'));
 const AdminGuides = lazy(() => import('./pages/admin/Guides'));
 const AdminArrivals = lazy(() => import('./pages/admin/Arrivals'));
 const AdminExpiring = lazy(() => import('./pages/admin/Expiring'));
+const AdminRecognition = lazy(() => import('./pages/admin/Recognition')); // Anerkennung procedures
+const AdminAccelerated = lazy(() => import('./pages/admin/Accelerated')); // § 81a accelerated procedures
 const AdminOriginals = lazy(() => import('./pages/admin/Originals'));
 const AdminDuplicates = lazy(() => import('./pages/admin/Duplicates'));
 const AdminHistory = lazy(() => import('./pages/admin/History')); // field-level change history + revert
@@ -644,6 +648,22 @@ export default function App() {
                 </RequireAuth>
               }
             />
+            <Route
+              path="accounting"
+              element={
+                <RequireAuth roles={['ADMIN', 'SUPER_ADMIN']}>
+                  <AdminAccounting />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="countersign"
+              element={
+                <RequireAuth roles={['ADMIN', 'SUPER_ADMIN']}>
+                  <AdminCountersign />
+                </RequireAuth>
+              }
+            />
             <Route path="reviews" element={<AdminReviews />} />
             <Route path="analytics" element={<AdminAnalytics />} />
             <Route path="messaging" element={<AdminMessaging />} />
@@ -654,6 +674,8 @@ export default function App() {
             <Route path="announcements" element={<AdminAnnouncements />} />
             <Route path="arrivals/*" element={<AdminArrivals />} />
             <Route path="expiring" element={<AdminExpiring />} />
+            <Route path="recognition" element={<AdminRecognition />} />
+            <Route path="accelerated" element={<AdminAccelerated />} />
             <Route path="originals" element={<AdminOriginals />} />
             <Route
               path="duplicates"

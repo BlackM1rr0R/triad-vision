@@ -107,9 +107,9 @@ const List = ({ onEdit }: { onEdit: (i: ClientInvoice) => void }) => {
     <>
       {totals && (
         <div className="mb-6 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
-          <StatTile label={t('bill.admin.tiles.open')} value={fmtEurShort(totals.openCents)} hint={t('bill.admin.countHint', { count: totals.count })} icon={Euro} />
-          <StatTile label={t('bill.admin.tiles.overdue')} value={fmtEurShort(totals.overdueCents)} hint={t('bill.admin.countHint', { count: totals.overdueCount })} icon={AlertTriangle} tone={totals.overdueCount ? 'danger' : undefined} />
-          <StatTile label={t('bill.admin.tiles.paid')} value={fmtEurShort(totals.paidCents)} icon={CheckCircle2} tone="good" />
+          <StatTile label={t('bill.admin.tiles.open')} value={fmtEurShort(totals.openCents, totals.currency)} hint={t('bill.admin.countHint', { count: totals.count })} icon={Euro} />
+          <StatTile label={t('bill.admin.tiles.overdue')} value={fmtEurShort(totals.overdueCents, totals.currency)} hint={t('bill.admin.countHint', { count: totals.overdueCount })} icon={AlertTriangle} tone={totals.overdueCount ? 'danger' : undefined} />
+          <StatTile label={t('bill.admin.tiles.paid')} value={fmtEurShort(totals.paidCents, totals.currency)} icon={CheckCircle2} tone="good" />
           <StatTile label={t('bill.admin.tiles.drafts')} value={totals.draftCount} icon={FileText} />
         </div>
       )}
@@ -186,8 +186,8 @@ const List = ({ onEdit }: { onEdit: (i: ClientInvoice) => void }) => {
                     <span className="md:hidden">→ </span>
                     {fmtDate(inv.dueDate)}
                   </td>
-                  <td className="ml-auto font-semibold text-navy-900 tabular-nums md:ml-0 md:px-4 md:py-3 md:text-right">{fmtEur(inv.grossCents)}</td>
-                  <td className="text-xs tabular-nums md:px-4 md:py-3 md:text-right md:text-sm">{inv.openCents ? fmtEur(inv.openCents) : '—'}</td>
+                  <td className="ml-auto font-semibold text-navy-900 tabular-nums md:ml-0 md:px-4 md:py-3 md:text-right">{fmtEur(inv.grossCents, inv.currency)}</td>
+                  <td className="text-xs tabular-nums md:px-4 md:py-3 md:text-right md:text-sm">{inv.openCents ? fmtEur(inv.openCents, inv.currency) : '—'}</td>
                   <td className="md:px-4 md:py-3">
                     <span className={clsx('badge', STATUS_BADGE[inv.status])}>{t(`bill.status.${inv.status}`)}</span>
                   </td>

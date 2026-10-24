@@ -24,7 +24,7 @@ import {
   UserRound,
   type LucideIcon,
 } from 'lucide-react';
-import { Magnetic, Marquee, Reveal, Stagger, StaggerItem, TiltCard } from '../motion';
+import { Magnetic, Marquee, Reveal, Stagger, StaggerItem, TiltCard, useMotionOK } from '../motion';
 import { SectionHeading } from '../ui/SectionHeading';
 import { DetailModal } from '../ui/DetailModal';
 import { FaqList, PartnerLogo, PostCard, ServiceCard, TestimonialCard, VisaCard, VisaSticker } from '../cards';
@@ -33,12 +33,22 @@ import { sized, srcSet } from '@/lib/img';
 const ELIGIBILITY_IMG = 'https://images.unsplash.com/photo-1576765608535-5f04d1e3f289?auto=format&fit=crop&w=1200&q=70';
 const CTA_IMG = 'https://images.unsplash.com/photo-1521791136064-7986c2920216?auto=format&fit=crop&w=1600&q=70';
 import { useSiteContent } from '@/lib/content';
+import { SkeletonCard } from '../ui/Skeleton';
 import { setAudience } from '@/lib/audience';
 
 const ViewAll = ({ to, label }: { to: string; label: string }) => (
   <Link to={to} className="btn-ghost group w-full whitespace-nowrap sm:w-auto">
     {label} <ArrowRight className="size-4 transition group-hover:translate-x-1" />
   </Link>
+);
+
+/** Card placeholders in the same rail / grid as the loaded cards, so the section keeps its height (no CLS). */
+const RailSkeleton = ({ count, className, media }: { count: number; className: string; media?: boolean }) => (
+  <div className={className}>
+    {Array.from({ length: count }, (_, i) => (
+      <SkeletonCard key={i} media={media} mediaClassName="aspect-[16/11]" lines={3} className="h-full" />
+    ))}
+  </div>
 );
 
 export const VisaSection = () => {
@@ -48,6 +58,7 @@ export const VisaSection = () => {
     <section className="section">
       <div className="container-x">
         <SectionHeading eyebrow={t('visas.eyebrow')} title={t('visas.title')} subtitle={t('visas.subtitle')} action={<ViewAll to="/visas" label={t('visas.all')} />} />
+        {!data && <RailSkeleton count={4} media className="mobile-rail sm:grid-cols-2 sm:gap-5 lg:grid-cols-3 lg:gap-6 xl:grid-cols-4" />}
         <Stagger className="mobile-rail sm:grid-cols-2 sm:gap-5 lg:grid-cols-3 lg:gap-6 xl:grid-cols-4">
           {data?.visaCategories.slice(0, 8).map((v) => (
             <StaggerItem key={v.id}>
@@ -62,14 +73,15 @@ export const VisaSection = () => {
 
 export const ServicesSection = () => {
   const { t } = useTranslation();
-  const { data } = useSiteContent();
-  if (!data?.services.length) return null;
+  const { data, isLoading } = useSiteContent();
+  if (!isLoading && !data?.services.length) return null;
   return (
     <section className="section bg-surface">
       <div className="container-x">
         <SectionHeading eyebrow={t('svc.eyebrow')} title={t('svc.title')} subtitle={t('svc.subtitle')} action={<ViewAll to="/services" label={t('common.viewAll')} />} />
+        {!data && <RailSkeleton count={4} className="mobile-rail sm:grid-cols-2 sm:gap-5 lg:grid-cols-4 lg:gap-6" />}
         <Stagger className="mobile-rail sm:grid-cols-2 sm:gap-5 lg:grid-cols-4 lg:gap-6">
-          {data.services.slice(0, 8).map((s, i) => (
+          {data?.services.slice(0, 8).map((s, i) => (
             <StaggerItem key={s.id}>
               <ServiceCard service={s} index={i} />
             </StaggerItem>
@@ -165,6 +177,8 @@ export const ProcessSection = () => {
   // The progress line fills as the section scrolls through the viewport (scroll-linked, no JS timers).
   const { scrollYProgress } = useScroll({ target: root, offset: ['start 75%', 'end 55%'] });
   const lineProgress = useSpring(scrollYProgress, { stiffness: 120, damping: 30 });
+  // Reduced motion: the line is simply full (no scroll-linked movement).
+  const line = useMotionOK() ? lineProgress : 1;
 
   const OpenIcon = open !== null ? STEP_ICONS[open] ?? Search : Search;
 
@@ -175,10 +189,10 @@ export const ProcessSection = () => {
         <SectionHeading eyebrow={t('process.eyebrow')} title={t('process.title')} light />
         <div ref={root} className="relative">
           <div className="absolute top-8 right-[8%] left-[8%] hidden h-[2px] bg-white/10 lg:block">
-            <motion.div style={{ scaleX: lineProgress }} className="h-full origin-left bg-gradient-to-r from-az-blue via-brand-500 to-de-gold" />
+            <motion.div style={{ scaleX: line }} className="h-full origin-left bg-gradient-to-r from-az-blue via-brand-500 to-de-gold" />
           </div>
           <div className="absolute top-2 bottom-2 left-7 w-[2px] bg-white/10 lg:hidden">
-            <motion.div style={{ scaleY: lineProgress }} className="h-full origin-top bg-gradient-to-b from-az-blue via-brand-500 to-de-gold" />
+            <motion.div style={{ scaleY: line }} className="h-full origin-top bg-gradient-to-b from-az-blue via-brand-500 to-de-gold" />
           </div>
           <ol className="grid gap-3 lg:grid-cols-6 lg:gap-3">
             {steps.map((s, i) => {

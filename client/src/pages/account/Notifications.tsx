@@ -1,18 +1,14 @@
-import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useQueryClient } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
 import { BellOff, BellRing, CheckCheck, ChevronRight } from 'lucide-react';
-import { api } from '@/lib/api';
 import { useL10n } from '@/lib/l10n';
 import type { Notification } from '@/lib/types';
-import { PageLoader, Spinner } from '@/components/ui/Spinner';
-import { useNotifications } from '@/components/portal/useNotifications';
-import { useApiError } from '@/components/portal/useApiError';
+import { PageLoader } from '@/components/ui/Spinner';
+import { useMarkNotificationsRead, useNotifications } from '@/components/portal/useNotifications';
 import { useWhen } from '@/components/portal/useWhen';
-import { OVERVIEW_KEY, useOverview } from '@/components/portal/useOverview';
+import { useOverview } from '@/components/portal/useOverview';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { ManagerCard } from '@/components/portal/Dashboard';
 import { PortalCallbackCard } from '@/components/calls/CallbackForm';
@@ -23,49 +19,17 @@ export default function Notifications() {
   const { dateTime } = useL10n();
   const when = useWhen();
   const navigate = useNavigate();
-  const qc = useQueryClient();
-  const onError = useApiError();
   const { data, isLoading } = useNotifications();
   const { data: overview } = useOverview();
-  const [markingAll, setMarkingAll] = useState(false);
-
-  const markRead = (body: { ids?: string[] }) => api.post('/notifications/read', body);
+  // Optimistic (components/portal/useNotifications.ts): dots and badges clear at once, rolled back on error.
+  const markRead = useMarkNotificationsRead();
 
   const open = (n: Notification) => {
-    if (!n.readAt) {
-      // Optimistically mark as read so the badge updates immediately.
-      qc.setQueryData<typeof data>(['notifications'], (prev) =>
-        prev
-          ? {
-              items: prev.items.map((i) => (i.id === n.id ? { ...i, readAt: new Date().toISOString() } : i)),
-              unread: Math.max(0, prev.unread - 1),
-            }
-          : prev,
-      );
-      markRead({ ids: [n.id] })
-        .catch(onError)
-        .finally(() => {
-          void qc.invalidateQueries({ queryKey: ['notifications'] });
-          void qc.invalidateQueries({ queryKey: OVERVIEW_KEY });
-        });
-    }
+    if (!n.readAt) markRead.mutate([n.id]);
     if (n.link) navigate(n.link);
   };
 
-  const markAll = async () => {
-    setMarkingAll(true);
-    try {
-      await markRead({});
-      await Promise.all([
-        qc.invalidateQueries({ queryKey: ['notifications'] }),
-        qc.invalidateQueries({ queryKey: OVERVIEW_KEY }),
-      ]);
-    } catch (err) {
-      onError(err);
-    } finally {
-      setMarkingAll(false);
-    }
-  };
+  const markAll = () => markRead.mutate(undefined);
 
   if (isLoading) return <PageLoader />;
   const items = data?.items ?? [];
@@ -81,8 +45,8 @@ export default function Notifications() {
             {t('portal.notifications')}
             {unread > 0 && <span className="badge bg-danger text-white">{unread}</span>}
           </h2>
-          <button type="button" className="btn-ghost btn-sm min-h-10 whitespace-nowrap" onClick={markAll} disabled={unread === 0 || markingAll}>
-            {markingAll ? <Spinner className="size-3.5" /> : <CheckCheck className="size-4" aria-hidden />}
+          <button type="button" className="btn-ghost btn-sm min-h-10 whitespace-nowrap" onClick={markAll} disabled={unread === 0}>
+            <CheckCheck className="size-4" aria-hidden />
             {t('portal.markAllRead')}
           </button>
         </div>

@@ -10,6 +10,7 @@ import { registerCopy } from '@/i18n';
 import { pagesJobs } from '@/i18n/pagesJobs';
 import { PageHero } from '@/components/layout/PageHero';
 import { Spinner } from '@/components/ui/Spinner';
+import { SkeletonGrid } from '@/components/ui/Skeleton';
 import { JobCard } from '@/components/jobs/JobCard';
 import { JobAlertForm } from '@/components/jobs/JobAlertForm';
 import { useJobLabels } from '@/components/jobs/labels';
@@ -196,9 +197,7 @@ export default function Jobs() {
             {filtersOpen && <div className="card mb-5 p-5 lg:hidden">{filters}</div>}
 
             {isLoading ? (
-              <div className="grid min-h-[30vh] place-items-center">
-                <Spinner className="size-8 text-brand-600" />
-              </div>
+              <SkeletonGrid count={6} lines={3} footer className="grid-cards grid-cols-1 md:grid-cols-2 2xl:grid-cols-3" />
             ) : isError ? (
               <div className="card p-8 text-center">
                 <p className="text-sm text-muted">{t('jobsArea.errors.generic')}</p>

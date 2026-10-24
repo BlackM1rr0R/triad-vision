@@ -9,6 +9,7 @@ import { Modal } from '@/components/admin/Modal';
 import { Spinner } from '@/components/ui/Spinner';
 import {
   BILLING_KEY,
+  CURRENCIES,
   LINE_CATEGORIES,
   addDaysIso,
   billingErrText,
@@ -20,6 +21,7 @@ import {
   totalsOf,
   type BillingSettingsResponse,
   type ClientInvoice,
+  type Currency,
   type LineCategory,
 } from './api';
 
@@ -68,7 +70,16 @@ export function InvoiceEditor({ invoice, fixed, onClose }: { invoice: ClientInvo
   const settingsQ = useBillingSettings();
   const s = settingsQ.data?.settings;
   const terms = s?.paymentTermsDays ?? 14;
-  const rate = !s || s.vatMode === 'STANDARD' ? (s?.vatRate ?? 19) : 0;
+  const [currency, setCurrency] = useState<Currency>((invoice?.currency as Currency | undefined) ?? 'EUR');
+  const [currencyTouched, setCurrencyTouched] = useState(!!invoice);
+  useEffect(() => {
+    if (!currencyTouched && settingsQ.data?.defaultCurrency) setCurrency(settingsQ.data.defaultCurrency);
+  }, [currencyTouched, settingsQ.data?.defaultCurrency]);
+  const baseRate = !s || s.vatMode === 'STANDARD' ? (s?.vatRate ?? 19) : 0;
+  // The issuing entity of the currency decides the VAT (German company or the Baku office).
+  const rate = settingsQ.data?.vatRateByCurrency?.[currency] ?? baseRate;
+  const entity = settingsQ.data?.entityByCurrency?.[currency] ?? 'DE';
+  const money = (c: number) => fmtEur(c, currency);
   const today = isoDay(new Date());
   const period = invoice?.items.find((l) => l.servicePeriod)?.servicePeriod;
 
@@ -109,7 +120,7 @@ export function InvoiceEditor({ invoice, fixed, onClose }: { invoice: ClientInvo
 
   const save = useMutation({
     mutationFn: async () => {
-      const body = { clientId, caseId: caseId || null, issueDate, dueDate, serviceFrom: serviceFrom || null, serviceTo: serviceTo || null, items: parsed, note: note.trim() || null };
+      const body = { clientId, caseId: caseId || null, issueDate, dueDate, serviceFrom: serviceFrom || null, serviceTo: serviceTo || null, items: parsed, note: note.trim() || null, currency };
       return invoice ? api.put(`/admin/client-billing/invoices/${invoice.id}`, body) : api.post('/admin/client-billing/invoices', body);
     },
     onSuccess: () => {
@@ -204,6 +215,23 @@ export function InvoiceEditor({ invoice, fixed, onClose }: { invoice: ClientInvo
         <Field label={t('bill.admin.editor.serviceTo')} id="ci-sto">
           <input id="ci-sto" type="date" className="input" min={serviceFrom || undefined} value={serviceTo} onChange={(e) => setServiceTo(e.target.value)} />
         </Field>
+        <Field label={t('acct.currency.label')} id="ci-currency" hint={t(`acct.currency.entityHint.${entity}`)}>
+          <select
+            id="ci-currency"
+            className="input"
+            value={currency}
+            onChange={(e) => {
+              setCurrency(e.target.value as Currency);
+              setCurrencyTouched(true);
+            }}
+          >
+            {(settingsQ.data?.currencies ?? CURRENCIES).map((c) => (
+              <option key={c} value={c}>
+                {t(`acct.currency.names.${c}`)}
+              </option>
+            ))}
+          </select>
+        </Field>
       </div>
 
       <h3 className="mt-6 mb-2 text-sm font-semibold text-navy-900">{t('bill.admin.editor.items')}</h3>
@@ -233,7 +261,7 @@ export function InvoiceEditor({ invoice, fixed, onClose }: { invoice: ClientInvo
               <div className="grid grid-cols-[5rem_1fr_auto_auto] items-center gap-2 sm:col-span-3">
                 <input className={clsx('input text-right tabular-nums', !Number.isFinite(p.quantity) && l.qty && 'border-danger')} inputMode="decimal" aria-label={t('bill.admin.editor.qty')} placeholder={t('bill.admin.editor.qty')} value={l.qty} onChange={(e) => setLine(l.key, { qty: e.target.value })} />
                 <input className={clsx('input text-right tabular-nums', !Number.isFinite(p.unitPriceCents) && l.price && 'border-danger')} inputMode="decimal" aria-label={t('bill.admin.editor.unitPrice')} placeholder={t('bill.admin.editor.unitPrice')} value={l.price} onChange={(e) => setLine(l.key, { price: e.target.value })} />
-                <span className="min-w-20 text-right text-sm font-semibold text-navy-900 tabular-nums">{total === null ? '—' : fmtEur(total)}</span>
+                <span className="min-w-20 text-right text-sm font-semibold text-navy-900 tabular-nums">{total === null ? '—' : money(total)}</span>
                 <button
                   type="button"
                   className="grid size-9 place-items-center rounded-lg text-muted hover:bg-red-50 hover:text-danger disabled:opacity-30 sm:hidden"
@@ -259,25 +287,25 @@ export function InvoiceEditor({ invoice, fixed, onClose }: { invoice: ClientInvo
           <textarea id="ci-note" className="input resize-y" rows={4} maxLength={2000} value={note} onChange={(e) => setNote(e.target.value)} />
         </Field>
         <div className="rounded-xl bg-surface p-4 text-sm">
-          <p className="mb-3 text-xs text-muted">{t(`bill.admin.editor.vatInfo.${s?.vatMode ?? 'STANDARD'}`, { rate })}</p>
+          <p className="mb-3 text-xs text-muted">{entity === 'AZ' ? t('acct.currency.azVat', { rate }) : t(`bill.admin.editor.vatInfo.${s?.vatMode ?? 'STANDARD'}`, { rate })}</p>
           <dl className="space-y-1.5 tabular-nums">
             <div className="flex justify-between gap-2">
               <dt className="text-muted">{t('bill.admin.editor.net')}</dt>
-              <dd>{fmtEur(totals.taxable)}</dd>
+              <dd>{money(totals.taxable)}</dd>
             </div>
             <div className="flex justify-between gap-2">
               <dt className="text-muted">{t('bill.admin.editor.vatAmount', { rate })}</dt>
-              <dd>{fmtEur(totals.vat)}</dd>
+              <dd>{money(totals.vat)}</dd>
             </div>
             {totals.pass > 0 && (
               <div className="flex justify-between gap-2">
                 <dt className="text-muted">{t('bill.admin.editor.passThrough')}</dt>
-                <dd>{fmtEur(totals.pass)}</dd>
+                <dd>{money(totals.pass)}</dd>
               </div>
             )}
             <div className="flex justify-between gap-2 border-t border-line pt-1.5 text-base font-bold text-navy-900">
               <dt>{t('bill.admin.editor.gross')}</dt>
-              <dd>{fmtEur(totals.gross)}</dd>
+              <dd>{money(totals.gross)}</dd>
             </div>
           </dl>
         </div>

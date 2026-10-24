@@ -14,6 +14,8 @@ import { TONE_CLASS } from '@/components/ui/status';
 import { Loading } from './shared';
 import { CHECKIN_TONE, CheckInCell, DateCell, RISK_TONE, useMilestoneText } from './workerCells';
 import { plannedArrival, type WorkerDetail } from './workerTypes';
+import { EmployerAcceleratedBlock } from '@/components/recognition/EmployerAcceleratedBlock'; // § 81a (registers its copy)
+import { euro } from '@/components/recognition/api';
 
 registerCopy(pagesTimeCare); // check-in topic labels (checkIn.topics.*)
 registerCopy(pagesEmployerWorkers);
@@ -95,7 +97,9 @@ export const WorkerDrawer = ({ id, onClose }: { id: string | null; onClose: () =
                   <li key={`${i.kind}-${i.id}`} className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm">
                     <span className="min-w-0">
                       <span className="block text-[11px] font-semibold tracking-wide text-amber-800 uppercase">{t(`employerWorkers.docKind.${i.kind}`)}</span>
-                      <span className="font-medium text-ink">{i.kind === 'CHECKIN' ? t('employerWorkers.action.ANSWER_CHECKIN') : i.title}</span>
+                      <span className="font-medium text-ink">
+                        {i.kind === 'CHECKIN' ? t('employerWorkers.action.ANSWER_CHECKIN') : i.kind === 'ACCELERATED' ? t(`accel.employer.todo.${i.id.split(':')[1]}`, { defaultValue: i.title, fee: euro(data.accelerated?.feeCents) }) : i.title}
+                      </span>
                     </span>
                     {i.link && (
                       <Link to={i.link} className="btn-primary btn-sm">
@@ -107,6 +111,9 @@ export const WorkerDrawer = ({ id, onClose }: { id: string | null; onClose: () =
               </ul>
             </Block>
           )}
+
+          {/* § 81a accelerated procedure: steps, what the employer has to do, embassy dates (read-only). */}
+          {data.accelerated && <EmployerAcceleratedBlock a={data.accelerated} />}
 
           <Block title={t('employerWorkers.drawer.upcoming')} icon={CalendarClock}>
             {data.upcoming.length === 0 ? (

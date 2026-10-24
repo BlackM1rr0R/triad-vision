@@ -11,8 +11,9 @@ import { pagesEmployerWorkers } from '@/i18n/pagesEmployerWorkers';
 import { useL10n } from '@/lib/l10n';
 import { Table, type Column } from '@/components/ui/Table';
 import { TONE_CLASS } from '@/components/ui/status';
-import { Empty, Kpi, Loading, Section } from './shared';
+import { Empty, Kpi, Section } from './shared';
 import { WorkerDrawer } from './WorkerDrawer';
+import { WorkersSkeleton } from './WorkersSkeleton';
 import { CompanyReports } from './CompanyReports';
 import { CheckInCell, DateCell, RISK_TONE, useMilestoneText } from './workerCells';
 import { PHASES, plannedArrival, type Phase, type WorkerRow, type WorkersResponse } from './workerTypes';
@@ -119,7 +120,7 @@ export const CompanyWorkers = () => {
     },
   ];
 
-  if (isLoading || !data) return <Loading />;
+  if (isLoading || !data) return <WorkersSkeleton />;
   const s = data.summary;
   const counts = Object.fromEntries(PHASES.map((p) => [p, data.items.filter((w) => w.phase === p).length])) as Record<Phase, number>;
 

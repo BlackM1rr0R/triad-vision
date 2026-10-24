@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
+import { celebrate } from '@/components/motion/celebrate';
 import clsx from 'clsx';
 import {
   BadgeCheck,
@@ -338,6 +339,7 @@ const SignForm = ({ view, base, onDone }: { view: SigningView; base: string; onD
       const body = mode === 'DRAW' ? { mode, signature: padRef.current!.toDataURL(), agree: true } : { mode, typedName: typed.trim(), agree: true };
       const res = await api.post<SigningView>(`${base}/sign`, body);
       toast.success(t('esign.sign.signedToast'));
+      celebrate(); // success moment (no-op for reduced motion)
       onDone(res.data);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (e) {

@@ -48,6 +48,8 @@ const EVENT_TYPES = [
   'callback.new',
   'livechat.queue',
   'livechat.message',
+  // live presence on a case / inquiry (components/presence)
+  'viewers.updated',
 ] as const;
 export type RealtimeEventType = (typeof EVENT_TYPES)[number];
 

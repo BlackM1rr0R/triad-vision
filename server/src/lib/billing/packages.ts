@@ -9,7 +9,9 @@ import { config } from '../../config.js';
 import { badRequest, conflict, notFound, parse } from '../http.js';
 import { renderEmail, sendMail } from '../mailer.js';
 import { notifyStaff } from '../notifications.js';
-import { formatEur } from '../invoiceTexts.js';
+import { currencySchema, formatMoney } from './currency.js';
+import { getPackagePrices, packagePricesSchema, priceFor, pricesOf, removePackagePrices, setPackagePrices, visitorCurrency } from './packagePrices.js';
+import { awaitingCountersign, withCountersigner } from '../esign/countersign.js';
 import { recordConsent } from '../privacy/consents.js';
 import { currentRef } from '../legal/documents.js';
 import { onInquiryCreated } from '../assignment/inquiry.js';
@@ -57,6 +59,10 @@ export const packageSchema = z
     summary: l10n(600),
     features: l10nList,
     priceCents: z.coerce.number().int().min(100).max(100_000_000),
+    /** Base currency of priceCents (EUR by default). */
+    currency: currencySchema.default('EUR'),
+    /** Optional fixed prices in the other currencies (packagePrices.ts). */
+    prices: packagePricesSchema.optional(),
     installments: z
       .array(z.object({ label: l10n(160), percent: z.coerce.number().min(1).max(100), trigger: z.string().trim().max(40).refine((t) => isValidTrigger(t) && t !== 'DATE', 'INVALID_TRIGGER') }))
       .max(12)
@@ -95,9 +101,11 @@ export const contentLocale = (l: string): ContentLocale => (l === 'de' || l === 
 /** Account / staff language for a site language: Turkish visitors are served by the Azerbaijani team, Ukrainian by the Russian one. */
 export const accountLocale = (l: string): Locale => (l === 'de' || l === 'en' || l === 'ru' || l === 'az' ? l : l === 'uk' ? 'ru' : 'az');
 
-export const adminPackageView = (p: ServicePackage) => ({ ...p, visaTypes: visaTypesOf(p), installments: installmentsOf(p) });
+type PriceStore = Awaited<ReturnType<typeof getPackagePrices>>;
 
-export const publicPackageView = (p: ServicePackage) => ({
+export const adminPackageView = (p: ServicePackage, prices: PriceStore = {}) => ({ ...p, visaTypes: visaTypesOf(p), installments: installmentsOf(p), prices: pricesOf(p, prices) });
+
+export const publicPackageView = (p: ServicePackage, prices: PriceStore = {}) => ({
   id: p.id,
   slug: p.slug,
   tier: p.tier,
@@ -107,6 +115,8 @@ export const publicPackageView = (p: ServicePackage) => ({
   features: p.features,
   priceCents: p.priceCents,
   currency: p.currency,
+  /** Price per currency (base + the extra fixed prices); the page shows the visitor's currency where defined. */
+  prices: pricesOf(p, prices),
   installments: installmentsOf(p),
   highlight: p.highlight,
   sortOrder: p.sortOrder,
@@ -132,6 +142,7 @@ const toData = (b: z.infer<typeof packageSchema>) => ({
   summary: b.summary,
   features: b.features,
   priceCents: b.priceCents,
+  currency: b.currency,
   installments: (b.installments && b.installments.length ? b.installments : null) as Prisma.InputJsonValue | undefined,
   contractTemplateId: b.contractTemplateId,
   highlight: b.highlight,
@@ -144,7 +155,9 @@ export const createPackage = async (input: PackageInput) => {
   await checkTemplate(b.contractTemplateId);
   const d = toData(b);
   try {
-    return await prisma.servicePackage.create({ data: { ...d, visaTypes: d.visaTypes ?? undefined, installments: d.installments ?? undefined } });
+    const created = await prisma.servicePackage.create({ data: { ...d, visaTypes: d.visaTypes ?? undefined, installments: d.installments ?? undefined } });
+    await setPackagePrices(created.id, created.currency, b.prices);
+    return created;
   } catch (err) {
     if ((err as { code?: string }).code === 'P2002') throw conflict('SLUG_TAKEN');
     throw err;
@@ -158,10 +171,13 @@ export const updatePackage = async (id: string, input: PackageInput) => {
   await checkTemplate(b.contractTemplateId);
   const d = toData(b);
   try {
-    return await prisma.servicePackage.update({
+    const updated = await prisma.servicePackage.update({
       where: { id },
       data: { ...d, visaTypes: d.visaTypes ?? Prisma.DbNull, installments: d.installments ?? Prisma.DbNull },
     });
+    // Leaving `prices` out keeps the stored extra prices; sending it ({} = none) replaces them.
+    if (b.prices !== undefined) await setPackagePrices(updated.id, updated.currency, b.prices);
+    return updated;
   } catch (err) {
     if ((err as { code?: string }).code === 'P2002') throw conflict('SLUG_TAKEN');
     throw err;
@@ -174,6 +190,7 @@ export const deletePackage = async (id: string) => {
   await prisma.servicePackage.delete({ where: { id } }).catch(() => {
     throw notFound('PACKAGE_NOT_FOUND');
   });
+  await removePackagePrices(id);
 };
 
 // ─── Order ───────────────────────────────────────────────────────────
@@ -189,6 +206,8 @@ export const orderSchema = z.object({
   visaType: z.enum(VISA_TYPES).optional().nullable(),
   profession: z.string().trim().max(120).optional().nullable(),
   locale: z.enum(SITE_LOCALES).default('az'),
+  /** Currency the price was shown in (default: the visitor's currency by site language; base price when the package has none). */
+  currency: currencySchema.optional(),
   acceptTerms: z.literal(true),
   acceptPrivacy: z.literal(true),
   token: z.string().regex(TOKEN_RE),
@@ -280,11 +299,11 @@ export const buildOrderContract = async (order: PackageOrder, pkg: ServicePackag
     `## ${h.pkg}: ${pickL(pkg.title, cl)}`,
     pickL(pkg.summary, cl),
     '',
-    `${h.price}: ${formatEur(order.priceCents)}`,
+    `${h.price}: ${formatMoney(order.priceCents, order.currency, { pdf: 'dejavu' })}`,
     '',
     ...(features.length ? [`## ${h.features}`, ...features.map((f) => `- ${f}`), ''] : []),
     `## ${h.schedule}`,
-    ...amounts.map((a, i) => `- ${i + 1}. ${a.label ? `${a.label}: ` : ''}${formatEur(a.amountCents)} — ${triggerText(lang, a.trigger)}`),
+    ...amounts.map((a, i) => `- ${i + 1}. ${a.label ? `${a.label}: ` : ''}${formatMoney(a.amountCents, order.currency, { pdf: 'dejavu' })} — ${triggerText(lang, a.trigger)}`),
     '',
     `${h.terms}: ${termsVersion}`,
   ].join('\n');
@@ -324,7 +343,8 @@ const sendContract = async (orderId: string) =>
         order: 'SEQUENTIAL',
         message: null,
         expiresAt: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
-        signers: [{ role: 'CANDIDATE', name: order.name, email: order.email, phone: order.phone, locale: accountLocale(order.locale), order: 1 }],
+        // Client first, then (when configured) the authorised Triad Vision signatory countersigns (esign/countersign.ts).
+        signers: await withCountersigner([{ role: 'CANDIDATE', name: order.name, email: order.email, phone: order.phone, locale: accountLocale(order.locale), order: 1 }], 'PACKAGE'),
         pdf: contract.pdf,
         fileName: `Dienstleistungsvertrag-${pkg.slug}.pdf`,
       },
@@ -361,6 +381,7 @@ export const createOrder = async (input: unknown, req: Pick<Request, 'ip' | 'get
   await systemActor(); // fail early when nobody could own the signature request
 
   const title = pickL(pkg.title, contentLocale(body.locale));
+  const price = priceFor(pkg, await getPackagePrices(), body.currency ?? visitorCurrency(body.locale));
   let order: PackageOrder;
   try {
     order = await prisma.packageOrder.create({
@@ -372,8 +393,8 @@ export const createOrder = async (input: unknown, req: Pick<Request, 'ip' | 'get
         phone: body.phone,
         locale: body.locale,
         visaType,
-        priceCents: pkg.priceCents,
-        currency: pkg.currency,
+        priceCents: price.priceCents,
+        currency: price.currency,
         status: 'STARTED',
         tokenHash: hash,
       },
@@ -393,7 +414,7 @@ export const createOrder = async (input: unknown, req: Pick<Request, 'ip' | 'get
         email: body.email,
         phone: body.phone,
         sector: body.profession || null,
-        message: [`Paket sifarişi: ${title} (${pkg.tier}) · ${formatEur(pkg.priceCents)}`, visaType ? `Viza növü: ${visaType}` : null, body.profession ? `Peşə: ${body.profession}` : null].filter(Boolean).join('\n'),
+        message: [`Paket sifarişi: ${title} (${pkg.tier}) · ${formatMoney(price.priceCents, price.currency)}`, visaType ? `Viza növü: ${visaType}` : null, body.profession ? `Peşə: ${body.profession}` : null].filter(Boolean).join('\n'),
         locale: accountLocale(body.locale),
         status: 'IN_PROGRESS',
       },
@@ -410,9 +431,9 @@ export const createOrder = async (input: unknown, req: Pick<Request, 'ip' | 'get
   await sendContract(order.id);
 
   const t = billingTexts[asBillingLocale(accountLocale(body.locale))];
-  const msg = t.orderReceived({ name: splitName(body.name).firstName, pkg: title, price: formatEur(pkg.priceCents), email: body.email });
+  const msg = t.orderReceived({ name: splitName(body.name).firstName, pkg: title, price: formatMoney(price.priceCents, price.currency), email: body.email });
   void sendMail(body.email, `Triad Vision · ${msg.title}`, renderEmail(msg.title, msg.body, { label: t.orderCta, url: statusUrl(body.token, body.locale) }));
-  const s = staffBillingTexts.orderNew({ name: body.name, pkg: pickL(pkg.title, 'az'), price: formatEur(pkg.priceCents), email: body.email });
+  const s = staffBillingTexts.orderNew({ name: body.name, pkg: pickL(pkg.title, 'az'), price: formatMoney(price.priceCents, price.currency), email: body.email });
   await notifyStaff(s.title, s.body, { link: '/admin/packages?tab=orders', type: 'PACKAGE_ORDER' });
   return orderStatus(body.token);
 };
@@ -424,7 +445,7 @@ export const orderStatus = async (token: string) => {
   if (!order) throw notFound('ORDER_NOT_FOUND');
   const [pkg, request, kase, invoice] = await Promise.all([
     prisma.servicePackage.findUnique({ where: { id: order.packageId } }),
-    order.signatureRequestId ? prisma.signatureRequest.findUnique({ where: { id: order.signatureRequestId }, select: { status: true, sentAt: true, completedAt: true, expiresAt: true } }) : null,
+    order.signatureRequestId ? prisma.signatureRequest.findUnique({ where: { id: order.signatureRequestId }, select: { status: true, sentAt: true, completedAt: true, expiresAt: true, signers: { select: { role: true, status: true } } } }) : null,
     order.caseId ? prisma.case.findUnique({ where: { id: order.caseId }, select: { number: true } }) : null,
     order.planId ? prisma.clientInvoice.findFirst({ where: { orderId: order.id, status: { not: 'DRAFT' } }, orderBy: { createdAt: 'asc' }, select: { number: true, grossCents: true, status: true } }) : null,
   ]);
@@ -439,7 +460,9 @@ export const orderStatus = async (token: string) => {
     priceCents: order.priceCents,
     currency: order.currency,
     package: pkg ? { slug: pkg.slug, tier: pkg.tier, title: asL10n(pkg.title), installments: installmentsOf(pkg) } : null,
-    signature: request ? { status: request.status, sentAt: request.sentAt, completedAt: request.completedAt, expiresAt: request.expiresAt } : null,
+    signature: request
+      ? { status: request.status, sentAt: request.sentAt, completedAt: request.completedAt, expiresAt: request.expiresAt, countersignPending: request.status === 'SENT' && awaitingCountersign(request.signers) }
+      : null,
     caseNumber: kase?.number ?? null,
     firstInvoice: invoice,
   };
@@ -517,8 +540,10 @@ export const activateOrder = async (orderId: string) =>
     let order = await prisma.packageOrder.findUnique({ where: { id: orderId } });
     if (!order || order.status === 'ACTIVE' || order.status === 'CANCELLED') return order;
     if (order.status === 'STARTED') {
-      const r = order.signatureRequestId ? await prisma.signatureRequest.findUnique({ where: { id: order.signatureRequestId }, select: { status: true } }) : null;
-      if (r?.status !== 'COMPLETED') return order;
+      const r = order.signatureRequestId ? await prisma.signatureRequest.findUnique({ where: { id: order.signatureRequestId }, select: { status: true, signers: { select: { role: true, status: true } } } }) : null;
+      // Activation at the client's signature: a contract still waiting for the Triad Vision countersignature
+      // ("pending countersignature") already activates the order; the final PDF follows the countersignature.
+      if (!r || (r.status !== 'COMPLETED' && !(r.status === 'SENT' && awaitingCountersign(r.signers)))) return order;
       await prisma.packageOrder.updateMany({ where: { id: order.id, status: 'STARTED' }, data: { status: 'SIGNED' } });
       order = await prisma.packageOrder.findUniqueOrThrow({ where: { id: order.id } });
     }
@@ -556,7 +581,7 @@ export const activateOrder = async (orderId: string) =>
       if (!planId) {
         const tpl = installmentsOf(pkg);
         const items = fromTemplate({ items: tpl.length ? tpl : [{ label: { az: 'Xidmət haqqı', de: 'Servicegebühr', en: 'Service fee', ru: 'Сервисный сбор' }, percent: 100, trigger: 'ON_SIGN' }] }, order.priceCents, lang);
-        const { plan } = await createPlan({ clientId, caseId, title: `${pickL(pkg.title, 'de') || pkg.slug} (${pkg.tier})`, installments: items }, null, { orderId: order.id, catchUp: false });
+        const { plan } = await createPlan({ clientId, caseId, title: `${pickL(pkg.title, 'de') || pkg.slug} (${pkg.tier})`, installments: items, currency: currencySchema.catch('EUR').parse(order.currency) }, null, { orderId: order.id, catchUp: false });
         planId = plan.id;
         order = await prisma.packageOrder.update({ where: { id: order.id }, data: { planId } });
       }
@@ -571,7 +596,7 @@ export const activateOrder = async (orderId: string) =>
         await notifyStaff(s.title, s.body, { caseId, link: `/admin/cases/${caseId}?tab=finance`, type: 'PACKAGE_ORDER_ACTIVE' });
         const u = await prisma.user.findUniqueOrThrow({ where: { id: clientId }, select: { locale: true, email: true, firstName: true } });
         const t = billingTexts[asBillingLocale(u.locale)];
-        const msg = t.orderActive({ name: u.firstName, pkg: pickL(pkg.title, lang), price: formatEur(order.priceCents), caseNumber: kase.number });
+        const msg = t.orderActive({ name: u.firstName, pkg: pickL(pkg.title, lang), price: formatMoney(order.priceCents, order.currency), caseNumber: kase.number });
         void sendMail(u.email, `Triad Vision · ${msg.title}`, renderEmail(msg.title, msg.body, { label: t.portalCta, url: `${config.clientUrl}${created ? '/login' : '/account/payments'}` }));
       }
       return prisma.packageOrder.findUnique({ where: { id: order.id } });
@@ -587,7 +612,10 @@ export const activateOrder = async (orderId: string) =>
     }
   });
 
-/** esign hook: a completed signature request may be a package contract. Never throws. */
+/**
+ * esign hook: a completed signature request — or one where the client has signed and only the Triad Vision
+ * countersignature is missing — may be a package contract. Never throws.
+ */
 export const onSignatureCompleted = async (requestId: string) => {
   try {
     const order = await prisma.packageOrder.findFirst({ where: { signatureRequestId: requestId } });
@@ -605,9 +633,9 @@ export const runPackageOrderJobs = async () => {
   const result = { activated: 0, cancelled: 0 };
   const open = await prisma.packageOrder.findMany({ where: { status: { in: ['STARTED', 'SIGNED'] }, signatureRequestId: { not: null } }, take: 200 });
   for (const o of open) {
-    const r = await prisma.signatureRequest.findUnique({ where: { id: o.signatureRequestId! }, select: { status: true, expiresAt: true } });
+    const r = await prisma.signatureRequest.findUnique({ where: { id: o.signatureRequestId! }, select: { status: true, expiresAt: true, signers: { select: { role: true, status: true } } } });
     if (!r) continue;
-    if (r.status === 'COMPLETED' || o.status === 'SIGNED') {
+    if (r.status === 'COMPLETED' || o.status === 'SIGNED' || (r.status === 'SENT' && awaitingCountersign(r.signers))) {
       try {
         const after = await activateOrder(o.id);
         if (after?.status === 'ACTIVE') result.activated++;
@@ -641,11 +669,12 @@ export const listOrders = async (q: { status?: string; q?: string }) => {
   const orders = await prisma.packageOrder.findMany({ where, orderBy: { createdAt: 'desc' }, take: 500 });
   const [pkgs, requests, cases] = await Promise.all([
     prisma.servicePackage.findMany({ where: { id: { in: [...new Set(orders.map((o) => o.packageId))] } }, select: { id: true, slug: true, tier: true, title: true } }),
-    prisma.signatureRequest.findMany({ where: { id: { in: orders.map((o) => o.signatureRequestId).filter((x): x is string => !!x) } }, select: { id: true, status: true } }),
+    prisma.signatureRequest.findMany({ where: { id: { in: orders.map((o) => o.signatureRequestId).filter((x): x is string => !!x) } }, select: { id: true, status: true, signers: { select: { role: true, status: true } } } }),
     prisma.case.findMany({ where: { id: { in: orders.map((o) => o.caseId).filter((x): x is string => !!x) } }, select: { id: true, number: true } }),
   ]);
   const pMap = new Map(pkgs.map((p) => [p.id, p]));
   const rMap = new Map(requests.map((r) => [r.id, r.status]));
+  const csMap = new Map(requests.map((r) => [r.id, r.status === 'SENT' && awaitingCountersign(r.signers)]));
   const cMap = new Map(cases.map((c) => [c.id, c.number]));
   const counts = await prisma.packageOrder.groupBy({ by: ['status'], _count: { _all: true } });
   return {
@@ -653,6 +682,7 @@ export const listOrders = async (q: { status?: string; q?: string }) => {
       ...o,
       package: pMap.get(o.packageId) ?? null,
       signatureStatus: o.signatureRequestId ? (rMap.get(o.signatureRequestId) ?? null) : null,
+      countersignPending: o.signatureRequestId ? (csMap.get(o.signatureRequestId) ?? false) : false,
       caseNumber: o.caseId ? (cMap.get(o.caseId) ?? null) : null,
     })),
     counts: Object.fromEntries(counts.map((c) => [c.status, c._count._all])),

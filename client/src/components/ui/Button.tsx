@@ -26,7 +26,8 @@ const ICON_SIZE: Record<ButtonSize, string> = { sm: 'size-3.5', md: 'size-4', lg
 
 /** Class string of a button look, for <Link> / <a> elements that should look like buttons. */
 export const buttonClass = ({ variant = 'primary', size = 'md', block = false, className }: { variant?: ButtonVariant; size?: ButtonSize; block?: boolean; className?: string } = {}) =>
-  clsx(VARIANT[variant], variant === 'link' ? LINK_SIZE[size] : SIZE[size], block && 'w-full', className);
+  // btn-press: tactile press / hover feedback (index.css; off for reduced motion)
+  clsx(VARIANT[variant], variant === 'link' ? LINK_SIZE[size] : ['btn-press', SIZE[size]], block && 'w-full', className);
 
 const renderIcon = (icon: LucideIcon | ReactNode | undefined, size: ButtonSize) => {
   if (!icon) return null;
@@ -118,7 +119,7 @@ export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(functio
       disabled={disabled || loading}
       aria-busy={loading || undefined}
       className={clsx(
-        'inline-grid shrink-0 place-items-center rounded-lg transition disabled:cursor-not-allowed disabled:opacity-50',
+        'btn-press inline-grid shrink-0 place-items-center rounded-lg transition disabled:cursor-not-allowed disabled:opacity-50',
         ICON_BOX[size],
         ICON_VARIANT[v],
         className,

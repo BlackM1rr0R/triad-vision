@@ -13,6 +13,7 @@ import {
   Copy,
   Download,
   Euro,
+  FileCode2,
   FileText,
   Landmark,
   Pencil,
@@ -35,6 +36,8 @@ import { errorMessage, fmtDate } from '@/components/admin/labels';
 import { Spinner } from '@/components/ui/Spinner';
 import { isMaskedValue, SensitiveValue } from '@/components/privacyTools/SensitiveValue';
 import { useNewParam } from '@/components/command/useNewParam'; // ?new=1 deep link (Ctrl+K palette)
+import { CURRENCIES, fmtMoney, type Currency } from '@/components/billing/api'; // document currencies (EUR / AZN / TRY)
+import { EInvoiceDialog } from '@/components/accounting/EInvoiceDialog';
 
 registerCopy(adminInvoicesCopy);
 
@@ -60,6 +63,7 @@ interface Invoice {
   vatRate: number;
   vatCents: number;
   grossCents: number;
+  currency: string;
   status: InvoiceStatus;
   sentAt: string | null;
   paidAt: string | null;
@@ -74,6 +78,8 @@ interface Totals {
   paidThisMonthCents: number;
   paidThisMonthCount: number;
   draftCount: number;
+  /** Flat fields are EUR; other currencies separately (never added up). */
+  byCurrency?: { currency: string; openCents: number; overdueCents: number; paidThisMonthCents: number }[];
 }
 interface CompanyOpt {
   id: string;
@@ -101,8 +107,7 @@ interface SettingsResponse {
 
 const STATUS_TONE: Record<InvoiceStatus, string> = { ...toneClasses(STATUS_TONES.invoice), CANCELLED: `${TONE_CLASS.danger} line-through` };
 
-const eur = new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' });
-const fmtEur = (cents: number) => eur.format(cents / 100);
+const fmtEur = (cents: number, currency: string = 'EUR') => fmtMoney(cents, currency);
 /** Whole euros for the stat tiles (they must fit next to the icon on phones). */
 const eurWhole = new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 });
 const fmtEurShort = (cents: number) => eurWhole.format(Math.round(cents / 100));
@@ -229,6 +234,7 @@ const InvoiceList = ({ onEdit, legalMissing }: { onEdit: (i: Invoice) => void; l
   const companiesQ = useCompanies();
   const totals = listQ.data?.totals;
   const [action, setAction] = useState<{ kind: 'send' | 'paid' | 'cancel' | 'delete'; invoice: Invoice } | null>(null);
+  const [eInvoice, setEInvoice] = useState<{ id: string; name: string } | null>(null);
   const qc = useQueryClient();
   const refresh = () => void qc.invalidateQueries({ queryKey: KEY });
 
@@ -259,6 +265,14 @@ const InvoiceList = ({ onEdit, legalMissing }: { onEdit: (i: Invoice) => void; l
           <StatTile label={t('adminInvoices.tiles.overdue')} value={fmtEurShort(totals.overdueCents)} hint={t('adminInvoices.countHint', { count: totals.overdueCount })} icon={AlertTriangle} tone={totals.overdueCount ? 'danger' : undefined} />
           <StatTile label={t('adminInvoices.tiles.paidMonth')} value={fmtEurShort(totals.paidThisMonthCents)} hint={t('adminInvoices.countHint', { count: totals.paidThisMonthCount })} icon={CheckCircle2} tone="good" />
           <StatTile label={t('adminInvoices.tiles.drafts')} value={totals.draftCount} icon={FileText} />
+          {(totals.byCurrency ?? []).some((c) => c.currency !== 'EUR') && (
+            <p className="col-span-2 text-xs text-muted lg:col-span-4">
+              {(totals.byCurrency ?? [])
+                .filter((c) => c.currency !== 'EUR')
+                .map((c) => t('acct.currency.otherOpen', { open: fmtEur(c.openCents, c.currency) }))
+                .join(' · ')}
+            </p>
+          )}
         </div>
       )}
 
@@ -330,13 +344,15 @@ const InvoiceList = ({ onEdit, legalMissing }: { onEdit: (i: Invoice) => void; l
                     <span className="md:hidden">→ </span>
                     {fmtDate(inv.dueDate)}
                   </td>
-                  <td className="ml-auto font-semibold text-navy-900 tabular-nums md:ml-0 md:px-4 md:py-3 md:text-right">{fmtEur(inv.grossCents)}</td>
+                  <td className="ml-auto font-semibold text-navy-900 tabular-nums md:ml-0 md:px-4 md:py-3 md:text-right">{fmtEur(inv.grossCents, inv.currency)}</td>
                   <td className="md:px-4 md:py-3">
                     <span className={clsx('badge', STATUS_TONE[inv.status])}>{t(`adminInvoices.status.${inv.status}`)}</span>
                   </td>
                   <td className="basis-full md:basis-auto md:px-3 md:py-2">
                     <div className="flex flex-wrap justify-end gap-1">
                       <IconAction href={pdfUrl(inv.id)} label={t('adminInvoices.actions.pdf')} icon={Download} />
+                      {(inv.status === 'SENT' || inv.status === 'OVERDUE' || inv.status === 'PAID') && <IconAction href={`/api/admin/invoices/${inv.id}/xrechnung`} label={t('acct.xr.download')} icon={FileCode2} />}
+                      <IconAction onClick={() => setEInvoice(inv.company)} label={t('acct.xr.companyTitle')} icon={Building2} />
                       {inv.status === 'DRAFT' && <IconAction onClick={() => onEdit(inv)} label={t('adminInvoices.actions.edit')} icon={Pencil} />}
                       {(inv.status === 'DRAFT' || inv.status === 'SENT' || inv.status === 'OVERDUE') && (
                         <IconAction onClick={() => setAction({ kind: 'send', invoice: inv })} label={inv.status === 'DRAFT' ? t('adminInvoices.actions.send') : t('adminInvoices.actions.resend')} icon={Send} tone={inv.status === 'DRAFT' ? 'primary' : undefined} />
@@ -359,6 +375,7 @@ const InvoiceList = ({ onEdit, legalMissing }: { onEdit: (i: Invoice) => void; l
       )}
 
       <ActionDialogs action={action} onClose={() => setAction(null)} onDone={refresh} />
+      {eInvoice && <EInvoiceDialog company={eInvoice} onClose={() => setEInvoice(null)} />}
     </>
   );
 };
@@ -459,7 +476,7 @@ const ActionDialogs = ({ action, onClose, onDone }: { action: { kind: 'send' | '
         loading={m.isPending}
         tone="primary"
         title={t('adminInvoices.confirm.paidTitle')}
-        message={inv ? `${inv.number} · ${fmtEur(inv.grossCents)}` : undefined}
+        message={inv ? `${inv.number} · ${fmtEur(inv.grossCents, inv.currency)}` : undefined}
         confirmLabel={t('adminInvoices.actions.paid')}
       >
         <label className="label mt-3" htmlFor="inv-paid-at">{t('adminInvoices.confirm.paidDate')}</label>
@@ -515,6 +532,7 @@ const Editor = ({ invoice, settings, onClose }: { invoice: Invoice | null; setti
   const [periodFrom, setPeriodFrom] = useState(period?.from ?? '');
   const [periodTo, setPeriodTo] = useState(period?.to ?? '');
   const [vatRate, setVatRate] = useState(String(invoice?.vatRate ?? settings?.defaultVatRate ?? 19));
+  const [currency, setCurrency] = useState<Currency>((invoice?.currency as Currency | undefined) ?? 'EUR');
   const [note, setNote] = useState(invoice?.note ?? '');
   const [lines, setLines] = useState<LineDraft[]>(() =>
     invoice?.items.length
@@ -536,6 +554,7 @@ const Editor = ({ invoice, settings, onClose }: { invoice: Invoice | null; setti
         issueDate,
         dueDate,
         vatRate: rate,
+        currency,
         items: parsed,
         servicePeriodFrom: periodFrom || null,
         servicePeriodTo: periodTo || null,
@@ -637,7 +656,7 @@ const Editor = ({ invoice, settings, onClose }: { invoice: Invoice | null; setti
               <div className="col-span-2 grid grid-cols-[5rem_1fr_auto] items-center gap-2 sm:contents">
                 <input className={clsx('input text-right tabular-nums', !Number.isFinite(p.quantity) && l.qty && 'border-danger')} inputMode="decimal" aria-label={t('adminInvoices.editor.qty')} placeholder={t('adminInvoices.editor.qty')} value={l.qty} onChange={(e) => setLine(l.key, { qty: e.target.value })} />
                 <input className={clsx('input text-right tabular-nums', !Number.isFinite(p.unitPriceCents) && l.price && 'border-danger')} inputMode="decimal" aria-label={t('adminInvoices.editor.unitPrice')} placeholder={t('adminInvoices.editor.unitPrice')} value={l.price} onChange={(e) => setLine(l.key, { price: e.target.value })} />
-                <span className="text-right text-sm font-semibold text-navy-900 tabular-nums sm:w-full">{total === null ? '—' : fmtEur(total)}</span>
+                <span className="text-right text-sm font-semibold text-navy-900 tabular-nums sm:w-full">{total === null ? '—' : fmtEur(total, currency)}</span>
               </div>
               <button
                 type="button"
@@ -672,18 +691,28 @@ const Editor = ({ invoice, settings, onClose }: { invoice: Invoice | null; setti
               <input id="inv-vat" type="number" min={0} max={100} className="input" value={vatRate} onChange={(e) => setVatRate(e.target.value)} />
             )}
           </div>
+          <div className="mb-3">
+            <label className="label" htmlFor="inv-currency">{t('acct.currency.label')}</label>
+            <select id="inv-currency" className="input" value={currency} onChange={(e) => setCurrency(e.target.value as Currency)}>
+              {CURRENCIES.map((c) => (
+                <option key={c} value={c}>
+                  {t(`acct.currency.names.${c}`)}
+                </option>
+              ))}
+            </select>
+          </div>
           <dl className="space-y-1.5 tabular-nums">
             <div className="flex justify-between">
               <dt className="text-muted">{t('adminInvoices.editor.net')}</dt>
-              <dd>{fmtEur(net)}</dd>
+              <dd>{fmtEur(net, currency)}</dd>
             </div>
             <div className="flex justify-between">
               <dt className="text-muted">{t('adminInvoices.editor.vatAmount', { rate })}</dt>
-              <dd>{fmtEur(vat)}</dd>
+              <dd>{fmtEur(vat, currency)}</dd>
             </div>
             <div className="flex justify-between border-t border-line pt-1.5 text-base font-bold text-navy-900">
               <dt>{t('adminInvoices.editor.gross')}</dt>
-              <dd>{fmtEur(net + vat)}</dd>
+              <dd>{fmtEur(net + vat, currency)}</dd>
             </div>
           </dl>
         </div>

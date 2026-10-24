@@ -6,7 +6,7 @@ import { api } from '@/lib/api';
 import { useL10n } from '@/lib/l10n';
 import { registerCopy } from '@/i18n';
 import { pagesJourney } from '@/i18n/pagesJourney';
-import { Spinner } from '@/components/ui/Spinner';
+import { PanelBodySkeleton } from '@/components/admin/case/TabSkeleton';
 import { Panel } from '@/components/admin/ui';
 import type { OnboardingResponse } from './types';
 
@@ -30,9 +30,7 @@ export const OnboardingAdminPanel = ({ caseId }: { caseId: string }) => {
       bodyClassName="p-0"
     >
       {isLoading || !data ? (
-        <div className="grid place-items-center py-8">
-          <Spinner className="size-5 text-brand-600" />
-        </div>
+        <PanelBodySkeleton rows={2} padded />
       ) : (
         <>
           {progress && (

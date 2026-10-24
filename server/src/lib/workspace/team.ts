@@ -127,6 +127,16 @@ export type LeaveRow = Prisma.LeaveRequestGetPayload<{ select: typeof leaveSelec
 
 export const toLeave = (l: LeaveRow) => ({ ...l, days: weekdaysBetween(l.startsAt, l.endsAt) });
 
+/**
+ * A colleague's leave as a viewer below ADMIN may see it in the team calendars: when someone is away, not why.
+ * Sick leave is health data (DSGVO Art. 9): it is shown as OTHER, and the free-text notes are dropped. The
+ * person themself and ADMIN+ (who approve leave) see everything.
+ */
+export const leaveForViewer = <T extends { userId: string; type: LeaveType; note?: string | null; decisionNote?: string | null }>(l: T, viewer: { id: string; role: Role }): T => {
+  if (l.userId === viewer.id || viewer.role === 'ADMIN' || viewer.role === 'SUPER_ADMIN') return l;
+  return { ...l, type: l.type === 'SICK' ? 'OTHER' : l.type, ...('note' in l ? { note: null } : {}), ...('decisionNote' in l ? { decisionNote: null } : {}) };
+};
+
 export type LeaveOut = ReturnType<typeof toLeave>;
 
 /** Days used this year per type (approved) and pending, as weekdays. */

@@ -62,11 +62,23 @@ seoRouter.get('/:lng/rss.xml', rss);
  * It never fails: any error answers 200 with an empty body, so the page still renders with the static
  * fallbacks from index.html (Caddy's httpInclude turns a non-2xx answer into a broken page).
  */
+/**
+ * Defence in depth for the Caddy include: Caddy renders the included fragment as a template (delimiters
+ * "<!--tv:" / ":tv-->", deploy/Caddyfile), so a fragment that somehow contains a delimiter (all CMS text is
+ * escaped, so it never should) is dropped instead of being executed as a template action.
+ */
+export const TEMPLATE_DELIMITER_RE = /<!--\s*tv:|:tv\s*-->/i;
+export const templateSafe = (html: string) => {
+  if (!TEMPLATE_DELIMITER_RE.test(html)) return html;
+  console.error('[seo] fragment contained a template delimiter; dropped');
+  return '';
+};
+
 const head = async (req: Request, res: Response) => {
   res.type('text/html; charset=utf-8');
   res.setHeader('X-Robots-Tag', 'noindex');
   try {
-    const html = renderHead(String(req.query.path ?? '/'), parseLocale(req.query.lng), await getSeoData());
+    const html = templateSafe(renderHead(String(req.query.path ?? '/'), parseLocale(req.query.lng), await getSeoData()));
     res.setHeader('Cache-Control', 'public, max-age=60, stale-while-revalidate=600');
     res.send(html);
   } catch (err) {
@@ -91,7 +103,7 @@ seoRouter.get('/__seo/body', async (req, res) => {
   res.type('text/html; charset=utf-8');
   res.setHeader('X-Robots-Tag', 'noindex');
   try {
-    const html = await getBody(String(req.query.path ?? '/'), await getSeoData());
+    const html = templateSafe(await getBody(String(req.query.path ?? '/'), await getSeoData()));
     res.setHeader('Cache-Control', 'public, max-age=60, stale-while-revalidate=600');
     res.send(html);
   } catch (err) {

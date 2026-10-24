@@ -29,7 +29,7 @@ interface OrderStatus {
   firstInvoice: { number: string; grossCents: number; status: string } | null;
 }
 
-const money = (c: number, cur = 'EUR') => new Intl.NumberFormat('de-DE', { style: 'currency', currency: cur }).format(c / 100);
+const money = (c: number, cur = 'EUR') => new Intl.NumberFormat('de-DE', { style: 'currency', currency: cur, currencyDisplay: 'narrowSymbol' }).format(c / 100);
 
 /** Public status page of a package order (/packages/order/:token): never indexed, works without an account. */
 export default function PackageOrderStatus() {
@@ -104,7 +104,7 @@ export default function PackageOrderStatus() {
               ) : o.status === 'ACTIVE' ? (
                 <>
                   <p>{t('pkgs.status.active', { case: o.caseNumber ?? '' })}</p>
-                  {o.firstInvoice && <p className="mt-2 font-semibold">{t('pkgs.status.firstInvoice', { number: o.firstInvoice.number, amount: money(o.firstInvoice.grossCents) })}</p>}
+                  {o.firstInvoice && <p className="mt-2 font-semibold">{t('pkgs.status.firstInvoice', { number: o.firstInvoice.number, amount: money(o.firstInvoice.grossCents, o.currency) })}</p>}
                   <Link to="/login" className="btn-primary btn-sm mt-4">
                     {t('pkgs.status.login')}
                   </Link>

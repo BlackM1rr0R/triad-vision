@@ -12,6 +12,7 @@ import { toastError } from '@/components/admin/labels';
 import { CharCount, SeoSnippet } from '@/components/admin/SeoSnippet';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { Flag } from '@/components/ui/Flag';
+import { GuideBody } from '@/components/guides/GuideBody';
 import { useL10n } from '@/lib/l10n';
 
 registerCopy(pagesSeoAdmin);
@@ -280,8 +281,8 @@ export default function AdminGuides() {
                 </div>
                 <p className="mb-2 text-[11px] leading-snug text-muted">{g('bodyHelp')}</p>
                 {preview ? (
-                  // Rendered by the server's safe markdown renderer (all text escaped), exactly like the site.
-                  <div className="prose-guide max-h-[70vh] overflow-y-auto rounded-xl border border-line p-5" dangerouslySetInnerHTML={{ __html: preview.html }} />
+                  // Rendered by the server's safe markdown renderer (all text escaped), exactly like the site (live calculators included).
+                  <GuideBody html={preview.html} className="max-h-[70vh] overflow-y-auto rounded-xl border border-line p-5" />
                 ) : (
                   <textarea id="guide-body" className="input min-h-[28rem] font-mono text-sm leading-relaxed" value={draft.body} onChange={(e) => set('body', e.target.value)} spellCheck />
                 )}

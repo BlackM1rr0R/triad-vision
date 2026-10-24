@@ -99,6 +99,7 @@ export const LineChart = ({
   height = 240,
   ariaLabel,
   emptyText,
+  area = false,
 }: {
   points: { x: string; values: Record<string, number> }[];
   series: Series[];
@@ -112,8 +113,11 @@ export const LineChart = ({
   height?: number;
   ariaLabel: string;
   emptyText?: string;
+  /** Soft gradient fill under each line (area chart). */
+  area?: boolean;
 }) => {
   const { t } = useTranslation();
+  const gradId = useId().replace(/:/g, '');
   const [ref, width] = useWidth();
   const [hover, setHover] = useState<number | null>(null);
   const [table, setTable] = useState(false);
@@ -210,6 +214,21 @@ export const LineChart = ({
               ) : null,
             )}
             {hp && <line x1={xAt(hover!)} x2={xAt(hover!)} y1={pad.t} y2={pad.t + innerH} stroke={INK} strokeOpacity={0.35} strokeWidth={1} />}
+            {area && (
+              <defs>
+                {visible.map((s) => (
+                  <linearGradient key={s.key} id={`${gradId}-${s.key}`} x1="0" x2="0" y1="0" y2="1">
+                    <stop offset="0%" stopColor={s.color} stopOpacity={visible.length > 1 ? 0.14 : 0.22} />
+                    <stop offset="100%" stopColor={s.color} stopOpacity={0} />
+                  </linearGradient>
+                ))}
+              </defs>
+            )}
+            {area &&
+              n > 1 &&
+              visible.map((s) => (
+                <path key={`a-${s.key}`} d={`${pathOf(s)} L${xAt(n - 1).toFixed(1)},${(pad.t + innerH).toFixed(1)} L${xAt(0).toFixed(1)},${(pad.t + innerH).toFixed(1)} Z`} fill={`url(#${gradId}-${s.key})`} stroke="none" />
+              ))}
             {visible.map((s) => (
               <path key={s.key} d={pathOf(s)} fill="none" stroke={s.color} strokeWidth={2} strokeLinejoin="round" strokeLinecap="round" />
             ))}

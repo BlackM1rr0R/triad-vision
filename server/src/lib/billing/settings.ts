@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { prisma } from '../../db.js';
 import { readInvoicing, readLegal } from '../invoicePdf.js';
 import { readSetting, writeSetting } from '../growth/settings.js';
+import { azSeller, entityForCurrency, getBillingEntities, type BillingEntity } from './entities.js';
 
 /**
  * Settings of client billing (Setting `clientBilling`). The seller data (name, address, Steuernummer /
@@ -53,14 +54,39 @@ export const saveClientBillingSettings = async (s: ClientBillingSettings) => {
 /** VAT rate an invoice gets in the current mode. */
 export const effectiveVatRate = (s: Pick<ClientBillingSettings, 'vatMode' | 'vatRate'>) => (s.vatMode === 'STANDARD' ? s.vatRate : 0);
 
-/** Everything a client invoice / receipt needs: billing settings, seller (legal), bank (invoicing). */
-export const loadBillingContext = async () => {
+/**
+ * Everything a client invoice / receipt needs: billing settings, seller, bank — of the issuing entity
+ * (entities.ts). DE (default): seller from the legal settings, bank from the invoicing settings, VAT from the
+ * client billing settings. AZ (Baku entity, when enabled and chosen for the currency): its own legal data, bank
+ * and VAT; terms, reminders and footer stay those of the client billing settings.
+ */
+export const loadBillingContext = async (opts: { currency?: string | null; entity?: BillingEntity } = {}) => {
   const rows = await prisma.setting.findMany({ where: { key: { in: ['invoicing', 'legal'] } } });
   const byKey = Object.fromEntries(rows.map((r) => [r.key, r.value]));
   const invoicing = readInvoicing(byKey.invoicing);
   const { seller, missing } = readLegal(byKey.legal);
+  const billing = await getClientBillingSettings();
+  const entities = await getBillingEntities();
+  const entity: BillingEntity = opts.entity ?? (opts.currency ? entityForCurrency(opts.currency, entities) : 'DE');
+  if (entity === 'AZ') {
+    const az = entities.az;
+    const azMissing: string[] = [];
+    if (!az.name) azMissing.push('name');
+    if (!az.street || !az.zipCity) azMissing.push('address');
+    if (!az.taxNumber && !az.vatId) azMissing.push('vatId');
+    return {
+      entity,
+      entities,
+      billing: { ...billing, vatMode: (az.vatMode === 'STANDARD' ? 'STANDARD' : 'EXEMPT') as VatMode, vatRate: az.vatRate, exemptionNote: az.exemptionNote },
+      seller: azSeller(az),
+      legalMissing: azMissing,
+      bank: { accountHolder: az.bank.accountHolder || az.name, iban: az.bank.iban, bic: az.bank.bic, bank: az.bank.bank },
+    };
+  }
   return {
-    billing: await getClientBillingSettings(),
+    entity,
+    entities,
+    billing,
     seller,
     legalMissing: missing,
     bank: { accountHolder: invoicing.accountHolder || seller.name, iban: invoicing.iban, bic: invoicing.bic, bank: invoicing.bank },

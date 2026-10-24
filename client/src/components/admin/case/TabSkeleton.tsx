@@ -26,3 +26,15 @@ export const TabSkeleton = ({ panels = 3 }: { panels?: number }) => {
     </div>
   );
 };
+
+/** Body of a case panel while its data loads (rows at list-row height); `padded` for panels with bodyClassName="p-0". */
+export const PanelBodySkeleton = ({ rows = 3, padded = false }: { rows?: number; padded?: boolean }) => {
+  const { t } = useTranslation();
+  return (
+    <div role="status" aria-label={t('ui.loading')} className={padded ? 'space-y-3 p-5' : 'space-y-3'}>
+      {Array.from({ length: rows }, (_, i) => (
+        <Skeleton key={i} className="h-10 w-full" />
+      ))}
+    </div>
+  );
+};

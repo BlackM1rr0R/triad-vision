@@ -12,6 +12,7 @@ import { DocStatusBadge } from './StatusBadge';
 import { FileDrop } from './FileDrop';
 import { ConfirmDialog } from './ConfirmDialog';
 import { useApiError } from './useApiError';
+import { celebrate } from '@/components/motion/celebrate';
 // Document vault + automatic checks: client-side check before upload, "choose from my vault", server check result.
 import { useDocCheckGate } from '@/components/vault/DocCheckDialog';
 import { VaultPicker } from '@/components/vault/VaultPicker';
@@ -373,6 +374,7 @@ export const CaseDocuments = ({
     try {
       await api.post(`/cases/${data.id}/submit`);
       toast.success(t('portal.events.DOCUMENTS_SUBMITTED'));
+      celebrate({ count: 50 }); // documents handed in: success moment
       setConfirmSubmit(false);
       await onChanged();
     } catch (err) {

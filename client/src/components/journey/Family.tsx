@@ -10,6 +10,7 @@ import { useL10n } from '@/lib/l10n';
 import { registerCopy } from '@/i18n';
 import { pagesJourney } from '@/i18n/pagesJourney';
 import { pagesFamilyLanguage } from '@/i18n/pagesFamilyLanguage';
+import { PanelBodySkeleton } from '@/components/admin/case/TabSkeleton';
 import { Spinner } from '@/components/ui/Spinner';
 import { StatusBadge } from '@/components/portal/StatusBadge';
 import { CaseStepper } from '@/components/portal/CaseStepper';
@@ -241,9 +242,7 @@ export const FamilyPanel = ({ caseId, parentCaseId }: { caseId: string; parentCa
       bodyClassName="p-0"
     >
       {isLoading || !group ? (
-        <div className="grid place-items-center py-8">
-          <Spinner className="size-5 text-brand-600" />
-        </div>
+        <PanelBodySkeleton rows={2} padded />
       ) : isMember ? (
         <div className="p-5 text-sm">
           <p className="text-muted">{t('journey.family.memberOf', { number: group.main.number })}</p>

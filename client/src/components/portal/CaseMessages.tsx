@@ -2,14 +2,13 @@ import { useEffect, useId, useRef, useState } from 'react';
 import clsx from 'clsx';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
-import { MessageCircle, SendHorizontal, X } from 'lucide-react';
+import { MessageCircle, RotateCw, SendHorizontal, X } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { useL10n } from '@/lib/l10n';
 import type { CaseDetail } from '@/lib/types';
 import { RealtimeBridge } from '@/lib/realtime';
 import { registerCopy } from '@/i18n';
 import { pagesMessaging } from '@/i18n/pagesMessaging';
-import { Spinner } from '@/components/ui/Spinner';
 import { ChannelBadge, LiveDot, ReadTicks, TypingIndicator } from '@/components/messaging/ThreadBits';
 import { useThread } from '@/components/messaging/useThread';
 import { useApiError } from './useApiError';
@@ -32,7 +31,6 @@ export const CaseMessages = ({ data, onChanged }: { data: CaseDetail; onChanged:
   const inputId = useId();
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const [body, setBody] = useState('');
-  const [sending, setSending] = useState(false);
   const meId = user?.id ?? '';
 
   const thread = useThread({ caseId: data.id, base: '/cases', initial: data.messages, meId, onNewMessage: () => void onChanged() });
@@ -52,20 +50,23 @@ export const CaseMessages = ({ data, onChanged }: { data: CaseDetail; onChanged:
     if (el) el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
   }, [count, lastId, typingName]);
 
-  const send = async () => {
+  // Optimistic: the message appears at once (faded, clock icon) and the box is free for the next one;
+  // the server's copy replaces it, a failed send stays in the thread with "resend" / "discard".
+  const send = () => {
     const text = body.trim();
-    if (!text || sending || !user) return;
-    setSending(true);
+    if (!text || !user) return;
     setBody('');
-    try {
-      await thread.send(text, { id: user.id, firstName: user.firstName, lastName: user.lastName, role: user.role });
-      void onChanged();
-    } catch (err) {
-      setBody(text);
-      onError(err);
-    } finally {
-      setSending(false);
-    }
+    thread
+      .send(text, { id: user.id, firstName: user.firstName, lastName: user.lastName, role: user.role })
+      .then(() => void onChanged())
+      .catch(onError);
+  };
+
+  const retry = (id: string) => {
+    thread
+      .retry(id)
+      .then((ok) => ok && void onChanged())
+      .catch(onError);
   };
 
   return (
@@ -121,9 +122,15 @@ export const CaseMessages = ({ data, onChanged }: { data: CaseDetail; onChanged:
                     <time dateTime={m.createdAt}>{dateTime(m.createdAt)}</time>
                     {mine && <ReadTicks m={m} />}
                     {m.failed && (
-                      <button type="button" className="inline-flex items-center gap-0.5 text-red-700 hover:underline" onClick={() => thread.dismissFailed(m.id)}>
-                        <X className="size-3" aria-hidden /> {t('messaging.chat.failed')}
-                      </button>
+                      <>
+                        <span className="text-danger-fg" role="alert">{t('messaging.chat.failed')}</span>
+                        <button type="button" className="inline-flex items-center gap-0.5 font-semibold text-brand-700 hover:underline" onClick={() => retry(m.id)}>
+                          <RotateCw className="size-3" aria-hidden /> {t('messaging.chat.retry')}
+                        </button>
+                        <button type="button" className="inline-flex items-center gap-0.5 text-muted hover:underline" onClick={() => thread.dismissFailed(m.id)}>
+                          <X className="size-3" aria-hidden /> {t('messaging.chat.dismiss')}
+                        </button>
+                      </>
                     )}
                   </span>
                 </motion.div>
@@ -142,7 +149,7 @@ export const CaseMessages = ({ data, onChanged }: { data: CaseDetail; onChanged:
         className="flex items-end gap-2 border-t border-line p-3"
         onSubmit={(e) => {
           e.preventDefault();
-          void send();
+          send();
         }}
       >
         <label htmlFor={inputId} className="sr-only">
@@ -162,7 +169,7 @@ export const CaseMessages = ({ data, onChanged }: { data: CaseDetail; onChanged:
           onKeyDown={(e) => {
             if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
               e.preventDefault();
-              void send();
+              send();
             }
           }}
         />
@@ -174,8 +181,8 @@ export const CaseMessages = ({ data, onChanged }: { data: CaseDetail; onChanged:
             void onChanged();
           }}
         />
-        <button type="submit" className="btn-primary size-11 shrink-0 p-0" disabled={!body.trim() || sending} aria-label={t('common.send')}>
-          {sending ? <Spinner className="size-4" /> : <SendHorizontal className="size-4.5" aria-hidden />}
+        <button type="submit" className="btn-primary size-11 shrink-0 p-0" disabled={!body.trim()} aria-label={t('common.send')}>
+          <SendHorizontal className="size-4.5" aria-hidden />
         </button>
       </form>
     </section>

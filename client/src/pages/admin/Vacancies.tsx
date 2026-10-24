@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
@@ -24,6 +24,9 @@ import { CandidateProfileCard } from '@/components/aiEmployer/CandidateProfileCa
 import { EmployerAiToggle } from '@/components/aiEmployer/EmployerAiToggle';
 import { reportAiSaved } from '@/components/aiEmployer/shared';
 import { toastJobsError, useJobLabels } from '@/components/jobs/labels';
+import { VacancyStatusCell } from '@/components/inline/VacancyStatusCell'; // inline publish / close
+import { requestInlineEdit } from '@/components/inline/optimistic';
+import { useListNav } from '@/components/shortcuts/useListNav'; // J / K / Enter / E / '/' / Esc
 import {
   APPLICATION_STATUS_TONE,
   VACANCY_STATUS_TONE,
@@ -441,6 +444,20 @@ export default function AdminVacancies() {
   });
   const pages = data ? Math.max(1, Math.ceil(data.total / data.pageSize)) : 1;
 
+  // Keyboard: J / K select a row, Enter opens it, E edits its status in place, "/" searches.
+  const [selected, setSelected] = useState<string | null>(null);
+  const searchRef = useRef<HTMLInputElement>(null);
+  useListNav({
+    ids: (data?.items ?? []).map((v) => v.id),
+    selected,
+    onSelect: setSelected,
+    onOpen: (id) => setParam('id', id),
+    onEdit: (id) => requestInlineEdit(id),
+    searchRef,
+    titleKey: 'ux.shortcuts.lists.vacancies',
+    enabled: !openId,
+  });
+
   return (
     <div>
       <PageHead
@@ -460,7 +477,7 @@ export default function AdminVacancies() {
         <label className="relative flex-1">
           <span className="sr-only">{t('admin.common.search')}</span>
           <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted" aria-hidden />
-          <input type="search" className="input pl-9" placeholder={t('jobsArea.admin.vacancies.search')} value={searchInput} onChange={(e) => setSearchInput(e.target.value)} />
+          <input ref={searchRef} type="search" className="input pl-9" placeholder={t('jobsArea.admin.vacancies.search')} value={searchInput} onChange={(e) => setSearchInput(e.target.value)} />
         </label>
         <select aria-label={t('jobsArea.admin.vacancies.company')} className="input lg:w-56" value={companyId} onChange={(e) => setParam('companyId', e.target.value || null)}>
           <option value="">{t('jobsArea.admin.vacancies.allCompanies')}</option>
@@ -496,27 +513,42 @@ export default function AdminVacancies() {
           {data.items.map((v) => {
             const total = Object.values(v.applications).reduce<number>((a, b) => a + (b ?? 0), 0);
             return (
-              <li key={v.id}>
-                <button type="button" onClick={() => setParam('id', v.id)} className="flex w-full flex-col gap-2 px-4 py-3.5 text-left transition hover:bg-surface/70 sm:flex-row sm:items-center sm:justify-between">
-                  <div className="min-w-0">
-                    <p className="flex flex-wrap items-center gap-2">
-                      <span className="font-semibold break-words text-navy-900">{L.title(v.title)}</span>
-                      <span className={clsx('badge', VACANCY_STATUS_TONE[v.status])}>{L.vacancyStatus(v.status)}</span>
-                    </p>
-                    <p className="mt-0.5 truncate text-xs text-muted">
-                      {[v.company?.name ?? t('jobsArea.admin.vacancies.noCompany'), v.city, L.employmentType(v.employmentType), L.salary(v.salaryMin, v.salaryMax)].filter(Boolean).join(' · ')}
-                    </p>
-                  </div>
-                  <div className="flex shrink-0 items-center gap-3 text-xs text-muted tabular-nums">
-                    {total > 0 && (
-                      <span className="inline-flex items-center gap-1">
-                        <Users className="size-3.5" /> {total}
-                        {v.applications.NEW ? <span className="badge bg-brand-100 text-brand-700">+{v.applications.NEW}</span> : null}
-                      </span>
-                    )}
-                    <span title={fmtDate(v.updatedAt)}>{fmtRelative(v.updatedAt)}</span>
-                  </div>
-                </button>
+              <li
+                key={v.id}
+                data-row-id={v.id}
+                onClick={() => setParam('id', v.id)}
+                className={clsx(
+                  'flex w-full cursor-pointer flex-col gap-2 px-4 py-3.5 text-left transition hover:bg-surface/70 sm:flex-row sm:items-center sm:justify-between',
+                  selected === v.id && 'bg-brand-50/60 shadow-[inset_3px_0_0_var(--color-brand-600)]',
+                )}
+              >
+                <div className="min-w-0">
+                  <p className="flex flex-wrap items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setParam('id', v.id);
+                      }}
+                      className="rounded text-left font-semibold break-words text-navy-900 outline-none hover:underline focus-visible:ring-2 focus-visible:ring-brand-500/50"
+                    >
+                      {L.title(v.title)}
+                    </button>
+                    <VacancyStatusCell id={v.id} status={v.status} />
+                  </p>
+                  <p className="mt-0.5 truncate text-xs text-muted">
+                    {[v.company?.name ?? t('jobsArea.admin.vacancies.noCompany'), v.city, L.employmentType(v.employmentType), L.salary(v.salaryMin, v.salaryMax)].filter(Boolean).join(' · ')}
+                  </p>
+                </div>
+                <div className="flex shrink-0 items-center gap-3 text-xs text-muted tabular-nums">
+                  {total > 0 && (
+                    <span className="inline-flex items-center gap-1">
+                      <Users className="size-3.5" /> {total}
+                      {v.applications.NEW ? <span className="badge bg-brand-100 text-brand-700">+{v.applications.NEW}</span> : null}
+                    </span>
+                  )}
+                  <span title={fmtDate(v.updatedAt)}>{fmtRelative(v.updatedAt)}</span>
+                </div>
               </li>
             );
           })}

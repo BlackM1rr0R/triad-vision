@@ -20,6 +20,7 @@ import {
   STATUS_BADGE,
   billingErrText,
   fmtEur,
+  otherCurrencies,
   triggerLabel,
   type CaseBilling,
   type ClientInvoice,
@@ -126,10 +127,17 @@ export default function CaseBillingPanel({ caseId, isAdmin }: { caseId: string; 
             ).map(([k, v, tone]) => (
               <div key={k} className="rounded-xl bg-surface px-3 py-2.5">
                 <dt className="text-xs text-muted">{t(`bill.admin.panel.${k}`)}</dt>
-                <dd className={clsx('font-display text-lg font-bold text-navy-900 tabular-nums', tone)}>{fmtEur(v)}</dd>
+                <dd className={clsx('font-display text-lg font-bold text-navy-900 tabular-nums', tone)}>{fmtEur(v, d.totals.currency)}</dd>
               </div>
             ))}
           </dl>
+          {otherCurrencies(d.totals).length > 0 && (
+            <p className="-mt-3 text-xs text-muted">
+              {otherCurrencies(d.totals)
+                .map((c) => t('acct.currency.otherLine', { open: fmtEur(c.openCents, c.currency), invoiced: fmtEur(c.invoicedCents, c.currency) }))
+                .join(' · ')}
+            </p>
+          )}
 
           <section>
             <h3 className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-navy-900">
@@ -148,10 +156,10 @@ export default function CaseBillingPanel({ caseId, isAdmin }: { caseId: string; 
                       </p>
                       <p className="text-xs text-muted">
                         {fmtDate(inv.issueDate)} → <span className={clsx(inv.status === 'OVERDUE' && 'font-semibold text-danger')}>{fmtDate(inv.dueDate)}</span>
-                        {inv.paidCents > 0 && inv.status !== 'PAID' && ` · ${t('bill.admin.cols.paid')} ${fmtEur(inv.paidCents)}`}
+                        {inv.paidCents > 0 && inv.status !== 'PAID' && ` · ${t('bill.admin.cols.paid')} ${fmtEur(inv.paidCents, inv.currency)}`}
                       </p>
                     </div>
-                    <span className="text-sm font-semibold text-navy-900 tabular-nums">{fmtEur(inv.grossCents)}</span>
+                    <span className="text-sm font-semibold text-navy-900 tabular-nums">{fmtEur(inv.grossCents, inv.currency)}</span>
                     <span className={clsx('badge', STATUS_BADGE[inv.status])}>{t(`bill.status.${inv.status}`)}</span>
                     <InvoiceRowActions inv={inv} onEdit={setEditing} onAction={(kind) => setAction({ kind, invoice: inv, email: d.client.email })} />
                   </li>
@@ -172,7 +180,7 @@ export default function CaseBillingPanel({ caseId, isAdmin }: { caseId: string; 
                   <div key={p.id} className="rounded-xl border border-line">
                     <div className="flex flex-wrap items-center gap-2 border-b border-line px-3 py-2">
                       <p className="min-w-0 flex-1 text-sm font-semibold text-navy-900">{p.title}</p>
-                      <span className="text-sm tabular-nums">{fmtEur(p.totalCents)}</span>
+                      <span className="text-sm tabular-nums">{fmtEur(p.totalCents, p.currency)}</span>
                       <span className="badge">{t(`bill.planStatus.${p.status}`)}</span>
                       {p.status !== 'CANCELLED' && (
                         <button type="button" className="btn-ghost btn-sm" onClick={() => setInst({ planId: p.id, installment: null })}>
@@ -196,7 +204,7 @@ export default function CaseBillingPanel({ caseId, isAdmin }: { caseId: string; 
                               {i.dueDate && ` · ${fmtDate(i.dueDate)}`}
                             </span>
                           </span>
-                          <span className="tabular-nums">{fmtEur(i.amountCents)}</span>
+                          <span className="tabular-nums">{fmtEur(i.amountCents, p.currency)}</span>
                           <span className={clsx('badge', INSTALLMENT_BADGE[i.status])}>{t(`bill.instStatus.${i.status}`)}</span>
                           {i.status === 'PENDING' && p.status === 'ACTIVE' && (
                             <span className="flex gap-1">
@@ -233,7 +241,7 @@ export default function CaseBillingPanel({ caseId, isAdmin }: { caseId: string; 
                         {p.reference && ` · ${p.reference}`}
                       </span>
                     </span>
-                    <span className="font-semibold text-success-fg tabular-nums">{fmtEur(p.amountCents)}</span>
+                    <span className="font-semibold text-success-fg tabular-nums">{fmtEur(p.amountCents, p.currency)}</span>
                     <IconBtn href={`/api/admin/client-billing/payments/${p.id}/receipt`} label={t('bill.admin.actions.receipt')} icon={Download} />
                     {isAdmin && <IconBtn label={t('bill.admin.actions.void')} icon={Trash2} tone="danger" onClick={() => setConfirm({ kind: 'void', id: p.id })} />}
                   </li>

@@ -7,7 +7,11 @@
  * the source is shown as text. Links: http(s) (opened in a new tab, rel=noopener), site paths ("/booking" gets
  * the reader's language prefix), "#anchor", "mailto:" and "guide:<key>" (another guide in the same language).
  * Anything else is rendered as plain text.
+ * A line `::calculator{type="chancenkarte"}` (see calculators.ts) becomes a static calculator teaser that the
+ * client turns into a live calculator.
  */
+
+import { CALCULATOR_SHORTCODE_RE, CALCULATOR_TOOL_PATH, calculatorCopy, isCalculatorType } from './calculators.js';
 
 export interface TocEntry {
   id: string;
@@ -19,6 +23,8 @@ export interface RenderOptions {
   localize: (path: string) => string;
   /** Site path of another guide in the reader's language, or null if it does not exist. */
   guideHref: (key: string) => string | null;
+  /** Language of the guide (static calculator texts); default English. */
+  locale?: string;
 }
 
 const escapeHtml = (s: string) =>
@@ -105,6 +111,17 @@ export const renderGuideMarkdown = (md: string, opts: RenderOptions): { html: st
       flushPara();
       continue;
     }
+    const calc = CALCULATOR_SHORTCODE_RE.exec(trimmed);
+    if (calc && isCalculatorType(calc[1])) {
+      flushPara();
+      const type = calc[1];
+      const c = calculatorCopy(type, opts.locale);
+      out.push(
+        `<div class="guide-calculator" data-calculator="${type}"><p><strong>${escapeHtml(c.title)}</strong></p><p>${escapeHtml(c.text)}</p>` +
+          `<p><a href="${escapeHtml(opts.localize(CALCULATOR_TOOL_PATH[type]))}">${escapeHtml(c.cta)}</a></p></div>`,
+      );
+      continue;
+    }
     const h = /^(#{1,4})\s+(.+?)\s*#*$/.exec(trimmed);
     if (h) {
       flushPara();
@@ -174,6 +191,7 @@ export const renderGuideMarkdown = (md: string, opts: RenderOptions): { html: st
 /** Plain text of a markdown body (for word counts and descriptions). */
 export const markdownToText = (md: string) =>
   md
+    .replace(/^[ \t]*::calculator\{[^}\n]*\}[ \t]*$/gm, '')
     .replace(/^#+\s+/gm, '')
     .replace(/^\s*[-*>]\s+/gm, '')
     .replace(/\|/g, ' ')

@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
 import { ArrowDown, ArrowUp, GripVertical, Lock, Plus, Search, X } from 'lucide-react';
 import { BarChart, LineChart, SERIES_COLORS, compactNumber } from '@/components/admin/charts';
+import { DonutChart } from '@/components/admin/chartKit';
 import {
   useReportFormat,
   type AggFn,
@@ -497,42 +498,7 @@ export const PreviewTable = ({ result }: { result: ReportResult }) => {
 
 // ─── Chart ──────────────────────────────────────────────────────────────
 
-const Pie = ({ slices, format, ariaLabel }: { slices: { label: string; value: number }[]; format: (v: number) => string; ariaLabel: string }) => {
-  const total = slices.reduce((a, s) => a + Math.max(0, s.value), 0);
-  const R = 80;
-  let angle = -Math.PI / 2;
-  const arcs = slices.map((s, i) => {
-    const frac = total ? Math.max(0, s.value) / total : 0;
-    const a0 = angle;
-    const a1 = angle + frac * 2 * Math.PI;
-    angle = a1;
-    const large = a1 - a0 > Math.PI ? 1 : 0;
-    const p = (a: number) => `${(100 + R * Math.cos(a)).toFixed(2)},${(100 + R * Math.sin(a)).toFixed(2)}`;
-    const d = frac >= 0.9999 ? `M100,${100 - R} A${R},${R} 0 1 1 99.99,${100 - R} Z` : `M100,100 L${p(a0)} A${R},${R} 0 ${large} 1 ${p(a1)} Z`;
-    return { d, color: SERIES_COLORS[i % SERIES_COLORS.length], ...s, frac };
-  });
-  return (
-    <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-start">
-      <svg viewBox="0 0 200 200" className="size-48 shrink-0" role="img" aria-label={ariaLabel}>
-        {arcs.map((a, i) => (
-          <path key={i} d={a.d} fill={a.color} stroke="var(--color-card)" strokeWidth={1.5}>
-            <title>{`${a.label}: ${format(a.value)}`}</title>
-          </path>
-        ))}
-      </svg>
-      <ul className="min-w-0 flex-1 space-y-1 text-sm">
-        {arcs.map((a, i) => (
-          <li key={i} className="flex items-center gap-2">
-            <span className="size-3 shrink-0 rounded-sm" style={{ background: a.color }} aria-hidden />
-            <span className="min-w-0 flex-1 truncate">{a.label}</span>
-            <span className="text-xs text-muted tabular-nums">{Math.round(a.frac * 1000) / 10}%</span>
-            <span className="w-28 text-right font-semibold tabular-nums">{format(a.value)}</span>
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-};
+// Pie view: the interactive donut of the chart kit (hover, legend toggles, table fallback).
 
 export const ReportChart = ({ result, type, metric, onChange }: { result: ReportResult; type: ChartType; metric?: string; onChange: (c: { type: ChartType; metric?: string }) => void }) => {
   const { t } = useTranslation();
@@ -582,9 +548,10 @@ export const ReportChart = ({ result, type, metric, onChange }: { result: Report
           onToggle={() => undefined}
           xLabel={(x) => x}
           ariaLabel={t('reports.chartAria')}
+          area
         />
       )}
-      {type === 'pie' && <Pie slices={pie} format={fmt} ariaLabel={t('reports.chartAria')} />}
+      {type === 'pie' && <DonutChart slices={pie.map((p, i) => ({ key: `${i}`, ...p }))} format={fmt} ariaLabel={t('reports.chartAria')} size={200} />}
     </div>
   );
 };

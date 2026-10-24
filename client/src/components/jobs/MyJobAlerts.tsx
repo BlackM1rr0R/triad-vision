@@ -5,6 +5,7 @@ import { BellRing, Plus, Trash2 } from 'lucide-react';
 import clsx from 'clsx';
 import { toast } from 'sonner';
 import { api, errorCode } from '@/lib/api';
+import { optimistic } from '@/lib/optimistic';
 import { currentSiteLocale, registerCopy } from '@/i18n';
 import { pagesDiscover } from '@/i18n/pagesDiscover';
 import { ProfessionPicker, useAlertOptions } from './JobAlertForm';
@@ -54,13 +55,15 @@ export const MyJobAlerts = ({ className }: { className?: string }) => {
     },
     onError: (err) => toast.error(errorCode(err) === 'TOO_MANY_ALERTS' ? t('discover.alerts.tooMany') : t('discover.alerts.error')),
   });
+  // Optimistic: the alert disappears at once and comes back if the server refuses.
   const remove = useMutation({
     mutationFn: async (id: string) => (await api.delete(`/job-alerts/mine/${id}`)).data,
-    onSuccess: () => {
-      toast.success(t('discover.alerts.mine.removed'));
-      void qc.invalidateQueries({ queryKey: ['my-job-alerts'] });
-    },
-    onError: () => toast.error(t('discover.alerts.error')),
+    ...optimistic<MineResponse, string>(qc, {
+      key: ['my-job-alerts'],
+      update: (prev, id) => prev && { ...prev, items: prev.items.filter((a) => a.id !== id) },
+      onError: () => toast.error(t('discover.alerts.error')),
+    }),
+    onSuccess: () => toast.success(t('discover.alerts.mine.removed')),
   });
 
   return (

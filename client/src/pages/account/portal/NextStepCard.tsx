@@ -15,6 +15,7 @@ import {
   FilePen,
   FileSignature,
   FileUp,
+  GraduationCap,
   Hourglass,
   Landmark,
   ListChecks,
@@ -31,6 +32,7 @@ import {
 import { buttonClass } from '@/components/ui/Button';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { useL10n } from '@/lib/l10n';
+import { useMorphSource } from '@/lib/viewTransition';
 import type { L10n } from '@/lib/types';
 import type { NextAction, NextKind, NextStep } from '@/components/portal/usePortalNav';
 
@@ -46,6 +48,7 @@ export const KIND_ICON: Record<NextKind, LucideIcon> = {
   CONFIRM_DATA: ShieldCheck,
   FILL_FORM: ClipboardList,
   CLIENT_TASK: ListChecks,
+  RECOGNITION_DOCS: GraduationCap,
   ANSWER_CHECKIN: MessageCircleHeart,
   ARRIVAL_PLAN: PlaneTakeoff,
   RENEW_RESIDENCE: CalendarClock,
@@ -54,6 +57,9 @@ export const KIND_ICON: Record<NextKind, LucideIcon> = {
   PASSPORT_EXPIRY: BookUser,
   COMPLETE_PROFILE: UserRound,
 };
+
+/** Pages whose heading is a morph target of the next-step card (useMorphTarget('portal-next', 'step')). */
+const morphTarget = (to: string) => /^\/account\/cases\/[^/?#]+([?#]|$)/.test(to) || /^\/account\/payments([?#]|$)/.test(to);
 
 /** Kinds whose sentence already names the date. */
 const DATE_IN_TEXT: NextKind[] = ['ATTEND_APPOINTMENT', 'RENEW_RESIDENCE', 'PASSPORT_EXPIRY'];
@@ -104,6 +110,9 @@ export function NextStepCard({ data, loading, caseLink, tour }: { data: NextStep
   const { t } = useTranslation();
   const { date } = useL10n();
   const copyOf = useActionCopy();
+  // Shared-element morph: the card's title grows into the heading of the page its button opens
+  // (case view, payments…: useMorphTarget('portal-next', 'step') there). Off without View Transitions.
+  const morph = useMorphSource<HTMLElement>('portal-next', 'step');
 
   if (loading && !data) {
     return (
@@ -124,7 +133,7 @@ export function NextStepCard({ data, loading, caseLink, tour }: { data: NextStep
     const side = data.waiting?.side ?? 'NONE';
     const Icon = side === 'EMBASSY' ? Landmark : side === 'TEAM' ? Hourglass : CheckCircle2;
     return (
-      <section className="card relative overflow-hidden" aria-labelledby="next-step-title" data-tour={tour}>
+      <section ref={morph.ref} className="card relative overflow-hidden" aria-labelledby="next-step-title" data-tour={tour}>
         <span className={clsx('absolute inset-y-0 left-0 w-1.5', side === 'NONE' ? 'bg-success' : 'bg-info')} aria-hidden />
         <div className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:p-7 sm:pl-8">
           <span className={clsx('grid size-14 shrink-0 place-items-center rounded-2xl', side === 'NONE' ? 'bg-success-bg text-success-fg' : 'bg-info-bg text-info-fg')}>
@@ -132,7 +141,7 @@ export function NextStepCard({ data, loading, caseLink, tour }: { data: NextStep
           </span>
           <div className="min-w-0 flex-1">
             <p className="eyebrow">{t('pnav.next.eyebrow')}</p>
-            <h2 id="next-step-title" className="mt-1 text-xl font-extrabold break-words text-ink sm:text-2xl">
+            <h2 id="next-step-title" className="mt-1 text-xl font-extrabold break-words text-ink sm:text-2xl" {...morph.part('title')}>
               {t(`pnav.next.wait.${side}.title`)}
             </h2>
             <p className="type-small mt-1.5">{t(`pnav.next.wait.${side}.text`)}</p>
@@ -141,7 +150,7 @@ export function NextStepCard({ data, loading, caseLink, tour }: { data: NextStep
             )}
           </div>
           {caseLink && (
-            <Link to={caseLink} className={buttonClass({ variant: 'secondary', className: 'w-full shrink-0 sm:w-auto' })}>
+            <Link to={caseLink} onClick={morphTarget(caseLink) ? morph.onClick : undefined} className={buttonClass({ variant: 'secondary', className: 'w-full shrink-0 sm:w-auto' })}>
               {t('pnav.next.wait.open')}
               <ArrowRight className="size-4" aria-hidden />
             </Link>
@@ -155,6 +164,7 @@ export function NextStepCard({ data, loading, caseLink, tour }: { data: NextStep
   const Icon = KIND_ICON[a.kind];
   return (
     <section
+      ref={morph.ref}
       className={clsx('card relative overflow-hidden border-brand-400/50 ring-4 ring-brand-500/10', a.overdue && 'border-danger-border ring-danger/10')}
       aria-labelledby="next-step-title"
       data-tour={tour}
@@ -167,7 +177,7 @@ export function NextStepCard({ data, loading, caseLink, tour }: { data: NextStep
           </span>
           <div className="min-w-0 flex-1">
             <p className="eyebrow">{t('pnav.next.eyebrow')}</p>
-            <h2 id="next-step-title" className="mt-1 text-xl font-extrabold break-words text-ink sm:text-[1.7rem] sm:leading-tight">
+            <h2 id="next-step-title" className="mt-1 text-xl font-extrabold break-words text-ink sm:text-[1.7rem] sm:leading-tight" {...morph.part('title')}>
               {copy.title}
             </h2>
             <p className="type-small mt-1.5 max-w-2xl">{copy.text}</p>
@@ -184,7 +194,7 @@ export function NextStepCard({ data, loading, caseLink, tour }: { data: NextStep
               </p>
             )}
           </div>
-          <Link to={a.to} className={buttonClass({ size: 'lg', className: 'w-full shrink-0 sm:w-auto' })}>
+          <Link to={a.to} onClick={morphTarget(a.to) ? morph.onClick : undefined} className={buttonClass({ size: 'lg', className: 'w-full shrink-0 sm:w-auto' })}>
             {copy.action}
             <ArrowRight className="size-4" aria-hidden />
           </Link>
