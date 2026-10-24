@@ -215,10 +215,8 @@ const AdminGermanExamDates = lazy(() => import('./pages/admin/GermanExamDates'))
 const AdminRequirements = lazy(() => import('./pages/admin/Requirements'));
 const AdminCaseForms = lazy(() => import('./pages/admin/CaseForms')); // smart questionnaire builder
 const AdminDocGuides = lazy(() => import('./pages/admin/DocGuides')); // "Necə almalı?" document guides
-const AdminHub = lazy(() => import('./pages/admin/Hub')); // /admin/hub/:hubId → the hub's last / first tab
 const AdminModules = lazy(() => import('./pages/admin/SystemModules')); // module toggles (SUPER_ADMIN)
 const AdminUsage = lazy(() => import('./pages/admin/SystemUsage')); // admin page usage statistics (SUPER_ADMIN)
-const AdminStaffDesks = lazy(() => import('./pages/admin/StaffDesks')); // desks of the staff (ADMIN+)
 const AccountCaseForm = lazy(() => import('./pages/account/CaseForm'));
 const AccountConfirmData = lazy(() => import('./pages/account/ConfirmData'));
 const AccountOnboarding = lazy(() => import('./pages/account/Onboarding'));
@@ -499,7 +497,6 @@ export default function App() {
           >
             <Route index element={<AdminIndex />} />
             <Route path="today" element={<AdminToday />} />
-            <Route path="hub/:hubId" element={<AdminHub />} />
             <Route
               path="system/modules"
               element={
@@ -513,14 +510,6 @@ export default function App() {
               element={
                 <RequireAuth roles={['SUPER_ADMIN']}>
                   <AdminUsage />
-                </RequireAuth>
-              }
-            />
-            <Route
-              path="team/desks"
-              element={
-                <RequireAuth roles={['ADMIN', 'SUPER_ADMIN']}>
-                  <AdminStaffDesks />
                 </RequireAuth>
               }
             />

@@ -19,7 +19,7 @@ import { pagesTasks } from '@/i18n/pagesTasks';
 import { commandPaletteCopy } from '@/i18n/commandPalette';
 import { adminNavCopy } from '@/i18n/adminNav';
 import { roleLabel, statusLabel } from '@/components/admin/labels';
-import { ALL_NAV, canSee, hrefFor, hubOf, isVisible, moduleOn, navItemById, type StaffNavItem } from './navRegistry';
+import { STAFF_NAV, canSee, hrefFor, isVisible, moduleOn, navItemById, type StaffNavItem } from './navRegistry';
 import { useStaffNav } from './navPrefs';
 import { PALETTE_ACTIONS, type PaletteAction } from './actions';
 import { SYNONYMS } from './synonyms';
@@ -145,7 +145,7 @@ export default function CommandPalette({ open, onClose }: { open: boolean; onClo
         .map((l) => i18n.getFixedT(l)(key))
         .concat(extra)
         .join(' , ');
-    const nav = ALL_NAV.filter((n) => isVisible(n, role, modules)).map((item) => ({
+    const nav = STAFF_NAV.filter((n) => isVisible(n, role, modules)).map((item) => ({
       item,
       label: t(item.labelKey),
       hay: { primary: prepHay(t(item.labelKey)), others: prepHay(others(item.labelKey, SYNONYMS[item.id] ?? '')) } as MatchHay,
@@ -161,18 +161,8 @@ export default function CommandPalette({ open, onClose }: { open: boolean; onClo
   const navEntry = useCallback(
     (item: StaffNavItem, label: string, section: SectionKey): Entry => {
       const href = hrefFor(item, role);
-      // Sub-line: the hub the page lives in (hubs themselves: "Sections").
-      const hub = hubOf(item.id);
-      const sub =
-        item.area === 'workspace'
-          ? t('cmd.areaWorkspace')
-          : item.id.startsWith('hub.')
-            ? t('anav.sections.hubs')
-            : hub
-              ? t(`anav.hubs.${hub}`)
-              : item.group
-                ? t(`admin.nav.groups.${item.group}`)
-                : undefined;
+      // Sub-line: the sidebar group the page lives in.
+      const sub = item.area === 'workspace' ? t('cmd.areaWorkspace') : item.group ? t(`admin.nav.groups.${item.group}`) : undefined;
       return { key: `${section}:nav:${item.id}`, section, icon: item.icon, label, sub, href, recent: { key: `nav:${item.id}`, kind: 'nav', id: item.id, label, href } };
     },
     [role, t],

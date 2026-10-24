@@ -86,7 +86,6 @@ describe('admin navigation registry', () => {
       const found = app.includes(`path="${route}"`) || app.includes(`path="${route}/*"`);
       expect(found, `${i.id} → ${i.to}`).toBe(true);
     }
-    expect(app).toContain('path="hub/:hubId"');
   });
 
   it('labels hubs, desks, modules and the new pages in all four languages', () => {

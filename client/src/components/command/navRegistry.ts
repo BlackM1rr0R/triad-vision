@@ -72,7 +72,6 @@ import {
   Timer,
   ToggleRight,
   TrendingUp,
-  UserCog,
   UserSearch,
   Users,
   UsersRound,
@@ -281,7 +280,6 @@ export const STAFF_NAV: StaffNavItem[] = [
   // Navigation settings: module toggles, page usage (SUPER_ADMIN), staff desks (ADMIN+)
   a('modules', '/admin/system/modules', ToggleRight, 'system', { superOnly: true }),
   a('usage', '/admin/system/usage', Activity, 'system', { superOnly: true }),
-  a('desks', '/admin/team/desks', UserCog, 'system', { adminOnly: true }),
   // Sub-pages without a former sidebar entry
   a('docsAudit', '/admin/docs/audit', FileSearch, undefined),
   a('aiSettings', '/admin/ai/settings', Bot, undefined, { superOnly: true, module: 'aiAssistant' }),
@@ -339,7 +337,7 @@ export const HUBS: { key: HubKey; icon: LucideIcon; tabs: string[] }[] = [
     icon: Globe,
     tabs: ['services', 'visaCategories', 'partners', 'visaSamples', 'testimonials', 'stats', 'faqs', 'posts', 'landingPages', 'leadMagnets', 'guides', 'docGuides', 'events', 'siteTools'],
   },
-  { key: 'team', icon: UsersRound, tabs: ['users', 'kpi', 'shifts', 'training', 'timeTracking', 'oversight', 'weeklyReports', 'desks'] },
+  { key: 'team', icon: UsersRound, tabs: ['users', 'kpi', 'shifts', 'training', 'timeTracking', 'oversight', 'weeklyReports'] },
   { key: 'compliance', icon: Scale, tabs: ['privacyRequests', 'legal', 'history', 'security', 'securityAlerts', 'sensitiveAccess', 'storage'] },
   { key: 'ai', icon: Sparkles, tabs: ['ai', 'aiSettings', 'mailTriage'] },
   { key: 'system', icon: Settings, tabs: ['settings', 'integrations', 'automation', 'modules', 'usage', 'kb', 'problemReports', 'help'] },
