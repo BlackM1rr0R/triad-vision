@@ -17,8 +17,8 @@ registerTour({
   steps: [
     { id: 'next', target: 'portal-next', titleKey: 'pux.tour.client.next.title', textKey: 'pux.tour.client.next.text', placement: 'bottom' },
     { id: 'progress', target: 'portal-progress', titleKey: 'pux.tour.client.progress.title', textKey: 'pux.tour.client.progress.text', placement: 'bottom' },
-    { id: 'docs', target: ['bnav-docs', 'portal-tab-case'], titleKey: 'pux.tour.client.docs.title', textKey: 'pux.tour.client.docs.text', placement: 'bottom' },
-    { id: 'messages', target: ['bnav-messages', 'portal-messages', 'portal-tab-case'], titleKey: 'pux.tour.client.messages.title', textKey: 'pux.tour.client.messages.text', placement: 'top' },
+    { id: 'docs', target: ['bnav-docs', 'portal-tab-docs'], titleKey: 'pux.tour.client.docs.title', textKey: 'pux.tour.client.docs.text', placement: 'bottom' },
+    { id: 'messages', target: ['bnav-messages', 'portal-messages', 'portal-tab-messages'], titleKey: 'pux.tour.client.messages.title', textKey: 'pux.tour.client.messages.text', placement: 'top' },
     { id: 'profile', target: ['portal-profile', 'bnav-profile'], titleKey: 'pux.tour.client.profile.title', textKey: 'pux.tour.client.profile.text', placement: 'bottom' },
   ],
 });

@@ -17,6 +17,7 @@ import type { DashboardResponse } from '@/components/admin/types';
 import { EmptyState, ErrorBlock, LoadingBlock, PageHead, Panel } from '@/components/admin/ui';
 import { BarList } from '@/components/admin/charts';
 import { Skeleton } from '@/components/ui/Skeleton';
+import { useStaffNav } from '@/components/command/navPrefs'; // module toggles hide the AI widgets
 
 // Team tasks widget (own chunk, so the dashboard does not carry the task UI and its copy).
 const MyTasksWidget = lazy(() => import('@/components/tasks/MyTasksWidget').then((m) => ({ default: m.MyTasksWidget })));
@@ -90,6 +91,8 @@ const TodayCardFallback = ({ rows }: { rows: number }) => (
 export default function Dashboard() {
   const { t } = useTranslation();
   const { user } = useAuth();
+  const { isModuleOn } = useStaffNav();
+  const ai = isModuleOn('aiAssistant');
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['admin-dashboard'],
     queryFn: async () => (await api.get<DashboardResponse>('/admin/dashboard')).data,
@@ -166,17 +169,21 @@ export default function Dashboard() {
         </Suspense>
       )}
 
-      <Suspense fallback={null}>
-        <InboxTodayWidget />
-      </Suspense>
+      {ai && (
+        <Suspense fallback={null}>
+          <InboxTodayWidget />
+        </Suspense>
+      )}
 
       <Suspense fallback={null}>
         <MyTasksWidget />
       </Suspense>
 
-      <Suspense fallback={null}>
-        <RiskyCasesWidget showBriefing={user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN'} />
-      </Suspense>
+      {ai && (
+        <Suspense fallback={null}>
+          <RiskyCasesWidget showBriefing={user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN'} />
+        </Suspense>
+      )}
       {(user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN') && (
         <Suspense fallback={null}>
           <div className="mb-6"><AssignmentLoadCard compact /></div>

@@ -4,20 +4,22 @@ import { ArrowUpRight, Receipt, Scale, Timer, TrendingUp, Wallet } from 'lucide-
 import CaseProfitCard from '@/components/reports/CaseProfitCard';
 import CaseTimePanel from '@/components/timeCare/CaseTimePanel';
 import { Card } from '@/components/ui/Card';
+import { useStaffNav } from '@/components/command/navPrefs';
 import type { CaseTabProps } from './types';
 
 /** Maliyyə: profitability of the case (ADMIN+, revenue lines come from its invoices / settlements), staff time, finance pages. */
 export default function FinanceTab({ c, isAdmin }: CaseTabProps) {
   const { t } = useTranslation();
+  const { isModuleOn } = useStaffNav(); // switched-off modules (settlements, time tracking) get no link
   const links = [
     ...(isAdmin
       ? [
           { to: '/admin/invoices', label: t('caseLayout.finance.invoices'), icon: Receipt },
-          { to: '/admin/settlements', label: t('caseLayout.finance.settlements'), icon: Scale },
+          ...(isModuleOn('settlements') ? [{ to: '/admin/settlements', label: t('caseLayout.finance.settlements'), icon: Scale }] : []),
           { to: '/admin/profitability', label: t('caseLayout.finance.profitability'), icon: TrendingUp },
         ]
       : []),
-    { to: `/admin/time?caseId=${c.id}`, label: t('caseLayout.finance.time'), icon: Timer },
+    ...(isModuleOn('timeTracking') ? [{ to: `/admin/time?caseId=${c.id}`, label: t('caseLayout.finance.time'), icon: Timer }] : []),
   ];
   return (
     <div className="stack-page">

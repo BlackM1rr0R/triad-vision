@@ -60,6 +60,7 @@ export default function CitiesGuide() {
         title={t('citiesPage.title')}
         subtitle={t('citiesPage.subtitle')}
         image="https://images.unsplash.com/photo-1467269204594-9661b134dd2b?auto=format&fit=crop&w=2000&q=70"
+        crumb={{ to: '/tools', label: t('siteNav.tools') }}
       />
 
       <nav aria-label={t('citiesPage.title')} className="border-b border-line bg-card">

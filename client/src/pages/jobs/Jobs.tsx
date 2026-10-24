@@ -11,6 +11,7 @@ import { pagesJobs } from '@/i18n/pagesJobs';
 import { PageHero } from '@/components/layout/PageHero';
 import { Spinner } from '@/components/ui/Spinner';
 import { JobCard } from '@/components/jobs/JobCard';
+import { JobAlertForm } from '@/components/jobs/JobAlertForm';
 import { useJobLabels } from '@/components/jobs/labels';
 import { EMPLOYMENT_TYPES, GERMAN_LEVELS, SECTORS, type VacancyList } from '@/components/jobs/types';
 
@@ -244,6 +245,9 @@ export default function Jobs() {
                 )}
               </>
             )}
+
+            {/* "Notify me about new jobs" (double opt-in, lib/jobAlerts on the server). */}
+            <JobAlertForm className="mt-10" />
 
             <div className="relative mt-10 overflow-hidden rounded-2xl bg-gradient-to-br from-navy-950 via-navy-900 to-navy-700 p-6 text-white sm:p-8">
               <div className="pointer-events-none absolute -top-20 -right-16 size-64 rounded-full bg-[radial-gradient(closest-side,var(--color-brand-500),transparent)] opacity-30" aria-hidden />

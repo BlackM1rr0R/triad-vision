@@ -265,7 +265,7 @@ export default function AnerkennungGuide() {
 
   return (
     <>
-      <PageHero title={t('anerkPage.heroTitle')} subtitle={t('anerkPage.heroSubtitle')} image={HERO} />
+      <PageHero title={t('anerkPage.heroTitle')} subtitle={t('anerkPage.heroSubtitle')} image={HERO} crumb={{ to: '/tools', label: t('siteNav.tools') }} />
 
       {/* Picker */}
       <section className="section">

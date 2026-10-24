@@ -4,7 +4,7 @@ import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
 import type { LucideIcon } from 'lucide-react';
-import { ArrowRight, Briefcase, Building2, Clock, CornerDownLeft, File, Folder, FolderKanban, ListTodo, Loader2, Search, User as UserIcon } from 'lucide-react';
+import { ArrowRight, Briefcase, Building2, Clock, CornerDownLeft, File, Folder, FolderKanban, ListTodo, Loader2, Search, Star, User as UserIcon } from 'lucide-react';
 import { Modal } from '@/components/ui/Modal';
 import { StatusPill } from '@/components/ui/Badge';
 import { api } from '@/lib/api';
@@ -17,8 +17,10 @@ import { workspaceCopy } from '@/i18n/workspace';
 import { pagesCalls } from '@/i18n/pagesCalls';
 import { pagesTasks } from '@/i18n/pagesTasks';
 import { commandPaletteCopy } from '@/i18n/commandPalette';
+import { adminNavCopy } from '@/i18n/adminNav';
 import { roleLabel, statusLabel } from '@/components/admin/labels';
-import { STAFF_NAV, canSee, hrefFor, navItemById, type StaffNavItem } from './navRegistry';
+import { ALL_NAV, canSee, hrefFor, hubOf, isVisible, moduleOn, navItemById, type StaffNavItem } from './navRegistry';
+import { useStaffNav } from './navPrefs';
 import { PALETTE_ACTIONS, type PaletteAction } from './actions';
 import { SYNONYMS } from './synonyms';
 import { looksLikeRecord, prepHay, queryTokens, scoreMatch, type MatchHay } from './match';
@@ -32,6 +34,7 @@ registerCopy(workspaceCopy);
 registerCopy(pagesCalls);
 registerCopy(pagesTasks);
 registerCopy(commandPaletteCopy);
+registerCopy(adminNavCopy);
 
 // ─── Server search ──────────────────────────────────────────────────────
 
@@ -59,7 +62,7 @@ const useDebounced = (value: string, ms: number) => {
 
 // ─── Entries ────────────────────────────────────────────────────────────
 
-type SectionKey = 'recent' | 'goto' | 'actions' | 'results';
+type SectionKey = 'pinned' | 'recent' | 'goto' | 'actions' | 'results';
 
 interface Entry {
   key: string;
@@ -104,6 +107,8 @@ export default function CommandPalette({ open, onClose }: { open: boolean; onClo
   const navigate = useNavigate();
   const location = useLocation();
   const role = user?.role;
+  // Favourites (shared with the sidebar) and module toggles: switched-off modules are not offered.
+  const { pins, modules, togglePin } = useStaffNav();
   const area: 'admin' | 'workspace' = location.pathname.startsWith('/workspace') ? 'workspace' : 'admin';
   const ids = useId().replace(/:/g, '');
   const listId = `cmdk-list-${ids}`;
@@ -140,23 +145,34 @@ export default function CommandPalette({ open, onClose }: { open: boolean; onClo
         .map((l) => i18n.getFixedT(l)(key))
         .concat(extra)
         .join(' , ');
-    const nav = STAFF_NAV.filter((n) => canSee(n, role)).map((item) => ({
+    const nav = ALL_NAV.filter((n) => isVisible(n, role, modules)).map((item) => ({
       item,
       label: t(item.labelKey),
       hay: { primary: prepHay(t(item.labelKey)), others: prepHay(others(item.labelKey, SYNONYMS[item.id] ?? '')) } as MatchHay,
     }));
-    const actions = PALETTE_ACTIONS.filter((a) => canSee(a, role)).map((action) => ({
+    const actions = PALETTE_ACTIONS.filter((a) => canSee(a, role) && moduleOn(modules, a.module)).map((action) => ({
       action,
       label: t(`cmd.actions.${action.id}`),
       hay: { primary: prepHay(t(`cmd.actions.${action.id}`)), others: prepHay(others(`cmd.actions.${action.id}`, SYNONYMS[action.id] ?? '')) } as MatchHay,
     }));
     return { nav, actions };
-  }, [i18n, lang, role, t]);
+  }, [i18n, lang, modules, role, t]);
 
   const navEntry = useCallback(
     (item: StaffNavItem, label: string, section: SectionKey): Entry => {
       const href = hrefFor(item, role);
-      const sub = item.area === 'workspace' ? t('cmd.areaWorkspace') : item.group ? t(`admin.nav.groups.${item.group}`) : undefined;
+      // Sub-line: the hub the page lives in (hubs themselves: "Sections").
+      const hub = hubOf(item.id);
+      const sub =
+        item.area === 'workspace'
+          ? t('cmd.areaWorkspace')
+          : item.id.startsWith('hub.')
+            ? t('anav.sections.hubs')
+            : hub
+              ? t(`anav.hubs.${hub}`)
+              : item.group
+                ? t(`admin.nav.groups.${item.group}`)
+                : undefined;
       return { key: `${section}:nav:${item.id}`, section, icon: item.icon, label, sub, href, recent: { key: `nav:${item.id}`, kind: 'nav', id: item.id, label, href } };
     },
     [role, t],
@@ -239,16 +255,21 @@ export default function CommandPalette({ open, onClose }: { open: boolean; onClo
           // Pages and actions re-translate their label; a page the role lost is dropped.
           if (r.kind === 'nav') {
             const item = navItemById(r.id);
-            return item && canSee(item, role) ? navEntry(item, t(item.labelKey), 'recent') : null;
+            return item && isVisible(item, role, modules) ? navEntry(item, t(item.labelKey), 'recent') : null;
           }
           if (r.kind === 'action') {
             const action = PALETTE_ACTIONS.find((a) => a.id === r.id);
-            return action && canSee(action, role) ? actionEntry(action, t(`cmd.actions.${action.id}`), 'recent') : null;
+            return action && canSee(action, role) && moduleOn(modules, action.module) ? actionEntry(action, t(`cmd.actions.${action.id}`), 'recent') : null;
           }
           return { key: `recent:${r.key}`, section: 'recent', icon: r.folder ? Folder : RECENT_ICON[r.kind] ?? Clock, label: r.label, sub: r.sub, href: r.href, recent: r };
         })
         .filter((e): e is Entry => !!e);
+      const pinned = pins
+        .map(navItemById)
+        .filter((i): i is StaffNavItem => !!i && isVisible(i, role, modules))
+        .map((i) => navEntry(i, t(i.labelKey), 'pinned'));
       return [
+        ...pinned,
         ...rec,
         ...index.actions.map((a) => actionEntry(a.action, a.label, 'actions')),
         ...index.nav.slice(0, GOTO_EMPTY_LIMIT).map((n) => navEntry(n.item, n.label, 'goto')),
@@ -266,7 +287,7 @@ export default function CommandPalette({ open, onClose }: { open: boolean; onClo
     const actions = rank(index.actions).map((a) => actionEntry(a.action, a.label, 'actions'));
     const results = serverReady ? resultEntries(search.data) : [];
     return looksLikeRecord(q) ? [...results, ...goto, ...actions] : [...goto, ...actions, ...results];
-  }, [actionEntry, index, navEntry, q, recent, resultEntries, role, search.data, serverReady, t, tokens]);
+  }, [actionEntry, index, modules, navEntry, pins, q, recent, resultEntries, role, search.data, serverReady, t, tokens]);
 
   // Keep the highlight inside the list as it changes.
   useEffect(() => setActive(0), [q]);
@@ -327,6 +348,15 @@ export default function CommandPalette({ open, onClose }: { open: boolean; onClo
         run(entry, e.ctrlKey || e.metaKey);
         break;
       }
+      case 'd':
+      case 'D': {
+        // Ctrl+D / ⌘D (like a browser bookmark): add the highlighted page to the favourites, or remove it.
+        if (!(e.ctrlKey || e.metaKey) || e.altKey || e.shiftKey) break;
+        const entry = entries[active];
+        e.preventDefault();
+        if (entry?.recent.kind === 'nav') togglePin(entry.recent.id);
+        break;
+      }
       case 'Tab':
         // Tab moves between sections instead of leaving the field (the modal's focus trap must not see it).
         e.preventDefault();
@@ -384,6 +414,10 @@ export default function CommandPalette({ open, onClose }: { open: boolean; onClo
           </span>
           <span className="inline-flex items-center gap-1">
             <Kbd>Esc</Kbd> {t('cmd.hints.close')}
+          </span>
+          <span className="inline-flex items-center gap-1">
+            <Kbd>{mac ? '⌘' : 'Ctrl'}</Kbd>
+            <Kbd>D</Kbd> <Star className="size-3" /> {t('cmd.pinHint')}
           </span>
           <span className="ml-auto inline-flex items-center gap-1">
             <Kbd>{mac ? '⌘' : 'Ctrl'}</Kbd>
@@ -459,7 +493,7 @@ export default function CommandPalette({ open, onClose }: { open: boolean; onClo
                 onMouseMove={() => !isActive && setActive(i)}
                 onMouseDown={(ev) => ev.preventDefault()}
                 onClick={(ev) => run(e, ev.ctrlKey || ev.metaKey)}
-                className={clsx('flex min-h-11 cursor-pointer items-center gap-3 rounded-lg px-2.5 py-2 text-sm', isActive ? 'bg-brand-50 text-ink dark:bg-white/10' : 'text-ink')}
+                className={clsx('group/opt flex min-h-11 cursor-pointer items-center gap-3 rounded-lg px-2.5 py-2 text-sm', isActive ? 'bg-brand-50 text-ink dark:bg-white/10' : 'text-ink')}
               >
                 <span className={clsx('grid size-8 shrink-0 place-items-center rounded-md border', isActive ? 'border-brand-200 bg-card text-brand-600' : 'border-line bg-surface text-muted')}>
                   <e.icon className="size-4" aria-hidden />
@@ -471,6 +505,24 @@ export default function CommandPalette({ open, onClose }: { open: boolean; onClo
                   {e.sub && <span className="block truncate text-xs text-muted">{e.sub}</span>}
                 </span>
                 {e.meta && <span className="hidden shrink-0 sm:inline-flex">{e.meta}</span>}
+                {e.recent.kind === 'nav' && (
+                  // Mouse shortcut for Ctrl+D; keyboard and screen-reader users get the shortcut (option stays one control).
+                  <span
+                    aria-hidden
+                    title={`${pins.includes(e.recent.id) ? t('admin.layout.unpin') : t('admin.layout.pin')} (${mac ? '⌘' : 'Ctrl'}+D)`}
+                    onClick={(ev) => {
+                      ev.stopPropagation();
+                      togglePin(e.recent.id);
+                    }}
+                    className={clsx(
+                      'grid size-7 shrink-0 place-items-center rounded-md transition hover:bg-surface',
+                      pins.includes(e.recent.id) ? 'text-amber-500' : isActive ? 'text-muted' : 'text-transparent group-hover/opt:text-muted',
+                    )}
+                  >
+                    <Star className={clsx('size-3.5', pins.includes(e.recent.id) && 'fill-current')} />
+                  </span>
+                )}
+                {e.recent.kind === 'nav' && pins.includes(e.recent.id) && <span className="sr-only">({t('cmd.sections.pinned')})</span>}
                 {isActive && <CornerDownLeft className="size-3.5 shrink-0 text-muted" aria-hidden />}
               </div>
             </li>

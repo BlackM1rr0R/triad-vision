@@ -74,7 +74,7 @@ export default function ChancenkarteCalculator() {
 
   return (
     <>
-      <PageHero title={t('ckCalc.title')} subtitle={t('ckCalc.subtitle')} image={HERO} />
+      <PageHero title={t('ckCalc.title')} subtitle={t('ckCalc.subtitle')} image={HERO} crumb={{ to: '/tools', label: t('siteNav.tools') }} />
       <section className="section">
         <div className="container-x grid items-start gap-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] lg:gap-10">
           <form className="card card-pad space-y-5" onSubmit={(e) => e.preventDefault()} aria-labelledby={`${id}-form`}>

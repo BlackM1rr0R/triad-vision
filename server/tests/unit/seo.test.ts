@@ -105,9 +105,20 @@ describe('SEO catalogue', () => {
         '/', '/about', '/services', '/visas', '/partners', '/stories', '/ausbildung', '/eligibility', '/faq', '/news',
         '/contact', '/cooperation', '/jobs', '/booking', '/impressum', '/privacy', '/accessibility', '/guides',
         '/chancenkarte-calculator', '/blue-card-check',
+        '/tools', '/for-workers', '/for-employers',
       ]),
     );
     expect(SITEMAP_STATIC).not.toContain('/login');
+  });
+
+  it('has hand-written texts in all six languages for the tools hub and the audience pages', () => {
+    for (const p of ['/tools', '/for-workers', '/for-employers']) {
+      for (const l of SEO_LOCALES) {
+        expect(STATIC_PAGES[p].name[l], `${p} ${l}`).toBeTruthy();
+        expect(STATIC_PAGES[p].title[l], `${p} ${l}`).toBeTruthy();
+        expect(STATIC_PAGES[p].description[l], `${p} ${l}`).toBeTruthy();
+      }
+    }
   });
 });
 
@@ -321,6 +332,16 @@ describe('renderHead', () => {
     expect(types).toContain('WebApplication');
   });
 
+  it('describes the tools hub with an ItemList of the tool pages in that language', () => {
+    const list = ldBlocks(renderHead('/de/tools', null, emptyData())).find((b) => b['@type'] === 'ItemList') as { itemListElement: { url: string; position: number }[] } | undefined;
+    expect(list).toBeTruthy();
+    expect(list!.itemListElement[0].position).toBe(1);
+    expect(list!.itemListElement.map((i) => i.url)).toContain(`${ORIGIN}/de/blue-card-check`);
+    // Tool pages sit under the hub in breadcrumbs.
+    const crumbs = ldBlocks(renderHead('/de/salary-calculator', null, emptyData())).find((b) => b['@type'] === 'BreadcrumbList');
+    expect(crumbs.itemListElement.map((i: { item: string }) => i.item)).toEqual([`${ORIGIN}/de`, `${ORIGIN}/de/tools`, `${ORIGIN}/de/salary-calculator`]);
+  });
+
   it('gives landing pages one language: canonical in that language, no hreflang', () => {
     const data = emptyData({ landings: [{ slug: 'promo', locale: 'de', title: 'Promo', seoTitle: null, seoDescription: 'Kurz', ogImage: null, heroImage: null, heroSubtitle: null, updatedAt: new Date() }] });
     const html = renderHead('/l/promo', null, data);
@@ -509,6 +530,38 @@ describe('crawlable body (/__seo/body)', () => {
     expect(html).toContain('href="/guides/mavi-kart"');
     expect(html).toContain('<table>');
     expect(html).toContain('Sual?');
+  });
+
+  it('mirrors the site navigation and keeps both audiences crawlable on the home page', () => {
+    const html = renderBody('/en', data);
+    expect(html).toContain('href="/en/for-workers"');
+    expect(html).toContain('href="/en/for-employers"');
+    expect(html).toContain('href="/en/tools"');
+    expect(html).toContain(STATIC_PAGES['/for-employers'].description.en);
+  });
+
+  it('renders the tools hub in groups and the audience pages with their own services and testimonials', () => {
+    const svc = (slug: string, audience: string) => ({ slug, title: l10n(slug), summary: l10n('S'), image: '', updatedAt: new Date(), audience });
+    const quote = (id: string, kind: string) => ({ id, quote: l10n(`Quote ${id}`), author: l10n('A'), role: l10n('R'), kind, videoUrl: null, posterUrl: null, profession: null, country: null, city: null, visaType: null });
+    const d = { ...data, services: [svc('hiring', 'company'), svc('visa-help', 'candidate'), svc('docs', 'all')], testimonials: [quote('c1', 'company'), quote('w1', 'candidate')] };
+
+    const tools = renderBody('/de/tools', d);
+    expect(tools).toContain('<h2>Eignung prüfen</h2>');
+    expect(tools).toContain('href="/de/salary-calculator"');
+    expect(tools).toContain(STATIC_PAGES['/blue-card-check'].description.de);
+
+    const employers = renderBody('/for-employers', d);
+    expect(employers).toContain('href="/services/hiring"');
+    expect(employers).toContain('href="/services/docs"');
+    expect(employers).not.toContain('href="/services/visa-help"');
+    expect(employers).toContain('Quote c1');
+    expect(employers).not.toContain('Quote w1');
+    expect(employers).toContain('href="/cooperation"');
+
+    const workers = renderBody('/for-workers', d);
+    expect(workers).toContain('href="/services/visa-help"');
+    expect(workers).not.toContain('href="/services/hiring"');
+    expect(workers).toContain('Quote w1');
   });
 
   it('returns nothing for private and unknown paths', () => {

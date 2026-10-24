@@ -650,13 +650,20 @@ model VisaSample {
 }
 
 model Testimonial {
-  id        String  @id @default(cuid())
-  quote     Json
-  author    Json
-  role      Json
-  kind      String  @default("company") // company | candidate
-  sortOrder Int     @default(0)
-  published Boolean @default(true)
+  id         String  @id @default(cuid())
+  quote      Json
+  author     Json
+  role       Json
+  kind       String  @default("company") // company | candidate
+  sortOrder  Int     @default(0)
+  published  Boolean @default(true)
+  /// Video success story: YouTube/Vimeo link or uploaded file, plus filters for the stories page.
+  videoUrl   String? @db.Text
+  posterUrl  String? @db.Text
+  profession String? @db.VarChar(120)
+  country    String? @db.VarChar(40) // origin country code: AZ | TR | UA …
+  city       String? @db.VarChar(80) // German city
+  visaType   String? @db.VarChar(30)
 }
 
 model Stat {
@@ -3590,6 +3597,10 @@ model StaffPreferences {
   maxOpenCases    Int?
   workingDays     Json? // ISO weekdays [1..7], Baku time
   autoAssign      Boolean  @default(true)
+  /// Admin navigation: role desk, pinned items and recently opened pages.
+  desk            String?  @db.VarChar(20) // MANAGER | FINANCE | MARKETING | ALL
+  navPins         Json? // nav item ids
+  navRecent       Json? // [{ id, at }]
   updatedAt       DateTime @updatedAt
 }
 
@@ -4957,4 +4968,55 @@ model GuidePage {
 
   @@unique([key, locale])
   @@unique([locale, slug])
+}
+
+// ─── Simplification round: admin page usage, job alerts, lead magnets ─
+
+/// Daily count of admin page opens per user (to find unused pages).
+model AdminPageVisit {
+  id     String   @id @default(cuid())
+  userId String   @db.VarChar(40)
+  navId  String   @db.VarChar(60) // nav registry id (or route key)
+  day    DateTime @db.Date
+  count  Int      @default(1)
+
+  @@unique([userId, navId, day])
+  @@index([navId, day])
+  @@index([day])
+}
+
+/// "Tell me when a vacancy for this profession appears" (double opt-in).
+model JobAlert {
+  id             String    @id @default(cuid())
+  email          String    @db.VarChar(190)
+  userId         String?   @db.VarChar(40)
+  locale         String    @default("az") @db.VarChar(8)
+  professions    Json // string[]
+  germanLevel    String?   @db.VarChar(4)
+  visaTypes      Json?
+  tokenHash      String    @unique @db.Char(64) // manage / unsubscribe link
+  confirmedAt    DateTime?
+  lastSentAt     DateTime?
+  sentCount      Int       @default(0)
+  unsubscribedAt DateTime?
+  visitorId      String?   @db.VarChar(40)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([email])
+  @@index([confirmedAt])
+}
+
+/// Downloadable guide (e-book) offered in exchange for an e-mail address.
+model LeadMagnet {
+  id          String   @id @default(cuid())
+  slug        String   @unique @db.VarChar(120)
+  title       Json // L10n
+  description Json? // L10n
+  coverUrl    String?  @db.Text
+  files       Json // { az: "upload key", de: … } — PDF per language
+  published   Boolean  @default(true)
+  downloads   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }

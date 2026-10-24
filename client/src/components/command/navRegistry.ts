@@ -1,5 +1,6 @@
 import type { LucideIcon } from 'lucide-react';
 import {
+  Activity,
   AtSign,
   Banknote,
   BarChart3,
@@ -26,6 +27,7 @@ import {
   FolderKanban,
   FolderOpen,
   Gauge,
+  Globe,
   GraduationCap,
   Handshake,
   HardDrive,
@@ -57,6 +59,7 @@ import {
   Plug,
   Receipt,
   Route,
+  Scale,
   Settings,
   Sheet,
   ShieldAlert,
@@ -65,8 +68,11 @@ import {
   Smile,
   Sparkles,
   Star,
+  Target,
   Timer,
+  ToggleRight,
   TrendingUp,
+  UserCog,
   UserSearch,
   Users,
   UsersRound,
@@ -77,14 +83,18 @@ import {
   Workflow,
   ScrollText,
 } from 'lucide-react';
-import { hasMinRole, type Role } from '@/lib/types';
+// Relative (not '@/'): the server unit tests load this module directly (tests/unit/adminNavRegistry.test.ts).
+import { hasMinRole, type Role } from '../../lib/types';
 
 /**
- * One list of every staff page (admin + workspace). The admin sidebar renders the `admin` area grouped by
- * `group`; the command palette (Ctrl+K) offers all of them under "Go to". Role rules match the routes in
- * App.tsx (`RequireAuth roles`) and the former sidebar flags: `adminOnly` = ADMIN+, `superOnly` = SUPER_ADMIN.
+ * One list of every staff page (admin + workspace). The command palette (Ctrl+K) offers all of them under
+ * "Go to"; the admin sidebar shows the user's desk (DESK_ITEMS), favourites, recent pages and the hubs (HUBS:
+ * 12 sections whose pages appear as tabs above each page). Role rules match the routes in App.tsx
+ * (`RequireAuth roles`): `adminOnly` = ADMIN+, `superOnly` = SUPER_ADMIN. `module` = optional feature a
+ * SUPER_ADMIN can switch off (System → Modules); a disabled module hides the page everywhere in the menu.
  */
 
+/** Former sidebar groups; still used as the sub-line of a page in Ctrl+K. */
 export type NavGroupKey = 'today' | 'work' | 'clients' | 'employers' | 'comms' | 'finance' | 'site' | 'system';
 
 export const NAV_GROUPS: { key: NavGroupKey; icon: LucideIcon }[] = [
@@ -98,21 +108,61 @@ export const NAV_GROUPS: { key: NavGroupKey; icon: LucideIcon }[] = [
   { key: 'system', icon: Settings },
 ];
 
+// ─── Modules (System → Modules, SUPER_ADMIN) ───────────────────────────
+
+/** Same keys as server lib/navModules.ts (MODULE_KEYS). Labels: anav.modules.<key>.title / .desc. */
+export const MODULE_KEYS = [
+  'campaigns',
+  'liveChat',
+  'calls',
+  'landingPages',
+  'events',
+  'referrals',
+  'agents',
+  'training',
+  'shifts',
+  'waitingRoom',
+  'aiAssistant',
+  'settlements',
+  'originals',
+  'surveys',
+  'reviews',
+  'announcements',
+  'interviewPrep',
+  'translations',
+  'timeTracking',
+  'kpi',
+  'examDates',
+  'journey',
+  'bookings',
+  'knowledgeBase',
+  'quotes',
+  'checkIns',
+  'guides',
+] as const;
+export type ModuleKey = (typeof MODULE_KEYS)[number];
+export type ModuleFlags = Partial<Record<ModuleKey, boolean>>;
+
+/** A module is on unless it was switched off explicitly (unknown / not loaded yet = on). */
+export const moduleOn = (modules: ModuleFlags | undefined, key: ModuleKey | undefined) => !key || modules?.[key] !== false;
+
 export interface StaffNavItem {
-  /** Stable id: favourites, recents and synonyms refer to it. */
+  /** Stable id: favourites, recents, usage statistics and synonyms refer to it. */
   id: string;
   to: string;
   /** Full i18n key of the label. */
   labelKey: string;
   icon: LucideIcon;
   area: 'admin' | 'workspace';
-  /** Sidebar group (admin area). Items without a group are palette-only. */
+  /** Former sidebar group (sub-line in Ctrl+K). */
   group?: NavGroupKey;
   end?: boolean;
   adminOnly?: boolean;
   superOnly?: boolean;
   /** Live counter shown on the sidebar item. */
   badge?: 'today' | 'training';
+  /** Optional feature (System → Modules); hidden when switched off. */
+  module?: ModuleKey;
 }
 
 const a = (id: string, to: string, icon: LucideIcon, group: NavGroupKey | undefined, extra: Partial<StaffNavItem> = {}): StaffNavItem => ({
@@ -128,12 +178,13 @@ const a = (id: string, to: string, icon: LucideIcon, group: NavGroupKey | undefi
 const content = (id: string, resource: string, icon: LucideIcon): StaffNavItem =>
   a(id, `/admin/content/${resource}`, icon, 'site', { adminOnly: true });
 
-const w = (id: string, path: string, icon: LucideIcon): StaffNavItem => ({
+const w = (id: string, path: string, icon: LucideIcon, module?: ModuleKey): StaffNavItem => ({
   id: `ws.${id}`,
   to: `/workspace/${path}`,
   labelKey: `workspace.nav.${id}`,
   icon,
   area: 'workspace',
+  module,
 });
 
 export const STAFF_NAV: StaffNavItem[] = [
@@ -149,12 +200,12 @@ export const STAFF_NAV: StaffNavItem[] = [
   a('requirements', '/admin/requirements', ListChecks, 'work'),
   a('signatures', '/admin/signatures', FileSignature, 'work'),
   a('expiring', '/admin/expiring', Hourglass, 'work'),
-  a('originals', '/admin/originals', Vault, 'work'),
+  a('originals', '/admin/originals', Vault, 'work', { module: 'originals' }),
   a('arrivals', '/admin/arrivals', PlaneLanding, 'work'),
-  a('checkIns', '/admin/check-ins', HeartHandshake, 'work'),
-  a('examDates', '/admin/exam-dates', CalendarClock, 'work'),
-  a('journey', '/admin/journey', Route, 'work'),
-  a('shifts', '/admin/shifts', CalendarRange, 'work'), // team calendar: shifts, leave, handovers
+  a('checkIns', '/admin/check-ins', HeartHandshake, 'work', { module: 'checkIns' }),
+  a('examDates', '/admin/exam-dates', CalendarClock, 'work', { module: 'examDates' }),
+  a('journey', '/admin/journey', Route, 'work', { module: 'journey' }),
+  a('shifts', '/admin/shifts', CalendarRange, 'work', { module: 'shifts' }), // team calendar: shifts, leave, handovers
   // Müştərilər
   a('users', '/admin/users', Users, 'clients'),
   a('candidates', '/admin/candidates', UserSearch, 'clients'),
@@ -162,32 +213,32 @@ export const STAFF_NAV: StaffNavItem[] = [
   a('duplicates', '/admin/duplicates', Copy, 'clients', { adminOnly: true }),
   a('inquiries', '/admin/inquiries', Inbox, 'clients'),
   a('privacyRequests', '/admin/privacy-requests', ShieldHalf, 'clients', { adminOnly: true }),
-  a('referralPartners', '/admin/partners', Handshake, 'clients'),
+  a('referralPartners', '/admin/partners', Handshake, 'clients', { module: 'referrals' }),
   // İşəgötürənlər
   a('companies', '/admin/companies', Building2, 'employers'),
   a('vacancies', '/admin/vacancies', BriefcaseBusiness, 'employers'),
   a('candidateRequests', '/admin/candidate-requests', UsersRound, 'employers'),
-  a('quotes', '/admin/quotes', FileSignature, 'employers', { adminOnly: true }),
+  a('quotes', '/admin/quotes', FileSignature, 'employers', { adminOnly: true, module: 'quotes' }),
   a('interviews', '/admin/interviews', Video, 'employers'),
   a('employmentContracts', '/admin/employment-contracts', FileText, 'employers'),
-  a('interviewPrep', '/admin/interview-prep', MessageCircleQuestion, 'employers'),
+  a('interviewPrep', '/admin/interview-prep', MessageCircleQuestion, 'employers', { module: 'interviewPrep' }),
   // Ünsiyyət
   a('messaging', '/admin/messaging', MessageSquareText, 'comms'),
   a('mailboxes', '/admin/mailboxes', AtSign, 'comms', { adminOnly: true }),
-  a('mailTriage', '/admin/ai/mail-triage', MailCheck, 'comms', { superOnly: true }),
-  a('campaigns', '/admin/campaigns', Megaphone, 'comms', { adminOnly: true }),
-  a('calls', '/admin/calls', PhoneCall, 'comms'),
-  a('bookings', '/admin/bookings', CalendarClock, 'comms'),
-  a('events', '/admin/events', CalendarHeart, 'comms'),
-  a('announcements', '/admin/announcements', Megaphone, 'comms'),
-  a('surveys', '/admin/surveys', Smile, 'comms'),
-  a('reviews', '/admin/reviews', Star, 'comms'),
+  a('mailTriage', '/admin/ai/mail-triage', MailCheck, 'comms', { superOnly: true, module: 'aiAssistant' }),
+  a('campaigns', '/admin/campaigns', Megaphone, 'comms', { adminOnly: true, module: 'campaigns' }),
+  a('calls', '/admin/calls', PhoneCall, 'comms', { module: 'calls' }),
+  a('bookings', '/admin/bookings', CalendarClock, 'comms', { module: 'bookings' }),
+  a('events', '/admin/events', CalendarHeart, 'comms', { module: 'events' }),
+  a('announcements', '/admin/announcements', Megaphone, 'comms', { module: 'announcements' }),
+  a('surveys', '/admin/surveys', Smile, 'comms', { module: 'surveys' }),
+  a('reviews', '/admin/reviews', Star, 'comms', { module: 'reviews' }),
   // Maliyyə
   a('invoices', '/admin/invoices', Receipt, 'finance', { adminOnly: true }),
-  a('settlements', '/admin/settlements', Banknote, 'finance'),
+  a('settlements', '/admin/settlements', Banknote, 'finance', { module: 'settlements' }),
   a('finance', '/admin/finance', Wallet, 'finance', { adminOnly: true }),
   a('profitability', '/admin/profitability', TrendingUp, 'finance', { adminOnly: true }),
-  a('timeTracking', '/admin/time', Timer, 'finance'),
+  a('timeTracking', '/admin/time', Timer, 'finance', { module: 'timeTracking' }),
   a('reports', '/admin/reports', FileBarChart2, 'finance', { adminOnly: true }),
   a('analytics', '/admin/analytics', BarChart3, 'finance'),
   a('weeklyReports', '/admin/weekly-reports', FileBarChart2, 'finance', { superOnly: true }),
@@ -200,15 +251,16 @@ export const STAFF_NAV: StaffNavItem[] = [
   content('stats', 'stats', TrendingUp),
   content('faqs', 'faqs', HelpCircle),
   content('posts', 'posts', Newspaper),
-  a('kb', '/admin/kb', BookOpenText, 'site'),
-  a('translations', '/admin/translations', Languages, 'site'),
+  a('kb', '/admin/kb', BookOpenText, 'site', { module: 'knowledgeBase' }),
+  a('translations', '/admin/translations', Languages, 'site', { module: 'translations' }),
   a('docGuides', '/admin/doc-guides', BookOpen, 'site'),
-  a('waitingRoom', '/admin/waiting-room', Hourglass, 'site'),
+  a('waitingRoom', '/admin/waiting-room', Hourglass, 'site', { module: 'waitingRoom' }),
   a('caseForms', '/admin/case-forms', ListChecks, 'site'),
   a('contractTemplates', '/admin/contract-templates', FileText, 'site', { adminOnly: true }),
   a('siteTools', '/admin/site-tools', Wand2, 'site'),
-  a('landingPages', '/admin/landing-pages', PanelsTopLeft, 'site'),
-  a('guides', '/admin/guides', BookOpen, 'site', { adminOnly: true }), // SEO topic guides (6 languages)
+  a('landingPages', '/admin/landing-pages', PanelsTopLeft, 'site', { module: 'landingPages' }),
+  a('leadMagnets', '/admin/lead-magnets', BookOpen, 'site', { adminOnly: true, module: 'landingPages' }), // e-book lead magnets
+  a('guides', '/admin/guides', BookOpen, 'site', { adminOnly: true, module: 'guides' }), // SEO topic guides (6 languages)
   a('problemReports', '/admin/problems', Bug, 'site', { adminOnly: true }),
   // Sistem
   a('settings', '/admin/settings', Settings, 'system', { adminOnly: true }),
@@ -220,26 +272,30 @@ export const STAFF_NAV: StaffNavItem[] = [
   a('storage', '/admin/storage', HardDrive, 'system', { adminOnly: true }),
   a('automation', '/admin/automation', Workflow, 'system', { adminOnly: true }),
   a('integrations', '/admin/integrations', Plug, 'system', { adminOnly: true }),
-  a('ai', '/admin/ai', Sparkles, 'system', { superOnly: true }),
-  a('agents', '/admin/agents', Handshake, 'system', { adminOnly: true }),
+  a('ai', '/admin/ai', Sparkles, 'system', { superOnly: true, module: 'aiAssistant' }),
+  a('agents', '/admin/agents', Handshake, 'system', { adminOnly: true, module: 'agents' }),
   a('oversight', '/admin/oversight', Eye, 'system', { superOnly: true }),
-  a('kpi', '/admin/kpi', Gauge, 'system', { adminOnly: true }), // staff KPI leaderboard
-  a('training', '/admin/training', GraduationCap, 'system', { badge: 'training' }), // internal training (badge: unfinished required courses)
+  a('kpi', '/admin/kpi', Gauge, 'system', { adminOnly: true, module: 'kpi' }), // staff KPI leaderboard
+  a('training', '/admin/training', GraduationCap, 'system', { badge: 'training', module: 'training' }), // internal training (badge: unfinished required courses)
   a('help', '/admin/help', LifeBuoy, 'system'),
-  // Palette only (sub-pages without their own sidebar entry)
+  // Navigation settings: module toggles, page usage (SUPER_ADMIN), staff desks (ADMIN+)
+  a('modules', '/admin/system/modules', ToggleRight, 'system', { superOnly: true }),
+  a('usage', '/admin/system/usage', Activity, 'system', { superOnly: true }),
+  a('desks', '/admin/team/desks', UserCog, 'system', { adminOnly: true }),
+  // Sub-pages without a former sidebar entry
   a('docsAudit', '/admin/docs/audit', FileSearch, undefined),
-  a('aiSettings', '/admin/ai/settings', Bot, undefined, { superOnly: true }),
+  a('aiSettings', '/admin/ai/settings', Bot, undefined, { superOnly: true, module: 'aiAssistant' }),
   // Workspace
   w('home', 'home', LayoutDashboard),
   w('mail', 'mail', Mail),
   w('chat', 'chat', MessagesSquare),
   w('calendar', 'calendar', CalendarDays),
   w('drive', 'drive', FolderOpen),
-  w('settlements', 'settlements', Banknote),
+  w('settlements', 'settlements', Banknote, 'settlements'),
   w('tasks', 'tasks', ListTodo),
   w('contacts', 'contacts', BookUser),
   w('team', 'team', Users),
-  w('liveChats', 'live-chats', Headset),
+  w('liveChats', 'live-chats', Headset, 'liveChat'),
 ];
 
 /** Whether a role may open the item (mirrors the route guards). */
@@ -249,8 +305,6 @@ export const canSee = (item: Pick<StaffNavItem, 'adminOnly' | 'superOnly'>, role
 /** Staff below ADMIN land on /admin/dashboard (the /admin index redirects them elsewhere). */
 export const hrefFor = (item: StaffNavItem, role: Role | null | undefined) =>
   item.id === 'dashboard' && !hasMinRole(role, 'ADMIN') ? '/admin/dashboard' : item.to;
-
-export const navItemById = (id: string) => STAFF_NAV.find((i) => i.id === id);
 
 /** The item whose route contains the pathname best (longest match; `end` items only match exactly). */
 export const activeNavItem = (pathname: string, items: StaffNavItem[] = STAFF_NAV) => {
@@ -262,3 +316,84 @@ export const activeNavItem = (pathname: string, items: StaffNavItem[] = STAFF_NA
   }
   return best;
 };
+
+// ─── Hubs ───────────────────────────────────────────────────────────────
+
+export type HubKey = 'today' | 'cases' | 'clients' | 'employers' | 'comms' | 'finance' | 'site' | 'leads' | 'team' | 'compliance' | 'ai' | 'system';
+
+/**
+ * Hubs replace the long flat menu: each one is a sidebar entry (/admin/hub/<key> opens its last or first tab)
+ * and its pages are shown as tabs above the page. Every admin page belongs to exactly one hub; the pages keep
+ * their own URLs, so old links and bookmarks still open them. Labels: anav.hubs.<key>.
+ */
+export const HUBS: { key: HubKey; icon: LucideIcon; tabs: string[] }[] = [
+  { key: 'today', icon: LayoutDashboard, tabs: ['today', 'dashboard', 'kanban', 'tasks', 'clientTasks'] },
+  { key: 'cases', icon: FolderKanban, tabs: ['cases', 'requirements', 'docsAudit', 'expiring', 'originals', 'signatures', 'caseForms', 'contractTemplates', 'translations'] },
+  { key: 'clients', icon: Users, tabs: ['candidates', 'register', 'duplicates', 'checkIns', 'arrivals', 'journey', 'examDates', 'waitingRoom'] },
+  { key: 'employers', icon: Building2, tabs: ['companies', 'vacancies', 'candidateRequests', 'interviews', 'employmentContracts', 'interviewPrep'] },
+  { key: 'comms', icon: MessageSquareText, tabs: ['messaging', 'mailboxes', 'calls', 'campaigns', 'announcements', 'surveys', 'reviews'] },
+  { key: 'finance', icon: Wallet, tabs: ['finance', 'invoices', 'quotes', 'settlements', 'profitability', 'reports'] },
+  { key: 'leads', icon: Target, tabs: ['inquiries', 'bookings', 'analytics', 'referralPartners', 'agents'] },
+  {
+    key: 'site',
+    icon: Globe,
+    tabs: ['services', 'visaCategories', 'partners', 'visaSamples', 'testimonials', 'stats', 'faqs', 'posts', 'landingPages', 'leadMagnets', 'guides', 'docGuides', 'events', 'siteTools'],
+  },
+  { key: 'team', icon: UsersRound, tabs: ['users', 'kpi', 'shifts', 'training', 'timeTracking', 'oversight', 'weeklyReports', 'desks'] },
+  { key: 'compliance', icon: Scale, tabs: ['privacyRequests', 'legal', 'history', 'security', 'securityAlerts', 'sensitiveAccess', 'storage'] },
+  { key: 'ai', icon: Sparkles, tabs: ['ai', 'aiSettings', 'mailTriage'] },
+  { key: 'system', icon: Settings, tabs: ['settings', 'integrations', 'automation', 'modules', 'usage', 'kb', 'problemReports', 'help'] },
+];
+
+export const hubHref = (key: HubKey) => `/admin/hub/${key}`;
+
+/** Sidebar / palette entries of the hubs (pinnable like any page: id `hub.<key>`). */
+export const HUB_NAV: StaffNavItem[] = HUBS.map((h) => ({ id: `hub.${h.key}`, to: hubHref(h.key), labelKey: `anav.hubs.${h.key}`, icon: h.icon, area: 'admin' }));
+
+const HUB_OF = new Map<string, HubKey>(HUBS.flatMap((h) => h.tabs.map((id) => [id, h.key] as const)));
+export const hubOf = (navId: string | undefined): HubKey | undefined => (navId ? (navId.startsWith('hub.') ? hubByKey(navId.slice(4))?.key : HUB_OF.get(navId)) : undefined);
+export const hubByKey = (key: string | undefined) => HUBS.find((h) => h.key === key);
+
+/** Every page and hub, for favourites / recent lookups. */
+export const ALL_NAV: StaffNavItem[] = [...STAFF_NAV, ...HUB_NAV];
+export const navItemById = (id: string) => ALL_NAV.find((i) => i.id === id);
+
+/** The tabs of a hub the user can open, in hub order. */
+export const hubTabs = (key: string, role: Role | null | undefined, modules: ModuleFlags | undefined): StaffNavItem[] =>
+  (hubByKey(key)?.tabs ?? [])
+    .map((id) => STAFF_NAV.find((i) => i.id === id))
+    .filter((i): i is StaffNavItem => !!i && canSee(i, role) && moduleOn(modules, i.module));
+
+/** Role + module check of a page or hub (a hub is visible while one of its tabs is). */
+export const isVisible = (item: StaffNavItem, role: Role | null | undefined, modules: ModuleFlags | undefined): boolean => {
+  if (item.id.startsWith('hub.')) return hubTabs(item.id.slice(4), role, modules).length > 0;
+  return canSee(item, role) && moduleOn(modules, item.module);
+};
+
+/** Pages of a module (System → Modules lists them; Usage offers "switch off" next to them). */
+export const moduleItems = (key: ModuleKey) => STAFF_NAV.filter((i) => i.module === key);
+
+// ─── Desks ──────────────────────────────────────────────────────────────
+
+export const DESKS = ['MANAGER', 'FINANCE', 'MARKETING', 'ALL'] as const;
+export type Desk = (typeof DESKS)[number];
+export const isDesk = (v: unknown): v is Desk => typeof v === 'string' && (DESKS as readonly string[]).includes(v);
+
+/** Desk until one is chosen (same rule as the server): admins see every hub, everyone else the case desk. */
+export const defaultDeskFor = (role: Role | null | undefined): Desk => (hasMinRole(role, 'ADMIN') ? 'ALL' : 'MANAGER');
+
+/**
+ * The sidebar's first block per desk. Everything else stays one click away under "More" (the hubs), in
+ * Ctrl+K and by URL. ALL (admins): "today" + the dashboard, then every hub as the main list.
+ * Labels: anav.desks.<desk>.
+ */
+export const DESK_ITEMS: Record<Desk, string[]> = {
+  MANAGER: ['today', 'cases', 'candidates', 'messaging', 'ws.mail', 'interviews', 'ws.calendar', 'ws.drive'],
+  FINANCE: ['today', 'finance', 'invoices', 'quotes', 'settlements', 'profitability', 'candidates'],
+  MARKETING: ['today', 'inquiries', 'campaigns', 'hub.site', 'landingPages', 'analytics'],
+  ALL: ['today', 'dashboard'],
+};
+
+/** Favourites shown on top of the sidebar; recently opened pages listed under the desk. */
+export const PINS_MAX = 8;
+export const RECENT_SHOWN = 5;

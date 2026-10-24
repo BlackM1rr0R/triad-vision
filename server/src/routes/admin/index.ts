@@ -69,6 +69,8 @@ import { adminTrainingRouter } from './training.js'; // internal training course
 import { adminShiftsRouter } from './shifts.js'; // team calendar: shifts, leave, handovers, coverage
 import { adminHandoverNotesRouter } from './handoverNotes.js'; // handover notes + checklists for absence handovers
 import { adminGuidesRouter } from './guides.js'; // topic guides (/guides) CMS, per-language versions
+import { adminNavRouter } from './nav.js'; // role desks, favourites, recent pages, module toggles, page usage
+import { adminSiteFeaturesRouter } from './siteFeatures.js'; // search stats, job alert stats, story video upload, e-book lead magnets
 
 export const adminRouter = Router();
 adminRouter.use(requireMinRole('STAFF'));
@@ -136,6 +138,7 @@ adminRouter.get('/dashboard', async (req, res) => {
   });
 });
 
+adminRouter.use(adminNavRouter); // /me/nav*, /nav/* (desks, usage, modules)
 adminRouter.use('/command-search', adminCommandSearchRouter); // staff command palette: cases, people, companies, vacancies, drive, tasks
 adminRouter.use(adminSensitiveRouter); // /reveal, /sensitive/* (masked fields: reveal with reason, settings, reveal log)
 adminRouter.use('/client-process', adminClientProcessRouter); // client tasks, office visits, ball-in-court ETA settings
@@ -185,7 +188,7 @@ adminRouter.use('/mgmt', adminMgmtRouter); // weekly management report + securit
 adminRouter.use('/ai/employer', adminAiEmployerRouter);
 // Any successful CMS write (incl. vacancy, employer and review moderation) must be visible on the public site right away.
 // The cache is cleared before the response is sent, so the admin's next public read is already fresh.
-adminRouter.use(['/content', '/settings', '/vacancies', '/companies', '/reviews', '/guides'], (req, res, next) => {
+adminRouter.use(['/content', '/settings', '/vacancies', '/companies', '/reviews', '/guides', '/site-features'], (req, res, next) => {
   if (req.method !== 'GET') {
     const json = res.json.bind(res);
     res.json = (body) => {
@@ -216,6 +219,7 @@ adminRouter.use('/upload', requireMinRole('ADMIN'), adminUploadRouter);
 adminRouter.use('/settings', requireMinRole('ADMIN'), adminSettingsRouter);
 adminRouter.use('/content', requireMinRole('ADMIN'), adminContentRouter);
 adminRouter.use('/guides', requireMinRole('ADMIN'), adminGuidesRouter);
+adminRouter.use('/site-features', adminSiteFeaturesRouter); // read: staff; writes: ADMIN (checked per route)
 
 adminRouter.get('/inquiries', async (_req, res) => {
   const DAY = 24 * 60 * 60 * 1000;

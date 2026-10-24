@@ -55,6 +55,7 @@ export const ROUTING_PRIVATE_PREFIXES = [
   '/check-in',
   '/unsubscribe',
   '/kandidat',
+  '/job-alert', // job alert confirm / manage link (token)
 ];
 
 export const isPrivatePath = (path: string) => ROUTING_PRIVATE_PREFIXES.some((p) => path === p || path.startsWith(`${p}/`));

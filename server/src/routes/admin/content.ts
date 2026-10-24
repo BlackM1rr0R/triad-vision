@@ -3,10 +3,12 @@ import { z, type ZodTypeAny } from 'zod';
 import { Prisma } from '@prisma/client';
 import { prisma } from '../../db.js';
 import { imageUpload, verifyUploadedFile } from '../../middleware/upload.js';
-import { badRequest, notFound, parse } from '../../lib/http.js';
+import { badRequest, forbidden, notFound, parse } from '../../lib/http.js';
 import { audit } from '../../lib/audit.js';
 import { LEGAL_SETTING_SCHEMAS } from '../../lib/legalSettings.js';
 import { retentionStatus } from '../../jobs/retention.js';
+import { MODULES_SETTING_KEY } from '../../lib/navModules.js';
+import { storyVideo } from '../../lib/seo.js';
 
 export const adminContentRouter = Router();
 
@@ -32,6 +34,11 @@ const faqList = z.array(z.object({ q: l10n, a: l10n })).max(30);
 const safeUrl = z.string().max(2000).refine((v) => /^(https?:\/\/[^\s]+|\/[^\s]*)$/i.test(v), 'INVALID_URL');
 const safeUrlOrEmpty = z.union([safeUrl, z.literal('')]);
 const optInt = z.number().int().min(0).max(1_000_000).nullable().optional();
+/** Story video: a YouTube / Vimeo link (embedded privacy-friendly) or an MP4 / WebM uploaded to /uploads (CSP media-src 'self'). */
+const storyVideoUrl = z.union([
+  z.literal(''),
+  z.string().trim().max(500).refine((v) => storyVideo(v) !== null, 'VIDEO_URL'),
+]);
 /** Per-item SEO overrides (posts, services, visa categories): empty language = the generated title / text. */
 const seoText = (max: number) => z.object({ az: z.string().max(max), de: z.string().max(max), en: z.string().max(max), ru: z.string().max(max) }).partial().nullable().optional();
 const seoFields = {
@@ -124,6 +131,13 @@ const resources: Record<string, { delegate: () => Delegate; schema: z.ZodObject<
       kind: z.enum(['company', 'candidate']),
       sortOrder: z.number().int(),
       published: z.boolean(),
+      // Video success story (/stories): YouTube / Vimeo link or an uploaded MP4 / WebM (/uploads/…), poster image, filters.
+      videoUrl: storyVideoUrl.nullable().optional(),
+      posterUrl: safeUrlOrEmpty.nullable().optional(),
+      profession: z.string().trim().max(120).nullable().optional(),
+      country: z.string().trim().max(40).nullable().optional(),
+      city: z.string().trim().max(80).nullable().optional(),
+      visaType: z.string().trim().max(30).nullable().optional(),
     }),
   },
   stats: {
@@ -234,6 +248,8 @@ adminSettingsRouter.put('/:key', async (req, res) => {
   const key = parse(z.string().regex(/^[a-zA-Z0-9_.-]{1,64}$/), req.params.key);
   const body = parse(z.object({ value: z.unknown() }), req.body);
   if (body.value === undefined) throw badRequest('VALUE_REQUIRED');
+  // Module toggles have their own SUPER_ADMIN endpoint (PUT /api/admin/nav/modules) with validation.
+  if (key === MODULES_SETTING_KEY) throw forbidden('USE_MODULES_ENDPOINT');
   // Keys with a fixed shape (legal & security stream) are validated; others stay free-form.
   const schema = LEGAL_SETTING_SCHEMAS[key];
   const value = schema ? parse(schema, body.value) : body.value;

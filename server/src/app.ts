@@ -88,6 +88,10 @@ import { callbackRouter } from './routes/callback.js';
 import { livechatRouter } from './routes/livechat.js';
 import { candidateShareRouter } from './routes/candidateShare.js';
 import { introVideoRouter } from './routes/introVideo.js';
+import { searchRouter } from './routes/search.js';
+import { compareRouter } from './routes/compare.js';
+import { leadMagnetsRouter } from './routes/leadMagnets.js';
+import { jobAlertsRouter } from './routes/jobAlerts.js';
 
 type RequestWithRawBody = import('express').Request & { rawBody?: Buffer };
 
@@ -175,6 +179,10 @@ export const createApp = () => {
   app.use('/api/vacancies', vacanciesRouter);
   app.use('/api/booking', bookingRouter);
   app.use('/api/guides', guidesRouter); // public topic guides (SEO)
+  app.use('/api/search', searchRouter); // public site search (guides, visas, services, FAQ, news, jobs, events, tools)
+  app.use('/api/compare-visas', compareRouter); // "which visa fits me?" comparison table + FAQ
+  app.use('/api/lead-magnets', leadMagnetsRouter); // e-book lead magnets: form → Inquiry + signed download link
+  app.use('/api/job-alerts', jobAlertsRouter); // "notify me about new jobs" (double opt-in, digests)
   app.use('/api/growth', growthRouter); // start-date calculator, placement map, info sessions, client referrals
   app.use('/api/landing', landingRouter); // landing pages: page, view counter, form → Inquiry
   app.use('/api/reviews', reviewsRouter);

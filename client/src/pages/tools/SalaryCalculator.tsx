@@ -167,7 +167,7 @@ export default function SalaryCalculator() {
 
   return (
     <>
-      <PageHero title={t('salaryPage.heroTitle')} subtitle={t('salaryPage.heroSubtitle')} image={HERO} />
+      <PageHero title={t('salaryPage.heroTitle')} subtitle={t('salaryPage.heroSubtitle')} image={HERO} crumb={{ to: '/tools', label: t('siteNav.tools') }} />
 
       <section className="section">
         <div className="container-x grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)] lg:gap-10">

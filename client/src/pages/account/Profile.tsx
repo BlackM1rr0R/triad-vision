@@ -58,6 +58,7 @@ import { usePageTitle } from '@/lib/usePageTitle';
 import { pagesPlacement } from '@/i18n/pagesPlacement';
 import { IntroVideoPanel } from '@/components/placement/IntroVideo';
 import { RECOGNITION_STATUSES } from '@/components/placement/api';
+import { MyJobAlerts } from '@/components/jobs/MyJobAlerts';
 
 registerCopy(pagesAccount);
 registerCopy(pagesGrowth);
@@ -1112,6 +1113,7 @@ export default function Profile() {
         {tab === 'professional' && <IntroVideoPanel className="mt-6" />}
         {tab === 'notifications' && <NotificationsPanel user={user} />}
         {tab === 'notifications' && <CalendarSubscribe className="mt-6" />}
+        {tab === 'notifications' && <MyJobAlerts className="mt-6" />}
         {tab === 'security' && <SecurityPanel user={user} />}
         {tab === 'privacy' && <PrivacyPanel />}
       </div>

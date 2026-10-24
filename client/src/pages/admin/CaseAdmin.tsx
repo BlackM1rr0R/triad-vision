@@ -2,7 +2,7 @@ import { lazy, Suspense, useCallback, useEffect, useLayoutEffect, useRef, useSta
 import { useLocation, useParams, useSearchParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { Clock, FileText, LayoutDashboard, MessagesSquare, Wallet } from 'lucide-react';
+import { Clock, FileText, LayoutDashboard, MessagesSquare, PlaneLanding, Users, Wallet } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { useRealtime } from '@/lib/realtime';
@@ -14,6 +14,7 @@ import { CaseSummaryAside } from '@/components/admin/case/CaseSummaryAside';
 import { PanelSkeleton, TabSkeleton } from '@/components/admin/case/TabSkeleton';
 import type { CaseTabProps } from '@/components/admin/case/tabs/types';
 import type { BallInCourt } from '@/components/clientProcess/api';
+import { openIssues, useCaseCheckIns } from '@/components/postArrival/caseCheckIns'; // "After arrival" tab badge
 import { ErrorBlock } from '@/components/admin/ui';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { TabPanel, Tabs, useTabParam, type TabItem } from '@/components/ui/Tabs';
@@ -24,6 +25,8 @@ type TabModule = { default: ComponentType<CaseTabProps> };
 const TAB_LOADERS: Record<CaseTab, () => Promise<TabModule>> = {
   overview: () => import('@/components/admin/case/tabs/OverviewTab'),
   documents: () => import('@/components/admin/case/tabs/DocumentsTab'),
+  family: () => import('@/components/admin/case/tabs/FamilyTab'),
+  postArrival: () => import('@/components/admin/case/tabs/PostArrivalTab'),
   communication: () => import('@/components/admin/case/tabs/CommunicationTab'),
   finance: () => import('@/components/admin/case/tabs/FinanceTab'),
   history: () => import('@/components/admin/case/tabs/HistoryTab'),
@@ -31,11 +34,13 @@ const TAB_LOADERS: Record<CaseTab, () => Promise<TabModule>> = {
 const TAB_VIEWS: Record<CaseTab, ComponentType<CaseTabProps>> = {
   overview: lazy(TAB_LOADERS.overview),
   documents: lazy(TAB_LOADERS.documents),
+  family: lazy(TAB_LOADERS.family),
+  postArrival: lazy(TAB_LOADERS.postArrival),
   communication: lazy(TAB_LOADERS.communication),
   finance: lazy(TAB_LOADERS.finance),
   history: lazy(TAB_LOADERS.history),
 };
-const TAB_ICON = { overview: LayoutDashboard, documents: FileText, communication: MessagesSquare, finance: Wallet, history: Clock } as const;
+const TAB_ICON = { overview: LayoutDashboard, documents: FileText, family: Users, postArrival: PlaneLanding, communication: MessagesSquare, finance: Wallet, history: Clock } as const;
 
 // Always visible under the header: "ball in court" strip and the "Next step" card (own chunks).
 const BallStrip = lazy(() => import('@/components/admin/case/BallStrip'));
@@ -193,15 +198,22 @@ function CasePage({ data }: { data: CaseDetailResponse }) {
   }, []);
 
   // ─── Tabs ──────────────────────────────────────────────────────────────
+  // Small counters on the tabs: documents to review, unanswered client messages, open problems after arrival.
   const pendingDocs = stats.documents.pending;
   const unanswered = stats.messages.awaitingStaffReply ? unansweredCount(c, stats.messages.lastStaffAt) : 0;
-  const items: TabItem<CaseTab>[] = CASE_TABS.map((k) => ({
-    key: k,
-    label: t(`caseLayout.tabs.${k}`),
-    icon: TAB_ICON[k],
-    count: k === 'documents' && pendingDocs > 0 ? pendingDocs : k === 'communication' && unanswered > 0 ? unanswered : undefined,
-    title: k === 'documents' && pendingDocs > 0 ? t('caseLayout.tabHint.documents', { count: pendingDocs }) : k === 'communication' && unanswered > 0 ? t('caseLayout.tabHint.communication', { count: unanswered }) : undefined,
-  }));
+  const checkIns = useCaseCheckIns(c.id, c.status === 'APPROVED');
+  const careIssues = openIssues(checkIns.data);
+  const counts: Partial<Record<CaseTab, number>> = { documents: pendingDocs, communication: unanswered, postArrival: careIssues };
+  const items: TabItem<CaseTab>[] = CASE_TABS.map((k) => {
+    const n = counts[k] ?? 0;
+    return {
+      key: k,
+      label: t(`caseLayout.tabs.${k}`),
+      icon: TAB_ICON[k],
+      count: n > 0 ? n : undefined,
+      title: n > 0 ? t(`caseLayout.tabHint.${k}`, { count: n }) : undefined,
+    };
+  });
   const ball = (c as CaseDetail & { ballInCourt?: BallInCourt | null }).ballInCourt;
   const tabProps: CaseTabProps = { c, stats, isAdmin, goTo };
 

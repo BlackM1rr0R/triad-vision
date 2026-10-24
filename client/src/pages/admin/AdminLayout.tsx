@@ -5,7 +5,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
 import type { LucideIcon } from 'lucide-react';
-import { Bell, BookOpen, CheckCheck, ChevronDown, ChevronsLeft, ChevronsRight, ExternalLink, LogOut, Menu, Star, X } from 'lucide-react';
+import { Bell, BookOpen, Briefcase, CheckCheck, ChevronDown, ChevronsLeft, ChevronsRight, Clock, ExternalLink, LayoutGrid, LogOut, Menu, MoreHorizontal, Star, X } from 'lucide-react';
 import { Logo, LogoMark } from '@/components/ui/Logo';
 import { Tooltip } from '@/components/ui/Tooltip';
 import { LanguageSwitcher } from '@/components/layout/LanguageSwitcher';
@@ -17,6 +17,7 @@ import { useAuth } from '@/lib/auth';
 import type { Notification, Role } from '@/lib/types';
 import { registerCopy } from '@/i18n';
 import { adminCopy } from '@/i18n/admin';
+import { adminNavCopy } from '@/i18n/adminNav';
 import { roleLabel, fmtRelative } from '@/components/admin/labels';
 import { HelpButton } from '@/components/admin/help/HelpButton';
 import { TodayNavBadge } from '@/components/today/TodayNavBadge'; // urgent count of "my work today"
@@ -25,21 +26,40 @@ import { pagesCalls } from '@/i18n/pagesCalls';
 import { LiveChatAlerts } from '@/components/livechat/LiveChatAlerts'; // live chat queue sound + toast, incoming calls
 import { HeaderTimer } from '@/components/timeCare/HeaderTimer'; // running staff timer (registers its copy)
 import { CommandPaletteButton, CommandPaletteHotkey } from '@/components/command/CommandPaletteHost'; // Ctrl+K staff palette
-import { NAV_GROUPS, STAFF_NAV, activeNavItem, canSee, hrefFor, type NavGroupKey, type StaffNavItem } from '@/components/command/navRegistry';
-import { isStringArray, navGroupsKey, navPinsKey, readJson, writeJson } from '@/components/command/storage';
+import {
+  ALL_NAV,
+  DESKS,
+  DESK_ITEMS,
+  HUB_NAV,
+  RECENT_SHOWN,
+  STAFF_NAV,
+  activeNavItem,
+  hrefFor,
+  hubOf,
+  isVisible,
+  navItemById,
+  type Desk,
+  type StaffNavItem,
+} from '@/components/command/navRegistry';
+import { usePageVisits, useStaffNav } from '@/components/command/navPrefs';
+import { isStringArray, navOpenKey, readJson, writeJson } from '@/components/command/storage';
+import { HubTabs } from '@/components/admin/nav/HubTabs';
+import { ModuleDisabled } from '@/components/admin/nav/ModuleDisabled';
 
 registerCopy(adminCopy);
+registerCopy(adminNavCopy);
 registerCopy(pagesCalls);
 
 /**
- * Sidebar entries come from components/command/navRegistry.ts (shared with the Ctrl+K palette): eight
- * collapsible groups, plus "Sevimlilər" (pinned favourites) on top. Role rules (adminOnly / superOnly)
- * live there too and match the route guards in App.tsx.
+ * Sidebar entries come from components/command/navRegistry.ts (shared with the Ctrl+K palette):
+ *   Favourites (pinned, max 8) → the user's desk (DESK_ITEMS) → recently opened pages (5) → hubs.
+ * With the ALL desk (admins) the hubs are the main list ("Sections"); other desks keep them folded under
+ * "More". Every page stays reachable through its hub, Ctrl+K and its URL. Role rules (adminOnly / superOnly)
+ * match the route guards in App.tsx; modules switched off in System → Modules disappear everywhere.
  */
 const ADMIN_NAV = STAFF_NAV.filter((i) => i.area === 'admin' || i.id === 'workspace');
-const SIDEBAR_NAV = ADMIN_NAV.filter((i) => i.group);
-type GroupKey = NavGroupKey | 'favourites';
-const DEFAULT_OPEN: GroupKey[] = ['favourites', 'today', 'work'];
+type SectionKey = 'favourites' | 'desk' | 'recent' | 'hubs' | 'more';
+const DEFAULT_OPEN: SectionKey[] = ['favourites', 'desk', 'recent', 'hubs'];
 const PREFS_EVENT = 'tv:admin-nav-prefs';
 
 /** Translation key of the page title for a pathname. */
@@ -52,9 +72,12 @@ const pageTitleKey = (pathname: string) => {
   if (matchPath('/admin/docs/audit', pathname)) return 'admin.layout.audit';
   const m = matchPath('/admin/content/:resource', pathname);
   if (m) return STAFF_NAV.find((i) => i.to === `/admin/content/${m.params.resource}`)?.labelKey ?? 'admin.nav.content';
-  // Every other page: the sidebar / palette entry whose route contains it.
-  return activeNavItem(pathname, ADMIN_NAV)?.labelKey ?? 'admin.layout.panel';
+  // Every other page: the sidebar / palette entry whose route contains it (hubs included).
+  return activeNavItem(pathname, [...ADMIN_NAV, ...HUB_NAV])?.labelKey ?? 'admin.layout.panel';
 };
+
+/** Detail pages draw their own header; the hub tab row would only push it down. */
+const isDetailPage = (pathname: string) => !!matchPath('/admin/cases/:id', pathname) || !!matchPath('/admin/oversight/staff/:id', pathname);
 
 const COLLAPSE_KEY = 'tv-admin-sidebar-collapsed';
 const readCollapsed = () => {
@@ -68,34 +91,27 @@ const readCollapsed = () => {
 // ─── Sidebar ────────────────────────────────────────────────────────────
 
 /**
- * Open groups and pinned favourites, per user in localStorage. The desktop sidebar and the mobile drawer
- * are separate instances: a change in one is broadcast so the other follows.
+ * Open sidebar sections, per user in localStorage. The desktop sidebar and the mobile drawer are separate
+ * instances: a change in one is broadcast so the other follows.
  */
-const useNavPrefs = (userId: string | undefined) => {
-  const read = useCallback(
-    () => ({
-      open: readJson<string[]>(navGroupsKey(userId), DEFAULT_OPEN, isStringArray),
-      pins: readJson<string[]>(navPinsKey(userId), [], isStringArray),
-    }),
-    [userId],
-  );
-  const [prefs, setPrefs] = useState(read);
+const useOpenSections = (userId: string | undefined) => {
+  const read = useCallback(() => readJson<string[]>(navOpenKey(userId), DEFAULT_OPEN, isStringArray), [userId]);
+  const [open, setOpen] = useState(read);
   useEffect(() => {
-    setPrefs(read());
-    const sync = () => setPrefs(read());
+    setOpen(read());
+    const sync = () => setOpen(read());
     window.addEventListener(PREFS_EVENT, sync);
     return () => window.removeEventListener(PREFS_EVENT, sync);
   }, [read]);
   const save = useCallback(
-    (next: { open: string[]; pins: string[] }) => {
-      writeJson(navGroupsKey(userId), next.open);
-      writeJson(navPinsKey(userId), next.pins);
-      setPrefs(next);
+    (next: string[]) => {
+      writeJson(navOpenKey(userId), next);
+      setOpen(next);
       window.dispatchEvent(new Event(PREFS_EVENT));
     },
     [userId],
   );
-  return { prefs, save };
+  return { open, save };
 };
 
 type SideLinkProps = {
@@ -105,9 +121,11 @@ type SideLinkProps = {
   pinned: boolean;
   onTogglePin: (id: string) => void;
   onNavigate?: () => void;
+  /** Hub entries: highlighted while one of their pages is open (not only on /admin/hub/…). */
+  active?: boolean;
 };
 
-const SideLink = ({ item, role, collapsed, pinned, onTogglePin, onNavigate }: SideLinkProps) => {
+const SideLink = ({ item, role, collapsed, pinned, onTogglePin, onNavigate, active }: SideLinkProps) => {
   const { t } = useTranslation();
   const label = t(item.labelKey);
   const link = (
@@ -116,23 +134,27 @@ const SideLink = ({ item, role, collapsed, pinned, onTogglePin, onNavigate }: Si
       end={item.end}
       onClick={onNavigate}
       aria-label={collapsed ? label : undefined}
+      aria-current={active ? 'page' : undefined}
       className={({ isActive }) =>
         clsx(
           'group relative flex min-h-10 items-center gap-3 rounded-lg py-2 text-sm font-medium transition',
           collapsed ? 'w-11 justify-center' : 'pr-9 pl-3',
-          isActive ? 'bg-white/10 text-white' : 'text-white/60 hover:bg-white/5 hover:text-white',
+          (active ?? isActive) ? 'bg-white/10 text-white' : 'text-white/60 hover:bg-white/5 hover:text-white',
         )
       }
     >
-      {({ isActive }) => (
-        <>
-          {isActive && <span className="absolute top-1.5 bottom-1.5 left-0 w-0.5 rounded-full bg-brand-400" aria-hidden />}
-          <item.icon className={clsx('size-[18px] shrink-0', isActive ? 'text-brand-400' : 'text-white/50 group-hover:text-white/80')} aria-hidden />
-          {!collapsed && <span className="truncate">{label}</span>}
-          {item.badge === 'today' && <TodayNavBadge collapsed={collapsed} />}
-          {item.badge === 'training' && <TrainingNavBadge collapsed={collapsed} />}
-        </>
-      )}
+      {({ isActive }) => {
+        const on = active ?? isActive;
+        return (
+          <>
+            {on && <span className="absolute top-1.5 bottom-1.5 left-0 w-0.5 rounded-full bg-brand-400" aria-hidden />}
+            <item.icon className={clsx('size-[18px] shrink-0', on ? 'text-brand-400' : 'text-white/50 group-hover:text-white/80')} aria-hidden />
+            {!collapsed && <span className="truncate">{label}</span>}
+            {item.badge === 'today' && <TodayNavBadge collapsed={collapsed} />}
+            {item.badge === 'training' && <TrainingNavBadge collapsed={collapsed} />}
+          </>
+        );
+      }}
     </NavLink>
   );
   if (collapsed) {
@@ -170,25 +192,48 @@ type SidebarNavProps = { collapsed: boolean; role: Role | undefined; userId: str
 const SidebarNav = ({ collapsed, role, userId, idSuffix, onNavigate }: SidebarNavProps) => {
   const { t } = useTranslation();
   const location = useLocation();
-  const { prefs, save } = useNavPrefs(userId);
-  const items = SIDEBAR_NAV.filter((i) => canSee(i, role));
-  const active = activeNavItem(location.pathname, items);
-  const pinned = prefs.pins.map((id) => items.find((i) => i.id === id)).filter((i): i is StaffNavItem => !!i);
+  const { desk, pins, recent, modules, togglePin } = useStaffNav();
+  const { open, save } = useOpenSections(userId);
+  const visible = (i: StaffNavItem | undefined): i is StaffNavItem => !!i && isVisible(i, role, modules);
 
-  const toggleGroup = (key: GroupKey) => save({ ...prefs, open: prefs.open.includes(key) ? prefs.open.filter((k) => k !== key) : [...prefs.open, key] });
-  const togglePin = (id: string) => save({ ...prefs, pins: prefs.pins.includes(id) ? prefs.pins.filter((p) => p !== id) : [...prefs.pins, id] });
+  const current = activeNavItem(location.pathname, ALL_NAV);
+  const currentHub = hubOf(current?.id);
 
-  // The group of the current page opens by itself (and stays open).
-  const activeGroup = active?.group;
+  const pinned = pins.map(navItemById).filter(visible);
+  const shown = new Set(pinned.map((i) => i.id));
+  const deskItems = DESK_ITEMS[desk].map(navItemById).filter(visible).filter((i) => !shown.has(i.id));
+  deskItems.forEach((i) => shown.add(i.id));
+  const recentItems = recent
+    .map((r) => navItemById(r.id))
+    .filter(visible)
+    .filter((i) => !shown.has(i.id))
+    .slice(0, RECENT_SHOWN);
+  recentItems.forEach((i) => shown.add(i.id));
+  const workspace = navItemById('workspace');
+  const hubItems = [...HUB_NAV.filter(visible), ...(visible(workspace) ? [workspace] : [])];
+  const hubsKey: SectionKey = desk === 'ALL' ? 'hubs' : 'more';
+  // A hub entry is highlighted while one of its pages is open and that page has no entry of its own above.
+  const currentShown = !!current && shown.has(current.id);
+
+  const toggleSection = (key: SectionKey) => save(open.includes(key) ? open.filter((k) => k !== key) : [...open, key]);
+
+  // A page reached through Ctrl+K or a link: its hub section opens by itself (and stays open).
   useEffect(() => {
-    if (activeGroup && !prefs.open.includes(activeGroup)) save({ ...prefs, open: [...prefs.open, activeGroup] });
+    if (currentHub && !currentShown && !open.includes(hubsKey)) save([...open, hubsKey]);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeGroup]);
+  }, [currentHub, currentShown, hubsKey]);
 
-  const groups: { key: GroupKey; icon: LucideIcon; items: StaffNavItem[] }[] = [
-    ...(pinned.length ? [{ key: 'favourites' as const, icon: Star, items: pinned }] : []),
-    ...NAV_GROUPS.map((g) => ({ key: g.key, icon: g.icon, items: items.filter((i) => i.group === g.key) })).filter((g) => g.items.length > 0),
-  ];
+  const sections: { key: SectionKey; icon: LucideIcon; label: string; items: StaffNavItem[] }[] = [
+    { key: 'favourites' as const, icon: Star, label: t('anav.sections.favourites'), items: pinned },
+    {
+      key: 'desk' as const,
+      icon: Briefcase,
+      label: desk === 'ALL' ? t('anav.hubs.today') : t('anav.sections.desk', { desk: t(`anav.desks.${desk}`) }),
+      items: deskItems,
+    },
+    { key: 'recent' as const, icon: Clock, label: t('anav.sections.recent'), items: recentItems },
+    { key: hubsKey, icon: desk === 'ALL' ? LayoutGrid : MoreHorizontal, label: t(`anav.sections.${hubsKey}`), items: hubItems },
+  ].filter((s) => s.items.length > 0);
 
   return (
     <nav
@@ -200,55 +245,54 @@ const SidebarNav = ({ collapsed, role, userId, idSuffix, onNavigate }: SidebarNa
       )}
       aria-label={t('admin.layout.navAria')}
     >
-      {groups.map((g, gi) => {
-        const open = prefs.open.includes(g.key);
-        const name = g.key === 'favourites' ? t('admin.nav.favourites') : t(`admin.nav.groups.${g.key}`);
+      {sections.map((g, gi) => {
+        const isOpen = open.includes(g.key);
         const listId = `admin-nav-${g.key}-${idSuffix}`;
-        const holdsActive = !!active && g.items.some((i) => i.id === active.id);
+        const holdsActive = !!current && g.items.some((i) => i.id === current.id || (i.id.startsWith('hub.') && !currentShown && hubOf(i.id) === currentHub));
         return (
           <div key={g.key} className={clsx(gi > 0 && (collapsed ? 'mt-1.5 w-11 border-t border-white/10 pt-1.5' : 'mt-2'))}>
             {collapsed ? (
               <div className="pointer-events-auto flex w-11 justify-center">
-                <Tooltip content={name} side="right">
+                <Tooltip content={g.label} side="right">
                   <button
                     type="button"
-                    onClick={() => toggleGroup(g.key)}
-                    aria-expanded={open}
+                    onClick={() => toggleSection(g.key)}
+                    aria-expanded={isOpen}
                     aria-controls={listId}
-                    aria-label={t('admin.layout.toggleGroup', { group: name })}
+                    aria-label={t('admin.layout.toggleGroup', { group: g.label })}
                     className={clsx(
                       'relative grid h-7 w-11 place-items-center rounded-md transition hover:bg-white/5',
-                      holdsActive && !open ? 'text-brand-400' : 'text-white/35 hover:text-white/70',
+                      holdsActive && !isOpen ? 'text-brand-400' : 'text-white/35 hover:text-white/70',
                     )}
                   >
                     <g.icon className="size-3.5" aria-hidden />
-                    <ChevronDown className={clsx('absolute right-1 bottom-0.5 size-2.5 transition-transform', !open && '-rotate-90')} aria-hidden />
+                    <ChevronDown className={clsx('absolute right-1 bottom-0.5 size-2.5 transition-transform', !isOpen && '-rotate-90')} aria-hidden />
                   </button>
                 </Tooltip>
               </div>
             ) : (
               <button
                 type="button"
-                onClick={() => toggleGroup(g.key)}
-                aria-expanded={open}
+                onClick={() => toggleSection(g.key)}
+                aria-expanded={isOpen}
                 aria-controls={listId}
                 className={clsx(
                   'flex min-h-8 w-full items-center justify-between gap-2 rounded-md px-3 text-[11px] font-bold tracking-[0.14em] uppercase transition',
-                  holdsActive && !open ? 'text-brand-400' : 'text-white/60 hover:text-white/80',
+                  holdsActive && !isOpen ? 'text-brand-400' : 'text-white/60 hover:text-white/80',
                 )}
               >
                 <span className="flex min-w-0 items-center gap-2">
                   {g.key === 'favourites' && <Star className="size-3 fill-current text-amber-300" aria-hidden />}
-                  <span className="truncate">{name}</span>
+                  <span className="truncate">{g.label}</span>
                 </span>
                 <span className="flex items-center gap-1.5">
-                  {!open && <span className="text-[10px] font-semibold tracking-normal text-white/30 tabular-nums">{g.items.length}</span>}
-                  <ChevronDown className={clsx('size-3.5 transition-transform', !open && '-rotate-90')} aria-hidden />
+                  {!isOpen && <span className="text-[10px] font-semibold tracking-normal text-white/30 tabular-nums">{g.items.length}</span>}
+                  <ChevronDown className={clsx('size-3.5 transition-transform', !isOpen && '-rotate-90')} aria-hidden />
                 </span>
               </button>
             )}
             <AnimatePresence initial={false}>
-              {open && (
+              {isOpen && (
                 <motion.div
                   id={listId}
                   initial={{ height: 0, opacity: 0 }}
@@ -264,9 +308,10 @@ const SidebarNav = ({ collapsed, role, userId, idSuffix, onNavigate }: SidebarNa
                       item={item}
                       role={role}
                       collapsed={collapsed}
-                      pinned={prefs.pins.includes(item.id)}
+                      pinned={pins.includes(item.id)}
                       onTogglePin={togglePin}
                       onNavigate={onNavigate}
+                      active={item.id.startsWith('hub.') ? !currentShown && hubOf(item.id) === currentHub && !!currentHub : undefined}
                     />
                   ))}
                 </motion.div>
@@ -276,6 +321,33 @@ const SidebarNav = ({ collapsed, role, userId, idSuffix, onNavigate }: SidebarNa
         );
       })}
     </nav>
+  );
+};
+
+/** Desk picker at the bottom of the sidebar: decides the first block of the menu (own desk only). */
+const DeskSwitcher = ({ idSuffix }: { idSuffix: string }) => {
+  const { t } = useTranslation();
+  const { desk, defaultDesk, setDesk } = useStaffNav();
+  const id = `admin-desk-${idSuffix}`;
+  return (
+    <div className="px-3 pt-2">
+      <label htmlFor={id} className="mb-1 block px-1 text-[11px] font-bold tracking-[0.14em] text-white/50 uppercase">
+        {t('anav.deskLabel')}
+      </label>
+      <select
+        id={id}
+        value={desk}
+        onChange={(e) => setDesk(e.target.value as Desk)}
+        title={t(`anav.deskDesc.${desk}`)}
+        className="h-10 w-full rounded-lg border border-white/15 bg-navy-900 px-2.5 text-sm font-medium text-white outline-none focus-visible:border-brand-400 focus-visible:ring-2 focus-visible:ring-brand-400/40"
+      >
+        {DESKS.map((d) => (
+          <option key={d} value={d}>
+            {d === defaultDesk ? t('anav.deskDefault', { desk: t(`anav.desks.${d}`) }) : t(`anav.desks.${d}`)}
+          </option>
+        ))}
+      </select>
+    </div>
   );
 };
 
@@ -406,6 +478,12 @@ export default function AdminLayout() {
   const [collapsed, setCollapsed] = useState(readCollapsed);
   const [mobileOpen, setMobileOpen] = useState(false);
   const title = t(pageTitleKey(location.pathname));
+  const { isModuleOn, loaded } = useStaffNav();
+  usePageVisits(location.pathname);
+  // The page's registry entry: its hub draws the tab row; a switched-off module shows a notice instead.
+  const page = activeNavItem(location.pathname, STAFF_NAV);
+  const pageHub = isDetailPage(location.pathname) ? undefined : hubOf(page?.id);
+  const blocked = loaded && !!page?.module && !isModuleOn(page.module);
 
   useEffect(() => {
     try {
@@ -464,6 +542,7 @@ export default function AdminLayout() {
           )}
         </div>
         <SidebarNav collapsed={collapsed} role={user?.role} userId={user?.id} idSuffix={collapsed ? 'rail' : 'side'} />
+        {!collapsed && <DeskSwitcher idSuffix="side" />}
         <button
           type="button"
           onClick={() => setCollapsed((v) => !v)}
@@ -513,6 +592,9 @@ export default function AdminLayout() {
               </div>
               <SidebarNav collapsed={false} role={user?.role} userId={user?.id} idSuffix="drawer" onNavigate={() => setMobileOpen(false)} />
               <div className="border-t border-white/10 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+                <div className="-mx-3 mb-2">
+                  <DeskSwitcher idSuffix="drawer" />
+                </div>
                 <a
                   href="/"
                   className="flex min-h-10 items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-white/60 transition hover:bg-white/5 hover:text-white"
@@ -573,7 +655,8 @@ export default function AdminLayout() {
         </header>
 
         <main id="admin-main" tabIndex={-1} className="mx-auto w-full max-w-[1440px] min-w-0 flex-1 p-4 outline-none sm:p-6 lg:p-8">
-          <Outlet />
+          {pageHub && !blocked && <HubTabs hub={pageHub} currentId={page?.id} />}
+          {blocked && page ? <ModuleDisabled item={page} /> : <Outlet />}
           <LiveChatAlerts />
         </main>
         <footer className="flex items-center justify-center gap-1.5 px-4 pb-5 text-[11px] text-muted/70">

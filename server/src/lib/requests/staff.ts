@@ -6,6 +6,7 @@ import { GERMAN_LEVELS, germanRank, licenceCovers, matchCandidate, normaliseText
 import { fillL10n, uniqueSlug } from '../vacancies.js';
 import { audit } from '../audit.js';
 import { emitWebhook } from '../ops/webhooks.js';
+import { onVacancyPublished } from '../jobAlerts/service.js';
 import { notifyApplicationStatus, notifyCandidateProposed } from '../jobsNotifications.js';
 import { conflict } from '../http.js';
 
@@ -169,6 +170,7 @@ export const ensureVacancy = async (req: Request, r: CandidateRequest, publish: 
   await audit(req, 'VACANCY_CREATED', `vacancy:${vacancy.id}`, { companyId: vacancy.companyId, status: vacancy.status, requestId: r.id });
   if (vacancy.status === 'OPEN') {
     await emitWebhook('vacancy.published', { id: vacancy.id, slug: vacancy.slug, publishedAt: vacancy.publishedAt?.toISOString() ?? null }, vacancy.companyId);
+    onVacancyPublished(); // job alert digests (background)
   }
   return { vacancy, created: true };
 };

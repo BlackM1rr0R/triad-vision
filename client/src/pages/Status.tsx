@@ -138,7 +138,7 @@ export default function StatusPage() {
 
   return (
     <>
-      <PageHero title={t('site.status.title')} subtitle={t('site.status.subtitle')} image="https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=2000&q=70" />
+      <PageHero title={t('site.status.title')} subtitle={t('site.status.subtitle')} image="https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=2000&q=70" crumb={{ to: '/tools', label: t('siteNav.tools') }} />
       <section className="section">
         <div className="container-x max-w-3xl">
           <div className="card card-pad">

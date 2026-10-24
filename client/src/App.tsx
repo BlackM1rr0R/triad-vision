@@ -51,6 +51,10 @@ const ForgotPassword = lazy(() => import('./pages/auth/ForgotPassword'));
 const ResetPassword = lazy(() => import('./pages/auth/ResetPassword'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 const AccessibilityPage = lazy(() => import('./pages/Accessibility'));
+// Simplified public navigation: all tools on one page, one landing page per audience.
+const ToolsPage = lazy(() => import('./pages/Tools'));
+const ForWorkers = lazy(() => import('./pages/ForWorkers'));
+const ForEmployers = lazy(() => import('./pages/ForEmployers'));
 
 const AccountLayout = lazy(() => import('./pages/account/AccountLayout'));
 const AccountHome = lazy(() => import('./pages/account/AccountHome'));
@@ -97,6 +101,8 @@ const LegalArchivedVersion = lazy(() => import('./pages/legal/LegalDocument').th
 const AdminLegal = lazy(() => import('./pages/admin/Legal'));
 const AdminWaitingRoom = lazy(() => import('./pages/admin/WaitingRoom'));
 const AccountWaitingRoom = lazy(() => import('./pages/account/WaitingRoom'));
+const AccountCases = lazy(() => import('./pages/account/Cases')); // Home › My applications
+const AccountGuides = lazy(() => import('./pages/account/Guides')); // Learn › Guides
 const VerifyEmail = lazy(() => import('./pages/auth/VerifyEmail'));
 const TwoFactor = lazy(() => import('./pages/auth/TwoFactor'));
 const Jobs = lazy(() => import('./pages/jobs/Jobs'));
@@ -123,6 +129,11 @@ const AccountReferral = lazy(() => import('./pages/account/Referral'));
 const AdminGrowthEvents = lazy(() => import('./pages/admin/GrowthEvents'));
 const AdminGrowthTools = lazy(() => import('./pages/admin/GrowthTools'));
 const AdminLandingPages = lazy(() => import('./pages/admin/LandingPages')); // landing page builder
+const AdminLeadMagnets = lazy(() => import('./pages/admin/LeadMagnets')); // e-book lead magnets + starter e-book
+const SearchPage = lazy(() => import('./pages/SearchPage')); // full site search results (/search?q=, noindex)
+const CompareVisas = lazy(() => import('./pages/tools/CompareVisas')); // "which visa fits me?" table + wizard
+const EbookPage = lazy(() => import('./pages/growth/Ebook')); // e-book lead magnet /ebook/:slug
+const JobAlertManage = lazy(() => import('./pages/JobAlertManage')); // job alert confirm / manage / unsubscribe link
 const AnerkennungGuide = lazy(() => import('./pages/tools/Anerkennung'));
 const CitiesGuide = lazy(() => import('./pages/tools/Cities'));
 // SEO: topic guides and interactive tools (Chancenkarte points, Blue Card salary check)
@@ -204,6 +215,10 @@ const AdminGermanExamDates = lazy(() => import('./pages/admin/GermanExamDates'))
 const AdminRequirements = lazy(() => import('./pages/admin/Requirements'));
 const AdminCaseForms = lazy(() => import('./pages/admin/CaseForms')); // smart questionnaire builder
 const AdminDocGuides = lazy(() => import('./pages/admin/DocGuides')); // "Necə almalı?" document guides
+const AdminHub = lazy(() => import('./pages/admin/Hub')); // /admin/hub/:hubId → the hub's last / first tab
+const AdminModules = lazy(() => import('./pages/admin/SystemModules')); // module toggles (SUPER_ADMIN)
+const AdminUsage = lazy(() => import('./pages/admin/SystemUsage')); // admin page usage statistics (SUPER_ADMIN)
+const AdminStaffDesks = lazy(() => import('./pages/admin/StaffDesks')); // desks of the staff (ADMIN+)
 const AccountCaseForm = lazy(() => import('./pages/account/CaseForm'));
 const AccountConfirmData = lazy(() => import('./pages/account/ConfirmData'));
 const AccountOnboarding = lazy(() => import('./pages/account/Onboarding'));
@@ -275,6 +290,9 @@ const INTENT: [string, () => Promise<unknown>][] = [
   ['/news/', () => import('./pages/NewsDetail')],
   ['/news', () => import('./pages/News')],
   ['/contact', () => import('./pages/Contact')],
+  ['/tools', () => import('./pages/Tools')],
+  ['/for-workers', () => import('./pages/ForWorkers')],
+  ['/for-employers', () => import('./pages/ForEmployers')],
   ['/cooperation', () => import('./pages/Cooperation')],
   ['/login', () => import('./pages/auth/Login')],
   ['/register', () => import('./pages/auth/Register')],
@@ -320,6 +338,14 @@ export default function App() {
           <Route element={<SiteLayout />}>
             <Route index element={<Home />} />
             <Route path="about" element={<About />} />
+            <Route path="tools" element={<ToolsPage />} />
+            <Route path="for-workers" element={<ForWorkers />} />
+            <Route path="for-employers" element={<ForEmployers />} />
+            {/* Short / guessable aliases of the new pages. */}
+            <Route path="calculators" element={<Navigate to="/tools" replace />} />
+            <Route path="workers" element={<Navigate to="/for-workers" replace />} />
+            <Route path="candidates" element={<Navigate to="/for-workers" replace />} />
+            <Route path="employers" element={<Navigate to="/for-employers" replace />} />
             <Route path="services" element={<Services />} />
             <Route path="services/:slug" element={<ServiceDetail />} />
             <Route path="eligibility" element={<Eligibility />} />
@@ -335,6 +361,10 @@ export default function App() {
             <Route path="anerkennung" element={<AnerkennungGuide />} />
             <Route path="cities" element={<CitiesGuide />} />
             <Route path="guides" element={<Guides />} />
+            <Route path="search" element={<SearchPage />} />
+            <Route path="compare-visas" element={<CompareVisas />} />
+            <Route path="ebook/:slug" element={<EbookPage />} />
+            <Route path="job-alert" element={<JobAlertManage />} />
             <Route path="guides/:slug" element={<GuideDetail />} />
             <Route path="chancenkarte-calculator" element={<ChancenkarteCalculator />} />
             <Route path="blue-card-check" element={<BlueCardCheck />} />
@@ -408,6 +438,7 @@ export default function App() {
               }
             >
               <Route index element={<AccountHome />} />
+              <Route path="cases" element={<AccountCases />} />
               <Route path="cases/:id" element={<CaseView />} />
               <Route path="cases/:id/forms/:formId" element={<AccountCaseForm />} />
               <Route path="cases/:id/confirm" element={<AccountConfirmData />} />
@@ -420,6 +451,7 @@ export default function App() {
               <Route path="translations/*" element={<AccountTranslations />} />
               <Route path="privacy" element={<AccountPrivacyCenter />} />
               <Route path="waiting-room" element={<AccountWaitingRoom />} />
+              <Route path="guides" element={<AccountGuides />} />
               <Route path="cv" element={<AccountCv />} />
               <Route path="letters/*" element={<AccountLetters />} />
               <Route path="letters-explain" element={<AccountLetterExplain />} />
@@ -467,6 +499,31 @@ export default function App() {
           >
             <Route index element={<AdminIndex />} />
             <Route path="today" element={<AdminToday />} />
+            <Route path="hub/:hubId" element={<AdminHub />} />
+            <Route
+              path="system/modules"
+              element={
+                <RequireAuth roles={['SUPER_ADMIN']}>
+                  <AdminModules />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="system/usage"
+              element={
+                <RequireAuth roles={['SUPER_ADMIN']}>
+                  <AdminUsage />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="team/desks"
+              element={
+                <RequireAuth roles={['ADMIN', 'SUPER_ADMIN']}>
+                  <AdminStaffDesks />
+                </RequireAuth>
+              }
+            />
             <Route path="dashboard" element={<AdminDashboard />} />
             <Route
               path="oversight"
@@ -641,6 +698,7 @@ export default function App() {
             <Route path="events" element={<AdminGrowthEvents />} />
             <Route path="site-tools" element={<AdminGrowthTools />} />
             <Route path="landing-pages/*" element={<AdminLandingPages />} />
+            <Route path="lead-magnets" element={<AdminLeadMagnets />} />
             <Route path="contract-templates/*" element={<AdminContractTemplates />} />
             <Route path="candidate-requests/*" element={<AdminCandidateRequests />} />
             <Route path="agents/*" element={<AdminAgents />} />

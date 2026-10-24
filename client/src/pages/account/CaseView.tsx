@@ -36,6 +36,7 @@ import { registerCopy } from '@/i18n';
 import { pagesPortalUx } from '@/i18n/pagesPortalUx';
 import { NextUpCard, StickyBelowHeader } from './portal/NextUpCard';
 import { CaseNumbers } from './portal/SecondaryCards';
+import { NextItems } from './portal/NextItems';
 import { tabOfAnchor, useNextUp, type CaseTab } from './portal/useNextUp';
 
 registerCopy(pagesPortalUx);
@@ -281,6 +282,8 @@ export default function CaseView() {
         {current === 'overview' && (
           <>
             <CurrentStepPanel data={data} />
+            {/* Every other open item (the portal home shows only the top three). */}
+            <NextItems items={next.items} short={next.short} />
             <ClientDataTasks caseId={data.id} />
             <DecisionCard data={data} />
             <AppointmentCard data={data} />

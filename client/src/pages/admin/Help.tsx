@@ -2,14 +2,17 @@ import { useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
-import { ChevronRight, LifeBuoy, Search } from 'lucide-react';
+import { ChevronRight, Compass, LifeBuoy, Search } from 'lucide-react';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { HelpGuide } from '@/components/admin/help/HelpGuide';
 import { HELP_GROUPS, HELP_KEYS, type HelpKey } from '@/components/admin/help/helpKeys';
 import { registerHelpCopy, useHelpGuides } from '@/components/admin/help/registerHelp';
 import { PageLoader } from '@/components/ui/Spinner';
+import { registerCopy } from '@/i18n';
+import { adminNavCopy } from '@/i18n/adminNav';
 
 registerHelpCopy();
+registerCopy(adminNavCopy); // "New navigation" box
 
 /** Help centre: every admin guide in one place, grouped like the menu, with a search box. */
 export default function AdminHelp() {
@@ -47,6 +50,20 @@ export default function AdminHelp() {
           <p className="mt-1 max-w-2xl text-sm text-muted">{t('adminHelpUi.centerIntro')}</p>
         </div>
       </div>
+      {/* Desks, hubs, favourites (simplified admin navigation). */}
+      <section aria-labelledby="help-new-nav" className="mb-6 rounded-xl border border-brand-200 bg-brand-50/60 p-4 sm:p-5 dark:border-white/10 dark:bg-white/5">
+        <h2 id="help-new-nav" className="flex items-center gap-2 font-display text-base font-bold text-ink">
+          <Compass className="size-4 text-brand-600" aria-hidden /> {t('anav.help.title')}
+        </h2>
+        <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-ink/80">
+          {[t('anav.help.points', { returnObjects: true }) as unknown]
+            .flat()
+            .map(String)
+            .map((p) => (
+            <li key={p}>{p}</li>
+          ))}
+        </ul>
+      </section>
       <div className="grid gap-6 lg:grid-cols-[18rem_minmax(0,1fr)]">
         <aside className="lg:sticky lg:top-20 lg:self-start">
           <label className="relative mb-3 block">

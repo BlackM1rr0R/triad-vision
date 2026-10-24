@@ -12,6 +12,7 @@ import { registerCopy } from '@/i18n';
 import { pagesGrowth } from '@/i18n/pagesGrowth';
 import { useL10n } from '@/lib/l10n';
 import { usePageTitle } from '@/lib/usePageTitle';
+import { SearchTermsPanel } from '@/components/analytics/SearchTermsPanel';
 
 registerCopy(pagesGrowth);
 
@@ -402,6 +403,9 @@ export default function AdminAnalytics() {
               )}
             </Panel>
           </div>
+
+          {/* Site search: top terms and searches without results (anonymous daily counts). */}
+          <SearchTermsPanel from={range.from} to={range.to} />
 
           <p className="flex items-start gap-2 text-xs text-muted">
             <ShieldCheck className="mt-0.5 size-4 shrink-0 text-emerald-600" aria-hidden /> {t('growth.analytics.privacy')}

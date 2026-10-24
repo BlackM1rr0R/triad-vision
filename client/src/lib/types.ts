@@ -134,6 +134,13 @@ export interface Testimonial {
   kind: 'company' | 'candidate';
   sortOrder: number;
   published: boolean;
+  /** Video success story (/stories): YouTube / Vimeo link or an uploaded /uploads/….mp4, plus filter fields. */
+  videoUrl?: string | null;
+  posterUrl?: string | null;
+  profession?: string | null;
+  country?: string | null;
+  city?: string | null;
+  visaType?: string | null;
 }
 
 export interface Stat {

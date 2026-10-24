@@ -18,6 +18,7 @@ import { dueText, noteText, runAction, useMyWork, useRefreshMyWork, type WorkAct
 import { CATEGORY_TONE, FILTERS, KIND_ICON, PRIORITY_DOT, type WorkFilter } from '@/components/today/kinds';
 import { TimerButton } from '@/components/timeCare/TimerButton'; // "⏱ Başlat" on rows with a case
 import { RequiredTrainingBanner } from '@/components/team/training/TrainingNotice'; // unfinished required courses
+import { useStaffNav } from '@/components/command/navPrefs'; // training banner follows the module toggle
 
 registerCopy(pagesToday);
 
@@ -53,6 +54,7 @@ const quickAction = (item: WorkItem) =>
 /** /admin/today — "Bu gün mənim işlərim": one queue of everything waiting for the signed-in staff member. */
 export default function Today() {
   const { t } = useTranslation();
+  const { isModuleOn } = useStaffNav();
   const navigate = useNavigate();
   const { user } = useAuth();
   const isAdmin = hasMinRole(user?.role, 'ADMIN');
@@ -255,7 +257,7 @@ export default function Today() {
         }
       />
 
-      <RequiredTrainingBanner />
+      {isModuleOn('training') && <RequiredTrainingBanner />}
 
       <div className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
         <div className="flex w-max gap-1.5 sm:w-auto sm:flex-wrap" role="group" aria-label={t('today.filter.label')}>

@@ -19,13 +19,18 @@ import { fmtDate, toDateInput, toastError } from '@/components/admin/labels';
 import { EmptyState, ErrorBlock, LoadingBlock, PageHead, Switch } from '@/components/admin/ui';
 import { PostAiTools } from '@/components/aiStaff/PostAiDraft';
 import { SEO_RESOURCES, SeoFields, seoFromItem, seoPayload, type SeoValue } from '@/components/admin/SeoFields';
+import { VideoUrlField } from '@/components/admin/VideoUrlField';
+import { registerCopy } from '@/i18n';
+import { pagesDiscoverAdmin } from '@/i18n/pagesDiscoverAdmin';
+
+registerCopy(pagesDiscoverAdmin);
 
 // ─── Config ─────────────────────────────────────────────────────────────
 
 /** Translator bound to the current language (a plain signature keeps the resource table simple). */
 type Tr = (key: string, opts?: Record<string, unknown>) => string;
 
-type FieldType = 'text' | 'slug' | 'url' | 'number' | 'boolean' | 'tristate' | 'l10n' | 'l10n-textarea' | 'l10n-list' | 'faq' | 'image' | 'icon' | 'select' | 'date';
+type FieldType = 'text' | 'slug' | 'url' | 'video' | 'number' | 'boolean' | 'tristate' | 'l10n' | 'l10n-textarea' | 'l10n-list' | 'faq' | 'image' | 'icon' | 'select' | 'date';
 
 interface FieldDef {
   key: string;
@@ -217,6 +222,28 @@ const buildResources = (t: Tr): Record<string, ResourceDef> => {
           options: [
             { value: 'candidate', label: t('admin.content.opt.candidate') },
             { value: 'company', label: t('admin.content.opt.company') },
+          ],
+        },
+        // Video success story + filters of the /stories page.
+        { key: 'videoUrl', label: f('videoUrl'), type: 'video', nullable: true, wide: true, group: t('discoverAdmin.story.group'), hint: t('discoverAdmin.story.videoHint') },
+        { key: 'posterUrl', label: f('posterUrl'), type: 'image', nullable: true, wide: true },
+        { key: 'profession', label: f('profession'), type: 'text', nullable: true, maxLength: 120 },
+        { key: 'city', label: f('city'), type: 'text', nullable: true, maxLength: 80 },
+        {
+          key: 'country',
+          label: f('country'),
+          type: 'select',
+          nullable: true,
+          options: [{ value: '', label: t('admin.content.opt.notSelected') }, ...(['AZ', 'TR', 'UA', 'other'] as const).map((value) => ({ value, label: t(`discoverAdmin.story.countries.${value}`) }))],
+        },
+        {
+          key: 'visaType',
+          label: f('visaType'),
+          type: 'select',
+          nullable: true,
+          options: [
+            { value: '', label: t('admin.content.opt.notSelected') },
+            ...(['chancenkarte', 'blue-card', 'ausbildung', '18a', '18b', '19c', 'family', 'seasonal', 'other'] as const).map((value) => ({ value, label: t(`discoverAdmin.story.visas.${value}`) })),
           ],
         },
         PUBLISHED,
@@ -572,6 +599,8 @@ const FieldInput = ({ f, value, onChange }: { f: FieldDef; value: Value; onChang
     }
     case 'image':
       return <ImageField label={f.label} value={typeof value === 'string' ? value : ''} onChange={onChange} required={f.required} />;
+    case 'video':
+      return <VideoUrlField label={f.label} hint={f.hint} value={typeof value === 'string' ? value : ''} onChange={onChange} />;
     case 'icon':
       return <IconField id={id} label={f.label} value={typeof value === 'string' ? value : ''} onChange={onChange} />;
     case 'boolean':

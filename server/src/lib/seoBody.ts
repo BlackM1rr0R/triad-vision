@@ -1,5 +1,5 @@
 import { cached } from './cache.js';
-import { SEO_LOCALES, SITE_NAME, STATIC_PAGES, textIn, type SeoLocale } from './seoCatalogue.js';
+import { SEO_LOCALES, SITE_NAME, STATIC_PAGES, textIn, TOOL_GROUPS, type SeoLocale, type ToolGroupKey } from './seoCatalogue.js';
 import {
   collapse,
   escapeHtml as e,
@@ -15,6 +15,7 @@ import {
   type SeoData,
 } from './seo.js';
 import { guidePath, renderGuide, type GuideRow } from './guides/service.js';
+import { compareContent } from './compare/visaCompare.js';
 
 /*
  * Crawlable page body ("SSR-lite") for search engines and link previews that do not run JavaScript.
@@ -73,9 +74,22 @@ const L: Record<SeoLocale, Labels> = {
 
 const LANGUAGE_NAMES: Record<SeoLocale, string> = { az: 'Azərbaycan', de: 'Deutsch', en: 'English', ru: 'Русский', tr: 'Türkçe', uk: 'Українська' };
 
-const NAV = ['/visas', '/services', '/jobs', '/guides', '/ausbildung', '/news', '/about', '/contact'];
-const TOOLS = ['/eligibility', '/chancenkarte-calculator', '/blue-card-check', '/salary-calculator', '/anerkennung', '/calculator', '/cities'];
-const FOOTER = ['/booking', '/cooperation', '/faq', '/partners', '/stories', '/events', '/impressum', '/privacy', '/accessibility'];
+// Same structure as the site header (For workers, For employers, Visas, Guides, Contact + Tools) and footer.
+const NAV = ['/for-workers', '/for-employers', '/visas', '/guides', '/contact', '/tools'];
+const TOOLS = ['/uygunluq-testi', '/eligibility', '/compare-visas', '/chancenkarte-calculator', '/blue-card-check', '/salary-calculator', '/cost-calculator', '/anerkennung', '/calculator', '/cities', '/map', '/tools'];
+const FOOTER = ['/jobs', '/ausbildung', '/services', '/cooperation', '/partners', '/stories', '/events', '/news', '/faq', '/booking', '/about', '/impressum', '/privacy', '/accessibility'];
+/** Links of the employer landing page besides its services. */
+const EMPLOYER_LINKS = ['/cooperation', '/employers/register', '/partners', '/stories', '/booking'];
+
+/** Labels of the audience / tools sections (home, /for-workers, /for-employers, /tools). */
+const AL: Record<SeoLocale, { who: string; stories: string; groups: Record<ToolGroupKey, string> }> = {
+  az: { who: 'Siz kimsiniz?', stories: 'Rəylər', groups: { eligibility: 'Uyğunluğu yoxla', costs: 'Xərc və maaşı hesabla', plan: 'Köçünü planla', explore: 'Kəşf et' } },
+  de: { who: 'Wer sind Sie?', stories: 'Stimmen', groups: { eligibility: 'Eignung prüfen', costs: 'Kosten und Gehalt berechnen', plan: 'Umzug planen', explore: 'Entdecken' } },
+  en: { who: 'Who are you?', stories: 'Testimonials', groups: { eligibility: 'Check eligibility', costs: 'Calculate costs and salary', plan: 'Plan your move', explore: 'Explore' } },
+  ru: { who: 'Кто вы?', stories: 'Отзывы', groups: { eligibility: 'Проверить соответствие', costs: 'Рассчитать расходы и зарплату', plan: 'Спланировать переезд', explore: 'Узнать больше' } },
+  tr: { who: 'Siz kimsiniz?', stories: 'Görüşler', groups: { eligibility: 'Uygunluğu kontrol et', costs: 'Maliyet ve maaşı hesapla', plan: 'Taşınmanı planla', explore: 'Keşfet' } },
+  uk: { who: 'Хто ви?', stories: 'Відгуки', groups: { eligibility: 'Перевірити відповідність', costs: 'Розрахувати витрати й зарплату', plan: 'Спланувати переїзд', explore: 'Дізнатися більше' } },
+};
 
 const paragraphs = (text: string) =>
   text
@@ -132,7 +146,7 @@ export const renderBody = (rawPath: string, data: SeoData): string => {
   const guides = guidesInLanguage(data, lng);
   const visaList = () =>
     `<ul>${visas.map((v) => `<li>${link(`/visas/${v.slug}`, collapse(pick(v.title, lng)))}${v.visaLabel ? ` (${e(v.visaLabel)})` : ''} — ${e(collapse(pick(v.summary, lng)))}</li>`).join('')}</ul>`;
-  const serviceList = () => `<ul>${services.map((s) => `<li>${link(`/services/${s.slug}`, collapse(pick(s.title, lng)))} — ${e(collapse(pick(s.summary, lng)))}</li>`).join('')}</ul>`;
+  const serviceList = (items = services) => `<ul>${items.map((s) => `<li>${link(`/services/${s.slug}`, collapse(pick(s.title, lng)))} — ${e(collapse(pick(s.summary, lng)))}</li>`).join('')}</ul>`;
   const guideList = (items: GuideRow[]) =>
     `<ul>${items.map((g) => `<li>${link(guidePath(g.slug), g.title, g.locale as SeoLocale)} — ${e(g.description)}</li>`).join('')}</ul>`;
   const postList = (n: number) =>
@@ -142,6 +156,14 @@ export const renderBody = (rawPath: string, data: SeoData): string => {
   const eventList = () =>
     `<ul>${(data.events ?? []).map((ev) => `<li>${link(`/events/${ev.slug}`, collapse(pick(ev.title, lng)))} <time datetime="${ev.startsAt.toISOString()}">${ev.startsAt.toISOString().slice(0, 10)}</time></li>`).join('')}</ul>`;
   const cta = `<p>${link('/booking', t.cta)} · ${link('/eligibility', t.eligibility)}</p>`;
+  // Audience pages: services for that audience (Service.audience = all | candidate | company) and testimonials of that kind.
+  const audienceServices = (kind: 'candidate' | 'company') => services.filter((s) => !s.audience || s.audience === 'all' || s.audience === kind);
+  const quotes = (kind: 'candidate' | 'company') => {
+    const items = (data.testimonials ?? []).filter((x) => x.kind === kind).slice(0, 6);
+    return items.length
+      ? `<ul>${items.map((x) => `<li><blockquote>${e(collapse(pick(x.quote, lng)))}</blockquote><p>${e([collapse(pick(x.author, lng)), collapse(pick(x.role, lng))].filter(Boolean).join(' · '))}</p></li>`).join('')}</ul>`
+      : '';
+  };
 
   const detail = /^\/(visas|services|news|jobs|events|guides)\/([^/]+)$/.exec(path);
   if (detail) {
@@ -220,12 +242,16 @@ export const renderBody = (rawPath: string, data: SeoData): string => {
     }
   } else if (path.startsWith('/l/')) {
     out.push(`<h1>${e(h1)}</h1>`, `<p>${e(page.description)}</p>`, cta);
+  } else if (path.startsWith('/ebook/')) {
+    out.push(`<article><h1>${e(h1)}</h1>`, `<p>${e(page.description)}</p>`, '</article>', section(t.guides, guideList(guides)), cta);
   } else {
     out.push(`<h1>${e(h1)}</h1>`, `<p>${e(page.description)}</p>`);
     switch (path) {
       case '/':
         out.push(
           cta,
+          // Both audiences stay crawlable on the home page (the SPA shows one after "Who are you?").
+          section(AL[lng].who, `<ul>${['/for-workers', '/for-employers'].map((p) => `<li>${link(p, staticLabel(p))} — ${e(textIn(STATIC_PAGES[p].description, lng))}</li>`).join('')}</ul>`),
           section(t.visas, visaList()),
           section(t.services, serviceList()),
           section(t.guides, guideList(guides)),
@@ -236,6 +262,32 @@ export const renderBody = (rawPath: string, data: SeoData): string => {
         break;
       case '/visas':
         out.push(visaList(), section(t.guides, guideList(guides)), cta);
+        break;
+      case '/for-workers':
+        out.push(
+          cta,
+          section(t.services, serviceList(audienceServices('candidate'))),
+          section(t.visas, visaList()),
+          jobs.length ? section(t.jobs, jobList(8)) : '',
+          section(AL[lng].stories, quotes('candidate')),
+          section(t.guides, guideList(guides)),
+        );
+        break;
+      case '/for-employers':
+        out.push(
+          section(t.services, serviceList(audienceServices('company'))),
+          section(t.more, linkList(EMPLOYER_LINKS)),
+          section(AL[lng].stories, quotes('company')),
+          cta,
+        );
+        break;
+      case '/tools':
+        out.push(
+          ...TOOL_GROUPS.map((g) =>
+            section(AL[lng].groups[g.key], `<ul>${g.paths.filter((p) => STATIC_PAGES[p]).map((p) => `<li>${link(p, staticLabel(p))} — ${e(textIn(STATIC_PAGES[p].description, lng))}</li>`).join('')}</ul>`),
+          ),
+          cta,
+        );
         break;
       case '/services':
         out.push(serviceList(), cta);
@@ -257,6 +309,43 @@ export const renderBody = (rawPath: string, data: SeoData): string => {
         out.push(faqs.map(([q, a]) => `<h2>${e(q)}</h2>${paragraphs(a)}`).join(''), cta);
         break;
       }
+      case '/compare-visas': {
+        if (!data.compareThresholds) {
+          out.push(section(t.guides, guideList(guides)), cta);
+          break;
+        }
+        const c = compareContent(lng, data.compareThresholds);
+        const guideHref = (key: string) => {
+          const g = guides.find((x) => x.key === key);
+          return g ? link(guidePath(g.slug), g.title, g.locale as SeoLocale) : '';
+        };
+        out.push(
+          `<p>${e(c.intro)}</p>`,
+          `<table><caption>${e(c.caption)}</caption><thead><tr><th scope="col">${e(c.criterion)}</th>${c.routes.map((r) => `<th scope="col">${e(r.name)}</th>`).join('')}</tr></thead><tbody>`,
+          c.criteria.map((k) => `<tr><th scope="row">${e(k.label)}</th>${c.routes.map((r) => `<td>${e(r.cells[k.key])}</td>`).join('')}</tr>`).join(''),
+          '</tbody></table>',
+          `<ul>${c.routes.map((r) => `<li>${e(r.name)}: ${[guideHref(r.guideKey), r.tool ? link(r.tool, staticLabel(r.tool)) : ''].filter(Boolean).join(' · ')}</li>`).join('')}</ul>`,
+          section(t.faq, c.faq.map((f) => `<h3>${e(f.q)}</h3><p>${e(f.a)}</p>`).join('')),
+          `<p><small>${e(c.disclaimer)}</small></p>`,
+          cta,
+        );
+        break;
+      }
+      case '/stories': {
+        const stories = (data.testimonials ?? []).filter((x) => x.kind === 'candidate' || x.videoUrl);
+        out.push(
+          stories.length
+            ? `<ul>${stories
+                .map((x) => {
+                  const who = [collapse(pick(x.author, lng)), collapse(pick(x.role, lng)) || x.profession, x.city].filter(Boolean).join(' · ');
+                  return `<li><blockquote>${e(collapse(pick(x.quote, lng)))}</blockquote><p>${e(who)}</p></li>`;
+                })
+                .join('')}</ul>`
+            : '',
+          cta,
+        );
+        break;
+      }
       case '/ausbildung':
       case '/eligibility':
       case '/uygunluq-testi':
@@ -268,7 +357,7 @@ export const renderBody = (rawPath: string, data: SeoData): string => {
       default:
         out.push(cta);
     }
-    if (TOOLS.includes(path) || path === '/') out.push(section(staticLabel('/eligibility'), linkList(TOOLS)));
+    if ((TOOLS.includes(path) && path !== '/tools') || path === '/' || path === '/for-workers') out.push(section(staticLabel('/tools'), linkList(TOOLS)));
   }
   out.push('</main>');
 

@@ -6,6 +6,7 @@ import { registerJob } from '../lib/scheduler.js';
 import { audit } from '../lib/audit.js';
 import { FINAL_STATUSES } from '../lib/caseFlow.js';
 import { getRetentionSettings } from '../lib/legalSettings.js';
+import { pruneAdminPageVisits } from '../lib/navModules.js';
 
 /**
  * DSGVO storage limitation (Art. 5(1)(e), Art. 17): once a case has been closed (APPROVED /
@@ -153,6 +154,8 @@ registerJob({
     try {
       const r = await runRetention();
       if (r.cases || r.failed) console.log(`[retention] purged ${r.cases} cases, ${r.documents} documents (${r.failed} failed)`);
+      // Admin page usage statistics are kept for 400 days.
+      await pruneAdminPageVisits().catch((err) => console.error('[retention] page usage prune failed', err));
     } finally {
       lastRunAt = new Date();
       nextRunAt = new Date(lastRunAt.getTime() + RETENTION_EVERY_MS);

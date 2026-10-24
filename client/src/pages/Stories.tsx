@@ -7,7 +7,8 @@ import { ArrowRight, ArrowUpRight, BadgeCheck, EyeOff, FileSignature, ShieldChec
 import clsx from 'clsx';
 import { PageHero } from '@/components/layout/PageHero';
 import { Reveal, Stagger, StaggerItem } from '@/components/motion';
-import { TestimonialCard, VisaSticker } from '@/components/cards';
+import { VisaSticker } from '@/components/cards';
+import { VideoStories } from '@/components/stories/VideoStories';
 import { SectionHeading } from '@/components/ui/SectionHeading';
 import { DetailModal } from '@/components/ui/DetailModal';
 import { RouteFlags } from '@/components/ui/Flag';
@@ -322,7 +323,6 @@ export default function Stories() {
   usePageTitle(t('storiesPage.hero.title'));
   const { data } = useSiteContent();
   const samples = data?.samples ?? [];
-  const candidates = data?.testimonials.filter((x) => x.kind === 'candidate') ?? [];
 
   return (
     <>
@@ -331,20 +331,11 @@ export default function Stories() {
       {samples.length > 0 && <Gallery samples={samples} visas={data?.visaCategories ?? []} />}
       {samples.length > 0 && <Breakdown samples={samples} />}
 
-      {candidates.length > 0 && (
-        <section className="section">
-          <div className="container-x">
-            <SectionHeading eyebrow={t('storiesPage.testimonials.eyebrow')} title={t('storiesPage.testimonials.title')} subtitle={t('storiesPage.testimonials.subtitle')} />
-            <div className="grid-cards md:grid-cols-2">
-              {candidates.map((x, i) => (
-                <Reveal key={x.id} delay={(i % 2) * 0.1}>
-                  <TestimonialCard item={x} />
-                </Reveal>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
+      {/* Video + text success stories with filters (profession, origin, German city, visa type). */}
+      <VideoStories
+        testimonials={data?.testimonials ?? []}
+        fallbackHeading={{ eyebrow: t('storiesPage.testimonials.eyebrow'), title: t('storiesPage.testimonials.title'), subtitle: t('storiesPage.testimonials.subtitle') }}
+      />
 
       <PublicReviews />
 

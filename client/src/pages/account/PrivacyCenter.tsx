@@ -34,6 +34,7 @@ import { ConfirmDialog } from '@/components/portal/ConfirmDialog';
 import { PublicStatusSettings } from '@/components/site/PublicStatusSettings';
 import { AccessLogSection } from '@/components/privacy/AccessLogSection'; // "who viewed my documents"
 import { LegalVersions } from '@/components/legal/LegalVersions';
+import { useHashScroll } from '@/components/portal/useOverview';
 import {
   CLIENT_REQUEST_TYPES,
   STATUS_TONE,
@@ -418,6 +419,7 @@ export default function AccountPrivacyCenter() {
     queryKey: KEY,
     queryFn: async () => (await api.get<PrivacyState>('/privacy')).data,
   });
+  useHashScroll(!!data); // "#legal" from the portal home ("Accept the new terms")
 
   if (isLoading) {
     return (
@@ -477,7 +479,11 @@ export default function AccountPrivacyCenter() {
           <span className="text-xs text-muted">{t('privacy.page.policyVersion', { version: data.policyVersion })}</span>
         </p>
         {/* Versioned legal texts: current AGB / privacy version vs. the version accepted. */}
-        {data.legal?.length ? <LegalVersions items={data.legal} /> : null}
+        {data.legal?.length ? (
+          <div id="legal" className="scroll-mt-28 lg:scroll-mt-36">
+            <LegalVersions items={data.legal} />
+          </div>
+        ) : null}
       </section>
 
       <section aria-labelledby="privacy-overview">

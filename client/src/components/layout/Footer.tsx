@@ -10,8 +10,10 @@ import { whenIdle } from '@/lib/idle';
 import { openConsentSettings } from '@/lib/consent';
 import { registerCopy } from '@/i18n';
 import { cookieConsentCopy } from '@/i18n/cookieConsent';
+import { siteNavCopy } from '@/i18n/siteNav';
 
 registerCopy(cookieConsentCopy); // "AGB" + "Cookie settings" links
+registerCopy(siteNavCopy); // footer columns (also registered by the header)
 
 // "Mənə zəng edin": the form, its copy and the dialog are their own chunk, loaded when the browser is idle.
 const CallbackButton = lazy(() => import('@/components/calls/CallbackForm'));
@@ -41,6 +43,24 @@ const SocialIcon = ({ name }: { name: string }) => {
   );
 };
 
+type FooterLink = { to: string; label: string };
+
+const FooterColumn = ({ title, links }: { title: string; links: FooterLink[] }) => (
+  <div>
+    <h2 className="mb-4 text-xs font-bold tracking-widest text-white/60 uppercase sm:mb-5 sm:text-sm">{title}</h2>
+    <ul className="space-y-3">
+      {links.map((l) => (
+        <li key={l.to}>
+          <Link to={l.to} className="group inline-flex items-center gap-1 text-sm text-white/75 transition hover:text-white">
+            {l.label}
+            <ArrowUpRight className="size-3.5 -translate-x-1 opacity-0 transition group-hover:translate-x-0 group-hover:opacity-100" />
+          </Link>
+        </li>
+      ))}
+    </ul>
+  </div>
+);
+
 export const Footer = () => {
   const { t } = useTranslation();
   const { data } = useSiteContent();
@@ -48,30 +68,39 @@ export const Footer = () => {
   const contact = data?.settings.contact;
   const social = data?.settings.social ?? {};
 
-  const company = [
-    { to: '/about', label: t('nav.about') },
-    { to: '/services', label: t('nav.services') },
-    { to: '/partners', label: t('nav.partners') },
-    { to: '/stories', label: t('nav.stories') },
-    { to: '/news', label: t('nav.news') },
-    { to: '/guides', label: t('nav.guides') },
-    { to: '/cooperation', label: t('nav.cooperation') },
-  ];
-  const candidates = [
+  // Every public page is reachable from here or from /tools (all calculators and checks).
+  const workers: FooterLink[] = [
+    { to: '/for-workers', label: t('siteNav.overview.worker.title') },
     { to: '/jobs', label: t('nav.jobs') },
     { to: '/visas', label: t('nav.visas') },
     { to: '/ausbildung', label: t('nav.ausbildung') },
     { to: '/eligibility', label: t('nav.eligibility') },
-    { to: '/chancenkarte-calculator', label: t('nav.chancenkarte') },
-    { to: '/blue-card-check', label: t('nav.blueCard') },
-    { to: '/calculator', label: t('nav.calculator') },
-    { to: '/cost-calculator', label: t('nav.costCalculator') },
     { to: '/events', label: t('nav.events') },
-    { to: '/faq', label: t('nav.faq') },
     { to: '/register', label: t('nav.apply') },
+    { to: '/status', label: t('siteNav.footer.status') },
+  ];
+  const employers: FooterLink[] = [
+    { to: '/for-employers', label: t('siteNav.overview.employer.title') },
+    { to: '/services', label: t('nav.services') },
+    { to: '/cooperation', label: t('siteNav.e.cooperation') },
+    { to: '/cooperation#form', label: t('siteNav.e.request') },
+    { to: '/employers/register', label: t('siteNav.e.register') },
+    { to: '/partners', label: t('nav.partners') },
+  ];
+  const resources: FooterLink[] = [
+    { to: '/guides', label: t('nav.guides') },
+    { to: '/tools', label: t('siteNav.tools') },
+    { to: '/news', label: t('nav.news') },
+    { to: '/faq', label: t('nav.faq') },
+    { to: '/map', label: t('nav.map') },
+    { to: '/cities', label: t('nav.cities') },
+  ];
+  const company: FooterLink[] = [
+    { to: '/about', label: t('nav.about') },
+    { to: '/stories', label: t('nav.stories') },
+    { to: '/contact', label: t('nav.contact') },
+    { to: '/booking', label: t('siteNav.book') },
     { to: '/login', label: t('nav.login') },
-    { to: '/booking', label: t('nav.booking') },
-    { to: '/employers/register', label: t('nav.forEmployers') },
   ];
 
   return (
@@ -86,10 +115,36 @@ export const Footer = () => {
         <span className="flex-1 bg-de-gold" />
       </div>
 
-      <div className="container-x relative grid grid-cols-2 gap-x-6 gap-y-10 pt-14 pb-10 sm:pt-20 sm:pb-12 lg:grid-cols-[1.4fr_1fr_1fr_1.3fr] lg:gap-12">
-        <div className="col-span-2 lg:col-span-1">
+      <div className="container-x relative grid grid-cols-2 gap-x-6 gap-y-10 pt-14 pb-10 sm:pt-20 sm:pb-12 md:grid-cols-4 lg:grid-cols-[1.6fr_1fr_1fr_1fr_1fr] lg:gap-10">
+        <div className="col-span-2 md:col-span-4 lg:col-span-1">
           <Logo light />
           <p className="mt-6 max-w-sm text-sm leading-relaxed text-white/60">{t('footer.about')}</p>
+          {contact && (
+            <ul className="mt-6 space-y-3 text-sm text-white/75">
+              <li>
+                <a href={`tel:${contact.phone.replace(/\s/g, '')}`} className="flex items-center gap-3 hover:text-white">
+                  <Phone className="size-4 text-brand-400" /> {contact.phone}
+                </a>
+              </li>
+              <li>
+                <a href={`mailto:${contact.email}`} className="flex items-center gap-3 break-all hover:text-white">
+                  <Mail className="size-4 shrink-0 text-brand-400" /> {contact.email}
+                </a>
+              </li>
+              {contact.offices.map((o) => (
+                <li key={o.address} className="flex gap-3">
+                  <MapPin className="mt-0.5 size-4 shrink-0 text-brand-400" />
+                  <span>
+                    <strong className="block text-white">{tr(o.city)}</strong>
+                    {o.address}
+                  </span>
+                </li>
+              ))}
+              <li>
+                <LateCallbackButton className="inline-flex min-h-9 items-center gap-2 rounded-lg border border-white/20 px-3 py-1.5 text-sm font-semibold text-white hover:bg-white/10" />
+              </li>
+            </ul>
+          )}
           <div className="mt-6 flex gap-2">
             {Object.entries(social).map(([name, url]) => (
               <motion.a
@@ -107,63 +162,10 @@ export const Footer = () => {
           </div>
         </div>
 
-        <div>
-          <h2 className="mb-4 text-xs font-bold tracking-widest text-white/60 uppercase sm:mb-5 sm:text-sm">{t('footer.company')}</h2>
-          <ul className="space-y-3">
-            {company.map((l) => (
-              <li key={l.to}>
-                <Link to={l.to} className="group inline-flex items-center gap-1 text-sm text-white/75 transition hover:text-white">
-                  {l.label}
-                  <ArrowUpRight className="size-3.5 -translate-x-1 opacity-0 transition group-hover:translate-x-0 group-hover:opacity-100" />
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        <div>
-          <h2 className="mb-4 text-xs font-bold tracking-widest text-white/60 uppercase sm:mb-5 sm:text-sm">{t('footer.forCandidates')}</h2>
-          <ul className="space-y-3">
-            {candidates.map((l) => (
-              <li key={l.to}>
-                <Link to={l.to} className="group inline-flex items-center gap-1 text-sm text-white/75 transition hover:text-white">
-                  {l.label}
-                  <ArrowUpRight className="size-3.5 -translate-x-1 opacity-0 transition group-hover:translate-x-0 group-hover:opacity-100" />
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        <div className="col-span-2 lg:col-span-1">
-          <h2 className="mb-4 text-xs font-bold tracking-widest text-white/60 uppercase sm:mb-5 sm:text-sm">{t('footer.contact')}</h2>
-          {contact && (
-            <ul className="space-y-4 text-sm text-white/75">
-              <li>
-                <a href={`tel:${contact.phone.replace(/\s/g, '')}`} className="flex items-center gap-3 hover:text-white">
-                  <Phone className="size-4 text-brand-400" /> {contact.phone}
-                </a>
-              </li>
-              <li>
-                <LateCallbackButton className="inline-flex min-h-9 items-center gap-2 rounded-lg border border-white/20 px-3 py-1.5 text-sm font-semibold text-white hover:bg-white/10" />
-              </li>
-              <li>
-                <a href={`mailto:${contact.email}`} className="flex items-center gap-3 break-all hover:text-white">
-                  <Mail className="size-4 shrink-0 text-brand-400" /> {contact.email}
-                </a>
-              </li>
-              {contact.offices.map((o) => (
-                <li key={o.address} className="flex gap-3">
-                  <MapPin className="mt-0.5 size-4 shrink-0 text-brand-400" />
-                  <span>
-                    <strong className="block text-white">{tr(o.city)}</strong>
-                    {o.address}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
+        <FooterColumn title={t('siteNav.footer.workers')} links={workers} />
+        <FooterColumn title={t('siteNav.footer.employers')} links={employers} />
+        <FooterColumn title={t('siteNav.footer.resources')} links={resources} />
+        <FooterColumn title={t('siteNav.footer.company')} links={company} />
       </div>
 
       <div className="relative border-t border-white/10">
@@ -180,6 +182,9 @@ export const Footer = () => {
             </Link>
             <Link to="/agb" className="hover:text-white">
               {t('legalDocs.footer.terms')}
+            </Link>
+            <Link to="/cookies" className="hover:text-white">
+              {t('siteNav.footer.cookiePolicy')}
             </Link>
             {/* Re-opens the cookie consent banner (components/legal/CookieConsent). */}
             <button type="button" onClick={openConsentSettings} className="hover:text-white">

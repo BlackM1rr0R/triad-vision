@@ -23,6 +23,7 @@ import { HeaderTimer } from '@/components/timeCare/HeaderTimer'; // running staf
 import { BottomNavWorkspace } from '@/components/nav/BottomNavWorkspace'; // phones: tab bar
 import { STAFF_TOUR, TourHost, TourRestartButton } from '@/components/onboarding'; // first-login tour
 import { CommandPaletteButton, CommandPaletteHotkey } from '@/components/command'; // Ctrl+K
+import { usePageVisits, useStaffNav } from '@/components/command/navPrefs'; // usage + module toggles
 
 registerCopy(workspaceCopy);
 registerCopy(pagesCalls);
@@ -52,6 +53,7 @@ export default function WorkspaceLayout() {
   const { t } = useTranslation();
   const { user, logout } = useAuth();
   const location = useLocation();
+  usePageVisits(location.pathname); // admin usage statistics + "recently opened" in the admin sidebar
   const [collapsed, setCollapsed] = useState(readCollapsed);
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -96,17 +98,18 @@ export default function WorkspaceLayout() {
     }
   }, [collapsed]);
 
+  const { isModuleOn } = useStaffNav();
   const nav: NavItem[] = [
     { to: '/workspace/home', label: t('workspace.nav.home'), icon: LayoutDashboard },
     { to: '/workspace/mail', label: t('workspace.nav.mail'), icon: Mail, badge: mailSummary.data?.unread || undefined },
     { to: '/workspace/chat', label: t('workspace.nav.chat'), icon: MessagesSquare, badge: chatSummary.data?.unread || undefined },
     { to: '/workspace/calendar', label: t('workspace.nav.calendar'), icon: CalendarDays },
     { to: '/workspace/drive', label: t('workspace.nav.drive'), icon: FolderOpen },
-    { to: '/workspace/settlements', label: t('workspace.nav.settlements'), icon: Banknote },
+    ...(isModuleOn('settlements') ? [{ to: '/workspace/settlements', label: t('workspace.nav.settlements'), icon: Banknote }] : []),
     { to: '/workspace/tasks', label: t('workspace.nav.tasks'), icon: ListTodo, badge: summary.data?.open || undefined },
     { to: '/workspace/contacts', label: t('workspace.nav.contacts'), icon: BookUser },
     { to: '/workspace/team', label: t('workspace.nav.team'), icon: Users },
-    { to: '/workspace/live-chats', label: t('workspace.nav.liveChats'), icon: Headset, badge: liveWaiting || undefined },
+    ...(isModuleOn('liveChat') ? [{ to: '/workspace/live-chats', label: t('workspace.nav.liveChats'), icon: Headset, badge: liveWaiting || undefined }] : []),
   ];
   const initials = user ? `${user.firstName[0] ?? ''}${user.lastName[0] ?? ''}`.toUpperCase() : '';
 

@@ -37,6 +37,7 @@ import { fmtDate } from '@/components/admin/labels';
 import { GapList, ScoreRing } from '@/components/jobs/MatchMeter';
 import { jobsError, useJobLabels } from '@/components/jobs/labels';
 import { APPLICATION_STATUS_TONE, type ApplicationStatus, type Match, type PublicVacancy } from '@/components/jobs/types';
+import { JobAlertForm } from '@/components/jobs/JobAlertForm';
 
 registerCopy(pagesJobs);
 
@@ -327,6 +328,9 @@ export default function JobDetail() {
                 <ArrowRight className="size-5 shrink-0 text-brand-600 transition group-hover:translate-x-0.5" aria-hidden />
               </Link>
             )}
+
+            {/* Job alert preselected with this vacancy's profession. */}
+            <JobAlertForm profession={v.profession} />
           </div>
 
           <aside className="min-w-0">

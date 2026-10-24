@@ -3,10 +3,11 @@
 const az = {
   caseLayout: {
     tabsLabel: 'Müraciət bölmələri',
-    tabs: { overview: 'Ümumi', documents: 'Sənədlər', communication: 'Ünsiyyət', finance: 'Maliyyə', history: 'Tarixçə' },
+    tabs: { overview: 'Ümumi', documents: 'Sənədlər', family: 'Ailə', postArrival: 'Gəlişdən sonra', finance: 'Maliyyə', communication: 'Mesajlar', history: 'Tarixçə' },
     tabHint: {
       documents: '{{count}} sənəd yoxlama gözləyir',
       communication: '{{count}} cavabsız mesaj',
+      postArrival: '{{count}} həll olunmamış problem (gəlişdən sonra)',
     },
     back: 'Müraciətlərə qayıt',
     message: 'Mesaj',
@@ -42,6 +43,14 @@ const az = {
       profitability: 'Gəlirlilik',
       time: 'Vaxt uçotu',
     },
+    family: { none: 'Bu müraciətdə ailə üzvü yoxdur. Ailə üzvləri müştəri profilindən və ya müraciətin ailə bölməsindən əlavə olunur.' },
+    postArrival: {
+      notYet: 'Gəlişdən sonrakı işlər (gəliş planı, yoxlamalar, yaşayış icazəsinin uzadılması) viza təsdiqləndikdən sonra burada görünür.',
+      noFollowUp: 'Gəliş hələ qeydə alınmayıb — yoxlamalar gəlişdən sonra başlayır.',
+      allCheckIns: 'Bütün yoxlamalar',
+      ok: 'Hər şey qaydasındadır',
+      issue: 'Problem bildirilib',
+    },
     loadingTab: 'Bölmə yüklənir…',
     actionsTitle: 'Status əməliyyatları',
     statusTitle: 'Statusun gedişi',
@@ -51,10 +60,11 @@ const az = {
 const de: typeof az = {
   caseLayout: {
     tabsLabel: 'Bereiche des Antrags',
-    tabs: { overview: 'Übersicht', documents: 'Dokumente', communication: 'Kommunikation', finance: 'Finanzen', history: 'Verlauf' },
+    tabs: { overview: 'Übersicht', documents: 'Dokumente', family: 'Familie', postArrival: 'Nach der Ankunft', finance: 'Finanzen', communication: 'Nachrichten', history: 'Verlauf' },
     tabHint: {
       documents: '{{count}} Dokumente warten auf Prüfung',
       communication: '{{count}} unbeantwortete Nachrichten',
+      postArrival: '{{count}} offene Probleme nach der Ankunft',
     },
     back: 'Zurück zu den Anträgen',
     message: 'Nachricht',
@@ -90,6 +100,14 @@ const de: typeof az = {
       profitability: 'Rentabilität',
       time: 'Zeiterfassung',
     },
+    family: { none: 'Zu diesem Antrag gibt es keine Familienangehörigen. Angehörige werden im Kundenprofil bzw. im Familienbereich des Antrags hinzugefügt.' },
+    postArrival: {
+      notYet: 'Die Arbeit nach der Ankunft (Ankunftsplan, Check-ins, Verlängerung des Aufenthaltstitels) erscheint hier, sobald das Visum erteilt ist.',
+      noFollowUp: 'Die Ankunft ist noch nicht erfasst — Check-ins beginnen nach der Ankunft.',
+      allCheckIns: 'Alle Check-ins',
+      ok: 'Alles in Ordnung',
+      issue: 'Problem gemeldet',
+    },
     loadingTab: 'Bereich wird geladen…',
     actionsTitle: 'Statusaktionen',
     statusTitle: 'Statusverlauf',
@@ -99,10 +117,11 @@ const de: typeof az = {
 const en: typeof az = {
   caseLayout: {
     tabsLabel: 'Case sections',
-    tabs: { overview: 'Overview', documents: 'Documents', communication: 'Communication', finance: 'Finance', history: 'History' },
+    tabs: { overview: 'Overview', documents: 'Documents', family: 'Family', postArrival: 'After arrival', finance: 'Finance', communication: 'Messages', history: 'History' },
     tabHint: {
       documents: '{{count}} documents awaiting review',
       communication: '{{count}} unanswered messages',
+      postArrival: '{{count}} open problems after arrival',
     },
     back: 'Back to cases',
     message: 'Message',
@@ -138,6 +157,14 @@ const en: typeof az = {
       profitability: 'Profitability',
       time: 'Time tracking',
     },
+    family: { none: 'This case has no family members. Family members are added from the client profile or the family section of the case.' },
+    postArrival: {
+      notYet: 'Work after arrival (arrival plan, check-ins, residence title renewal) appears here once the visa is approved.',
+      noFollowUp: 'Arrival not recorded yet — check-ins start after arrival.',
+      allCheckIns: 'All check-ins',
+      ok: 'All fine',
+      issue: 'Problem reported',
+    },
     loadingTab: 'Loading section…',
     actionsTitle: 'Status actions',
     statusTitle: 'Status timeline',
@@ -147,10 +174,11 @@ const en: typeof az = {
 const ru: typeof az = {
   caseLayout: {
     tabsLabel: 'Разделы заявки',
-    tabs: { overview: 'Обзор', documents: 'Документы', communication: 'Общение', finance: 'Финансы', history: 'История' },
+    tabs: { overview: 'Обзор', documents: 'Документы', family: 'Семья', postArrival: 'После приезда', finance: 'Финансы', communication: 'Сообщения', history: 'История' },
     tabHint: {
       documents: '{{count}} документов ждут проверки',
       communication: '{{count}} неотвеченных сообщений',
+      postArrival: '{{count}} нерешённых проблем после приезда',
     },
     back: 'К заявкам',
     message: 'Сообщение',
@@ -185,6 +213,14 @@ const ru: typeof az = {
       settlements: 'Взаиморасчёты',
       profitability: 'Рентабельность',
       time: 'Учёт времени',
+    },
+    family: { none: 'В этой заявке нет членов семьи. Члены семьи добавляются в профиле клиента или в семейном разделе заявки.' },
+    postArrival: {
+      notYet: 'Работа после приезда (план приезда, чек-ины, продление ВНЖ) появится здесь после одобрения визы.',
+      noFollowUp: 'Приезд ещё не отмечен — чек-ины начинаются после приезда.',
+      allCheckIns: 'Все чек-ины',
+      ok: 'Всё в порядке',
+      issue: 'Сообщено о проблеме',
     },
     loadingTab: 'Раздел загружается…',
     actionsTitle: 'Действия по статусу',

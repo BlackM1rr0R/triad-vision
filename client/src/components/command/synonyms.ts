@@ -102,4 +102,10 @@ export const SYNONYMS: Record<string, string> = {
   newCampaign: 'yeni kampaniya, newsletter, kampagne erstellen, создать рассылку',
   newContact: 'yeni kontakt, kontakt anlegen, add contact, создать контакт',
   uploadDrive: 'yüklə, fayl, upload, hochladen, datei, загрузить, файл',
+  modules: 'modul, funksiya, söndür, feature, toggle, funktion, ausschalten, модуль, функция, отключить',
+  usage: 'statistika, istifadə, usage, analytics, nutzung, aufrufe, статистика, использование',
+  desks: 'masa, rol, desk, arbeitsplatz, rolle, рабочее место, роль',
+  'hub.today': 'today, heute, сегодня',
+  'hub.compliance': 'dsgvo, gdpr, məxfilik, privacy, datenschutz, sicherheit, конфиденциальность, безопасность',
+  'hub.leads': 'lid, lead, inquiry, anfrage, лид, обращение, partner',
 };

@@ -222,7 +222,7 @@ export default function CostCalculator() {
 
   return (
     <>
-      <PageHero title={t('mk.cost.heroTitle')} subtitle={t('mk.cost.heroSubtitle')} image={HERO} />
+      <PageHero title={t('mk.cost.heroTitle')} subtitle={t('mk.cost.heroSubtitle')} image={HERO} crumb={{ to: '/tools', label: t('siteNav.tools') }} />
       <section className="section">
         <div className="container-x">
           {isLoading ? (

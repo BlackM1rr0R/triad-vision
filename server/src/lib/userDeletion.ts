@@ -207,6 +207,8 @@ export const deleteUserAccount = async (actorId: string, userId: string, ip?: st
         const cases = ownCaseIds.length ? (await tx.case.deleteMany({ where: { id: { in: ownCaseIds } } })).count : 0;
         // Site features keep plain ids (no cascade): browser push subscriptions and the cases' public status switches.
         await tx.webPushSubscription.deleteMany({ where: { userId } });
+        // Job alerts of the account and of its e-mail address (plain ids, no foreign key).
+        await tx.jobAlert.deleteMany({ where: { OR: [{ userId }, { email: target.email.toLowerCase() }] } });
         if (ownCaseIds.length) await tx.casePublicStatus.deleteMany({ where: { caseId: { in: ownCaseIds } } });
 
         await tx.user.delete({ where: { id: userId } });

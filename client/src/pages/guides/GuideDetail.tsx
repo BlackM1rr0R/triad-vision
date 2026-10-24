@@ -15,6 +15,7 @@ import { useL10n } from '@/lib/l10n';
 import { navigateToUrl } from '@/lib/localeRouter';
 import { usePageTitle } from '@/lib/usePageTitle';
 import NotFound from '../NotFound';
+import { LeadMagnetBlock } from '@/components/growth/LeadMagnetBlock';
 
 registerCopy(pagesSeo);
 
@@ -119,6 +120,9 @@ export default function GuideDetail() {
                 </div>
               </section>
             )}
+
+            {/* Free e-book (lead magnet) built from the guides; renders nothing until it is published with a PDF. */}
+            <LeadMagnetBlock from={`guide:${guide.key}`} className="mt-12" />
 
             <p className="mt-10 flex gap-2 rounded-xl bg-amber-50 p-4 text-sm leading-relaxed text-amber-900">
               <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden /> {t('guidesPage.disclaimer')}

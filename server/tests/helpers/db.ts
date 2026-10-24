@@ -1,5 +1,6 @@
 import { prisma } from '../../src/db.js';
 import { clearCache } from '../../src/lib/cache.js';
+import { invalidateModules } from '../../src/lib/navModules.js';
 
 export { prisma };
 
@@ -37,6 +38,7 @@ export const resetDb = async () => {
   await prisma.automationRule.deleteMany();
   await prisma.automationEvent.deleteMany();
   await prisma.staffPreferences.deleteMany();
+  await prisma.adminPageVisit.deleteMany(); // admin page usage statistics (no foreign keys)
   await prisma.caseHandover.deleteMany();
   // Team: training courses / progress, shift calendar (plain ids, no dependants)
   await prisma.trainingProgress.deleteMany();
@@ -138,6 +140,8 @@ export const resetDb = async () => {
   await prisma.leadVisitor.deleteMany(); // lead scoring visitors + landing pages (plain ids, no dependants)
   await prisma.landingPage.deleteMany();
   await prisma.guidePage.deleteMany(); // SEO topic guides (no foreign keys)
+  await prisma.jobAlert.deleteMany(); // job alerts + e-book lead magnets (plain ids, no foreign keys)
+  await prisma.leadMagnet.deleteMany();
   await prisma.reminderLog.deleteMany();
   await prisma.analyticsDaily.deleteMany();
   await prisma.review.deleteMany();
@@ -185,6 +189,7 @@ export const resetDb = async () => {
   await prisma.fieldChange.deleteMany(); // field history (no foreign keys; last: the deletes above may record rows)
   // The public content cache lives in this module graph; drop it with the data.
   clearCache();
+  invalidateModules(); // module toggles are cached in-process for 30 s
 };
 
 export const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));

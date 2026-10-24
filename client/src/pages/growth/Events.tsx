@@ -19,7 +19,7 @@ export default function Events() {
   const { data: events, isLoading } = usePublicEvents();
   return (
     <>
-      <PageHero title={t('gp.events.heroTitle')} subtitle={t('gp.events.heroSubtitle')} image={HERO} />
+      <PageHero title={t('gp.events.heroTitle')} subtitle={t('gp.events.heroSubtitle')} image={HERO} crumb={{ to: '/tools', label: t('siteNav.tools') }} />
       <section className="section">
         <div className="container-x">
           <h2 className="h-section section-head text-navy-900">{t('gp.events.upcoming')}</h2>

@@ -1,19 +1,23 @@
 import { useRef } from 'react';
 import { RouteFlags } from '../ui/Flag';
 import { HeroGlobeLite } from './HeroGlobeLite';
-import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { motion, useScroll, useTransform } from 'framer-motion';
-import { ArrowRight, CheckCircle2, MousePointer2 } from 'lucide-react';
-import { Magnetic } from '../motion';
+import { ArrowRight, Building2, CheckCircle2, HardHat, MousePointer2, type LucideIcon } from 'lucide-react';
+import clsx from 'clsx';
 import { QuizCta } from '../publicAi/QuizCta';
 import { sized, srcSet } from '@/lib/img';
+import type { Audience } from '@/lib/audience';
 
 const BG = 'https://images.unsplash.com/photo-1587330979470-3595ac045ab0?auto=format&fit=crop&w=1600&q=60';
 const HANDSHAKE = 'https://images.unsplash.com/photo-1521791136064-7986c2920216?auto=format&fit=crop&w=640&q=70';
 const EASE = [0.22, 1, 0.36, 1] as const;
+const CHOICES: { key: Audience; icon: LucideIcon }[] = [
+  { key: 'worker', icon: HardHat },
+  { key: 'employer', icon: Building2 },
+];
 
-export const Hero = () => {
+export const Hero = ({ audience, onChoose }: { audience: Audience | null; onChoose: (a: Audience) => void }) => {
   const { t } = useTranslation();
   const ref = useRef<HTMLElement>(null);
   const { scrollYProgress } = useScroll({ target: ref, offset: ['start start', 'end start'] });
@@ -84,32 +88,51 @@ export const Hero = () => {
             {t('hero.subtitle')}
           </motion.p>
 
+          {/* "Who are you?" — the choice is remembered (lib/audience) and the home page below shows only that audience. */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.95, duration: 0.8, ease: EASE }}
-            className="mt-7 flex flex-col gap-3 sm:mt-9 sm:flex-row sm:flex-wrap"
+            className="mt-7 sm:mt-9"
           >
-            <Magnetic className="w-full sm:w-auto">
-              <Link to="/cooperation" className="btn-primary group w-full px-6 py-3.5 text-[0.95rem] sm:w-auto">
-                <span className="absolute inset-y-0 left-0 w-1/3 animate-shine bg-white/25" />
-                {t('hero.ctaPrimary')}
-                <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
-              </Link>
-            </Magnetic>
-            <Magnetic className="w-full sm:w-auto">
-              <Link to="/register" className="btn-outline w-full px-6 py-3.5 text-[0.95rem] sm:w-auto">
-                {t('hero.ctaSecondary')}
-              </Link>
-            </Magnetic>
+            <h2 id="hero-who" className="font-display text-base font-bold sm:text-lg">
+              {t('siteNav.home.question')}
+            </h2>
+            <p className="mt-1 text-sm text-white/65">{t('siteNav.home.hint')}</p>
+            <div role="group" aria-labelledby="hero-who" className="mt-4 grid gap-3 sm:grid-cols-2">
+              {CHOICES.map(({ key, icon: ChoiceIcon }) => {
+                const on = audience === key;
+                return (
+                  <button
+                    key={key}
+                    type="button"
+                    aria-pressed={on}
+                    onClick={() => onChoose(key)}
+                    className={clsx(
+                      'group flex items-center gap-4 rounded-2xl border p-4 text-left backdrop-blur-sm transition duration-300 sm:p-5',
+                      on ? 'border-brand-400 bg-brand-600/30 shadow-lg shadow-brand-600/30' : 'border-white/20 bg-white/[0.06] hover:-translate-y-0.5 hover:border-white/45 hover:bg-white/10',
+                    )}
+                  >
+                    <span className={clsx('grid size-12 shrink-0 place-items-center rounded-xl transition', on ? 'bg-white text-brand-700' : 'bg-brand-600 text-white')}>
+                      <ChoiceIcon className="size-6" aria-hidden />
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block font-display text-lg leading-tight font-bold">{t(`siteNav.home.${key}.title`)}</span>
+                      <span className="mt-1 block text-sm leading-snug text-white/70">{t(`siteNav.home.${key}.text`)}</span>
+                    </span>
+                    {on ? <CheckCircle2 className="size-5 shrink-0 text-brand-300" aria-hidden /> : <ArrowRight className="size-5 shrink-0 opacity-60 transition group-hover:translate-x-1 group-hover:opacity-100" aria-hidden />}
+                  </button>
+                );
+              })}
+            </div>
           </motion.div>
-          <QuizCta className="mt-4" />
+          {audience !== 'employer' && <QuizCta className="mt-4" />}
 
           <motion.ul
             initial="hidden"
             animate="show"
             variants={{ hidden: {}, show: { transition: { staggerChildren: 0.1, delayChildren: 1.1 } } }}
-            className="mt-8 grid gap-2.5 sm:mt-10 sm:grid-cols-2 sm:gap-3"
+            className="mt-8 hidden gap-2.5 sm:mt-10 sm:grid sm:grid-cols-2 sm:gap-3"
           >
             {bullets.map((b) => (
               <motion.li

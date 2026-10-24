@@ -180,6 +180,9 @@ const FAMILY_OF = new Map(PROFESSIONS.map((p) => [p.key, p.family]));
 /** Canonical profession keys (for selects and tests). */
 export const PROFESSION_KEYS = PROFESSIONS.map((p) => p.key);
 
+/** Family of a canonical profession key (driving, care, …), or null (job alerts match by family). */
+export const professionFamily = (key: string | null | undefined): string | null => (key ? (FAMILY_OF.get(key) ?? null) : null);
+
 const containsPhrase = (text: string, phrase: string) => ` ${text} `.includes(` ${phrase} `);
 
 /**

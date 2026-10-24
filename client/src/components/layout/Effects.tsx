@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useLocation, useNavigationType } from 'react-router-dom';
 import { AnimatePresence, motion, useScroll, useSpring } from 'framer-motion';
 import { LogoMark } from '../ui/Logo';
@@ -44,9 +44,29 @@ const restoreTo = (y: number) => {
   requestAnimationFrame(attempt);
 };
 
+/** Scrolls to the element of a URL hash once it exists (below the fixed header), giving up after 3 s. */
+const scrollToHash = (hash: string) => {
+  let id = hash.slice(1);
+  try {
+    id = decodeURIComponent(id);
+  } catch {
+    /* malformed escape: use it as it is */
+  }
+  const started = performance.now();
+  const attempt = () => {
+    const el = document.getElementById(id);
+    if (el) {
+      smoothScrollTo(el, { offset: -88 });
+      return;
+    }
+    if (performance.now() - started < 3000) requestAnimationFrame(attempt);
+  };
+  requestAnimationFrame(attempt);
+};
+
 /**
  * Scroll behaviour like a classic website:
- * - clicking a link (PUSH/REPLACE) opens the new page at the top;
+ * - clicking a link (PUSH/REPLACE) opens the new page at the top, or at the section named by its #hash;
  * - reload and back/forward (POP) return to where the user was on that page;
  * - inertial wheel scrolling (Lenis) on desktop pointers, native everywhere else.
  */
@@ -54,6 +74,7 @@ export const SmoothScroll = () => {
   const location = useLocation();
   const navType = useNavigationType();
   const { noMotion } = usePrefs();
+  const lastPath = useRef<string | null>(null);
 
   // Inertial scrolling is itself motion: off while "stop animations" is on in the accessibility widget.
   useEffect(() => {
@@ -77,14 +98,20 @@ export const SmoothScroll = () => {
       const y = readPositions()[`${location.key}:${location.pathname}`];
       if (y) restoreTo(y);
       else scrollToTop(true);
+    } else if (location.hash.length > 1) {
+      // Link to a section (/for-workers#process, /cooperation#form): the page opens at the top, then glides
+      // to the section once it has rendered (page chunks and content load asynchronously).
+      if (lastPath.current !== location.pathname) scrollToTop(true);
+      scrollToHash(location.hash);
     } else {
       scrollToTop(true);
     }
+    lastPath.current = location.pathname;
     // Remember where we were on this entry when leaving it.
     // Entries opened by typing a URL all share the key "default", so the path is part of the key.
     const key = `${location.key}:${location.pathname}`;
     return () => savePosition(key);
-  }, [location.key, location.pathname, navType]);
+  }, [location.key, location.pathname, location.hash, navType]);
 
   return null;
 };

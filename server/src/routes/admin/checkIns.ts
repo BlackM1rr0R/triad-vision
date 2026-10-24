@@ -12,6 +12,7 @@ import { recomputeRisk, runRiskRecompute } from '../../lib/checkIns/risk.js';
  * Post-arrival check-ins, staff side (mounted at /api/admin/check-ins, STAFF+):
  *
  *   GET   /overview                retention dashboard            ?from&to&companyId&status&risk=all|LOW|MEDIUM|HIGH&sort=arrived|risk
+ *   GET   /cases/:caseId           one case: follow-up, churn risk, check-ins (case card → "After arrival" tab)
  *   POST  /:id/resolve             mark a reported problem as handled { note? }
  *   PATCH /follow-ups/:id/left     "left the job" (or undo)          { left, leftAt?, reason?, note? }
  *   GET   /settings                worker offsets / employer check-in offsets
@@ -23,6 +24,27 @@ export const adminCheckInsRouter = Router();
 
 adminCheckInsRouter.get('/overview', async (req, res) => {
   res.json(await overview(parse(overviewQuery, req.query)));
+});
+
+adminCheckInsRouter.get('/cases/:caseId', async (req, res) => {
+  const followUp = await prisma.arrivalFollowUp.findUnique({
+    where: { caseId: String(req.params.caseId) },
+    select: {
+      id: true,
+      arrivedAt: true,
+      leftJobAt: true,
+      leftReason: true,
+      riskScore: true,
+      riskLevel: true,
+      riskReasons: true,
+      riskAt: true,
+      checkIns: {
+        orderBy: [{ dueAt: 'asc' }, { audience: 'asc' }],
+        select: { id: true, audience: true, offsetDays: true, dueAt: true, sentAt: true, answer: true, topics: true, comment: true, answeredAt: true, resolvedAt: true },
+      },
+    },
+  });
+  res.json({ followUp });
 });
 
 adminCheckInsRouter.post('/:id/resolve', async (req, res) => {

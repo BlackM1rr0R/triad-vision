@@ -33,6 +33,7 @@ import { sized, srcSet } from '@/lib/img';
 const ELIGIBILITY_IMG = 'https://images.unsplash.com/photo-1576765608535-5f04d1e3f289?auto=format&fit=crop&w=1200&q=70';
 const CTA_IMG = 'https://images.unsplash.com/photo-1521791136064-7986c2920216?auto=format&fit=crop&w=1600&q=70';
 import { useSiteContent } from '@/lib/content';
+import { setAudience } from '@/lib/audience';
 
 const ViewAll = ({ to, label }: { to: string; label: string }) => (
   <Link to={to} className="btn-ghost group w-full whitespace-nowrap sm:w-auto">
@@ -108,8 +109,8 @@ export const PartnersSection = () => {
 export const AudienceSection = () => {
   const { t } = useTranslation();
   const cards = [
-    { key: 'company', icon: Building2, to: '/cooperation', img: 'https://images.unsplash.com/photo-1600880292203-757bb62b4baf?auto=format&fit=crop&w=1200&q=70' },
-    { key: 'candidate', icon: UserRound, to: '/register', img: 'https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?auto=format&fit=crop&w=1200&q=70' },
+    { key: 'company', audience: 'employer', icon: Building2, to: '/for-employers', img: 'https://images.unsplash.com/photo-1600880292203-757bb62b4baf?auto=format&fit=crop&w=1200&q=70' },
+    { key: 'candidate', audience: 'worker', icon: UserRound, to: '/for-workers', img: 'https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?auto=format&fit=crop&w=1200&q=70' },
   ] as const;
   return (
     <section className="section">
@@ -137,8 +138,9 @@ export const AudienceSection = () => {
                       ))}
                     </ul>
                     <div className="mt-6 sm:mt-8">
-                      <Link to={c.to} className="btn-white group/btn w-full sm:w-auto">
-                        {t(`audience.${c.key}.cta`)} <ArrowRight className="size-4 transition group-hover/btn:translate-x-1" />
+                      {/* Opening an audience page also remembers the choice for the home page (lib/audience). */}
+                      <Link to={c.to} onClick={() => setAudience(c.audience)} className="btn-white group/btn w-full sm:w-auto">
+                        {t(`siteNav.overview.${c.audience}.title`)} <ArrowRight className="size-4 transition group-hover/btn:translate-x-1" />
                       </Link>
                     </div>
                   </div>

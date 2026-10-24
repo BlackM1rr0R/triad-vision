@@ -11,11 +11,15 @@ import {
   SITEMAP_STATIC,
   STATIC_PAGES,
   textIn,
+  TOOL_GROUPS,
   type L10nText,
   type SeoLocale,
 } from './seoCatalogue.js';
 import { publishedLandingsForSeo, type LandingSeo } from './marketing/landing.js';
 import { guideAlternates, guidePath, parseFaq, type GuideRow } from './guides/service.js';
+import { videoEmbedUrl } from './marketing/landing.js';
+import { getCaseAiSettings } from './ai/features/caseAi/config.js';
+import { compareContent, currentThresholds, type CompareThresholds } from './compare/visaCompare.js';
 
 /*
  * SEO for a client-rendered SPA.
@@ -189,6 +193,8 @@ export interface SeoData {
     body?: unknown;
     features?: unknown;
     steps?: unknown;
+    /** all | company | candidate (audience pages /for-workers, /for-employers). Optional for older fixtures. */
+    audience?: string;
   } & SeoOverrides)[];
   posts: ({ slug: string; title: unknown; excerpt: unknown; cover: string; publishedAt: Date; updatedAt: Date; body?: unknown } & SeoOverrides)[];
   faqs: { question: unknown; answer: unknown }[];
@@ -228,6 +234,12 @@ export interface SeoData {
   landings?: LandingSeo[];
   /** Published topic guides (/guides/:slug, every language with its own slug). Optional for older fixtures. */
   guides?: GuideRow[];
+  /** Published success stories (/stories: VideoObject JSON-LD for the video ones). Optional for older fixtures. */
+  testimonials?: { id: string; quote: unknown; author: unknown; role: unknown; kind: string; videoUrl: string | null; posterUrl: string | null; profession: string | null; country: string | null; city: string | null; visaType: string | null }[];
+  /** Published e-book lead magnets (/ebook/:slug). Optional for older fixtures. */
+  leadMagnets?: { slug: string; title: unknown; description: unknown; coverUrl: string | null; updatedAt: Date }[];
+  /** Blue Card / 45+ thresholds of the current year (/compare-visas FAQ). Optional for older fixtures. */
+  compareThresholds?: CompareThresholds;
 }
 
 const SEO_FIELDS = { seoTitle: true, seoDescription: true, ogImage: true, noindex: true } as const;
@@ -256,7 +268,7 @@ const loadSeoData = async (): Promise<SeoData> => {
     prisma.service.findMany({
       where: { published: true },
       orderBy: { sortOrder: 'asc' },
-      select: { slug: true, title: true, summary: true, image: true, updatedAt: true, body: true, features: true, steps: true, ...SEO_FIELDS },
+      select: { slug: true, title: true, summary: true, image: true, updatedAt: true, body: true, features: true, steps: true, audience: true, ...SEO_FIELDS },
     }),
     prisma.post.findMany({
       where: { published: true },
@@ -305,6 +317,15 @@ const loadSeoData = async (): Promise<SeoData> => {
     }),
     prisma.guidePage.findMany({ where: { published: true }, orderBy: [{ key: 'asc' }, { locale: 'asc' }] }),
   ]);
+  const [testimonials, leadMagnets, caseAi] = await Promise.all([
+    prisma.testimonial.findMany({
+      where: { published: true },
+      orderBy: { sortOrder: 'asc' },
+      select: { id: true, quote: true, author: true, role: true, kind: true, videoUrl: true, posterUrl: true, profession: true, country: true, city: true, visaType: true },
+    }),
+    prisma.leadMagnet.findMany({ where: { published: true }, orderBy: { createdAt: 'asc' }, select: { slug: true, title: true, description: true, coverUrl: true, updatedAt: true } }),
+    getCaseAiSettings(),
+  ]);
   const count = rating._count.rating;
   return {
     visas,
@@ -314,6 +335,9 @@ const loadSeoData = async (): Promise<SeoData> => {
     jobs,
     events,
     guides,
+    testimonials,
+    leadMagnets,
+    compareThresholds: currentThresholds(caseAi),
     landings: await publishedLandingsForSeo(),
     settings: Object.fromEntries(settings.map((s) => [s.key, s.value])),
     rating: count >= 3 && rating._avg.rating != null ? { count, average: Math.round(rating._avg.rating * 10) / 10 } : null,
@@ -570,6 +594,9 @@ export const jobPostingLd = (job: SeoData['jobs'][number], lng: SeoLocale, url: 
   return ld;
 };
 
+/** Pages shown under "Tools" in breadcrumbs: the tools hub's own pages (not the top-level sections it also links to). */
+const TOOL_CRUMB_PAGES = new Set(TOOL_GROUPS.flatMap((g) => g.paths).filter((p) => !['/guides', '/jobs', '/visas'].includes(p)));
+
 /** Interactive tools: WebApplication JSON-LD (free, runs in the browser). */
 const TOOL_PAGES = new Set(['/chancenkarte-calculator', '/blue-card-check', '/salary-calculator', '/calculator', '/cost-calculator', '/anerkennung']);
 
@@ -582,6 +609,49 @@ const faqPageLd = (items: { q: string; a: string }[], lng: SeoLocale) =>
         mainEntity: items.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })),
       }
     : null;
+
+const COMPARE_FALLBACK: CompareThresholds = { year: '2026', standard: 50_700, shortage: 45_934.2, olderWorker: 55_770 };
+
+/** Release date of story videos without their own date (Testimonial has no timestamps). */
+const STORY_VIDEO_DATE = '2026-10-24';
+
+/** YouTube video id of a watch / share / embed link (for its thumbnail), else null. */
+export const youtubeId = (url: string) => /(?:youtube(?:-nocookie)?\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/)|youtu\.be\/)([A-Za-z0-9_-]{6,20})/.exec(url)?.[1] ?? null;
+
+/** Embed URL (YouTube no-cookie / Vimeo dnt) or the site-relative MP4 of a story video, else null. */
+export const storyVideo = (url: string | null | undefined): { embedUrl: string | null; contentUrl: string | null } | null => {
+  if (!url) return null;
+  const embed = videoEmbedUrl(url);
+  if (embed) return { embedUrl: embed, contentUrl: null };
+  if (/^\/uploads\/[\w.-]+\.(mp4|webm)$/i.test(url)) return { embedUrl: null, contentUrl: url };
+  return null;
+};
+
+/** VideoObject JSON-LD of the published video success stories (/stories). */
+export const storyVideosLd = (data: SeoData, lng: SeoLocale) =>
+  (data.testimonials ?? []).flatMap((t) => {
+    const video = storyVideo(t.videoUrl);
+    if (!video) return [];
+    const author = collapse(pick(t.author, lng));
+    const role = collapse(pick(t.role, lng));
+    const quote = collapse(pick(t.quote, lng));
+    const yt = t.videoUrl ? youtubeId(t.videoUrl) : null;
+    const thumb = absoluteImage(t.posterUrl) ?? (yt ? `https://i.ytimg.com/vi/${yt}/hqdefault.jpg` : `${siteOrigin()}/og-default.png`);
+    return [
+      {
+        '@context': 'https://schema.org',
+        '@type': 'VideoObject',
+        name: truncate([author, role || t.profession].filter(Boolean).join(' — ') || SITE_NAME, 100),
+        description: truncate(quote || textIn(STATIC_PAGES['/stories'].description, lng), 300),
+        thumbnailUrl: [thumb],
+        uploadDate: STORY_VIDEO_DATE,
+        inLanguage: lng,
+        ...(video.embedUrl ? { embedUrl: video.embedUrl } : {}),
+        ...(video.contentUrl ? { contentUrl: absoluteImage(video.contentUrl) } : {}),
+        publisher: { '@id': organizationId() },
+      },
+    ];
+  });
 
 /** Title / description / image / robots of a CMS item, honouring its per-item SEO overrides. */
 const withOverrides = (item: SeoOverrides & { image?: string; cover?: string }, lng: SeoLocale, name: string, fallbackDescription: string) => {
@@ -627,7 +697,8 @@ export const resolvePage = (path: string, lng: SeoLocale, data: SeoData): Resolv
       index: page.index !== false,
       image: null,
       ogType: 'website',
-      crumbs: path === '/' ? [] : [home, { name: textIn(page.name, lng), path }],
+      // Calculators and checks sit under the tools hub (Home › Tools › Salary calculator), as on the page.
+      crumbs: path === '/' ? [] : [home, ...(TOOL_CRUMB_PAGES.has(path) ? [{ name: staticName('/tools', lng), path: '/tools' }] : []), { name: textIn(page.name, lng), path }],
       jsonLd: [],
       extraMeta: [],
     };
@@ -676,7 +747,53 @@ export const resolvePage = (path: string, lng: SeoLocale, data: SeoData): Resolv
         provider: { '@id': organizationId() },
       });
     }
+    if (path === '/compare-visas') {
+      const content = compareContent(lng, data.compareThresholds ?? COMPARE_FALLBACK);
+      const ld = faqPageLd(content.faq, lng);
+      if (ld) resolved.jsonLd.push(ld);
+    }
+    if (path === '/stories') resolved.jsonLd.push(...storyVideosLd(data, lng));
+    if (path === '/tools') {
+      // The tools hub: an ItemList of every tool page (same groups and order as the page).
+      const items = TOOL_GROUPS.flatMap((g) => g.paths).filter((p) => STATIC_PAGES[p]);
+      resolved.jsonLd.push({
+        '@context': 'https://schema.org',
+        '@type': 'ItemList',
+        name: textIn(page.title, lng),
+        itemListElement: items.map((p, i) => ({ '@type': 'ListItem', position: i + 1, name: textIn(STATIC_PAGES[p].name, lng), url: pageUrl(p, lng) })),
+      });
+    }
     return resolved;
+  }
+
+  // E-book lead magnets: one page per e-book, text in every language (CMS fallback rules).
+  const eb = /^\/ebook\/([^/]+)$/.exec(path);
+  if (eb) {
+    const magnet = (data.leadMagnets ?? []).find((m) => m.slug === eb[1]);
+    if (!magnet) return generic;
+    const name = collapse(pick(magnet.title, lng));
+    return {
+      title: pageTitle(name),
+      description: truncate(pick(magnet.description, lng) || name, DESCRIPTION_MAX),
+      index: true,
+      image: absoluteImage(magnet.coverUrl),
+      ogType: 'website',
+      crumbs: [home, { name: staticName('/guides', lng), path: '/guides' }, { name, path }],
+      jsonLd: [
+        {
+          '@context': 'https://schema.org',
+          '@type': 'Book',
+          name,
+          bookFormat: 'https://schema.org/EBook',
+          inLanguage: lng,
+          isAccessibleForFree: true,
+          url,
+          ...(absoluteImage(magnet.coverUrl) ? { image: absoluteImage(magnet.coverUrl) } : {}),
+          publisher: { '@id': organizationId() },
+        },
+      ],
+      extraMeta: [],
+    };
   }
 
   // Landing pages: written in one language, with their own SEO title / description / image.
@@ -1044,6 +1161,7 @@ export const sitemapUrls = (data: SeoData, group: SitemapGroup): SitemapUrl[] =>
         ...visas.flatMap((v) => allLanguages(`/visas/${v.slug}`, v.updatedAt, { src: v.ogImage || v.image, title: (l) => collapse(pick(v.title, l)) })),
         ...services.flatMap((s) => allLanguages(`/services/${s.slug}`, s.updatedAt, { src: s.ogImage || s.image, title: (l) => collapse(pick(s.title, l)) })),
         ...posts.flatMap((p) => allLanguages(`/news/${p.slug}`, p.updatedAt, { src: p.ogImage || p.cover, title: (l) => collapse(pick(p.title, l)) })),
+        ...(data.leadMagnets ?? []).flatMap((m) => allLanguages(`/ebook/${m.slug}`, m.updatedAt, { src: m.coverUrl, title: (l) => collapse(pick(m.title, l)) })),
       ];
     case 'guides': {
       const guides = data.guides ?? [];

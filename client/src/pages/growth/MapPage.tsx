@@ -31,7 +31,7 @@ export default function MapPage() {
   const showFrom = hasOrigins && view === 'from';
   return (
     <>
-      <PageHero title={showFrom ? t('mk.origins.title') : t('gp.map.title')} subtitle={showFrom ? t('mk.origins.subtitle') : t('gp.map.subtitle')} image={HERO} />
+      <PageHero title={showFrom ? t('mk.origins.title') : t('gp.map.title')} subtitle={showFrom ? t('mk.origins.subtitle') : t('gp.map.subtitle')} image={HERO} crumb={{ to: '/tools', label: t('siteNav.tools') }} />
       <section className="section">
         <div className="container-x">
           {hasOrigins && (

@@ -9,6 +9,7 @@ import { notifyStaff } from '../lib/notifications.js';
 import { publicUser } from './auth.js';
 import { buildUserExport, exportFilename } from '../lib/privacy/export.js';
 import { OPEN_STATUSES, dueFrom } from '../lib/privacy/requests.js';
+import { loadNextStep } from '../lib/account/nextStep.js';
 
 export const accountRouter = Router();
 accountRouter.use(requireAuth);
@@ -257,6 +258,15 @@ accountRouter.get('/overview', async (req, res) => {
       author: { firstName: lastMessage.author.firstName, lastName: lastMessage.author.lastName },
     },
   });
+});
+
+/**
+ * Portal home "next step": the single most important action now (+ up to 2 secondary actions), the
+ * progress of the case, the next expected date and the badge counters of the portal sections.
+ */
+accountRouter.get('/next-step', async (req, res) => {
+  res.setHeader('Cache-Control', 'no-store');
+  res.json(await loadNextStep(req.user!.id));
 });
 
 /** GDPR export: everything stored about the user, as a JSON download (file metadata only, no contents). */

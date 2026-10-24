@@ -57,6 +57,64 @@ export const STATIC_PAGES: Record<string, StaticPageMeta> = {
       uk: 'Робота в Німеччині для фахівців: вакансії, візовий процес, документи та інтеграція — супровід від першої консультації до переїзду.',
     },
   },
+  // The two audience landing pages and the tools hub (header: For workers ▾, For employers ▾ … ; footer: Resources).
+  '/for-workers': {
+    name: { az: 'İşçilər üçün', de: 'Für Fachkräfte', en: 'For workers', ru: 'Работникам', tr: 'Çalışanlar için', uk: 'Працівникам' },
+    title: {
+      az: 'Almaniyada iş: işçilər və namizədlər üçün',
+      de: 'Arbeiten in Deutschland: für Fachkräfte',
+      en: 'Work in Germany: for workers and trainees',
+      ru: 'Работа в Германии: для работников',
+      tr: 'Almanya\'da iş: çalışanlar ve adaylar için',
+      uk: 'Робота в Німеччині: для працівників',
+    },
+    description: {
+      az: 'Almaniyada iş, viza və Ausbildung: vakansiyalar, sənədlər, dil hazırlığı və köç — ilk addımdan ilk maaşa qədər dəstək.',
+      de: 'Arbeit, Visum und Ausbildung in Deutschland: Stellen, Dokumente, Sprachvorbereitung und Umzug — Begleitung bis zum ersten Gehalt.',
+      en: 'Work, visa and Ausbildung in Germany: jobs, documents, language preparation and the move — support up to your first salary.',
+      ru: 'Работа, виза и Ausbildung в Германии: вакансии, документы, языковая подготовка и переезд — поддержка до первой зарплаты.',
+      tr: 'Almanya\'da iş, vize ve Ausbildung: iş ilanları, belgeler, dil hazırlığı ve taşınma — ilk maaşınıza kadar destek.',
+      uk: 'Робота, віза та Ausbildung у Німеччині: вакансії, документи, мовна підготовка й переїзд — підтримка до першої зарплати.',
+    },
+  },
+  '/for-employers': {
+    name: { az: 'İşəgötürənlər üçün', de: 'Für Arbeitgeber', en: 'For employers', ru: 'Работодателям', tr: 'İşverenler için', uk: 'Роботодавцям' },
+    title: {
+      az: 'İşəgötürənlər üçün: xaricdən işçi təminatı',
+      de: 'Fachkräfte aus dem Ausland für Arbeitgeber',
+      en: 'Hire skilled workers from abroad',
+      ru: 'Работодателям: персонал из-за рубежа',
+      tr: 'İşverenler için: yurt dışından personel',
+      uk: 'Роботодавцям: персонал з-за кордону',
+    },
+    description: {
+      az: 'Alman şirkətləri üçün xaricdən yoxlanılmış işçilər: namizəd seçimi, müsahibə, viza, Anerkennung və inteqrasiya bir komandadan.',
+      de: 'Geprüfte Fachkräfte aus dem Ausland: Kandidatenauswahl, Interviews, Visum, Anerkennung und Integration aus einer Hand.',
+      en: 'Screened workers from abroad for German companies: candidate selection, interviews, visa, recognition and integration from one team.',
+      ru: 'Проверенные работники из-за рубежа для компаний Германии: подбор, собеседования, виза, признание дипломов и интеграция.',
+      tr: 'Alman şirketleri için yurt dışından elemeden geçmiş personel: aday seçimi, mülakat, vize, denklik ve uyum tek ekipten.',
+      uk: 'Перевірені працівники з-за кордону для компаній Німеччини: підбір, співбесіди, віза, визнання дипломів та інтеграція.',
+    },
+  },
+  '/tools': {
+    name: { az: 'Alətlər', de: 'Tools', en: 'Tools', ru: 'Инструменты', tr: 'Araçlar', uk: 'Інструменти' },
+    title: {
+      az: 'Pulsuz alətlər: kalkulyatorlar və testlər',
+      de: 'Kostenlose Rechner und Checks für Deutschland',
+      en: 'Free calculators and checks for Germany',
+      ru: 'Бесплатные калькуляторы и тесты',
+      tr: 'Ücretsiz hesaplayıcılar ve testler',
+      uk: 'Безкоштовні калькулятори й тести',
+    },
+    description: {
+      az: 'Viza testi, Mavi Kart və İmkan Kartı yoxlaması, maaş və xərc kalkulyatoru, şəhərlər və xəritə — Almaniyaya köç üçün bütün alətlər.',
+      de: 'Visum-Check, Blaue Karte und Chancenkarte, Gehalts- und Kostenrechner, Städte und Karte — alle Tools für den Weg nach Deutschland.',
+      en: 'Visa check, Blue Card and Opportunity Card checks, salary and cost calculators, cities and map — every tool for your move to Germany.',
+      ru: 'Подбор визы, проверка Голубой карты и Chancenkarte, калькуляторы зарплаты и расходов, города и карта — всё для переезда.',
+      tr: 'Vize testi, Mavi Kart ve Fırsat Kartı kontrolü, maaş ve maliyet hesaplayıcı, şehirler ve harita — Almanya\'ya taşınma için tüm araçlar.',
+      uk: 'Підбір візи, перевірка Блакитної карти й Chancenkarte, калькулятори зарплати та витрат, міста й карта — усе для переїзду.',
+    },
+  },
   '/about': {
     name: { az: 'Haqqımızda', de: 'Über uns', en: 'About us', ru: 'О нас', tr: 'Hakkımızda', uk: 'Про нас' },
     title: { az: 'Haqqımızda', de: 'Über uns', en: 'About us', ru: 'О компании', tr: 'Hakkımızda', uk: 'Про компанію' },
@@ -408,6 +466,39 @@ export const STATIC_PAGES: Record<string, StaticPageMeta> = {
       uk: 'Чи достатня ваша зарплата для Блакитної карти ЄС? Одразу порівняйте її з порогами 2026 року: стандартним і для дефіцитних професій.',
     },
   },
+  '/compare-visas': {
+    name: { az: 'Vizaların müqayisəsi', de: 'Visa-Vergleich', en: 'Visa comparison', ru: 'Сравнение виз', tr: 'Vize karşılaştırması', uk: 'Порівняння віз' },
+    title: {
+      az: 'Hansı viza mənə uyğundur? Müqayisə 2026',
+      de: 'Welches Visum passt? Vergleich 2026',
+      en: 'Which German visa fits me? Comparison 2026',
+      ru: 'Какая виза мне подходит? Сравнение 2026',
+      tr: 'Hangi vize bana uygun? Karşılaştırma 2026',
+      uk: 'Яка віза мені підходить? Порівняння 2026',
+    },
+    description: {
+      az: 'İmkan Kartı, Mavi Kart, Ausbildung, §18a, yoxsa ailə birləşməsi? Tələbləri, alman dilini, maaşı və ailə imkanlarını müqayisə edin, qısa testdən keçin.',
+      de: 'Chancenkarte, Blaue Karte, Ausbildung, § 18a oder Familiennachzug? Voraussetzungen, Deutsch, Gehalt und Familie im Vergleich – mit kurzem Test.',
+      en: 'Opportunity Card, Blue Card, Ausbildung, §18a or family reunification? Compare requirements, German level, salary and family, and take a quick test.',
+      ru: 'Chancenkarte, Голубая карта, Ausbildung, §18a или воссоединение семьи? Сравните требования, немецкий, зарплату и семью и пройдите короткий тест.',
+      tr: 'Fırsat Kartı, Mavi Kart, Ausbildung, §18a mı, aile birleşimi mi? Şartları, Almancayı, maaşı ve aile olanaklarını karşılaştırın, kısa testi yapın.',
+      uk: 'Chancenkarte, Блакитна карта, Ausbildung, §18a чи возз’єднання сім’ї? Порівняйте вимоги, німецьку, зарплату й сім’ю та пройдіть короткий тест.',
+    },
+  },
+  '/search': {
+    sitemap: false,
+    index: false,
+    name: { az: 'Axtarış', de: 'Suche', en: 'Search', ru: 'Поиск', tr: 'Arama', uk: 'Пошук' },
+    title: { az: 'Saytda axtarış', de: 'Suche auf der Website', en: 'Search the site', ru: 'Поиск по сайту', tr: 'Sitede ara', uk: 'Пошук на сайті' },
+    description: {
+      az: 'Bələdçilər, vizalar, vakansiyalar, tədbirlər və alətlər üzrə axtarış.',
+      de: 'Suche in Ratgebern, Visa, Stellenangeboten, Veranstaltungen und Tools.',
+      en: 'Search guides, visas, jobs, events and tools.',
+      ru: 'Поиск по гидам, визам, вакансиям, мероприятиям и инструментам.',
+      tr: 'Rehberler, vizeler, iş ilanları, etkinlikler ve araçlarda arama.',
+      uk: 'Пошук у посібниках, візах, вакансіях, заходах та інструментах.',
+    },
+  },
   '/impressum': {
     name: { az: 'Impressum', de: 'Impressum', en: 'Imprint', ru: 'Impressum', tr: 'Impressum', uk: 'Impressum' },
     title: { az: 'Impressum', de: 'Impressum', en: 'Imprint (Impressum)', ru: 'Impressum', tr: 'Künye (Impressum)', uk: 'Вихідні дані (Impressum)' },
@@ -549,6 +640,19 @@ export const PRIVATE_PREFIXES = [
   '/survey',
   '/check-in',
   '/unsubscribe',
+  '/job-alert', // job alert confirm / manage link (token)
+];
+
+/**
+ * The tools hub (/tools): every calculator, check and planning aid, grouped as on the page
+ * (client/src/components/audience/tools.ts). Paths without a catalogue entry are skipped in the crawlable body.
+ */
+export type ToolGroupKey = 'eligibility' | 'costs' | 'plan' | 'explore';
+export const TOOL_GROUPS: { key: ToolGroupKey; paths: string[] }[] = [
+  { key: 'eligibility', paths: ['/uygunluq-testi', '/eligibility', '/compare-visas', '/blue-card-check', '/chancenkarte-calculator', '/anerkennung'] },
+  { key: 'costs', paths: ['/salary-calculator', '/cost-calculator'] },
+  { key: 'plan', paths: ['/calculator', '/cities', '/events', '/status'] },
+  { key: 'explore', paths: ['/map', '/guides', '/jobs', '/visas'] },
 ];
 
 /** Static routes listed in sitemap.xml, in this order. */
@@ -564,4 +668,5 @@ export const SECTION_OF: Record<string, string> = {
   jobs: '/jobs',
   events: '/events',
   guides: '/guides',
+  ebook: '/guides',
 };

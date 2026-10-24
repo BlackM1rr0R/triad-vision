@@ -7,8 +7,12 @@ registerCopy(caseLayoutCopy);
 /** Same string as CASE_SECTION_EVENT in components/caseNext/api (not imported: that module pulls in its copy bundle). */
 export const CASE_SECTION_EVENT = 'tv:case-section';
 
-/** Tabs of the admin case page (`?tab=`); `overview` is the default and has no param. */
-export const CASE_TABS = ['overview', 'documents', 'communication', 'finance', 'history'] as const;
+/**
+ * Tabs of the admin case page (`?tab=`); `overview` is the default and has no param. Everything about one case
+ * lives here (cross-case lists stay in the admin hubs): Ümumi · Sənədlər · Ailə · Gəlişdən sonra · Maliyyə ·
+ * Mesajlar (`communication`) · Tarixçə.
+ */
+export const CASE_TABS = ['overview', 'documents', 'family', 'postArrival', 'finance', 'communication', 'history'] as const;
 export type CaseTab = (typeof CASE_TABS)[number];
 
 /**
@@ -25,13 +29,19 @@ export const SECTION_TAB: Record<string, CaseTab | null> = {
   'case-actions': 'overview',
   'case-workflow': 'overview',
   'case-stats': 'overview',
-  'case-onboarding': 'overview',
   'case-data': 'overview',
   'case-forms': 'overview', // forms are part of the client-data panel
-  'case-family': 'overview',
   'case-german': 'overview',
   'case-ai': 'overview',
   'case-ai-summary': 'overview',
+  // Ailə
+  'case-family': 'family',
+  'case-family-members': 'family',
+  // Gəlişdən sonra: arrival plan / onboarding, check-ins + churn risk, residence-title renewal
+  'case-onboarding': 'postArrival',
+  'case-arrival': 'postArrival',
+  'case-checkins': 'postArrival',
+  'case-renewal': 'postArrival',
   // Sənədlər
   'case-documents': 'documents',
   'case-docs-initial': 'documents',
@@ -64,7 +74,7 @@ export const SECTION_TAB: Record<string, CaseTab | null> = {
 };
 
 /** Anchors that are aliases of another element id. */
-const SECTION_ALIAS: Record<string, string> = { 'case-forms': 'case-data', messages: 'case-messages', 'case-client-tasks': 'client-tasks', 'docs-initial': 'case-docs-initial', 'docs-embassy': 'case-docs-embassy' };
+const SECTION_ALIAS: Record<string, string> = { 'case-family-members': 'case-family', 'case-arrival': 'case-onboarding', 'case-forms': 'case-data', messages: 'case-messages', 'case-client-tasks': 'client-tasks', 'docs-initial': 'case-docs-initial', 'docs-embassy': 'case-docs-embassy' };
 
 export const sectionElementId = (section: string) => SECTION_ALIAS[section] ?? section;
 

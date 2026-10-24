@@ -1,4 +1,5 @@
 import type { LucideIcon } from 'lucide-react';
+import type { ModuleKey } from './navRegistry';
 import { BookUser, Briefcase, Building2, FilePlus2, FolderPlus, ListPlus, Megaphone, Receipt, Upload, UserPlus } from 'lucide-react';
 
 /**
@@ -15,6 +16,8 @@ export interface PaletteAction {
   superOnly?: boolean;
   /** Has a cmd.actionHints.<id> line. */
   hint?: boolean;
+  /** Hidden while this module is switched off (System → Modules). */
+  module?: ModuleKey;
 }
 
 export const PALETTE_ACTIONS: PaletteAction[] = [
@@ -23,9 +26,9 @@ export const PALETTE_ACTIONS: PaletteAction[] = [
   { id: 'newTask', icon: ListPlus, href: (area) => `/${area}/tasks?new=1` },
   { id: 'newVacancy', icon: Briefcase, href: () => '/admin/vacancies?id=new' },
   { id: 'newCompany', icon: Building2, href: () => '/admin/companies?new=1' },
-  { id: 'newQuote', icon: FilePlus2, href: () => '/admin/quotes?new=1', adminOnly: true },
+  { id: 'newQuote', icon: FilePlus2, href: () => '/admin/quotes?new=1', adminOnly: true, module: 'quotes' },
   { id: 'newInvoice', icon: Receipt, href: () => '/admin/invoices?new=1', adminOnly: true },
-  { id: 'newCampaign', icon: Megaphone, href: () => '/admin/campaigns/new', adminOnly: true },
+  { id: 'newCampaign', icon: Megaphone, href: () => '/admin/campaigns/new', adminOnly: true, module: 'campaigns' },
   { id: 'newContact', icon: BookUser, href: () => '/workspace/contacts?new=1' },
   { id: 'newClient', icon: UserPlus, href: () => '/admin/users?new=1', superOnly: true },
   { id: 'uploadDrive', icon: Upload, href: () => '/workspace/drive', hint: true },

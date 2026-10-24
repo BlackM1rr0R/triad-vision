@@ -147,7 +147,7 @@ export default function Calculator() {
 
   return (
     <>
-      <PageHero title={t('gp.calc.heroTitle')} subtitle={t('gp.calc.heroSubtitle')} image={HERO} />
+      <PageHero title={t('gp.calc.heroTitle')} subtitle={t('gp.calc.heroSubtitle')} image={HERO} crumb={{ to: '/tools', label: t('siteNav.tools') }} />
       <section className="section">
         <div className="container-x">
           {isLoading ? (

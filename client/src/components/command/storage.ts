@@ -25,6 +25,12 @@ export const isStringArray = (v: unknown): v is string[] => Array.isArray(v) && 
 export const navGroupsKey = (userId: string | undefined) => `tv-admin-nav-groups:${userId ?? 'anon'}`;
 export const navPinsKey = (userId: string | undefined) => `tv-admin-nav-pins:${userId ?? 'anon'}`;
 export const recentKey = (userId: string | undefined) => `tv-cmdk-recent:${userId ?? 'anon'}`;
+/** Sections of the sidebar that are open (favourites, desk, recent, hubs / more). */
+export const navOpenKey = (userId: string | undefined) => `tv-admin-nav-open:${userId ?? 'anon'}`;
+/** Last server answer of GET /api/admin/me/nav (desk, pins, recent, modules): instant sidebar on reload. */
+export const navStateKey = (userId: string | undefined) => `tv-admin-nav-state:${userId ?? 'anon'}`;
+/** Last opened tab of a hub. */
+export const hubTabKey = (userId: string | undefined, hub: string) => `tv-admin-hub:${hub}:${userId ?? 'anon'}`;
 
 // ─── Recent palette entries ─────────────────────────────────────────────
 

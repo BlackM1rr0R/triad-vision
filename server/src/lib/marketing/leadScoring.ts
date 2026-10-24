@@ -81,7 +81,7 @@ export const saveLeadScoringSettings = (s: LeadScoringSettings) => writeSetting(
 export const sourceKeyOf = (q: Pick<Inquiry, 'kind' | 'source' | 'sector'>): SourceKey => {
   const s = (q.source ?? '').toLowerCase();
   if (s.startsWith('event:')) return 'event';
-  if (s.startsWith('landing:')) return 'landing';
+  if (s.startsWith('landing:') || s.startsWith('ebook:')) return 'landing'; // e-book lead magnets score like a landing page form
   if (s === 'cost-calculator' || s.startsWith('calculator')) return 'calculator';
   if (s === 'quiz') return 'quiz';
   if (s === 'booking') return 'booking';
