@@ -72,7 +72,7 @@ describe('profitability: allocation rules', () => {
     expect((await admin.agent.post(`/api/admin/profitability/cases/${c2.id}/costs`).send({ category: 'EMBASSY_FEE', amount: 75, incurredAt: '2026-03-02' })).body.cost).toMatchObject({ currency: 'EUR', fxRate: 2 });
 
     const p1 = (await admin.agent.get(`/api/admin/profitability/cases/${c1.id}`)).body;
-    expect(p1.profit.revenue).toEqual({ INVOICE: 65001, SETTLEMENT: 100000, TRANSLATION: 0, total: 165001 });
+    expect(p1.profit.revenue).toEqual({ INVOICE: 65001, SETTLEMENT: 100000, TRANSLATION: 0, CLIENT_INVOICE: 0, total: 165001 });
     expect(p1.profit.costs).toMatchObject({ PARTNER_COMMISSION: 10000, LEDGER_EXPENSES: 10000, COURIER: 2941, AGENT_COMMISSION: 0, total: 22941 });
     expect(p1.profit.marginCents).toBe(142060);
     expect(p1.profit.marginPct).toBe(86.1);
@@ -88,7 +88,7 @@ describe('profitability: allocation rules', () => {
     expect(p1.settings).toMatchObject({ eurAzn: 2, translationAs: 'revenue' });
 
     const p2 = (await admin.agent.get(`/api/admin/profitability/cases/${c2.id}`)).body.profit;
-    expect(p2.revenue).toEqual({ INVOICE: 35000, SETTLEMENT: 0, TRANSLATION: 8000, total: 43000 });
+    expect(p2.revenue).toEqual({ INVOICE: 35000, SETTLEMENT: 0, TRANSLATION: 8000, CLIENT_INVOICE: 0, total: 43000 });
     expect(p2.costs).toMatchObject({ AGENT_COMMISSION: 5000, EMBASSY_FEE: 7500, total: 12500 }); // cancelled commission ignored
     expect(p2.marginCents).toBe(30500);
     expect(p2.agentName).toBe('Agent Gəncə');
@@ -132,7 +132,7 @@ describe('profitability: overview', () => {
     expect(res.body.totals.marginPct).toBe(88);
     // Mean of the per-case margins in % (87.9 and 88.4); the case without revenue is left out.
     expect(Math.abs(res.body.totals.avgMarginPct - 88.15)).toBeLessThan(0.06);
-    expect(res.body.revenueBySource).toEqual({ INVOICE: 100001, SETTLEMENT: 100000, TRANSLATION: 8000 });
+    expect(res.body.revenueBySource).toEqual({ INVOICE: 100001, SETTLEMENT: 100000, TRANSLATION: 8000, CLIENT_INVOICE: 0 });
     expect(res.body.costsByCategory).toMatchObject({ PARTNER_COMMISSION: 10000, LEDGER_EXPENSES: 10000, AGENT_COMMISSION: 5000 });
     expect(res.body.top[0].number).toBe('TV-P-0001');
     expect(res.body.bottom[0].number).toBe('TV-P-0003');
