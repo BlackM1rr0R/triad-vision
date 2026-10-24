@@ -31,7 +31,7 @@ export const PANEL_TEXTS: Record<Loc, PanelTexts> = {
       TITLE_EXPIRY: 'Ablauf Aufenthaltstitel',
       CHECKIN: 'Nächster Check-in',
     },
-    checkIn: { OK: 'In Ordnung', ISSUE: 'Problem gemeldet', RESOLVED: 'Problem gelöst', OVERDUE: 'Überfällig', PENDING: 'Offen' },
+    checkIn: { OK: 'In Ordnung', ISSUE: 'Problem gemeldet', RESOLVED: 'Problem gelöst', ANSWERED: 'Beantwortet', OVERDUE: 'Überfällig', PENDING: 'Offen' },
     risk: { LOW: 'Niedrig', MEDIUM: 'Mittel', HIGH: 'Hoch' },
     riskReason: (code, p) =>
       ({
@@ -69,7 +69,7 @@ export const PANEL_TEXTS: Record<Loc, PanelTexts> = {
       TITLE_EXPIRY: 'Residence title expiry',
       CHECKIN: 'Next check-in',
     },
-    checkIn: { OK: 'OK', ISSUE: 'Issue reported', RESOLVED: 'Issue resolved', OVERDUE: 'Overdue', PENDING: 'Open' },
+    checkIn: { OK: 'OK', ISSUE: 'Issue reported', RESOLVED: 'Issue resolved', ANSWERED: 'Answered', OVERDUE: 'Overdue', PENDING: 'Open' },
     risk: { LOW: 'Low', MEDIUM: 'Medium', HIGH: 'High' },
     riskReason: (code, p) =>
       ({
@@ -107,7 +107,7 @@ export const PANEL_TEXTS: Record<Loc, PanelTexts> = {
       TITLE_EXPIRY: 'Yaşayış icazəsinin bitməsi',
       CHECKIN: 'Növbəti yoxlama',
     },
-    checkIn: { OK: 'Qaydasındadır', ISSUE: 'Problem bildirilib', RESOLVED: 'Problem həll olunub', OVERDUE: 'Gecikib', PENDING: 'Gözlənilir' },
+    checkIn: { OK: 'Qaydasındadır', ISSUE: 'Problem bildirilib', RESOLVED: 'Problem həll olunub', ANSWERED: 'Cavab verib', OVERDUE: 'Gecikib', PENDING: 'Gözlənilir' },
     risk: { LOW: 'Aşağı', MEDIUM: 'Orta', HIGH: 'Yüksək' },
     riskReason: (code, p) =>
       ({
@@ -145,7 +145,7 @@ export const PANEL_TEXTS: Record<Loc, PanelTexts> = {
       TITLE_EXPIRY: 'Окончание ВНЖ',
       CHECKIN: 'Следующий опрос',
     },
-    checkIn: { OK: 'В порядке', ISSUE: 'Есть проблема', RESOLVED: 'Проблема решена', OVERDUE: 'Просрочено', PENDING: 'Ожидается' },
+    checkIn: { OK: 'В порядке', ISSUE: 'Есть проблема', RESOLVED: 'Проблема решена', ANSWERED: 'Ответил', OVERDUE: 'Просрочено', PENDING: 'Ожидается' },
     risk: { LOW: 'Низкий', MEDIUM: 'Средний', HIGH: 'Высокий' },
     riskReason: (code, p) =>
       ({

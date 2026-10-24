@@ -1,3 +1,4 @@
+import { randomBytes } from 'node:crypto';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { prisma } from '../helpers/db';
 import { asStaff } from '../helpers/api';
@@ -25,7 +26,9 @@ const setup = async (locale: 'de' | 'en' = 'de') => {
     data: { number: uniq('TV-'), clientId: working.user.id, profession: 'Koch', companyId: employer.company.id, status: 'APPROVED', decisionAt: new Date(start.getTime() + 2 * DAY), createdAt: new Date(start.getTime() + DAY), residenceTitleExpiresAt: new Date(now.getTime() + 45 * DAY) },
   });
   await prisma.arrivalPlan.create({ data: { caseId: kase.id, clientId: working.user.id, status: 'COMPLETED', arrivalTime: new Date(start.getTime() + 5 * DAY) } });
-  await prisma.arrivalFollowUp.create({ data: { caseId: kase.id, clientId: working.user.id, companyId: employer.company.id, arrivedAt: new Date(start.getTime() + 5 * DAY), riskLevel: 'MEDIUM', riskScore: 30, riskReasons: [{ code: 'NO_ANSWER', points: 8, params: { count: 1 } }] } });
+  const fu = await prisma.arrivalFollowUp.create({ data: { caseId: kase.id, clientId: working.user.id, companyId: employer.company.id, arrivedAt: new Date(start.getTime() + 5 * DAY), riskLevel: 'MEDIUM', riskScore: 30, riskReasons: [{ code: 'NO_ANSWER', points: 8, params: { count: 1 } }] } });
+  // The employer's own "problem" answer: the employer-side risk view is scored from these only.
+  await prisma.arrivalCheckIn.create({ data: { followUpId: fu.id, caseId: kase.id, audience: 'EMPLOYER', offsetDays: 30, dueAt: new Date(now.getTime() - 5 * DAY), sentAt: new Date(now.getTime() - 5 * DAY), tokenHash: randomBytes(32).toString('hex'), answer: 'ISSUE', answeredAt: new Date(now.getTime() - 4 * DAY) } });
   await prisma.employmentContract.create({ data: { caseId: kase.id, companyId: employer.company.id, jobTitle: 'Beikoch', probationEndsAt: new Date(now.getTime() + 20 * DAY) } });
   const proc = await asCandidate({ firstName: 'Nərmin', lastName: 'Hüseynova' });
   await prisma.case.create({ data: { number: uniq('TV-'), clientId: proc.user.id, profession: 'Koch', companyId: employer.company.id } });

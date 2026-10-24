@@ -3,7 +3,7 @@ import { prisma } from '../../db.js';
 import { computeForecast, rangesFor, stepOf, type StatusPoint } from '../journey/forecast.js';
 import { isExpired as signatureExpired } from '../esign/service.js';
 import { getCheckInSettings, ANSWER_TTL_DAYS } from '../checkIns/service.js';
-import { RISK_RULES, type RiskReason } from '../checkIns/risk.js';
+import { RISK_RULES, scoreRisk, type RiskCheckIn, type RiskReason } from '../checkIns/risk.js';
 import { listWorkers, plannedArrival, workerSummary, type Stage, type WorkerRow } from '../requests/workers.js';
 import { employerAccelerated, employerAcceleratedTodos } from '../recognition/accelerated.js';
 
@@ -16,8 +16,8 @@ import { employerAccelerated, employerAcceleratedTodos } from '../recognition/ac
  *     (visa forecast of lib/journey, embassy appointment, planned arrival, probation end, title expiry);
  *   - arrival date, validity of the visa / residence title (warning at 90 / 30 days), probation end
  *     (EmploymentContract.probationEndsAt, warning at 14 days);
- *   - check-in status: the employer's own answers and the worker's answers only as a status (OK / issue /
- *     overdue) — never the worker's topics or comments;
+ *   - check-in status: the employer's own answers; for the worker only answered / pending / overdue — never
+ *     whether the worker reported a problem, nor topics or comments (so a complaint cannot backfire);
  *   - churn risk level with reasons rewritten in employer-safe wording (no topics, so nothing about health,
  *     homesickness or other private matters);
  *   - open items the employer has to do (documents to sign, forms to complete, check-ins to answer) and the
@@ -32,7 +32,7 @@ export const PHASES = ['IN_PROCESS', 'TRAVELLING', 'WORKING', 'LEFT', 'CLOSED'] 
 export type Phase = (typeof PHASES)[number];
 
 export type DateWarn = 'OK' | 'WARN' | 'CRITICAL' | 'EXPIRED';
-export type CheckInState = 'OK' | 'ISSUE' | 'RESOLVED' | 'OVERDUE' | 'PENDING';
+export type CheckInState = 'OK' | 'ISSUE' | 'RESOLVED' | 'ANSWERED' | 'OVERDUE' | 'PENDING';
 export const SAFE_RISK_CODES = ['EMPLOYER_FEEDBACK', 'WORKER_FEEDBACK', 'OPEN_ISSUE', 'NO_RESPONSE', 'TREND_WORSE', 'PROBATION_SOON'] as const;
 export type SafeRiskCode = (typeof SAFE_RISK_CODES)[number];
 export const NEXT_ACTIONS = ['SIGN_DOCUMENT', 'COMPLETE_FORM', 'ACCELERATED_STEP', 'ANSWER_CHECKIN', 'PREPARE_ARRIVAL', 'PROBATION_REVIEW', 'CONFIRM_EMPLOYMENT', 'TALK_TO_MANAGER', 'NONE'] as const;
@@ -86,8 +86,14 @@ export const checkInState = (list: CheckInLite[], now: Date): CheckInState | nul
   return now.getTime() - last.sentAt!.getTime() > RISK_RULES.noAnswerAfterDays * DAY ? 'OVERDUE' : 'PENDING';
 };
 
+/** The worker's side as the employer may see it: answered, pending or overdue — never the answer itself. */
+export const workerCheckInState = (list: CheckInLite[], now: Date): CheckInState | null => {
+  const s = checkInState(list, now);
+  return s === 'OK' || s === 'ISSUE' || s === 'RESOLVED' ? 'ANSWERED' : s;
+};
+
 const overallState = (a: CheckInState | null, b: CheckInState | null): CheckInState | null => {
-  const order: CheckInState[] = ['ISSUE', 'OVERDUE', 'PENDING', 'RESOLVED', 'OK'];
+  const order: CheckInState[] = ['ISSUE', 'OVERDUE', 'PENDING', 'RESOLVED', 'ANSWERED', 'OK'];
   for (const s of order) if (a === s || b === s) return s;
   return null;
 };
@@ -99,7 +105,6 @@ export const safeRiskReasons = (raw: unknown): { code: SafeRiskCode; params?: Re
   for (const r of list) {
     const num = (k: string) => (typeof r.params?.[k] === 'number' ? (r.params[k] as number) : undefined);
     if (r.code === 'EMPLOYER_ISSUE') out.push({ code: 'EMPLOYER_FEEDBACK', params: num('count') !== undefined ? { count: num('count')! } : undefined });
-    else if (r.code === 'WORKER_ISSUE') out.push({ code: 'WORKER_FEEDBACK' });
     else if (r.code === 'OPEN_ISSUE') out.push({ code: 'OPEN_ISSUE' });
     else if (r.code === 'NO_ANSWER') out.push({ code: 'NO_RESPONSE' });
     else if (r.code === 'TREND_WORSE') out.push({ code: 'TREND_WORSE' });
@@ -145,7 +150,7 @@ const loadExtras = async (companyId: string, caseIds: string[]) => {
         leftJobAt: true,
         riskLevel: true,
         riskReasons: true,
-        checkIns: { select: { id: true, audience: true, offsetDays: true, dueAt: true, sentAt: true, answer: true, answeredAt: true, resolvedAt: true, createdAt: true } },
+        checkIns: { select: { id: true, audience: true, offsetDays: true, dueAt: true, sentAt: true, answer: true, answeredAt: true, resolvedAt: true, createdAt: true, topics: true } },
       },
     }),
     prisma.signatureRequest.findMany({
@@ -252,10 +257,13 @@ export const buildPanel = async (companyId: string, now = new Date()): Promise<P
 
     const checkIns = (f?.checkIns ?? []) as CheckInLite[];
     const employerState = checkInState(checkIns.filter((ci) => ci.audience === 'EMPLOYER'), now);
-    const workerState = checkInState(checkIns.filter((ci) => ci.audience === 'WORKER'), now);
+    const workerState = workerCheckInState(checkIns.filter((ci) => ci.audience === 'WORKER'), now);
     const lastAt = checkIns.reduce<Date | null>((a, ci) => (ci.answeredAt && (!a || ci.answeredAt > a) ? ci.answeredAt : a), null);
 
-    const risk = phase === 'WORKING' && f?.riskLevel && ['LOW', 'MEDIUM', 'HIGH'].includes(f.riskLevel) ? { level: f.riskLevel as 'LOW' | 'MEDIUM' | 'HIGH', reasons: safeRiskReasons(f.riskReasons) } : null;
+    // The employer's risk view is scored from the employer's own answers and the probation date only: the
+    // staff-side score also weighs the worker's answers, which the employer must not be able to infer.
+    const employerRisk = f && !f.leftJobAt ? scoreRisk(checkIns.filter((ci) => ci.audience === 'EMPLOYER') as unknown as RiskCheckIn[], contract?.probationEndsAt ?? null, now) : null;
+    const risk = phase === 'WORKING' && employerRisk ? { level: employerRisk.level, reasons: safeRiskReasons(employerRisk.reasons) } : null;
 
     // Next milestone.
     let next: PanelRow['next'] = null;
@@ -480,7 +488,7 @@ export const workerDetail = async (companyId: string, caseId: string, now = new 
             comment: c.comment,
             link: !c.answeredAt && now.getTime() - c.sentAt!.getTime() <= ANSWER_TTL_DAYS * DAY ? `/check-in/${c.id}` : null,
           }
-        : { id: c.id, audience: 'WORKER' as const, offsetDays: c.offsetDays, dueAt: c.dueAt, state: checkInState([c], now), answeredAt: c.answeredAt, topics: [], comment: null, link: null },
+        : { id: c.id, audience: 'WORKER' as const, offsetDays: c.offsetDays, dueAt: c.dueAt, state: workerCheckInState([c], now), answeredAt: c.answeredAt, topics: [], comment: null, link: null },
     );
 
   const contactValue = (contact?.value ?? {}) as Record<string, unknown>;

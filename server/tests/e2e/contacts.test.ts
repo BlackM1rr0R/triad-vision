@@ -6,7 +6,8 @@ import { createClient, createUser, uniq } from '../helpers/factories';
 const contact = (over: Record<string, unknown> = {}) => ({
   firstName: 'Aysel',
   lastName: 'Mammadova',
-  email: `${uniq('aysel')}@example.com`,
+  // Digits only after the name: a random letter suffix could contain "mu" and match the "Mü" search below.
+  email: `aysel-${Date.now()}${Math.floor(Math.random() * 1e6)}@example.com`,
   phone: '+994 50 123 45 67',
   company: 'Baku Logistics',
   position: 'HR manager',

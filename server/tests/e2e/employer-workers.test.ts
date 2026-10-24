@@ -127,19 +127,22 @@ describe('company portal: my workers panel', () => {
       position: 'Pflegefachkraft Station 3',
       title: { kind: 'RESIDENCE', warn: 'WARN' },
       probation: { warn: 'WARN' },
-      checkIn: { worker: 'ISSUE', employer: 'OVERDUE', overall: 'ISSUE' },
-      risk: { level: 'HIGH' },
+      // The worker's side is status-only (answered), never whether a problem was reported.
+      checkIn: { worker: 'ANSWERED', employer: 'OVERDUE', overall: 'OVERDUE' },
+      // Scored from the employer's own (unanswered) check-in and the probation date only: the stored HIGH
+      // score comes from the worker's answers and must not show through.
+      risk: { level: 'LOW' },
       nextAction: 'SIGN_DOCUMENT',
       manager: { name: 'Lena Manager' },
     });
     expect(working.arrivedAt).toBeTruthy();
-    // Employer-safe reasons only: no topic (health), the worker's feedback without details.
-    expect(working.risk.reasons.map((r: Row) => r.code)).toEqual(['WORKER_FEEDBACK', 'OPEN_ISSUE', 'PROBATION_SOON']);
+    // Employer-side reasons only: nothing derived from the worker's answers.
+    expect(working.risk.reasons.map((r: Row) => r.code)).toEqual(['NO_RESPONSE', 'PROBATION_SOON']);
     expect(working.openItems.map((i: Row) => i.kind).sort()).toEqual(['CHECKIN', 'SIGNATURE']);
     expect(working.openItems.find((i: Row) => i.kind === 'SIGNATURE').link).toBe(`/company/contracts/${s.sig.signers[0].id}`);
 
     expect(by(s.left.kase.id)).toMatchObject({ phase: 'LEFT' });
-    expect(res.body.summary).toMatchObject({ inProcess: 1, travelling: 1, working: 1, left: 1, probationSoon: 1, titlesExpiring: 2, atRisk: 1, openItems: 2 });
+    expect(res.body.summary).toMatchObject({ inProcess: 1, travelling: 1, working: 1, left: 1, probationSoon: 1, titlesExpiring: 2, atRisk: 0, openItems: 2 });
 
     // Privacy: no passport numbers, last names, flight numbers, salary, worker comments, health topics or leave notes.
     const raw = JSON.stringify(res.body);
@@ -157,7 +160,7 @@ describe('company portal: my workers panel', () => {
     expect(docs.find((d) => d.id === s.sig.id)).toMatchObject({ status: 'SENT', downloadable: false, signLink: `/company/contracts/${s.sig.signers[0].id}` });
     expect(docs.find((d) => d.id === s.done.id)).toMatchObject({ status: 'COMPLETED', downloadable: true });
     const worker = (res.body.checkIns as Row[]).find((c) => c.audience === 'WORKER')!;
-    expect(worker).toMatchObject({ state: 'ISSUE', topics: [], comment: null });
+    expect(worker).toMatchObject({ state: 'ANSWERED', topics: [], comment: null });
     expect((res.body.checkIns as Row[]).find((c) => c.audience === 'EMPLOYER')).toMatchObject({ state: 'OVERDUE', link: `/check-in/${s.empCheckIn.id}` });
     expect(res.body.contact.manager).toMatchObject({ name: 'Lena Manager' });
     expect(JSON.stringify(res.body)).not.toContain('Rückenschmerzen');

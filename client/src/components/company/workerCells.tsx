@@ -7,7 +7,7 @@ import type { CheckInState, DateWarn, RiskLevel, WorkerRow } from './workerTypes
 /** Cells and tones shared by the employer worker table and the worker drawer. */
 
 export const warnTone = (w: DateWarn | undefined): BadgeTone | null => (w === 'CRITICAL' || w === 'EXPIRED' ? 'danger' : w === 'WARN' ? 'warning' : null);
-export const CHECKIN_TONE: Record<CheckInState, BadgeTone> = { OK: 'success', RESOLVED: 'info', ISSUE: 'danger', OVERDUE: 'warning', PENDING: 'neutral' };
+export const CHECKIN_TONE: Record<CheckInState, BadgeTone> = { OK: 'success', RESOLVED: 'info', ANSWERED: 'success', ISSUE: 'danger', OVERDUE: 'warning', PENDING: 'neutral' };
 export const RISK_TONE: Record<RiskLevel, BadgeTone> = { LOW: 'success', MEDIUM: 'warning', HIGH: 'danger' };
 
 /** "Next: Visa decision · expected 01.11. – 20.11." */
