@@ -75,6 +75,7 @@ export const profitOverview = async (f: ProfitFilters) => {
     INVOICE: rows.reduce((a, r) => a + r.revenue.INVOICE, 0),
     SETTLEMENT: rows.reduce((a, r) => a + r.revenue.SETTLEMENT, 0),
     TRANSLATION: rows.reduce((a, r) => a + r.revenue.TRANSLATION, 0),
+    CLIENT_INVOICE: rows.reduce((a, r) => a + r.revenue.CLIENT_INVOICE, 0),
   };
   const byMargin = [...rows].sort((a, b) => b.marginCents - a.marginCents || a.number.localeCompare(b.number));
   return {

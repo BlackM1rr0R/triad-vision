@@ -45,7 +45,7 @@ export interface CaseProfitRow {
   agentName: string | null;
   companyName: string | null;
   createdAt: string;
-  revenue: { INVOICE: number; SETTLEMENT: number; TRANSLATION: number; total: number };
+  revenue: { INVOICE: number; SETTLEMENT: number; TRANSLATION: number; CLIENT_INVOICE: number; total: number };
   costs: Record<CostKey, number> & { total: number };
   marginCents: number;
   marginPct: number | null;
@@ -74,7 +74,7 @@ export interface ProfitOverview {
     unprofitable: number;
   };
   costsByCategory: Record<CostKey, number>;
-  revenueBySource: { INVOICE: number; SETTLEMENT: number; TRANSLATION: number };
+  revenueBySource: { INVOICE: number; SETTLEMENT: number; TRANSLATION: number; CLIENT_INVOICE: number };
   byVisaType: Bucket[];
   byCategory: Bucket[];
   byPartner: Bucket[];

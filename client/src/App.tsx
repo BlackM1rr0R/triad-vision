@@ -75,6 +75,11 @@ const AdminMailboxes = lazy(() => import('./pages/admin/Mailboxes'));
 const AdminSignatures = lazy(() => import('./pages/admin/Signatures'));
 const SignPage = lazy(() => import('./pages/SignPage'));
 const QuotePage = lazy(() => import('./pages/QuotePage'));
+const PackagesPage = lazy(() => import('./pages/Packages')); // service packages + online order
+const PackageOrderStatus = lazy(() => import('./pages/PackageOrderStatus'));
+const AccountPayments = lazy(() => import('./pages/account/Payments')); // Documents › Payments
+const AdminClientInvoices = lazy(() => import('./pages/admin/ClientInvoices'));
+const AdminPackages = lazy(() => import('./pages/admin/Packages'));
 const SharePage = lazy(() => import('./pages/SharePage'));
 const CandidateSharePage = lazy(() => import('./pages/CandidateSharePage')); // employer share link of a candidate
 const AccountSignatures = lazy(() => import('./pages/account/Signatures'));
@@ -209,6 +214,7 @@ const AdminKnowledgeBase = lazy(() => import('./pages/admin/KnowledgeBase'));
 const AdminIntegrations = lazy(() => import('./pages/admin/Integrations'));
 const AdminAutomation = lazy(() => import('./pages/admin/Automation')); // automation rules + automatic assignment
 const AdminInterviews = lazy(() => import('./pages/admin/Interviews'));
+const AdminOfficialForms = lazy(() => import('./pages/admin/OfficialForms')); // official forms: templates, field mapping, preview
 const AdminEmploymentContracts = lazy(() => import('./pages/admin/EmploymentContracts')); // Arbeitsvertrag tracker: warnings, probation ending
 const AdminJourney = lazy(() => import('./pages/admin/Journey'));
 const AdminGermanExamDates = lazy(() => import('./pages/admin/GermanExamDates'));
@@ -277,6 +283,7 @@ const INTENT: [string, () => Promise<unknown>][] = [
   ['/about', () => import('./pages/About')],
   ['/services/', () => import('./pages/ServiceDetail')],
   ['/services', () => import('./pages/Services')],
+  ['/packages', () => import('./pages/Packages')],
   ['/visas/', () => import('./pages/VisaDetail')],
   ['/visas', () => import('./pages/Visas')],
   ['/partners', () => import('./pages/Partners')],
@@ -424,6 +431,8 @@ export default function App() {
             <Route path="review" element={<ReviewPage />} />
             <Route path="sign/:token" element={<SignPage />} />
             <Route path="angebot/:token" element={<QuotePage />} />
+            <Route path="packages" element={<PackagesPage />} />
+            <Route path="packages/order/:token" element={<PackageOrderStatus />} />
             <Route path="share/:token" element={<SharePage />} />
             <Route path="kandidat/:token" element={<CandidateSharePage />} />
             <Route path="q/:caseId" element={<QrRedirect />} />
@@ -459,6 +468,7 @@ export default function App() {
               <Route path="interview-prep" element={<AccountInterviewPrep />} />
               <Route path="signatures" element={<AccountSignatures />} />
               <Route path="signatures/:signerId" element={<AccountSignatures />} />
+              <Route path="payments" element={<AccountPayments />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Route>
@@ -618,6 +628,22 @@ export default function App() {
                 </RequireAuth>
               }
             />
+            <Route
+              path="client-invoices"
+              element={
+                <RequireAuth roles={['ADMIN', 'SUPER_ADMIN']}>
+                  <AdminClientInvoices />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="packages"
+              element={
+                <RequireAuth roles={['ADMIN', 'SUPER_ADMIN']}>
+                  <AdminPackages />
+                </RequireAuth>
+              }
+            />
             <Route path="reviews" element={<AdminReviews />} />
             <Route path="analytics" element={<AdminAnalytics />} />
             <Route path="messaging" element={<AdminMessaging />} />
@@ -713,6 +739,7 @@ export default function App() {
             />
             <Route path="interviews" element={<AdminInterviews />} />
             <Route path="employment-contracts" element={<AdminEmploymentContracts />} />
+            <Route path="official-forms" element={<AdminOfficialForms />} />
             <Route path="journey" element={<AdminJourney />} />
             <Route path="exam-dates" element={<AdminGermanExamDates />} />
             <Route path="requirements" element={<AdminRequirements />} />

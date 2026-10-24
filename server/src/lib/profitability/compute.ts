@@ -2,6 +2,7 @@ import type { Prisma } from '@prisma/client';
 import { prisma } from '../../db.js';
 import { toEur, type ProfitSettings } from './settings.js';
 import { labourByCase } from '../timeTracking/rates.js'; // LABOUR cost (time tracking)
+import { recognisedRevenue } from '../billing/math.js'; // client invoices (private clients)
 
 /**
  * Profitability per case (Gəlirlilik): lifetime revenue and costs of each case, in EUR cents.
@@ -14,6 +15,10 @@ import { labourByCase } from '../timeTracking/rates.js'; // LABOUR cost (time tr
  *         CANCELLED (all its cases when every one is cancelled). Whole cents; the remainder goes to the
  *         oldest cases so the parts add up exactly.
  *  - Client payments recorded in the settlement ledger (SettlementEntry.paidCents of entries linked to the case).
+ *  - Client invoices (lib/billing, CLIENT_INVOICE): the paid share of the net amount without pass-through embassy
+ *    fees and without VAT, on the invoice's case (else the client's case at the issue date). No double count: a case
+ *    with client-invoice revenue takes its client revenue from the invoices only — its settlement-ledger payments
+ *    (the same money recorded the old way) are not counted again.
  *  - Delivered translation orders (price) — as revenue by default (like the finance reports) or, with the
  *    setting translationAs = 'cost', as a TRANSLATION cost.
  * Costs
@@ -29,7 +34,7 @@ import { labourByCase } from '../timeTracking/rates.js'; // LABOUR cost (time tr
  * default rate of the profitability settings.
  */
 
-export type RevenueSource = 'INVOICE' | 'SETTLEMENT' | 'TRANSLATION';
+export type RevenueSource = 'INVOICE' | 'SETTLEMENT' | 'TRANSLATION' | 'CLIENT_INVOICE';
 // LABOUR = staff time × hourly cost rate (lib/timeTracking).
 export type CostKey = 'TRANSLATION' | 'COURIER' | 'EMBASSY_FEE' | 'VISA_FEE' | 'AGENT_COMMISSION' | 'PARTNER_COMMISSION' | 'TRAVEL' | 'OTHER' | 'LEDGER_EXPENSES' | 'LABOUR';
 export const COST_KEYS: CostKey[] = ['TRANSLATION', 'COURIER', 'EMBASSY_FEE', 'VISA_FEE', 'AGENT_COMMISSION', 'PARTNER_COMMISSION', 'TRAVEL', 'OTHER', 'LEDGER_EXPENSES', 'LABOUR'];
@@ -131,7 +136,7 @@ export const computeProfitability = async (where: Prisma.CaseWhereInput, s: Pick
   const agentIds = [...new Set(cases.map((c) => c.client.referredByAgentId).filter((x): x is string => !!x))];
   const rate = s.eurAzn;
 
-  const [invoices, companyCases, clientCases, settlements, translations, agentComms, partnerComms, manual, agents, labour] = await Promise.all([
+  const [invoices, companyCases, clientCases, settlements, translations, agentComms, partnerComms, manual, agents, labour, clientInvoices] = await Promise.all([
     companyIds.length
       ? prisma.invoice.findMany({ where: { companyId: { in: companyIds }, status: 'PAID' }, select: { id: true, number: true, companyId: true, netCents: true, currency: true, items: true, paidAt: true } })
       : [],
@@ -156,6 +161,10 @@ export const computeProfitability = async (where: Prisma.CaseWhereInput, s: Pick
     prisma.caseCost.findMany({ where: { caseId: { in: ids } }, orderBy: [{ incurredAt: 'asc' }, { id: 'asc' }] }),
     agentIds.length ? prisma.agent.findMany({ where: { id: { in: agentIds } }, select: { id: true, code: true, user: { select: { firstName: true, lastName: true } } } }) : [],
     labourByCase(ids), // LABOUR (time tracking)
+    prisma.clientInvoice.findMany({
+      where: { clientId: { in: clientIds }, status: { notIn: ['DRAFT', 'CANCELLED'] }, paidCents: { gt: 0 } },
+      select: { id: true, number: true, clientId: true, caseId: true, items: true, grossCents: true, paidCents: true, vatRate: true, currency: true, issueDate: true, paidAt: true },
+    }),
   ]);
 
   const lines = new Map<string, ProfitLine[]>(ids.map((id) => [id, []]));
@@ -226,12 +235,22 @@ export const computeProfitability = async (where: Prisma.CaseWhereInput, s: Pick
     );
   }
 
+  // ── Client invoices (private clients) ──
+  const clientInvoiceCases = new Set<string>();
+  for (const ci of clientInvoices) {
+    const caseId = ci.caseId && lines.has(ci.caseId) ? ci.caseId : ci.caseId ? null : caseOfClient(ci.clientId, ci.issueDate);
+    const cents = recognisedRevenue(ci);
+    if (!caseId || !cents) continue;
+    clientInvoiceCases.add(caseId);
+    add(caseId, { kind: 'revenue', source: 'CLIENT_INVOICE', category: null, ref: ci.number, date: ci.paidAt ?? ci.issueDate, amountCents: cents, currency: ci.currency, eurCents: toEur(cents, ci.currency, rate) });
+  }
+
   // ── Settlement ledger ──
   const syncedEntries = new Set(partnerComms.map((p) => p.settlementEntryId).filter((x): x is string => !!x));
   for (const e of settlements) {
     const ref = `${e.project} · ${e.clientName}`;
     const date = e.visaDate ?? e.tlsDate ?? e.createdAt;
-    if (e.paidCents) add(e.caseId, { kind: 'revenue', source: 'SETTLEMENT', category: null, ref, date, amountCents: e.paidCents, currency: e.currency, eurCents: toEur(e.paidCents, e.currency, rate) });
+    if (e.paidCents && !(e.caseId && clientInvoiceCases.has(e.caseId))) add(e.caseId, { kind: 'revenue', source: 'SETTLEMENT', category: null, ref, date, amountCents: e.paidCents, currency: e.currency, eurCents: toEur(e.paidCents, e.currency, rate) });
     if (e.partnerShareCents && !syncedEntries.has(e.id)) {
       add(e.caseId, {
         kind: 'cost',
@@ -310,7 +329,7 @@ export const computeProfitability = async (where: Prisma.CaseWhereInput, s: Pick
   return cases.map((c) => {
     const ls = lines.get(c.id) ?? [];
     for (const l of ls) l.eurCents = Math.round(l.eurCents);
-    const revenue = { INVOICE: 0, SETTLEMENT: 0, TRANSLATION: 0, total: 0 } as CaseProfit['revenue'];
+    const revenue = { INVOICE: 0, SETTLEMENT: 0, TRANSLATION: 0, CLIENT_INVOICE: 0, total: 0 } as CaseProfit['revenue'];
     const costs = Object.fromEntries([...COST_KEYS.map((k) => [k, 0]), ['total', 0]]) as CaseProfit['costs'];
     for (const l of ls) {
       if (l.kind === 'revenue') {

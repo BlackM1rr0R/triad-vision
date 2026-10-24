@@ -148,6 +148,8 @@ const transition = async (
   if (FINAL_STATUSES.includes(to)) void surveyOnCaseFinal(caseId, to); // satisfaction survey (never throws)
   void notifyPartnerCaseStatus(caseId, to, opts.eventType); // referral partner portal (never throws)
   void syncSettlementsForCase(caseId); // settlement ledger rows follow the case (never throws)
+  // Payment plans: instalments whose trigger is this status (or ON_SIGN on the contract signature) get their invoice (lazy import: no cycle; never throws).
+  void import('./billing/plans.js').then((m) => m.fireCaseStatusInstallments(caseId, to)).catch(() => undefined);
   // ── Automation hook: one central place for every status change, contract signature and appointment ──
   const eventType = opts.eventType ?? 'STATUS_CHANGED';
   void emitAutomationEvent({ type: 'CASE_STATUS_CHANGED', entityType: 'case', entityId: caseId, caseId, payload: { from: current.status, to, eventType } });

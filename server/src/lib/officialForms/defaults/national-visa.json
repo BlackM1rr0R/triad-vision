@@ -1,0 +1,366 @@
+{
+  "key": "NATIONAL_VISA",
+  "title": "Antrag auf Erteilung eines nationalen Visums",
+  "version": "diplo-de-en",
+  "url": "https://service.diplo.de/blob/207850/f9342033f2933dc05da54151efe283db/aufenthalten-data.pdf",
+  "sha256": "238db97a5dd507ed3ae454aac5ee58223b0aeec2fa31714ab4d1c9315031565c",
+  "notes": "Official form of the German missions (Auswärtiges Amt, German/English edition, AcroForm with 154 fields). Downloaded at runtime from service.diplo.de; the PDF is not part of the repository. Not prefilled on purpose: previous stays in Germany (5), accommodation type, permanent residence abroad (7), health insurance, criminal record and expulsion (14-16), illnesses, parents (4) - the applicant answers them.",
+  "fieldMap": {
+    "Name Familienname Surname": {
+      "source": "client.lastName",
+      "format": "upper"
+    },
+    "Früherer Familiennamen Former surnames": {
+      "source": "client.birthName",
+      "optional": true,
+      "format": "upper"
+    },
+    "Vornamen First names": {
+      "source": "client.firstName",
+      "format": "upper"
+    },
+    "Geburtsdatum TagMonatJahr Date of birth daymonthyear": {
+      "source": "client.birthDate"
+    },
+    "Geburtsort Place of birth": {
+      "source": "client.birthPlace"
+    },
+    "Geburtsland Country of birth": {
+      "source": "client.birthCountry"
+    },
+    "Derzeitige Staatsangehörigkeiten Current nationality please state all nationalities": {
+      "source": "client.nationality"
+    },
+    "Frühere Staatsangehörigkeiten Former nationalities": {
+      "source": "client.nationalityAtBirth",
+      "optional": true
+    },
+    "ledig single": {
+      "source": "client.maritalStatus",
+      "when": "LEDIG"
+    },
+    "verheiratet seit married since": {
+      "source": "client.maritalStatus",
+      "when": "VERHEIRATET"
+    },
+    "eingetragene Lebenspartnerschaft seit civil union since": {
+      "source": "client.maritalStatus",
+      "when": "LEBENSPARTNERSCHAFT"
+    },
+    "geschieden seit divorced since": {
+      "source": "client.maritalStatus",
+      "when": "GESCHIEDEN"
+    },
+    "verwitwet seit widowed since": {
+      "source": "client.maritalStatus",
+      "when": "VERWITWET"
+    },
+    "männlich male": {
+      "source": "client.sex",
+      "when": "M"
+    },
+    "weiblich female": {
+      "source": "client.sex",
+      "when": "F"
+    },
+    "Reisepass Passport": {
+      "source": "const",
+      "value": "X",
+      "when": "*"
+    },
+    "Nummer des Reisedokuments Number of travel document": {
+      "source": "passport.number"
+    },
+    "Ausstellungsdatum Date of issue": {
+      "source": "passport.issueDate"
+    },
+    "Gültig bis Valid until": {
+      "source": "passport.expiry"
+    },
+    "Ausgestellt durch Issued by": {
+      "source": "passport.authority"
+    },
+    "Straße Hausnummer Street number": {
+      "source": "address.street"
+    },
+    "Postleitzahl Ort Postcode place": {
+      "source": "address.postalCity"
+    },
+    "EMailAdresse Email address": {
+      "source": "client.email"
+    },
+    "Mobilfunknummer Mobile phone number": {
+      "source": "client.phone"
+    },
+    "Name Familienname Surname_2": {
+      "source": "spouse.lastName",
+      "optional": true
+    },
+    "Vornamen First names_2": {
+      "source": "spouse.firstName",
+      "optional": true
+    },
+    "Geburtsdatum TagMonatJahr Date of birth daymonthyear_2": {
+      "source": "spouse.birthDate",
+      "optional": true
+    },
+    "Geburtsort  Place of birth": {
+      "source": "spouse.birthPlace",
+      "optional": true
+    },
+    "Derzeitige Staatsangehörigkeiten Current nationality please state all nationalities_2": {
+      "source": "spouse.nationality",
+      "optional": true
+    },
+    "Wohnort Place of residence": {
+      "source": "spouse.residence",
+      "optional": true
+    },
+    "Name Familienname SurnameRow1": {
+      "source": "children.1.lastName",
+      "optional": true
+    },
+    "Vornamen First namesRow1": {
+      "source": "children.1.firstName",
+      "optional": true
+    },
+    "mw mfRow1": {
+      "source": "children.1.sex",
+      "optional": true,
+      "map": {
+        "M": "m",
+        "F": "w",
+        "X": "d"
+      }
+    },
+    "Geburtsdatum und ort Date and place of birthRow1": {
+      "source": "children.1.birthDatePlace",
+      "optional": true
+    },
+    "Staats angehörigkeit NationalityRow1": {
+      "source": "children.1.nationality",
+      "optional": true
+    },
+    "Wohnort Place of residenceRow1": {
+      "source": "children.1.residence",
+      "optional": true
+    },
+    "Name Familienname SurnameRow2": {
+      "source": "children.2.lastName",
+      "optional": true
+    },
+    "Vornamen First namesRow2": {
+      "source": "children.2.firstName",
+      "optional": true
+    },
+    "mw mfRow2": {
+      "source": "children.2.sex",
+      "optional": true,
+      "map": {
+        "M": "m",
+        "F": "w",
+        "X": "d"
+      }
+    },
+    "Geburtsdatum und ort Date and place of birthRow2": {
+      "source": "children.2.birthDatePlace",
+      "optional": true
+    },
+    "Staats angehörigkeit NationalityRow2": {
+      "source": "children.2.nationality",
+      "optional": true
+    },
+    "Wohnort Place of residenceRow2": {
+      "source": "children.2.residence",
+      "optional": true
+    },
+    "Name Familienname SurnameRow3": {
+      "source": "children.3.lastName",
+      "optional": true
+    },
+    "Vornamen First namesRow3": {
+      "source": "children.3.firstName",
+      "optional": true
+    },
+    "mw mfRow3": {
+      "source": "children.3.sex",
+      "optional": true,
+      "map": {
+        "M": "m",
+        "F": "w",
+        "X": "d"
+      }
+    },
+    "Geburtsdatum und ort Date and place of birthRow3": {
+      "source": "children.3.birthDatePlace",
+      "optional": true
+    },
+    "Staats angehörigkeit NationalityRow3": {
+      "source": "children.3.nationality",
+      "optional": true
+    },
+    "Wohnort Place of residenceRow3": {
+      "source": "children.3.residence",
+      "optional": true
+    },
+    "Name Familienname SurnameRow4": {
+      "source": "children.4.lastName",
+      "optional": true
+    },
+    "Vornamen First namesRow4": {
+      "source": "children.4.firstName",
+      "optional": true
+    },
+    "mw mfRow4": {
+      "source": "children.4.sex",
+      "optional": true,
+      "map": {
+        "M": "m",
+        "F": "w",
+        "X": "d"
+      }
+    },
+    "Geburtsdatum und ort Date and place of birthRow4": {
+      "source": "children.4.birthDatePlace",
+      "optional": true
+    },
+    "Staats angehörigkeit NationalityRow4": {
+      "source": "children.4.nationality",
+      "optional": true
+    },
+    "Wohnort Place of residenceRow4": {
+      "source": "children.4.residence",
+      "optional": true
+    },
+    "Name Familienname SurnameRow5": {
+      "source": "children.5.lastName",
+      "optional": true
+    },
+    "Vornamen First namesRow5": {
+      "source": "children.5.firstName",
+      "optional": true
+    },
+    "mw mfRow5": {
+      "source": "children.5.sex",
+      "optional": true,
+      "map": {
+        "M": "m",
+        "F": "w",
+        "X": "d"
+      }
+    },
+    "Geburtsdatum und ort Date and place of birthRow5": {
+      "source": "children.5.birthDatePlace",
+      "optional": true
+    },
+    "Staats angehörigkeit NationalityRow5": {
+      "source": "children.5.nationality",
+      "optional": true
+    },
+    "Wohnort Place of residenceRow5": {
+      "source": "children.5.residence",
+      "optional": true
+    },
+    "Name Familienname SurnameRow6": {
+      "source": "children.6.lastName",
+      "optional": true
+    },
+    "Vornamen First namesRow6": {
+      "source": "children.6.firstName",
+      "optional": true
+    },
+    "mw mfRow6": {
+      "source": "children.6.sex",
+      "optional": true,
+      "map": {
+        "M": "m",
+        "F": "w",
+        "X": "d"
+      }
+    },
+    "Geburtsdatum und ort Date and place of birthRow6": {
+      "source": "children.6.birthDatePlace",
+      "optional": true
+    },
+    "Staats angehörigkeit NationalityRow6": {
+      "source": "children.6.nationality",
+      "optional": true
+    },
+    "Wohnort Place of residenceRow6": {
+      "source": "children.6.residence",
+      "optional": true
+    },
+    "Postleitzahl Ort Postcode place_2": {
+      "source": "case.residenceGermany",
+      "optional": true
+    },
+    "ja yes_3": {
+      "source": "case.familyAccompanying",
+      "when": "yes"
+    },
+    "nein no_3": {
+      "source": "case.familyAccompanying",
+      "when": "no"
+    },
+    "Falls ja welche If so which": {
+      "source": "case.familyAccompanyingNames",
+      "optional": true
+    },
+    "9 Zweck des Aufenthalts in der Bundesrepublik Deutschland Purpose of stay in the Federal Republic of Germany": {
+      "source": "case.visaType",
+      "when": "WORK|AUSBILDUNG|WEITERBILDUNG"
+    },
+    "undefined_6": {
+      "source": "case.visaType",
+      "when": "STUDY"
+    },
+    "undefined_9": {
+      "source": "case.visaType",
+      "when": "FAMILY"
+    },
+    "undefined_10": {
+      "source": "case.visaType",
+      "when": "JOB_SEEKER|TOURIST"
+    },
+    "Ggf beabsichtigte Erwerbstätigkeit If applicable intended employment": {
+      "source": "case.position",
+      "optional": true
+    },
+    "10 Referenzen in der Bundesrepublik Deutschland z B Arbeitgeber Studienanstalt Verwandte References in the Federal Republic of Germany e g employer educational establishment relatives": {
+      "source": "company.name",
+      "optional": true
+    },
+    "Straße Hausnummer Street number_2": {
+      "source": "company.streetLine",
+      "optional": true
+    },
+    "Postleitzahl Ort Postcode place_3": {
+      "source": "company.postalCity",
+      "optional": true
+    },
+    "TelefonMobilfunknummer Phonemobile phone number": {
+      "source": "company.phone",
+      "optional": true
+    },
+    "EMailAdresse Email address_2": {
+      "source": "company.email",
+      "optional": true
+    },
+    "11 Erlernter und sofern abweichend ausgeübter Beruf Trade or profession for which you trained and if different your current trade or profession": {
+      "source": "client.profession"
+    },
+    "von from_6": {
+      "source": "case.plannedEntryDate"
+    },
+    "bis  to_6": {
+      "source": "case.stayUntil",
+      "optional": true
+    },
+    "13 Aus welchen Mitteln wird der Lebensunterhalt bestritten What are your means of subsistence": {
+      "source": "case.costCoverage"
+    },
+    "Ort und Datum Place and date": {
+      "source": "meta.placeAndDate"
+    }
+  }
+}

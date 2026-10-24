@@ -50,6 +50,7 @@ export const SECTION_TAB: Record<string, CaseTab | null> = {
   'docs-embassy': 'documents',
   'case-contract': 'documents',
   'case-employment': 'documents', // employment contract tracker (Arbeitsvertrag)
+  'case-official-forms': 'documents', // official forms (national visa, Erklärung zum Beschäftigungsverhältnis)
   'case-signatures': 'documents',
   'case-embassy-package': 'documents',
   'case-four-eyes': 'documents',
@@ -67,6 +68,7 @@ export const SECTION_TAB: Record<string, CaseTab | null> = {
   'case-profit': 'finance',
   'case-time': 'finance',
   'case-finance-links': 'finance',
+  'case-billing': 'finance', // client invoices, payments, payment plan
   // Tarixçə
   'case-timeline': 'history',
   'case-history': 'history',

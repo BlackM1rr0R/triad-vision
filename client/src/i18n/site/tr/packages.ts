@@ -1,0 +1,66 @@
+import type { pagesPackages } from '../../pagesPackages';
+import type { SiteCopy } from '../types';
+
+// Public /packages page (order form, order status) in Turkish; the admin part falls back to English.
+const copy: SiteCopy<(typeof pagesPackages)['en']> = {
+  pkgs: {
+    eyebrow: 'Fiyatlar',
+    title: 'Hizmet paketleri',
+    subtitle: 'Size uygun paketi seçin, online sipariş verin ve sözleşmeyi burada imzalayın. Taksitli ödeme mümkündür.',
+    filter: 'Vize türü',
+    all: 'Tümü',
+    tier: { BASIC: 'Basic', STANDARD: 'Standard', PREMIUM: 'Premium' },
+    popular: 'En popüler',
+    vat: 'KDV dahil',
+    perCase: 'başvuru başına',
+    schedule: 'Ödeme planı',
+    trigger: { ON_SIGN: 'imzada', CASE_STATUS: 'aşamada: {{status}}' },
+    order: 'Sipariş ver',
+    empty: 'Bu vize türü için şu anda paket yok. Ücretsiz danışmanlık alın — size özel teklif hazırlayalım.',
+    book: 'Danışmanlık al',
+    compare: 'Paket karşılaştırması',
+    feature: 'Hizmet',
+    fees: 'Konsolosluk ve resmi harçlar pakete dahil değildir ve ayrıca (KDV hariç) faturalandırılır.',
+    faqTitle: 'Sıkça sorulan sorular',
+    faq: [
+      { q: 'Sözleşmeyi nasıl imzalarım?', a: 'Siparişten sonra e-postanıza sözleşme bağlantısı gelir. Tek kullanımlık kodla onaylayıp online imzalarsınız — yasal geçerli elektronik imza.' },
+      { q: 'Taksitle ödeyebilir miyim?', a: 'Evet. Her paketin bir ödeme planı vardır: örneğin imzada peşinat, kalanı başvurunuzun aşamalarında. Her taksit için ayrı fatura alırsınız.' },
+      { q: 'Vize reddedilirse ne olur?', a: 'Kararı yalnızca konsolosluk verir. Belgelerin eksiksiz ve doğru hazırlanmasını üstleniyoruz; koşullar sözleşmede ve AGB metninde yer alır.' },
+      { q: 'Nasıl öderim?', a: 'Banka havalesiyle (bilgiler müşteri panelinizde) veya Bakü ofisinde nakit.' },
+    ],
+    form: {
+      title: 'Sipariş: {{pkg}}',
+      name: 'Ad ve soyad',
+      email: 'E-posta',
+      phone: 'Telefon (ülke koduyla)',
+      visaType: 'Vize türü',
+      profession: 'Meslek (isteğe bağlı)',
+      terms: '<0>AGB</0> metnini (sürüm {{version}}) kabul ediyorum',
+      privacy: '<0>Gizlilik politikasını</0> okudum',
+      submit: 'Siparişi onayla',
+      note: 'Siparişten sonra sözleşme imza için e-postanıza gönderilir. Ödeme yalnızca imzadan sonra.',
+      cancel: 'Kapat',
+    },
+    visaType: { WORK: 'Çalışma vizesi', AUSBILDUNG: 'Mesleki eğitim (Ausbildung)', WEITERBILDUNG: 'Denklik / ek eğitim', JOB_SEEKER: 'İş arama (Fırsat Kartı)', STUDY: 'Öğrenim', FAMILY: 'Aile birleşimi', TOURIST: 'Ziyaret (Schengen)' },
+    errors: { default: 'Sipariş gönderilemedi. Lütfen tekrar deneyin.', FULL_NAME_REQUIRED: 'Ad ve soyadınızı girin', INVALID_PHONE: 'Telefonu ülke koduyla yazın (+90…)', EMAIL_NOT_CLIENT: 'Bu e-posta ile sipariş mümkün değil', VISA_TYPE_NOT_IN_PACKAGE: 'Bu paket seçilen vize türü için değil', PACKAGE_NOT_FOUND: 'Paket artık mevcut değil', TOO_MANY_REQUESTS: 'Çok fazla deneme. Lütfen daha sonra tekrar deneyin.' },
+    status: {
+      title: 'Siparişiniz',
+      invalidTitle: 'Sipariş bulunamadı',
+      invalidText: 'Bağlantı eski veya hatalı. Lütfen e-postanızdaki bağlantıyı kullanın.',
+      hello: 'Merhaba {{name}}!',
+      steps: { received: 'Sipariş alındı', contract: 'Sözleşme imzaya gönderildi', signed: 'Sözleşme imzalandı', active: 'Hesap ve başvuru açıldı' },
+      started: 'Sözleşme {{email}} adresine gönderildi. E-postadaki bağlantıyı açın, kodla onaylayın ve imzalayın.',
+      expired: 'İmza bağlantısının süresi doldu veya sözleşme iptal edildi. Lütfen bizimle iletişime geçin.',
+      signed: 'Sözleşme imzalandı — hesabınız hazırlanıyor.',
+      active: 'Hazır! {{case}} numaralı başvurunuz açıldı. Müşteri paneline giriş yapın (yeni hesap için şifre bağlantısı e-postanızda).',
+      cancelled: 'Bu sipariş iptal edildi.',
+      resend: 'Sözleşme bağlantısını yeniden gönder',
+      resent: 'Bağlantı yeniden gönderildi',
+      login: 'Müşteri paneline git',
+      firstInvoice: 'İlk fatura: {{number}} · {{amount}}',
+      price: 'Fiyat',
+    },
+  },
+};
+
+export default copy;

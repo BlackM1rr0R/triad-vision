@@ -21,6 +21,8 @@ import { CompanyProfile } from '@/components/company/CompanyProfile';
 import { CompanyInterviews } from '@/components/company/Interviews';
 import { Loading, Section, useCompany } from '@/components/company/shared';
 import { CompanyContracts } from '@/components/company/CompanyContracts';
+import { CompanyForms } from '@/components/company/CompanyForms'; // official forms to complete + sign (Erklärung zum Beschäftigungsverhältnis)
+import { pagesOfficialForms } from '@/i18n/pagesOfficialForms';
 import { CompanyRequests } from '@/components/requests/CompanyRequests';
 import { pagesRequests } from '@/i18n/pagesRequests';
 
@@ -28,6 +30,7 @@ registerCopy(pagesJobs);
 registerCopy(pagesSign);
 registerCopy(pagesRequests);
 registerCopy(pagesQuotes);
+registerCopy(pagesOfficialForms);
 
 /** Employer portal, mounted at /company/* behind RequireAuth roles=['COMPANY']. */
 export default function CompanyApp() {
@@ -46,6 +49,7 @@ export default function CompanyApp() {
     { to: '/company/workers', label: t('jobsArea.portal.nav.workers'), icon: Handshake, match: (p: string) => p.startsWith('/company/workers') },
     { to: '/company/interviews', label: t('ops.company.title'), icon: Video, match: (p: string) => p.startsWith('/company/interviews') },
     { to: '/company/contracts', label: t('esign.portal.companyTitle'), icon: FileSignature, match: (p: string) => p.startsWith('/company/contracts') },
+    { to: '/company/forms', label: t('officialForms.company.nav'), icon: FileText, match: (p: string) => p.startsWith('/company/forms') },
     { to: '/company/quotes', label: t('companyQuotes.nav'), icon: FileSignature, match: (p: string) => p.startsWith('/company/quotes') },
     { to: '/company/invoices', label: t('jobsArea.portal.nav.invoices'), icon: FileText, match: (p: string) => p.startsWith('/company/invoices') },
     { to: '/company/profile', label: t('jobsArea.portal.nav.profile'), icon: Building2, match: (p: string) => p.startsWith('/company/profile') },
@@ -165,6 +169,8 @@ export default function CompanyApp() {
                 <Route path="interviews" element={<CompanyInterviews />} />
                 <Route path="contracts" element={<CompanyContracts />} />
                 <Route path="contracts/:signerId" element={<CompanyContracts />} />
+                <Route path="forms" element={<CompanyForms />} />
+                <Route path="forms/:id" element={<CompanyForms />} />
                 <Route path="quotes" element={<CompanyQuotes />} />
                 <Route path="quotes/:id" element={<CompanyQuotes />} />
                 <Route path="invoices" element={<CompanyInvoices />} />

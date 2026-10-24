@@ -9,6 +9,7 @@ import { adminContentRouter, adminSettingsRouter, adminUploadRouter } from './co
 import { adminUsersRouter } from './users.js';
 import { adminMailboxesRouter } from './mailboxes.js';
 import { adminCompaniesRouter } from './companies.js';
+import { adminEmployerReportsRouter } from './employerReports.js';
 import { adminVacanciesRouter } from './vacancies.js';
 import { adminCandidatesRouter } from './candidates.js';
 import { adminBookingRouter } from './booking.js';
@@ -70,7 +71,10 @@ import { adminShiftsRouter } from './shifts.js'; // team calendar: shifts, leave
 import { adminHandoverNotesRouter } from './handoverNotes.js'; // handover notes + checklists for absence handovers
 import { adminGuidesRouter } from './guides.js'; // topic guides (/guides) CMS, per-language versions
 import { adminNavRouter } from './nav.js'; // role desks, favourites, recent pages, module toggles, page usage
+import { adminClientBillingRouter } from './clientBilling.js'; // client invoices, payments, payment plans
+import { adminPackagesRouter } from './packages.js'; // service packages + online orders
 import { adminSiteFeaturesRouter } from './siteFeatures.js'; // search stats, job alert stats, story video upload, e-book lead magnets
+import { adminOfficialFormsRouter } from './officialForms.js'; // official fillable PDFs: templates, mapping, case fills, employer declaration
 
 export const adminRouter = Router();
 adminRouter.use(requireMinRole('STAFF'));
@@ -200,6 +204,7 @@ adminRouter.use(['/content', '/settings', '/vacancies', '/companies', '/reviews'
 });
 
 adminRouter.use(adminCaseAiRouter); // /cases/:id/ai/*, /case-ai/settings
+adminRouter.use(adminOfficialFormsRouter); // /official-forms/*, /cases/:id/official-forms*
 adminRouter.use(adminCaseNextRouter); // /cases/:id/next-step*, /cases/:id/embassy-package*
 adminRouter.use(adminClientDataRouter); // /case-forms/*, /cases/:id/forms*, /cases/:id/data-confirmation*, /doc-guides*
 adminRouter.use(adminDocumentExpiryRouter); // /cases/:caseId/documents/:docId/expiry, /expiring
@@ -208,10 +213,13 @@ adminRouter.use('/users', adminUsersRouter);
 adminRouter.use('/duplicates', requireMinRole('ADMIN'), adminDuplicatesRouter); // duplicate clients: review, not-a-duplicate, merge
 adminRouter.use('/mailboxes', requireMinRole('ADMIN'), adminMailboxesRouter);
 adminRouter.use('/companies', adminCompaniesRouter);
+adminRouter.use('/employer-reports', adminEmployerReportsRouter); // monthly employer report: preview, regenerate, send
 adminRouter.use('/vacancies', adminVacanciesRouter);
 adminRouter.use('/candidates', adminCandidatesRouter);
 adminRouter.use('/booking', adminBookingRouter);
 adminRouter.use('/invoices', requireMinRole('ADMIN'), adminInvoicesRouter);
+adminRouter.use('/client-billing', adminClientBillingRouter); // case-level STAFF; list, CSV, settings ADMIN (per route)
+adminRouter.use('/packages', requireMinRole('ADMIN'), adminPackagesRouter);
 adminRouter.use('/quotes', requireMinRole('ADMIN'), adminQuotesRouter); // Angebote for employers
 adminRouter.use('/reviews', adminReviewsRouter);
 adminRouter.use('/analytics', adminAnalyticsRouter);

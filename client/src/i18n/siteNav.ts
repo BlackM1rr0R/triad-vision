@@ -42,6 +42,7 @@ const az = {
       company: 'Şirkət',
       cookiePolicy: 'Cookie siyasəti',
       status: 'Müraciətin statusu',
+      packages: 'Paketlər və qiymətlər',
     },
     home: {
       question: 'Siz kimsiniz?',
@@ -99,6 +100,7 @@ const de: typeof az = {
       company: 'Unternehmen',
       cookiePolicy: 'Cookie-Richtlinie',
       status: 'Antragsstatus',
+      packages: 'Pakete und Preise',
     },
     home: {
       question: 'Wer sind Sie?',
@@ -156,6 +158,7 @@ const en: typeof az = {
       company: 'Company',
       cookiePolicy: 'Cookie policy',
       status: 'Application status',
+      packages: 'Packages and prices',
     },
     home: {
       question: 'Who are you?',
@@ -213,6 +216,7 @@ const ru: typeof az = {
       company: 'Компания',
       cookiePolicy: 'Политика cookie',
       status: 'Статус заявки',
+      packages: 'Пакеты и цены',
     },
     home: {
       question: 'Кто вы?',

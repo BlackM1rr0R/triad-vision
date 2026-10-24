@@ -183,7 +183,7 @@ const HEADERS: Record<Loc, string[]> = {
   ru: ['Имя', 'Профессия', 'Вакансия', 'Тип визы', 'Виза', 'Этап', 'Дней на этапе', 'Начало', 'Запись в посольство', 'Решение', 'Виза с', 'Плановый приезд', 'Статус приезда', 'Следующее интервью'],
 };
 
-const STAGE_TEXT: Record<Loc, Record<Stage, string>> = {
+export const STAGE_TEXT: Record<Loc, Record<Stage, string>> = {
   de: { DOCUMENTS: 'Dokumente', CONTRACT: 'Vertrag', EMBASSY: 'Botschaftsunterlagen', APPOINTMENT: 'Botschaftstermin', DECISION: 'Entscheidung', APPROVED: 'Visum erteilt', ARRIVED: 'Angekommen', REJECTED: 'Abgelehnt', CANCELLED: 'Abgebrochen' },
   en: { DOCUMENTS: 'Documents', CONTRACT: 'Contract', EMBASSY: 'Embassy documents', APPOINTMENT: 'Embassy appointment', DECISION: 'Decision', APPROVED: 'Visa approved', ARRIVED: 'Arrived', REJECTED: 'Rejected', CANCELLED: 'Cancelled' },
   az: { DOCUMENTS: 'Sənədlər', CONTRACT: 'Müqavilə', EMBASSY: 'Səfirlik sənədləri', APPOINTMENT: 'Səfirlik görüşü', DECISION: 'Qərar', APPROVED: 'Viza verildi', ARRIVED: 'Gəldi', REJECTED: 'Rədd edildi', CANCELLED: 'Ləğv edildi' },

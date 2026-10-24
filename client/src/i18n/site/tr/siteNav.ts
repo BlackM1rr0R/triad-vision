@@ -42,6 +42,7 @@ const copy: SiteCopy<(typeof siteNavCopy)['en']> = {
       company: 'Şirket',
       cookiePolicy: 'Çerez politikası',
       status: 'Başvuru durumu',
+      packages: 'Paketler ve fiyatlar',
     },
     home: {
       question: 'Siz kimsiniz?',

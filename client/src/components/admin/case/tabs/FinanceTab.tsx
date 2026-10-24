@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ArrowUpRight, Receipt, Scale, Timer, TrendingUp, Wallet } from 'lucide-react';
@@ -7,6 +8,9 @@ import { Card } from '@/components/ui/Card';
 import { useStaffNav } from '@/components/command/navPrefs';
 import type { CaseTabProps } from './types';
 
+// Client invoices, payments and payment plan of the case (lib/billing).
+const CaseBillingPanel = lazy(() => import('@/components/billing/CaseBillingPanel'));
+
 /** Maliyyə: profitability of the case (ADMIN+, revenue lines come from its invoices / settlements), staff time, finance pages. */
 export default function FinanceTab({ c, isAdmin }: CaseTabProps) {
   const { t } = useTranslation();
@@ -15,6 +19,7 @@ export default function FinanceTab({ c, isAdmin }: CaseTabProps) {
     ...(isAdmin
       ? [
           { to: '/admin/invoices', label: t('caseLayout.finance.invoices'), icon: Receipt },
+          { to: '/admin/client-invoices', label: t('admin.nav.clientInvoices'), icon: Receipt },
           ...(isModuleOn('settlements') ? [{ to: '/admin/settlements', label: t('caseLayout.finance.settlements'), icon: Scale }] : []),
           { to: '/admin/profitability', label: t('caseLayout.finance.profitability'), icon: TrendingUp },
         ]
@@ -23,6 +28,9 @@ export default function FinanceTab({ c, isAdmin }: CaseTabProps) {
   ];
   return (
     <div className="stack-page">
+      <Suspense fallback={null}>
+        <CaseBillingPanel caseId={c.id} isAdmin={isAdmin} />
+      </Suspense>
       <div className="grid items-start gap-6 2xl:grid-cols-2">
         {isAdmin && (
           <div id="case-profit" className="empty:hidden">

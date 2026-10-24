@@ -21,7 +21,7 @@ export const fmtContractDate = (d: Date | string | null | undefined, lang: Contr
 const fmtMoney = (n: number | null | undefined, lang: ContractLang) =>
   typeof n === 'number' ? `${new Intl.NumberFormat(INTL[lang], { maximumFractionDigits: 0 }).format(n)} €` : '';
 
-const VISA_TYPE: Record<ContractLang, Record<VisaType, string>> = {
+export const VISA_TYPE: Record<ContractLang, Record<VisaType, string>> = {
   de: { WORK: 'Erwerbstätigkeit', AUSBILDUNG: 'Berufsausbildung', WEITERBILDUNG: 'Anerkennung / Weiterbildung', JOB_SEEKER: 'Arbeitsplatzsuche (Chancenkarte)', STUDY: 'Studium', FAMILY: 'Familiennachzug', TOURIST: 'Besuch (Schengen)' },
   en: { WORK: 'Employment', AUSBILDUNG: 'Vocational training', WEITERBILDUNG: 'Recognition / further training', JOB_SEEKER: 'Job seeking (Opportunity Card)', STUDY: 'Studies', FAMILY: 'Family reunion', TOURIST: 'Visit (Schengen)' },
   az: { WORK: 'İş vizası', AUSBILDUNG: 'Peşə təhsili (Ausbildung)', WEITERBILDUNG: 'Tanınma / əlavə təhsil', JOB_SEEKER: 'İş axtarışı (Chancenkarte)', STUDY: 'Təhsil', FAMILY: 'Ailə birləşməsi', TOURIST: 'Turist (Şengen)' },
@@ -38,7 +38,7 @@ const l10n = (json: unknown, lang: ContractLang) => {
 const str = (v: unknown) => (typeof v === 'string' ? v.trim() : '');
 
 /** Triad Vision's own name and address: the Impressum settings first, the contact settings as fallback. */
-const triadParty = async () => {
+export const triadParty = async () => {
   const rows = await prisma.setting.findMany({ where: { key: { in: ['legal', 'contact'] } } });
   const legal = (rows.find((r) => r.key === 'legal')?.value ?? {}) as Record<string, unknown>;
   const contact = (rows.find((r) => r.key === 'contact')?.value ?? {}) as Record<string, unknown>;

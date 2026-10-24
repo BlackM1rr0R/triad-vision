@@ -8,6 +8,8 @@ import { forecastForCase } from '../journey/forecast.js';
 import { onboardingForCase } from '../journey/onboarding.js';
 import { pendingAcceptances } from '../legal/documents.js';
 import { getRenewalSettings } from '../renewals/service.js';
+import { openInvoicesOf } from '../billing/service.js';
+import { isPastDue } from '../billing/math.js';
 import { documentSummary, profileCompleteness, progressPercent, STATUS_STEP, STEP_COUNT } from '../../routes/account.js';
 
 /**
@@ -22,6 +24,7 @@ import { documentSummary, profileCompleteness, progressPercent, STATUS_STEP, STE
 
 export type NextKind =
   | 'ACCEPT_LEGAL'
+  | 'PAY_INVOICE'
   | 'FIX_DOCS'
   | 'UPLOAD_DOCS'
   | 'SUBMIT_DOCS'
@@ -55,6 +58,8 @@ export interface NextAction {
 /** Base rank of each kind (lower = more important). An overdue action jumps right behind ACCEPT_LEGAL. */
 export const KIND_RANK: Record<NextKind, number> = {
   ACCEPT_LEGAL: 0,
+  // Client invoices: right after legal re-acceptance and overdue items (an overdue invoice is itself an overdue item).
+  PAY_INVOICE: 5,
   FIX_DOCS: 10,
   UPLOAD_DOCS: 11,
   SUBMIT_DOCS: 12,
@@ -102,6 +107,8 @@ export interface NextStepFacts {
   residence: { caseId: string; expiresAt: Date; leadDays: number; renewalOpened: boolean } | null;
   passportExpiry: Date | null;
   profilePercent: number;
+  /** Open client invoices (lib/billing): issued, not fully paid. */
+  invoices?: { id: string; number: string; openCents: number; dueAt: Date; overdue: boolean }[];
 }
 
 const iso = (d: Date | null | undefined) => (d ? d.toISOString() : null);
@@ -119,6 +126,10 @@ export const collectActions = (f: NextStepFacts): NextAction[] => {
     out.push({ kind, to, dueAt: iso(o.dueAt), overdue: o.overdue ?? (!!o.dueAt && o.dueAt < now), count: o.count ?? 1, detail: o.detail ?? null });
 
   if (f.pendingLegal > 0) add('ACCEPT_LEGAL', '/account/privacy#legal', { count: f.pendingLegal });
+  if (f.invoices?.length) {
+    const first = [...f.invoices].sort((a, b) => a.dueAt.getTime() - b.dueAt.getTime())[0];
+    add('PAY_INVOICE', '/account/payments', { count: f.invoices.length, dueAt: first.dueAt, overdue: f.invoices.some((i) => i.overdue), detail: first.number });
+  }
 
   const p = f.primary;
   if (p) {
@@ -240,7 +251,7 @@ export const loadNextStep = async (userId: string, now = new Date()) => {
   const approved = cases.find((c) => c.status === 'APPROVED' && !c.parentCaseId) ?? cases.find((c) => c.status === 'APPROVED') ?? null;
   const caseIds = cases.map((c) => c.id);
 
-  const [ball, requirements, conf, forms, signers, tasks, followUp, plan, checkIns, unreadMessages, unreadNotifications] = await Promise.all([
+  const [ball, requirements, conf, forms, signers, tasks, followUp, plan, checkIns, unreadMessages, unreadNotifications, invoices, billedCount] = await Promise.all([
     open ? ballInCourtFor(open.id) : Promise.resolve(null),
     open
       ? prisma.documentRequirement.findMany({
@@ -265,6 +276,8 @@ export const loadNextStep = async (userId: string, now = new Date()) => {
     prisma.arrivalCheckIn.findMany({ where: { audience: 'WORKER', answeredAt: null, sentAt: { not: null }, followUp: { clientId: userId } }, orderBy: { sentAt: 'desc' }, take: 10 }),
     prisma.caseMessage.count({ where: { case: { clientId: userId }, authorId: { not: userId }, readAt: null } }),
     prisma.notification.count({ where: { userId, readAt: null } }),
+    openInvoicesOf(userId),
+    prisma.clientInvoice.count({ where: { clientId: userId, status: { not: 'DRAFT' } } }),
   ]);
 
   const arrived = (!!followUp && followUp.arrivedAt <= now) || plan?.status === 'COMPLETED';
@@ -310,6 +323,7 @@ export const loadNextStep = async (userId: string, now = new Date()) => {
         : null,
     passportExpiry: user.passportExpiry,
     profilePercent: profileCompleteness(user).percent,
+    invoices: invoices.map((i) => ({ id: i.id, number: i.number, openCents: i.grossCents - i.paidCents, dueAt: i.dueDate, overdue: i.status === 'OVERDUE' || isPastDue(i.dueDate, now) })),
   };
   const { actionCount, ...picked } = pickNextStep(facts);
 
@@ -361,6 +375,8 @@ export const loadNextStep = async (userId: string, now = new Date()) => {
       pendingSignatures: facts.signatures.length,
       pendingLegal: legal.length,
       openCheckIns: facts.checkIns.length,
+      openInvoices: invoices.length,
+      hasBilling: billedCount > 0,
     },
   };
 };

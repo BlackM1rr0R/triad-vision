@@ -4,6 +4,7 @@ import { EmbassyPackagePanel } from '@/components/caseNext/EmbassyPackagePanel';
 import { FourEyesPanel } from '@/components/caseNext/FourEyesPanel';
 import CaseOriginalsPanel from '@/components/originals/CaseOriginalsPanel';
 import { EmploymentContractPanel } from '@/components/placement/EmploymentContractPanel';
+import { CaseOfficialFormsPanel } from '@/components/officialForms/CaseOfficialFormsPanel';
 import { ClientFiles } from '../ClientFiles';
 import { ContractBox } from '../Contract';
 import { RequirementsSection } from '../Requirements';
@@ -39,6 +40,8 @@ export default function DocumentsTab({ c }: CaseTabProps) {
       </div>
       {/* Employment contract with the employer (Arbeitsvertrag): terms, checks, probation end. */}
       <EmploymentContractPanel caseId={c.id} />
+      {/* Official forms: national visa application, Erklärung zum Beschäftigungsverhältnis … (fill, missing data, employer signature). */}
+      <CaseOfficialFormsPanel caseId={c.id} />
       <div id="case-signatures">
         <SignaturesPanel caseId={c.id} />
       </div>

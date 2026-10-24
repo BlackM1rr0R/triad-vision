@@ -191,7 +191,7 @@ function ProfitPage() {
         <section className="rounded-xl border border-line bg-card p-4 sm:p-5">
           <h2 className="mb-3 text-sm font-semibold text-ink">{t('profit.revenueBySource')}</h2>
           <BarList
-            rows={(['INVOICE', 'SETTLEMENT', 'TRANSLATION'] as const).map((k) => ({ key: k, label: t(`profit.sources.${k}`), value: d.revenueBySource[k], tone: 'bg-brand-500' }))}
+            rows={(['INVOICE', 'CLIENT_INVOICE', 'SETTLEMENT', 'TRANSLATION'] as const).map((k) => ({ key: k, label: t(`profit.sources.${k}`), value: d.revenueBySource[k], tone: 'bg-brand-500' }))}
             format={(v) => f.eur(v)}
           />
         </section>

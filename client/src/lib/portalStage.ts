@@ -22,6 +22,7 @@ export type SubKey =
   // documents
   | 'caseDocs'
   | 'signatures'
+  | 'payments'
   | 'vault'
   | 'translations'
   | 'letterExplain'
@@ -46,7 +47,7 @@ export type SubKey =
 /** Every sub-tab in display order, grouped by section. */
 export const SECTION_SUBS: Record<SectionKey, readonly SubKey[]> = {
   home: ['overview', 'application', 'arrival', 'onboarding'],
-  documents: ['caseDocs', 'signatures', 'vault', 'translations', 'letterExplain'],
+  documents: ['caseDocs', 'signatures', 'payments', 'vault', 'translations', 'letterExplain'],
   messages: ['chat', 'notifications'],
   learn: ['waitingRoom', 'german', 'interviewPrep', 'interviews', 'jobs', 'cv', 'letters', 'guides'],
   profile: ['personal', 'family', 'privacy', 'referral'],
@@ -91,6 +92,8 @@ export interface VisibilityContext {
   hasSignatures: boolean;
   /** Open document actions (upload / fix / submit / contract) on a case. */
   openDocActions: boolean;
+  /** Client invoices or a payment plan exist (Documents › Payments). */
+  hasPayments?: boolean;
 }
 
 const PRE_APPROVAL: PortalStage[] = ['LEAD', 'PREPARING', 'AT_EMBASSY'];
@@ -123,6 +126,8 @@ export const isSubVisible = (sub: SubKey, stage: PortalStage, ctx: VisibilityCon
       return stage === 'IN_GERMANY' ? ctx.hasOpenCase || ctx.openDocActions : true;
     case 'signatures':
       return ctx.hasSignatures;
+    case 'payments':
+      return !!ctx.hasPayments;
     case 'waitingRoom':
       return stage === 'PREPARING' || stage === 'AT_EMBASSY';
     case 'interviewPrep':
@@ -171,6 +176,8 @@ export const subOfLocation = (pathname: string, search = ''): SubKey | null => {
       return 'onboarding';
     case 'signatures':
       return 'signatures';
+    case 'payments':
+      return 'payments';
     case 'vault':
       return 'vault';
     case 'translations':
@@ -227,6 +234,8 @@ export const subPath = (sub: SubKey, caseId: string | null, caseCount = caseId ?
       return kase('docs');
     case 'signatures':
       return '/account/signatures';
+    case 'payments':
+      return '/account/payments';
     case 'vault':
       return '/account/vault';
     case 'translations':
@@ -271,6 +280,8 @@ export interface SectionBadges {
   pendingSignatures: number;
   pendingLegal: number;
   actions: number;
+  /** Open client invoices (Payments). */
+  openInvoices?: number;
 }
 
 /** Counter per sub-tab (0 = none). */
@@ -282,6 +293,8 @@ export const subBadge = (sub: SubKey, b: SectionBadges): number => {
       return b.unreadNotifications;
     case 'signatures':
       return b.pendingSignatures;
+    case 'payments':
+      return b.openInvoices ?? 0;
     case 'privacy':
       return b.pendingLegal;
     case 'overview':

@@ -15,6 +15,7 @@ const az = {
       onboarding: 'İlk addımlar',
       caseDocs: 'Müraciət sənədləri',
       signatures: 'İmzalanacaqlar',
+      payments: 'Ödənişlər',
       vault: 'Sənəd seyfi',
       translations: 'Tərcümə və apostil',
       letterExplain: 'Məktubu izah et',
@@ -49,6 +50,7 @@ const az = {
       also: 'Bunlar da gözləyir',
       kind: {
         ACCEPT_LEGAL: { title: 'Yenilənmiş şərtləri qəbul edin', text: 'Şərtlərimizi və ya məxfilik siyasətimizi yenilədik. Portaldan istifadəyə davam etmək üçün yeni versiyanı oxuyub qəbul edin.', action: 'Oxu və qəbul et' },
+        PAY_INVOICE: { title: 'Hesab-faktura ödənilməlidir ({{count}})', titleDetail: 'Hesabı ödəyin: {{detail}}', text: 'Bank köçürməsi ilə ödəyin və təyinatda hesab nömrəsini göstərin.', action: 'Ödəniş məlumatları' },
         FIX_DOCS: { title: 'Rədd edilmiş sənədi yenidən yükləyin', titleDetail: 'Sənədi yenidən yükləyin: {{detail}}', text: 'Yenidən yüklənməli sənəd sayı: {{count}}. Komandanın qeydinə baxın.', action: 'Sənədləri düzəlt' },
         UPLOAD_DOCS: { title: 'Sənədlərinizi yükləyin', titleDetail: 'Yükləyin: {{detail}}', text: 'Çatışmayan vacib sənəd sayı: {{count}}.', action: 'İndi yüklə' },
         SUBMIT_DOCS: { title: 'Sənədləri yoxlamaya göndərin', text: 'Bütün vacib sənədlər yüklənib. Onları yoxlama üçün komandamıza göndərin.', action: 'Yoxlamaya göndər' },
@@ -115,6 +117,7 @@ const de: typeof az = {
       onboarding: 'Erste Schritte',
       caseDocs: 'Antragsunterlagen',
       signatures: 'Zu unterschreiben',
+      payments: 'Zahlungen',
       vault: 'Dokumenten-Tresor',
       translations: 'Übersetzung & Apostille',
       letterExplain: 'Brief erklären',
@@ -149,6 +152,7 @@ const de: typeof az = {
       also: 'Ebenfalls offen',
       kind: {
         ACCEPT_LEGAL: { title: 'Aktualisierte Bedingungen akzeptieren', text: 'Wir haben unsere AGB bzw. Datenschutzerklärung aktualisiert. Bitte lesen und akzeptieren Sie die neue Fassung, um das Portal weiter zu nutzen.', action: 'Lesen und akzeptieren' },
+        PAY_INVOICE: { title: 'Rechnung bezahlen ({{count}})', titleDetail: 'Rechnung {{detail}} bezahlen', text: 'Bitte überweisen Sie den Betrag mit der Rechnungsnummer als Verwendungszweck.', action: 'Zahlungsdetails' },
         FIX_DOCS: { title: 'Abgelehntes Dokument ersetzen', titleDetail: 'Dokument ersetzen: {{detail}}', text: 'Neu hochzuladende Dokumente: {{count}}. Beachten Sie den Hinweis unseres Teams.', action: 'Dokumente korrigieren' },
         UPLOAD_DOCS: { title: 'Laden Sie Ihre Dokumente hoch', titleDetail: 'Hochladen: {{detail}}', text: 'Fehlende Pflichtdokumente: {{count}}.', action: 'Jetzt hochladen' },
         SUBMIT_DOCS: { title: 'Dokumente zur Prüfung senden', text: 'Alle Pflichtdokumente sind hochgeladen. Senden Sie sie unserem Team zur Prüfung.', action: 'Zur Prüfung senden' },
@@ -215,6 +219,7 @@ const en: typeof az = {
       onboarding: 'First steps',
       caseDocs: 'Application documents',
       signatures: 'To sign',
+      payments: 'Payments',
       vault: 'Document vault',
       translations: 'Translation & apostille',
       letterExplain: 'Explain a letter',
@@ -249,6 +254,7 @@ const en: typeof az = {
       also: 'Also waiting for you',
       kind: {
         ACCEPT_LEGAL: { title: 'Accept the updated terms', text: 'We updated our terms or privacy policy. Please read and accept the new version to keep using the portal.', action: 'Review and accept' },
+        PAY_INVOICE: { title: 'Pay your invoice ({{count}})', titleDetail: 'Pay invoice {{detail}}', text: 'Please transfer the amount and quote the invoice number as the payment reference.', action: 'Payment details' },
         FIX_DOCS: { title: 'Replace a rejected document', titleDetail: 'Replace the document: {{detail}}', text: 'Documents to upload again: {{count}}. See the note from our team.', action: 'Fix documents' },
         UPLOAD_DOCS: { title: 'Upload your documents', titleDetail: 'Upload: {{detail}}', text: 'Required documents still missing: {{count}}.', action: 'Upload now' },
         SUBMIT_DOCS: { title: 'Send your documents for review', text: 'All required documents are uploaded. Send them to our team for checking.', action: 'Send for review' },
@@ -315,6 +321,7 @@ const ru: typeof az = {
       onboarding: 'Первые шаги',
       caseDocs: 'Документы заявки',
       signatures: 'На подпись',
+      payments: 'Платежи',
       vault: 'Сейф документов',
       translations: 'Перевод и апостиль',
       letterExplain: 'Объяснить письмо',
@@ -349,6 +356,7 @@ const ru: typeof az = {
       also: 'Также ждёт вас',
       kind: {
         ACCEPT_LEGAL: { title: 'Примите обновлённые условия', text: 'Мы обновили условия или политику конфиденциальности. Прочитайте и примите новую версию, чтобы продолжить пользоваться порталом.', action: 'Прочитать и принять' },
+        PAY_INVOICE: { title: 'Оплатите счёт ({{count}})', titleDetail: 'Оплатите счёт {{detail}}', text: 'Переведите сумму, указав номер счёта в назначении платежа.', action: 'Реквизиты для оплаты' },
         FIX_DOCS: { title: 'Замените отклонённый документ', titleDetail: 'Замените документ: {{detail}}', text: 'Документов для повторной загрузки: {{count}}. Посмотрите комментарий команды.', action: 'Исправить документы' },
         UPLOAD_DOCS: { title: 'Загрузите документы', titleDetail: 'Загрузите: {{detail}}', text: 'Не хватает обязательных документов: {{count}}.', action: 'Загрузить' },
         SUBMIT_DOCS: { title: 'Отправьте документы на проверку', text: 'Все обязательные документы загружены. Отправьте их нашей команде на проверку.', action: 'Отправить на проверку' },

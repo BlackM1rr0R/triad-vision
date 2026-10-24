@@ -417,19 +417,4 @@ companyRouter.post('/candidates/:id/decision', async (req, res) => {
   res.json({ ok: true, status: rule.to });
 });
 
-// ─── Our workers (cases placed with this company) ──────────────────────
-
-companyRouter.get('/workers', async (_req, res) => {
-  const items = await listWorkers(co(res).id);
-  res.json({ stepCount: STEP_COUNT, summary: workerSummary(items), items });
-});
-
-/** The worker panel as an Excel sheet (same fields as the panel). */
-companyRouter.get('/workers/export.xlsx', async (req, res) => {
-  const pickLang = (v: unknown) => (typeof v === 'string' && ['az', 'de', 'en', 'ru'].includes(v.slice(0, 2)) ? (v.slice(0, 2) as 'az' | 'de' | 'en' | 'ru') : null);
-  const locale = pickLang(req.query.lang) ?? pickLang(req.get('X-Locale')) ?? 'de';
-  const buf = workersXlsx(await listWorkers(co(res).id), locale);
-  res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-  res.setHeader('Content-Disposition', `attachment; filename="workers-${new Date().toISOString().slice(0, 10)}.xlsx"`);
-  res.send(buf);
-});
+// Our workers (cases placed with this company): routes/companyWorkers.ts, mounted at /api/company/workers.

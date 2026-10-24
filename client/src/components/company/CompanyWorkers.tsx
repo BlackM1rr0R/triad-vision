@@ -1,303 +1,247 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
-import { CalendarClock, CheckCircle2, Download, Gavel, Handshake, Hourglass, Landmark, PlaneLanding, ShieldCheck, Users, Video } from 'lucide-react';
+import { AlertTriangle, CalendarClock, Download, FileSpreadsheet, Handshake, Hourglass, PlaneLanding, Search, ShieldAlert, Users, Wrench } from 'lucide-react';
 import { api } from '@/lib/api';
 import { registerCopy } from '@/i18n';
 import { pagesRequests } from '@/i18n/pagesRequests';
+import { pagesEmployerWorkers } from '@/i18n/pagesEmployerWorkers';
 import { useL10n } from '@/lib/l10n';
-import type { CaseStatus, L10n } from '@/lib/types';
-import { fmtDate, fmtDateTime } from '@/components/admin/labels';
-import { statusTone, TONE_CLASS } from '@/components/ui/status';
+import { Table, type Column } from '@/components/ui/Table';
+import { TONE_CLASS } from '@/components/ui/status';
 import { Empty, Kpi, Loading, Section } from './shared';
+import { WorkerDrawer } from './WorkerDrawer';
+import { CompanyReports } from './CompanyReports';
+import { CheckInCell, DateCell, RISK_TONE, useMilestoneText } from './workerCells';
+import { PHASES, plannedArrival, type Phase, type WorkerRow, type WorkersResponse } from './workerTypes';
 
 registerCopy(pagesRequests);
+registerCopy(pagesEmployerWorkers);
 
-type Stage = 'DOCUMENTS' | 'CONTRACT' | 'EMBASSY' | 'APPOINTMENT' | 'DECISION' | 'APPROVED' | 'ARRIVED' | 'REJECTED' | 'CANCELLED';
-const STAGE_ORDER: Stage[] = ['DOCUMENTS', 'CONTRACT', 'EMBASSY', 'APPOINTMENT', 'DECISION', 'APPROVED', 'ARRIVED', 'REJECTED', 'CANCELLED'];
+type SortKey = 'phase' | 'name' | 'arrival' | 'title' | 'probation' | 'risk';
+const SORTS: SortKey[] = ['phase', 'name', 'arrival', 'title', 'probation', 'risk'];
 
-/** `bar` = timeline chart series (categorical: every stage keeps its own hue); `pill` = status tone from status.ts. */
-const STAGE_BAR: Record<Stage, string> = {
-  DOCUMENTS: 'bg-slate-400',
-  CONTRACT: 'bg-sky-500',
-  EMBASSY: 'bg-indigo-500',
-  APPOINTMENT: 'bg-violet-500',
-  DECISION: 'bg-amber-500',
-  APPROVED: 'bg-emerald-500',
-  ARRIVED: 'bg-emerald-700',
-  REJECTED: 'bg-red-500',
-  CANCELLED: 'bg-slate-300',
-};
-const STAGE_TONE: Record<Stage, { bar: string; pill: string }> = Object.fromEntries(
-  STAGE_ORDER.map((s) => [s, { bar: STAGE_BAR[s], pill: s === 'ARRIVED' ? 'bg-success text-white' : TONE_CLASS[statusTone('workerStage', s)] }]),
-) as Record<Stage, { bar: string; pill: string }>;
+const PHASE_ICON: Record<Phase, typeof Hourglass> = { IN_PROCESS: Hourglass, TRAVELLING: PlaneLanding, WORKING: Wrench, LEFT: Users, CLOSED: Users };
 
-interface Worker {
-  id: string;
-  name: string;
-  profession: string;
-  visaType: string;
-  status: CaseStatus;
-  step: number;
-  stage: Stage;
-  stageSince: string;
-  daysInStage: number;
-  startedAt: string;
-  appointmentAt: string | null;
-  decisionAt: string | null;
-  visaValidFrom: string | null;
-  expectedDecision: { from: string; to: string } | null;
-  arrival: { status: string; flightDate: string | null; arrivalTime: string | null } | null;
-  nextInterview: { startsAt: string; endsAt: string; status: string } | null;
-  timeline: { stage: Stage; at: string }[];
-  vacancy: { id: string; title: L10n } | null;
-  visa: { title: L10n; visaLabel: string } | null;
-}
-
-interface WorkersResponse {
-  items: Worker[];
-  stepCount: number;
-  summary: { inProcess: number; approved: number; arrivingThisMonth: number; arrived: number };
-}
-
-type SortKey = 'started' | 'stage' | 'arrival' | 'days' | 'name';
-const DAY = 24 * 60 * 60 * 1000;
-
-const plannedArrival = (w: Worker) => w.arrival?.arrivalTime ?? w.arrival?.flightDate ?? null;
-const ts = (iso: string | null) => (iso ? new Date(iso).getTime() : null);
-
-/** Gantt-like bar: each stage the case went through, on a shared time axis. */
-const TimelineBar = ({ w, from, to, now }: { w: Worker; from: number; to: number; now: number }) => {
-  const { t } = useTranslation();
-  const span = Math.max(DAY, to - from);
-  const pos = (x: number) => `${Math.max(0, Math.min(100, ((x - from) / span) * 100))}%`;
-  const end = w.stage === 'ARRIVED' || w.stage === 'REJECTED' || w.stage === 'CANCELLED' ? ts(w.timeline.at(-1)!.at)! : now;
-  const arrival = ts(plannedArrival(w));
-  return (
-    <div className="relative h-3 w-full rounded-full bg-surface ring-1 ring-line">
-      {w.timeline.map((seg, i) => {
-        const start = ts(seg.at)!;
-        const stop = i + 1 < w.timeline.length ? ts(w.timeline[i + 1].at)! : Math.max(end, start + DAY / 2);
-        return (
-          <span
-            key={`${seg.stage}-${seg.at}`}
-            title={`${t(`requests.workers.stage.${seg.stage}`)} · ${fmtDate(seg.at)}`}
-            className={clsx('absolute inset-y-0 rounded-full', STAGE_TONE[seg.stage].bar)}
-            style={{ left: pos(start), width: `calc(${pos(stop)} - ${pos(start)})`, minWidth: 4 }}
-          />
-        );
-      })}
-      {arrival && w.stage !== 'ARRIVED' && (
-        <span
-          className="absolute -top-1 size-5 -translate-x-1/2 rounded-full border-2 border-card bg-emerald-600 text-white"
-          style={{ left: pos(arrival) }}
-          title={`${t('requests.workers.arrival')}: ${fmtDateTime(plannedArrival(w))}`}
-        >
-          <PlaneLanding className="m-auto mt-[2px] size-3" aria-hidden />
-        </span>
-      )}
-      <span className="absolute -inset-y-1 w-px bg-navy-900/50" style={{ left: pos(now) }} aria-hidden />
-    </div>
-  );
-};
+const ts = (iso: string | null | undefined) => (iso ? new Date(iso).getTime() : Infinity);
+const RISK_ORDER: Record<string, number> = { HIGH: 0, MEDIUM: 1, LOW: 2 };
 
 export const CompanyWorkers = () => {
   const { t } = useTranslation();
-  const { tr, locale } = useL10n();
-  const [stage, setStage] = useState<Stage | ''>('');
-  const [next30, setNext30] = useState(false);
-  const [sort, setSort] = useState<SortKey>('started');
+  const { locale } = useL10n();
+  const [params, setParams] = useSearchParams();
+  const [phase, setPhase] = useState<Phase | ''>('');
+  const [q, setQ] = useState('');
+  const [attention, setAttention] = useState(false);
+  const [sort, setSort] = useState<SortKey>('phase');
+  const reportsRef = useRef<HTMLDivElement>(null);
+  const openId = params.get('worker');
+  const milestone = useMilestoneText();
+
   const { data, isLoading } = useQuery({
     queryKey: ['company-workers'],
     queryFn: async () => (await api.get<WorkersResponse>('/company/workers')).data,
   });
-  // Re-evaluated with each data load; enough for "today" in an employer panel.
-  const now = useMemo(() => Date.now(), [data]);
 
-  const items = useMemo(() => {
+  // ?view=reports (link in the monthly e-mail) scrolls to the reports list.
+  useEffect(() => {
+    if (data && params.get('view') === 'reports') reportsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, [data, params]);
+
+  const setOpen = (id: string | null) => {
+    const next = new URLSearchParams(params);
+    if (id) next.set('worker', id);
+    else next.delete('worker');
+    setParams(next, { replace: true });
+  };
+
+  const groups = useMemo(() => {
     let list = data?.items ?? [];
-    if (stage) list = list.filter((w) => w.stage === stage);
-    if (next30) {
-      list = list.filter((w) => {
-        const a = ts(plannedArrival(w));
-        return w.stage === 'APPROVED' && a != null && a >= now - DAY && a <= now + 30 * DAY;
-      });
-    }
-    const by: Record<SortKey, (a: Worker, b: Worker) => number> = {
-      started: (a, b) => b.startedAt.localeCompare(a.startedAt),
-      stage: (a, b) => STAGE_ORDER.indexOf(a.stage) - STAGE_ORDER.indexOf(b.stage) || b.daysInStage - a.daysInStage,
-      arrival: (a, b) => (ts(plannedArrival(a)) ?? Infinity) - (ts(plannedArrival(b)) ?? Infinity),
-      days: (a, b) => b.daysInStage - a.daysInStage,
+    if (phase) list = list.filter((w) => w.phase === phase);
+    const needle = q.trim().toLowerCase();
+    if (needle) list = list.filter((w) => `${w.name} ${w.position} ${w.profession}`.toLowerCase().includes(needle));
+    if (attention) list = list.filter((w) => w.nextAction !== 'NONE' || w.openItems.length > 0 || (w.risk && w.risk.level !== 'LOW'));
+    const by: Record<SortKey, (a: WorkerRow, b: WorkerRow) => number> = {
+      phase: (a, b) => b.openItems.length - a.openItems.length || (RISK_ORDER[a.risk?.level ?? ''] ?? 3) - (RISK_ORDER[b.risk?.level ?? ''] ?? 3) || a.name.localeCompare(b.name),
       name: (a, b) => a.name.localeCompare(b.name),
+      arrival: (a, b) => ts(a.arrivedAt ?? plannedArrival(a)) - ts(b.arrivedAt ?? plannedArrival(b)),
+      title: (a, b) => ts(a.title?.validUntil) - ts(b.title?.validUntil),
+      probation: (a, b) => ts(a.probation?.endsAt) - ts(b.probation?.endsAt),
+      risk: (a, b) => (RISK_ORDER[a.risk?.level ?? ''] ?? 3) - (RISK_ORDER[b.risk?.level ?? ''] ?? 3),
     };
-    return [...list].sort(by[sort]);
-  }, [data, stage, next30, sort, now]);
+    const sorted = [...list].sort(by[sort]);
+    return PHASES.map((p) => ({ phase: p, rows: sorted.filter((w) => w.phase === p) })).filter((g) => g.rows.length);
+  }, [data, phase, q, attention, sort]);
 
-  const axis = useMemo(() => {
-    if (!items.length) return { from: now - 30 * DAY, to: now + 30 * DAY };
-    let from = now;
-    let to = now + 14 * DAY;
-    for (const w of items) {
-      from = Math.min(from, ts(w.startedAt)!);
-      const a = ts(plannedArrival(w));
-      if (a) to = Math.max(to, a + 3 * DAY);
-    }
-    return { from, to };
-  }, [items, now]);
+  const columns: Column<WorkerRow>[] = [
+    {
+      key: 'name',
+      header: t('employerWorkers.cols.name'),
+      primary: true,
+      cell: (w) => (
+        <span className="flex min-w-0 flex-col">
+          <span className="font-semibold text-navy-900">{w.name}</span>
+          <span className="truncate text-xs text-muted">{w.position}</span>
+        </span>
+      ),
+    },
+    {
+      key: 'status',
+      header: t('employerWorkers.cols.status'),
+      cell: (w) => (
+        <span className="flex flex-col gap-0.5">
+          <span className="text-sm text-ink">{w.phase === 'IN_PROCESS' ? t(`requests.workers.stage.${w.stage}`) : t(`employerWorkers.phase.${w.phase}`)}</span>
+          {milestone(w) && <span className="text-[11px] text-muted">{milestone(w)}</span>}
+        </span>
+      ),
+    },
+    { key: 'arrival', header: t('employerWorkers.cols.arrival'), hideBelow: 'md', cell: (w) => <DateCell iso={w.arrivedAt ?? plannedArrival(w)} /> },
+    { key: 'title', header: t('employerWorkers.cols.title'), cell: (w) => <DateCell iso={w.title?.validUntil} warn={w.title?.warn} daysLeft={w.title?.daysLeft} /> },
+    { key: 'probation', header: t('employerWorkers.cols.probation'), hideBelow: 'lg', cell: (w) => <DateCell iso={w.probation?.endsAt} warn={w.probation?.warn} daysLeft={w.probation?.daysLeft} /> },
+    { key: 'checkIn', header: t('employerWorkers.cols.checkIn'), hideBelow: 'lg', cell: (w) => <CheckInCell w={w} /> },
+    {
+      key: 'risk',
+      header: t('employerWorkers.cols.risk'),
+      cell: (w) => (w.risk ? <span className={clsx('badge', TONE_CLASS[RISK_TONE[w.risk.level]])}>{t(`employerWorkers.risk.${w.risk.level}`)}</span> : <span className="text-muted">—</span>),
+    },
+    {
+      key: 'open',
+      header: t('employerWorkers.cols.open'),
+      align: 'center',
+      cell: (w) => (w.openItems.length ? <span className={clsx('badge tabular-nums', TONE_CLASS.warning)}>{w.openItems.length}</span> : <span className="text-muted">0</span>),
+    },
+    {
+      key: 'nextAction',
+      header: t('employerWorkers.cols.nextAction'),
+      cell: (w) => <span className={clsx('text-xs', w.nextAction === 'NONE' ? 'text-muted' : 'font-semibold text-brand-700')}>{t(`employerWorkers.action.${w.nextAction}`)}</span>,
+    },
+  ];
 
   if (isLoading || !data) return <Loading />;
   const s = data.summary;
+  const counts = Object.fromEntries(PHASES.map((p) => [p, data.items.filter((w) => w.phase === p).length])) as Record<Phase, number>;
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Kpi label={t('requests.workers.summary.inProcess')} value={s.inProcess} icon={Hourglass} />
-        <Kpi label={t('requests.workers.summary.approved')} value={s.approved} icon={ShieldCheck} tone="good" />
-        <Kpi label={t('requests.workers.summary.arrivingThisMonth')} value={s.arrivingThisMonth} icon={PlaneLanding} tone="violet" />
-        <Kpi label={t('requests.workers.summary.arrived')} value={s.arrived} icon={CheckCircle2} tone="good" />
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
+        <Kpi label={t('employerWorkers.tiles.inProcess')} value={s.inProcess} icon={Hourglass} />
+        <Kpi label={t('employerWorkers.tiles.arrivingThisMonth')} value={s.arrivingThisMonth} icon={PlaneLanding} tone="violet" />
+        <Kpi label={t('employerWorkers.tiles.working')} value={s.working} icon={Handshake} tone="good" />
+        <Kpi label={t('employerWorkers.tiles.probationSoon')} value={s.probationSoon} hint={t('employerWorkers.tileHints.probationSoon')} icon={CalendarClock} tone={s.probationSoon ? 'warn' : undefined} />
+        <Kpi label={t('employerWorkers.tiles.titlesExpiring')} value={s.titlesExpiring} hint={t('employerWorkers.tileHints.titlesExpiring')} icon={ShieldAlert} tone={s.titlesExpiring ? 'warn' : undefined} />
+        <Kpi label={t('employerWorkers.tiles.atRisk')} value={s.atRisk} hint={t('employerWorkers.tileHints.atRisk')} icon={AlertTriangle} tone={s.atRisk ? 'warn' : undefined} />
       </div>
 
       <Section
-        title={t('jobsArea.portal.workers.title')}
+        title={t('employerWorkers.title')}
         icon={Handshake}
         actions={
           data.items.length > 0 && (
-            <a href={`/api/company/workers/export.xlsx?lang=${locale}`} className="btn-ghost btn-sm" download>
-              <Download className="size-4" aria-hidden /> {t('requests.workers.export')}
-            </a>
+            <>
+              <a href={`/api/company/workers/export.csv?lang=${locale}`} className="btn-ghost btn-sm" download>
+                <Download className="size-4" aria-hidden /> {t('employerWorkers.exportCsv')}
+              </a>
+              <a href={`/api/company/workers/export.xlsx?lang=${locale}`} className="btn-ghost btn-sm" download>
+                <FileSpreadsheet className="size-4" aria-hidden /> {t('employerWorkers.exportXlsx')}
+              </a>
+            </>
           )
         }
       >
-        <p className="-mt-2 mb-5 text-sm text-muted">{t('jobsArea.portal.workers.subtitle')}</p>
+        <p className="-mt-2 mb-5 text-sm text-muted">{t('employerWorkers.subtitle')}</p>
         {data.items.length === 0 ? (
-          <Empty icon={Handshake} title={t('jobsArea.portal.workers.empty')} text={t('jobsArea.portal.workers.emptyText')} />
+          <Empty icon={Handshake} title={t('employerWorkers.empty')} text={t('employerWorkers.emptyText')} />
         ) : (
           <>
+            <div className="mb-3 flex snap-x gap-1.5 overflow-x-auto pb-1 [scrollbar-width:none]" role="group" aria-label={t('employerWorkers.sort.phase')}>
+              {(['', ...PHASES] as (Phase | '')[]).map((p) =>
+                p && !counts[p] ? null : (
+                  <button
+                    key={p || 'all'}
+                    type="button"
+                    aria-pressed={phase === p}
+                    onClick={() => setPhase(p)}
+                    className={clsx(
+                      'inline-flex min-h-10 shrink-0 snap-start items-center gap-1.5 rounded-full border px-3.5 text-xs font-semibold whitespace-nowrap transition sm:min-h-9',
+                      phase === p ? 'border-navy-900 bg-navy-900 text-white' : 'border-line bg-card text-ink/75 hover:border-brand-400 hover:text-navy-900',
+                    )}
+                  >
+                    {p ? t(`employerWorkers.phase.${p}`) : t('employerWorkers.phaseAll')}
+                    <span className={clsx('rounded-full px-1.5 text-[10px] tabular-nums', phase === p ? 'bg-white/20' : 'bg-surface text-muted')}>{p ? counts[p] : data.items.length}</span>
+                  </button>
+                ),
+              )}
+            </div>
             <div className="mb-5 flex flex-wrap items-center gap-2">
-              <label className="sr-only" htmlFor="wk-stage">
-                {t('requests.workers.stageCol')}
+              <label className="relative min-w-0 flex-1 sm:max-w-xs">
+                <span className="sr-only">{t('employerWorkers.search')}</span>
+                <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted" aria-hidden />
+                <input type="search" className="input py-2 pl-9 text-sm" placeholder={t('employerWorkers.search')} value={q} onChange={(e) => setQ(e.target.value)} />
               </label>
-              <select id="wk-stage" className="input w-auto min-w-44 py-2 text-sm" value={stage} onChange={(e) => setStage(e.target.value as Stage | '')}>
-                <option value="">{t('requests.workers.allStages')}</option>
-                {STAGE_ORDER.map((st) => (
-                  <option key={st} value={st}>
-                    {t(`requests.workers.stage.${st}`)}
-                  </option>
-                ))}
-              </select>
               <button
                 type="button"
-                aria-pressed={next30}
-                onClick={() => setNext30((v) => !v)}
-                className={clsx('inline-flex min-h-10 items-center gap-1.5 rounded-xl border px-3 text-sm font-semibold transition', next30 ? 'border-brand-600 bg-brand-600 text-white' : 'border-line bg-card text-ink hover:border-brand-400')}
+                aria-pressed={attention}
+                onClick={() => setAttention((v) => !v)}
+                className={clsx('inline-flex min-h-10 items-center gap-1.5 rounded-xl border px-3 text-sm font-semibold transition', attention ? 'border-brand-600 bg-brand-600 text-white' : 'border-line bg-card text-ink hover:border-brand-400')}
               >
-                <PlaneLanding className="size-4" aria-hidden /> {t('requests.workers.next30')}
+                <AlertTriangle className="size-4" aria-hidden /> {t('employerWorkers.attention')}
               </button>
               <div className="ml-auto flex items-center gap-2">
-                <label htmlFor="wk-sort" className="text-xs font-semibold text-muted">
-                  {t('requests.workers.sortBy')}
+                <label htmlFor="ew-sort" className="text-xs font-semibold text-muted">
+                  {t('employerWorkers.sortBy')}
                 </label>
-                <select id="wk-sort" className="input w-auto py-2 text-sm" value={sort} onChange={(e) => setSort(e.target.value as SortKey)}>
-                  {(['started', 'stage', 'arrival', 'days', 'name'] as SortKey[]).map((k) => (
+                <select id="ew-sort" className="input w-auto py-2 text-sm" value={sort} onChange={(e) => setSort(e.target.value as SortKey)}>
+                  {SORTS.map((k) => (
                     <option key={k} value={k}>
-                      {t(`requests.workers.sort.${k}`)}
+                      {t(`employerWorkers.sort.${k}`)}
                     </option>
                   ))}
                 </select>
               </div>
             </div>
 
-            {items.length === 0 ? (
-              <Empty icon={Users} title={t('requests.workers.noMatch')} />
+            {groups.length === 0 ? (
+              <Empty icon={Users} title={t('employerWorkers.noMatch')} />
             ) : (
-              <>
-                <div className="mb-3 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-muted" aria-hidden>
-                  {STAGE_ORDER.slice(0, 7).map((st) => (
-                    <span key={st} className="inline-flex items-center gap-1">
-                      <span className={clsx('size-2.5 rounded-full', STAGE_TONE[st].bar)} /> {t(`requests.workers.stage.${st}`)}
-                    </span>
-                  ))}
-                  <span className="ml-auto tabular-nums">
-                    {fmtDate(new Date(axis.from))} – {fmtDate(new Date(axis.to))}
-                  </span>
-                </div>
-                <ul className="space-y-3">
-                  {items.map((w) => {
-                    const arrival = plannedArrival(w);
-                    return (
-                      <li key={w.id} className="min-w-0 rounded-2xl border border-line bg-card p-4 sm:p-5">
-                        <div className="flex flex-wrap items-start justify-between gap-2">
-                          <div className="min-w-0">
-                            <p className="font-display text-base font-bold text-navy-900">{w.name}</p>
-                            <p className="truncate text-sm text-muted">{[w.profession, w.vacancy ? tr(w.vacancy.title) : null].filter(Boolean).join(' · ')}</p>
-                          </div>
-                          <div className="flex flex-wrap items-center gap-1.5">
-                            <span className="badge bg-surface text-ink ring-1 ring-line">{t(`requests.workers.visaType.${w.visaType}`, { defaultValue: w.visaType })}</span>
-                            {w.visa && <span className="badge bg-navy-900 text-white">{w.visa.visaLabel}</span>}
-                            <span className={clsx('badge', STAGE_TONE[w.stage].pill)}>{t(`requests.workers.stage.${w.stage}`)}</span>
-                          </div>
-                        </div>
-
-                        <div className="mt-4">
-                          <TimelineBar w={w} from={axis.from} to={axis.to} now={now} />
-                          <p className="mt-1.5 text-[11px] text-muted">{t('requests.workers.daysInStage', { count: w.daysInStage })}</p>
-                        </div>
-
-                        <dl className="mt-3 grid grid-cols-1 gap-x-4 gap-y-1.5 border-t border-line pt-3 text-xs sm:grid-cols-2 lg:grid-cols-4">
-                          <div className="flex items-center gap-1.5">
-                            <CalendarClock className="size-3.5 shrink-0 text-brand-600" aria-hidden />
-                            <dt className="sr-only">{t('requests.workers.sort.started')}</dt>
-                            <dd className="text-ink/80">{t('jobsArea.portal.workers.started', { date: fmtDate(w.startedAt) })}</dd>
-                          </div>
-                          <div className="flex items-center gap-1.5">
-                            <Landmark className="size-3.5 shrink-0 text-violet-600" aria-hidden />
-                            <dt className="text-muted">{t('requests.workers.appointment')}:</dt>
-                            <dd className="font-medium text-ink">{w.appointmentAt ? fmtDateTime(w.appointmentAt) : '—'}</dd>
-                          </div>
-                          <div className="flex items-center gap-1.5">
-                            <Gavel className="size-3.5 shrink-0 text-amber-600" aria-hidden />
-                            <dt className="text-muted">{t('requests.workers.decision')}:</dt>
-                            <dd className="font-medium text-ink">
-                              {w.decisionAt
-                                ? fmtDate(w.decisionAt)
-                                : w.expectedDecision
-                                  ? `≈ ${fmtDate(w.expectedDecision.from)} – ${fmtDate(w.expectedDecision.to)}`
-                                  : '—'}
-                            </dd>
-                          </div>
-                          <div className="flex items-center gap-1.5">
-                            <PlaneLanding className="size-3.5 shrink-0 text-emerald-600" aria-hidden />
-                            <dt className="text-muted">{t('requests.workers.arrival')}:</dt>
-                            <dd className="font-medium text-ink">
-                              {arrival ? fmtDateTime(arrival) : '—'}
-                              {w.arrival && <span className="ml-1 text-muted">({t(`requests.workers.arrivalStatus.${w.arrival.status}`, { defaultValue: w.arrival.status })})</span>}
-                            </dd>
-                          </div>
-                          {w.nextInterview && (
-                            <div className="flex items-center gap-1.5 sm:col-span-2">
-                              <Video className="size-3.5 shrink-0 text-brand-600" aria-hidden />
-                              <dt className="text-muted">{t('requests.workers.interview')}:</dt>
-                              <dd className="font-medium text-ink">{fmtDateTime(w.nextInterview.startsAt)}</dd>
-                            </div>
-                          )}
-                          {w.status === 'APPROVED' && w.visaValidFrom && (
-                            <div className="flex items-center gap-1.5 font-semibold text-emerald-700 sm:col-span-2">
-                              <ShieldCheck className="size-3.5 shrink-0" aria-hidden />
-                              <dt className="sr-only">{t('requests.workers.visa')}</dt>
-                              <dd>{t('jobsArea.portal.workers.visaFrom', { date: fmtDate(w.visaValidFrom) })}</dd>
-                            </div>
-                          )}
-                        </dl>
-                      </li>
-                    );
-                  })}
-                </ul>
-              </>
+              <div className="space-y-6">
+                {groups.map((g) => {
+                  const Icon = PHASE_ICON[g.phase];
+                  return (
+                    <div key={g.phase}>
+                      <h3 className="mb-2 flex items-center gap-2 text-sm font-bold text-navy-900">
+                        <Icon className="size-4 text-brand-600" aria-hidden /> {t(`employerWorkers.phase.${g.phase}`)}
+                        <span className="rounded-full bg-surface px-2 text-xs text-muted tabular-nums">{g.rows.length}</span>
+                      </h3>
+                      <div className="rounded-2xl border border-line">
+                        <Table
+                          columns={columns}
+                          rows={g.rows}
+                          rowKey={(w) => w.id}
+                          stackOnMobile
+                          dense
+                          stickyHeader={false}
+                          onRowClick={(w) => setOpen(w.id)}
+                          rowClassName={() => 'cursor-pointer hover:bg-surface/60'}
+                          caption={t(`employerWorkers.phase.${g.phase}`)}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             )}
+            <p className="mt-5 text-[11px] text-muted">{t('employerWorkers.privacyNote')}</p>
           </>
         )}
       </Section>
+
+      <div ref={reportsRef} className="scroll-mt-28">
+        <CompanyReports />
+      </div>
+
+      <WorkerDrawer id={openId} onClose={() => setOpen(null)} />
     </div>
   );
 };

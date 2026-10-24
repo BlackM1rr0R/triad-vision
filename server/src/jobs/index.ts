@@ -40,3 +40,5 @@ import './postArrivalCare.js'; // churn risk (twice a day), residence-title rene
 import './calls.js'; // callback reminders (10 min before) + live chats nobody accepted in 2 min
 import './automation.js'; // automation rules (event queue, delayed actions, time triggers) + absence handover
 import './clientData.js'; // reminders for unsubmitted questionnaires and open data confirmations
+import './clientBilling.js'; // client invoices: DATE instalments, overdue + reminders (3 / 10 days) + staff task, package order activation retries
+import './employerReports.js'; // monthly employer PDF report (1st of the month, 08:00 Baku) to the company's portal users

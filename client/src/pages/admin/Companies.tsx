@@ -20,6 +20,7 @@ import { toastJobsError, useJobLabels } from '@/components/jobs/labels';
 import { COMPANY_STATUS_TONE, SECTORS, VACANCY_STATUS_TONE, type Company, type CompanyStatus, type VacancyStatus } from '@/components/jobs/types';
 import { SignaturesPanel } from '@/components/esign/CaseSignatures';
 import { CompanyQuotesPanel } from '@/components/quotes/CompanyQuotesPanel';
+import { EmployerReportsPanel } from '@/components/employerReports/EmployerReportsPanel';
 import RecordHistoryPanel from '@/components/history/RecordHistoryPanel';
 import { useNewParam } from '@/components/command/useNewParam'; // ?new=1 deep link (Ctrl+K palette)
 
@@ -364,6 +365,7 @@ const CompanyDrawer = ({ id, onClose }: { id: string | null; onClose: () => void
             </Panel>
 
             <CompanyQuotesPanel companyId={data.id} />
+            <EmployerReportsPanel companyId={data.id} />
             <SignaturesPanel companyId={data.id} />
             <RecordHistoryPanel entity="COMPANY" entityId={data.id} />
           </div>

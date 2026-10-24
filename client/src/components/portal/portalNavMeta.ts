@@ -25,6 +25,7 @@ import {
   Users,
   Vault,
   Video,
+  Wallet,
 } from 'lucide-react';
 import type { SectionKey, SubKey } from '@/lib/portalStage';
 
@@ -44,6 +45,7 @@ export const SUB_ICON: Record<SubKey, LucideIcon> = {
   onboarding: Compass,
   caseDocs: FileText,
   signatures: FileSignature,
+  payments: Wallet,
   vault: Vault,
   translations: Languages,
   letterExplain: MailQuestion,

@@ -17,6 +17,7 @@ import { signContractPdf } from '../lib/pdfSign.js';
 import { checkCaseDocument } from '../lib/docCheck/index.js';
 import { scheduleAiDocCheck } from '../lib/aiDocs/docCheck.js';
 import { prepareCaseDocument, publicQuality, scheduleUploadAnalysis } from '../lib/uploadAi/index.js';
+import { photoCheckOnUpload } from '../lib/photoCheck/index.js'; // biometric photo rules (PHOTO / PHOTO_2 uploads)
 import { emitAutomationEvent } from '../lib/automation/events.js';
 import { completeTasksForUpload } from '../lib/clientProcess/tasks.js';
 
@@ -106,7 +107,8 @@ casesRouter.post('/:id/documents', documentUpload.single('file'), async (req, re
     const checks = await checkCaseDocument(doc.id);
     // Smart uploads: scan quality (blur, darkness, glare, cut-off) for instant feedback; never throws.
     const quality = publicQuality(await prepareCaseDocument(doc.id));
-    res.status(201).json({ document: { ...doc, checks }, checks, quality });
+    const photoCheck = await photoCheckOnUpload(doc.id); // biometric photo checklist (never throws)
+    res.status(201).json({ document: { ...doc, checks, photoCheck }, checks, quality, photoCheck });
     scheduleAiDocCheck(doc.id); // AI check against the requirement, in the background (checks.ai)
     scheduleUploadAnalysis({ documentId: doc.id }); // recognition + proposals, in the background
     void completeTasksForUpload(doc.id); // client tasks linked to this requirement are done (never throws)

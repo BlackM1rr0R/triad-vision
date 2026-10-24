@@ -27,6 +27,7 @@ import { copyDocumentToDrive, syncCaseFolder } from '../../lib/drive/caseFolders
 import { requireMinRole } from '../../middleware/auth.js';
 import { hasMissing, translateMany } from '../../lib/ai/translate.js';
 import { prepareCaseDocument, publicQuality, scheduleUploadAnalysis } from '../../lib/uploadAi/index.js';
+import { checkDocumentPhoto, photoCheckOnUpload } from '../../lib/photoCheck/index.js'; // biometric photo rules
 import { nextStepSummaries } from '../../lib/caseNext/nextStep.js';
 import { emitAutomationEvent } from '../../lib/automation/events.js';
 import { onLanguageCertAccepted } from '../../lib/german/progress.js';
@@ -241,6 +242,15 @@ adminCasesRouter.delete('/:id/documents/:docId', requireMinRole('SUPER_ADMIN'), 
   res.json({ ok: true, ...(await deleteCaseDocument(req, doc.id)) });
 });
 
+/** On-demand biometric photo check of a case document (stored on Document.photoCheck). */
+adminCasesRouter.post('/:id/documents/:docId/photo-check', async (req, res) => {
+  const doc = await prisma.document.findUnique({ where: { id: String(req.params.docId) }, select: { id: true, caseId: true } });
+  if (!doc || doc.caseId !== req.params.id) throw notFound('DOCUMENT_NOT_FOUND');
+  const photoCheck = await checkDocumentPhoto(doc.id);
+  if (!photoCheck) throw notFound('FILE_MISSING_ON_DISK');
+  res.json({ photoCheck });
+});
+
 adminCasesRouter.post('/:id/documents/:docId/review', async (req, res) => {
   const body = parse(
     z.object({ status: z.enum(['ACCEPTED', 'REJECTED', 'PENDING']), note: z.string().trim().max(1000).optional() }),
@@ -347,7 +357,8 @@ adminCasesRouter.post('/:id/documents', documentUpload.single('file'), async (re
     }
     // Smart uploads (not for contracts the agency sends): scan quality now, recognition in the background.
     const quality = body.stage === 'CONTRACT' ? null : publicQuality(await prepareCaseDocument(doc.id));
-    res.status(201).json({ document: doc, quality });
+    const photoCheck = body.stage === 'CONTRACT' ? null : await photoCheckOnUpload(doc.id); // biometric photo checklist (never throws)
+    res.status(201).json({ document: { ...doc, photoCheck }, quality, photoCheck });
     if (body.stage !== 'CONTRACT') scheduleUploadAnalysis({ documentId: doc.id });
   } catch (err) {
     await fs.unlink(path.join(config.uploads.privateDir, file.filename)).catch(() => undefined);

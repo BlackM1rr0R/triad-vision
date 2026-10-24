@@ -207,7 +207,7 @@ const az = {
     empty: 'Bu filtrlərə uyğun müraciət yoxdur.',
     exportVia: 'Report builder-də aç (Excel)',
     rowsTruncated: 'Cədvəldə ilk 2 000 müraciət göstərilir.',
-    sources: { INVOICE: 'Hesablar (işəgötürən)', SETTLEMENT: 'Müştəri ödənişləri', TRANSLATION: 'Tərcümələr' },
+    sources: { INVOICE: 'Hesablar (işəgötürən)', SETTLEMENT: 'Müştəri ödənişləri', TRANSLATION: 'Tərcümələr', CLIENT_INVOICE: 'Müştəri hesab-fakturaları' },
     costCats: {
       TRANSLATION: 'Tərcümə',
       COURIER: 'Kuryer',
@@ -490,7 +490,7 @@ const de: Copy = {
     empty: 'Keine Fälle für diese Filter.',
     exportVia: 'Im Berichtsgenerator öffnen (Excel)',
     rowsTruncated: 'Die Tabelle zeigt die ersten 2 000 Fälle.',
-    sources: { INVOICE: 'Rechnungen (Arbeitgeber)', SETTLEMENT: 'Kundenzahlungen', TRANSLATION: 'Übersetzungen' },
+    sources: { INVOICE: 'Rechnungen (Arbeitgeber)', SETTLEMENT: 'Kundenzahlungen', TRANSLATION: 'Übersetzungen', CLIENT_INVOICE: 'Kundenrechnungen' },
     costCats: {
       TRANSLATION: 'Übersetzung',
       COURIER: 'Kurier',
@@ -771,7 +771,7 @@ const en: Copy = {
     empty: 'No cases match these filters.',
     exportVia: 'Open in the report builder (Excel)',
     rowsTruncated: 'The table shows the first 2,000 cases.',
-    sources: { INVOICE: 'Invoices (employers)', SETTLEMENT: 'Client payments', TRANSLATION: 'Translations' },
+    sources: { INVOICE: 'Invoices (employers)', SETTLEMENT: 'Client payments', TRANSLATION: 'Translations', CLIENT_INVOICE: 'Client invoices' },
     costCats: {
       TRANSLATION: 'Translation',
       COURIER: 'Courier',
@@ -1052,7 +1052,7 @@ const ru: Copy = {
     empty: 'Нет дел по этим фильтрам.',
     exportVia: 'Открыть в конструкторе отчётов (Excel)',
     rowsTruncated: 'В таблице показаны первые 2 000 дел.',
-    sources: { INVOICE: 'Счета (работодатели)', SETTLEMENT: 'Платежи клиентов', TRANSLATION: 'Переводы' },
+    sources: { INVOICE: 'Счета (работодатели)', SETTLEMENT: 'Платежи клиентов', TRANSLATION: 'Переводы', CLIENT_INVOICE: 'Счета клиентов' },
     costCats: {
       TRANSLATION: 'Перевод',
       COURIER: 'Курьер',

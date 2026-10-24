@@ -77,7 +77,7 @@ const LANGUAGE_NAMES: Record<SeoLocale, string> = { az: 'Azərbaycan', de: 'Deut
 // Same structure as the site header (For workers, For employers, Visas, Guides, Contact + Tools) and footer.
 const NAV = ['/for-workers', '/for-employers', '/visas', '/guides', '/contact', '/tools'];
 const TOOLS = ['/uygunluq-testi', '/eligibility', '/compare-visas', '/chancenkarte-calculator', '/blue-card-check', '/salary-calculator', '/cost-calculator', '/anerkennung', '/calculator', '/cities', '/map', '/tools'];
-const FOOTER = ['/jobs', '/ausbildung', '/services', '/cooperation', '/partners', '/stories', '/events', '/news', '/faq', '/booking', '/about', '/impressum', '/privacy', '/accessibility'];
+const FOOTER = ['/jobs', '/ausbildung', '/services', '/packages', '/cooperation', '/partners', '/stories', '/events', '/news', '/faq', '/booking', '/about', '/impressum', '/privacy', '/accessibility'];
 /** Links of the employer landing page besides its services. */
 const EMPLOYER_LINKS = ['/cooperation', '/employers/register', '/partners', '/stories', '/booking'];
 
@@ -292,6 +292,19 @@ export const renderBody = (rawPath: string, data: SeoData): string => {
       case '/services':
         out.push(serviceList(), cta);
         break;
+      case '/packages': {
+        // Service packages: name, summary, price (VAT included) and what is included.
+        const pkgs = data.packages ?? [];
+        const price = (c: number, cur: string) => new Intl.NumberFormat('de-DE', { style: 'currency', currency: cur }).format(c / 100).replace(/ /g, ' ');
+        out.push(
+          pkgs
+            .map((p) => `<section><h2>${e(collapse(pick(p.title, lng)))}</h2><p>${e(collapse(pick(p.summary, lng)))}</p><p><strong>${e(price(p.priceCents, p.currency))}</strong></p>${section(t.features, list(pickList(p.features, lng)))}</section>`)
+            .join(''),
+          section(t.services, serviceList()),
+          cta,
+        );
+        break;
+      }
       case '/guides':
         out.push(guideList(guides), cta);
         break;

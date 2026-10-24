@@ -23,6 +23,7 @@ import { ExpiryEditor } from '@/components/expiry/Expiry';
 import { AiDocActions } from '@/components/aiDocs/AiDocActions';
 // Smart uploads: "AI · type" chip with the suggestion card, "Low quality", and "Accept all suggestions (N)".
 import { CaseAcceptAllBar, CaseDocAiChip } from '@/components/uploadAi/StaffChips';
+import { PHOTO_KEYS, PhotoCheckBadge, photoCheckOf } from '@/components/uploadAi/PhotoCheckNotice'; // biometric photo rules badge
 
 type Stage = 'INITIAL' | 'EMBASSY';
 
@@ -89,6 +90,7 @@ const DocRow = ({ c, doc, requirementKey }: { c: CaseDetail; doc: CaseDocument; 
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5">
           <span className={clsx('badge whitespace-nowrap', DOC_STATUS_TONE[doc.status])}>{docStatusLabel(doc.status)}</span>
           <DocCheckBadge checks={(doc as CaseDocument & { checks?: unknown }).checks} />
+          {requirementKey && PHOTO_KEYS.includes(requirementKey) && <PhotoCheckBadge check={photoCheckOf((doc as CaseDocument & { photoCheck?: unknown }).photoCheck)} caseId={c.id} docId={doc.id} />}
           <AiDocActions docId={doc.id} checks={(doc as CaseDocument & { checks?: unknown }).checks} name={doc.originalName} mimeType={doc.mimeType} onChanged={refresh} />
           <CaseDocAiChip caseId={c.id} docId={doc.id} onChanged={refresh} />
           {/* validity date: chip (green/amber/red) + date picker to set or clear it */}

@@ -240,6 +240,8 @@ export interface SeoData {
   leadMagnets?: { slug: string; title: unknown; description: unknown; coverUrl: string | null; updatedAt: Date }[];
   /** Blue Card / 45+ thresholds of the current year (/compare-visas FAQ). Optional for older fixtures. */
   compareThresholds?: CompareThresholds;
+  /** Published service packages (/packages: Offer JSON-LD, crawlable body). Optional for older fixtures. */
+  packages?: { slug: string; tier: string; title: unknown; summary: unknown; features: unknown; priceCents: number; currency: string; updatedAt: Date }[];
 }
 
 const SEO_FIELDS = { seoTitle: true, seoDescription: true, ogImage: true, noindex: true } as const;
@@ -317,7 +319,7 @@ const loadSeoData = async (): Promise<SeoData> => {
     }),
     prisma.guidePage.findMany({ where: { published: true }, orderBy: [{ key: 'asc' }, { locale: 'asc' }] }),
   ]);
-  const [testimonials, leadMagnets, caseAi] = await Promise.all([
+  const [testimonials, leadMagnets, caseAi, packages] = await Promise.all([
     prisma.testimonial.findMany({
       where: { published: true },
       orderBy: { sortOrder: 'asc' },
@@ -325,6 +327,8 @@ const loadSeoData = async (): Promise<SeoData> => {
     }),
     prisma.leadMagnet.findMany({ where: { published: true }, orderBy: { createdAt: 'asc' }, select: { slug: true, title: true, description: true, coverUrl: true, updatedAt: true } }),
     getCaseAiSettings(),
+    // Service packages (/packages): cards, Offer JSON-LD, crawlable body.
+    prisma.servicePackage.findMany({ where: { published: true }, orderBy: [{ sortOrder: 'asc' }, { priceCents: 'asc' }], select: { slug: true, tier: true, title: true, summary: true, features: true, priceCents: true, currency: true, updatedAt: true } }),
   ]);
   const count = rating._count.rating;
   return {
@@ -337,6 +341,7 @@ const loadSeoData = async (): Promise<SeoData> => {
     guides,
     testimonials,
     leadMagnets,
+    packages,
     compareThresholds: currentThresholds(caseAi),
     landings: await publishedLandingsForSeo(),
     settings: Object.fromEntries(settings.map((s) => [s.key, s.value])),
@@ -753,6 +758,33 @@ export const resolvePage = (path: string, lng: SeoLocale, data: SeoData): Resolv
       if (ld) resolved.jsonLd.push(ld);
     }
     if (path === '/stories') resolved.jsonLd.push(...storyVideosLd(data, lng));
+    if (path === '/packages' && (data.packages ?? []).length) {
+      // One Service with an OfferCatalog: each package is an Offer with its price (VAT included).
+      resolved.jsonLd.push({
+        '@context': 'https://schema.org',
+        '@type': 'Service',
+        name: textIn(page.title, lng),
+        description: textIn(page.description, lng),
+        serviceType: 'Visa and relocation support',
+        provider: { '@id': organizationId() },
+        areaServed: SERVED_COUNTRIES.map((n) => ({ '@type': 'Country', name: n })),
+        url,
+        hasOfferCatalog: {
+          '@type': 'OfferCatalog',
+          name: textIn(page.name, lng),
+          itemListElement: (data.packages ?? []).map((p) => ({
+            '@type': 'Offer',
+            name: collapse(pick(p.title, lng)),
+            description: truncate(collapse(pick(p.summary, lng)), 300),
+            price: (p.priceCents / 100).toFixed(2),
+            priceCurrency: p.currency,
+            availability: 'https://schema.org/InStock',
+            url,
+            itemOffered: { '@type': 'Service', name: collapse(pick(p.title, lng)), category: p.tier },
+          })),
+        },
+      });
+    }
     if (path === '/tools') {
       // The tools hub: an ItemList of every tool page (same groups and order as the page).
       const items = TOOL_GROUPS.flatMap((g) => g.paths).filter((p) => STATIC_PAGES[p]);
@@ -1151,6 +1183,7 @@ export const sitemapUrls = (data: SeoData, group: SitemapGroup): SitemapUrl[] =>
         '/jobs': latest(jobs.map((j) => j.updatedAt)),
         '/events': latest((data.events ?? []).map((e) => e.updatedAt)),
         '/guides': latest((data.guides ?? []).map((g) => g.updatedAt)),
+        '/packages': latest((data.packages ?? []).map((p) => p.updatedAt)),
       };
       return SITEMAP_STATIC.flatMap((path) =>
         allLanguages(path, path === '/' ? latest(Object.values(sectionLastmod)) : (sectionLastmod[path] ?? STATIC_LASTMOD)),

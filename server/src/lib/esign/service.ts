@@ -14,6 +14,7 @@ import { esignText, formatDay } from './texts.js';
 import { maskEmail } from './otp.js';
 import { maskPhone, normalizePhone, smsConfigured } from '../messaging/providers.js';
 import { saveSignedCopyToDrive } from '../driveIntel/signedCopy.js';
+import { officialFormSigned } from '../officialForms/signedHook.js';
 import { isImpersonating } from '../privacy/impersonationContext.js';
 
 /**
@@ -671,6 +672,7 @@ const afterCompletion = async (r: RequestWithSigners, built: { pdf: Buffer; sha2
     }
 
     await saveSignedCopyToDrive(id, built.pdf).catch((err) => console.error('[esign] signed copy for the drive failed', id, err)); // started from the drive: signed PDF next to the original
+    await officialFormSigned(id, built.pdf); // official form (Erklärung zum Beschäftigungsverhältnis) signed by the employer → SIGNED + drive + staff notified
 
     // Everyone gets the signed PDF.
     const attachment = { filename: `${safeFileBase(r.title)}-signed.pdf`, content: built.pdf, contentType: 'application/pdf' };
@@ -689,6 +691,8 @@ const afterCompletion = async (r: RequestWithSigners, built: { pdf: Buffer; sha2
       await notifyUser(s.userId, { type: 'SIGNATURE_COMPLETED', title: t.completedTitle, body: t.completedBody({ title: r.title, sha: built.sha256 }), link: portalSignLink(user.role, s.id), caseId: r.caseId ?? undefined, email: false });
     }
     await notifyCreator(r, (t) => ({ title: t.completedTitle, body: t.completedBody({ title: r.title, sha: built.sha256 }) }));
+    // Package order contract signed → client account, case, payment plan, first invoice (lazy import: no import cycle; never throws).
+    await (await import('../billing/packages.js')).onSignatureCompleted(id);
   }
 };
 

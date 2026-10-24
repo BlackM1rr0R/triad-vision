@@ -18,6 +18,7 @@ import { checkCaseDocument, runChecks, targetForVaultKind, vaultDir } from '../l
 import { vaultDto, vaultKindsFor } from '../lib/docCheck/vault.js';
 import { scheduleAiDocCheck } from '../lib/aiDocs/docCheck.js';
 import { prepareCaseDocument, publicQuality, scheduleUploadAnalysis } from '../lib/uploadAi/index.js';
+import { photoCheckOnUpload } from '../lib/photoCheck/index.js'; // biometric photo rules (PHOTO / PHOTO_2)
 import { emitAutomationEvent } from '../lib/automation/events.js';
 
 /**
@@ -302,7 +303,8 @@ vaultRouter.post('/:id/use', async (req, res) => {
     const checks = await checkCaseDocument(doc.id);
     await audit(req, 'vault.use', v.id, { caseId: c.id, documentId: doc.id });
     const quality = publicQuality(await prepareCaseDocument(doc.id)); // smart uploads: scan quality, never throws
-    res.status(201).json({ document: { ...doc, checks }, checks, quality });
+    const photoCheck = await photoCheckOnUpload(doc.id); // biometric photo checklist (never throws)
+    res.status(201).json({ document: { ...doc, checks, photoCheck }, checks, quality, photoCheck });
     scheduleAiDocCheck(doc.id); // AI check against the requirement (checks.ai)
     scheduleUploadAnalysis({ documentId: doc.id }); // recognition + proposals, in the background
   } catch (err) {

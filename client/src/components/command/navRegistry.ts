@@ -53,6 +53,7 @@ import {
   MessageSquareText,
   MessagesSquare,
   Newspaper,
+  Package,
   PanelsTopLeft,
   PhoneCall,
   PlaneLanding,
@@ -198,6 +199,7 @@ export const STAFF_NAV: StaffNavItem[] = [
   a('clientTasks', '/admin/client-tasks', ClipboardList, 'work'),
   a('requirements', '/admin/requirements', ListChecks, 'work'),
   a('signatures', '/admin/signatures', FileSignature, 'work'),
+  a('officialForms', '/admin/official-forms', FileText, 'work'), // official fillable PDFs: templates + mapping (ADMIN edits, STAFF uses)
   a('expiring', '/admin/expiring', Hourglass, 'work'),
   a('originals', '/admin/originals', Vault, 'work', { module: 'originals' }),
   a('arrivals', '/admin/arrivals', PlaneLanding, 'work'),
@@ -234,6 +236,8 @@ export const STAFF_NAV: StaffNavItem[] = [
   a('reviews', '/admin/reviews', Star, 'comms', { module: 'reviews' }),
   // Maliyyə
   a('invoices', '/admin/invoices', Receipt, 'finance', { adminOnly: true }),
+  a('clientInvoices', '/admin/client-invoices', Receipt, 'finance', { adminOnly: true }), // invoices + payments of private clients
+  a('packages', '/admin/packages', Package, 'finance', { adminOnly: true }), // service packages + online orders
   a('settlements', '/admin/settlements', Banknote, 'finance', { module: 'settlements' }),
   a('finance', '/admin/finance', Wallet, 'finance', { adminOnly: true }),
   a('profitability', '/admin/profitability', TrendingUp, 'finance', { adminOnly: true }),
@@ -326,11 +330,11 @@ export type HubKey = 'today' | 'cases' | 'clients' | 'employers' | 'comms' | 'fi
  */
 export const HUBS: { key: HubKey; icon: LucideIcon; tabs: string[] }[] = [
   { key: 'today', icon: LayoutDashboard, tabs: ['today', 'dashboard', 'kanban', 'tasks', 'clientTasks'] },
-  { key: 'cases', icon: FolderKanban, tabs: ['cases', 'requirements', 'docsAudit', 'expiring', 'originals', 'signatures', 'caseForms', 'contractTemplates', 'translations'] },
+  { key: 'cases', icon: FolderKanban, tabs: ['cases', 'requirements', 'docsAudit', 'expiring', 'originals', 'signatures', 'officialForms', 'caseForms', 'contractTemplates', 'translations'] },
   { key: 'clients', icon: Users, tabs: ['candidates', 'register', 'duplicates', 'checkIns', 'arrivals', 'journey', 'examDates', 'waitingRoom'] },
   { key: 'employers', icon: Building2, tabs: ['companies', 'vacancies', 'candidateRequests', 'interviews', 'employmentContracts', 'interviewPrep'] },
   { key: 'comms', icon: MessageSquareText, tabs: ['messaging', 'mailboxes', 'calls', 'campaigns', 'announcements', 'surveys', 'reviews'] },
-  { key: 'finance', icon: Wallet, tabs: ['finance', 'invoices', 'quotes', 'settlements', 'profitability', 'reports'] },
+  { key: 'finance', icon: Wallet, tabs: ['finance', 'invoices', 'clientInvoices', 'packages', 'quotes', 'settlements', 'profitability', 'reports'] },
   { key: 'leads', icon: Target, tabs: ['inquiries', 'bookings', 'analytics', 'referralPartners', 'agents'] },
   {
     key: 'site',

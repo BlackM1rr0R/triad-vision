@@ -18,6 +18,8 @@ import { impersonationRouter } from './routes/admin/privacyTools.js';
 import { impersonation } from './lib/privacy/impersonation.js';
 import { maskResponses } from './lib/privacy/mask.js';
 import { accountRouter } from './routes/account.js';
+import { accountBillingRouter } from './routes/billing.js'; // client portal: invoices, receipts, payment plan
+import { packagesRouter } from './routes/packages.js'; // public service packages + online order
 import { messagingRouter } from './routes/messaging.js';
 import { messagingPlusRouter } from './routes/messagingPlus.js';
 import { documentsRouter } from './routes/documents.js';
@@ -67,9 +69,13 @@ import { fileLockedHandler } from './lib/driveCollab/lock.js';
 import { sheetsRouter } from './routes/sheets.js';
 import { tasksRouter } from './routes/tasks.js';
 import { signRouter, signaturesRouter } from './routes/signatures.js';
+import { photoCheckRouter } from './routes/photoCheck.js'; // on-demand biometric passport photo check
 import { aiRouter } from './routes/ai.js';
 import { aiWritingRouter } from './routes/aiWriting.js';
 import { companyAiRouter } from './routes/companyAi.js';
+import { companyFormsRouter } from './routes/companyForms.js'; // official forms the employer completes and signs
+import { companyWorkersRouter } from './routes/companyWorkers.js';
+import { companyReportsRouter } from './routes/companyReports.js';
 import { publicAiRouter } from './routes/publicAi.js';
 import { aiDocsRouter } from './routes/aiDocs.js';
 import { originalsRouter } from './routes/originals.js';
@@ -163,18 +169,24 @@ export const createApp = () => {
   app.use('/api/drive', driveRouter);
   app.use('/api/tasks', tasksRouter);
   app.use('/api/sign', signRouter);
+  app.use('/api/photo-check', photoCheckRouter); // "check my passport photo" (signed in, nothing stored)
   app.use('/api/angebot', quotePublicRouter); // public quote link (accept / decline)
+  app.use('/api/packages', packagesRouter); // service packages: list, order, order status (token)
   app.use('/api/share', shareRouter);
   app.use('/api/candidate-share', candidateShareRouter); // employer share link of a candidate (no login)
   app.use('/api/intro-video', introVideoRouter); // candidate's video introduction for employers
   app.use('/api/signatures', signaturesRouter);
   app.use('/api/admin/impersonate', impersonationRouter); // before the staff-only admin router (req.user is the client then)
   app.use('/api/admin', adminRouter);
+  app.use('/api/account/billing', accountBillingRouter); // before the account router
   app.use('/api/account', accountRouter);
   app.use('/api/company/invoices', companyInvoicesRouter);
   app.use('/api/company/quotes', companyQuotesRouter);
   app.use('/api/company/requests', companyRequestsRouter);
   app.use('/api/company/ai', companyAiRouter);
+  app.use('/api/company/forms', companyFormsRouter); // Erklärung zum Beschäftigungsverhältnis: complete + sign
+  app.use('/api/company/workers', companyWorkersRouter); // "my workers" panel, worker drawer, CSV / Excel export
+  app.use('/api/company/reports', companyReportsRouter); // monthly employer reports (list, PDF, e-mail opt-out)
   app.use('/api/company', companyRouter);
   app.use('/api/vacancies', vacanciesRouter);
   app.use('/api/booking', bookingRouter);

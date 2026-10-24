@@ -25,6 +25,7 @@ import { AiCheckCard } from '@/components/aiDocs/AiCheckCard';
 import { QualityNotice } from '@/components/uploadAi/QualityNotice';
 import { RecognitionNotice } from '@/components/uploadAi/RecognitionNotice';
 import { qualityOf, type Quality } from '@/components/uploadAi/api';
+import { PHOTO_KEYS, PhotoCheckNotice, photoCheckOf, type PhotoCheck } from '@/components/uploadAi/PhotoCheckNotice'; // biometric photo checklist
 import { optimizeImages } from '@/lib/imageCompress';
 import { ScanCameraButton } from '@/components/scanner/ScanCameraButton'; // in-browser camera document scanner
 import DocGuideButton from '@/components/clientData/DocGuideButton'; // "Necə almalı?" guide per requirement key
@@ -91,6 +92,7 @@ const DocRow = ({
         <div className="ml-auto flex shrink-0 items-center gap-1">
         {/* automatic check findings (warnings / problems only) */}
         <DocCheckBadge checks={(doc as CaseDocument & { checks?: unknown }).checks} showOk={false} />
+        {requirementKey && PHOTO_KEYS.includes(requirementKey) && photoCheckOf((doc as CaseDocument & { photoCheck?: unknown }).photoCheck)?.level === 'BAD' && <XCircle className="size-4 text-danger" aria-label={t('photoCheck.badge.BAD')} />}
         {doc.status !== 'REJECTED' && <ExpiryChip expiresAt={expiresAt} requirementKey={requirementKey} />}
         <DocStatusBadge status={doc.status} className="mr-1" />
           <a
@@ -165,6 +167,7 @@ const RequirementCard = ({
   const { gate, dialog: checkDialog } = useDocCheckGate();
   const [lastChecks, setLastChecks] = useState<unknown>(null);
   const [lastQuality, setLastQuality] = useState<Quality | null>(null);
+  const [lastPhoto, setLastPhoto] = useState<PhotoCheck | null>(null);
   const docs = [...req.documents].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   const description = tr(req.description);
 
@@ -172,6 +175,7 @@ const RequirementCard = ({
     if (!(await gate(file))) return; // the client chose another file
     setLastChecks(null);
     setLastQuality(null);
+    setLastPhoto(null);
     const form = new FormData();
     form.append('requirementId', req.id);
     form.append('file', await optimizeImages([file]).then((l) => l[0]));
@@ -182,6 +186,7 @@ const RequirementCard = ({
       });
       setLastChecks(data.checks ?? null);
       setLastQuality(qualityOf(data));
+      setLastPhoto(photoCheckOf((data as { photoCheck?: unknown }).photoCheck));
       toast.success(t('portal.docs.uploaded'));
       await onChanged();
     } catch (err) {
@@ -223,6 +228,7 @@ const RequirementCard = ({
       });
       setLastChecks(data.checks ?? null);
       setLastQuality(qualityOf(data));
+      setLastPhoto(photoCheckOf((data as { photoCheck?: unknown }).photoCheck));
       toast.success(t('expiry.scan.done', { count: data.pages }));
       await onChanged();
       return true;
@@ -276,6 +282,7 @@ const RequirementCard = ({
         )}
         {open && lastChecks != null && <CheckResultNotice checks={lastChecks} onDismiss={() => setLastChecks(null)} />}
         {open && <QualityNotice quality={lastQuality} onRetake={(f) => void upload(f)} onDismiss={() => setLastQuality(null)} />}
+        {open && <PhotoCheckNotice check={lastPhoto} onRetake={(f) => void upload(f)} onDismiss={() => setLastPhoto(null)} />}
         {open && (
           <FileDrop
             onFile={upload}

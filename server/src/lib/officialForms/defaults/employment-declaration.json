@@ -1,0 +1,180 @@
+{
+  "key": "EMPLOYMENT_DECLARATION",
+  "title": "Erklärung zum Beschäftigungsverhältnis",
+  "version": "EzB-02-2024",
+  "url": "https://www.arbeitsagentur.de/datei/erklaerung-zum-beschaeftigungsverhaeltnis_ba047549.pdf",
+  "sha256": "789fddf0b8a440dc7c6f72299da3fcf56468d086a2defe9943eed72aa5ec9914",
+  "notes": "Bundesagentur für Arbeit, form EzB 02/2024 (AcroForm, 69 fields). Downloaded at runtime from arbeitsagentur.de; the PDF is not part of the repository. The employer reviews and signs it in the company portal. Not prefilled: residence since (9), degree / training details (26-36), overtime extent (39-40), collective agreement name / pay group (44-45), benefits in kind and variable pay (47-51), DVKA exemption (53-55).",
+  "fieldMap": {
+    "rbtn_1_Erklaerung": {
+      "source": "const",
+      "value": "zur Erteilung eines Aufenthaltstitels zum Zweck der Beschaeftigung"
+    },
+    "rbtn_2_Anlass": {
+      "source": "const",
+      "value": "Ersterteilung"
+    },
+    "txtf_3_Vorname": {
+      "source": "client.firstName"
+    },
+    "txtf_4_Nachname": {
+      "source": "client.lastName"
+    },
+    "txtf_5_Geburtsdatum": {
+      "source": "client.birthDate"
+    },
+    "rbtn_6_Geschlecht": {
+      "source": "client.sex",
+      "map": {
+        "M": "maennlich",
+        "F": "weiblich",
+        "X": "divers"
+      }
+    },
+    "txtf_7_Staatsangehoerigkeit": {
+      "source": "client.nationality"
+    },
+    "txtf_8_Wohnsitz": {
+      "source": "address.full"
+    },
+    "txtf_10_Firma": {
+      "source": "company.name"
+    },
+    "txtf_11_Strasse": {
+      "source": "company.street"
+    },
+    "txtf_12_Hausnummer": {
+      "source": "company.houseNumber"
+    },
+    "txtf_13_Postleitzahl": {
+      "source": "company.postalCode"
+    },
+    "txtf_14_Ort": {
+      "source": "company.city"
+    },
+    "txtf_15_Kontaktperson": {
+      "source": "company.contactName"
+    },
+    "txtf_16_Telefon": {
+      "source": "company.phone"
+    },
+    "txtf_17_E-Mail": {
+      "source": "company.email"
+    },
+    "txtf_18_Telefax": {
+      "source": "company.fax",
+      "optional": true
+    },
+    "txtf_19_Betriebsnummer": {
+      "source": "company.betriebsnummer"
+    },
+    "rbtn_20_Unternehmen_gegruendet": {
+      "source": "company.foundedRecently",
+      "map": {
+        "yes": "ja",
+        "no": "nein"
+      }
+    },
+    "txtf_21_Beschaeftigungsverhaeltniss": {
+      "source": "contract.startDate"
+    },
+    "rbtn_22_Beschaeftigungsverhaeltniss": {
+      "source": "contract.contractType",
+      "map": {
+        "UNLIMITED": "unbefristet",
+        "FIXED": "befristet",
+        "AUSBILDUNG": "befristet"
+      }
+    },
+    "txtf_22_Beschaeftigungsverhaeltniss": {
+      "source": "contract.endDate",
+      "optional": true
+    },
+    "rbtn_23_Dritte": {
+      "source": "employment.leasedToThirdParty",
+      "map": {
+        "yes": "ja",
+        "no": "nein"
+      }
+    },
+    "rbtn_24_Arbeitsort": {
+      "source": "employment.workplaceMode",
+      "map": {
+        "EMPLOYER_SEAT": "Arbeitsort entspricht dem Arbeitgeber-Sitz",
+        "CHANGING": "Arbeitnehmerin oder Arbeitnehmer wird an wechselnden Arbeits-/Einsatzorten beschaeftigt",
+        "ADDRESS": "Der Arbeitsort befindet sich unter folgender Adresse"
+      }
+    },
+    "txtf_24_Arbeitsort_Adresse": {
+      "source": "employment.workplaceAddress",
+      "optional": true
+    },
+    "txtf_25_Berufsbezeichnung": {
+      "source": "employment.jobTitleDescription"
+    },
+    "chbx_zuE_1v4": {
+      "source": "client.education",
+      "optional": true,
+      "when": "school"
+    },
+    "chbx_zuE_2v4": {
+      "source": "client.education",
+      "optional": true,
+      "when": "university"
+    },
+    "chbx_zuE_3v4": {
+      "source": "client.education",
+      "optional": true,
+      "when": "vocational"
+    },
+    "rbtn_37_Arbeitszeit": {
+      "source": "contract.workingTime",
+      "map": {
+        "FULL": "Vollzeit",
+        "PART": "Teilzeit",
+        "MINI": "Geringfuegige Beschaeftigung"
+      }
+    },
+    "txtf_37_Arbeitsstunden_Woche": {
+      "source": "contract.weeklyHours"
+    },
+    "rbtn_38_Ueberstunden": {
+      "source": "employment.overtime",
+      "map": {
+        "yes": "ja",
+        "no": "nein - weiter mit Abschnitt I."
+      }
+    },
+    "txtf_41_Urlaubsanpruch": {
+      "source": "contract.vacationDays"
+    },
+    "rbtn_42_Arbeitgeber_tarifgebunden": {
+      "source": "employment.collectiveAgreement",
+      "map": {
+        "yes": "ja",
+        "no": "nein - weiter mit 46"
+      }
+    },
+    "chbx_46_Arbeitsentgelt": {
+      "source": "const",
+      "value": "pro Monat"
+    },
+    "txtf_46_Entgelt_pro_Monat": {
+      "source": "contract.grossMonthly",
+      "format": "money"
+    },
+    "rbtn_52_besteht_Versicherungspflicht": {
+      "source": "employment.socialInsurance",
+      "map": {
+        "yes": "ja - weiter mit 54",
+        "no": "nein"
+      }
+    },
+    "txtf_57_Ort": {
+      "source": "company.city"
+    },
+    "txtf_58_Datum": {
+      "source": "meta.today"
+    }
+  }
+}

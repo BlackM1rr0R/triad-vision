@@ -21,6 +21,7 @@ import { useOverview } from './useOverview';
 /** Kinds of GET /api/account/next-step (server: lib/account/nextStep.ts). */
 export type NextKind =
   | 'ACCEPT_LEGAL'
+  | 'PAY_INVOICE'
   | 'FIX_DOCS'
   | 'UPLOAD_DOCS'
   | 'SUBMIT_DOCS'
@@ -57,7 +58,7 @@ export interface NextStep {
   primary: NextAction | null;
   secondary: NextAction[];
   waiting: { side: 'TEAM' | 'EMBASSY' | 'NONE'; expectedBy: string | null } | null;
-  counts: { actions: number; unreadMessages: number; unreadNotifications: number; pendingSignatures: number; pendingLegal: number; openCheckIns: number };
+  counts: { actions: number; unreadMessages: number; unreadNotifications: number; pendingSignatures: number; pendingLegal: number; openCheckIns: number; openInvoices?: number; hasBilling?: boolean };
 }
 
 // Under the overview key: every invalidation of the overview (upload, signature, status change) refreshes it too.
@@ -118,6 +119,7 @@ export function usePortalNav() {
     hasOpenCase: cases.some((c) => !FINAL.includes(c.status)),
     hasSignatures,
     openDocActions: actions.some((a) => DOC_KINDS.includes(a.kind)),
+    hasPayments: !!next.data?.counts.hasBilling,
   });
 
   const badges: SectionBadges = {
@@ -126,6 +128,7 @@ export function usePortalNav() {
     pendingSignatures: signatures ? signatures.filter((s) => s.myTurn).length : (next.data?.counts.pendingSignatures ?? 0),
     pendingLegal: legal.data ? legal.data.pending.length : (next.data?.counts.pendingLegal ?? 0),
     actions: next.data?.counts.actions ?? 0,
+    openInvoices: next.data?.counts.openInvoices ?? 0,
   };
   const allSubs = SECTIONS.flatMap((s) => subs[s]);
   const sectionBadges = Object.fromEntries(SECTIONS.map((s) => [s, sectionBadge(s, allSubs, badges)])) as Record<SectionKey, number>;

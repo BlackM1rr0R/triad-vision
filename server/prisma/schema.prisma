@@ -488,6 +488,8 @@ model Document {
   uploadedById     String
   uploadedBy       User                 @relation(fields: [uploadedById], references: [id])
   createdAt        DateTime             @default(now())
+  /// Biometric photo check result (passport photo rules: size, ratio, background, face area …).
+  photoCheck       Json?
 
   @@index([caseId, stage])
 }
@@ -5019,4 +5021,188 @@ model LeadMagnet {
   downloads   Int      @default(0)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+// ─── Official forms, client billing, service packages, employer reports ─
+
+/// An official fillable PDF (national visa application, Erklärung zum Beschäftigungsverhältnis …) with its field mapping.
+model OfficialFormTemplate {
+  id          String   @id @default(cuid())
+  key         String   @db.VarChar(60) // NATIONAL_VISA | EMPLOYMENT_DECLARATION | …
+  title       String   @db.VarChar(200)
+  version     String   @db.VarChar(40)
+  fileKey     String   @db.VarChar(300) // stored PDF
+  fieldMap    Json // { "<pdf field name>": { source: "client.lastName" | "const:…" | "contract.grossMonthly", format? } }
+  active      Boolean  @default(true)
+  notes       String?  @db.Text
+  createdById String?  @db.VarChar(40)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([key, version])
+  @@index([key, active])
+}
+
+/// One filled form for a case (values snapshot, generated PDF, employer signature).
+model OfficialFormFill {
+  id                 String    @id @default(cuid())
+  templateId         String    @db.VarChar(40)
+  caseId             String    @db.VarChar(40)
+  companyId          String?   @db.VarChar(40)
+  values             Json
+  missing            Json? // field names / data keys still empty
+  fileKey            String?   @db.VarChar(300)
+  driveNodeId        String?   @db.VarChar(40)
+  status             String    @default("DRAFT") @db.VarChar(20) // DRAFT | GENERATED | SENT_TO_EMPLOYER | SIGNED | SUBMITTED
+  signatureRequestId String?   @db.VarChar(40)
+  generatedAt        DateTime?
+  createdById        String?   @db.VarChar(40)
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  @@index([caseId])
+  @@index([companyId, status])
+}
+
+/// Invoice to a private client (service fee, translations, apostille …) — company invoices stay in Invoice.
+model ClientInvoice {
+  id            String    @id @default(cuid())
+  number        String    @unique @db.VarChar(32) // TV-KR-2026-0001
+  clientId      String    @db.VarChar(40)
+  caseId        String?   @db.VarChar(40)
+  issueDate     DateTime
+  dueDate       DateTime
+  currency      String    @default("EUR") @db.VarChar(3)
+  items         Json // [{ description, quantity, unitPriceCents, category? }]
+  netCents      Int
+  vatRate       Int       @default(19)
+  vatCents      Int
+  grossCents    Int
+  paidCents     Int       @default(0)
+  status        String    @default("DRAFT") @db.VarChar(20) // DRAFT | SENT | PARTIALLY_PAID | PAID | OVERDUE | CANCELLED
+  sentAt        DateTime?
+  paidAt        DateTime?
+  note          String?   @db.Text
+  planId        String?   @db.VarChar(40)
+  installmentId String?   @db.VarChar(40)
+  orderId       String?   @db.VarChar(40)
+  remindedAt    DateTime?
+  reminderCount Int       @default(0)
+  createdById   String?   @db.VarChar(40)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([clientId])
+  @@index([caseId])
+  @@index([status, dueDate])
+}
+
+model ClientPayment {
+  id           String   @id @default(cuid())
+  clientId     String   @db.VarChar(40)
+  invoiceId    String?  @db.VarChar(40)
+  caseId       String?  @db.VarChar(40)
+  amountCents  Int
+  currency     String   @default("EUR") @db.VarChar(3)
+  method       String   @db.VarChar(12) // CASH | BANK | CARD | OTHER
+  paidAt       DateTime
+  reference    String?  @db.VarChar(120)
+  note         String?  @db.VarChar(500)
+  recordedById String?  @db.VarChar(40)
+  createdAt    DateTime @default(now())
+
+  @@index([clientId, paidAt])
+  @@index([invoiceId])
+}
+
+/// Instalment plan for a client (e.g. 40 % on signing, 30 % at embassy, 30 % on approval).
+model PaymentPlan {
+  id          String   @id @default(cuid())
+  clientId    String   @db.VarChar(40)
+  caseId      String?  @db.VarChar(40)
+  title       String   @db.VarChar(200)
+  totalCents  Int
+  currency    String   @default("EUR") @db.VarChar(3)
+  status      String   @default("ACTIVE") @db.VarChar(12) // ACTIVE | COMPLETED | CANCELLED
+  orderId     String?  @db.VarChar(40)
+  createdById String?  @db.VarChar(40)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([clientId])
+  @@index([caseId])
+}
+
+model PaymentInstallment {
+  id          String    @id @default(cuid())
+  planId      String    @db.VarChar(40)
+  seq         Int
+  label       String?   @db.VarChar(160)
+  trigger     String?   @db.VarChar(40) // DATE | ON_SIGN | CASE_STATUS:<status>
+  dueDate     DateTime?
+  amountCents Int
+  invoiceId   String?   @db.VarChar(40)
+  status      String    @default("PENDING") @db.VarChar(12) // PENDING | INVOICED | PAID | OVERDUE | CANCELLED
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([planId, seq])
+  @@index([status, dueDate])
+}
+
+/// Public service package (Basic / Standard / Premium) a client can order and sign online.
+model ServicePackage {
+  id                 String   @id @default(cuid())
+  slug               String   @unique @db.VarChar(120)
+  tier               String   @db.VarChar(12) // BASIC | STANDARD | PREMIUM
+  visaTypes          Json? // VisaType[]; null = all
+  title              Json // L10n
+  summary            Json // L10n
+  features           Json // L10nList
+  priceCents         Int
+  currency           String   @default("EUR") @db.VarChar(3)
+  installments       Json? // [{ label: L10n, percent, trigger }]
+  contractTemplateId String?  @db.VarChar(40)
+  highlight          Boolean  @default(false)
+  published          Boolean  @default(false)
+  sortOrder          Int      @default(0)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+}
+
+model PackageOrder {
+  id                 String   @id @default(cuid())
+  packageId          String   @db.VarChar(40)
+  clientId           String?  @db.VarChar(40)
+  email              String   @db.VarChar(190)
+  name               String   @db.VarChar(160)
+  phone              String?  @db.VarChar(40)
+  locale             String   @default("az") @db.VarChar(8)
+  visaType           String?  @db.VarChar(30)
+  priceCents         Int
+  currency           String   @default("EUR") @db.VarChar(3)
+  status             String   @default("STARTED") @db.VarChar(12) // STARTED | SIGNED | ACTIVE | CANCELLED
+  signatureRequestId String?  @db.VarChar(40)
+  caseId             String?  @db.VarChar(40)
+  planId             String?  @db.VarChar(40)
+  tokenHash          String?  @unique @db.Char(64)
+  inquiryId          String?  @db.VarChar(40)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@index([status])
+  @@index([clientId])
+}
+
+/// Monthly PDF report to an employer about its workers (arrived, on the way, risks).
+model EmployerReport {
+  id        String    @id @default(cuid())
+  companyId String    @db.VarChar(40)
+  month     String    @db.VarChar(7) // YYYY-MM
+  fileKey   String?   @db.VarChar(300)
+  stats     Json
+  sentAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@unique([companyId, month])
 }

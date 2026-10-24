@@ -9,6 +9,7 @@ import { toastJobsError, useJobLabels } from '@/components/jobs/labels';
 import { SECTORS, type Company } from '@/components/jobs/types';
 import { EmailOtpCard } from '@/components/auth/EmailOtpCard';
 import { Section } from './shared';
+import { EmployerReportPrefs } from './CompanyReports';
 
 const FIELDS = ['name', 'legalForm', 'city', 'phone', 'address', 'vatId', 'website', 'contactName'] as const;
 type Field = (typeof FIELDS)[number];
@@ -96,6 +97,8 @@ export const CompanyProfile = ({ company }: { company: Company }) => {
       </Section>
       {/* Account security of the employer login: optional two-step login by email. */}
       <EmailOtpCard />
+      {/* Monthly PDF report about the company's workers by e-mail (opt-out per portal user). */}
+      <EmployerReportPrefs />
     </div>
   );
 };

@@ -26,6 +26,7 @@ import {
   Send,
   ShieldCheck,
   UserRound,
+  Wallet,
 } from 'lucide-react';
 import { buttonClass } from '@/components/ui/Button';
 import { Skeleton } from '@/components/ui/Skeleton';
@@ -35,6 +36,7 @@ import type { NextAction, NextKind, NextStep } from '@/components/portal/usePort
 
 export const KIND_ICON: Record<NextKind, LucideIcon> = {
   ACCEPT_LEGAL: ScrollText,
+  PAY_INVOICE: Wallet,
   FIX_DOCS: FilePen,
   UPLOAD_DOCS: FileUp,
   SUBMIT_DOCS: Send,

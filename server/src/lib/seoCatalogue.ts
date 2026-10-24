@@ -376,6 +376,26 @@ export const STATIC_PAGES: Record<string, StaticPageMeta> = {
       uk: 'Відкриті вакансії в Німеччині: водії, будівництво, готельний бізнес, Ausbildung та інші. Подавайте заявку з візовою підтримкою.',
     },
   },
+  // Service packages (Basic / Standard / Premium) with online order and e-signature.
+  '/packages': {
+    name: { az: 'Paketlər və qiymətlər', de: 'Pakete und Preise', en: 'Packages and prices', ru: 'Пакеты и цены', tr: 'Paketler ve fiyatlar', uk: 'Пакети та ціни' },
+    title: {
+      az: 'Xidmət paketləri və qiymətlər',
+      de: 'Servicepakete und Preise',
+      en: 'Service packages and prices',
+      ru: 'Пакеты услуг и цены',
+      tr: 'Hizmet paketleri ve fiyatlar',
+      uk: 'Пакети послуг і ціни',
+    },
+    description: {
+      az: 'Viza dəstəyi üçün Basic, Standard və Premium paketlər: daxil olanlar, qiymət, hissə-hissə ödəniş və onlayn müqavilə imzası.',
+      de: 'Basic, Standard und Premium für Ihr Visumverfahren: Leistungen, Preise, Ratenzahlung und Vertrag online unterschreiben.',
+      en: 'Basic, Standard and Premium packages for your visa process: what is included, prices, instalments and signing the contract online.',
+      ru: 'Пакеты Basic, Standard и Premium для визового процесса: что входит, цены, оплата частями и онлайн-подпись договора.',
+      tr: 'Vize süreciniz için Basic, Standard ve Premium paketler: kapsam, fiyatlar, taksitli ödeme ve sözleşmeyi online imzalama.',
+      uk: 'Пакети Basic, Standard і Premium для візового процесу: що входить, ціни, оплата частинами та онлайн-підпис договору.',
+    },
+  },
   '/booking': {
     name: { az: 'Görüş təyin et', de: 'Termin buchen', en: 'Book a call', ru: 'Запись', tr: 'Görüşme planla', uk: 'Запис' },
     title: {

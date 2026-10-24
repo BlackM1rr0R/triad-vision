@@ -20,7 +20,8 @@ import cookieConsent from './cookieConsent';
 import siteNav from './siteNav';
 import audience from './audience';
 import discover from './discover';
+import packages from './packages'; // service packages page (/packages)
 import { deepMerge } from '../merge';
 
 /** All tr copy of the public site in one resource object (loaded on demand by i18n/index.ts). */
-export default deepMerge([main, details, extra, ui, company, visa, booking, jobs, publicAi, growthPlus, growth, tools, cities, a11yStatement, site, legal, marketing, legalDocs, cookieConsent, siteNav, audience, discover]);
+export default deepMerge([main, details, extra, ui, company, visa, booking, jobs, publicAi, growthPlus, growth, tools, cities, a11yStatement, site, legal, marketing, legalDocs, cookieConsent, siteNav, audience, discover, packages]);
