@@ -30,6 +30,7 @@ import { NextUpCard } from './portal/NextUpCard';
 import { NextItems } from './portal/NextItems';
 import { ProgressSteps } from './portal/ProgressSteps';
 import { GermanTeaser, ReferralTeaser } from './portal/SecondaryCards';
+import { NextWhileYouWait } from '@/components/waitingRoom/NextWhileYouWait'; // "Next while you wait" (waiting room)
 import { caseHref, useNextUp } from './portal/useNextUp';
 
 registerCopy(pagesAccount);
@@ -72,6 +73,7 @@ const ActiveHome = ({ c, rest }: { c: ActiveCase; rest: HomeRest }) => {
         </div>
         {c.appointment && <AppointmentWidget c={c} />}
         <ManagerCard c={c} />
+        <NextWhileYouWait />
         <GermanTeaser />
         {rest.profile.percent < 100 && <ProfileCard percent={rest.profile.percent} missing={rest.profile.missing} />}
         {rest.hasApproved && <OnboardingCard />}

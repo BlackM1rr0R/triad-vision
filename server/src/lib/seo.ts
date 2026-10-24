@@ -4,25 +4,31 @@ import { cached } from './cache.js';
 import {
   GENERIC_META,
   PRIVATE_PREFIXES,
+  PREFIX_LOCALES,
   SECTION_OF,
   SEO_LOCALES,
   SITE_NAME,
   SITEMAP_STATIC,
   STATIC_PAGES,
+  textIn,
   type L10nText,
   type SeoLocale,
 } from './seoCatalogue.js';
+import { publishedLandingsForSeo, type LandingSeo } from './marketing/landing.js';
+import { guideAlternates, guidePath, parseFaq, type GuideRow } from './guides/service.js';
 
 /*
  * SEO for a client-rendered SPA.
  *
- * Language/URL strategy (the site has no per-language paths, only ?lng=az|de|en|ru):
- *   - Every page exists as 5 URLs: the bare path (x-default: the app picks the visitor's language) and
- *     path?lng=az|de|en|ru (one per language).
- *   - Each of those URLs is its own canonical (self-referencing canonicals are what hreflang requires):
- *     /visas?lng=de  → canonical /visas?lng=de,  /visas → canonical /visas.
- *   - The bare path is described in the default language (az).
- *   - hreflang alternates on every indexable page: az, de, en, ru → ?lng= URLs, x-default → bare path.
+ * Language/URL strategy:
+ *   - Azerbaijani lives at the root (/visas) and is also the x-default; every other language has a path
+ *     prefix: /de/visas, /en/visas, /ru/visas, /tr/visas, /uk/visas. Old ?lng=xx links are 301-redirected to
+ *     the prefixed URL by Caddy (deploy/Caddyfile); a ?lng= that still reaches us is treated as that language.
+ *   - Every URL is its own canonical (self-referencing canonicals are what hreflang requires).
+ *   - hreflang alternates on every indexable page: az (= x-default, the root URL), de, en, ru, tr, uk.
+ *     Guides have their own slug per language, so their alternates point to each language's slug; landing
+ *     pages exist in one language only (canonical to that language, no alternates).
+ *   - CMS content exists in az/de/en/ru; Turkish and Ukrainian pages fall back to the English text.
  *   - Breadcrumb/og:url links keep the requested language so a crawler never jumps languages.
  *
  * All page data comes from a handful of cached collections (cleared on CMS writes, TTL 5 min), so rendering
@@ -30,7 +36,7 @@ import {
  */
 
 export const DEFAULT_LOCALE: SeoLocale = 'az';
-const OG_LOCALE: Record<SeoLocale, string> = { az: 'az_AZ', de: 'de_DE', en: 'en_US', ru: 'ru_RU' };
+export const OG_LOCALE: Record<SeoLocale, string> = { az: 'az_AZ', de: 'de_DE', en: 'en_US', ru: 'ru_RU', tr: 'tr_TR', uk: 'uk_UA' };
 const TITLE_MAX = 60;
 const DESCRIPTION_MAX = 155;
 
@@ -51,7 +57,7 @@ export const safeJsonLd = (data: unknown) =>
     lit.replace(/[<>&{}\u2028\u2029]/g, (c) => `\\u${c.charCodeAt(0).toString(16).padStart(4, '0')}`),
   );
 
-const collapse = (s: string) => s.replace(/\s+/g, ' ').trim();
+export const collapse = (s: string) => s.replace(/\s+/g, ' ').trim();
 
 /** Shortens text on a word boundary, adding an ellipsis, so it fits `max` characters. */
 export const truncate = (s: string, max: number) => {
@@ -62,34 +68,41 @@ export const truncate = (s: string, max: number) => {
   return `${(space > max * 0.6 ? cut.slice(0, space) : cut).replace(/[\s,.;:—–-]+$/, '')}…`;
 };
 
-/** Reads one language from an L10n JSON value, falling back to az, then any language. */
+/** Language fallback order for CMS content: tr / uk read English, the others the default language (az). */
+const fallbackOrder = (lng: SeoLocale): string[] =>
+  lng === 'tr' || lng === 'uk' ? [lng, 'en', DEFAULT_LOCALE, ...SEO_LOCALES] : [lng, DEFAULT_LOCALE, ...SEO_LOCALES];
+
+/** Reads one language from an L10n JSON value, falling back (tr/uk → en, others → az), then any language. */
 export const pick = (value: unknown, lng: SeoLocale): string => {
   if (typeof value === 'string') return value;
   if (!value || typeof value !== 'object') return '';
   const v = value as Record<string, unknown>;
-  for (const key of [lng, DEFAULT_LOCALE, ...SEO_LOCALES]) {
+  for (const key of fallbackOrder(lng)) {
     if (typeof v[key] === 'string' && (v[key] as string).trim()) return v[key] as string;
   }
   return '';
 };
 
-const pickList = (value: unknown, lng: SeoLocale): string[] => {
+export const pickList = (value: unknown, lng: SeoLocale): string[] => {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return [];
   const v = value as Record<string, unknown>;
-  for (const key of [lng, DEFAULT_LOCALE, ...SEO_LOCALES]) {
+  for (const key of fallbackOrder(lng)) {
     const list = v[key];
     if (Array.isArray(list) && list.length) return list.filter((x): x is string => typeof x === 'string' && !!x.trim());
   }
   return [];
 };
 
-const pageTitle = (title: string) => {
+export const pageTitle = (title: string) => {
   const suffix = ` | ${SITE_NAME}`;
   return `${truncate(title, TITLE_MAX - suffix.length)}${suffix}`;
 };
 
+/** A hand-written SEO title is used as is (no site-name suffix), only shortened to fit. */
+const fullTitle = (title: string) => truncate(title, TITLE_MAX);
+
 /** Absolute image URL for og:image / JSON-LD, or null for data: URIs and other unusable values. */
-const absoluteImage = (src: string | null | undefined) => {
+export const absoluteImage = (src: string | null | undefined) => {
   if (!src) return null;
   if (/^https?:\/\//i.test(src)) return src;
   if (src.startsWith('/') && !src.startsWith('//')) return siteOrigin() + src;
@@ -117,19 +130,67 @@ export const normalizePath = (raw: unknown): string => {
 export const parseLocale = (raw: unknown): SeoLocale | null =>
   typeof raw === 'string' && (SEO_LOCALES as readonly string[]).includes(raw) ? (raw as SeoLocale) : null;
 
+/** "/de/visas" → { lng: 'de', path: '/visas' }; "/visas" → { lng: null, path: '/visas' }. Expects a normalised path. */
+export const splitLocalePath = (path: string): { lng: SeoLocale | null; path: string } => {
+  const m = /^\/([a-z]{2})(\/.*)?$/.exec(path);
+  if (m && (PREFIX_LOCALES as readonly string[]).includes(m[1])) return { lng: m[1] as SeoLocale, path: m[2] || '/' };
+  return { lng: null, path };
+};
+
 export const isPrivatePath = (path: string) =>
   PRIVATE_PREFIXES.some((prefix) => path === prefix || path.startsWith(`${prefix}/`));
 
-/** URL of `path` in a language (null = the bare, language-negotiated x-default URL). */
-export const pageUrl = (path: string, lng: SeoLocale | null) =>
-  `${siteOrigin()}${path === '/' ? '/' : encodeURI(path)}${lng ? `?lng=${lng}` : ''}`;
+/** Site path of `path` in a language (az and null = the root, x-default). */
+export const localizedPath = (path: string, lng: SeoLocale | null) =>
+  !lng || lng === DEFAULT_LOCALE ? path : `/${lng}${path === '/' ? '' : path}`;
+
+/** Absolute URL of `path` in a language (az and null = the root URL, which is also the x-default). */
+export const pageUrl = (path: string, lng: SeoLocale | null) => {
+  const p = localizedPath(path, lng);
+  return `${siteOrigin()}${p === '/' ? '/' : encodeURI(p)}`;
+};
+
+export type OgKind = 'visas' | 'services' | 'news' | 'jobs' | 'events' | 'guides';
+
+/** Dynamic Open Graph image (1200×630 PNG with the page title, lib/ogImage.ts). */
+export const ogImageUrl = (kind: OgKind, slug: string, lng: SeoLocale) =>
+  `${siteOrigin()}/og/${kind}/${lng}/${encodeURIComponent(slug)}.png`;
 
 // ─── data ─────────────────────────────────────────────────────────────
 
+/** SEO overrides edited in the CMS (Post / Service / VisaCategory). Optional so older fixtures stay valid. */
+interface SeoOverrides {
+  seoTitle?: unknown;
+  seoDescription?: unknown;
+  ogImage?: string | null;
+  noindex?: boolean;
+}
+
 export interface SeoData {
-  visas: { slug: string; title: unknown; summary: unknown; image: string; updatedAt: Date }[];
-  services: { slug: string; title: unknown; summary: unknown; image: string; updatedAt: Date }[];
-  posts: { slug: string; title: unknown; excerpt: unknown; cover: string; publishedAt: Date; updatedAt: Date }[];
+  visas: ({
+    slug: string;
+    title: unknown;
+    summary: unknown;
+    image: string;
+    updatedAt: Date;
+    visaLabel?: string;
+    body?: unknown;
+    items?: unknown;
+    requirements?: unknown;
+    documents?: unknown;
+    faq?: unknown;
+  } & SeoOverrides)[];
+  services: ({
+    slug: string;
+    title: unknown;
+    summary: unknown;
+    image: string;
+    updatedAt: Date;
+    body?: unknown;
+    features?: unknown;
+    steps?: unknown;
+  } & SeoOverrides)[];
+  posts: ({ slug: string; title: unknown; excerpt: unknown; cover: string; publishedAt: Date; updatedAt: Date; body?: unknown } & SeoOverrides)[];
   faqs: { question: unknown; answer: unknown }[];
   jobs: {
     slug: string;
@@ -163,25 +224,44 @@ export interface SeoData {
     language: string;
     updatedAt: Date;
   }[];
+  /** Published landing pages (/l/:slug, lib/marketing/landing.ts). Optional so older fixtures stay valid. */
+  landings?: LandingSeo[];
+  /** Published topic guides (/guides/:slug, every language with its own slug). Optional for older fixtures. */
+  guides?: GuideRow[];
 }
+
+const SEO_FIELDS = { seoTitle: true, seoDescription: true, ogImage: true, noindex: true } as const;
 
 const loadSeoData = async (): Promise<SeoData> => {
   const now = new Date();
-  const [visas, services, posts, faqs, jobs, settings, rating, events] = await Promise.all([
+  const [visas, services, posts, faqs, jobs, settings, rating, events, guides] = await Promise.all([
     prisma.visaCategory.findMany({
       where: { published: true },
       orderBy: { sortOrder: 'asc' },
-      select: { slug: true, title: true, summary: true, image: true, updatedAt: true },
+      select: {
+        slug: true,
+        title: true,
+        summary: true,
+        image: true,
+        updatedAt: true,
+        visaLabel: true,
+        body: true,
+        items: true,
+        requirements: true,
+        documents: true,
+        faq: true,
+        ...SEO_FIELDS,
+      },
     }),
     prisma.service.findMany({
       where: { published: true },
       orderBy: { sortOrder: 'asc' },
-      select: { slug: true, title: true, summary: true, image: true, updatedAt: true },
+      select: { slug: true, title: true, summary: true, image: true, updatedAt: true, body: true, features: true, steps: true, ...SEO_FIELDS },
     }),
     prisma.post.findMany({
       where: { published: true },
       orderBy: { publishedAt: 'desc' },
-      select: { slug: true, title: true, excerpt: true, cover: true, publishedAt: true, updatedAt: true },
+      select: { slug: true, title: true, excerpt: true, cover: true, publishedAt: true, updatedAt: true, body: true, ...SEO_FIELDS },
     }),
     prisma.faq.findMany({ where: { published: true }, orderBy: { sortOrder: 'asc' }, select: { question: true, answer: true } }),
     prisma.vacancy.findMany({
@@ -211,7 +291,7 @@ const loadSeoData = async (): Promise<SeoData> => {
         company: { select: { name: true, website: true } },
       },
     }),
-    prisma.setting.findMany({ where: { key: { in: ['contact', 'social', 'legal'] } } }),
+    prisma.setting.findMany({ where: { key: { in: ['contact', 'social', 'legal', 'analytics'] } } }),
     prisma.review.aggregate({
       where: { status: 'APPROVED', consentPublish: true, rating: { not: null } },
       _count: { rating: true },
@@ -223,6 +303,7 @@ const loadSeoData = async (): Promise<SeoData> => {
       take: 200,
       select: { slug: true, title: true, description: true, mode: true, address: true, startsAt: true, endsAt: true, language: true, updatedAt: true },
     }),
+    prisma.guidePage.findMany({ where: { published: true }, orderBy: [{ key: 'asc' }, { locale: 'asc' }] }),
   ]);
   const count = rating._count.rating;
   return {
@@ -232,6 +313,8 @@ const loadSeoData = async (): Promise<SeoData> => {
     faqs,
     jobs,
     events,
+    guides,
+    landings: await publishedLandingsForSeo(),
     settings: Object.fromEntries(settings.map((s) => [s.key, s.value])),
     rating: count >= 3 && rating._avg.rating != null ? { count, average: Math.round(rating._avg.rating * 10) / 10 } : null,
   };
@@ -240,10 +323,13 @@ const loadSeoData = async (): Promise<SeoData> => {
 export const getSeoData = () => cached('seo:data', loadSeoData);
 
 /** Open jobs whose closing date has not passed (the cached list may be up to a few minutes old). */
-const liveJobs = (data: SeoData) => {
+export const liveJobs = (data: SeoData) => {
   const now = Date.now();
   return data.jobs.filter((j) => !j.closesAt || j.closesAt.getTime() > now);
 };
+
+/** Indexable CMS items (the editor can mark a single item noindex). */
+export const indexable = <T extends { noindex?: boolean }>(items: T[]) => items.filter((i) => !i.noindex);
 
 // ─── page resolution ──────────────────────────────────────────────────
 
@@ -252,26 +338,39 @@ interface Crumb {
   path: string;
 }
 
-interface ResolvedPage {
+export interface ResolvedPage {
   title: string;
   description: string;
   index: boolean;
   image: string | null;
+  /** og:image when `image` is empty: the generated title card of this page. */
+  ogCard?: { kind: OgKind; slug: string } | null;
   ogType: 'website' | 'article';
   crumbs: Crumb[];
   jsonLd: unknown[];
   extraMeta: [string, string][]; // [property, content]
+  /**
+   * Language versions of this page. undefined = the same path in every language; an object = locale → path
+   * (guides: one slug per language); null = one language only (landing pages: no hreflang).
+   */
+  alternates?: Partial<Record<SeoLocale, string>> | null;
+  /** Language of the canonical URL when it differs from the requested one (single-language pages). */
+  canonicalLng?: SeoLocale;
 }
 
-const staticName = (path: string, lng: SeoLocale) => STATIC_PAGES[path]?.name[lng] ?? '';
+const staticName = (path: string, lng: SeoLocale) => (STATIC_PAGES[path] ? textIn(STATIC_PAGES[path].name, lng) : '');
 
 const organizationId = () => `${siteOrigin()}/#organization`;
 
+const asRecord = (v: unknown) => (v && typeof v === 'object' && !Array.isArray(v) ? (v as Record<string, unknown>) : {});
+
+const SERVED_COUNTRIES = ['Azerbaijan', 'Türkiye', 'Ukraine', 'Germany'];
+
 export const organizationLd = (data: SeoData, lng: SeoLocale) => {
   const origin = siteOrigin();
-  const contact = (data.settings.contact ?? {}) as Record<string, unknown>;
-  const social = (data.settings.social ?? {}) as Record<string, unknown>;
-  const legal = (data.settings.legal ?? {}) as Record<string, unknown>;
+  const contact = asRecord(data.settings.contact);
+  const social = asRecord(data.settings.social);
+  const legal = asRecord(data.settings.legal);
   const phone = typeof contact.phone === 'string' ? contact.phone : undefined;
   const email = typeof contact.email === 'string' ? contact.email : undefined;
   const offices = Array.isArray(contact.offices) ? (contact.offices as Record<string, unknown>[]) : [];
@@ -285,14 +384,11 @@ export const organizationLd = (data: SeoData, lng: SeoLocale) => {
     url: `${origin}/`,
     logo: { '@type': 'ImageObject', url: `${origin}/logo-512.png`, width: 512, height: 512 },
     image: `${origin}/og-default.png`,
-    description: GENERIC_META.description[lng],
+    description: textIn(GENERIC_META.description, lng),
     ...(email ? { email } : {}),
     ...(phone ? { telephone: phone } : {}),
-    areaServed: [
-      { '@type': 'Country', name: 'Azerbaijan' },
-      { '@type': 'Country', name: 'Germany' },
-    ],
-    knowsLanguage: ['az', 'de', 'en', 'ru'],
+    areaServed: SERVED_COUNTRIES.map((name) => ({ '@type': 'Country', name })),
+    knowsLanguage: [...SEO_LOCALES],
   };
   if (phone || email) {
     org.contactPoint = [
@@ -301,7 +397,7 @@ export const organizationLd = (data: SeoData, lng: SeoLocale) => {
         contactType: 'customer service',
         ...(phone ? { telephone: phone } : {}),
         ...(email ? { email } : {}),
-        availableLanguage: ['Azerbaijani', 'German', 'English', 'Russian'],
+        availableLanguage: ['Azerbaijani', 'German', 'English', 'Russian', 'Turkish', 'Ukrainian'],
       },
     ];
   }
@@ -327,6 +423,75 @@ export const organizationLd = (data: SeoData, lng: SeoLocale) => {
   return org;
 };
 
+const DAY_NAMES: Record<string, string> = { mon: 'Monday', tue: 'Tuesday', wed: 'Wednesday', thu: 'Thursday', fri: 'Friday', sat: 'Saturday', sun: 'Sunday' };
+const DAY_ORDER = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
+
+/** "Mon – Fri, 09:00 – 18:00" (the English contact.hours text) → OpeningHoursSpecification, or null. */
+export const parseOpeningHours = (text: string) => {
+  const days = /\b(mon|tue|wed|thu|fri|sat|sun)[a-z]*\.?\s*[–—-]\s*(mon|tue|wed|thu|fri|sat|sun)[a-z]*/i.exec(text);
+  const time = /(\d{1,2}):(\d{2})\s*[–—-]\s*(\d{1,2}):(\d{2})/.exec(text);
+  if (!days || !time) return null;
+  const from = DAY_ORDER.indexOf(days[1].toLowerCase());
+  const to = DAY_ORDER.indexOf(days[2].toLowerCase());
+  if (from < 0 || to < from) return null;
+  const hm = (h: string, m: string) => `${h.padStart(2, '0')}:${m}`;
+  return {
+    '@type': 'OpeningHoursSpecification',
+    dayOfWeek: DAY_ORDER.slice(from, to + 1).map((d) => DAY_NAMES[d]),
+    opens: hm(time[1], time[2]),
+    closes: hm(time[3], time[4]),
+  };
+};
+
+const COUNTRY_BY_CITY: Record<string, string> = { baku: 'AZ', ganja: 'AZ', sumgait: 'AZ', istanbul: 'TR', ankara: 'TR', izmir: 'TR', kyiv: 'UA', lviv: 'UA' };
+
+/** One ProfessionalService (a LocalBusiness) per office from the contact settings: NAP, geo, hours, sameAs. */
+export const localBusinessLd = (data: SeoData, lng: SeoLocale) => {
+  const origin = siteOrigin();
+  const contact = asRecord(data.settings.contact);
+  const social = asRecord(data.settings.social);
+  const phone = typeof contact.phone === 'string' ? contact.phone : undefined;
+  const email = typeof contact.email === 'string' ? contact.email : undefined;
+  const hours = parseOpeningHours(pick(contact.hours, 'en'));
+  const sameAs = Object.values(social).filter(isHttpUrl);
+  const offices = (Array.isArray(contact.offices) ? (contact.offices as Record<string, unknown>[]) : []).filter(
+    (o) => typeof o?.address === 'string' && (o.address as string).trim(),
+  );
+  return offices.map((o, i) => {
+    const cityEn = pick(o.city, 'en');
+    const country = COUNTRY_BY_CITY[cityEn.toLowerCase()] ?? (/\b\d{5}\b/.test(String(o.address)) ? 'DE' : undefined);
+    const lat = typeof o.lat === 'number' ? o.lat : null;
+    const lon = typeof o.lng === 'number' ? o.lng : null;
+    return {
+      '@context': 'https://schema.org',
+      '@type': 'ProfessionalService',
+      '@id': `${origin}/#office-${i + 1}`,
+      name: cityEn ? `${SITE_NAME} — ${pick(o.city, lng)}` : SITE_NAME,
+      url: pageUrl('/contact', lng),
+      image: `${origin}/og-default.png`,
+      logo: `${origin}/logo-512.png`,
+      description: textIn(GENERIC_META.description, lng),
+      ...(phone ? { telephone: phone } : {}),
+      ...(email ? { email } : {}),
+      address: {
+        '@type': 'PostalAddress',
+        streetAddress: collapse(String(o.address)),
+        ...(cityEn ? { addressLocality: cityEn } : {}),
+        ...(country ? { addressCountry: country } : {}),
+      },
+      ...(lat != null && lon != null ? { geo: { '@type': 'GeoCoordinates', latitude: lat, longitude: lon } } : {}),
+      ...(hours ? { openingHoursSpecification: [hours] } : {}),
+      ...(sameAs.length ? { sameAs } : {}),
+      areaServed: SERVED_COUNTRIES.map((name) => ({ '@type': 'Country', name })),
+      knowsLanguage: [...SEO_LOCALES],
+      parentOrganization: { '@id': organizationId() },
+      ...(data.rating
+        ? { aggregateRating: { '@type': 'AggregateRating', ratingValue: data.rating.average, reviewCount: data.rating.count, bestRating: 5, worstRating: 1 } }
+        : {}),
+    };
+  });
+};
+
 const EMPLOYMENT_TYPE: Record<string, string | string[]> = {
   FULL_TIME: 'FULL_TIME',
   PART_TIME: 'PART_TIME',
@@ -336,7 +501,7 @@ const EMPLOYMENT_TYPE: Record<string, string | string[]> = {
 };
 
 /** Plain text (paragraphs separated by blank lines) → minimal escaped HTML for JobPosting.description. */
-const textToHtml = (text: string) =>
+export const textToHtml = (text: string) =>
   text
     .split(/\n\s*\n/)
     .map((p) => p.trim())
@@ -347,11 +512,13 @@ const textToHtml = (text: string) =>
 const listHtml = (heading: string, items: string[]) =>
   items.length ? `<p><strong>${escapeHtml(heading)}</strong></p><ul>${items.map((i) => `<li>${escapeHtml(i)}</li>`).join('')}</ul>` : '';
 
-const JOB_LABELS: Record<SeoLocale, { requirements: string; benefits: string }> = {
+export const JOB_LABELS: Record<SeoLocale, { requirements: string; benefits: string }> = {
   az: { requirements: 'Tələblər', benefits: 'Üstünlüklər' },
   de: { requirements: 'Anforderungen', benefits: 'Wir bieten' },
   en: { requirements: 'Requirements', benefits: 'Benefits' },
   ru: { requirements: 'Требования', benefits: 'Мы предлагаем' },
+  tr: { requirements: 'Aranan nitelikler', benefits: 'Sunduklarımız' },
+  uk: { requirements: 'Вимоги', benefits: 'Ми пропонуємо' },
 };
 
 export const jobPostingLd = (job: SeoData['jobs'][number], lng: SeoLocale, url: string) => {
@@ -403,12 +570,45 @@ export const jobPostingLd = (job: SeoData['jobs'][number], lng: SeoLocale, url: 
   return ld;
 };
 
-const resolvePage = (path: string, lng: SeoLocale, data: SeoData, requestLng: SeoLocale | null): ResolvedPage => {
+/** Interactive tools: WebApplication JSON-LD (free, runs in the browser). */
+const TOOL_PAGES = new Set(['/chancenkarte-calculator', '/blue-card-check', '/salary-calculator', '/calculator', '/cost-calculator', '/anerkennung']);
+
+const faqPageLd = (items: { q: string; a: string }[], lng: SeoLocale) =>
+  items.length
+    ? {
+        '@context': 'https://schema.org',
+        '@type': 'FAQPage',
+        inLanguage: lng,
+        mainEntity: items.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })),
+      }
+    : null;
+
+/** Title / description / image / robots of a CMS item, honouring its per-item SEO overrides. */
+const withOverrides = (item: SeoOverrides & { image?: string; cover?: string }, lng: SeoLocale, name: string, fallbackDescription: string) => {
+  const ownTitle = collapse(pick(item.seoTitle, lng));
+  const ownDescription = collapse(pick(item.seoDescription, lng));
+  return {
+    title: ownTitle ? fullTitle(ownTitle) : pageTitle(name),
+    description: truncate(ownDescription || fallbackDescription, DESCRIPTION_MAX),
+    image: absoluteImage(item.ogImage) ?? absoluteImage(item.image ?? item.cover),
+    index: !item.noindex,
+  };
+};
+
+/** Published guides shown for a language (its own versions, English for keys it lacks). */
+export const guidesInLanguage = (data: SeoData, lng: SeoLocale) => {
+  const all = data.guides ?? [];
+  const own = all.filter((g) => g.locale === lng);
+  const keys = new Set(own.map((g) => g.key));
+  return [...own, ...all.filter((g) => g.locale === 'en' && !keys.has(g.key))];
+};
+
+export const resolvePage = (path: string, lng: SeoLocale, data: SeoData): ResolvedPage => {
   const origin = siteOrigin();
-  const url = pageUrl(path, requestLng);
+  const url = pageUrl(path, lng);
   const generic: ResolvedPage = {
-    title: GENERIC_META.title[lng],
-    description: GENERIC_META.description[lng],
+    title: textIn(GENERIC_META.title, lng),
+    description: textIn(GENERIC_META.description, lng),
     index: false,
     image: null,
     ogType: 'website',
@@ -422,12 +622,12 @@ const resolvePage = (path: string, lng: SeoLocale, data: SeoData, requestLng: Se
   const page = STATIC_PAGES[path];
   if (page) {
     const resolved: ResolvedPage = {
-      title: page.fullTitle ? page.title[lng] : pageTitle(page.title[lng]),
-      description: page.description[lng],
+      title: page.fullTitle ? textIn(page.title, lng) : pageTitle(textIn(page.title, lng)),
+      description: textIn(page.description, lng),
       index: page.index !== false,
       image: null,
       ogType: 'website',
-      crumbs: path === '/' ? [] : [home, { name: page.name[lng], path }],
+      crumbs: path === '/' ? [] : [home, { name: textIn(page.name, lng), path }],
       jsonLd: [],
       extraMeta: [],
     };
@@ -442,51 +642,130 @@ const resolvePage = (path: string, lng: SeoLocale, data: SeoData, requestLng: Se
         publisher: { '@id': organizationId() },
       });
     }
+    if (path === '/' || path === '/contact') resolved.jsonLd.push(...localBusinessLd(data, lng));
     if (path === '/faq' && data.faqs.length) {
-      const entities = data.faqs
-        .map((f) => ({ q: collapse(pick(f.question, lng)), a: pick(f.answer, lng).trim() }))
-        .filter((f) => f.q && f.a)
-        .map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } }));
-      if (entities.length) {
-        resolved.jsonLd.push({ '@context': 'https://schema.org', '@type': 'FAQPage', inLanguage: lng, mainEntity: entities });
+      const ld = faqPageLd(
+        data.faqs.map((f) => ({ q: collapse(pick(f.question, lng)), a: pick(f.answer, lng).trim() })).filter((f) => f.q && f.a),
+        lng,
+      );
+      if (ld) resolved.jsonLd.push(ld);
+    }
+    if (path === '/guides') {
+      const list = guidesInLanguage(data, lng);
+      if (list.length) {
+        resolved.jsonLd.push({
+          '@context': 'https://schema.org',
+          '@type': 'ItemList',
+          itemListElement: list.map((g, i) => ({ '@type': 'ListItem', position: i + 1, name: g.title, url: pageUrl(guidePath(g.slug), g.locale as SeoLocale) })),
+        });
       }
+    }
+    if (TOOL_PAGES.has(path)) {
+      resolved.jsonLd.push({
+        '@context': 'https://schema.org',
+        '@type': 'WebApplication',
+        name: textIn(page.name, lng),
+        description: textIn(page.description, lng),
+        url,
+        applicationCategory: 'UtilitiesApplication',
+        operatingSystem: 'Any',
+        browserRequirements: 'Requires JavaScript',
+        isAccessibleForFree: true,
+        inLanguage: lng,
+        offers: { '@type': 'Offer', price: 0, priceCurrency: 'EUR' },
+        provider: { '@id': organizationId() },
+      });
     }
     return resolved;
   }
 
-  const m = /^\/(visas|services|news|jobs|events)\/([^/]+)$/.exec(path);
+  // Landing pages: written in one language, with their own SEO title / description / image.
+  const lp = /^\/l\/([^/]+)$/.exec(path);
+  if (lp) {
+    const landing = (data.landings ?? []).find((l) => l.slug === lp[1]);
+    if (!landing) return generic;
+    const own = parseLocale(landing.locale);
+    return {
+      title: landing.seoTitle || pageTitle(landing.title),
+      description: truncate(landing.seoDescription || landing.heroSubtitle || textIn(GENERIC_META.description, lng), DESCRIPTION_MAX),
+      index: true,
+      image: absoluteImage(landing.ogImage || landing.heroImage),
+      ogType: 'website',
+      crumbs: [],
+      jsonLd: [],
+      extraMeta: [],
+      // One language only: canonical to that language's URL, no hreflang set.
+      alternates: null,
+      ...(own ? { canonicalLng: own } : {}),
+    };
+  }
+
+  const m = /^\/(visas|services|news|jobs|events|guides)\/([^/]+)$/.exec(path);
   if (!m) return generic;
   const [, section, slug] = m;
   const sectionPath = SECTION_OF[section];
   const crumbsFor = (name: string) => [home, { name: staticName(sectionPath, lng), path: sectionPath }, { name, path }];
 
+  if (section === 'guides') {
+    const guides = data.guides ?? [];
+    const guide = guides.find((g) => g.locale === lng && g.slug === slug);
+    if (!guide) return generic;
+    const alternates = Object.fromEntries(Object.entries(guideAlternates(guides, guide.key)).map(([l, s]) => [l, guidePath(s!)])) as Partial<
+      Record<SeoLocale, string>
+    >;
+    const faqLd = faqPageLd(parseFaq(guide.faq), lng);
+    return {
+      title: guide.title.length + ` | ${SITE_NAME}`.length <= TITLE_MAX ? pageTitle(guide.title) : fullTitle(guide.title),
+      description: truncate(guide.description, DESCRIPTION_MAX),
+      index: true,
+      image: null,
+      ogCard: { kind: 'guides', slug: guide.slug },
+      ogType: 'article',
+      crumbs: crumbsFor(collapse(guide.title)),
+      alternates,
+      jsonLd: [
+        {
+          '@context': 'https://schema.org',
+          '@type': 'Article',
+          headline: truncate(guide.title, 110),
+          description: guide.description,
+          image: [ogImageUrl('guides', guide.slug, lng)],
+          datePublished: guide.createdAt.toISOString(),
+          dateModified: guide.updatedAt.toISOString(),
+          inLanguage: lng,
+          mainEntityOfPage: { '@type': 'WebPage', '@id': url },
+          author: { '@type': 'Organization', name: SITE_NAME, url: pageUrl('/about', lng) },
+          publisher: { '@id': organizationId() },
+        },
+        ...(faqLd ? [faqLd] : []),
+      ],
+      extraMeta: [
+        ['article:published_time', guide.createdAt.toISOString()],
+        ['article:modified_time', guide.updatedAt.toISOString()],
+      ],
+    };
+  }
+
   if (section === 'visas') {
     const visa = data.visas.find((v) => v.slug === slug);
     if (!visa) return generic;
     const name = collapse(pick(visa.title, lng));
-    return {
-      title: pageTitle(name),
-      description: truncate(pick(visa.summary, lng) || STATIC_PAGES['/visas'].description[lng], DESCRIPTION_MAX),
-      index: true,
-      image: absoluteImage(visa.image),
-      ogType: 'website',
-      crumbs: crumbsFor(name),
-      jsonLd: [],
-      extraMeta: [],
-    };
+    const o = withOverrides(visa, lng, name, pick(visa.summary, lng) || textIn(STATIC_PAGES['/visas'].description, lng));
+    const faq = Array.isArray(visa.faq)
+      ? (visa.faq as { q?: unknown; a?: unknown }[]).map((f) => ({ q: collapse(pick(f?.q, lng)), a: pick(f?.a, lng).trim() })).filter((f) => f.q && f.a)
+      : [];
+    const faqLd = faqPageLd(faq, lng);
+    return { ...o, ogCard: { kind: 'visas', slug }, ogType: 'website', crumbs: crumbsFor(name), jsonLd: faqLd ? [faqLd] : [], extraMeta: [] };
   }
 
   if (section === 'services') {
     const service = data.services.find((s) => s.slug === slug);
     if (!service) return generic;
     const name = collapse(pick(service.title, lng));
-    const description = truncate(pick(service.summary, lng) || STATIC_PAGES['/services'].description[lng], DESCRIPTION_MAX);
-    const image = absoluteImage(service.image);
+    const o = withOverrides(service, lng, name, pick(service.summary, lng) || textIn(STATIC_PAGES['/services'].description, lng));
     return {
-      title: pageTitle(name),
-      description,
-      index: true,
-      image,
+      ...o,
+      ogCard: { kind: 'services', slug },
       ogType: 'website',
       crumbs: crumbsFor(name),
       jsonLd: [
@@ -495,14 +774,11 @@ const resolvePage = (path: string, lng: SeoLocale, data: SeoData, requestLng: Se
           '@type': 'Service',
           name,
           serviceType: name,
-          description: collapse(pick(service.summary, lng)) || description,
+          description: collapse(pick(service.summary, lng)) || o.description,
           url,
-          ...(image ? { image } : {}),
+          ...(o.image ? { image: o.image } : {}),
           provider: { '@id': organizationId() },
-          areaServed: [
-            { '@type': 'Country', name: 'Azerbaijan' },
-            { '@type': 'Country', name: 'Germany' },
-          ],
+          areaServed: SERVED_COUNTRIES.map((n) => ({ '@type': 'Country', name: n })),
           inLanguage: lng,
         },
       ],
@@ -514,13 +790,11 @@ const resolvePage = (path: string, lng: SeoLocale, data: SeoData, requestLng: Se
     const post = data.posts.find((p) => p.slug === slug);
     if (!post) return generic;
     const name = collapse(pick(post.title, lng));
-    const description = truncate(pick(post.excerpt, lng) || STATIC_PAGES['/news'].description[lng], DESCRIPTION_MAX);
-    const image = absoluteImage(post.cover);
+    const o = withOverrides(post, lng, name, pick(post.excerpt, lng) || textIn(STATIC_PAGES['/news'].description, lng));
+    const modified = post.updatedAt > post.publishedAt ? post.updatedAt : post.publishedAt;
     return {
-      title: pageTitle(name),
-      description,
-      index: true,
-      image,
+      ...o,
+      ogCard: { kind: 'news', slug },
       ogType: 'article',
       crumbs: crumbsFor(name),
       jsonLd: [
@@ -528,19 +802,20 @@ const resolvePage = (path: string, lng: SeoLocale, data: SeoData, requestLng: Se
           '@context': 'https://schema.org',
           '@type': 'NewsArticle',
           headline: truncate(name, 110),
-          description: collapse(pick(post.excerpt, lng)) || description,
-          image: [image ?? `${origin}/og-default.png`],
+          description: collapse(pick(post.excerpt, lng)) || o.description,
+          image: [o.image ?? ogImageUrl('news', slug, lng)],
           datePublished: post.publishedAt.toISOString(),
-          dateModified: post.updatedAt.toISOString(),
+          dateModified: modified.toISOString(),
           inLanguage: lng,
           mainEntityOfPage: { '@type': 'WebPage', '@id': url },
-          author: { '@type': 'Organization', name: SITE_NAME, url: `${origin}/` },
+          author: { '@type': 'Organization', name: SITE_NAME, url: pageUrl('/about', lng) },
           publisher: { '@id': organizationId() },
         },
       ],
       extraMeta: [
         ['article:published_time', post.publishedAt.toISOString()],
-        ['article:modified_time', post.updatedAt.toISOString()],
+        ['article:modified_time', modified.toISOString()],
+        ['article:author', SITE_NAME],
       ],
     };
   }
@@ -549,13 +824,14 @@ const resolvePage = (path: string, lng: SeoLocale, data: SeoData, requestLng: Se
     const ev = (data.events ?? []).find((e) => e.slug === slug && e.endsAt.getTime() > Date.now());
     if (!ev) return generic;
     const name = collapse(pick(ev.title, lng));
-    const description = truncate(pick(ev.description, lng) || STATIC_PAGES['/events'].description[lng], DESCRIPTION_MAX);
+    const description = truncate(pick(ev.description, lng) || textIn(STATIC_PAGES['/events'].description, lng), DESCRIPTION_MAX);
     const online = ev.mode === 'ONLINE';
     return {
       title: pageTitle(name),
       description,
       index: true,
       image: null,
+      ogCard: { kind: 'events', slug },
       ogType: 'website',
       crumbs: crumbsFor(name),
       jsonLd: [
@@ -571,6 +847,7 @@ const resolvePage = (path: string, lng: SeoLocale, data: SeoData, requestLng: Se
           location: online
             ? { '@type': 'VirtualLocation', url }
             : { '@type': 'Place', name: SITE_NAME, address: collapse(ev.address ?? '') || 'Baku, Azerbaijan' },
+          image: [ogImageUrl('events', slug, lng)],
           inLanguage: ev.language,
           isAccessibleForFree: true,
           url,
@@ -589,9 +866,10 @@ const resolvePage = (path: string, lng: SeoLocale, data: SeoData, requestLng: Se
   const where = job.city ? `${name} — ${job.city}` : name;
   return {
     title: pageTitle(where),
-    description: truncate(pick(job.description, lng) || STATIC_PAGES['/jobs'].description[lng], DESCRIPTION_MAX),
+    description: truncate(pick(job.description, lng) || textIn(STATIC_PAGES['/jobs'].description, lng), DESCRIPTION_MAX),
     index: true,
     image: null,
+    ogCard: { kind: 'jobs', slug },
     ogType: 'website',
     crumbs: crumbsFor(name),
     jsonLd: [jobPostingLd(job, lng, url)],
@@ -601,17 +879,35 @@ const resolvePage = (path: string, lng: SeoLocale, data: SeoData, requestLng: Se
 
 // ─── rendering ────────────────────────────────────────────────────────
 
+/** The language and page path of a requested URL path (a path prefix wins over a legacy ?lng=). */
+export const requestTarget = (rawPath: string, queryLng: SeoLocale | null) => {
+  const { lng: prefixLng, path } = splitLocalePath(normalizePath(rawPath));
+  return { path, lng: prefixLng ?? queryLng ?? DEFAULT_LOCALE };
+};
+
+export const RSS_TITLE: Record<SeoLocale, string> = {
+  az: 'Triad Vision — xəbərlər və bələdçilər',
+  de: 'Triad Vision — News und Ratgeber',
+  en: 'Triad Vision — news and guides',
+  ru: 'Triad Vision — новости и гиды',
+  tr: 'Triad Vision — haberler ve rehberler',
+  uk: 'Triad Vision — новини та посібники',
+};
+
+/** RSS feed URL of a language (/rss.xml for az, /de/rss.xml …). */
+export const rssUrl = (lng: SeoLocale) => `${siteOrigin()}${localizedPath('/rss.xml', lng)}`;
+
 /**
  * The head tags for one page, as an HTML fragment. Every tag carries `data-seo` so the SPA can replace
- * them on navigation. `requestLng` is the ?lng= of the page URL (null = bare URL, described in az).
+ * them on navigation. `rawPath` is the URL path including any language prefix (/de/visas); `queryLng` a
+ * legacy ?lng= value (only used when the path has no prefix).
  */
-export const renderHead = (rawPath: string, requestLng: SeoLocale | null, data: SeoData) => {
-  const path = normalizePath(rawPath);
-  const lng = requestLng ?? DEFAULT_LOCALE;
-  const page = resolvePage(path, lng, data, requestLng);
+export const renderHead = (rawPath: string, queryLng: SeoLocale | null, data: SeoData) => {
+  const { path, lng } = requestTarget(rawPath, queryLng);
+  const page = resolvePage(path, lng, data);
   const origin = siteOrigin();
-  const url = pageUrl(path, requestLng);
-  const image = page.image ?? `${origin}/og-default.png`;
+  const url = pageUrl(path, page.canonicalLng ?? lng);
+  const image = page.image ?? (page.ogCard ? ogImageUrl(page.ogCard.kind, page.ogCard.slug, lng) : `${origin}/og-default.png`);
   const a = escapeHtml;
   const out: string[] = [];
   const meta = (attr: 'name' | 'property', key: string, content: string) =>
@@ -622,8 +918,16 @@ export const renderHead = (rawPath: string, requestLng: SeoLocale | null, data: 
   meta('name', 'robots', page.index ? 'index, follow, max-image-preview:large' : 'noindex, nofollow');
   if (page.index) {
     out.push(`<link data-seo rel="canonical" href="${a(url)}">`);
-    for (const l of SEO_LOCALES) out.push(`<link data-seo rel="alternate" hreflang="${l}" href="${a(pageUrl(path, l))}">`);
-    out.push(`<link data-seo rel="alternate" hreflang="x-default" href="${a(pageUrl(path, null))}">`);
+    if (page.alternates === undefined) {
+      for (const l of SEO_LOCALES) out.push(`<link data-seo rel="alternate" hreflang="${l}" href="${a(pageUrl(path, l))}">`);
+      out.push(`<link data-seo rel="alternate" hreflang="x-default" href="${a(pageUrl(path, null))}">`);
+    } else if (page.alternates) {
+      const alts = page.alternates;
+      for (const l of SEO_LOCALES) if (alts[l]) out.push(`<link data-seo rel="alternate" hreflang="${l}" href="${a(pageUrl(alts[l]!, l))}">`);
+      const xd = alts.az ? pageUrl(alts.az, 'az') : alts.en ? pageUrl(alts.en, 'en') : null;
+      if (xd) out.push(`<link data-seo rel="alternate" hreflang="x-default" href="${a(xd)}">`);
+    }
+    out.push(`<link data-seo rel="alternate" type="application/rss+xml" title="${a(RSS_TITLE[lng])}" href="${a(rssUrl(lng))}">`);
   }
   meta('property', 'og:site_name', SITE_NAME);
   meta('property', 'og:type', page.ogType);
@@ -634,7 +938,7 @@ export const renderHead = (rawPath: string, requestLng: SeoLocale | null, data: 
   if (!page.image) {
     meta('property', 'og:image:width', '1200');
     meta('property', 'og:image:height', '630');
-    meta('property', 'og:image:alt', 'Triad Vision — Azerbaijan → Germany');
+    meta('property', 'og:image:alt', page.ogCard ? page.title : 'Triad Vision — Germany: work, visas, family');
   }
   meta('property', 'og:locale', OG_LOCALE[lng]);
   for (const l of SEO_LOCALES) if (l !== lng) meta('property', 'og:locale:alternate', OG_LOCALE[l]);
@@ -654,7 +958,7 @@ export const renderHead = (rawPath: string, requestLng: SeoLocale | null, data: 
           '@type': 'ListItem',
           position: i + 1,
           name: c.name,
-          item: pageUrl(c.path, requestLng),
+          item: pageUrl(c.path, lng),
         })),
       });
     }
@@ -664,71 +968,201 @@ export const renderHead = (rawPath: string, requestLng: SeoLocale | null, data: 
   return out.join('\n');
 };
 
-// ─── robots.txt / sitemap.xml ─────────────────────────────────────────
+// ─── robots.txt / sitemaps / RSS ──────────────────────────────────────
+
+const ROBOTS_EXACT = new Set(['/partner', '/q', '/share', '/agent']);
 
 export const renderRobots = () =>
   [
     'User-agent: *',
     'Allow: /',
-    ...PRIVATE_PREFIXES.map((p) => `Disallow: ${p === '/api' ? '/api/' : p}`),
+    // robots.txt rules are plain prefixes: "/partner" would also block the public /partners page, so prefixes
+    // that start a public path are written as "/partner$" + "/partner/".
+    ...PRIVATE_PREFIXES.flatMap((p) =>
+      p === '/api' ? ['Disallow: /api/'] : ROBOTS_EXACT.has(p) ? [`Disallow: ${p}$`, `Disallow: ${p}/`] : [`Disallow: ${p}`],
+    ),
+    'Disallow: /__seo/',
     '',
     `Sitemap: ${siteOrigin()}/sitemap.xml`,
     '',
   ].join('\n');
 
-const escapeXml = (s: string) =>
+export const escapeXml = (s: string) =>
   s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&apos;' })[c]!);
 
 /** Content release date of the hand-written static pages (bump when their text changes). */
-const STATIC_LASTMOD = new Date('2026-10-15T00:00:00.000Z');
+const STATIC_LASTMOD = new Date('2026-10-24T00:00:00.000Z');
 
 const latest = (dates: Date[], fallback = STATIC_LASTMOD) =>
   dates.reduce((max, d) => (d.getTime() > max.getTime() ? d : max), fallback);
 
-export const renderSitemap = (data: SeoData) => {
-  const jobs = liveJobs(data);
-  const entries: { path: string; lastmod: Date }[] = [];
-  const sectionLastmod: Record<string, Date> = {
-    '/visas': latest(data.visas.map((v) => v.updatedAt)),
-    '/services': latest(data.services.map((s) => s.updatedAt)),
-    '/news': latest(data.posts.map((p) => p.updatedAt)),
-    '/jobs': latest(jobs.map((j) => j.updatedAt)),
-    '/events': latest((data.events ?? []).map((e) => e.updatedAt)),
-  };
-  for (const path of SITEMAP_STATIC) {
-    const lastmod = path === '/' ? latest(Object.values(sectionLastmod)) : (sectionLastmod[path] ?? STATIC_LASTMOD);
-    entries.push({ path, lastmod });
-  }
-  for (const v of data.visas) entries.push({ path: `/visas/${v.slug}`, lastmod: v.updatedAt });
-  for (const s of data.services) entries.push({ path: `/services/${s.slug}`, lastmod: s.updatedAt });
-  for (const p of data.posts) entries.push({ path: `/news/${p.slug}`, lastmod: p.updatedAt });
-  for (const j of jobs) entries.push({ path: `/jobs/${j.slug}`, lastmod: j.updatedAt });
-  for (const e of data.events ?? []) entries.push({ path: `/events/${e.slug}`, lastmod: e.updatedAt });
+/** Child sitemaps of /sitemap.xml (/sitemaps/<group>.xml). */
+export const SITEMAP_GROUPS = ['pages', 'content', 'guides', 'jobs', 'events', 'landing'] as const;
+export type SitemapGroup = (typeof SITEMAP_GROUPS)[number];
 
-  const out: string[] = [
-    '<?xml version="1.0" encoding="UTF-8"?>',
-    '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">',
-  ];
-  for (const { path, lastmod } of entries) {
-    const alternates = [
-      ...SEO_LOCALES.map((l) => `    <xhtml:link rel="alternate" hreflang="${l}" href="${escapeXml(pageUrl(path, l))}"/>`),
-      `    <xhtml:link rel="alternate" hreflang="x-default" href="${escapeXml(pageUrl(path, null))}"/>`,
-    ].join('\n');
-    // One <url> per language version (and the x-default URL), each listing the full set of alternates.
-    for (const l of [null, ...SEO_LOCALES]) {
-      out.push(
-        '  <url>',
-        `    <loc>${escapeXml(pageUrl(path, l))}</loc>`,
-        `    <lastmod>${lastmod.toISOString()}</lastmod>`,
-        alternates,
-        '  </url>',
+interface SitemapUrl {
+  loc: string;
+  lastmod: Date;
+  /** [hreflang, href] (empty for single-language pages). */
+  alternates: [string, string][];
+  images: { loc: string; title: string }[];
+}
+
+/** One <url> per language version, each listing the full set of language alternates (+ x-default). */
+const allLanguages = (path: string, lastmod: Date, image?: { src: string | null | undefined; title: (l: SeoLocale) => string }): SitemapUrl[] => {
+  const alternates: [string, string][] = [...SEO_LOCALES.map((l): [string, string] => [l, pageUrl(path, l)]), ['x-default', pageUrl(path, null)]];
+  const img = absoluteImage(image?.src);
+  return SEO_LOCALES.map((l) => ({
+    loc: pageUrl(path, l),
+    lastmod,
+    alternates,
+    images: img && image ? [{ loc: img, title: image.title(l) }] : [],
+  }));
+};
+
+export const sitemapUrls = (data: SeoData, group: SitemapGroup): SitemapUrl[] => {
+  const jobs = liveJobs(data);
+  const visas = indexable(data.visas);
+  const services = indexable(data.services);
+  const posts = indexable(data.posts);
+  switch (group) {
+    case 'pages': {
+      const sectionLastmod: Record<string, Date> = {
+        '/visas': latest(visas.map((v) => v.updatedAt)),
+        '/services': latest(services.map((s) => s.updatedAt)),
+        '/news': latest(posts.map((p) => p.updatedAt)),
+        '/jobs': latest(jobs.map((j) => j.updatedAt)),
+        '/events': latest((data.events ?? []).map((e) => e.updatedAt)),
+        '/guides': latest((data.guides ?? []).map((g) => g.updatedAt)),
+      };
+      return SITEMAP_STATIC.flatMap((path) =>
+        allLanguages(path, path === '/' ? latest(Object.values(sectionLastmod)) : (sectionLastmod[path] ?? STATIC_LASTMOD)),
       );
     }
+    case 'content':
+      return [
+        ...visas.flatMap((v) => allLanguages(`/visas/${v.slug}`, v.updatedAt, { src: v.ogImage || v.image, title: (l) => collapse(pick(v.title, l)) })),
+        ...services.flatMap((s) => allLanguages(`/services/${s.slug}`, s.updatedAt, { src: s.ogImage || s.image, title: (l) => collapse(pick(s.title, l)) })),
+        ...posts.flatMap((p) => allLanguages(`/news/${p.slug}`, p.updatedAt, { src: p.ogImage || p.cover, title: (l) => collapse(pick(p.title, l)) })),
+      ];
+    case 'guides': {
+      const guides = data.guides ?? [];
+      return guides
+        .filter((g) => parseLocale(g.locale))
+        .map((g) => {
+          const alt = guideAlternates(guides, g.key);
+          const alternates: [string, string][] = SEO_LOCALES.filter((l) => alt[l]).map((l): [string, string] => [l, pageUrl(guidePath(alt[l]!), l)]);
+          const xd = alt.az ? pageUrl(guidePath(alt.az), 'az') : alt.en ? pageUrl(guidePath(alt.en), 'en') : null;
+          if (xd) alternates.push(['x-default', xd]);
+          return { loc: pageUrl(guidePath(g.slug), g.locale as SeoLocale), lastmod: g.updatedAt, alternates, images: [] };
+        });
+    }
+    case 'jobs':
+      return jobs.flatMap((j) => allLanguages(`/jobs/${j.slug}`, j.updatedAt));
+    case 'events':
+      return (data.events ?? []).flatMap((e) => allLanguages(`/events/${e.slug}`, e.updatedAt));
+    case 'landing':
+      return (data.landings ?? []).map((l) => {
+        const img = absoluteImage(l.ogImage || l.heroImage);
+        return { loc: pageUrl(`/l/${l.slug}`, parseLocale(l.locale)), lastmod: l.updatedAt, alternates: [], images: img ? [{ loc: img, title: l.title }] : [] };
+      });
+  }
+};
+
+const urlsetXml = (urls: SitemapUrl[]) => {
+  const out: string[] = [
+    '<?xml version="1.0" encoding="UTF-8"?>',
+    '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">',
+  ];
+  for (const u of urls) {
+    out.push('  <url>', `    <loc>${escapeXml(u.loc)}</loc>`, `    <lastmod>${u.lastmod.toISOString()}</lastmod>`);
+    for (const [hreflang, href] of u.alternates) out.push(`    <xhtml:link rel="alternate" hreflang="${hreflang}" href="${escapeXml(href)}"/>`);
+    for (const img of u.images) {
+      out.push('    <image:image>', `      <image:loc>${escapeXml(img.loc)}</image:loc>`);
+      if (img.title) out.push(`      <image:title>${escapeXml(img.title)}</image:title>`);
+      out.push('    </image:image>');
+    }
+    out.push('  </url>');
   }
   out.push('</urlset>', '');
   return out.join('\n');
 };
 
-export const getSitemap = () => cached('seo:sitemap', async () => renderSitemap(await getSeoData()));
+/** One child sitemap (/sitemaps/<group>.xml). */
+export const renderSitemapGroup = (data: SeoData, group: SitemapGroup) => urlsetXml(sitemapUrls(data, group));
+
+/** Every URL of every group in one urlset (tests, debugging). */
+export const renderSitemap = (data: SeoData) => urlsetXml(SITEMAP_GROUPS.flatMap((g) => sitemapUrls(data, g)));
+
+/** /sitemap.xml: the index of the child sitemaps that have URLs (pages always). */
+export const renderSitemapIndex = (data: SeoData) => {
+  const origin = siteOrigin();
+  const out = ['<?xml version="1.0" encoding="UTF-8"?>', '<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'];
+  for (const g of SITEMAP_GROUPS) {
+    const urls = sitemapUrls(data, g);
+    if (!urls.length && g !== 'pages') continue;
+    out.push('  <sitemap>', `    <loc>${origin}/sitemaps/${g}.xml</loc>`, `    <lastmod>${latest(urls.map((u) => u.lastmod)).toISOString()}</lastmod>`, '  </sitemap>');
+  }
+  out.push('</sitemapindex>', '');
+  return out.join('\n');
+};
+
+export const getSitemap = () => cached('seo:sitemap', async () => renderSitemapIndex(await getSeoData()));
+export const getSitemapGroup = (group: SitemapGroup) => cached(`seo:sitemap:${group}`, async () => renderSitemapGroup(await getSeoData(), group));
+
+/** RSS 2.0 feed of the news posts and topic guides in one language (CMS text falls back like the pages). */
+export const renderRss = (data: SeoData, lng: SeoLocale) => {
+  const now = Date.now();
+  const NEWS = textIn(STATIC_PAGES['/news'].name, lng);
+  const GUIDES = STATIC_PAGES['/guides'] ? textIn(STATIC_PAGES['/guides'].name, lng) : 'Guides';
+  const items: { title: string; link: string; description: string; date: Date; category: string }[] = [];
+  for (const p of indexable(data.posts).filter((x) => x.publishedAt.getTime() <= now).slice(0, 50)) {
+    items.push({
+      title: collapse(pick(p.title, lng)),
+      link: pageUrl(`/news/${p.slug}`, lng),
+      description: collapse(pick(p.excerpt, lng)),
+      date: p.publishedAt,
+      category: NEWS,
+    });
+  }
+  for (const g of guidesInLanguage(data, lng)) {
+    items.push({ title: g.title, link: pageUrl(guidePath(g.slug), g.locale as SeoLocale), description: g.description, date: g.updatedAt, category: GUIDES });
+  }
+  items.sort((x, y) => y.date.getTime() - x.date.getTime());
+  const self = rssUrl(lng);
+  const news = pageUrl('/news', lng);
+  const out = [
+    '<?xml version="1.0" encoding="UTF-8"?>',
+    '<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">',
+    '<channel>',
+    `  <title>${escapeXml(RSS_TITLE[lng])}</title>`,
+    `  <link>${escapeXml(news)}</link>`,
+    `  <description>${escapeXml(textIn(STATIC_PAGES['/news'].description, lng))}</description>`,
+    `  <language>${lng}</language>`,
+    `  <atom:link href="${escapeXml(self)}" rel="self" type="application/rss+xml"/>`,
+    `  <lastBuildDate>${latest(items.map((i) => i.date)).toUTCString()}</lastBuildDate>`,
+    '  <image>',
+    `    <url>${siteOrigin()}/logo-512.png</url>`,
+    `    <title>${escapeXml(RSS_TITLE[lng])}</title>`,
+    `    <link>${escapeXml(news)}</link>`,
+    '  </image>',
+  ];
+  for (const i of items) {
+    out.push(
+      '  <item>',
+      `    <title>${escapeXml(i.title)}</title>`,
+      `    <link>${escapeXml(i.link)}</link>`,
+      `    <guid isPermaLink="true">${escapeXml(i.link)}</guid>`,
+      `    <pubDate>${i.date.toUTCString()}</pubDate>`,
+      `    <category>${escapeXml(i.category)}</category>`,
+      `    <description>${escapeXml(i.description)}</description>`,
+      '  </item>',
+    );
+  }
+  out.push('</channel>', '</rss>', '');
+  return out.join('\n');
+};
+
+export const getRss = (lng: SeoLocale) => cached(`seo:rss:${lng}`, async () => renderRss(await getSeoData(), lng));
 
 export type { L10nText, SeoLocale };

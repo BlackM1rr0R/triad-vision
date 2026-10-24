@@ -19,6 +19,7 @@ import { Modal } from '@/components/admin/Modal';
 import { ConfirmDialog } from '@/components/admin/ConfirmDialog';
 import { useFamilyOverview, useFamilyRefresh } from './api';
 import { MemberFormFields } from './MemberFormFields';
+import { ReunionStatus } from './ReunionPanel';
 import { bodyFromForm, emptyMemberForm, formFromProfile, memberName, type ChecklistState, type FamilyMemberSummary, type FamilyRelation, type MemberForm } from './types';
 
 registerCopy(pagesFamilyLanguage);
@@ -197,6 +198,8 @@ export const FamilyMembersSection = ({ caseId }: { caseId: string }) => {
         )}
       </div>
 
+      {/* Familiennachzug: waiting for the approval / started (members joining later). */}
+      {data.members.length > 0 && <ReunionStatus data={data} className="mt-4" />}
       {data.members.length === 0 ? (
         <div className="mt-4 rounded-xl border border-dashed border-line px-4 py-6 text-center">
           <p className="font-semibold text-navy-900">{t('familyMembers.empty')}</p>

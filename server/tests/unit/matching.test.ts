@@ -6,6 +6,7 @@ import {
   germanRank,
   licenceCovers,
   matchCandidate,
+  needsRecognition,
   normaliseText,
   parseLicences,
   professionSimilarity,
@@ -117,7 +118,11 @@ describe('matchCandidate', () => {
 
   it('scores a perfect candidate 100 with no gaps', () => {
     const r = matchCandidate({ profession: 'Sürücü', germanLevel: 'B1', experienceYears: 5, drivingLicence: 'B, C, CE' }, vacancy);
-    expect(r).toEqual({ score: 100, gaps: [] });
+    expect(r).toEqual({ score: 100, gaps: [], parts: MATCH_WEIGHTS });
+  });
+
+  it('has weights that add up to 100', () => {
+    expect(Object.values(MATCH_WEIGHTS).reduce((a, b) => a + b, 0)).toBe(100);
   });
 
   it('scores 100 when the vacancy asks for nothing', () => {
@@ -129,14 +134,16 @@ describe('matchCandidate', () => {
     expect(r.gaps.map((g) => g.code)).toEqual(['PROFESSION', 'GERMAN', 'EXPERIENCE', 'LICENCE']);
     expect(r.gaps.find((g) => g.code === 'GERMAN')).toEqual({ code: 'GERMAN', required: 'A2', actual: 'none' });
     expect(r.gaps.find((g) => g.code === 'LICENCE')).toMatchObject({ required: 'CE', actual: 'B' });
-    // Visa share (no visa category = fully met) + German two levels below (20 % of its weight).
-    expect(r.score).toBe(MATCH_WEIGHTS.visa + MATCH_WEIGHTS.german * 0.2);
+    // Visa + recognition (not asked for = fully met) + German two levels below (20 % of its weight).
+    expect(r.score).toBe(Math.round(MATCH_WEIGHTS.visa + MATCH_WEIGHTS.recognition + MATCH_WEIGHTS.german * 0.2));
+    expect(r.parts).toEqual({ profession: 0, german: 4.4, experience: 0, licence: 0, visa: 9, recognition: 10 });
   });
 
   it('gives partial credit for one German level below and partial experience', () => {
     const r = matchCandidate({ profession: 'LKW-Fahrer', germanLevel: 'A1', experienceYears: 1, drivingLicence: 'CE' }, vacancy);
-    // 35 + 25*0.5 + 15*(1/3) + 15 + 10 = 77.5 → 78
-    expect(r.score).toBe(78);
+    // 32 + 22*0.5 + 14*(1/3) + 13 + 9 + 10 = 79.67 → 80
+    expect(r.score).toBe(80);
+    expect(r.parts.experience).toBe(4.7);
     expect(r.gaps.map((g) => g.code)).toEqual(['GERMAN', 'EXPERIENCE']);
   });
 
@@ -150,13 +157,34 @@ describe('matchCandidate', () => {
   it('checks visa-category fit: German minimum and a qualification for §18b', () => {
     const v = { ...vacancy, germanLevel: null, visaCategory: { visaLabel: '§18b', germanLevel: 'B1' } };
     const weak = matchCandidate({ profession: 'LKW-Fahrer', germanLevel: 'A2', experienceYears: 5, drivingLicence: 'CE', education: 'school' }, v);
-    expect(weak.gaps.map((g) => g.code)).toEqual(['VISA_GERMAN', 'VISA_EDUCATION']);
-    expect(weak.score).toBe(90);
-    const ok = matchCandidate({ profession: 'LKW-Fahrer', germanLevel: 'B1', experienceYears: 5, drivingLicence: 'CE', education: 'vocational' }, v);
-    expect(ok).toEqual({ score: 100, gaps: [] });
+    // §18b also needs the recognition of the qualification (none on file).
+    expect(weak.gaps.map((g) => g.code)).toEqual(['VISA_GERMAN', 'VISA_EDUCATION', 'RECOGNITION']);
+    expect(weak.score).toBe(100 - MATCH_WEIGHTS.visa - MATCH_WEIGHTS.recognition);
+    const ok = matchCandidate({ profession: 'LKW-Fahrer', germanLevel: 'B1', experienceYears: 5, drivingLicence: 'CE', education: 'vocational', recognitionStatus: 'RECOGNISED' }, v);
+    expect(ok).toEqual({ score: 100, gaps: [], parts: MATCH_WEIGHTS });
     // Seasonal work has no qualification requirement.
     const seasonal = matchCandidate({ education: null }, { visaCategory: { visaLabel: 'Saisonarbeit', germanLevel: null } });
     expect(seasonal.score).toBe(100);
+  });
+
+  it('scores the recognition of the qualification for regulated professions and §18a/b visas', () => {
+    expect(needsRecognition({ profession: 'Pflegefachkraft' })).toBe(true);
+    expect(needsRecognition({ profession: 'LKW-Fahrer' })).toBe(false);
+    expect(needsRecognition({ profession: null, visaCategory: { visaLabel: '§18a' } })).toBe(true);
+    expect(needsRecognition({ visaCategory: { visaLabel: 'Saisonarbeit' } })).toBe(false);
+
+    const care = { profession: 'Pflegekraft', germanLevel: 'B1' };
+    const base = { profession: 'Tibb bacısı', germanLevel: 'B2' };
+    const by = (recognitionStatus: string | null) => matchCandidate({ ...base, recognitionStatus }, care);
+    expect(by('RECOGNISED')).toMatchObject({ score: 100, gaps: [] });
+    expect(by('NOT_REQUIRED').score).toBe(100);
+    expect(by('PARTIAL').score).toBe(95);
+    expect(by('IN_PROGRESS').score).toBe(95);
+    expect(by('NONE').score).toBe(90);
+    expect(by(null).gaps).toEqual([{ code: 'RECOGNITION', required: 'RECOGNISED', actual: null }]);
+    expect(by('PARTIAL').gaps).toEqual([{ code: 'RECOGNITION', required: 'RECOGNISED', actual: 'PARTIAL' }]);
+    // A job that is not regulated ignores the status.
+    expect(matchCandidate({ ...base, profession: 'Sürücü', recognitionStatus: 'NONE' }, { profession: 'LKW-Fahrer' }).score).toBe(100);
   });
 
   it('always stays within 0..100', () => {

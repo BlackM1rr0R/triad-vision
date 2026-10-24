@@ -12,7 +12,7 @@ import { Footer } from './Footer';
 import { Preloader, ScrollProgress, SmoothScroll, scrollToTop } from './Effects';
 import { useSiteContent } from '@/lib/content';
 import { SearchPalette } from '../search/SearchPalette';
-import { CookieNotice } from './CookieNotice';
+import { CookieConsent } from '../legal/CookieConsent'; // real consent banner (lib/consent.ts)
 import { AccessibilityWidget } from '../a11y/AccessibilityWidget';
 
 // Public AI advisor: its own chunk, loaded only on the public pages (not in the portals).
@@ -124,7 +124,7 @@ export const SiteLayout = () => {
       <SearchPalette />
       <TrackBeacon />
       <SeoManager />
-      <CookieNotice />
+      <CookieConsent />
     </>
   );
 };

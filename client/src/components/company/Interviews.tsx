@@ -14,6 +14,7 @@ import { toLocalInput } from '@/components/admin/labels';
 import { InterviewCard } from '@/components/ops/InterviewCard';
 import { defaultStart, toastOpsError, type Interview } from '@/components/ops/shared';
 import { Empty, Loading, Section } from './shared';
+import { EvaluateButton } from '@/components/placement/Evaluations';
 
 registerCopy(pagesOps);
 
@@ -82,11 +83,14 @@ export const CompanyInterviews = () => {
   const upcoming = data.filter((i) => new Date(i.endsAt).getTime() >= now && i.status !== 'CANCELLED');
   const past = data.filter((i) => !upcoming.includes(i)).reverse();
 
+  /** After the interview started (or was marked done) the employer can evaluate it. */
+  const evaluable = (i: Interview) => i.status === 'DONE' || ((i.status === 'PROPOSED' || i.status === 'CONFIRMED') && new Date(i.startsAt).getTime() <= now);
   const actionsFor = (i: Interview) => {
     const live = i.status === 'PROPOSED' || i.status === 'CONFIRMED';
     if (!live) return null;
     return (
       <>
+        {evaluable(i) && <EvaluateButton interviewId={i.id} />}
         <button type="button" className="btn-secondary btn-sm" onClick={() => setReschedule({ id: i.id, at: toLocalInput(i.startsAt) })}>
           <CalendarDays className="size-3.5" /> {t('ops.interviews.actions.reschedule')}
         </button>
@@ -123,7 +127,7 @@ export const CompanyInterviews = () => {
         <Section title={t('ops.interviews.past')}>
           <ul className="grid gap-4 lg:grid-cols-2">
             {past.map((i) => (
-              <li key={i.id}><InterviewCard interview={i} audience="company" compact /></li>
+              <li key={i.id}><InterviewCard interview={i} audience="company" compact actions={evaluable(i) ? <EvaluateButton interviewId={i.id} /> : undefined} /></li>
             ))}
           </ul>
         </Section>

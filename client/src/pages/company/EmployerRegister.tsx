@@ -11,6 +11,7 @@ import { usePageTitle } from '@/lib/usePageTitle';
 import { isStaffRole, isStrongPassword, PASSWORD_MAX, PASSWORD_MIN, type User } from '@/lib/types';
 import { registerCopy } from '@/i18n';
 import { pagesJobs } from '@/i18n/pagesJobs';
+import { cookieConsentCopy } from '@/i18n/cookieConsent'; // AGB link label
 import { Spinner } from '@/components/ui/Spinner';
 import { RouteFlags } from '@/components/ui/Flag';
 import { jobsError, useJobLabels } from '@/components/jobs/labels';
@@ -20,6 +21,7 @@ import { sized, srcSet } from '@/lib/img';
 const ASIDE_IMG = 'https://images.unsplash.com/photo-1553413077-190dd305871c?auto=format&fit=crop&w=1200&q=65';
 
 registerCopy(pagesJobs);
+registerCopy(cookieConsentCopy);
 
 const Field = ({ id, label, children, className }: { id: string; label: string; children: ReactNode; className?: string }) => (
   <div className={className}>
@@ -173,6 +175,11 @@ export default function EmployerRegister() {
                 {t('jobsArea.register.terms')}{' '}
                 <Link to="/privacy" className="font-semibold text-brand-600 hover:underline">
                   {t('jobsArea.register.privacyLink')}
+                </Link>
+                {' · '}
+                {/* Accepting is logged as TERMS + PRIVACY_POLICY consents with the current versions. */}
+                <Link to="/agb" target="_blank" rel="noopener" className="font-semibold text-brand-600 hover:underline">
+                  {t('legalDocs.register.termsLink')}
                 </Link>
               </span>
             </label>

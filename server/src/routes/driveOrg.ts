@@ -20,6 +20,7 @@ import { TAG_COLORS, listTags, tagSelect } from '../lib/drive/org/tags.js';
 import { WORKFLOW_STAGES, folderSubtreeIds, seedSmartFolders, smartQuerySchema, smartWhere, type SmartQuery } from '../lib/drive/org/smart.js';
 import { caseReadiness } from '../lib/drive/org/readiness.js';
 import { applyTemplatesToExisting, cleanFolderList, foldersOf, seedFolderTemplates } from '../lib/drive/org/templates.js';
+import { assertFourEyes, caseForDriveNode } from '../lib/caseNext/fourEyes.js';
 
 /**
  * Document organisation of the team drive (mounted inside /api/drive by routes/drive.ts):
@@ -169,6 +170,11 @@ const stageOne = async (req: Request, ctx: DriveAccessCtx, id: string, stage: Do
   if (node.kind !== 'FILE') throw badRequest('NOT_A_FILE');
   const row = await prisma.driveNode.findUniqueOrThrow({ where: { id }, select: { workflowStage: true, updatedAt: true } });
   if (row.workflowStage === stage) return { name: node.name };
+  // Four-eyes gate: a case file goes to the embassy only after the approved package review.
+  if (stage === 'SENT_TO_EMBASSY') {
+    const caseId = await caseForDriveNode(id);
+    if (caseId) await assertFourEyes(caseId);
+  }
   await prisma.driveNode.update({ where: { id }, data: { workflowStage: stage, workflowAt: stage ? new Date() : null, updatedAt: row.updatedAt } });
   await logDriveActivity({ nodeId: id, folderId: node.parentId, actorId: req.user!.id, action: 'STAGE', name: node.name, meta: { kind: 'FILE', from: row.workflowStage, to: stage, stage } });
   return { name: node.name };

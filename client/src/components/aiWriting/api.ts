@@ -20,7 +20,7 @@ export interface LetterDraft {
 }
 
 export interface MatchGap {
-  code: 'PROFESSION' | 'GERMAN' | 'EXPERIENCE' | 'LICENCE' | 'VISA_GERMAN' | 'VISA_EDUCATION';
+  code: 'PROFESSION' | 'GERMAN' | 'EXPERIENCE' | 'LICENCE' | 'VISA_GERMAN' | 'VISA_EDUCATION' | 'RECOGNITION';
   required: string | number;
   actual: string | number | null;
 }

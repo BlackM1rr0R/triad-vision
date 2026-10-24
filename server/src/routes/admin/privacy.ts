@@ -16,7 +16,8 @@ import { dataOverview, notifyRequestDecided, OPEN_STATUSES } from '../../lib/pri
  *   GET  /requests/:id                           detail with the user's data overview (+ deletion preview)
  *   POST /requests/:id/status                    { status, decisionNote }
  *   POST /requests/:id/execute-deletion          { confirmEmail } → deleteUserAccount, request COMPLETED
- *   GET  /consents?email=&type=&from=&to=&format=csv   consent log search / CSV
+ *   GET  /consents?email=&type=&version=&source=&from=&to=&format=csv|download   consent register search / CSV / JSON
+ *   GET  /consents/person?userId=|email=|visitorId=   one person's consent timeline with the accepted text versions
  */
 export const adminPrivacyRouter = Router();
 adminPrivacyRouter.use(requireMinRole('ADMIN'));
@@ -203,49 +204,120 @@ const csvCell = (v: unknown) => {
   return `"${safe.replace(/"/g, '""')}"`;
 };
 
-adminPrivacyRouter.get('/consents', async (req, res) => {
-  const q = parse(
-    z.object({
-      email: z.string().trim().max(200).optional(),
-      type: z.enum(CONSENT_TYPES).optional(),
-      from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
-      to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
-      format: z.enum(['json', 'csv']).optional(),
-    }),
-    req.query,
-  );
+/** Document version (kind / version / status) of each referenced legal text, keyed by id. */
+const legalDocsFor = async (ids: (string | null)[]) => {
+  const unique = Array.from(new Set(ids.filter((v): v is string => !!v)));
+  if (!unique.length) return {} as Record<string, { id: string; kind: string; version: string; status: string }>;
+  const docs = await prisma.legalDocument.findMany({ where: { id: { in: unique } }, select: { id: true, kind: true, version: true, status: true } });
+  return Object.fromEntries(docs.map((d) => [d.id, d]));
+};
+
+const consentFilter = z.object({
+  email: z.string().trim().max(200).optional(),
+  type: z.enum(CONSENT_TYPES).optional(),
+  version: z.string().trim().max(40).optional(),
+  source: z.string().trim().max(40).optional(),
+  userId: z.string().trim().max(40).optional(),
+  visitorId: z.string().trim().max(40).optional(),
+  legalDocumentId: z.string().trim().max(40).optional(),
+  from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+});
+
+const consentWhere = (q: z.infer<typeof consentFilter>) => {
   const where: Prisma.ConsentRecordWhereInput = {};
   if (q.email) {
     const e = q.email.toLowerCase();
     where.OR = [{ email: { contains: e } }, { user: { email: { contains: e } } }];
   }
   if (q.type) where.type = q.type;
+  if (q.version) where.version = q.version;
+  if (q.source) where.source = q.source;
+  if (q.userId) where.userId = q.userId;
+  if (q.visitorId) where.visitorId = q.visitorId;
+  if (q.legalDocumentId) where.legalDocumentId = q.legalDocumentId;
   if (q.from || q.to) {
     where.createdAt = {
       ...(q.from ? { gte: new Date(`${q.from}T00:00:00Z`) } : {}),
       ...(q.to ? { lt: new Date(new Date(`${q.to}T00:00:00Z`).getTime() + DAY) } : {}),
     };
   }
-  const csv = q.format === 'csv';
+  return where;
+};
+
+/**
+ * Per-person timeline: every consent of one user (also rows logged by email before the account
+ * existed) or one anonymous cookie visitor, oldest first, with the legal text version accepted.
+ */
+adminPrivacyRouter.get('/consents/person', async (req, res) => {
+  const q = parse(z.object({ userId: z.string().max(40).optional(), email: z.string().trim().max(200).optional(), visitorId: z.string().max(40).optional() }), req.query);
+  if (!q.userId && !q.email && !q.visitorId) throw badRequest('PERSON_REQUIRED');
+  const user = q.userId
+    ? await prisma.user.findUnique({ where: { id: q.userId }, select: { id: true, email: true, firstName: true, lastName: true, role: true } })
+    : q.email
+      ? await prisma.user.findUnique({ where: { email: q.email.toLowerCase() }, select: { id: true, email: true, firstName: true, lastName: true, role: true } })
+      : null;
+  const or: Prisma.ConsentRecordWhereInput[] = [];
+  if (user) or.push({ userId: user.id }, { email: user.email });
+  if (q.email) or.push({ email: q.email.toLowerCase() });
+  if (q.visitorId) or.push({ visitorId: q.visitorId });
+  const items = or.length ? await prisma.consentRecord.findMany({ where: { OR: or }, orderBy: [{ createdAt: 'asc' }, { id: 'asc' }], take: 2000 }) : [];
+  // The latest state per type ("what is valid now").
+  const current: Record<string, { granted: boolean; version: string; at: Date; legalDocumentId: string | null }> = {};
+  for (const r of items) current[r.type] = { granted: r.granted, version: r.version, at: r.createdAt, legalDocumentId: r.legalDocumentId };
+  res.json({ user, items, current, documents: await legalDocsFor(items.map((i) => i.legalDocumentId)) });
+});
+
+adminPrivacyRouter.get('/consents', async (req, res) => {
+  const q = parse(consentFilter.extend({ format: z.enum(['json', 'csv', 'download']).optional() }), req.query);
+  const where = consentWhere(q);
+  const file = q.format === 'csv' || q.format === 'download';
   const rows = await prisma.consentRecord.findMany({
     where,
     orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
-    take: csv ? 50_000 : 500,
+    take: file ? 50_000 : 500,
     include: { user: { select: { id: true, email: true, firstName: true, lastName: true } } },
   });
-  if (!csv) {
-    const total = await prisma.consentRecord.count({ where });
-    res.json({ items: rows, total, types: CONSENT_TYPES });
+  const documents = await legalDocsFor(rows.map((r) => r.legalDocumentId));
+  if (!file) {
+    const [total, versions, sources] = await Promise.all([
+      prisma.consentRecord.count({ where }),
+      prisma.consentRecord.findMany({ distinct: ['version'], select: { version: true }, orderBy: { version: 'desc' }, take: 100 }),
+      prisma.consentRecord.findMany({ distinct: ['source'], select: { source: true }, orderBy: { source: 'asc' }, take: 100 }),
+    ]);
+    res.json({ items: rows, total, types: CONSENT_TYPES, documents, versions: versions.map((v) => v.version), sources: sources.map((s) => s.source) });
     return;
   }
-  await audit(req, 'CONSENT_LOG_EXPORTED', undefined, { rows: rows.length, filter: { ...q } });
-  const header = ['createdAt', 'email', 'userId', 'name', 'type', 'granted', 'version', 'source', 'ip', 'userAgent'];
+  await audit(req, 'CONSENT_LOG_EXPORTED', undefined, { rows: rows.length, format: q.format, filter: { ...q } });
+  const stamp = new Date().toISOString().slice(0, 10);
+  if (q.format === 'download') {
+    // JSON export (proof bundle): every row with the legal text version it refers to.
+    res.setHeader('Content-Type', 'application/json; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="consent-log-${stamp}.json"`);
+    res.send(JSON.stringify({ exportedAt: new Date(), filter: { ...q, format: undefined }, documents, items: rows }, null, 2));
+    return;
+  }
+  const header = ['createdAt', 'email', 'userId', 'visitorId', 'name', 'type', 'granted', 'version', 'legalDocumentId', 'documentKind', 'source', 'ip', 'userAgent'];
   const lines = rows.map((r) =>
-    [r.createdAt, r.user?.email ?? r.email, r.userId, r.user ? `${r.user.firstName} ${r.user.lastName}`.trim() : '', r.type, r.granted ? 'yes' : 'no', r.version, r.source, r.ip, r.userAgent]
+    [
+      r.createdAt,
+      r.user?.email ?? r.email,
+      r.userId,
+      r.visitorId,
+      r.user ? `${r.user.firstName} ${r.user.lastName}`.trim() : '',
+      r.type,
+      r.granted ? 'yes' : 'no',
+      r.version,
+      r.legalDocumentId,
+      r.legalDocumentId ? (documents[r.legalDocumentId]?.kind ?? '') : '',
+      r.source,
+      r.ip,
+      r.userAgent,
+    ]
       .map(csvCell)
       .join(','),
   );
   res.setHeader('Content-Type', 'text/csv; charset=utf-8');
-  res.setHeader('Content-Disposition', `attachment; filename="consent-log-${new Date().toISOString().slice(0, 10)}.csv"`);
+  res.setHeader('Content-Disposition', `attachment; filename="consent-log-${stamp}.csv"`);
   res.send(`﻿${header.join(',')}\r\n${lines.join('\r\n')}\r\n`);
 });

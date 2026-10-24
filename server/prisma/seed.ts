@@ -6,6 +6,7 @@ import { seedRequirements } from './seed/requirements';
 import { seedJourney } from './seed/journey';
 import { seedContractTemplates } from './seed/contractTemplates';
 import { seedInterviewPrep } from './seed/interviewPrep';
+import { seedGuides } from './seed/guides/index';
 
 const prisma = new PrismaClient();
 const img = (id: string, w = 1200) => `https://images.unsplash.com/photo-${id}?auto=format&fit=crop&w=${w}&q=75`;
@@ -497,6 +498,7 @@ async function main() {
   await seedJourney(prisma);
   await seedContractTemplates(prisma);
   await seedInterviewPrep(prisma);
+  await seedGuides(prisma); // topic guides (/guides): each language version written once
 
   console.log(`Seed complete. Admin login: ${adminEmail}`);
 }

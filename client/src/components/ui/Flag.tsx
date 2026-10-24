@@ -1,6 +1,6 @@
 import clsx from 'clsx';
 
-export type FlagCode = 'az' | 'de' | 'en' | 'ru';
+export type FlagCode = 'az' | 'de' | 'en' | 'ru' | 'tr' | 'uk';
 
 /**
  * SVG flags. Emoji flags are not rendered on Windows (they show as letters), so never use them in the UI.
@@ -34,6 +34,22 @@ export const Flag = ({ code, className, rounded = true }: { code: FlagCode; clas
           <rect width="60" height="13.34" fill="#fff" />
           <rect y="13.33" width="60" height="13.34" fill="#0039a6" />
           <rect y="26.66" width="60" height="13.34" fill="#d52b1e" />
+        </svg>
+      );
+    case 'tr':
+      return (
+        <svg viewBox="0 0 60 40" className={cls} aria-label="TR" role="img">
+          <rect width="60" height="40" fill="#e30a17" />
+          <circle cx="22" cy="20" r="10" fill="#fff" />
+          <circle cx="24.5" cy="20" r="8" fill="#e30a17" />
+          <path d="M30.50 20.00L33.92 18.85L33.95 15.24L36.10 18.15L39.55 17.06L37.45 20.00L39.55 22.94L36.10 21.85L33.95 24.76L33.92 21.15Z" fill="#fff" />
+        </svg>
+      );
+    case 'uk':
+      return (
+        <svg viewBox="0 0 60 40" className={cls} aria-label="UA" role="img">
+          <rect width="60" height="20" fill="#0057b7" />
+          <rect y="20" width="60" height="20" fill="#ffd700" />
         </svg>
       );
     case 'en':

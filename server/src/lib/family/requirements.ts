@@ -98,5 +98,7 @@ const relationKey = (r: string | null | undefined): FamilyRelationKey => (r === 
 export const familyRequirementsFor = async (tx: Prisma.TransactionClient, caseId: string, stage: 'INITIAL' | 'EMBASSY') => {
   const c = await tx.case.findUnique({ where: { id: caseId }, select: { parentCaseId: true, relation: true } });
   if (!c?.parentCaseId) return null;
-  return FAMILY_REQUIREMENTS[relationKey(c.relation)][stage].map((r, i) => ({ key: r.key, title: r.title as Prisma.InputJsonValue, description: r.description as Prisma.InputJsonValue | undefined, required: r.required, sortOrder: i }));
+  // Keys the case has already (e.g. housing proof copied from the main case, lib/family/reunion.ts) are not added twice.
+  const existing = new Set((await tx.documentRequirement.findMany({ where: { caseId, key: { not: null } }, select: { key: true } })).map((r) => r.key));
+  return FAMILY_REQUIREMENTS[relationKey(c.relation)][stage].filter((r) => !existing.has(r.key)).map((r, i) => ({ key: r.key, title: r.title as Prisma.InputJsonValue, description: r.description as Prisma.InputJsonValue | undefined, required: r.required, sortOrder: i }));
 };

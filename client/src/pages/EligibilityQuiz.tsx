@@ -24,7 +24,8 @@ import {
   UserPlus,
 } from 'lucide-react';
 import { api } from '@/lib/api';
-import { registerCopy } from '@/i18n';
+import { trackLead } from '@/lib/leadVisitor';
+import { registerCopy, toContentLocale } from '@/i18n';
 import { pagesPublicAi } from '@/i18n/pagesPublicAi';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { Spinner } from '@/components/ui/Spinner';
@@ -129,7 +130,7 @@ const PathCard = ({ p, best }: { p: PathResult; best: boolean }) => {
 export default function EligibilityQuiz() {
   const { t, i18n } = useTranslation();
   usePageTitle(t('pai.quiz.title'));
-  const lang = (i18n.resolvedLanguage ?? 'az').slice(0, 2);
+  const lang = toContentLocale(i18n.resolvedLanguage); // tr / uk: English answers
   const [step, setStep] = useState(-1);
   const [answers, setAnswers] = useState<Answers>({});
   const [paths, setPaths] = useState<PathResult[] | null>(null);
@@ -145,6 +146,8 @@ export default function EligibilityQuiz() {
       const { data } = await api.post<{ paths: PathResult[]; explanation: string | null }>('/public-ai/eligibility', { answers, lang, explain });
       setPaths(data.paths);
       if (explain) setExplanation(data.explanation ?? '');
+      // lead scoring (analytics consent only): quiz finished with the best path's fit
+      else if (data.paths[0]) trackLead('quiz_done', { fit: data.paths[0].fit });
     } catch {
       setError(true);
     } finally {

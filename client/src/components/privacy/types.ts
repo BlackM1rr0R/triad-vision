@@ -60,6 +60,8 @@ export interface DataOverview {
 
 export interface PrivacyState {
   policyVersion: string;
+  /** Current AGB / privacy policy version and the version this user accepted (versioned legal texts). */
+  legal?: import('@/components/legal/LegalVersions').LegalAcceptance[];
   retention: { months: number; includeMessages: boolean };
   consents: Record<ConsentType, EffectiveConsent>;
   history: ConsentHistoryRow[];

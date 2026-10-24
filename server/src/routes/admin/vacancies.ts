@@ -119,7 +119,7 @@ adminVacanciesRouter.get('/:id', async (req, res) => {
           user: {
             select: {
               id: true, firstName: true, lastName: true, email: true, phone: true, profession: true, experienceYears: true,
-              germanLevel: true, education: true, drivingLicence: true, city: true, emailVerifiedAt: true,
+              germanLevel: true, education: true, drivingLicence: true, recognitionStatus: true, city: true, emailVerifiedAt: true,
             },
           },
         },
@@ -234,7 +234,7 @@ adminVacanciesRouter.get('/:id/suggestions', async (req, res) => {
   const applied = new Set(v.applications.map((a) => a.userId));
   const candidates = await prisma.user.findMany({
     where: { role: 'CLIENT', isActive: true },
-    select: { id: true, firstName: true, lastName: true, profession: true, experienceYears: true, germanLevel: true, education: true, drivingLicence: true, city: true },
+    select: { id: true, firstName: true, lastName: true, profession: true, experienceYears: true, germanLevel: true, education: true, drivingLicence: true, recognitionStatus: true, city: true },
     take: 5000,
   });
   const ranked = candidates

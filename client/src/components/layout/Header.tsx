@@ -29,7 +29,7 @@ import { useAuth } from '@/lib/auth';
 import { isStaffRole } from '@/lib/types';
 import { useSiteContent } from '@/lib/content';
 import { useL10n } from '@/lib/l10n';
-import { LOCALES, switchLanguage } from '@/i18n';
+import { SITE_LOCALES, switchLanguage } from '@/i18n';
 import { sized } from '@/lib/img';
 
 /** Routes whose top section is light, so the header must start in its solid (dark-text) style. */
@@ -88,10 +88,14 @@ export const Header = () => {
     { to: '/eligibility', label: t('nav.eligibility') },
     { to: '/faq', label: t('nav.faq') },
     { to: '/news', label: t('nav.news') },
+    { to: '/guides', label: t('nav.guides') },
+    { to: '/chancenkarte-calculator', label: t('nav.chancenkarte') },
+    { to: '/blue-card-check', label: t('nav.blueCard') },
     { to: '/salary-calculator', label: t('nav.salary') },
     { to: '/anerkennung', label: t('nav.anerkennung') },
     { to: '/cities', label: t('nav.cities') },
     { to: '/calculator', label: t('nav.calculator') },
+    { to: '/cost-calculator', label: t('nav.costCalculator') },
     { to: '/events', label: t('nav.events') },
     { to: '/map', label: t('nav.map') },
   ];
@@ -392,7 +396,7 @@ export const Header = () => {
                 </div>
 
                 <div className="mt-6 flex flex-wrap gap-2">
-                  {LOCALES.map((l) => (
+                  {SITE_LOCALES.map((l) => (
                     <button
                       key={l}
                       type="button"
@@ -476,7 +480,7 @@ const MegaGrid = ({
       ))}
     </div>
     <Link to={aside.to} className="group relative flex flex-col justify-end overflow-hidden rounded-2xl bg-navy-900 p-6 text-white">
-      {aside.image && <img src={sized(aside.image, 600)} alt="" decoding="async" className="absolute inset-0 size-full object-cover opacity-30 transition duration-700 group-hover:scale-110" />}
+      {aside.image && <img src={sized(aside.image, 600)} alt="" loading="lazy" decoding="async" className="absolute inset-0 size-full object-cover opacity-30 transition duration-700 group-hover:scale-110" />}
       <div className="absolute inset-0 bg-gradient-to-t from-navy-950 to-transparent" />
       <div className="relative">
         <p className="font-display text-lg leading-snug font-bold">{aside.title}</p>

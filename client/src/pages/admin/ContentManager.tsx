@@ -18,6 +18,7 @@ import { L10nInput, L10nListInput, emptyL10n, emptyL10nList, fillFromAz, fillLis
 import { fmtDate, toDateInput, toastError } from '@/components/admin/labels';
 import { EmptyState, ErrorBlock, LoadingBlock, PageHead, Switch } from '@/components/admin/ui';
 import { PostAiTools } from '@/components/aiStaff/PostAiDraft';
+import { SEO_RESOURCES, SeoFields, seoFromItem, seoPayload, type SeoValue } from '@/components/admin/SeoFields';
 
 // ─── Config ─────────────────────────────────────────────────────────────
 
@@ -674,6 +675,9 @@ function ResourcePage({ resource }: { resource: string }) {
   const [deleting, setDeleting] = useState<Item | null>(null);
   const [deleteBusy, setDeleteBusy] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
+  // SEO overrides (posts, services, visa categories): kept apart from the generic field table.
+  const [seo, setSeo] = useState<SeoValue>(() => seoFromItem(null));
+  const hasSeo = SEO_RESOURCES.has(resource);
 
   const items = useMemo(() => {
     const list = data ?? [];
@@ -700,6 +704,7 @@ function ResourcePage({ resource }: { resource: string }) {
 
   const openEditor = (item: Item | 'new') => {
     setValues(toValues(def, item === 'new' ? null : item));
+    setSeo(seoFromItem(item === 'new' ? null : item));
     setEditing(item);
   };
 
@@ -712,6 +717,7 @@ function ResourcePage({ resource }: { resource: string }) {
     setSaving(true);
     try {
       const payload = toPayload(def, values);
+      if (hasSeo) Object.assign(payload, seoPayload(seo));
       if (editing === 'new') {
         if (def.sortable) payload.sortOrder = items.reduce((m, i) => Math.max(m, Number(i.sortOrder ?? 0)), -1) + 1;
         await api.post(`/admin/content/${resource}`, payload);
@@ -946,6 +952,16 @@ function ResourcePage({ resource }: { resource: string }) {
               </div>
             </Fragment>
           ))}
+          {hasSeo && (
+            <SeoFields
+              resource={resource}
+              value={seo}
+              onChange={setSeo}
+              fallbackTitle={(values.title as Record<string, string> | null) ?? {}}
+              fallbackDescription={((values.summary ?? values.excerpt) as Record<string, string> | null) ?? {}}
+              slug={typeof values.slug === 'string' ? values.slug : ''}
+            />
+          )}
           <p className="text-[11px] text-muted sm:col-span-2">{t('admin.content.fallbackNote')}</p>
         </form>
       </Drawer>

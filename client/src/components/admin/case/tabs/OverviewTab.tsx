@@ -8,6 +8,8 @@ import FamilyAdminPanel from '@/components/family/FamilyAdminPanel';
 import { FamilyPanel } from '@/components/journey/Family';
 import GermanStaffPanel from '@/components/german/GermanStaffPanel';
 import { OnboardingAdminPanel } from '@/components/journey/OnboardingAdmin';
+import RenewalPanel from '@/components/postArrival/RenewalPanel';
+import { CandidateEvaluations } from '@/components/placement/Evaluations';
 import { ActionPanel } from '../ActionPanel';
 import { CaseStatsPanel } from '../CaseStats';
 import type { CaseTabProps } from './types';
@@ -29,6 +31,8 @@ export default function OverviewTab({ c, stats, goTo }: CaseTabProps) {
           <OnboardingAdminPanel caseId={c.id} />
         </div>
       )}
+      {/* After the visa: residence title expiry → renewal case, probation end, links to / from the renewal. */}
+      <RenewalPanel caseId={c.id} status={c.status} />
       <div id="case-actions">
         <ActionPanel c={c} />
       </div>
@@ -43,6 +47,8 @@ export default function OverviewTab({ c, stats, goTo }: CaseTabProps) {
       <FamilyAdminPanel caseId={c.id} parentCaseId={x.parentCaseId} />
       {member && <FamilyPanel caseId={c.id} parentCaseId={x.parentCaseId} />}
       {!member && <GermanStaffPanel userId={c.client.id} />}
+      {/* Interview evaluations of the candidate (employer + team), only when there are any. */}
+      {!member && <CandidateEvaluations candidateId={c.client.id} hideEmpty />}
       <div id="case-ai-summary">
         <CaseAiSummary caseId={c.id} />
       </div>

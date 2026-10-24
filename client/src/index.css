@@ -705,3 +705,55 @@ html.a11y-visual-alerts.a11y-flash::after {
 .a11y-nomotion .page-in {
   animation: none;
 }
+
+/* Long-form topic guides (/guides/:slug): HTML rendered on the server from the guide's markdown. */
+@layer components {
+  .prose-guide {
+    @apply text-[1.0625rem] leading-relaxed text-ink;
+  }
+  .prose-guide > * + * {
+    @apply mt-4;
+  }
+  .prose-guide h2 {
+    @apply mt-12 mb-2 scroll-mt-28 font-display text-2xl leading-tight font-bold text-navy-900 sm:text-[1.75rem];
+  }
+  .prose-guide h3 {
+    @apply mt-8 mb-1 scroll-mt-28 font-display text-xl font-bold text-navy-900;
+  }
+  .prose-guide h4 {
+    @apply mt-6 font-semibold text-navy-900;
+  }
+  .prose-guide p {
+    @apply text-ink/85;
+  }
+  .prose-guide a {
+    @apply font-medium text-brand-700 underline decoration-brand-400/50 underline-offset-2 hover:decoration-brand-600;
+  }
+  .prose-guide ul {
+    @apply list-disc space-y-1.5 pl-6 marker:text-brand-500;
+  }
+  .prose-guide ol {
+    @apply list-decimal space-y-1.5 pl-6 marker:font-semibold marker:text-brand-600;
+  }
+  .prose-guide blockquote {
+    @apply rounded-xl border-l-4 border-brand-500 bg-brand-50 px-5 py-4 text-navy-900;
+  }
+  .prose-guide blockquote p {
+    @apply text-navy-900;
+  }
+  .prose-guide .table-wrap {
+    @apply overflow-x-auto rounded-xl border border-line;
+  }
+  .prose-guide table {
+    @apply w-full min-w-[32rem] border-collapse text-left text-[0.9375rem];
+  }
+  .prose-guide th {
+    @apply bg-surface px-4 py-2.5 font-semibold text-navy-900;
+  }
+  .prose-guide td {
+    @apply border-t border-line px-4 py-2.5 align-top;
+  }
+  .prose-guide code {
+    @apply rounded bg-surface px-1.5 py-0.5 text-[0.9em];
+  }
+}

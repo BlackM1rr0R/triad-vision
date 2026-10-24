@@ -1,7 +1,9 @@
 import { STATUS_STEP } from '@/lib/caseStatus';
 import { SignaturesPanel } from '@/components/esign/CaseSignatures';
 import { EmbassyPackagePanel } from '@/components/caseNext/EmbassyPackagePanel';
+import { FourEyesPanel } from '@/components/caseNext/FourEyesPanel';
 import CaseOriginalsPanel from '@/components/originals/CaseOriginalsPanel';
+import { EmploymentContractPanel } from '@/components/placement/EmploymentContractPanel';
 import { ClientFiles } from '../ClientFiles';
 import { ContractBox } from '../Contract';
 import { RequirementsSection } from '../Requirements';
@@ -30,9 +32,13 @@ export default function DocumentsTab({ c }: CaseTabProps) {
       </div>
       {!embassyFirst && embassy}
       <EmbassyPackagePanel c={c} />
+      {/* Four-eyes check of the package before the embassy step (from the embassy stage on). */}
+      {showEmbassy && <FourEyesPanel c={c} />}
       <div id="case-contract">
         <ContractBox c={c} />
       </div>
+      {/* Employment contract with the employer (Arbeitsvertrag): terms, checks, probation end. */}
+      <EmploymentContractPanel caseId={c.id} />
       <div id="case-signatures">
         <SignaturesPanel caseId={c.id} />
       </div>

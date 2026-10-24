@@ -1,8 +1,10 @@
 import { useId, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { toContentLocale } from '@/i18n';
 import { CheckCircle2, Send } from 'lucide-react';
 import { api, errorCode } from '@/lib/api';
+import { leadContext } from '@/lib/leadVisitor';
 import { Spinner } from '@/components/ui/Spinner';
 
 export interface ChatTurn {
@@ -45,10 +47,11 @@ export const LeadForm = ({
         phone: form.phone.trim() || undefined,
         consent: true,
         source,
-        lang: (i18n.resolvedLanguage ?? 'az').slice(0, 2),
+        lang: toContentLocale(i18n.resolvedLanguage),
         transcript: (transcript ?? []).slice(-12).map((m) => ({ role: m.role, content: m.content.slice(0, 2000) })),
         ...(answers ? { answers } : {}),
         ...(form.website ? { website: form.website } : {}),
+        ...leadContext(), // lead scoring: visitor id (consent only) + campaign
       });
       setState('sent');
     } catch (err) {

@@ -17,6 +17,7 @@ import {
   newMeetingUrl,
   type InterviewFull,
 } from '../lib/ops/interviews.js';
+import { canEvaluate, evaluationInput, evaluationSummary, evaluationsOfInterview, notifyEvaluation, saveEvaluation } from '../lib/placement/evaluations.js';
 
 /**
  * Employer ↔ candidate interviews — mounted at /api/interviews.
@@ -310,4 +311,40 @@ interviewsRouter.post('/:id/decline', async (req, res) => {
   await audit(req, 'INTERVIEW_DECLINED', `interview:${i.id}`, { reason: reason ?? null });
   await broadcastInterview(interview, 'declined', { actorId: req.user!.id, notes: reason, webhook: 'interview.updated' });
   res.json({ interview: interviewView(interview, audience) });
+});
+
+// ─── Evaluations (lib/placement/evaluations.ts) ─────────────────────────
+
+/** Staff see every evaluation of the interview, an employer only the employer side; candidates none. */
+interviewsRouter.get('/:id/evaluations', async (req, res) => {
+  const { interview: i, audience } = await loadVisible(req);
+  if (audience === 'candidate') throw forbidden();
+  const items = await evaluationsOfInterview(i.id, audience === 'company' ? 'EMPLOYER' : undefined);
+  res.json({ items, summary: evaluationSummary(items), canEvaluate: canEvaluate(i), mineId: items.find((e) => e.authorId === req.user!.id)?.id ?? null });
+});
+
+/** The caller's own evaluation (created or updated) — after the interview started or was marked DONE. */
+interviewsRouter.put('/:id/evaluations/mine', async (req, res) => {
+  const body = parse(evaluationInput, req.body);
+  const { interview: i, audience } = await loadVisible(req);
+  if (audience === 'candidate') throw forbidden();
+  if (!canEvaluate(i)) throw conflict('INTERVIEW_NOT_EVALUABLE');
+  const company = audience === 'company' ? await companyOf(req) : null;
+  const name = `${req.user!.firstName} ${req.user!.lastName}`.trim();
+  const author = { kind: company ? ('EMPLOYER' as const) : ('STAFF' as const), id: req.user!.id, name: company ? `${name} (${company.name})` : name };
+  const { evaluation, created } = await saveEvaluation(i, author, body);
+  await audit(req, created ? 'INTERVIEW_EVALUATED' : 'INTERVIEW_EVALUATION_UPDATED', `interview:${i.id}`, { overall: body.overall, recommendation: body.recommendation, authorKind: author.kind });
+  if (created && company) await notifyEvaluation(i, author, body);
+  res.status(created ? 201 : 200).json({ evaluation });
+});
+
+/** Staff remove any evaluation; others only their own. */
+interviewsRouter.delete('/:id/evaluations/:evalId', async (req, res) => {
+  const { interview: i, audience } = await loadVisible(req);
+  if (audience === 'candidate') throw forbidden();
+  const e = await prisma.interviewEvaluation.findFirst({ where: { id: String(req.params.evalId), interviewId: i.id } });
+  if (!e || (audience !== 'staff' && e.authorId !== req.user!.id)) throw notFound('EVALUATION_NOT_FOUND');
+  await prisma.interviewEvaluation.delete({ where: { id: e.id } });
+  await audit(req, 'INTERVIEW_EVALUATION_DELETED', `interview:${i.id}`, { evaluationId: e.id, authorKind: e.authorKind });
+  res.json({ ok: true });
 });

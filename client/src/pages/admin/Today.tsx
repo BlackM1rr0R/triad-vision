@@ -17,6 +17,7 @@ import { ErrorBlock, LoadingBlock, PageHead } from '@/components/admin/ui';
 import { dueText, noteText, runAction, useMyWork, useRefreshMyWork, type WorkAction, type WorkBucket, type WorkItem, type WorkScope } from '@/components/today/api';
 import { CATEGORY_TONE, FILTERS, KIND_ICON, PRIORITY_DOT, type WorkFilter } from '@/components/today/kinds';
 import { TimerButton } from '@/components/timeCare/TimerButton'; // "⏱ Başlat" on rows with a case
+import { RequiredTrainingBanner } from '@/components/team/training/TrainingNotice'; // unfinished required courses
 
 registerCopy(pagesToday);
 
@@ -253,6 +254,8 @@ export default function Today() {
           </div>
         }
       />
+
+      <RequiredTrainingBanner />
 
       <div className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
         <div className="flex w-max gap-1.5 sm:w-auto sm:flex-wrap" role="group" aria-label={t('today.filter.label')}>

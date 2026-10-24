@@ -10,6 +10,9 @@ import { L10nInput, emptyL10n } from '@/components/admin/L10nInput';
 import { useCalcConfig } from '@/components/growth/api';
 import { registerCopy } from '@/i18n';
 import { pagesGrowthPlus } from '@/i18n/pagesGrowthPlus';
+import { pagesMarketing } from '@/i18n/pagesMarketing';
+import { CostCalculatorSettings } from '@/components/marketing/CostCalculatorSettings';
+import { OriginAnalytics } from '@/components/marketing/OriginAnalytics';
 import { api, errorCode } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { useL10n } from '@/lib/l10n';
@@ -17,6 +20,7 @@ import { hasMinRole, type L10n } from '@/lib/types';
 import { usePageTitle } from '@/lib/usePageTitle';
 
 registerCopy(pagesGrowthPlus);
+registerCopy(pagesMarketing);
 
 type R = [number, number];
 interface CalcSettings {
@@ -535,7 +539,8 @@ const ReferralsTab = ({ canEdit }: { canEdit: boolean }) => {
   );
 };
 
-type Tab = 'calculator' | 'map' | 'referrals';
+type Tab = 'calculator' | 'costs' | 'map' | 'origins' | 'referrals';
+const TABS: Tab[] = ['calculator', 'costs', 'map', 'origins', 'referrals'];
 
 export default function AdminGrowthTools() {
   const { t } = useTranslation();
@@ -546,9 +551,11 @@ export default function AdminGrowthTools() {
   return (
     <div>
       <PageHead title={t('gp.admin.toolsTitle')} subtitle={t('gp.admin.toolsSubtitle')} />
-      <Tabs className="mb-5" label={t('gp.admin.toolsTitle')} items={(['calculator', 'map', 'referrals'] as const).map((k) => ({ key: k, label: t(`gp.admin.tabs.${k}`) }))} value={tab} onChange={setTab} />
+      <Tabs className="mb-5" label={t('gp.admin.toolsTitle')} items={TABS.map((k) => ({ key: k, label: k === 'costs' ? t('mk.cost.admin.tab') : k === 'origins' ? t('mk.origins.admin.tab') : t(`gp.admin.tabs.${k}`) }))} value={tab} onChange={setTab} />
       {tab === 'calculator' && <CalculatorTab canEdit={canEdit} />}
+      {tab === 'costs' && <CostCalculatorSettings canEdit={canEdit} />}
       {tab === 'map' && <MapTab canEdit={canEdit} />}
+      {tab === 'origins' && <OriginAnalytics />}
       {tab === 'referrals' && <ReferralsTab canEdit={canEdit} />}
     </div>
   );

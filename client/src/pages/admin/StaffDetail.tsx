@@ -46,6 +46,8 @@ import type { StaffAssignedCase, StaffDetailResponse } from '@/components/admin/
 import { DefRow, EmptyState, ErrorBlock, LoadingBlock, OnlineDot, Panel, StatTile } from '@/components/admin/ui';
 import { Tabs } from '@/components/ui/Tabs';
 import { ACCENT, BarChart, BarList, SERIES_COLORS } from '@/components/admin/charts';
+import { KpiCard } from '@/components/team/KpiCard'; // consolidated monthly KPI (lib/kpi)
+import { bakuMonth, useStaffKpi } from '@/components/team/api';
 
 /** Compact, human-readable rendering of an audit details JSON. */
 const detailsText = (d: Record<string, unknown> | null) =>
@@ -93,6 +95,8 @@ export default function StaffDetail() {
   const [allAudit, setAllAudit] = useState(false);
   const [caseTab, setCaseTab] = useState<'open' | 'closed'>('open');
   const [deleting, setDeleting] = useState(false);
+  const [kpiMonth, setKpiMonth] = useState(bakuMonth());
+  const kpi = useStaffKpi(id, kpiMonth, !!id);
   const { user: me } = useAuth();
   const navigate = useNavigate();
 
@@ -199,6 +203,9 @@ export default function StaffDetail() {
         <StatTile label={t('admin.staff.workspaceFile')} value={totals.docFiles} hint={t('admin.staff.caseDocs', { count: totals.documents })} />
         <StatTile label={t('admin.staff.sessions')} value={totals.sessions} hint={t('admin.staff.sessionsHint', { live: liveSessions, audit: totals.auditLogs })} />
       </div>
+
+      {/* Monthly KPI: cases, documents, replies, client score, revenue, hours, tasks, four-eyes checks */}
+      <KpiCard data={kpi.data} isLoading={kpi.isLoading} error={kpi.error} onRetry={() => kpi.refetch()} month={kpiMonth} onMonth={setKpiMonth} />
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Panel title={t('admin.staff.dailyActive')} icon={CalendarDays}>

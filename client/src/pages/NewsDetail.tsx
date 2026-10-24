@@ -1,7 +1,7 @@
 import { Link, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowLeft, Calendar, Clock, Link2 } from 'lucide-react';
+import { ArrowLeft, Calendar, Clock, Link2, PenLine, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import { PageHero, PageHeroSkeleton } from '@/components/layout/PageHero';
 import { Reveal } from '@/components/motion';
@@ -12,6 +12,10 @@ import { useL10n } from '@/lib/l10n';
 import type { Post } from '@/lib/types';
 import NotFound from './NotFound';
 import { usePageTitle } from '@/lib/usePageTitle';
+import { registerCopy } from '@/i18n';
+import { pagesSeo } from '@/i18n/pagesSeo';
+
+registerCopy(pagesSeo); // "updated" + author line
 
 export default function NewsDetail() {
   const { slug } = useParams();
@@ -43,6 +47,9 @@ export default function NewsDetail() {
     }
   };
   const minutes = Math.max(1, Math.round(body.split(/\s+/).length / 200));
+  // Shown when the post was edited at least a day after publication (Article JSON-LD dateModified matches).
+  const updatedAt = (data as typeof data & { updatedAt?: string }).updatedAt;
+  const showUpdated = !!updatedAt && new Date(updatedAt).getTime() - new Date(data.publishedAt).getTime() > 86_400_000;
 
   return (
     <>
@@ -50,6 +57,12 @@ export default function NewsDetail() {
         <div className="mt-6 flex flex-wrap gap-4 text-sm text-white/70">
           <span className="flex items-center gap-1.5"><Calendar className="size-4" /> {date(data.publishedAt, { dateStyle: 'long' })}</span>
           <span className="flex items-center gap-1.5"><Clock className="size-4" /> {minutes} {t('common.minRead')}</span>
+          {showUpdated && (
+            <span className="flex items-center gap-1.5">
+              <RefreshCw className="size-4" aria-hidden /> <time dateTime={updatedAt}>{t('newsMeta.updated', { date: date(updatedAt!, { dateStyle: 'long' }) })}</time>
+            </span>
+          )}
+          <span className="flex items-center gap-1.5"><PenLine className="size-4" aria-hidden /> {t('newsMeta.author')}</span>
         </div>
       </PageHero>
       <article className="section">

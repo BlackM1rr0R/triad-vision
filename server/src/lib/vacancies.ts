@@ -245,7 +245,7 @@ export const anonymisedProfile = (u: ProfileFields) => ({
 });
 
 export const matchFor = (
-  candidate: Pick<User, 'profession' | 'experienceYears' | 'germanLevel' | 'education' | 'drivingLicence'>,
+  candidate: Pick<User, 'profession' | 'experienceYears' | 'germanLevel' | 'education' | 'drivingLicence' | 'recognitionStatus'>,
   v: Pick<Vacancy, 'profession' | 'germanLevel' | 'minExperience' | 'drivingLicence'> & { visaCategory?: { visaLabel: string; germanLevel: string | null } | null },
 ): MatchResult => matchCandidate(candidate, v);
 

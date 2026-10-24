@@ -18,6 +18,10 @@ export interface EventCtx {
   eventUrl: string;
   bookingUrl: string;
   note?: string;
+  /** Personal .ics link of the registrant (includes the join link). */
+  icsUrl?: string;
+  /** Recording of the past event (follow-up mail). */
+  recordingUrl?: string;
 }
 
 interface Msg {
@@ -27,6 +31,8 @@ interface Msg {
 }
 
 const join = (...parts: (string | null | undefined | false)[]) => parts.filter(Boolean).join('\n\n');
+/** "Label: url" line, left out when there is no url. */
+const line = (label: string, url?: string) => (url ? `${label}: ${url}` : null);
 
 export const eventTexts: Record<
   EventLocale,
@@ -49,12 +55,13 @@ export const eventTexts: Record<
         `Vaxt:\n${c.when}`,
         `${c.online ? 'Onlayn qoşulma linki' : 'Ünvan'}: ${c.where}`,
         'Təqvim faylı (.ics) əlavə olunub. Tədbirdən 24 saat və 1 saat əvvəl xatırlatma göndərəcəyik.',
+        line('Təqvimə əlavə et', c.icsUrl),
       ),
       cta: 'Tədbirə bax',
     }),
     reminder24h: (c) => ({
       title: `Sabah: ${c.title}`,
-      body: join(`Salam, ${c.name}!`, `"${c.title}" tədbiri sabahdır.`, `Vaxt:\n${c.when}`, `${c.online ? 'Qoşulma linki' : 'Ünvan'}: ${c.where}`),
+      body: join(`Salam, ${c.name}!`, `"${c.title}" tədbiri sabahdır.`, `Vaxt:\n${c.when}`, `${c.online ? 'Qoşulma linki' : 'Ünvan'}: ${c.where}`, line('Təqvimə əlavə et (.ics)', c.icsUrl)),
       cta: c.online ? 'Linki aç' : 'Tədbirə bax',
     }),
     reminder1h: (c) => ({
@@ -73,6 +80,7 @@ export const eventTexts: Record<
         `Salam, ${c.name}!`,
         `"${c.title}" tədbirində iştirak etdiyiniz üçün təşəkkür edirik.`,
         c.note,
+        line('Tədbirin video yazısı', c.recordingUrl),
         'Növbəti addım: şəxsi vəziyyətinizi müzakirə etmək üçün pulsuz konsultasiya təyin edin — sizə uyğun viza yolunu və müddətləri birlikdə dəqiqləşdirək.',
       ),
       cta: 'Pulsuz konsultasiya təyin et',
@@ -89,12 +97,13 @@ export const eventTexts: Record<
         `Zeit:\n${c.when}`,
         `${c.online ? 'Link zur Teilnahme' : 'Adresse'}: ${c.where}`,
         'Die Kalenderdatei (.ics) ist angehängt. Wir erinnern Sie 24 Stunden und 1 Stunde vorher.',
+        line('Zum Kalender hinzufügen', c.icsUrl),
       ),
       cta: 'Zur Veranstaltung',
     }),
     reminder24h: (c) => ({
       title: `Morgen: ${c.title}`,
-      body: join(`Guten Tag ${c.name},`, `die Veranstaltung „${c.title}“ findet morgen statt.`, `Zeit:\n${c.when}`, `${c.online ? 'Link' : 'Adresse'}: ${c.where}`),
+      body: join(`Guten Tag ${c.name},`, `die Veranstaltung „${c.title}“ findet morgen statt.`, `Zeit:\n${c.when}`, `${c.online ? 'Link' : 'Adresse'}: ${c.where}`, line('Zum Kalender hinzufügen (.ics)', c.icsUrl)),
       cta: c.online ? 'Link öffnen' : 'Zur Veranstaltung',
     }),
     reminder1h: (c) => ({
@@ -113,6 +122,7 @@ export const eventTexts: Record<
         `Guten Tag ${c.name},`,
         `vielen Dank für Ihre Teilnahme an „${c.title}“.`,
         c.note,
+        line('Aufzeichnung der Veranstaltung', c.recordingUrl),
         'Nächster Schritt: Vereinbaren Sie eine kostenlose Beratung — wir klären gemeinsam Ihren passenden Visumweg und den Zeitplan.',
       ),
       cta: 'Kostenlose Beratung buchen',
@@ -129,12 +139,13 @@ export const eventTexts: Record<
         `Time:\n${c.when}`,
         `${c.online ? 'Join link' : 'Address'}: ${c.where}`,
         'The calendar file (.ics) is attached. We will remind you 24 hours and 1 hour before.',
+        line('Add to calendar', c.icsUrl),
       ),
       cta: 'View event',
     }),
     reminder24h: (c) => ({
       title: `Tomorrow: ${c.title}`,
-      body: join(`Hello ${c.name},`, `"${c.title}" takes place tomorrow.`, `Time:\n${c.when}`, `${c.online ? 'Join link' : 'Address'}: ${c.where}`),
+      body: join(`Hello ${c.name},`, `"${c.title}" takes place tomorrow.`, `Time:\n${c.when}`, `${c.online ? 'Join link' : 'Address'}: ${c.where}`, line('Add to calendar (.ics)', c.icsUrl)),
       cta: c.online ? 'Open link' : 'View event',
     }),
     reminder1h: (c) => ({
@@ -153,6 +164,7 @@ export const eventTexts: Record<
         `Hello ${c.name},`,
         `thank you for attending "${c.title}".`,
         c.note,
+        line('Recording of the session', c.recordingUrl),
         'Next step: book your free consultation — together we will work out the right visa path and timeline for you.',
       ),
       cta: 'Book your free consultation',
@@ -169,12 +181,13 @@ export const eventTexts: Record<
         `Время:\n${c.when}`,
         `${c.online ? 'Ссылка для подключения' : 'Адрес'}: ${c.where}`,
         'Файл календаря (.ics) во вложении. Мы напомним вам за 24 часа и за 1 час.',
+        line('Добавить в календарь', c.icsUrl),
       ),
       cta: 'Открыть мероприятие',
     }),
     reminder24h: (c) => ({
       title: `Завтра: ${c.title}`,
-      body: join(`Здравствуйте, ${c.name}!`, `Мероприятие «${c.title}» состоится завтра.`, `Время:\n${c.when}`, `${c.online ? 'Ссылка' : 'Адрес'}: ${c.where}`),
+      body: join(`Здравствуйте, ${c.name}!`, `Мероприятие «${c.title}» состоится завтра.`, `Время:\n${c.when}`, `${c.online ? 'Ссылка' : 'Адрес'}: ${c.where}`, line('Добавить в календарь (.ics)', c.icsUrl)),
       cta: c.online ? 'Открыть ссылку' : 'Открыть мероприятие',
     }),
     reminder1h: (c) => ({
@@ -193,6 +206,7 @@ export const eventTexts: Record<
         `Здравствуйте, ${c.name}!`,
         `Спасибо, что приняли участие в «${c.title}».`,
         c.note,
+        line('Запись мероприятия', c.recordingUrl),
         'Следующий шаг: запишитесь на бесплатную консультацию — вместе подберём подходящий визовый путь и сроки.',
       ),
       cta: 'Записаться на бесплатную консультацию',

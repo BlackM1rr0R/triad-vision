@@ -9,7 +9,8 @@ import { badRequest, conflict, HttpError, limiter, notFound, parse } from '../li
 import { getRetentionSettings } from '../lib/legalSettings.js';
 import { notifyUser } from '../lib/notifications.js';
 import { renderEmail, sendMail } from '../lib/mailer.js';
-import { effectiveConsents, POLICY_VERSION, recordConsent, TOGGLE_TYPES, type ToggleType } from '../lib/privacy/consents.js';
+import { effectiveConsents, recordConsent, TOGGLE_TYPES, type ToggleType } from '../lib/privacy/consents.js';
+import { ACCEPT_KINDS, CONSENT_TYPE_FOR_KIND, currentRef } from '../lib/legal/documents.js';
 import { buildUserExport, exportFilename } from '../lib/privacy/export.js';
 import { dataOverview, dueFrom, notifyAdminsNewRequest, notifyRequestReceived, OPEN_STATUSES } from '../lib/privacy/requests.js';
 import { exportedText } from '../lib/privacy/texts.js';
@@ -83,14 +84,23 @@ const loadState = async (userId: string) => {
       where: { userId },
       orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
       take: 100,
-      select: { id: true, type: true, granted: true, version: true, source: true, createdAt: true },
+      select: { id: true, type: true, granted: true, version: true, source: true, legalDocumentId: true, createdAt: true },
     }),
     prisma.privacyRequest.findMany({ where: { userId }, orderBy: { createdAt: 'desc' }, select: requestSelect }),
     dataOverview(userId),
     getRetentionSettings(),
   ]);
+  // Current AGB / privacy version and the version this user last accepted (versioned legal texts).
+  const legal = await Promise.all(
+    ACCEPT_KINDS.map(async (kind) => {
+      const current = await currentRef(kind);
+      const last = history.find((h) => h.type === CONSENT_TYPE_FOR_KIND[kind] && h.granted);
+      return { kind, current, accepted: last ? { version: last.version, legalDocumentId: last.legalDocumentId, at: last.createdAt } : null };
+    }),
+  );
   return {
-    policyVersion: POLICY_VERSION,
+    policyVersion: legal.find((l) => l.kind === 'PRIVACY')!.current.version,
+    legal,
     retention: { months: retention.months, includeMessages: retention.includeMessages },
     consents,
     history,

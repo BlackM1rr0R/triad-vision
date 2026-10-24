@@ -78,6 +78,7 @@ export const suggestCandidates = async (r: CandidateRequest): Promise<Suggestion
       germanLevel: true,
       education: true,
       drivingLicence: true,
+      recognitionStatus: true,
       emailVerifiedAt: true,
       cases: { where: { status: { notIn: FINAL_STATUSES } }, select: { id: true, number: true, status: true }, orderBy: { createdAt: 'desc' }, take: 1 },
     },

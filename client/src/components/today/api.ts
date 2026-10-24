@@ -24,7 +24,9 @@ export type WorkKind =
   | 'security_alert'
   | 'privacy'
   | 'client_task_overdue'
-  | 'arrival_issue';
+  | 'arrival_issue'
+  | 'embassy_review'
+  | 'handover'; // absence handover with a note / open checklist (components/team)
 export type WorkCategory = 'documents' | 'tasks' | 'mail' | 'signatures' | 'bookings' | 'leads' | 'other';
 export type WorkPriority = 'URGENT' | 'HIGH' | 'NORMAL';
 export type WorkBucket = 'overdue' | 'today' | 'week' | 'later';

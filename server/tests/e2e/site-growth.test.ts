@@ -211,9 +211,10 @@ describe('info sessions', () => {
   it('lists upcoming events in the sitemap', async () => {
     const staff = await asStaff();
     const ev = await createEvent(staff.agent, new Date(Date.now() + 4 * DAY));
-    const res = await anon().get('/sitemap.xml').expect(200);
-    expect(res.text).toContain(`/events/${ev.slug}`);
-    expect(res.text).toContain('/calculator');
+    // /sitemap.xml is an index; events and static pages live in their child sitemaps.
+    expect((await anon().get('/sitemap.xml').expect(200)).text).toContain('/sitemaps/events.xml');
+    expect((await anon().get('/sitemaps/events.xml').expect(200)).text).toContain(`/events/${ev.slug}`);
+    expect((await anon().get('/sitemaps/pages.xml').expect(200)).text).toContain('/calculator');
   });
 });
 

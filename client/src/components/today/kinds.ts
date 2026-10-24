@@ -18,12 +18,16 @@ import {
   UserSearch,
   UsersRound,
 } from 'lucide-react';
-import { HeartHandshake } from 'lucide-react';
+import { ArrowRightLeft, HeartHandshake, ScanEye } from 'lucide-react';
 import type { WorkCategory, WorkKind, WorkPriority } from './api';
 import { registerCopy } from '@/i18n';
 import { pagesClientProcessToday } from '@/i18n/pagesClientProcess';
+import { pagesPostArrival } from '@/i18n/pagesPostArrival';
+import { pagesTeam } from '@/i18n/pagesTeam';
 
 registerCopy(pagesClientProcessToday); // client_task_overdue kind + office-visit notes (client process)
+registerCopy(pagesPostArrival); // embassy_review kind (four-eyes check of the embassy package)
+registerCopy(pagesTeam); // handover kind + notes (absence handover)
 
 export const KIND_ICON: Record<WorkKind, LucideIcon> = {
   doc_review: FileCheck2,
@@ -45,6 +49,8 @@ export const KIND_ICON: Record<WorkKind, LucideIcon> = {
   privacy: ShieldHalf,
   client_task_overdue: ListTodo, // client tasks past their deadline (client process)
   arrival_issue: HeartHandshake, // post-arrival check-in: "Problem var"
+  embassy_review: ScanEye, // four-eyes check of an embassy package
+  handover: ArrowRightLeft, // covering an absent colleague's case (handover note / checklist)
 };
 
 /** Icon tile colours per category (light + dark via the brand / status tokens used across the admin). */

@@ -18,6 +18,7 @@ import { fmtDate, fmtRelative, fullName } from '@/components/admin/labels';
 import { Chip, EmptyState, ErrorBlock, LoadingBlock, PageHead, Panel } from '@/components/admin/ui';
 import { VacancyForm, formFromVacancy, payloadFromForm, type VacancyFormState } from '@/components/company/VacancyForm';
 import { ScorePill } from '@/components/jobs/MatchMeter';
+import { MatchBreakdown } from '@/components/placement/MatchBreakdown';
 import { CandidateProfileCard } from '@/components/aiEmployer/CandidateProfileCard';
 import { EmployerAiToggle } from '@/components/aiEmployer/EmployerAiToggle';
 import { reportAiSaved } from '@/components/aiEmployer/shared';
@@ -165,10 +166,10 @@ const ApplicationRow = ({ a, onChanged, hasCompany }: { a: DetailApplication; on
           )}
         </div>
       </div>
-      {a.match.gaps.length > 0 && <p className="mt-1 text-[11px] text-amber-800">{a.match.gaps.map((g) => L.gap(g)).join(' · ')}</p>}
+      <MatchBreakdown match={a.match} className="mt-1" />
       {a.message && <p className="mt-2 rounded-md bg-surface px-2.5 py-1.5 text-xs text-ink/80">“{a.message}”</p>}
       {a.companyNote && (
-        <p className="mt-2 rounded-md bg-violet-50 px-2.5 py-1.5 text-xs text-violet-900">
+        <p className="mt-2 rounded-md bg-violet-50 px-2.5 py-1.5 text-xs whitespace-pre-line text-violet-900">
           {t('jobsArea.admin.employerNote')}: {a.companyNote}
         </p>
       )}
@@ -359,6 +360,7 @@ const VacancyDrawer = ({ id, onClose }: { id: string | null; onClose: () => void
                         {fullName(s)}
                       </Link>
                       <p className="truncate text-xs text-muted">{[s.profession, s.germanLevel && `DE ${s.germanLevel}`, s.city].filter(Boolean).join(' · ')}</p>
+                      <MatchBreakdown match={s.match} />
                     </div>
                     <div className="flex items-center gap-2">
                       <ScorePill score={s.match.score} />

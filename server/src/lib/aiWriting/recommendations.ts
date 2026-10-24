@@ -18,7 +18,8 @@ export const TTL_MS = 24 * 60 * 60 * 1000;
 /** A result without AI lines is only kept briefly, so the AI is tried again later in the day. */
 export const FALLBACK_TTL_MS = 60 * 60 * 1000;
 const TOP = 5;
-const MIN_SCORE = 40;
+/** Criteria a vacancy does not ask for count as met (licence, visa, recognition ≈ 32 points), so the floor sits above that. */
+const MIN_SCORE = 45;
 
 export type MetCode = 'PROFESSION' | 'GERMAN' | 'EXPERIENCE' | 'LICENCE' | 'VISA';
 
@@ -37,7 +38,7 @@ export interface Recommendations {
   generatedAt: string;
 }
 
-const profileSelect = { profession: true, experienceYears: true, germanLevel: true, education: true, drivingLicence: true } as const;
+const profileSelect = { profession: true, experienceYears: true, germanLevel: true, education: true, drivingLicence: true, recognitionStatus: true } as const;
 
 const cache = new Map<string, { at: number; ttl: number; hash: string; locale: Locale; value: Recommendations }>();
 

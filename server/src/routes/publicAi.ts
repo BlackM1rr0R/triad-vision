@@ -16,7 +16,9 @@ import { bookPublicUsage, publicUsageMonth, publicUsageToday } from '../lib/publ
 import { retrieve } from '../lib/publicAi/knowledge.js';
 import { HUMAN_RE, INTENT_RE, MAX_TOKENS, OFFER_AFTER_TURNS, advisorInput, advisorSystem, chatSchema, chatSummary, detectLang, splitLead } from '../lib/publicAi/advisor.js';
 import { PATH_LABEL_RE, answersSummary, eligibilityAnswersSchema, evaluateEligibility, weeksFromRanges, type PathResult } from '../lib/publicAi/eligibility.js';
-import { onInquiryCreated } from '../lib/assignment/inquiry.js';
+
+import { onInquiryCreated } from '../lib/assignment/inquiry.js';
+import { attachLeadContext, utmSchema, visitorIdSchema } from '../lib/marketing/leadScoring.js';
 
 /**
  * Public AI for visitors (no login) — mounted at /api/public-ai:
@@ -183,6 +185,9 @@ const leadSchema = z
       .default([]),
     answers: eligibilityAnswersSchema.optional(),
     website: z.string().max(200).optional(),
+    // lead scoring context (the visitor id only exists after analytics consent)
+    visitorId: visitorIdSchema.optional().catch(undefined),
+    utm: utmSchema.optional().catch(undefined),
   })
   .strict()
   .refine((b) => !!b.email || !!b.phone, { message: 'CONTACT_REQUIRED', path: ['email'] });
@@ -199,15 +204,17 @@ publicAiRouter.post('/lead', async (req, res) => {
   }
   const parts: string[] = [`[AI advisor · ${body.source === 'quiz' ? 'uygunluq testi' : 'sayt çatı'}]`];
   if (body.note) parts.push('', body.note);
+  let quizResult: { path: string; fit: string; score: number } | null = null;
   if (body.answers) {
     const top = evaluateEligibility(body.answers);
+    if (top[0]) quizResult = { path: top[0].key, fit: top[0].fit, score: top[0].score };
     parts.push('', `Test cavabları: ${answersSummary(body.answers)}`, `Uyğun yollar: ${top.map((p) => `${p.key} (${p.score})`).join(', ')}`);
   }
   const summary = chatSummary(body.transcript);
   if (summary) parts.push('', 'Ziyarətçinin sualları:', summary);
   const message = parts.join('\n').slice(0, 5000);
   const inquiry = await prisma.inquiry.create({
-    data: { kind: 'contact', contactName: body.name, email: body.email ?? '', phone: body.phone ?? null, sector: 'AI advisor', message, locale: body.lang },
+    data: { kind: 'contact', source: body.source === 'quiz' ? 'quiz' : null, contactName: body.name, email: body.email ?? '', phone: body.phone ?? null, sector: 'AI advisor', message, locale: body.lang },
   });
   void onInquiryCreated(inquiry.id); // automation rules + optional auto-assignment (never throws)
   void bookPublicUsage({ leads: 1 });
@@ -221,6 +228,7 @@ publicAiRouter.post('/lead', async (req, res) => {
     message,
   ].filter((l): l is string => l !== null);
   await notifyStaff(`Yeni AI məsləhətçi müraciəti: ${body.name}`, lines.join('\n'), { link: '/admin/inquiries' });
+  await attachLeadContext(inquiry.id, { visitorId: body.visitorId, utm: body.utm, quizResult }); // lead score after the notice (never throws)
   res.status(201).json({ ok: true, id: inquiry.id });
 });
 

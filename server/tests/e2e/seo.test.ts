@@ -52,6 +52,17 @@ describe('GET /robots.txt', () => {
 });
 
 describe('GET /sitemap.xml', () => {
+  it('is an index of the child sitemaps', async () => {
+    await createPost({ slug: 'news-1' });
+    const res = await anon().get('/sitemap.xml');
+    expect(res.status).toBe(200);
+    expect(res.headers['content-type']).toMatch(/^application\/xml/);
+    expect(res.text).toContain('<sitemapindex');
+    expect(res.text).toContain(`<loc>${ORIGIN}/sitemaps/pages.xml</loc>`);
+    expect(res.text).toContain(`<loc>${ORIGIN}/sitemaps/content.xml</loc>`);
+    expect((await anon().get('/sitemaps/nope.xml')).status).toBe(404);
+  });
+
   it('lists static pages and only published/open dynamic pages with alternates', async () => {
     await createVisaCategory({ slug: 'lkw-fahrer' });
     await createVisaCategory({ slug: 'hidden-visa', published: false });
@@ -64,43 +75,44 @@ describe('GET /sitemap.xml', () => {
     const closed = await createJob({ status: 'CLOSED' });
     const future = await createJob({ publishedAt: new Date(Date.now() + day) });
 
-    const res = await anon().get('/sitemap.xml');
-    expect(res.status).toBe(200);
-    expect(res.headers['content-type']).toMatch(/^application\/xml/);
-    const xml = res.text;
+    const groups = await Promise.all(['pages', 'content', 'jobs'].map((g) => anon().get(`/sitemaps/${g}.xml`)));
+    for (const r of groups) expect(r.status).toBe(200);
+    const xml = groups.map((r) => r.text).join('\n');
     expect(xml).toContain('xmlns:xhtml="http://www.w3.org/1999/xhtml"');
     for (const p of ['/', '/about', '/jobs', '/booking', '/impressum', '/privacy', '/visas/lkw-fahrer', '/services/recruiting', '/news/news-1', `/jobs/${open.slug}`]) {
       expect(xml).toContain(`<loc>${ORIGIN}${p === '/' ? '/' : p}</loc>`);
-      expect(xml).toContain(`<loc>${ORIGIN}${p}?lng=de</loc>`);
+      expect(xml).toContain(`<loc>${ORIGIN}/de${p === '/' ? '' : p}</loc>`);
+      expect(xml).toContain(`<loc>${ORIGIN}/tr${p === '/' ? '' : p}</loc>`);
     }
     for (const slug of ['hidden-visa', 'hidden-service', 'draft-post', expired.slug, closed.slug, future.slug]) expect(xml).not.toContain(slug);
     expect(xml).toContain(`<xhtml:link rel="alternate" hreflang="x-default" href="${ORIGIN}/visas/lkw-fahrer"/>`);
-    expect(xml).toContain(`<xhtml:link rel="alternate" hreflang="ru" href="${ORIGIN}/visas/lkw-fahrer?lng=ru"/>`);
+    expect(xml).toContain(`<xhtml:link rel="alternate" hreflang="ru" href="${ORIGIN}/ru/visas/lkw-fahrer"/>`);
+    expect(xml).toContain(`<xhtml:link rel="alternate" hreflang="uk" href="${ORIGIN}/uk/visas/lkw-fahrer"/>`);
     expect(xml).not.toContain('/admin');
   });
 
   it('is cached and refreshed after a CMS write', async () => {
     const { agent: admin } = await asAdmin();
-    expect((await anon().get('/sitemap.xml')).text).not.toContain('/visas/new-visa');
+    expect((await anon().get('/sitemaps/content.xml')).text).not.toContain('/visas/new-visa');
     await createVisaCategory({ slug: 'new-visa' });
     // Direct DB writes are not seen until the cache expires...
-    expect((await anon().get('/sitemap.xml')).text).not.toContain('/visas/new-visa');
+    expect((await anon().get('/sitemaps/content.xml')).text).not.toContain('/visas/new-visa');
     // ...but any admin content write clears it.
     await admin.post('/api/admin/content/faqs').send({ question: l10n('Q'), answer: l10n('A'), audience: 'all', sortOrder: 0, published: true });
-    expect((await anon().get('/sitemap.xml')).text).toContain('/visas/new-visa');
+    expect((await anon().get('/sitemaps/content.xml')).text).toContain('/visas/new-visa');
   });
 });
 
 describe('GET /api/seo/head', () => {
   it('returns localized tags for a visa page', async () => {
     await createVisaCategory({ slug: 'lkw-fahrer', title: l10n('LKW'), summary: l10n('Trucks across Europe') });
-    const res = await anon().get('/api/seo/head').query({ path: '/visas/lkw-fahrer', lng: 'de' });
+    const res = await anon().get('/api/seo/head').query({ path: '/de/visas/lkw-fahrer' });
     expect(res.status).toBe(200);
     expect(res.headers['content-type']).toMatch(/^text\/html/);
     expect(res.headers['cache-control']).toBe('public, max-age=60, stale-while-revalidate=600');
     expect(res.text).toContain('<title data-seo>LKW de | Triad Vision</title>');
     expect(res.text).toContain('name="description" content="Trucks across Europe de"');
-    expect(res.text).toContain(`rel="canonical" href="${ORIGIN}/visas/lkw-fahrer?lng=de"`);
+    expect(res.text).toContain(`rel="canonical" href="${ORIGIN}/de/visas/lkw-fahrer"`);
     expect(res.text).toContain(`hreflang="x-default" href="${ORIGIN}/visas/lkw-fahrer"`);
     expect(res.text).toContain('property="og:locale" content="de_DE"');
     expect(res.text).toContain('name="twitter:card" content="summary_large_image"');

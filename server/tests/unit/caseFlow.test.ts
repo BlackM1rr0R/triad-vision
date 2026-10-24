@@ -33,6 +33,8 @@ vi.mock('../../src/lib/notifications.js', async (importOriginal) => ({
   notifyClient: vi.fn(),
   notifyStaff: vi.fn(),
 }));
+// The four-eyes gate has its own e2e tests; here it always passes.
+vi.mock('../../src/lib/caseNext/fourEyes.js', () => ({ assertFourEyes: vi.fn() }));
 
 const flow = await import('../../src/lib/caseFlow.js');
 const { notifyClient, notifyStaff } = await import('../../src/lib/notifications.js');

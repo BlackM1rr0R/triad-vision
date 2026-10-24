@@ -26,6 +26,8 @@ import { FINAL_STATUSES } from '../../lib/caseFlow.js';
 import { adminAgentsRouter } from './agents.js';
 import { adminTranslationsRouter } from './translations.js';
 import { adminPrivacyRouter } from './privacy.js';
+import { adminLegalRouter } from './legal.js';
+import { adminWaitingRoomRouter } from './waitingRoom.js';
 import { adminArrivalsRouter } from './arrivals.js';
 import { adminInterviewPrepRouter } from './interviewPrep.js';
 import { adminFinanceRouter } from './finance.js';
@@ -54,10 +56,19 @@ import { adminCampaignsRouter } from './campaigns.js';
 import { adminClientDataRouter } from './clientData.js';
 import { adminTimeRouter } from './time.js'; // staff time tracking
 import { adminCheckInsRouter } from './checkIns.js'; // post-arrival check-ins + retention
+import { adminRenewalsRouter } from './renewals.js'; // residence-title renewal + probation end
+import { adminFourEyesRouter } from './fourEyes.js'; // four-eyes check of the embassy package
 import { adminAccessLogRouter } from '../accessLog.js'; // client access log (ADMIN+)
 import { adminClientProcessRouter } from './clientProcess.js';
 import { adminGrowthRouter } from './growth.js';
+import { adminMarketingRouter } from './marketing.js'; // lead scoring, landing pages, cost calculator, origin analytics
 import { adminCommandSearchRouter } from './commandSearch.js'; // Ctrl+K command palette search
+import { adminPlacementRouter } from './placement.js'; // recognition, employer share links, evaluations, employment contracts
+import { adminKpiRouter } from './kpi.js'; // staff KPI card + team leaderboard
+import { adminTrainingRouter } from './training.js'; // internal training courses / lessons / quizzes
+import { adminShiftsRouter } from './shifts.js'; // team calendar: shifts, leave, handovers, coverage
+import { adminHandoverNotesRouter } from './handoverNotes.js'; // handover notes + checklists for absence handovers
+import { adminGuidesRouter } from './guides.js'; // topic guides (/guides) CMS, per-language versions
 
 export const adminRouter = Router();
 adminRouter.use(requireMinRole('STAFF'));
@@ -134,9 +145,17 @@ adminRouter.use('/automation', adminAutomationRouter); // automation rules (ADMI
 adminRouter.use('/assignment', adminAssignmentRouter); // auto-assignment settings, load, rebalance, handovers
 adminRouter.use('/campaigns', adminCampaignsRouter); // campaigns to client segments (ADMIN+)
 adminRouter.use('/time', adminTimeRouter); // time tracking (STAFF: own entries; rates SUPER_ADMIN)
+adminRouter.use('/kpi', adminKpiRouter); // staff KPI (own card STAFF; team + others ADMIN+)
+adminRouter.use('/training', adminTrainingRouter); // training: learn (STAFF), authoring + progress (ADMIN+)
+adminRouter.use('/shifts', adminShiftsRouter); // team calendar (STAFF read, ADMIN+ edit)
+adminRouter.use('/handover-notes', adminHandoverNotesRouter); // handover notes / checklists
 adminRouter.use('/check-ins', adminCheckInsRouter); // post-arrival check-ins, retention
+adminRouter.use('/renewals', adminRenewalsRouter); // residence-title renewal cases, probation reminders
+adminRouter.use(adminFourEyesRouter); // /cases/:id/four-eyes*, /four-eyes/* (embassy package review)
 adminRouter.use('/access-log', adminAccessLogRouter); // "who viewed my documents" per client
+adminRouter.use('/placement', adminPlacementRouter); // recognition, employer share links, interview evaluations, Arbeitsvertrag tracker
 adminRouter.use('/growth', adminGrowthRouter); // events (Tədbirlər), calculator assumptions, placement map, client referrals
+adminRouter.use('/marketing', adminMarketingRouter); // lead scoring, landing pages, cost calculator, origin → destination analytics
 adminRouter.use('/oversight', oversightRouter);
 adminRouter.use('/messaging', adminMessagingRouter);
 adminRouter.use('/requirements', adminRequirementsRouter);
@@ -146,6 +165,8 @@ adminRouter.use('/ops', adminOpsRouter);
 adminRouter.use('/agents', adminAgentsRouter);
 adminRouter.use('/translations', adminTranslationsRouter);
 adminRouter.use('/privacy', adminPrivacyRouter);
+adminRouter.use('/legal', adminLegalRouter); // versioned AGB / privacy / cookie texts (ADMIN+)
+adminRouter.use('/waiting-room', adminWaitingRoomRouter); // client waiting room CMS (STAFF read, ADMIN+ edit)
 adminRouter.use('/arrivals', adminArrivalsRouter);
 adminRouter.use('/interview-prep', adminInterviewPrepRouter);
 adminRouter.use('/finance', adminFinanceRouter);
@@ -164,7 +185,7 @@ adminRouter.use('/mgmt', adminMgmtRouter); // weekly management report + securit
 adminRouter.use('/ai/employer', adminAiEmployerRouter);
 // Any successful CMS write (incl. vacancy, employer and review moderation) must be visible on the public site right away.
 // The cache is cleared before the response is sent, so the admin's next public read is already fresh.
-adminRouter.use(['/content', '/settings', '/vacancies', '/companies', '/reviews'], (req, res, next) => {
+adminRouter.use(['/content', '/settings', '/vacancies', '/companies', '/reviews', '/guides'], (req, res, next) => {
   if (req.method !== 'GET') {
     const json = res.json.bind(res);
     res.json = (body) => {
@@ -194,6 +215,7 @@ adminRouter.use('/analytics', adminAnalyticsRouter);
 adminRouter.use('/upload', requireMinRole('ADMIN'), adminUploadRouter);
 adminRouter.use('/settings', requireMinRole('ADMIN'), adminSettingsRouter);
 adminRouter.use('/content', requireMinRole('ADMIN'), adminContentRouter);
+adminRouter.use('/guides', requireMinRole('ADMIN'), adminGuidesRouter);
 
 adminRouter.get('/inquiries', async (_req, res) => {
   const DAY = 24 * 60 * 60 * 1000;

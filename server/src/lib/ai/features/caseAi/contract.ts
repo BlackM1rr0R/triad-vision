@@ -128,7 +128,9 @@ export const quoteInText = (quote: string | null, text: string | null) => {
   return t.includes(q) || t.includes(q.slice(0, 60));
 };
 
-const isBlueCard = (ctx: CaseContext) => /18\s*g|blue|blau/i.test(`${ctx.visaCategory?.visaLabel ?? ''} ${ctx.visaCategory?.slug ?? ''}`);
+/** EU Blue Card (§ 18g) visa category, by label or slug. Also used by the employment-contract tracker (lib/placement). */
+export const isBlueCardCategory = (c: { visaLabel?: string | null; slug?: string | null } | null | undefined) => /18\s*g|blue|blau/i.test(`${c?.visaLabel ?? ''} ${c?.slug ?? ''}`);
+const isBlueCard = (ctx: CaseContext) => isBlueCardCategory(ctx.visaCategory);
 
 /** The deterministic contract rules. */
 export const evaluateContract = (t: ContractTerms, ctx: CaseContext, s: CaseAiSettings, text: string | null, now = new Date()): ContractIssue[] => {

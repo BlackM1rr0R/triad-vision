@@ -5,6 +5,7 @@ import { CheckCircle2, Send } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useL10n } from '@/lib/l10n';
 import { useSiteContent } from '@/lib/content';
+import { leadContext } from '@/lib/leadVisitor';
 import { Spinner } from './ui/Spinner';
 
 /** Contact form or company cooperation request. Posts to /api/public/inquiries, which emails the team. */
@@ -24,7 +25,7 @@ export const InquiryForm = ({ kind }: { kind: 'company' | 'contact' }) => {
   const submit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
-    const body: Record<string, unknown> = { kind, locale };
+    const body: Record<string, unknown> = { kind, locale, ...leadContext() }; // lead scoring: visitor id (consent only) + campaign
     fd.forEach((v, k) => {
       if (typeof v === 'string' && v.trim() !== '') body[k] = v.trim();
     });

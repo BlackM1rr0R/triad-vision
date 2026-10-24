@@ -1,10 +1,26 @@
 import type { Request } from 'express';
 import { prisma } from '../../db.js';
+import { currentRef, kindForConsentType, LEGACY_POLICY_VERSION } from '../legal/documents.js';
 
-/** Version label of the privacy policy / terms texts currently shown (bump when the text changes). */
-export const POLICY_VERSION = '2026-10';
+/**
+ * Legacy version label, used only while no legal document of the kind is published. The version of
+ * a consent is now the current published LegalDocument (lib/legal/documents.ts → currentRef).
+ */
+export const POLICY_VERSION = LEGACY_POLICY_VERSION;
 
-export const CONSENT_TYPES = ['PRIVACY_POLICY', 'TERMS', 'MARKETING_EMAIL', 'WHATSAPP', 'SMS', 'EMPLOYER_SHARING', 'PASSPORT_OCR'] as const;
+export const CONSENT_TYPES = [
+  'PRIVACY_POLICY',
+  'TERMS',
+  'MARKETING_EMAIL',
+  'WHATSAPP',
+  'SMS',
+  'EMPLOYER_SHARING',
+  'PASSPORT_OCR',
+  // Cookie banner: COOKIES = any optional category allowed; the categories are logged next to it.
+  'COOKIES',
+  'COOKIES_ANALYTICS',
+  'COOKIES_MARKETING',
+] as const;
 export type ConsentType = (typeof CONSENT_TYPES)[number];
 
 /**
@@ -18,17 +34,31 @@ export const recordConsent = async (input: {
   granted: boolean;
   source: string;
   version?: string;
+  /** The legal text version the consent refers to; resolved from the current published document when omitted. */
+  legalDocumentId?: string | null;
+  /** Anonymous visitor (cookie banner without an account). */
+  visitorId?: string | null;
   req?: Pick<Request, 'ip' | 'get'>;
 }) => {
   try {
+    let version = input.version;
+    let legalDocumentId = input.legalDocumentId ?? null;
+    const kind = kindForConsentType(input.type.startsWith('COOKIES') ? 'COOKIES' : input.type);
+    if (!version && kind) {
+      const ref = await currentRef(kind);
+      version = ref.version;
+      legalDocumentId ??= ref.id;
+    }
     await prisma.consentRecord.create({
       data: {
         userId: input.userId ?? null,
         email: input.email?.toLowerCase() ?? null,
         type: input.type,
         granted: input.granted,
-        version: input.version ?? POLICY_VERSION,
+        version: (version ?? POLICY_VERSION).slice(0, 40),
         source: input.source.slice(0, 40),
+        legalDocumentId,
+        visitorId: input.visitorId ?? null,
         ip: input.req?.ip?.slice(0, 64) ?? null,
         userAgent: input.req?.get('user-agent')?.slice(0, 400) ?? null,
       },

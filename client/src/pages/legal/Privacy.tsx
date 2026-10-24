@@ -1,7 +1,9 @@
 import { Fragment, useMemo, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Languages, ShieldCheck } from 'lucide-react';
-import { PageHero } from '@/components/layout/PageHero';
+import { PageHero, PageHeroSkeleton } from '@/components/layout/PageHero';
+import { useLegalDocument } from '@/components/legal/api';
+import { LegalDocumentView } from './LegalDocument';
 import { Reveal } from '@/components/motion';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { currentLocale, registerCopy, type Locale } from '@/i18n';
@@ -73,7 +75,18 @@ const ControllerBlock = ({ legal, placeholder }: { legal: LegalInfo; placeholder
   );
 };
 
+/**
+ * /privacy: the published PRIVACY legal document (Admin → Legal texts) when one exists, otherwise the
+ * generated policy below (template + Settings → privacy), so nothing changes until a version is published.
+ */
 export default function Privacy() {
+  const { data, isLoading } = useLegalDocument('PRIVACY');
+  if (isLoading) return <PageHeroSkeleton />;
+  if (data && !data.fallback) return <LegalDocumentView kind="PRIVACY" />;
+  return <PrivacyTemplate />;
+}
+
+function PrivacyTemplate() {
   const { t, i18n } = useTranslation();
   const uiLang = currentLocale();
   const [showGerman, setShowGerman] = useState(false);

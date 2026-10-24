@@ -37,6 +37,8 @@ import { agentPortalRouter } from './routes/agentPortal.js';
 import { partnerPortalRouter } from './routes/partnerPortal.js';
 import { translationsRouter } from './routes/translations.js';
 import { privacyRouter } from './routes/privacy.js';
+import { legalRouter } from './routes/legal.js';
+import { waitingRoomRouter } from './routes/waitingRoom.js';
 import { cvRouter } from './routes/cv.js';
 import { vaultRouter } from './routes/vault.js';
 import { arrivalRouter } from './routes/arrival.js';
@@ -54,6 +56,7 @@ import { bookingRouter } from './routes/booking.js';
 import { reviewsRouter } from './routes/reviews.js';
 import { trackRouter } from './routes/track.js';
 import { seoRouter } from './routes/seo.js';
+import { guidesRouter } from './routes/guides.js';
 import { driveRouter } from './routes/drive.js';
 import { driveCreateRouter } from './routes/driveCreate.js';
 import { pdfToolsRouter } from './routes/pdfTools.js';
@@ -77,11 +80,14 @@ import { clientDataRouter } from './routes/clientData.js';
 import { clientProcessRouter } from './routes/clientProcess.js';
 import { siteRouter } from './routes/site.js';
 import { growthRouter } from './routes/growth.js';
+import { landingRouter } from './routes/landing.js'; // public landing pages (/l/:slug)
 import { historyMiddleware } from './lib/history/context.js';
 import { callsRouter } from './routes/calls.js';
 import { callWebhooksRouter } from './routes/callWebhooks.js';
 import { callbackRouter } from './routes/callback.js';
 import { livechatRouter } from './routes/livechat.js';
+import { candidateShareRouter } from './routes/candidateShare.js';
+import { introVideoRouter } from './routes/introVideo.js';
 
 type RequestWithRawBody = import('express').Request & { rawBody?: Buffer };
 
@@ -155,6 +161,8 @@ export const createApp = () => {
   app.use('/api/sign', signRouter);
   app.use('/api/angebot', quotePublicRouter); // public quote link (accept / decline)
   app.use('/api/share', shareRouter);
+  app.use('/api/candidate-share', candidateShareRouter); // employer share link of a candidate (no login)
+  app.use('/api/intro-video', introVideoRouter); // candidate's video introduction for employers
   app.use('/api/signatures', signaturesRouter);
   app.use('/api/admin/impersonate', impersonationRouter); // before the staff-only admin router (req.user is the client then)
   app.use('/api/admin', adminRouter);
@@ -166,7 +174,9 @@ export const createApp = () => {
   app.use('/api/company', companyRouter);
   app.use('/api/vacancies', vacanciesRouter);
   app.use('/api/booking', bookingRouter);
+  app.use('/api/guides', guidesRouter); // public topic guides (SEO)
   app.use('/api/growth', growthRouter); // start-date calculator, placement map, info sessions, client referrals
+  app.use('/api/landing', landingRouter); // landing pages: page, view counter, form → Inquiry
   app.use('/api/reviews', reviewsRouter);
   app.use('/api/track', trackRouter);
   app.use('/api/messaging-plus', messagingPlusRouter); // translation, three-party threads, voice messages
@@ -187,6 +197,8 @@ export const createApp = () => {
   app.use('/api/agent', agentPortalRouter);
   app.use('/api/partner', partnerPortalRouter);
   app.use('/api/translations', translationsRouter);
+  app.use('/api/legal', legalRouter); // versioned AGB / privacy / cookie texts, re-acceptance, cookie consent log
+  app.use('/api/waiting-room', waitingRoomRouter); // client "while you wait" lessons, exercises, checklists
   app.use('/api/privacy/access-log', accessLogRouter); // before the privacy centre router
   app.use('/api/privacy', privacyRouter);
   app.use('/api/cv', cvRouter);

@@ -60,6 +60,7 @@ const userSelect = {
   germanLevel: true,
   education: true,
   drivingLicence: true,
+  recognitionStatus: true,
   city: true,
   about: true,
   cv: { select: { data: true } },

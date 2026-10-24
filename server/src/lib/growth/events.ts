@@ -1,3 +1,4 @@
+import crypto from 'node:crypto';
 import type { InfoEvent, InfoEventRegistration } from '@prisma/client';
 import { config } from '../../config.js';
 import { prisma } from '../../db.js';
@@ -23,31 +24,61 @@ export const bookingUrl = () => `${config.clientUrl}/booking`;
 export const eventWhere = (e: Pick<InfoEvent, 'mode' | 'meetingUrl' | 'address'>) =>
   e.mode === 'ONLINE' ? (e.meetingUrl ?? '') : (e.address ?? '');
 
-const ctxFor = (e: InfoEvent, r: Pick<InfoEventRegistration, 'name' | 'locale'>, note?: string): EventCtx => {
+/**
+ * Personal registrant token "<registrationId>.<hmac>" for links in the e-mails: the .ics with the join
+ * link and the recording on the past event page. Stateless (HMAC with the server secret), never expires.
+ */
+const tokenSig = (registrationId: string) =>
+  crypto.createHmac('sha256', config.jwtSecret).update(`info-event-registrant:${registrationId}`).digest('base64url').slice(0, 22);
+export const registrantToken = (registrationId: string) => `${registrationId}.${tokenSig(registrationId)}`;
+/** Registration id of a valid token, else null (constant-time compare). */
+export const registrationIdOf = (token: unknown) => {
+  if (typeof token !== 'string' || token.length > 120) return null;
+  const [id, sig] = token.split('.');
+  if (!id || !sig) return null;
+  const want = Buffer.from(tokenSig(id));
+  const got = Buffer.from(sig);
+  return want.length === got.length && crypto.timingSafeEqual(want, got) ? id : null;
+};
+
+/** Public "add to calendar" file of the event; with a registrant token it carries the join link. */
+export const eventIcsUrl = (slug: string, token?: string) =>
+  `${config.clientUrl}/api/growth/events/${encodeURIComponent(slug)}/ics${token ? `?r=${encodeURIComponent(token)}` : ''}`;
+
+const ctxFor = (e: InfoEvent, r: Pick<InfoEventRegistration, 'name' | 'locale'> & { id?: string }, note?: string): EventCtx => {
   const locale = asEventLocale(r.locale);
+  const token = r.id ? registrantToken(r.id) : undefined;
   return {
     name: r.name,
     title: pickL10n(e.title, locale),
     when: formatEventTime(e.startsAt, locale),
     where: eventWhere(e),
     online: e.mode === 'ONLINE',
-    eventUrl: eventUrl(e.slug),
+    // Registrants get the page with their token: after the event it shows the recording.
+    eventUrl: token ? `${eventUrl(e.slug)}?r=${encodeURIComponent(token)}` : eventUrl(e.slug),
     bookingUrl: bookingUrl(),
     note,
+    icsUrl: token ? eventIcsUrl(e.slug, token) : undefined,
+    recordingUrl: e.recordingUrl || undefined,
   };
 };
 
-export const eventIcs = (e: InfoEvent, locale: EventLocale, cancelled = false) => {
+/**
+ * Calendar file of the event. `withJoinLink` false (the public "add to calendar" button) leaves the
+ * meeting link out: it is only sent to registrants.
+ */
+export const eventIcs = (e: InfoEvent, locale: EventLocale, cancelled = false, withJoinLink = true) => {
   const title = pickL10n(e.title, locale);
   const ctx = ctxFor(e, { name: '', locale });
+  const where = withJoinLink || e.mode === 'OFFLINE' ? eventWhere(e) : '';
   return buildIcs({
     uid: `info-event-${e.id}@triad-vision.de`,
     start: e.startsAt,
     end: e.endsAt,
     summary: `Triad Vision · ${title}`,
-    description: eventTexts[locale].icsDescription(ctx),
-    location: eventWhere(e) || undefined,
-    url: e.mode === 'ONLINE' && e.meetingUrl ? e.meetingUrl : eventUrl(e.slug),
+    description: eventTexts[locale].icsDescription({ ...ctx, where: where || ctx.eventUrl }),
+    location: where || undefined,
+    url: withJoinLink && e.mode === 'ONLINE' && e.meetingUrl ? e.meetingUrl : eventUrl(e.slug),
     status: cancelled ? 'CANCELLED' : 'CONFIRMED',
   });
 };
@@ -66,8 +97,9 @@ export const mailRegistrant = async (e: InfoEvent, r: InfoEventRegistration, kin
       : (kind === 'reminder1h' || kind === 'reminder24h') && ctx.online && ctx.where
         ? ctx.where
         : ctx.eventUrl;
+  // Calendar invite (.ics) with the confirmation, the reminders and the cancellation.
   const attachments =
-    kind === 'confirmed' || kind === 'cancelled'
+    kind !== 'followUp'
       ? [{ filename: 'triad-vision-event.ics', content: eventIcs(e, locale, kind === 'cancelled'), contentType: 'text/calendar; charset=utf-8' }]
       : undefined;
   await sendMail(r.email, `Triad Vision · ${msg.title}`, renderEmail(msg.title, msg.body, { label: msg.cta, url: ctaUrl }), attachments);

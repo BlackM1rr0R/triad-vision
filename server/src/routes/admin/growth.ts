@@ -15,6 +15,7 @@ import { mailRegistrant, pickL10n, sendFollowUps } from '../../lib/growth/events
 import { asEventLocale, eventTexts, formatEventTime } from '../../lib/growth/eventTexts.js';
 import { eventUrl, eventWhere, bookingUrl } from '../../lib/growth/events.js';
 import { getReferralSettings, REFERRAL_DEFAULTS, referralSchema, syncReferrals } from '../../lib/growth/referral.js';
+import { emptyConversion, eventConversions } from '../../lib/growth/eventStats.js';
 
 /**
  * Admin side of the public growth features — mounted at /api/admin/growth (STAFF+; settings and
@@ -144,6 +145,8 @@ const eventBody = z
     language: z.enum(['az', 'de', 'en', 'ru']).default('az'),
     status: z.enum(['DRAFT', 'PUBLISHED', 'CANCELLED']).default('DRAFT'),
     followUpNote: l10n(2000).nullable().optional(),
+    /** Recording (YouTube / Vimeo / drive link) shown to registrants after the event and in the follow-up mail. */
+    recordingUrl: z.string().trim().url().startsWith('https://').max(1000).nullable().optional(),
   })
   .refine((b) => b.mode === 'ONLINE' || (b.address ?? '').length >= 3, { message: 'ADDRESS_REQUIRED', path: ['address'] });
 
@@ -193,8 +196,14 @@ adminGrowthRouter.get('/events', async (req, res) => {
     orderBy: { startsAt: scope === 'past' ? 'desc' : 'asc' },
     take: 200,
   });
-  const counts = await eventCounts(events.map((e) => e.id));
-  res.json({ events: events.map((e) => ({ ...e, counts: counts[e.id] ?? { total: 0, CHECKED_IN: 0, NO_SHOW: 0, REGISTERED: 0 } })) });
+  const [counts, conversions] = await Promise.all([eventCounts(events.map((e) => e.id)), eventConversions(events.map((e) => e.id))]);
+  res.json({
+    events: events.map((e) => ({
+      ...e,
+      counts: counts[e.id] ?? { total: 0, CHECKED_IN: 0, NO_SHOW: 0, REGISTERED: 0 },
+      conversion: conversions[e.id] ?? emptyConversion(),
+    })),
+  });
 });
 
 adminGrowthRouter.post('/events', async (req, res) => {
@@ -214,6 +223,7 @@ adminGrowthRouter.post('/events', async (req, res) => {
       language: body.language,
       status: body.status,
       followUpNote: body.followUpNote ?? undefined,
+      recordingUrl: body.recordingUrl ?? null,
       createdById: req.user!.id,
     },
   });
@@ -228,7 +238,8 @@ adminGrowthRouter.get('/events/:id', async (req, res) => {
     include: { registrations: { orderBy: { createdAt: 'asc' } } },
   });
   if (!event) throw notFound();
-  res.json({ event });
+  const conversion = (await eventConversions([event.id]))[event.id] ?? emptyConversion();
+  res.json({ event, conversion });
 });
 
 adminGrowthRouter.patch('/events/:id', async (req, res) => {
@@ -250,6 +261,7 @@ adminGrowthRouter.patch('/events/:id', async (req, res) => {
       language: body.language,
       status: body.status,
       followUpNote: body.followUpNote === null ? (null as unknown as Prisma.InputJsonValue) : (body.followUpNote ?? undefined),
+      ...(body.recordingUrl !== undefined ? { recordingUrl: body.recordingUrl } : {}),
     },
   });
   // Registrants hear about a cancellation (with a cancelling .ics) and about a moved date (new .ics).
@@ -300,6 +312,7 @@ adminGrowthRouter.get('/events/:id/follow-up/preview', async (req, res) => {
     eventUrl: eventUrl(event.slug),
     bookingUrl: bookingUrl(),
     note: pickL10n(event.followUpNote, locale).trim() || undefined,
+    recordingUrl: event.recordingUrl || undefined,
   });
   res.json({ locale, ...msg, ctaUrl: bookingUrl() });
 });

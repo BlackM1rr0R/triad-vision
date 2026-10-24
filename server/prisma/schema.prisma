@@ -26,166 +26,171 @@ enum Locale {
 }
 
 model User {
-  id                    String                   @id @default(cuid())
-  email                 String                   @unique
-  passwordHash          String
-  role                  Role                     @default(CLIENT)
-  firstName             String
-  lastName              String
-  phone                 String?
-  locale                Locale                   @default(az)
-  isActive              Boolean                  @default(true)
+  id                      String                   @id @default(cuid())
+  email                   String                   @unique
+  passwordHash            String
+  role                    Role                     @default(CLIENT)
+  firstName               String
+  lastName                String
+  phone                   String?
+  locale                  Locale                   @default(az)
+  isActive                Boolean                  @default(true)
   // Candidate profile (all optional, filled in the portal)
-  birthDate             DateTime?
-  nationality           String?
-  city                  String?
-  address               String?                  @db.Text
-  profession            String?
-  experienceYears       Int?
-  germanLevel           String? // none | A1 | A2 | B1 | B2 | C1 | C2
-  education             String? // school | vocational | university
-  drivingLicence        String? // e.g. "B, C, CE"
-  about                 String?                  @db.Text
+  birthDate               DateTime?
+  nationality             String?
+  city                    String?
+  address                 String?                  @db.Text
+  profession              String?
+  experienceYears         Int?
+  germanLevel             String? // none | A1 | A2 | B1 | B2 | C1 | C2
+  education               String? // school | vocational | university
+  /// Recognition of the foreign qualification (Anerkennung): NONE | NOT_REQUIRED | IN_PROGRESS | PARTIAL (Defizitbescheid) | RECOGNISED
+  recognitionStatus       String?                  @db.VarChar(20)
+  recognitionNote         String?                  @db.VarChar(300)
+  /// Short video introduction for employers (private upload key / drive node id).
+  introVideoKey           String?                  @db.VarChar(300)
+  drivingLicence          String? // e.g. "B, C, CE"
+  about                   String?                  @db.Text
   // Notification preferences (in-app notifications are always kept)
-  emailNotifications    Boolean                  @default(true)
-  pushNotifications     Boolean                  @default(true)
-  passportExpiry        DateTime? // for the passport-expiry reminder
-  passportNumber        String? // from passport OCR (MRZ) or typed by the client
-  whatsappOptIn         Boolean                  @default(true) // case updates via WhatsApp (needs a phone number)
-  smsNotifications      Boolean                  @default(true) // appointment reminders via SMS
-  calendarToken         String?                  @unique // secret for the personal ICS feed (staff)
+  emailNotifications      Boolean                  @default(true)
+  pushNotifications       Boolean                  @default(true)
+  passportExpiry          DateTime? // for the passport-expiry reminder
+  passportNumber          String? // from passport OCR (MRZ) or typed by the client
+  whatsappOptIn           Boolean                  @default(true) // case updates via WhatsApp (needs a phone number)
+  smsNotifications        Boolean                  @default(true) // appointment reminders via SMS
+  calendarToken           String?                  @unique // secret for the personal ICS feed (staff)
   // Email verification and two-factor authentication
-  emailVerifiedAt       DateTime?
-  totpSecret            String?                  @db.Text // encrypted with the server key; set while enrolling
-  totpEnabledAt         DateTime?
-  recoveryCodes         Json? // sha256 hashes of unused one-time recovery codes
-  emailOtpEnabledAt     DateTime? // two-step login with a code sent by email (CLIENT / COMPANY only)
-  emailOtpCodes         EmailOtpCode[]
+  emailVerifiedAt         DateTime?
+  totpSecret              String?                  @db.Text // encrypted with the server key; set while enrolling
+  totpEnabledAt           DateTime?
+  recoveryCodes           Json? // sha256 hashes of unused one-time recovery codes
+  emailOtpEnabledAt       DateTime? // two-step login with a code sent by email (CLIENT / COMPANY only)
+  emailOtpCodes           EmailOtpCode[]
   // Employer accounts
-  companyId             String?
-  company               Company?                 @relation(fields: [companyId], references: [id], onDelete: SetNull)
-  createdAt             DateTime                 @default(now())
-  updatedAt             DateTime                 @updatedAt
-  cases                 Case[]                   @relation("CaseClient")
-  assignedCases         Case[]                   @relation("CaseStaff")
-  notifications         Notification[]
-  events                CaseEvent[]
-  messages              CaseMessage[]
-  documents             Document[]
-  resetTokens           PasswordResetToken[]
-  devices               PushDevice[]
-  sessions              Session[]
-  auditLogs             AuditLog[]
-  docFolder             DocFolder?
-  docGrants             DocGrant[]               @relation("GrantUser")
-  grantsGiven           DocGrant[]               @relation("GrantedBy")
-  docFiles              DocFile[]
-  verifyTokens          EmailVerificationToken[]
-  applications          VacancyApplication[]
-  bookings              Booking[]                @relation("BookingUser")
-  slots                 ConsultationSlot[]       @relation("SlotStaff")
-  clientTasksCreated    ClientTask[]             @relation("ClientTaskCreatedBy")
-  reviews               Review[]
-  driveNodesCreated     DriveNode[]              @relation("DriveNodeCreatedBy")
-  driveNodesOwned       DriveNode[]              @relation("DriveNodeOwner")
-  driveNodesDeleted     DriveNode[]              @relation("DriveNodeDeletedBy")
-  driveGrants           DriveGrant[]             @relation("DriveGrantUser")
-  driveGrantsGiven      DriveGrant[]             @relation("DriveGrantGivenBy")
-  driveVersions         DriveFileVersion[]
-  driveFavorites        DriveFavorite[]
-  tasksCreated          Task[]                   @relation("TaskCreatedBy")
-  taskAssignments       TaskAssignee[]
-  taskComments          TaskComment[]
-  outboundMessages      OutboundMessage[]
-  templateEdits         NotificationTemplate[]
-  kbArticles            KbArticle[]
-  apiKeys               ApiKey[]
-  webhooks              Webhook[]
-  interviewsAsCandidate Interview[]              @relation("InterviewCandidate")
-  interviewsAsStaff     Interview[]              @relation("InterviewStaff")
-  interviewsCreated     Interview[]              @relation("InterviewCreatedBy")
-  statusText            String?                  @db.VarChar(120) // workspace presence: "In a meeting", …
-  statusEmoji           String?                  @db.VarChar(16)
-  statusUntil           DateTime?
-  mailAccounts          MailAccount[]
-  mailLabels            MailLabel[]
-  mailRules             MailRule[]
-  mailTemplates         MailTemplate[]
-  chatChannelsCreated   ChatChannel[]            @relation("ChatChannelCreatedBy")
-  chatMemberships       ChatMember[]
-  chatMessages          ChatMessage[]
-  chatReactions         ChatReaction[]
-  calendarEvents        CalendarEvent[]          @relation("CalendarEventOwner")
-  calendarAttendance    CalendarAttendee[]
-  contactsCreated       Contact[]                @relation("ContactCreatedBy")
-  contactLinks          Contact[]                @relation("ContactUser")
-  announcements         Announcement[]
-  announcementReads     AnnouncementRead[]
-  notes                 Note[]
-  polls                 Poll[]
-  pollVotes             PollVote[]
-  leaveRequests         LeaveRequest[]           @relation("LeaveUser")
-  leaveDecisions        LeaveRequest[]           @relation("LeaveDecidedBy")
-  referredByAgentId     String? // agent whose link / code the client signed up with
-  referredByAgent       Agent?                   @relation("AgentReferrals", fields: [referredByAgentId], references: [id], onDelete: SetNull)
-  referredAt            DateTime?
-  agentProfile          Agent?                   @relation("AgentUser")
-  agentCommissions      AgentCommission[]        @relation("CommissionClient")
-  translationOrders     TranslationOrder[]       @relation("TranslationClient")
-  translationAssigned   TranslationOrder[]       @relation("TranslationStaff")
-  translationEvents     TranslationOrderEvent[]
-  consents              ConsentRecord[]
-  privacyRequests       PrivacyRequest[]         @relation("PrivacyRequester")
-  privacyHandled        PrivacyRequest[]         @relation("PrivacyHandler")
-  cv                    CandidateCv?
-  motivationLetters     MotivationLetter[]
-  vaultDocuments        VaultDocument[]
-  arrivalPlans          ArrivalPlan[]            @relation("ArrivalClient")
-  arrivalPlansHandled   ArrivalPlan[]            @relation("ArrivalStaff")
-  surveys               SatisfactionSurvey[]     @relation("SurveyClient")
-  surveysAbout          SatisfactionSurvey[]     @relation("SurveyStaff")
-  driveLocks            DriveNode[]              @relation("DriveNodeLockedBy")
-  driveComments         DriveComment[]           @relation("DriveCommentAuthor")
-  driveShareLinks       DriveShareLink[]         @relation("DriveShareCreatedBy")
-  driveActivities       DriveActivity[]          @relation("DriveActivityActor")
-  referralPartner       ReferralPartner?         @relation("PartnerUser")
-  contractTemplates     ContractTemplate[]
-  candidateRequests     CandidateRequest[]
-  signatureRequests     SignatureRequest[]       @relation("SignatureRequestCreatedBy")
-  signatureSignings     SignatureSigner[]        @relation("SignatureSignerUser")
-  aiConversations       AiConversation[]
-  aiActions             AiAction[]
-  candidateProfiles     CandidateProfileDraft[]
-  timeEntries           TimeEntry[]              @relation("TimeEntryUser") // staff time tracking
+  companyId               String?
+  company                 Company?                 @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  createdAt               DateTime                 @default(now())
+  updatedAt               DateTime                 @updatedAt
+  cases                   Case[]                   @relation("CaseClient")
+  assignedCases           Case[]                   @relation("CaseStaff")
+  notifications           Notification[]
+  events                  CaseEvent[]
+  messages                CaseMessage[]
+  documents               Document[]
+  resetTokens             PasswordResetToken[]
+  devices                 PushDevice[]
+  sessions                Session[]
+  auditLogs               AuditLog[]
+  docFolder               DocFolder?
+  docGrants               DocGrant[]               @relation("GrantUser")
+  grantsGiven             DocGrant[]               @relation("GrantedBy")
+  docFiles                DocFile[]
+  verifyTokens            EmailVerificationToken[]
+  applications            VacancyApplication[]
+  bookings                Booking[]                @relation("BookingUser")
+  slots                   ConsultationSlot[]       @relation("SlotStaff")
+  clientTasksCreated      ClientTask[]             @relation("ClientTaskCreatedBy")
+  reviews                 Review[]
+  driveNodesCreated       DriveNode[]              @relation("DriveNodeCreatedBy")
+  driveNodesOwned         DriveNode[]              @relation("DriveNodeOwner")
+  driveNodesDeleted       DriveNode[]              @relation("DriveNodeDeletedBy")
+  driveGrants             DriveGrant[]             @relation("DriveGrantUser")
+  driveGrantsGiven        DriveGrant[]             @relation("DriveGrantGivenBy")
+  driveVersions           DriveFileVersion[]
+  driveFavorites          DriveFavorite[]
+  tasksCreated            Task[]                   @relation("TaskCreatedBy")
+  taskAssignments         TaskAssignee[]
+  taskComments            TaskComment[]
+  outboundMessages        OutboundMessage[]
+  templateEdits           NotificationTemplate[]
+  kbArticles              KbArticle[]
+  apiKeys                 ApiKey[]
+  webhooks                Webhook[]
+  interviewsAsCandidate   Interview[]              @relation("InterviewCandidate")
+  interviewsAsStaff       Interview[]              @relation("InterviewStaff")
+  interviewsCreated       Interview[]              @relation("InterviewCreatedBy")
+  statusText              String?                  @db.VarChar(120) // workspace presence: "In a meeting", …
+  statusEmoji             String?                  @db.VarChar(16)
+  statusUntil             DateTime?
+  mailAccounts            MailAccount[]
+  mailLabels              MailLabel[]
+  mailRules               MailRule[]
+  mailTemplates           MailTemplate[]
+  chatChannelsCreated     ChatChannel[]            @relation("ChatChannelCreatedBy")
+  chatMemberships         ChatMember[]
+  chatMessages            ChatMessage[]
+  chatReactions           ChatReaction[]
+  calendarEvents          CalendarEvent[]          @relation("CalendarEventOwner")
+  calendarAttendance      CalendarAttendee[]
+  contactsCreated         Contact[]                @relation("ContactCreatedBy")
+  contactLinks            Contact[]                @relation("ContactUser")
+  announcements           Announcement[]
+  announcementReads       AnnouncementRead[]
+  notes                   Note[]
+  polls                   Poll[]
+  pollVotes               PollVote[]
+  leaveRequests           LeaveRequest[]           @relation("LeaveUser")
+  leaveDecisions          LeaveRequest[]           @relation("LeaveDecidedBy")
+  referredByAgentId       String? // agent whose link / code the client signed up with
+  referredByAgent         Agent?                   @relation("AgentReferrals", fields: [referredByAgentId], references: [id], onDelete: SetNull)
+  referredAt              DateTime?
+  agentProfile            Agent?                   @relation("AgentUser")
+  agentCommissions        AgentCommission[]        @relation("CommissionClient")
+  translationOrders       TranslationOrder[]       @relation("TranslationClient")
+  translationAssigned     TranslationOrder[]       @relation("TranslationStaff")
+  translationEvents       TranslationOrderEvent[]
+  consents                ConsentRecord[]
+  privacyRequests         PrivacyRequest[]         @relation("PrivacyRequester")
+  privacyHandled          PrivacyRequest[]         @relation("PrivacyHandler")
+  cv                      CandidateCv?
+  motivationLetters       MotivationLetter[]
+  vaultDocuments          VaultDocument[]
+  arrivalPlans            ArrivalPlan[]            @relation("ArrivalClient")
+  arrivalPlansHandled     ArrivalPlan[]            @relation("ArrivalStaff")
+  surveys                 SatisfactionSurvey[]     @relation("SurveyClient")
+  surveysAbout            SatisfactionSurvey[]     @relation("SurveyStaff")
+  driveLocks              DriveNode[]              @relation("DriveNodeLockedBy")
+  driveComments           DriveComment[]           @relation("DriveCommentAuthor")
+  driveShareLinks         DriveShareLink[]         @relation("DriveShareCreatedBy")
+  driveActivities         DriveActivity[]          @relation("DriveActivityActor")
+  referralPartner         ReferralPartner?         @relation("PartnerUser")
+  contractTemplates       ContractTemplate[]
+  candidateRequests       CandidateRequest[]
+  signatureRequests       SignatureRequest[]       @relation("SignatureRequestCreatedBy")
+  signatureSignings       SignatureSigner[]        @relation("SignatureSignerUser")
+  aiConversations         AiConversation[]
+  aiActions               AiAction[]
+  candidateProfiles       CandidateProfileDraft[]
+  timeEntries             TimeEntry[]              @relation("TimeEntryUser") // staff time tracking
   /// Marketing consent for campaigns (UWG § 7 / DSGVO Art. 7): current state, when and where it was set
   /// (REGISTER | PROFILE | PRIVACY_CENTER | UNSUBSCRIBE). Every change is also logged in ConsentRecord (MARKETING_EMAIL).
-  marketingOptIn        Boolean                  @default(false)
-  marketingOptInAt      DateTime?
-  marketingOptInSource  String?                  @db.VarChar(40)
-  campaignSegments      CampaignSegment[]        @relation("CampaignSegmentCreatedBy")
-  campaignsCreated      Campaign[]               @relation("CampaignCreatedBy")
-  campaignRecipients    CampaignRecipient[]      @relation("CampaignRecipientUser")
-  quotesCreated         Quote[]                  @relation("QuoteCreatedBy")
+  marketingOptIn          Boolean                  @default(false)
+  marketingOptInAt        DateTime?
+  marketingOptInSource    String?                  @db.VarChar(40)
+  campaignSegments        CampaignSegment[]        @relation("CampaignSegmentCreatedBy")
+  campaignsCreated        Campaign[]               @relation("CampaignCreatedBy")
+  campaignRecipients      CampaignRecipient[]      @relation("CampaignRecipientUser")
+  quotesCreated           Quote[]                  @relation("QuoteCreatedBy")
   /// Duplicate merge (lib/userMerge.ts): this account was merged into another one and is closed.
-  mergedIntoId          String?
-  mergedInto            User?                    @relation("UserMergedInto", fields: [mergedIntoId], references: [id], onDelete: SetNull)
-  mergedFrom            User[]                   @relation("UserMergedInto")
-  mergedAt              DateTime?
-  duplicatesA           DuplicatePair[]          @relation("DuplicateA")
-  duplicatesB           DuplicatePair[]          @relation("DuplicateB")
+  mergedIntoId            String?
+  mergedInto              User?                    @relation("UserMergedInto", fields: [mergedIntoId], references: [id], onDelete: SetNull)
+  mergedFrom              User[]                   @relation("UserMergedInto")
+  mergedAt                DateTime?
+  duplicatesA             DuplicatePair[]          @relation("DuplicateA")
+  duplicatesB             DuplicatePair[]          @relation("DuplicateB")
   /// Messaging plus: show messages in their original language instead of the automatic translation.
-  showOriginalMessages  Boolean                  @default(false)
-  partyThreadsAsCandidate PartyThread[]          @relation("PartyThreadCandidate")
-  partyThreadsCreated   PartyThread[]            @relation("PartyThreadCreatedBy")
-  partyThreadMembers    PartyThreadMember[]      @relation("PartyThreadMemberUser")
-  partyThreadMessages   PartyThreadMessage[]     @relation("PartyThreadMessageAuthor")
-  voiceClips            VoiceClip[]              @relation("VoiceClipUploader")
-  germanPlan            GermanPlan?              @relation("GermanPlanUser")
-  germanCourses         GermanCourse[]           @relation("GermanCourseUser")
-  germanExams           GermanExam[]             @relation("GermanExamUser")
-  referralCode          ClientReferralCode?      @relation("ReferralCodeOwner")
-  referralsMade         ClientReferral[]         @relation("ReferralReferrer")
-  referredBy            ClientReferral?          @relation("ReferralReferred")
+  showOriginalMessages    Boolean                  @default(false)
+  partyThreadsAsCandidate PartyThread[]            @relation("PartyThreadCandidate")
+  partyThreadsCreated     PartyThread[]            @relation("PartyThreadCreatedBy")
+  partyThreadMembers      PartyThreadMember[]      @relation("PartyThreadMemberUser")
+  partyThreadMessages     PartyThreadMessage[]     @relation("PartyThreadMessageAuthor")
+  voiceClips              VoiceClip[]              @relation("VoiceClipUploader")
+  germanPlan              GermanPlan?              @relation("GermanPlanUser")
+  germanCourses           GermanCourse[]           @relation("GermanCourseUser")
+  germanExams             GermanExam[]             @relation("GermanExamUser")
+  referralCode            ClientReferralCode?      @relation("ReferralCodeOwner")
+  referralsMade           ClientReferral[]         @relation("ReferralReferrer")
+  referredBy              ClientReferral?          @relation("ReferralReferred")
 
   @@index([companyId])
   @@index([mergedIntoId])
@@ -356,78 +361,84 @@ enum DocStatus {
 }
 
 model Case {
-  id                String                @id @default(cuid())
-  number            String                @unique
-  clientId          String
-  client            User                  @relation("CaseClient", fields: [clientId], references: [id], onDelete: Cascade)
-  assignedStaffId   String?
-  assignedStaff     User?                 @relation("CaseStaff", fields: [assignedStaffId], references: [id], onDelete: SetNull)
-  visaCategoryId    String?
-  visaCategory      VisaCategory?         @relation(fields: [visaCategoryId], references: [id], onDelete: SetNull)
-  profession        String
-  visaType          VisaType              @default(WORK) // what the client applies for: drives step names and expected durations
-  status            CaseStatus            @default(DOCUMENTS_PENDING)
-  staffNote         String?               @db.Text // latest note visible to client (e.g. what to fix)
-  appointmentAt     DateTime?
-  appointmentPlace  String?               @db.Text
-  decisionAt        DateTime?
-  decisionReason    String?               @db.Text // rejection reason or approval remark
-  visaValidFrom     DateTime?
-  visaValidTo       DateTime?
-  cancelReason      String?               @db.Text
-  companyId         String? // employer this candidate is placed with (company portal visibility)
-  company           Company?              @relation(fields: [companyId], references: [id], onDelete: SetNull)
-  vacancyId         String?
-  vacancy           Vacancy?              @relation(fields: [vacancyId], references: [id], onDelete: SetNull)
+  id                      String                @id @default(cuid())
+  number                  String                @unique
+  clientId                String
+  client                  User                  @relation("CaseClient", fields: [clientId], references: [id], onDelete: Cascade)
+  assignedStaffId         String?
+  assignedStaff           User?                 @relation("CaseStaff", fields: [assignedStaffId], references: [id], onDelete: SetNull)
+  visaCategoryId          String?
+  visaCategory            VisaCategory?         @relation(fields: [visaCategoryId], references: [id], onDelete: SetNull)
+  profession              String
+  visaType                VisaType              @default(WORK) // what the client applies for: drives step names and expected durations
+  status                  CaseStatus            @default(DOCUMENTS_PENDING)
+  staffNote               String?               @db.Text // latest note visible to client (e.g. what to fix)
+  appointmentAt           DateTime?
+  appointmentPlace        String?               @db.Text
+  decisionAt              DateTime?
+  decisionReason          String?               @db.Text // rejection reason or approval remark
+  visaValidFrom           DateTime?
+  visaValidTo             DateTime?
+  /// Residence title in Germany after arrival (Aufenthaltstitel); drives the renewal reminder.
+  residenceTitleExpiresAt DateTime?
+  /// Renewal case: the case this one renews (plain id) / when the renewal case for this one was opened.
+  renewalOfCaseId         String?               @db.VarChar(40)
+  renewalCaseCreatedAt    DateTime?
+  probationReminderAt     DateTime?
+  cancelReason            String?               @db.Text
+  companyId               String? // employer this candidate is placed with (company portal visibility)
+  company                 Company?              @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  vacancyId               String?
+  vacancy                 Vacancy?              @relation(fields: [vacancyId], references: [id], onDelete: SetNull)
   // Family reunion (Familiennachzug): member cases hang under the main applicant's case.
-  parentCaseId      String?
-  parentCase        Case?                 @relation("CaseFamily", fields: [parentCaseId], references: [id], onDelete: SetNull)
-  familyMembers     Case[]                @relation("CaseFamily")
-  relation          String? // spouse | child | parent (for member cases)
-  closedAt          DateTime? // set when the case reaches APPROVED / REJECTED / CANCELLED
-  documentsPurgedAt DateTime? // DSGVO retention: files deleted after the retention period
-  createdAt         DateTime              @default(now())
-  updatedAt         DateTime              @updatedAt
-  requirements      DocumentRequirement[]
-  documents         Document[]
-  contract          Contract?
-  events            CaseEvent[]
-  messages          CaseMessage[]
-  notifications     Notification[]
-  tasks             Task[]
-  outboundMessages  OutboundMessage[]
-  onboarding        CaseOnboarding[]
-  mailMessages      MailMessage[]
-  chatChannels      ChatChannel[]
-  calendarEvents    CalendarEvent[]
-  agentCommissions  AgentCommission[]
-  translationOrders TranslationOrder[]
-  arrivalPlan       ArrivalPlan?
-  motivationLetters MotivationLetter[]
-  surveys           SatisfactionSurvey[]
-  signatureRequests SignatureRequest[]
-  originals         OriginalDocument[]
-  settlements       SettlementEntry[]
-  aiRuns            CaseAiRun[]
-  aiFindingStates   CaseAiFindingState[]
-  costs             CaseCost[] // manual costs for the profitability view (lib/profitability)
-  partyThread       PartyThread?          @relation("PartyThreadCase")
-  timeEntries       TimeEntry[] // staff time tracking (lib/timeTracking)
-  arrivalFollowUp   ArrivalFollowUp? // post-arrival check-ins (lib/checkIns)
-  familyProfiles    FamilyMember[]        @relation("FamilyMemberMain") // members of this main case (details)
-  familyProfile     FamilyMember?         @relation("FamilyMemberCase") // this case is a member's case
-  clientTasks       ClientTask[] // to-dos the team gives the client (lib/clientProcess)
-  officeVisits      Booking[] // office visits booked from the portal (lib/clientProcess)
-  caseForms         CaseForm[] // smart questionnaires (lib/clientData)
-  dataConfirmations DataConfirmation[] // client confirms the embassy data (lib/clientData)
-  dataValues        CaseDataValue[] // client-provided VIDEX values (lib/clientData)
+  parentCaseId            String?
+  parentCase              Case?                 @relation("CaseFamily", fields: [parentCaseId], references: [id], onDelete: SetNull)
+  familyMembers           Case[]                @relation("CaseFamily")
+  relation                String? // spouse | child | parent (for member cases)
+  closedAt                DateTime? // set when the case reaches APPROVED / REJECTED / CANCELLED
+  documentsPurgedAt       DateTime? // DSGVO retention: files deleted after the retention period
+  createdAt               DateTime              @default(now())
+  updatedAt               DateTime              @updatedAt
+  requirements            DocumentRequirement[]
+  documents               Document[]
+  contract                Contract?
+  events                  CaseEvent[]
+  messages                CaseMessage[]
+  notifications           Notification[]
+  tasks                   Task[]
+  outboundMessages        OutboundMessage[]
+  onboarding              CaseOnboarding[]
+  mailMessages            MailMessage[]
+  chatChannels            ChatChannel[]
+  calendarEvents          CalendarEvent[]
+  agentCommissions        AgentCommission[]
+  translationOrders       TranslationOrder[]
+  arrivalPlan             ArrivalPlan?
+  motivationLetters       MotivationLetter[]
+  surveys                 SatisfactionSurvey[]
+  signatureRequests       SignatureRequest[]
+  originals               OriginalDocument[]
+  settlements             SettlementEntry[]
+  aiRuns                  CaseAiRun[]
+  aiFindingStates         CaseAiFindingState[]
+  costs                   CaseCost[] // manual costs for the profitability view (lib/profitability)
+  partyThread             PartyThread?          @relation("PartyThreadCase")
+  timeEntries             TimeEntry[] // staff time tracking (lib/timeTracking)
+  arrivalFollowUp         ArrivalFollowUp? // post-arrival check-ins (lib/checkIns)
+  familyProfiles          FamilyMember[]        @relation("FamilyMemberMain") // members of this main case (details)
+  familyProfile           FamilyMember?         @relation("FamilyMemberCase") // this case is a member's case
+  clientTasks             ClientTask[] // to-dos the team gives the client (lib/clientProcess)
+  officeVisits            Booking[] // office visits booked from the portal (lib/clientProcess)
+  caseForms               CaseForm[] // smart questionnaires (lib/clientData)
+  dataConfirmations       DataConfirmation[] // client confirms the embassy data (lib/clientData)
+  dataValues              CaseDataValue[] // client-provided VIDEX values (lib/clientData)
   /// Partner (middleman) who brought this client; their folder in the shared drive holds the client folder.
-  partnerId         String?
-  partner           ReferralPartner?      @relation(fields: [partnerId], references: [id], onDelete: SetNull)
+  partnerId               String?
+  partner                 ReferralPartner?      @relation(fields: [partnerId], references: [id], onDelete: SetNull)
   /// The client's real folder in the shared drive ("Ad Soyad · Pass-Nr."), created with the case.
-  driveFolderId     String?               @unique
+  driveFolderId           String?               @unique
   /// Extra columns of the client register (admin-defined), keyed by ClientRegisterColumn.id.
-  registerData      Json?
+  registerData            Json?
 
   @@index([clientId])
   @@index([status])
@@ -514,20 +525,20 @@ model CaseEvent {
 }
 
 model CaseMessage {
-  id         String    @id @default(cuid())
-  caseId     String
-  case       Case      @relation(fields: [caseId], references: [id], onDelete: Cascade)
-  authorId   String
-  author     User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  body       String    @db.Text
-  channel    String    @default("app") // app | whatsapp | sms
-  externalId String?   @unique // provider message id (WhatsApp), for de-duplication
-  readAt     DateTime? // when the other side opened it (read receipt)
-  lang       Locale? // detected language of the text (messaging plus: automatic translation)
-  voiceId    String?   @unique // voice message (VoiceClip); body is then empty
-  voice      VoiceClip? @relation("CaseMessageVoice", fields: [voiceId], references: [id], onDelete: SetNull)
+  id           String               @id @default(cuid())
+  caseId       String
+  case         Case                 @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  authorId     String
+  author       User                 @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  body         String               @db.Text
+  channel      String               @default("app") // app | whatsapp | sms
+  externalId   String?              @unique // provider message id (WhatsApp), for de-duplication
+  readAt       DateTime? // when the other side opened it (read receipt)
+  lang         Locale? // detected language of the text (messaging plus: automatic translation)
+  voiceId      String?              @unique // voice message (VoiceClip); body is then empty
+  voice        VoiceClip?           @relation("CaseMessageVoice", fields: [voiceId], references: [id], onDelete: SetNull)
   translations MessageTranslation[]
-  createdAt  DateTime  @default(now())
+  createdAt    DateTime             @default(now())
 
   @@index([caseId, createdAt])
 }
@@ -582,6 +593,10 @@ model VisaCategory {
   forecast             Json? // optional per-step expected days { DOCUMENTS: [min,max], CONTRACT: …, EMBASSY: …, APPOINTMENT: …, DECISION: … }
   sortOrder            Int                   @default(0)
   published            Boolean               @default(true)
+  seoTitle             Json? // L10n override of <title>
+  seoDescription       Json? // L10n override of the meta description
+  ogImage              String?               @db.Text
+  noindex              Boolean               @default(false)
   createdAt            DateTime              @default(now())
   updatedAt            DateTime              @updatedAt
   cases                Case[]
@@ -590,21 +605,25 @@ model VisaCategory {
 }
 
 model Service {
-  id        String   @id @default(cuid())
-  slug      String   @unique
-  icon      String // lucide icon name
-  image     String   @db.Text
-  audience  String   @default("all") // all | company | candidate
-  title     Json
-  summary   Json
-  body      Json // long description per locale, paragraphs separated by blank lines
-  features  Json // { az: string[], ... } what is included
-  steps     Json? // L10nList: service-specific "how it works" steps
-  duration  Json? // L10n, e.g. "2–4 weeks"
-  sortOrder Int      @default(0)
-  published Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id             String   @id @default(cuid())
+  slug           String   @unique
+  icon           String // lucide icon name
+  image          String   @db.Text
+  audience       String   @default("all") // all | company | candidate
+  title          Json
+  summary        Json
+  body           Json // long description per locale, paragraphs separated by blank lines
+  features       Json // { az: string[], ... } what is included
+  steps          Json? // L10nList: service-specific "how it works" steps
+  duration       Json? // L10n, e.g. "2–4 weeks"
+  sortOrder      Int      @default(0)
+  published      Boolean  @default(true)
+  seoTitle       Json? // L10n override of <title>
+  seoDescription Json? // L10n override of the meta description
+  ogImage        String?  @db.Text
+  noindex        Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 }
 
 model Partner {
@@ -660,16 +679,20 @@ model Faq {
 }
 
 model Post {
-  id          String   @id @default(cuid())
-  slug        String   @unique
-  cover       String   @db.Text
-  title       Json
-  excerpt     Json
-  body        Json
-  published   Boolean  @default(true)
-  publishedAt DateTime @default(now())
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id             String   @id @default(cuid())
+  slug           String   @unique
+  cover          String   @db.Text
+  title          Json
+  excerpt        Json
+  body           Json
+  published      Boolean  @default(true)
+  seoTitle       Json? // L10n override of <title>
+  seoDescription Json? // L10n override of the meta description
+  ogImage        String?  @db.Text
+  noindex        Boolean  @default(false)
+  publishedAt    DateTime @default(now())
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 }
 
 enum InquiryStatus {
@@ -693,8 +716,20 @@ model Inquiry {
   source        String?       @db.VarChar(80) // e.g. "event:<id>" (info-session registrant)
   status        InquiryStatus @default(NEW)
   createdAt     DateTime      @default(now())
+  /// Lead scoring (rules in Setting `leadScoring`).
+  score         Int           @default(0)
+  scoreLevel    String?       @db.VarChar(10) // COLD | WARM | HOT
+  scoreReasons  Json?
+  scoredAt      DateTime?
+  visitorId     String?       @db.VarChar(40)
+  quizResult    Json?
+  estimate      Json? // cost calculator result the lead asked about
+  landingPageId String?       @db.VarChar(40)
+  utm           Json?
 
   @@index([status, createdAt])
+  @@index([score])
+  @@index([visitorId])
 }
 
 model Setting {
@@ -2253,17 +2288,20 @@ model TranslationOrderEvent {
 
 /// Append-only log of consents given or withdrawn (who, what, which text version, when, from where).
 model ConsentRecord {
-  id        String   @id @default(cuid())
-  userId    String?
-  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
-  email     String?  @db.VarChar(200) // for consents given before an account exists (booking, inquiry)
-  type      String   @db.VarChar(40) // PRIVACY_POLICY | TERMS | MARKETING_EMAIL | WHATSAPP | SMS | EMPLOYER_SHARING | PASSPORT_OCR ...
-  granted   Boolean
-  version   String   @db.VarChar(40) // version / date of the policy text shown
-  source    String   @db.VarChar(40) // REGISTER | PROFILE | PRIVACY_CENTER | BOOKING | INQUIRY | MOBILE ...
-  ip        String?  @db.VarChar(64)
-  userAgent String?  @db.VarChar(400)
-  createdAt DateTime @default(now())
+  id              String   @id @default(cuid())
+  userId          String?
+  user            User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  email           String?  @db.VarChar(200) // for consents given before an account exists (booking, inquiry)
+  type            String   @db.VarChar(40) // PRIVACY_POLICY | TERMS | MARKETING_EMAIL | WHATSAPP | SMS | EMPLOYER_SHARING | PASSPORT_OCR ...
+  granted         Boolean
+  version         String   @db.VarChar(40) // version / date of the policy text shown
+  source          String   @db.VarChar(40) // REGISTER | PROFILE | PRIVACY_CENTER | BOOKING | INQUIRY | MOBILE ...
+  ip              String?  @db.VarChar(64)
+  userAgent       String?  @db.VarChar(400)
+  /// The published legal text version the consent refers to (LegalDocument), and the anonymous visitor for cookie consent.
+  legalDocumentId String?  @db.VarChar(40)
+  visitorId       String?  @db.VarChar(40)
+  createdAt       DateTime @default(now())
 
   @@index([userId, type, createdAt])
   @@index([email])
@@ -3572,6 +3610,8 @@ model CaseHandover {
   startedAt       DateTime           @default(now())
   plannedEndAt    DateTime?
   endedAt         DateTime?
+  note            String?            @db.Text
+  checklist       Json? // [{ text, done }]
 
   @@index([status])
   @@index([originalStaffId, status])
@@ -3789,6 +3829,7 @@ model InfoEvent {
   status         InfoEventStatus         @default(DRAFT)
   followUpNote   Json? // optional L10n paragraph added to the post-event follow-up email
   followUpSentAt DateTime?
+  recordingUrl   String?                 @db.Text
   createdById    String? // plain id (staff)
   createdAt      DateTime                @default(now())
   updatedAt      DateTime                @updatedAt
@@ -3921,6 +3962,7 @@ model FamilyMember {
   germanExempt      Boolean         @default(false)
   germanExemptNote  String?         @db.VarChar(300)
   notes             String?         @db.Text
+  docsCopiedAt      DateTime?
   createdById       String? // plain id (staff or the client)
   createdAt         DateTime        @default(now())
   updatedAt         DateTime        @updatedAt
@@ -4108,6 +4150,11 @@ model ArrivalFollowUp {
   leftReason     String?          @db.VarChar(40)
   leftNote       String?          @db.VarChar(1000)
   leftMarkedById String?
+  /// Churn risk from the check-in answers (0–100).
+  riskScore      Int?
+  riskLevel      String?          @db.VarChar(10) // LOW | MEDIUM | HIGH
+  riskReasons    Json?
+  riskAt         DateTime?
   createdAt      DateTime         @default(now())
   updatedAt      DateTime         @updatedAt
   checkIns       ArrivalCheckIn[]
@@ -4647,4 +4694,267 @@ model DocumentGuide {
   updatedById String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+// ─── Placement, post-arrival, growth, team quality, client experience, legal versions, SEO guides ─
+
+/// Login-free link an employer opens to see one anonymised candidate profile and answer "interested" / "not a fit".
+model CandidateShareLink {
+  id            String    @id @default(cuid())
+  tokenHash     String    @unique @db.Char(64)
+  candidateId   String    @db.VarChar(40)
+  applicationId String?   @db.VarChar(40)
+  companyId     String?   @db.VarChar(40)
+  vacancyId     String?   @db.VarChar(40)
+  createdById   String?   @db.VarChar(40)
+  expiresAt     DateTime
+  revokedAt     DateTime?
+  viewCount     Int       @default(0)
+  lastViewedAt  DateTime?
+  decision      String?   @db.VarChar(20) // INTERESTED | REJECTED
+  decisionNote  String?   @db.Text
+  decidedAt     DateTime?
+  decidedByName String?   @db.VarChar(160)
+  createdAt     DateTime  @default(now())
+
+  @@index([candidateId])
+  @@index([companyId])
+}
+
+/// Structured interview feedback (employer or staff), shown on the candidate card.
+model InterviewEvaluation {
+  id             String   @id @default(cuid())
+  interviewId    String   @db.VarChar(40)
+  candidateId    String   @db.VarChar(40)
+  authorKind     String   @db.VarChar(12) // EMPLOYER | STAFF
+  authorId       String?  @db.VarChar(40)
+  authorName     String?  @db.VarChar(160)
+  overall        Int // 1–5
+  scores         Json // { german, skills, experience, motivation, communication } each 1–5
+  recommendation String   @db.VarChar(12) // HIRE | MAYBE | NO
+  strengths      String?  @db.Text
+  concerns       String?  @db.Text
+  notes          String?  @db.Text
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([interviewId])
+  @@index([candidateId])
+}
+
+/// The worker's employment contract (Arbeitsvertrag) for a case: terms, probation and the Blue Card salary check.
+model EmploymentContract {
+  id              String    @id @default(cuid())
+  caseId          String    @unique @db.VarChar(40)
+  companyId       String?   @db.VarChar(40)
+  employerName    String?   @db.VarChar(200)
+  jobTitle        String?   @db.VarChar(160)
+  contractType    String    @default("UNLIMITED") @db.VarChar(20) // UNLIMITED | FIXED | AUSBILDUNG
+  grossMonthly    Decimal?  @db.Decimal(10, 2)
+  grossYearly     Decimal?  @db.Decimal(12, 2)
+  weeklyHours     Decimal?  @db.Decimal(4, 1)
+  vacationDays    Int?
+  startDate       DateTime?
+  endDate         DateTime?
+  probationMonths Int?
+  probationEndsAt DateTime?
+  signedAt        DateTime?
+  driveNodeId     String?   @db.VarChar(40)
+  blueCardCheck   String?   @db.VarChar(20) // OK | SHORTAGE_OK | BELOW | NOT_APPLICABLE
+  warnings        Json? // [{ code, message }]
+  note            String?   @db.Text
+  createdById     String?   @db.VarChar(40)
+  updatedById     String?   @db.VarChar(40)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([probationEndsAt])
+}
+
+/// Anonymous site visitor (first-party id, only after consent) aggregated for lead scoring.
+model LeadVisitor {
+  id          String   @id @db.VarChar(40)
+  firstSeenAt DateTime @default(now())
+  lastSeenAt  DateTime @default(now())
+  visits      Int      @default(1)
+  pageViews   Int      @default(0)
+  events      Json? // { "page:/visas": 3, "quiz:done": 1, "calc:cost": 1, … }
+  source      String?  @db.VarChar(80)
+  utm         Json?
+  locale      String?  @db.VarChar(8)
+  inquiryId   String?  @db.VarChar(40)
+
+  @@index([lastSeenAt])
+  @@index([inquiryId])
+}
+
+/// Campaign / country landing page assembled from sections, public at /l/:slug.
+model LandingPage {
+  id             String    @id @default(cuid())
+  slug           String    @unique @db.VarChar(120)
+  locale         String    @default("az") @db.VarChar(8)
+  title          String    @db.VarChar(200)
+  status         String    @default("DRAFT") @db.VarChar(12) // DRAFT | PUBLISHED | ARCHIVED
+  country        String?   @db.VarChar(40)
+  campaignId     String?   @db.VarChar(40)
+  sections       Json // [{ id, type: hero|text|benefits|steps|faq|testimonials|form|cta|video|stats, data }]
+  formConfig     Json?
+  seoTitle       String?   @db.VarChar(200)
+  seoDescription String?   @db.VarChar(400)
+  ogImage        String?   @db.Text
+  views          Int       @default(0)
+  submissions    Int       @default(0)
+  publishedAt    DateTime?
+  createdById    String?   @db.VarChar(40)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([status])
+}
+
+model TrainingCourse {
+  id          String   @id @default(cuid())
+  title       String   @db.VarChar(200)
+  description String?  @db.Text
+  roles       Json? // ["STAFF","ADMIN"]; null = everyone in the team
+  required    Boolean  @default(false)
+  sortOrder   Int      @default(0)
+  published   Boolean  @default(false)
+  createdById String?  @db.VarChar(40)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model TrainingLesson {
+  id          String   @id @default(cuid())
+  courseId    String   @db.VarChar(40)
+  title       String   @db.VarChar(200)
+  body        String?  @db.LongText // markdown
+  videoUrl    String?  @db.Text
+  driveNodeId String?  @db.VarChar(40)
+  minutes     Int?
+  sortOrder   Int      @default(0)
+  quiz        Json? // [{ q, options: string[], answer: number }]
+  passScore   Int      @default(70)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([courseId, sortOrder])
+}
+
+model TrainingProgress {
+  id          String    @id @default(cuid())
+  userId      String    @db.VarChar(40)
+  courseId    String    @db.VarChar(40)
+  lessonId    String    @db.VarChar(40)
+  completedAt DateTime?
+  quizScore   Int?
+  attempts    Int       @default(0)
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([userId, lessonId])
+  @@index([courseId])
+}
+
+/// Four-eyes check: a second staff member approves the embassy package before it is marked as sent / lodged.
+model EmbassyPackageApproval {
+  id            String    @id @default(cuid())
+  caseId        String    @db.VarChar(40)
+  status        String    @default("PENDING") @db.VarChar(12) // PENDING | APPROVED | REJECTED | OVERRIDDEN
+  packageHash   String?   @db.Char(64)
+  packageNodeId String?   @db.VarChar(40)
+  requestedById String    @db.VarChar(40)
+  requestedAt   DateTime  @default(now())
+  reviewerId    String?   @db.VarChar(40)
+  reviewedAt    DateTime?
+  comment       String?   @db.Text
+  checklist     Json? // [{ key, ok, note }]
+
+  @@index([caseId, requestedAt])
+  @@index([status])
+}
+
+model StaffShift {
+  id          String   @id @default(cuid())
+  userId      String   @db.VarChar(40)
+  date        DateTime @db.Date
+  startMin    Int // minutes after midnight, Baku time
+  endMin      Int
+  kind        String   @default("OFFICE") @db.VarChar(12) // OFFICE | REMOTE | ON_CALL
+  note        String?  @db.VarChar(300)
+  createdById String?  @db.VarChar(40)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([date])
+  @@index([userId, date])
+}
+
+/// Content for the client "waiting room": short lessons, videos and exercises while the case is in progress.
+model WaitingRoomItem {
+  id        String   @id @default(cuid())
+  kind      String   @db.VarChar(12) // LESSON | VIDEO | EXERCISE | CHECKLIST
+  topic     String   @db.VarChar(40) // life | work | language | bureaucracy | culture
+  title     Json // L10n
+  body      Json? // L10n markdown
+  videoUrl  String?  @db.Text
+  exercise  Json? // [{ q: L10n, options: L10n[], answer: number }]
+  minutes   Int?
+  visaTypes Json? // VisaType[]; null = all
+  stages    Json? // CaseStatus[]; null = all
+  sortOrder Int      @default(0)
+  published Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([published, sortOrder])
+}
+
+model WaitingRoomProgress {
+  id          String    @id @default(cuid())
+  userId      String    @db.VarChar(40)
+  itemId      String    @db.VarChar(40)
+  completedAt DateTime?
+  score       Int?
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([userId, itemId])
+}
+
+/// Versioned legal texts (AGB / privacy / cookies); consents point at the version the person accepted.
+model LegalDocument {
+  id                   String    @id @default(cuid())
+  kind                 String    @db.VarChar(20) // TERMS | PRIVACY | COOKIES
+  version              String    @db.VarChar(40)
+  title                Json // L10n
+  body                 Json // L10n markdown
+  changeSummary        Json? // L10n "what changed"
+  requiresReacceptance Boolean   @default(false)
+  status               String    @default("DRAFT") @db.VarChar(12) // DRAFT | PUBLISHED | ARCHIVED
+  publishedAt          DateTime?
+  effectiveAt          DateTime?
+  createdById          String?   @db.VarChar(40)
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  @@unique([kind, version])
+  @@index([kind, status])
+}
+
+/// Long SEO guide pages (Chancenkarte, Blue Card, Ausbildung …) with a localised slug per language.
+model GuidePage {
+  id          String   @id @default(cuid())
+  key         String   @db.VarChar(60) // chancenkarte | blue-card | ausbildung | anerkennung | pflege | familiennachzug …
+  locale      String   @db.VarChar(8) // az | de | en | ru | tr | uk
+  slug        String   @db.VarChar(160)
+  title       String   @db.VarChar(200)
+  description String   @db.VarChar(400)
+  body        String   @db.LongText // markdown
+  faq         Json? // [{ q, a }]
+  published   Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([key, locale])
+  @@unique([locale, slug])
 }

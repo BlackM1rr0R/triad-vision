@@ -32,6 +32,14 @@ const faqList = z.array(z.object({ q: l10n, a: l10n })).max(30);
 const safeUrl = z.string().max(2000).refine((v) => /^(https?:\/\/[^\s]+|\/[^\s]*)$/i.test(v), 'INVALID_URL');
 const safeUrlOrEmpty = z.union([safeUrl, z.literal('')]);
 const optInt = z.number().int().min(0).max(1_000_000).nullable().optional();
+/** Per-item SEO overrides (posts, services, visa categories): empty language = the generated title / text. */
+const seoText = (max: number) => z.object({ az: z.string().max(max), de: z.string().max(max), en: z.string().max(max), ru: z.string().max(max) }).partial().nullable().optional();
+const seoFields = {
+  seoTitle: seoText(120),
+  seoDescription: seoText(320),
+  ogImage: safeUrlOrEmpty.nullable().optional(),
+  noindex: z.boolean().optional(),
+};
 
 const resources: Record<string, { delegate: () => Delegate; schema: z.ZodObject<Record<string, ZodTypeAny>>; orderBy: object }> = {
   'visa-categories': {
@@ -57,6 +65,7 @@ const resources: Record<string, { delegate: () => Delegate; schema: z.ZodObject<
       faq: faqList.nullable().optional(),
       sortOrder: z.number().int(),
       published: z.boolean(),
+      ...seoFields,
     }),
   },
   services: {
@@ -75,6 +84,7 @@ const resources: Record<string, { delegate: () => Delegate; schema: z.ZodObject<
       duration: l10n.nullable().optional(),
       sortOrder: z.number().int(),
       published: z.boolean(),
+      ...seoFields,
     }),
   },
   partners: {
@@ -150,6 +160,7 @@ const resources: Record<string, { delegate: () => Delegate; schema: z.ZodObject<
       body: l10n,
       published: z.boolean(),
       publishedAt: z.coerce.date(),
+      ...seoFields,
     }),
   },
 };
@@ -166,7 +177,7 @@ adminContentRouter.get('/:resource', async (req, res) => {
 });
 
 /** Optional JSON columns: Prisma needs DbNull (not plain null) to clear them. */
-const JSON_FIELDS = new Set(['description', 'requirements', 'documents', 'faq', 'steps', 'duration']);
+const JSON_FIELDS = new Set(['description', 'requirements', 'documents', 'faq', 'steps', 'duration', 'seoTitle', 'seoDescription']);
 const toDb = (data: Record<string, unknown>) =>
   Object.fromEntries(Object.entries(data).map(([k, v]) => [k, v === null && JSON_FIELDS.has(k) ? Prisma.DbNull : v]));
 

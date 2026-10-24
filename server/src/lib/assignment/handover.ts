@@ -6,6 +6,7 @@ import { audit } from '../audit.js';
 import { STATUS_LABELS } from '../register/labels.js';
 import { absences, assignCase, pickAssignee, readAssignmentConfig, targetOfCase } from './index.js';
 import { assignmentTexts } from './texts.js';
+import { draftFor, readDraft } from '../shifts/handoverNotes.js'; // handover notes written before the leave
 
 /**
  * Absence handover (run by the 15-minute automation job):
@@ -45,6 +46,7 @@ export const runHandovers = async (now = new Date()) => {
         orderBy: { createdAt: 'asc' },
       });
       const handed: { caseId: string; number: string; client: string; status: string; substituteId: string }[] = [];
+      const draft = await readDraft(leave.leaveId);
       for (const c of cases.filter((x) => !already.has(x.id))) {
         const target = await targetOfCase(c.id);
         const sub = await pickAssignee(prisma, { ...target, excludeIds: [ownerId] }, { force: true, now });
@@ -54,7 +56,7 @@ export const runHandovers = async (now = new Date()) => {
         }
         const ok = await assignCase(c.id, sub, { reason: 'handover', from: ownerId, notify: false });
         if (!ok) continue;
-        await prisma.caseHandover.create({ data: { caseId: c.id, originalStaffId: ownerId, substituteId: sub, leaveId: leave.leaveId, plannedEndAt: leave.endsAt, startedAt: now } });
+        await prisma.caseHandover.create({ data: { caseId: c.id, originalStaffId: ownerId, substituteId: sub, leaveId: leave.leaveId, plannedEndAt: leave.endsAt, startedAt: now, ...draftFor(draft, c.id) } });
         handed.push({ caseId: c.id, number: c.number, client: fullName(c.client), status: c.status, substituteId: sub });
         out.started += 1;
       }

@@ -7,7 +7,7 @@ import { anon, asAdmin, asClient, asStaff, sessionAgent } from '../helpers/api';
 import { prisma, waitFor } from '../helpers/db';
 import { createUser } from '../helpers/factories';
 import { binaryParser, makePdf, PDF } from '../helpers/files';
-import { act, adminCase, clientCase, createCaseVia, driveCaseTo, expectStatus } from '../helpers/workflow';
+import { act, adminCase, approveFourEyes, clientCase, createCaseVia, driveCaseTo, expectStatus } from '../helpers/workflow';
 
 // Other suites running at the same time may clear the shared temp upload dir; make sure it exists.
 beforeEach(() => {
@@ -166,6 +166,7 @@ describe('partner portal: dashboard, commissions and notifications', () => {
     expect(moved.link).toBe(`/partner/clients/${c.id}`);
     await waitFor(() => prisma.emailLog.findFirst({ where: { to: p.user.email, subject: `Triad Vision · ${moved.title}` } }));
 
+    await approveFourEyes(c.id);
     expectStatus(await act(admin.agent, c.id, { action: 'MARK_LODGED' }), 200);
     expectStatus(await act(admin.agent, c.id, { action: 'DECIDE', decision: 'APPROVED' }), 200);
     const approved = await waitFor(() => prisma.notification.findFirst({ where: { userId: p.user.id, type: 'PARTNER_CASE_APPROVED' } }));

@@ -2,7 +2,7 @@ import { Link, useLocation, useOutlet } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
-import { Bell, BookUser, Briefcase, Cake, Compass, Gift, FileSignature, FileUser, FolderOpen, GraduationCap, Languages, LayoutDashboard, MailQuestion, MessageCircleQuestion, PenLine, PlaneLanding, ShieldCheck, UserRound, Vault, Video } from 'lucide-react';
+import { Bell, BookUser, Briefcase, Cake, Compass, Gift, FileSignature, FileUser, FolderOpen, GraduationCap, Hourglass, Languages, LayoutDashboard, MailQuestion, MessageCircleQuestion, PenLine, PlaneLanding, ShieldCheck, UserRound, Vault, Video } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { FINAL } from '@/lib/caseStatus';
 import { useNotifications } from '@/components/portal/useNotifications';
@@ -20,12 +20,14 @@ import AiLauncher from '@/components/ai/AiLauncher';
 import { BottomNavPortal } from '@/components/nav/BottomNavPortal';
 import { CLIENT_TOUR, TourHost, TourRestartButton } from '@/components/onboarding';
 import { pagesPortalUx } from '@/i18n/pagesPortalUx';
+import { pagesWaitingRoom } from '@/i18n/pagesWaitingRoom';
 
 registerCopy(pagesAccount);
 registerCopy(pagesSign);
 registerCopy(pagesJobs);
 registerCopy(pagesJourney);
 registerCopy(pagesPortalUx);
+registerCopy(pagesWaitingRoom); // waiting room tab label
 
 export default function AccountLayout() {
   const { t } = useTranslation();
@@ -71,6 +73,10 @@ export default function AccountLayout() {
     ...(isClient && hasApproved ? [{ to: '/account/arrival', label: t('accountPage.tabs.arrival'), icon: PlaneLanding, match: (p: string) => p.startsWith('/account/arrival') }] : []),
     ...(isClient && hasApproved ? [{ to: '/account/onboarding', label: t('journey.nav.onboarding'), icon: Compass, match: (p: string) => p.startsWith('/account/onboarding') }] : []),
     ...(isClient ? [{ to: '/account/german', label: t('journey.nav.german'), icon: GraduationCap, match: (p: string) => p.startsWith('/account/german') }] : []),
+    // Waiting room: "while you wait" lessons and exercises, for clients with an open case.
+    ...(isClient && primaryCase && !FINAL.includes(primaryCase.status)
+      ? [{ to: '/account/waiting-room', label: t('waitingRoom.nav'), icon: Hourglass, match: (p: string) => p.startsWith('/account/waiting-room') }]
+      : []),
     { to: '/account/interviews', label: t('journey.nav.interviews'), icon: Video, match: (p: string) => p.startsWith('/account/interviews') },
     ...(isClient ? [{ to: '/account/interview-prep', label: t('accountPage.tabs.interviewPrep'), icon: MessageCircleQuestion, match: (p: string) => p.startsWith('/account/interview-prep') }] : []),
     ...(signatures?.length

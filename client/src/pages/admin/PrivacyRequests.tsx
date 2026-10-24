@@ -4,25 +4,24 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import clsx from 'clsx';
-import { AlertTriangle, ArrowLeft, Clock, Download, FileText, Inbox, ListChecks, Search, ShieldHalf, Trash2, UserRound } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, Clock, FileText, Inbox, ListChecks, Search, ShieldHalf, Trash2, UserRound } from 'lucide-react';
 import { api, errorCode } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { registerCopy } from '@/i18n';
 import { pagesPrivacy } from '@/i18n/pagesPrivacy';
+import { ConsentRegister } from '@/components/legal/ConsentRegister'; // consent register: filters, timeline, versions, CSV / JSON
 import { Spinner } from '@/components/ui/Spinner';
 import { Modal } from '@/components/admin/Modal';
 import { Chip, DefRow, EmptyState, ErrorBlock, LoadingBlock, PageHead, Panel, StatTile } from '@/components/admin/ui';
 import { Tabs } from '@/components/ui/Tabs';
 import { fmtDate, fmtDateTime, fullName } from '@/components/admin/labels';
 import {
-  CONSENT_TYPES,
   REQUEST_STATUSES,
   REQUEST_TYPES,
   STATUS_TONE,
   isOpenStatus,
   type AdminRequestDetail,
   type AdminRequestsResponse,
-  type ConsentLogResponse,
   type DeletionPreviewCounts,
   type RequestStatus,
 } from '@/components/privacy/types';
@@ -439,7 +438,7 @@ const RequestDetail = () => {
                 {data.consentLog.map((c) => (
                   <li key={c.id} className="flex items-baseline justify-between gap-2 text-xs">
                     <span className="text-ink">
-                      {t(`privacy.consentType.${c.type}`)}:{' '}
+                      {t(`privacy.consentType.${c.type}`, { defaultValue: t(`legalDocs.consentTypes.${c.type}`, { defaultValue: c.type }) })}:{' '}
                       <b className={c.granted ? 'text-emerald-700' : 'text-amber-700'}>{c.granted ? t('privacy.admin.consents.yes') : t('privacy.admin.consents.no')}</b>
                     </span>
                     <span className="shrink-0 text-muted">{fmtDate(c.createdAt)}</span>
@@ -451,105 +450,6 @@ const RequestDetail = () => {
         </div>
       </div>
     </div>
-  );
-};
-
-// ─── Consent log ───────────────────────────────────────────────────────
-
-const ConsentLog = () => {
-  const { t, i18n } = useTranslation();
-  const [email, setEmail] = useState('');
-  const [type, setType] = useState('');
-  const [from, setFrom] = useState('');
-  const [to, setTo] = useState('');
-  const query = new URLSearchParams();
-  if (email.trim()) query.set('email', email.trim());
-  if (type) query.set('type', type);
-  if (from) query.set('from', from);
-  if (to) query.set('to', to);
-  const qs = query.toString();
-  const csvQs = new URLSearchParams(query);
-  csvQs.set('format', 'csv');
-
-  const { data, isLoading, error, refetch } = useQuery({
-    queryKey: ['admin-privacy-consents', qs],
-    queryFn: async () => (await api.get<ConsentLogResponse>(`/admin/privacy/consents${qs ? `?${qs}` : ''}`)).data,
-  });
-  const sourceLabel = (s: string) => (i18n.exists(`privacy.source.${s}`) ? t(`privacy.source.${s}`) : s);
-
-  return (
-    <>
-      <div className="mb-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-[minmax(0,1fr)_14rem_10rem_10rem_auto]">
-        <label className="relative">
-          <span className="sr-only">{t('privacy.admin.consents.email')}</span>
-          <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted" aria-hidden />
-          <input type="search" className="input pl-9" placeholder={t('privacy.admin.consents.email')} value={email} onChange={(e) => setEmail(e.target.value)} />
-        </label>
-        <select aria-label={t('privacy.admin.consents.type')} className="input" value={type} onChange={(e) => setType(e.target.value)}>
-          <option value="">{t('privacy.admin.consents.all')}</option>
-          {CONSENT_TYPES.map((k) => (
-            <option key={k} value={k}>
-              {t(`privacy.consentType.${k}`)}
-            </option>
-          ))}
-        </select>
-        <input type="date" aria-label={t('privacy.admin.consents.from')} className="input" value={from} onChange={(e) => setFrom(e.target.value)} />
-        <input type="date" aria-label={t('privacy.admin.consents.to')} className="input" value={to} onChange={(e) => setTo(e.target.value)} />
-        <a href={`/api/admin/privacy/consents?${csvQs.toString()}`} download className="btn-white btn-sm min-h-10 border border-line">
-          <Download className="size-4" aria-hidden />
-          {t('privacy.admin.consents.csv')}
-        </a>
-      </div>
-
-      {isLoading ? (
-        <LoadingBlock />
-      ) : error ? (
-        <ErrorBlock error={error} onRetry={() => refetch()} />
-      ) : !data?.items.length ? (
-        <div className="rounded-xl border border-line bg-card">
-          <EmptyState icon={ListChecks} title={t('privacy.admin.consents.empty')} />
-        </div>
-      ) : (
-        <>
-          <p className="mb-2 text-xs text-muted">{t('privacy.admin.consents.total', { count: data.total })}</p>
-          <div className="overflow-x-auto rounded-xl border border-line bg-card">
-            <table className="w-full min-w-[44rem] text-sm">
-              <thead className="bg-surface text-left text-xs text-muted">
-                <tr>
-                  {(['date', 'person', 'type', 'value', 'source', 'version', 'ip'] as const).map((c) => (
-                    <th key={c} className="px-3 py-2.5 font-medium">
-                      {t(`privacy.admin.consents.col.${c}`)}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-line">
-                {data.items.map((r) => (
-                  <tr key={r.id}>
-                    <td className="px-3 py-2 text-xs whitespace-nowrap text-muted tabular-nums">{fmtDateTime(r.createdAt)}</td>
-                    <td className="px-3 py-2">
-                      <p className="font-medium break-all text-ink">{r.user?.email ?? r.email ?? '—'}</p>
-                      {r.user && <p className="text-xs text-muted">{fullName(r.user)}</p>}
-                    </td>
-                    <td className="px-3 py-2 text-ink">{t(`privacy.consentType.${r.type}`, { defaultValue: r.type })}</td>
-                    <td className="px-3 py-2">
-                      <span className={clsx('text-xs font-bold', r.granted ? 'text-emerald-700' : 'text-amber-700')}>
-                        {r.granted ? t('privacy.admin.consents.yes') : t('privacy.admin.consents.no')}
-                      </span>
-                    </td>
-                    <td className="px-3 py-2 text-xs text-muted">{sourceLabel(r.source)}</td>
-                    <td className="px-3 py-2 text-xs text-muted">{r.version}</td>
-                    <td className="px-3 py-2 text-xs text-muted" title={r.userAgent ?? undefined}>
-                      {r.ip ?? '—'}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </>
-      )}
-    </>
   );
 };
 
@@ -568,7 +468,7 @@ const ListPage = () => {
         value={tab}
         onChange={(k) => setParams(k === 'consents' ? { tab: 'consents' } : {}, { replace: true })}
       />
-      {tab === 'consents' ? <ConsentLog /> : <RequestsList />}
+      {tab === 'consents' ? <ConsentRegister /> : <RequestsList />}
     </>
   );
 };

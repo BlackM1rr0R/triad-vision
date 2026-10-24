@@ -2,6 +2,18 @@ import { prisma } from '../../db.js';
 import { publicUser } from '../../routes/auth.js';
 import { buildAccessLog } from './accessLog.js'; // "who viewed my documents"
 
+/** Adds kind / version / publication date of the accepted legal text to each consent row. */
+const withLegalVersions = async <T extends { legalDocumentId: string | null }>(rows: T[]) => {
+  const ids = Array.from(new Set(rows.map((r) => r.legalDocumentId).filter((v): v is string => !!v)));
+  const docs = ids.length
+    ? await prisma.legalDocument.findMany({ where: { id: { in: ids } }, select: { id: true, kind: true, version: true, publishedAt: true, effectiveAt: true } })
+    : [];
+  return rows.map(({ legalDocumentId, ...r }) => {
+    const d = docs.find((x) => x.id === legalDocumentId);
+    return { ...r, legalDocument: d ? { kind: d.kind, version: d.version, publishedAt: d.publishedAt, effectiveAt: d.effectiveAt } : null };
+  });
+};
+
 /**
  * GDPR export (Art. 15 / 20): everything stored about the user, as plain JSON (file metadata only,
  * never file contents, password hashes, tokens or staff-internal notes). Shared by
@@ -82,7 +94,7 @@ export const buildUserExport = async (userId: string) => {
     prisma.consentRecord.findMany({
       where: { userId },
       orderBy: { createdAt: 'asc' },
-      select: { type: true, granted: true, version: true, source: true, ip: true, userAgent: true, createdAt: true },
+      select: { type: true, granted: true, version: true, legalDocumentId: true, source: true, ip: true, userAgent: true, createdAt: true },
     }),
     prisma.privacyRequest.findMany({
       where: { userId },
@@ -113,7 +125,8 @@ export const buildUserExport = async (userId: string) => {
     translationOrders: translationOrders.map((o) => ({ ...o, number: `TR-${String(o.number).padStart(4, '0')}` })),
     interviews: interviews.map(({ company, ...i }) => ({ ...i, company: company?.name ?? null })),
     vacancyApplications: applications,
-    consents,
+    // Each consent with the legal text version it refers to (AGB / privacy / cookie policy).
+    consents: await withLegalVersions(consents),
     privacyRequests,
     notifications,
     devices,

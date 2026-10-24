@@ -13,13 +13,18 @@ import { registerCopy } from '@/i18n';
 import { pagesTimeCare } from '@/i18n/pagesTimeCare';
 import { Chip, ErrorBlock, LoadingBlock, PageHead, Panel, StatTile, Switch } from '@/components/admin/ui';
 import { Modal } from '@/components/settlement/Modal';
+import { RISK_LEVELS, RiskBadge, RiskReasons, type RiskReason } from '@/components/postArrival/RiskBadge';
 
 registerCopy(pagesTimeCare);
 
-const TOPICS = ['HOUSING', 'SALARY', 'WORKPLACE', 'HEALTH', 'DOCUMENTS', 'OTHER'] as const;
+const TOPICS = ['HOUSING', 'SALARY', 'WORKPLACE', 'TEAM', 'LANGUAGE', 'HOMESICK', 'HEALTH', 'DOCUMENTS', 'OTHER'] as const;
 const REASONS = ['QUIT', 'DISMISSED', 'CONTRACT_ENDED', 'CHANGED_EMPLOYER', 'RETURNED_HOME', 'OTHER'] as const;
 const STATUS = ['all', 'issue', 'noAnswer', 'employed', 'left'] as const;
 type Status = (typeof STATUS)[number];
+const RISK = ['all', ...RISK_LEVELS] as const;
+type Risk = (typeof RISK)[number];
+const SORTS = ['arrived', 'risk'] as const;
+type Sort = (typeof SORTS)[number];
 
 interface CheckInRow {
   id: string;
@@ -43,10 +48,14 @@ interface Worker {
   leftJobAt: string | null;
   leftReason: string | null;
   openIssue: boolean;
+  riskScore: number | null;
+  riskLevel: string | null;
+  riskReasons: RiskReason[];
+  riskAt: string | null;
   checkIns: CheckInRow[];
 }
 interface Overview {
-  totals: { followUps: number; sent: number; answered: number; ok: number; issue: number; openIssues: number; responseRate: number | null; left: number };
+  totals: { followUps: number; sent: number; answered: number; ok: number; issue: number; openIssues: number; responseRate: number | null; left: number; highRisk: number; mediumRisk: number };
   byOffset: { audience: 'WORKER' | 'EMPLOYER'; offsetDays: number; sent: number; answered: number; ok: number; issue: number }[];
   topics: Record<string, number>;
   retention: { months: number; eligible: number; employed: number; pct: number | null }[];
@@ -57,7 +66,7 @@ interface Settings {
   enabled: boolean;
   workerOffsets: number[];
   employerEnabled: boolean;
-  employerOffset: number;
+  employerOffsets: number[];
 }
 
 /** Admin → Gəlişdən sonra: retention dashboard of the post-arrival check-ins. */
@@ -69,9 +78,18 @@ export default function CheckIns() {
   const qc = useQueryClient();
   const [params, setParams] = useSearchParams();
   const status = ((STATUS as readonly string[]).includes(params.get('status') ?? '') ? params.get('status') : 'all') as Status;
+  const risk = ((RISK as readonly string[]).includes(params.get('risk') ?? '') ? params.get('risk') : 'all') as Risk;
+  const sort = ((SORTS as readonly string[]).includes(params.get('sort') ?? '') ? params.get('sort') : 'arrived') as Sort;
+  // Keeps the other list params when one changes.
+  const setParam = (key: string, value: string, fallback: string) => {
+    const next = new URLSearchParams(params);
+    if (value === fallback) next.delete(key);
+    else next.set(key, value);
+    setParams(next, { replace: true });
+  };
   const [left, setLeft] = useState<Worker | null>(null);
   const [showSettings, setShowSettings] = useState(false);
-  const q = useQuery({ queryKey: ['check-ins', status], queryFn: async () => (await api.get<Overview>('/admin/check-ins/overview', { params: { status } })).data, placeholderData: keepPreviousData });
+  const q = useQuery({ queryKey: ['check-ins', status, risk, sort], queryFn: async () => (await api.get<Overview>('/admin/check-ins/overview', { params: { status, risk, sort } })).data, placeholderData: keepPreviousData });
   const onError = (e: unknown) => toast.error(t(`time.errors.${errorCode(e)}`, { defaultValue: t('time.errors.generic') }));
   const refresh = () => void qc.invalidateQueries({ queryKey: ['check-ins'] });
   const resolve = useMutation({ mutationFn: async (id: string) => api.post(`/admin/check-ins/${id}/resolve`, {}), onSuccess: () => (refresh(), void qc.invalidateQueries({ queryKey: ['my-work'] })), onError });
@@ -106,13 +124,20 @@ export default function CheckIns() {
           )
         }
       />
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-4 xl:grid-cols-7">
         <StatTile label={t('checkInAdmin.kpi.followUps')} value={d.totals.followUps} />
         <StatTile label={t('checkInAdmin.kpi.response')} value={d.totals.responseRate === null ? '—' : `${d.totals.responseRate}%`} hint={`${d.totals.answered} / ${d.totals.sent}`} />
         <StatTile label={t('checkInAdmin.kpi.ok')} value={d.totals.ok} tone="good" />
         <StatTile label={t('checkInAdmin.kpi.issues')} value={d.totals.issue} tone={d.totals.issue ? 'warn' : undefined} />
         <StatTile label={t('checkInAdmin.kpi.open')} value={d.totals.openIssues} tone={d.totals.openIssues ? 'danger' : undefined} />
         <StatTile label={t('checkInAdmin.kpi.left')} value={d.totals.left} />
+        <StatTile
+          label={t('postArrival.risk.kpi')}
+          value={d.totals.highRisk}
+          tone={d.totals.highRisk ? 'danger' : undefined}
+          hint={t('postArrival.risk.kpiHint', { count: d.totals.mediumRisk })}
+          to={risk === 'HIGH' ? undefined : '/admin/check-ins?risk=HIGH&sort=risk'}
+        />
       </div>
 
       {d.totals.followUps === 0 ? (
@@ -185,10 +210,28 @@ export default function CheckIns() {
       <Panel title={t('checkInAdmin.workersTitle')} icon={PlaneLanding} bodyClassName="p-0 sm:p-0">
         <div className="flex gap-2 overflow-x-auto border-b border-line px-5 py-3">
           {STATUS.map((s) => (
-            <Chip key={s} active={status === s} onClick={() => setParams(s === 'all' ? {} : { status: s }, { replace: true })}>
+            <Chip key={s} active={status === s} onClick={() => setParam('status', s, 'all')}>
               {t(`checkInAdmin.filters.${s}`)}
             </Chip>
           ))}
+        </div>
+        <div className="flex flex-wrap items-center gap-2 border-b border-line px-5 py-3">
+          <span className="text-xs font-semibold text-muted">{t('postArrival.risk.filter')}:</span>
+          {RISK.map((r) => (
+            <Chip key={r} active={risk === r} onClick={() => setParam('risk', r, 'all')}>
+              {r === 'all' ? t('postArrival.risk.all') : t(`postArrival.risk.levels.${r}`)}
+            </Chip>
+          ))}
+          <label className="ml-auto flex items-center gap-2 text-xs text-muted">
+            {t('postArrival.risk.sortLabel')}
+            <select className="input h-9 w-auto py-1 text-xs" value={sort} onChange={(e) => setParam('sort', e.target.value, 'arrived')}>
+              {SORTS.map((x) => (
+                <option key={x} value={x}>
+                  {t(`postArrival.risk.sort.${x}`)}
+                </option>
+              ))}
+            </select>
+          </label>
         </div>
         <ul className="divide-y divide-line">
           {d.workers.map((w) => (
@@ -204,6 +247,12 @@ export default function CheckIns() {
                   </Link>
                   {w.company && ` · ${w.company}`} · {t('checkInAdmin.cols.arrived')}: {date(w.arrivedAt)}
                 </p>
+                {!w.leftJobAt && (
+                  <div className="mt-1.5 space-y-1" title={w.riskAt ? t('postArrival.risk.updated', { date: date(w.riskAt) }) : undefined}>
+                    <RiskBadge level={w.riskLevel} score={w.riskScore} />
+                    <RiskReasons reasons={w.riskReasons} />
+                  </div>
+                )}
               </div>
               <ul className="flex min-w-0 flex-1 flex-wrap gap-1.5">
                 {w.checkIns.map((c) => (
@@ -306,8 +355,8 @@ const LeftDialog = ({ worker, onClose, onDone }: { worker: Worker; onClose: () =
 const SettingsDialog = ({ onClose }: { onClose: () => void }) => {
   const { t } = useTranslation();
   const q = useQuery({ queryKey: ['check-ins', 'settings'], queryFn: async () => (await api.get<{ settings: Settings }>('/admin/check-ins/settings')).data.settings });
-  const [draft, setDraft] = useState<(Settings & { offsetsText: string }) | null>(null);
-  const s = draft ?? (q.data ? { ...q.data, offsetsText: q.data.workerOffsets.join(', ') } : null);
+  const [draft, setDraft] = useState<(Settings & { offsetsText: string; employerText: string }) | null>(null);
+  const s = draft ?? (q.data ? { ...q.data, offsetsText: q.data.workerOffsets.join(', '), employerText: q.data.employerOffsets.join(', ') } : null);
   const save = useMutation({
     mutationFn: async (v: Settings) => api.put('/admin/check-ins/settings', v),
     onSuccess: () => (toast.success(t('checkInAdmin.settings.saved')), onClose()),
@@ -317,11 +366,13 @@ const SettingsDialog = ({ onClose }: { onClose: () => void }) => {
   const set = (patch: Partial<typeof s>) => setDraft({ ...s, ...patch });
   const submit = (e: FormEvent) => {
     e.preventDefault();
-    const workerOffsets = s.offsetsText
-      .split(/[,\s]+/)
-      .map(Number)
-      .filter((n) => Number.isInteger(n) && n > 0);
-    save.mutate({ enabled: s.enabled, workerOffsets, employerEnabled: s.employerEnabled, employerOffset: Number(s.employerOffset) || 30 });
+    const days = (text: string) =>
+      text
+        .split(/[,\s]+/)
+        .map(Number)
+        .filter((n) => Number.isInteger(n) && n > 0);
+    const employerOffsets = days(s.employerText);
+    save.mutate({ enabled: s.enabled, workerOffsets: days(s.offsetsText), employerEnabled: s.employerEnabled, employerOffsets: employerOffsets.length ? employerOffsets : [30, 90, 180] });
   };
   return (
     <Modal title={t('checkInAdmin.settings.title')} onClose={onClose}>
@@ -333,15 +384,16 @@ const SettingsDialog = ({ onClose }: { onClose: () => void }) => {
         <label className="block">
           <span className="label">{t('checkInAdmin.settings.offsets')}</span>
           <input className="input" value={s.offsetsText} onChange={(e) => set({ offsetsText: e.target.value })} />
-          <span className="mt-1 block text-[11px] text-muted">{t('checkInAdmin.settings.offsetsHint')}</span>
+          <span className="mt-1 block text-[11px] text-muted">{t('postArrival.settings.offsetsHint')}</span>
         </label>
         <div className="flex items-center justify-between gap-3">
           <span className="text-sm">{t('checkInAdmin.settings.employerEnabled')}</span>
           <Switch checked={s.employerEnabled} onChange={(v: boolean) => set({ employerEnabled: v })} label={t('checkInAdmin.settings.employerEnabled')} />
         </div>
         <label className="block">
-          <span className="label">{t('checkInAdmin.settings.employerOffset')}</span>
-          <input type="number" min={1} max={730} className="input w-32" value={s.employerOffset} onChange={(e) => set({ employerOffset: Number(e.target.value) })} />
+          <span className="label">{t('postArrival.settings.employerOffsets')}</span>
+          <input className="input" value={s.employerText} disabled={!s.employerEnabled} onChange={(e) => set({ employerText: e.target.value })} />
+          <span className="mt-1 block text-[11px] text-muted">{t('postArrival.settings.employerOffsetsHint')}</span>
         </label>
         <div className="flex justify-end">
           <button type="submit" className="btn-primary btn-sm" disabled={save.isPending}>

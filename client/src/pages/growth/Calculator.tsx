@@ -9,6 +9,7 @@ import { Spinner } from '@/components/ui/Spinner';
 import { registerCopy } from '@/i18n';
 import { pagesGrowthPlus } from '@/i18n/pagesGrowthPlus';
 import { api } from '@/lib/api';
+import { trackLead } from '@/lib/leadVisitor';
 import { useL10n } from '@/lib/l10n';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { monthRange, useCalcConfig, type DocState, type Estimate, type InputLevel, type Stage } from '@/components/growth/api';
@@ -133,6 +134,11 @@ export default function Calculator() {
     placeholderData: (prev) => prev,
     staleTime: 5 * 60 * 1000,
   });
+
+  // lead scoring (analytics consent only): one event per visa the visitor calculates
+  useEffect(() => {
+    if (category) trackLead('start_calc');
+  }, [category]);
 
   const yesNo = [
     { value: 'yes' as const, label: t('gp.common.yes') },

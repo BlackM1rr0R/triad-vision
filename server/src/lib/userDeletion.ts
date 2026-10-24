@@ -135,6 +135,7 @@ export const deleteUserAccount = async (actorId: string, userId: string, ip?: st
     : [];
   // Vault documents and translation-order files are stored outside the case folder.
   const vaultFiles = await prisma.vaultDocument.findMany({ where: { userId }, select: { storageKey: true } });
+  const introVideo = (await prisma.user.findUnique({ where: { id: userId }, select: { introVideoKey: true } }))?.introVideoKey ?? null;
   const translationFiles = await prisma.translationOrderFile.findMany({ where: { storageKey: { not: null }, order: { clientId: userId } }, select: { storageKey: true } });
   const mailFiles = await prisma.mailAttachment.findMany({
     where: { storageKey: { not: null }, message: { account: { userId } } },
@@ -274,6 +275,7 @@ export const deleteUserAccount = async (actorId: string, userId: string, ip?: st
   }
   for (const [dir, keys] of [
     ['vault', vaultFiles.map((v) => v.storageKey)],
+    ['intro-video', introVideo ? [introVideo] : []],
     ['translations', translationFiles.map((t) => t.storageKey)],
   ] as const) {
     for (const key of keys) {
@@ -286,6 +288,10 @@ export const deleteUserAccount = async (actorId: string, userId: string, ip?: st
       }
     }
   }
+  // Placement rows keep plain ids (no foreign key): employer share links and interview evaluations of the candidate.
+  await prisma.candidateShareLink.deleteMany({ where: { candidateId: userId } });
+  await prisma.interviewEvaluation.deleteMany({ where: { candidateId: userId } });
+  await prisma.waitingRoomProgress.deleteMany({ where: { userId } }); // waiting room progress (plain id, no foreign key)
 
   return { user: target, counts: { ...counts, files, bytes, mailAttachmentsRemoved: mailFiles.length } satisfies UserDeletionCounts };
 };

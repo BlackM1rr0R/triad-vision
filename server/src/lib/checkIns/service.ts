@@ -9,15 +9,18 @@ import { invalidateMyWork } from '../myWork.js';
 import { notifyUser } from '../notifications.js';
 import { createNumbered } from '../tasks/core.js';
 import { checkInTexts, LEFT_REASONS, TOPICS, topicLabels } from './texts.js';
+import { RISK_LEVELS, recomputeRisk, type RiskReason } from './risk.js';
 
 /**
  * Post-arrival check-ins (Gəlişdən sonra yoxlama).
  *
  * When an arrival plan is COMPLETED (the worker arrived), the job creates one ArrivalFollowUp per main case
  * (family member cases are not asked) with arrivedAt = the planned arrival time (else the flight date, else
- * the moment it was marked completed). Check-ins go out at +7 / +30 / +90 days (Setting `checkIns`), in the
- * worker's language: in-app + push (notifyUser) and an e-mail with a tokenised one-tap link. An optional
- * short employer check-in goes to the company's portal users (+ the company e-mail) at +30 days.
+ * the moment it was marked completed). Check-ins go out after 1 / 3 / 6 months (+30 / +90 / +180 days, Setting
+ * `checkIns`), in the worker's language: in-app + push (notifyUser) and an e-mail with a tokenised one-tap link.
+ * An optional short employer check-in goes to the company's portal users (+ the company e-mail) at its own
+ * offsets (default also +30 / +90 / +180; settings saved with the older single `employerOffset` keep working).
+ * Every answer recomputes the churn risk of the follow-up (lib/checkIns/risk.ts).
  *
  * Idempotency: one row per (follow-up, audience, offset) — unique in the database — so a re-run never sends
  * twice; a check-in that is more than 14 days overdue (e.g. old arrivals when the feature starts) is skipped.
@@ -33,23 +36,34 @@ export const GRACE_DAYS = 14;
 export const ANSWER_TTL_DAYS = 60;
 export const CHECKIN_SETTING_KEY = 'checkIns';
 
+const offsetList = z.array(z.number().int().min(1).max(730)).min(1).max(6);
 export const settingsSchema = z.object({
   enabled: z.boolean(),
-  workerOffsets: z.array(z.number().int().min(1).max(730)).min(1).max(6),
+  workerOffsets: offsetList,
   employerEnabled: z.boolean(),
-  employerOffset: z.number().int().min(1).max(730),
+  employerOffsets: offsetList,
 });
 export type CheckInSettings = z.infer<typeof settingsSchema>;
-export const DEFAULT_SETTINGS: CheckInSettings = { enabled: true, workerOffsets: [7, 30, 90], employerEnabled: true, employerOffset: 30 };
+/** PUT body: also accepts the older single `employerOffset` (number) instead of the list. */
+export const settingsInputSchema = settingsSchema
+  .extend({ employerOffsets: offsetList.optional(), employerOffset: z.number().int().min(1).max(730).optional() })
+  .transform(({ employerOffset, employerOffsets, ...rest }) => ({ ...rest, employerOffsets: employerOffsets ?? (employerOffset ? [employerOffset] : DEFAULT_SETTINGS.employerOffsets) }));
+export const DEFAULT_SETTINGS: CheckInSettings = { enabled: true, workerOffsets: [30, 90, 180], employerEnabled: true, employerOffsets: [30, 90, 180] };
 
+const sortedOffsets = (list: number[]) => [...new Set(list)].sort((a, b) => a - b);
+
+/** Stored value → settings; the older shape `{ employerOffset: 30 }` becomes `employerOffsets: [30]`. */
 export const getCheckInSettings = async (): Promise<CheckInSettings> => {
   const row = await prisma.setting.findUnique({ where: { key: CHECKIN_SETTING_KEY } });
-  const parsed = settingsSchema.safeParse({ ...DEFAULT_SETTINGS, ...((row?.value ?? {}) as object) });
-  return parsed.success ? parsed.data : DEFAULT_SETTINGS;
+  const stored = { ...((row?.value ?? {}) as Record<string, unknown>) };
+  if (!Array.isArray(stored.employerOffsets) && typeof stored.employerOffset === 'number') stored.employerOffsets = [stored.employerOffset];
+  delete stored.employerOffset;
+  const parsed = settingsSchema.safeParse({ ...DEFAULT_SETTINGS, ...stored });
+  return parsed.success ? { ...parsed.data, workerOffsets: sortedOffsets(parsed.data.workerOffsets), employerOffsets: sortedOffsets(parsed.data.employerOffsets) } : DEFAULT_SETTINGS;
 };
 
 export const saveCheckInSettings = async (s: CheckInSettings) => {
-  const value = { ...s, workerOffsets: [...new Set(s.workerOffsets)].sort((a, b) => a - b) };
+  const value = { enabled: s.enabled, workerOffsets: sortedOffsets(s.workerOffsets), employerEnabled: s.employerEnabled, employerOffsets: sortedOffsets(s.employerOffsets) };
   await prisma.setting.upsert({ where: { key: CHECKIN_SETTING_KEY }, create: { key: CHECKIN_SETTING_KEY, value }, update: { value } });
   return value;
 };
@@ -113,7 +127,7 @@ const deliverEmployer = async (c: ArrivalCheckIn, token: string, companyId: stri
   const sent = new Set<string>();
   for (const u of users) {
     const tx = checkInTexts(u.locale);
-    const body = tx.employerBody({ company: company.name, worker });
+    const body = tx.employerBody({ company: company.name, worker, days: c.offsetDays });
     await notifyUser(u.id, { type: 'CHECKIN_EMPLOYER', title: tx.employerTitle, body, link: `/check-in/${c.id}`, caseId: c.caseId, email: false });
     if (u.emailNotifications !== false) {
       void sendMail(u.email, `Triad Vision · ${tx.employerTitle}`, renderEmail(tx.employerTitle, body, { label: tx.employerCta, url: checkInUrl(token) }));
@@ -122,7 +136,7 @@ const deliverEmployer = async (c: ArrivalCheckIn, token: string, companyId: stri
   }
   if (company.email && !sent.has(company.email.toLowerCase())) {
     const tx = checkInTexts('de');
-    void sendMail(company.email, `Triad Vision · ${tx.employerTitle}`, renderEmail(tx.employerTitle, tx.employerBody({ company: company.name, worker }), { label: tx.employerCta, url: checkInUrl(token) }));
+    void sendMail(company.email, `Triad Vision · ${tx.employerTitle}`, renderEmail(tx.employerTitle, tx.employerBody({ company: company.name, worker, days: c.offsetDays }), { label: tx.employerCta, url: checkInUrl(token) }));
     sent.add(company.email.toLowerCase());
   }
   return users.length > 0 || sent.size > 0;
@@ -133,7 +147,7 @@ export const runCheckIns = async (now = new Date()) => {
   const s = await getCheckInSettings();
   if (!s.enabled) return { followUps: 0, worker: 0, employer: 0 };
   const followUps = await syncFollowUps(now);
-  const offsets = [...s.workerOffsets, ...(s.employerEnabled ? [s.employerOffset] : [])];
+  const offsets = [...s.workerOffsets, ...(s.employerEnabled ? s.employerOffsets : [])];
   const maxOffset = Math.max(...offsets);
   const minOffset = Math.min(...offsets);
   const rows = await prisma.arrivalFollowUp.findMany({
@@ -156,13 +170,29 @@ export const runCheckIns = async (now = new Date()) => {
     }
     const companyId = f.case.companyId ?? f.companyId;
     if (s.employerEnabled && companyId) {
-      const at = due(f.arrivedAt, s.employerOffset);
-      if (!at) continue;
-      const claimed = await claimCheckIn(f.id, f.caseId, 'EMPLOYER', s.employerOffset, at, now);
-      if (claimed && (await deliverEmployer(claimed.row, claimed.token, companyId).catch((e) => (console.error('[checkins] employer delivery failed', e), false)))) employer++;
+      for (const offset of s.employerOffsets) {
+        const at = due(f.arrivedAt, offset);
+        if (!at) continue;
+        const claimed = await claimCheckIn(f.id, f.caseId, 'EMPLOYER', offset, at, now);
+        if (claimed && (await deliverEmployer(claimed.row, claimed.token, companyId).catch((e) => (console.error('[checkins] employer delivery failed', e), false)))) employer++;
+      }
     }
   }
   return { followUps, worker, employer };
+};
+
+/**
+ * An extra employer check-in outside the regular offsets (e.g. 14 days before the probation ends,
+ * lib/renewals). Returns false when there is no follow-up / employer or a check-in for today's offset exists.
+ */
+export const promptEmployerCheckIn = async (caseId: string, now = new Date()) => {
+  const f = await prisma.arrivalFollowUp.findUnique({ where: { caseId }, select: { id: true, caseId: true, companyId: true, arrivedAt: true, leftJobAt: true, case: { select: { companyId: true, status: true } } } });
+  const companyId = f?.case.companyId ?? f?.companyId;
+  if (!f || !companyId || f.leftJobAt || f.case.status === 'CANCELLED') return false;
+  const offset = Math.max(1, Math.round((now.getTime() - f.arrivedAt.getTime()) / DAY));
+  const claimed = await claimCheckIn(f.id, f.caseId, 'EMPLOYER', offset, now, now);
+  if (!claimed) return false;
+  return deliverEmployer(claimed.row, claimed.token, companyId).catch((e) => (console.error('[checkins] employer delivery failed', e), false));
 };
 
 // ─── Answering ────────────────────────────────────────────────────────
@@ -206,6 +236,7 @@ export const answerCheckIn = async (c: ArrivalCheckIn, input: z.infer<typeof ans
   if (!res.count) throw conflict('ALREADY_ANSWERED');
   const saved = await prisma.arrivalCheckIn.findUniqueOrThrow({ where: { id: c.id } });
   if (input.answer === 'ISSUE') await raiseIssue(saved).catch((e) => console.error('[checkins] issue alert failed', e));
+  await recomputeRisk(saved.followUpId, now).catch((e) => console.error('[checkins] churn risk failed', e));
   return saved;
 };
 
@@ -269,6 +300,8 @@ export const overviewQuery = z.object({
   to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   companyId: z.string().max(40).optional(),
   status: z.enum(['all', 'issue', 'left', 'employed', 'noAnswer']).default('all'),
+  risk: z.enum(['all', ...RISK_LEVELS]).default('all'),
+  sort: z.enum(['arrived', 'risk']).default('arrived'),
 });
 
 /** Retention dashboard: answers, issues by topic, still employed after 3 / 6 / 12 months, worker list. */
@@ -323,12 +356,19 @@ export const overview = async (q: z.infer<typeof overviewQuery>, now = new Date(
         leftReason: r.leftReason,
         leftNote: r.leftNote,
         openIssue,
+        riskScore: r.riskScore,
+        riskLevel: r.riskLevel,
+        riskReasons: (r.riskReasons as RiskReason[] | null) ?? [],
+        riskAt: r.riskAt,
         checkIns: r.checkIns.map((c) => ({ id: c.id, audience: c.audience, offsetDays: c.offsetDays, sentAt: c.sentAt, answer: c.answer, topics: (c.topics as string[] | null) ?? [], comment: c.comment, answeredAt: c.answeredAt, resolvedAt: c.resolvedAt, taskId: c.taskId })),
       };
     })
     .filter((w) =>
       q.status === 'issue' ? w.openIssue : q.status === 'left' ? !!w.leftJobAt : q.status === 'employed' ? !w.leftJobAt : q.status === 'noAnswer' ? w.checkIns.some((c) => c.sentAt && !c.answeredAt) : true,
-    );
+    )
+    .filter((w) => q.risk === 'all' || w.riskLevel === q.risk);
+  // Highest churn risk first (no score yet = last), ties by the latest arrival.
+  if (q.sort === 'risk') workers.sort((a, b) => (b.riskScore ?? -1) - (a.riskScore ?? -1) || b.arrivedAt.getTime() - a.arrivedAt.getTime());
 
   return {
     totals: {
@@ -340,6 +380,8 @@ export const overview = async (q: z.infer<typeof overviewQuery>, now = new Date(
       openIssues: all.filter((c) => c.answer === 'ISSUE' && !c.resolvedAt).length,
       responseRate: sent.length ? Math.round((answered.length / sent.length) * 1000) / 10 : null,
       left: rows.filter((r) => r.leftJobAt).length,
+      highRisk: rows.filter((r) => !r.leftJobAt && r.riskLevel === 'HIGH').length,
+      mediumRisk: rows.filter((r) => !r.leftJobAt && r.riskLevel === 'MEDIUM').length,
     },
     byOffset: [...byOffset.values()].sort((a, b) => a.audience.localeCompare(b.audience) || a.offsetDays - b.offsetDays),
     topics,

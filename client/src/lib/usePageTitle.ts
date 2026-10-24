@@ -1,5 +1,6 @@
 import { useContext, useEffect } from 'react';
-import { UNSAFE_LocationContext } from 'react-router-dom';
+import { UNSAFE_LocationContext, UNSAFE_NavigationContext } from 'react-router-dom';
+import { isPrivatePath, splitLocalePath } from './siteLocale';
 
 const DEFAULT_TITLE = 'Triad Vision';
 
@@ -12,22 +13,21 @@ const DEFAULT_TITLE = 'Triad Vision';
  * from /api/seo/head for the new URL and swaps every `data-seo` element, so a crawler that renders JavaScript
  * sees exactly what a non-JS crawler sees for that URL.
  *
- * The language follows the URL, not the UI: `?lng=xx` when present, otherwise the bare URL (x-default, described
- * in az) — the same rule the server applies, so raw and rendered tags always agree.
+ * The language follows the URL, not the UI: the path prefix (/de/…, /tr/…), otherwise the bare URL (az,
+ * x-default) — the same rule the server applies, so raw and rendered tags always agree. The full path (with
+ * the prefix) is sent; the server splits it.
  *
  * <title> stays owned by usePageTitle (pages know their localized title immediately); the fragment's title
  * only feeds og:title / twitter:title.
  */
 
-const LOCALES = ['az', 'de', 'en', 'ru'];
-/** Mirrors PRIVATE_PREFIXES in server/src/lib/seoCatalogue.ts (and robots.txt). */
-const PRIVATE = ['/admin', '/workspace', '/account', '/company', '/api', '/booking/manage', '/review', '/verify-email', '/login/2fa', '/reset-password', '/sign', '/angebot'];
-const isPrivate = (path: string) => PRIVATE.some((p) => path === p || path.startsWith(`${p}/`));
+/** Private areas (mirrors PRIVATE_PREFIXES in server/src/lib/seoCatalogue.ts and robots.txt). */
+const isPrivate = (path: string) => isPrivatePath(splitLocalePath(path).rest);
 
-const keyFor = (pathname: string, search: string) => {
-  const lng = new URLSearchParams(search).get('lng');
+// `search` is kept in the signature for callers; the language now comes from the path alone.
+const keyFor = (pathname: string, _search: string) => {
   const path = pathname.length > 1 ? pathname.replace(/\/+$/, '') : pathname;
-  return { path, lng: lng && LOCALES.includes(lng) ? lng : '' };
+  return { path, lng: '' };
 };
 
 // The URL whose tags are in the document. If the server injected them (og:url present), the first page view
@@ -98,11 +98,13 @@ export const syncSeoHead = (pathname: string, search: string) => {
  */
 export const useSeo = () => {
   const location = useContext(UNSAFE_LocationContext)?.location;
+  // The router strips the language prefix (its basename); the tags describe the full URL.
+  const basename = useContext(UNSAFE_NavigationContext)?.basename;
   const pathname = location?.pathname;
   const search = location?.search ?? '';
   useEffect(() => {
-    if (pathname !== undefined) syncSeoHead(pathname, search);
-  }, [pathname, search]);
+    if (pathname !== undefined) syncSeoHead(window.location.pathname, search);
+  }, [pathname, search, basename]);
 };
 
 /** Mount once in the site layout so pages that never call usePageTitle get their tags too. */

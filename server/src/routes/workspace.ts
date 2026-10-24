@@ -23,6 +23,7 @@ import {
 } from '../lib/workspace/team.js';
 import { closeExpiredPolls, isOpen, loadPoll, pollInclude, toPoll } from '../lib/workspace/polls.js';
 import { excerptOf, formatLeaveDay, workspaceTexts } from '../lib/workspace/texts.js';
+import { promptHandoverNotes } from '../lib/shifts/handoverNotes.js'; // "write a handover note" after approval
 
 /**
  * Team workspace (/api/workspace): presence and status, leave requests, announcements, personal
@@ -126,6 +127,7 @@ const notifyLeaveRequested = (req: Request, l: LeaveOut) =>
 
 const notifyLeaveDecided = (req: Request, l: LeaveOut) =>
   safely('leave decided', async () => {
+    if (l.status === 'APPROVED') await promptHandoverNotes(l).catch((e) => console.error('[workspace] handover prompt failed', e));
     const u = await prisma.user.findUnique({ where: { id: l.userId }, select: { id: true, locale: true } });
     if (!u || u.id === req.user!.id) return;
     const tx = workspaceTexts(u.locale);

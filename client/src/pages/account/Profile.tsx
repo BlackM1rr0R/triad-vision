@@ -55,11 +55,15 @@ import { pagesAccount } from '@/i18n/pagesAccount';
 import { pagesGrowth } from '@/i18n/pagesGrowth';
 import { pagesMessaging } from '@/i18n/pagesMessaging';
 import { usePageTitle } from '@/lib/usePageTitle';
+import { pagesPlacement } from '@/i18n/pagesPlacement';
+import { IntroVideoPanel } from '@/components/placement/IntroVideo';
+import { RECOGNITION_STATUSES } from '@/components/placement/api';
 
 registerCopy(pagesAccount);
 registerCopy(pagesGrowth);
 registerCopy(pagesMessaging);
 registerCopy(campaignConsentCopy);
+registerCopy(pagesPlacement);
 
 const TAB_ICON: Record<ProfileTab, LucideIcon> = {
   personal: UserRound,
@@ -391,6 +395,8 @@ const ProfessionalPanel = ({ user }: { user: User }) => {
     experienceYears: user.experienceYears == null ? '' : String(user.experienceYears),
     germanLevel: user.germanLevel ?? '',
     education: user.education ?? '',
+    recognitionStatus: user.recognitionStatus ?? '',
+    recognitionNote: user.recognitionNote ?? '',
     drivingLicence: user.drivingLicence ?? '',
     about: user.about ?? '',
   });
@@ -427,6 +433,8 @@ const ProfessionalPanel = ({ user }: { user: User }) => {
         experienceYears: f.experienceYears.trim() === '' ? null : Number(f.experienceYears),
         germanLevel: f.germanLevel || null,
         education: f.education || null,
+        recognitionStatus: f.recognitionStatus || null,
+        recognitionNote: f.recognitionNote.trim() || null,
         drivingLicence: f.drivingLicence.trim() || null,
         about: f.about.trim() || null,
       });
@@ -497,6 +505,30 @@ const ProfessionalPanel = ({ user }: { user: User }) => {
               ))}
             </select>
           </div>
+          <div className="min-w-0">
+            <label htmlFor={`${uid}-rec`} className="label">
+              {t('placement.recognition.label')}
+            </label>
+            <select id={`${uid}-rec`} className="input" value={f.recognitionStatus} onChange={set('recognitionStatus')} aria-describedby={`${uid}-rec-hint`}>
+              <option value="">{t('accountPage.profile.select')}</option>
+              {RECOGNITION_STATUSES.map((r) => (
+                <option key={r} value={r}>
+                  {t(`placement.recognition.status.${r}`)}
+                </option>
+              ))}
+            </select>
+          </div>
+          <Field
+            id={`${uid}-recnote`}
+            label={t('placement.recognition.note')}
+            value={f.recognitionNote}
+            onChange={set('recognitionNote')}
+            maxLength={300}
+            placeholder={t('placement.recognition.notePh')}
+          />
+          <p id={`${uid}-rec-hint`} className="-mt-2 text-xs text-muted sm:col-span-2">
+            {t('placement.recognition.hint')}
+          </p>
           <div className="min-w-0 sm:col-span-2">
             <Field
               id={`${uid}-lic`}
@@ -1077,6 +1109,7 @@ export default function Profile() {
       <div id={`${uid}-panel`} role="tabpanel" aria-labelledby={`${uid}-tab-${tab}`} className="min-w-0">
         {tab === 'personal' && <PersonalPanel key={user.id} user={user} />}
         {tab === 'professional' && <ProfessionalPanel key={user.id} user={user} />}
+        {tab === 'professional' && <IntroVideoPanel className="mt-6" />}
         {tab === 'notifications' && <NotificationsPanel user={user} />}
         {tab === 'notifications' && <CalendarSubscribe className="mt-6" />}
         {tab === 'security' && <SecurityPanel user={user} />}

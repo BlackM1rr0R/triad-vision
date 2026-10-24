@@ -32,6 +32,7 @@ import { attachClientReferral, REF_COOKIE } from '../lib/growth/referral.js';
 import { markClientsExcelDirty } from '../lib/clientsExcel.js';
 import { syncClientFolders } from '../lib/drive/caseFolders.js';
 import { scanUserDuplicates } from '../lib/duplicates/detect.js';
+import { RECOGNITION_STATUSES } from '../lib/matching.js';
 
 export const authRouter = Router();
 
@@ -63,6 +64,8 @@ export const publicUser = (u: User) => ({
   experienceYears: u.experienceYears,
   germanLevel: u.germanLevel,
   education: u.education,
+  recognitionStatus: u.recognitionStatus, // Anerkennung of the foreign qualification (matching)
+  recognitionNote: u.recognitionNote,
   drivingLicence: u.drivingLicence,
   about: u.about,
   emailNotifications: u.emailNotifications,
@@ -198,9 +201,13 @@ authRouter.post('/register', authLimiter, async (req, res) => {
       passportScanned: z.boolean().optional(),
       // Optional, unchecked by default: news and offers by e-mail (marketing consent, logged).
       marketingOptIn: z.boolean().optional(),
+      // Required checkbox on the web form: "I accept the AGB" (logged as a TERMS consent with the version).
+      // Older app builds do not send it: they accept the terms later in the re-acceptance dialog.
+      acceptTerms: z.boolean().optional(),
     }),
     req.body,
   );
+  if (body.acceptTerms === false) throw badRequest('TERMS_REQUIRED');
   const exists = await prisma.user.findUnique({ where: { email: body.email } });
   if (exists) throw conflict('EMAIL_TAKEN');
 
@@ -217,7 +224,9 @@ authRouter.post('/register', authLimiter, async (req, res) => {
     },
   });
   // The sign-up form requires accepting the privacy policy; the consent log is the proof.
+  // Both rows carry the current published version (recordConsent resolves version + legalDocumentId).
   await recordConsent({ userId: user.id, email: user.email, type: 'PRIVACY_POLICY', granted: true, source: 'REGISTER', req });
+  if (body.acceptTerms) await recordConsent({ userId: user.id, email: user.email, type: 'TERMS', granted: true, source: 'REGISTER', req });
   if (body.passportScanned) {
     await recordConsent({ userId: user.id, email: user.email, type: 'PASSPORT_OCR', granted: true, source: 'REGISTER', req });
   }
@@ -362,6 +371,8 @@ authRouter.patch('/me', requireAuth, async (req, res) => {
       experienceYears: z.number().int().min(0).max(50).nullable().optional(),
       germanLevel: z.enum(GERMAN_LEVELS).nullable().optional(),
       education: z.enum(EDUCATION_LEVELS).nullable().optional(),
+      recognitionStatus: z.enum(RECOGNITION_STATUSES).nullable().optional(),
+      recognitionNote: optText(300),
       drivingLicence: optText(60),
       about: optText(2000),
       emailNotifications: z.boolean().optional(),

@@ -5,7 +5,9 @@ export const api = axios.create({ baseURL: '/api', withCredentials: true });
 // The interface language (set on <html lang> by i18n), so texts the API builds itself (calendar items,
 // generated labels) follow the language the user is looking at, not only their profile setting.
 api.interceptors.request.use((cfg) => {
-  const lang = typeof document !== 'undefined' ? document.documentElement.lang.slice(0, 2) : '';
+  const ui = typeof document !== 'undefined' ? document.documentElement.lang.slice(0, 2) : '';
+  // Turkish / Ukrainian exist on the public site only; the API works in the four content languages (→ English).
+  const lang = ui === 'tr' || ui === 'uk' ? 'en' : ui;
   if (lang) cfg.headers.set('X-Locale', lang);
   return cfg;
 });

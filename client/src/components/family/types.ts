@@ -27,6 +27,8 @@ export interface FamilyProfile {
   germanExempt: boolean;
   germanExemptNote: string | null;
   notes: string | null;
+  /** Reusable main-case documents copied into this member's case (lib/family/reunion.ts). */
+  docsCopiedAt: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -77,6 +79,18 @@ export interface FamilyOverview {
   members: FamilyMemberSummary[];
   canAdd: boolean;
   aggregate: { total: number; approved: number; openItems: number; percent: number };
+  /** Familiennachzug start (null on a member case's own lookup). */
+  reunion: ReunionSummary | null;
+}
+
+export interface ReunionSummary {
+  /** Main case approved or the main applicant arrived. */
+  ready: boolean;
+  startedAt: string | null;
+  laterCount: number;
+  /** Member cases the start would open now. */
+  startable: string[];
+  members: { caseId: string; joinsWhen: JoinsWhen; startedAt: string | null; docsCopiedAt: string | null }[];
 }
 
 /** Form state of a member (dates as YYYY-MM-DD, empty string = not set). */

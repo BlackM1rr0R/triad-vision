@@ -12,7 +12,7 @@ import { usePageTitle } from '@/lib/usePageTitle';
 
 registerCopy(pagesTimeCare);
 
-const TOPICS = ['HOUSING', 'SALARY', 'WORKPLACE', 'HEALTH', 'DOCUMENTS', 'OTHER'] as const;
+const TOPICS = ['HOUSING', 'SALARY', 'WORKPLACE', 'TEAM', 'LANGUAGE', 'HOMESICK', 'HEALTH', 'DOCUMENTS', 'OTHER'] as const;
 type Topic = (typeof TOPICS)[number];
 
 interface CheckInInfo {

@@ -10,6 +10,7 @@ import { useL10n } from '@/lib/l10n';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { Chip, EmptyState, ErrorBlock, LoadingBlock, PageHead } from '@/components/admin/ui';
 import { TONE_CLASS, type ExpiryTone } from '@/components/expiry/Expiry';
+import { RenewalSections } from '@/components/postArrival/RenewalSections';
 
 registerCopy(pagesExpiry);
 
@@ -193,6 +194,9 @@ const Expiring = () => {
           </table>
         </div>
       )}
+
+      {/* After the visa: residence titles (renewal cases) and probation periods ending in the same period. */}
+      <RenewalSections days={days} staffId={staffId} />
     </div>
   );
 };

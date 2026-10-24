@@ -136,6 +136,8 @@ export const addFamilyMember = async (
     data: { caseId: main.id, type: 'CASE_UPDATED', note: `Family member added: ${info.firstName} ${info.lastName} (${info.relation}) → ${created.number}`, actorId, visibleToClient: false },
   });
   void syncCaseFolder(created.id); // folder named after the member, inside the main applicant's folder
+  // Reusable documents of the main case (marriage certificate, passport copy, visa …) go in right away.
+  await (await import('../family/reunion.js')).copyReusableDocs(main.id, created.id, actorId).catch((e) => console.error('[family] document copy failed', e));
   return created;
 };
 

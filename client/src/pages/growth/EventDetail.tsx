@@ -1,27 +1,93 @@
 import { useId, useState, type FormEvent } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, CheckCircle2, Info } from 'lucide-react';
+import { ArrowLeft, CalendarPlus, CheckCircle2, Info, PlayCircle } from 'lucide-react';
 import { PageHero } from '@/components/layout/PageHero';
 import { Spinner } from '@/components/ui/Spinner';
 import { EventBadge, EventMeta } from '@/components/growth/EventCard';
 import type { PublicEvent } from '@/components/growth/api';
 import { registerCopy } from '@/i18n';
 import { pagesGrowthPlus } from '@/i18n/pagesGrowthPlus';
+import { pagesMarketing } from '@/i18n/pagesMarketing';
 import { api, errorCode } from '@/lib/api';
+import { leadContext } from '@/lib/leadVisitor';
 import { useAuth } from '@/lib/auth';
 import { useL10n } from '@/lib/l10n';
 import { usePageTitle } from '@/lib/usePageTitle';
 import NotFound from '../NotFound';
 
 registerCopy(pagesGrowthPlus);
+registerCopy(pagesMarketing);
+
+/** "20261020T140000Z" for Google Calendar links. */
+const gcalTime = (iso: string) => new Date(iso).toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+
+/**
+ * "Add to calendar": the .ics file (with the registrant token from the e-mail link it also carries the join
+ * link) and a Google Calendar template link (never with the join link).
+ */
+const CalendarButtons = ({ event, token, title }: { event: PublicEvent; token: string | null; title: string }) => {
+  const { t } = useTranslation();
+  const { locale } = useL10n();
+  const ics = `/api/growth/events/${encodeURIComponent(event.slug)}/ics?lng=${locale}${token ? `&r=${encodeURIComponent(token)}` : ''}`;
+  const page = `${window.location.origin}/events/${encodeURIComponent(event.slug)}`;
+  const google = `https://calendar.google.com/calendar/render?${new URLSearchParams({
+    action: 'TEMPLATE',
+    text: `Triad Vision · ${title}`,
+    dates: `${gcalTime(event.startsAt)}/${gcalTime(event.endsAt)}`,
+    details: page,
+    ...(event.mode === 'OFFLINE' && event.address ? { location: event.address } : {}),
+  }).toString()}`;
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      <span className="flex items-center gap-1.5 text-sm font-semibold text-ink">
+        <CalendarPlus className="size-4 text-brand-600" aria-hidden /> {t('mk.events.addToCalendar')}:
+      </span>
+      <a href={ics} download className="btn-ghost btn-sm">
+        {t('mk.events.icsFile')}
+      </a>
+      <a href={google} target="_blank" rel="noreferrer" className="btn-ghost btn-sm">
+        {t('mk.events.google')}
+      </a>
+    </div>
+  );
+};
+
+/** Past event + registrant token (link from the e-mails): the recording, once the team added it. */
+const Recording = ({ slug, token }: { slug: string; token: string }) => {
+  const { t } = useTranslation();
+  const { data } = useQuery({
+    queryKey: ['growth', 'event-recording', slug, token],
+    queryFn: async () => (await api.get<{ recordingUrl: string | null; name: string }>(`/growth/events/${encodeURIComponent(slug)}/recording?r=${encodeURIComponent(token)}`)).data,
+    retry: false,
+  });
+  if (!data) return null;
+  return (
+    <div className="text-center">
+      <PlayCircle className="mx-auto size-12 text-brand-600" aria-hidden />
+      <h2 className="mt-3 font-display text-xl font-bold text-ink">{t('mk.events.recordingTitle')}</h2>
+      {data.recordingUrl ? (
+        <>
+          <p className="mt-2 text-sm text-muted">{t('mk.events.recordingText', { name: data.name })}</p>
+          <a href={data.recordingUrl} target="_blank" rel="noopener noreferrer" className="btn-primary mt-5 px-5 py-3">
+            {t('mk.events.watch')}
+          </a>
+        </>
+      ) : (
+        <p className="mt-2 text-sm text-muted">{t('mk.events.recordingSoon')}</p>
+      )}
+    </div>
+  );
+};
 
 const HERO = 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=2000&q=70';
 const KNOWN_ERRORS = ['ALREADY_REGISTERED', 'EVENT_FULL', 'REGISTRATION_CLOSED', 'TOO_MANY_REQUESTS', 'VALIDATION'];
 
 export default function EventDetail() {
   const { slug = '' } = useParams();
+  const [params] = useSearchParams();
+  const token = params.get('r');
   const { t } = useTranslation();
   const { tr, locale } = useL10n();
   const { user } = useAuth();
@@ -47,6 +113,8 @@ export default function EventDetail() {
 
   if (isLoading) return <Spinner />;
   if (isError || !event) return <NotFound />;
+  const started = new Date(event.startsAt).getTime() <= Date.now();
+  const upcoming = !started && event.status === 'PUBLISHED';
 
   const ready = form.name.trim().length >= 2 && /\S+@\S+\.\S+/.test(form.email) && form.consent;
   const submit = async (e: FormEvent) => {
@@ -55,7 +123,7 @@ export default function EventDetail() {
     setBusy(true);
     setError(null);
     try {
-      await api.post(`/growth/events/${encodeURIComponent(event.slug)}/register`, form);
+      await api.post(`/growth/events/${encodeURIComponent(event.slug)}/register`, { ...form, ...leadContext() });
       setDone(true);
       void qc.invalidateQueries({ queryKey: ['growth'] });
     } catch (err) {
@@ -81,6 +149,11 @@ export default function EventDetail() {
                 <EventMeta e={event} />
               </div>
               <p className="mt-5 text-sm leading-relaxed whitespace-pre-line text-ink">{tr(event.description)}</p>
+              {upcoming && (
+                <div className="mt-5 border-t border-line pt-4">
+                  <CalendarButtons event={event} token={token} title={tr(event.title)} />
+                </div>
+              )}
             </div>
           </div>
 
@@ -90,10 +163,17 @@ export default function EventDetail() {
                 <CheckCircle2 className="mx-auto size-12 text-success" aria-hidden />
                 <h2 className="mt-3 font-display text-xl font-bold text-ink">{t('gp.events.form.successTitle')}</h2>
                 <p className="mt-2 text-sm text-muted">{t('gp.events.form.successText')}</p>
+                <div className="mt-5 flex justify-center">
+                  <CalendarButtons event={event} token={null} title={tr(event.title)} />
+                </div>
                 <Link to="/booking" className="btn-primary mt-5 px-5 py-3">
                   {t('gp.calc.ctaBooking')}
                 </Link>
               </div>
+            ) : started && token ? (
+              <Recording slug={event.slug} token={token} />
+            ) : started ? (
+              <p className="text-center text-muted">{t('mk.events.ended')}</p>
             ) : !event.registrationOpen ? (
               <p className="text-center text-muted">{event.status === 'CANCELLED' ? t('gp.events.cancelled') : event.seatsLeft === 0 ? t('gp.events.full') : t('gp.events.closed')}</p>
             ) : (

@@ -104,6 +104,7 @@ export const serializeProfile = (p: FamilyMember) => ({
   germanExempt: p.germanExempt,
   germanExemptNote: p.germanExemptNote,
   notes: p.notes,
+  docsCopiedAt: p.docsCopiedAt?.toISOString() ?? null,
   createdAt: p.createdAt.toISOString(),
   updatedAt: p.updatedAt.toISOString(),
 });
@@ -237,6 +238,8 @@ export const familyOverview = async (caseId: string) => {
       openItems: members.reduce((a, m) => a + m.counts.missing + m.counts.rejected, 0),
       percent: members.length ? Math.round(members.reduce((a, m) => a + m.percent, 0) / members.length) : 0,
     },
+    // Familiennachzug start + document copies (lazy import: reunion.ts imports this module).
+    reunion: await (await import('./reunion.js')).reunionSummary(mainId),
   };
 };
 

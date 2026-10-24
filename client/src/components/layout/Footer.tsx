@@ -7,6 +7,11 @@ import { Logo } from '../ui/Logo';
 import { useSiteContent } from '@/lib/content';
 import { useL10n } from '@/lib/l10n';
 import { whenIdle } from '@/lib/idle';
+import { openConsentSettings } from '@/lib/consent';
+import { registerCopy } from '@/i18n';
+import { cookieConsentCopy } from '@/i18n/cookieConsent';
+
+registerCopy(cookieConsentCopy); // "AGB" + "Cookie settings" links
 
 // "Mənə zəng edin": the form, its copy and the dialog are their own chunk, loaded when the browser is idle.
 const CallbackButton = lazy(() => import('@/components/calls/CallbackForm'));
@@ -49,6 +54,7 @@ export const Footer = () => {
     { to: '/partners', label: t('nav.partners') },
     { to: '/stories', label: t('nav.stories') },
     { to: '/news', label: t('nav.news') },
+    { to: '/guides', label: t('nav.guides') },
     { to: '/cooperation', label: t('nav.cooperation') },
   ];
   const candidates = [
@@ -56,7 +62,10 @@ export const Footer = () => {
     { to: '/visas', label: t('nav.visas') },
     { to: '/ausbildung', label: t('nav.ausbildung') },
     { to: '/eligibility', label: t('nav.eligibility') },
+    { to: '/chancenkarte-calculator', label: t('nav.chancenkarte') },
+    { to: '/blue-card-check', label: t('nav.blueCard') },
     { to: '/calculator', label: t('nav.calculator') },
+    { to: '/cost-calculator', label: t('nav.costCalculator') },
     { to: '/events', label: t('nav.events') },
     { to: '/faq', label: t('nav.faq') },
     { to: '/register', label: t('nav.apply') },
@@ -169,6 +178,13 @@ export const Footer = () => {
             <Link to="/impressum" className="hover:text-white">
               {t('footer.imprint')}
             </Link>
+            <Link to="/agb" className="hover:text-white">
+              {t('legalDocs.footer.terms')}
+            </Link>
+            {/* Re-opens the cookie consent banner (components/legal/CookieConsent). */}
+            <button type="button" onClick={openConsentSettings} className="hover:text-white">
+              {t('legalDocs.footer.cookies')}
+            </button>
             <Link to="/accessibility" className="hover:text-white">
               {t('a11y.statementLink')}
             </Link>

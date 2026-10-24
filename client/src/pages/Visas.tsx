@@ -11,6 +11,7 @@ import { PageLoader } from '@/components/ui/Spinner';
 import { ComparisonTable } from '@/components/visa/ComparisonTable';
 import { RangeBars } from '@/components/visa/Charts';
 import { PageCta } from '@/components/visa/PageCta';
+import { CostCalculatorTeaser } from '@/components/marketing/CostCalculatorTeaser';
 import { MIN_WAGE_MONTHLY, hasProcessing, hasSalary, isSeasonal, isTrainee, levelRank, useEuro } from '@/components/visa/utils';
 import { useSiteContent } from '@/lib/content';
 import { useL10n } from '@/lib/l10n';
@@ -289,6 +290,7 @@ export default function Visas() {
         </div>
       </section>
 
+      <CostCalculatorTeaser />
       <PageCta
         icon={<FileStack className="size-7" />}
         title={t('visasPage.cta.title')}

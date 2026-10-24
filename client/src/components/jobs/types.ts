@@ -46,15 +46,18 @@ export interface VacancyList {
   facets: { sectors: { value: Sector; count: number }[]; cities: { value: string; count: number }[] };
 }
 
-export type GapCode = 'PROFESSION' | 'GERMAN' | 'EXPERIENCE' | 'LICENCE' | 'VISA_GERMAN' | 'VISA_EDUCATION';
+export type GapCode = 'PROFESSION' | 'GERMAN' | 'EXPERIENCE' | 'LICENCE' | 'VISA_GERMAN' | 'VISA_EDUCATION' | 'RECOGNITION';
 export interface MatchGap {
   code: GapCode;
   required: string | number;
   actual: string | number | null;
 }
+export type MatchCriterion = 'profession' | 'german' | 'experience' | 'licence' | 'visa' | 'recognition';
 export interface Match {
   score: number;
   gaps: MatchGap[];
+  /** Points per criterion (score breakdown); weights in components/placement/MatchBreakdown. */
+  parts?: Record<MatchCriterion, number>;
 }
 
 /** Full vacancy row (company portal / admin). */

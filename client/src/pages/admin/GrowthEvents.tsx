@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import clsx from 'clsx';
-import { CalendarPlus, ExternalLink, Mail, Pencil, Trash2, Users } from 'lucide-react';
+import { CalendarPlus, ExternalLink, Mail, Pencil, Trash2, TrendingUp, Users, Video } from 'lucide-react';
 import { Chip, EmptyState, LoadingBlock, PageHead, Panel } from '@/components/admin/ui';
 import { Modal } from '@/components/admin/Modal';
 import { ConfirmDialog } from '@/components/admin/ConfirmDialog';
@@ -12,6 +12,7 @@ import { L10nInput, emptyL10n, fillFromAz } from '@/components/admin/L10nInput';
 import { bakuTime } from '@/components/growth/api';
 import { registerCopy } from '@/i18n';
 import { pagesGrowthPlus } from '@/i18n/pagesGrowthPlus';
+import { pagesMarketing } from '@/i18n/pagesMarketing';
 import { api, errorCode } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { useL10n } from '@/lib/l10n';
@@ -19,6 +20,7 @@ import { hasMinRole, type L10n } from '@/lib/types';
 import { usePageTitle } from '@/lib/usePageTitle';
 
 registerCopy(pagesGrowthPlus);
+registerCopy(pagesMarketing);
 
 type Status = 'DRAFT' | 'PUBLISHED' | 'CANCELLED';
 type Attendance = 'REGISTERED' | 'CHECKED_IN' | 'NO_SHOW';
@@ -37,7 +39,18 @@ interface AdminEvent {
   status: Status;
   followUpNote: L10n | null;
   followUpSentAt: string | null;
+  recordingUrl: string | null;
   counts?: { total: number; CHECKED_IN: number; NO_SHOW: number; REGISTERED: number };
+  conversion?: Conversion;
+}
+/** Registered → checked in / no-show → lead → client → case (server lib/growth/eventStats.ts). */
+interface Conversion {
+  registered: number;
+  checkedIn: number;
+  noShow: number;
+  inquiries: number;
+  clients: number;
+  cases: number;
 }
 interface Registration {
   id: string;
@@ -71,12 +84,13 @@ type Form = {
   language: AdminEvent['language'];
   status: Status;
   followUpNote: L10n;
+  recordingUrl: string;
 };
 
 const formOf = (e: AdminEvent | null, defaultAddress: string): Form => {
   if (!e) {
     const tomorrow = toBaku(new Date(Date.now() + 7 * 24 * HOUR).toISOString());
-    return { title: emptyL10n(), description: emptyL10n(), mode: 'ONLINE', meetingUrl: '', address: defaultAddress, date: tomorrow.date, time: '18:00', durationMin: 60, capacity: '', language: 'az', status: 'DRAFT', followUpNote: emptyL10n() };
+    return { title: emptyL10n(), description: emptyL10n(), mode: 'ONLINE', meetingUrl: '', address: defaultAddress, date: tomorrow.date, time: '18:00', durationMin: 60, capacity: '', language: 'az', status: 'DRAFT', followUpNote: emptyL10n(), recordingUrl: '' };
   }
   const b = toBaku(e.startsAt);
   return {
@@ -92,6 +106,7 @@ const formOf = (e: AdminEvent | null, defaultAddress: string): Form => {
     language: e.language,
     status: e.status,
     followUpNote: e.followUpNote ?? emptyL10n(),
+    recordingUrl: e.recordingUrl ?? '',
   };
 };
 
@@ -118,6 +133,7 @@ const EventForm = ({ event, onClose }: { event: AdminEvent | null; onClose: () =
         language: f.language,
         status: f.status,
         followUpNote: note.az ? note : null,
+        recordingUrl: f.recordingUrl.trim() || null,
       };
       return event ? api.patch(`/admin/growth/events/${event.id}`, body) : api.post('/admin/growth/events', body);
     },
@@ -211,8 +227,45 @@ const EventForm = ({ event, onClose }: { event: AdminEvent | null; onClose: () =
         </div>
         {event && f.status === 'CANCELLED' && event.status !== 'CANCELLED' && <p className="text-xs text-warning">{t('gp.admin.cancelHint')}</p>}
         <L10nInput label={t('gp.admin.form.followUpNote')} value={f.followUpNote} onChange={(v) => set('followUpNote', v)} multiline rows={2} />
+        <label className="block">
+          <span className="label">{t('mk.events.admin.recordingUrl')}</span>
+          <input className="input" type="url" placeholder="https://youtu.be/…" maxLength={1000} value={f.recordingUrl} onChange={(e) => set('recordingUrl', e.target.value)} />
+          <span className="mt-1 block text-xs text-muted">{t('mk.events.admin.recordingHint')}</span>
+        </label>
       </div>
     </Modal>
+  );
+};
+
+/** Registered → attended → lead → client → case, as bars relative to the registrations. */
+const ConversionFunnel = ({ c }: { c: Conversion }) => {
+  const { t } = useTranslation();
+  const steps = [
+    { key: 'registered', n: c.registered },
+    { key: 'checkedIn', n: c.checkedIn },
+    { key: 'noShow', n: c.noShow },
+    { key: 'inquiries', n: c.inquiries },
+    { key: 'clients', n: c.clients },
+    { key: 'cases', n: c.cases },
+  ] as const;
+  const base = Math.max(1, c.registered);
+  return (
+    <Panel title={t('mk.events.admin.conversion')} icon={TrendingUp}>
+      <ul className="space-y-2">
+        {steps.map((s) => (
+          <li key={s.key} className="grid grid-cols-[8rem_minmax(0,1fr)_3.5rem] items-center gap-3 text-sm">
+            <span className="text-muted">{t(`mk.events.admin.${s.key}`)}</span>
+            <span className="h-2.5 overflow-hidden rounded-full bg-surface" aria-hidden>
+              <span className={clsx('block h-full rounded-full', s.key === 'noShow' ? 'bg-danger/60' : 'bg-brand-500')} style={{ width: `${(s.n / base) * 100}%` }} />
+            </span>
+            <span className="text-right font-semibold text-ink tabular-nums">
+              {s.n}
+              {s.key !== 'registered' && c.registered > 0 && <span className="block text-[10px] font-normal text-muted">{Math.round((s.n / c.registered) * 100)}%</span>}
+            </span>
+          </li>
+        ))}
+      </ul>
+    </Panel>
   );
 };
 
@@ -223,7 +276,10 @@ const EventDetail = ({ id, onEdit }: { id: string; onEdit: (e: AdminEvent) => vo
   const [audience, setAudience] = useState<'attended' | 'noShow' | 'all'>('attended');
   const { data, isLoading } = useQuery({
     queryKey: ['admin', 'growth', 'events', id],
-    queryFn: async () => (await api.get<{ event: AdminEvent & { registrations: Registration[] } }>(`/admin/growth/events/${id}`)).data.event,
+    queryFn: async () => {
+      const r = (await api.get<{ event: AdminEvent & { registrations: Registration[] }; conversion: Conversion }>(`/admin/growth/events/${id}`)).data;
+      return { ...r.event, conversion: r.conversion };
+    },
   });
   const { data: preview } = useQuery({
     queryKey: ['admin', 'growth', 'events', id, 'preview', locale],
@@ -270,7 +326,14 @@ const EventDetail = ({ id, onEdit }: { id: string; onEdit: (e: AdminEvent) => vo
         <p className="text-sm text-muted">
           {bakuTime(data.startsAt, locale)} (Baku) · {data.mode === 'ONLINE' ? (data.meetingUrl ?? '') : (data.address ?? '')}
         </p>
+        {data.recordingUrl && (
+          <a href={data.recordingUrl} target="_blank" rel="noopener noreferrer" className="mt-2 inline-flex items-center gap-1.5 text-sm font-semibold text-brand-600 hover:underline">
+            <Video className="size-4" aria-hidden /> {t('mk.events.recordingTitle')}
+          </a>
+        )}
       </Panel>
+
+      {data.conversion && <ConversionFunnel c={data.conversion} />}
 
       <Panel title={`${t('gp.admin.registrations')} (${data.registrations.length}${data.capacity ? ` / ${data.capacity}` : ''})`} icon={Users} bodyClassName="p-0 sm:p-0">
         {data.registrations.length === 0 ? (
@@ -395,6 +458,11 @@ export default function AdminGrowthEvents() {
                         <p className="mt-1 text-xs text-muted">
                           {t('gp.admin.registered')}: {e.counts.total}
                           {e.capacity ? ` / ${e.capacity}` : ''} · {t('gp.admin.attended')}: {e.counts.CHECKED_IN} · {t('gp.admin.noShow')}: {e.counts.NO_SHOW}
+                        </p>
+                      )}
+                      {e.conversion && e.conversion.registered > 0 && (
+                        <p className="text-xs text-muted">
+                          {t('mk.events.admin.inquiries')}: {e.conversion.inquiries} · {t('mk.events.admin.clients')}: {e.conversion.clients} · {t('mk.events.admin.cases')}: {e.conversion.cases}
                         </p>
                       )}
                     </button>

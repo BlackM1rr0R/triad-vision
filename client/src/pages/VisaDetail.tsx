@@ -23,6 +23,7 @@ import { registerCopy } from '@/i18n';
 import { pagesVisa } from '@/i18n/pagesVisa';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { CalculatorTeaser } from '@/components/growth/CalculatorTeaser';
+import { CostCalculatorTeaser } from '@/components/marketing/CostCalculatorTeaser';
 
 registerCopy(pagesVisa);
 
@@ -305,6 +306,7 @@ export default function VisaDetail() {
       </section>
 
       <CalculatorTeaser visa={data.slug} />
+      <CostCalculatorTeaser visa={data.slug} />
 
       {services.length > 0 && (
         <section className="section bg-surface">

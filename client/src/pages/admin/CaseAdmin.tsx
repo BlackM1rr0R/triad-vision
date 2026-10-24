@@ -41,6 +41,7 @@ const TAB_ICON = { overview: LayoutDashboard, documents: FileText, communication
 const BallStrip = lazy(() => import('@/components/admin/case/BallStrip'));
 const NextStepCard = lazy(() => import('@/components/caseNext/NextStepCard').then((m) => ({ default: m.NextStepCard })));
 const PackageWatcher = lazy(() => import('@/components/admin/case/PackageWatcher'));
+const CaseHandoverCard = lazy(() => import('@/components/team/CaseHandoverCard')); // absence handover note + checklist
 // Dialogs opened from the header menu / summary column.
 const CaseDetailsDialog = lazy(() => import('@/components/admin/case/CaseDetailsDialog'));
 const FromTemplateDialog = lazy(() => import('@/components/contracts/FromTemplateDialog').then((m) => ({ default: m.FromTemplateDialog })));
@@ -218,6 +219,9 @@ function CasePage({ data }: { data: CaseDetailResponse }) {
         </Suspense>
         <Suspense fallback={null}>
           <PackageWatcher caseId={c.id} onOpen={mountDocuments} />
+        </Suspense>
+        <Suspense fallback={null}>
+          <CaseHandoverCard caseId={c.id} />
         </Suspense>
       </div>
 

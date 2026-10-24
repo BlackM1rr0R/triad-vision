@@ -10,6 +10,9 @@ import { notifyUser } from '../lib/notifications.js';
 import { buildIcs } from '../lib/ics.js';
 import { asBookingLocale, bookingTexts, formatSlot, topicLabel, type BookingLocale } from '../lib/bookingTexts.js';
 import { emitAutomationEvent } from '../lib/automation/events.js';
+import { recordConsent } from '../lib/privacy/consents.js';
+import { visitorIdSchema } from '../lib/marketing/leadScoring.js';
+import { onBookingLead } from '../lib/marketing/leads.js';
 
 // Public consultation booking — mounted at /api/booking
 export const bookingRouter = Router();
@@ -162,6 +165,8 @@ const bookSchema = z.object({
   consent: z.literal(true),
   // honeypot: real users never fill this hidden field
   website: z.string().max(200).optional(),
+  // lead scoring: first-party visitor id (only sent after analytics consent)
+  visitorId: visitorIdSchema.optional().catch(undefined),
 });
 
 bookingRouter.post('/', createLimiter, async (req, res) => {
@@ -214,10 +219,13 @@ bookingRouter.post('/', createLimiter, async (req, res) => {
     throw err;
   }
 
+  // The form's required privacy checkbox: logged with the current privacy policy version (append-only proof).
+  await recordConsent({ userId: req.user?.id ?? null, email: body.email, type: 'PRIVACY_POLICY', granted: true, source: 'BOOKING', req });
   void mailBooker(booking, 'confirmed').catch(() => undefined);
   void emitAutomationEvent({ type: 'BOOKING_CREATED', entityType: 'booking', entityId: booking.id }); // automation hook
   await notifySlotStaff(booking, 'staffNew').catch((e) => console.error('[booking] staff notify failed', e));
   void bumpAnalytics();
+  void onBookingLead(booking, body.visitorId); // lead scoring (never throws)
 
   res.status(201).json({
     booking: {

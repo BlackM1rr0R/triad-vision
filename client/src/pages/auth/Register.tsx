@@ -40,10 +40,12 @@ import { PassportScan, type PassportScanFields } from '@/components/auth/Passpor
 import { registerCopy } from '@/i18n';
 import { pagesLegal } from '@/i18n/pagesLegal';
 import { campaignConsentCopy } from '@/i18n/pagesCampaigns';
+import { cookieConsentCopy } from '@/i18n/cookieConsent'; // AGB checkbox copy
 import { clearRefCookie, readRefCookie, rememberVisa } from '@/lib/referralCookie';
 
 registerCopy(pagesLegal);
 registerCopy(campaignConsentCopy);
+registerCopy(cookieConsentCopy);
 
 /** Same photo as the home hero (already cached for most visitors). */
 const ASIDE_IMG = 'https://images.unsplash.com/photo-1587330979470-3595ac045ab0?auto=format&fit=crop&w=1200&q=65';
@@ -241,6 +243,8 @@ export default function Register() {
   const [f, setF] = useState<Form>(EMPTY);
   const [showPassword, setShowPassword] = useState(false);
   const [privacy, setPrivacy] = useState(false);
+  // Required: "I accept the AGB" (logged on the server as a TERMS consent with the current version).
+  const [terms, setTerms] = useState(false);
   // Optional marketing consent: unchecked by default (UWG / DSGVO), logged on the server.
   const [marketing, setMarketing] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -309,13 +313,13 @@ export default function Register() {
   const submit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setSubmitted(true);
-    if (Object.values(clientErrors).some(Boolean) || !privacy) {
+    if (Object.values(clientErrors).some(Boolean) || !privacy || !terms) {
       const failing = (Object.keys(clientErrors) as FieldKey[]).filter((k) => clientErrors[k]);
       if (failing.length === 1 && failing[0] === 'password') toast.error(t('auth.errors.PASSWORD_TOO_WEAK'));
-      else if (!failing.length) toast.error(t('registerPage.errors.privacy'));
+      else if (!failing.length) toast.error(!terms ? t('legalDocs.register.termsError') : t('registerPage.errors.privacy'));
       else toast.error(t('auth.errors.VALIDATION'));
       // Keyboard and screen-reader users land on the first field to fix (its message is linked via aria-describedby).
-      focusField(failing[0] ?? 'privacy');
+      focusField(failing[0] ?? (!terms ? 'terms' : 'privacy'));
       return;
     }
     setBusy(true);
@@ -332,6 +336,7 @@ export default function Register() {
         ...(refCode ? { ref: refCode } : {}),
         ...(scanned && Object.keys(scanned).length ? { passportScanned: true } : {}),
         ...(marketing ? { marketingOptIn: true } : {}),
+        acceptTerms: true,
       });
       forgetRef();
       clearRefCookie();
@@ -536,6 +541,34 @@ export default function Register() {
               {submitted && !privacy && (
                 <p id={id('privacy-error')} className="mt-1.5 pl-6.5 text-xs text-danger" aria-live="polite">
                   {t('registerPage.errors.privacy')}
+                </p>
+              )}
+            </div>
+
+            <div>
+              <label className="flex items-start gap-2.5 text-sm text-ink/80">
+                <input
+                  type="checkbox"
+                  id={id('terms')}
+                  name="terms"
+                  required
+                  checked={terms}
+                  onChange={(e) => setTerms(e.target.checked)}
+                  aria-invalid={submitted && !terms ? true : undefined}
+                  aria-describedby={submitted && !terms ? id('terms-error') : undefined}
+                  className="mt-0.5 size-4 shrink-0 accent-brand-600"
+                />
+                <span>
+                  {t('legalDocs.register.termsBefore')}
+                  <Link to="/agb" target="_blank" rel="noopener" className="font-semibold text-brand-600 hover:underline">
+                    {t('legalDocs.register.termsLink')}
+                  </Link>
+                  {t('legalDocs.register.termsAfter')}
+                </span>
+              </label>
+              {submitted && !terms && (
+                <p id={id('terms-error')} className="mt-1.5 pl-6.5 text-xs text-danger" aria-live="polite">
+                  {t('legalDocs.register.termsError')}
                 </p>
               )}
             </div>

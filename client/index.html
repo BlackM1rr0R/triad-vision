@@ -1,5 +1,7 @@
 <!doctype html>
-<html lang="az">
+<!--tv:/* Language of the URL: /de/…, /en/…, /ru/…, /tr/…, /uk/…; the root is Azerbaijani (see deploy/Caddyfile). */:tv-->
+<!--tv:$seg := index (splitList "/" .OriginalReq.URL.Path) 1:tv--><!--tv:$lang := "az":tv--><!--tv:if has $seg (list "de" "en" "ru" "tr" "uk"):tv--><!--tv:$lang = $seg:tv--><!--tv:end:tv-->
+<!--tv:if $lang:tv--><!--tv:printf "<html lang=\"%s\" dir=\"ltr\">" $lang:tv--><!--tv:else:tv--><html lang="az" dir="ltr"><!--tv:end:tv-->
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -8,6 +10,18 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+    <!-- Third-party origins used on most pages: CMS stock photos and the Cloudflare analytics beacon. -->
+    <link rel="preconnect" href="https://images.unsplash.com" crossorigin />
+    <link rel="dns-prefetch" href="https://images.unsplash.com" />
+    <link rel="dns-prefetch" href="https://static.cloudflareinsights.com" />
+    <!-- Crawler HTML inside #root (Caddy include of /__seo/body): readable without JavaScript, hidden as soon as
+         JavaScript runs (the script below adds html.js) — React replaces it on its first render. -->
+    <style>
+      html.js .ssr { display: none }
+      .ssr { max-width: 60rem; margin: 0 auto; padding: 1rem 1rem 3rem; font: 16px/1.6 system-ui, -apple-system, "Segoe UI", sans-serif; color: #0b1f44 }
+      .ssr a { color: #1d4ed8 } .ssr ul, .ssr ol { padding-left: 1.25rem } .ssr nav ul { list-style: none; padding: 0; display: flex; flex-wrap: wrap; gap: .25rem 1rem }
+      .ssr table { border-collapse: collapse } .ssr th, .ssr td { border: 1px solid #cbd5e1; padding: .25rem .5rem; text-align: left }
+    </style>
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-title" content="Triad Vision" />
@@ -35,6 +49,7 @@
           if (q === 'dark' || q === 'light' || q === 'system') p.theme = q;
         } catch (e) {}
         var h = document.documentElement;
+        h.classList.add('js');
         var dark = p.theme === 'dark' || (p.theme !== 'light' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
         h.setAttribute('data-theme', dark ? 'dark' : 'light');
         h.style.colorScheme = dark ? 'dark' : 'light';
@@ -60,7 +75,7 @@
     </script>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root"><!--tv:httpInclude (printf "/__seo/body?path=%s" (urlquery .OriginalReq.URL.Path)):tv--></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

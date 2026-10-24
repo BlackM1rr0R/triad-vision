@@ -5,17 +5,19 @@ import { requireMinRole } from '../../middleware/auth.js';
 import { audit } from '../../lib/audit.js';
 import { badRequest, notFound, parse } from '../../lib/http.js';
 import { invalidateMyWork } from '../../lib/myWork.js';
-import { getCheckInSettings, leftSchema, overview, overviewQuery, runCheckIns, saveCheckInSettings, settingsSchema } from '../../lib/checkIns/service.js';
+import { getCheckInSettings, leftSchema, overview, overviewQuery, runCheckIns, saveCheckInSettings, settingsInputSchema } from '../../lib/checkIns/service.js';
+import { recomputeRisk, runRiskRecompute } from '../../lib/checkIns/risk.js';
 
 /**
  * Post-arrival check-ins, staff side (mounted at /api/admin/check-ins, STAFF+):
  *
- *   GET   /overview                retention dashboard            ?from&to&companyId&status
+ *   GET   /overview                retention dashboard            ?from&to&companyId&status&risk=all|LOW|MEDIUM|HIGH&sort=arrived|risk
  *   POST  /:id/resolve             mark a reported problem as handled { note? }
  *   PATCH /follow-ups/:id/left     "left the job" (or undo)          { left, leftAt?, reason?, note? }
- *   GET   /settings                offsets / employer check-in
+ *   GET   /settings                worker offsets / employer check-in offsets
  *   PUT   /settings                ADMIN+
  *   POST  /run                     ADMIN+: send what is due now (the job runs hourly anyway)
+ *   POST  /risk/recompute          ADMIN+: recompute every churn risk now (the job runs nightly anyway)
  */
 export const adminCheckInsRouter = Router();
 
@@ -30,6 +32,7 @@ adminCheckInsRouter.post('/:id/resolve', async (req, res) => {
   if (c.answer !== 'ISSUE') throw badRequest('NOT_AN_ISSUE');
   const saved = c.resolvedAt ? c : await prisma.arrivalCheckIn.update({ where: { id: c.id }, data: { resolvedAt: new Date(), resolvedById: req.user!.id } });
   await audit(req, 'CHECKIN_ISSUE_RESOLVED', `checkin:${c.id}`, { caseId: c.caseId, note: body.note ?? null });
+  await recomputeRisk(c.followUpId).catch(() => undefined); // a resolved problem lowers the churn risk
   invalidateMyWork();
   res.json({ checkIn: { id: saved.id, resolvedAt: saved.resolvedAt } });
 });
@@ -46,6 +49,7 @@ adminCheckInsRouter.patch('/follow-ups/:id/left', async (req, res) => {
     data: body.left ? { leftJobAt: leftAt, leftReason: body.reason, leftNote: body.note || null, leftMarkedById: req.user!.id } : { leftJobAt: null, leftReason: null, leftNote: null, leftMarkedById: req.user!.id },
   });
   await audit(req, body.left ? 'WORKER_LEFT_JOB' : 'WORKER_LEFT_JOB_UNDONE', `case:${f.caseId}`, { followUpId: f.id, reason: body.reason ?? null, leftAt: leftAt?.toISOString() ?? null });
+  await recomputeRisk(f.id).catch(() => undefined);
   res.json({ followUp: saved });
 });
 
@@ -54,11 +58,15 @@ adminCheckInsRouter.get('/settings', async (_req, res) => {
 });
 
 adminCheckInsRouter.put('/settings', requireMinRole('ADMIN'), async (req, res) => {
-  const saved = await saveCheckInSettings(parse(settingsSchema, req.body?.settings ?? req.body ?? {}));
+  const saved = await saveCheckInSettings(parse(settingsInputSchema, req.body?.settings ?? req.body ?? {}));
   await audit(req, 'CHECKIN_SETTINGS', 'setting:checkIns', saved);
   res.json({ settings: saved });
 });
 
 adminCheckInsRouter.post('/run', requireMinRole('ADMIN'), async (_req, res) => {
   res.json(await runCheckIns());
+});
+
+adminCheckInsRouter.post('/risk/recompute', requireMinRole('ADMIN'), async (_req, res) => {
+  res.json(await runRiskRecompute());
 });

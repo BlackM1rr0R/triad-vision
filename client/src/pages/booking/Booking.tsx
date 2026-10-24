@@ -24,9 +24,10 @@ import {
 import { api, errorCode } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { usePageTitle } from '@/lib/usePageTitle';
-import { registerCopy } from '@/i18n';
+import { registerCopy, toContentLocale } from '@/i18n';
 import { bookingCopy } from '@/i18n/pagesBooking';
 import { PageHero } from '@/components/layout/PageHero';
+import { leadVisitorId } from '@/lib/leadVisitor';
 import { Spinner } from '@/components/ui/Spinner';
 import { TOPICS, browserTimeZone, fmtTime, useDayLabels, zoned, type Topic } from '@/components/booking/time';
 
@@ -130,7 +131,9 @@ export default function Booking() {
           message: form.message.trim(),
           consent: form.consent,
           website: form.website,
-          locale: i18n.resolvedLanguage?.slice(0, 2) ?? 'az',
+          locale: toContentLocale(i18n.resolvedLanguage),
+          // lead scoring: only present after analytics consent
+          ...(leadVisitorId() ? { visitorId: leadVisitorId() } : {}),
         })
       ).data,
     onSuccess: (data) => {

@@ -8,6 +8,7 @@ import { HttpError, badRequest, conflict, forbidden, limiter, notFound, parse } 
 import { notifyStaff } from '../lib/notifications.js';
 import { sendVerificationEmail } from '../lib/emailVerification.js';
 import { audit } from '../lib/audit.js';
+import { recordConsent } from '../lib/privacy/consents.js';
 import { notifyApplicationStatus } from '../lib/jobsNotifications.js';
 import {
   SECTORS,
@@ -124,6 +125,9 @@ companyRouter.post('/register', registerLimiter, async (req, res) => {
     return { company, user };
   });
 
+  // The form requires accepting the terms (and links the privacy policy): logged with the current versions.
+  await recordConsent({ userId: user.id, email: user.email, type: 'TERMS', granted: true, source: 'REGISTER', req });
+  await recordConsent({ userId: user.id, email: user.email, type: 'PRIVACY_POLICY', granted: true, source: 'REGISTER', req });
   await sendVerificationEmail(user.id).catch((err) => console.error('[company] verification email failed', err));
   await notifyStaff(
     `Yeni işəgötürən qeydiyyatı: ${company.name}`.slice(0, 180),

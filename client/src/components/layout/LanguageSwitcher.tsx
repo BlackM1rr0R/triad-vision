@@ -4,15 +4,15 @@ import { useTranslation } from 'react-i18next';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Check, ChevronDown } from 'lucide-react';
 import clsx from 'clsx';
-import { LOCALES, switchLanguage, type Locale } from '@/i18n';
+import { useLocation } from 'react-router-dom';
+import { LOCALES, SITE_LOCALES, switchLanguage, type SiteLocale } from '@/i18n';
+import { isPrivatePath, SITE_LANGUAGE_NAMES as NAMES } from '@/lib/siteLocale';
 import { Flag } from '../ui/Flag';
-
-const NAMES: Record<Locale, string> = { az: 'Azərbaycan', de: 'Deutsch', en: 'English', ru: 'Русский' };
 
 const LIST_W = 192; // w-48
 const GAP = 8;
 /** Height of the list before it is measured: one 44px row per language plus padding. */
-const LIST_H_GUESS = LOCALES.length * 44 + 10;
+const LIST_H_GUESS = SITE_LOCALES.length * 44 + 10;
 
 interface ListPos {
   left: number;
@@ -57,7 +57,10 @@ export const LanguageSwitcher = ({ light = false, variant = 'pill', compact = fa
   const ref = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
-  const current = ((i18n.resolvedLanguage ?? 'az').slice(0, 2) as Locale) || 'az';
+  const current = ((i18n.resolvedLanguage ?? 'az').slice(0, 2) as SiteLocale) || 'az';
+  // Turkish and Ukrainian exist for the public site; the portals offer the four content languages.
+  const pathname = useLocation().pathname;
+  const choices: readonly SiteLocale[] = isPrivatePath(pathname) && current !== 'tr' && current !== 'uk' ? LOCALES : SITE_LOCALES;
 
   // Place the list next to the button; once it is rendered, again with its real height.
   useLayoutEffect(() => {
@@ -176,7 +179,7 @@ export const LanguageSwitcher = ({ light = false, variant = 'pill', compact = fa
               style={{ left: pos.left, top: pos.top, bottom: pos.bottom, width: LIST_W, maxHeight: 'calc(100dvh - 16px)' }}
               className={clsx('fixed z-[200] overflow-y-auto rounded-xl border border-line bg-white p-1 shadow-2xl', pos.up ? 'origin-bottom' : 'origin-top')}
             >
-              {LOCALES.map((l) => (
+              {choices.map((l) => (
                 <li key={l}>
                   <button
                     type="button"

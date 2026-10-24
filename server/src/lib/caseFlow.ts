@@ -43,6 +43,8 @@ export const createCase = async (
     relation?: string | null;
     /** Staff creating a case on someone's behalf (actor for the event / assignment). */
     actorId?: string;
+    /** Skip the generic "case created" notices (the caller sends its own, e.g. a residence-title renewal). */
+    quiet?: boolean;
   },
 ) => {
   // One active case per client — except family-member cases, which are separate applications.
@@ -82,12 +84,14 @@ export const createCase = async (
         }
         return c;
       });
-      await notifyClient(created.id, 'CASE_CREATED');
-      await notifyStaff(
-        `Yeni müraciət: ${created.number}`,
-        `Yeni müştəri müraciəti yaradıldı.\n\nPeşə: ${created.profession}`,
-        { caseId: created.id, link: `/admin/cases/${created.id}` },
-      );
+      if (!input.quiet) {
+        await notifyClient(created.id, 'CASE_CREATED');
+        await notifyStaff(
+          `Yeni müraciət: ${created.number}`,
+          `Yeni müştəri müraciəti yaradıldı.\n\nPeşə: ${created.profession}`,
+          { caseId: created.id, link: `/admin/cases/${created.id}` },
+        );
+      }
       await awardCaseCommission(created.id, 'CASE_CREATED'); // agent programme (never throws)
       void emitWebhook('case.created', { caseId: created.id, number: created.number, status: created.status, visaCategoryId: created.visaCategoryId }, created.companyId);
       void syncCaseFolder(created.id); // the client's folder in the shared drive
@@ -339,6 +343,8 @@ export const staffScheduleAppointment = async (
 };
 
 export const staffMarkLodged = async (caseId: string, actorId: string) => {
+  // Four-eyes gate: an approved review of the current embassy package (lazy import: no import cycle).
+  if ((await loadCase(caseId)).status === 'APPOINTMENT_SCHEDULED') await (await import('./caseNext/fourEyes.js')).assertFourEyes(caseId);
   await transition(caseId, ['APPOINTMENT_SCHEDULED'], 'DECISION_PENDING', actorId, {
     eventType: 'LODGED_AT_EMBASSY',
     data: { staffNote: null },

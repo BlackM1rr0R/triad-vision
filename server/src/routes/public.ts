@@ -6,7 +6,9 @@ import { notifyStaff } from '../lib/notifications.js';
 
 const PRIVATE_SETTING_KEYS = ['invoicing', 'retention'];
 import { cached } from '../lib/cache.js';
-import { onInquiryCreated } from '../lib/assignment/inquiry.js';
+
+import { onInquiryCreated } from '../lib/assignment/inquiry.js';
+import { attachLeadContext, utmSchema, visitorIdSchema } from '../lib/marketing/leadScoring.js';
 
 export const publicRouter = Router();
 
@@ -106,10 +108,13 @@ publicRouter.post('/inquiries', inquiryLimiter, async (req, res) => {
       locale: z.enum(['az', 'de', 'en', 'ru']).catch('az'),
       // honeypot: real users never fill this hidden field
       website: z.string().max(200).optional(),
+      // lead scoring context (the visitor id only exists after analytics consent)
+      visitorId: visitorIdSchema.optional().catch(undefined),
+      utm: utmSchema.optional().catch(undefined),
     }),
     req.body,
   );
-  const { website: honeypot, ...data } = body;
+  const { website: honeypot, visitorId, utm, ...data } = body;
   if (honeypot) {
     // A bot filled the hidden field. Answer exactly like a success so it learns nothing.
     res.status(201).json({ ok: true, id: 'ok' });
@@ -135,5 +140,7 @@ publicRouter.post('/inquiries', inquiryLimiter, async (req, res) => {
     lines.join('\n'),
     { link: `/admin/inquiries` },
   );
+  // Lead score after the "new inquiry" notice, so a HOT alert never arrives before it (never throws).
+  await attachLeadContext(inquiry.id, { visitorId, utm });
   res.status(201).json({ ok: true, id: inquiry.id });
 });

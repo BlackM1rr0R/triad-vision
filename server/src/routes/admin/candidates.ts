@@ -28,6 +28,7 @@ const candidateSelect = {
   germanLevel: true,
   education: true,
   drivingLicence: true,
+  recognitionStatus: true,
   emailVerifiedAt: true,
   isActive: true,
   createdAt: true,
@@ -129,7 +130,7 @@ adminCandidatesRouter.get('/:id', async (req, res) => {
     select: {
       id: true, role: true, firstName: true, lastName: true, email: true, phone: true, locale: true, birthDate: true, nationality: true,
       city: true, address: true, profession: true, experienceYears: true, germanLevel: true, education: true, drivingLicence: true,
-      about: true, emailVerifiedAt: true, isActive: true, createdAt: true,
+      recognitionStatus: true, recognitionNote: true, introVideoKey: true, about: true, emailVerifiedAt: true, isActive: true, createdAt: true,
       cases: {
         orderBy: { createdAt: 'desc' },
         select: { id: true, number: true, status: true, profession: true, createdAt: true, companyId: true, vacancyId: true, company: { select: { name: true } } },
@@ -148,9 +149,11 @@ adminCandidatesRouter.get('/:id', async (req, res) => {
     },
   });
   if (!user || user.role !== 'CLIENT') throw notFound('CANDIDATE_NOT_FOUND');
+  const { introVideoKey, ...rest } = user;
   res.json({
     candidate: {
-      ...user,
+      ...rest,
+      hasIntroVideo: !!introVideoKey, // the stored file name never leaves the server
       applications: user.applications.map((a) => ({ ...a, match: matchCandidate(user, a.vacancy) })),
     },
   });

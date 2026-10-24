@@ -6,6 +6,7 @@ import { forbidden, notFound, parse } from '../lib/http.js';
 import { notifyStaff } from '../lib/notifications.js';
 import { addFamilyMember, removeFamilyMember } from '../lib/journey/family.js';
 import { assertCanAdd, createMemberSchema, ensureProfile, familyOverview, loadMemberCase, rootCaseId, serializeProfile, updateMemberSchema, updateProfile } from '../lib/family/members.js';
+import { copyForAllMembers, startReunion } from '../lib/family/reunion.js';
 
 /**
  * Family members (Familiennachzug) — mounted at /api/family. The main client manages their family from
@@ -15,6 +16,8 @@ import { assertCanAdd, createMemberSchema, ensureProfile, familyOverview, loadMe
  *   POST   /cases/:id/members         add a member (creates the member case with its relation's checklist)
  *   PATCH  /members/:caseId           edit a member's details (names as in passport, passport data …)
  *   DELETE /members/:caseId           remove a member case created by mistake (nothing uploaded yet)
+ *   POST   /cases/:id/reunion/start   STAFF+: start the Familiennachzug of the LATER members (lib/family/reunion.ts)
+ *   POST   /cases/:id/copy-documents  STAFF+: copy reusable main-case documents into every member case again
  *
  * Access: the client who owns the case, or STAFF+. Passport fields are masked for staff by maskResponses.
  */
@@ -79,4 +82,20 @@ familyRouter.get('/members/:caseId', async (req, res) => {
   const profile = await ensureProfile(m.id);
   if (!profile) throw notFound('FAMILY_MEMBER_NOT_FOUND');
   res.json({ profile: serializeProfile(profile), mainCaseId: await rootCaseId(m.id) });
+});
+
+familyRouter.post('/cases/:id/reunion/start', async (req, res) => {
+  if (!isStaff(req.user!)) throw forbidden();
+  const mainId = await rootCaseId((await accessible(String(req.params.id), req.user!)).id);
+  const out = await startReunion(mainId, req.user!.id);
+  await audit(req, 'FAMILY_REUNION_STARTED', `case:${mainId}`, { members: out.started.map((m) => m.caseId), copied: out.started.reduce((a, m) => a + m.copied, 0) });
+  res.json({ ...out, ...(await familyOverview(mainId)) });
+});
+
+familyRouter.post('/cases/:id/copy-documents', async (req, res) => {
+  if (!isStaff(req.user!)) throw forbidden();
+  const mainId = await rootCaseId((await accessible(String(req.params.id), req.user!)).id);
+  const copied = await copyForAllMembers(mainId, req.user!.id);
+  await audit(req, 'FAMILY_DOCS_COPIED', `case:${mainId}`, { copied: copied.filter((c) => c.copied).map((c) => ({ caseId: c.caseId, n: c.copied })) });
+  res.json({ copied, ...(await familyOverview(mainId)) });
 });

@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
 import { Tabs } from '@/components/ui/Tabs';
 import { Languages } from 'lucide-react';
-import { LOCALES, type Locale } from '@/i18n';
+import { LOCALES, toContentLocale, type Locale } from '@/i18n';
 import { Flag } from '@/components/ui/Flag';
 import { Switch } from '@/components/admin/ui';
 import { useJobLabels } from '@/components/jobs/labels';
@@ -152,7 +152,7 @@ export const VacancyForm = ({
   const L = useJobLabels();
   const [f, setF] = useState<VacancyFormState>(initial);
   const [aiUsed, setAiUsed] = useState<AiFeature[]>([]);
-  const uiLang = (i18n.resolvedLanguage ?? 'de').slice(0, 2) as Locale;
+  const uiLang: Locale = i18n.resolvedLanguage ? toContentLocale(i18n.resolvedLanguage) : 'de';
   const [lang, setLang] = useState<Locale>(LOCALES.find((l) => initial.title[l]) ?? (staff ? 'az' : uiLang));
   const set = <K extends keyof VacancyFormState>(k: K, v: VacancyFormState[K]) => setF((s) => ({ ...s, [k]: v }));
   const setText = (k: 'title' | 'description' | 'requirements' | 'benefits', v: string) => setF((s) => ({ ...s, [k]: { ...s[k], [lang]: v } }));

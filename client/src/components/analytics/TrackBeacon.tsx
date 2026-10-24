@@ -1,4 +1,6 @@
 import { useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
+import { noteArrival, trackLead, watchLeadConsent } from '@/lib/leadVisitor';
 
 const FLAG = 'tv_visit_sent';
 
@@ -27,10 +29,36 @@ export const visitSource = (search: string, referrer: string, ownHost: string) =
 };
 
 /**
+ * Lead visitor page views (lib/leadVisitor.ts): sent only after analytics consent, one per route change,
+ * plus WhatsApp link clicks anywhere on the site. Without consent trackLead() does nothing.
+ */
+const useLeadTracking = () => {
+  const { pathname, search } = useLocation();
+  useEffect(() => {
+    noteArrival(search);
+    trackLead('page_view', { path: pathname });
+  }, [pathname, search]);
+  useEffect(() => {
+    const off = watchLeadConsent(() => trackLead('page_view', { path: window.location.pathname }));
+    const onClick = (e: MouseEvent) => {
+      const a = (e.target as HTMLElement | null)?.closest?.('a[href]');
+      const href = a?.getAttribute('href') ?? '';
+      if (/^https:\/\/(wa\.me|api\.whatsapp\.com)\//i.test(href)) trackLead('whatsapp_click');
+    };
+    document.addEventListener('click', onClick, { capture: true });
+    return () => {
+      off();
+      document.removeEventListener('click', onClick, { capture: true });
+    };
+  }, []);
+};
+
+/**
  * Cookie-less funnel beacon: one "visit" per browser session (sessionStorage flag), carrying only
  * the traffic source. Nothing is sent when the browser asks not to be tracked.
  */
 export const TrackBeacon = () => {
+  useLeadTracking();
   useEffect(() => {
     try {
       const nav = navigator as Navigator & { globalPrivacyControl?: boolean };

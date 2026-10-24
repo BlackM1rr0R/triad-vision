@@ -5,7 +5,7 @@ import clsx from 'clsx';
 import { Check } from 'lucide-react';
 import { errorCode } from '@/lib/api';
 import { STATUS_TONES, toneClasses } from '@/components/ui/status';
-import type { Locale } from '@/i18n';
+import { toContentLocale, type Locale } from '@/i18n';
 
 export type ArrivalStatus = 'DRAFT' | 'SUBMITTED' | 'CONFIRMED' | 'COMPLETED' | 'CANCELLED';
 export type HousingStatus = 'NONE' | 'REQUESTED' | 'SEARCHING' | 'OFFERED' | 'ARRANGED';
@@ -138,7 +138,7 @@ const TZ_SHORT: Record<Locale, string> = { az: 'Almaniya vaxtı', de: 'deutsche 
 
 export const useArrivalFormat = () => {
   const { i18n } = useTranslation();
-  const locale = ((i18n.resolvedLanguage ?? 'az').slice(0, 2) as Locale) || 'az';
+  const locale: Locale = toContentLocale(i18n.resolvedLanguage);
   return {
     locale,
     arrival: (iso: string | null | undefined) =>

@@ -26,6 +26,7 @@ import { QualityNotice } from '@/components/uploadAi/QualityNotice';
 import { RecognitionNotice } from '@/components/uploadAi/RecognitionNotice';
 import { qualityOf, type Quality } from '@/components/uploadAi/api';
 import { optimizeImages } from '@/lib/imageCompress';
+import { ScanCameraButton } from '@/components/scanner/ScanCameraButton'; // in-browser camera document scanner
 import DocGuideButton from '@/components/clientData/DocGuideButton'; // "Necə almalı?" guide per requirement key
 
 type UploadStage = 'INITIAL' | 'EMBASSY';
@@ -196,9 +197,19 @@ const RequirementCard = ({
   const uploadAsPdf = async (list: FileList | null) => {
     const files = Array.from(list ?? []);
     if (pagesRef.current) pagesRef.current.value = '';
-    if (!files.length) return;
-    if (files.length > 20) return void toast.error(t('expiry.scan.tooMany'));
-    if (files.some((f) => !['image/jpeg', 'image/png'].includes(f.type))) return void toast.error(t('expiry.scan.onlyImages'));
+    await sendPages(files);
+  };
+  /** Shared by the image picker and the camera scanner; false = not uploaded (the scanner stays open). */
+  const sendPages = async (files: File[]): Promise<boolean> => {
+    if (!files.length) return false;
+    if (files.length > 20) {
+      toast.error(t('expiry.scan.tooMany'));
+      return false;
+    }
+    if (files.some((f) => !['image/jpeg', 'image/png'].includes(f.type))) {
+      toast.error(t('expiry.scan.onlyImages'));
+      return false;
+    }
     const form = new FormData();
     form.append('requirementId', req.id);
     form.append('name', tr(req.title));
@@ -214,8 +225,10 @@ const RequirementCard = ({
       setLastQuality(qualityOf(data));
       toast.success(t('expiry.scan.done', { count: data.pages }));
       await onChanged();
+      return true;
     } catch (err) {
       onError(err);
+      return false;
     } finally {
       setPdfProgress(null);
     }
@@ -293,6 +306,8 @@ const RequirementCard = ({
               <FileStack className="size-4" aria-hidden />
               {t('expiry.scan.button')}
             </button>
+            {/* Camera scanner: edge detection, perspective correction, enhancement → the same PDF endpoint. */}
+            <ScanCameraButton onPages={sendPages} disabled={pdfProgress !== null || progress !== null} progress={pdfProgress} title={tr(req.title)} />
             {pdfProgress !== null ? (
               <span className="text-xs text-muted" role="status">
                 {t('expiry.scan.uploading', { percent: Math.round(pdfProgress * 100) })}

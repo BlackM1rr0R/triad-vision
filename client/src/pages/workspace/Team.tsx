@@ -2,9 +2,10 @@ import { lazy, Suspense, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Tabs } from '@/components/ui/Tabs';
-import { ClipboardCheck, Palmtree, Search, Users } from 'lucide-react';
+import { ArrowRightLeft, CalendarRange, ClipboardCheck, Gauge, GraduationCap, Palmtree, Search, Users } from 'lucide-react';
 import { registerCopy } from '@/i18n';
 import { pagesWorkspace } from '@/i18n/pagesWorkspace';
+import { pagesTeam } from '@/i18n/pagesTeam';
 import { useAuth } from '@/lib/auth';
 import { hasMinRole } from '@/lib/types';
 import { usePageTitle } from '@/lib/usePageTitle';
@@ -15,10 +16,18 @@ import { BalanceStrip, LeaveDialog, LeaveMonthStrip, LeaveRow, NewLeaveButton } 
 import { Card, Chip, Empty, Skeleton, fullName } from '@/components/workspace/ui';
 // Own assignment profile for automatic case assignment (own chunk).
 const MyAssignmentCard = lazy(() => import('@/components/automation/MyAssignmentCard'));
+// Team calendar, handover notes, training and the own KPI card (components/team, own chunks).
+const ShiftCalendar = lazy(() => import('@/components/team/ShiftCalendar').then((m) => ({ default: m.ShiftCalendar })));
+const HandoverPanel = lazy(() => import('@/components/team/Handover').then((m) => ({ default: m.HandoverPanel })));
+const Learn = lazy(() => import('@/components/team/training/Learn').then((m) => ({ default: m.Learn })));
+const MyKpi = lazy(() => import('@/components/team/MyKpi'));
 
 registerCopy(pagesWorkspace);
+registerCopy(pagesTeam);
 
-type Tab = 'people' | 'leave';
+const TABS = ['people', 'leave', 'shifts', 'handover', 'learn', 'kpi'] as const;
+type Tab = (typeof TABS)[number];
+const TAB_ICON = { people: Users, leave: Palmtree, shifts: CalendarRange, handover: ArrowRightLeft, learn: GraduationCap, kpi: Gauge };
 
 /** Team directory (presence, statuses) and leave requests, with an approvals queue for admins. */
 export default function WorkspaceTeam() {
@@ -28,7 +37,7 @@ export default function WorkspaceTeam() {
   const inv = useWorkspaceInvalidate();
   const isAdmin = hasMinRole(user?.role, 'ADMIN');
   usePageTitle(t('ws.team.title'));
-  const tab: Tab = sp.get('tab') === 'leave' ? 'leave' : 'people';
+  const tab: Tab = (TABS as readonly string[]).includes(sp.get('tab') ?? '') ? (sp.get('tab') as Tab) : 'people';
   const [search, setSearch] = useState('');
   const [dialog, setDialog] = useState<{ open: boolean; editing: LeaveRequest | null }>({ open: false, editing: null });
 
@@ -80,12 +89,12 @@ export default function WorkspaceTeam() {
           <Tabs
             variant="pills"
             label={t('ws.team.tabs.people')}
-            items={(['people', 'leave'] as Tab[]).map((k) => ({
+            items={TABS.map((k) => ({
               key: k,
-              icon: k === 'people' ? Users : Palmtree,
+              icon: TAB_ICON[k],
               label: (
                 <>
-                  {t(`ws.team.tabs.${k}`)}
+                  {k === 'people' || k === 'leave' ? t(`ws.team.tabs.${k}`) : t(`team.wsTabs.${k}`)}
                   {k === 'leave' && isAdmin && queue.length > 0 && <Chip tone="warn">{queue.length}</Chip>}
                 </>
               ),
@@ -98,15 +107,22 @@ export default function WorkspaceTeam() {
               <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted" aria-hidden />
               <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t('ws.team.search')} aria-label={t('ws.team.search')} className="input h-9 pl-9" />
             </label>
-          ) : (
+          ) : tab === 'leave' ? (
             <NewLeaveButton className="ml-auto h-9" onClick={() => setDialog({ open: true, editing: null })} />
-          )}
+          ) : null}
         </div>
       </header>
 
       <div className="min-h-0 flex-1 overflow-y-auto bg-surface">
         <div className="mx-auto max-w-7xl space-y-5 px-4 py-5 lg:px-6">
-          {tab === 'people' ? (
+          {tab === 'shifts' || tab === 'handover' || tab === 'learn' || tab === 'kpi' ? (
+            <Suspense fallback={<Skeleton className="h-64" />}>
+              {tab === 'shifts' && <ShiftCalendar />}
+              {tab === 'handover' && <HandoverPanel />}
+              {tab === 'learn' && <Learn />}
+              {tab === 'kpi' && <MyKpi />}
+            </Suspense>
+          ) : tab === 'people' ? (
             <>
               <StatusEditor me={me} />
               {presence.isLoading ? (

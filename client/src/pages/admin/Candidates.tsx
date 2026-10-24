@@ -22,6 +22,11 @@ import { CandidateProfileCard } from '@/components/aiEmployer/CandidateProfileCa
 import { PartyThreadButton, PartyThreadFromQuery } from '@/components/messagingPlus/PartyThread';
 import { toastJobsError, useJobLabels } from '@/components/jobs/labels';
 import { APPLICATION_STATUS_TONE, EDUCATION_LEVELS, GERMAN_LEVELS, type ApplicationStatus, type Match, type VacancyStatus } from '@/components/jobs/types';
+import { MatchBreakdown } from '@/components/placement/MatchBreakdown';
+import { RecognitionEditor } from '@/components/placement/RecognitionEditor';
+import { CandidateShareLinks } from '@/components/placement/CandidateShareLinks';
+import { CandidateEvaluations } from '@/components/placement/Evaluations';
+import { CandidateIntroVideo } from '@/components/placement/IntroVideo';
 
 registerCopy(pagesJobs);
 
@@ -61,6 +66,9 @@ interface CandidateDetail extends Omit<Row, 'activeCase' | 'applicationsCount' |
   nationality: string | null;
   address: string | null;
   about: string | null;
+  recognitionStatus: string | null;
+  recognitionNote: string | null;
+  hasIntroVideo: boolean;
   cases: { id: string; number: string; status: CaseStatus; profession: string; createdAt: string; companyId: string | null; vacancyId: string | null; company: { name: string } | null }[];
   applications: {
     id: string;
@@ -225,10 +233,10 @@ const ApplicationCard = ({ a, userId, onChanged }: { a: CandidateDetail['applica
         </div>
         <ScorePill score={a.match.score} />
       </div>
-      {a.match.gaps.length > 0 && <p className="mt-1 text-[11px] text-amber-800">{a.match.gaps.map((g) => L.gap(g)).join(' · ')}</p>}
+      <MatchBreakdown match={a.match} className="mt-1" />
       {a.message && <p className="mt-2 rounded-md bg-surface px-2.5 py-1.5 text-xs text-ink/80">“{a.message}”</p>}
       {a.companyNote && (
-        <p className="mt-2 rounded-md bg-violet-50 px-2.5 py-1.5 text-xs text-violet-900">
+        <p className="mt-2 rounded-md bg-violet-50 px-2.5 py-1.5 text-xs whitespace-pre-line text-violet-900">
           {t('jobsArea.admin.employerNote')}: {a.companyNote}
         </p>
       )}
@@ -283,6 +291,7 @@ const ApplicationCard = ({ a, userId, onChanged }: { a: CandidateDetail['applica
 
 const CandidateDrawer = ({ id, onClose, onAdd }: { id: string | null; onClose: () => void; onAdd: (id: string) => void }) => {
   const { t } = useTranslation();
+  const { tr } = useL10n();
   const L = useJobLabels();
   const qc = useQueryClient();
   const { data, isLoading, error, refetch } = useQuery({
@@ -320,6 +329,7 @@ const CandidateDrawer = ({ id, onClose, onAdd }: { id: string | null; onClose: (
               <DefRow label={t('jobsArea.profile.experience')}>{data.experienceYears != null ? L.years(data.experienceYears) : '—'}</DefRow>
               <DefRow label={t('jobsArea.profile.german')}>{data.germanLevel ? L.german(data.germanLevel) : '—'}</DefRow>
               <DefRow label={t('jobsArea.profile.education')}>{L.education(data.education) || '—'}</DefRow>
+              <DefRow label={t('placement.recognition.label')}>{data.recognitionStatus ? t(`placement.recognition.status.${data.recognitionStatus}`) : '—'}</DefRow>
               <DefRow label={t('jobsArea.profile.licence')}>{data.drivingLicence ?? '—'}</DefRow>
               <DefRow label={t('jobsArea.profile.city')}>{data.city ?? '—'}</DefRow>
               <DefRow label={t('jobsArea.profile.birthDate')}>{data.birthDate ? fmtDate(data.birthDate) : '—'}</DefRow>
@@ -327,6 +337,10 @@ const CandidateDrawer = ({ id, onClose, onAdd }: { id: string | null; onClose: (
               <DefRow label={t('jobsArea.profile.registered')}>{fmtDate(data.createdAt)}</DefRow>
             </dl>
             {data.about && <p className="mt-3 rounded-md bg-surface px-3 py-2 text-xs whitespace-pre-line text-ink/80">{data.about}</p>}
+            <div className="mt-3 space-y-3">
+              <RecognitionEditor userId={data.id} status={data.recognitionStatus} note={data.recognitionNote} onSaved={refresh} />
+              <CandidateIntroVideo candidateId={data.id} has={data.hasIntroVideo} />
+            </div>
             <div className="mt-3">
               <CandidateProfileCard userId={data.id} />
             </div>
@@ -350,6 +364,15 @@ const CandidateDrawer = ({ id, onClose, onAdd }: { id: string | null; onClose: (
               </ul>
             )}
           </Panel>
+
+          {/* Employer collaboration: share links without login and interview evaluations with averages. */}
+          <CandidateShareLinks
+            candidateId={data.id}
+            applications={data.applications
+              .filter((a) => a.status !== 'WITHDRAWN')
+              .map((a) => ({ id: a.id, label: [tr(a.vacancy.title), a.vacancy.company?.name].filter(Boolean).join(' · ') }))}
+          />
+          <CandidateEvaluations candidateId={data.id} />
 
           <Panel title={t('jobsArea.admin.candidates.cases', { count: data.cases.length })}>
             {data.cases.length === 0 ? (

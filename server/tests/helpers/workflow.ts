@@ -2,6 +2,8 @@ import type { CaseStatus } from '@prisma/client';
 import type { Response } from 'supertest';
 import type { Agent } from './api';
 import { makePdf, PDF, SIGNATURE_DATA_URL } from './files';
+import { prisma } from './db';
+import { packageFingerprint } from '../../src/lib/caseNext/fourEyes.js';
 
 /** Throws with the response body when the status is not the expected one (clearer than a bare expect). */
 export const expectStatus = (res: Response, status: number) => {
@@ -69,6 +71,12 @@ export const signContract = (client: Agent, caseId: string, signerName = 'Əli M
 export const act = (admin: Agent, caseId: string, body: Record<string, unknown>) =>
   admin.post(`/api/admin/cases/${caseId}/actions`).send(body);
 
+/** Four-eyes gate (lib/caseNext/fourEyes.ts): records an approved second review of the current embassy package. */
+export const approveFourEyes = async (caseId: string) => {
+  const fp = await packageFingerprint(caseId);
+  await prisma.embassyPackageApproval.create({ data: { caseId, status: 'APPROVED', packageHash: fp.hash, requestedById: 'test-builder', reviewerId: 'test-reviewer', reviewedAt: new Date() } });
+};
+
 const ORDER: CaseStatus[] = [
   'DOCUMENTS_PENDING',
   'DOCUMENTS_REVIEW',
@@ -124,7 +132,10 @@ export const driveCaseTo = async (target: CaseStatus, actors: { client: Agent; a
       );
     },
     // → DECISION_PENDING
-    async () => expectStatus(await act(admin, id, { action: 'MARK_LODGED' }), 200),
+    async () => {
+      await approveFourEyes(id);
+      expectStatus(await act(admin, id, { action: 'MARK_LODGED' }), 200);
+    },
   ];
   for (let i = 0; i < stopAt; i++) await steps[i]();
 

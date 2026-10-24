@@ -3,9 +3,10 @@
  * apply, in the staff candidate list and for vacancy suggestions.
  *
  * Score 0–100 = weighted sum of: profession similarity, German level vs the minimum, experience vs
- * the minimum, driving-licence coverage and fit for the vacancy's visa category. A criterion the
- * vacancy does not ask for counts as fully met. `gaps` lists what is missing, for the UI
- * ("needs German B1").
+ * the minimum, driving-licence coverage, fit for the vacancy's visa category and the recognition of the
+ * foreign qualification (Anerkennung, only where the job or visa needs one). A criterion the vacancy
+ * does not ask for counts as fully met. `gaps` lists what is missing, for the UI ("needs German B1");
+ * `parts` the points per criterion (score breakdown).
  */
 
 export const GERMAN_LEVELS = ['none', 'A1', 'A2', 'B1', 'B2', 'C1', 'C2'] as const;
@@ -279,6 +280,8 @@ export interface MatchCandidate {
   germanLevel?: string | null;
   education?: string | null;
   drivingLicence?: string | null;
+  /** NONE | NOT_REQUIRED | IN_PROGRESS | PARTIAL | RECOGNISED (unknown / empty = NONE). */
+  recognitionStatus?: string | null;
 }
 
 export interface MatchVacancy {
@@ -289,7 +292,7 @@ export interface MatchVacancy {
   visaCategory?: { visaLabel?: string | null; germanLevel?: string | null } | null;
 }
 
-export type GapCode = 'PROFESSION' | 'GERMAN' | 'EXPERIENCE' | 'LICENCE' | 'VISA_GERMAN' | 'VISA_EDUCATION';
+export type GapCode = 'PROFESSION' | 'GERMAN' | 'EXPERIENCE' | 'LICENCE' | 'VISA_GERMAN' | 'VISA_EDUCATION' | 'RECOGNITION';
 
 export interface MatchGap {
   code: GapCode;
@@ -297,53 +300,77 @@ export interface MatchGap {
   actual: string | number | null;
 }
 
+/** The weights add up to 100. Recognition took its 10 points proportionally from the other criteria. */
+export const MATCH_WEIGHTS = { profession: 32, german: 22, experience: 14, licence: 13, visa: 9, recognition: 10 } as const;
+export type MatchCriterion = keyof typeof MATCH_WEIGHTS;
+
 export interface MatchResult {
   score: number;
   gaps: MatchGap[];
+  /** Points earned per criterion (one decimal), out of MATCH_WEIGHTS — the score breakdown. */
+  parts: Record<MatchCriterion, number>;
 }
-
-export const MATCH_WEIGHTS = { profession: 35, german: 25, experience: 15, licence: 15, visa: 10 } as const;
 
 /** Skilled-worker visas (§18a / §18b) need a recognised vocational or university qualification. */
 const needsQualification = (visaLabel: string | null | undefined) => !!visaLabel && /18\s*[ab]\b/i.test(visaLabel);
 const QUALIFIED = new Set(['vocational', 'university']);
 
+// ─── Recognition (Anerkennung) ──────────────────────────────────────────
+
+export const RECOGNITION_STATUSES = ['NONE', 'NOT_REQUIRED', 'IN_PROGRESS', 'PARTIAL', 'RECOGNISED'] as const;
+export type RecognitionStatus = (typeof RECOGNITION_STATUSES)[number];
+
+/** Share of the recognition points per status: a Defizitbescheid (PARTIAL) or a running procedure counts half. */
+const RECOGNITION_CREDIT: Record<RecognitionStatus, number> = { RECOGNISED: 1, NOT_REQUIRED: 1, PARTIAL: 0.5, IN_PROGRESS: 0.5, NONE: 0 };
+
+/** Professions regulated in Germany: working in them at all needs a recognised qualification. */
+const REGULATED_PROFESSIONS = new Set(['nurse']);
+
+/** True when the vacancy needs a recognised foreign qualification: a regulated profession or a §18a / §18b visa. */
+export const needsRecognition = (v: Pick<MatchVacancy, 'profession' | 'visaCategory'>) =>
+  needsQualification(v.visaCategory?.visaLabel) || REGULATED_PROFESSIONS.has(canonicalProfession(v.profession) ?? '');
+
+/** 0..1 share of the recognition points for a status (unknown / empty = NONE). */
+export const recognitionCredit = (status: string | null | undefined) => RECOGNITION_CREDIT[(status || 'NONE') as RecognitionStatus] ?? 0;
+
+const round1 = (n: number) => Math.round(n * 10) / 10;
+
 export const matchCandidate = (c: MatchCandidate, v: MatchVacancy): MatchResult => {
   const gaps: MatchGap[] = [];
-  let score = 0;
+  const parts = { profession: 0, german: 0, experience: 0, licence: 0, visa: 0, recognition: 0 } as Record<MatchCriterion, number>;
 
   // Profession
   const prof = professionSimilarity(c.profession, v.profession);
-  score += MATCH_WEIGHTS.profession * prof;
+  parts.profession = MATCH_WEIGHTS.profession * prof;
   if (prof < 1 && v.profession) gaps.push({ code: 'PROFESSION', required: v.profession, actual: c.profession ?? null });
 
   // German
   const needGerman = germanRank(v.germanLevel);
   const haveGerman = germanRank(c.germanLevel);
-  if (needGerman <= haveGerman) score += MATCH_WEIGHTS.german;
+  if (needGerman <= haveGerman) parts.german = MATCH_WEIGHTS.german;
   else {
     const diff = needGerman - haveGerman;
-    score += MATCH_WEIGHTS.german * (diff === 1 ? 0.5 : diff === 2 ? 0.2 : 0);
+    parts.german = MATCH_WEIGHTS.german * (diff === 1 ? 0.5 : diff === 2 ? 0.2 : 0);
     gaps.push({ code: 'GERMAN', required: GERMAN_LEVELS[needGerman], actual: c.germanLevel ?? null });
   }
 
   // Experience
   const needExp = v.minExperience ?? 0;
   const haveExp = c.experienceYears ?? 0;
-  if (needExp <= 0 || haveExp >= needExp) score += MATCH_WEIGHTS.experience;
+  if (needExp <= 0 || haveExp >= needExp) parts.experience = MATCH_WEIGHTS.experience;
   else {
-    score += MATCH_WEIGHTS.experience * Math.max(0, haveExp / needExp);
+    parts.experience = MATCH_WEIGHTS.experience * Math.max(0, haveExp / needExp);
     gaps.push({ code: 'EXPERIENCE', required: needExp, actual: c.experienceYears ?? null });
   }
 
   // Driving licence
-  if (licenceCovers(c.drivingLicence, v.drivingLicence)) score += MATCH_WEIGHTS.licence;
+  if (licenceCovers(c.drivingLicence, v.drivingLicence)) parts.licence = MATCH_WEIGHTS.licence;
   else {
     // Partial credit for a lower category in the same line (e.g. C when CE is required).
     const covered = coveredLicences(c.drivingLicence);
     const required = parseLicences(v.drivingLicence);
     const partial = required.some((r) => LICENCE_IMPLIES[r].some((x) => x !== 'B' && x !== 'AM' && covered.has(x)));
-    score += MATCH_WEIGHTS.licence * (partial ? 0.3 : 0);
+    parts.licence = MATCH_WEIGHTS.licence * (partial ? 0.3 : 0);
     gaps.push({ code: 'LICENCE', required: required.join(', '), actual: c.drivingLicence ?? null });
   }
 
@@ -361,7 +388,17 @@ export const matchCandidate = (c: MatchCandidate, v: MatchVacancy): MatchResult 
       gaps.push({ code: 'VISA_EDUCATION', required: 'vocational', actual: c.education ?? null });
     }
   }
-  score += MATCH_WEIGHTS.visa * visaFit;
+  parts.visa = MATCH_WEIGHTS.visa * visaFit;
 
-  return { score: Math.max(0, Math.min(100, Math.round(score))), gaps };
+  // Recognition of the foreign qualification: only where the profession is regulated or the visa needs it.
+  if (!needsRecognition(v)) parts.recognition = MATCH_WEIGHTS.recognition;
+  else {
+    const credit = recognitionCredit(c.recognitionStatus);
+    parts.recognition = MATCH_WEIGHTS.recognition * credit;
+    if (credit < 1) gaps.push({ code: 'RECOGNITION', required: 'RECOGNISED', actual: c.recognitionStatus ?? null });
+  }
+
+  const score = Object.values(parts).reduce((a, b) => a + b, 0);
+  for (const k of Object.keys(parts) as MatchCriterion[]) parts[k] = round1(parts[k]);
+  return { score: Math.max(0, Math.min(100, Math.round(score))), gaps, parts };
 };

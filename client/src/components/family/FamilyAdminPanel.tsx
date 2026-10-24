@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
@@ -22,6 +22,7 @@ import { SensitiveValue } from '@/components/privacyTools/SensitiveValue';
 import { useFamilyOverview, useFamilyRefresh } from './api';
 import { MemberFormFields } from './MemberFormFields';
 import { MemberProgress, RELATION_ICON, STATE_TONE } from './FamilyMembersSection';
+import { MemberReunionLine, ReunionPanel } from './ReunionPanel';
 import { bodyFromForm, emptyMemberForm, formFromProfile, memberName, type FamilyMemberSummary, type FamilyProfile, type MemberForm } from './types';
 
 registerCopy(pagesFamilyLanguage);
@@ -91,7 +92,7 @@ export const MemberDetails = ({ p }: { p: FamilyProfile }) => {
   );
 };
 
-const MemberRow = ({ m, onEdit, onRemove, onChanged }: { m: FamilyMemberSummary; onEdit: () => void; onRemove: () => void; onChanged: () => void }) => {
+const MemberRow = ({ m, onEdit, onRemove, onChanged, reunion }: { m: FamilyMemberSummary; onEdit: () => void; onRemove: () => void; onChanged: () => void; reunion?: ReactNode }) => {
   const { t } = useTranslation();
   const { tr } = useL10n();
   const [open, setOpen] = useState(false);
@@ -114,6 +115,7 @@ const MemberRow = ({ m, onEdit, onRemove, onChanged }: { m: FamilyMemberSummary;
             </Link>
           </p>
           <MemberProgress m={m} />
+          {reunion}
           <ul className="mt-2 flex flex-wrap gap-1.5" aria-label={t('familyMembers.showDocs')}>
             {m.checklist.map((i) => (
               <li key={i.id} className={clsx('badge max-w-full truncate', STATE_TONE[i.state])} title={`${tr(i.title)} · ${t(`familyMembers.state.${i.state}`)}`}>
@@ -280,9 +282,18 @@ export const FamilyAdminPanel = ({ caseId, parentCaseId }: { caseId: string; par
       ) : (
         <>
           <p className="mb-4 text-xs text-muted">{t('familyMembers.staffHint')}</p>
+          {/* Familiennachzug start + document copies (lib/family/reunion.ts). */}
+          <ReunionPanel caseId={caseId} data={data} onChanged={() => refresh(data)} />
           <ul className="divide-y divide-line">
             {data.members.map((m) => (
-              <MemberRow key={m.caseId} m={m} onEdit={() => setEditing(m)} onRemove={() => setRemoving(m)} onChanged={() => void refetch()} />
+              <MemberRow
+                key={m.caseId}
+                m={m}
+                onEdit={() => setEditing(m)}
+                onRemove={() => setRemoving(m)}
+                onChanged={() => void refetch()}
+                reunion={<MemberReunionLine data={data} memberCaseId={m.caseId} />}
+              />
             ))}
           </ul>
           <p className="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-line pt-3 text-xs text-muted">

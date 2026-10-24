@@ -13,6 +13,7 @@ import {
   Building2,
   CalendarClock,
   CalendarDays,
+  CalendarRange,
   CalendarHeart,
   ClipboardList,
   Copy,
@@ -24,6 +25,8 @@ import {
   FileText,
   FolderKanban,
   FolderOpen,
+  Gauge,
+  GraduationCap,
   Handshake,
   HardDrive,
   HeartHandshake,
@@ -48,6 +51,7 @@ import {
   MessageSquareText,
   MessagesSquare,
   Newspaper,
+  PanelsTopLeft,
   PhoneCall,
   PlaneLanding,
   Plug,
@@ -71,6 +75,7 @@ import {
   Wallet,
   Wand2,
   Workflow,
+  ScrollText,
 } from 'lucide-react';
 import { hasMinRole, type Role } from '@/lib/types';
 
@@ -107,7 +112,7 @@ export interface StaffNavItem {
   adminOnly?: boolean;
   superOnly?: boolean;
   /** Live counter shown on the sidebar item. */
-  badge?: 'today';
+  badge?: 'today' | 'training';
 }
 
 const a = (id: string, to: string, icon: LucideIcon, group: NavGroupKey | undefined, extra: Partial<StaffNavItem> = {}): StaffNavItem => ({
@@ -149,6 +154,7 @@ export const STAFF_NAV: StaffNavItem[] = [
   a('checkIns', '/admin/check-ins', HeartHandshake, 'work'),
   a('examDates', '/admin/exam-dates', CalendarClock, 'work'),
   a('journey', '/admin/journey', Route, 'work'),
+  a('shifts', '/admin/shifts', CalendarRange, 'work'), // team calendar: shifts, leave, handovers
   // Müştərilər
   a('users', '/admin/users', Users, 'clients'),
   a('candidates', '/admin/candidates', UserSearch, 'clients'),
@@ -163,6 +169,7 @@ export const STAFF_NAV: StaffNavItem[] = [
   a('candidateRequests', '/admin/candidate-requests', UsersRound, 'employers'),
   a('quotes', '/admin/quotes', FileSignature, 'employers', { adminOnly: true }),
   a('interviews', '/admin/interviews', Video, 'employers'),
+  a('employmentContracts', '/admin/employment-contracts', FileText, 'employers'),
   a('interviewPrep', '/admin/interview-prep', MessageCircleQuestion, 'employers'),
   // Ünsiyyət
   a('messaging', '/admin/messaging', MessageSquareText, 'comms'),
@@ -196,12 +203,16 @@ export const STAFF_NAV: StaffNavItem[] = [
   a('kb', '/admin/kb', BookOpenText, 'site'),
   a('translations', '/admin/translations', Languages, 'site'),
   a('docGuides', '/admin/doc-guides', BookOpen, 'site'),
+  a('waitingRoom', '/admin/waiting-room', Hourglass, 'site'),
   a('caseForms', '/admin/case-forms', ListChecks, 'site'),
   a('contractTemplates', '/admin/contract-templates', FileText, 'site', { adminOnly: true }),
   a('siteTools', '/admin/site-tools', Wand2, 'site'),
+  a('landingPages', '/admin/landing-pages', PanelsTopLeft, 'site'),
+  a('guides', '/admin/guides', BookOpen, 'site', { adminOnly: true }), // SEO topic guides (6 languages)
   a('problemReports', '/admin/problems', Bug, 'site', { adminOnly: true }),
   // Sistem
   a('settings', '/admin/settings', Settings, 'system', { adminOnly: true }),
+  a('legal', '/admin/legal', ScrollText, 'system', { adminOnly: true }),
   a('security', '/admin/security', ShieldCheck, 'system'),
   a('securityAlerts', '/admin/security-alerts', ShieldAlert, 'system', { superOnly: true }),
   a('sensitiveAccess', '/admin/sensitive-access', ShieldHalf, 'system', { superOnly: true }),
@@ -212,6 +223,8 @@ export const STAFF_NAV: StaffNavItem[] = [
   a('ai', '/admin/ai', Sparkles, 'system', { superOnly: true }),
   a('agents', '/admin/agents', Handshake, 'system', { adminOnly: true }),
   a('oversight', '/admin/oversight', Eye, 'system', { superOnly: true }),
+  a('kpi', '/admin/kpi', Gauge, 'system', { adminOnly: true }), // staff KPI leaderboard
+  a('training', '/admin/training', GraduationCap, 'system', { badge: 'training' }), // internal training (badge: unfinished required courses)
   a('help', '/admin/help', LifeBuoy, 'system'),
   // Palette only (sub-pages without their own sidebar entry)
   a('docsAudit', '/admin/docs/audit', FileSearch, undefined),

@@ -39,8 +39,10 @@ export const SECTION_TAB: Record<string, CaseTab | null> = {
   'docs-initial': 'documents',
   'docs-embassy': 'documents',
   'case-contract': 'documents',
+  'case-employment': 'documents', // employment contract tracker (Arbeitsvertrag)
   'case-signatures': 'documents',
   'case-embassy-package': 'documents',
+  'case-four-eyes': 'documents',
   'case-files': 'documents',
   'case-originals': 'documents',
   // Ünsiyyət

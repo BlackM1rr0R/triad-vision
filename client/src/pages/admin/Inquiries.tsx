@@ -1,12 +1,12 @@
 import { CallButton } from '@/components/calls/CallButton'; // click-to-call (Twilio / sipgate) or manual call log
-import { useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
 import { toast } from 'sonner';
-import { Building2, ChevronDown, Inbox, Mail, MessageCircle, Phone, Search, User, Users } from 'lucide-react';
+import { Building2, ChevronDown, Flame, Inbox, Mail, MessageCircle, Phone, Search, SlidersHorizontal, User, Users } from 'lucide-react';
 import { api } from '@/lib/api';
 import {
   INQUIRY_KINDS,
@@ -22,6 +22,22 @@ import {
 } from '@/components/admin/labels';
 import type { InquiriesResponse, Inquiry } from '@/components/admin/types';
 import { Chip, EmptyState, ErrorBlock, LoadingBlock, PageHead, StatTile } from '@/components/admin/ui';
+import { LEAD_LEVELS, useLeadScoring, type LeadLevel, type ScoreReason } from '@/components/marketing/api';
+import { LeadDetailsPanel, LeadScoreBadge } from '@/components/marketing/LeadScore';
+import { LeadScoringSettingsDrawer } from '@/components/marketing/LeadScoringSettings';
+import { registerCopy } from '@/i18n';
+import { pagesMarketing } from '@/i18n/pagesMarketing';
+import { useAuth } from '@/lib/auth';
+import { hasMinRole } from '@/lib/types';
+
+registerCopy(pagesMarketing);
+
+/** Lead scoring fields on every inquiry (server lib/marketing/leadScoring.ts). */
+type Scored = Inquiry & { score?: number; scoreLevel?: LeadLevel | null; scoreReasons?: ScoreReason[] | null; source?: string | null };
+type SortKey = 'hot' | 'newest' | 'score';
+const LEVEL_RANK: Record<LeadLevel, number> = { HOT: 3, WARM: 2, COLD: 1 };
+const rank = (i: Scored) => (i.scoreLevel ? LEVEL_RANK[i.scoreLevel] : 0);
+const OPEN = new Set(['NEW', 'IN_PROGRESS']);
 
 const KEY = ['admin-inquiries'] as const;
 
@@ -70,8 +86,18 @@ export default function Inquiries() {
   const [params, setParams] = useSearchParams();
   const status = (params.get('status') as InquiryStatus | null) ?? null;
   const kind = params.get('kind');
+  const level = (params.get('level') as LeadLevel | null) ?? null;
+  const sort = (params.get('sort') as SortKey | null) ?? 'hot';
   const [q, setQ] = useState('');
-  const [open, setOpen] = useState<string | null>(null);
+  const [open, setOpen] = useState<string | null>(() => params.get('open'));
+  const [rulesOpen, setRulesOpen] = useState(false);
+  const { user } = useAuth();
+  const { data: scoring } = useLeadScoring();
+  // A HOT-lead notification links here with ?open=<id>: expand that inquiry once.
+  useEffect(() => {
+    const id = params.get('open');
+    if (id) setOpen(id);
+  }, [params]);
 
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: KEY,
@@ -86,7 +112,7 @@ export default function Inquiries() {
     setParams(next, { replace: true });
   };
 
-  const items = data?.items ?? [];
+  const items = (data?.items ?? []) as Scored[];
   const summary = data?.summary;
   // With a kind filter the chip counts are narrowed locally; otherwise they are the server totals.
   const counts = useMemo(() => {
@@ -96,23 +122,44 @@ export default function Inquiries() {
     return out;
   }, [items, kind, summary]);
 
+  const hotOpen = items.filter((i) => i.scoreLevel === 'HOT' && OPEN.has(i.status)).length;
   const filtered = items.filter((i) => {
     if (status && i.status !== status) return false;
     if (kind && i.kind !== kind) return false;
+    if (level && i.scoreLevel !== level) return false;
     if (q.trim()) {
       const s = q.trim().toLowerCase();
       return [i.contactName, i.companyName, i.email, i.phone, i.message, i.sector].some((f) => f?.toLowerCase().includes(s));
     }
     return true;
   });
+  // "Hot first" puts open HOT / WARM leads on top (then by score); closed inquiries keep their date order.
+  const sorted = [...filtered].sort((a, b) => {
+    const date = new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    if (sort === 'newest') return date;
+    if (sort === 'score') return (b.score ?? 0) - (a.score ?? 0) || date;
+    const ao = OPEN.has(a.status) ? 1 : 0;
+    const bo = OPEN.has(b.status) ? 1 : 0;
+    return bo - ao || (bo ? rank(b) - rank(a) || (b.score ?? 0) - (a.score ?? 0) : 0) || date;
+  });
 
   return (
     <div>
-      <PageHead title={t('admin.nav.inquiries')} subtitle={t('admin.inquiries.subtitle')} />
+      <PageHead
+        title={t('admin.nav.inquiries')}
+        subtitle={t('admin.inquiries.subtitle')}
+        actions={
+          <button type="button" className="btn-secondary btn-sm" onClick={() => setRulesOpen(true)}>
+            <SlidersHorizontal className="size-4" aria-hidden /> {t('mk.lead.settings.open')}
+          </button>
+        }
+      />
+      <LeadScoringSettingsDrawer open={rulesOpen} onClose={() => setRulesOpen(false)} canEdit={hasMinRole(user?.role, 'ADMIN')} />
 
       {summary && (
-        <div className="mb-6 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+        <div className="mb-6 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-5">
           <StatTile label={t('admin.inquiries.new7d')} value={summary.new7d} icon={Inbox} />
+          <StatTile label={t('mk.lead.hotTile')} value={hotOpen} icon={Flame} tone={hotOpen > 0 ? 'warn' : undefined} hint={t('mk.lead.hotTileHint', { n: scoring?.settings.thresholds.hot ?? 60 })} />
           <StatTile
             label={t('admin.inquiries.oldestOpen')}
             value={summary.oldestOpenDays === null ? '—' : t('admin.common.days', { count: summary.oldestOpenDays })}
@@ -131,6 +178,19 @@ export default function Inquiries() {
             <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted" aria-hidden />
             <input type="search" className="input pl-9" placeholder={t('admin.inquiries.searchPlaceholder')} value={q} onChange={(e) => setQ(e.target.value)} />
           </label>
+          <select aria-label={t('mk.lead.filterLevel')} className="input sm:w-44" value={level ?? ''} onChange={(e) => setParam('level', e.target.value || null)}>
+            <option value="">{t('mk.lead.allLevels')}</option>
+            {LEAD_LEVELS.map((l) => (
+              <option key={l} value={l}>
+                {t(`mk.lead.levels.${l}`)}
+              </option>
+            ))}
+          </select>
+          <select aria-label={t('mk.lead.sort')} className="input sm:w-44" value={sort} onChange={(e) => setParam('sort', e.target.value === 'hot' ? null : e.target.value)}>
+            <option value="hot">{t('mk.lead.sortHot')}</option>
+            <option value="score">{t('mk.lead.sortScore')}</option>
+            <option value="newest">{t('mk.lead.sortNewest')}</option>
+          </select>
           <select aria-label={t('admin.inquiries.kindAria')} className="input sm:w-56" value={kind ?? ''} onChange={(e) => setParam('kind', e.target.value || null)}>
             <option value="">{t('admin.inquiries.allKinds')}</option>
             {INQUIRY_KINDS.map((k) => (
@@ -156,13 +216,13 @@ export default function Inquiries() {
         <LoadingBlock />
       ) : error ? (
         <ErrorBlock error={error} onRetry={() => refetch()} />
-      ) : filtered.length === 0 ? (
+      ) : sorted.length === 0 ? (
         <div className="rounded-xl border border-line bg-white">
           <EmptyState icon={Inbox} title={t('admin.inquiries.notFound')} />
         </div>
       ) : (
         <ul className="divide-y divide-line overflow-hidden rounded-xl border border-line bg-white">
-          {filtered.map((i) => {
+          {sorted.map((i) => {
             const expanded = open === i.id;
             return (
               <li key={i.id} className={clsx(i.status === 'NEW' && 'bg-brand-50/40')}>
@@ -193,6 +253,7 @@ export default function Inquiries() {
                       <span className="min-w-0 font-semibold break-words text-navy-900">{i.companyName || i.contactName}</span>
                       {i.companyName && <span className="text-muted">{i.contactName}</span>}
                       <span className="text-[11px] whitespace-nowrap text-muted">{inquiryKindLabel(i.kind)}</span>
+                      <LeadScoreBadge level={i.scoreLevel ?? null} score={i.score ?? 0} reasons={i.scoreReasons ?? null} />
                     </p>
                     <p className={clsx('mt-0.5 text-xs text-ink/70', !expanded && 'line-clamp-1')}>{i.message}</p>
                   </div>
@@ -215,6 +276,7 @@ export default function Inquiries() {
                     >
                       <div className="space-y-4 border-t border-line bg-surface/50 px-4 py-4 sm:pr-5 sm:pl-16">
                         <p className="rounded-lg border border-line bg-white px-3.5 py-3 text-sm break-words whitespace-pre-wrap text-ink">{i.message}</p>
+                        <LeadDetailsPanel inquiryId={i.id} />
                         <dl className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                           <Detail label={t('admin.inquiries.contactPerson')}>{i.contactName}</Detail>
                           {i.companyName && <Detail label={t('admin.inquiries.company')}>{i.companyName}</Detail>}

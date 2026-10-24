@@ -196,41 +196,58 @@ const arrivedCase = async (daysAgo: number, opts: { staffId?: string; companyId?
 };
 
 describe('post-arrival check-ins', () => {
-  it('sends +7 / +30 days to the worker (in-app + e-mail) and +30 to the employer, exactly once', async () => {
+  it('sends +30 days (1 month) to the worker (in-app + e-mail) and the employer, then +90, exactly once', async () => {
     const staff = await asStaff();
     const company = await prisma.company.create({ data: { name: 'Nord Logistik GmbH', status: 'ACTIVE' } });
     const employer = await createUser({ role: 'COMPANY', locale: 'de' });
     await prisma.user.update({ where: { id: employer.user.id }, data: { companyId: company.id } });
-    const { client, c } = await arrivedCase(8, { staffId: staff.user.id, companyId: company.id });
-    const old = await arrivedCase(200); // far beyond every offset + grace: never sent
+    const { client, c } = await arrivedCase(31, { staffId: staff.user.id, companyId: company.id });
+    const old = await arrivedCase(400); // far beyond every offset + grace: never sent
 
     const now = new Date();
-    expect(await runCheckIns(now)).toEqual({ followUps: 2, worker: 1, employer: 0 });
+    expect(await runCheckIns(now)).toEqual({ followUps: 2, worker: 1, employer: 1 });
     expect(await runCheckIns(now)).toEqual({ followUps: 0, worker: 0, employer: 0 });
     const n = await prisma.notification.findFirst({ where: { userId: client.user.id, type: 'CHECKIN' } });
     expect(n?.title).toBe('Almaniyada necəsiniz?');
     await waitFor(() => prisma.emailLog.findFirst({ where: { to: client.user.email, subject: 'Triad Vision · Almaniyada necəsiniz?' } }));
     expect(await prisma.arrivalCheckIn.count({ where: { followUp: { caseId: old.c.id } } })).toBe(0);
+    const empN = await prisma.notification.findFirstOrThrow({ where: { userId: employer.user.id, type: 'CHECKIN_EMPLOYER' } });
+    expect(empN.body).toContain('seit 30 Tagen');
 
-    const later = new Date(now.getTime() + 23 * DAY);
+    const later = new Date(now.getTime() + 60 * DAY);
     expect(await runCheckIns(later)).toEqual({ followUps: 0, worker: 1, employer: 1 });
     expect(await runCheckIns(later)).toEqual({ followUps: 0, worker: 0, employer: 0 });
     const rows = await prisma.arrivalCheckIn.findMany({ where: { caseId: c.id }, orderBy: [{ audience: 'asc' }, { offsetDays: 'asc' }] });
     expect(rows.map((r) => [r.audience, r.offsetDays])).toEqual([
-      ['WORKER', 7],
       ['WORKER', 30],
+      ['WORKER', 90],
       ['EMPLOYER', 30],
+      ['EMPLOYER', 90],
     ]);
-    expect(await prisma.notification.count({ where: { userId: employer.user.id, type: 'CHECKIN_EMPLOYER' } })).toBe(1);
+    expect(await prisma.notification.count({ where: { userId: employer.user.id, type: 'CHECKIN_EMPLOYER' } })).toBe(2);
 
     // Configurable offsets (ADMIN+).
-    expect((await staff.agent.put('/api/admin/check-ins/settings').send({ enabled: true, workerOffsets: [14], employerEnabled: false, employerOffset: 30 })).status).toBe(403);
+    expect((await staff.agent.put('/api/admin/check-ins/settings').send({ enabled: true, workerOffsets: [14], employerEnabled: false, employerOffsets: [30] })).status).toBe(403);
+  });
+
+  it('settings: defaults 1 / 3 / 6 months, several employer offsets, the old single employerOffset keeps working', async () => {
+    const admin = await asAdmin();
+    expect((await admin.agent.get('/api/admin/check-ins/settings')).body.settings).toEqual({ enabled: true, workerOffsets: [30, 90, 180], employerEnabled: true, employerOffsets: [30, 90, 180] });
+    // A value stored by the previous version (custom worker offsets + one employer offset).
+    await prisma.setting.create({ data: { key: 'checkIns', value: { enabled: true, workerOffsets: [7, 30, 90], employerEnabled: true, employerOffset: 45 } } });
+    expect((await admin.agent.get('/api/admin/check-ins/settings')).body.settings).toEqual({ enabled: true, workerOffsets: [7, 30, 90], employerEnabled: true, employerOffsets: [45] });
+    // The old request body still saves (as a list).
+    const old = await admin.agent.put('/api/admin/check-ins/settings').send({ enabled: true, workerOffsets: [7, 30], employerEnabled: true, employerOffset: 60 });
+    expect(old.body.settings).toEqual({ enabled: true, workerOffsets: [7, 30], employerEnabled: true, employerOffsets: [60] });
+    const saved = await admin.agent.put('/api/admin/check-ins/settings').send({ enabled: true, workerOffsets: [180, 30, 90, 30], employerEnabled: true, employerOffsets: [90, 30] });
+    expect(saved.body.settings).toMatchObject({ workerOffsets: [30, 90, 180], employerOffsets: [30, 90] });
+    expect((await prisma.setting.findUniqueOrThrow({ where: { key: 'checkIns' } })).value).not.toHaveProperty('employerOffset');
   });
 
   it('one-tap answer via the e-mailed token; "Problem var" alerts staff + admins, creates a task and a my-work item', async () => {
     const staff = await asStaff();
     const admin = await asAdmin();
-    const { client, c } = await arrivedCase(8, { staffId: staff.user.id });
+    const { client, c } = await arrivedCase(31, { staffId: staff.user.id });
     await runCheckIns();
     await waitFor(() => prisma.emailLog.findFirst({ where: { to: client.user.email } }));
     // Only the hash of the e-mailed token is stored: give the row a token known to the test.
@@ -239,7 +256,7 @@ describe('post-arrival check-ins', () => {
 
     const view = await anon().get(`/api/check-ins/${token}`);
     expect(view.status).toBe(200);
-    expect(view.body.checkIn).toMatchObject({ audience: 'WORKER', offsetDays: 7, firstName: 'Rauf', answered: false });
+    expect(view.body.checkIn).toMatchObject({ audience: 'WORKER', offsetDays: 30, firstName: 'Rauf', answered: false });
     expect((await anon().get('/api/check-ins/notatokennotatokennotatokennotatokennotat')).status).toBe(404);
 
     // The worker's open check-ins (web / mobile home card).
@@ -275,7 +292,7 @@ describe('post-arrival check-ins', () => {
 
   it('the logged-in worker answers by id (others cannot); retention counts "left the job"', async () => {
     const staff = await asStaff();
-    const { client, c } = await arrivedCase(8);
+    const { client, c } = await arrivedCase(31);
     const stranger = await asClient();
     await runCheckIns();
     const ci = await prisma.arrivalCheckIn.findFirstOrThrow({ where: { caseId: c.id } });

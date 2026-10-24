@@ -18,6 +18,7 @@ import { ConfirmDialog } from '@/components/admin/ConfirmDialog';
 import { Chip, EmptyState, ErrorBlock, LoadingBlock, PageHead, Panel } from '@/components/admin/ui';
 import { fmtDate, fmtDateTime, fullName, toLocalInput } from '@/components/admin/labels';
 import { InterviewCard, InterviewStatusBadge } from '@/components/ops/InterviewCard';
+import { InterviewEvaluations } from '@/components/placement/Evaluations';
 import { INTERVIEW_DOT, INTERVIEW_STATUSES, addDays, defaultStart, fmtTime, sameDay, startOfWeek, toastOpsError, type Interview, type InterviewStatus } from '@/components/ops/shared';
 
 registerCopy(pagesOps);
@@ -298,6 +299,13 @@ const DetailDrawer = ({ interview: i, onClose, staff }: { interview: Interview |
               </button>
               <button type="button" className="btn-secondary btn-sm" onClick={() => setCancelReason(null)}>{t('ops.common.cancel')}</button>
             </div>
+          </div>
+        )}
+
+        {/* Structured evaluations (employer + team); possible once the interview started. */}
+        {i.status !== 'CANCELLED' && (
+          <div className="rounded-xl border border-line p-4">
+            <InterviewEvaluations interviewId={i.id} canDeleteAll />
           </div>
         )}
 

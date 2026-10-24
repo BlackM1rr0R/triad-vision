@@ -5,6 +5,7 @@ import { whenIdle } from './lib/idle';
 import { PageLoader } from './components/ui/Spinner';
 import { SiteLayout } from './components/layout/SiteLayout';
 import { getImpersonation, subscribeImpersonation } from './lib/api';
+import { splitLocalePath } from './lib/siteLocale';
 
 // "View as client" bar: its chunk (and copy) loads only while an admin is actually viewing a portal.
 const ImpersonationBanner = lazy(() => import('./components/privacyTools/ImpersonationBanner').then((m) => ({ default: m.ImpersonationBanner })));
@@ -13,6 +14,17 @@ const ImpersonationGate = () => {
   return active ? (
     <Suspense fallback={null}>
       <ImpersonationBanner />
+    </Suspense>
+  ) : null;
+};
+
+// Re-acceptance of updated legal texts: own chunk, fetched only for signed-in users.
+const LegalGate = lazy(() => import('./components/legal/LegalGate'));
+const LegalGateHost = () => {
+  const { user } = useAuth();
+  return user ? (
+    <Suspense fallback={null}>
+      <LegalGate />
     </Suspense>
   ) : null;
 };
@@ -60,6 +72,7 @@ const AdminSignatures = lazy(() => import('./pages/admin/Signatures'));
 const SignPage = lazy(() => import('./pages/SignPage'));
 const QuotePage = lazy(() => import('./pages/QuotePage'));
 const SharePage = lazy(() => import('./pages/SharePage'));
+const CandidateSharePage = lazy(() => import('./pages/CandidateSharePage')); // employer share link of a candidate
 const AccountSignatures = lazy(() => import('./pages/account/Signatures'));
 const WorkspaceLayout = lazy(() => import('./pages/workspace/WorkspaceLayout'));
 const WorkspaceDrive = lazy(() => import('./pages/workspace/Drive'));
@@ -77,6 +90,13 @@ const AdminContent = lazy(() => import('./pages/admin/ContentManager'));
 const AdminSettings = lazy(() => import('./pages/admin/Settings'));
 const Impressum = lazy(() => import('./pages/legal/Impressum'));
 const Privacy = lazy(() => import('./pages/legal/Privacy'));
+// Versioned legal texts: AGB (/agb, /terms), cookie policy, archived versions.
+const TermsPage = lazy(() => import('./pages/legal/LegalDocument').then((m) => ({ default: m.TermsPage })));
+const CookiesPage = lazy(() => import('./pages/legal/LegalDocument').then((m) => ({ default: m.CookiesPage })));
+const LegalArchivedVersion = lazy(() => import('./pages/legal/LegalDocument').then((m) => ({ default: m.LegalArchivedVersion })));
+const AdminLegal = lazy(() => import('./pages/admin/Legal'));
+const AdminWaitingRoom = lazy(() => import('./pages/admin/WaitingRoom'));
+const AccountWaitingRoom = lazy(() => import('./pages/account/WaitingRoom'));
 const VerifyEmail = lazy(() => import('./pages/auth/VerifyEmail'));
 const TwoFactor = lazy(() => import('./pages/auth/TwoFactor'));
 const Jobs = lazy(() => import('./pages/jobs/Jobs'));
@@ -97,11 +117,20 @@ const StartCalculator = lazy(() => import('./pages/growth/Calculator'));
 const PlacementMapPage = lazy(() => import('./pages/growth/MapPage'));
 const InfoEvents = lazy(() => import('./pages/growth/Events'));
 const InfoEventDetail = lazy(() => import('./pages/growth/EventDetail'));
+const CostCalculatorPage = lazy(() => import('./pages/growth/CostCalculator')); // client cost calculator
+const LandingPageView = lazy(() => import('./pages/growth/LandingPage')); // public landing pages /l/:slug
 const AccountReferral = lazy(() => import('./pages/account/Referral'));
 const AdminGrowthEvents = lazy(() => import('./pages/admin/GrowthEvents'));
 const AdminGrowthTools = lazy(() => import('./pages/admin/GrowthTools'));
+const AdminLandingPages = lazy(() => import('./pages/admin/LandingPages')); // landing page builder
 const AnerkennungGuide = lazy(() => import('./pages/tools/Anerkennung'));
 const CitiesGuide = lazy(() => import('./pages/tools/Cities'));
+// SEO: topic guides and interactive tools (Chancenkarte points, Blue Card salary check)
+const Guides = lazy(() => import('./pages/guides/Guides'));
+const GuideDetail = lazy(() => import('./pages/guides/GuideDetail'));
+const ChancenkarteCalculator = lazy(() => import('./pages/tools/ChancenkarteCalculator'));
+const BlueCardCheck = lazy(() => import('./pages/tools/BlueCardCheck'));
+const AdminGuides = lazy(() => import('./pages/admin/Guides'));
 const AdminArrivals = lazy(() => import('./pages/admin/Arrivals'));
 const AdminExpiring = lazy(() => import('./pages/admin/Expiring'));
 const AdminOriginals = lazy(() => import('./pages/admin/Originals'));
@@ -142,6 +171,9 @@ const AdminCandidateRequests = lazy(() => import('./pages/admin/CandidateRequest
 const SurveyAnswer = lazy(() => import('./pages/SurveyAnswer'));
 const CheckInAnswer = lazy(() => import('./pages/CheckInAnswer')); // post-arrival check-in (one tap)
 const AdminTimeTracking = lazy(() => import('./pages/admin/TimeTracking')); // staff time tracking
+const AdminKpi = lazy(() => import('./pages/admin/Kpi')); // staff KPI leaderboard (ADMIN+)
+const AdminTraining = lazy(() => import('./pages/admin/Training')); // internal training: learn / authoring / progress
+const AdminShifts = lazy(() => import('./pages/admin/Shifts')); // team calendar: shifts, leave, handovers
 const AdminCheckIns = lazy(() => import('./pages/admin/CheckIns')); // post-arrival check-ins + retention
 const AdminAgents = lazy(() => import('./pages/admin/Agents'));
 const AdminTranslations = lazy(() => import('./pages/admin/Translations'));
@@ -166,6 +198,7 @@ const AdminKnowledgeBase = lazy(() => import('./pages/admin/KnowledgeBase'));
 const AdminIntegrations = lazy(() => import('./pages/admin/Integrations'));
 const AdminAutomation = lazy(() => import('./pages/admin/Automation')); // automation rules + automatic assignment
 const AdminInterviews = lazy(() => import('./pages/admin/Interviews'));
+const AdminEmploymentContracts = lazy(() => import('./pages/admin/EmploymentContracts')); // Arbeitsvertrag tracker: warnings, probation ending
 const AdminJourney = lazy(() => import('./pages/admin/Journey'));
 const AdminGermanExamDates = lazy(() => import('./pages/admin/GermanExamDates'));
 const AdminRequirements = lazy(() => import('./pages/admin/Requirements'));
@@ -250,7 +283,9 @@ const INTENT: [string, () => Promise<unknown>][] = [
 const warmed = new Set<string>();
 const prefetchIntent = (e: Event) => {
   const a = (e.target as HTMLElement | null)?.closest?.('a[href^="/"]');
-  const href = a?.getAttribute('href');
+  // Language-prefixed links (/de/visas) warm the same chunk as /visas.
+  const raw = a?.getAttribute('href');
+  const href = raw ? splitLocalePath(raw.split(/[?#]/)[0]).rest : null;
   if (!href) return;
   const hit = INTENT.find(([prefix]) => href === prefix || href.startsWith(prefix.endsWith('/') ? prefix : `${prefix}/`) || href.startsWith(prefix + '?'));
   if (!hit || warmed.has(hit[0])) return;
@@ -278,6 +313,8 @@ export default function App() {
     <>
     {/* "View as client": persistent read-only bar (renders nothing otherwise). */}
     <ImpersonationGate />
+    {/* Updated AGB / privacy policy to re-accept (signed-in users only; renders nothing otherwise). */}
+    <LegalGateHost />
     <Suspense fallback={<PageLoader />}>
       <Routes location={location} key={area}>
           <Route element={<SiteLayout />}>
@@ -297,10 +334,16 @@ export default function App() {
             <Route path="salary-calculator" element={<SalaryCalculator />} />
             <Route path="anerkennung" element={<AnerkennungGuide />} />
             <Route path="cities" element={<CitiesGuide />} />
+            <Route path="guides" element={<Guides />} />
+            <Route path="guides/:slug" element={<GuideDetail />} />
+            <Route path="chancenkarte-calculator" element={<ChancenkarteCalculator />} />
+            <Route path="blue-card-check" element={<BlueCardCheck />} />
             <Route path="calculator" element={<StartCalculator />} />
             <Route path="map" element={<PlacementMapPage />} />
             <Route path="events" element={<InfoEvents />} />
             <Route path="events/:slug" element={<InfoEventDetail />} />
+            <Route path="cost-calculator" element={<CostCalculatorPage />} />
+            <Route path="l/:slug" element={<LandingPageView />} />
             <Route path="survey/:token" element={<SurveyAnswer />} />
             <Route path="check-in/:key" element={<CheckInAnswer />} />
             <Route path="unsubscribe" element={<Unsubscribe />} />
@@ -317,6 +360,10 @@ export default function App() {
             <Route path="login/2fa" element={<TwoFactor />} />
             <Route path="impressum" element={<Impressum />} />
             <Route path="privacy" element={<Privacy />} />
+            <Route path="agb" element={<TermsPage />} />
+            <Route path="terms" element={<TermsPage />} />
+            <Route path="cookies" element={<CookiesPage />} />
+            <Route path="legal/:kind/:version" element={<LegalArchivedVersion />} />
             <Route path="jobs" element={<Jobs />} />
             <Route path="jobs/:slug" element={<JobDetail />} />
             <Route path="employers/register" element={<EmployerRegister />} />
@@ -350,6 +397,7 @@ export default function App() {
             <Route path="sign/:token" element={<SignPage />} />
             <Route path="angebot/:token" element={<QuotePage />} />
             <Route path="share/:token" element={<SharePage />} />
+            <Route path="kandidat/:token" element={<CandidateSharePage />} />
             <Route path="q/:caseId" element={<QrRedirect />} />
             <Route
               path="account"
@@ -371,6 +419,7 @@ export default function App() {
               <Route path="interviews" element={<AccountInterviews />} />
               <Route path="translations/*" element={<AccountTranslations />} />
               <Route path="privacy" element={<AccountPrivacyCenter />} />
+              <Route path="waiting-room" element={<AccountWaitingRoom />} />
               <Route path="cv" element={<AccountCv />} />
               <Route path="letters/*" element={<AccountLetters />} />
               <Route path="letters-explain" element={<AccountLetterExplain />} />
@@ -499,6 +548,7 @@ export default function App() {
             <Route path="docs" element={<Navigate to="/workspace/drive" replace />} />
             <Route path="docs/audit" element={<AdminDocsAudit />} />
             <Route path="content/:resource" element={<AdminContent />} />
+            <Route path="guides" element={<AdminGuides />} />
             <Route path="settings" element={<AdminSettings />} />
             <Route path="security" element={<AdminSecurity />} />
             <Route path="companies" element={<AdminCompanies />} />
@@ -569,6 +619,16 @@ export default function App() {
             <Route path="profitability" element={<AdminProfitability />} />
             <Route path="surveys/*" element={<AdminSurveys />} />
             <Route path="time" element={<AdminTimeTracking />} />
+            <Route
+              path="kpi"
+              element={
+                <RequireAuth roles={['ADMIN', 'SUPER_ADMIN']}>
+                  <AdminKpi />
+                </RequireAuth>
+              }
+            />
+            <Route path="training" element={<AdminTraining />} />
+            <Route path="shifts" element={<AdminShifts />} />
             <Route path="check-ins" element={<AdminCheckIns />} />
             <Route
               path="campaigns/*"
@@ -580,11 +640,21 @@ export default function App() {
             />
             <Route path="events" element={<AdminGrowthEvents />} />
             <Route path="site-tools" element={<AdminGrowthTools />} />
+            <Route path="landing-pages/*" element={<AdminLandingPages />} />
             <Route path="contract-templates/*" element={<AdminContractTemplates />} />
             <Route path="candidate-requests/*" element={<AdminCandidateRequests />} />
             <Route path="agents/*" element={<AdminAgents />} />
             <Route path="translations/*" element={<AdminTranslations />} />
             <Route path="privacy-requests/*" element={<AdminPrivacyRequests />} />
+            <Route path="waiting-room" element={<AdminWaitingRoom />} />
+            <Route
+              path="legal/*"
+              element={
+                <RequireAuth roles={['ADMIN', 'SUPER_ADMIN']}>
+                  <AdminLegal />
+                </RequireAuth>
+              }
+            />
             <Route path="integrations" element={<AdminIntegrations />} />
             <Route
               path="automation"
@@ -595,6 +665,7 @@ export default function App() {
               }
             />
             <Route path="interviews" element={<AdminInterviews />} />
+            <Route path="employment-contracts" element={<AdminEmploymentContracts />} />
             <Route path="journey" element={<AdminJourney />} />
             <Route path="exam-dates" element={<AdminGermanExamDates />} />
             <Route path="requirements" element={<AdminRequirements />} />

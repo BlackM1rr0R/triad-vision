@@ -32,7 +32,9 @@ export const WORK_KINDS = [
   'security_alert',
   'privacy',
   'arrival_issue', // post-arrival check-in answered "Problem var" (lib/checkIns)
+  'embassy_review', // four-eyes check of an embassy package waiting for the viewer (lib/caseNext/fourEyes)
   'client_task_overdue',
+  'handover', // cases covered for an absent colleague with a handover note / open checklist (lib/shifts/handoverNotes)
 ] as const;
 export type WorkKind = (typeof WORK_KINDS)[number];
 
@@ -58,7 +60,9 @@ const CATEGORY: Record<WorkKind, WorkCategory> = {
   security_alert: 'other',
   privacy: 'other',
   arrival_issue: 'other',
+  embassy_review: 'documents',
   client_task_overdue: 'tasks',
+  handover: 'other',
 };
 
 /** Page that lists all items of a kind (the "+N more" link). */
@@ -81,7 +85,9 @@ const MORE_LINK: Record<WorkKind, string> = {
   security_alert: '/admin/security-alerts',
   privacy: '/admin/privacy-requests',
   arrival_issue: '/admin/check-ins?status=issue',
+  embassy_review: '/admin/cases?status=APPOINTMENT_SCHEDULED',
   client_task_overdue: '/admin/client-tasks?filter=overdue',
+  handover: '/workspace/team?tab=handover',
 };
 
 export type WorkPriority = 'URGENT' | 'HIGH' | 'NORMAL';
@@ -970,6 +976,93 @@ const arrivalIssues = async (ctx: Ctx): Promise<Source> => {
   };
 };
 
+/** Embassy packages waiting for the viewer's four-eyes review (assigned to them, or unassigned and asked by someone else). */
+const embassyReviews = async (ctx: Ctx): Promise<Source> => {
+  const where: Prisma.EmbassyPackageApprovalWhereInput = ctx.team
+    ? { status: 'PENDING' }
+    : { status: 'PENDING', requestedById: { not: ctx.viewer.id }, OR: [{ reviewerId: ctx.viewer.id }, { reviewerId: null }] };
+  const [rows, total] = await Promise.all([
+    prisma.embassyPackageApproval.findMany({ where, orderBy: { requestedAt: 'asc' }, take: LIMIT_PER_KIND }),
+    prisma.embassyPackageApproval.count({ where }),
+  ]);
+  const ids = [...new Set(rows.flatMap((r) => [r.requestedById, r.reviewerId]).filter((x): x is string => !!x))];
+  const [cases, users] = await Promise.all([
+    prisma.case.findMany({ where: { id: { in: rows.map((r) => r.caseId) } }, select: { id: true, number: true, appointmentAt: true, client: { select: { firstName: true, lastName: true } } } }),
+    ids.length ? prisma.user.findMany({ where: { id: { in: ids } }, select: { id: true, firstName: true, lastName: true } }) : [],
+  ]);
+  const byCase = new Map(cases.map((c) => [c.id, c]));
+  const byUser = new Map(users.map((u) => [u.id, u]));
+  return {
+    kind: 'embassy_review',
+    total,
+    items: rows
+      .filter((r) => byCase.has(r.caseId))
+      .map((r) => {
+        const c = byCase.get(r.caseId)!;
+        const href = `${caseLink(c.id)}?tab=documents#case-four-eyes`;
+        // Due a day before the embassy appointment (else one working day after the request).
+        const due = c.appointmentAt ? new Date(c.appointmentAt.getTime() - DAY) : new Date(r.requestedAt.getTime() + DAY);
+        return {
+          id: `embassy_review:${r.id}`,
+          kind: 'embassy_review' as const,
+          title: name(c.client) || c.number,
+          subtitle: join(c.number, name(byUser.get(r.requestedById))),
+          note: { key: 'embassyReview', params: { by: name(byUser.get(r.requestedById)) } },
+          priority: c.appointmentAt && c.appointmentAt.getTime() - ctx.c.now.getTime() < 3 * DAY ? ('URGENT' as const) : ('HIGH' as const),
+          dueAt: due,
+          since: r.requestedAt,
+          link: href,
+          refs: { caseId: c.id, caseNumber: c.number, approvalId: r.id },
+          assignee: person(r.reviewerId ? byUser.get(r.reviewerId) : null),
+          actions: [{ key: 'review', label: 'reviewPackage', type: 'link' as const, href, primary: true }],
+        };
+      }),
+  };
+};
+
+/** Cases the viewer covers for an absent colleague that carry a handover note or open checklist items. */
+const handovers = async (ctx: Ctx): Promise<Source> => {
+  const rows = await prisma.caseHandover.findMany({
+    where: { status: 'ACTIVE', ...(ctx.team ? {} : { substituteId: ctx.viewer.id }) },
+    orderBy: { startedAt: 'asc' },
+    select: { id: true, caseId: true, originalStaffId: true, substituteId: true, startedAt: true, plannedEndAt: true, note: true, checklist: true },
+  });
+  const withNotes = rows.filter((h) => h.note || (Array.isArray(h.checklist) && h.checklist.length));
+  const openItems = (h: (typeof rows)[number]) => (Array.isArray(h.checklist) ? (h.checklist as { done?: boolean }[]).filter((x) => !x?.done).length : 0);
+  const list = withNotes.slice(0, LIMIT_PER_KIND);
+  const [cases, people] = await Promise.all([
+    prisma.case.findMany({ where: { id: { in: list.map((h) => h.caseId) } }, select: { id: true, number: true, client: { select: { firstName: true, lastName: true } } } }),
+    prisma.user.findMany({ where: { id: { in: [...new Set(list.flatMap((h) => [h.originalStaffId, h.substituteId]))] } }, select: { id: true, firstName: true, lastName: true } }),
+  ]);
+  const caseOf = new Map(cases.map((c) => [c.id, c]));
+  const personOf = new Map(people.map((p) => [p.id, p]));
+  return {
+    kind: 'handover',
+    total: withNotes.length,
+    items: list.flatMap((h) => {
+      const c = caseOf.get(h.caseId);
+      if (!c) return [];
+      const n = openItems(h);
+      return [
+        {
+          id: `handover:${h.id}`,
+          kind: 'handover' as const,
+          title: name(c.client) || c.number,
+          subtitle: join(c.number, h.note ? h.note.slice(0, 140) : null),
+          note: { key: n ? 'handoverOpen' : 'handoverNote', params: { owner: name(personOf.get(h.originalStaffId)), count: n } },
+          priority: n ? ('HIGH' as const) : ('NORMAL' as const),
+          dueAt: h.plannedEndAt,
+          since: h.startedAt,
+          link: `${caseLink(c.id)}#case-handover`,
+          refs: { caseId: c.id, caseNumber: c.number, handoverId: h.id },
+          assignee: person(personOf.get(h.substituteId)),
+          actions: [open(`${caseLink(c.id)}#case-handover`, true)],
+        },
+      ];
+    }),
+  };
+};
+
 // ─── Assembly ─────────────────────────────────────────────────────────
 
 export const buildMyWork = async (viewer: WorkViewer, opts: { team: boolean; tz?: number; now?: Date }): Promise<WorkResult> => {
@@ -994,6 +1087,8 @@ export const buildMyWork = async (viewer: WorkViewer, opts: { team: boolean; tz?
     ctx.isSuper ? securityAlerts(ctx) : null,
     ctx.isAdmin ? privacyRequests(ctx) : null,
     arrivalIssues(ctx), // post-arrival check-ins
+    handovers(ctx), // absence handover notes / checklists
+    embassyReviews(ctx), // four-eyes check of embassy packages
   ]);
   const sources = groups.flat().filter((s): s is Source => !!s);
   const items = sources.flatMap((s) => s.items.map((d) => finish(d, ctx.c))).sort(compareItems);

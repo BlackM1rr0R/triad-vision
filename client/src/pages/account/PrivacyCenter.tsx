@@ -33,6 +33,7 @@ import { Spinner } from '@/components/ui/Spinner';
 import { ConfirmDialog } from '@/components/portal/ConfirmDialog';
 import { PublicStatusSettings } from '@/components/site/PublicStatusSettings';
 import { AccessLogSection } from '@/components/privacy/AccessLogSection'; // "who viewed my documents"
+import { LegalVersions } from '@/components/legal/LegalVersions';
 import {
   CLIENT_REQUEST_TYPES,
   STATUS_TONE,
@@ -182,7 +183,10 @@ const HistoryPanel = ({ state }: { state: PrivacyState }) => {
   const { dateTime } = useL10n();
   const [all, setAll] = useState(false);
   const rows = all ? state.history : state.history.slice(0, 8);
-  const sourceLabel = (s: string) => (i18n.exists(`privacy.source.${s}`) ? t(`privacy.source.${s}`) : t('privacy.source.other'));
+  const sourceLabel = (s: string) =>
+    i18n.exists(`privacy.source.${s}`) ? t(`privacy.source.${s}`) : i18n.exists(`legalDocs.sources.${s}`) ? t(`legalDocs.sources.${s}`) : t('privacy.source.other');
+  // Cookie-banner rows (COOKIES*) are labelled by the legal-docs copy.
+  const typeLabel = (type: string) => (i18n.exists(`privacy.consentType.${type}`) ? t(`privacy.consentType.${type}`) : t(`legalDocs.consentTypes.${type}`, { defaultValue: type }));
   return (
     <Panel id="privacy-history" title={t('privacy.history.title')} icon={History}>
       {state.history.length === 0 ? (
@@ -193,7 +197,7 @@ const HistoryPanel = ({ state }: { state: PrivacyState }) => {
             {rows.map((r) => (
               <li key={r.id} className="flex flex-wrap items-start justify-between gap-x-4 gap-y-1 py-2.5">
                 <div className="min-w-0">
-                  <p className="text-sm font-medium text-ink">{t(`privacy.consentType.${r.type}`)}</p>
+                  <p className="text-sm font-medium text-ink">{typeLabel(r.type)}</p>
                   <p className={clsx('text-xs font-semibold', r.granted ? 'text-emerald-700' : 'text-amber-700')}>
                     {r.granted ? t('privacy.history.granted') : t('privacy.history.withdrawn')}
                   </p>
@@ -472,6 +476,8 @@ export default function AccountPrivacyCenter() {
           </Link>
           <span className="text-xs text-muted">{t('privacy.page.policyVersion', { version: data.policyVersion })}</span>
         </p>
+        {/* Versioned legal texts: current AGB / privacy version vs. the version accepted. */}
+        {data.legal?.length ? <LegalVersions items={data.legal} /> : null}
       </section>
 
       <section aria-labelledby="privacy-overview">

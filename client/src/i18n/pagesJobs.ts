@@ -37,6 +37,7 @@ const az = {
       LICENCE: '{{required}} kateqoriyalı sürücülük vəsiqəsi tələb olunur',
       VISA_GERMAN: 'Viza üçün alman dili {{required}} lazımdır',
       VISA_EDUCATION: 'Viza üçün peşə və ya ali təhsil lazımdır',
+      RECOGNITION: 'Diplomun Almaniyada tanınması (Anerkennung) lazımdır',
     },
     common: {
       all: 'Hamısı',
@@ -505,6 +506,7 @@ const de: typeof az = {
       LICENCE: 'Führerschein Klasse {{required}} erforderlich',
       VISA_GERMAN: 'Für das Visum ist Deutsch {{required}} nötig',
       VISA_EDUCATION: 'Für das Visum ist eine Berufsausbildung oder ein Studium nötig',
+      RECOGNITION: 'Anerkennung der ausländischen Qualifikation erforderlich',
     },
     common: {
       all: 'Alle',
@@ -973,6 +975,7 @@ const en: typeof az = {
       LICENCE: 'Needs driving licence {{required}}',
       VISA_GERMAN: 'The visa requires German {{required}}',
       VISA_EDUCATION: 'The visa requires vocational training or a degree',
+      RECOGNITION: 'Recognition of the foreign qualification (Anerkennung) required',
     },
     common: {
       all: 'All',
@@ -1441,6 +1444,7 @@ const ru: typeof az = {
       LICENCE: 'Нужны права категории {{required}}',
       VISA_GERMAN: 'Для визы нужен немецкий {{required}}',
       VISA_EDUCATION: 'Для визы нужно профессиональное или высшее образование',
+      RECOGNITION: 'Нужно признание иностранной квалификации (Anerkennung)',
     },
     common: {
       all: 'Все',

@@ -6,6 +6,7 @@ import { clientNotificationTypes, expectClientNotified, staffNotifications } fro
 import {
   act,
   adminCase,
+  approveFourEyes,
   clientCase,
   createCaseVia,
   driveCaseTo,
@@ -111,6 +112,9 @@ describe('full journey (client in German)', () => {
     expect(res.body.case.events.some((e: { type: string }) => e.type === 'APPOINTMENT_RESCHEDULED')).toBe(true);
 
     expect((await act(admin.agent, id, { action: 'DECIDE', decision: 'APPROVED' })).status).toBe(409);
+    // Four-eyes gate: lodging needs an approved second review of the embassy package.
+    expect((await act(admin.agent, id, { action: 'MARK_LODGED' })).body.error).toBe('FOUR_EYES_REQUIRED');
+    await approveFourEyes(id);
     expectStatus(await act(admin.agent, id, { action: 'MARK_LODGED' }), 200);
     expect(await status(client.agent, id)).toBe('DECISION_PENDING');
     await expectClientNotified(user, 'DECISION_PENDING', 'Antrag bei der Botschaft eingereicht');
@@ -131,6 +135,7 @@ describe('full journey (client in German)', () => {
     // 10. second attempt approved
     expectStatus(await client.agent.post(`/api/cases/${id}/submit`), 200);
     expectStatus(await act(admin.agent, id, schedule('2026-12-10T09:00:00+04:00')), 200);
+    await approveFourEyes(id);
     expectStatus(await act(admin.agent, id, { action: 'MARK_LODGED' }), 200);
     res = expectStatus(
       await act(admin.agent, id, { action: 'DECIDE', decision: 'APPROVED', validFrom: '2027-01-01', validTo: '2027-06-30' }),
@@ -309,6 +314,7 @@ describe('concurrency', () => {
     const admin = await asAdmin();
     const staff = await asStaff();
     const c = await driveCaseTo('APPOINTMENT_SCHEDULED', { client: client.agent, admin: admin.agent });
+    await approveFourEyes(c.id);
 
     const results = await Promise.all([act(admin.agent, c.id, { action: 'MARK_LODGED' }), act(staff.agent, c.id, { action: 'MARK_LODGED' })]);
     expect(results.map((r) => r.status).sort()).toEqual([200, 409]);

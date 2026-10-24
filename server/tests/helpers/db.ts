@@ -5,6 +5,10 @@ export { prisma };
 
 /** Deletes all rows, children before parents so foreign keys are never violated. */
 export const resetDb = async () => {
+  // Placement: employer share links, interview evaluations, employment contracts (plain ids, no dependants)
+  await prisma.candidateShareLink.deleteMany();
+  await prisma.interviewEvaluation.deleteMany();
+  await prisma.employmentContract.deleteMany();
   // German exam dates (admin list, no user FK; candidates' exams / courses / plans cascade with the user)
   await prisma.germanExamDate.deleteMany();
   // Client data: templates and guides have no case (forms, confirmations, values cascade with the case)
@@ -16,6 +20,7 @@ export const resetDb = async () => {
   await prisma.staffCostRate.deleteMany();
   await prisma.arrivalCheckIn.deleteMany();
   await prisma.arrivalFollowUp.deleteMany();
+  await prisma.embassyPackageApproval.deleteMany(); // four-eyes check of the embassy package (plain ids)
   await prisma.documentAccessLog.deleteMany();
   // Calls, callback requests, live chat (plain ids; messages cascade with the chat)
   await prisma.call.deleteMany();
@@ -33,6 +38,11 @@ export const resetDb = async () => {
   await prisma.automationEvent.deleteMany();
   await prisma.staffPreferences.deleteMany();
   await prisma.caseHandover.deleteMany();
+  // Team: training courses / progress, shift calendar (plain ids, no dependants)
+  await prisma.trainingProgress.deleteMany();
+  await prisma.trainingLesson.deleteMany();
+  await prisma.trainingCourse.deleteMany();
+  await prisma.staffShift.deleteMany();
   await prisma.savedReport.deleteMany(); // report builder (schedules and deliveries cascade; CaseCost cascades with the case)
   await prisma.userMerge.deleteMany(); // duplicate merges (no foreign keys; pairs cascade with the users)
   await prisma.user.updateMany({ where: { mergedIntoId: { not: null } }, data: { mergedIntoId: null } });
@@ -69,6 +79,9 @@ export const resetDb = async () => {
   await prisma.translationOrderFile.deleteMany();
   await prisma.translationOrder.deleteMany();
   await prisma.consentRecord.deleteMany();
+  await prisma.legalDocument.deleteMany(); // versioned AGB / privacy / cookie texts
+  await prisma.waitingRoomProgress.deleteMany(); // client waiting room
+  await prisma.waitingRoomItem.deleteMany();
   await prisma.privacyRequest.deleteMany();
   // Team workspace: mail / chat / calendar / contacts / announcements / notes / polls / leave
   await prisma.pollVote.deleteMany();
@@ -122,6 +135,9 @@ export const resetDb = async () => {
   await prisma.task.deleteMany();
   await prisma.infoEvent.deleteMany(); // info sessions (registrations cascade); client referrals cascade with the users
   await prisma.placementMapEntry.deleteMany();
+  await prisma.leadVisitor.deleteMany(); // lead scoring visitors + landing pages (plain ids, no dependants)
+  await prisma.landingPage.deleteMany();
+  await prisma.guidePage.deleteMany(); // SEO topic guides (no foreign keys)
   await prisma.reminderLog.deleteMany();
   await prisma.analyticsDaily.deleteMany();
   await prisma.review.deleteMany();

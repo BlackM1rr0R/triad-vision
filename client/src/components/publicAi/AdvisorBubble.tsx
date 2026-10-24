@@ -7,7 +7,7 @@ import clsx from 'clsx';
 import { CalendarCheck, ClipboardCheck, Headset, MessageCircleQuestion, PhoneCall, RotateCcw, Send, Sparkles, UserPlus, X } from 'lucide-react';
 import { api, errorCode } from '@/lib/api';
 import { AxiosError } from 'axios';
-import { registerCopy } from '@/i18n';
+import { registerCopy, toContentLocale } from '@/i18n';
 import { pagesPublicAi } from '@/i18n/pagesPublicAi';
 import { LeadForm, type ChatTurn } from './LeadForm';
 import { VisitorLiveChat } from '@/components/livechat/VisitorLiveChat'; // AI → human handover ("Əməkdaşla danışın")
@@ -59,7 +59,7 @@ const save = (v: Stored) => {
  */
 export const AdvisorBubble = () => {
   const { t, i18n } = useTranslation();
-  const lang = (i18n.resolvedLanguage ?? 'az').slice(0, 2);
+  const lang = toContentLocale(i18n.resolvedLanguage); // tr / uk: English answers
   const status = useQuery({
     queryKey: ['public-ai', 'status'],
     queryFn: async () => (await api.get<{ enabled: boolean; maxTurns: number }>('/public-ai/status')).data,

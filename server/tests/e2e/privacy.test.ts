@@ -235,7 +235,8 @@ describe('Admin consent log', () => {
     const csv = expectStatus(await admin.agent.get('/api/admin/privacy/consents?format=csv&email=ayla'), 200);
     expect(csv.headers['content-type']).toMatch(/text\/csv/);
     const lines = csv.text.replace(/^﻿/, '').trim().split('\r\n');
-    expect(lines[0]).toBe('createdAt,email,userId,name,type,granted,version,source,ip,userAgent');
+    // Consent register: anonymous cookie visitors and the accepted legal text version are part of the export.
+    expect(lines[0]).toBe('createdAt,email,userId,visitorId,name,type,granted,version,legalDocumentId,documentKind,source,ip,userAgent');
     expect(lines).toHaveLength(3);
     expect(csv.text).toContain('"ayla@test.local"');
   });

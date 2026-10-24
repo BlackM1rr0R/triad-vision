@@ -58,6 +58,8 @@ describe('POST /api/auth/register', () => {
       experienceYears: null,
       germanLevel: null,
       education: null,
+      recognitionStatus: null,
+      recognitionNote: null,
       drivingLicence: null,
       about: null,
       emailNotifications: true,

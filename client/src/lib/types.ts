@@ -50,6 +50,9 @@ export interface User {
   experienceYears?: number | null;
   germanLevel?: string | null;
   education?: string | null;
+  /** Recognition of the foreign qualification (Anerkennung): NONE | NOT_REQUIRED | IN_PROGRESS | PARTIAL | RECOGNISED. */
+  recognitionStatus?: string | null;
+  recognitionNote?: string | null;
   drivingLicence?: string | null;
   about?: string | null;
   emailNotifications?: boolean;
