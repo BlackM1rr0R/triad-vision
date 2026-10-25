@@ -22,9 +22,10 @@ export const AuthShell = ({ title, subtitle, children }: { title: string; subtit
   return (
     <section className="flex min-h-[100svh] items-center bg-canvas pt-24 pb-12 sm:pt-28 lg:pt-36 lg:pb-16">
       <div className="container-x grid items-stretch gap-6 lg:grid-cols-2 lg:gap-8">
+        {/* Slide only, no fade: the form card holds the LCP text, which must be visible from the first frame. */}
         <motion.div
-          initial={{ opacity: 0, y: 24 }}
-          animate={{ opacity: 1, y: 0 }}
+          initial={{ y: 24 }}
+          animate={{ y: 0 }}
           transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
           className="card mx-auto flex w-full max-w-lg flex-col rounded-3xl p-6 sm:p-10 lg:max-w-none"
         >

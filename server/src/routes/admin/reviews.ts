@@ -5,6 +5,7 @@ import { prisma } from '../../db.js';
 import { requireMinRole } from '../../middleware/auth.js';
 import { conflict, notFound, parse } from '../../lib/http.js';
 import { inviteExpired, inviteForCase, resendInvite } from '../../lib/reviewInvites.js';
+import { getGoogleReviewSettings, googleReviewSchema, googleReviewStats, runGoogleReviewRequests, saveGoogleReviewSettings } from '../../lib/googleReview/service.js';
 
 // Admin: reviews — mounted at /api/admin/reviews (staff may read; admins moderate)
 export const adminReviewsRouter = Router();
@@ -101,4 +102,24 @@ adminReviewsRouter.post('/invite', requireMinRole('ADMIN'), async (req, res) => 
   const review = await inviteForCase(caseId);
   if (!review) throw conflict('ALREADY_INVITED');
   res.status(201).json({ ok: true, id: review.id });
+});
+
+// ─── Google review requests (lib/googleReview) ─────────────────────────
+
+/** Settings + sent / clicked per month. */
+adminReviewsRouter.get('/google', async (_req, res) => {
+  const [settings, stats] = await Promise.all([getGoogleReviewSettings(), googleReviewStats()]);
+  res.json({ settings, stats });
+});
+
+adminReviewsRouter.put('/google', requireMinRole('ADMIN'), async (req, res) => {
+  const settings = parse(googleReviewSchema, req.body ?? {});
+  if (settings.enabled && !settings.url) throw conflict('URL_REQUIRED');
+  await saveGoogleReviewSettings(settings);
+  res.json({ settings });
+});
+
+/** Runs the daily job now (only clients that are due; never sends twice). */
+adminReviewsRouter.post('/google/run', requireMinRole('ADMIN'), async (_req, res) => {
+  res.json(await runGoogleReviewRequests());
 });

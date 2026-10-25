@@ -1,10 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
 import { Sparkles } from 'lucide-react';
 import { api } from '@/lib/api';
 import { ChatPanel } from './index';
+import { focusBack, useHelpAction, useHelpFabPresent } from '@/lib/helpMenu';
 
 /*
  * "AI köməkçi" button for clients on /account/* (rendered by AccountLayout). It sits to the left of
@@ -24,6 +25,10 @@ export default function AiLauncher() {
   const copy = COPY[(i18n.resolvedLanguage?.slice(0, 2) ?? 'az') as keyof typeof COPY] ?? COPY.az;
   const [open, setOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const launcherRef = useRef<HTMLButtonElement>(null);
+  const wasOpen = useRef(false);
+  // Phones: the site's "Kömək" button lists the assistant instead of this floating button (lib/helpMenu.ts).
+  const helpFab = useHelpFabPresent();
   const { data } = useQuery({
     queryKey: ['ai', 'status'],
     queryFn: async () => (await api.get<{ scopes: { CLIENT: boolean } }>('/ai/status')).data,
@@ -43,11 +48,24 @@ export default function AiLauncher() {
     };
   }, [open]);
 
+  useEffect(() => {
+    if (open) wasOpen.current = true;
+    else if (wasOpen.current) {
+      wasOpen.current = false;
+      focusBack(launcherRef.current);
+    }
+  }, [open]);
+  useHelpAction('ai', !!data?.scopes.CLIENT, () => {
+    setMounted(true);
+    setOpen(true);
+  });
+
   if (!data?.scopes.CLIENT) return null;
 
   return (
     <>
       <button
+        ref={launcherRef}
         type="button"
         onClick={() => {
           setMounted(true);
@@ -59,6 +77,7 @@ export default function AiLauncher() {
         className={clsx(
           'fixed right-[5.25rem] bottom-4 z-40 inline-flex size-14 items-center justify-center gap-2 rounded-full bg-primary text-sm sm:w-auto sm:justify-start font-semibold text-primary-contrast shadow-[var(--tv-shadow-raised)] transition-colors hover:bg-primary-hover sm:right-[5.75rem] sm:bottom-6 sm:px-5',
           open && 'pointer-events-none opacity-0',
+          helpFab && 'max-sm:hidden',
         )}
       >
         <Sparkles className="size-5 shrink-0" aria-hidden />

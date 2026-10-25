@@ -6,7 +6,7 @@ import { MotionConfig } from 'framer-motion';
 import { Toaster } from 'sonner';
 // Fonts are bundled and served from our own domain (no requests to Google — DSGVO).
 import '@fontsource-variable/onest'; // the one UI family (az/tr/de/ru/uk + € ₼ ₺, tabular figures)
-import { i18nReady } from './i18n';
+import { i18nReady, preloadAllLanguages } from './i18n';
 import './index.css';
 import { initSiteTheme } from './lib/theme';
 import App from './App';
@@ -74,9 +74,9 @@ const Shell = () => {
 // GA4 (only when configured and the visitor consented to analytics cookies).
 initAnalytics();
 
-// Turkish / Ukrainian copy is its own chunk: render once the starting language is available (instant for
-// az/de/en/ru). The crawler-only HTML inside #root (Caddy include, /__seo/body) is replaced by this render.
-void i18nReady().finally(() =>
+// Non-Azerbaijani copy is in its own chunks: render once the starting language is available (instant for
+// az; de/en/ru/tr/uk chunks are preloaded by the HTML shell). The crawler-only HTML inside #root (Caddy include, /__seo/body) is replaced by this render.
+void i18nReady().finally(() => {
   createRoot(document.getElementById('root')!).render(
     <StrictMode>
       <QueryClientProvider client={queryClient}>
@@ -87,5 +87,7 @@ void i18nReady().finally(() =>
         </LocaleRouter>
       </QueryClientProvider>
     </StrictMode>,
-  ),
-);
+  );
+  // The other languages' copy (for getFixedT in another language), once the page has settled.
+  whenIdle(preloadAllLanguages, 5000);
+});

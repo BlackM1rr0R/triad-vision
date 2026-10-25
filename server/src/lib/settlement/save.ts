@@ -235,7 +235,8 @@ export const recalculate = async (ids: string[]) => {
     const shares = storedShares(e.shares);
     const next: Record<string, StoredShare> = {};
     for (const [k, s] of Object.entries(shares)) {
-      if (k === PARTNER_KEY) {
+      // "_partner" and other metadata keys ("_import": the import batch) are kept.
+      if (k === PARTNER_KEY || k.startsWith('_')) {
         next[k] = s;
         continue;
       }

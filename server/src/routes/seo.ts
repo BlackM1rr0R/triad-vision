@@ -14,6 +14,7 @@ import {
 import { getBody } from '../lib/seoBody.js';
 import { ogCardPng, ogCardText } from '../lib/ogImage.js';
 import { getCaseAiSettings } from '../lib/ai/features/caseAi/config.js';
+import { successShareHead } from '../lib/successShare/service.js';
 
 // SEO: robots.txt, sitemaps, RSS, Open Graph cards, /api/seo/* and the Caddy includes (mounted at the app root).
 export const seoRouter = Router();
@@ -78,8 +79,10 @@ const head = async (req: Request, res: Response) => {
   res.type('text/html; charset=utf-8');
   res.setHeader('X-Robots-Tag', 'noindex');
   try {
-    const html = templateSafe(renderHead(String(req.query.path ?? '/'), parseLocale(req.query.lng), await getSeoData()));
-    res.setHeader('Cache-Control', 'public, max-age=60, stale-while-revalidate=600');
+    // Visa-approved share pages (/success/:token) depend on the client's consent: computed live, never cached.
+    const share = await successShareHead(String(req.query.path ?? '/'));
+    const html = templateSafe(share ?? renderHead(String(req.query.path ?? '/'), parseLocale(req.query.lng), await getSeoData()));
+    res.setHeader('Cache-Control', share !== null ? 'no-store' : 'public, max-age=60, stale-while-revalidate=600');
     res.send(html);
   } catch (err) {
     console.error('[seo] head failed', err);

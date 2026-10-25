@@ -1,4 +1,4 @@
-import { lazy, Suspense } from 'react';
+import { lazy, startTransition, Suspense, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ArrowRight, Repeat } from 'lucide-react';
@@ -77,10 +77,30 @@ const NeutralHome = () => (
   </>
 );
 
+/**
+ * True one frame after the first paint. The sections below the hero are rendered then, as an interruptible
+ * transition: the hero (the LCP element) no longer waits for the whole page to render in one long task.
+ */
+const useAfterFirstPaint = () => {
+  const [ready, setReady] = useState(false);
+  useEffect(() => {
+    let timer = 0;
+    const frame = requestAnimationFrame(() => {
+      timer = window.setTimeout(() => startTransition(() => setReady(true)));
+    });
+    return () => {
+      cancelAnimationFrame(frame);
+      window.clearTimeout(timer);
+    };
+  }, []);
+  return ready;
+};
+
 export default function Home() {
   const { t } = useTranslation();
   usePageTitle(t('nav.home'));
   const [audience, setAudience] = useAudience();
+  const rest = useAfterFirstPaint();
 
   const choose = (a: Audience | null) => {
     setAudience(a);
@@ -96,7 +116,10 @@ export default function Home() {
       <Hero audience={audience} onChoose={choose} />
       <StatsBar />
       <div id="home-content" className="scroll-mt-16">
-        {audience ? (
+        {/* Until then, hold the space so the footer never flashes up into view. */}
+        {!rest ? (
+          <div className="min-h-screen" aria-hidden />
+        ) : audience ? (
           <>
             <AudienceBar audience={audience} onChoose={choose} />
             <Suspense fallback={<div className="min-h-[60vh]" />}>

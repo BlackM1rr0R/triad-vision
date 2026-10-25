@@ -21,6 +21,7 @@ import './vault.js'; // vault document expiry reminders
 import './arrival.js'; // arrival / pickup reminders
 import './clientsExcel.js'; // super admin's Excel of all clients
 import './surveys.js'; // satisfaction surveys after visa approval / case closure
+import './googleReviews.js'; // one Google review request per client after approval / arrival (low survey score → staff task)
 import './expiry.js'; // document expiry warnings (client, staff, daily admin digest)
 import './driveIndex.js'; // drive full-text index (text layer, DOCX, XLSX, OCR)
 import './aiBriefing.js'; // daily AI briefing e-mail for opted-in admins (08:00 Baku)

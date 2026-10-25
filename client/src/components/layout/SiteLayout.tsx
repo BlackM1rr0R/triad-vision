@@ -15,6 +15,7 @@ import { SearchPalette } from '../search/SearchPalette';
 import { CookieConsent } from '../legal/CookieConsent'; // real consent banner (lib/consent.ts)
 import { AccessibilityWidget } from '../a11y/AccessibilityWidget';
 import { useSurface } from '@/lib/theme'; // warm public surface + serif display headings (index.css)
+import { HelpFab } from './HelpFab'; // phones: one "Kömək" button instead of the floating stack
 
 // Public AI advisor: its own chunk, loaded only on the public pages (not in the portals).
 const AdvisorBubble = lazy(() => import('../publicAi/AdvisorBubble'));
@@ -40,7 +41,7 @@ const FloatingActions = () => {
   const wa = data?.settings.contact?.whatsapp.replace(/\D/g, '');
 
   return (
-    <div className="fixed right-4 bottom-4 z-40 flex flex-col items-end gap-3 sm:right-6 sm:bottom-6" data-bnav-lift>
+    <div className="fixed right-4 bottom-[max(1rem,env(safe-area-inset-bottom))] z-40 flex flex-col items-end gap-3 sm:right-6 sm:bottom-6" data-bnav-lift>
       <AnimatePresence>
         {showTop && (
           <motion.button
@@ -50,17 +51,18 @@ const FloatingActions = () => {
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.5 }}
             onClick={() => scrollToTop()}
-            className="grid size-11 place-items-center rounded-full border border-line bg-card text-ink shadow-lg hover:bg-sunken"
+            className="grid size-11 place-items-center rounded-full border border-line bg-card text-ink shadow-lg hover:bg-sunken max-sm:hidden"
           >
             <ArrowUp className="size-5" />
           </motion.button>
         )}
       </AnimatePresence>
-      {/* Accessibility panel button sits above WhatsApp; the panel itself is fixed above the whole stack. */}
-      <AccessibilityWidget panelClass={advisor ? 'sm:bottom-[14.5rem] sm:max-h-[calc(100dvh-15.5rem)]' : 'sm:bottom-[10rem] sm:max-h-[calc(100dvh-11rem)]'} />
+      {/* Accessibility panel button sits above WhatsApp; the panel itself is fixed above the whole stack.
+          Phones: these buttons hide and the help button below lists them (HelpFab, lib/helpMenu.ts). */}
+      <AccessibilityWidget buttonClass="max-sm:hidden" panelClass={advisor ? 'sm:bottom-[14.5rem] sm:max-h-[calc(100dvh-15.5rem)]' : 'sm:bottom-[10rem] sm:max-h-[calc(100dvh-11rem)]'} />
       {advisor && (
         <Suspense fallback={null}>
-          <AdvisorBubble />
+          <AdvisorBubble launcherClass="max-sm:hidden" />
         </Suspense>
       )}
       {wa && (
@@ -73,11 +75,12 @@ const FloatingActions = () => {
           animate={{ scale: 1 }}
           transition={{ delay: 2.2, type: 'spring' }}
           whileHover={{ scale: 1.1 }}
-          className="relative grid size-14 place-items-center rounded-full bg-[#25d366] text-white shadow-[var(--tv-shadow-raised)]"
+          className="relative grid size-14 place-items-center rounded-full bg-[#25d366] text-white shadow-[var(--tv-shadow-raised)] max-sm:hidden"
         >
                     <WhatsAppIcon />
         </motion.a>
       )}
+      <HelpFab />
     </div>
   );
 };

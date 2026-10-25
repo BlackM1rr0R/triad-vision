@@ -16,6 +16,7 @@ import { Chip, EmptyState, ErrorBlock, LoadingBlock, PageHead, Panel, StatTile }
 import { registerCopy } from '@/i18n';
 import { pagesGrowth } from '@/i18n/pagesGrowth';
 import { usePageTitle } from '@/lib/usePageTitle';
+import { GoogleReviewPanel } from '@/components/admin/GoogleReviewPanel'; // one-time Google review requests: settings + sent / clicked per month
 
 registerCopy(pagesGrowth);
 
@@ -322,6 +323,8 @@ export default function AdminReviews() {
           )}
 
           {canModerate && <Candidates />}
+
+          <GoogleReviewPanel canEdit={canModerate} />
         </div>
       )}
     </div>

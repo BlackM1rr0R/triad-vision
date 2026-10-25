@@ -189,6 +189,9 @@ const Unsubscribe = lazy(() => import('./pages/Unsubscribe'));
 const AdminContractTemplates = lazy(() => import('./pages/admin/ContractTemplates'));
 const AdminCandidateRequests = lazy(() => import('./pages/admin/CandidateRequests'));
 const SurveyAnswer = lazy(() => import('./pages/SurveyAnswer'));
+const SuccessSharePage = lazy(() => import('./pages/SuccessSharePage')); // public "visa approved" share card + lead form
+const GoogleReviewOptOut = lazy(() => import('./pages/GoogleReviewLink')); // Google review request: opt-out
+const GoogleReviewRedirect = lazy(() => import('./pages/GoogleReviewLink').then((m) => ({ default: m.GoogleReviewRedirect }))); // tracked link → Google
 const CheckInAnswer = lazy(() => import('./pages/CheckInAnswer')); // post-arrival check-in (one tap)
 const AdminTimeTracking = lazy(() => import('./pages/admin/TimeTracking')); // staff time tracking
 const AdminKpi = lazy(() => import('./pages/admin/Kpi')); // staff KPI leaderboard (ADMIN+)
@@ -385,6 +388,9 @@ export default function App() {
             <Route path="cost-calculator" element={<CostCalculatorPage />} />
             <Route path="l/:slug" element={<LandingPageView />} />
             <Route path="survey/:token" element={<SurveyAnswer />} />
+            <Route path="success/:token" element={<SuccessSharePage />} />
+            <Route path="r/review/:token" element={<GoogleReviewRedirect />} />
+            <Route path="r/review/:token/optout" element={<GoogleReviewOptOut />} />
             <Route path="check-in/:key" element={<CheckInAnswer />} />
             <Route path="unsubscribe" element={<Unsubscribe />} />
             <Route path="news/:slug" element={<NewsDetail />} />

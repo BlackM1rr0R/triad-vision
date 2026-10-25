@@ -24,21 +24,21 @@ const H = 630;
 const CACHE_DIR = path.join(path.dirname(config.uploads.publicDir), 'og-cache');
 const VERSION = 'v2';
 
-type Font = ReturnType<typeof fontkit.create>;
+export type Font = ReturnType<typeof fontkit.create>;
 let fonts: Promise<{ bold: Font; regular: Font }> | null = null;
-const loadFonts = () =>
+export const loadFonts = () =>
   (fonts ??= Promise.all([
     fs.readFile(require.resolve('dejavu-fonts-ttf/ttf/DejaVuSans-Bold.ttf')),
     fs.readFile(require.resolve('dejavu-fonts-ttf/ttf/DejaVuSans.ttf')),
   ]).then(([b, r]) => ({ bold: fontkit.create(b), regular: fontkit.create(r) })));
 
-const widthOf = (font: Font, text: string, size: number) => {
+export const widthOf = (font: Font, text: string, size: number) => {
   const run = font.layout(text);
   return (run.positions.reduce((w, p) => w + p.xAdvance, 0) * size) / font.unitsPerEm;
 };
 
 /** SVG path data of a text line at (x, baseline). */
-const textPath = (font: Font, text: string, size: number, x: number, baseline: number) => {
+export const textPath = (font: Font, text: string, size: number, x: number, baseline: number) => {
   const run = font.layout(text);
   const scale = size / font.unitsPerEm;
   let cx = 0;
@@ -57,7 +57,7 @@ const textPath = (font: Font, text: string, size: number, x: number, baseline: n
 };
 
 /** Greedy word wrap into at most `maxLines` lines (the last one gets an ellipsis if text remains). */
-const wrap = (font: Font, text: string, size: number, maxWidth: number, maxLines: number) => {
+export const wrap = (font: Font, text: string, size: number, maxWidth: number, maxLines: number) => {
   const words = collapse(text).split(' ');
   const lines: string[] = [];
   let current = '';

@@ -15,6 +15,7 @@ import { pagesPortalUx } from '@/i18n/pagesPortalUx';
 import { pagesPortalNav } from '@/i18n/pagesPortalNav';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { NextWhileYouWait } from '@/components/waitingRoom/NextWhileYouWait'; // "Next while you wait" (waiting room)
+import { SuccessShareCard } from '@/components/portal/SuccessShareCard'; // visa approved: congratulations + share card (hideable)
 import { NextStepCard } from './portal/NextStepCard';
 import { HomeProgress } from './portal/HomeProgress';
 import { caseHref } from './portal/useNextUp';
@@ -80,6 +81,8 @@ export default function AccountHome() {
       ) : (
         <NextStepCard data={step} loading={next.isLoading} caseLink={caseId ? caseHref(caseId, 'overview') : null} tour="portal-next" />
       )}
+
+      {cases.some((c) => c.status === 'APPROVED') && <SuccessShareCard dismissible />}
 
       {step?.case && <HomeProgress next={step} stage={stage} detailsTo={caseId && activeCase ? caseHref(caseId, 'overview', '#forecast') : null} tour="portal-progress" />}
 

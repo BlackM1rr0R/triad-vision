@@ -2,10 +2,7 @@ import { startTransition } from 'react';
 import i18n from 'i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
 import { initReactI18next } from 'react-i18next';
-import az from './az';
-import de from './de';
-import en from './en';
-import ru from './ru';
+import az, { type Messages } from './az';
 import { details } from './details';
 import { extra } from './extra';
 import { uiCopy } from './ui';
@@ -26,11 +23,13 @@ void i18n
   .use(detector)
   .use(initReactI18next)
   .init({
+    // az (the root language and everyone's fallback) ships with the bundle; the de / en / ru main copy is
+    // loaded before the first render in that language (loadCore below, preloaded from the HTML shell).
     resources: {
       az: { translation: { ...az, ...details.az, ...extra.az, ...uiCopy.az } },
-      de: { translation: { ...de, ...details.de, ...extra.de, ...uiCopy.de } },
-      en: { translation: { ...en, ...details.en, ...extra.en, ...uiCopy.en } },
-      ru: { translation: { ...ru, ...details.ru, ...extra.ru, ...uiCopy.ru } },
+      de: { translation: { ...details.de, ...extra.de, ...uiCopy.de } },
+      en: { translation: { ...details.en, ...extra.en, ...uiCopy.en } },
+      ru: { translation: { ...details.ru, ...extra.ru, ...uiCopy.ru } },
     },
     // tr / uk: strings not translated yet (mostly portal screens) fall back to English.
     fallbackLng: { tr: ['en', 'az'], uk: ['en', 'az'], default: ['az'] },
@@ -75,18 +74,57 @@ export const currentLocale = (): Locale => toContentLocale(i18n.resolvedLanguage
 
 export default i18n;
 
-// ─── tr / uk: copy chunks loaded on demand ──────────────────────────────
+// ─── de / en / ru main copy and tr / uk: chunks loaded on demand ─────────
+
+type CoreLocale = Exclude<Locale, 'az'>;
+const CORE: Record<CoreLocale, () => Promise<{ default: Messages }>> = {
+  de: () => import('./de'),
+  en: () => import('./en'),
+  ru: () => import('./ru'),
+};
+const pendingCore: Partial<Record<CoreLocale, Promise<void>>> = {};
+
+/**
+ * Main copy of a content language (~8 KB gzip each). Same layering as when all four shipped in the bundle:
+ * the main file, then details / extra / ui on top (shallow), and it wins over page copy registered meanwhile.
+ * Components already rendered with a fallback re-render (languageChanged), also those using getFixedT.
+ */
+const loadCore = (l: Locale): Promise<void> => {
+  if (l === 'az') return Promise.resolve();
+  pendingCore[l] ??= CORE[l]()
+    .then((m) => {
+      i18n.addResourceBundle(l, 'translation', { ...m.default, ...details[l], ...extra[l], ...uiCopy[l] }, true, true);
+      startTransition(() => {
+        i18n.emit('languageChanged', i18n.language);
+      });
+    })
+    .catch((err) => {
+      delete pendingCore[l];
+      console.warn('[i18n] could not load', l, err);
+    });
+  return pendingCore[l]!;
+};
+
+/**
+ * The other content languages, once the page is idle: getFixedT(lng) (legal texts in another language, the
+ * language list in the profile, unsubscribe pages in the recipient's language) needs their copy too.
+ */
+export const preloadAllLanguages = () => {
+  LOCALES.forEach((l) => void loadCore(l));
+};
 
 const pendingExtra: Partial<Record<ExtraLocale, Promise<void>>> = {};
 const isExtra = (lng: string): lng is ExtraLocale => (EXTRA_LOCALES as readonly string[]).includes(lng);
 
 /**
- * Makes sure the copy of a language is in i18next before it is shown. az/de/en/ru ship with the bundle; the
- * Turkish and Ukrainian copy (~50 KB gzip each) is its own chunk, fetched only by visitors who use it.
+ * Makes sure the copy of a language is in i18next before it is shown. az ships with the bundle; de / en / ru
+ * main copy is a small chunk each; the Turkish and Ukrainian copy (~50 KB gzip each, on top of English, their
+ * fallback) is its own chunk, fetched only by visitors who use it.
  */
 export const loadSiteLanguage = (lng: string): Promise<void> => {
   const l = siteLocaleOf(lng);
-  if (!isExtra(l)) return Promise.resolve();
+  const core = loadCore(toContentLocale(l));
+  if (!isExtra(l)) return core;
   pendingExtra[l] ??= (l === 'tr' ? import('./site/tr') : import('./site/uk'))
     .then((m) => {
       // deep, no overwrite: copy a page module registered earlier (registerCopy) stays as it is.
@@ -96,7 +134,7 @@ export const loadSiteLanguage = (lng: string): Promise<void> => {
       delete pendingExtra[l];
       console.warn('[i18n] could not load', l, err);
     });
-  return pendingExtra[l]!;
+  return Promise.all([core, pendingExtra[l]]).then(() => undefined);
 };
 
 /** Resolves once the starting language's copy is available (main.tsx renders after it). */

@@ -18,6 +18,16 @@ const enter = (delay: number) => ({
   animate: { opacity: 1, y: 0 },
   transition: { delay, duration: 0.6, ease: EASE },
 });
+/**
+ * Headline and subtitle (the largest text above the fold, i.e. the LCP element) only slide: an element that
+ * starts at opacity 0 does not count as painted until the fade reveals it, which pushed LCP back by the
+ * delay plus the fade. Visible from the first frame, same movement.
+ */
+const rise = (delay: number) => ({
+  initial: { y: 14 },
+  animate: { y: 0 },
+  transition: { delay, duration: 0.6, ease: EASE },
+});
 
 /**
  * Home hero (Direction B): warm canvas, serif headline, the traveller illustration, and the
@@ -40,12 +50,12 @@ export const Hero = ({ audience, onChoose }: { audience: Audience | null; onChoo
               <span className="min-w-0 truncate">{t('hero.eyebrow')}</span>
             </motion.p>
 
-            <motion.h1 {...enter(0.12)} className="font-display text-[2rem] leading-[1.1] font-semibold tracking-[-0.02em] text-balance break-words hyphens-auto text-ink sm:text-[3.25rem] sm:leading-[1.08] xl:text-[3.75rem]">
+            <motion.h1 {...rise(0.12)} className="font-display text-[2rem] leading-[1.1] font-semibold tracking-[-0.02em] text-balance break-words hyphens-auto text-ink sm:text-[3.25rem] sm:leading-[1.08] xl:text-[3.75rem]">
               <span className="block">{t('hero.title1')}</span>
               <span className="block text-highlight-fg">{t('hero.title2')}</span>
             </motion.h1>
 
-            <motion.p {...enter(0.2)} className="mt-5 max-w-[56ch] text-base leading-relaxed text-muted sm:mt-6 sm:text-lg">
+            <motion.p {...rise(0.2)} className="mt-5 max-w-[56ch] text-base leading-relaxed text-muted sm:mt-6 sm:text-lg">
               {t('hero.subtitle')}
             </motion.p>
 

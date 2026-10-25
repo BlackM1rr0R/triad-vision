@@ -12,6 +12,7 @@ import { pagesPublicAi } from '@/i18n/pagesPublicAi';
 import { LeadForm, type ChatTurn } from './LeadForm';
 import { VisitorLiveChat } from '@/components/livechat/VisitorLiveChat'; // AI → human handover ("Əməkdaşla danışın")
 import { CallbackButton } from '@/components/calls/CallbackForm'; // "Mənə zəng edin"
+import { focusBack, useHelpAction } from '@/lib/helpMenu'; // phones: opened from the "Kömək" menu
 
 registerCopy(pagesPublicAi);
 
@@ -57,7 +58,7 @@ const save = (v: Stored) => {
  * POST /api/public-ai/chat (JSON); after a few answers or on intent it offers the free consultation,
  * registration and the contact form. Sits in the floating-actions stack of the site layout.
  */
-export const AdvisorBubble = () => {
+export const AdvisorBubble = ({ launcherClass }: { launcherClass?: string } = {}) => {
   const { t, i18n } = useTranslation();
   const lang = toContentLocale(i18n.resolvedLanguage); // tr / uk: English answers
   const status = useQuery({
@@ -84,6 +85,8 @@ export const AdvisorBubble = () => {
   });
   const listRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const launcherRef = useRef<HTMLButtonElement>(null);
+  const wasOpen = useRef(false);
   const titleId = useId();
   const inputId = useId();
 
@@ -98,6 +101,16 @@ export const AdvisorBubble = () => {
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [open]);
+
+  // Closing returns focus to the launcher, or to the help button on phones (the launcher is hidden there).
+  useEffect(() => {
+    if (open) wasOpen.current = true;
+    else if (wasOpen.current) {
+      wasOpen.current = false;
+      focusBack(launcherRef.current);
+    }
+  }, [open]);
+  useHelpAction('advisor', !!status.data?.enabled, () => setOpen(true));
 
   if (!status.data?.enabled) return null;
 
@@ -143,6 +156,7 @@ export const AdvisorBubble = () => {
   return (
     <>
       <motion.button
+        ref={launcherRef}
         type="button"
         aria-label={t('pai.bubble.open')}
         aria-expanded={open}
@@ -151,7 +165,7 @@ export const AdvisorBubble = () => {
         transition={{ delay: 2.6, type: 'spring' }}
         whileHover={{ scale: 1.08 }}
         onClick={() => setOpen((o) => !o)}
-        className="grid size-14 place-items-center rounded-full bg-primary text-primary-contrast shadow-[var(--tv-shadow-raised)] hover:bg-primary-hover"
+        className={clsx('grid size-14 place-items-center rounded-full bg-primary text-primary-contrast shadow-[var(--tv-shadow-raised)] hover:bg-primary-hover', launcherClass)}
       >
         {open ? <X className="size-6" aria-hidden /> : <MessageCircleQuestion className="size-7" aria-hidden />}
       </motion.button>

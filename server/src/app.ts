@@ -99,6 +99,8 @@ import { compareRouter } from './routes/compare.js';
 import { leadMagnetsRouter } from './routes/leadMagnets.js';
 import { jobAlertsRouter } from './routes/jobAlerts.js';
 import { accountRecognitionRouter } from './routes/accountRecognition.js'; // client portal: recognition status card
+import { accountSuccessShareRouter, publicSuccessShareRouter } from './routes/successShare.js'; // "visa approved" share cards + /success/:token
+import { googleReviewPublicRouter } from './routes/googleReview.js'; // Google review request: tracked redirect + opt-out
 
 type RequestWithRawBody = import('express').Request & { rawBody?: Buffer };
 
@@ -181,6 +183,7 @@ export const createApp = () => {
   app.use('/api/admin', adminRouter);
   app.use('/api/account/billing', accountBillingRouter); // before the account router
   app.use('/api/account/recognition', accountRecognitionRouter); // read-only Anerkennung status of the own case
+  app.use('/api/account/success-share', accountSuccessShareRouter); // visa approved: share card (consent, revoke)
   app.use('/api/account', accountRouter);
   app.use('/api/company/invoices', companyInvoicesRouter);
   app.use('/api/company/quotes', companyQuotesRouter);
@@ -242,6 +245,8 @@ export const createApp = () => {
   app.use('/api/livechat', livechatRouter); // AI advisor → human live chat (visitor token + staff queue)
   app.use('/api/originals', originalsRouter); // physical originals, QR labels, drive retention + storage report
   app.use('/api/site', siteRouter); // web push (PWA), public status check, "Problem bildir" reports
+  app.use('/api/success', publicSuccessShareRouter); // public success share page data, card PNGs, lead form
+  app.use('/api/r/review', googleReviewPublicRouter); // Google review link (click counter) + opt-out
   app.use('/api', campaignPublicRouter); // campaigns: /o/:token.gif, /c/:token/:link, /unsubscribe/:token
 
   // /sitemap.xml, /robots.txt and /api/seo/* (Caddy forwards the first two here).

@@ -94,7 +94,11 @@ const Hero = ({ d, ctx }: { d: SectionDataMap['hero']; ctx: Ctx }) => (
         )}
       </div>
       {d.image && (
-        <img src={sized(d.image, 1200)} alt="" fetchPriority="high" decoding="async" className="hidden aspect-[4/3] w-full rounded-3xl object-cover shadow-[var(--tv-shadow-raised)] lg:block" />
+        // lg-only photo: smaller screens get an inline pixel, so phones don't download it at high priority.
+        <picture className="hidden lg:block">
+          <source media="(min-width: 1024px)" srcSet={sized(d.image, 1200)} />
+          <img src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" alt="" fetchPriority="high" decoding="async" className="aspect-[4/3] w-full rounded-3xl object-cover shadow-[var(--tv-shadow-raised)]" />
+        </picture>
       )}
     </div>
   </section>

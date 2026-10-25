@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { Accessibility } from 'lucide-react';
 import { usePrefs, type Prefs } from '@/lib/prefs';
 import { setHoverReading, setLang, setRate } from './speech';
+import { focusBack, useHelpAction } from '@/lib/helpMenu';
 
 // The panel (all the controls) loads on first open; the button and the global effects stay in the shell.
 const loadPanel = () => import('./AccessibilityPanel');
@@ -77,7 +78,7 @@ const useSpeechSync = (prefs: Prefs, lang: string) => {
  * Floating accessibility button and panel. Render inside a floating-actions stack (public site) or
  * on its own (`standalone`, admin panel). Alt+A toggles the panel from anywhere.
  */
-export const AccessibilityWidget = ({ standalone = false, panelClass }: { standalone?: boolean; panelClass?: string }) => {
+export const AccessibilityWidget = ({ standalone = false, panelClass, buttonClass }: { standalone?: boolean; panelClass?: string; buttonClass?: string }) => {
   const { t, i18n } = useTranslation();
   const prefs = usePrefs();
   const [open, setOpen] = useState(false);
@@ -101,8 +102,10 @@ export const AccessibilityWidget = ({ standalone = false, panelClass }: { standa
 
   const close = () => {
     setOpen(false);
-    btnRef.current?.focus({ preventScroll: true });
+    focusBack(btnRef.current); // phones: the button is hidden → back to the help button
   };
+  // Phones: opened from the "Kömək" menu (lib/helpMenu.ts); the admin's standalone widget is not listed there.
+  useHelpAction('a11y', !standalone, () => setOpen(true));
 
   const button = (
     <motion.button
@@ -120,7 +123,7 @@ export const AccessibilityWidget = ({ standalone = false, panelClass }: { standa
       onClick={() => (open ? close() : setOpen(true))}
       onPointerEnter={() => void loadPanel()}
       onFocus={() => void loadPanel()}
-      className="grid size-14 place-items-center rounded-full bg-primary text-primary-contrast shadow-[var(--tv-shadow-raised)] hover:bg-primary-hover"
+      className={`grid size-14 place-items-center rounded-full bg-primary text-primary-contrast shadow-[var(--tv-shadow-raised)] hover:bg-primary-hover ${buttonClass ?? ''}`}
     >
       <Accessibility className="size-7" aria-hidden />
     </motion.button>

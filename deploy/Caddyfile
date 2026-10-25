@@ -83,6 +83,21 @@ www.{$SITE_DOMAIN} {
 		}
 	}
 
+	# Google review request link (/r/review/<token>, from e-mails and notifications): straight to the API, which
+	# counts the click and answers with a 302 to Google — no SPA load in between. Exactly one segment and GET
+	# only: /r/review/<token>/optout stays the SPA page (it posts the opt-out itself).
+	@reviewlink {
+		method GET
+		path_regexp reviewlink ^/r/review/[^/]+$
+	}
+	handle @reviewlink {
+		rewrite * /api{path}
+		reverse_proxy api:4000 {
+			header_up X-Forwarded-For {client_ip}
+			header_up X-Forwarded-Proto {scheme}
+		}
+	}
+
 	# Language URLs: Azerbaijani lives at the root, the other languages under /de/, /en/, /ru/, /tr/, /uk/.
 	# Old links with ?lng=xx (and /az/…) get a permanent redirect to that form, so every page has exactly one
 	# URL per language. Portals, token pages and files keep ?lng= (the mobile app opens them in its language).
@@ -139,7 +154,11 @@ www.{$SITE_DOMAIN} {
 			between "<!--tv:" ":tv-->"
 		}
 		try_files {path} /index.html
-		file_server
+		# Hashed JS/CSS/SVG ship with a Brotli copy (*.br, written by the client build, quality 11): ~15 % smaller
+		# than the gzip `encode` makes on the fly. Everything else (index.html is a template) is compressed live.
+		file_server {
+			precompressed br
+		}
 	}
 
 	# Fail soft: if the API is down or too slow, the head and body includes answer empty and index.html keeps

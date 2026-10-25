@@ -52,7 +52,18 @@ export const Reveal = ({
   </motion.div>
 );
 
-const staggerParent: Variants = { hidden: {}, show: { transition: { staggerChildren: 0.09 } } };
+/**
+ * Above-the-fold entrance: a short slide on mount, without a fade. For the page's main heading and intro
+ * text (the LCP element): an element that starts at opacity 0 only counts as painted once the fade has
+ * revealed it, so fading the hero pushes Largest Contentful Paint back by the delay plus the animation.
+ */
+export const Rise = ({ children, delay = 0, y = 12, className }: { children: ReactNode; delay?: number; y?: number; className?: string }) => (
+  <motion.div className={className} initial={{ y }} animate={{ y: 0 }} transition={{ duration: 0.7, delay, ease: EASE }}>
+    {children}
+  </motion.div>
+);
+
+const staggerParent: Variants ={ hidden: {}, show: { transition: { staggerChildren: 0.09 } } };
 // opacity + translate only: both are composited, so a grid of cards fading in never re-rasterises
 // (the previous scale step forced every card with images to repaint on each frame).
 const staggerChild: Variants = {

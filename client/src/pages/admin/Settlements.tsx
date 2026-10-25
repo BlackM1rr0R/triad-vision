@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import clsx from 'clsx';
-import { Banknote, CheckCheck, FileDown, FileUp, FolderInput, Plus, RotateCcw, Save, Scale, Search, Trash2, Undo2, X } from 'lucide-react';
+import { Banknote, CheckCheck, FileDown, FileSpreadsheet, FileUp, FolderInput, Plus, RotateCcw, Save, Scale, Search, Trash2, Undo2, X } from 'lucide-react';
 import { api, errorCode } from '@/lib/api';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { PageLoader } from '@/components/ui/Spinner';
@@ -14,6 +14,7 @@ import { buildColumns } from '@/components/settlement/columns';
 import { SettlementTable, type TableActions, type ViewRow } from '@/components/settlement/SettlementTable';
 import { SummaryCards } from '@/components/settlement/SummaryCards';
 import { ImportDialog } from '@/components/settlement/ImportDialog';
+import { RowImportDialog } from '@/components/settlement/RowImportDialog';
 import { RulesDialog } from '@/components/settlement/RulesDialog';
 import { LinkDialog } from '@/components/settlement/LinkDialog';
 import { addBag, fmtBag } from '@/components/settlement/money';
@@ -110,7 +111,7 @@ export default function Settlements() {
   const [selected, setSelected] = useState<Set<string>>(() => new Set());
   const lastSelected = useRef<string | null>(null);
   const [saving, setSaving] = useState(false);
-  const [dialog, setDialog] = useState<'import' | 'rules' | null>(null);
+  const [dialog, setDialog] = useState<'import' | 'rowImport' | 'rules' | null>(null);
   const [linkRow, setLinkRow] = useState<Row | null>(null);
   const [newName, setNewName] = useState('');
   const [moveTo, setMoveTo] = useState('');
@@ -455,6 +456,11 @@ export default function Settlements() {
               <FileUp className="size-4" /> {t('settlement.toolbar.import')}
             </button>
           )}
+          {canManage && (
+            <button type="button" className="btn-secondary btn-sm" onClick={() => setDialog('rowImport')}>
+              <FileSpreadsheet className="size-4" /> {t('settlementImport.button', { defaultValue: 'Import (CSV/XLSX)' })}
+            </button>
+          )}
           <a className="btn-secondary btn-sm" href={exportHref} download>
             <FileDown className="size-4" /> {t('settlement.toolbar.export')}
           </a>
@@ -592,6 +598,7 @@ export default function Settlements() {
       </div>
 
       {dialog === 'import' && <ImportDialog onClose={() => setDialog(null)} onDone={reloadAll} />}
+      {dialog === 'rowImport' && <RowImportDialog onClose={() => setDialog(null)} onDone={reloadAll} />}
       {dialog === 'rules' && <RulesDialog beneficiaries={beneficiaries} rate={data.settings.eurAzn} canManage={canManage} onClose={() => setDialog(null)} onSaved={reloadAll} />}
       {linkRow && <LinkDialog row={linkRow} onClose={() => setLinkRow(null)} onLinked={(r) => mergeRows([r])} />}
       {isSuper && <AdminAiPanel variant="float" open={aiOpen} onClose={() => setAiOpen(false)} context={AI_CONTEXT} hint={t('aiAdmin.settlementsHint')} />}

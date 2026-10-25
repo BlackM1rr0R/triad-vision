@@ -27,6 +27,7 @@ import { JourneyCard } from '@/components/portal/JourneyCard';
 import { useNextStep } from '@/components/portal/usePortalNav';
 import { useMorphTarget } from '@/lib/viewTransition';
 import { celebrateOnce } from '@/components/motion/celebrate';
+import { SuccessShareCard } from '@/components/portal/SuccessShareCard'; // visa approved: congratulations + share card
 import { FamilyGroupCard, useRelationLabel } from '@/components/journey/Family';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { ClientOriginals } from '@/components/originals/ClientOriginals';
@@ -298,6 +299,7 @@ export default function CaseView() {
         {current === 'overview' && (
           <>
             <CurrentStepPanel data={data} />
+            {data.status === 'APPROVED' && <SuccessShareCard caseId={data.id} />}
             {/* Every other open item (the portal home shows only the top three). */}
             <NextItems items={next.items} short={next.short} />
             <ClientDataTasks caseId={data.id} />

@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ChevronRight } from 'lucide-react';
-import { Reveal, SplitText } from '../motion';
+import { Reveal, Rise } from '../motion';
 import { sized, srcSet } from '@/lib/img';
 import { useMorphTarget } from '@/lib/viewTransition';
 
@@ -41,15 +41,18 @@ export const PageHero = ({
     <div className="mx-auto hidden w-full max-w-[18rem] md:block lg:max-w-[22rem]">{illustration}</div>
   ) : image ? (
     <div className="hidden lg:block">
-      <img
-        src={sized(image, 800)}
-        srcSet={srcSet(image, [480, 800, 1200])}
-        sizes="(min-width: 1280px) 26rem, 22rem"
-        alt=""
-        fetchPriority="high"
-        decoding="async"
-        className="aspect-[4/3] w-full rounded-3xl border border-line object-cover shadow-[var(--tv-shadow-card)]"
-      />
+      {/* The photo is only shown from lg up. A hidden <img> is still downloaded (at high priority, competing
+          with the page's own files on phones), so smaller screens get an empty inline pixel instead. */}
+      <picture>
+        <source media="(min-width: 1024px)" srcSet={srcSet(image, [480, 800, 1200]) ?? sized(image, 800)} sizes="(min-width: 1280px) 26rem, 22rem" />
+        <img
+          src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="
+          alt=""
+          fetchPriority="high"
+          decoding="async"
+          className="aspect-[4/3] w-full rounded-3xl border border-line object-cover shadow-[var(--tv-shadow-card)]"
+        />
+      </picture>
     </div>
   ) : null;
   const titleClass = 'type-hero max-w-3xl text-ink';
@@ -83,14 +86,17 @@ export const PageHero = ({
               {title}
             </h1>
           ) : (
+            // Title and subtitle are the LCP element: visible from the first frame, they only slide in (Rise).
             <div {...m.part('title')}>
-              <SplitText as="h1" text={title} className={titleClass} />
+              <Rise y={14} className="pb-[0.12em]">
+                <h1 className={titleClass}>{title}</h1>
+              </Rise>
             </div>
           )}
           {subtitle && (
-            <Reveal delay={0.15} y={12}>
+            <Rise delay={0.1} y={12}>
               <p className="mt-4 max-w-[62ch] text-base leading-relaxed text-muted sm:mt-5 sm:text-lg">{subtitle}</p>
-            </Reveal>
+            </Rise>
           )}
           {children && (
             <Reveal delay={0.25} y={12}>

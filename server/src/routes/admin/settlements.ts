@@ -10,6 +10,7 @@ import { getSettings, listBeneficiaries, loadRows, projectsList, saveSettings, s
 import { STAGES, applyChanges, markPaid, nextSortOrder, recalculate, type Change } from '../../lib/settlement/save.js';
 import { linkCase, suggestCases } from '../../lib/settlement/link.js';
 import { importWorkbook } from '../../lib/settlement/import.js';
+import { confirmImport, confirmSchema, listBatches, previewImport, templateCsv, templateXlsx, undoBatch } from '../../lib/settlement/rowImport.js';
 import { buildSettlementXlsx } from '../../lib/settlement/export.js';
 import { buildSummary } from '../../lib/settlement/summary.js';
 import { parseAmount, splitName } from '../../lib/settlement/parse.js';
@@ -31,6 +32,10 @@ import { parseAmount, splitName } from '../../lib/settlement/parse.js';
  *   GET    /summary?month=YYYY-MM    report numbers
  *   GET    /export.xlsx?project=     workbook like the team's
  *   POST   /import?dryRun=1          (ADMIN+) multipart "file" (.xlsx) → preview / import report
+ *   GET    /import/template.csv|xlsx (ADMIN+) row import template (columns documented in rowImportParse.ts)
+ *   POST   /import/rows/preview      (ADMIN+) multipart "file" (.csv / .xlsx, template format) → per-row matches + warnings
+ *   POST   /import/rows/confirm      (ADMIN+) { rows, partners, beneficiaryColumns } → one transaction, batch id
+ *   GET    /import/batches           (ADMIN+) recent import batches · DELETE /import/batches/:id (ADMIN+) undo
  *   GET    /beneficiaries            beneficiaries + rate · POST / PATCH /:id / DELETE /:id (ADMIN+) · PUT /settings (ADMIN+)
  *   GET    /:id/suggestions          cases matching the client name · POST /:id/link { caseId | null }
  *   DELETE /:id                      (ADMIN+)
@@ -287,6 +292,68 @@ adminSettlementsRouter.post('/import', adminOnly, receiveFile, async (req, res) 
     } satisfies Prisma.InputJsonValue);
   }
   res.json(report);
+});
+
+// ─── Row import (CSV / XLSX template): preview → confirm → undo ─────────
+
+const rowUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024, files: 1 },
+  fileFilter: (_req, file, cb) => {
+    if (/\.(csv|xlsx|txt)$/i.test(file.originalname)) cb(null, true);
+    else cb(badRequest('UNSUPPORTED_FILE_TYPE'));
+  },
+}).single('file');
+
+adminSettlementsRouter.get('/import/template.csv', adminOnly, async (_req, res) => {
+  res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+  res.setHeader('Content-Disposition', 'attachment; filename="hesablasma-import.csv"');
+  res.send(await templateCsv());
+});
+
+adminSettlementsRouter.get('/import/template.xlsx', adminOnly, async (_req, res) => {
+  res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+  res.setHeader('Content-Disposition', 'attachment; filename="hesablasma-import.xlsx"');
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.send(await templateXlsx());
+});
+
+adminSettlementsRouter.post(
+  '/import/rows/preview',
+  adminOnly,
+  (req: Request, res: Response, next: NextFunction) => rowUpload(req, res, (err: unknown) => next(err)),
+  async (req, res) => {
+    const file = req.file;
+    if (!file) throw badRequest('FILE_REQUIRED');
+    res.json(await previewImport(file.buffer, file.originalname.slice(0, 200)));
+  },
+);
+
+adminSettlementsRouter.post('/import/rows/confirm', adminOnly, async (req, res) => {
+  const input = parse(confirmSchema, req.body);
+  const batch = await confirmImport(input, req.user!.id);
+  await audit(req, 'SETTLEMENT_ROWS_IMPORTED', undefined, {
+    batch: batch.id,
+    file: batch.fileName.slice(0, 120),
+    ...batch.counts,
+    created: { partners: batch.created.partners.length, beneficiaries: batch.created.beneficiaries.length, companies: batch.created.companies.length },
+  });
+  res.status(201).json({ batch: { id: batch.id, at: batch.at, counts: batch.counts, created: batch.created } });
+});
+
+adminSettlementsRouter.get('/import/batches', adminOnly, async (_req, res) => {
+  res.json({ batches: await listBatches() });
+});
+
+adminSettlementsRouter.delete('/import/batches/:batchId', adminOnly, async (req, res) => {
+  const batchId = parse(z.string().regex(/^imp-[0-9a-z-]{4,40}$/), req.params.batchId);
+  const result = await undoBatch(batchId, req.user!.id);
+  if (!result.ok) {
+    res.status(409).json({ error: 'IMPORT_EDITED', edited: result.edited });
+    return;
+  }
+  await audit(req, 'SETTLEMENT_IMPORT_UNDONE', undefined, { batch: batchId, deleted: result.deleted, removed: result.removed });
+  res.json(result);
 });
 
 // ─── Beneficiaries & rate ──────────────────────────────────────────────

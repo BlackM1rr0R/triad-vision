@@ -1,4 +1,4 @@
-import { useEffect, useId, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -22,6 +22,9 @@ const fetchCookieVersion = async (): Promise<string> => {
     return '1';
   }
 };
+/** One request per page load, shared by the delayed check and an early click. */
+let versionRequest: Promise<string> | null = null;
+const cookieVersion = () => (versionRequest ??= fetchCookieVersion());
 
 const Toggle = ({ checked, disabled, onChange, labelledBy }: { checked: boolean; disabled?: boolean; onChange?: (v: boolean) => void; labelledBy: string }) => (
   <button
@@ -53,17 +56,24 @@ export const CookieConsent = () => {
   const uid = useId();
   const [open, setOpen] = useState(false);
   const [view, setView] = useState<'banner' | 'settings'>('banner');
-  const [version, setVersion] = useState('1');
+  // Set once the visitor chose: a version check still in flight must not reopen the banner.
+  const decided = useRef(false);
   const [analytics, setAnalytics] = useState(false);
   const [marketing, setMarketing] = useState(false);
 
   useEffect(() => {
     let alive = true;
-    // A moment after the page settles, so the banner never competes with the first paint.
+    // First visit (no choice stored): the banner is part of the first render. Opening it seconds later made
+    // it the page's Largest Contentful Paint on phones (a late, large text block). The policy version is
+    // still fetched after the page settles; a click before that waits for it (save).
+    if (!getConsent()) {
+      setView('banner');
+      setOpen(true);
+    }
+    // A moment after the page settles, so the version check never competes with the first paint.
     const id = window.setTimeout(() => {
-      void fetchCookieVersion().then((v) => {
-        if (!alive) return;
-        setVersion(v);
+      void cookieVersion().then((v) => {
+        if (!alive || decided.current) return;
         const current = getConsent();
         if (!current || current.v !== v) {
           setAnalytics(current?.analytics ?? false);
@@ -89,8 +99,13 @@ export const CookieConsent = () => {
   }, []);
 
   const save = (choice: { analytics: boolean; marketing: boolean }, source: 'COOKIE_BANNER' | 'COOKIE_SETTINGS') => {
-    setConsent(choice, { v: version, source, loggedIn: !!user });
+    const loggedIn = !!user;
+    decided.current = true;
     setOpen(false);
+    // Normally the version is known already; on a very quick first-visit click, record it once it arrives.
+    void cookieVersion().then((v) => {
+      setConsent(choice, { v, source, loggedIn });
+    });
   };
   const source = view === 'settings' ? 'COOKIE_SETTINGS' : 'COOKIE_BANNER';
 
@@ -107,7 +122,7 @@ export const CookieConsent = () => {
           role="dialog"
           aria-modal="false"
           aria-labelledby={`${uid}-title`}
-          initial={{ y: 40, opacity: 0 }}
+          initial={{ y: 40 }}
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: 40, opacity: 0 }}
           data-bnav-lift

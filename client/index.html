@@ -75,7 +75,9 @@
     </script>
   </head>
   <body>
-    <div id="root"><!--tv:httpInclude (printf "/__seo/body?path=%s" (urlquery .OriginalReq.URL.Path)):tv--></div>
+    <!-- Cloudflare e-mail obfuscation is switched off for the crawler body (the markers around the include):
+         it would rewrite the address there and add a render-blocking decoder script to every page. -->
+    <div id="root"><!--email_off--><!--tv:httpInclude (printf "/__seo/body?path=%s" (urlquery .OriginalReq.URL.Path)):tv--><!--/email_off--></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
