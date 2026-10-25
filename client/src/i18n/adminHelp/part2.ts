@@ -278,7 +278,7 @@ const az: Bundle = {
     integrations: {
       title: 'İnteqrasiyalar',
       summary:
-        'Tərəfdaş sistemlər üçün API açarları və webhook-lar, şəxsi təqvim axını və API sənədləri buradadır. Tərəfdaş şirkətin proqramını Triad Vision ilə birləşdirmək və ya görüşlərinizi öz təqviminizdə görmək üçün istifadə edin.',
+        'Tərəfdaş sistemlər üçün API açarları və webhook-lar, şəxsi təqvim axını və API sənədləri buradadır. Tərəfdaş şirkətin proqramını {{brand}} ilə birləşdirmək və ya görüşlərinizi öz təqviminizdə görmək üçün istifadə edin.',
       who: 'Menyuda yalnız Administrator və Super admin görür; API açarlarını və webhook-ları yalnız onlar idarə edir. Təqvim axını və API sənədləri hər əməkdaş üçün işləyir.',
       steps: [
         '"Təqvim axını" bölməsində "Axını yarat" basın və "Abunə linki"ni kopyalayın.',
@@ -620,7 +620,7 @@ const de: Bundle = {
     integrations: {
       title: 'Integrationen',
       summary:
-        'Hier finden Sie API-Schlüssel und Webhooks für Partnersysteme, Ihren persönlichen Kalender-Feed und die API-Dokumentation. Nutzen Sie die Seite, um die Software eines Partnerunternehmens mit Triad Vision zu verbinden oder Ihre Termine im eigenen Kalender zu sehen.',
+        'Hier finden Sie API-Schlüssel und Webhooks für Partnersysteme, Ihren persönlichen Kalender-Feed und die API-Dokumentation. Nutzen Sie die Seite, um die Software eines Partnerunternehmens mit {{brand}} zu verbinden oder Ihre Termine im eigenen Kalender zu sehen.',
       who: 'Im Menü nur für Administrator und Super-Admin sichtbar; API-Schlüssel und Webhooks verwalten nur sie. Kalender-Feed und API-Dokumentation funktionieren für alle Mitarbeitenden.',
       steps: [
         'Klicken Sie im Bereich „Kalender-Feed“ auf „Feed erstellen“ und kopieren Sie den Abo-Link.',
@@ -962,7 +962,7 @@ const en: Bundle = {
     integrations: {
       title: 'Integrations',
       summary:
-        'API keys and webhooks for partner systems, your personal calendar feed and the API docs are here. Use it to connect a partner company’s software with Triad Vision or to see your appointments in your own calendar.',
+        'API keys and webhooks for partner systems, your personal calendar feed and the API docs are here. Use it to connect a partner company’s software with {{brand}} or to see your appointments in your own calendar.',
       who: 'Shown in the menu for Administrator and Super admin only; only they manage API keys and webhooks. The calendar feed and API docs work for every staff member.',
       steps: [
         'In the “Calendar feed” section, click “Create feed” and copy the subscription link.',
@@ -1304,7 +1304,7 @@ const ru: Bundle = {
     integrations: {
       title: 'Интеграции',
       summary:
-        'Здесь API-ключи и вебхуки для партнёрских систем, ваша личная лента календаря и документация API. Используйте страницу, чтобы связать программу компании-партнёра с Triad Vision или видеть свои встречи в собственном календаре.',
+        'Здесь API-ключи и вебхуки для партнёрских систем, ваша личная лента календаря и документация API. Используйте страницу, чтобы связать программу компании-партнёра с {{brand}} или видеть свои встречи в собственном календаре.',
       who: 'В меню видна только Администратору и Суперадмину; API-ключами и вебхуками управляют только они. Лента календаря и документация API работают для каждого сотрудника.',
       steps: [
         'В разделе «Лента календаря» нажмите «Создать ленту» и скопируйте ссылку для подписки.',

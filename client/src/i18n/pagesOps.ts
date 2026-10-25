@@ -120,7 +120,7 @@ const az = {
       fields: {
         candidate: 'Namizəd',
         company: 'Şirkət',
-        noCompany: 'Şirkətsiz (Triad Vision)',
+        noCompany: 'Şirkətsiz ({{brand}})',
         application: 'Müraciət / vakansiya',
         noApplication: 'Vakansiyasız',
         startsAt: 'Başlama',
@@ -195,7 +195,7 @@ const az = {
       ics: 'Təqvimə əlavə et',
       awaiting: 'Sizin təsdiqiniz gözlənilir',
       with: '{{company}} ilə müsahibə',
-      withTv: 'Triad Vision ilə müsahibə',
+      withTv: '{{brand}} ilə müsahibə',
       vacancy: 'Vakansiya',
     },
     kb: {
@@ -417,7 +417,7 @@ export const pagesOps: { az: Copy; de: Copy; en: Copy; ru: Copy } = {
         title: 'Interviews', subtitle: 'Online-Vorstellungsgespräche zwischen Arbeitgebern und Kandidaten (Jitsi).', views: { week: 'Woche', list: 'Liste' }, new: 'Neues Interview',
         today: 'Heute', prevWeek: 'Vorherige Woche', nextWeek: 'Nächste Woche', weekOf: '{{from}} – {{to}}', weekdays: ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'],
         status: { PROPOSED: 'Vorgeschlagen', CONFIRMED: 'Bestätigt', CANCELLED: 'Abgesagt', DONE: 'Durchgeführt', NO_SHOW: 'Nicht erschienen' }, anyStatus: 'Alle Status',
-        fields: { candidate: 'Kandidat', company: 'Unternehmen', noCompany: 'Ohne Unternehmen (Triad Vision)', application: 'Bewerbung / Stelle', noApplication: 'Ohne Stelle', startsAt: 'Beginn', minutes: 'Dauer (Min.)', notes: 'Notizen', notesPh: 'Thema, Teilnehmer, Vorbereitung…', staff: 'Zuständig', meeting: 'Meeting-Link', createdBy: 'Erstellt von', reason: 'Grund (wird dem Kandidaten mitgeteilt)', newTime: 'Neuer Zeitpunkt' },
+        fields: { candidate: 'Kandidat', company: 'Unternehmen', noCompany: 'Ohne Unternehmen ({{brand}})', application: 'Bewerbung / Stelle', noApplication: 'Ohne Stelle', startsAt: 'Beginn', minutes: 'Dauer (Min.)', notes: 'Notizen', notesPh: 'Thema, Teilnehmer, Vorbereitung…', staff: 'Zuständig', meeting: 'Meeting-Link', createdBy: 'Erstellt von', reason: 'Grund (wird dem Kandidaten mitgeteilt)', newTime: 'Neuer Zeitpunkt' },
         actions: { confirm: 'Bestätigen', cancel: 'Absagen', done: 'Durchgeführt', noShow: 'Nicht erschienen', reschedule: 'Verschieben', join: 'Meeting beitreten', ics: 'In Kalender (.ics)', delete: 'Löschen', decline: 'Ablehnen', propose: 'Interview vorschlagen', saveNotes: 'Notizen speichern' },
         searchCandidate: 'Nach Name, E-Mail oder Beruf suchen…', noCandidates: 'Keine Kandidaten gefunden', pickCandidate: 'Kandidat wählen', applications: '{{count}} Bewerbungen',
         created: 'Interview erstellt – Kandidat und Unternehmen wurden benachrichtigt', updated: 'Interview aktualisiert', deleted: 'Interview gelöscht', confirmDelete: 'Interview löschen?',
@@ -434,7 +434,7 @@ export const pagesOps: { az: Copy; de: Copy; en: Copy; ru: Copy } = {
         upcoming: 'Bevorstehende Gespräche', past: 'Vergangene Gespräche', empty: 'Noch keine Interviews. Sobald ein Arbeitgeber Sie einlädt, erscheint es hier.', noPast: 'Keine vergangenen Gespräche.',
         confirm: 'Termin bestätigen', decline: 'Termin passt nicht', declineTitle: 'Interview ablehnen', declineText: 'Geben Sie optional einen Grund an – der Arbeitgeber kann einen neuen Termin vorschlagen.',
         declineReason: 'Grund (optional)', confirmed: 'Interview bestätigt', declined: 'Interview abgelehnt', join: 'Meeting beitreten', joinHint: 'Der Link öffnet 5 Minuten vorher; prüfen Sie Mikrofon und Kamera.',
-        ics: 'In Kalender eintragen', awaiting: 'Ihre Bestätigung steht aus', with: 'Gespräch mit {{company}}', withTv: 'Gespräch mit Triad Vision', vacancy: 'Stelle',
+        ics: 'In Kalender eintragen', awaiting: 'Ihre Bestätigung steht aus', with: 'Gespräch mit {{company}}', withTv: 'Gespräch mit {{brand}}', vacancy: 'Stelle',
       },
       kb: {
         title: 'Wissensdatenbank', subtitle: 'Interne Anleitungen, häufige Fragen und fertige Antwortvorlagen.', categories: 'Kategorien', allArticles: 'Alle Artikel', pinned: 'Angepinnt',
@@ -509,7 +509,7 @@ export const pagesOps: { az: Copy; de: Copy; en: Copy; ru: Copy } = {
       interviews: {
         title: 'Interviews', subtitle: 'Online interviews between employers and candidates (Jitsi).', views: { week: 'Week', list: 'List' }, new: 'New interview', today: 'Today', prevWeek: 'Previous week', nextWeek: 'Next week',
         weekOf: '{{from}} – {{to}}', weekdays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'], status: { PROPOSED: 'Proposed', CONFIRMED: 'Confirmed', CANCELLED: 'Cancelled', DONE: 'Done', NO_SHOW: 'No-show' }, anyStatus: 'All statuses',
-        fields: { candidate: 'Candidate', company: 'Company', noCompany: 'No company (Triad Vision)', application: 'Application / vacancy', noApplication: 'No vacancy', startsAt: 'Start', minutes: 'Duration (min)', notes: 'Notes', notesPh: 'Topic, participants, preparation…', staff: 'Responsible staff', meeting: 'Meeting link', createdBy: 'Created by', reason: 'Reason (sent to the candidate)', newTime: 'New time' },
+        fields: { candidate: 'Candidate', company: 'Company', noCompany: 'No company ({{brand}})', application: 'Application / vacancy', noApplication: 'No vacancy', startsAt: 'Start', minutes: 'Duration (min)', notes: 'Notes', notesPh: 'Topic, participants, preparation…', staff: 'Responsible staff', meeting: 'Meeting link', createdBy: 'Created by', reason: 'Reason (sent to the candidate)', newTime: 'New time' },
         actions: { confirm: 'Confirm', cancel: 'Cancel', done: 'Done', noShow: 'No-show', reschedule: 'Reschedule', join: 'Join meeting', ics: 'Add to calendar (.ics)', delete: 'Delete', decline: 'Decline', propose: 'Propose interview', saveNotes: 'Save notes' },
         searchCandidate: 'Search by name, e-mail or profession…', noCandidates: 'No candidates found', pickCandidate: 'Pick a candidate', applications: '{{count}} applications', created: 'Interview created – candidate and company notified',
         updated: 'Interview updated', deleted: 'Interview deleted', confirmDelete: 'Delete this interview?', confirmDeleteText: 'An active interview is cancelled first and the candidate notified.', cancelTitle: 'Cancel interview',
@@ -524,7 +524,7 @@ export const pagesOps: { az: Copy; de: Copy; en: Copy; ru: Copy } = {
         title: 'My interviews', subtitle: 'Your online interviews with employers. Confirm or decline the proposed time.', upcoming: 'Upcoming interviews', past: 'Past interviews',
         empty: 'No interviews yet. When an employer invites you, it will appear here.', noPast: 'No past interviews.', confirm: 'Confirm the time', decline: 'This time does not suit me', declineTitle: 'Decline interview',
         declineText: 'Optionally say why – the employer can propose a new time.', declineReason: 'Reason (optional)', confirmed: 'Interview confirmed', declined: 'Interview declined', join: 'Join meeting',
-        joinHint: 'The link opens 5 minutes early; check your microphone and camera.', ics: 'Add to calendar', awaiting: 'Waiting for your confirmation', with: 'Interview with {{company}}', withTv: 'Interview with Triad Vision', vacancy: 'Vacancy',
+        joinHint: 'The link opens 5 minutes early; check your microphone and camera.', ics: 'Add to calendar', awaiting: 'Waiting for your confirmation', with: 'Interview with {{company}}', withTv: 'Interview with {{brand}}', vacancy: 'Vacancy',
       },
       kb: {
         title: 'Knowledge base', subtitle: 'Internal how-tos, frequent questions and ready answer templates.', categories: 'Categories', allArticles: 'All articles', pinned: 'Pinned', uncategorised: 'Uncategorised',
@@ -595,7 +595,7 @@ export const pagesOps: { az: Copy; de: Copy; en: Copy; ru: Copy } = {
       interviews: {
         title: 'Собеседования', subtitle: 'Онлайн-собеседования между работодателями и кандидатами (Jitsi).', views: { week: 'Неделя', list: 'Список' }, new: 'Новое собеседование', today: 'Сегодня', prevWeek: 'Предыдущая неделя', nextWeek: 'Следующая неделя',
         weekOf: '{{from}} – {{to}}', weekdays: ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'], status: { PROPOSED: 'Предложено', CONFIRMED: 'Подтверждено', CANCELLED: 'Отменено', DONE: 'Проведено', NO_SHOW: 'Не явился' }, anyStatus: 'Все статусы',
-        fields: { candidate: 'Кандидат', company: 'Компания', noCompany: 'Без компании (Triad Vision)', application: 'Отклик / вакансия', noApplication: 'Без вакансии', startsAt: 'Начало', minutes: 'Длительность (мин)', notes: 'Заметки', notesPh: 'Тема, участники, подготовка…', staff: 'Ответственный', meeting: 'Ссылка на встречу', createdBy: 'Создал(а)', reason: 'Причина (отправляется кандидату)', newTime: 'Новое время' },
+        fields: { candidate: 'Кандидат', company: 'Компания', noCompany: 'Без компании ({{brand}})', application: 'Отклик / вакансия', noApplication: 'Без вакансии', startsAt: 'Начало', minutes: 'Длительность (мин)', notes: 'Заметки', notesPh: 'Тема, участники, подготовка…', staff: 'Ответственный', meeting: 'Ссылка на встречу', createdBy: 'Создал(а)', reason: 'Причина (отправляется кандидату)', newTime: 'Новое время' },
         actions: { confirm: 'Подтвердить', cancel: 'Отменить', done: 'Проведено', noShow: 'Не явился', reschedule: 'Перенести', join: 'Подключиться', ics: 'В календарь (.ics)', delete: 'Удалить', decline: 'Отклонить', propose: 'Предложить собеседование', saveNotes: 'Сохранить заметки' },
         searchCandidate: 'Поиск по имени, e-mail или профессии…', noCandidates: 'Кандидаты не найдены', pickCandidate: 'Выберите кандидата', applications: '{{count}} откликов', created: 'Собеседование создано – кандидат и компания уведомлены',
         updated: 'Собеседование обновлено', deleted: 'Собеседование удалено', confirmDelete: 'Удалить собеседование?', confirmDeleteText: 'Активное собеседование сначала отменяется, кандидат получает уведомление.', cancelTitle: 'Отменить собеседование',
@@ -610,7 +610,7 @@ export const pagesOps: { az: Copy; de: Copy; en: Copy; ru: Copy } = {
         title: 'Мои собеседования', subtitle: 'Ваши онлайн-собеседования с работодателями. Подтвердите или отклоните предложенное время.', upcoming: 'Предстоящие собеседования', past: 'Прошедшие собеседования',
         empty: 'Собеседований пока нет. Когда работодатель пригласит вас, оно появится здесь.', noPast: 'Прошедших собеседований нет.', confirm: 'Подтверждаю время', decline: 'Это время не подходит', declineTitle: 'Отклонить собеседование',
         declineText: 'При желании укажите причину – работодатель сможет предложить новое время.', declineReason: 'Причина (необязательно)', confirmed: 'Собеседование подтверждено', declined: 'Собеседование отклонено', join: 'Подключиться',
-        joinHint: 'Ссылка открывается за 5 минут до начала; проверьте микрофон и камеру.', ics: 'Добавить в календарь', awaiting: 'Ожидается ваше подтверждение', with: 'Собеседование с {{company}}', withTv: 'Собеседование с Triad Vision', vacancy: 'Вакансия',
+        joinHint: 'Ссылка открывается за 5 минут до начала; проверьте микрофон и камеру.', ics: 'Добавить в календарь', awaiting: 'Ожидается ваше подтверждение', with: 'Собеседование с {{company}}', withTv: 'Собеседование с {{brand}}', vacancy: 'Вакансия',
       },
       kb: {
         title: 'База знаний', subtitle: 'Внутренние инструкции, частые вопросы и готовые шаблоны ответов.', categories: 'Категории', allArticles: 'Все статьи', pinned: 'Закреплённые', uncategorised: 'Без категории', newArticle: 'Новая статья',

@@ -40,6 +40,7 @@ import {
 } from '../lib/site/problems.js';
 import { SITE_TEXTS, siteLocale } from '../lib/site/texts.js';
 import { deriveTheme, getSiteTheme, saveSiteTheme, THEME_DEFAULTS, THEME_KEY, themeSchema } from '../lib/site/theme.js';
+import { getBrand, invalidateBrand, publicBrand } from '../lib/brand/index.js';
 
 /**
  * Site features (PWA stream):
@@ -97,6 +98,14 @@ siteRouter.post('/push/test', requireAuth, pushTestLimiter, async (req, res) => 
   res.json(result);
 });
 
+// ─── Brand (white-label, lib/brand) ─────────────────────────────────
+
+/** Public: this instance's brand (name, logos, icons, colours). The HTML shell also carries it (<meta name="tv-brand">). */
+siteRouter.get('/brand', async (_req, res) => {
+  res.setHeader('Cache-Control', 'public, max-age=60');
+  res.json({ brand: publicBrand(await getBrand()) });
+});
+
 // ─── Theme (design tokens on top of client/src/index.css) ──────────────
 
 /** Public: the site theme as CSS variables (cached 5 minutes; the client also keeps a copy in localStorage). */
@@ -126,12 +135,14 @@ siteRouter.put('/theme', requireAuth, requireMinRole('SUPER_ADMIN'), async (req,
   }
   for (const i of issues) if (i.adjustedTo) next[i.field] = i.adjustedTo;
   await saveSiteTheme(next);
+  invalidateBrand(); // the brand's primary colour follows the theme
   void audit(req, 'SITE_THEME_UPDATED', THEME_KEY, next);
   res.json({ theme: next, vars: deriveTheme(next).vars, adjustments: issues });
 });
 
 siteRouter.delete('/theme', requireAuth, requireMinRole('SUPER_ADMIN'), async (req, res) => {
   await saveSiteTheme(THEME_DEFAULTS);
+  invalidateBrand();
   void audit(req, 'SITE_THEME_RESET', THEME_KEY);
   res.json({ theme: THEME_DEFAULTS, vars: deriveTheme(THEME_DEFAULTS).vars });
 });

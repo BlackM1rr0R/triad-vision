@@ -18,3 +18,7 @@ server/ocr/*
 
 # Generated OG images (local test runs)
 server/uploads/og-cache/
+
+# White-label licence signing key (owner only, never in git)
+license-private.pem
+*.private.pem

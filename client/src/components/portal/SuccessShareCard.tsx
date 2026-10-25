@@ -13,6 +13,7 @@ import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { Success } from '@/components/illustrations';
 import { registerCopy } from '@/i18n';
 import { pagesSuccessShare } from '@/i18n/pagesSuccessShare';
+import { getBrand } from '@/lib/brand';
 
 registerCopy(pagesSuccessShare);
 
@@ -127,8 +128,8 @@ const ShareDialog = ({ open, onClose, item, referralEnabled }: { open: boolean; 
       const blob = await (await fetch(s.cards[format], { credentials: 'same-origin' })).blob();
       const file = new File([blob], `triad-vision-${format}.png`, { type: 'image/png' });
       const text = `${p('shareText')} ${s.url}`;
-      if (navigator.canShare?.({ files: [file] })) await navigator.share({ files: [file], title: 'Triad Vision', text });
-      else if (navigator.share) await navigator.share({ title: 'Triad Vision', text: p('shareText'), url: s.url });
+      if (navigator.canShare?.({ files: [file] })) await navigator.share({ files: [file], title: getBrand().name, text });
+      else if (navigator.share) await navigator.share({ title: getBrand().name, text: p('shareText'), url: s.url });
       else await copyLink(s.url);
     } catch (err) {
       if ((err as DOMException)?.name !== 'AbortError') toast.error(p('error'));

@@ -7,7 +7,7 @@ const copy: SiteCopy<(typeof pagesSite)['en']> = {
       updateTitle: 'Yeni sürüm mevcut',
       updateAction: 'Yeniden yükle',
       installTitle: 'Ana ekrana ekle',
-      installText: 'Triad Vision’ı uygulama olarak yükleyin: tek dokunuşla açılır, bildirimler doğrudan telefonunuza gelir.',
+      installText: '{{brand}}’ı uygulama olarak yükleyin: tek dokunuşla açılır, bildirimler doğrudan telefonunuza gelir.',
       installAction: 'Ekle',
       later: 'Daha sonra',
       iosHow: 'Nasıl?',
@@ -60,7 +60,7 @@ const copy: SiteCopy<(typeof pagesSite)['en']> = {
       stepOf: 'Adım {{step}} / {{total}}',
       ball: {
         APPLICANT: 'Sıradaki adım başvuru sahibinde — ayrıntılar müşteri portalında.',
-        TEAM: 'Sıradaki adım Triad Vision ekibinde — şu an yapmanız gereken bir şey yok.',
+        TEAM: 'Sıradaki adım {{brand}} ekibinde — şu an yapmanız gereken bir şey yok.',
         EMBASSY: 'Başvuru büyükelçilikte — karar bekleniyor.',
         NONE: 'Süreç tamamlandı — sonuç için portala giriş yapın.',
       },

@@ -56,7 +56,7 @@ const copy: { mk: Pick<Mk, 'common' | 'cost'> } = {
         language: 'Курс і іспит з німецької',
         healthInsurance: 'Медичне страхування (перші місяці)',
         flight: 'Переліт',
-        serviceFee: 'Сервісний збір Triad Vision',
+        serviceFee: 'Сервісний збір {{brand}}',
         blockedAccount: 'Блокований рахунок (Sperrkonto)',
       },
       qty: { people: 'осіб: {{n}}', docs: 'документів: {{n}}', each: 'по {{price}}' },

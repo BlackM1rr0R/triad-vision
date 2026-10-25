@@ -122,13 +122,13 @@ const az: Bundle = {
     signatures: {
       title: 'İmzalar',
       summary:
-        'İmzalar bölməsi PDF sənədləri bir və ya bir neçə tərəfə — namizədə, işəgötürənə, Triad Vision-a və digər tərəflərə — onlayn imzaya göndərmək və prosesi izləmək üçündür.',
+        'İmzalar bölməsi PDF sənədləri bir və ya bir neçə tərəfə — namizədə, işəgötürənə, {{brand}}-a və digər tərəflərə — onlayn imzaya göndərmək və prosesi izləmək üçündür.',
       who: 'Bütün əməkdaşlar imza tələbi yarada, xatırlatma göndərə və tələbi ləğv edə bilər.',
       steps: [
         '«Yeni imza tələbi» düyməsini basın və sənədin adını yazın.',
         'PDF mənbəyini seçin: «Yüklə» (kompüterdən), «Müraciət sənədi» və ya «Diskdən». Yalnız PDF qəbul olunur, maksimum 20 MB.',
-        '«İştirakçı əlavə et» ilə hər tərəfin adını, e-poçtunu, rolunu və e-poçt dilini yazın; özünüz də imzalayacaqsınızsa, «Məni əlavə et (Triad Vision)» basın.',
-        'Qaydanı seçin: «Ardıcıl» — növbə ilə (namizəd → işəgötürən → Triad Vision), «Paralel» — hamı eyni anda. Lazım olsa, iştirakçılara mesaj və son tarix (gün) əlavə edin.',
+        '«İştirakçı əlavə et» ilə hər tərəfin adını, e-poçtunu, rolunu və e-poçt dilini yazın; özünüz də imzalayacaqsınızsa, «Məni əlavə et ({{brand}})» basın.',
+        'Qaydanı seçin: «Ardıcıl» — növbə ilə (namizəd → işəgötürən → {{brand}}), «Paralel» — hamı eyni anda. Lazım olsa, iştirakçılara mesaj və son tarix (gün) əlavə edin.',
         'Sənəd müraciətin əmək müqaviləsidirsə, «Bu, müraciətin əmək müqaviləsidir» qutusunu işarələyin. Sonra «İmzaya göndər» və ya hələ hazır deyilsə «Qaralama kimi saxla» basın.',
         'Siyahıda status düymələri («Qaralama», «İmzada», «Tamamlandı», «İmtina edildi», «Ləğv edildi», «Vaxtı bitdi»), «Mənim» filtri və axtarışla tələbi tapın, sətirə klikləyib təfərrüatı açın.',
         'Təfərrüatda hər iştirakçının vəziyyətinə və «Audit izi»nə baxın. Gecikən tərəfə «Xatırlat», e-poçtu səhv olana «Yeni link» göndərin, lazım deyilsə «Ləğv et» basın. Proses bitəndə «İmzalanmış PDF»-i endirin.',
@@ -315,14 +315,14 @@ const az: Bundle = {
     vacancies: {
       title: 'Vakansiyalar',
       summary:
-        'İşəgötürənlərin və Triad Vision-un vakansiyaları burada yoxlanır, dörd dilə hazırlanır və saytda dərc edilir. Vakansiyaya gələn müraciətlər və uyğun namizəd təklifləri də buradadır.',
+        'İşəgötürənlərin və {{brand}}-un vakansiyaları burada yoxlanır, dörd dilə hazırlanır və saytda dərc edilir. Vakansiyaya gələn müraciətlər və uyğun namizəd təklifləri də buradadır.',
       who: 'Bütün əməkdaşlar.',
       steps: [
         'Siyahını status («Qaralama», «Yoxlamada», «Aktiv», «Bağlı»), şirkət və axtarışla süzün. İşəgötürənlərin göndərdiyi yeni vakansiyalar «Yoxlamada» statusunda olur.',
         'Yoxlamadakı vakansiyanı açın, mətnini oxuyun və lazım olsa «Redaktə (4 dil)» ilə dörd dildə düzəldin.',
         'Hər şey qaydasındadırsa, «Təsdiqlə və dərc et» basın — vakansiya saytda görünür və işəgötürən bildiriş alır.',
         'Düzəliş lazımdırsa, «Düzəlişə qaytar» basın, səbəbi yazın və «Geri göndər» ilə işəgötürənə qaytarın.',
-        'Öz vakansiyanızı yaratmaq üçün «Yeni vakansiya» basın; şirkət seçməsəniz, vakansiya «Şirkətsiz (Triad Vision)» olur. «Dərhal dərc et» işarələnməsə, qaralama kimi saxlanılır.',
+        'Öz vakansiyanızı yaratmaq üçün «Yeni vakansiya» basın; şirkət seçməsəniz, vakansiya «Şirkətsiz ({{brand}})» olur. «Dərhal dərc et» işarələnməsə, qaralama kimi saxlanılır.',
         'Vakansiyanın «Müraciətlər» siyahısında namizədlərin statusunu və qeydlərini idarə edin; «Uyğun namizəd təklifləri»ndən namizədi «Vakansiyaya əlavə et» ilə əlavə edin.',
         'Yer dolanda və ya vakansiya aktual olmayanda «Bağla» basın. Bağlı vakansiyanı yenidən «Dərc et» ilə aça bilərsiniz.',
       ],
@@ -453,13 +453,13 @@ const de: Bundle = {
     signatures: {
       title: 'Signaturen',
       summary:
-        'Im Bereich Signaturen senden Sie PDF-Dokumente an eine oder mehrere Parteien – Kandidat, Arbeitgeber, Triad Vision und weitere – zur Online-Unterschrift und verfolgen den Ablauf.',
+        'Im Bereich Signaturen senden Sie PDF-Dokumente an eine oder mehrere Parteien – Kandidat, Arbeitgeber, {{brand}} und weitere – zur Online-Unterschrift und verfolgen den Ablauf.',
       who: 'Alle Mitarbeitenden können Signaturanfragen erstellen, Erinnerungen senden und Anfragen stornieren.',
       steps: [
         'Klicken Sie auf „Neue Signaturanfrage“ und geben Sie den Namen des Dokuments ein.',
         'Wählen Sie die PDF-Quelle: „Hochladen“ (vom Computer), „Aktendokument“ oder „Aus dem Drive“. Nur PDF, maximal 20 MB.',
-        'Erfassen Sie mit „Partei hinzufügen“ Name, E-Mail, Rolle und E-Mail-Sprache jeder Partei; unterschreiben Sie selbst mit, klicken Sie auf „Mich hinzufügen (Triad Vision)“.',
-        'Wählen Sie die Reihenfolge: „Nacheinander“ – der Reihe nach (Kandidat → Arbeitgeber → Triad Vision), „Parallel“ – alle gleichzeitig. Fügen Sie bei Bedarf eine Nachricht an die Parteien und eine Frist (Tage) hinzu.',
+        'Erfassen Sie mit „Partei hinzufügen“ Name, E-Mail, Rolle und E-Mail-Sprache jeder Partei; unterschreiben Sie selbst mit, klicken Sie auf „Mich hinzufügen ({{brand}})“.',
+        'Wählen Sie die Reihenfolge: „Nacheinander“ – der Reihe nach (Kandidat → Arbeitgeber → {{brand}}), „Parallel“ – alle gleichzeitig. Fügen Sie bei Bedarf eine Nachricht an die Parteien und eine Frist (Tage) hinzu.',
         'Ist das Dokument der Arbeitsvertrag eines Antrags, setzen Sie das Häkchen „Dies ist der Arbeitsvertrag der Akte“. Klicken Sie dann auf „Zur Unterschrift senden“ oder, falls noch nicht fertig, auf „Als Entwurf speichern“.',
         'Finden Sie eine Anfrage in der Liste über die Status-Schaltflächen („Entwurf“, „Zur Unterschrift“, „Abgeschlossen“, „Abgelehnt“, „Storniert“, „Abgelaufen“), den Filter „Meine“ und die Suche; klicken Sie auf die Zeile, um die Details zu öffnen.',
         'In den Details sehen Sie den Stand jeder Partei und das „Prüfprotokoll“. Senden Sie säumigen Parteien „Erinnern“, bei falscher E-Mail „Neuer Link“, und klicken Sie auf „Stornieren“, wenn die Anfrage nicht mehr nötig ist. Ist alles erledigt, laden Sie das „Unterschriebene PDF“ herunter.',
@@ -646,14 +646,14 @@ const de: Bundle = {
     vacancies: {
       title: 'Stellen',
       summary:
-        'Hier werden die Stellen von Arbeitgebern und von Triad Vision geprüft, in vier Sprachen aufbereitet und auf der Website veröffentlicht. Auch die Bewerbungen auf eine Stelle und passende Kandidatenvorschläge finden Sie hier.',
+        'Hier werden die Stellen von Arbeitgebern und von {{brand}} geprüft, in vier Sprachen aufbereitet und auf der Website veröffentlicht. Auch die Bewerbungen auf eine Stelle und passende Kandidatenvorschläge finden Sie hier.',
       who: 'Alle Mitarbeitenden.',
       steps: [
         'Filtern Sie die Liste nach Status („Entwurf“, „In Prüfung“, „Veröffentlicht“, „Geschlossen“), Unternehmen und Suche. Neue Stellen von Arbeitgebern stehen im Status „In Prüfung“.',
         'Öffnen Sie eine Stelle in Prüfung, lesen Sie den Text und korrigieren Sie ihn bei Bedarf mit „Bearbeiten (4 Sprachen)“ in allen vier Sprachen.',
         'Ist alles in Ordnung, klicken Sie auf „Freigeben und veröffentlichen“ – die Stelle erscheint auf der Website und der Arbeitgeber wird benachrichtigt.',
         'Sind Korrekturen nötig, klicken Sie auf „Zur Überarbeitung zurück“, geben den Grund ein und senden die Stelle mit „Zurücksenden“ an den Arbeitgeber zurück.',
-        'Für eine eigene Stelle klicken Sie auf „Neue Stelle“; ohne gewähltes Unternehmen wird sie als „Ohne Unternehmen (Triad Vision)“ angelegt. Ohne Häkchen bei „Sofort veröffentlichen“ wird sie als Entwurf gespeichert.',
+        'Für eine eigene Stelle klicken Sie auf „Neue Stelle“; ohne gewähltes Unternehmen wird sie als „Ohne Unternehmen ({{brand}})“ angelegt. Ohne Häkchen bei „Sofort veröffentlichen“ wird sie als Entwurf gespeichert.',
         'Verwalten Sie in der Liste „Bewerbungen“ der Stelle Status und Notizen der Kandidaten; aus „Passende Kandidaten (Vorschläge)“ fügen Sie Kandidaten mit „Zur Stelle hinzufügen“ hinzu.',
         'Ist die Stelle besetzt oder nicht mehr aktuell, klicken Sie auf „Schließen“. Eine geschlossene Stelle können Sie mit „Veröffentlichen“ wieder öffnen.',
       ],
@@ -784,13 +784,13 @@ const en: Bundle = {
     signatures: {
       title: 'Signatures',
       summary:
-        'Signatures is where you send PDF documents to one or more parties – candidate, employer, Triad Vision and others – for online signature and follow the progress.',
+        'Signatures is where you send PDF documents to one or more parties – candidate, employer, {{brand}} and others – for online signature and follow the progress.',
       who: 'All staff can create signature requests, send reminders and cancel requests.',
       steps: [
         'Click “New signature request” and enter the document’s name.',
         'Choose the PDF source: “Upload” (from your computer), “Case document” or “From the drive”. PDF only, up to 20 MB.',
-        'Use “Add party” to enter each party’s name, email, role and email language; if you sign too, click “Add me (Triad Vision)”.',
-        'Choose the order: “Sequential” – one after another (candidate → employer → Triad Vision), “Parallel” – everyone at once. Add a message for the parties and a deadline (days) if needed.',
+        'Use “Add party” to enter each party’s name, email, role and email language; if you sign too, click “Add me ({{brand}})”.',
+        'Choose the order: “Sequential” – one after another (candidate → employer → {{brand}}), “Parallel” – everyone at once. Add a message for the parties and a deadline (days) if needed.',
         'If the document is a case’s employment contract, tick “This is the employment contract of the case”. Then click “Send for signature”, or “Save as draft” if it is not ready yet.',
         'Find a request in the list with the status buttons (“Draft”, “Out for signature”, “Completed”, “Declined”, “Cancelled”, “Expired”), the “Mine” filter and search; click the row to open the details.',
         'In the details see each party’s state and the “Audit trail”. Send “Remind” to a late party, a “New link” if the email was wrong, and “Cancel” if the request is no longer needed. When it is complete, download the “Signed PDF”.',
@@ -977,14 +977,14 @@ const en: Bundle = {
     vacancies: {
       title: 'Vacancies',
       summary:
-        'Vacancies from employers and from Triad Vision are reviewed here, prepared in four languages and published on the website. The applications for a vacancy and suggested candidates are here too.',
+        'Vacancies from employers and from {{brand}} are reviewed here, prepared in four languages and published on the website. The applications for a vacancy and suggested candidates are here too.',
       who: 'All staff.',
       steps: [
         'Filter the list by status (“Draft”, “In review”, “Published”, “Closed”), company and search. New vacancies sent by employers are “In review”.',
         'Open a vacancy in review, read the text and, if needed, correct it in all four languages with “Edit (4 languages)”.',
         'If everything is fine, click “Approve and publish” – the vacancy appears on the website and the employer is notified.',
         'If changes are needed, click “Send back for changes”, enter the reason and return it to the employer with “Send back”.',
-        'To create your own vacancy click “New vacancy”; without a company it is saved as “No company (Triad Vision)”. If “Publish immediately” is not ticked, it is saved as a draft.',
+        'To create your own vacancy click “New vacancy”; without a company it is saved as “No company ({{brand}})”. If “Publish immediately” is not ticked, it is saved as a draft.',
         'Manage candidates’ statuses and notes in the vacancy’s “Applications” list; add people from “Suggested candidates” with “Add to vacancy”.',
         'When the position is filled or no longer current, click “Close”. You can reopen a closed vacancy with “Publish”.',
       ],
@@ -1115,13 +1115,13 @@ const ru: Bundle = {
     signatures: {
       title: 'Подписи',
       summary:
-        'В разделе «Подписи» вы отправляете PDF-документы одной или нескольким сторонам — кандидату, работодателю, Triad Vision и другим — на онлайн-подпись и следите за процессом.',
+        'В разделе «Подписи» вы отправляете PDF-документы одной или нескольким сторонам — кандидату, работодателю, {{brand}} и другим — на онлайн-подпись и следите за процессом.',
       who: 'Все сотрудники могут создавать запросы на подпись, отправлять напоминания и отменять запросы.',
       steps: [
         'Нажмите «Новый запрос на подпись» и введите название документа.',
         'Выберите источник PDF: «Загрузить» (с компьютера), «Документ заявки» или «С диска». Только PDF, не более 20 МБ.',
-        'Кнопкой «Добавить сторону» укажите имя, e-mail, роль и язык письма каждой стороны; если подписываете и вы, нажмите «Добавить меня (Triad Vision)».',
-        'Выберите порядок: «По очереди» — один за другим (кандидат → работодатель → Triad Vision), «Параллельно» — все одновременно. При необходимости добавьте сообщение для сторон и срок (дней).',
+        'Кнопкой «Добавить сторону» укажите имя, e-mail, роль и язык письма каждой стороны; если подписываете и вы, нажмите «Добавить меня ({{brand}})».',
+        'Выберите порядок: «По очереди» — один за другим (кандидат → работодатель → {{brand}}), «Параллельно» — все одновременно. При необходимости добавьте сообщение для сторон и срок (дней).',
         'Если документ — трудовой договор заявки, отметьте «Это трудовой договор заявки». Затем нажмите «Отправить на подпись» или, если он ещё не готов, «Сохранить черновик».',
         'Найдите запрос в списке с помощью кнопок статусов («Черновик», «На подписи», «Завершён», «Отклонён», «Отменён», «Истёк»), фильтра «Мои» и поиска; нажмите на строку, чтобы открыть подробности.',
         'В подробностях видно состояние каждой стороны и «Журнал аудита». Отправьте опаздывающей стороне «Напомнить», при неверном e-mail — «Новая ссылка», а если запрос больше не нужен — «Отменить». Когда всё готово, скачайте «Подписанный PDF».',
@@ -1308,14 +1308,14 @@ const ru: Bundle = {
     vacancies: {
       title: 'Вакансии',
       summary:
-        'Здесь вакансии работодателей и Triad Vision проверяются, готовятся на четырёх языках и публикуются на сайте. Отклики на вакансию и подходящие кандидаты тоже находятся здесь.',
+        'Здесь вакансии работодателей и {{brand}} проверяются, готовятся на четырёх языках и публикуются на сайте. Отклики на вакансию и подходящие кандидаты тоже находятся здесь.',
       who: 'Все сотрудники.',
       steps: [
         'Фильтруйте список по статусу («Черновик», «На проверке», «Опубликована», «Закрыта»), компании и поиску. Новые вакансии от работодателей имеют статус «На проверке».',
         'Откройте вакансию на проверке, прочитайте текст и при необходимости исправьте его на всех четырёх языках кнопкой «Редактирование (4 языка)».',
         'Если всё в порядке, нажмите «Одобрить и опубликовать» — вакансия появится на сайте, а работодатель получит уведомление.',
         'Если нужны исправления, нажмите «Вернуть на доработку», укажите причину и верните вакансию работодателю кнопкой «Вернуть».',
-        'Чтобы создать свою вакансию, нажмите «Новая вакансия»; без выбранной компании она сохраняется как «Без компании (Triad Vision)». Если не отмечено «Опубликовать сразу», она сохраняется как черновик.',
+        'Чтобы создать свою вакансию, нажмите «Новая вакансия»; без выбранной компании она сохраняется как «Без компании ({{brand}})». Если не отмечено «Опубликовать сразу», она сохраняется как черновик.',
         'В списке «Отклики» вакансии управляйте статусами и заметками кандидатов; из «Подходящие кандидаты» добавляйте людей кнопкой «Добавить к вакансии».',
         'Когда место занято или вакансия неактуальна, нажмите «Закрыть». Закрытую вакансию можно снова открыть кнопкой «Опубликовать».',
       ],

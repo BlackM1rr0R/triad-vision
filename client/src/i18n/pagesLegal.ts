@@ -190,7 +190,7 @@ const az = {
       privacy: 'Davam etmək üçün məxfilik siyasətini qəbul edin.',
     },
     aside: {
-      label: 'Triad Vision xidmətləri',
+      label: '{{brand}} xidmətləri',
       title: 'Bütün viza həlləri bir ünvanda',
       text: 'Peşəkar komandamızla xaricdə iş və təhsil imkanlarını reallaşdırın.',
       consult: 'Peşəkar məsləhət',
@@ -522,7 +522,7 @@ const de: LegalCopy = {
       privacy: 'Bitte akzeptieren Sie die Datenschutzerklärung, um fortzufahren.',
     },
     aside: {
-      label: 'Leistungen von Triad Vision',
+      label: 'Leistungen von {{brand}}',
       title: 'Alle Visa-Lösungen an einem Ort',
       text: 'Verwirklichen Sie mit unserem professionellen Team Ihre Arbeits- und Ausbildungsmöglichkeiten im Ausland.',
       consult: 'Professionelle Beratung',
@@ -852,7 +852,7 @@ const en: LegalCopy = {
       privacy: 'Please accept the privacy policy to continue.',
     },
     aside: {
-      label: 'Triad Vision services',
+      label: '{{brand}} services',
       title: 'All visa solutions in one place',
       text: 'Turn opportunities to work and study abroad into reality with our professional team.',
       consult: 'Professional advice',
@@ -1182,7 +1182,7 @@ const ru: LegalCopy = {
       privacy: 'Чтобы продолжить, примите политику конфиденциальности.',
     },
     aside: {
-      label: 'Услуги Triad Vision',
+      label: 'Услуги {{brand}}',
       title: 'Все визовые решения в одном месте',
       text: 'Реализуйте возможности работы и учёбы за рубежом вместе с нашей профессиональной командой.',
       consult: 'Профессиональная консультация',

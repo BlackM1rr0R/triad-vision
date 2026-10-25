@@ -1,4 +1,5 @@
 import 'dotenv/config';
+import crypto from 'node:crypto';
 import bcrypt from 'bcryptjs';
 import { PrismaClient } from '@prisma/client';
 import { services } from './seedServices';
@@ -8,7 +9,42 @@ import { seedContractTemplates } from './seed/contractTemplates';
 import { seedInterviewPrep } from './seed/interviewPrep';
 import { seedGuideCalculators, seedGuides } from './seed/guides/index';
 
-const prisma = new PrismaClient();
+/**
+ * SEED_PROFILE (white-label, deploy/whitelabel/README.md):
+ *   owner       (default) the owner's Triad Vision site: super admin from SEED_ADMIN_EMAIL / SEED_ADMIN_PASSWORD and
+ *               the full starter content (testimonials, stats, sample visas, partner logos, posts, contact data).
+ *   whitelabel  a customer agency's instance: no Triad Vision business content (no testimonials, statistics,
+ *               sample visas, partner logos, news posts, contact / social data); the generic starter content
+ *               (visa categories, services, FAQ, requirements, journey, contract template, interview prep, guides)
+ *               is written with "Triad Vision" replaced by BRAND_NAME. The first SUPER_ADMIN (SEED_ADMIN_EMAIL)
+ *               gets a one-time setup link instead of a password from the environment.
+ */
+const SEED_PROFILE = (process.env.SEED_PROFILE ?? 'owner').trim().toLowerCase();
+if (SEED_PROFILE !== 'owner' && SEED_PROFILE !== 'whitelabel') throw new Error(`Unknown SEED_PROFILE "${SEED_PROFILE}" (owner | whitelabel)`);
+const WHITELABEL = SEED_PROFILE === 'whitelabel';
+const BRAND_NAME = (process.env.BRAND_NAME ?? '').trim() || 'Triad Vision';
+
+/** "Triad Vision" in seeded texts → the instance brand (whitelabel profile only). */
+const brandDeep = (v: unknown): unknown => {
+  if (typeof v === 'string') return v.split('Triad Vision').join(BRAND_NAME).split('TRIAD VISION').join(BRAND_NAME.toLocaleUpperCase('en'));
+  if (Array.isArray(v)) return v.map(brandDeep);
+  if (v && typeof v === 'object' && Object.getPrototypeOf(v) === Object.prototype) return Object.fromEntries(Object.entries(v).map(([k, x]) => [k, brandDeep(x)]));
+  return v;
+};
+const WRITE_OPS = new Set(['create', 'createMany', 'update', 'updateMany', 'upsert']);
+const basePrisma = new PrismaClient();
+const prisma: PrismaClient =
+  WHITELABEL && BRAND_NAME !== 'Triad Vision'
+    ? (basePrisma.$extends({
+        query: {
+          $allModels: {
+            async $allOperations({ operation, args, query }) {
+              return query(WRITE_OPS.has(operation) ? (brandDeep(args) as typeof args) : args);
+            },
+          },
+        },
+      }) as unknown as PrismaClient)
+    : basePrisma;
 const img = (id: string, w = 1200) => `https://images.unsplash.com/photo-${id}?auto=format&fit=crop&w=${w}&q=75`;
 
 type L = { az: string; de: string; en: string; ru: string };
@@ -418,26 +454,57 @@ const posts: { slug: string; cover: string; title: L; excerpt: L; body: L; publi
   },
 ];
 
-async function main() {
-  const adminEmail = (process.env.SEED_ADMIN_EMAIL ?? 'admin@triad-vision.de').toLowerCase();
-  const adminPassword = process.env.SEED_ADMIN_PASSWORD;
-  if (!adminPassword || adminPassword.length < 10) {
-    throw new Error('Set SEED_ADMIN_PASSWORD (at least 10 characters) in server/.env before seeding.');
-  }
-  // The seeded account is the super admin: it manages staff accounts and workspace permissions.
-  // Re-running the seed promotes an existing account with this e-mail but never changes its password.
-  await prisma.user.upsert({
-    where: { email: adminEmail },
-    update: { role: 'SUPER_ADMIN', isActive: true },
-    create: {
+/**
+ * White-label instance: the first SUPER_ADMIN is created once, with an unusable random password and a one-time
+ * "set your password" link (the regular password-reset token, 72 h) printed to the console. Later deploys
+ * re-run the seed and leave the account alone; `npx tsx prisma/setupLink.ts` issues a new link if needed.
+ */
+async function seedWhitelabelAdmin(adminEmail: string) {
+  if (await prisma.user.findFirst({ where: { role: 'SUPER_ADMIN' }, select: { id: true } })) return;
+  const user = await prisma.user.create({
+    data: {
       email: adminEmail,
-      passwordHash: await bcrypt.hash(adminPassword, 12),
+      passwordHash: await bcrypt.hash(crypto.randomBytes(32).toString('hex'), 12),
       role: 'SUPER_ADMIN',
-      firstName: 'Triad',
-      lastName: 'Admin',
+      firstName: 'Admin',
+      lastName: BRAND_NAME.slice(0, 80),
       locale: 'az',
     },
   });
+  const token = crypto.randomBytes(32).toString('hex');
+  await prisma.passwordResetToken.create({
+    data: { userId: user.id, tokenHash: crypto.createHash('sha256').update(token).digest('hex'), expiresAt: new Date(Date.now() + 72 * 60 * 60 * 1000) },
+  });
+  const base = (process.env.CLIENT_URL ?? 'http://localhost:5173').replace(/\/+$/, '');
+  console.log(`\n================ FIRST SUPER ADMIN (${adminEmail}) ================`);
+  console.log(`One-time setup link (valid 72 h): ${base}/reset-password?token=${token}`);
+  console.log('================================================================\n');
+}
+
+async function main() {
+  const adminEmail = (process.env.SEED_ADMIN_EMAIL ?? 'admin@triad-vision.de').toLowerCase();
+  const adminPassword = process.env.SEED_ADMIN_PASSWORD;
+  if (WHITELABEL && !adminPassword) {
+    await seedWhitelabelAdmin(adminEmail);
+  } else {
+    if (!adminPassword || adminPassword.length < 10) {
+      throw new Error('Set SEED_ADMIN_PASSWORD (at least 10 characters) in server/.env before seeding.');
+    }
+    // The seeded account is the super admin: it manages staff accounts and workspace permissions.
+    // Re-running the seed promotes an existing account with this e-mail but never changes its password.
+    await prisma.user.upsert({
+      where: { email: adminEmail },
+      update: { role: 'SUPER_ADMIN', isActive: true },
+      create: {
+        email: adminEmail,
+        passwordHash: await bcrypt.hash(adminPassword, 12),
+        role: 'SUPER_ADMIN',
+        firstName: 'Triad',
+        lastName: 'Admin',
+        locale: 'az',
+      },
+    });
+  }
 
   // Starter website content is written once. A marker setting remembers it, so content the admin
   // deletes later (even every visa type) is never re-created by a later deploy.
@@ -450,24 +517,26 @@ async function main() {
   if (await seedTable(prisma.service)) {
     await prisma.service.createMany({ data: services.map((v, i) => ({ ...v, sortOrder: i })) });
   }
-  if (await seedTable(prisma.partner)) {
+  // Triad Vision's own business content (partner logos, sample visas, testimonials, statistics, news) is not a
+  // template for another agency: the whitelabel profile leaves those tables empty.
+  if (!WHITELABEL && (await seedTable(prisma.partner))) {
     await prisma.partner.createMany({ data: partners.map((name, i) => ({ name, sortOrder: i })) });
   }
-  if (await seedTable(prisma.visaSample)) {
+  if (!WHITELABEL && (await seedTable(prisma.visaSample))) {
     await prisma.visaSample.createMany({
       data: samples.map((s, i) => ({ ...s, image: img(portraits[i % portraits.length], 400), sortOrder: i })),
     });
   }
-  if (await seedTable(prisma.testimonial)) {
+  if (!WHITELABEL && (await seedTable(prisma.testimonial))) {
     await prisma.testimonial.createMany({ data: testimonials.map((t, i) => ({ ...t, sortOrder: i })) });
   }
-  if (await seedTable(prisma.stat)) {
+  if (!WHITELABEL && (await seedTable(prisma.stat))) {
     await prisma.stat.createMany({ data: stats.map((s, i) => ({ ...s, sortOrder: i })) });
   }
   if (await seedTable(prisma.faq)) {
     await prisma.faq.createMany({ data: faqs.map((f, i) => ({ ...f, sortOrder: i })) });
   }
-  if (await seedTable(prisma.post)) {
+  if (!WHITELABEL && (await seedTable(prisma.post))) {
     await prisma.post.createMany({ data: posts });
   }
   if (!contentSeeded) await prisma.setting.create({ data: { key: CONTENT_MARKER, value: { at: new Date().toISOString() } } });
@@ -490,8 +559,11 @@ async function main() {
       tiktok: 'https://tiktok.com/@triadvision',
     },
   };
-  for (const [key, value] of Object.entries(settings)) {
-    await prisma.setting.upsert({ where: { key }, update: {}, create: { key, value: value as object } });
+  // Contact and social links are Triad Vision's; a white-label agency enters its own in Admin → Settings.
+  if (!WHITELABEL) {
+    for (const [key, value] of Object.entries(settings)) {
+      await prisma.setting.upsert({ where: { key }, update: {}, create: { key, value: value as object } });
+    }
   }
 
   await seedRequirements(prisma);
@@ -501,7 +573,7 @@ async function main() {
   await seedGuides(prisma); // topic guides (/guides): each language version written once
   await seedGuideCalculators(prisma); // calculator shortcodes into guides seeded before they existed (once per row)
 
-  console.log(`Seed complete. Admin login: ${adminEmail}`);
+  console.log(`Seed complete (${SEED_PROFILE} profile). Admin login: ${adminEmail}`);
 }
 
 main()
@@ -509,4 +581,4 @@ main()
     console.error(e);
     process.exit(1);
   })
-  .finally(() => prisma.$disconnect());
+  .finally(() => basePrisma.$disconnect());

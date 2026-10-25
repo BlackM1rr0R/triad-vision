@@ -19,6 +19,7 @@ interface Item {
   adminOnly?: boolean;
   superOnly?: boolean;
   module?: string;
+  ownerOnly?: boolean;
 }
 interface Registry {
   STAFF_NAV: Item[];
@@ -30,6 +31,7 @@ interface Registry {
   hubOf: (id: string) => string | undefined;
   hubTabs: (key: string, role: Role, modules: Record<string, boolean> | undefined) => Item[];
   isVisible: (item: Item, role: Role, modules: Record<string, boolean> | undefined) => boolean;
+  setOwnerInstance: (v: boolean) => void;
   activeNavItem: (pathname: string, items?: Item[]) => Item | undefined;
   defaultDeskFor: (role: Role) => string;
 }
@@ -86,6 +88,21 @@ describe('admin navigation registry', () => {
       const found = app.includes(`path="${route}"`) || app.includes(`path="${route}/*"`);
       expect(found, `${i.id} → ${i.to}`).toBe(true);
     }
+  });
+
+  it('white-label pages: brand + license for the super admin, customers only on the owner instance', async () => {
+    const admin = ((await import(/* @vite-ignore */ pathToFileURL(path.join(clientSrc, 'i18n/admin.ts')).href)) as { adminCopy: Record<string, { admin: { nav: Record<string, string> } }> }).adminCopy;
+    for (const l of ['az', 'de', 'en', 'ru']) for (const id of ['brand', 'license', 'customers']) expect(admin[l].admin.nav[id], `${l} nav ${id}`).toBeTruthy();
+    const item = (id: string) => r.STAFF_NAV.find((i) => i.id === id)!;
+    expect(r.hubOf('brand')).toBe('system');
+    expect(r.isVisible(item('brand'), 'SUPER_ADMIN', {})).toBe(true);
+    expect(r.isVisible(item('license'), 'ADMIN', {})).toBe(false);
+    r.setOwnerInstance(false);
+    expect(r.isVisible(item('customers'), 'SUPER_ADMIN', {})).toBe(false);
+    r.setOwnerInstance(true);
+    expect(r.isVisible(item('customers'), 'SUPER_ADMIN', {})).toBe(true);
+    expect(r.isVisible(item('customers'), 'ADMIN', {})).toBe(false);
+    r.setOwnerInstance(false);
   });
 
   it('labels hubs, desks, modules and the new pages in all four languages', () => {

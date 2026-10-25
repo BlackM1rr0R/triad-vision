@@ -223,7 +223,7 @@ const copy: SiteCopy<(typeof pagesTools)['en']> = {
       anabinText: 'Yabancı üniversitelerin ve diplomaların statüsü (KMK veri tabanı).',
     },
     tip: {
-      title: 'Triad Vision’dan ipucu',
+      title: '{{brand}}’dan ipucu',
       text: 'En çok zaman eksik belgeler yüzünden kaybedilir. Diplomalarınızı ve belgelerinizi çeviriyor, apostil ve onay işlemlerini ayarlıyor ve başvuruyu sizinle birlikte hazırlıyoruz.',
       translations: 'Çeviri siparişleri',
       booking: 'Danışmanlık randevusu al',

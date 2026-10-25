@@ -11,6 +11,7 @@ import { leadContext } from '@/lib/leadVisitor';
 import { currentSiteLocale, registerCopy } from '@/i18n';
 import { pagesDiscover } from '@/i18n/pagesDiscover';
 import { SITE_LANGUAGE_NAMES, type SiteLocale } from '@/lib/siteLocale';
+import { getBrand } from '@/lib/brand';
 
 registerCopy(pagesDiscover);
 
@@ -42,7 +43,7 @@ export const EbookCover = ({ magnet, className }: { magnet: Pick<PublicLeadMagne
     <img src={magnet.coverUrl} alt="" loading="lazy" decoding="async" className={clsx('aspect-[3/4] w-full rounded-xl object-cover shadow-[var(--tv-shadow-raised)]', className)} />
   ) : (
     <div className={clsx('relative flex aspect-[3/4] w-full flex-col justify-between overflow-hidden rounded-xl bg-navy-900 p-5 text-white shadow-[var(--tv-shadow-raised)]', className)} aria-hidden>
-      <span className="text-[10px] font-semibold tracking-[0.25em] text-white/70">TRIAD VISION</span>
+      <span className="text-[10px] font-semibold tracking-[0.25em] text-white/70">{getBrand().name.toLocaleUpperCase('en')}</span>
       <span className="font-display text-lg leading-tight font-semibold text-balance">{magnet.title}</span>
       <BookOpen className="size-7 text-highlight" />
     </div>

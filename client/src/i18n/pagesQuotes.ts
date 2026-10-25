@@ -249,7 +249,7 @@ const az = {
   companyQuotes: {
     nav: 'Təkliflər',
     title: 'Təkliflər',
-    subtitle: 'Triad Vision-dan aldığınız təkliflər. Onlayn qəbul edə və ya rədd edə bilərsiniz.',
+    subtitle: '{{brand}}-dan aldığınız təkliflər. Onlayn qəbul edə və ya rədd edə bilərsiniz.',
     empty: 'Hələ təklif yoxdur',
     emptyText: 'Bizdən təklif aldıqda burada görünəcək.',
     loadFailed: 'Təkliflər yüklənmədi',
@@ -502,7 +502,7 @@ const de: typeof az = {
   companyQuotes: {
     nav: 'Angebote',
     title: 'Angebote',
-    subtitle: 'Ihre Angebote von Triad Vision. Sie können sie online annehmen oder ablehnen.',
+    subtitle: 'Ihre Angebote von {{brand}}. Sie können sie online annehmen oder ablehnen.',
     empty: 'Noch keine Angebote',
     emptyText: 'Sobald wir Ihnen ein Angebot senden, erscheint es hier.',
     loadFailed: 'Angebote konnten nicht geladen werden',
@@ -755,7 +755,7 @@ const en: typeof az = {
   companyQuotes: {
     nav: 'Quotations',
     title: 'Quotations',
-    subtitle: 'Your quotations from Triad Vision. You can accept or decline them online.',
+    subtitle: 'Your quotations from {{brand}}. You can accept or decline them online.',
     empty: 'No quotations yet',
     emptyText: 'As soon as we send you a quotation, it will appear here.',
     loadFailed: 'Quotations could not be loaded',
@@ -1008,7 +1008,7 @@ const ru: typeof az = {
   companyQuotes: {
     nav: 'Предложения',
     title: 'Предложения',
-    subtitle: 'Ваши предложения от Triad Vision. Вы можете принять или отклонить их онлайн.',
+    subtitle: 'Ваши предложения от {{brand}}. Вы можете принять или отклонить их онлайн.',
     empty: 'Предложений пока нет',
     emptyText: 'Как только мы отправим вам предложение, оно появится здесь.',
     loadFailed: 'Не удалось загрузить предложения',

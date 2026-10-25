@@ -5,6 +5,12 @@ import { startScheduler } from './lib/scheduler.js';
 import { mailSettings } from './lib/mail/settings.js';
 import { startMailIdle, stopMailIdle } from './lib/mail/idle.js';
 import './jobs/index.js';
+import { getBrand } from './lib/brand/index.js';
+import { logLicense, refreshLicense } from './lib/license/index.js';
+
+// White-label: verify the licence and load the brand before the first request (both are cached afterwards).
+logLicense(refreshLicense());
+void getBrand();
 
 const server = createApp().listen(config.port, () => {
   console.log(`Triad Vision API listening on http://localhost:${config.port}`);

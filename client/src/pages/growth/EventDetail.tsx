@@ -18,6 +18,7 @@ import { useAuth } from '@/lib/auth';
 import { useL10n } from '@/lib/l10n';
 import { usePageTitle } from '@/lib/usePageTitle';
 import NotFound from '../NotFound';
+import { getBrand } from '@/lib/brand';
 
 registerCopy(pagesGrowthPlus);
 registerCopy(pagesMarketing);
@@ -36,7 +37,7 @@ const CalendarButtons = ({ event, token, title }: { event: PublicEvent; token: s
   const page = `${window.location.origin}/events/${encodeURIComponent(event.slug)}`;
   const google = `https://calendar.google.com/calendar/render?${new URLSearchParams({
     action: 'TEMPLATE',
-    text: `Triad Vision · ${title}`,
+    text: `${getBrand().name} · ${title}`,
     dates: `${gcalTime(event.startsAt)}/${gcalTime(event.endsAt)}`,
     details: page,
     ...(event.mode === 'OFFLINE' && event.address ? { location: event.address } : {}),

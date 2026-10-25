@@ -86,6 +86,9 @@ import {
   BookOpenCheck,
   Signature as SignatureIcon,
   Palette,
+  BadgeCheck,
+  KeyRound,
+  Store,
 } from 'lucide-react';
 // Relative (not '@/'): the server unit tests load this module directly (tests/unit/adminNavRegistry.test.ts).
 import { hasMinRole, type Role } from '../../lib/types';
@@ -167,7 +170,15 @@ export interface StaffNavItem {
   badge?: 'today' | 'training';
   /** Optional feature (System → Modules); hidden when switched off. */
   module?: ModuleKey;
+  /** White-label: only on the owner's own instance (INSTANCE_ROLE=owner), e.g. the list of customer agencies. */
+  ownerOnly?: boolean;
 }
+
+// White-label instance role from GET /admin/me/nav (navPrefs.ts sets it); unknown = not the owner's instance.
+let ownerInstance = false;
+export const setOwnerInstance = (v: boolean) => {
+  ownerInstance = v;
+};
 
 const a = (id: string, to: string, icon: LucideIcon, group: NavGroupKey | undefined, extra: Partial<StaffNavItem> = {}): StaffNavItem => ({
   id,
@@ -293,6 +304,10 @@ export const STAFF_NAV: StaffNavItem[] = [
   a('modules', '/admin/system/modules', ToggleRight, 'system', { superOnly: true }),
   a('usage', '/admin/system/usage', Activity, 'system', { superOnly: true }),
   a('designSystem', '/admin/design-system', Palette, 'system', { adminOnly: true }), // tokens + component catalogue
+  // White-label: brand of this instance, its licence, and (owner instance only) the customer agencies.
+  a('brand', '/admin/system/brand', BadgeCheck, 'system', { superOnly: true }),
+  a('license', '/admin/system/license', KeyRound, 'system', { superOnly: true }),
+  a('customers', '/admin/system/customers', Store, 'system', { superOnly: true, ownerOnly: true }),
   // Sub-pages without a former sidebar entry
   a('docsAudit', '/admin/docs/audit', FileSearch, undefined),
   a('aiSettings', '/admin/ai/settings', Bot, undefined, { superOnly: true, module: 'aiAssistant' }),
@@ -310,8 +325,11 @@ export const STAFF_NAV: StaffNavItem[] = [
 ];
 
 /** Whether a role may open the item (mirrors the route guards). */
-export const canSee = (item: Pick<StaffNavItem, 'adminOnly' | 'superOnly'>, role: Role | null | undefined) =>
-  hasMinRole(role, 'STAFF') && (!item.superOnly || hasMinRole(role, 'SUPER_ADMIN')) && (!item.adminOnly || hasMinRole(role, 'ADMIN'));
+export const canSee = (item: Pick<StaffNavItem, 'adminOnly' | 'superOnly' | 'ownerOnly'>, role: Role | null | undefined) =>
+  hasMinRole(role, 'STAFF') &&
+  (!item.superOnly || hasMinRole(role, 'SUPER_ADMIN')) &&
+  (!item.adminOnly || hasMinRole(role, 'ADMIN')) &&
+  (!item.ownerOnly || ownerInstance);
 
 /** Staff below ADMIN land on /admin/dashboard (the /admin index redirects them elsewhere). */
 export const hrefFor = (item: StaffNavItem, role: Role | null | undefined) =>
@@ -353,7 +371,7 @@ export const HUBS: { key: HubKey; icon: LucideIcon; tabs: string[] }[] = [
   { key: 'team', icon: UsersRound, tabs: ['users', 'kpi', 'shifts', 'training', 'timeTracking', 'oversight', 'weeklyReports'] },
   { key: 'compliance', icon: Scale, tabs: ['privacyRequests', 'legal', 'history', 'security', 'securityAlerts', 'sensitiveAccess', 'storage'] },
   { key: 'ai', icon: Sparkles, tabs: ['ai', 'aiSettings', 'mailTriage'] },
-  { key: 'system', icon: Settings, tabs: ['settings', 'integrations', 'automation', 'modules', 'usage', 'designSystem', 'kb', 'problemReports', 'help'] },
+  { key: 'system', icon: Settings, tabs: ['settings', 'integrations', 'automation', 'modules', 'usage', 'brand', 'license', 'customers', 'designSystem', 'kb', 'problemReports', 'help'] },
 ];
 
 export const hubHref = (key: HubKey) => `/admin/hub/${key}`;

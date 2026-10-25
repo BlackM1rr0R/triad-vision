@@ -84,7 +84,7 @@ const az = {
       },
       manager: {
         title: 'Meneceriniz',
-        team: 'Triad Vision komandası',
+        team: '{{brand}} komandası',
         pending: 'Menecer tezliklə təyin ediləcək. Hələlik suallarınızı komandamıza yaza bilərsiniz.',
         chat: 'Yazışma',
         call: 'Zəng',
@@ -382,7 +382,7 @@ const de: typeof az = {
       },
       manager: {
         title: 'Ihr Betreuer',
-        team: 'Triad-Vision-Team',
+        team: '{{brandHyphen}}-Team',
         pending: 'Ihr Betreuer wird in Kürze zugewiesen. Bis dahin können Sie unserem Team schreiben.',
         chat: 'Nachrichten',
         call: 'Anrufen',
@@ -680,7 +680,7 @@ const en: typeof az = {
       },
       manager: {
         title: 'Your manager',
-        team: 'Triad Vision team',
+        team: '{{brand}} team',
         pending: 'A manager will be assigned soon. Meanwhile you can message our team.',
         chat: 'Messages',
         call: 'Call',
@@ -978,7 +978,7 @@ const ru: typeof az = {
       },
       manager: {
         title: 'Ваш менеджер',
-        team: 'Команда Triad Vision',
+        team: 'Команда {{brand}}',
         pending: 'Менеджер будет назначен в ближайшее время. Пока вы можете написать нашей команде.',
         chat: 'Переписка',
         call: 'Позвонить',

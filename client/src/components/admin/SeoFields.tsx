@@ -8,6 +8,7 @@ import { ImageField } from './ImageField';
 import { CharCount, SeoSnippet } from './SeoSnippet';
 import { Switch } from './ui';
 import { Flag } from '../ui/Flag';
+import { getBrand } from '@/lib/brand';
 
 registerCopy(pagesSeoAdmin);
 
@@ -76,7 +77,7 @@ export const SeoFields = ({
   const chars = (count: number, max: number) => t('seoAdmin.guides.chars', { count, max });
   const title = value.seoTitle[lang] ?? '';
   const description = value.seoDescription[lang] ?? '';
-  const shownTitle = title.trim() || `${(fallbackTitle[lang] || fallbackTitle.az || '').trim()} | Triad Vision`;
+  const shownTitle = title.trim() || `${(fallbackTitle[lang] || fallbackTitle.az || '').trim()} | ${getBrand().name}`;
   const shownDescription = description.trim() || fallbackDescription[lang] || fallbackDescription.az || '';
   const url = `${lang === 'az' ? '' : `/${lang}`}${PATH[resource] ?? ''}/${slug || '…'}`;
 

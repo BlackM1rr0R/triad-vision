@@ -30,12 +30,14 @@ import { CommandPaletteButton, CommandPaletteHotkey } from '@/components/command
 import { ShortcutLayer } from '@/components/shortcuts/ShortcutLayer'; // ? cheat sheet, g+c/i/t/d, page shortcuts (J/K, E, /)
 import { NAV_GROUPS, STAFF_NAV, activeNavItem, hrefFor, isVisible, type NavGroupKey, type StaffNavItem } from '@/components/command/navRegistry';
 import { usePageVisits, useStaffNav } from '@/components/command/navPrefs'; // server-side pins (shared with Ctrl+K), modules, page usage
+import { LicenseBanner } from '@/components/admin/LicenseBanner'; // white-label licence: grace / read-only notice
 import { ModuleDisabled } from '@/components/admin/nav/ModuleDisabled';
 import { isStringArray, navGroupsKey, navPinsKey, readJson, writeJson } from '@/components/command/storage';
 import { useSurface } from '@/lib/theme'; // crisp admin surface tokens (index.css [data-surface=admin])
 import { DensityToggle } from '@/components/ui/DensityToggle'; // per-user table density (data-density)
 
 registerCopy(adminCopy);
+import { getBrand } from '@/lib/brand';
 registerCopy(pagesCalls);
 
 /**
@@ -428,7 +430,7 @@ const WorkspaceSwitcher = ({ collapsed }: { collapsed: boolean }) => {
       trigger={
         <button
           type="button"
-          aria-label={collapsed ? `Triad Vision · ${t('admin.layout.panel')}` : undefined}
+          aria-label={collapsed ? `${getBrand().name} · ${t('admin.layout.panel')}` : undefined}
           className={clsx(
             'flex w-full items-center gap-2.5 rounded-lg py-1.5 text-left transition-colors hover:bg-line/60',
             collapsed ? 'justify-center px-0' : 'px-2',
@@ -438,7 +440,7 @@ const WorkspaceSwitcher = ({ collapsed }: { collapsed: boolean }) => {
           {!collapsed && (
             <>
               <span className="min-w-0 flex-1 leading-tight">
-                <span className="block truncate text-[13px] font-semibold text-ink">Triad Vision</span>
+                <span className="block truncate text-[13px] font-semibold text-ink">{getBrand().name}</span>
                 <span className="block truncate text-[11.5px] text-muted">{t('admin.layout.panel')}</span>
               </span>
               <ChevronDown className="size-3.5 shrink-0 text-muted" aria-hidden />
@@ -522,7 +524,7 @@ export default function AdminLayout() {
   }, [collapsed]);
 
   useEffect(() => {
-    document.title = `${title} · Triad Vision Admin`;
+    document.title = `${title} · ${getBrand().name} Admin`;
   }, [title]);
 
   useEffect(() => setMobileOpen(false), [location.pathname]);
@@ -694,6 +696,7 @@ export default function AdminLayout() {
         </header>
 
         <main id="admin-main" tabIndex={-1} className="mx-auto w-full max-w-[1440px] min-w-0 flex-1 px-4 py-5 outline-none sm:px-6 sm:py-6 lg:px-8">
+          <LicenseBanner />
           {blocked && page ? <ModuleDisabled item={page} /> : <Outlet />}
           <LiveChatAlerts />
         </main>

@@ -1,5 +1,7 @@
 import { Router } from 'express';
 import { z, type ZodTypeAny } from 'zod';
+import { BRAND_SETTING_KEY } from '../../lib/brand/index.js';
+import { WHITELABEL_CUSTOMERS_KEY } from '../../lib/whitelabel/customers.js';
 import { Prisma } from '@prisma/client';
 import { prisma } from '../../db.js';
 import { imageUpload, verifyUploadedFile } from '../../middleware/upload.js';
@@ -235,7 +237,8 @@ adminContentRouter.delete('/:resource/:id', async (req, res) => {
 export const adminSettingsRouter = Router();
 
 adminSettingsRouter.get('/', async (_req, res) => {
-  const settings = await prisma.setting.findMany();
+  // The owner's customer list (white-label, System → Customers) has its own SUPER_ADMIN endpoint.
+  const settings = await prisma.setting.findMany({ where: { key: { notIn: [WHITELABEL_CUSTOMERS_KEY] } } });
   res.json({ settings: Object.fromEntries(settings.map((s) => [s.key, s.value])) });
 });
 
@@ -250,6 +253,9 @@ adminSettingsRouter.put('/:key', async (req, res) => {
   if (body.value === undefined) throw badRequest('VALUE_REQUIRED');
   // Module toggles have their own SUPER_ADMIN endpoint (PUT /api/admin/nav/modules) with validation.
   if (key === MODULES_SETTING_KEY) throw forbidden('USE_MODULES_ENDPOINT');
+  // White-label brand and the owner's customer list: validated SUPER_ADMIN endpoints (/api/admin/brand, /api/admin/whitelabel).
+  if (key === BRAND_SETTING_KEY) throw forbidden('USE_BRAND_ENDPOINT');
+  if (key === WHITELABEL_CUSTOMERS_KEY) throw forbidden('USE_WHITELABEL_ENDPOINT');
   // Keys with a fixed shape (legal & security stream) are validated; others stay free-form.
   const schema = LEGAL_SETTING_SCHEMAS[key];
   const value = schema ? parse(schema, body.value) : body.value;

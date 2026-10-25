@@ -9,6 +9,7 @@ import '@fontsource-variable/onest'; // the one UI family (az/tr/de/ru/uk + € 
 import { i18nReady, preloadAllLanguages } from './i18n';
 import './index.css';
 import { initSiteTheme } from './lib/theme';
+import { initBrand } from './lib/brand';
 import App from './App';
 import { AuthProvider } from './lib/auth';
 import { reloadOnce } from './components/ui/RouteErrorBoundary';
@@ -22,6 +23,8 @@ import { initAnalytics } from './lib/analytics';
 
 // Site theme (SUPER_ADMIN theme builder): cached CSS variables now, fresh ones after the first paint; table density.
 initSiteTheme();
+// White-label brand (name, logo, icons) from the HTML shell's <meta name="tv-brand">, or the API when idle.
+initBrand();
 // "Problem bildir" diagnostics (console errors ring buffer, last API error) and the service worker (PWA).
 installDiagnostics();
 initPwa();

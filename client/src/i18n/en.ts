@@ -65,7 +65,7 @@ const en: Messages = {
     title1: 'Reliable workforce supply',
     title2: 'and visa solutions',
     subtitle:
-      'Triad Vision provides companies in Germany with full support in selecting qualified, motivated workers from Azerbaijan, handling the visa process and integration.',
+      '{{brand}} provides companies in Germany with full support in selecting qualified, motivated workers from Azerbaijan, handling the visa process and integration.',
     ctaPrimary: 'Send a cooperation request',
     ctaSecondary: 'Apply for a visa',
     bullets: [
@@ -141,7 +141,7 @@ const en: Messages = {
     },
   },
   why: {
-    eyebrow: 'Why Triad Vision',
+    eyebrow: 'Why {{brand}}',
     title: 'Transparent, legal and fast',
     items: [
       { title: 'Legal and safe', text: 'The entire process complies with German law.' },
@@ -190,7 +190,7 @@ const en: Messages = {
     subtitle: 'People · Work · Opportunities — a trusted bridge between Azerbaijan and Germany.',
     storyTitle: 'Our story',
     story:
-      'Triad Vision was founded to connect talented, hard-working people in Azerbaijan with German companies that need skilled workers. Our mission is to build legal, transparent and long-term cooperation for both sides.\n\nOur team works in Baku and Germany and directly manages every stage, from candidate selection to the first day at work.',
+      '{{brand}} was founded to connect talented, hard-working people in Azerbaijan with German companies that need skilled workers. Our mission is to build legal, transparent and long-term cooperation for both sides.\n\nOur team works in Baku and Germany and directly manages every stage, from candidate selection to the first day at work.',
     valuesTitle: 'Our values',
     values: [
       { title: 'Trust', text: 'We take responsibility for every word we give and every document we handle.' },
@@ -408,7 +408,7 @@ const en: Messages = {
       placeholder: 'Type your message...',
       empty: 'No messages yet. If you have a question, write here.',
       you: 'You',
-      team: 'Triad Vision',
+      team: '{{brand}}',
     },
     events: {
       CASE_CREATED: 'Application created',

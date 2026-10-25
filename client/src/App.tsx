@@ -229,6 +229,9 @@ const AdminRequirements = lazy(() => import('./pages/admin/Requirements'));
 const AdminCaseForms = lazy(() => import('./pages/admin/CaseForms')); // smart questionnaire builder
 const AdminDocGuides = lazy(() => import('./pages/admin/DocGuides')); // "Necə almalı?" document guides
 const AdminModules = lazy(() => import('./pages/admin/SystemModules')); // module toggles (SUPER_ADMIN)
+const AdminBrand = lazy(() => import('./pages/admin/SystemBrand')); // white-label brand (SUPER_ADMIN)
+const AdminLicense = lazy(() => import('./pages/admin/SystemLicense')); // white-label licence status (SUPER_ADMIN)
+const AdminCustomers = lazy(() => import('./pages/admin/SystemCustomers')); // owner instance: customer agencies (SUPER_ADMIN)
 const AdminUsage = lazy(() => import('./pages/admin/SystemUsage')); // admin page usage statistics (SUPER_ADMIN)
 const AdminDesignSystem = lazy(() => import('./pages/admin/DesignSystem')); // design tokens + component catalogue (ADMIN+)
 const AccountCaseForm = lazy(() => import('./pages/account/CaseForm'));
@@ -531,6 +534,30 @@ export default function App() {
               element={
                 <RequireAuth roles={['SUPER_ADMIN']}>
                   <AdminUsage />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="system/brand"
+              element={
+                <RequireAuth roles={['SUPER_ADMIN']}>
+                  <AdminBrand />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="system/license"
+              element={
+                <RequireAuth roles={['SUPER_ADMIN']}>
+                  <AdminLicense />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="system/customers"
+              element={
+                <RequireAuth roles={['SUPER_ADMIN']}>
+                  <AdminCustomers />
                 </RequireAuth>
               }
             />

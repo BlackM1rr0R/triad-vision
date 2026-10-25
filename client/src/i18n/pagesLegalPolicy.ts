@@ -11,8 +11,8 @@ const azSections: PolicySection[] = [
     id: 'general',
     title: 'Ümumi məlumat',
     body: [
-      'Bu məxfilik siyasəti DSGVO-nun 13 və 14-cü maddələrinə uyğun olaraq triad-vision.de saytından, namizəd və işəgötürən portalından və mobil tətbiqimizdən istifadə edərkən hansı şəxsi məlumatları, hansı məqsədlə və hansı hüquqi əsasla emal etdiyimizi, eləcə də hüquqlarınızı izah edir.',
-      'Triad Vision Azərbaycandan olan mütəxəssisləri Almaniyadakı işəgötürənlərə yönləndirir və viza prosesini müşayiət edir. Bunun üçün namizəd məlumatlarının geniş emalı lazımdır. Biz yalnız bu məqsədlər üçün zəruri olan məlumatları emal edirik.',
+      'Bu məxfilik siyasəti DSGVO-nun 13 və 14-cü maddələrinə uyğun olaraq {{brandDomain}} saytından, namizəd və işəgötürən portalından və mobil tətbiqimizdən istifadə edərkən hansı şəxsi məlumatları, hansı məqsədlə və hansı hüquqi əsasla emal etdiyimizi, eləcə də hüquqlarınızı izah edir.',
+      '{{brand}} Azərbaycandan olan mütəxəssisləri Almaniyadakı işəgötürənlərə yönləndirir və viza prosesini müşayiət edir. Bunun üçün namizəd məlumatlarının geniş emalı lazımdır. Biz yalnız bu məqsədlər üçün zəruri olan məlumatları emal edirik.',
     ],
   },
   {
@@ -213,8 +213,8 @@ const deSections: PolicySection[] = [
     id: 'general',
     title: 'Allgemeine Hinweise',
     body: [
-      'Diese Datenschutzerklärung informiert Sie gemäß Art. 13 und 14 DSGVO darüber, welche personenbezogenen Daten wir verarbeiten, wenn Sie unsere Website triad-vision.de, unser Bewerber- und Arbeitgeberportal sowie unsere mobile App nutzen, zu welchen Zwecken und auf welcher Rechtsgrundlage dies geschieht und welche Rechte Ihnen zustehen.',
-      'Triad Vision vermittelt Fachkräfte aus Aserbaidschan an Arbeitgeber in Deutschland und begleitet das Visumverfahren. Dafür ist die Verarbeitung umfangreicher Bewerberdaten erforderlich. Wir verarbeiten nur die Daten, die für diese Zwecke notwendig sind.',
+      'Diese Datenschutzerklärung informiert Sie gemäß Art. 13 und 14 DSGVO darüber, welche personenbezogenen Daten wir verarbeiten, wenn Sie unsere Website {{brandDomain}}, unser Bewerber- und Arbeitgeberportal sowie unsere mobile App nutzen, zu welchen Zwecken und auf welcher Rechtsgrundlage dies geschieht und welche Rechte Ihnen zustehen.',
+      '{{brand}} vermittelt Fachkräfte aus Aserbaidschan an Arbeitgeber in Deutschland und begleitet das Visumverfahren. Dafür ist die Verarbeitung umfangreicher Bewerberdaten erforderlich. Wir verarbeiten nur die Daten, die für diese Zwecke notwendig sind.',
     ],
   },
   {
@@ -415,8 +415,8 @@ const enSections: PolicySection[] = [
     id: 'general',
     title: 'General information',
     body: [
-      'In accordance with Art. 13 and 14 GDPR, this privacy policy explains which personal data we process when you use our website triad-vision.de, our candidate and employer portal and our mobile app, for which purposes and on which legal basis, and which rights you have.',
-      'Triad Vision places skilled workers from Azerbaijan with employers in Germany and supports the visa process. This requires processing extensive candidate data. We only process data that is necessary for these purposes.',
+      'In accordance with Art. 13 and 14 GDPR, this privacy policy explains which personal data we process when you use our website {{brandDomain}}, our candidate and employer portal and our mobile app, for which purposes and on which legal basis, and which rights you have.',
+      '{{brand}} places skilled workers from Azerbaijan with employers in Germany and supports the visa process. This requires processing extensive candidate data. We only process data that is necessary for these purposes.',
     ],
   },
   {
@@ -617,8 +617,8 @@ const ruSections: PolicySection[] = [
     id: 'general',
     title: 'Общие сведения',
     body: [
-      'В соответствии со ст. 13 и 14 GDPR эта политика объясняет, какие персональные данные мы обрабатываем, когда вы пользуетесь сайтом triad-vision.de, порталом для кандидатов и работодателей и нашим мобильным приложением, с какой целью и на каком правовом основании, а также какие права у вас есть.',
-      'Triad Vision трудоустраивает специалистов из Азербайджана у работодателей в Германии и сопровождает визовый процесс. Для этого необходима обработка обширных данных кандидатов. Мы обрабатываем только данные, необходимые для этих целей.',
+      'В соответствии со ст. 13 и 14 GDPR эта политика объясняет, какие персональные данные мы обрабатываем, когда вы пользуетесь сайтом {{brandDomain}}, порталом для кандидатов и работодателей и нашим мобильным приложением, с какой целью и на каком правовом основании, а также какие права у вас есть.',
+      '{{brand}} трудоустраивает специалистов из Азербайджана у работодателей в Германии и сопровождает визовый процесс. Для этого необходима обработка обширных данных кандидатов. Мы обрабатываем только данные, необходимые для этих целей.',
     ],
   },
   {

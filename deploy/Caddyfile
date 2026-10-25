@@ -39,13 +39,14 @@ www.{$SITE_DOMAIN} {
 		}
 	}
 
-	# Per-page <head> tags (title, description, canonical, hreflang, Open Graph, JSON-LD) and the crawlable page
+	# Per-page <head> tags (title, description, canonical, hreflang, Open Graph, JSON-LD), the white-label brand
+	# tags (/__seo/brand: theme colour, icons, app title) and the crawlable page
 	# body (/__seo/body, placed inside <div id="root">) for crawlers that do not run JavaScript. index.html
 	# includes them via httpInclude (see the templates directive below). Only Caddy's own include sub-requests
 	# match here (they come from 127.0.0.1 and carry Caddy-Templates-Include);
 	# anyone else asking for /__seo/head just gets the SPA. Short timeouts: a slow API must not hold pages up.
 	@seohead {
-		path /__seo/head /__seo/body
+		path /__seo/head /__seo/body /__seo/brand
 		remote_ip 127.0.0.1
 		header Caddy-Templates-Include *
 	}
@@ -95,6 +96,21 @@ www.{$SITE_DOMAIN} {
 		reverse_proxy api:4000 {
 			header_up X-Forwarded-For {client_ip}
 			header_up X-Forwarded-Proto {scheme}
+		}
+	}
+
+	# Web app manifest of the installable site: built by the API from the instance brand (name, icons, colour).
+	# If the API is unreachable, handle_errors below serves the static client/public/manifest.webmanifest.
+	@manifestapi path /manifest.webmanifest
+	handle @manifestapi {
+		header Cache-Control "no-cache"
+		reverse_proxy api:4000 {
+			header_up -Cookie
+			header_up -Authorization
+			transport http {
+				dial_timeout 1s
+				response_header_timeout 2s
+			}
 		}
 	}
 
@@ -164,8 +180,15 @@ www.{$SITE_DOMAIN} {
 	# Fail soft: if the API is down or too slow, the head and body includes answer empty and index.html keeps
 	# its static fallback title/description (and an empty #root) instead of the whole page failing. Other errors keep Caddy's default.
 	handle_errors {
-		@seoheadFailed path /__seo/head /__seo/body
+		@seoheadFailed path /__seo/head /__seo/body /__seo/brand
 		respond @seoheadFailed 200
+		@manifestFailed path /manifest.webmanifest
+		handle @manifestFailed {
+			root * /srv
+			header Content-Type "application/manifest+json"
+			header Cache-Control "no-cache"
+			file_server
+		}
 	}
 
 	log {

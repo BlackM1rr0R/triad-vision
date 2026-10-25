@@ -5,6 +5,7 @@ import JSZip from 'jszip';
 import type { DocStatus, Prisma } from '@prisma/client';
 import { config } from '../../config.js';
 import { prisma } from '../../db.js';
+import { brandSync } from '../brand/index.js';
 import { badRequest, HttpError, notFound } from '../http.js';
 import { copyDocumentToDrive } from '../drive/caseFolders.js';
 import { checklistFor, getCaseAiSettings } from '../ai/features/caseAi/config.js';
@@ -263,7 +264,7 @@ const contactInfo = async (staff: { firstName: string; lastName: string } | null
   const s = (k: string) => (typeof v[k] === 'string' ? (v[k] as string).trim() : '');
   return {
     company: [s('companyName') || 'Triad Vision', s('legalForm')].filter(Boolean).join(' '),
-    phone: s('phone') || '+994 50 748 70 48',
+    phone: s('phone') || brandSync().phone, // white-label: the instance's phone (Triad Vision's by default)
     email: s('email') || 'info@triad-vision.de',
     staff: staff ? `${staff.firstName} ${staff.lastName}`.trim() || null : null,
   };

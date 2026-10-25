@@ -57,7 +57,7 @@ const az = {
       nav: { dashboard: 'İcmal', referrals: 'Tövsiyələr', earnings: 'Qazanc', profile: 'Profil' },
       pausedTitle: 'Hesabınız dayandırılıb',
       pausedText: 'Tarixçəni görə bilərsiniz, lakin kodunuzla yeni qeydiyyatlar hazırda sizə yazılmır. Suallar üçün bizimlə əlaqə saxlayın.',
-      noProfile: 'Tərəfdaş profili tapılmadı. Zəhmət olmasa Triad Vision ilə əlaqə saxlayın.',
+      noProfile: 'Tərəfdaş profili tapılmadı. Zəhmət olmasa {{brand}} ilə əlaqə saxlayın.',
     },
     dash: {
       kpi: { referrals: 'Tövsiyələr', thisMonth: 'Bu ay qeydiyyat', activeCases: 'Aktiv müraciətlər', approvedVisas: 'Təsdiqlənmiş vizalar' },
@@ -73,7 +73,7 @@ const az = {
         copyCode: 'Kodu kopyala',
         copied: 'Kopyalandı',
         whatsapp: 'WhatsApp ilə paylaş',
-        whatsappText: 'Almaniyada qanuni iş üçün Triad Vision ilə qeydiyyatdan keçin: {{link}}',
+        whatsappText: 'Almaniyada qanuni iş üçün {{brand}} ilə qeydiyyatdan keçin: {{link}}',
       },
       terms: {
         title: 'Komissiya şərtləriniz',
@@ -111,7 +111,7 @@ const az = {
       phone: 'Telefon',
       iban: 'IBAN (ödənişlər üçün)',
       ibanHint: 'Komissiyalar bu hesaba köçürülür. Boşluqlarla yaza bilərsiniz.',
-      readOnly: 'Ad, e-poçt, kod və şərtləri yalnız Triad Vision dəyişə bilər.',
+      readOnly: 'Ad, e-poçt, kod və şərtləri yalnız {{brand}} dəyişə bilər.',
     },
     admin: {
       title: 'Agentlər',
@@ -281,7 +281,7 @@ const de: typeof az = {
       nav: { dashboard: 'Übersicht', referrals: 'Empfehlungen', earnings: 'Einnahmen', profile: 'Profil' },
       pausedTitle: 'Ihr Konto ist pausiert',
       pausedText: 'Sie sehen weiterhin Ihren Verlauf, neue Registrierungen mit Ihrem Code werden derzeit aber nicht zugeordnet. Bei Fragen kontaktieren Sie uns.',
-      noProfile: 'Kein Partnerprofil gefunden. Bitte kontaktieren Sie Triad Vision.',
+      noProfile: 'Kein Partnerprofil gefunden. Bitte kontaktieren Sie {{brand}}.',
     },
     dash: {
       kpi: { referrals: 'Empfehlungen', thisMonth: 'Registriert diesen Monat', activeCases: 'Aktive Anträge', approvedVisas: 'Erteilte Visa' },
@@ -297,7 +297,7 @@ const de: typeof az = {
         copyCode: 'Code kopieren',
         copied: 'Kopiert',
         whatsapp: 'Per WhatsApp teilen',
-        whatsappText: 'Legal in Deutschland arbeiten – registrieren Sie sich bei Triad Vision: {{link}}',
+        whatsappText: 'Legal in Deutschland arbeiten – registrieren Sie sich bei {{brand}}: {{link}}',
       },
       terms: {
         title: 'Ihre Provisionsbedingungen',
@@ -335,7 +335,7 @@ const de: typeof az = {
       phone: 'Telefon',
       iban: 'IBAN (für Auszahlungen)',
       ibanHint: 'Provisionen werden auf dieses Konto überwiesen. Leerzeichen sind erlaubt.',
-      readOnly: 'Name, E-Mail, Code und Bedingungen kann nur Triad Vision ändern.',
+      readOnly: 'Name, E-Mail, Code und Bedingungen kann nur {{brand}} ändern.',
     },
     admin: {
       title: 'Agenten',
@@ -505,7 +505,7 @@ const en: typeof az = {
       nav: { dashboard: 'Dashboard', referrals: 'Referrals', earnings: 'Earnings', profile: 'Profile' },
       pausedTitle: 'Your account is paused',
       pausedText: 'You can still see your history, but new sign-ups with your code are not attributed to you at the moment. Contact us if you have questions.',
-      noProfile: 'No partner profile found. Please contact Triad Vision.',
+      noProfile: 'No partner profile found. Please contact {{brand}}.',
     },
     dash: {
       kpi: { referrals: 'Referrals', thisMonth: 'Registered this month', activeCases: 'Active applications', approvedVisas: 'Approved visas' },
@@ -521,7 +521,7 @@ const en: typeof az = {
         copyCode: 'Copy code',
         copied: 'Copied',
         whatsapp: 'Share on WhatsApp',
-        whatsappText: 'Work legally in Germany – sign up with Triad Vision: {{link}}',
+        whatsappText: 'Work legally in Germany – sign up with {{brand}}: {{link}}',
       },
       terms: {
         title: 'Your commission terms',
@@ -559,7 +559,7 @@ const en: typeof az = {
       phone: 'Phone',
       iban: 'IBAN (for payouts)',
       ibanHint: 'Commissions are transferred to this account. Spaces are fine.',
-      readOnly: 'Only Triad Vision can change your name, email, code and terms.',
+      readOnly: 'Only {{brand}} can change your name, email, code and terms.',
     },
     admin: {
       title: 'Agents',
@@ -729,7 +729,7 @@ const ru: typeof az = {
       nav: { dashboard: 'Обзор', referrals: 'Рекомендации', earnings: 'Доходы', profile: 'Профиль' },
       pausedTitle: 'Ваш аккаунт приостановлен',
       pausedText: 'История по-прежнему доступна, но новые регистрации по вашему коду сейчас не закрепляются за вами. По вопросам свяжитесь с нами.',
-      noProfile: 'Партнёрский профиль не найден. Пожалуйста, свяжитесь с Triad Vision.',
+      noProfile: 'Партнёрский профиль не найден. Пожалуйста, свяжитесь с {{brand}}.',
     },
     dash: {
       kpi: { referrals: 'Рекомендации', thisMonth: 'Регистраций в этом месяце', activeCases: 'Активные заявки', approvedVisas: 'Одобренные визы' },
@@ -745,7 +745,7 @@ const ru: typeof az = {
         copyCode: 'Копировать код',
         copied: 'Скопировано',
         whatsapp: 'Поделиться в WhatsApp',
-        whatsappText: 'Легальная работа в Германии – регистрируйтесь в Triad Vision: {{link}}',
+        whatsappText: 'Легальная работа в Германии – регистрируйтесь в {{brand}}: {{link}}',
       },
       terms: {
         title: 'Ваши условия комиссии',
@@ -783,7 +783,7 @@ const ru: typeof az = {
       phone: 'Телефон',
       iban: 'IBAN (для выплат)',
       ibanHint: 'Комиссии переводятся на этот счёт. Пробелы допускаются.',
-      readOnly: 'Имя, эл. почту, код и условия может изменить только Triad Vision.',
+      readOnly: 'Имя, эл. почту, код и условия может изменить только {{brand}}.',
     },
     admin: {
       title: 'Агенты',

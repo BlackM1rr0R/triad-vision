@@ -17,7 +17,7 @@ const az = {
       back: 'Geri',
       downloadFailed: 'Fayl yüklənmədi',
     },
-    noProfile: 'Bu hesab heç bir partnyora bağlı deyil. Zəhmət olmasa Triad Vision komandası ilə əlaqə saxlayın.',
+    noProfile: 'Bu hesab heç bir partnyora bağlı deyil. Zəhmət olmasa {{brand}} komandası ilə əlaqə saxlayın.',
     inactiveTitle: 'Partnyor hesabınız deaktivdir',
     inactiveText: 'Məlumatlarınızı görə bilərsiniz, lakin yeni müştərilər üçün komanda ilə əlaqə saxlayın.',
     dashboard: {
@@ -178,7 +178,7 @@ const de: typeof az = {
       back: 'Zurück',
       downloadFailed: 'Download fehlgeschlagen',
     },
-    noProfile: 'Dieses Konto ist keinem Vermittler zugeordnet. Bitte wenden Sie sich an das Triad-Vision-Team.',
+    noProfile: 'Dieses Konto ist keinem Vermittler zugeordnet. Bitte wenden Sie sich an das {{brandHyphen}}-Team.',
     inactiveTitle: 'Ihr Partnerkonto ist deaktiviert',
     inactiveText: 'Sie können Ihre Daten einsehen; für neue Kunden wenden Sie sich bitte an das Team.',
     dashboard: {
@@ -339,7 +339,7 @@ const en: typeof az = {
       back: 'Back',
       downloadFailed: 'Download failed',
     },
-    noProfile: 'This account is not linked to a referral partner. Please contact the Triad Vision team.',
+    noProfile: 'This account is not linked to a referral partner. Please contact the {{brand}} team.',
     inactiveTitle: 'Your partner account is deactivated',
     inactiveText: 'You can still see your data; for new clients please contact the team.',
     dashboard: {
@@ -500,7 +500,7 @@ const ru: typeof az = {
       back: 'Назад',
       downloadFailed: 'Не удалось скачать файл',
     },
-    noProfile: 'Этот аккаунт не привязан к партнёру. Пожалуйста, свяжитесь с командой Triad Vision.',
+    noProfile: 'Этот аккаунт не привязан к партнёру. Пожалуйста, свяжитесь с командой {{brand}}.',
     inactiveTitle: 'Ваш партнёрский аккаунт деактивирован',
     inactiveText: 'Вы можете просматривать данные; по новым клиентам обратитесь к команде.',
     dashboard: {

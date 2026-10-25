@@ -80,6 +80,7 @@ import { adminOfficialFormsRouter } from './officialForms.js'; // official filla
 import { adminAcceleratedRouter, adminRecognitionRouter } from './recognition.js'; // Anerkennung tracker + § 81a accelerated procedure
 import { adminDashboardLayoutRouter } from './dashboardLayout.js'; // personal dashboard widget layout
 import { adminPresenceRouter } from './presence.js'; // live "who is viewing this case / inquiry"
+import { adminBrandRouter, adminLicenseRouter, adminWhitelabelRouter } from './whitelabel.js'; // white-label: brand, licence, owner's customer list
 
 export const adminRouter = Router();
 adminRouter.use(requireMinRole('STAFF'));
@@ -148,6 +149,9 @@ adminRouter.get('/dashboard', async (req, res) => {
 });
 
 adminRouter.use(adminNavRouter); // /me/nav*, /nav/* (desks, usage, modules)
+adminRouter.use('/brand', requireMinRole('SUPER_ADMIN'), adminBrandRouter); // white-label brand (System → Brand)
+adminRouter.use('/license', requireMinRole('SUPER_ADMIN'), adminLicenseRouter); // white-label licence status (System → License)
+adminRouter.use('/whitelabel', requireMinRole('SUPER_ADMIN'), adminWhitelabelRouter); // owner instance: customers / instances
 adminRouter.use(adminDashboardLayoutRouter); // /me/dashboard (widget order, sizes, hidden widgets)
 adminRouter.use('/presence', adminPresenceRouter); // /presence/:kind/:id (join / heartbeat / leave)
 adminRouter.use('/command-search', adminCommandSearchRouter); // staff command palette: cases, people, companies, vacancies, drive, tasks

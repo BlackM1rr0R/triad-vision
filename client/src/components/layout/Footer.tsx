@@ -11,6 +11,7 @@ import { openConsentSettings } from '@/lib/consent';
 import { registerCopy } from '@/i18n';
 import { cookieConsentCopy } from '@/i18n/cookieConsent';
 import { siteNavCopy } from '@/i18n/siteNav';
+import { getBrand } from '@/lib/brand';
 
 registerCopy(cookieConsentCopy); // "AGB" + "Cookie settings" links
 registerCopy(siteNavCopy); // footer columns (also registered by the header)
@@ -173,7 +174,7 @@ export const Footer = () => {
       <div className="relative border-t border-white/10">
         <div className="container-x flex flex-col items-start justify-between gap-3 pt-6 pr-20 pb-24 text-left text-xs text-white/60 sm:flex-row sm:items-center sm:pr-24">
           <p>
-            © {new Date().getFullYear()} Triad Vision · triad-vision.de · {t('footer.rights')}
+            © {new Date().getFullYear()} {getBrand().name} · {getBrand().domain} · {t('footer.rights')}
           </p>
           <nav aria-label={t('a11y.footerNav')} className="flex flex-wrap gap-x-5 sm:justify-center sm:gap-y-2">
             <Link to="/privacy" className={LEGAL}>

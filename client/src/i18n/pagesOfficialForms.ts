@@ -118,7 +118,7 @@ const az = {
     company: {
       nav: 'Formlar',
       title: 'İmzalanmalı formlar',
-      subtitle: 'Triad Vision işçiniz üçün rəsmi formaları əvvəlcədən doldurur. Məlumatları yoxlayın, düzəldin və onlayn imzalayın.',
+      subtitle: '{{brand}} işçiniz üçün rəsmi formaları əvvəlcədən doldurur. Məlumatları yoxlayın, düzəldin və onlayn imzalayın.',
       empty: 'Hazırda forma yoxdur',
       back: 'Formlara qayıt',
       worker: 'İşçi',
@@ -331,7 +331,7 @@ const de: typeof az = {
     company: {
       nav: 'Formulare',
       title: 'Formulare zur Unterschrift',
-      subtitle: 'Triad Vision füllt amtliche Formulare für Ihre Mitarbeitenden vor. Bitte prüfen, ergänzen und online unterschreiben.',
+      subtitle: '{{brand}} füllt amtliche Formulare für Ihre Mitarbeitenden vor. Bitte prüfen, ergänzen und online unterschreiben.',
       empty: 'Derzeit keine Formulare',
       back: 'Zurück zu den Formularen',
       worker: 'Arbeitnehmer/in',
@@ -544,7 +544,7 @@ const en: typeof az = {
     company: {
       nav: 'Forms',
       title: 'Forms to sign',
-      subtitle: 'Triad Vision prefills official forms for your workers. Please check, complete and sign online.',
+      subtitle: '{{brand}} prefills official forms for your workers. Please check, complete and sign online.',
       empty: 'No forms right now',
       back: 'Back to forms',
       worker: 'Employee',
@@ -757,7 +757,7 @@ const ru: typeof az = {
     company: {
       nav: 'Формы',
       title: 'Формы на подпись',
-      subtitle: 'Triad Vision предзаполняет официальные формы для ваших сотрудников. Проверьте, дополните и подпишите онлайн.',
+      subtitle: '{{brand}} предзаполняет официальные формы для ваших сотрудников. Проверьте, дополните и подпишите онлайн.',
       empty: 'Сейчас форм нет',
       back: 'Назад к формам',
       worker: 'Сотрудник',

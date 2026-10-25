@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import bcrypt from 'bcryptjs';
 import { z } from 'zod';
+import { assertStaffSeat, STAFF_ROLES } from '../../lib/license/index.js';
 import { prisma } from '../../db.js';
 import { requireMinRole, revokeUserSessions } from '../../middleware/auth.js';
 import { badRequest, conflict, notFound, parse } from '../../lib/http.js';
@@ -99,6 +100,7 @@ adminUsersRouter.post('/', requireMinRole('SUPER_ADMIN'), async (req, res) => {
     req.body,
   );
   if (await prisma.user.findUnique({ where: { email: body.email } })) throw conflict('EMAIL_TAKEN');
+  await assertStaffSeat(); // white-label plan: staff seat limit (lib/license)
   const { password: pw, ...rest } = body;
   const user = await prisma.user.create({
     data: { ...rest, passwordHash: await bcrypt.hash(pw, 12) },
@@ -120,8 +122,13 @@ adminUsersRouter.patch('/:id', requireMinRole('SUPER_ADMIN'), async (req, res) =
   );
   const id = String(req.params.id);
   if (id === req.user!.id && (body.role || body.isActive === false)) throw badRequest('CANNOT_CHANGE_SELF');
-  const target = await prisma.user.findUnique({ where: { id }, select: { role: true } });
+  const target = await prisma.user.findUnique({ where: { id }, select: { role: true, isActive: true } });
   if (!target) throw notFound('USER_NOT_FOUND');
+  // White-label plan: one more active staff account (promotion to staff, or re-activating a staff account)
+  // must fit the staff seat limit of the licence (lib/license).
+  const wasActiveStaff = target.isActive && STAFF_ROLES.includes(target.role as (typeof STAFF_ROLES)[number]);
+  const willBeActiveStaff = (body.isActive ?? target.isActive) && STAFF_ROLES.includes((body.role ?? target.role) as (typeof STAFF_ROLES)[number]);
+  if (willBeActiveStaff && !wasActiveStaff) await assertStaffSeat();
   // There is exactly one super admin (the seeded account); it cannot be demoted or locked out through the API.
   if (target.role === 'SUPER_ADMIN' && (body.role || body.isActive === false)) throw badRequest('CANNOT_CHANGE_SUPER_ADMIN');
 

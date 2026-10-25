@@ -5,7 +5,7 @@
 const az = {
   a11yStatement: {
     title: 'Əlçatanlıq bəyanatı',
-    lead: 'Triad Vision saytını (triad-vision.de) və müştəri portalını hər kəsin — o cümlədən görmə, eşitmə, hərəkət və idrak məhdudiyyəti olan istifadəçilərin — istifadə edə bilməsi üçün hazırlayırıq.',
+    lead: '{{brand}} saytını ({{brandDomain}}) və müştəri portalını hər kəsin — o cümlədən görmə, eşitmə, hərəkət və idrak məhdudiyyəti olan istifadəçilərin — istifadə edə bilməsi üçün hazırlayırıq.',
     scopeTitle: 'Bəyanat nəyə aiddir',
     scopeText: 'Bu bəyanat ictimai sayta (səhifələr, viza və vakansiya kataloqları, kalkulyatorlar, qeydiyyat, giriş və əlaqə formaları) və müştəri portalına aiddir. Əməkdaşlar üçün daxili iş sahəsi (admin paneli, iş sahəsi) bu bəyanatın əhatəsinə daxil deyil, lakin eyni komponentlərlə qurulur.',
     statusTitle: 'Uyğunluq vəziyyəti',
@@ -49,7 +49,7 @@ type Copy = typeof az;
 const de: Copy = {
   a11yStatement: {
     title: 'Erklärung zur Barrierefreiheit',
-    lead: 'Wir gestalten die Website von Triad Vision (triad-vision.de) und das Kundenportal so, dass alle Menschen sie nutzen können – auch Menschen mit Seh-, Hör-, Bewegungs- oder kognitiven Einschränkungen.',
+    lead: 'Wir gestalten die Website von {{brand}} ({{brandDomain}}) und das Kundenportal so, dass alle Menschen sie nutzen können – auch Menschen mit Seh-, Hör-, Bewegungs- oder kognitiven Einschränkungen.',
     scopeTitle: 'Geltungsbereich',
     scopeText: 'Diese Erklärung gilt für die öffentliche Website (Inhaltsseiten, Visa- und Stellenkatalog, Rechner, Registrierung, Anmeldung und Kontaktformulare) und das Kundenportal. Der interne Arbeitsbereich für Mitarbeiter (Admin-Bereich, Workspace) gehört nicht zum Geltungsbereich, ist aber mit denselben Komponenten gebaut.',
     statusTitle: 'Stand der Vereinbarkeit',
@@ -91,7 +91,7 @@ const de: Copy = {
 const en: Copy = {
   a11yStatement: {
     title: 'Accessibility statement',
-    lead: 'We build the Triad Vision website (triad-vision.de) and the client portal so that everyone can use them – including people with visual, hearing, motor or cognitive impairments.',
+    lead: 'We build the {{brand}} website ({{brandDomain}}) and the client portal so that everyone can use them – including people with visual, hearing, motor or cognitive impairments.',
     scopeTitle: 'Scope',
     scopeText: 'This statement covers the public website (content pages, visa and job catalogues, calculators, registration, login and contact forms) and the client portal. The internal staff workspace (admin area, workspace) is outside its scope, but it is built with the same components.',
     statusTitle: 'Compliance status',
@@ -133,7 +133,7 @@ const en: Copy = {
 const ru: Copy = {
   a11yStatement: {
     title: 'Заявление о доступности',
-    lead: 'Мы делаем сайт Triad Vision (triad-vision.de) и клиентский портал такими, чтобы ими могли пользоваться все — в том числе люди с нарушениями зрения, слуха, моторики или когнитивных функций.',
+    lead: 'Мы делаем сайт {{brand}} ({{brandDomain}}) и клиентский портал такими, чтобы ими могли пользоваться все — в том числе люди с нарушениями зрения, слуха, моторики или когнитивных функций.',
     scopeTitle: 'Область действия',
     scopeText: 'Заявление относится к публичному сайту (информационные страницы, каталоги виз и вакансий, калькуляторы, регистрация, вход и контактные формы) и клиентскому порталу. Внутреннее рабочее пространство сотрудников (админ-панель, workspace) в него не входит, но построено на тех же компонентах.',
     statusTitle: 'Степень соответствия',

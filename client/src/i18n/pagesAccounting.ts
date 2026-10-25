@@ -129,9 +129,9 @@ const az = {
     pkg: { baseCurrency: 'Əsas valyuta', prices: 'Digər valyutalarda qiymət (istəyə görə)', pricesHint: 'Ziyarətçinin valyutasında göstərilir (az → AZN, tr → TRY); yoxdursa əsas qiymət.' },
   },
   cs: {
-    subtitle: 'Müştərinin imzaladığı xidmət müqavilələri Triad Vision-un səlahiyyətli imzaçısının ikinci imzasını gözləyir.',
+    subtitle: 'Müştərinin imzaladığı xidmət müqavilələri {{brand}}-un səlahiyyətli imzaçısının ikinci imzasını gözləyir.',
     tabs: { list: 'İmza gözləyir', settings: 'Parametrlər' },
-    disabled: 'İkinci imza söndürülüb: yeni müqavilələrə Triad Vision imzaçısı əlavə edilmir.',
+    disabled: 'İkinci imza söndürülüb: yeni müqavilələrə {{brand}} imzaçısı əlavə edilmir.',
     empty: 'İkinci imza gözləyən müqavilə yoxdur',
     emptyText: 'Müştəri imzaladıqdan sonra müqavilə burada görünür.',
     kind: { PACKAGE: 'Paket sifarişi', CASE_CONTRACT: 'Müraciət müqaviləsi', OTHER: 'Sənəd' },
@@ -144,17 +144,17 @@ const az = {
     notAuthorised: 'Yalnız səlahiyyətli imzaçılar imzalaya bilər.',
     done: 'Müqavilə imzalandı — yekun PDF hazırdır.',
     modal: {
-      title: 'Triad Vision adından imza',
+      title: '{{brand}} adından imza',
       draw: 'Əl ilə çək',
       type: 'Adı yaz',
       typed: 'Tam ad',
-      agree: 'Triad Vision adından bu müqaviləni imzalamağa səlahiyyətim var və bu elektron imza mənim imzamdır.',
+      agree: '{{brand}} adından bu müqaviləni imzalamağa səlahiyyətim var və bu elektron imza mənim imzamdır.',
       sign: 'İmzala',
       legal: 'İmza, tarix, IP və audit izi yekun PDF-in sertifikat səhifəsinə yazılır.',
     },
     settings: {
-      enabled: 'Xidmət müqavilələri Triad Vision tərəfindən ikinci dəfə imzalansın',
-      flow: 'Ardıcıllıq: müştəri → Triad Vision. Paket sifarişi müştəri imzalayanda aktivləşir (hesab, müraciət, ödəniş planı, ilk faktura); müqavilə «ikinci imza gözləyir» kimi görünür. Müraciət müqaviləsi isə yalnız ikinci imzadan sonra «imzalanıb» olur.',
+      enabled: 'Xidmət müqavilələri {{brand}} tərəfindən ikinci dəfə imzalansın',
+      flow: 'Ardıcıllıq: müştəri → {{brand}}. Paket sifarişi müştəri imzalayanda aktivləşir (hesab, müraciət, ödəniş planı, ilk faktura); müqavilə «ikinci imza gözləyir» kimi görünür. Müraciət müqaviləsi isə yalnız ikinci imzadan sonra «imzalanıb» olur.',
       signatories: 'Səlahiyyətli imzaçılar (ADMIN+)',
       defaultSigner: 'Standart imzaçı',
       packageOrders: 'Paket sifarişlərinin müqavilələri',
@@ -162,7 +162,7 @@ const az = {
       reminderDays: 'Neçə gündən bir xatırlatma',
     },
   },
-  today: { kind: { countersign: 'İkinci imza (Triad Vision)' }, action: { countersign: 'İmzala' }, note: { countersign: '{{days}} gündür gözləyir' } },
+  today: { kind: { countersign: 'İkinci imza ({{brand}})' }, action: { countersign: 'İmzala' }, note: { countersign: '{{days}} gündür gözləyir' } },
 };
 
 type Copy = typeof az;
@@ -293,9 +293,9 @@ const de: Copy = {
     pkg: { baseCurrency: 'Basiswährung', prices: 'Preise in anderen Währungen (optional)', pricesHint: 'Wird in der Währung der Besucher gezeigt (az → AZN, tr → TRY); sonst der Basispreis.' },
   },
   cs: {
-    subtitle: 'Vom Kunden unterschriebene Dienstleistungsverträge warten auf die Gegenzeichnung durch eine zeichnungsberechtigte Person von Triad Vision.',
+    subtitle: 'Vom Kunden unterschriebene Dienstleistungsverträge warten auf die Gegenzeichnung durch eine zeichnungsberechtigte Person von {{brand}}.',
     tabs: { list: 'Offen', settings: 'Einstellungen' },
-    disabled: 'Gegenzeichnung ist ausgeschaltet: neue Verträge erhalten keine Triad-Vision-Unterschrift.',
+    disabled: 'Gegenzeichnung ist ausgeschaltet: neue Verträge erhalten keine {{brandHyphen}}-Unterschrift.',
     empty: 'Keine Verträge zur Gegenzeichnung',
     emptyText: 'Sobald ein Kunde unterschrieben hat, erscheint der Vertrag hier.',
     kind: { PACKAGE: 'Paketbestellung', CASE_CONTRACT: 'Fallvertrag', OTHER: 'Dokument' },
@@ -308,17 +308,17 @@ const de: Copy = {
     notAuthorised: 'Nur zeichnungsberechtigte Personen können gegenzeichnen.',
     done: 'Vertrag gegengezeichnet — das finale PDF ist erstellt.',
     modal: {
-      title: 'Unterschrift für Triad Vision',
+      title: 'Unterschrift für {{brand}}',
       draw: 'Zeichnen',
       type: 'Name tippen',
       typed: 'Vollständiger Name',
-      agree: 'Ich bin berechtigt, diesen Vertrag für Triad Vision zu unterzeichnen, und diese elektronische Unterschrift ist meine.',
+      agree: 'Ich bin berechtigt, diesen Vertrag für {{brand}} zu unterzeichnen, und diese elektronische Unterschrift ist meine.',
       sign: 'Unterschreiben',
       legal: 'Unterschrift, Zeitpunkt, IP und Prüfprotokoll stehen auf dem Abschlusszertifikat des finalen PDFs.',
     },
     settings: {
-      enabled: 'Dienstleistungsverträge von Triad Vision gegenzeichnen lassen',
-      flow: 'Reihenfolge: Kunde → Triad Vision. Eine Paketbestellung wird bei der Unterschrift des Kunden aktiviert (Konto, Fall, Zahlungsplan, erste Rechnung); der Vertrag steht bis dahin auf „Gegenzeichnung ausstehend“. Ein Fallvertrag gilt erst nach der Gegenzeichnung als unterschrieben.',
+      enabled: 'Dienstleistungsverträge von {{brand}} gegenzeichnen lassen',
+      flow: 'Reihenfolge: Kunde → {{brand}}. Eine Paketbestellung wird bei der Unterschrift des Kunden aktiviert (Konto, Fall, Zahlungsplan, erste Rechnung); der Vertrag steht bis dahin auf „Gegenzeichnung ausstehend“. Ein Fallvertrag gilt erst nach der Gegenzeichnung als unterschrieben.',
       signatories: 'Zeichnungsberechtigte (ADMIN+)',
       defaultSigner: 'Standard-Unterzeichner',
       packageOrders: 'Verträge aus Paketbestellungen',
@@ -326,7 +326,7 @@ const de: Copy = {
       reminderDays: 'Erinnerung alle … Tage',
     },
   },
-  today: { kind: { countersign: 'Gegenzeichnung (Triad Vision)' }, action: { countersign: 'Gegenzeichnen' }, note: { countersign: 'wartet seit {{days}} Tagen' } },
+  today: { kind: { countersign: 'Gegenzeichnung ({{brand}})' }, action: { countersign: 'Gegenzeichnen' }, note: { countersign: 'wartet seit {{days}} Tagen' } },
 };
 
 const en: Copy = {
@@ -455,9 +455,9 @@ const en: Copy = {
     pkg: { baseCurrency: 'Base currency', prices: 'Prices in other currencies (optional)', pricesHint: 'Shown in the visitor’s currency (az → AZN, tr → TRY); otherwise the base price.' },
   },
   cs: {
-    subtitle: 'Service contracts signed by the client wait for the countersignature of an authorised Triad Vision signatory.',
+    subtitle: 'Service contracts signed by the client wait for the countersignature of an authorised {{brand}} signatory.',
     tabs: { list: 'Pending', settings: 'Settings' },
-    disabled: 'Countersignature is off: new contracts get no Triad Vision signer.',
+    disabled: 'Countersignature is off: new contracts get no {{brand}} signer.',
     empty: 'No contracts to countersign',
     emptyText: 'A contract appears here as soon as the client has signed.',
     kind: { PACKAGE: 'Package order', CASE_CONTRACT: 'Case contract', OTHER: 'Document' },
@@ -470,17 +470,17 @@ const en: Copy = {
     notAuthorised: 'Only authorised signatories can countersign.',
     done: 'Contract countersigned — the final PDF is ready.',
     modal: {
-      title: 'Signature for Triad Vision',
+      title: 'Signature for {{brand}}',
       draw: 'Draw',
       type: 'Type name',
       typed: 'Full name',
-      agree: 'I am authorised to sign this contract for Triad Vision and this electronic signature is mine.',
+      agree: 'I am authorised to sign this contract for {{brand}} and this electronic signature is mine.',
       sign: 'Sign',
       legal: 'Signature, time, IP and the audit trail are printed on the certificate of the final PDF.',
     },
     settings: {
-      enabled: 'Service contracts are countersigned by Triad Vision',
-      flow: 'Order: client → Triad Vision. A package order is activated when the client signs (account, case, payment plan, first invoice); the contract shows “countersignature pending” until then. A case contract counts as signed only after the countersignature.',
+      enabled: 'Service contracts are countersigned by {{brand}}',
+      flow: 'Order: client → {{brand}}. A package order is activated when the client signs (account, case, payment plan, first invoice); the contract shows “countersignature pending” until then. A case contract counts as signed only after the countersignature.',
       signatories: 'Authorised signatories (ADMIN+)',
       defaultSigner: 'Default signer',
       packageOrders: 'Package order contracts',
@@ -488,7 +488,7 @@ const en: Copy = {
       reminderDays: 'Remind every … days',
     },
   },
-  today: { kind: { countersign: 'Countersignature (Triad Vision)' }, action: { countersign: 'Countersign' }, note: { countersign: 'waiting {{days}} days' } },
+  today: { kind: { countersign: 'Countersignature ({{brand}})' }, action: { countersign: 'Countersign' }, note: { countersign: 'waiting {{days}} days' } },
 };
 
 const ru: Copy = {
@@ -617,9 +617,9 @@ const ru: Copy = {
     pkg: { baseCurrency: 'Базовая валюта', prices: 'Цены в других валютах (необязательно)', pricesHint: 'Показывается в валюте посетителя (az → AZN, tr → TRY); иначе базовая цена.' },
   },
   cs: {
-    subtitle: 'Договоры услуг, подписанные клиентом, ждут второй подписи уполномоченного лица Triad Vision.',
+    subtitle: 'Договоры услуг, подписанные клиентом, ждут второй подписи уполномоченного лица {{brand}}.',
     tabs: { list: 'Ожидают', settings: 'Настройки' },
-    disabled: 'Вторая подпись выключена: новые договоры не получают подписанта Triad Vision.',
+    disabled: 'Вторая подпись выключена: новые договоры не получают подписанта {{brand}}.',
     empty: 'Нет договоров для второй подписи',
     emptyText: 'Договор появится здесь, как только клиент подпишет.',
     kind: { PACKAGE: 'Заказ пакета', CASE_CONTRACT: 'Договор по делу', OTHER: 'Документ' },
@@ -632,17 +632,17 @@ const ru: Copy = {
     notAuthorised: 'Подписывать могут только уполномоченные лица.',
     done: 'Договор подписан — итоговый PDF готов.',
     modal: {
-      title: 'Подпись от имени Triad Vision',
+      title: 'Подпись от имени {{brand}}',
       draw: 'Нарисовать',
       type: 'Ввести имя',
       typed: 'Полное имя',
-      agree: 'Я уполномочен(а) подписать этот договор от имени Triad Vision, и эта электронная подпись — моя.',
+      agree: 'Я уполномочен(а) подписать этот договор от имени {{brand}}, и эта электронная подпись — моя.',
       sign: 'Подписать',
       legal: 'Подпись, время, IP и журнал аудита печатаются на сертификате итогового PDF.',
     },
     settings: {
-      enabled: 'Договоры услуг подписываются Triad Vision второй подписью',
-      flow: 'Порядок: клиент → Triad Vision. Заказ пакета активируется при подписи клиента (аккаунт, дело, план платежей, первый счёт); договор до этого отмечен «ждёт второй подписи». Договор по делу считается подписанным только после второй подписи.',
+      enabled: 'Договоры услуг подписываются {{brand}} второй подписью',
+      flow: 'Порядок: клиент → {{brand}}. Заказ пакета активируется при подписи клиента (аккаунт, дело, план платежей, первый счёт); договор до этого отмечен «ждёт второй подписи». Договор по делу считается подписанным только после второй подписи.',
       signatories: 'Уполномоченные подписанты (ADMIN+)',
       defaultSigner: 'Подписант по умолчанию',
       packageOrders: 'Договоры заказов пакетов',
@@ -650,7 +650,7 @@ const ru: Copy = {
       reminderDays: 'Напоминать каждые … дн.',
     },
   },
-  today: { kind: { countersign: 'Вторая подпись (Triad Vision)' }, action: { countersign: 'Подписать' }, note: { countersign: 'ждёт {{days}} дн.' } },
+  today: { kind: { countersign: 'Вторая подпись ({{brand}})' }, action: { countersign: 'Подписать' }, note: { countersign: 'ждёт {{days}} дн.' } },
 };
 
 export const pagesAccounting = { az, de, en, ru };

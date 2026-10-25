@@ -77,6 +77,9 @@ deploy/push.sh root@SERVER
 
 Useful on the server (`cd /opt/triad-vision/src`): `docker compose -f docker-compose.prod.yml logs -f api`, `... ps`, `... restart api`, `... exec db mysqldump -uroot -p triad_vision > backup.sql`.
 
+**White-label (other agencies, one instance each):** brand configuration, licence keys and provisioning scripts are
+described in [deploy/whitelabel/README.md](deploy/whitelabel/README.md).
+
 ## Tests
 
 ```bash

@@ -6,10 +6,12 @@ import { Reveal } from '@/components/motion';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { registerCopy } from '@/i18n';
 import { pagesA11yStatement } from '@/i18n/pagesA11yStatement';
+import { getBrand } from '@/lib/brand';
 
 registerCopy(pagesA11yStatement);
 
-const FEEDBACK_EMAIL = 'info@triad-vision.de';
+// White-label: the instance's support address (info@<domain> by default, info@triad-vision.de for the owner).
+const feedbackEmail = () => getBrand().supportEmail || `info@${getBrand().domain}`;
 
 const H2 = 'mt-12 font-display text-2xl font-semibold text-ink sm:text-3xl';
 
@@ -77,9 +79,9 @@ export default function AccessibilityPage() {
                 <p className="mt-2 text-sm leading-relaxed text-muted">{t('a11yStatement.contactText')}</p>
                 <p className="mt-4 text-sm">
                   <span className="font-semibold text-ink">{t('a11yStatement.emailLabel')}: </span>
-                  <a href={`mailto:${FEEDBACK_EMAIL}`} className="inline-flex min-h-6 items-center gap-1.5 font-semibold break-all text-link underline underline-offset-2 hover:text-link">
+                  <a href={`mailto:${feedbackEmail()}`} className="inline-flex min-h-6 items-center gap-1.5 font-semibold break-all text-link underline underline-offset-2 hover:text-link">
                     <Mail className="size-4 shrink-0" aria-hidden />
-                    {FEEDBACK_EMAIL}
+                    {feedbackEmail()}
                   </a>
                 </p>
                 <Link to="/contact" className="btn-primary mt-5 w-full">

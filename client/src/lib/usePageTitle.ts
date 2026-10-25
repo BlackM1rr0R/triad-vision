@@ -1,8 +1,10 @@
 import { useContext, useEffect } from 'react';
 import { UNSAFE_LocationContext, UNSAFE_NavigationContext } from 'react-router-dom';
 import { isPrivatePath, splitLocalePath } from './siteLocale';
+import { getBrand } from './brand';
 
-const DEFAULT_TITLE = 'Triad Vision';
+// White-label: the instance brand (src/lib/brand.ts), "Triad Vision" by default.
+const defaultTitle = () => getBrand().name;
 
 /*
  * Client-side SEO meta manager.
@@ -122,7 +124,7 @@ export const usePageTitle = (title?: string | null) => {
   useSeo();
   useEffect(() => {
     const previous = document.title;
-    document.title = title ? `${title} · ${DEFAULT_TITLE}` : DEFAULT_TITLE;
+    document.title = title ? `${title} · ${defaultTitle()}` : defaultTitle();
     return () => {
       document.title = previous;
     };

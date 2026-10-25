@@ -2,6 +2,7 @@ import { config } from '../config.js';
 import { prisma } from '../db.js';
 import { isImpersonating } from './privacy/impersonationContext.js';
 import { sendWebPush } from './site/webPush.js';
+import { brandify } from './brand/index.js';
 
 const EXPO_PUSH_URL = 'https://exp.host/--/api/v2/push/send';
 const EXPO_TOKEN = /^Expo(nent)?PushToken\[.+\]$/;
@@ -20,6 +21,7 @@ interface ExpoTicket {
 export const sendPush = async (userIds: string[], msg: { title: string; body: string; data?: Record<string, string> }) => {
   if (userIds.length === 0) return;
   if (isImpersonating()) return; // "view as client" never pushes
+  msg = { ...msg, title: brandify(msg.title), body: brandify(msg.body) }; // white-label brand (no-op for the default brand)
   // Browsers (installed site / PWA): Web Push next to the phones' Expo push (lib/site/webPush.ts; fake transport in tests).
   void sendWebPush(userIds, { title: msg.title, body: msg.body, link: msg.data?.link || undefined, tag: msg.data?.type || undefined });
   if (config.isTest) return;

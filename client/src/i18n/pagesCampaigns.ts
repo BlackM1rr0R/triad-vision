@@ -778,12 +778,12 @@ const consentAz = {
   campaignConsent: {
     profileLabel: 'Xəbərlər və təkliflər',
     profileHint: 'Yeni vakansiyalar, proqramlar və təkliflər haqqında e-poçt və SMS. İstənilən vaxt söndürə bilərsiniz.',
-    register: 'Triad Vision-dan xəbər və təkliflər (e-poçt / SMS) almaq istəyirəm. İstəyə bağlıdır, istənilən vaxt geri götürmək olar.',
+    register: '{{brand}}-dan xəbər və təkliflər (e-poçt / SMS) almaq istəyirəm. İstəyə bağlıdır, istənilən vaxt geri götürmək olar.',
     unsubscribe: {
       title: 'Abunəlikdən çıxmaq',
       loading: 'Yüklənir…',
       intro: '{{email}} ünvanı üçün',
-      marketing: 'Triad Vision-dan xəbər və təkliflər artıq göndərilməsin.',
+      marketing: '{{brand}}-dan xəbər və təkliflər artıq göndərilməsin.',
       service: 'E-poçt bildirişləri artıq göndərilməsin. Müraciətinizlə bağlı bildirişlər kabinetinizdə görünməyə davam edəcək.',
       alsoAll: 'E-poçt bildirişlərini də söndür (müraciət yenilikləri kabinetdə qalır)',
       button: 'Abunəlikdən çıx',
@@ -805,12 +805,12 @@ const consentDe: typeof consentAz = {
   campaignConsent: {
     profileLabel: 'Neuigkeiten und Angebote',
     profileHint: 'E-Mails und SMS zu neuen Stellen, Programmen und Angeboten. Sie können dies jederzeit abschalten.',
-    register: 'Ich möchte Neuigkeiten und Angebote von Triad Vision per E-Mail / SMS erhalten. Freiwillig, jederzeit widerrufbar.',
+    register: 'Ich möchte Neuigkeiten und Angebote von {{brand}} per E-Mail / SMS erhalten. Freiwillig, jederzeit widerrufbar.',
     unsubscribe: {
       title: 'Abmelden',
       loading: 'Wird geladen…',
       intro: 'Für die Adresse {{email}}',
-      marketing: 'Keine Neuigkeiten und Angebote von Triad Vision mehr erhalten.',
+      marketing: 'Keine Neuigkeiten und Angebote von {{brand}} mehr erhalten.',
       service: 'Keine Benachrichtigungen mehr per E-Mail erhalten. Hinweise zu Ihrem Antrag sehen Sie weiterhin in Ihrem Kundenbereich.',
       alsoAll: 'Auch E-Mail-Benachrichtigungen abschalten (Hinweise zum Antrag bleiben im Kundenbereich)',
       button: 'Abmelden',
@@ -832,12 +832,12 @@ const consentEn: typeof consentAz = {
   campaignConsent: {
     profileLabel: 'News and offers',
     profileHint: 'Emails and SMS about new jobs, programmes and offers. You can turn this off at any time.',
-    register: 'I would like to receive news and offers from Triad Vision by email / SMS. Optional, can be withdrawn at any time.',
+    register: 'I would like to receive news and offers from {{brand}} by email / SMS. Optional, can be withdrawn at any time.',
     unsubscribe: {
       title: 'Unsubscribe',
       loading: 'Loading…',
       intro: 'For the address {{email}}',
-      marketing: 'Stop receiving news and offers from Triad Vision.',
+      marketing: 'Stop receiving news and offers from {{brand}}.',
       service: 'Stop receiving notifications by email. Updates about your application will still appear in your account.',
       alsoAll: 'Also turn off email notifications (application updates stay in your account)',
       button: 'Unsubscribe',
@@ -859,12 +859,12 @@ const consentRu: typeof consentAz = {
   campaignConsent: {
     profileLabel: 'Новости и предложения',
     profileHint: 'E-mail и SMS о новых вакансиях, программах и предложениях. Вы можете отключить это в любой момент.',
-    register: 'Я хочу получать новости и предложения от Triad Vision по e-mail / SMS. Необязательно, согласие можно отозвать в любой момент.',
+    register: 'Я хочу получать новости и предложения от {{brand}} по e-mail / SMS. Необязательно, согласие можно отозвать в любой момент.',
     unsubscribe: {
       title: 'Отписка',
       loading: 'Загрузка…',
       intro: 'Для адреса {{email}}',
-      marketing: 'Больше не получать новости и предложения от Triad Vision.',
+      marketing: 'Больше не получать новости и предложения от {{brand}}.',
       service: 'Больше не получать уведомления по e-mail. Уведомления о вашей заявке по-прежнему будут в личном кабинете.',
       alsoAll: 'Также отключить e-mail-уведомления (новости по заявке остаются в кабинете)',
       button: 'Отписаться',

@@ -26,6 +26,7 @@ import { ConfirmDialog } from '@/components/admin/ConfirmDialog';
 import { errorMessage, fmtDate, roleLabel } from '@/components/admin/labels';
 import { registerCopy } from '@/i18n';
 import { pagesLegal } from '@/i18n/pagesLegal';
+import { getBrand } from '@/lib/brand';
 
 registerCopy(pagesLegal);
 
@@ -88,7 +89,7 @@ const copyText = async (text: string) => {
 const RecoveryCodes = ({ codes, onDone }: { codes: string[]; onDone: () => void }) => {
   const { t } = useTranslation();
   const [copied, setCopied] = useState(false);
-  const text = `Triad Vision – recovery codes\n${new Date().toISOString().slice(0, 10)}\n\n${codes.join('\n')}\n`;
+  const text = `${getBrand().name} – recovery codes\n${new Date().toISOString().slice(0, 10)}\n\n${codes.join('\n')}\n`;
   const download = () => {
     const url = URL.createObjectURL(new Blob([text], { type: 'text/plain;charset=utf-8' }));
     const a = document.createElement('a');

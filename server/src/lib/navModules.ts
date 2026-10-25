@@ -1,6 +1,7 @@
 import type { Role } from '@prisma/client';
 import { prisma } from '../db.js';
 import { hasMinRole } from '../middleware/auth.js';
+import { getLicense, type LicenseState } from './license/index.js';
 
 /**
  * Admin navigation settings (simplification round):
@@ -8,6 +9,8 @@ import { hasMinRole } from '../middleware/auth.js';
  *  - module toggles: optional features a SUPER_ADMIN can hide from the staff panel (Setting `modules`).
  *    A disabled module only hides its menu items, hub tabs, dashboard widgets and Ctrl+K entries; the
  *    API keeps working, so public / legacy flows and links in old e-mails are not broken.
+ *  - white-label licence (lib/license): a module outside the instance's plan is hidden the same way, whatever
+ *    the stored toggle says (the stored toggles are kept, so an upgraded plan shows them again).
  * The client mirrors the module list in client/src/components/command/navRegistry.ts (MODULES).
  */
 
@@ -69,7 +72,8 @@ export const normalizeModules = (raw: unknown): Modules => {
 const TTL_MS = 30_000;
 let memo: { at: number; value: Modules } | null = null;
 
-export const getModules = async (): Promise<Modules> => {
+/** The toggles as stored by the SUPER_ADMIN (System → Modules), without the licence. */
+export const getStoredModules = async (): Promise<Modules> => {
   if (memo && Date.now() - memo.at < TTL_MS) return memo.value;
   const row = await prisma.setting.findUnique({ where: { key: MODULES_SETTING_KEY } });
   const value = normalizeModules(row?.value);
@@ -77,11 +81,25 @@ export const getModules = async (): Promise<Modules> => {
   return value;
 };
 
+/** Modules of the licence plan (null = every module: owner instance or an all-modules plan). */
+export const licensedModules = (license: LicenseState = getLicense()): ModuleKey[] | null =>
+  license.modules === null ? null : MODULE_KEYS.filter((k) => license.modules!.includes(k));
+
+/** Stored toggles AND the licence plan: a module outside the plan is always off. */
+export const applyLicense = (modules: Modules, license: LicenseState = getLicense()): Modules => {
+  const allowed = licensedModules(license);
+  if (!allowed) return modules;
+  return Object.fromEntries(MODULE_KEYS.map((k) => [k, modules[k] && allowed.includes(k)])) as Modules;
+};
+
+/** Effective modules (what the staff panel shows). */
+export const getModules = async (): Promise<Modules> => applyLicense(await getStoredModules());
+
 export const saveModules = async (patch: Partial<Record<ModuleKey, boolean>>): Promise<Modules> => {
-  const next = { ...(await getModules()), ...patch };
+  const next = { ...(await getStoredModules()), ...patch };
   await prisma.setting.upsert({ where: { key: MODULES_SETTING_KEY }, create: { key: MODULES_SETTING_KEY, value: next }, update: { value: next } });
   memo = null;
-  return next;
+  return applyLicense(next);
 };
 
 export const invalidateModules = () => {

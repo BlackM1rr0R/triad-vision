@@ -4,7 +4,7 @@ import type { SiteCopy } from '../types';
 const copy: SiteCopy<(typeof pagesA11yStatement)['en']> = {
   a11yStatement: {
     title: 'Erişilebilirlik beyanı',
-    lead: 'Triad Vision web sitesini (triad-vision.de) ve müşteri portalını herkesin – görme, işitme, hareket veya bilişsel engeli olan kişiler dahil – kullanabileceği şekilde geliştiriyoruz.',
+    lead: '{{brand}} web sitesini ({{brandDomain}}) ve müşteri portalını herkesin – görme, işitme, hareket veya bilişsel engeli olan kişiler dahil – kullanabileceği şekilde geliştiriyoruz.',
     scopeTitle: 'Kapsam',
     scopeText: 'Bu beyan, herkese açık web sitesini (içerik sayfaları, vize ve iş ilanı katalogları, hesaplayıcılar, kayıt, giriş ve iletişim formları) ve müşteri portalını kapsar. Çalışanlara yönelik dahili çalışma alanı (yönetim paneli, çalışma alanı) bu beyanın kapsamı dışındadır, ancak aynı bileşenlerle oluşturulmuştur.',
     statusTitle: 'Uyumluluk durumu',

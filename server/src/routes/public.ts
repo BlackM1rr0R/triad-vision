@@ -4,7 +4,8 @@ import { prisma } from '../db.js';
 import { limiter, notFound, parse } from '../lib/http.js';
 import { notifyStaff } from '../lib/notifications.js';
 
-const PRIVATE_SETTING_KEYS = ['invoicing', 'retention'];
+// whitelabel.customers: the owner's list of agencies that bought the platform (white-label, never public).
+const PRIVATE_SETTING_KEYS = ['invoicing', 'retention', 'whitelabel.customers'];
 import { cached } from '../lib/cache.js';
 
 import { onInquiryCreated } from '../lib/assignment/inquiry.js';

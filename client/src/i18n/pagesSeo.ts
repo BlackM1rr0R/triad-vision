@@ -103,7 +103,7 @@ const az = {
   },
   newsMeta: {
     updated: 'Yenilənib: {{date}}',
-    author: 'Müəllif: Triad Vision komandası',
+    author: 'Müəllif: {{brand}} komandası',
   },
 };
 
@@ -209,7 +209,7 @@ const de: Copy = {
   },
   newsMeta: {
     updated: 'Aktualisiert: {{date}}',
-    author: 'Autor: Team Triad Vision',
+    author: 'Autor: Team {{brand}}',
   },
 };
 
@@ -313,7 +313,7 @@ const en: Copy = {
   },
   newsMeta: {
     updated: 'Updated: {{date}}',
-    author: 'By the Triad Vision team',
+    author: 'By the {{brand}} team',
   },
 };
 
@@ -417,7 +417,7 @@ const ru: Copy = {
   },
   newsMeta: {
     updated: 'Обновлено: {{date}}',
-    author: 'Автор: команда Triad Vision',
+    author: 'Автор: команда {{brand}}',
   },
 };
 
@@ -521,7 +521,7 @@ const tr: Copy = {
   },
   newsMeta: {
     updated: 'Güncellendi: {{date}}',
-    author: 'Yazar: Triad Vision ekibi',
+    author: 'Yazar: {{brand}} ekibi',
   },
 };
 
@@ -625,7 +625,7 @@ const uk: Copy = {
   },
   newsMeta: {
     updated: 'Оновлено: {{date}}',
-    author: 'Автор: команда Triad Vision',
+    author: 'Автор: команда {{brand}}',
   },
 };
 

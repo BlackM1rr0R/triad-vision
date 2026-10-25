@@ -7,6 +7,7 @@ import sharp from 'sharp';
 import { config } from '../config.js';
 import { SITE_NAME, STATIC_PAGES, textIn, type SeoLocale } from './seoCatalogue.js';
 import { collapse, liveJobs, pick, type OgKind, type SeoData } from './seo.js';
+import { brandify, brandSync } from './brand/index.js';
 
 /*
  * Dynamic Open Graph images: a 1200×630 PNG title card per page (visas, services, news, jobs, events, guides)
@@ -85,6 +86,12 @@ export const wrap = (font: Font, text: string, size: number, maxWidth: number, m
 /** The card as SVG (exported for tests). */
 export const ogCardSvg = async (title: string, kicker: string, lang = 'en') => {
   const { bold, regular } = await loadFonts();
+  // White-label: this instance's name and domain; the flag stripes are Triad Vision's own mark.
+  const brand = brandSync();
+  title = brandify(title);
+  kicker = brandify(kicker);
+  const siteName = brand.isDefault ? SITE_NAME : brand.name;
+  const domain = brand.isDefault ? 'triad-vision.de' : brand.domain;
   let size = 64;
   let lines = wrap(bold, title, size, W - 160, 3);
   if (lines.length === 3) {
@@ -103,9 +110,9 @@ export const ogCardSvg = async (title: string, kicker: string, lang = 'en') => {
 <g fill="#93c5fd">${textPath(bold, kicker.toLocaleUpperCase(lang), 26, 80, 130)}</g>
 <g fill="#ffffff">${titlePaths}</g>
 <rect x="0" y="${H - 96}" width="${W}" height="96" fill="#000000" fill-opacity="0.18"/>
-<g fill="#ffffff">${textPath(bold, SITE_NAME, 34, 80, H - 36)}</g>
-<g fill="#cbd5e1">${textPath(regular, 'triad-vision.de', 26, W - 80 - widthOf(regular, 'triad-vision.de', 26), H - 38)}</g>
-<g transform="translate(1048 72)"><rect width="16" height="44" rx="2" fill="#00b5e2"/><rect x="20" width="16" height="44" rx="2" fill="#ef3340"/><rect x="40" width="16" height="44" rx="2" fill="#509e2f"/><rect x="60" width="16" height="44" rx="2" fill="#ffce00"/></g>
+<g fill="#ffffff">${textPath(bold, siteName, 34, 80, H - 36)}</g>
+<g fill="#cbd5e1">${textPath(regular, domain, 26, W - 80 - widthOf(regular, domain, 26), H - 38)}</g>
+${brand.isDefault ? '<g transform="translate(1048 72)"><rect width="16" height="44" rx="2" fill="#00b5e2"/><rect x="20" width="16" height="44" rx="2" fill="#ef3340"/><rect x="40" width="16" height="44" rx="2" fill="#509e2f"/><rect x="60" width="16" height="44" rx="2" fill="#ffce00"/></g>' : ''}
 </svg>`;
 };
 
@@ -144,7 +151,10 @@ const inflight = new Map<string, Promise<Buffer>>();
 
 /** PNG bytes of a card (disk cache; concurrent requests for the same card render once). */
 export const ogCardPng = async (title: string, kicker: string, lang = 'en'): Promise<Buffer> => {
-  const key = createHash('sha256').update(`${VERSION}\n${lang}\n${kicker}\n${title}`).digest('hex').slice(0, 32);
+  // A brand other than the default gets its own cache entries (the owner's cached cards stay valid).
+  const brand = brandSync();
+  const brandKey = brand.isDefault ? '' : `\n${brand.name}\n${brand.domain}`;
+  const key = createHash('sha256').update(`${VERSION}\n${lang}\n${kicker}\n${title}${brandKey}`).digest('hex').slice(0, 32);
   const file = path.join(CACHE_DIR, `${key}.png`);
   try {
     return await fs.readFile(file);

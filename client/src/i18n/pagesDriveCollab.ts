@@ -188,7 +188,7 @@ const az = {
       uploadFailed: '«{{name}}» göndərilmədi',
       invalidTitle: 'Link etibarsızdır',
       invalidBody: 'Bu linkin müddəti bitib, ləğv edilib və ya mövcud deyil. Linki göndərən şəxslə əlaqə saxlayın.',
-      securedBy: 'Triad Vision vasitəsilə təhlükəsiz paylaşım',
+      securedBy: '{{brand}} vasitəsilə təhlükəsiz paylaşım',
     },
   },
   drive: {
@@ -397,7 +397,7 @@ const de: Copy = {
       uploadFailed: '„{{name}}“ konnte nicht gesendet werden',
       invalidTitle: 'Link ungültig',
       invalidBody: 'Dieser Link ist abgelaufen, wurde widerrufen oder existiert nicht. Bitte wenden Sie sich an die Person, die ihn geschickt hat.',
-      securedBy: 'Sicher geteilt über Triad Vision',
+      securedBy: 'Sicher geteilt über {{brand}}',
     },
   },
   drive: {
@@ -604,7 +604,7 @@ const en: Copy = {
       uploadFailed: '“{{name}}” could not be sent',
       invalidTitle: 'Link not valid',
       invalidBody: 'This link has expired, was revoked or does not exist. Please contact the person who sent it.',
-      securedBy: 'Shared securely through Triad Vision',
+      securedBy: 'Shared securely through {{brand}}',
     },
   },
   drive: {
@@ -811,7 +811,7 @@ const ru: Copy = {
       uploadFailed: 'Не удалось отправить «{{name}}»',
       invalidTitle: 'Ссылка недействительна',
       invalidBody: 'Срок действия ссылки истёк, она отозвана или не существует. Свяжитесь с отправителем.',
-      securedBy: 'Безопасный обмен через Triad Vision',
+      securedBy: 'Безопасный обмен через {{brand}}',
     },
   },
   drive: {

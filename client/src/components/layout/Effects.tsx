@@ -4,6 +4,7 @@ import { AnimatePresence, motion, useScroll, useSpring } from 'framer-motion';
 import { LogoMark } from '../ui/Logo';
 import { smoothScrollTo, startSmoothScroll, stopSmoothScroll } from '@/lib/smoothScroll';
 import { usePrefs } from '@/lib/prefs';
+import { getBrand } from '@/lib/brand';
 
 export const scrollToTop = (immediate = false) => {
   smoothScrollTo(0, { immediate });
@@ -174,7 +175,7 @@ export const Preloader = () => {
                 animate={{ y: 0 }}
                 transition={{ delay: 0.35, duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
               >
-                TRIAD VISION
+                {getBrand().name.toLocaleUpperCase('en')}
               </motion.div>
             </div>
             <div className="h-[3px] w-48 overflow-hidden rounded bg-line">

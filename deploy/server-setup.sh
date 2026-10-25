@@ -3,9 +3,17 @@
 #   ssh root@SERVER 'bash -s' < deploy/server-setup.sh
 # Installs Docker, opens the firewall for SSH/HTTP/HTTPS, prepares /opt/triad-vision and a
 # .env.production with generated secrets (you still fill in SMTP and the admin password).
+#
+# Optional environment (white-label instances, deploy/whitelabel/new-instance.sh; the defaults are the owner's):
+#   APP_DIR (/opt/triad-vision), SITE_DOMAIN (triad-vision.de), ACME_EMAIL, ADMIN_EMAIL,
+#   SKIP_ENV=1 (do not write .env.production: the caller uploads its own)
+#   ssh root@SERVER 'SITE_DOMAIN=agency.example SKIP_ENV=1 bash -s' < deploy/server-setup.sh
 set -euo pipefail
 
-APP_DIR=/opt/triad-vision
+APP_DIR=${APP_DIR:-/opt/triad-vision}
+SITE_DOMAIN=${SITE_DOMAIN:-triad-vision.de}
+ACME_EMAIL=${ACME_EMAIL:-abdllyevv@gmail.com}
+ADMIN_EMAIL=${ADMIN_EMAIL:-abdllyevv@gmail.com}
 
 echo "== packages"
 export DEBIAN_FRONTEND=noninteractive
@@ -39,15 +47,15 @@ echo "== app directory"
 mkdir -p "$APP_DIR"/data/{mysql,uploads/private,uploads/public,docs,caddy/data,caddy/config}
 cd "$APP_DIR"
 
-if [ ! -f .env.production ]; then
+if [ "${SKIP_ENV:-0}" != 1 ] && [ ! -f .env.production ]; then
   echo "== generating .env.production"
   DB_PW=$(openssl rand -hex 16)
   ROOT_PW=$(openssl rand -hex 16)
   JWT=$(openssl rand -hex 48)
   cat > .env.production <<EOF
-SITE_DOMAIN=triad-vision.de
-ACME_EMAIL=abdllyevv@gmail.com
-CLIENT_URL=https://triad-vision.de
+SITE_DOMAIN=$SITE_DOMAIN
+ACME_EMAIL=$ACME_EMAIL
+CLIENT_URL=https://$SITE_DOMAIN
 ALLOWED_ORIGINS=
 
 MYSQL_DATABASE=triad_vision
@@ -73,9 +81,9 @@ SMTP_SECURE=true
 SMTP_USER=
 SMTP_PASS=
 MAIL_FROM=Triad Vision <no-reply@triad-vision.de>
-ADMIN_NOTIFY_EMAIL=abdllyevv@gmail.com
+ADMIN_NOTIFY_EMAIL=$ADMIN_EMAIL
 
-SEED_ADMIN_EMAIL=abdllyevv@gmail.com
+SEED_ADMIN_EMAIL=$ADMIN_EMAIL
 SEED_ADMIN_PASSWORD=CHANGE_ME_$(openssl rand -hex 6)
 EOF
   chmod 600 .env.production

@@ -58,7 +58,7 @@ const copy: SiteCopy<(typeof pagesAudience)['en']> = {
     subtitle: 'Aday seçimi, mülakatlar, vize süreci, denklik ve uyum: hepsini tek ekip yönetir.',
     ctaPrimary: 'Aday talep et',
     ctaSecondary: 'Danışmanlık randevusu al',
-    benefitsTitle: 'Neden Triad Vision',
+    benefitsTitle: 'Neden {{brand}}',
     benefits: [
       { title: 'Hukuki güvence', text: 'Vize, denklik ve iş sözleşmesi Alman mevzuatına uygun hazırlanır.' },
       { title: 'Ön elemeden geçmiş adaylar', text: 'Her aday meslek, dil ve belgeler açısından önceden kontrol edilir.' },

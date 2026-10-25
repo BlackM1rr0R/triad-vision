@@ -174,7 +174,7 @@ const copy: SiteCopy<(typeof pagesLegal)['en']> = {
       privacy: 'Devam etmek için lütfen gizlilik politikasını kabul edin.',
     },
     aside: {
-      label: 'Triad Vision hizmetleri',
+      label: '{{brand}} hizmetleri',
       title: 'Tüm vize çözümleri tek yerde',
       text: 'Profesyonel ekibimizle yurt dışında çalışma ve eğitim fırsatlarını gerçeğe dönüştürün.',
       consult: 'Profesyonel danışmanlık',

@@ -12,12 +12,14 @@ import {
   defaultDesk,
   getModules,
   isDesk,
+  licensedModules,
   recordVisit,
   saveModules,
   toPins,
   toRecent,
   usageReport,
 } from '../../lib/navModules.js';
+import { getLicense } from '../../lib/license/index.js';
 
 /**
  * Admin navigation (mounted on /api/admin, STAFF+):
@@ -35,6 +37,7 @@ const navId = z.string().regex(NAV_ID_RE);
 const desk = z.enum(DESKS);
 
 const navView = async (userId: string, role: Parameters<typeof defaultDesk>[0]) => {
+  const license = getLicense();
   const [prefs, modules] = await Promise.all([
     prisma.staffPreferences.findUnique({ where: { userId }, select: { desk: true, navPins: true, navRecent: true } }),
     getModules(),
@@ -46,6 +49,16 @@ const navView = async (userId: string, role: Parameters<typeof defaultDesk>[0]) 
     pins: toPins(prefs?.navPins),
     recent: toRecent(prefs?.navRecent),
     modules,
+    /** White-label licence: plan modules (null = all) and the status for the admin banner (lib/license). */
+    licensedModules: licensedModules(license),
+    license: {
+      role: license.role,
+      status: license.status,
+      mode: license.mode,
+      daysLeft: license.daysLeft ?? null,
+      graceEndsAt: license.graceEndsAt ?? null,
+      expiresAt: license.expiresAt ?? null,
+    },
   };
 };
 

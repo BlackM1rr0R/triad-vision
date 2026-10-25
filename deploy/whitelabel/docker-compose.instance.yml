@@ -1,0 +1,9 @@
+# Compose override of a white-label customer instance. new-instance.sh copies it to <APP_DIR>/ and
+# deploy/remote-deploy.sh adds it automatically when it is there (the owner's server has none).
+#
+# The owner's built-in mail server (Stalwart for @triad-vision.de) is not part of a customer instance: the
+# agency sends through its own SMTP (SMTP_* in .env.production). Putting it in a profile that is never
+# activated keeps it from starting.
+services:
+  mail:
+    profiles: ['owner-mail']

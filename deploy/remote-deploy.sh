@@ -5,6 +5,11 @@ set -euo pipefail
 APP_DIR=${1:-/opt/triad-vision}
 ARCHIVE=${2:-/tmp/triad-vision.tar.gz}
 COMPOSE="docker compose -f docker-compose.prod.yml"
+# White-label customer instances (deploy/whitelabel/) keep a compose override next to .env.production, e.g. to
+# leave out the owner's built-in mail server. The owner's server has no such file: the stack stays as it is.
+if [ -f "$APP_DIR/docker-compose.instance.yml" ]; then
+  COMPOSE="$COMPOSE -f $APP_DIR/docker-compose.instance.yml"
+fi
 
 cd "$APP_DIR"
 [ -f .env.production ] || { echo "missing $APP_DIR/.env.production — run deploy/server-setup.sh first"; exit 1; }

@@ -37,6 +37,7 @@ import { createPdf, fetchLetterhead, fetchSource, isText, newId, updatePdf, type
 import { getOffsets, insertText, normalize, runsLength, runsText, sliceRuns, toggleMark } from './richText';
 import { RichBlock, type PendingSelection } from './RichBlock';
 import { TableEditor } from './TableEditor';
+import { getBrand } from '@/lib/brand';
 
 export type DocEditorTarget = { mode: 'new'; parentId: string } | { mode: 'edit'; nodeId: string };
 
@@ -594,7 +595,7 @@ export default function DocEditor({ target, folderName, onClose, onSaved }: { ta
             {letterhead && (
               <div className="mb-6 flex flex-wrap items-start justify-between gap-3 border-b-2 border-primary pb-3">
                 <div>
-                  <p className="text-lg font-bold text-ink dark:text-brand-300">{lh.data?.name ?? 'Triad Vision'}</p>
+                  <p className="text-lg font-bold text-ink dark:text-brand-300">{lh.data?.name ?? getBrand().name}</p>
                   {lh.data?.lines.map((l) => (
                     <p key={l} className="text-xs text-muted">
                       {l}

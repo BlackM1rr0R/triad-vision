@@ -5,7 +5,7 @@ const copy: SiteCopy<(typeof pagesPublicAi)['en']> = {
   pai: {
     bubble: {
       open: 'Danışmanımıza sorun',
-      title: 'Triad Vision danışmanı',
+      title: '{{brand}} danışmanı',
       subtitle: 'Yapay zekâ asistanı · anında yanıt',
       close: 'Kapat',
       greeting: 'Merhaba! Almanya’da çalışma, Ausbildung, aile birleşimi ve vizeler hakkında sorularınızı sorabilirsiniz. Ne öğrenmek istersiniz?',
@@ -33,7 +33,7 @@ const copy: SiteCopy<(typeof pagesPublicAi)['en']> = {
       email: 'E-posta',
       phone: 'Telefon / WhatsApp',
       contactHint: 'Bir e-posta adresi veya telefon numarası girin.',
-      consent: 'Triad Vision’ın bu bilgileri benimle iletişim kurmak için kullanmasını kabul ediyorum.',
+      consent: '{{brand}}’ın bu bilgileri benimle iletişim kurmak için kullanmasını kabul ediyorum.',
       privacy: 'Gizlilik politikası',
       submit: 'Gönder',
       sent: 'Teşekkürler! Temsilcimiz kısa süre içinde sizinle iletişime geçecek.',

@@ -2,6 +2,7 @@ import crypto from 'node:crypto';
 import { config } from '../../config.js';
 import type { ChatMessage } from './context.js';
 import { createSseParser } from './sse.js';
+import { brandify } from '../brand/index.js';
 
 /**
  * OpenRouter over plain fetch (no SDK): streamed chat completions, the key's remaining credit and
@@ -10,7 +11,9 @@ import { createSseParser } from './sse.js';
  */
 
 export const OPENROUTER_BASE = 'https://openrouter.ai/api/v1';
-const APP_HEADERS = { 'HTTP-Referer': 'https://triad-vision.de', 'X-Title': 'Triad Vision' };
+const APP_HEADERS_DEFAULT = { 'HTTP-Referer': 'https://triad-vision.de', 'X-Title': 'Triad Vision' };
+/** Attribution headers (white-label: this instance's name and domain). */
+const appHeaders = () => ({ 'HTTP-Referer': brandify(APP_HEADERS_DEFAULT['HTTP-Referer']), 'X-Title': brandify(APP_HEADERS_DEFAULT['X-Title']) });
 
 export class AiError extends Error {
   constructor(
@@ -101,13 +104,24 @@ export const withPromptCache = (req: ChatRequest): ChatRequest | (Omit<ChatReque
   return { ...req, messages: [{ role: 'system', content }, ...rest] };
 };
 
+/**
+ * White-label: the system prompts and tool descriptions are written for "Triad Vision"; the model reads this
+ * instance's brand instead (lib/brand brandify, a no-op for the default brand). User and tool messages are
+ * data and stay untouched.
+ */
+export const brandChatRequest = (req: ChatRequest): ChatRequest => ({
+  ...req,
+  messages: req.messages.map((m) => (m.role === 'system' ? { ...m, content: brandify(m.content) } : m)),
+  ...(req.tools ? { tools: req.tools.map((t) => ({ ...t, function: { ...t.function, description: brandify(t.function.description) } })) } : {}),
+});
+
 const MAX_ATTEMPTS = 3;
 
 /** The real transport: POST /chat/completions with stream:true, retrying 429/5xx before the stream starts. */
 export const openRouterTransport: AiTransport = async function* (req, { signal, apiKey }) {
   if (config.isTest) throw new AiError('TRANSPORT_DISABLED', 'The real OpenRouter transport is disabled in tests');
   if (!apiKey) throw new AiError('NO_API_KEY', 'OpenRouter key is not configured');
-  const body = JSON.stringify({ ...withPromptCache(req), stream: true, usage: { include: true } });
+  const body = JSON.stringify({ ...withPromptCache(brandChatRequest(req)), stream: true, usage: { include: true } });
 
   let res: Response | null = null;
   for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
@@ -115,7 +129,7 @@ export const openRouterTransport: AiTransport = async function* (req, { signal, 
     try {
       res = await fetch(`${OPENROUTER_BASE}/chat/completions`, {
         method: 'POST',
-        headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json', Accept: 'text/event-stream', ...APP_HEADERS },
+        headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json', Accept: 'text/event-stream', ...appHeaders() },
         body,
         signal: AbortSignal.any([signal, connect]),
       });
@@ -203,7 +217,7 @@ export type KeyInfoFetcher = (apiKey: string) => Promise<KeyInfo | null>;
 
 const realKeyFetcher: KeyInfoFetcher = async (apiKey) => {
   if (config.isTest || !apiKey) return null;
-  const res = await fetch(`${OPENROUTER_BASE}/key`, { headers: { Authorization: `Bearer ${apiKey}`, ...APP_HEADERS }, signal: AbortSignal.timeout(10_000) });
+  const res = await fetch(`${OPENROUTER_BASE}/key`, { headers: { Authorization: `Bearer ${apiKey}`, ...appHeaders() }, signal: AbortSignal.timeout(10_000) });
   if (!res.ok) return null;
   const d = ((await res.json()) as { data?: Record<string, unknown> }).data ?? {};
   const num = (v: unknown) => (typeof v === 'number' && Number.isFinite(v) ? v : null);
@@ -261,7 +275,7 @@ export type ModelsFetcher = () => Promise<ModelMeta[]>;
 
 const realModelsFetcher: ModelsFetcher = async () => {
   if (config.isTest) return [];
-  const res = await fetch(`${OPENROUTER_BASE}/models`, { headers: APP_HEADERS, signal: AbortSignal.timeout(15_000) });
+  const res = await fetch(`${OPENROUTER_BASE}/models`, { headers: appHeaders(), signal: AbortSignal.timeout(15_000) });
   if (!res.ok) throw new AiError(`UPSTREAM_${res.status}`);
   const rows = ((await res.json()) as { data?: Record<string, unknown>[] }).data ?? [];
   return rows.map((m) => {

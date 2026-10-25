@@ -54,7 +54,7 @@ const az = {
     riskReason: {
       EMPLOYER_FEEDBACK: 'Siz problem bildirmisiniz',
       WORKER_FEEDBACK: 'İşçi danışmaq istəyir',
-      OPEN_ISSUE: 'Bir məsələ hələ Triad Vision tərəfindən həll edilir',
+      OPEN_ISSUE: 'Bir məsələ hələ {{brand}} tərəfindən həll edilir',
       NO_RESPONSE: 'Yoxlamalara cavab verilməyib',
       TREND_WORSE: 'Son rəy əvvəlkindən pisdir',
       PROBATION_SOON: 'Sınaq müddəti {{days}} gün sonra bitir',
@@ -66,7 +66,7 @@ const az = {
       PREPARE_ARRIVAL: 'İlk iş gününü hazırlayın',
       PROBATION_REVIEW: 'Sınaq müddəti söhbətini keçirin',
       CONFIRM_EMPLOYMENT: 'Uzatma üçün işin davamını təsdiqləyin',
-      TALK_TO_MANAGER: 'Triad menecerinizlə danışın',
+      TALK_TO_MANAGER: '{{brandWord}} menecerinizlə danışın',
       NONE: '—',
     },
     titleKind: { VISA: 'Viza', RESIDENCE: 'Yaşayış icazəsi' },
@@ -91,7 +91,7 @@ const az = {
       download: 'Yüklə',
       answer: 'Cavab ver',
       openForm: 'Formu aç',
-      manager: 'Məsul Triad meneceri',
+      manager: 'Məsul {{brandWord}} meneceri',
       noManager: 'Menecer hələ təyin edilməyib — ofisimizlə əlaqə saxlayın.',
       office: 'Ofis',
       email: 'E-poçt yaz',
@@ -177,7 +177,7 @@ type Copy = typeof az;
 const de: Copy = {
   employerWorkers: {
     title: 'Unsere Mitarbeiter',
-    subtitle: 'Alle Mitarbeiter, die Triad Vision bei Ihnen vermittelt: Visumverfahren, Anreise, Beschäftigung und nächste Schritte.',
+    subtitle: 'Alle Mitarbeiter, die {{brand}} bei Ihnen vermittelt: Visumverfahren, Anreise, Beschäftigung und nächste Schritte.',
     tiles: {
       inProcess: 'Im Verfahren',
       arrivingThisMonth: 'Anreise diesen Monat',
@@ -227,7 +227,7 @@ const de: Copy = {
     riskReason: {
       EMPLOYER_FEEDBACK: 'Sie haben ein Problem gemeldet',
       WORKER_FEEDBACK: 'Der Mitarbeiter hat Gesprächsbedarf signalisiert',
-      OPEN_ISSUE: 'Ein Anliegen wird von Triad Vision noch bearbeitet',
+      OPEN_ISSUE: 'Ein Anliegen wird von {{brand}} noch bearbeitet',
       NO_RESPONSE: 'Check-ins wurden nicht beantwortet',
       TREND_WORSE: 'Die letzte Rückmeldung war schlechter als zuvor',
       PROBATION_SOON: 'Probezeit endet in {{days}} Tagen',
@@ -239,7 +239,7 @@ const de: Copy = {
       PREPARE_ARRIVAL: 'Ersten Arbeitstag vorbereiten',
       PROBATION_REVIEW: 'Probezeitgespräch führen',
       CONFIRM_EMPLOYMENT: 'Weiterbeschäftigung für die Verlängerung bestätigen',
-      TALK_TO_MANAGER: 'Mit Ihrem Triad-Ansprechpartner sprechen',
+      TALK_TO_MANAGER: 'Mit Ihrem {{brandWord}}-Ansprechpartner sprechen',
       NONE: '—',
     },
     titleKind: { VISA: 'Visum', RESIDENCE: 'Aufenthaltstitel' },
@@ -264,7 +264,7 @@ const de: Copy = {
       download: 'Herunterladen',
       answer: 'Beantworten',
       openForm: 'Formular öffnen',
-      manager: 'Ihr Ansprechpartner bei Triad Vision',
+      manager: 'Ihr Ansprechpartner bei {{brand}}',
       noManager: 'Noch kein persönlicher Ansprechpartner zugeordnet – bitte wenden Sie sich an unser Büro.',
       office: 'Büro',
       email: 'E-Mail schreiben',
@@ -348,7 +348,7 @@ const de: Copy = {
 const en: Copy = {
   employerWorkers: {
     title: 'Our workers',
-    subtitle: 'Every worker Triad Vision places with you: visa process, arrival, employment and next steps.',
+    subtitle: 'Every worker {{brand}} places with you: visa process, arrival, employment and next steps.',
     tiles: {
       inProcess: 'In process',
       arrivingThisMonth: 'Arriving this month',
@@ -398,7 +398,7 @@ const en: Copy = {
     riskReason: {
       EMPLOYER_FEEDBACK: 'You reported a problem',
       WORKER_FEEDBACK: 'The worker would like to talk',
-      OPEN_ISSUE: 'A concern is still being handled by Triad Vision',
+      OPEN_ISSUE: 'A concern is still being handled by {{brand}}',
       NO_RESPONSE: 'Check-ins were not answered',
       TREND_WORSE: 'The latest feedback was worse than before',
       PROBATION_SOON: 'Probation ends in {{days}} days',
@@ -410,7 +410,7 @@ const en: Copy = {
       PREPARE_ARRIVAL: 'Prepare the first working day',
       PROBATION_REVIEW: 'Hold the probation review',
       CONFIRM_EMPLOYMENT: 'Confirm continued employment for the renewal',
-      TALK_TO_MANAGER: 'Talk to your Triad contact',
+      TALK_TO_MANAGER: 'Talk to your {{brandWord}} contact',
       NONE: '—',
     },
     titleKind: { VISA: 'Visa', RESIDENCE: 'Residence permit' },
@@ -435,7 +435,7 @@ const en: Copy = {
       download: 'Download',
       answer: 'Answer',
       openForm: 'Open form',
-      manager: 'Your contact at Triad Vision',
+      manager: 'Your contact at {{brand}}',
       noManager: 'No personal contact assigned yet – please get in touch with our office.',
       office: 'Office',
       email: 'Send e-mail',
@@ -519,7 +519,7 @@ const en: Copy = {
 const ru: Copy = {
   employerWorkers: {
     title: 'Наши сотрудники',
-    subtitle: 'Все сотрудники, которых Triad Vision трудоустраивает у вас: визовый процесс, приезд, работа и следующие шаги.',
+    subtitle: 'Все сотрудники, которых {{brand}} трудоустраивает у вас: визовый процесс, приезд, работа и следующие шаги.',
     tiles: {
       inProcess: 'В процессе',
       arrivingThisMonth: 'Приезд в этом месяце',
@@ -569,7 +569,7 @@ const ru: Copy = {
     riskReason: {
       EMPLOYER_FEEDBACK: 'Вы сообщили о проблеме',
       WORKER_FEEDBACK: 'Сотрудник хотел бы поговорить',
-      OPEN_ISSUE: 'Вопрос ещё решается Triad Vision',
+      OPEN_ISSUE: 'Вопрос ещё решается {{brand}}',
       NO_RESPONSE: 'Опросы остались без ответа',
       TREND_WORSE: 'Последний отзыв хуже предыдущего',
       PROBATION_SOON: 'Испытательный срок заканчивается через {{days}} дн.',
@@ -581,7 +581,7 @@ const ru: Copy = {
       PREPARE_ARRIVAL: 'Подготовить первый рабочий день',
       PROBATION_REVIEW: 'Провести беседу по итогам испытательного срока',
       CONFIRM_EMPLOYMENT: 'Подтвердить продолжение работы для продления',
-      TALK_TO_MANAGER: 'Связаться с менеджером Triad',
+      TALK_TO_MANAGER: 'Связаться с менеджером {{brandWord}}',
       NONE: '—',
     },
     titleKind: { VISA: 'Виза', RESIDENCE: 'ВНЖ' },
@@ -606,7 +606,7 @@ const ru: Copy = {
       download: 'Скачать',
       answer: 'Ответить',
       openForm: 'Открыть форму',
-      manager: 'Ваш контакт в Triad Vision',
+      manager: 'Ваш контакт в {{brand}}',
       noManager: 'Персональный менеджер ещё не назначен — свяжитесь с нашим офисом.',
       office: 'Офис',
       email: 'Написать',

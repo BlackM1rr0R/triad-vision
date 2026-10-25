@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { CheckCircle2, Printer, Square } from 'lucide-react';
 import { Stagger, StaggerItem } from '@/components/motion';
+import { getBrand } from '@/lib/brand';
 
 /** While printing, everything except the print sheet is hidden. Scoped by a body class so normal printing is untouched. */
 const PRINT_CSS = `
@@ -83,7 +84,7 @@ export const PrintableChecklist = ({
               fontWeight: 700,
             }}
           >
-            Triad Vision · triad-vision.de
+            {getBrand().name} · {getBrand().domain}
           </p>
           <h1 style={{ fontSize: 22, fontWeight: 800, margin: '6px 0 2px' }}>{heading}</h1>
           <p style={{ fontSize: 14, color: '#5b6b88', margin: '0 0 18px' }}>{subheading}</p>

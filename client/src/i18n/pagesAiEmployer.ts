@@ -102,7 +102,7 @@ const az = {
       found: 'Tapıldı: {{detail}}',
     },
     company: {
-      profileTitle: 'Triad Vision-dan namizəd profili',
+      profileTitle: '{{brand}}-dan namizəd profili',
       pdf: 'Profil PDF',
       whyFit: 'Niyə uyğundur',
       openPoints: 'Açıq məsələlər',
@@ -221,7 +221,7 @@ const de: Copy = {
       found: 'Gefunden: {{detail}}',
     },
     company: {
-      profileTitle: 'Kandidatenprofil von Triad Vision',
+      profileTitle: 'Kandidatenprofil von {{brand}}',
       pdf: 'Profil als PDF',
       whyFit: 'Warum der Kandidat passt',
       openPoints: 'Offene Punkte',
@@ -338,7 +338,7 @@ const en: Copy = {
       found: 'Found: {{detail}}',
     },
     company: {
-      profileTitle: 'Candidate profile from Triad Vision',
+      profileTitle: 'Candidate profile from {{brand}}',
       pdf: 'Profile PDF',
       whyFit: 'Why the candidate fits',
       openPoints: 'Open points',
@@ -455,7 +455,7 @@ const ru: Copy = {
       found: 'Найдено: {{detail}}',
     },
     company: {
-      profileTitle: 'Профиль кандидата от Triad Vision',
+      profileTitle: 'Профиль кандидата от {{brand}}',
       pdf: 'Профиль в PDF',
       whyFit: 'Почему подходит',
       openPoints: 'Открытые вопросы',

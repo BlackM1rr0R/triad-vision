@@ -13,6 +13,7 @@ import { LogoMark } from '@/components/ui/Logo';
 import { Spinner } from '@/components/ui/Spinner';
 import { optimizeImages } from '@/lib/imageCompress';
 import { Lost } from '@/components/illustrations';
+import { getBrand } from '@/lib/brand';
 
 registerCopy(driveCollabCopy);
 
@@ -122,7 +123,7 @@ export default function SharePage() {
           <div className="mb-6 flex items-center gap-3">
             <LogoMark className="h-9 w-10 shrink-0 text-ink" />
             <div className="min-w-0">
-              <p className="font-display text-sm font-semibold tracking-[0.12em] text-ink">TRIAD VISION</p>
+              <p className="font-display text-sm font-semibold tracking-[0.12em] text-ink">{getBrand().name.toLocaleUpperCase('en')}</p>
               <p className="text-xs text-muted">{t('driveCollab.share.eyebrow')}</p>
             </div>
           </div>

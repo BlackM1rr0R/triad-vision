@@ -5,7 +5,7 @@ const az = {
   pai: {
     bubble: {
       open: 'Məsləhətçi ilə danışın',
-      title: 'Triad Vision məsləhətçisi',
+      title: '{{brand}} məsləhətçisi',
       subtitle: 'AI köməkçi · dərhal cavab',
       close: 'Bağla',
       greeting: 'Salam! Almaniyada iş, Ausbildung, ailə birləşməsi və vizalar haqqında suallarınızı verin. Hansı mövzu sizi maraqlandırır?',
@@ -33,7 +33,7 @@ const az = {
       email: 'E-poçt',
       phone: 'Telefon / WhatsApp',
       contactHint: 'E-poçt və ya telefondan birini yazın.',
-      consent: 'Razıyam ki, Triad Vision bu məlumatları mənimlə əlaqə saxlamaq üçün istifadə etsin.',
+      consent: 'Razıyam ki, {{brand}} bu məlumatları mənimlə əlaqə saxlamaq üçün istifadə etsin.',
       privacy: 'Məxfilik siyasəti',
       submit: 'Göndər',
       sent: 'Təşəkkür edirik! Menecerimiz tezliklə sizinlə əlaqə saxlayacaq.',
@@ -141,7 +141,7 @@ const de: typeof az = {
   pai: {
     bubble: {
       open: 'Mit dem Berater sprechen',
-      title: 'Triad Vision Berater',
+      title: '{{brand}} Berater',
       subtitle: 'KI-Assistent · antwortet sofort',
       close: 'Schließen',
       greeting: 'Hallo! Fragen Sie mich zu Arbeit, Ausbildung, Familiennachzug und Visa in Deutschland. Worum geht es Ihnen?',
@@ -169,7 +169,7 @@ const de: typeof az = {
       email: 'E-Mail',
       phone: 'Telefon / WhatsApp',
       contactHint: 'E-Mail oder Telefon angeben.',
-      consent: 'Ich bin einverstanden, dass Triad Vision diese Daten nutzt, um mich zu kontaktieren.',
+      consent: 'Ich bin einverstanden, dass {{brand}} diese Daten nutzt, um mich zu kontaktieren.',
       privacy: 'Datenschutz',
       submit: 'Senden',
       sent: 'Vielen Dank! Wir melden uns in Kürze.',
@@ -277,7 +277,7 @@ const en: typeof az = {
   pai: {
     bubble: {
       open: 'Talk to our advisor',
-      title: 'Triad Vision advisor',
+      title: '{{brand}} advisor',
       subtitle: 'AI assistant · instant answers',
       close: 'Close',
       greeting: 'Hello! Ask me about working, Ausbildung, family reunion and visas in Germany. What would you like to know?',
@@ -305,7 +305,7 @@ const en: typeof az = {
       email: 'E-mail',
       phone: 'Phone / WhatsApp',
       contactHint: 'Enter an e-mail or a phone number.',
-      consent: 'I agree that Triad Vision may use these details to contact me.',
+      consent: 'I agree that {{brand}} may use these details to contact me.',
       privacy: 'Privacy policy',
       submit: 'Send',
       sent: 'Thank you! Our manager will contact you soon.',
@@ -413,7 +413,7 @@ const ru: typeof az = {
   pai: {
     bubble: {
       open: 'Спросить консультанта',
-      title: 'Консультант Triad Vision',
+      title: 'Консультант {{brand}}',
       subtitle: 'ИИ-помощник · отвечает сразу',
       close: 'Закрыть',
       greeting: 'Здравствуйте! Спросите о работе, Ausbildung, воссоединении семьи и визах в Германию. Что вас интересует?',
@@ -441,7 +441,7 @@ const ru: typeof az = {
       email: 'E-mail',
       phone: 'Телефон / WhatsApp',
       contactHint: 'Укажите e-mail или телефон.',
-      consent: 'Я согласен(на), что Triad Vision использует эти данные, чтобы связаться со мной.',
+      consent: 'Я согласен(на), что {{brand}} использует эти данные, чтобы связаться со мной.',
       privacy: 'Политика конфиденциальности',
       submit: 'Отправить',
       sent: 'Спасибо! Менеджер скоро свяжется с вами.',

@@ -101,16 +101,21 @@ import { jobAlertsRouter } from './routes/jobAlerts.js';
 import { accountRecognitionRouter } from './routes/accountRecognition.js'; // client portal: recognition status card
 import { accountSuccessShareRouter, publicSuccessShareRouter } from './routes/successShare.js'; // "visa approved" share cards + /success/:token
 import { googleReviewPublicRouter } from './routes/googleReview.js'; // Google review request: tracked redirect + opt-out
+import { brandTextResponses, registerBrandApp } from './lib/brand/index.js'; // white-label brand (API JSON follows it)
+import './lib/brand/pdfPatch.js'; // white-label brand in every generated PDF
+import { licenseGuard } from './middleware/license.js'; // white-label licence: read-only mode for staff
 
 type RequestWithRawBody = import('express').Request & { rawBody?: Buffer };
 
 /** Builds the Express app without listening, so tests can drive it with supertest. */
 export const createApp = () => {
   const app = express();
+  registerBrandApp(app);
   app.set('trust proxy', config.trustProxy);
   app.disable('x-powered-by');
   app.set('etag', 'weak');
   app.use(requestId);
+  app.use(brandTextResponses); // white-label brand in text responses (no-op for the default brand)
   app.use(
     helmet({
       crossOriginResourcePolicy: { policy: 'cross-origin' },
@@ -145,6 +150,7 @@ export const createApp = () => {
   app.use(cookieParser());
   app.use(loadUser);
   app.use(impersonation); // "view as client": req.user = viewed user, read-only (lib/privacy/impersonation.ts)
+  app.use(licenseGuard); // licence expired / invalid on a customer instance: staff read-only, clients unaffected
   app.use(csrfGuard);
   app.use(historyMiddleware); // field history: actor / source / request id for every Prisma update
   app.use(maskResponses); // sensitive fields masked for STAFF / ADMIN per settings (lib/privacy/mask.ts)

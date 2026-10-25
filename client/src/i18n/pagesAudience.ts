@@ -57,7 +57,7 @@ const az = {
     subtitle: 'Namizəd seçimi, müsahibələr, viza prosesi, Anerkennung və inteqrasiya: hamısını bir komanda idarə edir.',
     ctaPrimary: 'Namizəd sorğusu göndər',
     ctaSecondary: 'Konsultasiya təyin et',
-    benefitsTitle: 'Niyə Triad Vision',
+    benefitsTitle: 'Niyə {{brand}}',
     benefits: [
       { title: 'Hüquqi təhlükəsizlik', text: 'Viza, Anerkennung və əmək müqaviləsi Almaniya qanunlarına uyğun hazırlanır.' },
       { title: 'Yoxlanılmış namizədlər', text: 'Hər namizəd peşə, dil və sənədlər baxımından əvvəlcədən yoxlanılır.' },
@@ -141,7 +141,7 @@ const de: typeof az = {
     subtitle: 'Kandidatenauswahl, Interviews, Visumverfahren, Anerkennung und Integration: alles aus einer Hand.',
     ctaPrimary: 'Kandidaten anfragen',
     ctaSecondary: 'Beratung buchen',
-    benefitsTitle: 'Warum Triad Vision',
+    benefitsTitle: 'Warum {{brand}}',
     benefits: [
       { title: 'Rechtssicherheit', text: 'Visum, Anerkennung und Arbeitsvertrag werden nach deutschem Recht vorbereitet.' },
       { title: 'Geprüfte Kandidaten', text: 'Jede Person wird vorab auf Beruf, Sprache und Unterlagen geprüft.' },
@@ -225,7 +225,7 @@ const en: typeof az = {
     subtitle: 'Candidate selection, interviews, the visa process, recognition and integration: all handled by one team.',
     ctaPrimary: 'Request candidates',
     ctaSecondary: 'Book a consultation',
-    benefitsTitle: 'Why Triad Vision',
+    benefitsTitle: 'Why {{brand}}',
     benefits: [
       { title: 'Legal certainty', text: 'Visa, recognition and employment contract are prepared in line with German law.' },
       { title: 'Screened candidates', text: 'Every candidate is checked in advance for skills, language and documents.' },
@@ -309,7 +309,7 @@ const ru: typeof az = {
     subtitle: 'Подбор кандидатов, собеседования, визовый процесс, признание дипломов и интеграция — всё ведёт одна команда.',
     ctaPrimary: 'Запросить кандидатов',
     ctaSecondary: 'Записаться на консультацию',
-    benefitsTitle: 'Почему Triad Vision',
+    benefitsTitle: 'Почему {{brand}}',
     benefits: [
       { title: 'Правовая надёжность', text: 'Виза, признание диплома и трудовой договор оформляются по законам Германии.' },
       { title: 'Проверенные кандидаты', text: 'Каждый кандидат заранее проверяется по профессии, языку и документам.' },

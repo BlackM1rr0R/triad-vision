@@ -3,6 +3,7 @@ import { config } from '../config.js';
 import { prisma } from '../db.js';
 import { renderEmail, sendMail } from './mailer.js';
 import { sendPush } from './push.js';
+import { brandify } from './brand/index.js';
 import { publish } from './messaging/realtime.js';
 import { sendWhatsApp } from './messaging/outbound.js';
 import { getOverride, renderTemplate } from './messaging/templates.js';
@@ -181,7 +182,9 @@ export const notifyClient = async (
   if (isImpersonating()) return; // "view as client" never notifies
   const c = await prisma.case.findUniqueOrThrow({ where: { id: caseId }, include: { client: true } });
   const locale = c.client.locale;
-  const { title, body } = await renderNotification(type, locale, { number: c.number, firstName: c.client.firstName, ...params });
+  const rendered = await renderNotification(type, locale, { number: c.number, firstName: c.client.firstName, ...params });
+  const title = brandify(rendered.title);
+  const body = brandify(rendered.body);
   const link = `/account/cases/${c.id}`;
 
   const n = await prisma.notification.create({
@@ -208,6 +211,8 @@ export const notifyClient = async (
 /** Notify staff (admin inbox + in-app for assigned staff / all admins). */
 export const notifyStaff = async (subject: string, body: string, opts: { caseId?: string; link?: string; type?: string } = {}) => {
   if (isImpersonating()) return; // "view as client" never notifies
+  subject = brandify(subject);
+  body = brandify(body);
   const recipients = await prisma.user.findMany({
     where: opts.caseId
       ? { OR: [{ role: { in: ['ADMIN', 'SUPER_ADMIN'] } }, { assignedCases: { some: { id: opts.caseId } } }], isActive: true }
@@ -266,6 +271,7 @@ export const notifyUser = async (
   if (isImpersonating()) return; // "view as client" never notifies
   const user = await prisma.user.findUnique({ where: { id: userId } });
   if (!user || !user.isActive) return;
+  msg = { ...msg, title: brandify(msg.title), body: brandify(msg.body) }; // white-label brand (no-op for the default brand)
   const n = await prisma.notification.create({
     data: { userId, caseId: msg.caseId, type: msg.type, title: msg.title, body: msg.body, link: msg.link },
   });

@@ -63,7 +63,7 @@ const az = {
     title1: 'Güvənilir işçi təminatı',
     title2: 'və viza həlləri',
     subtitle:
-      'Triad Vision — Almaniyada fəaliyyət göstərən şirkətlər üçün Azərbaycandan ixtisaslı və motivasiyalı işçi qüvvəsinin seçimi, viza prosesi və inteqrasiya üzrə tam dəstək göstərir.',
+      '{{brand}} — Almaniyada fəaliyyət göstərən şirkətlər üçün Azərbaycandan ixtisaslı və motivasiyalı işçi qüvvəsinin seçimi, viza prosesi və inteqrasiya üzrə tam dəstək göstərir.',
     ctaPrimary: 'Əməkdaşlıq təklifi göndərin',
     ctaSecondary: 'Viza üçün müraciət',
     bullets: [
@@ -139,7 +139,7 @@ const az = {
     },
   },
   why: {
-    eyebrow: 'Niyə Triad Vision',
+    eyebrow: 'Niyə {{brand}}',
     title: 'Şəffaf, qanuni və sürətli',
     items: [
       { title: 'Qanuni və təhlükəsiz', text: 'Bütün proses Almaniya qanunvericiliyinə uyğun aparılır.' },
@@ -188,7 +188,7 @@ const az = {
     subtitle: 'İnsanlar · İş · İmkanlar — Azərbaycanla Almaniya arasında etibarlı körpü.',
     storyTitle: 'Bizim hekayəmiz',
     story:
-      'Triad Vision Azərbaycandakı istedadlı, zəhmətkeş insanları Almaniyanın ixtisaslı işçiyə ehtiyacı olan şirkətləri ilə birləşdirmək məqsədilə yaradılıb. Missiyamız — hər iki tərəf üçün qanuni, şəffaf və uzunmüddətli əməkdaşlıq qurmaqdır.\n\nKomandamız Bakı və Almaniyada çalışır, namizədin seçimindən işə başlamasına qədər bütün mərhələləri birbaşa idarə edir.',
+      '{{brand}} Azərbaycandakı istedadlı, zəhmətkeş insanları Almaniyanın ixtisaslı işçiyə ehtiyacı olan şirkətləri ilə birləşdirmək məqsədilə yaradılıb. Missiyamız — hər iki tərəf üçün qanuni, şəffaf və uzunmüddətli əməkdaşlıq qurmaqdır.\n\nKomandamız Bakı və Almaniyada çalışır, namizədin seçimindən işə başlamasına qədər bütün mərhələləri birbaşa idarə edir.',
     valuesTitle: 'Dəyərlərimiz',
     values: [
       { title: 'Etibar', text: 'Verdiyimiz hər söz və hər sənəd üçün məsuliyyət daşıyırıq.' },
@@ -406,7 +406,7 @@ const az = {
       placeholder: 'Mesajınızı yazın...',
       empty: 'Hələ mesaj yoxdur. Sualınız varsa, buradan yazın.',
       you: 'Siz',
-      team: 'Triad Vision',
+      team: '{{brand}}',
     },
     events: {
       CASE_CREATED: 'Müraciət yaradıldı',

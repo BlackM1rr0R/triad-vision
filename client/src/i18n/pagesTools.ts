@@ -222,7 +222,7 @@ const az = {
       anabinText: 'Xarici universitetlərin və diplomların statusu (KMK məlumat bazası).',
     },
     tip: {
-      title: 'Triad Vision-ın məsləhəti',
+      title: '{{brand}}-ın məsləhəti',
       text: 'Ən çox vaxt itkisi natamam sənədlərə görə olur. Biz diplom və arayışlarınızı tərcümə edir, apostil və notarial təsdiqi təşkil edir və müraciət paketini sizinlə birlikdə hazırlayırıq.',
       translations: 'Tərcümə sifarişləri',
       booking: 'Məsləhət sifariş et',
@@ -491,7 +491,7 @@ const de: Copy = {
       anabinText: 'Status ausländischer Hochschulen und Abschlüsse (Datenbank der KMK).',
     },
     tip: {
-      title: 'Tipp von Triad Vision',
+      title: 'Tipp von {{brand}}',
       text: 'Die meiste Zeit geht durch unvollständige Unterlagen verloren. Wir übersetzen Ihre Zeugnisse und Nachweise, organisieren Apostille und Beglaubigung und stellen den Antrag gemeinsam mit Ihnen zusammen.',
       translations: 'Übersetzungsaufträge',
       booking: 'Beratung buchen',
@@ -758,7 +758,7 @@ const en: Copy = {
       anabinText: 'Status of foreign universities and degrees (KMK database).',
     },
     tip: {
-      title: 'Triad Vision tip',
+      title: '{{brand}} tip',
       text: 'Most time is lost to incomplete documents. We translate your diplomas and certificates, arrange apostille and certification, and put the application together with you.',
       translations: 'Translation orders',
       booking: 'Book a consultation',
@@ -1025,7 +1025,7 @@ const ru: Copy = {
       anabinText: 'Статус иностранных вузов и дипломов (база данных KMK).',
     },
     tip: {
-      title: 'Совет Triad Vision',
+      title: 'Совет {{brand}}',
       text: 'Больше всего времени теряется из-за неполного пакета документов. Мы переводим дипломы и справки, организуем апостиль и заверение и вместе с вами готовим заявление.',
       translations: 'Заказы переводов',
       booking: 'Записаться на консультацию',

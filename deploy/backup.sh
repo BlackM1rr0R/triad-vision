@@ -7,6 +7,9 @@
 # Restore:  openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 -pass file:/root/.triad-backup.key \
 #             -in triad-YYYYmmdd-HHMM.tar.gz.enc | tar -xz -C /tmp/restore
 # Keep a copy of /root/.triad-backup.key OFF the server, or the archives can't be decrypted.
+#
+# Optional off-site copy: BACKUP_REMOTE=user@host:/path/ (scp, key-based) uploads each archive after it was
+# verified, e.g. for white-label customer instances (deploy/whitelabel/new-instance.sh writes the cron line).
 set -euo pipefail
 
 APP_DIR="${APP_DIR:-/opt/triad-vision}"
@@ -46,6 +49,10 @@ openssl enc -aes-256-cbc -pbkdf2 -iter 200000 -salt -pass "file:$KEY_FILE" -in "
 
 # verify the archive decrypts and is a valid tarball before trusting it
 openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 -pass "file:$KEY_FILE" -in "$OUT" | tar -tz >/dev/null
+
+if [ -n "${BACKUP_REMOTE:-}" ]; then
+  scp -q -o BatchMode=yes "$OUT" "$BACKUP_REMOTE" || echo "off-site copy to $BACKUP_REMOTE failed" >&2
+fi
 
 find "$BACKUP_DIR" -name 'triad-*.tar.gz.enc' -mtime +"$KEEP_DAYS" -delete
 echo "$(date -u +%FT%TZ) ok $(du -h "$OUT" | cut -f1) $OUT"

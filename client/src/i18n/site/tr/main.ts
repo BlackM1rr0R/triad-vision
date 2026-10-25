@@ -66,7 +66,7 @@ const tr: SiteCopy<Messages> = {
     title1: 'Güvenilir personel temini',
     title2: 've vize çözümleri',
     subtitle:
-      'Triad Vision, Almanya’daki şirketlere Azerbaycan’dan nitelikli ve motivasyonu yüksek çalışanların seçimi, vize süreci ve uyum konularında eksiksiz destek sağlar.',
+      '{{brand}}, Almanya’daki şirketlere Azerbaycan’dan nitelikli ve motivasyonu yüksek çalışanların seçimi, vize süreci ve uyum konularında eksiksiz destek sağlar.',
     ctaPrimary: 'İş birliği talebi gönderin',
     ctaSecondary: 'Vize başvurusu yapın',
     bullets: [
@@ -142,7 +142,7 @@ const tr: SiteCopy<Messages> = {
     },
   },
   why: {
-    eyebrow: 'Neden Triad Vision',
+    eyebrow: 'Neden {{brand}}',
     title: 'Şeffaf, yasal ve hızlı',
     items: [
       { title: 'Yasal ve güvenli', text: 'Tüm süreç Alman mevzuatına uygun yürütülür.' },
@@ -191,7 +191,7 @@ const tr: SiteCopy<Messages> = {
     subtitle: 'İnsanlar · İş · Fırsatlar — Azerbaycan ile Almanya arasında güvenilir bir köprü.',
     storyTitle: 'Hikâyemiz',
     story:
-      'Triad Vision, Azerbaycan’daki yetenekli ve çalışkan insanları nitelikli çalışana ihtiyaç duyan Alman şirketleriyle buluşturmak amacıyla kuruldu. Misyonumuz, her iki taraf için yasal, şeffaf ve uzun vadeli bir iş birliği kurmaktır.\n\nEkibimiz Bakü’de ve Almanya’da çalışır; aday seçiminden ilk iş gününe kadar tüm aşamaları doğrudan yönetir.',
+      '{{brand}}, Azerbaycan’daki yetenekli ve çalışkan insanları nitelikli çalışana ihtiyaç duyan Alman şirketleriyle buluşturmak amacıyla kuruldu. Misyonumuz, her iki taraf için yasal, şeffaf ve uzun vadeli bir iş birliği kurmaktır.\n\nEkibimiz Bakü’de ve Almanya’da çalışır; aday seçiminden ilk iş gününe kadar tüm aşamaları doğrudan yönetir.',
     valuesTitle: 'Değerlerimiz',
     values: [
       { title: 'Güven', text: 'Verdiğimiz her sözün ve ilgilendiğimiz her belgenin sorumluluğunu taşırız.' },
@@ -417,7 +417,7 @@ const tr: SiteCopy<Messages> = {
       placeholder: 'Mesajınızı yazın...',
       empty: 'Henüz mesaj yok. Sorunuz varsa buradan yazabilirsiniz.',
       you: 'Siz',
-      team: 'Triad Vision',
+      team: '{{brand}}',
     },
     events: {
       CASE_CREATED: 'Başvuru oluşturuldu',

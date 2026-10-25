@@ -1322,7 +1322,7 @@ export const adminInvoicesCopy = { az: invAz, de: invDe, en: invEn, ru: invRu };
 const ciAz = {
   companyInvoices: {
     title: 'Hesab-fakturalar',
-    subtitle: 'Triad Vision tərəfindən göndərilmiş hesab-fakturalar və onların statusu.',
+    subtitle: '{{brand}} tərəfindən göndərilmiş hesab-fakturalar və onların statusu.',
     open: 'Ödənilməli',
     overdue: 'Gecikmiş',
     empty: 'Hələ hesab-faktura yoxdur',
@@ -1341,7 +1341,7 @@ const ciAz = {
 const ciDe: typeof ciAz = {
   companyInvoices: {
     title: 'Rechnungen',
-    subtitle: 'Rechnungen von Triad Vision und ihr Zahlungsstatus.',
+    subtitle: 'Rechnungen von {{brand}} und ihr Zahlungsstatus.',
     open: 'Offen',
     overdue: 'Überfällig',
     empty: 'Noch keine Rechnungen',
@@ -1360,7 +1360,7 @@ const ciDe: typeof ciAz = {
 const ciEn: typeof ciAz = {
   companyInvoices: {
     title: 'Invoices',
-    subtitle: 'Invoices from Triad Vision and their payment status.',
+    subtitle: 'Invoices from {{brand}} and their payment status.',
     open: 'Open',
     overdue: 'Overdue',
     empty: 'No invoices yet',
@@ -1379,7 +1379,7 @@ const ciEn: typeof ciAz = {
 const ciRu: typeof ciAz = {
   companyInvoices: {
     title: 'Счета',
-    subtitle: 'Счета от Triad Vision и статус их оплаты.',
+    subtitle: 'Счета от {{brand}} и статус их оплаты.',
     open: 'К оплате',
     overdue: 'Просрочено',
     empty: 'Счетов пока нет',

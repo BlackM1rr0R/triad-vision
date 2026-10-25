@@ -22,6 +22,7 @@ import {
   type SaveAs,
   type WatermarkPosition,
 } from './api';
+import { getBrand } from '@/lib/brand';
 
 /** One-shot PDF tool dialogs opened from the drive's context menu (lazy-loaded by usePdfTools). */
 
@@ -187,11 +188,11 @@ export const CompressDialog = ({ items, toPdf: forcePdf = false, onClose, onDone
 
 // ─── watermark ───────────────────────────────────────────────────────
 
-const PRESETS = ['KOPIE', 'Nur für Triad Vision', 'ENTWURF'];
+const presets = () => ['KOPIE', `Nur für ${getBrand().name}`, 'ENTWURF'];
 
 export const WatermarkDialog = ({ items, onClose, onDone }: { items: DriveItem[]; onClose: () => void; onDone: () => void }) => {
   const { t } = useTranslation();
-  const [text, setText] = useState(PRESETS[0]);
+  const [text, setText] = useState(presets()[0]);
   const [position, setPosition] = useState<WatermarkPosition>('diagonal');
   const [opacity, setOpacity] = useState(25);
   const [size, setSize] = useState(60);
@@ -225,7 +226,7 @@ export const WatermarkDialog = ({ items, onClose, onDone }: { items: DriveItem[]
         <div>
           <span className={label}>{t('pdfTools.watermark.presets')}</span>
           <div className="flex flex-wrap gap-2">
-            {PRESETS.map((p) => (
+            {presets().map((p) => (
               <button key={p} type="button" onClick={() => setText(p)} className={clsx('rounded-full border px-3 py-1 text-xs font-semibold', text === p ? 'border-primary bg-primary/[0.06] text-link dark:bg-brand-500/10' : 'border-line text-ink hover:bg-sunken')}>
                 {p}
               </button>

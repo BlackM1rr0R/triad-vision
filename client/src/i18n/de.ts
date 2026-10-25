@@ -65,7 +65,7 @@ const de: Messages = {
     title1: 'Ihr zuverlässiger Partner',
     title2: 'für qualifizierte Arbeitskräfte',
     subtitle:
-      'Triad Vision unterstützt Unternehmen in Deutschland umfassend bei der Auswahl qualifizierter und motivierter Fachkräfte aus Aserbaidschan, beim Visumverfahren und bei der Integration.',
+      '{{brand}} unterstützt Unternehmen in Deutschland umfassend bei der Auswahl qualifizierter und motivierter Fachkräfte aus Aserbaidschan, beim Visumverfahren und bei der Integration.',
     ctaPrimary: 'Kooperationsanfrage senden',
     ctaSecondary: 'Visum beantragen',
     bullets: [
@@ -141,7 +141,7 @@ const de: Messages = {
     },
   },
   why: {
-    eyebrow: 'Warum Triad Vision',
+    eyebrow: 'Warum {{brand}}',
     title: 'Transparent, legal und schnell',
     items: [
       { title: 'Legal und sicher', text: 'Der gesamte Prozess erfolgt nach deutschem Recht.' },
@@ -190,7 +190,7 @@ const de: Messages = {
     subtitle: 'Menschen · Arbeit · Chancen – eine verlässliche Brücke zwischen Aserbaidschan und Deutschland.',
     storyTitle: 'Unsere Geschichte',
     story:
-      'Triad Vision wurde gegründet, um talentierte und fleißige Menschen aus Aserbaidschan mit deutschen Unternehmen zusammenzubringen, die qualifizierte Fachkräfte suchen. Unsere Mission: eine legale, transparente und langfristige Zusammenarbeit für beide Seiten.\n\nUnser Team arbeitet in Baku und in Deutschland und steuert alle Phasen direkt – von der Auswahl des Kandidaten bis zum Arbeitsbeginn.',
+      '{{brand}} wurde gegründet, um talentierte und fleißige Menschen aus Aserbaidschan mit deutschen Unternehmen zusammenzubringen, die qualifizierte Fachkräfte suchen. Unsere Mission: eine legale, transparente und langfristige Zusammenarbeit für beide Seiten.\n\nUnser Team arbeitet in Baku und in Deutschland und steuert alle Phasen direkt – von der Auswahl des Kandidaten bis zum Arbeitsbeginn.',
     valuesTitle: 'Unsere Werte',
     values: [
       { title: 'Vertrauen', text: 'Wir stehen für jedes Wort und jedes Dokument, das wir geben.' },
@@ -408,7 +408,7 @@ const de: Messages = {
       placeholder: 'Ihre Nachricht...',
       empty: 'Noch keine Nachrichten. Bei Fragen schreiben Sie uns hier.',
       you: 'Sie',
-      team: 'Triad Vision',
+      team: '{{brand}}',
     },
     events: {
       CASE_CREATED: 'Antrag erstellt',

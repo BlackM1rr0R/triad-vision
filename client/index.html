@@ -5,11 +5,18 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#0b1f44" />
+    <!--tv:/* White-label brand tags (theme colour, favicon, app icons, app title, Search Console verification,
+      <meta name="tv-brand">) from the API's /__seo/brand (server/src/lib/brand/web.ts); the static Triad Vision
+      tags are the fallback. */:tv-->
+    <!--tv:$brand := httpInclude "/__seo/brand":tv-->
+    <!--tv:if $brand:tv--><!--tv:$brand:tv--><!--tv:else:tv-->
     <meta name="google-site-verification" content="W7ASmkW0-5qq0rKMp2DrlQfP0kCTxliKR5rQQgiH7w4" />
+    <meta name="theme-color" content="#0b1f44" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+    <meta name="apple-mobile-web-app-title" content="Triad Vision" />
+    <!--tv:end:tv-->
+    <link rel="manifest" href="/manifest.webmanifest" />
     <!-- Third-party origins used on most pages: CMS stock photos and the Cloudflare analytics beacon. -->
     <link rel="preconnect" href="https://images.unsplash.com" crossorigin />
     <link rel="dns-prefetch" href="https://images.unsplash.com" />
@@ -24,7 +31,6 @@
     </style>
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-title" content="Triad Vision" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <!--tv:/*
       SEO head tags. In production Caddy runs this file through its `templates` handler; the "tv:"

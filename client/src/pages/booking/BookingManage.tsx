@@ -13,6 +13,7 @@ import { PageHero } from '@/components/layout/PageHero';
 import { Spinner } from '@/components/ui/Spinner';
 import { CalendarDay, Lost } from '@/components/illustrations';
 import { BOOKING_STATUS_TONE, browserTimeZone, fmtTime, useDayLabels, type BookingStatus, type Topic } from '@/components/booking/time';
+import { getBrand } from '@/lib/brand';
 
 registerCopy(bookingCopy);
 
@@ -110,7 +111,7 @@ export default function BookingManage() {
                       <dt className="flex items-center gap-1.5 text-xs text-muted">
                         <UserRound className="size-3.5" aria-hidden /> {t('bookingManage.with')}
                       </dt>
-                      <dd className="mt-1 font-semibold text-ink">Triad Vision · {b.staffName}</dd>
+                      <dd className="mt-1 font-semibold text-ink">{getBrand().name} · {b.staffName}</dd>
                     </div>
                     <div className="rounded-xl border border-line p-3 sm:col-span-2">
                       <dt className="flex items-center gap-1.5 text-xs text-muted">

@@ -3,6 +3,7 @@ import { config } from '../../config.js';
 import { prisma } from '../../db.js';
 import { normalizePhone, sms, smsConfigured, whatsapp, whatsappConfigured } from './providers.js';
 import { isImpersonating } from '../privacy/impersonationContext.js';
+import { brandify } from '../brand/index.js';
 
 /**
  * Outbound WhatsApp / SMS. Every attempt is written to OutboundMessage (QUEUED → SENT | FAILED |
@@ -45,6 +46,7 @@ export const deliver = async (
   meta: { userId?: string | null; caseId?: string | null; templateKey?: string | null } = {},
 ): Promise<OutboundMessage | null> => {
   if (isImpersonating()) return null; // "view as client" never sends WhatsApp / SMS
+  body = brandify(body); // white-label brand (no-op for the default brand)
   let row: OutboundMessage;
   try {
     row = await record({ channel, to, body, userId: meta.userId ?? null, caseId: meta.caseId ?? null, templateKey: meta.templateKey ?? null });

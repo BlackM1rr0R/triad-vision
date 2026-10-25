@@ -7,6 +7,7 @@ import { details } from './details';
 import { extra } from './extra';
 import { uiCopy } from './ui';
 import { EXTRA_LOCALES, SITE_LOCALES, initialLocaleRedirect, pathLanguageDetector, type ExtraLocale, type SiteLocale } from '@/lib/siteLocale';
+import { brandVars, onBrandChange } from '@/lib/brand';
 
 /** Content languages: every CMS text, e-mail and stored user locale exists in these four. */
 export const LOCALES = ['az', 'de', 'en', 'ru'] as const;
@@ -35,7 +36,9 @@ void i18n
     fallbackLng: { tr: ['en', 'az'], uk: ['en', 'az'], default: ['az'] },
     supportedLngs: SITE_LOCALES,
     nonExplicitSupportedLngs: true,
-    interpolation: { escapeValue: false },
+    // White-label: copy says {{brand}} (and {{brandUpper}}, {{brandHyphen}}, {{brandShort}}, {{brandDomain}}) instead
+    // of the literal name; every t() / getFixedT() call fills them in from the instance brand (src/lib/brand.ts).
+    interpolation: { escapeValue: false, defaultVariables: brandVars() },
     returnObjects: true,
     // Public pages: the URL prefix decides (/de/…; the root is az). Portals: ?lng=de (the mobile app opens
     // web pages in the user's app language), then the stored choice, then the browser.
@@ -46,6 +49,15 @@ void i18n
       lookupLocalStorage: 'tv_lang',
     },
   });
+
+// A brand change (System → Brand saved, or the API's answer in the dev server) re-renders every translated text.
+onBrandChange(() => {
+  const vars = i18n.options.interpolation?.defaultVariables;
+  if (vars) Object.assign(vars, brandVars());
+  startTransition(() => {
+    i18n.emit('languageChanged', i18n.language);
+  });
+});
 
 // <html lang> drives CSS text-transform rules (Azerbaijani uppercases "i" as "İ"), so keep it in sync
 // from the very first render, not only after a language switch.

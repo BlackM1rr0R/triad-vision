@@ -15,6 +15,8 @@ import { getBody } from '../lib/seoBody.js';
 import { ogCardPng, ogCardText } from '../lib/ogImage.js';
 import { getCaseAiSettings } from '../lib/ai/features/caseAi/config.js';
 import { successShareHead } from '../lib/successShare/service.js';
+import { brandify } from '../lib/brand/index.js';
+import { brandHeadTags, webManifest } from '../lib/brand/web.js';
 
 // SEO: robots.txt, sitemaps, RSS, Open Graph cards, /api/seo/* and the Caddy includes (mounted at the app root).
 export const seoRouter = Router();
@@ -52,7 +54,7 @@ const rss = async (req: Request, res: Response) => {
   }
   res.type('application/rss+xml; charset=utf-8');
   res.setHeader('Cache-Control', 'public, max-age=900');
-  res.send(await getRss(lng));
+  res.send(brandify(await getRss(lng)));
 };
 seoRouter.get('/rss.xml', rss);
 seoRouter.get('/:lng/rss.xml', rss);
@@ -81,7 +83,7 @@ const head = async (req: Request, res: Response) => {
   try {
     // Visa-approved share pages (/success/:token) depend on the client's consent: computed live, never cached.
     const share = await successShareHead(String(req.query.path ?? '/'));
-    const html = templateSafe(share ?? renderHead(String(req.query.path ?? '/'), parseLocale(req.query.lng), await getSeoData()));
+    const html = templateSafe(brandify(share ?? renderHead(String(req.query.path ?? '/'), parseLocale(req.query.lng), await getSeoData())));
     res.setHeader('Cache-Control', share !== null ? 'no-store' : 'public, max-age=60, stale-while-revalidate=600');
     res.send(html);
   } catch (err) {
@@ -106,7 +108,7 @@ seoRouter.get('/__seo/body', async (req, res) => {
   res.type('text/html; charset=utf-8');
   res.setHeader('X-Robots-Tag', 'noindex');
   try {
-    const html = templateSafe(await getBody(String(req.query.path ?? '/'), await getSeoData()));
+    const html = templateSafe(brandify(await getBody(String(req.query.path ?? '/'), await getSeoData())));
     res.setHeader('Cache-Control', 'public, max-age=60, stale-while-revalidate=600');
     res.send(html);
   } catch (err) {
@@ -114,6 +116,31 @@ seoRouter.get('/__seo/body', async (req, res) => {
     res.setHeader('Cache-Control', 'no-store');
     res.send('');
   }
+});
+
+/**
+ * White-label brand tags of the HTML shell (Caddy include, client/index.html): theme colour, favicon, app
+ * icons, the installed-app title and <meta name="tv-brand"> (the brand the SPA starts with). Same failure
+ * rule as the head: an error answers 200 with an empty body and index.html keeps its static Triad Vision tags.
+ */
+seoRouter.get('/__seo/brand', async (_req, res) => {
+  res.type('text/html; charset=utf-8');
+  res.setHeader('X-Robots-Tag', 'noindex');
+  try {
+    res.setHeader('Cache-Control', 'public, max-age=60');
+    res.send(templateSafe(await brandHeadTags()));
+  } catch (err) {
+    console.error('[seo] brand tags failed', err);
+    res.setHeader('Cache-Control', 'no-store');
+    res.send('');
+  }
+});
+
+/** Web app manifest of the installable site, from the brand (Caddy forwards /manifest.webmanifest here). */
+seoRouter.get('/manifest.webmanifest', async (_req, res) => {
+  res.type('application/manifest+json; charset=utf-8');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.send(JSON.stringify(await webManifest(), null, 2));
 });
 
 /** Generated Open Graph title card: /og/<kind>/<lng>/<slug>.png (lib/ogImage.ts). */

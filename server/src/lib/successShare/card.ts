@@ -1,6 +1,7 @@
 import QRCode from 'qrcode';
 import sharp from 'sharp';
 import { loadFonts, textPath, widthOf, wrap, type Font } from '../ogImage.js';
+import { brandify } from '../brand/index.js'; // white-label name + domain on the card
 
 /*
  * "Visa approved" share card: a branded PNG the client can post (1080×1350 portrait for Instagram / feeds)
@@ -123,7 +124,7 @@ export const successCardSvg = async (input: CardInput) => {
   const footer = [
     `<rect x="0" y="${H - FOOTER}" width="${W}" height="${FOOTER}" fill="#000000" fill-opacity="0.22"/>`,
     `<g fill="${AMBER}">${textPath(bold, input.scanLabel, 32, 80, H - FOOTER + 92)}</g>`,
-    `<g fill="#ffffff">${textPath(bold, 'triad-vision.de', 50, 80, H - FOOTER + 162)}</g>`,
+    `<g fill="#ffffff">${textPath(bold, brandify('triad-vision.de'), 50, 80, H - FOOTER + 162)}</g>`,
     `<g fill="#cbd5e1">${textPath(regular, input.codeLine ?? input.withUs, 32, 80, H - FOOTER + 222)}</g>`,
     `<rect x="${qrX}" y="${qrY}" width="${qrBox}" height="${qrBox}" rx="18" fill="#ffffff"/>`,
     qrPath(input.qrUrl, qrX + 16, qrY + 16, qrBox - 32),
@@ -137,7 +138,7 @@ export const successCardSvg = async (input: CardInput) => {
 <circle cx="${W - 140}" cy="${H * 0.45}" r="10" fill="${AMBER}"/>
 <rect x="120" y="${H * 0.3}" width="18" height="18" rx="3" fill="#ffffff" fill-opacity="0.35" transform="rotate(20 129 ${H * 0.3 + 9})"/>
 <circle cx="170" cy="${H * 0.52}" r="7" fill="#93c5fd"/>
-<g fill="#ffffff">${textPath(bold, 'TRIAD VISION', 40, 80, story ? 170 : 120)}</g>
+<g fill="#ffffff">${textPath(bold, brandify('TRIAD VISION'), 40, 80, story ? 170 : 120)}</g>
 <g fill="${AMBER}">${textPath(bold, input.kicker.toLocaleUpperCase(input.lang), 24, 80, story ? 214 : 160)}</g>
 <g transform="translate(${W - 80 - 76} ${story ? 132 : 82})"><rect width="16" height="44" rx="2" fill="#00b5e2"/><rect x="20" width="16" height="44" rx="2" fill="#ef3340"/><rect x="40" width="16" height="44" rx="2" fill="#509e2f"/><rect x="60" width="16" height="44" rx="2" fill="#ffce00"/></g>
 ${out.join('\n')}

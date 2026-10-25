@@ -2,6 +2,7 @@ import nodemailer from 'nodemailer';
 import { config } from '../config.js';
 import { prisma } from '../db.js';
 import { isImpersonating } from './privacy/impersonationContext.js';
+import { brandify, brandSync } from './brand/index.js';
 
 const transporter = config.smtp.host
   ? nodemailer.createTransport({
@@ -19,6 +20,23 @@ const escapeHtml = (s: string) =>
 const headerSafe = (s: string) => s.replace(/[\r\n]+/g, ' ').slice(0, 300);
 
 /**
+ * Header and footer of the e-mail wrapper from the instance brand (lib/brand). With the default brand this is
+ * exactly the former fixed markup: "TRIAD VISION", "PEOPLE · WORK · OPPORTUNITIES", navy, and the footer
+ * "Triad Vision · triad-vision.de · +994 50 748 70 48".
+ */
+const emailBrand = () => {
+  const b = brandSync();
+  const footer = b.footerText || [b.name, b.domain, b.phone].filter(Boolean).join(' · ');
+  return {
+    name: escapeHtml(b.name.toLocaleUpperCase('en')),
+    tagline: escapeHtml(b.tagline.toLocaleUpperCase('en')),
+    // The owner's mails keep their navy header even if the site theme colour changes.
+    color: !b.isDefault && /^#[0-9a-f]{6}$/i.test(b.primaryColor) ? b.primaryColor : '#0b1f44',
+    footer: escapeHtml(footer),
+  };
+};
+
+/**
  * Branded HTML wrapper. `body` is plain text; paragraphs are split on blank lines. `opts.html` is an optional
  * block of already-escaped HTML (tables of a report) placed after the paragraphs — callers must escape their data.
  */
@@ -30,15 +48,16 @@ export const renderEmail = (title: string, body: string, cta?: { label: string; 
   const button = cta
     ? `<p style="margin:24px 0 8px"><a href="${escapeHtml(cta.url)}" style="background:#1565e8;color:#fff;text-decoration:none;padding:12px 22px;border-radius:8px;font-weight:600;display:inline-block">${escapeHtml(cta.label)}</a></p>`
     : '';
+  const header = emailBrand();
   return `<!doctype html><html><body style="margin:0;background:#eef3fb;font-family:Segoe UI,Arial,sans-serif;color:#0b1f44">
 <table width="100%" cellpadding="0" cellspacing="0" style="padding:32px 12px"><tr><td align="center">
 <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;background:#fff;border-radius:14px;overflow:hidden">
-<tr><td style="background:#0b1f44;padding:22px 28px;color:#fff;font-size:20px;font-weight:700;letter-spacing:2px">TRIAD VISION
-<div style="font-size:10px;letter-spacing:3px;opacity:.7;font-weight:400">PEOPLE · WORK · OPPORTUNITIES</div></td></tr>
+<tr><td style="background:${header.color};padding:22px 28px;color:#fff;font-size:20px;font-weight:700;letter-spacing:2px">${header.name}
+<div style="font-size:10px;letter-spacing:3px;opacity:.7;font-weight:400">${header.tagline}</div></td></tr>
 <tr><td style="padding:28px">
 <h2 style="margin:0 0 18px;font-size:20px">${escapeHtml(title)}</h2>${paragraphs}${opts.html ?? ''}${button}
 </td></tr>
-<tr><td style="background:#f5f8fd;padding:16px 28px;font-size:12px;color:#5b6b88">Triad Vision · triad-vision.de · +994 50 748 70 48</td></tr>
+<tr><td style="background:#f5f8fd;padding:16px 28px;font-size:12px;color:#5b6b88">${header.footer}</td></tr>
 </table></td></tr></table></body></html>`;
 };
 
@@ -65,7 +84,8 @@ export interface MailAttachment {
 export const sendMail = async (to: string, subject: string, html: string, attachments?: MailAttachment[]) => {
   if (!to) return;
   if (isImpersonating()) return; // "view as client" never sends mail
-  const safeSubject = headerSafe(subject);
+  const safeSubject = headerSafe(brandify(subject));
+  html = brandify(html);
   try {
     if (!transporter) {
       if (!config.isTest) console.log(`\n[mail:console] to=${to}\n  subject=${safeSubject}\n`);
@@ -74,7 +94,7 @@ export const sendMail = async (to: string, subject: string, html: string, attach
     }
     try {
       await transporter.sendMail({
-        from: config.smtp.from,
+        from: brandSync().emailFrom,
         to: headerSafe(to),
         subject: safeSubject,
         html,
@@ -107,7 +127,7 @@ export interface MailResult {
  * Never throws. Header names and values are made single-line.
  */
 export const sendMailDetailed = async (msg: { to: string; subject: string; html: string; text?: string; headers?: Record<string, string> }): Promise<MailResult> => {
-  const safeSubject = headerSafe(msg.subject);
+  const safeSubject = headerSafe(brandify(msg.subject));
   try {
     if (!msg.to) return { status: 'FAILED', error: 'NO_ADDRESS' };
     if (!transporter) {
@@ -119,7 +139,7 @@ export const sendMailDetailed = async (msg: { to: string; subject: string; html:
       Object.entries(msg.headers ?? {}).map(([k, v]) => [k.replace(/[^A-Za-z0-9-]/g, ''), headerSafe(v).slice(0, 900)]),
     );
     try {
-      await transporter.sendMail({ from: config.smtp.from, to: headerSafe(msg.to), subject: safeSubject, html: msg.html, text: msg.text, headers });
+      await transporter.sendMail({ from: brandSync().emailFrom, to: headerSafe(msg.to), subject: safeSubject, html: brandify(msg.html), text: msg.text === undefined ? undefined : brandify(msg.text), headers });
       await log({ to: msg.to, subject: safeSubject, status: 'SENT' });
       return { status: 'SENT' };
     } catch (err) {

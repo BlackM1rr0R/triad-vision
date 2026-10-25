@@ -4,6 +4,7 @@ import clsx from 'clsx';
 import { AlertTriangle, CheckCircle2, Clock3, Download, ThumbsDown, ThumbsUp, XCircle } from 'lucide-react';
 import { Spinner } from '@/components/ui/Spinner';
 import { STATUS_TONES, toneClasses } from '@/components/ui/status';
+import { getBrand } from '@/lib/brand';
 
 /** The quote as the employer sees it (GET /api/angebot/:token, GET /api/company/quotes/:id). */
 export type QuoteStatus = 'DRAFT' | 'SENT' | 'VIEWED' | 'ACCEPTED' | 'DECLINED' | 'EXPIRED' | 'CONVERTED';
@@ -57,7 +58,7 @@ export const QuoteDocument = ({ q, pdfHref }: { q: CustomerQuote; pdfHref: strin
       <div className="p-5 sm:p-8">
         <header className="flex flex-wrap items-start justify-between gap-4">
           <div className="min-w-0">
-            <p className="font-display text-lg font-bold text-navy-900">{q.seller.name || 'Triad Vision'}</p>
+            <p className="font-display text-lg font-bold text-navy-900">{q.seller.name || getBrand().name}</p>
             <p className="text-xs text-muted">{[q.seller.street, q.seller.zipCity].filter(Boolean).join(' · ')}</p>
           </div>
           <div className="text-right">
@@ -194,7 +195,7 @@ export const QuoteDocument = ({ q, pdfHref }: { q: CustomerQuote; pdfHref: strin
           <p>
             Mit freundlichen Grüßen
             <br />
-            <strong className="text-navy-900">{q.seller.name || 'Triad Vision'}</strong>
+            <strong className="text-navy-900">{q.seller.name || getBrand().name}</strong>
           </p>
         </div>
       </div>

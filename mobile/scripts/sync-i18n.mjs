@@ -38,9 +38,29 @@ const code = result.outputFiles[0].text;
 const mod = await import(`data:text/javascript;base64,${Buffer.from(code).toString('base64')}`);
 const all = mod.default;
 
+// The web copy names the brand through i18next variables (white-label, client/src/lib/brand.ts). The app is
+// built for Triad Vision, so the names are filled in here and the JSON stays as before.
+const BRAND_VARS = {
+  brand: 'Triad Vision',
+  brandShort: 'Triad Vision',
+  brandUpper: 'TRIAD VISION',
+  brandHyphen: 'Triad-Vision',
+  brandDomain: 'triad-vision.de',
+  brandWord: 'Triad',
+  brandSlug: 'triad-vision',
+};
+const fillBrand = (v) =>
+  typeof v === 'string'
+    ? v.replace(/\{\{(brand[A-Za-z]*)\}\}/g, (m, k) => BRAND_VARS[k] ?? m)
+    : Array.isArray(v)
+      ? v.map(fillBrand)
+      : v && typeof v === 'object'
+        ? Object.fromEntries(Object.entries(v).map(([k, x]) => [k, fillBrand(x)]))
+        : v;
+
 await mkdir(outDir, { recursive: true });
 for (const lng of LOCALES) {
   const file = path.join(outDir, `${lng}.json`);
-  await writeFile(file, JSON.stringify(all[lng], null, 1) + '\n', 'utf8');
+  await writeFile(file, JSON.stringify(fillBrand(all[lng]), null, 1) + '\n', 'utf8');
   console.log(`wrote ${path.relative(process.cwd(), file)} (${Object.keys(all[lng]).length} sections)`);
 }

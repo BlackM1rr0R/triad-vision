@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { hasMinRole } from '@/lib/types';
-import { DESKS, PINS_MAX, STAFF_NAV, activeNavItem, defaultDeskFor, isDesk, moduleOn, type Desk, type ModuleFlags, type ModuleKey } from './navRegistry';
+import { DESKS, PINS_MAX, STAFF_NAV, activeNavItem, defaultDeskFor, isDesk, moduleOn, setOwnerInstance, type Desk, type ModuleFlags, type ModuleKey } from './navRegistry';
 import { isStringArray, navPinsKey, navStateKey, readJson, writeJson } from './storage';
 
 /**
@@ -18,12 +18,25 @@ export interface RecentVisit {
   at: string;
 }
 
+/** White-label licence status (server lib/license): banner + read-only mode in the admin layout. */
+export interface NavLicense {
+  role: 'owner' | 'customer';
+  status: 'owner' | 'valid' | 'grace' | 'expired' | 'invalid' | 'missing';
+  mode: 'normal' | 'readonly';
+  daysLeft: number | null;
+  graceEndsAt: string | null;
+  expiresAt: string | null;
+}
+
 export interface NavState {
   desk: Desk;
   defaultDesk: Desk;
   pins: string[];
   recent: RecentVisit[];
   modules: ModuleFlags;
+  /** Modules of the licence plan (null = all); a module outside the plan is already off in `modules`. */
+  licensedModules?: ModuleKey[] | null;
+  license?: NavLicense;
 }
 
 const isNavState = (v: unknown): v is NavState =>
@@ -100,6 +113,8 @@ export const useStaffNav = () => {
   const pins = useMemo(() => data?.pins ?? readJson<string[]>(navPinsKey(userId), [], isStringArray), [data?.pins, userId]);
   const recent = data?.recent ?? [];
   const modules = data?.modules;
+  // Owner-only pages (System → Customers) follow the instance role of the last answer.
+  setOwnerInstance(data?.license?.role === 'owner');
 
   const setDesk = useCallback(
     (next: Desk | null) => {
@@ -145,6 +160,8 @@ export const useStaffNav = () => {
     modules,
     /** False until the first answer (server or cache): module screens wait for it. */
     loaded: !!data,
+    licensedModules: data?.licensedModules ?? null,
+    license: data?.license,
     setDesk,
     togglePin,
     recordVisit,
