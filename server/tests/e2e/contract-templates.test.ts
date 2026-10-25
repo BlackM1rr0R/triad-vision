@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { PDFDocument } from 'pdf-lib';
 import type { CaseStatus, ContractKind } from '@prisma/client';
 import { anon, asAdmin, asClient, asStaff, sessionAgent } from '../helpers/api';
@@ -68,7 +68,8 @@ describe('contract templates CRUD and permissions', () => {
     expect((await admin.agent.get(`${BASE}?active=true`)).body.items).toHaveLength(0);
     expectStatus(await admin.agent.delete(`${BASE}/${t.id}`), 200);
     expectStatus(await admin.agent.get(`${BASE}/${t.id}`), 404);
-    expect(await prisma.auditLog.count({ where: { action: { startsWith: 'contractTemplate.' } } })).toBe(3);
+    // audit() runs fire-and-forget after the response: wait for the rows instead of reading at once.
+    await vi.waitFor(async () => expect(await prisma.auditLog.count({ where: { action: { startsWith: 'contractTemplate.' } } })).toBe(3));
   });
 
   it('keeps one default per kind and language', async () => {
@@ -163,7 +164,7 @@ describe('send for e-signature', () => {
       ['CANDIDATE', client.user.id],
       ['COMPANY', user.id],
     ]);
-    expect(await prisma.auditLog.count({ where: { action: 'contractTemplate.send' } })).toBe(1);
+    await vi.waitFor(async () => expect(await prisma.auditLog.count({ where: { action: 'contractTemplate.send' } })).toBe(1));
   });
 
   it('service contract in the contract step becomes the case contract with the staff member as STAFF', async () => {
