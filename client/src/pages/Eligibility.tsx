@@ -168,7 +168,7 @@ export default function Eligibility() {
               <Trophy className="size-4" />
               {t('quiz.eyebrow')}
             </span>
-            <h1 className="mx-auto mt-3 max-w-3xl font-display text-3xl leading-tight font-semibold tracking-[-0.02em] text-balance break-words text-ink sm:text-4xl lg:text-5xl">
+            <h1 className="type-hero mx-auto mt-3 max-w-3xl text-ink">
               {t('quiz.title')}
             </h1>
             <p className="mx-auto mt-4 max-w-2xl leading-relaxed text-muted sm:text-lg">{t('quiz.subtitle')}</p>

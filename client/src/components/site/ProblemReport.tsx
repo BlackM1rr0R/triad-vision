@@ -179,7 +179,7 @@ export const ProblemButton = () => {
         onClick={() => setOpen(true)}
         title={t('site.problem.button')}
         aria-label={t('site.problem.button')}
-        className="fixed top-[62%] right-0 z-30 flex items-center gap-1.5 rounded-l-lg border border-r-0 border-line bg-card px-1.5 py-2 text-xs font-semibold text-muted shadow-md transition hover:text-link print:hidden sm:[writing-mode:vertical-rl] sm:px-1 sm:py-3"
+        className="fixed top-[62%] right-0 z-30 flex min-h-11 min-w-9 items-center justify-center gap-1.5 rounded-l-lg border border-r-0 border-line bg-card px-2 py-2 text-xs sm:min-h-0 sm:min-w-0 sm:px-1.5 font-semibold text-muted shadow-md transition hover:text-link print:hidden sm:[writing-mode:vertical-rl] sm:px-1 sm:py-3"
       >
         <Bug className="size-4 shrink-0 sm:rotate-90" aria-hidden />
         <span className="hidden sm:inline">{t('site.problem.button')}</span>

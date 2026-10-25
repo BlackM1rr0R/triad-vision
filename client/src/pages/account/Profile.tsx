@@ -1046,7 +1046,7 @@ const Completeness = ({ user, onJump }: { user: User; onJump: (tab: ProfileTab) 
                 <button
                   type="button"
                   onClick={() => onJump(FIELD_TAB[f])}
-                  className="badge min-h-7 border border-dashed border-line bg-sunken text-ink hover:border-primary hover:text-link"
+                  className="badge min-h-11 border border-dashed border-line bg-sunken px-3 text-sm text-ink hover:border-primary hover:text-link sm:min-h-7 sm:px-2 sm:text-xs"
                 >
                   {t(`accountPage.profile.fields.${f}`)}
                 </button>

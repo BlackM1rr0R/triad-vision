@@ -50,7 +50,7 @@ const SpeakButton = ({ id, text, speech }: { id: string; text: string; speech: R
       type="button"
       onClick={() => (active ? speech.stop() : speech.speak(id, text))}
       aria-pressed={active}
-      className={clsx('inline-flex min-h-9 items-center gap-1.5 rounded-lg border px-3 text-xs font-semibold transition-colors', active ? 'border-primary bg-primary text-primary-contrast' : 'border-line bg-card text-ink/80 hover:border-primary')}
+      className={clsx('inline-flex min-h-11 items-center gap-1.5 rounded-lg border px-3 text-sm font-semibold sm:min-h-9 sm:text-xs transition-colors', active ? 'border-primary bg-primary text-primary-contrast' : 'border-line bg-card text-ink/80 hover:border-primary')}
     >
       {active ? <Square className="size-3.5" aria-hidden /> : <Volume2 className="size-3.5" aria-hidden />}
       {active ? t('prep.page.stop') : t('prep.page.readAloud')}
@@ -97,13 +97,13 @@ const QuestionCard = ({
           type="button"
           onClick={() => setOpen((v) => !v)}
           aria-expanded={open}
-          className="inline-flex min-h-9 items-center gap-1.5 rounded-lg bg-primary px-3 text-xs font-semibold text-primary-contrast transition-colors hover:bg-primary-hover"
+          className="inline-flex min-h-11 items-center gap-1.5 rounded-lg bg-primary px-3 text-sm font-semibold sm:min-h-9 sm:text-xs text-primary-contrast transition-colors hover:bg-primary-hover"
         >
           {open ? <EyeOff className="size-3.5" aria-hidden /> : <Eye className="size-3.5" aria-hidden />}
           {open ? t('prep.page.hideAnswer') : t('prep.page.showAnswer')}
         </button>
         <SpeakButton id={q.id} text={speechText(q, open)} speech={speech} />
-        <label className="ml-auto inline-flex min-h-9 cursor-pointer items-center gap-2 rounded-lg px-2 text-sm font-medium text-ink/85 select-none">
+        <label className="ml-auto inline-flex min-h-11 cursor-pointer sm:min-h-9 items-center gap-2 rounded-lg px-2 text-sm font-medium text-ink/85 select-none">
           <input type="checkbox" className="size-4 accent-primary" checked={done} onChange={(e) => onDone(e.target.checked)} />
           {t('prep.page.practised')}
         </label>
@@ -345,7 +345,7 @@ export default function AccountInterviewPrep() {
                       type="button"
                       aria-pressed={active}
                       onClick={() => setCategory(c)}
-                      className={clsx('inline-flex min-h-9 shrink-0 items-center rounded-full border px-3 text-xs font-semibold whitespace-nowrap transition-colors', active ? 'border-primary bg-primary text-primary-contrast' : 'border-line bg-card text-ink/75 hover:border-primary')}
+                      className={clsx('inline-flex min-h-11 shrink-0 items-center rounded-full border px-3 text-sm sm:min-h-9 sm:text-xs font-semibold whitespace-nowrap transition-colors', active ? 'border-primary bg-primary text-primary-contrast' : 'border-line bg-card text-ink/75 hover:border-primary')}
                     >
                       {c ? categoryLabel(t, (k) => i18n.exists(k), c) : t('prep.page.allCategories')}
                     </button>

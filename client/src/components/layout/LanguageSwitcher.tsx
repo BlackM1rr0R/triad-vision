@@ -152,7 +152,7 @@ export const LanguageSwitcher = ({ light = false, variant = 'pill', compact = fa
         onKeyDown={onButtonKey}
         className={clsx(
           'flex items-center gap-1.5 text-xs font-bold whitespace-nowrap transition',
-          variant === 'pill' && (compact ? 'h-10 rounded-lg border px-1.5' : 'h-10 rounded-lg border px-2 min-[400px]:px-2.5'),
+          variant === 'pill' && (compact ? 'h-11 min-w-11 justify-center rounded-lg border px-1.5 sm:h-10 sm:min-w-10' : 'h-11 min-w-11 justify-center rounded-lg border px-2 min-[400px]:px-2.5 sm:h-10'),
           variant === 'pill' && (light ? 'border-white/25 text-white hover:bg-white/10' : 'border-line text-ink hover:border-primary'),
           variant === 'bar' && 'h-8 rounded px-1.5 text-white/80 hover:text-white',
         )}
@@ -162,7 +162,7 @@ export const LanguageSwitcher = ({ light = false, variant = 'pill', compact = fa
       >
         <Flag code={current} className="w-5" />
         {!compact && <span className={variant === 'pill' ? 'hidden min-[400px]:inline' : undefined}>{current.toUpperCase()}</span>}
-        <ChevronDown className={clsx('size-3.5 opacity-70 transition-transform', open && 'rotate-180', compact && 'hidden')} />
+        <ChevronDown className={clsx('size-3.5 opacity-70 transition-transform', open && 'rotate-180', compact ? 'hidden' : variant === 'pill' && 'hidden min-[400px]:block')} />
       </button>
       {createPortal(
         <AnimatePresence>

@@ -674,7 +674,7 @@ export default function AdminLayout() {
           <NotificationBell />
           <a
             href="/"
-            className="hidden min-h-9 items-center gap-1.5 rounded-[var(--tv-radius-control)] px-2.5 text-xs font-medium whitespace-nowrap text-muted transition hover:bg-sunken hover:text-ink sm:inline-flex lg:hidden xl:inline-flex"
+            className="hidden min-h-9 items-center gap-1.5 rounded-[var(--tv-radius-control)] px-2.5 text-xs font-medium whitespace-nowrap text-muted transition hover:bg-sunken hover:text-ink min-[56rem]:inline-flex lg:hidden xl:inline-flex"
           >
             <ExternalLink className="size-3.5" aria-hidden /> {t('admin.layout.goToSite')}
           </a>
@@ -697,7 +697,7 @@ export default function AdminLayout() {
           {blocked && page ? <ModuleDisabled item={page} /> : <Outlet />}
           <LiveChatAlerts />
         </main>
-        <footer className="flex items-center justify-center gap-1.5 px-4 pb-5 text-[11px] text-muted">
+        <footer className="flex items-center justify-center gap-1.5 px-4 pb-20 text-[11px] text-muted">
           <BookOpen className="size-3" aria-hidden /> {t('admin.layout.footer')}
         </footer>
       </div>

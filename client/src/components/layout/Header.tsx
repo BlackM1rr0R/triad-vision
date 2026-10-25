@@ -225,7 +225,7 @@ export const Header = () => {
           )}
         >
           <div className="container-x flex h-16 items-center justify-between gap-3 sm:h-[72px] xl:gap-6">
-            <Logo />
+            <Logo shrink />
 
             <nav className="hidden xl:block" aria-label={t('a11y.mainNav')}>
               <ul className="flex items-center">
@@ -261,10 +261,13 @@ export const Header = () => {
               </ul>
             </nav>
 
-            <div className="flex items-center gap-1 sm:gap-2">
+            <div className="flex shrink-0 items-center gap-1 sm:gap-2">
               <HeaderSearchSlot />
               <LanguageSwitcher />
-              <ThemeToggle className="lg:hidden" />
+              {/* On phones the theme switch lives in the menu only, so the logo and the menu button always fit. */}
+              <span className="hidden sm:flex lg:hidden">
+                <ThemeToggle />
+              </span>
               {user ? (
                 <Link
                   to={accountHref}

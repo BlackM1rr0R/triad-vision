@@ -183,7 +183,7 @@ export default function EligibilityQuiz() {
           <span className="eyebrow">
             <ClipboardCheck className="size-4" aria-hidden /> {t('pai.quiz.cta')}
           </span>
-          <h1 className="mx-auto mt-3 max-w-3xl font-display text-3xl leading-tight font-semibold tracking-[-0.02em] text-balance break-words text-ink sm:text-4xl lg:text-5xl">{t('pai.quiz.title')}</h1>
+          <h1 className="type-hero mx-auto mt-3 max-w-3xl text-ink">{t('pai.quiz.title')}</h1>
           <p className="mx-auto mt-4 max-w-2xl leading-relaxed text-muted sm:text-lg">{t('pai.quiz.subtitle')}</p>
         </div>
       </section>
@@ -199,7 +199,7 @@ export default function EligibilityQuiz() {
                 <div className="space-y-5">
                   <div className="flex flex-wrap items-end justify-between gap-3">
                     <div>
-                      <h2 className="font-display text-xl font-semibold text-ink sm:text-2xl">{t('pai.quiz.resultTitle')}</h2>
+                      <h2 className="type-subsection text-ink">{t('pai.quiz.resultTitle')}</h2>
                       {paths[0] && <p className="mt-1 text-sm text-muted">{t('pai.quiz.summary', { path: t(`pai.paths.${paths[0].key}.title`) })}</p>}
                     </div>
                     <button type="button" className="btn-ghost btn-sm" onClick={restart}>

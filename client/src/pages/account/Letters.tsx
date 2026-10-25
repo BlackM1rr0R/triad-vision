@@ -536,7 +536,7 @@ const LetterEditor = () => {
             </label>
             <textarea
               id={bodyId}
-              className="input min-h-[28rem] font-serif text-[15px] leading-relaxed"
+              className="input min-h-[28rem] font-serif text-base leading-relaxed sm:text-[15px]"
               maxLength={20000}
               value={body}
               onChange={(e) => edit({ body: e.target.value })}

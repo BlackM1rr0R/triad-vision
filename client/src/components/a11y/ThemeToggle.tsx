@@ -20,7 +20,7 @@ export const ThemeToggle = ({ light = false, variant = 'pill', className }: { li
       title={label}
       className={clsx(
         'inline-flex shrink-0 items-center justify-center transition',
-        variant === 'pill' && 'size-10 rounded-lg border',
+        variant === 'pill' && 'size-11 rounded-lg border sm:size-10',
         variant === 'pill' && (light ? 'border-white/25 text-white hover:bg-white/10' : 'border-line text-ink hover:border-primary'),
         variant === 'bar' && 'size-8 rounded text-white/80 hover:text-white',
         className,

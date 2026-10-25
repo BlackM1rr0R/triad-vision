@@ -41,7 +41,7 @@ One semantic system, two **surface flavours**, two themes. The surface attribute
 | Scope | Set by | Look |
 | --- | --- | --- |
 | default / `data-surface="portal"` | client, company, partner portals | warm: off-white `#fafaf7`, radii 10–24 px, 44 px controls, 16 px body, Inter headings |
-| `data-surface="public"` | `SiteLayout` | warm + **Fraunces** display headings (az/de/en/tr; ru/uk fall back to Inter; extrabold capped at 650) |
+| `data-surface="public"` | `SiteLayout` | warm, Onest headings |
 | `data-surface="admin"` | `AdminLayout`, `WorkspaceLayout` | crisp: zinc greys `#f6f7f9`, radii 4–12 px, 36 px controls, 14 px UI text, tabular numbers in tables |
 | `data-theme="dark"` | `lib/prefs.ts` | soft navy-grey `#11151c` / `#0f141c`, never pure black |
 | `data-density="compact"` (with admin) | `DensityToggle` / theme default | tighter table rows (`--tv-cell-x/-y`) |
@@ -61,7 +61,7 @@ One semantic system, two **surface flavours**, two themes. The surface attribute
 
 Radii (`rounded-sm … 4xl`) and `--tv-radius-control` change per surface and scale with the theme builder.
 Shadows: `shadow-[var(--tv-shadow-card|raised|overlay)]`. Fonts: `font-sans` (Inter), `font-display`
-(surface-dependent), `font-mono` (JetBrains Mono). Helpers: `.num` (tabular-nums), `.code-id` (case / invoice
+(surface-dependent), `font-mono` (system monospace, for code blocks only; the UI family is Onest). Helpers: `.num` (tabular-nums), `.code-id` (case / invoice
 numbers), `.measure` (68ch prose), `.link`, `.kbd`, `.type-display`, `.type-overline`, `.tv-table` (hand-written
 tables), `.card-interactive`.
 
@@ -104,15 +104,27 @@ They stay in their features.
 
 ## 4. Typography and spacing (app surfaces)
 
-| Class | Use | Style |
+Sizes and line-heights are tokens (`--tv-type-*` in `index.css`, phone value first, sm / lg steps), never font
+names, so the family can change without touching them. Phone rules: UI and reading text ≥ 14 px, captions /
+badges / fine print ≥ 12 px, form controls ≥ 16 px (iOS focus zoom), tap targets ≥ 44 px (admin ≥ 40 px).
+
+| Class | Use | Phone → sm → lg |
 | --- | --- | --- |
-| `type-page-title` | the page `<h1>` (PageHeader) | display, xl → 2xl, bold |
-| `type-section-title` | `<Section>` heading | display, lg, bold |
-| `type-card-title` | Card / panel header | sans, sm, semibold |
-| `type-body` | running text | sm, relaxed |
-| `type-small` | secondary lines | 13 px, muted |
-| `type-caption` | meta, timestamps | xs, muted |
+| `type-hero` | public page hero `<h1>` (PageHero, quiz pages) | 30 → 44 → 52 px |
+| `h-section` | public section heading | 28 → 36 → 44 px |
+| `type-subsection` | public sub-section / content-card heading | 20 → 24 px |
+| `type-display` | big app / auth / 404 heading | 30 → 36 px |
+| `type-page-title` | the page `<h1>` (PageHeader) | 20 → 24 px (admin 20) |
+| `type-section-title` | `<Section>` heading | 18 px (admin 16) |
+| `type-card-title` | Card / panel header | 14 px, semibold |
+| `type-body` | running text | 14 px, relaxed |
+| `type-small` | secondary lines | 14 → 13 px, muted (admin 13) |
+| `type-caption` | meta, timestamps | 12 px, muted |
+| `type-overline` | uppercase kicker (app) | 12 → 11 px |
 | `eyebrow` | uppercase kicker (site) | xs, bold, tracking |
+
+`.btn-sm` is 14 px / 44 px tall on phones (admin 13 px / 40 px) and the compact 12 px look from sm. Below sm a
+legibility floor lifts the legacy `text-[10px]` / `text-[11px]` utilities to 12 px and every form control to 16 px.
 
 | Class | Rhythm |
 | --- | --- |

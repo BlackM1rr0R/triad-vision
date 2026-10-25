@@ -82,7 +82,7 @@ export default function ChancenkarteCalculator() {
               <h2 id={`${id}-form`} className="font-display text-lg font-semibold text-ink">
                 {t('ckCalc.form')}
               </h2>
-              <button type="button" onClick={() => setForm(DEFAULTS)} className="inline-flex min-h-10 items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-semibold text-muted transition-colors hover:bg-sunken hover:text-ink">
+              <button type="button" onClick={() => setForm(DEFAULTS)} className="inline-flex min-h-11 items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-semibold text-muted sm:min-h-10 transition-colors hover:bg-sunken hover:text-ink">
                 <RotateCcw className="size-3.5" aria-hidden /> {t('ckCalc.reset')}
               </button>
             </div>

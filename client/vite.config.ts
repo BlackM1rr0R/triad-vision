@@ -41,7 +41,7 @@ const fontPreload = (): Plugin => ({
     handler(_html, ctx) {
       const files = Object.keys(ctx.bundle ?? {});
       // Inter latin + latin-ext (Azerbaijani ə ş ğ İ live in latin-ext; az is the root language) and the public display face.
-      const wanted = [/inter-latin-wght-normal-[\w-]+\.woff2$/, /inter-latin-ext-wght-normal-[\w-]+\.woff2$/, /fraunces-latin-wght-normal-[\w-]+\.woff2$/];
+      const wanted = [/onest-latin-wght-normal-[\w-]+\.woff2$/, /onest-latin-ext-wght-normal-[\w-]+\.woff2$/];
       return wanted
         .map((re) => files.find((f) => re.test(f)))
         .filter((f): f is string => !!f)

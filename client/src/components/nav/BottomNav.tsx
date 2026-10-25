@@ -120,7 +120,7 @@ export function BottomNav({ items, fixed = true, className, hidden: forceHidden 
                   </span>
                 )}
               </span>
-              <span className={clsx('max-w-full truncate text-[11px] leading-tight', it.active ? 'font-bold text-ink' : 'font-medium text-muted')}>{it.label}</span>
+              <span className={clsx('max-w-full truncate text-xs leading-tight', it.active ? 'font-bold text-ink' : 'font-medium text-muted')}>{it.label}</span>
               {badge > 0 && <span className="sr-only">, {t('pux.nav.badge', { count: badge })}</span>}
               {it.active && <span className="absolute inset-x-5 top-0 h-0.5 rounded-b-full bg-brand-600" aria-hidden />}
             </>

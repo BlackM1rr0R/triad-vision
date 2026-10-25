@@ -410,7 +410,7 @@ const Success = ({ result, email, tz, onAnother }: { result: BookResult; email: 
     <div className="card overflow-hidden rounded-3xl" role="status">
       <div className="bg-sunken px-6 py-8 text-center sm:px-10">
         <SuccessArt className="mx-auto w-36" animated />
-        <h2 className="mt-4 font-display text-2xl font-semibold text-ink">{t('bookingPage.successTitle')}</h2>
+        <h2 className="type-subsection mt-4 text-ink">{t('bookingPage.successTitle')}</h2>
         <p className="mx-auto mt-2 max-w-md text-sm text-muted">{t('bookingPage.successText', { email })}</p>
       </div>
       <div className="card-pad space-y-5">

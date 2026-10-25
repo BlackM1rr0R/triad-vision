@@ -90,7 +90,7 @@ export default function FaqPage() {
                 <span className="grid size-11 place-items-center rounded-xl chip-soft">
                   <Sparkles className="size-5" />
                 </span>
-                <h2 className="mt-4 font-display text-2xl font-semibold text-ink">{t('faqPage.stillTitle')}</h2>
+                <h2 className="type-subsection mt-4 text-ink">{t('faqPage.stillTitle')}</h2>
                 <p className="mt-2 text-muted">{t('faqPage.stillText')}</p>
               </div>
               <div className="grid gap-2 sm:grid-cols-3 md:grid-cols-1">

@@ -91,7 +91,7 @@ export default function EmployerRegister() {
           className="card w-full rounded-3xl p-6 sm:p-10"
         >
           <span className="eyebrow">{t('jobsArea.register.eyebrow')}</span>
-          <h1 className="mt-2 font-display text-[1.75rem] leading-tight font-semibold text-ink sm:text-3xl">{t('jobsArea.register.title')}</h1>
+          <h1 className="type-display mt-2 sm:text-3xl">{t('jobsArea.register.title')}</h1>
           <p className="mt-2 text-muted">{t('jobsArea.register.subtitle')}</p>
 
           {user && !isStaffRole(user.role) && (
@@ -202,7 +202,7 @@ export default function EmployerRegister() {
         >
           <Employer className="mx-auto mb-6 w-full max-w-[15rem]" animated />
           <RouteFlags size="lg" />
-          <h2 className="mt-6 font-display text-2xl leading-tight font-semibold text-ink sm:text-3xl">{t('jobsArea.register.asideTitle')}</h2>
+          <h2 className="type-subsection mt-6 text-ink sm:text-3xl">{t('jobsArea.register.asideTitle')}</h2>
           <p className="mt-3 text-muted">{t('jobsArea.register.asideText')}</p>
           <ul className="mt-7 space-y-3">
             {benefits.map((b) => (

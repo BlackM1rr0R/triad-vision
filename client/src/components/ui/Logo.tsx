@@ -15,15 +15,16 @@ export const LogoMark = ({ className }: { className?: string }) => (
   </svg>
 );
 
-export const Logo = ({ light = false, className }: { light?: boolean; className?: string }) => (
-  <Link to="/" className={clsx('group flex shrink-0 items-center gap-2 sm:gap-3', className)} aria-label="Triad Vision">
+/** `shrink`: may give up width in a crowded bar (the word mark truncates instead of pushing the controls off-screen). */
+export const Logo = ({ light = false, shrink = false, className }: { light?: boolean; shrink?: boolean; className?: string }) => (
+  <Link to="/" className={clsx('group flex min-h-11 items-center gap-2 sm:gap-3', shrink ? 'min-w-0' : 'shrink-0', className)} aria-label="Triad Vision">
     <LogoMark
       className={clsx(
         'h-8 w-9 shrink-0 transition-transform duration-500 group-hover:scale-105 group-hover:rotate-[8deg] sm:h-10 sm:w-11',
         light ? 'text-white' : 'text-ink',
       )}
     />
-    <span className="leading-none whitespace-nowrap">
+    <span className={clsx('leading-none whitespace-nowrap', shrink && 'min-w-0 overflow-hidden')}>
       <span className={clsx('block font-display text-[0.98rem] font-extrabold tracking-[0.08em] min-[400px]:text-[1.05rem] min-[400px]:tracking-[0.1em] sm:text-[1.3rem] sm:tracking-[0.12em]', light ? 'text-white' : 'text-ink')}>
         TRIAD VISION
       </span>

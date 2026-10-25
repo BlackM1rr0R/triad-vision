@@ -68,7 +68,7 @@ const Wizard = ({ data }: { data: CompareData }) => {
           <div className="flex items-center justify-between gap-3">
             <p className="type-overline text-muted">{t('discover.compare.wizard.step', { n: step + 1, total: questions.length })}</p>
             {step > 0 && (
-              <button type="button" onClick={() => setStep((s) => Math.max(0, s - 1))} className="inline-flex min-h-10 items-center gap-1 rounded-lg px-3 py-2 text-sm font-semibold text-muted transition-colors hover:bg-sunken hover:text-ink">
+              <button type="button" onClick={() => setStep((s) => Math.max(0, s - 1))} className="inline-flex min-h-11 items-center gap-1 rounded-lg px-3 py-2 text-sm font-semibold text-muted sm:min-h-10 transition-colors hover:bg-sunken hover:text-ink">
                 <ArrowLeft className="size-3.5" aria-hidden /> {t('discover.compare.wizard.back')}
               </button>
             )}

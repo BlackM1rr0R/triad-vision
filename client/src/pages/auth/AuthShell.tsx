@@ -29,7 +29,7 @@ export const AuthShell = ({ title, subtitle, children }: { title: string; subtit
           className="card mx-auto flex w-full max-w-lg flex-col rounded-3xl p-6 sm:p-10 lg:max-w-none"
         >
           <div className="flex flex-1 flex-col justify-center">
-            <h1 className="font-display text-[1.75rem] leading-tight font-semibold text-ink sm:text-3xl">{title}</h1>
+            <h1 className="type-display sm:text-3xl">{title}</h1>
             {subtitle && <p className="mt-2 text-muted">{subtitle}</p>}
             <div className="mt-7 sm:mt-8">{children}</div>
           </div>

@@ -357,7 +357,7 @@ export default function Register() {
           transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
           className="card mx-auto w-full max-w-lg rounded-3xl p-5 sm:p-10 lg:max-w-none"
         >
-          <h1 className="font-display text-[1.75rem] leading-tight font-semibold text-ink sm:text-3xl">{t('registerPage.title')}</h1>
+          <h1 className="type-display sm:text-3xl">{t('registerPage.title')}</h1>
           <p className="mt-2 text-muted">{t('registerPage.subtitle')}</p>
           <p className="mt-4 flex items-start gap-2.5 rounded-xl border border-line bg-sunken px-3.5 py-3 text-sm text-ink">
             <BookUser className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden />

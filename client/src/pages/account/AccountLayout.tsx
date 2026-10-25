@@ -75,7 +75,7 @@ const NavPill = ({
     to={to}
     className={clsx(
       'relative flex shrink-0 snap-start items-center gap-2 font-semibold whitespace-nowrap transition-colors',
-      small ? 'min-h-11 rounded-full px-3.5 py-2 text-[13px]' : 'min-h-12 rounded-t-xl px-3.5 py-3 text-sm sm:px-4',
+      small ? 'min-h-11 rounded-full px-3.5 py-2 text-sm' : 'min-h-12 rounded-t-xl px-3.5 py-3 text-sm sm:px-4',
       active ? 'text-primary' : 'text-muted hover:bg-sunken hover:text-ink',
     )}
     aria-current={active ? 'page' : undefined}
@@ -142,9 +142,9 @@ export default function AccountLayout() {
                 <ProgressRing percent={completeness.percent} size={52} stroke={5} />
               </Link>
             )}
-            <motion.span className="type-overline inline-flex items-center gap-2 text-muted" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+            <motion.span className="type-overline inline-flex flex-wrap items-center gap-x-2 gap-y-0.5 text-muted" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
               <span className="size-1.5 rounded-full bg-highlight" aria-hidden />
-              {t('portal.title')}
+              <span className="whitespace-nowrap">{t('portal.title')}</span>
               {isClient && nav.overview && <span className="font-semibold normal-case"> · {t(`pnav.stage.${nav.stage}`)}</span>}
             </motion.span>
             <motion.h1
@@ -172,7 +172,7 @@ export default function AccountLayout() {
                     {user.passportNumber}
                   </span>
                 )}
-                <TourRestartButton tourId={CLIENT_TOUR} className="min-h-8 rounded-lg text-muted hover:text-ink" />
+                <TourRestartButton tourId={CLIENT_TOUR} className="min-h-11 rounded-lg text-muted hover:text-ink sm:min-h-8" />
               </p>
             )}
 

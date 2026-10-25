@@ -30,7 +30,7 @@ const CopyButton = ({ value }: { value: string }) => {
   return (
     <button
       type="button"
-      className="inline-flex min-h-9 items-center gap-1 rounded-lg px-2 text-xs font-semibold text-link hover:bg-sunken"
+      className="inline-flex min-h-11 items-center gap-1 rounded-lg px-2 text-sm font-semibold text-link hover:bg-sunken sm:min-h-9 sm:text-xs"
       onClick={() => {
         void navigator.clipboard?.writeText(value).then(() => {
           setDone(true);

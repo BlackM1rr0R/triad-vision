@@ -33,11 +33,11 @@
    back to the default when they are missing.
    ══════════════════════════════════════════════════════════════════════════════ */
 @theme static {
-  --font-sans: 'Inter Variable', 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
-  /* Display face: Inter everywhere; the public site switches to Fraunces (see [data-surface=public] below). */
-  --font-display: 'Inter Variable', 'Inter', ui-sans-serif, system-ui, sans-serif;
-  --font-serif: 'Fraunces Variable', 'Fraunces', Georgia, 'Times New Roman', serif;
-  --font-mono: 'JetBrains Mono Variable', 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+  /* One family everywhere: Onest (az/tr/de/ru/uk, € ₼ ₺ and tabular figures verified in the font files). */
+  --font-sans: 'Onest Variable', 'Onest', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-display: 'Onest Variable', 'Onest', ui-sans-serif, system-ui, sans-serif;
+  /* Real code (code/kbd/pre) uses the system monospace; case and invoice numbers use Onest + tabular figures. */
+  --font-mono: ui-monospace, 'SFMono-Regular', Menlo, Consolas, 'Liberation Mono', monospace;
 
   /* ── brand scales (legacy, still used directly: dark heroes, focus, links) ── */
   --color-navy-950: #050f24;
@@ -305,7 +305,7 @@
   --tv-cell-x: 1rem;
   --tv-cell-y: 0.75rem;
   --tv-cell-text: 0.875rem;
-  --font-display: 'Inter Variable', 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --font-display: 'Onest Variable', 'Onest', ui-sans-serif, system-ui, sans-serif;
 }
 [data-theme='dark'][data-surface='public'],
 [data-theme='dark'][data-surface='portal'],
@@ -325,25 +325,6 @@
   --tv-shadow-raised: 0 2px 6px rgba(3, 6, 12, 0.4), 0 16px 40px -12px rgba(3, 6, 12, 0.6);
   --tv-shadow-overlay: 0 24px 64px -12px rgba(3, 6, 12, 0.7);
 }
-/* Public site: warm serif display headings (Fraunces renders az/de/en/tr; it has no Cyrillic, so ru/uk keep Inter). */
-[data-surface='public'] {
-  --font-display: 'Fraunces Variable', 'Fraunces', 'Inter Variable', Georgia, serif;
-}
-/* Fraunces is at its best at semibold: heavier utility weights on public headings are capped (Inter keeps them). */
-[data-surface='public'] :is(h1, h2, h3, .font-display):is(.font-extrabold, .font-black) {
-  font-weight: 650;
-}
-[data-surface='public']:lang(ru) :is(h1, h2, h3, .font-display):is(.font-extrabold, .font-black),
-[data-surface='public']:lang(uk) :is(h1, h2, h3, .font-display):is(.font-extrabold, .font-black) {
-  font-weight: 800;
-}
-[data-surface='public']:lang(ru),
-[data-surface='public']:lang(uk),
-:lang(ru) [data-surface='public'],
-:lang(uk) [data-surface='public'] {
-  --font-display: 'Inter Variable', 'Inter', ui-sans-serif, system-ui, sans-serif;
-}
-
 /* ── Crisp admin / workspace surface (Linear / Vercel-like): zinc greys with a navy bias, hairlines,
    small radii, quiet shadows, 14 px UI text, 36 px controls. ── */
 [data-surface='admin'] {
@@ -382,7 +363,7 @@
   --tv-cell-x: 0.875rem;
   --tv-cell-y: 0.625rem;
   --tv-cell-text: 0.875rem;
-  --font-display: 'Inter Variable', 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --font-display: 'Onest Variable', 'Onest', ui-sans-serif, system-ui, sans-serif;
 }
 [data-theme='dark'][data-surface='admin'],
 [data-theme='dark'] [data-surface='admin'] {
@@ -412,13 +393,96 @@
 /* Admin / workspace page titles are a step smaller and tighter than the portal's (the top bar already
    carries the breadcrumb; Direction A "crisp"). Unlayered so it applies to <h1 className="type-page-title">. */
 [data-surface='admin'] .type-page-title {
-  font-size: 1.25rem;
-  line-height: 1.75rem;
   letter-spacing: -0.02em;
 }
-[data-surface='admin'] .type-section-title {
-  font-size: 1rem;
-  line-height: 1.5rem;
+
+/* ── Type scale tokens: sizes and line-heights only, never a font name, so the family can change without
+   touching them. Phone values first (≤ 639 px), then sm / lg steps. The .type-* classes, .h-section,
+   .type-hero and .btn-sm read these; the admin surface overrides a few below.
+   Phone rules of thumb (mobile audit, 2026-10): UI and reading text ≥ 14 px, captions / badges / fine print
+   ≥ 12 px, form controls ≥ 16 px (iOS zooms into smaller inputs), tap targets ≥ 44 px (admin ≥ 40 px). ── */
+:root {
+  --tv-type-hero: 1.875rem; /* public page heroes (PageHero); long de / ru titles stay within 3 lines on phones */
+  --tv-type-hero-lh: 1.12;
+  --tv-type-h-section: 1.75rem; /* public section headings (.h-section) */
+  --tv-type-h-section-lh: 1.15;
+  --tv-type-display: 1.875rem;
+  --tv-type-display-lh: 1.1;
+  --tv-type-subsection: 1.25rem; /* public sub-section / content-card headings (.type-subsection) */
+  --tv-type-subsection-lh: 1.25;
+  --tv-type-page-title: 1.25rem;
+  --tv-type-page-title-lh: 1.25;
+  --tv-type-section-title: 1.125rem;
+  --tv-type-section-title-lh: 1.375;
+  --tv-type-card-title: 0.875rem;
+  --tv-type-card-title-lh: 1.375;
+  --tv-type-body: 0.875rem;
+  --tv-type-body-lh: 1.625;
+  --tv-type-small: 0.875rem; /* 14 px on phones, 13 px from sm */
+  --tv-type-small-lh: 1.375;
+  --tv-type-caption: 0.75rem;
+  --tv-type-caption-lh: 1.375;
+  --tv-type-overline: 0.75rem; /* 12 px on phones, 11 px from sm */
+  --tv-type-overline-lh: 1rem;
+  /* small buttons: 14 px text and a 44 px target on phones, the compact 12 px look from sm */
+  --tv-btn-sm-text: 0.875rem;
+  --tv-btn-sm-lh: 1.25rem;
+  --tv-btn-sm-minh: 2.75rem;
+  /* smallest text a phone shows (see the legibility floor at the end of this block) */
+  --tv-type-min: 0.75rem;
+}
+@media (min-width: 40rem) {
+  :root {
+    --tv-type-hero: 2.75rem;
+    --tv-type-h-section: 2.25rem;
+    --tv-type-display: 2.25rem;
+    --tv-type-subsection: 1.5rem;
+    --tv-type-page-title: 1.5rem;
+    --tv-type-small: 0.8125rem;
+    --tv-type-overline: 0.6875rem;
+    --tv-btn-sm-text: 0.75rem;
+    --tv-btn-sm-lh: 1rem;
+    --tv-btn-sm-minh: 0px;
+  }
+}
+@media (min-width: 64rem) {
+  :root {
+    --tv-type-hero: 3.25rem;
+    --tv-type-h-section: 2.75rem;
+  }
+}
+/* Admin / workspace: page titles a step smaller and tighter (the top bar carries the breadcrumb). */
+[data-surface='admin'] {
+  --tv-type-page-title: 1.25rem;
+  --tv-type-page-title-lh: 1.4;
+  --tv-type-section-title: 1rem;
+  --tv-type-section-title-lh: 1.5;
+  --tv-type-small: 0.8125rem;
+}
+/* Admin on phones: 40 px targets and 16 px form text (no iOS focus zoom); the dense desktop look from sm. */
+@media (max-width: 39.99rem) {
+  [data-surface='admin'] {
+    --tv-control-h: 2.5rem;
+    --tv-btn-py: 0.625rem;
+    --tv-input-py: 0.4375rem;
+    --tv-input-text: 1rem;
+    --tv-btn-sm-text: 0.8125rem;
+    --tv-btn-sm-lh: 1rem;
+    --tv-btn-sm-minh: 2.5rem;
+  }
+  /* Legibility floor: the few arbitrary sub-12 px utilities (dense desktop meta lines, chips) render at
+     12 px on phones. Decorative, aria-hidden artwork keeps its own sizes. */
+  :is(.text-\[10px\], .text-\[11px\], .text-\[11\.5px\], .text-\[0\.65rem\], .text-\[0\.68rem\], .text-\[0\.7rem\], .text-\[0\.72rem\]):not([aria-hidden='true'], [aria-hidden='true'] *) {
+    font-size: var(--tv-type-min);
+  }
+  .code-id {
+    font-size: max(0.92em, var(--tv-type-min));
+  }
+  /* iOS Safari zooms the page into any focused field under 16 px: phone form controls are never smaller,
+     whatever compact utility a page puts on them. */
+  :is(input:not([type='checkbox'], [type='radio'], [type='range'], [type='file'], [type='color'], [type='button'], [type='submit'], [type='reset'], [type='image']), select, textarea) {
+    font-size: 1rem;
+  }
 }
 
 /* Inside dark navy sections (heroes, footers, the admin sidebar) the primary action turns amber so it never
@@ -516,7 +580,7 @@
 }
 /* Case numbers, invoice numbers, codes. */
 @utility code-id {
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   font-size: 0.92em;
   letter-spacing: -0.01em;
   font-variant-numeric: tabular-nums slashed-zero;
@@ -552,7 +616,7 @@
     @apply p-5 sm:p-6 lg:p-7;
   }
   .h-section {
-    @apply font-display text-[1.75rem] leading-[1.15] font-semibold tracking-[-0.02em] sm:text-4xl lg:text-[2.75rem];
+    @apply font-display text-[length:var(--tv-type-h-section)] leading-[var(--tv-type-h-section-lh)] font-semibold tracking-[-0.02em];
   }
   /* Horizontal snap carousel on phones, regular grid from sm up */
   .mobile-rail {
@@ -589,7 +653,7 @@
     @apply btn text-ink hover:bg-sunken;
   }
   .btn-sm {
-    @apply px-[var(--tv-btn-px-sm)] py-[var(--tv-btn-py-sm)] text-xs leading-4;
+    @apply min-h-[var(--tv-btn-sm-minh)] px-[var(--tv-btn-px-sm)] py-[var(--tv-btn-py-sm)] text-[length:var(--tv-btn-sm-text)] leading-[var(--tv-btn-sm-lh)];
   }
   .btn-lg {
     @apply px-6 py-3.5 text-base leading-6;
@@ -608,7 +672,7 @@
     @apply transition-[border-color,box-shadow] duration-200 hover:border-line-strong hover:shadow-[var(--tv-shadow-raised)];
   }
   .input {
-    @apply w-full rounded-[var(--tv-radius-control)] border border-line-strong/80 bg-field px-3.5 py-[var(--tv-input-py)] text-[length:var(--tv-input-text)] leading-6 text-ink transition outline-none placeholder:text-subtle hover:border-line-strong focus:border-focus focus:ring-[3px] focus:ring-focus/20 disabled:cursor-not-allowed disabled:bg-sunken disabled:opacity-70;
+    @apply min-h-[var(--tv-control-h)] w-full rounded-[var(--tv-radius-control)] border border-line-strong/80 bg-field px-3.5 py-[var(--tv-input-py)] text-[length:var(--tv-input-text)] leading-6 text-ink transition outline-none placeholder:text-subtle hover:border-line-strong focus:border-focus focus:ring-[3px] focus:ring-focus/20 disabled:cursor-not-allowed disabled:bg-sunken disabled:opacity-70;
   }
   .label {
     @apply mb-1.5 block text-[length:var(--tv-label-text)] leading-snug font-medium text-ink;
@@ -632,29 +696,37 @@
 
   /* ── App typography scale (portal, company, admin, workspace). The marketing site keeps .h-section.
      See components/ui/README.md. ── */
+  /* Public page hero title (PageHero and hero-like page tops). */
+  .type-hero {
+    @apply font-display text-[length:var(--tv-type-hero)] leading-[var(--tv-type-hero-lh)] font-semibold tracking-[-0.02em] text-balance break-words hyphens-auto;
+  }
+  /* Public sub-section and content-card headings (one step under .h-section). */
+  .type-subsection {
+    @apply font-display text-[length:var(--tv-type-subsection)] leading-[var(--tv-type-subsection-lh)] font-semibold tracking-[-0.015em];
+  }
   .type-display {
-    @apply font-display text-3xl leading-[1.1] font-semibold tracking-[-0.02em] text-ink sm:text-4xl;
+    @apply font-display text-[length:var(--tv-type-display)] leading-[var(--tv-type-display-lh)] font-semibold tracking-[-0.02em] text-ink;
   }
   .type-page-title {
-    @apply font-display text-xl leading-tight font-semibold tracking-[-0.015em] text-ink sm:text-2xl;
+    @apply font-display text-[length:var(--tv-type-page-title)] leading-[var(--tv-type-page-title-lh)] font-semibold tracking-[-0.015em] text-ink;
   }
   .type-section-title {
-    @apply font-display text-lg leading-snug font-semibold tracking-[-0.01em] text-ink;
+    @apply font-display text-[length:var(--tv-type-section-title)] leading-[var(--tv-type-section-title-lh)] font-semibold tracking-[-0.01em] text-ink;
   }
   .type-card-title {
-    @apply font-sans text-sm leading-snug font-semibold text-ink;
+    @apply font-sans text-[length:var(--tv-type-card-title)] leading-[var(--tv-type-card-title-lh)] font-semibold text-ink;
   }
   .type-body {
-    @apply text-sm leading-relaxed text-ink;
+    @apply text-[length:var(--tv-type-body)] leading-[var(--tv-type-body-lh)] text-ink;
   }
   .type-small {
-    @apply text-[0.8125rem] leading-snug text-muted;
+    @apply text-[length:var(--tv-type-small)] leading-[var(--tv-type-small-lh)] text-muted;
   }
   .type-caption {
-    @apply text-xs leading-snug text-muted;
+    @apply text-[length:var(--tv-type-caption)] leading-[var(--tv-type-caption-lh)] text-muted;
   }
   .type-overline {
-    @apply text-[11px] leading-4 font-semibold tracking-[0.08em] text-muted uppercase;
+    @apply text-[length:var(--tv-type-overline)] leading-[var(--tv-type-overline-lh)] font-semibold tracking-[0.08em] text-muted uppercase;
   }
 
   /* ── App spacing rhythm ── */

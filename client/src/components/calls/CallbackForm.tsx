@@ -126,7 +126,7 @@ export const CallbackForm = ({ source, onDone, compact }: { source: Source; onDo
             type="button"
             aria-pressed={slot === 'asap'}
             onClick={() => setSlot('asap')}
-            className={clsx('min-h-10 w-full rounded-lg border px-3 text-left text-sm font-semibold transition', slot === 'asap' ? 'border-brand-600 bg-brand-600 text-white' : 'border-line bg-card text-ink hover:border-brand-400')}
+            className={clsx('min-h-11 w-full rounded-lg border px-3 text-left text-sm font-semibold transition sm:min-h-10', slot === 'asap' ? 'border-brand-600 bg-brand-600 text-white' : 'border-line bg-card text-ink hover:border-brand-400')}
           >
             {data && !data.open ? t('callback.asapClosed') : t('callback.asap')}
           </button>
@@ -143,7 +143,7 @@ export const CallbackForm = ({ source, onDone, compact }: { source: Source; onDo
                       type="button"
                       aria-pressed={slot === w.start}
                       onClick={() => setSlot(w.start)}
-                      className={clsx('min-h-9 rounded-lg border px-1 text-xs font-semibold tabular-nums transition', slot === w.start ? 'border-brand-600 bg-brand-600 text-white' : 'border-line bg-card text-ink hover:border-brand-400')}
+                      className={clsx('min-h-11 rounded-lg border px-1 text-sm font-semibold tabular-nums transition sm:min-h-9 sm:text-xs', slot === w.start ? 'border-brand-600 bg-brand-600 text-white' : 'border-line bg-card text-ink hover:border-brand-400')}
                     >
                       {bakuTime(w.start, i18n.language)}–{bakuTime(w.end, i18n.language)}
                     </button>

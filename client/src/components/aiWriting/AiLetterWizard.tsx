@@ -258,7 +258,7 @@ export const AiLetterWizard = () => {
                     </label>
                     <span className={clsx('text-xs tabular-nums', words < 200 || words > 380 ? 'text-warning-fg' : 'text-muted')}>{t('aiw.letter.words', { count: words })}</span>
                   </div>
-                  <textarea id={ids.body} lang="de" className="input min-h-[22rem] font-serif text-[0.95rem] leading-relaxed" maxLength={6000} value={draft.body} onChange={(e) => setDraft((d) => (d ? { ...d, body: e.target.value } : d))} />
+                  <textarea id={ids.body} lang="de" className="input min-h-[22rem] font-serif text-base leading-relaxed sm:text-[0.95rem]" maxLength={6000} value={draft.body} onChange={(e) => setDraft((d) => (d ? { ...d, body: e.target.value } : d))} />
                 </div>
                 <div>
                   <p className="label">{t('aiw.letter.variants')}</p>

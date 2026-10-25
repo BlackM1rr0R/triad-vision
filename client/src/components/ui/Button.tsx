@@ -90,7 +90,8 @@ const ICON_VARIANT: Record<IconButtonVariant, string> = {
   primary: 'bg-primary text-primary-contrast hover:bg-primary-hover',
   danger: 'text-muted hover:bg-danger-bg hover:text-danger-fg',
 };
-const ICON_BOX: Record<ButtonSize, string> = { sm: 'size-8', md: 'size-10', lg: 'size-11' };
+// phones get 40 / 44 px targets; the compact desktop boxes from sm
+const ICON_BOX: Record<ButtonSize, string> = { sm: 'size-10 sm:size-8', md: 'size-11 sm:size-10', lg: 'size-11' };
 
 export type IconButtonProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'children' | 'aria-label'> & {
   /** Lucide component or element. */

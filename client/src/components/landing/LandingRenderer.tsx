@@ -332,7 +332,7 @@ export const LandingForm = ({ slug, config, d, ctx }: { slug: string; config: Fo
           ) : (
             <form onSubmit={submit} className="grid gap-4 sm:grid-cols-2" aria-labelledby={`${id}-title`}>
               <div className="sm:col-span-2">
-                <h2 id={`${id}-title`} className="font-display text-xl font-semibold text-ink sm:text-2xl">
+                <h2 id={`${id}-title`} className="type-subsection text-ink">
                   {d.title || t('mk.lp.formTitle')}
                 </h2>
                 {d.text && <p className="mt-1 text-sm text-muted">{d.text}</p>}

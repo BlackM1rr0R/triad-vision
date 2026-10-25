@@ -37,7 +37,7 @@ const CustomText = ({ text }: { text: string }) => (
       const lines = block.split('\n');
       if (block.startsWith('## ')) {
         return (
-          <h2 key={i} className="pt-6 font-display text-xl font-semibold text-ink sm:text-2xl">
+          <h2 key={i} className="type-subsection pt-6 text-ink">
             {block.slice(3)}
           </h2>
         );
@@ -153,7 +153,7 @@ function PrivacyTemplate() {
                   {all.map((s, i) => (
                     <Reveal key={s.id}>
                       <section id={s.id} className="scroll-mt-28">
-                        <h2 className="font-display text-xl font-semibold text-ink sm:text-2xl">
+                        <h2 className="type-subsection text-ink">
                           {i + 1}. {s.title}
                         </h2>
                         <div className="mt-3 space-y-3">

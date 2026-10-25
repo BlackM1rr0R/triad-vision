@@ -158,7 +158,7 @@ export default function SalaryCalculator() {
               <h2 id={`${id}-form`} className="flex items-center gap-2 font-display text-lg font-semibold text-ink">
                 <Calculator className="size-5 text-primary" aria-hidden /> {t('salaryPage.form.title')}
               </h2>
-              <button type="button" onClick={() => setForm(toForm(DEFAULT_INPUT))} className="inline-flex min-h-10 items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-semibold text-muted transition-colors hover:bg-sunken hover:text-ink">
+              <button type="button" onClick={() => setForm(toForm(DEFAULT_INPUT))} className="inline-flex min-h-11 items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-semibold text-muted sm:min-h-10 transition-colors hover:bg-sunken hover:text-ink">
                 <RotateCcw className="size-3.5" aria-hidden /> {t('salaryPage.form.reset')}
               </button>
             </div>
@@ -310,7 +310,7 @@ export default function SalaryCalculator() {
                       type="button"
                       aria-pressed={view === v}
                       onClick={() => setView(v)}
-                      className={clsx('min-h-9 rounded-lg px-3 py-1.5 text-sm font-semibold transition-colors', view === v ? 'bg-card text-ink shadow-[var(--tv-shadow-card)]' : 'text-muted hover:text-ink')}
+                      className={clsx('min-h-11 rounded-lg px-3 py-1.5 text-sm font-semibold transition-colors sm:min-h-9', view === v ? 'bg-card text-ink shadow-[var(--tv-shadow-card)]' : 'text-muted hover:text-ink')}
                     >
                       {t(v === 'month' ? 'salaryPage.result.monthly' : 'salaryPage.result.yearly')}
                     </button>

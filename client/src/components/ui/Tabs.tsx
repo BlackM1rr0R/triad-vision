@@ -110,10 +110,10 @@ export function Tabs<K extends string>({ items, value, onChange, label, variant 
             className={clsx(
               'relative inline-flex items-center justify-center gap-1.5 font-medium whitespace-nowrap transition disabled:cursor-not-allowed disabled:opacity-50',
               fullWidth ? 'min-w-0 flex-1' : 'shrink-0',
-              size === 'sm' ? 'text-xs' : 'text-sm',
+              size === 'sm' ? 'text-[length:var(--tv-btn-sm-text)]' : 'text-sm',
               variant === 'underline'
-                ? ['-mb-px border-b-2', size === 'sm' ? 'min-h-9 px-2.5 py-1.5' : 'min-h-[var(--tv-control-h)] px-3 py-2', active ? clsx(slid ? 'border-transparent' : 'border-brand-600', 'text-ink') : 'border-transparent text-muted hover:border-line-strong hover:text-ink']
-                : ['rounded-lg', size === 'sm' ? 'min-h-8 px-2.5 py-1' : 'min-h-9 px-3 py-1.5', active ? clsx(!slid && 'bg-card shadow-sm', 'text-ink') : 'text-muted hover:text-ink'],
+                ? ['-mb-px border-b-2', size === 'sm' ? 'min-h-10 px-2.5 py-1.5 sm:min-h-9' : 'min-h-[var(--tv-control-h)] px-3 py-2', active ? clsx(slid ? 'border-transparent' : 'border-brand-600', 'text-ink') : 'border-transparent text-muted hover:border-line-strong hover:text-ink']
+                : ['rounded-lg', size === 'sm' ? 'min-h-10 px-2.5 py-1 sm:min-h-8' : 'min-h-11 px-3 py-1.5 sm:min-h-9', active ? clsx(!slid && 'bg-card shadow-sm', 'text-ink') : 'text-muted hover:text-ink'],
               it.className,
             )}
           >

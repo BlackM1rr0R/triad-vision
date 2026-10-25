@@ -48,10 +48,10 @@ type FooterLink = { to: string; label: string };
 const FooterColumn = ({ title, links }: { title: string; links: FooterLink[] }) => (
   <div>
     <h2 className="mb-4 font-sans text-xs font-semibold tracking-[0.14em] text-white/70 uppercase sm:mb-5">{title}</h2>
-    <ul className="space-y-3">
+    <ul className="space-y-1 sm:space-y-3">
       {links.map((l) => (
         <li key={l.to}>
-          <Link to={l.to} className="group inline-flex min-h-8 items-center gap-1 text-sm text-white/80 transition hover:text-white hover:underline">
+          <Link to={l.to} className="group inline-flex min-h-11 items-center gap-1 text-sm sm:min-h-8 text-white/80 transition hover:text-white hover:underline">
             {l.label}
             <ArrowUpRight className="size-3.5 -translate-x-1 opacity-0 transition group-hover:translate-x-0 group-hover:opacity-100" />
           </Link>
@@ -60,6 +60,9 @@ const FooterColumn = ({ title, links }: { title: string; links: FooterLink[] }) 
     </ul>
   </div>
 );
+
+/** Footer legal links: 44 px tall rows on phones (fine print stays 12 px), inline from sm. */
+const LEGAL = 'inline-flex min-h-11 items-center hover:text-white sm:min-h-0';
 
 export const Footer = () => {
   const { t } = useTranslation();
@@ -120,19 +123,19 @@ export const Footer = () => {
           <Logo light />
           <p className="mt-6 max-w-sm text-sm leading-relaxed text-white/60">{t('footer.about')}</p>
           {contact && (
-            <ul className="mt-6 space-y-3 text-sm text-white/75">
+            <ul className="mt-6 space-y-1 text-sm text-white/75 sm:space-y-3">
               <li>
-                <a href={`tel:${contact.phone.replace(/\s/g, '')}`} className="flex items-center gap-3 hover:text-white">
+                <a href={`tel:${contact.phone.replace(/\s/g, '')}`} className="flex min-h-11 items-center gap-3 hover:text-white sm:min-h-0">
                   <Phone className="size-4 text-primary" /> {contact.phone}
                 </a>
               </li>
               <li>
-                <a href={`mailto:${contact.email}`} className="flex items-center gap-3 break-all hover:text-white">
+                <a href={`mailto:${contact.email}`} className="flex min-h-11 items-center gap-3 break-all hover:text-white sm:min-h-0">
                   <Mail className="size-4 shrink-0 text-primary" /> {contact.email}
                 </a>
               </li>
               {contact.offices.map((o) => (
-                <li key={o.address} className="flex gap-3">
+                <li key={o.address} className="flex gap-3 py-1.5 sm:py-0">
                   <MapPin className="mt-0.5 size-4 shrink-0 text-primary" />
                   <span>
                     <strong className="block text-white">{tr(o.city)}</strong>
@@ -141,7 +144,7 @@ export const Footer = () => {
                 </li>
               ))}
               <li>
-                <LateCallbackButton className="inline-flex min-h-9 items-center gap-2 rounded-lg border border-white/20 px-3 py-1.5 text-sm font-semibold text-white hover:bg-white/10" />
+                <LateCallbackButton className="mt-2 inline-flex min-h-11 items-center gap-2 rounded-lg border border-white/20 sm:mt-0 sm:min-h-9 px-3 py-1.5 text-sm font-semibold text-white hover:bg-white/10" />
               </li>
             </ul>
           )}
@@ -168,28 +171,28 @@ export const Footer = () => {
       </div>
 
       <div className="relative border-t border-white/10">
-        <div className="container-x flex flex-col items-center justify-between gap-3 py-6 text-center text-xs text-white/60 sm:flex-row sm:text-left">
+        <div className="container-x flex flex-col items-start justify-between gap-3 pt-6 pr-20 pb-24 text-left text-xs text-white/60 sm:flex-row sm:items-center sm:pr-24">
           <p>
             © {new Date().getFullYear()} Triad Vision · triad-vision.de · {t('footer.rights')}
           </p>
-          <nav aria-label={t('a11y.footerNav')} className="flex flex-wrap justify-center gap-x-5 gap-y-2">
-            <Link to="/privacy" className="hover:text-white">
+          <nav aria-label={t('a11y.footerNav')} className="flex flex-wrap gap-x-5 sm:justify-center sm:gap-y-2">
+            <Link to="/privacy" className={LEGAL}>
               {t('footer.privacy')}
             </Link>
-            <Link to="/impressum" className="hover:text-white">
+            <Link to="/impressum" className={LEGAL}>
               {t('footer.imprint')}
             </Link>
-            <Link to="/agb" className="hover:text-white">
+            <Link to="/agb" className={LEGAL}>
               {t('legalDocs.footer.terms')}
             </Link>
-            <Link to="/cookies" className="hover:text-white">
+            <Link to="/cookies" className={LEGAL}>
               {t('siteNav.footer.cookiePolicy')}
             </Link>
             {/* Re-opens the cookie consent banner (components/legal/CookieConsent). */}
-            <button type="button" onClick={openConsentSettings} className="hover:text-white">
+            <button type="button" onClick={openConsentSettings} className={LEGAL}>
               {t('legalDocs.footer.cookies')}
             </button>
-            <Link to="/accessibility" className="hover:text-white">
+            <Link to="/accessibility" className={LEGAL}>
               {t('a11y.statementLink')}
             </Link>
           </nav>

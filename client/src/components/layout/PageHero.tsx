@@ -12,6 +12,9 @@ import { useMorphTarget } from '@/lib/viewTransition';
  * Children (search forms, chips, buttons) sit on the light band: style them with the tokens (text-ink,
  * bg-card, border-line, Button variants), never with text-white.
  */
+/** Breadcrumb links: a 44 px tall hit area on phones without making the line taller. */
+const CRUMB = 'rounded hover:text-ink hover:underline max-sm:-my-3 max-sm:py-3';
+
 export const PageHero = ({
   title,
   subtitle,
@@ -49,7 +52,7 @@ export const PageHero = ({
       />
     </div>
   ) : null;
-  const titleClass = 'max-w-3xl font-display text-[2rem] leading-[1.12] font-semibold tracking-[-0.02em] text-ink text-balance break-words hyphens-auto sm:text-[2.75rem] lg:text-[3.25rem]';
+  const titleClass = 'type-hero max-w-3xl text-ink';
 
   return (
     <section {...m.part('card')} className="hero-warm relative isolate overflow-hidden border-b border-line pt-24 pb-10 sm:pt-28 sm:pb-14 lg:pt-36 lg:pb-16">
@@ -57,13 +60,13 @@ export const PageHero = ({
         <div className="min-w-0">
           <Reveal y={8}>
             <nav className="mb-4 flex min-w-0 flex-wrap items-center gap-1.5 text-sm text-muted sm:mb-5">
-              <Link to="/" className="rounded hover:text-ink hover:underline">
+              <Link to="/" className={CRUMB}>
                 {t('nav.home')}
               </Link>
               {crumb && (
                 <>
                   <ChevronRight className="size-3.5 shrink-0" aria-hidden />
-                  <Link to={crumb.to} className="rounded hover:text-ink hover:underline">
+                  <Link to={crumb.to} className={CRUMB}>
                     {crumb.label}
                   </Link>
                 </>

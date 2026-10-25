@@ -93,7 +93,7 @@ export const Field = ({ label, hint, error, required = false, hideLabel = false,
           </p>
         )}
         {error && (
-          <p id={errorId} className="mt-1 text-xs font-medium text-danger-fg" role="alert">
+          <p id={errorId} className="mt-1 text-sm font-medium text-danger-fg sm:text-xs" role="alert">
             {error}
           </p>
         )}
@@ -208,7 +208,7 @@ export function RadioGroup<V extends string>({ label, name, value, onChange, opt
         </p>
       )}
       {error && (
-        <p id={errorId} className="mt-1 text-xs font-medium text-danger-fg" role="alert">
+        <p id={errorId} className="mt-1 text-sm font-medium text-danger-fg sm:text-xs" role="alert">
           {error}
         </p>
       )}

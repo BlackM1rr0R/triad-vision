@@ -40,7 +40,7 @@ export const Hero = ({ audience, onChoose }: { audience: Audience | null; onChoo
               <span className="min-w-0 truncate">{t('hero.eyebrow')}</span>
             </motion.p>
 
-            <motion.h1 {...enter(0.12)} className="font-display text-[2.25rem] leading-[1.08] font-semibold tracking-[-0.02em] text-balance text-ink sm:text-[3.25rem] xl:text-[3.75rem]">
+            <motion.h1 {...enter(0.12)} className="font-display text-[2rem] leading-[1.1] font-semibold tracking-[-0.02em] text-balance break-words hyphens-auto text-ink sm:text-[3.25rem] sm:leading-[1.08] xl:text-[3.75rem]">
               <span className="block">{t('hero.title1')}</span>
               <span className="block text-highlight-fg">{t('hero.title2')}</span>
             </motion.h1>
@@ -82,7 +82,7 @@ export const Hero = ({ audience, onChoose }: { audience: Audience | null; onChoo
 
         {/* "Who are you?" */}
         <motion.div {...enter(0.4)} className="mt-10 sm:mt-14">
-          <h2 id="hero-who" className="font-display text-xl font-semibold text-ink sm:text-2xl">
+          <h2 id="hero-who" className="type-subsection text-ink">
             {t('siteNav.home.question')}
           </h2>
           <p className="mt-1 text-sm text-muted sm:text-base">{t('siteNav.home.hint')}</p>

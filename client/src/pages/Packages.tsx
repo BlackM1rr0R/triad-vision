@@ -143,7 +143,7 @@ export default function Packages() {
                     </span>
                   )}
                   <p className="eyebrow">{t(`pkgs.tier.${p.tier}`)}</p>
-                  <h2 className="mt-1 font-display text-2xl font-semibold text-ink">{tr(p.title)}</h2>
+                  <h2 className="type-subsection mt-1 text-ink">{tr(p.title)}</h2>
                   <p className="mt-2 text-sm text-muted">{tr(p.summary)}</p>
                   <p className="mt-5">
                     <span className="font-display text-4xl font-semibold text-ink">{priceText(p)}</span>{' '}

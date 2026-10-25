@@ -5,9 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MotionConfig } from 'framer-motion';
 import { Toaster } from 'sonner';
 // Fonts are bundled and served from our own domain (no requests to Google — DSGVO).
-import '@fontsource-variable/inter';
-import '@fontsource-variable/fraunces'; // public-site display headings (az/de/en/tr; ru/uk use Inter)
-import '@fontsource-variable/jetbrains-mono'; // codes / case numbers (downloaded only when used)
+import '@fontsource-variable/onest'; // the one UI family (az/tr/de/ru/uk + € ₼ ₺, tabular figures)
 import { i18nReady } from './i18n';
 import './index.css';
 import { initSiteTheme } from './lib/theme';

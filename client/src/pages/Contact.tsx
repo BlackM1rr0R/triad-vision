@@ -65,7 +65,7 @@ export default function Contact() {
         <div className="container-x grid gap-10 lg:grid-cols-[1.1fr_0.9fr]">
           <Reveal>
             <div className="card card-pad rounded-3xl sm:p-10">
-              <h2 className="mb-6 font-display text-2xl font-semibold text-ink">{t('contact.formTitle')}</h2>
+              <h2 className="type-subsection mb-6 text-ink">{t('contact.formTitle')}</h2>
               <InquiryForm kind="contact" />
             </div>
           </Reveal>
@@ -74,7 +74,7 @@ export default function Contact() {
             <StatusBox />
             {/* "Mənə zəng edin": callback request in a Baku office-hours window */}
             <ContactCallbackCard />
-            <h2 className="font-display text-2xl font-semibold text-ink">{t('contact.offices')}</h2>
+            <h2 className="type-subsection text-ink">{t('contact.offices')}</h2>
             {c?.offices.map((o, i) => (
               <Reveal key={o.address} delay={i * 0.1}>
                 <div className="card overflow-hidden">

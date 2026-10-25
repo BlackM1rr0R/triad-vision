@@ -60,7 +60,7 @@ export const WorkerQuickLinks = () => {
   return (
     <section className="section-sm">
       <div className="container-x">
-        <h2 className="mb-5 font-display text-xl font-semibold text-ink sm:text-2xl">{t('workersPage.quickTitle')}</h2>
+        <h2 className="type-subsection mb-5 text-ink">{t('workersPage.quickTitle')}</h2>
         <ul className="grid grid-cols-2 gap-3 lg:grid-cols-4">
           {items.map((it, i) => (
             <li key={it.to}>

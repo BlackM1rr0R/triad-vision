@@ -34,7 +34,7 @@ export const SearchButton = ({ light = false, className }: { light?: boolean; cl
       aria-label={t('search.button')}
       title={`${t('search.button')} (${hint})`}
       className={clsx(
-        'inline-flex h-10 min-w-10 shrink-0 items-center justify-center gap-2 rounded-full transition-colors duration-300 lg:px-3',
+        'inline-flex h-11 min-w-11 shrink-0 items-center justify-center gap-2 rounded-full transition-colors duration-300 sm:h-10 sm:min-w-10 lg:px-3',
         light ? 'text-white hover:bg-white/10' : 'text-ink hover:bg-sunken',
         className,
       )}

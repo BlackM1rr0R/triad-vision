@@ -138,7 +138,7 @@ export const CommandPaletteButton = ({ variant = 'header', compact = false, dark
       title={`${label} (${shortcut})`}
       className={clsx(
         'flex h-9 shrink-0 items-center gap-2 rounded-[var(--tv-radius-control)] text-muted transition hover:text-ink',
-        'w-9 justify-center hover:bg-sunken sm:w-auto sm:min-w-[13rem] sm:justify-start sm:border sm:border-line sm:bg-field sm:px-2.5 sm:hover:border-line-strong sm:hover:bg-field',
+        'w-9 justify-center hover:bg-sunken max-sm:size-10 sm:w-auto sm:min-w-[13rem] sm:justify-start sm:border sm:border-line sm:bg-field sm:px-2.5 sm:hover:border-line-strong sm:hover:bg-field',
         className,
       )}
     >
