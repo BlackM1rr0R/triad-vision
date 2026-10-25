@@ -33,6 +33,11 @@ const boundsFor = (a: LngLat, b: LngLat) => {
 
 const label = 'fill-ink stroke-card text-[22px] font-semibold [paint-order:stroke]';
 
+/** Labels near the left/right edge grow inwards instead of being clipped by the frame. */
+const EDGE = 16;
+const labelPos = (x: number): { x: number; textAnchor: 'start' | 'middle' | 'end' } =>
+  x > W * 0.78 ? { x: Math.min(x + 12, W - EDGE), textAnchor: 'end' } : x < W * 0.22 ? { x: Math.max(x - 12, EDGE), textAnchor: 'start' } : { x, textAnchor: 'middle' };
+
 /**
  * Decorative-but-labelled SVG map of the client's journey: simplified country outlines (shared with the public
  * origin map), a curved route from the home city to the German city, the part already travelled drawn in the
@@ -112,7 +117,7 @@ export function JourneyMap({
       {/* Home city and German city. */}
       <motion.g variants={fade(0)}>
         <circle cx={geo.a[0]} cy={geo.a[1]} r={9} className={clsx('stroke-card', geo.known ? 'fill-warning' : 'fill-muted')} strokeWidth={3} />
-        <text x={geo.a[0]} y={geo.a[1] + 36} textAnchor="middle" className={label} strokeWidth={6} strokeLinejoin="round">
+        <text {...labelPos(geo.a[0])} y={geo.a[1] + 36} className={label} strokeWidth={6} strokeLinejoin="round">
           {fromName}
         </text>
       </motion.g>
@@ -124,7 +129,7 @@ export function JourneyMap({
           strokeLinejoin="round"
         />
         <circle cx={geo.b[0]} cy={geo.b[1] - 25} r={4.5} className="fill-card" />
-        <text x={geo.b[0]} y={geo.b[1] + 30} textAnchor="middle" className={label} strokeWidth={6} strokeLinejoin="round">
+        <text {...labelPos(geo.b[0])} y={geo.b[1] + 30} className={label} strokeWidth={6} strokeLinejoin="round">
           {toName}
         </text>
       </motion.g>
@@ -155,9 +160,8 @@ export function JourneyMap({
       {/* Name of the current stage next to its marker. */}
       {current >= 0 && (
         <motion.text
-          x={geo.markers[current][0]}
+          {...labelPos(geo.markers[current][0])}
           y={geo.markers[current][1] - 22}
-          textAnchor="middle"
           className={clsx(label, 'fill-ink')}
           strokeWidth={6}
           strokeLinejoin="round"

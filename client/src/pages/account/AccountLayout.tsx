@@ -121,7 +121,7 @@ export default function AccountLayout() {
   const countLabel = (n: number) => t('pux.nav.badge', { count: n });
 
   return (
-    <div className="min-h-screen bg-canvas pt-24 pb-16 sm:pt-28 sm:pb-24 lg:pt-40">
+    <div className="min-h-screen bg-canvas pt-24 pb-36 sm:pt-28 sm:pb-24 lg:pt-40">
       <div className="container-x">
         <header className="vt-portal-header relative rounded-3xl border border-line bg-card px-5 pt-6 pb-2 shadow-[var(--tv-shadow-card)] sm:px-8 sm:pt-7 md:pb-0">
           <div>

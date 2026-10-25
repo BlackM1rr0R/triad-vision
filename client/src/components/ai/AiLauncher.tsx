@@ -57,12 +57,13 @@ export default function AiLauncher() {
         aria-expanded={open}
         data-bnav-lift
         className={clsx(
-          'fixed right-[5.25rem] bottom-4 z-40 inline-flex h-14 items-center gap-2 rounded-full bg-primary px-4 text-sm font-semibold text-primary-contrast shadow-[var(--tv-shadow-raised)] transition-colors hover:bg-primary-hover sm:right-[5.75rem] sm:bottom-6 sm:px-5',
+          'fixed right-[5.25rem] bottom-4 z-40 inline-flex size-14 items-center justify-center gap-2 rounded-full bg-primary text-sm sm:w-auto sm:justify-start font-semibold text-primary-contrast shadow-[var(--tv-shadow-raised)] transition-colors hover:bg-primary-hover sm:right-[5.75rem] sm:bottom-6 sm:px-5',
           open && 'pointer-events-none opacity-0',
         )}
       >
         <Sparkles className="size-5 shrink-0" aria-hidden />
-        <span>{copy.open}</span>
+        {/* Phones: icon only, so the round button does not cover the page content. */}
+        <span className="sr-only sm:not-sr-only">{copy.open}</span>
       </button>
 
       {mounted && (
