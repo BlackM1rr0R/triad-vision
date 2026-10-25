@@ -10,8 +10,7 @@ export function AccountHomeSkeleton() {
   return (
     <div className="space-y-6 lg:space-y-8" role="status" aria-label={t('ui.loading')}>
       {/* Next-step card */}
-      <div className="card relative overflow-hidden p-5 sm:p-7 sm:pl-8" aria-hidden>
-        <span className="absolute inset-y-0 left-0 w-1.5 bg-line" />
+      <div className="relative overflow-hidden rounded-3xl border border-line bg-highlight-bg p-6 sm:p-9" aria-hidden>
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-5">
           <Skeleton className="size-14 shrink-0" rounded="xl" />
           <div className="min-w-0 flex-1 space-y-2">

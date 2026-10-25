@@ -73,7 +73,7 @@ export const RequestDetail = ({ id, onClose }: { id: string | null; onClose: () 
               </button>
             )}
             {(active || r.status === 'DRAFT') && (
-              <button type="button" className="btn btn-sm text-danger hover:bg-red-50" disabled={!!busy} onClick={() => setCancelOpen(true)}>
+              <button type="button" className="btn btn-sm text-danger-fg hover:bg-danger-bg" disabled={!!busy} onClick={() => setCancelOpen(true)}>
                 <Ban className="size-3.5" aria-hidden />
                 {t('esign.admin.detail.cancel')}
               </button>
@@ -83,21 +83,21 @@ export const RequestDetail = ({ id, onClose }: { id: string | null; onClose: () 
       }
     >
       {isLoading || !r ? (
-        <div className="grid min-h-40 place-items-center text-brand-600">
+        <div className="grid min-h-40 place-items-center text-link">
           <Spinner className="size-6" />
         </div>
       ) : (
         <div className="space-y-6">
           <div className="flex flex-wrap items-center gap-2">
             <span className={clsx('badge', STATUS_TONE[r.status])}>{t(`esign.status.${r.status}`)}</span>
-            <span className="badge bg-surface text-ink/80">{t(`esign.order.${r.order}`)}</span>
-            {r.isCaseContract && <span className="badge bg-navy-900 text-white">{t('esign.admin.detail.caseContract')}</span>}
+            <span className="badge bg-sunken text-ink/80">{t(`esign.order.${r.order}`)}</span>
+            {r.isCaseContract && <span className="badge bg-primary text-primary-contrast">{t('esign.admin.detail.caseContract')}</span>}
           </div>
 
           <dl className="grid gap-x-6 gap-y-2 text-sm sm:grid-cols-2">
             {r.case && (
               <Field label={t('esign.admin.detail.case')}>
-                <Link to={`/admin/cases/${r.case.id}`} className="font-semibold text-brand-600 hover:underline">
+                <Link to={`/admin/cases/${r.case.id}`} className="font-semibold text-link hover:underline">
                   {r.case.number}
                 </Link>
               </Field>
@@ -108,8 +108,8 @@ export const RequestDetail = ({ id, onClose }: { id: string | null; onClose: () 
             <Field label={t('esign.admin.detail.expires')}>{fmtDateTime(r.expiresAt)}</Field>
             {r.completedAt && <Field label={t('esign.admin.detail.completed')}>{fmtDateTime(r.completedAt)}</Field>}
           </dl>
-          {r.message && <p className="rounded-lg border border-line bg-surface p-3 text-sm whitespace-pre-line">{r.message}</p>}
-          {r.cancelReason && <p className="rounded-lg border border-line bg-surface p-3 text-sm">{r.cancelReason}</p>}
+          {r.message && <p className="rounded-lg border border-line bg-sunken p-3 text-sm whitespace-pre-line">{r.message}</p>}
+          {r.cancelReason && <p className="rounded-lg border border-line bg-sunken p-3 text-sm">{r.cancelReason}</p>}
 
           {/* PDFs */}
           <div className="grid gap-2 sm:grid-cols-2">
@@ -130,16 +130,16 @@ export const RequestDetail = ({ id, onClose }: { id: string | null; onClose: () 
 
           {/* Parties */}
           <section>
-            <h3 className="mb-2 text-sm font-semibold text-navy-900">{t('esign.admin.detail.signers')}</h3>
+            <h3 className="mb-2 text-sm font-semibold text-ink">{t('esign.admin.detail.signers')}</h3>
             <ol className="space-y-2">
               {r.signers.map((s) => {
                 const turn = r.currentTurn.includes(s.id);
                 return (
-                  <li key={s.id} className={clsx('rounded-xl border p-3', turn ? 'border-brand-400 bg-brand-50' : 'border-line')}>
+                  <li key={s.id} className={clsx('rounded-xl border p-3', turn ? 'border-line-strong bg-primary/[0.06]' : 'border-line')}>
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="grid size-6 place-items-center rounded-full bg-surface text-[11px] font-bold">{s.order}</span>
-                      <span className="min-w-0 flex-1 truncate text-sm font-semibold text-navy-900">{s.name}</span>
-                      <span className="badge bg-surface text-ink/80">{t(`esign.role.${s.role}`)}</span>
+                      <span className="grid size-6 place-items-center rounded-full bg-sunken text-[11px] font-bold">{s.order}</span>
+                      <span className="min-w-0 flex-1 truncate text-sm font-semibold text-ink">{s.name}</span>
+                      <span className="badge bg-sunken text-ink/80">{t(`esign.role.${s.role}`)}</span>
                       <span className={clsx('badge', SIGNER_TONE[s.status])}>{t(`esign.signerStatus.${s.status}`)}</span>
                     </div>
                     <p className="mt-1 truncate pl-8 text-xs text-muted">{s.email}</p>
@@ -151,7 +151,7 @@ export const RequestDetail = ({ id, onClose }: { id: string | null; onClose: () 
                       {s.userAgent && <span className="truncate">{shortUserAgent(s.userAgent)}</span>}
                     </div>
                     {s.declinedReason && (
-                      <p className="mt-2 ml-8 rounded-lg bg-red-50 p-2 text-xs text-red-800">
+                      <p className="mt-2 ml-8 rounded-lg bg-danger-bg p-2 text-xs text-danger-fg">
                         {t('esign.admin.detail.declinedReason')}: {s.declinedReason}
                       </p>
                     )}
@@ -209,7 +209,7 @@ export const RequestDetail = ({ id, onClose }: { id: string | null; onClose: () 
           </section>
 
           {cancelOpen && (
-            <section className="space-y-2 rounded-xl border border-red-200 bg-red-50 p-3">
+            <section className="space-y-2 rounded-xl border border-danger-border bg-danger-bg p-3">
               <label className="label" htmlFor="esign-cancel-reason">
                 {t('esign.admin.detail.cancelReason')}
               </label>
@@ -232,13 +232,13 @@ export const RequestDetail = ({ id, onClose }: { id: string | null; onClose: () 
 
           {/* Audit trail */}
           <section>
-            <h3 className="mb-2 text-sm font-semibold text-navy-900">{t('esign.admin.detail.timeline')}</h3>
+            <h3 className="mb-2 text-sm font-semibold text-ink">{t('esign.admin.detail.timeline')}</h3>
             <ol className="relative space-y-3 border-l border-line pl-4">
               {r.events.map((e) => (
                 <li key={e.id} className="relative">
-                  <span className={clsx('absolute top-1.5 -left-[21px] size-2.5 rounded-full', e.type === 'SIGNED' || e.type === 'COMPLETED' ? 'bg-success' : e.type === 'DECLINED' || e.type === 'CANCELLED' || e.type === 'EXPIRED' ? 'bg-danger' : 'bg-brand-400')} aria-hidden />
+                  <span className={clsx('absolute top-1.5 -left-[21px] size-2.5 rounded-full', e.type === 'SIGNED' || e.type === 'COMPLETED' ? 'bg-success' : e.type === 'DECLINED' || e.type === 'CANCELLED' || e.type === 'EXPIRED' ? 'bg-danger' : 'bg-primary/40')} aria-hidden />
                   <p className="text-sm">
-                    <span className="font-semibold text-navy-900">{t(`esign.admin.event.${e.type}`)}</span>
+                    <span className="font-semibold text-ink">{t(`esign.admin.event.${e.type}`)}</span>
                     {(e.signer || e.actor) && <span className="text-muted"> · {e.signer?.name ?? e.actor?.name}</span>}
                   </p>
                   <p className="text-[11px] text-muted">
@@ -266,15 +266,15 @@ const Field = ({ label, children }: { label: string; children: React.ReactNode }
 );
 
 const PdfRow = ({ label, sub, view, download, accent }: { label: string; sub: string; view: string; download: string; accent?: boolean }) => (
-  <div className={clsx('flex items-center gap-2 rounded-lg border px-3 py-2', accent ? 'border-emerald-200 bg-emerald-50' : 'border-line bg-surface/60')}>
+  <div className={clsx('flex items-center gap-2 rounded-lg border px-3 py-2', accent ? 'border-success-border bg-success-bg' : 'border-line bg-surface/60')}>
     <div className="min-w-0 flex-1">
-      <p className="truncate text-sm font-semibold text-navy-900">{label}</p>
+      <p className="truncate text-sm font-semibold text-ink">{label}</p>
       <p className="truncate text-[11px] text-muted">{sub}</p>
     </div>
-    <a href={view} target="_blank" rel="noreferrer" className="grid size-9 place-items-center rounded-lg text-muted hover:bg-white hover:text-navy-900" aria-label={label}>
+    <a href={view} target="_blank" rel="noreferrer" className="grid size-9 place-items-center rounded-lg text-muted hover:bg-card hover:text-ink" aria-label={label}>
       <ExternalLink className="size-4" />
     </a>
-    <a href={download} className="grid size-9 place-items-center rounded-lg text-muted hover:bg-white hover:text-navy-900" aria-label={`${label} ↓`}>
+    <a href={download} className="grid size-9 place-items-center rounded-lg text-muted hover:bg-card hover:text-ink" aria-label={`${label} ↓`}>
       <Download className="size-4" />
     </a>
   </div>

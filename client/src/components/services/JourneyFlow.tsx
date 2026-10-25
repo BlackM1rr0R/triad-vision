@@ -8,11 +8,12 @@ import type { Service } from '@/lib/types';
 import { servicePhase } from '@/components/visa/utils';
 
 const PHASE_ICONS = ['UserSearch', 'FileCheck2', 'Stamp', 'Plane'];
+const CHIPS = ['chip-soft', 'chip-sage', 'chip-sky', 'chip-peach'];
 
 /** Connector arrow: horizontal between columns on large screens, vertical between stacked phases below. */
 const Arrow = ({ index }: { index: number }) => (
   <>
-    <svg aria-hidden viewBox="0 0 40 24" className="mx-auto hidden h-6 w-10 self-center text-brand-500 lg:block">
+    <svg aria-hidden viewBox="0 0 40 24" className="mx-auto hidden h-6 w-10 self-center text-subtle lg:block">
       <motion.path
         d="M2 12 H32"
         stroke="currentColor"
@@ -27,7 +28,7 @@ const Arrow = ({ index }: { index: number }) => (
       />
       <path d="M30 6 L38 12 L30 18" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
     </svg>
-    <svg aria-hidden viewBox="0 0 24 32" className="mx-auto h-8 w-6 text-brand-500 lg:hidden">
+    <svg aria-hidden viewBox="0 0 24 32" className="mx-auto h-8 w-6 text-subtle lg:hidden">
       <path d="M12 2 V24" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeDasharray="4 5" fill="none" />
       <path d="M6 20 L12 28 L18 20" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
     </svg>
@@ -51,30 +52,30 @@ export const JourneyFlow = ({ services }: { services: Service[] }) => {
           <Fragment key={p.title}>
             {i > 0 && <Arrow index={i} />}
             <motion.div
-              className="flex flex-col rounded-2xl border border-white/10 bg-white/[0.04] p-4 sm:p-5"
+              className="flex flex-col rounded-3xl border border-line bg-card p-4 shadow-[var(--tv-shadow-card)] sm:p-5"
               initial={{ opacity: 0, y: 24 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: '-60px' }}
               transition={{ duration: 0.6, delay: i * 0.15 }}
             >
               <div className="flex items-center gap-3">
-                <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-brand-600 text-white shadow-lg shadow-brand-600/30">
+                <span className={`grid size-11 shrink-0 place-items-center rounded-xl ${CHIPS[i % CHIPS.length]}`}>
                   <Icon name={PHASE_ICONS[i]} className="size-5" />
                 </span>
                 <div className="min-w-0">
-                  <p className="text-[11px] font-bold tracking-widest text-brand-400 uppercase">0{i + 1}</p>
-                  <h3 className="font-display text-lg leading-tight font-bold text-white">{p.title}</h3>
+                  <p className="text-xs font-semibold tracking-widest text-highlight-fg uppercase">0{i + 1}</p>
+                  <h3 className="font-display text-lg leading-tight font-semibold text-ink">{p.title}</h3>
                 </div>
               </div>
-              <p className="mt-2 text-xs leading-relaxed text-white/60">{p.text}</p>
+              <p className="mt-2 text-sm leading-relaxed text-muted">{p.text}</p>
               <ul className="mt-4 space-y-2">
                 {items.map((s) => (
                   <li key={s.id}>
                     <Link
                       to={`/services/${s.slug}`}
-                      className="flex items-center gap-2.5 rounded-xl bg-white px-3 py-2.5 text-sm font-semibold text-navy-900 transition hover:-translate-y-0.5 hover:shadow-lg hover:shadow-brand-600/20"
+                      className="flex min-h-11 items-center gap-2.5 rounded-xl border border-line bg-canvas px-3 py-2.5 text-sm font-semibold text-ink transition-colors hover:border-line-strong hover:bg-sunken"
                     >
-                      <Icon name={s.icon} className="size-4 shrink-0 text-brand-600" />
+                      <Icon name={s.icon} className="size-4 shrink-0 text-muted" />
                       <span className="min-w-0 leading-snug">{tr(s.title)}</span>
                     </Link>
                   </li>

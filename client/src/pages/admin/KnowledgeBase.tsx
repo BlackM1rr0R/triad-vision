@@ -102,9 +102,9 @@ const Editor = ({ article, categories, isAdmin, onSaved, onCancel }: { article: 
       <div>
         <div className="mb-1.5 flex items-center justify-between">
           <span className="label mb-0">{t('ops.kb.editor.body')}</span>
-          <div className="flex rounded-lg border border-line bg-white p-0.5">
+          <div className="flex rounded-lg border border-line bg-sunken p-0.5">
             {(['write', 'preview'] as const).map((v) => (
-              <button key={v} type="button" onClick={() => setTab(v)} className={clsx('inline-flex min-h-8 items-center gap-1 rounded-md px-2.5 text-xs font-semibold', tab === v ? 'bg-navy-900 text-white' : 'text-ink/70')}>
+              <button key={v} type="button" onClick={() => setTab(v)} className={clsx('inline-flex min-h-8 items-center gap-1 rounded-md px-2.5 text-xs font-semibold', tab === v ? 'bg-card text-ink shadow-[var(--tv-shadow-card)] ring-1 ring-line' : 'text-muted')}>
                 {v === 'write' ? <Pencil className="size-3" /> : <Eye className="size-3" />} {t(`ops.kb.editor.${v}`)}
               </button>
             ))}
@@ -113,7 +113,7 @@ const Editor = ({ article, categories, isAdmin, onSaved, onCancel }: { article: 
         {tab === 'write' ? (
           <textarea className="input min-h-80 font-mono text-[13px] leading-relaxed" value={body} maxLength={100_000} placeholder={t('ops.kb.editor.bodyPh')} onChange={(e) => setBody(e.target.value)} />
         ) : (
-          <div className="min-h-80 rounded-lg border border-line bg-white p-4">{body.trim() ? <Markdown source={body} /> : <p className="text-sm text-muted">{t('ops.kb.editor.emptyPreview')}</p>}</div>
+          <div className="min-h-80 rounded-lg border border-line bg-card p-4">{body.trim() ? <Markdown source={body} /> : <p className="text-sm text-muted">{t('ops.kb.editor.emptyPreview')}</p>}</div>
         )}
       </div>
       <div className="grid gap-4 sm:grid-cols-2">
@@ -241,12 +241,12 @@ export default function KnowledgeBase() {
         <Search className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-muted" aria-hidden />
         <input className="input pl-10" placeholder={t('ops.kb.searchPh')} value={q} onChange={(e) => setQ(e.target.value)} aria-label={t('ops.common.search')} />
         {q && (
-          <button type="button" className="absolute top-1/2 right-2 grid size-8 -translate-y-1/2 place-items-center rounded-md text-muted hover:bg-surface" onClick={() => setQ('')} aria-label={t('ops.common.close')}>
+          <button type="button" className="absolute top-1/2 right-2 grid size-8 -translate-y-1/2 place-items-center rounded-md text-muted hover:bg-sunken" onClick={() => setQ('')} aria-label={t('ops.common.close')}>
             <X className="size-4" />
           </button>
         )}
         {dq && (
-          <div className="absolute inset-x-0 top-full z-20 mt-1 max-h-96 overflow-y-auto rounded-xl border border-line bg-white shadow-xl">
+          <div className="absolute inset-x-0 top-full z-20 mt-1 max-h-96 overflow-y-auto rounded-xl border border-line bg-card shadow-[var(--tv-shadow-raised)]">
             {search.isLoading ? (
               <p className="px-4 py-3 text-sm text-muted">…</p>
             ) : !search.data?.items.length ? (
@@ -256,8 +256,8 @@ export default function KnowledgeBase() {
                 <li className="px-4 py-1.5 text-[11px] font-semibold text-muted uppercase">{t('ops.kb.results', { count: search.data.items.length })}</li>
                 {search.data.items.map((h) => (
                   <li key={h.id}>
-                    <button type="button" className="block w-full px-4 py-2.5 text-left hover:bg-surface" onClick={() => open(h.id)}>
-                      <span className="flex items-center gap-2 text-sm font-semibold text-navy-900">{h.pinned && <Pin className="size-3 text-amber-600" />}{h.title}{!h.published && <span className="badge bg-neutral-bg text-neutral-fg">{t('ops.kb.draftBadge')}</span>}</span>
+                    <button type="button" className="block w-full px-4 py-2.5 text-left hover:bg-sunken" onClick={() => open(h.id)}>
+                      <span className="flex items-center gap-2 text-sm font-semibold text-ink">{h.pinned && <Pin className="size-3 text-warning-fg" />}{h.title}{!h.published && <span className="badge bg-neutral-bg text-neutral-fg">{t('ops.kb.draftBadge')}</span>}</span>
                       <span className="mt-0.5 block text-xs text-muted">{h.excerpt}</span>
                     </button>
                   </li>
@@ -270,31 +270,31 @@ export default function KnowledgeBase() {
 
       <div className="grid gap-5 lg:grid-cols-[16rem_1fr] xl:grid-cols-[16rem_20rem_1fr]">
         {/* Categories */}
-        <aside className="space-y-1 rounded-xl border border-line bg-white p-2">
+        <aside className="space-y-1 rounded-xl border border-line bg-card p-2">
           <p className="px-2 pt-1 pb-2 text-[11px] font-semibold tracking-wide text-muted uppercase">{t('ops.kb.categories')}</p>
           {[
             { key: 'all', label: t('ops.kb.allArticles'), s: { kind: 'all' } as Selection },
             { key: 'pinned', label: t('ops.kb.pinned'), s: { kind: 'pinned' } as Selection },
           ].map((row) => (
-            <button key={row.key} type="button" onClick={() => { setSel(row.s); setTag(''); }} className={clsx('flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-sm', sel.kind === row.s.kind ? 'bg-navy-900 text-white' : 'text-ink/80 hover:bg-surface')}>
+            <button key={row.key} type="button" onClick={() => { setSel(row.s); setTag(''); }} className={clsx('flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-sm', sel.kind === row.s.kind ? 'bg-primary text-primary-contrast' : 'text-ink/80 hover:bg-sunken')}>
               {row.key === 'pinned' ? <Pin className="size-3.5" /> : <BookOpenText className="size-3.5" />} {row.label}
             </button>
           ))}
           {cats.data?.map((c) => (
             <div key={c.id} className="group flex items-center">
-              <button type="button" onClick={() => { setSel({ kind: 'cat', id: c.id }); setTag(''); }} className={clsx('flex min-w-0 flex-1 items-center justify-between gap-2 rounded-lg px-2.5 py-2 text-left text-sm', sel.kind === 'cat' && sel.id === c.id ? 'bg-navy-900 text-white' : 'text-ink/80 hover:bg-surface')}>
+              <button type="button" onClick={() => { setSel({ kind: 'cat', id: c.id }); setTag(''); }} className={clsx('flex min-w-0 flex-1 items-center justify-between gap-2 rounded-lg px-2.5 py-2 text-left text-sm', sel.kind === 'cat' && sel.id === c.id ? 'bg-primary text-primary-contrast' : 'text-ink/80 hover:bg-sunken')}>
                 <span className="truncate">{c.name}</span>
                 <span className="text-[11px] opacity-70 tabular-nums">{c.articles}</span>
               </button>
               {isAdmin && (
                 <span className="flex shrink-0 opacity-0 transition group-hover:opacity-100 focus-within:opacity-100">
-                  <button type="button" className="grid size-7 place-items-center rounded text-muted hover:text-navy-900" onClick={() => setCatModal({ id: c.id, name: c.name })} aria-label={t('ops.kb.renameCategory')}><Pencil className="size-3" /></button>
-                  <button type="button" className="grid size-7 place-items-center rounded text-muted hover:text-danger" onClick={() => setConfirm({ kind: 'category', id: c.id })} aria-label={t('ops.kb.deleteCategory')}><Trash2 className="size-3" /></button>
+                  <button type="button" className="grid size-7 place-items-center rounded text-muted hover:text-ink" onClick={() => setCatModal({ id: c.id, name: c.name })} aria-label={t('ops.kb.renameCategory')}><Pencil className="size-3" /></button>
+                  <button type="button" className="grid size-7 place-items-center rounded text-muted hover:text-danger-fg" onClick={() => setConfirm({ kind: 'category', id: c.id })} aria-label={t('ops.kb.deleteCategory')}><Trash2 className="size-3" /></button>
                 </span>
               )}
             </div>
           ))}
-          <button type="button" onClick={() => { setSel({ kind: 'none' }); setTag(''); }} className={clsx('flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-sm', sel.kind === 'none' ? 'bg-navy-900 text-white' : 'text-muted hover:bg-surface')}>
+          <button type="button" onClick={() => { setSel({ kind: 'none' }); setTag(''); }} className={clsx('flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-sm', sel.kind === 'none' ? 'bg-primary text-primary-contrast' : 'text-muted hover:bg-sunken')}>
             {t('ops.kb.uncategorised')}
           </button>
           {allTags.length > 0 && (
@@ -302,7 +302,7 @@ export default function KnowledgeBase() {
               <p className="px-2 pb-1.5 text-[11px] font-semibold tracking-wide text-muted uppercase">{t('ops.kb.editor.tags')}</p>
               <div className="flex flex-wrap gap-1 px-1.5">
                 {allTags.map((tg) => (
-                  <button key={tg} type="button" onClick={() => setTag(tag === tg ? '' : tg)} className={clsx('rounded-full border px-2 py-0.5 text-[11px]', tag === tg ? 'border-brand-500 bg-brand-50 text-brand-700' : 'border-line text-muted hover:text-navy-900')}>
+                  <button key={tg} type="button" onClick={() => setTag(tag === tg ? '' : tg)} className={clsx('rounded-full border px-2 py-0.5 text-[11px]', tag === tg ? 'border-primary bg-primary/[0.06] text-link' : 'border-line text-muted hover:text-ink')}>
                     #{tg}
                   </button>
                 ))}
@@ -312,7 +312,7 @@ export default function KnowledgeBase() {
         </aside>
 
         {/* Article list */}
-        <section className="min-w-0 rounded-xl border border-line bg-white xl:max-h-[70vh] xl:overflow-y-auto">
+        <section className="min-w-0 rounded-xl border border-line bg-card xl:max-h-[70vh] xl:overflow-y-auto">
           {list.isLoading ? (
             <LoadingBlock className="min-h-40" />
           ) : list.error ? (
@@ -324,9 +324,9 @@ export default function KnowledgeBase() {
               <li className="px-4 py-2 text-[11px] font-semibold text-muted">{t('ops.kb.articles', { count: rows.length })}{tag && ` · ${t('ops.kb.tagFilter', { tag })}`}</li>
               {rows.map((a) => (
                 <li key={a.id}>
-                  <button type="button" onClick={() => open(a.id)} className={clsx('block w-full px-4 py-3 text-left transition hover:bg-surface', a.id === articleId && 'bg-brand-50/60')}>
-                    <span className="flex items-center gap-1.5 text-sm font-semibold text-navy-900">
-                      {a.pinned && <Pin className="size-3 shrink-0 text-amber-600" />}
+                  <button type="button" onClick={() => open(a.id)} className={clsx('block w-full px-4 py-3 text-left transition hover:bg-sunken', a.id === articleId && 'bg-primary/[0.04]')}>
+                    <span className="flex items-center gap-1.5 text-sm font-semibold text-ink">
+                      {a.pinned && <Pin className="size-3 shrink-0 text-warning-fg" />}
                       <span className="truncate">{a.title}</span>
                       {!a.published && <span className="badge shrink-0 bg-neutral-bg text-neutral-fg">{t('ops.kb.draftBadge')}</span>}
                     </span>
@@ -341,7 +341,7 @@ export default function KnowledgeBase() {
         </section>
 
         {/* Reader / editor */}
-        <section className="min-w-0 rounded-xl border border-line bg-white p-5 lg:col-span-2 xl:col-span-1 sm:p-6">
+        <section className="min-w-0 rounded-xl border border-line bg-card p-5 lg:col-span-2 xl:col-span-1 sm:p-6">
           {mode === 'new' || (mode === 'edit' && current) ? (
             <Editor
               key={mode === 'new' ? 'new' : current!.id}
@@ -365,8 +365,8 @@ export default function KnowledgeBase() {
             <article>
               <header className="mb-4 flex flex-wrap items-start justify-between gap-3 border-b border-line pb-4">
                 <div className="min-w-0">
-                  <h2 className="flex items-center gap-2 font-display text-xl font-bold text-navy-900">
-                    {current.pinned && <Pin className="size-4 text-amber-600" />}
+                  <h2 className="flex items-center gap-2 font-display text-xl font-bold text-ink">
+                    {current.pinned && <Pin className="size-4 text-warning-fg" />}
                     {current.title}
                     {!current.published && <span className="badge bg-neutral-bg text-neutral-fg">{t('ops.kb.draftBadge')}</span>}
                   </h2>
@@ -375,7 +375,7 @@ export default function KnowledgeBase() {
                   </p>
                   {current.tags.length > 0 && (
                     <p className="mt-1.5 flex flex-wrap items-center gap-1 text-[11px] text-muted">
-                      <Tag className="size-3" /> {current.tags.map((x) => <span key={x} className="rounded-full bg-surface px-2 py-0.5">#{x}</span>)}
+                      <Tag className="size-3" /> {current.tags.map((x) => <span key={x} className="rounded-full bg-sunken px-2 py-0.5">#{x}</span>)}
                     </p>
                   )}
                 </div>
@@ -393,7 +393,7 @@ export default function KnowledgeBase() {
                       <button type="button" className="btn-secondary btn-sm" disabled={togglePin.isPending} onClick={() => togglePin.mutate(current)}>
                         {current.pinned ? <PinOff className="size-3.5" /> : <Pin className="size-3.5" />} {current.pinned ? t('ops.kb.unpin') : t('ops.kb.pin')}
                       </button>
-                      <button type="button" className="btn-secondary btn-sm text-danger" onClick={() => setConfirm({ kind: 'article', id: current.id })}>
+                      <button type="button" className="btn-secondary btn-sm text-danger-fg" onClick={() => setConfirm({ kind: 'article', id: current.id })}>
                         <Trash2 className="size-3.5" /> {t('ops.common.delete')}
                       </button>
                     </>

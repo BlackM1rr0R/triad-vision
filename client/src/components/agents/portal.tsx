@@ -64,8 +64,8 @@ export const Section = ({ title, icon: Icon, actions, children, className }: { t
     {(title || actions) && (
       <header className="mb-5 flex flex-wrap items-center justify-between gap-3">
         {title && (
-          <h2 className="flex items-center gap-2 font-display text-lg font-bold text-ink">
-            {Icon && <Icon className="size-5 text-brand-600" aria-hidden />} {title}
+          <h2 className="type-section-title flex items-center gap-2 text-ink">
+            {Icon && <Icon className="size-5 text-primary" aria-hidden />} {title}
           </h2>
         )}
         {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
@@ -78,7 +78,7 @@ export const Section = ({ title, icon: Icon, actions, children, className }: { t
 export const Loading = () => {
   const { t } = useTranslation();
   return (
-    <div className="grid min-h-[30vh] place-items-center text-brand-600" role="status" aria-label={t('agents.common.loading')}>
+    <div className="grid min-h-[30vh] place-items-center text-primary" role="status" aria-label={t('agents.common.loading')}>
       <Spinner className="size-8 border-[3px]" />
     </div>
   );
@@ -102,11 +102,11 @@ export const Pager = ({ page, total, pageSize, onPage }: { page: number; total: 
   if (pages <= 1) return null;
   return (
     <div className="mt-4 flex items-center justify-end gap-2 text-sm">
-      <button type="button" className="grid size-10 place-items-center rounded-lg border border-line text-ink disabled:opacity-40" disabled={page <= 1} onClick={() => onPage(page - 1)} aria-label={t('agents.common.prev')}>
+      <button type="button" className="grid size-11 place-items-center rounded-xl border border-line-strong bg-card text-ink transition-colors hover:bg-sunken disabled:opacity-40 sm:size-10" disabled={page <= 1} onClick={() => onPage(page - 1)} aria-label={t('agents.common.prev')}>
         <ChevronLeft className="size-4" />
       </button>
-      <span className="text-muted tabular-nums">{t('agents.common.page', { page, pages })}</span>
-      <button type="button" className="grid size-10 place-items-center rounded-lg border border-line text-ink disabled:opacity-40" disabled={page >= pages} onClick={() => onPage(page + 1)} aria-label={t('agents.common.next')}>
+      <span className="num text-muted">{t('agents.common.page', { page, pages })}</span>
+      <button type="button" className="grid size-11 place-items-center rounded-xl border border-line-strong bg-card text-ink transition-colors hover:bg-sunken disabled:opacity-40 sm:size-10" disabled={page >= pages} onClick={() => onPage(page + 1)} aria-label={t('agents.common.next')}>
         <ChevronRight className="size-4" />
       </button>
     </div>

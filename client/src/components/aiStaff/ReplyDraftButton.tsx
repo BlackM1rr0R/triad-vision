@@ -47,29 +47,29 @@ export const ReplyDraftButton = ({ endpoint, onInsert, className }: { endpoint: 
 
   if (!open) {
     return (
-      <button type="button" className={clsx('inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-xs font-semibold text-brand-700 transition hover:bg-brand-50', className)} onClick={() => void run(false)}>
+      <button type="button" className={clsx('inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-xs font-semibold text-link transition hover:bg-primary/[0.06]', className)} onClick={() => void run(false)}>
         <Sparkles className="size-3.5" aria-hidden /> {t('aiStaff.reply.button')}
       </button>
     );
   }
 
   return (
-    <div className={clsx('space-y-2 rounded-lg border border-brand-100 bg-brand-50/40 p-3', className)}>
+    <div className={clsx('space-y-2 rounded-lg border border-primary/25 bg-primary/[0.04] p-3', className)}>
       <div className="flex items-center justify-between gap-2">
-        <p className="flex items-center gap-1.5 text-xs font-semibold text-navy-900">
-          <Sparkles className="size-3.5 text-brand-600" aria-hidden /> {t('aiStaff.reply.title')}
-          {draft && <span className="badge bg-white text-[10px] text-muted">{t('aiStaff.reply.lang', { lang: LANG_LABEL[draft.lang] ?? draft.lang })}</span>}
+        <p className="flex items-center gap-1.5 text-xs font-semibold text-ink">
+          <Sparkles className="size-3.5 text-link" aria-hidden /> {t('aiStaff.reply.title')}
+          {draft && <span className="badge bg-card text-[10px] text-muted">{t('aiStaff.reply.lang', { lang: LANG_LABEL[draft.lang] ?? draft.lang })}</span>}
         </p>
-        <button type="button" className="grid size-7 place-items-center rounded-md text-muted hover:bg-white" onClick={() => setOpen(false)} aria-label={t('aiStaff.reply.close')}>
+        <button type="button" className="grid size-7 place-items-center rounded-md text-muted hover:bg-card" onClick={() => setOpen(false)} aria-label={t('aiStaff.reply.close')}>
           <X className="size-3.5" />
         </button>
       </div>
       {busy && !draft ? (
-        <div className="flex justify-center py-3 text-brand-600">
+        <div className="flex justify-center py-3 text-link">
           <Spinner className="size-5" />
         </div>
       ) : draft ? (
-        <p className="max-h-48 overflow-y-auto rounded-md bg-white px-3 py-2 text-sm whitespace-pre-wrap text-ink">{draft.draft}</p>
+        <p className="max-h-48 overflow-y-auto rounded-md bg-card px-3 py-2 text-sm whitespace-pre-wrap text-ink">{draft.draft}</p>
       ) : null}
       <input className="input h-9 text-xs" value={hint} maxLength={300} onChange={(e) => setHint(e.target.value)} placeholder={t('aiStaff.reply.hintPlaceholder')} />
       <div className="flex flex-wrap items-center gap-2">

@@ -12,10 +12,10 @@ export const ExpiryBadge = ({ doc, className }: { doc: Pick<VaultDoc, 'expiry' |
   if (status === 'none' || !doc.expiresAt) return null;
   const tone =
     status === 'expired'
-      ? 'bg-red-100 text-red-700 dark:bg-red-950/40 dark:text-red-300'
+      ? 'bg-danger-bg text-danger-fg'
       : status === 'soon'
-        ? 'bg-amber-100 text-amber-800 dark:bg-amber-950/40 dark:text-amber-200'
-        : 'bg-surface text-muted';
+        ? 'bg-warning-bg text-warning-fg'
+        : 'bg-sunken text-muted';
   const label =
     status === 'expired' ? t('vault.expiry.expired') : status === 'soon' ? t('vault.expiry.soon', { count: daysLeft ?? 0 }) : t('vault.expiry.valid', { date: date(doc.expiresAt) });
   return (

@@ -4,7 +4,10 @@ import { useTranslation } from 'react-i18next';
 import { ArrowRight, CheckCircle2, Clock, Compass, Euro, FileStack, Info, Languages, ListFilter, Stamp } from 'lucide-react';
 import clsx from 'clsx';
 import { PageHero } from '@/components/layout/PageHero';
-import { Magnetic, Reveal, Stagger, StaggerItem } from '@/components/motion';
+import { Reveal, Stagger, StaggerItem } from '@/components/motion';
+import { Button, buttonClass } from '@/components/ui/Button';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { SearchEmpty, Traveller } from '@/components/illustrations';
 import { SectionHeading } from '@/components/ui/SectionHeading';
 import { VisaCard } from '@/components/cards';
 import { SkeletonGrid } from '@/components/ui/Skeleton';
@@ -88,17 +91,17 @@ export default function Visas() {
         )}
         {visas.length > 0 && (
           <ul className="mt-6 flex flex-wrap gap-2 text-sm font-semibold">
-            <li className="glass inline-flex items-center gap-2 rounded-full px-4 py-2">
-              <Stamp className="size-4 text-brand-400" /> {t('visasPage.heroTypes', { count: visas.length })}
+            <li className="inline-flex items-center gap-2 rounded-full border border-line bg-card px-4 py-2 text-ink shadow-[var(--tv-shadow-card)]">
+              <Stamp className="size-4 text-muted" /> {t('visasPage.heroTypes', { count: visas.length })}
             </li>
             {lowest && (
-              <li className="glass inline-flex items-center gap-2 rounded-full px-4 py-2">
-                <Languages className="size-4 text-brand-400" /> {t('visasPage.heroLevels', { from: lowest })}
+              <li className="inline-flex items-center gap-2 rounded-full border border-line bg-card px-4 py-2 text-ink shadow-[var(--tv-shadow-card)]">
+                <Languages className="size-4 text-muted" /> {t('visasPage.heroLevels', { from: lowest })}
               </li>
             )}
             {pMin !== null && (
-              <li className="glass inline-flex items-center gap-2 rounded-full px-4 py-2">
-                <Clock className="size-4 text-brand-400" /> {t('visasPage.heroWeeks', { min: pMin, max: pMax })}
+              <li className="inline-flex items-center gap-2 rounded-full border border-line bg-card px-4 py-2 text-ink shadow-[var(--tv-shadow-card)]">
+                <Clock className="size-4 text-muted" /> {t('visasPage.heroWeeks', { min: pMin, max: pMax })}
               </li>
             )}
           </ul>
@@ -111,7 +114,7 @@ export default function Visas() {
           <SectionHeading eyebrow={t('visasPage.grid.eyebrow')} title={t('visasPage.grid.title')} subtitle={t('visasPage.grid.subtitle')} />
           <div className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div className="min-w-0">
-              <p className="mb-2 flex items-center gap-1.5 text-xs font-bold tracking-wider text-muted uppercase">
+              <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold tracking-wider text-muted uppercase">
                 <ListFilter className="size-3.5" /> {t('visasPage.grid.filterLabel')}
               </p>
               <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 [&::-webkit-scrollbar]:hidden">
@@ -122,8 +125,8 @@ export default function Visas() {
                     aria-pressed={filter === f}
                     onClick={() => setFilter(f)}
                     className={clsx(
-                      'h-10 shrink-0 rounded-full border px-4 text-sm font-semibold whitespace-nowrap transition',
-                      filter === f ? 'border-brand-600 bg-brand-600 text-white shadow-md shadow-brand-600/25' : 'border-line bg-white text-navy-900 hover:border-brand-400',
+                      'h-11 shrink-0 rounded-full border px-4 text-sm font-semibold whitespace-nowrap transition',
+                      filter === f ? 'border-primary bg-primary text-primary-contrast' : 'border-line bg-card text-ink hover:border-primary',
                     )}
                   >
                     {t(`visasPage.grid.filters.${f}`)}
@@ -136,7 +139,7 @@ export default function Visas() {
                 <label htmlFor="visa-sort" className="label">
                   {t('visasPage.grid.sortLabel')}
                 </label>
-                <select id="visa-sort" className="input h-10 py-0" value={sort} onChange={(e) => setSort(e.target.value as Sort)}>
+                <select id="visa-sort" className="input h-11 py-0" value={sort} onChange={(e) => setSort(e.target.value as Sort)}>
                   {SORTS.map((s) => (
                     <option key={s} value={s}>
                       {t(`visasPage.grid.sort.${s}`)}
@@ -155,11 +158,17 @@ export default function Visas() {
           {isLoading ? (
             <SkeletonGrid count={6} media mediaClassName="aspect-[16/11]" lines={3} className="grid-cards sm:grid-cols-2 lg:grid-cols-3" />
           ) : shown.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-line bg-surface px-6 py-14 text-center">
-              <p className="font-semibold text-navy-900">{t('visasPage.grid.empty')}</p>
-              <button type="button" className="btn-ghost btn-sm mt-4" onClick={() => setFilter('all')}>
-                {t('visasPage.grid.reset')}
-              </button>
+            <div className="rounded-3xl border border-line bg-card">
+              <EmptyState
+                size="lg"
+                illustration={<SearchEmpty />}
+                title={t('visasPage.grid.empty')}
+                action={
+                  <Button variant="outline" onClick={() => setFilter('all')}>
+                    {t('visasPage.grid.reset')}
+                  </Button>
+                }
+              />
             </div>
           ) : (
             <Stagger key={`${filter}-${sort}`} className="grid-cards sm:grid-cols-2 lg:grid-cols-3">
@@ -175,7 +184,7 @@ export default function Visas() {
 
       {/* Comparison table */}
       {visas.length > 0 && (
-        <section className="section bg-surface">
+        <section className="section bg-sunken">
           <div className="container-x">
             <SectionHeading eyebrow={t('visasPage.compare.eyebrow')} title={t('visasPage.compare.title')} subtitle={t('visasPage.compare.subtitle')} />
             <Reveal>
@@ -199,8 +208,8 @@ export default function Visas() {
             <div className="grid gap-5 xl:grid-cols-2 xl:gap-6">
               {withSalary.length > 0 && (
                 <Reveal className="card card-pad min-w-0">
-                  <h3 className="mb-5 flex items-center gap-2 font-display text-lg font-bold text-navy-900">
-                    <Euro className="size-5 text-brand-600" /> {t('visasPage.charts.salaryTitle')}
+                  <h3 className="mb-5 flex items-center gap-2 font-display text-lg font-semibold text-ink">
+                    <span className="grid size-9 place-items-center rounded-xl chip-soft"><Euro className="size-4" /></span> {t('visasPage.charts.salaryTitle')}
                   </h3>
                   <RangeBars
                     title={t('visasPage.charts.salaryAria')}
@@ -227,8 +236,8 @@ export default function Visas() {
               )}
               {withTime.length > 0 && (
                 <Reveal delay={0.1} className="card card-pad min-w-0">
-                  <h3 className="mb-5 flex items-center gap-2 font-display text-lg font-bold text-navy-900">
-                    <Clock className="size-5 text-brand-600" /> {t('visasPage.charts.processingTitle')}
+                  <h3 className="mb-5 flex items-center gap-2 font-display text-lg font-semibold text-ink">
+                    <span className="grid size-9 place-items-center rounded-xl chip-sky"><Clock className="size-4" /></span> {t('visasPage.charts.processingTitle')}
                   </h3>
                   <RangeBars
                     title={t('visasPage.charts.processingAria')}
@@ -260,29 +269,27 @@ export default function Visas() {
       <section className="pb-16 sm:pb-20 lg:pb-28">
         <div className="container-x">
           <Reveal>
-            <div className="grid overflow-hidden rounded-3xl border border-line bg-surface lg:grid-cols-[1.25fr_1fr] lg:rounded-[2rem]">
+            <div className="grid overflow-hidden rounded-3xl border border-line bg-card shadow-[var(--tv-shadow-card)] lg:grid-cols-[1.25fr_1fr]">
               <div className="p-6 sm:p-10 lg:p-14">
                 <span className="eyebrow">
                   <Compass className="size-4" /> {t('visasPage.fit.eyebrow')}
                 </span>
-                <h2 className="mt-3 font-display text-[1.6rem] leading-tight font-extrabold text-navy-900 text-balance sm:text-4xl">{t('visasPage.fit.title')}</h2>
-                <p className="mt-4 max-w-xl text-sm leading-relaxed text-muted sm:text-base">{t('visasPage.fit.text')}</p>
+                <h2 className="h-section mt-3 text-balance">{t('visasPage.fit.title')}</h2>
+                <p className="mt-4 max-w-[65ch] leading-relaxed text-muted">{t('visasPage.fit.text')}</p>
                 <ul className="mt-6 grid gap-2.5 sm:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3">
                   {(
                     t('visasPage.fit.points', {
                       returnObjects: true,
                     }) as string[]
                   ).map((p) => (
-                    <li key={p} className="flex items-start gap-2 text-sm font-semibold text-navy-900">
+                    <li key={p} className="flex items-start gap-2 text-sm font-semibold text-ink">
                       <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-success" /> {p}
                     </li>
                   ))}
                 </ul>
-                <Magnetic className="mt-8">
-                  <Link to="/eligibility" className="btn-primary group">
-                    {t('visasPage.fit.button')} <ArrowRight className="size-4 transition group-hover:translate-x-1" />
-                  </Link>
-                </Magnetic>
+                <Link to="/eligibility" className={buttonClass({ size: 'lg', className: 'mt-8' })}>
+                  {t('visasPage.fit.button')} <ArrowRight className="size-4" aria-hidden />
+                </Link>
               </div>
               <FitIllustration />
             </div>
@@ -302,38 +309,9 @@ export default function Visas() {
   );
 }
 
-/** Static "matching" illustration: a profile card linked to three visa options, one highlighted. */
+/** Decorative drawing beside the "Which visa fits me?" teaser (warm sand panel, follows the theme). */
 const FitIllustration = () => (
-  <div className="relative hidden min-h-[320px] items-center justify-center bg-navy-950 p-10 sm:flex" aria-hidden>
-    <div className="absolute inset-0 opacity-[0.08] [background-image:radial-gradient(white_1px,transparent_1px)] [background-size:18px_18px]" />
-    <svg viewBox="0 0 360 240" className="relative w-full max-w-md">
-      <defs>
-        <linearGradient id="fit-g" x1="0" x2="1">
-          <stop offset="0" stopColor="#2f7bff" />
-          <stop offset="1" stopColor="#1565e8" />
-        </linearGradient>
-      </defs>
-      <rect x="10" y="80" width="120" height="80" rx="14" fill="#112b5c" stroke="#18397a" />
-      <circle cx="40" cy="110" r="13" fill="#5c9bff" />
-      <rect x="60" y="102" width="56" height="7" rx="3.5" fill="#ffffff" opacity="0.7" />
-      <rect x="60" y="114" width="38" height="6" rx="3" fill="#ffffff" opacity="0.35" />
-      <rect x="26" y="134" width="88" height="6" rx="3" fill="#ffffff" opacity="0.25" />
-      {[40, 120, 200].map((y, i) => (
-        <g key={y}>
-          <path
-            d={`M130 120 C 180 120, 190 ${y + 20}, 230 ${y + 20}`}
-            fill="none"
-            stroke={i === 1 ? '#2f7bff' : '#18397a'}
-            strokeWidth={i === 1 ? 3 : 2}
-            strokeDasharray={i === 1 ? undefined : '5 5'}
-          />
-          <rect x="230" y={y} width="120" height="40" rx="10" fill={i === 1 ? 'url(#fit-g)' : '#0b1f44'} stroke={i === 1 ? 'none' : '#18397a'} />
-          <rect x="246" y={y + 12} width={i === 1 ? 70 : 60} height="7" rx="3.5" fill="#ffffff" opacity={i === 1 ? 0.95 : 0.4} />
-          <rect x="246" y={y + 24} width="40" height="5" rx="2.5" fill="#ffffff" opacity={i === 1 ? 0.6 : 0.2} />
-          {i === 1 && <circle cx="334" cy={y + 20} r="8" fill="#12a150" />}
-          {i === 1 && <path d={`M330 ${y + 20} l3 3 l5 -6`} stroke="#fff" strokeWidth="2" fill="none" strokeLinecap="round" />}
-        </g>
-      ))}
-    </svg>
+  <div className="hidden items-center justify-center bg-sunken p-10 sm:flex" aria-hidden>
+    <Traveller className="w-full max-w-sm" />
   </div>
 );

@@ -129,7 +129,7 @@ export const FourEyesPanel = ({ c }: { c: CaseDetail }) => {
     >
       <p className="text-xs text-muted">{t('postArrival.fourEyes.subtitle')}</p>
       {!d.enabled ? (
-        <p className="rounded-lg bg-surface px-3 py-2 text-xs text-muted">{t('postArrival.fourEyes.off')}</p>
+        <p className="rounded-lg bg-sunken px-3 py-2 text-xs text-muted">{t('postArrival.fourEyes.off')}</p>
       ) : (
         <p className={clsx('flex items-start gap-2 rounded-lg px-3 py-2 text-xs', d.cleared ? TONE_CLASS.success : TONE_CLASS.warning)}>
           {d.cleared ? <CheckCircle2 className="mt-0.5 size-3.5 shrink-0" aria-hidden /> : <AlertTriangle className="mt-0.5 size-3.5 shrink-0" aria-hidden />}
@@ -146,15 +146,15 @@ export const FourEyesPanel = ({ c }: { c: CaseDetail }) => {
             </p>
           )}
           {latest.comment && <p className="mt-1 break-words whitespace-pre-line">“{latest.comment}”</p>}
-          {pending && <p className="mt-1 text-xs font-semibold text-brand-700">{d.canReview ? t('postArrival.fourEyes.waitingYou') : t('postArrival.fourEyes.waitingOther')}</p>}
-          {d.current.changedSinceRequest && <p className="mt-1 text-xs text-amber-700">{t('postArrival.fourEyes.changed')}</p>}
+          {pending && <p className="mt-1 text-xs font-semibold text-link">{d.canReview ? t('postArrival.fourEyes.waitingYou') : t('postArrival.fourEyes.waitingOther')}</p>}
+          {d.current.changedSinceRequest && <p className="mt-1 text-xs text-warning-fg">{t('postArrival.fourEyes.changed')}</p>}
         </div>
       )}
 
       {/* Review form: a different staff member than the requester. */}
       {d.enabled && d.canReview && (
         <form
-          className="space-y-3 rounded-lg bg-surface p-3"
+          className="space-y-3 rounded-lg bg-sunken p-3"
           onSubmit={(e) => {
             e.preventDefault();
             review.mutate('APPROVE');
@@ -179,7 +179,7 @@ export const FourEyesPanel = ({ c }: { c: CaseDetail }) => {
             <span className="mt-1 block text-[11px] text-muted">{t('postArrival.fourEyes.commentHint')}</span>
           </label>
           <div className="flex flex-wrap justify-end gap-2">
-            <button type="button" className="btn-secondary btn-sm text-red-700" disabled={review.isPending || !comment.trim()} onClick={() => review.mutate('REJECT')}>
+            <button type="button" className="btn-secondary btn-sm text-danger-fg" disabled={review.isPending || !comment.trim()} onClick={() => review.mutate('REJECT')}>
               <XCircle className="size-3.5" aria-hidden /> {t('postArrival.fourEyes.reject')}
             </button>
             <button type="submit" className="btn-primary btn-sm" disabled={review.isPending || !allTicked}>
@@ -222,7 +222,7 @@ export const FourEyesPanel = ({ c }: { c: CaseDetail }) => {
       )}
 
       {d.enabled && d.canOverride && !d.cleared && (
-        <button type="button" className="inline-flex min-h-9 items-center gap-1.5 text-xs font-semibold text-red-700 hover:underline" onClick={() => setOverrideOpen(true)}>
+        <button type="button" className="inline-flex min-h-9 items-center gap-1.5 text-xs font-semibold text-danger-fg hover:underline" onClick={() => setOverrideOpen(true)}>
           <ShieldAlert className="size-3.5" aria-hidden /> {t('postArrival.fourEyes.override')}
         </button>
       )}
@@ -256,7 +256,7 @@ export const FourEyesPanel = ({ c }: { c: CaseDetail }) => {
             <textarea className="input" rows={3} minLength={5} maxLength={2000} required value={reason} onChange={(e) => setReason(e.target.value)} />
           </label>
           <div className="flex justify-end gap-2">
-            <button type="button" className="btn-ghost btn-sm" onClick={() => setOverrideOpen(false)}>
+            <button type="button" className="btn-secondary btn-sm" onClick={() => setOverrideOpen(false)}>
               {t('postArrival.fourEyes.cancel')}
             </button>
             <button type="submit" className="btn-primary btn-sm" disabled={override.isPending || reason.trim().length < 5}>

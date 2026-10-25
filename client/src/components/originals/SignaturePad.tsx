@@ -72,7 +72,7 @@ export const SignaturePad = ({ label, onChange }: { label: string; onChange: (pn
     <div>
       <div className="mb-1 flex items-center justify-between">
         <span className="text-xs font-semibold text-muted">{label}</span>
-        <button type="button" onClick={clear} className="inline-flex min-h-8 items-center gap-1 rounded-md px-2 text-xs text-muted hover:bg-surface hover:text-ink">
+        <button type="button" onClick={clear} className="inline-flex min-h-8 items-center gap-1 rounded-md px-2 text-xs text-muted hover:bg-sunken hover:text-ink">
           <Eraser className="size-3.5" aria-hidden />
           {t('originals.form.clear')}
         </button>
@@ -80,7 +80,7 @@ export const SignaturePad = ({ label, onChange }: { label: string; onChange: (pn
       <div className="relative">
         <canvas
           ref={ref}
-          className="block h-32 w-full touch-none rounded-lg border border-dashed border-line bg-white"
+          className="block h-32 w-full touch-none rounded-lg border border-dashed border-line bg-card"
           onPointerDown={down}
           onPointerMove={move}
           onPointerUp={up}
@@ -89,7 +89,7 @@ export const SignaturePad = ({ label, onChange }: { label: string; onChange: (pn
           aria-label={`${label}: ${t('originals.form.signHere')}`}
           role="img"
         />
-        {empty && <span className="pointer-events-none absolute inset-0 grid place-items-center text-xs text-muted/70">{t('originals.form.signHere')}</span>}
+        {empty && <span className="pointer-events-none absolute inset-0 grid place-items-center text-xs text-muted">{t('originals.form.signHere')}</span>}
       </div>
     </div>
   );

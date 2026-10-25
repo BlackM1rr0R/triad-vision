@@ -57,7 +57,7 @@ export const AdminPublicAdvisor = () => {
   return (
     <Panel title={t('pai.admin.title')} icon={Globe} className="bg-card">
       <div className="space-y-4">
-        <div className="flex items-start justify-between gap-4 rounded-lg border border-line bg-surface p-3">
+        <div className="flex items-start justify-between gap-4 rounded-lg border border-line bg-sunken p-3">
           <div>
             <p className="text-sm font-semibold text-ink">{t('pai.admin.enabled')}</p>
             <p className="mt-0.5 text-xs text-muted">{t('pai.admin.enabledHint')}</p>

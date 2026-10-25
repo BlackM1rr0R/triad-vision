@@ -66,7 +66,7 @@ const FieldEditor = ({
   const fitting = targets.filter((tg) => f.type !== 'file' && (tg.entity === 'videx' || tg.kind === 'longtext' || (f.type !== 'group' && f.type !== 'multi' && (tg.kind === 'text' || (tg.kind === 'date' && f.type === 'date') || (tg.kind === 'int' && f.type === 'number') || ((tg.kind === 'level' || tg.kind === 'education') && f.type === 'select') || (tg.kind === 'passport' && f.type === 'text')))));
   const set = (patch: Partial<FormField>) => onChange({ ...f, ...patch });
   return (
-    <fieldset disabled={readOnly} className={clsx('space-y-3 rounded-xl border border-line p-3 sm:p-4', sub ? 'bg-surface' : 'bg-white')}>
+    <fieldset disabled={readOnly} className={clsx('space-y-3 rounded-xl border border-line p-3 sm:p-4', sub ? 'bg-sunken' : 'bg-card')}>
       <div className="flex flex-wrap items-end gap-2">
         <label className="block min-w-[8rem] flex-1 text-xs font-semibold text-ink/80">
           {t('clientData.builder.key')}
@@ -94,7 +94,7 @@ const FieldEditor = ({
             <button type="button" className="grid size-9 place-items-center rounded-md border border-line text-muted hover:text-ink" aria-label={t('clientData.builder.moveDown')} onClick={() => onMove(1)}>
               <ArrowDown className="size-4" aria-hidden />
             </button>
-            <button type="button" className="grid size-9 place-items-center rounded-md border border-line text-muted hover:text-red-600" aria-label={t('clientData.builder.removeField')} onClick={onRemove}>
+            <button type="button" className="grid size-9 place-items-center rounded-md border border-line text-muted hover:text-danger-fg" aria-label={t('clientData.builder.removeField')} onClick={onRemove}>
               <Trash2 className="size-4" aria-hidden />
             </button>
           </div>
@@ -114,7 +114,7 @@ const FieldEditor = ({
               </label>
               <L10nInput label={t('clientData.builder.optionLabel')} value={o.label} onChange={(v) => set({ options: f.options!.map((x, j) => (j === i ? { ...x, label: v } : x)) })} anyLang />
               {!readOnly && (
-                <button type="button" className="grid size-9 place-items-center rounded-md text-muted hover:text-red-600" aria-label={t('clientData.common.remove')} onClick={() => set({ options: f.options!.filter((_, j) => j !== i) })}>
+                <button type="button" className="grid size-9 place-items-center rounded-md text-muted hover:text-danger-fg" aria-label={t('clientData.common.remove')} onClick={() => set({ options: f.options!.filter((_, j) => j !== i) })}>
                   <Trash2 className="size-4" aria-hidden />
                 </button>
               )}
@@ -299,7 +299,7 @@ export default function CaseFormsPage() {
           <ul className="space-y-1">
             {data.map((tp) => (
               <li key={tp.id}>
-                <button type="button" onClick={() => { setDraft(fromTemplate(tp)); setPreview(false); }} className={clsx('flex min-h-11 w-full items-center justify-between gap-2 rounded-lg px-3 py-2 text-left text-sm transition', draft?.id === tp.id ? 'bg-brand-50 font-semibold text-brand-800 dark:bg-brand-950/40 dark:text-brand-200' : 'text-ink hover:bg-surface')}>
+                <button type="button" onClick={() => { setDraft(fromTemplate(tp)); setPreview(false); }} className={clsx('flex min-h-10 sm:min-h-9 w-full items-center justify-between gap-2 rounded-lg px-3 py-2 text-left text-sm transition', draft?.id === tp.id ? 'bg-primary/[0.06] font-semibold text-ink dark:bg-brand-950/40 dark:text-brand-200' : 'text-ink hover:bg-sunken')}>
                   <span className="min-w-0 break-words">{tr(tp.title)}</span>
                   <span className="flex shrink-0 gap-1">
                     {tp.builtIn && <span className="badge bg-neutral-bg text-[10px] text-neutral-fg">{t('clientData.builder.builtIn')}</span>}
@@ -330,7 +330,7 @@ export default function CaseFormsPage() {
                   </button>
                 )}
                 {canEdit && draft.id && (
-                  <button type="button" className="btn-secondary btn-sm text-red-700" disabled={busy} onClick={() => void remove()}>
+                  <button type="button" className="btn-secondary btn-sm text-danger-fg" disabled={busy} onClick={() => void remove()}>
                     <Trash2 className="size-3.5" aria-hidden /> {draft.builtIn ? t('clientData.builder.deactivate') : t('clientData.builder.delete')}
                   </button>
                 )}
@@ -342,7 +342,7 @@ export default function CaseFormsPage() {
               </>
             }
           >
-            {!canEdit && <p className="mb-4 rounded-lg bg-surface px-3 py-2 text-xs text-muted">{t('clientData.builder.readOnly')}</p>}
+            {!canEdit && <p className="mb-4 rounded-lg bg-sunken px-3 py-2 text-xs text-muted">{t('clientData.builder.readOnly')}</p>}
             {preview ? (
               <div className="mx-auto max-w-2xl">
                 <FormRenderer fields={draft.fields} answers={previewAnswers} onChange={setPreviewAnswers} />
@@ -357,7 +357,7 @@ export default function CaseFormsPage() {
                     {t('clientData.builder.active')}
                   </label>
                 </fieldset>
-                <h3 className="text-sm font-semibold text-navy-900">{t('clientData.builder.fields', { count: draft.fields.length })}</h3>
+                <h3 className="text-sm font-semibold text-ink">{t('clientData.builder.fields', { count: draft.fields.length })}</h3>
                 {draft.fields.map((f, i) => (
                   <FieldEditor
                     key={i}
@@ -380,7 +380,7 @@ export default function CaseFormsPage() {
                 {canEdit && (
                   <div className="flex flex-wrap gap-2">
                     {FIELD_TYPES.map((ft) => (
-                      <button key={ft} type="button" className="btn-white btn-sm border border-dashed border-line" onClick={() => setFields([...draft.fields, newField(ft, keys)])}>
+                      <button key={ft} type="button" className="btn-secondary btn-sm border border-dashed border-line" onClick={() => setFields([...draft.fields, newField(ft, keys)])}>
                         <Plus className="size-3.5" aria-hidden /> {t(`clientData.fieldType.${ft}`)}
                       </button>
                     ))}

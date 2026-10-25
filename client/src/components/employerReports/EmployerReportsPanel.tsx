@@ -78,7 +78,7 @@ export const EmployerReportsPanel = ({ companyId }: { companyId: string }) => {
             <option value="en">English</option>
           </select>
         </div>
-        <a href={validMonth ? previewUrl : undefined} target="_blank" rel="noopener noreferrer" className="btn-ghost btn-sm" aria-disabled={!validMonth}>
+        <a href={validMonth ? previewUrl : undefined} target="_blank" rel="noopener noreferrer" className="btn-secondary btn-sm" aria-disabled={!validMonth}>
           <Eye className="size-3.5" aria-hidden /> {t('employerReports.admin.preview')}
         </a>
         <button type="button" className="btn-primary btn-sm" disabled={!validMonth || generate.isPending} onClick={() => generate.mutate()}>
@@ -97,7 +97,7 @@ export const EmployerReportsPanel = ({ companyId }: { companyId: string }) => {
           {q.data.items.map((r) => (
             <li key={r.id} className="flex flex-wrap items-center justify-between gap-2 py-2.5 text-sm">
               <span className="min-w-0">
-                <a href={`/api/admin/employer-reports/${r.id}/pdf`} target="_blank" rel="noopener noreferrer" className="font-semibold text-brand-700 capitalize hover:underline">
+                <a href={`/api/admin/employer-reports/${r.id}/pdf`} target="_blank" rel="noopener noreferrer" className="font-semibold text-link capitalize hover:underline">
                   {monthLabel(r.month, i18n.language)} · {r.lang.toUpperCase()}
                 </a>
                 <span className="block text-xs text-muted">{r.sentAt ? t('employerReports.admin.sent', { date: fmtDate(r.sentAt) }) : t('employerReports.admin.notSent')}</span>

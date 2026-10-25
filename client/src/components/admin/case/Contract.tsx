@@ -62,7 +62,7 @@ export const ContractUpload = ({
       />
       <button
         type="button"
-        className={variant === 'primary' ? 'btn-primary btn-sm' : 'btn-white btn-sm border border-line'}
+        className={variant === 'primary' ? 'btn-primary btn-sm' : 'btn-secondary btn-sm'}
         disabled={disabled || busy}
         onClick={() => ref.current?.click()}
       >
@@ -107,20 +107,20 @@ export const ContractBox = ({ c }: { c: CaseDetail }) => {
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
             <div className="flex items-center gap-2">
-              <span className="badge bg-navy-900 text-white">v{k.version}</span>
+              <span className="badge bg-primary text-primary-contrast">v{k.version}</span>
               <span className="min-w-0 text-xs text-muted">{t('admin.case.contract.sentAt', { date: fmtDateTime(k.sentAt) })}</span>
             </div>
             {k.file && (
               <div className="flex items-center gap-2 rounded-lg border border-line bg-surface/60 px-3 py-2">
-                <DocIcon mime={k.file.mimeType} className="size-4 shrink-0 text-brand-600" />
+                <DocIcon mime={k.file.mimeType} className="size-4 shrink-0 text-link" />
                 <span className="min-w-0 flex-1 truncate text-sm">{k.file.originalName}</span>
                 <DocLinks doc={k.file} />
               </div>
             )}
             {k.signedFile ? (
-              <div className="flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2">
-                <FileSignature className="size-4 shrink-0 text-success" aria-hidden />
-                <span className="min-w-0 flex-1 truncate text-sm font-medium text-emerald-900">{t('admin.case.contract.signed')}</span>
+              <div className="flex items-center gap-2 rounded-lg border border-success-border bg-success-bg px-3 py-2">
+                <FileSignature className="size-4 shrink-0 text-success-fg" aria-hidden />
+                <span className="min-w-0 flex-1 truncate text-sm font-medium text-success-fg">{t('admin.case.contract.signed')}</span>
                 <DocLinks doc={k.signedFile} />
               </div>
             ) : (
@@ -136,10 +136,10 @@ export const ContractBox = ({ c }: { c: CaseDetail }) => {
                 {fmtDateTime(k.signedAt)}
               </Row>
               <Row icon={Globe} label={t('admin.case.contract.ip')}>
-                <span className="font-mono text-xs">{k.signerIp ?? '—'}</span>
+                <span className="code-id text-xs">{k.signerIp ?? '—'}</span>
               </Row>
               <Row icon={Monitor} label={t('admin.case.contract.ua')}>
-                <span className="font-mono text-[11px] leading-snug text-ink/80">{k.signerUserAgent ?? '—'}</span>
+                <span className="code-id text-[11px] leading-snug text-ink/80">{k.signerUserAgent ?? '—'}</span>
               </Row>
             </div>
           )}

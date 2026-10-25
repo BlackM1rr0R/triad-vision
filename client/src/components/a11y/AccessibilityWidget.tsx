@@ -120,7 +120,7 @@ export const AccessibilityWidget = ({ standalone = false, panelClass }: { standa
       onClick={() => (open ? close() : setOpen(true))}
       onPointerEnter={() => void loadPanel()}
       onFocus={() => void loadPanel()}
-      className="grid size-14 place-items-center rounded-full bg-brand-600 text-white shadow-xl shadow-brand-600/40 hover:bg-brand-700"
+      className="grid size-14 place-items-center rounded-full bg-primary text-primary-contrast shadow-[var(--tv-shadow-raised)] hover:bg-primary-hover"
     >
       <Accessibility className="size-7" aria-hidden />
     </motion.button>

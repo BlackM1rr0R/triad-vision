@@ -3,6 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { MapPin, Play, Quote, RotateCcw } from 'lucide-react';
 import clsx from 'clsx';
 import { SectionHeading } from '@/components/ui/SectionHeading';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { SearchEmpty } from '@/components/illustrations';
 import { Reveal } from '@/components/motion';
 import { useL10n } from '@/lib/l10n';
 import { registerCopy } from '@/i18n';
@@ -68,10 +70,10 @@ const VideoPlayer = ({ item, title }: { item: Testimonial; title: string }) => {
       className="group relative block aspect-video w-full overflow-hidden rounded-t-2xl bg-navy-900 text-left"
       aria-label={t('discover.stories.play', { name: title })}
     >
-      {poster ? <img src={poster} alt="" loading="lazy" decoding="async" className="size-full object-cover opacity-90 transition duration-700 group-hover:scale-105" /> : null}
-      <span className="absolute inset-0 bg-gradient-to-t from-navy-950/70 via-navy-950/10 to-transparent" aria-hidden />
+      {poster ? <img src={poster} alt="" loading="lazy" decoding="async" className="size-full object-cover" /> : null}
+      <span className="absolute inset-0 bg-navy-950/15" aria-hidden />
       <span className="absolute inset-0 grid place-items-center" aria-hidden>
-        <span className="grid size-16 place-items-center rounded-full bg-white/95 text-brand-700 shadow-xl transition group-hover:scale-110">
+        <span className="grid size-16 place-items-center rounded-full bg-card text-ink shadow-[var(--tv-shadow-raised)]">
           <Play className="ml-1 size-7 fill-current" />
         </span>
       </span>
@@ -134,7 +136,7 @@ export const VideoStories = ({ testimonials, fallbackHeading }: { testimonials: 
               </div>
             ))}
             {active && (
-              <button type="button" className="btn-ghost btn-sm mb-0.5" onClick={() => setFilters({ profession: '', country: '', city: '', visa: '' })}>
+              <button type="button" className="btn-secondary mb-0.5" onClick={() => setFilters({ profession: '', country: '', city: '', visa: '' })}>
                 <RotateCcw className="size-4" aria-hidden /> {t('discover.stories.filters.reset')}
               </button>
             )}
@@ -144,7 +146,7 @@ export const VideoStories = ({ testimonials, fallbackHeading }: { testimonials: 
           {t('discover.stories.count', { count: list.length })}
         </p>
         {list.length === 0 ? (
-          <p className="card card-pad text-center text-sm text-muted">{t('discover.stories.noMatch')}</p>
+          <EmptyState className="rounded-3xl border border-line bg-card" illustration={<SearchEmpty />} title={t('discover.stories.noMatch')} />
         ) : (
           <ul className="grid-cards md:grid-cols-2 xl:grid-cols-3">
             {list.map((s, i) => {
@@ -157,16 +159,16 @@ export const VideoStories = ({ testimonials, fallbackHeading }: { testimonials: 
                     <figure className={clsx('card flex h-full flex-col overflow-hidden', !video && 'p-0')}>
                       {video && <VideoPlayer item={s} title={[name, tr(s.role)].filter(Boolean).join(' — ')} />}
                       <div className="flex flex-1 flex-col p-6">
-                        {!video && <Quote className="size-8 text-brand-500" aria-hidden />}
-                        <blockquote className={clsx('flex-1 text-[0.97rem] leading-relaxed text-navy-900/85', !video && 'mt-3')}>„{tr(s.quote)}“</blockquote>
+                        {!video && <Quote className="size-8 text-highlight" aria-hidden />}
+                        <blockquote className={clsx('flex-1 text-[0.97rem] leading-relaxed text-ink/85', !video && 'mt-3')}>„{tr(s.quote)}“</blockquote>
                         <figcaption className="mt-5 border-t border-line pt-4">
-                          <span className="block text-sm font-bold text-navy-900">{name}</span>
+                          <span className="block text-sm font-bold text-ink">{name}</span>
                           {tr(s.role) && <span className="block text-xs text-muted">{tr(s.role)}</span>}
                           {chips.length > 0 && (
                             <span className="mt-3 flex flex-wrap gap-1.5">
                               {chips.map((c, ci) => (
-                                <span key={`${c}-${ci}`} className="inline-flex items-center gap-1 rounded-full bg-surface px-2.5 py-1 text-[11px] font-semibold text-navy-900">
-                                  {c === s.city && <MapPin className="size-3 text-brand-600" aria-hidden />} {c}
+                                <span key={`${c}-${ci}`} className="inline-flex items-center gap-1 rounded-full bg-sunken px-2.5 py-1 text-[11px] font-semibold text-ink">
+                                  {c === s.city && <MapPin className="size-3 text-muted" aria-hidden />} {c}
                                 </span>
                               ))}
                             </span>

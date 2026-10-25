@@ -26,7 +26,7 @@ const chipTone = (task: TaskCard) => {
   if (s === 'done') return `${TONE_CLASS.neutral} line-through decoration-1`;
   if (s === 'overdue') return TONE_CLASS.danger;
   if (task.priority === 'URGENT' || task.priority === 'HIGH') return TONE_CLASS.warning;
-  return 'bg-brand-50 text-ink';
+  return 'bg-primary/[0.06] text-ink';
 };
 
 /** Month grid by deadline. Click a day to create a task due that day; drag a task to another day to move its deadline. */
@@ -89,7 +89,7 @@ export const CalendarView = ({
         onOpen(task);
       }}
       title={`${task.key} · ${task.title}`}
-      className={clsx('flex w-full min-w-0 items-center gap-1.5 rounded-md px-1.5 py-1 text-left text-[0.72rem] leading-tight font-medium transition hover:ring-1 hover:ring-brand-400', chipTone(task))}
+      className={clsx('flex w-full min-w-0 items-center gap-1.5 rounded-md px-1.5 py-1 text-left text-[0.72rem] leading-tight font-medium transition hover:ring-1 hover:ring-focus', chipTone(task))}
     >
       <span className={clsx('size-1.5 shrink-0 rounded-full', STATUS_DOT[task.status])} aria-hidden />
       <span className="shrink-0 tabular-nums opacity-70">{fmtTime(task.dueAt!)}</span>
@@ -104,16 +104,16 @@ export const CalendarView = ({
     <div className="flex h-full flex-col">
       <div className="flex items-center gap-2 px-4 pt-4 lg:px-6">
         <h2 className="mr-2 font-display text-lg font-bold text-ink">{monthLabel}</h2>
-        <button type="button" onClick={() => shift(-1)} className="grid size-9 place-items-center rounded-lg border border-line bg-card text-ink hover:bg-surface" aria-label={t('tasks.actions.prev')}>
+        <button type="button" onClick={() => shift(-1)} className="grid size-9 place-items-center rounded-lg border border-line bg-card text-ink hover:bg-sunken" aria-label={t('tasks.actions.prev')}>
           <ChevronLeft className="size-4" />
         </button>
-        <button type="button" onClick={() => shift(1)} className="grid size-9 place-items-center rounded-lg border border-line bg-card text-ink hover:bg-surface" aria-label={t('tasks.actions.next')}>
+        <button type="button" onClick={() => shift(1)} className="grid size-9 place-items-center rounded-lg border border-line bg-card text-ink hover:bg-sunken" aria-label={t('tasks.actions.next')}>
           <ChevronRight className="size-4" />
         </button>
-        <button type="button" onClick={() => onMonth(new Date(new Date().getFullYear(), new Date().getMonth(), 1))} className="h-9 rounded-lg border border-line bg-card px-3 text-sm font-semibold text-ink hover:bg-surface">
+        <button type="button" onClick={() => onMonth(new Date(new Date().getFullYear(), new Date().getMonth(), 1))} className="h-9 rounded-lg border border-line bg-card px-3 text-sm font-semibold text-ink hover:bg-sunken">
           {t('tasks.actions.today')}
         </button>
-        {loading && <Spinner className="ml-2 size-4 text-brand-500" />}
+        {loading && <Spinner className="ml-2 size-4 text-link" />}
         <p className="ml-auto hidden text-xs text-muted xl:block">{t('tasks.calendar.noDue')}</p>
       </div>
 
@@ -127,10 +127,10 @@ export const CalendarView = ({
             return (
               <li key={k} className="rounded-xl border border-line bg-card p-3">
                 <div className="mb-2 flex items-center justify-between">
-                  <span className={clsx('text-sm font-bold', k === today ? 'text-brand-600' : 'text-ink')}>
+                  <span className={clsx('text-sm font-bold', k === today ? 'text-link' : 'text-ink')}>
                     {weekdayNames()[(d.getDay() + 6) % 7]}, {d.getDate()}
                   </span>
-                  <button type="button" onClick={() => onCreateOn(k)} className="grid size-8 place-items-center rounded-lg text-muted hover:text-brand-600" aria-label={t('tasks.actions.newOnDay')}>
+                  <button type="button" onClick={() => onCreateOn(k)} className="grid size-8 place-items-center rounded-lg text-muted hover:text-link" aria-label={t('tasks.actions.newOnDay')}>
                     <Plus className="size-4" />
                   </button>
                 </div>
@@ -143,14 +143,14 @@ export const CalendarView = ({
 
       {/* Tablet / desktop: month grid */}
       <div className="hidden min-h-0 flex-1 flex-col px-4 py-4 sm:flex lg:px-6">
-        <div className="grid grid-cols-7 gap-px rounded-t-2xl border border-b-0 border-line bg-line">
+        <div className="grid grid-cols-7 gap-px rounded-t-xl border border-b-0 border-line bg-line">
           {weekdayNames().map((w, i) => (
-            <div key={w} className={clsx('bg-surface px-2 py-2 text-center text-xs font-semibold tracking-wide text-muted uppercase', i === 0 && 'rounded-tl-2xl', i === 6 && 'rounded-tr-2xl')}>
+            <div key={w} className={clsx('bg-sunken px-2 py-2 text-center text-xs font-semibold tracking-wide text-muted uppercase', i === 0 && 'rounded-tl-xl', i === 6 && 'rounded-tr-xl')}>
               {w}
             </div>
           ))}
         </div>
-        <div className="grid min-h-0 flex-1 grid-cols-7 grid-rows-6 gap-px overflow-hidden rounded-b-2xl border border-line bg-line">
+        <div className="grid min-h-0 flex-1 grid-cols-7 grid-rows-6 gap-px overflow-hidden rounded-b-xl border border-line bg-line">
           {days.map((d) => {
             const k = dayKey(d);
             const list = byDay.get(k) ?? [];
@@ -176,16 +176,16 @@ export const CalendarView = ({
                 title={t('tasks.actions.newOnDay')}
                 className={clsx(
                   'group relative flex min-h-0 cursor-pointer flex-col gap-1 p-1.5 transition-colors',
-                  other ? 'bg-surface' : weekend ? 'bg-card/80' : 'bg-card',
-                  overDay === k && 'bg-brand-50 ring-2 ring-brand-400 ring-inset',
-                  'hover:bg-brand-50/50',
+                  other ? 'bg-sunken' : weekend ? 'bg-card/80' : 'bg-card',
+                  overDay === k && 'bg-primary/[0.06] ring-2 ring-focus ring-inset',
+                  'hover:bg-primary/[0.04]',
                 )}
               >
                 <div className="flex items-center justify-between">
                   <span
                     className={clsx(
                       'grid size-6 place-items-center rounded-full text-xs font-semibold tabular-nums',
-                      k === today ? 'bg-brand-600 text-white' : other ? 'text-muted/60' : 'text-ink',
+                      k === today ? 'bg-primary text-primary-contrast' : other ? 'text-muted' : 'text-ink',
                     )}
                   >
                     {d.getDate()}
@@ -200,7 +200,7 @@ export const CalendarView = ({
                       e.stopPropagation();
                       setExpanded(k);
                     }}
-                    className="self-start rounded px-1.5 text-[0.7rem] font-semibold text-brand-600 hover:underline"
+                    className="self-start rounded px-1.5 text-[0.7rem] font-semibold text-link hover:underline"
                   >
                     {t('tasks.calendar.more', { count: list.length - MAX_IN_CELL })}
                   </button>

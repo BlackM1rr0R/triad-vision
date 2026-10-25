@@ -51,7 +51,7 @@ const KEY = ['admin-arrivals'] as const;
 const Section = ({ title, icon: Icon, children }: { title: string; icon: typeof Plane; children: ReactNode }) => (
   <section className="rounded-xl border border-line bg-card p-4">
     <h3 className="mb-2 flex items-center gap-2 text-xs font-bold tracking-wide text-muted uppercase">
-      <Icon className="size-4 text-brand-600" aria-hidden /> {title}
+      <Icon className="size-4 text-link" aria-hidden /> {title}
     </h3>
     {children}
   </section>
@@ -122,13 +122,13 @@ const Drawer = ({ caseId, onClose }: { caseId: string; onClose: () => void }) =>
       closeLabel={t('arrival.admin.detail.back')}
       title={
         <span className="flex items-center gap-2">
-          <PlaneLanding className="size-5 shrink-0 text-brand-600" aria-hidden />
+          <PlaneLanding className="size-5 shrink-0 text-link" aria-hidden />
           <span className="truncate">{plan ? personName(plan.client) : '…'}</span>
         </span>
       }
       description={plan ? <span className="block truncate text-xs">{plan.case.number} · {plan.case.profession}</span> : undefined}
       headerActions={plan ? <ArrivalStatusPill status={plan.status} /> : undefined}
-      bodyClassName="space-y-4 bg-surface"
+      bodyClassName="space-y-4 bg-sunken"
       footer={
         plan && (
           <div className="flex w-full flex-wrap items-center gap-2">
@@ -138,16 +138,16 @@ const Drawer = ({ caseId, onClose }: { caseId: string; onClose: () => void }) =>
             <span className="flex-1" />
             {can('CONFIRMED') && (
               <button type="button" className="btn-secondary btn-sm" disabled={save.isPending} onClick={() => save.mutate('CONFIRMED')}>
-                <CheckCircle2 className="size-4 text-success" aria-hidden /> {t('arrival.admin.detail.confirm')}
+                <CheckCircle2 className="size-4 text-success-fg" aria-hidden /> {t('arrival.admin.detail.confirm')}
               </button>
             )}
             {can('COMPLETED') && (
               <button type="button" className="btn-secondary btn-sm" disabled={save.isPending} onClick={() => save.mutate('COMPLETED')}>
-                <PlaneLanding className="size-4 text-brand-600" aria-hidden /> {t('arrival.admin.detail.complete')}
+                <PlaneLanding className="size-4 text-link" aria-hidden /> {t('arrival.admin.detail.complete')}
               </button>
             )}
             {can('CANCELLED') && (
-              <button type="button" className="btn-sm inline-flex items-center gap-1.5 rounded-lg px-3 font-semibold text-danger hover:bg-red-50" disabled={save.isPending} onClick={() => save.mutate('CANCELLED')}>
+              <button type="button" className="btn-sm inline-flex items-center gap-1.5 rounded-lg px-3 font-semibold text-danger-fg hover:bg-danger-bg" disabled={save.isPending} onClick={() => save.mutate('CANCELLED')}>
                 <XCircle className="size-4" aria-hidden /> {t('arrival.admin.detail.cancel')}
               </button>
             )}
@@ -166,20 +166,20 @@ const Drawer = ({ caseId, onClose }: { caseId: string; onClose: () => void }) =>
               <Section title={t('arrival.admin.detail.client')} icon={Mail}>
                 <dl>
                   <Def label="E-mail">
-                    <a href={`mailto:${plan.client.email}`} className="text-brand-700 hover:underline">
+                    <a href={`mailto:${plan.client.email}`} className="text-link hover:underline">
                       {plan.client.email}
                     </a>
                   </Def>
                   {plan.client.phone && (
                     <Def label={<Phone className="inline size-3.5" aria-label="Phone" />}>
-                      <a href={`tel:${plan.client.phone}`} className="text-brand-700 hover:underline">
+                      <a href={`tel:${plan.client.phone}`} className="text-link hover:underline">
                         {plan.client.phone}
                       </a>
                     </Def>
                   )}
                   <Def label={t('arrival.admin.detail.submittedAt')}>{f.dateTime(plan.submittedAt)}</Def>
                 </dl>
-                <Link to={`/admin/cases/${plan.case.id}`} className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-brand-700 hover:underline">
+                <Link to={`/admin/cases/${plan.case.id}`} className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-link hover:underline">
                   <ExternalLink className="size-3.5" aria-hidden /> {t('arrival.admin.detail.openCase')}
                 </Link>
               </Section>
@@ -191,7 +191,7 @@ const Drawer = ({ caseId, onClose }: { caseId: string; onClose: () => void }) =>
                   <Def label={t('arrival.flight.departure')}>{airportLabel(plan.departureAirport)}</Def>
                   <Def label={t('arrival.flight.arrival')}>{airportLabel(plan.arrivalAirport)}</Def>
                   <Def label={t('arrival.flight.arrivalTime')}>
-                    <span className={clsx(plan.upcoming && 'font-bold text-amber-700')}>{f.arrival(plan.arrivalTime)}</span>
+                    <span className={clsx(plan.upcoming && 'font-bold text-warning-fg')}>{f.arrival(plan.arrivalTime)}</span>
                   </Def>
                   <Def label={t('arrival.flight.travellers')}>{plan.travellers}</Def>
                   {plan.luggageNote && <Def label={t('arrival.flight.luggage')}>{plan.luggageNote}</Def>}
@@ -203,9 +203,9 @@ const Drawer = ({ caseId, onClose }: { caseId: string; onClose: () => void }) =>
                   <Def label={t('arrival.steps.pickup')}>{plan.pickupRequested ? t('arrival.admin.pickupYes') : '—'}</Def>
                   <Def label={t('arrival.steps.housing')}>{plan.housingStatus !== 'NONE' ? [plan.housingCity, plan.housingBudget ? t('arrival.summary.budget', { amount: plan.housingBudget }) : null, f.day(plan.housingFrom)].filter(Boolean).join(' · ') : '—'}</Def>
                 </dl>
-                {plan.housingNote && <p className="mt-2 rounded-lg bg-surface p-2.5 text-sm whitespace-pre-line text-ink/85">{plan.housingNote}</p>}
+                {plan.housingNote && <p className="mt-2 rounded-lg bg-sunken p-2.5 text-sm whitespace-pre-line text-ink/85">{plan.housingNote}</p>}
                 {plan.clientNote && (
-                  <p className="mt-2 rounded-lg bg-surface p-2.5 text-sm whitespace-pre-line text-ink/85">
+                  <p className="mt-2 rounded-lg bg-sunken p-2.5 text-sm whitespace-pre-line text-ink/85">
                     <span className="font-semibold">{t('arrival.admin.detail.clientNote')}:</span> {plan.clientNote}
                   </p>
                 )}
@@ -381,7 +381,7 @@ export default function AdminArrivals() {
         <div className="overflow-hidden rounded-xl border border-line bg-card">
           <div className="overflow-x-auto">
             <table className="w-full min-w-[900px] text-left text-sm">
-              <thead className="border-b border-line bg-surface/70 text-[11px] font-semibold tracking-wide whitespace-nowrap text-muted uppercase">
+              <thead className="border-b border-line bg-surface/70 text-xs font-medium whitespace-nowrap text-muted">
                 <tr>
                   <th className="px-4 py-2.5">{t('arrival.admin.cols.client')}</th>
                   <th className="px-4 py-2.5">{t('arrival.admin.cols.case')}</th>
@@ -397,10 +397,10 @@ export default function AdminArrivals() {
                   <tr
                     key={p.id}
                     onClick={() => open(p.caseId)}
-                    className={clsx('cursor-pointer transition-colors hover:bg-surface/60', p.upcoming && 'bg-amber-50/70', p.caseId === caseId && 'bg-brand-50')}
+                    className={clsx('cursor-pointer transition-colors hover:bg-surface/60', p.upcoming && 'bg-warning-bg/70', p.caseId === caseId && 'bg-primary/[0.06]')}
                   >
                     <td className="px-4 py-3">
-                      <button type="button" className="text-left font-medium text-ink hover:text-brand-700" onClick={(e) => {
+                      <button type="button" className="text-left font-medium text-ink hover:text-link" onClick={(e) => {
                           e.stopPropagation();
                           open(p.caseId);
                         }}>
@@ -409,12 +409,12 @@ export default function AdminArrivals() {
                       <span className="block truncate text-[11px] text-muted">{p.client.email}</span>
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap">
-                      <span className="font-semibold text-brand-700 tabular-nums">{p.case.number}</span>
+                      <span className="font-semibold text-link tabular-nums">{p.case.number}</span>
                       <span className="block text-[11px] text-muted">{p.handledBy ? personName(p.handledBy) : p.case.assignedStaff ? personName(p.case.assignedStaff) : '—'}</span>
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap">
                       {p.arrivalTime ? (
-                        <span className={clsx('inline-flex items-center gap-1', p.upcoming && 'font-semibold text-amber-800')}>
+                        <span className={clsx('inline-flex items-center gap-1', p.upcoming && 'font-semibold text-warning-fg')}>
                           {p.upcoming && <AlertTriangle className="size-3.5" aria-hidden />}
                           {f.arrivalShort(p.arrivalTime)}
                         </span>
@@ -446,13 +446,13 @@ export default function AdminArrivals() {
             <span>{t('arrival.admin.total', { count: list.data.total })}</span>
             {pages > 1 && (
               <span className="flex items-center gap-1">
-                <button type="button" className="grid size-8 place-items-center rounded-md hover:bg-surface disabled:opacity-40" disabled={page <= 1} onClick={() => set('page', String(page - 1))} aria-label="‹">
+                <button type="button" className="grid size-8 place-items-center rounded-md hover:bg-sunken disabled:opacity-40" disabled={page <= 1} onClick={() => set('page', String(page - 1))} aria-label="‹">
                   <ChevronLeft className="size-4" />
                 </button>
                 <span className="tabular-nums">
                   {page} / {pages}
                 </span>
-                <button type="button" className="grid size-8 place-items-center rounded-md hover:bg-surface disabled:opacity-40" disabled={page >= pages} onClick={() => set('page', String(page + 1))} aria-label="›">
+                <button type="button" className="grid size-8 place-items-center rounded-md hover:bg-sunken disabled:opacity-40" disabled={page >= pages} onClick={() => set('page', String(page + 1))} aria-label="›">
                   <ChevronRight className="size-4" />
                 </button>
               </span>

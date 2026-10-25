@@ -13,7 +13,7 @@ export default function ClientAccessLogPanel({ clientId }: { clientId: string })
       title={t('accessLog.adminTitle')}
       icon={ShieldCheck}
       actions={
-        <button type="button" className="btn-ghost btn-sm" aria-expanded={open} onClick={() => setOpen((o) => !o)}>
+        <button type="button" className="btn-secondary btn-sm" aria-expanded={open} onClick={() => setOpen((o) => !o)}>
           {open ? t('accessLog.hide') : t('accessLog.show')}
         </button>
       }

@@ -26,7 +26,7 @@ export const Accordion = ({ items, dark = false }: { items: { q: string; a: stri
             key={it.q}
             className={clsx(
               'rounded-2xl border transition-colors duration-300',
-              dark ? (isOpen ? 'border-brand-400/60 bg-white/[0.07]' : 'border-white/10 bg-white/[0.03] hover:border-white/25') : isOpen ? 'border-brand-400 bg-white shadow-lg shadow-brand-600/10' : 'border-line bg-white hover:border-brand-200',
+              dark ? (isOpen ? 'border-white/30 bg-white/[0.07]' : 'border-white/10 bg-white/[0.03] hover:border-white/25') : isOpen ? 'border-line-strong bg-card shadow-[var(--tv-shadow-raised)]' : 'border-line bg-card shadow-[var(--tv-shadow-card)] hover:border-line-strong',
             )}
           >
             <h3>
@@ -36,14 +36,14 @@ export const Accordion = ({ items, dark = false }: { items: { q: string; a: stri
                 aria-expanded={isOpen}
                 aria-controls={`${base}-p${i}`}
                 onClick={() => setOpen(isOpen ? null : i)}
-                className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left sm:px-6 sm:py-5"
+                className="flex min-h-14 w-full items-center justify-between gap-4 rounded-2xl px-5 py-4 text-left sm:px-6 sm:py-5"
               >
-                <span className={clsx('font-display text-[0.95rem] font-bold sm:text-base', dark ? 'text-white' : 'text-navy-900')}>{it.q}</span>
+                <span className={clsx('font-display text-[0.95rem] font-semibold sm:text-base', dark ? 'text-white' : 'text-ink')}>{it.q}</span>
                 <span
                   className={clsx(
-                    'grid size-8 shrink-0 place-items-center rounded-full transition-transform duration-300',
+                    'grid size-9 shrink-0 place-items-center rounded-full transition-transform duration-300',
                     isOpen && 'rotate-45',
-                    isOpen ? 'bg-brand-600 text-white' : dark ? 'bg-white/10 text-white' : 'bg-brand-50 text-brand-700',
+                    dark ? 'bg-white/10 text-white' : isOpen ? 'bg-primary text-primary-contrast' : 'bg-sunken text-ink',
                   )}
                 >
                   <Plus className="size-4" />
@@ -67,11 +67,11 @@ export const Accordion = ({ items, dark = false }: { items: { q: string; a: stri
   );
 };
 
-/** Small pill used inside dark heroes. */
+/** Small pills under the PageHero subtitle (light warm band). */
 export const HeroChips = ({ items }: { items: ReactNode[] }) => (
   <ul className="mt-6 flex flex-wrap gap-2 sm:mt-8">
     {items.map((c, i) => (
-      <li key={i} className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3.5 py-1.5 text-xs font-semibold text-white/90 sm:text-sm">
+      <li key={i} className="inline-flex items-center gap-2 rounded-full border border-line bg-card px-3.5 py-1.5 text-xs font-semibold text-ink shadow-[var(--tv-shadow-card)] sm:text-sm">
         {c}
       </li>
     ))}
@@ -84,7 +84,7 @@ export const ChartCard = ({ title, note, children, className, dark = false }: { 
     <figure className={clsx('flex h-full flex-col rounded-2xl p-5 sm:p-6', dark ? 'border border-white/10 bg-white/[0.04]' : 'card')}>
       {children}
       <figcaption className="mt-4">
-        <span className={clsx('block font-display text-sm font-bold', dark ? 'text-white' : 'text-navy-900')}>{title}</span>
+        <span className={clsx('block font-display text-sm font-semibold', dark ? 'text-white' : 'text-ink')}>{title}</span>
         {note && <span className={clsx('mt-0.5 block text-xs', dark ? 'text-white/55' : 'text-muted')}>{note}</span>}
       </figcaption>
     </figure>

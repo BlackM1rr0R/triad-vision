@@ -39,7 +39,7 @@ export default function About() {
       <CompareSection />
       <JourneySection />
 
-      <section className="section">
+      <section className="section bg-sunken">
         <div className="container-x">
           <SectionHeading eyebrow={t('aboutPage.numbers.eyebrow')} title={t('aboutPage.numbers.title')} subtitle={t('aboutPage.numbers.subtitle')} />
           <NumbersCharts stats={data?.stats} />

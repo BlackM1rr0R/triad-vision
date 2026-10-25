@@ -19,10 +19,10 @@ export const CheckResultNotice = ({ checks, onDismiss, className }: { checks: un
       className={clsx(
         'relative rounded-lg border px-3 py-2.5 pr-9 text-sm',
         c.level === 'error'
-          ? 'border-red-200 bg-red-50 text-red-800 dark:border-red-900 dark:bg-red-950/30 dark:text-red-200'
+          ? 'border-danger-border bg-danger-bg text-danger-fg'
           : c.level === 'warn'
-            ? 'border-amber-200 bg-amber-50 text-amber-900 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200'
-            : 'border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950/30 dark:text-emerald-200',
+            ? 'border-warning-border bg-warning-bg text-warning-fg'
+            : 'border-success-border bg-success-bg text-success-fg',
         className,
       )}
     >

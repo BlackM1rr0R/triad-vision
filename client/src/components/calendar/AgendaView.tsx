@@ -19,10 +19,10 @@ export const AgendaView = ({ from, days = 30, items, onOpenItem }: { from: Date;
   }, [from, days, items]);
   if (!groups.length) return <p className="p-10 text-center text-sm text-muted">{t('calendar.labels.agendaEmpty')}</p>;
   return (
-    <div className="h-full overflow-y-auto overscroll-contain">
+    <div tabIndex={0} className="h-full overflow-y-auto overscroll-contain outline-none focus-visible:ring-2 focus-visible:ring-focus/40 focus-visible:ring-inset">
       {groups.map(({ day, list }) => (
         <section key={dayKey(day)} className="border-b border-line">
-          <h3 className={clsx('sticky top-0 z-[1] bg-card px-4 py-2 text-xs font-bold tracking-wide uppercase', isToday(day) ? 'text-brand-600' : 'text-muted')}>{fmtDayLong(day)}</h3>
+          <h3 className={clsx('sticky top-0 z-[1] bg-card px-4 py-2 text-xs font-bold tracking-wide uppercase', isToday(day) ? 'text-link' : 'text-muted')}>{fmtDayLong(day)}</h3>
           <ul className="pb-2">
             {list.map((it) => {
               const raw = it.raw;
@@ -30,7 +30,7 @@ export const AgendaView = ({ from, days = 30, items, onOpenItem }: { from: Date;
               const meeting = 'meetingUrl' in raw ? raw.meetingUrl : null;
               return (
                 <li key={it.key}>
-                  <button type="button" onClick={(e) => onOpenItem(it, e.currentTarget.getBoundingClientRect())} className="flex w-full items-start gap-3 px-4 py-2 text-left hover:bg-surface">
+                  <button type="button" onClick={(e) => onOpenItem(it, e.currentTarget.getBoundingClientRect())} className="flex w-full items-start gap-3 px-4 py-2 text-left hover:bg-sunken">
                     <span className="w-24 shrink-0 pt-0.5 text-xs text-muted">{it.allDay ? t('calendar.labels.allDay') : `${fmtTime(it.start)} – ${fmtTime(it.end)}`}</span>
                     <span className={clsx('mt-1.5 size-2.5 shrink-0 rounded-full', it.tone.dot)} aria-hidden />
                     <span className="min-w-0 flex-1">

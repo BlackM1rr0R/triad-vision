@@ -3,6 +3,8 @@ import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { ShieldCheck, Users } from 'lucide-react';
 import { api } from '@/lib/api';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { Handshake } from '@/components/illustrations';
 import { ErrorRetry, Loading, Pager, Section, type AgentReferralRow } from '@/components/agents/portal';
 import { STAGE_TONE } from '@/components/agents/types';
 import { day, money } from '@/components/agents/format';
@@ -28,31 +30,31 @@ export default function AgentReferralsPage() {
 
   return (
     <Section title={t('agents.ref.title')} icon={Users}>
-      <p className="mb-4 flex items-start gap-2 rounded-xl border border-line bg-surface px-3 py-2.5 text-xs text-muted">
-        <ShieldCheck className="mt-0.5 size-4 shrink-0 text-brand-600" aria-hidden /> {t('agents.ref.privacy')}
+      <p className="mb-4 flex items-start gap-2 rounded-xl border border-line bg-sunken px-3 py-2.5 text-xs text-muted">
+        <ShieldCheck className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden /> {t('agents.ref.privacy')}
       </p>
       {items.length === 0 ? (
-        <p className="py-8 text-center text-sm text-muted">{t('agents.ref.empty')}</p>
+        <EmptyState compact illustration={<Handshake className="w-28" />} title={t('agents.ref.empty')} />
       ) : (
-        <div className="-mx-5 overflow-x-auto sm:mx-0">
-          <table className="w-full min-w-[520px] text-sm">
+        <div className="overflow-x-auto rounded-2xl border border-line">
+          <table className="tv-table min-w-[520px]">
             <thead>
-              <tr className="border-b border-line text-left text-xs text-muted">
-                <th className="px-5 py-2 font-semibold sm:px-3">{t('agents.ref.name')}</th>
-                <th className="px-3 py-2 font-semibold">{t('agents.ref.registered')}</th>
-                <th className="px-3 py-2 font-semibold">{t('agents.ref.stage')}</th>
-                <th className="px-5 py-2 text-right font-semibold sm:px-3">{t('agents.ref.earned')}</th>
+              <tr>
+                <th>{t('agents.ref.name')}</th>
+                <th>{t('agents.ref.registered')}</th>
+                <th>{t('agents.ref.stage')}</th>
+                <th className="text-right">{t('agents.ref.earned')}</th>
               </tr>
             </thead>
             <tbody>
               {items.map((r) => (
-                <tr key={r.key} className="border-b border-line last:border-0">
-                  <td className="px-5 py-3 font-semibold text-ink sm:px-3">{r.name}</td>
-                  <td className="px-3 py-3 text-muted">{day(r.registeredAt)}</td>
-                  <td className="px-3 py-3">
+                <tr key={r.key}>
+                  <td className="font-semibold text-ink">{r.name}</td>
+                  <td className="text-muted">{day(r.registeredAt)}</td>
+                  <td>
                     <span className={`badge ${STAGE_TONE[r.stage]}`}>{t(`agents.stages.${r.stage}`)}</span>
                   </td>
-                  <td className="px-5 py-3 text-right text-ink tabular-nums sm:px-3">{r.earnedCents ? money(r.earnedCents, currency) : '—'}</td>
+                  <td className="num text-ink">{r.earnedCents ? money(r.earnedCents, currency) : '—'}</td>
                 </tr>
               ))}
             </tbody>

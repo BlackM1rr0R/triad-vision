@@ -31,7 +31,7 @@ export const AiFilterChips = ({ value, onChange }: { value: AiFilter | null; onC
   return (
     <div className="mt-1.5 flex flex-wrap items-center gap-1.5" role="group" aria-label={t('aiMail.title')}>
       <span className="inline-flex items-center gap-1 text-[0.7rem] font-semibold text-muted">
-        <Sparkles className="size-3 text-brand-600" aria-hidden /> {t('aiMail.filter.label')}
+        <Sparkles className="size-3 text-link" aria-hidden /> {t('aiMail.filter.label')}
       </span>
       {AI_FILTERS.map((f) => (
         <button
@@ -39,7 +39,7 @@ export const AiFilterChips = ({ value, onChange }: { value: AiFilter | null; onC
           type="button"
           onClick={() => onChange(value === f ? null : f)}
           aria-pressed={value === f}
-          className={clsx('rounded-full border px-2 py-0.5 text-xs font-semibold', value === f ? 'border-brand-500 bg-brand-50 text-brand-700' : 'border-line text-muted hover:text-ink')}
+          className={clsx('rounded-full border px-2 py-0.5 text-xs font-semibold', value === f ? 'border-primary bg-primary/[0.06] text-link' : 'border-line text-muted hover:text-ink')}
         >
           {t(`aiMail.filter.${f}`)}
         </button>

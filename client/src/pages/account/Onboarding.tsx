@@ -19,6 +19,7 @@ import { ProgressRing } from '@/components/portal/ProgressRing';
 import { useApiError } from '@/components/portal/useApiError';
 import { daysUntil, ONBOARDING_KEY, useOnboarding } from '@/components/journey/api';
 import type { OnboardingProgress, OnboardingResponse, OnboardingRow } from '@/components/journey/types';
+import { Germany } from '@/components/illustrations';
 
 registerCopy(pagesJourney);
 
@@ -29,7 +30,7 @@ const DueHint = ({ row }: { row: OnboardingRow }) => {
   if (!row.dueAt) return row.dueDays !== null ? <span>{t('journey.onboarding.within', { count: row.dueDays })}</span> : null;
   const days = daysUntil(row.dueAt);
   return (
-    <span className={clsx(days < 0 ? 'font-semibold text-danger' : days <= 3 ? 'font-semibold text-amber-700' : '')}>
+    <span className={clsx(days < 0 ? 'font-semibold text-danger' : days <= 3 ? 'font-semibold text-warning-fg' : '')}>
       {t('journey.onboarding.due', { date: date(row.dueAt) })} ·{' '}
       {days < 0 ? t('journey.onboarding.overdue', { count: -days }) : days === 0 ? t('journey.onboarding.dueToday') : t('journey.onboarding.dueIn', { count: days })}
     </span>
@@ -83,7 +84,7 @@ const ItemCard = ({ row, index, canEdit, defaultOpen }: { row: OnboardingRow; in
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay: Math.min(index * 0.04, 0.3), ease: [0.22, 1, 0.36, 1] }}
-      className={clsx('card overflow-hidden transition-colors', row.done && 'border-success/30 bg-emerald-50/30')}
+      className={clsx('card overflow-hidden transition-colors', row.done && 'border-success/30 bg-success-bg')}
     >
       <div className="flex items-start gap-3 p-4 sm:gap-4 sm:p-5">
         {canEdit ? (
@@ -96,7 +97,7 @@ const ItemCard = ({ row, index, canEdit, defaultOpen }: { row: OnboardingRow; in
             onClick={() => mutation.mutate({ done: !row.done })}
             className={clsx(
               'mt-0.5 grid size-7 shrink-0 place-items-center rounded-full border-2 transition',
-              row.done ? 'border-success bg-success text-white' : 'border-line bg-white text-transparent hover:border-brand-500',
+              row.done ? 'border-success bg-success text-white' : 'border-line bg-card text-transparent hover:border-primary',
             )}
           >
             <Check className="size-4" strokeWidth={3} />
@@ -106,7 +107,7 @@ const ItemCard = ({ row, index, canEdit, defaultOpen }: { row: OnboardingRow; in
             {index + 1}
           </span>
         )}
-        <span className={clsx('grid size-10 shrink-0 place-items-center rounded-xl', row.done ? 'bg-success/10 text-success' : 'bg-brand-50 text-brand-700')}>
+        <span className={clsx('grid size-10 shrink-0 place-items-center rounded-xl', row.done ? 'bg-success/10 text-success' : 'bg-sunken text-link')}>
           {hasIcon(row.icon) ? <Icon name={row.icon} className="size-5" aria-hidden /> : <Compass className="size-5" aria-hidden />}
         </span>
         <div className="min-w-0 flex-1">
@@ -118,7 +119,7 @@ const ItemCard = ({ row, index, canEdit, defaultOpen }: { row: OnboardingRow; in
             onClick={() => setOpen((o) => !o)}
           >
             <span className="min-w-0">
-              <span className={clsx('block font-semibold break-words text-navy-900', row.done && 'line-through decoration-success/60')}>{tr(row.title)}</span>
+              <span className={clsx('block font-semibold break-words text-ink', row.done && 'line-through decoration-success/60')}>{tr(row.title)}</span>
               <span className="mt-0.5 block text-xs text-muted">
                 <DueHint row={row} />
               </span>
@@ -133,13 +134,13 @@ const ItemCard = ({ row, index, canEdit, defaultOpen }: { row: OnboardingRow; in
                     <p key={i}>{p}</p>
                   ))}
                   {row.link && (
-                    <a href={row.link} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 font-semibold text-brand-600 hover:text-brand-700">
+                    <a href={row.link} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 font-semibold text-link hover:text-link">
                       <ExternalLink className="size-3.5" aria-hidden />
                       {t('journey.onboarding.official')}
                     </a>
                   )}
                   {canEdit && (
-                    <div className="rounded-xl bg-surface p-3">
+                    <div className="rounded-xl bg-sunken p-3">
                       <label htmlFor={`${panelId}-note`} className="flex items-center gap-1.5 text-xs font-semibold text-muted">
                         <StickyNote className="size-3.5" aria-hidden />
                         {t('journey.onboarding.note')}
@@ -169,14 +170,14 @@ const ItemCard = ({ row, index, canEdit, defaultOpen }: { row: OnboardingRow; in
                           )}
                         </>
                       ) : (
-                        <button type="button" className="mt-1 block w-full text-left text-sm whitespace-pre-line text-navy-900 hover:text-brand-700" onClick={() => setEditingNote(true)}>
+                        <button type="button" className="mt-1 block w-full text-left text-sm whitespace-pre-line text-ink hover:text-link" onClick={() => setEditingNote(true)}>
                           {row.note}
                         </button>
                       )}
                     </div>
                   )}
                   {canEdit && row.done && (
-                    <button type="button" className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted hover:text-navy-900" onClick={() => mutation.mutate({ done: false })}>
+                    <button type="button" className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted hover:text-ink" onClick={() => mutation.mutate({ done: false })}>
                       <Undo2 className="size-3.5" aria-hidden /> {t('journey.onboarding.undo')}
                     </button>
                   )}
@@ -202,7 +203,7 @@ export default function Onboarding() {
     return (
       <div className="card mx-auto max-w-lg p-8 text-center">
         <AlertTriangle className="mx-auto size-10 text-warning" aria-hidden />
-        <p className="mt-4 font-semibold text-navy-900">{t('common.error')}</p>
+        <p className="mt-4 font-semibold text-ink">{t('common.error')}</p>
       </div>
     );
   }
@@ -213,25 +214,25 @@ export default function Onboarding() {
 
   return (
     <div className="space-y-6">
-      <section className={clsx('card relative overflow-hidden p-5 sm:p-7', active && 'bg-gradient-to-br from-navy-900 via-navy-800 to-brand-700 text-white')} aria-labelledby="onboarding-title">
-        {active && <div className="pointer-events-none absolute -top-20 -right-16 size-64 rounded-full bg-[radial-gradient(closest-side,var(--color-brand-400),transparent)] opacity-25" aria-hidden />}
-        <div className="relative flex items-start gap-4 sm:gap-6">
+      <section className={clsx('relative overflow-hidden rounded-3xl border p-6 sm:p-8', active ? 'border-warning-border bg-highlight-bg' : 'border-line bg-card shadow-[var(--tv-shadow-card)]')} aria-labelledby="onboarding-title">
+        <div className="relative flex items-start gap-4 sm:items-center sm:gap-6">
           <div className="min-w-0 flex-1">
-            <span className={clsx('eyebrow', active ? 'text-brand-400' : '')}>
+            <span className="type-overline inline-flex items-center gap-2 text-muted">
               <Compass className="size-4" aria-hidden />
               {t('journey.onboarding.caseLabel')} {data.case?.number}
             </span>
-            <h1 id="onboarding-title" className={clsx('mt-2 text-2xl font-extrabold sm:text-3xl', active ? 'text-white' : 'text-navy-900')}>
+            <h1 id="onboarding-title" className="type-page-title mt-2 text-ink">
               {t('journey.onboarding.title')}
             </h1>
-            <p className={clsx('mt-1', active ? 'text-white/75' : 'text-muted')}>{t('journey.onboarding.subtitle')}</p>
-            {active && data.baseDate && <p className="mt-3 text-xs text-white/60">{t('journey.onboarding.basedOn', { date: date(data.baseDate) })}</p>}
+            <p className={clsx('mt-1 max-w-[65ch]', active ? 'text-ink/80' : 'text-muted')}>{t('journey.onboarding.subtitle')}</p>
+            {active && data.baseDate && <p className="mt-3 text-xs text-muted">{t('journey.onboarding.basedOn', { date: date(data.baseDate) })}</p>}
           </div>
+          <Germany className="hidden w-40 shrink-0 md:block" />
           {active && (
-            <ProgressRing percent={data.progress!.percent} size={84} stroke={7} tone="light" label={t('journey.onboarding.progress', { done: data.progress!.done, total: data.progress!.total })}>
+            <ProgressRing percent={data.progress!.percent} size={84} stroke={7} label={t('journey.onboarding.progress', { done: data.progress!.done, total: data.progress!.total })}>
               <span className="text-center leading-none">
-                <span className="block font-display text-lg font-extrabold">{data.progress!.done}/{data.progress!.total}</span>
-                <span className="mt-0.5 block text-[10px] font-semibold text-white/70">{t('journey.onboarding.markDone')}</span>
+                <span className="block font-display text-lg font-semibold">{data.progress!.done}/{data.progress!.total}</span>
+                <span className="mt-0.5 block text-[10px] font-semibold text-muted">{t('journey.onboarding.markDone')}</span>
               </span>
             </ProgressRing>
           )}
@@ -239,13 +240,13 @@ export default function Onboarding() {
       </section>
 
       {!active && (
-        <section className="card border-brand-200 bg-brand-50/50 p-5 sm:p-6">
+        <section className="card border-line-strong bg-sunken p-5 sm:p-6">
           <div className="flex items-start gap-4">
-            <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-brand-600 text-white">
+            <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-primary text-primary-contrast">
               <Sparkles className="size-5" aria-hidden />
             </span>
             <div className="min-w-0">
-              <h2 className="text-lg font-bold text-navy-900">{t('journey.onboarding.empty.title')}</h2>
+              <h2 className="text-lg font-semibold text-ink">{t('journey.onboarding.empty.title')}</h2>
               <p className="mt-1 text-sm leading-relaxed text-muted">{t('journey.onboarding.empty.body')}</p>
               <Link to="/account" className="btn-primary mt-4 min-h-10 px-4 py-2 text-sm">
                 {t('journey.onboarding.empty.cta')}
@@ -258,19 +259,19 @@ export default function Onboarding() {
 
       <AnimatePresence>
         {allDone && (
-          <motion.section initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }} className="card flex items-start gap-4 border-success/30 bg-emerald-50 p-5 sm:p-6" aria-live="polite">
+          <motion.section initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }} className="card flex items-start gap-4 border-success/30 bg-success-bg p-5 sm:p-6" aria-live="polite">
             <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-success text-white">
               <PartyPopper className="size-5" aria-hidden />
             </span>
             <div>
-              <h2 className="text-lg font-bold text-emerald-900">{t('journey.onboarding.allDone')}</h2>
-              <p className="mt-1 text-sm text-emerald-900/80">{t('journey.onboarding.allDoneBody')}</p>
+              <h2 className="text-lg font-semibold text-success-fg">{t('journey.onboarding.allDone')}</h2>
+              <p className="mt-1 text-sm text-success-fg">{t('journey.onboarding.allDoneBody')}</p>
             </div>
           </motion.section>
         )}
       </AnimatePresence>
 
-      {!active && data.items.length > 0 && <p className="eyebrow">{t('journey.onboarding.preview')}</p>}
+      {!active && data.items.length > 0 && <p className="type-overline text-muted">{t('journey.onboarding.preview')}</p>}
       <ul className="space-y-3">
         {data.items.map((row, i) => (
           <ItemCard key={row.id} row={row} index={i} canEdit={active} defaultOpen={active && row.id === firstOpen} />

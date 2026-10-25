@@ -33,7 +33,7 @@ const TextPreview = ({ id }: { id: string }) => {
     staleTime: 60_000,
   });
   if (!q.data) return null;
-  return <pre className="max-h-64 overflow-auto rounded-lg border border-line bg-surface p-3 text-[11px] leading-relaxed whitespace-pre-wrap text-ink">{q.data.slice(0, 20_000)}</pre>;
+  return <pre className="max-h-64 overflow-auto rounded-lg border border-line bg-sunken p-3 text-[11px] leading-relaxed whitespace-pre-wrap text-ink">{q.data.slice(0, 20_000)}</pre>;
 };
 
 export const DetailsPanel = ({
@@ -86,9 +86,9 @@ export const DetailsPanel = ({
   const header = (
     <div className="flex items-center justify-between border-b border-line px-4 py-2.5">
       <h2 className="flex items-center gap-2 text-sm font-bold text-ink">
-        <Info className="size-4 text-brand-600" /> {t('drive.details.title')}
+        <Info className="size-4 text-link" /> {t('drive.details.title')}
       </h2>
-      <button type="button" onClick={onClose} className="grid size-8 place-items-center rounded-lg text-muted hover:bg-surface hover:text-ink" aria-label={t('drive.dialogs.close')}>
+      <button type="button" onClick={onClose} className="grid size-8 place-items-center rounded-lg text-muted hover:bg-sunken hover:text-ink" aria-label={t('drive.dialogs.close')}>
         <X className="size-4" />
       </button>
     </div>
@@ -142,11 +142,11 @@ export const DetailsPanel = ({
             onClick={() => setTab(key)}
             className={clsx(
               '-mb-px inline-flex items-center gap-1.5 border-b-2 px-2.5 py-2 text-xs font-semibold transition',
-              tab === key ? 'border-brand-600 text-brand-700 dark:text-brand-200' : 'border-transparent text-muted hover:text-ink',
+              tab === key ? 'border-primary text-link dark:text-brand-200' : 'border-transparent text-muted hover:text-ink',
             )}
           >
             <Icon className="size-3.5" /> {label}
-            {badge ? <span className="rounded-full bg-brand-600 px-1.5 text-[10px] leading-4 font-bold text-white">{badge}</span> : null}
+            {badge ? <span className="rounded-full bg-primary px-1.5 text-[10px] leading-4 font-bold text-primary-contrast">{badge}</span> : null}
           </button>
         ))}
       </div>
@@ -165,7 +165,7 @@ export const DetailsPanel = ({
         <div className="border-b border-line bg-surface/60 p-4">
           {isImage && imgFailed !== item.id ? (
             <button type="button" onClick={() => onPreview(item)} className="block w-full">
-              <img src={contentUrl(item.id)} alt="" onError={() => setImgFailed(item.id)} className="mx-auto max-h-56 rounded-lg border border-line object-contain shadow-sm" />
+              <img src={contentUrl(item.id)} alt="" onError={() => setImgFailed(item.id)} className="mx-auto max-h-56 rounded-lg border border-line object-contain shadow-[var(--tv-shadow-card)]" />
             </button>
           ) : isText ? (
             <TextPreview id={item.id} />
@@ -236,7 +236,7 @@ export const DetailsPanel = ({
         {item.caseId && (
           <div className="border-b border-line px-4 py-3 text-xs text-muted">
             <p>{item.kind === 'FILE' ? t('drive.shared.caseDoc', { number: item.caseNumber }) : t('drive.shared.clientFolderBanner', { number: item.caseNumber })}</p>
-            <Link to={`/admin/cases/${item.caseId}`} className="mt-2 inline-flex items-center gap-1 font-semibold text-brand-600 hover:underline">
+            <Link to={`/admin/cases/${item.caseId}`} className="mt-2 inline-flex items-center gap-1 font-semibold text-link hover:underline">
               <ExternalLink className="size-3.5" /> {t('drive.actions.openCase')}
             </Link>
           </div>
@@ -254,7 +254,7 @@ export const DetailsPanel = ({
               <h3 className="flex items-center gap-1.5 text-xs font-bold tracking-wide text-muted uppercase">
                 <Shield className="size-3.5" /> {t('drive.details.access')}
               </h3>
-              <button type="button" onClick={() => onShare(item)} className="text-xs font-semibold text-brand-600 hover:underline">
+              <button type="button" onClick={() => onShare(item)} className="text-xs font-semibold text-link hover:underline">
                 {a.canManage ? t('drive.details.manageAccess') : t('drive.details.viewAccess')}
               </button>
             </div>
@@ -301,14 +301,14 @@ export const DetailsPanel = ({
               <History className="size-3.5" /> {t('drive.details.versions')}
             </h3>
             <ul className="space-y-1.5 text-xs">
-              <li className="flex items-center justify-between gap-2 rounded-lg bg-brand-50 px-2 py-1.5 dark:bg-brand-500/10">
+              <li className="flex items-center justify-between gap-2 rounded-lg bg-primary/[0.06] px-2 py-1.5 dark:bg-brand-500/10">
                 <span className="font-semibold text-ink">
                   {t('drive.details.versionN', { version: item.version })} · {t('drive.details.current')}
                 </span>
                 <span className="text-muted">{formatBytes(item.size ?? 0)}</span>
               </li>
               {d?.versions.map((v) => (
-                <li key={v.id} className="flex items-center justify-between gap-2 rounded-lg px-2 py-1.5 hover:bg-surface">
+                <li key={v.id} className="flex items-center justify-between gap-2 rounded-lg px-2 py-1.5 hover:bg-sunken">
                   <span className="min-w-0">
                     <span className="block font-medium text-ink">{t('drive.details.versionN', { version: v.version })}</span>
                     <span className="block truncate text-muted">
@@ -318,12 +318,12 @@ export const DetailsPanel = ({
                   </span>
                   <span className="flex shrink-0 gap-1">
                     {can(item.myAccess, 'DOWNLOAD') && (
-                      <a href={versionUrl(item.id, v.id)} className="grid size-7 place-items-center rounded-md text-muted hover:bg-card hover:text-brand-600" title={t('drive.details.downloadVersion')} aria-label={t('drive.details.downloadVersion')}>
+                      <a href={versionUrl(item.id, v.id)} className="grid size-7 place-items-center rounded-md text-muted hover:bg-card hover:text-link" title={t('drive.details.downloadVersion')} aria-label={t('drive.details.downloadVersion')}>
                         <Download className="size-3.5" />
                       </a>
                     )}
                     {can(item.myAccess, 'EDIT') && (
-                      <button type="button" onClick={() => onRestoreVersion(item, v)} className="grid size-7 place-items-center rounded-md text-muted hover:bg-card hover:text-brand-600" title={t('drive.details.restoreVersion')} aria-label={t('drive.details.restoreVersion')}>
+                      <button type="button" onClick={() => onRestoreVersion(item, v)} className="grid size-7 place-items-center rounded-md text-muted hover:bg-card hover:text-link" title={t('drive.details.restoreVersion')} aria-label={t('drive.details.restoreVersion')}>
                         <RotateCcw className="size-3.5" />
                       </button>
                     )}

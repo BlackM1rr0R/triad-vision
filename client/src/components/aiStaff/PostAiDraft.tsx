@@ -92,7 +92,7 @@ export const PostAiTools = ({ onCreated }: { onCreated: (post: DraftPost) => voi
       <button type="button" className="btn-secondary btn-sm" onClick={() => setImproveOpen(true)}>
         <Wand2 className="size-3.5" /> {t('aiStaff.post.improve')}
       </button>
-      <button type="button" className="btn-white btn-sm border border-brand-200 text-brand-700" onClick={() => setOpen(true)}>
+      <button type="button" className="btn-secondary btn-sm border border-primary/25 text-link" onClick={() => setOpen(true)}>
         <Sparkles className="size-3.5" /> {t('aiStaff.post.button')}
       </button>
 
@@ -123,7 +123,7 @@ export const PostAiTools = ({ onCreated }: { onCreated: (post: DraftPost) => voi
           <Select id="ai-post-lang" label={t('aiStaff.post.lang')} value={lang} options={['az', 'de'] as const} onChange={setLang} text={(v) => t(`aiStaff.post.langs.${v}`)} />
           {busy && (
             <p className="flex items-center gap-2 text-xs text-muted sm:col-span-2">
-              <Spinner className="size-3.5 text-brand-600" /> {t('aiStaff.post.busy')}
+              <Spinner className="size-3.5 text-link" /> {t('aiStaff.post.busy')}
             </p>
           )}
         </div>
@@ -139,11 +139,11 @@ export const PostAiTools = ({ onCreated }: { onCreated: (post: DraftPost) => voi
             </button>
           </div>
           {better && (
-            <div className="rounded-lg border border-line bg-surface p-3">
+            <div className="rounded-lg border border-line bg-sunken p-3">
               <p className="text-sm whitespace-pre-wrap text-ink">{better}</p>
               <button
                 type="button"
-                className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-brand-700 hover:underline"
+                className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-link hover:underline"
                 onClick={() => {
                   void navigator.clipboard?.writeText(better).then(() => toast.success(t('aiStaff.post.copied')));
                 }}

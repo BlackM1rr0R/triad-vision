@@ -14,7 +14,7 @@ const Item = ({ r }: { r: Recommendation }) => {
   const v = r.vacancy;
   const salary = v.salaryMin || v.salaryMax ? t('aiw.rec.salary', { min: v.salaryMin ?? '…', max: v.salaryMax ?? '…' }) : null;
   return (
-    <li className="rounded-xl border border-line bg-surface/40 p-3 sm:p-4">
+    <li className="rounded-xl border border-line bg-sunken p-3 sm:p-4">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="font-bold break-words text-ink">{v.title}</p>
@@ -28,17 +28,17 @@ const Item = ({ r }: { r: Recommendation }) => {
             {salary && <span className="font-semibold text-ink/80">{salary}</span>}
           </p>
         </div>
-        <span className="shrink-0 rounded-lg bg-brand-50 px-2 py-1 text-center text-xs leading-tight font-bold text-brand-700" title={t('aiw.rec.score')}>
+        <span className="shrink-0 rounded-lg bg-sunken px-2 py-1 text-center text-xs leading-tight font-bold text-primary" title={t('aiw.rec.score')}>
           {r.score}%
         </span>
       </div>
       {r.why ? (
         <p className="mt-2 flex items-start gap-1.5 text-sm text-ink/90">
-          <Sparkles className="mt-0.5 size-3.5 shrink-0 text-brand-500" aria-hidden /> {r.why}
+          <Sparkles className="mt-0.5 size-3.5 shrink-0 text-link" aria-hidden /> {r.why}
         </p>
       ) : (
         r.met.length > 0 && (
-          <ul className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-emerald-700">
+          <ul className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-success-fg">
             {r.met.slice(0, 3).map((m) => (
               <li key={m} className="inline-flex items-center gap-1">
                 <CheckCircle2 className="size-3.5" aria-hidden /> {t(`aiw.rec.met.${m}`)}
@@ -48,7 +48,7 @@ const Item = ({ r }: { r: Recommendation }) => {
         )
       )}
       {r.gaps.length > 0 && (
-        <ul className="mt-1.5 flex flex-wrap gap-x-3 gap-y-1 text-xs text-amber-700">
+        <ul className="mt-1.5 flex flex-wrap gap-x-3 gap-y-1 text-xs text-warning-fg">
           {r.gaps.slice(0, 2).map((g) => (
             <li key={g.code} className="inline-flex items-center gap-1">
               <CircleAlert className="size-3.5" aria-hidden /> {t(`aiw.rec.gaps.${g.code}`, { required: g.required })}
@@ -56,7 +56,7 @@ const Item = ({ r }: { r: Recommendation }) => {
           ))}
         </ul>
       )}
-      <Link to={`/jobs/${v.slug}`} className="mt-3 inline-flex min-h-9 items-center gap-1 text-sm font-semibold text-brand-600 hover:text-brand-700">
+      <Link to={`/jobs/${v.slug}`} className="mt-3 inline-flex min-h-9 items-center gap-1 text-sm font-semibold text-link hover:text-link">
         {t('aiw.rec.view')} <ArrowRight className="size-4" aria-hidden />
       </Link>
     </li>
@@ -77,12 +77,12 @@ export const RecommendationsCard = () => {
     <section className="card p-4 sm:p-5" aria-labelledby="rec-title">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <h2 id="rec-title" className="flex items-center gap-2 text-base font-bold text-navy-900">
-            <BriefcaseBusiness className="size-5 text-brand-600" aria-hidden /> {t('aiw.rec.title')}
+          <h2 id="rec-title" className="flex items-center gap-2 text-base font-semibold text-ink">
+            <BriefcaseBusiness className="size-5 text-primary" aria-hidden /> {t('aiw.rec.title')}
           </h2>
           <p className="mt-0.5 text-xs text-muted">{t('aiw.rec.subtitle')}</p>
         </div>
-        <Link to="/jobs" className="shrink-0 text-xs font-semibold text-brand-600 hover:text-brand-700">
+        <Link to="/jobs" className="shrink-0 text-xs font-semibold text-link hover:text-link">
           {t('aiw.rec.all')}
         </Link>
       </div>
@@ -92,11 +92,11 @@ export const RecommendationsCard = () => {
         ))}
       </ul>
       {data.tip && (
-        <div className="mt-4 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50/70 p-3 text-sm text-ink">
-          <Lightbulb className="mt-0.5 size-4 shrink-0 text-amber-500" aria-hidden />
+        <div className="mt-4 flex items-start gap-2 rounded-xl border border-warning-border bg-warning-bg p-3 text-sm text-ink">
+          <Lightbulb className="mt-0.5 size-4 shrink-0 text-highlight" aria-hidden />
           <p>
             <span className="font-semibold">{t('aiw.rec.tip')}:</span> {data.tip}{' '}
-            <Link to="/account/profile" className="font-semibold whitespace-nowrap text-brand-600 hover:text-brand-700">
+            <Link to="/account/profile" className="font-semibold whitespace-nowrap text-link hover:text-link">
               {t('aiw.rec.improve')}
             </Link>
           </p>

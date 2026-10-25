@@ -107,7 +107,7 @@ export const DonutChart = ({
           aria-label={ariaLabel}
           onKeyDown={onKey}
           onBlur={() => setHover(null)}
-          className="relative shrink-0 rounded-full outline-none focus-visible:ring-2 focus-visible:ring-brand-500/40"
+          className="relative shrink-0 rounded-full outline-none focus-visible:ring-2 focus-visible:ring-focus/40"
           style={{ width: size, height: size }}
         >
           <svg viewBox="0 0 200 200" width={size} height={size} role="img" aria-label={ariaLabel} onPointerLeave={() => setHover(null)}>
@@ -128,7 +128,7 @@ export const DonutChart = ({
           </svg>
           <div className="pointer-events-none absolute inset-0 grid place-items-center text-center" aria-hidden>
             <div>
-              <p className="font-display text-xl font-bold text-navy-900 tabular-nums">{format(active ? active.value : total)}</p>
+              <p className="font-display text-xl font-bold text-ink tabular-nums">{format(active ? active.value : total)}</p>
               <p className="max-w-[7rem] truncate text-[11px] text-muted">{active ? `${active.label} · ${pct(active.frac)}` : (centerLabel ?? t('ux.charts.total'))}</p>
             </div>
           </div>
@@ -142,18 +142,18 @@ export const DonutChart = ({
             const i = arcs.findIndex((a) => a.key === s.key);
             const frac = total && !off ? s.value / total : 0;
             return (
-              <li key={s.key} className={clsx('flex items-center gap-2 rounded-md px-1', hover !== null && hover === i && 'bg-surface')} onPointerEnter={() => setHover(i >= 0 ? i : null)} onPointerLeave={() => setHover(null)}>
+              <li key={s.key} className={clsx('flex items-center gap-2 rounded-md px-1', hover !== null && hover === i && 'bg-sunken')} onPointerEnter={() => setHover(i >= 0 ? i : null)} onPointerLeave={() => setHover(null)}>
                 <button
                   type="button"
                   aria-pressed={!off}
                   onClick={() => toggle(s.key)}
-                  className={clsx('inline-flex min-h-8 min-w-0 flex-1 items-center gap-2 text-left text-xs font-medium transition', off ? 'text-muted/70 line-through' : 'text-ink')}
+                  className={clsx('inline-flex min-h-8 min-w-0 flex-1 items-center gap-2 text-left text-xs font-medium transition', off ? 'text-muted line-through' : 'text-ink')}
                 >
                   <span className="size-2.5 shrink-0 rounded-sm" style={{ background: off ? GRID : s.color }} aria-hidden />
                   <span className="min-w-0 flex-1 truncate">{s.label}</span>
                 </button>
                 <span className="w-12 text-right text-[11px] text-muted tabular-nums">{off ? '—' : pct(frac)}</span>
-                <span className="w-14 text-right text-xs font-semibold text-navy-900 tabular-nums">{format(s.value)}</span>
+                <span className="w-14 text-right text-xs font-semibold text-ink tabular-nums">{format(s.value)}</span>
               </li>
             );
           })}
@@ -167,7 +167,7 @@ export const DonutChart = ({
           aria-controls={tableId}
           className={clsx(
             'inline-flex min-h-8 items-center gap-1.5 rounded-md border px-2.5 text-[11px] font-semibold transition',
-            table ? 'border-navy-900 bg-navy-900 text-white' : 'border-line bg-white text-muted hover:text-navy-900',
+            table ? 'border-line-strong bg-sunken text-ink shadow-[inset_0_0_0_1px_var(--color-line-strong)]' : 'border-line bg-card text-muted hover:text-ink',
           )}
         >
           <Table2 className="size-3.5" aria-hidden /> {t('admin.charts.table')}
@@ -176,7 +176,7 @@ export const DonutChart = ({
       {table && (
         <div id={tableId} className="mt-2 max-h-60 overflow-auto rounded-lg border border-line">
           <table className="w-full text-left text-xs">
-            <thead className="sticky top-0 bg-surface/90 text-[10px] font-semibold tracking-wide text-muted uppercase">
+            <thead className="sticky top-0 bg-surface/90 text-xs font-medium text-muted">
               <tr>
                 <th className="px-3 py-2">{t('ux.charts.category')}</th>
                 <th className="px-3 py-2 text-right">{t('ux.charts.value')}</th>
@@ -189,7 +189,7 @@ export const DonutChart = ({
                 return (
                   <tr key={s.key}>
                     <td className="px-3 py-1.5 text-ink">{s.label}</td>
-                    <td className="px-3 py-1.5 text-right text-navy-900 tabular-nums">{format(s.value)}</td>
+                    <td className="px-3 py-1.5 text-right text-ink tabular-nums">{format(s.value)}</td>
                     <td className="px-3 py-1.5 text-right text-muted tabular-nums">{all ? pct(Math.max(0, s.value) / all) : '—'}</td>
                   </tr>
                 );
@@ -273,7 +273,7 @@ export const Sparkline = ({
   };
   return (
     <span
-      className="relative inline-flex shrink-0 rounded outline-none focus-visible:ring-2 focus-visible:ring-brand-500/40"
+      className="relative inline-flex shrink-0 rounded outline-none focus-visible:ring-2 focus-visible:ring-focus/40"
       tabIndex={0}
       onKeyDown={onKey}
       onBlur={() => setHover(null)}
@@ -295,7 +295,7 @@ export const Sparkline = ({
         <circle cx={mx} cy={my} r={hover !== null ? 3 : 2.5} fill={color} stroke="var(--color-card)" strokeWidth={hover !== null ? 1.5 : 0} />
       </svg>
       {hover !== null && values[hover] !== null && (
-        <span className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-1 -translate-x-1/2 rounded-md bg-navy-950 px-1.5 py-0.5 text-[10px] font-semibold whitespace-nowrap text-white shadow" aria-hidden>
+        <span className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-1 -translate-x-1/2 rounded-md bg-navy-950 px-1.5 py-0.5 text-[10px] font-semibold whitespace-nowrap text-white shadow-[var(--tv-shadow-card)]" aria-hidden>
           {pointLabel ? `${pointLabel(hover)}: ` : ''}
           {format(values[hover]!)}
         </span>

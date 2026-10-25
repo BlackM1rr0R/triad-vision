@@ -50,7 +50,7 @@ export const DocCheckDialog = ({
       }
       footer={
         <>
-          <button type="button" className="btn min-h-11 border border-line text-ink hover:bg-surface" onClick={onCancel}>
+          <button type="button" className="btn min-h-11 border border-line text-ink hover:bg-sunken" onClick={onCancel}>
             {t('vault.check.chooseAnother')}
           </button>
           {!blocked && (
@@ -63,7 +63,7 @@ export const DocCheckDialog = ({
       }
     >
       <div className="flex flex-col gap-4 sm:flex-row">
-        <div className="grid h-40 shrink-0 place-items-center overflow-hidden rounded-lg border border-line bg-surface sm:w-40">
+        <div className="grid h-40 shrink-0 place-items-center overflow-hidden rounded-lg border border-line bg-sunken sm:w-40">
           {preview ? (
             <img src={preview} alt="" className="size-full object-contain" />
           ) : (
@@ -81,7 +81,7 @@ export const DocCheckDialog = ({
                 key={i.code}
                 className={clsx(
                   'flex gap-2 rounded-lg px-3 py-2 text-sm leading-relaxed',
-                  i.level === 'error' ? 'bg-red-50 text-danger dark:bg-red-950/30' : 'bg-amber-50 text-amber-900 dark:bg-amber-950/30 dark:text-amber-200',
+                  i.level === 'error' ? 'bg-danger-bg text-danger' : 'bg-warning-bg text-warning-fg',
                 )}
               >
                 {i.level === 'error' ? <XCircle className="mt-0.5 size-4 shrink-0" aria-hidden /> : <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden />}

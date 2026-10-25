@@ -3,13 +3,16 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
-import { ArrowRight, Briefcase, Building2, ChevronLeft, ChevronRight, Search, SlidersHorizontal, X } from 'lucide-react';
+import { ArrowRight, Building2, ChevronLeft, ChevronRight, Search, SlidersHorizontal, X } from 'lucide-react';
 import { api } from '@/lib/api';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { registerCopy } from '@/i18n';
 import { pagesJobs } from '@/i18n/pagesJobs';
 import { PageHero } from '@/components/layout/PageHero';
 import { Spinner } from '@/components/ui/Spinner';
+import { Button, buttonClass } from '@/components/ui/Button';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { Employer, Lost, SearchEmpty } from '@/components/illustrations';
 import { SkeletonGrid } from '@/components/ui/Skeleton';
 import { JobCard } from '@/components/jobs/JobCard';
 import { JobAlertForm } from '@/components/jobs/JobAlertForm';
@@ -102,7 +105,7 @@ export default function Jobs() {
             </option>
           ))}
         </select>
-        <p className="mt-1 text-[11px] text-muted">{t('jobsArea.board.myGermanHint')}</p>
+        <p className="mt-1 text-xs text-muted">{t('jobsArea.board.myGermanHint')}</p>
       </div>
       <div>
         <label className="label" htmlFor="f-type">{t('jobsArea.board.type')}</label>
@@ -127,7 +130,7 @@ export default function Jobs() {
         </select>
       </div>
       {activeFilters > 0 && (
-        <button type="button" onClick={reset} className="inline-flex items-center gap-1.5 justify-self-start text-sm font-semibold text-brand-600 hover:text-brand-700">
+        <button type="button" onClick={reset} className="inline-flex min-h-11 items-center gap-1.5 justify-self-start text-sm font-semibold text-link hover:text-link-hover">
           <X className="size-4" /> {t('jobsArea.board.reset')}
         </button>
       )}
@@ -138,7 +141,7 @@ export default function Jobs() {
     <>
       <PageHero title={t('jobsArea.board.title')} subtitle={t('jobsArea.board.subtitle')} image={HERO}>
         <form
-          className="mt-7 flex max-w-2xl items-center gap-2 rounded-2xl bg-white p-2 shadow-2xl shadow-navy-950/40"
+          className="mt-7 flex max-w-2xl items-center gap-2 rounded-2xl border border-line-strong/70 bg-card p-2 shadow-[var(--tv-shadow-raised)] focus-within:border-focus focus-within:ring-[3px] focus-within:ring-focus/20"
           role="search"
           onSubmit={(e) => {
             e.preventDefault();
@@ -153,20 +156,20 @@ export default function Jobs() {
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
             placeholder={t('jobsArea.board.searchPlaceholder')}
-            className="min-w-0 flex-1 bg-transparent px-1 py-2.5 text-sm text-ink outline-none placeholder:text-muted/80 sm:text-base"
+            className="min-h-11 min-w-0 flex-1 bg-transparent px-1 py-2.5 text-base text-ink outline-none placeholder:text-subtle"
           />
-          <button type="submit" className="btn-primary btn-sm h-11 shrink-0 px-4 sm:px-5">
+          <button type="submit" className={buttonClass({ className: 'h-11 shrink-0 px-4 sm:px-5' })}>
             {t('jobsArea.board.searchButton')}
           </button>
         </form>
       </PageHero>
 
-      <section className="section-sm bg-surface">
+      <section className="section-sm bg-sunken">
         <div className="container-x grid gap-6 lg:grid-cols-[17rem_minmax(0,1fr)] lg:gap-8">
           <aside className="hidden lg:block">
-            <div className="card sticky top-28 p-5">
-              <p className="mb-4 flex items-center gap-2 text-sm font-bold text-navy-900">
-                <SlidersHorizontal className="size-4 text-brand-600" aria-hidden /> {t('jobsArea.board.filters')}
+            <div className="card sticky top-28 rounded-3xl p-5">
+              <p className="mb-4 flex items-center gap-2 text-sm font-semibold text-ink">
+                <SlidersHorizontal className="size-4 text-muted" aria-hidden /> {t('jobsArea.board.filters')}
               </p>
               {filters}
             </div>
@@ -176,15 +179,15 @@ export default function Jobs() {
             <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
               <p className="flex items-center gap-2 text-sm text-muted" aria-live="polite">
                 {data ? t('jobsArea.board.results', { count: data.total }) : ' '}
-                {isFetching && !isLoading && <Spinner className="size-3.5 text-brand-600" />}
+                {isFetching && !isLoading && <Spinner className="size-3.5 text-primary" />}
               </p>
               <div className="flex items-center gap-2">
-                <button type="button" className="btn-secondary btn-sm lg:hidden" onClick={() => setFiltersOpen((o) => !o)} aria-expanded={filtersOpen}>
+                <button type="button" className={buttonClass({ variant: 'secondary', className: 'lg:hidden' })} onClick={() => setFiltersOpen((o) => !o)} aria-expanded={filtersOpen}>
                   <SlidersHorizontal className="size-3.5" /> {t('jobsArea.board.filters')}
-                  {activeFilters > 0 && <span className="rounded-full bg-brand-600 px-1.5 text-[10px] text-white">{activeFilters}</span>}
+                  {activeFilters > 0 && <span className="rounded-full bg-primary px-1.5 text-xs text-primary-contrast">{activeFilters}</span>}
                 </button>
                 <label htmlFor="f-sort" className="sr-only">{t('jobsArea.board.sortLabel')}</label>
-                <select id="f-sort" className="input w-auto py-2 text-xs" value={params.get('sort') ?? 'newest'} onChange={(e) => set('sort', e.target.value === 'newest' ? null : e.target.value)}>
+                <select id="f-sort" className="input h-11 w-auto py-0 text-sm" value={params.get('sort') ?? 'newest'} onChange={(e) => set('sort', e.target.value === 'newest' ? null : e.target.value)}>
                   {SORTS.map((s) => (
                     <option key={s} value={s}>
                       {t(`jobsArea.board.sort.${s}`)}
@@ -194,35 +197,42 @@ export default function Jobs() {
               </div>
             </div>
 
-            {filtersOpen && <div className="card mb-5 p-5 lg:hidden">{filters}</div>}
+            {filtersOpen && <div className="card mb-5 rounded-3xl p-5 lg:hidden">{filters}</div>}
 
             {isLoading ? (
               <SkeletonGrid count={6} lines={3} footer className="grid-cards grid-cols-1 md:grid-cols-2 2xl:grid-cols-3" />
             ) : isError ? (
-              <div className="card p-8 text-center">
-                <p className="text-sm text-muted">{t('jobsArea.errors.generic')}</p>
-                <button type="button" className="btn-ghost btn-sm mt-4" onClick={() => refetch()}>
-                  {t('jobsArea.common.retry')}
-                </button>
+              <div className="card rounded-3xl">
+                <EmptyState
+                  illustration={<Lost />}
+                  text={t('jobsArea.errors.generic')}
+                  action={
+                    <Button variant="outline" onClick={() => refetch()}>
+                      {t('jobsArea.common.retry')}
+                    </Button>
+                  }
+                />
               </div>
             ) : !data?.items.length ? (
-              <div className="card flex flex-col items-center px-6 py-14 text-center">
-                {/* TODO(ui): large portal empty state (size-14 icon, display title) -> <EmptyState size="lg" tone="brand"> (portal rework) */}
-                <span className="grid size-14 place-items-center rounded-full bg-brand-50 text-brand-600">
-                  <Briefcase className="size-6" aria-hidden />
-                </span>
-                <p className="mt-4 font-display text-lg font-bold text-navy-900">{t('jobsArea.board.empty')}</p>
-                <p className="mt-1 max-w-md text-sm text-muted">{t('jobsArea.board.emptyText')}</p>
-                <div className="mt-5 flex flex-wrap justify-center gap-2">
-                  {(activeFilters > 0 || params.get('search')) && (
-                    <button type="button" className="btn-ghost btn-sm" onClick={reset}>
-                      {t('jobsArea.board.reset')}
-                    </button>
-                  )}
-                  <Link to="/booking" className="btn-primary btn-sm">
-                    {t('jobsArea.board.consult')}
-                  </Link>
-                </div>
+              <div className="card rounded-3xl">
+                <EmptyState
+                  size="lg"
+                  illustration={<SearchEmpty />}
+                  title={t('jobsArea.board.empty')}
+                  text={t('jobsArea.board.emptyText')}
+                  action={
+                    <>
+                      {(activeFilters > 0 || params.get('search')) && (
+                        <Button variant="outline" onClick={reset}>
+                          {t('jobsArea.board.reset')}
+                        </Button>
+                      )}
+                      <Link to="/booking" className={buttonClass()}>
+                        {t('jobsArea.board.consult')}
+                      </Link>
+                    </>
+                  }
+                />
               </div>
             ) : (
               <>
@@ -233,11 +243,11 @@ export default function Jobs() {
                 </div>
                 {pages > 1 && (
                   <nav className="mt-8 flex items-center justify-center gap-2" aria-label={t('jobsArea.board.pagination')}>
-                    <button type="button" className="btn-secondary btn-sm" disabled={page <= 1} onClick={() => set('page', String(page - 1))}>
+                    <button type="button" className={buttonClass({ variant: 'secondary' })} disabled={page <= 1} onClick={() => set('page', String(page - 1))}>
                       <ChevronLeft className="size-4" /> <span className="hidden sm:inline">{t('jobsArea.common.prev')}</span>
                     </button>
                     <span className="px-2 text-sm text-muted tabular-nums">{t('jobsArea.board.pageOf', { page, pages })}</span>
-                    <button type="button" className="btn-secondary btn-sm" disabled={page >= pages} onClick={() => set('page', String(page + 1))}>
+                    <button type="button" className={buttonClass({ variant: 'secondary' })} disabled={page >= pages} onClick={() => set('page', String(page + 1))}>
                       <span className="hidden sm:inline">{t('jobsArea.common.next')}</span> <ChevronRight className="size-4" />
                     </button>
                   </nav>
@@ -248,20 +258,18 @@ export default function Jobs() {
             {/* "Notify me about new jobs" (double opt-in, lib/jobAlerts on the server). */}
             <JobAlertForm className="mt-10" />
 
-            <div className="relative mt-10 overflow-hidden rounded-2xl bg-gradient-to-br from-navy-950 via-navy-900 to-navy-700 p-6 text-white sm:p-8">
-              <div className="pointer-events-none absolute -top-20 -right-16 size-64 rounded-full bg-[radial-gradient(closest-side,var(--color-brand-500),transparent)] opacity-30" aria-hidden />
-              <div className="relative flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
-                <div className="max-w-xl">
-                  <p className="flex items-center gap-2 text-xs font-bold tracking-[0.18em] text-brand-400 uppercase">
-                    <Building2 className="size-4" aria-hidden /> {t('jobsArea.board.employerEyebrow')}
-                  </p>
-                  <p className="mt-2 font-display text-xl font-bold sm:text-2xl">{t('jobsArea.board.employerTitle')}</p>
-                  <p className="mt-1 text-sm text-white/70">{t('jobsArea.board.employerText')}</p>
-                </div>
-                <Link to="/employers/register" className="btn-white shrink-0">
-                  {t('jobsArea.board.employerCta')} <ArrowRight className="size-4" />
-                </Link>
+            <div className="mt-10 grid items-center gap-6 rounded-3xl border border-line bg-card p-6 shadow-[var(--tv-shadow-card)] sm:p-8 md:grid-cols-[auto_minmax(0,1fr)_auto]">
+              <Employer className="hidden w-28 md:block" />
+              <div className="max-w-xl">
+                <p className="eyebrow">
+                  <Building2 className="size-4" aria-hidden /> {t('jobsArea.board.employerEyebrow')}
+                </p>
+                <p className="mt-2 font-display text-xl font-semibold text-ink sm:text-2xl">{t('jobsArea.board.employerTitle')}</p>
+                <p className="mt-1 text-muted">{t('jobsArea.board.employerText')}</p>
               </div>
+              <Link to="/employers/register" className={buttonClass({ variant: 'outline', className: 'shrink-0' })}>
+                {t('jobsArea.board.employerCta')} <ArrowRight className="size-4" aria-hidden />
+              </Link>
             </div>
           </div>
         </div>

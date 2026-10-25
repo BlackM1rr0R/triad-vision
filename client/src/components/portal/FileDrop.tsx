@@ -75,8 +75,8 @@ export const FileDrop = ({
       onDragLeave={() => setOver(false)}
       onDrop={onDrop}
       className={clsx(
-        'relative overflow-hidden rounded-xl border-2 border-dashed transition-colors [&:has(input:focus-visible)]:border-brand-600 [&:has(input:focus-visible)]:ring-4 [&:has(input:focus-visible)]:ring-brand-500/20',
-        over ? 'border-brand-600 bg-brand-50' : 'border-line bg-surface/60 hover:border-brand-400 hover:bg-brand-50/50',
+        'relative overflow-hidden rounded-2xl border-2 border-dashed transition-colors [&:has(input:focus-visible)]:border-primary [&:has(input:focus-visible)]:ring-4 [&:has(input:focus-visible)]:ring-focus/30',
+        over ? 'border-primary bg-highlight-bg' : 'border-line-strong bg-sunken hover:border-primary hover:bg-highlight-bg/60',
         blocked && 'pointer-events-none opacity-80',
       )}
     >
@@ -99,20 +99,20 @@ export const FileDrop = ({
           compact ? 'min-h-14 px-3 py-2.5 sm:px-4' : 'flex-col justify-center px-4 py-6 text-center',
         )}
       >
-        <span className={clsx('grid shrink-0 place-items-center rounded-full bg-brand-100 text-brand-600', compact ? 'size-9' : 'size-12')}>
+        <span className={clsx('grid shrink-0 place-items-center rounded-full chip-sky', compact ? 'size-9' : 'size-12')}>
           <UploadCloud className={compact ? 'size-4.5' : 'size-6'} aria-hidden />
         </span>
         <span className={clsx('min-w-0', compact && 'flex-1')}>
-          <span className="block text-sm font-semibold text-navy-900">
+          <span className="block text-sm font-semibold text-ink">
             {uploading ? `${t('portal.docs.uploading')} ${Math.round((progress ?? 0) * 100)}%` : (label ?? t('portal.docs.upload'))}
           </span>
           <span className="mt-0.5 block text-xs text-muted">{uploading ? '' : t('portal.docs.drop')}</span>
-          {!compact && !uploading && <span className="mt-1 block text-[11px] text-muted/80">{t('portal.docs.formats')}</span>}
+          {!compact && !uploading && <span className="mt-1 block text-[11px] text-muted">{t('portal.docs.formats')}</span>}
         </span>
       </label>
       {uploading && (
-        <div className="absolute inset-x-0 bottom-0 h-1 bg-brand-100" role="progressbar" aria-label={t('ui.uploadProgress')} aria-valuenow={Math.round((progress ?? 0) * 100)} aria-valuemin={0} aria-valuemax={100}>
-          <motion.div className="h-full bg-brand-600" animate={{ width: `${Math.round((progress ?? 0) * 100)}%` }} transition={{ ease: 'easeOut' }} />
+        <div className="absolute inset-x-0 bottom-0 h-1 bg-sunken" role="progressbar" aria-label={t('ui.uploadProgress')} aria-valuenow={Math.round((progress ?? 0) * 100)} aria-valuemin={0} aria-valuemax={100}>
+          <motion.div className="h-full bg-primary" animate={{ width: `${Math.round((progress ?? 0) * 100)}%` }} transition={{ ease: 'easeOut' }} />
         </div>
       )}
     </div>

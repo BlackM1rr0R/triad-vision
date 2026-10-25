@@ -112,7 +112,7 @@ export default function AdminRecognition() {
           {data.items.map((r) => (
             <li key={r.id} className="grid gap-2 px-4 py-3 text-sm lg:grid-cols-[minmax(0,14rem)_minmax(0,1fr)_minmax(0,8rem)_minmax(0,12rem)] lg:items-center">
               <div className="min-w-0">
-                <Link to={`/admin/cases/${r.case.id}#case-recognition`} className="font-semibold text-brand-700 hover:underline">
+                <Link to={`/admin/cases/${r.case.id}#case-recognition`} className="font-semibold text-link hover:underline">
                   {r.case.number}
                 </Link>
                 <p className="truncate text-xs text-muted">
@@ -123,7 +123,7 @@ export default function AdminRecognition() {
               </div>
               <div className="min-w-0">
                 <p className="flex flex-wrap items-center gap-1.5">
-                  <span className="font-medium text-navy-900">{t(`recognition.procedure.${r.procedureType}`)}</span>
+                  <span className="font-medium text-ink">{t(`recognition.procedure.${r.procedureType}`)}</span>
                   <span className={clsx('badge', TONE_CLASS[STATUS_TONE[r.status]])}>{t(`recognition.status.${r.status}`)}</span>
                 </p>
                 <p className="truncate text-xs text-ink/80">{[r.profession, r.authority, r.federalState, r.reference].filter(Boolean).join(' · ')}</p>
@@ -131,7 +131,7 @@ export default function AdminRecognition() {
               </div>
               <p className="text-xs">
                 <span className="text-muted">{t('recognition.list.progress')}: </span>
-                <span className="font-medium text-navy-900 tabular-nums">
+                <span className="font-medium text-ink tabular-nums">
                   {r.progress.done}/{r.progress.total}
                 </span>
               </p>
@@ -183,7 +183,7 @@ const ReminderSettings = () => {
         save.mutate();
       }}
     >
-      <p className="w-full text-sm font-semibold text-navy-900">{t('recognition.list.settings')}</p>
+      <p className="w-full text-sm font-semibold text-ink">{t('recognition.list.settings')}</p>
       <p className="w-full text-xs text-muted">{t('recognition.deadline.reminderHint', { days: leadDays })}</p>
       <label className="flex items-center gap-2 text-sm">
         <input type="checkbox" checked={enabled} onChange={(e) => setEnabled(e.target.checked)} /> {t('recognition.list.enabled')}

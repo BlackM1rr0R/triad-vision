@@ -135,7 +135,7 @@ export const MentionInput = forwardRef<MentionInputHandle, { initial?: string; p
           className="input min-h-[2.75rem] resize-y !py-2 !text-sm"
         />
         {query && (
-          <ul className="absolute right-0 left-0 z-30 mt-1 max-h-56 overflow-y-auto rounded-lg border border-line bg-card py-1 shadow-lg" role="listbox">
+          <ul className="absolute right-0 left-0 z-30 mt-1 max-h-56 overflow-y-auto rounded-lg border border-line bg-card py-1 shadow-[var(--tv-shadow-raised)]" role="listbox">
             {options.map((p, i) => (
               <li key={p.id}>
                 <button
@@ -144,9 +144,9 @@ export const MentionInput = forwardRef<MentionInputHandle, { initial?: string; p
                   aria-selected={i === active}
                   onMouseDown={(e) => e.preventDefault()}
                   onClick={() => pick(p)}
-                  className={`flex w-full items-center gap-2 px-3 py-1.5 text-left text-sm ${i === active ? 'bg-brand-50 dark:bg-white/10' : 'hover:bg-surface'}`}
+                  className={`flex w-full items-center gap-2 px-3 py-1.5 text-left text-sm ${i === active ? 'bg-primary/[0.06] dark:bg-white/10' : 'hover:bg-sunken'}`}
                 >
-                  <span className="grid size-6 shrink-0 place-items-center rounded-full bg-brand-100 text-[10px] font-bold text-brand-700">{(p.firstName[0] ?? '') + (p.lastName[0] ?? '')}</span>
+                  <span className="grid size-6 shrink-0 place-items-center rounded-full bg-primary/10 text-[10px] font-bold text-link">{(p.firstName[0] ?? '') + (p.lastName[0] ?? '')}</span>
                   <span className="min-w-0 truncate text-ink">
                     {p.firstName} {p.lastName}
                   </span>
@@ -178,7 +178,7 @@ export const CommentBody = ({ body }: { body: string }) => {
         typeof p === 'string' ? (
           p
         ) : (
-          <span key={i} className="rounded bg-brand-50 px-1 font-semibold text-brand-700 dark:bg-brand-500/15 dark:text-brand-200">
+          <span key={i} className="rounded bg-primary/[0.06] px-1 font-semibold text-link dark:bg-brand-500/15 dark:text-brand-200">
             @{p.name}
           </span>
         ),

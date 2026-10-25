@@ -54,7 +54,7 @@ const pct = (v: number | null | undefined) => (v === null || v === undefined ? '
 
 // ─── Funnel (hand-made SVG: one trapezoid per stage, stacked into a funnel) ─────────
 
-const FUNNEL_COLOR = '#2f7bff';
+const FUNNEL_COLOR = 'var(--color-chart-1)';
 
 const Funnel = ({ stages }: { stages: AnalyticsResponse['funnel'] }) => {
   const { t } = useTranslation();
@@ -82,13 +82,13 @@ const Funnel = ({ stages }: { stages: AnalyticsResponse['funnel'] }) => {
                   />
                 </svg>
                 <span className="absolute inset-0 grid place-items-center">
-                  <span className="rounded bg-white/90 px-1.5 text-xs font-bold text-navy-900 tabular-nums">{s.count.toLocaleString()}</span>
+                  <span className="rounded bg-white/90 px-1.5 text-xs font-bold text-ink tabular-nums">{s.count.toLocaleString()}</span>
                 </span>
               </span>
               <span className="text-right text-[11px] leading-tight text-muted tabular-nums">
                 {s.rate === null ? '' : (
                   <>
-                    <span className="block text-xs font-semibold text-navy-900">{pct(s.rate)}</span>
+                    <span className="block text-xs font-semibold text-ink">{pct(s.rate)}</span>
                     <span className="hidden sm:inline">{t('growth.analytics.fromPrev')}</span>
                   </>
                 )}
@@ -130,26 +130,26 @@ const Dropoff = ({ rows }: { rows: AnalyticsResponse['dropoff'] }) => {
             <div className="flex items-baseline justify-between gap-3 text-xs">
               <span className="font-medium text-ink/80">{t(`growth.analytics.steps.${r.step}`)}</span>
               <span className="text-muted tabular-nums">
-                <span className="font-semibold text-navy-900">{r.reached}</span> {t('growth.analytics.reached')}
+                <span className="font-semibold text-ink">{r.reached}</span> {t('growth.analytics.reached')}
                 {r.stepRate !== null && <> · {pct(r.stepRate)}</>}
               </span>
             </div>
             <svg viewBox="0 0 100 4" preserveAspectRatio="none" className="mt-1 block h-3 w-full" aria-hidden>
               <rect x={0} y={0} width={100} height={4} rx={1} fill="var(--color-surface)" />
-              <rect x={0} y={0} width={Math.max(0, w - activeW - lostW)} height={4} fill="#2f7bff" />
-              <rect x={Math.max(0, w - activeW - lostW)} y={0} width={activeW} height={4} fill="#eda100" />
-              <rect x={Math.max(0, w - lostW)} y={0} width={lostW} height={4} fill="#d92d3a" />
+              <rect x={0} y={0} width={Math.max(0, w - activeW - lostW)} height={4} fill="var(--color-chart-1)" />
+              <rect x={Math.max(0, w - activeW - lostW)} y={0} width={activeW} height={4} fill="var(--color-chart-2)" />
+              <rect x={Math.max(0, w - lostW)} y={0} width={lostW} height={4} fill="var(--color-danger)" />
             </svg>
             {(r.active > 0 || r.lost > 0) && (
               <p className="mt-1 text-[11px] text-muted">
                 {r.active > 0 && (
                   <span className="mr-3 inline-flex items-center gap-1">
-                    <span className="size-2 rounded-sm bg-[#eda100]" aria-hidden /> {r.active} {t('growth.analytics.active')}
+                    <span className="size-2 rounded-sm bg-chart-2" aria-hidden /> {r.active} {t('growth.analytics.active')}
                   </span>
                 )}
                 {r.lost > 0 && (
                   <span className="inline-flex items-center gap-1">
-                    <span className="size-2 rounded-sm bg-[#d92d3a]" aria-hidden /> {r.lost} {t('growth.analytics.lost')}
+                    <span className="size-2 rounded-sm bg-danger" aria-hidden /> {r.lost} {t('growth.analytics.lost')}
                   </span>
                 )}
               </p>
@@ -242,7 +242,7 @@ export default function AdminAnalytics() {
         }
       />
 
-      <div className="mb-6 flex flex-col gap-3 rounded-xl border border-line bg-white p-3 sm:p-4 lg:flex-row lg:items-center lg:justify-between">
+      <div className="mb-6 flex flex-col gap-3 rounded-xl border border-line bg-card p-3 sm:p-4 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label={t('growth.analytics.period')}>
           {PRESETS.map((p) => (
             <Chip key={p} active={preset === p} onClick={() => setPreset(p)}>
@@ -252,7 +252,7 @@ export default function AdminAnalytics() {
           <Chip active={preset === 'custom'} onClick={() => setPreset('custom')}>
             {t('growth.analytics.ranges.custom')}
           </Chip>
-          {isFetching && !isLoading && <Spinner className="ml-1 size-3.5 text-brand-600" />}
+          {isFetching && !isLoading && <Spinner className="ml-1 size-3.5 text-link" />}
         </div>
         <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="groupBy">
           {(['day', 'week', 'month'] as const).map((g) => (
@@ -264,7 +264,7 @@ export default function AdminAnalytics() {
       </div>
 
       {preset === 'custom' && (
-        <form onSubmit={applyCustom} className="mb-6 flex flex-wrap items-end gap-3 rounded-xl border border-line bg-white p-3 sm:p-4">
+        <form onSubmit={applyCustom} className="mb-6 flex flex-wrap items-end gap-3 rounded-xl border border-line bg-card p-3 sm:p-4">
           <label className="min-w-0 flex-1 sm:flex-none">
             <span className="label">{t('growth.analytics.from')}</span>
             <input type="date" className="input" value={draft.from} max={todayIso()} onChange={(e) => setDraft((d) => ({ ...d, from: e.target.value }))} />
@@ -273,7 +273,7 @@ export default function AdminAnalytics() {
             <span className="label">{t('growth.analytics.to')}</span>
             <input type="date" className="input" value={draft.to} max={todayIso()} onChange={(e) => setDraft((d) => ({ ...d, to: e.target.value }))} />
           </label>
-          <button type="submit" className="btn-primary min-h-11 w-full sm:w-auto">
+          <button type="submit" className="btn-primary min-h-10 sm:min-h-9 w-full sm:w-auto">
             <Filter className="size-4" aria-hidden /> {t('growth.analytics.apply')}
           </button>
         </form>
@@ -308,7 +308,7 @@ export default function AdminAnalytics() {
               <div className="mt-5 grid grid-cols-3 gap-2 border-t border-line pt-4 text-center">
                 {(['inquiries', 'bookings', 'applications'] as const).map((k) => (
                   <div key={k} className="min-w-0">
-                    <p className="font-display text-xl font-bold text-navy-900 tabular-nums">{data.totals[k] ?? 0}</p>
+                    <p className="font-display text-xl font-bold text-ink tabular-nums">{data.totals[k] ?? 0}</p>
                     <p className="truncate text-[11px] text-muted">{stageLabel(k)}</p>
                   </div>
                 ))}
@@ -332,7 +332,7 @@ export default function AdminAnalytics() {
               ) : (
                 <div className="-mx-5 overflow-x-auto sm:-mx-6">
                   <table className="w-full min-w-[320px] text-left text-sm">
-                    <thead className="text-[11px] font-semibold tracking-wide text-muted uppercase">
+                    <thead className="text-xs font-medium text-muted">
                       <tr>
                         <th className="px-5 py-2 sm:px-6">{t('growth.analytics.source')}</th>
                         <th className="px-3 py-2 text-right">{t('growth.analytics.visits')}</th>
@@ -342,13 +342,13 @@ export default function AdminAnalytics() {
                     <tbody className="divide-y divide-line">
                       {data.sources.map((s) => (
                         <tr key={s.source || '(direct)'}>
-                          <td className="max-w-[12rem] truncate px-5 py-2 font-medium text-navy-900 sm:px-6">{s.source || <span className="text-muted">{t('growth.analytics.direct')}</span>}</td>
+                          <td className="max-w-[12rem] truncate px-5 py-2 font-medium text-ink sm:px-6">{s.source || <span className="text-muted">{t('growth.analytics.direct')}</span>}</td>
                           <td className="px-3 py-2 text-right tabular-nums">{s.count.toLocaleString()}</td>
                           <td className="px-5 py-2 sm:px-6">
                             <span className="flex items-center gap-2">
                               <svg viewBox="0 0 100 4" preserveAspectRatio="none" className="h-2 min-w-0 flex-1" aria-hidden>
                                 <rect width={100} height={4} rx={2} fill="var(--color-surface)" />
-                                <rect width={s.share ?? 0} height={4} rx={2} fill="#2f7bff" />
+                                <rect width={s.share ?? 0} height={4} rx={2} fill="var(--color-chart-1)" />
                               </svg>
                               <span className="w-12 text-right text-xs text-muted tabular-nums">{pct(s.share)}</span>
                             </span>
@@ -367,7 +367,7 @@ export default function AdminAnalytics() {
               ) : (
                 <div className="-mx-5 overflow-x-auto sm:-mx-6">
                   <table className="w-full min-w-[440px] text-left text-sm">
-                    <thead className="text-[11px] font-semibold tracking-wide text-muted uppercase">
+                    <thead className="text-xs font-medium text-muted">
                       <tr>
                         <th className="px-5 py-2 sm:px-6">{t('growth.analytics.category')}</th>
                         <th className="px-2 py-2 text-right">{t('growth.analytics.created')}</th>
@@ -383,8 +383,8 @@ export default function AdminAnalytics() {
                           <td className="px-5 py-2 sm:px-6">
                             {c.title ? (
                               <>
-                                <span className="font-medium text-navy-900">{tr(c.title as never)}</span>
-                                {c.visaLabel && <span className="ml-1.5 font-mono text-[11px] text-muted">{c.visaLabel}</span>}
+                                <span className="font-medium text-ink">{tr(c.title as never)}</span>
+                                {c.visaLabel && <span className="ml-1.5 code-id text-[11px] text-muted">{c.visaLabel}</span>}
                               </>
                             ) : (
                               <span className="text-muted">{t('growth.analytics.noCategory')}</span>
@@ -392,8 +392,8 @@ export default function AdminAnalytics() {
                           </td>
                           <td className="px-2 py-2 text-right tabular-nums">{c.created}</td>
                           <td className="px-2 py-2 text-right tabular-nums">{c.active}</td>
-                          <td className="px-2 py-2 text-right text-emerald-700 tabular-nums">{c.approved}</td>
-                          <td className="px-2 py-2 text-right text-danger tabular-nums">{c.rejected}</td>
+                          <td className="px-2 py-2 text-right text-success-fg tabular-nums">{c.approved}</td>
+                          <td className="px-2 py-2 text-right text-danger-fg tabular-nums">{c.rejected}</td>
                           <td className="px-5 py-2 text-right font-semibold tabular-nums sm:px-6">{pct(c.approvalRate)}</td>
                         </tr>
                       ))}
@@ -408,7 +408,7 @@ export default function AdminAnalytics() {
           <SearchTermsPanel from={range.from} to={range.to} />
 
           <p className="flex items-start gap-2 text-xs text-muted">
-            <ShieldCheck className="mt-0.5 size-4 shrink-0 text-emerald-600" aria-hidden /> {t('growth.analytics.privacy')}
+            <ShieldCheck className="mt-0.5 size-4 shrink-0 text-success-fg" aria-hidden /> {t('growth.analytics.privacy')}
           </p>
         </div>
       ) : null}

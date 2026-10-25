@@ -6,6 +6,7 @@ import { CheckCircle2, MessageSquareHeart, Star, TriangleAlert } from 'lucide-re
 import clsx from 'clsx';
 import { api, errorCode } from '@/lib/api';
 import { Spinner } from '@/components/ui/Spinner';
+import { Lost, Success } from '@/components/illustrations';
 import { registerCopy, currentLocale } from '@/i18n';
 import { pagesGrowth } from '@/i18n/pagesGrowth';
 import { usePageTitle } from '@/lib/usePageTitle';
@@ -26,19 +27,17 @@ const TEXT_MAX = 1500;
 const KNOWN_ERRORS = ['INVITE_NOT_FOUND', 'INVITE_EXPIRED', 'UNAUTHENTICATED', 'ALREADY_SUBMITTED', 'TOO_MANY_REQUESTS'];
 
 const Shell = ({ children }: { children: ReactNode }) => (
-  <section className="flex min-h-[100svh] items-center bg-surface pt-24 pb-12 sm:pt-28 lg:pt-36 lg:pb-16">
+  <section className="flex min-h-[100svh] items-center bg-canvas pt-24 pb-12 sm:pt-28 lg:pt-36 lg:pb-16">
     <div className="container-x">
-      <div className="card mx-auto w-full max-w-2xl p-6 sm:p-10">{children}</div>
+      <div className="card mx-auto w-full max-w-2xl rounded-3xl p-6 sm:p-10">{children}</div>
     </div>
   </section>
 );
 
-const Message = ({ icon: Icon, tone, title, text, children }: { icon: typeof CheckCircle2; tone: 'good' | 'warn'; title: string; text: string; children?: ReactNode }) => (
+const Message = ({ tone, title, text, children }: { icon: typeof CheckCircle2; tone: 'good' | 'warn'; title: string; text: string; children?: ReactNode }) => (
   <div className="py-4 text-center" role={tone === 'warn' ? 'alert' : 'status'}>
-    <span className={clsx('mx-auto grid size-14 place-items-center rounded-full', tone === 'good' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700')}>
-      <Icon className="size-7" aria-hidden />
-    </span>
-    <h1 className="mt-5 font-display text-2xl font-extrabold text-navy-900">{title}</h1>
+    {tone === 'good' ? <Success className="mx-auto w-36" /> : <Lost className="mx-auto w-40" />}
+    <h1 className="mt-5 font-display text-2xl font-semibold text-ink">{title}</h1>
     <p className="mx-auto mt-2 max-w-md text-muted">{text}</p>
     <div className="mt-7 flex flex-col justify-center gap-3 sm:flex-row">{children}</div>
   </div>
@@ -77,13 +76,13 @@ const StarInput = ({ value, onChange, labelId }: { value: number; onChange: (v: 
             tabIndex={value === n || (!value && n === 1) ? 0 : -1}
             onClick={() => onChange(n)}
             onMouseEnter={() => setHover(n)}
-            className="grid size-11 place-items-center rounded-lg transition hover:bg-amber-50 focus-visible:outline-2 focus-visible:outline-brand-500"
+            className="grid size-11 place-items-center rounded-lg transition hover:bg-warning-bg focus-visible:outline-2 focus-visible:outline-focus"
           >
-            <Star className={clsx('size-8 transition', n <= shown ? 'fill-amber-400 text-amber-400' : 'text-slate-300')} aria-hidden />
+            <Star className={clsx('size-8 transition', n <= shown ? 'fill-highlight text-highlight' : 'text-subtle')} aria-hidden />
           </button>
         ))}
       </div>
-      <span className="min-h-5 text-sm font-semibold text-navy-900" aria-live="polite">
+      <span className="min-h-5 text-sm font-semibold text-ink" aria-live="polite">
         {shown ? labels[shown - 1] : ''}
       </span>
     </div>
@@ -136,10 +135,10 @@ const ReviewForm = ({ invite, token, onDone }: { invite: Invite; token: string |
 
   return (
     <form noValidate onSubmit={submit}>
-      <span className="grid size-12 place-items-center rounded-xl bg-brand-50 text-brand-600">
+      <span className="grid size-12 place-items-center rounded-xl chip-peach">
         <MessageSquareHeart className="size-6" aria-hidden />
       </span>
-      <h1 className="mt-5 font-display text-[1.75rem] leading-tight font-extrabold text-navy-900 sm:text-3xl">{t('growth.review.hello', { name: invite.firstName })}</h1>
+      <h1 className="mt-5 font-display text-[1.75rem] leading-tight font-semibold text-ink sm:text-3xl">{t('growth.review.hello', { name: invite.firstName })}</h1>
       <p className="mt-2 text-muted">
         {invite.profession ? t('growth.review.introProfession', { profession: invite.profession }) : t('growth.review.intro')}
       </p>
@@ -192,21 +191,21 @@ const ReviewForm = ({ invite, token, onDone }: { invite: Invite; token: string |
         </div>
 
         <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-line p-4">
-          <input type="checkbox" className="mt-0.5 size-5 shrink-0 accent-brand-600" checked={consent} onChange={(e) => setConsent(e.target.checked)} />
+          <input type="checkbox" className="mt-0.5 size-5 shrink-0 accent-primary" checked={consent} onChange={(e) => setConsent(e.target.checked)} />
           <span>
-            <span className="block text-sm font-semibold text-navy-900">{t('growth.review.consent')}</span>
+            <span className="block text-sm font-semibold text-ink">{t('growth.review.consent')}</span>
             <span className="mt-0.5 block text-xs text-muted">{t('growth.review.consentHint')}</span>
           </span>
         </label>
       </div>
 
       {error && (
-        <p className="mt-5 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-800" role="alert">
+        <p className="mt-5 rounded-lg bg-danger-bg px-4 py-3 text-sm text-danger-fg" role="alert">
           {error}
         </p>
       )}
 
-      <button type="submit" className="btn-primary mt-7 min-h-12 w-full sm:w-auto sm:px-8" disabled={busy}>
+      <button type="submit" className="btn-primary btn-lg mt-7 w-full sm:w-auto sm:px-8" disabled={busy}>
         {busy && <Spinner className="size-4" />}
         {t('growth.review.submit')}
       </button>
@@ -231,7 +230,7 @@ export default function ReviewPage() {
   if (isLoading) {
     return (
       <Shell>
-        <div className="grid min-h-60 place-items-center text-brand-600">
+        <div className="grid min-h-60 place-items-center text-primary">
           <Spinner className="size-8 border-[3px]" />
         </div>
       </Shell>
@@ -248,7 +247,7 @@ export default function ReviewPage() {
               {t('growth.review.login')}
             </Link>
           )}
-          <Link to="/" className="btn-ghost px-6">
+          <Link to="/" className="btn-secondary px-6">
             {t('growth.review.home')}
           </Link>
         </Message>

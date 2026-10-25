@@ -40,7 +40,7 @@ const Floating = ({ x, y, onClose, children, className }: { x: number; y: number
     setPos({ left: Math.max(4, Math.min(x, window.innerWidth - r.width - 8)), top: Math.max(4, Math.min(y, window.innerHeight - r.height - 8)) });
   }, [x, y, ref]);
   return createPortal(
-    <div ref={ref} style={{ position: 'fixed', left: pos.left, top: pos.top, zIndex: 60 }} className={clsx('rounded-xl border border-line bg-card text-ink shadow-2xl', className)}>
+    <div ref={ref} style={{ position: 'fixed', left: pos.left, top: pos.top, zIndex: 60 }} className={clsx('rounded-xl border border-line bg-card text-ink shadow-[var(--tv-shadow-raised)]', className)}>
       {children}
     </div>,
     document.body,
@@ -76,7 +76,7 @@ export function ContextMenu({ x, y, items, onClose }: { x: number; y: number; it
               }}
               className={clsx(
                 'flex w-full items-center gap-2.5 px-3 py-1.5 text-left text-sm disabled:cursor-not-allowed disabled:opacity-40',
-                it.danger ? 'text-danger hover:bg-danger/10' : 'hover:bg-brand-50',
+                it.danger ? 'text-danger-fg hover:bg-danger-bg' : 'hover:bg-primary/[0.06]',
               )}
             >
               <span className="grid w-4 shrink-0 place-items-center text-muted">{it.icon}</span>
@@ -137,10 +137,10 @@ export function FilterMenu({
       <div className="mb-2 truncate text-xs font-semibold text-muted">{title}</div>
       {onSort && (
         <div className="mb-3 grid grid-cols-2 gap-2">
-          <button type="button" className="flex items-center justify-center gap-1.5 rounded-lg border border-line px-2 py-1.5 text-xs font-semibold hover:bg-surface" onClick={() => (onSort('asc'), onClose())}>
+          <button type="button" className="flex items-center justify-center gap-1.5 rounded-lg border border-line px-2 py-1.5 text-xs font-semibold hover:bg-sunken" onClick={() => (onSort('asc'), onClose())}>
             <ArrowDownAZ size={14} /> {t('sheet.sortAsc')}
           </button>
-          <button type="button" className="flex items-center justify-center gap-1.5 rounded-lg border border-line px-2 py-1.5 text-xs font-semibold hover:bg-surface" onClick={() => (onSort('desc'), onClose())}>
+          <button type="button" className="flex items-center justify-center gap-1.5 rounded-lg border border-line px-2 py-1.5 text-xs font-semibold hover:bg-sunken" onClick={() => (onSort('desc'), onClose())}>
             <ArrowUpAZ size={14} /> {t('sheet.sortDesc')}
           </button>
         </div>
@@ -150,10 +150,10 @@ export function FilterMenu({
       <div className="mb-1 flex items-center justify-between text-xs">
         <span className="font-semibold text-ink/80">{t('sheet.filter.values')}</span>
         <span className="flex gap-2">
-          <button type="button" className="text-brand-600 hover:underline" onClick={() => setPicked(null)}>
+          <button type="button" className="text-link hover:underline" onClick={() => setPicked(null)}>
             {t('sheet.filter.all')}
           </button>
-          <button type="button" className="text-brand-600 hover:underline" onClick={() => setPicked(new Set())}>
+          <button type="button" className="text-link hover:underline" onClick={() => setPicked(new Set())}>
             {t('sheet.filter.none')}
           </button>
         </span>
@@ -164,18 +164,18 @@ export function FilterMenu({
       </div>
       <div className="max-h-52 overflow-auto rounded-lg border border-line">
         {shown.map((v) => (
-          <label key={v} className="flex cursor-pointer items-center gap-2 px-2 py-1 text-sm hover:bg-surface">
-            <input type="checkbox" checked={isPicked(v)} onChange={() => toggle(v)} className="accent-brand-600" />
+          <label key={v} className="flex cursor-pointer items-center gap-2 px-2 py-1 text-sm hover:bg-sunken">
+            <input type="checkbox" checked={isPicked(v)} onChange={() => toggle(v)} className="accent-primary" />
             <span className={clsx('truncate', !v && 'text-muted italic')}>{v || t('sheet.filter.blank')}</span>
           </label>
         ))}
         {!shown.length && <div className="px-2 py-3 text-center text-xs text-muted">—</div>}
       </div>
       <div className="mt-3 flex justify-between gap-2">
-        <button type="button" className="flex items-center gap-1 rounded-lg px-2 py-1.5 text-xs font-semibold text-muted hover:bg-surface" onClick={() => (onChange(undefined), onClose())}>
+        <button type="button" className="flex items-center gap-1 rounded-lg px-2 py-1.5 text-xs font-semibold text-muted hover:bg-sunken" onClick={() => (onChange(undefined), onClose())}>
           <X size={13} /> {t('sheet.filter.clear')}
         </button>
-        <button type="button" className="flex items-center gap-1 rounded-lg bg-brand-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-700" onClick={apply}>
+        <button type="button" className="flex items-center gap-1 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-contrast hover:bg-primary" onClick={apply}>
           <Check size={13} /> {t('sheet.filter.apply')}
         </button>
       </div>

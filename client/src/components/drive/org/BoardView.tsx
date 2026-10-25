@@ -99,7 +99,7 @@ export default function BoardView({ folderId, folderName, onOpen, onOpenFolder }
   return (
     <div className="flex h-full min-h-0 flex-col">
       <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-line/70 px-3 py-2 text-xs sm:px-4">
-        <Columns3 className="size-4 text-brand-600" aria-hidden />
+        <Columns3 className="size-4 text-link" aria-hidden />
         <span className="font-semibold text-ink">{t('driveOrg.board.title')}</span>
         {folderId && (
           <div className="flex rounded-lg border border-line p-0.5" role="radiogroup" aria-label={t('driveOrg.board.scope')}>
@@ -110,16 +110,16 @@ export default function BoardView({ folderId, folderName, onOpen, onOpenFolder }
                 role="radio"
                 aria-checked={scope === s}
                 onClick={() => setScope(s)}
-                className={clsx('max-w-[14rem] truncate rounded-md px-2 py-0.5 font-semibold', scope === s ? 'bg-brand-600 text-white' : 'text-muted hover:text-ink')}
+                className={clsx('max-w-[14rem] truncate rounded-md px-2 py-0.5 font-semibold', scope === s ? 'bg-card text-ink shadow-[var(--tv-shadow-card)] ring-1 ring-line' : 'text-muted hover:text-ink')}
               >
                 {s === 'folder' ? t('driveOrg.board.thisFolder', { name: folderName ?? '' }) : t('driveOrg.board.all')}
               </button>
             ))}
           </div>
         )}
-        <button type="button" onClick={() => setShowFilters((x) => !x)} className={clsx('inline-flex items-center gap-1 rounded-md px-2 py-1 font-semibold', showFilters || activeFilters ? 'bg-brand-50 text-brand-700 dark:bg-brand-500/15 dark:text-brand-300' : 'text-muted hover:text-ink')} aria-expanded={showFilters}>
+        <button type="button" onClick={() => setShowFilters((x) => !x)} className={clsx('inline-flex items-center gap-1 rounded-md px-2 py-1 font-semibold', showFilters || activeFilters ? 'bg-primary/[0.06] text-link dark:bg-brand-500/15 dark:text-brand-300' : 'text-muted hover:text-ink')} aria-expanded={showFilters}>
           <Filter className="size-3.5" /> {t('driveOrg.board.filters')}
-          {activeFilters > 0 && <span className="rounded-full bg-brand-600 px-1.5 text-[10px] text-white">{activeFilters}</span>}
+          {activeFilters > 0 && <span className="rounded-full bg-primary px-1.5 text-[10px] text-primary-contrast">{activeFilters}</span>}
         </button>
         {activeFilters > 0 && (
           <button type="button" onClick={() => setFilters({})} className="inline-flex items-center gap-1 text-muted hover:text-ink">
@@ -178,7 +178,7 @@ export default function BoardView({ folderId, folderName, onOpen, onOpenFolder }
                 key={stage}
                 aria-label={t(`driveOrg.stage.${stage}`)}
                 {...dropOn(stage)}
-                className={clsx('flex w-64 shrink-0 flex-col rounded-xl border bg-surface/60 transition-colors', over === stage ? 'border-brand-500 bg-brand-50 dark:bg-brand-500/10' : 'border-line')}
+                className={clsx('flex w-64 shrink-0 flex-col rounded-xl border bg-surface/60 transition-colors', over === stage ? 'border-primary bg-primary/[0.06] dark:bg-brand-500/10' : 'border-line')}
               >
                 <header className="flex items-center gap-2 px-3 py-2">
                   <span className={clsx('rounded px-1.5 py-0.5 text-[11px] font-bold', STAGE_TONE[stage])}>{t(`driveOrg.stage.${stage}`)}</span>
@@ -199,7 +199,7 @@ export default function BoardView({ folderId, folderName, onOpen, onOpenFolder }
                           if (e.key === 'Enter') onOpen(item);
                         }}
                         tabIndex={0}
-                        className="group rounded-lg border border-line bg-card p-2.5 shadow-sm outline-none hover:border-brand-300 focus-visible:ring-2 focus-visible:ring-brand-500/50"
+                        className="group rounded-lg border border-line bg-card p-2.5 shadow-[var(--tv-shadow-card)] outline-none hover:border-line-strong focus-visible:ring-2 focus-visible:ring-focus/50"
                       >
                         <div className="flex items-start gap-2">
                           <ItemIcon item={item} className="mt-0.5 size-5 shrink-0" />
@@ -207,7 +207,7 @@ export default function BoardView({ folderId, folderName, onOpen, onOpenFolder }
                           {editable && (
                             <button
                               type="button"
-                              className="grid size-6 shrink-0 place-items-center rounded-md text-muted opacity-60 hover:bg-surface hover:text-ink group-hover:opacity-100 focus-visible:opacity-100"
+                              className="grid size-6 shrink-0 place-items-center rounded-md text-muted opacity-60 hover:bg-sunken hover:text-ink group-hover:opacity-100 focus-visible:opacity-100"
                               aria-label={t('driveOrg.stage.change')}
                               title={t('driveOrg.stage.change')}
                               onClick={(e) => {
@@ -220,7 +220,7 @@ export default function BoardView({ folderId, folderName, onOpen, onOpenFolder }
                           )}
                         </div>
                         {item.client && (
-                          <button type="button" onClick={() => onOpenFolder(item.client!.folderId)} className="mt-1 flex max-w-full items-center gap-1 truncate text-[11px] font-semibold text-violet-700 hover:underline dark:text-violet-300" title={item.client.name}>
+                          <button type="button" onClick={() => onOpenFolder(item.client!.folderId)} className="mt-1 flex max-w-full items-center gap-1 truncate text-[11px] font-semibold text-accent-fg hover:underline dark:text-violet-300" title={item.client.name}>
                             <Briefcase className="size-3 shrink-0" aria-hidden />
                             <span className="truncate">{item.client.name}</span>
                           </button>
@@ -228,7 +228,7 @@ export default function BoardView({ folderId, folderName, onOpen, onOpenFolder }
                         <div className="mt-1.5 flex flex-wrap items-center gap-1">
                           <FinalBadge item={item} compact />
                           <TagChips tags={item.tags} max={3} />
-                          <span className={clsx('ml-auto text-[10px] font-semibold tabular-nums', days >= 7 ? 'text-danger' : 'text-muted')} title={t('driveOrg.board.ageHint')}>
+                          <span className={clsx('ml-auto text-[10px] font-semibold tabular-nums', days >= 7 ? 'text-danger-fg' : 'text-muted')} title={t('driveOrg.board.ageHint')}>
                             {t('driveOrg.board.age', { count: days })}
                           </span>
                         </div>

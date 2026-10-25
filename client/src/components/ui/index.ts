@@ -1,6 +1,6 @@
 /**
  * Triad Vision design system. Import from '@/components/ui' (or the individual files).
- * Docs: components/ui/README.md · Inventory of legacy duplicates: components/ui/INVENTORY.md
+ * Docs: components/ui/README.md · Live catalogue: /admin/design-system · Legacy duplicates: components/ui/INVENTORY.md
  */
 export * from './status';
 export { useOverlay, useEscapeLayer, lockScroll, hasOpenOverlay, focusableIn, type OverlayOptions } from './overlay';
@@ -12,7 +12,11 @@ export { ConfirmDialog, type ConfirmDialogProps } from './ConfirmDialog';
 export { Badge, StatusPill, StatusDot, type BadgeProps, type StatusPillProps } from './Badge';
 export { EmptyState, type EmptyStateProps } from './EmptyState';
 export { Skeleton, SkeletonText, SkeletonBlock, SkeletonList, SkeletonRows, SkeletonAvatar, SkeletonCard, SkeletonGrid, SkeletonStat, SkeletonStats, SkeletonTable, SkeletonHero } from './Skeleton';
-export { Field, Input, Select, Textarea, Checkbox, useFieldControl, type FieldProps, type InputProps, type SelectProps, type TextareaProps } from './Field';
+export { Field, Input, Select, Textarea, Checkbox, Radio, RadioGroup, useFieldControl, type FieldProps, type InputProps, type SelectProps, type TextareaProps, type RadioGroupProps } from './Field';
+export { Switch, type SwitchProps } from './Switch';
+export { Avatar, initialsOf, type AvatarProps, type AvatarSize } from './Avatar';
+export { StatTile, type StatTileProps, type StatDelta } from './StatTile';
+export { Pagination, pageWindow, type PaginationProps } from './Pagination';
 export { Card, CardHeader, type CardProps } from './Card';
 export { PageHeader, Breadcrumbs, Section, Toolbar, FilterBar, type PageHeaderProps, type Crumb } from './PageHeader';
 export { Tabs, TabPanel, tabIds, useTabParam, type TabItem, type TabsProps } from './Tabs';

@@ -6,6 +6,8 @@ import { api } from '@/lib/api';
 import { money, day } from '@/components/agents/format';
 import type { PartnerDashboard, PartnerMe } from '@/components/partnerPortal/api';
 import { ErrorRetry, Kpi, Loading, Section, StatusPill } from '@/components/partnerPortal/ui';
+import { EmptyState } from '@/components/ui';
+import { EmptyInbox } from '@/components/illustrations';
 
 export default function PartnerDashboardPage({ me }: { me: PartnerMe }) {
   const { t } = useTranslation();
@@ -22,24 +24,24 @@ export default function PartnerDashboardPage({ me }: { me: PartnerMe }) {
     <>
       <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3">
         <Kpi label={t('partnerPortal.dashboard.clients')} value={d.counts.clients} icon={Users} />
-        <Kpi label={t('partnerPortal.dashboard.activeCases')} value={d.counts.activeCases} icon={Briefcase} tone="bg-amber-100 text-amber-700" />
-        <Kpi label={t('partnerPortal.dashboard.approvedVisas')} value={d.counts.approvedVisas} icon={BadgeCheck} tone="bg-emerald-100 text-emerald-700" />
+        <Kpi label={t('partnerPortal.dashboard.activeCases')} value={d.counts.activeCases} icon={Briefcase} tone="bg-warning-bg text-warning-fg" />
+        <Kpi label={t('partnerPortal.dashboard.approvedVisas')} value={d.counts.approvedVisas} icon={BadgeCheck} tone="bg-success-bg text-success-fg" />
       </div>
 
       <Section
         title={t('partnerPortal.dashboard.commissions')}
         icon={HandCoins}
         actions={
-          <Link to="/partner/commissions" className="inline-flex items-center gap-1 text-sm font-semibold text-brand-700 hover:underline">
+          <Link to="/partner/commissions" className="inline-flex items-center gap-1 text-sm font-semibold text-link hover:underline">
             {t('partnerPortal.dashboard.viewCommissions')} <ArrowRight className="size-4" aria-hidden />
           </Link>
         }
       >
         <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
-          <Kpi label={t('partnerPortal.dashboard.pending')} value={money(d.commissions.pendingCents, cur)} icon={Clock3} tone="bg-amber-100 text-amber-700" />
+          <Kpi label={t('partnerPortal.dashboard.pending')} value={money(d.commissions.pendingCents, cur)} icon={Clock3} tone="bg-warning-bg text-warning-fg" />
           <Kpi label={t('partnerPortal.dashboard.approved')} value={money(d.commissions.approvedCents, cur)} icon={CheckCircle2} />
-          <Kpi label={t('partnerPortal.dashboard.paid')} value={money(d.commissions.paidCents, cur)} icon={Wallet} tone="bg-emerald-100 text-emerald-700" />
-          <Kpi label={t('partnerPortal.dashboard.thisMonth')} value={money(d.commissions.thisMonthCents, cur)} icon={CalendarDays} tone="bg-violet-100 text-violet-700" />
+          <Kpi label={t('partnerPortal.dashboard.paid')} value={money(d.commissions.paidCents, cur)} icon={Wallet} tone="bg-success-bg text-success-fg" />
+          <Kpi label={t('partnerPortal.dashboard.thisMonth')} value={money(d.commissions.thisMonthCents, cur)} icon={CalendarDays} tone="bg-accent-bg text-accent-fg" />
         </div>
         {me.partner.commissionCents != null && me.partner.commissionCents > 0 && (
           <p className="mt-4 text-sm text-muted">{t('partnerPortal.dashboard.defaultCommission', { amount: money(me.partner.commissionCents, me.partner.currency) })}</p>
@@ -50,25 +52,25 @@ export default function PartnerDashboardPage({ me }: { me: PartnerMe }) {
         title={t('partnerPortal.dashboard.recent')}
         icon={Activity}
         actions={
-          <Link to="/partner/clients" className="inline-flex items-center gap-1 text-sm font-semibold text-brand-700 hover:underline">
+          <Link to="/partner/clients" className="inline-flex items-center gap-1 text-sm font-semibold text-link hover:underline">
             {t('partnerPortal.dashboard.viewClients')} <ArrowRight className="size-4" aria-hidden />
           </Link>
         }
       >
         {d.recent.length === 0 ? (
-          <p className="text-sm text-muted">{t('partnerPortal.dashboard.recentEmpty')}</p>
+          <EmptyState compact illustration={<EmptyInbox className="w-28" />} title={t('partnerPortal.dashboard.recentEmpty')} />
         ) : (
           <ul className="divide-y divide-line">
             {d.recent.map((e) => (
               <li key={e.id}>
-                <Link to={`/partner/clients/${e.caseId}`} className="-mx-2 flex flex-wrap items-center justify-between gap-2 rounded-lg px-2 py-3 hover:bg-surface">
+                <Link to={`/partner/clients/${e.caseId}`} className="-mx-2 flex min-h-14 flex-wrap items-center justify-between gap-2 rounded-xl px-2 py-3 transition-colors hover:bg-sunken">
                   <span className="min-w-0">
                     <span className="block truncate font-semibold text-ink">{e.client}</span>
                     <span className="block text-xs text-muted">
                       <span className="font-mono">{e.caseNumber}</span> · {day(e.createdAt)}
                     </span>
                   </span>
-                  {e.toStatus ? <StatusPill status={e.toStatus} /> : <span className="text-sm text-ink/80">{eventLabel(e)}</span>}
+                  {e.toStatus ? <StatusPill status={e.toStatus} /> : <span className="text-sm text-muted">{eventLabel(e)}</span>}
                 </Link>
               </li>
             ))}

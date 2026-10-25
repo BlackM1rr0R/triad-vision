@@ -2,8 +2,8 @@ import { useState, type ReactNode } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import clsx from 'clsx';
 import { CheckCircle2, FlaskConical, MailX, SearchX } from 'lucide-react';
+import { Lost, Success } from '@/components/illustrations';
 import { api } from '@/lib/api';
 import { Spinner } from '@/components/ui/Spinner';
 import { registerCopy, type Locale } from '@/i18n';
@@ -23,19 +23,25 @@ interface Info {
 }
 
 const Shell = ({ children }: { children: ReactNode }) => (
-  <section className="flex min-h-[100svh] items-center bg-surface pt-24 pb-12 sm:pt-28 lg:pt-36 lg:pb-16">
+  <section className="flex min-h-[100svh] items-center bg-canvas pt-24 pb-12 sm:pt-28 lg:pt-36 lg:pb-16">
     <div className="container-x">
-      <div className="mx-auto w-full max-w-xl rounded-2xl border border-line bg-card p-5 shadow-sm sm:p-10">{children}</div>
+      <div className="card mx-auto w-full max-w-xl rounded-3xl p-5 sm:p-10">{children}</div>
     </div>
   </section>
 );
 
 const Message = ({ icon: Icon, tone, title, text, children }: { icon: typeof CheckCircle2; tone: 'good' | 'warn' | 'muted'; title: string; text: string; children?: ReactNode }) => (
   <div className="py-4 text-center" role={tone === 'warn' ? 'alert' : 'status'}>
-    <span className={clsx('mx-auto grid size-14 place-items-center rounded-full', tone === 'good' ? 'bg-emerald-100 text-emerald-700' : tone === 'warn' ? 'bg-amber-100 text-amber-700' : 'bg-surface text-muted')}>
-      <Icon className="size-7" aria-hidden />
-    </span>
-    <h1 className="mt-4 text-xl font-bold text-navy-900 sm:text-2xl">{title}</h1>
+    {tone === 'good' ? (
+      <Success className="mx-auto w-36" />
+    ) : tone === 'warn' ? (
+      <Lost className="mx-auto w-40" />
+    ) : (
+      <span className="mx-auto grid size-14 place-items-center rounded-full bg-sunken text-muted">
+        <Icon className="size-7" aria-hidden />
+      </span>
+    )}
+    <h1 className="mt-5 font-display text-xl font-semibold text-ink sm:text-2xl">{title}</h1>
     <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-muted">{text}</p>
     {children}
   </div>
@@ -75,10 +81,10 @@ export default function Unsubscribe() {
 
   const links = (
     <div className="mt-6 flex flex-wrap justify-center gap-2">
-      <Link to="/account/profile?tab=notifications" className="btn-secondary btn-sm">
+      <Link to="/account/profile?tab=notifications" className="btn-secondary">
         {u('settings')}
       </Link>
-      <Link to="/" className="btn-secondary btn-sm">
+      <Link to="/" className="btn-secondary">
         {u('home')}
       </Link>
     </div>
@@ -95,7 +101,7 @@ export default function Unsubscribe() {
   if (info.isLoading || !info.data)
     return (
       <Shell>
-        <div className="grid min-h-[30vh] place-items-center text-brand-600" role="status" aria-label={u('loading')}>
+        <div className="grid min-h-[30vh] place-items-center text-primary" role="status" aria-label={u('loading')}>
           <Spinner className="size-8 border-[3px]" />
         </div>
       </Shell>
@@ -122,17 +128,17 @@ export default function Unsubscribe() {
   return (
     <Shell>
       <div className="text-center">
-        <span className="mx-auto grid size-14 place-items-center rounded-full bg-brand-50 text-brand-700">
+        <span className="mx-auto grid size-14 place-items-center rounded-2xl chip-sky">
           <MailX className="size-7" aria-hidden />
         </span>
-        <h1 className="mt-4 text-xl font-bold text-navy-900 sm:text-2xl">{u('title')}</h1>
+        <h1 className="mt-4 font-display text-xl font-semibold text-ink sm:text-2xl">{u('title')}</h1>
         <p className="mt-1 text-sm text-muted">{u('intro', { email: info.data.email })}</p>
       </div>
-      <p className="mt-6 rounded-xl bg-surface px-4 py-3 text-sm leading-relaxed text-ink">{marketing ? u('marketing') : u('service')}</p>
+      <p className="mt-6 rounded-2xl bg-sunken px-4 py-3 text-sm leading-relaxed text-ink">{marketing ? u('marketing') : u('service')}</p>
       {already && <p className="mt-3 text-center text-sm text-muted">{u('already')}</p>}
       {marketing && (
         <label className="mt-4 flex items-start gap-2.5 text-sm text-ink/80">
-          <input type="checkbox" className="mt-0.5 size-4 shrink-0 accent-brand-600" checked={alsoAll} onChange={(e) => setAlsoAll(e.target.checked)} />
+          <input type="checkbox" className="mt-0.5 size-4 shrink-0 accent-primary" checked={alsoAll} onChange={(e) => setAlsoAll(e.target.checked)} />
           <span>{u('alsoAll')}</span>
         </label>
       )}
@@ -141,7 +147,7 @@ export default function Unsubscribe() {
           {u('error')}
         </p>
       )}
-      <button type="button" className="btn-primary mt-6 h-12 w-full" disabled={state === 'busy'} onClick={() => void submit()}>
+      <button type="button" className="btn-primary btn-lg mt-6 w-full" disabled={state === 'busy'} onClick={() => void submit()}>
         {state === 'busy' ? <Spinner className="size-4" /> : <MailX className="size-4" aria-hidden />} {u('button')}
       </button>
       {links}

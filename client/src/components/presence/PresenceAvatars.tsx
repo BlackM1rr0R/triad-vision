@@ -7,7 +7,7 @@ import type { Viewer } from './usePresence';
 
 registerCopy(pagesAdminUx);
 
-const TONES = ['bg-brand-600', 'bg-violet-600', 'bg-emerald-600', 'bg-amber-600', 'bg-rose-600', 'bg-sky-600'];
+const TONES = ['bg-primary', 'bg-accent', 'bg-success', 'bg-warning', 'bg-danger', 'bg-info'];
 const toneOf = (id: string) => TONES[[...id].reduce((a, ch) => (a * 31 + ch.charCodeAt(0)) >>> 0, 7) % TONES.length];
 const initials = (v: Viewer) => `${v.firstName[0] ?? ''}${v.lastName[0] ?? ''}`.toUpperCase() || '?';
 
@@ -39,20 +39,20 @@ export const PresenceAvatars = ({ viewers, max = 4, className }: { viewers: View
               role="img"
               aria-label={text(v)}
               className={clsx(
-                'relative grid size-8 place-items-center rounded-full text-[11px] font-bold text-white ring-2 ring-card outline-none focus-visible:ring-brand-500',
+                'relative grid size-8 place-items-center rounded-full text-[11px] font-bold text-white ring-2 ring-card outline-none focus-visible:ring-focus',
                 toneOf(v.userId),
               )}
             >
               <span aria-hidden>{initials(v)}</span>
               {v.editing && (
-                <span className="absolute -right-0.5 -bottom-0.5 grid size-3.5 place-items-center rounded-full bg-amber-500 ring-2 ring-card" aria-hidden>
+                <span className="absolute -right-0.5 -bottom-0.5 grid size-3.5 place-items-center rounded-full bg-warning ring-2 ring-card" aria-hidden>
                   <Pencil className="size-2 text-white" />
                 </span>
               )}
             </span>
             <span
               role="tooltip"
-              className="pointer-events-none absolute top-full right-0 z-[130] mt-1.5 w-max max-w-64 rounded-md bg-navy-950 px-2 py-1 text-xs font-medium text-white opacity-0 shadow-lg transition-opacity group-focus-within/av:opacity-100 group-hover/av:opacity-100"
+              className="pointer-events-none absolute top-full right-0 z-[130] mt-1.5 w-max max-w-64 rounded-md bg-navy-950 px-2 py-1 text-xs font-medium text-white opacity-0 shadow-[var(--tv-shadow-raised)] transition-opacity group-focus-within/av:opacity-100 group-hover/av:opacity-100"
             >
               {text(v)}
             </span>
@@ -60,7 +60,7 @@ export const PresenceAvatars = ({ viewers, max = 4, className }: { viewers: View
         ))}
       </ul>
       {rest > 0 && (
-        <span className="ml-1 rounded-full bg-surface px-1.5 py-0.5 text-[11px] font-semibold text-muted">
+        <span className="ml-1 rounded-full bg-sunken px-1.5 py-0.5 text-[11px] font-semibold text-muted">
           <span aria-hidden>+{rest}</span>
           <span className="sr-only">{t('ux.presence.more', { count: rest })}</span>
         </span>

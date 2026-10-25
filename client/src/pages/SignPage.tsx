@@ -29,7 +29,7 @@ export default function SignPage() {
   usePageTitle(view?.request.title ?? t('esign.sign.eyebrow'));
 
   return (
-    <div className="min-h-screen bg-surface px-4 pt-24 pb-16 sm:pt-28 sm:pb-24 lg:pt-36">
+    <div className="min-h-screen bg-canvas px-4 pt-24 pb-16 sm:pt-28 sm:pb-24 lg:pt-36">
       {isLoading ? <SigningSkeleton /> : error || !view ? <InvalidLink /> : <SigningFlow view={view} base={base} onChange={setView} />}
     </div>
   );

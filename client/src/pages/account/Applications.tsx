@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import clsx from 'clsx';
-import { ArrowRight, Briefcase, MapPin, Undo2 } from 'lucide-react';
+import { ArrowRight, MapPin, Undo2 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { registerCopy } from '@/i18n';
@@ -18,6 +18,7 @@ import { APPLICATION_STATUS_TONE, type ApplicationStatus, type EmploymentType } 
 import type { L10n } from '@/lib/types';
 import { PartyChatButton, PartyConversations, PartyThreadFromQuery, usePartyThreads } from '@/components/messagingPlus/PartyThread';
 import { RecommendationsCard } from '@/components/aiWriting/Recommendations';
+import { Handshake } from '@/components/illustrations';
 
 registerCopy(pagesJobs);
 
@@ -61,7 +62,7 @@ export default function AccountApplications() {
   if (isLoading) {
     return (
       <div className="grid min-h-[30vh] place-items-center">
-        <Spinner className="size-8 text-brand-600" />
+        <Spinner className="size-8 text-primary" />
       </div>
     );
   }
@@ -81,7 +82,7 @@ export default function AccountApplications() {
     <div className="space-y-5">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h2 className="font-display text-xl font-bold text-navy-900 sm:text-2xl">{t('jobsArea.applications.title')}</h2>
+          <h2 className="type-page-title">{t('jobsArea.applications.title')}</h2>
           <p className="mt-1 text-sm text-muted">{t('jobsArea.applications.subtitle')}</p>
         </div>
         <Link to="/jobs" className="btn-ghost btn-sm">
@@ -91,11 +92,8 @@ export default function AccountApplications() {
 
       {items.length === 0 ? (
         <div className="card flex flex-col items-center px-6 py-14 text-center">
-          {/* TODO(ui): large portal empty state (size-14 icon, display title) -> <EmptyState size="lg" tone="brand"> (portal rework) */}
-          <span className="grid size-14 place-items-center rounded-full bg-brand-50 text-brand-600">
-            <Briefcase className="size-6" aria-hidden />
-          </span>
-          <p className="mt-4 font-display text-lg font-bold text-navy-900">{t('jobsArea.applications.empty')}</p>
+          <Handshake className="w-40" />
+          <p className="type-card-title mt-4 text-lg">{t('jobsArea.applications.empty')}</p>
           <p className="mt-1 max-w-md text-sm text-muted">{t('jobsArea.applications.emptyText')}</p>
           <Link to="/jobs" className="btn-primary btn-sm mt-5">
             {t('jobsArea.applications.browse')}
@@ -111,11 +109,11 @@ export default function AccountApplications() {
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     {a.vacancy.isOpen ? (
-                      <Link to={`/jobs/${a.vacancy.slug}`} className="font-display text-lg leading-snug font-bold break-words text-navy-900 hover:text-brand-700">
+                      <Link to={`/jobs/${a.vacancy.slug}`} className="font-display text-lg leading-snug font-bold break-words text-ink hover:text-link-hover">
                         {L.title(a.vacancy.title)}
                       </Link>
                     ) : (
-                      <p className="font-display text-lg leading-snug font-bold break-words text-navy-900">{L.title(a.vacancy.title)}</p>
+                      <p className="font-display text-lg leading-snug font-bold break-words text-ink">{L.title(a.vacancy.title)}</p>
                     )}
                     <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted">
                       {a.vacancy.city && (
@@ -137,7 +135,7 @@ export default function AccountApplications() {
                       title={L.appStatus(s)}
                       className={clsx(
                         'h-1.5 flex-1 rounded-full',
-                        ended ? 'bg-slate-200' : i <= reached ? (a.status === 'ACCEPTED' ? 'bg-emerald-500' : 'bg-brand-600') : 'bg-line',
+                        ended ? 'bg-line' : i <= reached ? (a.status === 'ACCEPTED' ? 'bg-success' : 'bg-primary') : 'bg-line',
                       )}
                     />
                   ))}

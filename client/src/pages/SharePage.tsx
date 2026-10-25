@@ -12,6 +12,7 @@ import { fmtDate } from '@/components/admin/labels';
 import { LogoMark } from '@/components/ui/Logo';
 import { Spinner } from '@/components/ui/Spinner';
 import { optimizeImages } from '@/lib/imageCompress';
+import { Lost } from '@/components/illustrations';
 
 registerCopy(driveCollabCopy);
 
@@ -115,13 +116,13 @@ export default function SharePage() {
   };
 
   const shell = (children: React.ReactNode) => (
-    <div className="min-h-screen bg-surface px-4 pt-24 pb-16 sm:pt-28 sm:pb-24 lg:pt-36">
+    <div className="min-h-screen bg-canvas px-4 pt-24 pb-16 sm:pt-28 sm:pb-24 lg:pt-36">
       <div className="mx-auto w-full max-w-2xl">
-        <div className="rounded-2xl border border-line bg-card p-5 shadow-sm sm:p-8">
+        <div className="card rounded-3xl p-5 sm:p-8">
           <div className="mb-6 flex items-center gap-3">
-            <LogoMark className="h-9 w-10 shrink-0 text-navy-900 dark:text-white" />
+            <LogoMark className="h-9 w-10 shrink-0 text-ink" />
             <div className="min-w-0">
-              <p className="font-display text-sm font-extrabold tracking-[0.12em] text-ink">TRIAD VISION</p>
+              <p className="font-display text-sm font-semibold tracking-[0.12em] text-ink">TRIAD VISION</p>
               <p className="text-xs text-muted">{t('driveCollab.share.eyebrow')}</p>
             </div>
           </div>
@@ -144,8 +145,8 @@ export default function SharePage() {
   if (q.isError || !meta) {
     return shell(
       <div className="py-6 text-center">
-        <XCircle className="mx-auto size-12 text-muted" strokeWidth={1.4} />
-        <h1 className="mt-3 text-lg font-bold text-ink">{t('driveCollab.share.invalidTitle')}</h1>
+        <Lost className="mx-auto w-40" />
+        <h1 className="mt-4 type-card-title text-ink">{t('driveCollab.share.invalidTitle')}</h1>
         <p className="mx-auto mt-1 max-w-md text-sm text-muted">{t('driveCollab.share.invalidBody')}</p>
       </div>,
     );
@@ -154,11 +155,11 @@ export default function SharePage() {
   const Icon = meta.kind === 'FOLDER' ? Folder : FileText;
   const header = (
     <div className="flex items-start gap-3">
-      <span className={clsx('grid size-12 shrink-0 place-items-center rounded-xl', meta.kind === 'FOLDER' ? 'bg-amber-100 text-amber-600' : 'bg-brand-50 text-brand-600')}>
+      <span className={clsx('grid size-12 shrink-0 place-items-center rounded-xl', meta.kind === 'FOLDER' ? 'chip-soft' : 'chip-sky')}>
         <Icon className="size-6" />
       </span>
       <div className="min-w-0">
-        <h1 className="text-lg font-bold break-words text-ink">{meta.name}</h1>
+        <h1 className="type-card-title break-words text-ink">{meta.name}</h1>
         <p className="mt-0.5 text-xs text-muted">
           {meta.kind === 'FOLDER' ? t('driveCollab.share.folder') : t('driveCollab.share.file')}
           {meta.kind === 'FILE' && meta.size != null ? ` · ${formatBytes(meta.size)}` : ''}
@@ -173,9 +174,9 @@ export default function SharePage() {
     return shell(
       <>
         {header}
-        <form onSubmit={unlock} className="mt-6 rounded-xl border border-line bg-surface/60 p-4">
+        <form onSubmit={unlock} className="mt-6 rounded-2xl border border-line bg-sunken p-4">
           <p className="flex items-center gap-2 text-sm font-semibold text-ink">
-            <KeyRound className="size-4 text-brand-600" /> {t('driveCollab.share.passwordTitle')}
+            <KeyRound className="size-4" /> {t('driveCollab.share.passwordTitle')}
           </p>
           <div className="mt-3 flex gap-2">
             <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder={t('driveCollab.share.passwordPh')} className="input" autoFocus autoComplete="off" aria-invalid={pwError} />
@@ -195,13 +196,13 @@ export default function SharePage() {
       {header}
       {meta.downloadsLeft != null && !exhausted && <p className="mt-3 text-xs text-muted">{t('driveCollab.share.downloadsLeft', { count: meta.downloadsLeft })}</p>}
       {exhausted && (
-        <p className="mt-4 flex items-center gap-2 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:bg-amber-500/10 dark:text-amber-200">
+        <p className="mt-4 flex items-center gap-2 rounded-lg bg-warning-bg px-3 py-2 text-sm text-warning-fg">
           <AlertTriangle className="size-4 shrink-0" /> {t('driveCollab.share.limitReached')}
         </p>
       )}
 
       {meta.kind === 'FILE' && !exhausted && (
-        <a href={dl()} onClick={afterDownload} className="btn-primary mt-6 w-full justify-center sm:w-auto" download>
+        <a href={dl()} onClick={afterDownload} className="btn-primary btn-lg mt-6 w-full justify-center sm:w-auto" download>
           <Download className="size-4" /> {t('driveCollab.share.download')}
         </a>
       )}
@@ -214,7 +215,7 @@ export default function SharePage() {
                 <span key={p.id ?? 'root'} className="flex items-center gap-1">
                   {i > 0 && <ChevronRight className="size-3.5 text-muted" />}
                   {i < arr.length - 1 ? (
-                    <button type="button" onClick={() => setDir(p.id)} className="font-medium text-brand-600 hover:underline">
+                    <button type="button" onClick={() => setDir(p.id)} className="font-medium text-link hover:underline">
                       {p.name}
                     </button>
                   ) : (
@@ -233,9 +234,9 @@ export default function SharePage() {
             <ul className="divide-y divide-line rounded-xl border border-line">
               {meta.entries.map((e) => (
                 <li key={e.id} className="flex items-center gap-3 px-3 py-2.5">
-                  {e.kind === 'FOLDER' ? <Folder className="size-5 shrink-0 text-amber-500" /> : <FileText className="size-5 shrink-0 text-brand-600" />}
+                  {e.kind === 'FOLDER' ? <Folder className="size-5 shrink-0 text-highlight" /> : <FileText className="size-5 shrink-0 text-primary" />}
                   {e.kind === 'FOLDER' ? (
-                    <button type="button" onClick={() => setDir(e.id)} className="min-w-0 flex-1 truncate text-left text-sm font-medium text-ink hover:text-brand-600 hover:underline">
+                    <button type="button" onClick={() => setDir(e.id)} className="min-w-0 flex-1 truncate text-left text-sm font-medium text-ink hover:text-link hover:underline">
                       {e.name}
                     </button>
                   ) : (
@@ -243,7 +244,7 @@ export default function SharePage() {
                   )}
                   {e.kind === 'FILE' && <span className="shrink-0 text-xs text-muted tabular-nums">{formatBytes(e.size ?? 0)}</span>}
                   {!exhausted && (
-                    <a href={dl(e.id)} onClick={afterDownload} className="grid size-8 shrink-0 place-items-center rounded-lg text-muted hover:bg-surface hover:text-brand-600" title={t('driveCollab.share.download')} aria-label={`${t('driveCollab.share.download')}: ${e.name}`} download>
+                    <a href={dl(e.id)} onClick={afterDownload} className="grid size-10 shrink-0 place-items-center rounded-lg text-muted hover:bg-sunken hover:text-link" title={t('driveCollab.share.download')} aria-label={`${t('driveCollab.share.download')}: ${e.name}`} download>
                       {e.kind === 'FOLDER' ? <FileArchive className="size-4" /> : <Download className="size-4" />}
                     </a>
                   )}
@@ -262,12 +263,12 @@ export default function SharePage() {
               }}
               onDragLeave={() => setOver(false)}
               onDrop={onDrop}
-              className={clsx('mt-6 rounded-xl border-2 border-dashed p-5 text-center transition', over ? 'border-brand-500 bg-brand-50 dark:bg-brand-500/10' : 'border-line')}
+              className={clsx('mt-6 rounded-xl border-2 border-dashed p-5 text-center transition', over ? 'border-primary bg-sunken' : 'border-line-strong')}
             >
-              <UploadCloud className="mx-auto size-10 text-brand-600" strokeWidth={1.5} />
+              <UploadCloud className="mx-auto size-10 text-muted" strokeWidth={1.5} />
               <p className="mt-2 text-sm font-semibold text-ink">{t('driveCollab.share.uploadTitle')}</p>
               <p className="mt-0.5 text-xs text-muted">{t('driveCollab.share.uploadHint', { size: formatBytes(meta.maxFileBytes ?? 50 * 1024 * 1024) })}</p>
-              <button type="button" className="btn-primary btn-sm mt-3" onClick={() => input.current?.click()}>
+              <button type="button" className="btn-secondary mt-3" onClick={() => input.current?.click()}>
                 {t('driveCollab.share.choose')}
               </button>
               <input
@@ -285,7 +286,7 @@ export default function SharePage() {
                 <ul className="mt-4 space-y-1 text-left text-xs">
                   {uploads.map((u) => (
                     <li key={u.id} className="flex items-center gap-2">
-                      {u.state === 'busy' ? <Loader2 className="size-3.5 shrink-0 animate-spin text-brand-600" /> : u.state === 'ok' ? <CheckCircle2 className="size-3.5 shrink-0 text-emerald-600" /> : <XCircle className="size-3.5 shrink-0 text-danger" />}
+                      {u.state === 'busy' ? <Loader2 className="size-3.5 shrink-0 animate-spin text-primary" /> : u.state === 'ok' ? <CheckCircle2 className="size-3.5 shrink-0 text-success-fg" /> : <XCircle className="size-3.5 shrink-0 text-danger" />}
                       <span className={clsx('min-w-0 flex-1 truncate', u.state === 'fail' ? 'text-danger' : 'text-ink')}>
                         {u.state === 'busy' ? t('driveCollab.share.uploading', { name: u.name }) : u.state === 'ok' ? t('driveCollab.share.uploaded', { name: u.name }) : t('driveCollab.share.uploadFailed', { name: u.name })}
                       </span>

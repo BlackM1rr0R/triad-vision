@@ -113,7 +113,7 @@ export const StampView = ({ doc, info, onSaved }: { doc: PDFDocumentProxy; info:
           onPage={setPage}
           badge={(i) => {
             const n = placed.filter((p) => p.page === i).length;
-            return n ? <span className="absolute top-1 right-1 rounded-full bg-brand-600 px-1.5 text-[10px] font-bold text-white">{n}</span> : null;
+            return n ? <span className="absolute top-1 right-1 rounded-full bg-primary px-1.5 text-[10px] font-bold text-primary-contrast">{n}</span> : null;
           }}
           overlay={({ scale, size }) => {
             const move = (e: RPointerEvent) => {
@@ -153,7 +153,7 @@ export const StampView = ({ doc, info, onSaved }: { doc: PDFDocumentProxy; info:
                 {onPage.map((p) => (
                   <div
                     key={p.key}
-                    className="group absolute cursor-move ring-1 ring-brand-500/70 hover:ring-2"
+                    className="group absolute cursor-move ring-1 ring-focus/70 hover:ring-2"
                     style={{ left: p.x * scale, top: p.y * scale, width: p.w * scale, height: p.h * scale }}
                     onPointerDown={(e) => {
                       e.stopPropagation();
@@ -169,7 +169,7 @@ export const StampView = ({ doc, info, onSaved }: { doc: PDFDocumentProxy; info:
                     )}
                     <button
                       type="button"
-                      className="absolute -top-3 -right-3 hidden rounded-full bg-red-600 p-1 text-white shadow group-hover:block"
+                      className="absolute -top-3 -right-3 hidden rounded-full bg-danger p-1 text-white shadow-[var(--tv-shadow-card)] group-hover:block"
                       onPointerDown={(e) => e.stopPropagation()}
                       onClick={() => setPlaced((list) => list.filter((x) => x.key !== p.key))}
                       aria-label={t('pdfTools.stamp.remove')}
@@ -177,7 +177,7 @@ export const StampView = ({ doc, info, onSaved }: { doc: PDFDocumentProxy; info:
                       <Trash2 className="size-3" />
                     </button>
                     <span
-                      className="absolute -right-1.5 -bottom-1.5 size-3 cursor-nwse-resize rounded-sm border border-white bg-brand-600"
+                      className="absolute -right-1.5 -bottom-1.5 size-3 cursor-nwse-resize rounded-sm border border-white bg-primary"
                       onPointerDown={(e) => {
                         e.stopPropagation();
                         (e.currentTarget.parentElement?.parentElement as HTMLElement).setPointerCapture(e.pointerId);
@@ -207,7 +207,7 @@ export const StampView = ({ doc, info, onSaved }: { doc: PDFDocumentProxy; info:
                   type="button"
                   title={s.name}
                   onClick={() => setActive(active?.id === s.id ? null : s)}
-                  className={clsx('rounded-lg border bg-[repeating-conic-gradient(#f1f5f9_0_25%,#fff_0_50%)] bg-[length:12px_12px] p-2', active?.id === s.id ? 'border-brand-500 ring-2 ring-brand-500' : 'border-line hover:border-brand-300')}
+                  className={clsx('rounded-lg border bg-[repeating-conic-gradient(#f1f5f9_0_25%,#fff_0_50%)] bg-[length:12px_12px] p-2', active?.id === s.id ? 'border-primary ring-2 ring-focus' : 'border-line hover:border-line-strong')}
                 >
                   <img src={contentUrl(s.id)} alt={s.name} className="mx-auto h-14 w-full object-contain" />
                   <span className="mt-1 block truncate text-[11px] text-ink">{s.name.replace(/\.(png|jpe?g)$/i, '')}</span>

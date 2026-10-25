@@ -231,13 +231,13 @@ export const Composer = ({
       onDrop={onDrop}
     >
       {dragging && (
-        <div className="pointer-events-none absolute inset-x-4 inset-y-0 z-10 grid place-items-center rounded-xl border-2 border-dashed border-brand-500 bg-brand-50/90 text-sm font-semibold text-brand-700">
+        <div className="pointer-events-none absolute inset-x-4 inset-y-0 z-10 grid place-items-center rounded-xl border-2 border-dashed border-primary bg-primary/[0.04] text-sm font-semibold text-link">
           {t('chat.composer.dropHere')}
         </div>
       )}
       {/* Mention autocomplete */}
       {mention && candidates.length > 0 && (
-        <ul className="absolute bottom-full left-4 z-20 mb-1 w-72 max-w-[calc(100%-2rem)] overflow-hidden rounded-xl border border-line bg-card p-1 shadow-xl" role="listbox">
+        <ul className="absolute bottom-full left-4 z-20 mb-1 w-72 max-w-[calc(100%-2rem)] overflow-hidden rounded-xl border border-line bg-card p-1 shadow-[var(--tv-shadow-raised)]" role="listbox">
           {candidates.map((p, i) => (
             <li key={p.id}>
               <button
@@ -249,9 +249,9 @@ export const Composer = ({
                   pickMention(p);
                 }}
                 onMouseEnter={() => setMentionIdx(i)}
-                className={clsx('flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm', i === mentionIdx ? 'bg-brand-50 text-brand-700' : 'text-ink')}
+                className={clsx('flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm', i === mentionIdx ? 'bg-primary/[0.06] text-link' : 'text-ink')}
               >
-                {p.id === '*' ? <span className="grid size-6 place-items-center rounded-full bg-amber-100 text-xs font-bold text-amber-800">@</span> : <Avatar person={p} size="sm" />}
+                {p.id === '*' ? <span className="grid size-6 place-items-center rounded-full bg-warning-bg text-xs font-bold text-warning-fg">@</span> : <Avatar person={p} size="sm" />}
                 <span className="truncate font-medium">{p.id === '*' ? 'all' : fullName(p)}</span>
                 {p.id === '*' && <span className="truncate text-xs text-muted">{t('chat.composer.mentionAllHint')}</span>}
               </button>
@@ -259,15 +259,15 @@ export const Composer = ({
           ))}
         </ul>
       )}
-      <div className={clsx('rounded-xl border bg-field transition-colors focus-within:border-brand-500 focus-within:ring-4 focus-within:ring-brand-500/15', dragging ? 'border-brand-500' : 'border-line')}>
+      <div className={clsx('rounded-xl border bg-field transition-colors focus-within:border-focus focus-within:ring-4 focus-within:ring-focus/15', dragging ? 'border-primary' : 'border-line')}>
         {uploads.length > 0 && (
           <div className="flex flex-wrap gap-2 px-3 pt-2.5">
             {uploads.map((u) => (
               <span key={u.localId} className="inline-flex max-w-full items-center gap-2 rounded-lg border border-line bg-card px-2 py-1 text-xs">
-                {u.id ? <FileText className="size-3.5 shrink-0 text-brand-600" /> : <Loader2 className="size-3.5 shrink-0 animate-spin text-muted" />}
+                {u.id ? <FileText className="size-3.5 shrink-0 text-link" /> : <Loader2 className="size-3.5 shrink-0 animate-spin text-muted" />}
                 <span className="truncate font-medium text-ink">{u.filename}</span>
                 {u.id ? <span className="text-muted">{u.size ? formatBytes(u.size) : ''}</span> : <span className="text-muted">{t('chat.composer.uploading', { percent: u.progress })}</span>}
-                <button type="button" onClick={() => setUploads((x) => x.filter((y) => y.localId !== u.localId))} className="grid size-5 place-items-center rounded-full text-muted hover:text-danger" aria-label={t('chat.composer.removeFile')}>
+                <button type="button" onClick={() => setUploads((x) => x.filter((y) => y.localId !== u.localId))} className="grid size-5 place-items-center rounded-full text-muted hover:text-danger-fg" aria-label={t('chat.composer.removeFile')}>
                   <X className="size-3" />
                 </button>
               </span>
@@ -290,23 +290,23 @@ export const Composer = ({
           maxLength={4000}
           placeholder={placeholder}
           aria-label={placeholder}
-          className="block w-full resize-none bg-transparent px-3.5 pt-3 pb-1 text-sm text-ink outline-none placeholder:text-muted/70"
+          className="block w-full resize-none bg-transparent px-3.5 pt-3 pb-1 text-sm text-ink outline-none placeholder:text-muted"
         />
         <div className="flex items-center gap-0.5 px-2 pb-1.5">
-          <button type="button" onClick={() => fileInput.current?.click()} disabled={disabled} className="grid size-8 place-items-center rounded-lg text-muted hover:bg-surface hover:text-ink" aria-label={t('chat.composer.attach')} title={t('chat.composer.attach')}>
+          <button type="button" onClick={() => fileInput.current?.click()} disabled={disabled} className="grid size-8 place-items-center rounded-lg text-muted hover:bg-sunken hover:text-ink" aria-label={t('chat.composer.attach')} title={t('chat.composer.attach')}>
             <Paperclip className="size-4" />
           </button>
-          <button type="button" onClick={() => setDriveOpen(true)} disabled={disabled} className="grid size-8 place-items-center rounded-lg text-muted hover:bg-surface hover:text-ink" aria-label={t('chat.composer.fromDrive')} title={t('chat.composer.fromDrive')}>
+          <button type="button" onClick={() => setDriveOpen(true)} disabled={disabled} className="grid size-8 place-items-center rounded-lg text-muted hover:bg-sunken hover:text-ink" aria-label={t('chat.composer.fromDrive')} title={t('chat.composer.fromDrive')}>
             <FolderOpen className="size-4" />
           </button>
           <span className="relative">
-            <button type="button" onClick={() => setEmojiOpen((o) => !o)} disabled={disabled} className="grid size-8 place-items-center rounded-lg text-muted hover:bg-surface hover:text-ink" aria-label={t('chat.composer.emoji')} title={t('chat.composer.emoji')}>
+            <button type="button" onClick={() => setEmojiOpen((o) => !o)} disabled={disabled} className="grid size-8 place-items-center rounded-lg text-muted hover:bg-sunken hover:text-ink" aria-label={t('chat.composer.emoji')} title={t('chat.composer.emoji')}>
               <SmilePlus className="size-4" />
             </button>
             <EmojiPicker open={emojiOpen} onClose={() => setEmojiOpen(false)} onPick={insertEmoji} />
           </span>
           {!compact && <span className="ml-2 hidden text-[0.68rem] text-muted sm:inline">{t('chat.composer.hint')}</span>}
-          <button type="button" onClick={() => void send()} disabled={!canSend} className={clsx('ml-auto grid size-8 place-items-center rounded-lg transition-colors', canSend ? 'bg-brand-600 text-white hover:bg-brand-700' : 'bg-surface text-muted')} aria-label={t('chat.composer.send')} title={t('chat.composer.send')}>
+          <button type="button" onClick={() => void send()} disabled={!canSend} className={clsx('ml-auto grid size-8 place-items-center rounded-lg transition-colors', canSend ? 'bg-primary text-primary-contrast hover:bg-primary' : 'bg-sunken text-muted')} aria-label={t('chat.composer.send')} title={t('chat.composer.send')}>
             {sending ? <Loader2 className="size-4 animate-spin" /> : <SendHorizonal className="size-4" />}
           </button>
         </div>

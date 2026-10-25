@@ -30,16 +30,16 @@ export const LevelProgress = ({ ov, compact = false }: { ov: GermanOverview; com
   return (
     <div>
       <div className="flex items-center justify-between gap-3 text-sm">
-        <span className="font-semibold text-navy-900">{t('germanProgress.toTarget', { from: levelLabel(ov.progress.current), to: levelLabel(ov.progress.target) })}</span>
-        <span className="font-bold tabular-nums text-brand-700">{ov.progress.percent}%</span>
+        <span className="font-semibold text-ink">{t('germanProgress.toTarget', { from: levelLabel(ov.progress.current), to: levelLabel(ov.progress.target) })}</span>
+        <span className="font-semibold tabular-nums text-ink">{ov.progress.percent}%</span>
       </div>
       <div className="relative mt-2 h-2.5 overflow-hidden rounded-full bg-line" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={ov.progress.percent} aria-label={t('germanProgress.title')}>
-        <span className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-brand-500 to-emerald-500" style={{ width: `${ov.progress.percent}%` }} />
+        <span className="absolute inset-y-0 left-0 rounded-full bg-highlight" style={{ width: `${ov.progress.percent}%` }} />
       </div>
       {!compact && (
         <ol className="mt-2 flex justify-between text-[11px] font-semibold">
           {steps.map((s, i) => (
-            <li key={s} className={clsx(i <= current ? 'text-brand-700' : 'text-muted', i === target && 'underline decoration-2 underline-offset-4')}>
+            <li key={s} className={clsx(i <= current ? 'text-link' : 'text-muted', i === target && 'underline decoration-2 underline-offset-4')}>
               {levelLabel(s)}
             </li>
           ))}
@@ -229,7 +229,7 @@ const ExamForm = ({ ov, initial, onSubmit, onCancel }: { ov: GermanOverview; ini
           <div className="grid gap-2 sm:grid-cols-2">
             {MODULES.map((m) => (
               <div key={m} className="flex items-end gap-2">
-                <span className="w-24 shrink-0 pb-2.5 text-sm font-medium text-navy-900">{t(`germanProgress.exams.modules.${m}`)}</span>
+                <span className="w-24 shrink-0 pb-2.5 text-sm font-medium text-ink">{t(`germanProgress.exams.modules.${m}`)}</span>
                 <label className="min-w-0 flex-1">
                   <span className="sr-only">{t(`germanProgress.exams.modules.${m}`)} · {t('germanProgress.exams.score')}</span>
                   <input type="number" min={0} max={1000} step="0.5" inputMode="decimal" className="input" placeholder={t('germanProgress.exams.score')} value={results[m].score} onChange={(e) => setResults((r) => ({ ...r, [m]: { ...r[m], score: e.target.value } }))} />
@@ -286,7 +286,7 @@ export const GermanProgressBoard = ({ userId }: { userId?: string }) => {
   if (isLoading || !ov) {
     return (
       <div className="grid place-items-center py-10">
-        <Spinner className="size-5 text-brand-600" />
+        <Spinner className="size-5 text-primary" />
       </div>
     );
   }
@@ -329,8 +329,8 @@ export const GermanProgressBoard = ({ userId }: { userId?: string }) => {
     <div className="space-y-6">
       {/* Goal + progress */}
       <section className="card p-5 sm:p-6" aria-labelledby="gp-goal">
-        <h2 id="gp-goal" className="flex items-center gap-2.5 text-base font-bold text-navy-900">
-          <Flag className="size-4 text-brand-600" aria-hidden /> {t('germanProgress.plan.title')}
+        <h2 id="gp-goal" className="flex items-center gap-2.5 text-base font-semibold text-ink">
+          <Flag className="size-4 text-primary" aria-hidden /> {t('germanProgress.plan.title')}
         </h2>
         <div className="mt-4">
           <LevelProgress ov={ov} />
@@ -356,8 +356,8 @@ export const GermanProgressBoard = ({ userId }: { userId?: string }) => {
         {/* Courses */}
         <section className="card p-5 sm:p-6" aria-labelledby="gp-courses">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <h2 id="gp-courses" className="flex items-center gap-2.5 text-base font-bold text-navy-900">
-              <BookOpen className="size-4 text-brand-600" aria-hidden /> {t('germanProgress.courses.title')}
+            <h2 id="gp-courses" className="flex items-center gap-2.5 text-base font-semibold text-ink">
+              <BookOpen className="size-4 text-primary" aria-hidden /> {t('germanProgress.courses.title')}
             </h2>
             <button type="button" className="btn-secondary btn-sm" onClick={() => setCourse('new')}>
               <Plus className="size-3.5" aria-hidden /> {t('germanProgress.courses.add')}
@@ -370,9 +370,9 @@ export const GermanProgressBoard = ({ userId }: { userId?: string }) => {
               {ov.courses.map((c) => (
                 <li key={c.id} className="flex items-start justify-between gap-3 py-3 first:pt-0 last:pb-0">
                   <div className="min-w-0">
-                    <p className="flex flex-wrap items-center gap-2 font-semibold text-navy-900">
+                    <p className="flex flex-wrap items-center gap-2 font-semibold text-ink">
                       <span className="break-words">{c.school}</span>
-                      <span className="badge bg-brand-100 text-brand-700">{c.level}</span>
+                      <span className="badge bg-sunken text-link">{c.level}</span>
                       <span className="badge bg-neutral-bg text-neutral-fg">{t(`germanProgress.courses.statuses.${c.status}`)}</span>
                     </p>
                     <p className="mt-0.5 text-xs text-muted">
@@ -382,10 +382,10 @@ export const GermanProgressBoard = ({ userId }: { userId?: string }) => {
                     </p>
                   </div>
                   <div className="flex shrink-0 gap-1">
-                    <button type="button" className="grid size-8 place-items-center rounded-lg text-muted hover:bg-brand-50 hover:text-brand-700" onClick={() => setCourse(c)} aria-label={`${t('germanProgress.edit')}: ${c.school}`}>
+                    <button type="button" className="grid size-8 place-items-center rounded-lg text-muted hover:bg-sunken hover:text-link" onClick={() => setCourse(c)} aria-label={`${t('germanProgress.edit')}: ${c.school}`}>
                       <Pencil className="size-3.5" />
                     </button>
-                    <button type="button" className="grid size-8 place-items-center rounded-lg text-muted hover:bg-red-50 hover:text-red-700" onClick={() => setDeleting({ kind: 'courses', id: c.id })} aria-label={`${t('germanProgress.delete')}: ${c.school}`}>
+                    <button type="button" className="grid size-8 place-items-center rounded-lg text-muted hover:bg-danger-bg hover:text-danger-fg" onClick={() => setDeleting({ kind: 'courses', id: c.id })} aria-label={`${t('germanProgress.delete')}: ${c.school}`}>
                       <Trash2 className="size-3.5" />
                     </button>
                   </div>
@@ -398,8 +398,8 @@ export const GermanProgressBoard = ({ userId }: { userId?: string }) => {
         {/* Exams */}
         <section className="card p-5 sm:p-6" aria-labelledby="gp-exams">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <h2 id="gp-exams" className="flex items-center gap-2.5 text-base font-bold text-navy-900">
-              <Award className="size-4 text-brand-600" aria-hidden /> {t('germanProgress.exams.title')}
+            <h2 id="gp-exams" className="flex items-center gap-2.5 text-base font-semibold text-ink">
+              <Award className="size-4 text-primary" aria-hidden /> {t('germanProgress.exams.title')}
             </h2>
             <button type="button" className="btn-secondary btn-sm" onClick={() => setExam('new')}>
               <Plus className="size-3.5" aria-hidden /> {t('germanProgress.exams.add')}
@@ -416,7 +416,7 @@ export const GermanProgressBoard = ({ userId }: { userId?: string }) => {
                   <li key={e.id} className="py-3 first:pt-0 last:pb-0">
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
-                        <p className="flex flex-wrap items-center gap-2 font-semibold text-navy-900">
+                        <p className="flex flex-wrap items-center gap-2 font-semibold text-ink">
                           {t(`germanProgress.exams.providers.${e.provider}`)} {e.level}
                           <span className={clsx('badge', resultTone(e.passed))}>
                             {e.passed === true ? <CheckCircle2 className="size-3" aria-hidden /> : e.passed === false ? <XCircle className="size-3" aria-hidden /> : null}
@@ -428,7 +428,7 @@ export const GermanProgressBoard = ({ userId }: { userId?: string }) => {
                           {e.location && <> · {e.location}</>}
                         </p>
                         {left !== null && (
-                          <p className={clsx('mt-1 inline-flex items-center gap-1 text-xs font-semibold', left < 0 ? 'text-red-700' : left <= 7 ? 'text-amber-700' : 'text-muted')}>
+                          <p className={clsx('mt-1 inline-flex items-center gap-1 text-xs font-semibold', left < 0 ? 'text-danger-fg' : left <= 7 ? 'text-warning-fg' : 'text-muted')}>
                             <CalendarClock className="size-3.5" aria-hidden />
                             {t('germanProgress.exams.deadline')}: {date(e.registrationDeadline!)} · {left < 0 ? t('germanProgress.exams.deadlinePassed') : t('germanProgress.exams.deadlineIn', { count: left })}
                           </p>
@@ -445,12 +445,12 @@ export const GermanProgressBoard = ({ userId }: { userId?: string }) => {
                         )}
                         <div className="mt-2 flex flex-wrap items-center gap-3 text-xs">
                           {link && (
-                            <a href={link} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 font-semibold text-brand-700 hover:underline">
+                            <a href={link} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 font-semibold text-link hover:underline">
                               {t('germanProgress.exams.register')} <ExternalLink className="size-3" aria-hidden />
                             </a>
                           )}
                           {e.certificateDocumentId ? (
-                            <span className="inline-flex items-center gap-1 font-semibold text-emerald-700">
+                            <span className="inline-flex items-center gap-1 font-semibold text-success-fg">
                               <CheckCircle2 className="size-3.5" aria-hidden /> {t('germanProgress.exams.certLinked')}
                             </span>
                           ) : (
@@ -459,7 +459,7 @@ export const GermanProgressBoard = ({ userId }: { userId?: string }) => {
                             e.status !== 'CANCELLED' && (
                               <button
                                 type="button"
-                                className="inline-flex min-h-9 items-center gap-1 font-semibold text-brand-700 hover:text-brand-800 disabled:opacity-60"
+                                className="inline-flex min-h-9 items-center gap-1 font-semibold text-link hover:text-link disabled:opacity-60"
                                 disabled={!ov.case || uploading === e.id}
                                 title={!ov.case ? t('germanProgress.exams.noCase') : undefined}
                                 onClick={() => {
@@ -474,10 +474,10 @@ export const GermanProgressBoard = ({ userId }: { userId?: string }) => {
                         </div>
                       </div>
                       <div className="flex shrink-0 gap-1">
-                        <button type="button" className="grid size-8 place-items-center rounded-lg text-muted hover:bg-brand-50 hover:text-brand-700" onClick={() => setExam(e)} aria-label={`${t('germanProgress.edit')}: ${e.provider} ${e.level}`}>
+                        <button type="button" className="grid size-8 place-items-center rounded-lg text-muted hover:bg-sunken hover:text-link" onClick={() => setExam(e)} aria-label={`${t('germanProgress.edit')}: ${e.provider} ${e.level}`}>
                           <Pencil className="size-3.5" />
                         </button>
-                        <button type="button" className="grid size-8 place-items-center rounded-lg text-muted hover:bg-red-50 hover:text-red-700" onClick={() => setDeleting({ kind: 'exams', id: e.id })} aria-label={`${t('germanProgress.delete')}: ${e.provider} ${e.level}`}>
+                        <button type="button" className="grid size-8 place-items-center rounded-lg text-muted hover:bg-danger-bg hover:text-danger-fg" onClick={() => setDeleting({ kind: 'exams', id: e.id })} aria-label={`${t('germanProgress.delete')}: ${e.provider} ${e.level}`}>
                           <Trash2 className="size-3.5" />
                         </button>
                       </div>
@@ -493,8 +493,8 @@ export const GermanProgressBoard = ({ userId }: { userId?: string }) => {
 
       {/* Timeline */}
       <section className="card p-5 sm:p-6" aria-labelledby="gp-timeline">
-        <h2 id="gp-timeline" className="flex items-center gap-2.5 text-base font-bold text-navy-900">
-          <CalendarClock className="size-4 text-brand-600" aria-hidden /> {t('germanProgress.timeline.title')}
+        <h2 id="gp-timeline" className="flex items-center gap-2.5 text-base font-semibold text-ink">
+          <CalendarClock className="size-4 text-primary" aria-hidden /> {t('germanProgress.timeline.title')}
         </h2>
         {ov.timeline.length === 0 ? (
           <p className="mt-4 text-sm text-muted">{t('germanProgress.timeline.empty')}</p>
@@ -504,11 +504,11 @@ export const GermanProgressBoard = ({ userId }: { userId?: string }) => {
               const past = new Date(i.date).getTime() < Date.now();
               return (
                 <li key={`${i.kind}-${i.refId}-${i.date}`} className="relative">
-                  <span className={clsx('absolute top-1 -left-[27px] size-3 rounded-full ring-4 ring-white', past ? 'bg-brand-600' : 'bg-line')} aria-hidden />
+                  <span className={clsx('absolute top-1 -left-[27px] size-3 rounded-full ring-4 ring-card', past ? 'bg-highlight' : 'bg-line')} aria-hidden />
                   <p className="text-xs font-semibold text-muted">{date(i.date)}</p>
-                  <p className="text-sm font-semibold break-words text-navy-900">
+                  <p className="text-sm font-semibold break-words text-ink">
                     {t(`germanProgress.timeline.kinds.${i.kind}`)} · {i.kind === 'exam' || i.kind === 'deadline' ? t(`germanProgress.exams.providers.${i.title}`) : i.title}
-                    {i.level && <span className="ml-1.5 badge bg-brand-100 text-brand-700">{i.level}</span>}
+                    {i.level && <span className="ml-1.5 badge bg-sunken text-link">{i.level}</span>}
                   </p>
                 </li>
               );

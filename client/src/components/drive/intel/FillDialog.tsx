@@ -98,7 +98,7 @@ export default function FillDialog({
       size="lg"
       title={
         <span className="inline-flex items-center gap-2">
-          <WandSparkles className="size-4 text-brand-600" aria-hidden />
+          <WandSparkles className="size-4 text-link" aria-hidden />
           {bulk ? t('driveIntel.fill.bulkTitle') : t('driveIntel.fill.title')}
         </span>
       }
@@ -124,7 +124,7 @@ export default function FillDialog({
           {picked.length > 0 && (
             <div className="mb-2 flex flex-wrap gap-1.5">
               {picked.map((c) => (
-                <span key={c.id} className="inline-flex items-center gap-1.5 rounded-full border border-line bg-surface py-1 pr-1 pl-3 text-sm">
+                <span key={c.id} className="inline-flex items-center gap-1.5 rounded-full border border-line bg-sunken py-1 pr-1 pl-3 text-sm">
                   <span className="font-semibold text-ink">
                     {c.client.firstName} {c.client.lastName}
                   </span>
@@ -147,7 +147,7 @@ export default function FillDialog({
                 <ul className="mt-1 max-h-48 overflow-y-auto rounded-lg border border-line bg-card">
                   {hits.data.map((c) => (
                     <li key={c.id}>
-                      <button type="button" className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-surface" onClick={() => pick(c)}>
+                      <button type="button" className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-sunken" onClick={() => pick(c)}>
                         <span className="font-semibold text-ink">
                           {c.client.firstName} {c.client.lastName}
                         </span>
@@ -180,12 +180,12 @@ export default function FillDialog({
           {fields.isLoading ? (
             <Spinner className="size-5" />
           ) : fields.isError ? (
-            <p className="text-sm text-danger">{driveError(fields.error)}</p>
+            <p className="text-sm text-danger-fg">{driveError(fields.error)}</p>
           ) : reasonText ? (
-            <div className="rounded-xl border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-200">
+            <div className="rounded-xl border border-warning-border bg-warning-bg p-3 text-sm text-warning-fg dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-200">
               <p>{reasonText}</p>
               {info?.reason !== 'TEMPLATE_NO_FIELDS' && info?.reason !== 'NOT_A_TEMPLATE' && (
-                <p className="mt-2 flex flex-wrap gap-1.5 font-mono text-xs">
+                <p className="mt-2 flex flex-wrap gap-1.5 code-id text-xs">
                   {['{{client.fullName}}', '[[client.passportNumber]]', '«Ad Soyad»'].map((x) => (
                     <code key={x} className="rounded bg-card px-1.5 py-0.5">
                       {x}
@@ -206,24 +206,24 @@ export default function FillDialog({
                     <li key={f.key} className="flex flex-col gap-1.5 px-3 py-2 sm:flex-row sm:items-center sm:gap-3">
                       <span className="flex min-w-0 items-center gap-2 sm:w-56 sm:shrink-0">
                         {filled ? (
-                          <CheckCircle2 className="size-4 shrink-0 text-emerald-600" aria-hidden />
+                          <CheckCircle2 className="size-4 shrink-0 text-success-fg" aria-hidden />
                         ) : f.status === 'missing' ? (
-                          <CircleAlert className="size-4 shrink-0 text-amber-500" aria-hidden />
+                          <CircleAlert className="size-4 shrink-0 text-warning-fg" aria-hidden />
                         ) : (
                           <span className="size-4 shrink-0 rounded-full border-2 border-line" aria-hidden />
                         )}
                         <span className="min-w-0">
-                          <span className="block truncate font-mono text-xs font-semibold text-ink" title={f.label}>
+                          <span className="block truncate code-id text-xs font-medium text-ink" title={f.label}>
                             {f.label}
                           </span>
                           {f.label !== f.key && <span className="block truncate text-[11px] text-muted">{f.key}</span>}
                         </span>
                       </span>
                       {f.status === 'filled' && !typed ? (
-                        <span className="min-w-0 flex-1 truncate rounded-md bg-emerald-50 px-2 py-1 text-sm text-emerald-900 dark:bg-emerald-500/10 dark:text-emerald-200">{f.value}</span>
+                        <span className="min-w-0 flex-1 truncate rounded-md bg-success-bg px-2 py-1 text-sm text-success-fg dark:bg-emerald-500/10 dark:text-emerald-200">{f.value}</span>
                       ) : needsInput ? (
                         <input
-                          className={clsx('input !py-1.5 !text-sm sm:flex-1', f.status === 'missing' && !typed.trim() && 'border-amber-400 ring-1 ring-amber-200')}
+                          className={clsx('input !py-1.5 !text-sm sm:flex-1', f.status === 'missing' && !typed.trim() && 'border-warning ring-1 ring-warning-border')}
                           type={f.key === 'startDate' ? 'date' : 'text'}
                           placeholder={f.status === 'optional' ? t('driveIntel.fill.optional') : t('driveIntel.fill.typeValue')}
                           value={typed}
@@ -237,7 +237,7 @@ export default function FillDialog({
                   );
                 })}
               </ul>
-              {picked.length > 0 && missing.length > 0 && <p className="mt-2 text-xs text-amber-700 dark:text-amber-300">{t('driveIntel.fill.stillMissing', { list: missing.map((m) => m.label).join(', ') })}</p>}
+              {picked.length > 0 && missing.length > 0 && <p className="mt-2 text-xs text-warning-fg dark:text-amber-300">{t('driveIntel.fill.stillMissing', { list: missing.map((m) => m.label).join(', ') })}</p>}
             </>
           )}
         </div>
@@ -248,11 +248,11 @@ export default function FillDialog({
             <legend className="label">{t('driveIntel.fill.target')}</legend>
             <div className="flex flex-wrap gap-3 text-sm">
               <label className="inline-flex items-center gap-2">
-                <input type="radio" className="accent-brand-600" checked={target === 'client'} onChange={() => setTarget('client')} />
+                <input type="radio" className="accent-primary" checked={target === 'client'} onChange={() => setTarget('client')} />
                 {t('driveIntel.fill.targetClient')}
               </label>
               <label className="inline-flex items-center gap-2">
-                <input type="radio" className="accent-brand-600" checked={target === 'here'} onChange={() => setTarget('here')} />
+                <input type="radio" className="accent-primary" checked={target === 'here'} onChange={() => setTarget('here')} />
                 {t('driveIntel.fill.targetHere')}
               </label>
             </div>

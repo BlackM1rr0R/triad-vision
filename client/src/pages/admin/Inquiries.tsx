@@ -170,8 +170,8 @@ export default function Inquiries() {
             onClick={split.toggle}
             title={t('ux.split.toggleHint')}
             className={clsx(
-              'hidden min-h-11 shrink-0 items-center justify-center gap-2 rounded-lg border px-3.5 text-sm font-semibold whitespace-nowrap transition lg:inline-flex',
-              split.enabled ? 'border-navy-900 bg-navy-900 text-white' : 'border-line bg-white text-ink/80 hover:border-brand-400',
+              'hidden min-h-10 sm:min-h-9 shrink-0 items-center justify-center gap-2 rounded-lg border px-3.5 text-sm font-semibold whitespace-nowrap transition lg:inline-flex',
+              split.enabled ? 'border-line-strong bg-sunken text-ink shadow-[inset_0_0_0_1px_var(--color-line-strong)]' : 'border-line bg-card text-ink/80 hover:border-line-strong',
             )}
           >
             <Columns2 className="size-4" aria-hidden /> {t('ux.split.toggle')}
@@ -226,12 +226,12 @@ export default function Inquiries() {
       ) : error ? (
         <ErrorBlock error={error} onRetry={() => refetch()} />
       ) : sorted.length === 0 ? (
-        <div className="rounded-xl border border-line bg-white">
+        <div className="rounded-xl border border-line bg-card">
           <EmptyState icon={Inbox} title={t('admin.inquiries.notFound')} />
         </div>
       ) : split.active ? (
         <div className="grid items-start gap-4 lg:grid-cols-[minmax(17rem,22rem)_minmax(0,1fr)] xl:gap-6">
-          <ul className="max-h-[calc(100dvh-12rem)] divide-y divide-line overflow-y-auto rounded-xl border border-line bg-white lg:sticky lg:top-20" aria-label={t('admin.nav.inquiries')}>
+          <ul className="max-h-[calc(100dvh-12rem)] divide-y divide-line overflow-y-auto rounded-xl border border-line bg-card lg:sticky lg:top-20" aria-label={t('admin.nav.inquiries')}>
             {sorted.map((i) => {
               const on = i.id === split.selected;
               return (
@@ -241,15 +241,15 @@ export default function Inquiries() {
                     aria-current={on || undefined}
                     onClick={() => split.select(i.id)}
                     className={clsx(
-                      'block w-full px-4 py-3 text-left transition outline-none focus-visible:ring-2 focus-visible:ring-brand-500/40 focus-visible:ring-inset',
-                      on ? 'bg-brand-50 shadow-[inset_3px_0_0_var(--color-brand-600)]' : i.status === 'NEW' ? 'bg-brand-50/40 hover:bg-surface' : 'hover:bg-surface',
+                      'block w-full px-4 py-3 text-left transition outline-none focus-visible:ring-2 focus-visible:ring-focus/40 focus-visible:ring-inset',
+                      on ? 'bg-primary/[0.06] shadow-[inset_3px_0_0_var(--color-brand-600)]' : i.status === 'NEW' ? 'bg-primary/[0.04] hover:bg-sunken' : 'hover:bg-sunken',
                     )}
                   >
                     <span className="flex items-start justify-between gap-2">
-                      <span className="min-w-0 truncate text-sm font-semibold text-navy-900">{i.companyName || i.contactName}</span>
+                      <span className="min-w-0 truncate text-sm font-semibold text-ink">{i.companyName || i.contactName}</span>
                       <span className={clsx('badge shrink-0', INQUIRY_STATUS_TONE[i.status])}>{inquiryStatusLabel(i.status)}</span>
                     </span>
-                    <span className="mt-0.5 line-clamp-1 block text-xs text-ink/70">{i.message}</span>
+                    <span className="mt-0.5 line-clamp-1 block text-xs text-muted">{i.message}</span>
                     <span className="mt-1 block text-[11px] text-muted">
                       {inquiryKindLabel(i.kind)} · {fmtRelative(i.createdAt)}
                     </span>
@@ -263,21 +263,21 @@ export default function Inquiries() {
               <InquirySplitPanel key={selectedItem.id} i={selectedItem} onClose={() => split.select(null)} />
             </div>
           ) : (
-            <div className="grid min-h-64 place-items-center rounded-xl border border-dashed border-line bg-white p-8 text-center">
+            <div className="grid min-h-64 place-items-center rounded-xl border border-dashed border-line bg-card p-8 text-center">
               <div>
-                <Columns2 className="mx-auto size-8 text-muted/60" aria-hidden />
-                <p className="mt-2 text-sm font-semibold text-navy-900">{t('ux.split.empty')}</p>
+                <Columns2 className="mx-auto size-8 text-subtle" aria-hidden />
+                <p className="mt-2 text-sm font-semibold text-ink">{t('ux.split.empty')}</p>
                 <p className="mt-1 text-xs text-muted">{t('ux.split.emptyHint')}</p>
               </div>
             </div>
           )}
         </div>
       ) : (
-        <ul className="divide-y divide-line overflow-hidden rounded-xl border border-line bg-white">
+        <ul className="divide-y divide-line overflow-hidden rounded-xl border border-line bg-card">
           {sorted.map((i) => {
             const expanded = open === i.id;
             return (
-              <li key={i.id} data-row-id={i.id} className={clsx(i.status === 'NEW' && 'bg-brand-50/40', i.id === split.selected && 'shadow-[inset_3px_0_0_var(--color-brand-600)]')}>
+              <li key={i.id} data-row-id={i.id} className={clsx(i.status === 'NEW' && 'bg-primary/[0.04]', i.id === split.selected && 'shadow-[inset_3px_0_0_var(--color-brand-600)]')}>
                 <div
                   role="button"
                   tabIndex={0}
@@ -289,12 +289,12 @@ export default function Inquiries() {
                       setOpen(expanded ? null : i.id);
                     }
                   }}
-                  className="flex cursor-pointer items-start gap-3 px-4 py-3.5 transition hover:bg-surface sm:px-5"
+                  className="flex cursor-pointer items-start gap-3 px-4 py-3.5 transition hover:bg-sunken sm:px-5"
                 >
                   <span
                     className={clsx(
                       'mt-0.5 grid size-8 shrink-0 place-items-center rounded-lg',
-                      i.kind === 'company' ? 'bg-violet-100 text-violet-700' : 'bg-brand-100 text-brand-700',
+                      i.kind === 'company' ? 'bg-accent-bg text-accent-fg' : 'bg-primary/10 text-link',
                     )}
                     aria-hidden
                   >
@@ -302,12 +302,12 @@ export default function Inquiries() {
                   </span>
                   <div className="min-w-0 flex-1">
                     <p className="flex flex-wrap items-center gap-x-2 text-sm">
-                      <span className="min-w-0 font-semibold break-words text-navy-900">{i.companyName || i.contactName}</span>
+                      <span className="min-w-0 font-semibold break-words text-ink">{i.companyName || i.contactName}</span>
                       {i.companyName && <span className="text-muted">{i.contactName}</span>}
                       <span className="text-[11px] whitespace-nowrap text-muted">{inquiryKindLabel(i.kind)}</span>
                       <LeadScoreBadge level={i.scoreLevel ?? null} score={i.score ?? 0} reasons={i.scoreReasons ?? null} />
                     </p>
-                    <p className={clsx('mt-0.5 text-xs text-ink/70', !expanded && 'line-clamp-1')}>{i.message}</p>
+                    <p className={clsx('mt-0.5 text-xs text-muted', !expanded && 'line-clamp-1')}>{i.message}</p>
                   </div>
                   <div className="flex shrink-0 flex-col items-end gap-1.5 sm:flex-row sm:items-center sm:gap-3">
                     <span className="text-[11px] whitespace-nowrap text-muted" title={fmtDateTime(i.createdAt)}>

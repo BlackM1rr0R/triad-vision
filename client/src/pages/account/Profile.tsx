@@ -104,8 +104,8 @@ const Field = ({
 
 const Panel = ({ title, icon: Icon, intro, children, id }: { title: string; icon: LucideIcon; intro?: string; children: ReactNode; id: string }) => (
   <div className="card card-pad">
-    <h2 id={id} className="flex items-center gap-2.5 text-lg font-bold text-navy-900">
-      <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-brand-50 text-brand-600">
+    <h2 id={id} className="type-card-title flex items-center gap-3">
+      <span className="grid size-11 shrink-0 place-items-center rounded-xl chip-soft">
         <Icon className="size-4.5" aria-hidden />
       </span>
       {title}
@@ -145,11 +145,11 @@ const Toggle = ({
   const id = useId();
   return (
     <div className="flex items-center gap-4 rounded-xl border border-line p-4">
-      <span className="grid size-10 shrink-0 place-items-center rounded-lg bg-surface text-brand-600">
+      <span className="grid size-10 shrink-0 place-items-center rounded-xl chip-soft">
         <Icon className="size-5" aria-hidden />
       </span>
       <div className="min-w-0 flex-1">
-        <p id={`${id}-l`} className="text-sm font-semibold text-navy-900">
+        <p id={`${id}-l`} className="text-sm font-semibold text-ink">
           {label}
         </p>
         <p id={`${id}-h`} className="text-xs leading-relaxed text-muted">
@@ -166,12 +166,12 @@ const Toggle = ({
         onClick={() => onChange(!checked)}
         className={clsx(
           'relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition-colors disabled:opacity-60',
-          checked ? 'bg-brand-600' : 'bg-slate-300',
+          checked ? 'bg-primary' : 'bg-line-strong',
         )}
       >
         <span
           className={clsx(
-            'inline-block size-5 rounded-full bg-white shadow transition-transform duration-200',
+            'inline-block size-5 rounded-full bg-card shadow transition-transform duration-200',
             checked ? 'translate-x-6' : 'translate-x-1',
           )}
           aria-hidden
@@ -311,7 +311,7 @@ const PersonalPanel = ({ user }: { user: User }) => {
             </label>
             <div className="relative">
               <Mail className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted" aria-hidden />
-              <input id={`${uid}-email`} className="input bg-surface pl-9 text-muted" value={user.email} readOnly />
+              <input id={`${uid}-email`} className="input bg-sunken pl-9 text-muted" value={user.email} readOnly />
             </div>
           </div>
           <Field
@@ -552,7 +552,7 @@ const ProfessionalPanel = ({ user }: { user: User }) => {
                     onClick={() => toggleLicence(cls)}
                     className={clsx(
                       'min-h-9 min-w-11 rounded-lg border px-2.5 text-xs font-bold transition-colors',
-                      on ? 'border-brand-600 bg-brand-600 text-white' : 'border-line text-navy-900 hover:border-brand-400',
+                      on ? 'border-primary bg-primary text-primary-contrast' : 'border-line text-ink hover:border-line-strong',
                     )}
                   >
                     {cls}
@@ -622,9 +622,9 @@ const PhoneChannels = ({ user, busy, update }: { user: User; busy: string | null
       {phone ? (
         <p className="px-1 text-xs text-muted">{t('messaging.prefs.phoneLabel', { phone })}</p>
       ) : (
-        <p className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-relaxed text-amber-900">
+        <p className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-warning-border bg-warning-bg px-4 py-3 text-sm leading-relaxed text-warning-fg">
           <span>{t('messaging.prefs.noPhone')}</span>
-          <button type="button" className="min-h-10 text-sm font-semibold text-brand-700 underline-offset-2 hover:underline" onClick={() => navigate('?tab=personal')}>
+          <button type="button" className="min-h-10 text-sm font-semibold text-link underline-offset-2 hover:underline" onClick={() => navigate('?tab=personal')}>
             {t('messaging.prefs.addPhone')}
           </button>
         </p>
@@ -693,7 +693,7 @@ const NotificationsPanel = ({ user }: { user: User }) => {
           onChange={(v) => void update('marketing', { marketingOptIn: v })}
         />
         {!emailOn && (
-          <p className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-relaxed text-amber-900">
+          <p className="rounded-xl border border-warning-border bg-warning-bg px-4 py-3 text-sm leading-relaxed text-warning-fg">
             {t('accountPage.profile.notif.warning')}
           </p>
         )}
@@ -702,7 +702,7 @@ const NotificationsPanel = ({ user }: { user: User }) => {
 
       <fieldset className="mt-6 border-t border-line pt-5">
         <legend className="sr-only">{t('portal.language')}</legend>
-        <p className="text-sm font-semibold text-navy-900" aria-hidden>
+        <p className="text-sm font-semibold text-ink" aria-hidden>
           {t('portal.language')}
         </p>
         <p className="mt-0.5 text-xs text-muted">{t('accountPage.profile.notif.languageHint')}</p>
@@ -713,8 +713,8 @@ const NotificationsPanel = ({ user }: { user: User }) => {
               <label
                 key={l}
                 className={clsx(
-                  'relative flex min-h-11 cursor-pointer items-center gap-2 rounded-lg border px-3 py-2.5 text-sm font-semibold transition-colors [&:has(input:focus-visible)]:ring-4 [&:has(input:focus-visible)]:ring-brand-500/20',
-                  active ? 'border-brand-600 bg-brand-50 text-brand-700' : 'border-line text-navy-900 hover:border-brand-400',
+                  'relative flex min-h-11 cursor-pointer items-center gap-2 rounded-lg border px-3 py-2.5 text-sm font-semibold transition-colors [&:has(input:focus-visible)]:ring-4 [&:has(input:focus-visible)]:ring-focus/30',
+                  active ? 'border-primary chip-soft' : 'border-line text-ink hover:border-line-strong',
                 )}
               >
                 <input type="radio" name={`${uid}-locale`} value={l} checked={active} onChange={() => void setLocale(l)} className="sr-only" disabled={busy === 'locale'} />
@@ -780,19 +780,19 @@ const SessionsPanel = () => {
     <Panel id={`${uid}-title`} title={k('title')} icon={Monitor} intro={k('text')}>
       {isLoading ? (
         <div className="grid place-items-center py-6">
-          <Spinner className="size-5 text-brand-600" />
+          <Spinner className="size-5 text-primary" />
         </div>
       ) : (
         <ul className="divide-y divide-line rounded-xl border border-line">
           {sessions.map((x) => (
             <li key={x.id} className="flex items-center gap-3 px-4 py-3">
-              <span className={clsx('grid size-9 shrink-0 place-items-center rounded-lg', x.current ? 'bg-brand-50 text-brand-600' : 'bg-surface text-muted')}>
+              <span className={clsx('grid size-9 shrink-0 place-items-center rounded-lg', x.current ? 'chip-soft' : 'bg-sunken text-muted')}>
                 {x.client === 'mobile' ? <Smartphone className="size-4" aria-hidden /> : <Monitor className="size-4" aria-hidden />}
               </span>
               <div className="min-w-0 flex-1">
-                <p className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-sm font-semibold text-navy-900">
+                <p className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-sm font-semibold text-ink">
                   <span className="truncate">{x.client === 'mobile' ? k('mobile') : describeAgent(x.userAgent, k('unknownDevice'))}</span>
-                  {x.current && <span className="badge bg-brand-100 text-[10px] text-brand-700">{k('current')}</span>}
+                  {x.current && <span className="badge bg-sunken text-[10px] text-link">{k('current')}</span>}
                 </p>
                 <p className="truncate text-xs text-muted">
                   {k('lastSeen')}: {dateTime(x.lastSeenAt)}
@@ -802,7 +802,7 @@ const SessionsPanel = () => {
               {!x.current && (
                 <button
                   type="button"
-                  className="btn btn-sm min-h-9 shrink-0 border border-line text-navy-900 hover:border-red-200 hover:bg-red-50 hover:text-danger"
+                  className="btn btn-sm min-h-9 shrink-0 border border-line text-ink hover:border-danger-border hover:bg-danger-bg hover:text-danger"
                   disabled={revokeOne.isPending || revokeOthers.isPending}
                   onClick={() => revokeOne.mutate(x.id)}
                 >
@@ -818,7 +818,7 @@ const SessionsPanel = () => {
         <div className="mt-4 flex justify-end">
           <button
             type="button"
-            className="btn min-h-11 w-full border border-line text-navy-900 hover:bg-surface sm:w-auto"
+            className="btn min-h-11 w-full border border-line text-ink hover:bg-sunken sm:w-auto"
             disabled={revokeOthers.isPending}
             onClick={() => revokeOthers.mutate()}
           >
@@ -922,12 +922,12 @@ const SecurityPanel = ({ user }: { user: User }) => {
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           {user.createdAt ? (
             <p className="text-xs text-muted">
-              {t('accountPage.profile.security.memberSince')}: <span className="font-semibold text-navy-900">{date(user.createdAt)}</span>
+              {t('accountPage.profile.security.memberSince')}: <span className="font-semibold text-ink">{date(user.createdAt)}</span>
             </p>
           ) : (
             <span />
           )}
-          <button type="button" className="btn min-h-11 border border-line text-navy-900 hover:bg-surface" onClick={() => void doLogout()} disabled={leaving}>
+          <button type="button" className="btn min-h-11 border border-line text-ink hover:bg-sunken" onClick={() => void doLogout()} disabled={leaving}>
             {leaving ? <Spinner className="size-4" /> : <LogOut className="size-4" aria-hidden />}
             {t('accountPage.profile.security.logout')}
           </button>
@@ -973,21 +973,21 @@ const PrivacyPanel = () => {
         </a>
       </Panel>
 
-      <div className="card card-pad border-red-200">
-        <h2 id={`${uid}-delete`} className="flex items-center gap-2.5 text-lg font-bold text-navy-900">
-          <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-red-50 text-danger">
+      <div className="card card-pad border-danger-border">
+        <h2 id={`${uid}-delete`} className="type-card-title flex items-center gap-3">
+          <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-danger-bg text-danger">
             <Trash2 className="size-4.5" aria-hidden />
           </span>
           {t('accountPage.profile.privacy.deleteTitle')}
         </h2>
         <p className="mt-2 text-sm leading-relaxed text-muted">{t('accountPage.profile.privacy.deleteText')}</p>
         {sent ? (
-          <p className="mt-5 flex items-center gap-2 rounded-xl bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800" role="status">
+          <p className="mt-5 flex items-center gap-2 rounded-xl bg-success-bg px-4 py-3 text-sm font-semibold text-success-fg" role="status">
             <CheckCircle2 className="size-4 shrink-0" aria-hidden />
             {t('accountPage.profile.privacy.sent')}
           </p>
         ) : (
-          <button type="button" className="btn mt-5 min-h-11 w-full border border-red-200 text-danger hover:bg-red-50 sm:w-auto" onClick={() => setOpen(true)}>
+          <button type="button" className="btn mt-5 min-h-11 w-full border border-danger-border text-danger hover:bg-danger-bg sm:w-auto" onClick={() => setOpen(true)}>
             <Trash2 className="size-4" aria-hidden />
             {t('accountPage.profile.privacy.deleteBtn')}
           </button>
@@ -1027,9 +1027,9 @@ const Completeness = ({ user, onJump }: { user: User; onJump: (tab: ProfileTab) 
   return (
     <section className="card card-pad" aria-labelledby="completeness-title">
       <div className="flex items-center gap-4">
-        <ProgressRing percent={percent} size={64} stroke={6} className="text-navy-900" />
+        <ProgressRing percent={percent} size={64} stroke={6} className="text-ink" />
         <div className="min-w-0">
-          <h2 id="completeness-title" className="text-sm font-bold text-navy-900">
+          <h2 id="completeness-title" className="text-sm font-semibold text-ink">
             {t('accountPage.profile.completeness.title')}
           </h2>
           <p className="mt-0.5 text-xs leading-relaxed text-muted">
@@ -1046,7 +1046,7 @@ const Completeness = ({ user, onJump }: { user: User; onJump: (tab: ProfileTab) 
                 <button
                   type="button"
                   onClick={() => onJump(FIELD_TAB[f])}
-                  className="badge min-h-7 border border-dashed border-line bg-surface text-navy-900 hover:border-brand-400 hover:text-brand-700"
+                  className="badge min-h-7 border border-dashed border-line bg-sunken text-ink hover:border-primary hover:text-link"
                 >
                   {t(`accountPage.profile.fields.${f}`)}
                 </button>
@@ -1077,7 +1077,7 @@ export default function Profile() {
         <div
           role="tablist"
           aria-label={t('accountPage.profile.sectionsLabel')}
-          className="-mx-4 flex gap-1.5 overflow-x-auto px-4 pb-1 [scrollbar-width:none] sm:mx-0 sm:px-0 lg:flex-col lg:rounded-2xl lg:border lg:border-line lg:bg-white lg:shadow-[0_8px_30px_-12px_rgba(11,31,68,0.18)] lg:gap-0.5 lg:overflow-visible lg:p-2 [&::-webkit-scrollbar]:hidden"
+          className="-mx-4 flex gap-1.5 overflow-x-auto px-4 pb-1 [scrollbar-width:none] sm:mx-0 sm:px-0 lg:flex-col lg:rounded-2xl lg:border lg:border-line lg:bg-card lg:shadow-[0_8px_30px_-12px_rgba(11,31,68,0.18)] lg:gap-0.5 lg:overflow-visible lg:p-2 [&::-webkit-scrollbar]:hidden"
         >
           {PROFILE_TABS.map((key) => {
             const Icon = TAB_ICON[key];
@@ -1094,8 +1094,8 @@ export default function Profile() {
                 className={clsx(
                   'flex min-h-11 shrink-0 items-center gap-2.5 rounded-xl px-3.5 py-2.5 text-sm font-semibold whitespace-nowrap transition-colors lg:w-full',
                   active
-                    ? 'bg-navy-900 text-white shadow-md lg:bg-brand-50 lg:text-brand-700 lg:shadow-none'
-                    : 'border border-line bg-white text-navy-900 hover:border-brand-400 lg:border-transparent lg:bg-transparent lg:hover:bg-surface',
+                    ? 'bg-primary text-primary-contrast shadow-md lg:bg-sunken lg:text-link lg:shadow-none'
+                    : 'border border-line bg-card text-ink hover:border-line-strong lg:border-transparent lg:bg-transparent lg:hover:bg-sunken',
                 )}
               >
                 <Icon className="size-4 shrink-0" aria-hidden />

@@ -11,6 +11,8 @@ import { pagesEmployerWorkers } from '@/i18n/pagesEmployerWorkers';
 import { useL10n } from '@/lib/l10n';
 import { Table, type Column } from '@/components/ui/Table';
 import { TONE_CLASS } from '@/components/ui/status';
+import { buttonClass } from '@/components/ui/Button';
+import { Employer, SearchEmpty } from '@/components/illustrations';
 import { Empty, Kpi, Section } from './shared';
 import { WorkerDrawer } from './WorkerDrawer';
 import { WorkersSkeleton } from './WorkersSkeleton';
@@ -83,7 +85,7 @@ export const CompanyWorkers = () => {
       primary: true,
       cell: (w) => (
         <span className="flex min-w-0 flex-col">
-          <span className="font-semibold text-navy-900">{w.name}</span>
+          <span className="font-semibold text-ink">{w.name}</span>
           <span className="truncate text-xs text-muted">{w.position}</span>
         </span>
       ),
@@ -116,7 +118,7 @@ export const CompanyWorkers = () => {
     {
       key: 'nextAction',
       header: t('employerWorkers.cols.nextAction'),
-      cell: (w) => <span className={clsx('text-xs', w.nextAction === 'NONE' ? 'text-muted' : 'font-semibold text-brand-700')}>{t(`employerWorkers.action.${w.nextAction}`)}</span>,
+      cell: (w) => <span className={clsx('text-xs', w.nextAction === 'NONE' ? 'text-muted' : 'font-semibold text-link')}>{t(`employerWorkers.action.${w.nextAction}`)}</span>,
     },
   ];
 
@@ -141,10 +143,10 @@ export const CompanyWorkers = () => {
         actions={
           data.items.length > 0 && (
             <>
-              <a href={`/api/company/workers/export.csv?lang=${locale}`} className="btn-ghost btn-sm" download>
+              <a href={`/api/company/workers/export.csv?lang=${locale}`} className={buttonClass({ variant: 'outline', size: 'sm' })} download>
                 <Download className="size-4" aria-hidden /> {t('employerWorkers.exportCsv')}
               </a>
-              <a href={`/api/company/workers/export.xlsx?lang=${locale}`} className="btn-ghost btn-sm" download>
+              <a href={`/api/company/workers/export.xlsx?lang=${locale}`} className={buttonClass({ variant: 'outline', size: 'sm' })} download>
                 <FileSpreadsheet className="size-4" aria-hidden /> {t('employerWorkers.exportXlsx')}
               </a>
             </>
@@ -153,7 +155,7 @@ export const CompanyWorkers = () => {
       >
         <p className="-mt-2 mb-5 text-sm text-muted">{t('employerWorkers.subtitle')}</p>
         {data.items.length === 0 ? (
-          <Empty icon={Handshake} title={t('employerWorkers.empty')} text={t('employerWorkers.emptyText')} />
+          <Empty icon={Handshake} illustration={<Employer className="w-36" />} title={t('employerWorkers.empty')} text={t('employerWorkers.emptyText')} />
         ) : (
           <>
             <div className="mb-3 flex snap-x gap-1.5 overflow-x-auto pb-1 [scrollbar-width:none]" role="group" aria-label={t('employerWorkers.sort.phase')}>
@@ -165,12 +167,12 @@ export const CompanyWorkers = () => {
                     aria-pressed={phase === p}
                     onClick={() => setPhase(p)}
                     className={clsx(
-                      'inline-flex min-h-10 shrink-0 snap-start items-center gap-1.5 rounded-full border px-3.5 text-xs font-semibold whitespace-nowrap transition sm:min-h-9',
-                      phase === p ? 'border-navy-900 bg-navy-900 text-white' : 'border-line bg-card text-ink/75 hover:border-brand-400 hover:text-navy-900',
+                      'inline-flex min-h-11 shrink-0 snap-start items-center gap-1.5 rounded-full border px-3.5 text-sm font-semibold whitespace-nowrap transition-colors sm:min-h-10',
+                      phase === p ? 'border-primary bg-primary text-primary-contrast' : 'border-line bg-card text-muted hover:border-line-strong hover:text-ink',
                     )}
                   >
                     {p ? t(`employerWorkers.phase.${p}`) : t('employerWorkers.phaseAll')}
-                    <span className={clsx('rounded-full px-1.5 text-[10px] tabular-nums', phase === p ? 'bg-white/20' : 'bg-surface text-muted')}>{p ? counts[p] : data.items.length}</span>
+                    <span className={clsx('rounded-full px-1.5 text-[10px] tabular-nums', phase === p ? 'bg-primary-contrast/20' : 'bg-sunken text-muted')}>{p ? counts[p] : data.items.length}</span>
                   </button>
                 ),
               )}
@@ -179,13 +181,13 @@ export const CompanyWorkers = () => {
               <label className="relative min-w-0 flex-1 sm:max-w-xs">
                 <span className="sr-only">{t('employerWorkers.search')}</span>
                 <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted" aria-hidden />
-                <input type="search" className="input py-2 pl-9 text-sm" placeholder={t('employerWorkers.search')} value={q} onChange={(e) => setQ(e.target.value)} />
+                <input type="search" className="input pl-9 text-sm" placeholder={t('employerWorkers.search')} value={q} onChange={(e) => setQ(e.target.value)} />
               </label>
               <button
                 type="button"
                 aria-pressed={attention}
                 onClick={() => setAttention((v) => !v)}
-                className={clsx('inline-flex min-h-10 items-center gap-1.5 rounded-xl border px-3 text-sm font-semibold transition', attention ? 'border-brand-600 bg-brand-600 text-white' : 'border-line bg-card text-ink hover:border-brand-400')}
+                className={clsx('inline-flex min-h-11 items-center gap-1.5 rounded-xl border px-3.5 text-sm font-semibold transition-colors', attention ? 'border-primary bg-primary text-primary-contrast' : 'border-line-strong bg-card text-ink hover:bg-sunken')}
               >
                 <AlertTriangle className="size-4" aria-hidden /> {t('employerWorkers.attention')}
               </button>
@@ -193,7 +195,7 @@ export const CompanyWorkers = () => {
                 <label htmlFor="ew-sort" className="text-xs font-semibold text-muted">
                   {t('employerWorkers.sortBy')}
                 </label>
-                <select id="ew-sort" className="input w-auto py-2 text-sm" value={sort} onChange={(e) => setSort(e.target.value as SortKey)}>
+                <select id="ew-sort" className="input w-auto text-sm" value={sort} onChange={(e) => setSort(e.target.value as SortKey)}>
                   {SORTS.map((k) => (
                     <option key={k} value={k}>
                       {t(`employerWorkers.sort.${k}`)}
@@ -204,18 +206,18 @@ export const CompanyWorkers = () => {
             </div>
 
             {groups.length === 0 ? (
-              <Empty icon={Users} title={t('employerWorkers.noMatch')} />
+              <Empty icon={Users} illustration={<SearchEmpty className="w-32" />} title={t('employerWorkers.noMatch')} />
             ) : (
               <div className="space-y-6">
                 {groups.map((g) => {
                   const Icon = PHASE_ICON[g.phase];
                   return (
                     <div key={g.phase}>
-                      <h3 className="mb-2 flex items-center gap-2 text-sm font-bold text-navy-900">
-                        <Icon className="size-4 text-brand-600" aria-hidden /> {t(`employerWorkers.phase.${g.phase}`)}
-                        <span className="rounded-full bg-surface px-2 text-xs text-muted tabular-nums">{g.rows.length}</span>
+                      <h3 className="type-card-title mb-2 flex items-center gap-2 text-ink">
+                        <Icon className="size-4 text-primary" aria-hidden /> {t(`employerWorkers.phase.${g.phase}`)}
+                        <span className="num rounded-full bg-sunken px-2 text-xs font-medium text-muted">{g.rows.length}</span>
                       </h3>
-                      <div className="rounded-2xl border border-line">
+                      <div className="sm:overflow-hidden sm:rounded-2xl sm:border sm:border-line sm:bg-card">
                         <Table
                           columns={columns}
                           rows={g.rows}
@@ -224,7 +226,7 @@ export const CompanyWorkers = () => {
                           dense
                           stickyHeader={false}
                           onRowClick={(w) => setOpen(w.id)}
-                          rowClassName={() => 'cursor-pointer hover:bg-surface/60'}
+                          rowClassName={() => 'cursor-pointer'}
                           caption={t(`employerWorkers.phase.${g.phase}`)}
                         />
                       </div>

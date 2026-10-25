@@ -20,7 +20,7 @@ const HERO_IMAGE = 'https://images.unsplash.com/photo-1563986768609-322da13575f3
 const withMarks = (text: string): ReactNode[] =>
   text.split(/(\[[^\]]+\])/g).map((part, i) =>
     /^\[[^\]]+\]$/.test(part) ? (
-      <mark key={i} className="rounded bg-warning/15 px-1 font-semibold text-warning [box-decoration-break:clone]">
+      <mark key={i} className="rounded bg-warning-bg px-1 font-semibold text-warning-fg [box-decoration-break:clone]">
         {part}
       </mark>
     ) : (
@@ -37,7 +37,7 @@ const CustomText = ({ text }: { text: string }) => (
       const lines = block.split('\n');
       if (block.startsWith('## ')) {
         return (
-          <h2 key={i} className="pt-4 font-display text-xl font-bold text-navy-900 sm:text-2xl">
+          <h2 key={i} className="pt-6 font-display text-xl font-semibold text-ink sm:text-2xl">
             {block.slice(3)}
           </h2>
         );
@@ -63,8 +63,8 @@ const CustomText = ({ text }: { text: string }) => (
 const ControllerBlock = ({ legal, placeholder }: { legal: LegalInfo; placeholder: (k: keyof LegalInfo) => string }) => {
   const v = (k: keyof LegalInfo) => legal[k] || placeholder(k);
   return (
-    <address className="rounded-xl border border-line bg-surface p-4 not-italic sm:p-5">
-      <p className="font-semibold text-navy-900">{withMarks(`${v('companyName')} ${v('legalForm')}`)}</p>
+    <address className="rounded-2xl border border-line bg-sunken p-4 not-italic sm:p-5">
+      <p className="font-semibold text-ink">{withMarks(`${v('companyName')} ${v('legalForm')}`)}</p>
       <p>{withMarks(v('street'))}</p>
       <p>{withMarks(`${v('postalCode')} ${v('city')}`)}</p>
       <p>{withMarks(v('country'))}</p>
@@ -116,12 +116,12 @@ function PrivacyTemplate() {
       <section className="section">
         <div className="container-x">
           {uiLang !== 'de' && (
-            <div className="mb-8 flex flex-col gap-3 rounded-xl border border-brand-100 bg-brand-50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="mb-8 flex flex-col gap-3 rounded-2xl border border-line bg-sunken px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between sm:px-5">
               <p className="flex items-start gap-2 text-sm text-ink/85">
-                <Languages className="mt-0.5 size-4 shrink-0 text-brand-600" aria-hidden />
+                <Languages className="mt-0.5 size-4 shrink-0 text-muted" aria-hidden />
                 {t('legalPages.common.germanPrevails')}
               </p>
-              <button type="button" className="btn-ghost btn-sm shrink-0 self-start sm:self-center" onClick={() => setShowGerman((s) => !s)} aria-pressed={showGerman}>
+              <button type="button" className="btn-secondary shrink-0 self-start sm:self-center" onClick={() => setShowGerman((s) => !s)} aria-pressed={showGerman}>
                 {showGerman ? t('legalPages.common.showTranslation') : t('legalPages.common.showGerman')}
               </button>
             </div>
@@ -129,12 +129,12 @@ function PrivacyTemplate() {
 
           <div className="grid gap-8 lg:grid-cols-[260px_minmax(0,1fr)] lg:gap-12" lang={lang}>
             {!custom && (
-              <nav aria-label={tl('legalPages.common.contents')} className="hidden lg:sticky lg:top-28 lg:block lg:self-start">
-                <p className="text-xs font-bold tracking-[0.14em] text-muted uppercase">{tl('legalPages.common.contents')}</p>
+              <nav aria-label={tl('legalPages.common.contents')} className="hidden rounded-2xl border border-line bg-card p-4 shadow-[var(--tv-shadow-card)] lg:sticky lg:top-28 lg:block lg:self-start">
+                <p className="type-overline text-muted">{tl('legalPages.common.contents')}</p>
                 <ol className="mt-3 max-h-[calc(100vh-10rem)] space-y-1 overflow-y-auto pr-2 text-sm">
                   {all.map((s, i) => (
                     <li key={s.id}>
-                      <a href={`#${s.id}`} className="flex gap-2 rounded-md px-2 py-1 text-muted hover:bg-surface hover:text-navy-900">
+                      <a href={`#${s.id}`} className="flex gap-2 rounded-lg px-2 py-1.5 leading-snug text-muted transition-colors hover:bg-sunken hover:text-ink">
                         <span className="w-5 shrink-0 text-right tabular-nums">{i + 1}.</span>
                         <span>{s.title}</span>
                       </a>
@@ -144,8 +144,8 @@ function PrivacyTemplate() {
               </nav>
             )}
 
-            <article className={`min-w-0 text-[0.95rem] leading-relaxed text-ink/85 ${custom ? 'lg:col-span-2 lg:max-w-4xl' : ''}`}>
-              {date && <p className="mb-6 text-sm font-semibold text-muted">{tl('legalPages.common.asOf', { date })}</p>}
+            <article className={`min-w-0 max-w-[72ch] text-base leading-[1.7] text-ink/90 ${custom ? 'lg:col-span-2' : ''}`}>
+              {date && <p className="mb-8 border-b border-line pb-4 text-sm font-semibold text-muted">{tl('legalPages.common.asOf', { date })}</p>}
               {custom ? (
                 <CustomText text={fill(custom, vars)} />
               ) : (
@@ -153,7 +153,7 @@ function PrivacyTemplate() {
                   {all.map((s, i) => (
                     <Reveal key={s.id}>
                       <section id={s.id} className="scroll-mt-28">
-                        <h2 className="font-display text-xl font-bold text-navy-900 sm:text-2xl">
+                        <h2 className="font-display text-xl font-semibold text-ink sm:text-2xl">
                           {i + 1}. {s.title}
                         </h2>
                         <div className="mt-3 space-y-3">
@@ -174,7 +174,7 @@ function PrivacyTemplate() {
                                 <ul key={j} className="space-y-1.5">
                                   {b.map((item) => (
                                     <li key={item} className="flex gap-2.5">
-                                      <ShieldCheck className="mt-1 size-4 shrink-0 text-brand-600" aria-hidden />
+                                      <ShieldCheck className="mt-1 size-4 shrink-0 text-success-fg" aria-hidden />
                                       <span>{withMarks(fill(item, vars))}</span>
                                     </li>
                                   ))}

@@ -100,17 +100,17 @@ const MemberRow = ({ m, onEdit, onRemove, onChanged, reunion }: { m: FamilyMembe
   return (
     <li className="py-4 first:pt-0 last:pb-0">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
-        <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-rose-50 text-rose-600">
+        <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-danger-bg text-danger-fg">
           <Icon className="size-4" aria-hidden />
         </span>
         <div className="min-w-0 flex-1">
           <p className="flex flex-wrap items-center gap-x-2 gap-y-1">
-            <span className="font-semibold text-navy-900">{memberName(m)}</span>
-            <span className="badge bg-rose-100 text-rose-800">{t(`familyMembers.relation.${m.relation}`)}</span>
+            <span className="font-semibold text-ink">{memberName(m)}</span>
+            <span className="badge bg-danger-bg text-danger-fg">{t(`familyMembers.relation.${m.relation}`)}</span>
             <StatusBadge status={m.status} />
           </p>
           <p className="mt-0.5 text-xs text-muted">
-            <Link to={`/admin/cases/${m.caseId}`} className="font-mono font-semibold text-brand-600 hover:underline">
+            <Link to={`/admin/cases/${m.caseId}`} className="font-mono font-semibold text-link hover:underline">
               {m.number}
             </Link>
           </p>
@@ -126,25 +126,25 @@ const MemberRow = ({ m, onEdit, onRemove, onChanged, reunion }: { m: FamilyMembe
           </ul>
         </div>
         <div className="flex shrink-0 items-center gap-1">
-          <button type="button" className="grid size-8 place-items-center rounded-lg text-muted transition hover:bg-brand-50 hover:text-brand-700" onClick={onEdit} title={t('familyMembers.edit')} aria-label={`${t('familyMembers.edit')}: ${memberName(m)}`}>
+          <button type="button" className="grid size-8 place-items-center rounded-lg text-muted transition hover:bg-primary/[0.06] hover:text-link" onClick={onEdit} title={t('familyMembers.edit')} aria-label={`${t('familyMembers.edit')}: ${memberName(m)}`}>
             <Pencil className="size-3.5" />
           </button>
           {m.removable && (
-            <button type="button" className="grid size-8 place-items-center rounded-lg text-muted transition hover:bg-red-50 hover:text-red-700" onClick={onRemove} title={t('familyMembers.remove')} aria-label={`${t('familyMembers.remove')}: ${memberName(m)}`}>
+            <button type="button" className="grid size-8 place-items-center rounded-lg text-muted transition hover:bg-danger-bg hover:text-danger-fg" onClick={onRemove} title={t('familyMembers.remove')} aria-label={`${t('familyMembers.remove')}: ${memberName(m)}`}>
               <Trash2 className="size-3.5" />
             </button>
           )}
-          <Link to={`/admin/cases/${m.caseId}`} className="grid size-8 place-items-center rounded-lg text-muted transition hover:bg-brand-50 hover:text-brand-700" title={t('familyMembers.openCase')} aria-label={`${t('familyMembers.openCase')}: ${m.number}`}>
+          <Link to={`/admin/cases/${m.caseId}`} className="grid size-8 place-items-center rounded-lg text-muted transition hover:bg-primary/[0.06] hover:text-link" title={t('familyMembers.openCase')} aria-label={`${t('familyMembers.openCase')}: ${m.number}`}>
             <ArrowRight className="size-3.5" />
           </Link>
         </div>
       </div>
       {m.profile && (
-        <div className="mt-3 rounded-lg bg-surface px-3 py-2.5 sm:ml-12">
+        <div className="mt-3 rounded-lg bg-sunken px-3 py-2.5 sm:ml-12">
           <MemberDetails p={m.profile} />
         </div>
       )}
-      <button type="button" className="mt-2 inline-flex min-h-9 items-center gap-1.5 text-xs font-semibold text-brand-700 hover:text-brand-800 sm:ml-12" aria-expanded={open} onClick={() => setOpen((v) => !v)}>
+      <button type="button" className="mt-2 inline-flex min-h-9 items-center gap-1.5 text-xs font-semibold text-link hover:text-ink sm:ml-12" aria-expanded={open} onClick={() => setOpen((v) => !v)}>
         <ChevronDown className={clsx('size-3.5 transition-transform', open && 'rotate-180')} aria-hidden />
         {open ? t('familyMembers.hideDocs') : t('familyMembers.showDocs')}
       </button>
@@ -247,7 +247,7 @@ export const FamilyAdminPanel = ({ caseId, parentCaseId }: { caseId: string; par
       >
         <p className="mb-3 text-xs text-muted">
           {t(`familyMembers.relation.${me.relation}`)} ·{' '}
-          <Link to={`/admin/cases/${data.main.id}`} className="font-semibold text-brand-600 hover:underline">
+          <Link to={`/admin/cases/${data.main.id}`} className="font-semibold text-link hover:underline">
             {t('familyMembers.main')}: {data.main.name} ({data.main.number})
           </Link>
         </p>
@@ -262,7 +262,7 @@ export const FamilyAdminPanel = ({ caseId, parentCaseId }: { caseId: string; par
       title={
         <>
           {t('familyMembers.title')}
-          {data.members.length > 0 && <span className="badge bg-brand-100 text-brand-700">{data.members.length}</span>}
+          {data.members.length > 0 && <span className="badge bg-primary/10 text-link">{data.members.length}</span>}
         </>
       }
       icon={Users}
@@ -298,7 +298,7 @@ export const FamilyAdminPanel = ({ caseId, parentCaseId }: { caseId: string; par
           </ul>
           <p className="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-line pt-3 text-xs text-muted">
             <span>{data.aggregate.openItems ? t('familyMembers.openItems', { count: data.aggregate.openItems }) : t('familyMembers.allDone')}</span>
-            <span className="font-semibold tabular-nums text-navy-900">{data.aggregate.percent}%</span>
+            <span className="font-semibold tabular-nums text-ink">{data.aggregate.percent}%</span>
           </p>
         </>
       )}

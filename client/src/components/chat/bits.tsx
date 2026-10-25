@@ -11,7 +11,7 @@ export const Avatar = ({ person, size = 'md', className }: { person: Person | nu
     title={fullName(person)}
     className={clsx(
       'inline-grid shrink-0 place-items-center rounded-full font-bold select-none',
-      person ? avatarTone(person.id) : 'bg-slate-200 text-slate-600',
+      person ? avatarTone(person.id) : 'bg-line text-muted',
       { xs: 'size-5 text-[0.55rem]', sm: 'size-6 text-[0.6rem]', md: 'size-8 text-[0.7rem]', lg: 'size-9 text-xs' }[size],
       className,
     )}
@@ -32,7 +32,7 @@ export const EmojiPicker = ({ open, onClose, onPick, align = 'left' }: { open: b
             onPick(e);
             onClose();
           }}
-          className="grid size-7 place-items-center rounded-md text-lg leading-none hover:bg-surface"
+          className="grid size-7 place-items-center rounded-md text-lg leading-none hover:bg-sunken"
           aria-label={e}
         >
           {e}

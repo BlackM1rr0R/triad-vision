@@ -41,8 +41,8 @@ export const RecognitionEditor = ({
   const dirty = s !== (status ?? '') || n.trim() !== (note ?? '');
   return (
     <div className="rounded-lg border border-line bg-surface/40 p-3">
-      <p className="flex items-center gap-1.5 text-xs font-semibold text-navy-900">
-        <GraduationCap className="size-3.5 text-brand-600" aria-hidden /> {t('placement.recognition.label')}
+      <p className="flex items-center gap-1.5 text-xs font-semibold text-ink">
+        <GraduationCap className="size-3.5 text-link" aria-hidden /> {t('placement.recognition.label')}
       </p>
       <p className="mt-0.5 text-[11px] text-muted">{t('placement.recognition.hint')}</p>
       <div className="mt-2 grid gap-2 sm:grid-cols-[minmax(0,12rem)_minmax(0,1fr)_auto]">

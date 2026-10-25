@@ -211,7 +211,7 @@ const OrdersTable = () => {
         <div className="overflow-hidden rounded-xl border border-line bg-card">
           <div className="overflow-x-auto">
             <table className="w-full min-w-[980px] text-left text-sm">
-              <thead className="border-b border-line bg-surface/70 text-[11px] font-semibold tracking-wide whitespace-nowrap text-muted uppercase">
+              <thead className="border-b border-line bg-surface/70 text-xs font-medium whitespace-nowrap text-muted">
                 <tr>
                   <th className="px-4 py-2.5">{t('trOrders.admin.cols.number')}</th>
                   <th className="px-4 py-2.5">{t('trOrders.admin.cols.client')}</th>
@@ -225,9 +225,9 @@ const OrdersTable = () => {
               </thead>
               <tbody className={clsx('divide-y divide-line', list.isFetching && 'opacity-60')}>
                 {list.data.items.map((o) => (
-                  <tr key={o.id} className={clsx('transition hover:bg-surface/60', o.overdue && 'bg-red-50/60')}>
+                  <tr key={o.id} className={clsx('transition hover:bg-surface/60', o.overdue && 'bg-danger-bg/60')}>
                     <td className="px-4 py-3 whitespace-nowrap">
-                      <Link to={o.id} className="font-semibold text-brand-700 tabular-nums hover:underline">
+                      <Link to={o.id} className="font-semibold text-link tabular-nums hover:underline">
                         {o.key}
                       </Link>
                       {o.urgency === 'EXPRESS' && <span className="ml-1.5 badge bg-warning-bg text-warning-fg">{t('trOrders.urgency.EXPRESS')}</span>}
@@ -251,7 +251,7 @@ const OrdersTable = () => {
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap">
                       {o.overdue ? (
-                        <span className="inline-flex items-center gap-1 font-semibold text-danger">
+                        <span className="inline-flex items-center gap-1 font-semibold text-danger-fg">
                           <AlertTriangle className="size-3.5" aria-hidden /> {f.day(o.dueAt)}
                         </span>
                       ) : (
@@ -269,13 +269,13 @@ const OrdersTable = () => {
             <span>{t('trOrders.admin.total', { count: list.data.total })}</span>
             {pages > 1 && (
               <span className="flex items-center gap-1">
-                <button type="button" className="grid size-8 place-items-center rounded-md hover:bg-surface disabled:opacity-40" disabled={page <= 1} onClick={() => set('page', String(page - 1))} aria-label="‹">
+                <button type="button" className="grid size-8 place-items-center rounded-md hover:bg-sunken disabled:opacity-40" disabled={page <= 1} onClick={() => set('page', String(page - 1))} aria-label="‹">
                   <ChevronLeft className="size-4" />
                 </button>
                 <span className="tabular-nums">
                   {page} / {pages}
                 </span>
-                <button type="button" className="grid size-8 place-items-center rounded-md hover:bg-surface disabled:opacity-40" disabled={page >= pages} onClick={() => set('page', String(page + 1))} aria-label="›">
+                <button type="button" className="grid size-8 place-items-center rounded-md hover:bg-sunken disabled:opacity-40" disabled={page >= pages} onClick={() => set('page', String(page + 1))} aria-label="›">
                   <ChevronRight className="size-4" />
                 </button>
               </span>
@@ -338,7 +338,7 @@ const QuoteForm = ({ order, onSaved }: { order: TrStaffOrder; onSaved: (o: TrSta
             </label>
             <input id="q-price" type="number" min={0} step="0.01" required className="input" value={price} onChange={(e) => setPrice(e.target.value)} />
             {estimate != null && (
-              <button type="button" className="mt-1 text-[11px] font-semibold text-brand-700 hover:underline" onClick={() => setPrice((estimate / 100).toFixed(2))}>
+              <button type="button" className="mt-1 text-[11px] font-semibold text-link hover:underline" onClick={() => setPrice((estimate / 100).toFixed(2))}>
                 {t('trOrders.admin.quote.estimate', { price: f.money(estimate, pricing!.currency) })}
               </button>
             )}
@@ -419,7 +419,7 @@ const StatusActions = ({ order, onSaved }: { order: TrStaffOrder; onSaved: (o: T
                 type="button"
                 disabled={change.isPending || (s === 'CANCELLED' && !note.trim())}
                 title={s === 'CANCELLED' && !note.trim() ? t('trOrders.admin.actions.reasonPlaceholder') : undefined}
-                className={s === 'CANCELLED' ? 'btn-white btn-sm border border-red-200 text-danger hover:bg-red-50 disabled:opacity-50' : 'btn-primary btn-sm'}
+                className={s === 'CANCELLED' ? 'btn-secondary btn-sm border border-danger-border text-danger-fg hover:bg-danger-bg disabled:opacity-50' : 'btn-primary btn-sm'}
                 onClick={() => change.mutate(s)}
               >
                 {t(`trOrders.admin.actions.${s}`)}
@@ -565,13 +565,13 @@ const OrderAdmin = () => {
 
   return (
     <div className="space-y-5">
-      <Link to="/admin/translations" className="inline-flex items-center gap-1.5 text-sm font-semibold text-muted hover:text-brand-700">
+      <Link to="/admin/translations" className="inline-flex items-center gap-1.5 text-sm font-semibold text-muted hover:text-link">
         <ArrowLeft className="size-4" aria-hidden /> {t('trOrders.backToList')}
       </Link>
 
       <div className="rounded-xl border border-line bg-card p-5 sm:p-6">
         <div className="flex flex-wrap items-center gap-2">
-          <h1 className="text-xl font-bold text-ink tabular-nums sm:text-2xl">{order.key}</h1>
+          <h1 className="type-page-title">{order.key}</h1>
           <TrStatusPill status={order.status} />
           {order.urgency === 'EXPRESS' && <span className="badge bg-warning-bg text-warning-fg">{t('trOrders.urgency.EXPRESS')}</span>}
           {order.overdue && (
@@ -604,7 +604,7 @@ const OrderAdmin = () => {
             ) : (
               <p className="text-sm text-muted">{t('trOrders.admin.noFiles')}</p>
             )}
-            {order.clientNote && <p className="mt-4 rounded-lg bg-surface p-3 text-sm whitespace-pre-line text-ink">{order.clientNote}</p>}
+            {order.clientNote && <p className="mt-4 rounded-lg bg-sunken p-3 text-sm whitespace-pre-line text-ink">{order.clientNote}</p>}
             {/* AI draft translation of a source file for the translator (drive: client folder "Übersetzungen") */}
             <OrderDraftButton orderId={order.id} files={sources} onCreated={() => void q.refetch()} />
           </Panel>
@@ -630,11 +630,11 @@ const OrderAdmin = () => {
             <ol className="space-y-3">
               {[...order.events].reverse().map((e) => (
                 <li key={e.id} className="flex gap-3 text-sm">
-                  <span className={clsx('mt-1.5 size-2 shrink-0 rounded-full', e.visibleToClient ? 'bg-brand-600' : 'bg-slate-400')} aria-hidden />
+                  <span className={clsx('mt-1.5 size-2 shrink-0 rounded-full', e.visibleToClient ? 'bg-primary' : 'bg-subtle')} aria-hidden />
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
                       {e.status && <TrStatusPill status={e.status} />}
-                      {!e.visibleToClient && <span className="badge bg-surface text-muted">{t('trOrders.admin.internal')}</span>}
+                      {!e.visibleToClient && <span className="badge bg-sunken text-muted">{t('trOrders.admin.internal')}</span>}
                       <span className="text-xs text-muted">
                         {f.dateTime(e.createdAt)} · {e.actor ? name(e.actor) : t('trOrders.admin.system')}
                       </span>
@@ -652,7 +652,7 @@ const OrderAdmin = () => {
             <p className="font-semibold text-ink">{name(order.client)}</p>
             <p className="mt-1 flex items-center gap-2 text-sm text-muted">
               <Mail className="size-3.5" aria-hidden />
-              <a href={`mailto:${order.client.email}`} className="truncate hover:text-brand-700">
+              <a href={`mailto:${order.client.email}`} className="truncate hover:text-link">
                 {order.client.email}
               </a>
             </p>
@@ -662,7 +662,7 @@ const OrderAdmin = () => {
               </p>
             )}
             {order.case && (
-              <Link to={`/admin/cases/${order.case.id}`} className="btn-white btn-sm mt-3 border border-line">
+              <Link to={`/admin/cases/${order.case.id}`} className="btn-secondary btn-sm mt-3 border border-line">
                 {t('trOrders.admin.openCase')} · {order.case.number}
               </Link>
             )}

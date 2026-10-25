@@ -87,8 +87,8 @@ const StaffFields = ({ f, set }: { f: VacancyFormState; set: <K extends keyof Va
   const { data: companies } = useCompanyOptions();
   const { data: content } = useSiteContent();
   return (
-    <section className="grid gap-4 rounded-xl border border-dashed border-brand-300 bg-brand-50/40 p-4 sm:grid-cols-3">
-      <p className="text-sm font-bold text-navy-900 sm:col-span-3">{t('jobsArea.admin.vacancies.staffFields')}</p>
+    <section className="grid gap-4 rounded-xl border border-dashed border-primary/25 bg-primary/[0.04] p-4 sm:grid-cols-3">
+      <p className="text-sm font-bold text-ink sm:col-span-3">{t('jobsArea.admin.vacancies.staffFields')}</p>
       <div>
         <label className="label" htmlFor="sv-company">
           {t('jobsArea.admin.vacancies.company')}
@@ -120,7 +120,7 @@ const StaffFields = ({ f, set }: { f: VacancyFormState; set: <K extends keyof Va
         <label className="label" htmlFor="sv-slug">
           {t('jobsArea.admin.vacancies.slug')}
         </label>
-        <input id="sv-slug" className="input font-mono text-xs" value={f.slug} onChange={(e) => set('slug', e.target.value)} placeholder={t('jobsArea.admin.vacancies.slugAuto')} pattern="[a-z0-9]+(-[a-z0-9]+)*" />
+        <input id="sv-slug" className="input code-id text-xs" value={f.slug} onChange={(e) => set('slug', e.target.value)} placeholder={t('jobsArea.admin.vacancies.slugAuto')} pattern="[a-z0-9]+(-[a-z0-9]+)*" />
       </div>
     </section>
   );
@@ -142,7 +142,7 @@ const ApplicationRow = ({ a, onChanged, hasCompany }: { a: DetailApplication; on
     <li className="py-3">
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div className="min-w-0">
-          <Link to={`/admin/candidates?id=${a.user.id}`} className="font-semibold text-brand-700 hover:underline">
+          <Link to={`/admin/candidates?id=${a.user.id}`} className="font-semibold text-link hover:underline">
             {fullName(a.user)}
           </Link>
           <p className="truncate text-xs text-muted">
@@ -171,9 +171,9 @@ const ApplicationRow = ({ a, onChanged, hasCompany }: { a: DetailApplication; on
         </div>
       </div>
       <MatchBreakdown match={a.match} className="mt-1" />
-      {a.message && <p className="mt-2 rounded-md bg-surface px-2.5 py-1.5 text-xs text-ink/80">“{a.message}”</p>}
+      {a.message && <p className="mt-2 rounded-md bg-sunken px-2.5 py-1.5 text-xs text-ink/80">“{a.message}”</p>}
       {a.companyNote && (
-        <p className="mt-2 rounded-md bg-violet-50 px-2.5 py-1.5 text-xs whitespace-pre-line text-violet-900">
+        <p className="mt-2 rounded-md bg-accent-bg px-2.5 py-1.5 text-xs whitespace-pre-line text-accent-fg">
           {t('jobsArea.admin.employerNote')}: {a.companyNote}
         </p>
       )}
@@ -276,8 +276,8 @@ const VacancyDrawer = ({ id, onClose }: { id: string | null; onClose: () => void
           extra={(f, set) => (
             <>
               <StaffFields f={f} set={set} />
-              <label className="flex items-center gap-2 text-sm font-semibold text-navy-900">
-                <input type="checkbox" className="size-4 accent-brand-600" checked={publish} onChange={(e) => setPublish(e.target.checked)} /> {t('jobsArea.admin.vacancies.publishNow')}
+              <label className="flex items-center gap-2 text-sm font-semibold text-ink">
+                <input type="checkbox" className="size-4 accent-primary" checked={publish} onChange={(e) => setPublish(e.target.checked)} /> {t('jobsArea.admin.vacancies.publishNow')}
               </label>
             </>
           )}
@@ -290,7 +290,7 @@ const VacancyDrawer = ({ id, onClose }: { id: string | null; onClose: () => void
             <div className="flex flex-wrap items-center gap-2 text-xs text-muted">
               <span className={clsx('badge', VACANCY_STATUS_TONE[v.status])}>{L.vacancyStatus(v.status)}</span>
               {v.company ? (
-                <Link to={`/admin/companies?id=${v.company.id}`} className="font-semibold text-brand-700 hover:underline">
+                <Link to={`/admin/companies?id=${v.company.id}`} className="font-semibold text-link hover:underline">
                   {v.company.name}
                 </Link>
               ) : (
@@ -298,7 +298,7 @@ const VacancyDrawer = ({ id, onClose }: { id: string | null; onClose: () => void
               )}
               {v.publishedAt && <span>· {t('jobsArea.common.postedOn', { date: fmtDate(v.publishedAt) })}</span>}
               {v.status === 'OPEN' && (
-                <a href={`/jobs/${v.slug}`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 font-semibold text-brand-700 hover:underline">
+                <a href={`/jobs/${v.slug}`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 font-semibold text-link hover:underline">
                   <ExternalLink className="size-3" /> /jobs/{v.slug}
                 </a>
               )}
@@ -320,7 +320,7 @@ const VacancyDrawer = ({ id, onClose }: { id: string | null; onClose: () => void
                 </button>
               )}
               {v.applications.length === 0 && (
-                <button type="button" className="btn-secondary btn-sm text-danger" onClick={() => setConfirmDelete(true)}>
+                <button type="button" className="btn-secondary btn-sm text-danger-fg" onClick={() => setConfirmDelete(true)}>
                   <Trash2 className="size-3.5" /> {t('admin.common.delete')}
                 </button>
               )}
@@ -352,7 +352,7 @@ const VacancyDrawer = ({ id, onClose }: { id: string | null; onClose: () => void
 
           <Panel title={t('jobsArea.admin.vacancies.suggestions')} icon={Sparkles}>
             {suggestions.isLoading ? (
-              <Spinner className="size-5 text-brand-600" />
+              <Spinner className="size-5 text-link" />
             ) : !suggestions.data?.length ? (
               <p className="text-sm text-muted">—</p>
             ) : (
@@ -360,7 +360,7 @@ const VacancyDrawer = ({ id, onClose }: { id: string | null; onClose: () => void
                 {suggestions.data.slice(0, 10).map((s) => (
                   <li key={s.id} className="flex flex-wrap items-center justify-between gap-2 py-2.5">
                     <div className="min-w-0">
-                      <Link to={`/admin/candidates?id=${s.id}`} className="text-sm font-semibold text-brand-700 hover:underline">
+                      <Link to={`/admin/candidates?id=${s.id}`} className="text-sm font-semibold text-link hover:underline">
                         {fullName(s)}
                       </Link>
                       <p className="truncate text-xs text-muted">{[s.profession, s.germanLevel && `DE ${s.germanLevel}`, s.city].filter(Boolean).join(' · ')}</p>
@@ -465,7 +465,7 @@ export default function AdminVacancies() {
         subtitle={t('jobsArea.admin.vacancies.subtitle')}
         actions={
           <>
-            {isFetching && !isLoading && <Spinner className="size-4 text-brand-600" />}
+            {isFetching && !isLoading && <Spinner className="size-4 text-link" />}
             <EmployerAiToggle />
             <button type="button" className="btn-primary btn-sm" onClick={() => setParam('id', 'new')}>
               <Plus className="size-3.5" /> {t('jobsArea.admin.vacancies.new')}
@@ -505,11 +505,11 @@ export default function AdminVacancies() {
       ) : error ? (
         <ErrorBlock error={error} onRetry={() => refetch()} />
       ) : !data?.items.length ? (
-        <div className="rounded-xl border border-line bg-white">
+        <div className="rounded-xl border border-line bg-card">
           <EmptyState icon={Briefcase} title={t('jobsArea.admin.vacancies.empty')} />
         </div>
       ) : (
-        <ul className="divide-y divide-line overflow-hidden rounded-xl border border-line bg-white">
+        <ul className="divide-y divide-line overflow-hidden rounded-xl border border-line bg-card">
           {data.items.map((v) => {
             const total = Object.values(v.applications).reduce<number>((a, b) => a + (b ?? 0), 0);
             return (
@@ -519,7 +519,7 @@ export default function AdminVacancies() {
                 onClick={() => setParam('id', v.id)}
                 className={clsx(
                   'flex w-full cursor-pointer flex-col gap-2 px-4 py-3.5 text-left transition hover:bg-surface/70 sm:flex-row sm:items-center sm:justify-between',
-                  selected === v.id && 'bg-brand-50/60 shadow-[inset_3px_0_0_var(--color-brand-600)]',
+                  selected === v.id && 'bg-primary/[0.04] shadow-[inset_3px_0_0_var(--color-brand-600)]',
                 )}
               >
                 <div className="min-w-0">
@@ -530,7 +530,7 @@ export default function AdminVacancies() {
                         e.stopPropagation();
                         setParam('id', v.id);
                       }}
-                      className="rounded text-left font-semibold break-words text-navy-900 outline-none hover:underline focus-visible:ring-2 focus-visible:ring-brand-500/50"
+                      className="rounded text-left font-semibold break-words text-ink outline-none hover:underline focus-visible:ring-2 focus-visible:ring-focus/50"
                     >
                       {L.title(v.title)}
                     </button>
@@ -544,7 +544,7 @@ export default function AdminVacancies() {
                   {total > 0 && (
                     <span className="inline-flex items-center gap-1">
                       <Users className="size-3.5" /> {total}
-                      {v.applications.NEW ? <span className="badge bg-brand-100 text-brand-700">+{v.applications.NEW}</span> : null}
+                      {v.applications.NEW ? <span className="badge bg-primary/10 text-link">+{v.applications.NEW}</span> : null}
                     </span>
                   )}
                   <span title={fmtDate(v.updatedAt)}>{fmtRelative(v.updatedAt)}</span>

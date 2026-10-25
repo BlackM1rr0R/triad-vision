@@ -28,7 +28,7 @@ const Section = ({ title, hint, children }: { title: string; hint?: string; chil
   </section>
 );
 
-const iconBtn = 'grid size-8 shrink-0 place-items-center rounded-lg text-muted transition hover:bg-surface hover:text-ink disabled:opacity-30';
+const iconBtn = 'grid size-8 shrink-0 place-items-center rounded-lg text-muted transition hover:bg-sunken hover:text-ink disabled:opacity-30';
 
 // ─── Columns ────────────────────────────────────────────────────────────
 
@@ -59,8 +59,8 @@ export const ColumnsPicker = ({ dataset, value, onChange }: { dataset: Dataset; 
           <ul className="max-h-72 space-y-0.5 overflow-y-auto pr-1">
             {shown.map((c) => (
               <li key={c.key}>
-                <label className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-1.5 text-sm hover:bg-surface">
-                  <input type="checkbox" className="size-4 accent-brand-600" checked={value.includes(c.key)} onChange={() => toggle(c.key)} />
+                <label className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-1.5 text-sm hover:bg-sunken">
+                  <input type="checkbox" className="size-4 accent-primary" checked={value.includes(c.key)} onChange={() => toggle(c.key)} />
                   <span className="min-w-0 flex-1 truncate">{f.tr(c.label)}</span>
                   {c.masked && <Lock className="size-3.5 text-muted" aria-label={t('reports.masked')} />}
                 </label>
@@ -88,7 +88,7 @@ export const ColumnsPicker = ({ dataset, value, onChange }: { dataset: Dataset; 
                       setDrag(null);
                     }}
                     onDragEnd={() => setDrag(null)}
-                    className={clsx('flex items-center gap-1 rounded-lg border border-line bg-surface px-1.5 py-1 text-sm', drag === i && 'opacity-50')}
+                    className={clsx('flex items-center gap-1 rounded-lg border border-line bg-sunken px-1.5 py-1 text-sm', drag === i && 'opacity-50')}
                   >
                     <GripVertical className="size-4 shrink-0 cursor-grab text-muted" aria-hidden />
                     <span className="min-w-0 flex-1 truncate">{f.tr(c.label)}</span>
@@ -132,13 +132,13 @@ const MultiPick = ({ options, value, onChange, placeholder }: { options: { value
         {label || <span className="text-muted">{placeholder}</span>}
       </button>
       {open && (
-        <ul className="absolute z-20 mt-1 max-h-60 w-full min-w-[12rem] overflow-y-auto rounded-lg border border-line bg-card p-1 shadow-lg">
+        <ul className="absolute z-20 mt-1 max-h-60 w-full min-w-[12rem] overflow-y-auto rounded-lg border border-line bg-card p-1 shadow-[var(--tv-shadow-raised)]">
           {options.map((o) => (
             <li key={o.value}>
-              <label className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-surface">
+              <label className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-sunken">
                 <input
                   type="checkbox"
-                  className="size-4 accent-brand-600"
+                  className="size-4 accent-primary"
                   checked={value.includes(o.value)}
                   onChange={() => onChange(value.includes(o.value) ? value.filter((x) => x !== o.value) : [...value, o.value])}
                 />
@@ -282,7 +282,7 @@ export const FiltersEditor = ({
           );
         })}
       </ul>
-      <button type="button" className="btn-ghost btn-sm mt-3" onClick={add} disabled={!filterable.length}>
+      <button type="button" className="btn-secondary btn-sm mt-3" onClick={add} disabled={!filterable.length}>
         <Plus className="size-4" /> {t('reports.addFilter')}
       </button>
     </Section>
@@ -345,7 +345,7 @@ export const GroupEditor = ({ dataset, config, onChange }: { dataset: Dataset; c
         {config.groupBy.length < 2 && groupable.length > 0 && (
           <button
             type="button"
-            className="btn-ghost btn-sm"
+            className="btn-secondary btn-sm"
             onClick={() => {
               const c = groupable.find((x) => !config.groupBy.some((g) => g.column === x.key)) ?? groupable[0];
               onChange({ groupBy: [...config.groupBy, { column: c.key, granularity: c.type === 'date' ? 'month' : undefined }], sort: null });
@@ -396,7 +396,7 @@ export const GroupEditor = ({ dataset, config, onChange }: { dataset: Dataset; c
               );
             })}
           {aggCols.length > 0 && config.aggregations.length < 12 && (
-            <button type="button" className="btn-ghost btn-sm" onClick={() => onChange({ aggregations: [...config.aggregations, { column: aggCols[0].key, fn: aggCols[0].aggregatable[0] }] })}>
+            <button type="button" className="btn-secondary btn-sm" onClick={() => onChange({ aggregations: [...config.aggregations, { column: aggCols[0].key, fn: aggCols[0].aggregatable[0] }] })}>
               <Plus className="size-4" /> {t('reports.addAggregation')}
             </button>
           )}
@@ -447,7 +447,7 @@ export const PreviewTable = ({ result }: { result: ReportResult }) => {
     <div>
       <div className="overflow-x-auto rounded-lg border border-line">
         <table className="w-full min-w-max text-sm">
-          <thead className="bg-surface text-xs text-muted">
+          <thead className="bg-sunken text-xs text-muted">
             <tr>
               {result.columns.map((c) => (
                 <th key={c.key} scope="col" className={clsx('px-3 py-2 font-semibold whitespace-nowrap', right(c.type) ? 'text-right' : 'text-left')}>
@@ -469,7 +469,7 @@ export const PreviewTable = ({ result }: { result: ReportResult }) => {
             ))}
           </tbody>
           {result.totals && (
-            <tfoot className="border-t-2 border-line bg-surface font-semibold">
+            <tfoot className="border-t-2 border-line bg-sunken font-semibold">
               <tr>
                 {result.columns.map((c, i) => (
                   <td key={c.key} className={clsx('px-3 py-2', right(c.type) && 'text-right tabular-nums')}>
@@ -483,11 +483,11 @@ export const PreviewTable = ({ result }: { result: ReportResult }) => {
       </div>
       {pages > 1 && (
         <div className="mt-3 flex items-center justify-end gap-2 text-xs text-muted">
-          <button type="button" className="btn-ghost btn-sm" disabled={page === 0} onClick={() => setPage((p) => p - 1)}>
+          <button type="button" className="btn-secondary btn-sm" disabled={page === 0} onClick={() => setPage((p) => p - 1)}>
             {t('reports.prev')}
           </button>
           <span>{t('reports.page', { page: page + 1, pages })}</span>
-          <button type="button" className="btn-ghost btn-sm" disabled={page >= pages - 1} onClick={() => setPage((p) => p + 1)}>
+          <button type="button" className="btn-secondary btn-sm" disabled={page >= pages - 1} onClick={() => setPage((p) => p + 1)}>
             {t('reports.next')}
           </button>
         </div>
@@ -524,7 +524,7 @@ export const ReportChart = ({ result, type, metric, onChange }: { result: Report
       <div className="mb-3 flex flex-wrap items-center gap-2">
         <div className="inline-flex rounded-lg border border-line p-0.5" role="group" aria-label={t('reports.chart')}>
           {(['bar', 'line', 'pie'] as ChartType[]).map((ct) => (
-            <button key={ct} type="button" aria-pressed={type === ct} onClick={() => onChange({ type: ct, metric: m.key })} className={clsx('rounded-md px-3 py-1.5 text-xs font-semibold', type === ct ? 'bg-brand-600 text-white' : 'text-muted hover:text-ink')}>
+            <button key={ct} type="button" aria-pressed={type === ct} onClick={() => onChange({ type: ct, metric: m.key })} className={clsx('rounded-md px-3 py-1.5 text-xs font-semibold', type === ct ? 'bg-card text-ink shadow-[var(--tv-shadow-card)] ring-1 ring-line' : 'text-muted hover:text-ink')}>
               {t(`reports.chartTypes.${ct}`)}
             </button>
           ))}

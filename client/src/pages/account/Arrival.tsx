@@ -33,6 +33,7 @@ import { PageLoader, Spinner } from '@/components/ui/Spinner';
 import { Tabs } from '@/components/ui/Tabs';
 import { ConfirmDialog } from '@/components/portal/ConfirmDialog';
 import { CITIES } from '@/lib/cities/data';
+import { Germany, Success } from '@/components/illustrations';
 import {
   ArrivalStatusPill,
   ArrivalTimeline,
@@ -117,8 +118,8 @@ const Field = ({ label, children, hint, className }: { label: string; children: 
 );
 
 const Toggle = ({ checked, onChange, label, hint, disabled }: { checked: boolean; onChange: (v: boolean) => void; label: string; hint?: string; disabled?: boolean }) => (
-  <label className={clsx('flex cursor-pointer items-start gap-3 rounded-xl border p-4 transition-colors', checked ? 'border-brand-500 bg-brand-50' : 'border-line bg-surface hover:border-brand-400/60', disabled && 'cursor-not-allowed opacity-60')}>
-    <input type="checkbox" className="mt-0.5 size-5 accent-brand-600" checked={checked} disabled={disabled} onChange={(e) => onChange(e.target.checked)} />
+  <label className={clsx('flex cursor-pointer items-start gap-3 rounded-xl border p-4 transition-colors', checked ? 'border-primary bg-sunken' : 'border-line bg-sunken hover:border-line-strong', disabled && 'cursor-not-allowed opacity-60')}>
+    <input type="checkbox" className="mt-0.5 size-5 accent-primary" checked={checked} disabled={disabled} onChange={(e) => onChange(e.target.checked)} />
     <span>
       <span className="block font-semibold text-ink">{label}</span>
       {hint && <span className="mt-0.5 block text-sm text-muted">{hint}</span>}
@@ -144,16 +145,16 @@ const StaffAnswer = ({ plan }: { plan: ArrivalPlan }) => {
   const hasHousing = !!plan.housingDetails;
   if (plan.status === 'DRAFT') return null;
   return (
-    <section className="rounded-2xl border border-brand-500/40 bg-card p-5 shadow-sm">
-      <h3 className="flex items-center gap-2 font-bold text-ink">
-        <UserRound className="size-5 text-brand-600" aria-hidden /> {t('arrival.staff.title')}
+    <section className="rounded-2xl border border-line-strong bg-card p-5 shadow-sm">
+      <h3 className="flex items-center gap-2 font-semibold text-ink">
+        <UserRound className="size-5 text-primary" aria-hidden /> {t('arrival.staff.title')}
       </h3>
       {!hasPickup && !hasHousing ? (
         <p className="mt-2 text-sm text-muted">{plan.pickupRequested || plan.housingStatus !== 'NONE' ? t('arrival.staff.waiting') : t('arrival.lockedHint')}</p>
       ) : (
         <div className="mt-3 grid gap-3 sm:grid-cols-2">
           {hasPickup && (
-            <div className="rounded-xl bg-emerald-50 p-4 text-emerald-900">
+            <div className="rounded-xl bg-success-bg p-4 text-success-fg">
               <p className="flex items-center gap-1.5 text-xs font-bold tracking-wide uppercase">
                 <Car className="size-4" aria-hidden /> {t('arrival.staff.pickup')}
               </p>
@@ -161,7 +162,7 @@ const StaffAnswer = ({ plan }: { plan: ArrivalPlan }) => {
             </div>
           )}
           {hasHousing && (
-            <div className="rounded-xl bg-sky-50 p-4 text-sky-900">
+            <div className="rounded-xl bg-info-bg p-4 text-info-fg">
               <p className="flex items-center gap-1.5 text-xs font-bold tracking-wide uppercase">
                 <Home className="size-4" aria-hidden /> {t('arrival.staff.housing')} · {t(`arrival.housing.${plan.housingStatus}`)}
               </p>
@@ -187,7 +188,7 @@ const PlanSummary = ({ form }: { form: Form }) => {
   const arrivalIso = form.arrivalTime ? berlinInputToIso(form.arrivalTime) : null;
   return (
     <div className="grid gap-4 md:grid-cols-3">
-      <div className="rounded-xl border border-line bg-surface/60 p-4">
+      <div className="rounded-xl border border-line bg-sunken p-4">
         <p className="flex items-center gap-1.5 text-xs font-bold tracking-wide text-muted uppercase">
           <Plane className="size-4" aria-hidden /> {t('arrival.steps.flight')}
         </p>
@@ -201,13 +202,13 @@ const PlanSummary = ({ form }: { form: Form }) => {
           {form.luggageNote && <SummaryRow label={t('arrival.flight.luggage')} value={form.luggageNote} />}
         </dl>
       </div>
-      <div className="rounded-xl border border-line bg-surface/60 p-4">
+      <div className="rounded-xl border border-line bg-sunken p-4">
         <p className="flex items-center gap-1.5 text-xs font-bold tracking-wide text-muted uppercase">
           <Car className="size-4" aria-hidden /> {t('arrival.steps.pickup')}
         </p>
         <p className="mt-2 text-sm font-medium text-ink">{form.pickupRequested ? t('arrival.pickup.request') : t('arrival.pickup.none')}</p>
       </div>
-      <div className="rounded-xl border border-line bg-surface/60 p-4">
+      <div className="rounded-xl border border-line bg-sunken p-4">
         <p className="flex items-center gap-1.5 text-xs font-bold tracking-wide text-muted uppercase">
           <BedDouble className="size-4" aria-hidden /> {t('arrival.steps.housing')}
         </p>
@@ -316,7 +317,7 @@ const PlanView = ({ plan }: { plan: ArrivalPlan }) => {
       {/* Status */}
       <section className="rounded-2xl border border-line bg-card p-5">
         <div className="flex flex-wrap items-center gap-3">
-          <span className="grid size-11 place-items-center rounded-xl bg-brand-100 text-brand-600">
+          <span className="grid size-11 place-items-center rounded-xl chip-soft">
             <PlaneLanding className="size-5" aria-hidden />
           </span>
           <div className="min-w-0 flex-1">
@@ -343,7 +344,7 @@ const PlanView = ({ plan }: { plan: ArrivalPlan }) => {
             </button>
           )}
           {plan.status !== 'CANCELLED' && plan.status !== 'COMPLETED' && (
-            <button type="button" className="btn-sm inline-flex items-center gap-1.5 rounded-lg px-3 font-semibold text-danger hover:bg-red-50" onClick={() => setConfirmCancel(true)}>
+            <button type="button" className="btn-sm inline-flex items-center gap-1.5 rounded-lg px-3 font-semibold text-danger hover:bg-danger-bg" onClick={() => setConfirmCancel(true)}>
               <Ban className="size-4" aria-hidden /> {t('arrival.actions.cancel')}
             </button>
           )}
@@ -356,18 +357,19 @@ const PlanView = ({ plan }: { plan: ArrivalPlan }) => {
       </section>
 
       {plan.status === 'COMPLETED' && (
-        <section className="flex flex-wrap items-center gap-4 rounded-2xl bg-gradient-to-br from-brand-600 to-brand-800 p-5 text-white">
-          <Compass className="size-8 shrink-0" aria-hidden />
+        <section className="flex flex-wrap items-center gap-5 rounded-3xl border border-success-border bg-success-bg p-6 text-ink sm:p-8">
+          <Success className="hidden w-28 shrink-0 sm:block" />
+          <Compass className="size-8 shrink-0 text-success-fg sm:hidden" aria-hidden />
           <div className="min-w-0 flex-1">
-            <p className="text-lg font-extrabold">{t('arrival.completed.title')}</p>
-            <p className="text-sm text-white/85">{t('arrival.completed.text')}</p>
+            <p className="type-card-title text-lg">{t('arrival.completed.title')}</p>
+            <p className="mt-1 text-sm text-ink/80">{t('arrival.completed.text')}</p>
           </div>
-          <Link to="/account/onboarding" className="btn-white btn-sm">
+          <Link to="/account/onboarding" className="btn-primary">
             {t('arrival.completed.link')} <ArrowRight className="size-4" aria-hidden />
           </Link>
         </section>
       )}
-      {plan.status === 'CANCELLED' && <p className="rounded-xl border border-line bg-surface p-4 text-sm text-muted">{t('arrival.cancelledBanner')}</p>}
+      {plan.status === 'CANCELLED' && <p className="rounded-xl border border-line bg-sunken p-4 text-sm text-muted">{t('arrival.cancelledBanner')}</p>}
 
       <StaffAnswer plan={plan} />
 
@@ -384,9 +386,9 @@ const PlanView = ({ plan }: { plan: ArrivalPlan }) => {
                     onClick={() => void go(s)}
                     disabled={busy}
                     aria-current={s === step ? 'step' : undefined}
-                    className={clsx('flex w-full flex-col items-center gap-1 px-1 py-3 text-xs font-semibold transition-colors sm:flex-row sm:justify-center sm:gap-2 sm:text-sm', s === step ? 'text-brand-700' : i < idx ? 'text-ink' : 'text-muted hover:text-ink')}
+                    className={clsx('flex w-full flex-col items-center gap-1 px-1 py-3 text-xs font-semibold transition-colors sm:flex-row sm:justify-center sm:gap-2 sm:text-sm', s === step ? 'text-link' : i < idx ? 'text-ink' : 'text-muted hover:text-ink')}
                   >
-                    <span className={clsx('grid size-7 place-items-center rounded-full transition-colors duration-200', s === step ? 'bg-brand-600 text-white' : i < idx ? 'bg-brand-100 text-brand-700' : 'bg-surface')}>
+                    <span className={clsx('grid size-7 place-items-center rounded-full transition-colors duration-200', s === step ? 'bg-primary text-primary-contrast' : i < idx ? 'bg-sunken text-link' : 'bg-sunken')}>
                       <Icon className="size-4" aria-hidden />
                     </span>
                     {t(`arrival.steps.${s}`)}
@@ -399,7 +401,7 @@ const PlanView = ({ plan }: { plan: ArrivalPlan }) => {
           <div key={step} className="page-in p-5 sm:p-6">
             {step === 'flight' && (
               <div>
-                <h3 className="text-lg font-bold text-ink">{t('arrival.flight.title')}</h3>
+                <h3 className="text-lg font-semibold text-ink">{t('arrival.flight.title')}</h3>
                 <p className="mt-1 text-sm text-muted">{t('arrival.flight.hint')}</p>
                 <div className="mt-5 grid gap-4 sm:grid-cols-2">
                   <Field label={t('arrival.flight.flightNumber')}>
@@ -443,7 +445,7 @@ const PlanView = ({ plan }: { plan: ArrivalPlan }) => {
 
             {step === 'pickup' && (
               <div>
-                <h3 className="text-lg font-bold text-ink">{t('arrival.pickup.title')}</h3>
+                <h3 className="text-lg font-semibold text-ink">{t('arrival.pickup.title')}</h3>
                 <p className="mt-1 text-sm text-muted">{t('arrival.pickup.hint')}</p>
                 <div className="mt-5">
                   <Toggle checked={form.pickupRequested} onChange={(v) => set('pickupRequested', v)} label={t('arrival.pickup.request')} hint={t('arrival.pickup.requestHint')} />
@@ -459,7 +461,7 @@ const PlanView = ({ plan }: { plan: ArrivalPlan }) => {
 
             {step === 'housing' && (
               <div>
-                <h3 className="text-lg font-bold text-ink">{t('arrival.housingStep.title')}</h3>
+                <h3 className="text-lg font-semibold text-ink">{t('arrival.housingStep.title')}</h3>
                 <p className="mt-1 text-sm text-muted">{t('arrival.housingStep.hint')}</p>
                 <div className="mt-5">
                   <Toggle checked={form.housingRequested} disabled={housingLocked} onChange={(v) => set('housingRequested', v)} label={t('arrival.housingStep.request')} />
@@ -486,7 +488,7 @@ const PlanView = ({ plan }: { plan: ArrivalPlan }) => {
                         <textarea className="input min-h-20" maxLength={2000} placeholder={t('arrival.housingStep.notePh')} value={form.housingNote} onChange={(e) => set('housingNote', e.target.value)} />
                       </Field>
                     </div>
-                    <Link to="/cities" target="_blank" className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-brand-700 hover:underline">
+                    <Link to="/cities" target="_blank" className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-link hover:underline">
                       <Info className="size-4" aria-hidden /> {t('arrival.housingStep.costs')}
                     </Link>
                   </div>
@@ -496,7 +498,7 @@ const PlanView = ({ plan }: { plan: ArrivalPlan }) => {
 
             {step === 'summary' && (
               <div>
-                <h3 className="text-lg font-bold text-ink">{t('arrival.summary.title')}</h3>
+                <h3 className="text-lg font-semibold text-ink">{t('arrival.summary.title')}</h3>
                 <p className="mt-1 text-sm text-muted">{t('arrival.summary.hint')}</p>
                 <div className="mt-5">
                   <PlanSummary form={form} />
@@ -555,7 +557,7 @@ const PlanView = ({ plan }: { plan: ArrivalPlan }) => {
           <section className="rounded-2xl border border-line bg-card p-5">
             <PlanSummary form={form} />
             {form.clientNote && (
-              <p className="mt-4 rounded-xl bg-surface p-3 text-sm text-ink/85">
+              <p className="mt-4 rounded-xl bg-sunken p-3 text-sm text-ink/85">
                 <span className="font-semibold">{t('arrival.summary.clientNote')}:</span> {form.clientNote}
               </p>
             )}
@@ -599,24 +601,21 @@ export default function AccountArrival() {
   return (
     <div className="space-y-5">
       <div>
-        <h2 className="text-xl font-extrabold text-ink sm:text-2xl">{t('arrival.title')}</h2>
+        <h2 className="type-page-title">{t('arrival.title')}</h2>
         <p className="mt-1 max-w-2xl text-sm text-muted">{t('arrival.subtitle')}</p>
       </div>
 
       {list.isError ? (
         <div className="card p-6 text-center text-sm text-muted">
           {t('common.error')}{' '}
-          <button type="button" className="font-semibold text-brand-700 hover:underline" onClick={() => void list.refetch()}>
+          <button type="button" className="font-semibold text-link hover:underline" onClick={() => void list.refetch()}>
             ↻
           </button>
         </div>
       ) : !plan ? (
         <div className="card flex flex-col items-center px-6 py-12 text-center">
-          {/* TODO(ui): large portal empty state (size-14 icon, display title) -> <EmptyState size="lg" tone="brand"> (portal rework) */}
-          <span className="grid size-14 place-items-center rounded-2xl bg-brand-100 text-brand-600">
-            <PlaneLanding className="size-7" aria-hidden />
-          </span>
-          <p className="mt-4 text-lg font-bold text-ink">{t('arrival.emptyTitle')}</p>
+          <Germany className="w-40" />
+          <p className="type-card-title mt-4 text-lg">{t('arrival.emptyTitle')}</p>
           <p className="mt-1 max-w-md text-sm text-muted">{t('arrival.emptyText')}</p>
         </div>
       ) : (

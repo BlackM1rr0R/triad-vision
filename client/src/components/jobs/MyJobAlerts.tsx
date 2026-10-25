@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { BellRing, Plus, Trash2 } from 'lucide-react';
 import clsx from 'clsx';
+import { buttonClass } from '@/components/ui/Button';
 import { toast } from 'sonner';
 import { api, errorCode } from '@/lib/api';
 import { optimistic } from '@/lib/optimistic';
@@ -70,24 +71,24 @@ export const MyJobAlerts = ({ className }: { className?: string }) => {
     <section className={clsx('card card-pad', className)} aria-labelledby="my-job-alerts-title">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="flex items-start gap-3">
-          <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-brand-50 text-brand-600" aria-hidden>
+          <span className="grid size-11 shrink-0 place-items-center rounded-xl chip-soft" aria-hidden>
             <BellRing className="size-5" />
           </span>
           <div>
-            <h2 id="my-job-alerts-title" className="font-display text-lg font-bold text-navy-900">
+            <h2 id="my-job-alerts-title" className="font-display text-lg font-semibold text-ink">
               {t('discover.alerts.mine.title')}
             </h2>
             <p className="mt-0.5 text-sm text-muted">{t('discover.alerts.mine.text')}</p>
           </div>
         </div>
         {!adding && (
-          <button type="button" className="btn-outline btn-sm" onClick={() => setAdding(true)}>
+          <button type="button" className={buttonClass({ variant: 'outline', size: 'sm' })} onClick={() => setAdding(true)}>
             <Plus className="size-4" aria-hidden /> {t('discover.alerts.mine.add')}
           </button>
         )}
       </div>
 
-      {data && !data.emailNotifications && <p className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">{t('discover.alerts.mine.notificationsOff')}</p>}
+      {data && !data.emailNotifications && <p className="mt-4 rounded-xl border border-warning-border bg-warning-bg px-4 py-3 text-sm text-warning-fg">{t('discover.alerts.mine.notificationsOff')}</p>}
 
       {data && data.items.length === 0 && !adding && <p className="mt-4 text-sm text-muted">{t('discover.alerts.mine.empty')}</p>}
 
@@ -96,12 +97,12 @@ export const MyJobAlerts = ({ className }: { className?: string }) => {
           {data.items.map((a) => (
             <li key={a.id} className="flex flex-wrap items-center justify-between gap-3 p-3.5">
               <div className="min-w-0">
-                <p className="text-sm font-semibold text-navy-900">{a.professions.map(label).join(', ')}</p>
+                <p className="text-sm font-semibold text-ink">{a.professions.map(label).join(', ')}</p>
                 <p className="mt-0.5 text-xs text-muted">
                   {[a.germanLevel, ...a.kinds.map((k) => t(`discover.alerts.kind.${k}`)), t('discover.alerts.mine.sent', { count: a.sentCount })].filter(Boolean).join(' · ')}
                 </p>
               </div>
-              <button type="button" className="btn-ghost btn-sm text-red-700" disabled={remove.isPending} onClick={() => remove.mutate(a.id)}>
+              <button type="button" className={buttonClass({ variant: 'ghost', size: 'sm', className: 'text-danger-fg' })} disabled={remove.isPending} onClick={() => remove.mutate(a.id)}>
                 <Trash2 className="size-4" aria-hidden /> {t('discover.alerts.mine.remove')}
               </button>
             </li>
@@ -136,7 +137,7 @@ export const MyJobAlerts = ({ className }: { className?: string }) => {
             <button type="submit" className="btn-primary btn-sm" disabled={create.isPending}>
               {t('discover.alerts.submit')}
             </button>
-            <button type="button" className="btn-ghost btn-sm" onClick={() => setAdding(false)}>
+            <button type="button" className={buttonClass({ variant: 'ghost', size: 'sm' })} onClick={() => setAdding(false)}>
               {t('discover.compare.wizard.back')}
             </button>
           </div>

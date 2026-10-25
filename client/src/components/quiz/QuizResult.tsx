@@ -21,7 +21,7 @@ const fadeUp = (delay: number) => ({
 
 const TONE_STYLE: Record<ChecklistItem['tone'], { icon: typeof CheckCircle2; box: string; badge: string }> = {
   todo: { icon: CircleAlert, box: TONE_TEXT.warning, badge: TONE_CLASS.warning },
-  info: { icon: ClipboardList, box: 'text-brand-600', badge: TONE_CLASS.brand },
+  info: { icon: ClipboardList, box: TONE_TEXT.info, badge: TONE_CLASS.info },
   ok: { icon: CheckCircle2, box: TONE_TEXT.success, badge: TONE_CLASS.success },
 };
 
@@ -52,13 +52,13 @@ export const QuizResult = ({
             <Sparkles className="size-4" />
             {t('quiz.result.eyebrow')}
           </span>
-          <h2 className="mt-2 font-display text-2xl font-extrabold text-navy-900 sm:text-3xl">{t('quiz.result.title')}</h2>
+          <h2 className="mt-2 font-display text-2xl font-semibold text-ink sm:text-3xl">{t('quiz.result.title')}</h2>
           <p className="mt-1 text-muted">{t('quiz.result.subtitle')}</p>
         </motion.div>
 
         {top && (
-          <motion.article {...fadeUp(0.1)} className="overflow-hidden rounded-2xl border border-line bg-white shadow-[0_20px_60px_-30px_rgba(11,31,68,0.45)]">
-            <div className="relative h-44 overflow-hidden sm:h-56">
+          <motion.article {...fadeUp(0.1)} className="overflow-hidden rounded-3xl border border-line bg-card shadow-[var(--tv-shadow-raised)]">
+            <div className="relative h-40 overflow-hidden sm:h-52">
               <motion.img
                 src={sized(top.image, 800)}
                 alt=""
@@ -67,29 +67,28 @@ export const QuizResult = ({
                 animate={{ scale: 1 }}
                 transition={{ duration: 1.4, ease: EASE }}
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-navy-950/85 via-navy-950/30 to-transparent" />
-              <span className="absolute top-4 left-4 inline-flex items-center gap-1.5 rounded-full bg-de-gold px-3 py-1 text-xs font-bold text-navy-950">
+              <span className="absolute top-4 left-4 inline-flex items-center gap-1.5 rounded-full bg-highlight px-3 py-1 text-xs font-bold text-highlight-contrast">
                 <Sparkles className="size-3.5" />
                 {t('quiz.result.topMatch')}
               </span>
-              <span className="absolute top-4 right-4 rounded-md bg-white/95 px-2 py-1 text-xs font-bold text-brand-700">{top.visaLabel}</span>
-              <div className="absolute inset-x-4 bottom-4 flex items-end gap-3 sm:inset-x-6">
-                <span className="grid size-12 shrink-0 place-items-center rounded-xl bg-brand-600 text-white shadow-lg">
+              <span className="absolute top-4 right-4 rounded-md bg-card px-2 py-1 text-xs font-bold text-ink">{top.visaLabel}</span>
+            </div>
+            <div className="p-5 sm:p-6">
+              <div className="flex items-center gap-3">
+                <span className="grid size-12 shrink-0 place-items-center rounded-xl chip-soft">
                   <Icon name={top.icon} className="size-6" />
                 </span>
                 <div className="min-w-0">
-                  <h3 className="font-display text-xl leading-tight font-bold break-words text-white sm:text-2xl">{tr(top.title)}</h3>
-                  <p className="text-sm font-semibold text-white/80">{t('quiz.result.match', { score: result.top.score })}</p>
+                  <h3 className="font-display text-xl leading-tight font-semibold break-words text-ink sm:text-2xl">{tr(top.title)}</h3>
+                  <p className="text-sm font-semibold text-success-fg">{t('quiz.result.match', { score: result.top.score })}</p>
                 </div>
               </div>
-            </div>
-            <div className="p-5 sm:p-6">
-              <p className="leading-relaxed text-muted">{tr(top.summary)}</p>
-              <h4 className="mt-5 text-sm font-bold tracking-wide text-navy-900 uppercase">{t('quiz.result.why')}</h4>
+              <p className="mt-4 leading-relaxed text-muted">{tr(top.summary)}</p>
+              <h4 className="mt-5 text-sm font-bold tracking-wide text-ink uppercase">{t('quiz.result.why')}</h4>
               <ul className="mt-3 space-y-2">
                 {reasons.map((r) => (
                   <li key={r} className="flex gap-2.5 text-sm text-ink/90">
-                    <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-success" />
+                    <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-success-fg" />
                     <span>{t(`quiz.reasons.${r}`)}</span>
                   </li>
                 ))}
@@ -99,11 +98,11 @@ export const QuizResult = ({
                   <Send className="size-4" />
                   {t('quiz.result.apply')}
                 </Link>
-                <Link to={`/visas/${top.slug}`} className="btn-ghost justify-center">
+                <Link to={`/visas/${top.slug}`} className="btn-secondary justify-center">
                   <BookOpen className="size-4" />
                   {t('quiz.result.read')}
                 </Link>
-                <Link to="/contact" className="btn justify-center border border-line text-navy-900 hover:bg-surface">
+                <Link to="/contact" className="btn-quiet justify-center">
                   <MessageCircle className="size-4" />
                   {t('quiz.result.ask')}
                 </Link>
@@ -114,7 +113,7 @@ export const QuizResult = ({
 
         {result.alternatives.length > 0 && (
           <motion.div {...fadeUp(0.25)}>
-            <h3 className="mb-3 text-sm font-bold tracking-wide text-navy-900 uppercase">{t('quiz.result.alternatives')}</h3>
+            <h3 className="mb-3 text-sm font-bold tracking-wide text-ink uppercase">{t('quiz.result.alternatives')}</h3>
             <div className="grid gap-3 sm:grid-cols-2">
               {result.alternatives.map((m) => {
                 const v = bySlug(m.slug);
@@ -123,16 +122,16 @@ export const QuizResult = ({
                   <Link
                     key={m.slug}
                     to={`/visas/${v.slug}`}
-                    className="group flex min-w-0 items-center gap-3 rounded-2xl border border-line bg-white p-3 transition hover:border-brand-400 hover:shadow-[0_14px_40px_-22px_rgba(11,31,68,0.35)]"
+                    className="card card-interactive group flex min-w-0 items-center gap-3 p-3"
                   >
                     <img src={sized(v.image, 160)} alt="" loading="lazy" decoding="async" className="size-16 shrink-0 rounded-xl object-cover" />
                     <div className="min-w-0 flex-1">
-                      <p className="truncate font-semibold text-navy-900">{tr(v.title)}</p>
+                      <p className="truncate font-semibold text-ink">{tr(v.title)}</p>
                       <p className="text-xs text-muted">
-                        <span className="font-bold text-brand-700">{v.visaLabel}</span> · {t('quiz.result.match', { score: m.score })}
+                        <span className="font-bold text-ink">{v.visaLabel}</span> · {t('quiz.result.match', { score: m.score })}
                       </p>
                     </div>
-                    <ArrowRight className="size-4 shrink-0 text-muted transition group-hover:translate-x-1 group-hover:text-brand-600" />
+                    <ArrowRight className="size-4 shrink-0 text-muted transition-colors group-hover:text-ink" />
                   </Link>
                 );
               })}
@@ -143,25 +142,25 @@ export const QuizResult = ({
 
       {/* ── Right: readiness + checklist ── */}
       <div className="min-w-0 space-y-6">
-        <motion.div {...fadeUp(0.15)} className="rounded-2xl bg-navy-950 p-6 text-center text-white">
-          <p className="text-xs font-bold tracking-[0.18em] text-white/60 uppercase">{t('quiz.result.readiness')}</p>
-          <div className="mt-4 rounded-full bg-white p-2 [width:fit-content] [margin-inline:auto]">
+        <motion.div {...fadeUp(0.15)} className="rounded-3xl border border-line bg-sunken p-6 text-center">
+          <p className="type-overline text-muted">{t('quiz.result.readiness')}</p>
+          <div className="mt-4 rounded-full bg-card p-2 shadow-[var(--tv-shadow-card)] [width:fit-content] [margin-inline:auto]">
             <ReadinessGauge value={result.readiness} size={152} label={t('quiz.result.readiness')} />
           </div>
           <p
             className={clsx(
-              'mt-4 font-display text-lg font-bold',
-              level === 'low' ? 'text-de-gold' : level === 'mid' ? 'text-brand-400' : 'text-[#4ade80]',
+              'mt-4 font-display text-lg font-semibold',
+              level === 'low' ? TONE_TEXT.warning : level === 'mid' ? TONE_TEXT.info : TONE_TEXT.success,
             )}
           >
             {t(`quiz.result.readinessLevel.${level}`)}
           </p>
-          <p className="mt-1 text-sm leading-relaxed text-white/70">{t(`quiz.result.readinessText.${level}`)}</p>
+          <p className="mt-1 text-sm leading-relaxed text-muted">{t(`quiz.result.readinessText.${level}`)}</p>
         </motion.div>
 
-        <motion.div {...fadeUp(0.3)} className="rounded-2xl border border-line bg-white p-5 sm:p-6">
-          <h3 className="flex items-center gap-2 font-display text-lg font-bold text-navy-900">
-            <ClipboardList className="size-5 text-brand-600" />
+        <motion.div {...fadeUp(0.3)} className="card p-5 sm:p-6">
+          <h3 className="flex items-center gap-2 font-display text-lg font-semibold text-ink">
+            <ClipboardList className="size-5 text-muted" />
             {t('quiz.result.checklist')}
           </h3>
           <ul className="mt-4 space-y-3">
@@ -188,7 +187,7 @@ export const QuizResult = ({
         </motion.div>
 
         <motion.div {...fadeUp(0.4)} className="space-y-4">
-          <button type="button" onClick={onRestart} className="btn w-full justify-center border border-line text-navy-900 hover:bg-surface">
+          <button type="button" onClick={onRestart} className="btn-secondary w-full justify-center">
             <RotateCcw className="size-4" />
             {t('quiz.startAgain')}
           </button>

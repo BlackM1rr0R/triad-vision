@@ -60,7 +60,7 @@ const Preview = ({ cv }: { cv: CvData }) => {
           <p className="text-xs font-semibold text-muted uppercase">{t('aiw.cv.experience')}</p>
           <ul className="mt-1 space-y-2">
             {cv.experience.map((e, i) => (
-              <li key={i} className="rounded-lg border border-line bg-surface/50 p-3">
+              <li key={i} className="rounded-lg border border-line bg-sunken p-3">
                 <p className="font-semibold text-ink">{e.title}</p>
                 <p className="text-xs text-muted">
                   {[e.employer, e.city, e.country].filter(Boolean).join(', ')} · {range(e.from, e.to)}
@@ -109,7 +109,7 @@ const Preview = ({ cv }: { cv: CvData }) => {
           <p className="text-xs font-semibold text-muted uppercase">{t('aiw.cv.skills')}</p>
           <div className="mt-1 flex flex-wrap gap-1.5">
             {cv.skills.map((s) => (
-              <span key={s} className="badge bg-brand-50 text-brand-700">
+              <span key={s} className="badge bg-sunken text-link">
                 {s}
               </span>
             ))}
@@ -175,7 +175,7 @@ export const AiCvWizard = ({ current, onApply, className }: { current: CvData; o
         closeLabel={t('aiw.cv.discard')}
         title={
           <span className="flex items-center gap-2">
-            <Sparkles className="size-5 text-brand-600" aria-hidden /> {draft ? t('aiw.cv.previewTitle') : t('aiw.cv.title')}
+            <Sparkles className="size-5 text-primary" aria-hidden /> {draft ? t('aiw.cv.previewTitle') : t('aiw.cv.title')}
           </span>
         }
         description={draft ? t('aiw.cv.previewHint') : t('aiw.cv.intro')}
@@ -183,11 +183,11 @@ export const AiCvWizard = ({ current, onApply, className }: { current: CvData; o
           <div className="flex w-full flex-col-reverse gap-2 sm:flex-row sm:justify-between">
                 {draft ? (
                   <>
-                    <button type="button" className="btn min-h-11 border border-line text-ink hover:bg-surface" onClick={() => setDraft(null)}>
+                    <button type="button" className="btn min-h-11 border border-line text-ink hover:bg-sunken" onClick={() => setDraft(null)}>
                       <ArrowLeft className="size-4" aria-hidden /> {t('aiw.cv.back')}
                     </button>
                     <div className="flex flex-col gap-2 sm:flex-row">
-                      <button type="button" className="btn min-h-11 border border-line text-ink hover:bg-surface" onClick={() => apply('merge')}>
+                      <button type="button" className="btn min-h-11 border border-line text-ink hover:bg-sunken" onClick={() => apply('merge')}>
                         {t('aiw.cv.merge')}
                       </button>
                       <button type="button" className="btn-primary min-h-11" onClick={() => apply('replace')}>
@@ -197,7 +197,7 @@ export const AiCvWizard = ({ current, onApply, className }: { current: CvData; o
                   </>
                 ) : (
                   <>
-                    <button type="button" className="btn min-h-11 border border-line text-ink hover:bg-surface disabled:opacity-50" disabled={step === 0 || busy} onClick={() => setStep((s) => s - 1)}>
+                    <button type="button" className="btn min-h-11 border border-line text-ink hover:bg-sunken disabled:opacity-50" disabled={step === 0 || busy} onClick={() => setStep((s) => s - 1)}>
                       <ArrowLeft className="size-4" aria-hidden /> {t('aiw.cv.back')}
                     </button>
                     {last ? (
@@ -218,7 +218,7 @@ export const AiCvWizard = ({ current, onApply, className }: { current: CvData; o
                   <Preview cv={draft} />
                 ) : (
                   <div className="space-y-4">
-                    <p className="text-xs font-semibold text-brand-600">{t('aiw.cv.step', { n: step + 1, total: STEPS.length })}</p>
+                    <p className="text-xs font-semibold text-primary">{t('aiw.cv.step', { n: step + 1, total: STEPS.length })}</p>
                     {STEPS[step].map((name) => (
                       <Field key={name} name={name} value={answers[name]} onChange={(v) => setAnswers((a) => ({ ...a, [name]: v }))} />
                     ))}

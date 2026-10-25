@@ -127,12 +127,12 @@ export const AiLetterWizard = () => {
 
   return (
     <div className="space-y-5">
-      <Link to="/account/letters" className="inline-flex items-center gap-1.5 text-sm font-semibold text-brand-600 hover:text-brand-700">
+      <Link to="/account/letters" className="inline-flex items-center gap-1.5 text-sm font-semibold text-link hover:text-link">
         <ArrowLeft className="size-4" aria-hidden /> {t('aiw.letter.back')}
       </Link>
       <div>
-        <h1 className="flex items-center gap-2 text-xl font-extrabold text-ink sm:text-2xl">
-          <Sparkles className="size-5 text-brand-600" aria-hidden /> {t('aiw.letter.title')}
+        <h1 className="flex items-center gap-2 text-xl font-semibold text-ink sm:text-2xl">
+          <Sparkles className="size-5 text-primary" aria-hidden /> {t('aiw.letter.title')}
         </h1>
         <p className="mt-1 max-w-2xl text-sm text-muted">{t('aiw.letter.intro')}</p>
       </div>
@@ -146,7 +146,7 @@ export const AiLetterWizard = () => {
                 type="button"
                 role="tab"
                 aria-selected={mode === m}
-                className={clsx('flex min-h-11 items-center justify-center gap-2 rounded-xl border px-3 text-sm font-semibold', mode === m ? 'border-brand-500 bg-brand-50 text-brand-700' : 'border-line text-ink hover:bg-surface')}
+                className={clsx('flex min-h-11 items-center justify-center gap-2 rounded-xl border px-3 text-sm font-semibold', mode === m ? 'border-primary bg-sunken text-link' : 'border-line text-ink hover:bg-sunken')}
                 onClick={() => setMode(m)}
               >
                 {m === 'vacancy' ? <BriefcaseBusiness className="size-4" aria-hidden /> : <Building2 className="size-4" aria-hidden />}
@@ -178,7 +178,7 @@ export const AiLetterWizard = () => {
                               <button
                                 type="button"
                                 aria-pressed={picked?.vacancyId === v.vacancyId}
-                                className={clsx('w-full rounded-xl border px-3 py-2 text-left text-sm', picked?.vacancyId === v.vacancyId ? 'border-brand-500 bg-brand-50' : 'border-line hover:bg-surface')}
+                                className={clsx('w-full rounded-xl border px-3 py-2 text-left text-sm', picked?.vacancyId === v.vacancyId ? 'border-primary bg-sunken' : 'border-line hover:bg-sunken')}
                                 onClick={() => setPicked(v)}
                               >
                                 <span className="block font-semibold text-ink">{v.title}</span>
@@ -256,7 +256,7 @@ export const AiLetterWizard = () => {
                     <label htmlFor={ids.body} className="label">
                       {t('aiw.letter.body')}
                     </label>
-                    <span className={clsx('text-xs tabular-nums', words < 200 || words > 380 ? 'text-amber-700' : 'text-muted')}>{t('aiw.letter.words', { count: words })}</span>
+                    <span className={clsx('text-xs tabular-nums', words < 200 || words > 380 ? 'text-warning-fg' : 'text-muted')}>{t('aiw.letter.words', { count: words })}</span>
                   </div>
                   <textarea id={ids.body} lang="de" className="input min-h-[22rem] font-serif text-[0.95rem] leading-relaxed" maxLength={6000} value={draft.body} onChange={(e) => setDraft((d) => (d ? { ...d, body: e.target.value } : d))} />
                 </div>
@@ -276,20 +276,20 @@ export const AiLetterWizard = () => {
               </div>
               {draft.explanation && (
                 <div className="card p-4 sm:p-5">
-                  <h2 className="flex items-center gap-2 text-sm font-bold text-ink">
-                    <Languages className="size-4 text-brand-600" aria-hidden /> {t('aiw.letter.explanation')}
+                  <h2 className="flex items-center gap-2 text-sm font-semibold text-ink">
+                    <Languages className="size-4 text-primary" aria-hidden /> {t('aiw.letter.explanation')}
                   </h2>
                   <p className="mt-2 text-sm leading-relaxed whitespace-pre-line text-ink/90">{draft.explanation}</p>
                 </div>
               )}
               <p className="flex items-start gap-2 text-xs text-muted">
-                <Lightbulb className="mt-0.5 size-4 shrink-0 text-amber-500" aria-hidden /> {t('aiw.letter.tip')}
+                <Lightbulb className="mt-0.5 size-4 shrink-0 text-highlight" aria-hidden /> {t('aiw.letter.tip')}
               </p>
             </>
           ) : (
             <div className="card grid min-h-60 place-items-center p-6 text-center text-sm text-muted">
               <div>
-                <Sparkles className="mx-auto size-8 text-brand-400" aria-hidden />
+                <Sparkles className="mx-auto size-8 text-primary" aria-hidden />
                 <p className="mt-3 max-w-sm">{t('aiw.letter.intro')}</p>
               </div>
             </div>

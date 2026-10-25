@@ -17,7 +17,7 @@ export const SearchHits = ({ items, onOpenLocation }: { items: SearchItem[]; onO
   return (
     <section className="shrink-0 border-b border-line bg-surface/50" aria-label={t('driveIntel.search.contentHits', { count: hits.length })}>
       <button type="button" onClick={() => setOpen((o) => !o)} className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs font-semibold text-ink sm:px-4" aria-expanded={open}>
-        <TextSearch className="size-4 text-brand-600" aria-hidden />
+        <TextSearch className="size-4 text-link" aria-hidden />
         {t('driveIntel.search.contentHits', { count: hits.length })}
         <span className="ml-auto text-muted">{open ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}</span>
       </button>
@@ -26,14 +26,14 @@ export const SearchHits = ({ items, onOpenLocation }: { items: SearchItem[]; onO
           {hits.map((i) => {
             const s = i.contentMatch!.snippet;
             return (
-              <li key={i.id} className="flex items-start gap-3 rounded-lg bg-card px-3 py-2 shadow-sm ring-1 ring-line/60">
+              <li key={i.id} className="flex items-start gap-3 rounded-lg bg-card px-3 py-2 shadow-[var(--tv-shadow-card)] ring-1 ring-line/60">
                 <ItemIcon item={i} className="mt-0.5 size-6 shrink-0" />
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
-                    <a href={contentUrl(i.id)} target="_blank" rel="noopener noreferrer" className="truncate text-sm font-semibold text-ink hover:text-brand-600 hover:underline">
+                    <a href={contentUrl(i.id)} target="_blank" rel="noopener noreferrer" className="truncate text-sm font-semibold text-ink hover:text-link hover:underline">
                       {i.name}
                     </a>
-                    <span className="rounded-full bg-brand-50 px-2 py-0.5 text-[10px] font-bold tracking-wide text-brand-700 uppercase dark:bg-brand-500/15 dark:text-brand-300">
+                    <span className="rounded-full bg-primary/[0.06] px-2 py-0.5 text-[10px] font-bold tracking-wide text-link uppercase dark:bg-brand-500/15 dark:text-brand-300">
                       {t('driveIntel.search.badge')}
                     </span>
                   </div>
@@ -41,7 +41,7 @@ export const SearchHits = ({ items, onOpenLocation }: { items: SearchItem[]; onO
                     {s ? (
                       <>
                         {s.before}
-                        <mark className="rounded bg-amber-200 px-0.5 font-semibold text-ink dark:bg-amber-500/30">{s.match}</mark>
+                        <mark className="rounded bg-warning-bg px-0.5 font-semibold text-ink dark:bg-amber-500/30">{s.match}</mark>
                         {s.after}
                       </>
                     ) : (
@@ -53,7 +53,7 @@ export const SearchHits = ({ items, onOpenLocation }: { items: SearchItem[]; onO
                   <button
                     type="button"
                     onClick={() => onOpenLocation(i.location!.id)}
-                    className="grid size-8 shrink-0 place-items-center rounded-lg text-muted hover:bg-surface hover:text-ink"
+                    className="grid size-8 shrink-0 place-items-center rounded-lg text-muted hover:bg-sunken hover:text-ink"
                     title={t('driveIntel.search.openLocation')}
                     aria-label={t('driveIntel.search.openLocation')}
                   >

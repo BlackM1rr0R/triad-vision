@@ -12,6 +12,7 @@ import { api } from '@/lib/api';
 import { useL10n } from '@/lib/l10n';
 import type { L10n } from '@/lib/types';
 import { usePageTitle } from '@/lib/usePageTitle';
+import { Handshake } from '@/components/illustrations';
 
 registerCopy(pagesGrowthPlus);
 
@@ -61,18 +62,24 @@ export default function AccountReferral() {
   return (
     <div className="space-y-6">
       <section className="card overflow-hidden">
-        <div className="bg-gradient-to-br from-brand-600 to-brand-700 p-5 text-white sm:p-7">
-          <p className="flex items-center gap-2 font-display text-xl font-bold">
-            <Gift className="size-6" aria-hidden /> {t('gp.ref.title')}
+        <div className="flex items-center gap-6 border-b border-line bg-highlight-bg p-6 text-ink sm:p-8">
+          <div className="min-w-0 flex-1">
+          <p className="flex items-center gap-3 font-display text-xl font-semibold">
+            <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-card">
+              <Gift className="size-5" aria-hidden />
+            </span>
+            {t('gp.ref.title')}
           </p>
-          <p className="mt-2 max-w-2xl text-sm text-white/85">{t('gp.ref.intro')}</p>
+          <p className="mt-3 max-w-[65ch] text-ink/80">{t('gp.ref.intro')}</p>
           {data.enabled && (
-            <p className="mt-3 inline-block rounded-lg bg-white/15 px-3 py-1.5 text-sm font-semibold">
+            <p className="mt-4 inline-block rounded-full border border-warning-border bg-card px-3.5 py-1.5 text-sm font-semibold">
               {t(`gp.ref.rule.${data.rule.trigger}`, { amount: data.rule.amount, currency: data.rule.currency, kind: t(`gp.ref.kind.${data.rule.kind}`) })}
             </p>
           )}
+          </div>
+          <Handshake className="hidden w-40 shrink-0 sm:block" />
         </div>
-        <div className="p-5 sm:p-7">
+        <div className="p-6 sm:p-8">
           {!data.enabled || !data.link || !data.code ? (
             <p className="text-sm text-muted">{t('gp.ref.disabled')}</p>
           ) : (
@@ -82,24 +89,24 @@ export default function AccountReferral() {
               </label>
               <div className="flex flex-col gap-2 sm:flex-row">
                 <input id="ref-link" readOnly value={data.link} onFocus={(e) => e.currentTarget.select()} className="input min-w-0 flex-1 font-mono text-xs sm:text-sm" />
-                <button type="button" className="btn-primary btn-sm shrink-0" onClick={() => copy('link')}>
+                <button type="button" className="btn-primary shrink-0" onClick={() => copy('link')}>
                   {copied === 'link' ? <Check className="size-4" aria-hidden /> : <Copy className="size-4" aria-hidden />} {t('gp.ref.copy')}
                 </button>
               </div>
               <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
                 <span className="text-muted">{t('gp.ref.code')}:</span>
-                <code className="rounded-md border border-line bg-surface px-2 py-1 font-mono font-bold tracking-wider text-ink">{data.code}</code>
-                <button type="button" className="inline-flex min-h-9 items-center gap-1 rounded-lg px-2 text-xs font-semibold text-brand-600 hover:bg-surface" onClick={() => copy('code')}>
+                <code className="rounded-md border border-line bg-sunken px-2 py-1 font-mono font-bold tracking-wider text-ink">{data.code}</code>
+                <button type="button" className="inline-flex min-h-11 items-center gap-1 rounded-lg px-2.5 text-sm font-semibold text-link hover:bg-sunken" onClick={() => copy('code')}>
                   {copied === 'code' ? <Check className="size-3.5" aria-hidden /> : <Copy className="size-3.5" aria-hidden />} {t('gp.ref.copyCode')}
                 </button>
-                <a href={`https://wa.me/?text=${encodeURIComponent(share)}`} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-9 items-center gap-1.5 rounded-lg bg-emerald-600 px-3 text-xs font-semibold text-white hover:bg-emerald-700">
+                <a href={`https://wa.me/?text=${encodeURIComponent(share)}`} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center gap-1.5 rounded-lg bg-[#1f8a4c] px-3.5 text-sm font-semibold text-white hover:bg-[#1a7541]">
                   <MessageCircle className="size-3.5" aria-hidden /> {t('gp.ref.whatsapp')}
                 </a>
                 <a
                   href={`https://t.me/share/url?url=${encodeURIComponent(data.link)}&text=${encodeURIComponent(t('gp.ref.shareText', { link: '' }).trim())}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex min-h-9 items-center gap-1.5 rounded-lg bg-sky-600 px-3 text-xs font-semibold text-white hover:bg-sky-700"
+                  className="inline-flex min-h-11 items-center gap-1.5 rounded-lg bg-[#1f7fb8] px-3.5 text-sm font-semibold text-white hover:bg-[#1a6c9d]"
                 >
                   <Send className="size-3.5" aria-hidden /> {t('gp.ref.telegram')}
                 </a>
@@ -113,7 +120,7 @@ export default function AccountReferral() {
         {(['pending', 'earned', 'settled'] as const).map((k) => (
           <div key={k} className="card card-pad">
             <p className="text-xs font-semibold tracking-wide text-muted uppercase">{t(`gp.ref.totals.${k}`)}</p>
-            <p className="mt-1 font-display text-2xl font-extrabold text-ink tabular-nums">
+            <p className="mt-1 font-display text-2xl font-semibold text-ink tabular-nums">
               {data.totals[k]} <span className="text-base font-bold text-muted">{data.totals.currency}</span>
             </p>
           </div>
@@ -121,7 +128,7 @@ export default function AccountReferral() {
       </section>
 
       <section className="card card-pad">
-        <h2 className="font-display text-lg font-bold text-ink">{t('gp.ref.list')}</h2>
+        <h2 className="font-display text-lg font-semibold text-ink">{t('gp.ref.list')}</h2>
         {data.referrals.length === 0 ? (
           <p className="mt-3 text-sm text-muted">{t('gp.ref.empty')}</p>
         ) : (
@@ -137,7 +144,7 @@ export default function AccountReferral() {
                 ) : (
                   <ol className="flex items-center gap-1.5" aria-label={t(`gp.ref.stages.${r.stage}`)}>
                     {steps.map((s, i) => (
-                      <li key={s} className={clsx('rounded-full px-2.5 py-1 text-[11px] font-semibold', i <= STEP_OF[r.stage] ? 'bg-brand-600 text-white' : 'bg-surface text-muted')}>
+                      <li key={s} className={clsx('rounded-full px-2.5 py-1 text-[11px] font-semibold', i <= STEP_OF[r.stage] ? 'bg-primary text-primary-contrast' : 'bg-sunken text-muted')}>
                         {s}
                       </li>
                     ))}

@@ -75,7 +75,7 @@ const azSections: PolicySection[] = [
     title: 'Xarici məzmun',
     body: [
       [
-        'Şriftlər: Inter və Montserrat şriftləri birbaşa bizim serverimizdən yüklənir. Üçüncü tərəflərə (məsələn Google) heç bir sorğu göndərilmir.',
+        'Şriftlər: Inter, Fraunces və JetBrains Mono şriftləri birbaşa bizim serverimizdən yüklənir. Üçüncü tərəflərə (məsələn Google) heç bir sorğu göndərilmir.',
         'Şəkillər: bəzi fotolar Unsplash serverlərindən yüklənir; bu zaman IP ünvanınız onların serverlərinə ötürülür.',
         'Xəritə: əlaqə səhifəsində OpenStreetMap xəritəsi (OpenStreetMap Foundation, Böyük Britaniya) yerləşdirilib; yüklənərkən IP ünvanınız və texniki məlumatlar OpenStreetMap Foundation-a ötürülür.',
         'WhatsApp, telefon və sosial şəbəkələr yalnız keçid kimi verilib. Məlumat yalnız siz keçidə kliklədikdə ötürülür; bu halda müvafiq təminatçının məxfilik qaydaları tətbiq olunur.',
@@ -277,7 +277,7 @@ const deSections: PolicySection[] = [
     title: 'Externe Inhalte',
     body: [
       [
-        'Schriftarten: Die Schriftarten Inter und Montserrat werden lokal von unserem eigenen Server geladen. Dabei findet keine Verbindung zu Dritten (z. B. Google) statt.',
+        'Schriftarten: Die Schriftarten Inter, Fraunces und JetBrains Mono werden lokal von unserem eigenen Server geladen. Dabei findet keine Verbindung zu Dritten (z. B. Google) statt.',
         'Bilder: Einige Fotos werden von Servern des Dienstes Unsplash geladen; dabei wird Ihre IP-Adresse an dessen Server übermittelt.',
         'Karte: Auf der Kontaktseite ist eine Karte von OpenStreetMap (OpenStreetMap Foundation, Vereinigtes Königreich) eingebunden; beim Laden werden Ihre IP-Adresse und technische Daten an die OpenStreetMap Foundation übermittelt.',
         'WhatsApp, Telefon und soziale Netzwerke sind nur verlinkt. Daten werden erst übermittelt, wenn Sie einen Link anklicken; dann gelten die Datenschutzbestimmungen des jeweiligen Anbieters.',
@@ -479,7 +479,7 @@ const enSections: PolicySection[] = [
     title: 'External content',
     body: [
       [
-        'Fonts: the Inter and Montserrat fonts are served directly from our own server. No requests are made to third parties (such as Google).',
+        'Fonts: the Inter, Fraunces and JetBrains Mono fonts are served directly from our own server. No requests are made to third parties (such as Google).',
         'Images: some photos are loaded from Unsplash servers; your IP address is transmitted to those servers.',
         'Map: the contact page embeds an OpenStreetMap map (OpenStreetMap Foundation, United Kingdom); when it loads, your IP address and technical data are transmitted to the OpenStreetMap Foundation.',
         'WhatsApp, phone and social networks are only linked. Data is only transmitted when you click a link; the privacy policy of the respective provider then applies.',
@@ -681,7 +681,7 @@ const ruSections: PolicySection[] = [
     title: 'Внешний контент',
     body: [
       [
-        'Шрифты: шрифты Inter и Montserrat загружаются непосредственно с нашего сервера. Запросы к третьим лицам (например, Google) не выполняются.',
+        'Шрифты: шрифты Inter, Fraunces и JetBrains Mono загружаются непосредственно с нашего сервера. Запросы к третьим лицам (например, Google) не выполняются.',
         'Изображения: некоторые фотографии загружаются с серверов сервиса Unsplash; при этом ваш IP-адрес передаётся на эти серверы.',
         'Карта: на странице контактов встроена карта OpenStreetMap (OpenStreetMap Foundation, Великобритания); при её загрузке ваш IP-адрес и технические данные передаются OpenStreetMap Foundation.',
         'WhatsApp, телефон и социальные сети представлены только ссылками. Данные передаются лишь после нажатия на ссылку; тогда действуют правила конфиденциальности соответствующего сервиса.',

@@ -19,8 +19,8 @@ export const LegalVersions = ({ items }: { items: LegalAcceptance[] }) => {
   const { t } = useTranslation();
   const { date } = useL10n();
   return (
-    <section aria-labelledby="privacy-legal-versions" className="mt-4 rounded-xl border border-line bg-surface p-4">
-      <h3 id="privacy-legal-versions" className="text-sm font-semibold text-navy-900">
+    <section aria-labelledby="privacy-legal-versions" className="mt-4 rounded-xl border border-line bg-sunken p-4">
+      <h3 id="privacy-legal-versions" className="text-sm font-semibold text-ink">
         {t('legalDocs.center.title')}
       </h3>
       <ul className="mt-2 divide-y divide-line">
@@ -40,7 +40,7 @@ export const LegalVersions = ({ items }: { items: LegalAcceptance[] }) => {
                       {l.accepted.legalDocumentId && (
                         <>
                           {' · '}
-                          <Link to={versionPath(l.kind, l.accepted.version)} target="_blank" rel="noopener" className="text-brand-700 hover:underline">
+                          <Link to={versionPath(l.kind, l.accepted.version)} target="_blank" rel="noopener" className="text-link hover:underline">
                             {t('legalDocs.center.open')}
                           </Link>
                         </>
@@ -53,7 +53,7 @@ export const LegalVersions = ({ items }: { items: LegalAcceptance[] }) => {
                   {t('legalDocs.center.current', { version: l.current.version })}
                 </span>
               </span>
-              <Link to={LEGAL_PATH[l.kind]} target="_blank" rel="noopener" className="inline-flex min-h-9 items-center gap-1 text-xs font-semibold text-brand-700 hover:underline">
+              <Link to={LEGAL_PATH[l.kind]} target="_blank" rel="noopener" className="inline-flex min-h-9 items-center gap-1 text-xs font-semibold text-link hover:underline">
                 {t('legalDocs.center.open')}
                 <ExternalLink className="size-3" aria-hidden />
               </Link>

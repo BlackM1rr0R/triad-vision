@@ -63,8 +63,8 @@ const ConfirmationSection = ({ caseId }: { caseId: string }) => {
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h3 className="flex items-center gap-2 text-sm font-semibold text-navy-900">
-          <ShieldCheck className="size-4 text-brand-600" aria-hidden /> {t('clientData.admin.confirm.title')}
+        <h3 className="flex items-center gap-2 text-sm font-semibold text-ink">
+          <ShieldCheck className="size-4 text-link" aria-hidden /> {t('clientData.admin.confirm.title')}
           <span className={clsx('badge', CONFIRM_TONE[state.state])}>{t(`clientData.confirmStatus.${state.state}`)}</span>
         </h3>
         <div className="flex flex-wrap gap-2">
@@ -100,10 +100,10 @@ const ConfirmationSection = ({ caseId }: { caseId: string }) => {
           {conf.submittedAt && (
             <p className="text-[11px] text-muted">{t('clientData.admin.confirm.evidence', { date: fmtDateTime(conf.submittedAt), ip: conf.submitIp ?? '—' })}</p>
           )}
-          {openCorrections.length > 0 && <p className="rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:bg-amber-950/40 dark:text-amber-200">{t('clientData.admin.confirm.corrections', { count: openCorrections.length })}</p>}
+          {openCorrections.length > 0 && <p className="rounded-lg bg-warning-bg px-3 py-2 text-xs text-warning-fg dark:bg-amber-950/40 dark:text-amber-200">{t('clientData.admin.confirm.corrections', { count: openCorrections.length })}</p>}
           <div className="overflow-x-auto rounded-lg border border-line">
             <table className="w-full min-w-[34rem] text-left text-xs">
-              <thead className="bg-surface text-muted">
+              <thead className="bg-sunken text-muted">
                 <tr>
                   <th className="px-3 py-2 font-semibold">{t('clientData.admin.confirm.field')}</th>
                   <th className="px-3 py-2 font-semibold">{t('clientData.admin.confirm.sent')}</th>
@@ -112,29 +112,29 @@ const ConfirmationSection = ({ caseId }: { caseId: string }) => {
               </thead>
               <tbody className="divide-y divide-line">
                 {conf.items.map((i) => (
-                  <tr key={i.key} className={clsx(i.answer && !i.answer.ok && !i.decision && 'bg-amber-50/50 dark:bg-amber-950/20')}>
+                  <tr key={i.key} className={clsx(i.answer && !i.answer.ok && !i.decision && 'bg-warning-bg/50 dark:bg-amber-950/20')}>
                     <td className="px-3 py-2 align-top text-ink/80">{tr(i.label)}</td>
-                    <td className="px-3 py-2 align-top font-mono break-all text-navy-900">{i.value || '—'}</td>
+                    <td className="px-3 py-2 align-top font-mono break-all text-ink">{i.value || '—'}</td>
                     <td className="px-3 py-2 align-top">
                       {!i.answer ? (
                         <span className="text-muted">—</span>
                       ) : i.answer.ok ? (
-                        <span className="inline-flex items-center gap-1 font-semibold text-emerald-700 dark:text-emerald-300">
+                        <span className="inline-flex items-center gap-1 font-semibold text-success-fg dark:text-emerald-300">
                           <CheckCircle2 className="size-3.5" aria-hidden /> {t('clientData.admin.confirm.ok')}
                         </span>
                       ) : (
                         <div className="space-y-1.5">
-                          <p className="font-mono font-semibold break-all text-amber-800 dark:text-amber-300">
+                          <p className="font-mono font-semibold break-all text-warning-fg dark:text-amber-300">
                             <ArrowRight className="mr-1 inline size-3" aria-hidden />
                             {i.answer.correction.value}
                           </p>
                           {i.answer.proof && (
-                            <a href={fileUrl(i.answer.proof.id)} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-brand-700 hover:underline">
+                            <a href={fileUrl(i.answer.proof.id)} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-link hover:underline">
                               <Paperclip className="size-3" aria-hidden /> {t('clientData.admin.confirm.proof')}
                             </a>
                           )}
                           {i.decision ? (
-                            <p className={clsx('font-semibold', i.decision.decision === 'ACCEPTED' ? 'text-emerald-700 dark:text-emerald-300' : 'text-red-700 dark:text-red-300')}>
+                            <p className={clsx('font-semibold', i.decision.decision === 'ACCEPTED' ? 'text-success-fg dark:text-emerald-300' : 'text-danger-fg dark:text-red-300')}>
                               {t(`clientData.admin.confirm.${i.decision.decision === 'ACCEPTED' ? 'accepted' : 'rejected'}`)} · {fmtDateTime(i.decision.at)}
                             </p>
                           ) : (
@@ -166,7 +166,7 @@ const ConfirmationSection = ({ caseId }: { caseId: string }) => {
           {(preview ?? []).map((f) => (
             <div key={f.key} className="grid gap-1 px-3 py-2 sm:grid-cols-[minmax(0,1fr)_minmax(0,1.3fr)]">
               <dt className="text-xs text-muted">{tr(f.label)}</dt>
-              <dd className={clsx('font-mono text-sm break-all', f.value ? 'text-navy-900' : 'text-amber-700')}>{f.value || t('clientData.admin.confirm.empty')}</dd>
+              <dd className={clsx('font-mono text-sm break-all', f.value ? 'text-ink' : 'text-warning-fg')}>{f.value || t('clientData.admin.confirm.empty')}</dd>
             </div>
           ))}
         </dl>
@@ -265,13 +265,13 @@ const FormReviewDrawer = ({ caseId, formId, onClose }: { caseId: string; formId:
           )}
           {reviewable && (
             <section>
-              <h3 className="mb-2 text-sm font-semibold text-navy-900">{t('clientData.admin.diffTitle')}</h3>
+              <h3 className="mb-2 text-sm font-semibold text-ink">{t('clientData.admin.diffTitle')}</h3>
               {!data.diff.length ? (
                 <p className="text-xs text-muted">{t('clientData.admin.noMapped')}</p>
               ) : (
                 <div className="overflow-x-auto rounded-lg border border-line">
                   <table className="w-full min-w-[30rem] text-left text-xs">
-                    <thead className="bg-surface text-muted">
+                    <thead className="bg-sunken text-muted">
                       <tr>
                         <th className="w-8 px-2 py-2" />
                         <th className="px-2 py-2 font-semibold">{t('clientData.admin.target')}</th>
@@ -302,7 +302,7 @@ const FormReviewDrawer = ({ caseId, formId, onClose }: { caseId: string; formId:
                             <span className="block text-[10px] text-muted">{d.target}</span>
                           </td>
                           <td className="px-2 py-2 align-top break-words text-muted">{d.before.value || '—'}</td>
-                          <td className="px-2 py-2 align-top break-words font-semibold text-navy-900">{d.after.value}{!d.changed && <span className="ml-1 font-normal text-muted">({t('clientData.admin.unchanged')})</span>}</td>
+                          <td className="px-2 py-2 align-top break-words font-semibold text-ink">{d.after.value}{!d.changed && <span className="ml-1 font-normal text-muted">({t('clientData.admin.unchanged')})</span>}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -313,7 +313,7 @@ const FormReviewDrawer = ({ caseId, formId, onClose }: { caseId: string; formId:
             </section>
           )}
           <section>
-            <h3 className="mb-2 text-sm font-semibold text-navy-900">{t('clientData.admin.answers')}</h3>
+            <h3 className="mb-2 text-sm font-semibold text-ink">{t('clientData.admin.answers')}</h3>
             <div className="rounded-lg border border-line p-3">
               <FormRenderer fields={data.fields} answers={data.answers} readOnly caseId={caseId} fileNames={data.files} />
             </div>
@@ -354,8 +354,8 @@ const FormsSection = ({ caseId }: { caseId: string }) => {
 
   return (
     <div className="space-y-3">
-      <h3 className="flex items-center gap-2 text-sm font-semibold text-navy-900">
-        <ClipboardList className="size-4 text-brand-600" aria-hidden /> {t('clientData.admin.forms')}
+      <h3 className="flex items-center gap-2 text-sm font-semibold text-ink">
+        <ClipboardList className="size-4 text-link" aria-hidden /> {t('clientData.admin.forms')}
       </h3>
       <div className="grid gap-2 rounded-lg border border-line p-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] sm:items-end">
         <label className="block text-xs font-semibold text-ink/80">
@@ -420,7 +420,7 @@ const FormsSection = ({ caseId }: { caseId: string }) => {
                   )}
                   {f.status !== 'APPLIED' &&
                     (cancel === f.id ? (
-                      <button type="button" className="btn-sm rounded-md bg-red-600 px-2.5 text-white hover:bg-red-700" disabled={!!busy} onClick={() => void act(`cancel:${f.id}`, () => api.delete(`/admin/cases/${caseId}/forms/${f.id}`)).then(() => setCancel(null))}>
+                      <button type="button" className="btn-sm rounded-md bg-danger px-2.5 text-white hover:bg-danger/90" disabled={!!busy} onClick={() => void act(`cancel:${f.id}`, () => api.delete(`/admin/cases/${caseId}/forms/${f.id}`)).then(() => setCancel(null))}>
                         <Trash2 className="size-3.5" aria-hidden /> {t('clientData.admin.cancelConfirm')}
                       </button>
                     ) : (

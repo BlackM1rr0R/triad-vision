@@ -146,7 +146,7 @@ const PackageList = ({ packages, onEdit }: { packages: Pkg[]; onEdit: (p: Pkg) =
   });
   if (!packages.length)
     return (
-      <div className="rounded-xl border border-line bg-white">
+      <div className="rounded-xl border border-line bg-card">
         <EmptyState icon={Package} title={t('apkg.empty')}>
           {t('apkg.emptyText')}
         </EmptyState>
@@ -156,15 +156,15 @@ const PackageList = ({ packages, onEdit }: { packages: Pkg[]; onEdit: (p: Pkg) =
     <>
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {packages.map((p) => (
-          <article key={p.id} className={clsx('rounded-xl border bg-white p-5', p.highlight ? 'border-brand-400' : 'border-line')}>
+          <article key={p.id} className={clsx('rounded-xl border bg-card p-5', p.highlight ? 'border-line-strong' : 'border-line')}>
             <div className="flex flex-wrap items-center gap-2">
-              <span className="badge bg-brand-100 text-brand-700">{t(`apkg.tier.${p.tier}`)}</span>
+              <span className="badge bg-primary/10 text-link">{t(`apkg.tier.${p.tier}`)}</span>
               <span className={clsx('badge', p.published ? 'bg-success-bg text-success-fg' : 'bg-neutral-bg text-neutral-fg')}>{p.published ? t('apkg.published') : t('apkg.draft')}</span>
               {p.highlight && <span className="badge bg-accent-bg text-accent-fg">{t('apkg.highlight')}</span>}
             </div>
-            <h2 className="mt-2 font-display text-lg font-bold text-navy-900">{p.title.az || p.title.de || p.slug}</h2>
+            <h2 className="mt-2 font-display text-lg font-bold text-ink">{p.title.az || p.title.de || p.slug}</h2>
             <p className="text-xs text-muted">/{p.slug}</p>
-            <p className="mt-2 font-display text-2xl font-bold text-navy-900">{fmtEur(p.priceCents, p.currency)}</p>
+            <p className="mt-2 font-display text-2xl font-bold text-ink">{fmtEur(p.priceCents, p.currency)}</p>
             {Object.entries(p.prices ?? {})
               .filter(([c]) => c !== p.currency)
               .map(([c, v]) => (
@@ -180,7 +180,7 @@ const PackageList = ({ packages, onEdit }: { packages: Pkg[]; onEdit: (p: Pkg) =
                 <Pencil className="size-3.5" aria-hidden /> {t('apkg.edit')}
               </button>
               {p.orders === 0 && (
-                <button type="button" className="btn-ghost btn-sm text-danger" onClick={() => setDel(p)}>
+                <button type="button" className="btn-secondary btn-sm text-danger-fg" onClick={() => setDel(p)}>
                   <Trash2 className="size-3.5" aria-hidden /> {t('apkg.delete')}
                 </button>
               )}
@@ -314,7 +314,7 @@ const Editor = ({ pkg, templates, onClose }: { pkg: Pkg | null; templates: Tpl[]
           <div className="grid gap-2 sm:grid-cols-2">
             {CURRENCIES.filter((c) => c !== baseCurrency).map((c) => (
               <label key={c} className="flex items-center gap-2">
-                <span className="w-12 text-sm font-semibold text-navy-900">{c}</span>
+                <span className="w-12 text-sm font-semibold text-ink">{c}</span>
                 <input className="input text-right tabular-nums" inputMode="decimal" placeholder="—" value={extra[c] ?? ''} onChange={(e) => setExtra((x) => ({ ...x, [c]: e.target.value }))} />
               </label>
             ))}
@@ -355,7 +355,7 @@ const Editor = ({ pkg, templates, onClose }: { pkg: Pkg | null; templates: Tpl[]
                       </option>
                     ))}
                   </select>
-                  <button type="button" className="grid size-9 place-items-center rounded-lg text-muted hover:bg-danger-bg hover:text-danger" aria-label={t('apkg.editor.removeInst')} onClick={() => setInsts((xs) => xs.filter((x) => x.key !== i.key))}>
+                  <button type="button" className="grid size-9 place-items-center rounded-lg text-muted hover:bg-danger-bg hover:text-danger-fg" aria-label={t('apkg.editor.removeInst')} onClick={() => setInsts((xs) => xs.filter((x) => x.key !== i.key))}>
                     <X className="size-4" aria-hidden />
                   </button>
                 </div>
@@ -368,10 +368,10 @@ const Editor = ({ pkg, templates, onClose }: { pkg: Pkg | null; templates: Tpl[]
             ))}
           </ul>
           <div className="mt-2 flex items-center justify-between">
-            <button type="button" className="inline-flex min-h-9 items-center gap-1.5 rounded-lg px-2 text-sm font-semibold text-brand-600 hover:bg-brand-50" onClick={() => setInsts((xs) => [...xs, { key: ++instSeq, label: emptyL10n(), percent: '', trigger: 'ON_SIGN' }])}>
+            <button type="button" className="inline-flex min-h-9 items-center gap-1.5 rounded-lg px-2 text-sm font-semibold text-link hover:bg-primary/[0.06]" onClick={() => setInsts((xs) => [...xs, { key: ++instSeq, label: emptyL10n(), percent: '', trigger: 'ON_SIGN' }])}>
               <Plus className="size-4" aria-hidden /> {t('apkg.editor.addInst')}
             </button>
-            {insts.length > 0 && <span className={clsx('text-sm font-semibold tabular-nums', Math.round(sum) === 100 ? 'text-success-fg' : 'text-danger')}>{sum} %</span>}
+            {insts.length > 0 && <span className={clsx('text-sm font-semibold tabular-nums', Math.round(sum) === 100 ? 'text-success-fg' : 'text-danger-fg')}>{sum} %</span>}
           </div>
         </fieldset>
         <div className="sm:col-span-2">
@@ -439,13 +439,13 @@ const Orders = () => {
       ) : q.error || !q.data ? (
         <ErrorBlock error={q.error} onRetry={() => q.refetch()} />
       ) : !q.data.orders.length ? (
-        <div className="rounded-xl border border-line bg-white">
+        <div className="rounded-xl border border-line bg-card">
           <EmptyState icon={ShoppingCart} title={t('apkg.noOrders')} />
         </div>
       ) : (
-        <div className="overflow-x-auto rounded-xl border border-line bg-white">
+        <div className="overflow-x-auto rounded-xl border border-line bg-card">
           <table className="w-full min-w-[44rem] text-sm">
-            <thead className="bg-surface text-left text-xs text-muted">
+            <thead className="bg-sunken text-left text-xs text-muted">
               <tr>
                 {(['date', 'client', 'pkg', 'price', 'status', 'signature', 'case'] as const).map((c) => (
                   <th key={c} className="px-4 py-2.5 font-semibold">
@@ -476,7 +476,7 @@ const Orders = () => {
                   </td>
                   <td className="px-4 py-3">
                     {o.caseId ? (
-                      <Link to={`/admin/cases/${o.caseId}?tab=finance`} className="text-brand-600 hover:underline">
+                      <Link to={`/admin/cases/${o.caseId}?tab=finance`} className="text-link hover:underline">
                         {o.caseNumber}
                       </Link>
                     ) : (
@@ -486,17 +486,17 @@ const Orders = () => {
                   <td className="px-3 py-2">
                     <div className="flex justify-end gap-1">
                       {o.status === 'STARTED' && o.signatureStatus === 'SENT' && (
-                        <button type="button" className="grid size-9 place-items-center rounded-lg border border-line hover:bg-surface" title={t('apkg.remind')} aria-label={t('apkg.remind')} onClick={() => act.mutate({ kind: 'remind', id: o.id })}>
+                        <button type="button" className="grid size-9 place-items-center rounded-lg border border-line hover:bg-sunken" title={t('apkg.remind')} aria-label={t('apkg.remind')} onClick={() => act.mutate({ kind: 'remind', id: o.id })}>
                           <Send className="size-4" aria-hidden />
                         </button>
                       )}
                       {o.status === 'SIGNED' && (
-                        <button type="button" className="grid size-9 place-items-center rounded-lg border border-line hover:bg-surface" title={t('apkg.retry')} aria-label={t('apkg.retry')} onClick={() => act.mutate({ kind: 'retry', id: o.id })}>
+                        <button type="button" className="grid size-9 place-items-center rounded-lg border border-line hover:bg-sunken" title={t('apkg.retry')} aria-label={t('apkg.retry')} onClick={() => act.mutate({ kind: 'retry', id: o.id })}>
                           <RefreshCw className="size-4" aria-hidden />
                         </button>
                       )}
                       {o.status === 'STARTED' && (
-                        <button type="button" className="grid size-9 place-items-center rounded-lg border border-line text-danger hover:bg-danger-bg" title={t('apkg.cancelOrder')} aria-label={t('apkg.cancelOrder')} onClick={() => act.mutate({ kind: 'cancel', id: o.id })}>
+                        <button type="button" className="grid size-9 place-items-center rounded-lg border border-line text-danger-fg hover:bg-danger-bg" title={t('apkg.cancelOrder')} aria-label={t('apkg.cancelOrder')} onClick={() => act.mutate({ kind: 'cancel', id: o.id })}>
                           <Ban className="size-4" aria-hidden />
                         </button>
                       )}

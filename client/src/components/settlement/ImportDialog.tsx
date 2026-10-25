@@ -83,8 +83,8 @@ export const ImportDialog = ({ onClose, onDone }: { onClose: () => void; onDone:
       }
     >
       <p className="text-sm text-muted">{t('settlement.import.hint')}</p>
-      <label className="mt-4 flex cursor-pointer items-center gap-3 rounded-xl border border-dashed border-line bg-surface px-4 py-3 text-sm hover:border-brand-500">
-        <FileUp className="size-5 text-brand-600" />
+      <label className="mt-4 flex cursor-pointer items-center gap-3 rounded-xl border border-dashed border-line bg-sunken px-4 py-3 text-sm hover:border-line-strong">
+        <FileUp className="size-5 text-link" />
         <span className="min-w-0 flex-1 truncate">{file ? file.name : t('settlement.import.choose')}</span>
         <input type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" className="sr-only" onChange={(e) => void choose(e.target.files?.[0] ?? null)} />
       </label>
@@ -97,14 +97,14 @@ export const ImportDialog = ({ onClose, onDone }: { onClose: () => void; onDone:
         <div className="mt-5 space-y-5">
           <div className="grid grid-cols-3 gap-3 text-center">
             {(['rows', 'created', 'updated'] as const).map((k) => (
-              <div key={k} className="rounded-xl border border-line bg-surface p-3">
+              <div key={k} className="rounded-xl border border-line bg-sunken p-3">
                 <div className="text-xl font-bold tabular-nums">{report[k]}</div>
                 <div className="text-xs text-muted">{t(`settlement.import.${k}`)}</div>
               </div>
             ))}
           </div>
           {report.skippedCredentials > 0 && (
-            <p className="flex items-start gap-2 rounded-xl bg-amber-50 p-3 text-sm text-amber-800">
+            <p className="flex items-start gap-2 rounded-xl bg-warning-bg p-3 text-sm text-warning-fg">
               <ShieldAlert className="mt-0.5 size-4 shrink-0" />
               {t('settlement.import.skippedCredentials', { count: report.skippedCredentials })}
             </p>
@@ -133,7 +133,7 @@ export const ImportDialog = ({ onClose, onDone }: { onClose: () => void; onDone:
               <h3 className="mb-2 text-sm font-semibold">{t('settlement.import.newPartners')}</h3>
               <div className="flex flex-wrap gap-1.5">
                 {report.newPartners.map((p) => (
-                  <span key={p} className="badge bg-brand-50 text-brand-700">
+                  <span key={p} className="badge bg-primary/[0.06] text-link">
                     {p}
                   </span>
                 ))}
@@ -154,7 +154,7 @@ export const ImportDialog = ({ onClose, onDone }: { onClose: () => void; onDone:
             <h3 className="mb-2 text-sm font-semibold">{t('settlement.import.previewRows')}</h3>
             <div className="max-h-72 overflow-auto rounded-xl border border-line">
               <table className="w-full min-w-[720px] text-xs">
-                <thead className="sticky top-0 bg-surface text-muted">
+                <thead className="sticky top-0 bg-sunken text-muted">
                   <tr>
                     <th className="px-2 py-1.5 text-left">{t('settlement.import.sheets')}</th>
                     <th className="px-2 py-1.5 text-left">{t('settlement.cols.partner')}</th>

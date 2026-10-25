@@ -14,6 +14,8 @@ export type Column<T> = {
   /** Clickable header that calls onSortChange (sorting itself is the caller's job). */
   sortable?: boolean;
   align?: 'left' | 'right' | 'center';
+  /** Numbers / money: right-aligned with tabular figures (sets align="right" unless given). */
+  numeric?: boolean;
   /** Classes on every <td> / the <th>. */
   className?: string;
   headerClassName?: string;
@@ -44,7 +46,10 @@ export type TableProps<T> = {
   rowClassName?: (row: T) => string | undefined;
   /** Accessible caption (visually hidden). */
   caption?: string;
+  /** Always compact rows (otherwise rows follow the admin density setting, data-density on <html>). */
   dense?: boolean;
+  /** Subtle hover on every row, not only clickable ones (default true). */
+  hover?: boolean;
   className?: string;
 };
 
@@ -75,7 +80,7 @@ export const SortableTh = ({
         title={dir === 'asc' ? t('ui.sortAscending') : dir === 'desc' ? t('ui.sortDescending') : undefined}
       >
         {label}
-        <Icon className={clsx('size-3.5 shrink-0', dir ? 'text-brand-600' : 'opacity-40')} aria-hidden />
+        <Icon className={clsx('size-3.5 shrink-0', dir ? 'text-ink' : 'opacity-40')} aria-hidden />
       </button>
     </th>
   );
@@ -107,25 +112,36 @@ export function Table<T>({
   rowClassName,
   caption,
   dense = false,
+  hover = true,
   className,
 }: TableProps<T>) {
   const list = rows ?? [];
   const showSkeleton = loading && list.length === 0;
-  const cellPad = dense ? 'px-3 py-2' : 'px-4 py-3';
+  // Padding comes from the density tokens (index.css --tv-cell-x / -y: surface + data-density).
+  const cellPad = dense ? 'px-3 py-1.5' : 'px-[var(--tv-cell-x)] py-[var(--tv-cell-y)]';
+  const headPad = dense ? 'px-3 py-1.5' : 'px-[var(--tv-cell-x)] py-[calc(var(--tv-cell-y)_*_0.8)]';
   const stack = stackOnMobile;
+  const alignOf = (c: Column<T>) => c.align ?? (c.numeric ? 'right' : 'left');
 
   return (
     <div className={clsx('min-w-0 overflow-x-auto', className)}>
-      <table className={clsx('w-full text-sm', stack && 'max-sm:block')}>
+      <table className={clsx('w-full text-[length:var(--tv-cell-text)]', dense && 'text-[0.8125rem]', stack && 'max-sm:block')}>
         {caption && <caption className="sr-only">{caption}</caption>}
         <thead className={clsx(stack && 'max-sm:sr-only')}>
-          <tr className="border-b border-line text-xs font-semibold text-muted">
+          <tr className="text-xs font-medium text-muted">
             {columns.map((c) => {
-              const cls = clsx(cellPad, 'bg-surface/95 whitespace-nowrap', stickyHeader && 'sticky top-0 z-[1]', c.hideBelow && HIDE[c.hideBelow], c.headerClassName);
+              const cls = clsx(
+                headPad,
+                // box-shadow instead of border-bottom: the hairline stays visible while the header is sticky
+                'bg-sunken whitespace-nowrap shadow-[inset_0_-1px_0_var(--color-line)]',
+                stickyHeader && 'sticky top-0 z-[1]',
+                c.hideBelow && HIDE[c.hideBelow],
+                c.headerClassName,
+              );
               return c.sortable && onSortChange ? (
-                <SortableTh key={c.key} label={c.header} sortKey={c.key} sort={sort} onSortChange={onSortChange} align={c.align} className={cls} />
+                <SortableTh key={c.key} label={c.header} sortKey={c.key} sort={sort} onSortChange={onSortChange} align={alignOf(c)} className={cls} />
               ) : (
-                <th key={c.key} scope="col" className={clsx(cls, ALIGN[c.align ?? 'left'])}>
+                <th key={c.key} scope="col" className={clsx(cls, ALIGN[alignOf(c)])}>
                   {c.header}
                 </th>
               );
@@ -147,7 +163,7 @@ export function Table<T>({
               onClick={onRowClick ? () => onRowClick(row) : undefined}
               className={clsx(
                 'transition-colors',
-                onRowClick && 'cursor-pointer hover:bg-surface/70',
+                onRowClick ? 'cursor-pointer hover:bg-sunken/70' : hover && 'hover:bg-sunken/40',
                 stack && 'max-sm:block max-sm:rounded-xl max-sm:border max-sm:border-line max-sm:bg-card max-sm:p-3',
                 rowClassName?.(row),
               )}
@@ -158,7 +174,8 @@ export function Table<T>({
                   className={clsx(
                     cellPad,
                     'align-middle',
-                    ALIGN[c.align ?? 'left'],
+                    ALIGN[alignOf(c)],
+                    c.numeric && 'tabular-nums',
                     c.hideBelow && (stack ? HIDE_STACKED[c.hideBelow] : HIDE[c.hideBelow]),
                     stack && 'max-sm:flex max-sm:items-baseline max-sm:justify-between max-sm:gap-3 max-sm:px-0 max-sm:py-1 max-sm:text-left',
                     stack && c.primary && 'max-sm:block max-sm:pb-1.5 max-sm:font-semibold',

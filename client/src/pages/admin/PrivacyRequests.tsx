@@ -127,7 +127,7 @@ const RequestsList = () => {
       ) : (
         <div className="overflow-hidden rounded-xl border border-line bg-card">
           <table className="w-full text-sm">
-            <thead className="hidden bg-surface text-left text-xs text-muted sm:table-header-group">
+            <thead className="hidden bg-sunken text-left text-xs text-muted sm:table-header-group">
               <tr>
                 <th className="px-4 py-2.5 font-medium">{t('privacy.admin.col.requester')}</th>
                 <th className="px-4 py-2.5 font-medium">{t('privacy.admin.col.type')}</th>
@@ -146,20 +146,20 @@ const RequestsList = () => {
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') navigate(r.id);
                   }}
-                  className={clsx('flex cursor-pointer flex-col gap-1 px-4 py-3 transition hover:bg-surface sm:table-row sm:p-0', r.overdue && 'bg-red-50/60 dark:bg-red-950/20')}
+                  className={clsx('flex cursor-pointer flex-col gap-1 px-4 py-3 transition hover:bg-sunken sm:table-row sm:p-0', r.overdue && 'bg-danger-bg/60 dark:bg-red-950/20')}
                 >
                   <td className="sm:px-4 sm:py-3">
-                    <p className="font-semibold break-all text-navy-900">{r.user ? fullName(r.user) : r.email}</p>
+                    <p className="font-semibold break-all text-ink">{r.user ? fullName(r.user) : r.email}</p>
                     <p className="text-xs break-all text-muted">{r.user ? r.email : t('privacy.admin.noAccount')}</p>
                   </td>
                   <td className="sm:px-4 sm:py-3">
-                    <span className={clsx('font-medium', r.type === 'DELETION' ? 'text-red-700' : 'text-ink')}>{t(`privacy.typeName.${r.type}`)}</span>
+                    <span className={clsx('font-medium', r.type === 'DELETION' ? 'text-danger-fg' : 'text-ink')}>{t(`privacy.typeName.${r.type}`)}</span>
                   </td>
                   <td className="sm:px-4 sm:py-3">
                     <StatusBadge status={r.status} />
                   </td>
                   <td className="sm:px-4 sm:py-3">
-                    <span className={clsx('text-xs tabular-nums', r.overdue ? 'font-bold text-danger' : r.dueSoon ? 'font-semibold text-amber-700' : 'text-muted')}>
+                    <span className={clsx('text-xs tabular-nums', r.overdue ? 'font-bold text-danger-fg' : r.dueSoon ? 'font-semibold text-warning-fg' : 'text-muted')}>
                       {isOpenStatus(r.status) ? fmtDate(r.dueAt) : '—'}
                       {r.overdue && ` · ${t('privacy.admin.overdue')}`}
                       {r.dueSoon && ` · ${t('privacy.admin.dueSoon')}`}
@@ -208,10 +208,10 @@ const DeletionPanel = ({ detail }: { detail: AdminRequestDetail }) => {
   };
 
   return (
-    <Panel title={t('privacy.admin.deletion.title')} icon={Trash2} className="border-red-200">
+    <Panel title={t('privacy.admin.deletion.title')} icon={Trash2} className="border-danger-border">
       <p className="text-sm leading-relaxed text-muted">{t('privacy.admin.deletion.intro')}</p>
       {deletionBlocked ? (
-        <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-800">
+        <p className="mt-3 rounded-lg bg-danger-bg px-3 py-2 text-sm text-danger-fg">
           {t('privacy.admin.deletion.blocked', { reason: t(`privacy.admin.errors.${deletionBlocked}`, { defaultValue: deletionBlocked }) })}
         </p>
       ) : (
@@ -243,7 +243,7 @@ const DeletionPanel = ({ detail }: { detail: AdminRequestDetail }) => {
         size="sm"
         title={
           <span className="flex items-center gap-2">
-            <AlertTriangle className="size-4 text-danger" aria-hidden />
+            <AlertTriangle className="size-4 text-danger-fg" aria-hidden />
             {t('privacy.admin.deletion.title')}
           </span>
         }
@@ -310,7 +310,7 @@ const RequestDetail = () => {
   });
 
   const back = (
-    <Link to="/admin/privacy-requests" className="mb-4 inline-flex min-h-10 items-center gap-1.5 text-sm font-semibold text-brand-700 hover:underline">
+    <Link to="/admin/privacy-requests" className="mb-4 inline-flex min-h-10 items-center gap-1.5 text-sm font-semibold text-link hover:underline">
       <ArrowLeft className="size-4" aria-hidden />
       {t('privacy.admin.back')}
     </Link>
@@ -333,10 +333,10 @@ const RequestDetail = () => {
     <div>
       {back}
       <div className="mb-6 flex flex-wrap items-center gap-3">
-        <h2 className={clsx('text-xl font-bold', item.type === 'DELETION' ? 'text-red-800' : 'text-navy-900')}>{t(`privacy.typeName.${item.type}`)}</h2>
+        <h2 className={clsx('text-xl font-bold', item.type === 'DELETION' ? 'text-danger-fg' : 'text-ink')}>{t(`privacy.typeName.${item.type}`)}</h2>
         <StatusBadge status={item.status} />
-        {item.overdue && <span className="rounded-full bg-red-100 px-2 py-0.5 text-[11px] font-bold text-red-800">{t('privacy.admin.overdue')}</span>}
-        {item.dueSoon && <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-bold text-amber-800">{t('privacy.admin.dueSoon')}</span>}
+        {item.overdue && <span className="rounded-full bg-danger-bg px-2 py-0.5 text-[11px] font-bold text-danger-fg">{t('privacy.admin.overdue')}</span>}
+        {item.dueSoon && <span className="rounded-full bg-warning-bg px-2 py-0.5 text-[11px] font-bold text-warning-fg">{t('privacy.admin.dueSoon')}</span>}
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,22rem)]">
@@ -391,12 +391,12 @@ const RequestDetail = () => {
           <Panel title={t('privacy.admin.subject')} icon={UserRound}>
             {subject ? (
               <>
-                <p className="font-semibold text-navy-900">{fullName(subject)}</p>
+                <p className="font-semibold text-ink">{fullName(subject)}</p>
                 <p className="text-xs break-all text-muted">
                   {subject.email} · {subject.role}
                   {!subject.isActive && ` · ${t('privacy.admin.inactive')}`}
                 </p>
-                {subject.matchedByEmail && <p className="mt-2 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-900">{t('privacy.admin.matchedByEmail')}</p>}
+                {subject.matchedByEmail && <p className="mt-2 rounded-lg bg-warning-bg px-3 py-2 text-xs text-warning-fg">{t('privacy.admin.matchedByEmail')}</p>}
               </>
             ) : (
               <p className="text-sm text-muted">{t('privacy.admin.noSubject')}</p>
@@ -420,7 +420,7 @@ const RequestDetail = () => {
               <ul className="space-y-2">
                 {data.otherRequests.map((o) => (
                   <li key={o.id} className="flex items-center justify-between gap-2 text-sm">
-                    <Link to={`/admin/privacy-requests/${o.id}`} className="font-medium text-brand-700 hover:underline">
+                    <Link to={`/admin/privacy-requests/${o.id}`} className="font-medium text-link hover:underline">
                       {t(`privacy.typeName.${o.type}`)}
                     </Link>
                     <span className="flex items-center gap-2 text-xs text-muted">
@@ -439,7 +439,7 @@ const RequestDetail = () => {
                   <li key={c.id} className="flex items-baseline justify-between gap-2 text-xs">
                     <span className="text-ink">
                       {t(`privacy.consentType.${c.type}`, { defaultValue: t(`legalDocs.consentTypes.${c.type}`, { defaultValue: c.type }) })}:{' '}
-                      <b className={c.granted ? 'text-emerald-700' : 'text-amber-700'}>{c.granted ? t('privacy.admin.consents.yes') : t('privacy.admin.consents.no')}</b>
+                      <b className={c.granted ? 'text-success-fg' : 'text-warning-fg'}>{c.granted ? t('privacy.admin.consents.yes') : t('privacy.admin.consents.no')}</b>
                     </span>
                     <span className="shrink-0 text-muted">{fmtDate(c.createdAt)}</span>
                   </li>

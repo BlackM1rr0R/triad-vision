@@ -78,7 +78,7 @@ export const OriginAnalytics = () => {
             </select>
           </label>
           <label className="flex items-end gap-2 pb-2.5 text-sm text-ink">
-            <input type="checkbox" className="size-4 accent-brand-600" checked={f.placed} onChange={(e) => setF({ ...f, placed: e.target.checked })} />
+            <input type="checkbox" className="size-4 accent-primary" checked={f.placed} onChange={(e) => setF({ ...f, placed: e.target.checked })} />
             {t('mk.origins.admin.placed')}
           </label>
         </div>
@@ -92,16 +92,16 @@ export const OriginAnalytics = () => {
             {(['AZ', 'TR', 'UA'] as const).map((c) => (
               <div key={c} className="rounded-xl border border-line bg-card p-3">
                 <p className="text-xs text-muted">{t(`mk.origins.countries.${c}`)}</p>
-                <p className="font-display text-2xl font-extrabold text-ink tabular-nums">{data.countries[c]}</p>
+                <p className="font-display text-2xl font-semibold text-ink tabular-nums">{data.countries[c]}</p>
               </div>
             ))}
             <div className="rounded-xl border border-line bg-card p-3">
               <p className="text-xs text-muted">{t('mk.origins.admin.unknown')}</p>
-              <p className="font-display text-2xl font-extrabold text-muted tabular-nums">{data.unknown}</p>
+              <p className="font-display text-2xl font-semibold text-muted tabular-nums">{data.unknown}</p>
             </div>
             <div className="rounded-xl border border-line bg-card p-3">
               <p className="text-xs text-muted">{t('mk.origins.admin.clients')}</p>
-              <p className="font-display text-2xl font-extrabold text-ink tabular-nums">{data.clients}</p>
+              <p className="font-display text-2xl font-semibold text-ink tabular-nums">{data.clients}</p>
             </div>
           </div>
           {data.origins.length === 0 ? (
@@ -116,7 +116,7 @@ export const OriginAnalytics = () => {
               <div className="grid gap-5 lg:grid-cols-2">
                 <Panel title={t('mk.origins.admin.origin')} bodyClassName="p-0 sm:p-0">
                   <table className="w-full text-sm">
-                    <thead className="bg-surface text-left text-xs text-muted">
+                    <thead className="bg-sunken text-left text-xs text-muted">
                       <tr>
                         <th className="px-4 py-2 font-semibold">{t('mk.origins.admin.origin')}</th>
                         <th className="px-4 py-2 font-semibold">{t('mk.origins.admin.country')}</th>

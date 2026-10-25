@@ -1,3 +1,4 @@
+import './lib/azIntlInstall'; // first: Azerbaijani dates in browsers without "az" ICU data (Chrome)
 import { lazy, StrictMode, Suspense, useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -5,9 +6,11 @@ import { MotionConfig } from 'framer-motion';
 import { Toaster } from 'sonner';
 // Fonts are bundled and served from our own domain (no requests to Google — DSGVO).
 import '@fontsource-variable/inter';
-import '@fontsource-variable/montserrat';
+import '@fontsource-variable/fraunces'; // public-site display headings (az/de/en/tr; ru/uk use Inter)
+import '@fontsource-variable/jetbrains-mono'; // codes / case numbers (downloaded only when used)
 import { i18nReady } from './i18n';
 import './index.css';
+import { initSiteTheme } from './lib/theme';
 import App from './App';
 import { AuthProvider } from './lib/auth';
 import { reloadOnce } from './components/ui/RouteErrorBoundary';
@@ -19,6 +22,8 @@ import { captureRefFromUrl } from './lib/referralCookie';
 import { LocaleRouter } from './lib/localeRouter';
 import { initAnalytics } from './lib/analytics';
 
+// Site theme (SUPER_ADMIN theme builder): cached CSS variables now, fresh ones after the first paint; table density.
+initSiteTheme();
 // "Problem bildir" diagnostics (console errors ring buffer, last API error) and the service worker (PWA).
 installDiagnostics();
 initPwa();

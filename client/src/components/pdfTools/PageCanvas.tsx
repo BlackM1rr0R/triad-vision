@@ -68,7 +68,7 @@ export const PageCanvas = ({
 
   return (
     <div ref={box} className={className} style={{ width, height, position: 'relative' }}>
-      <canvas ref={canvasRef} className="block bg-white shadow-sm" style={{ width, height }} />
+      <canvas ref={canvasRef} className="block bg-card shadow-[var(--tv-shadow-card)]" style={{ width, height }} />
       {busy && (
         <div className="pointer-events-none absolute inset-0 grid place-items-center">
           <Spinner className="size-4" />

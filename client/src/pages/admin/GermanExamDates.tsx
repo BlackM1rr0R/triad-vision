@@ -110,7 +110,7 @@ const DateForm = ({ initial, onDone }: { initial: GermanExamDate | null; onDone:
         <label htmlFor="ed-notes" className="label">{t('germanProgress.examDates.notes')}</label>
         <input id="ed-notes" className="input" value={f.notes} onChange={set('notes')} maxLength={500} />
       </div>
-      <label className="flex items-center justify-between gap-3 text-sm text-navy-900 sm:col-span-2">
+      <label className="flex items-center justify-between gap-3 text-sm text-ink sm:col-span-2">
         {t('germanProgress.examDates.published')}
         <Switch checked={f.published} onChange={(v) => setF((s) => ({ ...s, published: v }))} label={t('germanProgress.examDates.published')} />
       </label>
@@ -166,9 +166,9 @@ export default function GermanExamDates() {
           )
         }
       />
-      <div className="inline-flex rounded-lg border border-line bg-white p-0.5" role="group">
+      <div className="inline-flex rounded-lg border border-line bg-sunken p-0.5" role="group">
         {(['upcoming', 'all'] as const).map((s) => (
-          <button key={s} type="button" aria-pressed={scope === s} className={clsx('rounded-md px-3 py-1.5 text-xs font-semibold transition', scope === s ? 'bg-navy-900 text-white' : 'text-muted hover:text-navy-900')} onClick={() => setScope(s)}>
+          <button key={s} type="button" aria-pressed={scope === s} className={clsx('rounded-md px-3 py-1.5 text-xs font-semibold transition', scope === s ? 'bg-card text-ink shadow-[var(--tv-shadow-card)] ring-1 ring-line' : 'text-muted hover:text-ink')} onClick={() => setScope(s)}>
             {t(`germanProgress.examDates.${s}`)}
           </button>
         ))}
@@ -185,9 +185,9 @@ export default function GermanExamDates() {
             {data.map((d) => (
               <li key={d.id} className="flex flex-col gap-2 px-5 py-4 sm:flex-row sm:items-center sm:gap-4">
                 <div className="min-w-0 flex-1">
-                  <p className="flex flex-wrap items-center gap-2 font-semibold text-navy-900">
+                  <p className="flex flex-wrap items-center gap-2 font-semibold text-ink">
                     {t(`germanProgress.exams.providers.${d.provider}`)}
-                    {d.level && <span className="badge bg-brand-100 text-brand-700">{d.level}</span>}
+                    {d.level && <span className="badge bg-primary/10 text-link">{d.level}</span>}
                     {!d.published && <span className="badge bg-neutral-bg text-neutral-fg">{t('germanProgress.examDates.hidden')}</span>}
                   </p>
                   <p className="mt-0.5 text-sm text-ink/80">
@@ -201,7 +201,7 @@ export default function GermanExamDates() {
                     )}
                     <span>{t('germanProgress.examDates.candidates', { count: d.candidates ?? 0 })}</span>
                     {d.link && (
-                      <a href={d.link} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 font-semibold text-brand-700 hover:underline">
+                      <a href={d.link} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 font-semibold text-link hover:underline">
                         {t('germanProgress.examDates.link')} <ExternalLink className="size-3" aria-hidden />
                       </a>
                     )}
@@ -209,10 +209,10 @@ export default function GermanExamDates() {
                 </div>
                 {canEdit && (
                   <div className="flex shrink-0 gap-1">
-                    <button type="button" className="grid size-9 place-items-center rounded-lg text-muted hover:bg-brand-50 hover:text-brand-700" onClick={() => setEditing(d)} aria-label={t('germanProgress.examDates.edit')}>
+                    <button type="button" className="grid size-9 place-items-center rounded-lg text-muted hover:bg-primary/[0.06] hover:text-link" onClick={() => setEditing(d)} aria-label={t('germanProgress.examDates.edit')}>
                       <Pencil className="size-4" />
                     </button>
-                    <button type="button" className="grid size-9 place-items-center rounded-lg text-muted hover:bg-red-50 hover:text-red-700" onClick={() => setDeleting(d)} aria-label={t('germanProgress.delete')}>
+                    <button type="button" className="grid size-9 place-items-center rounded-lg text-muted hover:bg-danger-bg hover:text-danger-fg" onClick={() => setDeleting(d)} aria-label={t('germanProgress.delete')}>
                       <Trash2 className="size-4" />
                     </button>
                   </div>

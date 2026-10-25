@@ -29,6 +29,7 @@ import { bookingCopy } from '@/i18n/pagesBooking';
 import { PageHero } from '@/components/layout/PageHero';
 import { leadVisitorId } from '@/lib/leadVisitor';
 import { Spinner } from '@/components/ui/Spinner';
+import { CalendarDay, Success as SuccessArt } from '@/components/illustrations';
 import { TOPICS, browserTimeZone, fmtTime, useDayLabels, zoned, type Topic } from '@/components/booking/time';
 
 registerCopy(bookingCopy);
@@ -47,8 +48,8 @@ const TOPIC_ICON = { candidate: UserRound, company: Building2, other: MessageCir
 const SLOT_ERRORS = new Set(['SLOT_TAKEN', 'SLOT_NOT_FOUND', 'SLOT_TOO_SOON']);
 
 const StepTitle = ({ n, children }: { n: number; children: string }) => (
-  <h2 className="mb-4 flex items-center gap-3 font-display text-lg font-bold text-navy-900 sm:text-xl">
-    <span className="grid size-8 shrink-0 place-items-center rounded-full bg-navy-900 text-sm font-bold text-white" aria-hidden>
+  <h2 className="mb-5 flex items-center gap-3 font-display text-lg font-semibold text-ink sm:text-xl">
+    <span className="grid size-9 shrink-0 place-items-center rounded-full bg-primary text-sm font-semibold text-primary-contrast" aria-hidden>
       {n}
     </span>
     {children}
@@ -167,12 +168,12 @@ export default function Booking() {
       <PageHero
         title={t('bookingPage.title')}
         subtitle={t('bookingPage.subtitle')}
-        image="https://images.unsplash.com/photo-1600880292203-757bb62b4baf?auto=format&fit=crop&w=2000&q=70"
+        illustration={<CalendarDay className="w-full" animated />}
       >
         <ul className="mt-6 flex flex-wrap gap-2">
           {(t('bookingPage.perks', { returnObjects: true }) as string[]).map((p) => (
-            <li key={p} className="glass inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold text-white/90">
-              <CheckCircle2 className="size-3.5 text-brand-400" aria-hidden />
+            <li key={p} className="inline-flex items-center gap-1.5 rounded-full border border-line bg-card px-3 py-1.5 text-xs font-semibold text-ink">
+              <CheckCircle2 className="size-3.5 text-success" aria-hidden />
               {p}
             </li>
           ))}
@@ -210,15 +211,15 @@ export default function Booking() {
                             aria-checked={on}
                             onClick={() => setTopic(k)}
                             className={clsx(
-                              'flex items-start gap-3 rounded-xl border-2 p-4 text-left transition',
-                              on ? 'border-brand-600 bg-brand-50' : 'border-line hover:border-brand-400',
+                              'flex min-h-14 items-start gap-3 rounded-2xl border-2 p-4 text-left transition-colors',
+                              on ? 'border-primary bg-sunken' : 'border-line bg-card hover:border-line-strong',
                             )}
                           >
-                            <span className={clsx('grid size-10 shrink-0 place-items-center rounded-lg transition', on ? 'bg-brand-600 text-white' : 'bg-surface text-navy-900')}>
+                            <span className={clsx('grid size-10 shrink-0 place-items-center rounded-lg transition', on ? 'bg-primary text-primary-contrast' : ['chip-soft', 'chip-sage', 'chip-sky'][TOPICS.indexOf(k) % 3])}>
                               <I className="size-5" aria-hidden />
                             </span>
                             <span className="min-w-0">
-                              <span className="block font-semibold text-navy-900">{t(`bookingPage.topics.${k}.title`)}</span>
+                              <span className="block font-semibold text-ink">{t(`bookingPage.topics.${k}.title`)}</span>
                               <span className="mt-0.5 block text-xs text-muted">{t(`bookingPage.topics.${k}.text`)}</span>
                             </span>
                           </button>
@@ -236,11 +237,11 @@ export default function Booking() {
                     </p>
 
                     {slotsQ.isLoading ? (
-                      <div className="grid min-h-40 place-items-center text-brand-600" role="status">
+                      <div className="grid min-h-40 place-items-center text-primary" role="status">
                         <Spinner className="size-7 border-[3px]" />
                       </div>
                     ) : slotsQ.error ? (
-                      <div className="flex flex-col items-center gap-3 rounded-xl bg-red-50 p-6 text-center text-sm text-red-800" role="alert">
+                      <div className="flex flex-col items-center gap-3 rounded-xl bg-danger-bg p-6 text-center text-sm text-danger-fg" role="alert">
                         <AlertCircle className="size-5" aria-hidden />
                         {t('bookingPage.loadFailed')}
                         <button type="button" className="btn-secondary btn-sm" onClick={() => slotsQ.refetch()}>
@@ -248,11 +249,11 @@ export default function Booking() {
                         </button>
                       </div>
                     ) : days.length === 0 ? (
-                      <div className="rounded-xl bg-surface p-6 text-center">
-                        <CalendarCheck2 className="mx-auto size-7 text-muted" aria-hidden />
-                        <p className="mt-2 font-semibold text-navy-900">{t('bookingPage.noSlots')}</p>
+                      <div className="rounded-2xl bg-sunken p-6 text-center">
+                        <CalendarDay className="mx-auto w-32" />
+                        <p className="mt-2 font-semibold text-ink">{t('bookingPage.noSlots')}</p>
                         <p className="mx-auto mt-1 max-w-md text-sm text-muted">{t('bookingPage.noSlotsText')}</p>
-                        <Link to="/contact" className="btn-ghost btn-sm mt-4">
+                        <Link to="/contact" className="btn-secondary mt-4">
                           {t('bookingPage.contactLink')}
                         </Link>
                       </div>
@@ -271,14 +272,14 @@ export default function Booking() {
                                 aria-pressed={on}
                                 onClick={() => setDay(k)}
                                 className={clsx(
-                                  'flex w-[4.75rem] shrink-0 snap-start flex-col items-center rounded-xl border px-2 py-2.5 text-center transition',
-                                  on ? 'border-navy-900 bg-navy-900 text-white shadow-lg shadow-navy-900/20' : 'border-line bg-card text-navy-900 hover:border-brand-400',
+                                  'flex w-[4.75rem] shrink-0 snap-start flex-col items-center rounded-2xl border px-2 py-2.5 text-center transition-colors',
+                                  on ? 'border-primary bg-primary text-primary-contrast' : 'border-line bg-card text-ink hover:border-line-strong',
                                 )}
                               >
-                                <span className={clsx('text-[11px] font-semibold uppercase', on ? 'text-white/70' : 'text-muted')}>{rel ?? c.weekday}</span>
-                                <span className="font-display text-xl leading-tight font-extrabold">{c.day}</span>
-                                <span className={clsx('text-[11px]', on ? 'text-white/70' : 'text-muted')}>{c.month}</span>
-                                <span className={clsx('mt-1 rounded-full px-1.5 text-[10px] font-semibold', on ? 'bg-white/15' : 'bg-brand-50 text-brand-700')}>
+                                <span className={clsx('text-[11px] font-semibold uppercase', on ? 'opacity-75' : 'text-muted')}>{rel ?? c.weekday}</span>
+                                <span className="font-display text-xl leading-tight font-semibold">{c.day}</span>
+                                <span className={clsx('text-[11px]', on ? 'opacity-75' : 'text-muted')}>{c.month}</span>
+                                <span className={clsx('mt-1 rounded-full px-1.5 text-[10px] font-semibold', on ? 'bg-primary-contrast/15' : 'bg-sunken text-muted')}>
                                   {t('bookingPage.slotsCount', { count: list.length })}
                                 </span>
                               </button>
@@ -302,8 +303,8 @@ export default function Booking() {
                                     aria-checked={on}
                                     onClick={() => setSlot(s)}
                                     className={clsx(
-                                      'min-h-11 rounded-lg border text-sm font-semibold tabular-nums transition',
-                                      on ? 'border-brand-600 bg-brand-600 text-white shadow-md shadow-brand-600/25' : 'border-line bg-card text-navy-900 hover:border-brand-500 hover:text-brand-700',
+                                      'min-h-12 rounded-xl border text-sm font-semibold tabular-nums transition-colors',
+                                      on ? 'border-primary bg-primary text-primary-contrast' : 'border-line bg-card text-ink hover:border-line-strong hover:bg-sunken',
                                     )}
                                   >
                                     {fmtTime(s.startsAt, tz)}
@@ -323,26 +324,26 @@ export default function Booking() {
                   <div className="card card-pad">
                     <StepTitle n={3}>{t('bookingPage.step3')}</StepTitle>
 
-                    <div className={clsx('mb-5 rounded-xl p-4', slot ? 'bg-navy-900 text-white' : 'border border-dashed border-line text-muted')}>
+                    <div className={clsx('mb-5 rounded-2xl p-4', slot ? 'border border-line bg-sunken text-ink' : 'border border-dashed border-line-strong text-muted')}>
                       {slot ? (
                         <>
-                          <p className="text-[11px] font-semibold tracking-wider text-white/60 uppercase">{t('bookingPage.selected')}</p>
-                          <p className="mt-1 font-display text-lg font-bold">{labels.long(slot.startsAt, tz)}</p>
-                          <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-white/85">
+                          <p className="type-overline text-muted">{t('bookingPage.selected')}</p>
+                          <p className="mt-1 font-display text-lg font-semibold">{labels.long(slot.startsAt, tz)}</p>
+                          <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted">
                             <span className="inline-flex items-center gap-1.5">
                               <Clock className="size-3.5" aria-hidden />
                               {fmtTime(slot.startsAt, tz)}–{fmtTime(slot.endsAt, tz)}
                             </span>
                             <span>{t('bookingPage.minutes', { count: minutes })}</span>
-                            {topic && <span className="rounded-full bg-white/15 px-2 py-0.5 text-xs">{t(`bookingCommon.topic.${topic}`)}</span>}
+                            {topic && <span className="rounded-full bg-card px-2 py-0.5 text-xs text-ink ring-1 ring-line">{t(`bookingCommon.topic.${topic}`)}</span>}
                           </p>
-                          <dl className="mt-3 grid grid-cols-2 gap-2 border-t border-white/15 pt-3 text-xs">
+                          <dl className="mt-3 grid grid-cols-2 gap-2 border-t border-line pt-3 text-xs">
                             <div>
-                              <dt className="text-white/60">{t('bookingPage.baku')}</dt>
+                              <dt className="text-muted">{t('bookingPage.baku')}</dt>
                               <dd className="font-semibold tabular-nums">{fmtTime(slot.startsAt, 'Asia/Baku')}</dd>
                             </div>
                             <div>
-                              <dt className="text-white/60">{t('bookingPage.berlin')}</dt>
+                              <dt className="text-muted">{t('bookingPage.berlin')}</dt>
                               <dd className="font-semibold tabular-nums">{fmtTime(slot.startsAt, 'Europe/Berlin')}</dd>
                             </div>
                           </dl>
@@ -375,15 +376,15 @@ export default function Booking() {
                         <textarea id="bk-msg" className="input resize-y" rows={3} maxLength={2000} placeholder={t('bookingPage.messagePlaceholder')} value={form.message} onChange={(e) => setForm({ ...form, message: e.target.value })} />
                       </div>
                       <label className="flex items-start gap-2.5 text-xs text-muted">
-                        <input type="checkbox" required className="mt-0.5 size-4 shrink-0 accent-brand-600" checked={form.consent} onChange={(e) => setForm({ ...form, consent: e.target.checked })} />
+                        <input type="checkbox" required className="mt-0.5 size-4 shrink-0 accent-primary" checked={form.consent} onChange={(e) => setForm({ ...form, consent: e.target.checked })} />
                         <span>
                           {t('bookingPage.consent')}{' '}
-                          <Link to="/privacy" target="_blank" className="font-semibold text-brand-600 underline-offset-2 hover:underline">
+                          <Link to="/privacy" target="_blank" className="font-semibold text-link underline-offset-2 hover:underline">
                             {t('bookingPage.privacy')}
                           </Link>
                         </span>
                       </label>
-                      <button type="submit" className="btn-primary w-full" disabled={!ready || book.isPending}>
+                      <button type="submit" className="btn-primary btn-lg w-full" disabled={!ready || book.isPending}>
                         {book.isPending ? <Spinner className="size-4" /> : <Send className="size-4" aria-hidden />}
                         {book.isPending ? t('bookingPage.submitting') : t('bookingPage.submit')}
                       </button>
@@ -406,17 +407,15 @@ const Success = ({ result, email, tz, onAnother }: { result: BookResult; email: 
   const b = result.booking;
   const token = encodeURIComponent(result.manageToken);
   return (
-    <div className="card overflow-hidden" role="status">
-      <div className="bg-navy-900 px-6 py-8 text-center text-white sm:px-10">
-        <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', delay: 0.1 }} className="mx-auto grid size-16 place-items-center rounded-full bg-success">
-          <CheckCircle2 className="size-8" aria-hidden />
-        </motion.span>
-        <h2 className="mt-4 font-display text-2xl font-extrabold">{t('bookingPage.successTitle')}</h2>
-        <p className="mx-auto mt-2 max-w-md text-sm text-white/75">{t('bookingPage.successText', { email })}</p>
+    <div className="card overflow-hidden rounded-3xl" role="status">
+      <div className="bg-sunken px-6 py-8 text-center sm:px-10">
+        <SuccessArt className="mx-auto w-36" animated />
+        <h2 className="mt-4 font-display text-2xl font-semibold text-ink">{t('bookingPage.successTitle')}</h2>
+        <p className="mx-auto mt-2 max-w-md text-sm text-muted">{t('bookingPage.successText', { email })}</p>
       </div>
       <div className="card-pad space-y-5">
-        <div className="rounded-xl bg-surface p-4">
-          <p className="font-display text-lg font-bold text-navy-900">{labels.long(b.startsAt, tz)}</p>
+        <div className="rounded-2xl border border-line p-4">
+          <p className="font-display text-lg font-semibold text-ink">{labels.long(b.startsAt, tz)}</p>
           <p className="text-sm text-muted tabular-nums">
             {fmtTime(b.startsAt, tz)}–{fmtTime(b.endsAt, tz)} · {t('bookingPage.baku')} {fmtTime(b.startsAt, 'Asia/Baku')} · {t('bookingPage.berlin')} {fmtTime(b.startsAt, 'Europe/Berlin')}
           </p>
@@ -425,7 +424,7 @@ const Success = ({ result, email, tz, onAnother }: { result: BookResult; email: 
           <a href={b.meetingUrl} target="_blank" rel="noopener noreferrer" className="btn-primary">
             <Video className="size-4" aria-hidden /> {t('bookingPage.join')} <ExternalLink className="size-3.5" aria-hidden />
           </a>
-          <a href={`/api/booking/ics?token=${token}`} className="btn-ghost" download>
+          <a href={`/api/booking/ics?token=${token}`} className="btn-secondary" download>
             <CalendarPlus className="size-4" aria-hidden /> {t('bookingPage.addCalendar')}
           </a>
           <Link to={`/booking/manage?token=${token}`} className="btn-secondary">

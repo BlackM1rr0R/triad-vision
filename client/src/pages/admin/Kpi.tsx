@@ -89,12 +89,12 @@ export default function AdminKpi() {
           >
             <div className="overflow-x-auto">
               <table className="w-full min-w-[1100px] text-left text-xs">
-                <thead className="border-b border-line bg-surface/70 text-[10px] font-semibold tracking-wide whitespace-nowrap text-muted uppercase">
+                <thead className="border-b border-line bg-surface/70 text-xs font-medium whitespace-nowrap text-muted">
                   <tr>
-                    <th className="sticky left-0 z-10 bg-surface px-4 py-2">{t('team.kpi.staff')}</th>
+                    <th className="sticky left-0 z-10 bg-sunken px-4 py-2">{t('team.kpi.staff')}</th>
                     {METRICS.map((m) => (
                       <th key={m.key} className="px-2 py-2 text-right" aria-sort={sortKey === m.key ? 'descending' : undefined}>
-                        <button type="button" onClick={() => setSortKey(m.key)} className={clsx('inline-flex min-h-8 items-center uppercase hover:text-ink', sortKey === m.key && 'text-brand-700')}>
+                        <button type="button" onClick={() => setSortKey(m.key)} className={clsx('inline-flex min-h-8 items-center uppercase hover:text-ink', sortKey === m.key && 'text-link')}>
                           {t(`team.kpi.short.${m.key}`)}
                         </button>
                       </th>
@@ -104,12 +104,12 @@ export default function AdminKpi() {
                 </thead>
                 <tbody className="divide-y divide-line">
                   {rows.map((r, i) => (
-                    <tr key={r.staff.id} className={clsx(r.staff.id === user?.id && 'bg-brand-50/40')}>
+                    <tr key={r.staff.id} className={clsx(r.staff.id === user?.id && 'bg-primary/[0.04]')}>
                       <td className="sticky left-0 z-10 bg-card px-4 py-2">
                         <span className="flex items-center gap-2 whitespace-nowrap">
                           <span className="w-5 text-right text-muted tabular-nums">{i + 1}</span>
                           {user?.role === 'SUPER_ADMIN' ? (
-                            <Link to={`/admin/oversight/staff/${r.staff.id}`} className="font-semibold text-ink hover:text-brand-700 hover:underline">
+                            <Link to={`/admin/oversight/staff/${r.staff.id}`} className="font-semibold text-ink hover:text-link hover:underline">
                               {r.staff.name}
                             </Link>
                           ) : (
@@ -131,7 +131,7 @@ export default function AdminKpi() {
                 </tbody>
                 <tfoot className="border-t-2 border-line bg-surface/60 font-semibold">
                   <tr>
-                    <td className="sticky left-0 z-10 bg-surface px-4 py-2 whitespace-nowrap text-ink">{t('team.kpi.teamAverage', { count: data.team.size })}</td>
+                    <td className="sticky left-0 z-10 bg-sunken px-4 py-2 whitespace-nowrap text-ink">{t('team.kpi.teamAverage', { count: data.team.size })}</td>
                     {METRICS.map((m) => (
                       <td key={m.key} className="px-2 py-2 text-right whitespace-nowrap tabular-nums">
                         {m.fmt(data.team.average[m.key] as number | null)}

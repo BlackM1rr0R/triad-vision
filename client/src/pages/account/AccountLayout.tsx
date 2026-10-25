@@ -5,6 +5,7 @@ import clsx from 'clsx';
 import type { LucideIcon } from 'lucide-react';
 import { BookUser, Cake } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
+import { Avatar } from '@/components/ui/Avatar';
 import { SECTIONS, sectionOfLocation, sectionOfSub, subOfLocation, subPath, type SectionKey, type SubKey } from '@/lib/portalStage';
 import { profileCompleteness } from '@/components/portal/profileFields';
 import { ProgressRing } from '@/components/portal/ProgressRing';
@@ -73,14 +74,21 @@ const NavPill = ({
   <Link
     to={to}
     className={clsx(
-      'relative flex shrink-0 snap-start items-center gap-2 rounded-xl font-semibold whitespace-nowrap transition-colors',
-      small ? 'min-h-10 px-3 py-2 text-[13px]' : 'min-h-11 px-3.5 py-2.5 text-sm sm:px-4',
-      active ? 'text-navy-900' : 'text-white/75 hover:bg-white/10 hover:text-white',
+      'relative flex shrink-0 snap-start items-center gap-2 font-semibold whitespace-nowrap transition-colors',
+      small ? 'min-h-11 rounded-full px-3.5 py-2 text-[13px]' : 'min-h-12 rounded-t-xl px-3.5 py-3 text-sm sm:px-4',
+      active ? 'text-primary' : 'text-muted hover:bg-sunken hover:text-ink',
     )}
     aria-current={active ? 'page' : undefined}
     data-tour={tour}
   >
-    {active && <motion.span layoutId={layoutId} className="absolute inset-0 rounded-xl bg-white shadow-lg" transition={{ type: 'spring', stiffness: 420, damping: 34 }} />}
+    {active && (
+      <motion.span
+        layoutId={layoutId}
+        className={small ? 'absolute inset-0 rounded-full border border-line bg-sunken' : 'absolute inset-x-2 -bottom-px h-[3px] rounded-full bg-highlight'}
+        transition={{ type: 'spring', stiffness: 420, damping: 34 }}
+        aria-hidden
+      />
+    )}
     <Icon className="relative size-4 shrink-0" aria-hidden />
     <span className="relative">{label}</span>
     <Badge count={badge} label={badgeLabel} />
@@ -113,43 +121,34 @@ export default function AccountLayout() {
   const countLabel = (n: number) => t('pux.nav.badge', { count: n });
 
   return (
-    <div className="min-h-screen bg-surface pt-24 pb-16 sm:pt-28 sm:pb-24 lg:pt-40">
+    <div className="min-h-screen bg-canvas pt-24 pb-16 sm:pt-28 sm:pb-24 lg:pt-40">
       <div className="container-x">
-        <header className="vt-portal-header relative overflow-hidden rounded-3xl bg-gradient-to-br from-navy-950 via-navy-900 to-navy-700 px-5 pt-6 pb-3 text-white shadow-[0_30px_60px_-30px_rgba(5,15,36,0.8)] sm:px-8 sm:pt-8 sm:pb-4">
-          <div className="pointer-events-none absolute -top-24 -right-16 size-80 rounded-full bg-[radial-gradient(closest-side,var(--color-brand-500),transparent)] opacity-30" aria-hidden />
-          <div className="pointer-events-none absolute -bottom-32 left-1/3 size-72 rounded-full bg-[radial-gradient(closest-side,var(--color-brand-400),transparent)] opacity-15" aria-hidden />
-          <svg className="pointer-events-none absolute inset-0 size-full opacity-[0.07]" aria-hidden>
-            <defs>
-              <pattern id="portal-grid" width="32" height="32" patternUnits="userSpaceOnUse">
-                <path d="M32 0H0v32" fill="none" stroke="#fff" strokeWidth="1" />
-              </pattern>
-            </defs>
-            <rect width="100%" height="100%" fill="url(#portal-grid)" />
-          </svg>
-
-          <div className="relative">
+        <header className="vt-portal-header relative rounded-3xl border border-line bg-card px-5 pt-6 pb-2 shadow-[var(--tv-shadow-card)] sm:px-8 sm:pt-7 md:pb-0">
+          <div>
             {isClient && (
               <Link
                 to="/account/profile"
-                className="group float-right ml-4 flex items-center gap-3 rounded-2xl py-1 pr-1 pl-1 transition-colors hover:bg-white/10 sm:pl-3"
+                className="group float-right ml-4 flex min-h-11 items-center gap-3 rounded-2xl py-1 pr-1 pl-1 transition-colors hover:bg-sunken sm:pl-3"
                 aria-label={`${t('accountPage.header.profile')}: ${completeness.percent}% ${t('accountPage.header.complete')}`}
                 data-tour="portal-profile"
               >
                 <span className="hidden text-right sm:block">
-                  <span className="block text-xs font-semibold text-white/60">{t('accountPage.header.profile')}</span>
-                  <span className="block text-sm font-bold whitespace-nowrap text-white">
+                  <span className="block text-xs font-semibold text-muted">{t('accountPage.header.profile')}</span>
+                  <span className="block text-sm font-semibold whitespace-nowrap text-ink">
                     {completeness.percent < 100 ? t('accountPage.header.completeProfile') : `${completeness.percent}% ${t('accountPage.header.complete')}`}
                   </span>
                 </span>
-                <ProgressRing percent={completeness.percent} size={52} stroke={5} tone="light" />
+                {user && <Avatar name={`${user.firstName ?? ''} ${user.lastName ?? ''}`} size="lg" className="hidden sm:inline-flex" />}
+                <ProgressRing percent={completeness.percent} size={52} stroke={5} />
               </Link>
             )}
-            <motion.span className="eyebrow text-brand-400" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+            <motion.span className="type-overline inline-flex items-center gap-2 text-muted" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+              <span className="size-1.5 rounded-full bg-highlight" aria-hidden />
               {t('portal.title')}
-              {isClient && nav.overview && <span className="font-semibold text-white/60 normal-case"> · {t(`pnav.stage.${nav.stage}`)}</span>}
+              {isClient && nav.overview && <span className="font-semibold normal-case"> · {t(`pnav.stage.${nav.stage}`)}</span>}
             </motion.span>
             <motion.h1
-              className="mt-2 text-2xl font-extrabold break-words sm:text-4xl"
+              className="type-page-title mt-2 break-words text-ink"
               initial={{ opacity: 0, y: 14 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.05 }}
@@ -157,7 +156,7 @@ export default function AccountLayout() {
               {t('portal.hello')}, {user?.firstName}
             </motion.h1>
             {user?.email && (
-              <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-white/60">
+              <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted">
                 <span className="min-w-0 truncate">{user.email}</span>
                 {user.birthDate && (
                   <span className="hidden items-center gap-1.5 sm:inline-flex">
@@ -173,12 +172,12 @@ export default function AccountLayout() {
                     {user.passportNumber}
                   </span>
                 )}
-                <TourRestartButton tourId={CLIENT_TOUR} className="min-h-8 rounded-lg text-white/70 hover:text-white" />
+                <TourRestartButton tourId={CLIENT_TOUR} className="min-h-8 rounded-lg text-muted hover:text-ink" />
               </p>
             )}
 
             {/* Sections: desktop only (phones: bottom bar). */}
-            <nav className="clear-both mt-6 hidden gap-1 sm:mt-8 md:flex" aria-label={t('pnav.label')}>
+            <nav className="clear-both -mx-2 mt-6 hidden gap-1 border-t border-line pt-1 sm:mt-7 md:flex" aria-label={t('pnav.label')}>
               {SECTIONS.map((s) => (
                 <NavPill
                   key={s}
@@ -197,7 +196,7 @@ export default function AccountLayout() {
             {/* Pages of the open section (hidden when the section has a single page). */}
             {sectionSubs.length > 1 ? (
               <nav
-                className="clear-both -mx-5 mt-5 flex snap-x gap-1 overflow-x-auto px-4 pb-1 [scrollbar-width:none] sm:mx-0 sm:px-0 md:mt-2 md:border-t md:border-white/10 md:pt-2 [&::-webkit-scrollbar]:hidden"
+                className="clear-both -mx-5 mt-5 flex snap-x gap-1 overflow-x-auto px-4 pb-1 [scrollbar-width:none] sm:mx-0 sm:px-0 md:mt-0 md:border-t md:border-line md:py-3 [&::-webkit-scrollbar]:hidden"
                 aria-label={t('pnav.subLabel', { section: sectionLabel(t, currentSection) })}
               >
                 {sectionSubs.map((sub) => (

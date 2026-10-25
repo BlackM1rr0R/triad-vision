@@ -16,9 +16,9 @@ export const CheckList = ({ items, columns = 1 }: { items: string[]; columns?: 1
   <Stagger className={columns === 2 ? 'grid gap-3 sm:grid-cols-2' : 'grid gap-3'}>
     {items.map((it) => (
       <StaggerItem key={it}>
-        <div className="flex h-full items-start gap-3 rounded-xl border border-line bg-white p-4">
-          <CheckCircle2 className="mt-0.5 size-5 shrink-0 text-brand-600" />
-          <span className="text-sm leading-relaxed text-navy-900">{it}</span>
+        <div className="flex h-full items-start gap-3 rounded-xl border border-line bg-card p-4">
+          <CheckCircle2 className="mt-0.5 size-5 shrink-0 text-success" aria-hidden />
+          <span className="text-sm leading-relaxed text-ink">{it}</span>
         </div>
       </StaggerItem>
     ))}
@@ -60,9 +60,9 @@ export const PrintableChecklist = ({
       <style>{PRINT_CSS}</style>
       <ol className="grid gap-2.5 sm:grid-cols-2">
         {items.map((it, i) => (
-          <li key={it} className="flex items-start gap-3 rounded-xl border border-line bg-white p-4">
-            <span className="grid size-6 shrink-0 place-items-center rounded-md bg-brand-50 font-display text-xs font-bold text-brand-700 tabular-nums">{i + 1}</span>
-            <span className="text-sm leading-relaxed text-navy-900">{it}</span>
+          <li key={it} className="flex items-start gap-3 rounded-xl border border-line bg-card p-4">
+            <span className="grid size-6 shrink-0 place-items-center rounded-md bg-sunken font-display text-xs font-semibold text-ink tabular-nums">{i + 1}</span>
+            <span className="text-sm leading-relaxed text-ink">{it}</span>
           </li>
         ))}
       </ol>

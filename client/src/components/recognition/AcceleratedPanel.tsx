@@ -150,7 +150,7 @@ const Procedure = ({ d, p, caseId }: { d: CaseAccelerated; p: AcceleratedProcedu
       case 'PRE_APPROVAL':
         action = (
           <div className="space-y-2">
-            {p.appointmentDeadline && <p className="rounded-lg bg-brand-50 px-3 py-2 text-xs text-brand-700">{t('accel.action.notifyEmbassyPrompt', { date: fmtDate(p.appointmentDeadline) })}</p>}
+            {p.appointmentDeadline && <p className="rounded-lg bg-primary/[0.06] px-3 py-2 text-xs text-link">{t('accel.action.notifyEmbassyPrompt', { date: fmtDate(p.appointmentDeadline) })}</p>}
             <StepButton label={t('accel.action.notifyEmbassy')} onClick={() => withDate('EMBASSY_NOTIFIED')} busy={step.isPending} />
           </div>
         );
@@ -172,7 +172,7 @@ const Procedure = ({ d, p, caseId }: { d: CaseAccelerated; p: AcceleratedProcedu
         action = (
           <div className="flex flex-wrap gap-2">
             <StepButton label={t('accel.action.visaDecided')} onClick={() => withDate('DECIDED', { outcome: 'VISA_DECIDED' })} busy={step.isPending} />
-            <button type="button" className="btn-ghost btn-sm text-danger" disabled={step.isPending} onClick={() => withDate('DECIDED', { outcome: 'REJECTED' })}>
+            <button type="button" className="btn-secondary btn-sm text-danger-fg" disabled={step.isPending} onClick={() => withDate('DECIDED', { outcome: 'REJECTED' })}>
               <XCircle className="size-3.5" aria-hidden /> {t('accel.action.rejected')}
             </button>
           </div>
@@ -192,11 +192,11 @@ const Procedure = ({ d, p, caseId }: { d: CaseAccelerated; p: AcceleratedProcedu
             key={s.status}
             className={clsx(
               'flex items-center gap-2 rounded-lg border px-2.5 py-1.5 text-xs',
-              s.current && !p.final ? 'border-brand-400 bg-brand-50 font-semibold text-brand-700' : s.done ? 'border-line bg-surface/60 text-ink/80' : 'border-dashed border-line text-muted',
+              s.current && !p.final ? 'border-line-strong bg-primary/[0.06] font-semibold text-link' : s.done ? 'border-line bg-surface/60 text-ink/80' : 'border-dashed border-line text-muted',
             )}
             aria-current={s.current ? 'step' : undefined}
           >
-            <span className={clsx('grid size-5 shrink-0 place-items-center rounded-full text-[10px] tabular-nums', s.done ? 'bg-brand-600 text-white' : 'bg-surface text-muted')}>{s.done ? <Check className="size-3" aria-hidden /> : i + 1}</span>
+            <span className={clsx('grid size-5 shrink-0 place-items-center rounded-full text-[10px] tabular-nums', s.done ? 'bg-primary text-primary-contrast' : 'bg-sunken text-muted')}>{s.done ? <Check className="size-3" aria-hidden /> : i + 1}</span>
             <span className="min-w-0 flex-1 truncate">{t(`accel.status.${s.status}`)}</span>
             {s.at && <span className="shrink-0 text-[10px] text-muted tabular-nums">{fmtDate(s.at)}</span>}
           </li>
@@ -206,8 +206,8 @@ const Procedure = ({ d, p, caseId }: { d: CaseAccelerated; p: AcceleratedProcedu
 
       {/* Current step: what to do */}
       {!p.final && (
-        <div className="rounded-xl border border-brand-200 bg-card p-3">
-          <p className="text-sm font-semibold text-navy-900">{t(`accel.status.${p.status}`)}</p>
+        <div className="rounded-xl border border-primary/25 bg-card p-3">
+          <p className="text-sm font-semibold text-ink">{t(`accel.status.${p.status}`)}</p>
           <p className="mt-0.5 text-xs text-ink/80">{t(`accel.todo.${p.status}`, { defaultValue: '' })}</p>
           <div className="mt-3 flex flex-wrap items-end gap-3">
             {action}
@@ -237,12 +237,12 @@ const Procedure = ({ d, p, caseId }: { d: CaseAccelerated; p: AcceleratedProcedu
                 }}
               >
                 <input className="input min-w-0 flex-1 py-1 text-xs" placeholder={t('accel.action.cancelReason')} value={cancelReason} maxLength={2000} onChange={(e) => setCancelReason(e.target.value)} />
-                <button type="submit" className="btn-ghost btn-sm text-danger" disabled={cancelReason.trim().length < 3 || step.isPending}>
+                <button type="submit" className="btn-secondary btn-sm text-danger-fg" disabled={cancelReason.trim().length < 3 || step.isPending}>
                   {t('accel.action.cancel')}
                 </button>
               </form>
             ) : (
-              <button type="button" className="btn-ghost btn-sm text-xs text-muted" onClick={() => setCancelling(true)}>
+              <button type="button" className="btn-secondary btn-sm text-xs text-muted" onClick={() => setCancelling(true)}>
                 <XCircle className="size-3.5" aria-hidden /> {t('accel.action.cancel')}
               </button>
             )}
@@ -253,7 +253,7 @@ const Procedure = ({ d, p, caseId }: { d: CaseAccelerated; p: AcceleratedProcedu
       <div className="grid gap-4 lg:grid-cols-2">
         <Details p={p} caseId={caseId} locale={locale} />
         <section>
-          <h4 className="mb-2 text-sm font-semibold text-navy-900">{t('accel.deadlines.title')}</h4>
+          <h4 className="mb-2 text-sm font-semibold text-ink">{t('accel.deadlines.title')}</h4>
           {p.deadlines.length === 0 ? (
             <p className="text-xs text-muted">{t('accel.deadlines.none')}</p>
           ) : (
@@ -403,7 +403,7 @@ const Correspondence = ({ d, p, caseId }: { d: CaseAccelerated; p: AcceleratedPr
   });
   return (
     <section className="space-y-3">
-      <h4 className="text-sm font-semibold text-navy-900">{t('accel.messages.title')}</h4>
+      <h4 className="text-sm font-semibold text-ink">{t('accel.messages.title')}</h4>
       <form
         className="grid gap-2 rounded-xl border border-dashed border-line p-3 sm:grid-cols-4"
         onSubmit={(e) => {
@@ -447,19 +447,19 @@ const Correspondence = ({ d, p, caseId }: { d: CaseAccelerated; p: AcceleratedPr
         <ul className="divide-y divide-line rounded-xl border border-line">
           {d.messages.map((m) => (
             <li key={m.id} className="flex gap-3 px-3 py-2.5 text-sm">
-              <span className={clsx('mt-0.5 grid size-7 shrink-0 place-items-center rounded-lg', m.direction === 'IN' ? 'bg-info-bg text-info-fg' : 'bg-brand-100 text-brand-700')} title={t(`accel.messages.direction.${m.direction}`)}>
+              <span className={clsx('mt-0.5 grid size-7 shrink-0 place-items-center rounded-lg', m.direction === 'IN' ? 'bg-info-bg text-info-fg' : 'bg-primary/10 text-link')} title={t(`accel.messages.direction.${m.direction}`)}>
                 {m.direction === 'IN' ? <ArrowDownLeft className="size-4" aria-hidden /> : <ArrowUpRight className="size-4" aria-hidden />}
               </span>
               <div className="min-w-0 flex-1">
                 <p className="font-medium break-words text-ink">{m.subject || t(`accel.messages.direction.${m.direction}`)}</p>
-                {m.body && <p className="mt-0.5 line-clamp-3 text-xs break-words whitespace-pre-line text-ink/70">{m.body}</p>}
+                {m.body && <p className="mt-0.5 line-clamp-3 text-xs break-words whitespace-pre-line text-muted">{m.body}</p>}
                 <p className="mt-0.5 flex flex-wrap items-center gap-x-2 text-[11px] text-muted">
                   <span>{t(`accel.messages.channel.${m.channel}`)}</span>
                   <span>{fmtDateTime(m.at)}</span>
                   {m.actor && <span>{m.actor}</span>}
                   {m.dueAt && <span className="font-semibold text-warning-fg">{t('accel.messages.due', { date: fmtDate(m.dueAt) })}</span>}
                   {m.documentId && (
-                    <a href={fileUrl(m.documentId)} target="_blank" rel="noreferrer" className="inline-flex items-center gap-0.5 text-brand-600 hover:underline">
+                    <a href={fileUrl(m.documentId)} target="_blank" rel="noreferrer" className="inline-flex items-center gap-0.5 text-link hover:underline">
                       <ExternalLink className="size-3" aria-hidden /> PDF
                     </a>
                   )}
@@ -507,7 +507,7 @@ const SubmissionDialog = ({ procedureId, documents, onClose, onSent }: { procedu
       busy={send.isPending}
       footer={
         <>
-          <button type="button" className="btn-ghost btn-sm" onClick={onClose}>
+          <button type="button" className="btn-secondary btn-sm" onClick={onClose}>
             {t('admin.common.cancel')}
           </button>
           <button type="button" className="btn-primary btn-sm" disabled={!valid || send.isPending} onClick={() => send.mutate()}>
@@ -534,9 +534,9 @@ const SubmissionDialog = ({ procedureId, documents, onClose, onSent }: { procedu
           </label>
           <fieldset>
             <legend className="label">
-              {t('accel.submission.attachments')} <span className={clsx('tabular-nums', tooLarge ? 'text-danger' : 'text-muted')}>({formatBytes(bytes)})</span>
+              {t('accel.submission.attachments')} <span className={clsx('tabular-nums', tooLarge ? 'text-danger-fg' : 'text-muted')}>({formatBytes(bytes)})</span>
             </legend>
-            {tooLarge && <p className="text-xs text-danger">{t('accel.submission.tooLarge')}</p>}
+            {tooLarge && <p className="text-xs text-danger-fg">{t('accel.submission.tooLarge')}</p>}
             <ul className="mt-1 max-h-56 space-y-1 overflow-y-auto rounded-xl border border-line p-2">
               {documents.map((x) => (
                 <li key={x.id}>

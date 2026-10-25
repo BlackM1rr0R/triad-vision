@@ -96,7 +96,7 @@ const MaskingSettings = () => {
                     <td key={r} className="px-3 py-2.5 text-center">
                       <input
                         type="checkbox"
-                        className="size-4 accent-brand-600"
+                        className="size-4 accent-primary"
                         checked={form[r].includes(g)}
                         onChange={() => toggle(r, g)}
                         aria-label={`${t(`privacyTools.access.role.${r}`)} · ${t(`privacyTools.access.groups.${g}`)}`}
@@ -230,7 +230,7 @@ const RevealLog = () => {
                       </span>
                     </td>
                     <td className="px-3 py-2.5 break-words text-ink/90">{r.reason}</td>
-                    <td className="py-2.5 pl-3 font-mono text-xs text-muted">{r.ip ?? '—'}</td>
+                    <td className="py-2.5 pl-3 code-id text-xs text-muted">{r.ip ?? '—'}</td>
                   </tr>
                 ))}
               </tbody>
@@ -251,11 +251,11 @@ const RevealLog = () => {
             ))}
           </ul>
           <div className="mt-4 flex items-center justify-between gap-3 text-sm">
-            <button type="button" className="btn-ghost btn-sm" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
+            <button type="button" className="btn-secondary btn-sm" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
               {t('privacyTools.access.prev')}
             </button>
             <span className="text-muted">{t('privacyTools.access.page', { page })}</span>
-            <button type="button" className="btn-ghost btn-sm" disabled={!data.hasMore} onClick={() => setPage((p) => p + 1)}>
+            <button type="button" className="btn-secondary btn-sm" disabled={!data.hasMore} onClick={() => setPage((p) => p + 1)}>
               {t('privacyTools.access.next')}
             </button>
           </div>

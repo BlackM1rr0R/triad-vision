@@ -33,20 +33,20 @@ const AudienceBar = ({ audience, onChoose }: { audience: Audience; onChoose: (a:
   const { t } = useTranslation();
   const other: Audience = audience === 'worker' ? 'employer' : 'worker';
   return (
-    <div className="border-b border-line bg-surface">
+    <div className="border-b border-line bg-sunken">
       <div className="container-x flex flex-col gap-2 py-3 text-sm sm:flex-row sm:items-center sm:justify-between">
-        <p className="font-semibold text-navy-900" aria-live="polite">
+        <p className="font-semibold text-ink" aria-live="polite">
           {t(audience === 'worker' ? 'siteNav.home.showingWorker' : 'siteNav.home.showingEmployer')}
         </p>
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
-          <button type="button" onClick={() => onChoose(other)} className="inline-flex min-h-9 items-center gap-1.5 font-semibold text-brand-700 hover:underline">
+          <button type="button" onClick={() => onChoose(other)} className="inline-flex min-h-9 items-center gap-1.5 font-semibold text-link hover:underline">
             <Repeat className="size-4" aria-hidden />
             {t(other === 'worker' ? 'siteNav.home.switchToWorker' : 'siteNav.home.switchToEmployer')}
           </button>
-          <button type="button" onClick={() => onChoose(null)} className="inline-flex min-h-9 items-center text-muted hover:text-navy-900 hover:underline">
+          <button type="button" onClick={() => onChoose(null)} className="inline-flex min-h-9 items-center text-muted hover:text-ink hover:underline">
             {t('siteNav.home.showAll')}
           </button>
-          <Link to={AUDIENCE_PATH[audience]} className="inline-flex min-h-9 items-center gap-1 font-semibold text-navy-900 hover:text-brand-700">
+          <Link to={AUDIENCE_PATH[audience]} className="inline-flex min-h-9 items-center gap-1 font-semibold text-ink hover:text-link">
             {t('siteNav.home.fullPage')} <ArrowRight className="size-4" aria-hidden />
           </Link>
         </div>

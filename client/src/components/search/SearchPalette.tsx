@@ -35,7 +35,7 @@ export const SearchButton = ({ light = false, className }: { light?: boolean; cl
       title={`${t('search.button')} (${hint})`}
       className={clsx(
         'inline-flex h-10 min-w-10 shrink-0 items-center justify-center gap-2 rounded-full transition-colors duration-300 lg:px-3',
-        light ? 'text-white hover:bg-white/10' : 'text-navy-900 hover:bg-brand-50',
+        light ? 'text-white hover:bg-white/10' : 'text-ink hover:bg-sunken',
         className,
       )}
     >

@@ -323,7 +323,7 @@ export const PartnersOverview = ({ items, onOpen }: { items: DriveItem[]; onOpen
                       <FolderOpen className="size-3.5" /> {t('drive.partner.openFolder')}
                     </button>
                   ) : (
-                    <button type="button" className="btn-white btn-sm border border-dashed border-teal-400 !px-2 text-teal-700 dark:text-teal-300" disabled={ensureFolder.isPending} onClick={() => ensureFolder.mutate(p)}>
+                    <button type="button" className="btn-secondary btn-sm border border-dashed border-teal-400 !px-2 text-teal-700 dark:text-teal-300" disabled={ensureFolder.isPending} onClick={() => ensureFolder.mutate(p)}>
                       {creating ? <Spinner className="size-3.5" /> : <FolderPlus className="size-3.5" />} {t('drive.partner.noFolder')}
                     </button>
                   )}
@@ -336,7 +336,7 @@ export const PartnersOverview = ({ items, onOpen }: { items: DriveItem[]; onOpen
                     <span className="sr-only">{t('drive.partner.edit')}</span>
                   </button>
                   {canDelete && (
-                    <button type="button" className="btn-secondary btn-sm !px-2 text-danger" onClick={() => setDeleting(p)} title={t('drive.partner.deletePartner')}>
+                    <button type="button" className="btn-secondary btn-sm !px-2 text-danger-fg" onClick={() => setDeleting(p)} title={t('drive.partner.deletePartner')}>
                       <Trash2 className="size-3.5" />
                       <span className="sr-only">{t('drive.partner.deletePartner')}</span>
                     </button>
@@ -390,7 +390,7 @@ export const PartnerFolderHeader = ({ folder }: { folder: DriveItem }) => {
           <Pencil className="size-3.5" /> {t('drive.partner.edit')}
         </button>
         {canDelete && (
-          <button type="button" className="btn-secondary btn-sm !px-2 text-danger" disabled={!p} onClick={() => setDeleting(true)}>
+          <button type="button" className="btn-secondary btn-sm !px-2 text-danger-fg" disabled={!p} onClick={() => setDeleting(true)}>
             <Trash2 className="size-3.5" /> {t('drive.partner.deletePartner')}
           </button>
         )}

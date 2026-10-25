@@ -27,7 +27,7 @@ export default function DuplicatesDialog({ folderId, folderName, onClose, onOpen
       {q.isLoading ? (
         <Spinner className="size-5" />
       ) : q.isError ? (
-        <p className="text-sm text-danger">{driveError(q.error)}</p>
+        <p className="text-sm text-danger-fg">{driveError(q.error)}</p>
       ) : (
         <div className="space-y-3 text-sm">
           <p className="text-muted">
@@ -51,7 +51,7 @@ export default function DuplicatesDialog({ folderId, folderName, onClose, onOpen
                         </span>
                       </span>
                       {i.parentId && (
-                        <button type="button" className="inline-flex shrink-0 items-center gap-1 rounded-md px-1.5 py-1 font-semibold text-brand-700 hover:bg-surface dark:text-brand-300" onClick={() => onOpenFolder(i.parentId!, i.id)}>
+                        <button type="button" className="inline-flex shrink-0 items-center gap-1 rounded-md px-1.5 py-1 font-semibold text-link hover:bg-sunken dark:text-brand-300" onClick={() => onOpenFolder(i.parentId!, i.id)}>
                           <FolderOpen className="size-3.5" /> {t('driveOrg.duplicates.open')}
                         </button>
                       )}

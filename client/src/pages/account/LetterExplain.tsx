@@ -13,6 +13,7 @@ import { pagesAiDocs } from '@/i18n/pagesAiDocs';
 import { useL10n } from '@/lib/l10n';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { aiLimitMessage, errorCode, fetchLetters, lettersKey, type LetterItem } from '@/components/aiDocs/api';
+import { EmptyInbox } from '@/components/illustrations';
 
 registerCopy(pagesAiDocs);
 
@@ -36,7 +37,7 @@ const URGENCY_TONE = toneClasses(STATUS_TONES.urgency);
 
 const Section = ({ icon: Icon, title, children }: { icon: typeof FileText; title: string; children: ReactNode }) => (
   <section>
-    <h4 className="mb-1.5 flex items-center gap-1.5 text-xs font-bold tracking-wide text-muted uppercase">
+    <h4 className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold tracking-wide text-muted uppercase">
       <Icon className="size-3.5" aria-hidden /> {title}
     </h4>
     {children}
@@ -77,7 +78,7 @@ const LetterCard = ({ item, defaultOpen }: { item: LetterItem; defaultOpen?: boo
   return (
     <li className="card overflow-hidden">
       <button type="button" className="flex w-full items-start gap-3 p-4 text-left sm:p-5" onClick={() => setOpen((o) => !o)} aria-expanded={open}>
-        <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-brand-100 text-brand-700">
+        <span className="grid size-10 shrink-0 place-items-center rounded-xl chip-soft">
           <MailQuestion className="size-5" aria-hidden />
         </span>
         <span className="min-w-0 flex-1">
@@ -122,7 +123,7 @@ const LetterCard = ({ item, defaultOpen }: { item: LetterItem; defaultOpen?: boo
                       <span
                         className={clsx(
                           'badge whitespace-nowrap',
-                          left < 0 ? 'bg-slate-200 text-slate-700' : left <= 7 ? URGENCY_TONE.high : left <= 21 ? URGENCY_TONE.medium : URGENCY_TONE.low,
+                          left < 0 ? 'bg-neutral-bg text-neutral-fg' : left <= 7 ? URGENCY_TONE.high : left <= 21 ? URGENCY_TONE.medium : URGENCY_TONE.low,
                         )}
                       >
                         {left < 0 ? t('aiDocs.letters.overdue') : left === 0 ? t('aiDocs.letters.dueToday') : t('aiDocs.letters.daysLeft', { count: left })}
@@ -170,7 +171,7 @@ const LetterCard = ({ item, defaultOpen }: { item: LetterItem; defaultOpen?: boo
             </Section>
           )}
 
-          <p className="flex gap-2 rounded-lg bg-surface p-3 text-xs leading-relaxed text-muted">
+          <p className="flex gap-2 rounded-lg bg-sunken p-3 text-xs leading-relaxed text-muted">
             <ShieldAlert className="mt-0.5 size-3.5 shrink-0" aria-hidden />
             {t('aiDocs.letters.disclaimer')}
           </p>
@@ -266,8 +267,8 @@ export default function LetterExplain() {
   return (
     <div className="space-y-6">
       <div className="min-w-0">
-        <h2 className="flex items-center gap-2 text-xl font-extrabold text-ink sm:text-2xl">
-          <MailQuestion className="size-6 text-brand-600" aria-hidden /> {t('aiDocs.letters.title')}
+        <h2 className="flex items-center gap-2 text-xl font-semibold text-ink sm:text-2xl">
+          <MailQuestion className="size-6 text-primary" aria-hidden /> {t('aiDocs.letters.title')}
         </h2>
         <p className="mt-1 max-w-2xl text-sm text-muted">{t('aiDocs.letters.subtitle')}</p>
       </div>
@@ -278,9 +279,9 @@ export default function LetterExplain() {
           type="button"
           onClick={() => inputRef.current?.click()}
           disabled={explain.isPending || files.length >= MAX_FILES}
-          className="flex w-full flex-col items-center gap-2 rounded-xl border-2 border-dashed border-line bg-surface px-4 py-8 text-center transition hover:border-brand-400 hover:bg-brand-50/40 disabled:opacity-60"
+          className="flex w-full flex-col items-center gap-2 rounded-xl border-2 border-dashed border-line bg-sunken px-4 py-8 text-center transition hover:border-primary hover:bg-sunken disabled:opacity-60"
         >
-          <Camera className="size-8 text-brand-600" aria-hidden />
+          <Camera className="size-8 text-primary" aria-hidden />
           <span className="font-semibold text-ink">{t('aiDocs.letters.pick')}</span>
           <span className="text-xs text-muted">{t('aiDocs.letters.pickHint')}</span>
         </button>
@@ -294,7 +295,7 @@ export default function LetterExplain() {
                 <span className="shrink-0 text-xs text-muted">{formatBytes(f.size)}</span>
                 <button
                   type="button"
-                  className="grid size-8 place-items-center rounded-lg text-muted hover:bg-surface hover:text-danger"
+                  className="grid size-8 place-items-center rounded-lg text-muted hover:bg-sunken hover:text-danger"
                   onClick={() => setFiles((l) => l.filter((_, j) => j !== i))}
                   disabled={explain.isPending}
                   aria-label={`${t('aiDocs.letters.clear')}: ${f.name}`}
@@ -306,7 +307,7 @@ export default function LetterExplain() {
           </ul>
         )}
 
-        {limit && <p className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-100">{limit}</p>}
+        {limit && <p className="rounded-lg border border-warning-border bg-warning-bg p-3 text-sm text-warning-fg">{limit}</p>}
 
         <div className="flex flex-wrap items-center gap-3">
           <button type="button" className="btn-primary" disabled={!files.length || explain.isPending} onClick={() => explain.mutate()}>
@@ -323,7 +324,7 @@ export default function LetterExplain() {
       </div>
 
       <section aria-labelledby="letters-history">
-        <h3 id="letters-history" className="mb-3 text-base font-bold text-ink">
+        <h3 id="letters-history" className="mb-3 text-base font-semibold text-ink">
           {t('aiDocs.letters.history')}
         </h3>
         {list.isLoading ? (
@@ -332,11 +333,8 @@ export default function LetterExplain() {
           </div>
         ) : items.length === 0 ? (
           <div className="card flex flex-col items-center px-6 py-10 text-center">
-            {/* TODO(ui): large portal empty state (size-14 icon, display title) -> <EmptyState size="lg" tone="brand"> (portal rework) */}
-            <span className="grid size-12 place-items-center rounded-2xl bg-brand-100 text-brand-600">
-              <MailQuestion className="size-6" aria-hidden />
-            </span>
-            <p className="mt-3 font-bold text-ink">{t('aiDocs.letters.empty')}</p>
+            <EmptyInbox className="w-40" />
+            <p className="type-card-title mt-3">{t('aiDocs.letters.empty')}</p>
             <p className="mt-1 max-w-md text-sm text-muted">{t('aiDocs.letters.emptyHint')}</p>
           </div>
         ) : (

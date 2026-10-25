@@ -2,6 +2,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Building2, Layers, MapPin } from 'lucide-react';
 import { PageHero } from '@/components/layout/PageHero';
+import { Handshake } from '@/components/illustrations';
 import { HeroChips } from '@/components/about/shared';
 import { cityCoords } from '@/components/about/geo';
 import { PartnerModal, sectorOf } from '@/components/partners/parts';
@@ -40,18 +41,18 @@ export default function Partners() {
 
   return (
     <>
-      <PageHero title={t('partnersPage.hero.title')} subtitle={t('partnersPage.hero.subtitle')} image="https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?auto=format&fit=crop&w=2000&q=70">
+      <PageHero title={t('partnersPage.hero.title')} subtitle={t('partnersPage.hero.subtitle')} illustration={<Handshake />}>
         {partners.length > 0 && (
           <HeroChips
             items={[
               <>
-                <Building2 className="size-4 text-brand-400" /> {partners.length} {t('partnersPage.hero.partners')}
+                <Building2 className="size-4 text-muted" /> {partners.length} {t('partnersPage.hero.partners')}
               </>,
               <>
-                <MapPin className="size-4 text-brand-400" /> {cities} {t('partnersPage.hero.cities')}
+                <MapPin className="size-4 text-muted" /> {cities} {t('partnersPage.hero.cities')}
               </>,
               <>
-                <Layers className="size-4 text-brand-400" /> {sectors} {t('partnersPage.hero.sectors')}
+                <Layers className="size-4 text-muted" /> {sectors} {t('partnersPage.hero.sectors')}
               </>,
             ]}
           />

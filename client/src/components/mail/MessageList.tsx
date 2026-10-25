@@ -20,7 +20,7 @@ export interface ListFilters {
 export const EMPTY_LIST_FILTERS: ListFilters = { q: '', from: '', to: '', unread: false, hasAttachments: false };
 
 const IconBtn = ({ onClick, label, children, active, danger }: { onClick: () => void; label: string; children: ReactNode; active?: boolean; danger?: boolean }) => (
-  <button type="button" onClick={onClick} title={label} aria-label={label} className={clsx('grid size-8 place-items-center rounded-lg transition', active ? 'bg-brand-100 text-brand-700' : 'text-muted hover:bg-surface hover:text-ink', danger && 'hover:text-danger')}>
+  <button type="button" onClick={onClick} title={label} aria-label={label} className={clsx('grid size-8 place-items-center rounded-lg transition', active ? 'bg-primary/10 text-link' : 'text-muted hover:bg-sunken hover:text-ink', danger && 'hover:text-danger-fg')}>
     {children}
   </button>
 );
@@ -115,7 +115,7 @@ export const MessageList = ({
       <div className="shrink-0 border-b border-line px-3 pt-3 pb-2">
         <div className="mb-2 flex items-center gap-2">
           <h2 className="min-w-0 flex-1 truncate text-sm font-bold text-ink">{title}</h2>
-          <button type="button" onClick={() => onThreads(!threads)} className={clsx('inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-semibold', threads ? 'bg-brand-100 text-brand-700' : 'text-muted hover:bg-surface')} title={t('mail.list.threadsOn')} aria-pressed={threads}>
+          <button type="button" onClick={() => onThreads(!threads)} className={clsx('inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-semibold', threads ? 'bg-primary/10 text-link' : 'text-muted hover:bg-sunken')} title={t('mail.list.threadsOn')} aria-pressed={threads}>
             <MessagesSquare className="size-3.5" /> {t('mail.list.threads')}
           </button>
         </div>
@@ -134,10 +134,10 @@ export const MessageList = ({
           </IconBtn>
         </div>
         <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-          <button type="button" onClick={() => onFilters({ ...filters, unread: !filters.unread })} className={clsx('rounded-full border px-2 py-0.5 text-xs font-semibold', filters.unread ? 'border-brand-500 bg-brand-50 text-brand-700' : 'border-line text-muted hover:text-ink')}>
+          <button type="button" onClick={() => onFilters({ ...filters, unread: !filters.unread })} className={clsx('rounded-full border px-2 py-0.5 text-xs font-semibold', filters.unread ? 'border-primary bg-primary/[0.06] text-link' : 'border-line text-muted hover:text-ink')}>
             {t('mail.list.filters.unread')}
           </button>
-          <button type="button" onClick={() => onFilters({ ...filters, hasAttachments: !filters.hasAttachments })} className={clsx('rounded-full border px-2 py-0.5 text-xs font-semibold', filters.hasAttachments ? 'border-brand-500 bg-brand-50 text-brand-700' : 'border-line text-muted hover:text-ink')}>
+          <button type="button" onClick={() => onFilters({ ...filters, hasAttachments: !filters.hasAttachments })} className={clsx('rounded-full border px-2 py-0.5 text-xs font-semibold', filters.hasAttachments ? 'border-primary bg-primary/[0.06] text-link' : 'border-line text-muted hover:text-ink')}>
             {t('mail.list.filters.attachments')}
           </button>
           {more && (
@@ -151,11 +151,11 @@ export const MessageList = ({
       </div>
 
       {selected.size > 0 ? (
-        <div className="flex shrink-0 items-center gap-1 border-b border-line bg-brand-50 px-2 py-1 text-xs">
+        <div className="flex shrink-0 items-center gap-1 border-b border-line bg-primary/[0.06] px-2 py-1 text-xs">
           <IconBtn onClick={onToggleAll} label={t('mail.list.selectAll')}>
-            {allSelected ? <CheckSquare className="size-4 text-brand-600" /> : <Square className="size-4" />}
+            {allSelected ? <CheckSquare className="size-4 text-link" /> : <Square className="size-4" />}
           </IconBtn>
-          <span className="font-semibold text-brand-700">{t('mail.list.selected', { count: selected.size })}</span>
+          <span className="font-semibold text-link">{t('mail.list.selected', { count: selected.size })}</span>
           <span className="flex-1" />
           <IconBtn onClick={() => bulk('read')} label={t('mail.actions.markRead')}>
             <MailOpen className="size-4" />
@@ -195,7 +195,7 @@ export const MessageList = ({
 
       <div ref={listRef} className="min-h-0 flex-1 overflow-y-auto" role="listbox" aria-label={title}>
         {loading && !items.length && (
-          <div className="grid h-40 place-items-center text-brand-600">
+          <div className="grid h-40 place-items-center text-link">
             <Spinner />
           </div>
         )}
@@ -223,8 +223,8 @@ export const MessageList = ({
             const isSel = selected.has(m.id);
             const isActive = m.id === activeId;
             return (
-              <li key={m.id} data-id={m.id} className={clsx('group relative border-b border-line/70', isActive ? 'bg-brand-50' : isSel ? 'bg-brand-50/60' : 'hover:bg-surface')}>
-                <div className={clsx('absolute inset-y-0 left-0 w-0.5', isActive ? 'bg-brand-600' : !m.seen ? 'bg-brand-400' : 'bg-transparent')} aria-hidden />
+              <li key={m.id} data-id={m.id} className={clsx('group relative border-b border-line/70', isActive ? 'bg-primary/[0.06]' : isSel ? 'bg-primary/[0.04]' : 'hover:bg-sunken')}>
+                <div className={clsx('absolute inset-y-0 left-0 w-0.5', isActive ? 'bg-primary' : !m.seen ? 'bg-primary/40' : 'bg-transparent')} aria-hidden />
                 <div className="flex items-start gap-2 px-2 py-2.5 pl-3">
                   <button
                     type="button"
@@ -232,7 +232,7 @@ export const MessageList = ({
                       e.stopPropagation();
                       onToggle(m.id, e.shiftKey);
                     }}
-                    className={clsx('mt-1 grid size-7 shrink-0 place-items-center rounded-full text-[0.65rem] font-bold', isSel ? 'bg-brand-600 text-white' : avatarTone(counterpart?.address ?? m.id))}
+                    className={clsx('mt-1 grid size-7 shrink-0 place-items-center rounded-full text-[0.65rem] font-bold', isSel ? 'bg-primary text-primary-contrast' : avatarTone(counterpart?.address ?? m.id))}
                     aria-label={t('mail.list.selectAll')}
                     aria-pressed={isSel}
                   >
@@ -242,18 +242,18 @@ export const MessageList = ({
                   <button type="button" onClick={() => onOpen(m)} className="min-w-0 flex-1 text-left" aria-current={isActive ? 'true' : undefined}>
                     <span className="flex items-baseline gap-2">
                       <span className={clsx('min-w-0 flex-1 truncate text-sm', m.seen ? 'text-ink' : 'font-bold text-ink')}>{who}</span>
-                      {m.threadCount > 1 && <span className="shrink-0 rounded-md bg-surface px-1 text-[0.65rem] font-semibold text-muted">{m.threadCount}</span>}
-                      <span className={clsx('shrink-0 text-[0.7rem] tabular-nums', m.seen ? 'text-muted' : 'font-semibold text-brand-700')}>{fmtListDate(m.date)}</span>
+                      {m.threadCount > 1 && <span className="shrink-0 rounded-md bg-sunken px-1 text-[0.65rem] font-semibold text-muted">{m.threadCount}</span>}
+                      <span className={clsx('shrink-0 text-[0.7rem] tabular-nums', m.seen ? 'text-muted' : 'font-semibold text-link')}>{fmtListDate(m.date)}</span>
                     </span>
                     <span className="flex items-center gap-1.5">
                       <span className={clsx('min-w-0 flex-1 truncate text-sm', m.seen ? 'text-ink/90' : 'font-semibold text-ink')}>
-                        {m.isDraft && <span className="mr-1 text-danger">{t('mail.list.draft')}:</span>}
+                        {m.isDraft && <span className="mr-1 text-danger-fg">{t('mail.list.draft')}:</span>}
                         {subjectOf(m)}
                       </span>
                       <TriageRowChips ai={m.ai} />
                       {m.hasAttachments && <Paperclip className="size-3.5 shrink-0 text-muted" aria-hidden />}
-                      {m.flagged && <Flag className="size-3.5 shrink-0 fill-amber-400 text-amber-500" aria-hidden />}
-                      {m.snoozedUntil && <Clock className="size-3.5 shrink-0 text-violet-500" aria-hidden />}
+                      {m.flagged && <Flag className="size-3.5 shrink-0 fill-warning text-warning-fg" aria-hidden />}
+                      {m.snoozedUntil && <Clock className="size-3.5 shrink-0 text-accent-fg" aria-hidden />}
                     </span>
                     <span className="flex items-center gap-1.5">
                       <span className="min-w-0 flex-1 truncate text-xs text-muted">{m.snippet}</span>
@@ -270,11 +270,11 @@ export const MessageList = ({
           })}
         </ul>
         {hasMore && (
-          <div ref={sentinel} className="grid place-items-center py-4 text-brand-600">
+          <div ref={sentinel} className="grid place-items-center py-4 text-link">
             {fetchingMore ? (
               <Spinner className="size-4" />
             ) : (
-              <button type="button" onClick={onLoadMore} className="text-xs font-semibold text-brand-600 hover:underline">
+              <button type="button" onClick={onLoadMore} className="text-xs font-semibold text-link hover:underline">
                 {t('mail.loadMore')}
               </button>
             )}

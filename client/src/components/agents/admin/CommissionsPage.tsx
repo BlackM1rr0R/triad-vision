@@ -59,7 +59,7 @@ export const CommissionsPage = () => {
         bodyClassName="p-0"
         title={
           <span className="flex items-center gap-2">
-            <Coins className="size-4 text-brand-600" aria-hidden /> {t('agents.admin.com.title')}
+            <Coins className="size-4 text-link" aria-hidden /> {t('agents.admin.com.title')}
           </span>
         }
         actions={

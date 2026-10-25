@@ -85,6 +85,7 @@ import {
   ScrollText,
   BookOpenCheck,
   Signature as SignatureIcon,
+  Palette,
 } from 'lucide-react';
 // Relative (not '@/'): the server unit tests load this module directly (tests/unit/adminNavRegistry.test.ts).
 import { hasMinRole, type Role } from '../../lib/types';
@@ -291,6 +292,7 @@ export const STAFF_NAV: StaffNavItem[] = [
   // Navigation settings: module toggles, page usage (SUPER_ADMIN), staff desks (ADMIN+)
   a('modules', '/admin/system/modules', ToggleRight, 'system', { superOnly: true }),
   a('usage', '/admin/system/usage', Activity, 'system', { superOnly: true }),
+  a('designSystem', '/admin/design-system', Palette, 'system', { adminOnly: true }), // tokens + component catalogue
   // Sub-pages without a former sidebar entry
   a('docsAudit', '/admin/docs/audit', FileSearch, undefined),
   a('aiSettings', '/admin/ai/settings', Bot, undefined, { superOnly: true, module: 'aiAssistant' }),
@@ -351,7 +353,7 @@ export const HUBS: { key: HubKey; icon: LucideIcon; tabs: string[] }[] = [
   { key: 'team', icon: UsersRound, tabs: ['users', 'kpi', 'shifts', 'training', 'timeTracking', 'oversight', 'weeklyReports'] },
   { key: 'compliance', icon: Scale, tabs: ['privacyRequests', 'legal', 'history', 'security', 'securityAlerts', 'sensitiveAccess', 'storage'] },
   { key: 'ai', icon: Sparkles, tabs: ['ai', 'aiSettings', 'mailTriage'] },
-  { key: 'system', icon: Settings, tabs: ['settings', 'integrations', 'automation', 'modules', 'usage', 'kb', 'problemReports', 'help'] },
+  { key: 'system', icon: Settings, tabs: ['settings', 'integrations', 'automation', 'modules', 'usage', 'designSystem', 'kb', 'problemReports', 'help'] },
 ];
 
 export const hubHref = (key: HubKey) => `/admin/hub/${key}`;

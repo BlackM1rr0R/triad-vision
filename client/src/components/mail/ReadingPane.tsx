@@ -19,7 +19,7 @@ export type PaneAction =
   | { type: 'linkCase'; caseRef: CaseRef | null };
 
 const Btn = ({ onClick, label, children, active, danger, kbd }: { onClick: () => void; label: string; children: ReactNode; active?: boolean; danger?: boolean; kbd?: string }) => (
-  <button type="button" onClick={onClick} title={kbd ? `${label} (${kbd})` : label} aria-label={label} className={clsx('grid size-9 place-items-center rounded-lg transition', active ? 'bg-brand-100 text-brand-700' : 'text-muted hover:bg-surface hover:text-ink', danger && 'hover:text-danger')}>
+  <button type="button" onClick={onClick} title={kbd ? `${label} (${kbd})` : label} aria-label={label} className={clsx('grid size-9 place-items-center rounded-lg transition', active ? 'bg-primary/10 text-link' : 'text-muted hover:bg-sunken hover:text-ink', danger && 'hover:text-danger-fg')}>
     {children}
   </button>
 );
@@ -35,11 +35,11 @@ const AddrList = ({ label, list }: { label: string; list: Address[] }) =>
 const AttachmentChip = ({ a }: { a: { id: string; filename: string; mimeType: string; size: number } }) => {
   const { t } = useTranslation();
   return (
-    <a href={attachmentUrl(a.id)} download className="inline-flex max-w-full items-center gap-2 rounded-lg border border-line bg-card px-2.5 py-1.5 text-xs hover:border-brand-400 hover:bg-brand-50" title={`${a.filename} · ${formatBytes(a.size)}`}>
+    <a href={attachmentUrl(a.id)} download className="inline-flex max-w-full items-center gap-2 rounded-lg border border-line bg-card px-2.5 py-1.5 text-xs hover:border-line-strong hover:bg-primary/[0.06]" title={`${a.filename} · ${formatBytes(a.size)}`}>
       <Paperclip className="size-3.5 shrink-0 text-muted" aria-hidden />
       <span className="min-w-0 truncate font-medium text-ink">{a.filename}</span>
       <span className="shrink-0 text-muted">{formatBytes(a.size)}</span>
-      <Download className="size-3.5 shrink-0 text-brand-600" aria-label={t('mail.actions.download')} />
+      <Download className="size-3.5 shrink-0 text-link" aria-label={t('mail.actions.download')} />
     </a>
   );
 };
@@ -78,7 +78,7 @@ export const MessageCard = ({ m, expanded, onToggle, single }: { m: MessageDetai
                 {details ? <ChevronUp className="size-3" /> : <ChevronDown className="size-3" />}
               </button>
               {details && (
-                <div className="mt-2 space-y-1 rounded-lg bg-surface px-3 py-2">
+                <div className="mt-2 space-y-1 rounded-lg bg-sunken px-3 py-2">
                   <AddrList label={t('mail.header.from')} list={m.from ? [m.from] : []} />
                   <AddrList label={t('mail.header.to')} list={m.to} />
                   <AddrList label={t('mail.header.cc')} list={m.cc} />
@@ -151,7 +151,7 @@ export const ReadingPane = ({
     return (
       <div className="grid h-full place-items-center px-6 text-center">
         {loading ? (
-          <Spinner className="text-brand-600" />
+          <Spinner className="text-link" />
         ) : error ? (
           <div>
             <p className="text-sm font-semibold text-ink">{t('mail.error.message')}</p>
@@ -159,7 +159,7 @@ export const ReadingPane = ({
           </div>
         ) : (
           <div>
-            <span className="mx-auto mb-3 grid size-14 place-items-center rounded-full bg-brand-50 text-brand-600">
+            <span className="mx-auto mb-3 grid size-14 place-items-center rounded-full bg-primary/[0.06] text-link">
               <MailOpen className="size-6" />
             </span>
             <p className="text-sm font-semibold text-ink">{t('mail.empty.selectMessage')}</p>
@@ -207,7 +207,7 @@ export const ReadingPane = ({
           <Trash2 className="size-4" />
         </Btn>
         <Btn onClick={() => onAction({ type: message.flagged ? 'unflag' : 'flag' })} label={message.flagged ? t('mail.actions.unflag') : t('mail.actions.flag')} active={message.flagged} kbd="s">
-          <Flag className={clsx('size-4', message.flagged && 'fill-amber-400 text-amber-500')} />
+          <Flag className={clsx('size-4', message.flagged && 'fill-warning text-warning-fg')} />
         </Btn>
         <div className="relative">
           <Btn onClick={() => setMenu(menu === 'snooze' ? null : 'snooze')} label={t('mail.actions.snooze')} active={!!message.snoozedUntil}>
@@ -314,12 +314,12 @@ export const ReadingPane = ({
               </span>
             ))}
             {message.snoozedUntil && (
-              <span className="inline-flex items-center gap-1 rounded-md bg-violet-100 px-1.5 py-0.5 text-[0.65rem] font-semibold text-violet-700">
+              <span className="inline-flex items-center gap-1 rounded-md bg-accent-bg px-1.5 py-0.5 text-[0.65rem] font-semibold text-accent-fg">
                 <Clock className="size-3" /> {t('mail.snooze.until', { date: fmtFull(message.snoozedUntil) })}
               </span>
             )}
             {message.case && (
-              <Link to={`/admin/cases/${message.case.id}`} className="inline-flex items-center gap-1 rounded-md bg-brand-100 px-1.5 py-0.5 text-[0.65rem] font-semibold text-brand-700 hover:underline">
+              <Link to={`/admin/cases/${message.case.id}`} className="inline-flex items-center gap-1 rounded-md bg-primary/10 px-1.5 py-0.5 text-[0.65rem] font-semibold text-link hover:underline">
                 <Briefcase className="size-3" /> {message.case.number} · {message.case.clientName}
               </Link>
             )}

@@ -33,7 +33,7 @@ export const CallButton = ({ target, phone, name, compact, className }: { target
           setOpen(true);
         }}
         className={clsx(
-          'inline-flex min-h-8 items-center gap-1.5 rounded-md border border-brand-200 bg-brand-50 px-2.5 py-1 text-xs font-semibold whitespace-nowrap text-brand-700 transition hover:bg-brand-100',
+          'inline-flex min-h-8 items-center gap-1.5 rounded-md border border-primary/25 bg-primary/[0.06] px-2.5 py-1 text-xs font-semibold whitespace-nowrap text-link transition hover:bg-primary/10',
           className,
         )}
         title={t('calls.call')}
@@ -67,7 +67,7 @@ const OutcomeForm = ({ onSave, busy, initial }: { onSave: (o: CallOutcome, note:
               type="button"
               aria-pressed={outcome === o}
               onClick={() => setOutcome(o)}
-              className={clsx('min-h-10 rounded-lg border px-2 text-xs font-semibold transition', outcome === o ? 'border-brand-600 bg-brand-600 text-white' : 'border-line bg-card text-ink hover:border-brand-400')}
+              className={clsx('min-h-10 rounded-lg border px-2 text-xs font-semibold transition', outcome === o ? 'border-line-strong bg-sunken text-ink shadow-[inset_0_0_0_1px_var(--color-line-strong)]' : 'border-line bg-card text-ink hover:border-line-strong')}
             >
               {t(`calls.outcome.${o}`)}
             </button>
@@ -132,19 +132,19 @@ const CallDialog = ({ target, phone, name, onClose }: { target: CallTarget; phon
       <div className="space-y-4">
         {phone && (
           <p className="flex items-center gap-2 text-sm font-semibold text-ink">
-            <Phone className="size-4 text-brand-600" aria-hidden /> {phone}
+            <Phone className="size-4 text-link" aria-hidden /> {phone}
           </p>
         )}
 
         {status.isLoading && <p className="text-sm text-muted">…</p>}
 
         {s && !s.configured && (
-          <div className="space-y-2 rounded-xl border border-amber-300 bg-amber-50 p-3 text-xs text-amber-950" role="status">
+          <div className="space-y-2 rounded-xl border border-warning-border bg-warning-bg p-3 text-xs text-warning-fg" role="status">
             <p className="flex items-center gap-1.5 text-sm font-bold">
               <AlertTriangle className="size-4" aria-hidden /> {t('calls.notConfigured')}
             </p>
             <p>{t('calls.notConfiguredHint')}</p>
-            <p className="text-amber-900/80">{t('calls.setupSteps')}</p>
+            <p className="text-warning-fg/80">{t('calls.setupSteps')}</p>
             {s.canConfigure && (
               <Link to="/admin/calls?tab=settings" className="inline-flex items-center gap-1 font-semibold underline" onClick={onClose}>
                 <Settings className="size-3.5" aria-hidden /> {t('calls.setupLink')}
@@ -153,7 +153,7 @@ const CallDialog = ({ target, phone, name, onClose }: { target: CallTarget; phon
           </div>
         )}
         {s?.configured && !s.staffPhone && (
-          <p className="rounded-xl border border-amber-300 bg-amber-50 p-3 text-xs text-amber-950" role="status">
+          <p className="rounded-xl border border-warning-border bg-warning-bg p-3 text-xs text-warning-fg" role="status">
             {t('calls.staffPhoneMissing')}
           </p>
         )}
@@ -162,8 +162,8 @@ const CallDialog = ({ target, phone, name, onClose }: { target: CallTarget; phon
           <div className="space-y-2">
             <p className="text-xs text-muted">{t('calls.howItWorks', { phone: s!.staffPhone })}</p>
             {s!.recording && (
-              <p className="flex items-start gap-1.5 rounded-lg bg-surface p-2 text-xs text-muted">
-                <Mic className="mt-0.5 size-3.5 shrink-0 text-red-600" aria-hidden /> {t('calls.recordingOn')} „{s!.recordingNotice[lang] ?? s!.recordingNotice.az}“
+              <p className="flex items-start gap-1.5 rounded-lg bg-sunken p-2 text-xs text-muted">
+                <Mic className="mt-0.5 size-3.5 shrink-0 text-danger-fg" aria-hidden /> {t('calls.recordingOn')} „{s!.recordingNotice[lang] ?? s!.recordingNotice.az}“
               </p>
             )}
             <button type="button" className="btn-primary w-full" disabled={start.isPending} onClick={() => start.mutate()}>
@@ -173,16 +173,16 @@ const CallDialog = ({ target, phone, name, onClose }: { target: CallTarget; phon
         )}
 
         {s && !ready && phone && (
-          <a href={telHref(phone)} className="btn-ghost btn-sm w-full border border-line">
+          <a href={telHref(phone)} className="btn-secondary btn-sm w-full border border-line">
             <Phone className="size-4" aria-hidden /> {t('calls.dialOwn')}
           </a>
         )}
 
         {call && call.provider !== 'manual' && (
-          <div className="flex items-center justify-between gap-2 rounded-xl border border-line bg-surface px-3 py-2 text-sm" aria-live="polite">
+          <div className="flex items-center justify-between gap-2 rounded-xl border border-line bg-sunken px-3 py-2 text-sm" aria-live="polite">
             <span className="text-muted">{t('calls.statusLabel')}</span>
-            <span className={clsx('font-semibold', live ? 'text-brand-700' : 'text-ink')}>
-              {live && <span className="mr-1.5 inline-block size-2 animate-pulse rounded-full bg-emerald-500" aria-hidden />}
+            <span className={clsx('font-semibold', live ? 'text-link' : 'text-ink')}>
+              {live && <span className="mr-1.5 inline-block size-2 animate-pulse rounded-full bg-success" aria-hidden />}
               {t(`calls.status.${call.status}`)}
             </span>
           </div>
@@ -194,7 +194,7 @@ const CallDialog = ({ target, phone, name, onClose }: { target: CallTarget; phon
             <OutcomeForm busy={save.isPending} initial={call} onSave={(outcome, note) => save.mutate({ outcome, note })} />
           </section>
         )}
-        {saved && <p className="rounded-lg bg-emerald-50 p-2 text-center text-sm font-semibold text-emerald-800">{t('calls.saved')}</p>}
+        {saved && <p className="rounded-lg bg-success-bg p-2 text-center text-sm font-semibold text-success-fg">{t('calls.saved')}</p>}
 
         {filter && (
           <div className="border-t border-line pt-3">

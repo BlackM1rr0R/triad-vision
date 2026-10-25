@@ -40,7 +40,7 @@ export default function HistoryButton({
       <button
         type="button"
         className={clsx(
-          'inline-flex items-center gap-1 rounded-md px-2 text-xs font-semibold whitespace-nowrap text-ink/70 hover:bg-surface hover:text-navy-900',
+          'inline-flex items-center gap-1 rounded-md px-2 text-xs font-semibold whitespace-nowrap text-muted hover:bg-sunken hover:text-ink',
           compact ? 'min-h-10' : 'min-h-8 py-1',
           className,
         )}

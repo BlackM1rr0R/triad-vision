@@ -15,7 +15,7 @@ export interface RichEditorHandle {
 }
 
 const Tool = ({ onClick, label, children }: { onClick: () => void; label: string; children: ReactNode }) => (
-  <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={onClick} className="grid size-8 place-items-center rounded-md text-muted hover:bg-surface hover:text-ink" title={label} aria-label={label}>
+  <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={onClick} className="grid size-8 place-items-center rounded-md text-muted hover:bg-sunken hover:text-ink" title={label} aria-label={label}>
     {children}
   </button>
 );
@@ -112,7 +112,7 @@ export const RichEditor = forwardRef<RichEditorHandle, { initialHtml: string; pl
               document.execCommand('insertText', false, text);
             }
           }}
-          className="tv-editor min-h-[10rem] flex-1 overflow-y-auto px-3 py-2 text-sm leading-relaxed text-ink outline-none [&_a]:text-brand-600 [&_a]:underline [&_blockquote]:my-2 [&_blockquote]:border-l-2 [&_blockquote]:border-line [&_blockquote]:pl-3 [&_blockquote]:text-muted [&_ol]:list-decimal [&_ol]:pl-6 [&_ul]:list-disc [&_ul]:pl-6 empty:before:text-muted/60 empty:before:content-[attr(data-placeholder)]"
+          className="tv-editor min-h-[10rem] flex-1 overflow-y-auto px-3 py-2 text-sm leading-relaxed text-ink outline-none [&_a]:text-link [&_a]:underline [&_blockquote]:my-2 [&_blockquote]:border-l-2 [&_blockquote]:border-line [&_blockquote]:pl-3 [&_blockquote]:text-muted [&_ol]:list-decimal [&_ol]:pl-6 [&_ul]:list-disc [&_ul]:pl-6 empty:before:text-subtle empty:before:content-[attr(data-placeholder)]"
         />
       </div>
     );

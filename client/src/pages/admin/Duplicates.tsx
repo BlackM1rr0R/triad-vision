@@ -109,7 +109,7 @@ const ScoreBadge = ({ score }: { score: number }) => (
   <span
     className={clsx(
       'inline-flex min-h-6 items-center rounded-full px-2.5 text-xs font-bold tabular-nums',
-      score >= 90 ? 'bg-red-50 text-red-700' : score >= 70 ? 'bg-amber-50 text-amber-800' : 'bg-surface text-ink/75',
+      score >= 90 ? 'bg-danger-bg text-danger-fg' : score >= 70 ? 'bg-warning-bg text-warning-fg' : 'bg-sunken text-muted',
     )}
   >
     {score}
@@ -126,7 +126,7 @@ const ReasonChips = ({ reasons }: { reasons: Reason[] }) => {
           title={r.value ? `${t(`duplicates.strength.${r.strength}`)} · ${r.value}` : t(`duplicates.strength.${r.strength}`)}
           className={clsx(
             'inline-flex min-h-6 items-center gap-1 rounded-full border px-2 text-[11px] font-semibold',
-            r.strength === 'strong' ? 'border-red-200 bg-red-50 text-red-700' : 'border-amber-200 bg-amber-50 text-amber-800',
+            r.strength === 'strong' ? 'border-danger-border bg-danger-bg text-danger-fg' : 'border-warning-border bg-warning-bg text-warning-fg',
           )}
         >
           {t(`duplicates.rules.${r.rule}`, { defaultValue: r.rule })}
@@ -141,7 +141,7 @@ const BriefCard = ({ u, label }: { u: Brief; label: string }) => {
   return (
     <div className="min-w-0 rounded-lg border border-line bg-surface/50 p-3 text-xs">
       <p className="text-[10px] font-bold tracking-wider text-muted uppercase">{label}</p>
-      <p className="mt-0.5 truncate text-sm font-semibold text-navy-900">
+      <p className="mt-0.5 truncate text-sm font-semibold text-ink">
         {fullName(u)} {!u.isActive && <span className="ml-1 text-[11px] font-medium text-muted">· {t('duplicates.inactive')}</span>}
       </p>
       <p className="truncate text-ink/80">{u.email}</p>
@@ -166,7 +166,7 @@ const PairRow = ({ p, onCompare }: { p: Pair; onCompare: () => void }) => {
     onError,
   });
   return (
-    <li className="rounded-xl border border-line bg-white p-4">
+    <li className="rounded-xl border border-line bg-card p-4">
       <div className="flex flex-wrap items-center gap-2">
         <ScoreBadge score={p.score} />
         <ReasonChips reasons={p.reasons} />
@@ -228,15 +228,15 @@ const ConfirmMerge = ({ open, onClose, onConfirm, pending, primary, secondary }:
 const AccountHeader = ({ s, side, primary, suggested, onPrimary }: { s: Summary; side: Side; primary: boolean; suggested: boolean; onPrimary: () => void }) => {
   const { t } = useTranslation();
   return (
-    <div className={clsx('min-w-0 rounded-xl border p-4', primary ? 'border-brand-500 bg-brand-50' : 'border-line bg-white')}>
+    <div className={clsx('min-w-0 rounded-xl border p-4', primary ? 'border-primary bg-primary/[0.06]' : 'border-line bg-card')}>
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="text-[11px] font-bold tracking-wider text-muted uppercase">{t('duplicates.cmp.account', { side: side.toUpperCase() })}</p>
-        {suggested && <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">{t('duplicates.cmp.suggested')}</span>}
+        {suggested && <span className="rounded-full bg-success-bg px-2 py-0.5 text-[10px] font-semibold text-success-fg">{t('duplicates.cmp.suggested')}</span>}
       </div>
-      <p className="mt-1 truncate text-base font-bold text-navy-900">{fullName(s.profile)}</p>
+      <p className="mt-1 truncate text-base font-bold text-ink">{fullName(s.profile)}</p>
       <p className="truncate text-xs text-ink/80">{s.profile.email}</p>
-      <label className="mt-3 inline-flex min-h-10 cursor-pointer items-center gap-2 text-sm font-semibold text-navy-900">
-        <input type="radio" name="primary" checked={primary} onChange={onPrimary} className="size-4 accent-brand-600" />
+      <label className="mt-3 inline-flex min-h-10 cursor-pointer items-center gap-2 text-sm font-semibold text-ink">
+        <input type="radio" name="primary" checked={primary} onChange={onPrimary} className="size-4 accent-primary" />
         {primary ? t('duplicates.cmp.primary') : t('duplicates.cmp.makePrimary')}
       </label>
       <dl className="mt-3 grid grid-cols-2 gap-x-3 gap-y-1 border-t border-line pt-3 text-xs">
@@ -261,11 +261,11 @@ const AccountHeader = ({ s, side, primary, suggested, onPrimary }: { s: Summary;
           <ul className="mt-1 space-y-1 text-xs">
             {s.cases.map((c) => (
               <li key={c.id} className="flex flex-wrap items-center gap-x-2">
-                <Link to={`/admin/cases/${c.id}`} className="font-semibold text-brand-700 hover:underline">
+                <Link to={`/admin/cases/${c.id}`} className="font-semibold text-link hover:underline">
                   {c.number}
                 </Link>
                 <span className="text-ink/80">{t(`duplicates.visaTypes.${c.visaType}`, { defaultValue: c.visaType })}</span>
-                <span className={clsx(c.active ? 'text-emerald-700' : 'text-muted')}>{statusLabel(c.status)}</span>
+                <span className={clsx(c.active ? 'text-success-fg' : 'text-muted')}>{statusLabel(c.status)}</span>
                 <span className="text-muted">{t('duplicates.cmp.docs', { count: c.documents })}</span>
                 {c.family && <span className="text-muted">· {t('duplicates.cmp.family')}</span>}
               </li>
@@ -360,12 +360,12 @@ const ComparePanel = ({ aId, bId, onDone, onBack }: { aId: string; bId: string; 
 
   return (
     <div className="space-y-5">
-      <button type="button" onClick={onBack} className="-my-2 inline-flex min-h-10 items-center gap-1.5 text-xs font-semibold text-muted transition hover:text-navy-900">
+      <button type="button" onClick={onBack} className="-my-2 inline-flex min-h-10 items-center gap-1.5 text-xs font-semibold text-muted transition hover:text-ink">
         <ArrowLeft className="size-3.5" aria-hidden /> {t('duplicates.back')}
       </button>
 
       {cmp.blocker && (
-        <p className="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800" role="alert">
+        <p className="flex items-start gap-2 rounded-lg border border-danger-border bg-danger-bg p-3 text-sm text-danger-fg" role="alert">
           <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden /> {t(`duplicates.blocker.${cmp.blocker}`, { defaultValue: t('duplicates.blocker.NOT_MERGEABLE') })}
         </p>
       )}
@@ -386,9 +386,9 @@ const ComparePanel = ({ aId, bId, onDone, onBack }: { aId: string; bId: string; 
             if (both) return null;
             return (
               <li key={f} className="px-4 py-3 sm:px-6">
-                <p className="mb-1.5 flex items-center gap-2 text-xs font-semibold text-navy-900">
+                <p className="mb-1.5 flex items-center gap-2 text-xs font-semibold text-ink">
                   {t(`duplicates.fields.${f}`, { defaultValue: f })}
-                  {conflict && <span className="rounded-full bg-amber-50 px-1.5 text-[10px] font-semibold text-amber-800">{t('duplicates.cmp.conflict')}</span>}
+                  {conflict && <span className="rounded-full bg-warning-bg px-1.5 text-[10px] font-semibold text-warning-fg">{t('duplicates.cmp.conflict')}</span>}
                 </p>
                 <div className="grid grid-cols-2 gap-2" role={conflict ? 'radiogroup' : undefined} aria-label={t(`duplicates.fields.${f}`)}>
                   {(['a', 'b'] as Side[]).map((s) => {
@@ -399,18 +399,18 @@ const ComparePanel = ({ aId, bId, onDone, onBack }: { aId: string; bId: string; 
                         key={s}
                         className={clsx(
                           'flex min-h-10 min-w-0 cursor-pointer items-start gap-2 rounded-lg border px-2.5 py-2 text-xs break-words transition',
-                          chosen ? 'border-brand-500 bg-brand-50 text-navy-900' : 'border-line text-ink/80 hover:border-brand-300',
+                          chosen ? 'border-primary bg-primary/[0.06] text-ink' : 'border-line text-ink/80 hover:border-line-strong',
                         )}
                       >
-                        <input type="radio" name={`f-${f}`} checked={chosen} onChange={() => setChoices((c) => ({ ...c, [f]: s }))} className="mt-0.5 size-3.5 shrink-0 accent-brand-600" />
+                        <input type="radio" name={`f-${f}`} checked={chosen} onChange={() => setChoices((c) => ({ ...c, [f]: s }))} className="mt-0.5 size-3.5 shrink-0 accent-primary" />
                         <span className="min-w-0 break-all sm:break-words">
                           <span className="mr-1 font-bold text-muted">{s.toUpperCase()}</span>
                           {fmt(f, v)}
                         </span>
                       </label>
                     ) : (
-                      <div key={s} className={clsx('flex min-h-10 min-w-0 items-start gap-1.5 rounded-lg border px-2.5 py-2 text-xs break-all', chosen ? 'border-line bg-surface text-navy-900' : 'border-transparent text-muted')}>
-                        {chosen && <Check className="mt-0.5 size-3.5 shrink-0 text-brand-600" aria-label={t('duplicates.cmp.keep')} />}
+                      <div key={s} className={clsx('flex min-h-10 min-w-0 items-start gap-1.5 rounded-lg border px-2.5 py-2 text-xs break-all', chosen ? 'border-line bg-sunken text-ink' : 'border-transparent text-muted')}>
+                        {chosen && <Check className="mt-0.5 size-3.5 shrink-0 text-link" aria-label={t('duplicates.cmp.keep')} />}
                         <span>
                           <span className="mr-1 font-bold text-muted">{s.toUpperCase()}</span>
                           {fmt(f, v)}
@@ -429,7 +429,7 @@ const ComparePanel = ({ aId, bId, onDone, onBack }: { aId: string; bId: string; 
       </Panel>
 
       {clash && (
-        <div className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
+        <div className="rounded-xl border border-warning-border bg-warning-bg p-4 text-sm text-warning-fg">
           <p className="flex items-center gap-2 font-semibold">
             <AlertTriangle className="size-4" aria-hidden /> {t('duplicates.clash.title')}
           </p>
@@ -437,7 +437,7 @@ const ComparePanel = ({ aId, bId, onDone, onBack }: { aId: string; bId: string; 
             {t('duplicates.clash.text')} {cmp.activeCaseClashes.map((c) => `${t(`duplicates.visaTypes.${c.visaType}`, { defaultValue: c.visaType })}: ${c.cases.map((x) => x.number).join(', ')}`).join(' · ')}
           </p>
           <label className="mt-2 inline-flex min-h-10 cursor-pointer items-center gap-2 text-sm font-semibold">
-            <input type="checkbox" checked={twoActive} onChange={(e) => setTwoActive(e.target.checked)} className="size-4 accent-brand-600" /> {t('duplicates.clash.confirm')}
+            <input type="checkbox" checked={twoActive} onChange={(e) => setTwoActive(e.target.checked)} className="size-4 accent-primary" /> {t('duplicates.clash.confirm')}
           </label>
         </div>
       )}
@@ -445,14 +445,14 @@ const ComparePanel = ({ aId, bId, onDone, onBack }: { aId: string; bId: string; 
       <Panel>
         <div className="space-y-3 text-sm">
           <label className="flex cursor-pointer items-start gap-2">
-            <input type="checkbox" checked={driveMerge} onChange={(e) => setDriveMerge(e.target.checked)} className="mt-0.5 size-4 shrink-0 accent-brand-600" />
+            <input type="checkbox" checked={driveMerge} onChange={(e) => setDriveMerge(e.target.checked)} className="mt-0.5 size-4 shrink-0 accent-primary" />
             <span>
               {t('duplicates.options.driveMerge')}
               <span className="block text-xs text-muted">{t('duplicates.options.driveKeep')}</span>
             </span>
           </label>
           <label className="flex cursor-pointer items-start gap-2">
-            <input type="checkbox" checked={inform} onChange={(e) => setInform(e.target.checked)} className="mt-0.5 size-4 shrink-0 accent-brand-600" />
+            <input type="checkbox" checked={inform} onChange={(e) => setInform(e.target.checked)} className="mt-0.5 size-4 shrink-0 accent-primary" />
             <span>{t('duplicates.options.inform')}</span>
           </label>
           {inform && (
@@ -463,10 +463,10 @@ const ComparePanel = ({ aId, bId, onDone, onBack }: { aId: string; bId: string; 
               <textarea id="dup-msg" className="input min-h-28" maxLength={4000} value={message} onChange={(e) => setMessage(e.target.value)} />
             </div>
           )}
-          <p className="flex items-start gap-2 rounded-lg bg-surface p-3 text-xs text-muted">
+          <p className="flex items-start gap-2 rounded-lg bg-sunken p-3 text-xs text-muted">
             <Info className="mt-0.5 size-3.5 shrink-0" aria-hidden /> {t('duplicates.options.noUndo')}
           </p>
-          {!cmp.canMerge && <p className="text-xs font-semibold text-danger">{t('duplicates.noPermission')}</p>}
+          {!cmp.canMerge && <p className="text-xs font-semibold text-danger-fg">{t('duplicates.noPermission')}</p>}
           <div className="flex justify-end">
             <button type="button" className="btn-danger btn-sm" disabled={!canSubmit || merge.isPending} onClick={() => setConfirming(true)}>
               <GitMerge className="size-3.5" aria-hidden /> {t('duplicates.merge')}
@@ -593,8 +593,8 @@ export default function Duplicates() {
       />
 
       {mergedNotice && (
-        <p className="mb-4 flex items-start gap-2 rounded-lg border border-brand-200 bg-brand-50 p-3 text-sm text-navy-900">
-          <Info className="mt-0.5 size-4 shrink-0 text-brand-600" aria-hidden /> {t('duplicates.mergedInto')}
+        <p className="mb-4 flex items-start gap-2 rounded-lg border border-primary/25 bg-primary/[0.06] p-3 text-sm text-ink">
+          <Info className="mt-0.5 size-4 shrink-0 text-link" aria-hidden /> {t('duplicates.mergedInto')}
         </p>
       )}
 
@@ -616,7 +616,7 @@ export default function Duplicates() {
       {userParam && (
         <p className="mb-4 flex flex-wrap items-center gap-2 text-xs text-muted">
           {t('duplicates.filteredBy')}
-          <button type="button" className="font-semibold text-brand-700 hover:underline" onClick={() => setParam({ user: null })}>
+          <button type="button" className="font-semibold text-link hover:underline" onClick={() => setParam({ user: null })}>
             {t('duplicates.clearFilter')}
           </button>
         </p>
@@ -627,7 +627,7 @@ export default function Duplicates() {
       ) : list.error ? (
         <ErrorBlock error={list.error} onRetry={() => list.refetch()} />
       ) : items.length === 0 ? (
-        <div className="rounded-xl border border-line bg-white">
+        <div className="rounded-xl border border-line bg-card">
           <EmptyState icon={Copy} title={t('duplicates.empty')}>
             {t('duplicates.emptyHint')}
           </EmptyState>

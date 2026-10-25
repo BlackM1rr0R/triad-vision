@@ -48,7 +48,7 @@ export const ClientRecognitionCard = ({ caseId }: { caseId: string }) => {
           {items.map((p) => (
             <section key={p.id} className="space-y-3">
               <div className="flex flex-wrap items-center gap-2">
-                <h3 className="text-sm font-semibold text-navy-900">{t(`recognition.procedure.${p.procedureType}`)}</h3>
+                <h3 className="text-sm font-semibold text-ink">{t(`recognition.procedure.${p.procedureType}`)}</h3>
                 <span className={clsx('badge', TONE_CLASS[STATUS_TONE[p.status]])}>{t(`recognition.status.${p.status}`)}</span>
               </div>
               <p className="text-xs text-muted">
@@ -57,7 +57,7 @@ export const ClientRecognitionCard = ({ caseId }: { caseId: string }) => {
               {p.timeline.length > 1 && (
                 <ol className="flex flex-wrap gap-1.5" aria-label={t('recognition.portal.timeline')}>
                   {p.timeline.map((e, i) => (
-                    <li key={`${e.status}-${i}`} className="badge bg-surface text-ink/80">
+                    <li key={`${e.status}-${i}`} className="badge bg-sunken text-ink/80">
                       {e.status ? t(`recognition.status.${e.status}`) : '—'} · {day(e.at)}
                     </li>
                   ))}
@@ -76,7 +76,7 @@ export const ClientRecognitionCard = ({ caseId }: { caseId: string }) => {
                 </div>
               )}
               <div>
-                <p className="text-xs font-semibold text-navy-900">
+                <p className="text-xs font-semibold text-ink">
                   {t('recognition.portal.todo')} <span className="font-normal text-muted tabular-nums">· {t('recognition.portal.progress', p.progress)}</span>
                 </p>
                 {p.clientTodo.length === 0 ? (

@@ -147,15 +147,15 @@ const List = ({ onEdit }: { onEdit: (i: ClientInvoice) => void }) => {
       ) : listQ.error ? (
         <ErrorBlock error={listQ.error} onRetry={() => listQ.refetch()} />
       ) : !listQ.data?.invoices.length ? (
-        <div className="rounded-xl border border-line bg-white">
+        <div className="rounded-xl border border-line bg-card">
           <EmptyState icon={Receipt} title={t('bill.admin.empty')}>
             {t('bill.admin.emptyText')}
           </EmptyState>
         </div>
       ) : (
-        <div className="overflow-hidden rounded-xl border border-line bg-white">
+        <div className="overflow-hidden rounded-xl border border-line bg-card">
           <table className="w-full text-sm">
-            <thead className="hidden bg-surface text-left text-xs text-muted md:table-header-group">
+            <thead className="hidden bg-sunken text-left text-xs text-muted md:table-header-group">
               <tr>
                 <th className="px-4 py-2.5 font-semibold">{t('bill.admin.cols.number')}</th>
                 <th className="px-4 py-2.5 font-semibold">{t('bill.admin.cols.client')}</th>
@@ -172,21 +172,21 @@ const List = ({ onEdit }: { onEdit: (i: ClientInvoice) => void }) => {
             <tbody className="divide-y divide-line">
               {listQ.data.invoices.map((inv) => (
                 <tr key={inv.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-3 md:table-row md:p-0">
-                  <td className="font-semibold text-navy-900 tabular-nums md:px-4 md:py-3">{inv.number ?? <span className="text-muted italic">{t('bill.admin.draftNo')}</span>}</td>
+                  <td className="font-semibold text-ink tabular-nums md:px-4 md:py-3">{inv.number ?? <span className="text-muted italic">{t('bill.admin.draftNo')}</span>}</td>
                   <td className="min-w-0 basis-full md:basis-auto md:px-4 md:py-3">
                     <span className="line-clamp-1 text-ink">{inv.clientName}</span>
                     {inv.caseId && inv.caseNumber && (
-                      <Link to={`/admin/cases/${inv.caseId}?tab=finance`} className="text-xs text-brand-600 hover:underline">
+                      <Link to={`/admin/cases/${inv.caseId}?tab=finance`} className="text-xs text-link hover:underline">
                         {inv.caseNumber}
                       </Link>
                     )}
                   </td>
                   <td className="text-xs text-muted md:px-4 md:py-3 md:text-sm md:text-ink">{fmtDate(inv.issueDate)}</td>
-                  <td className={clsx('text-xs md:px-4 md:py-3 md:text-sm', inv.status === 'OVERDUE' ? 'font-semibold text-danger' : 'text-muted md:text-ink')}>
+                  <td className={clsx('text-xs md:px-4 md:py-3 md:text-sm', inv.status === 'OVERDUE' ? 'font-semibold text-danger-fg' : 'text-muted md:text-ink')}>
                     <span className="md:hidden">→ </span>
                     {fmtDate(inv.dueDate)}
                   </td>
-                  <td className="ml-auto font-semibold text-navy-900 tabular-nums md:ml-0 md:px-4 md:py-3 md:text-right">{fmtEur(inv.grossCents, inv.currency)}</td>
+                  <td className="ml-auto font-semibold text-ink tabular-nums md:ml-0 md:px-4 md:py-3 md:text-right">{fmtEur(inv.grossCents, inv.currency)}</td>
                   <td className="text-xs tabular-nums md:px-4 md:py-3 md:text-right md:text-sm">{inv.openCents ? fmtEur(inv.openCents, inv.currency) : '—'}</td>
                   <td className="md:px-4 md:py-3">
                     <span className={clsx('badge', STATUS_BADGE[inv.status])}>{t(`bill.status.${inv.status}`)}</span>
@@ -315,13 +315,13 @@ const SettingsTab = () => {
               </>
             )}
           </p>
-          <Link to="/admin/invoices?tab=settings" className="btn-white btn-sm mt-4 border border-line">
+          <Link to="/admin/invoices?tab=settings" className="btn-secondary btn-sm mt-4 border border-line">
             <Settings2 className="size-3.5" aria-hidden /> {t('bill.admin.settings.openInvoiceSettings')}
           </Link>
         </Panel>
         <Panel title={legalMissing.length ? t('bill.admin.settings.legalMissing') : t('bill.admin.settings.legal')} icon={legalMissing.length ? AlertTriangle : FileText}>
           <address className="text-sm leading-relaxed text-ink not-italic">
-            <strong className="text-navy-900">{seller.name || '—'}</strong>
+            <strong className="text-ink">{seller.name || '—'}</strong>
             <br />
             {seller.street || '—'}
             <br />

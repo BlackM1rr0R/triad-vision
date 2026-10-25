@@ -69,14 +69,14 @@ export const FilePicker = ({
       }
     >
       <div className="mb-3 flex flex-wrap items-center gap-1 text-sm">
-        <button type="button" onClick={() => setAt(null)} className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 font-medium text-brand-600 hover:bg-brand-50">
+        <button type="button" onClick={() => setAt(null)} className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 font-medium text-link hover:bg-primary/[0.06]">
           <HardDrive className="size-3.5" aria-hidden />
         </button>
         {at &&
           q.data?.path.map((c) => (
             <span key={c.id} className="inline-flex items-center gap-1">
               <ChevronRight className="size-3.5 text-muted" aria-hidden />
-              <button type="button" onClick={() => setAt(c.id)} className="rounded-md px-1.5 py-0.5 font-medium text-ink hover:bg-surface">
+              <button type="button" onClick={() => setAt(c.id)} className="rounded-md px-1.5 py-0.5 font-medium text-ink hover:bg-sunken">
                 {c.name}
               </button>
             </span>
@@ -86,7 +86,7 @@ export const FilePicker = ({
         {!at ? (
           top.map((r) => (
             <li key={r.id}>
-              <button type="button" onClick={() => setAt(r.id)} className="flex w-full items-center gap-3 px-3 py-2 text-left text-sm hover:bg-surface">
+              <button type="button" onClick={() => setAt(r.id)} className="flex w-full items-center gap-3 px-3 py-2 text-left text-sm hover:bg-sunken">
                 <ItemIcon item={r} className="size-5" />
                 <span className="truncate font-medium text-ink">{r.name}</span>
               </button>
@@ -106,12 +106,12 @@ export const FilePicker = ({
                 <button
                   type="button"
                   onClick={() => (f.kind === 'FOLDER' ? setAt(f.id) : toggle(f))}
-                  className={clsx('flex w-full items-center gap-3 px-3 py-2 text-left text-sm hover:bg-surface', on && 'bg-brand-50 dark:bg-brand-500/10')}
+                  className={clsx('flex w-full items-center gap-3 px-3 py-2 text-left text-sm hover:bg-sunken', on && 'bg-primary/[0.06] dark:bg-brand-500/10')}
                 >
                   <ItemIcon item={f} className="size-5" />
                   <span className="min-w-0 flex-1 truncate font-medium text-ink">{f.name}</span>
                   {f.kind === 'FILE' && f.size != null && <span className="text-xs text-muted">{formatSize(f.size)}</span>}
-                  {f.kind === 'FOLDER' ? <ChevronRight className="size-4 text-muted" aria-hidden /> : on ? <Check className="size-4 text-brand-600" aria-hidden /> : null}
+                  {f.kind === 'FOLDER' ? <ChevronRight className="size-4 text-muted" aria-hidden /> : on ? <Check className="size-4 text-link" aria-hidden /> : null}
                 </button>
               </li>
             );

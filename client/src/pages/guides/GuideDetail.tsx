@@ -10,6 +10,8 @@ import { PageCta } from '@/components/visa/PageCta';
 import { onRichContentClick, PathLink, type GuideDetail as Guide, type GuideSummary } from '@/components/guides/shared';
 import { GuideBody } from '@/components/guides/GuideBody';
 import { Skeleton, SkeletonText } from '@/components/ui/Skeleton';
+import { buttonClass } from '@/components/ui/Button';
+import { Learning } from '@/components/illustrations';
 import { currentSiteLocale, registerCopy } from '@/i18n';
 import { pagesSeo } from '@/i18n/pagesSeo';
 import { api } from '@/lib/api';
@@ -21,7 +23,7 @@ import { LeadMagnetBlock } from '@/components/growth/LeadMagnetBlock';
 
 registerCopy(pagesSeo);
 
-const HERO = 'https://images.unsplash.com/photo-1560969184-10fe8719e047?auto=format&fit=crop&w=2000&q=70';
+const HERO_ART = <Learning className="w-full" />;
 
 /** Tools shown next to a guide (by guide key). */
 const TOOLS: Record<string, { to: string; key: 'ckCalc.title' | 'bcCheck.title' | 'nav.eligibility' | 'nav.anerkennung' | 'nav.salary'; icon: typeof Calculator }[]> = {
@@ -39,7 +41,7 @@ const GuideBodySkeleton = () => {
   const { t } = useTranslation();
   return (
     <section className="section" role="status" aria-label={t('ui.loading')}>
-      <div className="container-x grid items-start gap-10 lg:grid-cols-[minmax(0,1fr)_18rem]" aria-hidden>
+      <div className="container-x grid items-start gap-10 lg:grid-cols-[minmax(0,46rem)_17rem] lg:justify-between xl:gap-16" aria-hidden>
         <div className="min-w-0 space-y-4">
           <SkeletonText lines={4} />
           <Skeleton className="mt-10 h-7 w-1/2" />
@@ -94,7 +96,7 @@ export default function GuideDetail() {
     if (!summary || data?.redirect) return <PageHeroSkeleton />;
     return (
       <>
-        <PageHero title={summary.title} subtitle={summary.description} image={HERO} crumb={{ to: '/guides', label: t('guidesPage.title') }} morph={{ kind: 'guide', id: slug }} />
+        <PageHero title={summary.title} subtitle={summary.description} illustration={HERO_ART} crumb={{ to: '/guides', label: t('guidesPage.title') }} morph={{ kind: 'guide', id: slug }} />
         <GuideBodySkeleton />
       </>
     );
@@ -106,8 +108,8 @@ export default function GuideDetail() {
 
   return (
     <>
-      <PageHero title={guide.title} subtitle={guide.description} image={HERO} crumb={{ to: '/guides', label: t('guidesPage.title') }} morph={{ kind: 'guide', id: guide.slug }}>
-        <div className="mt-6 flex flex-wrap gap-4 text-sm text-white/70">
+      <PageHero title={guide.title} subtitle={guide.description} illustration={HERO_ART} crumb={{ to: '/guides', label: t('guidesPage.title') }} morph={{ kind: 'guide', id: guide.slug }}>
+        <div className="mt-6 flex flex-wrap gap-x-5 gap-y-2 text-sm text-muted">
           <span className="flex items-center gap-1.5">
             <Calendar className="size-4" aria-hidden />
             <time dateTime={guide.updatedAt}>{t('guidesPage.updated', { date: date(guide.updatedAt, { dateStyle: 'long' }) })}</time>
@@ -119,15 +121,15 @@ export default function GuideDetail() {
       </PageHero>
 
       <section className="section">
-        <div className="container-x grid items-start gap-10 lg:grid-cols-[minmax(0,1fr)_18rem]">
+        <div className="container-x grid items-start gap-10 lg:grid-cols-[minmax(0,46rem)_17rem] lg:justify-between xl:gap-16">
           <article className="min-w-0">
             {guide.toc.length > 1 && (
-              <nav aria-label={t('guidesPage.toc')} className="card card-pad mb-8 lg:hidden">
-                <p className="font-display text-sm font-bold tracking-wide text-navy-900 uppercase">{t('guidesPage.toc')}</p>
-                <ol className="mt-3 list-decimal space-y-1.5 pl-5 text-sm marker:text-brand-600">
+              <nav aria-label={t('guidesPage.toc')} className="card card-pad mb-10 rounded-3xl bg-sunken shadow-none lg:hidden">
+                <p className="type-overline">{t('guidesPage.toc')}</p>
+                <ol className="mt-3 list-decimal space-y-2 pl-5 marker:font-semibold marker:text-muted">
                   {guide.toc.map((h) => (
                     <li key={h.id}>
-                      <a href={`#${h.id}`} onClick={onRichContentClick} className="text-brand-700 hover:underline">
+                      <a href={`#${h.id}`} onClick={onRichContentClick} className="text-link underline-offset-2 hover:underline">
                         {h.text}
                       </a>
                     </li>
@@ -142,10 +144,10 @@ export default function GuideDetail() {
 
             {guide.faq.length > 0 && (
               <section className="mt-14" aria-labelledby="guide-faq">
-                <h2 id="guide-faq" className="font-display text-2xl font-bold text-navy-900">
+                <h2 id="guide-faq" className="font-display text-2xl font-semibold text-ink sm:text-[1.75rem]">
                   {t('guidesPage.faq')}
                 </h2>
-                <div className="mt-5 divide-y divide-line rounded-2xl border border-line">
+                <div className="mt-5 divide-y divide-line overflow-hidden rounded-2xl border border-line bg-card shadow-[var(--tv-shadow-card)]">
                   {guide.faq.map((f, i) => (
                     <div key={f.q}>
                       <h3>
@@ -153,13 +155,13 @@ export default function GuideDetail() {
                           type="button"
                           aria-expanded={openFaq === i}
                           onClick={() => setOpenFaq(openFaq === i ? null : i)}
-                          className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left font-semibold text-navy-900"
+                          className="flex min-h-14 w-full items-center justify-between gap-4 px-5 py-4 text-left font-semibold text-ink hover:bg-sunken"
                         >
                           {f.q}
                           <ChevronDown className={clsx('size-4 shrink-0 transition', openFaq === i && 'rotate-180')} aria-hidden />
                         </button>
                       </h3>
-                      {openFaq === i && <p className="px-5 pb-5 text-ink/80">{f.a}</p>}
+                      {openFaq === i && <p className="max-w-[70ch] px-5 pb-5 leading-relaxed text-muted">{f.a}</p>}
                     </div>
                   ))}
                 </div>
@@ -169,23 +171,23 @@ export default function GuideDetail() {
             {/* Free e-book (lead magnet) built from the guides; renders nothing until it is published with a PDF. */}
             <LeadMagnetBlock from={`guide:${guide.key}`} className="mt-12" />
 
-            <p className="mt-10 flex gap-2 rounded-xl bg-amber-50 p-4 text-sm leading-relaxed text-amber-900">
+            <p className="mt-10 flex gap-2 rounded-2xl border border-warning-border bg-warning-bg p-4 text-sm leading-relaxed text-warning-fg">
               <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden /> {t('guidesPage.disclaimer')}
             </p>
 
-            <Link to="/guides" className="btn-ghost mt-8">
+            <Link to="/guides" className={buttonClass({ variant: 'outline', className: 'mt-8' })}>
               <ArrowLeft className="size-4" aria-hidden /> {t('guidesPage.back')}
             </Link>
           </article>
 
-          <aside className="space-y-6 lg:sticky lg:top-28">
+          <aside className="space-y-5 lg:sticky lg:top-28 lg:max-h-[calc(100vh-8rem)] lg:overflow-y-auto">
             {guide.toc.length > 1 && (
-              <nav aria-label={t('guidesPage.toc')} className="card card-pad hidden lg:block">
-                <p className="font-display text-sm font-bold tracking-wide text-navy-900 uppercase">{t('guidesPage.toc')}</p>
-                <ol className="mt-3 space-y-2 text-sm">
+              <nav aria-label={t('guidesPage.toc')} className="card hidden rounded-3xl p-5 lg:block">
+                <p className="type-overline">{t('guidesPage.toc')}</p>
+                <ol className="mt-3 space-y-0.5 border-l border-line text-sm">
                   {guide.toc.map((h) => (
                     <li key={h.id}>
-                      <a href={`#${h.id}`} onClick={onRichContentClick} className="text-muted hover:text-brand-700">
+                      <a href={`#${h.id}`} onClick={onRichContentClick} className="-ml-px block border-l-2 border-transparent py-1.5 pl-3 leading-snug text-muted transition-colors hover:border-primary hover:text-ink">
                         {h.text}
                       </a>
                     </li>
@@ -193,13 +195,13 @@ export default function GuideDetail() {
                 </ol>
               </nav>
             )}
-            <div className="card card-pad">
-              <p className="font-display text-sm font-bold tracking-wide text-navy-900 uppercase">{t('guidesPage.tools')}</p>
+            <div className="card rounded-3xl p-5">
+              <p className="type-overline">{t('guidesPage.tools')}</p>
               <ul className="mt-3 space-y-2">
                 {tools.map(({ to, key, icon: Icon }) => (
                   <li key={to}>
-                    <Link to={to} className="flex items-center gap-2 text-sm font-semibold text-brand-700 hover:underline">
-                      <Icon className="size-4" aria-hidden /> {t(key)}
+                    <Link to={to} className="flex min-h-11 items-center gap-3 rounded-xl px-2 text-sm font-semibold text-ink hover:bg-sunken">
+                      <span className="grid size-8 shrink-0 place-items-center rounded-lg chip-sky"><Icon className="size-4" aria-hidden /></span> {t(key)}
                     </Link>
                   </li>
                 ))}
@@ -210,13 +212,13 @@ export default function GuideDetail() {
       </section>
 
       {guide.related.length > 0 && (
-        <section className="section bg-surface">
+        <section className="section bg-sunken">
           <div className="container-x">
-            <h2 className="h-section section-head text-navy-900">{t('guidesPage.related')}</h2>
+            <h2 className="h-section section-head text-ink">{t('guidesPage.related')}</h2>
             <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-4">
               {guide.related.map((r) => (
-                <PathLink key={r.key} path={r.path} className="card card-pad block transition hover:border-brand-400 hover:shadow-md">
-                  <h3 className="font-display font-bold text-navy-900">{r.title}</h3>
+                <PathLink key={r.key} path={r.path} className="card card-interactive card-pad block rounded-3xl">
+                  <h3 className="font-display text-lg leading-snug font-semibold text-ink">{r.title}</h3>
                   <p className="mt-2 line-clamp-3 text-sm text-muted">{r.description}</p>
                 </PathLink>
               ))}

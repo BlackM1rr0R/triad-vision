@@ -5,7 +5,7 @@ export const MiniBars = ({
   bars,
   format = (v) => String(v),
   label,
-  color = 'bg-brand-500',
+  color = 'bg-primary',
 }: {
   bars: { key: string; label: string; value: number }[];
   format?: (v: number) => string;
@@ -26,7 +26,7 @@ export const MiniBars = ({
               className={`relative w-full rounded-t ${b.value > 0 ? color : 'bg-line'}`}
               style={{ height: `${b.value > 0 ? Math.max(4, (b.value / max) * 100) : 2}%` }}
             >
-              <span className="pointer-events-none absolute -top-1 left-1/2 z-10 -translate-x-1/2 -translate-y-full rounded bg-navy-900 px-1.5 py-0.5 text-[10px] whitespace-nowrap text-white opacity-0 transition group-hover:opacity-100">
+              <span className="pointer-events-none absolute -top-1 left-1/2 z-10 -translate-x-1/2 -translate-y-full rounded bg-ink px-1.5 py-0.5 text-[10px] whitespace-nowrap text-canvas opacity-0 transition group-hover:opacity-100">
                 {format(b.value)}
               </span>
             </div>

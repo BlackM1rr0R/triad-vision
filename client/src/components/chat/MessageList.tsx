@@ -22,19 +22,19 @@ const AttachmentView = ({ a }: { a: Attachment }) => {
   const { t } = useTranslation();
   if (isImage(a.mimeType)) {
     return (
-      <a href={attachmentUrl(a.id)} target="_blank" rel="noopener noreferrer" className="block max-w-xs overflow-hidden rounded-lg border border-line bg-surface">
+      <a href={attachmentUrl(a.id)} target="_blank" rel="noopener noreferrer" className="block max-w-xs overflow-hidden rounded-lg border border-line bg-sunken">
         <img src={attachmentUrl(a.id)} alt={a.filename} loading="lazy" className="max-h-64 w-auto object-contain" />
       </a>
     );
   }
   return (
     <span className="inline-flex max-w-full items-center gap-2 rounded-lg border border-line bg-card px-2.5 py-1.5 text-sm">
-      <FileText className="size-4 shrink-0 text-brand-600" aria-hidden />
+      <FileText className="size-4 shrink-0 text-link" aria-hidden />
       <a href={attachmentUrl(a.id)} target="_blank" rel="noopener noreferrer" className="min-w-0 truncate font-medium text-ink hover:underline">
         {a.filename}
       </a>
       <span className="shrink-0 text-xs text-muted">{formatBytes(a.size)}</span>
-      <a href={attachmentUrl(a.id, true)} className="grid size-6 shrink-0 place-items-center rounded-md text-muted hover:bg-surface hover:text-ink" aria-label={t('chat.actions.download')} title={t('chat.actions.download')}>
+      <a href={attachmentUrl(a.id, true)} className="grid size-6 shrink-0 place-items-center rounded-md text-muted hover:bg-sunken hover:text-ink" aria-label={t('chat.actions.download')} title={t('chat.actions.download')}>
         <Download className="size-3.5" />
       </a>
     </span>
@@ -52,7 +52,7 @@ const Reactions = ({ m, onReact }: { m: Message; onReact: (emoji: string) => voi
           key={r.emoji}
           type="button"
           onClick={() => onReact(r.emoji)}
-          className={clsx('inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs transition-colors', r.me ? 'border-brand-400 bg-brand-50 text-brand-700' : 'border-line bg-card text-ink hover:border-brand-300')}
+          className={clsx('inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs transition-colors', r.me ? 'border-line-strong bg-primary/[0.06] text-link' : 'border-line bg-card text-ink hover:border-line-strong')}
           aria-pressed={r.me}
         >
           <span>{r.emoji}</span>
@@ -60,7 +60,7 @@ const Reactions = ({ m, onReact }: { m: Message; onReact: (emoji: string) => voi
         </button>
       ))}
       <span className="relative">
-        <button type="button" onClick={() => setOpen((o) => !o)} className="grid size-6 place-items-center rounded-full border border-dashed border-line text-muted hover:border-brand-300 hover:text-brand-600" aria-label={t('chat.actions.react')}>
+        <button type="button" onClick={() => setOpen((o) => !o)} className="grid size-6 place-items-center rounded-full border border-dashed border-line text-muted hover:border-line-strong hover:text-link" aria-label={t('chat.actions.react')}>
           <SmilePlus className="size-3.5" />
         </button>
         <EmojiPicker open={open} onClose={() => setOpen(false)} onPick={onReact} />
@@ -89,7 +89,7 @@ const Editor = ({ initial, onSave, onCancel }: { initial: string; onSave: (body:
     }
   };
   return (
-    <div className="mt-1 rounded-lg border border-brand-400 bg-card p-2 ring-4 ring-brand-500/10">
+    <div className="mt-1 rounded-lg border border-line-strong bg-card p-2 ring-4 ring-focus/10">
       <textarea
         ref={ref}
         value={value}
@@ -152,7 +152,7 @@ export const MessageItem = ({
       onClick={onClick}
       title={label}
       aria-label={label}
-      className={clsx('grid size-7 place-items-center rounded-md transition-colors', danger ? 'text-muted hover:bg-red-50 hover:text-danger' : active ? 'bg-brand-50 text-brand-600' : 'text-muted hover:bg-surface hover:text-ink')}
+      className={clsx('grid size-7 place-items-center rounded-md transition-colors', danger ? 'text-muted hover:bg-danger-bg hover:text-danger-fg' : active ? 'bg-primary/[0.06] text-link' : 'text-muted hover:bg-sunken hover:text-ink')}
     >
       {children}
     </button>
@@ -164,10 +164,10 @@ export const MessageItem = ({
       className={clsx(
         'group relative flex gap-3 px-4 py-0.5 transition-colors hover:bg-surface/70',
         !grouped && 'mt-2.5',
-        mentionsMe && 'bg-amber-50/60',
-        highlighted && 'bg-brand-50',
+        mentionsMe && 'bg-warning-bg/60',
+        highlighted && 'bg-primary/[0.06]',
         m.pending && 'opacity-60',
-        m.failed && 'bg-red-50',
+        m.failed && 'bg-danger-bg',
       )}
       data-message-id={m.id}
     >
@@ -184,7 +184,7 @@ export const MessageItem = ({
             <span className="text-sm font-bold text-ink">{fullName(m.author) || '—'}</span>
             <span className="text-xs text-muted">{fmtTime(m.createdAt)}</span>
             {m.pinnedAt && (
-              <span className="inline-flex items-center gap-1 text-xs text-amber-700">
+              <span className="inline-flex items-center gap-1 text-xs text-warning-fg">
                 <Pin className="size-3" /> {t('chat.message.pinnedBy')}
               </span>
             )}
@@ -215,7 +215,7 @@ export const MessageItem = ({
         )}
         <Reactions m={m} onReact={(e) => actions.react(m, e)} />
         {!inThread && m.replyCount > 0 && onOpenThread && (
-          <button type="button" onClick={() => onOpenThread(m)} className="mt-1 inline-flex items-center gap-1.5 rounded-md px-1.5 py-0.5 text-xs font-semibold text-brand-600 hover:bg-brand-50">
+          <button type="button" onClick={() => onOpenThread(m)} className="mt-1 inline-flex items-center gap-1.5 rounded-md px-1.5 py-0.5 text-xs font-semibold text-link hover:bg-primary/[0.06]">
             <MessageSquare className="size-3.5" />
             {t('chat.message.replies', { count: m.replyCount })}
             {m.lastReplyAt && <span className="font-normal text-muted">· {t('chat.message.lastReply', { time: fmtTime(m.lastReplyAt) })}</span>}
@@ -225,7 +225,7 @@ export const MessageItem = ({
 
       {/* Hover toolbar */}
       {!editing && !m.pending && (
-        <div className={clsx('absolute -top-3 right-3 flex items-center gap-0.5 rounded-lg border border-line bg-card p-0.5 shadow-sm', menuOpen || emojiOpen ? 'flex' : 'hidden group-hover:flex')}>
+        <div className={clsx('absolute -top-3 right-3 flex items-center gap-0.5 rounded-lg border border-line bg-card p-0.5 shadow-[var(--tv-shadow-card)]', menuOpen || emojiOpen ? 'flex' : 'hidden group-hover:flex')}>
           <span className="relative">
             <Tool label={t('chat.actions.react')} onClick={() => setEmojiOpen((o) => !o)} active={emojiOpen}>
               <SmilePlus className="size-4" />
@@ -261,7 +261,7 @@ export const MessageItem = ({
           )}
         </div>
       )}
-      {m.failed && <X className="absolute top-2 right-3 size-4 text-danger" aria-hidden />}
+      {m.failed && <X className="absolute top-2 right-3 size-4 text-danger-fg" aria-hidden />}
     </div>
   );
 };
@@ -392,7 +392,7 @@ export const MessageList = ({
               {r.firstNew && (
                 <div className="my-2 flex items-center gap-2 px-4" role="separator">
                   <span className="h-px flex-1 bg-danger/50" />
-                  <span className="text-[0.65rem] font-bold tracking-wider text-danger uppercase">{t('chat.message.newMessages')}</span>
+                  <span className="text-[0.65rem] font-bold tracking-wider text-danger-fg uppercase">{t('chat.message.newMessages')}</span>
                 </div>
               )}
               <MessageItem m={r.m} people={people} meId={meId} grouped={r.grouped} actions={actions} onOpenThread={onOpenThread} highlighted={highlightId === r.m.id} />
@@ -418,7 +418,7 @@ export const MessageList = ({
             if (el) el.scrollTop = el.scrollHeight;
             setUnseen(0);
           }}
-          className="absolute right-4 bottom-3 inline-flex items-center gap-1.5 rounded-full border border-line bg-card px-3 py-1.5 text-xs font-semibold text-ink shadow-lg hover:bg-surface"
+          className="absolute right-4 bottom-3 inline-flex items-center gap-1.5 rounded-full border border-line bg-card px-3 py-1.5 text-xs font-semibold text-ink shadow-[var(--tv-shadow-raised)] hover:bg-sunken"
         >
           <ArrowDown className="size-3.5" />
           {unseen > 0 ? unseen : t('chat.message.scrollBottom')}

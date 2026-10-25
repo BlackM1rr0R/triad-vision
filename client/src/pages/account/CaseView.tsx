@@ -60,54 +60,50 @@ const CurrentStepPanel = ({ data }: { data: CaseDetail }) => {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
       className={clsx(
-        'card relative overflow-hidden p-5 sm:p-6',
-        clientTurn && 'border-brand-400/40 ring-4 ring-brand-500/10',
+        'relative overflow-hidden rounded-3xl border p-6 sm:p-8',
+        clientTurn ? 'border-warning-border bg-highlight-bg' : 'border-line bg-card shadow-[var(--tv-shadow-card)]',
       )}
       aria-labelledby="current-step-title"
     >
-      <span
-        className={clsx(
-          'absolute inset-y-0 left-0 w-1.5',
-          clientTurn ? 'bg-gradient-to-b from-brand-400 to-brand-700' : data.status === 'APPROVED' ? 'bg-success' : data.status === 'REJECTED' ? 'bg-danger' : data.status === 'CANCELLED' ? 'bg-slate-300' : 'bg-sky-400',
-        )}
-        aria-hidden
-      />
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:gap-5">
         <span
           className={clsx(
             'grid size-12 shrink-0 place-items-center rounded-xl',
-            clientTurn ? 'bg-brand-600 text-white shadow-lg shadow-brand-600/30' : data.status === 'CANCELLED' ? 'bg-slate-100 text-slate-500' : 'bg-sky-100 text-sky-700',
+            clientTurn ? 'bg-card text-ink' : data.status === 'CANCELLED' ? 'bg-sunken text-muted' : 'bg-info-bg text-info-fg',
           )}
         >
           {clientTurn ? <Sparkles className="size-6" aria-hidden /> : data.status === 'CANCELLED' ? <Ban className="size-6" aria-hidden /> : <Hourglass className="size-6" aria-hidden />}
         </span>
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="eyebrow">{t('portal.currentStep')}</span>
+            <span className="type-overline inline-flex items-center gap-2 text-ink">
+              <span className={clsx('size-2 rounded-full', clientTurn ? 'bg-highlight' : data.status === 'APPROVED' ? 'bg-success' : data.status === 'REJECTED' ? 'bg-danger' : data.status === 'CANCELLED' ? 'bg-line-strong' : 'bg-info')} aria-hidden />
+              {t('portal.currentStep')}
+            </span>
             {clientTurn && (
-              <span className="badge bg-amber-100 text-amber-800">
-                <span className="size-2 rounded-full bg-amber-500 shadow-[0_0_0_3px_rgba(245,158,11,0.25)]" aria-hidden />
+              <span className="badge bg-warning-bg text-warning-fg">
+                <span className="size-2 rounded-full bg-warning" aria-hidden />
                 {t('portal.actionRequired')}
               </span>
             )}
-            {staffTurn && <span className="badge bg-sky-100 text-sky-800">{t('portal.waiting')}</span>}
+            {staffTurn && <span className="badge bg-info-bg text-info-fg">{t('portal.waiting')}</span>}
           </div>
-          <h2 id="current-step-title" className="mt-2 text-xl font-extrabold break-words text-navy-900 sm:text-[1.7rem]">
+          <h2 id="current-step-title" className="mt-2 text-xl font-semibold break-words text-ink sm:text-[1.7rem]">
             {t(`portal.status.${data.status}`)}
           </h2>
-          <p className="mt-2 max-w-2xl leading-relaxed text-muted">{t(`portal.statusHelp.${data.status}`)}</p>
-          {staffTurn && <p className="mt-2 text-sm font-medium text-sky-700">{t('portal.waitingUs')}</p>}
+          <p className={clsx('mt-2 max-w-[65ch] leading-relaxed', clientTurn ? 'text-ink/80' : 'text-muted')}>{t(`portal.statusHelp.${data.status}`)}</p>
+          {staffTurn && <p className="mt-2 text-sm font-medium text-info-fg">{t('portal.waitingUs')}</p>}
 
           {data.status === 'CANCELLED' && data.cancelReason && (
-            <p className="mt-4 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm whitespace-pre-line text-slate-700">{data.cancelReason}</p>
+            <p className="mt-4 rounded-xl border border-line bg-sunken px-4 py-3 text-sm whitespace-pre-line text-muted">{data.cancelReason}</p>
           )}
 
           {data.staffNote && (
-            <div className="mt-5 flex gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3.5">
-              <MessageSquareWarning className="mt-0.5 size-5 shrink-0 text-amber-600" aria-hidden />
+            <div className="mt-5 flex gap-3 rounded-xl border border-warning-border bg-warning-bg px-4 py-3.5">
+              <MessageSquareWarning className="mt-0.5 size-5 shrink-0 text-warning-fg" aria-hidden />
               <div className="min-w-0">
-                <p className="text-xs font-bold tracking-wide text-amber-800 uppercase">{t('portal.staffNote')}</p>
-                <p className="mt-1 text-sm leading-relaxed break-words whitespace-pre-line text-amber-950">{data.staffNote}</p>
+                <p className="text-xs font-bold tracking-wide text-warning-fg uppercase">{t('portal.staffNote')}</p>
+                <p className="mt-1 text-sm leading-relaxed break-words whitespace-pre-line text-warning-fg">{data.staffNote}</p>
               </div>
             </div>
           )}
@@ -254,7 +250,7 @@ export default function CaseView() {
       {/* Header */}
       <HeaderReveal still={morph.arrived}>
         <div className="min-w-0">
-          <Link to="/account" className="-my-2 inline-flex min-h-10 items-center gap-1.5 text-sm font-semibold text-brand-600 hover:text-brand-700">
+          <Link to="/account" className="-my-2 inline-flex min-h-10 items-center gap-1.5 text-sm font-semibold text-link hover:text-link">
             <ArrowLeft className="size-4" aria-hidden />
             {t('portal.myCases')}
           </Link>
@@ -272,7 +268,7 @@ export default function CaseView() {
             </span>
             {data.visaCategory && (
               <span className="inline-flex min-w-0 items-center gap-1.5">
-                <span className="badge shrink-0 whitespace-nowrap bg-navy-900 text-white">{data.visaCategory.visaLabel}</span>
+                <span className="badge shrink-0 whitespace-nowrap border border-line bg-sunken text-ink">{data.visaCategory.visaLabel}</span>
                 {tr(data.visaCategory.title)}
               </span>
             )}

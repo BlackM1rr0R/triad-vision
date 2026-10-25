@@ -60,41 +60,41 @@ const TaskRow = ({ task, showCase, onChanged }: { task: ClientTaskView; showCase
   const isOpen = task.status === 'OPEN';
 
   return (
-    <li className={clsx('rounded-xl border p-4', task.state === 'overdue' ? 'border-red-200 bg-red-50/60' : 'border-line bg-card')}>
+    <li className={clsx('rounded-xl border p-4', task.state === 'overdue' ? 'border-danger-border bg-danger-bg' : 'border-line bg-card')}>
       <div className="flex flex-wrap items-start gap-3">
-        <span className={clsx('mt-0.5 grid size-8 shrink-0 place-items-center rounded-lg', isOpen ? 'bg-brand-100 text-brand-700' : 'bg-emerald-100 text-emerald-700')}>
+        <span className={clsx('mt-0.5 grid size-8 shrink-0 place-items-center rounded-lg', isOpen ? 'bg-sunken text-link' : 'bg-success-bg text-success-fg')}>
           {isOpen ? <ListChecks className="size-4" aria-hidden /> : <CheckCircle2 className="size-4" aria-hidden />}
         </span>
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <p className={clsx('font-semibold break-words text-navy-900', !isOpen && 'line-through decoration-slate-300')}>{task.title}</p>
+            <p className={clsx('font-semibold break-words text-ink', !isOpen && 'line-through decoration-slate-300')}>{task.title}</p>
             <span className={clsx('badge', STATE_TONE[task.state])}>{t(`cp.tasks.state.${task.state}`)}</span>
           </div>
-          <p className={clsx('mt-0.5 text-xs', task.state === 'overdue' ? 'font-semibold text-red-700' : 'text-muted')}>
+          <p className={clsx('mt-0.5 text-xs', task.state === 'overdue' ? 'font-semibold text-danger-fg' : 'text-muted')}>
             {task.dueAt ? t('cp.tasks.due', { date: date(task.dueAt, { day: 'numeric', month: 'long' }) }) : t('cp.tasks.noDue')}
             {showCase && (
               <>
                 {' · '}
-                <Link to={`/account/cases/${task.caseId}#client-tasks`} className="font-semibold text-brand-600 hover:underline">
+                <Link to={`/account/cases/${task.caseId}#client-tasks`} className="font-semibold text-link hover:underline">
                   {t('cp.tasks.caseNo', { number: task.caseNumber })}
                 </Link>
               </>
             )}
           </p>
-          {task.description && <p className="mt-2 text-sm leading-relaxed break-words whitespace-pre-line text-slate-700">{task.description}</p>}
+          {task.description && <p className="mt-2 text-sm leading-relaxed break-words whitespace-pre-line text-muted">{task.description}</p>}
           {task.requirement && isOpen && (
-            <a href={`/account/cases/${task.caseId}#docs-${task.requirement.stage.toLowerCase()}`} className="mt-2 inline-flex items-center gap-1.5 text-sm font-semibold text-brand-600 hover:underline">
+            <a href={`/account/cases/${task.caseId}#docs-${task.requirement.stage.toLowerCase()}`} className="mt-2 inline-flex items-center gap-1.5 text-sm font-semibold text-link hover:underline">
               <FileText className="size-4" aria-hidden /> {t('cp.tasks.requirement', { title: task.requirement.title })}
             </a>
           )}
           <div className="mt-2 flex flex-wrap gap-3 text-sm">
             {task.linkUrl && (
-              <a href={task.linkUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 font-semibold text-brand-600 hover:underline">
+              <a href={task.linkUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 font-semibold text-link hover:underline">
                 <ExternalLink className="size-4" aria-hidden /> {t('cp.tasks.openLink')}
               </a>
             )}
             {task.attachmentId && (
-              <a href={fileUrl(task.attachmentId)} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 font-semibold text-brand-600 hover:underline">
+              <a href={fileUrl(task.attachmentId)} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 font-semibold text-link hover:underline">
                 <Paperclip className="size-4" aria-hidden /> {t('cp.tasks.attachment')}
               </a>
             )}
@@ -170,7 +170,7 @@ export const PortalTasks = ({ caseId, onChanged }: { caseId?: string; onChanged?
     <section id="client-tasks" className="card scroll-mt-24 p-5 sm:p-6" aria-labelledby="client-tasks-title">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <div>
-          <h2 id="client-tasks-title" className="text-lg font-extrabold text-navy-900">{t('cp.tasks.title')}</h2>
+          <h2 id="client-tasks-title" className="text-lg font-semibold text-ink">{t('cp.tasks.title')}</h2>
           <p className="text-sm text-muted">{t('cp.tasks.subtitle')}</p>
         </div>
         {open.length > 0 && <span className={clsx('badge', data.counts.overdue ? STATE_TONE.overdue : STATE_TONE.open)}>{t('cp.tasks.openCount', { count: open.length })}</span>}
@@ -183,7 +183,7 @@ export const PortalTasks = ({ caseId, onChanged }: { caseId?: string; onChanged?
       </ul>
       {done.length > 0 && (
         <div className="mt-4">
-          <button type="button" className="text-sm font-semibold text-brand-600 hover:underline" onClick={() => setShowDone((v) => !v)} aria-expanded={showDone}>
+          <button type="button" className="text-sm font-semibold text-link hover:underline" onClick={() => setShowDone((v) => !v)} aria-expanded={showDone}>
             {t('cp.tasks.showDone', { count: done.length })}
           </button>
           {showDone && (

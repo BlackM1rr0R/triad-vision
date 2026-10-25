@@ -158,7 +158,7 @@ const ExperienceEditor = ({ items, onChange }: { items: Keyed<CvExperience>[]; o
         const incomplete = !experienceComplete(e);
         const label = e.title || `${t('cvb.sections.experience')} ${i + 1}`;
         return (
-          <div key={e._k} className={clsx('rounded-xl border p-4', incomplete ? 'border-amber-300 bg-amber-50/40' : 'border-line bg-surface/40')}>
+          <div key={e._k} className={clsx('rounded-xl border p-4', incomplete ? 'border-warning-border bg-warning-bg' : 'border-line bg-sunken')}>
             <div className="mb-3 flex items-center justify-between gap-2">
               <p className="min-w-0 truncate text-sm font-bold text-ink">{label}</p>
               <EntryToolbar index={i} count={items.length} label={label} onMove={(to) => onChange(moveItem(items, i, to))} onRemove={() => onChange(items.filter((_, j) => j !== i))} />
@@ -172,13 +172,13 @@ const ExperienceEditor = ({ items, onChange }: { items: Keyed<CvExperience>[]; o
               <div className="space-y-2">
                 <MonthPicker label={t('cvb.fields.to')} value={e.to} disabled={isCurrent(e)} onChange={(v) => set(i, { to: v })} optional />
                 <label className="inline-flex items-center gap-2 text-sm text-ink">
-                  <input type="checkbox" className="size-4 accent-brand-600" checked={isCurrent(e)} onChange={(ev) => set(i, { to: ev.target.checked ? null : e.from || thisMonth() })} />
+                  <input type="checkbox" className="size-4 accent-primary" checked={isCurrent(e)} onChange={(ev) => set(i, { to: ev.target.checked ? null : e.from || thisMonth() })} />
                   {t('cvb.fields.current')}
                 </label>
               </div>
             </div>
             <TaskList tasks={e.tasks} onChange={(tasks) => set(i, { tasks })} />
-            {incomplete && <p className="mt-3 text-xs font-medium text-amber-700">{t('cvb.hints.incomplete')}</p>}
+            {incomplete && <p className="mt-3 text-xs font-medium text-warning-fg">{t('cvb.hints.incomplete')}</p>}
           </div>
         );
       })}
@@ -230,7 +230,7 @@ const TaskList = ({ tasks, onChange }: { tasks: string[]; onChange: (v: string[]
         ))}
       </ul>
       {tasks.length < CV_MAX.tasks && (
-        <button type="button" className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-brand-600 hover:text-brand-700" onClick={() => onChange([...tasks, ''])}>
+        <button type="button" className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-link hover:text-link" onClick={() => onChange([...tasks, ''])}>
           <Plus className="size-3.5" aria-hidden /> {t('cvb.fields.addTask')}
         </button>
       )}
@@ -248,7 +248,7 @@ const EducationEditor = ({ items, onChange }: { items: Keyed<CvEducation>[]; onC
         const incomplete = !educationComplete(e);
         const label = e.degree || `${t('cvb.sections.education')} ${i + 1}`;
         return (
-          <div key={e._k} className={clsx('rounded-xl border p-4', incomplete ? 'border-amber-300 bg-amber-50/40' : 'border-line bg-surface/40')}>
+          <div key={e._k} className={clsx('rounded-xl border p-4', incomplete ? 'border-warning-border bg-warning-bg' : 'border-line bg-sunken')}>
             <div className="mb-3 flex items-center justify-between gap-2">
               <p className="min-w-0 truncate text-sm font-bold text-ink">{label}</p>
               <EntryToolbar index={i} count={items.length} label={label} onMove={(to) => onChange(moveItem(items, i, to))} onRemove={() => onChange(items.filter((_, j) => j !== i))} />
@@ -262,7 +262,7 @@ const EducationEditor = ({ items, onChange }: { items: Keyed<CvEducation>[]; onC
               <MonthPicker label={t('cvb.fields.from')} value={e.from} onChange={(v) => set(i, { from: v })} optional />
               <MonthPicker label={t('cvb.fields.to')} value={e.to} onChange={(v) => set(i, { to: v })} optional />
             </div>
-            {incomplete && <p className="mt-3 text-xs font-medium text-amber-700">{t('cvb.hints.incompleteEdu')}</p>}
+            {incomplete && <p className="mt-3 text-xs font-medium text-warning-fg">{t('cvb.hints.incompleteEdu')}</p>}
           </div>
         );
       })}
@@ -283,7 +283,7 @@ const LanguagesEditor = ({ items, onChange }: { items: Keyed<CvLanguage>[]; onCh
     <div className="space-y-3">
       {items.length === 0 && <p className="text-sm text-muted">{t('cvb.empty')}</p>}
       {items.map((l, i) => (
-        <div key={l._k} className="flex flex-wrap items-end gap-2 rounded-xl border border-line bg-surface/40 p-3">
+        <div key={l._k} className="flex flex-wrap items-end gap-2 rounded-xl border border-line bg-sunken p-3">
           <TextField label={t('cvb.fields.language')} value={l.language} max={CV_MAX.language} placeholder={t('cvb.fields.languagePh')} onChange={(v) => set(i, { language: v })} className="min-w-40 flex-1" />
           <div className="w-40">
             <label htmlFor={`${id}-${i}`} className="label">
@@ -318,7 +318,7 @@ const CertificatesEditor = ({ items, onChange }: { items: Keyed<CvCertificate>[]
     <div className="space-y-3">
       {items.length === 0 && <p className="text-sm text-muted">{t('cvb.empty')}</p>}
       {items.map((c, i) => (
-        <div key={c._k} className="flex flex-wrap items-end gap-2 rounded-xl border border-line bg-surface/40 p-3">
+        <div key={c._k} className="flex flex-wrap items-end gap-2 rounded-xl border border-line bg-sunken p-3">
           <TextField label={t('cvb.fields.certName')} value={c.name} max={CV_MAX.org} placeholder={t('cvb.fields.certNamePh')} onChange={(v) => set(i, { name: v })} className="min-w-44 flex-[2]" />
           <TextField label={t('cvb.fields.issuer')} value={c.issuer} max={CV_MAX.org} onChange={(v) => set(i, { issuer: v })} className="min-w-36 flex-1" />
           <div className="w-28">
@@ -362,10 +362,10 @@ const ProfileBasics = ({ profile }: { profile: CvProfile }) => {
   return (
     <div className="card p-5">
       <div className="flex items-center justify-between gap-2">
-        <h2 className="flex items-center gap-2 text-sm font-bold text-ink">
-          <UserRound className="size-4 text-brand-600" aria-hidden /> {t('cvb.profile.title')}
+        <h2 className="flex items-center gap-2 text-sm font-semibold text-ink">
+          <UserRound className="size-4 text-primary" aria-hidden /> {t('cvb.profile.title')}
         </h2>
-        <Link to="/account/profile" className="inline-flex items-center gap-1 text-xs font-semibold text-brand-600 hover:text-brand-700">
+        <Link to="/account/profile" className="inline-flex items-center gap-1 text-xs font-semibold text-link hover:text-link">
           <PencilLine className="size-3.5" aria-hidden /> {t('cvb.profile.edit')}
         </Link>
       </div>
@@ -374,7 +374,7 @@ const ProfileBasics = ({ profile }: { profile: CvProfile }) => {
         {rows.map(([label, value]) => (
           <div key={label} className="flex gap-3 py-1.5">
             <dt className="w-28 shrink-0 text-xs text-muted">{label}</dt>
-            <dd className={clsx('min-w-0 flex-1 break-words', value ? 'text-ink' : 'text-xs text-amber-700')}>{value || t('cvb.profile.missing')}</dd>
+            <dd className={clsx('min-w-0 flex-1 break-words', value ? 'text-ink' : 'text-xs text-warning-fg')}>{value || t('cvb.profile.missing')}</dd>
           </div>
         ))}
       </dl>
@@ -425,7 +425,7 @@ const Editor = ({ cv, profile }: { cv: CvState; profile: CvProfile }) => {
     <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div className="min-w-0">
-          <h1 className="text-xl font-extrabold text-ink sm:text-2xl">{t('cvb.title')}</h1>
+          <h1 className="type-page-title">{t('cvb.title')}</h1>
           <p className="mt-1 max-w-2xl text-sm text-muted">{t('cvb.subtitle')}</p>
         </div>
         <SaveIndicator state={state} onRetry={() => void retry()} />
@@ -433,8 +433,8 @@ const Editor = ({ cv, profile }: { cv: CvState; profile: CvProfile }) => {
 
       <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
         <div className="min-w-0 space-y-6">
-          <p className="rounded-xl border border-brand-200/60 bg-brand-50/60 px-4 py-3 text-sm text-ink/80">
-            <Sparkles className="mr-1.5 inline size-4 text-brand-600" aria-hidden />
+          <p className="rounded-xl border border-line-strong bg-sunken px-4 py-3 text-sm text-ink/80">
+            <Sparkles className="mr-1.5 inline size-4 text-primary" aria-hidden />
             {t('cvb.hints.german')}
           </p>
 
@@ -504,7 +504,7 @@ const Editor = ({ cv, profile }: { cv: CvState; profile: CvProfile }) => {
                     onClick={() => setSettings({ template: tpl })}
                     className={clsx(
                       'rounded-xl border p-2 text-left transition',
-                      settings.template === tpl ? 'border-brand-500 ring-2 ring-brand-500/20' : 'border-line hover:border-brand-300',
+                      settings.template === tpl ? 'border-primary ring-2 ring-focus/40' : 'border-line hover:border-line-strong',
                     )}
                   >
                     <TemplatePreview template={tpl} />
@@ -524,7 +524,7 @@ const Editor = ({ cv, profile }: { cv: CvState; profile: CvProfile }) => {
                     type="button"
                     aria-pressed={lang === l}
                     onClick={() => setLang(l)}
-                    className={clsx('rounded-md px-3 py-1.5 text-xs font-semibold transition', lang === l ? 'bg-brand-600 text-white' : 'text-ink/75 hover:bg-surface')}
+                    className={clsx('rounded-md px-3 py-1.5 text-xs font-semibold transition', lang === l ? 'bg-primary text-primary-contrast' : 'text-ink/75 hover:bg-sunken')}
                   >
                     {t(`cvb.docLang.${l}`)}
                   </button>
@@ -533,10 +533,10 @@ const Editor = ({ cv, profile }: { cv: CvState; profile: CvProfile }) => {
             </fieldset>
 
             <label className="flex items-start gap-2.5 text-sm text-ink">
-              <input type="checkbox" className="mt-0.5 size-4 accent-brand-600" checked={photo} onChange={(e) => setPhoto(e.target.checked)} />
+              <input type="checkbox" className="mt-0.5 size-4 accent-primary" checked={photo} onChange={(e) => setPhoto(e.target.checked)} />
               <span>
                 <span className="inline-flex items-center gap-1.5 font-semibold">
-                  <ImageIcon className="size-3.5 text-brand-600" aria-hidden /> {t('cvb.photo')}
+                  <ImageIcon className="size-3.5 text-primary" aria-hidden /> {t('cvb.photo')}
                 </span>
                 <span className="block text-xs text-muted">{t('cvb.photoHint')}</span>
               </span>
@@ -549,7 +549,7 @@ const Editor = ({ cv, profile }: { cv: CvState; profile: CvProfile }) => {
 
           <div className="card p-5">
             <div className="flex items-start gap-3">
-              <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-surface text-brand-600">
+              <span className="grid size-11 shrink-0 place-items-center rounded-xl chip-soft">
                 <Share2 className="size-4.5" aria-hidden />
               </span>
               <div className="min-w-0 flex-1">
@@ -601,7 +601,7 @@ export default function AccountCv() {
     return (
       <div className="card p-6 text-center text-sm text-muted">
         {t('common.error')}{' '}
-        <button type="button" className="font-semibold text-brand-600 underline" onClick={() => void refetch()}>
+        <button type="button" className="font-semibold text-link underline" onClick={() => void refetch()}>
           {t('cvb.status.retry')}
         </button>
       </div>

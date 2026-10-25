@@ -29,7 +29,7 @@ import { api, errorCode } from '@/lib/api';
 import i18n, { registerCopy } from '@/i18n';
 import { adminInvoicesCopy } from '@/i18n/pagesBooking';
 import { Chip, EmptyState, ErrorBlock, LoadingBlock, PageHead, Panel, StatTile, Switch } from '@/components/admin/ui';
-import { Tabs } from '@/components/ui/Tabs';
+import { TabPanel, Tabs } from '@/components/ui/Tabs';
 import { Modal } from '@/components/admin/Modal';
 import { ConfirmDialog } from '@/components/admin/ConfirmDialog';
 import { errorMessage, fmtDate } from '@/components/admin/labels';
@@ -188,6 +188,7 @@ export default function AdminInvoices() {
 
       <Tabs
         className="mb-5"
+        idPrefix="admin-invoices"
         label={t('adminInvoices.tabs.list')}
         items={(['list', 'settings'] as const).map((v) => ({
           key: v,
@@ -203,7 +204,9 @@ export default function AdminInvoices() {
         onChange={setTab}
       />
 
-      {tab === 'list' ? <InvoiceList onEdit={setEditing} legalMissing={settingsQ.data?.legalMissing ?? []} /> : <SettingsTab q={settingsQ} />}
+      <TabPanel idPrefix="admin-invoices" tabKey={tab}>
+        {tab === 'list' ? <InvoiceList onEdit={setEditing} legalMissing={settingsQ.data?.legalMissing ?? []} /> : <SettingsTab q={settingsQ} />}
+      </TabPanel>
 
       {editing && <Editor invoice={editing === 'new' ? null : editing} settings={settingsQ.data?.invoicing} onClose={() => setEditing(null)} />}
     </div>
@@ -251,7 +254,7 @@ const InvoiceList = ({ onEdit, legalMissing }: { onEdit: (i: Invoice) => void; l
   return (
     <>
       {legalMissing.length > 0 && (
-        <div className="mb-4 flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-3.5 text-sm text-amber-900" role="alert">
+        <div className="mb-4 flex items-start gap-3 rounded-xl border border-warning-border bg-warning-bg p-3.5 text-sm text-warning-fg" role="alert">
           <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden />
           <p className="min-w-0">
             <span className="font-semibold">{t('adminInvoices.settings.legalMissing')}.</span> {t('adminInvoices.settings.legalMissingText')}
@@ -311,15 +314,15 @@ const InvoiceList = ({ onEdit, legalMissing }: { onEdit: (i: Invoice) => void; l
       ) : listQ.error ? (
         <ErrorBlock error={listQ.error} onRetry={() => listQ.refetch()} />
       ) : !listQ.data?.invoices.length ? (
-        <div className="rounded-xl border border-line bg-white">
+        <div className="rounded-xl border border-line bg-card">
           <EmptyState icon={Receipt} title={t('adminInvoices.empty')}>
             {t('adminInvoices.emptyText')}
           </EmptyState>
         </div>
       ) : (
-        <div className="overflow-hidden rounded-xl border border-line bg-white">
+        <div className="overflow-hidden rounded-xl border border-line bg-card">
           <table className="w-full text-sm">
-            <thead className="hidden bg-surface text-left text-xs text-muted md:table-header-group">
+            <thead className="hidden bg-sunken text-left text-xs text-muted md:table-header-group">
               <tr>
                 <th className="px-4 py-2.5 font-semibold">{t('adminInvoices.cols.number')}</th>
                 <th className="px-4 py-2.5 font-semibold">{t('adminInvoices.cols.company')}</th>
@@ -335,16 +338,16 @@ const InvoiceList = ({ onEdit, legalMissing }: { onEdit: (i: Invoice) => void; l
             <tbody className="divide-y divide-line">
               {listQ.data.invoices.map((inv) => (
                 <tr key={inv.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-3 md:table-row md:p-0">
-                  <td className="font-semibold text-navy-900 tabular-nums md:px-4 md:py-3">{inv.number ?? <span className="text-muted italic">{t('adminInvoices.draftNo')}</span>}</td>
+                  <td className="font-semibold text-ink tabular-nums md:px-4 md:py-3">{inv.number ?? <span className="text-muted italic">{t('adminInvoices.draftNo')}</span>}</td>
                   <td className="min-w-0 basis-full text-ink md:basis-auto md:px-4 md:py-3">
                     <span className="line-clamp-1">{inv.company.name}</span>
                   </td>
                   <td className="text-xs text-muted md:px-4 md:py-3 md:text-sm md:text-ink">{fmtDate(inv.issueDate)}</td>
-                  <td className={clsx('text-xs md:px-4 md:py-3 md:text-sm', inv.status === 'OVERDUE' ? 'font-semibold text-danger' : 'text-muted md:text-ink')}>
+                  <td className={clsx('text-xs md:px-4 md:py-3 md:text-sm', inv.status === 'OVERDUE' ? 'font-semibold text-danger-fg' : 'text-muted md:text-ink')}>
                     <span className="md:hidden">→ </span>
                     {fmtDate(inv.dueDate)}
                   </td>
-                  <td className="ml-auto font-semibold text-navy-900 tabular-nums md:ml-0 md:px-4 md:py-3 md:text-right">{fmtEur(inv.grossCents, inv.currency)}</td>
+                  <td className="ml-auto font-semibold text-ink tabular-nums md:ml-0 md:px-4 md:py-3 md:text-right">{fmtEur(inv.grossCents, inv.currency)}</td>
                   <td className="md:px-4 md:py-3">
                     <span className={clsx('badge', STATUS_TONE[inv.status])}>{t(`adminInvoices.status.${inv.status}`)}</span>
                   </td>
@@ -396,12 +399,12 @@ const IconAction = ({
   const cls = clsx(
     'grid size-9 place-items-center rounded-lg border transition',
     tone === 'primary'
-      ? 'border-brand-600 bg-brand-600 text-white hover:bg-brand-700'
+      ? 'border-primary bg-primary text-primary-contrast hover:bg-primary'
       : tone === 'good'
-        ? 'border-line text-emerald-700 hover:bg-emerald-50'
+        ? 'border-line text-success-fg hover:bg-success-bg'
         : tone === 'danger'
-          ? 'border-line text-danger hover:bg-red-50'
-          : 'border-line text-navy-900 hover:bg-surface',
+          ? 'border-line text-danger-fg hover:bg-danger-bg'
+          : 'border-line text-ink hover:bg-sunken',
   );
   return href ? (
     <a href={href} className={cls} title={label} aria-label={label} download>
@@ -604,7 +607,7 @@ const Editor = ({ invoice, settings, onClose }: { invoice: Invoice | null; setti
             ))}
           </select>
           {company && (
-            <p className={clsx('mt-1 flex items-center gap-1.5 text-xs', company.email ? 'text-muted' : 'text-amber-700')}>
+            <p className={clsx('mt-1 flex items-center gap-1.5 text-xs', company.email ? 'text-muted' : 'text-warning-fg')}>
               <Building2 className="size-3.5" aria-hidden />
               {company.email ?? t('adminInvoices.editor.noCompanyEmail')}
               {company.vatId && ` · USt-IdNr. ${company.vatId}`}
@@ -645,7 +648,7 @@ const Editor = ({ invoice, settings, onClose }: { invoice: Invoice | null; setti
         </fieldset>
       </div>
 
-      <h3 className="mt-6 mb-2 text-sm font-semibold text-navy-900">{t('adminInvoices.editor.items')}</h3>
+      <h3 className="mt-6 mb-2 text-sm font-semibold text-ink">{t('adminInvoices.editor.items')}</h3>
       <ul className="space-y-2">
         {lines.map((l, i) => {
           const p = parsed[i];
@@ -656,11 +659,11 @@ const Editor = ({ invoice, settings, onClose }: { invoice: Invoice | null; setti
               <div className="col-span-2 grid grid-cols-[5rem_1fr_auto] items-center gap-2 sm:contents">
                 <input className={clsx('input text-right tabular-nums', !Number.isFinite(p.quantity) && l.qty && 'border-danger')} inputMode="decimal" aria-label={t('adminInvoices.editor.qty')} placeholder={t('adminInvoices.editor.qty')} value={l.qty} onChange={(e) => setLine(l.key, { qty: e.target.value })} />
                 <input className={clsx('input text-right tabular-nums', !Number.isFinite(p.unitPriceCents) && l.price && 'border-danger')} inputMode="decimal" aria-label={t('adminInvoices.editor.unitPrice')} placeholder={t('adminInvoices.editor.unitPrice')} value={l.price} onChange={(e) => setLine(l.key, { price: e.target.value })} />
-                <span className="text-right text-sm font-semibold text-navy-900 tabular-nums sm:w-full">{total === null ? '—' : fmtEur(total, currency)}</span>
+                <span className="text-right text-sm font-semibold text-ink tabular-nums sm:w-full">{total === null ? '—' : fmtEur(total, currency)}</span>
               </div>
               <button
                 type="button"
-                className="row-start-1 grid size-9 place-items-center self-start rounded-lg text-muted hover:bg-red-50 hover:text-danger disabled:opacity-30 sm:row-start-auto sm:self-center"
+                className="row-start-1 grid size-9 place-items-center self-start rounded-lg text-muted hover:bg-danger-bg hover:text-danger-fg disabled:opacity-30 sm:row-start-auto sm:self-center"
                 aria-label={t('adminInvoices.editor.removeLine')}
                 disabled={lines.length === 1}
                 onClick={() => setLines((ls) => ls.filter((x) => x.key !== l.key))}
@@ -672,7 +675,7 @@ const Editor = ({ invoice, settings, onClose }: { invoice: Invoice | null; setti
         })}
       </ul>
       {lines.length < 60 && (
-        <button type="button" className="mt-2 inline-flex min-h-9 items-center gap-1.5 rounded-lg px-2 text-sm font-semibold text-brand-600 hover:bg-brand-50" onClick={() => setLines((ls) => [...ls, blankLine()])}>
+        <button type="button" className="mt-2 inline-flex min-h-9 items-center gap-1.5 rounded-lg px-2 text-sm font-semibold text-link hover:bg-primary/[0.06]" onClick={() => setLines((ls) => [...ls, blankLine()])}>
           <Plus className="size-4" aria-hidden /> {t('adminInvoices.editor.addLine')}
         </button>
       )}
@@ -682,7 +685,7 @@ const Editor = ({ invoice, settings, onClose }: { invoice: Invoice | null; setti
           <label className="label" htmlFor="inv-note">{t('adminInvoices.editor.note')}</label>
           <textarea id="inv-note" className="input resize-y" rows={4} maxLength={2000} value={note} onChange={(e) => setNote(e.target.value)} />
         </div>
-        <div className="rounded-xl bg-surface p-4 text-sm">
+        <div className="rounded-xl bg-sunken p-4 text-sm">
           <div className="mb-3">
             <label className="label" htmlFor="inv-vat">{t('adminInvoices.editor.vat')}</label>
             {small ? (
@@ -710,7 +713,7 @@ const Editor = ({ invoice, settings, onClose }: { invoice: Invoice | null; setti
               <dt className="text-muted">{t('adminInvoices.editor.vatAmount', { rate })}</dt>
               <dd>{fmtEur(vat, currency)}</dd>
             </div>
-            <div className="flex justify-between border-t border-line pt-1.5 text-base font-bold text-navy-900">
+            <div className="flex justify-between border-t border-line pt-1.5 text-base font-bold text-ink">
               <dt>{t('adminInvoices.editor.gross')}</dt>
               <dd>{fmtEur(net + vat, currency)}</dd>
             </div>
@@ -810,7 +813,7 @@ const SettingsTab = ({ q }: { q: { data?: SettingsResponse; isLoading: boolean; 
       <aside className="space-y-4">
         <Panel title={legalMissing.length ? t('adminInvoices.settings.legalMissing') : t('adminInvoices.settings.legalOk')} icon={legalMissing.length ? AlertTriangle : Building2}>
           {legalMissing.length > 0 && (
-            <div className="mb-4 rounded-lg bg-amber-50 p-3 text-xs text-amber-900">
+            <div className="mb-4 rounded-lg bg-warning-bg p-3 text-xs text-warning-fg">
               <p>{t('adminInvoices.settings.legalMissingText')}</p>
               <ul className="mt-2 list-inside list-disc">
                 {legalMissing.map((k) => (
@@ -820,7 +823,7 @@ const SettingsTab = ({ q }: { q: { data?: SettingsResponse; isLoading: boolean; 
             </div>
           )}
           <address className="text-sm leading-relaxed text-ink not-italic">
-            <strong className="text-navy-900">{seller.name || '—'}</strong>
+            <strong className="text-ink">{seller.name || '—'}</strong>
             <br />
             {seller.street || '—'}
             <br />
@@ -838,7 +841,7 @@ const SettingsTab = ({ q }: { q: { data?: SettingsResponse; isLoading: boolean; 
               </>
             )}
           </address>
-          <Link to="/admin/settings" className="btn-white btn-sm mt-4 border border-line">
+          <Link to="/admin/settings" className="btn-secondary btn-sm mt-4 border border-line">
             <Settings2 className="size-3.5" aria-hidden /> {t('adminInvoices.settings.openSettings')}
           </Link>
         </Panel>

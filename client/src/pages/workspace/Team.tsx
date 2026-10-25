@@ -75,13 +75,13 @@ export default function WorkspaceTeam() {
       <header className="shrink-0 border-b border-line bg-card px-4 pt-4 pb-3 lg:px-6">
         <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
           <div className="flex min-w-0 items-center gap-3">
-            <span className="hidden size-10 place-items-center rounded-xl bg-brand-600 text-white shadow-sm sm:grid">
+            <span className="hidden size-10 place-items-center rounded-xl bg-primary text-primary-contrast shadow-[var(--tv-shadow-card)] sm:grid">
               <Users className="size-5" aria-hidden />
             </span>
             <div className="min-w-0">
-              <h1 className="flex items-center gap-2 font-display text-xl font-extrabold text-ink">
+              <h1 className="flex items-center gap-2 type-page-title">
                 {t('ws.team.title')}
-                {presence.data && <span className="rounded-full bg-surface px-2 py-0.5 font-sans text-xs font-semibold text-muted tabular-nums ring-1 ring-line">{t('ws.team.onlineCount', { count: onlineCount })}</span>}
+                {presence.data && <span className="rounded-full bg-sunken px-2 py-0.5 font-sans text-xs font-semibold text-muted tabular-nums ring-1 ring-line">{t('ws.team.onlineCount', { count: onlineCount })}</span>}
               </h1>
               <p className="hidden truncate text-xs text-muted sm:block">{t('ws.team.subtitle')}</p>
             </div>
@@ -113,7 +113,7 @@ export default function WorkspaceTeam() {
         </div>
       </header>
 
-      <div className="min-h-0 flex-1 overflow-y-auto bg-surface">
+      <div className="min-h-0 flex-1 overflow-y-auto bg-sunken">
         <div className="mx-auto max-w-7xl space-y-5 px-4 py-5 lg:px-6">
           {tab === 'shifts' || tab === 'handover' || tab === 'learn' || tab === 'kpi' ? (
             <Suspense fallback={<Skeleton className="h-64" />}>

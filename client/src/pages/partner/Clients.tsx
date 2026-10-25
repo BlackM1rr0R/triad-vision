@@ -10,6 +10,7 @@ import { day } from '@/components/agents/format';
 import type { PartnerCaseRow } from '@/components/partnerPortal/api';
 import { ErrorRetry, Loading, Section, StatusPill, StepBar } from '@/components/partnerPortal/ui';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { Handshake, SearchEmpty } from '@/components/illustrations';
 
 type Filter = 'all' | 'active' | 'closed';
 
@@ -44,7 +45,7 @@ export default function PartnerClientsPage() {
               type="button"
               onClick={() => setFilter(f)}
               aria-pressed={filter === f}
-              className={clsx('min-h-10 rounded-full border px-3.5 text-sm font-semibold transition', filter === f ? 'border-brand-600 bg-brand-600 text-white' : 'border-line bg-card text-ink hover:border-brand-400')}
+              className={clsx('min-h-11 rounded-full border px-3.5 text-sm font-semibold transition-colors sm:min-h-10', filter === f ? 'border-primary bg-primary text-primary-contrast' : 'border-line bg-card text-muted hover:border-line-strong hover:text-ink')}
             >
               {t(`partnerPortal.clients.filter.${f}`)}
             </button>
@@ -58,6 +59,7 @@ export default function PartnerClientsPage() {
         <ErrorRetry onRetry={() => q.refetch()} />
       ) : q.data.length === 0 ? (
         <EmptyState
+          illustration={search || filter !== 'all' ? <SearchEmpty className="w-32" /> : <Handshake className="w-36" />}
           title={search || filter !== 'all' ? t('partnerPortal.clients.notFound') : t('partnerPortal.clients.empty')}
           text={!search && filter === 'all' ? t('partnerPortal.clients.emptyHint') : undefined}
         />
@@ -65,10 +67,10 @@ export default function PartnerClientsPage() {
         <ul className="space-y-3">
           {q.data.map((c) => (
             <li key={c.id}>
-              <Link to={`/partner/clients/${c.id}`} className="group block rounded-2xl border border-line bg-card p-4 transition hover:border-brand-400/70 hover:shadow-sm">
+              <Link to={`/partner/clients/${c.id}`} className="group card-interactive block rounded-2xl border border-line bg-card p-4">
                 <div className="flex flex-wrap items-start justify-between gap-2">
                   <div className="min-w-0">
-                    <p className="truncate font-semibold text-ink group-hover:text-brand-700">
+                    <p className="truncate font-semibold text-ink group-hover:text-link">
                       {c.client.firstName} {c.client.lastName}
                     </p>
                     <p className="mt-0.5 flex flex-wrap gap-x-3 text-xs text-muted">
@@ -105,7 +107,7 @@ export default function PartnerClientsPage() {
                   </div>
                 </div>
                 {c.nextAction !== 'NONE' && (
-                  <p className={clsx('mt-3 flex items-start gap-1.5 rounded-lg px-3 py-2 text-xs font-medium', c.nextAction === 'UPLOAD_DOCUMENTS' ? 'bg-amber-50 text-amber-900' : 'bg-surface text-ink/80')}>
+                  <p className={clsx('mt-3 flex items-start gap-1.5 rounded-xl px-3 py-2 text-xs font-medium', c.nextAction === 'UPLOAD_DOCUMENTS' ? 'bg-warning-bg text-warning-fg' : 'bg-sunken text-ink')}>
                     <AlertCircle className="mt-px size-3.5 shrink-0" aria-hidden />
                     <span>
                       {t('partnerPortal.clients.next')}: {t(`partnerPortal.nextAction.${c.nextAction}`)}

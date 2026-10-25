@@ -82,7 +82,7 @@ export const Checklist = ({ taskRef, items, canEdit }: { taskRef: string; items:
               e.preventDefault();
               void drop(item.id);
             }}
-            className={clsx('group flex items-center gap-2 rounded-lg px-1.5 py-1 transition-colors hover:bg-surface', overId === item.id && dragId !== item.id && 'ring-2 ring-brand-400', dragId === item.id && 'opacity-40')}
+            className={clsx('group flex items-center gap-2 rounded-lg px-1.5 py-1 transition-colors hover:bg-sunken', overId === item.id && dragId !== item.id && 'ring-2 ring-focus', dragId === item.id && 'opacity-40')}
           >
             {canEdit && (
               <span
@@ -96,7 +96,7 @@ export const Checklist = ({ taskRef, items, canEdit }: { taskRef: string; items:
                   setDragId(null);
                   setOverId(null);
                 }}
-                className="hidden cursor-grab text-muted/60 group-hover:block active:cursor-grabbing"
+                className="hidden cursor-grab text-subtle group-hover:block active:cursor-grabbing"
                 aria-hidden
               >
                 <GripVertical className="size-3.5" />
@@ -110,7 +110,7 @@ export const Checklist = ({ taskRef, items, canEdit }: { taskRef: string; items:
               onClick={() => void run(items.map((i) => (i.id === item.id ? { ...i, done: !i.done } : i)), () => actions.checklistUpdate(taskRef, item.id, { done: !item.done }))}
               className={clsx(
                 'grid size-5 shrink-0 place-items-center rounded-md border-2 transition-colors disabled:cursor-default',
-                item.done ? 'border-success bg-success text-white' : 'border-line bg-field hover:border-brand-500',
+                item.done ? 'border-success bg-success text-white' : 'border-line bg-field hover:border-line-strong',
               )}
               aria-label={item.text}
             >
@@ -144,7 +144,7 @@ export const Checklist = ({ taskRef, items, canEdit }: { taskRef: string; items:
               <button
                 type="button"
                 onClick={() => void run(items.filter((i) => i.id !== item.id), () => actions.checklistDelete(taskRef, item.id))}
-                className="grid size-7 shrink-0 place-items-center rounded-md text-muted opacity-100 transition hover:text-danger sm:opacity-0 sm:group-hover:opacity-100 sm:focus:opacity-100"
+                className="grid size-7 shrink-0 place-items-center rounded-md text-muted opacity-100 transition hover:text-danger-fg sm:opacity-0 sm:group-hover:opacity-100 sm:focus:opacity-100"
                 aria-label={`${t('tasks.actions.remove')}: ${item.text}`}
               >
                 <X className="size-3.5" />

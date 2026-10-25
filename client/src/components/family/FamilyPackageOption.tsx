@@ -22,9 +22,9 @@ export const FamilyPackageOption = ({ members, checked, onChange }: { members: F
   if (!members.length) return null;
   return (
     <div className="rounded-xl border border-line p-3 sm:p-4">
-      <label className="flex items-center justify-between gap-3 text-sm font-semibold text-navy-900">
+      <label className="flex items-center justify-between gap-3 text-sm font-semibold text-ink">
         <span className="flex items-center gap-2">
-          <Users className="size-4 text-rose-600" aria-hidden /> {t('familyMembers.pkg.include')}
+          <Users className="size-4 text-danger-fg" aria-hidden /> {t('familyMembers.pkg.include')}
         </span>
         <Switch checked={checked} onChange={onChange} label={t('familyMembers.pkg.include')} />
       </label>
@@ -32,7 +32,7 @@ export const FamilyPackageOption = ({ members, checked, onChange }: { members: F
         {members.map((m) => (
           <li key={m.caseId} className="flex flex-wrap justify-between gap-2">
             <span className="min-w-0 truncate">
-              {m.relation ? t(`familyMembers.relation.${m.relation}`) : t('familyMembers.member')}: <span className="font-medium text-navy-900">{m.name}</span> · {m.number}
+              {m.relation ? t(`familyMembers.relation.${m.relation}`) : t('familyMembers.member')}: <span className="font-medium text-ink">{m.name}</span> · {m.number}
             </span>
             <span className="tabular-nums">{m.included ? t('familyMembers.pkg.docs', { count: m.included }) : t('familyMembers.pkg.none')}</span>
           </li>

@@ -57,8 +57,8 @@ export const CaseStepper = ({
             <motion.span
               className={clsx(
                 'absolute inset-0 origin-left rounded-full',
-                s === 'done' && (status === 'APPROVED' ? 'bg-success' : 'bg-brand-600'),
-                s === 'current' && 'bg-brand-400',
+                s === 'done' && (status === 'APPROVED' ? 'bg-success' : 'bg-highlight'),
+                s === 'current' && 'bg-highlight/45',
                 s === 'failed' && 'bg-danger',
               )}
               initial={{ scaleX: 0 }}
@@ -74,7 +74,7 @@ export const CaseStepper = ({
   return (
     <div className={className}>
       {status === 'CANCELLED' && (
-        <div className="mb-6 flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-100 px-4 py-3 text-sm font-semibold text-slate-600">
+        <div className="mb-6 flex items-center gap-3 rounded-xl border border-line bg-sunken px-4 py-3 text-sm font-semibold text-muted">
           <Ban className="size-5 shrink-0" aria-hidden />
           {t('portal.status.CANCELLED')}
         </div>
@@ -97,7 +97,7 @@ export const CaseStepper = ({
                   aria-hidden
                 >
                   <motion.span
-                    className={clsx('absolute inset-0 rounded-full', approved ? 'bg-success' : 'bg-brand-600')}
+                    className={clsx('absolute inset-0 rounded-full', approved ? 'bg-success' : 'bg-highlight')}
                     initial={{ clipPath: 'inset(0 100% 100% 0)' }}
                     animate={{ clipPath: filled ? 'inset(0 0% 0% 0)' : 'inset(0 100% 100% 0)' }}
                     transition={{ duration: reduce ? 0 : 0.7, delay: reduce ? 0 : 0.15 + i * 0.12, ease: EASE }}
@@ -106,11 +106,11 @@ export const CaseStepper = ({
               )}
               <motion.span
                 className={clsx(
-                  'relative z-10 grid size-11 shrink-0 place-items-center rounded-full border-2 font-display text-sm font-bold transition-colors',
-                  s === 'done' && (approved ? 'border-success bg-success text-white' : 'border-brand-600 bg-brand-600 text-white'),
-                  s === 'current' && 'border-brand-600 bg-white text-brand-600 shadow-lg shadow-brand-600/30',
+                  'relative z-10 grid size-11 shrink-0 place-items-center rounded-full border-2 font-display text-sm font-semibold transition-colors',
+                  s === 'done' && (approved ? 'border-success bg-success text-white' : 'border-highlight bg-highlight text-highlight-contrast'),
+                  s === 'current' && 'border-highlight bg-highlight-bg text-ink',
                   s === 'failed' && 'border-danger bg-danger text-white',
-                  s === 'idle' && 'border-line bg-white text-muted',
+                  s === 'idle' && 'border-line bg-card text-muted',
                 )}
                 initial={reduce ? false : { scale: 0.6, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
@@ -118,7 +118,7 @@ export const CaseStepper = ({
               >
                 {s === 'current' && !reduce && (
                   <motion.span
-                    className="absolute inset-0 rounded-full bg-brand-500"
+                    className="absolute inset-0 rounded-full bg-highlight"
                     animate={{ scale: [1, 1.7], opacity: [0.45, 0] }}
                     transition={{ duration: 1.8, repeat: Infinity, ease: 'easeOut' }}
                     aria-hidden
@@ -136,13 +136,13 @@ export const CaseStepper = ({
                 <span
                   className={clsx(
                     'block text-sm font-semibold',
-                    s === 'idle' ? 'text-muted' : s === 'failed' ? 'text-danger' : 'text-navy-900',
+                    s === 'idle' ? 'text-muted' : s === 'failed' ? 'text-danger' : 'text-ink',
                   )}
                 >
                   {stepLabel(t, key, visaType)}
                 </span>
                 {(s === 'current' || s === 'failed' || (last && approved)) && (
-                  <span className={clsx('mt-0.5 block text-xs', s === 'failed' ? 'text-danger/80' : approved ? 'text-success' : 'text-brand-600')}>
+                  <span className={clsx('mt-0.5 block text-xs', s === 'failed' ? 'text-danger/80' : approved ? 'text-success' : 'text-link')}>
                     {t(`portal.status.${status}`)}
                   </span>
                 )}

@@ -16,7 +16,7 @@ export const ModuleDisabled = ({ item }: { item: StaffNavItem }) => {
   usePageTitle(title);
   const superAdmin = hasMinRole(user?.role, 'SUPER_ADMIN');
   return (
-    <section className="rounded-2xl border border-line bg-card" aria-labelledby="module-disabled-title">
+    <section className="rounded-xl border border-line bg-card" aria-labelledby="module-disabled-title">
       <EmptyState
         icon={PowerOff}
         size="lg"

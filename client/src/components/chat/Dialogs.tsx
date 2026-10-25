@@ -81,8 +81,8 @@ export const NewChannelDialog = ({ open, onClose, people, onCreated }: { open: b
           <span className="label">{t('chat.dialogs.kind')}</span>
           <div className="grid grid-cols-2 gap-2">
             {(['PUBLIC', 'PRIVATE'] as const).map((k) => (
-              <button key={k} type="button" onClick={() => setKind(k)} className={clsx('flex items-start gap-2.5 rounded-xl border p-3 text-left transition-colors', kind === k ? 'border-brand-500 bg-brand-50' : 'border-line hover:border-brand-300')} aria-pressed={kind === k}>
-                {k === 'PUBLIC' ? <Hash className="mt-0.5 size-4 shrink-0 text-brand-600" /> : <Lock className="mt-0.5 size-4 shrink-0 text-brand-600" />}
+              <button key={k} type="button" onClick={() => setKind(k)} className={clsx('flex items-start gap-2.5 rounded-xl border p-3 text-left transition-colors', kind === k ? 'border-primary bg-primary/[0.06]' : 'border-line hover:border-line-strong')} aria-pressed={kind === k}>
+                {k === 'PUBLIC' ? <Hash className="mt-0.5 size-4 shrink-0 text-link" /> : <Lock className="mt-0.5 size-4 shrink-0 text-link" />}
                 <span>
                   <span className="block text-sm font-semibold text-ink">{t(`chat.dialogs.${k === 'PUBLIC' ? 'public' : 'private'}`)}</span>
                   <span className="block text-xs text-muted">{t(`chat.dialogs.${k === 'PUBLIC' ? 'publicHint' : 'privateHint'}`)}</span>
@@ -98,7 +98,7 @@ export const NewChannelDialog = ({ open, onClose, people, onCreated }: { open: b
               {members.map((m) => (
                 <span key={m.id} className="inline-flex items-center gap-1.5 rounded-full border border-line bg-card py-0.5 pr-1 pl-0.5 text-xs">
                   <Avatar person={m} size="xs" /> {fullName(m)}
-                  <button type="button" onClick={() => setMembers((x) => x.filter((y) => y.id !== m.id))} className="grid size-4 place-items-center rounded-full text-muted hover:text-danger" aria-label={t('chat.actions.removeMember')}>
+                  <button type="button" onClick={() => setMembers((x) => x.filter((y) => y.id !== m.id))} className="grid size-4 place-items-center rounded-full text-muted hover:text-danger-fg" aria-label={t('chat.actions.removeMember')}>
                     <X className="size-3" />
                   </button>
                 </span>
@@ -267,7 +267,7 @@ export const DrivePickerDialog = ({ open, onClose, onPick }: { open: boolean; on
         ))}
       </div>
       {current && (
-        <button type="button" onClick={() => setPath(path.slice(0, -1))} className="mb-1 flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm text-muted hover:bg-surface">
+        <button type="button" onClick={() => setPath(path.slice(0, -1))} className="mb-1 flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm text-muted hover:bg-sunken">
           <ArrowUp className="size-4" /> {t('chat.dialogs.up')}
         </button>
       )}
@@ -288,9 +288,9 @@ export const DrivePickerDialog = ({ open, onClose, onPick }: { open: boolean; on
                     onClose();
                   }
                 }}
-                className="flex w-full items-center gap-2.5 rounded-lg px-2 py-1.5 text-left text-sm hover:bg-surface"
+                className="flex w-full items-center gap-2.5 rounded-lg px-2 py-1.5 text-left text-sm hover:bg-sunken"
               >
-                {it.kind === 'FOLDER' ? <Folder className="size-4 shrink-0 text-amber-500" /> : <File className="size-4 shrink-0 text-brand-600" />}
+                {it.kind === 'FOLDER' ? <Folder className="size-4 shrink-0 text-warning-fg" /> : <File className="size-4 shrink-0 text-link" />}
                 <span className="min-w-0 flex-1 truncate text-ink">{it.name}</span>
                 {it.kind === 'FOLDER' ? <ChevronRight className="size-3.5 text-muted" /> : it.size !== null && <span className="text-xs text-muted">{formatBytes(it.size)}</span>}
               </button>
@@ -319,7 +319,7 @@ export const SearchPanel = ({ channel, onClose, onJump }: { channel: Channel | n
       <div className="flex items-center gap-2 border-b border-line px-3 py-2.5">
         <Search className="size-4 text-muted" />
         <h2 className="text-sm font-bold text-ink">{t('chat.search.title')}</h2>
-        <button type="button" onClick={onClose} className="ml-auto grid size-8 place-items-center rounded-lg text-muted hover:bg-surface hover:text-ink" aria-label={t('chat.actions.close')}>
+        <button type="button" onClick={onClose} className="ml-auto grid size-8 place-items-center rounded-lg text-muted hover:bg-sunken hover:text-ink" aria-label={t('chat.actions.close')}>
           <X className="size-4" />
         </button>
       </div>
@@ -327,7 +327,7 @@ export const SearchPanel = ({ channel, onClose, onJump }: { channel: Channel | n
         <input autoFocus value={q} onChange={(e) => setQ(e.target.value)} placeholder={t('chat.search.placeholder')} className="input py-2 text-sm" aria-label={t('chat.search.placeholder')} />
         {channel && (
           <label className="flex items-center gap-2 text-xs text-muted">
-            <input type="checkbox" checked={here} onChange={(e) => setHere(e.target.checked)} className="accent-brand-600" /> {t('chat.search.thisChannel')}
+            <input type="checkbox" checked={here} onChange={(e) => setHere(e.target.checked)} className="accent-primary" /> {t('chat.search.thisChannel')}
           </label>
         )}
       </div>
@@ -343,7 +343,7 @@ export const SearchPanel = ({ channel, onClose, onJump }: { channel: Channel | n
             <ul className="space-y-1">
               {res.data.messages.map((m) => (
                 <li key={m.id}>
-                  <button type="button" onClick={() => onJump(m)} className="block w-full rounded-lg px-2 py-2 text-left hover:bg-surface">
+                  <button type="button" onClick={() => onJump(m)} className="block w-full rounded-lg px-2 py-2 text-left hover:bg-sunken">
                     <span className="flex items-center gap-2 text-xs text-muted">
                       <Avatar person={m.author} size="xs" />
                       <span className="font-semibold text-ink">{fullName(m.author)}</span>

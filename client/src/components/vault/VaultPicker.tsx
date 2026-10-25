@@ -61,20 +61,20 @@ export const VaultPicker = ({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className={compact ? 'btn min-h-10 border border-line px-3 text-sm text-ink hover:bg-surface' : 'btn min-h-11 w-full border border-line text-sm text-ink hover:bg-surface sm:w-auto'}
+        className={compact ? 'btn min-h-10 border border-line px-3 text-sm text-ink hover:bg-sunken' : 'btn min-h-11 w-full border border-line text-sm text-ink hover:bg-sunken sm:w-auto'}
       >
-        <Archive className="size-4 text-brand-600" aria-hidden />
+        <Archive className="size-4 text-primary" aria-hidden />
         {t('vault.fromVault.button')}
       </button>
       <VaultModal open={open} onClose={() => setOpen(false)} title={t('vault.fromVault.title')} busy={!!busy}>
         {q.isLoading ? (
-          <div className="grid place-items-center py-10 text-brand-600">
+          <div className="grid place-items-center py-10 text-primary">
             <Spinner />
           </div>
         ) : docs.length === 0 ? (
           <div className="py-6 text-center">
             <p className="text-sm text-muted">{t('vault.fromVault.empty')}</p>
-            <Link to="/account/vault" className="btn mt-3 border border-line text-sm text-ink hover:bg-surface">
+            <Link to="/account/vault" className="btn mt-3 border border-line text-sm text-ink hover:bg-sunken">
               <Archive className="size-4" aria-hidden />
               {t('vault.fromVault.openVault')}
             </Link>
@@ -83,7 +83,7 @@ export const VaultPicker = ({
           <ul className="space-y-2">
             {docs.map((d) => (
               <li key={d.id} className="flex flex-wrap items-center gap-3 rounded-lg border border-line bg-card px-3 py-2.5">
-                <a href={vaultFileUrl(d.id)} target="_blank" rel="noreferrer" className="grid size-12 shrink-0 place-items-center overflow-hidden rounded-md bg-surface">
+                <a href={vaultFileUrl(d.id)} target="_blank" rel="noreferrer" className="grid size-12 shrink-0 place-items-center overflow-hidden rounded-md bg-sunken">
                   {isImageMime(d.mimeType) ? <img src={vaultFileUrl(d.id)} alt="" className="size-full object-cover" loading="lazy" /> : <FileText className="size-5 text-muted" aria-hidden />}
                 </a>
                 <div className="min-w-0 flex-[1_1_10rem]">

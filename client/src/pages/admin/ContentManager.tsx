@@ -444,7 +444,7 @@ const IconField = ({ id, label, value, onChange }: { id: string; label: string; 
         <span
           className={clsx(
             'grid size-[42px] shrink-0 place-items-center rounded-lg border',
-            valid ? 'border-line bg-brand-50 text-brand-700' : 'border-amber-300 bg-amber-50 text-amber-600',
+            valid ? 'border-line bg-primary/[0.06] text-link' : 'border-warning-border bg-warning-bg text-warning-fg',
           )}
           aria-hidden
         >
@@ -457,7 +457,7 @@ const IconField = ({ id, label, value, onChange }: { id: string; label: string; 
           ))}
         </datalist>
       </div>
-      <p className={clsx('mt-1 text-[11px]', valid ? 'text-muted' : 'text-amber-700')}>
+      <p className={clsx('mt-1 text-[11px]', valid ? 'text-muted' : 'text-warning-fg')}>
         {valid ? t('admin.content.icon.pick', { count: ICON_NAMES.length }) : t('admin.content.icon.unknown')}
       </p>
     </div>
@@ -505,10 +505,10 @@ const FaqListInput = ({ label, value, onChange }: { label: string; value: FaqIte
           {value.map((item, i) => (
             <li key={ids.current[i]} className="rounded-xl border border-line bg-surface/60 p-3 sm:p-4">
               <div className="mb-2 flex items-center gap-1">
-                <span className="mr-auto text-xs font-bold text-navy-900">{t('admin.content.faq.questionN', { n: i + 1 })}</span>
+                <span className="mr-auto text-xs font-bold text-ink">{t('admin.content.faq.questionN', { n: i + 1 })}</span>
                 <button
                   type="button"
-                  className="grid size-8 place-items-center rounded-md text-muted hover:bg-white hover:text-navy-900 disabled:opacity-25"
+                  className="grid size-8 place-items-center rounded-md text-muted hover:bg-card hover:text-ink disabled:opacity-25"
                   onClick={() => move(i, -1)}
                   disabled={i === 0}
                   aria-label={t('admin.content.faq.moveUp', { n: i + 1 })}
@@ -517,7 +517,7 @@ const FaqListInput = ({ label, value, onChange }: { label: string; value: FaqIte
                 </button>
                 <button
                   type="button"
-                  className="grid size-8 place-items-center rounded-md text-muted hover:bg-white hover:text-navy-900 disabled:opacity-25"
+                  className="grid size-8 place-items-center rounded-md text-muted hover:bg-card hover:text-ink disabled:opacity-25"
                   onClick={() => move(i, 1)}
                   disabled={i === value.length - 1}
                   aria-label={t('admin.content.faq.moveDown', { n: i + 1 })}
@@ -526,7 +526,7 @@ const FaqListInput = ({ label, value, onChange }: { label: string; value: FaqIte
                 </button>
                 <button
                   type="button"
-                  className="grid size-8 place-items-center rounded-md text-muted hover:bg-red-50 hover:text-danger"
+                  className="grid size-8 place-items-center rounded-md text-muted hover:bg-danger-bg hover:text-danger-fg"
                   onClick={() => remove(i)}
                   aria-label={t('admin.content.faq.remove', { n: i + 1 })}
                 >
@@ -541,7 +541,7 @@ const FaqListInput = ({ label, value, onChange }: { label: string; value: FaqIte
           ))}
         </ol>
       )}
-      <button type="button" className="btn-white btn-sm mt-3 border border-line" onClick={add} disabled={value.length >= 30}>
+      <button type="button" className="btn-secondary btn-sm mt-3 border border-line" onClick={add} disabled={value.length >= 30}>
         <Plus className="size-3.5" /> {t('admin.content.faq.addQuestion')}
       </button>
     </div>
@@ -553,7 +553,7 @@ const FieldInput = ({ f, value, onChange }: { f: FieldDef; value: Value; onChang
   const labelEl: ReactNode = (
     <label htmlFor={id} className="label">
       {f.label}
-      {f.required && <span className="text-danger"> *</span>}
+      {f.required && <span className="text-danger-fg"> *</span>}
     </label>
   );
   const hint = f.hint && <p className="mt-1 text-[11px] text-muted">{f.hint}</p>;
@@ -605,7 +605,7 @@ const FieldInput = ({ f, value, onChange }: { f: FieldDef; value: Value; onChang
       return <IconField id={id} label={f.label} value={typeof value === 'string' ? value : ''} onChange={onChange} />;
     case 'boolean':
       return (
-        <label className="flex min-h-11 cursor-pointer items-center gap-3 rounded-lg border border-line px-3.5 py-2.5 text-sm font-medium">
+        <label className="flex min-h-10 sm:min-h-9 cursor-pointer items-center gap-3 rounded-lg border border-line px-3.5 py-2.5 text-sm font-medium">
           <Switch checked={value === true} onChange={onChange} label={f.label} />
           {f.label}
         </label>
@@ -715,11 +715,11 @@ function ResourcePage({ resource }: { resource: string }) {
 
   if (!def) {
     return (
-      <div className="rounded-xl border border-line bg-white">
+      <div className="rounded-xl border border-line bg-card">
         <EmptyState icon={FileQuestion} title={t('admin.content.unknown')}>
           <div className="mt-2 flex flex-wrap justify-center gap-2">
             {Object.entries(RESOURCES).map(([k, r]) => (
-              <Link key={k} to={`/admin/content/${k}`} className="text-brand-600 hover:underline">
+              <Link key={k} to={`/admin/content/${k}`} className="text-link hover:underline">
                 {r.title}
               </Link>
             ))}
@@ -843,7 +843,7 @@ function ResourcePage({ resource }: { resource: string }) {
       ) : error ? (
         <ErrorBlock error={error} onRetry={() => refetch()} />
       ) : items.length === 0 ? (
-        <div className="rounded-xl border border-line bg-white">
+        <div className="rounded-xl border border-line bg-card">
           <EmptyState icon={LayoutList} title={t('admin.content.empty')}>
             <button type="button" className="btn-primary btn-sm mt-3" onClick={() => openEditor('new')}>
               <Plus className="size-3.5" /> {t('admin.content.addFirst')}
@@ -851,7 +851,7 @@ function ResourcePage({ resource }: { resource: string }) {
           </EmptyState>
         </div>
       ) : (
-        <ul className="divide-y divide-line overflow-hidden rounded-xl border border-line bg-white">
+        <ul className="divide-y divide-line overflow-hidden rounded-xl border border-line bg-card">
           <AnimatePresence initial={false}>
             {items.map((item, index) => {
               const img = def.imageKey ? str(item[def.imageKey]) : '';
@@ -865,13 +865,13 @@ function ResourcePage({ resource }: { resource: string }) {
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
                   transition={{ duration: 0.2 }}
-                  className={clsx('flex items-center gap-2 bg-white px-2 py-2.5 sm:gap-3 sm:px-4', def.publishable && !published && 'bg-slate-50/80')}
+                  className={clsx('flex items-center gap-2 bg-card px-2 py-2.5 sm:gap-3 sm:px-4', def.publishable && !published && 'bg-sunken/80')}
                 >
                   {def.sortable && (
                     <div className="flex shrink-0 flex-col">
                       <button
                         type="button"
-                        className="grid size-8 place-items-center rounded-md text-muted hover:bg-surface hover:text-navy-900 disabled:opacity-25 sm:size-7"
+                        className="grid size-8 place-items-center rounded-md text-muted hover:bg-sunken hover:text-ink disabled:opacity-25 sm:size-7"
                         onClick={() => move(index, -1)}
                         disabled={index === 0 || !!busyId}
                         aria-label={t('admin.common.up')}
@@ -880,7 +880,7 @@ function ResourcePage({ resource }: { resource: string }) {
                       </button>
                       <button
                         type="button"
-                        className="grid size-8 place-items-center rounded-md text-muted hover:bg-surface hover:text-navy-900 disabled:opacity-25 sm:size-7"
+                        className="grid size-8 place-items-center rounded-md text-muted hover:bg-sunken hover:text-ink disabled:opacity-25 sm:size-7"
                         onClick={() => move(index, 1)}
                         disabled={index === items.length - 1 || !!busyId}
                         aria-label={t('admin.common.down')}
@@ -890,18 +890,18 @@ function ResourcePage({ resource }: { resource: string }) {
                     </div>
                   )}
                   {(def.imageKey || def.iconKey) && (
-                    <div className="grid size-12 shrink-0 place-items-center overflow-hidden rounded-lg border border-line bg-surface">
+                    <div className="grid size-12 shrink-0 place-items-center overflow-hidden rounded-lg border border-line bg-sunken">
                       {img ? (
                         <img src={img} alt="" className="size-full object-cover" loading="lazy" />
                       ) : iconName ? (
-                        <Icon name={iconName} className="size-5 text-brand-600" />
+                        <Icon name={iconName} className="size-5 text-link" />
                       ) : (
-                        <ImageOff className="size-4 text-muted/60" aria-hidden />
+                        <ImageOff className="size-4 text-subtle" aria-hidden />
                       )}
                     </div>
                   )}
                   <button type="button" className="min-w-0 flex-1 py-1 text-left" onClick={() => openEditor(item)}>
-                    <p className="flex min-w-0 items-center gap-1.5 text-sm font-semibold text-navy-900">
+                    <p className="flex min-w-0 items-center gap-1.5 text-sm font-semibold text-ink">
                       <span className="truncate">{def.titleOf(item) || '—'}</span>
                       {def.publishable && !published && <span className="badge shrink-0 bg-neutral-bg text-[10px] text-neutral-fg sm:hidden">{t('admin.content.hiddenBadge')}</span>}
                     </p>
@@ -909,7 +909,7 @@ function ResourcePage({ resource }: { resource: string }) {
                   </button>
                   {def.publishable && (
                     <span className="hidden shrink-0 items-center gap-2 sm:flex">
-                      <span className={clsx('text-[11px] whitespace-nowrap', published ? 'text-success' : 'text-muted')}>
+                      <span className={clsx('text-[11px] whitespace-nowrap', published ? 'text-success-fg' : 'text-muted')}>
                         {published ? t('admin.content.publishedState') : t('admin.content.hiddenBadge')}
                       </span>
                       <Switch
@@ -920,11 +920,11 @@ function ResourcePage({ resource }: { resource: string }) {
                       />
                     </span>
                   )}
-                  {busyId === item.id && <Spinner className="size-3.5 text-brand-600" />}
+                  {busyId === item.id && <Spinner className="size-3.5 text-link" />}
                   <div className="flex shrink-0 items-center">
                     <button
                       type="button"
-                      className="grid size-10 place-items-center rounded-lg text-muted hover:bg-brand-50 hover:text-brand-700 lg:size-9"
+                      className="grid size-10 place-items-center rounded-lg text-muted hover:bg-primary/[0.06] hover:text-link lg:size-9"
                       onClick={() => openEditor(item)}
                       aria-label={t('admin.common.edit')}
                       title={t('admin.common.edit')}
@@ -933,7 +933,7 @@ function ResourcePage({ resource }: { resource: string }) {
                     </button>
                     <button
                       type="button"
-                      className="grid size-10 place-items-center rounded-lg text-muted hover:bg-red-50 hover:text-danger lg:size-9"
+                      className="grid size-10 place-items-center rounded-lg text-muted hover:bg-danger-bg hover:text-danger-fg lg:size-9"
                       onClick={() => setDeleting(item)}
                       aria-label={t('admin.common.delete')}
                       title={t('admin.common.delete')}
@@ -975,7 +975,7 @@ function ResourcePage({ resource }: { resource: string }) {
         >
           {def.fields.map((f) => (
             <Fragment key={f.key}>
-              {f.group && <h3 className="mt-3 border-t border-line pt-5 text-xs font-bold tracking-wider text-navy-900 uppercase sm:col-span-2">{f.group}</h3>}
+              {f.group && <h3 className="mt-3 border-t border-line pt-5 text-xs font-bold tracking-wider text-ink uppercase sm:col-span-2">{f.group}</h3>}
               <div className={clsx((f.wide || f.type === 'boolean') && 'sm:col-span-2')}>
                 <FieldInput f={f} value={values[f.key] ?? null} onChange={(v) => setValues((prev) => ({ ...prev, [f.key]: v }))} />
               </div>

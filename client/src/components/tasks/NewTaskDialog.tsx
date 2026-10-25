@@ -131,7 +131,7 @@ export const NewTaskDialog = ({
                 maxLength={200}
                 placeholder={t('tasks.ph.title')}
                 aria-label={t('tasks.fields.title')}
-                className="w-full border-0 bg-transparent p-0 font-display text-xl font-bold text-ink outline-none placeholder:text-muted/60 sm:text-2xl"
+                className="w-full border-0 bg-transparent p-0 font-display text-xl font-bold text-ink outline-none placeholder:text-subtle sm:text-2xl"
               />
               <textarea
                 value={description}

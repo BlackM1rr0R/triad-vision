@@ -10,11 +10,11 @@ import { ItemIcon } from './fileIcons';
 import type { DriveItem, OverviewItem, OverviewResponse, StaffPerson } from './types';
 
 const SOURCE_TONE: Record<OverviewItem['source'], string> = {
-  user: 'bg-emerald-100 text-emerald-800',
-  role: 'bg-sky-100 text-sky-800',
-  inherited: 'bg-slate-100 text-slate-600',
-  owner: 'bg-violet-100 text-violet-800',
-  super: 'bg-amber-100 text-amber-800',
+  user: 'bg-success-bg text-success-fg',
+  role: 'bg-info-bg text-info-fg',
+  inherited: 'bg-sunken text-muted',
+  owner: 'bg-accent-bg text-accent-fg',
+  super: 'bg-warning-bg text-warning-fg',
 };
 
 const asItem = (n: OverviewItem): DriveItem => ({
@@ -39,7 +39,7 @@ const Branch = ({ node, byParent, depth, open, onOpen }: { node: OverviewItem; b
   const label = node.system && !node.parentId ? (node.space === 'PERSONAL' ? node.name : t(`drive.roots.${node.space}`)) : node.name;
   return (
     <li>
-      <div className="flex items-center gap-1.5 rounded-lg py-1 pr-2 hover:bg-surface" style={{ paddingLeft: `${depth * 16}px` }}>
+      <div className="flex items-center gap-1.5 rounded-lg py-1 pr-2 hover:bg-sunken" style={{ paddingLeft: `${depth * 16}px` }}>
         <button type="button" onClick={() => setExpanded((x) => !x)} className={clsx('grid size-6 place-items-center rounded', kids.length ? '' : 'invisible')} aria-expanded={expanded}>
           <ChevronRight className={clsx('size-3.5 transition-transform', expanded && 'rotate-90')} />
         </button>
@@ -97,7 +97,7 @@ export const AccessOverview = ({ onOpenFolder }: { onOpenFolder: (id: string) =>
       <aside className="flex min-h-0 flex-col border-b border-line md:border-r md:border-b-0">
         <div className="p-3">
           <h2 className="flex items-center gap-2 text-base font-bold text-ink">
-            <ShieldCheck className="size-5 text-violet-600" /> {t('drive.overview.title')}
+            <ShieldCheck className="size-5 text-accent-fg" /> {t('drive.overview.title')}
           </h2>
           <p className="mt-1 text-xs text-muted">{t('drive.overview.subtitle')}</p>
           <div className="relative mt-3">
@@ -111,14 +111,14 @@ export const AccessOverview = ({ onOpenFolder }: { onOpenFolder: (id: string) =>
               <button
                 type="button"
                 onClick={() => setUserId(p.id)}
-                className={clsx('flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left', userId === p.id ? 'bg-brand-600 text-white' : 'hover:bg-surface')}
+                className={clsx('flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left', userId === p.id ? 'bg-primary text-primary-contrast' : 'hover:bg-sunken')}
               >
-                <span className={clsx('grid size-8 shrink-0 place-items-center rounded-full text-[11px] font-bold', userId === p.id ? 'bg-white/20 text-white' : 'bg-brand-100 text-brand-700')}>
+                <span className={clsx('grid size-8 shrink-0 place-items-center rounded-full text-[11px] font-bold', userId === p.id ? 'bg-primary-contrast/20 text-primary-contrast' : 'bg-primary/10 text-link')}>
                   {(p.firstName[0] ?? '') + (p.lastName[0] ?? '')}
                 </span>
                 <span className="min-w-0">
-                  <span className={clsx('block truncate text-sm font-semibold', userId === p.id ? 'text-white' : 'text-ink')}>{fullName(p)}</span>
-                  <span className={clsx('block truncate text-[11px]', userId === p.id ? 'text-white/80' : 'text-muted')}>{roleLabel(p.role)}</span>
+                  <span className={clsx('block truncate text-sm font-semibold', userId === p.id ? 'text-primary-contrast' : 'text-ink')}>{fullName(p)}</span>
+                  <span className={clsx('block truncate text-[11px]', userId === p.id ? 'text-primary-contrast/80' : 'text-muted')}>{roleLabel(p.role)}</span>
                 </span>
               </button>
             </li>
@@ -143,7 +143,7 @@ export const AccessOverview = ({ onOpenFolder }: { onOpenFolder: (id: string) =>
               </p>
             </div>
             {ov.data.user.role === 'SUPER_ADMIN' ? (
-              <p className="rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-900">{t('drive.overview.superAll')}</p>
+              <p className="rounded-xl bg-warning-bg px-4 py-3 text-sm text-warning-fg">{t('drive.overview.superAll')}</p>
             ) : roots.length === 0 ? (
               <p className="text-sm text-muted">{t('drive.overview.nothing')}</p>
             ) : (

@@ -381,15 +381,15 @@ const QuoteList = ({ onOpen }: { onOpen: (id: string) => void }) => {
       ) : listQ.error ? (
         <ErrorBlock error={listQ.error} onRetry={() => listQ.refetch()} />
       ) : !listQ.data?.quotes.length ? (
-        <div className="rounded-xl border border-line bg-white">
+        <div className="rounded-xl border border-line bg-card">
           <EmptyState icon={FileSignature} title={t('adminQuotes.empty')}>
             {t('adminQuotes.emptyText')}
           </EmptyState>
         </div>
       ) : (
-        <div className="overflow-hidden rounded-xl border border-line bg-white">
+        <div className="overflow-hidden rounded-xl border border-line bg-card">
           <table className="w-full text-sm">
-            <thead className="hidden bg-surface text-left text-xs text-muted md:table-header-group">
+            <thead className="hidden bg-sunken text-left text-xs text-muted md:table-header-group">
               <tr>
                 <th className="px-4 py-2.5 font-semibold">{t('adminQuotes.cols.number')}</th>
                 <th className="px-4 py-2.5 font-semibold">{t('adminQuotes.cols.company')}</th>
@@ -400,8 +400,8 @@ const QuoteList = ({ onOpen }: { onOpen: (id: string) => void }) => {
             </thead>
             <tbody className="divide-y divide-line">
               {listQ.data.quotes.map((qt) => (
-                <tr key={qt.id} className="flex cursor-pointer flex-wrap items-center gap-x-3 gap-y-1 px-4 py-3 hover:bg-surface md:table-row md:p-0" onClick={() => onOpen(qt.id)}>
-                  <td className="font-semibold text-navy-900 tabular-nums md:px-4 md:py-3">
+                <tr key={qt.id} className="flex cursor-pointer flex-wrap items-center gap-x-3 gap-y-1 px-4 py-3 hover:bg-sunken md:table-row md:p-0" onClick={() => onOpen(qt.id)}>
+                  <td className="font-semibold text-ink tabular-nums md:px-4 md:py-3">
                     <button type="button" className="text-left hover:underline" onClick={(e) => { e.stopPropagation(); onOpen(qt.id); }}>
                       {qt.number ?? <span className="text-muted italic">{t('adminQuotes.draftNo')}</span>}
                     </button>
@@ -410,8 +410,8 @@ const QuoteList = ({ onOpen }: { onOpen: (id: string) => void }) => {
                     <span className="line-clamp-1 text-ink">{qt.company.name}</span>
                     <span className="line-clamp-1 text-xs text-muted">{qt.title}</span>
                   </td>
-                  <td className={clsx('text-xs md:px-4 md:py-3 md:text-sm', qt.status === 'EXPIRED' ? 'text-amber-700' : 'text-muted md:text-ink')}>{fmtDate(qt.validUntil)}</td>
-                  <td className="ml-auto font-semibold text-navy-900 tabular-nums md:ml-0 md:px-4 md:py-3 md:text-right">{fmtEur(qt.grossCents)}</td>
+                  <td className={clsx('text-xs md:px-4 md:py-3 md:text-sm', qt.status === 'EXPIRED' ? 'text-warning-fg' : 'text-muted md:text-ink')}>{fmtDate(qt.validUntil)}</td>
+                  <td className="ml-auto font-semibold text-ink tabular-nums md:ml-0 md:px-4 md:py-3 md:text-right">{fmtEur(qt.grossCents)}</td>
                   <td className="md:px-4 md:py-3">
                     <span className={clsx('badge', QUOTE_STATUS_TONE[qt.status])}>{t(`adminQuotes.status.${qt.status}`)}</span>
                   </td>
@@ -469,10 +469,10 @@ const QuoteDrawer = ({ id, onClose, onEdit, onOpen }: { id: string | null; onClo
         <div className="space-y-5">
           <div className="flex flex-wrap items-center gap-2">
             <span className={clsx('badge', QUOTE_STATUS_TONE[q.status])}>{t(`adminQuotes.status.${q.status}`)}</span>
-            <span className="font-display text-xl font-bold text-navy-900 tabular-nums">{fmtEur(q.grossCents)}</span>
+            <span className="font-display text-xl font-bold text-ink tabular-nums">{fmtEur(q.grossCents)}</span>
             <span className="text-xs text-muted">netto {fmtEur(q.netCents)}</span>
           </div>
-          <p className="text-sm font-semibold text-navy-900">{q.title}</p>
+          <p className="text-sm font-semibold text-ink">{q.title}</p>
 
           <div className="flex flex-wrap gap-2">
             <a href={pdfUrl(q.id)} className="btn-secondary btn-sm" download>
@@ -502,14 +502,14 @@ const QuoteDrawer = ({ id, onClose, onEdit, onOpen }: { id: string | null; onClo
               <Copy className="size-3.5" aria-hidden /> {t('adminQuotes.actions.duplicate')}
             </button>
             {q.status === 'DRAFT' && (
-              <button type="button" className="btn-secondary btn-sm text-danger" onClick={() => setDialog('delete')}>
+              <button type="button" className="btn-secondary btn-sm text-danger-fg" onClick={() => setDialog('delete')}>
                 <Trash2 className="size-3.5" aria-hidden /> {t('adminQuotes.actions.delete')}
               </button>
             )}
           </div>
 
           {(q.status === 'ACCEPTED' || q.status === 'CONVERTED') && q.acceptedByName && (
-            <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-3.5 text-sm text-emerald-900">
+            <div className="rounded-xl border border-success-border bg-success-bg p-3.5 text-sm text-success-fg">
               <p className="font-semibold">
                 {t('adminQuotes.detail.acceptedBy')}: {q.acceptedByName} · {q.acceptedAt && fmtDateTime(q.acceptedAt)}
               </p>
@@ -521,7 +521,7 @@ const QuoteDrawer = ({ id, onClose, onEdit, onOpen }: { id: string | null; onClo
             </div>
           )}
           {q.status === 'DECLINED' && (
-            <div className="rounded-xl border border-red-200 bg-red-50 p-3.5 text-sm text-red-900">
+            <div className="rounded-xl border border-danger-border bg-danger-bg p-3.5 text-sm text-danger-fg">
               <p className="font-semibold">{t('adminQuotes.detail.declinedReason')}</p>
               <p className="mt-1 whitespace-pre-line">{q.declinedReason || '—'}</p>
             </div>
@@ -530,17 +530,17 @@ const QuoteDrawer = ({ id, onClose, onEdit, onOpen }: { id: string | null; onClo
           <Panel>
             <dl>
               <DefRow label={t('adminQuotes.cols.company')}>
-                <Link to={`/admin/companies?id=${q.companyId}`} className="text-brand-700 hover:underline">
+                <Link to={`/admin/companies?id=${q.companyId}`} className="text-link hover:underline">
                   {q.company.name}
                 </Link>
               </DefRow>
-              <DefRow label={t('adminQuotes.detail.recipient')}>{q.recipient || <span className="text-amber-700">{t('adminQuotes.detail.noRecipient')}</span>}</DefRow>
+              <DefRow label={t('adminQuotes.detail.recipient')}>{q.recipient || <span className="text-warning-fg">{t('adminQuotes.detail.noRecipient')}</span>}</DefRow>
               <DefRow label={t('adminQuotes.detail.validUntil')}>{fmtDate(q.validUntil)}</DefRow>
               {q.sentAt && <DefRow label={t('adminQuotes.detail.sentAt')}>{fmtDateTime(q.sentAt)}</DefRow>}
               {q.createdBy && <DefRow label={t('adminQuotes.detail.createdBy')}>{q.createdBy}</DefRow>}
               {q.publicUrl && (
                 <DefRow label={t('adminQuotes.detail.link')}>
-                  <a href={q.publicUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-brand-700 hover:underline">
+                  <a href={q.publicUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-link hover:underline">
                     /angebot/… <ExternalLink className="size-3.5" aria-hidden />
                   </a>
                 </DefRow>
@@ -577,7 +577,7 @@ const QuoteDrawer = ({ id, onClose, onEdit, onOpen }: { id: string | null; onClo
               <ul className="space-y-1.5 text-sm">
                 {q.invoices.map((inv) => (
                   <li key={inv.id} className="flex items-center justify-between gap-2">
-                    <Link to={inv.status === 'DRAFT' ? `/admin/invoices?edit=${inv.id}` : `/admin/invoices`} className="font-semibold text-brand-700 hover:underline">
+                    <Link to={inv.status === 'DRAFT' ? `/admin/invoices?edit=${inv.id}` : `/admin/invoices`} className="font-semibold text-link hover:underline">
                       {inv.number ?? t('adminQuotes.draftNo')}
                     </Link>
                     <span className="tabular-nums">{fmtEur(inv.grossCents)}</span>
@@ -593,8 +593,8 @@ const QuoteDrawer = ({ id, onClose, onEdit, onOpen }: { id: string | null; onClo
                 const via = (e.meta as { via?: string } | null)?.via;
                 return (
                   <li key={e.id} className="text-sm">
-                    <span className="absolute -left-[5px] mt-1.5 size-2.5 rounded-full bg-brand-500" aria-hidden />
-                    <p className="font-semibold text-navy-900">
+                    <span className="absolute -left-[5px] mt-1.5 size-2.5 rounded-full bg-primary" aria-hidden />
+                    <p className="font-semibold text-ink">
                       {i18n.exists(`adminQuotes.detail.events.${e.type}`) ? t(`adminQuotes.detail.events.${e.type}`) : e.type}
                       {via && <span className="font-normal text-muted"> · {via === 'portal' ? t('adminQuotes.detail.viaPortal') : t('adminQuotes.detail.viaLink')}</span>}
                     </p>
@@ -763,11 +763,11 @@ const ConvertDialog = ({ quote, onClose, onDone }: { quote: DetailQuote; onClose
           </li>
         ))}
       </ul>
-      <button type="button" className="mt-2 text-sm font-semibold text-brand-600 hover:underline" onClick={() => setQty(remaining.map((r) => String(r).replace('.', ',')))}>
+      <button type="button" className="mt-2 text-sm font-semibold text-link hover:underline" onClick={() => setQty(remaining.map((r) => String(r).replace('.', ',')))}>
         {t('adminQuotes.convert.all')}
       </button>
       {rates.size > 1 && (
-        <p className="mt-3 flex items-center gap-2 rounded-lg bg-amber-50 p-2.5 text-xs text-amber-900">
+        <p className="mt-3 flex items-center gap-2 rounded-lg bg-warning-bg p-2.5 text-xs text-warning-fg">
           <AlertTriangle className="size-4 shrink-0" aria-hidden /> {t('adminQuotes.convert.mixedVat')}
         </p>
       )}
@@ -984,7 +984,7 @@ const Wizard = ({ initial, settings, onClose, onSaved }: { initial: NonNullable<
       footer={
         <>
           {step > 0 && (
-            <button type="button" className="btn-white btn-sm mr-auto border border-line" onClick={() => goTo(step - 1)} disabled={busy}>
+            <button type="button" className="btn-secondary btn-sm mr-auto border border-line" onClick={() => goTo(step - 1)} disabled={busy}>
               <ArrowLeft className="size-3.5" aria-hidden /> {t('adminQuotes.wizard.back')}
             </button>
           )}
@@ -1015,7 +1015,7 @@ const Wizard = ({ initial, settings, onClose, onSaved }: { initial: NonNullable<
               onClick={() => goTo(i)}
               className={clsx(
                 'inline-flex min-h-9 items-center gap-1.5 rounded-full px-3 text-xs font-semibold transition disabled:opacity-40',
-                i === step ? 'bg-navy-900 text-white' : i < step ? 'bg-brand-100 text-brand-700' : 'bg-surface text-muted',
+                i === step ? 'bg-primary text-primary-contrast' : i < step ? 'bg-primary/10 text-link' : 'bg-sunken text-muted',
               )}
               aria-current={i === step ? 'step' : undefined}
             >
@@ -1026,7 +1026,7 @@ const Wizard = ({ initial, settings, onClose, onSaved }: { initial: NonNullable<
       </ol>
 
       {settings.legalMissing.length > 0 && step === 4 && (
-        <p className="mb-4 flex items-start gap-2 rounded-lg bg-amber-50 p-3 text-xs text-amber-900">
+        <p className="mb-4 flex items-start gap-2 rounded-lg bg-warning-bg p-3 text-xs text-warning-fg">
           <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden /> {t('adminQuotes.wizard.legalMissing')}
         </p>
       )}
@@ -1065,17 +1065,17 @@ const Wizard = ({ initial, settings, onClose, onSaved }: { initial: NonNullable<
                       role="option"
                       aria-selected={c.id === companyId}
                       onClick={() => pickCompany(c)}
-                      className={clsx('flex w-full items-center gap-3 px-3 py-2.5 text-left text-sm transition', c.id === companyId ? 'bg-brand-50' : 'hover:bg-surface')}
+                      className={clsx('flex w-full items-center gap-3 px-3 py-2.5 text-left text-sm transition', c.id === companyId ? 'bg-primary/[0.06]' : 'hover:bg-sunken')}
                     >
-                      <Building2 className={clsx('size-4 shrink-0', c.id === companyId ? 'text-brand-600' : 'text-muted')} aria-hidden />
+                      <Building2 className={clsx('size-4 shrink-0', c.id === companyId ? 'text-link' : 'text-muted')} aria-hidden />
                       <span className="min-w-0 flex-1">
-                        <span className="block truncate font-semibold text-navy-900">{c.name}</span>
+                        <span className="block truncate font-semibold text-ink">{c.name}</span>
                         <span className="block truncate text-xs text-muted">
                           {[c.city, c.email].filter(Boolean).join(' · ') || '—'}
                           {c.status === 'PENDING' && ` · ${t('adminQuotes.wizard.pending')}`}
                         </span>
                       </span>
-                      {c.id === companyId && <CheckCircle2 className="size-4 shrink-0 text-brand-600" aria-hidden />}
+                      {c.id === companyId && <CheckCircle2 className="size-4 shrink-0 text-link" aria-hidden />}
                     </button>
                   </li>
                 ))}
@@ -1088,7 +1088,7 @@ const Wizard = ({ initial, settings, onClose, onSaved }: { initial: NonNullable<
                   <Field id="qw-email" label={t('adminQuotes.wizard.contactEmail')} hint={t('adminQuotes.wizard.contactEmailHint')}>
                     <input id="qw-email" type="email" className="input" maxLength={200} placeholder={company.email ?? ''} value={contactEmail} onChange={(e) => setContactEmail(e.target.value)} />
                   </Field>
-                  {!company.email && !contactEmail.trim() && <p className="text-xs text-amber-700 sm:col-span-2">{t('adminQuotes.wizard.noEmail')}</p>}
+                  {!company.email && !contactEmail.trim() && <p className="text-xs text-warning-fg sm:col-span-2">{t('adminQuotes.wizard.noEmail')}</p>}
                 </div>
               )}
             </>
@@ -1121,9 +1121,9 @@ const Wizard = ({ initial, settings, onClose, onSaved }: { initial: NonNullable<
                     key={c.id}
                     type="button"
                     onClick={() => addFromCatalogue(c)}
-                    className="inline-flex min-h-9 max-w-full items-center gap-1.5 rounded-full border border-line bg-white px-3 py-1.5 text-left text-xs font-semibold text-navy-900 transition hover:border-brand-400 hover:bg-brand-50"
+                    className="inline-flex min-h-9 max-w-full items-center gap-1.5 rounded-full border border-line bg-card px-3 py-1.5 text-left text-xs font-semibold text-ink transition hover:border-line-strong hover:bg-primary/[0.06]"
                   >
-                    <Plus className="size-3.5 shrink-0 text-brand-600" aria-hidden />
+                    <Plus className="size-3.5 shrink-0 text-link" aria-hidden />
                     <span className="truncate">{c.name}</span>
                     <span className="shrink-0 font-normal text-muted tabular-nums">{fmtEur(c.unitPriceCents)}</span>
                   </button>
@@ -1131,7 +1131,7 @@ const Wizard = ({ initial, settings, onClose, onSaved }: { initial: NonNullable<
               <button
                 type="button"
                 onClick={() => setLines((ls) => [...ls, { key: ++lineSeq, description: '', qty: '1', unit: 'FLAT', price: '', vat: '', catalogueId: null }])}
-                className="inline-flex min-h-9 items-center gap-1.5 rounded-full border border-dashed border-line px-3 py-1.5 text-xs font-semibold text-muted transition hover:border-brand-400 hover:text-navy-900"
+                className="inline-flex min-h-9 items-center gap-1.5 rounded-full border border-dashed border-line px-3 py-1.5 text-xs font-semibold text-muted transition hover:border-line-strong hover:text-ink"
               >
                 <Pencil className="size-3.5" aria-hidden /> {t('adminQuotes.wizard.customLine')}
               </button>
@@ -1149,7 +1149,7 @@ const Wizard = ({ initial, settings, onClose, onSaved }: { initial: NonNullable<
                   <li key={l.key} className="space-y-2 rounded-xl border border-line p-2.5">
                     <div className="flex gap-2">
                       <input className="input min-w-0 flex-1" aria-label={t('adminQuotes.wizard.description')} placeholder={t('adminQuotes.wizard.description')} maxLength={500} value={l.description} onChange={(e) => setLine(l.key, { description: e.target.value })} />
-                      <button type="button" className="grid size-10 shrink-0 place-items-center rounded-lg text-muted hover:bg-red-50 hover:text-danger" aria-label={t('adminQuotes.wizard.removeLine')} onClick={() => setLines((ls) => ls.filter((x) => x.key !== l.key))}>
+                      <button type="button" className="grid size-10 shrink-0 place-items-center rounded-lg text-muted hover:bg-danger-bg hover:text-danger-fg" aria-label={t('adminQuotes.wizard.removeLine')} onClick={() => setLines((ls) => ls.filter((x) => x.key !== l.key))}>
                         <X className="size-4" />
                       </button>
                     </div>
@@ -1175,7 +1175,7 @@ const Wizard = ({ initial, settings, onClose, onSaved }: { initial: NonNullable<
                           ))}
                         </select>
                       )}
-                      <span className="col-span-2 text-right text-sm font-semibold text-navy-900 tabular-nums sm:col-span-1">{total === null ? '—' : fmtEur(total)}</span>
+                      <span className="col-span-2 text-right text-sm font-semibold text-ink tabular-nums sm:col-span-1">{total === null ? '—' : fmtEur(total)}</span>
                     </div>
                   </li>
                 );
@@ -1275,12 +1275,12 @@ const Wizard = ({ initial, settings, onClose, onSaved }: { initial: NonNullable<
         <div className="space-y-4">
           <div className="grid gap-4 sm:grid-cols-[1fr_16rem]">
             <div className="space-y-1 text-sm">
-              <p className="font-semibold text-navy-900">{company?.name}</p>
+              <p className="font-semibold text-ink">{company?.name}</p>
               <p className="text-ink">{title}</p>
               <p className="text-xs text-muted">
                 {t('adminQuotes.wizard.validUntil')}: {validUntil ? deDate(validUntil) : '—'} · {parsed.length} × {t('adminQuotes.detail.items')}
               </p>
-              {!valid && <p className="text-xs text-amber-700">{t('adminQuotes.wizard.invalid')}</p>}
+              {!valid && <p className="text-xs text-warning-fg">{t('adminQuotes.wizard.invalid')}</p>}
             </div>
             <TotalsBox totals={totals} />
           </div>
@@ -1289,13 +1289,13 @@ const Wizard = ({ initial, settings, onClose, onSaved }: { initial: NonNullable<
               {preview.isPending ? <Spinner className="size-3.5" /> : <FileText className="size-3.5" aria-hidden />} {t('adminQuotes.wizard.previewPdf')}
             </button>
             {previewUrl && (
-              <a href={previewUrl} target="_blank" rel="noreferrer" className="inline-flex min-h-9 items-center gap-1 text-sm font-semibold text-brand-700 hover:underline">
+              <a href={previewUrl} target="_blank" rel="noreferrer" className="inline-flex min-h-9 items-center gap-1 text-sm font-semibold text-link hover:underline">
                 <ExternalLink className="size-3.5" aria-hidden /> {t('adminQuotes.wizard.openPdf')}
               </a>
             )}
             <span className="text-xs text-muted">{t('adminQuotes.wizard.previewHint')}</span>
           </div>
-          {previewUrl && <iframe title={t('adminQuotes.wizard.previewPdf')} src={previewUrl} className="h-[60vh] w-full rounded-xl border border-line bg-white" />}
+          {previewUrl && <iframe title={t('adminQuotes.wizard.previewPdf')} src={previewUrl} className="h-[60vh] w-full rounded-xl border border-line bg-card" />}
         </div>
       )}
     </Modal>
@@ -1305,7 +1305,7 @@ const Wizard = ({ initial, settings, onClose, onSaved }: { initial: NonNullable<
 const TotalsBox = ({ totals }: { totals: ReturnType<typeof computeTotals> }) => {
   const { t } = useTranslation();
   return (
-    <dl className="space-y-1.5 rounded-xl bg-surface p-4 text-sm tabular-nums">
+    <dl className="space-y-1.5 rounded-xl bg-sunken p-4 text-sm tabular-nums">
       {totals.discount > 0 && (
         <>
           <div className="flex justify-between">
@@ -1328,7 +1328,7 @@ const TotalsBox = ({ totals }: { totals: ReturnType<typeof computeTotals> }) => 
           <dd>{fmtEur(g.vatCents)}</dd>
         </div>
       ))}
-      <div className="flex justify-between border-t border-line pt-1.5 text-base font-bold text-navy-900">
+      <div className="flex justify-between border-t border-line pt-1.5 text-base font-bold text-ink">
         <dt>{t('adminQuotes.wizard.gross')}</dt>
         <dd>{fmtEur(totals.gross)}</dd>
       </div>
@@ -1363,7 +1363,7 @@ const TextBlock = ({
           {label}
         </label>
         {ai && (
-          <button type="button" className="inline-flex min-h-8 items-center gap-1.5 rounded-lg px-2 text-xs font-semibold text-violet-700 hover:bg-violet-50 disabled:opacity-50" disabled={aiBusy || value.trim().length < 3} onClick={ai}>
+          <button type="button" className="inline-flex min-h-8 items-center gap-1.5 rounded-lg px-2 text-xs font-semibold text-accent-fg hover:bg-accent-bg disabled:opacity-50" disabled={aiBusy || value.trim().length < 3} onClick={ai}>
             {aiBusy ? <Spinner className="size-3.5" /> : <Sparkles className="size-3.5" aria-hidden />} {aiBusy ? t('adminQuotes.wizard.improving') : t('adminQuotes.wizard.improve')}
           </button>
         )}
@@ -1388,11 +1388,11 @@ const ChoiceCard = ({ active, onClick, title, hint }: { active: boolean; onClick
     type="button"
     onClick={onClick}
     aria-pressed={active}
-    className={clsx('flex min-h-14 items-center gap-3 rounded-xl border p-3 text-left text-sm transition', active ? 'border-brand-600 bg-brand-50' : 'border-line hover:border-brand-400')}
+    className={clsx('flex min-h-14 items-center gap-3 rounded-xl border p-3 text-left text-sm transition', active ? 'border-primary bg-primary/[0.06]' : 'border-line hover:border-line-strong')}
   >
-    <span className={clsx('grid size-5 shrink-0 place-items-center rounded-full border', active ? 'border-brand-600 bg-brand-600 text-white' : 'border-line')}>{active && <CheckCircle2 className="size-3.5" aria-hidden />}</span>
+    <span className={clsx('grid size-5 shrink-0 place-items-center rounded-full border', active ? 'border-line-strong bg-sunken text-ink shadow-[inset_0_0_0_1px_var(--color-line-strong)]' : 'border-line')}>{active && <CheckCircle2 className="size-3.5" aria-hidden />}</span>
     <span className="min-w-0">
-      <span className="block truncate font-semibold text-navy-900">{title}</span>
+      <span className="block truncate font-semibold text-ink">{title}</span>
       {hint && <span className="block text-xs text-muted">{hint}</span>}
     </span>
   </button>
@@ -1422,7 +1422,7 @@ const ProspectForm = ({ onCancel, onCreated }: { onCancel: () => void; onCreated
         if (f.name.trim().length >= 2) m.mutate();
       }}
     >
-      <p className="text-sm font-semibold text-navy-900">{t('adminQuotes.wizard.prospect.title')}</p>
+      <p className="text-sm font-semibold text-ink">{t('adminQuotes.wizard.prospect.title')}</p>
       <div className="grid gap-3 sm:grid-cols-2">
         {input('name')}
         {input('contactName', 'text', 160)}
@@ -1508,7 +1508,7 @@ const SettingsTab = ({ q }: { q: { data?: SettingsResponse; isLoading: boolean; 
           <li key={tp.id} className="space-y-2 rounded-xl border border-line p-3">
             <div className="flex gap-2">
               <input className="input min-w-0 flex-1" aria-label={t('adminQuotes.settings.templateName')} placeholder={t('adminQuotes.settings.templateName')} maxLength={80} value={tp.name} onChange={(e) => set(k, form[k].map((x) => (x.id === tp.id ? { ...x, name: e.target.value } : x)))} />
-              <button type="button" className="grid size-10 shrink-0 place-items-center rounded-lg text-muted hover:bg-red-50 hover:text-danger" aria-label={t('adminQuotes.settings.remove')} onClick={() => set(k, form[k].filter((x) => x.id !== tp.id))}>
+              <button type="button" className="grid size-10 shrink-0 place-items-center rounded-lg text-muted hover:bg-danger-bg hover:text-danger-fg" aria-label={t('adminQuotes.settings.remove')} onClick={() => set(k, form[k].filter((x) => x.id !== tp.id))}>
                 <Trash2 className="size-4" />
               </button>
             </div>
@@ -1579,7 +1579,7 @@ const SettingsTab = ({ q }: { q: { data?: SettingsResponse; isLoading: boolean; 
                 <Switch checked={c.active} onChange={(v) => setItem(c.id, { active: v })} label={t('adminQuotes.settings.active')} />
                 <span className="sm:sr-only">{t('adminQuotes.settings.active')}</span>
               </span>
-              <button type="button" className="grid size-10 place-items-center justify-self-end rounded-lg text-muted hover:bg-red-50 hover:text-danger" aria-label={t('adminQuotes.settings.remove')} onClick={() => set('catalogue', form.catalogue.filter((x) => x.id !== c.id))}>
+              <button type="button" className="grid size-10 place-items-center justify-self-end rounded-lg text-muted hover:bg-danger-bg hover:text-danger-fg" aria-label={t('adminQuotes.settings.remove')} onClick={() => set('catalogue', form.catalogue.filter((x) => x.id !== c.id))}>
                 <Trash2 className="size-4" />
               </button>
             </li>

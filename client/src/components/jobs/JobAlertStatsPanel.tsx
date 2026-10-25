@@ -25,7 +25,7 @@ export const JobAlertStatsPanel = ({ className }: { className?: string }) => {
   return (
     <Panel title={t('discoverAdmin.alerts.title')} icon={BellRing} className={className}>
       <p className="text-sm text-muted">{t('discoverAdmin.alerts.subtitle')}</p>
-      <p className="mt-2 text-xs font-semibold text-navy-900">
+      <p className="mt-2 text-xs font-semibold text-ink">
         {t('discoverAdmin.alerts.active', { count: data.active })} · {t('discoverAdmin.alerts.accounts', { count: data.accounts })} · {t('discoverAdmin.alerts.pending', { count: data.pending })}
       </p>
       {data.professions.length === 0 ? (
@@ -35,11 +35,11 @@ export const JobAlertStatsPanel = ({ className }: { className?: string }) => {
           {data.professions.map((p) => (
             <li key={p.key} className="text-sm">
               <div className="flex justify-between gap-2">
-                <span className="truncate text-navy-900">{p.labels?.[lng] ?? p.labels?.en ?? p.key}</span>
+                <span className="truncate text-ink">{p.labels?.[lng] ?? p.labels?.en ?? p.key}</span>
                 <span className="font-semibold tabular-nums">{p.count}</span>
               </div>
-              <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-surface" aria-hidden>
-                <div className="h-full rounded-full bg-brand-600" style={{ width: `${(p.count / max) * 100}%` }} />
+              <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-sunken" aria-hidden>
+                <div className="h-full rounded-full bg-primary" style={{ width: `${(p.count / max) * 100}%` }} />
               </div>
             </li>
           ))}

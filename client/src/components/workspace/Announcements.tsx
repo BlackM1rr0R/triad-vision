@@ -93,7 +93,7 @@ export const AnnouncementDialog = ({ open, onClose, editing }: { open: boolean; 
           {tab === 'write' ? (
             <textarea value={body} onChange={(e) => setBody(e.target.value)} rows={8} maxLength={20000} placeholder={t('ws.ann.ph.body')} className="input resize-y font-mono text-[0.8rem] leading-relaxed" required />
           ) : (
-            <div className="min-h-40 rounded-lg border border-line bg-surface px-4 py-3 text-sm">{body.trim() ? <Markdown source={body} /> : <p className="text-muted">{t('ws.ann.previewEmpty')}</p>}</div>
+            <div className="min-h-40 rounded-lg border border-line bg-sunken px-4 py-3 text-sm">{body.trim() ? <Markdown source={body} /> : <p className="text-muted">{t('ws.ann.previewEmpty')}</p>}</div>
           )}
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
@@ -136,7 +136,7 @@ export const AnnouncementItem = ({ a, highlight, onEdit }: { a: Announcement; hi
     }
   };
   return (
-    <article id={`announcement-${a.id}`} className={clsx('rounded-xl border px-4 py-3 transition', a.read ? 'border-line bg-card' : 'border-brand-200 bg-brand-50/60', highlight && 'ring-2 ring-brand-500/40')}>
+    <article id={`announcement-${a.id}`} className={clsx('rounded-xl border px-4 py-3 transition', a.read ? 'border-line bg-card' : 'border-primary/25 bg-primary/[0.04]', highlight && 'ring-2 ring-focus/40')}>
       <div className="flex items-start gap-3">
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
@@ -146,7 +146,7 @@ export const AnnouncementItem = ({ a, highlight, onEdit }: { a: Announcement; hi
               </Chip>
             )}
             {a.expired && <Chip tone="muted">{t('ws.ann.expired')}</Chip>}
-            {!a.read && <span className="size-2 rounded-full bg-brand-600" aria-hidden />}
+            {!a.read && <span className="size-2 rounded-full bg-primary" aria-hidden />}
             <h3 className="min-w-0 truncate text-sm font-bold text-ink">{a.title}</h3>
           </div>
           <p className="mt-0.5 text-xs text-muted">
@@ -162,7 +162,7 @@ export const AnnouncementItem = ({ a, highlight, onEdit }: { a: Announcement; hi
         </div>
         <div className="flex shrink-0 items-center gap-0.5">
           {!a.read && (
-            <button type="button" onClick={() => void markRead()} disabled={busy} className="inline-flex h-8 items-center gap-1 rounded-lg px-2 text-xs font-semibold text-brand-700 hover:bg-brand-100">
+            <button type="button" onClick={() => void markRead()} disabled={busy} className="inline-flex h-8 items-center gap-1 rounded-lg px-2 text-xs font-semibold text-link hover:bg-primary/10">
               <Check className="size-3.5" /> {t('ws.ann.markRead')}
             </button>
           )}

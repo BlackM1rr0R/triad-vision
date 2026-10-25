@@ -54,7 +54,7 @@ export const ChecklistEditor = ({ items, onChange, idPrefix }: { items: Checklis
         </div>
       ))}
       {items.length < 30 && (
-        <button type="button" className="inline-flex min-h-9 items-center gap-1 text-xs font-semibold text-brand-600 hover:underline" onClick={() => onChange([...items, { text: '', done: false }])}>
+        <button type="button" className="inline-flex min-h-9 items-center gap-1 text-xs font-semibold text-link hover:underline" onClick={() => onChange([...items, { text: '', done: false }])}>
           <Plus className="size-3" /> {t('team.handover.addItem')}
         </button>
       )}
@@ -86,7 +86,7 @@ export const Checklist = ({ h, canTick }: { h: Handover; canTick: boolean }) => 
             disabled={!canTick || tick.isPending || h.status !== 'ACTIVE'}
             onClick={() => tick.mutate({ index: i, done: !it.done })}
             aria-pressed={it.done}
-            className="flex min-h-9 w-full items-start gap-2 rounded-md px-1.5 py-1 text-left text-sm transition enabled:hover:bg-surface disabled:cursor-default"
+            className="flex min-h-9 w-full items-start gap-2 rounded-md px-1.5 py-1 text-left text-sm transition enabled:hover:bg-sunken disabled:cursor-default"
           >
             {it.done ? <CheckSquare className={clsx('mt-0.5 size-4 shrink-0', TONE_TEXT.success)} aria-hidden /> : <Square className="mt-0.5 size-4 shrink-0 text-muted" aria-hidden />}
             <span className={clsx('flex-1', it.done ? 'text-muted line-through' : 'text-ink')}>{it.text}</span>
@@ -119,7 +119,7 @@ export const ChangesSummary = ({ c }: { c: HandoverChanges }) => {
       )}
       {c.recent.length > 0 && (
         <details>
-          <summary className="cursor-pointer font-semibold text-brand-600">{t('team.handover.recent', { count: c.recent.length })}</summary>
+          <summary className="cursor-pointer font-semibold text-link">{t('team.handover.recent', { count: c.recent.length })}</summary>
           <ul className="mt-1 space-y-1 border-l border-line pl-3">
             {c.recent.map((e) => (
               <li key={e.id}>
@@ -203,8 +203,8 @@ export const HandoverCard = ({ h, changes, showCase = true }: { h: Handover; cha
       <header className="flex flex-wrap items-start justify-between gap-2">
         <div className="min-w-0">
           {showCase && (
-            <Link to={`/admin/cases/${h.caseId}#case-handover`} className="flex flex-wrap items-center gap-2 text-sm font-semibold text-ink hover:text-brand-700">
-              <span className="font-mono text-xs text-muted">{h.caseNumber}</span>
+            <Link to={`/admin/cases/${h.caseId}#case-handover`} className="flex flex-wrap items-center gap-2 text-sm font-semibold text-ink hover:text-link">
+              <span className="code-id text-xs text-muted">{h.caseNumber}</span>
               {h.client}
             </Link>
           )}
@@ -228,7 +228,7 @@ export const HandoverCard = ({ h, changes, showCase = true }: { h: Handover; cha
           )}
         </div>
       </header>
-      {h.note ? <p className="rounded-lg bg-surface px-3 py-2 text-sm whitespace-pre-wrap text-ink">{h.note}</p> : !h.checklist.length && <p className="text-xs text-muted">{t('team.handover.noNote')}</p>}
+      {h.note ? <p className="rounded-lg bg-sunken px-3 py-2 text-sm whitespace-pre-wrap text-ink">{h.note}</p> : !h.checklist.length && <p className="text-xs text-muted">{t('team.handover.noNote')}</p>}
       <Checklist h={h} canTick={canTick} />
       {changes && (
         <div className="border-t border-line pt-2">
@@ -321,8 +321,8 @@ const DraftEditor = ({ leaveId, open, onClose }: { leaveId: string; open: boolea
                   const isOpen = expanded === c.id;
                   return (
                     <li key={c.id}>
-                      <button type="button" aria-expanded={isOpen} onClick={() => setExpanded(isOpen ? null : c.id)} className="flex min-h-11 w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-surface">
-                        <span className="font-mono text-xs text-muted">{c.number}</span>
+                      <button type="button" aria-expanded={isOpen} onClick={() => setExpanded(isOpen ? null : c.id)} className="flex min-h-10 sm:min-h-9 w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-sunken">
+                        <span className="code-id text-xs text-muted">{c.number}</span>
                         <span className="min-w-0 flex-1 truncate text-ink">{c.client}</span>
                         <span className="hidden text-xs text-muted sm:inline">{statusLabel(c.status as CaseStatus)}</span>
                         {has && <NotebookPen className={clsx('size-3.5', TONE_TEXT.info)} aria-label={t('team.handover.hasNote')} />}

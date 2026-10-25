@@ -227,6 +227,7 @@ const AdminCaseForms = lazy(() => import('./pages/admin/CaseForms')); // smart q
 const AdminDocGuides = lazy(() => import('./pages/admin/DocGuides')); // "Necə almalı?" document guides
 const AdminModules = lazy(() => import('./pages/admin/SystemModules')); // module toggles (SUPER_ADMIN)
 const AdminUsage = lazy(() => import('./pages/admin/SystemUsage')); // admin page usage statistics (SUPER_ADMIN)
+const AdminDesignSystem = lazy(() => import('./pages/admin/DesignSystem')); // design tokens + component catalogue (ADMIN+)
 const AccountCaseForm = lazy(() => import('./pages/account/CaseForm'));
 const AccountConfirmData = lazy(() => import('./pages/account/ConfirmData'));
 const AccountOnboarding = lazy(() => import('./pages/account/Onboarding'));
@@ -610,6 +611,14 @@ export default function App() {
             <Route path="content/:resource" element={<AdminContent />} />
             <Route path="guides" element={<AdminGuides />} />
             <Route path="settings" element={<AdminSettings />} />
+            <Route
+              path="design-system"
+              element={
+                <RequireAuth roles={['ADMIN', 'SUPER_ADMIN']}>
+                  <AdminDesignSystem />
+                </RequireAuth>
+              }
+            />
             <Route path="security" element={<AdminSecurity />} />
             <Route path="companies" element={<AdminCompanies />} />
             <Route path="vacancies" element={<AdminVacancies />} />

@@ -154,7 +154,7 @@ export const TimeGrid = ({
         {days.map((d, i) => (
           <div key={dayKey(d)} className={clsx('border-l border-line py-1.5 text-center', i >= 5 && cols > 1 && 'bg-surface/40')}>
             <span className="block text-[0.65rem] font-bold tracking-wider text-muted uppercase">{weekdayShort()[(d.getDay() + 6) % 7]}</span>
-            <span className={clsx('mx-auto mt-0.5 grid size-7 place-items-center rounded-full text-sm font-bold', isToday(d) ? 'bg-brand-600 text-white' : 'text-ink')}>{d.getDate()}</span>
+            <span className={clsx('mx-auto mt-0.5 grid size-7 place-items-center rounded-full text-sm font-bold', isToday(d) ? 'bg-primary text-primary-contrast' : 'text-ink')}>{d.getDate()}</span>
           </div>
         ))}
         {hasAllDay && (
@@ -182,7 +182,7 @@ export const TimeGrid = ({
       </div>
 
       {/* Body */}
-      <div ref={scroller} className="min-h-0 flex-1 overflow-y-auto overscroll-contain" onPointerMove={onPointerMove}>
+      <div ref={scroller} tabIndex={0} className="min-h-0 flex-1 overflow-y-auto overscroll-contain outline-none focus-visible:ring-2 focus-visible:ring-focus/40 focus-visible:ring-inset" onPointerMove={onPointerMove}>
         <div className="relative grid" style={{ gridTemplateColumns: `${GUTTER}px repeat(${cols}, minmax(0, 1fr))`, height: 24 * HOUR_PX }}>
           {/* hour labels */}
           <div className="relative">
@@ -236,12 +236,12 @@ export const TimeGrid = ({
                     }}
                     onKeyDown={(e) => e.key === 'Enter' && onOpenItem(p.item, e.currentTarget.getBoundingClientRect())}
                     className={clsx(
-                      'absolute z-[5] overflow-hidden rounded-md border-l-[3px] px-1.5 py-0.5 text-left text-[0.7rem] leading-tight shadow-sm transition-[filter] select-none hover:brightness-95',
+                      'absolute z-[5] overflow-hidden rounded-md border-l-[3px] px-1.5 py-0.5 text-left text-[0.7rem] leading-tight shadow-[var(--tv-shadow-card)] transition-[filter] select-none hover:brightness-95',
                       p.item.tone.bg,
                       p.item.tone.text,
                       p.item.tone.border,
                       editable ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer',
-                      dragging && 'z-20 opacity-90 shadow-lg ring-2 ring-brand-500',
+                      dragging && 'z-20 opacity-90 shadow-[var(--tv-shadow-raised)] ring-2 ring-focus',
                       p.item.busy && 'italic',
                     )}
                     style={{ top, height, left, width, transform: shiftX ? `translateX(${shiftX}px)` : undefined }}

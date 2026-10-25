@@ -36,12 +36,12 @@ const ConfirmButton = ({ label, confirm, onConfirm, icon, danger, busy }: { labe
   const [open, setOpen] = useState(false);
   if (!open)
     return (
-      <button type="button" className={clsx('btn-sm border', danger ? 'border-red-200 bg-card text-red-700 hover:bg-red-50' : 'btn-white border-line')} disabled={busy} onClick={() => setOpen(true)}>
+      <button type="button" className={clsx('btn-sm border', danger ? 'border-danger-border bg-card text-danger-fg hover:bg-danger-bg' : 'btn-secondary border-line')} disabled={busy} onClick={() => setOpen(true)}>
         {icon} {label}
       </button>
     );
   return (
-    <span className="inline-flex flex-wrap items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-2 py-1 text-xs text-red-800" role="alert">
+    <span className="inline-flex flex-wrap items-center gap-2 rounded-lg border border-danger-border bg-danger-bg px-2 py-1 text-xs text-danger-fg" role="alert">
       {confirm}
       <button type="button" className="btn-danger btn-sm" onClick={() => { setOpen(false); onConfirm(); }}>
         {label}
@@ -113,7 +113,7 @@ const CampaignList = () => {
                 {q.data.map((c) => (
                   <tr key={c.id} className="hover:bg-surface/60">
                     <td className="px-4 py-3">
-                      <Link to={`/admin/campaigns/${c.id}`} className="font-semibold text-navy-900 hover:text-brand-700 hover:underline">
+                      <Link to={`/admin/campaigns/${c.id}`} className="font-semibold text-ink hover:text-link hover:underline">
                         {c.name}
                       </Link>
                       <span className="block text-[11px] text-muted">
@@ -130,7 +130,7 @@ const CampaignList = () => {
                       {c.stats.opened + c.stats.inAppRead}
                     </td>
                     <td className="px-2 py-3 text-right tabular-nums">{c.stats.clicked}</td>
-                    <td className={clsx('px-2 py-3 text-right tabular-nums', c.stats.failed + c.stats.bounced > 0 && 'font-semibold text-danger')}>{c.stats.failed + c.stats.bounced}</td>
+                    <td className={clsx('px-2 py-3 text-right tabular-nums', c.stats.failed + c.stats.bounced > 0 && 'font-semibold text-danger-fg')}>{c.stats.failed + c.stats.bounced}</td>
                     <td className="px-2 py-3 text-right tabular-nums">{c.stats.unsubscribed}</td>
                     <td className="px-4 py-3 text-xs whitespace-nowrap text-muted">{fmtDateTime(c.completedAt ?? c.startedAt ?? c.scheduledAt ?? c.createdAt)}</td>
                   </tr>
@@ -238,7 +238,7 @@ const RecipientTable = ({ campaignId, live }: { campaignId: string; live: boolea
               {data.data.items.map((r) => (
                 <tr key={r.id}>
                   <td className="px-4 py-2.5">
-                    <span className="font-medium text-navy-900">
+                    <span className="font-medium text-ink">
                       {r.user.firstName} {r.user.lastName}
                     </span>
                     <span className="block max-w-[16rem] truncate text-[11px] text-muted" title={r.address ?? r.user.email}>
@@ -254,8 +254,8 @@ const RecipientTable = ({ campaignId, live }: { campaignId: string; live: boolea
                   <td className="px-2 py-2.5 text-xs whitespace-nowrap text-muted">{r.openedAt ? fmtDateTime(r.openedAt) : r.readAt ? `${d('read')} ${fmtDateTime(r.readAt)}` : '—'}</td>
                   <td className="px-2 py-2.5 text-xs tabular-nums">{r.clicks || '—'}</td>
                   <td className="max-w-[18rem] px-4 py-2.5 text-xs text-muted">
-                    {r.skipReason ? d(`skip.${r.skipReason}`) : r.error ? <span className="line-clamp-2 text-red-700" title={r.error}>{r.error}</span> : null}
-                    {r.unsubscribedAt && <span className="block text-amber-700">{d('unsubscribedAt')} {fmtDateTime(r.unsubscribedAt)}</span>}
+                    {r.skipReason ? d(`skip.${r.skipReason}`) : r.error ? <span className="line-clamp-2 text-danger-fg" title={r.error}>{r.error}</span> : null}
+                    {r.unsubscribedAt && <span className="block text-warning-fg">{d('unsubscribedAt')} {fmtDateTime(r.unsubscribedAt)}</span>}
                   </td>
                 </tr>
               ))}
@@ -308,7 +308,7 @@ const CampaignDetail = () => {
   const d = (k: string, o?: Record<string, unknown>) => t(`campaigns.detail.${k}`, o);
   return (
     <div className="mx-auto max-w-7xl space-y-5">
-      <Link to="/admin/campaigns" className="inline-flex min-h-10 items-center gap-1 text-sm font-semibold text-brand-700 hover:underline">
+      <Link to="/admin/campaigns" className="inline-flex min-h-10 items-center gap-1 text-sm font-semibold text-link hover:underline">
         <ArrowLeft className="size-4" aria-hidden /> {d('back')}
       </Link>
       <PageHead
@@ -389,7 +389,7 @@ const SegmentList = () => {
   const q = useSegments();
   return (
     <div className="mx-auto max-w-5xl">
-      <Link to="/admin/campaigns" className="mb-3 inline-flex min-h-10 items-center gap-1 text-sm font-semibold text-brand-700 hover:underline">
+      <Link to="/admin/campaigns" className="mb-3 inline-flex min-h-10 items-center gap-1 text-sm font-semibold text-link hover:underline">
         <ArrowLeft className="size-4" aria-hidden /> {t('campaigns.title')}
       </Link>
       <PageHead
@@ -416,7 +416,7 @@ const SegmentList = () => {
               <li key={s.id}>
                 <Link to={`/admin/campaigns/segments/${s.id}`} className="flex flex-wrap items-center justify-between gap-2 px-5 py-3.5 hover:bg-surface/60">
                   <span className="min-w-0">
-                    <span className="block font-semibold text-navy-900">{s.name}</span>
+                    <span className="block font-semibold text-ink">{s.name}</span>
                     {s.description && <span className="block truncate text-xs text-muted">{s.description}</span>}
                   </span>
                   <span className="text-xs text-muted">
@@ -492,7 +492,7 @@ const SegmentEditor = () => {
   if (!isNew && existing.error) return <ErrorBlock error={existing.error} onRetry={() => void existing.refetch()} />;
   return (
     <div className="mx-auto max-w-7xl">
-      <Link to="/admin/campaigns/segments" className="mb-3 inline-flex min-h-10 items-center gap-1 text-sm font-semibold text-brand-700 hover:underline">
+      <Link to="/admin/campaigns/segments" className="mb-3 inline-flex min-h-10 items-center gap-1 text-sm font-semibold text-link hover:underline">
         <ArrowLeft className="size-4" aria-hidden /> {s('title')}
       </Link>
       <PageHead

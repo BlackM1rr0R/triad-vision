@@ -72,7 +72,7 @@ export const CommissionsTable = ({ items, showAgent = true }: { items: AdminComm
   return (
     <>
       {selected.size > 0 && (
-        <div className="mb-3 flex flex-wrap items-center gap-3 rounded-lg border border-brand-200 bg-brand-50/60 px-3 py-2 text-sm">
+        <div className="mb-3 flex flex-wrap items-center gap-3 rounded-lg border border-primary/25 bg-primary/[0.04] px-3 py-2 text-sm">
           <span className="font-semibold text-ink">{t('agents.admin.com.selected', { count: selected.size })}</span>
           <button type="button" className="btn-primary btn-sm" onClick={() => setPayOpen(true)}>
             <Wallet className="size-3.5" aria-hidden /> {t('agents.admin.com.markPaid')}
@@ -86,7 +86,7 @@ export const CommissionsTable = ({ items, showAgent = true }: { items: AdminComm
               <th className="w-10 px-5 py-2 sm:px-6">
                 <input
                   type="checkbox"
-                  className="size-4 accent-brand-600"
+                  className="size-4 accent-primary"
                   aria-label={t('agents.admin.com.selectAll')}
                   checked={allSelected}
                   disabled={!selectable.length}
@@ -108,7 +108,7 @@ export const CommissionsTable = ({ items, showAgent = true }: { items: AdminComm
                 <td className="px-5 py-3 sm:px-6">
                   <input
                     type="checkbox"
-                    className="size-4 accent-brand-600"
+                    className="size-4 accent-primary"
                     aria-label={c.id}
                     disabled={c.status !== 'APPROVED'}
                     checked={selected.has(c.id)}
@@ -118,16 +118,16 @@ export const CommissionsTable = ({ items, showAgent = true }: { items: AdminComm
                 <td className="px-3 py-3 whitespace-nowrap text-muted">{fmtDate(c.createdAt)}</td>
                 {showAgent && (
                   <td className="px-3 py-3">
-                    <Link to={`/admin/agents/${c.agent.id}`} className="font-semibold text-brand-700 hover:underline">
+                    <Link to={`/admin/agents/${c.agent.id}`} className="font-semibold text-link hover:underline">
                       {c.agent.user.firstName} {c.agent.user.lastName}
                     </Link>
-                    <span className="block font-mono text-[11px] text-muted">{c.agent.code}</span>
+                    <span className="block code-id text-[11px] text-muted">{c.agent.code}</span>
                   </td>
                 )}
                 <td className="px-3 py-3 text-ink">
                   {c.client ? `${c.client.firstName} ${c.client.lastName}` : '—'}
                   {c.case && (
-                    <Link to={`/admin/cases/${c.case.id}`} className="block font-mono text-[11px] text-brand-700 hover:underline">
+                    <Link to={`/admin/cases/${c.case.id}`} className="block code-id text-[11px] text-link hover:underline whitespace-nowrap">
                       {c.case.number}
                     </Link>
                   )}
@@ -136,7 +136,7 @@ export const CommissionsTable = ({ items, showAgent = true }: { items: AdminComm
                   {t(`agents.events.${c.event}`, { defaultValue: c.event })}
                   {c.note && <span className="block text-xs text-muted">{c.note}</span>}
                 </td>
-                <td className={clsx('px-3 py-3 text-right font-semibold tabular-nums', c.amountCents < 0 ? 'text-danger' : 'text-ink')}>{money(c.amountCents, c.currency)}</td>
+                <td className={clsx('px-3 py-3 text-right font-semibold tabular-nums', c.amountCents < 0 ? 'text-danger-fg' : 'text-ink')}>{money(c.amountCents, c.currency)}</td>
                 <td className="px-3 py-3">
                   <span className={`badge ${STATUS_TONE[c.status]}`}>{t(`agents.status.${c.status}`)}</span>
                   {c.paidAt && (
@@ -150,7 +150,7 @@ export const CommissionsTable = ({ items, showAgent = true }: { items: AdminComm
                   {c.status === 'PENDING' && (
                     <button
                       type="button"
-                      className="inline-flex min-h-9 items-center gap-1 rounded-lg px-2 text-xs font-semibold text-emerald-700 hover:bg-emerald-50"
+                      className="inline-flex min-h-9 items-center gap-1 rounded-lg px-2 text-xs font-semibold text-success-fg hover:bg-success-bg"
                       onClick={() => approve.mutate(c.id)}
                       disabled={approve.isPending}
                     >
@@ -158,7 +158,7 @@ export const CommissionsTable = ({ items, showAgent = true }: { items: AdminComm
                     </button>
                   )}
                   {(c.status === 'PENDING' || c.status === 'APPROVED') && (
-                    <button type="button" className="inline-flex min-h-9 items-center gap-1 rounded-lg px-2 text-xs font-semibold text-danger hover:bg-red-50" onClick={() => setCancelling(c)}>
+                    <button type="button" className="inline-flex min-h-9 items-center gap-1 rounded-lg px-2 text-xs font-semibold text-danger-fg hover:bg-danger-bg" onClick={() => setCancelling(c)}>
                       <Ban className="size-3.5" aria-hidden /> {t('agents.admin.com.cancel')}
                     </button>
                   )}

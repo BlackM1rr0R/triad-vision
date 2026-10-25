@@ -65,7 +65,7 @@ export const NamingSettingsDialog = ({ onClose }: { onClose: () => void }) => {
       ) : (
         <div className="space-y-3 text-sm">
           <label className="flex items-center gap-2 font-semibold text-ink">
-            <input type="checkbox" className="size-4 accent-brand-600" checked={enabled} onChange={(e) => setEnabled(e.target.checked)} disabled={!q.data.canManage} />
+            <input type="checkbox" className="size-4 accent-primary" checked={enabled} onChange={(e) => setEnabled(e.target.checked)} disabled={!q.data.canManage} />
             {t('driveOrg.naming.enabled')}
           </label>
           <label className="block">
@@ -74,13 +74,13 @@ export const NamingSettingsDialog = ({ onClose }: { onClose: () => void }) => {
           </label>
           <div className="flex flex-wrap gap-1">
             {q.data.tokens.map((tok) => (
-              <button key={tok} type="button" disabled={!q.data.canManage} onClick={() => setPattern((p) => `${p}{${tok}}`)} className="rounded border border-line bg-surface px-1.5 py-0.5 font-mono text-xs hover:border-brand-400">
+              <button key={tok} type="button" disabled={!q.data.canManage} onClick={() => setPattern((p) => `${p}{${tok}}`)} className="rounded border border-line bg-sunken px-1.5 py-0.5 code-id text-xs hover:border-line-strong">
                 {`{${tok}}`}
               </button>
             ))}
           </div>
           <p className="text-xs text-muted">{t('driveOrg.naming.tokensHint')}</p>
-          <p className="rounded-lg bg-surface px-3 py-2 text-xs">
+          <p className="rounded-lg bg-sunken px-3 py-2 text-xs">
             {t('driveOrg.naming.example')}: <span className="font-mono font-semibold text-ink">{example(pattern)}</span>
           </p>
         </div>
@@ -131,7 +131,7 @@ export const TidyDialog = ({ folderId, folderName, onClose }: { folderId: string
       {preview.isLoading ? (
         <Spinner className="size-5" />
       ) : preview.isError ? (
-        <p className="text-sm text-danger">{driveError(preview.error)}</p>
+        <p className="text-sm text-danger-fg">{driveError(preview.error)}</p>
       ) : rows.length === 0 ? (
         <p className="text-sm text-muted">{t('driveOrg.naming.nothing')}</p>
       ) : (
@@ -140,7 +140,7 @@ export const TidyDialog = ({ folderId, folderName, onClose }: { folderId: string
             <li key={r.id} className={clsx('flex items-center gap-2 rounded-lg border border-line px-2 py-1.5', r.blocked && 'opacity-60')}>
               <input
                 type="checkbox"
-                className="size-4 shrink-0 accent-brand-600"
+                className="size-4 shrink-0 accent-primary"
                 disabled={!!r.blocked}
                 checked={picked.has(r.id)}
                 onChange={(e) =>
@@ -160,7 +160,7 @@ export const TidyDialog = ({ folderId, folderName, onClose }: { folderId: string
               <span className="min-w-0 flex-1 truncate font-semibold text-ink" title={r.to}>
                 {r.to}
               </span>
-              {r.blocked && <span className="shrink-0 text-[10px] font-semibold text-danger">{driveError(r.blocked)}</span>}
+              {r.blocked && <span className="shrink-0 text-[10px] font-semibold text-danger-fg">{driveError(r.blocked)}</span>}
             </li>
           ))}
         </ul>

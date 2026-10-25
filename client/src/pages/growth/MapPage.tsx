@@ -4,6 +4,7 @@ import { Navigate } from 'react-router-dom';
 import { PageHero } from '@/components/layout/PageHero';
 import { Spinner } from '@/components/ui/Spinner';
 import { Tabs } from '@/components/ui/Tabs';
+import { Germany } from '@/components/illustrations';
 import { PageCta } from '@/components/visa/PageCta';
 import { PlacementMap } from '@/components/growth/PlacementMap';
 import { OriginFlowMap } from '@/components/growth/OriginFlowMap';
@@ -17,8 +18,6 @@ import { usePageTitle } from '@/lib/usePageTitle';
 registerCopy(pagesGrowthPlus);
 registerCopy(pagesMarketing);
 
-const HERO = 'https://images.unsplash.com/photo-1467269204594-9661b134dd2b?auto=format&fit=crop&w=2000&q=70';
-
 export default function MapPage() {
   const { t } = useTranslation();
   usePageTitle(t('gp.map.title'));
@@ -31,7 +30,7 @@ export default function MapPage() {
   const showFrom = hasOrigins && view === 'from';
   return (
     <>
-      <PageHero title={showFrom ? t('mk.origins.title') : t('gp.map.title')} subtitle={showFrom ? t('mk.origins.subtitle') : t('gp.map.subtitle')} image={HERO} crumb={{ to: '/tools', label: t('siteNav.tools') }} />
+      <PageHero title={showFrom ? t('mk.origins.title') : t('gp.map.title')} subtitle={showFrom ? t('mk.origins.subtitle') : t('gp.map.subtitle')} illustration={<Germany className="w-full" />} crumb={{ to: '/tools', label: t('siteNav.tools') }} />
       <section className="section">
         <div className="container-x">
           {hasOrigins && (
@@ -52,7 +51,7 @@ export default function MapPage() {
           ) : isLoading || !data ? (
             <Spinner />
           ) : data.cities.length === 0 ? (
-            <p className="card card-pad text-center text-muted">{t('gp.map.empty')}</p>
+            <p className="card card-pad rounded-3xl text-center text-muted">{t('gp.map.empty')}</p>
           ) : (
             <PlacementMap data={data} />
           )}

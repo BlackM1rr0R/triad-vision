@@ -44,7 +44,7 @@ export const AvatarStack = ({ people, max = 3, size = 'sm' }: { people: Person[]
         <Avatar key={p.id} person={p} size={size} ring />
       ))}
       {rest > 0 && (
-        <span className={clsx('inline-grid place-items-center rounded-full bg-slate-200 font-bold text-slate-700 ring-2 ring-white', size === 'xs' ? 'size-5 text-[0.55rem]' : 'size-6 text-[0.6rem]')}>
+        <span className={clsx('inline-grid place-items-center rounded-full bg-line font-bold text-muted ring-2 ring-white', size === 'xs' ? 'size-5 text-[0.55rem]' : 'size-6 text-[0.6rem]')}>
           +{rest}
         </span>
       )}
@@ -90,8 +90,8 @@ export const ProgressBar = ({ done, total, className }: { done: number; total: n
   const { t } = useTranslation();
   const pct = total ? Math.round((done / total) * 100) : 0;
   return (
-    <span className={clsx('block h-1.5 overflow-hidden rounded-full bg-slate-100', className)} role="progressbar" aria-label={t('ui.progress')} aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100}>
-      <span className={clsx('block h-full rounded-full transition-[width] duration-300', pct === 100 ? 'bg-success' : 'bg-brand-500')} style={{ width: `${pct}%` }} />
+    <span className={clsx('block h-1.5 overflow-hidden rounded-full bg-sunken', className)} role="progressbar" aria-label={t('ui.progress')} aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100}>
+      <span className={clsx('block h-full rounded-full transition-[width] duration-300', pct === 100 ? 'bg-success' : 'bg-primary')} style={{ width: `${pct}%` }} />
     </span>
   );
 };
@@ -105,11 +105,11 @@ export const RichText = ({ text, className }: { text: string; className?: string
         p.type === 'text' ? (
           <span key={i}>{p.text}</span>
         ) : p.type === 'link' ? (
-          <a key={i} href={p.href} target="_blank" rel="noopener noreferrer nofollow" className="font-medium text-brand-600 underline decoration-brand-600/30 underline-offset-2 hover:decoration-brand-600">
+          <a key={i} href={p.href} target="_blank" rel="noopener noreferrer nofollow" className="font-medium text-link underline decoration-link/30 underline-offset-2 hover:decoration-link">
             {p.text}
           </a>
         ) : (
-          <span key={i} className="rounded bg-brand-50 px-1 font-semibold text-brand-700">
+          <span key={i} className="rounded bg-primary/[0.06] px-1 font-semibold text-link">
             @{p.name}
           </span>
         ),
@@ -207,7 +207,7 @@ export const Popover = ({
           <div
             ref={panelRef}
             style={{ position: 'fixed', top: pos?.top ?? -9999, left: pos?.left ?? -9999, maxHeight: pos?.maxHeight }}
-            className={clsx('z-[90] overflow-y-auto rounded-xl border border-line bg-card p-1.5 text-ink shadow-[0_16px_40px_-12px_rgba(11,31,68,0.35)]', className)}
+            className={clsx('z-[90] overflow-y-auto rounded-xl border border-line bg-card p-1.5 text-ink shadow-[var(--tv-shadow-raised)]', className)}
           >
             {children}
           </div>,
@@ -254,11 +254,11 @@ export const PeopleList = ({
                 role="option"
                 aria-selected={on}
                 onClick={() => onToggle(p)}
-                className={clsx('flex w-full items-center gap-2.5 rounded-lg px-2 py-1.5 text-left text-sm transition-colors hover:bg-surface', on && 'bg-brand-50')}
+                className={clsx('flex w-full items-center gap-2.5 rounded-lg px-2 py-1.5 text-left text-sm transition-colors hover:bg-sunken', on && 'bg-primary/[0.06]')}
               >
                 <Avatar person={p} size="sm" />
                 <span className="min-w-0 flex-1 truncate font-medium text-ink">{fullName(p)}</span>
-                {on && <Check className="size-4 shrink-0 text-brand-600" aria-hidden />}
+                {on && <Check className="size-4 shrink-0 text-link" aria-hidden />}
               </button>
             </li>
           );

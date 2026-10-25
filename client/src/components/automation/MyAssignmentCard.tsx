@@ -38,7 +38,7 @@ export const MyAssignmentCard = () => {
       <div className="space-y-4">
         <p className="text-xs text-muted">{t('automation.staff.hint')}</p>
         <div className="flex items-center justify-between gap-3">
-          <span className="text-sm font-semibold text-navy-900">{t('automation.staff.autoAssign')}</span>
+          <span className="text-sm font-semibold text-ink">{t('automation.staff.autoAssign')}</span>
           <Switch checked={p.autoAssign} onChange={(v) => setP({ ...p, autoAssign: v })} label={t('automation.staff.autoAssign')} />
         </div>
         <div><span className="label">{t('automation.staff.languages')}</span><MultiChips options={LANGS} value={p.languages} onChange={(languages) => setP({ ...p, languages: languages as Lang[] })} label={(l) => t(`automation.locales.${l}`)} /></div>

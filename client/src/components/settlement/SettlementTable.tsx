@@ -104,7 +104,7 @@ const Editor = ({ initial, kind, onCommit, onCancel }: { initial: string; kind: 
       defaultValue={initial}
       type={kind === 'date' ? 'date' : 'text'}
       inputMode={kind === 'number' ? 'decimal' : undefined}
-      className="absolute inset-0 z-10 w-full min-w-0 border-2 border-brand-500 bg-field px-2 text-sm text-ink outline-none"
+      className="absolute inset-0 z-10 w-full min-w-0 border-2 border-primary bg-field px-2 text-sm text-ink outline-none"
       onKeyDown={(e) => {
         e.stopPropagation();
         if (e.key === 'Enter') {
@@ -139,7 +139,7 @@ const SelectEditor = ({ value, options, onCommit, onCancel }: { value: string; o
     <select
       ref={ref}
       defaultValue={value}
-      className="absolute inset-0 z-10 w-full min-w-0 border-2 border-brand-500 bg-field px-1 text-sm text-ink outline-none"
+      className="absolute inset-0 z-10 w-full min-w-0 border-2 border-primary bg-field px-1 text-sm text-ink outline-none"
       onChange={(e) => {
         done.current = true;
         onCommit(e.target.value, null);
@@ -181,7 +181,7 @@ const PaidToggle = ({ paid, onToggle, title }: { paid: boolean; onToggle: () => 
     }}
     className={clsx(
       'grid size-4 shrink-0 place-items-center rounded border transition',
-      paid ? 'border-emerald-600 bg-emerald-600 text-white' : 'border-line bg-field text-transparent hover:border-emerald-500',
+      paid ? 'border-success bg-success text-white' : 'border-line bg-field text-transparent hover:border-success',
     )}
   >
     <Check className="size-3" strokeWidth={3} />
@@ -193,14 +193,14 @@ const ShareView = ({ share, draft, onToggle, t }: { share: Share | null; draft: 
   if (!share) return null;
   if (share.text)
     return (
-      <span title={t('settlement.rawotHint')} className="rounded bg-slate-500/15 px-1.5 py-0.5 text-[11px] font-semibold text-slate-600">
+      <span title={t('settlement.rawotHint')} className="rounded bg-muted/15 px-1.5 py-0.5 text-[11px] font-semibold text-muted">
         {share.text}
       </span>
     );
   return (
     <span className="flex min-w-0 items-center justify-end gap-1.5">
-      {share.manual && <span title={t('settlement.manual')} className="size-1.5 shrink-0 rounded-full bg-brand-500" />}
-      <span className={clsx('truncate tabular-nums', share.status === 'PAID' && 'text-emerald-700')}>{fmtMoney(share.cents, share.currency)}</span>
+      {share.manual && <span title={t('settlement.manual')} className="size-1.5 shrink-0 rounded-full bg-primary" />}
+      <span className={clsx('truncate tabular-nums', share.status === 'PAID' && 'text-success-fg')}>{fmtMoney(share.cents, share.currency)}</span>
       {share.cents !== 0 && <PaidToggle paid={share.status === 'PAID'} title={t(share.status === 'PAID' ? 'settlement.markUnpaid' : 'settlement.markPaid')} onToggle={() => onToggle(share.status !== 'PAID')} />}
     </span>
   );
@@ -232,9 +232,9 @@ const TableRow = memo(function TableRow({ row, index, start, width, selected, ac
           'relative flex h-full items-center border-r border-line/60 px-2',
           col.align === 'right' && 'justify-end text-right',
           col.align === 'center' && 'justify-center text-center',
-          d.has && 'bg-amber-300/25',
-          active && 'outline-2 -outline-offset-2 outline-brand-500',
-          selected && col.key === '_select' && 'bg-brand-500/10',
+          d.has && 'bg-warning/25',
+          active && 'outline-2 -outline-offset-2 outline-focus',
+          selected && col.key === '_select' && 'bg-primary/10',
         );
         let content: React.ReactNode = null;
         const rec = row as unknown as Record<string, unknown>;
@@ -251,7 +251,7 @@ const TableRow = memo(function TableRow({ row, index, start, width, selected, ac
               content = (
                 <input
                   type="checkbox"
-                  className="size-4 cursor-pointer accent-brand-600"
+                  className="size-4 cursor-pointer accent-primary"
                   checked={selected}
                   aria-label={t('settlement.cols.select')}
                   onMouseDown={(e) => e.stopPropagation()}
@@ -284,7 +284,7 @@ const TableRow = memo(function TableRow({ row, index, start, width, selected, ac
                         e.stopPropagation();
                         ctx.actions.current.change(row.id, [{ field: 'stageAuto', value: !row.stageAuto }]);
                       }}
-                      className="shrink-0 text-muted hover:text-brand-600"
+                      className="shrink-0 text-muted hover:text-link"
                     >
                       {row.stageAuto ? <Lock className="size-3" /> : <Unlock className="size-3" />}
                     </button>
@@ -304,7 +304,7 @@ const TableRow = memo(function TableRow({ row, index, start, width, selected, ac
               content = (
                 <input
                   type="checkbox"
-                  className="size-4 cursor-pointer accent-brand-600"
+                  className="size-4 cursor-pointer accent-primary"
                   checked={!!rec[col.key]}
                   aria-label={col.label}
                   onMouseDown={(e) => e.stopPropagation()}
@@ -315,7 +315,7 @@ const TableRow = memo(function TableRow({ row, index, start, width, selected, ac
             case 'partnerShare':
               content = (
                 <span className="flex min-w-0 items-center justify-end gap-1.5">
-                  <span className={clsx('truncate tabular-nums', row.partnerPaid && 'text-emerald-700')}>{fmtMoney(row.partnerShareCents, row.partnerShareCurrency)}</span>
+                  <span className={clsx('truncate tabular-nums', row.partnerPaid && 'text-success-fg')}>{fmtMoney(row.partnerShareCents, row.partnerShareCurrency)}</span>
                   {!!row.partnerShareCents && !!row.partnerId && !row._draft?.partnerShareCents && (
                     <PaidToggle paid={row.partnerPaid} title={t('settlement.partnerPaid')} onToggle={() => ctx.actions.current.togglePaid(row.id, '_partner', !row.partnerPaid)} />
                   )}
@@ -337,7 +337,7 @@ const TableRow = memo(function TableRow({ row, index, start, width, selected, ac
                       e.stopPropagation();
                       ctx.actions.current.openLink(row);
                     }}
-                    className={clsx('rounded p-0.5 hover:bg-brand-500/10', row.caseId ? 'text-brand-600' : 'text-muted')}
+                    className={clsx('rounded p-0.5 hover:bg-primary/10', row.caseId ? 'text-link' : 'text-muted')}
                   >
                     {row.caseId ? <Link2 className="size-4" /> : <Link2Off className="size-4" />}
                   </button>
@@ -350,7 +350,7 @@ const TableRow = memo(function TableRow({ row, index, start, width, selected, ac
                       e.stopPropagation();
                       ctx.actions.current.recalc(row.id);
                     }}
-                    className="rounded p-0.5 text-muted hover:bg-brand-500/10 hover:text-brand-600"
+                    className="rounded p-0.5 text-muted hover:bg-primary/10 hover:text-link"
                   >
                     <RotateCcw className="size-3.5" />
                   </button>
@@ -585,10 +585,10 @@ export const SettlementTable = ({ rows, cols, partners, selected, allSelected, t
       aria-rowcount={rows.length + 1}
       tabIndex={0}
       onKeyDown={onKeyDown}
-      className="relative h-full min-h-0 w-full overflow-auto overscroll-contain rounded-xl border border-line bg-card outline-none focus-visible:ring-2 focus-visible:ring-brand-500/40"
+      className="relative h-full min-h-0 w-full overflow-auto overscroll-contain rounded-xl border border-line bg-card outline-none focus-visible:ring-2 focus-visible:ring-focus/40"
     >
       {/* Header */}
-      <div role="row" className="sticky top-0 z-20 flex border-b border-line bg-surface text-xs font-semibold text-muted" style={{ width, height: HEADER_H }}>
+      <div role="row" className="sticky top-0 z-20 flex border-b border-line bg-sunken text-xs font-semibold text-muted" style={{ width, height: HEADER_H }}>
         {cols.map((col) => (
           <div
             key={col.key}
@@ -598,10 +598,10 @@ export const SettlementTable = ({ rows, cols, partners, selected, allSelected, t
             title={col.group ? `${col.group} · ${col.label}` : col.label}
           >
             {col.kind === 'check' ? (
-              <input type="checkbox" className="size-4 cursor-pointer accent-brand-600" checked={allSelected} aria-label={t('settlement.cols.select')} onChange={() => actions.toggleAll()} />
+              <input type="checkbox" className="size-4 cursor-pointer accent-primary" checked={allSelected} aria-label={t('settlement.cols.select')} onChange={() => actions.toggleAll()} />
             ) : (
               <>
-                {col.group && <span className="truncate text-[10px] font-medium tracking-wide text-muted/80 uppercase">{col.group}</span>}
+                {col.group && <span className="truncate text-[10px] font-medium tracking-wide text-muted uppercase">{col.group}</span>}
                 <span className="truncate text-ink/80">{col.label}</span>
               </>
             )}
@@ -633,7 +633,7 @@ export const SettlementTable = ({ rows, cols, partners, selected, allSelected, t
       </div>
 
       {/* Totals */}
-      <div role="row" className="sticky bottom-0 z-20 flex border-t-2 border-line bg-surface text-xs font-bold text-ink" style={{ width, height: ROW_H }}>
+      <div role="row" className="sticky bottom-0 z-20 flex border-t-2 border-line bg-sunken text-xs font-bold text-ink" style={{ width, height: ROW_H }}>
         {cols.map((col) => (
           <div
             key={col.key}

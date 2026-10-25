@@ -134,7 +134,7 @@ const DetailView = ({ id, onBack }: { id: string; onBack: () => void }) => {
 
   return (
     <div className="space-y-5">
-      <button type="button" onClick={onBack} className="inline-flex min-h-10 items-center gap-1.5 text-sm font-semibold text-brand-700 hover:underline">
+      <button type="button" onClick={onBack} className="inline-flex min-h-10 items-center gap-1.5 text-sm font-semibold text-link hover:underline">
         <ArrowLeft className="size-4" aria-hidden />
         {t('site.admin.back')}
       </button>
@@ -167,14 +167,14 @@ const DetailView = ({ id, onBack }: { id: string; onBack: () => void }) => {
           </Panel>
           <Panel title={t('site.admin.consoleErrors')}>
             {r.consoleErrors.length ? (
-              <pre className="max-h-72 overflow-auto rounded-lg bg-surface p-3 text-[11px] leading-snug break-all whitespace-pre-wrap text-ink">{r.consoleErrors.join('\n\n')}</pre>
+              <pre className="max-h-72 overflow-auto rounded-lg bg-sunken p-3 text-[11px] leading-snug break-all whitespace-pre-wrap text-ink">{r.consoleErrors.join('\n\n')}</pre>
             ) : (
               <p className="text-sm text-muted">{t('site.admin.noErrors')}</p>
             )}
             {r.lastApiError && (
               <>
                 <p className="mt-4 mb-1.5 text-xs font-semibold text-muted">{t('site.admin.lastApiError')}</p>
-                <pre className="overflow-auto rounded-lg bg-surface p-3 text-[11px] break-all whitespace-pre-wrap text-ink">{JSON.stringify(r.lastApiError, null, 2)}</pre>
+                <pre className="overflow-auto rounded-lg bg-sunken p-3 text-[11px] break-all whitespace-pre-wrap text-ink">{JSON.stringify(r.lastApiError, null, 2)}</pre>
               </>
             )}
           </Panel>
@@ -183,7 +183,7 @@ const DetailView = ({ id, onBack }: { id: string; onBack: () => void }) => {
               <div className="mb-4 space-y-2">
                 <p className="text-xs font-semibold text-muted">{t('site.admin.history')}</p>
                 {r.replies.map((x, i) => (
-                  <div key={i} className="rounded-lg bg-surface p-3 text-sm">
+                  <div key={i} className="rounded-lg bg-sunken p-3 text-sm">
                     <p className="whitespace-pre-wrap">{x.message}</p>
                     <p className="mt-1 text-xs text-muted">
                       {x.byName} · {when(x.at, i18n.language)} · {x.channel === 'EMAIL' ? 'e-mail' : 'in-app + e-mail'}
@@ -212,7 +212,7 @@ const DetailView = ({ id, onBack }: { id: string; onBack: () => void }) => {
               </DefRow>
               {r.reporter?.email && <DefRow label="E-mail">{r.reporter.email}</DefRow>}
               <DefRow label={t('site.admin.page')}>
-                <a href={r.pageUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 break-all text-brand-700 hover:underline">
+                <a href={r.pageUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 break-all text-link hover:underline">
                   {r.pageUrl.replace(/^https?:\/\/[^/]+/, '') || '/'}
                   <ExternalLink className="size-3 shrink-0" aria-hidden />
                 </a>
@@ -226,7 +226,7 @@ const DetailView = ({ id, onBack }: { id: string; onBack: () => void }) => {
               </DefRow>
               {r.task && (
                 <DefRow label={t('site.admin.task')}>
-                  <Link to={`/workspace/tasks/${r.task.key}`} className="inline-flex items-center gap-1 text-brand-700 hover:underline">
+                  <Link to={`/workspace/tasks/${r.task.key}`} className="inline-flex items-center gap-1 text-link hover:underline">
                     <ListTodo className="size-3.5" aria-hidden />
                     {r.task.key}
                   </Link>
@@ -238,7 +238,7 @@ const DetailView = ({ id, onBack }: { id: string; onBack: () => void }) => {
             <textarea className="input" rows={4} maxLength={5000} value={note} onChange={(e) => setNote(e.target.value)} aria-label={t('site.admin.note')} />
             <button
               type="button"
-              className="btn-ghost btn-sm mt-2 min-h-10"
+              className="btn-secondary btn-sm mt-2 min-h-10"
               disabled={patch.isPending || note === (r.internalNote ?? '')}
               onClick={() => patch.mutate({ internalNote: note.trim() || null })}
             >
@@ -318,10 +318,10 @@ export default function AdminProblemReports() {
             <ul className="divide-y divide-line">
               {list.data.items.map((r) => (
                 <li key={r.id}>
-                  <button type="button" onClick={() => open(r.id)} className="flex w-full flex-col gap-1.5 px-4 py-3 text-left transition hover:bg-surface sm:flex-row sm:items-center sm:gap-4">
+                  <button type="button" onClick={() => open(r.id)} className="flex w-full flex-col gap-1.5 px-4 py-3 text-left transition hover:bg-sunken sm:flex-row sm:items-center sm:gap-4">
                     <StatusPill s={r.status} />
                     <span className="min-w-0 flex-1">
-                      <span className="line-clamp-2 text-sm font-medium text-navy-900">{r.message}</span>
+                      <span className="line-clamp-2 text-sm font-medium text-ink">{r.message}</span>
                       <span className="mt-0.5 block truncate text-xs text-muted">
                         {r.pageUrl.replace(/^https?:\/\/[^/]+/, '') || '/'} · {r.reporter ? `${r.reporter.name} (${r.reporter.role ?? ''})` : (r.contactEmail ?? t('site.admin.anonymous'))}
                       </span>

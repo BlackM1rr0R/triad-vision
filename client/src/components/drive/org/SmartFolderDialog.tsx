@@ -75,7 +75,7 @@ export default function SmartFolderDialog({
     onError: toastDriveError,
   });
 
-  const chip = (on: boolean) => clsx('rounded-full border px-2 py-0.5 text-xs font-semibold', on ? 'border-brand-500 bg-brand-50 text-brand-700 dark:bg-brand-500/15 dark:text-brand-300' : 'border-line text-muted hover:text-ink');
+  const chip = (on: boolean) => clsx('rounded-full border px-2 py-0.5 text-xs font-semibold', on ? 'border-primary bg-primary/[0.06] text-link dark:bg-brand-500/15 dark:text-brand-300' : 'border-line text-muted hover:text-ink');
 
   return (
     <Modal
@@ -86,7 +86,7 @@ export default function SmartFolderDialog({
       footer={
         <>
           {existing?.canEdit && (
-            <button type="button" className="btn-white btn-sm mr-auto border border-line text-danger" onClick={() => window.confirm(t('driveOrg.smart.deleteConfirm', { name: existing.name })) && remove.mutate()}>
+            <button type="button" className="btn-secondary btn-sm mr-auto border border-line text-danger-fg" onClick={() => window.confirm(t('driveOrg.smart.deleteConfirm', { name: existing.name })) && remove.mutate()}>
               <Trash2 className="size-4" /> {t('driveOrg.common.delete')}
             </button>
           )}
@@ -113,7 +113,7 @@ export default function SmartFolderDialog({
           <span className="mb-1 block font-semibold text-ink">{t('driveOrg.smart.tags')}</span>
           <div className="flex flex-wrap gap-1">
             {(tags.data?.tags ?? []).map((tg) => (
-              <button key={tg.id} type="button" onClick={() => setQuery((q) => ({ ...q, tagIds: toggle(q.tagIds, tg.id) }))} className={clsx('rounded px-1.5 py-0.5 text-xs font-semibold ring-offset-1', TAG_TONE[tg.color], query.tagIds?.includes(tg.id) ? 'ring-2 ring-brand-500' : 'opacity-60')} aria-pressed={!!query.tagIds?.includes(tg.id)}>
+              <button key={tg.id} type="button" onClick={() => setQuery((q) => ({ ...q, tagIds: toggle(q.tagIds, tg.id) }))} className={clsx('rounded px-1.5 py-0.5 text-xs font-semibold ring-offset-1', TAG_TONE[tg.color], query.tagIds?.includes(tg.id) ? 'ring-2 ring-focus' : 'opacity-60')} aria-pressed={!!query.tagIds?.includes(tg.id)}>
                 {tg.name}
               </button>
             ))}
@@ -123,7 +123,7 @@ export default function SmartFolderDialog({
           <span className="mb-1 block font-semibold text-ink">{t('driveOrg.smart.stages')}</span>
           <div className="flex flex-wrap gap-1">
             {WORKFLOW_STAGES.map((s: WorkflowStage) => (
-              <button key={s} type="button" onClick={() => setQuery((q) => ({ ...q, stages: toggle(q.stages, s) }))} className={clsx('rounded px-1.5 py-0.5 text-xs font-semibold ring-offset-1', STAGE_TONE[s], query.stages?.includes(s) ? 'ring-2 ring-brand-500' : 'opacity-60')} aria-pressed={!!query.stages?.includes(s)}>
+              <button key={s} type="button" onClick={() => setQuery((q) => ({ ...q, stages: toggle(q.stages, s) }))} className={clsx('rounded px-1.5 py-0.5 text-xs font-semibold ring-offset-1', STAGE_TONE[s], query.stages?.includes(s) ? 'ring-2 ring-focus' : 'opacity-60')} aria-pressed={!!query.stages?.includes(s)}>
                 {t(`driveOrg.stage.${s}`)}
               </button>
             ))}
@@ -172,12 +172,12 @@ export default function SmartFolderDialog({
         </div>
         {(folder || query.folderId) && (
           <label className="flex items-center gap-2">
-            <input type="checkbox" className="size-4 accent-brand-600" checked={!!query.folderId} onChange={(e) => setQuery((q) => ({ ...q, folderId: e.target.checked ? (folder?.id ?? q.folderId) : undefined }))} />
+            <input type="checkbox" className="size-4 accent-primary" checked={!!query.folderId} onChange={(e) => setQuery((q) => ({ ...q, folderId: e.target.checked ? (folder?.id ?? q.folderId) : undefined }))} />
             {t('driveOrg.smart.onlyBelow', { name: folder?.name ?? '…' })}
           </label>
         )}
         <label className={clsx('flex items-center gap-2', !canShare && 'opacity-60')}>
-          <input type="checkbox" className="size-4 accent-brand-600" checked={shared} disabled={!canShare} onChange={(e) => setShared(e.target.checked)} />
+          <input type="checkbox" className="size-4 accent-primary" checked={shared} disabled={!canShare} onChange={(e) => setShared(e.target.checked)} />
           {t('driveOrg.smart.shared')}
         </label>
       </div>

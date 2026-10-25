@@ -65,10 +65,10 @@ const CaseRows = ({ cases, empty }: { cases: StaffAssignedCase[]; empty: string 
     <ul className="divide-y divide-line">
       {cases.map((c) => (
         <li key={c.id}>
-          <Link to={`/admin/cases/${c.id}`} className="flex items-center gap-3 px-5 py-2.5 transition hover:bg-surface sm:px-6">
+          <Link to={`/admin/cases/${c.id}`} className="flex items-center gap-3 px-5 py-2.5 transition hover:bg-sunken sm:px-6">
             <div className="min-w-0 flex-1">
-              <p className="flex min-w-0 items-center gap-2 text-sm font-semibold text-navy-900">
-                <span className="shrink-0 font-mono text-xs text-muted">{c.number}</span>
+              <p className="flex min-w-0 items-center gap-2 text-sm font-semibold text-ink">
+                <span className="shrink-0 code-id text-xs text-muted">{c.number}</span>
                 <span className="truncate">{fullName(c.client)}</span>
               </p>
               <p className="mt-0.5 truncate text-xs text-muted">
@@ -123,7 +123,7 @@ export default function StaffDetail() {
     () =>
       Object.entries(data?.eventTypes30d ?? {})
         .sort((a, b) => b[1] - a[1])
-        .map(([type, n]) => ({ key: type, label: eventLabel(type), value: n, tone: 'bg-brand-500' })),
+        .map(([type, n]) => ({ key: type, label: eventLabel(type), value: n, tone: 'bg-primary' })),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [data, t],
   );
@@ -140,29 +140,29 @@ export default function StaffDetail() {
 
   return (
     <div className="space-y-6">
-      <Link to="/admin/oversight" className="-my-2 inline-flex min-h-10 items-center gap-1.5 text-xs font-semibold text-muted transition hover:text-navy-900">
+      <Link to="/admin/oversight" className="-my-2 inline-flex min-h-10 items-center gap-1.5 text-xs font-semibold text-muted transition hover:text-ink">
         <ArrowLeft className="size-3.5" /> {t('admin.staff.back')}
       </Link>
 
       {/* Header */}
-      <div className="rounded-xl border border-line bg-white p-5 sm:p-6">
+      <div className="rounded-xl border border-line bg-card p-5 sm:p-6">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="flex min-w-0 items-start gap-4">
-            <span className="grid size-12 shrink-0 place-items-center rounded-full bg-navy-900 text-sm font-bold text-white" aria-hidden>
+            <span className="grid size-12 shrink-0 place-items-center rounded-full bg-primary text-sm font-bold text-primary-contrast" aria-hidden>
               {`${user.firstName[0] ?? ''}${user.lastName[0] ?? ''}`.toUpperCase()}
             </span>
             <div className="min-w-0">
-              <h1 className="flex flex-wrap items-center gap-2 text-xl font-bold text-navy-900">
+              <h1 className="flex flex-wrap items-center gap-2 type-page-title">
                 {fullName(user)}
                 <ToneBadge tone={ROLE_TONE[user.role]}>{roleLabel(user.role)}</ToneBadge>
-                {!user.isActive && <ToneBadge tone="bg-slate-200 text-slate-600">{t('admin.common.inactiveCap')}</ToneBadge>}
+                {!user.isActive && <ToneBadge tone="bg-line text-muted">{t('admin.common.inactiveCap')}</ToneBadge>}
               </h1>
               <div className="mt-2 flex flex-wrap gap-2">
-                <a href={`mailto:${user.email}`} className="inline-flex min-h-8 max-w-full items-center gap-1.5 rounded-md border border-line px-2.5 py-1 text-xs text-ink/80 transition hover:border-brand-400 hover:text-brand-700">
+                <a href={`mailto:${user.email}`} className="inline-flex min-h-8 max-w-full items-center gap-1.5 rounded-md border border-line px-2.5 py-1 text-xs text-ink/80 transition hover:border-line-strong hover:text-link">
                   <Mail className="size-3.5 shrink-0" /> <span className="truncate">{user.email}</span>
                 </a>
                 {user.phone && (
-                  <a href={`tel:${user.phone}`} className="inline-flex min-h-8 items-center gap-1.5 rounded-md border border-line px-2.5 py-1 text-xs text-ink/80 transition hover:border-brand-400 hover:text-brand-700">
+                  <a href={`tel:${user.phone}`} className="inline-flex min-h-8 items-center gap-1.5 rounded-md border border-line px-2.5 py-1 text-xs text-ink/80 transition hover:border-line-strong hover:text-link">
                     <Phone className="size-3.5" /> {user.phone}
                   </a>
                 )}
@@ -185,7 +185,7 @@ export default function StaffDetail() {
             )}
             {/* Only the super admin deletes accounts; never their own or another super admin's. */}
             {me?.role === 'SUPER_ADMIN' && user.id !== me.id && user.role !== 'SUPER_ADMIN' && (
-              <button type="button" className="btn-secondary btn-sm text-danger hover:border-red-300 hover:bg-red-50" onClick={() => setDeleting(true)}>
+              <button type="button" className="btn-secondary btn-sm text-danger-fg hover:border-danger-border hover:bg-danger-bg" onClick={() => setDeleting(true)}>
                 <Trash2 className="size-3.5" /> {t('admin.users.deleteBtn')}
               </button>
             )}
@@ -230,7 +230,7 @@ export default function StaffDetail() {
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[640px] text-left text-xs">
-                  <thead className="border-b border-line bg-surface/70 text-[10px] font-semibold tracking-wide whitespace-nowrap text-muted uppercase">
+                  <thead className="border-b border-line bg-surface/70 text-xs font-medium whitespace-nowrap text-muted">
                     <tr>
                       <th className="px-4 py-2">{t('admin.staff.th.device')}</th>
                       <th className="px-3 py-2">{t('admin.staff.th.ip')}</th>
@@ -242,11 +242,11 @@ export default function StaffDetail() {
                   </thead>
                   <tbody className="divide-y divide-line">
                     {sessions.map((s) => (
-                      <tr key={s.id} className={clsx(!s.live && 'text-ink/60')}>
+                      <tr key={s.id} className={clsx(!s.live && 'text-muted')}>
                         <td className="px-4 py-2">
                           <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
                             {s.client === 'mobile' ? <Smartphone className="size-3.5 text-muted" aria-hidden /> : <Monitor className="size-3.5 text-muted" aria-hidden />}
-                            <span className="font-medium text-navy-900">{sessionClientLabel(s.client)}</span>
+                            <span className="font-medium text-ink">{sessionClientLabel(s.client)}</span>
                             <span className="text-muted" title={s.userAgent ?? undefined}>
                               {shortUserAgent(s.userAgent)}
                             </span>
@@ -262,11 +262,11 @@ export default function StaffDetail() {
                         <td className="px-3 py-2 text-right whitespace-nowrap tabular-nums">{fmtMinutes(s.activeMinutes)}</td>
                         <td className="px-3 py-2 text-right">
                           {s.live ? (
-                            <ToneBadge tone="bg-emerald-100 text-emerald-800" className="text-[10px]">{t('admin.staff.live')}</ToneBadge>
+                            <ToneBadge tone="bg-success-bg text-success-fg" className="text-[10px]">{t('admin.staff.live')}</ToneBadge>
                           ) : s.revokedAt ? (
-                            <ToneBadge tone="bg-red-100 text-red-700" className="text-[10px]">{t('admin.staff.revoked')}</ToneBadge>
+                            <ToneBadge tone="bg-danger-bg text-danger-fg" className="text-[10px]">{t('admin.staff.revoked')}</ToneBadge>
                           ) : (
-                            <ToneBadge tone="bg-slate-100 text-slate-600" className="text-[10px]">{t('admin.staff.expired')}</ToneBadge>
+                            <ToneBadge tone="bg-sunken text-muted" className="text-[10px]">{t('admin.staff.expired')}</ToneBadge>
                           )}
                         </td>
                       </tr>
@@ -286,10 +286,10 @@ export default function StaffDetail() {
                 <ol className="relative space-y-4 before:absolute before:top-1 before:bottom-1 before:left-[5px] before:w-px before:bg-line">
                   {events.map((e) => (
                     <li key={e.id} className="relative pl-6">
-                      <span className={clsx('absolute top-1.5 left-0 size-[11px] rounded-full border-2 border-white', e.type === 'INTERNAL_NOTE' ? 'bg-amber-400' : e.toStatus ? 'bg-brand-600' : 'bg-slate-300')} aria-hidden />
+                      <span className={clsx('absolute top-1.5 left-0 size-[11px] rounded-full border-2 border-white', e.type === 'INTERNAL_NOTE' ? 'bg-warning' : e.toStatus ? 'bg-primary' : 'bg-line-strong')} aria-hidden />
                       <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
-                        <span className="font-semibold text-navy-900">{eventLabel(e.type)}</span>
-                        <Link to={`/admin/cases/${e.case.id}`} className="font-mono text-xs font-semibold text-brand-600 hover:underline">
+                        <span className="font-semibold text-ink">{eventLabel(e.type)}</span>
+                        <Link to={`/admin/cases/${e.case.id}`} className="code-id text-xs font-medium text-link hover:underline whitespace-nowrap">
                           {e.case.number}
                         </Link>
                         <span className="text-xs text-muted">{fullName(e.case.client)}</span>
@@ -305,7 +305,7 @@ export default function StaffDetail() {
                   ))}
                 </ol>
                 {data.events.length > 15 && (
-                  <button type="button" className="mt-3 inline-flex min-h-10 items-center text-xs font-semibold text-brand-600 hover:underline" onClick={() => setAllEvents((v) => !v)}>
+                  <button type="button" className="mt-3 inline-flex min-h-10 items-center text-xs font-semibold text-link hover:underline" onClick={() => setAllEvents((v) => !v)}>
                     {allEvents ? t('admin.common.showLess') : t('admin.common.showAll', { count: data.events.length })}
                   </button>
                 )}
@@ -345,7 +345,7 @@ export default function StaffDetail() {
           <Panel
             title={t('admin.staff.workspace')}
             icon={FolderOpen}
-            actions={workspace && <Link to={`/workspace/drive/f/${workspace.folderId}`} className="text-xs font-semibold text-brand-600 hover:underline">{t('admin.staff.goDocs')}</Link>}
+            actions={workspace && <Link to={`/workspace/drive/f/${workspace.folderId}`} className="text-xs font-semibold text-link hover:underline">{t('admin.staff.goDocs')}</Link>}
           >
             {!workspace ? (
               <p className="text-sm text-muted">{t('admin.staff.noWorkspace')}</p>
@@ -358,7 +358,7 @@ export default function StaffDetail() {
                   <DefRow label={t('admin.staff.lastUpload')}>{workspace.lastUploadAt ? fmtRelative(workspace.lastUploadAt) : '—'}</DefRow>
                 </dl>
                 <div>
-                  <p className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold text-navy-900">
+                  <p className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold text-ink">
                     <Share2 className="size-3.5 text-muted" aria-hidden /> {t('admin.staff.sharedWith')}
                   </p>
                   {workspace.sharedWith.length === 0 ? (
@@ -367,7 +367,7 @@ export default function StaffDetail() {
                     <ul className="flex flex-wrap gap-1.5">
                       {workspace.sharedWith.map((g) => (
                         <li key={g.user.id} className="inline-flex items-center gap-1.5 rounded-md border border-line px-2 py-1 text-xs">
-                          <span className="text-navy-900">{fullName(g.user)}</span>
+                          <span className="text-ink">{fullName(g.user)}</span>
                           <ToneBadge tone={DOC_ACCESS_TONE[g.access]} className="text-[10px]">
                             {docAccessLabel(g.access)}
                           </ToneBadge>
@@ -377,7 +377,7 @@ export default function StaffDetail() {
                   )}
                 </div>
                 <div>
-                  <p className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold text-navy-900">
+                  <p className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold text-ink">
                     <FolderOpen className="size-3.5 text-muted" aria-hidden /> {t('admin.staff.otherAccess')}
                   </p>
                   {workspace.accessTo.length === 0 ? (
@@ -386,8 +386,8 @@ export default function StaffDetail() {
                     <ul className="flex flex-wrap gap-1.5">
                       {workspace.accessTo.map((g) => (
                         <li key={g.folder.id}>
-                          <Link to={`/workspace/drive/f/${g.folder.id}`} className="inline-flex items-center gap-1.5 rounded-md border border-line px-2 py-1 text-xs transition hover:border-brand-400">
-                            <span className="text-navy-900">{fullName(g.folder.owner)}</span>
+                          <Link to={`/workspace/drive/f/${g.folder.id}`} className="inline-flex items-center gap-1.5 rounded-md border border-line px-2 py-1 text-xs transition hover:border-line-strong">
+                            <span className="text-ink">{fullName(g.folder.owner)}</span>
                             <ToneBadge tone={DOC_ACCESS_TONE[g.access]} className="text-[10px]">
                               {docAccessLabel(g.access)}
                             </ToneBadge>
@@ -402,7 +402,7 @@ export default function StaffDetail() {
           </Panel>
 
           {/* Audit */}
-          <Panel title={t('admin.staff.auditTitle')} icon={ScrollText} actions={<Link to="/admin/docs/audit" className="text-xs font-semibold text-brand-600 hover:underline">{t('admin.layout.audit')}</Link>}>
+          <Panel title={t('admin.staff.auditTitle')} icon={ScrollText} actions={<Link to="/admin/docs/audit" className="text-xs font-semibold text-link hover:underline">{t('admin.layout.audit')}</Link>}>
             {data.audit.length === 0 ? (
               <p className="text-sm text-muted">{t('admin.staff.noAudit')}</p>
             ) : (
@@ -411,7 +411,7 @@ export default function StaffDetail() {
                   {audit.map((a) => (
                     <li key={a.id} className="py-2 text-xs">
                       <p className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
-                        <span className="font-semibold text-navy-900">{auditActionLabel(a.action)}</span>
+                        <span className="font-semibold text-ink">{auditActionLabel(a.action)}</span>
                         {a.target && <span className="font-mono text-muted">{a.target}</span>}
                       </p>
                       {a.details && <p className="mt-0.5 line-clamp-2 break-all text-muted">{detailsText(a.details)}</p>}
@@ -423,7 +423,7 @@ export default function StaffDetail() {
                   ))}
                 </ul>
                 {data.audit.length > 10 && (
-                  <button type="button" className="mt-2 inline-flex min-h-10 items-center text-xs font-semibold text-brand-600 hover:underline" onClick={() => setAllAudit((v) => !v)}>
+                  <button type="button" className="mt-2 inline-flex min-h-10 items-center text-xs font-semibold text-link hover:underline" onClick={() => setAllAudit((v) => !v)}>
                     {allAudit ? t('admin.common.showLess') : t('admin.common.showAll', { count: data.audit.length })}
                   </button>
                 )}

@@ -10,7 +10,8 @@
  *   neutral  grey    draft, not started, queued, skipped, archived, closed, low priority
  *   accent   violet  a booked milestone: appointment / interview scheduled, proposed, at apostille
  *
- * `brand` exists as a badge tone for non-status labels (roles, categories) and is never a status.
+ * `brand` (blue) and `highlight` (the brand amber) exist as badge tones for non-status labels (roles,
+ * categories, "new", "recommended") and are never statuses.
  *
  * Feature modules keep their exported `*_TONE` maps for compatibility, but build them with
  * `toneClasses(STATUS_TONES.<domain>)` so the colour decision lives only here.
@@ -18,7 +19,7 @@
 
 export type Tone = 'success' | 'warning' | 'danger' | 'info' | 'neutral' | 'accent';
 /** Badge tones: the status tones plus `brand` for non-status labels. */
-export type BadgeTone = Tone | 'brand';
+export type BadgeTone = Tone | 'brand' | 'highlight';
 
 /** Tint background + readable text (badges, pills, chips). */
 export const TONE_CLASS: Record<BadgeTone, string> = {
@@ -29,6 +30,7 @@ export const TONE_CLASS: Record<BadgeTone, string> = {
   neutral: 'bg-neutral-bg text-neutral-fg',
   accent: 'bg-accent-bg text-accent-fg',
   brand: 'bg-brand-100 text-brand-700',
+  highlight: 'bg-highlight-bg text-highlight-fg',
 };
 
 /** Text colour only (inline status words, icons on a neutral surface). */
@@ -40,6 +42,7 @@ export const TONE_TEXT: Record<BadgeTone, string> = {
   neutral: 'text-neutral-fg',
   accent: 'text-accent-fg',
   brand: 'text-brand-700',
+  highlight: 'text-highlight-fg',
 };
 
 /** Solid fill (status bars, progress segments, dots). */
@@ -51,6 +54,7 @@ export const TONE_SOLID: Record<BadgeTone, string> = {
   neutral: 'bg-neutral',
   accent: 'bg-accent',
   brand: 'bg-brand-500',
+  highlight: 'bg-highlight',
 };
 
 /** Border colour (outlined callouts, cards with a status edge). */
@@ -62,6 +66,7 @@ export const TONE_BORDER: Record<BadgeTone, string> = {
   neutral: 'border-neutral-border',
   accent: 'border-accent-border',
   brand: 'border-brand-400',
+  highlight: 'border-highlight/50',
 };
 
 export const toneClass = (tone: BadgeTone) => TONE_CLASS[tone];

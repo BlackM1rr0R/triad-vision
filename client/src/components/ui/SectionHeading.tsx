@@ -21,7 +21,7 @@ export const SectionHeading = ({
     <div className={clsx('min-w-0 max-w-3xl', center && 'mx-auto')}>
       {eyebrow && (
         <Reveal y={16}>
-          <span className={clsx('eyebrow mb-3', light && 'text-brand-400')}>
+          <span className="eyebrow mb-3">
             <svg viewBox="0 0 12 12" className="size-3" aria-hidden>
               <path d="M2 1v10M2 1h8l-2 3 2 3H2" fill="currentColor" />
             </svg>
@@ -29,7 +29,7 @@ export const SectionHeading = ({
           </span>
         </Reveal>
       )}
-      <SplitText text={title} className={clsx('h-section text-balance', light ? 'text-white' : 'text-navy-900')} />
+      <SplitText text={title} className={clsx('h-section text-balance', light ? 'text-white' : 'text-ink')} />
       {subtitle && (
         <Reveal delay={0.15} y={20}>
           <p className={clsx('mt-3 text-[0.95rem] leading-relaxed sm:mt-4 sm:text-lg', light ? 'text-white/70' : 'text-muted')}>{subtitle}</p>

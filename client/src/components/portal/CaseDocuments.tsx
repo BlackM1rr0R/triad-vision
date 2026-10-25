@@ -44,7 +44,7 @@ const isSatisfied = (r: Requirement) => r.documents.some((d) => d.status !== 'RE
 const RequirementIcon = ({ req }: { req: Requirement }) => {
   const docs = req.documents;
   if (docs.some((d) => d.status === 'ACCEPTED')) return <CheckCircle2 className="size-5 text-success" aria-hidden />;
-  if (docs.some((d) => d.status === 'PENDING')) return <Clock className="size-5 text-brand-600" aria-hidden />;
+  if (docs.some((d) => d.status === 'PENDING')) return <Clock className="size-5 text-primary" aria-hidden />;
   if (docs.length) return <XCircle className="size-5 text-danger" aria-hidden />;
   return <Circle className="size-5 text-line" aria-hidden />;
 };
@@ -74,15 +74,15 @@ const DocRow = ({
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, x: 24, transition: { duration: 0.2 } }}
       className={clsx(
-        'rounded-lg border bg-white py-1.5 pr-1.5 pl-3',
-        doc.status === 'REJECTED' ? 'border-red-200 bg-red-50/40' : 'border-line',
+        'rounded-lg border bg-card py-1.5 pr-1.5 pl-3',
+        doc.status === 'REJECTED' ? 'border-danger-border bg-danger-bg' : 'border-line',
       )}
     >
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
         <div className="flex min-w-0 flex-[1_1_12rem] items-center gap-3">
           <FileText className="size-4 shrink-0 text-muted" aria-hidden />
           <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-medium text-navy-900" title={doc.originalName}>
+            <p className="truncate text-sm font-medium text-ink" title={doc.originalName}>
               {doc.originalName}
             </p>
             <p className="truncate text-xs text-muted">
@@ -100,7 +100,7 @@ const DocRow = ({
             href={fileUrl(doc.id)}
             target="_blank"
             rel="noreferrer"
-            className="grid size-10 place-items-center rounded-lg text-brand-600 transition hover:bg-brand-50 lg:size-9"
+            className="grid size-10 place-items-center rounded-lg text-primary transition hover:bg-sunken lg:size-9"
             aria-label={`${t('common.open')}: ${doc.originalName}`}
             title={t('common.open')}
           >
@@ -110,7 +110,7 @@ const DocRow = ({
             <button
               type="button"
               onClick={() => onDelete(doc)}
-              className="grid size-10 place-items-center rounded-lg text-danger transition hover:bg-red-50 lg:size-9"
+              className="grid size-10 place-items-center rounded-lg text-danger transition hover:bg-danger-bg lg:size-9"
               aria-label={`${t('common.delete')}: ${doc.originalName}`}
               title={t('common.delete')}
             >
@@ -137,7 +137,7 @@ const DocRow = ({
         }
       />
       {doc.status === 'REJECTED' && doc.reviewNote && (
-        <p className="mt-1.5 mb-1.5 mr-1.5 flex gap-2 rounded-md bg-red-50 px-2.5 py-1.5 text-xs leading-relaxed whitespace-pre-line text-danger">
+        <p className="mt-1.5 mb-1.5 mr-1.5 flex gap-2 rounded-md bg-danger-bg px-2.5 py-1.5 text-xs leading-relaxed whitespace-pre-line text-danger">
           <AlertCircle className="mt-0.5 size-3.5 shrink-0" aria-hidden />
           {doc.reviewNote}
         </p>
@@ -244,16 +244,16 @@ const RequirementCard = ({
   const missing = req.required && !isSatisfied(req);
 
   return (
-    <li className={clsx('rounded-xl border p-4 transition-colors sm:p-5', missing && open ? 'border-amber-200 bg-amber-50/30' : 'border-line bg-white')}>
+    <li className={clsx('rounded-xl border p-4 transition-colors sm:p-5', missing && open ? 'border-warning-border bg-warning-bg' : 'border-line bg-card')}>
       <div className="flex items-start gap-3">
         <span className="mt-0.5">
           <RequirementIcon req={req} />
         </span>
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <h4 className="min-w-0 font-sans text-[0.95rem] font-semibold break-words text-navy-900">{tr(req.title)}</h4>
+            <h4 className="min-w-0 font-sans text-[0.95rem] font-semibold break-words text-ink">{tr(req.title)}</h4>
             <DocGuideButton requirementKey={(req as Requirement & { key?: string | null }).key} title={tr(req.title)} />
-            <span className={clsx('badge whitespace-nowrap', req.required ? 'bg-navy-900/8 text-navy-900' : 'bg-surface text-muted')}>
+            <span className={clsx('badge whitespace-nowrap', req.required ? 'border border-line bg-sunken text-ink' : 'bg-sunken text-muted')}>
               {req.required ? t('common.required') : t('common.optional')}
             </span>
           </div>
@@ -402,7 +402,7 @@ export const CaseDocuments = ({
     <section id={`docs-${stage.toLowerCase()}`} className="card scroll-mt-28 lg:scroll-mt-36 p-5 sm:p-6" aria-labelledby={`docs-title-${stage}`}>
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div className="min-w-0">
-          <h3 id={`docs-title-${stage}`} className="text-xl font-bold text-navy-900">
+          <h3 id={`docs-title-${stage}`} className="type-card-title text-xl">
             {stage === 'INITIAL' ? t('portal.docs.initialTitle') : t('portal.docs.embassyTitle')}
           </h3>
           {open ? (
@@ -418,13 +418,13 @@ export const CaseDocuments = ({
           <div className="w-full sm:w-48">
             <div className="mb-1 flex justify-between text-xs font-semibold text-muted">
               <span>{t('common.required')}</span>
-              <span className="text-navy-900">
+              <span className="text-ink">
                 {doneCount}/{required.length}
               </span>
             </div>
             <div className="h-2 overflow-hidden rounded-full bg-line">
               <motion.div
-                className={clsx('h-full rounded-full', pct === 100 ? 'bg-success' : 'bg-brand-600')}
+                className={clsx('h-full rounded-full', pct === 100 ? 'bg-success' : 'bg-primary')}
                 initial={{ width: 0 }}
                 animate={{ width: `${pct}%` }}
                 transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
@@ -441,7 +441,7 @@ export const CaseDocuments = ({
       </ul>
 
       {open && (
-        <div className="mt-6 flex flex-col gap-4 rounded-xl bg-surface p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
+        <div className="mt-6 flex flex-col gap-4 rounded-xl bg-sunken p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
           <div className="min-w-0 text-sm">
             {missing.length > 0 ? (
               <>

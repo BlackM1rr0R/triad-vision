@@ -14,6 +14,7 @@ import { toastJobsError, useJobLabels } from '@/components/jobs/labels';
 import { VACANCY_STATUS_TONE, type Company, type VacancyRow } from '@/components/jobs/types';
 import { VacancyForm, formFromVacancy, payloadFromForm } from './VacancyForm';
 import { reportAiSaved } from '@/components/aiEmployer/shared';
+import { Employer } from '@/components/illustrations';
 import { Empty, Loading, Section } from './shared';
 
 type Row = VacancyRow & { candidates: Partial<Record<string, number>> };
@@ -62,15 +63,15 @@ export const CompanyVacancies = ({ company }: { company: Company }) => {
       title={t('jobsArea.portal.vacancies.title')}
       icon={Briefcase}
       actions={
-        <Link to="/company/vacancies/new" className="btn-primary btn-sm">
-          <Plus className="size-3.5" /> {t('jobsArea.portal.vacancies.new')}
+        <Link to="/company/vacancies/new" className="btn-primary">
+          <Plus className="size-4" aria-hidden /> {t('jobsArea.portal.vacancies.new')}
         </Link>
       }
     >
       {items.length === 0 ? (
-        <Empty icon={Briefcase} title={t('jobsArea.portal.vacancies.empty')} text={t('jobsArea.portal.vacancies.emptyText')}>
-          <Link to="/company/vacancies/new" className="btn-primary btn-sm">
-            <Plus className="size-3.5" /> {t('jobsArea.portal.vacancies.new')}
+        <Empty icon={Briefcase} illustration={<Employer className="w-36" />} title={t('jobsArea.portal.vacancies.empty')} text={t('jobsArea.portal.vacancies.emptyText')}>
+          <Link to="/company/vacancies/new" className="btn-primary">
+            <Plus className="size-4" aria-hidden /> {t('jobsArea.portal.vacancies.new')}
           </Link>
         </Empty>
       ) : (
@@ -81,7 +82,7 @@ export const CompanyVacancies = ({ company }: { company: Company }) => {
               <li key={v.id} className="flex flex-col gap-3 py-4 first:pt-0 last:pb-0 md:flex-row md:items-center md:justify-between">
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
-                    <Link to={`/company/vacancies/${v.id}`} className="font-semibold break-words text-navy-900 hover:text-brand-700">
+                    <Link to={`/company/vacancies/${v.id}`} className="font-semibold break-words text-ink hover:text-link">
                       {tr(v.title)}
                     </Link>
                     <span className={clsx('badge', VACANCY_STATUS_TONE[v.status])}>{L.vacancyStatus(v.status)}</span>
@@ -93,7 +94,7 @@ export const CompanyVacancies = ({ company }: { company: Company }) => {
                     {t(`jobsArea.portal.vacancies.statusHint.${v.status}`)}
                     {v.publishedAt && ` · ${t('jobsArea.common.postedOn', { date: fmtDate(v.publishedAt) })}`}
                     {proposed > 0 && (
-                      <Link to={`/company/candidates?vacancyId=${v.id}`} className="ml-1 font-semibold text-brand-600 hover:underline">
+                      <Link to={`/company/candidates?vacancyId=${v.id}`} className="ml-1 font-semibold text-link hover:underline">
                         · {t('jobsArea.portal.vacancies.candidates', { count: proposed })}
                       </Link>
                     )}
@@ -138,7 +139,7 @@ export const CompanyVacancies = ({ company }: { company: Company }) => {
         </ul>
       )}
       {!canSubmit && items.some((v) => v.status === 'DRAFT') && (
-        <p className="mt-5 flex items-start gap-2 rounded-lg bg-amber-50 px-3 py-2.5 text-xs text-amber-900">
+        <p className="mt-5 flex items-start gap-2 rounded-xl bg-warning-bg px-4 py-3 text-sm text-warning-fg">
           <Info className="mt-0.5 size-3.5 shrink-0" aria-hidden /> {t('jobsArea.portal.vacancies.needApproval')}
         </p>
       )}
@@ -190,7 +191,7 @@ export const CompanyVacancyEditor = ({ company }: { company: Company }) => {
 
   return (
     <div className="space-y-4">
-      <Link to="/company/vacancies" className="-my-2 inline-flex min-h-10 items-center gap-1.5 text-sm font-semibold text-muted hover:text-navy-900">
+      <Link to="/company/vacancies" className="-my-2 inline-flex min-h-10 items-center gap-1.5 text-sm font-semibold text-muted hover:text-ink">
         <ArrowLeft className="size-4" /> {t('jobsArea.portal.vacancies.back')}
       </Link>
       <Section
@@ -214,14 +215,14 @@ export const CompanyVacancyEditor = ({ company }: { company: Company }) => {
           )
         }
       >
-        {v && <p className="mb-5 rounded-lg bg-surface px-3 py-2.5 text-xs text-ink/80">{t(`jobsArea.portal.vacancies.statusHint.${v.status}`)}</p>}
+        {v && <p className="mb-5 rounded-xl bg-sunken px-4 py-3 text-sm text-ink">{t(`jobsArea.portal.vacancies.statusHint.${v.status}`)}</p>}
         {v?.status === 'OPEN' && (
-          <p className="mb-5 flex items-start gap-2 rounded-lg bg-amber-50 px-3 py-2.5 text-xs text-amber-900">
+          <p className="mb-5 flex items-start gap-2 rounded-xl bg-warning-bg px-4 py-3 text-sm text-warning-fg">
             <Info className="mt-0.5 size-3.5 shrink-0" aria-hidden /> {t('jobsArea.portal.vacancies.editWarning')}
           </p>
         )}
         {company.status !== 'ACTIVE' && (
-          <p className="mb-5 flex items-start gap-2 rounded-lg bg-amber-50 px-3 py-2.5 text-xs text-amber-900">
+          <p className="mb-5 flex items-start gap-2 rounded-xl bg-warning-bg px-4 py-3 text-sm text-warning-fg">
             <Lock className="mt-0.5 size-3.5 shrink-0" aria-hidden /> {t('jobsArea.portal.vacancies.needApproval')}
           </p>
         )}

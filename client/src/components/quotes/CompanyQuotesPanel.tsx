@@ -50,7 +50,7 @@ export const CompanyQuotesPanel = ({ companyId }: { companyId: string }) => {
         <ul className="divide-y divide-line">
           {q.data.slice(0, 10).map((r) => (
             <li key={r.id} className="flex flex-wrap items-center justify-between gap-2 py-2.5 text-sm">
-              <Link to={`/admin/quotes?id=${r.id}`} className="min-w-0 truncate font-semibold text-brand-700 hover:underline">
+              <Link to={`/admin/quotes?id=${r.id}`} className="min-w-0 truncate font-semibold text-link hover:underline">
                 {r.number ?? t('adminQuotes.draftNo')} · {r.title}
               </Link>
               <span className="flex items-center gap-2 text-xs text-muted">

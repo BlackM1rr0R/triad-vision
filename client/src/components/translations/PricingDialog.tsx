@@ -75,7 +75,7 @@ export const PricingDialog = ({ open, pricing, onClose }: { open: boolean; prici
       }}
       footer={
         <div className="flex w-full flex-wrap items-center justify-between gap-2">
-          <button type="button" className="text-xs font-semibold text-muted hover:text-brand-700" onClick={() => fill(DEFAULTS)}>
+          <button type="button" className="text-xs font-semibold text-muted hover:text-link" onClick={() => fill(DEFAULTS)}>
             {t('trOrders.admin.pricing.defaults')}
           </button>
           <div className="flex gap-2">

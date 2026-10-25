@@ -114,10 +114,10 @@ export default function CheckIns() {
         actions={
           isAdmin && (
             <>
-              <button type="button" className="btn-ghost btn-sm" onClick={() => run.mutate()} disabled={run.isPending}>
+              <button type="button" className="btn-secondary btn-sm" onClick={() => run.mutate()} disabled={run.isPending}>
                 <Send className="size-4" /> {t('checkInAdmin.runNow')}
               </button>
-              <button type="button" className="btn-ghost btn-sm" onClick={() => setShowSettings(true)}>
+              <button type="button" className="btn-secondary btn-sm" onClick={() => setShowSettings(true)}>
                 <Settings2 className="size-4" /> {t('checkInAdmin.settings.title')}
               </button>
             </>
@@ -154,8 +154,8 @@ export default function CheckIns() {
                     <span>{t('checkInAdmin.months', { n: r.months })}</span>
                     <strong className="tabular-nums">{r.pct === null ? '—' : `${r.pct}%`}</strong>
                   </div>
-                  <span className="mt-1 block h-1.5 overflow-hidden rounded-full bg-surface" aria-hidden>
-                    <span className="block h-full rounded-full bg-emerald-500" style={{ width: `${r.pct ?? 0}%` }} />
+                  <span className="mt-1 block h-1.5 overflow-hidden rounded-full bg-sunken" aria-hidden>
+                    <span className="block h-full rounded-full bg-success" style={{ width: `${r.pct ?? 0}%` }} />
                   </span>
                   <p className="mt-0.5 text-[11px] text-muted">{t('checkInAdmin.retentionOf', { employed: r.employed, eligible: r.eligible })}</p>
                 </li>
@@ -183,8 +183,8 @@ export default function CheckIns() {
                     <span>{t(`checkIn.topics.${k}`)}</span>
                     <span className="tabular-nums">{d.topics[k] ?? 0}</span>
                   </div>
-                  <span className="mt-1 block h-1.5 overflow-hidden rounded-full bg-surface" aria-hidden>
-                    <span className="block h-full rounded-full bg-amber-500" style={{ width: `${maxTopic ? Math.round(((d.topics[k] ?? 0) / maxTopic) * 100) : 0}%` }} />
+                  <span className="mt-1 block h-1.5 overflow-hidden rounded-full bg-sunken" aria-hidden>
+                    <span className="block h-full rounded-full bg-warning" style={{ width: `${maxTopic ? Math.round(((d.topics[k] ?? 0) / maxTopic) * 100) : 0}%` }} />
                   </span>
                 </li>
               ))}
@@ -238,7 +238,7 @@ export default function CheckIns() {
             <li key={w.id} className="flex flex-col gap-2 px-5 py-3 lg:flex-row lg:items-start lg:gap-4">
               <div className="min-w-0 lg:w-64 lg:shrink-0">
                 <p className="truncate text-sm font-semibold text-ink">
-                  {w.openIssue && <AlertTriangle className="mr-1 inline size-4 text-amber-600" aria-hidden />}
+                  {w.openIssue && <AlertTriangle className="mr-1 inline size-4 text-warning-fg" aria-hidden />}
                   {w.worker}
                 </p>
                 <p className="truncate text-xs text-muted">
@@ -260,7 +260,7 @@ export default function CheckIns() {
                     key={c.id}
                     className={clsx(
                       'max-w-full rounded-lg border px-2 py-1 text-[11px]',
-                      c.answer === 'ISSUE' && !c.resolvedAt ? 'border-amber-300 bg-amber-50' : c.answer === 'OK' ? 'border-emerald-200 bg-emerald-50' : 'border-line bg-surface',
+                      c.answer === 'ISSUE' && !c.resolvedAt ? 'border-warning-border bg-warning-bg' : c.answer === 'OK' ? 'border-success-border bg-success-bg' : 'border-line bg-sunken',
                     )}
                   >
                     <span className="font-semibold">
@@ -270,9 +270,9 @@ export default function CheckIns() {
                     {c.comment && <span className="block break-words text-muted">“{c.comment}”</span>}
                     {c.answer === 'ISSUE' &&
                       (c.resolvedAt ? (
-                        <span className="ml-1 text-emerald-700">✓ {t('checkInAdmin.resolved')}</span>
+                        <span className="ml-1 text-success-fg">✓ {t('checkInAdmin.resolved')}</span>
                       ) : (
-                        <button type="button" className="ml-1 font-semibold text-brand-600 hover:underline" onClick={() => resolve.mutate(c.id)}>
+                        <button type="button" className="ml-1 font-semibold text-link hover:underline" onClick={() => resolve.mutate(c.id)}>
                           <CheckCircle2 className="inline size-3" aria-hidden /> {t('checkInAdmin.resolve')}
                         </button>
                       ))}
@@ -286,14 +286,14 @@ export default function CheckIns() {
                       {t('checkInAdmin.leftOn', { date: date(w.leftJobAt) })}
                       {w.leftReason && ` · ${t(`checkInAdmin.reasons.${w.leftReason}`)}`}
                     </span>
-                    <button type="button" className="btn-ghost btn-sm" onClick={() => undoLeft.mutate(w.id)}>
+                    <button type="button" className="btn-secondary btn-sm" onClick={() => undoLeft.mutate(w.id)}>
                       {t('checkInAdmin.undoLeft')}
                     </button>
                   </>
                 ) : (
                   <>
-                    <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">{t('checkInAdmin.employed')}</span>
-                    <button type="button" className="btn-ghost btn-sm" onClick={() => setLeft(w)}>
+                    <span className="rounded-full bg-success-bg px-2 py-0.5 text-[11px] font-semibold text-success-fg">{t('checkInAdmin.employed')}</span>
+                    <button type="button" className="btn-secondary btn-sm" onClick={() => setLeft(w)}>
                       {t('checkInAdmin.markLeft')}
                     </button>
                   </>
@@ -340,7 +340,7 @@ const LeftDialog = ({ worker, onClose, onDone }: { worker: Worker; onClose: () =
           <textarea className="input" rows={2} maxLength={1000} value={form.note} onChange={(e) => setForm((s) => ({ ...s, note: e.target.value }))} />
         </label>
         <div className="flex justify-end gap-2">
-          <button type="button" className="btn-ghost btn-sm" onClick={onClose}>
+          <button type="button" className="btn-secondary btn-sm" onClick={onClose}>
             {t('checkInAdmin.leftDialog.cancel')}
           </button>
           <button type="submit" className="btn-primary btn-sm" disabled={save.isPending}>

@@ -83,7 +83,7 @@ export const RiskyCasesWidget = ({ showBriefing = false }: { showBriefing?: bool
             <li key={c.caseId} className="px-5 py-3 sm:px-6">
               <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                 <span className={clsx('badge text-[10px]', TONE[c.severity])}>{t(`aiStaff.risks.severity.${c.severity}`)}</span>
-                <Link to={`/admin/cases/${c.caseId}`} className="text-sm font-semibold text-navy-900 hover:text-brand-700 hover:underline">
+                <Link to={`/admin/cases/${c.caseId}`} className="text-sm font-semibold text-ink hover:text-link hover:underline">
                   {c.number}
                 </Link>
                 <span className="truncate text-sm text-ink">{c.clientName}</span>
@@ -92,7 +92,7 @@ export const RiskyCasesWidget = ({ showBriefing = false }: { showBriefing?: bool
               <ul className="mt-1.5 space-y-1">
                 {c.risks.slice(0, 2).map((r, i) => (
                   <li key={`${r.code}-${i}`} className="text-xs">
-                    <p className={clsx('font-medium', r.severity === 'high' ? 'text-red-700' : 'text-ink')}>{r.title}</p>
+                    <p className={clsx('font-medium', r.severity === 'high' ? 'text-danger-fg' : 'text-ink')}>{r.title}</p>
                     <p className="flex items-start gap-1 text-muted">
                       <Lightbulb className="mt-px size-3 shrink-0" aria-hidden /> {r.suggestion}
                     </p>
@@ -107,7 +107,7 @@ export const RiskyCasesWidget = ({ showBriefing = false }: { showBriefing?: bool
       {(items.length > SHOWN || showBriefing) && (
         <div className="flex flex-wrap items-center justify-between gap-2 border-t border-line px-5 py-2.5 sm:px-6">
           {items.length > SHOWN ? (
-            <button type="button" className="text-xs font-semibold text-brand-600 hover:underline" onClick={() => setExpanded((v) => !v)}>
+            <button type="button" className="text-xs font-semibold text-link hover:underline" onClick={() => setExpanded((v) => !v)}>
               {expanded ? t('aiStaff.risks.showLess') : t('aiStaff.risks.showAll', { count: items.length })}
             </button>
           ) : (

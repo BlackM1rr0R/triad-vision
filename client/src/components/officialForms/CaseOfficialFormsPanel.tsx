@@ -66,7 +66,7 @@ export const CaseOfficialFormsPanel = ({ caseId }: { caseId: string }) => {
       title={t('officialForms.panel.title')}
       icon={FileText}
       actions={
-        <Link to="/admin/official-forms" className="text-xs font-semibold text-brand-700 hover:underline">
+        <Link to="/admin/official-forms" className="text-xs font-semibold text-link hover:underline">
           {t('officialForms.panel.installLink')}
         </Link>
       }
@@ -74,7 +74,7 @@ export const CaseOfficialFormsPanel = ({ caseId }: { caseId: string }) => {
     >
       <p className="px-5 pt-4 text-xs text-muted sm:px-6">{t('officialForms.panel.subtitle')}</p>
       {isLoading ? (
-        <div className="grid place-items-center py-8 text-brand-600">
+        <div className="grid place-items-center py-8 text-link">
           <Spinner />
         </div>
       ) : (
@@ -87,7 +87,7 @@ export const CaseOfficialFormsPanel = ({ caseId }: { caseId: string }) => {
               <li key={f.key} className="flex flex-wrap items-start gap-x-4 gap-y-2 px-5 py-4 sm:px-6">
                 <div className="min-w-0 flex-[1_1_16rem]">
                   <p className="flex flex-wrap items-center gap-2">
-                    <span className="font-semibold text-navy-900">{f.title}</span>
+                    <span className="font-semibold text-ink">{f.title}</span>
                     <span className={clsx('badge', TONE_CLASS[FILL_TONE[status]])}>{t(`officialForms.panel.status.${status}`)}</span>
                   </p>
                   <p className="mt-0.5 text-xs text-muted">
@@ -123,19 +123,19 @@ export const CaseOfficialFormsPanel = ({ caseId }: { caseId: string }) => {
                     </button>
                   )}
                   {latest?.status === 'SENT_TO_EMPLOYER' && (
-                    <button type="button" className="btn-ghost btn-sm" disabled={withdraw.isPending} onClick={() => withdraw.mutate(latest.id)}>
+                    <button type="button" className="btn-secondary btn-sm" disabled={withdraw.isPending} onClick={() => withdraw.mutate(latest.id)}>
                       <Undo2 className="size-3.5" aria-hidden />
                       {t('officialForms.panel.withdraw')}
                     </button>
                   )}
                   {latest && (latest.status === 'GENERATED' || latest.status === 'SIGNED') && (
-                    <button type="button" className="btn-ghost btn-sm" disabled={submitted.isPending} onClick={() => submitted.mutate(latest.id)}>
+                    <button type="button" className="btn-secondary btn-sm" disabled={submitted.isPending} onClick={() => submitted.mutate(latest.id)}>
                       <CheckCircle2 className="size-3.5" aria-hidden />
                       {t('officialForms.panel.markSubmitted')}
                     </button>
                   )}
                   {(f.template || f.builtIn) && (
-                    <a className="btn-ghost btn-sm" href={`/api/admin/cases/${caseId}/official-forms/${f.key}/datasheet`} title={t('officialForms.panel.datasheetHint')}>
+                    <a className="btn-secondary btn-sm" href={`/api/admin/cases/${caseId}/official-forms/${f.key}/datasheet`} title={t('officialForms.panel.datasheetHint')}>
                       <FileSpreadsheet className="size-3.5" aria-hidden />
                       {t('officialForms.panel.datasheet')}
                     </a>
@@ -150,7 +150,7 @@ export const CaseOfficialFormsPanel = ({ caseId }: { caseId: string }) => {
                           <span>{t(`officialForms.panel.status.${h.status}`)}</span>
                           <span>{fmtDateTime(h.generatedAt ?? h.createdAt)}</span>
                           {h.hasFile && (
-                            <a className="text-brand-700 hover:underline" href={fillFileUrl(h.id)} target="_blank" rel="noreferrer">
+                            <a className="text-link hover:underline" href={fillFileUrl(h.id)} target="_blank" rel="noreferrer">
                               {t('officialForms.panel.open')}
                             </a>
                           )}
@@ -239,7 +239,7 @@ const FillDialog = ({ caseId, entry, onClose, onDone }: { caseId: string; entry:
             <Switch checked={flat} onChange={setFlatten} label={t('officialForms.panel.flatten')} />
             {t('officialForms.panel.flatten')}
           </label>
-          <button type="button" className="btn-ghost" onClick={onClose}>
+          <button type="button" className="btn-secondary" onClick={onClose}>
             {t('admin.common.cancel', { defaultValue: 'Cancel' })}
           </button>
           <button type="button" className="btn-primary" onClick={() => generate.mutate()} disabled={!data || generate.isPending}>
@@ -250,13 +250,13 @@ const FillDialog = ({ caseId, entry, onClose, onDone }: { caseId: string; entry:
       }
     >
       {isLoading || !data ? (
-        <div className="grid place-items-center py-10 text-brand-600">
+        <div className="grid place-items-center py-10 text-link">
           <Spinner />
         </div>
       ) : (
         <div className="space-y-5">
           <section>
-            <h3 className="mb-2 text-sm font-semibold text-navy-900">{t('officialForms.panel.missingTitle')}</h3>
+            <h3 className="mb-2 text-sm font-semibold text-ink">{t('officialForms.panel.missingTitle')}</h3>
             {data.missing.length ? (
               <ul className="space-y-1.5">
                 {data.missing.map((m) => (
@@ -282,8 +282,8 @@ const FillDialog = ({ caseId, entry, onClose, onDone }: { caseId: string; entry:
           </section>
           <section>
             <div className="mb-2 flex flex-wrap items-center gap-2">
-              <h3 className="text-sm font-semibold text-navy-900">{t('officialForms.panel.overrides')}</h3>
-              <button type="button" className="ml-auto text-xs font-semibold text-brand-700 hover:underline" onClick={() => setShowAll((v) => !v)}>
+              <h3 className="text-sm font-semibold text-ink">{t('officialForms.panel.overrides')}</h3>
+              <button type="button" className="ml-auto text-xs font-semibold text-link hover:underline" onClick={() => setShowAll((v) => !v)}>
                 {showAll ? t('officialForms.panel.showMapped') : t('officialForms.panel.showAll')}
               </button>
             </div>
@@ -316,7 +316,7 @@ const FillDialog = ({ caseId, entry, onClose, onDone }: { caseId: string; entry:
                       <input className="input py-1 text-xs" value={current} onChange={(e) => setOv(r.field, e.target.value)} aria-label={r.field} />
                     )}
                     {has ? (
-                      <button type="button" className="text-brand-700 hover:underline" onClick={() => setOv(r.field, null)} title={t('officialForms.panel.reset')}>
+                      <button type="button" className="text-link hover:underline" onClick={() => setOv(r.field, null)} title={t('officialForms.panel.reset')}>
                         <Undo2 className="size-3.5" aria-hidden />
                         <span className="sr-only">{t('officialForms.panel.reset')}</span>
                       </button>

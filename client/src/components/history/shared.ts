@@ -88,12 +88,12 @@ export const entityLabel = (e: string) => (i18n.exists(`history.entities.${e}`) 
 export const sourceLabel = (s: string) => (i18n.exists(`history.sources.${s}`) ? t(`history.sources.${s}`) : s);
 
 export const SOURCE_TONE: Record<string, string> = {
-  admin: 'bg-brand-100 text-brand-700',
-  client: 'bg-slate-100 text-slate-700',
-  system: 'bg-surface text-muted',
-  ai: 'bg-violet-100 text-violet-800',
-  automation: 'bg-sky-100 text-sky-800',
-  revert: 'bg-amber-100 text-amber-800',
+  admin: 'bg-primary/10 text-link',
+  client: 'bg-sunken text-muted',
+  system: 'bg-sunken text-muted',
+  ai: 'bg-accent-bg text-accent-fg',
+  automation: 'bg-info-bg text-info-fg',
+  revert: 'bg-warning-bg text-warning-fg',
 };
 
 const pickL10n = (v: L10n) => {

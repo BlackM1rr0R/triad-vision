@@ -120,7 +120,7 @@ const ItemList = <T extends Record<string, string>>({ items, onChange, empty, re
     <div className="space-y-2">
       <p className="label">{t('mk.landing.editor.f.items')}</p>
       {items.map((it, i) => (
-        <div key={i} className="rounded-lg border border-line bg-surface/50 p-3">
+        <div key={i} className="rounded-lg border border-line bg-sunken p-3">
           <div className="mb-2 flex justify-end gap-1">
             <IconButton icon={ArrowUp} label={t('mk.common.up')} size="sm" variant="ghost" disabled={i === 0} onClick={() => move(i, -1)} />
             <IconButton icon={ArrowDown} label={t('mk.common.down')} size="sm" variant="ghost" disabled={i === items.length - 1} onClick={() => move(i, 1)} />
@@ -130,7 +130,7 @@ const ItemList = <T extends Record<string, string>>({ items, onChange, empty, re
         </div>
       ))}
       {items.length < 12 && (
-        <Button variant="outline" size="sm" icon={Plus} onClick={() => onChange([...items, { ...empty }])}>
+        <Button variant="secondary" size="sm" icon={Plus} onClick={() => onChange([...items, { ...empty }])}>
           {t('mk.landing.editor.f.addItem')}
         </Button>
       )}
@@ -239,10 +239,10 @@ const SectionFields = ({ s, onChange, testimonials, locale }: { s: LandingSectio
                 const on = s.data.ids.includes(tm.id);
                 return (
                   <li key={tm.id}>
-                    <label className="flex cursor-pointer items-start gap-2 rounded px-1.5 py-1 text-sm hover:bg-surface">
+                    <label className="flex cursor-pointer items-start gap-2 rounded px-1.5 py-1 text-sm hover:bg-sunken">
                       <input
                         type="checkbox"
-                        className="mt-0.5 size-4 accent-brand-600"
+                        className="mt-0.5 size-4 accent-primary"
                         checked={on}
                         disabled={!on && s.data.ids.length >= 12}
                         onChange={() => set({ ids: on ? s.data.ids.filter((x) => x !== tm.id) : [...s.data.ids, tm.id] })}
@@ -299,7 +299,7 @@ const SectionFields = ({ s, onChange, testimonials, locale }: { s: LandingSectio
       return (
         <div className="space-y-3">
           <Text label={f('title')} value={s.data.title} onChange={(v) => set({ title: v })} />
-          <Text label={f('videoUrl')} value={s.data.url} max={500} onChange={(v) => set({ url: v.trim() })} hint={s.data.url && !videoEmbedUrl(s.data.url) ? <span className="text-danger">{f('videoInvalid')}</span> : undefined} />
+          <Text label={f('videoUrl')} value={s.data.url} max={500} onChange={(v) => set({ url: v.trim() })} hint={s.data.url && !videoEmbedUrl(s.data.url) ? <span className="text-danger-fg">{f('videoInvalid')}</span> : undefined} />
         </div>
       );
     case 'cta':
@@ -421,19 +421,19 @@ export const LandingEditor = ({ id, canPublish }: { id: string | null; canPublis
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <Link to="/admin/landing-pages" className="inline-flex items-center gap-1.5 text-sm font-semibold text-brand-600 hover:underline">
+        <Link to="/admin/landing-pages" className="inline-flex items-center gap-1.5 text-sm font-semibold text-link hover:underline">
           <ArrowLeft className="size-4" aria-hidden /> {t('mk.landing.editor.back')}
         </Link>
         <div className="flex flex-wrap items-center gap-2">
           {page && <StatusPill domain="publication" status={page.status} label={t(`mk.landing.statuses.${page.status}`)} />}
           {dirty && <span className="text-xs font-semibold text-warning-fg">{t('mk.landing.editor.unsaved')}</span>}
           {!isNew && (
-            <Button variant="outline" size="sm" icon={Copy} loading={duplicate.isPending} onClick={() => duplicate.mutate()}>
+            <Button variant="secondary" size="sm" icon={Copy} loading={duplicate.isPending} onClick={() => duplicate.mutate()}>
               {t('mk.landing.actions.duplicate')}
             </Button>
           )}
           {published && (
-            <a href={`/l/${page!.slug}`} target="_blank" rel="noreferrer" className="btn-ghost btn-sm">
+            <a href={`/l/${page!.slug}`} target="_blank" rel="noreferrer" className="btn-secondary btn-sm">
               <ExternalLink className="size-4" aria-hidden /> {t('mk.landing.actions.view')}
             </a>
           )}
@@ -542,7 +542,7 @@ export const LandingEditor = ({ id, canPublish }: { id: string | null; canPublis
                     <li key={s.id} className="rounded-xl border border-line bg-card">
                       <div className="flex items-center gap-2 px-3 py-2">
                         <button type="button" className="flex min-w-0 flex-1 items-center gap-2 text-left" aria-expanded={open} onClick={() => setOpenSection(open ? null : s.id)}>
-                          <span className="grid size-6 shrink-0 place-items-center rounded-full bg-surface text-[11px] font-bold text-muted">{i + 1}</span>
+                          <span className="grid size-6 shrink-0 place-items-center rounded-full bg-sunken text-[11px] font-bold text-muted">{i + 1}</span>
                           <span className="text-sm font-semibold text-ink">{t(`mk.landing.editor.sectionNames.${s.type}`)}</span>
                           {heading && <span className="truncate text-xs text-muted">· {heading}</span>}
                         </button>
@@ -602,7 +602,7 @@ export const LandingEditor = ({ id, canPublish }: { id: string | null; canPublis
                       );
                     })}
                   </ul>
-                  <p className={clsx('mt-2 text-xs', formValid ? 'text-muted' : 'text-danger')}>{t('mk.landing.editor.form.rule')}</p>
+                  <p className={clsx('mt-2 text-xs', formValid ? 'text-muted' : 'text-danger-fg')}>{t('mk.landing.editor.form.rule')}</p>
                 </div>
                 <Text label={t('mk.landing.editor.form.submitLabel')} value={fc.submitLabel} max={60} onChange={(v) => up({ formConfig: { ...fc, submitLabel: v } })} />
                 <Text label={t('mk.landing.editor.form.successText')} value={fc.successText} max={400} multiline rows={2} onChange={(v) => up({ formConfig: { ...fc, successText: v } })} />
@@ -627,7 +627,7 @@ export const LandingEditor = ({ id, canPublish }: { id: string | null; canPublis
             <span className="font-semibold tracking-wide uppercase">{t('mk.landing.editor.preview')}</span>
             <span>{t('mk.landing.editor.previewHint')}</span>
           </p>
-          <div className="max-h-[80vh] overflow-y-auto overscroll-contain rounded-xl border border-line bg-page shadow-sm">
+          <div className="max-h-[80vh] overflow-y-auto overscroll-contain rounded-xl border border-line bg-canvas shadow-[var(--tv-shadow-card)]">
             <LandingRenderer slug={draft.slug || 'preview'} locale={draft.locale} sections={draft.sections} formConfig={draft.formConfig} preview testimonialPool={poolMap} />
           </div>
         </div>

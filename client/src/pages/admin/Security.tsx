@@ -99,13 +99,13 @@ const RecoveryCodes = ({ codes, onDone }: { codes: string[]; onDone: () => void 
   };
   return (
     <div>
-      <h3 className="flex items-center gap-2 text-sm font-semibold text-navy-900">
-        <KeyRound className="size-4 text-brand-600" aria-hidden /> {t('adminSecurity.step4')}
+      <h3 className="flex items-center gap-2 text-sm font-semibold text-ink">
+        <KeyRound className="size-4 text-link" aria-hidden /> {t('adminSecurity.step4')}
       </h3>
       <p className="mt-1 text-sm text-muted">{t('adminSecurity.step4Text')}</p>
-      <ul className="mt-4 grid grid-cols-1 gap-2 rounded-xl border border-line bg-surface p-4 font-mono text-sm sm:grid-cols-2" aria-label={t('adminSecurity.step4')}>
+      <ul className="mt-4 grid grid-cols-1 gap-2 rounded-xl border border-line bg-sunken p-4 font-mono text-sm sm:grid-cols-2" aria-label={t('adminSecurity.step4')}>
         {codes.map((c) => (
-          <li key={c} className="rounded-md bg-white px-3 py-1.5 text-center tracking-wider text-navy-900">
+          <li key={c} className="rounded-md bg-card px-3 py-1.5 text-center tracking-wider text-ink">
             {c}
           </li>
         ))}
@@ -183,7 +183,7 @@ const Enroll = ({ onEnabled }: { onEnabled: (codes: string[]) => void }) => {
         <ol className="space-y-2 text-sm text-ink/85">
           {(['step1', 'step2', 'step3', 'step4'] as const).map((k, i) => (
             <li key={k} className="flex gap-3">
-              <span className="grid size-6 shrink-0 place-items-center rounded-full bg-brand-50 text-xs font-bold text-brand-700">{i + 1}</span>
+              <span className="grid size-6 shrink-0 place-items-center rounded-full bg-primary/[0.06] text-xs font-bold text-link">{i + 1}</span>
               <span className="pt-0.5">{t(`adminSecurity.${k}`)}</span>
             </li>
           ))}
@@ -201,20 +201,20 @@ const Enroll = ({ onEnabled }: { onEnabled: (codes: string[]) => void }) => {
     <div className="grid gap-6 lg:grid-cols-2">
       <div className="space-y-5">
         <div>
-          <h3 className="flex items-center gap-2 text-sm font-semibold text-navy-900">
-            <Smartphone className="size-4 text-brand-600" aria-hidden /> 1. {t('adminSecurity.step1')}
+          <h3 className="flex items-center gap-2 text-sm font-semibold text-ink">
+            <Smartphone className="size-4 text-link" aria-hidden /> 1. {t('adminSecurity.step1')}
           </h3>
           <p className="mt-1 text-sm text-muted">{t('adminSecurity.step1Text')}</p>
         </div>
         <div>
-          <h3 className="text-sm font-semibold text-navy-900">2. {t('adminSecurity.step2')}</h3>
+          <h3 className="text-sm font-semibold text-ink">2. {t('adminSecurity.step2')}</h3>
           <p className="mt-1 text-sm text-muted">{t('adminSecurity.step2Text')}</p>
-          <div className="mt-3 grid size-52 place-items-center rounded-xl border border-line bg-white p-2">
-            {qr ? <img src={qr} alt="QR" className="size-full" width={200} height={200} /> : <Spinner className="size-6 text-brand-600" />}
+          <div className="mt-3 grid size-52 place-items-center rounded-xl border border-line bg-card p-2">
+            {qr ? <img src={qr} alt="QR" className="size-full" width={200} height={200} /> : <Spinner className="size-6 text-link" />}
           </div>
           <p className="mt-3 text-xs text-muted">{t('adminSecurity.manual')}</p>
           <div className="mt-1.5 flex flex-wrap items-center gap-2">
-            <code className="rounded-md bg-surface px-2.5 py-1.5 font-mono text-sm break-all text-navy-900 select-all">{groupedSecret}</code>
+            <code className="rounded-md bg-sunken px-2.5 py-1.5 font-mono text-sm break-all text-ink select-all">{groupedSecret}</code>
             <button type="button" className="btn-secondary btn-sm" onClick={async () => setCopied(await copyText(setup.secret))}>
               {copied ? <Check className="size-3.5" /> : <Copy className="size-3.5" />} {copied ? t('adminSecurity.copied') : t('adminSecurity.copy')}
             </button>
@@ -222,7 +222,7 @@ const Enroll = ({ onEnabled }: { onEnabled: (codes: string[]) => void }) => {
         </div>
       </div>
       <form onSubmit={enable} className="space-y-4 lg:border-l lg:border-line lg:pl-6">
-        <h3 className="text-sm font-semibold text-navy-900">3. {t('adminSecurity.step3')}</h3>
+        <h3 className="text-sm font-semibold text-ink">3. {t('adminSecurity.step3')}</h3>
         <CodeInput id="tf-enable" value={code} onChange={setCode} label={t('adminSecurity.codeLabel')} />
         <button type="submit" className="btn-primary" disabled={busy || code.replace(/\D/g, '').length !== 6}>
           {busy ? <Spinner className="size-4" /> : <ShieldCheck className="size-4" />} {t('adminSecurity.activate')}
@@ -279,13 +279,13 @@ const Manage = ({ status, onCodes, onDisabled }: { status: Status; onCodes: (c: 
     <div className="space-y-5">
       <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
         {status.enabledAt && <span className="text-muted">{t('adminSecurity.enabledSince', { date: fmtDate(status.enabledAt) })}</span>}
-        <span className={clsx('font-medium', status.recoveryCodesLeft <= 3 ? 'text-warning' : 'text-muted')}>
+        <span className={clsx('font-medium', status.recoveryCodesLeft <= 3 ? 'text-warning-fg' : 'text-muted')}>
           {t('adminSecurity.recoveryLeft', { count: status.recoveryCodesLeft })}
         </span>
       </div>
       {status.recoveryCodesLeft <= 3 && (
-        <p className="flex items-start gap-2 rounded-lg bg-warning/10 px-3 py-2 text-sm text-ink/85">
-          <AlertTriangle className="mt-0.5 size-4 shrink-0 text-warning" aria-hidden /> {t('adminSecurity.recoveryLow')}
+        <p className="flex items-start gap-2 rounded-lg bg-warning-bg px-3 py-2 text-sm text-ink/85">
+          <AlertTriangle className="mt-0.5 size-4 shrink-0 text-warning-fg" aria-hidden /> {t('adminSecurity.recoveryLow')}
         </p>
       )}
 
@@ -294,7 +294,7 @@ const Manage = ({ status, onCodes, onDisabled }: { status: Status; onCodes: (c: 
           <button type="button" className="btn-secondary btn-sm" onClick={() => setMode('regen')}>
             <RefreshCw className="size-3.5" /> {t('adminSecurity.regenerate')}
           </button>
-          <button type="button" className="btn-secondary btn-sm text-danger" onClick={() => setMode('disable')}>
+          <button type="button" className="btn-secondary btn-sm text-danger-fg" onClick={() => setMode('disable')}>
             <ShieldOff className="size-3.5" /> {t('adminSecurity.disable')}
           </button>
         </div>
@@ -316,10 +316,10 @@ const Manage = ({ status, onCodes, onDisabled }: { status: Status; onCodes: (c: 
       )}
 
       {mode === 'disable' && (
-        <form onSubmit={disable} className="space-y-3 rounded-xl border border-red-200 p-4">
+        <form onSubmit={disable} className="space-y-3 rounded-xl border border-danger-border p-4">
           <p className="text-sm text-muted">{t('adminSecurity.disableText')}</p>
           {status.required && (
-            <p className="flex items-start gap-2 text-sm font-medium text-danger">
+            <p className="flex items-start gap-2 text-sm font-medium text-danger-fg">
               <ShieldAlert className="mt-0.5 size-4 shrink-0" aria-hidden /> {t('adminSecurity.disableStaffWarn')}
             </p>
           )}
@@ -401,7 +401,7 @@ const StaffTwoFactor = () => {
           {(data ?? []).map((s) => (
             <li key={s.id} className={clsx('flex flex-wrap items-center gap-x-4 gap-y-2 px-5 py-3 sm:px-6', !s.isActive && 'opacity-60')}>
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-semibold text-navy-900">
+                <p className="truncate text-sm font-semibold text-ink">
                   {s.firstName} {s.lastName}
                   {s.id === user?.id && <span className="ml-1.5 text-xs font-normal text-muted">({t('adminSecurity.you')})</span>}
                 </p>
@@ -413,7 +413,7 @@ const StaffTwoFactor = () => {
               <span
                 className={clsx(
                   'inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold',
-                  s.twoFactorEnabled ? 'bg-success/10 text-success' : 'bg-warning/15 text-warning',
+                  s.twoFactorEnabled ? 'bg-success-bg text-success-fg' : 'bg-warning-bg text-warning-fg',
                 )}
               >
                 {s.twoFactorEnabled ? <ShieldCheck className="size-3.5" aria-hidden /> : <ShieldAlert className="size-3.5" aria-hidden />}
@@ -468,8 +468,8 @@ export default function AdminSecurity() {
       <PageHead title={t('adminSecurity.title')} subtitle={t('adminSecurity.subtitle')} />
 
       {mustEnroll && !codes && (
-        <div className="flex items-start gap-3 rounded-xl border border-warning/40 bg-warning/10 px-4 py-3 text-sm text-ink/85" role="alert">
-          <ShieldAlert className="mt-0.5 size-5 shrink-0 text-warning" aria-hidden />
+        <div className="flex items-start gap-3 rounded-xl border border-warning/40 bg-warning-bg px-4 py-3 text-sm text-ink/85" role="alert">
+          <ShieldAlert className="mt-0.5 size-5 shrink-0 text-warning-fg" aria-hidden />
           <p className="font-medium">{t('adminSecurity.required')}</p>
         </div>
       )}

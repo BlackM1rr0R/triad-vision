@@ -14,6 +14,7 @@ import { useThread } from '@/components/messaging/useThread';
 import { useApiError } from './useApiError';
 import { MessageBody, ShowOriginalsToggle, TranslationNote } from '@/components/messagingPlus/MessageBody';
 import { VoiceRecorder } from '@/components/messagingPlus/VoiceRecorder';
+import { EmptyInbox } from '@/components/illustrations';
 import { translatableText, useMessageTranslations, useShowOriginals } from '@/components/messagingPlus/useTranslations';
 
 registerCopy(pagesMessaging);
@@ -73,10 +74,10 @@ export const CaseMessages = ({ data, onChanged }: { data: CaseDetail; onChanged:
     <section id="messages" className="card flex scroll-mt-28 flex-col overflow-hidden lg:scroll-mt-36" aria-labelledby="messages-title">
       <RealtimeBridge />
       <div className="flex items-center gap-3 border-b border-line px-5 py-4 sm:px-6">
-        <span className="grid size-9 shrink-0 place-items-center rounded-full bg-brand-100 text-brand-600">
-          <MessageCircle className="size-4.5" aria-hidden />
+        <span className="grid size-11 shrink-0 place-items-center rounded-xl chip-peach">
+          <MessageCircle className="size-5" aria-hidden />
         </span>
-        <h3 id="messages-title" className="min-w-0 flex-1 text-base font-bold text-navy-900">
+        <h3 id="messages-title" className="type-card-title min-w-0 flex-1">
           {t('portal.messages.title')}
         </h3>
         <LiveDot connected={thread.connected} />
@@ -87,11 +88,14 @@ export const CaseMessages = ({ data, onChanged }: { data: CaseDetail; onChanged:
           scrollRef.current = el;
           thread.listRef(el);
         }}
-        className="max-h-[min(26rem,60vh)] min-h-40 flex-1 space-y-3 overflow-y-auto overscroll-contain bg-surface/50 px-4 py-4 sm:px-5"
+        className="max-h-[min(26rem,60vh)] min-h-40 flex-1 space-y-3 overflow-y-auto overscroll-contain bg-sunken px-4 py-4 sm:px-5"
         aria-live="polite"
       >
         {count === 0 ? (
-          <p className="px-4 py-8 text-center text-sm text-muted">{t('portal.messages.empty')}</p>
+          <div className="flex flex-col items-center px-4 py-6 text-center">
+            <EmptyInbox className="w-32" />
+            <p className="mt-3 text-sm text-muted">{t('portal.messages.empty')}</p>
+          </div>
         ) : (
           <AnimatePresence initial={false}>
             {messages.map((m) => {
@@ -110,10 +114,10 @@ export const CaseMessages = ({ data, onChanged }: { data: CaseDetail; onChanged:
                   </span>
                   <div
                     className={clsx(
-                      'max-w-[85%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed break-words whitespace-pre-line shadow-sm',
-                      mine ? 'rounded-br-md bg-brand-600 text-white' : 'rounded-bl-md border border-line bg-white text-navy-900',
+                      'max-w-[85%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed break-words whitespace-pre-line',
+                      mine ? 'rounded-br-md bg-primary text-primary-contrast' : 'rounded-bl-md border border-line bg-card text-ink',
                       m.pending && 'opacity-70',
-                      m.failed && 'bg-red-600',
+                      m.failed && 'bg-danger',
                     )}
                   >
                     <MessageBody m={m} tx={tx} onDark={mine} />
@@ -124,7 +128,7 @@ export const CaseMessages = ({ data, onChanged }: { data: CaseDetail; onChanged:
                     {m.failed && (
                       <>
                         <span className="text-danger-fg" role="alert">{t('messaging.chat.failed')}</span>
-                        <button type="button" className="inline-flex items-center gap-0.5 font-semibold text-brand-700 hover:underline" onClick={() => retry(m.id)}>
+                        <button type="button" className="inline-flex items-center gap-0.5 font-semibold text-link hover:underline" onClick={() => retry(m.id)}>
                           <RotateCw className="size-3" aria-hidden /> {t('messaging.chat.retry')}
                         </button>
                         <button type="button" className="inline-flex items-center gap-0.5 text-muted hover:underline" onClick={() => thread.dismissFailed(m.id)}>

@@ -59,7 +59,7 @@ export const Breadcrumbs = ({ items, className }: { items: Crumb[]; className?: 
                     {c.label}
                   </Link>
                 ) : (
-                  <span aria-current={last ? 'page' : undefined} className={clsx(last && 'font-medium text-ink/80')}>
+                  <span aria-current={last ? 'page' : undefined} className={clsx(last && 'font-medium text-ink')}>
                     {c.label}
                   </span>
                 )}

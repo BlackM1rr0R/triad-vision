@@ -47,11 +47,11 @@ type FooterLink = { to: string; label: string };
 
 const FooterColumn = ({ title, links }: { title: string; links: FooterLink[] }) => (
   <div>
-    <h2 className="mb-4 text-xs font-bold tracking-widest text-white/60 uppercase sm:mb-5 sm:text-sm">{title}</h2>
+    <h2 className="mb-4 font-sans text-xs font-semibold tracking-[0.14em] text-white/70 uppercase sm:mb-5">{title}</h2>
     <ul className="space-y-3">
       {links.map((l) => (
         <li key={l.to}>
-          <Link to={l.to} className="group inline-flex items-center gap-1 text-sm text-white/75 transition hover:text-white">
+          <Link to={l.to} className="group inline-flex min-h-8 items-center gap-1 text-sm text-white/80 transition hover:text-white hover:underline">
             {l.label}
             <ArrowUpRight className="size-3.5 -translate-x-1 opacity-0 transition group-hover:translate-x-0 group-hover:opacity-100" />
           </Link>
@@ -106,7 +106,6 @@ export const Footer = () => {
 
   return (
     <footer className="relative overflow-hidden bg-navy-950 text-white">
-      <div className="pointer-events-none absolute -top-40 left-1/2 size-[640px] -translate-x-1/2 rounded-full bg-[radial-gradient(closest-side,var(--color-brand-600),transparent)] opacity-20" />
       <div className="absolute inset-x-0 top-0 flex h-1">
         <span className="flex-1 bg-az-blue" />
         <span className="flex-1 bg-az-red" />
@@ -124,17 +123,17 @@ export const Footer = () => {
             <ul className="mt-6 space-y-3 text-sm text-white/75">
               <li>
                 <a href={`tel:${contact.phone.replace(/\s/g, '')}`} className="flex items-center gap-3 hover:text-white">
-                  <Phone className="size-4 text-brand-400" /> {contact.phone}
+                  <Phone className="size-4 text-primary" /> {contact.phone}
                 </a>
               </li>
               <li>
                 <a href={`mailto:${contact.email}`} className="flex items-center gap-3 break-all hover:text-white">
-                  <Mail className="size-4 shrink-0 text-brand-400" /> {contact.email}
+                  <Mail className="size-4 shrink-0 text-primary" /> {contact.email}
                 </a>
               </li>
               {contact.offices.map((o) => (
                 <li key={o.address} className="flex gap-3">
-                  <MapPin className="mt-0.5 size-4 shrink-0 text-brand-400" />
+                  <MapPin className="mt-0.5 size-4 shrink-0 text-primary" />
                   <span>
                     <strong className="block text-white">{tr(o.city)}</strong>
                     {o.address}
@@ -154,8 +153,7 @@ export const Footer = () => {
                 target="_blank"
                 rel="noreferrer"
                 aria-label={name}
-                whileHover={{ y: -4, scale: 1.08 }}
-                className="grid size-10 place-items-center rounded-full border border-white/15 text-white/80 transition-colors hover:border-brand-500 hover:bg-brand-600 hover:text-white"
+                className="grid size-11 place-items-center rounded-full border border-white/20 text-white/85 transition-colors hover:border-primary hover:bg-primary hover:text-primary-contrast"
               >
                 <SocialIcon name={name} />
               </motion.a>
@@ -196,11 +194,6 @@ export const Footer = () => {
             </Link>
           </nav>
         </div>
-      </div>
-
-      <div aria-hidden className="pointer-events-none overflow-hidden">
-        {/* Decorative wordmark drawn as CSS generated content: not text for screen readers or contrast checks. */}
-        <p data-text="TRIAD VISION" className="-mb-[3vw] text-center font-display text-[13vw] leading-none font-black tracking-tight text-white/[0.03] select-none before:content-[attr(data-text)]" />
       </div>
     </footer>
   );

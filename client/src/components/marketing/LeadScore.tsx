@@ -65,7 +65,7 @@ export const ReasonList = ({ reasons }: { reasons: ScoreReason[] }) => {
       {reasons.map((r, i) => (
         <li key={i} className="flex items-baseline justify-between gap-3">
           <span className="text-ink">{reasonLabel(t, r)}</span>
-          <span className={clsx('shrink-0 font-semibold tabular-nums', r.points >= 0 ? 'text-success' : 'text-danger')}>{signed(r.points)}</span>
+          <span className={clsx('shrink-0 font-semibold tabular-nums', r.points >= 0 ? 'text-success-fg' : 'text-danger-fg')}>{signed(r.points)}</span>
         </li>
       ))}
     </ul>
@@ -153,7 +153,7 @@ export const LeadDetailsPanel = ({ inquiryId }: { inquiryId: string }) => {
         {data.landing && (
           <p>
             <span className="text-muted">{t('mk.lead.details.landing')}: </span>
-            <a href={`/l/${data.landing.slug}`} target="_blank" rel="noreferrer" className="font-semibold text-brand-600 hover:underline">
+            <a href={`/l/${data.landing.slug}`} target="_blank" rel="noreferrer" className="font-semibold text-link hover:underline">
               {data.landing.title}
             </a>
           </p>

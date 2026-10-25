@@ -112,14 +112,14 @@ const ExportTab = () => {
         <Panel title={p.fileName} icon={Eye}>
           <dl className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-5">
             {(Object.keys(p.counts) as (keyof DatevPreview['counts'])[]).map((k) => (
-              <div key={k} className="rounded-xl bg-surface px-3 py-2.5">
+              <div key={k} className="rounded-xl bg-sunken px-3 py-2.5">
                 <dt className="text-xs text-muted">{t(`acct.export.counts.${k}`)}</dt>
-                <dd className="font-display text-lg font-bold text-navy-900 tabular-nums">{p.counts[k]}</dd>
+                <dd className="font-display text-lg font-bold text-ink tabular-nums">{p.counts[k]}</dd>
               </div>
             ))}
           </dl>
           {p.warnings.length > 0 && (
-            <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900" role="status">
+            <div className="mb-4 rounded-xl border border-warning-border bg-warning-bg p-3 text-sm text-warning-fg" role="status">
               <p className="mb-1 flex items-center gap-1.5 font-semibold">
                 <AlertTriangle className="size-4" aria-hidden /> {t('acct.export.warnings')}
               </p>
@@ -136,7 +136,7 @@ const ExportTab = () => {
             <>
               <div className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
                 <table className="w-full min-w-[44rem] text-sm">
-                  <thead className="bg-surface text-left text-xs text-muted">
+                  <thead className="bg-sunken text-left text-xs text-muted">
                     <tr>
                       {(['date', 'beleg', 'text', 'amount', 'side', 'account', 'contra', 'bu'] as const).map((c) => (
                         <th key={c} className={c === 'amount' ? 'px-3 py-2 text-right font-semibold' : 'px-3 py-2 font-semibold'}>
@@ -149,7 +149,7 @@ const ExportTab = () => {
                     {p.rows.map((r, i) => (
                       <tr key={`${r.beleg1}-${i}`}>
                         <td className="px-3 py-2 whitespace-nowrap">{fmtDate(r.date)}</td>
-                        <td className="px-3 py-2 font-mono text-xs whitespace-nowrap">{r.beleg1}</td>
+                        <td className="px-3 py-2 code-id text-xs whitespace-nowrap">{r.beleg1}</td>
                         <td className="max-w-64 truncate px-3 py-2">{r.text}</td>
                         <td className="px-3 py-2 text-right tabular-nums whitespace-nowrap">
                           {r.amount} {r.currency}
@@ -230,7 +230,7 @@ const DatevTab = () => {
         </Field>
       </div>
 
-      <h3 className="mt-6 mb-2 text-sm font-semibold text-navy-900">{t('acct.datev.accountsTitle')}</h3>
+      <h3 className="mt-6 mb-2 text-sm font-semibold text-ink">{t('acct.datev.accountsTitle')}</h3>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {ACCOUNT_KEYS.map((k) => (
           <Field key={k} label={t(`acct.datev.accounts.${k}`)} id={`dv-a-${k}`}>
@@ -246,7 +246,7 @@ const DatevTab = () => {
         ))}
       </div>
 
-      <h3 className="mt-6 mb-2 text-sm font-semibold text-navy-900">{t('acct.datev.categoryTitle')}</h3>
+      <h3 className="mt-6 mb-2 text-sm font-semibold text-ink">{t('acct.datev.categoryTitle')}</h3>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
         {CATEGORY_KEYS.map((k) => (
           <Field key={k} label={t(`bill.category.${k}`, { defaultValue: k })} id={`dv-c-${k}`}>
@@ -265,7 +265,7 @@ const DatevTab = () => {
         </Field>
       </div>
 
-      <h3 className="mt-6 mb-2 text-sm font-semibold text-navy-900">{t('acct.datev.debtorTitle')}</h3>
+      <h3 className="mt-6 mb-2 text-sm font-semibold text-ink">{t('acct.datev.debtorTitle')}</h3>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Field label={t('acct.datev.debtorTitle')} id="dv-dm">
           <select id="dv-dm" className="input" value={s.debtorMode} onChange={(e) => set({ debtorMode: e.target.value as DatevSettings['debtorMode'] })}>
@@ -402,7 +402,7 @@ const CurrenciesTab = () => {
                 <input id="az-exempt" className="input" maxLength={500} value={az.exemptionNote} onChange={(e) => setAz({ exemptionNote: e.target.value })} />
               </Field>
             </div>
-            <h3 className="mt-6 mb-2 text-sm font-semibold text-navy-900">{t('acct.entities.bankTitle')}</h3>
+            <h3 className="mt-6 mb-2 text-sm font-semibold text-ink">{t('acct.entities.bankTitle')}</h3>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {(['accountHolder', 'iban', 'bic', 'bank'] as const).map((k) => (
                 <Field key={k} label={t(`acct.entities.${k}`)} id={`az-bank-${k}`}>

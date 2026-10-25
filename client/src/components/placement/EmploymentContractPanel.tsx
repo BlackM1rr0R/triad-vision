@@ -191,8 +191,8 @@ export const EmploymentContractPanel = ({ caseId }: { caseId: string }) => {
           }}
         >
           <div className="flex justify-end">
-            <button type="button" className="btn-white btn-sm border border-line" disabled={prefill.isPending} onClick={() => prefill.mutate()}>
-              {prefill.isPending ? <Spinner className="size-3.5" /> : <Sparkles className="size-3.5 text-violet-600" />} {t('placement.contract.prefill')}
+            <button type="button" className="btn-secondary btn-sm" disabled={prefill.isPending} onClick={() => prefill.mutate()}>
+              {prefill.isPending ? <Spinner className="size-3.5" /> : <Sparkles className="size-3.5 text-accent-fg" />} {t('placement.contract.prefill')}
             </button>
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
@@ -266,16 +266,16 @@ export const EmploymentContractPanel = ({ caseId }: { caseId: string }) => {
             ).map(([k, v]) => (
               <div key={k} className="flex items-baseline justify-between gap-3 border-b border-line/60 py-1">
                 <dt className="text-xs text-muted">{t(`placement.contract.fields.${k}`)}</dt>
-                <dd className="text-right font-medium text-navy-900 tabular-nums">{v ?? '—'}</dd>
+                <dd className="text-right font-medium text-ink tabular-nums">{v ?? '—'}</dd>
               </div>
             ))}
           </dl>
           {c.driveNodeId && (
-            <a href={contentUrl(c.driveNodeId)} target="_blank" rel="noopener noreferrer" className="inline-flex text-xs font-semibold text-brand-700 hover:underline">
+            <a href={contentUrl(c.driveNodeId)} target="_blank" rel="noopener noreferrer" className="inline-flex text-xs font-semibold text-link hover:underline">
               {t('placement.contract.openFile')}
             </a>
           )}
-          {c.note && <p className="rounded-md bg-surface px-3 py-2 text-xs whitespace-pre-line text-ink/80">{c.note}</p>}
+          {c.note && <p className="rounded-md bg-sunken px-3 py-2 text-xs whitespace-pre-line text-ink/80">{c.note}</p>}
         </div>
       )}
     </Panel>

@@ -50,7 +50,7 @@ export const MonthView = ({
     <div className="flex h-full min-h-0 flex-col">
       <div className="grid grid-cols-7 border-b border-line bg-card text-center text-[0.68rem] font-bold tracking-wider text-muted uppercase">
         {weekdayShort().map((d, i) => (
-          <span key={i} className={clsx('py-1.5', i >= 5 && 'text-muted/70')}>
+          <span key={i} className={clsx('py-1.5', i >= 5 && 'text-muted')}>
             {d}
           </span>
         ))}
@@ -69,7 +69,7 @@ export const MonthView = ({
               tabIndex={0}
               onClick={() => onCreate(new Date(d.getFullYear(), d.getMonth(), d.getDate(), 9, 0))}
               onKeyDown={(e) => e.key === 'Enter' && onCreate(new Date(d.getFullYear(), d.getMonth(), d.getDate(), 9, 0))}
-              className={clsx('group flex min-h-0 cursor-pointer flex-col gap-0.5 overflow-hidden border-r border-b border-line p-1 transition-colors hover:bg-surface/70', other ? 'bg-surface/40' : 'bg-card', k === sel && 'ring-1 ring-brand-400 ring-inset')}
+              className={clsx('group flex min-h-0 cursor-pointer flex-col gap-0.5 overflow-hidden border-r border-b border-line p-1 transition-colors hover:bg-surface/70', other ? 'bg-surface/40' : 'bg-card', k === sel && 'ring-1 ring-focus ring-inset')}
             >
               <button
                 type="button"
@@ -77,7 +77,7 @@ export const MonthView = ({
                   e.stopPropagation();
                   onSelectDay(d);
                 }}
-                className={clsx('mb-0.5 grid size-6 place-items-center self-end rounded-full text-xs font-semibold', isToday(d) ? 'bg-brand-600 text-white' : other ? 'text-muted/60' : 'text-ink hover:bg-brand-50')}
+                className={clsx('mb-0.5 grid size-6 place-items-center self-end rounded-full text-xs font-semibold', isToday(d) ? 'bg-primary text-primary-contrast' : other ? 'text-muted' : 'text-ink hover:bg-primary/[0.06]')}
               >
                 {d.getDate()}
               </button>
@@ -91,7 +91,7 @@ export const MonthView = ({
                     e.stopPropagation();
                     onSelectDay(d);
                   }}
-                  className="px-1 text-left text-[0.68rem] font-semibold text-brand-600 hover:underline"
+                  className="px-1 text-left text-[0.68rem] font-semibold text-link hover:underline"
                 >
                   {t('calendar.actions.more', { count: rest })}
                 </button>

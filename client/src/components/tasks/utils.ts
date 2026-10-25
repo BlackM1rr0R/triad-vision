@@ -9,12 +9,12 @@ export const fullName = (p: Pick<Person, 'firstName' | 'lastName'> | null | unde
 export const initials = (p: Pick<Person, 'firstName' | 'lastName'>) => `${p.firstName[0] ?? ''}${p.lastName[0] ?? ''}`.toUpperCase() || '?';
 
 const AVATAR_TONES = [
-  'bg-brand-100 text-brand-700',
-  'bg-emerald-100 text-emerald-700',
-  'bg-amber-100 text-amber-800',
-  'bg-violet-100 text-violet-700',
-  'bg-sky-100 text-sky-800',
-  'bg-red-100 text-red-700',
+  'bg-primary/10 text-link',
+  'bg-success-bg text-success-fg',
+  'bg-warning-bg text-warning-fg',
+  'bg-accent-bg text-accent-fg',
+  'bg-info-bg text-info-fg',
+  'bg-danger-bg text-danger-fg',
 ];
 export const avatarTone = (id: string) => {
   let h = 0;
@@ -27,11 +27,11 @@ export const priorityLabel = (p: TaskPriority) => t(`tasks.priority.${p}`);
 
 export const STATUS_TONE: Record<TaskStatus, string> = toneClasses(STATUS_TONES.task);
 export const STATUS_DOT: Record<TaskStatus, string> = {
-  TODO: 'bg-slate-400',
-  IN_PROGRESS: 'bg-brand-500',
-  REVIEW: 'bg-violet-500',
-  DONE: 'bg-emerald-500',
-  CANCELLED: 'bg-slate-300',
+  TODO: 'bg-subtle',
+  IN_PROGRESS: 'bg-primary',
+  REVIEW: 'bg-accent',
+  DONE: 'bg-success',
+  CANCELLED: 'bg-line-strong',
 };
 export const PRIORITY_TONE: Record<TaskPriority, string> = toneClasses(STATUS_TONES.taskPriority);
 

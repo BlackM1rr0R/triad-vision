@@ -36,7 +36,7 @@ export const Wordmark = ({ partner, size = 'md', className }: { partner: Partner
   ) : (
     <span
       className={clsx(
-        'block truncate font-display font-black tracking-tight text-navy-900 uppercase',
+        'block truncate font-display font-semibold tracking-tight text-ink uppercase',
         size === 'lg' ? 'text-2xl sm:text-3xl' : size === 'md' ? 'text-lg' : 'text-base',
         className,
       )}
@@ -49,7 +49,7 @@ export const SectorBadge = ({ sector, dark = false }: { sector: PartnerSector; d
   const { t } = useTranslation();
   const I = SECTOR_ICON[sector];
   return (
-    <span className={clsx('badge shrink-0 gap-1.5 whitespace-nowrap', dark ? 'bg-white/10 text-white' : 'bg-brand-50 text-brand-700')}>
+    <span className={clsx('badge shrink-0 gap-1.5 whitespace-nowrap', dark ? 'bg-white/10 text-white' : 'bg-sunken text-ink')}>
       <I className="size-3.5" /> {t(`partnersPage.sector.${sector}`)}
     </span>
   );
@@ -58,8 +58,8 @@ export const SectorBadge = ({ sector, dark = false }: { sector: PartnerSector; d
 export const CityLine = ({ city, className }: { city?: string | null; className?: string }) => {
   const { t } = useTranslation();
   return (
-    <span className={clsx('inline-flex items-center gap-1.5 text-sm', city ? 'text-navy-900/80' : 'text-muted', className)}>
-      <MapPin className="size-4 shrink-0 text-brand-600" /> {city ?? t('partnersPage.card.noCity')}
+    <span className={clsx('inline-flex items-center gap-1.5 text-sm', city ? 'text-ink/80' : 'text-muted', className)}>
+      <MapPin className="size-4 shrink-0 text-muted" /> {city ?? t('partnersPage.card.noCity')}
     </span>
   );
 };
@@ -82,7 +82,7 @@ export const PartnerModal = ({ partner, onClose }: { partner: Partner | null; on
         p && (
           <>
             {p.website && (
-              <a href={p.website} target="_blank" rel="noopener noreferrer" className="btn-ghost">
+              <a href={p.website} target="_blank" rel="noopener noreferrer" className="btn-secondary">
                 {t('partnersPage.card.visit')} <ExternalLink className="size-4" />
               </a>
             )}
@@ -95,22 +95,22 @@ export const PartnerModal = ({ partner, onClose }: { partner: Partner | null; on
     >
       {p && (
         <div className="space-y-5">
-          <div className="grid place-items-center rounded-2xl bg-surface px-4 py-8">
+          <div className="grid place-items-center rounded-2xl bg-sunken px-4 py-8">
             <Wordmark partner={p} size="lg" />
           </div>
           <dl className="grid grid-cols-2 gap-3 text-sm">
-            <div className="rounded-xl border border-line p-3">
+            <div className="rounded-xl bg-sunken p-3">
               <dt className="text-xs font-semibold text-muted">{t('partnersPage.card.sector')}</dt>
-              <dd className="mt-1 font-semibold text-navy-900">{t(`partnersPage.sector.${sector}`)}</dd>
+              <dd className="mt-1 font-semibold text-ink">{t(`partnersPage.sector.${sector}`)}</dd>
             </div>
-            <div className="rounded-xl border border-line p-3">
+            <div className="rounded-xl bg-sunken p-3">
               <dt className="text-xs font-semibold text-muted">{t('partnersPage.card.location')}</dt>
-              <dd className="mt-1 font-semibold text-navy-900">{p.city ?? '—'}</dd>
+              <dd className="mt-1 font-semibold text-ink">{p.city ?? '—'}</dd>
             </div>
           </dl>
           {p.description && (
             <div>
-              <h4 className="text-xs font-bold tracking-widest text-brand-600 uppercase">{t('partnersPage.card.about')}</h4>
+              <h4 className="type-overline text-muted">{t('partnersPage.card.about')}</h4>
               <p className="mt-2">{tr(p.description)}</p>
             </div>
           )}

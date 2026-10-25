@@ -11,19 +11,19 @@ const TEXT = {
   ru: { cta: 'Тест на соответствие', hint: 'Узнайте свой путь в Германию за 2 минуты' },
 } as const;
 
-/** Small link to /uygunluq-testi for the home hero (light text on the dark hero). */
+/** Small link to /uygunluq-testi for the home hero. Inherits the text colour, so it reads on a light or a dark hero. */
 export const QuizCta = ({ className }: { className?: string }) => {
   const { i18n } = useTranslation();
   const l = (i18n.resolvedLanguage ?? 'az').slice(0, 2) as keyof typeof TEXT;
   const txt = TEXT[l] ?? TEXT.az;
   return (
-    <Link to="/uygunluq-testi" className={clsx('group inline-flex items-center gap-2 text-sm text-white/85 hover:text-white', className)}>
-      <span className="grid size-8 place-items-center rounded-full bg-white/10 text-brand-300 group-hover:bg-white/20">
-        <ClipboardCheck className="size-4" aria-hidden />
+    <Link to="/uygunluq-testi" className={clsx('group inline-flex min-h-11 items-center gap-2 text-sm opacity-90 hover:opacity-100', className)}>
+      <span className="grid size-9 shrink-0 place-items-center rounded-full bg-current/10 group-hover:bg-current/15">
+        <ClipboardCheck className="size-4 text-highlight-fg" aria-hidden />
       </span>
       <span>
-        <span className="font-semibold underline decoration-white/30 underline-offset-4 group-hover:decoration-white">{txt.cta}</span>
-        <span className="text-white/60"> — {txt.hint}</span>
+        <span className="font-semibold underline decoration-current/30 underline-offset-4 group-hover:decoration-current">{txt.cta}</span>
+        <span className="opacity-75"> — {txt.hint}</span>
       </span>
     </Link>
   );

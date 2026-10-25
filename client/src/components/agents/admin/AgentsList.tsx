@@ -36,7 +36,7 @@ export const AgentsList = () => {
         bodyClassName="p-0"
         title={
           <span className="flex items-center gap-2">
-            <Handshake className="size-4 text-brand-600" aria-hidden /> {t('agents.admin.tabs.agents')}
+            <Handshake className="size-4 text-link" aria-hidden /> {t('agents.admin.tabs.agents')}
           </span>
         }
         actions={
@@ -88,13 +88,13 @@ export const AgentsList = () => {
                 {q.data.items.map((a) => (
                   <tr key={a.id} className="border-b border-line last:border-0 hover:bg-surface/60">
                     <td className="px-5 py-3 sm:px-6">
-                      <Link to={`/admin/agents/${a.id}`} className="font-semibold text-brand-700 hover:underline">
+                      <Link to={`/admin/agents/${a.id}`} className="font-semibold text-link hover:underline">
                         {a.user.firstName} {a.user.lastName}
                       </Link>
                       <span className="block truncate text-xs text-muted">{a.user.email}</span>
                     </td>
                     <td className="px-3 py-3">
-                      <span className="font-mono text-xs font-semibold text-ink">{a.code}</span>
+                      <span className="code-id text-xs font-medium text-ink">{a.code}</span>
                       {a.status === 'PAUSED' && <span className="badge ml-1.5 bg-warning-bg text-warning-fg">{t('agents.agentStatus.PAUSED')}</span>}
                     </td>
                     <td className="px-3 py-3 text-muted">{a.region ?? '—'}</td>

@@ -156,7 +156,7 @@ export default function TwoFactor() {
           : t('twoFactorLogin.emailSubtitleGeneric')
         : t('twoFactorLogin.subtitle');
 
-  const linkClass = 'inline-flex items-center gap-1.5 font-semibold text-brand-600 hover:underline disabled:opacity-60';
+  const linkClass = 'inline-flex items-center gap-1.5 font-semibold text-link hover:underline min-h-11 disabled:opacity-60';
 
   return (
     <AuthShell title={t('twoFactorLogin.title')} subtitle={subtitle}>
@@ -209,7 +209,7 @@ export default function TwoFactor() {
             </p>
           )}
         </div>
-        <button type="submit" disabled={busy} className="btn-primary w-full">
+        <button type="submit" disabled={busy} className="btn-primary btn-lg w-full">
           {busy ? <Spinner className="size-4" /> : <ShieldCheck className="size-4" />} {t('twoFactorLogin.submit')}
         </button>
       </form>
@@ -238,7 +238,7 @@ export default function TwoFactor() {
             <KeyRound className="size-4" aria-hidden /> {t('twoFactorLogin.useRecovery')}
           </button>
         )}
-        <Link to="/login" replace className="text-muted hover:text-navy-900 hover:underline">
+        <Link to="/login" replace className="text-muted hover:text-ink hover:underline">
           {t('twoFactorLogin.back')}
         </Link>
       </div>

@@ -89,7 +89,7 @@ export const Attachments = ({ taskRef, items, canEdit }: { taskRef: string; item
             const Icon = a.accessible ? iconFor(a.kind, a.mimeType) : Lock;
             const body = (
               <>
-                <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-brand-50 text-brand-600">
+                <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-primary/[0.06] text-link">
                   <Icon className="size-4" aria-hidden />
                 </span>
                 <span className="min-w-0 flex-1">
@@ -99,7 +99,7 @@ export const Attachments = ({ taskRef, items, canEdit }: { taskRef: string; item
               </>
             );
             return (
-              <li key={a.nodeId} className="group relative flex items-center gap-2 rounded-xl border border-line bg-card p-2 pr-1 transition hover:border-brand-400/60">
+              <li key={a.nodeId} className="group relative flex items-center gap-2 rounded-xl border border-line bg-card p-2 pr-1 transition hover:border-line-strong">
                 {a.accessible ? (
                   <Link to={nodeHref(a.nodeId)} className="flex min-w-0 flex-1 items-center gap-2.5">
                     {body}
@@ -111,7 +111,7 @@ export const Attachments = ({ taskRef, items, canEdit }: { taskRef: string; item
                   <button
                     type="button"
                     onClick={() => void run(() => actions.detach(taskRef, a.nodeId))}
-                    className="grid size-8 shrink-0 place-items-center rounded-lg text-muted hover:bg-surface hover:text-danger"
+                    className="grid size-8 shrink-0 place-items-center rounded-lg text-muted hover:bg-sunken hover:text-danger-fg"
                     aria-label={`${t('tasks.actions.unlink')}: ${a.name}`}
                     title={t('tasks.actions.unlink')}
                   >
@@ -129,7 +129,7 @@ export const Attachments = ({ taskRef, items, canEdit }: { taskRef: string; item
       {canEdit && (
         <div className="relative mt-3">
           <FileDrop compact disabled={uploads.length > 0} onFiles={(f) => void uploadAll(f)} onTooLarge={(f) => toast.error(`${f.name}: ${t('tasks.errors.FILE_TOO_LARGE')}`)}>
-            <button type="button" onClick={() => setOpen((o) => !o)} className="inline-flex items-center gap-1.5 rounded-lg border border-dashed border-line px-3 py-1.5 text-sm font-semibold text-muted hover:border-brand-400 hover:text-brand-600">
+            <button type="button" onClick={() => setOpen((o) => !o)} className="inline-flex items-center gap-1.5 rounded-lg border border-dashed border-line px-3 py-1.5 text-sm font-semibold text-muted hover:border-line-strong hover:text-link">
               <Paperclip className="size-3.5" /> {t('tasks.actions.linkFile')}
             </button>
           </FileDrop>
@@ -152,9 +152,9 @@ export const Attachments = ({ taskRef, items, canEdit }: { taskRef: string; item
                           setQ('');
                         })
                       }
-                      className="flex w-full items-center gap-2.5 rounded-lg px-2 py-2 text-left hover:bg-surface"
+                      className="flex w-full items-center gap-2.5 rounded-lg px-2 py-2 text-left hover:bg-sunken"
                     >
-                      <Icon className="size-4 shrink-0 text-brand-600" aria-hidden />
+                      <Icon className="size-4 shrink-0 text-link" aria-hidden />
                       <span className="min-w-0 flex-1">
                         <span className="block truncate text-sm font-medium text-ink">{h.name}</span>
                         {h.location && <span className="block truncate text-xs text-muted">{h.location.name}</span>}

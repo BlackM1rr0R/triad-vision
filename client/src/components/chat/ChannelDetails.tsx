@@ -50,22 +50,22 @@ export const ChannelDetails = ({
     { id: 'files', label: t('chat.details.files') },
   ];
   const Action = ({ icon: Icon, label, onClick, danger = false }: { icon: typeof Info; label: string; onClick: () => void; danger?: boolean }) => (
-    <button type="button" onClick={onClick} className={clsx('flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm font-medium', danger ? 'text-danger hover:bg-red-50' : 'text-ink hover:bg-surface')}>
+    <button type="button" onClick={onClick} className={clsx('flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm font-medium', danger ? 'text-danger-fg hover:bg-danger-bg' : 'text-ink hover:bg-sunken')}>
       <Icon className="size-4 shrink-0" /> {label}
     </button>
   );
   return (
     <div className="flex h-full flex-col">
       <div className="flex items-center gap-2 border-b border-line px-3 py-2.5">
-        <Info className="size-4 text-brand-600" />
+        <Info className="size-4 text-link" />
         <h2 className="min-w-0 truncate text-sm font-bold text-ink">{t('chat.details.title')}</h2>
-        <button type="button" onClick={onClose} className="ml-auto grid size-8 place-items-center rounded-lg text-muted hover:bg-surface hover:text-ink" aria-label={t('chat.actions.close')}>
+        <button type="button" onClick={onClose} className="ml-auto grid size-8 place-items-center rounded-lg text-muted hover:bg-sunken hover:text-ink" aria-label={t('chat.actions.close')}>
           <X className="size-4" />
         </button>
       </div>
       <div className="flex gap-1 border-b border-line px-2 pt-2">
         {tabs.map((x) => (
-          <button key={x.id} type="button" onClick={() => setTab(x.id)} className={clsx('rounded-t-lg px-3 py-1.5 text-xs font-semibold', tab === x.id ? 'border-b-2 border-brand-600 text-brand-600' : 'text-muted hover:text-ink')}>
+          <button key={x.id} type="button" onClick={() => setTab(x.id)} className={clsx('rounded-t-lg px-3 py-1.5 text-xs font-semibold', tab === x.id ? 'border-b-2 border-primary text-link' : 'text-muted hover:text-ink')}>
             {x.label}
           </button>
         ))}
@@ -75,7 +75,7 @@ export const ChannelDetails = ({
           <div className="space-y-4">
             <div>
               <div className="flex items-center gap-2">
-                {isDm ? <Avatar person={channel.peer} size="lg" /> : <span className="grid size-9 place-items-center rounded-xl bg-surface text-muted"><Hash className="size-4" /></span>}
+                {isDm ? <Avatar person={channel.peer} size="lg" /> : <span className="grid size-9 place-items-center rounded-xl bg-sunken text-muted"><Hash className="size-4" /></span>}
                 <span className="min-w-0">
                   <span className="block truncate font-display text-base font-bold text-ink">{isDm ? channel.name : `#${channel.name}`}</span>
                   <span className="block text-xs text-muted">{t('chat.header.members', { count: channel.memberCount })}</span>
@@ -90,7 +90,7 @@ export const ChannelDetails = ({
               {channel.case && (
                 <p className="mt-2 text-sm">
                   <span className="label">{t('chat.details.case')}</span>
-                  <Link to={`/admin/cases/${channel.case.id}`} className="inline-flex items-center gap-1.5 font-semibold text-brand-600 hover:underline">
+                  <Link to={`/admin/cases/${channel.case.id}`} className="inline-flex items-center gap-1.5 font-semibold text-link hover:underline">
                     <Briefcase className="size-3.5" /> {channel.case.number}
                   </Link>
                 </p>
@@ -111,21 +111,21 @@ export const ChannelDetails = ({
               <div className="mb-1 flex items-center justify-between">
                 <span className="label mb-0">{t('chat.details.members')}</span>
                 {!isDm && channel.isMember && !channel.archivedAt && (channel.kind === 'PUBLIC' || canManage) && (
-                  <button type="button" onClick={onAddMembers} className="inline-flex items-center gap-1 text-xs font-semibold text-brand-600 hover:underline">
+                  <button type="button" onClick={onAddMembers} className="inline-flex items-center gap-1 text-xs font-semibold text-link hover:underline">
                     <UserPlus className="size-3.5" /> {t('chat.actions.addMembers')}
                   </button>
                 )}
               </div>
               <ul className="space-y-0.5">
                 {channel.members.map((m) => (
-                  <li key={m.id} className="group flex items-center gap-2 rounded-lg px-1.5 py-1 hover:bg-surface">
+                  <li key={m.id} className="group flex items-center gap-2 rounded-lg px-1.5 py-1 hover:bg-sunken">
                     <Avatar person={m} size="sm" />
                     <span className="min-w-0 flex-1 truncate text-sm text-ink">
                       {fullName(m)} {m.id === meId && <span className="text-xs text-muted">({t('chat.sidebar.you')})</span>}
                     </span>
-                    {m.memberRole === 'OWNER' && <Crown className="size-3.5 text-amber-500" aria-label={t('chat.details.owner')} />}
+                    {m.memberRole === 'OWNER' && <Crown className="size-3.5 text-warning-fg" aria-label={t('chat.details.owner')} />}
                     {!isDm && canManage && m.id !== meId && (
-                      <button type="button" onClick={() => onRemoveMember(m.id)} className="hidden size-6 place-items-center rounded-md text-muted group-hover:grid hover:bg-red-50 hover:text-danger" aria-label={t('chat.actions.removeMember')} title={t('chat.actions.removeMember')}>
+                      <button type="button" onClick={() => onRemoveMember(m.id)} className="hidden size-6 place-items-center rounded-md text-muted group-hover:grid hover:bg-danger-bg hover:text-danger-fg" aria-label={t('chat.actions.removeMember')} title={t('chat.actions.removeMember')}>
                         <X className="size-3.5" />
                       </button>
                     )}
@@ -139,9 +139,9 @@ export const ChannelDetails = ({
           <ul className="space-y-1.5">
             {(pinned.data ?? []).map((m) => (
               <li key={m.id}>
-                <button type="button" onClick={() => onJump(m)} className="block w-full rounded-lg border border-line px-2.5 py-2 text-left hover:bg-surface">
+                <button type="button" onClick={() => onJump(m)} className="block w-full rounded-lg border border-line px-2.5 py-2 text-left hover:bg-sunken">
                   <span className="flex items-center gap-2 text-xs text-muted">
-                    <Pin className="size-3 text-amber-600" />
+                    <Pin className="size-3 text-warning-fg" />
                     <span className="font-semibold text-ink">{fullName(m.author)}</span>
                     <span className="ml-auto">{fmtDateTime(m.createdAt)}</span>
                   </span>
@@ -156,7 +156,7 @@ export const ChannelDetails = ({
           <ul className="space-y-1">
             {(files.data ?? []).map((f) => (
               <li key={f.id} className="flex items-center gap-2 rounded-lg border border-line px-2.5 py-2">
-                <FileText className="size-4 shrink-0 text-brand-600" />
+                <FileText className="size-4 shrink-0 text-link" />
                 <span className="min-w-0 flex-1">
                   <a href={attachmentUrl(f.id)} target="_blank" rel="noopener noreferrer" className="block truncate text-sm font-medium text-ink hover:underline">
                     {f.filename}
@@ -165,7 +165,7 @@ export const ChannelDetails = ({
                     {fullName(f.author)} · {fmtDateTime(f.createdAt)} · {formatBytes(f.size)}
                   </span>
                 </span>
-                <a href={attachmentUrl(f.id, true)} className="grid size-7 place-items-center rounded-md text-muted hover:bg-surface hover:text-ink" aria-label={t('chat.actions.download')}>
+                <a href={attachmentUrl(f.id, true)} className="grid size-7 place-items-center rounded-md text-muted hover:bg-sunken hover:text-ink" aria-label={t('chat.actions.download')}>
                   <Download className="size-3.5" />
                 </a>
               </li>

@@ -28,8 +28,8 @@ export const OrderDraftButton = ({ orderId, files, onCreated }: { orderId: strin
           ))}
         </select>
       )}
-      <button type="button" className="btn btn-sm border border-line bg-card text-ink hover:bg-surface" onClick={() => setOpen(true)}>
-        <Languages className="size-3.5 text-brand-600" aria-hidden /> {t('aiDocs.draft.action')}
+      <button type="button" className="btn btn-sm border border-line bg-card text-ink hover:bg-sunken" onClick={() => setOpen(true)}>
+        <Languages className="size-3.5 text-link" aria-hidden /> {t('aiDocs.draft.action')}
       </button>
       {open && (
         <Suspense fallback={null}>

@@ -59,7 +59,7 @@ const IconBtn = ({ label, onClick, disabled, children, active }: { label: string
     aria-label={label}
     className={clsx(
       'grid size-9 shrink-0 place-items-center rounded-lg transition-colors disabled:cursor-not-allowed disabled:opacity-35',
-      active ? 'bg-brand-100 text-brand-700 dark:bg-brand-500/20 dark:text-brand-400' : 'text-ink/80 hover:bg-surface hover:text-ink dark:hover:bg-white/5',
+      active ? 'bg-primary/10 text-link dark:bg-brand-500/20 dark:text-brand-400' : 'text-ink/80 hover:bg-sunken hover:text-ink dark:hover:bg-white/5',
     )}
   >
     {children}
@@ -92,7 +92,7 @@ const CrumbButton = ({
       className={clsx(
         'shrink-0 truncate rounded-md px-2 py-1 text-sm transition-colors',
         last ? 'max-w-[16rem] font-semibold text-ink' : 'max-w-[11rem] text-muted hover:bg-card hover:text-ink',
-        drop.over && 'bg-brand-100 text-brand-700 ring-2 ring-brand-500',
+        drop.over && 'bg-primary/10 text-link ring-2 ring-focus',
       )}
       title={c.label}
     >
@@ -111,13 +111,13 @@ const ContentToggle = ({ on, onChange, label, hint }: { on: boolean; onChange: (
     title={hint}
     className={clsx(
       'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[11px] font-semibold transition-colors',
-      on ? 'border-brand-300 bg-brand-50 text-brand-700 dark:border-brand-500/40 dark:bg-brand-500/15 dark:text-brand-300' : 'border-line text-muted hover:text-ink',
+      on ? 'border-primary/25 bg-primary/[0.06] text-link dark:border-brand-500/40 dark:bg-brand-500/15 dark:text-brand-300' : 'border-line text-muted hover:text-ink',
     )}
   >
     <ScanText className="size-3.5" aria-hidden />
     {label}
-    <span className={clsx('relative ml-0.5 inline-block h-3 w-5 rounded-full transition-colors', on ? 'bg-brand-600' : 'bg-line')} aria-hidden>
-      <span className={clsx('absolute top-0.5 size-2 rounded-full bg-white transition-all', on ? 'left-2.5' : 'left-0.5')} />
+    <span className={clsx('relative ml-0.5 inline-block h-3 w-5 rounded-full transition-colors', on ? 'bg-primary' : 'bg-line')} aria-hidden>
+      <span className={clsx('absolute top-0.5 size-2 rounded-full bg-card transition-all', on ? 'left-2.5' : 'left-0.5')} />
     </span>
   </button>
 );
@@ -231,7 +231,7 @@ export const Toolbar = (p: ToolbarProps) => {
         </IconBtn>
         <div
           ref={crumbsRef}
-          className="mx-1 flex h-9 min-w-0 flex-1 items-center gap-0.5 overflow-x-auto rounded-lg border border-line bg-surface px-1.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          className="mx-1 flex h-9 min-w-0 flex-1 items-center gap-0.5 overflow-x-auto rounded-lg border border-line bg-sunken px-1.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
           aria-label={t('drive.toolbar.address')}
         >
           {p.leading}
@@ -301,7 +301,7 @@ export const Toolbar = (p: ToolbarProps) => {
             {primary.map((a) => (
               <span key={a.id} className="hidden sm:contents">
                 <IconBtn label={a.label} onClick={a.onClick}>
-                  <a.icon className={clsx('size-[18px]', a.danger && 'text-danger')} />
+                  <a.icon className={clsx('size-[18px]', a.danger && 'text-danger-fg')} />
                 </IconBtn>
               </span>
             ))}

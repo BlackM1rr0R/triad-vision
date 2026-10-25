@@ -29,12 +29,12 @@ export default function ClientDataTasks({ caseId }: { caseId: string }) {
 
   const Row = ({ to, icon: Icon, title, sub, todo }: { to: string; icon: typeof ClipboardList; title: string; sub: string; todo: boolean }) => (
     <li>
-      <Link to={to} className={clsx('flex min-h-14 items-center gap-3 rounded-xl border px-4 py-3 transition hover:border-brand-400', todo ? 'border-brand-400/50 bg-brand-50/40 dark:bg-brand-950/20' : 'border-line bg-white')}>
-        <span className={clsx('grid size-9 shrink-0 place-items-center rounded-lg', todo ? 'bg-brand-600 text-white' : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300')}>
+      <Link to={to} className={clsx('flex min-h-14 items-center gap-3 rounded-xl border px-4 py-3 transition hover:border-primary', todo ? 'border-line-strong bg-sunken' : 'border-line bg-card')}>
+        <span className={clsx('grid size-9 shrink-0 place-items-center rounded-lg', todo ? 'bg-primary text-primary-contrast' : 'bg-success-bg text-success-fg')}>
           {todo ? <Icon className="size-4" aria-hidden /> : <CheckCircle2 className="size-4" aria-hidden />}
         </span>
         <span className="min-w-0 flex-1">
-          <span className="block font-semibold break-words text-navy-900">{title}</span>
+          <span className="block font-semibold break-words text-ink">{title}</span>
           <span className="block text-xs text-muted">{sub}</span>
         </span>
         <ChevronRight className="size-4 shrink-0 text-muted" aria-hidden />
@@ -44,8 +44,8 @@ export default function ClientDataTasks({ caseId }: { caseId: string }) {
 
   return (
     <section className="card p-5 sm:p-6" aria-labelledby="client-data-title">
-      <h2 id="client-data-title" className="flex items-center gap-2 text-lg font-extrabold text-navy-900">
-        <ClipboardList className="size-5 text-brand-600" aria-hidden /> {t('clientData.portal.tasksTitle')}
+      <h2 id="client-data-title" className="flex items-center gap-2 text-lg font-semibold text-ink">
+        <ClipboardList className="size-5 text-primary" aria-hidden /> {t('clientData.portal.tasksTitle')}
       </h2>
       <p className="mt-1 text-sm text-muted">{t('clientData.portal.tasksHint')}</p>
       <ul className="mt-4 space-y-2">

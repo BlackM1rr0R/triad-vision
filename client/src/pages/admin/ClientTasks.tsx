@@ -47,7 +47,7 @@ const EtaSettings = () => {
       <div className="space-y-3">
         {ETA_STATUSES.map((s) => (
           <div key={s} className="grid grid-cols-2 items-end gap-3 sm:grid-cols-[minmax(0,1fr)_120px_120px]">
-            <p className="col-span-2 text-sm font-semibold text-navy-900 sm:col-span-1">{t(`cp.settings.status.${s}`)}</p>
+            <p className="col-span-2 text-sm font-semibold text-ink sm:col-span-1">{t(`cp.settings.status.${s}`)}</p>
             <label className="block">
               <span className="label">{t('cp.settings.min')}</span>
               <input type="number" min={1} className="input" value={eta[s]?.minHours ?? ''} onChange={(e) => set(s, 'minHours', e.target.value)} />
@@ -133,7 +133,7 @@ export default function ClientTasks() {
               <li key={task.id} className="flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:gap-4 sm:px-6">
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
-                    <Link to={`/admin/cases/${task.caseId}#client-tasks`} className="font-semibold break-words text-navy-900 hover:text-brand-700">
+                    <Link to={`/admin/cases/${task.caseId}#client-tasks`} className="font-semibold break-words text-ink hover:text-link">
                       {task.rawTitle}
                     </Link>
                     <span className={clsx('badge', STATE_TONE[task.state])}>{t(`cp.tasks.state.${task.state}`)}</span>
@@ -143,7 +143,7 @@ export default function ClientTasks() {
                     {task.assignedStaff && ` · ${t('cp.page.col.manager')}: ${task.assignedStaff.name}`}
                   </p>
                 </div>
-                <p className={clsx('text-sm whitespace-nowrap', task.state === 'overdue' ? 'font-semibold text-red-600' : 'text-muted')}>
+                <p className={clsx('text-sm whitespace-nowrap', task.state === 'overdue' ? 'font-semibold text-danger-fg' : 'text-muted')}>
                   {task.dueAt ? fmtDate(task.dueAt) : t('cp.tasks.noDue')}
                 </p>
                 {task.status === 'OPEN' && (

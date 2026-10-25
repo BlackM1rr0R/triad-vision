@@ -18,7 +18,7 @@ export const TodayNavBadge = ({ collapsed }: { collapsed: boolean }) => {
       title={label}
       aria-label={label}
       className={clsx(
-        'grid min-w-5 place-items-center rounded-full bg-red-500 px-1 text-[11px] leading-5 font-bold text-white tabular-nums',
+        'grid min-w-5 place-items-center rounded-full bg-danger px-1.5 code-id text-[11px] leading-[18px] font-medium text-white tabular-nums',
         collapsed ? 'absolute top-0.5 right-0.5 min-w-4 text-[10px] leading-4' : 'ml-auto',
       )}
     >

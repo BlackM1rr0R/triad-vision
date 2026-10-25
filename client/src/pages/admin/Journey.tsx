@@ -38,7 +38,7 @@ const useAdminList = <T,>(key: string, url: string) =>
 const RowActions = ({ onEdit, onDelete, onUp, onDown, canWrite }: { onEdit: () => void; onDelete: () => void; onUp?: () => void; onDown?: () => void; canWrite: boolean }) => {
   const { t } = useTranslation();
   if (!canWrite) return null;
-  const btn = 'grid size-9 place-items-center rounded-lg text-muted transition hover:bg-brand-50 hover:text-brand-700 disabled:opacity-30 disabled:hover:bg-transparent';
+  const btn = 'grid size-9 place-items-center rounded-lg text-muted transition hover:bg-primary/[0.06] hover:text-link disabled:opacity-30 disabled:hover:bg-transparent';
   return (
     <div className="flex shrink-0 items-center">
       {onUp && (
@@ -54,7 +54,7 @@ const RowActions = ({ onEdit, onDelete, onUp, onDown, canWrite }: { onEdit: () =
       <button type="button" className={btn} onClick={onEdit} title={t('journey.admin.common.edit')} aria-label={t('journey.admin.common.edit')}>
         <Pencil className="size-3.5" />
       </button>
-      <button type="button" className={clsx(btn, 'hover:bg-red-50 hover:text-red-700')} onClick={onDelete} title={t('journey.admin.common.delete')} aria-label={t('journey.admin.common.delete')}>
+      <button type="button" className={clsx(btn, 'hover:bg-danger-bg hover:text-danger-fg')} onClick={onDelete} title={t('journey.admin.common.delete')} aria-label={t('journey.admin.common.delete')}>
         <Trash2 className="size-3.5" />
       </button>
     </div>
@@ -134,7 +134,7 @@ const draftUnits = (d: Draft) => Object.fromEntries(FORECAST_STEPS.filter((k) =>
 const UnitToggle = ({ unit, onChange, disabled, label }: { unit: Unit; onChange: (u: Unit) => void; disabled?: boolean; label: string }) => {
   const { t } = useTranslation();
   return (
-    <div role="radiogroup" aria-label={label} className="mt-1 inline-flex rounded-md border border-line bg-surface p-0.5 text-[10px] font-semibold">
+    <div role="radiogroup" aria-label={label} className="mt-1 inline-flex rounded-md border border-line bg-sunken p-0.5 text-[10px] font-semibold">
       {(['day', 'week'] as const).map((u) => (
         <button
           key={u}
@@ -143,7 +143,7 @@ const UnitToggle = ({ unit, onChange, disabled, label }: { unit: Unit; onChange:
           aria-checked={unit === u}
           disabled={disabled}
           onClick={() => onChange(u)}
-          className={clsx('min-h-6 rounded px-1.5 transition', unit === u ? 'bg-card text-ink shadow-sm' : 'text-muted hover:text-ink')}
+          className={clsx('min-h-6 rounded px-1.5 transition', unit === u ? 'bg-card text-ink shadow-[var(--tv-shadow-card)]' : 'text-muted hover:text-ink')}
         >
           {t(`journey.admin.forecast.unit.${u}`)}
         </button>
@@ -152,7 +152,7 @@ const UnitToggle = ({ unit, onChange, disabled, label }: { unit: Unit; onChange:
   );
 };
 
-const iconBtn = 'grid size-9 place-items-center rounded-lg text-muted transition hover:bg-brand-50 hover:text-brand-700 disabled:opacity-40';
+const iconBtn = 'grid size-9 place-items-center rounded-lg text-muted transition hover:bg-primary/[0.06] hover:text-link disabled:opacity-40';
 
 const ForecastRow = ({ row, canWrite, onDelete, onToggle, toggling }: { row: AdminForecastRow; canWrite: boolean; onDelete: () => void; onToggle: () => void; toggling: boolean }) => {
   const { t } = useTranslation();
@@ -235,7 +235,7 @@ const ForecastRow = ({ row, canWrite, onDelete, onToggle, toggling }: { row: Adm
               />
             </div>
             <UnitToggle unit={cell.unit} disabled={!canWrite} onChange={(u) => setUnit(k, u)} label={`${name} · ${t('journey.admin.forecast.unitLabel')}`} />
-            <p className={clsx('mt-1 text-[11px]', eff.basedOn === 'override' ? 'text-brand-700' : 'text-muted')}>
+            <p className={clsx('mt-1 text-[11px]', eff.basedOn === 'override' ? 'text-link' : 'text-muted')}>
               {t(`journey.admin.forecast.source.${eff.basedOn}`, { count: eff.sample })}
             </p>
           </td>
@@ -260,7 +260,7 @@ const ForecastRow = ({ row, canWrite, onDelete, onToggle, toggling }: { row: Adm
             >
               {toggling ? <Spinner className="size-3.5" /> : row.published ? <EyeOff className="size-3.5" /> : <Eye className="size-3.5" />}
             </button>
-            <button type="button" className={clsx(iconBtn, 'hover:bg-red-50 hover:text-red-700')} onClick={onDelete} title={t('journey.admin.visa.delete')} aria-label={`${t('journey.admin.visa.delete')} · ${tr(row.title)}`}>
+            <button type="button" className={clsx(iconBtn, 'hover:bg-danger-bg hover:text-danger-fg')} onClick={onDelete} title={t('journey.admin.visa.delete')} aria-label={`${t('journey.admin.visa.delete')} · ${tr(row.title)}`}>
               <Trash2 className="size-3.5" />
             </button>
           </div>
@@ -374,7 +374,7 @@ const NewVisaDrawer = ({ open, onClose, nextSortOrder }: { open: boolean; onClos
         <div className="grid gap-3 sm:grid-cols-2">
           <div>
             <label htmlFor="visa-label" className="label">
-              {t('journey.admin.visa.label')} <span className="text-danger">*</span>
+              {t('journey.admin.visa.label')} <span className="text-danger-fg">*</span>
             </label>
             <input id="visa-label" className="input" maxLength={40} required value={f.visaLabel} placeholder="§19c" onChange={(e) => setF({ ...f, visaLabel: e.target.value })} />
           </div>
@@ -404,9 +404,9 @@ const NewVisaDrawer = ({ open, onClose, nextSortOrder }: { open: boolean; onClos
           <Switch checked={f.published} label={t('journey.admin.visa.active')} onChange={(v) => setF({ ...f, published: v })} />
           {f.published ? t('journey.admin.visa.active') : t('journey.admin.visa.inactive')}
         </label>
-        <p className="rounded-lg bg-surface px-3 py-2 text-xs text-muted">
+        <p className="rounded-lg bg-sunken px-3 py-2 text-xs text-muted">
           {t('journey.admin.visa.contentHint')}{' '}
-          <Link to="/admin/content/visa-categories" className="font-semibold text-brand-700 hover:underline">
+          <Link to="/admin/content/visa-categories" className="font-semibold text-link hover:underline">
             {t('journey.admin.visa.contentLink')}
           </Link>
         </p>
@@ -474,7 +474,7 @@ const ForecastTab = ({ canWrite }: { canWrite: boolean }) => {
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full min-w-[64rem] text-sm">
-            <thead className="bg-surface text-left text-[11px] font-semibold tracking-wide text-muted uppercase">
+            <thead className="bg-sunken text-left text-xs font-medium text-muted">
               <tr>
                 <th className="px-4 py-2.5">{t('journey.admin.forecast.visa')}</th>
                 {FORECAST_STEPS.map((k) => (
@@ -591,18 +591,18 @@ const OnboardingTab = ({ canWrite }: { canWrite: boolean }) => {
         )}
       </div>
       {items.length === 0 ? (
-        <div className="rounded-xl border border-line bg-white">
+        <div className="rounded-xl border border-line bg-card">
           <EmptyState icon={ListChecks} title={t('journey.admin.items.empty')} />
         </div>
       ) : (
-        <ul className="divide-y divide-line rounded-xl border border-line bg-white">
+        <ul className="divide-y divide-line rounded-xl border border-line bg-card">
           {items.map((it, i) => (
             <li key={it.id} className="flex items-center gap-3 px-4 py-3">
-              <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-brand-50 text-brand-700">
+              <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-primary/[0.06] text-link">
                 {hasIcon(it.icon) ? <Icon name={it.icon} className="size-4" /> : <Compass className="size-4" />}
               </span>
               <div className="min-w-0 flex-1">
-                <p className="truncate font-semibold text-navy-900">{tr(it.title)}</p>
+                <p className="truncate font-semibold text-ink">{tr(it.title)}</p>
                 <p className="truncate text-xs text-muted">
                   {it.slug}
                   {it.dueDays !== null && ` · ${t('journey.onboarding.within', { count: it.dueDays })}`}
@@ -709,19 +709,19 @@ const QuestionsTab = ({ canWrite }: { canWrite: boolean }) => {
         )}
       </div>
       {items.length === 0 ? (
-        <div className="rounded-xl border border-line bg-white">
+        <div className="rounded-xl border border-line bg-card">
           <EmptyState icon={Languages} title={t('journey.admin.questions.empty')} />
         </div>
       ) : (
-        <ul className="divide-y divide-line rounded-xl border border-line bg-white">
+        <ul className="divide-y divide-line rounded-xl border border-line bg-card">
           {items.map((q) => (
             <li key={q.id} className="flex items-start gap-3 px-4 py-3">
-              <span className="badge mt-0.5 shrink-0 bg-navy-900 text-white">{q.level}</span>
+              <span className="badge mt-0.5 shrink-0 bg-primary text-primary-contrast">{q.level}</span>
               <div className="min-w-0 flex-1">
-                <p className="font-medium break-words text-navy-900">{tr(q.question)}</p>
+                <p className="font-medium break-words text-ink">{tr(q.question)}</p>
                 <p className="mt-1 flex flex-wrap gap-1.5 text-xs">
                   {q.options.map((o, i) => (
-                    <span key={i} className={clsx('rounded-md px-1.5 py-0.5', i === q.answer ? 'bg-emerald-100 font-semibold text-emerald-800' : 'bg-surface text-muted')}>
+                    <span key={i} className={clsx('rounded-md px-1.5 py-0.5', i === q.answer ? 'bg-success-bg font-semibold text-success-fg' : 'bg-sunken text-muted')}>
                       {String.fromCharCode(65 + i)}. {o}
                     </span>
                   ))}
@@ -822,17 +822,17 @@ const CoursesTab = ({ canWrite }: { canWrite: boolean }) => {
         )}
       </div>
       {items.length === 0 ? (
-        <div className="rounded-xl border border-line bg-white">
+        <div className="rounded-xl border border-line bg-card">
           <EmptyState icon={BookOpen} title={t('journey.admin.courses.empty')} />
         </div>
       ) : (
-        <ul className="divide-y divide-line rounded-xl border border-line bg-white">
+        <ul className="divide-y divide-line rounded-xl border border-line bg-card">
           {items.map((c) => (
             <li key={c.id} className="flex items-center gap-3 px-4 py-3">
               <div className="min-w-0 flex-1">
-                <p className="truncate font-semibold text-navy-900">
+                <p className="truncate font-semibold text-ink">
                   {c.name}
-                  {c.levels && <span className="badge ml-2 bg-navy-900 text-white">{c.levels}</span>}
+                  {c.levels && <span className="badge ml-2 bg-primary text-primary-contrast">{c.levels}</span>}
                 </p>
                 <p className="truncate text-xs text-muted">
                   {[c.provider, c.city, c.format && t(`journey.german.courses.format.${c.format}`), c.url].filter(Boolean).join(' · ')}

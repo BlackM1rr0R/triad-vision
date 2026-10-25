@@ -9,6 +9,7 @@ import { pagesQuotes } from '@/i18n/pagesQuotes';
 import { Spinner } from '@/components/ui/Spinner';
 import { QUOTE_STATUS_TONE, QuoteDocument, QuoteRespond, deDate, fmtEur, type CustomerQuote, type QuoteStatus } from '@/components/quotes/QuoteDocument';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { Documents } from '@/components/illustrations';
 
 registerCopy(pagesQuotes);
 
@@ -28,7 +29,7 @@ const errText = (err: unknown) => {
 };
 
 const Loading = () => (
-  <div className="grid min-h-40 place-items-center text-brand-600" role="status">
+  <div className="grid min-h-40 place-items-center text-primary" role="status">
     <Spinner className="size-7 border-[3px]" />
   </div>
 );
@@ -36,7 +37,7 @@ const Loading = () => (
 const Failed = ({ onRetry }: { onRetry: () => void }) => {
   const { t } = useTranslation();
   return (
-    <div className="flex flex-col items-center gap-3 rounded-2xl border border-red-200 bg-red-50 p-8 text-center text-sm text-red-800" role="alert">
+    <div className="flex flex-col items-center gap-3 rounded-2xl border border-danger-border bg-danger-bg p-8 text-center text-sm text-danger-fg" role="alert">
       <AlertCircle className="size-5" aria-hidden />
       {t('companyQuotes.loadFailed')}
       <button type="button" className="btn-secondary btn-sm" onClick={onRetry}>
@@ -59,29 +60,29 @@ const QuoteList = () => {
   return (
     <section aria-labelledby="company-quotes-title" className="space-y-5">
       <div>
-        <h2 id="company-quotes-title" className="font-display text-xl font-bold text-navy-900 sm:text-2xl">
+        <h2 id="company-quotes-title" className="type-page-title">
           {t('companyQuotes.title')}
         </h2>
         <p className="mt-1 text-sm text-muted">{t('companyQuotes.subtitle')}</p>
-        {open > 0 && <p className="mt-2 inline-flex rounded-full bg-brand-100 px-3 py-1 text-xs font-semibold text-brand-700">{t('companyQuotes.openCount', { count: open })}</p>}
+        {open > 0 && <p className="mt-2 inline-flex rounded-full bg-sunken px-3 py-1 text-xs font-semibold text-link">{t('companyQuotes.openCount', { count: open })}</p>}
       </div>
       {q.isLoading ? (
         <Loading />
       ) : q.error || !q.data ? (
         <Failed onRetry={() => q.refetch()} />
       ) : q.data.length === 0 ? (
-        <EmptyState className="card" icon={FileText} title={t('companyQuotes.empty')} text={t('companyQuotes.emptyText')} />
+        <EmptyState className="card" illustration={<Documents className="w-32" />} icon={FileText} title={t('companyQuotes.empty')} text={t('companyQuotes.emptyText')} />
       ) : (
         <ul className="card divide-y divide-line overflow-hidden">
           {q.data.map((x) => (
             <li key={x.id}>
-              <Link to={`/company/quotes/${x.id}`} className="flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3.5 transition hover:bg-surface sm:px-5">
+              <Link to={`/company/quotes/${x.id}`} className="flex min-h-16 flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3.5 transition-colors hover:bg-sunken sm:px-5">
                 <div className="min-w-0 flex-1">
-                  <p className="font-semibold text-navy-900 tabular-nums">{x.number}</p>
+                  <p className="font-semibold text-ink tabular-nums">{x.number}</p>
                   <p className="truncate text-sm text-ink">{x.title}</p>
                   <p className="text-xs text-muted">{t('companyQuotes.validUntil', { date: deDate(x.validUntil) })}</p>
                 </div>
-                <span className="font-semibold text-navy-900 tabular-nums">{fmtEur(x.grossCents)}</span>
+                <span className="num font-semibold text-ink">{fmtEur(x.grossCents)}</span>
                 <span className={clsx('badge', QUOTE_STATUS_TONE[x.status])}>{t(`quotePublic.status.${x.status}`)}</span>
                 <ChevronRight className="size-4 text-muted" aria-hidden />
               </Link>
@@ -111,7 +112,7 @@ const QuoteDetail = ({ id }: { id: string }) => {
   });
   return (
     <section className="space-y-5">
-      <Link to="/company/quotes" className="inline-flex min-h-10 items-center gap-1.5 text-sm font-semibold text-brand-700 hover:underline">
+      <Link to="/company/quotes" className="inline-flex min-h-10 items-center gap-1.5 text-sm font-semibold text-link hover:underline">
         <ArrowLeft className="size-4" aria-hidden /> {t('companyQuotes.back')}
       </Link>
       {q.isLoading ? (

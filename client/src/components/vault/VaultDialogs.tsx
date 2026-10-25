@@ -118,7 +118,7 @@ export const VaultUploadDialog = ({
             </button>
           ) : (
             <>
-              <button type="button" className="btn min-h-11 border border-line text-ink hover:bg-surface" onClick={onClose} disabled={busy}>
+              <button type="button" className="btn min-h-11 border border-line text-ink hover:bg-sunken" onClick={onClose} disabled={busy}>
                 {t('vault.actions.cancel')}
               </button>
               <button type="button" className="btn-primary min-h-11" onClick={submit} disabled={!file || busy}>
@@ -132,7 +132,7 @@ export const VaultUploadDialog = ({
         {result ? (
           <div className="space-y-3">
             {result.prefilled && (
-              <p className="flex gap-2 rounded-lg bg-brand-50 px-3 py-2 text-sm text-brand-800 dark:bg-brand-950/40 dark:text-brand-200">
+              <p className="flex gap-2 rounded-lg bg-sunken px-3 py-2 text-sm text-primary">
                 <Info className="mt-0.5 size-4 shrink-0" aria-hidden />
                 {t('vault.uploadDialog.prefilled')}
               </p>
@@ -157,9 +157,9 @@ export const VaultUploadDialog = ({
                 type="button"
                 onClick={() => inputRef.current?.click()}
                 disabled={busy || checking}
-                className="flex w-full items-center gap-3 rounded-xl border-2 border-dashed border-line bg-surface/60 px-4 py-3 text-left transition hover:border-brand-400"
+                className="flex w-full items-center gap-3 rounded-xl border-2 border-dashed border-line bg-sunken px-4 py-3 text-left transition hover:border-primary"
               >
-                <span className="grid size-10 shrink-0 place-items-center rounded-full bg-brand-100 text-brand-600">
+                <span className="grid size-10 shrink-0 place-items-center rounded-full chip-soft">
                   {checking ? <Spinner className="size-4" /> : file ? <FileText className="size-5" aria-hidden /> : <Upload className="size-5" aria-hidden />}
                 </span>
                 <span className="min-w-0 flex-1">
@@ -261,7 +261,7 @@ export const VaultEditDialog = ({ doc, onClose, onSaved }: { doc: VaultDoc | nul
       title={t('vault.editTitle')}
       footer={
         <>
-          <button type="button" className="btn min-h-11 border border-line text-ink hover:bg-surface" onClick={onClose} disabled={busy}>
+          <button type="button" className="btn min-h-11 border border-line text-ink hover:bg-sunken" onClick={onClose} disabled={busy}>
             {t('vault.actions.cancel')}
           </button>
           <button type="button" className="btn-primary min-h-11" onClick={save} disabled={busy || !title.trim()}>
@@ -380,7 +380,7 @@ export const UseInCaseDialog = ({ doc, onClose }: { doc: VaultDoc | null; onClos
           </button>
         ) : (
           <>
-            <button type="button" className="btn min-h-11 border border-line text-ink hover:bg-surface" onClick={onClose} disabled={busy}>
+            <button type="button" className="btn min-h-11 border border-line text-ink hover:bg-sunken" onClick={onClose} disabled={busy}>
               {t('vault.actions.cancel')}
             </button>
             <button type="button" className="btn-primary min-h-11" onClick={submit} disabled={busy || !caseId || !requirementId}>
@@ -394,7 +394,7 @@ export const UseInCaseDialog = ({ doc, onClose }: { doc: VaultDoc | null; onClos
       {done ? (
         <CheckResultNotice checks={checks} />
       ) : cases.isLoading ? (
-        <div className="grid place-items-center py-8 text-brand-600">
+        <div className="grid place-items-center py-8 text-primary">
           <Spinner />
         </div>
       ) : openCases.length === 0 ? (
@@ -417,7 +417,7 @@ export const UseInCaseDialog = ({ doc, onClose }: { doc: VaultDoc | null; onClos
           <fieldset>
             <legend className="label">{t('vault.use.requirement')}</legend>
             {sugg.isLoading ? (
-              <Spinner className="size-4 text-brand-600" />
+              <Spinner className="size-4 text-primary" />
             ) : reqs.length === 0 ? (
               <p className="text-sm text-muted">{t('vault.use.noRequirements')}</p>
             ) : (
@@ -429,7 +429,7 @@ export const UseInCaseDialog = ({ doc, onClose }: { doc: VaultDoc | null; onClos
                       key={r.requirementId}
                       className={clsx(
                         'flex cursor-pointer items-center gap-3 rounded-lg border px-3 py-2 text-sm transition',
-                        requirementId === r.requirementId ? 'border-brand-500 bg-brand-50 dark:bg-brand-950/30' : 'border-line hover:bg-surface',
+                        requirementId === r.requirementId ? 'border-line-strong bg-sunken' : 'border-line hover:bg-sunken',
                       )}
                     >
                       <input type="radio" name={`${ids}-req`} checked={requirementId === r.requirementId} onChange={() => setRequirementId(r.requirementId)} />

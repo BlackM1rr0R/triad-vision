@@ -16,6 +16,7 @@ import { PageHero } from '@/components/layout/PageHero';
 import { SectionHeading } from '@/components/ui/SectionHeading';
 import { Modal } from '@/components/ui/Modal';
 import { PageLoader, Spinner } from '@/components/ui/Spinner';
+import { buttonClass } from '@/components/ui/Button';
 
 registerCopy(pagesPackages);
 registerCopy(pagesBilling); // case status names in the payment schedule
@@ -114,7 +115,7 @@ export default function Packages() {
                       type="button"
                       aria-pressed={visa === v}
                       onClick={() => setVisa(v)}
-                      className={clsx('h-10 shrink-0 rounded-full border px-4 text-sm font-semibold whitespace-nowrap transition', visa === v ? 'border-brand-600 bg-brand-600 text-white' : 'border-line bg-white text-navy-900 hover:border-brand-400')}
+                      className={clsx('h-11 shrink-0 rounded-full border px-4 text-sm font-semibold whitespace-nowrap transition-colors', visa === v ? 'border-primary bg-primary text-primary-contrast' : 'border-line bg-card text-ink hover:border-line-strong')}
                     >
                       {v ? t(`pkgs.visaType.${v}`) : t('pkgs.all')}
                     </button>
@@ -126,26 +127,26 @@ export default function Packages() {
           {q.isLoading ? (
             <PageLoader />
           ) : !shown.length ? (
-            <div className="card mx-auto max-w-xl p-8 text-center">
+            <div className="card mx-auto max-w-xl rounded-3xl p-8 text-center">
               <p className="text-muted">{t('pkgs.empty')}</p>
-              <Link to="/booking" className="btn-primary mt-4">
+              <Link to="/booking" className={buttonClass({ className: 'mt-4' })}>
                 {t('pkgs.book')}
               </Link>
             </div>
           ) : (
             <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
               {shown.map((p) => (
-                <article key={p.id} className={clsx('card relative flex flex-col p-6', p.highlight && 'border-2 border-brand-600 shadow-lg')}>
+                <article key={p.id} className={clsx('card relative flex flex-col rounded-3xl p-6 sm:p-7', p.highlight && 'border-2 border-primary shadow-[var(--tv-shadow-raised)]')}>
                   {p.highlight && (
-                    <span className="absolute -top-3 left-6 inline-flex items-center gap-1 rounded-full bg-brand-600 px-3 py-1 text-xs font-bold text-white">
+                    <span className="absolute -top-3 left-6 inline-flex items-center gap-1 rounded-full bg-highlight px-3 py-1 text-xs font-semibold text-highlight-contrast">
                       <Sparkles className="size-3.5" aria-hidden /> {t('pkgs.popular')}
                     </span>
                   )}
-                  <p className="eyebrow text-brand-600">{t(`pkgs.tier.${p.tier}`)}</p>
-                  <h2 className="mt-1 font-display text-2xl font-bold text-navy-900">{tr(p.title)}</h2>
+                  <p className="eyebrow">{t(`pkgs.tier.${p.tier}`)}</p>
+                  <h2 className="mt-1 font-display text-2xl font-semibold text-ink">{tr(p.title)}</h2>
                   <p className="mt-2 text-sm text-muted">{tr(p.summary)}</p>
                   <p className="mt-5">
-                    <span className="font-display text-4xl font-extrabold text-navy-900">{priceText(p)}</span>{' '}
+                    <span className="font-display text-4xl font-semibold text-ink">{priceText(p)}</span>{' '}
                     <span className="text-xs text-muted">
                       {t('pkgs.perCase')} · {t('pkgs.vat')}
                     </span>
@@ -153,12 +154,12 @@ export default function Packages() {
                   <ul className="mt-5 space-y-2 text-sm">
                     {trList(p.features).map((f) => (
                       <li key={f} className="flex gap-2">
-                        <Check className="mt-0.5 size-4 shrink-0 text-success-fg" aria-hidden /> <span className="text-ink">{f}</span>
+                        <Check className="mt-0.5 size-4 shrink-0 text-success" aria-hidden /> <span className="text-ink">{f}</span>
                       </li>
                     ))}
                   </ul>
                   {p.installments.length > 0 && (
-                    <div className="mt-5 rounded-xl bg-surface p-3 text-xs text-ink">
+                    <div className="mt-5 rounded-xl bg-sunken p-3 text-xs text-ink">
                       <p className="mb-1 font-semibold">{t('pkgs.schedule')}</p>
                       <ul className="space-y-0.5">
                         {p.installments.map((i, k) => (
@@ -167,7 +168,7 @@ export default function Packages() {
                       </ul>
                     </div>
                   )}
-                  <button type="button" className={clsx('mt-6 w-full', p.highlight ? 'btn-primary' : 'btn-secondary')} onClick={() => setOrdering(p)}>
+                  <button type="button" className={buttonClass({ variant: p.highlight ? 'highlight' : 'outline', size: 'lg', block: true, className: 'mt-6' })} onClick={() => setOrdering(p)}>
                     {t('pkgs.order')}
                   </button>
                 </article>
@@ -179,14 +180,14 @@ export default function Packages() {
       </section>
 
       {shown.length > 1 && features.length > 0 && (
-        <section className="section bg-surface" aria-labelledby="pkgs-compare">
+        <section className="section bg-sunken" aria-labelledby="pkgs-compare">
           <div className="container-x">
-            <h2 id="pkgs-compare" className="mb-6 font-display text-2xl font-bold text-navy-900">
+            <h2 id="pkgs-compare" className="h-section mb-8 text-ink">
               {t('pkgs.compare')}
             </h2>
-            <div className="overflow-x-auto rounded-xl border border-line bg-white">
+            <div className="overflow-x-auto rounded-2xl border border-line bg-card shadow-[var(--tv-shadow-card)]">
               <table className="w-full min-w-[36rem] text-sm">
-                <thead className="bg-surface text-left">
+                <thead className="border-b border-line bg-sunken text-left text-muted">
                   <tr>
                     <th scope="col" className="px-4 py-3 font-semibold">
                       {t('pkgs.feature')}
@@ -230,14 +231,14 @@ export default function Packages() {
 
       <section className="section" aria-labelledby="pkgs-faq">
         <div className="container-x max-w-3xl">
-          <h2 id="pkgs-faq" className="mb-6 font-display text-2xl font-bold text-navy-900">
+          <h2 id="pkgs-faq" className="h-section mb-8 text-ink">
             {t('pkgs.faqTitle')}
           </h2>
           <div className="space-y-3">
             {(t('pkgs.faq', { returnObjects: true }) as { q: string; a: string }[]).map((f) => (
-              <details key={f.q} className="card group p-4">
-                <summary className="cursor-pointer font-semibold text-navy-900">{f.q}</summary>
-                <p className="mt-2 text-sm text-muted">{f.a}</p>
+              <details key={f.q} className="card group rounded-2xl p-0">
+                <summary className="flex min-h-14 cursor-pointer items-center px-5 py-4 font-semibold text-ink">{f.q}</summary>
+                <p className="max-w-[68ch] px-5 pb-5 leading-relaxed text-muted">{f.a}</p>
               </details>
             ))}
           </div>
@@ -299,10 +300,10 @@ const OrderForm = ({ pkg, termsVersion, defaultVisa, onClose }: { pkg: PublicPac
       onSubmit={submit}
       footer={
         <>
-          <button type="button" className="btn-secondary btn-sm" onClick={onClose} disabled={m.isPending}>
+          <button type="button" className={buttonClass({ variant: 'secondary' })} onClick={onClose} disabled={m.isPending}>
             {t('pkgs.form.cancel')}
           </button>
-          <button type="submit" className="btn-primary btn-sm" disabled={m.isPending || !form.terms || !form.privacy}>
+          <button type="submit" className={buttonClass()} disabled={m.isPending || !form.terms || !form.privacy}>
             {m.isPending && <Spinner className="size-3.5" />}
             {t('pkgs.form.submit')}
           </button>
@@ -310,7 +311,7 @@ const OrderForm = ({ pkg, termsVersion, defaultVisa, onClose }: { pkg: PublicPac
       }
     >
       <div className="space-y-3">
-        <p className="rounded-lg bg-surface p-3 text-sm">
+        <p className="rounded-xl bg-sunken p-3 text-sm">
           <strong>{tr(pkg.title)}</strong> · {priceText(pkg)} ({t('pkgs.vat')})
         </p>
         <div>
@@ -356,23 +357,23 @@ const OrderForm = ({ pkg, termsVersion, defaultVisa, onClose }: { pkg: PublicPac
         </div>
         {/* Honeypot: hidden from people and screen readers; bots fill it. */}
         <input type="text" name="website" tabIndex={-1} autoComplete="off" aria-hidden="true" className="hidden" value={form.website} onChange={set('website')} />
-        <label className="flex items-start gap-2.5 text-sm text-ink/80">
-          <input type="checkbox" required checked={form.terms} onChange={set('terms')} className="mt-0.5 size-4 shrink-0 accent-brand-600" />
+        <label className="flex items-start gap-2.5 text-sm text-ink">
+          <input type="checkbox" required checked={form.terms} onChange={set('terms')} className="mt-0.5 size-4 shrink-0 accent-primary" />
           <span>
-            <Trans i18nKey="pkgs.form.terms" values={{ version: termsVersion }} components={[<Link key="agb" to="/agb" target="_blank" rel="noopener" className="font-semibold text-brand-600 hover:underline" />]} />
+            <Trans i18nKey="pkgs.form.terms" values={{ version: termsVersion }} components={[<Link key="agb" to="/agb" target="_blank" rel="noopener" className="font-semibold text-link hover:underline" />]} />
           </span>
         </label>
-        <label className="flex items-start gap-2.5 text-sm text-ink/80">
-          <input type="checkbox" required checked={form.privacy} onChange={set('privacy')} className="mt-0.5 size-4 shrink-0 accent-brand-600" />
+        <label className="flex items-start gap-2.5 text-sm text-ink">
+          <input type="checkbox" required checked={form.privacy} onChange={set('privacy')} className="mt-0.5 size-4 shrink-0 accent-primary" />
           <span>
-            <Trans i18nKey="pkgs.form.privacy" components={[<Link key="privacy" to="/privacy" target="_blank" rel="noopener" className="font-semibold text-brand-600 hover:underline" />]} />
+            <Trans i18nKey="pkgs.form.privacy" components={[<Link key="privacy" to="/privacy" target="_blank" rel="noopener" className="font-semibold text-link hover:underline" />]} />
           </span>
         </label>
         <p className="flex items-start gap-2 text-xs text-muted">
-          <ShieldCheck className="size-4 shrink-0 text-brand-600" aria-hidden /> {t('pkgs.form.note')}
+          <ShieldCheck className="size-4 shrink-0 text-muted" aria-hidden /> {t('pkgs.form.note')}
         </p>
         {m.error && (
-          <p className="text-sm text-danger" role="alert">
+          <p className="text-sm text-danger-fg" role="alert">
             {errText(m.error)}
           </p>
         )}

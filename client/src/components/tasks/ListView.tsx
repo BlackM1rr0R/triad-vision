@@ -56,7 +56,7 @@ export const ListView = ({
                   <button
                     type="button"
                     onClick={() => onOpen(task)}
-                    className={clsx('w-full rounded-xl border bg-card p-3.5 text-left', activeId === task.id ? 'border-brand-500' : 'border-line')}
+                    className={clsx('w-full rounded-xl border bg-card p-3.5 text-left', activeId === task.id ? 'border-primary' : 'border-line')}
                   >
                     <span className="flex items-center gap-2">
                       <span className="font-mono text-[0.7rem] font-semibold text-muted">{task.key}</span>
@@ -74,9 +74,9 @@ export const ListView = ({
                 </li>
               ))}
         </ul>
-        <div className="hidden min-w-[60rem] overflow-hidden rounded-2xl border border-line bg-card md:block">
+        <div className="hidden min-w-[60rem] overflow-hidden rounded-xl border border-line bg-card md:block">
           <table className="w-full table-fixed text-sm">
-            <thead className="sticky top-0 z-10 bg-surface text-left text-xs font-semibold tracking-wide text-muted uppercase">
+            <thead className="sticky top-0 z-10 bg-sunken text-left text-xs font-medium text-muted">
               <tr>
                 {COLS.map((c) => (
                   <th key={c.label} scope="col" className={clsx('border-b border-line px-4 py-3', c.className)} aria-sort={c.key && sort === c.key ? (dir === 'asc' ? 'ascending' : 'descending') : undefined}>
@@ -110,11 +110,11 @@ export const ListView = ({
                       onKeyDown={(e) => e.key === 'Enter' && onOpen(task)}
                       tabIndex={0}
                       className={clsx(
-                        'cursor-pointer border-b border-line outline-none transition-colors last:border-0 hover:bg-surface focus-visible:bg-brand-50',
-                        activeId === task.id && 'bg-brand-50',
+                        'cursor-pointer border-b border-line outline-none transition-colors last:border-0 hover:bg-sunken focus-visible:bg-primary/[0.06]',
+                        activeId === task.id && 'bg-primary/[0.06]',
                       )}
                     >
-                      <td className="px-4 py-3 font-mono text-xs font-semibold text-muted">{task.key}</td>
+                      <td className="px-4 py-3 code-id text-xs font-medium text-muted">{task.key}</td>
                       <td className="px-4 py-3">
                         <span className={clsx('line-clamp-2 font-semibold text-ink', (task.status === 'DONE' || task.status === 'CANCELLED') && 'text-muted line-through decoration-1')}>{task.title}</span>
                         {(task.checklist.total > 0 || task.commentCount > 0) && (

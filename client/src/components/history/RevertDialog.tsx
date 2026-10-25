@@ -116,7 +116,7 @@ export const RevertDialog = ({ target, onClose, onDone }: { target: RevertTarget
       size="md"
       title={
         <span className="flex items-center gap-2">
-          <RotateCcw className="size-4 text-brand-600" aria-hidden />
+          <RotateCcw className="size-4 text-link" aria-hidden />
           {target.kind === 'one' ? t('history.revert.title') : t('history.revert.groupTitle')}
         </span>
       }
@@ -149,9 +149,9 @@ export const RevertDialog = ({ target, onClose, onDone }: { target: RevertTarget
           <div className="rounded-lg border border-line bg-surface/60 px-4 py-3">
             <p className="text-xs font-semibold tracking-wide text-muted uppercase">{fieldLabel(item.field)}</p>
             <p className="mt-1 flex flex-wrap items-center gap-2 break-words">
-              <span className="text-ink/60 line-through decoration-ink/30">{formatValue(item, item.newValue, item.newLabel)}</span>
+              <span className="text-muted line-through decoration-ink/30">{formatValue(item, item.newValue, item.newLabel)}</span>
               <ArrowRight className="size-3.5 shrink-0 text-muted" aria-hidden />
-              <span className="font-semibold text-navy-900">{formatValue(item, item.oldValue, item.oldLabel)}</span>
+              <span className="font-semibold text-ink">{formatValue(item, item.oldValue, item.oldLabel)}</span>
             </p>
           </div>
         )}
@@ -161,7 +161,7 @@ export const RevertDialog = ({ target, onClose, onDone }: { target: RevertTarget
         )}
 
         {dryErr && (
-          <p className={canForceOne ? 'flex gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-amber-900' : 'flex gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-red-800'} role="alert">
+          <p className={canForceOne ? 'flex gap-2 rounded-lg border border-warning-border bg-warning-bg px-3 py-2 text-warning-fg' : 'flex gap-2 rounded-lg border border-danger-border bg-danger-bg px-3 py-2 text-danger-fg'} role="alert">
             <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden />
             <span>{revertErrorMessage(dryErr.error, dryErr, fmt)}</span>
           </p>
@@ -169,20 +169,20 @@ export const RevertDialog = ({ target, onClose, onDone }: { target: RevertTarget
 
         {group && (
           <div>
-            <p className="mb-2 font-semibold text-navy-900">{t('history.revert.groupList')}</p>
+            <p className="mb-2 font-semibold text-ink">{t('history.revert.groupList')}</p>
             <ul className="divide-y divide-line rounded-lg border border-line">
               {group.results.map((r) => {
                 const it = byId.get(r.changeId);
                 const f = fmtFor(it);
                 return (
                   <li key={r.changeId} className="flex items-start gap-2 px-3 py-2">
-                    {r.ok ? <Check className="mt-0.5 size-4 shrink-0 text-success" aria-hidden /> : <X className="mt-0.5 size-4 shrink-0 text-danger" aria-hidden />}
+                    {r.ok ? <Check className="mt-0.5 size-4 shrink-0 text-success-fg" aria-hidden /> : <X className="mt-0.5 size-4 shrink-0 text-danger-fg" aria-hidden />}
                     <span className="min-w-0 break-words">
-                      <span className="font-medium text-navy-900">{fieldLabel(r.field)}</span>
+                      <span className="font-medium text-ink">{fieldLabel(r.field)}</span>
                       {r.ok && r.plan ? (
-                        <span className="text-ink/70"> : {f(r.plan.current)} → {f(r.plan.target)}</span>
+                        <span className="text-muted"> : {f(r.plan.current)} → {f(r.plan.target)}</span>
                       ) : (
-                        <span className="block text-xs text-ink/70">{revertErrorMessage(r.error, r.details ?? {}, f)}</span>
+                        <span className="block text-xs text-muted">{revertErrorMessage(r.error, r.details ?? {}, f)}</span>
                       )}
                     </span>
                   </li>
@@ -191,7 +191,7 @@ export const RevertDialog = ({ target, onClose, onDone }: { target: RevertTarget
             </ul>
             {groupForceable && (
               <label className="mt-3 flex items-start gap-2 text-sm">
-                <input type="checkbox" className="mt-0.5 size-4 accent-brand-600" checked={force} onChange={(e) => setForce(e.target.checked)} />
+                <input type="checkbox" className="mt-0.5 size-4 accent-primary" checked={force} onChange={(e) => setForce(e.target.checked)} />
                 <span>{t('history.revert.forceLabel')}</span>
               </label>
             )}
@@ -201,7 +201,7 @@ export const RevertDialog = ({ target, onClose, onDone }: { target: RevertTarget
         {needsNote && (
           <div className="space-y-2">
             <p className="flex gap-2 rounded-lg border border-line bg-surface/60 px-3 py-2">
-              <Info className="mt-0.5 size-4 shrink-0 text-brand-600" aria-hidden />
+              <Info className="mt-0.5 size-4 shrink-0 text-link" aria-hidden />
               <span>{t(`history.revert.via.${needsNote}`)}</span>
             </p>
             <div>

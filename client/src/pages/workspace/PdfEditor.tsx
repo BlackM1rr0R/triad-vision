@@ -326,7 +326,7 @@ export default function PdfEditor() {
     return (
       <div className="grid h-full place-items-center p-6">
         <div className="max-w-md text-center">
-          <AlertTriangle className="mx-auto mb-3 text-amber-600" size={36} />
+          <AlertTriangle className="mx-auto mb-3 text-warning-fg" size={36} />
           <p className="mb-5 text-sm text-muted">{info.isError ? (info.error ? t(`pdfTools.errors.${errorCode(info.error)}`, { defaultValue: t('pdfTools.editor.failed') }) : '') : t('pdfTools.editor.failed')}</p>
           <Link to="/workspace/drive" className="btn-primary btn-sm">
             <ArrowLeft size={15} /> {t('pdfTools.editor.back')}
@@ -343,7 +343,7 @@ export default function PdfEditor() {
   ];
 
   return (
-    <div className="flex h-full min-h-0 flex-col bg-surface text-ink">
+    <div className="flex h-full min-h-0 flex-col bg-sunken text-ink">
       <header className="flex flex-wrap items-center gap-3 border-b border-line bg-card px-4 py-2.5">
         <Link
           to={backHref}
@@ -351,7 +351,7 @@ export default function PdfEditor() {
             // TODO(ui): ConfirmDialog
             if (dirty && !window.confirm(t('pdfTools.editor.leaveUnsaved'))) e.preventDefault();
           }}
-          className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-sm text-muted hover:bg-surface hover:text-ink"
+          className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-sm text-muted hover:bg-sunken hover:text-ink"
         >
           <ArrowLeft className="size-4" /> {t('pdfTools.editor.back')}
         </Link>
@@ -366,7 +366,7 @@ export default function PdfEditor() {
               role="tab"
               aria-selected={mode === tb.id}
               onClick={() => setMode(tb.id)}
-              className={clsx('rounded-md px-3 py-1 text-sm font-medium', mode === tb.id ? 'bg-brand-600 text-white' : 'text-ink hover:bg-surface')}
+              className={clsx('rounded-md px-3 py-1 text-sm font-medium', mode === tb.id ? 'bg-primary text-primary-contrast' : 'text-ink hover:bg-sunken')}
             >
               {tb.label}
             </button>
@@ -375,17 +375,17 @@ export default function PdfEditor() {
       </header>
 
       {info.data.final && (
-        <div className="flex items-center gap-2 border-b border-amber-200 bg-amber-50 px-4 py-2 text-sm text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200">
+        <div className="flex items-center gap-2 border-b border-warning-border bg-warning-bg px-4 py-2 text-sm text-warning-fg dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200">
           <Lock className="size-4" /> {t('pdfTools.editor.final')}
         </div>
       )}
       {!info.data.final && !editable && <div className="border-b border-line bg-card px-4 py-2 text-sm text-muted">{t('pdfTools.editor.readOnly')}</div>}
       {conflict && (
-        <div className="flex items-center gap-3 border-b border-red-200 bg-red-50 px-4 py-2 text-sm text-red-800 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-200">
+        <div className="flex items-center gap-3 border-b border-danger-border bg-danger-bg px-4 py-2 text-sm text-danger-fg dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-200">
           <AlertTriangle className="size-4" /> {t('pdfTools.editor.conflict')}
           <button
             type="button"
-            className="btn-white btn-sm ml-auto border border-line"
+            className="btn-secondary btn-sm ml-auto border border-line"
             onClick={() => {
               setConflict(false);
               void info.refetch();
@@ -411,7 +411,7 @@ export default function PdfEditor() {
             <ToolButton icon={Scissors} label={t('pdfTools.editor.extract')} disabled={!onlyOriginalSelected || dirty || extracting || !canCopy} onClick={() => void extract()} />
             <ToolButton icon={SquareSplitHorizontal} label={t('pdfTools.editor.splitMore')} disabled={dirty || !canCopy} onClick={() => setSplitOpen(true)} />
             <div className="ml-auto flex items-center gap-2">
-              {dirty && <span className="text-xs text-amber-700 dark:text-amber-300">{t('pdfTools.editor.unsaved', { count: history.length })}</span>}
+              {dirty && <span className="text-xs text-warning-fg dark:text-amber-300">{t('pdfTools.editor.unsaved', { count: history.length })}</span>}
               <ToolButton icon={Undo2} label={t('pdfTools.editor.undo')} disabled={!dirty || saving} onClick={undo} />
               <button type="button" className="btn-secondary btn-sm" disabled={!dirty || saving || !canCopy} onClick={() => void save('copy')}>
                 <CopyPlus className="size-4" /> {t('pdfTools.editor.saveCopy')}
@@ -460,12 +460,12 @@ export default function PdfEditor() {
                     onClick={(ev) => click(e.key, ev)}
                     className={clsx(
                       'relative cursor-pointer rounded-lg border-2 bg-card p-2 select-none',
-                      on ? 'border-brand-500 ring-2 ring-brand-500/30' : 'border-transparent hover:border-line',
-                      marker && (dropAt!.after ? 'after:absolute after:inset-y-1 after:-right-3 after:w-1 after:rounded after:bg-brand-500' : 'before:absolute before:inset-y-1 before:-left-3 before:w-1 before:rounded before:bg-brand-500'),
+                      on ? 'border-primary ring-2 ring-focus/30' : 'border-transparent hover:border-line',
+                      marker && (dropAt!.after ? 'after:absolute after:inset-y-1 after:-right-3 after:w-1 after:rounded after:bg-primary' : 'before:absolute before:inset-y-1 before:-left-3 before:w-1 before:rounded before:bg-primary'),
                     )}
                   >
                     {e.type === 'insert' && e.kind === 'image' ? (
-                      <div className="grid place-items-center bg-white" style={{ width: THUMB, height: THUMB * 1.414 }}>
+                      <div className="grid place-items-center bg-card" style={{ width: THUMB, height: THUMB * 1.414 }}>
                         <img src={contentUrl(e.nodeId)} alt="" className="max-h-full max-w-full object-contain transition-transform" style={{ transform: `rotate(${e.rotation}deg)` }} draggable={false} />
                       </div>
                     ) : (
@@ -473,7 +473,7 @@ export default function PdfEditor() {
                     )}
                     <div className="mt-1.5 flex items-center justify-between gap-2 text-xs">
                       <span className="font-semibold text-ink">{i + 1}</span>
-                      {e.type === 'insert' && <span className="truncate rounded bg-brand-50 px-1.5 text-[10px] text-brand-700 dark:bg-brand-500/15 dark:text-brand-200" title={e.name}>+ {e.name}</span>}
+                      {e.type === 'insert' && <span className="truncate rounded bg-primary/[0.06] px-1.5 text-[10px] text-link dark:bg-brand-500/15 dark:text-brand-200" title={e.name}>+ {e.name}</span>}
                       {e.rotation !== 0 && <span className="text-[10px] text-muted">{e.rotation}°</span>}
                     </div>
                   </li>
@@ -509,7 +509,7 @@ export default function PdfEditor() {
 }
 
 const ToolButton = ({ icon: Icon, label, title, disabled, onClick }: { icon: typeof Save; label: string; title?: string; disabled?: boolean; onClick: () => void }) => (
-  <button type="button" title={title ?? label} disabled={disabled} onClick={onClick} className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-sm text-ink hover:bg-surface disabled:opacity-40 disabled:hover:bg-transparent">
+  <button type="button" title={title ?? label} disabled={disabled} onClick={onClick} className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-sm text-ink hover:bg-sunken disabled:opacity-40 disabled:hover:bg-transparent">
     <Icon className="size-4" /> <span className="hidden lg:inline">{label}</span>
   </button>
 );

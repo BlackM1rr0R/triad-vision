@@ -82,7 +82,7 @@ export const CostCalculatorSettings = ({ canEdit }: { canEdit: boolean }) => {
             onChange={(e) => setFee(k, num(e.target.value, max))}
           />
           {own && !inherited && (
-            <button type="button" className="text-xs font-semibold text-brand-600 hover:underline" disabled={!canEdit} onClick={() => setFee(k, undefined)}>
+            <button type="button" className="text-xs font-semibold text-link hover:underline" disabled={!canEdit} onClick={() => setFee(k, undefined)}>
               {t('mk.cost.admin.inherit')}
             </button>
           )}
@@ -122,7 +122,7 @@ export const CostCalculatorSettings = ({ canEdit }: { canEdit: boolean }) => {
           </div>
         </div>
         {slug && s.categories[slug] && canEdit && (
-          <button type="button" className="btn-ghost btn-sm mt-3" onClick={() => {
+          <button type="button" className="btn-secondary btn-sm mt-3" onClick={() => {
             const categories = { ...s.categories };
             delete categories[slug];
             up({ categories });
@@ -141,7 +141,7 @@ export const CostCalculatorSettings = ({ canEdit }: { canEdit: boolean }) => {
               <div key={k} className="space-y-1.5 py-2">
                 <p className="text-sm font-semibold text-ink">{t(`mk.cost.admin.${k}`)}</p>
                 <label className="flex items-center gap-2 text-sm text-ink">
-                  <input type="checkbox" className="size-4 accent-brand-600" checked={fromList} disabled={!canEdit} onChange={(e) => up({ [k]: e.target.checked ? null : list } as Partial<CostSettings>)} />
+                  <input type="checkbox" className="size-4 accent-primary" checked={fromList} disabled={!canEdit} onChange={(e) => up({ [k]: e.target.checked ? null : list } as Partial<CostSettings>)} />
                   {t('mk.cost.admin.fromList', { price: t('mk.common.eur', { n: list }) })}
                 </label>
                 {!fromList && (
@@ -173,8 +173,8 @@ export const CostCalculatorSettings = ({ canEdit }: { canEdit: boolean }) => {
 
       {canEdit && (
         <div className="flex flex-wrap items-center justify-end gap-2">
-          {invalid && <span className="text-xs text-danger">{t('mk.cost.admin.invalid')}</span>}
-          <button type="button" className="btn-ghost btn-sm" onClick={() => setS({ ...data.defaults })}>
+          {invalid && <span className="text-xs text-danger-fg">{t('mk.cost.admin.invalid')}</span>}
+          <button type="button" className="btn-secondary btn-sm" onClick={() => setS({ ...data.defaults })}>
             {t('mk.common.reset')}
           </button>
           <button type="button" className="btn-primary btn-sm" disabled={invalid || save.isPending} onClick={() => save.mutate(s)}>

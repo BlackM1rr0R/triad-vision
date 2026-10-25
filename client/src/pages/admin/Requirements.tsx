@@ -105,7 +105,7 @@ const TemplateForm = ({
   );
   return (
     <form
-      className="space-y-3 rounded-lg border border-brand-200 bg-brand-50/40 p-3"
+      className="space-y-3 rounded-lg border border-primary/25 bg-primary/[0.04] p-3"
       onSubmit={(e) => {
         e.preventDefault();
         if (hasText(d.title)) onSave(d);
@@ -249,7 +249,7 @@ const StageList = ({
       {items.length === 0 && !adding && <p className="text-sm text-muted">{t('docsIntel.admin.emptyStage')}</p>}
       <ol className="space-y-2">
         {items.map((tpl, i) => (
-          <li key={tpl.id} className="rounded-lg border border-line bg-white">
+          <li key={tpl.id} className="rounded-lg border border-line bg-card">
             {editing === tpl.id ? (
               <div className="p-2">
                 <TemplateForm
@@ -266,22 +266,22 @@ const StageList = ({
               <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 px-3 py-2.5">
                 <span className="w-5 shrink-0 text-xs text-muted tabular-nums">{i + 1}.</span>
                 <div className="min-w-0 flex-[1_1_14rem]">
-                  <p className="flex flex-wrap items-center gap-1.5 text-sm font-semibold text-navy-900">
+                  <p className="flex flex-wrap items-center gap-1.5 text-sm font-semibold text-ink">
                     {tr(tpl.title)}
                     {tpl.required ? (
-                      <span className="badge bg-navy-900/90 text-[10px] text-white">{t('docsIntel.admin.required')}</span>
+                      <span className="badge bg-primary text-[10px] text-primary-contrast">{t('docsIntel.admin.required')}</span>
                     ) : (
                       <span className="badge bg-neutral-bg text-[10px] text-neutral-fg">{t('docsIntel.admin.optional')}</span>
                     )}
                     {(aiLangsOf(tpl.title).length > 0 || aiLangsOf(tpl.description).length > 0) && (
-                      <span className="badge bg-brand-50 text-[10px] text-brand-700" title={t('admin.l10n.aiBadgeTitle')}>
+                      <span className="badge bg-primary/[0.06] text-[10px] text-link" title={t('admin.l10n.aiBadgeTitle')}>
                         {t('admin.l10n.aiBadge')}: {[...new Set([...aiLangsOf(tpl.title), ...aiLangsOf(tpl.description)])].map((l) => l.toUpperCase()).join(', ')}
                       </span>
                     )}
                     {tpl.key ? (
-                      <span className="badge bg-brand-100 font-mono text-[10px] text-brand-700">{tpl.key}</span>
+                      <span className="badge bg-primary/10 code-id text-[10px] text-link whitespace-nowrap">{tpl.key}</span>
                     ) : (
-                      <span className="badge bg-slate-50 text-[10px] text-slate-400">{t('docsIntel.admin.keyNone')}</span>
+                      <span className="badge bg-sunken text-[10px] text-subtle">{t('docsIntel.admin.keyNone')}</span>
                     )}
                   </p>
                   {tpl.description && tr(tpl.description) && <p className="mt-0.5 text-xs text-muted">{tr(tpl.description)}</p>}
@@ -289,16 +289,16 @@ const StageList = ({
                 {canEdit && (
                   <div className="-mr-1 flex shrink-0 items-center gap-0.5">
                     <Switch checked={tpl.required} disabled={busy === tpl.id} label={t('docsIntel.admin.required')} onChange={(required) => run(tpl.id, () => api.put(`/admin/requirements/${tpl.id}`, { required }))} />
-                    <button type="button" className="ml-1 grid size-9 place-items-center rounded-lg text-muted transition hover:bg-surface hover:text-navy-900 disabled:opacity-30" onClick={() => move(i, -1)} disabled={i === 0 || !!busy} title={t('docsIntel.admin.moveUp')} aria-label={t('docsIntel.admin.moveUp')}>
+                    <button type="button" className="ml-1 grid size-9 place-items-center rounded-lg text-muted transition hover:bg-sunken hover:text-ink disabled:opacity-30" onClick={() => move(i, -1)} disabled={i === 0 || !!busy} title={t('docsIntel.admin.moveUp')} aria-label={t('docsIntel.admin.moveUp')}>
                       <ArrowUp className="size-3.5" aria-hidden />
                     </button>
-                    <button type="button" className="grid size-9 place-items-center rounded-lg text-muted transition hover:bg-surface hover:text-navy-900 disabled:opacity-30" onClick={() => move(i, 1)} disabled={i === items.length - 1 || !!busy} title={t('docsIntel.admin.moveDown')} aria-label={t('docsIntel.admin.moveDown')}>
+                    <button type="button" className="grid size-9 place-items-center rounded-lg text-muted transition hover:bg-sunken hover:text-ink disabled:opacity-30" onClick={() => move(i, 1)} disabled={i === items.length - 1 || !!busy} title={t('docsIntel.admin.moveDown')} aria-label={t('docsIntel.admin.moveDown')}>
                       <ArrowDown className="size-3.5" aria-hidden />
                     </button>
-                    <button type="button" className="grid size-9 place-items-center rounded-lg text-muted transition hover:bg-surface hover:text-brand-700" onClick={() => setEditing(tpl.id)} title={t('docsIntel.admin.edit')} aria-label={t('docsIntel.admin.edit')}>
+                    <button type="button" className="grid size-9 place-items-center rounded-lg text-muted transition hover:bg-sunken hover:text-link" onClick={() => setEditing(tpl.id)} title={t('docsIntel.admin.edit')} aria-label={t('docsIntel.admin.edit')}>
                       <Pencil className="size-3.5" aria-hidden />
                     </button>
-                    <button type="button" className="grid size-9 place-items-center rounded-lg text-muted transition hover:bg-surface hover:text-danger" onClick={() => setDel(tpl)} title={t('docsIntel.admin.delete')} aria-label={t('docsIntel.admin.delete')}>
+                    <button type="button" className="grid size-9 place-items-center rounded-lg text-muted transition hover:bg-sunken hover:text-danger-fg" onClick={() => setDel(tpl)} title={t('docsIntel.admin.delete')} aria-label={t('docsIntel.admin.delete')}>
                       <Trash2 className="size-3.5" aria-hidden />
                     </button>
                   </div>
@@ -391,22 +391,22 @@ export default function Requirements() {
   return (
     <div>
       <PageHead title={t('docsIntel.admin.title')} subtitle={t('docsIntel.admin.subtitle')} />
-      <p className="mb-5 flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3.5 py-2.5 text-sm text-amber-900">
+      <p className="mb-5 flex items-start gap-2 rounded-lg border border-warning-border bg-warning-bg px-3.5 py-2.5 text-sm text-warning-fg">
         <Info className="mt-0.5 size-4 shrink-0" aria-hidden /> {t('docsIntel.admin.newOnly')}
       </p>
       {!canEdit && <p className="mb-4 text-sm text-muted">{t('docsIntel.admin.readOnly')}</p>}
 
       <div className="grid gap-5 lg:grid-cols-[16rem_1fr] lg:items-start">
-        <nav className="space-y-1 rounded-xl border border-line bg-white p-2" aria-label={t('docsIntel.admin.visaTypes')}>
+        <nav className="space-y-1 rounded-xl border border-line bg-card p-2" aria-label={t('docsIntel.admin.visaTypes')}>
           <button
             type="button"
             onClick={() => setSelected(GLOBAL)}
-            className={clsx('flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm transition', selected === GLOBAL ? 'bg-navy-900 text-white' : 'hover:bg-surface')}
+            className={clsx('flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm transition', selected === GLOBAL ? 'bg-primary text-primary-contrast' : 'hover:bg-sunken')}
           >
             <Globe className="size-4 shrink-0" aria-hidden />
             <span className="min-w-0 flex-1">
               <span className="block truncate font-semibold">{t('docsIntel.admin.global')}</span>
-              <span className={clsx('block truncate text-[11px]', selected === GLOBAL ? 'text-white/70' : 'text-muted')}>
+              <span className={clsx('block truncate text-[11px]', selected === GLOBAL ? 'text-primary-contrast/70' : 'text-muted')}>
                 {globalCount ? t('docsIntel.admin.own', { count: globalCount }) : t('docsIntel.admin.builtIn')}
               </span>
             </span>
@@ -419,11 +419,11 @@ export default function Requirements() {
                 key={v.id}
                 type="button"
                 onClick={() => setSelected(v.id)}
-                className={clsx('flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm transition', selected === v.id ? 'bg-navy-900 text-white' : 'hover:bg-surface')}
+                className={clsx('flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm transition', selected === v.id ? 'bg-primary text-primary-contrast' : 'hover:bg-sunken')}
               >
                 <span className="min-w-0 flex-1">
                   <span className="block truncate font-semibold">{tr(v.title)}</span>
-                  <span className={clsx('block truncate text-[11px]', selected === v.id ? 'text-white/70' : 'text-muted')}>
+                  <span className={clsx('block truncate text-[11px]', selected === v.id ? 'text-primary-contrast/70' : 'text-muted')}>
                     {v.visaLabel} · {n ? t('docsIntel.admin.own', { count: n }) : t('docsIntel.admin.usesGlobal')}
                   </span>
                 </span>
@@ -449,10 +449,10 @@ export default function Requirements() {
               <p className="text-sm text-muted">{t('docsIntel.admin.globalHint')}</p>
             )
           ) : (
-            <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-line bg-white px-4 py-3">
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-line bg-card px-4 py-3">
               <div className="min-w-0">
-                <p className="text-sm font-semibold text-navy-900">
-                  {selectedVisa ? tr(selectedVisa.title) : ''} <span className="badge ml-1 bg-navy-900 text-white">{selectedVisa?.visaLabel}</span>
+                <p className="text-sm font-semibold text-ink">
+                  {selectedVisa ? tr(selectedVisa.title) : ''} <span className="badge ml-1 bg-primary text-primary-contrast">{selectedVisa?.visaLabel}</span>
                 </p>
                 <p className="mt-0.5 text-xs text-muted">{selectedCount ? t('docsIntel.admin.copyDefaultsHint') : t('docsIntel.admin.emptyVisa')}</p>
               </div>

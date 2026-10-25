@@ -19,13 +19,13 @@ const DiffSide = ({ ops, side }: { ops: DiffOp[]; side: 'old' | 'new' }) => (
       if (o.t === 'eq') return <span key={i}>{o.s}</span>;
       if (side === 'old' && o.t === 'del')
         return (
-          <del key={i} className="rounded-sm bg-red-100 text-red-800 decoration-red-500 dark:bg-red-500/20 dark:text-red-200">
+          <del key={i} className="rounded-sm bg-danger-bg text-danger-fg decoration-danger dark:bg-red-500/20 dark:text-red-200">
             {o.s}
           </del>
         );
       if (side === 'new' && o.t === 'ins')
         return (
-          <ins key={i} className="rounded-sm bg-emerald-100 text-emerald-800 no-underline dark:bg-emerald-500/20 dark:text-emerald-200">
+          <ins key={i} className="rounded-sm bg-success-bg text-success-fg no-underline dark:bg-emerald-500/20 dark:text-emerald-200">
             {o.s}
           </ins>
         );
@@ -42,7 +42,7 @@ const Result = ({ data }: { data: CompareResponse }) => {
     return (
       <div className="grid gap-4 md:grid-cols-2">
         {[data.a, data.b].map((s, i) => (
-          <figure key={i} className="rounded-xl border border-line bg-surface p-2">
+          <figure key={i} className="rounded-xl border border-line bg-sunken p-2">
             <img src={s.url} alt={`v${s.version}`} className="mx-auto max-h-[65vh] w-auto object-contain" />
             <figcaption className="mt-1 text-center text-xs text-muted">v{s.version}</figcaption>
           </figure>
@@ -55,11 +55,11 @@ const Result = ({ data }: { data: CompareResponse }) => {
     return (
       <div className="space-y-4">
         <p className="text-sm font-semibold text-ink">{t('driveIntel.compare.cellStats', r.stats)}</p>
-        {r.truncated && <p className="text-xs text-amber-700">{t('driveIntel.compare.truncated')}</p>}
+        {r.truncated && <p className="text-xs text-warning-fg">{t('driveIntel.compare.truncated')}</p>}
         {!changedSheets.length && <p className="rounded-xl border border-dashed border-line p-6 text-center text-sm text-muted">{t('driveIntel.compare.unchanged')}</p>}
         {r.sheets.map((s) => (
           <section key={s.name} className="overflow-hidden rounded-xl border border-line">
-            <header className="flex items-center gap-2 border-b border-line bg-surface px-3 py-2 text-sm font-semibold text-ink">
+            <header className="flex items-center gap-2 border-b border-line bg-sunken px-3 py-2 text-sm font-semibold text-ink">
               {s.name}
               {s.status !== 'changed' && (
                 <span className="text-xs font-normal text-muted">
@@ -82,16 +82,16 @@ const Result = ({ data }: { data: CompareResponse }) => {
                       <tr
                         key={c.cell}
                         title={c.type === 'changed' ? `${c.old ?? ''} → ${c.new ?? ''}` : undefined}
-                        className={clsx('border-t border-line/60', c.type === 'changed' && 'bg-amber-50 dark:bg-amber-500/10', c.type === 'added' && 'bg-emerald-50 dark:bg-emerald-500/10', c.type === 'removed' && 'bg-red-50 dark:bg-red-500/10')}
+                        className={clsx('border-t border-line/60', c.type === 'changed' && 'bg-warning-bg dark:bg-amber-500/10', c.type === 'added' && 'bg-success-bg dark:bg-emerald-500/10', c.type === 'removed' && 'bg-danger-bg dark:bg-red-500/10')}
                       >
-                        <td className="px-3 py-1.5 font-mono text-xs font-semibold text-ink">
+                        <td className="px-3 py-1.5 code-id text-xs font-medium text-ink">
                           {c.cell}
                           <span className="ml-2 font-sans text-[10px] font-bold text-muted uppercase">{t(`driveIntel.compare.${c.type}`)}</span>
                         </td>
-                        <td className="px-3 py-1.5 break-all">{c.old !== null && <span className={clsx(c.type === 'removed' || c.type === 'changed' ? 'text-red-700 line-through dark:text-red-300' : '')}>{c.old}</span>}</td>
+                        <td className="px-3 py-1.5 break-all">{c.old !== null && <span className={clsx(c.type === 'removed' || c.type === 'changed' ? 'text-danger-fg line-through dark:text-red-300' : '')}>{c.old}</span>}</td>
                         <td className="px-3 py-1.5 break-all">
                           {c.new !== null && (
-                            <span className={clsx('inline-flex items-center gap-1', c.type === 'added' ? 'text-emerald-700 dark:text-emerald-300' : 'font-semibold text-amber-800 dark:text-amber-300')}>
+                            <span className={clsx('inline-flex items-center gap-1', c.type === 'added' ? 'text-success-fg dark:text-emerald-300' : 'font-semibold text-warning-fg dark:text-amber-300')}>
                               {c.type === 'changed' && <ArrowRight className="size-3 shrink-0" aria-hidden />}
                               {c.new}
                             </span>
@@ -115,25 +115,25 @@ const Result = ({ data }: { data: CompareResponse }) => {
       <div className="flex flex-wrap items-center gap-3 text-sm">
         <span className="font-semibold text-ink">{t('driveIntel.compare.stats', r.stats)}</span>
         <span className="inline-flex items-center gap-1 text-xs text-muted">
-          <del className="rounded-sm bg-red-100 px-1 text-red-800 dark:bg-red-500/20 dark:text-red-200">abc</del> {t('driveIntel.compare.legendDel')}
+          <del className="rounded-sm bg-danger-bg px-1 text-danger-fg dark:bg-red-500/20 dark:text-red-200">abc</del> {t('driveIntel.compare.legendDel')}
         </span>
         <span className="inline-flex items-center gap-1 text-xs text-muted">
-          <ins className="rounded-sm bg-emerald-100 px-1 text-emerald-800 no-underline dark:bg-emerald-500/20 dark:text-emerald-200">abc</ins> {t('driveIntel.compare.legendIns')}
+          <ins className="rounded-sm bg-success-bg px-1 text-success-fg no-underline dark:bg-emerald-500/20 dark:text-emerald-200">abc</ins> {t('driveIntel.compare.legendIns')}
         </span>
         {r.chunks.length > 1 && r.chunks.length !== changed.length && (
           <label className="ml-auto inline-flex items-center gap-2 text-xs text-muted">
-            <input type="checkbox" className="size-4 accent-brand-600" checked={showSame} onChange={(e) => setShowSame(e.target.checked)} />
+            <input type="checkbox" className="size-4 accent-primary" checked={showSame} onChange={(e) => setShowSame(e.target.checked)} />
             {t('driveIntel.compare.showUnchanged')}
           </label>
         )}
       </div>
       {r.mode === 'lines' && <p className="text-xs text-muted">{t('driveIntel.compare.linesMode')}</p>}
-      {r.truncated && <p className="text-xs text-amber-700">{t('driveIntel.compare.truncated')}</p>}
+      {r.truncated && <p className="text-xs text-warning-fg">{t('driveIntel.compare.truncated')}</p>}
       {!changed.length && <p className="rounded-xl border border-dashed border-line p-6 text-center text-sm text-muted">{t('driveIntel.compare.unchanged')}</p>}
       {shown.map((c, i) => (
         <section key={c.page ?? i} className="overflow-hidden rounded-xl border border-line">
           {c.page !== null && (
-            <header className="border-b border-line bg-surface px-3 py-1.5 text-xs font-semibold text-muted">
+            <header className="border-b border-line bg-sunken px-3 py-1.5 text-xs font-semibold text-muted">
               {c.changed ? t('driveIntel.compare.page', { page: c.page }) : t('driveIntel.compare.pageUnchanged', { page: c.page })}
             </header>
           )}
@@ -190,7 +190,7 @@ export default function CompareDialog({ item, onClose }: { item: DriveItem; onCl
       onClose={onClose}
       title={t('driveIntel.compare.title')}
       description={<span className="block truncate">{item.name}</span>}
-      icon={<FileDiff className="mt-1 size-5 shrink-0 text-brand-600" aria-hidden />}
+      icon={<FileDiff className="mt-1 size-5 shrink-0 text-link" aria-hidden />}
       closeLabel={t('admin.common.close')}
       size="2xl"
       mobile="full"
@@ -229,7 +229,7 @@ export default function CompareDialog({ item, onClose }: { item: DriveItem; onCl
                   <Spinner className="size-4" /> {t('driveIntel.compare.loading')}
                 </div>
               ) : cmp.isError ? (
-                <p className="text-sm text-danger">{driveError(cmp.error)}</p>
+                <p className="text-sm text-danger-fg">{driveError(cmp.error)}</p>
               ) : cmp.data ? (
                 <Result data={cmp.data} />
               ) : null}

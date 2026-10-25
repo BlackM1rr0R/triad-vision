@@ -82,7 +82,7 @@ export const AiDocActions = ({ docId, checks, name, mimeType, onChanged }: { doc
         type="button"
         onClick={() => recheck.mutate()}
         disabled={recheck.isPending}
-        className="grid size-8 place-items-center rounded-lg text-muted transition hover:bg-brand-50 hover:text-brand-700 disabled:opacity-50"
+        className="grid size-8 place-items-center rounded-lg text-muted transition hover:bg-primary/[0.06] hover:text-link disabled:opacity-50"
         title={t('aiDocs.check.recheck')}
         aria-label={`${t('aiDocs.check.recheck')}: ${name}`}
       >
@@ -92,7 +92,7 @@ export const AiDocActions = ({ docId, checks, name, mimeType, onChanged }: { doc
         <button
           type="button"
           onClick={() => setDraft(true)}
-          className="grid size-8 place-items-center rounded-lg text-muted transition hover:bg-brand-50 hover:text-brand-700"
+          className="grid size-8 place-items-center rounded-lg text-muted transition hover:bg-primary/[0.06] hover:text-link"
           title={t('aiDocs.draft.action')}
           aria-label={`${t('aiDocs.draft.action')}: ${name}`}
         >
@@ -100,7 +100,7 @@ export const AiDocActions = ({ docId, checks, name, mimeType, onChanged }: { doc
         </button>
       )}
       {open && ai && (
-        <span className="absolute top-full right-0 z-30 mt-1 block w-72 max-w-[80vw] rounded-lg border border-line bg-card p-3 text-left text-xs text-ink shadow-xl">
+        <span className="absolute top-full right-0 z-30 mt-1 block w-72 max-w-[80vw] rounded-lg border border-line bg-card p-3 text-left text-xs text-ink shadow-[var(--tv-shadow-raised)]">
           <span className="mb-1 block font-semibold">
             {t(`aiDocs.check.chip.${state}`)} · {t(`aiDocs.check.by.${ai.by}`)} · {new Date(ai.at).toLocaleString(i18n.resolvedLanguage)}
           </span>

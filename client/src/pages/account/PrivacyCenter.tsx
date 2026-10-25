@@ -67,8 +67,8 @@ const usePrivacyError = () => {
 
 const Panel = ({ title, icon: Icon, intro, children, id }: { title: string; icon: LucideIcon; intro?: ReactNode; children: ReactNode; id?: string }) => (
   <section className="card card-pad" aria-labelledby={id}>
-    <h2 id={id} className="flex items-center gap-2.5 text-lg font-bold text-navy-900">
-      <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-brand-50 text-brand-600">
+    <h2 id={id} className="type-card-title flex items-center gap-3">
+      <span className="grid size-11 shrink-0 place-items-center rounded-xl chip-soft">
         <Icon className="size-4.5" aria-hidden />
       </span>
       {title}
@@ -105,18 +105,18 @@ const ConsentSwitch = ({
   const phoneMissing = (type === 'WHATSAPP' || type === 'SMS') && !state.hasPhone;
   return (
     <div className="flex items-start gap-4 rounded-xl border border-line bg-card p-4">
-      <span className="grid size-10 shrink-0 place-items-center rounded-lg bg-surface text-brand-600">
+      <span className="grid size-10 shrink-0 place-items-center rounded-xl chip-soft">
         <Icon className="size-5" aria-hidden />
       </span>
       <div className="min-w-0 flex-1">
-        <p id={`${id}-l`} className="text-sm font-semibold text-navy-900">
+        <p id={`${id}-l`} className="text-sm font-semibold text-ink">
           {t(`privacy.consentType.${type}`)}
         </p>
         <p id={`${id}-h`} className="text-xs leading-relaxed text-muted">
           {t(`privacy.consents.hint.${type}`)}
         </p>
         <p className="mt-1 text-[11px] text-muted">{c.at ? t('privacy.consents.lastChange', { date: dateTime(c.at) }) : t('privacy.consents.never')}</p>
-        {phoneMissing && checked && <p className="mt-1 text-[11px] text-amber-700">{t('privacy.consents.noPhone')}</p>}
+        {phoneMissing && checked && <p className="mt-1 text-[11px] text-warning-fg">{t('privacy.consents.noPhone')}</p>}
       </div>
       <button
         type="button"
@@ -128,10 +128,10 @@ const ConsentSwitch = ({
         onClick={() => onChange(type, !checked)}
         className={clsx(
           'relative mt-1 inline-flex h-7 w-12 shrink-0 items-center rounded-full transition-colors disabled:opacity-60',
-          checked ? 'bg-brand-600' : 'bg-slate-300',
+          checked ? 'bg-primary' : 'bg-line-strong',
         )}
       >
-        <span className={clsx('inline-block size-5 rounded-full bg-white shadow transition-transform', checked ? 'translate-x-6' : 'translate-x-1')} />
+        <span className={clsx('inline-block size-5 rounded-full bg-card shadow transition-transform', checked ? 'translate-x-6' : 'translate-x-1')} />
       </button>
     </div>
   );
@@ -161,7 +161,7 @@ const ConsentsPanel = ({ state }: { state: PrivacyState }) => {
       <p className="mt-3 text-xs leading-relaxed text-muted">{t('privacy.consents.serviceMail')}</p>
       {given.length > 0 && (
         <div className="mt-5 border-t border-line pt-4">
-          <h3 className="text-sm font-semibold text-navy-900">{t('privacy.consents.given')}</h3>
+          <h3 className="text-sm font-semibold text-ink">{t('privacy.consents.given')}</h3>
           <ul className="mt-2 space-y-1.5">
             {given.map((k) => {
               const c = state.consents[k];
@@ -199,7 +199,7 @@ const HistoryPanel = ({ state }: { state: PrivacyState }) => {
               <li key={r.id} className="flex flex-wrap items-start justify-between gap-x-4 gap-y-1 py-2.5">
                 <div className="min-w-0">
                   <p className="text-sm font-medium text-ink">{typeLabel(r.type)}</p>
-                  <p className={clsx('text-xs font-semibold', r.granted ? 'text-emerald-700' : 'text-amber-700')}>
+                  <p className={clsx('text-xs font-semibold', r.granted ? 'text-success-fg' : 'text-warning-fg')}>
                     {r.granted ? t('privacy.history.granted') : t('privacy.history.withdrawn')}
                   </p>
                 </div>
@@ -212,7 +212,7 @@ const HistoryPanel = ({ state }: { state: PrivacyState }) => {
             ))}
           </ol>
           {state.history.length > 8 && (
-            <button type="button" className="mt-3 min-h-10 text-sm font-semibold text-brand-700 hover:underline" onClick={() => setAll((v) => !v)}>
+            <button type="button" className="mt-3 min-h-10 text-sm font-semibold text-link hover:underline" onClick={() => setAll((v) => !v)}>
               {all ? '−' : `+${state.history.length - 8}`}
             </button>
           )}
@@ -263,20 +263,20 @@ const RequestForm = ({ state }: { state: PrivacyState }) => {
                 key={k}
                 className={clsx(
                   'flex cursor-pointer gap-3 rounded-xl border p-3.5 transition',
-                  type === k ? (k === 'DELETION' ? 'border-red-400 bg-red-50/60' : 'border-brand-500 bg-brand-50/60') : 'border-line bg-card hover:border-brand-300',
+                  type === k ? (k === 'DELETION' ? 'border-danger-border bg-danger-bg' : 'border-line-strong bg-sunken') : 'border-line bg-card hover:border-line-strong',
                   busyType && 'cursor-not-allowed opacity-60',
                 )}
               >
                 <input
                   type="radio"
                   name={`${uid}-type`}
-                  className="mt-1 size-4 shrink-0 accent-brand-600"
+                  className="mt-1 size-4 shrink-0 accent-primary"
                   checked={type === k}
                   disabled={busyType}
                   onChange={() => setType(k)}
                 />
                 <span className="min-w-0">
-                  <span className={clsx('block text-sm font-semibold', k === 'DELETION' ? 'text-red-800' : 'text-navy-900')}>{t(`privacy.requests.type.${k}.label`)}</span>
+                  <span className={clsx('block text-sm font-semibold', k === 'DELETION' ? 'text-danger-fg' : 'text-ink')}>{t(`privacy.requests.type.${k}.label`)}</span>
                   <span className="block text-xs leading-relaxed text-muted">{busyType ? t('privacy.requests.open') : t(`privacy.requests.type.${k}.hint`)}</span>
                 </span>
               </label>
@@ -294,7 +294,7 @@ const RequestForm = ({ state }: { state: PrivacyState }) => {
           }}
         >
           {deletion && (
-            <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-900" role="note">
+            <div className="rounded-xl border border-danger-border bg-danger-bg p-4 text-sm text-danger-fg" role="note">
               <p className="flex items-center gap-2 font-semibold">
                 <AlertTriangle className="size-4 shrink-0" aria-hidden />
                 {t('privacy.deletion.title')}
@@ -330,7 +330,7 @@ const RequestForm = ({ state }: { state: PrivacyState }) => {
                 <input id={`${uid}-pw`} type="password" autoComplete="current-password" className="input" value={password} onChange={(e) => setPassword(e.target.value)} />
               </div>
               <label className="flex items-start gap-2.5 text-sm text-ink">
-                <input type="checkbox" className="mt-0.5 size-4 shrink-0 accent-red-600" checked={understood} onChange={(e) => setUnderstood(e.target.checked)} />
+                <input type="checkbox" className="mt-0.5 size-4 shrink-0 accent-danger" checked={understood} onChange={(e) => setUnderstood(e.target.checked)} />
                 {t('privacy.deletion.understand')}
               </label>
             </>
@@ -371,7 +371,7 @@ const MyRequests = ({ state }: { state: PrivacyState }) => {
           {state.requests.map((r) => (
             <li key={r.id} className="rounded-xl border border-line bg-card p-4">
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <p className="text-sm font-semibold text-navy-900">{t(`privacy.typeName.${r.type}`)}</p>
+                <p className="text-sm font-semibold text-ink">{t(`privacy.typeName.${r.type}`)}</p>
                 <StatusBadge status={r.status} />
               </div>
               <p className="mt-1 text-xs text-muted">
@@ -381,13 +381,13 @@ const MyRequests = ({ state }: { state: PrivacyState }) => {
               </p>
               {r.message && <p className="mt-2 text-sm whitespace-pre-line text-ink/80">{r.message}</p>}
               {r.decisionNote && r.type !== 'EXPORT' && (
-                <p className="mt-2 rounded-lg bg-surface px-3 py-2 text-sm whitespace-pre-line text-ink">
+                <p className="mt-2 rounded-lg bg-sunken px-3 py-2 text-sm whitespace-pre-line text-ink">
                   <span className="font-semibold">{t('privacy.requests.decision')}: </span>
                   {r.decisionNote}
                 </p>
               )}
               {r.status === 'OPEN' && (
-                <button type="button" className="mt-2 min-h-10 text-sm font-semibold text-brand-700 hover:underline" onClick={() => setCancelId(r.id)}>
+                <button type="button" className="mt-2 min-h-10 text-sm font-semibold text-link hover:underline" onClick={() => setCancelId(r.id)}>
                   {t('privacy.requests.cancel')}
                 </button>
               )}
@@ -423,7 +423,7 @@ export default function AccountPrivacyCenter() {
 
   if (isLoading) {
     return (
-      <div className="grid min-h-[40vh] place-items-center text-brand-600" role="status">
+      <div className="grid min-h-[40vh] place-items-center text-primary" role="status">
         <Spinner className="size-8 border-[3px]" />
       </div>
     );
@@ -451,8 +451,8 @@ export default function AccountPrivacyCenter() {
   return (
     <div className="space-y-6">
       <section className="card card-pad">
-        <h1 className="flex items-center gap-2.5 text-xl font-bold text-navy-900 sm:text-2xl">
-          <ShieldCheck className="size-6 shrink-0 text-brand-600" aria-hidden />
+        <h1 className="flex items-center gap-2.5 text-xl font-semibold text-ink sm:text-2xl">
+          <ShieldCheck className="size-6 shrink-0 text-primary" aria-hidden />
           {t('privacy.page.title')}
         </h1>
         <p className="mt-2 text-sm leading-relaxed text-muted">{t('privacy.page.subtitle')}</p>
@@ -462,9 +462,9 @@ export default function AccountPrivacyCenter() {
             { k: 'why', icon: ShieldCheck, text: t('privacy.page.why') },
             { k: 'howLong', icon: Clock, text: t('privacy.page.howLong', { months: data.retention.months }) },
           ].map(({ k, icon: Icon, text }) => (
-            <div key={k} className="rounded-xl bg-surface p-4">
-              <dt className="flex items-center gap-2 text-sm font-semibold text-navy-900">
-                <Icon className="size-4 text-brand-600" aria-hidden />
+            <div key={k} className="rounded-xl bg-sunken p-4">
+              <dt className="flex items-center gap-2 text-sm font-semibold text-ink">
+                <Icon className="size-4 text-link" aria-hidden />
                 {t(`privacy.page.${k}Title`)}
               </dt>
               <dd className="mt-1.5 text-sm leading-relaxed text-ink/80">{text}</dd>
@@ -472,7 +472,7 @@ export default function AccountPrivacyCenter() {
           ))}
         </dl>
         <p className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
-          <Link to="/privacy" target="_blank" rel="noopener" className="inline-flex min-h-10 items-center gap-1.5 font-semibold text-brand-700 hover:underline">
+          <Link to="/privacy" target="_blank" rel="noopener" className="inline-flex min-h-10 items-center gap-1.5 font-semibold text-link hover:underline">
             {t('privacy.page.policyLink')}
             <ExternalLink className="size-3.5" aria-hidden />
           </Link>
@@ -487,14 +487,14 @@ export default function AccountPrivacyCenter() {
       </section>
 
       <section aria-labelledby="privacy-overview">
-        <h2 id="privacy-overview" className="mb-3 text-lg font-bold text-navy-900">
+        <h2 id="privacy-overview" className="mb-3 text-lg font-semibold text-ink">
           {t('privacy.overview.title')}
         </h2>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
           {cards.map(({ key, icon: Icon }) => (
             <div key={key} className="rounded-xl border border-line bg-card p-4">
-              <Icon className="size-4.5 text-brand-600" aria-hidden />
-              <p className="mt-2 font-display text-2xl font-bold text-navy-900 tabular-nums">{data.overview[key]}</p>
+              <Icon className="size-4.5 text-primary" aria-hidden />
+              <p className="mt-2 font-display text-2xl font-bold text-ink tabular-nums">{data.overview[key]}</p>
               <p className="text-xs text-muted">{t(`privacy.overview.${key}`)}</p>
             </div>
           ))}

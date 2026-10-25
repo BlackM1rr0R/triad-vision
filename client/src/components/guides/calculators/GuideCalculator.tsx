@@ -12,6 +12,7 @@ import { costInput, DEFAULT_COST_CHOICES, useCostEstimate } from '@/lib/calculat
 import { calculateSalary, FEDERAL_STATES, STATE_NAMES, type FederalState, type TaxClass } from '@/lib/salary';
 import { fmtMoney, useCostConfig, type Money } from '@/components/marketing/api';
 import { useL10n } from '@/lib/l10n';
+import { buttonClass } from '@/components/ui/Button';
 import type { GuideCalculatorType } from './types';
 
 registerCopy(pagesSeo);
@@ -34,14 +35,14 @@ const Frame = ({ title, icon: Icon, to, children }: { title: string; icon: Lucid
   const { t } = useTranslation();
   const id = useId();
   return (
-    <section aria-labelledby={id} className="card card-pad my-10 border-brand-100">
+    <section aria-labelledby={id} className="card card-pad my-10 rounded-3xl">
       <div className="flex items-start gap-3">
-        <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-brand-50 text-brand-600">
+        <span className="grid size-11 shrink-0 place-items-center rounded-xl chip-sage">
           <Icon className="size-5" aria-hidden />
         </span>
         <div className="min-w-0">
           <p className="eyebrow">{t('guideCalc.eyebrow')}</p>
-          <h3 id={id} className="mt-0.5 font-display text-lg leading-snug font-bold text-navy-900">
+          <h3 id={id} className="mt-0.5 font-display text-lg leading-snug font-semibold text-ink">
             {title}
           </h3>
         </div>
@@ -49,8 +50,8 @@ const Frame = ({ title, icon: Icon, to, children }: { title: string; icon: Lucid
       <div className="mt-5">{children}</div>
       <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-line pt-4">
         <p className="text-xs text-muted">{t('guideCalc.live')}</p>
-        <Link to={to} className="btn-primary btn-sm group">
-          {t('guideCalc.openFull')} <ArrowRight className="size-4 transition group-hover:translate-x-0.5" aria-hidden />
+        <Link to={to} className={buttonClass({ variant: 'outline' })}>
+          {t('guideCalc.openFull')} <ArrowRight className="size-4" aria-hidden />
         </Link>
       </div>
     </section>
@@ -72,8 +73,8 @@ const SelectField = ({ label, value, onChange, children }: { label: string; valu
 };
 
 const Tick = ({ checked, onChange, children }: { checked: boolean; onChange: (v: boolean) => void; children: ReactNode }) => (
-  <label className="flex cursor-pointer items-start gap-2.5 rounded-lg border border-line p-2.5 text-sm leading-snug text-ink hover:border-brand-400 has-[:checked]:border-brand-500 has-[:checked]:bg-brand-50">
-    <input type="checkbox" className="mt-0.5 size-4 shrink-0 accent-brand-600" checked={checked} onChange={(e) => onChange(e.target.checked)} />
+  <label className="flex cursor-pointer items-start gap-2.5 min-h-11 rounded-xl border border-line p-2.5 text-sm leading-snug text-ink hover:border-line-strong has-[:checked]:border-primary has-[:checked]:bg-sunken">
+    <input type="checkbox" className="mt-0.5 size-4 shrink-0 accent-primary" checked={checked} onChange={(e) => onChange(e.target.checked)} />
     <span>{children}</span>
   </label>
 );
@@ -90,7 +91,7 @@ const Verdict = ({ ok, title, children }: { ok: boolean; title: string; children
 
 /** Result column (polite live region: screen readers hear the new result after a change). */
 const Result = ({ children }: { children: ReactNode }) => (
-  <div className="rounded-xl bg-surface p-4" aria-live="polite">
+  <div className="rounded-2xl bg-sunken p-4 sm:p-5" aria-live="polite">
     {children}
   </div>
 );
@@ -159,7 +160,7 @@ const ChancenkarteWidget = () => {
         <Result>
           <p className="text-xs font-semibold tracking-wide text-muted uppercase">{t('ckCalc.result')}</p>
           <div className="mt-2 flex items-end justify-between gap-3">
-            <p className="font-display text-3xl font-extrabold text-ink tabular-nums">{t('ckCalc.points', { count: r.points })}</p>
+            <p className="font-display text-3xl font-semibold text-ink tabular-nums">{t('ckCalc.points', { count: r.points })}</p>
             <p className="pb-1 text-xs text-muted">{t('ckCalc.of')}</p>
           </div>
           <div className="mt-3 h-2 overflow-hidden rounded-full bg-card" aria-hidden>
@@ -203,13 +204,13 @@ const BlueCardWidget = () => {
             </div>
             <fieldset>
               <legend className="label">{t('bcCheck.period')}</legend>
-              <div className="grid grid-cols-2 gap-1 rounded-lg border border-line bg-surface p-1">
+              <div className="grid grid-cols-2 gap-1 rounded-lg border border-line bg-sunken p-1">
                 {(['year', 'month'] as const).map((p) => (
                   <label
                     key={p}
                     className={clsx(
-                      'cursor-pointer rounded-md px-3 py-1.5 text-center text-sm font-semibold transition-colors has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-brand-500',
-                      period === p ? 'bg-brand-600 text-white shadow-sm' : 'text-muted hover:text-ink',
+                      'cursor-pointer rounded-md px-3 py-1.5 text-center text-sm font-semibold transition-colors has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-focus/40',
+                      period === p ? 'bg-primary text-primary-contrast shadow-sm' : 'text-muted hover:text-ink',
                     )}
                   >
                     <input type="radio" className="sr-only" name={`${id}-p`} checked={period === p} onChange={() => setPeriod(p)} />
@@ -244,7 +245,7 @@ const BlueCardWidget = () => {
             </div>
           ) : (
             <>
-              <p className="mt-2 font-display text-2xl font-extrabold text-ink tabular-nums">{t('bcCheck.yourSalary', { amount: fmt.format(r.yearly) })}</p>
+              <p className="mt-2 font-display text-2xl font-semibold text-ink tabular-nums">{t('bcCheck.yourSalary', { amount: fmt.format(r.yearly) })}</p>
               <p className="mt-1 text-sm text-muted">{t('bcCheck.threshold', { year, amount: fmt.format(r.threshold) })}</p>
               <Verdict ok={r.ok} title={r.salaryOk ? t('bcCheck.ok') : t('bcCheck.below')}>
                 <p>{r.salaryOk ? t('bcCheck.okText', { diff: fmt.format(r.diff) }) : t('bcCheck.belowText', { diff: fmt.format(r.diff) })}</p>
@@ -302,7 +303,7 @@ const SalaryWidget = () => {
         </div>
         <Result>
           <p className="text-xs font-semibold tracking-wide text-muted uppercase">{t('guideCalc.salary.net')}</p>
-          <p className="mt-2 font-display text-3xl font-extrabold text-ink tabular-nums">{fmt.format(r.monthly.net)}</p>
+          <p className="mt-2 font-display text-3xl font-semibold text-ink tabular-nums">{fmt.format(r.monthly.net)}</p>
           <div className="mt-3 h-2 overflow-hidden rounded-full bg-card" aria-hidden>
             <div className="h-full rounded-full bg-success transition-[width] duration-300" style={{ width: `${Math.round((1 - r.deductionRate) * 100)}%` }} />
           </div>
@@ -374,7 +375,7 @@ const CostWidget = () => {
             ) : (
               <div className={clsx('transition-opacity', isFetching && 'opacity-60')}>
                 <p className="text-xs font-semibold tracking-wide text-muted uppercase">{t('guideCalc.cost.oneTime')}</p>
-                <p className="mt-2 font-display text-2xl font-extrabold text-ink tabular-nums">{eur(est.oneTime)}</p>
+                <p className="mt-2 font-display text-2xl font-semibold text-ink tabular-nums">{eur(est.oneTime)}</p>
                 {est.refundable[1] > 0 && (
                   <p className="mt-3 flex items-start justify-between gap-3 text-sm">
                     <span className="text-muted">{t('guideCalc.cost.refundable')}</span>

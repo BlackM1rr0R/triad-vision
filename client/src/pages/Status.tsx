@@ -42,10 +42,10 @@ const Result = ({ s, family, onAgain }: { s: PublicStatus; family: boolean; onAg
             s.caseNumber
           )}
         </p>
-        {s.step >= 0 && <p className="text-sm font-semibold text-brand-700">{t('site.status.stepOf', { step: s.step + 1, total: s.steps })}</p>}
+        {s.step >= 0 && <p className="text-sm font-semibold text-link">{t('site.status.stepOf', { step: s.step + 1, total: s.steps })}</p>}
       </div>
       {s.state === 'CLOSED' ? (
-        <p className="rounded-xl bg-surface p-4 font-semibold text-navy-900">{t('site.status.closed')}</p>
+        <p className="rounded-xl bg-sunken p-4 font-semibold text-ink">{t('site.status.closed')}</p>
       ) : (
         <ol className="grid gap-2 sm:grid-cols-6 sm:gap-1.5">
           {STEP_KEYS.map((k, i) => {
@@ -56,19 +56,18 @@ const Result = ({ s, family, onAgain }: { s: PublicStatus; family: boolean; onAg
                 <span
                   className={clsx(
                     'grid size-8 shrink-0 place-items-center rounded-full text-sm font-bold sm:h-1.5 sm:w-full sm:rounded-full',
-                    done ? 'bg-brand-600 text-white' : current ? 'bg-brand-100 text-brand-700 ring-2 ring-brand-500 sm:ring-0' : 'bg-surface text-muted',
-                    current && 'sm:bg-brand-400',
+                    done ? 'bg-primary text-primary-contrast' : current ? 'bg-highlight-bg text-ink ring-2 ring-highlight sm:bg-highlight sm:ring-0' : 'bg-sunken text-muted',
                   )}
                 >
                   <span className="sm:hidden">{done ? <Check className="size-4" aria-hidden /> : i + 1}</span>
                 </span>
-                <span className={clsx('text-sm sm:text-xs', current ? 'font-bold text-navy-900' : done ? 'text-ink' : 'text-muted')}>{t(`site.status.steps.${k}`)}</span>
+                <span className={clsx('text-sm sm:text-xs', current ? 'font-bold text-ink' : done ? 'text-ink' : 'text-muted')}>{t(`site.status.steps.${k}`)}</span>
               </li>
             );
           })}
         </ol>
       )}
-      {s.state !== 'CLOSED' && <p className="rounded-xl border border-brand-100 bg-brand-50 p-4 text-sm font-medium text-navy-900">{t(`site.status.ball.${s.ball}`)}</p>}
+      {s.state !== 'CLOSED' && <p className="rounded-2xl border border-line bg-sunken p-4 text-sm font-medium text-ink">{t(`site.status.ball.${s.ball}`)}</p>}
       <p className="flex items-center gap-2 text-sm text-muted">
         <Clock className="size-4 shrink-0" aria-hidden />
         {t('site.status.lastUpdate', { date: formatDay(s.lastUpdate, i18n.language) })}
@@ -78,7 +77,7 @@ const Result = ({ s, family, onAgain }: { s: PublicStatus; family: boolean; onAg
           {t('site.status.login')}
         </Link>
         {!family && (
-          <button type="button" onClick={onAgain} className="btn-ghost min-h-11">
+          <button type="button" onClick={onAgain} className="btn-secondary min-h-11">
             {t('site.status.again')}
           </button>
         )}
@@ -141,7 +140,7 @@ export default function StatusPage() {
       <PageHero title={t('site.status.title')} subtitle={t('site.status.subtitle')} image="https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=2000&q=70" crumb={{ to: '/tools', label: t('siteNav.tools') }} />
       <section className="section">
         <div className="container-x max-w-3xl">
-          <div className="card card-pad">
+          <div className="card card-pad rounded-3xl">
             {result ? (
               <Result s={result.status} family={result.family} onAgain={() => setResult(null)} />
             ) : (
@@ -176,7 +175,7 @@ export default function StatusPage() {
                   <input id={ids.hp} tabIndex={-1} autoComplete="off" value={website} onChange={(e) => setWebsite(e.target.value)} />
                 </div>
                 {error && (
-                  <p role="alert" className="flex gap-2 rounded-xl bg-red-50 p-3 text-sm text-red-800">
+                  <p role="alert" className="flex gap-2 rounded-xl bg-danger-bg p-3 text-sm text-danger-fg">
                     <Lock className="mt-0.5 size-4 shrink-0" aria-hidden />
                     {error}
                   </p>
@@ -189,7 +188,7 @@ export default function StatusPage() {
             )}
           </div>
           <p className="mt-4 flex items-start gap-2 text-sm text-muted">
-            <ShieldCheck className="mt-0.5 size-4 shrink-0 text-brand-600" aria-hidden />
+            <ShieldCheck className="mt-0.5 size-4 shrink-0 text-success-fg" aria-hidden />
             {t('site.status.privacy')}
           </p>
         </div>

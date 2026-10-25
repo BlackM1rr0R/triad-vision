@@ -4,7 +4,8 @@ import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import { ArrowRight, BadgeCheck, CalendarClock, CheckCircle2, ClipboardCheck, Compass, Euro, FileText, Info, Languages, MessageCircle, Phone, Users } from 'lucide-react';
 import { PageHero, PageHeroSkeleton } from '@/components/layout/PageHero';
-import { Magnetic, Reveal, Stagger, StaggerItem } from '@/components/motion';
+import { Reveal, Stagger, StaggerItem } from '@/components/motion';
+import { buttonClass } from '@/components/ui/Button';
 import { ServiceCard, VisaCard } from '@/components/cards';
 import { Icon } from '@/components/ui/Icon';
 import { Accordion } from '@/components/visa/Accordion';
@@ -27,11 +28,13 @@ import { CostCalculatorTeaser } from '@/components/marketing/CostCalculatorTease
 
 registerCopy(pagesVisa);
 
+const CHIPS = ['chip-soft', 'chip-sage', 'chip-sky', 'chip-peach'];
+
 const Block = ({ id, eyebrow, title, subtitle, children }: { id?: string; eyebrow: string; title: string; subtitle?: string; children: ReactNode }) => (
   <section id={id} className="scroll-mt-28 border-t border-line pt-10 sm:pt-12">
     <Reveal y={24}>
       <span className="eyebrow">{eyebrow}</span>
-      <h2 className="mt-2 font-display text-2xl font-extrabold text-navy-900 sm:text-[1.75rem]">{title}</h2>
+      <h2 className="mt-2 font-display text-2xl font-semibold tracking-[-0.01em] text-ink sm:text-[1.75rem]">{title}</h2>
       {subtitle && <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted sm:text-[0.95rem]">{subtitle}</p>}
     </Reveal>
     <div className="mt-6">{children}</div>
@@ -117,28 +120,28 @@ export default function VisaDetail() {
     <>
       <PageHero title={tr(data.title)} subtitle={tr(data.summary)} image={data.image.replace('w=1200', 'w=2000')} crumb={{ to: '/visas', label: t('nav.visas') }} morph={{ kind: 'visa', id: data.slug }}>
         <div className="mt-6 flex flex-wrap items-center gap-2">
-          <span className="glass inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-bold">
+          <span className="inline-flex items-center gap-2 rounded-full border border-line bg-card px-4 py-2 text-sm font-semibold text-ink shadow-[var(--tv-shadow-card)]">
             <Icon name={data.icon} className="size-4" /> {data.visaLabel}
           </span>
           {data.germanLevel && (
-            <span className="glass inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold">
-              <Languages className="size-4 text-brand-400" /> {data.germanLevel}
+            <span className="inline-flex items-center gap-2 rounded-full border border-line bg-card px-4 py-2 text-sm font-semibold text-ink shadow-[var(--tv-shadow-card)]">
+              <Languages className="size-4 text-muted" /> {data.germanLevel}
             </span>
           )}
         </div>
       </PageHero>
 
-      {/* Key facts — overlaps the hero edge */}
-      <div className="relative z-10 -mt-8 sm:-mt-10">
+      {/* Key facts */}
+      <div className="pt-8 sm:pt-10">
         <div className="container-x">
           <Stagger className="grid grid-cols-2 gap-2.5 sm:gap-4 lg:grid-cols-4">
-            {facts.map((f) => (
+            {facts.map((f, i) => (
               <StaggerItem key={f.label} className="h-full">
-                <div className="card flex h-full flex-col p-4 sm:p-5">
-                  <span className="grid size-10 place-items-center rounded-xl bg-brand-50 text-brand-700">{f.icon}</span>
+                <div className="card flex h-full flex-col rounded-3xl p-4 sm:p-5">
+                  <span className={`grid size-11 place-items-center rounded-xl ${CHIPS[i % CHIPS.length]}`}>{f.icon}</span>
                   <p className="mt-3 text-xs font-semibold tracking-wide text-muted uppercase">{f.label}</p>
-                  <div className="mt-1 font-display text-base leading-snug font-extrabold text-navy-900 tabular-nums sm:text-lg">{f.value}</div>
-                  <p className="mt-auto pt-1 text-[11px] text-muted">{f.hint}</p>
+                  <div className="mt-1 font-display text-base leading-snug font-semibold text-ink tabular-nums sm:text-lg">{f.value}</div>
+                  <p className="mt-auto pt-1 text-xs text-muted">{f.hint}</p>
                 </div>
               </StaggerItem>
             ))}
@@ -152,8 +155,8 @@ export default function VisaDetail() {
             {/* Overview */}
             <div>
               <Reveal y={24}>
-                <h2 className="font-display text-2xl font-extrabold text-navy-900 sm:text-[1.75rem]">{t('visaDetail.overview')}</h2>
-                <div className="prose-tv mt-4 text-base sm:text-lg">
+                <h2 className="font-display text-2xl font-semibold tracking-[-0.01em] text-ink sm:text-[1.75rem]">{t('visaDetail.overview')}</h2>
+                <div className="prose-tv mt-4 max-w-[70ch] text-base sm:text-lg">
                   {tr(data.body)
                     .split(/\n{2,}/)
                     .map((p) => (
@@ -191,7 +194,7 @@ export default function VisaDetail() {
                     ariaLabel={t('visaDetail.timeline.aria')}
                   />
                   <p className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-line pt-4 text-sm">
-                    <strong className="font-bold text-navy-900">
+                    <strong className="font-semibold text-ink">
                       {t('visaDetail.timeline.total', {
                         min: totalMin,
                         max: totalMax,
@@ -206,7 +209,7 @@ export default function VisaDetail() {
             {hasSalary(data) && (
               <Block eyebrow={t('visaDetail.salary.eyebrow')} title={t('visaDetail.salary.title')} subtitle={t('visaDetail.salary.subtitle')}>
                 <div className="card card-pad">
-                  <p className="mb-6 font-display text-2xl font-extrabold text-navy-900 tabular-nums sm:text-3xl">
+                  <p className="mb-6 font-display text-2xl font-semibold text-ink tabular-nums sm:text-3xl">
                     {euro.range(data.salaryMin, data.salaryMax)}
                     <span className="ml-2 text-sm font-semibold text-muted">{t('visaDetail.facts.salaryHint')}</span>
                   </p>
@@ -230,7 +233,7 @@ export default function VisaDetail() {
                     })}
                   />
                   <div className="mt-5 space-y-1.5 border-t border-line pt-4 text-xs leading-relaxed text-muted">
-                    {trainee && <p className="font-semibold text-navy-900">{t('visaDetail.salary.trainee')}</p>}
+                    {trainee && <p className="font-semibold text-ink">{t('visaDetail.salary.trainee')}</p>}
                     <p className="flex items-start gap-1.5">
                       <Info className="mt-px size-3.5 shrink-0" /> {t('visasPage.indicative')} {t('visaDetail.salary.net')}
                     </p>
@@ -252,50 +255,47 @@ export default function VisaDetail() {
               <div className="card overflow-hidden">
                 <div className="relative h-40">
                   <img src={sized(data.image, 760)} alt="" loading="lazy" decoding="async" width={760} height={320} className="size-full object-cover" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-navy-950/80 to-transparent" />
-                  <span className="absolute bottom-3 left-4 rounded-md bg-white/90 px-2 py-1 text-xs font-bold text-brand-700">{data.visaLabel}</span>
+                  <span className="absolute bottom-3 left-4 rounded-full border border-line bg-card px-2.5 py-1 text-xs font-semibold text-ink shadow-[var(--tv-shadow-card)]">{data.visaLabel}</span>
                 </div>
                 <div className="card-pad">
-                  <h3 className="font-display text-lg font-bold text-navy-900">{t('visaDetail.side.title')}</h3>
+                  <h3 className="font-display text-lg font-semibold text-ink">{t('visaDetail.side.title')}</h3>
                   <p className="mt-1.5 text-sm text-muted">{t('visaDetail.side.text')}</p>
                   {trList(data.items).length > 0 && (
                     <>
-                      <p className="mt-5 text-xs font-bold tracking-wider text-muted uppercase">{t('visaDetail.highlights')}</p>
+                      <p className="mt-5 type-overline">{t('visaDetail.highlights')}</p>
                       <ul className="mt-2 space-y-2">
                         {trList(data.items).map((it) => (
-                          <li key={it} className="flex gap-2.5 text-sm text-navy-900">
-                            <CheckCircle2 className="size-4.5 shrink-0 text-brand-600" /> {it}
+                          <li key={it} className="flex gap-2.5 text-sm text-ink">
+                            <CheckCircle2 className="size-4.5 shrink-0 text-success" aria-hidden /> {it}
                           </li>
                         ))}
                       </ul>
                     </>
                   )}
                   <div className="mt-6 grid gap-2">
-                    <Magnetic className="w-full">
-                      <Link to="/register" className="btn-primary group w-full">
-                        {t('visaDetail.side.apply')} <ArrowRight className="size-4 transition group-hover:translate-x-1" />
-                      </Link>
-                    </Magnetic>
-                    <Link to="/eligibility" className="btn-ghost w-full">
+                    <Link to="/register" className={buttonClass({ size: 'lg', block: true })}>
+                      {t('visaDetail.side.apply')} <ArrowRight className="size-4" aria-hidden />
+                    </Link>
+                    <Link to="/eligibility" className={buttonClass({ variant: 'outline', block: true })}>
                       <Compass className="size-4" /> {t('visaDetail.side.check')}
                     </Link>
-                    <Link to="/cooperation" className="inline-flex items-center justify-center gap-1.5 py-2 text-sm font-semibold text-navy-900 hover:text-brand-600">
+                    <Link to="/cooperation" className="inline-flex min-h-11 items-center justify-center gap-1.5 text-sm font-semibold text-link hover:text-link-hover">
                       <BadgeCheck className="size-4" /> {t('visaDetail.side.employer')}
                     </Link>
                     {contact && (
                       <div className="grid grid-cols-2 gap-2 border-t border-line pt-3">
-                        <a href={`tel:${contact.phone.replace(/\s/g, '')}`} className="btn-secondary btn-sm">
+                        <a href={`tel:${contact.phone.replace(/\s/g, '')}`} className={buttonClass({ variant: 'secondary' })}>
                           <Phone className="size-4" /> {t('visaDetail.side.call')}
                         </a>
-                        <a href={`https://wa.me/${contact.whatsapp.replace(/\D/g, '')}`} target="_blank" rel="noreferrer" className="btn-secondary btn-sm">
+                        <a href={`https://wa.me/${contact.whatsapp.replace(/\D/g, '')}`} target="_blank" rel="noreferrer" className={buttonClass({ variant: 'secondary' })}>
                           <MessageCircle className="size-4" /> WhatsApp
                         </a>
                       </div>
                     )}
                   </div>
                   {documents.length > 0 && (
-                    <a href="#documents" className="mt-4 flex items-center gap-2 rounded-lg bg-surface px-3 py-2.5 text-xs font-semibold text-navy-900 hover:text-brand-700">
-                      <FileText className="size-4 text-brand-600" /> {t('visaDetail.documents.title')} · {documents.length}
+                    <a href="#documents" className="mt-4 flex min-h-11 items-center gap-2 rounded-xl bg-sunken px-3 py-2.5 text-sm font-semibold text-ink hover:text-link-hover">
+                      <FileText className="size-4 text-muted" aria-hidden /> {t('visaDetail.documents.title')} · {documents.length}
                     </a>
                   )}
                 </div>
@@ -309,11 +309,11 @@ export default function VisaDetail() {
       <CostCalculatorTeaser visa={data.slug} />
 
       {services.length > 0 && (
-        <section className="section bg-surface">
+        <section className="section bg-sunken">
           <div className="container-x">
             <div className="section-head max-w-3xl">
               <span className="eyebrow">{t('visaDetail.services.eyebrow')}</span>
-              <h2 className="h-section mt-2 text-navy-900">{t('visaDetail.services.title')}</h2>
+              <h2 className="h-section mt-2 text-ink">{t('visaDetail.services.title')}</h2>
               <p className="mt-3 text-muted sm:text-lg">{t('visaDetail.services.subtitle')}</p>
             </div>
             <div className="mobile-rail sm:grid-cols-2 sm:gap-5 lg:grid-cols-4 lg:gap-6">
@@ -328,7 +328,7 @@ export default function VisaDetail() {
       {others.length > 0 && (
         <section className="section">
           <div className="container-x">
-            <h2 className="h-section section-head text-navy-900">{t('visaDetail.others')}</h2>
+            <h2 className="h-section section-head text-ink">{t('visaDetail.others')}</h2>
             <Stagger className="grid-cards sm:grid-cols-2 lg:grid-cols-3">
               {others.map((v) => (
                 <StaggerItem key={v.id}>

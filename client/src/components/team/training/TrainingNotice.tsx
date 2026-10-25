@@ -21,7 +21,7 @@ export const TrainingNavBadge = ({ collapsed }: { collapsed: boolean }) => {
       title={label}
       aria-label={label}
       className={clsx(
-        'grid min-w-5 place-items-center rounded-full bg-amber-500 px-1 text-[11px] leading-5 font-bold text-white tabular-nums',
+        'grid min-w-5 place-items-center rounded-full border border-warning-border bg-warning-bg px-1.5 code-id text-[11px] leading-4 font-medium text-warning-fg tabular-nums',
         collapsed ? 'absolute top-0.5 right-0.5 min-w-4 text-[10px] leading-4' : 'ml-auto',
       )}
     >

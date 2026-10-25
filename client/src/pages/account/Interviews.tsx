@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
-import { CheckCircle2, Video, XCircle } from 'lucide-react';
+import { CheckCircle2, XCircle } from 'lucide-react';
 import { api } from '@/lib/api';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { registerCopy } from '@/i18n';
@@ -11,6 +11,7 @@ import { Spinner } from '@/components/ui/Spinner';
 import { Modal } from '@/components/admin/Modal';
 import { InterviewCard } from '@/components/ops/InterviewCard';
 import { toastOpsError, type Interview } from '@/components/ops/shared';
+import { CalendarDay } from '@/components/illustrations';
 
 registerCopy(pagesOps);
 
@@ -49,7 +50,7 @@ export default function AccountInterviews() {
   if (isLoading) {
     return (
       <div className="grid min-h-[30vh] place-items-center">
-        <Spinner className="size-8 text-brand-600" />
+        <Spinner className="size-8 text-primary" />
       </div>
     );
   }
@@ -83,18 +84,15 @@ export default function AccountInterviews() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="font-display text-xl font-bold text-navy-900 sm:text-2xl">{t('ops.account.title')}</h2>
+        <h2 className="type-page-title">{t('ops.account.title')}</h2>
         <p className="mt-1 text-sm text-muted">{t('ops.account.subtitle')}</p>
       </div>
 
       <section>
-        <h3 className="mb-3 text-sm font-bold text-navy-900">{t('ops.account.upcoming')}</h3>
+        <h3 className="mb-3 text-sm font-semibold text-ink">{t('ops.account.upcoming')}</h3>
         {data.upcoming.length === 0 ? (
           <div className="card flex flex-col items-center px-6 py-12 text-center">
-            {/* TODO(ui): large portal empty state (size-14 icon, display title) -> <EmptyState size="lg" tone="brand"> (portal rework) */}
-            <span className="grid size-14 place-items-center rounded-full bg-brand-50 text-brand-600">
-              <Video className="size-6" aria-hidden />
-            </span>
+            <CalendarDay className="w-40" />
             <p className="mt-4 max-w-md text-sm text-muted">{t('ops.account.empty')}</p>
           </div>
         ) : (
@@ -109,7 +107,7 @@ export default function AccountInterviews() {
       </section>
 
       <section>
-        <h3 className="mb-3 text-sm font-bold text-navy-900">{t('ops.account.past')}</h3>
+        <h3 className="mb-3 text-sm font-semibold text-ink">{t('ops.account.past')}</h3>
         {data.past.length === 0 ? (
           <p className="text-sm text-muted">{t('ops.account.noPast')}</p>
         ) : (

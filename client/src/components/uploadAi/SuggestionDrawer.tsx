@@ -118,7 +118,7 @@ export const SuggestionDrawer = ({
               </button>
             )}
             {canReupload && (
-              <button type="button" className="btn-white btn-sm border border-red-200 text-danger dark:border-red-900/60" disabled={busy} onClick={() => reupload.mutate()}>
+              <button type="button" className="btn-secondary btn-sm border border-danger-border text-danger-fg dark:border-red-900/60" disabled={busy} onClick={() => reupload.mutate()}>
                 {reupload.isPending ? <Spinner className="size-3.5" /> : <Undo2 className="size-4" aria-hidden />} {t('uploadAi.staff.reupload')}
               </button>
             )}
@@ -135,7 +135,7 @@ export const SuggestionDrawer = ({
             {i.proposals.currentName}
           </p>
 
-          <div className="rounded-lg border border-line bg-surface p-3">
+          <div className="rounded-lg border border-line bg-sunken p-3">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <span className="text-xs text-muted">{t('uploadAi.staff.detected')}</span>
               <span className="text-xs text-muted">
@@ -159,7 +159,7 @@ export const SuggestionDrawer = ({
               </select>
               <button
                 type="button"
-                className="grid size-9 place-items-center rounded-lg border border-line text-muted hover:bg-brand-50 hover:text-brand-700 disabled:opacity-50 dark:hover:bg-white/5"
+                className="grid size-9 place-items-center rounded-lg border border-line text-muted hover:bg-primary/[0.06] hover:text-link disabled:opacity-50 dark:hover:bg-white/5"
                 disabled={busy}
                 onClick={() => reanalyze.mutate()}
                 title={t('uploadAi.staff.reanalyze')}
@@ -181,12 +181,12 @@ export const SuggestionDrawer = ({
           {(i.flags.length > 0 || (i.quality && i.quality.level !== 'OK')) && (
             <ul className="space-y-1">
               {i.flags.map((f) => (
-                <li key={f} className="flex items-start gap-1.5 text-xs text-warning">
+                <li key={f} className="flex items-start gap-1.5 text-xs text-warning-fg">
                   <AlertTriangle className="mt-0.5 size-3.5 shrink-0" aria-hidden /> {t(`uploadAi.staff.flags.${f}`, { defaultValue: f })}
                 </li>
               ))}
               {i.quality && i.quality.level !== 'OK' && (
-                <li className={clsx('flex items-start gap-1.5 text-xs', i.quality.level === 'BAD' ? 'text-danger' : 'text-warning')}>
+                <li className={clsx('flex items-start gap-1.5 text-xs', i.quality.level === 'BAD' ? 'text-danger-fg' : 'text-warning-fg')}>
                   <AlertTriangle className="mt-0.5 size-3.5 shrink-0" aria-hidden />
                   {t('uploadAi.staff.lowQuality')}: {[...new Set(i.quality.reasons.map((r) => t(`uploadAi.quality.reasons.${r.code}`, { defaultValue: r.code })))].join(' · ')}
                 </li>
@@ -201,9 +201,9 @@ export const SuggestionDrawer = ({
                   const Icon = ACTION_ICON[a];
                   return (
                     <li key={a}>
-                      <label className="flex cursor-pointer items-start gap-2 rounded-lg border border-line p-2.5 hover:bg-surface">
-                        <input type="checkbox" className="mt-0.5 size-4 shrink-0 accent-brand-600" checked={!skip.has(a)} onChange={() => toggle(a)} disabled={busy} />
-                        <Icon className="mt-0.5 size-4 shrink-0 text-brand-600" aria-hidden />
+                      <label className="flex cursor-pointer items-start gap-2 rounded-lg border border-line p-2.5 hover:bg-sunken">
+                        <input type="checkbox" className="mt-0.5 size-4 shrink-0 accent-primary" checked={!skip.has(a)} onChange={() => toggle(a)} disabled={busy} />
+                        <Icon className="mt-0.5 size-4 shrink-0 text-link" aria-hidden />
                         <span className="min-w-0 flex-1">
                           <span className="block text-xs text-muted">{t(`uploadAi.staff.actions.${a}`)}</span>
                           <span className="flex min-w-0 items-center gap-1 font-medium break-all text-ink">

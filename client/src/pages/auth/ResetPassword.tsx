@@ -1,12 +1,13 @@
 import { useState, type FormEvent } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { CheckCircle2, KeyRound } from 'lucide-react';
+import { KeyRound } from 'lucide-react';
 import { toast } from 'sonner';
 import { api, errorCode } from '@/lib/api';
 import { isStrongPassword, PASSWORD_MAX, PASSWORD_MIN } from '@/lib/types';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { Spinner } from '@/components/ui/Spinner';
+import { Success } from '@/components/illustrations';
 import { AuthShell } from './AuthShell';
 import { authError } from './Login';
 
@@ -39,11 +40,10 @@ export default function ResetPassword() {
   return (
     <AuthShell title={t('auth.resetTitle')}>
       {done ? (
-        <div className="space-y-6">
-          <div className="flex items-start gap-3 rounded-xl bg-emerald-50 p-4 text-sm text-emerald-800">
-            <CheckCircle2 className="size-5 shrink-0" /> {t('auth.resetDone')}
-          </div>
-          <Link to="/login" className="btn-primary w-full">
+        <div className="flex flex-col items-center gap-5 text-center">
+          <Success className="w-36" />
+          <p className="max-w-sm rounded-2xl bg-success-bg px-4 py-3 text-sm text-success-fg" role="status">{t('auth.resetDone')}</p>
+          <Link to="/login" className="btn-primary btn-lg w-full">
             {t('auth.login')}
           </Link>
         </div>
@@ -66,7 +66,7 @@ export default function ResetPassword() {
             />
             <p className={`mt-1 text-xs ${weak ? 'text-danger' : 'text-muted'}`}>{t('auth.passwordHint')}</p>
           </div>
-          <button type="submit" disabled={busy} className="btn-primary w-full">
+          <button type="submit" disabled={busy} className="btn-primary btn-lg w-full">
             {busy ? <Spinner className="size-4" /> : <KeyRound className="size-4" />} {t('common.save')}
           </button>
         </form>

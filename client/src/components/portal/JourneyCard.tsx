@@ -35,20 +35,22 @@ export function JourneyCard({ next, className, tour }: { next: NextStep | undefi
   const estimated = milestones.some((m) => m.dateKind === 'expected');
 
   return (
-    <section className={clsx('card card-body', className)} aria-labelledby="journey-map-title" data-tour={tour}>
+    <section className={clsx('card p-5 sm:p-7', className)} aria-labelledby="journey-map-title" data-tour={tour}>
       <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-1">
         <div className="min-w-0">
-          <h2 id="journey-map-title" className="type-card-title flex items-center gap-2">
-            <Route className="size-4 shrink-0 text-brand-600" aria-hidden />
+          <h2 id="journey-map-title" className="type-card-title flex items-center gap-3">
+            <span className="grid size-11 shrink-0 place-items-center rounded-xl chip-sky">
+              <Route className="size-5" aria-hidden />
+            </span>
             {t('jmap.title')}
           </h2>
-          <p className="type-small mt-0.5 break-words">{t('jmap.route', { from: fromName, to: toName })}</p>
+          <p className="type-small mt-1 break-words sm:pl-14">{t('jmap.route', { from: fromName, to: toName })}</p>
         </div>
         {journey.outcome === 'APPROVED' && <span className="badge bg-success-bg text-success-fg">{t('jmap.approved')}</span>}
         {journey.outcome === 'REJECTED' && <span className="badge bg-danger-bg text-danger-fg">{t('jmap.rejected')}</span>}
       </div>
 
-      <div className="mt-4 grid gap-6 md:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] md:items-center">
+      <div className="mt-6 grid gap-6 md:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] md:items-center">
         <div className="hidden md:block">
           <JourneyMap
             journey={journey}

@@ -11,7 +11,7 @@ const HOUSEHOLDS: Household[] = ['single', 'couple', 'family'];
 const HOUSINGS: Housing[] = ['wg', 'room1', 'room2', 'room3'];
 
 const Segmented = <T extends string>({ value, options, onChange, label, render }: { value: T; options: T[]; onChange: (v: T) => void; label: string; render: (v: T) => ReactNode }) => (
-  <div role="radiogroup" aria-label={label} className="grid auto-cols-fr grid-flow-col gap-1 rounded-xl border border-line bg-surface p-1">
+  <div role="radiogroup" aria-label={label} className="grid auto-cols-fr grid-flow-col gap-1 rounded-xl border border-line bg-sunken p-1">
     {options.map((o) => (
       <button
         key={o}
@@ -19,7 +19,7 @@ const Segmented = <T extends string>({ value, options, onChange, label, render }
         role="radio"
         aria-checked={value === o}
         onClick={() => onChange(o)}
-        className={clsx('rounded-lg px-2 py-2 text-sm font-semibold transition-colors', value === o ? 'bg-card text-brand-700 shadow-sm' : 'text-muted hover:text-ink')}
+        className={clsx('min-h-11 rounded-lg px-2 py-2 text-sm font-semibold transition-colors', value === o ? 'bg-card text-ink shadow-[var(--tv-shadow-card)]' : 'text-muted hover:text-ink')}
       >
         {render(o)}
       </button>
@@ -55,7 +55,7 @@ export const CostCalculator = ({ citySlug, onCityChange }: { citySlug: string; o
 
   return (
     <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
-      <div className="space-y-5 rounded-2xl border border-line bg-card p-5 sm:p-6">
+      <div className="space-y-5 rounded-3xl border border-line bg-card p-5 shadow-[var(--tv-shadow-card)] sm:p-7">
         <label className="block">
           <span className="label">{t('citiesPage.calc.city')}</span>
           <select className="input" value={city.slug} onChange={(e) => onCityChange(e.target.value)}>
@@ -71,16 +71,16 @@ export const CostCalculator = ({ citySlug, onCityChange }: { citySlug: string; o
           <span className="label">{t('citiesPage.calc.household')}</span>
           <Segmented value={household} options={HOUSEHOLDS} onChange={pickHousehold} label={t('citiesPage.calc.household')} render={(h) => t(`citiesPage.calc.${h}`)} />
           {household === 'family' && (
-            <div className="mt-3 flex items-center justify-between gap-3 rounded-xl bg-surface px-3 py-2">
+            <div className="mt-3 flex items-center justify-between gap-3 rounded-xl bg-sunken px-3 py-2">
               <span className="text-sm font-medium text-ink">{t('citiesPage.calc.children')}</span>
               <span className="flex items-center gap-2">
-                <button type="button" className="grid size-8 place-items-center rounded-lg border border-line bg-card text-ink disabled:opacity-40" onClick={() => changeChildren(children - 1)} disabled={children <= 1} aria-label="−">
+                <button type="button" className="grid size-11 place-items-center rounded-xl border border-line bg-card text-ink transition-colors hover:border-line-strong disabled:opacity-40" onClick={() => changeChildren(children - 1)} disabled={children <= 1} aria-label="−">
                   <Minus className="size-4" aria-hidden />
                 </button>
                 <span className="w-6 text-center font-bold text-ink tabular-nums" aria-live="polite">
                   {children}
                 </span>
-                <button type="button" className="grid size-8 place-items-center rounded-lg border border-line bg-card text-ink disabled:opacity-40" onClick={() => changeChildren(children + 1)} disabled={children >= 6} aria-label="+">
+                <button type="button" className="grid size-11 place-items-center rounded-xl border border-line bg-card text-ink transition-colors hover:border-line-strong disabled:opacity-40" onClick={() => changeChildren(children + 1)} disabled={children >= 6} aria-label="+">
                   <Plus className="size-4" aria-hidden />
                 </button>
               </span>
@@ -121,19 +121,19 @@ export const CostCalculator = ({ citySlug, onCityChange }: { citySlug: string; o
           </div>
           <span className="mt-1 flex flex-wrap items-center justify-between gap-2 text-xs text-muted">
             {t('citiesPage.calc.netHint')}
-            <Link to="/salary-calculator" className="inline-flex items-center gap-1 font-semibold text-brand-700 hover:underline">
+            <Link to="/salary-calculator" className="inline-flex items-center gap-1 font-semibold text-link hover:underline">
               {t('citiesPage.calc.salaryLink')} <ArrowRight className="size-3" aria-hidden />
             </Link>
           </span>
         </label>
       </div>
 
-      <div className="flex flex-col rounded-2xl border border-line bg-card p-5 sm:p-6">
+      <div className="flex flex-col rounded-3xl border border-line bg-card p-5 shadow-[var(--tv-shadow-card)] sm:p-7">
         <div className="flex items-center justify-between gap-3">
-          <h3 className="font-display text-lg font-extrabold text-ink">
+          <h3 className="font-display text-lg font-semibold text-ink">
             {t('citiesPage.calc.breakdown')} · {f.l4(city.name)}
           </h3>
-          <span className="rounded-full bg-surface px-2.5 py-1 text-[11px] font-semibold text-muted">{t('citiesPage.approx', { year: DATA_YEAR })}</span>
+          <span className="rounded-full bg-sunken px-2.5 py-1 text-[11px] font-semibold text-muted">{t('citiesPage.approx', { year: DATA_YEAR })}</span>
         </div>
         <ul className="mt-4 divide-y divide-line text-sm">
           {result.lines.map((l) => {
@@ -144,24 +144,24 @@ export const CostCalculator = ({ citySlug, onCityChange }: { citySlug: string; o
                   <span className="text-ink/85">{l.key === 'rent' && housing === 'wg' ? t('citiesPage.calc.wgRent') : t(`citiesPage.calc.lines.${l.key}`)}</span>
                   <span className="font-semibold whitespace-nowrap text-ink tabular-nums">{f.range(l.range)}</span>
                 </div>
-                <div className="mt-1.5 h-1 overflow-hidden rounded-full bg-surface" aria-hidden>
-                  <div className="h-full rounded-full bg-brand-500/70 transition-[width] duration-500 ease-out" style={{ width: `${Math.max(2, share)}%` }} />
+                <div className="mt-1.5 h-1 overflow-hidden rounded-full bg-sunken" aria-hidden>
+                  <div className="h-full rounded-full bg-primary/70 transition-[width] duration-500 ease-out" style={{ width: `${Math.max(2, share)}%` }} />
                 </div>
               </li>
             );
           })}
         </ul>
-        <div className="mt-4 rounded-xl bg-brand-50 p-4">
+        <div className="mt-5 rounded-2xl bg-sunken p-4 sm:p-5">
           <div className="flex items-baseline justify-between gap-3">
             <span className="font-semibold text-ink">{t('citiesPage.calc.total')}</span>
-            <span className="font-display text-2xl font-extrabold text-brand-700 tabular-nums">{f.range(result.total)}</span>
+            <span className="font-display text-2xl font-semibold text-ink tabular-nums">{f.range(result.total)}</span>
           </div>
           {hasNet && (
             <div className="mt-3 flex items-baseline justify-between gap-3 border-t border-line pt-3">
               <span className="inline-flex items-center gap-1.5 font-semibold text-ink">
                 <Wallet className="size-4" aria-hidden /> {left >= 0 ? t('citiesPage.calc.remaining') : t('citiesPage.calc.deficit')}
               </span>
-              <span className={clsx('font-display text-xl font-extrabold tabular-nums', left >= 0 ? 'text-success' : 'text-danger')}>{f.euro(Math.abs(left))}</span>
+              <span className={clsx('font-display text-xl font-semibold tabular-nums', left >= 0 ? 'text-success-fg' : 'text-danger-fg')}>{f.euro(Math.abs(left))}</span>
             </div>
           )}
         </div>

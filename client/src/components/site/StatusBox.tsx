@@ -15,15 +15,15 @@ registerCopy({
 export const StatusBox = () => {
   const { t } = useTranslation();
   return (
-    <div className="card flex flex-col gap-3 p-5 sm:flex-row sm:items-center">
-      <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-brand-50 text-brand-600">
+    <div className="card flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:p-6">
+      <span className="grid size-11 shrink-0 place-items-center rounded-xl chip-sage">
         <ListChecks className="size-5" aria-hidden />
       </span>
       <div className="min-w-0 flex-1">
-        <p className="font-bold text-navy-900">{t('site.statusBox.title')}</p>
+        <p className="type-card-title text-ink">{t('site.statusBox.title')}</p>
         <p className="text-sm text-muted">{t('site.statusBox.text')}</p>
       </div>
-      <Link to="/status" className="btn-ghost min-h-11 shrink-0">
+      <Link to="/status" className="btn-secondary min-h-11 shrink-0">
         {t('site.statusBox.cta')}
         <ArrowRight className="size-4" aria-hidden />
       </Link>

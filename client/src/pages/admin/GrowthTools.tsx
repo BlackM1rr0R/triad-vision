@@ -85,8 +85,8 @@ const CalculatorTab = ({ canEdit }: { canEdit: boolean }) => {
   ].some(([a, b]) => a > b);
   return (
     <div className="space-y-5">
-      <p className="flex items-start gap-2 rounded-lg border border-warning/40 bg-warning/10 px-4 py-3 text-sm text-ink">
-        <AlertTriangle className="mt-0.5 size-4 shrink-0 text-warning" aria-hidden /> {t('gp.admin.calc.verify')}
+      <p className="flex items-start gap-2 rounded-lg border border-warning/40 bg-warning-bg px-4 py-3 text-sm text-ink">
+        <AlertTriangle className="mt-0.5 size-4 shrink-0 text-warning-fg" aria-hidden /> {t('gp.admin.calc.verify')}
       </p>
       <Panel title={t('gp.admin.tabs.calculator')} icon={Calculator} actions={<Switch checked={s.enabled} label={t('gp.admin.calc.enabled')} disabled={!canEdit} onChange={(v) => up({ enabled: v })} />}>
         <p className="mb-3 text-sm text-muted">{t('gp.admin.calc.intro')}</p>
@@ -155,7 +155,7 @@ const CalculatorTab = ({ canEdit }: { canEdit: boolean }) => {
         </div>
         {canEdit && (
           <div className="mt-4 flex flex-wrap justify-end gap-2">
-            <button type="button" className="btn-ghost btn-sm" onClick={() => setS({ ...data.defaults, verifiedAt: s.verifiedAt, verifiedNote: s.verifiedNote })}>
+            <button type="button" className="btn-secondary btn-sm" onClick={() => setS({ ...data.defaults, verifiedAt: s.verifiedAt, verifiedNote: s.verifiedNote })}>
               {t('gp.admin.calc.reset')}
             </button>
             <button type="button" className="btn-primary btn-sm" disabled={invalid || save.isPending} onClick={() => save.mutate(s)}>
@@ -267,7 +267,7 @@ const MapTab = ({ canEdit }: { canEdit: boolean }) => {
       <Panel title={t('gp.admin.map.preview')} bodyClassName="p-0 sm:p-0">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[560px] text-sm">
-            <thead className="bg-surface text-left text-xs text-muted">
+            <thead className="bg-sunken text-left text-xs text-muted">
               <tr>
                 <th className="px-4 py-2 font-semibold">{t('gp.admin.map.city')}</th>
                 <th className="px-4 py-2 text-right font-semibold">{t('gp.admin.map.workers')}</th>
@@ -286,7 +286,7 @@ const MapTab = ({ canEdit }: { canEdit: boolean }) => {
                   <td className="px-4 py-2 text-right text-muted tabular-nums">{c.computed}</td>
                   <td className="px-4 py-2 text-xs text-muted">{c.professions.join(', ')}</td>
                   <td className="px-4 py-2 text-xs">
-                    <span className={clsx('rounded-full px-2 py-0.5 font-semibold', c.published ? 'bg-success/10 text-success' : 'bg-surface text-muted')}>
+                    <span className={clsx('rounded-full px-2 py-0.5 font-semibold', c.published ? 'bg-success-bg text-success-fg' : 'bg-sunken text-muted')}>
                       {c.published ? t('gp.admin.map.published') : t('gp.admin.map.hidden', { min: data.minPerCity })}
                     </span>
                   </td>
@@ -309,7 +309,7 @@ const MapTab = ({ canEdit }: { canEdit: boolean }) => {
                   {e.note && <span className="block text-xs text-muted">{e.note}</span>}
                 </span>
                 {canEdit && (
-                  <button type="button" className="rounded-lg p-2 text-muted hover:bg-surface hover:text-danger" aria-label={t('gp.common.delete')} onClick={() => delEntry.mutate(e.id)}>
+                  <button type="button" className="rounded-lg p-2 text-muted hover:bg-sunken hover:text-danger-fg" aria-label={t('gp.common.delete')} onClick={() => delEntry.mutate(e.id)}>
                     <Trash2 className="size-4" aria-hidden />
                   </button>
                 )}
@@ -483,7 +483,7 @@ const ReferralsTab = ({ canEdit }: { canEdit: boolean }) => {
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full min-w-[720px] text-sm">
-              <thead className="bg-surface text-left text-xs text-muted">
+              <thead className="bg-sunken text-left text-xs text-muted">
                 <tr>
                   <th className="px-4 py-2 font-semibold">{t('gp.admin.ref.referrer')}</th>
                   <th className="px-4 py-2 font-semibold">{t('gp.admin.ref.referred')}</th>
@@ -511,7 +511,7 @@ const ReferralsTab = ({ canEdit }: { canEdit: boolean }) => {
                     </td>
                     <td className="px-4 py-2 text-xs">
                       {r.stage === 'BLOCKED' ? (
-                        <span className="font-semibold text-danger">{t('gp.admin.ref.blocked', { reason: t(`gp.admin.ref.reasons.${r.blockedReason ?? 'SAME_EMAIL'}`) })}</span>
+                        <span className="font-semibold text-danger-fg">{t('gp.admin.ref.blocked', { reason: t(`gp.admin.ref.reasons.${r.blockedReason ?? 'SAME_EMAIL'}`) })}</span>
                       ) : (
                         t(`gp.ref.stages.${r.stage}`)
                       )}
@@ -522,7 +522,7 @@ const ReferralsTab = ({ canEdit }: { canEdit: boolean }) => {
                         {canEdit &&
                           r.reward &&
                           actions(r.reward).map((a) => (
-                            <button key={a.status} type="button" className="btn-ghost btn-sm" disabled={move.isPending} onClick={() => move.mutate({ id: r.reward!.id, status: a.status })}>
+                            <button key={a.status} type="button" className="btn-secondary btn-sm" disabled={move.isPending} onClick={() => move.mutate({ id: r.reward!.id, status: a.status })}>
                               {a.label}
                             </button>
                           ))}

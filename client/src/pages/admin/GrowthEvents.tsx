@@ -152,7 +152,7 @@ const EventForm = ({ event, onClose }: { event: AdminEvent | null; onClose: () =
       title={event ? t('gp.common.edit') : t('gp.admin.newEvent')}
       footer={
         <>
-          <button type="button" className="btn-ghost btn-sm" onClick={onClose}>
+          <button type="button" className="btn-secondary btn-sm" onClick={onClose}>
             {t('gp.common.cancel')}
           </button>
           <button type="button" className="btn-primary btn-sm" disabled={save.isPending} onClick={() => save.mutate()}>
@@ -225,7 +225,7 @@ const EventForm = ({ event, onClose }: { event: AdminEvent | null; onClose: () =
             </select>
           </label>
         </div>
-        {event && f.status === 'CANCELLED' && event.status !== 'CANCELLED' && <p className="text-xs text-warning">{t('gp.admin.cancelHint')}</p>}
+        {event && f.status === 'CANCELLED' && event.status !== 'CANCELLED' && <p className="text-xs text-warning-fg">{t('gp.admin.cancelHint')}</p>}
         <L10nInput label={t('gp.admin.form.followUpNote')} value={f.followUpNote} onChange={(v) => set('followUpNote', v)} multiline rows={2} />
         <label className="block">
           <span className="label">{t('mk.events.admin.recordingUrl')}</span>
@@ -255,8 +255,8 @@ const ConversionFunnel = ({ c }: { c: Conversion }) => {
         {steps.map((s) => (
           <li key={s.key} className="grid grid-cols-[8rem_minmax(0,1fr)_3.5rem] items-center gap-3 text-sm">
             <span className="text-muted">{t(`mk.events.admin.${s.key}`)}</span>
-            <span className="h-2.5 overflow-hidden rounded-full bg-surface" aria-hidden>
-              <span className={clsx('block h-full rounded-full', s.key === 'noShow' ? 'bg-danger/60' : 'bg-brand-500')} style={{ width: `${(s.n / base) * 100}%` }} />
+            <span className="h-2.5 overflow-hidden rounded-full bg-sunken" aria-hidden>
+              <span className={clsx('block h-full rounded-full', s.key === 'noShow' ? 'bg-danger/60' : 'bg-primary')} style={{ width: `${(s.n / base) * 100}%` }} />
             </span>
             <span className="text-right font-semibold text-ink tabular-nums">
               {s.n}
@@ -308,16 +308,16 @@ const EventDetail = ({ id, onEdit }: { id: string; onEdit: (e: AdminEvent) => vo
         actions={
           <>
             {data.status !== 'DRAFT' && (
-              <a className="btn-ghost btn-sm" href={`/events/${data.slug}`} target="_blank" rel="noopener noreferrer">
+              <a className="btn-secondary btn-sm" href={`/events/${data.slug}`} target="_blank" rel="noopener noreferrer">
                 <ExternalLink className="size-4" aria-hidden /> {t('gp.admin.publicPage')}
               </a>
             )}
             {data.meetingUrl && (
-              <a className="btn-ghost btn-sm" href={data.meetingUrl} target="_blank" rel="noopener noreferrer">
+              <a className="btn-secondary btn-sm" href={data.meetingUrl} target="_blank" rel="noopener noreferrer">
                 <ExternalLink className="size-4" aria-hidden /> {t('gp.admin.openLink')}
               </a>
             )}
-            <button type="button" className="btn-ghost btn-sm" onClick={() => onEdit(data)}>
+            <button type="button" className="btn-secondary btn-sm" onClick={() => onEdit(data)}>
               <Pencil className="size-4" aria-hidden /> {t('gp.common.edit')}
             </button>
           </>
@@ -327,7 +327,7 @@ const EventDetail = ({ id, onEdit }: { id: string; onEdit: (e: AdminEvent) => vo
           {bakuTime(data.startsAt, locale)} (Baku) · {data.mode === 'ONLINE' ? (data.meetingUrl ?? '') : (data.address ?? '')}
         </p>
         {data.recordingUrl && (
-          <a href={data.recordingUrl} target="_blank" rel="noopener noreferrer" className="mt-2 inline-flex items-center gap-1.5 text-sm font-semibold text-brand-600 hover:underline">
+          <a href={data.recordingUrl} target="_blank" rel="noopener noreferrer" className="mt-2 inline-flex items-center gap-1.5 text-sm font-semibold text-link hover:underline">
             <Video className="size-4" aria-hidden /> {t('mk.events.recordingTitle')}
           </a>
         )}
@@ -345,7 +345,7 @@ const EventDetail = ({ id, onEdit }: { id: string; onEdit: (e: AdminEvent) => vo
                 <div className="min-w-0">
                   <p className="font-semibold text-ink">
                     {r.name} <span className="text-xs font-normal text-muted uppercase">{r.locale}</span>
-                    {r.inquiryId && <span className="ml-2 rounded bg-brand-50 px-1.5 py-0.5 text-[10px] font-bold text-brand-700">{t('gp.admin.lead')}</span>}
+                    {r.inquiryId && <span className="ml-2 rounded bg-primary/[0.06] px-1.5 py-0.5 text-[10px] font-bold text-link">{t('gp.admin.lead')}</span>}
                   </p>
                   <p className="truncate text-xs text-muted">
                     {r.email}
@@ -369,10 +369,10 @@ const EventDetail = ({ id, onEdit }: { id: string; onEdit: (e: AdminEvent) => vo
       <Panel title={t('gp.admin.followUp')} icon={Mail}>
         <p className="text-sm text-muted">{t('gp.admin.followUpText')}</p>
         {preview && (
-          <div className="mt-3 rounded-lg border border-line bg-surface p-3 text-sm">
+          <div className="mt-3 rounded-lg border border-line bg-sunken p-3 text-sm">
             <p className="font-semibold text-ink">{preview.title}</p>
             <p className="mt-1 whitespace-pre-line text-muted">{preview.body}</p>
-            <p className="mt-2 text-xs font-semibold text-brand-600">→ {preview.cta}</p>
+            <p className="mt-2 text-xs font-semibold text-link">→ {preview.cta}</p>
           </div>
         )}
         <div className="mt-4 flex flex-wrap items-center gap-2">
@@ -447,7 +447,7 @@ export default function AdminGrowthEvents() {
                   <div
                     className={clsx(
                       'flex items-start gap-3 rounded-xl border bg-card p-4 transition-colors',
-                      selected === e.id ? 'border-brand-500' : 'border-line hover:border-brand-400',
+                      selected === e.id ? 'border-primary' : 'border-line hover:border-line-strong',
                     )}
                   >
                     <button type="button" className="min-w-0 flex-1 text-left" onClick={() => setSelected(e.id)}>
@@ -467,7 +467,7 @@ export default function AdminGrowthEvents() {
                       )}
                     </button>
                     {isAdmin && (
-                      <button type="button" className="rounded-lg p-2 text-muted hover:bg-surface hover:text-danger" aria-label={t('gp.common.delete')} onClick={() => setDeleting(e)}>
+                      <button type="button" className="rounded-lg p-2 text-muted hover:bg-sunken hover:text-danger-fg" aria-label={t('gp.common.delete')} onClick={() => setDeleting(e)}>
                         <Trash2 className="size-4" aria-hidden />
                       </button>
                     )}

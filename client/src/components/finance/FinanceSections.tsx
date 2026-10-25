@@ -57,11 +57,11 @@ const TD_FIRST = 'px-5 py-2 sm:px-6';
 const Table = ({ minWidth, head, children, foot }: { minWidth: number; head: ReactNode; children: ReactNode; foot?: ReactNode }) => (
   <div className="-mx-5 overflow-x-auto sm:-mx-6">
     <table className="w-full text-sm" style={{ minWidth }}>
-      <thead className="text-[11px] font-semibold tracking-wide text-muted uppercase">
+      <thead className="text-xs font-medium text-muted">
         <tr>{head}</tr>
       </thead>
       <tbody className="divide-y divide-line">{children}</tbody>
-      {foot && <tfoot className="border-t-2 border-line font-semibold text-navy-900">{foot}</tfoot>}
+      {foot && <tfoot className="border-t-2 border-line font-semibold text-ink">{foot}</tfoot>}
     </table>
   </div>
 );
@@ -170,9 +170,9 @@ export const FinanceOverview = ({ range }: { range: FinanceRange }) => {
                 >
                   {months.map((m) => (
                     <tr key={m.month}>
-                      <td className={clsx(TD_FIRST, 'font-medium text-navy-900')}>{f.month(m.month)}</td>
+                      <td className={clsx(TD_FIRST, 'font-medium text-ink')}>{f.month(m.month)}</td>
                       <td className={TD}>{f.money(m.invoicedCents)}</td>
-                      <td className={clsx(TD, 'text-emerald-700')}>{f.money(m.paidCents)}</td>
+                      <td className={clsx(TD, 'text-success-fg')}>{f.money(m.paidCents)}</td>
                       <td className={TD}>{f.money(m.outstandingCents)}</td>
                       <td className={TD}>{f.money(m.translationCents)}</td>
                       <td className={TD}>{f.money(m.commissionsPaidCents + (m.partnerCommissionsPaidCents ?? 0))}</td>
@@ -216,7 +216,7 @@ export const FinanceReceivables = ({ range }: { range: FinanceRange }) => {
             {r.aging.map((a) => (
               <div key={a.bucket} className="rounded-xl border border-line bg-card p-4">
                 <BucketChip bucket={a.bucket} />
-                <p className="mt-2 font-display text-xl font-bold text-navy-900 tabular-nums">{f.money(a.grossCents)}</p>
+                <p className="mt-2 font-display text-xl font-bold text-ink tabular-nums">{f.money(a.grossCents)}</p>
                 <p className="text-[11px] text-muted">{a.count}</p>
               </div>
             ))}
@@ -227,7 +227,7 @@ export const FinanceReceivables = ({ range }: { range: FinanceRange }) => {
             actions={
               <>
                 <span className="text-xs text-muted">{t('finance.receivables.asOf', { date: f.day(r.asOf) })}</span>
-                <Link to="/admin/invoices" className="inline-flex items-center gap-1 text-xs font-semibold text-brand-700 hover:underline">
+                <Link to="/admin/invoices" className="inline-flex items-center gap-1 text-xs font-semibold text-link hover:underline">
                   {t('finance.receivables.openInvoices')} <ExternalLink className="size-3.5" aria-hidden />
                 </Link>
               </>
@@ -262,11 +262,11 @@ export const FinanceReceivables = ({ range }: { range: FinanceRange }) => {
                 {r.rows.map((row) => (
                   <tr key={row.id}>
                     <td className={TD_FIRST}>
-                      <Link to="/admin/invoices" className="font-mono text-xs font-semibold text-brand-700 hover:underline">
+                      <Link to="/admin/invoices" className="code-id text-xs font-medium text-link hover:underline whitespace-nowrap">
                         {row.number}
                       </Link>
                     </td>
-                    <td className="max-w-[14rem] truncate px-3 py-2 text-navy-900">{row.companyName}</td>
+                    <td className="max-w-[14rem] truncate px-3 py-2 text-ink">{row.companyName}</td>
                     <td className={TD}>{f.day(row.issueDate)}</td>
                     <td className={TD}>{f.day(row.dueDate)}</td>
                     <td className={TD}>
@@ -275,7 +275,7 @@ export const FinanceReceivables = ({ range }: { range: FinanceRange }) => {
                         <BucketChip bucket={row.bucket} />
                       </span>
                     </td>
-                    <td className={clsx(TD, 'pr-5 font-semibold text-navy-900 sm:pr-6')}>{f.money(row.grossCents)}</td>
+                    <td className={clsx(TD, 'pr-5 font-semibold text-ink sm:pr-6')}>{f.money(row.grossCents)}</td>
                   </tr>
                 ))}
               </Table>
@@ -331,11 +331,11 @@ export const FinanceCommissions = ({ range }: { range: FinanceRange }) => {
               {r.rows.map((a) => (
                 <tr key={a.id}>
                   <td className={TD_FIRST}>
-                    <Link to={`/admin/agents/${a.id}`} className="font-medium text-brand-700 hover:underline">
+                    <Link to={`/admin/agents/${a.id}`} className="font-medium text-link hover:underline">
                       {a.name}
                     </Link>
-                    <span className="ml-1.5 font-mono text-[11px] text-muted">{a.code}</span>
-                    {a.status !== 'ACTIVE' && <span className="ml-1.5 text-[11px] text-amber-700">({t('finance.commissions.paused')})</span>}
+                    <span className="ml-1.5 code-id text-[11px] text-muted">{a.code}</span>
+                    {a.status !== 'ACTIVE' && <span className="ml-1.5 text-[11px] text-warning-fg">({t('finance.commissions.paused')})</span>}
                     {a.region && <span className="block text-[11px] text-muted">{a.region}</span>}
                   </td>
                   <td className={TD}>
@@ -343,9 +343,9 @@ export const FinanceCommissions = ({ range }: { range: FinanceRange }) => {
                   </td>
                   <td className={TD}>{f.money(a.pendingCents)}</td>
                   <td className={TD}>{f.money(a.approvedCents)}</td>
-                  <td className={clsx(TD, 'text-emerald-700')}>{f.money(a.paidCents)}</td>
+                  <td className={clsx(TD, 'text-success-fg')}>{f.money(a.paidCents)}</td>
                   <td className={clsx(TD, 'text-muted')}>{f.money(a.cancelledCents)}</td>
-                  <td className={clsx(TD, 'pr-5 font-semibold text-navy-900 sm:pr-6')}>{f.money(a.totalCents)}</td>
+                  <td className={clsx(TD, 'pr-5 font-semibold text-ink sm:pr-6')}>{f.money(a.totalCents)}</td>
                 </tr>
               ))}
             </Table>
@@ -367,7 +367,7 @@ const PartnerCommissionsPanel = ({ data }: { data: NonNullable<CommissionsRespon
       title={t('finance.partnerCommissions.title')}
       icon={Handshake}
       actions={
-        <Link to="/admin/partners/commissions" className="text-xs font-semibold text-brand-700 hover:underline">
+        <Link to="/admin/partners/commissions" className="text-xs font-semibold text-link hover:underline">
           {t('finance.partnerCommissions.manage')}
         </Link>
       }
@@ -403,15 +403,15 @@ const PartnerCommissionsPanel = ({ data }: { data: NonNullable<CommissionsRespon
           {data.rows.map((p) => (
             <tr key={p.id}>
               <td className={TD_FIRST}>
-                <Link to={`/admin/partners/${p.id}`} className="font-medium text-brand-700 hover:underline">
+                <Link to={`/admin/partners/${p.id}`} className="font-medium text-link hover:underline">
                   {p.name}
                 </Link>
               </td>
               <td className={TD}>{f.money(p.pendingCents)}</td>
               <td className={TD}>{f.money(p.approvedCents)}</td>
-              <td className={clsx(TD, 'text-emerald-700')}>{f.money(p.paidCents)}</td>
+              <td className={clsx(TD, 'text-success-fg')}>{f.money(p.paidCents)}</td>
               <td className={clsx(TD, 'text-muted')}>{f.money(p.cancelledCents)}</td>
-              <td className={clsx(TD, 'pr-5 font-semibold text-navy-900 sm:pr-6')}>{f.money(p.totalCents)}</td>
+              <td className={clsx(TD, 'pr-5 font-semibold text-ink sm:pr-6')}>{f.money(p.totalCents)}</td>
             </tr>
           ))}
         </Table>
@@ -446,7 +446,7 @@ export const FinanceStaff = ({ range }: { range: FinanceRange }) => {
     const Icon = active ? (sort.dir === 'asc' ? ArrowUp : ArrowDown) : ArrowUpDown;
     return (
       <th className={first ? TH_FIRST : TH} aria-sort={active ? (sort.dir === 'asc' ? 'ascending' : 'descending') : 'none'}>
-        <button type="button" onClick={() => click(k)} className={clsx('inline-flex items-center gap-1 uppercase hover:text-navy-900', active && 'text-navy-900')} title={t('finance.staff.sortBy', { column: label })}>
+        <button type="button" onClick={() => click(k)} className={clsx('inline-flex items-center gap-1 uppercase hover:text-ink', active && 'text-ink')} title={t('finance.staff.sortBy', { column: label })}>
           {label} <Icon className="size-3" aria-hidden />
         </button>
       </th>
@@ -487,13 +487,13 @@ export const FinanceStaff = ({ range }: { range: FinanceRange }) => {
                   <tr key={s.id}>
                     <td className={TD_FIRST}>
                       <span className="mr-2 inline-block w-5 text-right text-xs text-muted tabular-nums">{i + 1}</span>
-                      <span className="font-medium text-navy-900">{s.name}</span>
+                      <span className="font-medium text-ink">{s.name}</span>
                       {!s.isActive && <span className="ml-1.5 text-[11px] text-muted">({t('finance.staff.inactive')})</span>}
                     </td>
                     <td className={TD}>{s.activeCases}</td>
                     <td className={TD}>{s.newCases}</td>
-                    <td className={clsx(TD, 'text-emerald-700')}>{s.approved}</td>
-                    <td className={clsx(TD, 'text-danger')}>{s.rejected}</td>
+                    <td className={clsx(TD, 'text-success-fg')}>{s.approved}</td>
+                    <td className={clsx(TD, 'text-danger-fg')}>{s.rejected}</td>
                     <td className={TD}>{f.pct(s.approvalPct)}</td>
                     <td className={TD}>{f.num(s.avgDaysToDecision)}</td>
                     <td className={TD}>{s.documentsReviewed}</td>
@@ -546,12 +546,12 @@ const TypeTable = ({ rows, label, first }: { rows: TypeRow[]; label: (r: TypeRow
           <td className={TD_FIRST}>{label(r)}</td>
           <td className={TD}>{r.newCases}</td>
           <td className={TD}>{r.active}</td>
-          <td className={clsx(TD, 'text-emerald-700')}>{r.approved}</td>
-          <td className={clsx(TD, 'text-danger')}>{r.rejected}</td>
+          <td className={clsx(TD, 'text-success-fg')}>{r.approved}</td>
+          <td className={clsx(TD, 'text-danger-fg')}>{r.rejected}</td>
           <td className={TD}>{f.pct(r.approvalPct)}</td>
           <td className={TD}>{f.money(r.invoiceRevenueCents)}</td>
           <td className={TD}>{f.money(r.translationCents)}</td>
-          <td className={clsx(TD, 'font-semibold text-navy-900')}>{f.money(r.revenueCents)}</td>
+          <td className={clsx(TD, 'font-semibold text-ink')}>{f.money(r.revenueCents)}</td>
           <td className={clsx(TD, 'pr-5 sm:pr-6')}>{f.money(r.commissionsPaidCents)}</td>
         </tr>
       ))}
@@ -569,7 +569,7 @@ export const FinanceByType = ({ range }: { range: FinanceRange }) => {
       {(r) => (
         <>
           <Panel title={t('finance.byType.visaType')} icon={Layers}>
-            <TypeTable rows={r.byVisaType} first={t('finance.byType.type')} label={(row) => (row.key ? <span className="font-medium text-navy-900">{t(`portal.visaTypes.${row.key}`)}</span> : none)} />
+            <TypeTable rows={r.byVisaType} first={t('finance.byType.type')} label={(row) => (row.key ? <span className="font-medium text-ink">{t(`portal.visaTypes.${row.key}`)}</span> : none)} />
           </Panel>
           <Panel title={t('finance.byType.category')} icon={CalendarClock}>
             <TypeTable
@@ -580,8 +580,8 @@ export const FinanceByType = ({ range }: { range: FinanceRange }) => {
                 if (!c?.title) return row.key ? <span className="text-muted">{c?.slug ?? row.key}</span> : none;
                 return (
                   <>
-                    <span className="font-medium text-navy-900">{tr(c.title as never)}</span>
-                    {c.visaLabel && <span className="ml-1.5 font-mono text-[11px] text-muted">{c.visaLabel}</span>}
+                    <span className="font-medium text-ink">{tr(c.title as never)}</span>
+                    {c.visaLabel && <span className="ml-1.5 code-id text-[11px] text-muted">{c.visaLabel}</span>}
                   </>
                 );
               }}

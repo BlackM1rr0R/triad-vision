@@ -11,6 +11,7 @@ import { usePageTitle } from '@/lib/usePageTitle';
 import type { L10n } from '@/lib/types';
 import { PageLoader, Spinner } from '@/components/ui/Spinner';
 import { clientTasksKey, uploadCaseFile, type ClientConfirmation, type ConfirmAnswer } from '@/components/clientData/api';
+import { Success } from '@/components/illustrations';
 
 type Draft = Record<string, ConfirmAnswer & { proofName?: string }>;
 
@@ -50,7 +51,7 @@ export default function ConfirmDataPage() {
     return (
       <div className="card mx-auto max-w-lg p-8 text-center">
         <AlertTriangle className="mx-auto size-10 text-warning" aria-hidden />
-        <p className="mt-4 font-semibold text-navy-900">{t('clientData.portal.noConfirmation')}</p>
+        <p className="mt-4 font-semibold text-ink">{t('clientData.portal.noConfirmation')}</p>
         <Link to={`/account/cases/${id}`} className="btn-primary mt-6">
           <ArrowLeft className="size-4" aria-hidden /> {t('clientData.common.back')}
         </Link>
@@ -86,26 +87,27 @@ export default function ConfirmDataPage() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-5 pb-24 sm:pb-0">
-      <Link to={`/account/cases/${id}`} className="-my-2 inline-flex min-h-10 items-center gap-1.5 text-sm font-semibold text-brand-600 hover:text-brand-700">
+      <Link to={`/account/cases/${id}`} className="-my-2 inline-flex min-h-10 items-center gap-1.5 text-sm font-semibold text-link hover:text-link">
         <ArrowLeft className="size-4" aria-hidden /> {t('clientData.common.back')}
       </Link>
       <header className="card p-5 sm:p-6">
         <div className="flex items-start gap-3">
-          <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-brand-600 text-white">
+          <span className="grid size-11 shrink-0 place-items-center rounded-xl chip-sage">
             <ShieldCheck className="size-5" aria-hidden />
           </span>
-          <div className="min-w-0">
-            <h1 className="text-xl font-extrabold text-navy-900 sm:text-2xl">{t('clientData.portal.confirmTitle')}</h1>
+          <div className="min-w-0 flex-1">
+            <h1 className="type-page-title">{t('clientData.portal.confirmTitle')}</h1>
             <p className="mt-1 text-sm text-muted">{editable ? t('clientData.portal.confirmIntro') : t('clientData.portal.confirmDone', { date: conf.submittedAt ? dateTime(conf.submittedAt) : '' })}</p>
           </div>
+          {!editable && <Success className="hidden w-24 shrink-0 sm:block" />}
         </div>
         {editable && (
           <div className="mt-4">
             <div className="flex justify-between text-xs text-muted">
               <span>{t('clientData.portal.progress', { done, total })}</span>
             </div>
-            <div className="mt-1 h-2 overflow-hidden rounded-full bg-slate-200" aria-hidden>
-              <div className="h-full rounded-full bg-brand-600 transition-[width]" style={{ width: `${total ? (done / total) * 100 : 0}%` }} />
+            <div className="mt-1 h-2 overflow-hidden rounded-full bg-line" aria-hidden>
+              <div className="h-full rounded-full bg-highlight transition-[width]" style={{ width: `${total ? (done / total) * 100 : 0}%` }} />
             </div>
           </div>
         )}
@@ -137,22 +139,22 @@ export default function ConfirmDataPage() {
 
       {sections.map((s) => (
         <section key={s.section} className="card overflow-hidden">
-          <h2 className="border-b border-line bg-surface px-5 py-3 text-sm font-bold text-navy-900">{tr(data?.sections[s.section]) || s.section}</h2>
+          <h2 className="border-b border-line bg-sunken px-5 py-3 text-sm font-semibold text-ink">{tr(data?.sections[s.section]) || s.section}</h2>
           <ul className="divide-y divide-line">
             {s.fields.map((f) => {
               const a = answers[f.key];
               const unanswered = tried && !(a && (a.ok || a.value?.trim()));
               return (
-                <li key={f.key} className={clsx('px-5 py-4', unanswered && 'bg-red-50/60 dark:bg-red-950/20')}>
+                <li key={f.key} className={clsx('px-5 py-4', unanswered && 'bg-danger-bg')}>
                   <p className="text-xs font-semibold text-muted">{tr(f.label)}</p>
-                  <p className={clsx('mt-0.5 font-mono text-base break-words text-navy-900', a && !a.ok && 'line-through opacity-60')}>{f.value || <span className="font-sans text-sm text-muted italic">{t('clientData.portal.emptyValue')}</span>}</p>
+                  <p className={clsx('mt-0.5 font-mono text-base break-words text-ink', a && !a.ok && 'line-through opacity-60')}>{f.value || <span className="font-sans text-sm text-muted italic">{t('clientData.portal.emptyValue')}</span>}</p>
                   {editable ? (
                     <div className="mt-3 grid grid-cols-2 gap-2 sm:max-w-sm">
                       <button
                         type="button"
                         aria-pressed={a?.ok === true}
                         onClick={() => set(f.key, { ok: true })}
-                        className={clsx('inline-flex min-h-11 items-center justify-center gap-1.5 rounded-lg border text-sm font-semibold transition', a?.ok === true ? 'border-emerald-600 bg-emerald-600 text-white' : 'border-line bg-white text-ink/80 hover:border-emerald-400')}
+                        className={clsx('inline-flex min-h-11 items-center justify-center gap-1.5 rounded-lg border text-sm font-semibold transition', a?.ok === true ? 'border-success bg-success text-white' : 'border-line bg-card text-ink/80 hover:border-success')}
                       >
                         <Check className="size-4" aria-hidden /> {t('clientData.portal.correct')}
                       </button>
@@ -160,14 +162,14 @@ export default function ConfirmDataPage() {
                         type="button"
                         aria-pressed={a?.ok === false}
                         onClick={() => set(f.key, { ok: false, value: a?.ok === false ? a.value : f.value, proofDocumentId: a?.proofDocumentId, proofName: a?.proofName })}
-                        className={clsx('inline-flex min-h-11 items-center justify-center gap-1.5 rounded-lg border text-sm font-semibold transition', a?.ok === false ? 'border-amber-500 bg-amber-500 text-white' : 'border-line bg-white text-ink/80 hover:border-amber-400')}
+                        className={clsx('inline-flex min-h-11 items-center justify-center gap-1.5 rounded-lg border text-sm font-semibold transition', a?.ok === false ? 'border-warning bg-warning-bg text-warning-fg ring-2 ring-warning/30' : 'border-line bg-card text-ink/80 hover:border-warning')}
                       >
                         <Pencil className="size-4" aria-hidden /> {t('clientData.portal.fix')}
                       </button>
                     </div>
                   ) : (
                     a && (
-                      <p className={clsx('mt-2 inline-flex items-center gap-1.5 text-sm font-semibold', a.ok ? 'text-emerald-700 dark:text-emerald-300' : 'text-amber-700 dark:text-amber-300')}>
+                      <p className={clsx('mt-2 inline-flex items-center gap-1.5 text-sm font-semibold', a.ok ? 'text-success-fg' : 'text-warning-fg')}>
                         {a.ok ? <CheckCircle2 className="size-4" aria-hidden /> : <Pencil className="size-4" aria-hidden />}
                         {a.ok ? t('clientData.portal.correct') : `${t('clientData.portal.correctedTo')}: ${a.value}`}
                       </p>
@@ -207,7 +209,7 @@ export default function ConfirmDataPage() {
       ))}
 
       {editable && (
-        <div className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-white p-3 sm:static sm:rounded-xl sm:border sm:p-4">
+        <div className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-card p-3 sm:static sm:rounded-xl sm:border sm:p-4">
           <div className="mx-auto flex max-w-3xl flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-xs text-muted">{t('clientData.portal.evidenceNote')}</p>
             <div className="flex gap-2">

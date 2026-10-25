@@ -39,6 +39,7 @@ import {
   type ProblemReply,
 } from '../lib/site/problems.js';
 import { SITE_TEXTS, siteLocale } from '../lib/site/texts.js';
+import { deriveTheme, getSiteTheme, saveSiteTheme, THEME_DEFAULTS, THEME_KEY, themeSchema } from '../lib/site/theme.js';
 
 /**
  * Site features (PWA stream):
@@ -94,6 +95,45 @@ siteRouter.post('/push/test', requireAuth, pushTestLimiter, async (req, res) => 
   const t = SITE_TEXTS[siteLocale(req.user!.locale)];
   const result = await sendWebPush([req.user!.id], { title: t.testTitle, body: t.testBody, link: '/', tag: 'test' });
   res.json(result);
+});
+
+// ─── Theme (design tokens on top of client/src/index.css) ──────────────
+
+/** Public: the site theme as CSS variables (cached 5 minutes; the client also keeps a copy in localStorage). */
+siteRouter.get('/theme', async (_req, res) => {
+  const theme = await getSiteTheme();
+  const { vars } = deriveTheme(theme);
+  res.setHeader('Cache-Control', 'public, max-age=300');
+  res.json({ theme, vars });
+});
+
+const themeUpdateSchema = z.object({
+  brandPrimary: z.string().regex(/^#[0-9a-fA-F]{6}$/).optional(),
+  accent: z.string().regex(/^#[0-9a-fA-F]{6}$/).optional(),
+  radiusScale: z.enum(['sm', 'md', 'lg']).optional(),
+  defaultDensity: z.enum(['comfortable', 'compact']).optional(),
+  /** adjust (default): failing colours are corrected and reported; strict: refused with 400 THEME_CONTRAST. */
+  mode: z.enum(['adjust', 'strict']).default('adjust'),
+});
+
+siteRouter.put('/theme', requireAuth, requireMinRole('SUPER_ADMIN'), async (req, res) => {
+  const { mode, ...patch } = parse(themeUpdateSchema, req.body);
+  const next = themeSchema.parse({ ...(await getSiteTheme()), ...patch });
+  const { issues } = deriveTheme(next);
+  if (issues.length && mode === 'strict') {
+    res.status(400).json({ error: 'THEME_CONTRAST', issues });
+    return;
+  }
+  for (const i of issues) if (i.adjustedTo) next[i.field] = i.adjustedTo;
+  await saveSiteTheme(next);
+  void audit(req, 'SITE_THEME_UPDATED', THEME_KEY, next);
+  res.json({ theme: next, vars: deriveTheme(next).vars, adjustments: issues });
+});
+
+siteRouter.delete('/theme', requireAuth, requireMinRole('SUPER_ADMIN'), async (req, res) => {
+  await saveSiteTheme(THEME_DEFAULTS);
+  void audit(req, 'SITE_THEME_RESET', THEME_KEY);
+  res.json({ theme: THEME_DEFAULTS, vars: deriveTheme(THEME_DEFAULTS).vars });
 });
 
 // ─── Public status check ──────────────────────────────────────────────

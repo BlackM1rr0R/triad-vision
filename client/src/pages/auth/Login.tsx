@@ -73,19 +73,19 @@ export default function Login() {
         <div>
           <div className="flex items-center justify-between">
             <label className="label" htmlFor="password">{t('auth.password')}</label>
-            <Link to="/forgot-password" className="mb-1.5 text-xs font-semibold text-brand-600 hover:underline">
+            <Link to="/forgot-password" className="mb-1.5 text-xs font-semibold text-link hover:underline">
               {t('auth.forgot')}
             </Link>
           </div>
           <input id="password" name="password" type="password" required autoComplete="current-password" className="input" />
         </div>
-        <button type="submit" disabled={busy} className="btn-primary w-full">
+        <button type="submit" disabled={busy} className="btn-primary btn-lg w-full">
           {busy ? <Spinner className="size-4" /> : <LogIn className="size-4" />} {t('auth.login')}
         </button>
       </form>
       <p className="mt-6 text-center text-sm text-muted">
         {t('auth.noAccount')}{' '}
-        <Link to="/register" state={location.state} className="font-semibold text-brand-600 hover:underline">
+        <Link to="/register" state={location.state} className="font-semibold text-link hover:underline">
           {t('auth.register')}
         </Link>
       </p>

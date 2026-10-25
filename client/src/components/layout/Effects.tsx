@@ -122,7 +122,7 @@ export const ScrollProgress = () => {
   return (
     <motion.div
       aria-hidden
-      className="fixed inset-x-0 top-0 z-[70] h-[3px] origin-left bg-gradient-to-r from-az-blue via-brand-500 to-de-gold"
+      className="fixed inset-x-0 top-0 z-[70] h-[3px] origin-left bg-highlight"
       style={{ scaleX }}
     />
   );
@@ -159,17 +159,17 @@ export const Preloader = () => {
       {show && (
         <motion.div
           aria-hidden
-          className="fixed inset-0 z-[200] grid place-items-center bg-navy-950"
+          className="fixed inset-0 z-[200] grid place-items-center bg-canvas"
           exit={{ clipPath: 'inset(0 0 100% 0)' }}
           transition={{ duration: 0.9, ease: [0.76, 0, 0.24, 1] }}
         >
           <div className="flex flex-col items-center gap-6">
             <motion.div initial={{ scale: 0.4, rotate: -30, opacity: 0 }} animate={{ scale: 1, rotate: 0, opacity: 1 }} transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}>
-              <LogoMark className="h-20 w-24 text-white" />
+              <LogoMark className="h-20 w-24 text-ink" />
             </motion.div>
             <div className="overflow-hidden">
               <motion.div
-                className="font-display text-2xl font-extrabold tracking-[0.3em] text-white"
+                className="font-display text-2xl font-semibold tracking-[0.3em] text-ink"
                 initial={{ y: '100%' }}
                 animate={{ y: 0 }}
                 transition={{ delay: 0.35, duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
@@ -177,9 +177,9 @@ export const Preloader = () => {
                 TRIAD VISION
               </motion.div>
             </div>
-            <div className="h-[2px] w-48 overflow-hidden rounded bg-white/10">
+            <div className="h-[3px] w-48 overflow-hidden rounded bg-line">
               <motion.div
-                className="h-full bg-gradient-to-r from-az-blue via-brand-500 to-de-gold"
+                className="h-full bg-highlight"
                 initial={{ x: '-100%' }}
                 animate={{ x: '0%' }}
                 transition={{ duration: 1.1, ease: 'easeInOut' }}

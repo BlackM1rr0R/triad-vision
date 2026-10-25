@@ -129,7 +129,7 @@ const ProblemDialog = ({ open, onClose }: { open: boolean; onClose: () => void }
         <div>
           <span className="label">{t('site.problem.image')}</span>
           {image ? (
-            <div className="flex items-center gap-3 rounded-lg border border-line bg-surface p-2">
+            <div className="flex items-center gap-3 rounded-lg border border-line bg-sunken p-2">
               <img src={preview ?? undefined} alt="" className="size-14 rounded-md object-cover" />
               <span className="min-w-0 flex-1 truncate text-sm">
                 {image.name} · {formatBytes(image.size)}
@@ -139,16 +139,16 @@ const ProblemDialog = ({ open, onClose }: { open: boolean; onClose: () => void }
               </button>
             </div>
           ) : (
-            <label htmlFor={ids.image} className="flex min-h-11 cursor-pointer items-center gap-2 rounded-lg border border-dashed border-line px-3 py-2 text-sm font-semibold text-brand-700 hover:bg-surface">
+            <label htmlFor={ids.image} className="flex min-h-11 cursor-pointer items-center gap-2 rounded-lg border border-dashed border-line-strong px-3 py-2 text-sm font-semibold text-ink hover:bg-sunken">
               <ImagePlus className="size-4" aria-hidden />
               {t('site.problem.imageHint')}
             </label>
           )}
           <input ref={fileRef} id={ids.image} type="file" accept="image/png,image/jpeg,image/webp,image/gif" className="sr-only" onChange={(e) => void pick(e.target.files?.[0])} />
         </div>
-        <div className="rounded-lg bg-surface p-3 text-xs text-muted">
+        <div className="rounded-lg bg-sunken p-3 text-xs text-muted">
           <p>{t('site.problem.auto')}</p>
-          <button type="button" className="mt-1.5 min-h-8 font-semibold text-brand-700 hover:underline" onClick={() => setShowDetails((v) => !v)} aria-expanded={showDetails}>
+          <button type="button" className="mt-1.5 min-h-8 font-semibold text-link hover:underline" onClick={() => setShowDetails((v) => !v)} aria-expanded={showDetails}>
             {t('site.problem.showDetails')}
           </button>
           {showDetails && diagnostics && (
@@ -179,7 +179,7 @@ export const ProblemButton = () => {
         onClick={() => setOpen(true)}
         title={t('site.problem.button')}
         aria-label={t('site.problem.button')}
-        className="fixed top-[62%] right-0 z-30 flex items-center gap-1.5 rounded-l-lg border border-r-0 border-line bg-card px-1.5 py-2 text-xs font-semibold text-muted shadow-md transition hover:text-brand-700 print:hidden sm:[writing-mode:vertical-rl] sm:px-1 sm:py-3"
+        className="fixed top-[62%] right-0 z-30 flex items-center gap-1.5 rounded-l-lg border border-r-0 border-line bg-card px-1.5 py-2 text-xs font-semibold text-muted shadow-md transition hover:text-link print:hidden sm:[writing-mode:vertical-rl] sm:px-1 sm:py-3"
       >
         <Bug className="size-4 shrink-0 sm:rotate-90" aria-hidden />
         <span className="hidden sm:inline">{t('site.problem.button')}</span>

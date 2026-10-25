@@ -58,9 +58,9 @@ const Hint = ({ tone = 'warning', children }: { tone?: 'warning' | 'info' | 'ok'
   <div
     className={clsx(
       'flex items-start gap-2 rounded-lg px-3 py-2 text-xs',
-      tone === 'warning' && 'bg-amber-50 text-amber-900',
-      tone === 'info' && 'bg-brand-50 text-brand-700',
-      tone === 'ok' && 'bg-emerald-50 text-emerald-800',
+      tone === 'warning' && 'bg-warning-bg text-warning-fg',
+      tone === 'info' && 'bg-primary/[0.06] text-link',
+      tone === 'ok' && 'bg-success-bg text-success-fg',
     )}
   >
     {tone === 'ok' ? <CheckCircle2 className="mt-0.5 size-3.5 shrink-0" aria-hidden /> : <AlertTriangle className="mt-0.5 size-3.5 shrink-0" aria-hidden />}
@@ -168,7 +168,7 @@ export const ActionPanel = ({ c }: { c: CaseDetail }) => {
             </Field>
             <button
               type="button"
-              className="btn-ghost btn-sm"
+              className="btn-secondary btn-sm"
               disabled={!noteOk || busy}
               onClick={() =>
                 setConfirm({
@@ -301,9 +301,9 @@ export const ActionPanel = ({ c }: { c: CaseDetail }) => {
                       'flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2.5 text-sm font-semibold transition',
                       decision === d
                         ? d === 'APPROVED'
-                          ? 'border-success bg-emerald-50 text-emerald-800'
-                          : 'border-danger bg-red-50 text-red-700'
-                        : 'border-line text-ink/70 hover:border-brand-400',
+                          ? 'border-success bg-success-bg text-success-fg'
+                          : 'border-danger bg-danger-bg text-danger-fg'
+                        : 'border-line text-muted hover:border-line-strong',
                     )}
                   >
                     <input type="radio" name="decision" value={d} checked={decision === d} onChange={() => setDecision(d)} className="accent-current" />
@@ -363,7 +363,7 @@ export const ActionPanel = ({ c }: { c: CaseDetail }) => {
                     key={s}
                     className={clsx(
                       'flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2.5 text-sm transition',
-                      reopenTo === s ? 'border-brand-600 bg-brand-50 font-semibold text-brand-700' : 'border-line text-ink/75 hover:border-brand-400',
+                      reopenTo === s ? 'border-primary bg-primary/[0.06] font-semibold text-link' : 'border-line text-muted hover:border-line-strong',
                     )}
                   >
                     <input type="radio" name="reopen" value={s} checked={reopenTo === s} onChange={() => setReopenTo(s)} />
@@ -397,13 +397,13 @@ export const ActionPanel = ({ c }: { c: CaseDetail }) => {
   };
 
   return (
-    <Panel title={t('caseLayout.actionsTitle')} icon={Zap} className="border-brand-400/50 ring-1 ring-brand-500/10">
+    <Panel title={t('caseLayout.actionsTitle')} icon={Zap} className="border-line-strong ring-1 ring-focus/10">
       <div className="space-y-4">
-        <div className="flex items-start gap-2.5 rounded-lg bg-surface px-3 py-2.5 text-sm text-ink/85">
+        <div className="flex items-start gap-2.5 rounded-lg bg-sunken px-3 py-2.5 text-sm text-ink/85">
           {actions.length === 0 && !isFinal ? (
-            <Hourglass className="mt-0.5 size-4 shrink-0 text-warning" aria-hidden />
+            <Hourglass className="mt-0.5 size-4 shrink-0 text-warning-fg" aria-hidden />
           ) : (
-            <Info className="mt-0.5 size-4 shrink-0 text-brand-600" aria-hidden />
+            <Info className="mt-0.5 size-4 shrink-0 text-link" aria-hidden />
           )}
           <p>{a(`situation.${c.status}`)}</p>
         </div>
@@ -427,7 +427,7 @@ export const ActionPanel = ({ c }: { c: CaseDetail }) => {
                   onClick={() => setSelected(k)}
                   className={clsx(
                     'inline-flex min-h-10 items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold whitespace-nowrap transition lg:min-h-9',
-                    selected === k ? 'border-brand-600 bg-brand-600 text-white' : 'border-line bg-white text-ink/75 hover:border-brand-400',
+                    selected === k ? 'border-line-strong bg-sunken text-ink shadow-[inset_0_0_0_1px_var(--color-line-strong)]' : 'border-line bg-card text-muted hover:border-line-strong',
                   )}
                 >
                   <Icon className="size-3.5" aria-hidden />
@@ -445,14 +445,14 @@ export const ActionPanel = ({ c }: { c: CaseDetail }) => {
             {!showCancel ? (
               <button
                 type="button"
-                className="-my-2 inline-flex min-h-10 items-center gap-1.5 text-xs font-semibold text-muted transition hover:text-danger"
+                className="-my-2 inline-flex min-h-10 items-center gap-1.5 text-xs font-semibold text-muted transition hover:text-danger-fg"
                 onClick={() => setShowCancel(true)}
               >
                 <Ban className="size-3.5" /> {a('cancelCase')}
               </button>
             ) : (
-              <div className="space-y-3 rounded-lg border border-red-200 bg-red-50/50 p-4">
-                <label htmlFor="ap-cancel" className="label text-red-800">
+              <div className="space-y-3 rounded-lg border border-danger-border bg-danger-bg/50 p-4">
+                <label htmlFor="ap-cancel" className="label text-danger-fg">
                   {a('cancelReasonLabel')}
                 </label>
                 <textarea id="ap-cancel" className="input" rows={2} value={cancelReason} onChange={(e) => setCancelReason(e.target.value)} />
@@ -473,7 +473,7 @@ export const ActionPanel = ({ c }: { c: CaseDetail }) => {
                   >
                     <Ban className="size-3.5" /> {a('cancelBtn')}
                   </button>
-                  <button type="button" className="btn-white btn-sm border border-line" onClick={() => setShowCancel(false)}>
+                  <button type="button" className="btn-secondary btn-sm" onClick={() => setShowCancel(false)}>
                     {t('admin.common.close')}
                   </button>
                 </div>

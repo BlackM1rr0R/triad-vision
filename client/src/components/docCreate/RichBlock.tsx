@@ -11,8 +11,8 @@ export interface PendingSelection {
 
 const STYLE: Record<TextBlock['type'], string> = {
   p: 'text-[15px] leading-relaxed',
-  h1: 'text-2xl font-bold leading-snug text-brand-800 dark:text-brand-300',
-  h2: 'text-xl font-bold leading-snug text-brand-800 dark:text-brand-300',
+  h1: 'text-2xl font-bold leading-snug text-ink dark:text-brand-300',
+  h2: 'text-xl font-bold leading-snug text-ink dark:text-brand-300',
   h3: 'text-base font-bold leading-snug',
   ul: 'text-[15px] leading-relaxed',
   ol: 'text-[15px] leading-relaxed',
@@ -73,7 +73,7 @@ export const RichBlock = memo(function RichBlock({
           {block.type === 'ul' ? '•' : `${listNumber}.`}
         </span>
       )}
-      {empty && <span className={clsx('pointer-events-none absolute inset-x-0 top-0 text-muted/70 select-none', STYLE[block.type], isList && 'left-7', ALIGN[block.align ?? 'left'])}>{placeholder}</span>}
+      {empty && <span className={clsx('pointer-events-none absolute inset-x-0 top-0 text-muted select-none', STYLE[block.type], isList && 'left-7', ALIGN[block.align ?? 'left'])}>{placeholder}</span>}
       <div
         ref={(el) => {
           ref.current = el;

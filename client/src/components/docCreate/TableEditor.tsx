@@ -23,7 +23,7 @@ const Cell = ({ value, header, onChange, label }: { value: string; header: boole
       value={value}
       aria-label={label}
       onChange={(e) => onChange(e.target.value)}
-      className={clsx('block w-full resize-none overflow-hidden bg-transparent px-2 py-1.5 text-sm text-ink outline-none focus:bg-brand-50/60 dark:focus:bg-white/5', header && 'font-semibold')}
+      className={clsx('block w-full resize-none overflow-hidden bg-transparent px-2 py-1.5 text-sm text-ink outline-none focus:bg-primary/[0.04] dark:focus:bg-white/5', header && 'font-semibold')}
     />
   );
 };
@@ -35,7 +35,7 @@ export const TableEditor = memo(function TableEditor({ block, onChange, onFocus 
   const rows = block.rows.map((r) => Array.from({ length: cols }, (_, i) => r[i] ?? ''));
   const header = block.header !== false;
   const set = (rowsNext: string[][], h = header) => onChange(block.id, { ...block, rows: rowsNext, header: h });
-  const btn = 'inline-flex items-center gap-1 rounded-md border border-line bg-card px-2 py-1 text-xs font-medium text-ink hover:bg-surface disabled:opacity-40';
+  const btn = 'inline-flex items-center gap-1 rounded-md border border-line bg-card px-2 py-1 text-xs font-medium text-ink hover:bg-sunken disabled:opacity-40';
 
   return (
     <div className="group/table" onFocus={() => onFocus(block.id)}>
@@ -43,7 +43,7 @@ export const TableEditor = memo(function TableEditor({ block, onChange, onFocus 
         <table className="w-full border-collapse text-sm">
           <tbody>
             {rows.map((r, ri) => (
-              <tr key={ri} className={clsx(header && ri === 0 && 'bg-brand-50 dark:bg-white/5')}>
+              <tr key={ri} className={clsx(header && ri === 0 && 'bg-primary/[0.06] dark:bg-white/5')}>
                 {r.map((c, ci) => (
                   <td key={ci} className="min-w-20 border border-line p-0 align-top">
                     <Cell
@@ -73,7 +73,7 @@ export const TableEditor = memo(function TableEditor({ block, onChange, onFocus 
           <Minus className="size-3.5" /> {t('docCreate.editor.table.delCol')}
         </button>
         <label className="ml-1 inline-flex items-center gap-1.5 text-xs text-muted">
-          <input type="checkbox" className="size-3.5 accent-brand-600" checked={header} onChange={(e) => set(rows, e.target.checked)} />
+          <input type="checkbox" className="size-3.5 accent-primary" checked={header} onChange={(e) => set(rows, e.target.checked)} />
           {t('docCreate.editor.table.header')}
         </label>
       </div>

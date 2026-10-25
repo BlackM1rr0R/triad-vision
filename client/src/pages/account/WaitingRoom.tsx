@@ -37,6 +37,7 @@ import { useApiError } from '@/components/portal/useApiError';
 import { Button } from '@/components/ui/Button';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { checklistOf, useWaitingRoom, videoEmbed, WR_KEY, type WrGraded, type WrItem, type WrProgress, type WrResponse, type WrStats, type WrTopic } from '@/components/waitingRoom/api';
+import { Learning } from '@/components/illustrations';
 
 registerCopy(pagesWaitingRoom);
 
@@ -60,7 +61,7 @@ const VideoEmbed = ({ url, title }: { url: string; title: string }) => {
   const embed = videoEmbed(url);
   if (!embed)
     return (
-      <a href={url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-sm font-semibold text-brand-600 hover:underline">
+      <a href={url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-sm font-semibold text-link hover:underline">
         <ExternalLink className="size-4" aria-hidden /> {url}
       </a>
     );
@@ -119,7 +120,7 @@ const Checklist = ({ item, body }: { item: WrItem; body: string }) => {
         {items.map((text, i) => (
           <li key={i}>
             <label className={clsx('flex min-h-11 cursor-pointer items-start gap-3 rounded-lg border px-3 py-2.5 text-sm transition-colors', ticked.includes(i) ? 'border-success-border bg-success-bg/60 text-ink/70' : 'border-line bg-card text-ink')}>
-              <input type="checkbox" className="mt-0.5 size-4 shrink-0 accent-brand-600" checked={ticked.includes(i)} onChange={() => toggle(i)} />
+              <input type="checkbox" className="mt-0.5 size-4 shrink-0 accent-primary" checked={ticked.includes(i)} onChange={() => toggle(i)} />
               <span className={clsx(ticked.includes(i) && 'line-through decoration-ink/30')}>{renderInline(text, `c${i}`)}</span>
             </label>
           </li>
@@ -174,10 +175,10 @@ const Exercise = ({ item, onGraded }: { item: WrItem; onGraded: (g: WrGraded) =>
                         key={oi}
                         className={clsx(
                           'flex min-h-11 cursor-pointer items-center gap-3 rounded-lg border px-3 py-2 text-sm transition-colors',
-                          isRight ? 'border-success-border bg-success-bg text-success-fg' : isWrongChoice ? 'border-danger-border bg-danger-bg text-danger-fg' : chosen ? 'border-brand-500 bg-brand-50' : 'border-line hover:bg-surface',
+                          isRight ? 'border-success-border bg-success-bg text-success-fg' : isWrongChoice ? 'border-danger-border bg-danger-bg text-danger-fg' : chosen ? 'border-line-strong bg-sunken' : 'border-line hover:bg-sunken',
                         )}
                       >
-                        <input type="radio" name={`${item.id}-${qi}`} className="size-4 shrink-0 accent-brand-600" checked={chosen} onChange={() => setAnswers((a) => a.map((v, i) => (i === qi ? oi : v)))} />
+                        <input type="radio" name={`${item.id}-${qi}`} className="size-4 shrink-0 accent-primary" checked={chosen} onChange={() => setAnswers((a) => a.map((v, i) => (i === qi ? oi : v)))} />
                         <span className="flex-1">{tr(o)}</span>
                         {isRight && <CircleCheck className="size-4 shrink-0" aria-label={t('waitingRoom.correct')} />}
                         {isWrongChoice && <CircleX className="size-4 shrink-0" aria-label={t('waitingRoom.wrong')} />}
@@ -198,7 +199,7 @@ const Exercise = ({ item, onGraded }: { item: WrItem; onGraded: (g: WrGraded) =>
       {graded ? (
         <div className="flex flex-wrap items-center gap-3">
           <p className="flex items-center gap-2 text-sm font-bold text-ink" role="status" aria-live="polite">
-            <Trophy className="size-4 text-brand-600" aria-hidden />
+            <Trophy className="size-4 text-primary" aria-hidden />
             {t('waitingRoom.score', { right: graded.right, total: graded.total, score: graded.score })}
           </p>
           {graded.best > graded.score && <span className="text-xs text-muted">{t('waitingRoom.best', { score: graded.best })}</span>}
@@ -252,9 +253,9 @@ const ItemCard = ({ item, open, onToggle }: { item: WrItem; open: boolean; onTog
   });
 
   return (
-    <li id={`wr-${item.id}`} className={clsx('scroll-mt-28 overflow-hidden rounded-2xl border bg-card transition-shadow', open ? 'border-brand-200 shadow-md' : 'border-line')}>
+    <li id={`wr-${item.id}`} className={clsx('scroll-mt-28 overflow-hidden rounded-2xl border bg-card transition-shadow', open ? 'border-line-strong shadow-md' : 'border-line')}>
       <button type="button" onClick={onToggle} aria-expanded={open} aria-controls={`wr-body-${item.id}`} className="flex w-full items-center gap-3 p-4 text-left sm:p-5">
-        <span className={clsx('grid size-10 shrink-0 place-items-center rounded-xl', done ? 'bg-success-bg text-success-fg' : 'bg-brand-50 text-brand-600')}>
+        <span className={clsx('grid size-10 shrink-0 place-items-center rounded-xl', done ? 'bg-success-bg text-success-fg' : 'bg-sunken text-link')}>
           {done ? <CheckCircle2 className="size-5" aria-hidden /> : <Icon className="size-5" aria-hidden />}
         </span>
         <span className="min-w-0 flex-1">
@@ -305,12 +306,12 @@ const ItemCard = ({ item, open, onToggle }: { item: WrItem; open: boolean; onTog
 const Stat = ({ icon: Icon, label, value, children }: { icon: LucideIcon; label: string; value: string | number; children?: ReactNode }) => (
   <div className="flex items-center gap-3 rounded-2xl border border-line bg-card p-4">
     {children ?? (
-      <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-brand-50 text-brand-600">
+      <span className="grid size-10 shrink-0 place-items-center rounded-xl chip-soft">
         <Icon className="size-5" aria-hidden />
       </span>
     )}
     <span className="min-w-0">
-      <span className="block text-xl leading-tight font-extrabold text-ink tabular-nums">{value}</span>
+      <span className="block text-xl leading-tight font-semibold text-ink tabular-nums">{value}</span>
       <span className="block truncate text-xs font-medium text-muted">{label}</span>
     </span>
   </div>
@@ -362,7 +363,7 @@ export default function AccountWaitingRoom() {
     <div className="space-y-6">
       <header>
         <h2 className="type-page-title flex items-center gap-2">
-          <Hourglass className="size-6 text-brand-600" aria-hidden />
+          <Hourglass className="size-6 text-primary" aria-hidden />
           {t('waitingRoom.title')}
         </h2>
         <p className="type-small mt-1 max-w-2xl">{t('waitingRoom.subtitle')}</p>
@@ -394,7 +395,7 @@ export default function AccountWaitingRoom() {
               type="button"
               aria-pressed={topic === k}
               onClick={() => setTopic(k)}
-              className={clsx('min-h-10 shrink-0 rounded-full border px-4 text-sm font-semibold transition-colors', topic === k ? 'border-brand-600 bg-brand-600 text-white' : 'border-line bg-card text-ink/80 hover:bg-surface')}
+              className={clsx('min-h-10 shrink-0 rounded-full border px-4 text-sm font-semibold transition-colors', topic === k ? 'border-primary bg-primary text-primary-contrast' : 'border-line bg-card text-ink/80 hover:bg-sunken')}
             >
               {k ? t(`waitingRoom.topics.${k}`) : t('waitingRoom.filterAll')}
             </button>
@@ -403,9 +404,9 @@ export default function AccountWaitingRoom() {
       )}
 
       {!data.items.length ? (
-        <div className="card p-8 text-center">
-          <Hourglass className="mx-auto size-10 text-brand-600" aria-hidden />
-          <p className="mt-3 font-semibold text-ink">{t('waitingRoom.empty')}</p>
+        <div className="card flex flex-col items-center p-8 text-center">
+          <Learning className="w-40" />
+          <p className="type-card-title mt-4">{t('waitingRoom.empty')}</p>
           <p className="type-small mt-1">{t('waitingRoom.emptyText')}</p>
         </div>
       ) : (

@@ -42,7 +42,7 @@ export default function SystemModules() {
                       <p className="mt-1.5 flex flex-wrap items-center gap-1.5 text-xs text-muted">
                         <span className="font-semibold">{t('anav.modulesPage.pages')}:</span>
                         {pages.map((p) => (
-                          <span key={p.id} className="inline-flex items-center gap-1 rounded-md bg-surface px-1.5 py-0.5">
+                          <span key={p.id} className="inline-flex items-center gap-1 rounded-md bg-sunken px-1.5 py-0.5">
                             <p.icon className="size-3" aria-hidden /> {t(p.labelKey)}
                           </span>
                         ))}

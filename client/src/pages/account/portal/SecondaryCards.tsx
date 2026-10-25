@@ -9,17 +9,17 @@ import { useGermanOverview } from '@/components/german/api';
 import { levelLabel } from '@/components/german/types';
 import type { ActiveCase } from '@/components/portal/accountTypes';
 
-const Teaser = ({ icon: Icon, title, text, to, action, children }: { icon: LucideIcon; title: string; text?: string; to: string; action: string; children?: ReactNode }) => (
+const Teaser = ({ icon: Icon, title, text, to, action, chip = 'chip-soft', children }: { icon: LucideIcon; title: string; text?: string; to: string; action: string; chip?: string; children?: ReactNode }) => (
   <section className="card card-body flex flex-col">
-    <h2 className="type-card-title flex items-center gap-2.5">
-      <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-brand-50 text-brand-600">
+    <h2 className="type-card-title flex items-center gap-3">
+      <span className={`grid size-11 shrink-0 place-items-center rounded-xl ${chip}`}>
         <Icon className="size-4" aria-hidden />
       </span>
       {title}
     </h2>
     {text && <p className="type-small mt-3">{text}</p>}
     {children}
-    <Link to={to} className="mt-auto inline-flex min-h-10 items-center gap-1 pt-3 text-sm font-semibold text-brand-600 hover:text-brand-700">
+    <Link to={to} className="mt-auto inline-flex min-h-10 items-center gap-1 pt-3 text-sm font-semibold text-link hover:text-link">
       {action}
       <ArrowRight className="size-3.5" aria-hidden />
     </Link>
@@ -33,10 +33,10 @@ export function GermanTeaser() {
   if (!data || (!data.plan && !data.courses.length && !data.exams.length && !data.requiredLevel)) return null;
   const pct = Math.max(0, Math.min(100, Math.round(data.progress.percent)));
   return (
-    <Teaser icon={GraduationCap} title={t('pux.cards.german.title')} to="/account/german" action={t('pux.cards.german.open')}>
+    <Teaser icon={GraduationCap} chip="chip-sky" title={t('pux.cards.german.title')} to="/account/german" action={t('pux.cards.german.open')}>
       <p className="type-small mt-3">{t('pux.cards.german.level', { current: levelLabel(data.progress.current), target: levelLabel(data.progress.target) })}</p>
-      <div className="mt-2 h-2 overflow-hidden rounded-full bg-surface" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100} aria-label={t('pux.cards.german.title')}>
-        <span className="block h-full rounded-full bg-brand-600" style={{ width: `${pct}%` }} />
+      <div className="mt-2 h-2 overflow-hidden rounded-full bg-sunken" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100} aria-label={t('pux.cards.german.title')}>
+        <span className="block h-full rounded-full bg-highlight" style={{ width: `${pct}%` }} />
       </div>
     </Teaser>
   );
@@ -52,7 +52,7 @@ export function ReferralTeaser() {
     retry: false,
   });
   if (!data?.enabled) return null;
-  return <Teaser icon={Gift} title={t('pux.cards.referral.title')} text={t('pux.cards.referral.text')} to="/account/referral" action={t('pux.cards.referral.open')} />;
+  return <Teaser icon={Gift} chip="chip-peach" title={t('pux.cards.referral.title')} text={t('pux.cards.referral.text')} to="/account/referral" action={t('pux.cards.referral.open')} />;
 }
 
 /** "Your application in numbers" (moved from the portal home to the case page's "Other" tab). */
@@ -70,11 +70,11 @@ export function CaseNumbers({ c }: { c: ActiveCase }) {
       <ul className="grid grid-cols-2 divide-y divide-line sm:grid-cols-5 sm:divide-x sm:divide-y-0 [&>*]:min-w-0">
         {items.map((it) => (
           <li key={it.label} className="flex items-center gap-3 px-4 py-3 sm:flex-col sm:items-start sm:gap-1.5 sm:px-5 sm:py-4">
-            <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-brand-50 text-brand-600">
+            <span className="grid size-9 shrink-0 place-items-center rounded-xl chip-soft">
               <it.icon className="size-4" aria-hidden />
             </span>
             <span className="min-w-0">
-              <span className="block text-xl leading-tight font-extrabold text-ink">{it.value}</span>
+              <span className="num block text-xl leading-tight font-semibold text-ink">{it.value}</span>
               <span className="block truncate text-[11px] font-medium text-muted">{it.label}</span>
             </span>
           </li>

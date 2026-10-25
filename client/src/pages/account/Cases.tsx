@@ -27,9 +27,9 @@ export default function AccountCases() {
     <div className="space-y-6 lg:space-y-8">
       <section aria-labelledby="cases-title">
         <h2 id="cases-title" className="type-section-title mb-4 flex items-center gap-2">
-          <FolderOpen className="size-5 text-brand-600" aria-hidden />
+          <FolderOpen className="size-5 text-primary" aria-hidden />
           {t('pnav.cases.title')}
-          <span className="badge bg-brand-100 text-brand-700">{cases.length}</span>
+          <span className="badge bg-sunken text-link">{cases.length}</span>
         </h2>
         {cases.length ? (
           <Stagger className="grid gap-4 sm:gap-6 md:grid-cols-2 xl:grid-cols-3 [&>*]:min-w-0">

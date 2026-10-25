@@ -29,13 +29,13 @@ const Field = ({ label, children, hint }: { label: string; children: ReactNode; 
 
 const Toggle = ({ checked, onChange, label }: { checked: boolean; onChange: (v: boolean) => void; label: string }) => (
   <label className="inline-flex cursor-pointer items-center gap-2 text-sm text-ink">
-    <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} className="size-4 accent-brand-600" />
+    <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} className="size-4 accent-primary" />
     {label}
   </label>
 );
 
 const Secondary = ({ onClick, children, disabled, className }: { onClick: () => void; children: ReactNode; disabled?: boolean; className?: string }) => (
-  <button type="button" onClick={onClick} disabled={disabled} className={clsx('inline-flex items-center gap-1.5 rounded-lg border border-line px-3 py-2 text-xs font-semibold text-ink hover:bg-surface disabled:opacity-50', className)}>
+  <button type="button" onClick={onClick} disabled={disabled} className={clsx('inline-flex items-center gap-1.5 rounded-lg border border-line px-3 py-2 text-xs font-semibold text-ink hover:bg-sunken disabled:opacity-50', className)}>
     {children}
   </button>
 );
@@ -150,8 +150,8 @@ const AccountDialog = ({ open, onClose, account }: { open: boolean; onClose: () 
         <Field label={t('mail.settings.accounts.email')}>
           <input type="email" value={form.email} onChange={(e) => onEmail(e.target.value)} className="input" autoComplete="off" data-autofocus />
         </Field>
-        <div className="sm:col-span-2 flex items-start gap-2 rounded-lg border border-line bg-surface px-3 py-2 text-xs text-muted">
-          <AlertCircle className="mt-0.5 size-3.5 shrink-0 text-brand-600" aria-hidden />
+        <div className="sm:col-span-2 flex items-start gap-2 rounded-lg border border-line bg-sunken px-3 py-2 text-xs text-muted">
+          <AlertCircle className="mt-0.5 size-3.5 shrink-0 text-link" aria-hidden />
           <span>{t(`mail.settings.accounts.hint.${form.provider}`)}</span>
         </div>
         <Field label={t('mail.settings.accounts.displayName')}>
@@ -199,18 +199,18 @@ const AccountDialog = ({ open, onClose, account }: { open: boolean; onClose: () 
         {test && (
           <div className="sm:col-span-2 space-y-1 text-sm">
             {test.imap.ok && test.smtp.ok ? (
-              <p className="inline-flex items-center gap-1.5 text-success">
+              <p className="inline-flex items-center gap-1.5 text-success-fg">
                 <CheckCircle2 className="size-4" /> {t('mail.settings.accounts.testOk')}
               </p>
             ) : (
               <>
                 {!test.imap.ok && (
-                  <p className="inline-flex items-start gap-1.5 text-danger">
+                  <p className="inline-flex items-start gap-1.5 text-danger-fg">
                     <AlertCircle className="mt-0.5 size-4 shrink-0" /> {t('mail.settings.accounts.testImapFailed', { error: test.imap.error ?? '' })}
                   </p>
                 )}
                 {!test.smtp.ok && (
-                  <p className="inline-flex items-start gap-1.5 text-danger">
+                  <p className="inline-flex items-start gap-1.5 text-danger-fg">
                     <AlertCircle className="mt-0.5 size-4 shrink-0" /> {t('mail.settings.accounts.testSmtpFailed', { error: test.smtp.error ?? '' })}
                   </p>
                 )}
@@ -255,10 +255,10 @@ const AccountsTab = ({ accounts }: { accounts: MailAccount[] }) => {
     <div className="space-y-3">
       {accounts.map((a) => (
         <div key={a.id} className="flex items-center gap-3 rounded-xl border border-line px-3 py-2.5">
-          <span className={clsx('size-2.5 shrink-0 rounded-full', a.syncStatus === 'OK' ? 'bg-success' : a.syncStatus === 'ERROR' ? 'bg-danger' : a.syncStatus === 'SYNCING' ? 'animate-pulse bg-brand-500' : 'bg-slate-300')} title={t(`mail.settings.accounts.status.${a.syncStatus}`)} />
+          <span className={clsx('size-2.5 shrink-0 rounded-full', a.syncStatus === 'OK' ? 'bg-success' : a.syncStatus === 'ERROR' ? 'bg-danger' : a.syncStatus === 'SYNCING' ? 'animate-pulse bg-primary' : 'bg-line-strong')} title={t(`mail.settings.accounts.status.${a.syncStatus}`)} />
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-semibold text-ink">
-              {a.email} {a.isDefault && <span className="ml-1 rounded-md bg-brand-100 px-1.5 text-[0.65rem] text-brand-700">{t('mail.settings.accounts.isDefault')}</span>}
+              {a.email} {a.isDefault && <span className="ml-1 rounded-md bg-primary/10 px-1.5 text-[0.65rem] text-link">{t('mail.settings.accounts.isDefault')}</span>}
             </p>
             <p className="truncate text-xs text-muted">
               {a.displayName ? `${a.displayName} · ` : ''}
@@ -272,7 +272,7 @@ const AccountsTab = ({ accounts }: { accounts: MailAccount[] }) => {
           <Secondary onClick={() => setEdit(a)}>
             <Pencil className="size-3.5" />
           </Secondary>
-          <Secondary onClick={() => setDel(a)} className="hover:text-danger">
+          <Secondary onClick={() => setDel(a)} className="hover:text-danger-fg">
             <Trash2 className="size-3.5" />
           </Secondary>
         </div>
@@ -367,7 +367,7 @@ const LabelsTab = () => {
         <div key={l.id} className="flex items-center gap-2 rounded-xl border border-line px-3 py-2">
           <input type="color" value={l.color} onChange={(e) => update.mutate({ ...l, color: e.target.value })} className="size-7 cursor-pointer rounded border-0 bg-transparent p-0" aria-label={t('mail.settings.labels.color')} />
           <input defaultValue={l.name} onBlur={(e) => e.target.value.trim() && e.target.value.trim() !== l.name && update.mutate({ ...l, name: e.target.value.trim() })} className="min-w-0 flex-1 bg-transparent text-sm text-ink outline-none" aria-label={t('mail.settings.labels.name')} />
-          <Secondary onClick={() => setDel(l)} className="hover:text-danger">
+          <Secondary onClick={() => setDel(l)} className="hover:text-danger-fg">
             <Trash2 className="size-3.5" />
           </Secondary>
         </div>
@@ -498,10 +498,10 @@ const RuleDialog = ({ open, onClose, rule, accounts }: { open: boolean; onClose:
           <legend className="px-1 text-xs font-bold text-muted">{t('mail.settings.rules.when')}</legend>
           <div className="mb-2 flex gap-4 text-sm">
             <label className="inline-flex items-center gap-1.5">
-              <input type="radio" checked={form.conditions.match !== 'any'} onChange={() => setC({ match: 'all' })} className="accent-brand-600" /> {t('mail.settings.rules.matchAll')}
+              <input type="radio" checked={form.conditions.match !== 'any'} onChange={() => setC({ match: 'all' })} className="accent-primary" /> {t('mail.settings.rules.matchAll')}
             </label>
             <label className="inline-flex items-center gap-1.5">
-              <input type="radio" checked={form.conditions.match === 'any'} onChange={() => setC({ match: 'any' })} className="accent-brand-600" /> {t('mail.settings.rules.matchAny')}
+              <input type="radio" checked={form.conditions.match === 'any'} onChange={() => setC({ match: 'any' })} className="accent-primary" /> {t('mail.settings.rules.matchAny')}
             </label>
           </div>
           <div className="grid gap-2 sm:grid-cols-2">
@@ -555,8 +555,8 @@ const RuleDialog = ({ open, onClose, rule, accounts }: { open: boolean; onClose:
               <span className="label">{t('mail.settings.rules.linkCase')}</span>
               {form.caseRef ? (
                 <span className="inline-flex items-center gap-1.5 rounded-lg border border-line px-2 py-1.5 text-sm">
-                  <Briefcase className="size-3.5 text-brand-600" /> {form.caseRef.number}
-                  <button type="button" onClick={() => set({ caseRef: null })} className="text-muted hover:text-danger" aria-label={t('mail.actions.delete')}>
+                  <Briefcase className="size-3.5 text-link" /> {form.caseRef.number}
+                  <button type="button" onClick={() => set({ caseRef: null })} className="text-muted hover:text-danger-fg" aria-label={t('mail.actions.delete')}>
                     <X className="size-3.5" />
                   </button>
                 </span>
@@ -629,7 +629,7 @@ const RulesTab = ({ accounts }: { accounts: MailAccount[] }) => {
     <div className="space-y-3">
       {(rules.data ?? []).map((r) => (
         <div key={r.id} className={clsx('flex items-center gap-2 rounded-xl border border-line px-3 py-2', !r.enabled && 'opacity-60')}>
-          <input type="checkbox" checked={r.enabled} onChange={() => toggle.mutate(r)} className="size-4 accent-brand-600" aria-label={t('mail.settings.rules.enabled')} />
+          <input type="checkbox" checked={r.enabled} onChange={() => toggle.mutate(r)} className="size-4 accent-primary" aria-label={t('mail.settings.rules.enabled')} />
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-semibold text-ink">{r.name}</p>
             <p className="truncate text-xs text-muted">{describe(r)}</p>
@@ -640,7 +640,7 @@ const RulesTab = ({ accounts }: { accounts: MailAccount[] }) => {
           <Secondary onClick={() => setEdit(r)}>
             <Pencil className="size-3.5" />
           </Secondary>
-          <Secondary onClick={() => setDel(r)} className="hover:text-danger">
+          <Secondary onClick={() => setDel(r)} className="hover:text-danger-fg">
             <Trash2 className="size-3.5" />
           </Secondary>
         </div>
@@ -732,7 +732,7 @@ const TemplatesTab = () => {
             <p className="flex items-center gap-1.5 truncate text-sm font-semibold text-ink">
               {tpl.name}
               {tpl.shared && (
-                <span className="inline-flex items-center gap-1 rounded-md bg-brand-100 px-1.5 text-[0.65rem] text-brand-700">
+                <span className="inline-flex items-center gap-1 rounded-md bg-primary/10 px-1.5 text-[0.65rem] text-link">
                   <Share2 className="size-3" /> {t('mail.settings.templates.sharedBadge')}
                 </span>
               )}
@@ -747,7 +747,7 @@ const TemplatesTab = () => {
               <Secondary onClick={() => setEdit(tpl)}>
                 <Pencil className="size-3.5" />
               </Secondary>
-              <Secondary onClick={() => setDel(tpl)} className="hover:text-danger">
+              <Secondary onClick={() => setDel(tpl)} className="hover:text-danger-fg">
                 <Trash2 className="size-3.5" />
               </Secondary>
             </>
@@ -795,7 +795,7 @@ export const MailSettingsDialog = ({ open, onClose, initialTab = 'accounts', acc
     <Dialog open={open} onClose={onClose} size="xl" title={t('mail.settings.title')}>
       <div className="-mt-1 mb-4 flex flex-wrap gap-1 border-b border-line">
         {tabs.map((x) => (
-          <button key={x} type="button" onClick={() => setTab(x)} className={clsx('-mb-px border-b-2 px-3 py-2 text-sm font-semibold', tab === x ? 'border-brand-600 text-brand-700' : 'border-transparent text-muted hover:text-ink')}>
+          <button key={x} type="button" onClick={() => setTab(x)} className={clsx('-mb-px border-b-2 px-3 py-2 text-sm font-semibold', tab === x ? 'border-primary text-link' : 'border-transparent text-muted hover:text-ink')}>
             {x === 'security' ? t('mailAdmin.security.tab') : t(`mail.settings.tabs.${x}`)}
           </button>
         ))}

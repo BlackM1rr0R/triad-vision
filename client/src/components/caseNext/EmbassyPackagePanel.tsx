@@ -18,7 +18,7 @@ export const EmbassyPackagePanel = ({ c }: { c: CaseDetail }) => {
         <div className="min-w-0">
           <p className="text-xs text-muted">{t('caseNext.pkg.panelDesc')}</p>
           {last && (
-            <a href={fileUrl(last.id, true)} className="mt-1.5 inline-flex items-center gap-1 text-xs font-semibold text-brand-700 hover:underline">
+            <a href={fileUrl(last.id, true)} className="mt-1.5 inline-flex items-center gap-1 text-xs font-semibold text-link hover:underline">
               <Download className="size-3.5" aria-hidden /> {t('caseNext.pkg.lastPackage', { date: fmtDateTime(last.createdAt) })}
             </a>
           )}

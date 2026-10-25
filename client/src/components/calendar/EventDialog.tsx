@@ -49,7 +49,7 @@ const FindTime = ({ day, users, people, meId, onPick }: { day: Date; users: stri
               <div
                 role="button"
                 tabIndex={0}
-                className="relative h-6 flex-1 cursor-crosshair overflow-hidden rounded-md bg-emerald-50"
+                className="relative h-6 flex-1 cursor-crosshair overflow-hidden rounded-md bg-success-bg"
                 title={t('calendar.findTime.free')}
                 onClick={(e) => {
                   const r = e.currentTarget.getBoundingClientRect();
@@ -171,7 +171,7 @@ export const EventDialog = ({ open, onClose, initial, people, meId, onSaved }: {
   const Seg = <T extends string>({ value, options, onChange, label }: { value: T; options: { v: T; l: string }[]; onChange: (v: T) => void; label: (v: T) => string }) => (
     <div className="flex flex-wrap gap-1" role="radiogroup">
       {options.map((o) => (
-        <button key={o.v} type="button" role="radio" aria-checked={value === o.v} onClick={() => onChange(o.v)} className={clsx('rounded-lg border px-2.5 py-1 text-xs font-semibold', value === o.v ? 'border-brand-500 bg-brand-50 text-brand-700' : 'border-line text-ink hover:bg-surface')}>
+        <button key={o.v} type="button" role="radio" aria-checked={value === o.v} onClick={() => onChange(o.v)} className={clsx('rounded-lg border px-2.5 py-1 text-xs font-semibold', value === o.v ? 'border-primary bg-primary/[0.06] text-link' : 'border-line text-ink hover:bg-sunken')}>
           {o.l || label(o.v)}
         </button>
       ))}
@@ -202,7 +202,7 @@ export const EventDialog = ({ open, onClose, initial, people, meId, onSaved }: {
           void submit();
         }}
       >
-        <input autoFocus value={title} onChange={(e) => setTitle(e.target.value)} maxLength={200} placeholder={t('calendar.ph.title')} aria-label={t('calendar.fields.title')} className="w-full border-0 bg-transparent p-0 font-display text-xl font-bold text-ink outline-none placeholder:text-muted/60" />
+        <input autoFocus value={title} onChange={(e) => setTitle(e.target.value)} maxLength={200} placeholder={t('calendar.ph.title')} aria-label={t('calendar.fields.title')} className="w-full border-0 bg-transparent p-0 font-display text-xl font-bold text-ink outline-none placeholder:text-subtle" />
 
         <div className="grid gap-3 sm:grid-cols-[1fr_auto_1fr]">
           <Field label={t('calendar.fields.start')}>
@@ -221,9 +221,9 @@ export const EventDialog = ({ open, onClose, initial, people, meId, onSaved }: {
         </div>
         <div className="flex flex-wrap items-center gap-4">
           <label className="inline-flex items-center gap-2 text-sm text-ink">
-            <input type="checkbox" checked={allDay} onChange={(e) => setAllDay(e.target.checked)} className="accent-brand-600" /> {t('calendar.fields.allDay')}
+            <input type="checkbox" checked={allDay} onChange={(e) => setAllDay(e.target.checked)} className="accent-primary" /> {t('calendar.fields.allDay')}
           </label>
-          <button type="button" onClick={() => setFindTime((f) => !f)} className={clsx('inline-flex items-center gap-1.5 text-sm font-semibold', findTime ? 'text-brand-700' : 'text-brand-600 hover:underline')}>
+          <button type="button" onClick={() => setFindTime((f) => !f)} className={clsx('inline-flex items-center gap-1.5 text-sm font-semibold', findTime ? 'text-link' : 'text-link hover:underline')}>
             <Clock className="size-4" /> {t('calendar.actions.findTime')}
           </button>
         </div>
@@ -245,13 +245,13 @@ export const EventDialog = ({ open, onClose, initial, people, meId, onSaved }: {
             {attendees.map((a) => (
               <span key={a.id} className="inline-flex items-center gap-1.5 rounded-full border border-line bg-card py-0.5 pr-1 pl-0.5 text-xs">
                 <Avatar person={a} size="xs" /> {fullName(a)}
-                <button type="button" onClick={() => setAttendees((x) => x.filter((y) => y.id !== a.id))} className="grid size-4 place-items-center rounded-full text-muted hover:text-danger" aria-label={t('calendar.actions.delete')}>
+                <button type="button" onClick={() => setAttendees((x) => x.filter((y) => y.id !== a.id))} className="grid size-4 place-items-center rounded-full text-muted hover:text-danger-fg" aria-label={t('calendar.actions.delete')}>
                   <X className="size-3" />
                 </button>
               </span>
             ))}
             <span className="relative">
-              <button type="button" onClick={() => setPeopleOpen((o) => !o)} className="inline-flex items-center gap-1 rounded-full border border-dashed border-line px-2.5 py-1 text-xs font-medium text-muted hover:border-brand-400 hover:text-brand-600">
+              <button type="button" onClick={() => setPeopleOpen((o) => !o)} className="inline-flex items-center gap-1 rounded-full border border-dashed border-line px-2.5 py-1 text-xs font-medium text-muted hover:border-line-strong hover:text-link">
                 <Plus className="size-3.5" /> {t('calendar.ph.attendees')}
               </button>
               <Popover open={peopleOpen} onClose={() => setPeopleOpen(false)}>
@@ -301,7 +301,7 @@ export const EventDialog = ({ open, onClose, initial, people, meId, onSaved }: {
                   <div className="flex flex-wrap items-center gap-1">
                     <span className="mr-1 text-muted">{t('calendar.recurrence.on')}</span>
                     {WEEKDAY_CODES.map((c, i) => (
-                      <button key={c} type="button" onClick={() => setRec({ ...rec, byDay: rec.byDay.includes(c) ? rec.byDay.filter((x) => x !== c) : [...rec.byDay, c] })} className={clsx('size-8 rounded-full text-xs font-semibold', rec.byDay.includes(c) ? 'bg-brand-600 text-white' : 'bg-surface text-ink hover:bg-brand-50')} aria-pressed={rec.byDay.includes(c)}>
+                      <button key={c} type="button" onClick={() => setRec({ ...rec, byDay: rec.byDay.includes(c) ? rec.byDay.filter((x) => x !== c) : [...rec.byDay, c] })} className={clsx('size-8 rounded-full text-xs font-semibold', rec.byDay.includes(c) ? 'bg-primary text-primary-contrast' : 'bg-sunken text-ink hover:bg-primary/[0.06]')} aria-pressed={rec.byDay.includes(c)}>
                         {weekdayShort()[i].slice(0, 2)}
                       </button>
                     ))}
@@ -348,7 +348,7 @@ export const EventDialog = ({ open, onClose, initial, people, meId, onSaved }: {
             <span className="label">{t('calendar.fields.color')}</span>
             <div className="flex flex-wrap gap-1.5">
               {EVENT_COLORS.map((c) => (
-                <button key={c} type="button" onClick={() => setColor(c)} className={clsx('size-7 rounded-full ring-offset-2 ring-offset-card transition-shadow', TONES[c].dot, color === c && 'ring-2 ring-brand-600')} aria-label={c} aria-pressed={color === c} />
+                <button key={c} type="button" onClick={() => setColor(c)} className={clsx('size-7 rounded-full ring-offset-2 ring-offset-card transition-shadow', TONES[c].dot, color === c && 'ring-2 ring-focus')} aria-label={c} aria-pressed={color === c} />
               ))}
             </div>
           </div>

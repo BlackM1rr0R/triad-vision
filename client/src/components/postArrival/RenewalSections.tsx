@@ -36,7 +36,7 @@ const DaysChip = ({ days }: { days: number }) => {
 const OpenLink = ({ id, number }: { id: string; number: string }) => {
   const { t } = useTranslation();
   return (
-    <Link to={`/admin/cases/${id}`} className="grid size-9 place-items-center rounded-lg text-brand-600 transition hover:bg-brand-50" title={t('expiry.page.openCase')} aria-label={`${t('expiry.page.openCase')}: ${number}`}>
+    <Link to={`/admin/cases/${id}`} className="grid size-9 place-items-center rounded-lg text-link transition hover:bg-primary/[0.06]" title={t('expiry.page.openCase')} aria-label={`${t('expiry.page.openCase')}: ${number}`}>
       <ExternalLink className="size-4" aria-hidden />
     </Link>
   );
@@ -63,14 +63,14 @@ export const RenewalSections = ({ days, staffId }: { days: number; staffId: stri
             {d.residence.map((r) => (
               <li key={r.case.id} className="flex items-center gap-3 px-5 py-3">
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium text-navy-900">{r.client.name}</p>
+                  <p className="truncate text-sm font-medium text-ink">{r.client.name}</p>
                   <p className="truncate text-xs text-muted">
                     <span className="font-mono">{r.case.number}</span> · {date(r.expiresAt)} · {r.staff?.name ?? t('expiry.page.unassigned')}
                   </p>
                   <p className="mt-0.5 text-xs">
                     {t('postArrival.expiring.renewal')}:{' '}
                     {r.renewal ? (
-                      <Link to={`/admin/cases/${r.renewal.id}`} className="font-mono font-semibold text-brand-600 hover:underline">
+                      <Link to={`/admin/cases/${r.renewal.id}`} className="font-mono font-semibold text-link hover:underline">
                         {r.renewal.number}
                       </Link>
                     ) : (
@@ -94,7 +94,7 @@ export const RenewalSections = ({ days, staffId }: { days: number; staffId: stri
             {d.probation.map((p) => (
               <li key={p.case.id} className="flex items-center gap-3 px-5 py-3">
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium text-navy-900">{p.client.name}</p>
+                  <p className="truncate text-sm font-medium text-ink">{p.client.name}</p>
                   <p className="truncate text-xs text-muted">
                     <span className="font-mono">{p.case.number}</span>
                     {p.employer && ` · ${t('postArrival.expiring.employer')}: ${p.employer}`} · {t('postArrival.expiring.ends')}: {date(p.endsAt)}

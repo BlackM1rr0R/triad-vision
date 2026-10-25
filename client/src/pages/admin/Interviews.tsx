@@ -120,7 +120,7 @@ const CreateModal = ({ open, onClose, onCreated, staff, companies }: { open: boo
           {candidate ? (
             <div className="flex items-center justify-between gap-2 rounded-lg border border-line bg-surface/50 px-3 py-2 text-sm">
               <span className="min-w-0 truncate">
-                <span className="font-semibold text-navy-900">{fullName(candidate)}</span> <span className="text-muted">· {candidate.email}{candidate.profession ? ` · ${candidate.profession}` : ''}</span>
+                <span className="font-semibold text-ink">{fullName(candidate)}</span> <span className="text-muted">· {candidate.email}{candidate.profession ? ` · ${candidate.profession}` : ''}</span>
               </span>
               <button type="button" className="btn-secondary btn-sm" onClick={() => { setCandidate(null); setApplicationId(''); }}>{t('ops.common.edit')}</button>
             </div>
@@ -129,13 +129,13 @@ const CreateModal = ({ open, onClose, onCreated, staff, companies }: { open: boo
               <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted" aria-hidden />
               <input id="iv-cand" data-autofocus className="input pl-9" placeholder={t('ops.interviews.searchCandidate')} value={search} onChange={(e) => setSearch(e.target.value)} />
               {search.trim().length >= 2 && (
-                <ul className="mt-1 max-h-56 overflow-y-auto rounded-lg border border-line bg-white text-sm shadow-lg">
+                <ul className="mt-1 max-h-56 overflow-y-auto rounded-lg border border-line bg-card text-sm shadow-[var(--tv-shadow-raised)]">
                   {hits.isLoading && <li className="px-3 py-2 text-muted">…</li>}
                   {hits.data?.length === 0 && <li className="px-3 py-2 text-muted">{t('ops.interviews.noCandidates')}</li>}
                   {hits.data?.map((c) => (
                     <li key={c.id}>
-                      <button type="button" className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left hover:bg-surface" onClick={() => setCandidate(c)}>
-                        <span className="min-w-0 truncate"><span className="font-medium text-navy-900">{fullName(c)}</span> <span className="text-muted">· {c.email}</span></span>
+                      <button type="button" className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left hover:bg-sunken" onClick={() => setCandidate(c)}>
+                        <span className="min-w-0 truncate"><span className="font-medium text-ink">{fullName(c)}</span> <span className="text-muted">· {c.email}</span></span>
                         <span className="shrink-0 text-xs text-muted">{c.profession ?? ''}</span>
                       </button>
                     </li>
@@ -241,13 +241,13 @@ const DetailDrawer = ({ interview: i, onClose, staff }: { interview: Interview |
         <InterviewCard interview={i} audience="staff" compact />
 
         <dl className="grid gap-x-4 gap-y-2 text-sm sm:grid-cols-2">
-          <div><dt className="text-xs text-muted">{t('ops.interviews.fields.candidate')}</dt><dd><Link to={`/admin/candidates?id=${i.candidate.id}`} className="font-medium text-brand-600 hover:underline">{i.candidate.name}</Link></dd></div>
-          <div><dt className="text-xs text-muted">{t('ops.interviews.fields.company')}</dt><dd>{i.company ? <Link to={`/admin/companies?id=${i.company.id}`} className="font-medium text-brand-600 hover:underline">{i.company.name}</Link> : t('ops.interviews.fields.noCompany')}</dd></div>
-          <div><dt className="text-xs text-muted">{t('ops.interviews.fields.application')}</dt><dd>{i.application ? <Link to={`/admin/vacancies?id=${i.application.vacancy.id}`} className="font-medium text-brand-600 hover:underline">{tr(i.application.vacancy.title)}</Link> : '—'}</dd></div>
+          <div><dt className="text-xs text-muted">{t('ops.interviews.fields.candidate')}</dt><dd><Link to={`/admin/candidates?id=${i.candidate.id}`} className="font-medium text-link hover:underline">{i.candidate.name}</Link></dd></div>
+          <div><dt className="text-xs text-muted">{t('ops.interviews.fields.company')}</dt><dd>{i.company ? <Link to={`/admin/companies?id=${i.company.id}`} className="font-medium text-link hover:underline">{i.company.name}</Link> : t('ops.interviews.fields.noCompany')}</dd></div>
+          <div><dt className="text-xs text-muted">{t('ops.interviews.fields.application')}</dt><dd>{i.application ? <Link to={`/admin/vacancies?id=${i.application.vacancy.id}`} className="font-medium text-link hover:underline">{tr(i.application.vacancy.title)}</Link> : '—'}</dd></div>
           <div><dt className="text-xs text-muted">{t('ops.interviews.fields.createdBy')}</dt><dd>{i.createdBy?.name ?? '—'} · {fmtDateTime(i.createdAt)}</dd></div>
           <div className="sm:col-span-2">
             <dt className="text-xs text-muted">{t('ops.interviews.fields.meeting')}</dt>
-            <dd className="truncate font-mono text-xs">{i.meetingUrl ?? '—'}</dd>
+            <dd className="truncate code-id text-xs">{i.meetingUrl ?? '—'}</dd>
           </div>
         </dl>
 
@@ -271,7 +271,7 @@ const DetailDrawer = ({ interview: i, onClose, staff }: { interview: Interview |
                 </button>
               </>
             )}
-            <button type="button" className="btn-secondary btn-sm text-danger" onClick={() => setCancelReason('')}>
+            <button type="button" className="btn-secondary btn-sm text-danger-fg" onClick={() => setCancelReason('')}>
               <Ban className="size-3.5" /> {t('ops.interviews.actions.cancel')}
             </button>
           </div>
@@ -290,7 +290,7 @@ const DetailDrawer = ({ interview: i, onClose, staff }: { interview: Interview |
           </div>
         )}
         {cancelReason !== null && (
-          <div className="rounded-xl border border-red-200 bg-red-50/50 p-4">
+          <div className="rounded-xl border border-danger-border bg-danger-bg/50 p-4">
             <label className="label" htmlFor="iv-cr">{t('ops.interviews.fields.reason')}</label>
             <textarea id="iv-cr" rows={2} className="input" maxLength={2000} value={cancelReason} onChange={(e) => setCancelReason(e.target.value)} />
             <div className="mt-2 flex gap-2">
@@ -319,13 +319,13 @@ const DetailDrawer = ({ interview: i, onClose, staff }: { interview: Interview |
         <div>
           <label className="label" htmlFor="iv-notes2">{t('ops.interviews.fields.notes')}</label>
           <textarea id="iv-notes2" rows={4} className="input" maxLength={4000} value={notes} onChange={(e) => setNotes(e.target.value)} />
-          <button type="button" className="btn-white btn-sm mt-2 border border-line" disabled={notes === (i.notes ?? '') || patch.isPending} onClick={() => patch.mutate({ notes })}>
+          <button type="button" className="btn-secondary btn-sm mt-2 border border-line" disabled={notes === (i.notes ?? '') || patch.isPending} onClick={() => patch.mutate({ notes })}>
             {t('ops.interviews.actions.saveNotes')}
           </button>
         </div>
 
         <div className="border-t border-line pt-4">
-          <button type="button" className="btn-secondary btn-sm text-danger" onClick={() => setConfirmDelete(true)}>
+          <button type="button" className="btn-secondary btn-sm text-danger-fg" onClick={() => setConfirmDelete(true)}>
             <Trash2 className="size-3.5" /> {t('ops.interviews.actions.delete')}
           </button>
         </div>
@@ -372,19 +372,19 @@ export default function Interviews() {
       />
 
       <div className="flex flex-wrap items-center gap-2">
-        <div className="flex rounded-lg border border-line bg-white p-0.5">
+        <div className="flex rounded-lg border border-line bg-sunken p-0.5">
           {(['week', 'list'] as const).map((v) => (
-            <button key={v} type="button" onClick={() => setView(v)} className={clsx('inline-flex min-h-9 items-center gap-1.5 rounded-md px-3 text-xs font-semibold transition', view === v ? 'bg-navy-900 text-white' : 'text-ink/70 hover:text-navy-900')}>
+            <button key={v} type="button" onClick={() => setView(v)} className={clsx('inline-flex min-h-9 items-center gap-1.5 rounded-md px-3 text-xs font-semibold transition', view === v ? 'bg-card text-ink shadow-[var(--tv-shadow-card)] ring-1 ring-line' : 'text-muted hover:text-ink')}>
               {v === 'week' ? <CalendarDays className="size-3.5" /> : <List className="size-3.5" />} {t(`ops.interviews.views.${v}`)}
             </button>
           ))}
         </div>
         {view === 'week' && (
           <div className="flex items-center gap-1">
-            <button type="button" className="grid size-9 place-items-center rounded-lg border border-line bg-white hover:bg-surface" onClick={() => setWeekStart(addDays(weekStart, -7))} aria-label={t('ops.interviews.prevWeek')}><ChevronLeft className="size-4" /></button>
+            <button type="button" className="grid size-9 place-items-center rounded-lg border border-line bg-card hover:bg-sunken" onClick={() => setWeekStart(addDays(weekStart, -7))} aria-label={t('ops.interviews.prevWeek')}><ChevronLeft className="size-4" /></button>
             <button type="button" className="btn-secondary btn-sm" onClick={() => setWeekStart(startOfWeek(new Date()))}>{t('ops.interviews.today')}</button>
-            <button type="button" className="grid size-9 place-items-center rounded-lg border border-line bg-white hover:bg-surface" onClick={() => setWeekStart(addDays(weekStart, 7))} aria-label={t('ops.interviews.nextWeek')}><ChevronRight className="size-4" /></button>
-            <span className="ml-2 text-sm font-semibold text-navy-900">{t('ops.interviews.weekOf', { from: fmtDate(days[0]), to: fmtDate(days[6]) })}</span>
+            <button type="button" className="grid size-9 place-items-center rounded-lg border border-line bg-card hover:bg-sunken" onClick={() => setWeekStart(addDays(weekStart, 7))} aria-label={t('ops.interviews.nextWeek')}><ChevronRight className="size-4" /></button>
+            <span className="ml-2 text-sm font-semibold text-ink">{t('ops.interviews.weekOf', { from: fmtDate(days[0]), to: fmtDate(days[6]) })}</span>
           </div>
         )}
         <div className="ml-auto flex flex-wrap items-center gap-2">
@@ -410,15 +410,15 @@ export default function Interviews() {
               const dayItems = items.filter((i) => sameDay(new Date(i.startsAt), d)).sort((a, b) => a.startsAt.localeCompare(b.startsAt));
               const isToday = sameDay(d, today);
               return (
-                <section key={idx} className={clsx('flex min-h-64 flex-col rounded-xl border bg-white', isToday ? 'border-brand-400' : 'border-line')}>
-                  <header className={clsx('rounded-t-xl px-3 py-2 text-xs font-semibold', isToday ? 'bg-brand-50 text-brand-700' : 'bg-surface/60 text-navy-900')}>
+                <section key={idx} className={clsx('flex min-h-64 flex-col rounded-xl border bg-card', isToday ? 'border-line-strong' : 'border-line')}>
+                  <header className={clsx('rounded-t-xl px-3 py-2 text-xs font-semibold', isToday ? 'bg-primary/[0.06] text-link' : 'bg-surface/60 text-ink')}>
                     {weekdays[idx]} <span className="ml-1 font-normal text-muted">{fmtDate(d)}</span>
                   </header>
                   <div className="flex-1 space-y-1.5 p-2">
                     {dayItems.map((i) => (
-                      <button key={i.id} type="button" onClick={() => setSelectedId(i.id)} className={clsx('block w-full rounded-lg border border-line px-2 py-1.5 text-left text-xs transition hover:border-brand-300', i.status === 'CANCELLED' && 'opacity-60')}>
+                      <button key={i.id} type="button" onClick={() => setSelectedId(i.id)} className={clsx('block w-full rounded-lg border border-line px-2 py-1.5 text-left text-xs transition hover:border-line-strong', i.status === 'CANCELLED' && 'opacity-60')}>
                         <span className="flex items-center justify-between gap-1">
-                          <span className="font-semibold text-navy-900 tabular-nums">{fmtTime(i.startsAt)}</span>
+                          <span className="font-semibold text-ink tabular-nums">{fmtTime(i.startsAt)}</span>
                           <span className={clsx('size-2 rounded-full', INTERVIEW_DOT[i.status])} aria-hidden />
                         </span>
                         <span className="block truncate text-ink/90">{i.candidate.name}</span>
@@ -442,10 +442,10 @@ export default function Interviews() {
             const sorted = group === 'upcoming' ? rows : [...rows].reverse();
             return (
               <section key={group}>
-                <h2 className="mb-3 text-sm font-bold text-navy-900">{t(`ops.interviews.${group}`)} <span className="font-normal text-muted">· {t('ops.interviews.count', { count: rows.length })}</span></h2>
+                <h2 className="mb-3 text-sm font-bold text-ink">{t(`ops.interviews.${group}`)} <span className="font-normal text-muted">· {t('ops.interviews.count', { count: rows.length })}</span></h2>
                 <ul className="grid gap-3 lg:grid-cols-2">
                   {sorted.map((i) => (
-                    <li key={i.id}><InterviewCard interview={i} audience="staff" compact onOpen={() => setSelectedId(i.id)} actions={<button type="button" className="btn-white btn-sm ml-auto border border-line" onClick={() => setSelectedId(i.id)}>{t('ops.common.edit')}</button>} /></li>
+                    <li key={i.id}><InterviewCard interview={i} audience="staff" compact onOpen={() => setSelectedId(i.id)} actions={<button type="button" className="btn-secondary btn-sm ml-auto border border-line" onClick={() => setSelectedId(i.id)}>{t('ops.common.edit')}</button>} /></li>
                   ))}
                 </ul>
               </section>

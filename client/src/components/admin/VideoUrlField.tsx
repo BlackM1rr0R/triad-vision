@@ -36,7 +36,7 @@ export const VideoUrlField = ({ label, hint, value, onChange }: { label: string;
         {label}
       </label>
       <div className="flex gap-2">
-        <span className="grid size-[42px] shrink-0 place-items-center rounded-lg border border-line bg-surface text-muted" aria-hidden>
+        <span className="grid size-[42px] shrink-0 place-items-center rounded-lg border border-line bg-sunken text-muted" aria-hidden>
           <Video className="size-5" />
         </span>
         <input id={id} type="text" className="input min-w-0 flex-1" value={value} placeholder="https://youtu.be/…" maxLength={500} onChange={(e) => onChange(e.target.value)} />

@@ -57,12 +57,12 @@ const ICONS: Record<string, LucideIcon> = {
 };
 
 const TONE: Record<string, string> = {
-  DELETE: 'bg-red-50 text-red-600 dark:bg-red-500/15 dark:text-red-300',
-  PURGE: 'bg-red-50 text-red-600 dark:bg-red-500/15 dark:text-red-300',
-  UPLOAD_VIA_LINK: 'bg-amber-50 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300',
-  SHARE_LINK_CREATED: 'bg-amber-50 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300',
-  COMMENT: 'bg-violet-50 text-violet-700 dark:bg-violet-500/15 dark:text-violet-300',
-  TASK_CREATED: 'bg-violet-50 text-violet-700 dark:bg-violet-500/15 dark:text-violet-300',
+  DELETE: 'bg-danger-bg text-danger-fg dark:bg-red-500/15 dark:text-red-300',
+  PURGE: 'bg-danger-bg text-danger-fg dark:bg-red-500/15 dark:text-red-300',
+  UPLOAD_VIA_LINK: 'bg-warning-bg text-warning-fg dark:bg-amber-500/15 dark:text-amber-300',
+  SHARE_LINK_CREATED: 'bg-warning-bg text-warning-fg dark:bg-amber-500/15 dark:text-amber-300',
+  COMMENT: 'bg-accent-bg text-accent-fg dark:bg-violet-500/15 dark:text-violet-300',
+  TASK_CREATED: 'bg-accent-bg text-accent-fg dark:bg-violet-500/15 dark:text-violet-300',
 };
 
 const dayKey = (iso: string) => new Date(iso).toDateString();
@@ -100,13 +100,13 @@ export const ActivityList = ({ filters, compact = false, onNavigate }: { filters
           return (
             <li key={r.id}>
               {newDay && <p className="mt-2 mb-1 px-2 text-[11px] font-bold tracking-wide text-muted uppercase first:mt-0">{dayLabel(r.createdAt)}</p>}
-              <div className="flex items-start gap-2.5 rounded-lg px-2 py-1.5 hover:bg-surface">
-                <span className={clsx('mt-0.5 grid size-6 shrink-0 place-items-center rounded-full', TONE[r.action] ?? 'bg-brand-50 text-brand-700 dark:bg-white/10 dark:text-brand-200')}>
+              <div className="flex items-start gap-2.5 rounded-lg px-2 py-1.5 hover:bg-sunken">
+                <span className={clsx('mt-0.5 grid size-6 shrink-0 place-items-center rounded-full', TONE[r.action] ?? 'bg-primary/[0.06] text-link dark:bg-white/10 dark:text-brand-200')}>
                   <Icon className="size-3.5" aria-hidden />
                 </span>
                 <p className="min-w-0 flex-1 text-xs leading-snug break-words text-ink">
                   {href ? (
-                    <Link to={href} onClick={onNavigate} className="hover:text-brand-700 hover:underline">
+                    <Link to={href} onClick={onNavigate} className="hover:text-link hover:underline">
                       {activitySentence(r, t)}
                     </Link>
                   ) : (
@@ -141,7 +141,7 @@ export const ActivityTab = ({ item, onOpenJournal }: { item: DriveItem; onOpenJo
     <div>
       {item.kind === 'FOLDER' && onOpenJournal && (
         <div className="flex justify-end border-b border-line px-4 py-2">
-          <button type="button" onClick={onOpenJournal} className="inline-flex items-center gap-1.5 text-xs font-semibold text-brand-600 hover:underline">
+          <button type="button" onClick={onOpenJournal} className="inline-flex items-center gap-1.5 text-xs font-semibold text-link hover:underline">
             <History className="size-3.5" /> {t('driveCollab.activity.full')}
           </button>
         </div>
@@ -210,7 +210,7 @@ export const ActivityJournal = ({ folder, title, onClose }: { folder: DriveItem 
         <div className="mb-2 text-right">
           <button
             type="button"
-            className="text-xs font-semibold text-brand-600 hover:underline"
+            className="text-xs font-semibold text-link hover:underline"
             onClick={() => {
               setActorId('');
               setAction('');

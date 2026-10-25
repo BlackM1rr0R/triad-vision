@@ -74,8 +74,8 @@ const RatingBars = ({ ratings, compact }: { ratings: Partial<Record<RatingKey, n
         return (
           <li key={k} className="grid grid-cols-[minmax(0,7rem)_1fr_2.5rem] items-center gap-2">
             <span className="truncate text-muted">{t(`surveyPage.ratings.${k}`)}</span>
-            <span className="h-2 overflow-hidden rounded-full bg-surface" aria-hidden>
-              <span className="block h-full rounded-full bg-amber-400" style={{ width: `${v ? (v / 5) * 100 : 0}%` }} />
+            <span className="h-2 overflow-hidden rounded-full bg-sunken" aria-hidden>
+              <span className="block h-full rounded-full bg-warning" style={{ width: `${v ? (v / 5) * 100 : 0}%` }} />
             </span>
             <span className="text-right font-semibold text-ink tabular-nums">{v === null ? '—' : v.toFixed(1)}</span>
           </li>
@@ -95,11 +95,11 @@ const NpsMonths = ({ trend }: { trend: Summary['trend'] }) => {
         {trend.map((m) => (
           <li key={m.month} className="flex min-w-9 flex-1 flex-col items-center gap-1" title={`${monthLabel(m.month, true)}: ${npsText(m.nps)}`}>
             <span className={clsx('text-[10px] font-semibold tabular-nums', npsTone(m.nps))}>{npsText(m.nps)}</span>
-            <span className="relative h-16 w-full max-w-6 rounded bg-surface" aria-hidden>
+            <span className="relative h-16 w-full max-w-6 rounded bg-sunken" aria-hidden>
               <span className="absolute inset-x-0 top-1/2 h-px bg-line" />
               {m.nps !== null && (
                 <span
-                  className={clsx('absolute inset-x-0 rounded-sm', m.nps >= 0 ? 'bottom-1/2 bg-emerald-500' : 'top-1/2 bg-red-500')}
+                  className={clsx('absolute inset-x-0 rounded-sm', m.nps >= 0 ? 'bottom-1/2 bg-success' : 'top-1/2 bg-danger')}
                   style={{ height: `${Math.max(2, (Math.abs(m.nps) / 100) * 50)}%` }}
                 />
               )}
@@ -207,21 +207,21 @@ export default function AdminSurveys() {
                   <p className="mt-1 font-display text-3xl font-bold text-ink tabular-nums">{pct(s.responseRate)}</p>
                   <p className="mt-1 text-[11px] text-muted">{t('surveyAdmin.kpi.responseHint', { answered: s.answered, sent: s.sent })}</p>
                 </div>
-                <span className="grid size-9 place-items-center rounded-lg bg-brand-100 text-brand-700">
+                <span className="grid size-9 place-items-center rounded-lg bg-primary/10 text-link">
                   <MessageSquareText className="size-[18px]" aria-hidden />
                 </span>
               </div>
               {s.nps.total > 0 && (
                 <div className="mt-4">
-                  <div className="flex h-2.5 overflow-hidden rounded-full bg-surface" aria-hidden>
-                    <span className="bg-emerald-500" style={{ width: `${(s.nps.promoters / s.nps.total) * 100}%` }} />
-                    <span className="bg-amber-400" style={{ width: `${(s.nps.passives / s.nps.total) * 100}%` }} />
-                    <span className="bg-red-500" style={{ width: `${(s.nps.detractors / s.nps.total) * 100}%` }} />
+                  <div className="flex h-2.5 overflow-hidden rounded-full bg-sunken" aria-hidden>
+                    <span className="bg-success" style={{ width: `${(s.nps.promoters / s.nps.total) * 100}%` }} />
+                    <span className="bg-warning" style={{ width: `${(s.nps.passives / s.nps.total) * 100}%` }} />
+                    <span className="bg-danger" style={{ width: `${(s.nps.detractors / s.nps.total) * 100}%` }} />
                   </div>
                   <ul className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-muted">
                     {(['promoters', 'passives', 'detractors'] as const).map((k) => (
                       <li key={k} className="inline-flex items-center gap-1">
-                        <span className={clsx('size-2 rounded-full', k === 'promoters' ? 'bg-emerald-500' : k === 'passives' ? 'bg-amber-400' : 'bg-red-500')} />
+                        <span className={clsx('size-2 rounded-full', k === 'promoters' ? 'bg-success' : k === 'passives' ? 'bg-warning' : 'bg-danger')} />
                         {t(`surveyAdmin.npsBands.${k}`)}: <span className="font-semibold text-ink tabular-nums">{s.nps[k]}</span>
                       </li>
                     ))}
@@ -231,7 +231,7 @@ export default function AdminSurveys() {
             </section>
             <section className="rounded-xl border border-line bg-card p-4">
               <p className="mb-3 flex items-center gap-1.5 text-xs font-medium text-muted">
-                <Star className="size-3.5 text-amber-500" aria-hidden /> {t('surveyAdmin.kpi.ratings')}
+                <Star className="size-3.5 text-warning-fg" aria-hidden /> {t('surveyAdmin.kpi.ratings')}
               </p>
               <RatingBars ratings={s.ratings} />
             </section>
@@ -274,7 +274,7 @@ export default function AdminSurveys() {
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[40rem] text-sm">
-                  <thead className="bg-surface text-left text-xs text-muted">
+                  <thead className="bg-sunken text-left text-xs text-muted">
                     <tr>
                       <th className="px-5 py-2.5 font-medium sm:px-6">{t('surveyAdmin.cols.staff')}</th>
                       <th className="px-3 py-2.5 text-right font-medium">{t('surveyAdmin.cols.sent')}</th>
@@ -287,7 +287,7 @@ export default function AdminSurveys() {
                     {s.staff.map((r) => (
                       <tr key={r.staffId}>
                         <td className="px-5 py-3 font-medium text-ink sm:px-6">
-                          <button type="button" className="text-left hover:text-brand-700 hover:underline" onClick={() => setFilter('staffId', r.staffId)}>
+                          <button type="button" className="text-left hover:text-link hover:underline" onClick={() => setFilter('staffId', r.staffId)}>
                             {fullName(r)}
                           </button>
                         </td>
@@ -336,7 +336,7 @@ export default function AdminSurveys() {
             <option value="open">{t('surveyAdmin.filters.open')}</option>
           </select>
           <label className="inline-flex min-h-10 items-center gap-2 text-sm text-ink">
-            <input type="checkbox" className="size-4 accent-brand-600" checked={filters.hasComment} onChange={(e) => setFilter('hasComment', e.target.checked)} />
+            <input type="checkbox" className="size-4 accent-primary" checked={filters.hasComment} onChange={(e) => setFilter('hasComment', e.target.checked)} />
             {t('surveyAdmin.filters.withComment')}
           </label>
         </div>
@@ -356,14 +356,14 @@ export default function AdminSurveys() {
               return (
                 <li key={it.id} className="flex flex-wrap items-start gap-x-4 gap-y-2 px-5 py-4 sm:px-6">
                   <span
-                    className={clsx('grid size-11 shrink-0 place-items-center rounded-xl text-lg font-bold tabular-nums', it.score === null ? 'bg-surface text-muted' : scoreTone(it.score))}
+                    className={clsx('grid size-11 shrink-0 place-items-center rounded-xl text-lg font-bold tabular-nums', it.score === null ? 'bg-sunken text-muted' : scoreTone(it.score))}
                     aria-label={`${t('surveyAdmin.cols.score')}: ${it.score ?? '—'}`}
                   >
                     {it.score ?? '–'}
                   </span>
                   <div className="min-w-0 flex-[1_1_16rem]">
                     <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted">
-                      <Link to={`/admin/cases/${it.case.id}`} className="font-mono font-semibold text-ink hover:text-brand-700 hover:underline">
+                      <Link to={`/admin/cases/${it.case.id}`} className="font-mono font-semibold text-ink hover:text-link hover:underline">
                         {it.case.number}
                       </Link>
                       <span>·</span>
@@ -374,16 +374,16 @@ export default function AdminSurveys() {
                           <span>{fullName(it.staff)}</span>
                         </>
                       )}
-                      <span className="badge bg-surface text-muted">{t(`surveyAdmin.trigger.${it.trigger}`)}</span>
+                      <span className="badge bg-sunken text-muted">{t(`surveyAdmin.trigger.${it.trigger}`)}</span>
                       <span
                         className={clsx(
                           'badge',
-                          state === 'answered' ? 'bg-emerald-100 text-emerald-800' : state === 'expired' ? 'bg-surface text-muted' : 'bg-amber-100 text-amber-800',
+                          state === 'answered' ? 'bg-success-bg text-success-fg' : state === 'expired' ? 'bg-sunken text-muted' : 'bg-warning-bg text-warning-fg',
                         )}
                       >
                         {t(`surveyAdmin.state.${state}`)}
                       </span>
-                      {!it.answeredAt && it.remindedAt && <span className="badge bg-surface text-muted">{t('surveyAdmin.state.reminded')}</span>}
+                      {!it.answeredAt && it.remindedAt && <span className="badge bg-sunken text-muted">{t('surveyAdmin.state.reminded')}</span>}
                     </div>
                     <p className={clsx('mt-1.5 text-sm break-words whitespace-pre-line', it.comment ? 'text-ink' : 'text-muted italic')}>
                       {it.comment || (it.answeredAt ? t('surveyAdmin.noComment') : '')}
@@ -394,7 +394,7 @@ export default function AdminSurveys() {
                           <li key={k} className="inline-flex items-center gap-1">
                             {t(`surveyPage.ratings.${k}`)}
                             <span className="inline-flex items-center gap-0.5 font-semibold text-ink">
-                              <Star className="size-3 fill-amber-400 text-amber-400" aria-hidden />
+                              <Star className="size-3 fill-warning text-warning-fg" aria-hidden />
                               {it.ratings[k]}
                             </span>
                           </li>

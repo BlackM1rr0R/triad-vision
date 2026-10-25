@@ -88,7 +88,7 @@ export const CaseAiChecks = ({ caseId }: { caseId: string }) => {
     >
       <p className="mb-4 text-xs text-muted">{t('aiCase.panel.subtitle')}</p>
       {ai && !ai.available && (
-        <p className="mb-4 flex items-start gap-2 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:bg-amber-950/40 dark:text-amber-300" role="status">
+        <p className="mb-4 flex items-start gap-2 rounded-lg bg-warning-bg px-3 py-2 text-xs text-warning-fg dark:bg-amber-950/40 dark:text-amber-300" role="status">
           <AlertTriangle className="mt-0.5 size-3.5 shrink-0" aria-hidden />
           <span>
             {t('aiCase.panel.unavailable', { reason: reasonText(t, ai.reason) })} {t('aiCase.panel.worksWithoutAi')}
@@ -102,13 +102,13 @@ export const CaseAiChecks = ({ caseId }: { caseId: string }) => {
           const blocked = disabledReason(kind);
           const isRunning = running === kind;
           return (
-            <div key={kind} className={clsx('flex min-w-0 flex-col rounded-xl border p-4 transition', tab === kind ? 'border-brand-600 ring-1 ring-brand-600/30' : 'border-line')}>
+            <div key={kind} className={clsx('flex min-w-0 flex-col rounded-xl border p-4 transition', tab === kind ? 'border-primary ring-1 ring-focus/30' : 'border-line')}>
               <button type="button" className="flex min-w-0 items-start gap-3 text-left" onClick={() => setTab(kind)} aria-pressed={tab === kind}>
-                <span className="grid size-10 shrink-0 place-items-center rounded-lg bg-brand-600/10 text-brand-600">
+                <span className="grid size-10 shrink-0 place-items-center rounded-lg bg-primary/10 text-link">
                   <I className="size-5" aria-hidden />
                 </span>
                 <span className="min-w-0">
-                  <span className="block text-sm font-semibold text-navy-900">{t(`aiCase.kinds.${kind}.title`)}</span>
+                  <span className="block text-sm font-semibold text-ink">{t(`aiCase.kinds.${kind}.title`)}</span>
                   <span className="mt-0.5 block text-xs text-muted">{t(`aiCase.kinds.${kind}.desc`)}</span>
                 </span>
               </button>
@@ -147,7 +147,7 @@ export const CaseAiChecks = ({ caseId }: { caseId: string }) => {
                 {' · '}
                 {last && last.costUsd > 0 ? t('aiCase.panel.lastCost', { usd: usd(last.costUsd) }) : t('aiCase.panel.estimate', { usd: usd(data?.estimatesUsd[kind] ?? 0) })}
               </p>
-              {blocked && <p className="mt-1 text-[11px] text-amber-700 dark:text-amber-300">{blocked}</p>}
+              {blocked && <p className="mt-1 text-[11px] text-warning-fg dark:text-amber-300">{blocked}</p>}
               {kind === 'CONTRACT' && !contracts.length && <p className="mt-1 text-[11px] text-muted">{t('aiCase.contract.noContract')}</p>}
             </div>
           );
@@ -157,7 +157,7 @@ export const CaseAiChecks = ({ caseId }: { caseId: string }) => {
       <div className="mt-5" aria-live="polite">
         {isLoading || running === tab ? (
           <div>
-            <p className="mb-2 flex items-center gap-2 text-xs font-semibold text-brand-600">
+            <p className="mb-2 flex items-center gap-2 text-xs font-semibold text-link">
               <Loader2 className="size-3.5 animate-spin" aria-hidden /> {running === tab ? t('aiCase.panel.working') : ''}
             </p>
             <Skeleton />

@@ -33,7 +33,7 @@ export default function CaseProfitCard({ caseId }: { caseId: string }) {
       title={t('profit.card.title')}
       icon={TrendingUp}
       actions={
-        <button type="button" className="btn-ghost btn-sm" onClick={() => setEdit('new')}>
+        <button type="button" className="btn-secondary btn-sm" onClick={() => setEdit('new')}>
           <Plus className="size-4" /> {t('profit.card.addCost')}
         </button>
       }
@@ -48,9 +48,9 @@ export default function CaseProfitCard({ caseId }: { caseId: string }) {
               { k: 'costs', v: p.costs.total },
               { k: 'margin', v: p.marginCents },
             ].map(({ k, v }) => (
-              <div key={k} className="rounded-lg bg-surface px-2 py-2.5">
+              <div key={k} className="rounded-lg bg-sunken px-2 py-2.5">
                 <dt className="text-[11px] text-muted">{t(`profit.card.${k}`)}</dt>
-                <dd className={clsx('mt-0.5 text-sm font-bold tabular-nums', k === 'margin' && (v < 0 ? 'text-danger' : 'text-emerald-700'))}>{f.eur(v)}</dd>
+                <dd className={clsx('mt-0.5 text-sm font-bold tabular-nums', k === 'margin' && (v < 0 ? 'text-danger-fg' : 'text-success-fg'))}>{f.eur(v)}</dd>
                 <dd className="text-[10px] text-muted tabular-nums">{f.azn(v, rate)}</dd>
               </div>
             ))}
@@ -68,15 +68,15 @@ export default function CaseProfitCard({ caseId }: { caseId: string }) {
               ))}
             </ul>
           )}
-          <button type="button" className="flex items-center gap-1 text-xs font-semibold text-brand-600" aria-expanded={details} onClick={() => setDetails((d) => !d)}>
+          <button type="button" className="flex items-center gap-1 text-xs font-semibold text-link" aria-expanded={details} onClick={() => setDetails((d) => !d)}>
             <ChevronDown className={clsx('size-3.5 transition', details && 'rotate-180')} /> {t('profit.card.lines')}
           </button>
           {details && (
             <ul className="space-y-1 text-xs">
               {p.lines.map((l, i) => (
-                <li key={i} className="flex flex-wrap justify-between gap-x-2 rounded-md bg-surface px-2 py-1.5">
+                <li key={i} className="flex flex-wrap justify-between gap-x-2 rounded-md bg-sunken px-2 py-1.5">
                   <span className="min-w-0">
-                    <span className={clsx('font-semibold', l.kind === 'revenue' ? 'text-emerald-700' : 'text-amber-700')}>
+                    <span className={clsx('font-semibold', l.kind === 'revenue' ? 'text-success-fg' : 'text-warning-fg')}>
                       {l.kind === 'revenue' ? t(`profit.sources.${l.source}`, { defaultValue: l.source }) : t(`profit.costCats.${l.category ?? 'OTHER'}`)}
                     </span>{' '}
                     · {l.ref}
@@ -110,14 +110,14 @@ export default function CaseProfitCard({ caseId }: { caseId: string }) {
                 <span className="text-xs whitespace-nowrap tabular-nums">
                   {(c.amountCents / 100).toFixed(2)} {c.currency}
                 </span>
-                <button type="button" className="grid size-7 place-items-center rounded-md text-muted hover:bg-surface hover:text-ink" onClick={() => setEdit(c)} aria-label={t('profit.card.editCost')}>
+                <button type="button" className="grid size-7 place-items-center rounded-md text-muted hover:bg-sunken hover:text-ink" onClick={() => setEdit(c)} aria-label={t('profit.card.editCost')}>
                   <Pencil className="size-3.5" />
                 </button>
               </li>
             ))}
           </ul>
         )}
-        <Link to="/admin/profitability" className="mt-3 inline-block text-xs font-semibold text-brand-600 hover:underline">
+        <Link to="/admin/profitability" className="mt-3 inline-block text-xs font-semibold text-link hover:underline">
           {t('profit.card.openOverview')}
         </Link>
       </div>
@@ -222,14 +222,14 @@ const CostDialog = ({ caseId, cost, defaultRate, documents, onClose }: { caseId:
         </label>
         <div className="flex flex-wrap justify-between gap-2 pt-1">
           {cost ? (
-            <button type="button" className="btn-ghost btn-sm" disabled={remove.isPending} onClick={() => window.confirm(t('profit.card.confirmDelete')) && remove.mutate()}>
+            <button type="button" className="btn-secondary btn-sm" disabled={remove.isPending} onClick={() => window.confirm(t('profit.card.confirmDelete')) && remove.mutate()}>
               <Trash2 className="size-4" /> {t('profit.card.delete')}
             </button>
           ) : (
             <span />
           )}
           <div className="flex gap-2">
-            <button type="button" className="btn-ghost btn-sm" onClick={onClose}>
+            <button type="button" className="btn-secondary btn-sm" onClick={onClose}>
               {t('profit.card.cancel')}
             </button>
             <button type="submit" className="btn-primary btn-sm" disabled={save.isPending}>

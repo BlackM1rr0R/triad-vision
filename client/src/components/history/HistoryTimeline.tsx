@@ -41,28 +41,28 @@ const ChangeLine = ({ it, showEntity, onRevert }: { it: HistoryItem; showEntity:
       <div className="min-w-0 flex-1">
         <p className="text-sm break-words">
           {showEntity && (
-            <Link to={entityLink(it)} className="mr-1.5 font-semibold text-brand-700 hover:underline">
+            <Link to={entityLink(it)} className="mr-1.5 font-semibold text-link hover:underline">
               {it.entityLabel ?? `${entityLabel(it.entity)} #${it.entityId.slice(-6)}`}:
             </Link>
           )}
-          <span className="font-semibold text-navy-900">{fieldLabel(it.field)}</span>
+          <span className="font-semibold text-ink">{fieldLabel(it.field)}</span>
           {it.sensitive && <Lock className="mx-1 inline size-3 text-muted" aria-label={t('history.masked')} />}
-          <span className="text-ink/70">: </span>
-          <span className={clsx('text-ink/70', reverted && 'line-through decoration-ink/30')}>{formatValue(it, it.oldValue, it.oldLabel)}</span>
+          <span className="text-muted">: </span>
+          <span className={clsx('text-muted', reverted && 'line-through decoration-ink/30')}>{formatValue(it, it.oldValue, it.oldLabel)}</span>
           <ArrowRight className="mx-1 inline size-3.5 text-muted" aria-hidden />
-          <span className={clsx('font-medium text-navy-900', reverted && 'line-through decoration-ink/30')}>{formatValue(it, it.newValue, it.newLabel)}</span>
+          <span className={clsx('font-medium text-ink', reverted && 'line-through decoration-ink/30')}>{formatValue(it, it.newValue, it.newLabel)}</span>
         </p>
         {(reverted || it.revertOfId) && (
           <p className="mt-0.5 flex flex-wrap gap-1.5">
             {reverted && <span className="badge bg-warning-bg text-warning-fg">{t('history.reverted')}</span>}
-            {it.revertOfId && <span className="badge bg-surface text-muted">{t('history.isRevert')}</span>}
+            {it.revertOfId && <span className="badge bg-sunken text-muted">{t('history.isRevert')}</span>}
           </p>
         )}
       </div>
       {it.canRevert && (
         <button
           type="button"
-          className="inline-flex min-h-9 shrink-0 items-center gap-1 rounded-md px-2 text-xs font-semibold text-brand-600 hover:bg-brand-50"
+          className="inline-flex min-h-9 shrink-0 items-center gap-1 rounded-md px-2 text-xs font-semibold text-link hover:bg-primary/[0.06]"
           onClick={() => onRevert(it)}
           aria-label={t('history.revert.buttonAria', { field: fieldLabel(it.field) })}
         >
@@ -188,11 +188,11 @@ export const HistoryTimeline = ({
         )}
         <div className="flex gap-1">
           {filtered && (
-            <button type="button" className="btn-white btn-sm min-h-10 border border-line" onClick={() => { setFilters(initial); setPage(1); }}>
+            <button type="button" className="btn-secondary btn-sm min-h-10 border border-line" onClick={() => { setFilters(initial); setPage(1); }}>
               {t('history.filters.reset')}
             </button>
           )}
-          <button type="button" className="btn-white btn-sm min-h-10 border border-line" onClick={() => refetch()} aria-label={t('history.refresh')} title={t('history.refresh')}>
+          <button type="button" className="btn-secondary btn-sm min-h-10 border border-line" onClick={() => refetch()} aria-label={t('history.refresh')} title={t('history.refresh')}>
             <RefreshCw className={clsx('size-3.5', isFetching && 'animate-spin')} aria-hidden />
           </button>
         </div>
@@ -201,7 +201,7 @@ export const HistoryTimeline = ({
       {!isAdmin && <p className="text-xs text-muted">{t('history.readOnly')}</p>}
 
       {isLoading ? (
-        <div className="grid min-h-32 place-items-center text-brand-600">
+        <div className="grid min-h-32 place-items-center text-link">
           <Spinner className="size-6" />
         </div>
       ) : error ? (
@@ -215,14 +215,14 @@ export const HistoryTimeline = ({
             const revertable = g.items.filter((i) => i.canRevert);
             const ActorIcon = first.source === 'ai' || first.source === 'automation' || first.source === 'system' ? Bot : UserIcon;
             return (
-              <li key={g.key} className="relative rounded-lg border border-line bg-white px-3 py-2.5 sm:px-4">
-                <span className="absolute top-4 -left-[1.4rem] size-2.5 rounded-full border-2 border-white bg-brand-500" aria-hidden />
+              <li key={g.key} className="relative rounded-lg border border-line bg-card px-3 py-2.5 sm:px-4">
+                <span className="absolute top-4 -left-[1.4rem] size-2.5 rounded-full border-2 border-white bg-primary" aria-hidden />
                 <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1.5">
                   <p className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-xs">
                     <ActorIcon className="size-3.5 text-muted" aria-hidden />
-                    <span className="font-semibold text-navy-900">{first.actor ? first.actor.name ?? t('history.unknownActor') : t('history.system')}</span>
+                    <span className="font-semibold text-ink">{first.actor ? first.actor.name ?? t('history.unknownActor') : t('history.system')}</span>
                     {first.actor?.role && <span className="text-muted">· {roleLabel(first.actor.role)}</span>}
-                    <span className={clsx('badge', SOURCE_TONE[first.source] ?? 'bg-surface text-muted')}>{sourceLabel(first.source)}</span>
+                    <span className={clsx('badge', SOURCE_TONE[first.source] ?? 'bg-sunken text-muted')}>{sourceLabel(first.source)}</span>
                     <time className="text-muted" dateTime={first.createdAt} title={fmtDateTime(first.createdAt)}>
                       {fmtRelative(first.createdAt)}
                     </time>
@@ -231,7 +231,7 @@ export const HistoryTimeline = ({
                   {g.requestId && revertable.length > 1 && (
                     <button
                       type="button"
-                      className="inline-flex min-h-9 items-center gap-1 rounded-md px-2 text-xs font-semibold text-brand-600 hover:bg-brand-50"
+                      className="inline-flex min-h-9 items-center gap-1 rounded-md px-2 text-xs font-semibold text-link hover:bg-primary/[0.06]"
                       onClick={() =>
                         setTarget({ kind: 'group', requestId: g.requestId!, items: g.items, scope: entityId ? { entity: effEntity, entityId } : {} })
                       }
@@ -257,10 +257,10 @@ export const HistoryTimeline = ({
             {t('history.pageOf', { page, pages })} · {t('history.total', { count: data.total })}
           </span>
           <span className="flex gap-1">
-            <button type="button" className="btn-white btn-sm min-h-10 border border-line" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
+            <button type="button" className="btn-secondary btn-sm min-h-10 border border-line" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
               <ChevronLeft className="size-3.5" aria-hidden /> {t('history.prev')}
             </button>
-            <button type="button" className="btn-white btn-sm min-h-10 border border-line" disabled={page >= pages} onClick={() => setPage((p) => p + 1)}>
+            <button type="button" className="btn-secondary btn-sm min-h-10 border border-line" disabled={page >= pages} onClick={() => setPage((p) => p + 1)}>
               {t('history.next')} <ChevronRight className="size-3.5" aria-hidden />
             </button>
           </span>

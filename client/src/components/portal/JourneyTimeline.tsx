@@ -31,10 +31,10 @@ export const useMilestoneDate = () => {
 };
 
 const DOT: Record<Milestone['status'], string> = {
-  done: 'bg-brand-600 text-white',
-  current: 'bg-card text-brand-600 ring-2 ring-brand-600',
+  done: 'bg-highlight text-highlight-contrast',
+  current: 'bg-highlight-bg text-ink ring-2 ring-highlight',
   upcoming: 'border border-line bg-card text-muted',
-  skipped: 'border border-dashed border-line bg-surface text-muted',
+  skipped: 'border border-dashed border-line bg-sunken text-muted',
 };
 
 /**
@@ -61,7 +61,7 @@ export function JourneyTimeline({ milestones, labelOf, className }: { milestones
             viewport={{ once: true, margin: '-20px' }}
             transition={{ duration: 0.35, delay: i * 0.06, ease: [0.22, 1, 0.36, 1] }}
           >
-            {!last && <span className={clsx('absolute top-9 bottom-1 left-[15px] w-0.5 rounded-full', nextDone ? 'bg-brand-600' : 'bg-line')} aria-hidden />}
+            {!last && <span className={clsx('absolute top-9 bottom-1 left-[15px] w-0.5 rounded-full', nextDone ? 'bg-highlight' : 'bg-line')} aria-hidden />}
             <span className={clsx('relative grid size-8 shrink-0 place-items-center rounded-full', m.negative ? 'bg-danger-bg text-danger-fg' : DOT[m.status])} aria-hidden>
               <Icon className="size-4" />
             </span>
@@ -71,7 +71,7 @@ export function JourneyTimeline({ milestones, labelOf, className }: { milestones
                 <span
                   className={clsx(
                     'text-xs font-semibold',
-                    m.negative ? 'text-danger-fg' : m.status === 'current' ? 'text-brand-600' : m.status === 'done' ? 'text-success-fg' : 'text-muted',
+                    m.negative ? 'text-danger-fg' : m.status === 'current' ? 'text-highlight-fg' : m.status === 'done' ? 'text-success-fg' : 'text-muted',
                   )}
                 >
                   {m.negative ? t('jmap.rejected') : t(`jmap.status.${m.status}`)}

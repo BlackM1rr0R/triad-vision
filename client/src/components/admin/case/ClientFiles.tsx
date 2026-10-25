@@ -84,13 +84,13 @@ export const ClientFiles = ({ c }: { c: CaseDetail }) => {
           {c.otherDocuments.map((d) => (
             <li key={d.id} className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-lg border border-line px-3 py-2.5">
               <div className="flex min-w-0 flex-[1_1_13rem] items-center gap-3">
-                <DocIcon mime={d.mimeType} className="size-4 shrink-0 text-brand-600" />
+                <DocIcon mime={d.mimeType} className="size-4 shrink-0 text-link" />
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium" title={d.originalName}>{d.originalName}</p>
                   <DocMeta doc={d} />
                 </div>
               </div>
-              <span className={d.stage === 'VISA' ? 'badge whitespace-nowrap bg-emerald-100 text-emerald-800' : 'badge whitespace-nowrap bg-slate-100 text-slate-600'}>
+              <span className={d.stage === 'VISA' ? 'badge whitespace-nowrap bg-success-bg text-success-fg' : 'badge whitespace-nowrap bg-sunken text-muted'}>
                 {stageLabel(d.stage)}
               </span>
               <DocLinks doc={d} />

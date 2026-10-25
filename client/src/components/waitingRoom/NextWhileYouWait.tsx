@@ -24,15 +24,15 @@ export function NextWhileYouWait() {
   const pct = Math.max(0, Math.min(100, data.stats.percent));
   return (
     <section className="card card-body flex flex-col">
-      <h2 className="type-card-title flex items-center gap-2.5">
-        <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-brand-50 text-brand-600">
-          <Hourglass className="size-4" aria-hidden />
+      <h2 className="type-card-title flex items-center gap-3">
+        <span className="grid size-11 shrink-0 place-items-center rounded-xl chip-sky">
+          <Hourglass className="size-5" aria-hidden />
         </span>
         {t('waitingRoom.next.title')}
       </h2>
       {next ? (
         <p className="mt-3 flex items-start gap-2 text-sm font-semibold text-ink">
-          <Icon className="mt-0.5 size-4 shrink-0 text-brand-600" aria-hidden />
+          <Icon className="mt-0.5 size-4 shrink-0 text-muted" aria-hidden />
           <span className="min-w-0">
             {tr(next.title)}
             <span className="block text-xs font-normal text-muted">
@@ -45,8 +45,8 @@ export function NextWhileYouWait() {
         <p className="type-small mt-3">{t('waitingRoom.next.allDone')}</p>
       )}
       <div className="mt-3 flex items-center gap-3">
-        <div className="h-2 flex-1 overflow-hidden rounded-full bg-surface" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100} aria-label={t('waitingRoom.stats.progress')}>
-          <span className="block h-full rounded-full bg-brand-600" style={{ width: `${pct}%` }} />
+        <div className="h-2 flex-1 overflow-hidden rounded-full bg-sunken" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100} aria-label={t('waitingRoom.stats.progress')}>
+          <span className="block h-full rounded-full bg-highlight" style={{ width: `${pct}%` }} />
         </div>
         <span className="text-xs font-semibold text-muted tabular-nums">{t('waitingRoom.stats.done', { done: data.stats.completed, total: data.stats.total })}</span>
         {data.stats.streak > 1 && (
@@ -58,7 +58,7 @@ export function NextWhileYouWait() {
       </div>
       <Link
         to={next ? `/account/waiting-room?item=${next.id}` : '/account/waiting-room'}
-        className="mt-auto inline-flex min-h-10 items-center gap-1 pt-3 text-sm font-semibold text-brand-600 hover:text-brand-700"
+        className="mt-auto inline-flex min-h-11 items-center gap-1 pt-3 text-sm font-semibold text-link hover:text-link"
       >
         {next ? t('waitingRoom.next.open') : t('waitingRoom.next.all')}
         <ArrowRight className="size-3.5" aria-hidden />

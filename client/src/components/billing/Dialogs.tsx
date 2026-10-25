@@ -300,17 +300,17 @@ export function PlanDialog({ clientId, caseId, clientLocale, onClose }: { client
             <TriggerSelect value={r.trigger} onChange={(v) => setRow(r.key, { trigger: v })} />
             <input type="date" className="input" aria-label={t('bill.admin.plan.dueDate')} disabled={r.trigger !== 'DATE'} value={r.dueDate} onChange={(e) => setRow(r.key, { dueDate: e.target.value })} />
             <input className="input text-right tabular-nums" inputMode="decimal" aria-label={t('bill.admin.plan.amount')} placeholder={t('bill.admin.plan.amount')} value={r.amount} onChange={(e) => setRow(r.key, { amount: e.target.value })} />
-            <button type="button" className="grid size-9 place-items-center rounded-lg text-muted hover:bg-red-50 hover:text-danger disabled:opacity-30" aria-label={t('bill.admin.plan.removeRow')} disabled={rows.length === 1} onClick={() => setRows((rs) => rs.filter((x) => x.key !== r.key))}>
+            <button type="button" className="grid size-9 place-items-center rounded-lg text-muted hover:bg-danger-bg hover:text-danger-fg disabled:opacity-30" aria-label={t('bill.admin.plan.removeRow')} disabled={rows.length === 1} onClick={() => setRows((rs) => rs.filter((x) => x.key !== r.key))}>
               <X className="size-4" aria-hidden />
             </button>
           </li>
         ))}
       </ul>
       <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
-        <button type="button" className="inline-flex min-h-9 items-center gap-1.5 rounded-lg px-2 text-sm font-semibold text-brand-600 hover:bg-brand-50" onClick={() => setRows((rs) => [...rs, { key: ++rowSeq, label: '', trigger: 'ON_SIGN', dueDate: '', amount: '' }])}>
+        <button type="button" className="inline-flex min-h-9 items-center gap-1.5 rounded-lg px-2 text-sm font-semibold text-link hover:bg-primary/[0.06]" onClick={() => setRows((rs) => [...rs, { key: ++rowSeq, label: '', trigger: 'ON_SIGN', dueDate: '', amount: '' }])}>
           <Plus className="size-4" aria-hidden /> {t('bill.admin.plan.addRow')}
         </button>
-        <span className="text-sm font-semibold text-navy-900 tabular-nums">{t('bill.admin.plan.sum', { sum: fmtEur(sum, cur) })}</span>
+        <span className="text-sm font-semibold text-ink tabular-nums">{t('bill.admin.plan.sum', { sum: fmtEur(sum, cur) })}</span>
       </div>
       <p className="mt-3 text-xs text-muted">{t('bill.admin.plan.catchUp')}</p>
     </Modal>

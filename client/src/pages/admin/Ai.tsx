@@ -17,17 +17,17 @@ export default function AdminAi() {
   return (
     <div className="flex h-[calc(100dvh-9rem)] min-h-[28rem] flex-col gap-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h1 className="text-xl font-bold text-ink sm:text-2xl">{t('ai.assistant')}</h1>
+        <h1 className="type-page-title">{t('ai.assistant')}</h1>
         <div className="flex flex-wrap items-center gap-2">
-          <Link to="/admin/ai/mail-triage" className="btn btn-sm border border-line bg-card text-ink hover:bg-surface">
+          <Link to="/admin/ai/mail-triage" className="btn btn-sm border border-line bg-card text-ink hover:bg-sunken">
             <Inbox className="size-3.5" aria-hidden /> {t('aiMail.settings.openSettings')}
           </Link>
-          <Link to="/admin/ai/settings" className="btn btn-sm border border-line bg-card text-ink hover:bg-surface">
+          <Link to="/admin/ai/settings" className="btn btn-sm border border-line bg-card text-ink hover:bg-sunken">
             <Settings className="size-3.5" aria-hidden /> {t('admin.nav.settings')}
           </Link>
         </div>
       </div>
-      <ChatPanel scope="ADMIN" className="min-h-0 flex-1 rounded-xl border border-line shadow-[0_1px_2px_rgba(11,31,68,0.04)]" />
+      <ChatPanel scope="ADMIN" className="min-h-0 flex-1 rounded-xl border border-line shadow-[var(--tv-shadow-card)]" />
     </div>
   );
 }

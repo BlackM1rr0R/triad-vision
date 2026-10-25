@@ -63,7 +63,7 @@ export const InquiryDetailBody = ({ i, className }: { i: Inquiry; className?: st
   const { t } = useTranslation();
   return (
     <div className={clsx('space-y-4', className)}>
-      <p className="rounded-lg border border-line bg-white px-3.5 py-3 text-sm break-words whitespace-pre-wrap text-ink">{i.message}</p>
+      <p className="rounded-lg border border-line bg-card px-3.5 py-3 text-sm break-words whitespace-pre-wrap text-ink">{i.message}</p>
       <LeadDetailsPanel inquiryId={i.id} />
       <dl className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <Detail label={t('admin.inquiries.contactPerson')}>{i.contactName}</Detail>
@@ -80,7 +80,7 @@ export const InquiryDetailBody = ({ i, className }: { i: Inquiry; className?: st
         <Detail label={t('admin.common.date')}>{fmtDateTime(i.createdAt)}</Detail>
       </dl>
       <div className="flex flex-wrap gap-2">
-        <a href={`mailto:${i.email}`} className="btn-white btn-sm max-w-full min-w-0 border border-line">
+        <a href={`mailto:${i.email}`} className="btn-secondary btn-sm max-w-full min-w-0 border border-line">
           <Mail className="size-3.5 shrink-0" /> <span className="truncate">{i.email}</span>
         </a>
         {i.phone && (
@@ -89,7 +89,7 @@ export const InquiryDetailBody = ({ i, className }: { i: Inquiry; className?: st
               <Phone className="size-3.5" /> {i.phone}
             </a>
             <CallButton target={{ inquiryId: i.id }} phone={i.phone} name={i.contactName} />
-            <a href={waLink(i.phone)} target="_blank" rel="noreferrer" className="btn-white btn-sm border border-emerald-200 text-emerald-800">
+            <a href={waLink(i.phone)} target="_blank" rel="noreferrer" className="btn-secondary btn-sm border border-success-border text-success-fg">
               <MessageCircle className="size-3.5" /> {t('admin.common.whatsapp')}
             </a>
           </>
@@ -111,12 +111,12 @@ export const InquirySplitPanel = ({ i, onClose }: { i: ScoredInquiry; onClose: (
   return (
     <section aria-label={t('ux.split.detailOf', { name: i.companyName || i.contactName })} className="flex min-h-0 flex-col rounded-xl border border-line bg-card">
       <header className="flex items-start gap-3 border-b border-line px-5 py-3.5">
-        <span className={clsx('mt-0.5 grid size-8 shrink-0 place-items-center rounded-lg', i.kind === 'company' ? 'bg-violet-100 text-violet-700' : 'bg-brand-100 text-brand-700')} aria-hidden>
+        <span className={clsx('mt-0.5 grid size-8 shrink-0 place-items-center rounded-lg', i.kind === 'company' ? 'bg-accent-bg text-accent-fg' : 'bg-primary/10 text-link')} aria-hidden>
           {i.kind === 'company' ? <Building2 className="size-4" /> : <User className="size-4" />}
         </span>
         <div className="min-w-0 flex-1">
           <p className="flex flex-wrap items-center gap-2 text-sm">
-            <span className="font-semibold break-words text-navy-900">{i.companyName || i.contactName}</span>
+            <span className="font-semibold break-words text-ink">{i.companyName || i.contactName}</span>
             <LeadScoreBadge level={i.scoreLevel ?? null} score={i.score ?? 0} reasons={i.scoreReasons ?? null} />
           </p>
           <p className="mt-0.5 text-[11px] text-muted">
@@ -127,7 +127,7 @@ export const InquirySplitPanel = ({ i, onClose }: { i: ScoredInquiry; onClose: (
           </div>
         </div>
         <InquiryPresence id={i.id} />
-        <button type="button" onClick={onClose} className="grid size-9 shrink-0 place-items-center rounded-lg text-muted transition hover:bg-surface hover:text-ink" aria-label={t('ux.split.close')} title={`${t('ux.split.close')} (Esc)`}>
+        <button type="button" onClick={onClose} className="grid size-9 shrink-0 place-items-center rounded-lg text-muted transition hover:bg-sunken hover:text-ink" aria-label={t('ux.split.close')} title={`${t('ux.split.close')} (Esc)`}>
           <X className="size-4" aria-hidden />
         </button>
       </header>

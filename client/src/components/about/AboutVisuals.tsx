@@ -75,7 +75,7 @@ export const NumbersCharts = ({ stats }: { stats: Stat[] | undefined }) => {
         {/* workers: unit chart */}
         <ChartCard className="md:col-span-3" title={labelOf(workers, '')} note={t('aboutPage.numbers.perDot')}>
           <div className="flex items-end justify-between gap-4">
-            <Counter to={workers.value} prefix={workers.prefix} suffix={workers.suffix} className="font-display text-4xl font-extrabold text-navy-900 sm:text-5xl" />
+            <Counter to={workers.value} prefix={workers.prefix} suffix={workers.suffix} className="font-display text-4xl font-semibold text-ink sm:text-5xl" />
           </div>
           <svg viewBox="0 0 200 104" className="mt-4 w-full">
             {Array.from({ length: dots }).map((_, i) => {
@@ -87,7 +87,7 @@ export const NumbersCharts = ({ stats }: { stats: Stat[] | undefined }) => {
                   cx={10 + col * 20}
                   cy={10 + row * 21}
                   r={7}
-                  fill="var(--color-brand-600)"
+                  fill="var(--color-primary)"
                   style={{ opacity: on ? 1 : 0.08, transition: `opacity .5s ${EASE} ${0.15 + i * 0.018}s` }}
                 />
               );
@@ -99,13 +99,13 @@ export const NumbersCharts = ({ stats }: { stats: Stat[] | undefined }) => {
         <ChartCard className="md:col-span-3" title={labelOf(visa, '')} note={t('aboutPage.numbers.ofApplications')}>
           <div className="flex items-center gap-6">
             <svg viewBox="0 0 128 128" className="w-32 shrink-0 -rotate-90 sm:w-36">
-              <circle cx="64" cy="64" r={R} fill="none" stroke="var(--color-brand-100)" strokeWidth="12" />
+              <circle cx="64" cy="64" r={R} fill="none" stroke="var(--color-sunken)" strokeWidth="12" />
               <circle
                 cx="64"
                 cy="64"
                 r={R}
                 fill="none"
-                stroke="var(--color-brand-600)"
+                stroke="var(--color-primary)"
                 strokeWidth="12"
                 strokeLinecap="round"
                 strokeDasharray={C}
@@ -114,10 +114,10 @@ export const NumbersCharts = ({ stats }: { stats: Stat[] | undefined }) => {
               />
             </svg>
             <div>
-              <Counter to={visa.value} suffix="%" className="font-display text-4xl font-extrabold text-navy-900 sm:text-5xl" />
+              <Counter to={visa.value} suffix="%" className="font-display text-4xl font-semibold text-ink sm:text-5xl" />
               <div className="mt-3 flex items-center gap-2 text-xs text-muted">
-                <span className="h-2 w-6 rounded-full bg-brand-600" /> {visa.value}%
-                <span className="ml-2 h-2 w-6 rounded-full bg-brand-100" /> {100 - visa.value}%
+                <span className="h-2 w-6 rounded-full bg-primary" /> {visa.value}%
+                <span className="ml-2 h-2 w-6 rounded-full bg-sunken" /> {100 - visa.value}%
               </div>
             </div>
           </div>
@@ -125,7 +125,7 @@ export const NumbersCharts = ({ stats }: { stats: Stat[] | undefined }) => {
 
         {/* partners: squares */}
         <ChartCard className="md:col-span-2" title={labelOf(partners, '')} note={t('aboutPage.numbers.perSquare')}>
-          <Counter to={partners.value} suffix={partners.suffix} className="font-display text-4xl font-extrabold text-navy-900" />
+          <Counter to={partners.value} suffix={partners.suffix} className="font-display text-4xl font-semibold text-ink" />
           <svg viewBox="0 0 120 120" className="mx-auto mt-4 w-full max-w-[180px]">
             {Array.from({ length: squares }).map((_, i) => (
               <rect
@@ -135,7 +135,7 @@ export const NumbersCharts = ({ stats }: { stats: Stat[] | undefined }) => {
                 width="20"
                 height="20"
                 rx="4"
-                fill="var(--color-navy-800)"
+                fill="var(--ill-sage)"
                 style={{ opacity: on ? 1 : 0.08, transition: `opacity .45s ${EASE} ${0.2 + i * 0.03}s` }}
               />
             ))}
@@ -155,7 +155,7 @@ export const NumbersCharts = ({ stats }: { stats: Stat[] | undefined }) => {
                     cy="64"
                     r={R}
                     fill="none"
-                    stroke="var(--color-brand-500)"
+                    stroke="var(--color-highlight)"
                     strokeWidth="14"
                     strokeDasharray={`${seg - 4} ${C - seg + 4}`}
                     strokeDashoffset={-i * seg}
@@ -165,14 +165,14 @@ export const NumbersCharts = ({ stats }: { stats: Stat[] | undefined }) => {
               })}
             </svg>
             <div className="absolute inset-0 grid place-items-center">
-              <Counter to={industries.value} suffix={industries.suffix} className="font-display text-3xl font-extrabold text-navy-900" />
+              <Counter to={industries.value} suffix={industries.suffix} className="font-display text-3xl font-semibold text-ink" />
             </div>
           </div>
         </ChartCard>
 
         {/* processing range */}
         <ChartCard className="md:col-span-2" title={t('aboutPage.numbers.rangeLabel')} note={t('aboutPage.numbers.rangeNote')}>
-          <p className="font-display text-4xl font-extrabold text-navy-900">
+          <p className="font-display text-4xl font-semibold text-ink">
             {procMin}–{procMax}
           </p>
           <svg viewBox="0 0 240 64" className="mt-6 w-full">
@@ -193,7 +193,7 @@ export const NumbersCharts = ({ stats }: { stats: Stat[] | undefined }) => {
               y="18"
               height="16"
               rx="8"
-              fill="var(--color-brand-600)"
+              fill="var(--color-highlight)"
               width={on ? ((procMax - procMin) / 12) * 224 : 0}
               style={{ transition: `width 1.2s ${EASE} .3s` }}
             />
@@ -251,8 +251,8 @@ export const PresenceMap = ({ offices }: { offices: Office[] }) => {
             <circle cx="2" cy="2" r="1.3" fill="rgba(255,255,255,0.09)" />
           </pattern>
           <linearGradient id="tv-arc" x1="0" x2="1">
-            <stop offset="0" stopColor="#ffce00" />
-            <stop offset="1" stopColor="#5c9bff" />
+            <stop offset="0" stopColor="var(--color-highlight)" />
+            <stop offset="1" stopColor="var(--color-link)" />
           </linearGradient>
         </defs>
         <rect width={proj.width} height={proj.height} fill="url(#tv-dots)" />
@@ -265,9 +265,9 @@ export const PresenceMap = ({ offices }: { offices: Office[] }) => {
           const x = proj.project([lng, 0])[0];
           return <line key={lng} y1="0" y2={proj.height} x1={x} x2={x} stroke="rgba(255,255,255,0.06)" strokeDasharray="2 6" />;
         })}
-        <path d={proj.path(GERMANY)} fill="rgba(92,155,255,0.22)" stroke="#5c9bff" strokeWidth="1.5" strokeLinejoin="round" />
-        <path d={proj.path(AZERBAIJAN)} fill="rgba(92,155,255,0.22)" stroke="#5c9bff" strokeWidth="1.5" strokeLinejoin="round" />
-        <path d={proj.path(NAKHCHIVAN)} fill="rgba(92,155,255,0.22)" stroke="#5c9bff" strokeWidth="1.5" strokeLinejoin="round" />
+        <path d={proj.path(GERMANY)} fill="rgba(156,195,255,0.18)" stroke="var(--color-link)" strokeWidth="1.5" strokeLinejoin="round" />
+        <path d={proj.path(AZERBAIJAN)} fill="rgba(156,195,255,0.18)" stroke="var(--color-link)" strokeWidth="1.5" strokeLinejoin="round" />
+        <path d={proj.path(NAKHCHIVAN)} fill="rgba(156,195,255,0.18)" stroke="var(--color-link)" strokeWidth="1.5" strokeLinejoin="round" />
         <text x={dLx} y={dLy + 4} textAnchor="middle" className="fill-white/50 text-[13px] font-semibold tracking-widest uppercase">
           {regionName(locale, 'DE')}
         </text>
@@ -288,9 +288,9 @@ export const PresenceMap = ({ offices }: { offices: Office[] }) => {
           style={{ transition: `stroke-dashoffset 2s ${EASE} .3s` }}
         />
         <g transform={`translate(${mx} ${my})`} style={{ opacity: on ? 1 : 0, transition: 'opacity .6s ease 1.6s' }}>
-          <circle r="16" fill="#1565e8" />
+          <circle r="16" fill="var(--color-primary)" />
           <g transform="translate(-9 -9) rotate(45 9 9)">
-            <Plane width={18} height={18} color="#fff" />
+            <Plane width={18} height={18} color="var(--color-primary-contrast)" />
           </g>
         </g>
 
@@ -299,8 +299,8 @@ export const PresenceMap = ({ offices }: { offices: Office[] }) => {
           { x: bx, y: by, label: offices[0] ? tr(offices[0].city) : 'Baku', anchor: 'middle' as const, dx: 0 },
         ].map((p) => (
           <g key={p.label}>
-            <circle cx={p.x} cy={p.y} r="16" fill="rgba(255,206,0,0.18)" />
-            <circle cx={p.x} cy={p.y} r="7" fill="#ffce00" stroke="#050f24" strokeWidth="2.5" />
+            <circle cx={p.x} cy={p.y} r="16" fill="rgba(232,163,23,0.2)" />
+            <circle cx={p.x} cy={p.y} r="7" fill="var(--color-highlight)" stroke="var(--color-navy-950)" strokeWidth="2.5" />
             <text x={p.x + p.dx} y={p.anchor === 'end' ? p.y + 5 : p.y + 36} textAnchor={p.anchor} className="fill-white text-[17px] font-bold">
               {p.label}
             </text>
@@ -311,13 +311,13 @@ export const PresenceMap = ({ offices }: { offices: Office[] }) => {
       <div className="mt-6 grid gap-3 sm:grid-cols-2">
         <div className="rounded-2xl border border-white/10 bg-white/[0.05] p-4">
           <p className="text-xs font-semibold tracking-wider text-white/55 uppercase">{t('aboutPage.presence.distance')}</p>
-          <p className="mt-1 font-display text-2xl font-extrabold text-white">
+          <p className="mt-1 font-display text-2xl font-semibold text-white">
             ≈ {km.toLocaleString(locale)} {t('aboutPage.presence.km')}
           </p>
         </div>
         <div className="rounded-2xl border border-white/10 bg-white/[0.05] p-4">
           <p className="text-xs font-semibold tracking-wider text-white/55 uppercase">{t('aboutPage.presence.timeDiff')}</p>
-          <p className="mt-1 font-display text-2xl font-extrabold text-white">{t('aboutPage.presence.timeValue')}</p>
+          <p className="mt-1 font-display text-2xl font-semibold text-white">{t('aboutPage.presence.timeValue')}</p>
           <p className="text-xs text-white/50">{t('aboutPage.presence.timeNote')}</p>
         </div>
       </div>
@@ -333,11 +333,11 @@ export const OfficeCard = ({ office, index, role }: { office: Office; index: num
     <div className="rounded-2xl border border-white/10 bg-white/[0.05] p-5 sm:p-6">
       <div className="flex items-center gap-3">
         <Flag code={index === 0 ? 'az' : 'de'} className="w-8" />
-        <span className="text-xs font-bold tracking-widest text-brand-400 uppercase">{t('aboutPage.presence.office')}</span>
+        <span className="text-xs font-bold tracking-widest text-highlight-fg uppercase">{t('aboutPage.presence.office')}</span>
       </div>
-      <p className="mt-3 font-display text-2xl font-extrabold text-white">{tr(office.city)}</p>
+      <p className="mt-3 font-display text-2xl font-semibold text-white">{tr(office.city)}</p>
       <p className="mt-1 flex items-start gap-1.5 text-sm text-white/65">
-        <MapPin className="mt-0.5 size-4 shrink-0 text-brand-400" /> {office.address}
+        <MapPin className="mt-0.5 size-4 shrink-0 text-primary" /> {office.address}
       </p>
       <p className="mt-4 border-t border-white/10 pt-4 text-sm text-white/80">{role}</p>
     </div>

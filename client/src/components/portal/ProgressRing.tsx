@@ -24,8 +24,9 @@ export const ProgressRing = ({
   const value = Math.max(0, Math.min(100, Math.round(percent)));
   const r = (size - stroke) / 2;
   const c = 2 * Math.PI * r;
-  const track = tone === 'light' ? 'stroke-white/15' : 'stroke-brand-100';
-  const bar = tone === 'light' ? 'stroke-white' : tone === 'success' || value === 100 ? 'stroke-success' : 'stroke-brand-600';
+  // 'light' is kept for older callers (it sat on the dark header); the portal chrome is light now, so all tones share the track.
+  const track = 'stroke-line';
+  const bar = tone === 'success' || value === 100 ? 'stroke-success' : 'stroke-highlight';
 
   return (
     <span
@@ -51,7 +52,7 @@ export const ProgressRing = ({
         />
       </svg>
       <span className="absolute inset-0 grid place-items-center" aria-hidden>
-        {children ?? <span className="font-display text-sm font-extrabold">{value}%</span>}
+        {children ?? <span className="font-display text-sm font-semibold text-ink">{value}%</span>}
       </span>
     </span>
   );

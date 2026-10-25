@@ -50,7 +50,7 @@ interface Preview {
   legalHolds: number;
 }
 
-const TONES = ['bg-brand-500', 'bg-emerald-500', 'bg-amber-500', 'bg-violet-500', 'bg-pink-500', 'bg-teal-500', 'bg-sky-500', 'bg-slate-400'];
+const TONES = ['bg-chart-1', 'bg-chart-3', 'bg-chart-2', 'bg-chart-4', 'bg-chart-5', 'bg-chart-7', 'bg-chart-8', 'bg-chart-6'];
 
 const RetentionSection = () => {
   const { t } = useTranslation();
@@ -98,11 +98,11 @@ const RetentionSection = () => {
             {rows.map((r) => (
               <tr key={r.folderId}>
                 <td className="py-2 pr-3">
-                  <Link to={`/admin/cases/${r.caseId}`} className="font-medium text-navy-900 hover:underline">
+                  <Link to={`/admin/cases/${r.caseId}`} className="font-medium text-ink hover:underline">
                     {r.clientName}
                   </Link>
-                  <span className="block font-mono text-[11px] text-muted">{r.caseNumber}</span>
-                  {r.skipReason && <span className="block text-[11px] text-amber-700">{t(`originals.retention.skip.${r.skipReason}`)}</span>}
+                  <span className="block code-id text-[11px] text-muted">{r.caseNumber}</span>
+                  {r.skipReason && <span className="block text-[11px] text-warning-fg">{t(`originals.retention.skip.${r.skipReason}`)}</span>}
                 </td>
                 <td className="py-2 pr-3 whitespace-nowrap">{date(r.closedAt)}</td>
                 <td className="py-2 pr-3 whitespace-nowrap">{date(r[dateKey])}</td>
@@ -110,7 +110,7 @@ const RetentionSection = () => {
                   <Switch checked={r.legalHold} disabled={hold.isPending} onChange={(v) => hold.mutate({ folderId: r.folderId, hold: v })} label={`${t('originals.retention.hold')}: ${r.clientName}`} />
                 </td>
                 <td className="py-2">
-                  <Link to={driveFolderHref(r.folderId)} className="inline-flex min-h-9 items-center gap-1 text-xs font-semibold text-brand-600 hover:underline">
+                  <Link to={driveFolderHref(r.folderId)} className="inline-flex min-h-9 items-center gap-1 text-xs font-semibold text-link hover:underline">
                     <FolderOpen className="size-3.5" aria-hidden /> {t('originals.storage.open')}
                   </Link>
                 </td>
@@ -143,23 +143,23 @@ const RetentionSection = () => {
               {t('originals.retention.save')}
             </button>
           </div>
-          {!valid && <p className="text-xs text-danger">{t('originals.retention.invalid')}</p>}
+          {!valid && <p className="text-xs text-danger-fg">{t('originals.retention.invalid')}</p>}
           <div className="rounded-lg bg-surface/60 p-3 text-xs text-muted">
             <p className="font-semibold text-ink">{t('originals.retention.caseDocs', { count: p.caseDocuments.months })}</p>
             <p>{t('originals.retention.caseDocsHint')}</p>
-            {form.deleteMonths < p.caseDocuments.months && <p className="mt-1 font-semibold text-amber-700">{t('originals.retention.tooShort')}</p>}
+            {form.deleteMonths < p.caseDocuments.months && <p className="mt-1 font-semibold text-warning-fg">{t('originals.retention.tooShort')}</p>}
             <p className="mt-1">
               {t('originals.retention.archivedTotal', { count: p.archivedTotal })} · {t('originals.retention.legalHolds', { count: p.legalHolds })}
             </p>
           </div>
           <div>
-            <h3 className="mb-2 flex items-center gap-2 text-sm font-semibold text-navy-900">
+            <h3 className="mb-2 flex items-center gap-2 text-sm font-semibold text-ink">
               <Archive className="size-4 text-muted" aria-hidden /> {t('originals.retention.toArchive')} · {t('originals.retention.preview', { count: p.days })}
             </h3>
             {table(p.archive, 'archiveAt')}
           </div>
           <div>
-            <h3 className="mb-2 text-sm font-semibold text-navy-900">
+            <h3 className="mb-2 text-sm font-semibold text-ink">
               {t('originals.retention.toPurge')} · {t('originals.retention.preview', { count: p.days })}
             </h3>
             {table(p.purge, 'purgeAt')}
@@ -227,7 +227,7 @@ const StorageReport = () => {
           <Panel title={t('originals.storage.topFolders')} icon={FolderOpen} bodyClassName="p-0">
             <div className="max-h-[28rem] overflow-auto">
               <table className="w-full text-left text-sm">
-                <thead className="sticky top-0 bg-surface text-xs text-muted">
+                <thead className="sticky top-0 bg-sunken text-xs text-muted">
                   <tr>
                     <th className="px-4 py-2 font-semibold">{t('originals.storage.name')}</th>
                     <th className="px-4 py-2 text-right font-semibold">{t('originals.storage.size')}</th>
@@ -237,7 +237,7 @@ const StorageReport = () => {
                   {r.topFolders.map((f) => (
                     <tr key={f.id}>
                       <td className="px-4 py-2">
-                        <Link to={driveFolderHref(f.id)} className="font-medium text-navy-900 hover:underline">
+                        <Link to={driveFolderHref(f.id)} className="font-medium text-ink hover:underline">
                           {f.name}
                         </Link>
                         <span className="block truncate text-[11px] text-muted">{f.path}</span>
@@ -256,7 +256,7 @@ const StorageReport = () => {
           <Panel title={t('originals.storage.largest')} bodyClassName="p-0">
             <div className="max-h-[28rem] overflow-auto">
               <table className="w-full text-left text-sm">
-                <thead className="sticky top-0 bg-surface text-xs text-muted">
+                <thead className="sticky top-0 bg-sunken text-xs text-muted">
                   <tr>
                     <th className="px-4 py-2 font-semibold">{t('originals.storage.name')}</th>
                     <th className="px-4 py-2 text-right font-semibold">{t('originals.storage.size')}</th>
@@ -267,11 +267,11 @@ const StorageReport = () => {
                     <tr key={f.id}>
                       <td className="px-4 py-2">
                         {f.parentId ? (
-                          <Link to={`${driveFolderHref(f.parentId)}?${new URLSearchParams({ item: f.id })}`} className="font-medium text-navy-900 hover:underline">
+                          <Link to={`${driveFolderHref(f.parentId)}?${new URLSearchParams({ item: f.id })}`} className="font-medium text-ink hover:underline">
                             {f.name}
                           </Link>
                         ) : (
-                          <span className="font-medium text-navy-900">{f.name}</span>
+                          <span className="font-medium text-ink">{f.name}</span>
                         )}
                         <span className="block truncate text-[11px] text-muted">
                           {f.path}

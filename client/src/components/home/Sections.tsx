@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { motion, useScroll, useSpring, useTransform } from 'framer-motion';
+import { motion, useScroll, useSpring } from 'framer-motion';
 import {
   ArrowRight,
   ArrowUpRight,
@@ -24,21 +24,21 @@ import {
   UserRound,
   type LucideIcon,
 } from 'lucide-react';
-import { Magnetic, Marquee, Reveal, Stagger, StaggerItem, TiltCard, useMotionOK } from '../motion';
+import { Marquee, Reveal, Stagger, StaggerItem, useMotionOK } from '../motion';
+import { Employer, Worker } from '../illustrations';
 import { SectionHeading } from '../ui/SectionHeading';
 import { DetailModal } from '../ui/DetailModal';
 import { FaqList, PartnerLogo, PostCard, ServiceCard, TestimonialCard, VisaCard, VisaSticker } from '../cards';
 import { sized, srcSet } from '@/lib/img';
 
 const ELIGIBILITY_IMG = 'https://images.unsplash.com/photo-1576765608535-5f04d1e3f289?auto=format&fit=crop&w=1200&q=70';
-const CTA_IMG = 'https://images.unsplash.com/photo-1521791136064-7986c2920216?auto=format&fit=crop&w=1600&q=70';
 import { useSiteContent } from '@/lib/content';
 import { SkeletonCard } from '../ui/Skeleton';
 import { setAudience } from '@/lib/audience';
 
 const ViewAll = ({ to, label }: { to: string; label: string }) => (
   <Link to={to} className="btn-ghost group w-full whitespace-nowrap sm:w-auto">
-    {label} <ArrowRight className="size-4 transition group-hover:translate-x-1" />
+    {label} <ArrowRight className="size-4" />
   </Link>
 );
 
@@ -76,7 +76,7 @@ export const ServicesSection = () => {
   const { data, isLoading } = useSiteContent();
   if (!isLoading && !data?.services.length) return null;
   return (
-    <section className="section bg-surface">
+    <section className="section bg-sunken">
       <div className="container-x">
         <SectionHeading eyebrow={t('svc.eyebrow')} title={t('svc.title')} subtitle={t('svc.subtitle')} action={<ViewAll to="/services" label={t('common.viewAll')} />} />
         {!data && <RailSkeleton count={4} className="mobile-rail sm:grid-cols-2 sm:gap-5 lg:grid-cols-4 lg:gap-6" />}
@@ -121,8 +121,8 @@ export const PartnersSection = () => {
 export const AudienceSection = () => {
   const { t } = useTranslation();
   const cards = [
-    { key: 'company', audience: 'employer', icon: Building2, to: '/for-employers', img: 'https://images.unsplash.com/photo-1600880292203-757bb62b4baf?auto=format&fit=crop&w=1200&q=70' },
-    { key: 'candidate', audience: 'worker', icon: UserRound, to: '/for-workers', img: 'https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?auto=format&fit=crop&w=1200&q=70' },
+    { key: 'company', audience: 'employer', icon: Building2, to: '/for-employers', Art: Employer },
+    { key: 'candidate', audience: 'worker', icon: UserRound, to: '/for-workers', Art: Worker },
   ] as const;
   return (
     <section className="section">
@@ -133,30 +133,29 @@ export const AudienceSection = () => {
             const items = t(`audience.${c.key}.items`, { returnObjects: true }) as string[];
             return (
               <Reveal key={c.key} delay={i * 0.12}>
-                <TiltCard max={4} className="h-full rounded-3xl">
-                  <div className="group relative isolate flex h-full min-h-[420px] flex-col justify-end overflow-hidden rounded-3xl bg-navy-950 p-6 text-white sm:min-h-[460px] sm:p-10">
-                    <img src={sized(c.img, 800)} srcSet={srcSet(c.img, [480, 800, 1200])} sizes="(min-width: 1024px) 50vw, 100vw" alt="" loading="lazy" decoding="async" className="absolute inset-0 -z-10 size-full object-cover opacity-40 transition duration-[1.5s] group-hover:scale-110 group-hover:opacity-30" />
-                    <div className="absolute inset-0 -z-10 bg-gradient-to-t from-navy-950 via-navy-950/85 to-navy-900/20" />
-                    <span className="mb-4 grid size-12 place-items-center rounded-2xl bg-brand-600 shadow-lg shadow-brand-600/40 sm:mb-5 sm:size-14">
-                      <c.icon className="size-6 sm:size-7" />
+                <div className="flex h-full flex-col rounded-3xl border border-line bg-card p-6 shadow-[var(--tv-shadow-card)] sm:p-9">
+                  <div className="flex items-start justify-between gap-4">
+                    <span className={`grid size-12 shrink-0 place-items-center rounded-2xl ${i === 0 ? 'chip-sky' : 'chip-soft'}`}>
+                      <c.icon className="size-6" aria-hidden />
                     </span>
-                    <h3 className="font-display text-2xl font-extrabold sm:text-3xl">{t(`audience.${c.key}.title`)}</h3>
-                    <p className="mt-3 max-w-md text-sm text-white/75 sm:text-base">{t(`audience.${c.key}.text`)}</p>
-                    <ul className="mt-5 grid gap-2.5 sm:mt-6 sm:grid-cols-2">
-                      {items.map((it) => (
-                        <li key={it} className="flex items-center gap-2 text-sm text-white/90">
-                          <BadgeCheck className="size-4 shrink-0 text-brand-400" /> {it}
-                        </li>
-                      ))}
-                    </ul>
-                    <div className="mt-6 sm:mt-8">
-                      {/* Opening an audience page also remembers the choice for the home page (lib/audience). */}
-                      <Link to={c.to} onClick={() => setAudience(c.audience)} className="btn-white group/btn w-full sm:w-auto">
-                        {t(`siteNav.overview.${c.audience}.title`)} <ArrowRight className="size-4 transition group-hover/btn:translate-x-1" />
-                      </Link>
-                    </div>
+                    <c.Art className="w-24 shrink-0 sm:w-28" />
                   </div>
-                </TiltCard>
+                  <h3 className="mt-2 font-display text-2xl font-semibold text-ink sm:text-[1.75rem]">{t(`audience.${c.key}.title`)}</h3>
+                  <p className="mt-3 max-w-[56ch] text-base leading-relaxed text-muted">{t(`audience.${c.key}.text`)}</p>
+                  <ul className="mt-5 grid gap-2.5 sm:mt-6 sm:grid-cols-2">
+                    {items.map((it) => (
+                      <li key={it} className="flex items-start gap-2 text-sm text-ink">
+                        <BadgeCheck className="mt-0.5 size-4 shrink-0 text-highlight-fg" aria-hidden /> {it}
+                      </li>
+                    ))}
+                  </ul>
+                  <div className="mt-auto pt-7">
+                    {/* Opening an audience page also remembers the choice for the home page (lib/audience). */}
+                    <Link to={c.to} onClick={() => setAudience(c.audience)} className="btn-primary btn-press btn-lg w-full sm:w-auto">
+                      {t(`siteNav.overview.${c.audience}.title`)} <ArrowRight className="size-4" aria-hidden />
+                    </Link>
+                  </div>
+                </div>
               </Reveal>
             );
           })}
@@ -183,16 +182,15 @@ export const ProcessSection = () => {
   const OpenIcon = open !== null ? STEP_ICONS[open] ?? Search : Search;
 
   return (
-    <section className="section relative overflow-hidden bg-navy-950 text-white">
-      <div className="pointer-events-none absolute top-0 right-0 size-[600px] rounded-full bg-[radial-gradient(closest-side,var(--color-brand-600),transparent)] opacity-20" />
+    <section className="section relative">
       <div className="container-x relative">
-        <SectionHeading eyebrow={t('process.eyebrow')} title={t('process.title')} light />
+        <SectionHeading eyebrow={t('process.eyebrow')} title={t('process.title')} />
         <div ref={root} className="relative">
-          <div className="absolute top-8 right-[8%] left-[8%] hidden h-[2px] bg-white/10 lg:block">
-            <motion.div style={{ scaleX: line }} className="h-full origin-left bg-gradient-to-r from-az-blue via-brand-500 to-de-gold" />
+          <div className="absolute top-8 right-[8%] left-[8%] hidden h-[3px] rounded-full bg-line lg:block">
+            <motion.div style={{ scaleX: line }} className="h-full origin-left rounded-full bg-highlight" />
           </div>
-          <div className="absolute top-2 bottom-2 left-7 w-[2px] bg-white/10 lg:hidden">
-            <motion.div style={{ scaleY: line }} className="h-full origin-top bg-gradient-to-b from-az-blue via-brand-500 to-de-gold" />
+          <div className="absolute top-2 bottom-2 left-7 w-[3px] rounded-full bg-line lg:hidden">
+            <motion.div style={{ scaleY: line }} className="h-full origin-top rounded-full bg-highlight" />
           </div>
           <ol className="grid gap-3 lg:grid-cols-6 lg:gap-3">
             {steps.map((s, i) => {
@@ -205,24 +203,21 @@ export const ProcessSection = () => {
                   whileInView="on"
                   // once: a step that has been read stays lit (dimmed 30 % text scrolling back into view failed contrast)
                   viewport={{ once: true, amount: 0.6, margin: '0px 0px -10% 0px' }}
-                  variants={{ off: { opacity: 0.3, y: 24 }, on: { opacity: 1, y: 0, transition: { duration: 0.6, delay: i * 0.05 } } }}
+                  variants={{ off: { opacity: 0.3, y: 16 }, on: { opacity: 1, y: 0, transition: { duration: 0.5, delay: i * 0.05 } } }}
                 >
                   <button
                     type="button"
                     onClick={() => setOpen(i)}
-                    className="group relative flex w-full gap-4 rounded-2xl p-0 text-left transition lg:flex-col lg:items-center lg:p-3 lg:text-center lg:hover:bg-white/5"
+                    className="group relative flex w-full gap-4 rounded-2xl p-0 text-left transition lg:flex-col lg:items-center lg:p-3 lg:text-center lg:hover:bg-card"
                   >
-                    <motion.span
-                      variants={{ off: { scale: 0.7, backgroundColor: '#18397a' }, on: { scale: 1, backgroundColor: '#1565e8', transition: { duration: 0.5, delay: i * 0.05 } } }}
-                      className="relative z-10 grid size-14 shrink-0 place-items-center rounded-2xl border border-white/15 shadow-xl shadow-brand-600/20 lg:size-16"
-                    >
-                      <StepIcon className="size-6 lg:size-7" />
-                      <span className="absolute -top-2 -right-2 grid size-6 place-items-center rounded-full bg-white font-display text-xs font-extrabold text-navy-900">{i + 1}</span>
-                    </motion.span>
+                    <span className="relative z-10 grid size-14 shrink-0 place-items-center rounded-2xl border border-line bg-card text-ink shadow-[var(--tv-shadow-card)] lg:size-16">
+                      <StepIcon className="size-6 lg:size-7" aria-hidden />
+                      <span className="absolute -top-2 -right-2 grid size-6 place-items-center rounded-full bg-highlight text-xs font-bold text-highlight-contrast">{i + 1}</span>
+                    </span>
                     <span className="min-w-0 flex-1 py-1 lg:pt-3">
-                      <span className="block font-display text-base font-bold">{s.title}</span>
-                      <span className="mt-1 block text-sm leading-relaxed text-white/60">{s.text}</span>
-                      <span className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-brand-400 opacity-80 transition group-hover:opacity-100">
+                      <span className="block font-display text-base font-semibold text-ink">{s.title}</span>
+                      <span className="mt-1 block text-sm leading-relaxed text-muted">{s.text}</span>
+                      <span className="mt-2 inline-flex min-h-6 items-center gap-1 text-sm font-semibold text-link">
                         {t('detail.open')} <Plus className="size-3.5" />
                       </span>
                     </span>
@@ -260,7 +255,7 @@ export const ProcessSection = () => {
       >
         {open !== null && (
           <>
-            <p className="font-semibold text-navy-900">{steps[open]?.text}</p>
+            <p className="font-semibold text-ink">{steps[open]?.text}</p>
             <p className="mt-3">{details[open]}</p>
           </>
         )}
@@ -270,6 +265,7 @@ export const ProcessSection = () => {
 };
 
 const WHY_ICONS: LucideIcon[] = [Scale, LayoutDashboard, UserCheck, Clock, Languages, HomeIcon];
+const CHIPS = ['chip-soft', 'chip-sage', 'chip-sky', 'chip-peach'];
 
 export const WhySection = () => {
   const { t } = useTranslation();
@@ -290,20 +286,15 @@ export const WhySection = () => {
                 <button
                   type="button"
                   onClick={() => setOpen(i)}
-                  className="group relative h-full w-full overflow-hidden rounded-2xl border border-line bg-white card-pad text-left transition duration-500 hover:-translate-y-1 hover:border-transparent hover:shadow-2xl hover:shadow-brand-600/15"
+                  className="card card-interactive card-pad group relative h-full w-full text-left"
                 >
-                  <div className="absolute inset-0 translate-y-full bg-gradient-to-br from-brand-600 to-navy-900 transition-transform duration-500 ease-out group-hover:translate-y-0" />
                   <div className="relative">
-                    <div className="flex items-start justify-between gap-4">
-                      <span className="grid size-12 place-items-center rounded-xl bg-brand-50 text-brand-700 transition group-hover:bg-white/15 group-hover:text-white">
-                        <WhyIcon className="size-6" />
-                      </span>
-                      {/* Decorative watermark: CSS generated content, so it is neither read out nor judged as text. */}
-                      <span aria-hidden data-n={`0${i + 1}`} className="font-display text-4xl leading-none font-black text-navy-900/5 transition group-hover:text-white/15 before:content-[attr(data-n)]" />
-                    </div>
-                    <h3 className="mt-5 font-display text-lg font-bold text-navy-900 transition group-hover:text-white">{it.title}</h3>
-                    <p className="mt-2 text-sm leading-relaxed text-muted transition group-hover:text-white/80">{it.text}</p>
-                    <span className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-brand-600 transition group-hover:text-white">
+                    <span className={`grid size-12 place-items-center rounded-xl ${CHIPS[i % CHIPS.length]}`}>
+                      <WhyIcon className="size-6" aria-hidden />
+                    </span>
+                    <h3 className="mt-5 font-display text-lg font-semibold text-ink">{it.title}</h3>
+                    <p className="mt-2 text-sm leading-relaxed text-muted">{it.text}</p>
+                    <span className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-link group-hover:underline">
                       {t('detail.open')} <ArrowUpRight className="size-4" />
                     </span>
                   </div>
@@ -339,7 +330,7 @@ export const SamplesSection = () => {
   const testimonials = data?.testimonials ?? [];
 
   return (
-    <section className="section bg-surface">
+    <section className="section bg-sunken">
       <div className="container-x grid gap-10 xl:grid-cols-[1fr_360px] xl:gap-12">
         <div className="min-w-0">
           <SectionHeading eyebrow={t('samples.eyebrow')} title={t('samples.title')} subtitle={`${t('samples.subtitle')} ${t('samples.privacy')}`} />
@@ -357,7 +348,7 @@ export const SamplesSection = () => {
                 type="button"
                 aria-label={d < 0 ? t('a11y.prev') : t('a11y.next')}
                 onClick={() => scroll(d)}
-                className="grid size-11 place-items-center rounded-full border border-line bg-white text-navy-900 transition hover:border-brand-500 hover:bg-brand-600 hover:text-white"
+                className="grid size-11 place-items-center rounded-full border border-line bg-card text-ink transition hover:border-primary hover:bg-primary hover:text-primary-contrast"
               >
                 {d < 0 ? <ChevronLeft className="size-5" /> : <ChevronRight className="size-5" />}
               </button>
@@ -366,7 +357,7 @@ export const SamplesSection = () => {
         </div>
         <div className="flex min-w-0 flex-col gap-4 md:grid md:grid-cols-2 xl:flex">
           <Reveal className="md:col-span-2">
-            <h3 className="font-display text-2xl font-extrabold text-navy-900">{t('testimonials.title')}</h3>
+            <h3 className="font-display text-2xl font-semibold text-ink">{t('testimonials.title')}</h3>
           </Reveal>
           {testimonials.slice(0, 2).map((tm, i) => (
             <Reveal key={tm.id} delay={0.1 + i * 0.1}>
@@ -381,40 +372,35 @@ export const SamplesSection = () => {
 
 export const AusbildungSection = () => {
   const { t } = useTranslation();
-  const ref = useRef<HTMLDivElement>(null);
-  const { scrollYProgress } = useScroll({ target: ref, offset: ['start end', 'end start'] });
-  const y = useTransform(scrollYProgress, [0, 1], ['-15%', '15%']);
   return (
     <section className="section">
       <div className="container-x">
-        <div ref={ref} className="relative isolate grid overflow-hidden rounded-3xl bg-gradient-to-br from-brand-600 to-navy-900 text-white lg:grid-cols-2 lg:rounded-[2rem]">
-          <div className="relative z-10 p-6 sm:p-12 lg:p-16">
-            <span className="eyebrow text-white/80">
-              <GraduationCap className="size-4" /> {t('ausbildung.eyebrow')}
+        <div className="grid overflow-hidden rounded-3xl border border-line bg-highlight-bg lg:grid-cols-2">
+          <div className="p-6 sm:p-12 lg:p-16">
+            <span className="eyebrow">
+              <GraduationCap className="size-4" aria-hidden /> {t('ausbildung.eyebrow')}
             </span>
-            <h2 className="mt-4 font-display text-[1.75rem] leading-tight font-extrabold sm:text-4xl">{t('ausbildung.title')}</h2>
-            <p className="mt-4 max-w-lg text-sm leading-relaxed text-white/80 sm:mt-5 sm:text-base">{t('ausbildung.text')}</p>
+            <h2 className="mt-4 h-section text-ink">{t('ausbildung.title')}</h2>
+            <p className="mt-4 max-w-[56ch] text-base leading-relaxed text-ink/80 sm:mt-5">{t('ausbildung.text')}</p>
             <div className="mt-6 flex flex-col gap-3 sm:mt-8 sm:flex-row">
-              <Link to="/ausbildung" className="btn-white group">
-                {t('common.learnMore')} <ArrowRight className="size-4 transition group-hover:translate-x-1" />
+              <Link to="/ausbildung" className="btn-primary btn-press btn-lg">
+                {t('common.learnMore')} <ArrowRight className="size-4" aria-hidden />
               </Link>
-              <Link to="/eligibility" className="btn-outline">
+              <Link to="/eligibility" className="btn-secondary btn-lg">
                 {t('nav.eligibility')}
               </Link>
             </div>
           </div>
-          <div className="relative min-h-[240px] overflow-hidden sm:min-h-[300px]">
-            <motion.img
-              style={{ y }}
+          <div className="relative min-h-[240px] overflow-hidden sm:min-h-[300px] lg:m-4 lg:rounded-2xl">
+            <img
               src={sized(ELIGIBILITY_IMG, 960)}
               srcSet={srcSet(ELIGIBILITY_IMG, [640, 960, 1280])}
               sizes="(min-width: 1024px) 50vw, 100vw"
               alt=""
               loading="lazy"
               decoding="async"
-              className="absolute inset-0 h-[130%] w-full object-cover"
+              className="absolute inset-0 size-full object-cover"
             />
-            <div className="absolute inset-0 bg-gradient-to-b from-brand-700/60 to-transparent lg:bg-gradient-to-r lg:from-brand-600/90" />
           </div>
         </div>
       </div>
@@ -426,14 +412,13 @@ export const TestimonialsSection = () => {
   const { t } = useTranslation();
   const { data } = useSiteContent();
   return (
-    <section className="section relative overflow-hidden bg-navy-950 text-white">
-      <div className="pointer-events-none absolute bottom-0 left-0 size-[500px] rounded-full bg-[radial-gradient(closest-side,var(--color-brand-600),transparent)] opacity-20" />
-      <div className="container-x relative">
-        <SectionHeading eyebrow={t('stories.title')} title={t('stories.subtitle')} light action={<Link to="/stories" className="btn-outline w-full whitespace-nowrap sm:w-auto">{t('common.viewAll')}</Link>} />
+    <section className="section">
+      <div className="container-x">
+        <SectionHeading eyebrow={t('stories.title')} title={t('stories.subtitle')} action={<ViewAll to="/stories" label={t('common.viewAll')} />} />
         <Stagger className="mobile-rail md:grid-cols-2 md:gap-5 xl:grid-cols-4">
           {data?.testimonials.map((tm) => (
             <StaggerItem key={tm.id}>
-              <TestimonialCard item={tm} dark />
+              <TestimonialCard item={tm} />
             </StaggerItem>
           ))}
         </Stagger>
@@ -472,7 +457,7 @@ export const NewsSection = () => {
   const { data } = useSiteContent();
   if (!data?.posts.length) return null;
   return (
-    <section className="section bg-surface">
+    <section className="section bg-sunken">
       <div className="container-x">
         <SectionHeading eyebrow={t('news.eyebrow')} title={t('news.title')} action={<ViewAll to="/news" label={t('common.viewAll')} />} />
         <Stagger className="mobile-rail md:grid-cols-2 md:gap-5 lg:grid-cols-3 lg:gap-6">
@@ -493,33 +478,15 @@ export const CtaSection = () => {
     <section className="pb-16 sm:pb-20 lg:pb-28">
       <div className="container-x">
         <Reveal>
-          <div className="relative isolate overflow-hidden rounded-3xl bg-navy-950 px-6 py-10 text-white sm:px-12 sm:py-14 lg:flex lg:items-center lg:justify-between lg:gap-10 lg:rounded-[2rem]">
-            <img
-              src={sized(CTA_IMG, 1280)}
-              srcSet={srcSet(CTA_IMG, [640, 960, 1280, 1600])}
-              sizes="(min-width: 1280px) 1200px, 100vw"
-              alt=""
-              loading="lazy"
-              decoding="async"
-              className="absolute inset-0 -z-10 size-full object-cover opacity-25"
-            />
-            <div className="absolute inset-0 -z-10 bg-gradient-to-r from-navy-950 via-navy-950/90 to-brand-700/60" />
-            <motion.div
-              className="absolute -right-20 -bottom-20 -z-10 size-80 rounded-full border-[40px] border-brand-500/20"
-              animate={{ rotate: 360 }}
-              transition={{ duration: 30, repeat: Infinity, ease: 'linear' }}
-            />
+          <div className="rounded-3xl bg-navy-950 px-6 py-10 text-white sm:px-12 sm:py-14 lg:flex lg:items-center lg:justify-between lg:gap-10">
             <div>
-              <h2 className="font-display text-2xl leading-tight font-extrabold sm:text-4xl">{t('cta.title')}</h2>
-              <p className="mt-3 max-w-xl text-sm text-white/75 sm:text-base">{t('cta.text')}</p>
+              <h2 className="font-display text-2xl leading-tight font-semibold sm:text-4xl">{t('cta.title')}</h2>
+              <p className="mt-3 max-w-[56ch] text-base text-white/80">{t('cta.text')}</p>
             </div>
             <div className="mt-7 shrink-0 lg:mt-0">
-              <Magnetic className="w-full sm:w-auto">
-                <Link to="/cooperation" className="btn-primary group w-full px-7 py-4 text-base sm:w-auto">
-                  <span className="absolute inset-y-0 left-0 w-1/3 animate-shine bg-white/25" />
-                  {t('cta.button')} <ArrowRight className="size-5 transition group-hover:translate-x-1" />
-                </Link>
-              </Magnetic>
+              <Link to="/cooperation" className="btn-primary btn-press btn-lg w-full sm:w-auto">
+                {t('cta.button')} <ArrowRight className="size-5" aria-hidden />
+              </Link>
             </div>
           </div>
         </Reveal>

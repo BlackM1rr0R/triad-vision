@@ -186,7 +186,7 @@ export const Menu = ({ trigger, items, align = 'end', label, className, widthCla
             aria-label={label ?? triggerProps.label ?? triggerProps['aria-label']}
             onKeyDown={onMenuKey}
             className={clsx(
-              'fixed z-[120] overflow-y-auto overscroll-contain rounded-xl border border-line bg-card p-1 text-sm text-ink shadow-[0_16px_40px_-12px_rgba(11,31,68,0.35)]',
+              'fixed z-[120] overflow-y-auto overscroll-contain rounded-xl border border-line bg-raised p-1 text-sm text-ink shadow-[var(--tv-shadow-raised)]',
               widthClassName,
               !pos && 'invisible',
               className,
@@ -197,7 +197,7 @@ export const Menu = ({ trigger, items, align = 'end', label, className, widthCla
               if (it === 'separator') return <div key={`sep-${idx}`} role="separator" className="my-1 h-px bg-line" />;
               if ('heading' in it)
                 return (
-                  <div key={`h-${idx}`} className="px-2.5 pt-2 pb-1 text-[11px] font-bold tracking-wide text-muted uppercase" role="presentation">
+                  <div key={`h-${idx}`} className="px-2.5 pt-2 pb-1 text-[11px] font-semibold tracking-wide text-muted uppercase" role="presentation">
                     {it.heading}
                   </div>
                 );
@@ -217,7 +217,7 @@ export const Menu = ({ trigger, items, align = 'end', label, className, widthCla
                   }}
                   className={clsx(
                     'flex min-h-10 w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left outline-none sm:min-h-9',
-                    it.disabled ? 'cursor-not-allowed opacity-50' : it.danger ? 'text-danger-fg hover:bg-danger-bg focus:bg-danger-bg' : 'hover:bg-surface focus:bg-surface',
+                    it.disabled ? 'cursor-not-allowed opacity-50' : it.danger ? 'text-danger-fg hover:bg-danger-bg focus:bg-danger-bg' : 'hover:bg-sunken focus:bg-sunken',
                   )}
                 >
                   {Icon && <Icon className="size-4 shrink-0 opacity-80" aria-hidden />}

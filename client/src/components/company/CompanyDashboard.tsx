@@ -7,8 +7,10 @@ import { STEP_KEYS } from '@/lib/caseStatus';
 import { useL10n } from '@/lib/l10n';
 import type { L10n } from '@/lib/types';
 import { fmtDate } from '@/components/admin/labels';
+import { buttonClass } from '@/components/ui';
 import { ScorePill } from '@/components/jobs/MatchMeter';
 import type { AnonProfile } from '@/components/jobs/types';
+import { Employer, SearchEmpty } from '@/components/illustrations';
 import { Empty, Kpi, Loading, Section } from './shared';
 
 interface Dashboard {
@@ -54,19 +56,19 @@ export const CompanyDashboard = () => {
           title={t('jobsArea.portal.dashboard.awaiting')}
           icon={Users}
           actions={
-            <Link to="/company/candidates" className="inline-flex items-center gap-1 text-xs font-semibold text-brand-600 hover:text-brand-700">
+            <Link to="/company/candidates" className="inline-flex min-h-10 items-center gap-1 text-sm font-semibold text-link hover:text-link-hover">
               {t('jobsArea.portal.dashboard.viewAll')} <ArrowRight className="size-3.5" />
             </Link>
           }
         >
           {data.awaitingDecision.length === 0 ? (
-            <Empty icon={UserCheck} title={t('jobsArea.portal.dashboard.noAwaiting')} text={t('jobsArea.portal.dashboard.noAwaitingText')} />
+            <Empty icon={UserCheck} illustration={<SearchEmpty className="w-32" />} title={t('jobsArea.portal.dashboard.noAwaiting')} text={t('jobsArea.portal.dashboard.noAwaitingText')} />
           ) : (
             <ul className="divide-y divide-line">
               {data.awaitingDecision.map((a) => (
                 <li key={a.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
                   <div className="min-w-0">
-                    <p className="font-semibold text-navy-900">{a.candidate.name}</p>
+                    <p className="font-semibold text-ink">{a.candidate.name}</p>
                     <p className="truncate text-xs text-muted">
                       {[a.candidate.profession, tr(a.vacancy.title)].filter(Boolean).join(' · ')} · {fmtDate(a.updatedAt)}
                     </p>
@@ -85,16 +87,16 @@ export const CompanyDashboard = () => {
 
         <Section title={t('jobsArea.portal.dashboard.workersByStep')} icon={Handshake}>
           {data.workers.total === 0 ? (
-            <Empty icon={Handshake} title={t('jobsArea.portal.workers.empty')} text={t('jobsArea.portal.workers.emptyText')} />
+            <Empty icon={Handshake} illustration={<Employer className="w-32" />} title={t('jobsArea.portal.workers.empty')} text={t('jobsArea.portal.workers.emptyText')} />
           ) : (
             <ul className="space-y-3">
               {STEP_KEYS.map((k, i) => (
                 <li key={k} className="grid grid-cols-[minmax(0,9rem)_1fr_2rem] items-center gap-3 text-sm">
-                  <span className="truncate text-ink/80">{t(`portal.steps.${k}`)}</span>
-                  <span className="h-2 overflow-hidden rounded-full bg-surface">
-                    <span className="block h-full rounded-full bg-brand-600" style={{ width: `${(data.workers.byStep[i] / maxStep) * 100}%` }} />
+                  <span className="truncate text-ink">{t(`portal.steps.${k}`)}</span>
+                  <span className="h-2 overflow-hidden rounded-full bg-sunken">
+                    <span className="block h-full rounded-full bg-primary" style={{ width: `${(data.workers.byStep[i] / maxStep) * 100}%` }} />
                   </span>
-                  <span className="text-right font-semibold text-navy-900 tabular-nums">{data.workers.byStep[i]}</span>
+                  <span className="num text-right font-semibold text-ink">{data.workers.byStep[i]}</span>
                 </li>
               ))}
             </ul>
@@ -103,10 +105,10 @@ export const CompanyDashboard = () => {
       </div>
 
       <div className="flex flex-wrap gap-3">
-        <Link to="/company/vacancies/new" className="btn-primary">
+        <Link to="/company/vacancies/new" className={buttonClass({ variant: 'primary', size: 'md' })}>
           <Plus className="size-4" /> {t('jobsArea.portal.vacancies.new')}
         </Link>
-        <Link to="/company/workers" className="btn-ghost">
+        <Link to="/company/workers" className={buttonClass({ variant: 'outline', size: 'md' })}>
           {t('jobsArea.portal.nav.workers')} <ArrowRight className="size-4" />
         </Link>
       </div>

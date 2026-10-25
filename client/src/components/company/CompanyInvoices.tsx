@@ -6,8 +6,8 @@ import { api } from '@/lib/api';
 import { registerCopy } from '@/i18n';
 import { companyInvoicesCopy } from '@/i18n/pagesBooking';
 import { Spinner } from '@/components/ui/Spinner';
-import { STATUS_TONES, toneClasses } from '@/components/ui/status';
-import { EmptyState } from '@/components/ui/EmptyState';
+import { EmptyState, StatTile, StatusPill, Table } from '@/components/ui';
+import { Documents } from '@/components/illustrations';
 
 registerCopy(companyInvoicesCopy);
 
@@ -26,8 +26,6 @@ interface Response {
   summary: { openCents: number; openCount: number; overdueCents: number; overdueCount: number };
 }
 
-const TONE: Record<Status, string> = toneClasses(STATUS_TONES.invoice);
-
 const eur = new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' });
 const INTL = { az: 'az-Latn-AZ', de: 'de-DE', en: 'en-GB', ru: 'ru-RU' } as const;
 
@@ -45,18 +43,18 @@ export const CompanyInvoices = () => {
   return (
     <section aria-labelledby="company-invoices-title" className="space-y-5">
       <div>
-        <h2 id="company-invoices-title" className="font-display text-xl font-bold text-navy-900 sm:text-2xl">
+        <h2 id="company-invoices-title" className="type-page-title">
           {t('companyInvoices.title')}
         </h2>
         <p className="mt-1 text-sm text-muted">{t('companyInvoices.subtitle')}</p>
       </div>
 
       {q.isLoading ? (
-        <div className="grid min-h-40 place-items-center text-brand-600" role="status">
+        <div className="grid min-h-40 place-items-center text-primary" role="status">
           <Spinner className="size-7 border-[3px]" />
         </div>
       ) : q.error || !q.data ? (
-        <div className="flex flex-col items-center gap-3 rounded-2xl border border-red-200 bg-red-50 p-8 text-center text-sm text-red-800" role="alert">
+        <div className="flex flex-col items-center gap-3 rounded-2xl border border-danger-border bg-danger-bg p-8 text-center text-sm text-danger-fg" role="alert">
           <AlertCircle className="size-5" aria-hidden />
           {t('companyInvoices.loadFailed')}
           <button type="button" className="btn-secondary btn-sm" onClick={() => q.refetch()}>
@@ -65,56 +63,61 @@ export const CompanyInvoices = () => {
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="card flex items-center gap-3 p-4">
-              <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-brand-100 text-brand-700">
-                <Euro className="size-5" aria-hidden />
-              </span>
-              <span className="min-w-0">
-                <span className="block text-xs text-muted">{t('companyInvoices.open')}</span>
-                <span className="block font-display text-lg font-bold text-navy-900 tabular-nums sm:text-xl">{eur.format(q.data.summary.openCents / 100)}</span>
-              </span>
-            </div>
-            <div className="card flex items-center gap-3 p-4">
-              <span className={clsx('grid size-10 shrink-0 place-items-center rounded-xl', q.data.summary.overdueCount ? 'bg-red-100 text-red-700' : 'bg-surface text-muted')}>
-                <AlertTriangle className="size-5" aria-hidden />
-              </span>
-              <span className="min-w-0">
-                <span className="block text-xs text-muted">{t('companyInvoices.overdue')}</span>
-                <span className={clsx('block font-display text-lg font-bold tabular-nums sm:text-xl', q.data.summary.overdueCount ? 'text-danger' : 'text-navy-900')}>
-                  {eur.format(q.data.summary.overdueCents / 100)}
-                </span>
-              </span>
-            </div>
+          <div className="grid grid-cols-2 gap-3 sm:gap-4">
+            <StatTile label={t('companyInvoices.open')} value={eur.format(q.data.summary.openCents / 100)} icon={Euro} className="rounded-2xl sm:p-5" />
+            <StatTile
+              label={t('companyInvoices.overdue')}
+              value={eur.format(q.data.summary.overdueCents / 100)}
+              icon={AlertTriangle}
+              tone={q.data.summary.overdueCount ? 'danger' : undefined}
+              className="rounded-2xl sm:p-5"
+            />
           </div>
 
           {q.data.invoices.length === 0 ? (
-            <EmptyState className="card" icon={Receipt} title={t('companyInvoices.empty')} text={t('companyInvoices.emptyText')} />
+            <EmptyState className="card" illustration={<Documents className="w-32" />} icon={Receipt} title={t('companyInvoices.empty')} text={t('companyInvoices.emptyText')} />
           ) : (
-            <ul className="card divide-y divide-line overflow-hidden">
-              {q.data.invoices.map((inv) => (
-                <li key={inv.id} className="flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3.5 sm:px-5">
-                  <div className="min-w-0 flex-1">
-                    <p className="font-semibold text-navy-900 tabular-nums">{inv.number}</p>
-                    <p className="text-xs text-muted">
-                      {t('companyInvoices.issued')} {date(inv.issueDate)} ·{' '}
-                      {inv.status === 'PAID' && inv.paidAt ? (
-                        t('companyInvoices.paidOn', { date: date(inv.paidAt) })
+            <div className="card overflow-hidden max-sm:border-0 max-sm:bg-transparent max-sm:shadow-none">
+              <Table
+                rows={q.data.invoices}
+                rowKey={(inv) => inv.id}
+                stackOnMobile
+                stickyHeader={false}
+                caption={t('companyInvoices.title')}
+                columns={[
+                  { key: 'number', header: t('companyInvoices.number'), primary: true, cell: (inv) => <span className="num font-semibold text-ink">{inv.number}</span> },
+                  { key: 'issued', header: t('companyInvoices.issued'), hideBelow: 'md', cell: (inv) => <span className="num">{date(inv.issueDate)}</span> },
+                  {
+                    key: 'due',
+                    header: t('companyInvoices.due'),
+                    cell: (inv) =>
+                      inv.status === 'PAID' && inv.paidAt ? (
+                        <span className="text-muted">{t('companyInvoices.paidOn', { date: date(inv.paidAt) })}</span>
                       ) : (
-                        <span className={clsx(inv.status === 'OVERDUE' && 'font-semibold text-danger')}>
-                          {t('companyInvoices.due')} {date(inv.dueDate)}
-                        </span>
-                      )}
-                    </p>
-                  </div>
-                  <span className={clsx('font-semibold tabular-nums', inv.status === 'CANCELLED' ? 'text-muted line-through' : 'text-navy-900')}>{eur.format(inv.grossCents / 100)}</span>
-                  <span className={clsx('badge', TONE[inv.status])}>{t(`companyInvoices.status.${inv.status}`)}</span>
-                  <a href={`/api/company/invoices/${inv.id}/pdf`} className="btn-secondary btn-sm" download aria-label={`${t('companyInvoices.download')} ${inv.number}`}>
-                    <Download className="size-3.5" aria-hidden /> PDF
-                  </a>
-                </li>
-              ))}
-            </ul>
+                        <span className={clsx('num', inv.status === 'OVERDUE' && 'font-semibold text-danger')}>{date(inv.dueDate)}</span>
+                      ),
+                  },
+                  {
+                    key: 'amount',
+                    header: t('companyInvoices.amount'),
+                    numeric: true,
+                    cell: (inv) => <span className={clsx('font-semibold', inv.status === 'CANCELLED' ? 'text-muted line-through' : 'text-ink')}>{eur.format(inv.grossCents / 100)}</span>,
+                  },
+                  { key: 'status', header: <span className="sr-only">{t('employerWorkers.cols.status')}</span>, mobileLabel: ' ', cell: (inv) => <StatusPill domain="invoice" status={inv.status} label={t(`companyInvoices.status.${inv.status}`)} /> },
+                  {
+                    key: 'pdf',
+                    header: <span className="sr-only">{t('companyInvoices.download')}</span>,
+                    mobileLabel: ' ',
+                    align: 'right',
+                    cell: (inv) => (
+                      <a href={`/api/company/invoices/${inv.id}/pdf`} className="btn-secondary btn-sm" download aria-label={`${t('companyInvoices.download')} ${inv.number}`}>
+                        <Download className="size-3.5" aria-hidden /> PDF
+                      </a>
+                    ),
+                  },
+                ]}
+              />
+            </div>
           )}
         </>
       )}

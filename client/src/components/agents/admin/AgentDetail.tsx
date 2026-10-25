@@ -149,7 +149,7 @@ const AttachClient = ({ agentId }: { agentId: string }) => {
   return (
     <div className="mt-5 border-t border-line pt-4">
       <p className="flex items-center gap-2 text-sm font-semibold text-ink">
-        <UserPlus className="size-4 text-brand-600" aria-hidden /> {t('agents.admin.detail.attach')}
+        <UserPlus className="size-4 text-link" aria-hidden /> {t('agents.admin.detail.attach')}
       </p>
       <p className="mt-0.5 text-xs text-muted">{t('agents.admin.detail.attachHint')}</p>
       <div className="relative mt-2 max-w-md">
@@ -171,7 +171,7 @@ const AttachClient = ({ agentId }: { agentId: string }) => {
                     {h.referredByAgentId ? ` · ${t('agents.admin.detail.alreadyOther')}` : ''}
                   </span>
                 </span>
-                <button type="button" className="btn-white btn-sm shrink-0 border border-line" onClick={() => attach.mutate(h.id)} disabled={attach.isPending}>
+                <button type="button" className="btn-secondary btn-sm shrink-0 border border-line" onClick={() => attach.mutate(h.id)} disabled={attach.isPending}>
                   <Plus className="size-3.5" aria-hidden />
                 </button>
               </li>
@@ -222,7 +222,7 @@ export const AgentDetail = () => {
 
   return (
     <div className="space-y-5">
-      <Link to="/admin/agents" className="inline-flex min-h-10 items-center gap-1.5 text-sm font-semibold text-brand-700 hover:underline">
+      <Link to="/admin/agents" className="inline-flex min-h-10 items-center gap-1.5 text-sm font-semibold text-link hover:underline">
         <ArrowLeft className="size-4" aria-hidden /> {t('agents.admin.back')}
       </Link>
 
@@ -299,7 +299,7 @@ export const AgentDetail = () => {
                     <td className="px-3 py-3">
                       {r.case ? (
                         <Link to={`/admin/cases/${r.case.id}`} className="inline-flex flex-wrap items-center gap-2 hover:underline">
-                          <span className="font-mono text-xs font-semibold text-brand-700">{r.case.number}</span>
+                          <span className="code-id text-xs font-medium text-link whitespace-nowrap">{r.case.number}</span>
                           <StatusBadge status={r.case.status as CaseStatus} />
                         </Link>
                       ) : (
@@ -309,7 +309,7 @@ export const AgentDetail = () => {
                     <td className="px-5 py-3 text-right sm:px-6">
                       <button
                         type="button"
-                        className="inline-flex min-h-9 items-center gap-1 rounded-lg px-2 text-xs font-semibold text-muted hover:bg-surface hover:text-danger"
+                        className="inline-flex min-h-9 items-center gap-1 rounded-lg px-2 text-xs font-semibold text-muted hover:bg-sunken hover:text-danger-fg"
                         onClick={() => detach.mutate(r.id)}
                         disabled={detach.isPending}
                       >

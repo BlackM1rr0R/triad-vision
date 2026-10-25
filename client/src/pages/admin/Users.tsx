@@ -149,7 +149,7 @@ const CreateUserModal = ({ open, onClose }: { open: boolean; onClose: () => void
             value={f.password}
             onChange={(e) => setF({ ...f, password: e.target.value })}
           />
-          <p className={clsx('mt-1 text-[11px]', f.password && !passwordOk ? 'text-danger' : 'text-muted')}>{passwordHint}</p>
+          <p className={clsx('mt-1 text-[11px]', f.password && !passwordOk ? 'text-danger-fg' : 'text-muted')}>{passwordHint}</p>
         </div>
       </form>
     </Modal>
@@ -210,7 +210,7 @@ const ResetPasswordModal = ({ user, onClose }: { user: AdminUser | null; onClose
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
-        <p className={clsx('mt-1 text-[11px]', password && !ok ? 'text-danger' : 'text-muted')}>
+        <p className={clsx('mt-1 text-[11px]', password && !ok ? 'text-danger-fg' : 'text-muted')}>
           {passwordHint} {t('admin.users.deliverHint')}
         </p>
       </form>
@@ -248,7 +248,7 @@ const RoleControl = ({ u, editable }: { u: AdminUser; editable: boolean }) => {
   return (
     <select
       aria-label={t('admin.users.roleAria', { name: fullName(u) })}
-      className={clsx('min-h-8 shrink-0 cursor-pointer rounded-md border-0 py-1 pr-7 pl-2 text-xs font-semibold outline-none focus:ring-2 focus:ring-brand-500/30', ROLE_TONE[u.role])}
+      className={clsx('min-h-8 shrink-0 cursor-pointer rounded-md border-0 py-1 pr-7 pl-2 text-xs font-semibold outline-none focus:ring-2 focus:ring-focus/30', ROLE_TONE[u.role])}
       value={u.role}
       disabled={patch.isPending}
       onChange={(e) =>
@@ -280,7 +280,7 @@ const ActiveControl = ({ u, editable }: { u: AdminUser; editable: boolean }) => 
           patch.mutate({ id: u.id, patch: { isActive } }, { onSuccess: (nu) => toast.success(nu.isActive ? t('admin.users.activated') : t('admin.users.deactivated')) })
         }
       />
-      <span className={clsx('text-xs', u.isActive ? 'text-success' : 'text-muted')}>{u.isActive ? t('admin.common.active') : t('admin.common.inactiveCap')}</span>
+      <span className={clsx('text-xs', u.isActive ? 'text-success-fg' : 'text-muted')}>{u.isActive ? t('admin.common.active') : t('admin.common.inactiveCap')}</span>
     </span>
   );
 };
@@ -344,7 +344,7 @@ const RowActions = ({
     <span className={clsx('inline-flex items-center', compact ? '-my-2 -mr-2 gap-0.5' : 'gap-1')}>
       <button
         type="button"
-        className={clsx('inline-flex items-center gap-1 rounded-md px-2 text-xs font-semibold whitespace-nowrap text-brand-600 hover:bg-brand-50', compact ? 'min-h-10' : 'min-h-8 py-1')}
+        className={clsx('inline-flex items-center gap-1 rounded-md px-2 text-xs font-semibold whitespace-nowrap text-link hover:bg-primary/[0.06]', compact ? 'min-h-10' : 'min-h-8 py-1')}
         onClick={onReset}
         title={t('admin.users.resetPassword')}
       >
@@ -352,7 +352,7 @@ const RowActions = ({
       </button>
       <button
         type="button"
-        className={clsx('inline-flex items-center gap-1 rounded-md px-2 text-xs font-semibold whitespace-nowrap text-ink/70 hover:bg-red-50 hover:text-danger', compact ? 'min-h-10' : 'min-h-8 py-1')}
+        className={clsx('inline-flex items-center gap-1 rounded-md px-2 text-xs font-semibold whitespace-nowrap text-muted hover:bg-danger-bg hover:text-danger-fg', compact ? 'min-h-10' : 'min-h-8 py-1')}
         onClick={onRevoke}
         title={t('admin.users.revokeTitle')}
         aria-label={t('admin.users.revokeAria', { name: fullName(u) })}
@@ -361,7 +361,7 @@ const RowActions = ({
       </button>
       <button
         type="button"
-        className={clsx('inline-flex items-center gap-1 rounded-md px-2 text-xs font-semibold whitespace-nowrap text-danger hover:bg-red-50', compact ? 'min-h-10' : 'min-h-8 py-1')}
+        className={clsx('inline-flex items-center gap-1 rounded-md px-2 text-xs font-semibold whitespace-nowrap text-danger-fg hover:bg-danger-bg', compact ? 'min-h-10' : 'min-h-8 py-1')}
         onClick={onDelete}
         title={t('admin.users.deleteTitle')}
         aria-label={t('admin.users.deleteAria', { name: fullName(u) })}
@@ -442,7 +442,7 @@ export default function Users() {
         subtitle={subtitle}
         actions={
           <>
-            {isFetching && !isLoading && <Spinner className="size-4 text-brand-600" />}
+            {isFetching && !isLoading && <Spinner className="size-4 text-link" />}
             {canManage && (
               <a
                 href="/api/admin/users/clients.xlsx"
@@ -483,21 +483,21 @@ export default function Users() {
         </div>
       </div>
 
-      {!canManage && <p className="mb-3 rounded-lg bg-brand-50 px-3 py-2 text-xs text-brand-700">{t('admin.users.readOnly')}</p>}
+      {!canManage && <p className="mb-3 rounded-lg bg-primary/[0.06] px-3 py-2 text-xs text-link">{t('admin.users.readOnly')}</p>}
 
       {isLoading ? (
         <LoadingBlock />
       ) : error ? (
         <ErrorBlock error={error} onRetry={() => refetch()} />
       ) : users.length === 0 ? (
-        <div className="rounded-xl border border-line bg-white">
+        <div className="rounded-xl border border-line bg-card">
           <EmptyState icon={UsersIcon} title={t('admin.users.notFound')} />
         </div>
       ) : (
         <>
-          <div className="hidden overflow-x-auto rounded-xl border border-line bg-white xl:block">
+          <div className="hidden overflow-x-auto rounded-xl border border-line bg-card xl:block">
             <table className="w-full min-w-[1040px] text-left text-sm">
-              <thead className="border-b border-line bg-surface/70 text-[11px] font-semibold tracking-wide whitespace-nowrap text-muted uppercase">
+              <thead className="border-b border-line bg-surface/70 text-xs font-medium whitespace-nowrap text-muted">
                 <tr>
                   <th className="px-4 py-2.5">{t('admin.users.th.user')}</th>
                   <th className="px-4 py-2.5">{t('admin.users.th.contact')}</th>
@@ -514,10 +514,10 @@ export default function Users() {
                   const self = u.id === me?.id;
                   const can = editable(u);
                   return (
-                    <tr key={u.id} className={clsx(!u.isActive && 'bg-slate-50 text-ink/60')}>
+                    <tr key={u.id} className={clsx(!u.isActive && 'bg-sunken text-muted')}>
                       <td className="px-4 py-3">
-                        <p className="font-semibold whitespace-nowrap text-navy-900">
-                          {fullName(u)} {self && <span className="badge ml-1 bg-brand-100 text-[10px] text-brand-700">{t('admin.common.you')}</span>}
+                        <p className="font-semibold whitespace-nowrap text-ink">
+                          {fullName(u)} {self && <span className="badge ml-1 bg-primary/10 text-[10px] text-link">{t('admin.common.you')}</span>}
                         </p>
                         <OnlineDot online={u.online} lastSeenAt={u.lastSeenAt} className="mt-0.5" />
                         {dupMark(u)}
@@ -527,11 +527,11 @@ export default function Users() {
                         </Suspense>
                       </td>
                       <td className="px-4 py-3 text-xs">
-                        <a href={`mailto:${u.email}`} className="flex items-center gap-1 whitespace-nowrap text-ink/80 hover:text-brand-700">
+                        <a href={`mailto:${u.email}`} className="flex min-h-6 items-center gap-1 whitespace-nowrap text-ink/80 hover:text-link">
                           <Mail className="size-3" /> {u.email}
                         </a>
                         {u.phone && (
-                          <a href={`tel:${u.phone}`} className="mt-0.5 flex items-center gap-1 text-muted hover:text-brand-700">
+                          <a href={`tel:${u.phone}`} className="flex min-h-6 items-center gap-1 text-muted hover:text-link">
                             <Phone className="size-3" /> {u.phone}
                           </a>
                         )}
@@ -567,11 +567,11 @@ export default function Users() {
               const self = u.id === me?.id;
               const can = editable(u);
               return (
-                <li key={u.id} className={clsx('rounded-xl border border-line bg-white p-4', !u.isActive && 'opacity-70')}>
+                <li key={u.id} className={clsx('rounded-xl border border-line bg-card p-4', !u.isActive && 'opacity-70')}>
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
-                      <p className="truncate font-semibold text-navy-900">
-                        {fullName(u)} {self && <span className="badge ml-1 bg-brand-100 text-[10px] text-brand-700">{t('admin.common.you')}</span>}
+                      <p className="truncate font-semibold text-ink">
+                        {fullName(u)} {self && <span className="badge ml-1 bg-primary/10 text-[10px] text-link">{t('admin.common.you')}</span>}
                       </p>
                       <p className="truncate text-xs text-muted">{u.email}</p>
                       {u.phone && <p className="text-xs text-muted">{u.phone}</p>}

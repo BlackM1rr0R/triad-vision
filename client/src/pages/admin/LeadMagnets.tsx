@@ -196,7 +196,7 @@ export default function AdminLeadMagnets() {
           title={draft.id ? m('edit') : m('new')}
           icon={BookOpen}
           actions={
-            <button type="button" className="btn-ghost btn-sm" onClick={() => setDraft(null)} aria-label={m('cancel')}>
+            <button type="button" className="btn-secondary btn-sm" onClick={() => setDraft(null)} aria-label={m('cancel')}>
               <X className="size-4" aria-hidden />
             </button>
           }
@@ -215,7 +215,7 @@ export default function AdminLeadMagnets() {
               />
               <p className="mt-1 text-[11px] text-muted">{m('slugHint')}</p>
             </div>
-            <label className="flex min-h-11 cursor-pointer items-center gap-3 self-end rounded-lg border border-line px-3.5 py-2.5 text-sm font-medium">
+            <label className="flex min-h-10 sm:min-h-9 cursor-pointer items-center gap-3 self-end rounded-lg border border-line px-3.5 py-2.5 text-sm font-medium">
               <Switch checked={draft.published} onChange={(v) => setDraft({ ...draft, published: v })} label={m('published')} />
               {m('published')}
             </label>
@@ -237,7 +237,7 @@ export default function AdminLeadMagnets() {
             <button type="button" className="btn-primary" disabled={busy === 'save'} onClick={() => void save()}>
               {m('save')}
             </button>
-            <button type="button" className="btn-ghost" onClick={() => setDraft(null)}>
+            <button type="button" className="btn-secondary" onClick={() => setDraft(null)}>
               {m('cancel')}
             </button>
           </div>
@@ -260,7 +260,7 @@ export default function AdminLeadMagnets() {
                     {item.coverUrl ? (
                       <img src={item.coverUrl} alt="" className="aspect-[3/4] w-full rounded-lg object-cover" />
                     ) : (
-                      <div className="grid aspect-[3/4] w-full place-items-center rounded-lg bg-navy-900 text-brand-300" aria-hidden>
+                      <div className="grid aspect-[3/4] w-full place-items-center rounded-lg bg-primary text-link" aria-hidden>
                         <BookOpen className="size-7" />
                       </div>
                     )}
@@ -268,53 +268,53 @@ export default function AdminLeadMagnets() {
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div className="min-w-0">
-                        <h2 className="font-display text-lg font-bold text-navy-900">{item.title[ui] || item.title.az}</h2>
-                        <p className="font-mono text-xs text-muted">/ebook/{item.slug}</p>
+                        <h2 className="font-display text-lg font-bold text-ink">{item.title[ui] || item.title.az}</h2>
+                        <p className="code-id text-xs text-muted">/ebook/{item.slug}</p>
                         <p className="mt-1 text-xs text-muted">
                           {m('downloads', { count: item.downloads })} · {m('leads', { count: item.leads })}
                         </p>
                       </div>
                       <div className="flex flex-wrap items-center gap-2">
                         <Switch checked={item.published} onChange={(v) => void togglePublished(item, v)} label={m('published')} />
-                        <a href={withLocale(`/ebook/${item.slug}`, 'az')} target="_blank" rel="noreferrer" className="btn-ghost btn-sm" aria-label={m('open')}>
+                        <a href={withLocale(`/ebook/${item.slug}`, 'az')} target="_blank" rel="noreferrer" className="btn-secondary btn-sm" aria-label={m('open')}>
                           <ExternalLink className="size-4" aria-hidden />
                         </a>
                         <button
                           type="button"
-                          className="btn-ghost btn-sm"
+                          className="btn-secondary btn-sm"
                           aria-label={m('edit')}
                           onClick={() => setDraft({ id: item.id, slug: item.slug, title: asText6(item.title), description: asText6(item.description), coverUrl: item.coverUrl ?? '', published: item.published })}
                         >
                           <Pencil className="size-4" aria-hidden />
                         </button>
-                        <button type="button" className="btn-ghost btn-sm text-red-700" aria-label={m('delete')} onClick={() => setDeleting(item)}>
+                        <button type="button" className="btn-secondary btn-sm text-danger-fg" aria-label={m('delete')} onClick={() => setDeleting(item)}>
                           <Trash2 className="size-4" aria-hidden />
                         </button>
                       </div>
                     </div>
-                    <p className="mt-4 text-xs font-semibold text-navy-900">{m('files')}</p>
+                    <p className="mt-4 text-xs font-semibold text-ink">{m('files')}</p>
                     <p className="text-[11px] text-muted">{m('filesHint')}</p>
                     <ul className="mt-2 grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
                       {SITE_LOCALES.map((lng) => {
                         const has = !!item.files[lng];
                         const working = busy === `file:${item.id}:${lng}`;
                         return (
-                          <li key={lng} className={clsx('flex items-center justify-between gap-2 rounded-lg border px-3 py-2', has ? 'border-emerald-200 bg-emerald-50/60' : 'border-dashed border-line')}>
-                            <span className="text-xs font-bold text-navy-900 uppercase">
+                          <li key={lng} className={clsx('flex items-center justify-between gap-2 rounded-lg border px-3 py-2', has ? 'border-success-border bg-success-bg/60' : 'border-dashed border-line')}>
+                            <span className="text-xs font-bold text-ink uppercase">
                               {lng} <span className="font-normal text-muted normal-case">{has ? 'PDF' : m('noFile')}</span>
                             </span>
                             <span className="flex items-center gap-1">
                               {working && <Spinner className="size-3.5" />}
                               {has && (
-                                <a href={`/api/admin/site-features/lead-magnets/${item.id}/files/${lng}`} target="_blank" rel="noreferrer" className="rounded p-1 text-muted hover:text-brand-700" aria-label={`${m('preview')} ${lng}`}>
+                                <a href={`/api/admin/site-features/lead-magnets/${item.id}/files/${lng}`} target="_blank" rel="noreferrer" className="rounded p-1 text-muted hover:text-link" aria-label={`${m('preview')} ${lng}`}>
                                   <Eye className="size-4" aria-hidden />
                                 </a>
                               )}
-                              <button type="button" className="rounded p-1 text-muted hover:text-brand-700" disabled={working} onClick={() => pickFile(item.id, lng)} aria-label={`${has ? m('replace') : m('upload')} ${lng}`}>
+                              <button type="button" className="rounded p-1 text-muted hover:text-link" disabled={working} onClick={() => pickFile(item.id, lng)} aria-label={`${has ? m('replace') : m('upload')} ${lng}`}>
                                 <FileUp className="size-4" aria-hidden />
                               </button>
                               {has && (
-                                <button type="button" className="rounded p-1 text-muted hover:text-red-700" disabled={working} onClick={() => void removeFile(item.id, lng)} aria-label={`${m('remove')} ${lng}`}>
+                                <button type="button" className="rounded p-1 text-muted hover:text-danger-fg" disabled={working} onClick={() => void removeFile(item.id, lng)} aria-label={`${m('remove')} ${lng}`}>
                                   <X className="size-4" aria-hidden />
                                 </button>
                               )}

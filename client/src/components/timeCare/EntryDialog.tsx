@@ -88,14 +88,14 @@ export function EntryDialog({ entry, caseId, taskId, onClose }: { entry?: TimeEn
         </label>
         <div className="flex flex-wrap justify-between gap-2 pt-1">
           {entry ? (
-            <button type="button" className="btn-ghost btn-sm" disabled={remove.isPending} onClick={() => window.confirm(t('time.form.confirmDelete')) && remove.mutate()}>
+            <button type="button" className="btn-secondary btn-sm" disabled={remove.isPending} onClick={() => window.confirm(t('time.form.confirmDelete')) && remove.mutate()}>
               <Trash2 className="size-4" /> {t('time.form.delete')}
             </button>
           ) : (
             <span />
           )}
           <div className="flex gap-2">
-            <button type="button" className="btn-ghost btn-sm" onClick={onClose}>
+            <button type="button" className="btn-secondary btn-sm" onClick={onClose}>
               {t('time.form.cancel')}
             </button>
             <button type="submit" className="btn-primary btn-sm" disabled={save.isPending}>

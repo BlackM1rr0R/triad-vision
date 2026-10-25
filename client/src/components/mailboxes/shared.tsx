@@ -56,7 +56,7 @@ export const CopyButton = ({ value, className }: { value: string; className?: st
   return (
     <button
       type="button"
-      className={clsx('inline-flex min-h-9 shrink-0 items-center gap-1.5 rounded-lg border border-line px-3 text-xs font-semibold text-ink hover:bg-surface', className)}
+      className={clsx('inline-flex min-h-9 shrink-0 items-center gap-1.5 rounded-lg border border-line px-3 text-xs font-semibold text-ink hover:bg-sunken', className)}
       onClick={() => {
         void navigator.clipboard?.writeText(value).then(
           () => setDone(true),
@@ -64,7 +64,7 @@ export const CopyButton = ({ value, className }: { value: string; className?: st
         );
       }}
     >
-      {done ? <Check className="size-3.5 text-success" aria-hidden /> : <Copy className="size-3.5" aria-hidden />}
+      {done ? <Check className="size-3.5 text-success-fg" aria-hidden /> : <Copy className="size-3.5" aria-hidden />}
       {done ? t('mailAdmin.actions.copied') : t('mailAdmin.actions.copy')}
     </button>
   );
@@ -72,7 +72,7 @@ export const CopyButton = ({ value, className }: { value: string; className?: st
 
 /** A password shown exactly once, with a copy button. */
 export const SecretOnce = ({ value, note }: { value: string; note?: string }) => (
-  <div className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-amber-950 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-100">
+  <div className="rounded-lg border border-warning-border bg-warning-bg p-3 text-warning-fg dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-100">
     <div className="flex flex-wrap items-center gap-2">
       <KeyRound className="size-4 shrink-0" aria-hidden />
       <code className="min-w-0 flex-1 font-mono text-base font-semibold break-all select-all" data-testid="secret-once">
@@ -159,8 +159,8 @@ export const AutoReplyForm = ({
     onError: toastMailboxError,
   });
 
-  if (q.isLoading) return <Spinner className="size-6 text-brand-600" />;
-  if (q.error) return <p className="text-sm text-danger">{mailboxErrorText(q.error)}</p>;
+  if (q.isLoading) return <Spinner className="size-6 text-link" />;
+  if (q.error) return <p className="text-sm text-danger-fg">{mailboxErrorText(q.error)}</p>;
 
   const datesBad = !!form.from && !!form.to && new Date(form.from) >= new Date(form.to);
   const invalid = (form.enabled && !form.text.trim()) || datesBad;
@@ -174,7 +174,7 @@ export const AutoReplyForm = ({
       }}
     >
       <label className="flex cursor-pointer items-center gap-3 text-sm font-semibold text-ink">
-        <input type="checkbox" className="size-4 accent-brand-600" checked={form.enabled} onChange={(e) => setForm((f) => ({ ...f, enabled: e.target.checked }))} />
+        <input type="checkbox" className="size-4 accent-primary" checked={form.enabled} onChange={(e) => setForm((f) => ({ ...f, enabled: e.target.checked }))} />
         {t('mailAdmin.autoReply.enabled')}
       </label>
       <Field label={t('mailAdmin.autoReply.subject')} hint={t('mailAdmin.autoReply.subjectHint')} htmlFor={`${id}-s`}>

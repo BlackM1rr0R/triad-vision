@@ -8,6 +8,7 @@ import { pagesEmployerWorkers } from '@/i18n/pagesEmployerWorkers';
 import { fmtDate } from '@/components/admin/labels';
 import { Switch } from '@/components/admin/ui';
 import { toastJobsError } from '@/components/jobs/labels';
+import { Documents } from '@/components/illustrations';
 import { Empty, Section } from './shared';
 
 registerCopy(pagesEmployerWorkers);
@@ -40,13 +41,13 @@ export const CompanyReports = () => {
     <Section title={t('employerReports.title')} icon={FileBarChart2}>
       <p className="-mt-2 mb-5 text-sm text-muted">{t('employerReports.subtitle')}</p>
       {!data?.length ? (
-        <Empty icon={FileBarChart2} title={t('employerReports.empty')} />
+        <Empty icon={FileBarChart2} illustration={<Documents className="w-32" />} title={t('employerReports.empty')} />
       ) : (
         <ul className="divide-y divide-line rounded-2xl border border-line">
           {data.map((r) => (
             <li key={r.id} className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 text-sm">
               <span className="min-w-0">
-                <span className="block font-semibold text-navy-900 capitalize">{monthLabel(r.month, i18n.language)}</span>
+                <span className="block font-semibold text-ink capitalize">{monthLabel(r.month, i18n.language)}</span>
                 <span className="text-xs text-muted">
                   {r.totals ? t('employerReports.summary', { working: r.totals.working, inProcess: r.totals.inProcess, open: r.totals.openItems }) : ''}
                   {' · '}

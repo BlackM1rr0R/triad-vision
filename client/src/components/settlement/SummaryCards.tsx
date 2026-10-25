@@ -19,11 +19,11 @@ export const SummaryCards = ({ summary }: { summary: Summary | undefined }) => {
           <dl className="mt-1.5 space-y-0.5 text-xs">
             <div className="flex justify-between gap-2">
               <dt className="text-muted">{t('settlement.summary.owed')}</dt>
-              <dd className="font-semibold text-amber-800 tabular-nums">{fmtBag(b.month.pending) || '0'}</dd>
+              <dd className="font-semibold text-warning-fg tabular-nums">{fmtBag(b.month.pending) || '0'}</dd>
             </div>
             <div className="flex justify-between gap-2">
               <dt className="text-muted">{t('settlement.summary.paid')}</dt>
-              <dd className="font-semibold text-emerald-700 tabular-nums">{fmtBag(b.month.paid) || '0'}</dd>
+              <dd className="font-semibold text-success-fg tabular-nums">{fmtBag(b.month.paid) || '0'}</dd>
             </div>
             <div className="flex justify-between gap-2 border-t border-line pt-0.5">
               <dt className="text-muted">{t('settlement.summary.overall')}</dt>
@@ -44,8 +44,8 @@ export const SummaryCards = ({ summary }: { summary: Summary | undefined }) => {
                     {p.name}
                   </span>
                   <span className="shrink-0 tabular-nums">
-                    <span className="font-semibold text-amber-800">{fmtBag(p.pending) || '0'}</span>
-                    {fmtBag(p.paid) && <span className="text-emerald-700"> · {fmtBag(p.paid)}</span>}
+                    <span className="font-semibold text-warning-fg">{fmtBag(p.pending) || '0'}</span>
+                    {fmtBag(p.paid) && <span className="text-success-fg"> · {fmtBag(p.paid)}</span>}
                   </span>
                 </li>
               ))}
@@ -77,7 +77,7 @@ export const SummaryCards = ({ summary }: { summary: Summary | undefined }) => {
           </div>
           <div className="flex justify-between gap-2">
             <dt className="text-muted">{t('settlement.summary.received')}</dt>
-            <dd className="font-semibold text-emerald-700 tabular-nums">{fmtBag(summary.revenue.received) || '0'}</dd>
+            <dd className="font-semibold text-success-fg tabular-nums">{fmtBag(summary.revenue.received) || '0'}</dd>
           </div>
           <div className="flex justify-between gap-2">
             <dt className="text-muted">{t('settlement.cols.expenses')}</dt>

@@ -69,7 +69,7 @@ export const DeletePartnerDialog = ({
       size="sm"
       title={
         <span className="flex items-center gap-2">
-          <AlertTriangle className="size-4 text-danger" aria-hidden />
+          <AlertTriangle className="size-4 text-danger-fg" aria-hidden />
           {t('refPartners.deleteDialog.title', { name: partner?.name ?? '' })}
         </span>
       }

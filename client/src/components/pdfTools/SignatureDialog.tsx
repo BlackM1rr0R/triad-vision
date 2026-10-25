@@ -63,19 +63,19 @@ export const SignatureDialog = ({ busy, onSave, onClose }: { busy: boolean; onSa
       <label className="mb-3 block">
         <span className="mb-1 block text-xs font-semibold text-muted">{t('pdfTools.stamp.name')}</span>
         <input
-          className="w-full rounded-lg border border-line bg-card px-3 py-2 text-sm text-ink focus:border-brand-500 focus:outline-none"
+          className="w-full rounded-lg border border-line bg-card px-3 py-2 text-sm text-ink focus:border-focus focus:outline-none"
           value={name}
           maxLength={80}
           onChange={(e) => setName(e.target.value)}
           placeholder={t('pdfTools.stamp.namePlaceholder')}
         />
       </label>
-      <div className="relative overflow-hidden rounded-xl border-2 border-dashed border-brand-400/60 bg-white">
+      <div className="relative overflow-hidden rounded-xl border-2 border-dashed border-line-strong bg-card">
         <canvas ref={canvasRef} className="block h-48 w-full cursor-crosshair touch-none" />
-        <div className="pointer-events-none absolute right-6 bottom-10 left-6 border-b border-slate-300" aria-hidden />
+        <div className="pointer-events-none absolute right-6 bottom-10 left-6 border-b border-line-strong" aria-hidden />
       </div>
       <div className="mt-2 flex justify-end">
-        <button type="button" onClick={clear} className="btn btn-sm text-muted hover:bg-surface" disabled={empty}>
+        <button type="button" onClick={clear} className="btn btn-sm text-muted hover:bg-sunken" disabled={empty}>
           <Eraser className="size-4" aria-hidden /> {t('pdfTools.stamp.clear')}
         </button>
       </div>

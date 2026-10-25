@@ -9,7 +9,7 @@ export const ReadinessGauge = ({ value, size = 168, label }: { value: number; si
   const reduce = useReducedMotion();
   const [shown, setShown] = useState(reduce ? value : 0);
   const v = Math.max(0, Math.min(100, value));
-  const color = v < 40 ? 'var(--color-warning)' : v < 70 ? 'var(--color-brand-600)' : 'var(--color-success)';
+  const color = v < 40 ? 'var(--color-warning)' : v < 70 ? 'var(--color-info)' : 'var(--color-success)';
 
   useEffect(() => {
     if (reduce) {
@@ -39,7 +39,7 @@ export const ReadinessGauge = ({ value, size = 168, label }: { value: number; si
         />
       </svg>
       <div className="absolute inset-0 grid place-items-center">
-        <span className="font-display text-4xl font-black text-navy-900">
+        <span className="font-display text-4xl font-semibold text-ink">
           {shown}
           <span className="text-xl font-bold text-muted">%</span>
         </span>

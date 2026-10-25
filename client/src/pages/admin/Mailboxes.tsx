@@ -67,8 +67,8 @@ const UsageBar = ({ used, quota }: { used: number; quota: number | null }) => {
     <div className="min-w-0">
       <div className="text-xs text-muted tabular-nums">{t('mailAdmin.usageOf', { used: formatBytes(used), quota: quota ? formatBytes(quota) : t('mailAdmin.unlimited') })}</div>
       {pct !== null && (
-        <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-surface" role="progressbar" aria-label={t('ui.progress')} aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100}>
-          <div className={clsx('h-full rounded-full', pct >= 90 ? 'bg-danger' : pct >= 75 ? 'bg-amber-500' : 'bg-brand-600')} style={{ width: `${Math.max(pct, 2)}%` }} />
+        <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-sunken" role="progressbar" aria-label={t('ui.progress')} aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100}>
+          <div className={clsx('h-full rounded-full', pct >= 90 ? 'bg-danger' : pct >= 75 ? 'bg-warning' : 'bg-primary')} style={{ width: `${Math.max(pct, 2)}%` }} />
         </div>
       )}
     </div>
@@ -84,7 +84,7 @@ const IconAction = ({ icon: Icon, label, onClick, disabled, danger, hint }: { ic
     aria-label={label}
     className={clsx(
       'grid size-9 place-items-center rounded-lg border border-line transition disabled:cursor-not-allowed disabled:opacity-40',
-      danger ? 'text-danger hover:bg-red-50' : 'text-ink/70 hover:bg-surface hover:text-navy-900',
+      danger ? 'text-danger-fg hover:bg-danger-bg' : 'text-muted hover:bg-sunken hover:text-ink',
     )}
   >
     <Icon className="size-4" aria-hidden />
@@ -100,16 +100,16 @@ const Row = ({ m, onOpen }: { m: Mailbox; onOpen: (d: NonNullable<DialogState>) 
     <li className="grid gap-3 px-4 py-4 sm:px-5 lg:grid-cols-[minmax(0,2.2fr)_minmax(0,1fr)_minmax(0,1.4fr)_auto] lg:items-center">
       <div className="min-w-0">
         <div className="flex flex-wrap items-center gap-2">
-          <span className="font-semibold break-all text-navy-900">{m.address}</span>
+          <span className="font-semibold break-all text-ink">{m.address}</span>
           {m.protection && (
-            <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-900" title={hint}>
+            <span className="inline-flex items-center gap-1 rounded-full bg-warning-bg px-2 py-0.5 text-[11px] font-semibold text-warning-fg" title={hint}>
               <ShieldAlert className="size-3" aria-hidden /> {t(`mailAdmin.badge.${m.protection}`)}
             </span>
           )}
         </div>
         <div className="mt-0.5 text-sm text-muted">{m.displayName || '—'}</div>
         {(m.linkedUser || m.workspaceUsers.length > 0) && (
-          <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-ink/70">
+          <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted">
             {m.linkedUser && (
               <span className="inline-flex items-center gap-1">
                 <User className="size-3" aria-hidden /> {m.linkedUser.name}
@@ -123,7 +123,7 @@ const Row = ({ m, onOpen }: { m: Mailbox; onOpen: (d: NonNullable<DialogState>) 
       <div className="flex min-w-0 flex-wrap gap-1">
         {m.aliases.length ? (
           m.aliases.map((a) => (
-            <span key={a} className="inline-flex max-w-full items-center gap-1 truncate rounded-md bg-surface px-2 py-0.5 text-xs text-ink/80">
+            <span key={a} className="inline-flex max-w-full items-center gap-1 truncate rounded-md bg-sunken px-2 py-0.5 text-xs text-ink/80">
               <AtSign className="size-3 shrink-0" aria-hidden />
               {a}
             </span>
@@ -234,7 +234,7 @@ const CreateDialog = ({ open, onClose, domain }: { open: boolean; onClose: () =>
           <Field label={t('mailAdmin.form.localPart')} htmlFor={`${id}-lp`}>
             <div className="flex items-stretch">
               <input id={`${id}-lp`} className="input rounded-r-none" autoComplete="off" spellCheck={false} maxLength={64} value={form.localPart} onChange={(e) => setForm((f) => ({ ...f, localPart: e.target.value }))} required data-autofocus />
-              <span className="grid shrink-0 place-items-center rounded-r-lg border border-l-0 border-line bg-surface px-3 text-sm text-muted">@{domain}</span>
+              <span className="grid shrink-0 place-items-center rounded-r-lg border border-l-0 border-line bg-sunken px-3 text-sm text-muted">@{domain}</span>
             </div>
           </Field>
           <Field label={t('mailAdmin.form.displayName')} htmlFor={`${id}-dn`}>
@@ -416,7 +416,7 @@ const DeleteDialog = ({ mailbox, onClose }: { mailbox: Mailbox | null; onClose: 
       size="sm"
       title={
         <span className="flex items-center gap-2">
-          <AlertTriangle className="size-4 text-danger" aria-hidden /> {t('mailAdmin.del.title')}
+          <AlertTriangle className="size-4 text-danger-fg" aria-hidden /> {t('mailAdmin.del.title')}
         </span>
       }
       footer={
@@ -437,7 +437,7 @@ const DeleteDialog = ({ mailbox, onClose }: { mailbox: Mailbox | null; onClose: 
             if (matches && !m.isPending) m.mutate(mailbox);
           }}
         >
-          <p className="rounded-lg border border-red-200 bg-red-50/60 p-3 text-red-900">{t('mailAdmin.del.body', { address: mailbox.address })}</p>
+          <p className="rounded-lg border border-danger-border bg-danger-bg/60 p-3 text-danger-fg">{t('mailAdmin.del.body', { address: mailbox.address })}</p>
           {(mailbox.linkedUser || mailbox.workspaceUsers.length > 0) && <p>{t('mailAdmin.del.linked')}</p>}
           <Field label={t('mailAdmin.del.typeToConfirm', { address: mailbox.address })} htmlFor={`${id}-c`}>
             <input id={`${id}-c`} className="input" autoComplete="off" spellCheck={false} value={typed} onChange={(e) => setTyped(e.target.value)} placeholder={mailbox.address} data-autofocus />
@@ -510,15 +510,15 @@ export default function Mailboxes() {
       {isLoading ? (
         <LoadingBlock />
       ) : error ? (
-        <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-10 text-center" role="alert">
-          <Unplug className="size-6 text-danger" aria-hidden />
-          <p className="text-sm font-medium text-red-800">{mailboxErrorText(error)}</p>
+        <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-danger-border bg-danger-bg px-4 py-10 text-center" role="alert">
+          <Unplug className="size-6 text-danger-fg" aria-hidden />
+          <p className="text-sm font-medium text-danger-fg">{mailboxErrorText(error)}</p>
           <button type="button" className="btn-secondary btn-sm" onClick={() => void refetch()}>
             <RefreshCw className="size-3.5" aria-hidden /> {t('mailAdmin.refresh')}
           </button>
         </div>
       ) : !data?.configured ? (
-        <div className="rounded-xl border border-line bg-white">
+        <div className="rounded-xl border border-line bg-card">
           <EmptyState icon={Unplug} title={t('mailAdmin.notConfigured.title')}>
             {t('mailAdmin.notConfigured.body')}
           </EmptyState>
@@ -533,7 +533,7 @@ export default function Mailboxes() {
             </label>
             <span className="text-xs text-muted">{t('mailAdmin.count', { count: data.mailboxes.length })}</span>
           </div>
-          <section className="overflow-hidden rounded-xl border border-line bg-white shadow-[0_1px_2px_rgba(11,31,68,0.04)]">
+          <section className="overflow-hidden rounded-xl border border-line bg-card shadow-[var(--tv-shadow-card)]">
             <div className="hidden border-b border-line bg-surface/60 px-5 py-2.5 text-[11px] font-bold tracking-wide text-muted uppercase lg:grid lg:grid-cols-[minmax(0,2.2fr)_minmax(0,1fr)_minmax(0,1.4fr)_auto] lg:gap-3">
               <span>{t('mailAdmin.col.address')}</span>
               <span>{t('mailAdmin.col.usage')}</span>

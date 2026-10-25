@@ -142,14 +142,14 @@ export const FolderPicker = ({
       }
     >
       <div className="mb-3 flex flex-wrap items-center gap-1 text-sm">
-        <button type="button" onClick={() => setAt(null)} className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 font-medium text-brand-600 hover:bg-brand-50">
+        <button type="button" onClick={() => setAt(null)} className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 font-medium text-link hover:bg-primary/[0.06]">
           <HardDrive className="size-3.5" /> {t('drive.dialogs.pickFolder')}
         </button>
         {at &&
           q.data?.path.map((c) => (
             <span key={c.id} className="inline-flex items-center gap-1">
               <ChevronRight className="size-3.5 text-muted" />
-              <button type="button" onClick={() => setAt(c.id)} className="rounded-md px-1.5 py-0.5 font-medium text-ink hover:bg-surface">
+              <button type="button" onClick={() => setAt(c.id)} className="rounded-md px-1.5 py-0.5 font-medium text-ink hover:bg-sunken">
                 {crumbLabel(c, t, myId)}
               </button>
             </span>
@@ -159,7 +159,7 @@ export const FolderPicker = ({
         {!at
           ? top.map((r) => (
               <li key={r.id}>
-                <button type="button" onClick={() => setAt(r.id)} className="flex w-full items-center gap-3 px-3 py-2 text-left text-sm hover:bg-surface">
+                <button type="button" onClick={() => setAt(r.id)} className="flex w-full items-center gap-3 px-3 py-2 text-left text-sm hover:bg-sunken">
                   <ItemIcon item={r} className="size-5" />
                   <span className="truncate font-medium text-ink">{rootLabel(r, t, myId)}</span>
                 </button>
@@ -175,7 +175,7 @@ export const FolderPicker = ({
               ? <li className="px-3 py-6 text-center text-xs text-muted">{t('drive.dialogs.noSubfolders')}</li>
               : children.map((f) => (
                   <li key={f.id}>
-                    <button type="button" onClick={() => setAt(f.id)} className={clsx('flex w-full items-center gap-3 px-3 py-2 text-left text-sm hover:bg-surface', !can(f.myAccess, 'EDIT') && 'opacity-60')}>
+                    <button type="button" onClick={() => setAt(f.id)} className={clsx('flex w-full items-center gap-3 px-3 py-2 text-left text-sm hover:bg-sunken', !can(f.myAccess, 'EDIT') && 'opacity-60')}>
                       <ItemIcon item={f} className="size-5" />
                       <span className="truncate font-medium text-ink">{displayName(f, t, myId)}</span>
                       <ChevronRight className="ml-auto size-4 text-muted" />
@@ -204,14 +204,14 @@ export const ConflictDialog = ({ name, onAnswer }: { name: string | null; onAnsw
         <button type="button" data-autofocus className="btn-primary btn-sm w-full" onClick={() => onAnswer('replace', all)}>
           {t('drive.upload.replace')}
         </button>
-        <button type="button" className="btn-white btn-sm w-full border border-line" onClick={() => onAnswer('rename', all)}>
+        <button type="button" className="btn-secondary btn-sm w-full border border-line" onClick={() => onAnswer('rename', all)}>
           {t('drive.upload.keepBoth')}
         </button>
-        <button type="button" className="btn-white btn-sm w-full border border-line" onClick={() => onAnswer('skip', all)}>
+        <button type="button" className="btn-secondary btn-sm w-full border border-line" onClick={() => onAnswer('skip', all)}>
           {t('drive.upload.skip')}
         </button>
         <label className="flex items-center gap-2 pt-2 text-xs text-muted">
-          <input type="checkbox" className="size-4 accent-brand-600" checked={all} onChange={(e) => setAll(e.target.checked)} />
+          <input type="checkbox" className="size-4 accent-primary" checked={all} onChange={(e) => setAll(e.target.checked)} />
           {t('drive.upload.applyAll')}
         </label>
       </div>

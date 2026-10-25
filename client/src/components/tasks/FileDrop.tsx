@@ -78,13 +78,13 @@ export const FileDrop = ({
 
   if (compact) {
     return (
-      <div {...dropProps} className={clsx('flex flex-wrap items-center gap-2 rounded-xl', over && 'ring-2 ring-brand-400 ring-offset-2 ring-offset-card')}>
+      <div {...dropProps} className={clsx('flex flex-wrap items-center gap-2 rounded-xl', over && 'ring-2 ring-focus ring-offset-2 ring-offset-card')}>
         {picker}
         <button
           type="button"
           disabled={disabled}
           onClick={() => input.current?.click()}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-dashed border-line px-3 py-1.5 text-sm font-semibold text-muted hover:border-brand-400 hover:text-brand-600 disabled:opacity-50"
+          className="inline-flex items-center gap-1.5 rounded-lg border border-dashed border-line px-3 py-1.5 text-sm font-semibold text-muted hover:border-line-strong hover:text-link disabled:opacity-50"
         >
           <UploadCloud className="size-3.5" /> {t('tasks.actions.uploadFile')}
         </button>
@@ -107,12 +107,12 @@ export const FileDrop = ({
       }}
       className={clsx(
         'flex cursor-pointer flex-col items-center justify-center gap-1.5 rounded-xl border-2 border-dashed px-4 py-5 text-center transition',
-        over ? 'border-brand-500 bg-brand-50' : 'border-line hover:border-brand-400 hover:bg-surface',
+        over ? 'border-primary bg-primary/[0.06]' : 'border-line hover:border-line-strong hover:bg-sunken',
         disabled && 'pointer-events-none opacity-60',
       )}
     >
       {picker}
-      <UploadCloud className={clsx('size-6', over ? 'text-brand-600' : 'text-muted')} aria-hidden />
+      <UploadCloud className={clsx('size-6', over ? 'text-link' : 'text-muted')} aria-hidden />
       <span className="text-sm font-semibold text-ink">{over ? t('tasks.actions.dropHere') : t('tasks.actions.uploadFile')}</span>
       <span className="max-w-md text-xs text-muted">{t('tasks.actions.filesHint')}</span>
     </div>
@@ -130,7 +130,7 @@ export const PendingFiles = ({ files, onRemove, progress }: { files: File[]; onR
         const pct = progress?.[i];
         return (
           <li key={`${f.name}-${i}`} className="relative flex items-center gap-2.5 overflow-hidden rounded-xl border border-line bg-card p-2 pr-1">
-            <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-brand-50 text-brand-600">
+            <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-primary/[0.06] text-link">
               <Icon className="size-4" aria-hidden />
             </span>
             <span className="min-w-0 flex-1">
@@ -141,13 +141,13 @@ export const PendingFiles = ({ files, onRemove, progress }: { files: File[]; onR
               <button
                 type="button"
                 onClick={() => onRemove(i)}
-                className="grid size-8 shrink-0 place-items-center rounded-lg text-muted hover:bg-surface hover:text-danger"
+                className="grid size-8 shrink-0 place-items-center rounded-lg text-muted hover:bg-sunken hover:text-danger-fg"
                 aria-label={`${t('tasks.actions.removeFile')}: ${f.name}`}
               >
                 <X className="size-3.5" />
               </button>
             )}
-            {pct != null && <span className="absolute inset-x-0 bottom-0 h-0.5 bg-brand-500 transition-all" style={{ width: `${pct}%` }} aria-hidden />}
+            {pct != null && <span className="absolute inset-x-0 bottom-0 h-0.5 bg-primary transition-all" style={{ width: `${pct}%` }} aria-hidden />}
           </li>
         );
       })}

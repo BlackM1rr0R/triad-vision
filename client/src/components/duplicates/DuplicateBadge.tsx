@@ -57,7 +57,7 @@ export const DuplicateChip = ({ userId, className, merged }: { userId: string; c
       to={`/admin/duplicates?user=${encodeURIComponent(userId)}`}
       title={merged ? t('duplicates.mergedInto') : t('duplicates.badgeTitle')}
       className={clsx(
-        'inline-flex min-h-6 items-center gap-1 rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap text-amber-800 transition hover:border-amber-400 hover:bg-amber-100',
+        'inline-flex min-h-6 items-center gap-1 rounded-full border border-warning-border bg-warning-bg px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap text-warning-fg transition hover:border-warning hover:bg-warning-bg',
         className,
       )}
     >

@@ -10,6 +10,7 @@ import { registerCopy } from '@/i18n';
 import { pagesOfficialForms } from '@/i18n/pagesOfficialForms';
 import { TONE_CLASS } from '@/components/ui/status';
 import { Spinner } from '@/components/ui/Spinner';
+import { Documents, Success } from '@/components/illustrations';
 import { Empty, Loading, Section } from './shared';
 import { openPdfBlob, toastFormError, type L10n } from '@/components/officialForms/api';
 
@@ -69,15 +70,17 @@ const FormList = () => {
     <Section title={t('officialForms.company.title')} icon={FileSignature}>
       <p className="-mt-3 mb-4 text-sm text-muted">{t('officialForms.company.subtitle')}</p>
       {!data?.items.length ? (
-        <Empty icon={FileText} title={t('officialForms.company.empty')} />
+        <Empty icon={FileText} illustration={<Documents className="w-32" />} title={t('officialForms.company.empty')} />
       ) : (
-        <ul className="divide-y divide-line rounded-xl border border-line">
+        <ul className="divide-y divide-line overflow-hidden rounded-2xl border border-line">
           {data.items.map((f) => (
             <li key={f.id}>
-              <Link to={`/company/forms/${f.id}`} className="flex items-center gap-3 px-4 py-3 transition hover:bg-surface">
-                <FileText className="size-5 shrink-0 text-brand-600" aria-hidden />
+              <Link to={`/company/forms/${f.id}`} className="flex min-h-14 items-center gap-3 px-4 py-3 transition-colors hover:bg-sunken">
+                <span className="grid size-10 shrink-0 place-items-center rounded-xl chip-sky">
+                  <FileText className="size-5" aria-hidden />
+                </span>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate font-semibold text-navy-900">{f.title}</p>
+                  <p className="truncate font-semibold text-ink">{f.title}</p>
                   <p className="truncate text-xs text-muted">
                     {f.worker} · {f.profession} · {date(f.updatedAt)}
                   </p>
@@ -165,32 +168,35 @@ const FormEditor = ({ id }: { id: string }) => {
         icon={FileSignature}
         actions={<span className={clsx('badge', TONE_CLASS[STATUS_TONE[data.status]])}>{t(`officialForms.company.status.${data.status}`)}</span>}
       >
-        <dl className="grid gap-3 rounded-xl bg-surface p-4 text-sm sm:grid-cols-4">
+        <dl className="grid gap-3 rounded-2xl bg-sunken p-4 text-sm sm:grid-cols-4">
           <div>
             <dt className="text-xs text-muted">{t('officialForms.company.worker')}</dt>
-            <dd className="font-semibold text-navy-900">{data.worker.name}</dd>
+            <dd className="font-semibold text-ink">{data.worker.name}</dd>
           </div>
           <div>
             <dt className="text-xs text-muted">{t('officialForms.company.born')}</dt>
-            <dd className="text-navy-900">{data.worker.birthDate ? date(data.worker.birthDate) : '—'}</dd>
+            <dd className="text-ink">{data.worker.birthDate ? date(data.worker.birthDate) : '—'}</dd>
           </div>
           <div>
             <dt className="text-xs text-muted">{t('officialForms.company.nationality')}</dt>
-            <dd className="text-navy-900">{data.worker.nationality || '—'}</dd>
+            <dd className="text-ink">{data.worker.nationality || '—'}</dd>
           </div>
           <div>
             <dt className="text-xs text-muted">{t('officialForms.company.profession')}</dt>
-            <dd className="text-navy-900">{data.worker.profession || '—'}</dd>
+            <dd className="text-ink">{data.worker.profession || '—'}</dd>
           </div>
         </dl>
         {data.status === 'SIGNED' || data.status === 'SUBMITTED' ? (
-          <p className={clsx('mt-4 flex items-center gap-2 rounded-lg px-3 py-2 text-sm', TONE_CLASS.success)}>
-            <CheckCircle2 className="size-4" aria-hidden />
-            {t('officialForms.company.signedNote')}
-          </p>
+          <div className={clsx('mt-4 flex items-center gap-3 rounded-2xl px-4 py-3 text-sm', TONE_CLASS.success)}>
+            <Success className="w-14 shrink-0" />
+            <p className="flex items-center gap-2 font-medium">
+              <CheckCircle2 className="size-4 shrink-0" aria-hidden />
+              {t('officialForms.company.signedNote')}
+            </p>
+          </div>
         ) : (
           canSign && (
-            <div className={clsx('mt-4 flex flex-wrap items-center gap-3 rounded-lg px-3 py-2 text-sm', TONE_CLASS.info)}>
+            <div className={clsx('mt-4 flex flex-wrap items-center gap-3 rounded-2xl px-4 py-3 text-sm', TONE_CLASS.info)}>
               <span>{t('officialForms.company.waitingNote')}</span>
               <Link to={`/company/contracts/${sig!.signerId}`} className="btn-primary btn-sm ml-auto">
                 <PenLine className="size-4" aria-hidden />

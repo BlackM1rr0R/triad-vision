@@ -15,7 +15,7 @@ export const RequestRows = ({ items, onOpen, showCase = true }: { items: StaffRe
           <li key={r.id}>
             <button type="button" onClick={() => onOpen(r.id)} className="group grid w-full grid-cols-1 gap-2 px-1 py-3 text-left transition hover:bg-surface/60 md:grid-cols-[minmax(0,2fr)_minmax(0,2fr)_auto_auto] md:items-center md:gap-4 md:px-2">
               <div className="min-w-0">
-                <p className="truncate text-sm font-semibold text-navy-900 group-hover:text-brand-700">{r.title}</p>
+                <p className="truncate text-sm font-semibold text-ink group-hover:text-link">{r.title}</p>
                 <p className="truncate text-xs text-muted">
                   {showCase && r.case ? `${r.case.number} · ` : ''}
                   {r.company ? `${r.company.name} · ` : ''}
@@ -24,7 +24,7 @@ export const RequestRows = ({ items, onOpen, showCase = true }: { items: StaffRe
               </div>
               <div className="flex min-w-0 flex-wrap items-center gap-1.5">
                 {r.signers.map((s) => (
-                  <span key={s.id} className={clsx('badge max-w-40 truncate', SIGNER_TONE[s.status], r.currentTurn.includes(s.id) && 'ring-2 ring-brand-400')} title={`${s.name} · ${t(`esign.signerStatus.${s.status}`)}`}>
+                  <span key={s.id} className={clsx('badge max-w-40 truncate', SIGNER_TONE[s.status], r.currentTurn.includes(s.id) && 'ring-2 ring-focus')} title={`${s.name} · ${t(`esign.signerStatus.${s.status}`)}`}>
                     <span className="truncate">{s.name}</span>
                   </span>
                 ))}

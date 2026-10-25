@@ -76,15 +76,15 @@ export default function Ausbildung() {
       />
 
       {/* Key figures */}
-      <div className="relative z-10 -mt-8 sm:-mt-10">
+      <div className="pt-10 sm:pt-14">
         <div className="container-x">
-          <Stagger className="grid grid-cols-2 overflow-hidden rounded-2xl border border-line bg-white shadow-[0_20px_50px_-20px_rgba(11,31,68,0.3)] lg:grid-cols-4">
+          <Stagger className="grid grid-cols-2 overflow-hidden rounded-3xl border border-line bg-card shadow-[var(--tv-shadow-card)] lg:grid-cols-4">
             {facts.map((f, i) => (
               <StaggerItem
                 key={f.label}
                 className={clsx('p-4 sm:p-6', i % 2 === 1 && 'border-l border-line', i > 1 && 'border-t border-line lg:border-t-0', i === 2 && 'lg:border-l')}
               >
-                <p className="font-display text-xl font-extrabold text-brand-600 tabular-nums sm:text-3xl">{f.value}</p>
+                <p className="font-display text-xl font-semibold text-ink tabular-nums sm:text-3xl">{f.value}</p>
                 <p className="mt-1 text-xs font-medium text-muted sm:text-sm">{f.label}</p>
               </StaggerItem>
             ))}
@@ -107,8 +107,8 @@ export default function Ausbildung() {
             </Reveal>
           </div>
           <Reveal delay={0.1}>
-            <div className="card card-pad sm:p-8">
-              <h3 className="font-display text-lg font-bold text-navy-900">{t('ausbildungPage.what.weekTitle')}</h3>
+            <div className="card card-pad rounded-3xl sm:p-8">
+              <h3 className="font-display text-lg font-semibold text-ink">{t('ausbildungPage.what.weekTitle')}</h3>
               <div role="img" aria-label={t('ausbildungPage.what.weekAria')} className="mt-5 grid grid-cols-5 gap-2 sm:gap-3">
                 {WEEK.map((kind, i) => (
                   <div key={days[i]} className="text-center">
@@ -116,7 +116,7 @@ export default function Ausbildung() {
                     <motion.div
                       className={clsx(
                         'grid h-28 place-items-center rounded-xl sm:h-36',
-                        kind === 'company' ? 'bg-gradient-to-b from-brand-500 to-brand-700 text-white' : 'border-2 border-dashed border-navy-900/25 bg-surface text-navy-900',
+                        kind === 'company' ? 'bg-primary text-primary-contrast' : 'border-2 border-dashed border-line-strong bg-sunken text-ink',
                       )}
                       style={{ originY: 1 }}
                       initial={{ scaleY: 0.2, opacity: 0 }}
@@ -130,17 +130,17 @@ export default function Ausbildung() {
                 ))}
               </div>
               <div className="mt-6 grid gap-3 sm:grid-cols-2">
-                <div className="flex gap-3 rounded-xl bg-brand-50 p-3.5">
-                  <span className="mt-0.5 size-4 shrink-0 rounded bg-brand-600" />
+                <div className="flex gap-3 rounded-xl bg-sunken p-3.5">
+                  <span className="mt-0.5 size-4 shrink-0 rounded bg-primary" />
                   <div>
-                    <p className="text-sm font-bold text-navy-900">{t('ausbildungPage.what.company')} · 3</p>
+                    <p className="text-sm font-bold text-ink">{t('ausbildungPage.what.company')} · 3</p>
                     <p className="text-xs text-muted">{t('ausbildungPage.what.companyText')}</p>
                   </div>
                 </div>
-                <div className="flex gap-3 rounded-xl bg-surface p-3.5">
-                  <span className="mt-0.5 size-4 shrink-0 rounded border-2 border-dashed border-navy-900/40" />
+                <div className="flex gap-3 rounded-xl bg-sunken p-3.5">
+                  <span className="mt-0.5 size-4 shrink-0 rounded border-2 border-dashed border-line-strong" />
                   <div>
-                    <p className="text-sm font-bold text-navy-900">{t('ausbildungPage.what.school')} · 2</p>
+                    <p className="text-sm font-bold text-ink">{t('ausbildungPage.what.school')} · 2</p>
                     <p className="text-xs text-muted">{t('ausbildungPage.what.schoolText')}</p>
                   </div>
                 </div>
@@ -154,11 +154,11 @@ export default function Ausbildung() {
       </section>
 
       {/* Professions & pay */}
-      <section className="section bg-surface">
+      <section className="section bg-sunken">
         <div className="container-x">
           <SectionHeading eyebrow={t('ausbildungPage.professions.eyebrow')} title={t('ausbildungPage.professions.title')} subtitle={t('ausbildungPage.professions.subtitle')} />
           <Reveal>
-            <div className="card card-pad sm:p-8">
+            <div className="card card-pad rounded-3xl sm:p-8">
               <GroupedBars
                 ariaLabel={t('ausbildungPage.professions.aria')}
                 series={years}
@@ -178,21 +178,21 @@ export default function Ausbildung() {
       </section>
 
       {/* Requirements */}
-      <section className="section bg-navy-950 text-white">
+      <section className="section">
         <div className="container-x">
-          <SectionHeading light eyebrow={t('ausbildungPage.reqs.eyebrow')} title={t('ausbildungPage.reqs.title')} />
+          <SectionHeading eyebrow={t('ausbildungPage.reqs.eyebrow')} title={t('ausbildungPage.reqs.title')} />
           <Stagger className="grid-cards sm:grid-cols-2 lg:grid-cols-3">
             {reqs.map((r, i) => {
               const ReqIcon = REQ_ICONS[i] ?? HeartPulse;
               return (
                 <StaggerItem key={r.title}>
-                  <div className="flex h-full gap-4 rounded-2xl border border-white/10 bg-white/[0.04] p-5 sm:p-6">
-                    <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-brand-600 text-white">
+                  <div className="card flex h-full gap-4 p-5 sm:p-6">
+                    <span className={clsx('grid size-11 shrink-0 place-items-center rounded-xl', ['chip-soft', 'chip-sage', 'chip-sky', 'chip-peach'][i % 4])}>
                       <ReqIcon className="size-5" />
                     </span>
                     <div>
-                      <h3 className="font-display font-bold">{r.title}</h3>
-                      <p className="mt-1 text-sm leading-relaxed text-white/65">{r.text}</p>
+                      <h3 className="font-display font-semibold text-ink">{r.title}</h3>
+                      <p className="mt-1 text-sm leading-relaxed text-muted">{r.text}</p>
                     </div>
                   </div>
                 </StaggerItem>
@@ -203,12 +203,12 @@ export default function Ausbildung() {
       </section>
 
       {/* Year-by-year timeline */}
-      <section className="section">
+      <section className="section bg-sunken">
         <div className="container-x">
           <SectionHeading eyebrow={t('ausbildungPage.timeline.eyebrow')} title={t('ausbildungPage.timeline.title')} />
           <ol className="relative grid gap-0 lg:grid-cols-7 lg:gap-3">
-            <span aria-hidden className="absolute top-5 right-[7%] left-[7%] hidden h-0.5 bg-gradient-to-r from-brand-200 via-brand-500 to-navy-900 lg:block" />
-            <span aria-hidden className="absolute top-2 bottom-2 left-5 w-0.5 bg-gradient-to-b from-brand-200 via-brand-500 to-navy-900 lg:hidden" />
+            <span aria-hidden className="absolute top-5 right-[7%] left-[7%] hidden h-0.5 bg-line-strong lg:block" />
+            <span aria-hidden className="absolute top-2 bottom-2 left-5 w-0.5 bg-line-strong lg:hidden" />
             {timeline.map((s, i) => {
               const during = i >= 3 && i <= 5;
               return (
@@ -222,15 +222,15 @@ export default function Ausbildung() {
                 >
                   <span
                     className={clsx(
-                      'relative z-10 grid size-10 shrink-0 place-items-center rounded-full font-display text-sm font-bold ring-4 ring-white',
-                      during ? 'bg-brand-600 text-white' : i === timeline.length - 1 ? 'bg-navy-900 text-white' : 'bg-brand-100 text-brand-700',
+                      'relative z-10 grid size-10 shrink-0 place-items-center rounded-full font-display text-sm font-semibold ring-4 ring-sunken',
+                      during ? 'bg-primary text-primary-contrast' : i === timeline.length - 1 ? 'bg-highlight text-highlight-contrast' : 'border border-line-strong bg-card text-ink',
                     )}
                   >
                     {i + 1}
                   </span>
                   <div className="min-w-0 lg:mt-4">
-                    <p className={clsx('text-[11px] font-bold tracking-wider uppercase', during ? 'text-brand-600' : 'text-muted')}>{s.when}</p>
-                    <h3 className="mt-0.5 font-display font-bold text-navy-900">{s.title}</h3>
+                    <p className={clsx('text-[11px] font-bold tracking-wider uppercase', during ? 'text-highlight-fg' : 'text-muted')}>{s.when}</p>
+                    <h3 className="mt-0.5 font-display font-semibold text-ink">{s.title}</h3>
                     <p className="mt-1 text-sm leading-relaxed text-muted lg:text-[0.8rem]">{s.text}</p>
                   </div>
                 </motion.li>
@@ -241,7 +241,7 @@ export default function Ausbildung() {
       </section>
 
       {/* Ausbildung-specific FAQ */}
-      <section className="section bg-surface">
+      <section className="section">
         <div className="container-x grid gap-8 lg:grid-cols-[1fr_1.6fr] lg:gap-14">
           <div className="lg:sticky lg:top-28 lg:self-start">
             <SectionHeading eyebrow={t('ausbildungPage.faq.eyebrow')} title={t('ausbildungPage.faq.title')} />
@@ -252,7 +252,7 @@ export default function Ausbildung() {
 
       {/* Related visa + service */}
       {(visa || service) && (
-        <section className="section">
+        <section className="section bg-sunken">
           <div className="container-x">
             <SectionHeading eyebrow={t('ausbildungPage.related.eyebrow')} title={t('ausbildungPage.related.title')} subtitle={t('ausbildungPage.related.subtitle')} />
             <div className="grid-cards mx-auto max-w-4xl sm:grid-cols-2">
@@ -260,7 +260,7 @@ export default function Ausbildung() {
               {service && <ServiceCard service={service} index={services.indexOf(service)} />}
             </div>
             <p className="mt-6 text-center text-sm">
-              <Link to="/visas" className="font-semibold text-brand-600 hover:underline">
+              <Link to="/visas" className="font-semibold text-link hover:underline">
                 {t('visas.all')}
               </Link>
             </p>

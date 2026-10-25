@@ -86,14 +86,14 @@ export function JourneyMap({
   const play = animated ? { initial: 'hidden', whileInView: 'show', viewport: { once: true, amount: 0.35 } } : { initial: 'show', animate: 'show' };
 
   return (
-    <motion.svg viewBox={`0 0 ${W} ${H}`} className={clsx('h-auto w-full overflow-hidden rounded-xl bg-surface', className)} role="img" aria-label={summary} {...play}>
+    <motion.svg viewBox={`0 0 ${W} ${H}`} className={clsx('h-auto w-full overflow-hidden rounded-2xl bg-sunken', className)} role="img" aria-label={summary} {...play}>
       {/* Countries: origin countries in the background, Germany by state with the destination state tinted. */}
       {COUNTRY_SHAPES.filter((c) => c.code !== 'DE').map((c) =>
         c.rings.map((ring, i) => (
           <path
             key={`${c.code}-${i}`}
             d={proj.path(ring)}
-            className={clsx('stroke-brand-500/30', c.code === journey.origin.country ? 'fill-brand-50' : 'fill-card')}
+            className={clsx('stroke-line-strong', c.code === journey.origin.country ? 'fill-highlight-bg' : 'fill-card')}
             strokeWidth={1.2}
             strokeLinejoin="round"
           />
@@ -101,13 +101,13 @@ export function JourneyMap({
       )}
       {GERMAN_STATES.map((st) =>
         st.rings.map((ring, i) => (
-          <path key={`${st.code}-${i}`} d={proj.path(ring)} className={clsx('stroke-brand-500/35', st.code === geo.destState ? 'fill-brand-100' : 'fill-brand-50')} strokeWidth={1} strokeLinejoin="round" />
+          <path key={`${st.code}-${i}`} d={proj.path(ring)} className={clsx('stroke-line-strong', st.code === geo.destState ? 'fill-highlight-bg' : 'fill-canvas')} strokeWidth={1} strokeLinejoin="round" />
         )),
       )}
 
       {/* The whole route (dashed) and the part already travelled (solid, draws itself). */}
       <path d={geo.d} fill="none" className="stroke-muted/40" strokeWidth={3} strokeDasharray="2 9" strokeLinecap="round" />
-      {progress > 0 && <motion.path d={geo.d} fill="none" className="stroke-brand-600" strokeWidth={4.5} strokeLinecap="round" variants={route} />}
+      {progress > 0 && <motion.path d={geo.d} fill="none" className="stroke-highlight" strokeWidth={4.5} strokeLinecap="round" variants={route} />}
 
       {/* Home city and German city. */}
       <motion.g variants={fade(0)}>
@@ -119,7 +119,7 @@ export function JourneyMap({
       <motion.g variants={fade(milestones.length + 1)}>
         <path
           d={`M${geo.b[0]} ${geo.b[1]} l-11 -18 a13 13 0 1 1 22 0 z`}
-          className={clsx('stroke-card', milestones.at(-1)?.status === 'done' ? 'fill-success' : 'fill-brand-700')}
+          className={clsx('stroke-card', milestones.at(-1)?.status === 'done' ? 'fill-success' : 'fill-primary')}
           strokeWidth={2.5}
           strokeLinejoin="round"
         />
@@ -135,17 +135,17 @@ export function JourneyMap({
         const tone = m.negative
           ? 'fill-danger stroke-card'
           : m.status === 'done'
-            ? 'fill-brand-600 stroke-card'
+            ? 'fill-highlight stroke-card'
             : m.status === 'current'
-              ? 'fill-card stroke-brand-600'
+              ? 'fill-card stroke-highlight'
               : m.status === 'skipped'
-                ? 'fill-surface stroke-line'
+                ? 'fill-sunken stroke-line'
                 : 'fill-card stroke-muted/50';
         return (
           <motion.g key={m.key} variants={fade(i + 1)}>
             <title>{labelOf(m)}</title>
             {m.status === 'current' && animated && (
-              <circle cx={x} cy={y} r={10} className="animate-pulse-ring fill-brand-500/30" style={{ transformBox: 'fill-box', transformOrigin: 'center' }} />
+              <circle cx={x} cy={y} r={10} className="animate-pulse-ring fill-highlight/30" style={{ transformBox: 'fill-box', transformOrigin: 'center' }} />
             )}
             <circle cx={x} cy={y} r={m.status === 'current' ? 11 : 8.5} className={tone} strokeWidth={m.status === 'current' ? 4 : 2.5} />
           </motion.g>
@@ -158,7 +158,7 @@ export function JourneyMap({
           x={geo.markers[current][0]}
           y={geo.markers[current][1] - 22}
           textAnchor="middle"
-          className={clsx(label, 'fill-brand-700')}
+          className={clsx(label, 'fill-ink')}
           strokeWidth={6}
           strokeLinejoin="round"
           variants={fade(milestones.length + 2)}
@@ -166,7 +166,7 @@ export function JourneyMap({
           {labelOf(milestones[current])}
         </motion.text>
       )}
-      {head && current < 0 && progress < 1 && <circle cx={head[0]} cy={head[1]} r={5} className="fill-brand-600" />}
+      {head && current < 0 && progress < 1 && <circle cx={head[0]} cy={head[1]} r={5} className="fill-highlight" />}
     </motion.svg>
   );
 }

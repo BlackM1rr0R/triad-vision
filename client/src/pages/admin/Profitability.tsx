@@ -77,7 +77,7 @@ function ProfitPage() {
         title={t('profit.title')}
         subtitle={t('profit.subtitle')}
         actions={
-          <Link to="/admin/reports?dataset=profitability" className="btn-ghost btn-sm">
+          <Link to="/admin/reports?dataset=profitability" className="btn-secondary btn-sm">
             <FileSpreadsheet className="size-4" /> {t('profit.exportVia')}
           </Link>
         }
@@ -120,7 +120,7 @@ function ProfitPage() {
           </button>
           <button
             type="button"
-            className="btn-ghost btn-sm"
+            className="btn-secondary btn-sm"
             onClick={() => {
               setDraft({ from: '', to: '', status: '', visaType: '' });
               setParams({}, { replace: true });
@@ -176,7 +176,7 @@ function ProfitPage() {
                       <td className="py-1.5 text-right tabular-nums">{b.cases}</td>
                       <td className="py-1.5 text-right tabular-nums">{f.eur(b.revenueCents)}</td>
                       <td className="py-1.5 text-right tabular-nums">{f.eur(b.costCents)}</td>
-                      <td className={clsx('py-1.5 text-right font-semibold tabular-nums', b.marginCents < 0 && 'text-danger')}>{f.eur(b.marginCents)}</td>
+                      <td className={clsx('py-1.5 text-right font-semibold tabular-nums', b.marginCents < 0 && 'text-danger-fg')}>{f.eur(b.marginCents)}</td>
                       <td className="py-1.5 text-right tabular-nums">{f.pct(b.marginPct)}</td>
                     </tr>
                   ))}
@@ -191,13 +191,13 @@ function ProfitPage() {
         <section className="rounded-xl border border-line bg-card p-4 sm:p-5">
           <h2 className="mb-3 text-sm font-semibold text-ink">{t('profit.revenueBySource')}</h2>
           <BarList
-            rows={(['INVOICE', 'CLIENT_INVOICE', 'SETTLEMENT', 'TRANSLATION'] as const).map((k) => ({ key: k, label: t(`profit.sources.${k}`), value: d.revenueBySource[k], tone: 'bg-brand-500' }))}
+            rows={(['INVOICE', 'CLIENT_INVOICE', 'SETTLEMENT', 'TRANSLATION'] as const).map((k) => ({ key: k, label: t(`profit.sources.${k}`), value: d.revenueBySource[k], tone: 'bg-primary' }))}
             format={(v) => f.eur(v)}
           />
         </section>
         <section className="rounded-xl border border-line bg-card p-4 sm:p-5">
           <h2 className="mb-3 text-sm font-semibold text-ink">{t('profit.costsByCategory')}</h2>
-          <BarList rows={COST_KEYS.filter((k) => d.costsByCategory[k]).map((k) => ({ key: k, label: t(`profit.costCats.${k}`), value: d.costsByCategory[k], tone: 'bg-amber-500' }))} format={(v) => f.eur(v)} />
+          <BarList rows={COST_KEYS.filter((k) => d.costsByCategory[k]).map((k) => ({ key: k, label: t(`profit.costCats.${k}`), value: d.costsByCategory[k], tone: 'bg-warning' }))} format={(v) => f.eur(v)} />
         </section>
       </div>
 
@@ -218,7 +218,7 @@ function ProfitPage() {
         <SettingsPanel settings={d.settings} />
         <details className="rounded-xl border border-line bg-card p-4 sm:p-5">
           <summary className="flex cursor-pointer items-center gap-2 text-sm font-semibold text-ink">
-            <Info className="size-4 text-brand-600" aria-hidden /> {t('profit.rules.title')}
+            <Info className="size-4 text-link" aria-hidden /> {t('profit.rules.title')}
           </summary>
           <div className="mt-3 space-y-2 text-xs leading-relaxed text-muted">
             {t('profit.rules.body')
@@ -261,7 +261,7 @@ const CaseTable = ({ rows, paged }: { rows: CaseProfitRow[]; paged: boolean }) =
             {shown.map((r) => (
               <tr key={r.caseId} className="border-b border-line/70">
                 <td className="py-1.5">
-                  <Link to={`/admin/cases/${r.caseId}`} className="font-medium text-brand-600 hover:underline">
+                  <Link to={`/admin/cases/${r.caseId}`} className="font-medium text-link hover:underline">
                     {r.number}
                   </Link>
                 </td>
@@ -269,7 +269,7 @@ const CaseTable = ({ rows, paged }: { rows: CaseProfitRow[]; paged: boolean }) =
                 <td className="py-1.5 text-xs text-muted">{t(`profit.visaTypes.${r.visaType}`, { defaultValue: r.visaType })}</td>
                 <td className="py-1.5 text-right tabular-nums">{f.eur(r.revenue.total)}</td>
                 <td className="py-1.5 text-right tabular-nums">{f.eur(r.costs.total)}</td>
-                <td className={clsx('py-1.5 text-right font-semibold tabular-nums', r.marginCents < 0 && 'text-danger')}>{f.eur(r.marginCents)}</td>
+                <td className={clsx('py-1.5 text-right font-semibold tabular-nums', r.marginCents < 0 && 'text-danger-fg')}>{f.eur(r.marginCents)}</td>
                 <td className="py-1.5 text-right tabular-nums">{f.pct(r.marginPct)}</td>
               </tr>
             ))}
@@ -278,11 +278,11 @@ const CaseTable = ({ rows, paged }: { rows: CaseProfitRow[]; paged: boolean }) =
       </div>
       {paged && pages > 1 && (
         <div className="mt-3 flex items-center justify-end gap-2 text-xs text-muted">
-          <button type="button" className="btn-ghost btn-sm" disabled={page === 0} onClick={() => setPage((p) => p - 1)}>
+          <button type="button" className="btn-secondary btn-sm" disabled={page === 0} onClick={() => setPage((p) => p - 1)}>
             {t('reports.prev')}
           </button>
           <span>{t('reports.page', { page: page + 1, pages })}</span>
-          <button type="button" className="btn-ghost btn-sm" disabled={page >= pages - 1} onClick={() => setPage((p) => p + 1)}>
+          <button type="button" className="btn-secondary btn-sm" disabled={page >= pages - 1} onClick={() => setPage((p) => p + 1)}>
             {t('reports.next')}
           </button>
         </div>
@@ -326,13 +326,13 @@ const SettingsPanel = ({ settings }: { settings: ProfitOverview['settings'] }) =
         <div className="flex flex-wrap gap-4 text-sm">
           {(['revenue', 'cost'] as const).map((v) => (
             <label key={v} className="flex items-center gap-2">
-              <input type="radio" name="translationAs" className="accent-brand-600" checked={as === v} onChange={() => setAs(v)} />
+              <input type="radio" name="translationAs" className="accent-primary" checked={as === v} onChange={() => setAs(v)} />
               {v === 'revenue' ? t('profit.settings.asRevenue') : t('profit.settings.asCost')}
             </label>
           ))}
         </div>
       </fieldset>
-      <button type="submit" className="btn-ghost btn-sm" disabled={save.isPending}>
+      <button type="submit" className="btn-secondary btn-sm" disabled={save.isPending}>
         <Save className="size-4" /> {t('reports.save')}
       </button>
     </form>

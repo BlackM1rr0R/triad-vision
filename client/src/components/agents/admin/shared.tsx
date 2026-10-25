@@ -20,7 +20,7 @@ export const AgentsTabs = () => {
   const cls = ({ isActive }: { isActive: boolean }) =>
     clsx(
       'inline-flex min-h-10 items-center rounded-lg px-3.5 text-sm font-semibold transition',
-      isActive ? 'bg-navy-900 text-white' : 'text-ink/75 hover:bg-surface hover:text-ink',
+      isActive ? 'bg-primary text-primary-contrast' : 'text-muted hover:bg-sunken hover:text-ink',
     );
   return (
     <nav className="mb-5 flex gap-1 rounded-xl border border-line bg-card p-1" aria-label={t('agents.admin.title')}>

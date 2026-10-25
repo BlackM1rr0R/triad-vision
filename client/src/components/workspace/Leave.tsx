@@ -8,7 +8,7 @@ import { LEAVE_TYPES, type LeaveBalance, type LeaveRequest, type LeaveStatus, ty
 import { Avatar, Card, Chip, Empty, Field, IconButton, Modal, Skeleton, errorText, fmtDay, fmtUtcDay, fullName, toDateInput, utcDayKey } from './ui';
 
 export const STATUS_TONE: Record<LeaveStatus, 'warn' | 'success' | 'danger' | 'muted'> = { PENDING: 'warn', APPROVED: 'success', REJECTED: 'danger', CANCELLED: 'muted' };
-const TYPE_TONE: Record<LeaveType, string> = { VACATION: 'bg-sky-400', SICK: 'bg-rose-400', REMOTE: 'bg-violet-400', OTHER: 'bg-slate-400' };
+const TYPE_TONE: Record<LeaveType, string> = { VACATION: 'bg-info', SICK: 'bg-danger', REMOTE: 'bg-accent', OTHER: 'bg-subtle' };
 
 /** New / edit request dialog. Dates are calendar days (sent as YYYY-MM-DD, stored as UTC days). */
 export const LeaveDialog = ({ open, onClose, editing }: { open: boolean; onClose: () => void; editing: LeaveRequest | null }) => {
@@ -73,7 +73,7 @@ export const LeaveDialog = ({ open, onClose, editing }: { open: boolean; onClose
           <span className="label">{t('ws.leave.type')}</span>
           <div className="grid grid-cols-2 gap-2">
             {LEAVE_TYPES.map((k) => (
-              <button key={k} type="button" aria-pressed={type === k} onClick={() => setType(k)} className={clsx('flex items-center gap-2 rounded-lg border px-3 py-2 text-left text-sm font-semibold transition', type === k ? 'border-brand-500 bg-brand-50 text-ink' : 'border-line bg-surface text-muted hover:text-ink')}>
+              <button key={k} type="button" aria-pressed={type === k} onClick={() => setType(k)} className={clsx('flex items-center gap-2 rounded-lg border px-3 py-2 text-left text-sm font-semibold transition', type === k ? 'border-primary bg-primary/[0.06] text-ink' : 'border-line bg-sunken text-muted hover:text-ink')}>
                 <span className={clsx('size-2.5 rounded-full', TYPE_TONE[k])} aria-hidden />
                 {t(`ws.leave.types.${k}`)}
               </button>
@@ -148,10 +148,10 @@ export const LeaveRow = ({ l, mine, admin, onEdit, dense = false }: { l: LeaveRe
         {admin && !mine && l.status === 'PENDING' && (
           <div className="mt-2 flex flex-wrap items-center gap-2">
             <input value={note} onChange={(e) => setNote(e.target.value)} maxLength={500} placeholder={t('ws.leave.decisionPh')} className="input h-8 max-w-xs py-1 text-xs" aria-label={t('ws.leave.decisionNote')} />
-            <button type="button" disabled={busy} onClick={() => void act('approve', { decisionNote: note || null }, t('ws.leave.decided'))} className="inline-flex h-8 items-center gap-1 rounded-lg bg-emerald-600 px-3 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-50">
+            <button type="button" disabled={busy} onClick={() => void act('approve', { decisionNote: note || null }, t('ws.leave.decided'))} className="inline-flex h-8 items-center gap-1 rounded-lg bg-success px-3 text-xs font-semibold text-white hover:bg-success/90 disabled:opacity-50">
               <Check className="size-3.5" /> {t('ws.leave.approve')}
             </button>
-            <button type="button" disabled={busy} onClick={() => void act('reject', { decisionNote: note || null }, t('ws.leave.decided'))} className="inline-flex h-8 items-center gap-1 rounded-lg border border-line bg-card px-3 text-xs font-semibold text-red-600 hover:bg-red-50 disabled:opacity-50">
+            <button type="button" disabled={busy} onClick={() => void act('reject', { decisionNote: note || null }, t('ws.leave.decided'))} className="inline-flex h-8 items-center gap-1 rounded-lg border border-line bg-card px-3 text-xs font-semibold text-danger-fg hover:bg-danger-bg disabled:opacity-50">
               <X className="size-3.5" /> {t('ws.leave.reject')}
             </button>
           </div>
@@ -160,7 +160,7 @@ export const LeaveRow = ({ l, mine, admin, onEdit, dense = false }: { l: LeaveRe
       {mine && (l.status === 'PENDING' || l.status === 'APPROVED') && (
         <div className="flex shrink-0 items-center gap-0.5">
           {l.status === 'PENDING' && onEdit && <IconButton icon={Pencil} label={t('ws.leave.edit')} onClick={() => onEdit(l)} />}
-          <button type="button" disabled={busy} onClick={() => void act('cancel', undefined, t('ws.leave.cancelled'))} className="inline-flex h-8 items-center gap-1 rounded-lg px-2 text-xs font-semibold text-muted hover:bg-surface hover:text-red-600 disabled:opacity-50">
+          <button type="button" disabled={busy} onClick={() => void act('cancel', undefined, t('ws.leave.cancelled'))} className="inline-flex h-8 items-center gap-1 rounded-lg px-2 text-xs font-semibold text-muted hover:bg-sunken hover:text-danger-fg disabled:opacity-50">
             <X className="size-3.5" /> {t('ws.leave.cancelRequest')}
           </button>
         </div>
@@ -177,7 +177,7 @@ export const BalanceStrip = ({ balance }: { balance: LeaveBalance | undefined })
       <p className="mb-2 text-xs font-semibold text-muted">{t('ws.leave.balance', { year: balance.year })}</p>
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
         {LEAVE_TYPES.map((k) => (
-          <div key={k} className="rounded-lg border border-line bg-surface px-3 py-2">
+          <div key={k} className="rounded-lg border border-line bg-sunken px-3 py-2">
             <div className="flex items-center gap-1.5 text-xs font-semibold text-ink">
               <span className={clsx('size-2 rounded-full', TYPE_TONE[k])} aria-hidden />
               {t(`ws.leave.types.${k}`)}
@@ -186,7 +186,7 @@ export const BalanceStrip = ({ balance }: { balance: LeaveBalance | undefined })
               {balance.used[k]} <span className="text-xs font-medium text-muted">{t('ws.leave.used')}</span>
             </p>
             {balance.pending[k] > 0 && (
-              <p className="text-xs text-amber-700 tabular-nums">
+              <p className="text-xs text-warning-fg tabular-nums">
                 +{balance.pending[k]} {t('ws.leave.pending')}
               </p>
             )}
@@ -252,7 +252,7 @@ export const LeaveMonthStrip = () => {
                 const key = d.toISOString().slice(0, 10);
                 const weekend = d.getUTCDay() === 0 || d.getUTCDay() === 6;
                 return (
-                  <th key={key} className={clsx('min-w-6 px-0 py-2 text-center font-semibold tabular-nums', weekend ? 'text-muted/50' : 'text-muted', key === todayKey && 'text-brand-600')} title={key}>
+                  <th key={key} className={clsx('min-w-6 px-0 py-2 text-center font-semibold tabular-nums', weekend ? 'font-normal text-muted' : 'text-muted', key === todayKey && 'text-link')} title={key}>
                     {d.getUTCDate()}
                   </th>
                 );

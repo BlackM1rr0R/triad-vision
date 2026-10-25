@@ -32,12 +32,12 @@ const Toggle = ({ checked, disabled, onChange, labelledBy }: { checked: boolean;
     disabled={disabled}
     onClick={() => onChange?.(!checked)}
     className={clsx(
-      'relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600 disabled:cursor-not-allowed',
-      checked ? 'bg-brand-600' : 'bg-line',
+      'relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed',
+      checked ? 'bg-primary' : 'bg-line-strong',
       disabled && 'opacity-60',
     )}
   >
-    <span className={clsx('inline-block size-5 rounded-full bg-white shadow transition-transform', checked ? 'translate-x-5' : 'translate-x-0.5')} />
+    <span className={clsx('inline-block size-5 rounded-full bg-card shadow transition-transform', checked ? 'translate-x-5' : 'translate-x-0.5')} />
   </button>
 );
 
@@ -111,10 +111,10 @@ export const CookieConsent = () => {
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: 40, opacity: 0 }}
           data-bnav-lift
-          className="fixed inset-x-3 bottom-3 z-[60] max-h-[calc(100dvh-1.5rem)] overflow-y-auto rounded-2xl border border-line bg-card p-4 shadow-2xl sm:right-auto sm:bottom-6 sm:left-6 sm:max-w-md sm:p-5"
+          className="fixed inset-x-3 bottom-3 z-[60] max-h-[calc(100dvh-1.5rem)] overflow-y-auto rounded-3xl border border-line bg-card p-4 shadow-[var(--tv-shadow-raised)] sm:right-auto sm:bottom-6 sm:left-6 sm:max-w-md sm:p-5"
         >
           <div className="flex items-start gap-3">
-            <span className="hidden size-10 shrink-0 place-items-center rounded-xl bg-brand-50 text-brand-700 sm:grid">
+            <span className="hidden size-11 shrink-0 place-items-center rounded-xl chip-soft sm:grid">
               {view === 'settings' ? <ShieldCheck className="size-5" aria-hidden /> : <Cookie className="size-5" aria-hidden />}
             </span>
             <div className="min-w-0 flex-1">
@@ -128,7 +128,7 @@ export const CookieConsent = () => {
           {view === 'settings' && (
             <ul className="mt-3 space-y-2">
               {categories.map((c) => (
-                <li key={c.key} className="flex items-start gap-3 rounded-xl border border-line bg-surface p-3">
+                <li key={c.key} className="flex items-start gap-3 rounded-2xl border border-line bg-sunken p-3">
                   <div className="min-w-0 flex-1">
                     <p id={`${uid}-${c.key}`} className="text-sm font-semibold text-ink">
                       {t(`legalDocs.cookie.categories.${c.key}.title`)}
@@ -143,10 +143,10 @@ export const CookieConsent = () => {
           )}
 
           <p className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs">
-            <Link to="/cookies" className="font-semibold text-brand-600 hover:underline">
+            <Link to="/cookies" className="font-semibold text-link hover:underline">
               {t('legalDocs.cookie.policy')}
             </Link>
-            <Link to="/privacy" className="font-semibold text-brand-600 hover:underline">
+            <Link to="/privacy" className="font-semibold text-link hover:underline">
               {t('legalDocs.cookie.privacy')}
             </Link>
           </p>
@@ -170,7 +170,7 @@ export const CookieConsent = () => {
                 <button type="button" className="btn-primary btn-sm min-h-11" onClick={() => save({ analytics: true, marketing: true }, source)}>
                   {t('legalDocs.cookie.acceptAll')}
                 </button>
-                <button type="button" className="btn-ghost btn-sm min-h-11 sm:col-span-2" onClick={() => setView('settings')}>
+                <button type="button" className="btn-secondary btn-sm min-h-11 sm:col-span-2" onClick={() => setView('settings')}>
                   {t('legalDocs.cookie.settings')}
                 </button>
               </>

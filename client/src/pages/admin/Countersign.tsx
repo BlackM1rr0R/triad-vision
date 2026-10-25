@@ -68,13 +68,13 @@ const PendingList = () => {
   return (
     <>
       {!d.enabled && (
-        <div className="mb-4 flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-3.5 text-sm text-amber-900" role="status">
+        <div className="mb-4 flex items-start gap-3 rounded-xl border border-warning-border bg-warning-bg p-3.5 text-sm text-warning-fg" role="status">
           <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden />
           <p className="min-w-0">{t('cs.disabled')}</p>
         </div>
       )}
       {d.items.length === 0 ? (
-        <div className="rounded-xl border border-line bg-white">
+        <div className="rounded-xl border border-line bg-card">
           <EmptyState icon={SignatureIcon} title={t('cs.empty')}>
             {t('cs.emptyText')}
           </EmptyState>
@@ -82,14 +82,14 @@ const PendingList = () => {
       ) : (
         <ul className="space-y-3">
           {d.items.map((i) => (
-            <li key={i.signerId} className="rounded-xl border border-line bg-white p-4">
+            <li key={i.signerId} className="rounded-xl border border-line bg-card p-4">
               <div className="flex flex-wrap items-start gap-3">
                 <div className="min-w-0 flex-1">
                   <p className="flex flex-wrap items-center gap-2">
-                    <span className="font-semibold text-navy-900">{i.title}</span>
-                    <span className="badge bg-surface text-muted">{t(`cs.kind.${i.kind}`)}</span>
+                    <span className="font-semibold text-ink">{i.title}</span>
+                    <span className="badge bg-sunken text-muted">{t(`cs.kind.${i.kind}`)}</span>
                     {i.case && (
-                      <Link to={`/admin/cases/${i.case.id}`} className="text-xs font-semibold text-brand-600 hover:underline">
+                      <Link to={`/admin/cases/${i.case.id}`} className="text-xs font-semibold text-link hover:underline">
                         {i.case.number}
                       </Link>
                     )}
@@ -101,7 +101,7 @@ const PendingList = () => {
                     <li>{t('cs.assigned', { name: i.mine ? t('cs.you') : i.assignedTo.name })}</li>
                   </ul>
                 </div>
-                <span className={clsx('inline-flex items-center gap-1 text-xs font-semibold', i.overdue ? 'text-danger' : 'text-muted')}>
+                <span className={clsx('inline-flex items-center gap-1 text-xs font-semibold', i.overdue ? 'text-danger-fg' : 'text-muted')}>
                   <Clock className="size-3.5" aria-hidden /> {t('cs.waiting', { count: i.waitingDays })}
                 </span>
               </div>
@@ -163,10 +163,10 @@ const SignDialog = ({ item, onClose }: { item: CountersignItem; onClose: () => v
         </>
       }
     >
-      <p className="mb-3 text-sm font-semibold text-navy-900">{item.title}</p>
+      <p className="mb-3 text-sm font-semibold text-ink">{item.title}</p>
       <div className="mb-3 inline-flex rounded-lg border border-line p-0.5" role="group">
         {(['DRAW', 'TYPE'] as const).map((m) => (
-          <button key={m} type="button" aria-pressed={mode === m} className={clsx('rounded-md px-3 py-1.5 text-sm font-semibold', mode === m ? 'bg-brand-600 text-white' : 'text-navy-900 hover:bg-surface')} onClick={() => setMode(m)}>
+          <button key={m} type="button" aria-pressed={mode === m} className={clsx('rounded-md px-3 py-1.5 text-sm font-semibold', mode === m ? 'bg-primary text-primary-contrast' : 'text-ink hover:bg-sunken')} onClick={() => setMode(m)}>
             {m === 'DRAW' ? t('cs.modal.draw') : t('cs.modal.type')}
           </button>
         ))}
@@ -229,7 +229,7 @@ const SettingsTab = () => {
                 <label className="flex items-center gap-2 rounded-lg border border-line px-3 py-2 text-sm">
                   <input type="checkbox" checked={form.signatoryIds.includes(c.id)} onChange={() => toggle(c.id)} />
                   <span className="min-w-0">
-                    <span className="block truncate font-medium text-navy-900">
+                    <span className="block truncate font-medium text-ink">
                       {c.firstName} {c.lastName}
                     </span>
                     <span className="block truncate text-xs text-muted">{c.email}</span>

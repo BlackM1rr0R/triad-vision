@@ -19,9 +19,9 @@ export const ProgressMatrix = () => {
     <Panel title={t('team.training.matrixTitle')} icon={Grid3X3} bodyClassName="p-0">
       <div className="overflow-x-auto">
         <table className="w-full min-w-[640px] text-left text-xs">
-          <thead className="border-b border-line bg-surface/70 text-[10px] font-semibold tracking-wide text-muted uppercase">
+          <thead className="border-b border-line bg-surface/70 text-xs font-medium text-muted">
             <tr>
-              <th className="sticky left-0 z-10 bg-surface px-4 py-2">{t('team.kpi.staff')}</th>
+              <th className="sticky left-0 z-10 bg-sunken px-4 py-2">{t('team.kpi.staff')}</th>
               {data.courses.map((c) => (
                 <th key={c.id} className="max-w-48 px-3 py-2 align-bottom">
                   <span className="line-clamp-2 normal-case">{c.title}</span>

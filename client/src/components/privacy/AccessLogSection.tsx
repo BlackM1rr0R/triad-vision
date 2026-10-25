@@ -66,7 +66,7 @@ export function AccessLogSection({ endpoint, compact }: { endpoint: string; comp
               type="button"
               aria-pressed={kind === k}
               onClick={() => setKind(k)}
-              className={clsx('min-h-9 rounded-full border px-3 text-xs font-semibold transition', kind === k ? 'border-navy-900 bg-navy-900 text-white' : 'border-line bg-card text-ink/75 hover:border-brand-400')}
+              className={clsx('min-h-9 rounded-full border px-3 text-xs font-semibold transition', kind === k ? 'border-primary bg-primary text-primary-contrast' : 'border-line bg-card text-ink/75 hover:border-line-strong')}
             >
               {k ? t(`accessLog.kinds.${k}`) : t('accessLog.all')}
               {k && q.data && !kind ? <span className="ml-1 text-[10px] opacity-70">{q.data.counts[k]}</span> : null}
@@ -95,7 +95,7 @@ export function AccessLogSection({ endpoint, compact }: { endpoint: string; comp
                 const what = describe(it);
                 return (
                   <li key={it.id} className="flex gap-3 px-3 py-2.5">
-                    <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-surface text-brand-600">
+                    <span className="grid size-10 shrink-0 place-items-center rounded-xl chip-soft">
                       <Icon className="size-4" aria-hidden />
                     </span>
                     <div className="min-w-0 flex-1">

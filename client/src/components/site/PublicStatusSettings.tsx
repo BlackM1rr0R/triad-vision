@@ -66,14 +66,14 @@ const CaseRow = ({ item }: { item: Item }) => {
     <li className="rounded-xl border border-line p-4">
       <div className="flex items-center justify-between gap-3">
         <label htmlFor={switchId} className="min-w-0">
-          <span className="block font-semibold text-navy-900">{item.number}</span>
+          <span className="block font-semibold text-ink">{item.number}</span>
           <span className="text-sm text-muted">{t('site.statusSettings.enable')}</span>
         </label>
         <input
           id={switchId}
           type="checkbox"
           role="switch"
-          className="size-6 shrink-0 accent-brand-600"
+          className="size-6 shrink-0 accent-primary"
           checked={item.enabled}
           disabled={toggle.isPending}
           onChange={(e) => toggle.mutate(e.target.checked)}
@@ -81,8 +81,8 @@ const CaseRow = ({ item }: { item: Item }) => {
       </div>
       {item.enabled && (
         <div className="mt-4 border-t border-line pt-4">
-          <p className="flex items-center gap-2 text-sm font-semibold text-navy-900">
-            <Link2 className="size-4 text-brand-600" aria-hidden />
+          <p className="flex items-center gap-2 text-sm font-semibold text-ink">
+            <Link2 className="size-4 text-primary" aria-hidden />
             {t('site.statusSettings.family')}
           </p>
           <p className="mt-1 text-sm text-muted">{t('site.statusSettings.familyText')}</p>
@@ -111,7 +111,7 @@ const CaseRow = ({ item }: { item: Item }) => {
               {item.hasLink ? t('site.statusSettings.rotate') : t('site.statusSettings.create')}
             </button>
             {item.hasLink && (
-              <button type="button" onClick={() => revoke.mutate()} disabled={revoke.isPending} className="btn-sm min-h-10 rounded-full px-3.5 font-semibold text-red-700 hover:bg-red-50">
+              <button type="button" onClick={() => revoke.mutate()} disabled={revoke.isPending} className="btn-sm min-h-10 rounded-full px-3.5 font-semibold text-danger-fg hover:bg-danger-bg">
                 <Trash2 className="size-4" aria-hidden />
                 {t('site.statusSettings.revoke')}
               </button>
@@ -134,15 +134,15 @@ const BrowserPush = () => {
   if (!pushSupported() || on === null) return null;
   return (
     <div className="mt-4 flex items-center justify-between gap-3 rounded-xl border border-line p-4">
-      <label htmlFor={id} className="flex min-w-0 items-center gap-2 text-sm font-semibold text-navy-900">
-        <Bell className="size-4 shrink-0 text-brand-600" aria-hidden />
+      <label htmlFor={id} className="flex min-w-0 items-center gap-2 text-sm font-semibold text-ink">
+        <Bell className="size-4 shrink-0 text-primary" aria-hidden />
         {t('site.push.promptTitle')}
       </label>
       <input
         id={id}
         type="checkbox"
         role="switch"
-        className="size-6 shrink-0 accent-brand-600"
+        className="size-6 shrink-0 accent-primary"
         checked={on}
         onChange={async (e) => {
           if (e.target.checked) {
@@ -167,8 +167,8 @@ export const PublicStatusSettings = () => {
   const q = useQuery({ queryKey: KEY, queryFn: async () => (await api.get<{ items: Item[] }>('/site/status/mine')).data.items });
   return (
     <section className="card card-pad" aria-labelledby={headingId}>
-      <h2 id={headingId} className="flex items-center gap-2 text-lg font-bold text-navy-900">
-        <ListChecks className="size-5 text-brand-600" aria-hidden />
+      <h2 id={headingId} className="flex items-center gap-2 text-lg font-semibold text-ink">
+        <ListChecks className="size-5 text-primary" aria-hidden />
         {t('site.statusSettings.title')}
       </h2>
       <p className="mt-1.5 text-sm leading-relaxed text-muted">{t('site.statusSettings.intro')}</p>

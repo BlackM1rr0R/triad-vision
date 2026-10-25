@@ -37,7 +37,7 @@ export const QualityNotice = ({
       role="status"
       className={clsx(
         'rounded-lg border px-3 py-2.5 text-sm',
-        bad ? 'border-red-200 bg-red-50 text-red-800 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-200' : 'border-amber-200 bg-amber-50 text-amber-900 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-100',
+        bad ? 'border-danger-border bg-danger-bg text-danger-fg' : 'border-warning-border bg-warning-bg text-warning-fg',
         className,
       )}
     >

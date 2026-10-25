@@ -248,7 +248,7 @@ export default function SheetEditor() {
     return (
       <div className="grid h-full place-items-center p-6">
         <div className="max-w-md text-center">
-          <AlertTriangle className="mx-auto mb-3 text-warning" size={36} />
+          <AlertTriangle className="mx-auto mb-3 text-warning-fg" size={36} />
           <h1 className="mb-2 text-lg font-bold text-ink">{t('sheet.openFailed')}</h1>
           <p className="mb-5 text-sm text-muted">{t(`sheet.errors.${code}`, { defaultValue: t('sheet.errors.generic') })}</p>
           <Link to="/workspace/drive" className="btn-primary btn-sm">
@@ -266,7 +266,7 @@ export default function SheetEditor() {
     <div className="flex h-full min-h-0 flex-col">
       {/* Header */}
       <header className="flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-line bg-card px-4 py-2.5">
-        <FileSpreadsheet className="shrink-0 text-emerald-600" size={26} />
+        <FileSpreadsheet className="shrink-0 text-success-fg" size={26} />
         <div className="min-w-0 flex-1">
           <nav aria-label={t('sheet.breadcrumbs')} className="flex min-w-0 items-center gap-1 text-xs text-muted">
             <Link to="/workspace/drive" className="hover:text-ink hover:underline">
@@ -298,19 +298,19 @@ export default function SheetEditor() {
               <h1 className="truncate font-display text-base font-bold text-ink">{meta.name}</h1>
             )}
             {!readOnly && renaming === null && (
-              <button type="button" onClick={() => setRenaming(meta.name.replace(/\.xlsx$/i, ''))} className="rounded p-1 text-muted hover:bg-surface hover:text-ink" title={t('sheet.rename')} aria-label={t('sheet.rename')}>
+              <button type="button" onClick={() => setRenaming(meta.name.replace(/\.xlsx$/i, ''))} className="rounded p-1 text-muted hover:bg-sunken hover:text-ink" title={t('sheet.rename')} aria-label={t('sheet.rename')}>
                 <Pencil size={14} />
               </button>
             )}
-            <span className="badge shrink-0 bg-surface text-muted" title={t('sheet.versionHint')}>
+            <span className="badge shrink-0 bg-sunken text-muted" title={t('sheet.versionHint')}>
               v{meta.version}
             </span>
             {readOnly ? (
-              <span className="badge shrink-0 bg-warning/15 text-warning">
+              <span className="badge shrink-0 bg-warning-bg text-warning-fg">
                 <Eye size={12} /> {t('sheet.readOnly')}
               </span>
             ) : wb.dirty ? (
-              <span className="badge shrink-0 bg-warning/15 text-warning">{t('sheet.unsaved')}</span>
+              <span className="badge shrink-0 bg-warning-bg text-warning-fg">{t('sheet.unsaved')}</span>
             ) : lastSaved ? (
               <span className="text-xs text-muted">{t('sheet.savedAt', { time: lastSaved.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) })}</span>
             ) : null}
@@ -318,7 +318,7 @@ export default function SheetEditor() {
         </div>
         <div className="flex items-center gap-2">
           {folderId && (
-            <Link to={folderHref(folderId)} className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm font-semibold text-muted hover:bg-surface hover:text-ink">
+            <Link to={folderHref(folderId)} className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm font-semibold text-muted hover:bg-sunken hover:text-ink">
               <FolderOpen size={15} /> <span className="hidden sm:inline">{t('sheet.openFolder')}</span>
             </Link>
           )}
@@ -329,7 +329,7 @@ export default function SheetEditor() {
                 if (wb.dirty) toast.message(t('sheet.downloadSavedVersion'));
                 startDownload(contentUrl(id, true));
               }}
-              className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm font-semibold text-muted hover:bg-surface hover:text-ink"
+              className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm font-semibold text-muted hover:bg-sunken hover:text-ink"
             >
               <Download size={15} /> <span className="hidden sm:inline">{t('sheet.download')}</span>
             </button>
@@ -338,7 +338,7 @@ export default function SheetEditor() {
           {!readOnly && (
             <>
               <label className="flex cursor-pointer items-center gap-1.5 text-xs font-semibold text-muted select-none" title={t('sheet.autosaveHint')}>
-                <input type="checkbox" checked={autosave} onChange={(e) => setAutosave(e.target.checked)} className="accent-brand-600" />
+                <input type="checkbox" checked={autosave} onChange={(e) => setAutosave(e.target.checked)} className="accent-primary" />
                 {t('sheet.autosave')}
               </label>
               <button type="button" onClick={() => void save()} disabled={saving || !wb.dirty} className={clsx('btn-primary btn-sm', (!wb.dirty || saving) && 'opacity-60')} title="Ctrl+S">
@@ -350,10 +350,10 @@ export default function SheetEditor() {
       </header>
 
       {conflict !== null && (
-        <div role="alert" className="flex flex-wrap items-center gap-3 border-b border-warning/40 bg-warning/10 px-4 py-2 text-sm text-ink">
-          <AlertTriangle size={16} className="text-warning" />
+        <div role="alert" className="flex flex-wrap items-center gap-3 border-b border-warning/40 bg-warning-bg px-4 py-2 text-sm text-ink">
+          <AlertTriangle size={16} className="text-warning-fg" />
           <span className="flex-1">{t('sheet.conflict', { version: conflict })}</span>
-          <button type="button" onClick={() => void reload()} className="flex items-center gap-1 rounded-lg border border-line bg-card px-3 py-1 text-xs font-semibold hover:bg-surface">
+          <button type="button" onClick={() => void reload()} className="flex items-center gap-1 rounded-lg border border-line bg-card px-3 py-1 text-xs font-semibold hover:bg-sunken">
             <RefreshCw size={13} /> {t('sheet.conflictReload')}
           </button>
           <button
@@ -373,7 +373,7 @@ export default function SheetEditor() {
       )}
 
       {aiChanged && (
-        <div role="alert" className="flex flex-wrap items-center gap-3 border-b border-brand-200 bg-brand-50 px-4 py-2 text-sm text-ink dark:border-navy-700 dark:bg-navy-900">
+        <div role="alert" className="flex flex-wrap items-center gap-3 border-b border-primary/25 bg-primary/[0.06] px-4 py-2 text-sm text-ink dark:border-navy-700 dark:bg-navy-900">
           <span className="flex-1">{t('aiAdmin.sheetChanged')}</span>
           <button
             type="button"
@@ -381,7 +381,7 @@ export default function SheetEditor() {
               setAiChanged(false);
               void reload();
             }}
-            className="flex items-center gap-1 rounded-lg border border-line bg-card px-3 py-1 text-xs font-semibold hover:bg-surface"
+            className="flex items-center gap-1 rounded-lg border border-line bg-card px-3 py-1 text-xs font-semibold hover:bg-sunken"
           >
             <RefreshCw size={13} /> {t('aiAdmin.reload')}
           </button>
@@ -393,7 +393,7 @@ export default function SheetEditor() {
 
       <FinalBanner final={final} />
       {(lock.status === 'other' || lock.status === 'error') && (
-        <div role="status" className="flex shrink-0 items-center gap-2 border-b border-amber-300 bg-amber-50 px-4 py-2 text-xs text-amber-900 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-200">
+        <div role="status" className="flex shrink-0 items-center gap-2 border-b border-warning-border bg-warning-bg px-4 py-2 text-xs text-warning-fg dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-200">
           <span className="min-w-0 flex-1">{lock.status === 'other' ? t('driveCollab.lock.bannerOther', { name: lock.lockedBy.name }) : t('driveCollab.lock.bannerError')}</span>
           <button type="button" onClick={lock.retry} className="shrink-0 font-semibold underline">
             {t('driveCollab.lock.retry')}

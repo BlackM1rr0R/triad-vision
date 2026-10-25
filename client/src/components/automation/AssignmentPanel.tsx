@@ -24,7 +24,7 @@ const Check = ({ checked, onChange, label, hint }: { checked: boolean; onChange:
   <label className="flex items-start gap-2.5 text-sm">
     <input type="checkbox" className="mt-0.5 size-4 shrink-0" checked={checked} onChange={(e) => onChange(e.target.checked)} />
     <span>
-      <span className="text-navy-900">{label}</span>
+      <span className="text-ink">{label}</span>
       {hint && <span className="block text-xs text-muted">{hint}</span>}
     </span>
   </label>
@@ -55,10 +55,10 @@ const ConfigForm = ({ initial, staff }: { initial: AssignmentConfig; staff: Staf
       <p className="mb-4 text-xs text-muted">{t('automation.assignment.configHint')}</p>
       <fieldset className="space-y-2">
         {MODES.map((m) => (
-          <label key={m} className={clsx('flex cursor-pointer items-start gap-3 rounded-lg border px-3 py-2.5 text-sm transition', cfg.mode === m ? 'border-brand-500 bg-brand-50/60' : 'border-line hover:border-brand-300')}>
+          <label key={m} className={clsx('flex cursor-pointer items-start gap-3 rounded-lg border px-3 py-2.5 text-sm transition', cfg.mode === m ? 'border-primary bg-primary/[0.04]' : 'border-line hover:border-line-strong')}>
             <input type="radio" name="assign-mode" className="mt-0.5 size-4" checked={cfg.mode === m} onChange={() => set('mode', m)} />
             <span>
-              <span className="block font-semibold text-navy-900">{t(`automation.assignment.modes.${m}`)}</span>
+              <span className="block font-semibold text-ink">{t(`automation.assignment.modes.${m}`)}</span>
               <span className="block text-xs text-muted">{t(`automation.assignment.modeHints.${m}`)}</span>
             </span>
           </label>
@@ -68,9 +68,9 @@ const ConfigForm = ({ initial, staff }: { initial: AssignmentConfig; staff: Staf
       <div className="mt-5">
         <span className="label">{t('automation.assignment.pool')}</span>
         <div className="flex flex-wrap gap-1.5">
-          <button type="button" onClick={() => set('staffIds', [])} aria-pressed={!pool.length} className={clsx('rounded-full border px-3 py-1.5 text-xs font-semibold', !pool.length ? 'border-navy-900 bg-navy-900 text-white' : 'border-line bg-white text-ink/75')}>{t('automation.assignment.everyone')}</button>
+          <button type="button" onClick={() => set('staffIds', [])} aria-pressed={!pool.length} className={clsx('rounded-full border px-3 py-1.5 text-xs font-semibold', !pool.length ? 'border-line-strong bg-sunken text-ink shadow-[inset_0_0_0_1px_var(--color-line-strong)]' : 'border-line bg-card text-muted')}>{t('automation.assignment.everyone')}</button>
           {staff.map((s) => (
-            <button key={s.id} type="button" aria-pressed={pool.includes(s.id)} onClick={() => set('staffIds', pool.includes(s.id) ? pool.filter((x) => x !== s.id) : [...pool, s.id])} className={clsx('rounded-full border px-3 py-1.5 text-xs font-semibold', pool.includes(s.id) ? 'border-brand-600 bg-brand-600 text-white' : 'border-line bg-white text-ink/75 hover:border-brand-400')}>
+            <button key={s.id} type="button" aria-pressed={pool.includes(s.id)} onClick={() => set('staffIds', pool.includes(s.id) ? pool.filter((x) => x !== s.id) : [...pool, s.id])} className={clsx('rounded-full border px-3 py-1.5 text-xs font-semibold', pool.includes(s.id) ? 'border-line-strong bg-sunken text-ink shadow-[inset_0_0_0_1px_var(--color-line-strong)]' : 'border-line bg-card text-muted hover:border-line-strong')}>
               {fullName(s)}
             </button>
           ))}
@@ -135,7 +135,7 @@ const PrefsModal = ({ row, meta, onClose }: { row: StaffLoadRow | null; meta: Me
       {p && (
         <div className="space-y-4">
           <div className="flex items-center justify-between gap-3">
-            <span className="text-sm font-semibold text-navy-900">{t('automation.staff.autoAssign')}</span>
+            <span className="text-sm font-semibold text-ink">{t('automation.staff.autoAssign')}</span>
             <Switch checked={p.autoAssign} onChange={(v) => setP({ ...p, autoAssign: v })} label={t('automation.staff.autoAssign')} />
           </div>
           <div><span className="label">{t('automation.staff.languages')}</span><MultiChips options={LANGS} value={p.languages} onChange={(languages) => setP({ ...p, languages: languages as Lang[] })} label={(l) => t(`automation.locales.${l}`)} /></div>
@@ -173,7 +173,7 @@ const StaffTable = ({ staff, meta }: { staff: StaffLoadRow[]; meta: Meta | undef
         <ul className="divide-y divide-line">
           {staff.map((s) => (
             <li key={s.id} className="flex flex-wrap items-center gap-x-4 gap-y-1 py-2.5 text-sm">
-              <span className="min-w-40 flex-1 font-semibold text-navy-900">{fullName(s)} {!s.prefs.autoAssign && <span className="text-xs font-normal text-muted">({t('automation.load.off')})</span>}</span>
+              <span className="min-w-40 flex-1 font-semibold text-ink">{fullName(s)} {!s.prefs.autoAssign && <span className="text-xs font-normal text-muted">({t('automation.load.off')})</span>}</span>
               <span className="text-xs text-muted">{t('automation.staff.languages')}: {summary(s.prefs.languages, 'locales')}</span>
               <span className="text-xs text-muted">{t('automation.staff.visaTypes')}: {summary(s.prefs.visaTypes, 'visaTypes')}</span>
               <span className="text-xs text-muted">{t('automation.staff.maxOpen')}: {s.prefs.maxOpenCases ?? t('automation.staff.unlimited')}</span>
@@ -228,7 +228,7 @@ export const HandoversPanel = () => {
             <tbody>
               {data.map((h) => (
                 <tr key={h.id} className="border-b border-line last:border-0">
-                  <td className="px-5 py-2 sm:px-6"><Link to={`/admin/cases/${h.caseId}`} className="font-semibold text-brand-700 hover:underline">{h.caseNumber ?? '—'}</Link></td>
+                  <td className="px-5 py-2 sm:px-6"><Link to={`/admin/cases/${h.caseId}`} className="font-semibold text-link hover:underline">{h.caseNumber ?? '—'}</Link></td>
                   <td className="px-3 py-2">{h.originalName ?? '—'}</td>
                   <td className="px-3 py-2">{h.substituteName ?? '—'}</td>
                   <td className="px-3 py-2 tabular-nums">{fmtDate(h.startedAt)}</td>

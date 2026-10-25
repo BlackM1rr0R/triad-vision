@@ -39,6 +39,8 @@ import {
 } from 'lucide-react';
 import clsx from 'clsx';
 import { PageHero } from '@/components/layout/PageHero';
+import { Germany, SearchEmpty } from '@/components/illustrations';
+import { EmptyState } from '@/components/ui/EmptyState';
 import { Reveal } from '@/components/motion';
 import { SectionHeading } from '@/components/ui/SectionHeading';
 import { Accordion } from '@/components/visa/Accordion';
@@ -53,7 +55,7 @@ import { findProfession, LINKS, PROFESSIONS, type Profession, type ProfessionIco
 
 registerCopy(pagesTools);
 
-const HERO = 'https://images.unsplash.com/photo-1573164713988-8665fc963095?auto=format&fit=crop&w=2000&q=70';
+const CHIPS = ['chip-soft', 'chip-sage', 'chip-sky', 'chip-peach'] as const;
 
 const ICONS: Record<ProfessionIcon, LucideIcon> = {
   heart: HeartPulse,
@@ -82,7 +84,7 @@ const ICONS: Record<ProfessionIcon, LucideIcon> = {
 const norm = (s: string) => s.toLocaleLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
 
 const ExtLink = ({ href, children, className }: { href: string; children: ReactNode; className?: string }) => (
-  <a href={href} target="_blank" rel="noopener noreferrer" className={clsx('inline-flex items-center gap-1.5 font-semibold text-brand-600 hover:underline', className)}>
+  <a href={href} target="_blank" rel="noopener noreferrer" className={clsx('inline-flex items-center gap-1.5 font-semibold text-link hover:underline', className)}>
     {children} <ExternalLink className="size-3.5" aria-hidden />
   </a>
 );
@@ -114,7 +116,7 @@ const Stepper = ({ p }: { p: Profession }) => {
           <div className="space-y-3">
             <div className="flex flex-wrap items-center gap-2">
               <RegBadge regulated={p.regulated} />
-              <span className="badge bg-brand-50 text-brand-700">{t(`anerkPage.procedure.${p.procedure}.label`)}</span>
+              <span className="badge bg-sunken text-link">{t(`anerkPage.procedure.${p.procedure}.label`)}</span>
             </div>
             <p>{t(`anerkPage.procedure.${p.procedure}.text`)}</p>
             <p className="text-ink/85">{p.note[locale]}</p>
@@ -148,8 +150,8 @@ const Stepper = ({ p }: { p: Profession }) => {
           <div className="space-y-4">
             <p>{t(`anerkPage.steps.s5.${p.procedure}`)}</p>
             {showDeficits && (
-              <div className="rounded-xl border border-line bg-surface p-4">
-                <p className="font-display text-sm font-bold text-ink">{t('anerkPage.steps.deficits.title')}</p>
+              <div className="rounded-xl border border-line bg-sunken p-4">
+                <p className="font-display text-sm font-semibold text-ink">{t('anerkPage.steps.deficits.title')}</p>
                 <dl className="mt-3 grid gap-3 sm:grid-cols-2">
                   <div>
                     <dt className="text-sm font-semibold text-ink">{t('anerkPage.steps.deficits.adaptation')}</dt>
@@ -173,7 +175,7 @@ const Stepper = ({ p }: { p: Profession }) => {
         const open = active === i;
         const done = i < active;
         return (
-          <li key={title} className={clsx('rounded-2xl border bg-card transition-colors', open ? 'border-brand-400 shadow-lg shadow-brand-600/10' : 'border-line')}>
+          <li key={title} className={clsx('rounded-2xl border bg-card transition-colors', open ? 'border-primary shadow-[var(--tv-shadow-raised)]' : 'border-line shadow-[var(--tv-shadow-card)]')}>
             <h3>
               <button
                 type="button"
@@ -181,12 +183,12 @@ const Stepper = ({ p }: { p: Profession }) => {
                 aria-expanded={open}
                 aria-controls={`${uid}-p${i}`}
                 onClick={() => setActive(i)}
-                className="flex w-full items-center gap-4 px-4 py-3.5 text-left sm:px-5 sm:py-4"
+                className="flex min-h-14 w-full items-center gap-4 rounded-2xl px-4 py-3.5 text-left sm:px-5 sm:py-4"
               >
                 <span
                   className={clsx(
-                    'grid size-9 shrink-0 place-items-center rounded-full font-display text-sm font-bold',
-                    open ? 'bg-brand-600 text-white' : done ? 'bg-emerald-500 text-white' : 'bg-brand-50 text-brand-700',
+                    'grid size-9 shrink-0 place-items-center rounded-full font-display text-sm font-semibold',
+                    open ? 'bg-primary text-primary-contrast' : done ? 'bg-success-bg text-success-fg' : 'bg-sunken text-muted',
                   )}
                   aria-hidden
                 >
@@ -194,7 +196,7 @@ const Stepper = ({ p }: { p: Profession }) => {
                 </span>
                 <span className="min-w-0">
                   <span className="block text-[11px] font-bold tracking-wider text-muted uppercase">{t('anerkPage.steps.step', { n: i + 1 })}</span>
-                  <span className="block font-display font-bold text-ink">{title}</span>
+                  <span className="block font-display font-semibold text-ink">{title}</span>
                 </span>
               </button>
             </h3>
@@ -203,12 +205,12 @@ const Stepper = ({ p }: { p: Profession }) => {
                 {body(i)}
                 <div className="mt-5 flex flex-wrap gap-2 border-t border-line pt-4">
                   {i > 0 && (
-                    <button type="button" className="btn-sm btn rounded-lg border border-line text-ink hover:border-brand-400" onClick={() => setActive(i - 1)}>
+                    <button type="button" className="btn-secondary" onClick={() => setActive(i - 1)}>
                       <ArrowLeft className="size-3.5" aria-hidden /> {t('anerkPage.steps.back')}
                     </button>
                   )}
                   {i < titles.length - 1 && (
-                    <button type="button" className="btn-primary btn-sm" onClick={() => setActive(i + 1)}>
+                    <button type="button" className="btn-primary" onClick={() => setActive(i + 1)}>
                       {t('anerkPage.steps.next')} <ArrowRight className="size-3.5" aria-hidden />
                     </button>
                   )}
@@ -225,7 +227,7 @@ const Stepper = ({ p }: { p: Profession }) => {
 
 const Fact = ({ icon: Icon, label, children }: { icon: LucideIcon; label: string; children: ReactNode }) => (
   <div className="flex gap-3">
-    <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-brand-50 text-brand-600">
+    <span className="grid size-9 shrink-0 place-items-center rounded-xl chip-sky">
       <Icon className="size-4" aria-hidden />
     </span>
     <div className="min-w-0">
@@ -265,7 +267,7 @@ export default function AnerkennungGuide() {
 
   return (
     <>
-      <PageHero title={t('anerkPage.heroTitle')} subtitle={t('anerkPage.heroSubtitle')} image={HERO} crumb={{ to: '/tools', label: t('siteNav.tools') }} />
+      <PageHero title={t('anerkPage.heroTitle')} subtitle={t('anerkPage.heroSubtitle')} illustration={<Germany />} crumb={{ to: '/tools', label: t('siteNav.tools') }} />
 
       {/* Picker */}
       <section className="section">
@@ -276,15 +278,21 @@ export default function AnerkennungGuide() {
               {t('anerkPage.picker.searchLabel')}
             </label>
             <Search className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-muted" aria-hidden />
-            <input id={searchId} type="search" className="input pl-10" placeholder={t('anerkPage.picker.search')} value={query} onChange={(e) => setQuery(e.target.value)} />
+            <input id={searchId} type="search" className="input min-h-12 pl-10" placeholder={t('anerkPage.picker.search')} value={query} onChange={(e) => setQuery(e.target.value)} />
           </div>
           {list.length === 0 ? (
-            <p className="rounded-xl border border-dashed border-line p-6 text-center text-sm text-muted">
-              {t('anerkPage.picker.empty')} <ExtLink href={LINKS.finder}>Anerkennungs-Finder</ExtLink>
-            </p>
+            <EmptyState
+              className="rounded-3xl border border-line bg-card"
+              illustration={<SearchEmpty />}
+              text={
+                <>
+                  {t('anerkPage.picker.empty')} <ExtLink href={LINKS.finder}>Anerkennungs-Finder</ExtLink>
+                </>
+              }
+            />
           ) : (
             <ul className="grid-cards grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {list.map((p) => {
+              {list.map((p, i) => {
                 const Icon = ICONS[p.icon];
                 const isSel = selected?.id === p.id;
                 return (
@@ -294,15 +302,15 @@ export default function AnerkennungGuide() {
                       onClick={() => choose(p.id)}
                       aria-pressed={isSel}
                       className={clsx(
-                        'flex h-full w-full items-start gap-3 rounded-2xl border bg-card p-4 text-left transition-colors focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:outline-none',
-                        isSel ? 'border-brand-500 ring-1 ring-brand-500' : 'border-line hover:border-brand-300',
+                        'flex h-full w-full items-start gap-3 rounded-2xl border bg-card p-4 text-left shadow-[var(--tv-shadow-card)] transition-[border-color,box-shadow] focus-visible:ring-2 focus-visible:ring-focus focus-visible:outline-none',
+                        isSel ? 'border-primary ring-2 ring-focus/40' : 'border-line hover:border-line-strong hover:shadow-[var(--tv-shadow-raised)]',
                       )}
                     >
-                      <span className={clsx('grid size-10 shrink-0 place-items-center rounded-xl', isSel ? 'bg-brand-600 text-white' : 'bg-brand-50 text-brand-600')}>
+                      <span className={clsx('grid size-11 shrink-0 place-items-center rounded-xl', isSel ? 'bg-primary text-primary-contrast' : CHIPS[i % CHIPS.length])}>
                         <Icon className="size-5" aria-hidden />
                       </span>
                       <span className="min-w-0 flex-1">
-                        <span className="block font-display text-sm font-bold text-ink">{p.name[locale]}</span>
+                        <span className="block font-display text-sm font-semibold text-ink">{p.name[locale]}</span>
                         <span className="block truncate text-xs text-muted">{p.german}</span>
                         <span className="mt-2 block">
                           <RegBadge regulated={p.regulated} />
@@ -318,12 +326,14 @@ export default function AnerkennungGuide() {
       </section>
 
       {/* Guide */}
-      <section ref={guideRef} className="section bg-surface" aria-labelledby="anerk-guide-title">
+      <section ref={guideRef} className="section bg-sunken" aria-labelledby="anerk-guide-title">
         <div className="container-x">
           {!selected ? (
-            <div className="mx-auto max-w-xl rounded-2xl border border-dashed border-line bg-card p-8 text-center">
-              <GraduationCap className="mx-auto size-8 text-brand-600" aria-hidden />
-              <h2 id="anerk-guide-title" className="mt-3 font-display text-lg font-bold text-ink">
+            <div className="mx-auto max-w-xl rounded-3xl border border-line bg-card p-8 text-center shadow-[var(--tv-shadow-card)] sm:p-10">
+              <span className="mx-auto grid size-14 place-items-center rounded-2xl chip-soft">
+                <GraduationCap className="size-7" aria-hidden />
+              </span>
+              <h2 id="anerk-guide-title" className="mt-3 font-display text-lg font-semibold text-ink">
                 {t('anerkPage.guide.eyebrow')}
               </h2>
               <p className="mt-2 text-sm text-muted">{t('anerkPage.guide.placeholder')}</p>
@@ -331,19 +341,19 @@ export default function AnerkennungGuide() {
           ) : (
             <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.5fr)] lg:gap-10">
               <div className="space-y-4 lg:sticky lg:top-28 lg:self-start">
-                <div className="card card-pad">
+                <div className="card card-pad rounded-3xl">
                   <p className="eyebrow">{t('anerkPage.guide.eyebrow')}</p>
                   <div className="mt-3 flex items-start gap-3">
                     {(() => {
                       const Icon = ICONS[selected.icon];
                       return (
-                        <span className="grid size-12 shrink-0 place-items-center rounded-xl bg-brand-600 text-white">
+                        <span className="grid size-12 shrink-0 place-items-center rounded-xl bg-primary text-primary-contrast">
                           <Icon className="size-6" aria-hidden />
                         </span>
                       );
                     })()}
                     <div className="min-w-0">
-                      <h2 id="anerk-guide-title" className="font-display text-xl font-extrabold text-ink">
+                      <h2 id="anerk-guide-title" className="font-display text-xl font-semibold text-ink">
                         {selected.name[locale]}
                       </h2>
                       <p className="text-xs text-muted">{selected.german}</p>
@@ -375,16 +385,16 @@ export default function AnerkennungGuide() {
                   </p>
                 </div>
 
-                <div className="rounded-2xl border border-brand-200 bg-brand-50 p-5">
-                  <p className="flex items-center gap-2 font-display text-sm font-bold text-ink">
-                    <Lightbulb className="size-4 text-brand-600" aria-hidden /> {t('anerkPage.tip.title')}
+                <div className="rounded-2xl border border-line bg-card p-5 shadow-[var(--tv-shadow-card)]">
+                  <p className="flex items-center gap-2 font-display text-sm font-semibold text-ink">
+                    <Lightbulb className="size-4 text-highlight-fg" aria-hidden /> {t('anerkPage.tip.title')}
                   </p>
                   <p className="mt-2 text-sm leading-relaxed text-muted">{t('anerkPage.tip.text')}</p>
                   <div className="mt-3 flex flex-wrap gap-x-4 gap-y-2 text-sm">
-                    <Link to="/account/translations" className="font-semibold text-brand-600 hover:underline">
+                    <Link to="/account/translations" className="font-semibold text-link hover:underline">
                       {t('anerkPage.tip.translations')}
                     </Link>
-                    <Link to="/booking" className="font-semibold text-brand-600 hover:underline">
+                    <Link to="/booking" className="font-semibold text-link hover:underline">
                       {t('anerkPage.tip.booking')}
                     </Link>
                   </div>
@@ -405,19 +415,19 @@ export default function AnerkennungGuide() {
       {/* Official sources */}
       <section className="section-sm">
         <div className="container-x">
-          <h2 className="mb-5 font-display text-xl font-bold text-ink">{t('anerkPage.links.title')}</h2>
+          <h2 className="type-section-title mb-5 text-ink">{t('anerkPage.links.title')}</h2>
           <div className="grid-cards sm:grid-cols-2">
             {[
               { href: LINKS.finder, title: t('anerkPage.links.finder'), text: t('anerkPage.links.finderText') },
               { href: LINKS.anabin, title: t('anerkPage.links.anabin'), text: t('anerkPage.links.anabinText') },
             ].map((l) => (
               <Reveal key={l.href}>
-                <div className="card card-pad h-full">
+                <div className="card card-interactive card-pad h-full">
                   <ExtLink href={l.href} className="font-display text-base">
                     {l.title}
                   </ExtLink>
                   <p className="mt-2 text-sm leading-relaxed text-muted">{l.text}</p>
-                  <p className="mt-2 truncate text-xs text-muted/80">{l.href.replace(/^https:\/\//, '').replace(/\/$/, '')}</p>
+                  <p className="mt-2 truncate text-xs text-muted">{l.href.replace(/^https:\/\//, '').replace(/\/$/, '')}</p>
                 </div>
               </Reveal>
             ))}
@@ -426,7 +436,7 @@ export default function AnerkennungGuide() {
       </section>
 
       {/* FAQ */}
-      <section className="section bg-surface">
+      <section className="section bg-sunken">
         <div className="container-x grid gap-8 lg:grid-cols-[1fr_1.6fr] lg:gap-14">
           <div className="lg:sticky lg:top-28 lg:self-start">
             <SectionHeading eyebrow={t('anerkPage.faq.eyebrow')} title={t('anerkPage.faq.title')} />

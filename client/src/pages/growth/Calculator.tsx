@@ -6,6 +6,8 @@ import { ArrowRight, CalendarCheck, Info, Lightbulb } from 'lucide-react';
 import clsx from 'clsx';
 import { PageHero } from '@/components/layout/PageHero';
 import { Spinner } from '@/components/ui/Spinner';
+import { buttonClass } from '@/components/ui/Button';
+import { CalendarDay } from '@/components/illustrations';
 import { registerCopy } from '@/i18n';
 import { pagesGrowthPlus } from '@/i18n/pagesGrowthPlus';
 import { api } from '@/lib/api';
@@ -16,7 +18,6 @@ import { monthRange, useCalcConfig, type DocState, type Estimate, type InputLeve
 
 registerCopy(pagesGrowthPlus);
 
-const HERO = 'https://images.unsplash.com/photo-1506784983877-45594efa4cbe?auto=format&fit=crop&w=2000&q=70';
 
 const Chips = <T extends string>({
   legend,
@@ -40,8 +41,8 @@ const Chips = <T extends string>({
         <label
           key={o.value}
           className={clsx(
-            'flex min-h-11 cursor-pointer items-center justify-center rounded-xl border px-3 py-2 text-center text-sm font-semibold transition-colors has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-brand-500',
-            value === o.value ? 'border-brand-600 bg-brand-600 text-white' : 'border-line bg-card text-ink hover:border-brand-500',
+            'flex min-h-11 cursor-pointer items-center justify-center rounded-xl border px-3 py-2 text-center text-sm font-semibold transition-colors has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-focus/40',
+            value === o.value ? 'border-primary bg-primary text-primary-contrast' : 'border-line bg-card text-ink hover:border-line-strong hover:bg-sunken',
           )}
         >
           <input type="radio" className="sr-only" name={name} value={o.value} checked={value === o.value} onChange={() => onChange(o.value)} />
@@ -65,17 +66,17 @@ const Timeline = ({ stages, total }: { stages: Stage[]; total: [number, number] 
             <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
               <span className="text-sm font-semibold text-ink">
                 {t(`gp.calc.stages.${s.key}.name`)}
-                {s.parallel && !s.skipped && <span className="ml-2 rounded-full bg-brand-50 px-2 py-0.5 text-[11px] font-semibold text-brand-700">{t('gp.calc.parallel')}</span>}
+                {s.parallel && !s.skipped && <span className="ml-2 rounded-full chip-sky px-2 py-0.5 text-xs font-semibold">{t('gp.calc.parallel')}</span>}
               </span>
               <span className="text-xs font-semibold text-muted tabular-nums">{s.skipped ? t('gp.calc.skipped') : weeks}</span>
             </div>
-            <div className="relative mt-1.5 h-3 overflow-hidden rounded-full bg-surface" aria-hidden>
+            <div className="relative mt-1.5 h-3 overflow-hidden rounded-full bg-sunken" aria-hidden>
               {!s.skipped && (
                 <>
                   {/* certain part (min scenario) */}
-                  <span className="absolute inset-y-0 rounded-full bg-brand-600" style={{ left: pct(s.start[0]), width: pct(Math.max(0.4, s.end[0] - s.start[0])) }} />
+                  <span className="absolute inset-y-0 rounded-full bg-primary" style={{ left: pct(s.start[0]), width: pct(Math.max(0.4, s.end[0] - s.start[0])) }} />
                   {/* possible extension up to the max scenario */}
-                  <span className="absolute inset-y-0 rounded-full bg-brand-500/30" style={{ left: pct(s.start[0]), width: pct(Math.max(0.4, s.end[1] - s.start[0])) }} />
+                  <span className="absolute inset-y-0 rounded-full bg-primary/25" style={{ left: pct(s.start[0]), width: pct(Math.max(0.4, s.end[1] - s.start[0])) }} />
                 </>
               )}
             </div>
@@ -147,17 +148,17 @@ export default function Calculator() {
 
   return (
     <>
-      <PageHero title={t('gp.calc.heroTitle')} subtitle={t('gp.calc.heroSubtitle')} image={HERO} crumb={{ to: '/tools', label: t('siteNav.tools') }} />
+      <PageHero title={t('gp.calc.heroTitle')} subtitle={t('gp.calc.heroSubtitle')} illustration={<CalendarDay className="w-full" />} crumb={{ to: '/tools', label: t('siteNav.tools') }} />
       <section className="section">
         <div className="container-x">
           {isLoading ? (
             <Spinner />
           ) : !config?.enabled ? (
-            <p className="card card-pad text-center text-muted">{t('gp.calc.disabled')}</p>
+            <p className="card card-pad rounded-3xl text-center text-muted">{t('gp.calc.disabled')}</p>
           ) : (
             <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] lg:gap-10">
-              <form className="card card-pad space-y-6" onSubmit={(e) => e.preventDefault()} aria-labelledby={`${id}-form`}>
-                <h2 id={`${id}-form`} className="font-display text-lg font-bold text-ink">
+              <form className="card card-pad space-y-6 rounded-3xl" onSubmit={(e) => e.preventDefault()} aria-labelledby={`${id}-form`}>
+                <h2 id={`${id}-form`} className="font-display text-lg font-semibold text-ink">
                   {t('gp.calc.formTitle')}
                 </h2>
                 <Chips
@@ -214,7 +215,7 @@ export default function Calculator() {
               </form>
 
               <div className="space-y-5 lg:sticky lg:top-28" aria-live="polite">
-                <div className="card card-pad">
+                <div className="card card-pad rounded-3xl">
                   {!result || !category ? (
                     <p className="flex items-center gap-2 text-sm text-muted">
                       <Info className="size-4 shrink-0" aria-hidden /> {t('gp.calc.pickVisa')}
@@ -222,20 +223,20 @@ export default function Calculator() {
                   ) : (
                     <div className={clsx('transition-opacity', isFetching && 'opacity-60')}>
                       <p className="eyebrow">{t('gp.calc.resultTitle')}</p>
-                      <p className="mt-2 flex items-center gap-3 font-display text-3xl font-extrabold text-ink sm:text-4xl">
-                        <CalendarCheck className="size-8 shrink-0 text-brand-600" aria-hidden />
+                      <p className="mt-2 flex items-center gap-3 font-display text-3xl font-semibold text-ink sm:text-4xl">
+                        <span className="grid size-12 shrink-0 place-items-center rounded-2xl chip-sage"><CalendarCheck className="size-6" aria-hidden /></span>
                         {monthRange(result.earliest, result.latest, locale)}
                       </p>
                       <p className="mt-1 text-sm text-muted">{t('gp.calc.total', { min: result.totalWeeks[0], max: result.totalWeeks[1] })}</p>
-                      <h3 className="mt-6 mb-3 text-sm font-bold tracking-wide text-ink uppercase">{t('gp.calc.timeline')}</h3>
+                      <h3 className="mt-6 mb-3 type-overline">{t('gp.calc.timeline')}</h3>
                       <Timeline stages={result.stages} total={result.totalWeeks} />
                     </div>
                   )}
                   <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-                    <Link to="/booking" className="btn-primary group flex-1 justify-center px-5 py-3">
-                      {t('gp.calc.ctaBooking')} <ArrowRight className="size-4 transition group-hover:translate-x-1" aria-hidden />
+                    <Link to="/booking" className={buttonClass({ size: 'lg', className: 'flex-1' })}>
+                      {t('gp.calc.ctaBooking')} <ArrowRight className="size-4" aria-hidden />
                     </Link>
-                    <Link to={category ? `/register?visa=${encodeURIComponent(category.slug)}` : '/register'} className="btn-ghost flex-1 justify-center px-5 py-3">
+                    <Link to={category ? `/register?visa=${encodeURIComponent(category.slug)}` : '/register'} className={buttonClass({ variant: 'outline', size: 'lg', className: 'flex-1' })}>
                       {t('gp.calc.ctaApply')}
                     </Link>
                   </div>

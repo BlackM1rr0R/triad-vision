@@ -126,7 +126,7 @@ export const ReceiveDialog = ({ caseId, open, onClose }: { caseId: string; open:
             <input className="input" value={r.note} maxLength={2000} aria-label={t('originals.form.note')} placeholder={t('originals.form.note')} onChange={(e) => setRow(i, { note: e.target.value })} />
             <button
               type="button"
-              className="grid size-10 place-items-center rounded-lg text-muted hover:bg-surface hover:text-danger disabled:opacity-40"
+              className="grid size-10 place-items-center rounded-lg text-muted hover:bg-sunken hover:text-danger-fg disabled:opacity-40"
               disabled={rows.length === 1}
               onClick={() => setRows((rs) => rs.filter((_, k) => k !== i))}
               aria-label={t('originals.form.removeRow')}
@@ -135,7 +135,7 @@ export const ReceiveDialog = ({ caseId, open, onClose }: { caseId: string; open:
             </button>
           </div>
         ))}
-        <button type="button" className="btn-ghost btn-sm" onClick={() => setRows((rs) => [...rs, { title: '', kind: 'DIPLOMA', note: '' }])}>
+        <button type="button" className="btn-secondary btn-sm" onClick={() => setRows((rs) => [...rs, { title: '', kind: 'DIPLOMA', note: '' }])}>
           <Plus className="size-4" aria-hidden /> {t('originals.form.addRow')}
         </button>
         <label className="block">
@@ -214,7 +214,7 @@ export const EventDialog = ({ originals, open, onClose, initial }: { originals: 
                 type="button"
                 onClick={() => setAction(a)}
                 aria-pressed={current === a}
-                className={clsx('min-h-9 rounded-full border px-3 text-xs font-semibold transition', current === a ? 'border-brand-600 bg-brand-600 text-white' : 'border-line bg-white text-ink hover:border-brand-300')}
+                className={clsx('min-h-9 rounded-full border px-3 text-xs font-semibold transition', current === a ? 'border-line-strong bg-sunken text-ink shadow-[inset_0_0_0_1px_var(--color-line-strong)]' : 'border-line bg-card text-ink hover:border-line-strong')}
               >
                 {t(`originals.actions.${a}`)}
               </button>

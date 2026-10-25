@@ -90,7 +90,7 @@ export default function EsignDialog({ item, onClose, onSent }: { item: DriveItem
       size="lg"
       title={
         <span className="inline-flex items-center gap-2">
-          <PenLine className="size-4 text-brand-600" aria-hidden />
+          <PenLine className="size-4 text-link" aria-hidden />
           {t('driveIntel.esign.title')}
         </span>
       }
@@ -108,7 +108,7 @@ export default function EsignDialog({ item, onClose, onSent }: { item: DriveItem
       }
     >
       <div className="space-y-5">
-        <p className="rounded-lg bg-surface px-3 py-2 text-xs text-muted">{t('driveIntel.esign.hint')}</p>
+        <p className="rounded-lg bg-sunken px-3 py-2 text-xs text-muted">{t('driveIntel.esign.hint')}</p>
         <div>
           <label htmlFor={ids.title} className="label">
             {t('driveIntel.esign.docTitle')}
@@ -122,7 +122,7 @@ export default function EsignDialog({ item, onClose, onSent }: { item: DriveItem
               {t('driveIntel.esign.case')}
             </label>
             {caseHit ? (
-              <div className="flex items-center gap-2 rounded-lg border border-line bg-surface px-3 py-2 text-sm">
+              <div className="flex items-center gap-2 rounded-lg border border-line bg-sunken px-3 py-2 text-sm">
                 <span className="font-semibold text-ink">{caseHit.number}</span>
                 <span className="min-w-0 flex-1 truncate text-muted">
                   {caseHit.client.firstName} {caseHit.client.lastName}
@@ -143,7 +143,7 @@ export default function EsignDialog({ item, onClose, onSent }: { item: DriveItem
                       <li key={c.id}>
                         <button
                           type="button"
-                          className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-surface"
+                          className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-sunken"
                           onClick={() => {
                             setCaseHit(c);
                             setCaseQuery('');
@@ -172,7 +172,7 @@ export default function EsignDialog({ item, onClose, onSent }: { item: DriveItem
             <div className="mb-2 flex flex-wrap items-center gap-1.5 text-xs">
               <span className="text-muted">{t('driveIntel.esign.suggested')}:</span>
               {suggestions.map(({ s, me }) => (
-                <button key={s.email} type="button" onClick={() => setRows((rs) => [...rs, row(s)])} className="inline-flex items-center gap-1 rounded-full border border-line bg-surface px-2.5 py-1 font-medium text-ink hover:border-brand-400">
+                <button key={s.email} type="button" onClick={() => setRows((rs) => [...rs, row(s)])} className="inline-flex items-center gap-1 rounded-full border border-line bg-sunken px-2.5 py-1 font-medium text-ink hover:border-line-strong">
                   <UserPlus className="size-3.5" aria-hidden /> {s.name}
                   {me && <span className="text-muted">({t('driveIntel.esign.me')})</span>}
                 </button>
@@ -183,7 +183,7 @@ export default function EsignDialog({ item, onClose, onSent }: { item: DriveItem
             {rows.map((r, i) => (
               <li key={r.key} className="rounded-xl border border-line p-3">
                 <div className="mb-2 flex items-center gap-2 text-xs font-semibold text-muted">
-                  <span className="grid size-6 place-items-center rounded-full bg-brand-50 text-brand-700 dark:bg-brand-500/15 dark:text-brand-300">{order === 'PARALLEL' ? '•' : i + 1}</span>
+                  <span className="grid size-6 place-items-center rounded-full bg-primary/[0.06] text-link dark:bg-brand-500/15 dark:text-brand-300">{order === 'PARALLEL' ? '•' : i + 1}</span>
                   <select className="input !w-auto !py-1 !text-xs" value={r.role} onChange={(e) => update(r.key, { role: e.target.value as SignerRole })} aria-label={t('driveIntel.esign.role')}>
                     {ROLES.map((x) => (
                       <option key={x} value={x}>
@@ -193,11 +193,11 @@ export default function EsignDialog({ item, onClose, onSent }: { item: DriveItem
                   </select>
                   <span className="flex-1" />
                   {order === 'SEQUENTIAL' && i > 0 && (
-                    <button type="button" onClick={() => moveUp(i)} className="grid size-7 place-items-center rounded-lg hover:bg-surface hover:text-ink" title={t('driveIntel.esign.moveUp')} aria-label={t('driveIntel.esign.moveUp')}>
+                    <button type="button" onClick={() => moveUp(i)} className="grid size-7 place-items-center rounded-lg hover:bg-sunken hover:text-ink" title={t('driveIntel.esign.moveUp')} aria-label={t('driveIntel.esign.moveUp')}>
                       <ArrowUp className="size-3.5" />
                     </button>
                   )}
-                  <button type="button" onClick={() => setRows((rs) => rs.filter((x) => x.key !== r.key))} className="grid size-7 place-items-center rounded-lg text-danger hover:bg-red-50" title={t('driveIntel.esign.remove')} aria-label={t('driveIntel.esign.remove')}>
+                  <button type="button" onClick={() => setRows((rs) => rs.filter((x) => x.key !== r.key))} className="grid size-7 place-items-center rounded-lg text-danger-fg hover:bg-danger-bg" title={t('driveIntel.esign.remove')} aria-label={t('driveIntel.esign.remove')}>
                     <Trash2 className="size-3.5" />
                   </button>
                 </div>
@@ -209,7 +209,7 @@ export default function EsignDialog({ item, onClose, onSent }: { item: DriveItem
               </li>
             ))}
           </ol>
-          <button type="button" onClick={() => setRows((rs) => [...rs, row()])} className="btn-white btn-sm mt-2 border border-line">
+          <button type="button" onClick={() => setRows((rs) => [...rs, row()])} className="btn-secondary btn-sm mt-2 border border-line">
             <Plus className="size-3.5" /> {t('driveIntel.esign.addSigner')}
           </button>
         </div>

@@ -62,7 +62,7 @@ export const LeadForm = ({
 
   if (state === 'sent') {
     return (
-      <p className="flex items-start gap-2 rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800" role="status">
+      <p className="flex items-start gap-2 rounded-xl border border-success-border bg-success-bg p-3 text-sm text-success-fg" role="status">
         <CheckCircle2 className="mt-0.5 size-4 shrink-0" aria-hidden /> {t('pai.lead.sent')}
       </p>
     );
@@ -98,10 +98,10 @@ export const LeadForm = ({
         <input id={ids.hp} tabIndex={-1} autoComplete="off" value={form.website} onChange={(e) => setForm((f) => ({ ...f, website: e.target.value }))} />
       </div>
       <label htmlFor={ids.consent} className="flex items-start gap-2 text-xs text-ink/80">
-        <input id={ids.consent} type="checkbox" className="mt-0.5 size-4 shrink-0 accent-brand-600" checked={form.consent} onChange={(e) => setForm((f) => ({ ...f, consent: e.target.checked }))} />
+        <input id={ids.consent} type="checkbox" className="mt-0.5 size-4 shrink-0 accent-primary" checked={form.consent} onChange={(e) => setForm((f) => ({ ...f, consent: e.target.checked }))} />
         <span>
           {t('pai.lead.consent')}{' '}
-          <Link to="/privacy" className="font-semibold text-brand-600 underline">
+          <Link to="/privacy" className="font-semibold text-link underline">
             {t('pai.lead.privacy')}
           </Link>
         </span>

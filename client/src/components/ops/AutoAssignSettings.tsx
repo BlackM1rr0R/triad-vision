@@ -71,10 +71,10 @@ export const AutoAssignSettings = ({ initial }: { initial: AutoAssignValue }) =>
           <fieldset className="space-y-2">
             <legend className="label">{t('ops.settings.autoAssign.mode')}</legend>
             {MODES.map((m) => (
-              <label key={m} className={clsx('flex cursor-pointer items-start gap-3 rounded-lg border px-3 py-2.5 text-sm transition', mode === m ? 'border-brand-500 bg-brand-50/60' : 'border-line hover:border-brand-300')}>
+              <label key={m} className={clsx('flex cursor-pointer items-start gap-3 rounded-lg border px-3 py-2.5 text-sm transition', mode === m ? 'border-primary bg-primary/[0.04]' : 'border-line hover:border-line-strong')}>
                 <input type="radio" name="aa-mode" className="mt-0.5 size-4" checked={mode === m} onChange={() => setMode(m)} />
                 <span>
-                  <span className="block font-semibold text-navy-900">{t(`ops.settings.autoAssign.modes.${m}`)}</span>
+                  <span className="block font-semibold text-ink">{t(`ops.settings.autoAssign.modes.${m}`)}</span>
                   <span className="block text-xs text-muted">{t(`ops.settings.autoAssign.modeHints.${m}`)}</span>
                 </span>
               </label>
@@ -84,11 +84,11 @@ export const AutoAssignSettings = ({ initial }: { initial: AutoAssignValue }) =>
             <legend className="label">{t('ops.settings.autoAssign.pool')}</legend>
             <p className="mb-2 text-xs text-muted">{t('ops.settings.autoAssign.poolHint')}</p>
             <div className="flex flex-wrap gap-2">
-              <button type="button" onClick={() => setPool([])} className={clsx('rounded-full border px-3 py-1.5 text-xs font-semibold', pool.length === 0 ? 'border-navy-900 bg-navy-900 text-white' : 'border-line bg-white text-ink/75')}>
+              <button type="button" onClick={() => setPool([])} className={clsx('rounded-full border px-3 py-1.5 text-xs font-semibold', pool.length === 0 ? 'border-line-strong bg-sunken text-ink shadow-[inset_0_0_0_1px_var(--color-line-strong)]' : 'border-line bg-card text-muted')}>
                 {t('ops.settings.autoAssign.everyone')}
               </button>
               {staff?.map((s) => (
-                <button key={s.id} type="button" onClick={() => toggle(s.id)} aria-pressed={pool.includes(s.id)} className={clsx('rounded-full border px-3 py-1.5 text-xs font-semibold', pool.includes(s.id) ? 'border-brand-600 bg-brand-600 text-white' : 'border-line bg-white text-ink/75 hover:border-brand-400')}>
+                <button key={s.id} type="button" onClick={() => toggle(s.id)} aria-pressed={pool.includes(s.id)} className={clsx('rounded-full border px-3 py-1.5 text-xs font-semibold', pool.includes(s.id) ? 'border-line-strong bg-sunken text-ink shadow-[inset_0_0_0_1px_var(--color-line-strong)]' : 'border-line bg-card text-muted hover:border-line-strong')}>
                   {fullName(s)}
                 </button>
               ))}
@@ -100,7 +100,7 @@ export const AutoAssignSettings = ({ initial }: { initial: AutoAssignValue }) =>
       <Panel title={t('ops.settings.workload.title')} icon={Scale}>
         <p className="mb-3 text-xs text-muted">{t('ops.settings.workload.hint')}</p>
         {workload.isLoading ? (
-          <Spinner className="size-5 text-brand-600" />
+          <Spinner className="size-5 text-link" />
         ) : !workload.data?.staff.length ? (
           <p className="text-sm text-muted">{t('ops.settings.workload.empty')}</p>
         ) : (
@@ -108,20 +108,20 @@ export const AutoAssignSettings = ({ initial }: { initial: AutoAssignValue }) =>
             {workload.data.staff.map((s) => (
               <li key={s.id} className="text-xs">
                 <div className="mb-1 flex items-center justify-between gap-2">
-                  <span className={clsx('truncate font-medium text-navy-900', pool.length && !pool.includes(s.id) && 'text-muted')}>{fullName(s)}</span>
+                  <span className={clsx('truncate font-medium text-ink', pool.length && !pool.includes(s.id) && 'text-muted')}>{fullName(s)}</span>
                   <span className="shrink-0 tabular-nums">
                     <span className="font-semibold">{s.open}</span> <span className="text-muted">{t('ops.settings.workload.open')}</span>
-                    {s.waitingForStaff > 0 && <span className="ml-2 rounded bg-brand-50 px-1.5 py-0.5 text-[10px] font-semibold text-brand-700">{s.waitingForStaff} {t('ops.settings.workload.waiting')}</span>}
+                    {s.waitingForStaff > 0 && <span className="ml-2 rounded bg-primary/[0.06] px-1.5 py-0.5 text-[10px] font-semibold text-link">{s.waitingForStaff} {t('ops.settings.workload.waiting')}</span>}
                   </span>
                 </div>
-                <div className="h-1.5 overflow-hidden rounded-full bg-surface">
-                  <div className="h-full rounded-full bg-brand-500" style={{ width: `${Math.round((s.open / max) * 100)}%` }} />
+                <div className="h-1.5 overflow-hidden rounded-full bg-sunken">
+                  <div className="h-full rounded-full bg-primary" style={{ width: `${Math.round((s.open / max) * 100)}%` }} />
                 </div>
               </li>
             ))}
           </ul>
         )}
-        {workload.data && <p className={clsx('mt-3 text-xs', workload.data.unassigned ? 'font-semibold text-amber-800' : 'text-muted')}>{t('ops.settings.workload.unassigned', { count: workload.data.unassigned })}</p>}
+        {workload.data && <p className={clsx('mt-3 text-xs', workload.data.unassigned ? 'font-semibold text-warning-fg' : 'text-muted')}>{t('ops.settings.workload.unassigned', { count: workload.data.unassigned })}</p>}
       </Panel>
     </div>
   );

@@ -1,13 +1,14 @@
 import { useParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { FileText, LinkIcon } from 'lucide-react';
+import { FileText } from 'lucide-react';
 import { api, errorCode } from '@/lib/api';
 import { usePageTitle } from '@/lib/usePageTitle';
 import i18n, { registerCopy } from '@/i18n';
 import { pagesQuotes } from '@/i18n/pagesQuotes';
 import { QuoteDocument, QuoteRespond, type CustomerQuote } from '@/components/quotes/QuoteDocument';
 import { Spinner } from '@/components/ui/Spinner';
+import { Lost } from '@/components/illustrations';
 
 registerCopy(pagesQuotes);
 
@@ -38,25 +39,22 @@ export default function QuotePage() {
   });
 
   return (
-    <div className="min-h-screen bg-surface px-4 pt-24 pb-16 sm:pt-28 sm:pb-24 lg:pt-36">
+    <div className="min-h-screen bg-canvas px-4 pt-24 pb-16 sm:pt-28 sm:pb-24 lg:pt-36">
       <div className="mx-auto max-w-4xl space-y-5">
         {q.isLoading ? (
-          <div className="grid min-h-[40vh] place-items-center text-brand-600" role="status" aria-label={t('quotePublic.loading')}>
+          <div className="grid min-h-[40vh] place-items-center text-primary" role="status" aria-label={t('quotePublic.loading')}>
             <Spinner className="size-8 border-[3px]" />
           </div>
         ) : q.error || !q.data ? (
-          <div className="card flex flex-col items-center px-6 py-14 text-center">
-            {/* TODO(ui): large portal empty state (size-14 icon, display title) -> <EmptyState size="lg" tone="brand"> (portal rework) */}
-            <span className="grid size-12 place-items-center rounded-full bg-red-50 text-danger">
-              <LinkIcon className="size-5" aria-hidden />
-            </span>
-            <h1 className="mt-3 font-display text-xl font-bold text-navy-900">{t('quotePublic.invalidTitle')}</h1>
+          <div className="card flex flex-col items-center rounded-3xl px-6 py-14 text-center">
+            <Lost className="w-44" />
+            <h1 className="mt-5 font-display text-xl font-semibold text-ink">{t('quotePublic.invalidTitle')}</h1>
             <p className="mt-1 max-w-md text-sm text-muted">{t('quotePublic.invalidText')}</p>
           </div>
         ) : (
           <>
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <span className="eyebrow inline-flex items-center gap-1.5 text-brand-600">
+              <span className="eyebrow inline-flex items-center gap-1.5">
                 <FileText className="size-4" aria-hidden /> {t('quotePublic.eyebrow')} {q.data.number}
               </span>
               <span className="text-xs text-muted">{t('quotePublic.germanNote')}</span>

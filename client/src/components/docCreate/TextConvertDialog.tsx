@@ -100,7 +100,7 @@ export default function TextConvertDialog({ parentId, onClose, onCreated }: { pa
                   role="radio"
                   aria-checked={format === f}
                   onClick={() => setFormat(f)}
-                  className={clsx('inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold transition', format === f ? 'bg-brand-600 text-white' : 'text-ink hover:bg-surface')}
+                  className={clsx('inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold transition', format === f ? 'bg-primary text-primary-contrast' : 'text-ink hover:bg-sunken')}
                 >
                   {f === 'pdf' ? <FileText className="size-3.5" /> : <FileSpreadsheet className="size-3.5" />} {t(`docCreate.fromText.${f}`)}
                 </button>
@@ -135,7 +135,7 @@ export default function TextConvertDialog({ parentId, onClose, onCreated }: { pa
                 <table className="w-full border-collapse text-xs">
                   <tbody>
                     {p.rows.map((r, i) => (
-                      <tr key={i} className={clsx(i === 0 && 'bg-brand-50 font-semibold dark:bg-white/5')}>
+                      <tr key={i} className={clsx(i === 0 && 'bg-primary/[0.06] font-semibold dark:bg-white/5')}>
                         {r.map((c, j) => (
                           <td key={j} className="max-w-56 truncate border border-line px-2 py-1 text-ink" title={c}>
                             {c}

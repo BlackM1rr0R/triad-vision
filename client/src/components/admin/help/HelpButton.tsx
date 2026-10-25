@@ -24,7 +24,7 @@ export const HelpButton = () => {
         onClick={() => setOpen(true)}
         onPointerEnter={() => void loadHelpGuides().catch(() => undefined)}
         onFocus={() => void loadHelpGuides().catch(() => undefined)}
-        className="inline-flex min-h-10 items-center gap-1.5 rounded-lg border border-line px-2.5 py-2 text-xs font-semibold whitespace-nowrap text-ink/80 transition hover:border-brand-400 hover:bg-brand-50 hover:text-brand-700"
+        className="inline-flex min-h-10 items-center gap-1.5 rounded-lg border border-line px-2.5 py-2 text-xs font-semibold whitespace-nowrap text-ink/80 transition hover:border-line-strong hover:bg-primary/[0.06] hover:text-link"
         aria-label={t('adminHelpUi.open')}
         title={t('adminHelpUi.open')}
       >
@@ -35,11 +35,11 @@ export const HelpButton = () => {
         onClose={() => setOpen(false)}
         title={
           <span className="flex items-center gap-2">
-            <LifeBuoy className="size-4 text-brand-600" /> {t(`adminHelp.${key}.title`, { defaultValue: t('adminHelpUi.button') })}
+            <LifeBuoy className="size-4 text-link" /> {t(`adminHelp.${key}.title`, { defaultValue: t('adminHelpUi.button') })}
           </span>
         }
         footer={
-          <Link to="/admin/help" onClick={() => setOpen(false)} className="text-sm font-semibold text-brand-600 hover:underline">
+          <Link to="/admin/help" onClick={() => setOpen(false)} className="text-sm font-semibold text-link hover:underline">
             {t('adminHelpUi.allGuides')} →
           </Link>
         }
@@ -47,7 +47,7 @@ export const HelpButton = () => {
         {ready ? (
           <HelpGuide helpKey={key} compact />
         ) : (
-          <div className="grid min-h-40 place-items-center text-brand-600" role="status" aria-label={t('ui.loading')}>
+          <div className="grid min-h-40 place-items-center text-link" role="status" aria-label={t('ui.loading')}>
             <Spinner className="size-6" />
           </div>
         )}

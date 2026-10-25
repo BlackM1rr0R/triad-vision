@@ -180,9 +180,9 @@ export default function WorkspaceCalendar() {
   }); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
-    <div className="flex h-full min-h-0 bg-page text-ink">
+    <div className="flex h-full min-h-0 bg-canvas text-ink">
       {sidebar && (
-        <aside className={clsx('shrink-0 border-r border-line bg-card', 'absolute inset-y-0 left-0 z-30 w-72 shadow-xl sm:static sm:w-64 sm:shadow-none')}>
+        <aside className={clsx('shrink-0 border-r border-line bg-card', 'absolute inset-y-0 left-0 z-30 w-72 shadow-[var(--tv-shadow-raised)] sm:static sm:w-64 sm:shadow-none')}>
           <CalendarSidebar
             month={date}
             selected={date}
@@ -201,25 +201,25 @@ export default function WorkspaceCalendar() {
           />
         </aside>
       )}
-      {sidebar && isPhone() && <button type="button" className="absolute inset-0 z-20 bg-navy-900/40 sm:hidden" onClick={() => setSidebar(false)} aria-label={t('calendar.actions.close')} />}
+      {sidebar && isPhone() && <button type="button" className="absolute inset-0 z-20 bg-scrim sm:hidden" onClick={() => setSidebar(false)} aria-label={t('calendar.actions.close')} />}
 
       <section className="flex min-w-0 flex-1 flex-col">
         <header className="flex flex-wrap items-center gap-2 border-b border-line bg-card px-3 py-2">
-          <button type="button" onClick={() => setSidebar((s) => !s)} className="grid size-8 place-items-center rounded-lg text-muted hover:bg-surface hover:text-ink" aria-label={t('calendar.calendars.title')} title={t('calendar.calendars.title')}>
+          <button type="button" onClick={() => setSidebar((s) => !s)} className="grid size-8 place-items-center rounded-lg text-muted hover:bg-sunken hover:text-ink" aria-label={t('calendar.calendars.title')} title={t('calendar.calendars.title')}>
             <PanelLeft className="size-4" />
           </button>
           <button type="button" onClick={() => setDate(new Date())} className="btn-secondary btn-sm">
             {t('calendar.today')}
           </button>
           <div className="flex items-center">
-            <button type="button" onClick={() => step(-1)} className="grid size-8 place-items-center rounded-lg text-muted hover:bg-surface hover:text-ink" aria-label={t('calendar.prev')}>
+            <button type="button" onClick={() => step(-1)} className="grid size-8 place-items-center rounded-lg text-muted hover:bg-sunken hover:text-ink" aria-label={t('calendar.prev')}>
               <ChevronLeft className="size-4" />
             </button>
-            <button type="button" onClick={() => step(1)} className="grid size-8 place-items-center rounded-lg text-muted hover:bg-surface hover:text-ink" aria-label={t('calendar.next')}>
+            <button type="button" onClick={() => step(1)} className="grid size-8 place-items-center rounded-lg text-muted hover:bg-sunken hover:text-ink" aria-label={t('calendar.next')}>
               <ChevronRight className="size-4" />
             </button>
           </div>
-          <h1 className="min-w-0 truncate font-display text-base font-extrabold text-ink">
+          <h1 className="min-w-0 truncate font-display text-base font-semibold text-ink">
             {title}
             {view === 'week' && <span className="ml-2 text-xs font-semibold text-muted">{t('calendar.labels.week', { n: weekNumber(date) })}</span>}
           </h1>
@@ -230,7 +230,7 @@ export default function WorkspaceCalendar() {
             {/* TODO(ui): <Tabs variant="pills"> once TabItem supports a per-item className (month/week are hidden below sm) */}
             <div className="flex rounded-lg border border-line p-0.5" role="tablist">
               {VIEWS.map((v) => (
-                <button key={v} type="button" role="tab" aria-selected={view === v} onClick={() => setView(v)} className={clsx('rounded-md px-2.5 py-1 text-xs font-semibold', view === v ? 'bg-brand-600 text-white' : 'text-muted hover:text-ink', (v === 'month' || v === 'week') && 'hidden sm:block')}>
+                <button key={v} type="button" role="tab" aria-selected={view === v} onClick={() => setView(v)} className={clsx('rounded-md px-2.5 py-1 text-xs font-semibold', view === v ? 'bg-card text-ink shadow-[var(--tv-shadow-card)] ring-1 ring-line' : 'text-muted hover:text-ink', (v === 'month' || v === 'week') && 'hidden sm:block')}>
                   {t(`calendar.views.${v}`)}
                 </button>
               ))}

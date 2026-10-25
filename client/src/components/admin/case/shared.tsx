@@ -88,7 +88,7 @@ export const DocLinks = ({ doc }: { doc: CaseDocument }) => {
         href={fileUrl(doc.id)}
         target="_blank"
         rel="noreferrer"
-        className="grid size-10 place-items-center rounded-lg lg:size-8 text-muted transition hover:bg-brand-50 hover:text-brand-700"
+        className="grid size-10 place-items-center rounded-lg lg:size-8 text-muted transition hover:bg-primary/[0.06] hover:text-link"
         title={t('admin.common.open')}
         aria-label={t('admin.case.doc.openAria', { name: doc.originalName })}
       >
@@ -96,7 +96,7 @@ export const DocLinks = ({ doc }: { doc: CaseDocument }) => {
       </a>
       <a
         href={fileUrl(doc.id, true)}
-        className="grid size-10 place-items-center rounded-lg lg:size-8 text-muted transition hover:bg-brand-50 hover:text-brand-700"
+        className="grid size-10 place-items-center rounded-lg lg:size-8 text-muted transition hover:bg-primary/[0.06] hover:text-link"
         title={t('admin.common.download')}
         aria-label={t('admin.case.doc.downloadAria', { name: doc.originalName })}
       >

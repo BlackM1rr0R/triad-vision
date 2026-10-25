@@ -172,7 +172,7 @@ export default function AdminGuides() {
             <ul className="space-y-4">
               {keys.map((key) => (
                 <li key={key}>
-                  <p className="font-mono text-xs font-semibold text-muted">{key}</p>
+                  <p className="code-id text-xs font-medium text-muted">{key}</p>
                   <div className="mt-1.5 flex flex-wrap gap-1.5">
                     {SITE_LOCALES.map((l) => {
                       const item = byKey(key).find((x) => x.locale === l);
@@ -185,7 +185,7 @@ export default function AdminGuides() {
                           title={item ? item.title : `${g('addLanguage')} (${l})`}
                           className={clsx(
                             'inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-xs font-semibold',
-                            active ? 'border-brand-500 bg-brand-50 text-brand-700' : item ? 'border-line text-ink hover:border-brand-400' : 'border-dashed border-line text-muted hover:text-ink',
+                            active ? 'border-primary bg-primary/[0.06] text-link' : item ? 'border-line text-ink hover:border-line-strong' : 'border-dashed border-line text-muted hover:text-ink',
                             item && !item.published && 'opacity-60',
                           )}
                         >
@@ -206,7 +206,7 @@ export default function AdminGuides() {
             title={draft.id ? draft.title || draft.key : g('newGuide')}
             icon={Pencil}
             actions={
-              <button type="button" className="btn-ghost btn-sm" onClick={() => setDraft(null)} aria-label="Close">
+              <button type="button" className="btn-secondary btn-sm" onClick={() => setDraft(null)} aria-label="Close">
                 <X className="size-4" aria-hidden />
               </button>
             }
@@ -243,7 +243,7 @@ export default function AdminGuides() {
                 <div className="flex flex-wrap items-center gap-2 text-xs text-muted">
                   {g('copyFrom')}:
                   {siblings.map((s) => (
-                    <button key={s.id} type="button" className="btn-ghost btn-sm" onClick={() => copyFrom(s.id)}>
+                    <button key={s.id} type="button" className="btn-secondary btn-sm" onClick={() => copyFrom(s.id)}>
                       <Flag code={s.locale} className="w-4" /> {s.locale.toUpperCase()}
                     </button>
                   ))}
@@ -275,7 +275,7 @@ export default function AdminGuides() {
                   <label className="label" htmlFor="guide-body">
                     {g('body')}
                   </label>
-                  <button type="button" className="btn-ghost btn-sm" onClick={() => setPreview(preview ? null : { html: '' })}>
+                  <button type="button" className="btn-secondary btn-sm" onClick={() => setPreview(preview ? null : { html: '' })}>
                     {preview ? <Pencil className="size-4" aria-hidden /> : <Eye className="size-4" aria-hidden />} {preview ? g('edit') : g('preview')}
                   </button>
                 </div>
@@ -296,12 +296,12 @@ export default function AdminGuides() {
                       <input className="input" placeholder={g('question')} value={f.q} onChange={(e) => set('faq', draft.faq.map((x, j) => (j === i ? { ...x, q: e.target.value } : x)))} />
                       <textarea className="input min-h-16" placeholder={g('answer')} value={f.a} onChange={(e) => set('faq', draft.faq.map((x, j) => (j === i ? { ...x, a: e.target.value } : x)))} />
                     </div>
-                    <button type="button" className="btn-ghost btn-sm self-start text-red-600" onClick={() => set('faq', draft.faq.filter((_, j) => j !== i))} aria-label="Remove">
+                    <button type="button" className="btn-secondary btn-sm self-start text-danger-fg" onClick={() => set('faq', draft.faq.filter((_, j) => j !== i))} aria-label="Remove">
                       <Trash2 className="size-4" aria-hidden />
                     </button>
                   </div>
                 ))}
-                <button type="button" className="btn-ghost btn-sm" onClick={() => set('faq', [...draft.faq, { q: '', a: '' }])} disabled={draft.faq.length >= 20}>
+                <button type="button" className="btn-secondary btn-sm" onClick={() => set('faq', [...draft.faq, { q: '', a: '' }])} disabled={draft.faq.length >= 20}>
                   <Plus className="size-4" aria-hidden /> {g('addFaq')}
                 </button>
               </fieldset>
@@ -313,12 +313,12 @@ export default function AdminGuides() {
                   <Save className="size-4" aria-hidden /> {draft.id ? g('save') : g('create')}
                 </button>
                 {draft.id && (
-                  <a href={sitePath} target="_blank" rel="noreferrer" className="btn-ghost">
+                  <a href={sitePath} target="_blank" rel="noreferrer" className="btn-secondary">
                     <ExternalLink className="size-4" aria-hidden /> {g('open')}
                   </a>
                 )}
                 {draft.id && (
-                  <button type="button" className="btn-ghost ml-auto text-red-600" onClick={() => setConfirm(true)} disabled={busy}>
+                  <button type="button" className="btn-secondary ml-auto text-danger-fg" onClick={() => setConfirm(true)} disabled={busy}>
                     <Trash2 className="size-4" aria-hidden /> {g('delete')}
                   </button>
                 )}

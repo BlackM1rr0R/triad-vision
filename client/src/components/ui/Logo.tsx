@@ -20,11 +20,11 @@ export const Logo = ({ light = false, className }: { light?: boolean; className?
     <LogoMark
       className={clsx(
         'h-8 w-9 shrink-0 transition-transform duration-500 group-hover:scale-105 group-hover:rotate-[8deg] sm:h-10 sm:w-11',
-        light ? 'text-white' : 'text-navy-900',
+        light ? 'text-white' : 'text-ink',
       )}
     />
     <span className="leading-none whitespace-nowrap">
-      <span className={clsx('block font-display text-[0.98rem] font-extrabold tracking-[0.08em] min-[400px]:text-[1.05rem] min-[400px]:tracking-[0.1em] sm:text-[1.3rem] sm:tracking-[0.12em]', light ? 'text-white' : 'text-navy-900')}>
+      <span className={clsx('block font-display text-[0.98rem] font-extrabold tracking-[0.08em] min-[400px]:text-[1.05rem] min-[400px]:tracking-[0.1em] sm:text-[1.3rem] sm:tracking-[0.12em]', light ? 'text-white' : 'text-ink')}>
         TRIAD VISION
       </span>
       <span className={clsx('mt-1 hidden text-[0.52rem] font-semibold tracking-[0.3em] sm:block', light ? 'text-white/60' : 'text-muted')}>

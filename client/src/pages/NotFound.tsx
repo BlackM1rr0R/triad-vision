@@ -3,35 +3,24 @@ import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
 import { ArrowLeft } from 'lucide-react';
 import { usePageTitle } from '@/lib/usePageTitle';
+import { Lost } from '@/components/illustrations';
 
 export default function NotFound() {
   const { t } = useTranslation();
   usePageTitle(t('notFound.title'));
   return (
-    <section className="relative grid min-h-[90vh] place-items-center overflow-hidden bg-navy-950 px-4 pt-24 text-center text-white">
-      <motion.p
-        className="font-display text-[34vw] leading-none font-black text-white/5 sm:text-[20rem]"
-        initial={{ scale: 0.6, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
-      >
-        404
-      </motion.p>
-      <div className="absolute inset-0 grid place-items-center px-4">
-        <div>
-          <motion.h1 initial={{ y: 30, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.3 }} className="font-display text-4xl font-extrabold">
-            {t('notFound.title')}
-          </motion.h1>
-          <motion.p initial={{ y: 30, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.4 }} className="mt-4 text-white/70">
-            {t('notFound.text')}
-          </motion.p>
-          <motion.div initial={{ y: 30, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.5 }} className="mt-8">
-            <Link to="/" className="btn-primary">
-              <ArrowLeft className="size-4" /> {t('notFound.home')}
-            </Link>
-          </motion.div>
+    <section className="grid min-h-[90vh] place-items-center bg-canvas px-4 pt-28 pb-16 text-center">
+      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }} className="mx-auto max-w-xl">
+        <Lost animated className="mx-auto w-56 sm:w-72" />
+        <p className="mt-6 font-display text-sm font-semibold tracking-[0.2em] text-highlight-fg">404</p>
+        <h1 className="mt-2 font-display text-3xl font-semibold text-ink sm:text-4xl">{t('notFound.title')}</h1>
+        <p className="mx-auto mt-4 max-w-[52ch] text-base leading-relaxed text-muted">{t('notFound.text')}</p>
+        <div className="mt-8">
+          <Link to="/" className="btn-primary btn-press btn-lg">
+            <ArrowLeft className="size-4" aria-hidden /> {t('notFound.home')}
+          </Link>
         </div>
-      </div>
+      </motion.div>
     </section>
   );
 }

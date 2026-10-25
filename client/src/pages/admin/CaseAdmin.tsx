@@ -255,7 +255,7 @@ function CasePage({ data }: { data: CaseDetailResponse }) {
         <div className="min-w-0">
           <div
             id="case-tabbar"
-            className="z-20 -mx-4 mb-5 bg-surface px-4 sm:-mx-6 sm:px-6 lg:sticky lg:top-[calc(4rem+var(--case-header-h))] lg:mx-0 lg:px-0"
+            className="z-20 -mx-4 mb-5 bg-sunken px-4 sm:-mx-6 sm:px-6 lg:sticky lg:top-[calc(4rem+var(--case-header-h))] lg:mx-0 lg:px-0"
             onPointerOver={onTabHover}
             onFocus={onTabHover}
           >

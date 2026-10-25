@@ -39,8 +39,8 @@ export const DocChecklist = ({ profession }: { profession: Profession }) => {
   return (
     <div>
       <div className="mb-3 flex items-center gap-3">
-        <div className="h-2 flex-1 overflow-hidden rounded-full bg-surface ring-1 ring-line" aria-hidden>
-          <div className="h-full rounded-full bg-emerald-500 transition-[width] duration-300" style={{ width: `${(count / total) * 100}%` }} />
+        <div className="h-2 flex-1 overflow-hidden rounded-full bg-sunken ring-1 ring-line" aria-hidden>
+          <div className="h-full rounded-full bg-success transition-[width] duration-300" style={{ width: `${(count / total) * 100}%` }} />
         </div>
         <span className="text-xs font-semibold text-ink tabular-nums" aria-live="polite">
           {t('anerkPage.steps.progress', { done: count, total })}
@@ -53,8 +53,8 @@ export const DocChecklist = ({ profession }: { profession: Profession }) => {
             <li key={k}>
               <label
                 className={clsx(
-                  'flex h-full cursor-pointer items-start gap-3 rounded-xl border p-3 text-sm transition-colors has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-brand-500',
-                  checked ? 'border-emerald-200 bg-emerald-50' : 'border-line bg-card hover:border-brand-200',
+                  'flex h-full min-h-12 cursor-pointer items-start gap-3 rounded-xl border p-3.5 text-sm transition-colors has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-focus/40',
+                  checked ? 'border-success-border bg-success-bg' : 'border-line bg-card hover:border-line-strong',
                 )}
               >
                 <input type="checkbox" className="sr-only" checked={checked} onChange={() => toggle(k)} />
@@ -62,7 +62,7 @@ export const DocChecklist = ({ profession }: { profession: Profession }) => {
                   aria-hidden
                   className={clsx(
                     'mt-0.5 grid size-5 shrink-0 place-items-center rounded-md border-2 transition-colors',
-                    checked ? 'border-emerald-500 bg-emerald-500 text-white' : 'border-line',
+                    checked ? 'border-success bg-success text-white' : 'border-line-strong bg-card',
                   )}
                 >
                   {checked && <Check className="size-3.5" strokeWidth={3} />}

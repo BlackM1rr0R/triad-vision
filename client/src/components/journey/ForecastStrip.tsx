@@ -46,7 +46,7 @@ const StepCell = ({ step, index, visaType }: { step: ForecastStep; index: number
   const reduce = useReducedMotion();
   const { date } = useL10n();
   const range = useRangeLabel();
-  const tone = step.status === 'done' ? 'text-success' : step.status === 'current' ? 'text-brand-700' : 'text-muted';
+  const tone = step.status === 'done' ? 'text-success' : step.status === 'current' ? 'text-link' : 'text-muted';
   return (
     <li className="relative min-w-0 flex-1" aria-current={step.status === 'current' ? 'step' : undefined}>
       <div className="flex items-center gap-2">
@@ -54,7 +54,7 @@ const StepCell = ({ step, index, visaType }: { step: ForecastStep; index: number
           className={clsx(
             'relative grid size-10 shrink-0 place-items-center rounded-full border-2 font-display text-sm font-bold',
             step.status === 'done' && 'border-success bg-success text-white',
-            step.status === 'current' && 'border-brand-600 bg-card text-brand-600 shadow-lg shadow-brand-600/30',
+            step.status === 'current' && 'border-primary bg-card text-link shadow-lg shadow-brand-600/30',
             step.status === 'upcoming' && 'border-line bg-card text-muted',
           )}
           initial={reduce ? false : { scale: 0.6, opacity: 0 }}
@@ -64,7 +64,7 @@ const StepCell = ({ step, index, visaType }: { step: ForecastStep; index: number
         >
           {step.status === 'current' && !reduce && (
             <motion.span
-              className="absolute inset-0 rounded-full bg-brand-500"
+              className="absolute inset-0 rounded-full bg-primary"
               animate={{ scale: [1, 1.7], opacity: [0.45, 0] }}
               transition={{ duration: 1.8, repeat: Infinity, ease: 'easeOut' }}
             />
@@ -80,7 +80,7 @@ const StepCell = ({ step, index, visaType }: { step: ForecastStep; index: number
           />
         </span>
       </div>
-      <p className={clsx('mt-2.5 text-sm font-bold', step.status === 'upcoming' ? 'text-navy-900/70' : 'text-navy-900')}>{step.key === 'CONTRACT' && visaType ? t(`journey.forecast.contractByType.${visaType}`, { defaultValue: t('journey.forecast.steps.CONTRACT') }) : t(`journey.forecast.steps.${step.key}`)}</p>
+      <p className={clsx('mt-2.5 text-sm font-bold', step.status === 'upcoming' ? 'text-ink/70' : 'text-ink')}>{step.key === 'CONTRACT' && visaType ? t(`journey.forecast.contractByType.${visaType}`, { defaultValue: t('journey.forecast.steps.CONTRACT') }) : t(`journey.forecast.steps.${step.key}`)}</p>
       <p className={clsx('mt-0.5 text-xs font-semibold', tone)}>{t(`journey.forecast.${step.status}`)}</p>
       <p className="mt-1 text-xs text-muted">
         {step.status === 'done' && step.enteredAt && step.leftAt ? (
@@ -89,7 +89,7 @@ const StepCell = ({ step, index, visaType }: { step: ForecastStep; index: number
           </>
         ) : step.expectedFrom && step.expectedTo ? (
           <>
-            <span className="block font-medium text-navy-900/80">{range(step.minDays, step.maxDays)}</span>
+            <span className="block font-medium text-ink/80">{range(step.minDays, step.maxDays)}</span>
             <DateRange from={step.expectedFrom} to={step.expectedTo} />
           </>
         ) : (
@@ -117,8 +117,8 @@ export const ForecastView = ({ forecast, className }: { forecast: Forecast; clas
     <section className={clsx('card p-5 sm:p-6', className)} aria-labelledby="forecast-title">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <h2 id="forecast-title" className="flex items-center gap-2.5 text-base font-bold text-navy-900">
-            <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-brand-50 text-brand-600">
+          <h2 id="forecast-title" className="flex items-center gap-2.5 text-base font-bold text-ink">
+            <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-sunken text-primary">
               <CalendarRange className="size-4" aria-hidden />
             </span>
             {t('journey.forecast.title')}
@@ -126,14 +126,14 @@ export const ForecastView = ({ forecast, className }: { forecast: Forecast; clas
           <p className="mt-1 text-sm text-muted">{t('journey.forecast.subtitle')}</p>
         </div>
         {forecast.estimatedDecision && (
-          <p className="rounded-xl border border-brand-200 bg-brand-50 px-3.5 py-2 text-sm">
-            <span className="block text-[11px] font-semibold tracking-wide text-brand-700 uppercase">{t('journey.forecast.decision')}</span>
-            <span className="font-bold text-navy-900">
+          <p className="rounded-xl border border-line-strong bg-sunken px-3.5 py-2 text-sm">
+            <span className="block text-[11px] font-semibold tracking-wide text-link uppercase">{t('journey.forecast.decision')}</span>
+            <span className="font-bold text-ink">
               <DateRange from={forecast.estimatedDecision.from} to={forecast.estimatedDecision.to} />
             </span>
           </p>
         )}
-        {finished && <p className="rounded-xl bg-emerald-50 px-3.5 py-2 text-sm font-semibold text-emerald-800">{t('journey.forecast.finished')}</p>}
+        {finished && <p className="rounded-xl bg-success-bg px-3.5 py-2 text-sm font-semibold text-success-fg">{t('journey.forecast.finished')}</p>}
       </div>
 
       <ol className="mt-5 flex gap-3 overflow-x-auto pb-1 [scrollbar-width:thin] sm:gap-4 [&>li]:min-w-[8.5rem] sm:[&>li]:min-w-0">
@@ -163,7 +163,7 @@ export const ForecastChip = ({ caseId, className }: { caseId: string; className?
   const basis = data.steps.find((s) => s.status === 'current');
   return (
     <span
-      className={clsx('inline-flex min-h-8 items-center gap-1.5 rounded-md border border-brand-200 bg-brand-50 px-2.5 py-1 text-xs font-medium text-brand-800', className)}
+      className={clsx('inline-flex min-h-8 items-center gap-1.5 rounded-md border border-line-strong bg-sunken px-2.5 py-1 text-xs font-medium text-link', className)}
       title={basis ? t(`journey.forecast.basedOn.${basis.basedOn}`, { count: basis.sample }) : undefined}
     >
       <CalendarRange className="size-3.5 shrink-0" aria-hidden />

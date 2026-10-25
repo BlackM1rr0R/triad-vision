@@ -94,7 +94,7 @@ export const TaskPanel = ({ taskRef, onClose, onDeleted }: { taskRef: string; on
       animate={{ x: 0, opacity: 1 }}
       exit={{ x: 40, opacity: 0 }}
       transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
-      className="fixed inset-0 z-50 flex flex-col bg-card md:absolute md:inset-y-0 md:right-0 md:left-auto md:w-[min(46rem,100%)] md:border-l md:border-line md:shadow-[-24px_0_60px_-30px_rgba(11,31,68,0.45)] xl:w-[48rem]"
+      className="fixed inset-0 z-50 flex flex-col bg-card md:absolute md:inset-y-0 md:right-0 md:left-auto md:w-[min(46rem,100%)] md:border-l md:border-line md:shadow-[var(--tv-shadow-overlay)] xl:w-[48rem]"
       aria-label={task ? `${task.key} ${task.title}` : taskRef}
     >
       {query.isLoading ? (
@@ -111,7 +111,7 @@ export const TaskPanel = ({ taskRef, onClose, onDeleted }: { taskRef: string; on
       ) : !task ? (
         <div className="flex h-full flex-col">
           <div className="flex justify-end p-3">
-            <button type="button" onClick={onClose} className="grid size-10 place-items-center rounded-lg text-muted hover:bg-surface" aria-label={t('tasks.actions.close')}>
+            <button type="button" onClick={onClose} className="grid size-10 place-items-center rounded-lg text-muted hover:bg-sunken" aria-label={t('tasks.actions.close')}>
               <X className="size-5" />
             </button>
           </div>
@@ -120,7 +120,7 @@ export const TaskPanel = ({ taskRef, onClose, onDeleted }: { taskRef: string; on
               <AlertCircle className="mx-auto mb-3 size-8 text-muted" aria-hidden />
               <p className="font-semibold text-ink">{errorCode(query.error) === 'TASK_NOT_FOUND' ? t('tasks.toast.notFound') : t('tasks.toast.loadFailed')}</p>
               {errorCode(query.error) !== 'TASK_NOT_FOUND' && (
-                <button type="button" onClick={() => void query.refetch()} className="btn-white btn-sm mt-4 border border-line">
+                <button type="button" onClick={() => void query.refetch()} className="btn-secondary btn-sm mt-4 border border-line">
                   <RefreshCw className="size-3.5" /> {t('tasks.actions.retry')}
                 </button>
               )}
@@ -230,19 +230,19 @@ const PanelBody = ({
   return (
     <>
       <header className="flex shrink-0 items-center gap-2 border-b border-line px-3 py-2.5 sm:px-5">
-        <span className="rounded-md bg-surface px-2 py-1 font-mono text-xs font-bold text-muted ring-1 ring-line">{task.key}</span>
+        <span className="rounded-md bg-sunken px-2 py-1 code-id text-xs font-medium text-muted ring-1 ring-line">{task.key}</span>
         <DueChip dueAt={task.dueAt} status={task.status} />
         <div className="ml-auto flex items-center gap-1">
           <TimerButton taskId={task.id} caseId={task.case?.id ?? null} compact />
-          <button type="button" onClick={() => void copyLink()} className="grid size-9 place-items-center rounded-lg text-muted hover:bg-surface hover:text-ink" title={t('tasks.actions.copyLink')} aria-label={t('tasks.actions.copyLink')}>
+          <button type="button" onClick={() => void copyLink()} className="grid size-9 place-items-center rounded-lg text-muted hover:bg-sunken hover:text-ink" title={t('tasks.actions.copyLink')} aria-label={t('tasks.actions.copyLink')}>
             <LinkIcon className="size-4" />
           </button>
           {p.delete && (
-            <button type="button" onClick={() => setConfirm({ kind: 'task' })} className="grid size-9 place-items-center rounded-lg text-muted hover:bg-red-50 hover:text-danger" title={t('tasks.actions.delete')} aria-label={t('tasks.actions.delete')}>
+            <button type="button" onClick={() => setConfirm({ kind: 'task' })} className="grid size-9 place-items-center rounded-lg text-muted hover:bg-danger-bg hover:text-danger-fg" title={t('tasks.actions.delete')} aria-label={t('tasks.actions.delete')}>
               <Trash2 className="size-4" />
             </button>
           )}
-          <button type="button" onClick={onClose} className="grid size-9 place-items-center rounded-lg text-muted hover:bg-surface hover:text-ink" title={t('tasks.actions.close')} aria-label={t('tasks.actions.close')}>
+          <button type="button" onClick={onClose} className="grid size-9 place-items-center rounded-lg text-muted hover:bg-sunken hover:text-ink" title={t('tasks.actions.close')} aria-label={t('tasks.actions.close')}>
             <X className="size-5" />
           </button>
         </div>
@@ -272,14 +272,14 @@ const PanelBody = ({
             aria-label={t('tasks.fields.title')}
             className={clsx(
               'w-full resize-none overflow-hidden rounded-lg border border-transparent bg-transparent px-1 py-0.5 font-display text-xl leading-snug font-bold text-ink outline-none sm:text-2xl',
-              p.edit && 'hover:border-line focus:border-brand-500 focus:bg-field',
+              p.edit && 'hover:border-line focus:border-focus focus:bg-field',
             )}
           />
           <p className="mt-1 px-1 text-xs text-muted">
             {t('tasks.panel.created', { name: task.createdBy ? fullName(task.createdBy) : '—', date: fmtDayTime(task.createdAt) })}
           </p>
           {p.take && (
-            <button type="button" onClick={() => void take()} className="btn-ghost btn-sm mt-3">
+            <button type="button" onClick={() => void take()} className="btn-secondary btn-sm mt-3">
               <Hand className="size-3.5" /> {t('tasks.actions.take')}
             </button>
           )}
@@ -324,7 +324,7 @@ const PanelBody = ({
               <div className="flex flex-wrap items-center gap-2">
                 <CaseField value={task.case} disabled={!p.edit} onChange={(c) => void save({ caseId: c?.id ?? null })} align="right" />
                 {task.case && (
-                  <Link to={`/admin/cases/${task.case.id}`} className="inline-flex items-center gap-0.5 text-xs font-semibold text-brand-600 hover:underline">
+                  <Link to={`/admin/cases/${task.case.id}`} className="inline-flex items-center gap-0.5 text-xs font-semibold text-link hover:underline">
                     {t('tasks.actions.openCase')} <ArrowUpRight className="size-3" />
                   </Link>
                 )}
@@ -339,7 +339,7 @@ const PanelBody = ({
           title={t('tasks.fields.description')}
           aside={
             p.edit && !editingDesc ? (
-              <button type="button" onClick={() => setEditingDesc(true)} className="text-xs font-semibold text-brand-600 hover:underline">
+              <button type="button" onClick={() => setEditingDesc(true)} className="text-xs font-semibold text-link hover:underline">
                 {t('tasks.actions.edit')}
               </button>
             ) : undefined
@@ -381,7 +381,7 @@ const PanelBody = ({
           ) : task.description ? (
             <RichText text={task.description} className="text-sm leading-relaxed text-ink/90" />
           ) : p.edit ? (
-            <button type="button" onClick={() => setEditingDesc(true)} className="w-full rounded-xl border border-dashed border-line px-4 py-4 text-left text-sm text-muted hover:border-brand-400">
+            <button type="button" onClick={() => setEditingDesc(true)} className="w-full rounded-xl border border-dashed border-line px-4 py-4 text-left text-sm text-muted hover:border-line-strong">
               {t('tasks.ph.noDescription')}
             </button>
           ) : (

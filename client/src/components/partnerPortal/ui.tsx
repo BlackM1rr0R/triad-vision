@@ -15,8 +15,8 @@ export const Section = ({ title, icon: Icon, actions, children, className }: { t
     {(title || actions) && (
       <header className="mb-5 flex flex-wrap items-center justify-between gap-3">
         {title && (
-          <h2 className="flex items-center gap-2 font-display text-lg font-bold text-ink">
-            {Icon && <Icon className="size-5 text-brand-600" aria-hidden />} {title}
+          <h2 className="type-section-title flex items-center gap-2 text-ink">
+            {Icon && <Icon className="size-5 text-primary" aria-hidden />} {title}
           </h2>
         )}
         {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
@@ -29,7 +29,7 @@ export const Section = ({ title, icon: Icon, actions, children, className }: { t
 export const Loading = () => {
   const { t } = useTranslation();
   return (
-    <div className="grid min-h-[30vh] place-items-center text-brand-600" role="status" aria-label={t('partnerPortal.common.loading')}>
+    <div className="grid min-h-[30vh] place-items-center text-primary" role="status" aria-label={t('partnerPortal.common.loading')}>
       <Spinner className="size-8 border-[3px]" />
     </div>
   );
@@ -47,12 +47,13 @@ export const ErrorRetry = ({ onRetry }: { onRetry: () => void }) => {
   );
 };
 
-export const Kpi = ({ label, value, icon: Icon, tone = 'bg-brand-100 text-brand-700', hint }: { label: string; value: ReactNode; icon: LucideIcon; tone?: string; hint?: ReactNode }) => (
-  <div className="card flex items-start justify-between gap-3 p-4 sm:p-5">
+/** KPI tile (same look as the design-system StatTile); `tone` colours the icon chip. */
+export const Kpi = ({ label, value, icon: Icon, tone = 'chip-sky text-ink', hint }: { label: string; value: ReactNode; icon: LucideIcon; tone?: string; hint?: ReactNode }) => (
+  <div className="flex h-full items-start justify-between gap-3 rounded-2xl border border-line bg-card p-4 shadow-[var(--tv-shadow-card)] sm:p-5">
     <div className="min-w-0">
-      <p className="text-xs font-medium text-muted">{label}</p>
-      <p className="mt-1 truncate font-display text-xl font-extrabold text-ink tabular-nums sm:text-2xl">{typeof value === 'number' ? <AnimatedNumber value={value} /> : value}</p>
-      {hint && <p className="mt-0.5 text-[11px] text-muted">{hint}</p>}
+      <p className="text-xs leading-snug font-medium text-muted">{label}</p>
+      <p className="num mt-1.5 truncate text-xl leading-tight font-semibold tracking-[-0.02em] text-ink sm:text-2xl">{typeof value === 'number' ? <AnimatedNumber value={value} /> : value}</p>
+      {hint && <p className="mt-1 text-xs text-muted">{hint}</p>}
     </div>
     <span className={clsx('grid size-10 shrink-0 place-items-center rounded-xl', tone)}>
       <Icon className="size-5" aria-hidden />
@@ -87,7 +88,7 @@ export const StepBar = ({ step, status }: { step: PortalStep; status: CaseStatus
             key={s}
             className={clsx(
               'h-1.5 flex-1 rounded-full',
-              i < idx ? (failed && step === 'DONE' ? 'bg-muted/40' : 'bg-emerald-500') : i === idx ? 'bg-brand-500' : 'bg-line',
+              i < idx ? (failed && step === 'DONE' ? 'bg-muted/40' : 'bg-success') : i === idx ? 'bg-primary' : 'bg-line',
             )}
           />
         ))}

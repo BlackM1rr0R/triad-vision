@@ -38,7 +38,7 @@ export function SheetTabs({
   };
 
   return (
-    <div className="flex items-center gap-1 overflow-x-auto border-t border-line bg-surface px-2 py-1" role="tablist" aria-label={t('sheet.tabs.label')}>
+    <div className="flex items-center gap-1 overflow-x-auto border-t border-line bg-sunken px-2 py-1" role="tablist" aria-label={t('sheet.tabs.label')}>
       {!readOnly && (
         <button type="button" onClick={onAdd} title={t('sheet.tabs.add')} aria-label={t('sheet.tabs.add')} className="grid h-7 w-7 shrink-0 place-items-center rounded-md text-muted hover:bg-card hover:text-ink">
           <Plus size={16} />
@@ -57,7 +57,7 @@ export function SheetTabs({
               if (e.key === 'Enter') finishRename(true);
               if (e.key === 'Escape') finishRename(false);
             }}
-            className={clsx('h-7 w-36 rounded-md border bg-card px-2 text-sm text-ink outline-none', isValidName(renaming.value, s.key) ? 'border-brand-500' : 'border-danger')}
+            className={clsx('h-7 w-36 rounded-md border bg-card px-2 text-sm text-ink outline-none', isValidName(renaming.value, s.key) ? 'border-primary' : 'border-danger')}
           />
         ) : (
           <button
@@ -88,7 +88,7 @@ export function SheetTabs({
             }}
             className={clsx(
               'h-7 shrink-0 rounded-md px-3 text-sm whitespace-nowrap transition',
-              i === active ? 'bg-card font-semibold text-brand-700 shadow-sm ring-1 ring-line' : 'text-muted hover:bg-card/70 hover:text-ink',
+              i === active ? 'bg-card font-semibold text-link shadow-[var(--tv-shadow-card)] ring-1 ring-line' : 'text-muted hover:bg-card/70 hover:text-ink',
               dragKey === s.key && 'opacity-50',
             )}
           >

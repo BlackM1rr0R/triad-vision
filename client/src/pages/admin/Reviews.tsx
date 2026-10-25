@@ -55,7 +55,7 @@ const KEY = ['admin-reviews'];
 const Stars = ({ value }: { value: number }) => (
   <span className="inline-flex gap-0.5" aria-label={`${value} / 5`}>
     {[1, 2, 3, 4, 5].map((n) => (
-      <Star key={n} className={clsx('size-4', n <= value ? 'fill-amber-400 text-amber-400' : 'text-slate-300')} aria-hidden />
+      <Star key={n} className={clsx('size-4', n <= value ? 'fill-warning text-warning-fg' : 'text-subtle')} aria-hidden />
     ))}
   </span>
 );
@@ -89,7 +89,7 @@ const ReviewCard = ({ r, canModerate }: { r: AdminReview; canModerate: boolean }
   const editValid = name.trim().length >= 2 && name.trim().length <= 80 && text.trim().length >= 20 && text.trim().length <= 1500;
 
   return (
-    <li className="rounded-xl border border-line bg-white p-4 sm:p-5">
+    <li className="rounded-xl border border-line bg-card p-4 sm:p-5">
       <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
@@ -97,24 +97,24 @@ const ReviewCard = ({ r, canModerate }: { r: AdminReview; canModerate: boolean }
             <ToneBadge tone={STATUS_TONE[r.status]}>{t(`growth.adminReviews.status.${r.status}`)}</ToneBadge>
             {r.status !== 'REQUESTED' &&
               (r.consentPublish ? (
-                <ToneBadge tone="bg-brand-50 text-brand-700">
+                <ToneBadge tone="bg-primary/[0.06] text-link">
                   <Eye className="size-3" aria-hidden /> {t('growth.adminReviews.consentYes')}
                 </ToneBadge>
               ) : (
-                <ToneBadge tone="bg-slate-100 text-slate-600">
+                <ToneBadge tone="bg-sunken text-muted">
                   <EyeOff className="size-3" aria-hidden /> {t('growth.adminReviews.consentNo')}
                 </ToneBadge>
               ))}
-            {isPublic && <ToneBadge tone="bg-emerald-50 text-emerald-700">{t('growth.adminReviews.public')}</ToneBadge>}
-            {r.inviteExpired && <ToneBadge tone="bg-red-50 text-red-700">{t('growth.adminReviews.expired')}</ToneBadge>}
+            {isPublic && <ToneBadge tone="bg-success-bg text-success-fg">{t('growth.adminReviews.public')}</ToneBadge>}
+            {r.inviteExpired && <ToneBadge tone="bg-danger-bg text-danger-fg">{t('growth.adminReviews.expired')}</ToneBadge>}
           </div>
-          <p className="mt-2 text-sm font-semibold text-navy-900">
+          <p className="mt-2 text-sm font-semibold text-ink">
             {fullName(r.user)} <span className="font-normal text-muted">· {r.user.email}</span>
           </p>
           <p className="mt-0.5 text-xs text-muted">
             {r.case && (
               <>
-                <Link to={`/admin/cases/${r.case.id}`} className="font-mono font-semibold text-brand-700 hover:underline">
+                <Link to={`/admin/cases/${r.case.id}`} className="font-mono font-semibold text-link hover:underline">
                   {r.case.number}
                 </Link>{' '}
                 · {r.case.profession} ·{' '}
@@ -135,12 +135,12 @@ const ReviewCard = ({ r, canModerate }: { r: AdminReview; canModerate: boolean }
               !editing && (
                 <>
                   {r.status !== 'APPROVED' && (
-                    <button type="button" className="btn-sm inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 font-semibold text-white hover:bg-emerald-700" onClick={() => patch.mutate({ status: 'APPROVED' })} disabled={busy}>
+                    <button type="button" className="btn-sm inline-flex items-center gap-1.5 rounded-lg bg-success px-3 font-semibold text-white hover:bg-success/90" onClick={() => patch.mutate({ status: 'APPROVED' })} disabled={busy}>
                       <Check className="size-3.5" aria-hidden /> {t('growth.adminReviews.approve')}
                     </button>
                   )}
                   {r.status !== 'REJECTED' && (
-                    <button type="button" className="btn-secondary btn-sm text-danger" onClick={() => patch.mutate({ status: 'REJECTED' })} disabled={busy}>
+                    <button type="button" className="btn-secondary btn-sm text-danger-fg" onClick={() => patch.mutate({ status: 'REJECTED' })} disabled={busy}>
                       <X className="size-3.5" aria-hidden /> {t('growth.adminReviews.reject')}
                     </button>
                   )}
@@ -197,9 +197,9 @@ const ReviewCard = ({ r, canModerate }: { r: AdminReview; canModerate: boolean }
           </div>
         </form>
       ) : (
-        <figure className="mt-3 rounded-lg bg-surface p-3.5">
+        <figure className="mt-3 rounded-lg bg-sunken p-3.5">
           <blockquote className="text-sm leading-relaxed whitespace-pre-line text-ink">{r.text}</blockquote>
-          <figcaption className="mt-2 text-xs font-semibold text-navy-900">— {r.displayName}</figcaption>
+          <figcaption className="mt-2 text-xs font-semibold text-ink">— {r.displayName}</figcaption>
         </figure>
       )}
     </li>
@@ -229,10 +229,10 @@ const Candidates = () => {
         {data.items.map((c) => (
           <li key={c.id} className="flex flex-wrap items-center justify-between gap-3 py-2.5">
             <span className="min-w-0 text-sm">
-              <Link to={`/admin/cases/${c.id}`} className="font-mono font-semibold text-brand-700 hover:underline">
+              <Link to={`/admin/cases/${c.id}`} className="font-mono font-semibold text-link hover:underline">
                 {c.number}
               </Link>{' '}
-              <span className="text-navy-900">{fullName(c.client)}</span> <span className="text-muted">· {c.profession} · {fmtDate(c.decisionAt)}</span>
+              <span className="text-ink">{fullName(c.client)}</span> <span className="text-muted">· {c.profession} · {fmtDate(c.decisionAt)}</span>
             </span>
             <button type="button" className="btn-secondary btn-sm" onClick={() => invite.mutate(c.id)} disabled={invite.isPending}>
               <Send className="size-3.5" aria-hidden /> {t('growth.adminReviews.invite')}
@@ -272,7 +272,7 @@ export default function AdminReviews() {
 
   return (
     <div>
-      <PageHead title={t('growth.adminReviews.title')} subtitle={t('growth.adminReviews.subtitle')} actions={isFetching && !isLoading ? <Spinner className="size-4 text-brand-600" /> : undefined} />
+      <PageHead title={t('growth.adminReviews.title')} subtitle={t('growth.adminReviews.subtitle')} actions={isFetching && !isLoading ? <Spinner className="size-4 text-link" /> : undefined} />
 
       {isLoading ? (
         <LoadingBlock />
@@ -287,7 +287,7 @@ export default function AdminReviews() {
             <StatTile label={t('growth.adminReviews.tiles.approved')} value={by.APPROVED ?? 0} tone="good" icon={Check} />
           </div>
 
-          {!canModerate && <p className="rounded-lg bg-surface px-4 py-3 text-sm text-muted">{t('growth.adminReviews.readOnly')}</p>}
+          {!canModerate && <p className="rounded-lg bg-sunken px-4 py-3 text-sm text-muted">{t('growth.adminReviews.readOnly')}</p>}
 
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <div className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1 [scrollbar-width:none]">

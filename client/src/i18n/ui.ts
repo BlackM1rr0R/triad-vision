@@ -19,6 +19,11 @@ const az = {
     sortDescending: 'Azalan sıra ilə',
     progress: 'Gedişat',
     uploadProgress: 'Yükləmə gedişatı',
+    pagination: 'Səhifələr',
+    previous: 'Əvvəlki',
+    next: 'Növbəti',
+    page: 'Səhifə {{page}}',
+    range: '{{from}}–{{to}} / {{total}}',
   },
 };
 
@@ -39,6 +44,11 @@ const de: Shape = {
     sortDescending: 'Absteigend',
     progress: 'Fortschritt',
     uploadProgress: 'Upload-Fortschritt',
+    pagination: 'Seitennavigation',
+    previous: 'Zurück',
+    next: 'Weiter',
+    page: 'Seite {{page}}',
+    range: '{{from}}–{{to}} von {{total}}',
   },
 };
 
@@ -57,6 +67,11 @@ const en: Shape = {
     sortDescending: 'Descending',
     progress: 'Progress',
     uploadProgress: 'Upload progress',
+    pagination: 'Pagination',
+    previous: 'Previous',
+    next: 'Next',
+    page: 'Page {{page}}',
+    range: '{{from}}–{{to}} of {{total}}',
   },
 };
 
@@ -75,6 +90,11 @@ const ru: Shape = {
     sortDescending: 'По убыванию',
     progress: 'Прогресс',
     uploadProgress: 'Ход загрузки',
+    pagination: 'Страницы',
+    previous: 'Назад',
+    next: 'Далее',
+    page: 'Страница {{page}}',
+    range: '{{from}}–{{to}} из {{total}}',
   },
 };
 

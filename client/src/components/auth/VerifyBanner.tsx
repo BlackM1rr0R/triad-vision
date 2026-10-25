@@ -39,7 +39,7 @@ export const ResendVerificationButton = ({ className, label }: { className?: str
   };
 
   return (
-    <button type="button" onClick={resend} disabled={busy || sent} className={clsx(className ?? 'btn-ghost btn-sm')}>
+    <button type="button" onClick={resend} disabled={busy || sent} className={clsx(className ?? 'btn-secondary btn-sm')}>
       {busy ? <Spinner className="size-4" /> : <Send className="size-4" aria-hidden />} {label ?? t('verifyBanner.resend')}
     </button>
   );
@@ -54,14 +54,14 @@ export const VerifyBanner = ({ className }: { className?: string }) => {
     <div
       role="status"
       className={clsx(
-        'flex flex-col gap-3 rounded-2xl border border-warning/40 bg-warning/10 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5',
+        'flex flex-col gap-3 rounded-2xl border border-warning-border bg-warning-bg p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5',
         className,
       )}
     >
       <div className="flex min-w-0 items-start gap-3">
-        <MailWarning className="mt-0.5 size-5 shrink-0 text-warning" aria-hidden />
+        <MailWarning className="mt-0.5 size-5 shrink-0 text-warning-fg" aria-hidden />
         <div className="min-w-0">
-          <p className="font-semibold text-navy-900">{t('verifyBanner.title')}</p>
+          <p className="font-semibold text-ink">{t('verifyBanner.title')}</p>
           <p className="mt-0.5 text-sm break-words text-muted">{t('verifyBanner.text', { email: user.email })}</p>
         </div>
       </div>

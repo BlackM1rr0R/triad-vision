@@ -21,7 +21,7 @@ export default function AccountGuides() {
   return (
     <div className="space-y-5">
       <div>
-        <h2 className="text-xl font-extrabold text-ink sm:text-2xl">{t('pnav.guides.title')}</h2>
+        <h2 className="type-page-title">{t('pnav.guides.title')}</h2>
         <p className="mt-1 max-w-2xl text-sm text-muted">{t('pnav.guides.intro')}</p>
       </div>
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 [&>*]:min-w-0">

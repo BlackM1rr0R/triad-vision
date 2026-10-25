@@ -102,7 +102,7 @@ export const Field = ({ label, hint, error, required = false, hideLabel = false,
   );
 };
 
-const invalidRing = 'border-danger-border focus:border-danger focus:ring-danger/15';
+const invalidRing = 'border-danger focus:border-danger focus:ring-danger/20';
 
 const useWired = (props: { id?: string; 'aria-describedby'?: string; 'aria-invalid'?: AriaAttributes['aria-invalid']; required?: boolean; invalid?: boolean }) => {
   const ctx = useFieldControl();
@@ -148,8 +148,8 @@ export const Checkbox = forwardRef<HTMLInputElement, Omit<InputHTMLAttributes<HT
   ref,
 ) {
   return (
-    <label className={clsx('flex cursor-pointer items-start gap-2.5 text-sm text-ink', rest.disabled && 'cursor-not-allowed opacity-60', className)}>
-      <input ref={ref} type="checkbox" className="mt-0.5 size-4 shrink-0 rounded border-line accent-brand-600" {...rest} />
+    <label className={clsx('flex min-h-6 cursor-pointer items-start gap-2.5 text-sm text-ink', rest.disabled && 'cursor-not-allowed opacity-60', className)}>
+      <input ref={ref} type="checkbox" className="mt-0.5 size-[1.125rem] shrink-0 cursor-[inherit] rounded border-line-strong accent-brand-600" {...rest} />
       <span className="min-w-0">
         {label}
         {hint && <span className="mt-0.5 block text-xs text-muted">{hint}</span>}
@@ -157,3 +157,61 @@ export const Checkbox = forwardRef<HTMLInputElement, Omit<InputHTMLAttributes<HT
     </label>
   );
 });
+
+/** Radio button with its label on the right (group them in a <RadioGroup> or a <fieldset>). */
+export const Radio = forwardRef<HTMLInputElement, Omit<InputHTMLAttributes<HTMLInputElement>, 'type'> & { label: ReactNode; hint?: ReactNode }>(function Radio(
+  { label, hint, className, ...rest },
+  ref,
+) {
+  return (
+    <label className={clsx('flex min-h-6 cursor-pointer items-start gap-2.5 text-sm text-ink', rest.disabled && 'cursor-not-allowed opacity-60', className)}>
+      <input ref={ref} type="radio" className="mt-0.5 size-[1.125rem] shrink-0 cursor-[inherit] accent-brand-600" {...rest} />
+      <span className="min-w-0">
+        {label}
+        {hint && <span className="mt-0.5 block text-xs text-muted">{hint}</span>}
+      </span>
+    </label>
+  );
+});
+
+export type RadioGroupProps<V extends string> = {
+  /** Group label (the fieldset legend). */
+  label: ReactNode;
+  name: string;
+  value: V;
+  onChange: (value: V) => void;
+  options: { value: V; label: ReactNode; hint?: ReactNode; disabled?: boolean }[];
+  hint?: ReactNode;
+  error?: ReactNode;
+  /** "column" (default) or "row" (wraps). */
+  direction?: 'column' | 'row';
+  hideLabel?: boolean;
+  className?: string;
+};
+
+/** Labelled radio group (fieldset + legend), with hint / error like <Field>. */
+export function RadioGroup<V extends string>({ label, name, value, onChange, options, hint, error, direction = 'column', hideLabel, className }: RadioGroupProps<V>) {
+  const autoId = useId();
+  const hintId = hint ? `rg${autoId}-hint` : undefined;
+  const errorId = error ? `rg${autoId}-error` : undefined;
+  return (
+    <fieldset className={clsx('min-w-0', className)} aria-describedby={[errorId, hintId].filter(Boolean).join(' ') || undefined} aria-invalid={error ? true : undefined}>
+      <legend className={clsx('label', hideLabel && 'sr-only')}>{label}</legend>
+      <div className={clsx('flex gap-x-5 gap-y-2', direction === 'row' ? 'flex-wrap' : 'flex-col')}>
+        {options.map((o) => (
+          <Radio key={o.value} name={name} value={o.value} checked={value === o.value} disabled={o.disabled} onChange={() => onChange(o.value)} label={o.label} hint={o.hint} />
+        ))}
+      </div>
+      {hint && (
+        <p id={hintId} className={clsx('mt-1 text-xs text-muted', error && 'sr-only')}>
+          {hint}
+        </p>
+      )}
+      {error && (
+        <p id={errorId} className="mt-1 text-xs font-medium text-danger-fg" role="alert">
+          {error}
+        </p>
+      )}
+    </fieldset>
+  );
+}

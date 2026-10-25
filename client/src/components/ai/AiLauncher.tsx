@@ -57,7 +57,7 @@ export default function AiLauncher() {
         aria-expanded={open}
         data-bnav-lift
         className={clsx(
-          'fixed right-[5.25rem] bottom-4 z-40 inline-flex h-14 items-center gap-2 rounded-full bg-gradient-to-br from-brand-500 to-brand-700 px-4 text-sm font-bold text-white shadow-xl shadow-brand-600/30 transition hover:brightness-110 sm:right-[5.75rem] sm:bottom-6 sm:px-5',
+          'fixed right-[5.25rem] bottom-4 z-40 inline-flex h-14 items-center gap-2 rounded-full bg-primary px-4 text-sm font-semibold text-primary-contrast shadow-[var(--tv-shadow-raised)] transition-colors hover:bg-primary-hover sm:right-[5.75rem] sm:bottom-6 sm:px-5',
           open && 'pointer-events-none opacity-0',
         )}
       >
@@ -67,7 +67,7 @@ export default function AiLauncher() {
 
       {mounted && (
         <div className={clsx('fixed inset-0 z-[60]', !open && 'pointer-events-none invisible')} aria-hidden={!open}>
-          <button type="button" tabIndex={-1} className={clsx('absolute inset-0 bg-navy-950/40 transition-opacity', open ? 'opacity-100' : 'opacity-0')} aria-label="close" onClick={() => setOpen(false)} />
+          <button type="button" tabIndex={-1} className={clsx('absolute inset-0 bg-scrim transition-opacity', open ? 'opacity-100' : 'opacity-0')} aria-label="close" onClick={() => setOpen(false)} />
           <div
             role="dialog"
             aria-modal="true"

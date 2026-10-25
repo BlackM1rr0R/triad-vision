@@ -69,7 +69,7 @@ const ToolBtn = ({ icon: Icon, label, onClick, active, disabled }: { icon: Lucid
     disabled={disabled}
     onMouseDown={(e) => e.preventDefault()}
     onClick={onClick}
-    className={clsx('grid size-8 shrink-0 place-items-center rounded-lg text-ink transition hover:bg-surface disabled:opacity-35', active && 'bg-brand-50 text-brand-700 dark:bg-white/10')}
+    className={clsx('grid size-8 shrink-0 place-items-center rounded-lg text-ink transition hover:bg-sunken disabled:opacity-35', active && 'bg-primary/[0.06] text-link dark:bg-white/10')}
   >
     <Icon className="size-4" />
   </button>
@@ -503,10 +503,10 @@ export default function DocEditor({ target, folderName, onClose, onSaved }: { ta
   const sep = <span className="mx-1 h-6 w-px shrink-0 bg-line" />;
 
   return createPortal(
-    <div className="fixed inset-0 z-[80] flex flex-col bg-surface" role="dialog" aria-modal="true" aria-label={t(target.mode === 'new' && !nodeId ? 'docCreate.editor.newTitle' : 'docCreate.editor.editTitle')}>
+    <div className="fixed inset-0 z-[80] flex flex-col bg-sunken" role="dialog" aria-modal="true" aria-label={t(target.mode === 'new' && !nodeId ? 'docCreate.editor.newTitle' : 'docCreate.editor.editTitle')}>
       {/* Header: name, letterhead, date, save */}
       <header className="flex shrink-0 flex-wrap items-center gap-2 border-b border-line bg-card px-3 py-2 sm:px-4">
-        <button type="button" onClick={close} className="grid size-9 place-items-center rounded-lg text-muted hover:bg-surface hover:text-ink" aria-label={t('docCreate.editor.close')} title={t('docCreate.editor.close')}>
+        <button type="button" onClick={close} className="grid size-9 place-items-center rounded-lg text-muted hover:bg-sunken hover:text-ink" aria-label={t('docCreate.editor.close')} title={t('docCreate.editor.close')}>
           <X className="size-5" />
         </button>
         <div className="min-w-0 flex-1">
@@ -525,15 +525,15 @@ export default function DocEditor({ target, folderName, onClose, onSaved }: { ta
             placeholder={`${fileName.replace(/\.pdf$/i, '')}.pdf`}
             aria-label={t('docCreate.editor.fileName')}
             maxLength={180}
-            className="w-full min-w-0 truncate bg-transparent text-base font-bold text-ink outline-none placeholder:text-muted/70 disabled:opacity-100"
+            className="w-full min-w-0 truncate bg-transparent text-base font-bold text-ink outline-none placeholder:text-muted disabled:opacity-100"
           />
         </div>
         <label className="inline-flex items-center gap-2 rounded-lg border border-line px-2.5 py-1.5 text-xs font-medium text-ink" title={t('docCreate.editor.letterheadHint')}>
-          <input type="checkbox" className="size-4 accent-brand-600" checked={letterhead} onChange={(e) => (setLetterhead(e.target.checked), setDirty(true))} />
+          <input type="checkbox" className="size-4 accent-primary" checked={letterhead} onChange={(e) => (setLetterhead(e.target.checked), setDirty(true))} />
           {t('docCreate.editor.letterhead')}
         </label>
         <label className="inline-flex items-center gap-2 rounded-lg border border-line px-2.5 py-1.5 text-xs font-medium text-ink">
-          <input type="checkbox" className="size-4 accent-brand-600" checked={date !== null} onChange={(e) => (setDate(e.target.checked ? today() : null), setDirty(true))} />
+          <input type="checkbox" className="size-4 accent-primary" checked={date !== null} onChange={(e) => (setDate(e.target.checked ? today() : null), setDirty(true))} />
           {t('docCreate.editor.date')}
           {date !== null && <input value={date} onChange={(e) => (setDate(e.target.value), setDirty(true))} maxLength={60} className="w-24 border-b border-line bg-transparent text-xs outline-none" aria-label={t('docCreate.editor.date')} />}
         </label>
@@ -543,7 +543,7 @@ export default function DocEditor({ target, folderName, onClose, onSaved }: { ta
       </header>
       {nodeId && <FinalBanner nodeId={nodeId} />}
       {(lock.status === 'other' || lock.status === 'error') && (
-        <div role="status" className="flex shrink-0 items-center gap-2 border-b border-amber-300 bg-amber-50 px-4 py-2 text-xs text-amber-900 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-200">
+        <div role="status" className="flex shrink-0 items-center gap-2 border-b border-warning-border bg-warning-bg px-4 py-2 text-xs text-warning-fg dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-200">
           <span className="min-w-0 flex-1">{lock.status === 'other' ? t('driveCollab.lock.bannerOther', { name: lock.lockedBy.name }) : t('driveCollab.lock.bannerError')}</span>
           <button type="button" onClick={lock.retry} className="shrink-0 font-semibold underline">
             {t('driveCollab.lock.retry')}
@@ -590,11 +590,11 @@ export default function DocEditor({ target, folderName, onClose, onSaved }: { ta
             </span>
           </div>
         ) : (
-          <article className="mx-auto w-full max-w-[52rem] rounded-xl border border-line bg-card px-5 py-8 shadow-sm sm:px-14 sm:py-12">
+          <article className="mx-auto w-full max-w-[52rem] rounded-xl border border-line bg-card px-5 py-8 shadow-[var(--tv-shadow-card)] sm:px-14 sm:py-12">
             {letterhead && (
-              <div className="mb-6 flex flex-wrap items-start justify-between gap-3 border-b-2 border-brand-700 pb-3">
+              <div className="mb-6 flex flex-wrap items-start justify-between gap-3 border-b-2 border-primary pb-3">
                 <div>
-                  <p className="text-lg font-bold text-brand-800 dark:text-brand-300">{lh.data?.name ?? 'Triad Vision'}</p>
+                  <p className="text-lg font-bold text-ink dark:text-brand-300">{lh.data?.name ?? 'Triad Vision'}</p>
                   {lh.data?.lines.map((l) => (
                     <p key={l} className="text-xs text-muted">
                       {l}
@@ -615,7 +615,7 @@ export default function DocEditor({ target, folderName, onClose, onSaved }: { ta
               placeholder={t('docCreate.editor.docTitle')}
               aria-label={t('docCreate.editor.docTitle')}
               maxLength={300}
-              className="w-full bg-transparent text-[26px] leading-tight font-bold text-brand-800 outline-none placeholder:text-muted/60 dark:text-brand-300"
+              className="w-full bg-transparent text-[26px] leading-tight font-bold text-ink outline-none placeholder:text-subtle dark:text-brand-300"
             />
             {title.trim() && <div className="mt-2 mb-5 border-b border-line" />}
             {!title.trim() && <div className="mb-4" />}
@@ -623,7 +623,7 @@ export default function DocEditor({ target, folderName, onClose, onSaved }: { ta
               {blocks.map((b) => (
                 <div
                   key={b.id}
-                  className={clsx('-mx-3 rounded-lg px-3 py-0.5 transition-colors', focusId === b.id && !isText(b) && 'bg-brand-50/60 ring-1 ring-brand-200 dark:bg-white/5')}
+                  className={clsx('-mx-3 rounded-lg px-3 py-0.5 transition-colors', focusId === b.id && !isText(b) && 'bg-primary/[0.04] ring-1 ring-focus dark:bg-white/5')}
                   onMouseDown={() => !isText(b) && setFocusId(b.id)}
                 >
                   {isText(b) ? (

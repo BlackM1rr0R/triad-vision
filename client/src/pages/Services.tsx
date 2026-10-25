@@ -48,7 +48,7 @@ export default function Services() {
             title={t('servicesPage.grid.title')}
             subtitle={t('servicesPage.grid.subtitle')}
             action={
-              <div className="inline-flex max-w-full overflow-x-auto rounded-full border border-line bg-surface p-1 [scrollbar-width:none]">
+              <div className="inline-flex max-w-full overflow-x-auto rounded-full border border-line bg-sunken p-1 [scrollbar-width:none]">
                 {tabs.map((tab) => (
                   <button
                     key={tab.key}
@@ -56,11 +56,11 @@ export default function Services() {
                     aria-pressed={filter === tab.key}
                     onClick={() => setFilter(tab.key)}
                     className={clsx(
-                      'relative h-10 shrink-0 rounded-full px-4 text-sm font-semibold whitespace-nowrap transition sm:px-5',
-                      filter === tab.key ? 'text-white' : 'text-navy-900',
+                      'relative h-11 shrink-0 rounded-full px-4 text-sm font-semibold whitespace-nowrap transition sm:px-5',
+                      filter === tab.key ? 'text-primary-contrast' : 'text-ink',
                     )}
                   >
-                    {filter === tab.key && <motion.span layoutId="svc-tab" className="absolute inset-0 rounded-full bg-brand-600" />}
+                    {filter === tab.key && <motion.span layoutId="svc-tab" className="absolute inset-0 rounded-full bg-primary" />}
                     <span className="relative">{tab.label}</span>
                   </button>
                 ))}
@@ -82,10 +82,9 @@ export default function Services() {
       </section>
 
       {all.length > 0 && (
-        <section className="section relative isolate overflow-hidden bg-navy-950 text-white">
-          <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_15%_0%,rgba(47,123,255,0.25),transparent_45%)]" />
+        <section className="section bg-sunken">
           <div className="container-x">
-            <SectionHeading light eyebrow={t('servicesPage.journey.eyebrow')} title={t('servicesPage.journey.title')} subtitle={t('servicesPage.journey.subtitle')} />
+            <SectionHeading eyebrow={t('servicesPage.journey.eyebrow')} title={t('servicesPage.journey.title')} subtitle={t('servicesPage.journey.subtitle')} />
             <JourneyFlow services={all} />
           </div>
         </section>

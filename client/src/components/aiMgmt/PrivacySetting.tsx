@@ -35,7 +35,7 @@ export const PrivacySetting = () => {
   };
 
   const row = (key: 'privacyMode' | 'zeroDataRetention', label: string, hint: string, checked: boolean) => (
-    <div className="flex items-start justify-between gap-4 rounded-lg border border-line bg-surface p-3">
+    <div className="flex items-start justify-between gap-4 rounded-lg border border-line bg-sunken p-3">
       <div>
         <p className="text-sm font-semibold text-ink">{label}</p>
         <p className="mt-0.5 text-xs text-muted">{hint}</p>

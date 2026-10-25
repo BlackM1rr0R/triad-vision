@@ -25,11 +25,11 @@ export const PreviewText = ({ preview }: { preview: Preview }) => {
         'text' in s ? (
           <span key={i}>{s.text}</span>
         ) : s.value ? (
-          <mark key={i} className="rounded bg-brand-100/70 px-0.5 text-inherit" title={t(placeholderLabelKey(s.key), { defaultValue: s.key })}>
+          <mark key={i} className="rounded bg-primary/[0.06] px-0.5 text-inherit" title={t(placeholderLabelKey(s.key), { defaultValue: s.key })}>
             {s.value}
           </mark>
         ) : (
-          <mark key={i} className="rounded bg-amber-200 px-0.5 font-sans text-amber-900" title={t(placeholderLabelKey(s.key), { defaultValue: s.key })}>
+          <mark key={i} className="rounded bg-warning-bg px-0.5 font-sans text-warning-fg" title={t(placeholderLabelKey(s.key), { defaultValue: s.key })}>
             {BLANK}
           </mark>
         ),
@@ -132,7 +132,7 @@ export const FromTemplateDialog = ({ open, onClose, caseId, caseNumber }: { open
         size="lg"
         title={
           <span className="flex items-center gap-2">
-            <FileSignature className="size-4 text-brand-600" aria-hidden /> {t('contractTpl.dialog.title')}
+            <FileSignature className="size-4 text-link" aria-hidden /> {t('contractTpl.dialog.title')}
           </span>
         }
         description={t('contractTpl.dialog.description', { number: caseNumber })}
@@ -148,7 +148,7 @@ export const FromTemplateDialog = ({ open, onClose, caseId, caseNumber }: { open
         }
       >
         {loadingTemplates ? (
-          <div className="grid min-h-40 place-items-center text-brand-600">
+          <div className="grid min-h-40 place-items-center text-link">
             <Spinner className="size-6" />
           </div>
         ) : !templates?.length ? (
@@ -156,7 +156,7 @@ export const FromTemplateDialog = ({ open, onClose, caseId, caseNumber }: { open
         ) : (
           <div className="grid gap-4">
             {sentId && (
-              <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-900" role="status">
+              <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-success-border bg-success-bg px-3 py-2 text-sm text-success-fg" role="status">
                 <span className="inline-flex items-center gap-1.5">
                   <CheckCircle2 className="size-4" aria-hidden /> {t('contractTpl.dialog.sent')}
                 </span>
@@ -213,19 +213,19 @@ export const FromTemplateDialog = ({ open, onClose, caseId, caseNumber }: { open
             <div>
               <div className="mb-1.5 flex items-center justify-between gap-2">
                 <span className="label mb-0">{t('contractTpl.dialog.preview')}</span>
-                {preview.isFetching && <Spinner className="size-3.5 text-brand-600" />}
+                {preview.isFetching && <Spinner className="size-3.5 text-link" />}
               </div>
               {preview.data ? (
                 <PreviewText preview={preview.data} />
               ) : preview.error ? (
-                <p className="text-sm text-danger">{t('admin.common.loadFailed')}</p>
+                <p className="text-sm text-danger-fg">{t('admin.common.loadFailed')}</p>
               ) : (
-                <div className="grid min-h-32 place-items-center rounded-lg border border-line text-brand-600">
+                <div className="grid min-h-32 place-items-center rounded-lg border border-line text-link">
                   <Spinner className="size-5" />
                 </div>
               )}
               {preview.data && (
-                <p className={clsx('mt-2 flex items-start gap-1.5 text-xs', missing.length ? 'text-amber-800' : 'text-emerald-700')}>
+                <p className={clsx('mt-2 flex items-start gap-1.5 text-xs', missing.length ? 'text-warning-fg' : 'text-success-fg')}>
                   {missing.length ? <AlertTriangle className="mt-0.5 size-3.5 shrink-0" aria-hidden /> : <CheckCircle2 className="mt-0.5 size-3.5 shrink-0" aria-hidden />}
                   {missing.length
                     ? t('contractTpl.dialog.missing', { keys: missing.map((k) => t(placeholderLabelKey(k), { defaultValue: k })).join(', ') })
@@ -247,7 +247,7 @@ export const FromTemplateDialog = ({ open, onClose, caseId, caseNumber }: { open
         message={
           <>
             {t('contractTpl.dialog.sendConfirm', { company: recipients })}
-            {missing.length > 0 && <span className="mt-2 block text-amber-800">{t('contractTpl.dialog.missingWarn')}</span>}
+            {missing.length > 0 && <span className="mt-2 block text-warning-fg">{t('contractTpl.dialog.missingWarn')}</span>}
           </>
         }
       />
@@ -263,7 +263,7 @@ export const FromTemplateButton = ({ caseId, caseNumber }: { caseId: string; cas
     <>
       <button
         type="button"
-        className="-my-2 inline-flex min-h-10 items-center gap-1 text-xs font-semibold whitespace-nowrap text-brand-600 hover:text-brand-700"
+        className="-my-2 inline-flex min-h-10 items-center gap-1 text-xs font-semibold whitespace-nowrap text-link hover:text-link"
         onClick={() => setOpen(true)}
       >
         <FileText className="size-3.5" /> {t('contractTpl.dialog.open')}

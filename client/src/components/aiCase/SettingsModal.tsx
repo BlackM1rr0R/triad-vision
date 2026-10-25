@@ -93,17 +93,17 @@ export const SettingsModal = ({ open, onClose }: { open: boolean; onClose: () =>
       {s &&
         sortedYears(s[table]).map((y) => (
           <div key={y} className="flex items-center gap-2">
-            <span className="w-12 text-sm font-semibold text-navy-900 tabular-nums">{y}</span>
+            <span className="w-12 text-sm font-semibold text-ink tabular-nums">{y}</span>
             <input className="input w-32" inputMode="decimal" disabled={!canEdit} defaultValue={String(s[table][y])} aria-label={`${t(`aiCase.settings.${table === 'minimumWage' ? 'wage' : 'older'}`)} ${y}`} onBlur={(e) => setS((x) => (x ? { ...x, [table]: { ...x[table], [y]: num(e.target.value) } } : x))} />
             {canEdit && (
-              <button type="button" className="grid size-8 place-items-center rounded-md text-muted hover:text-danger" onClick={() => removeYear(table, y)} aria-label={t('aiCase.settings.remove')}>
+              <button type="button" className="grid size-8 place-items-center rounded-md text-muted hover:text-danger-fg" onClick={() => removeYear(table, y)} aria-label={t('aiCase.settings.remove')}>
                 <Trash2 className="size-3.5" aria-hidden />
               </button>
             )}
           </div>
         ))}
       {canEdit && (
-        <button type="button" className="text-xs font-semibold text-brand-600 hover:underline" onClick={() => addYear(table)}>
+        <button type="button" className="text-xs font-semibold text-link hover:underline" onClick={() => addYear(table)}>
           + {t('aiCase.settings.addYear')}
         </button>
       )}
@@ -130,7 +130,7 @@ export const SettingsModal = ({ open, onClose }: { open: boolean; onClose: () =>
       }
     >
       {!s ? (
-        <div className="grid min-h-40 place-items-center text-brand-600">
+        <div className="grid min-h-40 place-items-center text-link">
           <Spinner className="size-6" />
         </div>
       ) : (
@@ -139,41 +139,41 @@ export const SettingsModal = ({ open, onClose }: { open: boolean; onClose: () =>
           <div className="flex items-start gap-3">
             <Switch checked={s.enabled} disabled={!canEdit} onChange={(v) => setS({ ...s, enabled: v })} label={t('aiCase.settings.enabled')} />
             <div>
-              <p className="text-sm font-semibold text-navy-900">{t('aiCase.settings.enabled')}</p>
+              <p className="text-sm font-semibold text-ink">{t('aiCase.settings.enabled')}</p>
               <p className="text-xs text-muted">{t('aiCase.settings.enabledHint')}</p>
             </div>
           </div>
-          <p className="flex items-center gap-2 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:bg-amber-950/40 dark:text-amber-300">
+          <p className="flex items-center gap-2 rounded-lg bg-warning-bg px-3 py-2 text-xs text-warning-fg dark:bg-amber-950/40 dark:text-amber-300">
             <AlertTriangle className="size-3.5 shrink-0" aria-hidden /> {t('aiCase.settings.verify')}
           </p>
           <div className="grid gap-6 sm:grid-cols-2">
             <div>
-              <h4 className="mb-2 text-sm font-semibold text-navy-900">{t('aiCase.settings.wage')}</h4>
+              <h4 className="mb-2 text-sm font-semibold text-ink">{t('aiCase.settings.wage')}</h4>
               <YearTable table="minimumWage" />
             </div>
             <div>
-              <h4 className="mb-2 text-sm font-semibold text-navy-900">{t('aiCase.settings.older')}</h4>
+              <h4 className="mb-2 text-sm font-semibold text-ink">{t('aiCase.settings.older')}</h4>
               <YearTable table="olderWorker" />
             </div>
           </div>
           <div>
-            <h4 className="mb-2 text-sm font-semibold text-navy-900">{t('aiCase.settings.blueCard')}</h4>
+            <h4 className="mb-2 text-sm font-semibold text-ink">{t('aiCase.settings.blueCard')}</h4>
             <div className="space-y-1.5">
               {sortedYears(s.blueCard).map((y) => (
                 <div key={y} className="flex flex-wrap items-center gap-2">
-                  <span className="w-12 text-sm font-semibold text-navy-900 tabular-nums">{y}</span>
+                  <span className="w-12 text-sm font-semibold text-ink tabular-nums">{y}</span>
                   {(['standard', 'shortage'] as const).map((k) => (
                     <input key={k} className="input w-32" inputMode="decimal" disabled={!canEdit} defaultValue={String(s.blueCard[y][k])} aria-label={`${y} ${k}`} onBlur={(e) => setS((x) => (x ? { ...x, blueCard: { ...x.blueCard, [y]: { ...x.blueCard[y], [k]: num(e.target.value) } } } : x))} />
                   ))}
                   {canEdit && (
-                    <button type="button" className="grid size-8 place-items-center rounded-md text-muted hover:text-danger" onClick={() => removeYear('blueCard', y)} aria-label={t('aiCase.settings.remove')}>
+                    <button type="button" className="grid size-8 place-items-center rounded-md text-muted hover:text-danger-fg" onClick={() => removeYear('blueCard', y)} aria-label={t('aiCase.settings.remove')}>
                       <Trash2 className="size-3.5" aria-hidden />
                     </button>
                   )}
                 </div>
               ))}
               {canEdit && (
-                <button type="button" className="text-xs font-semibold text-brand-600 hover:underline" onClick={() => addYear('blueCard')}>
+                <button type="button" className="text-xs font-semibold text-link hover:underline" onClick={() => addYear('blueCard')}>
                   + {t('aiCase.settings.addYear')}
                 </button>
               )}
@@ -182,7 +182,7 @@ export const SettingsModal = ({ open, onClose }: { open: boolean; onClose: () =>
 
           <div>
             <div className="mb-2 flex flex-wrap items-center gap-2">
-              <h4 className="min-w-0 flex-1 text-sm font-semibold text-navy-900">{t('aiCase.settings.checklists')}</h4>
+              <h4 className="min-w-0 flex-1 text-sm font-semibold text-ink">{t('aiCase.settings.checklists')}</h4>
               <select className="input w-auto" value={visa} onChange={(e) => setVisa(e.target.value as VisaType)} aria-label={t('aiCase.settings.visaType')}>
                 {VISA_TYPES.map((v) => (
                   <option key={v} value={v}>

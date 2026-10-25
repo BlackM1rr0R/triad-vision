@@ -50,8 +50,8 @@ const greetingKey = () => {
 };
 
 const QuickLink = ({ to, icon: Icon, label }: { to: string; icon: LucideIcon; label: string }) => (
-  <Link to={to} className="flex items-center gap-2 rounded-xl border border-line bg-card px-3 py-2.5 text-sm font-semibold text-ink transition hover:border-brand-400 hover:bg-brand-50">
-    <span className="grid size-8 place-items-center rounded-lg bg-brand-100 text-brand-700">
+  <Link to={to} className="flex items-center gap-2 rounded-xl border border-line bg-card px-3 py-2.5 text-sm font-semibold text-ink transition hover:border-line-strong hover:bg-primary/[0.06]">
+    <span className="grid size-8 place-items-center rounded-lg bg-primary/10 text-link">
       <Icon className="size-4" aria-hidden />
     </span>
     {label}
@@ -59,7 +59,7 @@ const QuickLink = ({ to, icon: Icon, label }: { to: string; icon: LucideIcon; la
 );
 
 const OpenLink = ({ to, label }: { to: string; label: string }) => (
-  <Link to={to} className="inline-flex items-center gap-0.5 text-xs font-semibold text-brand-600 hover:underline">
+  <Link to={to} className="inline-flex items-center gap-0.5 text-xs font-semibold text-link hover:underline">
     {label} <ArrowUpRight className="size-3" />
   </Link>
 );
@@ -87,11 +87,11 @@ export default function WorkspaceHome() {
   const mailUnread = mail.data?.unread ?? mail.data?.accounts?.reduce((n, a) => n + a.unread, 0) ?? 0;
 
   return (
-    <div className="h-full min-h-0 overflow-y-auto bg-surface">
+    <div className="h-full min-h-0 overflow-y-auto bg-sunken">
       <div className="mx-auto max-w-7xl space-y-5 px-4 py-5 lg:px-6">
         <header className="flex flex-wrap items-end justify-between gap-3">
           <div>
-            <h1 className="font-display text-2xl font-extrabold text-ink">{t(`ws.home.greeting.${greetingKey()}`, { name: user?.firstName ?? '' })}</h1>
+            <h1 className="type-page-title">{t(`ws.home.greeting.${greetingKey()}`, { name: user?.firstName ?? '' })}</h1>
             <p className="text-sm text-muted">{t('ws.home.subtitle')}</p>
           </div>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">

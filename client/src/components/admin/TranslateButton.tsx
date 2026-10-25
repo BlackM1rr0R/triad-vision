@@ -78,7 +78,7 @@ export const TranslateButton = <K extends string>({
   return (
     <button
       type="button"
-      className="inline-flex min-h-8 items-center gap-1 rounded-md border border-line bg-card px-2 text-[11px] font-semibold text-brand-700 transition hover:bg-brand-50 disabled:opacity-50"
+      className="inline-flex min-h-8 items-center gap-1 rounded-md border border-line bg-card px-2 text-[11px] font-semibold text-link transition hover:bg-primary/[0.06] disabled:opacity-50"
       onClick={() => void run()}
       disabled={disabled || busy}
       title={t('admin.l10n.translateTitle')}

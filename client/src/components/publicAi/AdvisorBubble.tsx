@@ -151,7 +151,7 @@ export const AdvisorBubble = () => {
         transition={{ delay: 2.6, type: 'spring' }}
         whileHover={{ scale: 1.08 }}
         onClick={() => setOpen((o) => !o)}
-        className="grid size-14 place-items-center rounded-full bg-brand-600 text-white shadow-xl shadow-brand-600/30 hover:bg-brand-700"
+        className="grid size-14 place-items-center rounded-full bg-primary text-primary-contrast shadow-[var(--tv-shadow-raised)] hover:bg-primary-hover"
       >
         {open ? <X className="size-6" aria-hidden /> : <MessageCircleQuestion className="size-7" aria-hidden />}
       </motion.button>
@@ -165,29 +165,29 @@ export const AdvisorBubble = () => {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 16, scale: 0.98 }}
             transition={{ type: 'spring', stiffness: 380, damping: 32 }}
-            className="fixed inset-0 z-[60] flex flex-col bg-card sm:inset-auto sm:right-24 sm:bottom-6 sm:h-[min(620px,calc(100dvh-7rem))] sm:w-[380px] sm:overflow-hidden sm:rounded-2xl sm:border sm:border-line sm:shadow-2xl"
+            className="fixed inset-0 z-[60] flex flex-col bg-card sm:inset-auto sm:right-24 sm:bottom-6 sm:h-[min(620px,calc(100dvh-7rem))] sm:w-[380px] sm:overflow-hidden sm:rounded-3xl sm:border sm:border-line sm:shadow-[var(--tv-shadow-raised)]"
           >
-            <header className="flex items-center gap-3 bg-navy-900 px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))] text-white sm:pt-3">
-              <span className="grid size-9 shrink-0 place-items-center rounded-full bg-brand-600">
+            <header className="flex items-center gap-3 border-b border-line bg-sunken px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))] text-ink sm:pt-3">
+              <span className="grid size-10 shrink-0 place-items-center rounded-full chip-soft">
                 <Sparkles className="size-5" aria-hidden />
               </span>
               <div className="min-w-0 flex-1">
-                <h2 id={titleId} className="truncate text-sm font-bold">
+                <h2 id={titleId} className="truncate text-sm font-semibold">
                   {t('pai.bubble.title')}
                 </h2>
-                <p className="truncate text-[11px] text-white/70">{t('pai.bubble.subtitle')}</p>
+                <p className="truncate text-xs text-muted">{t('pai.bubble.subtitle')}</p>
               </div>
               {!human && (
-                <button type="button" className="grid size-9 place-items-center rounded-lg text-white/80 hover:bg-white/10" aria-label={t('livechat.talkToHuman')} title={t('livechat.talkToHuman')} onClick={() => setHuman('button')}>
+                <button type="button" className="grid size-10 place-items-center rounded-lg text-muted hover:bg-card hover:text-ink" aria-label={t('livechat.talkToHuman')} title={t('livechat.talkToHuman')} onClick={() => setHuman('button')}>
                   <Headset className="size-4" aria-hidden />
                 </button>
               )}
               {state.messages.length > 0 && !human && (
-                <button type="button" className="grid size-9 place-items-center rounded-lg text-white/80 hover:bg-white/10" aria-label={t('pai.bubble.restart')} title={t('pai.bubble.restart')} onClick={restart}>
+                <button type="button" className="grid size-10 place-items-center rounded-lg text-muted hover:bg-card hover:text-ink" aria-label={t('pai.bubble.restart')} title={t('pai.bubble.restart')} onClick={restart}>
                   <RotateCcw className="size-4" aria-hidden />
                 </button>
               )}
-              <button type="button" className="grid size-9 place-items-center rounded-lg text-white/80 hover:bg-white/10" aria-label={t('pai.bubble.close')} onClick={() => setOpen(false)}>
+              <button type="button" className="grid size-10 place-items-center rounded-lg text-muted hover:bg-card hover:text-ink" aria-label={t('pai.bubble.close')} onClick={() => setOpen(false)}>
                 <X className="size-5" aria-hidden />
               </button>
             </header>
@@ -196,16 +196,16 @@ export const AdvisorBubble = () => {
               <VisitorLiveChat transcript={state.messages} lang={lang} reason={human} onBack={() => setHuman(null)} />
             ) : (
             <>
-            <div ref={listRef} className="min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain bg-surface/60 p-3" aria-live="polite">
-              <div className="max-w-[85%] rounded-2xl rounded-tl-sm bg-card px-3 py-2 text-sm text-ink shadow-sm">{t('pai.bubble.greeting')}</div>
+            <div ref={listRef} className="min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain bg-canvas p-3" aria-live="polite">
+              <div className="max-w-[85%] rounded-2xl rounded-tl-sm border border-line bg-card px-3 py-2 text-sm text-ink shadow-sm">{t('pai.bubble.greeting')}</div>
               {state.messages.length === 0 && (
                 <div className="flex flex-wrap gap-1.5">
                   {(['s1', 's2', 's3'] as const).map((k) => (
-                    <button key={k} type="button" className="rounded-full border border-brand-200 bg-card px-3 py-1.5 text-xs font-medium text-brand-700 hover:bg-brand-50" onClick={() => void ask(t(`pai.bubble.${k}`))}>
+                    <button key={k} type="button" className="rounded-full border border-line-strong bg-card px-3 py-1.5 text-xs font-medium text-ink hover:bg-sunken" onClick={() => void ask(t(`pai.bubble.${k}`))}>
                       {t(`pai.bubble.${k}`)}
                     </button>
                   ))}
-                  <Link to="/uygunluq-testi" onClick={() => setOpen(false)} className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-card px-3 py-1.5 text-xs font-medium text-emerald-700 hover:bg-emerald-50">
+                  <Link to="/uygunluq-testi" onClick={() => setOpen(false)} className="inline-flex items-center gap-1 rounded-full border border-success-border bg-card px-3 py-1.5 text-xs font-medium text-success-fg hover:bg-success-bg">
                     <ClipboardCheck className="size-3.5" aria-hidden /> {t('pai.bubble.quiz')}
                   </Link>
                 </div>
@@ -215,7 +215,7 @@ export const AdvisorBubble = () => {
                   key={i}
                   className={clsx(
                     'max-w-[85%] rounded-2xl px-3 py-2 text-sm break-words whitespace-pre-wrap shadow-sm',
-                    m.role === 'user' ? 'ml-auto rounded-tr-sm bg-brand-600 text-white' : 'rounded-tl-sm bg-card text-ink',
+                    m.role === 'user' ? 'ml-auto rounded-tr-sm bg-primary text-primary-contrast' : 'rounded-tl-sm border border-line bg-card text-ink',
                   )}
                 >
                   {m.content}
@@ -223,20 +223,20 @@ export const AdvisorBubble = () => {
               ))}
               {busy && <div className="w-fit rounded-2xl rounded-tl-sm bg-card px-3 py-2 text-xs text-muted shadow-sm">{t('pai.bubble.thinking')}</div>}
               {notice && (
-                <p className="rounded-xl border border-amber-200 bg-amber-50 p-2.5 text-xs text-amber-900" role="status">
+                <p className="rounded-xl border border-warning-border bg-warning-bg p-2.5 text-xs text-warning-fg" role="status">
                   {notice}
                 </p>
               )}
               {state.offerLead && (
-                <div className="space-y-2 rounded-xl border border-brand-200 bg-brand-50/60 p-2.5">
+                <div className="space-y-2 rounded-xl border border-line-strong bg-sunken p-2.5">
                   <Link to="/booking" onClick={() => setOpen(false)} className="btn-primary btn-sm w-full">
                     <CalendarCheck className="size-4" aria-hidden /> {t('pai.bubble.consult')}
                   </Link>
                   <div className="grid grid-cols-2 gap-2">
-                    <Link to="/register" onClick={() => setOpen(false)} className="btn-ghost btn-sm w-full bg-card">
+                    <Link to="/register" onClick={() => setOpen(false)} className="btn-secondary btn-sm w-full">
                       <UserPlus className="size-4" aria-hidden /> {t('pai.bubble.register')}
                     </Link>
-                    <button type="button" className="btn-ghost btn-sm w-full bg-card" onClick={() => setShowLead((v) => !v)}>
+                    <button type="button" className="btn-secondary btn-sm w-full" onClick={() => setShowLead((v) => !v)}>
                       <PhoneCall className="size-4" aria-hidden /> {t('pai.bubble.leaveContact')}
                     </button>
                   </div>
@@ -250,7 +250,7 @@ export const AdvisorBubble = () => {
                   </button>
                 </div>
               )}
-              {state.offerLead && <CallbackButton source="advisor" className="btn-ghost btn-sm w-full bg-card" />}
+              {state.offerLead && <CallbackButton source="advisor" className="btn-secondary btn-sm w-full" />}
               {showLead && <LeadForm compact source="advisor" transcript={state.messages} onCancel={() => setShowLead(false)} />}
             </div>
 

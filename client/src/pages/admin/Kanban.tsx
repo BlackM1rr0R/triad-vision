@@ -173,7 +173,7 @@ export default function Kanban() {
 
       {/* Staff drop row */}
       {data && (
-        <div className="mb-4 rounded-xl border border-line bg-white px-3 py-2.5">
+        <div className="mb-4 rounded-xl border border-line bg-card px-3 py-2.5">
           <div className="flex items-center gap-2 overflow-x-auto pb-1">
             <span className="shrink-0 pr-1 text-[11px] font-semibold tracking-wide text-muted uppercase">{t('ops.kanban.staffRow')}</span>
             {data.staff.map((s) => {
@@ -188,14 +188,14 @@ export default function Kanban() {
                   onDrop={(e) => dropOn(e, s)}
                   className={clsx(
                     'flex shrink-0 items-center gap-2 rounded-full border px-1.5 py-1 pr-3 text-xs font-medium transition',
-                    isOver ? 'border-brand-500 bg-brand-50 ring-2 ring-brand-200' : dragging ? 'border-dashed border-brand-300 bg-white' : 'border-line bg-surface/50',
+                    isOver ? 'border-primary bg-primary/[0.06] ring-2 ring-focus' : dragging ? 'border-dashed border-primary/25 bg-card' : 'border-line bg-surface/50',
                     s.id === user?.id && 'font-semibold',
                   )}
                   title={fullName(s)}
                 >
-                  <span className="grid size-7 place-items-center rounded-full bg-navy-900 text-[11px] font-bold text-white">{initials(s)}</span>
+                  <span className="grid size-7 place-items-center rounded-full bg-primary text-[11px] font-bold text-primary-contrast">{initials(s)}</span>
                   <span className="max-w-32 truncate">{s.firstName}</span>
-                  <span className="rounded-full bg-white px-1.5 text-[10px] text-muted tabular-nums">{open}</span>
+                  <span className="rounded-full bg-card px-1.5 text-[10px] text-muted tabular-nums">{open}</span>
                 </div>
               );
             })}
@@ -206,7 +206,7 @@ export default function Kanban() {
               onDrop={(e) => dropOn(e, null)}
               className={clsx(
                 'ml-auto flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs text-muted transition',
-                over === 'none' ? 'border-red-400 bg-red-50 text-red-700' : dragging ? 'border-dashed border-line' : 'border-transparent',
+                over === 'none' ? 'border-danger bg-danger-bg text-danger-fg' : dragging ? 'border-dashed border-line' : 'border-transparent',
               )}
             >
               <UserX className="size-3.5" /> {t('ops.kanban.unassign')}
@@ -225,8 +225,8 @@ export default function Kanban() {
             <section key={col.status} className="flex w-72 shrink-0 flex-col rounded-xl border border-line bg-surface/60" aria-label={statusLabel(col.status)}>
               <header className="flex items-center gap-2 px-3 pt-3 pb-2">
                 <span className={clsx('size-2 rounded-full', STATUS_BAR_TONE[col.status])} aria-hidden />
-                <h2 className="truncate text-xs font-bold text-navy-900">{statusLabel(col.status)}</h2>
-                <span className="ml-auto rounded-full bg-white px-2 py-0.5 text-[11px] font-semibold text-muted tabular-nums">{col.count}</span>
+                <h2 className="truncate text-xs font-bold text-ink">{statusLabel(col.status)}</h2>
+                <span className="ml-auto rounded-full bg-card px-2 py-0.5 text-[11px] font-semibold text-muted tabular-nums">{col.count}</span>
               </header>
               <div className="flex-1 space-y-2 overflow-y-auto px-2 pb-2">
                 {col.cards.length === 0 && <p className="px-2 py-6 text-center text-xs text-muted">{t('ops.kanban.columnEmpty')}</p>}
@@ -241,10 +241,10 @@ export default function Kanban() {
 
       <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-muted">
         <span className="font-semibold">{t('ops.kanban.legend.title')}:</span>
-        <span className="inline-flex items-center gap-1"><span className="size-2 rounded-full bg-amber-400" /> {t('ops.kanban.legend.client')}</span>
-        <span className="inline-flex items-center gap-1"><span className="size-2 rounded-full bg-brand-500" /> {t('ops.kanban.legend.staff')}</span>
-        <span className="inline-flex items-center gap-1"><span className="rounded bg-amber-100 px-1 text-amber-800">{t('ops.kanban.overdue')}</span> {t('ops.kanban.legend.overdue', { days: OVERDUE_DAYS })}</span>
-        <span className="inline-flex items-center gap-1"><span className="rounded bg-red-100 px-1 text-red-700">{t('ops.kanban.critical')}</span> {t('ops.kanban.legend.critical', { days: CRITICAL_DAYS })}</span>
+        <span className="inline-flex items-center gap-1"><span className="size-2 rounded-full bg-warning" /> {t('ops.kanban.legend.client')}</span>
+        <span className="inline-flex items-center gap-1"><span className="size-2 rounded-full bg-primary" /> {t('ops.kanban.legend.staff')}</span>
+        <span className="inline-flex items-center gap-1"><span className="rounded bg-warning-bg px-1 text-warning-fg">{t('ops.kanban.overdue')}</span> {t('ops.kanban.legend.overdue', { days: OVERDUE_DAYS })}</span>
+        <span className="inline-flex items-center gap-1"><span className="rounded bg-danger-bg px-1 text-danger-fg">{t('ops.kanban.critical')}</span> {t('ops.kanban.legend.critical', { days: CRITICAL_DAYS })}</span>
       </div>
     </div>
   );
@@ -261,18 +261,18 @@ const KanbanCard = ({ card, dragging, onDragStart, onDragEnd }: { card: Card; dr
       onDragStart={(e) => onDragStart(e, card)}
       onDragEnd={onDragEnd}
       className={clsx(
-        'group rounded-lg border bg-white p-2.5 text-xs shadow-[0_1px_2px_rgba(11,31,68,0.05)] transition',
-        dragging ? 'opacity-40' : 'hover:border-brand-300',
-        critical ? 'border-red-300' : overdue ? 'border-amber-300' : 'border-line',
+        'group rounded-lg border bg-card p-2.5 text-xs shadow-[var(--tv-shadow-card)] transition',
+        dragging ? 'opacity-40' : 'hover:border-line-strong',
+        critical ? 'border-danger-border' : overdue ? 'border-warning-border' : 'border-line',
       )}
     >
       <div className="flex items-start justify-between gap-2">
-        <Link to={`/admin/cases/${card.id}`} className="min-w-0 font-semibold text-navy-900 hover:text-brand-700">
+        <Link to={`/admin/cases/${card.id}`} className="min-w-0 font-semibold text-ink hover:text-link">
           <span className="block truncate">{card.clientName}</span>
-          <span className="block truncate font-mono text-[10px] font-normal text-muted">{card.number}</span>
+          <span className="block truncate code-id text-[10px] font-normal text-muted">{card.number}</span>
         </Link>
         {card.assignedStaff ? (
-          <span className="grid size-6 shrink-0 place-items-center rounded-full bg-navy-900 text-[10px] font-bold text-white" title={fullName(card.assignedStaff)}>
+          <span className="grid size-6 shrink-0 place-items-center rounded-full bg-primary text-[10px] font-bold text-primary-contrast" title={fullName(card.assignedStaff)}>
             {initials(card.assignedStaff)}
           </span>
         ) : (
@@ -281,31 +281,31 @@ const KanbanCard = ({ card, dragging, onDragStart, onDragEnd }: { card: Card; dr
           </span>
         )}
       </div>
-      <p className="mt-1 truncate text-[11px] text-ink/70">
+      <p className="mt-1 truncate text-[11px] text-muted">
         {card.profession}
-        {card.visaLabel && <span className="ml-1 rounded bg-surface px-1 font-mono text-[10px] text-muted">{card.visaLabel}</span>}
+        {card.visaLabel && <span className="ml-1 rounded bg-sunken px-1 code-id text-[10px] text-muted">{card.visaLabel}</span>}
       </p>
       <div className="mt-2 flex flex-wrap items-center gap-1">
         {card.waitingFor && (
-          <span className={clsx('rounded px-1.5 py-0.5 text-[10px] font-semibold', card.waitingFor === 'client' ? 'bg-amber-50 text-amber-800' : 'bg-brand-50 text-brand-700')}>
+          <span className={clsx('rounded px-1.5 py-0.5 text-[10px] font-semibold', card.waitingFor === 'client' ? 'bg-warning-bg text-warning-fg' : 'bg-primary/[0.06] text-link')}>
             {card.waitingFor === 'client' ? t('ops.kanban.waitingClient') : t('ops.kanban.waitingStaff')}
           </span>
         )}
-        <span className={clsx('rounded px-1.5 py-0.5 text-[10px] font-semibold tabular-nums', critical ? 'bg-red-100 text-red-700' : overdue ? 'bg-amber-100 text-amber-800' : 'bg-surface text-muted')}>
+        <span className={clsx('rounded px-1.5 py-0.5 text-[10px] font-semibold tabular-nums', critical ? 'bg-danger-bg text-danger-fg' : overdue ? 'bg-warning-bg text-warning-fg' : 'bg-sunken text-muted')}>
           {t('ops.kanban.days', { count: card.daysInStatus })}
         </span>
         {card.pendingDocs > 0 && (
-          <span className="inline-flex items-center gap-0.5 rounded bg-violet-50 px-1.5 py-0.5 text-[10px] font-semibold text-violet-800" title={t('ops.kanban.docsHint')}>
+          <span className="inline-flex items-center gap-0.5 rounded bg-accent-bg px-1.5 py-0.5 text-[10px] font-semibold text-accent-fg" title={t('ops.kanban.docsHint')}>
             <FileWarning className="size-3" /> {card.pendingDocs}
           </span>
         )}
         {card.unansweredClientMessage && (
-          <span className="inline-flex items-center gap-0.5 rounded bg-red-50 px-1.5 py-0.5 text-[10px] font-semibold text-red-700" title={t('ops.kanban.newMessage')}>
+          <span className="inline-flex items-center gap-0.5 rounded bg-danger-bg px-1.5 py-0.5 text-[10px] font-semibold text-danger-fg" title={t('ops.kanban.newMessage')}>
             <MessageSquareWarning className="size-3" />
           </span>
         )}
         {card.appointmentAt && (
-          <span className="inline-flex items-center gap-0.5 rounded bg-sky-50 px-1.5 py-0.5 text-[10px] font-semibold text-sky-800" title={t('ops.kanban.appointment')}>
+          <span className="inline-flex items-center gap-0.5 rounded bg-info-bg px-1.5 py-0.5 text-[10px] font-semibold text-info-fg" title={t('ops.kanban.appointment')}>
             <CalendarClock className="size-3" /> {fmtDate(card.appointmentAt)}
           </span>
         )}

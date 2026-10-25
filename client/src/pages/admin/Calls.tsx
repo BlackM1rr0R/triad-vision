@@ -117,12 +117,12 @@ const CallbacksTab = ({ highlight }: { highlight: string | null }) => {
         {q.data?.map((cb) => {
           const late = cb.status === 'PENDING' && Date.parse(cb.windowEnd) < now;
           return (
-            <li key={cb.id} className={clsx('flex flex-col gap-2 py-3 sm:flex-row sm:items-center', highlight === cb.id && 'rounded-lg bg-brand-50/70 px-2')}>
+            <li key={cb.id} className={clsx('flex flex-col gap-2 py-3 sm:flex-row sm:items-center', highlight === cb.id && 'rounded-lg bg-primary/[0.04] px-2')}>
               <div className="min-w-0 flex-1">
                 <p className="flex flex-wrap items-center gap-2 text-sm font-semibold text-ink">
                   {cb.name} <span className="font-normal text-muted">{cb.phone}</span>
                   <span className="text-[10px] font-semibold text-muted uppercase">{cb.locale}</span>
-                  {late && <span className="rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-semibold text-red-700">{t('calls.callbacks.overdue')}</span>}
+                  {late && <span className="rounded-full bg-danger-bg px-2 py-0.5 text-[10px] font-semibold text-danger-fg">{t('calls.callbacks.overdue')}</span>}
                   {cb.outcome && <span className="rounded-full border border-line px-2 py-0.5 text-[10px] font-semibold">{t(`calls.outcome.${cb.outcome}`)}</span>}
                 </p>
                 <p className="text-xs text-muted">
@@ -137,7 +137,7 @@ const CallbacksTab = ({ highlight }: { highlight: string | null }) => {
               {cb.status === 'PENDING' && (
                 <div className="flex flex-wrap gap-2">
                   <CallButton target={{ callbackId: cb.id }} phone={cb.phone} name={cb.name} />
-                  <button type="button" className="btn-ghost btn-sm border border-line" disabled={cancel.isPending} onClick={() => cancel.mutate(cb.id)}>
+                  <button type="button" className="btn-secondary btn-sm border border-line" disabled={cancel.isPending} onClick={() => cancel.mutate(cb.id)}>
                     {t('calls.callbacks.cancel')}
                   </button>
                 </div>
@@ -226,12 +226,12 @@ const SettingsTab = () => {
         save.mutate();
       }}
     >
-      <Panel title={t('calls.settings.provider')} icon={Settings} actions={<span className={clsx('inline-flex items-center gap-1 text-xs font-semibold', f.ready ? 'text-emerald-700' : 'text-amber-700')}>{f.ready ? <CheckCircle2 className="size-4" aria-hidden /> : <AlertTriangle className="size-4" aria-hidden />} {f.ready ? t('calls.settings.ready') : f.provider === 'none' ? t('calls.notConfigured') : t('calls.settings.notReady')}</span>}>
+      <Panel title={t('calls.settings.provider')} icon={Settings} actions={<span className={clsx('inline-flex items-center gap-1 text-xs font-semibold', f.ready ? 'text-success-fg' : 'text-warning-fg')}>{f.ready ? <CheckCircle2 className="size-4" aria-hidden /> : <AlertTriangle className="size-4" aria-hidden />} {f.ready ? t('calls.settings.ready') : f.provider === 'none' ? t('calls.notConfigured') : t('calls.settings.notReady')}</span>}>
         <div className="space-y-4">
-          {f.provider === 'none' && <p className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-950">{t('calls.setupSteps')}</p>}
+          {f.provider === 'none' && <p className="rounded-lg border border-warning-border bg-warning-bg p-3 text-xs text-warning-fg">{t('calls.setupSteps')}</p>}
           <div className="flex flex-wrap gap-2">
             {(['none', 'twilio', 'sipgate', ...(f.fakeAllowed ? ['fake'] : [])] as SettingsView['provider'][]).map((p) => (
-              <button key={p} type="button" aria-pressed={f.provider === p} onClick={() => set({ provider: p })} className={clsx('min-h-9 rounded-lg border px-3 text-sm font-semibold', f.provider === p ? 'border-brand-600 bg-brand-600 text-white' : 'border-line bg-card text-ink')}>
+              <button key={p} type="button" aria-pressed={f.provider === p} onClick={() => set({ provider: p })} className={clsx('min-h-9 rounded-lg border px-3 text-sm font-semibold', f.provider === p ? 'border-line-strong bg-sunken text-ink shadow-[inset_0_0_0_1px_var(--color-line-strong)]' : 'border-line bg-card text-ink')}>
                 {t(`calls.settings.providers.${p}`)}
               </button>
             ))}
@@ -259,7 +259,7 @@ const SettingsTab = () => {
             </div>
           )}
           {(f.provider === 'twilio' || f.provider === 'sipgate') && (
-            <div className="space-y-2 rounded-lg border border-line bg-surface p-3">
+            <div className="space-y-2 rounded-lg border border-line bg-sunken p-3">
               <p className="text-xs font-bold text-ink">{t('calls.settings.webhooks')}</p>
               {[[t(f.provider === 'twilio' ? 'calls.settings.twilioVoice' : 'calls.settings.sipgateHook'), f.provider === 'twilio' ? f.webhooks.twilioVoice : f.webhooks.sipgate]].map(([label, url]) => (
                 <div key={label} className="space-y-1">
@@ -279,7 +279,7 @@ const SettingsTab = () => {
 
       <Panel title={t('calls.settings.recording')} icon={AlertTriangle}>
         <div className="space-y-3">
-          <p className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-950">{t('calls.settings.recordingWarn')}</p>
+          <p className="rounded-lg border border-warning-border bg-warning-bg p-3 text-xs text-warning-fg">{t('calls.settings.recordingWarn')}</p>
           <label className="flex items-center gap-2 text-sm font-semibold text-ink">
             <input type="checkbox" className="size-4" checked={f.recording} onChange={(e) => set({ recording: e.target.checked })} /> {t('calls.settings.recording')}
           </label>
@@ -298,10 +298,10 @@ const SettingsTab = () => {
       <Panel title={t('calls.settings.hours')}>
         <div className="space-y-3">
           <div className="flex flex-wrap gap-2">
-            <button type="button" aria-pressed={!f.officeHours} onClick={() => set({ officeHours: null })} className={clsx('min-h-9 rounded-lg border px-3 text-xs font-semibold', !f.officeHours ? 'border-brand-600 bg-brand-600 text-white' : 'border-line bg-card text-ink')}>
+            <button type="button" aria-pressed={!f.officeHours} onClick={() => set({ officeHours: null })} className={clsx('min-h-9 rounded-lg border px-3 text-xs font-semibold', !f.officeHours ? 'border-line-strong bg-sunken text-ink shadow-[inset_0_0_0_1px_var(--color-line-strong)]' : 'border-line bg-card text-ink')}>
               {t('calls.settings.hoursSite')}
             </button>
-            <button type="button" aria-pressed={!!f.officeHours} onClick={() => set({ officeHours: f.officeHours ?? { days: [1, 2, 3, 4, 5], from: '09:00', to: '18:00' } })} className={clsx('min-h-9 rounded-lg border px-3 text-xs font-semibold', f.officeHours ? 'border-brand-600 bg-brand-600 text-white' : 'border-line bg-card text-ink')}>
+            <button type="button" aria-pressed={!!f.officeHours} onClick={() => set({ officeHours: f.officeHours ?? { days: [1, 2, 3, 4, 5], from: '09:00', to: '18:00' } })} className={clsx('min-h-9 rounded-lg border px-3 text-xs font-semibold', f.officeHours ? 'border-line-strong bg-sunken text-ink shadow-[inset_0_0_0_1px_var(--color-line-strong)]' : 'border-line bg-card text-ink')}>
               {t('calls.settings.hoursCustom')}
             </button>
           </div>
@@ -316,7 +316,7 @@ const SettingsTab = () => {
                       type="button"
                       aria-pressed={on}
                       onClick={() => set({ officeHours: { ...f.officeHours!, days: on ? f.officeHours!.days.filter((x) => x !== d) : [...f.officeHours!.days, d].sort() } })}
-                      className={clsx('min-h-9 min-w-11 rounded-lg border px-2 text-xs font-semibold', on ? 'border-brand-600 bg-brand-600 text-white' : 'border-line bg-card text-ink')}
+                      className={clsx('min-h-9 min-w-11 rounded-lg border px-2 text-xs font-semibold', on ? 'border-line-strong bg-sunken text-ink shadow-[inset_0_0_0_1px_var(--color-line-strong)]' : 'border-line bg-card text-ink')}
                     >
                       {days[d]}
                     </button>

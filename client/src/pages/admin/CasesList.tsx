@@ -40,7 +40,7 @@ const DaysInStatus = ({ c, className }: { c: AdminCaseListItem; className?: stri
     <span
       className={clsx(
         'inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] font-semibold whitespace-nowrap tabular-nums',
-        c.daysInStatus >= 7 ? 'bg-red-100 text-red-700' : c.daysInStatus >= 3 ? 'bg-amber-100 text-amber-800' : 'bg-surface text-ink/70',
+        c.daysInStatus >= 7 ? 'bg-danger-bg text-danger-fg' : c.daysInStatus >= 3 ? 'bg-warning-bg text-warning-fg' : 'bg-sunken text-muted',
         className,
       )}
       title={t('admin.cases.sinceTitle', { date: fmtDate(c.statusSince) })}
@@ -55,7 +55,7 @@ const RowMeta = ({ c }: { c: AdminCaseListItem }) => {
   return (
     <span className="inline-flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[11px] text-muted">
       {c.pendingDocs > 0 && (
-        <span className="inline-flex items-center gap-1 rounded-md bg-amber-100 px-1.5 py-0.5 font-semibold text-amber-800 tabular-nums" title={t('admin.cases.pendingDocsTitle')}>
+        <span className="inline-flex items-center gap-1 rounded-md bg-warning-bg px-1.5 py-0.5 font-semibold text-warning-fg tabular-nums" title={t('admin.cases.pendingDocsTitle')}>
           <FileClock className="size-3" aria-hidden /> {t('admin.cases.docsCount', { count: c.pendingDocs })}
         </span>
       )}
@@ -169,7 +169,7 @@ export default function CasesList() {
       <PageHead
         title={t('admin.nav.cases')}
         subtitle={data ? t('admin.cases.results', { count: data.total }) : undefined}
-        actions={isFetching && !isLoading ? <Spinner className="size-4 text-brand-600" /> : undefined}
+        actions={isFetching && !isLoading ? <Spinner className="size-4 text-link" /> : undefined}
       />
 
       <div className="mb-6 space-y-3">
@@ -191,15 +191,15 @@ export default function CasesList() {
             aria-pressed={mine}
             onClick={() => update({ mine: mine ? null : '1' })}
             className={clsx(
-              'inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-semibold whitespace-nowrap transition',
-              mine ? 'border-brand-600 bg-brand-600 text-white' : 'border-line bg-white text-ink/80 hover:border-brand-400',
+              'inline-flex min-h-10 sm:min-h-9 shrink-0 items-center justify-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-semibold whitespace-nowrap transition',
+              mine ? 'border-line-strong bg-sunken text-ink shadow-[inset_0_0_0_1px_var(--color-line-strong)]' : 'border-line bg-card text-ink/80 hover:border-line-strong',
             )}
           >
             <UserCheck className="size-4" /> {t('admin.cases.mine')}
           </button>
-          <label className="flex min-h-11 shrink-0 items-center gap-2 text-xs text-muted">
+          <label className="flex min-h-10 sm:min-h-9 shrink-0 items-center gap-2 text-xs text-muted">
             <span className="whitespace-nowrap">{t('admin.cases.sortLabel')}</span>
-            <select aria-label={t('admin.cases.sortAria')} className="input min-h-11 w-auto py-2 pr-8 text-sm" value={sort} onChange={(e) => update({ sort: e.target.value === 'updated' ? null : e.target.value })}>
+            <select aria-label={t('admin.cases.sortAria')} className="input min-h-10 sm:min-h-9 w-auto py-2 pr-8 text-sm" value={sort} onChange={(e) => update({ sort: e.target.value === 'updated' ? null : e.target.value })}>
               {SORT_KEYS.map((k) => (
                 <option key={k} value={k}>
                   {t(`admin.cases.sort.${k}`)}
@@ -214,8 +214,8 @@ export default function CasesList() {
             onClick={split.toggle}
             title={t('ux.split.toggleHint')}
             className={clsx(
-              'hidden min-h-11 shrink-0 items-center justify-center gap-2 rounded-lg border px-3.5 py-2.5 text-sm font-semibold whitespace-nowrap transition lg:inline-flex',
-              split.enabled ? 'border-navy-900 bg-navy-900 text-white' : 'border-line bg-white text-ink/80 hover:border-brand-400',
+              'hidden min-h-10 sm:min-h-9 shrink-0 items-center justify-center gap-2 rounded-lg border px-3.5 py-2.5 text-sm font-semibold whitespace-nowrap transition lg:inline-flex',
+              split.enabled ? 'border-line-strong bg-sunken text-ink shadow-[inset_0_0_0_1px_var(--color-line-strong)]' : 'border-line bg-card text-ink/80 hover:border-line-strong',
             )}
           >
             <Columns2 className="size-4" aria-hidden /> {t('ux.split.toggle')}
@@ -241,7 +241,7 @@ export default function CasesList() {
       ) : error || !data ? (
         <ErrorBlock error={error} onRetry={() => refetch()} />
       ) : items.length === 0 ? (
-        <div className="rounded-xl border border-line bg-white">
+        <div className="rounded-xl border border-line bg-card">
           <EmptyState icon={FolderSearch} title={t('admin.cases.notFound')}>
             {t('admin.cases.notFoundText')}
             {(status || search || mine || overdue || partner) && (
@@ -258,7 +258,7 @@ export default function CasesList() {
           <BulkPartnerBar ids={picked} onDone={() => setPicked([])} />
           {split.active ? (
             <div className="grid items-start gap-4 lg:grid-cols-[minmax(17rem,22rem)_minmax(0,1fr)] xl:gap-6">
-              <ul className={clsx('max-h-[calc(100dvh-12rem)] divide-y divide-line overflow-y-auto rounded-xl border border-line bg-white lg:sticky lg:top-20', isFetching && 'opacity-60')} aria-label={t('admin.nav.cases')}>
+              <ul className={clsx('max-h-[calc(100dvh-12rem)] divide-y divide-line overflow-y-auto rounded-xl border border-line bg-card lg:sticky lg:top-20', isFetching && 'opacity-60')} aria-label={t('admin.nav.cases')}>
                 {items.map((c) => {
                   const on = c.id === split.selected;
                   return (
@@ -269,14 +269,14 @@ export default function CasesList() {
                         onClick={() => split.select(c.id)}
                         onDoubleClick={() => navigate(`/admin/cases/${c.id}`)}
                         className={clsx(
-                          'block w-full px-4 py-3 text-left transition outline-none focus-visible:bg-brand-50 focus-visible:ring-2 focus-visible:ring-brand-500/40 focus-visible:ring-inset',
-                          on ? 'bg-brand-50 shadow-[inset_3px_0_0_var(--color-brand-600)]' : 'hover:bg-surface',
+                          'block w-full px-4 py-3 text-left transition outline-none focus-visible:bg-primary/[0.06] focus-visible:ring-2 focus-visible:ring-focus/40 focus-visible:ring-inset',
+                          on ? 'bg-primary/[0.06] shadow-[inset_3px_0_0_var(--color-brand-600)]' : 'hover:bg-sunken',
                         )}
                       >
                         <span className="flex items-start justify-between gap-2">
                           <span className="min-w-0">
-                            <span className="block font-mono text-xs font-semibold text-brand-700">{c.number}</span>
-                            <span className="block truncate text-sm font-semibold text-navy-900">{fullName(c.client)}</span>
+                            <span className="block code-id text-xs font-medium text-link whitespace-nowrap">{c.number}</span>
+                            <span className="block truncate text-sm font-semibold text-ink">{fullName(c.client)}</span>
                             <span className="block truncate text-xs text-muted">{c.profession}</span>
                           </span>
                           <StatusBadge status={c.status} />
@@ -295,10 +295,10 @@ export default function CasesList() {
                   <CaseSplitPanel key={split.selected} id={split.selected} row={selectedRow} onClose={() => split.select(null)} />
                 </div>
               ) : (
-                <div className="grid min-h-64 place-items-center rounded-xl border border-dashed border-line bg-white p-8 text-center">
+                <div className="grid min-h-64 place-items-center rounded-xl border border-dashed border-line bg-card p-8 text-center">
                   <div>
-                    <Columns2 className="mx-auto size-8 text-muted/60" aria-hidden />
-                    <p className="mt-2 text-sm font-semibold text-navy-900">{t('ux.split.empty')}</p>
+                    <Columns2 className="mx-auto size-8 text-subtle" aria-hidden />
+                    <p className="mt-2 text-sm font-semibold text-ink">{t('ux.split.empty')}</p>
                     <p className="mt-1 text-xs text-muted">{t('ux.split.emptyHint')}</p>
                   </div>
                 </div>
@@ -307,9 +307,9 @@ export default function CasesList() {
           ) : (
           <>
           {/* Desktop table */}
-          <div className="hidden overflow-x-auto rounded-xl border border-line bg-white xl:block">
+          <div className="hidden overflow-x-auto rounded-xl border border-line bg-card xl:block">
             <table className="w-full min-w-[1320px] text-left text-sm">
-              <thead className="border-b border-line bg-surface/70 text-[11px] font-semibold tracking-wide whitespace-nowrap text-muted uppercase">
+              <thead className="border-b border-line bg-surface/70 text-xs font-medium whitespace-nowrap text-muted">
                 <tr>
                   <th className="w-8 py-2.5 pl-4">
                     <SelectBox
@@ -336,7 +336,7 @@ export default function CasesList() {
                     key={c.id}
                     data-row-id={c.id}
                     aria-current={c.id === split.selected || undefined}
-                    className={clsx('cursor-pointer transition hover:bg-brand-50/50', c.id === split.selected && 'bg-brand-50/70 shadow-[inset_3px_0_0_var(--color-brand-600)]')}
+                    className={clsx('cursor-pointer transition hover:bg-primary/[0.04]', c.id === split.selected && 'bg-primary/[0.04] shadow-[inset_3px_0_0_var(--color-brand-600)]')}
                     onClick={(e) => {
                       morphCaseRow(e, c.id);
                       navigate(`/admin/cases/${c.id}`);
@@ -348,7 +348,7 @@ export default function CasesList() {
                     <td className="px-4 py-3 align-top">
                       <Link
                         to={`/admin/cases/${c.id}`}
-                        className="font-mono text-xs font-semibold text-brand-700 hover:underline"
+                        className="code-id text-xs font-medium text-link hover:underline whitespace-nowrap"
                         data-vt-part="title"
                         onClick={(e) => {
                           e.stopPropagation();
@@ -360,7 +360,7 @@ export default function CasesList() {
                       <p className="mt-0.5 text-[11px] text-muted">{fmtDate(c.createdAt)}</p>
                     </td>
                     <td className="px-4 py-3 align-top">
-                      <p className="font-semibold whitespace-nowrap text-navy-900">{fullName(c.client)}</p>
+                      <p className="font-semibold whitespace-nowrap text-ink">{fullName(c.client)}</p>
                       <p className="mt-0.5 flex flex-wrap gap-x-3 text-xs text-muted">
                         <span className="inline-flex items-center gap-1">
                           <Mail className="size-3" aria-hidden />
@@ -412,12 +412,12 @@ export default function CasesList() {
           {/* Cards below xl (table needs ~1080px next to the sidebar) */}
           <ul className={clsx('grid grid-cols-1 gap-3 md:grid-cols-2 xl:hidden', isFetching && 'opacity-60')}>
             {items.map((c) => (
-              <li key={c.id} data-row-id={c.id} className={clsx(c.id === split.selected && 'rounded-xl ring-2 ring-brand-500/50')}>
-                <Link to={`/admin/cases/${c.id}`} onClick={(e) => morphCaseRow(e, c.id)} className="block h-full rounded-xl border border-line bg-white p-4 transition hover:border-brand-400/60 active:bg-surface">
+              <li key={c.id} data-row-id={c.id} className={clsx(c.id === split.selected && 'rounded-xl ring-2 ring-focus/50')}>
+                <Link to={`/admin/cases/${c.id}`} onClick={(e) => morphCaseRow(e, c.id)} className="block h-full rounded-xl border border-line bg-card p-4 transition hover:border-line-strong active:bg-sunken">
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
-                      <p className="font-mono text-xs font-semibold text-brand-700" data-vt-part="title">{c.number}</p>
-                      <p className="mt-0.5 truncate font-semibold text-navy-900">{fullName(c.client)}</p>
+                      <p className="code-id text-xs font-medium text-link whitespace-nowrap" data-vt-part="title">{c.number}</p>
+                      <p className="mt-0.5 truncate font-semibold text-ink">{fullName(c.client)}</p>
                       <p className="truncate text-xs text-muted">{c.profession}</p>
                     </div>
                     <StatusBadge status={c.status} />

@@ -242,14 +242,14 @@ export default function Today() {
         actions={
           <div className="flex flex-wrap items-center gap-2">
             {isAdmin && (
-              <div className="inline-flex rounded-lg border border-line bg-card p-0.5" role="group" aria-label={t('today.scope.label')}>
+              <div className="inline-flex rounded-lg border border-line bg-sunken p-0.5" role="group" aria-label={t('today.scope.label')}>
                 {(['mine', 'all'] as const).map((s) => (
                   <button
                     key={s}
                     type="button"
                     onClick={() => setScope(s)}
                     aria-pressed={scope === s}
-                    className={clsx('min-h-8 rounded-md px-3 text-sm font-semibold transition', scope === s ? 'bg-brand-600 text-white' : 'text-muted hover:text-ink')}
+                    className={clsx('min-h-8 rounded-md px-3 text-sm font-semibold transition', scope === s ? 'bg-card text-ink shadow-[var(--tv-shadow-card)] ring-1 ring-line' : 'text-muted hover:text-ink')}
                   >
                     {t(s === 'mine' ? 'today.scope.mine' : 'today.scope.team')}
                   </button>
@@ -258,11 +258,11 @@ export default function Today() {
             )}
             {isAdmin && scope === 'all' && (
               <label className="inline-flex min-h-8 cursor-pointer items-center gap-2 rounded-lg border border-line bg-card px-3 text-sm text-ink">
-                <input type="checkbox" className="size-4 accent-brand-600" checked={byAssignee} onChange={(e) => setByAssignee(e.target.checked)} />
+                <input type="checkbox" className="size-4 accent-primary" checked={byAssignee} onChange={(e) => setByAssignee(e.target.checked)} />
                 {t('today.scope.byAssignee')}
               </label>
             )}
-            <button type="button" className="btn-ghost btn-sm" onClick={() => void refresh(scope).catch((err) => toastError(err))} disabled={query.isFetching}>
+            <button type="button" className="btn-secondary btn-sm" onClick={() => void refresh(scope).catch((err) => toastError(err))} disabled={query.isFetching}>
               <RefreshCw className={clsx('size-3.5', query.isFetching && 'animate-spin')} aria-hidden /> {t('today.refresh')}
             </button>
           </div>
@@ -286,13 +286,13 @@ export default function Today() {
                 }}
                 aria-pressed={on}
                 className={clsx(
-                  'inline-flex min-h-9 items-center gap-1.5 rounded-full border px-3 text-sm font-semibold whitespace-nowrap transition',
-                  on ? 'border-brand-600 bg-brand-600 text-white' : 'border-line bg-card text-ink hover:border-brand-400',
-                  !on && f === 'urgent' && n > 0 && 'text-red-600',
+                  'inline-flex min-h-10 items-center gap-1.5 rounded-lg border px-3 text-[13px] font-medium whitespace-nowrap transition-colors sm:min-h-8',
+                  on ? 'border-line-strong bg-sunken text-ink shadow-[inset_0_0_0_1px_var(--color-line-strong)]' : 'border-line bg-card text-ink hover:border-line-strong',
+                  !on && f === 'urgent' && n > 0 && 'text-danger-fg',
                 )}
               >
                 {t(`today.filter.${f}`)}
-                <span className={clsx('rounded-full px-1.5 text-xs tabular-nums', on ? 'bg-white/20' : 'bg-surface text-muted', !on && f === 'urgent' && n > 0 && 'bg-red-100 text-red-700')}>{n}</span>
+                <span className={clsx('font-mono text-xs font-medium tabular-nums', on ? 'text-ink' : 'text-muted', !on && f === 'urgent' && n > 0 && 'text-danger-fg')}>{n}</span>
               </button>
             );
           })}
@@ -304,9 +304,9 @@ export default function Today() {
       ) : query.isError ? (
         <ErrorBlock error={query.error} onRetry={() => void query.refetch()} />
       ) : !flat.length ? (
-        <div className="grid place-items-center rounded-2xl border border-line bg-card px-6 py-16 text-center">
+        <div className="grid place-items-center rounded-xl border border-line bg-card px-6 py-16 text-center">
           {/* TODO(ui): large portal empty state (size-14 icon, display title) -> <EmptyState size="lg" tone="brand"> (portal rework) */}
-          <PartyPopper className="size-10 text-brand-600" aria-hidden />
+          <PartyPopper className="size-10 text-link" aria-hidden />
           <p className="mt-3 font-display text-xl font-bold text-ink">{all.length ? t('today.empty.filtered') : t('today.empty.title')}</p>
           {!all.length && <p className="mt-1 max-w-md text-sm text-muted">{t('today.empty.body')}</p>}
         </div>
@@ -314,11 +314,11 @@ export default function Today() {
         <div className="space-y-5">
           {sections.map((s) => (
             <section key={s.key} aria-labelledby={`today-${s.key}`}>
-              <h2 id={`today-${s.key}`} className={clsx('mb-2 flex items-center gap-2 text-xs font-bold tracking-[0.12em] uppercase', s.key === 'overdue' ? 'text-red-600' : 'text-muted')}>
+              <h2 id={`today-${s.key}`} className={clsx('mb-2 flex items-center gap-2 text-xs font-bold tracking-[0.12em] uppercase', s.key === 'overdue' ? 'text-danger-fg' : 'text-muted')}>
                 {s.title}
-                <span className="rounded-full bg-surface px-1.5 py-0.5 text-[11px] text-muted tabular-nums">{s.items.length}</span>
+                <span className="rounded-full bg-sunken px-1.5 py-0.5 text-[11px] text-muted tabular-nums">{s.items.length}</span>
               </h2>
-              <div className="divide-y divide-line overflow-hidden rounded-2xl border border-line bg-card" role="list">
+              <div className="divide-y divide-line overflow-hidden rounded-xl border border-line bg-card" role="list">
                 {s.items.map((item) => {
                   const index = flat.indexOf(item);
                   return (
@@ -360,7 +360,7 @@ export default function Today() {
           {data.more
             .filter((m) => filter === 'all' || filter === 'urgent' || data.items.find((i) => i.kind === m.kind)?.category === filter)
             .map((m) => (
-              <Link key={m.kind} to={m.link} className="inline-flex items-center gap-1 rounded-full border border-line bg-card px-3 py-1.5 text-xs font-semibold text-brand-700 hover:border-brand-400">
+              <Link key={m.kind} to={m.link} className="inline-flex items-center gap-1 rounded-full border border-line bg-card px-3 py-1.5 text-xs font-semibold text-link hover:border-line-strong">
                 {t(`today.kind.${m.kind}`)}: {t('today.more', { count: m.count })} <ArrowUpRight className="size-3" aria-hidden />
               </Link>
             ))}
@@ -421,11 +421,11 @@ const Row = ({
       }}
       className={clsx(
         'group relative flex cursor-pointer flex-col gap-3 px-4 py-3 transition outline-none sm:flex-row sm:items-center',
-        active ? 'bg-brand-50/70' : 'hover:bg-surface',
-        'focus-visible:ring-2 focus-visible:ring-brand-400 focus-visible:ring-inset',
+        active ? 'bg-primary/[0.04]' : 'hover:bg-sunken',
+        'focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-inset',
       )}
     >
-      {active && <span className="absolute top-2 bottom-2 left-0 w-0.5 rounded-full bg-brand-500" aria-hidden />}
+      {active && <span className="absolute top-2 bottom-2 left-0 w-0.5 rounded-full bg-primary" aria-hidden />}
       <div className="flex min-w-0 flex-1 items-start gap-3">
         <span className={clsx('relative grid size-9 shrink-0 place-items-center rounded-lg', CATEGORY_TONE[item.category])}>
           <Icon className="size-[18px]" aria-hidden />
@@ -434,7 +434,7 @@ const Row = ({
         <div className="min-w-0 flex-1">
           <p className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] font-semibold tracking-wide text-muted uppercase">
             {t(`today.kind.${item.kind}`)}
-            {item.priority === 'URGENT' && <span className="rounded bg-red-100 px-1 text-red-700 normal-case">{t('today.priority.URGENT')}</span>}
+            {item.priority === 'URGENT' && <span className="rounded bg-danger-bg px-1 text-danger-fg normal-case">{t('today.priority.URGENT')}</span>}
           </p>
           <p className="truncate text-sm font-semibold text-ink">{item.title}</p>
           {(item.subtitle || note) && <p className="line-clamp-2 text-xs text-muted sm:line-clamp-1">{[note, item.subtitle].filter(Boolean).join(' · ')}</p>}
@@ -447,7 +447,7 @@ const Row = ({
         <span className="hidden sm:inline-flex">
           <DueChip text={due.text} late={due.late} />
         </span>
-        {showAssignee && item.assignee?.name && <span className="max-w-[9rem] truncate rounded-full bg-surface px-2 py-0.5 text-[11px] text-muted">{item.assignee.name}</span>}
+        {showAssignee && item.assignee?.name && <span className="max-w-[9rem] truncate rounded-full bg-sunken px-2 py-0.5 text-[11px] text-muted">{item.assignee.name}</span>}
         {item.refs.caseId && <TimerButton caseId={item.refs.caseId} compact />}
         {item.refs.phone && <CallButton target={item.refs.inquiryId ? { inquiryId: item.refs.inquiryId } : { phone: item.refs.phone }} phone={item.refs.phone} name={item.title} compact />}
         {item.actions.map((a) => {
@@ -467,12 +467,12 @@ const Row = ({
               className={clsx(
                 'inline-flex min-h-8 items-center gap-1 rounded-lg px-2.5 text-xs font-semibold whitespace-nowrap transition disabled:cursor-not-allowed disabled:opacity-50',
                 isArmed
-                  ? 'bg-amber-500 text-white'
+                  ? 'bg-warning text-white'
                   : a.primary
-                    ? 'bg-brand-600 text-white hover:bg-brand-700'
+                    ? 'bg-primary text-primary-contrast hover:bg-primary'
                     : a.type === 'reject' || a.key === 'rejectApp'
-                      ? 'border border-line bg-card text-red-600 hover:border-red-300'
-                      : 'border border-line bg-card text-ink hover:border-brand-400',
+                      ? 'border border-line bg-card text-danger-fg hover:border-danger-border'
+                      : 'border border-line bg-card text-ink hover:border-line-strong',
               )}
             >
               {a.key === 'accept' || a.key === 'done' ? <Check className="size-3.5" aria-hidden /> : null}
@@ -487,19 +487,19 @@ const Row = ({
 };
 
 const DueChip = ({ text, late }: { text: string; late: boolean }) => (
-  <span className={clsx('rounded-full px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap tabular-nums', late ? 'bg-red-100 text-red-700' : 'bg-surface text-muted')}>{text}</span>
+  <span className={clsx('rounded-full px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap tabular-nums', late ? 'bg-danger-bg text-danger-fg' : 'bg-sunken text-muted')}>{text}</span>
 );
 
 const RejectPanel = ({ onPick, onCancel }: { onPick: (r: (typeof REASONS)[number]) => void; onCancel: () => void }) => {
   const { t } = useTranslation();
   return (
-    <div className="bg-surface px-4 py-3" role="group" aria-label={t('today.reject.title')}>
+    <div className="bg-sunken px-4 py-3" role="group" aria-label={t('today.reject.title')}>
       <p className="mb-2 text-xs font-semibold text-ink">
         {t('today.reject.title')} <span className="font-normal text-muted">— {t('today.reject.hint')}</span>
       </p>
       <div className="flex flex-wrap gap-1.5">
         {REASONS.map((r) => (
-          <button key={r} type="button" onClick={() => onPick(r)} title={t(`today.reason.${r}`)} className="min-h-8 rounded-lg border border-line bg-card px-2.5 text-xs font-semibold text-red-600 hover:border-red-300">
+          <button key={r} type="button" onClick={() => onPick(r)} title={t(`today.reason.${r}`)} className="min-h-8 rounded-lg border border-line bg-card px-2.5 text-xs font-semibold text-danger-fg hover:border-danger-border">
             {t(`today.reasonLabel.${r}`)}
           </button>
         ))}

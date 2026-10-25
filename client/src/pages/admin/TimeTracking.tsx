@@ -165,8 +165,8 @@ const Entries = ({ filters, isAdmin }: { filters: FilterState; isAdmin: boolean 
                   {[t(`time.activity.${e.activity}`), isAdmin ? e.userName : null, e.task ? `${e.task.key} ${e.task.title}` : null, t(`time.page.source.${e.source}`), e.autoStopped ? t('time.page.autoStopped') : null, e.note].filter(Boolean).join(' · ')}
                 </p>
               </div>
-              <span className={clsx('text-sm whitespace-nowrap tabular-nums', e.running && 'font-semibold text-emerald-700')}>{e.running ? t('time.page.runningNow') : fmtDuration(t, e.minutes)}</span>
-              <button type="button" className="btn-ghost btn-sm self-start sm:self-auto" onClick={() => setEdit(e)}>
+              <span className={clsx('text-sm whitespace-nowrap tabular-nums', e.running && 'font-semibold text-success-fg')}>{e.running ? t('time.page.runningNow') : fmtDuration(t, e.minutes)}</span>
+              <button type="button" className="btn-secondary btn-sm self-start sm:self-auto" onClick={() => setEdit(e)}>
                 <Pencil className="size-3.5" /> {t('time.page.edit')}
               </button>
             </li>
@@ -175,13 +175,13 @@ const Entries = ({ filters, isAdmin }: { filters: FilterState; isAdmin: boolean 
       )}
       {pages > 1 && (
         <div className="flex items-center justify-between border-t border-line px-5 py-3 text-xs">
-          <button type="button" className="btn-ghost btn-sm" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
+          <button type="button" className="btn-secondary btn-sm" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
             {t('time.page.prev')}
           </button>
           <span className="text-muted tabular-nums">
             {page} / {pages}
           </span>
-          <button type="button" className="btn-ghost btn-sm" disabled={page >= pages} onClick={() => setPage((p) => p + 1)}>
+          <button type="button" className="btn-secondary btn-sm" disabled={page >= pages} onClick={() => setPage((p) => p + 1)}>
             {t('time.page.next')}
           </button>
         </div>
@@ -192,8 +192,8 @@ const Entries = ({ filters, isAdmin }: { filters: FilterState; isAdmin: boolean 
 };
 
 const Bar = ({ value, max }: { value: number; max: number }) => (
-  <span className="block h-1.5 w-full overflow-hidden rounded-full bg-surface" aria-hidden>
-    <span className="block h-full rounded-full bg-brand-500" style={{ width: `${max ? Math.max(2, Math.round((value / max) * 100)) : 0}%` }} />
+  <span className="block h-1.5 w-full overflow-hidden rounded-full bg-sunken" aria-hidden>
+    <span className="block h-full rounded-full bg-primary" style={{ width: `${max ? Math.max(2, Math.round((value / max) * 100)) : 0}%` }} />
   </span>
 );
 
@@ -212,7 +212,7 @@ const Reports = ({ filters, isAdmin }: { filters: FilterState; isAdmin: boolean 
           <p className="p-5 text-sm text-muted">{t('time.page.noEntries')}</p>
         ) : (
           <table className="w-full min-w-[32rem] text-sm">
-            <thead className="bg-surface text-left text-xs text-muted">
+            <thead className="bg-sunken text-left text-xs text-muted">
               <tr>
                 <th className="px-4 py-2 font-semibold">{t('time.page.staff')}</th>
                 {d.weeks.map((w) => (
@@ -280,7 +280,7 @@ const Reports = ({ filters, isAdmin }: { filters: FilterState; isAdmin: boolean 
         <Panel>
           <div className="flex flex-wrap items-center justify-between gap-3">
             <p className="text-sm text-muted">{t('time.page.exportHint')}</p>
-            <Link to="/admin/reports?dataset=timeEntries" className="btn-ghost btn-sm">
+            <Link to="/admin/reports?dataset=timeEntries" className="btn-secondary btn-sm">
               <FileBarChart2 className="size-4" /> {t('time.page.export')}
             </Link>
           </div>
@@ -370,9 +370,9 @@ const RatesTab = () => {
               {s.history.length > 0 && (
                 <ul className="mt-1 flex flex-wrap gap-1.5">
                   {s.history.map((h) => (
-                    <li key={h.id} className="inline-flex items-center gap-1 rounded-full bg-surface px-2 py-0.5 text-[11px]">
+                    <li key={h.id} className="inline-flex items-center gap-1 rounded-full bg-sunken px-2 py-0.5 text-[11px]">
                       {h.effectiveFrom}: {eur(h.centsPerHour)}
-                      <button type="button" className="text-muted hover:text-danger" aria-label={t('time.rates.remove')} onClick={() => remove.mutate(h.id)}>
+                      <button type="button" className="text-muted hover:text-danger-fg" aria-label={t('time.rates.remove')} onClick={() => remove.mutate(h.id)}>
                         <Trash2 className="size-3" />
                       </button>
                     </li>

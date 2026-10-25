@@ -73,7 +73,7 @@ export function Tabs<K extends string>({ items, value, onChange, label, variant 
       onKeyDown={move}
       className={clsx(
         'relative flex min-w-0 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden',
-        variant === 'underline' ? 'gap-1 border-b border-line' : ['max-w-full gap-1 rounded-xl bg-surface p-1', fullWidth ? 'w-full' : 'w-fit'],
+        variant === 'underline' ? 'gap-1 border-b border-line' : ['max-w-full gap-1 rounded-xl bg-sunken p-1', fullWidth ? 'w-full' : 'w-fit'],
         className,
       )}
     >
@@ -84,7 +84,7 @@ export function Tabs<K extends string>({ items, value, onChange, label, variant 
           className={clsx(
             'pointer-events-none absolute left-0',
             indicator.animate && 'transition-[transform,width] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)]',
-            variant === 'underline' ? 'bottom-0 h-0.5 bg-brand-600' : 'top-1 bottom-1 rounded-lg bg-card shadow-sm',
+            variant === 'underline' ? 'bottom-0 h-0.5 rounded-full bg-brand-600' : 'top-1 bottom-1 rounded-lg bg-card shadow-[var(--tv-shadow-card)] ring-1 ring-line/60',
           )}
           style={{ width: indicator.width, transform: `translateX(${indicator.left}px)` }}
         />
@@ -101,17 +101,18 @@ export function Tabs<K extends string>({ items, value, onChange, label, variant 
             type="button"
             role="tab"
             aria-selected={active}
-            aria-controls={ids.panel}
+            // only when the caller names the ids: then a <TabPanel idPrefix=…> exists to point at
+            aria-controls={idPrefix ? ids.panel : undefined}
             tabIndex={active ? 0 : -1}
             disabled={it.disabled}
             title={it.title}
             onClick={() => onChange(it.key)}
             className={clsx(
-              'relative inline-flex items-center justify-center gap-1.5 font-semibold whitespace-nowrap transition disabled:cursor-not-allowed disabled:opacity-50',
+              'relative inline-flex items-center justify-center gap-1.5 font-medium whitespace-nowrap transition disabled:cursor-not-allowed disabled:opacity-50',
               fullWidth ? 'min-w-0 flex-1' : 'shrink-0',
               size === 'sm' ? 'text-xs' : 'text-sm',
               variant === 'underline'
-                ? ['-mb-px border-b-2', size === 'sm' ? 'min-h-9 px-2.5 py-1.5' : 'min-h-11 px-3 py-2', active ? clsx(slid ? 'border-transparent' : 'border-brand-600', 'text-ink') : 'border-transparent text-muted hover:border-line hover:text-ink']
+                ? ['-mb-px border-b-2', size === 'sm' ? 'min-h-9 px-2.5 py-1.5' : 'min-h-[var(--tv-control-h)] px-3 py-2', active ? clsx(slid ? 'border-transparent' : 'border-brand-600', 'text-ink') : 'border-transparent text-muted hover:border-line-strong hover:text-ink']
                 : ['rounded-lg', size === 'sm' ? 'min-h-8 px-2.5 py-1' : 'min-h-9 px-3 py-1.5', active ? clsx(!slid && 'bg-card shadow-sm', 'text-ink') : 'text-muted hover:text-ink'],
               it.className,
             )}
@@ -119,7 +120,7 @@ export function Tabs<K extends string>({ items, value, onChange, label, variant 
             {Icon && <Icon className="size-4 shrink-0" aria-hidden />}
             {it.label}
             {it.count !== undefined && (
-              <span className={clsx('rounded-full px-1.5 text-[10px] tabular-nums', active ? 'bg-brand-100 text-brand-700' : 'bg-surface text-muted')}>{it.count}</span>
+              <span className={clsx('rounded-full px-1.5 text-[10px] font-semibold tabular-nums', active ? 'bg-brand-100 text-brand-700' : 'bg-sunken text-muted')}>{it.count}</span>
             )}
           </button>
         );

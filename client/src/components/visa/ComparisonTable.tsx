@@ -45,10 +45,10 @@ export const ComparisonTable = ({ visas }: { visas: VisaCategory[] }) => {
 
   return (
     <>
-      <div className="hidden overflow-hidden rounded-2xl border border-line bg-white shadow-[0_8px_30px_-12px_rgba(11,31,68,0.18)] lg:block">
+      <div className="hidden overflow-hidden rounded-2xl border border-line bg-card shadow-[var(--tv-shadow-card)] lg:block">
         <table className="w-full text-left text-sm">
           <caption className="sr-only">{t('visasPage.compare.caption')}</caption>
-          <thead className="bg-navy-900 text-xs tracking-wide text-white/80 uppercase">
+          <thead className="border-b border-line bg-sunken text-xs tracking-wide text-muted uppercase">
             <tr>
               {['visa', 'basis', 'level', 'salary', 'processing', 'family'].map((k) => (
                 <th key={k} scope="col" className="px-4 py-3.5 font-semibold lg:px-5">
@@ -62,21 +62,21 @@ export const ComparisonTable = ({ visas }: { visas: VisaCategory[] }) => {
           </thead>
           <tbody className="divide-y divide-line">
             {visas.map((v) => (
-              <tr key={v.id} className="group transition-colors hover:bg-brand-50/60">
+              <tr key={v.id} className="group transition-colors hover:bg-sunken">
                 <th scope="row" className="px-4 py-3.5 lg:px-5">
-                  <Link to={`/visas/${v.slug}`} className="flex items-center gap-3 font-bold text-navy-900 group-hover:text-brand-700">
-                    <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-brand-50 text-brand-700">
+                  <Link to={`/visas/${v.slug}`} className="flex items-center gap-3 font-semibold text-ink group-hover:text-link">
+                    <span className="grid size-9 shrink-0 place-items-center rounded-xl chip-sky">
                       <Icon name={v.icon} className="size-4.5" />
                     </span>
                     {tr(v.title)}
                   </Link>
                 </th>
                 <td className="px-4 py-3.5 lg:px-5">
-                  <span className="badge bg-surface font-mono text-[11px] text-navy-900">{v.visaLabel}</span>
+                  <span className="badge bg-sunken font-mono text-[11px] text-ink">{v.visaLabel}</span>
                 </td>
-                <td className="px-4 py-3.5 font-semibold text-navy-900 lg:px-5">{v.germanLevel || t('visaDetail.facts.na')}</td>
-                <td className="px-4 py-3.5 whitespace-nowrap text-navy-900 tabular-nums lg:px-5">{salary(v)}</td>
-                <td className="px-4 py-3.5 whitespace-nowrap text-navy-900 tabular-nums lg:px-5">{weeks(v)}</td>
+                <td className="px-4 py-3.5 font-semibold text-ink lg:px-5">{v.germanLevel || t('visaDetail.facts.na')}</td>
+                <td className="px-4 py-3.5 whitespace-nowrap text-ink tabular-nums lg:px-5">{salary(v)}</td>
+                <td className="px-4 py-3.5 whitespace-nowrap text-ink tabular-nums lg:px-5">{weeks(v)}</td>
                 <td className="px-4 py-3.5 lg:px-5">
                   <FamilyBadge value={v.familyReunion} />
                 </td>
@@ -84,7 +84,7 @@ export const ComparisonTable = ({ visas }: { visas: VisaCategory[] }) => {
                   <Link
                     to={`/visas/${v.slug}`}
                     aria-label={`${t('visasPage.compare.open')}: ${tr(v.title)}`}
-                    className="grid size-8 place-items-center rounded-full text-brand-600 transition group-hover:bg-brand-600 group-hover:text-white"
+                    className="grid size-9 place-items-center rounded-full text-link transition group-hover:bg-primary group-hover:text-primary-contrast"
                   >
                     <ArrowRight className="size-4" />
                   </Link>
@@ -98,29 +98,29 @@ export const ComparisonTable = ({ visas }: { visas: VisaCategory[] }) => {
       <ul className="grid gap-3 sm:grid-cols-2 lg:hidden">
         {visas.map((v) => (
           <li key={v.id}>
-            <Link to={`/visas/${v.slug}`} className="card block p-4 transition active:scale-[0.99]">
+            <Link to={`/visas/${v.slug}`} className="card card-interactive block p-4">
               <div className="flex items-center gap-3">
-                <span className="grid size-10 shrink-0 place-items-center rounded-lg bg-brand-50 text-brand-700">
+                <span className="grid size-11 shrink-0 place-items-center rounded-xl chip-sky">
                   <Icon name={v.icon} className="size-5" />
                 </span>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate font-bold text-navy-900">{tr(v.title)}</p>
+                  <p className="truncate font-semibold text-ink">{tr(v.title)}</p>
                   <p className="font-mono text-[11px] text-muted">{v.visaLabel}</p>
                 </div>
-                <ArrowRight className="size-4 shrink-0 text-brand-600" />
+                <ArrowRight className="size-4 shrink-0 text-muted" />
               </div>
               <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2.5 border-t border-line pt-3 text-xs">
                 <div>
                   <dt className="text-muted">{c('level')}</dt>
-                  <dd className="font-semibold text-navy-900">{v.germanLevel || t('visaDetail.facts.na')}</dd>
+                  <dd className="font-semibold text-ink">{v.germanLevel || t('visaDetail.facts.na')}</dd>
                 </div>
                 <div>
                   <dt className="text-muted">{c('processing')}</dt>
-                  <dd className="font-semibold text-navy-900 tabular-nums">{weeks(v)}</dd>
+                  <dd className="font-semibold text-ink tabular-nums">{weeks(v)}</dd>
                 </div>
                 <div>
                   <dt className="text-muted">{c('salary')}</dt>
-                  <dd className="font-semibold text-navy-900 tabular-nums">{salary(v)}</dd>
+                  <dd className="font-semibold text-ink tabular-nums">{salary(v)}</dd>
                 </div>
                 <div>
                   <dt className="text-muted">{c('family')}</dt>

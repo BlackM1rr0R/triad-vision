@@ -89,7 +89,7 @@ const LandingList = ({ canPublish }: { canPublish: boolean }) => {
           <p className="mb-3 text-sm text-muted">{t('mk.landing.totals', { views: data.totals.views, submissions: data.totals.submissions, rate: pct(data.totals.rate) })}</p>
           <div className="overflow-x-auto rounded-xl border border-line bg-card">
             <table className="w-full min-w-[760px] text-sm">
-              <thead className="bg-surface text-left text-xs text-muted">
+              <thead className="bg-sunken text-left text-xs text-muted">
                 <tr>
                   <th className="px-4 py-2 font-semibold">{t('mk.landing.col.page')}</th>
                   <th className="px-4 py-2 font-semibold">{t('mk.landing.col.status')}</th>
@@ -104,7 +104,7 @@ const LandingList = ({ canPublish }: { canPublish: boolean }) => {
                 {data.pages.map((p) => (
                   <tr key={p.id} className="hover:bg-surface/60">
                     <td className="px-4 py-2.5">
-                      <Link to={`/admin/landing-pages/${p.id}`} className="font-semibold text-ink hover:text-brand-600">
+                      <Link to={`/admin/landing-pages/${p.id}`} className="font-semibold text-ink hover:text-link">
                         {p.title}
                       </Link>
                       <span className="block text-xs text-muted">
@@ -122,14 +122,14 @@ const LandingList = ({ canPublish }: { canPublish: boolean }) => {
                     <td className="px-4 py-2.5">
                       <span className="flex justify-end gap-1">
                         {p.status === 'PUBLISHED' && (
-                          <a href={`/l/${p.slug}`} target="_blank" rel="noreferrer" className="grid size-8 place-items-center rounded-lg text-muted hover:bg-surface hover:text-ink" aria-label={t('mk.landing.actions.view')} title={t('mk.landing.actions.view')}>
+                          <a href={`/l/${p.slug}`} target="_blank" rel="noreferrer" className="grid size-8 place-items-center rounded-lg text-muted hover:bg-sunken hover:text-ink" aria-label={t('mk.landing.actions.view')} title={t('mk.landing.actions.view')}>
                             <ExternalLink className="size-4" aria-hidden />
                           </a>
                         )}
                         <IconButton icon={Pencil} label={t('mk.landing.actions.edit')} size="sm" variant="ghost" onClick={() => navigate(`/admin/landing-pages/${p.id}`)} />
                         <IconButton icon={Copy} label={t('mk.landing.actions.duplicate')} size="sm" variant="ghost" onClick={() => duplicate.mutate(p.id)} />
                         {canPublish && (
-                          <Button variant="outline" size="sm" onClick={() => setStatus.mutate({ id: p.id, status: p.status === 'PUBLISHED' ? 'DRAFT' : 'PUBLISHED' })}>
+                          <Button variant="secondary" size="sm" onClick={() => setStatus.mutate({ id: p.id, status: p.status === 'PUBLISHED' ? 'DRAFT' : 'PUBLISHED' })}>
                             {p.status === 'PUBLISHED' ? t('mk.landing.actions.unpublish') : t('mk.landing.actions.publish')}
                           </Button>
                         )}

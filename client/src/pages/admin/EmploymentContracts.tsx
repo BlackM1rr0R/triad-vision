@@ -52,15 +52,15 @@ export default function AdminEmploymentContracts() {
       ) : error ? (
         <ErrorBlock error={error} onRetry={() => refetch()} />
       ) : !data?.items.length ? (
-        <div className="rounded-xl border border-line bg-white">
+        <div className="rounded-xl border border-line bg-card">
           <EmptyState icon={FileSignature} title={t('placement.contract.list.empty')} />
         </div>
       ) : (
-        <ul className="divide-y divide-line rounded-xl border border-line bg-white">
+        <ul className="divide-y divide-line rounded-xl border border-line bg-card">
           {data.items.map((r) => (
             <li key={r.id} className="grid gap-2 px-4 py-3 text-sm lg:grid-cols-[minmax(0,14rem)_minmax(0,1fr)_minmax(0,9rem)_minmax(0,9rem)] lg:items-center">
               <div className="min-w-0">
-                <Link to={`/admin/cases/${r.case.id}#case-employment`} className="font-semibold text-brand-700 hover:underline">
+                <Link to={`/admin/cases/${r.case.id}#case-employment`} className="font-semibold text-link hover:underline">
                   {r.case.number}
                 </Link>
                 <p className="truncate text-xs text-muted">
@@ -81,11 +81,11 @@ export default function AdminEmploymentContracts() {
               </div>
               <p className="text-xs">
                 <span className="text-muted lg:hidden">{t('placement.contract.list.salary')}: </span>
-                <span className="font-medium text-navy-900 tabular-nums">{r.grossMonthly != null ? L.euro(r.grossMonthly) : '—'}</span>
+                <span className="font-medium text-ink tabular-nums">{r.grossMonthly != null ? L.euro(r.grossMonthly) : '—'}</span>
               </p>
               <p className="text-xs">
                 <span className="text-muted">{t('placement.contract.list.probation')}: </span>
-                <span className="font-medium text-navy-900 tabular-nums">{r.probationEndsAt ? fmtDate(r.probationEndsAt) : '—'}</span>
+                <span className="font-medium text-ink tabular-nums">{r.probationEndsAt ? fmtDate(r.probationEndsAt) : '—'}</span>
               </p>
             </li>
           ))}

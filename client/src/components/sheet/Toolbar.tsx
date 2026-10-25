@@ -97,7 +97,7 @@ function FormatPicker({ value, onPick }: { value?: string; onPick: (fmt: string 
               className={clsx('flex w-full items-center justify-between rounded-md px-2 py-1.5 text-left text-sm hover:bg-surface', f.fmt === value && 'font-semibold text-brand-600')}
             >
               <span>{t(`sheet.format.fmt.${f.key}`)}</span>
-              <span className="font-mono text-[11px] text-muted">{f.fmt ?? ''}</span>
+              <span className="code-id text-[11px] text-muted">{f.fmt ?? ''}</span>
             </button>
           ))}
         </Popover>

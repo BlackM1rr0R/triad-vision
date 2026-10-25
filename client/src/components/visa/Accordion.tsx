@@ -15,8 +15,8 @@ export const Accordion = ({ items, defaultOpen = 0 }: { items: { q: string; a: s
           <div
             key={f.q}
             className={clsx(
-              'overflow-hidden rounded-2xl border bg-white transition-colors',
-              isOpen ? 'border-brand-400 shadow-lg shadow-brand-600/10' : 'border-line hover:border-brand-200',
+              'overflow-hidden rounded-2xl border bg-card transition-colors',
+              isOpen ? 'border-line-strong shadow-[var(--tv-shadow-card)]' : 'border-line hover:border-line-strong',
             )}
           >
             <h3>
@@ -28,11 +28,11 @@ export const Accordion = ({ items, defaultOpen = 0 }: { items: { q: string; a: s
                 onClick={() => setOpen(isOpen ? null : i)}
                 className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left sm:px-6 sm:py-5"
               >
-                <span className="font-display text-[0.95rem] font-bold text-navy-900 sm:text-base">{f.q}</span>
+                <span className="text-base font-semibold text-ink">{f.q}</span>
                 <span
                   className={clsx(
                     'grid size-8 shrink-0 place-items-center rounded-full transition-transform duration-300',
-                    isOpen ? 'rotate-45 bg-brand-600 text-white' : 'bg-brand-50 text-brand-700',
+                    isOpen ? 'rotate-45 bg-primary text-primary-contrast' : 'bg-sunken text-ink',
                   )}
                 >
                   <Plus className="size-4" />
@@ -50,7 +50,7 @@ export const Accordion = ({ items, defaultOpen = 0 }: { items: { q: string; a: s
                   exit={{ height: 0, opacity: 0 }}
                   transition={{ duration: 0.3 }}
                 >
-                  <p className="px-5 pb-5 text-sm leading-relaxed text-muted sm:px-6 sm:pb-6 sm:text-[0.95rem]">{f.a}</p>
+                  <p className="max-w-[70ch] px-5 pb-5 text-[0.95rem] leading-relaxed text-muted sm:px-6 sm:pb-6 sm:text-base">{f.a}</p>
                 </motion.div>
               )}
             </AnimatePresence>

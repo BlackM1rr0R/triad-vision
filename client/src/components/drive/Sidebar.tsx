@@ -76,8 +76,8 @@ const TreeNode = memo(function TreeNode({
         {...drop.handlers}
         className={clsx(
           'group flex items-center rounded-lg pr-2 text-sm transition-colors',
-          active ? 'bg-brand-600 text-white' : 'text-ink hover:bg-brand-50 dark:hover:bg-white/5',
-          drop.over && 'ring-2 ring-brand-500 ring-inset bg-brand-50',
+          active ? 'bg-primary text-primary-contrast' : 'text-ink hover:bg-primary/[0.06] dark:hover:bg-white/5',
+          drop.over && 'ring-2 ring-focus ring-inset bg-primary/[0.06]',
         )}
         style={{ paddingLeft: `${4 + depth * 14}px` }}
         onContextMenu={
@@ -107,7 +107,7 @@ const TreeNode = memo(function TreeNode({
           className="flex min-w-0 flex-1 items-center gap-2 py-1.5"
           title={text}
         >
-          <ItemIcon item={item} open={expanded} className={clsx('size-[18px] shrink-0', active && '!text-white')} />
+          <ItemIcon item={item} open={expanded} className={clsx('size-[18px] shrink-0', active && '!text-primary-contrast')} />
           <span className="truncate font-medium">{text}</span>
         </a>
         {props.onContext && (
@@ -119,7 +119,7 @@ const TreeNode = memo(function TreeNode({
             }}
             className={clsx(
               'ml-0.5 grid size-6 shrink-0 place-items-center rounded-md opacity-0 transition group-hover:opacity-100 focus-visible:opacity-100 [@media(hover:none)]:opacity-70',
-              active ? 'hover:bg-white/15' : 'text-muted hover:bg-brand-100 hover:text-ink dark:hover:bg-white/10',
+              active ? 'hover:bg-primary-contrast/15' : 'text-muted hover:bg-primary/10 hover:text-ink dark:hover:bg-primary-contrast/10',
             )}
             aria-label={t('docCreate.menu.folderActions')}
             title={t('docCreate.menu.folderActions')}
@@ -136,7 +136,7 @@ const TreeNode = memo(function TreeNode({
             </li>
           )}
           {noFolders && (
-            <li className="py-0.5 text-[11px] text-muted/80 italic select-none" style={{ paddingLeft: `${indent}px` }}>
+            <li className="py-0.5 text-[11px] text-muted italic select-none" style={{ paddingLeft: `${indent}px` }}>
               {knownEmpty ? t('docCreate.menu.emptyFolder') : t('docCreate.menu.filesOnly', { count: item.childCount ?? 0 })}
             </li>
           )}
@@ -160,13 +160,13 @@ const QuickLink = ({ icon: Icon, label, hint, href, active, onOpen, tone, childr
       }}
       className={clsx(
         'flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-sm font-medium transition-colors',
-        active ? 'bg-brand-600 text-white' : 'text-ink hover:bg-brand-50 dark:hover:bg-white/5',
+        active ? 'bg-primary text-primary-contrast' : 'text-ink hover:bg-primary/[0.06] dark:hover:bg-white/5',
       )}
     >
-      <Icon className={clsx('size-[18px] shrink-0', active ? 'text-white' : tone)} strokeWidth={1.7} />
+      <Icon className={clsx('size-[18px] shrink-0', active ? 'text-primary-contrast' : tone)} strokeWidth={1.7} />
       <span className="min-w-0">
         <span className="block truncate">{label}</span>
-        {hint && <span className={clsx('block truncate text-[11px] font-normal', active ? 'text-white/80' : 'text-muted')}>{hint}</span>}
+        {hint && <span className={clsx('block truncate text-[11px] font-normal', active ? 'text-primary-contrast/80' : 'text-muted')}>{hint}</span>}
       </span>
       {children}
     </a>
@@ -189,8 +189,8 @@ export const Sidebar = (props: SidebarProps) => {
         <section>
           <h2 className="px-2.5 pb-1.5 text-[11px] font-bold tracking-wider text-muted uppercase">{t('drive.nav.quickAccess')}</h2>
           <ul className="space-y-0.5">
-            <QuickLink icon={Star} tone="text-amber-500" label={t('drive.shared.favorites')} href={`${base}/starred`} active={activeView === 'starred'} onOpen={onOpen} />
-            <QuickLink icon={Clock} tone="text-sky-600" label={t('drive.nav.recent')} href={`${base}/recent`} active={activeView === 'recent'} onOpen={onOpen} />
+            <QuickLink icon={Star} tone="text-warning-fg" label={t('drive.shared.favorites')} href={`${base}/starred`} active={activeView === 'starred'} onOpen={onOpen} />
+            <QuickLink icon={Clock} tone="text-info-fg" label={t('drive.nav.recent')} href={`${base}/recent`} active={activeView === 'recent'} onOpen={onOpen} />
             <QuickLink icon={Trash2} tone="text-muted" label={t('drive.nav.trash')} href={`${base}/trash`} active={activeView === 'trash'} onOpen={onOpen} />
           </ul>
         </section>

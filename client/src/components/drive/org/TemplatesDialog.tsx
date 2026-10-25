@@ -95,7 +95,7 @@ export default function TemplatesDialog({ onClose }: { onClose: () => void }) {
         <>
           <button
             type="button"
-            className="btn-white btn-sm mr-auto border border-line"
+            className="btn-secondary btn-sm mr-auto border border-line"
             disabled={apply.isPending}
             onClick={() => window.confirm(t('driveOrg.templates.applyConfirm')) && apply.mutate()}
           >
@@ -118,7 +118,7 @@ export default function TemplatesDialog({ onClose }: { onClose: () => void }) {
                   <button
                     type="button"
                     onClick={() => setDraft(toDraft(tpl))}
-                    className={clsx('flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm', draft?.id === tpl.id ? 'bg-brand-50 text-brand-800 dark:bg-brand-500/15 dark:text-brand-200' : 'hover:bg-surface')}
+                    className={clsx('flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm', draft?.id === tpl.id ? 'bg-primary/[0.06] text-ink dark:bg-brand-500/15 dark:text-brand-200' : 'hover:bg-sunken')}
                   >
                     <FolderTree className="size-4 shrink-0 text-muted" />
                     <span className="min-w-0 flex-1">
@@ -129,7 +129,7 @@ export default function TemplatesDialog({ onClose }: { onClose: () => void }) {
                 </li>
               ))}
             </ul>
-            <button type="button" className="btn-white btn-sm mt-2 w-full border border-line" onClick={() => setDraft(toDraft(null))}>
+            <button type="button" className="btn-secondary btn-sm mt-2 w-full border border-line" onClick={() => setDraft(toDraft(null))}>
               <Plus className="size-4" /> {t('driveOrg.templates.new')}
             </button>
           </div>
@@ -175,7 +175,7 @@ export default function TemplatesDialog({ onClose }: { onClose: () => void }) {
                 <span className="mt-1 block text-xs text-muted">{t('driveOrg.templates.foldersHint')}</span>
               </label>
               <label className="flex items-center gap-2">
-                <input type="checkbox" className="size-4 accent-brand-600" checked={draft.active} onChange={(e) => setDraft({ ...draft, active: e.target.checked })} />
+                <input type="checkbox" className="size-4 accent-primary" checked={draft.active} onChange={(e) => setDraft({ ...draft, active: e.target.checked })} />
                 {t('driveOrg.templates.active')}
               </label>
               <div className="flex items-center gap-2">
@@ -185,7 +185,7 @@ export default function TemplatesDialog({ onClose }: { onClose: () => void }) {
                 {draft.id && (
                   <button
                     type="button"
-                    className="btn-secondary btn-sm text-danger"
+                    className="btn-secondary btn-sm text-danger-fg"
                     disabled={remove.isPending}
                     onClick={() => window.confirm(t('driveOrg.templates.deleteConfirm', { name: draft.name })) && remove.mutate(draft.id!)}
                   >

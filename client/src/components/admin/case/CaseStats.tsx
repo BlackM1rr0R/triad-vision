@@ -12,7 +12,7 @@ import { WorkflowStepper } from './WorkflowStepper';
 const Mini = ({ label, value, hint, tone }: { label: string; value: string; hint?: string; tone?: 'warn' | 'danger' }) => (
   <div className="rounded-lg border border-line bg-surface/60 px-3 py-2.5">
     <p className="text-[11px] text-muted">{label}</p>
-    <p className={clsx('mt-0.5 text-lg font-bold tabular-nums', tone === 'danger' ? 'text-danger' : tone === 'warn' ? 'text-amber-700' : 'text-navy-900')}>{value}</p>
+    <p className={clsx('mt-0.5 text-lg font-bold tabular-nums', tone === 'danger' ? 'text-danger-fg' : tone === 'warn' ? 'text-warning-fg' : 'text-ink')}>{value}</p>
     {hint && <p className="text-[11px] text-muted">{hint}</p>}
   </div>
 );
@@ -48,7 +48,7 @@ export const CaseStatsPanel = ({ stats, status, onOpenMessages, id }: { stats: S
 
       {/* Status history: one segment per step, width ∝ days spent */}
       <section className="mt-5" aria-label={t('admin.case.stats.history')}>
-        <h3 className="mb-2 flex items-center gap-1.5 text-xs font-semibold text-navy-900">
+        <h3 className="mb-2 flex items-center gap-1.5 text-xs font-semibold text-ink">
           <Route className="size-3.5 text-muted" aria-hidden /> {t('admin.case.stats.history')}
         </h3>
         {stats.statusHistory.length === 0 ? (
@@ -58,19 +58,19 @@ export const CaseStatsPanel = ({ stats, status, onOpenMessages, id }: { stats: S
             {stats.statusHistory.map((h, i) => (
               <li
                 key={`${h.status}-${i}`}
-                className={clsx('min-w-[7.5rem] shrink-0 rounded-lg border p-2', h.current ? 'border-brand-400 bg-brand-50/60' : 'border-line')}
+                className={clsx('min-w-[7.5rem] shrink-0 rounded-lg border p-2', h.current ? 'border-line-strong bg-primary/[0.04]' : 'border-line')}
                 style={{ flexGrow: Math.max(0.5, h.days) / totalDays }}
                 aria-current={h.current ? 'step' : undefined}
               >
                 <span className={clsx('block h-1.5 rounded-full', STATUS_BAR_TONE[h.status])} aria-hidden />
-                <p className="mt-1.5 truncate text-[11px] font-semibold text-navy-900" title={statusLabel(h.status)}>
+                <p className="mt-1.5 truncate text-[11px] font-semibold text-ink" title={statusLabel(h.status)}>
                   {statusLabel(h.status)}
                 </p>
                 <p className="text-[11px] text-muted tabular-nums">
                   {fmtDays(h.days)}
                   {h.current && t('admin.case.stats.now')}
                 </p>
-                <p className="text-[10px] text-muted/80">{fmtDate(h.enteredAt)}</p>
+                <p className="text-[10px] text-muted">{fmtDate(h.enteredAt)}</p>
               </li>
             ))}
           </ol>
@@ -79,18 +79,18 @@ export const CaseStatsPanel = ({ stats, status, onOpenMessages, id }: { stats: S
 
       <div className="mt-5 grid gap-5 md:grid-cols-2">
         <section aria-label={t('admin.case.stats.docBalance')}>
-          <h3 className="mb-1 flex items-center gap-1.5 text-xs font-semibold text-navy-900">
+          <h3 className="mb-1 flex items-center gap-1.5 text-xs font-semibold text-ink">
             <FileCheck2 className="size-3.5 text-muted" aria-hidden /> {t('admin.case.stats.documents')}
           </h3>
           <div className="mb-2 flex items-center gap-3">
-            <span className="h-2 flex-1 overflow-hidden rounded-full bg-brand-100" aria-hidden>
-              <span className="block h-full rounded-full bg-brand-500 transition-[width]" style={{ width: `${d.requiredTotal ? (d.requiredAccepted / d.requiredTotal) * 100 : 0}%` }} />
+            <span className="h-2 flex-1 overflow-hidden rounded-full bg-primary/10" aria-hidden>
+              <span className="block h-full rounded-full bg-primary transition-[width]" style={{ width: `${d.requiredTotal ? (d.requiredAccepted / d.requiredTotal) * 100 : 0}%` }} />
             </span>
-            <span className="text-xs font-semibold text-navy-900 tabular-nums">{t('admin.case.stats.required', { accepted: d.requiredAccepted, total: d.requiredTotal })}</span>
+            <span className="text-xs font-semibold text-ink tabular-nums">{t('admin.case.stats.required', { accepted: d.requiredAccepted, total: d.requiredTotal })}</span>
           </div>
           <dl className="divide-y divide-line">
             <DefRow label={t('admin.case.stats.pendingRejected')}>
-              <span className={clsx(d.pending > 0 && 'text-amber-700')}>{d.pending}</span> / <span className={clsx(d.rejected > 0 && 'text-danger')}>{d.rejected}</span>
+              <span className={clsx(d.pending > 0 && 'text-warning-fg')}>{d.pending}</span> / <span className={clsx(d.rejected > 0 && 'text-danger-fg')}>{d.rejected}</span>
             </DefRow>
             <DefRow label={t('admin.case.stats.totalFiles')}>
               {d.total} · {formatBytes(d.bytes)}
@@ -100,7 +100,7 @@ export const CaseStatsPanel = ({ stats, status, onOpenMessages, id }: { stats: S
         </section>
 
         <section aria-label={t('admin.case.stats.msgBalance')}>
-          <h3 className="mb-1 flex items-center gap-1.5 text-xs font-semibold text-navy-900">
+          <h3 className="mb-1 flex items-center gap-1.5 text-xs font-semibold text-ink">
             <MessageSquare className="size-3.5 text-muted" aria-hidden /> {t('admin.common.messages')}
           </h3>
           {m.awaitingStaffReply && (

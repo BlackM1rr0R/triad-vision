@@ -54,7 +54,7 @@ export const OriginFlowMap = ({ data }: { data: PublicOrigins }) => {
           {COUNTRY_SHAPES.map((c) => (
             <g key={c.code}>
               {c.rings.map((ring, i) => (
-                <path key={i} d={proj.path(ring)} className={clsx('stroke-brand-500/40', c.code === 'DE' ? 'fill-brand-50' : 'fill-surface')} strokeWidth={1.2} strokeLinejoin="round">
+                <path key={i} d={proj.path(ring)} className={clsx('stroke-line-strong', c.code === 'DE' ? 'fill-[var(--ill-sky)]' : 'fill-sunken')} strokeWidth={1.2} strokeLinejoin="round">
                   <title>{t(`mk.origins.countries.${c.code}`)}</title>
                 </path>
               ))}
@@ -75,7 +75,7 @@ export const OriginFlowMap = ({ data }: { data: PublicOrigins }) => {
                 key={`${f.from}-${f.to}`}
                 d={f.d}
                 fill="none"
-                className={clsx('stroke-brand-600 transition-opacity', on ? 'opacity-70' : 'opacity-10')}
+                className={clsx('stroke-chart-1 transition-opacity', on ? 'opacity-70' : 'opacity-10')}
                 strokeWidth={1 + 4 * (f.count / maxFlow)}
                 strokeLinecap="round"
                 strokeDasharray="6 5"
@@ -85,7 +85,7 @@ export const OriginFlowMap = ({ data }: { data: PublicOrigins }) => {
             );
           })}
           {destinations.map((d) => (
-            <circle key={d.city} cx={d.x} cy={d.y} r={4 + 5 * Math.sqrt(d.count / maxFlow)} className="fill-brand-700 stroke-white" strokeWidth={1.5}>
+            <circle key={d.city} cx={d.x} cy={d.y} r={4 + 5 * Math.sqrt(d.count / maxFlow)} className="fill-chart-1 stroke-card" strokeWidth={1.5}>
               <title>{`${d.city} · ${t('mk.origins.people', { count: d.count })}`}</title>
             </circle>
           ))}
@@ -106,8 +106,8 @@ export const OriginFlowMap = ({ data }: { data: PublicOrigins }) => {
                 onBlur={() => setActive((a) => (a === o.key ? null : a))}
                 onClick={() => setActive((a) => (a === o.key ? null : o.key))}
               >
-                <circle cx={x} cy={y} r={r + 4} className="fill-warning/20" />
-                <circle cx={x} cy={y} r={r} className={clsx('stroke-white', on ? 'fill-warning-fg' : 'fill-warning')} strokeWidth={2} />
+                <circle cx={x} cy={y} r={r + 4} className="fill-chart-2/20" />
+                <circle cx={x} cy={y} r={r} className={clsx('stroke-card', on ? 'fill-highlight-fg' : 'fill-chart-2')} strokeWidth={2} />
               </g>
             );
           })}
@@ -115,11 +115,11 @@ export const OriginFlowMap = ({ data }: { data: PublicOrigins }) => {
         {current && (
           <div
             role="tooltip"
-            className="pointer-events-none absolute z-10 w-max max-w-[240px] -translate-x-1/2 -translate-y-full rounded-lg bg-navy-900 px-3 py-2 text-xs leading-snug text-white shadow-lg"
+            className="pointer-events-none absolute z-10 w-max max-w-[240px] -translate-x-1/2 -translate-y-full rounded-xl border border-line bg-raised px-3 py-2 text-xs leading-snug text-ink shadow-[var(--tv-shadow-raised)]"
             style={{ left: `${(proj.project([current.lng, current.lat])[0] / proj.width) * 100}%`, top: `calc(${(proj.project([current.lng, current.lat])[1] / proj.height) * 100}% - 18px)` }}
           >
-            <span className="font-bold">{originName(current)}</span>
-            <span className="block text-white/75">{t('mk.origins.people', { count: current.count })}</span>
+            <span className="font-semibold">{originName(current)}</span>
+            <span className="block text-muted">{t('mk.origins.people', { count: current.count })}</span>
           </div>
         )}
       </div>
@@ -127,8 +127,8 @@ export const OriginFlowMap = ({ data }: { data: PublicOrigins }) => {
       <div>
         <ul className="grid grid-cols-3 gap-2 text-center">
           {(['AZ', 'TR', 'UA'] as const).map((c) => (
-            <li key={c} className="rounded-xl border border-line bg-card px-2 py-3">
-              <span className="block font-display text-xl font-extrabold text-brand-600 tabular-nums">{data.countries[c] || '—'}</span>
+            <li key={c} className="rounded-2xl border border-line bg-card px-2 py-3 shadow-[var(--tv-shadow-card)]">
+              <span className="block font-display text-xl font-semibold text-ink tabular-nums">{data.countries[c] || '—'}</span>
               <span className="block text-xs text-muted">{t(`mk.origins.countries.${c}`)}</span>
             </li>
           ))}
@@ -136,21 +136,21 @@ export const OriginFlowMap = ({ data }: { data: PublicOrigins }) => {
         {data.flows.length > 0 && (
           <>
             <p className="mt-4 text-sm font-semibold text-ink">{t('mk.origins.topFlows')}</p>
-            <ul className="mt-2 divide-y divide-line rounded-xl border border-line bg-card">
+            <ul className="mt-2 divide-y divide-line overflow-hidden rounded-2xl border border-line bg-card">
               {flows.slice(0, 8).map((f) => (
                 <li key={`${f.from}-${f.to}`}>
                   <button
                     type="button"
-                    className={clsx('flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm hover:bg-surface', active === f.from && 'bg-surface')}
+                    className={clsx('flex min-h-11 w-full items-center gap-2 px-4 py-2.5 text-left text-sm hover:bg-sunken', active === f.from && 'bg-sunken')}
                     onMouseEnter={() => setActive(f.from)}
                     onFocus={() => setActive(f.from)}
                     onClick={() => setActive(f.from)}
                   >
-                    <MapPin className="size-4 shrink-0 text-warning" aria-hidden />
+                    <MapPin className="size-4 shrink-0 text-chart-2" aria-hidden />
                     <span className="min-w-0 flex-1 truncate font-semibold text-ink">
                       {originName(f.origin)} <ArrowRight className="inline size-3.5 text-muted" aria-hidden /> {f.to}
                     </span>
-                    <span className="shrink-0 font-semibold text-brand-600 tabular-nums">{t('mk.origins.people', { count: f.count })}</span>
+                    <span className="shrink-0 font-semibold text-ink tabular-nums">{t('mk.origins.people', { count: f.count })}</span>
                   </button>
                 </li>
               ))}

@@ -65,7 +65,7 @@ const VersionCell = ({ row, documents }: { row: ConsentRow; documents: Record<st
   const doc = row.legalDocumentId ? documents[row.legalDocumentId] : undefined;
   if (!doc) return <>{row.version}</>;
   return (
-    <a href={versionPath(doc.kind, doc.version)} target="_blank" rel="noopener" className="font-semibold text-brand-600 hover:underline" title={t('legalDocs.consents.openText')}>
+    <a href={versionPath(doc.kind, doc.version)} target="_blank" rel="noopener" className="font-semibold text-link hover:underline" title={t('legalDocs.consents.openText')}>
       {row.version}
     </a>
   );
@@ -92,7 +92,7 @@ const Timeline = ({ person, onClose }: { person: Person | null; onClose: () => v
       ) : (
         <div className="space-y-5">
           {data.user && (
-            <Link to={`/admin/users?search=${encodeURIComponent(data.user.email)}`} className="inline-flex items-center gap-2 text-sm font-semibold text-brand-600 hover:underline">
+            <Link to={`/admin/users?search=${encodeURIComponent(data.user.email)}`} className="inline-flex items-center gap-2 text-sm font-semibold text-link hover:underline">
               <UserRound className="size-4" aria-hidden /> {fullName(data.user)} · {data.user.email}
             </Link>
           )}
@@ -101,7 +101,7 @@ const Timeline = ({ person, onClose }: { person: Person | null; onClose: () => v
               <h3 className="mb-2 text-xs font-bold tracking-wide text-muted uppercase">{t('legalDocs.consents.currentState')}</h3>
               <ul className="grid gap-1.5 text-sm sm:grid-cols-2">
                 {Object.entries(data.current).map(([type, c]) => (
-                  <li key={type} className="rounded-lg border border-line bg-surface px-3 py-2">
+                  <li key={type} className="rounded-lg border border-line bg-sunken px-3 py-2">
                     <span className="block text-xs text-muted">{labels.type(type)}</span>
                     <b className={c.granted ? 'text-success-fg' : 'text-warning-fg'}>{c.granted ? t('privacy.admin.consents.yes') : t('privacy.admin.consents.no')}</b>
                     <span className="ml-2 text-xs text-muted">v {c.version}</span>
@@ -223,17 +223,17 @@ export const ConsentRegister = () => {
           <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
             <p className="text-xs text-muted">{t('privacy.admin.consents.total', { count: data.total })}</p>
             <div className="flex gap-2">
-              <a href={exportUrl('csv')} download className="btn-white btn-sm min-h-10 border border-line">
+              <a href={exportUrl('csv')} download className="btn-secondary btn-sm min-h-10 border border-line">
                 <Download className="size-4" aria-hidden /> {t('privacy.admin.consents.csv')}
               </a>
-              <a href={exportUrl('download')} download className="btn-white btn-sm min-h-10 border border-line">
+              <a href={exportUrl('download')} download className="btn-secondary btn-sm min-h-10 border border-line">
                 <Download className="size-4" aria-hidden /> {t('legalDocs.consents.json')}
               </a>
             </div>
           </div>
           <div className="overflow-x-auto rounded-xl border border-line bg-card">
             <table className="w-full min-w-[48rem] text-sm">
-              <thead className="bg-surface text-left text-xs text-muted">
+              <thead className="bg-sunken text-left text-xs text-muted">
                 <tr>
                   {(['date', 'person', 'type', 'value', 'source', 'version', 'ip'] as const).map((c) => (
                     <th key={c} className="px-3 py-2.5 font-medium">
@@ -252,7 +252,7 @@ export const ConsentRegister = () => {
                       <td className="px-3 py-2">
                         <p className="font-medium break-all text-ink">{r.user?.email ?? r.email ?? (r.visitorId ? t('legalDocs.consents.visitor') : '—')}</p>
                         {r.user && <p className="text-xs text-muted">{fullName(r.user)}</p>}
-                        {!r.user && r.visitorId && <p className="font-mono text-[11px] text-muted">{r.visitorId}</p>}
+                        {!r.user && r.visitorId && <p className="code-id text-[11px] text-muted">{r.visitorId}</p>}
                       </td>
                       <td className="px-3 py-2 text-ink">{labels.type(r.type)}</td>
                       <td className="px-3 py-2">
@@ -267,7 +267,7 @@ export const ConsentRegister = () => {
                       </td>
                       <td className="px-2 py-2">
                         {p && (
-                          <button type="button" className="grid size-8 place-items-center rounded-lg text-muted hover:bg-surface hover:text-ink" onClick={() => setPerson(p)} aria-label={t('legalDocs.consents.timeline')} title={t('legalDocs.consents.timeline')}>
+                          <button type="button" className="grid size-8 place-items-center rounded-lg text-muted hover:bg-sunken hover:text-ink" onClick={() => setPerson(p)} aria-label={t('legalDocs.consents.timeline')} title={t('legalDocs.consents.timeline')}>
                             <History className="size-4" />
                           </button>
                         )}

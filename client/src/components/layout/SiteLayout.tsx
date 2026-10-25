@@ -14,9 +14,11 @@ import { useSiteContent } from '@/lib/content';
 import { SearchPalette } from '../search/SearchPalette';
 import { CookieConsent } from '../legal/CookieConsent'; // real consent banner (lib/consent.ts)
 import { AccessibilityWidget } from '../a11y/AccessibilityWidget';
+import { useSurface } from '@/lib/theme'; // warm public surface + serif display headings (index.css)
 
 // Public AI advisor: its own chunk, loaded only on the public pages (not in the portals).
 const AdvisorBubble = lazy(() => import('../publicAi/AdvisorBubble'));
+const PORTAL_PATHS = ['/account', '/company', '/partner', '/agent'];
 const NO_ADVISOR = ['/account', '/agent', '/partner', '/company', '/admin', '/workspace', '/sign', '/share', '/survey'];
 
 const WhatsAppIcon = () => (
@@ -48,7 +50,7 @@ const FloatingActions = () => {
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.5 }}
             onClick={() => scrollToTop()}
-            className="grid size-11 place-items-center rounded-full border border-line bg-white text-navy-900 shadow-lg hover:bg-brand-50"
+            className="grid size-11 place-items-center rounded-full border border-line bg-card text-ink shadow-lg hover:bg-sunken"
           >
             <ArrowUp className="size-5" />
           </motion.button>
@@ -71,10 +73,9 @@ const FloatingActions = () => {
           animate={{ scale: 1 }}
           transition={{ delay: 2.2, type: 'spring' }}
           whileHover={{ scale: 1.1 }}
-          className="relative grid size-14 place-items-center rounded-full bg-[#25d366] text-white shadow-xl shadow-[#25d366]/40"
+          className="relative grid size-14 place-items-center rounded-full bg-[#25d366] text-white shadow-[var(--tv-shadow-raised)]"
         >
-          <span className="absolute inset-0 animate-ping rounded-full bg-[#25d366] opacity-30" />
-          <WhatsAppIcon />
+                    <WhatsAppIcon />
         </motion.a>
       )}
     </div>
@@ -88,7 +89,7 @@ const FloatingActions = () => {
 const RouteFallback = ({ pathname }: { pathname: string }) => {
   const light = LIGHT_TOP.some((p) => pathname.startsWith(p));
   return (
-    <div className={light ? 'grid min-h-[100svh] place-items-center bg-white text-brand-600' : 'grid min-h-[100svh] place-items-center bg-navy-950 text-white/70'} role="status" aria-live="polite">
+    <div className={light ? 'grid min-h-[100svh] place-items-center bg-canvas text-primary' : 'grid min-h-[100svh] place-items-center bg-canvas text-muted'} role="status" aria-live="polite">
       <Spinner className="size-9 border-[3px]" />
     </div>
   );
@@ -96,6 +97,9 @@ const RouteFallback = ({ pathname }: { pathname: string }) => {
 
 export const SiteLayout = () => {
   const { pathname } = useLocation();
+  // Portals (client / employer / partner / agent) use the warm portal surface (Inter headings, denser data);
+  // everything else is the public surface with serif display headings (index.css).
+  useSurface(PORTAL_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`)) ? 'portal' : 'public');
   const { t } = useTranslation();
   return (
     <>

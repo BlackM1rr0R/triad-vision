@@ -15,7 +15,6 @@ import {
   Handshake,
   Lock,
   Mail,
-  MailCheck,
   MessagesSquare,
   Phone,
   ScanLine,
@@ -29,7 +28,7 @@ import { toast } from 'sonner';
 import { api, errorCode } from '@/lib/api';
 import { landingAfterLogin, useAuth } from '@/lib/auth';
 import { useL10n } from '@/lib/l10n';
-import { sized, srcSet } from '@/lib/img';
+import { Documents, Success } from '@/components/illustrations';
 import { isStrongPassword, PASSWORD_MAX, PASSWORD_MIN, type SessionInfo, type User } from '@/lib/types';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { Spinner } from '@/components/ui/Spinner';
@@ -48,7 +47,6 @@ registerCopy(campaignConsentCopy);
 registerCopy(cookieConsentCopy);
 
 /** Same photo as the home hero (already cached for most visitors). */
-const ASIDE_IMG = 'https://images.unsplash.com/photo-1587330979470-3595ac045ab0?auto=format&fit=crop&w=1200&q=65';
 
 /** Age limits enforced by the API (POST /api/auth/register). */
 const MIN_AGE = 16;
@@ -122,16 +120,14 @@ const CheckInbox = ({ email, next }: { email: string; next: string }) => {
   return (
     <AuthShell title={t('registerInbox.title')}>
       <div className="flex flex-col items-center text-center" role="status">
-        <span className="grid size-16 place-items-center rounded-full bg-brand-50 text-brand-600">
-          <MailCheck className="size-8" aria-hidden />
-        </span>
+        <Success className="w-36" />
         <p className="mt-5 break-words text-ink">{t('registerInbox.text', { email })}</p>
         <p className="mt-2 text-sm text-muted">{t('registerInbox.hint')}</p>
         <div className="mt-7 flex w-full flex-col gap-2 sm:flex-row sm:justify-center">
-          <button type="button" className="btn-primary" onClick={() => navigate(next, { replace: true })}>
+          <button type="button" className="btn-primary btn-lg" onClick={() => navigate(next, { replace: true })}>
             {t('registerInbox.continue')} <ArrowRight className="size-4" aria-hidden />
           </button>
-          <ResendVerificationButton className="btn-ghost" label={t('registerInbox.resend')} />
+          <ResendVerificationButton className="btn-secondary btn-lg" label={t('registerInbox.resend')} />
         </div>
       </div>
     </AuthShell>
@@ -193,36 +189,26 @@ const Aside = () => {
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.7, delay: 0.08, ease: [0.22, 1, 0.36, 1] }}
       aria-label={t('registerPage.aside.label')}
-      className="relative isolate hidden min-h-[640px] overflow-hidden rounded-[2rem] bg-navy-950 p-10 text-white lg:flex lg:flex-col lg:justify-end xl:p-12"
+      className="hidden min-h-[640px] rounded-3xl border border-line bg-sunken p-10 lg:flex lg:flex-col lg:justify-center xl:p-12"
     >
-      <img
-        src={sized(ASIDE_IMG, 1200)}
-        srcSet={srcSet(ASIDE_IMG, [800, 1200, 1600])}
-        sizes="(min-width: 1024px) 50vw, 0px"
-        alt=""
-        decoding="async"
-        loading="lazy"
-        className="absolute inset-0 -z-10 size-full object-cover"
-      />
-      <div className="absolute inset-0 -z-10 bg-navy-950/70" />
-      <div className="absolute inset-0 -z-10 bg-gradient-to-t from-navy-950 via-navy-950/60 to-transparent" />
-      <h2 className="max-w-md font-display text-4xl leading-tight font-extrabold xl:text-[2.75rem]">{t('registerPage.aside.title')}</h2>
-      <p className="mt-4 max-w-md text-white/80">{t('registerPage.aside.text')}</p>
+      <Documents className="mx-auto mb-8 w-full max-w-[16rem]" animated />
+      <h2 className="max-w-md font-display text-3xl leading-tight font-semibold text-ink xl:text-4xl">{t('registerPage.aside.title')}</h2>
+      <p className="mt-4 max-w-md text-muted">{t('registerPage.aside.text')}</p>
       <ul className="mt-8 space-y-3">
-        {rows.map(({ key, icon: Icon, to }) => (
+        {rows.map(({ key, icon: Icon, to }, i) => (
           <li key={key}>
             <Link
               to={to}
-              className="glass group flex items-center gap-4 rounded-xl px-4 py-3.5 transition hover:border-white/30 hover:bg-white/[0.14] focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:outline-none"
+              className="card card-interactive group flex min-h-14 items-center gap-4 px-4 py-3.5 focus-visible:ring-2 focus-visible:ring-focus/40 focus-visible:outline-none"
             >
-              <span className="grid size-10 shrink-0 place-items-center rounded-lg bg-brand-500/20 text-brand-400">
+              <span className={clsx('grid size-11 shrink-0 place-items-center rounded-xl', ['chip-soft', 'chip-sage', 'chip-sky', 'chip-peach'][i % 4])}>
                 <Icon className="size-5" aria-hidden />
               </span>
               <span className="min-w-0 flex-1">
-                <span className="block text-sm font-bold">{t(`registerPage.aside.${key}`)}</span>
-                <span className="block text-xs text-white/70">{t(`registerPage.aside.${key}Text`)}</span>
+                <span className="block text-sm font-semibold text-ink">{t(`registerPage.aside.${key}`)}</span>
+                <span className="block text-xs text-muted">{t(`registerPage.aside.${key}Text`)}</span>
               </span>
-              <ChevronRight className="size-4 shrink-0 text-white/60 transition group-hover:translate-x-0.5 group-hover:text-white" aria-hidden />
+              <ChevronRight className="size-4 shrink-0 text-muted transition-colors group-hover:text-ink" aria-hidden />
             </Link>
           </li>
         ))}
@@ -272,7 +258,7 @@ export default function Register() {
   };
   const fromPassport = (k: FieldKey) =>
     scanned?.[k] && scanned[k] === f[k] ? (
-      <span className="mb-1.5 inline-flex items-center gap-1 rounded-full bg-brand-50 px-2 py-0.5 text-[0.7rem] font-semibold text-brand-700 ring-1 ring-brand-200 dark:text-brand-400 dark:ring-brand-500/30">
+      <span className="mb-1.5 inline-flex items-center gap-1 rounded-full bg-sunken px-2 py-0.5 text-[0.7rem] font-semibold text-ink ring-1 ring-line-strong">
         <ScanLine className="size-3" aria-hidden /> {t('registerPage.scan.filledTag')}
       </span>
     ) : null;
@@ -363,23 +349,23 @@ export default function Register() {
   const aria = (k: FieldKey) => ({ 'aria-invalid': errorFor(k) ? true : undefined, 'aria-describedby': `${id(k)}-hint` });
 
   return (
-    <section className="flex min-h-[100svh] items-center bg-surface pt-24 pb-12 sm:pt-28 lg:pt-36 lg:pb-16">
+    <section className="flex min-h-[100svh] items-center bg-canvas pt-24 pb-12 sm:pt-28 lg:pt-36 lg:pb-16">
       <div className="container-x grid items-stretch gap-6 lg:grid-cols-2 lg:gap-8">
         <motion.div
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-          className="card mx-auto w-full max-w-lg p-5 sm:p-10 lg:max-w-none"
+          className="card mx-auto w-full max-w-lg rounded-3xl p-5 sm:p-10 lg:max-w-none"
         >
-          <h1 className="font-display text-[1.75rem] leading-tight font-extrabold text-ink sm:text-3xl">{t('registerPage.title')}</h1>
+          <h1 className="font-display text-[1.75rem] leading-tight font-semibold text-ink sm:text-3xl">{t('registerPage.title')}</h1>
           <p className="mt-2 text-muted">{t('registerPage.subtitle')}</p>
-          <p className="mt-4 flex items-start gap-2.5 rounded-xl border border-brand-200 bg-brand-50 px-3.5 py-3 text-sm text-ink dark:border-brand-500/30">
-            <BookUser className="mt-0.5 size-4 shrink-0 text-brand-600" aria-hidden />
+          <p className="mt-4 flex items-start gap-2.5 rounded-xl border border-line bg-sunken px-3.5 py-3 text-sm text-ink">
+            <BookUser className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden />
             <span>{t('registerPage.passportNotice')}</span>
           </p>
           {refCode && (
             <p className="mt-3">
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-line bg-surface px-2.5 py-1 text-xs font-medium text-muted">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-line bg-sunken px-2.5 py-1 text-xs font-medium text-muted">
                 <Ticket className="size-3.5" aria-hidden /> {t('registerPage.scan.agentCode', { code: refCode })}
               </span>
             </p>
@@ -491,7 +477,7 @@ export default function Register() {
               trailing={
                 <button
                   type="button"
-                  className="absolute top-1/2 right-1.5 grid size-9 -translate-y-1/2 place-items-center rounded-md text-muted transition hover:bg-surface hover:text-ink focus-visible:ring-2 focus-visible:ring-brand-500/40 focus-visible:outline-none"
+                  className="absolute top-1/2 right-1.5 grid size-9 -translate-y-1/2 place-items-center rounded-md text-muted transition hover:bg-sunken hover:text-ink focus-visible:ring-2 focus-visible:ring-focus/40 focus-visible:outline-none"
                   onClick={() => setShowPassword((v) => !v)}
                   aria-label={showPassword ? t('registerPage.hidePassword') : t('registerPage.showPassword')}
                   aria-pressed={showPassword}
@@ -528,11 +514,11 @@ export default function Register() {
                   onChange={(e) => setPrivacy(e.target.checked)}
                   aria-invalid={submitted && !privacy ? true : undefined}
                   aria-describedby={submitted && !privacy ? id('privacy-error') : undefined}
-                  className="mt-0.5 size-4 shrink-0 accent-brand-600"
+                  className="mt-0.5 size-4 shrink-0 accent-primary"
                 />
                 <span>
                   {t('registerPage.privacyBefore')}
-                  <Link to="/privacy" target="_blank" rel="noopener" className="font-semibold text-brand-600 hover:underline">
+                  <Link to="/privacy" target="_blank" rel="noopener" className="font-semibold text-link hover:underline">
                     {t('registerPage.privacyLink')}
                   </Link>
                   {t('registerPage.privacyAfter')}
@@ -556,11 +542,11 @@ export default function Register() {
                   onChange={(e) => setTerms(e.target.checked)}
                   aria-invalid={submitted && !terms ? true : undefined}
                   aria-describedby={submitted && !terms ? id('terms-error') : undefined}
-                  className="mt-0.5 size-4 shrink-0 accent-brand-600"
+                  className="mt-0.5 size-4 shrink-0 accent-primary"
                 />
                 <span>
                   {t('legalDocs.register.termsBefore')}
-                  <Link to="/agb" target="_blank" rel="noopener" className="font-semibold text-brand-600 hover:underline">
+                  <Link to="/agb" target="_blank" rel="noopener" className="font-semibold text-link hover:underline">
                     {t('legalDocs.register.termsLink')}
                   </Link>
                   {t('legalDocs.register.termsAfter')}
@@ -574,18 +560,18 @@ export default function Register() {
             </div>
 
             <label className="flex items-start gap-2.5 text-sm text-ink/80">
-              <input type="checkbox" name="marketing" checked={marketing} onChange={(e) => setMarketing(e.target.checked)} className="mt-0.5 size-4 shrink-0 accent-brand-600" />
+              <input type="checkbox" name="marketing" checked={marketing} onChange={(e) => setMarketing(e.target.checked)} className="mt-0.5 size-4 shrink-0 accent-primary" />
               <span>{t('campaignConsent.register')}</span>
             </label>
 
-            <button type="submit" disabled={busy} className="btn-primary h-12 w-full">
+            <button type="submit" disabled={busy} className="btn-primary btn-lg w-full">
               {busy ? <Spinner className="size-4" /> : <UserPlus className="size-4" aria-hidden />} {t('registerPage.submit')}
             </button>
           </form>
 
           <p className="mt-6 text-center text-sm text-muted">
             {t('registerPage.haveAccount')}{' '}
-            <Link to="/login" state={location.state} className="font-semibold text-brand-600 hover:underline">
+            <Link to="/login" state={location.state} className="font-semibold text-link hover:underline">
               {t('registerPage.login')}
             </Link>
           </p>

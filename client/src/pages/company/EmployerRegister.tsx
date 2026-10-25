@@ -16,9 +16,8 @@ import { Spinner } from '@/components/ui/Spinner';
 import { RouteFlags } from '@/components/ui/Flag';
 import { jobsError, useJobLabels } from '@/components/jobs/labels';
 import { SECTORS } from '@/components/jobs/types';
-import { sized, srcSet } from '@/lib/img';
+import { Employer } from '@/components/illustrations';
 
-const ASIDE_IMG = 'https://images.unsplash.com/photo-1553413077-190dd305871c?auto=format&fit=crop&w=1200&q=65';
 
 registerCopy(pagesJobs);
 registerCopy(cookieConsentCopy);
@@ -83,26 +82,26 @@ export default function EmployerRegister() {
   const benefits = t('jobsArea.register.benefits', { returnObjects: true }) as string[];
 
   return (
-    <section className="bg-surface pt-24 pb-12 sm:pt-28 lg:pt-36 lg:pb-16">
+    <section className="bg-canvas pt-24 pb-12 sm:pt-28 lg:pt-36 lg:pb-16">
       <div className="container-x grid items-start gap-6 lg:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)] lg:gap-8">
         <motion.div
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-          className="card w-full p-6 sm:p-10"
+          className="card w-full rounded-3xl p-6 sm:p-10"
         >
           <span className="eyebrow">{t('jobsArea.register.eyebrow')}</span>
-          <h1 className="mt-2 font-display text-[1.75rem] leading-tight font-extrabold text-navy-900 sm:text-3xl">{t('jobsArea.register.title')}</h1>
+          <h1 className="mt-2 font-display text-[1.75rem] leading-tight font-semibold text-ink sm:text-3xl">{t('jobsArea.register.title')}</h1>
           <p className="mt-2 text-muted">{t('jobsArea.register.subtitle')}</p>
 
           {user && !isStaffRole(user.role) && (
-            <p className="mt-5 rounded-lg bg-amber-50 px-4 py-3 text-sm text-amber-900">{t('jobsArea.register.loggedInAsCandidate')}</p>
+            <p className="mt-5 rounded-lg bg-warning-bg px-4 py-3 text-sm text-warning-fg">{t('jobsArea.register.loggedInAsCandidate')}</p>
           )}
 
           <form onSubmit={submit} className="mt-8 space-y-8">
             <fieldset className="grid gap-4 sm:grid-cols-2">
-              <legend className="mb-4 flex items-center gap-2 text-sm font-bold text-navy-900">
-                <Building2 className="size-4 text-brand-600" aria-hidden /> {t('jobsArea.register.companySection')}
+              <legend className="mb-4 flex items-center gap-2.5 type-card-title text-ink">
+                <span className="grid size-9 place-items-center rounded-xl chip-sky"><Building2 className="size-4" aria-hidden /></span> {t('jobsArea.register.companySection')}
               </legend>
               <Field id="name" label={t('jobsArea.register.companyName')} className="sm:col-span-2">
                 <input id="name" name="name" required minLength={2} maxLength={160} autoComplete="organization" className="input" />
@@ -140,8 +139,8 @@ export default function EmployerRegister() {
             </fieldset>
 
             <fieldset className="grid gap-4 sm:grid-cols-2">
-              <legend className="mb-4 flex items-center gap-2 text-sm font-bold text-navy-900">
-                <UserRound className="size-4 text-brand-600" aria-hidden /> {t('jobsArea.register.contactSection')}
+              <legend className="mb-4 flex items-center gap-2.5 type-card-title text-ink">
+                <span className="grid size-9 place-items-center rounded-xl chip-sage"><UserRound className="size-4" aria-hidden /></span> {t('jobsArea.register.contactSection')}
               </legend>
               <Field id="firstName" label={t('jobsArea.register.firstName')}>
                 <input id="firstName" name="firstName" required maxLength={80} autoComplete="given-name" className="input" />
@@ -170,26 +169,26 @@ export default function EmployerRegister() {
             </fieldset>
 
             <label className="flex items-start gap-2.5 text-xs text-muted">
-              <input type="checkbox" required className="mt-0.5 size-4 accent-brand-600" />
+              <input type="checkbox" required className="mt-0.5 size-4 accent-primary" />
               <span>
                 {t('jobsArea.register.terms')}{' '}
-                <Link to="/privacy" className="font-semibold text-brand-600 hover:underline">
+                <Link to="/privacy" className="font-semibold text-link hover:underline">
                   {t('jobsArea.register.privacyLink')}
                 </Link>
                 {' · '}
                 {/* Accepting is logged as TERMS + PRIVACY_POLICY consents with the current versions. */}
-                <Link to="/agb" target="_blank" rel="noopener" className="font-semibold text-brand-600 hover:underline">
+                <Link to="/agb" target="_blank" rel="noopener" className="font-semibold text-link hover:underline">
                   {t('legalDocs.register.termsLink')}
                 </Link>
               </span>
             </label>
-            <button type="submit" disabled={busy || !!user} className="btn-primary w-full">
+            <button type="submit" disabled={busy || !!user} className="btn-primary btn-lg w-full">
               {busy ? <Spinner className="size-4" /> : <Building2 className="size-4" />} {t('jobsArea.register.submit')}
             </button>
           </form>
           <p className="mt-6 text-center text-sm text-muted">
             {t('jobsArea.register.haveAccount')}{' '}
-            <Link to="/login" className="font-semibold text-brand-600 hover:underline">
+            <Link to="/login" className="font-semibold text-link hover:underline">
               {t('jobsArea.register.login')}
             </Link>
           </p>
@@ -199,29 +198,20 @@ export default function EmployerRegister() {
           initial={{ opacity: 0, x: 30 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.7, delay: 0.08, ease: [0.22, 1, 0.36, 1] }}
-          className="relative isolate overflow-hidden rounded-[2rem] bg-navy-950 p-7 text-white sm:p-10 lg:sticky lg:top-28"
+          className="rounded-3xl border border-line bg-sunken p-7 sm:p-10 lg:sticky lg:top-28"
         >
-          <img
-            src={sized(ASIDE_IMG, 1200)}
-            srcSet={srcSet(ASIDE_IMG, [600, 900, 1200])}
-            sizes="(min-width: 1024px) 40vw, 100vw"
-            alt=""
-            decoding="async"
-            loading="lazy"
-            className="absolute inset-0 -z-10 size-full object-cover opacity-30"
-          />
-          <div className="absolute inset-0 -z-10 bg-gradient-to-t from-navy-950 via-navy-950/80 to-brand-700/30" />
+          <Employer className="mx-auto mb-6 w-full max-w-[15rem]" animated />
           <RouteFlags size="lg" />
-          <h2 className="mt-6 font-display text-2xl leading-tight font-extrabold sm:text-3xl">{t('jobsArea.register.asideTitle')}</h2>
-          <p className="mt-3 text-white/75">{t('jobsArea.register.asideText')}</p>
+          <h2 className="mt-6 font-display text-2xl leading-tight font-semibold text-ink sm:text-3xl">{t('jobsArea.register.asideTitle')}</h2>
+          <p className="mt-3 text-muted">{t('jobsArea.register.asideText')}</p>
           <ul className="mt-7 space-y-3">
             {benefits.map((b) => (
-              <li key={b} className="glass flex items-start gap-3 rounded-xl px-4 py-3 text-sm">
-                <CheckCircle2 className="mt-0.5 size-5 shrink-0 text-brand-400" aria-hidden /> {b}
+              <li key={b} className="flex items-start gap-3 rounded-2xl border border-line bg-card px-4 py-3 text-sm text-ink">
+                <CheckCircle2 className="mt-0.5 size-5 shrink-0 text-success" aria-hidden /> {b}
               </li>
             ))}
           </ul>
-          <p className="mt-7 flex items-center gap-2 text-xs text-white/60">
+          <p className="mt-7 flex items-center gap-2 text-xs text-muted">
             <ShieldCheck className="size-4" aria-hidden /> {t('jobsArea.register.asideNote')}
           </p>
         </motion.aside>

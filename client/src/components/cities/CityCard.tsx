@@ -26,10 +26,10 @@ export const CityCard = ({
   const small = city.slug === 'small-town';
 
   return (
-    <article className={clsx('flex flex-col rounded-2xl border bg-card p-5 transition-[border-color,box-shadow] duration-200', selected ? 'border-brand-500 shadow-[0_0_0_3px_rgb(0_0_0/0.02)] ring-2 ring-brand-500/20' : 'border-line hover:border-brand-400/60')}>
+    <article className={clsx('flex flex-col rounded-2xl border bg-card p-5 shadow-[var(--tv-shadow-card)] transition-[border-color,box-shadow] duration-200 sm:p-6', selected ? 'border-primary ring-2 ring-focus/40' : 'border-line hover:border-line-strong hover:shadow-[var(--tv-shadow-raised)]')}>
       <header className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <h3 className="font-display text-lg font-extrabold text-ink">{f.l4(city.name)}</h3>
+          <h3 className="font-display text-lg font-semibold text-ink">{f.l4(city.name)}</h3>
           <p className="mt-0.5 flex flex-wrap items-center gap-x-2 text-xs text-muted">
             {!small && (
               <span className="inline-flex items-center gap-1">
@@ -48,8 +48,8 @@ export const CityCard = ({
           aria-pressed={selected}
           title={selected ? t('citiesPage.card.remove') : canSelect ? t('citiesPage.card.compare') : t('citiesPage.compare.max')}
           className={clsx(
-            'grid size-9 shrink-0 place-items-center rounded-full border transition-colors disabled:cursor-not-allowed disabled:opacity-40',
-            selected ? 'border-brand-600 bg-brand-600 text-white' : 'border-line bg-surface text-muted hover:border-brand-400 hover:text-brand-700',
+            'grid size-11 shrink-0 place-items-center rounded-full border transition-colors disabled:cursor-not-allowed disabled:opacity-40',
+            selected ? 'border-primary bg-primary text-primary-contrast' : 'border-line bg-sunken text-ink hover:border-line-strong hover:bg-card',
           )}
         >
           {selected ? <Check className="size-4" aria-hidden /> : <Plus className="size-4" aria-hidden />}
@@ -60,21 +60,21 @@ export const CityCard = ({
       <p className="mt-3 text-sm leading-relaxed text-muted">{f.l4(city.description)}</p>
 
       <dl className="mt-4 grid grid-cols-2 gap-2 text-sm">
-        <div className="rounded-xl bg-surface p-3">
+        <div className="rounded-xl bg-sunken p-3">
           <dt className="text-[11px] leading-tight text-muted">{t('citiesPage.card.rent1')}</dt>
           <dd className="mt-1 font-bold text-ink tabular-nums">{f.range(k.oneRoom)}</dd>
         </div>
-        <div className="rounded-xl bg-surface p-3">
+        <div className="rounded-xl bg-sunken p-3">
           <dt className="text-[11px] leading-tight text-muted">{t('citiesPage.card.wg')}</dt>
           <dd className="mt-1 font-bold text-ink tabular-nums">{f.range(k.wg)}</dd>
         </div>
-        <div className="rounded-xl bg-surface p-3">
+        <div className="rounded-xl bg-sunken p-3">
           <dt className="text-[11px] leading-tight text-muted">{t('citiesPage.card.groceries')}</dt>
           <dd className="mt-1 font-bold text-ink tabular-nums">{f.range(k.groceries)}</dd>
         </div>
-        <div className="rounded-xl bg-brand-50 p-3">
+        <div className="rounded-xl border border-line-strong bg-card p-3">
           <dt className="text-[11px] leading-tight text-muted">{t('citiesPage.card.single')}</dt>
-          <dd className="mt-1 font-bold text-brand-700 tabular-nums">{f.range(k.single)}</dd>
+          <dd className="mt-1 font-bold text-ink tabular-nums">{f.range(k.single)}</dd>
         </div>
       </dl>
 
@@ -84,7 +84,7 @@ export const CityCard = ({
             <Row icon={Factory} title={t('citiesPage.detail.industries')}>
               <ul className="mt-1 flex flex-wrap gap-1.5">
                 {city.industries.map((i) => (
-                  <li key={i} className="rounded-full border border-line bg-surface px-2 py-0.5 text-xs text-ink/80">
+                  <li key={i} className="rounded-full border border-line bg-sunken px-2 py-0.5 text-xs text-ink/80">
                     {t(`citiesPage.industries.${i}`)}
                   </li>
                 ))}
@@ -120,7 +120,7 @@ export const CityCard = ({
               </Row>
             )}
             {city.website && (
-              <a href={city.website} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-sm font-semibold text-brand-700 hover:underline">
+              <a href={city.website} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-sm font-semibold text-link hover:underline">
                 <ExternalLink className="size-3.5" aria-hidden /> {t('citiesPage.card.website')} ({new URL(city.website).hostname.replace(/^www\./, '')})
               </a>
             )}
@@ -129,11 +129,11 @@ export const CityCard = ({
       </div>
 
       <footer className="mt-auto flex flex-wrap items-center gap-2 pt-4">
-        <button type="button" onClick={() => setOpen((v) => !v)} aria-expanded={open} className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-sm font-semibold text-ink/80 hover:bg-surface">
+        <button type="button" onClick={() => setOpen((v) => !v)} aria-expanded={open} className="inline-flex min-h-11 items-center gap-1 rounded-lg px-3 py-2 text-sm font-semibold text-ink/80 transition-colors hover:bg-sunken hover:text-ink">
           {open ? t('citiesPage.card.less') : t('citiesPage.card.more')}
           <ChevronDown className={clsx('size-4 transition-transform duration-200', open && 'rotate-180')} aria-hidden />
         </button>
-        <button type="button" onClick={onCalc} className="ml-auto inline-flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-sm font-semibold text-brand-700 hover:bg-brand-50">
+        <button type="button" onClick={onCalc} className="ml-auto inline-flex min-h-11 items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-semibold text-link transition-colors hover:bg-sunken">
           <Calculator className="size-4" aria-hidden /> {t('citiesPage.card.calc')}
         </button>
       </footer>
@@ -143,7 +143,7 @@ export const CityCard = ({
 
 const Row = ({ icon: Icon, title, children }: { icon: typeof Home; title: string; children: ReactNode }) => (
   <div className="flex gap-2.5">
-    <Icon className="mt-0.5 size-4 shrink-0 text-brand-600" aria-hidden />
+    <Icon className="mt-0.5 size-4 shrink-0 text-muted" aria-hidden />
     <div className="min-w-0">
       <p className="text-xs font-bold tracking-wide text-ink uppercase">{title}</p>
       <div className="mt-0.5 space-y-1">{children}</div>

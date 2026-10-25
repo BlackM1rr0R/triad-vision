@@ -34,7 +34,7 @@ export default function PackageConfirmWarning({ caseId, onBlockedChange }: { cas
     }
   };
   return (
-    <div className="space-y-2 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2.5 text-xs text-amber-900 dark:border-amber-800/60 dark:bg-amber-950/40 dark:text-amber-200" role="alert">
+    <div className="space-y-2 rounded-lg border border-warning-border bg-warning-bg px-3 py-2.5 text-xs text-warning-fg dark:border-amber-800/60 dark:bg-amber-950/40 dark:text-amber-200" role="alert">
       <p className="flex items-start gap-2 font-semibold">
         <AlertTriangle className="mt-0.5 size-3.5 shrink-0" aria-hidden /> {t('clientData.pkg.title')}
       </p>

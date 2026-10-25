@@ -236,13 +236,13 @@ export default function WorkspaceTasks() {
       <header className="shrink-0 space-y-3 border-b border-line bg-card px-4 pt-4 pb-3 lg:px-6">
         <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
           <div className="flex min-w-0 items-center gap-3">
-            <span className="hidden size-10 place-items-center rounded-xl bg-brand-600 text-white shadow-sm sm:grid">
+            <span className="hidden size-10 place-items-center rounded-xl bg-primary text-primary-contrast shadow-[var(--tv-shadow-card)] sm:grid">
               <ListTodo className="size-5" aria-hidden />
             </span>
             <div className="min-w-0">
-              <h1 className="flex items-center gap-2 font-display text-xl font-extrabold text-ink">
+              <h1 className="flex items-center gap-2 type-page-title">
                 {t('tasks.title')}
-                {list.data && <span className="rounded-full bg-surface px-2 py-0.5 font-sans text-xs font-semibold text-muted tabular-nums ring-1 ring-line">{list.data.total}</span>}
+                {list.data && <span className="rounded-full bg-sunken px-2 py-0.5 font-sans text-xs font-semibold text-muted tabular-nums ring-1 ring-line">{list.data.total}</span>}
               </h1>
               <p className="hidden truncate text-xs text-muted sm:block">{t('tasks.subtitle')}</p>
             </div>
@@ -257,7 +257,7 @@ export default function WorkspaceTasks() {
           />
 
           <div className="ml-auto flex items-center gap-2">
-            <div className="flex rounded-xl border border-line bg-surface p-1">
+            <div className="flex rounded-xl border border-line bg-sunken p-1">
               {([true, false] as const).map((m) => (
                 <button
                   key={String(m)}
@@ -265,7 +265,7 @@ export default function WorkspaceTasks() {
                   aria-pressed={mine === m}
                   title={m ? t('tasks.scope.mineHint') : t('tasks.scope.allHint')}
                   onClick={() => patchSp({ scope: m ? 'mine' : 'all', assignee: null, page: null })}
-                  className={clsx('inline-flex h-8 items-center gap-1.5 rounded-lg px-3 text-sm font-semibold transition', mine === m ? 'bg-card text-ink shadow-sm ring-1 ring-line' : 'text-muted hover:text-ink')}
+                  className={clsx('inline-flex h-8 items-center gap-1.5 rounded-lg px-3 text-sm font-semibold transition', mine === m ? 'bg-card text-ink shadow-[var(--tv-shadow-card)] ring-1 ring-line' : 'text-muted hover:text-ink')}
                 >
                   {m ? <User className="size-4" aria-hidden /> : <Users className="size-4" aria-hidden />}
                   {m ? t('tasks.scope.mine') : t('tasks.scope.all')}
@@ -275,7 +275,7 @@ export default function WorkspaceTasks() {
             <button type="button" onClick={() => startCreate()} className="btn-primary btn-sm h-10 px-4" title={t('tasks.shortcutNew')}>
               <Plus className="size-4" />
               <span className="hidden sm:inline">{t('tasks.newTask')}</span>
-              <kbd className="ml-1 hidden rounded border border-white/30 px-1.5 font-sans text-[0.65rem] leading-4 font-semibold text-white/80 lg:inline">N</kbd>
+              <kbd className="ml-1 hidden rounded border border-primary-contrast/30 px-1.5 font-sans text-[0.65rem] leading-4 font-semibold text-primary-contrast/80 lg:inline">N</kbd>
             </button>
           </div>
         </div>
@@ -290,12 +290,12 @@ export default function WorkspaceTasks() {
         />
       </header>
 
-      <div className="relative min-h-0 flex-1 bg-surface">
+      <div className="relative min-h-0 flex-1 bg-sunken">
         {list.isError && !list.data ? (
           <div className="grid h-full place-items-center p-6 text-center">
             <div>
               <p className="font-semibold text-ink">{t('tasks.toast.loadFailed')}</p>
-              <button type="button" onClick={() => void list.refetch()} className="btn-white btn-sm mt-3 border border-line">
+              <button type="button" onClick={() => void list.refetch()} className="btn-secondary btn-sm mt-3 border border-line">
                 {t('tasks.actions.retry')}
               </button>
             </div>
@@ -340,8 +340,8 @@ export default function WorkspaceTasks() {
 
         {empty && view !== 'calendar' && (
           <div className={clsx('pointer-events-none absolute inset-0 grid place-items-center p-6', view === 'board' && 'bg-surface/40')}>
-            <div className="pointer-events-auto max-w-sm rounded-2xl border border-line bg-card p-7 text-center shadow-[0_20px_60px_-30px_rgba(11,31,68,0.45)]">
-              <span className="mx-auto mb-4 grid size-14 place-items-center rounded-2xl bg-brand-50 text-brand-600">
+            <div className="pointer-events-auto max-w-sm rounded-xl border border-line bg-card p-7 text-center shadow-[var(--tv-shadow-card)]">
+              <span className="mx-auto mb-4 grid size-14 place-items-center rounded-xl bg-primary/[0.06] text-link">
                 <ListTodo className="size-7" aria-hidden />
               </span>
               <h2 className="font-display text-lg font-bold text-ink">{anyFilter || mine ? t('tasks.empty.filtered') : t('tasks.empty.board')}</h2>

@@ -35,13 +35,13 @@ export const TermsFields = ({ value, onChange }: { value: TermsValue; onChange: 
               key={o.type}
               className={clsx(
                 'flex cursor-pointer gap-3 rounded-xl border p-3.5 transition',
-                value.commissionType === o.type ? 'border-brand-500 bg-brand-50/60 ring-2 ring-brand-500/20' : 'border-line hover:border-brand-300',
+                value.commissionType === o.type ? 'border-primary bg-primary/[0.04] ring-2 ring-focus/20' : 'border-line hover:border-line-strong',
               )}
             >
-              <input type="radio" name={`${id}-type`} className="mt-1 accent-brand-600" checked={value.commissionType === o.type} onChange={() => set({ commissionType: o.type })} />
+              <input type="radio" name={`${id}-type`} className="mt-1 accent-primary" checked={value.commissionType === o.type} onChange={() => set({ commissionType: o.type })} />
               <span className="min-w-0">
                 <span className="flex items-center gap-1.5 text-sm font-semibold text-ink">
-                  <o.icon className="size-4 text-brand-600" aria-hidden /> {o.label}
+                  <o.icon className="size-4 text-link" aria-hidden /> {o.label}
                 </span>
                 <span className="mt-0.5 block text-xs text-muted">{o.help}</span>
               </span>
@@ -88,8 +88,8 @@ export const TermsFields = ({ value, onChange }: { value: TermsValue; onChange: 
         <p className="mb-2 text-xs text-muted">{t('agents.admin.terms.eventsHelp')}</p>
         <div className="space-y-1.5">
           {PAYOUT_EVENTS.map((e) => (
-            <label key={e} className="flex cursor-pointer items-start gap-3 rounded-lg border border-line px-3 py-2.5 hover:border-brand-300">
-              <input type="checkbox" className="mt-0.5 size-4 accent-brand-600" checked={value.payoutEvents.includes(e)} onChange={() => toggle(e)} />
+            <label key={e} className="flex cursor-pointer items-start gap-3 rounded-lg border border-line px-3 py-2.5 hover:border-line-strong">
+              <input type="checkbox" className="mt-0.5 size-4 accent-primary" checked={value.payoutEvents.includes(e)} onChange={() => toggle(e)} />
               <span className="min-w-0">
                 <span className="block text-sm font-semibold text-ink">{t(`agents.events.${e}`)}</span>
                 <span className="block text-xs text-muted">{t(`agents.eventsHelp.${e}`)}</span>
@@ -98,7 +98,7 @@ export const TermsFields = ({ value, onChange }: { value: TermsValue; onChange: 
           ))}
         </div>
         {percentWithoutInvoice && (
-          <p className="mt-2 flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+          <p className="mt-2 flex items-start gap-2 rounded-lg border border-warning-border bg-warning-bg px-3 py-2 text-xs text-warning-fg">
             <AlertTriangle className="mt-0.5 size-3.5 shrink-0" aria-hidden /> {t('agents.admin.terms.percentWarn')}
           </p>
         )}

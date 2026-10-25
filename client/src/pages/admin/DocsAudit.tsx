@@ -12,14 +12,14 @@ import { EmptyState, ErrorBlock, LoadingBlock, PageHead } from '@/components/adm
 
 const ACTION_TONE = (action: string) =>
   action === 'LOGIN_FAILED'
-    ? 'bg-red-100 text-red-700'
+    ? 'bg-danger-bg text-danger-fg'
     : action === 'DOC_GRANT_CHANGED' || action.startsWith('DRIVE_GRANT') || action === 'DRIVE_INHERITANCE_CHANGED'
-      ? 'bg-violet-100 text-violet-800'
+      ? 'bg-accent-bg text-accent-fg'
       : action.startsWith('DOC_') || action.startsWith('DRIVE_')
-      ? 'bg-brand-100 text-brand-700'
+      ? 'bg-primary/10 text-link'
       : action.startsWith('USER_')
-        ? 'bg-violet-100 text-violet-800'
-        : 'bg-amber-100 text-amber-800';
+        ? 'bg-accent-bg text-accent-fg'
+        : 'bg-warning-bg text-warning-fg';
 
 /** Compact, human-readable rendering of the details JSON. */
 const detailsText = (d: Record<string, unknown> | null) =>
@@ -69,7 +69,7 @@ export default function DocsAudit() {
         subtitle={q.data ? t('admin.docsAudit.entries', { count: total }) : t('admin.docsAudit.subtitle')}
         actions={
           <>
-            {q.isFetching && !q.isLoading && <Spinner className="size-4 text-brand-600" />}
+            {q.isFetching && !q.isLoading && <Spinner className="size-4 text-link" />}
             <Link to="/admin/docs" className="btn-secondary btn-sm">
               <ArrowLeft className="size-3.5" /> {t('admin.nav.docs')}
             </Link>
@@ -78,7 +78,7 @@ export default function DocsAudit() {
       />
 
       {!isSuper ? (
-        <div className="rounded-xl border border-line bg-white">
+        <div className="rounded-xl border border-line bg-card">
           <EmptyState icon={ScrollText} title={t('admin.docsAudit.superOnly')} />
         </div>
       ) : (
@@ -104,13 +104,13 @@ export default function DocsAudit() {
           ) : q.error ? (
             <ErrorBlock error={q.error} onRetry={() => q.refetch()} />
           ) : items.length === 0 ? (
-            <div className="rounded-xl border border-line bg-white">
+            <div className="rounded-xl border border-line bg-card">
               <EmptyState icon={ScrollText} title={t('admin.docsAudit.notFound')} />
             </div>
           ) : (
-            <div className="overflow-x-auto rounded-xl border border-line bg-white">
+            <div className="overflow-x-auto rounded-xl border border-line bg-card">
               <table className="w-full min-w-[760px] text-left text-sm">
-                <thead className="border-b border-line bg-surface/70 text-[11px] font-semibold tracking-wide whitespace-nowrap text-muted uppercase">
+                <thead className="border-b border-line bg-surface/70 text-xs font-medium whitespace-nowrap text-muted">
                   <tr>
                     <th className="px-4 py-2.5">{t('admin.docsAudit.th.time')}</th>
                     <th className="px-3 py-2.5">{t('admin.docsAudit.th.action')}</th>
@@ -130,18 +130,18 @@ export default function DocsAudit() {
                       <td className="px-3 py-2 text-xs">
                         {it.actor ? (
                           <>
-                            <span className="font-semibold text-navy-900">{fullName(it.actor)}</span>
+                            <span className="font-semibold text-ink">{fullName(it.actor)}</span>
                             <span className="block text-muted">{it.actor.email}</span>
                           </>
                         ) : (
                           <span className="text-muted">—</span>
                         )}
                       </td>
-                      <td className="max-w-[14rem] truncate px-3 py-2 font-mono text-[11px] text-muted" title={it.target ?? undefined}>
+                      <td className="max-w-[14rem] truncate px-3 py-2 code-id text-[11px] text-muted" title={it.target ?? undefined}>
                         {it.target ?? '—'}
                       </td>
                       <td className="max-w-[24rem] px-3 py-2 text-xs break-words text-ink/80">{detailsText(it.details) || '—'}</td>
-                      <td className="px-3 py-2 font-mono text-[11px] whitespace-nowrap text-muted">{it.ip ?? '—'}</td>
+                      <td className="px-3 py-2 code-id text-[11px] whitespace-nowrap text-muted">{it.ip ?? '—'}</td>
                     </tr>
                   ))}
                 </tbody>

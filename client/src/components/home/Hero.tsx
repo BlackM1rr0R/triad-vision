@@ -1,178 +1,119 @@
-import { useRef } from 'react';
 import { RouteFlags } from '../ui/Flag';
-import { HeroGlobeLite } from './HeroGlobeLite';
-import { useMotionOK } from '../motion';
 import { useTranslation } from 'react-i18next';
-import { motion, useScroll, useTransform } from 'framer-motion';
-import { ArrowRight, Building2, CheckCircle2, HardHat, MousePointer2, type LucideIcon } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { ArrowRight, CheckCircle2, Handshake as HandshakeIcon } from 'lucide-react';
 import clsx from 'clsx';
 import { QuizCta } from '../publicAi/QuizCta';
-import { sized, srcSet } from '@/lib/img';
+import { Employer, Traveller, Worker } from '../illustrations';
 import type { Audience } from '@/lib/audience';
 
-const BG = 'https://images.unsplash.com/photo-1587330979470-3595ac045ab0?auto=format&fit=crop&w=1600&q=60';
-const HANDSHAKE = 'https://images.unsplash.com/photo-1521791136064-7986c2920216?auto=format&fit=crop&w=640&q=70';
 const EASE = [0.22, 1, 0.36, 1] as const;
-const CHOICES: { key: Audience; icon: LucideIcon }[] = [
-  { key: 'worker', icon: HardHat },
-  { key: 'employer', icon: Building2 },
+const CHOICES: { key: Audience; Art: typeof Worker }[] = [
+  { key: 'worker', Art: Worker },
+  { key: 'employer', Art: Employer },
 ];
+/** Entrance: opacity + a short slide, once; MotionConfig turns it off for reduced motion. */
+const enter = (delay: number) => ({
+  initial: { opacity: 0, y: 14 },
+  animate: { opacity: 1, y: 0 },
+  transition: { delay, duration: 0.6, ease: EASE },
+});
 
+/**
+ * Home hero (Direction B): warm canvas, serif headline, the traveller illustration, and the
+ * "Who are you?" choice. The choice is remembered (lib/audience) and the page below shows only that audience.
+ */
 export const Hero = ({ audience, onChoose }: { audience: Audience | null; onChoose: (a: Audience) => void }) => {
   const { t } = useTranslation();
-  const ref = useRef<HTMLElement>(null);
-  const { scrollYProgress } = useScroll({ target: ref, offset: ['start start', 'end start'] });
-  const bgY = useTransform(scrollYProgress, [0, 1], ['0%', '35%']);
-  const globeY = useTransform(scrollYProgress, [0, 1], ['0%', '-18%']);
-  const globeScale = useTransform(scrollYProgress, [0, 1], [1, 0.85]);
-  const textY = useTransform(scrollYProgress, [0, 1], ['0%', '40%']);
-  const fade = useTransform(scrollYProgress, [0, 0.7], [1, 0]);
-  // Parallax only when motion is welcome (scroll-linked styles are not covered by MotionConfig).
-  const parallax = useMotionOK();
-
   const bullets = t('hero.bullets', { returnObjects: true }) as string[];
 
   return (
-    <section ref={ref} className="relative isolate min-h-[100svh] overflow-hidden bg-navy-950 text-white">
-      {/* background layers */}
-      <motion.div style={parallax ? { y: bgY } : undefined} className="absolute inset-0 -z-20 will-change-transform">
-        <img src={sized(BG, 1600)} srcSet={srcSet(BG, [640, 960, 1280, 1600])} sizes="100vw" alt="" fetchPriority="high" decoding="async" className="size-full scale-110 object-cover opacity-30" />
-      </motion.div>
-      <div className="absolute inset-0 -z-10 bg-gradient-to-r from-navy-950 via-navy-950/85 to-navy-900/30" />
-      <div className="absolute inset-0 -z-10 bg-gradient-to-t from-navy-950 via-transparent to-navy-950/60" />
-      <div className="absolute inset-0 -z-10 opacity-[0.07] [background-image:linear-gradient(rgba(255,255,255,.6)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.6)_1px,transparent_1px)] [background-size:64px_64px] [mask-image:radial-gradient(ellipse_at_center,#000_30%,transparent_75%)]" />
-      <motion.div
-        className="absolute -top-40 -left-40 -z-10 size-[520px] rounded-full bg-[radial-gradient(closest-side,var(--color-brand-600),transparent)] opacity-30"
-        animate={{ x: [0, 60, 0], y: [0, 40, 0] }}
-        transition={{ duration: 14, repeat: Infinity, ease: 'easeInOut' }}
-      />
+    <section className="relative isolate overflow-hidden bg-canvas pt-24 pb-12 sm:pt-28 sm:pb-16 lg:pt-40 lg:pb-20">
+      <div className="container-x">
+        <div className="grid items-center gap-10 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] lg:gap-14">
+          <div className="min-w-0">
+            <motion.p
+              {...enter(0.05)}
+              className="mb-5 inline-flex max-w-full items-center gap-2.5 rounded-full border border-line bg-card py-1.5 pr-4 pl-2 text-xs font-semibold text-muted shadow-[var(--tv-shadow-card)] sm:mb-6 sm:text-sm"
+            >
+              <RouteFlags />
+              <span className="min-w-0 truncate">{t('hero.eyebrow')}</span>
+            </motion.p>
 
-      {/* globe */}
-      <motion.div
-        style={parallax ? { y: globeY, scale: globeScale } : undefined}
-        className="will-change-transform absolute top-[58%] right-[-45%] -z-10 aspect-square w-[140vw] -translate-y-1/2 opacity-35 sm:top-1/2 sm:right-[-25%] sm:w-[100vw] sm:opacity-50 lg:right-[-8%] lg:w-[62vw] lg:max-w-[980px] lg:-translate-y-[45%] lg:opacity-100"
-      >
-        <HeroGlobeLite />
-      </motion.div>
+            <motion.h1 {...enter(0.12)} className="font-display text-[2.25rem] leading-[1.08] font-semibold tracking-[-0.02em] text-balance text-ink sm:text-[3.25rem] xl:text-[3.75rem]">
+              <span className="block">{t('hero.title1')}</span>
+              <span className="block text-highlight-fg">{t('hero.title2')}</span>
+            </motion.h1>
 
-      <div className="container-x relative flex min-h-[100svh] flex-col justify-center pt-28 pb-32 sm:pt-36 lg:pt-40 lg:pb-32">
-        <motion.div style={parallax ? { y: textY, opacity: fade } : undefined} className="max-w-2xl">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3, duration: 0.8, ease: EASE }}
-            className="glass mb-5 inline-flex max-w-full items-center gap-2.5 rounded-full py-1.5 pr-4 pl-1.5 text-[0.65rem] font-bold tracking-[0.14em] uppercase sm:mb-6 sm:gap-3 sm:text-xs"
-          >
-            <span className="flex items-center rounded-full bg-white/10 px-2 py-1"><RouteFlags /></span>
-            {t('hero.eyebrow')}
-          </motion.div>
+            <motion.p {...enter(0.2)} className="mt-5 max-w-[56ch] text-base leading-relaxed text-muted sm:mt-6 sm:text-lg">
+              {t('hero.subtitle')}
+            </motion.p>
 
-          <h1 className="font-display text-[2.15rem] leading-[1.06] font-extrabold text-balance sm:text-6xl xl:text-7xl">
-            {[t('hero.title1'), t('hero.title2')].map((line, i) => (
-              <span key={line} className="block overflow-hidden pb-2">
-                <motion.span
-                  className={i === 1 ? 'text-gradient block' : 'block'}
-                  initial={{ y: '110%', rotate: 3 }}
-                  animate={{ y: '0%', rotate: 0 }}
-                  transition={{ delay: 0.45 + i * 0.12, duration: 1, ease: EASE }}
-                >
-                  {line}
-                </motion.span>
-              </span>
-            ))}
-          </h1>
+            {audience !== 'employer' && (
+              <motion.div {...enter(0.28)}>
+                <QuizCta className="mt-5 text-ink" />
+              </motion.div>
+            )}
 
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.8, duration: 0.8, ease: EASE }}
-            className="mt-5 max-w-xl text-[0.95rem] leading-relaxed text-white/75 sm:mt-6 sm:text-lg"
-          >
-            {t('hero.subtitle')}
-          </motion.p>
+            <motion.ul {...enter(0.34)} className="mt-6 hidden gap-x-6 gap-y-2.5 sm:grid sm:grid-cols-2">
+              {bullets.map((b) => (
+                <li key={b} className="flex items-start gap-2.5 text-sm text-ink">
+                  <CheckCircle2 className="mt-0.5 size-5 shrink-0 text-highlight-fg" aria-hidden />
+                  {b}
+                </li>
+              ))}
+            </motion.ul>
+          </div>
 
-          {/* "Who are you?" — the choice is remembered (lib/audience) and the home page below shows only that audience. */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.95, duration: 0.8, ease: EASE }}
-            className="mt-7 sm:mt-9"
-          >
-            <h2 id="hero-who" className="font-display text-base font-bold sm:text-lg">
-              {t('siteNav.home.question')}
-            </h2>
-            <p className="mt-1 text-sm text-white/65">{t('siteNav.home.hint')}</p>
-            <div role="group" aria-labelledby="hero-who" className="mt-4 grid gap-3 sm:grid-cols-2">
-              {CHOICES.map(({ key, icon: ChoiceIcon }) => {
-                const on = audience === key;
-                return (
-                  <button
-                    key={key}
-                    type="button"
-                    aria-pressed={on}
-                    onClick={() => onChoose(key)}
-                    className={clsx(
-                      'group flex items-center gap-4 rounded-2xl border p-4 text-left backdrop-blur-sm transition duration-300 sm:p-5',
-                      on ? 'border-brand-400 bg-brand-600/30 shadow-lg shadow-brand-600/30' : 'border-white/20 bg-white/[0.06] hover:-translate-y-0.5 hover:border-white/45 hover:bg-white/10',
-                    )}
-                  >
-                    <span className={clsx('grid size-12 shrink-0 place-items-center rounded-xl transition', on ? 'bg-white text-brand-700' : 'bg-brand-600 text-white')}>
-                      <ChoiceIcon className="size-6" aria-hidden />
-                    </span>
-                    <span className="min-w-0 flex-1">
-                      <span className="block font-display text-lg leading-tight font-bold">{t(`siteNav.home.${key}.title`)}</span>
-                      <span className="mt-1 block text-sm leading-snug text-white/70">{t(`siteNav.home.${key}.text`)}</span>
-                    </span>
-                    {on ? <CheckCircle2 className="size-5 shrink-0 text-brand-300" aria-hidden /> : <ArrowRight className="size-5 shrink-0 opacity-60 transition group-hover:translate-x-1 group-hover:opacity-100" aria-hidden />}
-                  </button>
-                );
-              })}
+          {/* illustration + one quiet "partner" note (decorative drawing; the note is real text) */}
+          <motion.div {...enter(0.18)} className="relative mx-auto w-full max-w-[22rem] sm:max-w-[26rem] lg:max-w-none">
+            <Traveller animated className="w-full" />
+            <div className="absolute right-0 bottom-2 hidden max-w-[16rem] rounded-2xl border border-line bg-card p-4 shadow-[var(--tv-shadow-raised)] xl:block">
+              <p className="flex items-center gap-2 text-sm leading-snug font-semibold text-ink">
+                <span className="chip-sage grid size-8 shrink-0 place-items-center rounded-lg">
+                  <HandshakeIcon className="size-4" aria-hidden />
+                </span>
+                {t('hero.cardTitle')}
+              </p>
+              <p className="mt-2 text-xs leading-relaxed text-muted">{t('hero.cardText')}</p>
             </div>
           </motion.div>
-          {audience !== 'employer' && <QuizCta className="mt-4" />}
+        </div>
 
-          <motion.ul
-            initial="hidden"
-            animate="show"
-            variants={{ hidden: {}, show: { transition: { staggerChildren: 0.1, delayChildren: 1.1 } } }}
-            className="mt-8 hidden gap-2.5 sm:mt-10 sm:grid sm:grid-cols-2 sm:gap-3"
-          >
-            {bullets.map((b) => (
-              <motion.li
-                key={b}
-                variants={{ hidden: { opacity: 0, x: -20 }, show: { opacity: 1, x: 0, transition: { duration: 0.6 } } }}
-                className="flex items-start gap-2.5 text-sm text-white/85"
-              >
-                <CheckCircle2 className="mt-0.5 size-5 shrink-0 text-brand-400" />
-                {b}
-              </motion.li>
-            ))}
-          </motion.ul>
-        </motion.div>
-
-        {/* floating partner card */}
-        <motion.div
-          initial={{ opacity: 0, x: 60, rotate: 4 }}
-          animate={{ opacity: 1, x: 0, rotate: 0 }}
-          transition={{ delay: 1.3, duration: 1, ease: EASE }}
-          className="absolute right-8 bottom-36 hidden w-80 animate-float overflow-hidden rounded-2xl border border-white/15 bg-white/95 text-navy-900 shadow-2xl xl:block 2xl:right-16"
-        >
-          <img src={sized(HANDSHAKE, 320)} srcSet={srcSet(HANDSHAKE, [320, 640])} sizes="320px" width={320} height={144} alt="" loading="lazy" decoding="async" className="h-36 w-full object-cover" />
-          <div className="p-5">
-            <p className="font-display text-base leading-snug font-bold">{t('hero.cardTitle')}</p>
-            <p className="mt-2 text-xs leading-relaxed text-muted">{t('hero.cardText')}</p>
+        {/* "Who are you?" */}
+        <motion.div {...enter(0.4)} className="mt-10 sm:mt-14">
+          <h2 id="hero-who" className="font-display text-xl font-semibold text-ink sm:text-2xl">
+            {t('siteNav.home.question')}
+          </h2>
+          <p className="mt-1 text-sm text-muted sm:text-base">{t('siteNav.home.hint')}</p>
+          <div role="group" aria-labelledby="hero-who" className="mt-5 grid gap-4 md:grid-cols-2">
+            {CHOICES.map(({ key, Art }) => {
+              const on = audience === key;
+              return (
+                <button
+                  key={key}
+                  type="button"
+                  aria-pressed={on}
+                  onClick={() => onChoose(key)}
+                  className={clsx(
+                    'group flex min-h-[8.5rem] items-center gap-4 rounded-3xl border bg-card p-5 text-left shadow-[var(--tv-shadow-card)] transition-[border-color,box-shadow] duration-200 sm:gap-5 sm:p-6',
+                    on ? 'border-primary ring-2 ring-primary/25' : 'border-line hover:border-line-strong hover:shadow-[var(--tv-shadow-raised)]',
+                  )}
+                >
+                  <span className="min-w-0 flex-1">
+                    <span className="block font-display text-lg leading-tight font-semibold text-ink sm:text-xl">{t(`siteNav.home.${key}.title`)}</span>
+                    <span className="mt-1.5 block text-sm leading-relaxed text-muted">{t(`siteNav.home.${key}.text`)}</span>
+                    <span className={clsx('mt-3 inline-flex items-center gap-1.5 text-sm font-semibold', on ? 'text-ink' : 'text-link')}>
+                      {on ? <CheckCircle2 className="size-5 text-highlight-fg" aria-hidden /> : <ArrowRight className="size-4" aria-hidden />}
+                    </span>
+                  </span>
+                  <Art className="w-24 shrink-0 sm:w-28" />
+                </button>
+              );
+            })}
           </div>
         </motion.div>
       </div>
-
-      <motion.div
-        className="absolute bottom-28 left-1/2 hidden -translate-x-1/2 flex-col items-center gap-2 text-[10px] font-semibold tracking-[0.3em] text-white/50 uppercase lg:flex"
-        animate={{ y: [0, 8, 0] }}
-        transition={{ duration: 2, repeat: Infinity }}
-      >
-        <MousePointer2 className="size-4" />
-        {t('hero.scroll')}
-      </motion.div>
     </section>
   );
 };

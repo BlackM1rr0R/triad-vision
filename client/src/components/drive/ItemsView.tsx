@@ -26,13 +26,13 @@ const CollabBadges = ({ item, t, compact }: { item: DriveItem; t: ReturnType<typ
   return (
     <>
       {c.lock && (
-        <span title={editing} className="inline-flex max-w-full shrink-0 items-center gap-0.5 truncate rounded bg-amber-100 px-1 py-px text-[10px] font-semibold text-amber-800 dark:bg-amber-500/20 dark:text-amber-200">
+        <span title={editing} className="inline-flex max-w-full shrink-0 items-center gap-0.5 truncate rounded bg-warning-bg px-1 py-px text-[10px] font-semibold text-warning-fg dark:bg-amber-500/20 dark:text-amber-200">
           <PenLine className="size-2.5 shrink-0" aria-hidden />
           <span className="truncate">{compact ? c.lock.by.firstName : editing}</span>
         </span>
       )}
       {!!c.commentCount && (
-        <span title={t('driveCollab.tabs.comments', { defaultValue: '' })} className="inline-flex shrink-0 items-center gap-0.5 rounded bg-violet-100 px-1 py-px text-[10px] font-semibold text-violet-800 dark:bg-violet-500/20 dark:text-violet-200">
+        <span title={t('driveCollab.tabs.comments', { defaultValue: '' })} className="inline-flex shrink-0 items-center gap-0.5 rounded bg-accent-bg px-1 py-px text-[10px] font-semibold text-accent-fg dark:bg-violet-500/20 dark:text-violet-200">
           <MessageSquare className="size-2.5" aria-hidden />
           {c.commentCount}
         </span>
@@ -57,7 +57,7 @@ const CaseBadge = ({ item, t, className }: { item: DriveItem; t: ReturnType<type
       title={item.caseStatus ? statusLabel(item.caseStatus as CaseStatus) : undefined}
       className={clsx(
         'inline-flex max-w-full items-center gap-1 truncate rounded px-1.5 py-px text-[10px] font-semibold hover:underline',
-        item.kind === 'FILE' ? 'bg-violet-100 text-violet-800 dark:bg-violet-500/20 dark:text-violet-200' : 'bg-violet-50 text-violet-700 dark:bg-violet-500/10 dark:text-violet-300',
+        item.kind === 'FILE' ? 'bg-accent-bg text-accent-fg dark:bg-violet-500/20 dark:text-violet-200' : 'bg-accent-bg text-accent-fg dark:bg-violet-500/10 dark:text-violet-300',
         className,
       )}
     >
@@ -79,7 +79,7 @@ const SelectBox = ({ checked, onToggle, label, className }: { checked: boolean; 
       onToggle(e);
     }}
     onDoubleClick={(e) => e.stopPropagation()}
-    className={clsx('size-4 shrink-0 cursor-pointer rounded accent-brand-600', className)}
+    className={clsx('size-4 shrink-0 cursor-pointer rounded accent-primary', className)}
   />
 );
 
@@ -223,7 +223,7 @@ export const ItemsView = (p: ItemsViewProps) => {
         p.onSelect(new Set(), null, null);
         p.onContext(e, null);
       }}
-      className="h-full min-h-0 overflow-y-auto overscroll-contain outline-none focus-visible:ring-2 focus-visible:ring-brand-500/40 focus-visible:ring-inset"
+      className="h-full min-h-0 overflow-y-auto overscroll-contain outline-none focus-visible:ring-2 focus-visible:ring-focus/40 focus-visible:ring-inset"
     >
       {p.view === 'grid' ? (
         <div className="grid grid-cols-[repeat(auto-fill,minmax(124px,1fr))] gap-2 p-3 sm:grid-cols-[repeat(auto-fill,minmax(148px,1fr))] sm:gap-3 sm:p-5">
@@ -282,9 +282,9 @@ const Tile = memo(function Tile({ item, p, click, toggle, context, dragStart, t 
       {...drop.handlers}
       className={clsx(
         'group relative flex cursor-default flex-col items-center rounded-xl border px-2 pt-3 pb-2.5 text-center transition-colors select-none',
-        selected ? 'border-brand-400 bg-brand-50 dark:bg-brand-500/15' : 'border-transparent hover:bg-surface dark:hover:bg-white/5',
-        focused && 'ring-2 ring-brand-500/50',
-        drop.over && '!border-brand-500 !bg-brand-100',
+        selected ? 'border-line-strong bg-primary/[0.06] dark:bg-brand-500/15' : 'border-transparent hover:bg-sunken dark:hover:bg-white/5',
+        focused && 'ring-2 ring-focus/50',
+        drop.over && '!border-primary !bg-primary/10',
       )}
     >
       <SelectBox
@@ -302,20 +302,20 @@ const Tile = memo(function Tile({ item, p, click, toggle, context, dragStart, t 
             decoding="async"
             draggable={false}
             onError={() => setImgFailed(true)}
-            className="max-h-[76px] max-w-[96px] rounded-md border border-line object-cover shadow-sm"
+            className="max-h-[76px] max-w-[96px] rounded-md border border-line object-cover shadow-[var(--tv-shadow-card)]"
           />
         ) : (
           <ItemIcon item={item} className="size-16" />
         )}
         {isSheet(item) && (
-          <span className="absolute top-0 left-1/2 -translate-x-1/2 rounded bg-emerald-600 px-1.5 py-px text-[9px] font-bold tracking-wide text-white shadow-sm">{t('drive.partner.sheetBadge')}</span>
+          <span className="absolute top-0 left-1/2 -translate-x-1/2 rounded bg-success px-1.5 py-px text-[9px] font-bold tracking-wide text-white shadow-[var(--tv-shadow-card)]">{t('drive.partner.sheetBadge')}</span>
         )}
         {item.kind === 'FILE' && !thumb && extLabel(item.name) && (
           <span className={clsx('absolute bottom-0.5 left-1/2 -translate-x-1/2 rounded px-1 text-[9px] font-bold tracking-wide', fileTone(item).bg, fileTone(item).tone)}>
             {extLabel(item.name)}
           </span>
         )}
-        {item.starred && <Star className="absolute top-0 right-1 size-3.5 fill-amber-400 text-amber-400" aria-hidden />}
+        {item.starred && <Star className="absolute top-0 right-1 size-3.5 fill-warning text-warning-fg" aria-hidden />}
       </div>
       <span className="mt-1.5 line-clamp-2 w-full text-[13px] leading-snug font-medium break-words text-ink">{name}</span>
       {!!((item as CollabItem).commentCount || (item as CollabItem).lock || (item as { uploadAi?: UploadAiChipData }).uploadAi) && (
@@ -359,7 +359,7 @@ const SelectAllBox = ({ p, t }: { p: ItemsViewProps; t: ReturnType<typeof useTra
       title={t('drive.shared.selectAll', { count: p.items.length })}
       onChange={() => p.onSelect(all ? new Set() : new Set(p.items.map((i) => i.id)), null, null)}
       onClick={(e) => e.stopPropagation()}
-      className="ml-2.5 size-4 shrink-0 cursor-pointer rounded accent-brand-600"
+      className="ml-2.5 size-4 shrink-0 cursor-pointer rounded accent-primary"
     />
   );
 };
@@ -373,7 +373,7 @@ const HeaderCell = ({ k, label, p, className }: { k: SortKey | null; label: stri
           e.stopPropagation();
           p.onSort(k);
         }}
-        className="inline-flex items-center gap-1 truncate rounded px-1 py-0.5 hover:bg-brand-50 hover:text-ink dark:hover:bg-white/5"
+        className="inline-flex items-center gap-1 truncate rounded px-1 py-0.5 hover:bg-primary/[0.06] hover:text-ink dark:hover:bg-white/5"
       >
         {label}
         {p.sortKey === k && (p.sortDir === 'asc' ? <ArrowUp className="size-3" /> : <ArrowDown className="size-3" />)}
@@ -462,9 +462,9 @@ const Row = memo(function Row({ item, p, click, toggle, context, dragStart, t }:
       className={clsx(
         'grid cursor-default items-center gap-2 rounded-lg px-2.5 py-1.5 select-none',
         COLS[p.mode],
-        selected ? 'bg-brand-50 dark:bg-brand-500/15' : 'hover:bg-surface dark:hover:bg-white/5',
-        focused && 'ring-1 ring-brand-500/60',
-        drop.over && '!bg-brand-100 ring-2 ring-brand-500',
+        selected ? 'bg-primary/[0.06] dark:bg-brand-500/15' : 'hover:bg-sunken dark:hover:bg-white/5',
+        focused && 'ring-1 ring-focus/60',
+        drop.over && '!bg-primary/10 ring-2 ring-focus',
       )}
     >
       <div className="flex min-w-0 items-center gap-2.5" role="cell">
@@ -473,7 +473,7 @@ const Row = memo(function Row({ item, p, click, toggle, context, dragStart, t }:
         <span className="truncate font-medium text-ink" title={name}>
           {name}
         </span>
-        {item.starred && <Star className="size-3.5 shrink-0 fill-amber-400 text-amber-400" aria-hidden />}
+        {item.starred && <Star className="size-3.5 shrink-0 fill-warning text-warning-fg" aria-hidden />}
         <CollabBadges item={item} t={t} />
         <OrgBadges item={item} />
         <DriveAiChip item={item} />

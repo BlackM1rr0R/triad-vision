@@ -3,7 +3,6 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import {
-  Archive,
   Award,
   BookOpen,
   Car,
@@ -36,6 +35,7 @@ import { DocCheckBadge } from '@/components/vault/DocCheckBadge';
 import { UseInCaseDialog, VaultEditDialog, VaultUploadDialog } from '@/components/vault/VaultDialogs';
 import { VaultModal } from '@/components/vault/VaultModal';
 import { useVaultError } from '@/components/vault/useVaultError';
+import { Documents } from '@/components/illustrations';
 
 const KIND_ICON: Record<VaultKind, typeof FileText> = {
   PASSPORT: BookUser,
@@ -76,13 +76,13 @@ const DocCard = ({
       <button
         type="button"
         onClick={() => onPreview(doc)}
-        className="group relative grid h-32 place-items-center overflow-hidden border-b border-line bg-surface"
+        className="group relative grid h-32 place-items-center overflow-hidden border-b border-line bg-sunken"
         aria-label={`${t('vault.actions.preview')}: ${doc.title}`}
       >
         {image ? (
           <img src={vaultFileUrl(doc.id)} alt="" loading="lazy" className="size-full object-cover transition group-hover:scale-[1.02]" />
         ) : (
-          <Icon className="size-10 text-brand-600/70" aria-hidden />
+          <Icon className="size-10 text-link" aria-hidden />
         )}
       </button>
       <div className="flex flex-1 flex-col p-4">
@@ -104,7 +104,7 @@ const DocCard = ({
           </button>
           <a
             href={vaultFileUrl(doc.id, true)}
-            className="grid size-9 place-items-center rounded-lg text-muted transition hover:bg-surface hover:text-ink"
+            className="grid size-9 place-items-center rounded-lg text-muted transition hover:bg-sunken hover:text-ink"
             title={t('vault.actions.download')}
             aria-label={`${t('vault.actions.download')}: ${doc.title}`}
           >
@@ -113,7 +113,7 @@ const DocCard = ({
           <button
             type="button"
             onClick={() => onEdit(doc)}
-            className="grid size-9 place-items-center rounded-lg text-muted transition hover:bg-surface hover:text-ink"
+            className="grid size-9 place-items-center rounded-lg text-muted transition hover:bg-sunken hover:text-ink"
             title={t('vault.actions.edit')}
             aria-label={`${t('vault.actions.edit')}: ${doc.title}`}
           >
@@ -122,7 +122,7 @@ const DocCard = ({
           <button
             type="button"
             onClick={() => onDelete(doc)}
-            className="grid size-9 place-items-center rounded-lg text-danger transition hover:bg-red-50 dark:hover:bg-red-950/30"
+            className="grid size-9 place-items-center rounded-lg text-danger transition hover:bg-danger-bg"
             title={t('vault.actions.delete')}
             aria-label={`${t('vault.actions.delete')}: ${doc.title}`}
           >
@@ -182,7 +182,7 @@ export default function AccountVault() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div className="min-w-0">
-          <h2 className="text-xl font-extrabold text-ink sm:text-2xl">{t('vault.title')}</h2>
+          <h2 className="type-page-title">{t('vault.title')}</h2>
           <p className="mt-1 max-w-2xl text-sm text-muted">{t('vault.subtitle')}</p>
         </div>
         <button type="button" className="btn-primary btn-sm" onClick={() => setUploadKind('PASSPORT')}>
@@ -192,11 +192,8 @@ export default function AccountVault() {
 
       {documents.length === 0 ? (
         <div className="card flex flex-col items-center px-6 py-12 text-center">
-          {/* TODO(ui): large portal empty state (size-14 icon, display title) -> <EmptyState size="lg" tone="brand"> (portal rework) */}
-          <span className="grid size-14 place-items-center rounded-2xl bg-brand-100 text-brand-600">
-            <Archive className="size-7" aria-hidden />
-          </span>
-          <p className="mt-4 text-lg font-bold text-ink">{t('vault.empty')}</p>
+          <Documents className="w-40" />
+          <p className="type-card-title mt-4 text-lg">{t('vault.empty')}</p>
           <p className="mt-1 max-w-md text-sm text-muted">{t('vault.emptyHint')}</p>
           <button type="button" className="btn-primary mt-5" onClick={() => setUploadKind('PASSPORT')}>
             <Plus className="size-4" aria-hidden /> {t('vault.upload')}
@@ -209,14 +206,14 @@ export default function AccountVault() {
           return (
             <section key={k} aria-labelledby={`vault-${k}`}>
               <div className="mb-3 flex items-center justify-between gap-3">
-                <h3 id={`vault-${k}`} className="flex items-center gap-2 text-base font-bold text-ink">
-                  <span className="grid size-8 place-items-center rounded-lg bg-brand-100 text-brand-600">
+                <h3 id={`vault-${k}`} className="flex items-center gap-2 text-base font-semibold text-ink">
+                  <span className="grid size-8 place-items-center rounded-lg chip-soft">
                     <Icon className="size-4" aria-hidden />
                   </span>
                   {t(`vault.kinds.${k}`)}
                   <span className="text-xs font-medium text-muted">· {t('vault.count', { count: list.length })}</span>
                 </h3>
-                <button type="button" className="btn btn-sm border border-line text-ink hover:bg-surface" onClick={() => setUploadKind(k)}>
+                <button type="button" className="btn btn-sm border border-line text-ink hover:bg-sunken" onClick={() => setUploadKind(k)}>
                   <Plus className="size-3.5" aria-hidden /> {t('vault.upload')}
                 </button>
               </div>
@@ -237,7 +234,7 @@ export default function AccountVault() {
         {preview && (
           <div className="space-y-3">
             <img src={vaultFileUrl(preview.id)} alt={preview.title} className="mx-auto max-h-[65vh] w-auto rounded-lg border border-line object-contain" />
-            <a href={vaultFileUrl(preview.id)} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 text-sm font-medium text-brand-600 hover:underline">
+            <a href={vaultFileUrl(preview.id)} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 text-sm font-medium text-link hover:underline">
               <ExternalLink className="size-4" aria-hidden />
               {t('vault.actions.preview')}
             </a>

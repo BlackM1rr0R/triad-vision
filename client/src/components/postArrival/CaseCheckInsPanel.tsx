@@ -35,7 +35,7 @@ export default function CaseCheckInsPanel({ caseId }: { caseId: string }) {
       title={t('checkInAdmin.title')}
       icon={HeartHandshake}
       actions={
-        <Link to="/admin/check-ins" className="inline-flex items-center gap-1 text-xs font-semibold text-brand-700 hover:underline">
+        <Link to="/admin/check-ins" className="inline-flex items-center gap-1 text-xs font-semibold text-link hover:underline">
           {t('caseLayout.postArrival.allCheckIns')} <ArrowUpRight className="size-3" aria-hidden />
         </Link>
       }
@@ -81,7 +81,7 @@ export default function CaseCheckInsPanel({ caseId }: { caseId: string }) {
                   </div>
                   {c.answer === 'ISSUE' &&
                     (c.resolvedAt ? (
-                      <span className="text-xs text-emerald-700">✓ {t('checkInAdmin.resolved')}</span>
+                      <span className="text-xs text-success-fg">✓ {t('checkInAdmin.resolved')}</span>
                     ) : (
                       <button type="button" className="btn-secondary btn-sm" disabled={resolve.isPending} onClick={() => resolve.mutate(c.id)}>
                         <CheckCircle2 className="size-3.5" aria-hidden /> {t('checkInAdmin.resolve')}

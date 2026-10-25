@@ -16,8 +16,8 @@ import { toastTeamError } from '../shared';
 
 /** Progress bar with an accessible value. */
 export const ProgressBar = ({ percent, label, className }: { percent: number; label: string; className?: string }) => (
-  <div className={clsx('h-2 overflow-hidden rounded-full bg-surface ring-1 ring-line', className)} role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={percent} aria-label={label}>
-    <div className={clsx('h-full rounded-full transition-all', percent >= 100 ? 'bg-success' : 'bg-brand-500')} style={{ width: `${percent}%` }} />
+  <div className={clsx('h-2 overflow-hidden rounded-full bg-sunken ring-1 ring-line', className)} role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={percent} aria-label={label}>
+    <div className={clsx('h-full rounded-full transition-all', percent >= 100 ? 'bg-success' : 'bg-primary')} style={{ width: `${percent}%` }} />
   </div>
 );
 
@@ -51,7 +51,7 @@ const CourseCard = ({ c, onOpen }: { c: LearnCourse; onOpen: (lessonId: string) 
       <ol className="divide-y divide-line border-t border-line">
         {c.lessons.map((l, i) => (
           <li key={l.id}>
-            <button type="button" onClick={() => onOpen(l.id)} className="flex min-h-11 w-full items-center gap-3 px-4 py-2 text-left text-sm transition hover:bg-surface sm:px-5">
+            <button type="button" onClick={() => onOpen(l.id)} className="flex min-h-10 sm:min-h-9 w-full items-center gap-3 px-4 py-2 text-left text-sm transition hover:bg-sunken sm:px-5">
               {l.completedAt ? <CheckCircle2 className={clsx('size-4 shrink-0', TONE_TEXT.success)} aria-label={t('team.training.done')} /> : <Circle className="size-4 shrink-0 text-muted" aria-hidden />}
               <span className="min-w-0 flex-1 truncate text-ink">
                 {i + 1}. {l.title}
@@ -124,7 +124,7 @@ const Quiz = ({ data, onDone }: { data: LearnLesson; onDone: () => void }) => {
     <section className="rounded-xl border border-line bg-card p-4 sm:p-5" aria-labelledby="quiz-title">
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
         <h3 id="quiz-title" className="flex items-center gap-2 font-semibold text-ink">
-          <ListChecks className="size-4 text-brand-600" aria-hidden /> {t('team.training.quizTitle')}
+          <ListChecks className="size-4 text-link" aria-hidden /> {t('team.training.quizTitle')}
         </h3>
         <span className="text-xs text-muted">
           {t('team.training.passScore', { score: data.lesson.passScore })}
@@ -146,7 +146,7 @@ const Quiz = ({ data, onDone }: { data: LearnLesson; onDone: () => void }) => {
                 </legend>
                 <div className="grid gap-1.5">
                   {q.options.map((o, oi) => (
-                    <label key={oi} className={clsx('flex min-h-10 cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm transition', answers[qi] === oi ? 'border-brand-500 bg-brand-50' : 'border-line hover:bg-surface')}>
+                    <label key={oi} className={clsx('flex min-h-10 cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm transition', answers[qi] === oi ? 'border-primary bg-primary/[0.06]' : 'border-line hover:bg-sunken')}>
                       <input
                         type="radio"
                         name={`q-${data.lesson.id}-${qi}`}
@@ -208,7 +208,7 @@ const LessonView = ({ lessonId, onOpen, onBack }: { lessonId: string; onOpen: (i
         <p className="text-xs font-semibold tracking-wide text-muted uppercase">
           {data.course.title} · {t('team.training.lessonOf', { n: data.position, total: data.total })}
         </p>
-        <h2 className="mt-1 flex flex-wrap items-center gap-2 font-display text-2xl font-extrabold text-ink">
+        <h2 className="mt-1 flex flex-wrap items-center gap-2 font-display text-2xl font-semibold text-ink">
           {data.lesson.title}
           {done && (
             <span className={clsx('inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-sans text-xs font-semibold', TONE_CLASS.success)}>

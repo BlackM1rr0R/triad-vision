@@ -85,8 +85,8 @@ const TaskDialog = ({ comment, item, onClose, onCreated }: { comment: DriveComme
           <ul className="mt-1 max-h-44 overflow-y-auto rounded-lg border border-line">
             {people.data?.map((p) => (
               <li key={p.id}>
-                <label className="flex cursor-pointer items-center gap-2 px-3 py-1.5 text-sm hover:bg-surface">
-                  <input type="checkbox" className="size-4 accent-brand-600" checked={assignees.includes(p.id)} onChange={() => toggle(p.id)} />
+                <label className="flex cursor-pointer items-center gap-2 px-3 py-1.5 text-sm hover:bg-sunken">
+                  <input type="checkbox" className="size-4 accent-primary" checked={assignees.includes(p.id)} onChange={() => toggle(p.id)} />
                   <span className="truncate text-ink">
                     {p.firstName} {p.lastName}
                   </span>
@@ -101,7 +101,7 @@ const TaskDialog = ({ comment, item, onClose, onCreated }: { comment: DriveComme
           {t('driveCollab.task.due')}
           <input type="date" value={due} onChange={(e) => setDue(e.target.value)} className="input mt-1 !w-auto" />
         </label>
-        <p className="rounded-lg bg-surface px-3 py-2 text-xs text-muted">
+        <p className="rounded-lg bg-sunken px-3 py-2 text-xs text-muted">
           {t('driveCollab.task.file')}: <span className="font-semibold text-ink">{item.name}</span>
         </p>
       </div>
@@ -145,8 +145,8 @@ const CommentItem = ({ c, reply, focused, onReply, onTask, refresh }: ItemProps)
     onError: toastDriveError,
   });
   return (
-    <div ref={el} id={`comment-${c.id}`} className={clsx('group flex gap-2.5 rounded-xl p-2 transition', focused && 'bg-brand-50 ring-2 ring-brand-400/50 dark:bg-brand-500/10')}>
-      <span className={clsx('grid shrink-0 place-items-center rounded-full bg-brand-100 font-bold text-brand-700', reply ? 'size-6 text-[9px]' : 'size-8 text-[11px]')}>{initials(c.author)}</span>
+    <div ref={el} id={`comment-${c.id}`} className={clsx('group flex gap-2.5 rounded-xl p-2 transition', focused && 'bg-primary/[0.06] ring-2 ring-focus/50 dark:bg-brand-500/10')}>
+      <span className={clsx('grid shrink-0 place-items-center rounded-full bg-primary/10 font-bold text-link', reply ? 'size-6 text-[9px]' : 'size-8 text-[11px]')}>{initials(c.author)}</span>
       <div className="min-w-0 flex-1">
         <div className="flex items-baseline gap-1.5">
           <span className="truncate text-xs font-semibold text-ink">{c.author ? `${c.author.firstName} ${c.author.lastName}` : t('driveCollab.comments.someone')}</span>
@@ -156,13 +156,13 @@ const CommentItem = ({ c, reply, focused, onReply, onTask, refresh }: ItemProps)
           </span>
           {(c.canEdit || c.canDelete) && !editing && (
             <span className="relative ml-auto">
-              <button type="button" onClick={() => setMenu((m) => !m)} onBlur={() => window.setTimeout(() => setMenu(false), 150)} className="grid size-6 place-items-center rounded text-muted opacity-60 hover:bg-surface hover:text-ink group-hover:opacity-100" aria-label={t('driveCollab.comments.edit')}>
+              <button type="button" onClick={() => setMenu((m) => !m)} onBlur={() => window.setTimeout(() => setMenu(false), 150)} className="grid size-6 place-items-center rounded text-muted opacity-60 hover:bg-sunken hover:text-ink group-hover:opacity-100" aria-label={t('driveCollab.comments.edit')}>
                 <MoreHorizontal className="size-4" />
               </button>
               {menu && (
-                <span className="absolute right-0 z-20 mt-1 w-36 rounded-lg border border-line bg-card py-1 shadow-lg">
+                <span className="absolute right-0 z-20 mt-1 w-36 rounded-lg border border-line bg-card py-1 shadow-[var(--tv-shadow-raised)]">
                   {c.canEdit && (
-                    <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => { setMenu(false); setEditing(true); }} className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs text-ink hover:bg-surface">
+                    <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => { setMenu(false); setEditing(true); }} className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs text-ink hover:bg-sunken">
                       <Pencil className="size-3.5" /> {t('driveCollab.comments.edit')}
                     </button>
                   )}
@@ -175,7 +175,7 @@ const CommentItem = ({ c, reply, focused, onReply, onTask, refresh }: ItemProps)
                         // TODO(ui): ConfirmDialog
                         if (window.confirm(t('driveCollab.comments.deleteConfirm'))) remove.mutate();
                       }}
-                      className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs text-danger hover:bg-red-50 dark:hover:bg-red-500/10"
+                      className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs text-danger-fg hover:bg-danger-bg dark:hover:bg-red-500/10"
                     >
                       <Trash2 className="size-3.5" /> {t('driveCollab.comments.delete')}
                     </button>
@@ -203,8 +203,8 @@ const CommentItem = ({ c, reply, focused, onReply, onTask, refresh }: ItemProps)
           </div>
         )}
         {c.task && (
-          <Link to={`/workspace/tasks/${c.task.key}`} className="mt-1.5 inline-flex max-w-full items-center gap-1.5 rounded-lg border border-line bg-card px-2 py-1 text-[11px] hover:border-brand-400" title={t('driveCollab.comments.openTask')}>
-            <ListChecks className="size-3.5 shrink-0 text-brand-600" />
+          <Link to={`/workspace/tasks/${c.task.key}`} className="mt-1.5 inline-flex max-w-full items-center gap-1.5 rounded-lg border border-line bg-card px-2 py-1 text-[11px] hover:border-line-strong" title={t('driveCollab.comments.openTask')}>
+            <ListChecks className="size-3.5 shrink-0 text-link" />
             <span className="font-semibold text-ink">{c.task.key}</span>
             <span className="truncate text-muted">{c.task.title}</span>
             <span className={clsx('shrink-0 rounded-full px-1.5 py-px font-semibold', STATUS_TONE[c.task.status])}>{t(`driveCollab.taskStatus.${c.task.status}`)}</span>
@@ -213,21 +213,21 @@ const CommentItem = ({ c, reply, focused, onReply, onTask, refresh }: ItemProps)
         {!reply && !editing && (
           <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] font-semibold">
             {onReply && !c.resolvedAt && (
-              <button type="button" onClick={onReply} className="text-muted hover:text-brand-600">
+              <button type="button" onClick={onReply} className="text-muted hover:text-link">
                 {t('driveCollab.comments.reply')}
               </button>
             )}
             {c.resolvedAt ? (
-              <button type="button" onClick={() => resolve.mutate(false)} className="inline-flex items-center gap-1 text-muted hover:text-brand-600">
+              <button type="button" onClick={() => resolve.mutate(false)} className="inline-flex items-center gap-1 text-muted hover:text-link">
                 <RotateCcw className="size-3" /> {t('driveCollab.comments.reopen')}
               </button>
             ) : (
-              <button type="button" onClick={() => resolve.mutate(true)} className="inline-flex items-center gap-1 text-muted hover:text-emerald-600">
+              <button type="button" onClick={() => resolve.mutate(true)} className="inline-flex items-center gap-1 text-muted hover:text-success-fg">
                 <Check className="size-3" /> {t('driveCollab.comments.resolve')}
               </button>
             )}
             {onTask && !c.task && (
-              <button type="button" onClick={onTask} className="inline-flex items-center gap-1 text-muted hover:text-brand-600">
+              <button type="button" onClick={onTask} className="inline-flex items-center gap-1 text-muted hover:text-link">
                 <ListChecks className="size-3" /> {t('driveCollab.comments.createTask')}
               </button>
             )}
@@ -254,7 +254,7 @@ const Thread = ({ c, item, focusId, onTask, refresh }: { c: DriveComment; item: 
   return (
     <li className={clsx('rounded-xl border border-line bg-card', c.resolvedAt && 'opacity-75')}>
       {c.resolvedAt && (
-        <p className="flex items-center gap-1 border-b border-line px-3 py-1 text-[11px] font-semibold text-emerald-700 dark:text-emerald-300">
+        <p className="flex items-center gap-1 border-b border-line px-3 py-1 text-[11px] font-semibold text-success-fg dark:text-emerald-300">
           <Check className="size-3" /> {t('driveCollab.comments.resolvedBadge')}
         </p>
       )}

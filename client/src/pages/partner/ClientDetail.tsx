@@ -6,6 +6,8 @@ import { toast } from 'sonner';
 import clsx from 'clsx';
 import { AlertCircle, ArrowLeft, CheckCircle2, CircleDashed, Clock3, FileText, History, Info, Upload, XCircle } from 'lucide-react';
 import { api } from '@/lib/api';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { Documents } from '@/components/illustrations';
 import { useL10n } from '@/lib/l10n';
 import { Spinner } from '@/components/ui/Spinner';
 import { day } from '@/components/agents/format';
@@ -15,9 +17,9 @@ import { optimizeImage } from '@/lib/imageCompress';
 
 const STATE_ICON: Record<DocState, { icon: typeof CheckCircle2; tone: string }> = {
   MISSING: { icon: CircleDashed, tone: 'text-muted' },
-  UPLOADED: { icon: Clock3, tone: 'text-sky-700' },
-  ACCEPTED: { icon: CheckCircle2, tone: 'text-emerald-700' },
-  REJECTED: { icon: XCircle, tone: 'text-red-700' },
+  UPLOADED: { icon: Clock3, tone: 'text-info-fg' },
+  ACCEPTED: { icon: CheckCircle2, tone: 'text-success-fg' },
+  REJECTED: { icon: XCircle, tone: 'text-danger-fg' },
 };
 
 const Fact = ({ label, value }: { label: string; value: string }) => (
@@ -63,7 +65,7 @@ const RequirementRow = ({ caseId, r }: { caseId: string; r: PartnerRequirement }
             </p>
             <p className={clsx('text-xs font-semibold', tone)}>{t(`partnerPortal.detail.state.${r.state}`)}</p>
             {r.rejectionReason && (
-              <p className="mt-1 flex items-start gap-1 text-xs text-red-800">
+              <p className="mt-1 flex items-start gap-1 text-xs text-danger-fg">
                 <AlertCircle className="mt-px size-3.5 shrink-0" aria-hidden /> {t('partnerPortal.detail.reason', { reason: r.rejectionReason })}
               </p>
             )}
@@ -104,7 +106,7 @@ export default function PartnerClientDetailPage() {
   });
 
   const back = (
-    <Link to="/partner/clients" className="inline-flex items-center gap-1 text-sm font-semibold text-brand-700 hover:underline">
+    <Link to="/partner/clients" className="inline-flex min-h-11 items-center gap-1 text-sm font-semibold text-link hover:underline">
       <ArrowLeft className="size-4" aria-hidden /> {t('partnerPortal.detail.back')}
     </Link>
   );
@@ -144,7 +146,7 @@ export default function PartnerClientDetailPage() {
           <StepBar step={c.step} status={c.status} />
         </div>
         {c.nextAction !== 'NONE' && (
-          <p className={clsx('mt-4 flex items-start gap-2 rounded-xl px-4 py-3 text-sm font-medium', c.nextAction === 'UPLOAD_DOCUMENTS' ? 'bg-amber-50 text-amber-900' : 'bg-surface text-ink/80')}>
+          <p className={clsx('mt-4 flex items-start gap-2 rounded-xl px-4 py-3 text-sm font-medium', c.nextAction === 'UPLOAD_DOCUMENTS' ? 'bg-warning-bg text-warning-fg' : 'bg-sunken text-ink')}>
             <AlertCircle className="mt-0.5 size-4 shrink-0" aria-hidden />
             <span>
               {t('partnerPortal.clients.next')}: {t(`partnerPortal.nextAction.${c.nextAction}`)}
@@ -157,16 +159,16 @@ export default function PartnerClientDetailPage() {
       <div className="grid gap-6 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
         <Section title={t('partnerPortal.detail.documents')} icon={FileText}>
           {stages.length === 0 ? (
-            <p className="text-sm text-muted">{t('partnerPortal.detail.documentsEmpty')}</p>
+            <EmptyState compact illustration={<Documents className="w-28" />} title={t('partnerPortal.detail.documentsEmpty')} />
           ) : (
             <div className="space-y-5">
-              <p className="flex items-start gap-2 rounded-xl bg-surface px-3 py-2.5 text-xs text-muted">
+              <p className="flex items-start gap-2 rounded-xl bg-sunken px-3 py-2.5 text-xs text-muted">
                 <Info className="mt-px size-3.5 shrink-0" aria-hidden />
                 {c.uploadStage ? t('partnerPortal.detail.uploadHint') : t('partnerPortal.detail.uploadClosed')}
               </p>
               {stages.map((s) => (
                 <div key={s}>
-                  <h3 className="text-xs font-bold tracking-wide text-muted uppercase">{t(`partnerPortal.detail.stage.${s}`)}</h3>
+                  <h3 className="type-overline">{t(`partnerPortal.detail.stage.${s}`)}</h3>
                   <ul className="divide-y divide-line">
                     {c.requirements
                       .filter((r) => r.stage === s)
@@ -188,7 +190,7 @@ export default function PartnerClientDetailPage() {
               <ol className="relative space-y-4 border-l border-line pl-5">
                 {timeline.map((e) => (
                   <li key={e.id} className="relative">
-                    <span className="absolute top-1.5 -left-[25px] size-2.5 rounded-full border-2 border-card bg-brand-500" aria-hidden />
+                    <span className="absolute top-1.5 -left-[25px] size-2.5 rounded-full border-2 border-card bg-primary" aria-hidden />
                     <p className="text-sm font-medium text-ink">
                       {e.toStatus ? t(`partnerPortal.status.${e.toStatus}`) : t(`partnerPortal.event.${e.type}`, { defaultValue: t('partnerPortal.event.other') })}
                     </p>

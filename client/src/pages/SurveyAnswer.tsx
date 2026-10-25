@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { CheckCircle2, Clock, MessageSquareHeart, SearchX, Star } from 'lucide-react';
+import { Lost, Success } from '@/components/illustrations';
 import clsx from 'clsx';
 import { api, errorCode } from '@/lib/api';
 import { Spinner } from '@/components/ui/Spinner';
@@ -25,24 +26,25 @@ type RatingKey = (typeof RATING_KEYS)[number];
 const COMMENT_MAX = 2000;
 
 const Shell = ({ children }: { children: ReactNode }) => (
-  <section className="flex min-h-[100svh] items-center bg-surface pt-24 pb-12 sm:pt-28 lg:pt-36 lg:pb-16">
+  <section className="flex min-h-[100svh] items-center bg-canvas pt-24 pb-12 sm:pt-28 lg:pt-36 lg:pb-16">
     <div className="container-x">
-      <div className="mx-auto w-full max-w-2xl rounded-2xl border border-line bg-card p-5 shadow-sm sm:p-10">{children}</div>
+      <div className="card mx-auto w-full max-w-2xl rounded-3xl p-5 sm:p-10">{children}</div>
     </div>
   </section>
 );
 
 const Message = ({ icon: Icon, tone, title, text, children }: { icon: typeof CheckCircle2; tone: 'good' | 'warn' | 'muted'; title: string; text: string; children?: ReactNode }) => (
   <div className="py-4 text-center" role={tone === 'warn' ? 'alert' : 'status'}>
-    <span
-      className={clsx(
-        'mx-auto grid size-14 place-items-center rounded-full',
-        tone === 'good' ? 'bg-emerald-100 text-emerald-700' : tone === 'warn' ? 'bg-amber-100 text-amber-700' : 'bg-surface text-muted',
-      )}
-    >
-      <Icon className="size-7" aria-hidden />
-    </span>
-    <h1 className="mt-5 font-display text-2xl font-extrabold text-ink">{title}</h1>
+    {tone === 'good' ? (
+      <Success className="mx-auto w-36" />
+    ) : tone === 'muted' ? (
+      <Lost className="mx-auto w-40" />
+    ) : (
+      <span className="mx-auto grid size-14 place-items-center rounded-full bg-warning-bg text-warning-fg">
+        <Icon className="size-7" aria-hidden />
+      </span>
+    )}
+    <h1 className="mt-5 font-display text-2xl font-semibold text-ink">{title}</h1>
     <p className="mx-auto mt-2 max-w-md text-muted">{text}</p>
     {children && <div className="mt-7 flex flex-col items-center justify-center gap-3 sm:flex-row">{children}</div>}
   </div>
@@ -56,7 +58,6 @@ const ScoreScale = ({ value, onChange, labelId }: { value: number | null; onChan
       <div role="radiogroup" aria-labelledby={labelId} className="grid grid-cols-6 gap-2 sm:grid-cols-11 sm:gap-1.5">
         {Array.from({ length: 11 }, (_, n) => {
           const active = value === n;
-          const tone = n >= 9 ? 'emerald' : n >= 7 ? 'amber' : 'rose';
           return (
             <button
               key={n}
@@ -65,14 +66,8 @@ const ScoreScale = ({ value, onChange, labelId }: { value: number | null; onChan
               aria-checked={active}
               onClick={() => onChange(n)}
               className={clsx(
-                'grid h-12 place-items-center rounded-lg border text-base font-bold tabular-nums transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500 sm:h-11',
-                active
-                  ? tone === 'emerald'
-                    ? 'border-emerald-600 bg-emerald-600 text-white'
-                    : tone === 'amber'
-                      ? 'border-amber-500 bg-amber-500 text-white'
-                      : 'border-rose-600 bg-rose-600 text-white'
-                  : 'border-line bg-card text-ink hover:border-brand-400 hover:bg-surface',
+                'grid h-12 place-items-center rounded-xl border text-base font-semibold tabular-nums transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus sm:h-11',
+                active ? 'border-primary bg-primary text-primary-contrast' : 'border-line bg-card text-ink hover:border-line-strong hover:bg-sunken',
               )}
             >
               {n}
@@ -109,9 +104,9 @@ const Stars = ({ label, value, onChange }: { label: string; value: number; onCha
               aria-label={t('surveyPage.starLabel', { n })}
               onMouseEnter={() => setHover(n)}
               onClick={() => onChange(value === n ? 0 : n)}
-              className="grid size-10 place-items-center rounded-md transition focus-visible:outline-2 focus-visible:outline-brand-500"
+              className="grid size-10 place-items-center rounded-md transition focus-visible:outline-2 focus-visible:outline-focus"
             >
-              <Star className={clsx('size-6 transition', n <= shown ? 'fill-amber-400 text-amber-400' : 'text-line')} aria-hidden />
+              <Star className={clsx('size-6 transition', n <= shown ? 'fill-highlight text-highlight' : 'text-line')} aria-hidden />
             </button>
           ))}
         </div>
@@ -170,7 +165,7 @@ export default function SurveyAnswer() {
   if (isLoading) {
     return (
       <Shell>
-        <div className="grid min-h-[30vh] place-items-center text-brand-600" role="status">
+        <div className="grid min-h-[30vh] place-items-center text-primary" role="status">
           <Spinner className="size-8 border-[3px]" />
         </div>
       </Shell>
@@ -190,9 +185,11 @@ export default function SurveyAnswer() {
           {!done.suggestReview && home}
         </Message>
         {done.suggestReview && (
-          <div className="mt-2 rounded-xl border border-line bg-surface p-5 text-center">
-            <MessageSquareHeart className="mx-auto size-7 text-brand-600" aria-hidden />
-            <h2 className="mt-2 text-lg font-bold text-ink">{t('surveyPage.reviewTitle')}</h2>
+          <div className="mt-2 rounded-2xl border border-line bg-sunken p-5 text-center">
+            <span className="mx-auto grid size-11 place-items-center rounded-xl chip-peach">
+              <MessageSquareHeart className="size-5" aria-hidden />
+            </span>
+            <h2 className="mt-3 type-card-title text-ink">{t('surveyPage.reviewTitle')}</h2>
             <p className="mx-auto mt-1 max-w-md text-sm text-muted">{t('surveyPage.reviewText')}</p>
             <div className="mt-4 flex flex-col justify-center gap-3 sm:flex-row">
               <Link to="/review" className="btn-primary">
@@ -241,8 +238,8 @@ export default function SurveyAnswer() {
   return (
     <Shell>
       <form onSubmit={submit} noValidate>
-        <p className="text-xs font-semibold tracking-wider text-brand-600 uppercase">{t('surveyPage.title')}</p>
-        <h1 className="mt-2 font-display text-xl font-extrabold text-ink sm:text-2xl">
+        <p className="eyebrow">{t('surveyPage.title')}</p>
+        <h1 className="mt-2 font-display text-xl font-semibold text-ink sm:text-2xl">
           {data.trigger === 'VISA_APPROVED' ? t('surveyPage.triggerApproved') : t('surveyPage.triggerClosed')}
         </h1>
         <p className="mt-2 text-sm text-muted">
@@ -291,14 +288,14 @@ export default function SurveyAnswer() {
         </div>
 
         {formError && (
-          <p className="mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800" role="alert">
+          <p className="mt-3 rounded-lg border border-danger-border bg-danger-bg px-3 py-2 text-sm text-danger-fg" role="alert">
             {formError}
           </p>
         )}
 
         <div className="mt-6 flex flex-col-reverse items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-xs text-muted">{t('surveyPage.privacy')}</p>
-          <button type="submit" className="btn-primary shrink-0" disabled={sending}>
+          <button type="submit" className="btn-primary btn-lg shrink-0" disabled={sending}>
             {sending && <Spinner className="size-4" />} {t('surveyPage.submit')}
           </button>
         </div>

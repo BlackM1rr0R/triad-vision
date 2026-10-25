@@ -71,8 +71,8 @@ const Chips = <T extends string>({ legend, hint, all, value, onChange, label }: 
       {all.map((v) => {
         const on = value.includes(v);
         return (
-          <label key={v} className={clsx('inline-flex min-h-9 cursor-pointer items-center gap-2 rounded-lg border px-3 text-xs font-semibold transition-colors', on ? 'border-brand-600 bg-brand-50 text-brand-800' : 'border-line bg-card text-ink/80')}>
-            <input type="checkbox" className="size-3.5 accent-brand-600" checked={on} onChange={(e) => onChange(e.target.checked ? [...value, v] : value.filter((x) => x !== v))} />
+          <label key={v} className={clsx('inline-flex min-h-9 cursor-pointer items-center gap-2 rounded-lg border px-3 text-xs font-semibold transition-colors', on ? 'border-primary bg-primary/[0.06] text-ink' : 'border-line bg-card text-ink/80')}>
+            <input type="checkbox" className="size-3.5 accent-primary" checked={on} onChange={(e) => onChange(e.target.checked ? [...value, v] : value.filter((x) => x !== v))} />
             {label(v)}
           </label>
         );
@@ -182,10 +182,10 @@ const EditDialog = ({ draft, onClose }: { draft: Draft; onClose: () => void }) =
           <fieldset className="space-y-3">
             <legend className="label">{t('waitingRoom.admin.exercise')}</legend>
             {d.exercise.map((q, qi) => (
-              <div key={qi} className="space-y-3 rounded-xl border border-line bg-surface p-3 sm:p-4">
+              <div key={qi} className="space-y-3 rounded-xl border border-line bg-sunken p-3 sm:p-4">
                 <div className="flex items-center justify-between gap-2">
                   <span className="text-xs font-bold text-muted">{t('waitingRoom.admin.question', { n: qi + 1 })}</span>
-                  <button type="button" className="grid size-8 place-items-center rounded-lg text-muted hover:bg-card hover:text-danger" onClick={() => set('exercise', d.exercise.filter((_, i) => i !== qi))} aria-label={t('waitingRoom.admin.removeQuestion')}>
+                  <button type="button" className="grid size-8 place-items-center rounded-lg text-muted hover:bg-card hover:text-danger-fg" onClick={() => set('exercise', d.exercise.filter((_, i) => i !== qi))} aria-label={t('waitingRoom.admin.removeQuestion')}>
                     <Trash2 className="size-4" />
                   </button>
                 </div>
@@ -201,7 +201,7 @@ const EditDialog = ({ draft, onClose }: { draft: Draft; onClose: () => void }) =
                     {q.options.length > 2 && (
                       <button
                         type="button"
-                        className="mt-7 grid size-8 shrink-0 place-items-center rounded-lg text-muted hover:bg-card hover:text-danger"
+                        className="mt-7 grid size-8 shrink-0 place-items-center rounded-lg text-muted hover:bg-card hover:text-danger-fg"
                         onClick={() => setQ(qi, { ...q, options: q.options.filter((_, i) => i !== oi), answer: q.answer === oi ? 0 : q.answer > oi ? q.answer - 1 : q.answer })}
                         aria-label={t('waitingRoom.admin.removeOption')}
                       >
@@ -211,7 +211,7 @@ const EditDialog = ({ draft, onClose }: { draft: Draft; onClose: () => void }) =
                   </div>
                 ))}
                 {q.options.length < 6 && (
-                  <button type="button" className="btn-ghost btn-sm" onClick={() => setQ(qi, { ...q, options: [...q.options, emptyL10n()] })}>
+                  <button type="button" className="btn-secondary btn-sm" onClick={() => setQ(qi, { ...q, options: [...q.options, emptyL10n()] })}>
                     <Plus className="size-3.5" aria-hidden /> {t('waitingRoom.admin.addOption')}
                   </button>
                 )}
@@ -341,7 +341,7 @@ export default function AdminWaitingRoom() {
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full min-w-[760px] text-sm">
-                <thead className="bg-surface text-left text-xs font-semibold text-muted">
+                <thead className="bg-sunken text-left text-xs font-semibold text-muted">
                   <tr>
                     {canEdit && <th className="w-16 px-3 py-2" />}
                     <th className="px-3 py-2">{t('waitingRoom.admin.cols.item')}</th>
@@ -360,17 +360,17 @@ export default function AdminWaitingRoom() {
                         {canEdit && (
                           <td className="px-3 py-2.5">
                             <div className="flex flex-col gap-0.5">
-                              <button type="button" className="grid size-7 place-items-center rounded text-muted hover:bg-surface hover:text-ink disabled:opacity-30" disabled={reorder.isPending} onClick={() => move(i, -1)} aria-label={t('waitingRoom.admin.moveUp')}>
+                              <button type="button" className="grid size-7 place-items-center rounded text-muted hover:bg-sunken hover:text-ink disabled:opacity-30" disabled={reorder.isPending} onClick={() => move(i, -1)} aria-label={t('waitingRoom.admin.moveUp')}>
                                 <ArrowUp className="size-3.5" />
                               </button>
-                              <button type="button" className="grid size-7 place-items-center rounded text-muted hover:bg-surface hover:text-ink disabled:opacity-30" disabled={reorder.isPending} onClick={() => move(i, 1)} aria-label={t('waitingRoom.admin.moveDown')}>
+                              <button type="button" className="grid size-7 place-items-center rounded text-muted hover:bg-sunken hover:text-ink disabled:opacity-30" disabled={reorder.isPending} onClick={() => move(i, 1)} aria-label={t('waitingRoom.admin.moveDown')}>
                                 <ArrowDown className="size-3.5" />
                               </button>
                             </div>
                           </td>
                         )}
                         <td className="px-3 py-2.5">
-                          <span className="badge mb-1 inline-flex items-center gap-1 bg-brand-100 text-brand-800">
+                          <span className="badge mb-1 inline-flex items-center gap-1 bg-primary/10 text-ink">
                             <Icon className="size-3" aria-hidden />
                             {t(`waitingRoom.kinds.${i.kind}`)}
                             {i.minutes ? ` · ${t('waitingRoom.minutes', { count: i.minutes })}` : ''}
@@ -382,7 +382,7 @@ export default function AdminWaitingRoom() {
                           <div className="flex max-w-[16rem] flex-wrap gap-1">
                             {!i.visaTypes?.length && !i.stages?.length && <span className="text-xs text-muted">{t('waitingRoom.admin.everyone')}</span>}
                             {i.visaTypes?.map((v) => (
-                              <span key={v} className="badge bg-surface text-ink/80">
+                              <span key={v} className="badge bg-sunken text-ink/80">
                                 {t(`waitingRoom.visa.${v}`)}
                               </span>
                             ))}
@@ -403,10 +403,10 @@ export default function AdminWaitingRoom() {
                         {canEdit && (
                           <td className="px-3 py-2.5">
                             <div className="flex justify-end gap-1">
-                              <button type="button" className="grid size-8 place-items-center rounded-lg text-muted hover:bg-surface hover:text-ink" onClick={() => setEditing(toDraft(i))} aria-label={t('waitingRoom.admin.editTitle')}>
+                              <button type="button" className="grid size-8 place-items-center rounded-lg text-muted hover:bg-sunken hover:text-ink" onClick={() => setEditing(toDraft(i))} aria-label={t('waitingRoom.admin.editTitle')}>
                                 <Pencil className="size-4" />
                               </button>
-                              <button type="button" className="grid size-8 place-items-center rounded-lg text-muted hover:bg-surface hover:text-danger" onClick={() => setDeleting(i)} aria-label={t('waitingRoom.admin.delete')}>
+                              <button type="button" className="grid size-8 place-items-center rounded-lg text-muted hover:bg-sunken hover:text-danger-fg" onClick={() => setDeleting(i)} aria-label={t('waitingRoom.admin.delete')}>
                                 <Trash2 className="size-4" />
                               </button>
                             </div>

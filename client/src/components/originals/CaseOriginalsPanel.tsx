@@ -41,7 +41,7 @@ const LegalHold = ({ caseId }: { caseId: string }) => {
   return (
     <div className="mt-3 flex items-start justify-between gap-3 border-t border-line pt-3">
       <div className="min-w-0">
-        <p className="text-xs font-semibold text-navy-900">{t('originals.panel.legalHold')}</p>
+        <p className="text-xs font-semibold text-ink">{t('originals.panel.legalHold')}</p>
         <p className="text-[11px] text-muted">{t('originals.panel.legalHoldHint')}</p>
       </div>
       <Switch checked={holds.includes(folder)} onChange={(v: boolean) => toggle.mutate(v)} label={t('originals.panel.legalHold')} />
@@ -82,7 +82,7 @@ export const CaseOriginalsPanel = ({ caseId }: { caseId: string }) => {
           {items.map((o) => (
             <li key={o.id} className="flex flex-wrap items-center gap-x-3 gap-y-1.5 py-2.5">
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium text-navy-900">{o.title}</p>
+                <p className="truncate text-sm font-medium text-ink">{o.title}</p>
                 <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
                   <StatusChip status={o.status} />
                   <DaysChip o={o} />
@@ -90,10 +90,10 @@ export const CaseOriginalsPanel = ({ caseId }: { caseId: string }) => {
                 </div>
               </div>
               <div className="flex items-center gap-1">
-                <button type="button" className="grid size-9 place-items-center rounded-lg text-brand-600 hover:bg-brand-50" title={t('originals.event.title')} aria-label={`${t('originals.event.title')}: ${o.title}`} onClick={() => setMoving(o)}>
+                <button type="button" className="grid size-9 place-items-center rounded-lg text-link hover:bg-primary/[0.06]" title={t('originals.event.title')} aria-label={`${t('originals.event.title')}: ${o.title}`} onClick={() => setMoving(o)}>
                   <ArrowRightLeft className="size-4" aria-hidden />
                 </button>
-                <button type="button" className="grid size-9 place-items-center rounded-lg text-muted hover:bg-surface hover:text-ink" title={t('originals.timelineOpen')} aria-label={`${t('originals.timelineOpen')}: ${o.title}`} onClick={() => setHistory(o.id)}>
+                <button type="button" className="grid size-9 place-items-center rounded-lg text-muted hover:bg-sunken hover:text-ink" title={t('originals.timelineOpen')} aria-label={`${t('originals.timelineOpen')}: ${o.title}`} onClick={() => setHistory(o.id)}>
                   <History className="size-4" aria-hidden />
                 </button>
               </div>
@@ -102,7 +102,7 @@ export const CaseOriginalsPanel = ({ caseId }: { caseId: string }) => {
         </ul>
       )}
       {items.length > 0 && (
-        <Link to={`/admin/originals?q=${encodeURIComponent(items[0].case.number)}`} className="mt-2 inline-block text-xs font-semibold text-brand-600 hover:underline">
+        <Link to={`/admin/originals?q=${encodeURIComponent(items[0].case.number)}`} className="mt-2 inline-block text-xs font-semibold text-link hover:underline">
           {t('originals.panel.all')} →
         </Link>
       )}

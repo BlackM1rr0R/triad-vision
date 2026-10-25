@@ -63,19 +63,19 @@ export const KIND_ICON: Record<WorkKind, LucideIcon> = {
 
 /** Icon tile colours per category (light + dark via the brand / status tokens used across the admin). */
 export const CATEGORY_TONE: Record<WorkCategory, string> = {
-  documents: 'bg-amber-100 text-amber-700',
-  tasks: 'bg-brand-100 text-brand-700',
-  mail: 'bg-sky-100 text-sky-700',
-  signatures: 'bg-violet-100 text-violet-700',
-  bookings: 'bg-emerald-100 text-emerald-700',
-  leads: 'bg-rose-100 text-rose-700',
-  other: 'bg-slate-100 text-slate-600',
+  documents: 'bg-warning-bg text-warning-fg',
+  tasks: 'bg-primary/10 text-link',
+  mail: 'bg-info-bg text-info-fg',
+  signatures: 'bg-accent-bg text-accent-fg',
+  bookings: 'bg-success-bg text-success-fg',
+  leads: 'bg-danger-bg text-danger-fg',
+  other: 'bg-sunken text-muted',
 };
 
 export const PRIORITY_DOT: Record<WorkPriority, string> = {
-  URGENT: 'bg-red-500',
-  HIGH: 'bg-amber-400',
-  NORMAL: 'bg-slate-300',
+  URGENT: 'bg-danger',
+  HIGH: 'bg-warning',
+  NORMAL: 'bg-line-strong',
 };
 
 export const FILTERS = ['all', 'urgent', 'documents', 'tasks', 'mail', 'signatures', 'bookings', 'leads', 'other'] as const;

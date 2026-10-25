@@ -43,11 +43,11 @@ import { stepLabel } from './stepLabel';
 const caseLink = (c: { id: string }, anchor?: string | null) => `/account/cases/${c.id}${anchor ?? ''}`;
 
 /** Card header used by every dashboard widget. */
-const WidgetTitle = ({ icon: Icon, id, children, action }: { icon: typeof BellRing; id: string; children: ReactNode; action?: ReactNode }) => (
+const WidgetTitle = ({ icon: Icon, id, children, action, chip = 'chip-soft' }: { icon: typeof BellRing; id: string; children: ReactNode; action?: ReactNode; chip?: string }) => (
   <div className="flex items-center justify-between gap-3">
-    <h2 id={id} className="flex min-w-0 items-center gap-2.5 text-base font-bold text-navy-900">
-      <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-brand-50 text-brand-600">
-        <Icon className="size-4" aria-hidden />
+    <h2 id={id} className="type-card-title flex min-w-0 items-center gap-3">
+      <span className={clsx('grid size-11 shrink-0 place-items-center rounded-xl', chip)}>
+        <Icon className="size-5" aria-hidden />
       </span>
       <span className="truncate">{children}</span>
     </h2>
@@ -56,7 +56,7 @@ const WidgetTitle = ({ icon: Icon, id, children, action }: { icon: typeof BellRi
 );
 
 const MoreLink = ({ to, children }: { to: string; children: ReactNode }) => (
-  <Link to={to} className="-my-2 inline-flex min-h-10 shrink-0 items-center gap-1 text-sm font-semibold whitespace-nowrap text-brand-600 hover:text-brand-700">
+  <Link to={to} className="-my-2 inline-flex min-h-11 shrink-0 items-center gap-1 text-sm font-semibold whitespace-nowrap text-link hover:text-link">
     {children}
     <ArrowRight className="size-3.5" aria-hidden />
   </Link>
@@ -74,33 +74,32 @@ export const JourneyCard = ({ c }: { c: ActiveCase }) => {
 
   return (
     <section className="card relative overflow-hidden" aria-labelledby="journey-title">
-      <div className="relative overflow-hidden bg-gradient-to-br from-navy-900 via-navy-800 to-brand-700 px-5 pt-5 pb-6 text-white sm:px-7 sm:pt-6">
-        <div className="pointer-events-none absolute -top-20 -right-16 size-64 rounded-full bg-[radial-gradient(closest-side,var(--color-brand-400),transparent)] opacity-25" aria-hidden />
+      <div className="relative overflow-hidden border-b border-line bg-sunken px-5 pt-5 pb-6 text-ink sm:px-7 sm:pt-6">
         <div className="relative flex items-start gap-4 sm:gap-6">
           <div className="min-w-0 flex-1">
-            <span className="eyebrow text-brand-400">{t('accountPage.dash.journey')}</span>
-            <h2 id="journey-title" className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xl font-extrabold sm:text-2xl">
+            <span className="type-overline text-muted">{t('accountPage.dash.journey')}</span>
+            <h2 id="journey-title" className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xl font-semibold sm:text-2xl">
               <span className="min-w-0 break-words">
-                <span className="text-white/60">{t('portal.caseNo')}</span> <span className="whitespace-nowrap">{c.number}</span>
+                <span className="text-muted">{t('portal.caseNo')}</span> <span className="code-id whitespace-nowrap">{c.number}</span>
               </span>
             </h2>
-            <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm text-white/75">
+            <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm text-muted">
               <span className="inline-flex min-w-0 items-center gap-1.5">
                 <Briefcase className="size-4 shrink-0" aria-hidden />
-                <span className="truncate font-medium text-white">{c.profession}</span>
+                <span className="truncate font-medium text-ink">{c.profession}</span>
               </span>
               {c.visaCategory && (
                 <span className="inline-flex min-w-0 items-center gap-1.5">
-                  <span className="badge shrink-0 bg-white/15 text-white">{c.visaCategory.visaLabel}</span>
+                  <span className="badge shrink-0 border border-line bg-card text-ink">{c.visaCategory.visaLabel}</span>
                   <span className="truncate">{tr(c.visaCategory.title)}</span>
                 </span>
               )}
             </div>
           </div>
-          <ProgressRing percent={c.percent} size={76} stroke={7} tone="light" className="max-sm:scale-[0.85] max-sm:-mr-1.5 max-sm:-mt-1.5" label={`${t('accountPage.dash.progress')}: ${c.percent}%`}>
+          <ProgressRing percent={c.percent} size={76} stroke={7} className="max-sm:scale-[0.85] max-sm:-mr-1.5 max-sm:-mt-1.5" label={`${t('accountPage.dash.progress')}: ${c.percent}%`}>
             <span className="text-center leading-none">
-              <span className="block font-display text-lg font-extrabold">{c.percent}%</span>
-              <span className="mt-0.5 block text-[10px] font-semibold text-white/70">{t('accountPage.dash.done')}</span>
+              <span className="block font-display text-lg font-semibold">{c.percent}%</span>
+              <span className="mt-0.5 block text-[10px] font-semibold text-muted">{t('accountPage.dash.done')}</span>
             </span>
           </ProgressRing>
         </div>
@@ -115,14 +114,14 @@ export const JourneyCard = ({ c }: { c: ActiveCase }) => {
                 <span
                   className={clsx(
                     'block h-1.5 rounded-full',
-                    done ? 'bg-brand-400' : current ? 'bg-white' : 'bg-white/15',
+                    done ? 'bg-highlight' : current ? 'bg-highlight/45' : 'bg-line',
                   )}
                   aria-hidden
                 />
                 <span
                   className={clsx(
                     'mt-2 hidden truncate text-[11px] font-semibold md:block',
-                    current ? 'text-white' : done ? 'text-white/70' : 'text-white/40',
+                    current ? 'text-ink' : 'text-muted',
                   )}
                 >
                   {stepLabel(t, key, c.visaType)}
@@ -132,7 +131,7 @@ export const JourneyCard = ({ c }: { c: ActiveCase }) => {
             );
           })}
         </ol>
-        <p className="relative mt-2 text-xs font-semibold text-white/70 md:hidden">
+        <p className="relative mt-2 text-xs font-semibold text-muted md:hidden">
           {t('accountPage.dash.stepOf', { n: Math.max(1, c.step + 1), total: c.stepCount })} · {stepLabel(t, STEP_KEYS[Math.max(0, c.step)], c.visaType)}
         </p>
       </div>
@@ -142,7 +141,7 @@ export const JourneyCard = ({ c }: { c: ActiveCase }) => {
           <StatusBadge status={c.status} />
           {clientTurn ? (
             <span className="badge bg-warning-bg text-warning-fg">
-              <span className="size-2 rounded-full bg-amber-500" aria-hidden />
+              <span className="size-2 rounded-full bg-warning" aria-hidden />
               {t('portal.actionRequired')}
             </span>
           ) : c.turn === 'staff' ? (
@@ -155,11 +154,11 @@ export const JourneyCard = ({ c }: { c: ActiveCase }) => {
         <p className="mt-3 max-w-2xl leading-relaxed text-muted">{t(`portal.statusHelp.${c.status}`)}</p>
 
         {c.staffNote && (
-          <div className="mt-4 flex gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
-            <MessageSquareWarning className="mt-0.5 size-5 shrink-0 text-amber-600" aria-hidden />
+          <div className="mt-4 flex gap-3 rounded-xl border border-warning-border bg-warning-bg px-4 py-3">
+            <MessageSquareWarning className="mt-0.5 size-5 shrink-0 text-warning-fg" aria-hidden />
             <div className="min-w-0">
-              <p className="text-xs font-bold tracking-wide text-amber-800 uppercase">{t('portal.staffNote')}</p>
-              <p className="mt-1 line-clamp-4 text-sm leading-relaxed break-words whitespace-pre-line text-amber-950">{c.staffNote}</p>
+              <p className="text-xs font-bold tracking-wide text-warning-fg uppercase">{t('portal.staffNote')}</p>
+              <p className="mt-1 line-clamp-4 text-sm leading-relaxed break-words whitespace-pre-line text-warning-fg">{c.staffNote}</p>
             </div>
           </div>
         )}
@@ -167,21 +166,21 @@ export const JourneyCard = ({ c }: { c: ActiveCase }) => {
         <div
           className={clsx(
             'mt-5 flex flex-col gap-4 rounded-2xl border p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5',
-            clientTurn ? 'border-brand-400/40 bg-brand-50' : 'border-line bg-surface',
+            clientTurn ? 'border-warning-border bg-highlight-bg' : 'border-line bg-sunken',
           )}
         >
           <div className="flex min-w-0 items-start gap-3">
             <span
               className={clsx(
                 'grid size-10 shrink-0 place-items-center rounded-xl',
-                clientTurn ? 'bg-brand-600 text-white shadow-lg shadow-brand-600/30' : 'bg-white text-sky-700',
+                clientTurn ? 'bg-primary text-primary-contrast' : 'bg-card text-info-fg',
               )}
             >
               {clientTurn ? <Sparkles className="size-5" aria-hidden /> : <Hourglass className="size-5" aria-hidden />}
             </span>
             <div className="min-w-0">
               <p className="text-xs font-bold tracking-wide text-muted uppercase">{t('portal.nextAction')}</p>
-              <p className="mt-0.5 text-sm leading-relaxed text-navy-900">
+              <p className="mt-0.5 text-sm leading-relaxed text-ink">
                 {t(`accountPage.dash.nextHint.${action.kind}`, { count: hintCount })}
               </p>
             </div>
@@ -229,33 +228,33 @@ export const DocumentChecklist = ({ c }: { c: ActiveCase }) => {
       >
         {t('accountPage.dash.docs.title')}
       </WidgetTitle>
-      <p className="mt-1 pl-[2.6rem] text-sm text-muted">{t(`accountPage.dash.docs.${d.stage}`)}</p>
+      <p className="mt-1 pl-14 text-sm text-muted">{t(`accountPage.dash.docs.${d.stage}`)}</p>
 
       <div className="mt-5 grid grid-cols-3 gap-2 sm:gap-3">
         <div className="col-span-3 rounded-xl border border-line p-3 sm:col-span-1">
           <p className="text-xs font-semibold text-muted">{t('accountPage.dash.docs.requiredUploaded')}</p>
-          <p className="mt-1 font-display text-xl font-extrabold text-navy-900">
+          <p className="mt-1 font-display text-xl font-semibold text-ink">
             {d.requiredUploaded}
             <span className="text-base text-muted"> / {d.required}</span>
           </p>
-          <span className="mt-2 block h-1.5 overflow-hidden rounded-full bg-brand-100" aria-hidden>
-            <span className="block h-full rounded-full bg-brand-600 transition-[width] duration-700" style={{ width: `${reqPct}%` }} />
+          <span className="mt-2 block h-1.5 overflow-hidden rounded-full bg-sunken" aria-hidden>
+            <span className="block h-full rounded-full bg-highlight transition-[width] duration-700" style={{ width: `${reqPct}%` }} />
           </span>
         </div>
         <div className="col-span-3 grid grid-cols-2 gap-2 sm:col-span-2 sm:gap-3">
           <div className="rounded-xl border border-line p-3">
             <p className="text-xs font-semibold text-muted">{t('accountPage.dash.docs.accepted')}</p>
-            <p className="mt-1 font-display text-xl font-extrabold text-success">{d.accepted}</p>
+            <p className="mt-1 font-display text-xl font-semibold text-success">{d.accepted}</p>
           </div>
-          <div className={clsx('rounded-xl border p-3', d.rejected ? 'border-red-200 bg-red-50' : 'border-line')}>
+          <div className={clsx('rounded-xl border p-3', d.rejected ? 'border-danger-border bg-danger-bg' : 'border-line')}>
             <p className={clsx('text-xs font-semibold', d.rejected ? 'text-danger' : 'text-muted')}>{t('accountPage.dash.docs.rejected')}</p>
-            <p className={clsx('mt-1 font-display text-xl font-extrabold', d.rejected ? 'text-danger' : 'text-navy-900')}>{d.rejected}</p>
+            <p className={clsx('mt-1 font-display text-xl font-semibold', d.rejected ? 'text-danger' : 'text-ink')}>{d.rejected}</p>
           </div>
         </div>
       </div>
 
       {allAccepted ? (
-        <p className="mt-4 flex items-center gap-2 rounded-xl bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800">
+        <p className="mt-4 flex items-center gap-2 rounded-xl bg-success-bg px-4 py-3 text-sm font-semibold text-success-fg">
           <CheckCircle2 className="size-4 shrink-0" aria-hidden />
           {t('accountPage.dash.docs.allAccepted')}
         </p>
@@ -264,10 +263,10 @@ export const DocumentChecklist = ({ c }: { c: ActiveCase }) => {
           {shown.map((item) => {
             const Icon = DOC_ICON[item.state];
             return (
-              <li key={item.id} className={clsx('flex items-start gap-3 py-2.5', item.state === 'rejected' && '-mx-3 rounded-lg border-0 bg-red-50 px-3')}>
+              <li key={item.id} className={clsx('flex items-start gap-3 py-2.5', item.state === 'rejected' && '-mx-3 rounded-lg border-0 bg-danger-bg px-3')}>
                 <Icon className={clsx('mt-0.5 size-4.5 shrink-0', DOC_TONE[item.state])} aria-hidden />
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium break-words text-navy-900">
+                  <p className="text-sm font-medium break-words text-ink">
                     {tr(item.title)}
                     {!item.required && <span className="ml-1.5 text-xs font-normal text-muted">· {t('accountPage.dash.docs.optional')}</span>}
                   </p>
@@ -314,22 +313,22 @@ export const AppointmentWidget = ({ c }: { c: ActiveCase }) => {
 
   return (
     <section className="card overflow-hidden" aria-labelledby="appt-title">
-      <div className="bg-gradient-to-br from-violet-600 to-violet-800 p-5 text-white sm:p-6">
+      <div className="p-5 sm:p-6">
         <div className="flex items-start gap-4">
-          <div className="flex w-16 shrink-0 flex-col overflow-hidden rounded-xl bg-white text-center text-navy-900 shadow-sm" aria-hidden>
-            <span className="bg-violet-500 py-0.5 text-[10px] font-bold tracking-wider text-white uppercase">{date(at, { month: 'short' })}</span>
-            <span className="py-1 font-display text-2xl font-extrabold">{date(at, { day: 'numeric' })}</span>
+          <div className="flex w-16 shrink-0 flex-col overflow-hidden rounded-xl border border-line bg-card text-center text-ink" aria-hidden>
+            <span className="bg-primary py-0.5 text-[10px] font-semibold tracking-wider text-primary-contrast uppercase">{date(at, { month: 'short' })}</span>
+            <span className="py-1 font-display text-2xl font-semibold">{date(at, { day: 'numeric' })}</span>
           </div>
           <div className="min-w-0">
-            <h2 id="appt-title" className="text-base font-bold">
+            <h2 id="appt-title" className="type-card-title">
               {t('accountPage.dash.appointment.title')}
             </h2>
-            <p className="mt-1 flex items-start gap-1.5 text-sm text-white/85">
+            <p className="mt-1 flex items-start gap-1.5 text-sm text-muted">
               <CalendarDays className="mt-0.5 size-4 shrink-0" aria-hidden />
               <time dateTime={c.appointment.at}>{date(at, { dateStyle: 'full', timeStyle: 'short' })}</time>
             </p>
             {c.appointment.place && (
-              <p className="mt-1 flex items-start gap-1.5 text-sm break-words text-white/85">
+              <p className="mt-1 flex items-start gap-1.5 text-sm break-words text-muted">
                 <MapPin className="mt-0.5 size-4 shrink-0" aria-hidden />
                 {c.appointment.place}
               </p>
@@ -339,7 +338,7 @@ export const AppointmentWidget = ({ c }: { c: ActiveCase }) => {
 
         {diff > 0 ? (
           <div className="mt-5">
-            <p className="text-xs font-semibold text-white/70">{t('accountPage.dash.appointment.countdown')}</p>
+            <p className="text-xs font-semibold text-muted">{t('accountPage.dash.appointment.countdown')}</p>
             <div className="mt-2 grid grid-cols-3 gap-2" role="timer" aria-live="off">
               {(
                 [
@@ -348,18 +347,18 @@ export const AppointmentWidget = ({ c }: { c: ActiveCase }) => {
                   [minutes, 'minutes'],
                 ] as const
               ).map(([value, unit]) => (
-                <div key={unit} className="rounded-xl bg-white/12 px-2 py-2 text-center ring-1 ring-white/15">
-                  <span className="block font-display text-2xl leading-none font-extrabold tabular-nums">{value}</span>
-                  <span className="mt-1 block text-[11px] font-semibold text-white/75">{t(`accountPage.dash.appointment.${unit}`)}</span>
+                <div key={unit} className="rounded-xl border border-line bg-sunken px-2 py-2 text-center text-ink">
+                  <span className="block font-display text-2xl leading-none font-semibold tabular-nums">{value}</span>
+                  <span className="mt-1 block text-[11px] font-semibold text-muted">{t(`accountPage.dash.appointment.${unit}`)}</span>
                 </div>
               ))}
             </div>
           </div>
         ) : (
-          <p className="mt-4 rounded-lg bg-white/12 px-3 py-2 text-sm text-white/85">{t('accountPage.dash.appointment.passed')}</p>
+          <p className="mt-4 rounded-lg bg-sunken px-3 py-2 text-sm text-muted">{t('accountPage.dash.appointment.passed')}</p>
         )}
       </div>
-      <div className="flex flex-col gap-2 p-4 min-[480px]:flex-row sm:p-5 lg:flex-col">
+      <div className="flex flex-col gap-2 border-t border-line p-4 min-[480px]:flex-row sm:p-5 lg:flex-col">
         {diff > 0 && (
           <button
             type="button"
@@ -378,7 +377,7 @@ export const AppointmentWidget = ({ c }: { c: ActiveCase }) => {
             {t('accountPage.dash.appointment.addToCalendar')}
           </button>
         )}
-        <Link to={caseLink(c, '#appointment')} className="btn min-h-11 flex-1 border border-line text-navy-900 hover:bg-surface">
+        <Link to={caseLink(c, '#appointment')} className="btn min-h-11 flex-1 border border-line text-ink hover:bg-sunken">
           {t('accountPage.dash.appointment.details')}
         </Link>
       </div>
@@ -405,15 +404,15 @@ export const ManagerCard = ({ c }: { c: ActiveCase | null }) => {
 
   return (
     <section className="card card-pad" aria-labelledby="manager-title">
-      <WidgetTitle icon={UserRound} id="manager-title">
+      <WidgetTitle icon={UserRound} id="manager-title" chip="chip-sage">
         {t('accountPage.dash.manager.title')}
       </WidgetTitle>
       <div className="mt-4 flex items-center gap-3">
-        <span className="grid size-12 shrink-0 place-items-center rounded-full bg-gradient-to-br from-brand-500 to-brand-700 font-display text-base font-extrabold text-white shadow-md shadow-brand-600/25" aria-hidden>
+        <span className="chip-sky grid size-12 shrink-0 place-items-center rounded-full font-display text-base font-semibold" aria-hidden>
           {initials}
         </span>
         <div className="min-w-0">
-          <p className="truncate font-semibold text-navy-900">{name}</p>
+          <p className="truncate font-semibold text-ink">{name}</p>
           {contact?.hours && <p className="truncate text-xs text-muted">{tr(contact.hours)}</p>}
         </div>
       </div>
@@ -426,7 +425,7 @@ export const ManagerCard = ({ c }: { c: ActiveCase | null }) => {
           </Link>
         )}
         {contact?.phone && (
-          <a href={`tel:${contact.phone.replace(/\s/g, '')}`} className="btn btn-sm min-h-11 border border-line text-navy-900 hover:bg-surface">
+          <a href={`tel:${contact.phone.replace(/\s/g, '')}`} className="btn btn-sm min-h-11 border border-line text-ink hover:bg-sunken">
             <Phone className="size-4" aria-hidden />
             {t('accountPage.dash.manager.call')}
           </a>
@@ -436,7 +435,7 @@ export const ManagerCard = ({ c }: { c: ActiveCase | null }) => {
             href={`https://wa.me/${wa}`}
             target="_blank"
             rel="noreferrer"
-            className="btn btn-sm min-h-11 border border-emerald-200 text-emerald-700 hover:bg-emerald-50"
+            className="btn btn-sm min-h-11 border border-success-border text-success-fg hover:bg-success-bg"
           >
             <WhatsAppIcon className="size-4" />
             {t('accountPage.dash.manager.whatsapp')}
@@ -484,13 +483,13 @@ export const LatestNotifications = ({ items, unread }: { items: Notification[]; 
               <button
                 type="button"
                 onClick={() => open(n)}
-                className="flex w-full items-start gap-3 rounded-lg px-2 py-2.5 text-left transition-colors hover:bg-surface"
+                className="flex w-full items-start gap-3 rounded-lg px-2 py-2.5 text-left transition-colors hover:bg-sunken"
               >
                 <span className="mt-1.5 flex size-2 shrink-0" aria-hidden>
-                  {!n.readAt && <span className="size-2 rounded-full bg-brand-600" />}
+                  {!n.readAt && <span className="size-2 rounded-full bg-primary" />}
                 </span>
                 <span className="min-w-0 flex-1">
-                  <span className={clsx('block truncate text-sm text-navy-900', n.readAt ? 'font-medium' : 'font-bold')}>{n.title}</span>
+                  <span className={clsx('block truncate text-sm text-ink', n.readAt ? 'font-medium' : 'font-semibold')}>{n.title}</span>
                   <time className="block text-xs text-muted" dateTime={n.createdAt}>
                     {when(n.createdAt)}
                   </time>
@@ -511,21 +510,21 @@ export const LastMessageCard = ({ message, caseId }: { message: LastMessage | nu
 
   return (
     <section className="card card-pad" aria-labelledby="last-msg-title">
-      <WidgetTitle icon={MessageCircle} id="last-msg-title">
+      <WidgetTitle icon={MessageCircle} id="last-msg-title" chip="chip-peach">
         {t('accountPage.dash.message.title')}
       </WidgetTitle>
       {message ? (
         <div className="mt-4">
-          <div className={clsx('rounded-2xl px-4 py-3', message.fromTeam ? 'rounded-tl-sm bg-surface' : 'rounded-tr-sm bg-brand-50')}>
+          <div className={clsx('rounded-2xl px-4 py-3', message.fromTeam ? 'rounded-tl-sm bg-sunken' : 'rounded-tr-sm chip-sky')}>
             <p className="flex flex-wrap items-baseline justify-between gap-x-3 text-xs">
-              <span className="font-bold text-navy-900">
+              <span className="font-semibold text-ink">
                 {message.fromTeam ? `${message.author.firstName} · ${t('portal.messages.team')}` : t('accountPage.dash.message.you')}
               </span>
               <time className="text-muted" dateTime={message.createdAt}>
                 {when(message.createdAt)}
               </time>
             </p>
-            <p className="mt-1.5 line-clamp-3 text-sm leading-relaxed break-words whitespace-pre-line text-navy-900">{message.body}</p>
+            <p className="mt-1.5 line-clamp-3 text-sm leading-relaxed break-words whitespace-pre-line text-ink">{message.body}</p>
           </div>
           <MoreLink to={`/account/cases/${message.caseId}#messages`}>{t('accountPage.dash.message.reply')}</MoreLink>
         </div>
@@ -559,9 +558,9 @@ export const QuickLinks = ({ visaSlug }: { visaSlug?: string | null }) => {
           <li key={to} className="min-w-0">
             <Link
               to={to}
-              className="group flex h-full min-h-11 items-center gap-2 rounded-xl border border-line px-3 py-2.5 text-sm font-semibold text-navy-900 transition-colors hover:border-brand-400 hover:bg-brand-50"
+              className="group flex h-full min-h-11 items-center gap-2 rounded-xl border border-line px-3 py-2.5 text-sm font-semibold text-ink transition-colors hover:border-primary hover:bg-sunken"
             >
-              <Icon className="size-4 shrink-0 text-brand-600" aria-hidden />
+              <Icon className="size-4 shrink-0 text-primary" aria-hidden />
               <span className="min-w-0 break-words">{label}</span>
             </Link>
           </li>
@@ -607,11 +606,11 @@ export const TipsCard = ({ status }: { status: CaseStatus | null }) => {
       </WidgetTitle>
       <ul className={clsx('mt-4 grid gap-2.5', checklist && 'sm:grid-cols-2')}>
         {(Array.isArray(tips) ? tips : []).map((tip) => (
-          <li key={tip} className="flex items-start gap-2.5 text-sm leading-relaxed text-navy-900">
+          <li key={tip} className="flex items-start gap-2.5 text-sm leading-relaxed text-ink">
             {checklist ? (
-              <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-violet-600" aria-hidden />
+              <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-accent-fg" aria-hidden />
             ) : (
-              <span className="mt-2 size-1.5 shrink-0 rounded-full bg-brand-500" aria-hidden />
+              <span className="mt-2 size-1.5 shrink-0 rounded-full bg-primary" aria-hidden />
             )}
             <span className="min-w-0">{tip}</span>
           </li>
@@ -629,9 +628,9 @@ export const ProfileCard = ({ percent, missing }: { percent: number; missing: Pr
   return (
     <section className="card card-pad" aria-labelledby="profile-card-title">
       <div className="flex items-center gap-4">
-        <ProgressRing percent={percent} size={60} stroke={6} className="text-navy-900" />
+        <ProgressRing percent={percent} size={60} stroke={6} className="text-ink" />
         <div className="min-w-0">
-          <h2 id="profile-card-title" className="text-base font-bold text-navy-900">
+          <h2 id="profile-card-title" className="type-card-title">
             {t('accountPage.dash.profileCard.title')}
           </h2>
           <p className="text-sm text-muted">
@@ -648,7 +647,7 @@ export const ProfileCard = ({ percent, missing }: { percent: number; missing: Pr
               <li key={f}>
                 <Link
                   to={`/account/profile?tab=${FIELD_TAB[f]}`}
-                  className="badge border border-dashed border-line bg-surface py-1 text-navy-900 hover:border-brand-400 hover:text-brand-700"
+                  className="badge border border-dashed border-line bg-sunken py-1 text-ink hover:border-primary hover:text-link"
                 >
                   {t(`accountPage.profile.fields.${f}`)}
                 </Link>
@@ -675,11 +674,11 @@ export const DashboardSkeleton = () => (
   <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-8" aria-busy="true">
     <div className="min-w-0 space-y-6">
       <div className="card overflow-hidden">
-        <div className="h-[184px] bg-navy-900/90 p-6">
-          <Bone className="h-3 w-28 bg-white/15" />
-          <Bone className="mt-4 h-6 w-48 bg-white/15" />
-          <Bone className="mt-3 h-4 w-64 max-w-full bg-white/10" />
-          <Bone className="mt-8 h-1.5 w-full bg-white/10" />
+        <div className="h-[184px] border-b border-line bg-sunken p-6">
+          <Bone className="h-3 w-28" />
+          <Bone className="mt-4 h-6 w-48" />
+          <Bone className="mt-3 h-4 w-64 max-w-full" />
+          <Bone className="mt-8 h-1.5 w-full" />
         </div>
         <div className="space-y-3 p-6">
           <Bone className="h-5 w-40" />

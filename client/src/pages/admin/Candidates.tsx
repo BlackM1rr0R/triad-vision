@@ -151,7 +151,7 @@ const AddToVacancyModal = ({ userId, onClose, presetVacancy }: { userId: string 
       ) : options.error ? (
         <ErrorBlock error={options.error} onRetry={() => void options.refetch()} />
       ) : empty ? (
-        <div className="rounded-lg border border-dashed border-line bg-surface px-4 py-5 text-center">
+        <div className="rounded-lg border border-dashed border-line bg-sunken px-4 py-5 text-center">
           <p className="text-sm font-semibold text-ink">{t('jobsArea.admin.candidates.noVacancies')}</p>
           <p className="mt-1 text-xs text-muted">{t('jobsArea.admin.candidates.noVacanciesHint')}</p>
           <Link to="/admin/vacancies" className="btn-primary btn-sm mt-3 inline-flex" onClick={onClose}>
@@ -226,7 +226,7 @@ const ApplicationCard = ({ a, userId, onChanged }: { a: CandidateDetail['applica
     <li className="rounded-xl border border-line p-4">
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div className="min-w-0">
-          <Link to={`/admin/vacancies?id=${a.vacancy.id}`} className="font-semibold break-words text-brand-700 hover:underline">
+          <Link to={`/admin/vacancies?id=${a.vacancy.id}`} className="font-semibold break-words text-link hover:underline">
             {tr(a.vacancy.title)}
           </Link>
           <p className="text-xs text-muted">{[a.vacancy.company?.name, a.vacancy.city, fmtDate(a.createdAt)].filter(Boolean).join(' · ')}</p>
@@ -234,9 +234,9 @@ const ApplicationCard = ({ a, userId, onChanged }: { a: CandidateDetail['applica
         <ScorePill score={a.match.score} />
       </div>
       <MatchBreakdown match={a.match} className="mt-1" />
-      {a.message && <p className="mt-2 rounded-md bg-surface px-2.5 py-1.5 text-xs text-ink/80">“{a.message}”</p>}
+      {a.message && <p className="mt-2 rounded-md bg-sunken px-2.5 py-1.5 text-xs text-ink/80">“{a.message}”</p>}
       {a.companyNote && (
-        <p className="mt-2 rounded-md bg-violet-50 px-2.5 py-1.5 text-xs whitespace-pre-line text-violet-900">
+        <p className="mt-2 rounded-md bg-accent-bg px-2.5 py-1.5 text-xs whitespace-pre-line text-accent-fg">
           {t('jobsArea.admin.employerNote')}: {a.companyNote}
         </p>
       )}
@@ -311,11 +311,11 @@ const CandidateDrawer = ({ id, onClose, onAdd }: { id: string | null; onClose: (
         <div className="space-y-6">
           <Panel title={t('jobsArea.admin.candidates.profile')}>
             <div className="mb-3 flex flex-wrap gap-2">
-              <a href={`mailto:${data.email}`} className="inline-flex min-h-8 items-center gap-1.5 rounded-md border border-line px-2.5 py-1 text-xs text-ink/80 hover:border-brand-400">
+              <a href={`mailto:${data.email}`} className="inline-flex min-h-8 items-center gap-1.5 rounded-md border border-line px-2.5 py-1 text-xs text-ink/80 hover:border-line-strong">
                 <Mail className="size-3.5" /> {data.email}
               </a>
               {data.phone && (
-                <a href={`tel:${data.phone}`} className="inline-flex min-h-8 items-center gap-1.5 rounded-md border border-line px-2.5 py-1 text-xs text-ink/80 hover:border-brand-400">
+                <a href={`tel:${data.phone}`} className="inline-flex min-h-8 items-center gap-1.5 rounded-md border border-line px-2.5 py-1 text-xs text-ink/80 hover:border-line-strong">
                   <Phone className="size-3.5" /> {data.phone}
                 </a>
               )}
@@ -336,7 +336,7 @@ const CandidateDrawer = ({ id, onClose, onAdd }: { id: string | null; onClose: (
               <DefRow label={t('jobsArea.profile.nationality')}>{data.nationality ?? '—'}</DefRow>
               <DefRow label={t('jobsArea.profile.registered')}>{fmtDate(data.createdAt)}</DefRow>
             </dl>
-            {data.about && <p className="mt-3 rounded-md bg-surface px-3 py-2 text-xs whitespace-pre-line text-ink/80">{data.about}</p>}
+            {data.about && <p className="mt-3 rounded-md bg-sunken px-3 py-2 text-xs whitespace-pre-line text-ink/80">{data.about}</p>}
             <div className="mt-3 space-y-3">
               <RecognitionEditor userId={data.id} status={data.recognitionStatus} note={data.recognitionNote} onSaved={refresh} />
               <CandidateIntroVideo candidateId={data.id} has={data.hasIntroVideo} />
@@ -381,7 +381,7 @@ const CandidateDrawer = ({ id, onClose, onAdd }: { id: string | null; onClose: (
               <ul className="divide-y divide-line">
                 {data.cases.map((c) => (
                   <li key={c.id} className="flex flex-wrap items-center justify-between gap-2 py-2.5 text-sm">
-                    <Link to={`/admin/cases/${c.id}`} className="font-semibold text-brand-700 hover:underline">
+                    <Link to={`/admin/cases/${c.id}`} className="font-semibold text-link hover:underline">
                       {c.number} · {c.profession}
                     </Link>
                     <span className="flex items-center gap-2 text-xs text-muted">
@@ -455,7 +455,7 @@ export default function AdminCandidates() {
       <PageHead
         title={t('admin.nav.candidates')}
         subtitle={data ? t('jobsArea.admin.candidates.count', { count: data.total }) : undefined}
-        actions={isFetching && !isLoading ? <Spinner className="size-4 text-brand-600" /> : undefined}
+        actions={isFetching && !isLoading ? <Spinner className="size-4 text-link" /> : undefined}
       />
 
       <div className="mb-4 grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,22rem)]">
@@ -490,14 +490,14 @@ export default function AdminCandidates() {
       ) : error ? (
         <ErrorBlock error={error} onRetry={() => refetch()} />
       ) : !data?.items.length ? (
-        <div className="rounded-xl border border-line bg-white">
+        <div className="rounded-xl border border-line bg-card">
           <EmptyState icon={UserSearch} title={t('jobsArea.admin.candidates.empty')} />
         </div>
       ) : (
         <>
-          <div className="hidden overflow-x-auto rounded-xl border border-line bg-white xl:block">
+          <div className="hidden overflow-x-auto rounded-xl border border-line bg-card xl:block">
             <table className="w-full min-w-[1100px] text-left text-sm">
-              <thead className="border-b border-line bg-surface/70 text-[11px] font-semibold tracking-wide whitespace-nowrap text-muted uppercase">
+              <thead className="border-b border-line bg-surface/70 text-xs font-medium whitespace-nowrap text-muted">
                 <tr>
                   {ranked && <th className="px-4 py-2.5">{t('jobsArea.common.match')}</th>}
                   <th className="px-4 py-2.5">{t('jobsArea.admin.candidates.th.candidate')}</th>
@@ -520,8 +520,8 @@ export default function AdminCandidates() {
                       </td>
                     )}
                     <td className="px-4 py-3">
-                      <button type="button" onClick={() => setParam('id', c.id)} className="text-left font-semibold whitespace-nowrap text-navy-900 hover:text-brand-700">
-                        {fullName(c)} {c.emailVerifiedAt && <BadgeCheck className="inline size-3.5 text-emerald-600" aria-label={t('jobsArea.admin.verified')} />}
+                      <button type="button" onClick={() => setParam('id', c.id)} className="text-left font-semibold whitespace-nowrap text-ink hover:text-link">
+                        {fullName(c)} {c.emailVerifiedAt && <BadgeCheck className="inline size-3.5 text-success-fg" aria-label={t('jobsArea.admin.verified')} />}
                       </button>
                       <p className="text-xs text-muted">{c.email}</p>
                     </td>
@@ -536,7 +536,7 @@ export default function AdminCandidates() {
                       {ranked && c.application ? (
                         <span className={clsx('badge', APPLICATION_STATUS_TONE[c.application.status])}>{L.appStatus(c.application.status)}</span>
                       ) : (
-                        <button type="button" className="inline-flex min-h-8 items-center gap-1 rounded-md px-2 text-xs font-semibold whitespace-nowrap text-brand-600 hover:bg-brand-50" onClick={() => setAddFor(c.id)}>
+                        <button type="button" className="inline-flex min-h-8 items-center gap-1 rounded-md px-2 text-xs font-semibold whitespace-nowrap text-link hover:bg-primary/[0.06]" onClick={() => setAddFor(c.id)}>
                           <UserPlus className="size-3.5" /> {t('jobsArea.admin.shortlist')}
                         </button>
                       )}
@@ -549,11 +549,11 @@ export default function AdminCandidates() {
 
           <ul className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:hidden">
             {data.items.map((c) => (
-              <li key={c.id} className="rounded-xl border border-line bg-white p-4">
+              <li key={c.id} className="rounded-xl border border-line bg-card p-4">
                 <div className="flex items-start justify-between gap-2">
                   <button type="button" onClick={() => setParam('id', c.id)} className="min-w-0 text-left">
-                    <p className="truncate font-semibold text-navy-900">
-                      {fullName(c)} {c.emailVerifiedAt && <BadgeCheck className="inline size-3.5 text-emerald-600" aria-label={t('jobsArea.admin.verified')} />}
+                    <p className="truncate font-semibold text-ink">
+                      {fullName(c)} {c.emailVerifiedAt && <BadgeCheck className="inline size-3.5 text-success-fg" aria-label={t('jobsArea.admin.verified')} />}
                     </p>
                     <p className="truncate text-xs text-muted">{c.email}</p>
                   </button>
@@ -567,7 +567,7 @@ export default function AdminCandidates() {
                   {ranked && c.application ? (
                     <span className={clsx('badge', APPLICATION_STATUS_TONE[c.application.status])}>{L.appStatus(c.application.status)}</span>
                   ) : (
-                    <button type="button" className="-my-1 inline-flex min-h-10 items-center gap-1 text-xs font-semibold text-brand-600" onClick={() => setAddFor(c.id)}>
+                    <button type="button" className="-my-1 inline-flex min-h-10 items-center gap-1 text-xs font-semibold text-link" onClick={() => setAddFor(c.id)}>
                       <UserPlus className="size-3.5" /> {t('jobsArea.admin.shortlist')}
                     </button>
                   )}

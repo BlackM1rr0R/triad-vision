@@ -27,7 +27,7 @@ const isInteractive = (target: EventTarget | null) => {
 const eventKey = (e: KeyboardEvent) => (e.key.length === 1 && !e.shiftKey ? e.key.toLowerCase() : e.key);
 
 const Kbd = ({ k }: { k: string }) => (
-  <kbd className="inline-flex min-w-6 items-center justify-center rounded border border-line bg-surface px-1.5 py-0.5 font-sans text-[11px] leading-none font-semibold text-ink">{keyLabel(k)}</kbd>
+  <kbd className="inline-flex min-w-6 items-center justify-center rounded border border-line bg-sunken px-1.5 py-0.5 font-sans text-[11px] leading-none font-semibold text-ink">{keyLabel(k)}</kbd>
 );
 
 const Keys = ({ keys }: { keys: string[] }) => {
@@ -57,7 +57,7 @@ const ShortcutSheet = ({ open, onClose }: { open: boolean; onClose: () => void }
     </li>
   );
   return (
-    <Modal open={open} onClose={onClose} title={t('ux.shortcuts.title')} description={t('ux.shortcuts.subtitle')} icon={<Keyboard className="size-5 text-brand-600" aria-hidden />} size="lg">
+    <Modal open={open} onClose={onClose} title={t('ux.shortcuts.title')} description={t('ux.shortcuts.subtitle')} icon={<Keyboard className="size-5 text-link" aria-hidden />} size="lg">
       <div className="grid gap-6 sm:grid-cols-2">
         <section aria-labelledby="sc-global">
           <h3 id="sc-global" className="mb-1 text-[11px] font-semibold tracking-wide text-muted uppercase">

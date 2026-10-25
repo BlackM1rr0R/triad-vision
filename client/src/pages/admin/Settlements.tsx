@@ -421,7 +421,7 @@ export default function Settlements() {
   const filtersOn = !!(q || stage || partnerFilter || month || unpaidOnly);
 
   if (list.isLoading) return <PageLoader />;
-  if (list.isError || !data) return <p className="p-6 text-sm text-red-700">{t('settlement.loadFailed')}</p>;
+  if (list.isError || !data) return <p className="p-6 text-sm text-danger-fg">{t('settlement.loadFailed')}</p>;
 
   const tabBtn = (key: string, active: boolean, label: string, onClick: () => void, count?: number) => (
     <button
@@ -430,7 +430,7 @@ export default function Settlements() {
       onClick={onClick}
       className={clsx(
         'shrink-0 rounded-b-lg border border-t-0 px-3 py-1.5 text-xs font-semibold whitespace-nowrap transition',
-        active ? 'border-line bg-card text-brand-700 shadow-sm' : 'border-transparent text-muted hover:bg-card/60 hover:text-ink',
+        active ? 'border-line bg-card text-link shadow-[var(--tv-shadow-card)]' : 'border-transparent text-muted hover:bg-card/60 hover:text-ink',
       )}
     >
       {label}
@@ -443,22 +443,22 @@ export default function Settlements() {
     <div className={clsx('flex min-w-0 flex-col gap-3', inWorkspace && 'p-4 sm:p-6', aiOpen && 'lg:pr-[25rem]')}>
       <header className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <h1 className="flex items-center gap-2 font-display text-2xl font-extrabold text-ink">
-            <Banknote className="size-6 text-brand-600" /> {t('settlement.title')}
+          <h1 className="flex items-center gap-2 type-page-title">
+            <Banknote className="size-6 text-link" /> {t('settlement.title')}
           </h1>
           <p className="text-sm text-muted">{t('settlement.subtitle')}</p>
         </div>
         <div className="flex flex-wrap gap-2">
           {isSuper && <AdminAiButton open={aiOpen} onClick={() => setAiOpen((o) => !o)} />}
           {canManage && (
-            <button type="button" className="btn-ghost btn-sm" onClick={() => setDialog('import')}>
+            <button type="button" className="btn-secondary btn-sm" onClick={() => setDialog('import')}>
               <FileUp className="size-4" /> {t('settlement.toolbar.import')}
             </button>
           )}
-          <a className="btn-ghost btn-sm" href={exportHref} download>
+          <a className="btn-secondary btn-sm" href={exportHref} download>
             <FileDown className="size-4" /> {t('settlement.toolbar.export')}
           </a>
-          <button type="button" className="btn-ghost btn-sm" onClick={() => setDialog('rules')}>
+          <button type="button" className="btn-secondary btn-sm" onClick={() => setDialog('rules')}>
             <Scale className="size-4" /> {t('settlement.toolbar.rules')}
           </button>
         </div>
@@ -491,13 +491,13 @@ export default function Settlements() {
         </select>
         <input type="month" className="input w-auto py-2" value={month} onChange={(e) => setMonth(e.target.value)} aria-label={t('settlement.toolbar.month')} title={t('settlement.toolbar.month')} />
         <label className="flex items-center gap-1.5 text-sm text-ink">
-          <input type="checkbox" className="size-4 accent-brand-600" checked={unpaidOnly} onChange={(e) => setUnpaidOnly(e.target.checked)} />
+          <input type="checkbox" className="size-4 accent-primary" checked={unpaidOnly} onChange={(e) => setUnpaidOnly(e.target.checked)} />
           {t('settlement.toolbar.unpaidOnly')}
         </label>
         {filtersOn && (
           <button
             type="button"
-            className="text-xs font-semibold text-brand-600 hover:underline"
+            className="text-xs font-semibold text-link hover:underline"
             onClick={() => {
               setQ('');
               setStage('');
@@ -518,11 +518,11 @@ export default function Settlements() {
             }}
           >
             <input className="input w-48 py-2" value={newName} maxLength={160} onChange={(e) => setNewName(e.target.value)} placeholder={t('settlement.toolbar.newRowPlaceholder')} />
-            <button type="submit" className="btn-ghost btn-sm" disabled={!newName.trim()}>
+            <button type="submit" className="btn-secondary btn-sm" disabled={!newName.trim()}>
               <Plus className="size-4" /> {t('settlement.toolbar.newRow')}
             </button>
           </form>
-          <button type="button" className="btn-ghost btn-sm" onClick={undo} disabled={!dirtyCount} title="Ctrl+Z">
+          <button type="button" className="btn-secondary btn-sm" onClick={undo} disabled={!dirtyCount} title="Ctrl+Z">
             <Undo2 className="size-4" /> {t('settlement.toolbar.undo')}
           </button>
           <button type="button" className="btn-primary btn-sm" onClick={() => void save()} disabled={!dirtyCount || saving} title="Ctrl+S">
@@ -534,15 +534,15 @@ export default function Settlements() {
 
       {/* Bulk bar */}
       {selectedIds.length > 0 && (
-        <div className="flex flex-wrap items-center gap-2 rounded-xl border border-brand-500/30 bg-brand-50 px-3 py-2 text-sm">
+        <div className="flex flex-wrap items-center gap-2 rounded-xl border border-primary/30 bg-primary/[0.06] px-3 py-2 text-sm">
           <span className="font-semibold text-ink">{t('settlement.bulk.selected', { count: selectedIds.length })}</span>
-          <button type="button" className="btn-ghost btn-sm" onClick={() => void markPaid(selectedIds.map((id) => ({ id, beneficiaryId: '*' })), true)}>
+          <button type="button" className="btn-secondary btn-sm" onClick={() => void markPaid(selectedIds.map((id) => ({ id, beneficiaryId: '*' })), true)}>
             <CheckCheck className="size-4" /> {t('settlement.bulk.markPaid')}
           </button>
-          <button type="button" className="btn-ghost btn-sm" onClick={() => void markPaid(selectedIds.map((id) => ({ id, beneficiaryId: '*' })), false)}>
+          <button type="button" className="btn-secondary btn-sm" onClick={() => void markPaid(selectedIds.map((id) => ({ id, beneficiaryId: '*' })), false)}>
             {t('settlement.bulk.markUnpaid')}
           </button>
-          <button type="button" className="btn-ghost btn-sm" onClick={() => void recalc(selectedIds)}>
+          <button type="button" className="btn-secondary btn-sm" onClick={() => void recalc(selectedIds)}>
             <RotateCcw className="size-4" /> {t('settlement.bulk.recalc')}
           </button>
           <form
@@ -558,7 +558,7 @@ export default function Settlements() {
                 <option key={p.name} value={p.name} />
               ))}
             </datalist>
-            <button type="submit" className="btn-ghost btn-sm" disabled={!moveTo.trim()}>
+            <button type="submit" className="btn-secondary btn-sm" disabled={!moveTo.trim()}>
               <FolderInput className="size-4" /> {t('settlement.bulk.move')}
             </button>
           </form>

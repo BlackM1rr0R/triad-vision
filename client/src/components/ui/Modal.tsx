@@ -139,7 +139,7 @@ export const Modal = ({
             tabIndex={-1}
             onSubmit={onSubmit as never}
             className={clsx(
-              'relative flex max-h-full w-full flex-col overflow-hidden bg-card text-ink shadow-2xl outline-none sm:rounded-2xl sm:border sm:border-line',
+              'relative flex max-h-full w-full flex-col overflow-hidden bg-raised text-ink shadow-[var(--tv-shadow-overlay)] outline-none sm:rounded-2xl sm:border sm:border-line',
               full ? 'h-full sm:h-auto' : 'rounded-t-2xl border-t border-line',
               SIZE[size],
               className,
@@ -152,8 +152,8 @@ export const Modal = ({
             <div className="flex shrink-0 items-start gap-3 border-b border-line py-3 pr-3 pl-5 sm:pr-4 sm:pl-6">
               {icon && <div className="mt-0.5 shrink-0">{icon}</div>}
               <div className="min-w-0 flex-1 py-1.5">
-                {eyebrow && <p className="mb-0.5 text-[11px] font-bold tracking-widest text-brand-600 uppercase">{eyebrow}</p>}
-                <h2 id={titleId} className="text-base leading-snug font-bold break-words text-ink">
+                {eyebrow && <p className="mb-0.5 text-[11px] font-semibold tracking-[0.12em] text-muted uppercase">{eyebrow}</p>}
+                <h2 id={titleId} className="text-base leading-snug font-semibold break-words text-ink">
                   {title}
                 </h2>
                 {description && (
@@ -168,7 +168,7 @@ export const Modal = ({
                   type="button"
                   onClick={requestClose}
                   disabled={busy}
-                  className="grid size-10 shrink-0 place-items-center rounded-lg text-muted transition hover:bg-surface hover:text-ink disabled:opacity-50"
+                  className="grid size-10 shrink-0 place-items-center rounded-lg text-muted transition hover:bg-sunken hover:text-ink disabled:opacity-50"
                   aria-label={closeLabel ?? t('ui.close')}
                 >
                   <X className="size-4" aria-hidden />
@@ -181,7 +181,7 @@ export const Modal = ({
               </div>
             )}
             {footer && (
-              <div className="flex shrink-0 flex-wrap items-center justify-end gap-2 border-t border-line bg-surface/60 px-5 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:px-6">
+              <div className="flex shrink-0 flex-wrap items-center justify-end gap-2 border-t border-line bg-sunken/60 px-5 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:px-6">
                 {footer}
               </div>
             )}

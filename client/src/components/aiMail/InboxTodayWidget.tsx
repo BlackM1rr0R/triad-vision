@@ -6,11 +6,11 @@ import { useAuth } from '@/lib/auth';
 import { useInboxToday, type AiFilter, type TriageCategory } from './api';
 
 const LINKS: { key: TriageCategory; filter: AiFilter; tone: string }[] = [
-  { key: 'CANDIDATE', filter: 'candidate', tone: 'bg-brand-100 text-brand-700' },
-  { key: 'EMPLOYER', filter: 'employer', tone: 'bg-violet-100 text-violet-700' },
-  { key: 'PARTNER', filter: 'partner', tone: 'bg-sky-100 text-sky-700' },
-  { key: 'EXISTING_CLIENT', filter: 'client', tone: 'bg-emerald-100 text-emerald-700' },
-  { key: 'SPAM', filter: 'spam', tone: 'bg-slate-100 text-slate-600' },
+  { key: 'CANDIDATE', filter: 'candidate', tone: 'bg-primary/10 text-link' },
+  { key: 'EMPLOYER', filter: 'employer', tone: 'bg-accent-bg text-accent-fg' },
+  { key: 'PARTNER', filter: 'partner', tone: 'bg-info-bg text-info-fg' },
+  { key: 'EXISTING_CLIENT', filter: 'client', tone: 'bg-success-bg text-success-fg' },
+  { key: 'SPAM', filter: 'spam', tone: 'bg-sunken text-muted' },
 ];
 
 const mailLink = (filter?: AiFilter) => `/workspace/mail${filter ? `?ai=${filter}` : ''}`;
@@ -27,9 +27,9 @@ export const InboxTodayWidget = ({ className }: { className?: string }) => {
   const notAnalysed = Math.max(0, data.total - data.analysed);
 
   return (
-    <section className={clsx('rounded-xl border border-line bg-card p-4 shadow-[0_1px_2px_rgba(11,31,68,0.04)]', className)} aria-label={t('aiMail.today.title')}>
+    <section className={clsx('rounded-xl border border-line bg-card p-4 shadow-[var(--tv-shadow-card)]', className)} aria-label={t('aiMail.today.title')}>
       <div className="flex flex-wrap items-center gap-2">
-        <span className="grid size-8 place-items-center rounded-lg bg-brand-100 text-brand-700">
+        <span className="grid size-8 place-items-center rounded-lg bg-primary/10 text-link">
           <Inbox className="size-4" aria-hidden />
         </span>
         <div className="min-w-0 flex-1">
@@ -41,7 +41,7 @@ export const InboxTodayWidget = ({ className }: { className?: string }) => {
             <Settings className="size-3.5" aria-hidden /> {t('aiMail.today.settings')}
           </Link>
         )}
-        <Link to={mailLink()} className="inline-flex items-center gap-0.5 text-xs font-semibold text-brand-600 hover:underline">
+        <Link to={mailLink()} className="inline-flex items-center gap-0.5 text-xs font-semibold text-link hover:underline">
           {t('aiMail.today.openMail')} <ArrowUpRight className="size-3.5" aria-hidden />
         </Link>
       </div>
@@ -53,7 +53,7 @@ export const InboxTodayWidget = ({ className }: { className?: string }) => {
             {t('aiMail.today.line', { count: data.total })}
           </Link>
           {data.urgent > 0 && (
-            <Link to={mailLink('urgent')} className="rounded-full bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-700 hover:underline">
+            <Link to={mailLink('urgent')} className="rounded-full bg-danger-bg px-2 py-0.5 text-xs font-semibold text-danger-fg hover:underline">
               {t('aiMail.today.urgent', { count: data.urgent })}
             </Link>
           )}

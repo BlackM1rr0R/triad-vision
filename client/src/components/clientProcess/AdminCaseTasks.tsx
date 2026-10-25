@@ -102,11 +102,11 @@ const NewTaskModal = ({ c, open, onClose }: { c: CaseDetail; open: boolean; onCl
           <p className="label">{t('cp.tasks.template')}</p>
           <div className="flex flex-wrap gap-2">
             {(templates ?? []).map((tpl) => (
-              <button key={tpl.key} type="button" onClick={() => pick(tpl.key)} aria-pressed={template === tpl.key} className={clsx('min-h-9 rounded-full border px-3 text-xs font-semibold', template === tpl.key ? 'border-brand-600 bg-brand-50 text-brand-700' : 'border-line bg-card text-navy-900')}>
+              <button key={tpl.key} type="button" onClick={() => pick(tpl.key)} aria-pressed={template === tpl.key} className={clsx('min-h-9 rounded-full border px-3 text-xs font-semibold', template === tpl.key ? 'border-primary bg-primary/[0.06] text-link' : 'border-line bg-card text-ink')}>
                 {tpl.title[clientLocale] ?? tpl.title.az}
               </button>
             ))}
-            <button type="button" onClick={() => setTemplate('')} aria-pressed={!template} className={clsx('min-h-9 rounded-full border px-3 text-xs font-semibold', !template ? 'border-brand-600 bg-brand-50 text-brand-700' : 'border-line bg-card text-navy-900')}>
+            <button type="button" onClick={() => setTemplate('')} aria-pressed={!template} className={clsx('min-h-9 rounded-full border px-3 text-xs font-semibold', !template ? 'border-primary bg-primary/[0.06] text-link' : 'border-line bg-card text-ink')}>
               {t('cp.tasks.custom')}
             </button>
           </div>
@@ -191,9 +191,9 @@ export const AdminCaseTasks = ({ c }: { c: CaseDetail }) => {
       ) : (
         <ul className="space-y-3">
           {tasks.map((task) => (
-            <li key={task.id} className={clsx('rounded-lg border p-3', task.state === 'overdue' ? 'border-red-200 bg-red-50/50' : 'border-line')}>
+            <li key={task.id} className={clsx('rounded-lg border p-3', task.state === 'overdue' ? 'border-danger-border bg-danger-bg/50' : 'border-line')}>
               <div className="flex flex-wrap items-center gap-2">
-                <p className={clsx('min-w-0 flex-1 text-sm font-semibold break-words text-navy-900', task.status !== 'OPEN' && 'text-muted line-through')}>{task.rawTitle}</p>
+                <p className={clsx('min-w-0 flex-1 text-sm font-semibold break-words text-ink', task.status !== 'OPEN' && 'text-muted line-through')}>{task.rawTitle}</p>
                 <span className={clsx('badge', STATE_TONE[task.state])}>{t(`cp.tasks.state.${task.state}`)}</span>
               </div>
               <p className="mt-0.5 text-xs text-muted">
@@ -203,7 +203,7 @@ export const AdminCaseTasks = ({ c }: { c: CaseDetail }) => {
                 {task.completedAt && ` · ${t('cp.tasks.completedAt', { date: fmtDate(task.completedAt) })}`}
                 {task.completedVia === 'UPLOAD' && ` (${t('cp.tasks.viaUpload')})`}
               </p>
-              {task.clientNote && <p className="mt-1 text-xs text-slate-700">{t('cp.tasks.clientNote', { note: task.clientNote })}</p>}
+              {task.clientNote && <p className="mt-1 text-xs text-muted">{t('cp.tasks.clientNote', { note: task.clientNote })}</p>}
               <div className="mt-2 flex flex-wrap items-center gap-1.5">
                 {task.linkUrl && (
                   <a href={task.linkUrl} target="_blank" rel="noopener noreferrer" className="btn-secondary btn-sm">
@@ -239,7 +239,7 @@ export const AdminCaseTasks = ({ c }: { c: CaseDetail }) => {
                 )}
                 <button
                   type="button"
-                  className="btn-secondary btn-sm text-danger"
+                  className="btn-secondary btn-sm text-danger-fg"
                   aria-label={t('cp.tasks.delete')}
                   onClick={() => {
                     // TODO(ui): ConfirmDialog

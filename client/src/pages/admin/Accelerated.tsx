@@ -89,7 +89,7 @@ export default function AdminAccelerated() {
           {data.items.map((r) => (
             <li key={r.id} className="grid gap-2 px-4 py-3 text-sm lg:grid-cols-[minmax(0,14rem)_minmax(0,1fr)_minmax(0,14rem)] lg:items-center">
               <div className="min-w-0">
-                <Link to={`/admin/cases/${r.case.id}#case-81a`} className="font-semibold text-brand-700 hover:underline">
+                <Link to={`/admin/cases/${r.case.id}#case-81a`} className="font-semibold text-link hover:underline">
                   {r.case.number}
                 </Link>
                 <p className="truncate text-xs text-muted">

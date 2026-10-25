@@ -42,7 +42,7 @@ const Gallery = ({ samples, visas }: { samples: VisaSample[]; visas: VisaCategor
   const basis = open ? laws.find((l) => l.code === open.visaLabel) : undefined;
 
   const chip = (active: boolean) =>
-    clsx('rounded-full border px-4 py-2 text-sm font-semibold transition', active ? 'border-navy-900 bg-navy-900 text-white' : 'border-line bg-white text-navy-900 hover:border-brand-400');
+    clsx('inline-flex min-h-11 items-center gap-1.5 rounded-full border px-4 py-2 text-sm font-semibold transition-colors', active ? 'border-primary bg-primary text-primary-contrast' : 'border-line bg-card text-ink hover:border-line-strong');
 
   return (
     <section className="section">
@@ -60,7 +60,7 @@ const Gallery = ({ samples, visas }: { samples: VisaSample[]; visas: VisaCategor
             ))}
           </div>
           <p className="flex items-center gap-2 text-sm text-muted">
-            <EyeOff className="size-4 text-brand-600" /> {t('storiesPage.gallery.privacy')}
+            <EyeOff className="size-4 text-muted" /> {t('storiesPage.gallery.privacy')}
           </p>
         </div>
 
@@ -79,7 +79,7 @@ const Gallery = ({ samples, visas }: { samples: VisaSample[]; visas: VisaCategor
       <DetailModal open={!!open} onClose={() => setOpen(null)} title={open ? tr(open.profession) : ''} eyebrow={open ? `${open.visaLabel} · ${tr(open.dateLabel)}` : undefined} icon={<Stamp className="size-6" />}>
         {open && (
           <div className="space-y-5">
-            <div className="grid place-items-center rounded-2xl bg-surface py-6">
+            <div className="grid place-items-center rounded-2xl bg-sunken py-6">
               <VisaSticker sample={open} />
             </div>
             <dl className="grid grid-cols-2 gap-3 text-sm">
@@ -89,21 +89,21 @@ const Gallery = ({ samples, visas }: { samples: VisaSample[]; visas: VisaCategor
                 [t('storiesPage.gallery.date'), tr(open.dateLabel)],
                 [t('storiesPage.gallery.basis'), basis?.title ?? open.visaLabel],
               ].map(([k, v]) => (
-                <div key={k} className="rounded-xl border border-line p-3">
+                <div key={k} className="rounded-xl bg-sunken p-3">
                   <dt className="text-xs font-semibold text-muted">{k}</dt>
-                  <dd className="mt-1 font-semibold text-navy-900">{v}</dd>
+                  <dd className="mt-1 font-semibold text-ink">{v}</dd>
                 </div>
               ))}
             </dl>
             {related.length > 0 && (
               <div>
-                <h4 className="text-xs font-bold tracking-widest text-brand-600 uppercase">{t('storiesPage.gallery.direction')}</h4>
+                <h4 className="type-overline text-muted">{t('storiesPage.gallery.direction')}</h4>
                 <ul className="mt-2 space-y-2">
                   {related.map((v) => (
                     <li key={v.id}>
-                      <Link to={`/visas/${v.slug}`} onClick={() => setOpen(null)} className="group flex items-center justify-between gap-3 rounded-xl border border-line p-3 font-semibold text-navy-900 transition hover:border-brand-400">
+                      <Link to={`/visas/${v.slug}`} onClick={() => setOpen(null)} className="group flex min-h-12 items-center justify-between gap-3 rounded-xl border border-line bg-card p-3 font-semibold text-ink transition-colors hover:border-line-strong hover:bg-sunken">
                         {tr(v.title)}
-                        <ArrowUpRight className="size-4 text-navy-900/40 group-hover:text-brand-600" />
+                        <ArrowUpRight className="size-4 text-subtle group-hover:text-ink" />
                       </Link>
                     </li>
                   ))}
@@ -132,51 +132,51 @@ const Breakdown = ({ samples }: { samples: VisaSample[] }) => {
   const steps = Array.from({ length: max + 1 }, (_, i) => i);
 
   return (
-    <section className="section bg-surface">
+    <section className="section bg-sunken">
       <div className="container-x">
         <SectionHeading eyebrow={t('storiesPage.chart.eyebrow')} title={t('storiesPage.chart.title')} subtitle={t('storiesPage.chart.subtitle')} />
         <Reveal>
-          <div ref={ref} className="card grid gap-8 p-5 sm:p-8 lg:grid-cols-[1.3fr_1fr] lg:gap-12">
+          <div ref={ref} className="card grid gap-8 rounded-3xl p-5 sm:p-8 lg:grid-cols-[1.3fr_1fr] lg:gap-12">
             <figure>
               <figcaption className="sr-only">{t('storiesPage.chart.caption')}</figcaption>
               <div className="relative mt-8 h-60 sm:h-64" aria-hidden>
                 {/* gridlines */}
                 {steps.map((s) => (
                   <div key={s} className="absolute inset-x-0 border-t border-dashed border-line" style={{ bottom: `${(s / max) * 100}%` }}>
-                    <span className="absolute -top-2.5 left-0 bg-white pr-1 text-[0.65rem] text-muted">{s}</span>
+                    <span className="absolute -top-2.5 left-0 bg-card pr-1 text-[0.65rem] text-muted">{s}</span>
                   </div>
                 ))}
                 <div className="absolute inset-0 left-6 flex items-end justify-around gap-3 sm:gap-6">
                   {rows.map(([label, list], i) => (
                     <div key={label} className="relative flex h-full w-full max-w-20 items-end">
                       <span
-                        className="relative w-full rounded-t-md bg-brand-600"
+                        className="relative w-full rounded-t-md bg-primary"
                         style={{ height: on ? `${(list.length / max) * 100}%` : '0%', transition: `height 1s cubic-bezier(0.22,1,0.36,1) ${0.15 + i * 0.12}s` }}
                       >
-                        <span className="absolute inset-x-0 -top-6 text-center font-display text-sm font-bold text-navy-900">{list.length}</span>
+                        <span className="absolute inset-x-0 -top-6 text-center font-display text-sm font-semibold text-ink">{list.length}</span>
                       </span>
                     </div>
                   ))}
                 </div>
               </div>
-              <div className="ml-6 flex justify-around gap-3 border-t-2 border-navy-900 pt-2 sm:gap-6" aria-hidden>
+              <div className="ml-6 flex justify-around gap-3 border-t-2 border-line-strong pt-2 sm:gap-6" aria-hidden>
                 {rows.map(([label]) => (
-                  <span key={label} className="w-full max-w-20 text-center font-mono text-xs font-bold text-navy-900">
+                  <span key={label} className="w-full max-w-20 text-center font-mono text-xs font-bold text-ink">
                     {label}
                   </span>
                 ))}
               </div>
             </figure>
             <table className="w-full self-start text-sm">
-              <caption className="pb-3 text-left font-display text-base font-bold text-navy-900">{t('storiesPage.chart.professions')}</caption>
+              <caption className="pb-3 text-left font-display text-base font-semibold text-ink">{t('storiesPage.chart.professions')}</caption>
               <tbody>
                 {rows.map(([label, list]) => (
                   <tr key={label} className="border-t border-line">
                     <th scope="row" className="py-3 pr-3 text-left align-top">
-                      <span className="inline-block rounded-md bg-navy-900 px-2 py-0.5 font-mono text-xs font-bold text-white">{label}</span>
+                      <span className="inline-block rounded-md border border-line-strong bg-sunken px-2 py-0.5 font-mono text-xs font-bold text-ink">{label}</span>
                     </th>
                     <td className="py-3 align-top text-muted">
-                      <span className="font-semibold text-navy-900">
+                      <span className="font-semibold text-ink">
                         {list.length} {t('storiesPage.chart.samples')}
                       </span>
                       <span className="block">{list.map((s) => tr(s.profession)).join(', ')}</span>
@@ -212,7 +212,7 @@ const REVIEWS_PAGE = 6;
 const Stars = ({ value, className }: { value: number; className?: string }) => (
   <span className={clsx('inline-flex gap-0.5', className)} aria-hidden>
     {[1, 2, 3, 4, 5].map((n) => (
-      <Star key={n} className={clsx('size-4', n <= Math.round(value) ? 'fill-amber-400 text-amber-400' : 'text-slate-300')} />
+      <Star key={n} className={clsx('size-4', n <= Math.round(value) ? 'fill-highlight text-highlight' : 'text-subtle')} />
     ))}
   </span>
 );
@@ -237,12 +237,12 @@ const PublicReviews = () => {
   };
 
   return (
-    <section className="section bg-surface">
+    <section className="section bg-sunken">
       <div className="container-x">
         <SectionHeading eyebrow={t('growth.stories.eyebrow')} title={t('growth.stories.title')} subtitle={t('growth.stories.subtitle')} />
         {first.average !== null && (
-          <div className="mx-auto mb-10 flex w-fit flex-col items-center gap-1 rounded-2xl border border-line bg-white px-8 py-5 text-center sm:flex-row sm:gap-5 sm:text-left">
-            <span className="font-display text-5xl font-extrabold text-navy-900 tabular-nums">{first.average.toFixed(1)}</span>
+          <div className="mx-auto mb-10 flex w-fit flex-col items-center gap-1 rounded-3xl border border-line bg-card px-8 py-5 text-center shadow-[var(--tv-shadow-card)] sm:flex-row sm:gap-5 sm:text-left">
+            <span className="font-display text-5xl font-semibold text-ink tabular-nums">{first.average.toFixed(1)}</span>
             <span>
               <span className="sr-only">{t('growth.stories.stars', { value: first.average.toFixed(1) })}</span>
               <Stars value={first.average} className="[&_svg]:size-5" />
@@ -258,13 +258,13 @@ const PublicReviews = () => {
               <figure className="card flex h-full flex-col p-6">
                 <span className="sr-only">{t('growth.stories.stars', { value: r.rating })}</span>
                 <Stars value={r.rating} />
-                <blockquote className="mt-4 flex-1 text-[0.97rem] leading-relaxed whitespace-pre-line text-navy-900/85">„{r.text}"</blockquote>
+                <blockquote className="mt-4 flex-1 text-[0.97rem] leading-relaxed whitespace-pre-line text-ink/85">„{r.text}"</blockquote>
                 <figcaption className="mt-5 flex items-center justify-between gap-3 border-t border-line pt-4">
                   <span className="min-w-0">
-                    <span className="block truncate text-sm font-bold text-navy-900">{r.displayName}</span>
+                    <span className="block truncate text-sm font-bold text-ink">{r.displayName}</span>
                     {r.submittedAt && <span className="text-xs text-muted">{monthYear(r.submittedAt)}</span>}
                   </span>
-                  <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700">
+                  <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-success-bg px-2.5 py-1 text-[11px] font-semibold text-success-fg">
                     <BadgeCheck className="size-3.5" aria-hidden /> {t('growth.stories.verified')}
                   </span>
                 </figcaption>
@@ -274,7 +274,7 @@ const PublicReviews = () => {
         </ul>
         {hasNextPage && (
           <div className="mt-8 text-center">
-            <button type="button" className="btn-ghost px-6" onClick={() => void fetchNextPage()} disabled={isFetchingNextPage}>
+            <button type="button" className="btn-secondary px-6" onClick={() => void fetchNextPage()} disabled={isFetchingNextPage}>
               {t('growth.stories.more')}
             </button>
           </div>
@@ -294,10 +294,10 @@ const PrivacyStrip = () => {
     <section className="section-sm bg-navy-950 text-white">
       <div className="container-x grid gap-8 lg:grid-cols-[0.7fr_1.3fr] lg:items-center lg:gap-14">
         <div>
-          <span className="eyebrow text-brand-400">
+          <span className="eyebrow">
             <ShieldCheck className="size-4" /> {t('storiesPage.privacy.eyebrow')}
           </span>
-          <h2 className="mt-3 font-display text-2xl font-extrabold sm:text-3xl">{t('storiesPage.privacy.title')}</h2>
+          <h2 className="mt-3 font-display text-2xl font-semibold sm:text-3xl">{t('storiesPage.privacy.title')}</h2>
         </div>
         <Stagger className="grid gap-4 sm:grid-cols-3">
           {items.map((it, i) => {
@@ -305,8 +305,8 @@ const PrivacyStrip = () => {
             return (
               <StaggerItem key={it.title}>
                 <div className="h-full rounded-2xl border border-white/10 bg-white/[0.04] p-5">
-                  <I className="size-6 text-brand-400" />
-                  <h3 className="mt-3 font-display font-bold">{it.title}</h3>
+                  <I className="size-6 text-highlight-fg" />
+                  <h3 className="mt-3 font-display font-semibold">{it.title}</h3>
                   <p className="mt-1.5 text-sm leading-relaxed text-white/65">{it.text}</p>
                 </div>
               </StaggerItem>
@@ -346,16 +346,15 @@ export default function Stories() {
       <section className="section">
         <div className="container-x">
           <Reveal>
-            <div className="relative isolate overflow-hidden rounded-3xl border border-brand-100 bg-brand-50 px-6 py-12 text-center sm:px-12 sm:py-16 lg:rounded-[2rem]">
-              <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_50%_0%,rgba(47,123,255,0.18),transparent_60%)]" />
+            <div className="rounded-3xl border border-line bg-sunken px-6 py-12 text-center sm:px-12 sm:py-16 lg:rounded-[2rem]">
               <RouteFlags size="lg" className="justify-center" />
-              <h2 className="mx-auto mt-6 max-w-2xl font-display text-2xl leading-tight font-extrabold text-navy-900 sm:text-4xl">{t('storiesPage.cta.title')}</h2>
+              <h2 className="mx-auto mt-6 max-w-2xl font-display text-2xl leading-tight font-semibold text-ink sm:text-4xl">{t('storiesPage.cta.title')}</h2>
               <p className="mx-auto mt-4 max-w-xl text-muted">{t('storiesPage.cta.text')}</p>
               <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
                 <Link to="/eligibility" className="btn-primary group px-6 py-3.5">
-                  {t('storiesPage.cta.primary')} <ArrowRight className="size-4 transition group-hover:translate-x-1" />
+                  {t('storiesPage.cta.primary')} <ArrowRight className="size-4" />
                 </Link>
-                <Link to="/register" className="btn-ghost px-6 py-3.5">
+                <Link to="/register" className="btn-secondary px-6 py-3.5">
                   {t('storiesPage.cta.secondary')}
                 </Link>
               </div>

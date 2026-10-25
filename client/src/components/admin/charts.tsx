@@ -10,10 +10,10 @@ import { useTranslation } from 'react-i18next';
  */
 
 /** Categorical palette, fixed slot order (validated for CVD separation; slot 1 = brand blue). */
-export const SERIES_COLORS = ['#2f7bff', '#eb6834', '#1baf7a', '#eda100', '#e87ba4', '#008300', '#6250d6', '#e34948'] as const;
+export const SERIES_COLORS = ['var(--color-chart-1)', 'var(--color-chart-2)', 'var(--color-chart-3)', 'var(--color-chart-4)', 'var(--color-chart-5)', 'var(--color-chart-7)', 'var(--color-chart-6)', 'var(--color-chart-8)'] as const;
 /** Single-series accent (brand) and the reserved "critical" status colour. */
-export const ACCENT = '#2f7bff';
-export const CRITICAL = '#d92d3a';
+export const ACCENT = 'var(--color-chart-1)';
+export const CRITICAL = 'var(--color-danger)';
 
 // Theme tokens, so axes and grid lines follow light/dark mode.
 const GRID = 'var(--color-line)';
@@ -61,7 +61,7 @@ const Tooltip = ({ left, width, children }: { left: number; width: number; child
   return (
     <div
       role="status"
-      className="pointer-events-none absolute top-2 z-10 min-w-[9rem] rounded-lg border border-line bg-white px-3 py-2 text-xs shadow-lg"
+      className="pointer-events-none absolute top-2 z-10 min-w-[9rem] rounded-lg border border-line bg-card px-3 py-2 text-xs shadow-[var(--tv-shadow-raised)]"
       style={flip ? { right: Math.max(0, width - left + 10) } : { left: left + 10 }}
     >
       {children}
@@ -79,7 +79,7 @@ const TableToggle = ({ open, onToggle, controls }: { open: boolean; onToggle: ()
       aria-controls={controls}
       className={clsx(
         'inline-flex min-h-8 items-center gap-1.5 rounded-md border px-2.5 text-[11px] font-semibold transition',
-        open ? 'border-navy-900 bg-navy-900 text-white' : 'border-line bg-white text-muted hover:text-navy-900',
+        open ? 'border-line-strong bg-sunken text-ink shadow-[inset_0_0_0_1px_var(--color-line-strong)]' : 'border-line bg-card text-muted hover:text-ink',
       )}
     >
       <Table2 className="size-3.5" aria-hidden /> {t('admin.charts.table')}
@@ -168,8 +168,8 @@ export const LineChart = ({
               onClick={() => onToggle(s.key)}
               aria-pressed={!off}
               className={clsx(
-                'inline-flex min-h-8 items-center gap-1.5 rounded-md px-2 text-[11px] font-semibold transition hover:bg-surface',
-                off ? 'text-muted/70 line-through' : 'text-ink',
+                'inline-flex min-h-8 items-center gap-1.5 rounded-md px-2 text-[11px] font-semibold transition hover:bg-sunken',
+                off ? 'text-muted line-through' : 'text-ink',
               )}
             >
               <span className="h-0.5 w-4 shrink-0 rounded-full" style={{ background: off ? GRID : s.color }} aria-hidden />
@@ -182,7 +182,7 @@ export const LineChart = ({
         </span>
       </div>
 
-      <div ref={ref} role="group" className="relative w-full outline-none focus-visible:ring-2 focus-visible:ring-brand-500/40" tabIndex={0} onKeyDown={onKey} onBlur={() => setHover(null)} aria-label={ariaLabel}>
+      <div ref={ref} role="group" className="relative w-full outline-none focus-visible:ring-2 focus-visible:ring-focus/40" tabIndex={0} onKeyDown={onKey} onBlur={() => setHover(null)} aria-label={ariaLabel}>
         {width > 0 && n > 0 && visible.length > 0 ? (
           <svg
             width={width}
@@ -244,7 +244,7 @@ export const LineChart = ({
         )}
         {hp && hover !== null && (
           <Tooltip left={xAt(hover)} width={width}>
-            <p className="mb-1 font-semibold text-navy-900">{title(hp.x)}</p>
+            <p className="mb-1 font-semibold text-ink">{title(hp.x)}</p>
             <ul className="space-y-0.5">
               {visible.map((s) => (
                 <li key={s.key} className="flex items-center justify-between gap-3">
@@ -252,7 +252,7 @@ export const LineChart = ({
                     <span className="h-0.5 w-3 rounded-full" style={{ background: s.color }} aria-hidden />
                     {s.label}
                   </span>
-                  <span className="font-semibold text-navy-900 tabular-nums">{hp.values[s.key] ?? 0}</span>
+                  <span className="font-semibold text-ink tabular-nums">{hp.values[s.key] ?? 0}</span>
                 </li>
               ))}
             </ul>
@@ -263,7 +263,7 @@ export const LineChart = ({
       {table && (
         <div id={tableId} className="mt-3 max-h-72 overflow-auto rounded-lg border border-line">
           <table className="w-full text-left text-xs">
-            <thead className="sticky top-0 bg-surface/90 text-[10px] font-semibold tracking-wide text-muted uppercase">
+            <thead className="sticky top-0 bg-surface/90 text-xs font-medium text-muted">
               <tr>
                 <th className="px-3 py-2">{t('admin.charts.day')}</th>
                 {visible.map((s) => (
@@ -278,7 +278,7 @@ export const LineChart = ({
                 <tr key={p.x}>
                   <td className="px-3 py-1.5 whitespace-nowrap text-ink">{title(p.x)}</td>
                   {visible.map((s) => (
-                    <td key={s.key} className="px-3 py-1.5 text-right text-navy-900 tabular-nums">
+                    <td key={s.key} className="px-3 py-1.5 text-right text-ink tabular-nums">
                       {p.values[s.key] ?? 0}
                     </td>
                   ))}
@@ -351,7 +351,7 @@ export const BarChart = ({
 
   return (
     <div>
-      <div ref={ref} role="group" className="relative w-full outline-none focus-visible:ring-2 focus-visible:ring-brand-500/40" tabIndex={0} onKeyDown={onKey} onBlur={() => setHover(null)} aria-label={ariaLabel}>
+      <div ref={ref} role="group" className="relative w-full outline-none focus-visible:ring-2 focus-visible:ring-focus/40" tabIndex={0} onKeyDown={onKey} onBlur={() => setHover(null)} aria-label={ariaLabel}>
         {width > 0 && n > 0 ? (
           <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} role="img" aria-label={ariaLabel} className="block select-none" onPointerLeave={() => setHover(null)}>
             {[0, 1, 2, 3, 4].map((k) => {
@@ -400,7 +400,7 @@ export const BarChart = ({
         )}
         {hover !== null && bars[hover] && (
           <Tooltip left={pad.l + hover * slot + slot / 2} width={width}>
-            <p className="font-semibold text-navy-900 tabular-nums">{format(bars[hover].value)}</p>
+            <p className="font-semibold text-ink tabular-nums">{format(bars[hover].value)}</p>
             <p className="text-muted">{bars[hover].title ?? bars[hover].label}</p>
           </Tooltip>
         )}
@@ -411,7 +411,7 @@ export const BarChart = ({
       {table && (
         <div id={tableId} className="mt-2 max-h-60 overflow-auto rounded-lg border border-line">
           <table className="w-full text-left text-xs">
-            <thead className="sticky top-0 bg-surface/90 text-[10px] font-semibold tracking-wide text-muted uppercase">
+            <thead className="sticky top-0 bg-surface/90 text-xs font-medium text-muted">
               <tr>
                 <th className="px-3 py-2">{t('admin.charts.period')}</th>
                 <th className="px-3 py-2 text-right">{tableLabel ?? t('admin.charts.value')}</th>
@@ -421,7 +421,7 @@ export const BarChart = ({
               {bars.map((b, i) => (
                 <tr key={i}>
                   <td className="px-3 py-1.5 whitespace-nowrap text-ink">{b.title ?? b.label}</td>
-                  <td className="px-3 py-1.5 text-right text-navy-900 tabular-nums">{format(b.value)}</td>
+                  <td className="px-3 py-1.5 text-right text-ink tabular-nums">{format(b.value)}</td>
                 </tr>
               ))}
             </tbody>
@@ -448,10 +448,10 @@ export const BarList = ({
       {rows.map((r) => (
         <li key={r.key} className="grid grid-cols-[minmax(0,8rem)_minmax(0,1fr)_3rem] items-center gap-3 text-sm sm:grid-cols-[minmax(0,11rem)_minmax(0,1fr)_3.5rem]">
           <span className="truncate text-xs text-ink/80">{r.label}</span>
-          <span className="h-2.5 overflow-hidden rounded-full bg-surface" aria-hidden>
+          <span className="h-2.5 overflow-hidden rounded-full bg-sunken" aria-hidden>
             <span className={clsx('block h-full rounded-full transition-[width] duration-700 ease-out', r.tone)} style={{ width: `${r.value === 0 ? 0 : Math.max(3, (r.value / max) * 100)}%` }} />
           </span>
-          <span className="text-right text-xs font-semibold text-navy-900 tabular-nums">{format(r.value)}</span>
+          <span className="text-right text-xs font-semibold text-ink tabular-nums">{format(r.value)}</span>
         </li>
       ))}
     </ul>

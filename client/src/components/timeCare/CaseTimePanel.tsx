@@ -32,7 +32,7 @@ export default function CaseTimePanel({ caseId }: { caseId: string }) {
       actions={
         <div className="flex flex-wrap items-center gap-2">
           <TimerButton caseId={caseId} compact />
-          <button type="button" className="btn-ghost btn-sm" onClick={() => setEdit('new')}>
+          <button type="button" className="btn-secondary btn-sm" onClick={() => setEdit('new')}>
             <Plus className="size-4" /> {t('time.panel.manual')}
           </button>
         </div>
@@ -51,7 +51,7 @@ export default function CaseTimePanel({ caseId }: { caseId: string }) {
           {d.byActivity.length > 0 && (
             <ul className="flex flex-wrap gap-1.5">
               {d.byActivity.map((a) => (
-                <li key={a.activity} className="rounded-full bg-surface px-2 py-0.5 text-[11px] text-ink">
+                <li key={a.activity} className="rounded-full bg-sunken px-2 py-0.5 text-[11px] text-ink">
                   {t(`time.activity.${a.activity}`)} · <span className="tabular-nums">{fmtDuration(t, a.minutes)}</span>
                 </li>
               ))}
@@ -80,13 +80,13 @@ export default function CaseTimePanel({ caseId }: { caseId: string }) {
                   {e.note && <span className="text-xs text-muted"> · {e.note}</span>}
                 </span>
                 <span className="text-xs whitespace-nowrap tabular-nums">{e.running ? t('time.page.runningNow') : fmtDuration(t, e.minutes)}</span>
-                <button type="button" className="grid size-7 place-items-center rounded-md text-muted hover:bg-surface hover:text-ink" onClick={() => setEdit(e)} aria-label={t('time.page.edit')}>
+                <button type="button" className="grid size-7 place-items-center rounded-md text-muted hover:bg-sunken hover:text-ink" onClick={() => setEdit(e)} aria-label={t('time.page.edit')}>
                   <Pencil className="size-3.5" />
                 </button>
               </li>
             ))}
           </ul>
-          <Link to={`/admin/time?caseId=${caseId}`} className="inline-block text-xs font-semibold text-brand-600 hover:underline">
+          <Link to={`/admin/time?caseId=${caseId}`} className="inline-block text-xs font-semibold text-link hover:underline">
             {t('time.panel.openAll')}
           </Link>
         </div>

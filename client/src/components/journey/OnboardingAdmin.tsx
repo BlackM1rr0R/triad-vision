@@ -26,7 +26,7 @@ export const OnboardingAdminPanel = ({ caseId }: { caseId: string }) => {
     <Panel
       title={t('journey.admin.onboardingCase.title')}
       icon={Compass}
-      actions={progress && <span className="text-xs font-semibold text-navy-900">{t('journey.onboarding.progress', { done: progress.done, total: progress.total })}</span>}
+      actions={progress && <span className="text-xs font-semibold text-ink">{t('journey.onboarding.progress', { done: progress.done, total: progress.total })}</span>}
       bodyClassName="p-0"
     >
       {isLoading || !data ? (
@@ -35,7 +35,7 @@ export const OnboardingAdminPanel = ({ caseId }: { caseId: string }) => {
         <>
           {progress && (
             <div className="h-1.5 bg-line" role="progressbar" aria-label={t('ui.progress')} aria-valuenow={progress.percent} aria-valuemin={0} aria-valuemax={100}>
-              <div className="h-full bg-brand-600 transition-[width]" style={{ width: `${progress.percent}%` }} />
+              <div className="h-full bg-primary transition-[width]" style={{ width: `${progress.percent}%` }} />
             </div>
           )}
           {data.items.every((i) => !i.done) && <p className="px-5 pt-4 text-xs text-muted">{t('journey.admin.onboardingCase.empty')}</p>}
@@ -46,12 +46,12 @@ export const OnboardingAdminPanel = ({ caseId }: { caseId: string }) => {
                   <Check className="size-3" strokeWidth={3} />
                 </span>
                 <span className="min-w-0 flex-1">
-                  <span className={clsx('block truncate', i.done ? 'text-muted line-through' : 'font-medium text-navy-900')}>{tr(i.title)}</span>
+                  <span className={clsx('block truncate', i.done ? 'text-muted line-through' : 'font-medium text-ink')}>{tr(i.title)}</span>
                   <span className="block text-[11px] text-muted">
                     {i.done && i.doneAt ? t('journey.onboarding.doneAt', { date: date(i.doneAt) }) : i.dueAt ? t('journey.onboarding.due', { date: date(i.dueAt) }) : null}
                   </span>
                   {i.note && (
-                    <span className="mt-1 block rounded-md bg-surface px-2 py-1 text-xs whitespace-pre-line text-ink/80">
+                    <span className="mt-1 block rounded-md bg-sunken px-2 py-1 text-xs whitespace-pre-line text-ink/80">
                       <span className="font-semibold text-muted">{t('journey.admin.onboardingCase.note')}: </span>
                       {i.note}
                     </span>

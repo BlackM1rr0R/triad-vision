@@ -127,7 +127,7 @@ const Originals = () => {
         </div>
         {selectedRows.length > 1 && (
           <div className="flex flex-wrap items-center gap-2 text-sm">
-            <span className="badge bg-surface text-navy-900">{t('originals.page.count', { count: selectedRows.length })}</span>
+            <span className="badge bg-sunken text-ink">{t('originals.page.count', { count: selectedRows.length })}</span>
             <button type="button" className="btn-primary btn-sm" disabled={!bulkOk} onClick={() => setMoving(selectedRows)}>
               <ArrowRightLeft className="size-4" aria-hidden /> {t('originals.event.title')}
             </button>
@@ -164,19 +164,19 @@ const Originals = () => {
             </thead>
             <tbody className="divide-y divide-line">
               {rows.map((r) => (
-                <tr key={r.id} className={clsx('hover:bg-surface/40', r.overdue && 'bg-red-50/40')}>
+                <tr key={r.id} className={clsx('hover:bg-surface/40', r.overdue && 'bg-danger-bg/40')}>
                   <td className="px-3 py-2.5">
                     <input type="checkbox" checked={selected.has(r.id)} onChange={() => toggle(r.id)} aria-label={r.title} />
                   </td>
                   <td className="px-3 py-2.5">
-                    <Link to={`/admin/cases/${r.case.id}`} className="font-medium text-navy-900 hover:underline">
+                    <Link to={`/admin/cases/${r.case.id}`} className="font-medium text-ink hover:underline">
                       {r.case.client.name}
                     </Link>
-                    <span className="block font-mono text-[11px] text-muted">{r.case.number}</span>
+                    <span className="block code-id text-[11px] text-muted">{r.case.number}</span>
                     {r.case.staff && <span className="block text-[11px] text-muted">{r.case.staff.name}</span>}
                   </td>
                   <td className="px-3 py-2.5">
-                    <span className="block text-navy-900">{r.title}</span>
+                    <span className="block text-ink">{r.title}</span>
                     <span className="text-[11px] text-muted">{t(`originals.kinds.${r.kind}`)}</span>
                   </td>
                   <td className="px-3 py-2.5">
@@ -194,22 +194,22 @@ const Originals = () => {
                         <ArrowRightLeft className="size-4" aria-hidden />
                         <span className="hidden lg:inline">{t('originals.event.title')}</span>
                       </button>
-                      <button type="button" className="grid size-9 place-items-center rounded-lg text-muted hover:bg-surface hover:text-ink" title={t('originals.timelineOpen')} aria-label={t('originals.timelineOpen')} onClick={() => setParam('open', r.id)}>
+                      <button type="button" className="grid size-9 place-items-center rounded-lg text-muted hover:bg-sunken hover:text-ink" title={t('originals.timelineOpen')} aria-label={t('originals.timelineOpen')} onClick={() => setParam('open', r.id)}>
                         <History className="size-4" aria-hidden />
                       </button>
                       <LabelMenu caseId={r.case.id} compact />
                       {r.case.driveFolderId && (
-                        <Link to={driveFolderHref(r.case.driveFolderId)} className="grid size-9 place-items-center rounded-lg text-muted hover:bg-surface hover:text-ink" title="Drive" aria-label="Drive">
+                        <Link to={driveFolderHref(r.case.driveFolderId)} className="grid size-9 place-items-center rounded-lg text-muted hover:bg-sunken hover:text-ink" title="Drive" aria-label="Drive">
                           <FolderOpen className="size-4" aria-hidden />
                         </Link>
                       )}
-                      <Link to={`/admin/cases/${r.case.id}`} className="grid size-9 place-items-center rounded-lg text-brand-600 hover:bg-brand-50" title={t('originals.page.openCase')} aria-label={t('originals.page.openCase')}>
+                      <Link to={`/admin/cases/${r.case.id}`} className="grid size-9 place-items-center rounded-lg text-link hover:bg-primary/[0.06]" title={t('originals.page.openCase')} aria-label={t('originals.page.openCase')}>
                         <ExternalLink className="size-4" aria-hidden />
                       </Link>
                       {isAdmin && (
                         <button
                           type="button"
-                          className="grid size-9 place-items-center rounded-lg text-muted hover:bg-red-50 hover:text-danger"
+                          className="grid size-9 place-items-center rounded-lg text-muted hover:bg-danger-bg hover:text-danger-fg"
                           title={t('originals.delete')}
                           aria-label={t('originals.delete')}
                           onClick={() => window.confirm(t('originals.deleteConfirm')) && remove.mutate(r.id)}

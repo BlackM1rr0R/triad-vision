@@ -204,7 +204,7 @@ export const NewSignatureRequest = ({
       }
     >
       {prefill.isLoading ? (
-        <div className="grid min-h-40 place-items-center text-brand-600">
+        <div className="grid min-h-40 place-items-center text-link">
           <Spinner className="size-6" />
         </div>
       ) : (
@@ -216,9 +216,9 @@ export const NewSignatureRequest = ({
                 {t('esign.admin.detail.case')}
               </label>
               {caseId && p?.case ? (
-                <div className="flex items-center gap-2 rounded-lg border border-line bg-surface px-3 py-2 text-sm">
+                <div className="flex items-center gap-2 rounded-lg border border-line bg-sunken px-3 py-2 text-sm">
                   <span className="min-w-0 flex-1 truncate font-semibold">{p.case.number}</span>
-                  <button type="button" className="text-xs font-semibold text-brand-600 hover:underline" onClick={() => setCaseId(undefined)}>
+                  <button type="button" className="text-xs font-semibold text-link hover:underline" onClick={() => setCaseId(undefined)}>
                     {t('esign.admin.form.remove')}
                   </button>
                 </div>
@@ -229,10 +229,10 @@ export const NewSignatureRequest = ({
                     <input id={ids.caseSearch} className="input pl-9" value={caseQuery} onChange={(e) => setCaseQuery(e.target.value)} placeholder="TV-2026-…" />
                   </div>
                   {!!caseHits.data?.length && (
-                    <ul className="mt-1 max-h-48 overflow-y-auto rounded-lg border border-line bg-white">
+                    <ul className="mt-1 max-h-48 overflow-y-auto rounded-lg border border-line bg-card">
                       {caseHits.data.map((c) => (
                         <li key={c.id}>
-                          <button type="button" className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-surface" onClick={() => setCaseId(c.id)}>
+                          <button type="button" className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-sunken" onClick={() => setCaseId(c.id)}>
                             <span className="font-semibold">{c.number}</span>
                             <span className="truncate text-muted">
                               {c.client.firstName} {c.client.lastName}
@@ -249,9 +249,9 @@ export const NewSignatureRequest = ({
 
           {caseId && (
             <label htmlFor={ids.contract} className={clsx('flex items-start gap-3 rounded-xl border p-3.5 text-sm', canContract ? 'cursor-pointer border-line bg-surface/70' : 'border-dashed border-line opacity-70')}>
-              <input id={ids.contract} type="checkbox" className="mt-0.5 size-4 shrink-0 accent-brand-600" checked={isContract && canContract} disabled={!canContract} onChange={(e) => setIsContract(e.target.checked)} />
+              <input id={ids.contract} type="checkbox" className="mt-0.5 size-4 shrink-0 accent-primary" checked={isContract && canContract} disabled={!canContract} onChange={(e) => setIsContract(e.target.checked)} />
               <span>
-                <span className="font-semibold text-navy-900">{t('esign.admin.form.caseContract')}</span>
+                <span className="font-semibold text-ink">{t('esign.admin.form.caseContract')}</span>
                 <span className="mt-0.5 block text-xs text-muted">{canContract ? t('esign.admin.form.caseContractHint') : t('esign.admin.form.contractNotAllowed')}</span>
               </span>
             </label>
@@ -267,14 +267,14 @@ export const NewSignatureRequest = ({
           {/* PDF */}
           <fieldset>
             <legend className="label">{t('esign.admin.form.source')}</legend>
-            <div className="flex flex-wrap gap-1 rounded-xl border border-line bg-surface p-1">
+            <div className="flex flex-wrap gap-1 rounded-xl border border-line bg-sunken p-1">
               {(['upload', ...(caseId && pdfDocs.length ? ['caseDocument'] : []), 'drive'] as Source[]).map((s) => (
                 <button
                   key={s}
                   type="button"
                   onClick={() => setSource(s)}
                   aria-pressed={source === s}
-                  className={clsx('inline-flex min-h-9 flex-1 items-center justify-center gap-1.5 rounded-lg px-3 text-xs font-semibold transition', source === s ? 'bg-card text-navy-900 shadow' : 'text-muted hover:text-navy-900')}
+                  className={clsx('inline-flex min-h-9 flex-1 items-center justify-center gap-1.5 rounded-lg px-3 text-xs font-semibold transition', source === s ? 'bg-card text-ink shadow-[var(--tv-shadow-card)]' : 'text-muted hover:text-ink')}
                 >
                   {s === 'upload' ? <FileUp className="size-3.5" aria-hidden /> : s === 'drive' ? <FolderOpen className="size-3.5" aria-hidden /> : <Paperclip className="size-3.5" aria-hidden />}
                   {t(`esign.admin.form.${s}`)}
@@ -305,9 +305,9 @@ export const NewSignatureRequest = ({
               {source === 'drive' && (
                 <div>
                   {drivePick ? (
-                    <div className="flex items-center gap-2 rounded-lg border border-line bg-surface px-3 py-2 text-sm">
+                    <div className="flex items-center gap-2 rounded-lg border border-line bg-sunken px-3 py-2 text-sm">
                       <span className="min-w-0 flex-1 truncate font-semibold">{drivePick.name}</span>
-                      <button type="button" className="text-xs font-semibold text-brand-600 hover:underline" onClick={() => setDrivePick(null)}>
+                      <button type="button" className="text-xs font-semibold text-link hover:underline" onClick={() => setDrivePick(null)}>
                         {t('esign.admin.form.remove')}
                       </button>
                     </div>
@@ -315,7 +315,7 @@ export const NewSignatureRequest = ({
                     <>
                       <input id={ids.drive} className="input" value={driveQuery} onChange={(e) => setDriveQuery(e.target.value)} placeholder={t('esign.admin.form.driveSearch')} aria-label={t('esign.admin.form.driveSearch')} />
                       {driveQuery.trim().length >= 2 && (
-                        <ul className="mt-1 max-h-48 overflow-y-auto rounded-lg border border-line bg-white">
+                        <ul className="mt-1 max-h-48 overflow-y-auto rounded-lg border border-line bg-card">
                           {driveHits.isLoading ? (
                             <li className="px-3 py-2 text-sm text-muted">…</li>
                           ) : !driveHits.data?.length ? (
@@ -323,7 +323,7 @@ export const NewSignatureRequest = ({
                           ) : (
                             driveHits.data.map((d) => (
                               <li key={d.id}>
-                                <button type="button" className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-surface" onClick={() => setDrivePick(d)}>
+                                <button type="button" className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-sunken" onClick={() => setDrivePick(d)}>
                                   <span className="min-w-0 flex-1 truncate">{d.name}</span>
                                   {d.size != null && <span className="text-xs text-muted">{formatBytes(d.size)}</span>}
                                 </button>
@@ -352,7 +352,7 @@ export const NewSignatureRequest = ({
           {/* Parties */}
           <fieldset>
             <legend className="label">{t('esign.admin.form.signers')}</legend>
-            <div className="mb-2 flex flex-wrap gap-1 rounded-xl border border-line bg-surface p-1">
+            <div className="mb-2 flex flex-wrap gap-1 rounded-xl border border-line bg-sunken p-1">
               {(['SEQUENTIAL', 'PARALLEL'] as SignOrder[]).map((o) => (
                 <button
                   key={o}
@@ -360,7 +360,7 @@ export const NewSignatureRequest = ({
                   onClick={() => setOrder(o)}
                   aria-pressed={order === o}
                   title={t(o === 'SEQUENTIAL' ? 'esign.order.sequentialHint' : 'esign.order.parallelHint')}
-                  className={clsx('min-h-9 flex-1 rounded-lg px-3 text-xs font-semibold transition', order === o ? 'bg-card text-navy-900 shadow' : 'text-muted hover:text-navy-900')}
+                  className={clsx('min-h-9 flex-1 rounded-lg px-3 text-xs font-semibold transition', order === o ? 'bg-card text-ink shadow-[var(--tv-shadow-card)]' : 'text-muted hover:text-ink')}
                 >
                   {t(`esign.order.${o}`)}
                 </button>
@@ -371,10 +371,10 @@ export const NewSignatureRequest = ({
               {rows.map((r) => {
                 const pos = included.indexOf(r);
                 return (
-                  <li key={r.key} className={clsx('rounded-xl border p-3', r.include ? 'border-line bg-white' : 'border-dashed border-line opacity-60')}>
+                  <li key={r.key} className={clsx('rounded-xl border p-3', r.include ? 'border-line bg-card' : 'border-dashed border-line opacity-60')}>
                     <div className="flex flex-wrap items-center gap-2">
                       <label className="inline-flex min-h-9 items-center gap-2 text-xs font-semibold text-ink">
-                        <input type="checkbox" className="size-4 accent-brand-600" checked={r.include} onChange={(e) => update(r.key, { include: e.target.checked })} />
+                        <input type="checkbox" className="size-4 accent-primary" checked={r.include} onChange={(e) => update(r.key, { include: e.target.checked })} />
                         {order === 'SEQUENTIAL' && pos >= 0 ? `${pos + 1}.` : ''} {t('esign.admin.form.include')}
                       </label>
                       <select
@@ -405,7 +405,7 @@ export const NewSignatureRequest = ({
                       )}
                       <button
                         type="button"
-                        className="ml-auto grid size-9 place-items-center rounded-lg text-muted hover:bg-red-50 hover:text-danger"
+                        className="ml-auto grid size-9 place-items-center rounded-lg text-muted hover:bg-danger-bg hover:text-danger-fg"
                         onClick={() => setRows((rs) => rs.filter((x) => x.key !== r.key))}
                         aria-label={t('esign.admin.form.remove')}
                       >

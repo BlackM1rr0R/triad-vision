@@ -53,14 +53,14 @@ export const PortalLoginPanel = ({ partner, isAdmin }: { partner: Partner; isAdm
   return (
     <section className="rounded-xl border border-line bg-card p-4 sm:p-5">
       <h2 className="flex items-center gap-2 text-sm font-semibold text-ink">
-        <KeyRound className="size-4 text-brand-600" aria-hidden /> {t('refPartners.login.title')}
+        <KeyRound className="size-4 text-primary" aria-hidden /> {t('refPartners.login.title')}
       </h2>
       {login ? (
         <div className="mt-3 space-y-2 text-sm">
           <p className="flex flex-wrap items-center gap-2">
             <Mail className="size-3.5 text-muted" aria-hidden />
             <span className="font-medium text-ink">{login.email}</span>
-            {!login.isActive && <span className="badge bg-surface text-muted">{t('refPartners.login.inactive')}</span>}
+            {!login.isActive && <span className="badge bg-sunken text-muted">{t('refPartners.login.inactive')}</span>}
           </p>
           <p className="text-xs text-muted">{login.lastSeenAt ? t('refPartners.login.lastSeen', { date: fmtDateTime(login.lastSeenAt) }) : t('refPartners.login.never')}</p>
           {login.agentCode && <p className="text-xs text-muted">{t('refPartners.login.agent', { code: login.agentCode })}</p>}
@@ -69,7 +69,7 @@ export const PortalLoginPanel = ({ partner, isAdmin }: { partner: Partner; isAdm
               <button type="button" className="btn-secondary btn-sm" onClick={() => resend.mutate()} disabled={resend.isPending}>
                 {resend.isPending ? <Spinner className="size-3.5" /> : <Send className="size-3.5" />} {t('refPartners.login.resend')}
               </button>
-              <button type="button" className="btn-secondary btn-sm text-danger" onClick={() => setConfirmUnlink(true)}>
+              <button type="button" className="btn-secondary btn-sm text-danger-fg" onClick={() => setConfirmUnlink(true)}>
                 <Unlink className="size-3.5" /> {t('refPartners.login.unlink')}
               </button>
             </div>

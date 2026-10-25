@@ -32,7 +32,7 @@ registerCopy(pagesBilling);
 export const IconBtn = ({ label, icon: I, onClick, href, tone }: { label: string; icon: typeof Send; onClick?: () => void; href?: string; tone?: 'primary' | 'good' | 'danger' }) => {
   const cls = clsx(
     'grid size-9 place-items-center rounded-lg border transition',
-    tone === 'primary' ? 'border-brand-600 bg-brand-600 text-white hover:bg-brand-700' : tone === 'good' ? 'border-line text-success-fg hover:bg-success-bg' : tone === 'danger' ? 'border-line text-danger hover:bg-danger-bg' : 'border-line text-navy-900 hover:bg-surface',
+    tone === 'primary' ? 'border-primary bg-primary text-primary-contrast hover:bg-primary' : tone === 'good' ? 'border-line text-success-fg hover:bg-success-bg' : tone === 'danger' ? 'border-line text-danger-fg hover:bg-danger-bg' : 'border-line text-ink hover:bg-sunken',
   );
   return href ? (
     <a href={href} className={cls} title={label} aria-label={label} download>
@@ -125,9 +125,9 @@ export default function CaseBillingPanel({ caseId, isAdmin }: { caseId: string; 
                 ['overdue', d.totals.overdueCents, d.totals.overdueCents ? 'text-danger-fg' : ''],
               ] as const
             ).map(([k, v, tone]) => (
-              <div key={k} className="rounded-xl bg-surface px-3 py-2.5">
+              <div key={k} className="rounded-xl bg-sunken px-3 py-2.5">
                 <dt className="text-xs text-muted">{t(`bill.admin.panel.${k}`)}</dt>
-                <dd className={clsx('font-display text-lg font-bold text-navy-900 tabular-nums', tone)}>{fmtEur(v, d.totals.currency)}</dd>
+                <dd className={clsx('font-display text-lg font-bold text-ink tabular-nums', tone)}>{fmtEur(v, d.totals.currency)}</dd>
               </div>
             ))}
           </dl>
@@ -140,7 +140,7 @@ export default function CaseBillingPanel({ caseId, isAdmin }: { caseId: string; 
           )}
 
           <section>
-            <h3 className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-navy-900">
+            <h3 className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-ink">
               <Receipt className="size-4" aria-hidden /> {t('bill.admin.panel.invoices')}
             </h3>
             {d.invoices.length === 0 ? (
@@ -150,16 +150,16 @@ export default function CaseBillingPanel({ caseId, isAdmin }: { caseId: string; 
                 {d.invoices.map((inv) => (
                   <li key={inv.id} className="flex flex-wrap items-center gap-x-3 gap-y-2 px-3 py-2.5">
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm font-semibold text-navy-900 tabular-nums">
+                      <p className="text-sm font-semibold text-ink tabular-nums">
                         {inv.number ?? <span className="text-muted italic">{t('bill.admin.draftNo')}</span>}
                         {!inv.caseId && <span className="ml-2 text-xs font-normal text-muted">({t('bill.admin.panel.withoutCase')})</span>}
                       </p>
                       <p className="text-xs text-muted">
-                        {fmtDate(inv.issueDate)} → <span className={clsx(inv.status === 'OVERDUE' && 'font-semibold text-danger')}>{fmtDate(inv.dueDate)}</span>
+                        {fmtDate(inv.issueDate)} → <span className={clsx(inv.status === 'OVERDUE' && 'font-semibold text-danger-fg')}>{fmtDate(inv.dueDate)}</span>
                         {inv.paidCents > 0 && inv.status !== 'PAID' && ` · ${t('bill.admin.cols.paid')} ${fmtEur(inv.paidCents, inv.currency)}`}
                       </p>
                     </div>
-                    <span className="text-sm font-semibold text-navy-900 tabular-nums">{fmtEur(inv.grossCents, inv.currency)}</span>
+                    <span className="text-sm font-semibold text-ink tabular-nums">{fmtEur(inv.grossCents, inv.currency)}</span>
                     <span className={clsx('badge', STATUS_BADGE[inv.status])}>{t(`bill.status.${inv.status}`)}</span>
                     <InvoiceRowActions inv={inv} onEdit={setEditing} onAction={(kind) => setAction({ kind, invoice: inv, email: d.client.email })} />
                   </li>
@@ -169,7 +169,7 @@ export default function CaseBillingPanel({ caseId, isAdmin }: { caseId: string; 
           </section>
 
           <section>
-            <h3 className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-navy-900">
+            <h3 className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-ink">
               <ListOrdered className="size-4" aria-hidden /> {t('bill.admin.panel.plans')}
             </h3>
             {d.plans.length === 0 ? (
@@ -179,16 +179,16 @@ export default function CaseBillingPanel({ caseId, isAdmin }: { caseId: string; 
                 {d.plans.map((p) => (
                   <div key={p.id} className="rounded-xl border border-line">
                     <div className="flex flex-wrap items-center gap-2 border-b border-line px-3 py-2">
-                      <p className="min-w-0 flex-1 text-sm font-semibold text-navy-900">{p.title}</p>
+                      <p className="min-w-0 flex-1 text-sm font-semibold text-ink">{p.title}</p>
                       <span className="text-sm tabular-nums">{fmtEur(p.totalCents, p.currency)}</span>
                       <span className="badge">{t(`bill.planStatus.${p.status}`)}</span>
                       {p.status !== 'CANCELLED' && (
-                        <button type="button" className="btn-ghost btn-sm" onClick={() => setInst({ planId: p.id, installment: null })}>
+                        <button type="button" className="btn-secondary btn-sm" onClick={() => setInst({ planId: p.id, installment: null })}>
                           <Plus className="size-3.5" aria-hidden /> {t('bill.admin.actions.addInst')}
                         </button>
                       )}
                       {isAdmin && p.status === 'ACTIVE' && (
-                        <button type="button" className="btn-ghost btn-sm text-danger" onClick={() => setConfirm({ kind: 'cancelPlan', id: p.id })}>
+                        <button type="button" className="btn-secondary btn-sm text-danger-fg" onClick={() => setConfirm({ kind: 'cancelPlan', id: p.id })}>
                           {t('bill.admin.actions.cancelPlan')}
                         </button>
                       )}
@@ -223,7 +223,7 @@ export default function CaseBillingPanel({ caseId, isAdmin }: { caseId: string; 
           </section>
 
           <section>
-            <h3 className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-navy-900">
+            <h3 className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-ink">
               <CheckCircle2 className="size-4" aria-hidden /> {t('bill.admin.panel.payments')}
             </h3>
             {d.payments.length === 0 ? (
@@ -251,7 +251,7 @@ export default function CaseBillingPanel({ caseId, isAdmin }: { caseId: string; 
           </section>
 
           {isAdmin && (
-            <Link to="/admin/client-invoices" className="inline-flex text-sm font-semibold text-brand-600 hover:underline">
+            <Link to="/admin/client-invoices" className="inline-flex text-sm font-semibold text-link hover:underline">
               {t('bill.admin.panel.allInvoices')} →
             </Link>
           )}

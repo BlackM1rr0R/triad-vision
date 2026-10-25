@@ -5,6 +5,7 @@ import { ArrowLeft, Calendar, Clock, Link2, PenLine, RefreshCw } from 'lucide-re
 import { toast } from 'sonner';
 import { PageHero, PageHeroSkeleton } from '@/components/layout/PageHero';
 import { Reveal } from '@/components/motion';
+import { buttonClass } from '@/components/ui/Button';
 import { PostCard } from '@/components/cards';
 import { useSiteContent } from '@/lib/content';
 import { api } from '@/lib/api';
@@ -54,7 +55,7 @@ export default function NewsDetail() {
   return (
     <>
       <PageHero title={tr(data.title)} image={data.cover.replace('w=1200', 'w=2000')} crumb={{ to: '/news', label: t('nav.news') }}>
-        <div className="mt-6 flex flex-wrap gap-4 text-sm text-white/70">
+        <div className="mt-6 flex flex-wrap gap-x-5 gap-y-2 text-sm text-muted">
           <span className="flex items-center gap-1.5"><Calendar className="size-4" /> {date(data.publishedAt, { dateStyle: 'long' })}</span>
           <span className="flex items-center gap-1.5"><Clock className="size-4" /> {minutes} {t('common.minRead')}</span>
           {showUpdated && (
@@ -68,24 +69,24 @@ export default function NewsDetail() {
       <article className="section">
         <div className="container-x max-w-3xl">
           <Reveal>
-            <p className="mb-8 text-xl leading-relaxed font-medium text-navy-900">{tr(data.excerpt)}</p>
-            <div className="prose-tv text-lg">
+            <p className="mb-8 max-w-[65ch] text-xl leading-relaxed font-medium text-ink">{tr(data.excerpt)}</p>
+            <div className="prose-tv max-w-[70ch] text-lg">
               {body.split(/\n{2,}/).map((p) => (
                 <p key={p.slice(0, 24)}>{p}</p>
               ))}
             </div>
             <div className="mt-10 flex flex-col gap-4 border-t border-line pt-6 sm:flex-row sm:items-center sm:justify-between">
-              <Link to="/news" className="btn-ghost">
+              <Link to="/news" className={buttonClass({ variant: 'outline' })}>
                 <ArrowLeft className="size-4" /> {t('common.back')}
               </Link>
               <div className="flex flex-wrap items-center gap-2">
                 <span className="text-sm font-semibold text-muted">{t('article.share')}:</span>
                 {share.map((s) => (
-                  <a key={s.name} href={s.href} target="_blank" rel="noreferrer" className="btn-ghost btn-sm h-10">
+                  <a key={s.name} href={s.href} target="_blank" rel="noreferrer" className={buttonClass({ variant: 'secondary', size: 'sm', className: 'h-11' })}>
                     {s.name}
                   </a>
                 ))}
-                <button type="button" onClick={copy} className="btn-ghost btn-sm h-10" aria-label={t('article.copy')}>
+                <button type="button" onClick={copy} className={buttonClass({ variant: 'secondary', size: 'sm', className: 'h-11' })} aria-label={t('article.copy')}>
                   <Link2 className="size-4" /> {t('article.copy')}
                 </button>
               </div>
@@ -94,9 +95,9 @@ export default function NewsDetail() {
         </div>
       </article>
       {related.length > 0 && (
-        <section className="section bg-surface">
+        <section className="section bg-sunken">
           <div className="container-x">
-            <h2 className="h-section section-head text-navy-900">{t('article.related')}</h2>
+            <h2 className="h-section section-head text-ink">{t('article.related')}</h2>
             <div className="mobile-rail md:grid-cols-2 md:gap-5 lg:grid-cols-3 lg:gap-6">
               {related.map((p) => (
                 <PostCard key={p.id} post={p} />

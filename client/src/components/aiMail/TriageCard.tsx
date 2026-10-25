@@ -23,7 +23,7 @@ const ActionBtn = ({ onClick, children, disabled, title, primary, busy }: { onCl
       disabled={disabled || busy}
       className={clsx(
         'inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-50',
-        primary ? 'border-brand-600 bg-brand-600 text-white hover:bg-brand-700' : 'border-line bg-card text-ink hover:border-brand-400 hover:bg-brand-50',
+        primary ? 'border-line-strong bg-sunken text-ink shadow-[inset_0_0_0_1px_var(--color-line-strong)]' : 'border-line bg-card text-ink hover:border-line-strong hover:bg-primary/[0.06]',
       )}
     >
       {busy && <Spinner className="size-3" />}
@@ -118,9 +118,9 @@ export const TriageCard = ({ message, onUseDraft, onSpam }: { message: MessageDe
               : t('aiMail.card.notAuto');
     return shell(
       <div className="flex flex-wrap items-center gap-2">
-        <Sparkles className="size-4 shrink-0 text-brand-600" aria-hidden />
+        <Sparkles className="size-4 shrink-0 text-link" aria-hidden />
         <span className="min-w-0 flex-1 text-xs text-muted">{line}</span>
-        {triage?.status === 'PENDING' ? <Spinner className="size-4 text-brand-600" /> : analyzeBtn(false)}
+        {triage?.status === 'PENDING' ? <Spinner className="size-4 text-link" /> : analyzeBtn(false)}
       </div>,
     );
   }
@@ -134,19 +134,19 @@ export const TriageCard = ({ message, onUseDraft, onSpam }: { message: MessageDe
   return shell(
     <>
       <div className="flex flex-wrap items-center gap-1.5">
-        <Sparkles className="size-4 shrink-0 text-brand-600" aria-hidden />
+        <Sparkles className="size-4 shrink-0 text-link" aria-hidden />
         <h2 className="text-sm font-bold text-ink">{t('aiMail.card.title')}</h2>
         {triage.category && <CategoryChip category={triage.category} />}
         {triage.urgency && triage.urgency !== 'NORMAL' && <UrgencyChip urgency={triage.urgency} />}
-        {triage.status === 'DISMISSED' && <span className="rounded-md bg-slate-100 px-1.5 py-0.5 text-[0.65rem] font-semibold text-slate-600">{t('aiMail.card.dismissed')}</span>}
-        {triage.status === 'ACTIONED' && <span className="rounded-md bg-emerald-100 px-1.5 py-0.5 text-[0.65rem] font-semibold text-emerald-700">{t('aiMail.card.actioned')}</span>}
+        {triage.status === 'DISMISSED' && <span className="rounded-md bg-sunken px-1.5 py-0.5 text-[0.65rem] font-semibold text-muted">{t('aiMail.card.dismissed')}</span>}
+        {triage.status === 'ACTIONED' && <span className="rounded-md bg-success-bg px-1.5 py-0.5 text-[0.65rem] font-semibold text-success-fg">{t('aiMail.card.actioned')}</span>}
         <span className="flex-1" />
         <span title={unavailable ?? t('aiMail.card.again')} className="inline-flex">
           <button
             type="button"
             onClick={() => run('analyze', { refresh: true })}
             disabled={!!unavailable || busy('analyze')}
-            className="grid size-7 place-items-center rounded-lg text-muted hover:bg-surface hover:text-ink disabled:cursor-not-allowed disabled:opacity-50"
+            className="grid size-7 place-items-center rounded-lg text-muted hover:bg-sunken hover:text-ink disabled:cursor-not-allowed disabled:opacity-50"
             aria-label={t('aiMail.card.again')}
           >
             {busy('analyze') ? <Spinner className="size-3.5" /> : <RefreshCw className="size-3.5" />}
@@ -168,7 +168,7 @@ export const TriageCard = ({ message, onUseDraft, onSpam }: { message: MessageDe
               {triage.existingClient.companyName && <span className="text-muted">({triage.existingClient.companyName})</span>}
               <span className="text-muted">· {t(`aiMail.card.matchedBy.${triage.existingClient.matchedBy}`)}</span>
               {triage.existingClient.caseId && (
-                <Link to={`/admin/cases/${triage.existingClient.caseId}`} className="inline-flex items-center gap-1 rounded-md bg-brand-100 px-1.5 py-0.5 text-[0.65rem] font-semibold text-brand-700 hover:underline">
+                <Link to={`/admin/cases/${triage.existingClient.caseId}`} className="inline-flex items-center gap-1 rounded-md bg-primary/10 px-1.5 py-0.5 text-[0.65rem] font-semibold text-link hover:underline">
                   <Briefcase className="size-3" aria-hidden /> {triage.existingClient.caseNumber} · {t('aiMail.card.openCase')}
                 </Link>
               )}
@@ -179,18 +179,18 @@ export const TriageCard = ({ message, onUseDraft, onSpam }: { message: MessageDe
 
       <div className="mt-2 flex flex-wrap items-center gap-1.5 text-xs">
         {triage.assignedTo ? (
-          <span className="inline-flex items-center gap-1 rounded-md bg-emerald-100 px-1.5 py-0.5 font-semibold text-emerald-700">
+          <span className="inline-flex items-center gap-1 rounded-md bg-success-bg px-1.5 py-0.5 font-semibold text-success-fg">
             <Users className="size-3" aria-hidden /> {t('aiMail.card.assignedTo', { name: triage.assignedTo.name })}
           </span>
         ) : (
           triage.suggestedAssignee && (
-            <span className="inline-flex items-center gap-1 rounded-md bg-surface px-1.5 py-0.5 font-semibold text-muted">
+            <span className="inline-flex items-center gap-1 rounded-md bg-sunken px-1.5 py-0.5 font-semibold text-muted">
               <Users className="size-3" aria-hidden /> {t('aiMail.card.suggested', { name: triage.suggestedAssignee.name })}
             </span>
           )
         )}
         {triage.lead && (
-          <Link to="/admin/inquiries" className="inline-flex items-center gap-1 rounded-md bg-violet-100 px-1.5 py-0.5 font-semibold text-violet-700 hover:underline">
+          <Link to="/admin/inquiries" className="inline-flex items-center gap-1 rounded-md bg-accent-bg px-1.5 py-0.5 font-semibold text-accent-fg hover:underline">
             <Inbox className="size-3" aria-hidden /> {t('aiMail.card.leadCreated')} · {t('aiMail.card.openLead')}
           </Link>
         )}
@@ -198,12 +198,12 @@ export const TriageCard = ({ message, onUseDraft, onSpam }: { message: MessageDe
 
       {triage.replyDraft && (
         <div className="mt-2">
-          <button type="button" onClick={() => setDraftOpen((o) => !o)} className="inline-flex items-center gap-1 text-xs font-semibold text-brand-600 hover:underline" aria-expanded={draftOpen}>
+          <button type="button" onClick={() => setDraftOpen((o) => !o)} className="inline-flex items-center gap-1 text-xs font-semibold text-link hover:underline" aria-expanded={draftOpen}>
             {draftOpen ? <ChevronUp className="size-3.5" aria-hidden /> : <ChevronDown className="size-3.5" aria-hidden />}
             {t('aiMail.card.draft', { lang: LANG_LABEL[triage.replyDraft.language] ?? triage.replyDraft.language.toUpperCase() })}
           </button>
           {draftOpen && (
-            <div className="mt-1.5 rounded-lg border border-line bg-surface p-2.5 text-xs text-ink">
+            <div className="mt-1.5 rounded-lg border border-line bg-sunken p-2.5 text-xs text-ink">
               <p className="font-semibold">{triage.replyDraft.subject}</p>
               <p className="mt-1 whitespace-pre-wrap">{triage.replyDraft.body}</p>
             </div>
@@ -255,7 +255,7 @@ export const TriageCard = ({ message, onUseDraft, onSpam }: { message: MessageDe
                       toast.success(mode === 'task' && r.taskNumber ? t('aiMail.toast.task', { number: String(r.taskNumber).padStart(4, '0') }) : t('aiMail.toast.notified'));
                     })
                   }
-                  className="flex-1 rounded-lg border border-line px-2 py-1.5 text-xs font-semibold text-ink hover:border-brand-400 hover:bg-brand-50 disabled:opacity-50"
+                  className="flex-1 rounded-lg border border-line px-2 py-1.5 text-xs font-semibold text-ink hover:border-line-strong hover:bg-primary/[0.06] disabled:opacity-50"
                 >
                   {mode === 'task' ? t('aiMail.card.asTask') : t('aiMail.card.asNotification')}
                 </button>
@@ -299,6 +299,6 @@ export const TriageCard = ({ message, onUseDraft, onSpam }: { message: MessageDe
       </div>
       <p className="mt-2 text-[0.68rem] text-muted">{t('aiMail.card.note')}</p>
     </>,
-    triage.urgency === 'URGENT' && triage.status === 'NEW' ? 'border-red-300' : 'border-line',
+    triage.urgency === 'URGENT' && triage.status === 'NEW' ? 'border-danger-border' : 'border-line',
   );
 };

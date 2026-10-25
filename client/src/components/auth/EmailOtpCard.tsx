@@ -162,10 +162,10 @@ export const EmailOtpCard = ({ className }: { className?: string }) => {
 
   const actions = (submitLabel: string, danger = false) => (
     <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-      <button type="button" className="btn min-h-11 border border-line text-navy-900 hover:bg-surface" onClick={reset} disabled={busy}>
+      <button type="button" className="btn-secondary min-h-11" onClick={reset} disabled={busy}>
         {k('cancel')}
       </button>
-      <button type="submit" className={clsx('min-h-11', danger ? 'btn border border-red-200 text-danger hover:bg-red-50' : 'btn-primary')} disabled={busy}>
+      <button type="submit" className={clsx('min-h-11', danger ? 'btn border border-danger-border text-danger-fg hover:bg-danger-bg' : 'btn-primary')} disabled={busy}>
         {busy && <Spinner className="size-4" />} {submitLabel}
       </button>
     </div>
@@ -174,8 +174,8 @@ export const EmailOtpCard = ({ className }: { className?: string }) => {
   return (
     <section className={clsx('card card-pad', className)} aria-labelledby={`${uid}-title`}>
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <h2 id={`${uid}-title`} className="flex items-center gap-2.5 text-lg font-bold text-navy-900">
-          <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-brand-50 text-brand-600">
+        <h2 id={`${uid}-title`} className="flex items-center gap-2.5 type-card-title text-ink">
+          <span className="grid size-9 shrink-0 place-items-center rounded-lg chip-sky">
             <MailCheck className="size-4.5" aria-hidden />
           </span>
           {k('title')}
@@ -191,7 +191,7 @@ export const EmailOtpCard = ({ className }: { className?: string }) => {
       <div className="mt-5">
         {step === 'idle' &&
           (on ? (
-            <button type="button" className="btn min-h-11 border border-line text-navy-900 hover:bg-surface" onClick={() => setStep('disable')}>
+            <button type="button" className="btn-secondary min-h-11" onClick={() => setStep('disable')}>
               {k('disable')}
             </button>
           ) : verified ? (
@@ -237,7 +237,7 @@ export const EmailOtpCard = ({ className }: { className?: string }) => {
             </div>
             <button
               type="button"
-              className="inline-flex items-center gap-1.5 text-sm font-semibold text-brand-600 hover:underline disabled:opacity-60"
+              className="inline-flex items-center gap-1.5 text-sm font-semibold text-link hover:underline disabled:opacity-60"
               disabled={busy || resendIn > 0 || !password}
               onClick={() => void start()}
             >

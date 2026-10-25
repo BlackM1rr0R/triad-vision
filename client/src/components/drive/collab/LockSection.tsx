@@ -30,16 +30,16 @@ export const LockSection = ({ item, isSuper }: { item: DriveItem; isSuper: boole
   const lock = q.data;
   if (!lock || lock.stale) return null;
   return (
-    <div className="flex items-start gap-2.5 border-b border-line bg-amber-50 px-4 py-2.5 text-xs dark:bg-amber-500/10">
-      <Lock className="mt-0.5 size-4 shrink-0 text-amber-600" aria-hidden />
+    <div className="flex items-start gap-2.5 border-b border-line bg-warning-bg px-4 py-2.5 text-xs dark:bg-amber-500/10">
+      <Lock className="mt-0.5 size-4 shrink-0 text-warning-fg" aria-hidden />
       <div className="min-w-0 flex-1">
-        <p className="font-semibold text-amber-900 dark:text-amber-200">{lock.mine ? t('driveCollab.lock.mine') : t('driveCollab.lock.editing', { name: lock.lockedBy.name })}</p>
-        <p className="text-amber-800/80 dark:text-amber-200/70" title={fmtDateTime(lock.lockedAt)}>
+        <p className="font-semibold text-warning-fg dark:text-amber-200">{lock.mine ? t('driveCollab.lock.mine') : t('driveCollab.lock.editing', { name: lock.lockedBy.name })}</p>
+        <p className="text-warning-fg/80 dark:text-amber-200/70" title={fmtDateTime(lock.lockedAt)}>
           {t('driveCollab.lock.since', { time: timeOf(lock.lockedAt) })}
         </p>
       </div>
       {isSuper && !lock.mine && (
-        <button type="button" onClick={() => force.mutate()} disabled={force.isPending} className="btn-white btn-sm shrink-0 border border-amber-300">
+        <button type="button" onClick={() => force.mutate()} disabled={force.isPending} className="btn-secondary btn-sm shrink-0 border border-warning-border">
           <LockOpen className="size-3.5" /> {t('driveCollab.lock.takeOver')}
         </button>
       )}

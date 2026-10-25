@@ -42,7 +42,7 @@ export const GuideBody = ({ html, onClick, className }: { html: string; onClick?
         s.kind === 'html' ? (
           <div key={i} className={clsx('prose-guide', i > 0 && 'mt-4')} dangerouslySetInnerHTML={{ __html: s.html }} />
         ) : (
-          <Suspense key={i} fallback={<div className="prose-guide card card-pad my-10 min-h-80 border-brand-100" dangerouslySetInnerHTML={{ __html: s.html }} />}>
+          <Suspense key={i} fallback={<div className="prose-guide card card-pad my-10 min-h-80 rounded-3xl bg-sunken" dangerouslySetInnerHTML={{ __html: s.html }} />}>
             <GuideCalculator type={s.type} />
           </Suspense>
         ),

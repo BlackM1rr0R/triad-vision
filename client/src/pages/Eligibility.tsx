@@ -161,19 +161,18 @@ export default function Eligibility() {
   return (
     <>
       {/* ── Hero band ── */}
-      <section className="relative isolate overflow-hidden bg-navy-950 pt-28 sm:pt-36 lg:pt-44 pb-12 text-white">
-        <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_85%_10%,rgba(47,123,255,0.35),transparent_50%),radial-gradient(circle_at_10%_90%,rgba(0,181,226,0.18),transparent_45%)]" />
+      <section className="hero-warm border-b border-line pt-28 pb-12 sm:pt-36 lg:pt-44">
         <div className="container-x pb-12 text-center">
           <Reveal y={16}>
-            <span className="inline-flex items-center gap-2 text-xs font-bold tracking-[0.18em] text-brand-400 uppercase">
+            <span className="eyebrow">
               <Trophy className="size-4" />
               {t('quiz.eyebrow')}
             </span>
-            <h1 className="mx-auto mt-3 max-w-3xl font-display text-3xl leading-tight font-extrabold break-words sm:text-4xl lg:text-5xl">
+            <h1 className="mx-auto mt-3 max-w-3xl font-display text-3xl leading-tight font-semibold tracking-[-0.02em] text-balance break-words text-ink sm:text-4xl lg:text-5xl">
               {t('quiz.title')}
             </h1>
-            <p className="mx-auto mt-4 max-w-2xl leading-relaxed text-white/70">{t('quiz.subtitle')}</p>
-            <p className="mt-4 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-xs font-medium text-white/75">
+            <p className="mx-auto mt-4 max-w-2xl leading-relaxed text-muted sm:text-lg">{t('quiz.subtitle')}</p>
+            <p className="mt-5 inline-flex items-center gap-2 rounded-full border border-line bg-card px-3.5 py-1.5 text-xs font-medium text-ink">
               <Clock className="size-3.5" />
               {t('quiz.duration')}
             </p>
@@ -189,12 +188,12 @@ export default function Eligibility() {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, ease: EASE }}
-            className={`relative mx-auto -mt-12 scroll-mt-24 overflow-hidden rounded-3xl border border-line bg-white shadow-[0_30px_80px_-30px_rgba(11,31,68,0.45)] ${finished ? 'max-w-6xl' : 'max-w-4xl'}`}
+            className={`relative mx-auto -mt-12 scroll-mt-24 overflow-hidden rounded-3xl border border-line bg-card shadow-[var(--tv-shadow-raised)] ${finished ? 'max-w-6xl' : 'max-w-4xl'}`}
           >
             {/* Progress */}
-            <div className="h-1.5 bg-surface">
+            <div className="h-1.5 bg-sunken">
               <motion.div
-                className="h-full bg-gradient-to-r from-brand-600 via-brand-500 to-az-blue"
+                className="h-full bg-primary"
                 initial={false}
                 animate={{ width: `${progress}%` }}
                 transition={{ duration: 0.6, ease: EASE }}
@@ -208,7 +207,7 @@ export default function Eligibility() {
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: 'auto' }}
                     exit={{ opacity: 0, height: 0 }}
-                    className="mb-4 flex items-center gap-2 overflow-hidden text-xs font-medium text-brand-700"
+                    className="mb-4 flex items-center gap-2 overflow-hidden text-xs font-medium text-muted"
                   >
                     <History className="size-4 shrink-0" />
                     {t('quiz.restored')}
@@ -217,9 +216,9 @@ export default function Eligibility() {
               </AnimatePresence>
 
               {isLoading || !data ? (
-                <div className="grid min-h-[320px] place-items-center text-brand-600">
+                <div className="grid min-h-[320px] place-items-center text-primary">
                   <span className="flex flex-col items-center gap-3 text-sm text-muted">
-                    <Spinner className="size-8 border-[3px] text-brand-600" />
+                    <Spinner className="size-8 border-[3px] text-primary" />
                     {t('quiz.loading')}
                   </span>
                 </div>
@@ -247,10 +246,10 @@ export default function Eligibility() {
                       exit="exit"
                       transition={{ duration: 0.4, ease: EASE }}
                     >
-                      <p className="text-xs font-bold tracking-[0.18em] text-brand-600 uppercase">
+                      <p className="type-overline text-highlight-fg">
                         {t('quiz.stepOf', { current: q.step + 1, total })}
                       </p>
-                      <h2 id="quiz-question" className="mt-2 font-display text-2xl leading-tight font-extrabold break-words text-navy-900 sm:text-3xl">
+                      <h2 id="quiz-question" className="mt-2 font-display text-2xl leading-tight font-semibold break-words text-ink sm:text-3xl">
                         {t(`quiz.questions.${q.current}.title`)}
                       </h2>
                       <p className="mt-2 text-muted">{t(`quiz.questions.${q.current}.hint`)}</p>
@@ -274,7 +273,7 @@ export default function Eligibility() {
                           type="button"
                           onClick={q.goBack}
                           disabled={q.step === 0}
-                          className="btn border border-line text-navy-900 hover:bg-surface disabled:pointer-events-none disabled:opacity-40"
+                          className="btn-secondary disabled:pointer-events-none disabled:opacity-40"
                         >
                           <ArrowLeft className="size-4" />
                           {t('quiz.back')}

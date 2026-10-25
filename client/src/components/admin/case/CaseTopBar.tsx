@@ -98,12 +98,12 @@ export const CaseTopBar = ({
     <>
     <header
       id="case-topbar"
-      className="sticky top-16 z-30 -mx-4 -mt-4 border-b border-line bg-card px-4 py-2.5 shadow-[0_1px_2px_rgba(11,31,68,0.04)] sm:-mx-6 sm:-mt-6 sm:px-6 lg:-mx-8 lg:-mt-8 lg:px-8"
+      className="sticky top-16 z-30 -mx-4 -mt-4 border-b border-line bg-card px-4 py-2.5 shadow-[var(--tv-shadow-card)] sm:-mx-6 sm:-mt-6 sm:px-6 lg:-mx-8 lg:-mt-8 lg:px-8"
     >
       <div className="flex items-start gap-2 sm:gap-3">
         <Link
           to="/admin/cases"
-          className="-ml-1.5 grid size-9 shrink-0 place-items-center rounded-lg text-muted transition hover:bg-surface hover:text-ink"
+          className="-ml-1.5 grid size-9 shrink-0 place-items-center rounded-lg text-muted transition hover:bg-sunken hover:text-ink"
           aria-label={t('caseLayout.back')}
           title={t('caseLayout.back')}
         >

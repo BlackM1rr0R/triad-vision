@@ -469,7 +469,7 @@ export default function CommandPalette({ open, onClose }: { open: boolean; onClo
                         setRecent([]);
                         inputRef.current?.focus();
                       }}
-                      className="rounded px-1.5 py-0.5 text-[11px] font-semibold text-brand-600 hover:bg-surface"
+                      className="rounded px-1.5 py-0.5 text-[11px] font-semibold text-link hover:bg-sunken"
                     >
                       {t('cmd.clearRecent')}
                     </button>
@@ -483,9 +483,9 @@ export default function CommandPalette({ open, onClose }: { open: boolean; onClo
                 onMouseMove={() => !isActive && setActive(i)}
                 onMouseDown={(ev) => ev.preventDefault()}
                 onClick={(ev) => run(e, ev.ctrlKey || ev.metaKey)}
-                className={clsx('group/opt flex min-h-11 cursor-pointer items-center gap-3 rounded-lg px-2.5 py-2 text-sm', isActive ? 'bg-brand-50 text-ink dark:bg-white/10' : 'text-ink')}
+                className={clsx('group/opt flex min-h-10 sm:min-h-9 cursor-pointer items-center gap-3 rounded-lg px-2.5 py-2 text-sm', isActive ? 'bg-primary/[0.06] text-ink dark:bg-white/10' : 'text-ink')}
               >
-                <span className={clsx('grid size-8 shrink-0 place-items-center rounded-md border', isActive ? 'border-brand-200 bg-card text-brand-600' : 'border-line bg-surface text-muted')}>
+                <span className={clsx('grid size-8 shrink-0 place-items-center rounded-md border', isActive ? 'border-primary/25 bg-card text-link' : 'border-line bg-sunken text-muted')}>
                   <e.icon className="size-4" aria-hidden />
                 </span>
                 <span className="min-w-0 flex-1">
@@ -505,8 +505,8 @@ export default function CommandPalette({ open, onClose }: { open: boolean; onClo
                       togglePin(e.recent.id);
                     }}
                     className={clsx(
-                      'grid size-7 shrink-0 place-items-center rounded-md transition hover:bg-surface',
-                      pins.includes(e.recent.id) ? 'text-amber-500' : isActive ? 'text-muted' : 'text-transparent group-hover/opt:text-muted',
+                      'grid size-7 shrink-0 place-items-center rounded-md transition hover:bg-sunken',
+                      pins.includes(e.recent.id) ? 'text-warning-fg' : isActive ? 'text-muted' : 'text-transparent group-hover/opt:text-muted',
                     )}
                   >
                     <Star className={clsx('size-3.5', pins.includes(e.recent.id) && 'fill-current')} />
@@ -542,7 +542,7 @@ const Highlight = ({ text, tokens }: { text: string; tokens: string[] }) => {
   ranges.forEach(([s, e], k) => {
     if (s > pos) parts.push(text.slice(pos, s));
     parts.push(
-      <mark key={k} className="bg-transparent font-bold text-brand-700 dark:text-brand-300">
+      <mark key={k} className="bg-transparent font-bold text-link dark:text-brand-300">
         {text.slice(s, e)}
       </mark>,
     );

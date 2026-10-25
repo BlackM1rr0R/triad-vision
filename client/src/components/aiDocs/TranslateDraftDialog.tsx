@@ -50,14 +50,14 @@ export default function TranslateDraftDialog({
       onClose={onClose}
       title={
         <span className="inline-flex items-center gap-2">
-          <Languages className="size-4 text-brand-600" aria-hidden /> {t('aiDocs.draft.title')}
+          <Languages className="size-4 text-link" aria-hidden /> {t('aiDocs.draft.title')}
         </span>
       }
       size="md"
       footer={
         done ? (
           <>
-            <button type="button" className="btn btn-sm border border-line bg-card text-ink hover:bg-surface" onClick={onClose}>
+            <button type="button" className="btn btn-sm border border-line bg-card text-ink hover:bg-sunken" onClick={onClose}>
               {t('aiDocs.draft.cancel')}
             </button>
             <Link to={driveFolderHref(done.parentId)} className="btn-primary btn-sm" onClick={onClose}>
@@ -66,7 +66,7 @@ export default function TranslateDraftDialog({
           </>
         ) : (
           <>
-            <button type="button" className="btn btn-sm border border-line bg-card text-ink hover:bg-surface" onClick={onClose} disabled={run.isPending}>
+            <button type="button" className="btn btn-sm border border-line bg-card text-ink hover:bg-sunken" onClick={onClose} disabled={run.isPending}>
               {t('aiDocs.draft.cancel')}
             </button>
             <button type="button" className="btn-primary btn-sm" onClick={() => run.mutate()} disabled={run.isPending}>
@@ -78,14 +78,14 @@ export default function TranslateDraftDialog({
     >
       <div className="space-y-4 text-sm text-ink">
         <p className="text-muted">{t('aiDocs.draft.intro')}</p>
-        <p className="flex items-center gap-2 rounded-lg border border-line bg-surface px-3 py-2">
-          <FileText className="size-4 shrink-0 text-brand-600" aria-hidden />
+        <p className="flex items-center gap-2 rounded-lg border border-line bg-sunken px-3 py-2">
+          <FileText className="size-4 shrink-0 text-link" aria-hidden />
           <span className="min-w-0 truncate font-medium" title={fileName}>
             {fileName}
           </span>
         </p>
         {done ? (
-          <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-emerald-900 dark:border-emerald-900/50 dark:bg-emerald-950/30 dark:text-emerald-100">
+          <div className="rounded-lg border border-success-border bg-success-bg p-3 text-success-fg dark:border-emerald-900/50 dark:bg-emerald-950/30 dark:text-emerald-100">
             <p className="flex items-center gap-2 font-semibold">
               <CheckCircle2 className="size-4" aria-hidden /> {t('aiDocs.draft.done')}
             </p>

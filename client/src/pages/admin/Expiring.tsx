@@ -111,7 +111,7 @@ const Expiring = () => {
         </label>
         {rows.length > 0 && (
           <p className="ml-auto flex flex-wrap gap-2 text-xs font-semibold">
-            <span className="badge bg-surface text-navy-900">{t('expiry.page.count', { count: rows.length })}</span>
+            <span className="badge bg-sunken text-ink">{t('expiry.page.count', { count: rows.length })}</span>
             {expired > 0 && <span className={clsx('badge', TONE_CLASS.expired)}>{t('expiry.page.expiredCount')}: {expired}</span>}
             {urgent > 0 && <span className={clsx('badge', TONE_CLASS.urgent)}>{t('expiry.page.urgentCount')}: {urgent}</span>}
           </p>
@@ -147,11 +147,11 @@ const Expiring = () => {
             <tbody className="divide-y divide-line">
               {rows.map((r) => (
                 <tr key={`${r.source}-${r.id}`} className="hover:bg-surface/40">
-                  <td className="px-4 py-2.5 font-medium text-navy-900">{r.client.name}</td>
+                  <td className="px-4 py-2.5 font-medium text-ink">{r.client.name}</td>
                   <td className="px-4 py-2.5 whitespace-nowrap">
                     {r.case ? (
                       <>
-                        <span className="font-mono text-xs">{r.case.number}</span>
+                        <span className="code-id text-xs">{r.case.number}</span>
                         <span className="block text-[11px] text-muted">{t(`expiry.visaTypes.${r.case.visaType}`, { defaultValue: r.case.visaType })}</span>
                       </>
                     ) : (
@@ -159,7 +159,7 @@ const Expiring = () => {
                     )}
                   </td>
                   <td className="px-4 py-2.5">
-                    <span className="block text-navy-900">{r.document}</span>
+                    <span className="block text-ink">{r.document}</span>
                     <span className="flex items-center gap-1 text-[11px] text-muted">
                       {r.source === 'vault' && (
                         <span className="badge inline-flex items-center gap-1 bg-neutral-bg text-[10px] text-neutral-fg" title={t('expiry.page.vaultHint')}>
@@ -181,7 +181,7 @@ const Expiring = () => {
                     {r.case && (
                       <Link
                         to={`/admin/cases/${r.case.id}`}
-                        className="grid size-9 place-items-center rounded-lg text-brand-600 transition hover:bg-brand-50"
+                        className="grid size-9 place-items-center rounded-lg text-link transition hover:bg-primary/[0.06]"
                         title={t('expiry.page.openCase')}
                         aria-label={`${t('expiry.page.openCase')}: ${r.case.number}`}
                       >

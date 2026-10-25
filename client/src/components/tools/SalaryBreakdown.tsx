@@ -8,9 +8,9 @@ const TAX_KEYS: (keyof SalaryAmounts)[] = ['incomeTax', 'soli', 'churchTax'];
 const SOCIAL_KEYS: (keyof SalaryAmounts)[] = ['pension', 'unemployment', 'health', 'care'];
 
 const GROUPS = [
-  { key: 'taxes', swatch: 'bg-rose-500' },
-  { key: 'social', swatch: 'bg-brand-500' },
-  { key: 'net', swatch: 'bg-emerald-500' },
+  { key: 'taxes', swatch: 'bg-danger' },
+  { key: 'social', swatch: 'bg-primary' },
+  { key: 'net', swatch: 'bg-success' },
 ] as const;
 
 /** Stacked bar (taxes / social insurance / net) + itemised table for one period. */
@@ -27,7 +27,7 @@ export const SalaryBreakdown = ({ amounts }: { amounts: SalaryAmounts }) => {
       <div
         role="img"
         aria-label={t('salaryPage.result.barAria', { summary })}
-        className="flex h-4 w-full overflow-hidden rounded-full bg-surface ring-1 ring-line"
+        className="flex h-4 w-full overflow-hidden rounded-full bg-sunken ring-1 ring-line"
       >
         {amounts.gross > 0 &&
           GROUPS.map((g) => (
@@ -66,12 +66,12 @@ export const SalaryBreakdown = ({ amounts }: { amounts: SalaryAmounts }) => {
                 <th scope="row" className={clsx('py-2 pr-3 text-left font-medium', strong ? 'font-bold text-ink' : 'text-muted')}>
                   <span className="inline-flex items-center gap-2">
                     {deduction && (
-                      <span className={clsx('size-2 rounded-full', TAX_KEYS.includes(k) ? 'bg-rose-500' : 'bg-brand-500')} aria-hidden />
+                      <span className={clsx('size-2 rounded-full', TAX_KEYS.includes(k) ? 'bg-danger' : 'bg-primary')} aria-hidden />
                     )}
                     {t(`salaryPage.rows.${k}`)}
                   </span>
                 </th>
-                <td className={clsx('py-2 text-right tabular-nums', strong ? 'font-bold text-ink' : 'text-ink/80', k === 'net' && 'text-emerald-700')}>
+                <td className={clsx('py-2 text-right tabular-nums', strong ? 'font-bold text-ink' : 'text-ink/80', k === 'net' && 'text-success-fg')}>
                   {deduction && amounts[k] > 0 ? '− ' : ''}
                   {euroCents(amounts[k])}
                 </td>

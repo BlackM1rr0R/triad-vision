@@ -90,7 +90,7 @@ export default function CaseFormPage() {
     return (
       <div className="card mx-auto max-w-lg p-8 text-center">
         <AlertTriangle className="mx-auto size-10 text-warning" aria-hidden />
-        <p className="mt-4 font-semibold text-navy-900">{t('clientData.errors.FORM_NOT_FOUND')}</p>
+        <p className="mt-4 font-semibold text-ink">{t('clientData.errors.FORM_NOT_FOUND')}</p>
         <Link to={`/account/cases/${id}`} className="btn-primary mt-6">
           <ArrowLeft className="size-4" aria-hidden /> {t('clientData.common.back')}
         </Link>
@@ -100,23 +100,23 @@ export default function CaseFormPage() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-5 pb-24 sm:pb-0">
-      <Link to={`/account/cases/${id}`} className="-my-2 inline-flex min-h-10 items-center gap-1.5 text-sm font-semibold text-brand-600 hover:text-brand-700">
+      <Link to={`/account/cases/${id}`} className="-my-2 inline-flex min-h-10 items-center gap-1.5 text-sm font-semibold text-link hover:text-link">
         <ArrowLeft className="size-4" aria-hidden /> {t('clientData.common.back')}
       </Link>
       <header className="card p-5 sm:p-6">
         <div className="flex items-start gap-3">
-          <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-brand-600 text-white">
+          <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-primary text-primary-contrast">
             <ClipboardList className="size-5" aria-hidden />
           </span>
           <div className="min-w-0">
-            <h1 className="text-xl font-extrabold break-words text-navy-900 sm:text-2xl">{tr(data.title)}</h1>
+            <h1 className="type-page-title break-words">{tr(data.title)}</h1>
             <p className="mt-1 text-sm text-muted">{data.editable ? t('clientData.portal.formHint') : t('clientData.portal.formReadOnly')}</p>
-            {data.dueAt && <p className="mt-1 text-xs font-semibold text-amber-700">{t('clientData.portal.due', { date: date(data.dueAt) })}</p>}
+            {data.dueAt && <p className="mt-1 text-xs font-semibold text-warning-fg">{t('clientData.portal.due', { date: date(data.dueAt) })}</p>}
           </div>
         </div>
-        {data.note && <p className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm whitespace-pre-line text-amber-950 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-100">{data.note}</p>}
+        {data.note && <p className="mt-4 rounded-lg border border-warning-border bg-warning-bg px-4 py-3 text-sm whitespace-pre-line text-warning-fg">{data.note}</p>}
         {!data.editable && (
-          <p className="mt-4 flex items-center gap-2 rounded-lg bg-emerald-50 px-4 py-3 text-sm text-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-200">
+          <p className="mt-4 flex items-center gap-2 rounded-lg bg-success-bg px-4 py-3 text-sm text-success-fg">
             <CheckCircle2 className="size-4 shrink-0" aria-hidden /> {t('clientData.portal.submittedHint', { date: data.submittedAt ? dateTime(data.submittedAt) : '' })}
           </p>
         )}
@@ -137,7 +137,7 @@ export default function CaseFormPage() {
       </section>
 
       {data.editable && (
-        <div className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-white p-3 sm:static sm:rounded-xl sm:border sm:p-4">
+        <div className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-card p-3 sm:static sm:rounded-xl sm:border sm:p-4">
           <div className="mx-auto flex max-w-3xl flex-wrap items-center justify-between gap-2">
             <span className="text-xs text-muted" role="status">
               {busy === 'save' ? t('clientData.common.saving') : savedAt ? t('clientData.portal.savedAt', { date: dateTime(savedAt) }) : ''}

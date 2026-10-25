@@ -22,7 +22,7 @@ const ColorPicker = ({ value, onChange }: { value: string; onChange: (c: string)
           aria-checked={value === c}
           title={t(`drive.colors.${c}`)}
           onClick={() => onChange(c)}
-          className={clsx('size-5 rounded-full ring-offset-2 ring-offset-card', TAG_DOT[c], value === c && 'ring-2 ring-brand-500')}
+          className={clsx('size-5 rounded-full ring-offset-2 ring-offset-card', TAG_DOT[c], value === c && 'ring-2 ring-focus')}
         />
       ))}
     </div>
@@ -147,12 +147,12 @@ export default function TagsDialog({ items, manage, onClose }: { items: DriveIte
                 <>
                   <span className={clsx('rounded px-1.5 py-0.5 text-xs font-semibold', TAG_TONE[tag.color])}>{tag.name}</span>
                   <span className="flex-1" />
-                  <button type="button" className="text-xs font-semibold text-brand-700 hover:underline dark:text-brand-300" onClick={() => setEdit((x) => ({ ...x, [tag.id]: { name: tag.name, color: tag.color } }))}>
+                  <button type="button" className="text-xs font-semibold text-link hover:underline dark:text-brand-300" onClick={() => setEdit((x) => ({ ...x, [tag.id]: { name: tag.name, color: tag.color } }))}>
                     {t('driveOrg.common.edit')}
                   </button>
                   <button
                     type="button"
-                    className="grid size-7 place-items-center rounded-md text-muted hover:bg-surface hover:text-danger"
+                    className="grid size-7 place-items-center rounded-md text-muted hover:bg-sunken hover:text-danger-fg"
                     aria-label={t('driveOrg.common.delete')}
                     onClick={() => window.confirm(t('driveOrg.tags.deleteConfirm', { name: tag.name })) && remove.mutate(tag.id)}
                   >
@@ -163,8 +163,8 @@ export default function TagsDialog({ items, manage, onClose }: { items: DriveIte
             </li>
           ) : (
             <li key={tag.id}>
-              <button type="button" onClick={() => toggle(tag.id)} className="flex w-full items-center gap-2.5 rounded-lg px-2 py-1.5 text-left hover:bg-surface" aria-pressed={state.get(tag.id) === 'all'}>
-                <span className={clsx('grid size-4 shrink-0 place-items-center rounded border', state.get(tag.id) === 'none' ? 'border-line' : 'border-brand-600 bg-brand-600 text-white')}>
+              <button type="button" onClick={() => toggle(tag.id)} className="flex w-full items-center gap-2.5 rounded-lg px-2 py-1.5 text-left hover:bg-sunken" aria-pressed={state.get(tag.id) === 'all'}>
+                <span className={clsx('grid size-4 shrink-0 place-items-center rounded border', state.get(tag.id) === 'none' ? 'border-line' : 'border-primary bg-primary text-primary-contrast')}>
                   {state.get(tag.id) === 'all' ? <Check className="size-3" /> : state.get(tag.id) === 'some' ? <Minus className="size-3" /> : null}
                 </span>
                 <span className={clsx('rounded px-1.5 py-0.5 text-xs font-semibold', TAG_TONE[tag.color])}>{tag.name}</span>

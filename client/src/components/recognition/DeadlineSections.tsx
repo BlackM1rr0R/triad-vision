@@ -52,13 +52,13 @@ export const RecognitionDeadlineSection = ({ days, staffId }: { days: number; st
               return (
                 <li key={`${r.source}-${r.id}-${r.kind}`} className="flex flex-wrap items-center gap-3 px-5 py-3 text-sm">
                   <span className={clsx('badge whitespace-nowrap tabular-nums', TONE_CLASS[tone])}>{fmtDate(r.at)}</span>
-                  <span className="badge bg-surface text-muted">{t(r.source === 'RECOGNITION' ? 'recognition.expiring.recognition' : 'recognition.expiring.accelerated')}</span>
+                  <span className="badge bg-sunken text-muted">{t(r.source === 'RECOGNITION' ? 'recognition.expiring.recognition' : 'recognition.expiring.accelerated')}</span>
                   <span className="min-w-0 flex-1">
                     <span className="block truncate font-medium text-ink">{what}</span>
                     <span className="block truncate text-xs text-muted">{[r.client.name, r.case.number, r.note, r.staff?.name].filter(Boolean).join(' · ')}</span>
                   </span>
                   <StatusBadge status={r.case.status} />
-                  <Link to={`/admin/cases/${r.case.id}#${anchor}`} className="grid size-9 place-items-center rounded-lg text-brand-600 transition hover:bg-brand-50" aria-label={r.case.number}>
+                  <Link to={`/admin/cases/${r.case.id}#${anchor}`} className="grid size-9 place-items-center rounded-lg text-link transition hover:bg-primary/[0.06]" aria-label={r.case.number}>
                     <ExternalLink className="size-4" aria-hidden />
                   </Link>
                 </li>

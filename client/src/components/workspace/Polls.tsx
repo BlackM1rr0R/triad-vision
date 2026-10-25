@@ -83,11 +83,11 @@ export const PollCard = ({ poll, compact = false, onChanged }: { poll: Poll; com
                 onClick={() => void vote(o.id)}
                 disabled={!poll.open || busy !== null}
                 aria-pressed={o.mine}
-                className={clsx('relative block w-full overflow-hidden rounded-lg border px-3 py-2 text-left text-sm transition', o.mine ? 'border-brand-400 bg-brand-50' : 'border-line bg-surface hover:border-brand-300', !poll.open && 'cursor-default')}
+                className={clsx('relative block w-full overflow-hidden rounded-lg border px-3 py-2 text-left text-sm transition', o.mine ? 'border-line-strong bg-primary/[0.06]' : 'border-line bg-sunken hover:border-line-strong', !poll.open && 'cursor-default')}
               >
-                <span className={clsx('absolute inset-y-0 left-0 rounded-lg transition-[width] duration-300', o.mine ? 'bg-brand-200/60' : 'bg-brand-100/60')} style={{ width: `${(o.count / max) * 100}%` }} aria-hidden />
+                <span className={clsx('absolute inset-y-0 left-0 rounded-lg transition-[width] duration-300', o.mine ? 'bg-primary/20' : 'bg-primary/[0.06]')} style={{ width: `${(o.count / max) * 100}%` }} aria-hidden />
                 <span className="relative flex items-center gap-2">
-                  <span className={clsx('grid size-4 shrink-0 place-items-center rounded-full border', o.mine ? 'border-brand-600 bg-brand-600 text-white' : 'border-line bg-card')}>{o.mine && <Check className="size-3" />}</span>
+                  <span className={clsx('grid size-4 shrink-0 place-items-center rounded-full border', o.mine ? 'border-line-strong bg-sunken text-ink shadow-[inset_0_0_0_1px_var(--color-line-strong)]' : 'border-line bg-card')}>{o.mine && <Check className="size-3" />}</span>
                   <span className="min-w-0 flex-1 truncate font-medium text-ink">{o.text}</span>
                   <span className="shrink-0 text-xs font-semibold text-muted tabular-nums">
                     {o.count} · {pct}%
@@ -174,7 +174,7 @@ export const NewPollDialog = ({ open, onClose, channelId }: { open: boolean; onC
             ))}
           </div>
           {options.length < 12 && (
-            <button type="button" onClick={() => setOptions([...options, ''])} className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-brand-600 hover:underline">
+            <button type="button" onClick={() => setOptions([...options, ''])} className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-link hover:underline">
               <Plus className="size-3.5" /> {t('ws.polls.addOption')}
             </button>
           )}
@@ -199,7 +199,7 @@ export const PollsCard = ({ polls, loading }: { polls: Poll[] | undefined; loadi
       icon={BarChart3}
       title={t('ws.polls.title')}
       actions={
-        <button type="button" onClick={() => setOpen(true)} className="btn-white btn-sm h-8 border border-line px-3">
+        <button type="button" onClick={() => setOpen(true)} className="btn-secondary btn-sm h-8 border border-line px-3">
           <Plus className="size-4" /> {t('ws.polls.new')}
         </button>
       }

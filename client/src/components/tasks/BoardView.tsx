@@ -95,14 +95,14 @@ export const BoardView = ({
       {columns.map((status) => {
         const items = byStatus.get(status) ?? [];
         const isTarget = drop?.status === status;
-        const bar = <div className="h-1 rounded-full bg-brand-500 shadow-[0_0_0_3px_rgba(47,123,255,0.15)]" aria-hidden />;
+        const bar = <div className="h-1 rounded-full bg-primary ring-[3px] ring-focus/20" aria-hidden />;
         return (
           <section
             key={status}
             aria-label={statusLabel(status)}
             className={clsx(
-              'flex h-full w-[85vw] max-w-[22rem] shrink-0 snap-start flex-col rounded-2xl border bg-surface/70 transition-colors sm:w-80 xl:w-auto xl:max-w-none xl:min-w-[16rem] xl:flex-1',
-              isTarget ? 'border-brand-400 bg-brand-50/60' : 'border-line',
+              'flex h-full w-[85vw] max-w-[22rem] shrink-0 snap-start flex-col rounded-xl border bg-surface/70 transition-colors sm:w-80 xl:w-auto xl:max-w-none xl:min-w-[16rem] xl:flex-1',
+              isTarget ? 'border-line-strong bg-primary/[0.04]' : 'border-line',
             )}
           >
             <header className="flex items-center gap-2 px-3.5 pt-3 pb-2">
@@ -112,7 +112,7 @@ export const BoardView = ({
               <button
                 type="button"
                 onClick={() => onCreateIn(status)}
-                className="ml-auto grid size-8 place-items-center rounded-lg text-muted transition hover:bg-card hover:text-brand-600"
+                className="ml-auto grid size-8 place-items-center rounded-lg text-muted transition hover:bg-card hover:text-link"
                 title={t('tasks.actions.newInColumn')}
                 aria-label={t('tasks.actions.newInColumn')}
               >
@@ -145,7 +145,7 @@ export const BoardView = ({
                   ))}
               {isTarget && drop?.beforeId === null && bar}
               {!loading && !items.length && (
-                <div className={clsx('grid flex-1 place-items-center rounded-xl border-2 border-dashed px-4 py-8 text-center text-xs font-medium text-muted', isTarget ? 'border-brand-400' : 'border-line')}>
+                <div className={clsx('grid flex-1 place-items-center rounded-xl border-2 border-dashed px-4 py-8 text-center text-xs font-medium text-muted', isTarget ? 'border-line-strong' : 'border-line')}>
                   {t('tasks.empty.column')}
                 </div>
               )}

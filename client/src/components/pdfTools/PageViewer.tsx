@@ -39,9 +39,9 @@ export const PageViewer = ({
 
   return (
     <div className="flex min-h-0 flex-1">
-      <aside className="hidden w-32 shrink-0 space-y-3 overflow-y-auto border-r border-line bg-surface p-3 md:block">
+      <aside className="hidden w-32 shrink-0 space-y-3 overflow-y-auto border-r border-line bg-sunken p-3 md:block">
         {loaders.map((l, i) => (
-          <button key={i} type="button" onClick={() => onPage(i)} className={clsx('relative block rounded-md p-1 text-center', i === page ? 'bg-brand-100 ring-2 ring-brand-500 dark:bg-brand-500/20' : 'hover:bg-card')}>
+          <button key={i} type="button" onClick={() => onPage(i)} className={clsx('relative block rounded-md p-1 text-center', i === page ? 'bg-primary/10 ring-2 ring-focus dark:bg-brand-500/20' : 'hover:bg-card')}>
             <PageCanvas load={l} width={88} />
             <span className="mt-1 block text-[11px] text-muted">{i + 1}</span>
             {badge?.(i)}

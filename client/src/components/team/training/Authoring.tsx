@@ -66,7 +66,7 @@ const QuizBuilder = ({ quiz, onChange }: { quiz: QuizQuestion[]; onChange: (q: Q
             ))}
           </div>
           {q.options.length < 8 && (
-            <button type="button" className="mt-2 inline-flex min-h-9 items-center gap-1 text-xs font-semibold text-brand-600 hover:underline" onClick={() => set(i, { options: [...q.options, ''] })}>
+            <button type="button" className="mt-2 inline-flex min-h-9 items-center gap-1 text-xs font-semibold text-link hover:underline" onClick={() => set(i, { options: [...q.options, ''] })}>
               <Plus className="size-3" /> {t('team.training.editor.addOption')}
             </button>
           )}
@@ -170,16 +170,16 @@ const LessonEditor = ({ courseId, lesson, open, onClose, onSaved }: { courseId: 
           </label>
           <label className="block">
             <span className="label">{t('team.training.editor.driveNode')}</span>
-            <input className="input font-mono text-xs" maxLength={40} value={driveNodeId} onChange={(e) => setDriveNodeId(e.target.value)} />
+            <input className="input code-id text-xs" maxLength={40} value={driveNodeId} onChange={(e) => setDriveNodeId(e.target.value)} />
             <span className="mt-1 block text-[11px] text-muted">{t('team.training.editor.driveHint')}</span>
           </label>
         </div>
         <div>
           <div className="mb-1.5 flex items-center justify-between">
             <span className="label mb-0">{t('team.training.editor.body')}</span>
-            <div className="flex rounded-lg border border-line bg-card p-0.5">
+            <div className="flex rounded-lg border border-line bg-sunken p-0.5">
               {(['write', 'preview'] as const).map((v) => (
-                <button key={v} type="button" aria-pressed={tab === v} onClick={() => setTab(v)} className={clsx('inline-flex min-h-8 items-center gap-1 rounded-md px-2.5 text-xs font-semibold', tab === v ? 'bg-navy-900 text-white' : 'text-ink/70')}>
+                <button key={v} type="button" aria-pressed={tab === v} onClick={() => setTab(v)} className={clsx('inline-flex min-h-8 items-center gap-1 rounded-md px-2.5 text-xs font-semibold', tab === v ? 'bg-card text-ink shadow-[var(--tv-shadow-card)] ring-1 ring-line' : 'text-muted')}>
                   {v === 'write' ? <Pencil className="size-3" /> : <Eye className="size-3" />} {t(`team.training.editor.${v}`)}
                 </button>
               ))}
@@ -205,7 +205,7 @@ const LessonEditor = ({ courseId, lesson, open, onClose, onSaved }: { courseId: 
           </div>
           <p className="mb-2 text-[11px] text-muted">{t('team.training.editor.quizHint')}</p>
           <QuizBuilder quiz={quiz} onChange={setQuiz} />
-          {!quizValid && <p className="mt-2 text-xs text-danger">{t('team.training.editor.quizInvalid')}</p>}
+          {!quizValid && <p className="mt-2 text-xs text-danger-fg">{t('team.training.editor.quizInvalid')}</p>}
         </div>
       </div>
     </Modal>
@@ -308,7 +308,7 @@ const CourseEditor = ({ courseId, onClose }: { courseId: string; onClose: () => 
             </label>
           </div>
           <div className="flex flex-wrap justify-between gap-2 border-t border-line pt-4">
-            <button type="button" className="btn-secondary btn-sm text-danger" onClick={() => setDeleting('course')}>
+            <button type="button" className="btn-secondary btn-sm text-danger-fg" onClick={() => setDeleting('course')}>
               <Trash2 className="size-3.5" /> {t('team.training.editor.deleteCourse')}
             </button>
             <button type="submit" className="btn-primary btn-sm" disabled={save.isPending || form.title.trim().length < 2}>
@@ -362,7 +362,7 @@ const CourseEditor = ({ courseId, onClose }: { courseId: string; onClose: () => 
                 <button type="button" className="btn-secondary btn-sm px-2" aria-label={t('team.common.edit')} onClick={() => setEditing({ open: true, lesson: l })}>
                   <Pencil className="size-3.5" />
                 </button>
-                <button type="button" className="btn-secondary btn-sm px-2 text-danger" aria-label={t('team.common.delete')} onClick={() => setDeleting(l)}>
+                <button type="button" className="btn-secondary btn-sm px-2 text-danger-fg" aria-label={t('team.common.delete')} onClick={() => setDeleting(l)}>
                   <Trash2 className="size-3.5" />
                 </button>
               </li>

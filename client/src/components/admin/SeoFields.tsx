@@ -82,7 +82,7 @@ export const SeoFields = ({
 
   return (
     <section className="space-y-4 sm:col-span-2">
-      <h3 className="mt-3 flex items-center gap-2 border-t border-line pt-5 text-xs font-bold tracking-wider text-navy-900 uppercase">
+      <h3 className="mt-3 flex items-center gap-2 border-t border-line pt-5 text-xs font-bold tracking-wider text-ink uppercase">
         <Search className="size-3.5" aria-hidden /> {s('section')}
       </h3>
       <p className="-mt-2 text-[11px] text-muted">{s('hint')}</p>
@@ -94,10 +94,10 @@ export const SeoFields = ({
             role="tab"
             aria-selected={lang === l}
             onClick={() => setLang(l)}
-            className={clsx('inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs font-semibold', lang === l ? 'border-brand-500 bg-brand-50 text-brand-700' : 'border-line text-muted hover:text-ink')}
+            className={clsx('inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs font-semibold', lang === l ? 'border-primary bg-primary/[0.06] text-link' : 'border-line text-muted hover:text-ink')}
           >
             <Flag code={l} className="w-4" /> {l.toUpperCase()}
-            {(value.seoTitle[l] || value.seoDescription[l]) && <span className="size-1.5 rounded-full bg-brand-500" aria-hidden />}
+            {(value.seoTitle[l] || value.seoDescription[l]) && <span className="size-1.5 rounded-full bg-primary" aria-hidden />}
           </button>
         ))}
       </div>
@@ -131,7 +131,7 @@ export const SeoFields = ({
         <ImageField label={s('ogImage')} value={value.ogImage} onChange={(v) => onChange({ ...value, ogImage: v })} />
         <p className="mt-1 text-[11px] text-muted">{s('ogImageHelp')}</p>
       </div>
-      <label className="flex min-h-11 cursor-pointer items-center gap-3 rounded-lg border border-line px-3.5 py-2.5 text-sm font-medium">
+      <label className="flex min-h-10 sm:min-h-9 cursor-pointer items-center gap-3 rounded-lg border border-line px-3.5 py-2.5 text-sm font-medium">
         <Switch checked={value.noindex} onChange={(v) => onChange({ ...value, noindex: v })} label={s('noindex')} />
         {s('noindex')}
       </label>

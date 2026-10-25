@@ -46,8 +46,8 @@ export const StageDialog = ({ items, onClose }: { items: DriveItem[]; onClose: (
     >
       <div role="radiogroup" className="space-y-1">
         {[...WORKFLOW_STAGES, null].map((s) => (
-          <label key={s ?? 'none'} className={clsx('flex cursor-pointer items-center gap-2.5 rounded-lg px-2 py-1.5 hover:bg-surface', stage === s && 'bg-surface')}>
-            <input type="radio" name="stage" className="accent-brand-600" checked={stage === s} onChange={() => setValue(s)} />
+          <label key={s ?? 'none'} className={clsx('flex cursor-pointer items-center gap-2.5 rounded-lg px-2 py-1.5 hover:bg-sunken', stage === s && 'bg-sunken')}>
+            <input type="radio" name="stage" className="accent-primary" checked={stage === s} onChange={() => setValue(s)} />
             {s ? <span className={clsx('rounded px-1.5 py-0.5 text-xs font-semibold', STAGE_TONE[s])}>{t(`driveOrg.stage.${s}`)}</span> : <span className="text-sm text-muted">{t('driveOrg.stage.none')}</span>}
           </label>
         ))}
@@ -138,7 +138,7 @@ export const DuplicateDialog = ({
         <>
           <button
             type="button"
-            className="btn-secondary btn-sm text-danger"
+            className="btn-secondary btn-sm text-danger-fg"
             disabled={busy}
             onClick={async () => {
               setBusy(true);

@@ -5,6 +5,8 @@ import { Archive, Cookie, History, Languages, TriangleAlert } from 'lucide-react
 import { PageHero } from '@/components/layout/PageHero';
 import { Markdown } from '@/components/ops/Markdown';
 import { Spinner } from '@/components/ui/Spinner';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { Lost } from '@/components/illustrations';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { openConsentSettings } from '@/lib/consent';
 import { currentLocale, registerCopy, type Locale } from '@/i18n';
@@ -34,17 +36,17 @@ const DocumentBody = ({ doc, fallback, archived }: { doc: LegalDoc; fallback: bo
   return (
     <div lang={lang}>
       {uiLang !== 'de' && (
-        <div className="mb-8 flex flex-col gap-3 rounded-xl border border-brand-100 bg-brand-50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="mb-8 flex flex-col gap-3 rounded-2xl border border-line bg-sunken px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between sm:px-5">
           <p className="flex items-start gap-2 text-sm text-ink/85">
-            <Languages className="mt-0.5 size-4 shrink-0 text-brand-600" aria-hidden />
+            <Languages className="mt-0.5 size-4 shrink-0 text-muted" aria-hidden />
             {t('legalPages.common.germanPrevails')}
           </p>
-          <button type="button" className="btn-ghost btn-sm shrink-0 self-start sm:self-center" onClick={() => setShowGerman((s) => !s)} aria-pressed={showGerman}>
+          <button type="button" className="btn-secondary shrink-0 self-start sm:self-center" onClick={() => setShowGerman((s) => !s)} aria-pressed={showGerman}>
             {showGerman ? t('legalPages.common.showTranslation') : t('legalPages.common.showGerman')}
           </button>
         </div>
       )}
-      <p className="mb-6 flex flex-wrap gap-x-4 gap-y-1 text-sm font-semibold text-muted">
+      <p className="mb-8 flex flex-wrap gap-x-4 gap-y-1 border-b border-line pb-4 text-sm font-semibold text-muted">
         <span>{tl('legalDocs.page.version', { version: doc.version })}</span>
         {effective && <span>{tl('legalDocs.page.effective', { date: effective })}</span>}
       </p>
@@ -66,12 +68,15 @@ const DocumentBody = ({ doc, fallback, archived }: { doc: LegalDoc; fallback: bo
         </p>
       )}
       {summary && archived && (
-        <div className="mb-6 rounded-xl border border-line bg-surface px-4 py-3">
+        <div className="mb-6 rounded-xl border border-line bg-sunken px-4 py-3">
           <p className="text-xs font-bold tracking-wide text-muted uppercase">{tl('legalDocs.page.changes')}</p>
           <p className="mt-1 text-sm whitespace-pre-line text-ink/85">{summary}</p>
         </div>
       )}
-      <Markdown source={doc.body[lang] || doc.body.de} className="text-[0.95rem] [&_h2]:text-xl [&_h3]:mt-8 [&_h3]:font-display [&_h3]:text-xl sm:[&_h3]:text-2xl" />
+      <Markdown
+        source={doc.body[lang] || doc.body.de}
+        className="text-base! leading-[1.7]! text-ink/90 [&_h2]:mt-12 [&_h2]:scroll-mt-28 [&_h2]:font-display [&_h2]:text-2xl [&_h2]:font-semibold [&_h2]:text-ink [&_h3]:mt-10 [&_h3]:scroll-mt-28 [&_h3]:font-display [&_h3]:text-xl [&_h3]:font-semibold [&_h3]:text-ink sm:[&_h3]:text-2xl [&_h4]:mt-6 [&_h4]:font-semibold [&_h4]:text-ink [&_li]:pl-1 [&_table]:text-sm"
+      />
     </div>
   );
 };
@@ -82,9 +87,9 @@ const VersionArchive = ({ kind, active }: { kind: LegalKind; active?: string }) 
   const lang = currentLocale();
   const { data } = useLegalVersions(kind);
   return (
-    <aside className="rounded-2xl border border-line bg-card p-4 sm:p-5" aria-labelledby="legal-archive-title">
+    <aside className="card p-4 sm:p-5" aria-labelledby="legal-archive-title">
       <h2 id="legal-archive-title" className="type-card-title flex items-center gap-2">
-        <History className="size-4 text-brand-600" aria-hidden />
+        <History className="size-4 text-muted" aria-hidden />
         {t('legalDocs.page.archiveTitle')}
       </h2>
       {!data?.length ? (
@@ -96,7 +101,7 @@ const VersionArchive = ({ kind, active }: { kind: LegalKind; active?: string }) 
               <Link
                 to={v.status === 'PUBLISHED' ? LEGAL_PATH[kind] : versionPath(kind, v.version)}
                 aria-current={active === v.version ? 'page' : undefined}
-                className="flex items-center justify-between gap-2 rounded-lg px-2 py-1.5 text-ink/85 hover:bg-surface aria-[current=page]:bg-brand-50 aria-[current=page]:font-semibold"
+                className="flex min-h-10 items-center justify-between gap-2 rounded-lg px-2.5 py-2 text-ink/85 transition-colors hover:bg-sunken aria-[current=page]:bg-sunken aria-[current=page]:font-semibold"
               >
                 <span className="truncate">{v.version}</span>
                 <span className="shrink-0 text-xs text-muted">{fmtDate(v.effectiveAt ?? v.publishedAt, lang)}</span>
@@ -120,9 +125,9 @@ export function LegalDocumentView({ kind }: { kind: LegalKind }) {
       <PageHero title={data ? tr(data.document.title) : t(`legalDocs.page.${kind}.title`)} subtitle={t(`legalDocs.page.${kind}.subtitle`)} image={HERO_IMAGE} />
       <section className="section">
         <div className="container-x grid gap-8 lg:grid-cols-[minmax(0,1fr)_280px] lg:gap-12">
-          <article className="min-w-0 leading-relaxed text-ink/85 lg:max-w-4xl">
+          <article className="min-w-0 max-w-[72ch] leading-relaxed text-ink/85">
             {isLoading || !data ? (
-              <div className="grid place-items-center py-16 text-brand-600" role="status">
+              <div className="grid place-items-center py-16 text-muted" role="status">
                 <Spinner className="size-7" />
               </div>
             ) : (
@@ -131,7 +136,7 @@ export function LegalDocumentView({ kind }: { kind: LegalKind }) {
           </article>
           <div className="space-y-4 lg:sticky lg:top-28 lg:self-start">
             {kind === 'COOKIES' && (
-              <button type="button" className="btn-primary btn-sm w-full min-h-11" onClick={openConsentSettings}>
+              <button type="button" className="btn-primary w-full min-h-11" onClick={openConsentSettings}>
                 <Cookie className="size-4" aria-hidden /> {t('legalDocs.page.cookieSettings')}
               </button>
             )}
@@ -157,13 +162,13 @@ export function LegalArchivedVersion() {
       <PageHero title={t(`legalDocs.page.${kind}.title`)} subtitle={params.version} image={HERO_IMAGE} />
       <section className="section">
         <div className="container-x grid gap-8 lg:grid-cols-[minmax(0,1fr)_280px] lg:gap-12">
-          <article className="min-w-0 leading-relaxed text-ink/85 lg:max-w-4xl">
+          <article className="min-w-0 max-w-[72ch] leading-relaxed text-ink/85">
             {isLoading ? (
-              <div className="grid place-items-center py-16 text-brand-600" role="status">
+              <div className="grid place-items-center py-16 text-muted" role="status">
                 <Spinner className="size-7" />
               </div>
             ) : isError || !data ? (
-              <p className="rounded-xl border border-line bg-surface p-6 text-center text-muted">{t('legalDocs.page.notFound')}</p>
+              <EmptyState className="rounded-3xl border border-line bg-card" illustration={<Lost />} title={t('legalDocs.page.notFound')} />
             ) : (
               <DocumentBody doc={data} fallback={false} archived={data.status !== 'PUBLISHED'} />
             )}

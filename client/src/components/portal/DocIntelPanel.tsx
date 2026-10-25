@@ -25,8 +25,8 @@ import { FormButtons, PacketActions } from '@/components/docsIntel/PacketAndForm
 
 const Section = ({ icon: Icon, title, desc, children }: { icon: typeof ScanLine; title: string; desc?: string; children: React.ReactNode }) => (
   <div className="rounded-xl border border-line bg-white/60 p-4 sm:p-5">
-    <h4 className="flex items-center gap-2 text-sm font-bold text-navy-900">
-      <Icon className="size-4 text-brand-600" aria-hidden /> {title}
+    <h4 className="flex items-center gap-2 text-sm font-bold text-ink">
+      <Icon className="size-4 text-primary" aria-hidden /> {title}
     </h4>
     {desc && <p className="mt-0.5 mb-3 text-xs text-muted">{desc}</p>}
     {!desc && <div className="mb-3" />}
@@ -80,7 +80,7 @@ const PassportSection = ({ intel, caseId }: { intel: CaseIntel; caseId: string }
     <div className="space-y-3">
       {!mrz && (
         <div className="flex flex-wrap items-center gap-2 text-sm">
-          <span className={clsx(st.tone === 'warn' ? 'text-amber-700' : st.tone === 'danger' ? 'text-danger' : 'text-muted')}>{st.text}</span>
+          <span className={clsx(st.tone === 'warn' ? 'text-warning-fg' : st.tone === 'danger' ? 'text-danger' : 'text-muted')}>{st.text}</span>
           {p.isImage && intel.ocrAvailable && !p.ocrAt && (
             <button type="button" className="btn-secondary btn-sm" onClick={run} disabled={!!busy}>
               {busy === 'run' ? <Spinner className="size-3.5" /> : <ScanLine className="size-3.5" aria-hidden />} {t('docsIntel.ocr.run')}
@@ -93,30 +93,30 @@ const PassportSection = ({ intel, caseId }: { intel: CaseIntel; caseId: string }
           <dl className="grid gap-x-6 gap-y-1.5 text-sm sm:grid-cols-2">
             <div className="flex justify-between gap-3 sm:col-span-2">
               <dt className="text-muted">{t('docsIntel.ocr.fields.surname')} / {t('docsIntel.ocr.fields.givenNames')}</dt>
-              <dd className="font-mono font-semibold text-navy-900">{mrz.surname} {mrz.givenNames}</dd>
+              <dd className="font-mono font-semibold text-ink">{mrz.surname} {mrz.givenNames}</dd>
             </div>
             {PROFILE_KEYS.map((k) => {
               const label = k === 'passportNumber' ? 'documentNumber' : k === 'passportExpiry' ? 'expiryDate' : k;
               return (
                 <div key={k} className="flex justify-between gap-3">
                   <dt className="text-muted">{t(`docsIntel.ocr.fields.${label}`)}</dt>
-                  <dd className={clsx('font-mono font-semibold', diff.includes(k) ? 'text-brand-700' : 'text-navy-900')}>{p.extracted?.[k] ?? '—'}</dd>
+                  <dd className={clsx('font-mono font-semibold', diff.includes(k) ? 'text-link' : 'text-ink')}>{p.extracted?.[k] ?? '—'}</dd>
                 </div>
               );
             })}
           </dl>
           {!mrz.valid && (
-            <p className="flex items-start gap-2 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800">
+            <p className="flex items-start gap-2 rounded-lg bg-warning-bg px-3 py-2 text-xs text-warning-fg">
               <AlertTriangle className="mt-0.5 size-3.5 shrink-0" aria-hidden /> {t('docsIntel.ocr.invalid')}
             </p>
           )}
           {expiry === 'soon' && (
-            <p className="flex items-start gap-2 rounded-lg bg-amber-50 px-3 py-2 text-xs font-medium text-amber-800">
+            <p className="flex items-start gap-2 rounded-lg bg-warning-bg px-3 py-2 text-xs font-medium text-warning-fg">
               <AlertTriangle className="mt-0.5 size-3.5 shrink-0" aria-hidden /> {t('docsIntel.ocr.expiryWarning')}
             </p>
           )}
           {expiry === 'expired' && (
-            <p className="flex items-start gap-2 rounded-lg bg-red-50 px-3 py-2 text-xs font-medium text-danger">
+            <p className="flex items-start gap-2 rounded-lg bg-danger-bg px-3 py-2 text-xs font-medium text-danger">
               <AlertTriangle className="mt-0.5 size-3.5 shrink-0" aria-hidden /> {t('docsIntel.ocr.expired')}
             </p>
           )}
@@ -133,7 +133,7 @@ const PassportSection = ({ intel, caseId }: { intel: CaseIntel; caseId: string }
               </div>
             </div>
           ) : (
-            <p className="flex items-center gap-1.5 text-xs text-emerald-700">
+            <p className="flex items-center gap-1.5 text-xs text-success-fg">
               <CheckCircle2 className="size-3.5" aria-hidden /> {t('docsIntel.ocr.matches')}
             </p>
           )}
@@ -158,7 +158,7 @@ export default function DocIntelPanel({ caseId, caseNumber }: { caseId: string; 
           <Sparkles className="size-6" aria-hidden />
         </span>
         <div className="min-w-0 flex-1">
-          <h3 id="doc-intel-title" className="text-xl font-bold text-navy-900">
+          <h3 id="doc-intel-title" className="text-xl font-bold text-ink">
             {t('docsIntel.panel.title')}
           </h3>
           <p className="mt-0.5 text-sm text-muted">{t('docsIntel.panel.subtitle')}</p>

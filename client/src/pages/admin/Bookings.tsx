@@ -231,16 +231,16 @@ function ConsultationBookings() {
           />
           {view !== 'list' && (
             <div className="flex items-center gap-1">
-              <button type="button" className="grid size-9 place-items-center rounded-lg border border-line bg-white text-navy-900 hover:border-brand-400" onClick={() => shift(-1)} aria-label={t('adminBookings.prev')}>
+              <button type="button" className="grid size-9 place-items-center rounded-lg border border-line bg-card text-ink hover:border-line-strong" onClick={() => shift(-1)} aria-label={t('adminBookings.prev')}>
                 <ChevronLeft className="size-4" />
               </button>
-              <button type="button" className="btn-white btn-sm min-h-9 border border-line" onClick={() => setAnchor(new Date())}>
+              <button type="button" className="btn-secondary btn-sm min-h-9" onClick={() => setAnchor(new Date())}>
                 {t('adminBookings.today')}
               </button>
-              <button type="button" className="grid size-9 place-items-center rounded-lg border border-line bg-white text-navy-900 hover:border-brand-400" onClick={() => shift(1)} aria-label={t('adminBookings.next')}>
+              <button type="button" className="grid size-9 place-items-center rounded-lg border border-line bg-card text-ink hover:border-line-strong" onClick={() => shift(1)} aria-label={t('adminBookings.next')}>
                 <ChevronRight className="size-4" />
               </button>
-              <span className="ml-2 text-sm font-semibold text-navy-900">{rangeLabel}</span>
+              <span className="ml-2 text-sm font-semibold text-ink">{rangeLabel}</span>
             </div>
           )}
         </div>
@@ -257,7 +257,7 @@ function ConsultationBookings() {
             </select>
           )}
           {view !== 'list' && freeInView.length > 0 && (
-            <button type="button" className="btn-white btn-sm min-h-9 border border-line text-danger" onClick={() => setBulkOpen(true)}>
+            <button type="button" className="btn-secondary btn-sm min-h-9 text-danger-fg" onClick={() => setBulkOpen(true)}>
               <Trash2 className="size-3.5" aria-hidden /> {t('adminBookings.deleteFree')}
             </button>
           )}
@@ -271,7 +271,7 @@ function ConsultationBookings() {
       ) : slotsQ.error ? (
         <ErrorBlock error={slotsQ.error} onRetry={() => slotsQ.refetch()} />
       ) : slots.length === 0 ? (
-        <div className="rounded-xl border border-line bg-white">
+        <div className="rounded-xl border border-line bg-card">
           <EmptyState icon={CalendarPlus} title={t('adminBookings.noSlots')}>
             {t('adminBookings.noSlotsText')}
           </EmptyState>
@@ -284,10 +284,10 @@ function ConsultationBookings() {
             const isToday = key === localKey(new Date());
             const c = labels.chip(d, tz);
             return (
-              <section key={key} className={clsx('min-w-0 overflow-hidden rounded-xl border bg-white', isToday ? 'border-brand-400' : 'border-line')} aria-label={labels.long(d, tz)}>
-                <header className={clsx('flex items-baseline gap-2 border-b px-3 py-2', isToday ? 'border-brand-100 bg-brand-50' : 'border-line')}>
+              <section key={key} className={clsx('min-w-0 overflow-hidden rounded-xl border bg-card', isToday ? 'border-line-strong' : 'border-line')} aria-label={labels.long(d, tz)}>
+                <header className={clsx('flex items-baseline gap-2 border-b px-3 py-2', isToday ? 'border-primary/25 bg-primary/[0.06]' : 'border-line')}>
                   <span className="text-xs font-semibold text-muted uppercase">{c.weekday}</span>
-                  <span className={clsx('font-display text-lg font-bold', isToday ? 'text-brand-700' : 'text-navy-900')}>{c.day}</span>
+                  <span className={clsx('font-display text-lg font-bold', isToday ? 'text-link' : 'text-ink')}>{c.day}</span>
                   <span className="text-xs text-muted">{c.month}</span>
                   {list.length > 0 && <span className="ml-auto text-[11px] text-muted tabular-nums">{list.filter((s) => !isFree(s)).length}/{list.length}</span>}
                 </header>
@@ -343,16 +343,16 @@ const SlotPill = ({
   const past = new Date(slot.startsAt).getTime() < Date.now();
   if (isFree(slot)) {
     return (
-      <li className={clsx('group flex min-h-9 min-w-0 items-center gap-1 rounded-lg border border-dashed border-slate-300 pl-2.5 text-xs text-muted', past && 'opacity-50', wide && 'justify-between')}>
+      <li className={clsx('group flex min-h-9 min-w-0 items-center gap-1 rounded-lg border border-dashed border-line-strong pl-2.5 text-xs text-muted', past && 'opacity-50', wide && 'justify-between')}>
         <span className="min-w-0 flex-1 font-semibold tabular-nums">{time}</span>
         {wide && <span className="flex-1 px-2">{t('adminBookings.free')}</span>}
-        {showStaff && <span className="rounded bg-surface px-1 text-[10px] font-semibold">{initials(slot.staff)}</span>}
+        {showStaff && <span className="rounded bg-sunken px-1 text-[10px] font-semibold">{initials(slot.staff)}</span>}
         {!past && (
           <button
             type="button"
             onClick={onDelete}
             disabled={deleting}
-            className="grid size-8 shrink-0 place-items-center rounded-md text-muted transition hover:bg-red-50 hover:text-danger"
+            className="grid size-8 shrink-0 place-items-center rounded-md text-muted transition hover:bg-danger-bg hover:text-danger-fg"
             aria-label={`${t('adminBookings.deleteSlot')} ${time}`}
             title={t('adminBookings.deleteSlot')}
           >
@@ -370,7 +370,7 @@ const SlotPill = ({
         onClick={onOpen}
         className={clsx(
           'flex w-full min-w-0 items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-xs transition hover:brightness-95',
-          b.status === 'BOOKED' ? 'bg-brand-600 text-white' : BOOKING_STATUS_TONE[b.status],
+          b.status === 'BOOKED' ? 'bg-primary text-primary-contrast' : BOOKING_STATUS_TONE[b.status],
         )}
       >
         <span className="shrink-0 font-semibold tabular-nums">{time}</span>
@@ -418,22 +418,22 @@ const BookingList = ({
       ) : q.error ? (
         <ErrorBlock error={q.error} onRetry={() => q.refetch()} />
       ) : items.length === 0 ? (
-        <div className="rounded-xl border border-line bg-white">
+        <div className="rounded-xl border border-line bg-card">
           <EmptyState icon={CalendarClock} title={t('adminBookings.noBookings')} />
         </div>
       ) : (
-        <ul className="divide-y divide-line overflow-hidden rounded-xl border border-line bg-white">
+        <ul className="divide-y divide-line overflow-hidden rounded-xl border border-line bg-card">
           {items.map((b) => (
             <li key={b.id}>
-              <button type="button" onClick={() => onOpen({ booking: b, slot: b.slot })} className="flex w-full items-center gap-3 px-4 py-3 text-left transition hover:bg-surface sm:px-5">
+              <button type="button" onClick={() => onOpen({ booking: b, slot: b.slot })} className="flex w-full items-center gap-3 px-4 py-3 text-left transition hover:bg-sunken sm:px-5">
                 <span className="w-24 shrink-0 sm:w-36">
-                  <span className="block text-xs font-semibold text-navy-900">{labels.date(b.slot.startsAt, tz)}</span>
+                  <span className="block text-xs font-semibold text-ink">{labels.date(b.slot.startsAt, tz)}</span>
                   <span className="block text-xs text-muted tabular-nums">
                     {fmtTime(b.slot.startsAt, tz)}–{fmtTime(b.slot.endsAt, tz)}
                   </span>
                 </span>
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate text-sm font-semibold text-navy-900">{b.name}</span>
+                  <span className="block truncate text-sm font-semibold text-ink">{b.name}</span>
                   <span className="block truncate text-xs text-muted">
                     {t(`bookingCommon.topic.${b.topic ?? 'other'}`)} · {b.email}
                     {showStaff && ` · ${b.slot.staff.firstName} ${b.slot.staff.lastName}`}
@@ -514,14 +514,14 @@ const BookingDrawer = ({ selected, onClose, onChanged, tz }: { selected: Selecte
       >
         {selected && b && (
           <div className="space-y-5">
-            <div className="rounded-xl bg-navy-900 p-4 text-white">
+            <div className="rounded-xl bg-primary p-4 text-primary-contrast">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <p className="font-display text-lg font-bold">{labels.long(selected.slot.startsAt, tz)}</p>
-                  <p className="text-sm text-white/80 tabular-nums">
+                  <p className="text-sm text-primary-contrast/80 tabular-nums">
                     {fmtTime(selected.slot.startsAt, tz)}–{fmtTime(selected.slot.endsAt, tz)} · Bakı {fmtTime(selected.slot.startsAt, 'Asia/Baku')} · Berlin {fmtTime(selected.slot.startsAt, 'Europe/Berlin')}
                   </p>
-                  <p className="mt-1 text-xs text-white/60">
+                  <p className="mt-1 text-xs text-primary-contrast/60">
                     {selected.slot.staff.firstName} {selected.slot.staff.lastName}
                   </p>
                 </div>
@@ -536,7 +536,7 @@ const BookingDrawer = ({ selected, onClose, onChanged, tz }: { selected: Selecte
 
             <section>
               <h3 className="mb-2 text-xs font-semibold text-muted uppercase">{t('adminBookings.detail.contact')}</h3>
-              <p className="text-base font-semibold text-navy-900">{b.name}</p>
+              <p className="text-base font-semibold text-ink">{b.name}</p>
               <div className="mt-2 flex flex-wrap gap-2">
                 <a href={`mailto:${b.email}`} className="btn-secondary btn-sm">
                   <Mail className="size-3.5" aria-hidden /> {b.email}
@@ -555,17 +555,17 @@ const BookingDrawer = ({ selected, onClose, onChanged, tz }: { selected: Selecte
             </section>
 
             <dl className="grid grid-cols-2 gap-3 text-sm">
-              <div className="rounded-lg bg-surface p-3">
+              <div className="rounded-lg bg-sunken p-3">
                 <dt className="text-[11px] text-muted">{t('adminBookings.detail.topic')}</dt>
-                <dd className="font-semibold text-navy-900">{t(`bookingCommon.topic.${b.topic ?? 'other'}`)}</dd>
+                <dd className="font-semibold text-ink">{t(`bookingCommon.topic.${b.topic ?? 'other'}`)}</dd>
               </div>
-              <div className="rounded-lg bg-surface p-3">
+              <div className="rounded-lg bg-sunken p-3">
                 <dt className="text-[11px] text-muted">{t('adminBookings.detail.language')}</dt>
-                <dd className="font-semibold text-navy-900 uppercase">{b.locale}</dd>
+                <dd className="font-semibold text-ink uppercase">{b.locale}</dd>
               </div>
-              <div className="col-span-2 rounded-lg bg-surface p-3">
+              <div className="col-span-2 rounded-lg bg-sunken p-3">
                 <dt className="text-[11px] text-muted">{t('adminBookings.detail.booked')}</dt>
-                <dd className="font-semibold text-navy-900">{fmtDateTime(b.createdAt)}</dd>
+                <dd className="font-semibold text-ink">{fmtDateTime(b.createdAt)}</dd>
               </div>
             </dl>
 
@@ -823,26 +823,26 @@ const TemplateModal = ({
           const day = days[d];
           return (
             <li key={d} className="flex flex-col gap-2 px-3 py-2.5 sm:flex-row sm:items-start">
-              <label className="flex min-h-9 w-44 shrink-0 cursor-pointer items-center gap-2.5 text-sm font-semibold text-navy-900">
-                <input type="checkbox" className="size-4 accent-brand-600" checked={day.on} onChange={(e) => update(d, (x) => ({ ...x, on: e.target.checked }))} />
+              <label className="flex min-h-9 w-44 shrink-0 cursor-pointer items-center gap-2.5 text-sm font-semibold text-ink">
+                <input type="checkbox" className="size-4 accent-primary" checked={day.on} onChange={(e) => update(d, (x) => ({ ...x, on: e.target.checked }))} />
                 {weekdays[d]}
               </label>
               {day.on && (
                 <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
                   {day.ranges.map((r, i) => (
-                    <span key={i} className="inline-flex items-center gap-1 rounded-lg border border-line bg-surface p-1">
-                      <input type="time" step={300} aria-label={t('adminBookings.tpl.from')} className="rounded-md border-0 bg-white px-1.5 py-1 text-xs tabular-nums" value={r.from} onChange={(e) => update(d, (x) => ({ ...x, ranges: x.ranges.map((y, j) => (j === i ? { ...y, from: e.target.value } : y)) }))} />
+                    <span key={i} className="inline-flex items-center gap-1 rounded-lg border border-line bg-sunken p-1">
+                      <input type="time" step={300} aria-label={t('adminBookings.tpl.from')} className="rounded-md border-0 bg-card px-1.5 py-1 text-xs tabular-nums" value={r.from} onChange={(e) => update(d, (x) => ({ ...x, ranges: x.ranges.map((y, j) => (j === i ? { ...y, from: e.target.value } : y)) }))} />
                       <span className="text-xs text-muted">–</span>
-                      <input type="time" step={300} aria-label={t('adminBookings.tpl.to')} className="rounded-md border-0 bg-white px-1.5 py-1 text-xs tabular-nums" value={r.to} onChange={(e) => update(d, (x) => ({ ...x, ranges: x.ranges.map((y, j) => (j === i ? { ...y, to: e.target.value } : y)) }))} />
+                      <input type="time" step={300} aria-label={t('adminBookings.tpl.to')} className="rounded-md border-0 bg-card px-1.5 py-1 text-xs tabular-nums" value={r.to} onChange={(e) => update(d, (x) => ({ ...x, ranges: x.ranges.map((y, j) => (j === i ? { ...y, to: e.target.value } : y)) }))} />
                       {day.ranges.length > 1 && (
-                        <button type="button" className="grid size-7 place-items-center rounded-md text-muted hover:bg-red-50 hover:text-danger" aria-label={t('adminBookings.tpl.removeRange')} onClick={() => update(d, (x) => ({ ...x, ranges: x.ranges.filter((_, j) => j !== i) }))}>
+                        <button type="button" className="grid size-7 place-items-center rounded-md text-muted hover:bg-danger-bg hover:text-danger-fg" aria-label={t('adminBookings.tpl.removeRange')} onClick={() => update(d, (x) => ({ ...x, ranges: x.ranges.filter((_, j) => j !== i) }))}>
                           <X className="size-3.5" />
                         </button>
                       )}
                     </span>
                   ))}
                   {day.ranges.length < 6 && (
-                    <button type="button" className="inline-flex min-h-8 items-center gap-1 rounded-lg px-2 text-xs font-semibold text-brand-600 hover:bg-brand-50" onClick={() => update(d, (x) => ({ ...x, ranges: [...x.ranges, { from: '15:00', to: '16:00' }] }))}>
+                    <button type="button" className="inline-flex min-h-8 items-center gap-1 rounded-lg px-2 text-xs font-semibold text-link hover:bg-primary/[0.06]" onClick={() => update(d, (x) => ({ ...x, ranges: [...x.ranges, { from: '15:00', to: '16:00' }] }))}>
                       <Plus className="size-3.5" aria-hidden /> {t('adminBookings.tpl.addRange')}
                     </button>
                   )}

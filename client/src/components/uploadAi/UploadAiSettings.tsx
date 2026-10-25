@@ -37,7 +37,7 @@ export const UploadAiSettingsPanel = () => {
   };
 
   const row = (key: keyof Omit<UploadAiSettings, 'autoApply'>, label: string) => (
-    <div className="flex items-center justify-between gap-4 rounded-lg border border-line bg-surface p-3">
+    <div className="flex items-center justify-between gap-4 rounded-lg border border-line bg-sunken p-3">
       <p className="text-sm font-semibold text-ink">{label}</p>
       <Switch checked={s[key]} disabled={saving} onChange={(v) => void save({ [key]: v })} label={label} />
     </div>
@@ -51,7 +51,7 @@ export const UploadAiSettingsPanel = () => {
         {row('aiEnabled', t('uploadAi.settings.aiEnabled'))}
         {row('qualityEnabled', t('uploadAi.settings.qualityEnabled'))}
       </div>
-      <div className="mt-3 rounded-lg border border-line bg-surface p-3">
+      <div className="mt-3 rounded-lg border border-line bg-sunken p-3">
         <div className="flex items-start justify-between gap-4">
           <div>
             <p className="text-sm font-semibold text-ink">{t('uploadAi.settings.autoApply')}</p>
@@ -74,7 +74,7 @@ export const UploadAiSettingsPanel = () => {
                     onClick={() => void save({ autoApply: { threshold: v } })}
                     className={clsx(
                       'min-h-9 rounded-lg border px-3 text-xs font-semibold tabular-nums transition lg:min-h-8',
-                      Math.abs(s.autoApply.threshold - v) < 0.001 ? 'border-brand-600 bg-brand-600 text-white' : 'border-line bg-card text-ink hover:bg-brand-50 dark:hover:bg-white/5',
+                      Math.abs(s.autoApply.threshold - v) < 0.001 ? 'border-line-strong bg-sunken text-ink shadow-[inset_0_0_0_1px_var(--color-line-strong)]' : 'border-line bg-card text-ink hover:bg-primary/[0.06] dark:hover:bg-white/5',
                     )}
                   >
                     {Math.round(v * 100)}%

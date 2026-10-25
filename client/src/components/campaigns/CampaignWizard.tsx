@@ -90,11 +90,11 @@ const PreviewPane = ({ draft }: { draft: Draft }) => {
   return (
     <div className="rounded-xl border border-line bg-card">
       <div className="flex flex-wrap items-center gap-2 border-b border-line px-3 py-2">
-        <Eye className="size-4 text-brand-600" aria-hidden />
-        <span className="text-sm font-semibold text-navy-900">{t('campaigns.wizard.preview')}</span>
+        <Eye className="size-4 text-link" aria-hidden />
+        <span className="text-sm font-semibold text-ink">{t('campaigns.wizard.preview')}</span>
         <div className="ml-auto flex flex-wrap gap-1">
           {LANGS.map((l) => (
-            <button key={l} type="button" aria-pressed={lang === l} onClick={() => setLang(l)} className={clsx('min-h-8 rounded-md px-2 text-xs font-bold uppercase', lang === l ? 'bg-navy-900 text-white' : 'text-muted hover:bg-surface')}>
+            <button key={l} type="button" aria-pressed={lang === l} onClick={() => setLang(l)} className={clsx('min-h-8 rounded-md px-2 text-xs font-bold uppercase', lang === l ? 'bg-primary text-primary-contrast' : 'text-muted hover:bg-sunken')}>
               {l}
             </button>
           ))}
@@ -102,14 +102,14 @@ const PreviewPane = ({ draft }: { draft: Draft }) => {
       </div>
       <div className="flex gap-1 border-b border-line px-3 py-1.5">
         {(['EMAIL', 'IN_APP', 'SMS'] as const).map((c) => (
-          <button key={c} type="button" aria-pressed={tab === c} onClick={() => setTab(c)} className={clsx('min-h-8 rounded-md px-2.5 text-xs font-semibold', tab === c ? 'bg-brand-50 text-brand-700' : 'text-muted hover:bg-surface')}>
+          <button key={c} type="button" aria-pressed={tab === c} onClick={() => setTab(c)} className={clsx('min-h-8 rounded-md px-2.5 text-xs font-semibold', tab === c ? 'bg-primary/[0.06] text-link' : 'text-muted hover:bg-sunken')}>
             {t(`campaigns.wizard.preview${c === 'EMAIL' ? 'Email' : c === 'SMS' ? 'Sms' : 'InApp'}`)}
           </button>
         ))}
         {loading && <Spinner className="ml-auto size-4 self-center" />}
       </div>
       {data?.rejectedLinks.length ? (
-        <p className="border-b border-red-200 bg-red-50 px-3 py-2 text-xs text-red-800" role="alert">
+        <p className="border-b border-danger-border bg-danger-bg px-3 py-2 text-xs text-danger-fg" role="alert">
           {t('campaigns.wizard.rejectedLinks', { links: data.rejectedLinks.join(', ') })}
         </p>
       ) : null}
@@ -118,17 +118,17 @@ const PreviewPane = ({ draft }: { draft: Draft }) => {
           <p className="py-8 text-center text-sm text-muted">—</p>
         ) : tab === 'EMAIL' ? (
           <>
-            <p className="mb-2 truncate text-sm font-semibold text-navy-900" title={data.email.subject}>
+            <p className="mb-2 truncate text-sm font-semibold text-ink" title={data.email.subject}>
               {data.email.subject || '—'}
             </p>
             {/* Sandboxed: no scripts, no navigation out of the preview. */}
-            <iframe title={t('campaigns.wizard.previewEmail')} sandbox="" srcDoc={data.email.html} className="h-[28rem] w-full rounded-lg border border-line bg-white" />
+            <iframe title={t('campaigns.wizard.previewEmail')} sandbox="" srcDoc={data.email.html} className="h-[28rem] w-full rounded-lg border border-line bg-card" />
           </>
         ) : tab === 'SMS' ? (
-          <p className="max-w-sm rounded-2xl rounded-bl-sm bg-surface px-4 py-3 text-sm whitespace-pre-wrap text-ink">{data.sms || '—'}</p>
+          <p className="max-w-sm rounded-xl rounded-bl-sm bg-sunken px-4 py-3 text-sm whitespace-pre-wrap text-ink">{data.sms || '—'}</p>
         ) : (
           <div className="rounded-lg border border-line p-3">
-            <p className="text-sm font-semibold text-navy-900">{data.inApp.title || '—'}</p>
+            <p className="text-sm font-semibold text-ink">{data.inApp.title || '—'}</p>
             <p className="mt-1 text-xs whitespace-pre-line text-muted">{data.inApp.body}</p>
           </div>
         )}
@@ -207,7 +207,7 @@ export const CampaignWizard = ({ campaign }: { campaign?: Campaign }) => {
 
   return (
     <div className="mx-auto max-w-6xl">
-      <Link to={id ? `/admin/campaigns/${id}` : '/admin/campaigns'} className="mb-3 inline-flex min-h-10 items-center gap-1 text-sm font-semibold text-brand-700 hover:underline">
+      <Link to={id ? `/admin/campaigns/${id}` : '/admin/campaigns'} className="mb-3 inline-flex min-h-10 items-center gap-1 text-sm font-semibold text-link hover:underline">
         <ArrowLeft className="size-4" aria-hidden /> {t('campaigns.detail.back')}
       </Link>
       <PageHead
@@ -227,11 +227,11 @@ export const CampaignWizard = ({ campaign }: { campaign?: Campaign }) => {
               onClick={() => setStep(s)}
               aria-current={step === s ? 'step' : undefined}
               className={clsx(
-                'flex min-h-11 w-full items-center gap-2 rounded-lg border px-3 py-2 text-left text-xs font-semibold transition',
-                step === s ? 'border-brand-600 bg-brand-50 text-brand-700' : i < idx ? 'border-line bg-card text-navy-900' : 'border-line bg-card text-muted',
+                'flex min-h-10 sm:min-h-9 w-full items-center gap-2 rounded-lg border px-3 py-2 text-left text-xs font-semibold transition',
+                step === s ? 'border-primary bg-primary/[0.06] text-link' : i < idx ? 'border-line bg-card text-ink' : 'border-line bg-card text-muted',
               )}
             >
-              <span className={clsx('grid size-6 shrink-0 place-items-center rounded-full text-[11px]', i < idx ? 'bg-emerald-600 text-white' : step === s ? 'bg-brand-600 text-white' : 'bg-surface text-muted')}>
+              <span className={clsx('grid size-6 shrink-0 place-items-center rounded-full text-[11px]', i < idx ? 'bg-success text-white' : step === s ? 'bg-primary text-primary-contrast' : 'bg-sunken text-muted')}>
                 {i < idx ? <Check className="size-3.5" aria-hidden /> : i + 1}
               </span>
               <span className="min-w-0 truncate">{w(`steps.${s}`)}</span>
@@ -254,10 +254,10 @@ export const CampaignWizard = ({ campaign }: { campaign?: Campaign }) => {
                 <legend className="label">{w('kindTitle')}</legend>
                 <div className="grid gap-2 sm:grid-cols-2">
                   {(['SERVICE', 'MARKETING'] as const).map((k) => (
-                    <label key={k} className={clsx('flex cursor-pointer gap-3 rounded-lg border p-3 transition', draft.kind === k ? 'border-brand-600 bg-brand-50' : 'border-line hover:border-brand-400')}>
-                      <input type="radio" name={`${uid}-kind`} className="mt-1 accent-brand-600" checked={draft.kind === k} onChange={() => set('kind', k)} />
+                    <label key={k} className={clsx('flex cursor-pointer gap-3 rounded-lg border p-3 transition', draft.kind === k ? 'border-primary bg-primary/[0.06]' : 'border-line hover:border-line-strong')}>
+                      <input type="radio" name={`${uid}-kind`} className="mt-1 accent-primary" checked={draft.kind === k} onChange={() => set('kind', k)} />
                       <span>
-                        <span className="block text-sm font-semibold text-navy-900">{t(`campaigns.kind.${k}`)}</span>
+                        <span className="block text-sm font-semibold text-ink">{t(`campaigns.kind.${k}`)}</span>
                         <span className="mt-0.5 block text-xs text-muted">{t(`campaigns.kindHint.${k}`)}</span>
                       </span>
                     </label>
@@ -299,10 +299,10 @@ export const CampaignWizard = ({ campaign }: { campaign?: Campaign }) => {
                   role="tab"
                   aria-selected={lang === l}
                   onClick={() => setLang(l)}
-                  className={clsx('inline-flex min-h-9 items-center gap-1.5 rounded-lg border px-3 text-xs font-bold uppercase', lang === l ? 'border-navy-900 bg-navy-900 text-white' : 'border-line bg-card text-ink/80')}
+                  className={clsx('inline-flex min-h-9 items-center gap-1.5 rounded-lg border px-3 text-xs font-bold uppercase', lang === l ? 'border-line-strong bg-sunken text-ink shadow-[inset_0_0_0_1px_var(--color-line-strong)]' : 'border-line bg-card text-ink/80')}
                 >
                   {l}
-                  <span className={clsx('size-1.5 rounded-full', filled(draft.content[l]) ? 'bg-emerald-500' : 'bg-slate-300')} aria-label={filled(draft.content[l]) ? w('filled') : w('emptyLang')} />
+                  <span className={clsx('size-1.5 rounded-full', filled(draft.content[l]) ? 'bg-success' : 'bg-line-strong')} aria-label={filled(draft.content[l]) ? w('filled') : w('emptyLang')} />
                 </button>
               ))}
             </div>
@@ -326,7 +326,7 @@ export const CampaignWizard = ({ campaign }: { campaign?: Campaign }) => {
                 <textarea id={`${uid}-sms`} className="input" rows={3} maxLength={480} value={draft.content[lang].sms} onChange={(e) => setText(lang, 'sms', e.target.value)} />
                 <p className="mt-1 text-xs text-muted">{w('smsHint', { count: draft.content[lang].sms.length })}</p>
               </div>
-              <p className="rounded-lg bg-surface px-3 py-2 text-xs text-muted">{w('fallback')}</p>
+              <p className="rounded-lg bg-sunken px-3 py-2 text-xs text-muted">{w('fallback')}</p>
             </div>
           </Panel>
           <div className="space-y-3">
@@ -345,20 +345,20 @@ export const CampaignWizard = ({ campaign }: { campaign?: Campaign }) => {
               {CHANNELS.map((c) => {
                 const on = draft.channels.includes(c);
                 return (
-                  <label key={c} className={clsx('flex min-h-11 cursor-pointer items-center gap-3 rounded-lg border px-3 py-2', on ? 'border-brand-600 bg-brand-50' : 'border-line')}>
-                    <input type="checkbox" className="size-4 accent-brand-600" checked={on} onChange={() => set('channels', on ? draft.channels.filter((x) => x !== c) : [...draft.channels, c])} />
-                    <span className="text-sm font-semibold text-navy-900">{t(`campaigns.channel.${c}`)}</span>
+                  <label key={c} className={clsx('flex min-h-10 sm:min-h-9 cursor-pointer items-center gap-3 rounded-lg border px-3 py-2', on ? 'border-primary bg-primary/[0.06]' : 'border-line')}>
+                    <input type="checkbox" className="size-4 accent-primary" checked={on} onChange={() => set('channels', on ? draft.channels.filter((x) => x !== c) : [...draft.channels, c])} />
+                    <span className="text-sm font-semibold text-ink">{t(`campaigns.channel.${c}`)}</span>
                   </label>
                 );
               })}
-              {!draft.channels.length && <p className="text-xs text-danger">{w('noChannel')}</p>}
+              {!draft.channels.length && <p className="text-xs text-danger-fg">{w('noChannel')}</p>}
             </div>
             <fieldset className="mt-6">
               <legend className="label">{w('when')}</legend>
               <div className="flex flex-wrap gap-2">
                 {(['now', 'later'] as const).map((v) => (
-                  <label key={v} className={clsx('flex min-h-10 cursor-pointer items-center gap-2 rounded-lg border px-3 text-sm', when === v ? 'border-brand-600 bg-brand-50 font-semibold' : 'border-line')}>
-                    <input type="radio" name={`${uid}-when`} className="accent-brand-600" checked={when === v} onChange={() => setWhen(v)} />
+                  <label key={v} className={clsx('flex min-h-10 cursor-pointer items-center gap-2 rounded-lg border px-3 text-sm', when === v ? 'border-primary bg-primary/[0.06] font-semibold' : 'border-line')}>
+                    <input type="radio" name={`${uid}-when`} className="accent-primary" checked={when === v} onChange={() => setWhen(v)} />
                     {w(v)}
                   </label>
                 ))}
@@ -403,30 +403,30 @@ export const CampaignWizard = ({ campaign }: { campaign?: Campaign }) => {
             <dl className="grid gap-3 text-sm sm:grid-cols-2">
               <div>
                 <dt className="text-xs text-muted">{w('name')}</dt>
-                <dd className="font-semibold text-navy-900">{draft.name || '—'}</dd>
+                <dd className="font-semibold text-ink">{draft.name || '—'}</dd>
               </div>
               <div>
                 <dt className="text-xs text-muted">{w('kindTitle')}</dt>
-                <dd className="font-semibold text-navy-900">{t(`campaigns.kind.${draft.kind}`)}</dd>
+                <dd className="font-semibold text-ink">{t(`campaigns.kind.${draft.kind}`)}</dd>
               </div>
               <div>
                 <dt className="text-xs text-muted">{w('segment')}</dt>
-                <dd className="font-semibold text-navy-900">{segment?.name ?? '—'}</dd>
+                <dd className="font-semibold text-ink">{segment?.name ?? '—'}</dd>
               </div>
               <div>
                 <dt className="text-xs text-muted">{w('channelsTitle')}</dt>
-                <dd className="font-semibold text-navy-900">{draft.channels.map((c) => t(`campaigns.channel.${c}`)).join(', ') || '—'}</dd>
+                <dd className="font-semibold text-ink">{draft.channels.map((c) => t(`campaigns.channel.${c}`)).join(', ') || '—'}</dd>
               </div>
               <div>
                 <dt className="text-xs text-muted">{w('language')}</dt>
-                <dd className="font-semibold text-navy-900 uppercase">{LANGS.filter((l) => filled(draft.content[l])).join(', ') || '—'}</dd>
+                <dd className="font-semibold text-ink uppercase">{LANGS.filter((l) => filled(draft.content[l])).join(', ') || '—'}</dd>
               </div>
               <div>
                 <dt className="text-xs text-muted">{w('when')}</dt>
-                <dd className="font-semibold text-navy-900">{when === 'now' ? w('now') : `${sendAt.replace('T', ' ')} (${w('tz')})`}</dd>
+                <dd className="font-semibold text-ink">{when === 'now' ? w('now') : `${sendAt.replace('T', ' ')} (${w('tz')})`}</dd>
               </div>
             </dl>
-            <p className={clsx('mt-5 rounded-lg border px-3 py-2 text-sm', draft.kind === 'MARKETING' ? 'border-amber-200 bg-amber-50 text-amber-900' : 'border-line bg-surface text-ink')}>
+            <p className={clsx('mt-5 rounded-lg border px-3 py-2 text-sm', draft.kind === 'MARKETING' ? 'border-warning-border bg-warning-bg text-warning-fg' : 'border-line bg-sunken text-ink')}>
               {draft.kind === 'MARKETING' ? w('marketingWarn', { count: recipientsEstimate }) : w('serviceNote')}
             </p>
             <div className="mt-5 flex flex-wrap gap-2">

@@ -12,6 +12,8 @@ export type BadgeProps = {
   /** Thin border in the tone colour (for badges on tinted surfaces). */
   outline?: boolean;
   size?: 'sm' | 'md';
+  /** Fully rounded pill instead of the default soft rectangle. */
+  pill?: boolean;
   className?: string;
   title?: string;
 };
@@ -21,18 +23,19 @@ export type BadgeProps = {
  *
  *   <Badge tone="brand">Admin</Badge>
  */
-export const Badge = ({ tone = 'neutral', children, dot, icon: Icon, outline, size = 'md', className, title }: BadgeProps) => (
+export const Badge = ({ tone = 'neutral', children, dot, icon: Icon, outline, size = 'md', pill, className, title }: BadgeProps) => (
   <span
     title={title}
     className={clsx(
       'badge whitespace-nowrap',
       size === 'sm' && 'px-1.5 py-px text-[10px]',
+      pill && 'rounded-full',
       TONE_CLASS[tone],
       outline && ['border', TONE_BORDER[tone]],
       className,
     )}
   >
-    {dot && <span className="size-1.5 shrink-0 rounded-full bg-current opacity-70" aria-hidden />}
+    {dot && <span className="size-1.5 shrink-0 rounded-full bg-current opacity-80" aria-hidden />}
     {Icon && <Icon className={size === 'sm' ? 'size-3' : 'size-3.5'} aria-hidden />}
     {children}
   </span>

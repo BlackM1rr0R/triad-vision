@@ -1,8 +1,10 @@
 import { useEffect, useId, useState, type FormEvent } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { BellRing, Check, MailCheck } from 'lucide-react';
+import { BellRing, Check } from 'lucide-react';
 import clsx from 'clsx';
+import { buttonClass } from '@/components/ui/Button';
+import { Success } from '@/components/illustrations';
 import { api, errorCode } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { leadContext } from '@/lib/leadVisitor';
@@ -40,8 +42,8 @@ export const ProfessionPicker = ({ options, value, onChange, legend, hint }: { o
           <label
             key={p.key}
             className={clsx(
-              'inline-flex min-h-9 cursor-pointer items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-brand-400',
-              on ? 'border-brand-600 bg-brand-600 text-white' : 'border-line bg-white text-navy-900 hover:border-brand-400',
+              'inline-flex min-h-10 cursor-pointer items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-sm font-semibold transition-colors has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-focus/40',
+              on ? 'border-primary bg-primary text-primary-contrast' : 'border-line bg-card text-ink hover:border-line-strong',
             )}
           >
             <input type="checkbox" className="sr-only" checked={on} onChange={() => onChange(on ? value.filter((x) => x !== p.key) : [...value, p.key].slice(0, 10))} />
@@ -102,22 +104,22 @@ export const JobAlertForm = ({ profession, className }: { profession?: string | 
 
   if (state.s === 'pending' || state.s === 'confirmed') {
     return (
-      <div className={clsx('card card-pad text-center', className)} role="status">
-        <MailCheck className="mx-auto size-10 text-brand-600" aria-hidden />
-        <p className="mt-3 font-display text-lg font-bold text-navy-900">{t(state.s === 'pending' ? 'discover.alerts.pendingTitle' : 'discover.alerts.confirmedTitle')}</p>
+      <div className={clsx('card card-pad rounded-3xl text-center', className)} role="status">
+        <Success className="mx-auto w-32" />
+        <p className="mt-3 font-display text-lg font-semibold text-ink">{t(state.s === 'pending' ? 'discover.alerts.pendingTitle' : 'discover.alerts.confirmedTitle')}</p>
         <p className="mt-1 text-sm text-muted">{state.s === 'pending' ? t('discover.alerts.pendingText', { email }) : t('discover.alerts.confirmedText')}</p>
       </div>
     );
   }
 
   return (
-    <section className={clsx('card card-pad', className)} aria-labelledby={`${id}-title`}>
+    <section className={clsx('card card-pad rounded-3xl', className)} aria-labelledby={`${id}-title`}>
       <div className="flex items-start gap-3">
-        <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-brand-50 text-brand-600" aria-hidden>
+        <span className="grid size-11 shrink-0 place-items-center rounded-xl chip-soft" aria-hidden>
           <BellRing className="size-5" />
         </span>
         <div className="min-w-0">
-          <h2 id={`${id}-title`} className="font-display text-lg font-bold text-navy-900">
+          <h2 id={`${id}-title`} className="font-display text-lg font-semibold text-ink">
             {t('discover.alerts.title')}
           </h2>
           <p className="mt-1 text-sm text-muted">{t('discover.alerts.text')}</p>
@@ -127,7 +129,7 @@ export const JobAlertForm = ({ profession, className }: { profession?: string | 
         {options ? (
           <ProfessionPicker options={options.professions} value={professions} onChange={setProfessions} legend={t('discover.alerts.professions')} hint={t('discover.alerts.professionsHint')} />
         ) : (
-          <div className="h-24 animate-pulse rounded-xl bg-surface" aria-hidden />
+          <div className="h-24 animate-pulse rounded-xl bg-sunken" aria-hidden />
         )}
         <div className="grid gap-3 sm:grid-cols-2">
           <div>
@@ -148,7 +150,7 @@ export const JobAlertForm = ({ profession, className }: { profession?: string | 
             <div className="flex flex-wrap gap-x-4 gap-y-2 pt-2">
               {(options?.kinds ?? ['work', 'ausbildung', 'seasonal']).map((k) => (
                 <label key={k} className="inline-flex cursor-pointer items-center gap-2 text-sm text-ink">
-                  <input type="checkbox" className="size-4 accent-brand-600" checked={kinds.includes(k)} onChange={() => setKinds((v) => (v.includes(k) ? v.filter((x) => x !== k) : [...v, k]))} />
+                  <input type="checkbox" className="size-4 accent-primary" checked={kinds.includes(k)} onChange={() => setKinds((v) => (v.includes(k) ? v.filter((x) => x !== k) : [...v, k]))} />
                   {t(`discover.alerts.kind.${k}`)}
                 </label>
               ))}
@@ -162,14 +164,14 @@ export const JobAlertForm = ({ profession, className }: { profession?: string | 
             </label>
             <input id={`${id}-email`} type="email" required maxLength={190} autoComplete="email" className="input" value={email} onChange={(e) => setEmail(e.target.value)} />
           </div>
-          <button type="submit" className="btn-primary shrink-0" disabled={state.s === 'sending'}>
+          <button type="submit" className={buttonClass({ className: 'shrink-0' })} disabled={state.s === 'sending'}>
             <BellRing className="size-4" aria-hidden /> {state.s === 'sending' ? t('discover.alerts.sending') : t('discover.alerts.submit')}
           </button>
         </div>
         {/* honeypot for bots */}
         <input type="text" name="website" tabIndex={-1} autoComplete="off" className="hidden" aria-hidden value={website} onChange={(e) => setWebsite(e.target.value)} />
         {state.s === 'error' && (
-          <p className="rounded-lg bg-red-50 p-3 text-sm text-red-800" role="alert">
+          <p className="rounded-xl bg-danger-bg p-3 text-sm text-danger-fg" role="alert">
             {state.msg}
           </p>
         )}

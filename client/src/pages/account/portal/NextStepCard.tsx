@@ -35,6 +35,31 @@ import { useL10n } from '@/lib/l10n';
 import { useMorphSource } from '@/lib/viewTransition';
 import type { L10n } from '@/lib/types';
 import type { NextAction, NextKind, NextStep } from '@/components/portal/usePortalNav';
+import { CalendarDay, Documents, Germany, Handshake, Learning, PassportUpload, Success, Traveller, type IllustrationProps } from '@/components/illustrations';
+import type { ComponentType } from 'react';
+
+/** The drawing on the right of the next-step card (sm+): what the step is about, at a glance. */
+const KIND_ILLUSTRATION: Record<NextKind, ComponentType<IllustrationProps>> = {
+  ACCEPT_LEGAL: Documents,
+  PAY_INVOICE: Documents,
+  FIX_DOCS: PassportUpload,
+  UPLOAD_DOCS: PassportUpload,
+  SUBMIT_DOCS: PassportUpload,
+  SIGN_CONTRACT: Documents,
+  ATTEND_APPOINTMENT: CalendarDay,
+  SIGN_DOCUMENTS: Documents,
+  CONFIRM_DATA: Documents,
+  FILL_FORM: Documents,
+  CLIENT_TASK: Documents,
+  RECOGNITION_DOCS: PassportUpload,
+  ANSWER_CHECKIN: Handshake,
+  ARRIVAL_PLAN: Germany,
+  RENEW_RESIDENCE: CalendarDay,
+  ONBOARDING: Learning,
+  START_CASE: Traveller,
+  PASSPORT_EXPIRY: PassportUpload,
+  COMPLETE_PROFILE: Documents,
+};
 
 export const KIND_ICON: Record<NextKind, LucideIcon> = {
   ACCEPT_LEGAL: ScrollText,
@@ -84,8 +109,8 @@ const SecondaryRow = ({ a }: { a: NextAction }) => {
   const Icon = KIND_ICON[a.kind];
   return (
     <li>
-      <Link to={a.to} className="group flex min-h-12 items-center gap-3 rounded-xl px-2 py-2 transition-colors hover:bg-surface sm:px-3">
-        <span className={clsx('grid size-9 shrink-0 place-items-center rounded-lg', a.overdue ? 'bg-danger-bg text-danger-fg' : 'bg-brand-50 text-brand-600')}>
+      <Link to={a.to} className="group flex min-h-12 items-center gap-3 rounded-xl px-2 py-2 transition-colors hover:bg-sunken sm:px-3">
+        <span className={clsx('grid size-9 shrink-0 place-items-center rounded-lg', a.overdue ? 'bg-danger-bg text-danger-fg' : 'chip-soft')}>
           <Icon className="size-4" aria-hidden />
         </span>
         <span className="min-w-0 flex-1">
@@ -116,7 +141,7 @@ export function NextStepCard({ data, loading, caseLink, tour }: { data: NextStep
 
   if (loading && !data) {
     return (
-      <section className="card flex items-center gap-4 p-5 sm:p-7" aria-busy="true" data-tour={tour}>
+      <section className="flex items-center gap-4 rounded-3xl border border-line bg-highlight-bg p-6 sm:p-9" aria-busy="true" data-tour={tour}>
         <Skeleton className="size-14" rounded="xl" />
         <div className="flex-1 space-y-2">
           <Skeleton className="h-3 w-32" />
@@ -132,29 +157,31 @@ export function NextStepCard({ data, loading, caseLink, tour }: { data: NextStep
   if (!a) {
     const side = data.waiting?.side ?? 'NONE';
     const Icon = side === 'EMBASSY' ? Landmark : side === 'TEAM' ? Hourglass : CheckCircle2;
+    const WaitArt = side === 'EMBASSY' ? Germany : side === 'TEAM' ? Documents : Success;
     return (
-      <section ref={morph.ref} className="card relative overflow-hidden" aria-labelledby="next-step-title" data-tour={tour}>
-        <span className={clsx('absolute inset-y-0 left-0 w-1.5', side === 'NONE' ? 'bg-success' : 'bg-info')} aria-hidden />
-        <div className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:p-7 sm:pl-8">
-          <span className={clsx('grid size-14 shrink-0 place-items-center rounded-2xl', side === 'NONE' ? 'bg-success-bg text-success-fg' : 'bg-info-bg text-info-fg')}>
-            <Icon className="size-7" aria-hidden />
-          </span>
+      <section ref={morph.ref} className="relative overflow-hidden rounded-3xl border border-line bg-card shadow-[var(--tv-shadow-card)]" aria-labelledby="next-step-title" data-tour={tour}>
+        <div className="flex flex-col gap-5 p-6 sm:flex-row sm:items-center sm:gap-8 sm:p-9">
           <div className="min-w-0 flex-1">
-            <p className="eyebrow">{t('pnav.next.eyebrow')}</p>
-            <h2 id="next-step-title" className="mt-1 text-xl font-extrabold break-words text-ink sm:text-2xl" {...morph.part('title')}>
+            <p className="type-overline inline-flex items-center gap-2 text-muted">
+              <span className={clsx('size-2 rounded-full', side === 'NONE' ? 'bg-success' : 'bg-info')} aria-hidden />
+              {t('pnav.next.eyebrow')}
+            </p>
+            <h2 id="next-step-title" className="mt-2 flex items-center gap-2.5 text-2xl font-semibold break-words text-ink sm:text-3xl sm:leading-tight" {...morph.part('title')}>
+              <Icon className={clsx('size-6 shrink-0 sm:hidden', side === 'NONE' ? 'text-success' : 'text-info')} aria-hidden />
               {t(`pnav.next.wait.${side}.title`)}
             </h2>
-            <p className="type-small mt-1.5">{t(`pnav.next.wait.${side}.text`)}</p>
+            <p className="mt-2 max-w-[60ch] text-muted">{t(`pnav.next.wait.${side}.text`)}</p>
             {data.waiting?.expectedBy && (
-              <p className="mt-2 text-sm font-semibold text-info-fg">{t('pnav.next.wait.expected', { date: date(data.waiting.expectedBy, { day: 'numeric', month: 'long' }) })}</p>
+              <p className="mt-3 text-sm font-semibold text-info-fg">{t('pnav.next.wait.expected', { date: date(data.waiting.expectedBy, { day: 'numeric', month: 'long' }) })}</p>
+            )}
+            {caseLink && (
+              <Link to={caseLink} onClick={morphTarget(caseLink) ? morph.onClick : undefined} className={buttonClass({ variant: 'secondary', size: 'lg', className: 'mt-6 w-full sm:w-auto' })}>
+                {t('pnav.next.wait.open')}
+                <ArrowRight className="size-4" aria-hidden />
+              </Link>
             )}
           </div>
-          {caseLink && (
-            <Link to={caseLink} onClick={morphTarget(caseLink) ? morph.onClick : undefined} className={buttonClass({ variant: 'secondary', className: 'w-full shrink-0 sm:w-auto' })}>
-              {t('pnav.next.wait.open')}
-              <ArrowRight className="size-4" aria-hidden />
-            </Link>
-          )}
+          <WaitArt className="hidden w-44 shrink-0 sm:block lg:w-56" />
         </div>
       </section>
     );
@@ -162,47 +189,49 @@ export function NextStepCard({ data, loading, caseLink, tour }: { data: NextStep
 
   const copy = copyOf(a);
   const Icon = KIND_ICON[a.kind];
+  const Art = KIND_ILLUSTRATION[a.kind];
+  const showDue = a.overdue || (copy.day && !DATE_IN_TEXT.includes(a.kind));
   return (
     <section
       ref={morph.ref}
-      className={clsx('card relative overflow-hidden border-brand-400/50 ring-4 ring-brand-500/10', a.overdue && 'border-danger-border ring-danger/10')}
+      className={clsx('relative overflow-hidden rounded-3xl border bg-highlight-bg', a.overdue ? 'border-danger-border' : 'border-warning-border')}
       aria-labelledby="next-step-title"
       data-tour={tour}
     >
-      <span className={clsx('absolute inset-y-0 left-0 w-1.5', a.overdue ? 'bg-danger' : 'bg-brand-600')} aria-hidden />
-      <div className="p-5 sm:p-7 sm:pl-8">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-5">
-          <span className="grid size-14 shrink-0 place-items-center rounded-2xl bg-brand-600 text-white shadow-lg shadow-brand-600/25">
-            <Icon className="size-7" aria-hidden />
-          </span>
+      <div className="p-6 sm:p-9">
+        <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:gap-8">
           <div className="min-w-0 flex-1">
-            <p className="eyebrow">{t('pnav.next.eyebrow')}</p>
-            <h2 id="next-step-title" className="mt-1 text-xl font-extrabold break-words text-ink sm:text-[1.7rem] sm:leading-tight" {...morph.part('title')}>
-              {copy.title}
+            <p className="type-overline inline-flex flex-wrap items-center gap-x-2 gap-y-1 text-ink">
+              <span className={clsx('size-2 rounded-full', a.overdue ? 'bg-danger' : 'bg-highlight')} aria-hidden />
+              {t('pnav.next.eyebrow')}
+              {showDue && !a.overdue && <span className="font-semibold text-muted normal-case">· {t('pnav.next.due', { date: copy.day })}</span>}
+            </p>
+            <h2 id="next-step-title" className="mt-3 flex items-start gap-3 text-2xl font-semibold break-words text-ink sm:text-[2rem] sm:leading-tight" {...morph.part('title')}>
+              <span className="mt-0.5 grid size-10 shrink-0 place-items-center rounded-xl bg-card text-ink sm:hidden">
+                <Icon className="size-5" aria-hidden />
+              </span>
+              <span className="min-w-0">{copy.title}</span>
             </h2>
-            <p className="type-small mt-1.5 max-w-2xl">{copy.text}</p>
-            {(a.overdue || (copy.day && !DATE_IN_TEXT.includes(a.kind))) && (
-              <p className="mt-2 flex flex-wrap items-center gap-2 text-sm">
-                {a.overdue ? (
-                  <span className="badge bg-danger-bg text-danger-fg">
-                    <AlertTriangle className="size-3.5" aria-hidden /> {t('pnav.next.overdue')}
-                    {copy.day ? ` · ${copy.day}` : ''}
-                  </span>
-                ) : (
-                  <span className="font-semibold text-muted">{t('pnav.next.due', { date: copy.day })}</span>
-                )}
+            <p className="mt-3 max-w-[60ch] text-ink/80">{copy.text}</p>
+            {a.overdue && (
+              <p className="mt-3 flex flex-wrap items-center gap-2 text-sm">
+                <span className="badge bg-danger-bg text-danger-fg">
+                  <AlertTriangle className="size-3.5" aria-hidden /> {t('pnav.next.overdue')}
+                  {copy.day ? ` · ${copy.day}` : ''}
+                </span>
               </p>
             )}
+            <Link to={a.to} onClick={morphTarget(a.to) ? morph.onClick : undefined} className={buttonClass({ size: 'lg', className: 'mt-6 w-full sm:w-auto' })}>
+              {copy.action}
+              <ArrowRight className="size-4" aria-hidden />
+            </Link>
           </div>
-          <Link to={a.to} onClick={morphTarget(a.to) ? morph.onClick : undefined} className={buttonClass({ size: 'lg', className: 'w-full shrink-0 sm:w-auto' })}>
-            {copy.action}
-            <ArrowRight className="size-4" aria-hidden />
-          </Link>
+          <Art className="hidden w-48 shrink-0 sm:block lg:w-60" />
         </div>
 
         {data.secondary.length > 0 && (
-          <div className="mt-5 border-t border-line pt-4">
-            <h3 className="px-2 text-xs font-bold tracking-wide text-muted uppercase sm:px-3">{t('pnav.next.also')}</h3>
+          <div className="mt-7 rounded-2xl border border-line bg-card p-2 sm:p-3">
+            <h3 className="type-overline px-2 pt-1 text-muted sm:px-3">{t('pnav.next.also')}</h3>
             <ul className="mt-1">
               {data.secondary.map((s) => (
                 <SecondaryRow key={`${s.kind}-${s.to}`} a={s} />

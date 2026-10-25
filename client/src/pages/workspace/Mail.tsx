@@ -345,12 +345,12 @@ export default function WorkspaceMail() {
   // ─── No account yet ───
   if (folders.isSuccess && !accounts.length) {
     return (
-      <div className="grid h-full place-items-center bg-page p-6">
+      <div className="grid h-full place-items-center bg-canvas p-6">
         <div className="max-w-md text-center">
-          <span className="mx-auto mb-4 grid size-16 place-items-center rounded-2xl bg-brand-50 text-brand-600">
+          <span className="mx-auto mb-4 grid size-16 place-items-center rounded-xl bg-primary/[0.06] text-link">
             <MailIcon className="size-8" />
           </span>
-          <h1 className="text-xl font-bold text-ink">{t('mail.empty.noAccounts')}</h1>
+          <h1 className="type-page-title">{t('mail.empty.noAccounts')}</h1>
           <p className="mt-2 text-sm text-muted">{t('mail.empty.noAccountsBody')}</p>
           <button type="button" className="btn-primary mt-6" onClick={() => setSettings('accounts')}>
             {t('mail.empty.addAccount')}
@@ -364,11 +364,11 @@ export default function WorkspaceMail() {
   const showList = !messageId;
 
   return (
-    <div className="flex h-full min-h-0 bg-page text-ink">
+    <div className="flex h-full min-h-0 bg-canvas text-ink">
       {/* Left: accounts / folders / labels */}
-      <aside className={clsx('w-60 shrink-0 border-r border-line bg-card', sidebarOpen ? 'fixed inset-y-0 left-0 z-[60] block shadow-2xl' : 'hidden lg:block')}>
+      <aside className={clsx('w-60 shrink-0 border-r border-line bg-card', sidebarOpen ? 'fixed inset-y-0 left-0 z-[60] block shadow-[var(--tv-shadow-raised)]' : 'hidden lg:block')}>
         {folders.isLoading ? (
-          <div className="grid h-full place-items-center text-brand-600">
+          <div className="grid h-full place-items-center text-link">
             <Spinner />
           </div>
         ) : (
@@ -401,7 +401,7 @@ export default function WorkspaceMail() {
             <Menu className="size-5" />
           </button>
           <span className="flex-1 truncate text-sm font-bold">{title}</span>
-          <button type="button" onClick={() => startCompose({ mode: 'new', accountId: selection.accountId ?? undefined })} className="grid size-9 place-items-center rounded-lg text-brand-600" aria-label={t('mail.composeButton')}>
+          <button type="button" onClick={() => startCompose({ mode: 'new', accountId: selection.accountId ?? undefined })} className="grid size-9 place-items-center rounded-lg text-link" aria-label={t('mail.composeButton')}>
             <PenSquare className="size-5" />
           </button>
         </div>
@@ -459,7 +459,7 @@ export default function WorkspaceMail() {
       </section>
 
       {/* Right: reading pane */}
-      <section className={clsx('min-w-0 flex-1 flex-col bg-page', showList ? 'hidden lg:flex' : 'flex')}>
+      <section className={clsx('min-w-0 flex-1 flex-col bg-canvas', showList ? 'hidden lg:flex' : 'flex')}>
         <ReadingPane
           message={current}
           thread={thread.data}
@@ -504,7 +504,7 @@ export default function WorkspaceMail() {
         <ul className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 text-sm">
           {SHORTCUT_LIST.map((s) => (
             <li key={s.keys} className="contents">
-              <kbd className="rounded-md border border-line bg-surface px-1.5 py-0.5 font-mono text-xs text-ink">{s.keys}</kbd>
+              <kbd className="rounded-md border border-line bg-sunken px-1.5 py-0.5 font-mono text-xs text-ink">{s.keys}</kbd>
               <span className="text-muted">{t(`mail.shortcuts.${s.label}`)}</span>
             </li>
           ))}

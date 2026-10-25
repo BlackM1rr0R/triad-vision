@@ -17,6 +17,7 @@ import { SaveIndicator, type SaveState } from '@/components/cv/fields';
 import { errorCode } from '@/lib/api';
 import { AiLetterWizard } from '@/components/aiWriting/AiLetterWizard';
 import { pagesAiWriting } from '@/i18n/pagesAiWriting';
+import { Documents } from '@/components/illustrations';
 
 registerCopy(pagesCv);
 registerCopy(pagesAiWriting);
@@ -82,7 +83,7 @@ const LettersList = () => {
     <div className="space-y-5">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div className="min-w-0">
-          <h1 className="text-xl font-extrabold text-ink sm:text-2xl">{t('letters.title')}</h1>
+          <h1 className="type-page-title">{t('letters.title')}</h1>
           <p className="mt-1 max-w-2xl text-sm text-muted">{t('letters.subtitle')}</p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -96,11 +97,8 @@ const LettersList = () => {
       </div>
       {items.length === 0 ? (
         <div className="card flex flex-col items-center px-6 py-12 text-center">
-          {/* TODO(ui): large portal empty state (size-14 icon, display title) -> <EmptyState size="lg" tone="brand"> (portal rework) */}
-          <span className="grid size-14 place-items-center rounded-2xl bg-brand-100 text-brand-600">
-            <ScrollText className="size-7" aria-hidden />
-          </span>
-          <p className="mt-4 text-lg font-bold text-ink">{t('letters.empty')}</p>
+          <Documents className="w-40" />
+          <p className="type-card-title mt-4 text-lg">{t('letters.empty')}</p>
           <p className="mt-1 max-w-md text-sm text-muted">{t('letters.emptyHint')}</p>
           <Link to="new" className="btn-primary mt-5">
             <Plus className="size-4" aria-hidden /> {t('letters.new')}
@@ -112,14 +110,14 @@ const LettersList = () => {
             const Icon = KIND_ICON[l.kind];
             return (
               <li key={l.id}>
-                <Link to={l.id} className="card flex items-start gap-3 p-4 transition hover:border-brand-400/60 sm:p-5">
-                  <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-brand-100 text-brand-600">
+                <Link to={l.id} className="card flex items-start gap-3 p-4 transition hover:border-line-strong sm:p-5">
+                  <span className="grid size-11 shrink-0 place-items-center rounded-xl chip-soft">
                     <Icon className="size-5" aria-hidden />
                   </span>
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="text-xs font-bold tracking-wide text-brand-600 uppercase">{t(`letters.kinds.${l.kind}`)}</span>
-                      <span className="badge bg-surface text-muted uppercase">{l.language}</span>
+                      <span className="text-xs font-bold tracking-wide text-link uppercase">{t(`letters.kinds.${l.kind}`)}</span>
+                      <span className="badge bg-sunken text-muted uppercase">{l.language}</span>
                     </div>
                     <p className="mt-1 font-bold break-words text-ink">{l.title}</p>
                     <p className="mt-1 line-clamp-2 text-sm text-muted">{l.body.split('\n\n')[1] ?? ''}</p>
@@ -147,7 +145,7 @@ const Steps = ({ step }: { step: number }) => {
           <span
             className={clsx(
               'grid size-6 place-items-center rounded-full text-[11px] tabular-nums',
-              i < step ? 'bg-emerald-500 text-white' : i === step ? 'bg-brand-600 text-white' : 'bg-surface text-muted',
+              i < step ? 'bg-success text-primary-contrast' : i === step ? 'bg-primary text-primary-contrast' : 'bg-sunken text-muted',
             )}
           >
             {i < step ? <Check className="size-3.5" aria-hidden /> : i + 1}
@@ -187,7 +185,7 @@ const QuestionFields = ({ answers, onChange, kind }: { answers: Answers; onChang
               value={value}
               onChange={(e) => onChange({ ...answers, [key]: e.target.value })}
             />
-            <p id={`${id}-${key}-e`} className="mt-1 text-[11px] whitespace-pre-line text-muted/90 italic">
+            <p id={`${id}-${key}-e`} className="mt-1 text-[11px] whitespace-pre-line text-muted italic">
               {t(`letters.questions.${key}.example`)}
             </p>
           </div>
@@ -209,7 +207,7 @@ const LangToggle = ({ value, onChange }: { value: Lang; onChange: (l: Lang) => v
             type="button"
             aria-pressed={value === l}
             onClick={() => onChange(l)}
-            className={clsx('rounded-md px-3 py-1.5 text-xs font-semibold transition', value === l ? 'bg-brand-600 text-white' : 'text-ink/75 hover:bg-surface')}
+            className={clsx('rounded-md px-3 py-1.5 text-xs font-semibold transition', value === l ? 'bg-primary text-primary-contrast' : 'text-ink/75 hover:bg-sunken')}
           >
             {t(`cvb.docLang.${l}`)}
           </button>
@@ -244,7 +242,7 @@ const NewLetter = () => {
   const apps = options.data?.applications ?? [];
   const caseFirst = kind !== 'JOB';
   const radio = (selected: boolean) =>
-    clsx('flex w-full items-start gap-3 rounded-xl border p-3.5 text-left transition', selected ? 'border-brand-500 bg-brand-50/50 ring-2 ring-brand-500/15' : 'border-line hover:border-brand-300');
+    clsx('flex w-full items-start gap-3 rounded-xl border p-3.5 text-left transition', selected ? 'border-primary bg-sunken ring-2 ring-focus/40' : 'border-line hover:border-line-strong');
 
   const caseList = cases.length > 0 && (
     <div>
@@ -252,7 +250,7 @@ const NewLetter = () => {
       <div className="grid gap-2">
         {cases.map((c) => (
           <button key={c.id} type="button" aria-pressed={link.caseId === c.id} className={radio(link.caseId === c.id)} onClick={() => setLink({ caseId: c.id })}>
-            <FolderOpen className="mt-0.5 size-4 shrink-0 text-brand-600" aria-hidden />
+            <FolderOpen className="mt-0.5 size-4 shrink-0 text-link" aria-hidden />
             <span className="min-w-0">
               <span className="block text-sm font-semibold text-ink">{t('letters.link.caseLabel', { number: c.number })}</span>
               <span className="block truncate text-xs text-muted">{[c.profession, c.visa].filter(Boolean).join(' · ')}</span>
@@ -268,7 +266,7 @@ const NewLetter = () => {
       <div className="grid gap-2">
         {apps.map((a) => (
           <button key={a.id} type="button" aria-pressed={link.vacancyId === a.vacancyId && !link.caseId} className={radio(link.vacancyId === a.vacancyId && !link.caseId)} onClick={() => setLink({ vacancyId: a.vacancyId })}>
-            <BriefcaseBusiness className="mt-0.5 size-4 shrink-0 text-brand-600" aria-hidden />
+            <BriefcaseBusiness className="mt-0.5 size-4 shrink-0 text-link" aria-hidden />
             <span className="min-w-0">
               <span className="block text-sm font-semibold text-ink">{a.title}</span>
               <span className="block truncate text-xs text-muted">{[a.company, a.city].filter(Boolean).join(' · ')}</span>
@@ -281,11 +279,11 @@ const NewLetter = () => {
 
   return (
     <div className="space-y-5">
-      <Link to="/account/letters" className="inline-flex items-center gap-1.5 text-sm font-semibold text-brand-600 hover:text-brand-700">
+      <Link to="/account/letters" className="inline-flex items-center gap-1.5 text-sm font-semibold text-link hover:text-link-hover">
         <ArrowLeft className="size-4" aria-hidden /> {t('letters.back')}
       </Link>
       <div>
-        <h1 className="text-xl font-extrabold text-ink sm:text-2xl">{t('letters.new')}</h1>
+        <h1 className="type-page-title">{t('letters.new')}</h1>
         <div className="mt-3">
           <Steps step={step} />
         </div>
@@ -307,10 +305,10 @@ const NewLetter = () => {
                   }}
                   className={clsx(
                     'flex flex-col items-start gap-2 rounded-2xl border p-4 text-left transition',
-                    kind === k ? 'border-brand-500 bg-brand-50/50 ring-2 ring-brand-500/15' : 'border-line hover:border-brand-300',
+                    kind === k ? 'border-primary bg-sunken ring-2 ring-focus/40' : 'border-line hover:border-line-strong',
                   )}
                 >
-                  <span className="grid size-10 place-items-center rounded-xl bg-brand-100 text-brand-600">
+                  <span className="grid size-10 place-items-center rounded-xl chip-soft">
                     <Icon className="size-5" aria-hidden />
                   </span>
                   <span className="font-bold text-ink">{t(`letters.kinds.${k}`)}</span>
@@ -324,7 +322,7 @@ const NewLetter = () => {
         {step === 1 && (
           <div className="space-y-4">
             <div>
-              <h2 className="text-lg font-bold text-ink">{t('letters.link.title')}</h2>
+              <h2 className="text-lg font-semibold text-ink">{t('letters.link.title')}</h2>
               <p className="mt-1 text-sm text-muted">{t('letters.link.hint')}</p>
             </div>
             {options.isLoading ? (
@@ -332,7 +330,7 @@ const NewLetter = () => {
             ) : (
               <>
                 <button type="button" aria-pressed={!link.caseId && !link.vacancyId} className={radio(!link.caseId && !link.vacancyId)} onClick={() => setLink({})}>
-                  <FileText className="mt-0.5 size-4 shrink-0 text-brand-600" aria-hidden />
+                  <FileText className="mt-0.5 size-4 shrink-0 text-link" aria-hidden />
                   <span className="text-sm font-semibold text-ink">{t('letters.link.none')}</span>
                 </button>
                 {!cases.length && !apps.length && <p className="text-sm text-muted">{t('letters.link.noOptions')}</p>}
@@ -354,8 +352,8 @@ const NewLetter = () => {
 
         {step === 2 && kind && (
           <div className="space-y-5">
-            <p className="flex items-start gap-2 rounded-xl border border-brand-200/60 bg-brand-50/60 px-4 py-3 text-sm text-ink/80">
-              <Lightbulb className="mt-0.5 size-4 shrink-0 text-brand-600" aria-hidden />
+            <p className="flex items-start gap-2 rounded-xl border border-line-strong bg-sunken px-4 py-3 text-sm text-ink/80">
+              <Lightbulb className="mt-0.5 size-4 shrink-0 text-link" aria-hidden />
               {t('letters.questions.intro')}
             </p>
             <LangToggle value={language} onChange={setLanguage} />
@@ -508,16 +506,16 @@ const LetterEditor = () => {
 
   return (
     <div className="space-y-5">
-      <Link to="/account/letters" className="inline-flex items-center gap-1.5 text-sm font-semibold text-brand-600 hover:text-brand-700">
+      <Link to="/account/letters" className="inline-flex items-center gap-1.5 text-sm font-semibold text-link hover:text-link-hover">
         <ArrowLeft className="size-4" aria-hidden /> {t('letters.back')}
       </Link>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex min-w-0 items-center gap-3">
-          <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-brand-100 text-brand-600">
+          <span className="grid size-11 shrink-0 place-items-center rounded-xl chip-soft">
             <Icon className="size-5" aria-hidden />
           </span>
           <div className="min-w-0">
-            <p className="text-xs font-bold tracking-wide text-brand-600 uppercase">{t(`letters.kinds.${letter.kind}`)}</p>
+            <p className="text-xs font-bold tracking-wide text-link uppercase">{t(`letters.kinds.${letter.kind}`)}</p>
             <p className="text-xs text-muted">{t('letters.updated', { date: date(letter.updatedAt) })}</p>
           </div>
         </div>
@@ -573,8 +571,8 @@ const LetterEditor = () => {
             </button>
           </div>
 
-          <p className="flex items-start gap-2 rounded-xl border border-line bg-surface px-4 py-3 text-xs leading-relaxed text-muted">
-            <Lightbulb className="mt-0.5 size-4 shrink-0 text-brand-600" aria-hidden />
+          <p className="flex items-start gap-2 rounded-xl border border-line bg-sunken px-4 py-3 text-xs leading-relaxed text-muted">
+            <Lightbulb className="mt-0.5 size-4 shrink-0 text-link" aria-hidden />
             {t('letters.tip')}
           </p>
 

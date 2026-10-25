@@ -44,7 +44,7 @@ import { MultiChips } from './MultiChips';
 // ─── Small building blocks ──────────────────────────────────────────────
 
 const Section = ({ title, children, tone }: { title: string; children: ReactNode; tone: string }) => (
-  <section className="rounded-xl border border-line bg-white">
+  <section className="rounded-xl border border-line bg-card">
     <h3 className={clsx('rounded-t-xl border-b border-line px-4 py-2.5 text-xs font-bold tracking-wide uppercase', tone)}>{title}</h3>
     <div className="space-y-3 p-4">{children}</div>
   </section>
@@ -188,7 +188,7 @@ const ConditionRow = ({ value, onChange, onRemove, meta }: { value: Condition; o
         <select className="input w-auto min-w-36 flex-1" value={value.op} onChange={(e) => onChange({ ...value, op: e.target.value } as Condition)}>
           {OPS[value.type].map((o) => <option key={o} value={o}>{t(`automation.ops.${o}`)}</option>)}
         </select>
-        <button type="button" className="btn-ghost btn-sm text-danger" onClick={onRemove} aria-label={t('automation.common.remove')}><Trash2 className="size-4" /></button>
+        <button type="button" className="btn-secondary btn-sm text-danger-fg" onClick={onRemove} aria-label={t('automation.common.remove')}><Trash2 className="size-4" /></button>
       </div>
       {needsValues && (
         <div className="mt-2.5">
@@ -349,20 +349,20 @@ const ActionCard = ({ index, count, value, onChange, onMove, onRemove, meta, tar
   const { t } = useTranslation();
   const delayed = !!value.delay;
   return (
-    <div className="rounded-lg border border-line bg-white">
+    <div className="rounded-lg border border-line bg-card">
       <div className="flex flex-wrap items-center gap-2 border-b border-line bg-surface/50 px-3 py-2">
         <span className="text-xs font-bold text-muted">{t('automation.editor.step', { n: index + 1 })}</span>
         <select className="input w-auto min-w-44 flex-1 py-1.5" value={value.type} onChange={(e) => onChange({ ...defaultAction(e.target.value as Action['type']), delay: value.delay, onlyIfStillTrue: value.onlyIfStillTrue })}>
           {ACTION_TYPES.map((a) => <option key={a} value={a}>{t(`automation.actions.${a}`)}</option>)}
         </select>
-        <button type="button" className="btn-ghost btn-sm" disabled={index === 0} onClick={() => onMove(-1)} aria-label={t('automation.common.moveUp')}><ArrowUp className="size-4" /></button>
-        <button type="button" className="btn-ghost btn-sm" disabled={index === count - 1} onClick={() => onMove(1)} aria-label={t('automation.common.moveDown')}><ArrowDown className="size-4" /></button>
-        <button type="button" className="btn-ghost btn-sm text-danger" disabled={count === 1} onClick={onRemove} aria-label={t('automation.common.remove')}><Trash2 className="size-4" /></button>
+        <button type="button" className="btn-secondary btn-sm" disabled={index === 0} onClick={() => onMove(-1)} aria-label={t('automation.common.moveUp')}><ArrowUp className="size-4" /></button>
+        <button type="button" className="btn-secondary btn-sm" disabled={index === count - 1} onClick={() => onMove(1)} aria-label={t('automation.common.moveDown')}><ArrowDown className="size-4" /></button>
+        <button type="button" className="btn-secondary btn-sm text-danger-fg" disabled={count === 1} onClick={onRemove} aria-label={t('automation.common.remove')}><Trash2 className="size-4" /></button>
       </div>
       <div className="space-y-3 p-3">
         <ActionBody value={value} onChange={onChange} meta={meta} target={target} />
         <div className="flex flex-wrap items-center gap-2 border-t border-dashed border-line pt-3 text-sm">
-          <span className="font-semibold text-navy-900">{t('automation.editor.delay')}:</span>
+          <span className="font-semibold text-ink">{t('automation.editor.delay')}:</span>
           <select className="input w-auto py-1.5" value={value.delay?.unit ?? ''} onChange={(e) => onChange({ ...value, delay: e.target.value ? { amount: value.delay?.amount ?? 1, unit: e.target.value as 'HOURS' } : null, onlyIfStillTrue: e.target.value ? value.onlyIfStillTrue : false })}>
             <option value="">{t('automation.editor.noDelay')}</option>
             <option value="HOURS">{t('automation.editor.hours')}</option>
@@ -427,13 +427,13 @@ const TestPanel = ({ draft }: { draft: RuleDraft }) => {
           <Search className="pointer-events-none absolute bottom-3 left-3 size-4 text-muted" aria-hidden />
           <input className="input pl-9" value={picked ? `${picked.number}${picked.client ? ` · ${fullName(picked.client)}` : ''}` : q} placeholder={t('automation.test.search')} onChange={(e) => { setPicked(null); setQ(e.target.value); }} />
           {!picked && q.trim().length >= 2 && (
-            <ul className="absolute inset-x-0 top-full z-10 mt-1 max-h-60 overflow-y-auto rounded-lg border border-line bg-white shadow-lg">
-              {search.isLoading && <li className="px-3 py-2"><Spinner className="size-4 text-brand-600" /></li>}
+            <ul className="absolute inset-x-0 top-full z-10 mt-1 max-h-60 overflow-y-auto rounded-lg border border-line bg-card shadow-[var(--tv-shadow-raised)]">
+              {search.isLoading && <li className="px-3 py-2"><Spinner className="size-4 text-link" /></li>}
               {search.data?.length === 0 && <li className="px-3 py-2 text-sm text-muted">{t('automation.test.noResults')}</li>}
               {search.data?.map((c) => (
                 <li key={c.id}>
-                  <button type="button" className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm hover:bg-surface" onClick={() => setPicked(c)}>
-                    <span className="truncate"><span className="font-semibold text-navy-900">{c.number}</span>{c.client ? ` · ${fullName(c.client)}` : ''}</span>
+                  <button type="button" className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm hover:bg-sunken" onClick={() => setPicked(c)}>
+                    <span className="truncate"><span className="font-semibold text-ink">{c.number}</span>{c.client ? ` · ${fullName(c.client)}` : ''}</span>
                     <span className="shrink-0 text-xs text-muted">{statusLabel(c.status)}</span>
                   </button>
                 </li>
@@ -447,7 +447,7 @@ const TestPanel = ({ draft }: { draft: RuleDraft }) => {
       </div>
       {res && (
         <div className="space-y-3 rounded-lg border border-line bg-surface/40 p-3 text-sm" aria-live="polite">
-          <p className={clsx('flex items-center gap-2 font-semibold', res.matched ? 'text-emerald-700' : 'text-amber-800')}>
+          <p className={clsx('flex items-center gap-2 font-semibold', res.matched ? 'text-success-fg' : 'text-warning-fg')}>
             {res.matched ? <CheckCircle2 className="size-4" /> : <XCircle className="size-4" />} {res.matched ? t('automation.test.matched') : t('automation.test.notMatched')}
           </p>
           <div>
@@ -459,7 +459,7 @@ const TestPanel = ({ draft }: { draft: RuleDraft }) => {
               <p className="text-xs font-bold text-muted uppercase">{t('automation.test.conditions')}</p>
               <ul className="space-y-0.5">
                 {res.conditions.map((c) => (
-                  <li key={c.index} className={c.ok ? 'text-emerald-700' : 'text-red-700'}>
+                  <li key={c.index} className={c.ok ? 'text-success-fg' : 'text-danger-fg'}>
                     {c.ok ? '✓' : '✗'} {t(`automation.conditions.${c.type}`)} {c.seen !== undefined && <span className="text-muted">({t('automation.test.seen', { value: c.seen ?? '—' })})</span>}
                   </li>
                 ))}
@@ -470,8 +470,8 @@ const TestPanel = ({ draft }: { draft: RuleDraft }) => {
             <p className="text-xs font-bold text-muted uppercase">{t('automation.test.actions')}</p>
             <ol className="space-y-2">
               {res.actions.map((a) => (
-                <li key={a.index} className="rounded-md border border-line bg-white p-2">
-                  <p className="flex flex-wrap items-center gap-2 font-semibold text-navy-900">
+                <li key={a.index} className="rounded-md border border-line bg-card p-2">
+                  <p className="flex flex-wrap items-center gap-2 font-semibold text-ink">
                     {a.index + 1}. {t(`automation.actions.${a.type}`)}
                     {a.delayMs > 0 && <span className="badge bg-warning-bg text-warning-fg">{t('automation.test.delayed', { time: fmtDelay(a.delayMs) })}</span>}
                     <span className={clsx('badge', a.status === 'SUCCEEDED' ? 'bg-success-bg text-success-fg' : a.status === 'SKIPPED' ? 'bg-neutral-bg text-neutral-fg' : 'bg-danger-bg text-danger-fg')}>{t(`automation.runs.step.${a.status}`)}</span>
@@ -549,11 +549,11 @@ export const RuleEditor = ({ open, ruleId, initial, meta, onClose }: { open: boo
         <Field label={t('automation.editor.description')}><textarea className="input min-h-16" value={draft.description ?? ''} maxLength={2000} onChange={(e) => setDraft({ ...draft, description: e.target.value })} /></Field>
         <label className="flex items-center gap-2 text-sm"><input type="checkbox" className="size-4" checked={draft.enabled} onChange={(e) => setDraft({ ...draft, enabled: e.target.checked })} /> {t('automation.editor.enabled')}</label>
 
-        <Section title={t('automation.editor.when')} tone="bg-brand-50 text-brand-800">
+        <Section title={t('automation.editor.when')} tone="bg-primary/[0.06] text-ink">
           <TriggerEditor value={draft.trigger} onChange={(trigger) => setDraft({ ...draft, trigger })} />
         </Section>
 
-        <Section title={t('automation.editor.if')} tone="bg-amber-50 text-amber-900">
+        <Section title={t('automation.editor.if')} tone="bg-warning-bg text-warning-fg">
           {draft.conditions.length === 0 && <p className="text-sm text-muted">{t('automation.editor.noConditions')}</p>}
           {draft.conditions.map((c, i) => (
             <ConditionRow key={i} value={c} meta={meta} onChange={(nc) => setDraft((d) => ({ ...d, conditions: d.conditions.map((x, j) => (j === i ? nc : x)) }))} onRemove={() => setDraft((d) => ({ ...d, conditions: d.conditions.filter((_, j) => j !== i) }))} />
@@ -563,7 +563,7 @@ export const RuleEditor = ({ open, ruleId, initial, meta, onClose }: { open: boo
           </button>
         </Section>
 
-        <Section title={t('automation.editor.then')} tone="bg-emerald-50 text-emerald-900">
+        <Section title={t('automation.editor.then')} tone="bg-success-bg text-success-fg">
           {draft.actions.map((a, i) => (
             <ActionCard key={i} index={i} count={draft.actions.length} value={a} meta={meta} target={target.ref} onChange={(na) => setAction(i, na)} onMove={(d) => moveAction(i, d)} onRemove={() => setDraft((d) => ({ ...d, actions: d.actions.filter((_, j) => j !== i) }))} />
           ))}
@@ -572,12 +572,12 @@ export const RuleEditor = ({ open, ruleId, initial, meta, onClose }: { open: boo
           </button>
         </Section>
 
-        <section className="rounded-xl border border-line bg-white p-4">
-          <h3 className="flex items-center gap-2 text-sm font-semibold text-navy-900"><Braces className="size-4 text-brand-600" /> {t('automation.editor.placeholders')}</h3>
+        <section className="rounded-xl border border-line bg-card p-4">
+          <h3 className="flex items-center gap-2 text-sm font-semibold text-ink"><Braces className="size-4 text-link" /> {t('automation.editor.placeholders')}</h3>
           <p className="mt-1 mb-2 text-xs text-muted">{t('automation.editor.placeholdersHint')}</p>
           <div className="flex flex-wrap gap-1.5">
             {meta.placeholders.map((p) => (
-              <button key={p} type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => target.insert(p)} className="rounded-md border border-line bg-surface px-2 py-1 text-xs text-ink/80 hover:border-brand-400 hover:text-navy-900" title={`{{${p}}}`}>
+              <button key={p} type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => target.insert(p)} className="rounded-md border border-line bg-sunken px-2 py-1 text-xs text-ink/80 hover:border-line-strong hover:text-ink" title={`{{${p}}}`}>
                 {t(phKey(p), { defaultValue: p })}
               </button>
             ))}
@@ -585,7 +585,7 @@ export const RuleEditor = ({ open, ruleId, initial, meta, onClose }: { open: boo
         </section>
 
         {showTest && (
-          <Section title={t('automation.test.title')} tone="bg-slate-100 text-slate-800">
+          <Section title={t('automation.test.title')} tone="bg-sunken text-ink">
             <TestPanel draft={draft} />
           </Section>
         )}

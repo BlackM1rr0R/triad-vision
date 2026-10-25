@@ -26,8 +26,8 @@ export const EmployerAiToggle = () => {
     }
   };
   return (
-    <span className="inline-flex min-h-9 items-center gap-2 rounded-lg border border-line bg-white px-2.5 text-xs text-ink/80">
-      <Sparkles className="size-3.5 text-brand-600" aria-hidden />
+    <span className="inline-flex min-h-9 items-center gap-2 rounded-lg border border-line bg-card px-2.5 text-xs text-ink/80">
+      <Sparkles className="size-3.5 text-link" aria-hidden />
       <span className="hidden sm:inline">{t('aiEmployer.settings.companyToggle')}</span>
       <Switch checked={!!status.data.companyEnabled} onChange={(v) => void set(v)} label={t('aiEmployer.settings.companyToggle')} />
     </span>

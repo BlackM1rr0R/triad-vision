@@ -18,7 +18,7 @@ export const CasePartnerSelect = ({ c }: { c: { id: string } }) => {
       <dt className="sr-only">{t('refPartners.field')}</dt>
       <dd className="flex min-w-0 items-center gap-1.5">
         {current ? (
-          <Link to={`/admin/partners/${current.id}`} title={t('refPartners.field')} className="text-brand-600 hover:text-brand-700">
+          <Link to={`/admin/partners/${current.id}`} title={t('refPartners.field')} className="text-link hover:text-link">
             <Handshake className="size-3.5" aria-hidden />
           </Link>
         ) : (
@@ -44,7 +44,7 @@ export const CasePartnerSelect = ({ c }: { c: { id: string } }) => {
             </option>
           ))}
         </select>
-        {assign.isPending && <Spinner className="size-3.5 text-brand-600" />}
+        {assign.isPending && <Spinner className="size-3.5 text-primary" />}
       </dd>
     </div>
   );

@@ -44,14 +44,14 @@ export const ImageField = ({
     <div>
       <label htmlFor={id} className="label">
         {label}
-        {required && <span className="text-danger"> *</span>}
+        {required && <span className="text-danger-fg"> *</span>}
       </label>
       <div className="flex gap-3">
-        <div className="grid size-20 shrink-0 place-items-center overflow-hidden rounded-lg border border-line bg-surface">
+        <div className="grid size-20 shrink-0 place-items-center overflow-hidden rounded-lg border border-line bg-sunken">
           {value && !broken ? (
             <img src={value} alt="" className="size-full object-cover" onError={() => setBroken(true)} />
           ) : (
-            <ImageOff className="size-5 text-muted/60" aria-hidden />
+            <ImageOff className="size-5 text-subtle" aria-hidden />
           )}
         </div>
         <div className="min-w-0 flex-1 space-y-2">
@@ -70,7 +70,7 @@ export const ImageField = ({
             {value && (
               <button
                 type="button"
-                className="absolute top-1/2 right-2 -translate-y-1/2 rounded p-1 text-muted hover:text-danger"
+                className="absolute top-1/2 right-2 -translate-y-1/2 rounded p-1 text-muted hover:text-danger-fg"
                 onClick={() => onChange('')}
                 aria-label={t('admin.image.clear')}
               >
@@ -84,6 +84,8 @@ export const ImageField = ({
             accept="image/jpeg,image/png,image/webp,image/svg+xml,image/avif"
             className="sr-only"
             tabIndex={-1}
+            aria-hidden
+            aria-label={t('admin.image.upload')}
             onChange={(e) => {
               const f = e.target.files?.[0];
               if (f) void upload(f);

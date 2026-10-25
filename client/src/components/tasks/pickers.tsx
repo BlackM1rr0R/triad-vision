@@ -42,7 +42,7 @@ export const AssigneeField = ({
           <Avatar person={p} size="xs" />
           <span className="max-w-[10rem] truncate">{fullName(p)}</span>
           {!disabled && (
-            <button type="button" onClick={() => toggle(p)} className="grid size-5 place-items-center rounded-full text-muted hover:bg-surface hover:text-danger" aria-label={`${t('tasks.actions.remove')}: ${fullName(p)}`}>
+            <button type="button" onClick={() => toggle(p)} className="grid size-5 place-items-center rounded-full text-muted hover:bg-sunken hover:text-danger-fg" aria-label={`${t('tasks.actions.remove')}: ${fullName(p)}`}>
               <X className="size-3" />
             </button>
           )}
@@ -53,7 +53,7 @@ export const AssigneeField = ({
         <button
           type="button"
           onClick={() => setOpen((o) => !o)}
-          className="inline-flex items-center gap-1 rounded-full border border-dashed border-line px-2.5 py-1 text-xs font-semibold text-muted transition hover:border-brand-400 hover:text-brand-600"
+          className="inline-flex items-center gap-1 rounded-full border border-dashed border-line px-2.5 py-1 text-xs font-semibold text-muted transition hover:border-line-strong hover:text-link"
           aria-expanded={open}
         >
           <UserPlus className="size-3.5" /> {value.length ? t('tasks.actions.add') : t('tasks.fields.assignees')}
@@ -90,11 +90,11 @@ export const CaseField = ({
     <div className="relative">
       {value ? (
         <span className="inline-flex max-w-full items-center gap-1.5 rounded-lg border border-line bg-card px-2.5 py-1.5 text-sm">
-          <Briefcase className="size-3.5 shrink-0 text-brand-600" aria-hidden />
+          <Briefcase className="size-3.5 shrink-0 text-link" aria-hidden />
           <span className="truncate font-semibold text-ink">{value.number}</span>
           <span className="truncate text-muted">· {value.clientName}</span>
           {!disabled && (
-            <button type="button" onClick={() => onChange(null)} className="ml-1 grid size-5 shrink-0 place-items-center rounded-full text-muted hover:text-danger" aria-label={t('tasks.actions.clear')}>
+            <button type="button" onClick={() => onChange(null)} className="ml-1 grid size-5 shrink-0 place-items-center rounded-full text-muted hover:text-danger-fg" aria-label={t('tasks.actions.clear')}>
               <X className="size-3" />
             </button>
           )}
@@ -102,7 +102,7 @@ export const CaseField = ({
       ) : disabled ? (
         <span className="text-sm text-muted">{t('tasks.ph.noCase')}</span>
       ) : (
-        <button type="button" onClick={() => setOpen((o) => !o)} className="inline-flex items-center gap-1.5 rounded-lg border border-dashed border-line px-2.5 py-1.5 text-sm font-medium text-muted hover:border-brand-400 hover:text-brand-600">
+        <button type="button" onClick={() => setOpen((o) => !o)} className="inline-flex items-center gap-1.5 rounded-lg border border-dashed border-line px-2.5 py-1.5 text-sm font-medium text-muted hover:border-line-strong hover:text-link">
           <Briefcase className="size-3.5" /> {placeholder ?? t('tasks.ph.noCase')} <ChevronDown className="size-3.5" />
         </button>
       )}
@@ -121,7 +121,7 @@ export const CaseField = ({
                   setOpen(false);
                   setQ('');
                 }}
-                className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-sm hover:bg-surface"
+                className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-sm hover:bg-sunken"
               >
                 <Briefcase className="size-3.5 shrink-0 text-muted" aria-hidden />
                 <span className="font-semibold text-ink">{c.number}</span>
@@ -150,7 +150,7 @@ export const PriorityPicker = ({ value, onChange, disabled }: { value: TaskPrior
           onClick={() => onChange(p)}
           className={clsx(
             'rounded-lg px-2.5 py-1.5 text-xs font-semibold transition disabled:cursor-not-allowed',
-            value === p ? clsx(PRIORITY_TONE[p], 'ring-2 ring-current/30') : 'bg-surface text-muted hover:text-ink',
+            value === p ? clsx(PRIORITY_TONE[p], 'ring-2 ring-current/30') : 'bg-sunken text-muted hover:text-ink',
             disabled && value !== p && 'opacity-50',
           )}
         >
@@ -231,7 +231,7 @@ export const DateTimeField = ({
         className="input w-[8.25rem] shrink-0 py-2 disabled:opacity-50"
       />
       {!disabled && date && (
-        <button type="button" onClick={() => onChange('', '')} className="grid size-9 shrink-0 place-items-center rounded-lg text-muted hover:bg-surface hover:text-danger" aria-label={t('tasks.actions.clear')}>
+        <button type="button" onClick={() => onChange('', '')} className="grid size-9 shrink-0 place-items-center rounded-lg text-muted hover:bg-sunken hover:text-danger-fg" aria-label={t('tasks.actions.clear')}>
           <X className="size-4" />
         </button>
       )}

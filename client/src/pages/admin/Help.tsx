@@ -42,11 +42,11 @@ export default function AdminHelp() {
   return (
     <div className="mx-auto max-w-6xl">
       <div className="mb-6 flex items-start gap-3">
-        <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-brand-600 text-white">
+        <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-primary text-primary-contrast">
           <LifeBuoy className="size-5" />
         </span>
         <div>
-          <h1 className="font-display text-2xl font-extrabold text-ink">{t('adminHelpUi.centerTitle')}</h1>
+          <h1 className="type-page-title">{t('adminHelpUi.centerTitle')}</h1>
           <p className="mt-1 max-w-2xl text-sm text-muted">{t('adminHelpUi.centerIntro')}</p>
         </div>
       </div>
@@ -68,7 +68,7 @@ export default function AdminHelp() {
                         onClick={() => setParams({ g: k }, { replace: true })}
                         className={clsx(
                           'flex w-full items-center justify-between gap-2 rounded-lg px-2.5 py-2 text-left text-sm',
-                          selected === k ? 'bg-brand-50 font-semibold text-brand-700' : 'text-ink hover:bg-surface',
+                          selected === k ? 'bg-primary/[0.06] font-semibold text-link' : 'text-ink hover:bg-sunken',
                         )}
                       >
                         <span className="truncate">{t(`adminHelp.${k}.title`, { defaultValue: k })}</span>

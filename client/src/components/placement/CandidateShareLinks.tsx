@@ -79,7 +79,7 @@ export const CandidateShareLinks = ({ candidateId, applications }: { candidateId
       <p className="-mt-1 mb-3 text-xs text-muted">{t('placement.share.intro')}</p>
       {data && !data.sharingAllowed && <p className="mb-3 rounded-md bg-warning-bg px-3 py-2 text-xs text-warning-fg">{t('placement.share.declined')}</p>}
       {isLoading ? (
-        <Spinner className="size-5 text-brand-600" />
+        <Spinner className="size-5 text-link" />
       ) : !data?.items.length ? (
         <p className="text-sm text-muted">{t('placement.share.empty')}</p>
       ) : (
@@ -88,7 +88,7 @@ export const CandidateShareLinks = ({ candidateId, applications }: { candidateId
             <li key={l.id} className="py-2.5 text-xs">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div className="min-w-0">
-                  <p className="font-semibold text-navy-900">
+                  <p className="font-semibold text-ink">
                     {[l.company?.name, l.vacancy ? tr(l.vacancy.title) : null].filter(Boolean).join(' · ') || t('placement.share.noApplication')}
                   </p>
                   <p className="text-muted">
@@ -101,7 +101,7 @@ export const CandidateShareLinks = ({ candidateId, applications }: { candidateId
                   </span>
                   <span className={clsx('badge', STATUS_TONE[l.status])}>{t(`placement.share.status.${l.status}`)}</span>
                   {l.status === 'active' && (
-                    <button type="button" className="btn-ghost btn-sm text-danger" disabled={revoke.isPending} onClick={() => revoke.mutate(l.id)} aria-label={t('placement.share.revoke')}>
+                    <button type="button" className="btn-secondary btn-sm text-danger-fg" disabled={revoke.isPending} onClick={() => revoke.mutate(l.id)} aria-label={t('placement.share.revoke')}>
                       <Ban className="size-3.5" /> <span className="hidden sm:inline">{t('placement.share.revoke')}</span>
                     </button>
                   )}
@@ -144,7 +144,7 @@ export const CandidateShareLinks = ({ candidateId, applications }: { candidateId
         {created ? (
           <div className="space-y-3">
             <p className="text-sm font-semibold text-success-fg">{t('placement.share.created')}</p>
-            <input readOnly className="input font-mono text-xs" value={created.url} onFocus={(e) => e.currentTarget.select()} aria-label={t('placement.share.title')} />
+            <input readOnly className="input code-id text-xs" value={created.url} onFocus={(e) => e.currentTarget.select()} aria-label={t('placement.share.title')} />
             <p className="text-xs text-muted">{t('placement.share.onceHint')}</p>
             <div className="flex flex-wrap gap-2">
               <button type="button" className="btn-secondary btn-sm" onClick={() => void copy(created.url)}>

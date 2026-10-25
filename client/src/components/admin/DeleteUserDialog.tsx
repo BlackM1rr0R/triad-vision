@@ -95,7 +95,7 @@ export const DeleteUserDialog = ({ user, onClose, onDeleted }: { user: Deletable
       size="md"
       title={
         <span className="flex items-center gap-2">
-          <AlertTriangle className="size-4 text-danger" aria-hidden /> {t('admin.users.deleteTitle')}
+          <AlertTriangle className="size-4 text-danger-fg" aria-hidden /> {t('admin.users.deleteTitle')}
         </span>
       }
       footer={
@@ -120,12 +120,12 @@ export const DeleteUserDialog = ({ user, onClose, onDeleted }: { user: Deletable
         >
           <p>{t('admin.users.deleteIntro', { name: fullName(user), email: user.email })}</p>
 
-          <div className="rounded-lg border border-red-200 bg-red-50/60 p-3">
-            <p className="flex items-center gap-1.5 text-xs font-bold tracking-wide text-danger uppercase">
+          <div className="rounded-lg border border-danger-border bg-danger-bg/60 p-3">
+            <p className="flex items-center gap-1.5 text-xs font-bold tracking-wide text-danger-fg uppercase">
               <Trash2 className="size-3.5" aria-hidden /> {t('admin.users.deleteRemoved')}
             </p>
             {preview.isLoading ? (
-              <Spinner className="mt-2 size-4 text-danger" />
+              <Spinner className="mt-2 size-4 text-danger-fg" />
             ) : (
               <ul className="mt-2 space-y-1">
                 {removed.map((r) => (

@@ -109,7 +109,7 @@ function FinancePage() {
             </Chip>
           ))}
         </div>
-        <p className="text-sm font-medium text-navy-900 tabular-nums">{t('finance.rangeLabel', { from: f.day(range.from), to: f.day(range.to) })}</p>
+        <p className="text-sm font-medium text-ink tabular-nums">{t('finance.rangeLabel', { from: f.day(range.from), to: f.day(range.to) })}</p>
       </div>
 
       {preset === 'custom' && (
@@ -122,7 +122,7 @@ function FinancePage() {
             <span className="label">{t('finance.to')}</span>
             <input type="date" className="input" value={draft.to} onChange={(e) => setDraft((d) => ({ ...d, to: e.target.value }))} required />
           </label>
-          <button type="submit" className="btn-primary min-h-11 w-full sm:w-auto">
+          <button type="submit" className="btn-primary min-h-10 sm:min-h-9 w-full sm:w-auto">
             <Filter className="size-4" aria-hidden /> {t('finance.apply')}
           </button>
         </form>
@@ -138,7 +138,7 @@ function FinancePage() {
                 className={({ isActive }) =>
                   clsx(
                     '-mb-px inline-flex min-h-10 items-center border-b-2 px-3 text-sm font-semibold whitespace-nowrap transition',
-                    isActive ? 'border-brand-600 text-navy-900' : 'border-transparent text-muted hover:text-navy-900',
+                    isActive ? 'border-primary text-ink' : 'border-transparent text-muted hover:text-ink',
                   )
                 }
               >

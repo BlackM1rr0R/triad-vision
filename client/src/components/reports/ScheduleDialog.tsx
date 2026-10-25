@@ -24,12 +24,12 @@ const Deliveries = ({ id }: { id: string }) => {
   return (
     <ul className="mt-2 space-y-1 text-xs">
       {q.data.map((d) => (
-        <li key={d.id} className="flex flex-wrap items-center gap-x-3 gap-y-0.5 rounded-md bg-surface px-2 py-1.5">
-          <span className={clsx('font-semibold', d.status === 'SENT' ? 'text-emerald-700' : d.status === 'FAILED' ? 'text-danger' : 'text-muted')}>{t(`reports.schedule.status.${d.status}`)}</span>
+        <li key={d.id} className="flex flex-wrap items-center gap-x-3 gap-y-0.5 rounded-md bg-sunken px-2 py-1.5">
+          <span className={clsx('font-semibold', d.status === 'SENT' ? 'text-success-fg' : d.status === 'FAILED' ? 'text-danger-fg' : 'text-muted')}>{t(`reports.schedule.status.${d.status}`)}</span>
           <span className="text-muted">{f.dateTime(d.createdAt)}</span>
           <span>{t('reports.schedule.rows', { count: d.rows })}</span>
           <span className="min-w-0 truncate text-muted">{d.recipients.join(', ')}</span>
-          {d.error && <span className="text-danger">{t(`reports.errors.${d.error}`, { defaultValue: d.error })}</span>}
+          {d.error && <span className="text-danger-fg">{t(`reports.errors.${d.error}`, { defaultValue: d.error })}</span>}
         </li>
       ))}
     </ul>
@@ -98,7 +98,7 @@ export const ScheduleDialog = ({ reportId, users, onClose }: { reportId: string;
   };
 
   return (
-    <Modal title={t('reports.schedule.title')} onClose={onClose} wide footer={<button type="button" className="btn-ghost btn-sm" onClick={onClose}>{t('reports.schedule.close')}</button>}>
+    <Modal title={t('reports.schedule.title')} onClose={onClose} wide footer={<button type="button" className="btn-secondary btn-sm" onClick={onClose}>{t('reports.schedule.close')}</button>}>
       <div className="space-y-5">
         <div>
           {list.data?.length === 0 && <p className="text-sm text-muted">{t('reports.schedule.empty')}</p>}
@@ -108,7 +108,7 @@ export const ScheduleDialog = ({ reportId, users, onClose }: { reportId: string;
                 <div className="flex flex-wrap items-start justify-between gap-2">
                   <div className="min-w-0">
                     <p className="flex items-center gap-2 text-sm font-semibold text-ink">
-                      <CalendarClock className="size-4 text-brand-600" aria-hidden /> {summary(s)}
+                      <CalendarClock className="size-4 text-link" aria-hidden /> {summary(s)}
                     </p>
                     <p className="mt-0.5 text-xs text-muted">
                       {s.active ? (s.nextRunAt ? t('reports.schedule.next', { date: f.dateTime(s.nextRunAt) }) : '') : t('reports.schedule.paused')}
@@ -119,16 +119,16 @@ export const ScheduleDialog = ({ reportId, users, onClose }: { reportId: string;
                     </p>
                   </div>
                   <div className="flex flex-wrap gap-1">
-                    <button type="button" className="btn-ghost btn-sm" onClick={() => patch.mutate({ id: s.id, active: !s.active })}>
+                    <button type="button" className="btn-secondary btn-sm" onClick={() => patch.mutate({ id: s.id, active: !s.active })}>
                       {s.active ? <Pause className="size-3.5" /> : <Play className="size-3.5" />} {s.active ? t('reports.schedule.pause') : t('reports.schedule.resume')}
                     </button>
-                    <button type="button" className="btn-ghost btn-sm" disabled={sendNow.isPending} onClick={() => sendNow.mutate(s.id)}>
+                    <button type="button" className="btn-secondary btn-sm" disabled={sendNow.isPending} onClick={() => sendNow.mutate(s.id)}>
                       <Send className="size-3.5" /> {t('reports.schedule.sendNow')}
                     </button>
-                    <button type="button" className="btn-ghost btn-sm" aria-expanded={open === s.id} onClick={() => setOpen(open === s.id ? null : s.id)}>
+                    <button type="button" className="btn-secondary btn-sm" aria-expanded={open === s.id} onClick={() => setOpen(open === s.id ? null : s.id)}>
                       <History className="size-3.5" /> {t('reports.schedule.deliveries')}
                     </button>
-                    <button type="button" className="btn-ghost btn-sm" onClick={() => window.confirm(t('reports.schedule.deleteConfirm')) && remove.mutate(s.id)} aria-label={t('reports.remove')}>
+                    <button type="button" className="btn-secondary btn-sm" onClick={() => window.confirm(t('reports.schedule.deleteConfirm')) && remove.mutate(s.id)} aria-label={t('reports.remove')}>
                       <Trash2 className="size-3.5" />
                     </button>
                   </div>
@@ -180,7 +180,7 @@ export const ScheduleDialog = ({ reportId, users, onClose }: { reportId: string;
             <legend className="label">{t('reports.schedule.staff')}</legend>
             <div className="flex max-h-36 flex-wrap gap-1.5 overflow-y-auto">
               {admins.map((u) => (
-                <label key={u.id} className={clsx('flex cursor-pointer items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs', form.staff.includes(u.id) ? 'border-brand-600 bg-brand-50 text-brand-700' : 'border-line')}>
+                <label key={u.id} className={clsx('flex cursor-pointer items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs', form.staff.includes(u.id) ? 'border-primary bg-primary/[0.06] text-link' : 'border-line')}>
                   <input
                     type="checkbox"
                     className="sr-only"
@@ -212,14 +212,14 @@ export const ScheduleDialog = ({ reportId, users, onClose }: { reportId: string;
                 disabled={!allow.length}
                 aria-label={t('reports.schedule.external')}
               />
-              <button type="button" className="btn-ghost btn-sm shrink-0" onClick={addEmail} disabled={!allow.length}>
+              <button type="button" className="btn-secondary btn-sm shrink-0" onClick={addEmail} disabled={!allow.length}>
                 <Plus className="size-4" /> {t('reports.schedule.addEmail')}
               </button>
             </div>
             {form.emails.length > 0 && (
               <ul className="mt-2 flex flex-wrap gap-1.5">
                 {form.emails.map((m) => (
-                  <li key={m} className="flex items-center gap-1 rounded-full bg-brand-50 px-2.5 py-1 text-xs text-brand-700">
+                  <li key={m} className="flex items-center gap-1 rounded-full bg-primary/[0.06] px-2.5 py-1 text-xs text-link">
                     {m}
                     <button type="button" onClick={() => setForm((s) => ({ ...s, emails: s.emails.filter((x) => x !== m) }))} aria-label={t('reports.remove')}>
                       <X className="size-3" />

@@ -163,10 +163,10 @@ export const RecipientInput = ({ value, onChange, placeholder, autoFocus, id, on
     <div className="relative min-w-0 flex-1">
       <div className="flex min-h-9 flex-wrap items-center gap-1 py-1" onClick={() => inputRef.current?.focus()}>
         {value.map((a) => (
-          <span key={a.address} className={clsx('inline-flex max-w-full items-center gap-1 rounded-full border py-0.5 pr-1 pl-0.5 text-xs', EMAIL_RE.test(a.address) ? 'border-line bg-surface text-ink' : 'border-danger/40 bg-danger/10 text-danger')} title={a.address}>
+          <span key={a.address} className={clsx('inline-flex max-w-full items-center gap-1 rounded-full border py-0.5 pr-1 pl-0.5 text-xs', EMAIL_RE.test(a.address) ? 'border-line bg-sunken text-ink' : 'border-danger/40 bg-danger-bg text-danger-fg')} title={a.address}>
             <span className={clsx('grid size-5 place-items-center rounded-full text-[0.55rem] font-bold', avatarTone(a.address))}>{initialsOf(a)}</span>
             <span className="truncate">{a.name?.trim() || a.address}</span>
-            <button type="button" onClick={() => onChange(value.filter((v) => v !== a))} className="grid size-4 place-items-center rounded-full text-muted hover:text-danger" aria-label={t('mail.actions.delete')}>
+            <button type="button" onClick={() => onChange(value.filter((v) => v !== a))} className="grid size-4 place-items-center rounded-full text-muted hover:text-danger-fg" aria-label={t('mail.actions.delete')}>
               <X className="size-3" />
             </button>
           </span>
@@ -187,13 +187,13 @@ export const RecipientInput = ({ value, onChange, placeholder, autoFocus, id, on
           }}
           onKeyDown={onKey}
           placeholder={value.length ? '' : (placeholder ?? t('mail.compose.recipientPlaceholder'))}
-          className="min-w-[8rem] flex-1 bg-transparent py-1 text-sm text-ink outline-none placeholder:text-muted/70"
+          className="min-w-[8rem] flex-1 bg-transparent py-1 text-sm text-ink outline-none placeholder:text-muted"
           autoComplete="off"
           spellCheck={false}
         />
       </div>
       {open && text.trim() && suggestions.length > 0 && (
-        <ul className="absolute top-full left-0 z-[95] mt-1 w-full max-w-md overflow-hidden rounded-xl border border-line bg-card p-1 shadow-[0_16px_40px_-12px_rgba(11,31,68,0.35)]">
+        <ul className="absolute top-full left-0 z-[95] mt-1 w-full max-w-md overflow-hidden rounded-xl border border-line bg-card p-1 shadow-[var(--tv-shadow-raised)]">
           {suggestions.map((s, i) => (
             <li key={`${s.source}-${s.address}`}>
               <button
@@ -204,7 +204,7 @@ export const RecipientInput = ({ value, onChange, placeholder, autoFocus, id, on
                   setText('');
                   inputRef.current?.focus();
                 }}
-                className={clsx('flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm', i === cursor ? 'bg-surface' : 'hover:bg-surface')}
+                className={clsx('flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm', i === cursor ? 'bg-sunken' : 'hover:bg-sunken')}
               >
                 <span className={clsx('grid size-6 shrink-0 place-items-center rounded-full text-[0.6rem] font-bold', avatarTone(s.address))}>{initialsOf(s)}</span>
                 <span className="min-w-0 flex-1">

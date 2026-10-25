@@ -58,31 +58,22 @@ export default function CompanyApp() {
   const suspended = company?.status === 'SUSPENDED';
 
   return (
-    <div className="min-h-screen bg-surface pt-24 pb-16 sm:pt-28 sm:pb-24 lg:pt-40">
+    <div className="min-h-screen bg-canvas pt-24 pb-16 sm:pt-28 sm:pb-24 lg:pt-36">
       <div className="container-x">
-        <header className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-navy-950 via-navy-900 to-navy-700 px-5 pt-6 pb-4 text-white shadow-[0_30px_60px_-30px_rgba(5,15,36,0.8)] sm:px-8 sm:pt-8 sm:pb-5">
-          <div className="pointer-events-none absolute -top-24 -right-16 size-80 rounded-full bg-[radial-gradient(closest-side,var(--color-brand-500),transparent)] opacity-30" aria-hidden />
-          <svg className="pointer-events-none absolute inset-0 size-full opacity-[0.07]" aria-hidden>
-            <defs>
-              <pattern id="company-grid" width="32" height="32" patternUnits="userSpaceOnUse">
-                <path d="M32 0H0v32" fill="none" stroke="#fff" strokeWidth="1" />
-              </pattern>
-            </defs>
-            <rect width="100%" height="100%" fill="url(#company-grid)" />
-          </svg>
-          <div className="relative">
+        <header className="rounded-3xl border border-line bg-card px-4 pt-5 pb-3 shadow-[var(--tv-shadow-card)] sm:px-7 sm:pt-6 sm:pb-4">
+          <div>
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div className="min-w-0">
-                <span className="eyebrow text-brand-400">{t('jobsArea.portal.title')}</span>
+                <span className="type-overline">{t('jobsArea.portal.title')}</span>
                 <motion.h1
-                  className="mt-2 text-2xl font-extrabold break-words sm:text-4xl"
-                  initial={{ opacity: 0, y: 14 }}
+                  className="type-page-title mt-1 break-words"
+                  initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.6 }}
+                  transition={{ duration: 0.4 }}
                 >
                   {company?.name ?? ' '}
                 </motion.h1>
-                <p className="mt-1 truncate text-sm text-white/60">
+                <p className="mt-1 truncate text-sm text-muted">
                   {t('jobsArea.portal.hello', { name: user?.firstName ?? '' })} · {user?.email}
                 </p>
               </div>
@@ -91,7 +82,7 @@ export default function CompanyApp() {
 
             {!suspended && (
               <nav
-                className="-mx-5 mt-6 flex snap-x gap-1 overflow-x-auto px-4 pb-1 [scrollbar-width:none] sm:mx-0 sm:mt-8 sm:px-0 [&::-webkit-scrollbar]:hidden"
+                className="-mx-4 mt-5 flex snap-x gap-1 overflow-x-auto border-t border-line px-3 pt-3 pb-1 [scrollbar-width:none] sm:mx-0 sm:mt-6 sm:px-0 [&::-webkit-scrollbar]:hidden"
                 aria-label={t('jobsArea.portal.title')}
               >
                 {tabs.map((tab) => {
@@ -103,12 +94,12 @@ export default function CompanyApp() {
                       to={tab.to}
                       className={clsx(
                         'relative flex min-h-11 shrink-0 snap-start items-center gap-2 rounded-xl px-3.5 py-2.5 text-sm font-semibold whitespace-nowrap transition-colors sm:px-4',
-                        active ? 'text-navy-900' : 'text-white/75 hover:bg-white/10 hover:text-white',
+                        active ? 'text-primary-contrast' : 'text-muted hover:bg-sunken hover:text-ink',
                       )}
                       aria-current={active ? 'page' : undefined}
                     >
                       {active && (
-                        <motion.span layoutId="company-tab" className="absolute inset-0 rounded-xl bg-white shadow-lg" transition={{ type: 'spring', stiffness: 420, damping: 34 }} />
+                        <motion.span layoutId="company-tab" className="absolute inset-0 rounded-xl bg-primary" transition={{ type: 'spring', stiffness: 420, damping: 34 }} />
                       )}
                       <Icon className="relative size-4 shrink-0" aria-hidden />
                       <span className="relative">{tab.label}</span>
@@ -133,11 +124,11 @@ export default function CompanyApp() {
           ) : suspended ? (
             <Section>
               <div className="flex items-start gap-4">
-                <span className="grid size-12 shrink-0 place-items-center rounded-full bg-red-100 text-red-700">
+                <span className="grid size-12 shrink-0 place-items-center rounded-full bg-danger-bg text-danger-fg">
                   <ShieldAlert className="size-6" aria-hidden />
                 </span>
                 <div>
-                  <p className="font-display text-lg font-bold text-navy-900">{t('jobsArea.portal.suspendedTitle')}</p>
+                  <p className="type-section-title text-ink">{t('jobsArea.portal.suspendedTitle')}</p>
                   <p className="mt-1 text-sm text-muted">{t('jobsArea.portal.suspendedText')}</p>
                   <Link to="/contact" className="btn-primary btn-sm mt-4">
                     {t('jobsArea.portal.contactUs')}
@@ -148,13 +139,13 @@ export default function CompanyApp() {
           ) : (
             <>
               {company.status === 'PENDING' && (
-                <div className="flex items-start gap-4 rounded-2xl border border-amber-200 bg-amber-50 p-5">
-                  <span className="grid size-10 shrink-0 place-items-center rounded-full bg-amber-100 text-amber-700">
+                <div className="flex items-start gap-4 rounded-2xl border border-warning-border bg-warning-bg p-5">
+                  <span className="grid size-10 shrink-0 place-items-center rounded-full bg-card text-warning-fg">
                     <Clock3 className="size-5" aria-hidden />
                   </span>
                   <div>
-                    <p className="font-bold text-amber-900">{t('jobsArea.portal.pendingTitle')}</p>
-                    <p className="mt-1 text-sm text-amber-900/80">{t('jobsArea.portal.pendingText')}</p>
+                    <p className="font-semibold text-warning-fg">{t('jobsArea.portal.pendingTitle')}</p>
+                    <p className="mt-1 text-sm text-warning-fg">{t('jobsArea.portal.pendingText')}</p>
                   </div>
                 </div>
               )}

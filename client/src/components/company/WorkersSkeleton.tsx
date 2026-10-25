@@ -8,7 +8,7 @@ export const WorkersSkeleton = () => {
     <div className="space-y-6" role="status" aria-label={t('ui.loading')}>
       <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6" aria-hidden>
         {Array.from({ length: 6 }, (_, i) => (
-          <div key={i} className="card flex items-start justify-between gap-3 p-4 sm:p-5">
+          <div key={i} className="flex items-start justify-between gap-3 rounded-2xl border border-line bg-card p-4 shadow-[var(--tv-shadow-card)] sm:p-5">
             <div className="min-w-0 flex-1 space-y-2">
               <Skeleton className="h-3 w-3/4" />
               <Skeleton className="h-8 w-12" />
@@ -22,12 +22,12 @@ export const WorkersSkeleton = () => {
         <Skeleton className="mt-3 mb-5 h-4 w-2/3" />
         <div className="mb-3 flex gap-1.5">
           {Array.from({ length: 5 }, (_, i) => (
-            <Skeleton key={i} className="h-9 w-24" rounded="full" />
+            <Skeleton key={i} className="h-10 w-24" rounded="full" />
           ))}
         </div>
         <div className="mb-5 flex gap-2">
-          <Skeleton className="h-10 w-full sm:max-w-xs" rounded="xl" />
-          <Skeleton className="h-10 w-28" rounded="xl" />
+          <Skeleton className="h-11 w-full sm:max-w-xs" rounded="xl" />
+          <Skeleton className="h-11 w-28" rounded="xl" />
         </div>
         <div className="overflow-hidden rounded-2xl border border-line">
           <table className="w-full">

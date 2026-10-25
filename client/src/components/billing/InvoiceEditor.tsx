@@ -156,7 +156,7 @@ export function InvoiceEditor({ invoice, fixed, onClose }: { invoice: ClientInvo
         {fixed ? (
           <div className="sm:col-span-2">
             <p className="label">{t('bill.admin.editor.client')}</p>
-            <p className="text-sm font-semibold text-navy-900">{fixed.clientName}</p>
+            <p className="text-sm font-semibold text-ink">{fixed.clientName}</p>
           </div>
         ) : (
           <>
@@ -234,7 +234,7 @@ export function InvoiceEditor({ invoice, fixed, onClose }: { invoice: ClientInvo
         </Field>
       </div>
 
-      <h3 className="mt-6 mb-2 text-sm font-semibold text-navy-900">{t('bill.admin.editor.items')}</h3>
+      <h3 className="mt-6 mb-2 text-sm font-semibold text-ink">{t('bill.admin.editor.items')}</h3>
       <ul className="space-y-2">
         {lines.map((l, i) => {
           const p = parsed[i];
@@ -251,7 +251,7 @@ export function InvoiceEditor({ invoice, fixed, onClose }: { invoice: ClientInvo
               </select>
               <button
                 type="button"
-                className="hidden size-9 place-items-center self-center rounded-lg text-muted hover:bg-red-50 hover:text-danger disabled:opacity-30 sm:grid"
+                className="hidden size-9 place-items-center self-center rounded-lg text-muted hover:bg-danger-bg hover:text-danger-fg disabled:opacity-30 sm:grid"
                 aria-label={t('bill.admin.editor.removeLine')}
                 disabled={lines.length === 1}
                 onClick={() => setLines((ls) => ls.filter((x) => x.key !== l.key))}
@@ -261,10 +261,10 @@ export function InvoiceEditor({ invoice, fixed, onClose }: { invoice: ClientInvo
               <div className="grid grid-cols-[5rem_1fr_auto_auto] items-center gap-2 sm:col-span-3">
                 <input className={clsx('input text-right tabular-nums', !Number.isFinite(p.quantity) && l.qty && 'border-danger')} inputMode="decimal" aria-label={t('bill.admin.editor.qty')} placeholder={t('bill.admin.editor.qty')} value={l.qty} onChange={(e) => setLine(l.key, { qty: e.target.value })} />
                 <input className={clsx('input text-right tabular-nums', !Number.isFinite(p.unitPriceCents) && l.price && 'border-danger')} inputMode="decimal" aria-label={t('bill.admin.editor.unitPrice')} placeholder={t('bill.admin.editor.unitPrice')} value={l.price} onChange={(e) => setLine(l.key, { price: e.target.value })} />
-                <span className="min-w-20 text-right text-sm font-semibold text-navy-900 tabular-nums">{total === null ? '—' : money(total)}</span>
+                <span className="min-w-20 text-right text-sm font-semibold text-ink tabular-nums">{total === null ? '—' : money(total)}</span>
                 <button
                   type="button"
-                  className="grid size-9 place-items-center rounded-lg text-muted hover:bg-red-50 hover:text-danger disabled:opacity-30 sm:hidden"
+                  className="grid size-9 place-items-center rounded-lg text-muted hover:bg-danger-bg hover:text-danger-fg disabled:opacity-30 sm:hidden"
                   aria-label={t('bill.admin.editor.removeLine')}
                   disabled={lines.length === 1}
                   onClick={() => setLines((ls) => ls.filter((x) => x.key !== l.key))}
@@ -277,7 +277,7 @@ export function InvoiceEditor({ invoice, fixed, onClose }: { invoice: ClientInvo
         })}
       </ul>
       {lines.length < 60 && (
-        <button type="button" className="mt-2 inline-flex min-h-9 items-center gap-1.5 rounded-lg px-2 text-sm font-semibold text-brand-600 hover:bg-brand-50" onClick={() => setLines((ls) => [...ls, blank()])}>
+        <button type="button" className="mt-2 inline-flex min-h-9 items-center gap-1.5 rounded-lg px-2 text-sm font-semibold text-link hover:bg-primary/[0.06]" onClick={() => setLines((ls) => [...ls, blank()])}>
           <Plus className="size-4" aria-hidden /> {t('bill.admin.editor.addLine')}
         </button>
       )}
@@ -286,7 +286,7 @@ export function InvoiceEditor({ invoice, fixed, onClose }: { invoice: ClientInvo
         <Field label={t('bill.admin.editor.note')} id="ci-note">
           <textarea id="ci-note" className="input resize-y" rows={4} maxLength={2000} value={note} onChange={(e) => setNote(e.target.value)} />
         </Field>
-        <div className="rounded-xl bg-surface p-4 text-sm">
+        <div className="rounded-xl bg-sunken p-4 text-sm">
           <p className="mb-3 text-xs text-muted">{entity === 'AZ' ? t('acct.currency.azVat', { rate }) : t(`bill.admin.editor.vatInfo.${s?.vatMode ?? 'STANDARD'}`, { rate })}</p>
           <dl className="space-y-1.5 tabular-nums">
             <div className="flex justify-between gap-2">
@@ -303,7 +303,7 @@ export function InvoiceEditor({ invoice, fixed, onClose }: { invoice: ClientInvo
                 <dd>{money(totals.pass)}</dd>
               </div>
             )}
-            <div className="flex justify-between gap-2 border-t border-line pt-1.5 text-base font-bold text-navy-900">
+            <div className="flex justify-between gap-2 border-t border-line pt-1.5 text-base font-bold text-ink">
               <dt>{t('bill.admin.editor.gross')}</dt>
               <dd>{money(totals.gross)}</dd>
             </div>

@@ -20,7 +20,7 @@ const SlotPicker = ({ selected, onPick }: { selected: string | null; onPick: (id
     queryFn: async () => (await api.get<{ slots: OfficeSlot[] }>('/client-process/office/slots')).data.slots,
   });
   if (isLoading) return <p className="text-sm text-muted">…</p>;
-  if (!data?.length) return <p className="rounded-xl border border-line bg-slate-50 px-4 py-3 text-sm text-muted">{t('cp.office.noSlots')}</p>;
+  if (!data?.length) return <p className="rounded-xl border border-line bg-sunken px-4 py-3 text-sm text-muted">{t('cp.office.noSlots')}</p>;
   const days = new Map<string, OfficeSlot[]>();
   for (const s of data) {
     const k = date(s.startsAt, { weekday: 'short', day: 'numeric', month: 'short' });
@@ -38,11 +38,11 @@ const SlotPicker = ({ selected, onPick }: { selected: string | null; onPick: (id
                 type="button"
                 onClick={() => onPick(s.id)}
                 aria-pressed={selected === s.id}
-                className={clsx('min-h-10 rounded-lg border px-3 text-sm font-semibold transition', selected === s.id ? 'border-brand-600 bg-brand-600 text-white' : 'border-line bg-card text-navy-900 hover:border-brand-400')}
+                className={clsx('min-h-11 rounded-lg border px-3 text-sm font-semibold transition', selected === s.id ? 'border-primary bg-primary text-primary-contrast' : 'border-line bg-card text-ink hover:border-primary')}
                 title={s.location ?? ''}
               >
                 {date(s.startsAt, { hour: '2-digit', minute: '2-digit' })}
-                <span className={clsx('ml-1.5 text-xs font-medium', selected === s.id ? 'text-white/80' : 'text-muted')}>{t('cp.office.free', { count: s.free })}</span>
+                <span className={clsx('ml-1.5 text-xs font-medium', selected === s.id ? 'text-primary-contrast/80' : 'text-muted')}>{t('cp.office.free', { count: s.free })}</span>
               </button>
             ))}
           </div>
@@ -116,8 +116,8 @@ export const PortalOfficeVisits = ({ caseId, closed }: { caseId: string; closed?
     <section id="office-visits" className="card scroll-mt-24 p-5 sm:p-6" aria-labelledby="office-visits-title">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <h2 id="office-visits-title" className="flex items-center gap-2 text-lg font-extrabold text-navy-900">
-            <Store className="size-5 text-brand-600" aria-hidden /> {t('cp.office.title')}
+          <h2 id="office-visits-title" className="flex items-center gap-2 text-lg font-semibold text-ink">
+            <Store className="size-5 text-primary" aria-hidden /> {t('cp.office.title')}
           </h2>
           <p className="mt-1 text-sm text-muted">{t('cp.office.subtitle')}</p>
         </div>
@@ -148,7 +148,7 @@ export const PortalOfficeVisits = ({ caseId, closed }: { caseId: string; closed?
                     type="button"
                     onClick={() => setReason(r)}
                     aria-pressed={reason === r}
-                    className={clsx('min-h-10 rounded-full border px-3.5 text-sm font-semibold', reason === r ? 'border-brand-600 bg-brand-50 text-brand-700' : 'border-line bg-card text-navy-900')}
+                    className={clsx('min-h-10 rounded-full border px-3.5 text-sm font-semibold', reason === r ? 'border-primary chip-soft' : 'border-line bg-card text-ink')}
                   >
                     {t(`cp.office.reasons.${r}`)}
                   </button>
@@ -184,10 +184,10 @@ export const PortalOfficeVisits = ({ caseId, closed }: { caseId: string; closed?
           {[...upcoming, ...past].map((v) => (
             <li key={v.id} className="rounded-xl border border-line p-4">
               <div className="flex flex-wrap items-center gap-2">
-                <p className="font-semibold text-navy-900">{dateTime(v.startsAt)}</p>
+                <p className="font-semibold text-ink">{dateTime(v.startsAt)}</p>
                 <span className={clsx('badge', STATUS_TONE[v.status])}>{t(`cp.office.status.${v.status}`)}</span>
               </div>
-              <p className="mt-1 text-sm text-slate-700">{t(`cp.office.reasons.${v.reason}`)}</p>
+              <p className="mt-1 text-sm text-muted">{t(`cp.office.reasons.${v.reason}`)}</p>
               {v.location && (
                 <p className="mt-1 inline-flex items-center gap-1.5 text-sm text-muted">
                   <MapPin className="size-4 shrink-0" aria-hidden /> {v.location}
@@ -203,7 +203,7 @@ export const PortalOfficeVisits = ({ caseId, closed }: { caseId: string; closed?
                   </button>
                   <button
                     type="button"
-                    className="btn-ghost btn-sm text-red-600"
+                    className="btn-ghost btn-sm text-danger-fg"
                     disabled={cancel.isPending}
                     onClick={() => {
                       // TODO(ui): ConfirmDialog

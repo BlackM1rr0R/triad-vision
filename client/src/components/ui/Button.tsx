@@ -3,7 +3,7 @@ import clsx from 'clsx';
 import type { LucideIcon } from 'lucide-react';
 import { Spinner } from './Spinner';
 
-export type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger' | 'link';
+export type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger' | 'link' | 'highlight';
 export type ButtonSize = 'sm' | 'md' | 'lg';
 
 const VARIANT: Record<ButtonVariant, string> = {
@@ -13,13 +13,15 @@ const VARIANT: Record<ButtonVariant, string> = {
   outline: 'btn-ghost',
   ghost: 'btn-quiet',
   danger: 'btn-danger',
-  link: 'inline-flex items-center gap-1.5 rounded font-semibold text-brand-600 underline-offset-2 hover:underline disabled:cursor-not-allowed disabled:opacity-60',
+  link: 'inline-flex items-center gap-1.5 rounded font-semibold text-link underline-offset-[3px] hover:text-link-hover hover:underline disabled:cursor-not-allowed disabled:opacity-60',
+  /** The rare amber call to action (public hero, one per view). */
+  highlight: 'btn bg-highlight text-highlight-contrast shadow-[0_1px_2px_rgba(11,31,68,0.18)] hover:brightness-105',
 };
 
 const SIZE: Record<ButtonSize, string> = {
   sm: 'btn-sm',
   md: '',
-  lg: 'px-6 py-3.5 text-base',
+  lg: 'btn-lg',
 };
 const LINK_SIZE: Record<ButtonSize, string> = { sm: 'text-xs', md: 'text-sm', lg: 'text-base' };
 const ICON_SIZE: Record<ButtonSize, string> = { sm: 'size-3.5', md: 'size-4', lg: 'size-5' };
@@ -83,9 +85,9 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
 export type IconButtonVariant = 'ghost' | 'secondary' | 'primary' | 'danger';
 
 const ICON_VARIANT: Record<IconButtonVariant, string> = {
-  ghost: 'text-muted hover:bg-surface hover:text-ink',
-  secondary: 'border border-line bg-card text-ink hover:bg-surface',
-  primary: 'bg-brand-600 text-white hover:bg-brand-700',
+  ghost: 'text-muted hover:bg-sunken hover:text-ink',
+  secondary: 'border border-line-strong/80 bg-card text-ink hover:border-line-strong hover:bg-sunken',
+  primary: 'bg-primary text-primary-contrast hover:bg-primary-hover',
   danger: 'text-muted hover:bg-danger-bg hover:text-danger-fg',
 };
 const ICON_BOX: Record<ButtonSize, string> = { sm: 'size-8', md: 'size-10', lg: 'size-11' };
@@ -119,7 +121,7 @@ export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(functio
       disabled={disabled || loading}
       aria-busy={loading || undefined}
       className={clsx(
-        'btn-press inline-grid shrink-0 place-items-center rounded-lg transition disabled:cursor-not-allowed disabled:opacity-50',
+        'btn-press inline-grid shrink-0 place-items-center rounded-[var(--tv-radius-control)] transition disabled:cursor-not-allowed disabled:opacity-50',
         ICON_BOX[size],
         ICON_VARIANT[v],
         className,

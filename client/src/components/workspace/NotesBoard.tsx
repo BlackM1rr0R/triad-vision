@@ -179,7 +179,7 @@ export const NotesBoard = ({ notes, loading }: { notes: Note[] | undefined; load
       icon={StickyNote}
       title={t('ws.notes.title')}
       actions={
-        <button type="button" onClick={() => void add()} disabled={adding} className="btn-white btn-sm h-8 border border-line px-3">
+        <button type="button" onClick={() => void add()} disabled={adding} className="btn-secondary btn-sm h-8 border border-line px-3">
           <Plus className="size-4" /> {t('ws.notes.add')}
         </button>
       }

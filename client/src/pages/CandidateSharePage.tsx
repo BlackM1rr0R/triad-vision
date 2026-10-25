@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
-import { CheckCircle2, Circle, Clapperboard, Clock3, FileDown, FileText, LinkIcon, ShieldCheck, ThumbsDown, ThumbsUp, UserRound } from 'lucide-react';
+import { CheckCircle2, Circle, Clapperboard, Clock3, FileDown, FileText, ShieldCheck, ThumbsDown, ThumbsUp, UserRound } from 'lucide-react';
 import { api, errorCode } from '@/lib/api';
 import { useL10n } from '@/lib/l10n';
 import { usePageTitle } from '@/lib/usePageTitle';
@@ -12,6 +12,7 @@ import { pagesPlacement } from '@/i18n/pagesPlacement';
 import { pagesJobs } from '@/i18n/pagesJobs';
 import { Spinner } from '@/components/ui/Spinner';
 import { TONE_CLASS } from '@/components/ui/status';
+import { Lost } from '@/components/illustrations';
 import { fmtDate } from '@/components/admin/labels';
 import { ScoreRing, GapList } from '@/components/jobs/MatchMeter';
 import { useJobLabels } from '@/components/jobs/labels';
@@ -26,8 +27,11 @@ const DOC_TONE = { approved: 'text-success-fg', inReview: 'text-info-fg', missin
 
 const Card = ({ title, icon: Icon, children, className }: { title: string; icon: typeof FileText; children: ReactNode; className?: string }) => (
   <section className={clsx('card card-pad min-w-0', className)}>
-    <h2 className="mb-4 flex items-center gap-2 font-display text-lg font-bold text-navy-900">
-      <Icon className="size-5 text-brand-600" aria-hidden /> {title}
+    <h2 className="mb-4 flex items-center gap-2.5 type-card-title text-ink">
+      <span className="grid size-9 shrink-0 place-items-center rounded-xl chip-sky">
+        <Icon className="size-[18px]" aria-hidden />
+      </span>
+      {title}
     </h2>
     {children}
   </section>
@@ -63,19 +67,17 @@ export default function CandidateSharePage() {
 
   if (q.isLoading) {
     return (
-      <div className="grid min-h-screen place-items-center bg-surface text-brand-600" role="status" aria-label={t('placement.public.loading')}>
+      <div className="grid min-h-screen place-items-center bg-canvas text-primary" role="status" aria-label={t('placement.public.loading')}>
         <Spinner className="size-8 border-[3px]" />
       </div>
     );
   }
   if (q.error || !q.data) {
     return (
-      <div className="min-h-screen bg-surface px-4 pt-24 pb-16 sm:pt-28 lg:pt-36">
-        <div className="card mx-auto flex max-w-xl flex-col items-center px-6 py-14 text-center">
-          <span className="grid size-12 place-items-center rounded-full bg-red-50 text-danger">
-            <LinkIcon className="size-5" aria-hidden />
-          </span>
-          <h1 className="mt-3 font-display text-xl font-bold text-navy-900">{t('placement.public.invalidTitle')}</h1>
+      <div className="min-h-screen bg-canvas px-4 pt-24 pb-16 sm:pt-28 lg:pt-36">
+        <div className="card mx-auto flex max-w-xl flex-col items-center rounded-3xl px-6 py-14 text-center">
+          <Lost className="w-44" />
+          <h1 className="mt-5 font-display text-xl font-semibold text-ink">{t('placement.public.invalidTitle')}</h1>
           <p className="mt-1 max-w-md text-sm text-muted">{t('placement.public.invalidText')}</p>
         </div>
       </div>
@@ -95,21 +97,21 @@ export default function CandidateSharePage() {
   ];
 
   return (
-    <div className="min-h-screen bg-surface px-4 pt-24 pb-16 sm:pt-28 sm:pb-24 lg:pt-36">
+    <div className="min-h-screen bg-canvas px-4 pt-24 pb-16 sm:pt-28 sm:pb-24 lg:pt-36">
       <div className="mx-auto max-w-5xl space-y-5">
-        <header className="card card-pad">
-          <span className="eyebrow inline-flex items-center gap-1.5 text-brand-600">
+        <header className="card card-pad rounded-3xl">
+          <span className="eyebrow inline-flex items-center gap-1.5">
             <UserRound className="size-4" aria-hidden /> {t('placement.public.eyebrow')}
           </span>
           <div className="mt-2 flex flex-wrap items-start justify-between gap-4">
             <div className="min-w-0">
-              <h1 className="font-display text-2xl font-extrabold text-navy-900 sm:text-3xl">{c.name}</h1>
+              <h1 className="font-display text-2xl font-semibold text-ink sm:text-3xl">{c.name}</h1>
               <p className="mt-1 text-sm text-muted">{[c.profession, c.city].filter(Boolean).join(' · ')}</p>
-              {s.company && <p className="mt-1 text-sm font-semibold text-navy-900">{t('placement.public.forCompany', { company: s.company.name })}</p>}
+              {s.company && <p className="mt-1 text-sm font-semibold text-ink">{t('placement.public.forCompany', { company: s.company.name })}</p>}
             </div>
             {s.match && <ScoreRing score={s.match.score} size={72} />}
           </div>
-          <p className="mt-3 max-w-3xl text-sm leading-relaxed text-ink/80">{t('placement.public.intro')}</p>
+          <p className="mt-3 max-w-3xl text-sm leading-relaxed text-muted">{t('placement.public.intro')}</p>
           <p className="mt-2 text-xs text-muted">{t('placement.public.expires', { date: fmtDate(s.expiresAt) })}</p>
         </header>
 
@@ -119,7 +121,7 @@ export default function CandidateSharePage() {
               {rows.map(([k, v]) => (
                 <div key={k} className="flex items-baseline justify-between gap-3 py-1.5 text-sm">
                   <dt className="text-xs text-muted">{k}</dt>
-                  <dd className="text-right font-medium text-navy-900">{v}</dd>
+                  <dd className="text-right font-medium text-ink">{v}</dd>
                 </div>
               ))}
             </dl>
@@ -136,7 +138,7 @@ export default function CandidateSharePage() {
 
           {s.match && s.vacancy ? (
             <Card title={t('placement.public.match')} icon={CheckCircle2}>
-              <p className="text-sm font-semibold text-navy-900">
+              <p className="text-sm font-semibold text-ink">
                 {t('placement.public.vacancy')}: {tr(s.vacancy.title)}
                 {s.vacancy.city ? ` · ${s.vacancy.city}` : ''}
               </p>
@@ -171,7 +173,7 @@ export default function CandidateSharePage() {
               <p className="text-sm text-muted">{t('placement.public.docsNone')}</p>
             ) : (
               <>
-                <p className="mb-2 text-sm font-semibold text-navy-900">{t('placement.public.docsSummary', { approved: s.documents.approved, total: s.documents.total })}</p>
+                <p className="mb-2 text-sm font-semibold text-ink">{t('placement.public.docsSummary', { approved: s.documents.approved, total: s.documents.total })}</p>
                 <ul className="divide-y divide-line">
                   {s.documents.items.map((d) => {
                     const Icon = DOC_ICON[d.state];
@@ -191,7 +193,7 @@ export default function CandidateSharePage() {
         </div>
 
         <section className="card card-pad" aria-labelledby="cs-decide">
-          <h2 id="cs-decide" className="font-display text-lg font-bold text-navy-900">
+          <h2 id="cs-decide" className="type-card-title text-ink">
             {t('placement.public.decideTitle')}
           </h2>
           {s.decision ? (
@@ -220,7 +222,7 @@ export default function CandidateSharePage() {
                     onClick={() => setChoice(d)}
                     className={clsx(
                       'inline-flex min-h-11 items-center gap-2 rounded-xl border px-4 text-sm font-semibold transition-colors',
-                      choice === d ? (d === 'INTERESTED' ? 'border-emerald-600 bg-emerald-600 text-white' : 'border-navy-900 bg-navy-900 text-white') : 'border-line bg-white text-navy-900 hover:border-brand-400',
+                      choice === d ? (d === 'INTERESTED' ? 'border-success bg-success-bg text-success-fg ring-2 ring-success/30' : 'border-primary bg-primary text-primary-contrast') : 'border-line bg-card text-ink hover:border-line-strong',
                     )}
                   >
                     {d === 'INTERESTED' ? <ThumbsUp className="size-4" aria-hidden /> : <ThumbsDown className="size-4" aria-hidden />}
@@ -249,7 +251,7 @@ export default function CandidateSharePage() {
                   {placementError(decide.error)}
                 </p>
               )}
-              <button type="submit" className="btn-primary" disabled={!choice || name.trim().length < 2 || decide.isPending}>
+              <button type="submit" className="btn-primary btn-lg" disabled={!choice || name.trim().length < 2 || decide.isPending}>
                 {decide.isPending && <Spinner className="size-4" />} {t('placement.public.submit')}
               </button>
             </form>

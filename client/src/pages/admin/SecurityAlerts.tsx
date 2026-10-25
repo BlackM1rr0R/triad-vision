@@ -103,7 +103,7 @@ const AlertCard = ({ alert, highlighted, onChanged }: { alert: Alert; highlighte
     show ? (
       <button
         type="button"
-        className={clsx('btn-sm border', danger ? 'border-red-200 bg-card text-red-700 hover:bg-red-50' : 'btn-white border-line')}
+        className={clsx('btn-sm border', danger ? 'border-danger-border bg-card text-danger-fg hover:bg-danger-bg' : 'btn-secondary border-line')}
         disabled={!!busy}
         onClick={() => (action === 'ack' ? void run('ack') : setConfirm(action))}
       >
@@ -112,13 +112,13 @@ const AlertCard = ({ alert, highlighted, onChanged }: { alert: Alert; highlighte
     ) : null;
 
   return (
-    <article id={`alert-${alert.id}`} className={clsx('rounded-xl border bg-card p-4 sm:p-5', highlighted ? 'border-brand-400 ring-2 ring-brand-100' : 'border-line', resolved && 'opacity-80')}>
+    <article id={`alert-${alert.id}`} className={clsx('rounded-xl border bg-card p-4 sm:p-5', highlighted ? 'border-line-strong ring-2 ring-focus' : 'border-line', resolved && 'opacity-80')}>
       <header className="flex flex-wrap items-start justify-between gap-2">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
             <span className={clsx('rounded-full px-2 py-0.5 text-[11px] font-bold', SEVERITY_TONE[alert.severity])}>{t(`aiMgmt.security.severity.${alert.severity}`)}</span>
-            <h3 className="text-sm font-semibold text-navy-900">{alert.title}</h3>
-            {resolved && <span className="rounded-full bg-surface px-2 py-0.5 text-[11px] text-muted">{t(`aiMgmt.security.status.${alert.status}`)}</span>}
+            <h3 className="text-sm font-semibold text-ink">{alert.title}</h3>
+            {resolved && <span className="rounded-full bg-sunken px-2 py-0.5 text-[11px] text-muted">{t(`aiMgmt.security.status.${alert.status}`)}</span>}
           </div>
           <p className="mt-1 text-sm text-ink">{alert.summary}</p>
         </div>
@@ -131,15 +131,15 @@ const AlertCard = ({ alert, highlighted, onChanged }: { alert: Alert; highlighte
       {s && (
         <p className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted">
           <span className="font-semibold text-ink">{t('aiMgmt.security.account')}:</span> {s.name} · {s.email} · {s.role}
-          {!s.isActive && <span className="rounded-full bg-red-100 px-2 text-red-700">{t('aiMgmt.security.inactive')}</span>}
+          {!s.isActive && <span className="rounded-full bg-danger-bg px-2 text-danger-fg">{t('aiMgmt.security.inactive')}</span>}
           <span>· {t('aiMgmt.security.sessions', { count: s.activeSessions })}</span>
-          {!s.twoFactor && <span className="rounded-full bg-amber-100 px-2 text-amber-800">{t('aiMgmt.security.noTwoFactor')}</span>}
+          {!s.twoFactor && <span className="rounded-full bg-warning-bg px-2 text-warning-fg">{t('aiMgmt.security.noTwoFactor')}</span>}
         </p>
       )}
 
       <div className="mt-3 grid grid-cols-1 gap-4 lg:grid-cols-2">
         {facts.length > 0 && (
-          <dl className="grid grid-cols-2 gap-x-4 gap-y-1 rounded-lg bg-surface p-3 text-xs sm:grid-cols-3">
+          <dl className="grid grid-cols-2 gap-x-4 gap-y-1 rounded-lg bg-sunken p-3 text-xs sm:grid-cols-3">
             {facts.map(([k, v]) => (
               <div key={k} className="min-w-0">
                 <dt className="text-muted">{t(`aiMgmt.security.factLabels.${k}`)}</dt>
@@ -150,8 +150,8 @@ const AlertCard = ({ alert, highlighted, onChanged }: { alert: Alert; highlighte
             ))}
           </dl>
         )}
-        <div className="rounded-lg border border-brand-100 bg-brand-50/50 p-3 text-sm">
-          <p className="mb-1 flex items-center gap-1.5 text-xs font-semibold text-brand-700">
+        <div className="rounded-lg border border-primary/25 bg-primary/[0.04] p-3 text-sm">
+          <p className="mb-1 flex items-center gap-1.5 text-xs font-semibold text-link">
             <Sparkles className="size-3.5" aria-hidden /> {t('aiMgmt.security.ai')}
           </p>
           {alert.explanation ? (
@@ -228,21 +228,21 @@ const RulesPanel = () => {
   return (
     <Panel title={t('aiMgmt.security.settings.title')} icon={Settings2} className="bg-card">
       <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-        <div className="flex items-start justify-between gap-3 rounded-lg border border-line bg-surface p-3">
+        <div className="flex items-start justify-between gap-3 rounded-lg border border-line bg-sunken p-3">
           <div>
             <p className="text-sm font-semibold text-ink">{t('aiMgmt.security.settings.aiExplain')}</p>
             <p className="mt-0.5 text-xs text-muted">{t('aiMgmt.security.settings.aiExplainHint')}</p>
           </div>
           <Switch checked={form.aiExplain} onChange={(v) => setForm({ ...form, aiExplain: v })} label={t('aiMgmt.security.settings.aiExplain')} />
         </div>
-        <div className="flex items-start justify-between gap-3 rounded-lg border border-line bg-surface p-3">
+        <div className="flex items-start justify-between gap-3 rounded-lg border border-line bg-sunken p-3">
           <div>
             <p className="text-sm font-semibold text-ink">{t('aiMgmt.security.settings.emailHigh')}</p>
             <p className="mt-0.5 text-xs text-muted">{t('aiMgmt.security.settings.emailHighHint')}</p>
           </div>
           <Switch checked={form.emailHigh} onChange={(v) => setForm({ ...form, emailHigh: v })} label={t('aiMgmt.security.settings.emailHigh')} />
         </div>
-        <label className="block rounded-lg border border-line bg-surface p-3">
+        <label className="block rounded-lg border border-line bg-sunken p-3">
           <span className="text-sm font-semibold text-ink">{t('aiMgmt.security.settings.dedupeHours')}</span>
           <input type="number" min={1} max={168} className="input mt-1" value={Number.isFinite(form.dedupeHours) ? form.dedupeHours : ''} onChange={(e) => setForm({ ...form, dedupeHours: e.target.value === '' ? NaN : Number(e.target.value) })} />
           <span className="mt-1 block text-[11px] text-muted">{t('aiMgmt.security.settings.dedupeHoursHint')}</span>

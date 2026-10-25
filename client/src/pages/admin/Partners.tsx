@@ -29,14 +29,14 @@ const CountRow = ({ counts }: { counts: PartnerCounts }) => {
   const { t } = useTranslation();
   const cells: [string, number, string][] = [
     [t('refPartners.counts.clients'), counts.clients, 'text-ink'],
-    [t('refPartners.counts.active'), counts.activeCases, 'text-brand-700'],
-    [t('refPartners.counts.approved'), counts.approved, 'text-emerald-700'],
-    [t('refPartners.counts.negative'), counts.closedNegative, 'text-red-700'],
+    [t('refPartners.counts.active'), counts.activeCases, 'text-link'],
+    [t('refPartners.counts.approved'), counts.approved, 'text-success-fg'],
+    [t('refPartners.counts.negative'), counts.closedNegative, 'text-danger-fg'],
   ];
   return (
     <dl className="grid grid-cols-4 gap-2">
       {cells.map(([label, n, tone]) => (
-        <div key={label} className="min-w-0 rounded-lg bg-surface px-2 py-1.5 text-center">
+        <div key={label} className="min-w-0 rounded-lg bg-sunken px-2 py-1.5 text-center">
           <dd className={clsx('text-base font-bold tabular-nums', tone)}>{n}</dd>
           <dt className="truncate text-[10px] text-muted" title={label}>
             {label}
@@ -176,7 +176,7 @@ const PartnerList = ({ isAdmin }: { isAdmin: boolean }) => {
         subtitle={t('refPartners.subtitle')}
         actions={
           <>
-            {isFetching && !isLoading && <Spinner className="size-4 text-brand-600" />}
+            {isFetching && !isLoading && <Spinner className="size-4 text-link" />}
             <Link to="/admin/partners/commissions" className="btn-secondary btn-sm">
               <HandCoins className="size-4" /> {t('refPartners.allCommissions')}
             </Link>
@@ -216,17 +216,17 @@ const PartnerList = ({ isAdmin }: { isAdmin: boolean }) => {
       ) : (
         <ul className="grid grid-cols-1 gap-3 md:grid-cols-2 2xl:grid-cols-3">
           {data.map((p) => (
-            <li key={p.id} className={clsx('flex flex-col rounded-xl border border-line bg-card p-4 transition hover:border-brand-400/60', !p.active && 'opacity-70')}>
+            <li key={p.id} className={clsx('flex flex-col rounded-xl border border-line bg-card p-4 transition hover:border-line-strong', !p.active && 'opacity-70')}>
               <div className="flex items-start justify-between gap-2">
                 <Link to={`/admin/partners/${p.id}`} className="min-w-0">
-                  <p className="flex items-center gap-2 truncate font-semibold text-ink hover:text-brand-700">
-                    <Handshake className="size-4 shrink-0 text-brand-600" aria-hidden /> <span className="truncate">{p.name}</span>
+                  <p className="flex items-center gap-2 truncate font-semibold text-ink hover:text-link">
+                    <Handshake className="size-4 shrink-0 text-link" aria-hidden /> <span className="truncate">{p.name}</span>
                   </p>
                 </Link>
                 <div className="flex shrink-0 items-center gap-1">
-                  {!p.active && <span className="badge bg-surface text-muted">{t('refPartners.inactive')}</span>}
+                  {!p.active && <span className="badge bg-sunken text-muted">{t('refPartners.inactive')}</span>}
                   {isAdmin && (
-                    <button type="button" className="btn-ghost btn-sm" aria-label={t('refPartners.edit')} title={t('refPartners.edit')} onClick={() => setDialog({ open: true, partner: p })}>
+                    <button type="button" className="btn-secondary btn-sm" aria-label={t('refPartners.edit')} title={t('refPartners.edit')} onClick={() => setDialog({ open: true, partner: p })}>
                       <Pencil className="size-3.5" />
                     </button>
                   )}
@@ -252,7 +252,7 @@ const PartnerList = ({ isAdmin }: { isAdmin: boolean }) => {
                 <p className="mt-1 flex flex-wrap gap-x-3 text-[11px] text-muted">
                   {p.commissionCents != null && <span>{t('refPartners.perClient', { amount: money(p.commissionCents, p.currency ?? 'EUR') })}</span>}
                   {p.commissionTotals && p.commissionTotals.pendingCents + p.commissionTotals.approvedCents > 0 && (
-                    <span className="text-amber-700">
+                    <span className="text-warning-fg">
                       {t('refPartners.totals.pending')}: {money(p.commissionTotals.pendingCents + p.commissionTotals.approvedCents, p.currency ?? 'EUR')}
                     </span>
                   )}
@@ -300,21 +300,21 @@ const PartnerDetail = ({ isAdmin }: { isAdmin: boolean }) => {
 
   return (
     <div>
-      <Link to="/admin/partners" className="mb-3 inline-flex items-center gap-1 text-xs font-semibold text-brand-600 hover:text-brand-700">
+      <Link to="/admin/partners" className="mb-3 inline-flex items-center gap-1 text-xs font-semibold text-link hover:text-link">
         <ArrowLeft className="size-3.5" /> {t('refPartners.back')}
       </Link>
       <PageHead
         title={partner.name}
         subtitle={
           <span className="flex flex-wrap gap-x-3 gap-y-1">
-            {!partner.active && <span className="badge bg-surface text-muted">{t('refPartners.inactive')}</span>}
+            {!partner.active && <span className="badge bg-sunken text-muted">{t('refPartners.inactive')}</span>}
             {partner.phone && (
-              <a href={`tel:${partner.phone}`} className="inline-flex items-center gap-1 hover:text-brand-700">
+              <a href={`tel:${partner.phone}`} className="inline-flex items-center gap-1 hover:text-link">
                 <Phone className="size-3.5" /> {partner.phone}
               </a>
             )}
             {partner.email && (
-              <a href={`mailto:${partner.email}`} className="inline-flex items-center gap-1 hover:text-brand-700">
+              <a href={`mailto:${partner.email}`} className="inline-flex items-center gap-1 hover:text-link">
                 <Mail className="size-3.5" /> {partner.email}
               </a>
             )}
@@ -334,7 +334,7 @@ const PartnerDetail = ({ isAdmin }: { isAdmin: boolean }) => {
                 <button type="button" className="btn-secondary btn-sm" onClick={() => setEditing(true)}>
                   <Pencil className="size-3.5" /> {t('refPartners.edit')}
                 </button>
-                <button type="button" className="btn-secondary btn-sm text-danger" onClick={() => setConfirmDelete(true)}>
+                <button type="button" className="btn-secondary btn-sm text-danger-fg" onClick={() => setConfirmDelete(true)}>
                   <Trash2 className="size-3.5" /> {t('refPartners.delete')}
                 </button>
               </>
@@ -342,7 +342,7 @@ const PartnerDetail = ({ isAdmin }: { isAdmin: boolean }) => {
           </>
         }
       />
-      {partner.note && <p className="mb-4 rounded-xl border border-line bg-surface px-4 py-3 text-sm whitespace-pre-line text-ink/80">{partner.note}</p>}
+      {partner.note && <p className="mb-4 rounded-xl border border-line bg-sunken px-4 py-3 text-sm whitespace-pre-line text-ink/80">{partner.note}</p>}
       <div className="mb-5 grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,22rem)]">
         <div className="space-y-3">
           <div className="max-w-xl">
@@ -352,13 +352,13 @@ const PartnerDetail = ({ isAdmin }: { isAdmin: boolean }) => {
             <dl className="grid max-w-xl grid-cols-2 gap-2 sm:grid-cols-4">
               {(
                 [
-                  ['pending', partner.commissionTotals.pendingCents, 'text-amber-700'],
-                  ['approved', partner.commissionTotals.approvedCents, 'text-brand-700'],
-                  ['paid', partner.commissionTotals.paidCents, 'text-emerald-700'],
+                  ['pending', partner.commissionTotals.pendingCents, 'text-warning-fg'],
+                  ['approved', partner.commissionTotals.approvedCents, 'text-link'],
+                  ['paid', partner.commissionTotals.paidCents, 'text-success-fg'],
                   ['thisMonth', partner.commissionTotals.thisMonthCents, 'text-ink'],
                 ] as const
               ).map(([k, v, tone]) => (
-                <div key={k} className="min-w-0 rounded-lg bg-surface px-2 py-1.5 text-center">
+                <div key={k} className="min-w-0 rounded-lg bg-sunken px-2 py-1.5 text-center">
                   <dd className={clsx('truncate text-sm font-bold tabular-nums', tone)}>{money(v, partner.currency ?? 'EUR')}</dd>
                   <dt className="truncate text-[10px] text-muted">{t(`refPartners.totals.${k}`)}</dt>
                 </div>
@@ -377,7 +377,7 @@ const PartnerDetail = ({ isAdmin }: { isAdmin: boolean }) => {
       ) : (
       <section className="rounded-xl border border-line bg-card">
         <header className="flex items-center gap-2 border-b border-line px-5 py-3.5">
-          <Users className="size-4 text-brand-600" aria-hidden />
+          <Users className="size-4 text-link" aria-hidden />
           <h2 className="text-sm font-semibold text-ink">{t('refPartners.clientsTitle', { count: cases.length })}</h2>
         </header>
         {!hasCases ? (
@@ -385,7 +385,7 @@ const PartnerDetail = ({ isAdmin }: { isAdmin: boolean }) => {
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full min-w-[900px] text-left text-sm">
-              <thead className="border-b border-line bg-surface/70 text-[11px] font-semibold tracking-wide whitespace-nowrap text-muted uppercase">
+              <thead className="border-b border-line bg-surface/70 text-xs font-medium whitespace-nowrap text-muted">
                 <tr>
                   <th className="px-4 py-2.5">{t('refPartners.th.number')}</th>
                   <th className="px-4 py-2.5">{t('refPartners.th.client')}</th>
@@ -399,9 +399,9 @@ const PartnerDetail = ({ isAdmin }: { isAdmin: boolean }) => {
               </thead>
               <tbody className="divide-y divide-line">
                 {cases.map((c) => (
-                  <tr key={c.id} className="cursor-pointer transition hover:bg-brand-50/50" onClick={() => navigate(`/admin/cases/${c.id}`)}>
+                  <tr key={c.id} className="cursor-pointer transition hover:bg-primary/[0.04]" onClick={() => navigate(`/admin/cases/${c.id}`)}>
                     <td className="px-4 py-3 align-top">
-                      <Link to={`/admin/cases/${c.id}`} className="font-mono text-xs font-semibold text-brand-700 hover:underline" onClick={(e) => e.stopPropagation()}>
+                      <Link to={`/admin/cases/${c.id}`} className="code-id text-xs font-medium text-link hover:underline whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
                         {c.number}
                       </Link>
                     </td>
@@ -409,7 +409,7 @@ const PartnerDetail = ({ isAdmin }: { isAdmin: boolean }) => {
                       <p className="font-semibold whitespace-nowrap text-ink">{fullName(c.client)}</p>
                       {c.client.phone && <p className="text-xs text-muted">{c.client.phone}</p>}
                     </td>
-                    <td className="px-4 py-3 align-top font-mono text-xs text-ink/80">
+                    <td className="px-4 py-3 align-top code-id text-xs text-ink/80">
                       <SensitiveValue value={c.client.passportNumber} entity="user" id={c.client.id} field="passportNumber" />
                     </td>
                     <td className="px-4 py-3 align-top">
@@ -447,7 +447,7 @@ const AllCommissions = ({ isAdmin }: { isAdmin: boolean }) => {
   usePageTitle(t('refPartners.com.title'));
   return (
     <div>
-      <Link to="/admin/partners" className="mb-3 inline-flex items-center gap-1 text-xs font-semibold text-brand-600 hover:text-brand-700">
+      <Link to="/admin/partners" className="mb-3 inline-flex items-center gap-1 text-xs font-semibold text-link hover:text-link">
         <ArrowLeft className="size-3.5" /> {t('refPartners.back')}
       </Link>
       <PageHead title={t('refPartners.com.title')} subtitle={t('refPartners.com.subtitle')} />

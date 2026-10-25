@@ -272,8 +272,8 @@ export default function AdminClientRegister() {
       readOnly: (r, c) => !!fields[c].memberReadOnly && rows[r].kind === 'member',
       cellClass: (r, c) => {
         const k = pkey(rows[r].id, fields[c].field);
-        if (errors.has(k)) return 'bg-danger/15! ring-1 ring-inset ring-danger';
-        if (pending.has(k)) return 'bg-warning/20!';
+        if (errors.has(k)) return 'bg-danger-bg! ring-1 ring-inset ring-danger';
+        if (pending.has(k)) return 'bg-warning-bg!';
         return undefined;
       },
       cellTitle: (r, c) => {
@@ -299,7 +299,7 @@ export default function AdminClientRegister() {
           node = (
             <span className="flex items-center gap-1">
               {row.kind === 'member' && <CornerDownRight size={12} className="shrink-0 text-muted" aria-label={t('register.member')} />}
-              <Link to={`/admin/cases/${row.id}`} className="truncate font-semibold text-brand-600 hover:underline" title={t('register.openCase')}>
+              <Link to={`/admin/cases/${row.id}`} className="truncate font-semibold text-link hover:underline" title={t('register.openCase')}>
                 {row.number}
               </Link>
               <ExternalLink size={11} className="shrink-0 text-muted" />
@@ -451,8 +451,8 @@ export default function AdminClientRegister() {
     <div className="flex h-[calc(100dvh-9rem)] min-h-[520px] flex-col gap-3">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="flex items-center gap-2 font-display text-2xl font-extrabold text-ink">
-            <SheetIcon className="text-emerald-600" size={24} /> {t('register.title')}
+          <h1 className="flex items-center gap-2 type-page-title">
+            <SheetIcon className="text-success-fg" size={24} /> {t('register.title')}
           </h1>
           <p className="text-sm text-muted">{t('register.subtitle')}</p>
         </div>
@@ -470,7 +470,7 @@ export default function AdminClientRegister() {
       <div className="card min-h-0 flex-1 overflow-hidden">
         {query.isLoading || !source ? (
           <div className="grid h-full place-items-center">
-            {query.isError ? <p className="text-sm text-danger">{t('register.errors.generic')}</p> : <Spinner />}
+            {query.isError ? <p className="text-sm text-danger-fg">{t('register.errors.generic')}</p> : <Spinner />}
           </div>
         ) : (
           <Grid
@@ -505,7 +505,7 @@ export default function AdminClientRegister() {
                   <FileDown size={16} />
                 </ToolButton>
                 {data?.canManageColumns && (
-                  <button type="button" onClick={() => setManageOpen(true)} className="flex h-8 items-center gap-1.5 rounded-md px-2 text-xs font-semibold text-ink/80 hover:bg-surface">
+                  <button type="button" onClick={() => setManageOpen(true)} className="flex h-8 items-center gap-1.5 rounded-md px-2 text-xs font-semibold text-ink/80 hover:bg-sunken">
                     <Columns3 size={15} /> {t('register.manageColumns')}
                   </button>
                 )}
@@ -515,7 +515,7 @@ export default function AdminClientRegister() {
               <span>
                 {t('register.status', { rows: rows.length, members })}
                 {data?.truncated ? ` · ${t('register.truncated')}` : ''}
-                {errors.size > 0 && <b className="ml-2 text-danger">{t('register.errorCount', { count: errors.size })}</b>}
+                {errors.size > 0 && <b className="ml-2 text-danger-fg">{t('register.errorCount', { count: errors.size })}</b>}
               </span>
             }
           />
@@ -663,10 +663,10 @@ function ColumnRow({
   return (
     <li className="flex flex-wrap items-start gap-2 rounded-xl border border-line p-2.5">
       <div className="flex flex-col">
-        <button type="button" disabled={first || busy} onClick={onUp} className="rounded p-0.5 text-muted hover:bg-surface disabled:opacity-30" aria-label={t('register.manage.up')}>
+        <button type="button" disabled={first || busy} onClick={onUp} className="rounded p-0.5 text-muted hover:bg-sunken disabled:opacity-30" aria-label={t('register.manage.up')}>
           <ArrowUp size={14} />
         </button>
-        <button type="button" disabled={last || busy} onClick={onDown} className="rounded p-0.5 text-muted hover:bg-surface disabled:opacity-30" aria-label={t('register.manage.down')}>
+        <button type="button" disabled={last || busy} onClick={onDown} className="rounded p-0.5 text-muted hover:bg-sunken disabled:opacity-30" aria-label={t('register.manage.down')}>
           <ArrowDown size={14} />
         </button>
       </div>
@@ -689,7 +689,7 @@ function ColumnRow({
         >
           <Save size={13} /> {t('register.manage.save')}
         </button>
-        <button type="button" disabled={busy} onClick={onDelete} className="rounded-lg p-2 text-danger hover:bg-danger/10" aria-label={t('register.manage.delete')}>
+        <button type="button" disabled={busy} onClick={onDelete} className="rounded-lg p-2 text-danger-fg hover:bg-danger-bg" aria-label={t('register.manage.delete')}>
           <Trash2 size={15} />
         </button>
       </div>

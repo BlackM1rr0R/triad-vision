@@ -82,7 +82,7 @@ const placeholdersIn = (tpl: string) => Array.from(new Set(Array.from(tpl.matchA
 // ─── Outbound log ──────────────────────────────────────────────────────
 
 const ChannelLabel = ({ channel }: { channel: Channel }) => (
-  <span className={clsx('inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold', channel === 'WHATSAPP' ? 'bg-emerald-50 text-emerald-800' : 'bg-slate-100 text-slate-700')}>
+  <span className={clsx('inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold', channel === 'WHATSAPP' ? 'bg-success-bg text-success-fg' : 'bg-sunken text-muted')}>
     {channel === 'WHATSAPP' ? <MessageCircle className="size-3" aria-hidden /> : <Smartphone className="size-3" aria-hidden />}
     {channel === 'WHATSAPP' ? 'WhatsApp' : 'SMS'}
   </span>
@@ -191,7 +191,7 @@ const OutboundTab = () => {
         <Panel bodyClassName="p-0">
           <div className="overflow-x-auto">
             <table className="w-full min-w-[720px] text-sm">
-              <thead className="bg-surface text-left text-[11px] tracking-wide text-muted uppercase">
+              <thead className="bg-sunken text-left text-xs text-muted">
                 <tr>
                   <th className="px-4 py-2.5 font-semibold">{t('messaging.admin.outbound.channel')}</th>
                   <th className="px-4 py-2.5 font-semibold">{t('messaging.admin.outbound.to')}</th>
@@ -247,11 +247,11 @@ const RowGroup = ({
         <td className="px-4 py-3">
           <ChannelLabel channel={m.channel} />
         </td>
-        <td className="px-4 py-3 font-mono text-xs tabular-nums">{m.to}</td>
+        <td className="px-4 py-3 code-id text-xs tabular-nums">{m.to}</td>
         <td className="px-4 py-3">
           {m.user ? (
             <span className="block">
-              <span className="font-medium text-navy-900">{fullName(m.user)}</span>
+              <span className="font-medium text-ink">{fullName(m.user)}</span>
               <span className="block text-[11px] text-muted">{m.user.email}</span>
             </span>
           ) : (
@@ -260,7 +260,7 @@ const RowGroup = ({
         </td>
         <td className="px-4 py-3">
           {m.case ? (
-            <Link to={`/admin/cases/${m.case.id}`} className="font-semibold text-brand-600 hover:underline" onClick={(e) => e.stopPropagation()}>
+            <Link to={`/admin/cases/${m.case.id}`} className="font-semibold text-link hover:underline" onClick={(e) => e.stopPropagation()}>
               {m.case.number}
             </Link>
           ) : (
@@ -271,7 +271,7 @@ const RowGroup = ({
           <span className={clsx('inline-flex rounded-full px-2 py-0.5 text-[11px] font-semibold', STATUS_TONE[m.status])} title={m.status === 'CONSOLE' ? t('messaging.admin.outbound.consoleHint') : undefined}>
             {t(`messaging.admin.outbound.statuses.${m.status}`)}
           </span>
-          {m.error && <span className="mt-1 block max-w-[220px] truncate text-[11px] text-red-700" title={m.error}>{m.error}</span>}
+          {m.error && <span className="mt-1 block max-w-[220px] truncate text-[11px] text-danger-fg" title={m.error}>{m.error}</span>}
         </td>
         <td className="px-4 py-3 whitespace-nowrap text-xs text-muted" title={fmtDateTime(m.sentAt ?? m.createdAt)}>
           {fmtRelative(m.sentAt ?? m.createdAt)}
@@ -313,14 +313,14 @@ const RowGroup = ({
                 )}
                 {m.error && (
                   <>
-                    <dt className="mt-2 font-semibold text-red-700">{t('messaging.admin.outbound.error')}</dt>
-                    <dd className="break-words text-red-700">{m.error}</dd>
+                    <dt className="mt-2 font-semibold text-danger-fg">{t('messaging.admin.outbound.error')}</dt>
+                    <dd className="break-words text-danger-fg">{m.error}</dd>
                   </>
                 )}
               </div>
               <div>
                 <dt className="text-xs font-semibold text-muted">{t('messaging.admin.outbound.body')}</dt>
-                <dd className="mt-1 rounded-lg border border-line bg-white p-3 text-sm break-words whitespace-pre-wrap text-ink">{m.body}</dd>
+                <dd className="mt-1 rounded-lg border border-line bg-card p-3 text-sm break-words whitespace-pre-wrap text-ink">{m.body}</dd>
               </div>
             </dl>
           </td>
@@ -335,14 +335,14 @@ const RowGroup = ({
 const Row = ({ label, children }: { label: string; children: ReactNode }) => (
   <div className="flex items-baseline justify-between gap-3 py-1.5 text-sm">
     <dt className="shrink-0 text-xs text-muted">{label}</dt>
-    <dd className="min-w-0 text-right font-medium text-navy-900">{children}</dd>
+    <dd className="min-w-0 text-right font-medium text-ink">{children}</dd>
   </div>
 );
 
 const YesNo = ({ v }: { v: boolean }) => {
   const { t } = useTranslation();
   return (
-    <span className={clsx('inline-flex items-center gap-1', v ? 'text-emerald-700' : 'text-muted')}>
+    <span className={clsx('inline-flex items-center gap-1', v ? 'text-success-fg' : 'text-muted')}>
       {v ? <CheckCircle2 className="size-3.5" aria-hidden /> : <XCircle className="size-3.5" aria-hidden />}
       {v ? t('messaging.admin.providers.yes') : t('messaging.admin.providers.no')}
     </span>
@@ -352,7 +352,7 @@ const YesNo = ({ v }: { v: boolean }) => {
 const ConfiguredBadge = ({ ok }: { ok: boolean }) => {
   const { t } = useTranslation();
   return (
-    <span className={clsx('inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold', ok ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800')}>
+    <span className={clsx('inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold', ok ? 'bg-success-bg text-success-fg' : 'bg-warning-bg text-warning-fg')}>
       {ok ? <CheckCircle2 className="size-3" aria-hidden /> : <AlertTriangle className="size-3" aria-hidden />}
       {ok ? t('messaging.admin.providers.configured') : t('messaging.admin.providers.notConfigured')}
     </span>
@@ -395,7 +395,7 @@ const ProvidersTab = () => {
             </Row>
             <Row label={t('messaging.admin.providers.apiVersion')}>{p.whatsapp.apiVersion}</Row>
             <Row label={t('messaging.admin.providers.webhookUrl')}>
-              <span className="font-mono text-xs break-all">{webhookUrl}</span>
+              <span className="code-id text-xs break-all">{webhookUrl}</span>
             </Row>
             <Row label={t('messaging.admin.providers.webhookVerify')}>
               <YesNo v={p.whatsapp.webhookVerify} />
@@ -407,7 +407,7 @@ const ProvidersTab = () => {
               <YesNo v={p.whatsapp.webhookSecret} />
             </Row>
           </dl>
-          <p className="mt-4 flex gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs leading-relaxed text-amber-900">
+          <p className="mt-4 flex gap-2 rounded-lg border border-warning-border bg-warning-bg px-3 py-2 text-xs leading-relaxed text-warning-fg">
             <AlertTriangle className="mt-0.5 size-3.5 shrink-0" aria-hidden />
             {t('messaging.admin.providers.window')}
           </p>
@@ -423,7 +423,7 @@ const ProvidersTab = () => {
             )}
             {p.sms.url && (
               <Row label={t('messaging.admin.providers.url')}>
-                <span className="font-mono text-xs break-all">{p.sms.url}</span>
+                <span className="code-id text-xs break-all">{p.sms.url}</span>
               </Row>
             )}
             <Row label={t('messaging.admin.providers.defaultCountry')}>+{p.defaultCountryCode}</Row>
@@ -565,15 +565,15 @@ const TemplatesTab = () => {
                   onClick={() => select(tt.type)}
                   className={clsx(
                     'flex w-full items-center justify-between gap-2 rounded-lg px-3 py-2 text-left text-sm transition',
-                    active ? 'bg-navy-900 text-white' : 'text-ink hover:bg-surface',
+                    active ? 'bg-primary text-primary-contrast' : 'text-ink hover:bg-sunken',
                   )}
                 >
                   <span className="min-w-0">
                     <span className="block truncate font-medium">{t(`messaging.admin.templates.types.${tt.type}`)}</span>
-                    <span className={clsx('block truncate font-mono text-[10px]', active ? 'text-white/60' : 'text-muted')}>{tt.type}</span>
+                    <span className={clsx('block truncate code-id text-[10px]', active ? 'text-primary-contrast/60' : 'text-muted')}>{tt.type}</span>
                   </span>
                   {overridden > 0 && (
-                    <span className={clsx('shrink-0 rounded-full px-1.5 text-[10px] font-semibold tabular-nums', active ? 'bg-white/20' : 'bg-brand-100 text-brand-700')} title={t('messaging.admin.templates.overridden')}>
+                    <span className={clsx('shrink-0 rounded-full px-1.5 text-[10px] font-semibold tabular-nums', active ? 'bg-primary-contrast/20' : 'bg-primary/10 text-link')} title={t('messaging.admin.templates.overridden')}>
                       {overridden}/4
                     </span>
                   )}
@@ -590,14 +590,14 @@ const TemplatesTab = () => {
           title={
             <span className="flex items-center gap-2">
               {t(`messaging.admin.templates.types.${current.type}`)}
-              <span className="font-mono text-[11px] font-normal text-muted">{current.type}</span>
+              <span className="code-id text-[11px] font-normal text-muted">{current.type}</span>
             </span>
           }
           icon={FileText}
-          actions={dirty ? <span className="inline-flex items-center gap-1 text-xs font-semibold text-amber-700"><AlertTriangle className="size-3.5" aria-hidden /> {t('messaging.admin.templates.unsaved')}</span> : undefined}
+          actions={dirty ? <span className="inline-flex items-center gap-1 text-xs font-semibold text-warning-fg"><AlertTriangle className="size-3.5" aria-hidden /> {t('messaging.admin.templates.unsaved')}</span> : undefined}
         >
           <div className="mb-4">
-            <p className="text-xs font-semibold text-navy-900">{t('messaging.admin.templates.placeholders')}</p>
+            <p className="text-xs font-semibold text-ink">{t('messaging.admin.templates.placeholders')}</p>
             <p className="text-[11px] text-muted">{t('messaging.admin.templates.placeholderHint')}</p>
             <div className="mt-2 flex flex-wrap gap-1.5">
               {current.placeholders.map((ph) => (
@@ -606,11 +606,11 @@ const TemplatesTab = () => {
                   type="button"
                   disabled={!canEdit}
                   onClick={() => insert(ph)}
-                  className="inline-flex min-h-8 items-center gap-1 rounded-full border border-brand-200 bg-brand-50 px-2.5 text-xs font-medium text-brand-800 transition hover:border-brand-400 disabled:opacity-60"
+                  className="inline-flex min-h-8 items-center gap-1 rounded-full border border-primary/25 bg-primary/[0.06] px-2.5 text-xs font-medium text-ink transition hover:border-line-strong disabled:opacity-60"
                   title={t(`messaging.admin.templates.vars.${ph}`)}
                 >
                   <code>{`{{${ph}}}`}</code>
-                  <span className="text-[10px] text-brand-700/70">{t(`messaging.admin.templates.vars.${ph}`)}</span>
+                  <span className="text-[10px] text-link/70">{t(`messaging.admin.templates.vars.${ph}`)}</span>
                 </button>
               ))}
             </div>
@@ -627,14 +627,14 @@ const TemplatesTab = () => {
               const isDirty = localeDirty(l);
               const halfFilled = hasOverride && (!d.title.trim() || !d.body.trim());
               return (
-                <section key={l} className={clsx('rounded-xl border p-4', isDirty ? 'border-amber-300 bg-amber-50/30' : 'border-line')} aria-label={t('messaging.admin.templates.editorFor', { type: current.type, locale: l })}>
+                <section key={l} className={clsx('rounded-xl border p-4', isDirty ? 'border-warning-border bg-warning-bg/30' : 'border-line')} aria-label={t('messaging.admin.templates.editorFor', { type: current.type, locale: l })}>
                   <header className="mb-3 flex items-center justify-between gap-2">
-                    <span className="flex items-center gap-2 text-sm font-semibold text-navy-900">
+                    <span className="flex items-center gap-2 text-sm font-semibold text-ink">
                       <Flag code={l} /> {l.toUpperCase()}
                       {loc.override ? (
-                        <span className="rounded-full bg-brand-100 px-2 py-0.5 text-[10px] font-semibold text-brand-700">{t('messaging.admin.templates.overridden')}</span>
+                        <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-link">{t('messaging.admin.templates.overridden')}</span>
                       ) : (
-                        <span className="rounded-full bg-surface px-2 py-0.5 text-[10px] font-semibold text-muted">{t('messaging.admin.templates.default')}</span>
+                        <span className="rounded-full bg-sunken px-2 py-0.5 text-[10px] font-semibold text-muted">{t('messaging.admin.templates.default')}</span>
                       )}
                     </span>
                     {loc.override && (
@@ -674,15 +674,15 @@ const TemplatesTab = () => {
                       onChange={(e) => setDraft((x) => x && { ...x, [l]: { ...x[l], body: e.target.value } })}
                     />
                   </label>
-                  {unknown.length > 0 && <p className="mt-1 text-[11px] text-red-700">{t('messaging.admin.templates.unknown', { list: unknown.map((u) => `{{${u}}}`).join(', ') })}</p>}
-                  {halfFilled && <p className="mt-1 text-[11px] text-amber-700">{t('messaging.admin.templates.bothRequired')}</p>}
+                  {unknown.length > 0 && <p className="mt-1 text-[11px] text-danger-fg">{t('messaging.admin.templates.unknown', { list: unknown.map((u) => `{{${u}}}`).join(', ') })}</p>}
+                  {halfFilled && <p className="mt-1 text-[11px] text-warning-fg">{t('messaging.admin.templates.bothRequired')}</p>}
 
-                  <div className="mt-3 rounded-lg border border-line bg-white p-3">
+                  <div className="mt-3 rounded-lg border border-line bg-card p-3">
                     <p className="flex items-center justify-between text-[10px] font-semibold tracking-wide text-muted uppercase">
                       {t('messaging.admin.templates.preview')}
                       <span className="font-normal normal-case">{hasOverride ? t('messaging.admin.templates.previewHint') : t('messaging.admin.templates.usingDefault')}</span>
                     </p>
-                    <p className="mt-1.5 text-sm font-semibold text-navy-900">{previewTitle}</p>
+                    <p className="mt-1.5 text-sm font-semibold text-ink">{previewTitle}</p>
                     <p className="mt-1 text-xs leading-relaxed break-words whitespace-pre-wrap text-ink/80">{previewBody}</p>
                   </div>
 

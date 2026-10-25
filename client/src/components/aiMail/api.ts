@@ -119,13 +119,13 @@ export const aiMailError = (t: TFunction, err: unknown) => {
 };
 
 export const CATEGORY_TONE: Record<TriageCategory, string> = {
-  CANDIDATE: 'bg-brand-100 text-brand-700',
-  EMPLOYER: 'bg-violet-100 text-violet-700',
-  PARTNER: 'bg-sky-100 text-sky-700',
-  EXISTING_CLIENT: 'bg-emerald-100 text-emerald-700',
-  SUPPLIER: 'bg-slate-100 text-slate-600',
-  SPAM: 'bg-slate-100 text-slate-500',
-  OTHER: 'bg-slate-100 text-slate-600',
+  CANDIDATE: 'bg-primary/10 text-link',
+  EMPLOYER: 'bg-accent-bg text-accent-fg',
+  PARTNER: 'bg-info-bg text-info-fg',
+  EXISTING_CLIENT: 'bg-success-bg text-success-fg',
+  SUPPLIER: 'bg-sunken text-muted',
+  SPAM: 'bg-sunken text-muted',
+  OTHER: 'bg-sunken text-muted',
 };
 
 export const URGENCY_TONE: Record<TriageUrgency, string> = toneClasses(STATUS_TONES.urgency);

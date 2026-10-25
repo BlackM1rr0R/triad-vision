@@ -29,9 +29,9 @@ import {
 registerCopy(pagesContracts);
 
 const KIND_TONE: Record<ContractKind, string> = {
-  WORK: 'bg-brand-100 text-brand-800',
-  AUSBILDUNG: 'bg-violet-100 text-violet-800',
-  SERVICE: 'bg-emerald-100 text-emerald-800',
+  WORK: 'bg-primary/10 text-ink',
+  AUSBILDUNG: 'bg-accent-bg text-accent-fg',
+  SERVICE: 'bg-success-bg text-success-fg',
 };
 const GROUP_ORDER: PlaceholderGroup[] = ['input', 'client', 'case', 'company', 'vacancy', 'triad', 'staff', 'date'];
 const TOKEN = /\{\{\s*([A-Za-z][A-Za-z0-9_.]*)\s*\}\}/g;
@@ -45,7 +45,7 @@ const useTemplates = () =>
 const Disclaimer = () => {
   const { t } = useTranslation();
   return (
-    <p className="mb-4 flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+    <p className="mb-4 flex items-start gap-2 rounded-lg border border-warning-border bg-warning-bg px-3 py-2 text-xs text-warning-fg">
       <ShieldAlert className="mt-0.5 size-4 shrink-0" aria-hidden /> {t('contractTpl.disclaimer')}
     </p>
   );
@@ -101,15 +101,15 @@ const TemplateList = () => {
               <Link
                 to={x.id}
                 className={clsx(
-                  'flex h-full flex-col rounded-xl border border-line bg-card p-4 transition hover:border-brand-400/60 hover:shadow-[0_8px_24px_-14px_rgba(11,31,68,0.35)]',
+                  'flex h-full flex-col rounded-xl border border-line bg-card p-4 transition hover:border-line-strong hover:shadow-[var(--tv-shadow-raised)]',
                   !x.active && 'opacity-70',
                 )}
               >
                 <div className="flex flex-wrap items-center gap-1.5">
                   <span className={clsx('badge', KIND_TONE[x.kind])}>{t(`contractTpl.kinds.${x.kind}`)}</span>
-                  <span className="badge bg-surface text-muted uppercase">{x.language}</span>
+                  <span className="badge bg-sunken text-muted uppercase">{x.language}</span>
                   {x.isDefault && <span className="badge bg-warning-bg text-warning-fg">{t('contractTpl.default')}</span>}
-                  {!x.active && <span className="badge bg-surface text-muted">{t('contractTpl.inactive')}</span>}
+                  {!x.active && <span className="badge bg-sunken text-muted">{t('contractTpl.inactive')}</span>}
                 </div>
                 <p className="mt-2 font-semibold break-words text-ink">{x.name}</p>
                 <p className="mt-auto pt-3 text-xs text-muted">
@@ -143,7 +143,7 @@ const PlaceholderPicker = ({ defs, onPick, disabled }: { defs: PlaceholderDef[];
                       type="button"
                       disabled={disabled}
                       onClick={() => onPick(d.key)}
-                      className="flex w-full min-w-0 items-center justify-between gap-2 rounded-md border border-line bg-card px-2.5 py-1.5 text-left text-xs transition hover:border-brand-400 hover:bg-surface disabled:cursor-not-allowed disabled:opacity-60"
+                      className="flex w-full min-w-0 items-center justify-between gap-2 rounded-md border border-line bg-card px-2.5 py-1.5 text-left text-xs transition hover:border-line-strong hover:bg-sunken disabled:cursor-not-allowed disabled:opacity-60"
                     >
                       <span className="min-w-0">
                         <span className="block truncate font-medium text-ink">{t(placeholderLabelKey(d.key))}</span>
@@ -248,7 +248,7 @@ const TemplateEditor = () => {
 
   return (
     <div>
-      <Link to=".." relative="path" className="mb-3 inline-flex min-h-10 items-center gap-1 text-sm font-medium text-brand-600 hover:text-brand-700">
+      <Link to=".." relative="path" className="mb-3 inline-flex min-h-10 items-center gap-1 text-sm font-medium text-link hover:text-link">
         <ArrowLeft className="size-4" /> {t('contractTpl.back')}
       </Link>
       <PageHead
@@ -257,7 +257,7 @@ const TemplateEditor = () => {
           canEdit && (
             <>
               {!isNew && (
-                <button type="button" className="btn-secondary btn-sm text-danger" onClick={() => setConfirmDelete(true)}>
+                <button type="button" className="btn-secondary btn-sm text-danger-fg" onClick={() => setConfirmDelete(true)}>
                   <Trash2 className="size-3.5" /> {t('contractTpl.delete')}
                 </button>
               )}
@@ -269,7 +269,7 @@ const TemplateEditor = () => {
         }
       />
       <Disclaimer />
-      {!canEdit && <p className="mb-4 rounded-lg border border-line bg-surface px-3 py-2 text-xs text-muted">{t('contractTpl.readOnly')}</p>}
+      {!canEdit && <p className="mb-4 rounded-lg border border-line bg-sunken px-3 py-2 text-xs text-muted">{t('contractTpl.readOnly')}</p>}
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_18rem]">
         <Panel>
@@ -331,7 +331,7 @@ const TemplateEditor = () => {
                 onChange={(e) => setDraft((d) => ({ ...d, body: e.target.value }))}
               />
               <p className="mt-1.5 text-[11px] text-muted">{t('contractTpl.syntax', { braces: '{{…}}' })}</p>
-              {unknown.length > 0 && <p className="mt-1 text-xs font-medium text-danger">{t('contractTpl.unknownKeys', { keys: unknown.join(', ') })}</p>}
+              {unknown.length > 0 && <p className="mt-1 text-xs font-medium text-danger-fg">{t('contractTpl.unknownKeys', { keys: unknown.join(', ') })}</p>}
             </div>
           </div>
         </Panel>

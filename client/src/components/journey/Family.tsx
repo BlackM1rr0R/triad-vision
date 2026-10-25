@@ -33,7 +33,7 @@ const RelationTag = ({ relation }: { relation: Relation }) => {
   const { t } = useTranslation();
   const Icon = RELATION_ICON[relation];
   return (
-    <span className="badge whitespace-nowrap bg-rose-100 text-rose-800">
+    <span className="badge whitespace-nowrap bg-danger-bg text-danger-fg">
       <Icon className="size-3" aria-hidden />
       {t(`journey.family.relation.${relation}`)}
     </span>
@@ -53,7 +53,7 @@ const PortalRow = ({ c, current, label }: { c: FamilyCase; current: boolean; lab
   const { date } = useL10n();
   const inner = (
     <>
-      <span className={clsx('grid size-10 shrink-0 place-items-center rounded-xl', current ? 'bg-brand-600 text-white' : 'bg-brand-50 text-brand-700')}>
+      <span className={clsx('grid size-10 shrink-0 place-items-center rounded-xl', current ? 'bg-primary text-primary-contrast' : 'bg-sunken text-link')}>
         {c.relation ? (() => {
           const Icon = RELATION_ICON[c.relation];
           return <Icon className="size-5" aria-hidden />;
@@ -61,7 +61,7 @@ const PortalRow = ({ c, current, label }: { c: FamilyCase; current: boolean; lab
       </span>
       <span className="min-w-0 flex-1">
         <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
-          <span className="font-semibold text-navy-900">{c.relation ? memberName(c) : label}</span>
+          <span className="font-semibold text-ink">{c.relation ? memberName(c) : label}</span>
           {c.relation ? <RelationTag relation={c.relation} /> : <span className="badge bg-navy-900 text-white">{label}</span>}
           {current && <span className="text-xs text-muted">({t('journey.family.thisCase')})</span>}
         </span>
@@ -73,16 +73,16 @@ const PortalRow = ({ c, current, label }: { c: FamilyCase; current: boolean; lab
       </span>
       <span className="flex shrink-0 flex-col items-end gap-1.5">
         <StatusBadge status={c.status} />
-        {!current && <ArrowRight className="size-4 text-brand-600" aria-hidden />}
+        {!current && <ArrowRight className="size-4 text-primary" aria-hidden />}
       </span>
     </>
   );
   const cls = 'flex items-start gap-3 rounded-xl border border-line p-3.5 transition';
   return current ? (
-    <li className={clsx(cls, 'bg-brand-50/40 ring-1 ring-brand-200')}>{inner}</li>
+    <li className={clsx(cls, 'bg-sunken ring-1 ring-focus/40')}>{inner}</li>
   ) : (
     <li>
-      <Link to={`/account/cases/${c.id}`} className={clsx(cls, 'bg-white hover:border-brand-400 hover:shadow-sm')} aria-label={`${t('journey.family.open')}: ${c.number}`}>
+      <Link to={`/account/cases/${c.id}`} className={clsx(cls, 'bg-card hover:border-primary hover:shadow-sm')} aria-label={`${t('journey.family.open')}: ${c.number}`}>
         {inner}
       </Link>
     </li>
@@ -96,12 +96,12 @@ export const FamilyGroupCard = ({ caseId, parentCaseId }: { caseId: string; pare
   if (!data || (!data.members.length && !parentCaseId)) return null;
   return (
     <section className="card p-5 sm:p-6" aria-labelledby="family-title">
-      <h2 id="family-title" className="flex items-center gap-2.5 text-base font-bold text-navy-900">
-        <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-rose-50 text-rose-600">
+      <h2 id="family-title" className="flex items-center gap-2.5 text-base font-bold text-ink">
+        <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-danger-bg text-danger-fg">
           <Users className="size-4" aria-hidden />
         </span>
         {t('journey.family.title')}
-        <span className="badge bg-brand-100 text-brand-700">{data.members.length + 1}</span>
+        <span className="badge bg-sunken text-link">{data.members.length + 1}</span>
       </h2>
       <p className="mt-1 text-sm text-muted">{t('journey.family.subtitle')}</p>
       <ul className="mt-4 space-y-2.5">
@@ -113,7 +113,7 @@ export const FamilyGroupCard = ({ caseId, parentCaseId }: { caseId: string; pare
       {data.members.length > 0 && (
         <p className="mt-4 flex items-center justify-between gap-3 text-xs text-muted">
           <span>{t('journey.family.aggregate')}</span>
-          <span className="font-semibold text-navy-900">{t('journey.family.approved', { approved: data.aggregate.approved, total: data.aggregate.total })}</span>
+          <span className="font-semibold text-ink">{t('journey.family.approved', { approved: data.aggregate.approved, total: data.aggregate.total })}</span>
         </p>
       )}
     </section>
@@ -246,7 +246,7 @@ export const FamilyPanel = ({ caseId, parentCaseId }: { caseId: string; parentCa
       ) : isMember ? (
         <div className="p-5 text-sm">
           <p className="text-muted">{t('journey.family.memberOf', { number: group.main.number })}</p>
-          <Link to={`/admin/cases/${group.main.id}`} className="mt-2 inline-flex items-center gap-1 font-semibold text-brand-600 hover:text-brand-700">
+          <Link to={`/admin/cases/${group.main.id}`} className="mt-2 inline-flex items-center gap-1 font-semibold text-link hover:text-link">
             {group.main.number} · {group.main.profession} <ArrowRight className="size-3.5" aria-hidden />
           </Link>
           {group.members.length > 1 && (
@@ -255,7 +255,7 @@ export const FamilyPanel = ({ caseId, parentCaseId }: { caseId: string; parentCa
                 .filter((m) => m.id !== caseId)
                 .map((m) => (
                   <li key={m.id} className="flex items-center justify-between gap-3 py-2.5">
-                    <Link to={`/admin/cases/${m.id}`} className="min-w-0 truncate font-medium text-navy-900 hover:text-brand-700">
+                    <Link to={`/admin/cases/${m.id}`} className="min-w-0 truncate font-medium text-ink hover:text-link">
                       {memberName(m)} <span className="text-xs text-muted">· {m.number}</span>
                     </Link>
                     {m.relation && <RelationTag relation={m.relation} />}
@@ -272,7 +272,7 @@ export const FamilyPanel = ({ caseId, parentCaseId }: { caseId: string; parentCa
         <>
           <div className="overflow-x-auto">
             <table className="w-full min-w-[36rem] text-sm">
-              <thead className="bg-surface text-left text-[11px] font-semibold tracking-wide text-muted uppercase">
+              <thead className="bg-sunken text-left text-[11px] font-semibold tracking-wide text-muted uppercase">
                 <tr>
                   <th className="px-5 py-2.5">{t('journey.family.member')}</th>
                   <th className="px-3 py-2.5">{t('portal.caseNo')}</th>
@@ -285,7 +285,7 @@ export const FamilyPanel = ({ caseId, parentCaseId }: { caseId: string; parentCa
                 {group.members.map((m) => (
                   <tr key={m.id} className="align-top">
                     <td className="px-5 py-3">
-                      <p className="font-semibold text-navy-900">{memberName(m)}</p>
+                      <p className="font-semibold text-ink">{memberName(m)}</p>
                       <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted">
                         {m.relation && <RelationTag relation={m.relation} />}
                         {m.member?.birthDate && <span>{t('journey.family.born', { date: date(m.member.birthDate) })}</span>}
@@ -293,7 +293,7 @@ export const FamilyPanel = ({ caseId, parentCaseId }: { caseId: string; parentCa
                       </p>
                     </td>
                     <td className="px-3 py-3">
-                      <Link to={`/admin/cases/${m.id}`} className="font-mono text-xs font-semibold text-brand-600 hover:underline">
+                      <Link to={`/admin/cases/${m.id}`} className="font-mono text-xs font-semibold text-link hover:underline">
                         {m.number}
                       </Link>
                       <p className="mt-1 text-[11px] text-muted">{t('journey.family.docs', { count: m.documents })}</p>
@@ -301,14 +301,14 @@ export const FamilyPanel = ({ caseId, parentCaseId }: { caseId: string; parentCa
                     <td className="px-3 py-3">
                       <StatusBadge status={m.status} />
                     </td>
-                    <td className="px-3 py-3 text-right font-semibold tabular-nums text-navy-900">{m.percent}%</td>
+                    <td className="px-3 py-3 text-right font-semibold tabular-nums text-ink">{m.percent}%</td>
                     <td className="px-3 py-3 text-right">
                       <div className="inline-flex items-center gap-1">
-                        <Link to={`/admin/cases/${m.id}`} className="grid size-8 place-items-center rounded-lg text-muted transition hover:bg-brand-50 hover:text-brand-700" title={t('journey.family.open')} aria-label={`${t('journey.family.open')} ${m.number}`}>
+                        <Link to={`/admin/cases/${m.id}`} className="grid size-8 place-items-center rounded-lg text-muted transition hover:bg-sunken hover:text-link" title={t('journey.family.open')} aria-label={`${t('journey.family.open')} ${m.number}`}>
                           <ArrowRight className="size-3.5" />
                         </Link>
                         {canRemove(m) && (
-                          <button type="button" className="grid size-8 place-items-center rounded-lg text-muted transition hover:bg-red-50 hover:text-red-700" title={t('journey.family.remove')} aria-label={`${t('journey.family.remove')} ${m.number}`} onClick={() => setRemoving(m)}>
+                          <button type="button" className="grid size-8 place-items-center rounded-lg text-muted transition hover:bg-danger-bg hover:text-danger-fg" title={t('journey.family.remove')} aria-label={`${t('journey.family.remove')} ${m.number}`} onClick={() => setRemoving(m)}>
                             <Trash2 className="size-3.5" />
                           </button>
                         )}
@@ -322,11 +322,11 @@ export const FamilyPanel = ({ caseId, parentCaseId }: { caseId: string; parentCa
           <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line px-5 py-3 text-xs text-muted">
             <span>{t('journey.family.aggregate')}</span>
             <span className="flex items-center gap-3">
-              <span className="font-semibold text-navy-900">{t('journey.family.approved', { approved: group.aggregate.approved, total: group.aggregate.total })}</span>
+              <span className="font-semibold text-ink">{t('journey.family.approved', { approved: group.aggregate.approved, total: group.aggregate.total })}</span>
               <span className="relative h-1.5 w-28 overflow-hidden rounded-full bg-line" role="img" aria-label={`${group.aggregate.percent}%`}>
-                <span className="absolute inset-y-0 left-0 rounded-full bg-brand-600" style={{ width: `${group.aggregate.percent}%` }} />
+                <span className="absolute inset-y-0 left-0 rounded-full bg-primary" style={{ width: `${group.aggregate.percent}%` }} />
               </span>
-              <span className="font-semibold tabular-nums text-navy-900">{group.aggregate.percent}%</span>
+              <span className="font-semibold tabular-nums text-ink">{group.aggregate.percent}%</span>
             </span>
           </div>
         </>

@@ -26,11 +26,11 @@ export const ShareBox = ({ link, code, compact = false }: { link: string; code: 
   };
   const wa = `https://wa.me/?text=${encodeURIComponent(t('agents.dash.share.whatsappText', { link }))}`;
   return (
-    <div className={clsx(!compact && 'rounded-2xl border border-line bg-card p-5 shadow-[0_8px_30px_-12px_rgba(11,31,68,0.18)] sm:p-6')}>
+    <div className={clsx(!compact && 'rounded-2xl border border-line bg-card p-5 shadow-[var(--tv-shadow-card)] sm:p-6')}>
       {!compact && (
         <>
-          <p className="flex items-center gap-2 font-display text-lg font-bold text-ink">
-            <Link2 className="size-5 text-brand-600" aria-hidden /> {t('agents.dash.share.title')}
+          <p className="type-section-title flex items-center gap-2 text-ink">
+            <Link2 className="size-5 text-primary" aria-hidden /> {t('agents.dash.share.title')}
           </p>
           <p className="mt-1 text-sm text-muted">{t('agents.dash.share.text')}</p>
         </>
@@ -43,16 +43,16 @@ export const ShareBox = ({ link, code, compact = false }: { link: string; code: 
           className="input min-w-0 flex-1 font-mono text-xs sm:text-sm"
           aria-label={t('agents.dash.share.title')}
         />
-        <button type="button" className="btn-primary btn-sm shrink-0" onClick={() => copy('link')}>
+        <button type="button" className="btn-primary shrink-0" onClick={() => copy('link')}>
           {copied === 'link' ? <Check className="size-4" aria-hidden /> : <Copy className="size-4" aria-hidden />} {t('agents.dash.share.copy')}
         </button>
       </div>
       <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
         <span className="text-muted">{t('agents.dash.share.code')}:</span>
-        <code className="rounded-md border border-line bg-surface px-2 py-1 font-mono text-sm font-bold tracking-wider text-ink">{code}</code>
+        <code className="rounded-md border border-line bg-sunken px-2 py-1 font-mono text-sm font-bold tracking-wider text-ink">{code}</code>
         <button
           type="button"
-          className="inline-flex min-h-9 items-center gap-1 rounded-lg px-2 text-xs font-semibold text-brand-600 hover:bg-surface"
+          className="inline-flex min-h-11 items-center gap-1 rounded-xl px-2.5 text-sm font-semibold text-link hover:bg-sunken sm:min-h-10"
           onClick={() => copy('code')}
         >
           {copied === 'code' ? <Check className="size-3.5" aria-hidden /> : <Copy className="size-3.5" aria-hidden />} {t('agents.dash.share.copyCode')}
@@ -61,7 +61,7 @@ export const ShareBox = ({ link, code, compact = false }: { link: string; code: 
           href={wa}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex min-h-9 items-center gap-1.5 rounded-lg bg-emerald-600 px-3 text-xs font-semibold text-white hover:bg-emerald-700"
+          className="inline-flex min-h-11 items-center gap-1.5 rounded-xl bg-[#128C7E] px-3.5 text-sm font-semibold text-white hover:bg-[#0E7468] sm:min-h-10"
         >
           <MessageCircle className="size-3.5" aria-hidden /> {t('agents.dash.share.whatsapp')}
         </a>

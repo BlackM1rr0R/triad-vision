@@ -142,8 +142,8 @@ const EditDialog = ({ draft, categories, onClose }: { draft: Draft; categories: 
             {VISA_TYPES.map((v) => {
               const on = d.visaTypes.includes(v);
               return (
-                <label key={v} className={clsx('inline-flex min-h-9 cursor-pointer items-center gap-2 rounded-lg border px-3 text-xs font-semibold transition-colors', on ? 'border-brand-600 bg-brand-50 text-brand-800' : 'border-line bg-card text-ink/80')}>
-                  <input type="checkbox" className="size-3.5 accent-brand-600" checked={on} onChange={(e) => set('visaTypes', e.target.checked ? [...d.visaTypes, v] : d.visaTypes.filter((x) => x !== v))} />
+                <label key={v} className={clsx('inline-flex min-h-9 cursor-pointer items-center gap-2 rounded-lg border px-3 text-xs font-semibold transition-colors', on ? 'border-primary bg-primary/[0.06] text-ink' : 'border-line bg-card text-ink/80')}>
+                  <input type="checkbox" className="size-3.5 accent-primary" checked={on} onChange={(e) => set('visaTypes', e.target.checked ? [...d.visaTypes, v] : d.visaTypes.filter((x) => x !== v))} />
                   {t(`prep.visa.${v}`)}
                 </label>
               );
@@ -289,7 +289,7 @@ export default function AdminInterviewPrep() {
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full min-w-[720px] text-sm">
-                <thead className="bg-surface text-left text-xs font-semibold text-muted">
+                <thead className="bg-sunken text-left text-xs font-semibold text-muted">
                   <tr>
                     {canEdit && <th className="w-16 px-3 py-2" />}
                     <th className="px-3 py-2">{t('prep.admin.colQuestion')}</th>
@@ -305,17 +305,17 @@ export default function AdminInterviewPrep() {
                       {canEdit && (
                         <td className="px-3 py-2.5">
                           <div className="flex flex-col gap-0.5">
-                            <button type="button" className="grid size-7 place-items-center rounded text-muted hover:bg-surface hover:text-ink disabled:opacity-30" disabled={reorder.isPending} onClick={() => move(q, -1)} aria-label={t('prep.admin.moveUp')}>
+                            <button type="button" className="grid size-7 place-items-center rounded text-muted hover:bg-sunken hover:text-ink disabled:opacity-30" disabled={reorder.isPending} onClick={() => move(q, -1)} aria-label={t('prep.admin.moveUp')}>
                               <ArrowUp className="size-3.5" />
                             </button>
-                            <button type="button" className="grid size-7 place-items-center rounded text-muted hover:bg-surface hover:text-ink disabled:opacity-30" disabled={reorder.isPending} onClick={() => move(q, 1)} aria-label={t('prep.admin.moveDown')}>
+                            <button type="button" className="grid size-7 place-items-center rounded text-muted hover:bg-sunken hover:text-ink disabled:opacity-30" disabled={reorder.isPending} onClick={() => move(q, 1)} aria-label={t('prep.admin.moveDown')}>
                               <ArrowDown className="size-3.5" />
                             </button>
                           </div>
                         </td>
                       )}
                       <td className="px-3 py-2.5">
-                        <span className={clsx('badge mb-1', q.kind === 'EMBASSY' ? 'bg-brand-100 text-brand-800' : 'bg-accent-bg text-accent-fg')}>{t(`prep.page.tabs.${q.kind}`)}</span>
+                        <span className={clsx('badge mb-1', q.kind === 'EMBASSY' ? 'bg-primary/10 text-ink' : 'bg-accent-bg text-accent-fg')}>{t(`prep.page.tabs.${q.kind}`)}</span>
                         <p className="font-semibold text-ink">{tr(q.question)}</p>
                         <p className="mt-0.5 line-clamp-2 text-xs text-muted" lang="de">
                           {q.answerDe}
@@ -326,7 +326,7 @@ export default function AdminInterviewPrep() {
                         <div className="flex max-w-[14rem] flex-wrap gap-1">
                           {q.visaTypes?.length ? (
                             q.visaTypes.map((v) => (
-                              <span key={v} className="badge bg-surface text-ink/80">
+                              <span key={v} className="badge bg-sunken text-ink/80">
                                 {t(`prep.visa.${v}`)}
                               </span>
                             ))
@@ -344,10 +344,10 @@ export default function AdminInterviewPrep() {
                       {canEdit && (
                         <td className="px-3 py-2.5">
                           <div className="flex justify-end gap-1">
-                            <button type="button" className="grid size-8 place-items-center rounded-lg text-muted hover:bg-surface hover:text-ink" onClick={() => setEditing(toDraft(q))} aria-label={t('prep.admin.editTitle')}>
+                            <button type="button" className="grid size-8 place-items-center rounded-lg text-muted hover:bg-sunken hover:text-ink" onClick={() => setEditing(toDraft(q))} aria-label={t('prep.admin.editTitle')}>
                               <Pencil className="size-4" />
                             </button>
-                            <button type="button" className="grid size-8 place-items-center rounded-lg text-muted hover:bg-surface hover:text-danger" onClick={() => setDeleting(q)} aria-label={t('prep.admin.delete')}>
+                            <button type="button" className="grid size-8 place-items-center rounded-lg text-muted hover:bg-sunken hover:text-danger-fg" onClick={() => setDeleting(q)} aria-label={t('prep.admin.delete')}>
                               <Trash2 className="size-4" />
                             </button>
                           </div>

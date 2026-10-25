@@ -45,7 +45,8 @@ export const Tooltip = ({ content, children, side = 'top', className }: TooltipP
         role="tooltip"
         id={id}
         className={clsx(
-          'pointer-events-none absolute z-[130] w-max max-w-64 rounded-md bg-navy-950 px-2 py-1 text-xs font-medium text-white opacity-0 shadow-lg transition-opacity duration-150',
+          // inverse of the page: dark chip in light mode, light chip in dark mode
+          'pointer-events-none absolute z-[130] w-max max-w-64 rounded-md bg-ink px-2 py-1 text-xs leading-snug font-medium text-canvas opacity-0 shadow-[var(--tv-shadow-raised)] transition-opacity duration-150',
           !hidden && 'group-focus-within/tt:opacity-100 group-hover/tt:opacity-100 group-hover/tt:delay-300',
           SIDE[side],
           className,

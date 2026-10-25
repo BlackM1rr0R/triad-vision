@@ -103,7 +103,7 @@ export default function DocGuidesPage() {
           <ul className="max-h-[70vh] space-y-1 overflow-y-auto">
             {data.map((r) => (
               <li key={r.key}>
-                <button type="button" onClick={() => { setKey(r.key); setPreview(false); }} className={clsx('flex min-h-10 w-full items-center justify-between gap-2 rounded-lg px-3 py-1.5 text-left text-xs transition', key === r.key ? 'bg-brand-50 font-semibold text-brand-800 dark:bg-brand-950/40 dark:text-brand-200' : 'text-ink hover:bg-surface')}>
+                <button type="button" onClick={() => { setKey(r.key); setPreview(false); }} className={clsx('flex min-h-10 w-full items-center justify-between gap-2 rounded-lg px-3 py-1.5 text-left text-xs transition', key === r.key ? 'bg-primary/[0.06] font-semibold text-ink dark:bg-brand-950/40 dark:text-brand-200' : 'text-ink hover:bg-sunken')}>
                   <span className="min-w-0 truncate font-mono">{r.key}</span>
                   {r.alias && !r.guide ? <span className="text-[10px] text-muted">→ {r.alias}</span> : status(r.guide)}
                 </button>
@@ -122,7 +122,7 @@ export default function DocGuidesPage() {
                 }
               }}
             >
-              <input className="input min-w-0 flex-1 py-1.5 font-mono text-xs" placeholder="POLICE_CERT" value={newKey} onChange={(e) => setNewKey(e.target.value)} aria-label={t('clientData.guides.newKey')} />
+              <input className="input min-w-0 flex-1 py-1.5 code-id text-xs" placeholder="POLICE_CERT" value={newKey} onChange={(e) => setNewKey(e.target.value)} aria-label={t('clientData.guides.newKey')} />
               <button type="submit" className="btn-secondary btn-sm" aria-label={t('clientData.guides.newKey')}>
                 <Plus className="size-3.5" aria-hidden />
               </button>
@@ -157,7 +157,7 @@ export default function DocGuidesPage() {
             }
           >
             {(draft.builtIn || !draft.verified) && (
-              <p className="mb-4 flex items-start gap-2 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:bg-amber-950/40 dark:text-amber-200">
+              <p className="mb-4 flex items-start gap-2 rounded-lg bg-warning-bg px-3 py-2 text-xs text-warning-fg dark:bg-amber-950/40 dark:text-amber-200">
                 <AlertTriangle className="mt-0.5 size-3.5 shrink-0" aria-hidden /> {t('clientData.guides.draftHint')}
               </p>
             )}
@@ -173,7 +173,7 @@ export default function DocGuidesPage() {
                     {t(`clientData.guide.${f}`)}
                     {f === 'mistakes' && <span className="font-normal text-muted"> · {t('clientData.guides.onePerLine')}</span>}
                     <textarea className="input mt-1 w-full" rows={f === 'summary' || f === 'cost' || f === 'duration' ? 2 : 3} maxLength={3000} value={draft.content[lang][f]} onChange={(e) => setText(f, e.target.value)} />
-                    {f === 'cost' && <span className="mt-1 block font-normal text-amber-700 dark:text-amber-300">{t('clientData.guides.costHint')}</span>}
+                    {f === 'cost' && <span className="mt-1 block font-normal text-warning-fg dark:text-amber-300">{t('clientData.guides.costHint')}</span>}
                   </label>
                 ))}
                 <ImageField label={t('clientData.guide.sample')} value={draft.sampleImage ?? ''} onChange={(url) => setDraft({ ...draft, sampleImage: url || null })} />
@@ -183,7 +183,7 @@ export default function DocGuidesPage() {
                     <div key={i} className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_minmax(0,1.6fr)_auto]">
                       <input className="input" placeholder={t('clientData.guides.linkLabel')} value={l.label} maxLength={120} onChange={(e) => setLinks(draft.links.map((x, j) => (j === i ? { ...x, label: e.target.value } : x)))} />
                       <input className="input" type="url" placeholder="https://" value={l.url} maxLength={500} onChange={(e) => setLinks(draft.links.map((x, j) => (j === i ? { ...x, url: e.target.value } : x)))} />
-                      <button type="button" className="grid size-10 place-items-center rounded-md text-muted hover:text-red-600" aria-label={t('clientData.common.remove')} onClick={() => setLinks(draft.links.filter((_, j) => j !== i))}>
+                      <button type="button" className="grid size-10 place-items-center rounded-md text-muted hover:text-danger-fg" aria-label={t('clientData.common.remove')} onClick={() => setLinks(draft.links.filter((_, j) => j !== i))}>
                         <Trash2 className="size-4" aria-hidden />
                       </button>
                     </div>

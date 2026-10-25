@@ -119,7 +119,7 @@ const AddDialog = ({ open, onClose, caseId, data }: { open: boolean; onClose: ()
       }}
       footer={
         <>
-          <button type="button" className="btn-ghost btn-sm" onClick={onClose}>
+          <button type="button" className="btn-secondary btn-sm" onClick={onClose}>
             {t('admin.common.cancel')}
           </button>
           <button type="submit" className="btn-primary btn-sm" disabled={create.isPending || profession.trim().length < 2}>
@@ -268,14 +268,14 @@ const ProcessCard = ({ p, caseId, documents, isAdmin }: { p: RecognitionProcess;
   const locale = i18n.language === 'en' ? 'en-GB' : i18n.language === 'ru' ? 'ru-RU' : i18n.language === 'az' ? 'az-Latn-AZ' : 'de-DE';
 
   return (
-    <article className="rounded-2xl border border-line bg-card">
+    <article className="rounded-xl border border-line bg-card">
       <button type="button" className="flex w-full flex-wrap items-center gap-2 px-4 py-3 text-left" onClick={() => setOpen((o) => !o)} aria-expanded={open}>
         <ChevronDown className={clsx('size-4 shrink-0 text-muted transition-transform', open ? 'rotate-0' : '-rotate-90')} aria-hidden />
-        <span className="font-semibold text-navy-900">{t(`recognition.procedure.${p.procedureType}`)}</span>
+        <span className="font-semibold text-ink">{t(`recognition.procedure.${p.procedureType}`)}</span>
         <span className={clsx('badge', TONE_CLASS[STATUS_TONE[p.status]])}>{t(`recognition.status.${p.status}`)}</span>
         <span className="min-w-0 truncate text-xs text-muted">{[p.profession, p.authority, p.reference].filter(Boolean).join(' · ')}</span>
         <span className="ml-auto flex flex-wrap items-center gap-2">
-          <span className="badge bg-surface text-muted tabular-nums">{t('recognition.checklist.progress', p.progress)}</span>
+          <span className="badge bg-sunken text-muted tabular-nums">{t('recognition.checklist.progress', p.progress)}</span>
           {p.deadline && <DeadlineChip at={p.deadline.at} />}
         </span>
       </button>
@@ -340,7 +340,7 @@ const ProcessCard = ({ p, caseId, documents, isAdmin }: { p: RecognitionProcess;
 
             {/* Deadline */}
             <fieldset className="rounded-xl bg-surface/60 p-3">
-              <legend className="px-1 text-xs font-semibold text-navy-900">{t('recognition.deadline.title')}</legend>
+              <legend className="px-1 text-xs font-semibold text-ink">{t('recognition.deadline.title')}</legend>
               <div className="grid gap-3 sm:grid-cols-[minmax(0,10rem)_minmax(0,1fr)]">
                 <Field label={t('recognition.fields.nextDeadline')}>
                   <input type="date" className="input" value={form.nextDeadline} onChange={(e) => set('nextDeadline', e.target.value)} />
@@ -353,9 +353,9 @@ const ProcessCard = ({ p, caseId, documents, isAdmin }: { p: RecognitionProcess;
 
             {/* Deficit notice */}
             {showDeficit && (
-              <fieldset className="rounded-xl border border-amber-200 bg-amber-50/60 p-3">
-                <legend className="px-1 text-xs font-semibold text-amber-800">{t('recognition.deficit.title')}</legend>
-                <p className="mb-2 text-[11px] text-amber-800/80">{t('recognition.deficit.hint')}</p>
+              <fieldset className="rounded-xl border border-warning-border bg-warning-bg/60 p-3">
+                <legend className="px-1 text-xs font-semibold text-warning-fg">{t('recognition.deficit.title')}</legend>
+                <p className="mb-2 text-[11px] text-warning-fg/80">{t('recognition.deficit.hint')}</p>
                 <div className="grid gap-3 sm:grid-cols-2">
                   <Field label={t('recognition.fields.deficitNotes')} className="sm:col-span-2">
                     <textarea className="input min-h-20" value={form.deficitNotes} maxLength={8000} onChange={(e) => set('deficitNotes', e.target.value)} />
@@ -379,7 +379,7 @@ const ProcessCard = ({ p, caseId, documents, isAdmin }: { p: RecognitionProcess;
 
             {/* Fee */}
             <fieldset className="rounded-xl bg-surface/60 p-3">
-              <legend className="px-1 text-xs font-semibold text-navy-900">{t('recognition.fee.title')}</legend>
+              <legend className="px-1 text-xs font-semibold text-ink">{t('recognition.fee.title')}</legend>
               <div className="grid gap-3 sm:grid-cols-[minmax(0,8rem)_minmax(0,10rem)_1fr] sm:items-end">
                 <Field label={t('recognition.fields.fee')}>
                   <input className={clsx('input tabular-nums', feeInvalid && 'border-danger')} inputMode="decimal" value={form.fee} onChange={(e) => set('fee', e.target.value)} />
@@ -389,11 +389,11 @@ const ProcessCard = ({ p, caseId, documents, isAdmin }: { p: RecognitionProcess;
                 </Field>
                 <div className="flex flex-wrap items-center gap-2">
                   {p.invoice ? (
-                    <span className="badge bg-brand-100 text-brand-700">
+                    <span className="badge bg-primary/10 text-link">
                       <Receipt className="size-3" aria-hidden /> {t('recognition.fee.invoiceLinked', { status: p.invoice.status })} · {euro(p.invoice.grossCents, locale)}
                     </span>
                   ) : (
-                    <button type="button" className="btn-ghost btn-sm" disabled={!p.feeCents || invoice.isPending || dirty} onClick={() => invoice.mutate()}>
+                    <button type="button" className="btn-secondary btn-sm" disabled={!p.feeCents || invoice.isPending || dirty} onClick={() => invoice.mutate()}>
                       <Receipt className="size-3.5" aria-hidden /> {t('recognition.fee.invoice')}
                     </button>
                   )}
@@ -409,12 +409,12 @@ const ProcessCard = ({ p, caseId, documents, isAdmin }: { p: RecognitionProcess;
                 {t('admin.common.save')}
               </button>
               {dirty && (
-                <button type="button" className="btn-ghost btn-sm" onClick={() => setForm(formOf(p))}>
+                <button type="button" className="btn-secondary btn-sm" onClick={() => setForm(formOf(p))}>
                   {t('admin.common.cancel')}
                 </button>
               )}
               {isAdmin && (
-                <button type="button" className="btn-ghost btn-sm ml-auto text-danger" onClick={() => setConfirmDelete(true)}>
+                <button type="button" className="btn-secondary btn-sm ml-auto text-danger-fg" onClick={() => setConfirmDelete(true)}>
                   <Trash2 className="size-3.5" aria-hidden /> {t('admin.common.delete')}
                 </button>
               )}
@@ -457,10 +457,10 @@ const Checklist = ({ p, caseId, documents }: { p: RecognitionProcess; caseId: st
   return (
     <section>
       <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-        <h4 className="text-sm font-semibold text-navy-900">
+        <h4 className="text-sm font-semibold text-ink">
           {t('recognition.checklist.title')} <span className="ml-1 text-xs font-normal text-muted tabular-nums">{t('recognition.checklist.progress', p.progress)}</span>
         </h4>
-        <button type="button" className="btn-ghost btn-sm" onClick={() => relink.mutate()} disabled={relink.isPending}>
+        <button type="button" className="btn-secondary btn-sm" onClick={() => relink.mutate()} disabled={relink.isPending}>
           <RefreshCw className="size-3.5" aria-hidden /> {t('recognition.checklist.relink')}
         </button>
       </div>
@@ -470,7 +470,7 @@ const Checklist = ({ p, caseId, documents }: { p: RecognitionProcess; caseId: st
             <label className="flex min-w-0 items-center gap-2">
               <input type="checkbox" checked={i.done} disabled={save.isPending} onChange={(e) => update(i.key, { done: e.target.checked })} />
               <span className={clsx('min-w-0', i.done && 'text-muted line-through')}>{t(`recognition.check.${i.key}`)}</span>
-              {i.optional && <span className="badge bg-surface text-muted">{t('recognition.checklist.optional')}</span>}
+              {i.optional && <span className="badge bg-sunken text-muted">{t('recognition.checklist.optional')}</span>}
               {i.client && <span className="badge bg-info-bg text-info-fg">{t('recognition.checklist.client')}</span>}
             </label>
             <select aria-label={t('recognition.checklist.linkDoc')} className="input py-1 text-xs" value={i.documentId ?? ''} disabled={save.isPending} onChange={(e) => update(i.key, { documentId: e.target.value || null, ...(e.target.value ? { done: true } : {}) })}>
@@ -482,7 +482,7 @@ const Checklist = ({ p, caseId, documents }: { p: RecognitionProcess; caseId: st
               ))}
             </select>
             {i.documentId ? (
-              <a href={fileUrl(i.documentId)} target="_blank" rel="noreferrer" className="grid size-8 place-items-center rounded-lg text-brand-600 hover:bg-brand-50" title={t('recognition.checklist.openDoc')} aria-label={t('recognition.checklist.openDoc')}>
+              <a href={fileUrl(i.documentId)} target="_blank" rel="noreferrer" className="grid size-8 place-items-center rounded-lg text-link hover:bg-primary/[0.06]" title={t('recognition.checklist.openDoc')} aria-label={t('recognition.checklist.openDoc')}>
                 <ExternalLink className="size-4" aria-hidden />
               </a>
             ) : (
@@ -494,7 +494,7 @@ const Checklist = ({ p, caseId, documents }: { p: RecognitionProcess; caseId: st
       {missing.length > 0 && (
         <div className="mt-2 flex flex-wrap gap-1.5">
           {missing.map((k) => (
-            <button key={k} type="button" className="btn-ghost btn-sm text-xs" onClick={() => save.mutate([...p.checklist, { key: k, done: false, documentId: null, optional: true, client: false }])}>
+            <button key={k} type="button" className="btn-secondary btn-sm text-xs" onClick={() => save.mutate([...p.checklist, { key: k, done: false, documentId: null, optional: true, client: false }])}>
               <Plus className="size-3" aria-hidden /> {t(`recognition.check.${k}`)}
             </button>
           ))}
@@ -549,7 +549,7 @@ const Timeline = ({ p, caseId }: { p: RecognitionProcess; caseId: string }) => {
   const events = useMemo(() => p.events, [p.events]);
   return (
     <section className="space-y-3">
-      <h4 className="text-sm font-semibold text-navy-900">{t('recognition.events.title')}</h4>
+      <h4 className="text-sm font-semibold text-ink">{t('recognition.events.title')}</h4>
       <div className="grid gap-3 lg:grid-cols-2">
         <form
           className="flex gap-2"
@@ -601,7 +601,7 @@ const Timeline = ({ p, caseId }: { p: RecognitionProcess; caseId: string }) => {
             const Icon = EVENT_ICON[e.type] ?? StickyNote;
             return (
               <li key={e.id} className="relative">
-                <span className="absolute top-0.5 -left-[29px] grid size-4 place-items-center rounded-full bg-card text-brand-600 ring-4 ring-card">
+                <span className="absolute top-0.5 -left-[29px] grid size-4 place-items-center rounded-full bg-card text-link ring-4 ring-card">
                   <Icon className="size-3.5" aria-hidden />
                 </span>
                 <p className="text-sm text-ink">
@@ -609,7 +609,7 @@ const Timeline = ({ p, caseId }: { p: RecognitionProcess; caseId: string }) => {
                   {e.type === 'STATUS' && e.toStatus && <span>: {[statusLabel(e.fromStatus), statusLabel(e.toStatus)].filter(Boolean).join(' → ')}</span>}
                   {e.note && <span className="text-ink/80"> — {e.note}</span>}
                   {e.documentId && (
-                    <a href={fileUrl(e.documentId)} target="_blank" rel="noreferrer" className="ml-1 inline-flex items-center gap-0.5 text-xs text-brand-600 hover:underline">
+                    <a href={fileUrl(e.documentId)} target="_blank" rel="noreferrer" className="ml-1 inline-flex items-center gap-0.5 text-xs text-link hover:underline">
                       <ExternalLink className="size-3" aria-hidden /> PDF
                     </a>
                   )}

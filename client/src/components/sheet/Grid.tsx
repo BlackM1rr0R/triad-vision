@@ -161,12 +161,12 @@ const GridCell = memo(function GridCell(p: CellProps) {
       style={{ left: p.left, width: p.width, height: p.height, ...p.style }}
       className={clsx(
         'absolute top-0 overflow-hidden border-r border-b border-line/80 px-1.5 text-[13px] leading-[22px] whitespace-nowrap text-ink select-none contain-strict',
-        p.readOnly && 'bg-surface/70 text-ink/70',
+        p.readOnly && 'bg-surface/70 text-muted',
         p.className,
       )}
     >
       {p.checkbox !== undefined && p.checkbox !== null ? (
-        <span className="flex h-full items-center justify-center text-brand-600">{p.checkbox ? <SquareCheck size={16} /> : <Square size={16} className="text-muted" />}</span>
+        <span className="flex h-full items-center justify-center text-link">{p.checkbox ? <SquareCheck size={16} /> : <Square size={16} className="text-muted" />}</span>
       ) : (
         (p.content ?? p.text)
       )}
@@ -270,7 +270,7 @@ function FormulaInput({ draft, editing, idle, disabled, readOnly, label, onStart
     <input
       data-formula-bar=""
       aria-label={label}
-      className="min-w-0 flex-1 rounded-md border border-transparent bg-transparent px-2 py-0.5 font-mono text-[13px] text-ink outline-none focus:border-brand-500 disabled:text-muted"
+      className="min-w-0 flex-1 rounded-md border border-transparent bg-transparent px-2 py-0.5 font-mono text-[13px] text-ink outline-none focus:border-focus disabled:text-muted"
       value={editing ? d : idle}
       disabled={disabled}
       readOnly={readOnly}
@@ -984,8 +984,8 @@ export function Grid(props: GridProps) {
         data-hvr={vr}
         style={{ top, width: ROW_HEADER_W, height: rowH, ...(selected ? SELECTED_HEADER : {}) }}
         className={clsx(
-          'pointer-events-auto absolute left-0 flex cursor-default items-center justify-center truncate border-r border-b border-line bg-surface px-1 text-[11px] font-medium text-muted select-none',
-          selected && 'font-semibold text-brand-700',
+          'pointer-events-auto absolute left-0 flex cursor-default items-center justify-center truncate border-r border-b border-line bg-sunken px-1 text-[11px] font-medium text-muted select-none',
+          selected && 'font-semibold text-link',
         )}
       >
         {source.rowLabel?.(r, vr) ?? String(mode === 'sheet' ? r + 1 : vr + 1)}
@@ -1015,9 +1015,9 @@ export function Grid(props: GridProps) {
     const multi = sel.r0 !== sel.r1 || sel.c0 !== sel.c1;
     return (
       <>
-        {multi && rangeWithout(sel, active).map((rg, i) => box(rg, `t${i}`, 'z-[11] bg-brand-500/12'))}
-        {multi && box(sel, 'frame', 'z-[11] border border-brand-500/70')}
-        {box(activeSpan, 'active', 'z-[11] outline-2 -outline-offset-2 outline-brand-600')}
+        {multi && rangeWithout(sel, active).map((rg, i) => box(rg, `t${i}`, 'z-[11] bg-primary/12'))}
+        {multi && box(sel, 'frame', 'z-[11] border border-primary/70')}
+        {box(activeSpan, 'active', 'z-[11] outline-2 -outline-offset-2 outline-focus')}
       </>
     );
   };
@@ -1067,11 +1067,11 @@ export function Grid(props: GridProps) {
         <div className="ml-auto flex items-center gap-1">
           {filtered && (
             <ToolButton label={t('sheet.filter.clearAll')} onClick={() => setFilters({})}>
-              <FilterX size={16} className="text-brand-600" />
+              <FilterX size={16} className="text-link" />
             </ToolButton>
           )}
           {viewSort && (
-            <button type="button" onClick={() => setViewSort(null)} className="flex items-center gap-1 rounded-md bg-brand-50 px-2 py-1 text-xs font-semibold text-brand-700">
+            <button type="button" onClick={() => setViewSort(null)} className="flex items-center gap-1 rounded-md bg-primary/[0.06] px-2 py-1 text-xs font-semibold text-link">
               {viewSort.dir === 'asc' ? <ArrowDownAZ size={13} /> : <ArrowUpAZ size={13} />} {source.column(viewSort.c).label ?? colName(viewSort.c)} <X size={12} />
             </button>
           )}
@@ -1083,7 +1083,7 @@ export function Grid(props: GridProps) {
 
       {/* Formula bar */}
       <div className="flex items-center gap-2 border-b border-line bg-card px-2 py-1">
-        <div className="w-28 shrink-0 truncate rounded-md border border-line bg-surface px-2 py-0.5 text-center font-mono text-xs text-ink" aria-label={t('sheet.nameBox')}>
+        <div className="w-28 shrink-0 truncate rounded-md border border-line bg-sunken px-2 py-0.5 text-center code-id text-xs text-ink" aria-label={t('sheet.nameBox')}>
           {activeAddress}
         </div>
         <span className="font-serif text-sm text-muted italic">fx</span>
@@ -1138,7 +1138,7 @@ export function Grid(props: GridProps) {
             <div className="sticky top-0 z-30" style={{ height: topH, width: ROW_HEADER_W + totalW }}>
               <div role="row" aria-rowindex={1} className="absolute top-0 left-0" style={{ height: HEADER_H, width: ROW_HEADER_W + totalW }}>
                 <div
-                  className="sticky left-0 z-[6] border-r border-b border-line bg-surface"
+                  className="sticky left-0 z-[6] border-r border-b border-line bg-sunken"
                   style={{ width: ROW_HEADER_W, height: HEADER_H }}
                   onMouseDown={(e) => {
                     e.preventDefault();
@@ -1177,9 +1177,9 @@ export function Grid(props: GridProps) {
                       }}
                       style={{ left: ROW_HEADER_W + colStarts[c], width: colStarts[c + 1] - colStarts[c], height: HEADER_H, ...(colSelected ? SELECTED_HEADER : {}) }}
                       className={clsx(
-                        'group absolute top-0 flex items-center border-r border-b border-line bg-surface pr-0.5 pl-1.5 text-xs text-muted select-none',
+                        'group absolute top-0 flex items-center border-r border-b border-line bg-sunken pr-0.5 pl-1.5 text-xs text-muted select-none',
                         mode === 'sheet' ? 'justify-center font-medium' : 'justify-between font-semibold text-ink/80',
-                        colSelected && 'text-brand-700',
+                        colSelected && 'text-link',
                       )}
                     >
                       <span className="truncate">{mode === 'sheet' ? colName(c) : col.label}</span>
@@ -1192,14 +1192,14 @@ export function Grid(props: GridProps) {
                           setFilterMenu({ x: r.left - 200, y: r.bottom + 2, c });
                         }}
                         className={clsx(
-                          'ml-auto grid h-5 w-5 shrink-0 place-items-center rounded hover:bg-surface',
-                          hasFilter ? 'text-brand-600' : 'opacity-0 group-hover:opacity-100 focus:opacity-100',
+                          'ml-auto grid h-5 w-5 shrink-0 place-items-center rounded hover:bg-sunken',
+                          hasFilter ? 'text-link' : 'opacity-0 group-hover:opacity-100 focus:opacity-100',
                           mode === 'sheet' && !hasFilter && 'absolute right-1',
                         )}
                       >
                         {hasFilter ? <Filter size={12} /> : <ChevronDown size={12} />}
                       </button>
-                      <div data-resize onMouseDown={(e) => startResize(e, c)} className="absolute top-0 -right-1 z-10 h-full w-2 cursor-col-resize hover:bg-brand-500/40" />
+                      <div data-resize onMouseDown={(e) => startResize(e, c)} className="absolute top-0 -right-1 z-10 h-full w-2 cursor-col-resize hover:bg-primary/40" />
                     </div>
                   );
                 })}
@@ -1240,7 +1240,7 @@ export function Grid(props: GridProps) {
         </div>
 
         {findOpen && (
-          <div className="absolute top-2 right-4 z-40 flex items-center gap-1 rounded-xl border border-line bg-card p-1.5 shadow-xl">
+          <div className="absolute top-2 right-4 z-40 flex items-center gap-1 rounded-xl border border-line bg-card p-1.5 shadow-[var(--tv-shadow-raised)]">
             <Search size={14} className="ml-1 text-muted" />
             <input
               ref={findRef}
@@ -1285,11 +1285,11 @@ export function Grid(props: GridProps) {
       {props.footer}
 
       {/* Status bar */}
-      <div className="flex items-center gap-4 border-t border-line bg-surface px-3 py-1 text-xs text-muted" aria-live="polite">
+      <div className="flex items-center gap-4 border-t border-line bg-sunken px-3 py-1 text-xs text-muted" aria-live="polite">
         {props.statusExtra}
         {filtered && <span>{t('sheet.status.filtered', { shown: viewCount - frozen, total: source.rowCount - frozen })}</span>}
         {readOnly && (
-          <span className="flex items-center gap-1 font-semibold text-warning">
+          <span className="flex items-center gap-1 font-semibold text-warning-fg">
             <Check size={12} /> {t('sheet.readOnly')}
           </span>
         )}
@@ -1339,8 +1339,8 @@ export function ToolButton({ label, shortcut, onClick, disabled, active, childre
       onMouseDown={(e) => e.preventDefault()}
       onClick={onClick}
       className={clsx(
-        'grid h-8 min-w-8 place-items-center rounded-md px-1.5 text-ink/80 transition hover:bg-surface disabled:cursor-not-allowed disabled:opacity-35',
-        active && 'bg-brand-100 text-brand-700',
+        'grid h-8 min-w-8 place-items-center rounded-md px-1.5 text-ink/80 transition hover:bg-sunken disabled:cursor-not-allowed disabled:opacity-35',
+        active && 'bg-primary/10 text-link',
       )}
     >
       {children}

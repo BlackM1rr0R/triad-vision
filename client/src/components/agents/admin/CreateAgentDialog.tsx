@@ -121,7 +121,7 @@ export const CreateAgentDialog = ({ open, onClose }: { open: boolean; onClose: (
                 maxLength={32}
                 aria-describedby="agent-new-code-hint"
               />
-              <button type="button" className="btn-white btn-sm shrink-0 border border-line" onClick={() => suggest.mutate()} disabled={suggest.isPending || !f.firstName.trim()}>
+              <button type="button" className="btn-secondary btn-sm shrink-0 border border-line" onClick={() => suggest.mutate()} disabled={suggest.isPending || !f.firstName.trim()}>
                 <Wand2 className="size-3.5" aria-hidden /> {t('agents.admin.create.suggest')}
               </button>
             </div>

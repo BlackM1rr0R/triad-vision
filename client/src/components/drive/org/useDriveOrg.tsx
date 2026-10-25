@@ -79,7 +79,7 @@ export const useDriveOrg = ({ folder, loc, isAdmin, isSuper, onNavigate }: Optio
         {[...present.values()].map((tg) => {
           const on = tagFilter.includes(tg.id);
           return (
-            <span key={tg.id} className={clsx('inline-flex items-center overflow-hidden rounded-full', TAG_TONE[tg.color], on ? 'ring-2 ring-brand-500' : 'opacity-75 hover:opacity-100')}>
+            <span key={tg.id} className={clsx('inline-flex items-center overflow-hidden rounded-full', TAG_TONE[tg.color], on ? 'ring-2 ring-focus' : 'opacity-75 hover:opacity-100')}>
               <button type="button" aria-pressed={on} onClick={() => setTagFilter((f) => (on ? f.filter((x) => x !== tg.id) : [...f, tg.id]))} className="px-2 py-0.5 font-semibold">
                 {tg.name} <span className="opacity-70">{tg.n}</span>
               </button>
@@ -174,7 +174,7 @@ export const useDriveOrg = ({ folder, loc, isAdmin, isSuper, onNavigate }: Optio
             const r = e.currentTarget.getBoundingClientRect();
             setMenu({ x: r.left, y: r.bottom + 4 });
           }}
-          className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-lg px-2 text-sm font-medium text-ink/80 hover:bg-surface hover:text-ink dark:hover:bg-white/5"
+          className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-lg px-2 text-sm font-medium text-ink/80 hover:bg-sunken hover:text-ink dark:hover:bg-white/5"
           title={t('driveOrg.admin.menu')}
         >
           <Settings2 className="size-[18px]" />
@@ -192,7 +192,7 @@ export const useDriveOrg = ({ folder, loc, isAdmin, isSuper, onNavigate }: Optio
       <section>
         <div className="flex items-center px-2.5 pb-1.5">
           <h2 className="flex-1 text-[11px] font-bold tracking-wider text-muted uppercase">{t('driveOrg.smart.title')}</h2>
-          <button type="button" onClick={() => setDialog({ kind: 'smart', initial: {} })} className="grid size-6 place-items-center rounded-md text-muted hover:bg-brand-50 hover:text-ink dark:hover:bg-white/10" title={t('driveOrg.smart.new')} aria-label={t('driveOrg.smart.new')}>
+          <button type="button" onClick={() => setDialog({ kind: 'smart', initial: {} })} className="grid size-6 place-items-center rounded-md text-muted hover:bg-primary/[0.06] hover:text-ink dark:hover:bg-primary-contrast/10" title={t('driveOrg.smart.new')} aria-label={t('driveOrg.smart.new')}>
             <Plus className="size-3.5" />
           </button>
         </div>
@@ -205,17 +205,17 @@ export const useDriveOrg = ({ folder, loc, isAdmin, isSuper, onNavigate }: Optio
                   e.preventDefault();
                   onNavigate(`${BASE}/smart/${encodeURIComponent(f.id)}`);
                 }}
-                className={clsx('flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 pr-8 text-sm font-medium transition-colors', activeSmart === f.id ? 'bg-brand-600 text-white' : 'text-ink hover:bg-brand-50 dark:hover:bg-white/5')}
+                className={clsx('flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 pr-8 text-sm font-medium transition-colors', activeSmart === f.id ? 'bg-primary text-primary-contrast' : 'text-ink hover:bg-primary/[0.06] dark:hover:bg-white/5')}
                 title={f.name}
               >
-                <FolderSearch className={clsx('size-[18px] shrink-0', activeSmart === f.id ? 'text-white' : 'text-violet-500')} strokeWidth={1.7} />
+                <FolderSearch className={clsx('size-[18px] shrink-0', activeSmart === f.id ? 'text-primary-contrast' : 'text-accent-fg')} strokeWidth={1.7} />
                 <span className="truncate">{f.name}</span>
               </a>
               {f.canEdit && (
                 <button
                   type="button"
                   onClick={() => setDialog({ kind: 'smart', existing: f })}
-                  className={clsx('absolute top-1/2 right-1.5 grid size-6 -translate-y-1/2 place-items-center rounded-md opacity-0 group-hover:opacity-100 focus-visible:opacity-100', activeSmart === f.id ? 'text-white hover:bg-white/15' : 'text-muted hover:bg-brand-100')}
+                  className={clsx('absolute top-1/2 right-1.5 grid size-6 -translate-y-1/2 place-items-center rounded-md opacity-0 group-hover:opacity-100 focus-visible:opacity-100', activeSmart === f.id ? 'text-primary-contrast hover:bg-primary-contrast/15' : 'text-muted hover:bg-primary/10')}
                   aria-label={t('driveOrg.common.edit')}
                 >
                   <Pencil className="size-3.5" />
@@ -238,7 +238,7 @@ export const useDriveOrg = ({ folder, loc, isAdmin, isSuper, onNavigate }: Optio
                     e.preventDefault();
                     onNavigate(`${BASE}/tag/${encodeURIComponent(tg.id)}`);
                   }}
-                  className={clsx('inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold', TAG_TONE[tg.color], activeTag === tg.id && 'ring-2 ring-brand-500')}
+                  className={clsx('inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold', TAG_TONE[tg.color], activeTag === tg.id && 'ring-2 ring-focus')}
                 >
                   <span className={clsx('size-1.5 rounded-full', TAG_DOT[tg.color])} aria-hidden />
                   {tg.name}
@@ -266,11 +266,11 @@ export const useDriveOrg = ({ folder, loc, isAdmin, isSuper, onNavigate }: Optio
       const f = smart.data?.items.find((x) => x.id === l.id);
       return (
         <div className="flex flex-wrap items-center gap-2 border-b border-line bg-surface/60 px-3 py-2 text-xs text-muted sm:px-4">
-          <FolderSearch className="size-4 text-violet-500" />
+          <FolderSearch className="size-4 text-accent-fg" />
           <span className="font-semibold text-ink">{f?.name}</span>
           <span>{f?.shared ? t('driveOrg.smart.sharedBadge') : t('driveOrg.smart.privateBadge')}</span>
           {f?.canEdit && (
-            <button type="button" onClick={() => setDialog({ kind: 'smart', existing: f })} className="ml-auto inline-flex items-center gap-1 font-semibold text-brand-700 hover:underline dark:text-brand-300">
+            <button type="button" onClick={() => setDialog({ kind: 'smart', existing: f })} className="ml-auto inline-flex items-center gap-1 font-semibold text-link hover:underline dark:text-brand-300">
               <Pencil className="size-3.5" /> {t('driveOrg.common.edit')}
             </button>
           )}
@@ -282,7 +282,7 @@ export const useDriveOrg = ({ folder, loc, isAdmin, isSuper, onNavigate }: Optio
         <div className="flex flex-wrap items-center gap-2 border-b border-line bg-surface/60 px-3 py-2 text-xs text-muted sm:px-4">
           <TagIcon className="size-4" />
           <span>{t('driveOrg.tags.viewHint')}</span>
-          <button type="button" onClick={() => setDialog({ kind: 'smart', initial: { tagIds: [l.id] } })} className="ml-auto inline-flex items-center gap-1 font-semibold text-brand-700 hover:underline dark:text-brand-300">
+          <button type="button" onClick={() => setDialog({ kind: 'smart', initial: { tagIds: [l.id] } })} className="ml-auto inline-flex items-center gap-1 font-semibold text-link hover:underline dark:text-brand-300">
             <Save className="size-3.5" /> {t('driveOrg.smart.saveSearch')}
           </button>
         </div>
@@ -294,7 +294,7 @@ export const useDriveOrg = ({ folder, loc, isAdmin, isSuper, onNavigate }: Optio
         <button
           type="button"
           onClick={() => setDialog({ kind: 'smart', initial: { words: [search.q], ...(search.type ? { types: [search.type] } : {}), ...(after ? { uploadedWithinDays: Math.min(3650, after) } : {}) } })}
-          className="inline-flex items-center gap-1 font-semibold text-brand-700 hover:underline dark:text-brand-300"
+          className="inline-flex items-center gap-1 font-semibold text-link hover:underline dark:text-brand-300"
         >
           <Save className="size-3.5" /> {t('driveOrg.smart.saveSearch')}
         </button>

@@ -71,7 +71,7 @@ export const RenewalPanel = ({ caseId, status }: { caseId: string; status: CaseS
   return (
     <Panel title={t('postArrival.renewal.title')} icon={CalendarClock} id="case-renewal" bodyClassName="p-4 sm:p-5 space-y-4">
       {c.renewalOf && (
-        <p className="rounded-lg bg-brand-50 px-3 py-2 text-xs text-brand-700">
+        <p className="rounded-lg bg-primary/[0.06] px-3 py-2 text-xs text-link">
           <RefreshCcw className="mr-1 inline size-3.5" aria-hidden />
           <Link to={`/admin/cases/${c.renewalOf.id}`} className="font-semibold hover:underline">
             {t('postArrival.renewal.renewalOf', { number: c.renewalOf.number })}
@@ -94,7 +94,7 @@ export const RenewalPanel = ({ caseId, status }: { caseId: string; status: CaseS
             {t('postArrival.renewal.save')}
           </button>
           {c.residenceTitleExpiresAt && (
-            <button type="button" className="btn-ghost btn-sm" disabled={save.isPending} onClick={() => save.mutate(null)}>
+            <button type="button" className="btn-secondary btn-sm" disabled={save.isPending} onClick={() => save.mutate(null)}>
               {t('postArrival.renewal.clear')}
             </button>
           )}
@@ -119,7 +119,7 @@ export const RenewalPanel = ({ caseId, status }: { caseId: string; status: CaseS
           {c.renewals.map((r) => (
             <li key={r.id} className="flex flex-wrap items-center gap-2 text-sm">
               <span className="text-xs text-muted">{t('postArrival.renewal.renewals')}:</span>
-              <Link to={`/admin/cases/${r.id}`} className="inline-flex items-center gap-1 font-mono text-xs font-semibold text-brand-600 hover:underline">
+              <Link to={`/admin/cases/${r.id}`} className="inline-flex items-center gap-1 code-id text-xs font-medium text-link hover:underline whitespace-nowrap">
                 {r.number} <ArrowRight className="size-3" aria-hidden />
               </Link>
               <StatusBadge status={r.status} />

@@ -198,13 +198,13 @@ export const InlineSelect = ({
           }
         }}
         className={clsx(
-          'group/inl inline-flex max-w-full min-w-0 items-center gap-1 rounded-md text-left transition outline-none focus-visible:ring-2 focus-visible:ring-brand-500/50',
-          canEdit ? 'cursor-pointer hover:bg-brand-50/70 hover:ring-1 hover:ring-brand-200' : 'cursor-default',
+          'group/inl inline-flex max-w-full min-w-0 items-center gap-1 rounded-md text-left transition outline-none focus-visible:ring-2 focus-visible:ring-focus/50',
+          canEdit ? 'cursor-pointer hover:bg-primary/[0.04] hover:ring-1 hover:ring-focus' : 'cursor-default',
         )}
       >
         <span className="min-w-0">{display}</span>
         {busy ? (
-          <Spinner className="size-3 shrink-0 text-brand-600" />
+          <Spinner className="size-3 shrink-0 text-link" />
         ) : canEdit ? (
           <Pencil className="size-3 shrink-0 text-muted opacity-0 transition group-hover/inl:opacity-100 group-focus-visible/inl:opacity-100" aria-hidden />
         ) : null}
@@ -224,7 +224,7 @@ export const InlineSelect = ({
               if (!wrapRef.current?.contains(to) && !listRef.current?.contains(to)) close(false);
             }}
             style={pos}
-            className="fixed z-[140] max-h-64 max-w-[min(20rem,calc(100vw-1rem))] min-w-[12rem] overflow-auto rounded-lg border border-line bg-card p-1 text-sm shadow-xl outline-none"
+            className="fixed z-[140] max-h-64 max-w-[min(20rem,calc(100vw-1rem))] min-w-[12rem] overflow-auto rounded-lg border border-line bg-card p-1 text-sm shadow-[var(--tv-shadow-raised)] outline-none"
           >
             {options.map((o, i) => (
               <li
@@ -236,9 +236,9 @@ export const InlineSelect = ({
                 onMouseEnter={() => setActive(i)}
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={() => void pick(o.value)}
-                className={clsx('flex cursor-pointer items-start gap-2 rounded-md px-2.5 py-1.5', i === active ? 'bg-brand-50 text-navy-900' : 'text-ink')}
+                className={clsx('flex cursor-pointer items-start gap-2 rounded-md px-2.5 py-1.5', i === active ? 'bg-primary/[0.06] text-ink' : 'text-ink')}
               >
-                <Check className={clsx('mt-0.5 size-3.5 shrink-0', o.value === value ? 'text-brand-600' : 'invisible')} aria-hidden />
+                <Check className={clsx('mt-0.5 size-3.5 shrink-0', o.value === value ? 'text-link' : 'invisible')} aria-hidden />
                 <span className="min-w-0">
                   <span className="block">{o.label}</span>
                   {o.hint && <span className="block text-[11px] text-muted">{o.hint}</span>}

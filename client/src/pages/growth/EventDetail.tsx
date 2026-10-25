@@ -2,9 +2,11 @@ import { useId, useState, type FormEvent } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, CalendarPlus, CheckCircle2, Info, PlayCircle } from 'lucide-react';
+import { ArrowLeft, CalendarPlus, Info, PlayCircle } from 'lucide-react';
 import { PageHero } from '@/components/layout/PageHero';
 import { Spinner } from '@/components/ui/Spinner';
+import { buttonClass } from '@/components/ui/Button';
+import { Success } from '@/components/illustrations';
 import { EventBadge, EventMeta } from '@/components/growth/EventCard';
 import type { PublicEvent } from '@/components/growth/api';
 import { registerCopy } from '@/i18n';
@@ -42,12 +44,12 @@ const CalendarButtons = ({ event, token, title }: { event: PublicEvent; token: s
   return (
     <div className="flex flex-wrap items-center gap-2">
       <span className="flex items-center gap-1.5 text-sm font-semibold text-ink">
-        <CalendarPlus className="size-4 text-brand-600" aria-hidden /> {t('mk.events.addToCalendar')}:
+        <CalendarPlus className="size-4 text-muted" aria-hidden /> {t('mk.events.addToCalendar')}:
       </span>
-      <a href={ics} download className="btn-ghost btn-sm">
+      <a href={ics} download className={buttonClass({ variant: 'secondary', size: 'sm' })}>
         {t('mk.events.icsFile')}
       </a>
-      <a href={google} target="_blank" rel="noreferrer" className="btn-ghost btn-sm">
+      <a href={google} target="_blank" rel="noreferrer" className={buttonClass({ variant: 'secondary', size: 'sm' })}>
         {t('mk.events.google')}
       </a>
     </div>
@@ -65,12 +67,12 @@ const Recording = ({ slug, token }: { slug: string; token: string }) => {
   if (!data) return null;
   return (
     <div className="text-center">
-      <PlayCircle className="mx-auto size-12 text-brand-600" aria-hidden />
-      <h2 className="mt-3 font-display text-xl font-bold text-ink">{t('mk.events.recordingTitle')}</h2>
+      <span className="mx-auto grid size-14 place-items-center rounded-2xl chip-sky"><PlayCircle className="size-7" aria-hidden /></span>
+      <h2 className="mt-3 font-display text-xl font-semibold text-ink">{t('mk.events.recordingTitle')}</h2>
       {data.recordingUrl ? (
         <>
           <p className="mt-2 text-sm text-muted">{t('mk.events.recordingText', { name: data.name })}</p>
-          <a href={data.recordingUrl} target="_blank" rel="noopener noreferrer" className="btn-primary mt-5 px-5 py-3">
+          <a href={data.recordingUrl} target="_blank" rel="noopener noreferrer" className={buttonClass({ size: 'lg', className: 'mt-5' })}>
             {t('mk.events.watch')}
           </a>
         </>
@@ -140,15 +142,15 @@ export default function EventDetail() {
       <section className="section">
         <div className="container-x grid items-start gap-6 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)] lg:gap-10">
           <div className="space-y-5">
-            <Link to="/events" className="inline-flex items-center gap-1.5 text-sm font-semibold text-brand-600 hover:underline">
+            <Link to="/events" className="inline-flex min-h-11 items-center gap-1.5 text-sm font-semibold text-muted hover:text-ink">
               <ArrowLeft className="size-4" aria-hidden /> {t('gp.events.back')}
             </Link>
-            <div className="card card-pad">
+            <div className="card card-pad rounded-3xl">
               <EventBadge e={event} />
               <div className="mt-4">
                 <EventMeta e={event} />
               </div>
-              <p className="mt-5 text-sm leading-relaxed whitespace-pre-line text-ink">{tr(event.description)}</p>
+              <p className="mt-5 max-w-[68ch] leading-relaxed whitespace-pre-line text-ink">{tr(event.description)}</p>
               {upcoming && (
                 <div className="mt-5 border-t border-line pt-4">
                   <CalendarButtons event={event} token={token} title={tr(event.title)} />
@@ -157,16 +159,16 @@ export default function EventDetail() {
             </div>
           </div>
 
-          <div className="card card-pad">
+          <div className="card card-pad rounded-3xl lg:sticky lg:top-28">
             {done ? (
               <div className="text-center" role="status">
-                <CheckCircle2 className="mx-auto size-12 text-success" aria-hidden />
-                <h2 className="mt-3 font-display text-xl font-bold text-ink">{t('gp.events.form.successTitle')}</h2>
+                <Success className="mx-auto w-36" />
+                <h2 className="mt-3 font-display text-xl font-semibold text-ink">{t('gp.events.form.successTitle')}</h2>
                 <p className="mt-2 text-sm text-muted">{t('gp.events.form.successText')}</p>
                 <div className="mt-5 flex justify-center">
                   <CalendarButtons event={event} token={null} title={tr(event.title)} />
                 </div>
-                <Link to="/booking" className="btn-primary mt-5 px-5 py-3">
+                <Link to="/booking" className={buttonClass({ variant: 'outline', className: 'mt-5' })}>
                   {t('gp.calc.ctaBooking')}
                 </Link>
               </div>
@@ -178,7 +180,7 @@ export default function EventDetail() {
               <p className="text-center text-muted">{event.status === 'CANCELLED' ? t('gp.events.cancelled') : event.seatsLeft === 0 ? t('gp.events.full') : t('gp.events.closed')}</p>
             ) : (
               <form onSubmit={submit} noValidate className="space-y-4" aria-labelledby={`${id}-title`}>
-                <h2 id={`${id}-title`} className="font-display text-lg font-bold text-ink">
+                <h2 id={`${id}-title`} className="font-display text-lg font-semibold text-ink">
                   {t('gp.events.form.title')}
                 </h2>
                 <div>
@@ -216,10 +218,10 @@ export default function EventDetail() {
                 {/* honeypot for bots */}
                 <input type="text" name="website" tabIndex={-1} autoComplete="off" className="hidden" aria-hidden value={form.website} onChange={(e) => setForm({ ...form, website: e.target.value })} />
                 <label className="flex items-start gap-2.5 text-sm text-muted">
-                  <input type="checkbox" required className="mt-0.5 size-4 shrink-0 accent-brand-600" checked={form.consent} onChange={(e) => setForm({ ...form, consent: e.target.checked })} />
+                  <input type="checkbox" required className="mt-0.5 size-4 shrink-0 accent-primary" checked={form.consent} onChange={(e) => setForm({ ...form, consent: e.target.checked })} />
                   <span>
                     {t('gp.events.form.consent')}{' '}
-                    <Link to="/privacy" target="_blank" className="font-semibold text-brand-600 underline-offset-2 hover:underline">
+                    <Link to="/privacy" target="_blank" className="font-semibold text-link underline-offset-2 hover:underline">
                       {t('gp.events.form.privacy')}
                     </Link>
                   </span>
@@ -230,11 +232,11 @@ export default function EventDetail() {
                   </p>
                 )}
                 {error && (
-                  <p role="alert" className="rounded-lg bg-danger/10 px-3 py-2 text-sm text-danger">
+                  <p role="alert" className="rounded-xl bg-danger-bg px-3 py-2 text-sm text-danger-fg">
                     {t(`gp.events.form.errors.${error}`)}
                   </p>
                 )}
-                <button type="submit" className="btn-primary w-full justify-center px-5 py-3" disabled={!ready || busy}>
+                <button type="submit" className={buttonClass({ size: 'lg', block: true })} disabled={!ready || busy}>
                   {busy ? <Spinner /> : t('gp.events.form.submit')}
                 </button>
               </form>

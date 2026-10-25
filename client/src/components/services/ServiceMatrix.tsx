@@ -9,7 +9,7 @@ import { servicePhase } from '@/components/visa/utils';
 
 const Mark = ({ on, label }: { on: boolean; label: string }) => (
   <span
-    className={clsx('inline-grid size-7 place-items-center rounded-full', on ? 'bg-emerald-50 text-emerald-600 ring-1 ring-emerald-200' : 'bg-slate-50 text-slate-300')}
+    className={clsx('inline-grid size-7 place-items-center rounded-full', on ? 'bg-success-bg text-success-fg ring-1 ring-success-border' : 'bg-sunken text-subtle')}
     title={label}
   >
     {on ? <Check className="size-4" strokeWidth={3} /> : <Minus className="size-4" />}
@@ -32,11 +32,11 @@ export const ServiceMatrix = ({ services }: { services: Service[] }) => {
 
   return (
     <>
-      <div className="hidden overflow-hidden rounded-2xl border border-line bg-white shadow-[0_8px_30px_-12px_rgba(11,31,68,0.18)] md:block">
+      <div className="hidden overflow-hidden rounded-2xl border border-line bg-card shadow-[var(--tv-shadow-card)] md:block">
         <table className="w-full text-left text-sm">
           <caption className="sr-only">{t('servicesPage.matrix.caption')}</caption>
           <thead>
-            <tr className="border-b border-line bg-surface text-xs tracking-wide text-muted uppercase">
+            <tr className="border-b border-line bg-sunken text-xs tracking-wide text-muted uppercase">
               <th scope="col" className="px-5 py-3.5 font-semibold">
                 {col('service')}
               </th>
@@ -58,10 +58,10 @@ export const ServiceMatrix = ({ services }: { services: Service[] }) => {
             {services.map((s) => {
               const p = servicePhase(s.slug);
               return (
-                <tr key={s.id} className="group transition-colors hover:bg-brand-50/50">
+                <tr key={s.id} className="group transition-colors hover:bg-sunken">
                   <th scope="row" className="px-5 py-3">
-                    <Link to={`/services/${s.slug}`} className="flex items-center gap-3 font-bold text-navy-900 group-hover:text-brand-700">
-                      <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-navy-900 text-white">
+                    <Link to={`/services/${s.slug}`} className="flex items-center gap-3 font-semibold text-ink group-hover:text-link">
+                      <span className="grid size-9 shrink-0 place-items-center rounded-xl chip-soft">
                         <Icon name={s.icon} className="size-4" />
                       </span>
                       {tr(s.title)}
@@ -74,10 +74,10 @@ export const ServiceMatrix = ({ services }: { services: Service[] }) => {
                     <Mark on={forCandidate(s)} label={forCandidate(s) ? inc : exc} />
                   </td>
                   <td className="px-5 py-3">
-                    <span className="inline-flex items-center gap-2 text-navy-900">
+                    <span className="inline-flex items-center gap-2 text-ink">
                       <span className="flex gap-0.5" aria-hidden>
                         {[0, 1, 2, 3].map((i) => (
-                          <span key={i} className={clsx('h-1.5 w-3 rounded-full', i === p ? 'bg-brand-600' : i < p ? 'bg-brand-200' : 'bg-line')} />
+                          <span key={i} className={clsx('h-1.5 w-3 rounded-full', i === p ? 'bg-primary' : i < p ? 'bg-line-strong' : 'bg-line')} />
                         ))}
                       </span>
                       {phases[p]?.title}
@@ -94,18 +94,18 @@ export const ServiceMatrix = ({ services }: { services: Service[] }) => {
       <ul className="grid gap-3 md:hidden">
         {services.map((s) => (
           <li key={s.id}>
-            <Link to={`/services/${s.slug}`} className="card flex items-center gap-3 p-4">
-              <span className="grid size-10 shrink-0 place-items-center rounded-lg bg-navy-900 text-white">
+            <Link to={`/services/${s.slug}`} className="card card-interactive flex items-center gap-3 p-4">
+              <span className="grid size-11 shrink-0 place-items-center rounded-xl chip-soft">
                 <Icon name={s.icon} className="size-5" />
               </span>
               <div className="min-w-0 flex-1">
-                <p className="font-bold text-navy-900">{tr(s.title)}</p>
+                <p className="font-semibold text-ink">{tr(s.title)}</p>
                 <p className="mt-0.5 text-xs text-muted">
                   {phases[servicePhase(s.slug)]?.title}
                   {tr(s.duration) && ` · ${tr(s.duration)}`}
                 </p>
                 <div className="mt-2 flex flex-wrap gap-1.5 text-[11px] font-semibold">
-                  {forCompany(s) && <span className="badge bg-brand-50 text-brand-700">{col('company')}</span>}
+                  {forCompany(s) && <span className="badge bg-sunken text-ink">{col('company')}</span>}
                   {forCandidate(s) && <span className="badge bg-success-bg text-success-fg">{col('candidate')}</span>}
                 </div>
               </div>

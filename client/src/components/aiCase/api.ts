@@ -186,7 +186,7 @@ export const copyText = async (text: string) => {
 };
 
 export const SEVERITY_STYLE: Record<Severity, string> = {
-  BLOCKER: 'border-red-200 bg-red-50 text-red-800 dark:border-red-900/60 dark:bg-red-950/40 dark:text-red-300',
-  WARNING: 'border-amber-200 bg-amber-50 text-amber-900 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-300',
-  INFO: 'border-sky-200 bg-sky-50 text-sky-900 dark:border-sky-900/60 dark:bg-sky-950/40 dark:text-sky-300',
+  BLOCKER: 'border-danger-border bg-danger-bg text-danger-fg dark:border-red-900/60 dark:bg-red-950/40 dark:text-red-300',
+  WARNING: 'border-warning-border bg-warning-bg text-warning-fg dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-300',
+  INFO: 'border-info-border bg-info-bg text-info-fg dark:border-sky-900/60 dark:bg-sky-950/40 dark:text-sky-300',
 };

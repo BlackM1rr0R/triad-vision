@@ -374,13 +374,13 @@ export default function WorkspaceChat() {
     ) : null;
 
   const HeaderButton = ({ icon: Icon, label, active, onClick }: { icon: typeof Info; label: string; active?: boolean; onClick: () => void }) => (
-    <button type="button" onClick={onClick} title={label} aria-label={label} className={clsx('grid size-8 place-items-center rounded-lg', active ? 'bg-brand-50 text-brand-600' : 'text-muted hover:bg-surface hover:text-ink')}>
+    <button type="button" onClick={onClick} title={label} aria-label={label} className={clsx('grid size-8 place-items-center rounded-lg', active ? 'bg-primary/[0.06] text-link' : 'text-muted hover:bg-sunken hover:text-ink')}>
       <Icon className="size-4" />
     </button>
   );
 
   return (
-    <div className="flex h-full min-h-0 bg-page text-ink">
+    <div className="flex h-full min-h-0 bg-canvas text-ink">
       {/* Sidebar: fixed column on desktop, drawer on phones */}
       <aside className="hidden w-72 shrink-0 border-r border-line bg-card lg:block">{sidebar}</aside>
       {mobileNav && (
@@ -394,7 +394,7 @@ export default function WorkspaceChat() {
               <button type="button" onClick={() => setMobileNav(true)} className="grid size-8 place-items-center rounded-lg text-muted lg:hidden" aria-label={t('workspace.menu')}>
                 <Menu className="size-4" />
               </button>
-              {channel.kind === 'DM' ? <Avatar person={channel.peer} size="md" /> : <span className="grid size-8 place-items-center rounded-lg bg-surface text-muted">{channel.kind === 'PRIVATE' ? <Lock className="size-4" /> : <Hash className="size-4" />}</span>}
+              {channel.kind === 'DM' ? <Avatar person={channel.peer} size="md" /> : <span className="grid size-8 place-items-center rounded-lg bg-sunken text-muted">{channel.kind === 'PRIVATE' ? <Lock className="size-4" /> : <Hash className="size-4" />}</span>}
               <button type="button" onClick={() => setPane((p) => (p?.kind === 'details' ? null : { kind: 'details' }))} className="min-w-0 text-left leading-tight">
                 <span className="block truncate font-display text-sm font-bold text-ink">{channel.kind === 'DM' ? channel.name : `#${channel.name}`}</span>
                 <span className="block truncate text-xs text-muted">
@@ -430,7 +430,7 @@ export default function WorkspaceChat() {
                     highlightId={highlightId}
                     intro={
                       <div className="px-4 pt-8 pb-2">
-                        <span className="grid size-12 place-items-center rounded-2xl bg-brand-50 text-brand-600">{channel.kind === 'DM' ? <MessagesSquare className="size-6" /> : <Hash className="size-6" />}</span>
+                        <span className="grid size-12 place-items-center rounded-xl bg-primary/[0.06] text-link">{channel.kind === 'DM' ? <MessagesSquare className="size-6" /> : <Hash className="size-6" />}</span>
                         <h2 className="mt-3 font-display text-lg font-bold text-ink">{channel.kind === 'DM' ? t('chat.empty.dmStart', { name: channel.name }) : t('chat.empty.channelStart', { name: channel.name })}</h2>
                         {channel.topic && <p className="text-sm text-muted">{channel.topic}</p>}
                       </div>
@@ -466,7 +466,7 @@ export default function WorkspaceChat() {
               <Spinner />
             ) : (
               <div>
-                <span className="mx-auto grid size-14 place-items-center rounded-2xl bg-brand-50 text-brand-600">
+                <span className="mx-auto grid size-14 place-items-center rounded-xl bg-primary/[0.06] text-link">
                   <MessagesSquare className="size-7" />
                 </span>
                 <h2 className="mt-4 font-display text-lg font-bold text-ink">{t('chat.empty.noChannel')}</h2>

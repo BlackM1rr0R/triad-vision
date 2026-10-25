@@ -22,7 +22,7 @@ export default function Ebook() {
   return (
     <>
       <PageHero title={data.title} subtitle={data.description || undefined} image={HERO} crumb={{ to: '/guides', label: t('nav.guides') }} />
-      <section className="section bg-surface">
+      <section className="section bg-sunken">
         <div className="container-x grid items-start gap-8 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:gap-12">
           <div className="grid gap-6 sm:grid-cols-[10rem_minmax(0,1fr)]">
             <div className="mx-auto w-40 sm:w-full">
@@ -32,18 +32,18 @@ export default function Ebook() {
               <p className="eyebrow mb-3">
                 <FileText className="size-4" aria-hidden /> {t('discover.ebook.free')}
               </p>
-              <h2 className="font-display text-xl font-bold text-navy-900">{t('discover.ebook.inside')}</h2>
+              <h2 className="font-display text-xl font-semibold text-ink">{t('discover.ebook.inside')}</h2>
               <ul className="mt-3 space-y-2">
                 {(Array.isArray(items) ? (items as string[]) : []).map((x) => (
-                  <li key={x} className="flex gap-2 text-sm text-ink/85">
-                    <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-brand-600" aria-hidden /> {x}
+                  <li key={x} className="flex gap-2 text-ink">
+                    <CheckCircle2 className="mt-1 size-4 shrink-0 text-success" aria-hidden /> {x}
                   </li>
                 ))}
               </ul>
             </div>
           </div>
-          <div className="card card-pad">
-            <h2 className="font-display text-lg font-bold text-navy-900">{t('discover.ebook.formTitle')}</h2>
+          <div className="card card-pad rounded-3xl">
+            <h2 className="font-display text-lg font-semibold text-ink">{t('discover.ebook.formTitle')}</h2>
             <div className="mt-4">
               {data.fileLocale ? <LeadMagnetForm magnet={data} from={`ebook:${data.slug}`} /> : <p className="text-sm text-muted">{t('discover.ebook.notFound')}</p>}
             </div>

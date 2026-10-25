@@ -5,7 +5,7 @@ import { Briefcase, CheckSquare, MessageSquare, Paperclip } from 'lucide-react';
 import type { TaskCard as Card } from './types';
 import { AvatarStack, DueChip, PriorityChip } from './bits';
 
-const PRIORITY_EDGE = { LOW: 'before:bg-slate-300', NORMAL: 'before:bg-transparent', HIGH: 'before:bg-warning', URGENT: 'before:bg-danger' } as const;
+const PRIORITY_EDGE = { LOW: 'before:bg-line-strong', NORMAL: 'before:bg-transparent', HIGH: 'before:bg-warning', URGENT: 'before:bg-danger' } as const;
 
 /** Board card: number, title, priority, due, progress, counters, assignees. */
 export const TaskCard = memo(function TaskCard({
@@ -45,10 +45,10 @@ export const TaskCard = memo(function TaskCard({
       role="button"
       aria-label={`${task.key} ${task.title}`}
       className={clsx(
-        'group relative cursor-pointer overflow-hidden rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-brand-500 border bg-card p-3.5 pl-4 shadow-[0_1px_2px_rgba(11,31,68,0.06)] transition-[box-shadow,border-color,opacity] duration-150',
+        'group relative cursor-pointer overflow-hidden rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-focus border bg-card p-3.5 pl-4 shadow-[var(--tv-shadow-card)] transition-[box-shadow,border-color,opacity] duration-150',
         "before:absolute before:inset-y-0 before:left-0 before:w-1 before:content-['']",
         PRIORITY_EDGE[task.priority],
-        active ? 'border-brand-500 ring-2 ring-brand-500/20' : 'border-line hover:border-brand-400/60 hover:shadow-[0_6px_20px_-10px_rgba(11,31,68,0.35)]',
+        active ? 'border-primary ring-2 ring-focus/20' : 'border-line hover:border-line-strong hover:shadow-[var(--tv-shadow-raised)]',
         dragging && 'opacity-40',
         draggable && 'active:cursor-grabbing',
       )}
@@ -69,8 +69,8 @@ export const TaskCard = memo(function TaskCard({
         )}
         {total > 0 && (
           <div className="mt-2.5 flex items-center gap-2">
-            <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-slate-100">
-              <span className={clsx('block h-full rounded-full', done === total ? 'bg-success' : 'bg-brand-500')} style={{ width: `${Math.round((done / total) * 100)}%` }} />
+            <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-sunken">
+              <span className={clsx('block h-full rounded-full', done === total ? 'bg-success' : 'bg-primary')} style={{ width: `${Math.round((done / total) * 100)}%` }} />
             </span>
             <span className="text-[0.7rem] font-semibold text-muted tabular-nums">
               {done}/{total}
@@ -90,7 +90,7 @@ export const TaskCard = memo(function TaskCard({
                 <Paperclip className="size-3.5" aria-hidden /> {task.attachmentCount}
               </span>
             )}
-            {total > 0 && done === total && <CheckSquare className="size-3.5 text-success" aria-label={t('tasks.card.checklist', { done, total })} />}
+            {total > 0 && done === total && <CheckSquare className="size-3.5 text-success-fg" aria-label={t('tasks.card.checklist', { done, total })} />}
             <AvatarStack people={task.assignees} size="xs" />
           </span>
         </div>

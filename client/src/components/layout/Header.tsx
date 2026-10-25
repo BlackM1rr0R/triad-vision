@@ -50,7 +50,8 @@ import { siteNavCopy } from '@/i18n/siteNav';
 
 registerCopy(siteNavCopy);
 
-/** Routes whose top is light, so the header is solid there from the start (everywhere else it floats over a dark hero). */
+/** Routes whose top is light. Since the Direction B restyle every public hero is light and the header is always solid;
+ * the list stays for callers that still ask (route fallback). */
 export const LIGHT_TOP = ['/login', '/register', '/forgot-password', '/reset-password', '/account', '/company', '/employers/register'];
 const EASE = [0.22, 1, 0.36, 1] as const;
 
@@ -132,7 +133,7 @@ export const Header = () => {
   // Mobile menu is a modal layer: scroll lock (and Lenis pause), Esc closes, Tab stays inside, focus returns to the menu button.
   const mobilePanel = useOverlay(mobileOpen, () => setMobileOpen(false));
 
-  const solid = scrolled || menu !== null || LIGHT_TOP.some((p) => pathname.startsWith(p));
+  // Warm, solid bar everywhere (all heroes are light): readable from the first pixel, no on-dark switch.
   const contact = data?.settings.contact;
   const accountHref = user?.role === 'COMPANY' ? '/company' : user && user.role !== 'CLIENT' ? '/admin' : '/account';
   const portalLabel = user && isStaffRole(user.role) ? t('nav.admin') : t('siteNav.portal');
@@ -147,12 +148,12 @@ export const Header = () => {
     { key: 'employer', label: t('siteNav.employers') },
   ];
 
-  const navText = solid ? 'text-navy-900 hover:text-brand-600' : 'text-white/90 hover:text-white';
+  const navText = 'text-ink hover:text-ink';
   const itemClass = 'group relative flex h-10 items-center gap-1 rounded-lg px-3 text-[0.9rem] font-semibold whitespace-nowrap transition-colors 2xl:px-4';
   const underline = (on: boolean) => (
     <span
       className={clsx(
-        'absolute inset-x-3 bottom-0.5 h-[2px] origin-left rounded-full bg-brand-500 transition-transform duration-300',
+        'absolute inset-x-3 bottom-0.5 h-[3px] origin-left rounded-full bg-highlight transition-transform duration-300',
         on ? 'scale-x-100' : 'scale-x-0 group-hover:scale-x-100',
       )}
     />
@@ -173,13 +174,13 @@ export const Header = () => {
               {contact && (
                 <>
                   <a href={`tel:${contact.phone.replace(/\s/g, '')}`} className="flex items-center gap-1.5 whitespace-nowrap hover:text-white">
-                    <Phone className="size-3.5 text-brand-400" /> {contact.phone}
+                    <Phone className="size-3.5 text-highlight-fg" /> {contact.phone}
                   </a>
                   <a href={`mailto:${contact.email}`} className="flex items-center gap-1.5 whitespace-nowrap hover:text-white">
-                    <Mail className="size-3.5 text-brand-400" /> {contact.email}
+                    <Mail className="size-3.5 text-highlight-fg" /> {contact.email}
                   </a>
                   <span className="hidden items-center gap-1.5 whitespace-nowrap xl:flex">
-                    <Clock className="size-3.5 text-brand-400" /> {t('topbar.hours')}
+                    <Clock className="size-3.5 text-highlight-fg" /> {t('topbar.hours')}
                   </span>
                 </>
               )}
@@ -219,14 +220,12 @@ export const Header = () => {
         {/* ── Main bar ────────────────────────────────────── */}
         <div
           className={clsx(
-            'relative transition-[background-color,box-shadow,border-color] duration-500',
-            solid
-              ? 'border-b border-line/80 bg-white/[0.97] shadow-[0_10px_40px_-20px_rgba(11,31,68,0.35)]'
-              : 'border-b border-white/10 bg-transparent',
+            'relative border-b border-line bg-card transition-shadow duration-300',
+            scrolled && 'shadow-[var(--tv-shadow-card)]',
           )}
         >
           <div className="container-x flex h-16 items-center justify-between gap-3 sm:h-[72px] xl:gap-6">
-            <Logo light={!solid} />
+            <Logo />
 
             <nav className="hidden xl:block" aria-label={t('a11y.mainNav')}>
               <ul className="flex items-center">
@@ -242,14 +241,14 @@ export const Header = () => {
                       cta={cta[a.key]}
                       active={isUnder(pathname, links[a.key], AUDIENCE_PATH[a.key])}
                       className={clsx(itemClass, navText)}
-                      activeClass={solid ? '!text-brand-600' : '!text-white'}
+                      activeClass="!text-ink"
                       underline={underline}
                     />
                   </li>
                 ))}
                 {plain.map((l) => (
                   <li key={l.to} onMouseEnter={() => setMenu(null)}>
-                    <NavLink to={l.to} className={({ isActive }) => clsx(itemClass, navText, isActive && (solid ? '!text-brand-600' : '!text-white'))}>
+                    <NavLink to={l.to} className={({ isActive }) => clsx(itemClass, navText, isActive && '!text-ink')}>
                       {({ isActive }) => (
                         <>
                           {l.label}
@@ -263,15 +262,15 @@ export const Header = () => {
             </nav>
 
             <div className="flex items-center gap-1 sm:gap-2">
-              <HeaderSearchSlot light={!solid} />
-              <LanguageSwitcher light={!solid} />
-              <ThemeToggle light={!solid} className="lg:hidden" />
+              <HeaderSearchSlot />
+              <LanguageSwitcher />
+              <ThemeToggle className="lg:hidden" />
               {user ? (
                 <Link
                   to={accountHref}
                   className={clsx(
                     'hidden h-10 items-center gap-1.5 rounded-lg border px-3 text-sm font-semibold whitespace-nowrap transition lg:inline-flex',
-                    solid ? 'border-line text-navy-900 hover:border-brand-400' : 'border-white/25 text-white hover:bg-white/10',
+                    'border-line-strong text-ink hover:bg-sunken',
                   )}
                 >
                   {isStaffRole(user.role) ? <LayoutDashboard className="size-4" /> : <UserRound className="size-4" />} {portalLabel}
@@ -281,14 +280,13 @@ export const Header = () => {
                   to="/login"
                   className={clsx(
                     'hidden h-10 items-center gap-1.5 rounded-lg px-3 text-sm font-semibold whitespace-nowrap transition lg:inline-flex',
-                    solid ? 'text-navy-900 hover:bg-surface' : 'text-white hover:bg-white/10',
+                    'text-ink hover:bg-sunken',
                   )}
                 >
                   <LogIn className="size-4" /> {t('nav.login')}
                 </Link>
               )}
-              <Link to="/booking" className="btn-primary group hidden h-10 px-4 whitespace-nowrap sm:inline-flex">
-                <span className="absolute inset-y-0 left-0 w-1/3 animate-shine bg-white/25" />
+              <Link to="/booking" className="btn-primary btn-press hidden h-11 px-4 whitespace-nowrap sm:inline-flex">
                 <CalendarCheck className="size-4" aria-hidden />
                 <span className="2xl:hidden">{t('siteNav.bookShort')}</span>
                 <span className="hidden 2xl:inline">{t('siteNav.book')}</span>
@@ -299,7 +297,7 @@ export const Header = () => {
                 aria-expanded={mobileOpen}
                 aria-haspopup="dialog"
                 onClick={() => setMobileOpen(true)}
-                className={clsx('grid size-10 place-items-center rounded-lg xl:hidden', solid ? 'text-navy-900 hover:bg-surface' : 'text-white hover:bg-white/10')}
+                className="grid size-11 place-items-center rounded-xl text-ink hover:bg-sunken xl:hidden"
               >
                 <Menu className="size-6" />
               </button>
@@ -317,15 +315,15 @@ export const Header = () => {
             aria-modal="true"
             aria-label={t('a11y.menu')}
             tabIndex={-1}
-            className="fixed inset-0 z-[80] flex flex-col bg-navy-950 text-white outline-none"
+            className="fixed inset-0 z-[80] flex flex-col bg-canvas text-ink outline-none"
             initial={{ clipPath: 'circle(0% at 100% 0%)' }}
             animate={{ clipPath: 'circle(150% at 100% 0%)' }}
             exit={{ clipPath: 'circle(0% at 100% 0%)' }}
             transition={{ duration: 0.55, ease: [0.76, 0, 0.24, 1] }}
           >
             <div className="container-x flex h-16 shrink-0 items-center justify-between sm:h-[72px]">
-              <Logo light />
-              <button type="button" aria-label={t('common.close')} onClick={() => setMobileOpen(false)} className="grid size-10 place-items-center rounded-lg hover:bg-white/10">
+              <Logo />
+              <button type="button" aria-label={t('common.close')} onClick={() => setMobileOpen(false)} className="grid size-11 place-items-center rounded-xl hover:bg-sunken">
                 <X className="size-6" />
               </button>
             </div>
@@ -333,18 +331,18 @@ export const Header = () => {
             <div className="flex-1 overflow-y-auto overscroll-contain">
               <nav className="container-x flex flex-col pt-2 pb-8" aria-label={t('a11y.mainNav')}>
                 {audienceItems.map((a, i) => (
-                  <motion.div key={a.key} initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.15 + i * 0.035 }} className="border-b border-white/10">
+                  <motion.div key={a.key} initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.15 + i * 0.035 }} className="border-b border-line">
                     <MobileGroup label={a.label} open={mobileGroup === a.key} onToggle={() => setMobileGroup(mobileGroup === a.key ? null : a.key)}>
-                      <Link to={AUDIENCE_PATH[a.key]} className="mb-1 flex items-center justify-between gap-3 rounded-xl bg-white/5 px-3 py-3 hover:bg-white/10">
+                      <Link to={AUDIENCE_PATH[a.key]} className="mb-1 flex items-center justify-between gap-3 rounded-2xl border border-line bg-card px-4 py-3 hover:border-line-strong">
                         <span className="min-w-0">
                           <span className="block font-semibold">{t(`siteNav.overview.${a.key}.title`)}</span>
-                          <span className="mt-0.5 block text-sm text-white/70">{t(`siteNav.overview.${a.key}.text`)}</span>
+                          <span className="mt-0.5 block text-sm text-muted">{t(`siteNav.overview.${a.key}.text`)}</span>
                         </span>
-                        <ArrowRight className="size-4 shrink-0 text-brand-400" />
+                        <ArrowRight className="size-4 shrink-0 text-highlight-fg" />
                       </Link>
                       {links[a.key].map((l) => (
-                        <Link key={l.to} to={l.to} className="flex items-center gap-3 rounded-lg px-2 py-2.5 text-[0.95rem] text-white/85 hover:bg-white/5 hover:text-white">
-                          <l.icon className="size-4 shrink-0 text-brand-400" aria-hidden />
+                        <Link key={l.to} to={l.to} className="flex min-h-11 items-center gap-3 rounded-xl px-2 py-2.5 text-[0.95rem] text-ink hover:bg-sunken">
+                          <l.icon className="size-4 shrink-0 text-muted" aria-hidden />
                           <span className="truncate">{l.label}</span>
                         </Link>
                       ))}
@@ -352,8 +350,8 @@ export const Header = () => {
                   </motion.div>
                 ))}
                 {[...plain, { to: '/tools', label: t('siteNav.tools') }].map((l, i) => (
-                  <motion.div key={l.to} initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.22 + i * 0.035 }} className="border-b border-white/10">
-                    <NavLink to={l.to} className={({ isActive }) => clsx('flex items-center justify-between py-4 font-display text-xl font-bold', isActive ? 'text-brand-400' : 'text-white')}>
+                  <motion.div key={l.to} initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.22 + i * 0.035 }} className="border-b border-line">
+                    <NavLink to={l.to} className={({ isActive }) => clsx('flex min-h-14 items-center justify-between py-4 font-display text-xl font-semibold', isActive ? 'text-highlight-fg' : 'text-ink')}>
                       {l.label}
                       <ArrowRight className="size-5 opacity-30" />
                     </NavLink>
@@ -368,30 +366,30 @@ export const Header = () => {
                       onClick={() => switchLanguage(l)}
                       aria-pressed={!!i18n.resolvedLanguage?.startsWith(l)}
                       className={clsx(
-                        'flex h-10 items-center gap-2 rounded-lg border px-3 text-sm font-semibold',
-                        i18n.resolvedLanguage?.startsWith(l) ? 'border-brand-500 bg-brand-600/20 text-white' : 'border-white/15 text-white/70',
+                        'flex h-11 items-center gap-2 rounded-xl border px-3 text-sm font-semibold',
+                        i18n.resolvedLanguage?.startsWith(l) ? 'border-primary bg-card text-ink' : 'border-line text-muted',
                       )}
                     >
                       <Flag code={l} /> {l.toUpperCase()}
                     </button>
                   ))}
-                  <ThemeToggle light className="ml-auto" />
+                  <ThemeToggle className="ml-auto" />
                 </div>
 
                 <div className="mt-6 grid gap-3 sm:grid-cols-2">
-                  <Link to="/booking" className="btn-primary w-full">
+                  <Link to="/booking" className="btn-primary btn-lg w-full">
                     <CalendarCheck className="size-4" aria-hidden /> {t('siteNav.book')}
                   </Link>
                   {user ? (
-                    <Link to={accountHref} className="btn-outline w-full">
+                    <Link to={accountHref} className="btn-secondary btn-lg w-full">
                       {portalLabel}
                     </Link>
                   ) : (
                     <>
-                      <Link to="/login" className="btn-outline w-full">
+                      <Link to="/login" className="btn-secondary btn-lg w-full">
                         <LogIn className="size-4" /> {t('nav.login')}
                       </Link>
-                      <Link to="/register" className="btn-white w-full border border-line sm:col-span-2">
+                      <Link to="/register" className="btn-ghost btn-lg w-full sm:col-span-2">
                         <UserPlus className="size-4" /> {t('nav.register')}
                       </Link>
                     </>
@@ -400,14 +398,14 @@ export const Header = () => {
 
                 {contact && (
                   <div className="mt-6 grid grid-cols-2 gap-2 text-sm">
-                    <a href={`tel:${contact.phone.replace(/\s/g, '')}`} className="flex items-center justify-center gap-2 rounded-xl bg-white/5 py-3 hover:bg-white/10">
-                      <Phone className="size-4 text-brand-400" /> {t('contact.phone')}
+                    <a href={`tel:${contact.phone.replace(/\s/g, '')}`} className="flex min-h-12 items-center justify-center gap-2 rounded-xl border border-line bg-card py-3 hover:bg-sunken">
+                      <Phone className="size-4 text-muted" /> {t('contact.phone')}
                     </a>
                     <a
                       href={`https://wa.me/${contact.whatsapp.replace(/\D/g, '')}`}
                       target="_blank"
                       rel="noreferrer"
-                      className="flex items-center justify-center gap-2 rounded-xl bg-white/5 py-3 hover:bg-white/10"
+                      className="flex min-h-12 items-center justify-center gap-2 rounded-xl border border-line bg-card py-3 hover:bg-sunken"
                     >
                       <MessageCircle className="size-4 text-[#25d366]" /> WhatsApp
                     </a>
@@ -533,20 +531,20 @@ const AudienceDropdown = ({
             transition={{ duration: 0.2, ease: EASE }}
             className="absolute top-full left-0 z-10 w-[36rem] pt-2"
           >
-            <div className="grid grid-cols-[13rem_1fr] gap-3 overflow-hidden rounded-2xl border border-line bg-white p-3 text-navy-900 shadow-2xl">
-              <Link to={AUDIENCE_PATH[audience]} className="group flex flex-col justify-between rounded-xl bg-navy-950 p-4 text-white">
+            <div className="grid grid-cols-[13rem_1fr] gap-3 overflow-hidden rounded-2xl border border-line bg-raised p-3 text-ink shadow-[var(--tv-shadow-raised)]">
+              <Link to={AUDIENCE_PATH[audience]} className="group flex flex-col justify-between rounded-xl bg-highlight-bg p-4 text-ink">
                 <span>
-                  <span className="block font-display text-base leading-snug font-bold">{t(`siteNav.overview.${audience}.title`)}</span>
-                  <span className="mt-2 block text-xs leading-relaxed text-white/75">{t(`siteNav.overview.${audience}.text`)}</span>
+                  <span className="block font-display text-base leading-snug font-semibold">{t(`siteNav.overview.${audience}.title`)}</span>
+                  <span className="mt-2 block text-xs leading-relaxed text-muted">{t(`siteNav.overview.${audience}.text`)}</span>
                 </span>
-                <ArrowRight className="mt-4 size-5 text-brand-400 transition group-hover:translate-x-1" aria-hidden />
+                <ArrowRight className="mt-4 size-5 text-highlight-fg" aria-hidden />
               </Link>
               <div className="flex min-w-0 flex-col">
                 <ul aria-label={t(audience === 'worker' ? 'siteNav.workersMenu' : 'siteNav.employersMenu')} className="grid gap-0.5">
                   {links.map((l) => (
                     <li key={l.to}>
-                      <Link to={l.to} className="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm font-semibold transition hover:bg-brand-50 hover:text-brand-700 focus-visible:bg-brand-50">
-                        <l.icon className="size-4 shrink-0 text-brand-600" aria-hidden />
+                      <Link to={l.to} className="flex min-h-10 items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm font-semibold transition hover:bg-sunken focus-visible:bg-sunken">
+                        <l.icon className="size-4 shrink-0 text-muted" aria-hidden />
                         <span className="truncate">{l.label}</span>
                       </Link>
                     </li>
@@ -568,7 +566,7 @@ const MobileGroup = ({ label, open, onToggle, children }: { label: string; open:
   const id = useId();
   return (
     <div>
-      <button type="button" onClick={onToggle} aria-expanded={open} aria-controls={open ? id : undefined} className="flex w-full items-center justify-between py-4 font-display text-xl font-bold">
+      <button type="button" onClick={onToggle} aria-expanded={open} aria-controls={open ? id : undefined} className="flex min-h-14 w-full items-center justify-between py-4 font-display text-xl font-semibold">
         {label}
         <ChevronDown className={clsx('size-5 opacity-50 transition-transform', open && 'rotate-180')} aria-hidden />
       </button>

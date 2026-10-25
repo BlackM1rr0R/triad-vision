@@ -135,8 +135,8 @@ const StageTable = ({ data }: { data: StaffKpiCard }) => {
                 {t('team.kpi.stageValue', { mine: num(mine ?? null), team: num(team ?? null) })}
               </span>
             </div>
-            <div className="relative h-2 rounded-full bg-surface">
-              {mine !== undefined && <div className="absolute inset-y-0 left-0 rounded-full bg-brand-500" style={{ width: `${(mine / max) * 100}%` }} />}
+            <div className="relative h-2 rounded-full bg-sunken">
+              {mine !== undefined && <div className="absolute inset-y-0 left-0 rounded-full bg-primary" style={{ width: `${(mine / max) * 100}%` }} />}
               {team !== undefined && <div className="absolute -top-0.5 -bottom-0.5 w-0.5 rounded bg-ink/60" style={{ left: `calc(${(team / max) * 100}% - 1px)` }} title={t('team.kpi.teamMarker')} />}
             </div>
           </li>

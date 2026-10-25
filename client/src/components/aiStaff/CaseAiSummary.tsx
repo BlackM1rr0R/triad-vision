@@ -75,16 +75,16 @@ export const CaseAiSummary = ({ caseId }: { caseId: string }) => {
       ) : (
         <div className="space-y-3">
           {!data?.fresh && (
-            <p className="flex items-center gap-1.5 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800">
+            <p className="flex items-center gap-1.5 rounded-lg bg-warning-bg px-3 py-2 text-xs text-warning-fg">
               <AlertTriangle className="size-3.5 shrink-0" aria-hidden /> {t('aiStaff.summary.stale')}
             </p>
           )}
           <ul className="space-y-2">
             {LINES.map(({ key: k, icon: I }) => (
               <li key={k} className="flex gap-2.5 text-sm">
-                <I className="mt-0.5 size-4 shrink-0 text-brand-600" aria-hidden />
+                <I className="mt-0.5 size-4 shrink-0 text-link" aria-hidden />
                 <p className="min-w-0 text-ink">
-                  <span className="font-semibold text-navy-900">{t(`aiStaff.summary.lines.${k}`)}: </span>
+                  <span className="font-semibold text-ink">{t(`aiStaff.summary.lines.${k}`)}: </span>
                   {s.lines[k]}
                 </p>
               </li>

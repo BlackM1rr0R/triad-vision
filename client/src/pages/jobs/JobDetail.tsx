@@ -33,6 +33,8 @@ import { pagesJobs } from '@/i18n/pagesJobs';
 import { PageHero, PageHeroSkeleton } from '@/components/layout/PageHero';
 import { SalaryEstimate } from '@/components/tools/SalaryEstimate';
 import { Spinner } from '@/components/ui/Spinner';
+import { buttonClass } from '@/components/ui/Button';
+import { Lost } from '@/components/illustrations';
 import { Skeleton, SkeletonText } from '@/components/ui/Skeleton';
 import { fmtDate } from '@/components/admin/labels';
 import { GapList, ScoreRing } from '@/components/jobs/MatchMeter';
@@ -52,12 +54,12 @@ interface MeResponse {
 
 const Fact = ({ icon: Icon, label, children }: { icon: typeof MapPin; label: string; children: ReactNode }) => (
   <div className="flex items-start gap-3 py-2.5">
-    <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-brand-50 text-brand-600">
+    <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-sunken text-muted">
       <Icon className="size-4" aria-hidden />
     </span>
     <div className="min-w-0">
-      <dt className="text-[11px] font-medium text-muted">{label}</dt>
-      <dd className="text-sm font-semibold break-words text-navy-900">{children}</dd>
+      <dt className="text-xs font-medium text-muted">{label}</dt>
+      <dd className="text-sm font-semibold break-words text-ink">{children}</dd>
     </div>
   </div>
 );
@@ -95,10 +97,10 @@ const ApplyBox = ({ v }: { v: PublicVacancy }) => {
     return (
       <div className="space-y-3">
         <p className="text-sm text-muted">{t('jobsArea.detail.loginToApply')}</p>
-        <Link to="/login" state={{ from }} className="btn-primary w-full">
+        <Link to="/login" state={{ from }} className={buttonClass({ size: 'lg', block: true })}>
           {t('jobsArea.detail.loginCta')} <ArrowRight className="size-4" />
         </Link>
-        <Link to="/register" state={{ from }} className="btn-ghost w-full">
+        <Link to="/register" state={{ from }} className={buttonClass({ variant: 'outline', block: true })}>
           {t('jobsArea.detail.registerCta')}
         </Link>
       </div>
@@ -106,29 +108,29 @@ const ApplyBox = ({ v }: { v: PublicVacancy }) => {
   }
   if (!isClient) {
     return (
-      <p className="rounded-xl bg-surface px-4 py-3 text-sm text-muted">
+      <p className="rounded-xl bg-sunken px-4 py-3 text-sm text-muted">
         {user.role === 'COMPANY' ? t('jobsArea.detail.employersCannotApply') : isStaffRole(user.role) ? t('jobsArea.detail.staffCannotApply') : null}
       </p>
     );
   }
-  if (me.isLoading) return <Spinner className="mx-auto size-6 text-brand-600" />;
+  if (me.isLoading) return <Spinner className="mx-auto size-6 text-primary" />;
   const data = me.data;
   const applied = data?.application && data.application.status !== 'WITHDRAWN' ? data.application : null;
 
   return (
     <div className="space-y-5">
       {data && (
-        <div className="rounded-xl border border-line bg-surface/60 p-4">
+        <div className="rounded-2xl border border-line bg-sunken p-4">
           <div className="flex items-center gap-4">
             <ScoreRing score={data.match.score} />
             <div className="min-w-0">
-              <p className="text-sm font-bold text-navy-900">{t('jobsArea.detail.matchTitle')}</p>
+              <p className="text-sm font-semibold text-ink">{t('jobsArea.detail.matchTitle')}</p>
               <p className="text-xs text-muted">{t('jobsArea.detail.matchHint')}</p>
             </div>
           </div>
           <GapList match={data.match} className="mt-3" />
           {data.match.gaps.length > 0 && (
-            <Link to="/account/profile" className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-brand-600 hover:text-brand-700">
+            <Link to="/account/profile" className="mt-3 inline-flex min-h-11 items-center gap-1 text-sm font-semibold text-link hover:text-link-hover">
               {t('jobsArea.detail.completeProfile')} <ArrowRight className="size-3.5" />
             </Link>
           )}
@@ -136,20 +138,20 @@ const ApplyBox = ({ v }: { v: PublicVacancy }) => {
       )}
 
       {applied ? (
-        <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4">
-          <p className="flex items-center gap-2 text-sm font-bold text-emerald-800">
+        <div className="rounded-2xl border border-success-border bg-success-bg p-4">
+          <p className="flex items-center gap-2 text-sm font-semibold text-success-fg">
             <CheckCircle2 className="size-4" aria-hidden /> {t('jobsArea.detail.applied', { date: fmtDate(applied.createdAt) })}
           </p>
-          <p className="mt-2 text-xs text-emerald-900/80">
+          <p className="mt-2 text-xs text-success-fg">
             {t('jobsArea.detail.status')} <span className={`badge ${APPLICATION_STATUS_TONE[applied.status]}`}>{L.appStatus(applied.status)}</span>
           </p>
-          <Link to="/account/applications" className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-emerald-800 hover:underline">
+          <Link to="/account/applications" className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-success-fg hover:underline">
             {t('jobsArea.detail.myApplications')} <ArrowRight className="size-3.5" />
           </Link>
         </div>
       ) : data && !data.emailVerified ? (
-        <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
-          <p className="flex items-center gap-2 font-bold">
+        <div className="rounded-2xl border border-warning-border bg-warning-bg p-4 text-sm text-warning-fg">
+          <p className="flex items-center gap-2 font-semibold">
             <MailWarning className="size-4" aria-hidden /> {t('jobsArea.detail.verifyTitle')}
           </p>
           <p className="mt-1 text-xs">{t('jobsArea.detail.verifyText')}</p>
@@ -176,17 +178,17 @@ const ApplyBox = ({ v }: { v: PublicVacancy }) => {
             />
           </div>
           <div className="flex gap-2">
-            <button type="submit" className="btn-primary flex-1" disabled={apply.isPending}>
+            <button type="submit" className={buttonClass({ className: 'flex-1' })} disabled={apply.isPending}>
               {apply.isPending ? <Spinner className="size-4" /> : <Send className="size-4" />} {t('jobsArea.detail.send')}
             </button>
             <button type="button" className="btn-secondary" onClick={() => setOpen(false)}>
               {t('jobsArea.common.cancel')}
             </button>
           </div>
-          <p className="text-[11px] text-muted">{t('jobsArea.detail.privacy')}</p>
+          <p className="text-xs text-muted">{t('jobsArea.detail.privacy')}</p>
         </form>
       ) : (
-        <button type="button" className="btn-primary w-full" onClick={() => setOpen(true)}>
+        <button type="button" className={buttonClass({ size: 'lg', block: true })} onClick={() => setOpen(true)}>
           <Send className="size-4" /> {data?.application?.status === 'WITHDRAWN' ? t('jobsArea.detail.reapply') : t('jobsArea.detail.apply')}
         </button>
       )}
@@ -213,7 +215,7 @@ const JobDetailSkeleton = ({ slug }: { slug: string }) => {
       ) : (
         <PageHeroSkeleton />
       )}
-      <section className="section-sm bg-surface" role="status" aria-label={t('ui.loading')}>
+      <section className="section-sm bg-sunken" role="status" aria-label={t('ui.loading')}>
         <div className="container-x grid gap-6 lg:grid-cols-[minmax(0,1fr)_23rem] lg:gap-10">
           <div className="min-w-0 space-y-6">
             <Skeleton className="h-4 w-24" />
@@ -260,15 +262,13 @@ export default function JobDetail() {
   if (isLoading) return <JobDetailSkeleton slug={slug} />;
   if (error || !data) {
     return (
-      <section className="flex min-h-[80vh] items-center bg-surface pt-28">
+      <section className="flex min-h-[80vh] items-center bg-sunken pt-28">
         <div className="container-x">
-          <div className="card mx-auto max-w-lg p-8 text-center">
-            <span className="mx-auto grid size-14 place-items-center rounded-full bg-brand-50 text-brand-600">
-              <Briefcase className="size-6" aria-hidden />
-            </span>
-            <h1 className="mt-4 font-display text-2xl font-extrabold text-navy-900">{t('jobsArea.detail.notFound')}</h1>
+          <div className="card mx-auto max-w-lg rounded-3xl p-8 text-center">
+            <Lost className="mx-auto w-40" />
+            <h1 className="mt-4 font-display text-2xl font-semibold text-ink">{t('jobsArea.detail.notFound')}</h1>
             <p className="mt-2 text-sm text-muted">{t('jobsArea.detail.notFoundText')}</p>
-            <Link to="/jobs" className="btn-primary mt-6">
+            <Link to="/jobs" className={buttonClass({ className: 'mt-6' })}>
               {t('jobsArea.detail.toBoard')}
             </Link>
           </div>
@@ -287,35 +287,35 @@ export default function JobDetail() {
     <>
       <PageHero title={tr(v.title)} image={HERO} crumb={{ to: '/jobs', label: t('nav.jobs') }} morph={{ kind: 'job', id: v.slug }}>
         <div className="mt-5 flex flex-wrap gap-2 text-sm">
-          <span className="glass inline-flex items-center gap-1.5 rounded-full px-3 py-1.5">
-            <Building2 className="size-4 text-brand-400" aria-hidden /> {v.companyName ?? t('jobsArea.common.confidentialEmployer')}
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-line bg-card px-3 py-1.5 text-ink shadow-[var(--tv-shadow-card)]">
+            <Building2 className="size-4 text-muted" aria-hidden /> {v.companyName ?? t('jobsArea.common.confidentialEmployer')}
           </span>
           {v.city && (
-            <span className="glass inline-flex items-center gap-1.5 rounded-full px-3 py-1.5">
-              <MapPin className="size-4 text-brand-400" aria-hidden /> {v.city}
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-line bg-card px-3 py-1.5 text-ink shadow-[var(--tv-shadow-card)]">
+              <MapPin className="size-4 text-muted" aria-hidden /> {v.city}
             </span>
           )}
-          <span className="glass inline-flex items-center gap-1.5 rounded-full px-3 py-1.5">
-            <Clock className="size-4 text-brand-400" aria-hidden /> {L.employmentType(v.employmentType)}
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-line bg-card px-3 py-1.5 text-ink shadow-[var(--tv-shadow-card)]">
+            <Clock className="size-4 text-muted" aria-hidden /> {L.employmentType(v.employmentType)}
           </span>
           {salary && (
-            <span className="glass inline-flex items-center gap-1.5 rounded-full px-3 py-1.5">
-              <Euro className="size-4 text-brand-400" aria-hidden /> {salary}
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-line bg-card px-3 py-1.5 text-ink shadow-[var(--tv-shadow-card)]">
+              <Euro className="size-4 text-muted" aria-hidden /> {salary}
             </span>
           )}
         </div>
       </PageHero>
 
-      <section className="section-sm bg-surface">
+      <section className="section-sm bg-sunken">
         <div className="container-x grid gap-6 lg:grid-cols-[minmax(0,1fr)_23rem] lg:gap-10">
           <div className="min-w-0 space-y-6">
-            <Link to="/jobs" className="-my-2 inline-flex min-h-10 items-center gap-1.5 text-sm font-semibold text-muted hover:text-navy-900">
+            <Link to="/jobs" className="-my-2 inline-flex min-h-10 items-center gap-1.5 text-sm font-semibold text-muted hover:text-ink">
               <ArrowLeft className="size-4" /> {t('jobsArea.detail.back')}
             </Link>
 
-            <article className="card card-pad">
-              <h2 className="font-display text-xl font-bold text-navy-900">{t('jobsArea.detail.about')}</h2>
-              <div className="mt-4 space-y-3 text-[15px] leading-relaxed text-ink/80">
+            <article className="card card-pad rounded-3xl">
+              <h2 className="font-display text-xl font-semibold text-ink">{t('jobsArea.detail.about')}</h2>
+              <div className="mt-4 max-w-[70ch] space-y-3 leading-relaxed text-ink">
                 {description.split(/\n{2,}/).map((p, i) => (
                   <p key={i} className="whitespace-pre-line">
                     {p}
@@ -327,28 +327,28 @@ export default function JobDetail() {
             {(requirements.length > 0 || benefits.length > 0) && (
               <div className="grid gap-6 md:grid-cols-2">
                 {requirements.length > 0 && (
-                  <div className="card card-pad">
-                    <h2 className="flex items-center gap-2 font-display text-lg font-bold text-navy-900">
-                      <ListChecks className="size-5 text-brand-600" aria-hidden /> {t('jobsArea.detail.requirements')}
+                  <div className="card card-pad rounded-3xl">
+                    <h2 className="flex items-center gap-2 font-display text-lg font-semibold text-ink">
+                      <span className="grid size-9 place-items-center rounded-xl chip-sky"><ListChecks className="size-4.5" aria-hidden /></span> {t('jobsArea.detail.requirements')}
                     </h2>
                     <ul className="mt-4 space-y-2.5">
                       {requirements.map((r) => (
-                        <li key={r} className="flex items-start gap-2.5 text-sm text-ink/80">
-                          <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-brand-600" aria-hidden /> {r}
+                        <li key={r} className="flex items-start gap-2.5 text-sm text-ink">
+                          <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-success" aria-hidden /> {r}
                         </li>
                       ))}
                     </ul>
                   </div>
                 )}
                 {benefits.length > 0 && (
-                  <div className="card card-pad">
-                    <h2 className="flex items-center gap-2 font-display text-lg font-bold text-navy-900">
-                      <Gift className="size-5 text-emerald-600" aria-hidden /> {t('jobsArea.detail.benefits')}
+                  <div className="card card-pad rounded-3xl">
+                    <h2 className="flex items-center gap-2 font-display text-lg font-semibold text-ink">
+                      <span className="grid size-9 place-items-center rounded-xl chip-peach"><Gift className="size-4.5" aria-hidden /></span> {t('jobsArea.detail.benefits')}
                     </h2>
                     <ul className="mt-4 space-y-2.5">
                       {benefits.map((b) => (
-                        <li key={b} className="flex items-start gap-2.5 text-sm text-ink/80">
-                          <BadgeCheck className="mt-0.5 size-4 shrink-0 text-emerald-600" aria-hidden /> {b}
+                        <li key={b} className="flex items-start gap-2.5 text-sm text-ink">
+                          <BadgeCheck className="mt-0.5 size-4 shrink-0 text-success" aria-hidden /> {b}
                         </li>
                       ))}
                     </ul>
@@ -360,18 +360,18 @@ export default function JobDetail() {
             {v.visaCategory && (
               <Link
                 to={`/visas/${v.visaCategory.slug}`}
-                className="group card flex items-center gap-4 p-5 transition hover:border-brand-400/60"
+                className="group card card-interactive flex items-center gap-4 rounded-3xl p-5"
               >
-                <span className="grid size-12 shrink-0 place-items-center rounded-xl bg-navy-900 text-white">
+                <span className="grid size-12 shrink-0 place-items-center rounded-xl chip-soft">
                   <Stamp className="size-5" aria-hidden />
                 </span>
                 <span className="min-w-0 flex-1">
                   <span className="block text-xs font-semibold text-muted">{t('jobsArea.detail.visaRoute')}</span>
-                  <span className="block font-bold text-navy-900">
+                  <span className="block font-semibold text-ink">
                     {tr(v.visaCategory.title)} · {v.visaCategory.visaLabel}
                   </span>
                 </span>
-                <ArrowRight className="size-5 shrink-0 text-brand-600 transition group-hover:translate-x-0.5" aria-hidden />
+                <ArrowRight className="size-5 shrink-0 text-muted group-hover:text-ink" aria-hidden />
               </Link>
             )}
 
@@ -380,7 +380,7 @@ export default function JobDetail() {
           </div>
 
           <aside className="min-w-0">
-            <div className="card sticky top-28 p-5 sm:p-6">
+            <div className="card sticky top-28 rounded-3xl p-5 sm:p-6">
               <dl className="divide-y divide-line">
                 {salary && (
                   <Fact icon={Euro} label={t('jobsArea.detail.facts.salary')}>

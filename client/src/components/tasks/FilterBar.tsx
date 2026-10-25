@@ -15,7 +15,7 @@ const Trigger = ({ icon: Icon, label, active, onClick }: { icon: typeof User; la
     onClick={onClick}
     className={clsx(
       'inline-flex h-9 shrink-0 items-center gap-1.5 rounded-lg border px-3 text-sm font-semibold whitespace-nowrap transition',
-      active ? 'border-brand-500 bg-brand-50 text-brand-700' : 'border-line bg-card text-ink hover:border-brand-400/60',
+      active ? 'border-primary bg-primary/[0.06] text-link' : 'border-line bg-card text-ink hover:border-line-strong',
     )}
   >
     <Icon className="size-3.5" aria-hidden />
@@ -25,9 +25,9 @@ const Trigger = ({ icon: Icon, label, active, onClick }: { icon: typeof User; la
 );
 
 const Option = ({ on, onClick, children }: { on: boolean; onClick: () => void; children: ReactNode }) => (
-  <button type="button" role="menuitemcheckbox" aria-checked={on} onClick={onClick} className={clsx('flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-sm hover:bg-surface', on && 'bg-brand-50')}>
+  <button type="button" role="menuitemcheckbox" aria-checked={on} onClick={onClick} className={clsx('flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-sm hover:bg-sunken', on && 'bg-primary/[0.06]')}>
     <span className="min-w-0 flex-1 truncate">{children}</span>
-    {on && <Check className="size-4 shrink-0 text-brand-600" aria-hidden />}
+    {on && <Check className="size-4 shrink-0 text-link" aria-hidden />}
   </button>
 );
 
@@ -165,10 +165,10 @@ export const FilterBar = ({
       </div>
 
       {filters.caseId ? (
-        <span className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-lg border border-brand-500 bg-brand-50 px-3 text-sm font-semibold text-brand-700">
+        <span className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-lg border border-primary bg-primary/[0.06] px-3 text-sm font-semibold text-link">
           <Briefcase className="size-3.5" aria-hidden />
           {caseLabel || t('tasks.filters.case')}
-          <button type="button" onClick={() => (set({ caseId: '' }), onCaseLabel(null))} className="-mr-1 grid size-6 place-items-center rounded-md hover:bg-brand-100" aria-label={t('tasks.actions.clear')}>
+          <button type="button" onClick={() => (set({ caseId: '' }), onCaseLabel(null))} className="-mr-1 grid size-6 place-items-center rounded-md hover:bg-primary/10" aria-label={t('tasks.actions.clear')}>
             <X className="size-3.5" />
           </button>
         </span>
@@ -186,7 +186,7 @@ export const FilterBar = ({
       )}
 
       {count > 0 && (
-        <button type="button" onClick={() => (onChange({ ...filters, assignee: '', priority: [], status: [], due: '', caseId: '', search: '', cancelled: false }), onCaseLabel(null), setQ(''))} className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-lg px-2.5 text-sm font-semibold text-muted hover:text-danger">
+        <button type="button" onClick={() => (onChange({ ...filters, assignee: '', priority: [], status: [], due: '', caseId: '', search: '', cancelled: false }), onCaseLabel(null), setQ(''))} className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-lg px-2.5 text-sm font-semibold text-muted hover:text-danger-fg">
           <RotateCcw className="size-3.5" /> {t('tasks.filters.clear')}
         </button>
       )}

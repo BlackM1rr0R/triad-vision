@@ -36,10 +36,10 @@ export const SalaryEstimate = ({ min, max, className }: { min?: number | null; m
   return (
     <div className={clsx('flex flex-wrap items-baseline gap-x-2 gap-y-0.5 text-xs', className)}>
       <span className="text-muted">{copy.label}:</span>
-      <span className="font-semibold text-emerald-700 tabular-nums">{value}</span>
+      <span className="font-semibold text-success-fg tabular-nums">{value}</span>
       <Link
         to={`/salary-calculator?gross=${est.prefill}`}
-        className="inline-flex items-center gap-1 font-semibold text-brand-600 hover:underline focus-visible:underline"
+        className="inline-flex items-center gap-1 font-semibold text-link hover:underline focus-visible:underline"
       >
         <Calculator className="size-3" aria-hidden /> {copy.link}
       </Link>

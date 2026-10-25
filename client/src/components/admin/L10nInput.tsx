@@ -7,10 +7,10 @@ export const LANGS = ['az', 'de', 'en', 'ru'] as const;
 export type Lang = (typeof LANGS)[number];
 
 const LANG_META: Record<Lang, { short: string; tone: string }> = {
-  az: { short: 'AZ', tone: 'bg-az-blue/15 text-[#0089ab]' },
-  de: { short: 'DE', tone: 'bg-de-gold/25 text-[#8a6d00]' },
-  en: { short: 'EN', tone: 'bg-brand-100 text-brand-700' },
-  ru: { short: 'RU', tone: 'bg-red-100 text-red-700' },
+  az: { short: 'AZ', tone: 'bg-az-blue/15 text-[#0089ab] dark:text-az-blue' },
+  de: { short: 'DE', tone: 'bg-de-gold/25 text-[#8a6d00] dark:text-de-gold' },
+  en: { short: 'EN', tone: 'bg-primary/10 text-link' },
+  ru: { short: 'RU', tone: 'bg-danger-bg text-danger-fg' },
 };
 
 export const emptyL10n = (): L10n => ({ az: '', de: '', en: '', ru: '' });
@@ -53,7 +53,7 @@ const Tabs = ({
   const { t } = useTranslation();
   return (
     // TODO(ui): <Tabs variant="pills" size="sm"> once TabItem supports `title` and a compact size; ids feed the single `${id}-panel`
-    <div role="tablist" className="flex gap-1 rounded-lg bg-surface p-0.5">
+    <div role="tablist" className="flex gap-1 rounded-lg bg-sunken p-0.5">
       {LANGS.map((l) => (
         <button
           key={l}
@@ -66,12 +66,12 @@ const Tabs = ({
           onClick={() => onChange(l)}
           className={clsx(
             'relative min-h-8 rounded-md px-2.5 py-1 text-[11px] font-bold tracking-wide transition',
-            active === l ? 'bg-white text-navy-900 shadow-sm' : 'text-muted hover:text-navy-900',
+            active === l ? 'bg-card text-ink shadow-[var(--tv-shadow-card)]' : 'text-muted hover:text-ink',
           )}
         >
           {LANG_META[l].short}
           {!filled[l] && <span className="absolute top-0.5 right-0.5 size-1.5 rounded-full bg-warning" aria-label={t('admin.l10n.empty')} />}
-          {filled[l] && ai.includes(l) && <span className="absolute top-0.5 right-0.5 size-1.5 rounded-full bg-brand-500" aria-label={t('admin.l10n.aiBadge')} />}
+          {filled[l] && ai.includes(l) && <span className="absolute top-0.5 right-0.5 size-1.5 rounded-full bg-primary" aria-label={t('admin.l10n.aiBadge')} />}
         </button>
       ))}
     </div>
@@ -123,7 +123,7 @@ export const L10nInput = ({
       <div className="mb-1.5 flex items-center justify-between gap-2">
         <span id={`${id}-label`} className="text-xs font-semibold text-ink/80">
           {label}
-          {required && <span className="text-danger"> *</span>}
+          {required && <span className="text-danger-fg"> *</span>}
         </span>
         <div className="flex items-center gap-1.5">
           {actions}
@@ -137,7 +137,7 @@ export const L10nInput = ({
       )}
       {aiHere && (
         <p className="mt-1">
-          <span className="badge bg-brand-50 text-[10px] text-brand-700" title={t('admin.l10n.aiBadgeTitle')}>
+          <span className="badge bg-primary/[0.06] text-[10px] text-link" title={t('admin.l10n.aiBadgeTitle')}>
             {t('admin.l10n.aiBadge')}
           </span>
         </p>

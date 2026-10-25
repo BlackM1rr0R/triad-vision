@@ -237,15 +237,15 @@ export const ComposeWindow = ({ seed, accounts, onClose, onSent }: { seed: Compo
 
   if (minimized) {
     return (
-      <div className="fixed right-4 bottom-0 z-[70] flex w-72 items-center gap-2 rounded-t-xl border border-b-0 border-line bg-navy-900 px-3 py-2 text-white shadow-xl">
+      <div className="fixed right-4 bottom-0 z-[70] flex w-72 items-center gap-2 rounded-t-xl border border-b-0 border-line bg-primary px-3 py-2 text-primary-contrast shadow-[var(--tv-shadow-raised)]">
         <PenLine className="size-4 shrink-0" />
         <button type="button" onClick={() => setMinimized(false)} className="min-w-0 flex-1 truncate text-left text-sm font-semibold">
           {title}
         </button>
-        <button type="button" onClick={() => setMinimized(false)} className="grid size-7 place-items-center rounded-md hover:bg-white/10" aria-label={t('mail.compose.restore')}>
+        <button type="button" onClick={() => setMinimized(false)} className="grid size-7 place-items-center rounded-md hover:bg-primary-contrast/10" aria-label={t('mail.compose.restore')}>
           <Maximize2 className="size-3.5" />
         </button>
-        <button type="button" onClick={close} className="grid size-7 place-items-center rounded-md hover:bg-white/10" aria-label={t('mail.actions.close')}>
+        <button type="button" onClick={close} className="grid size-7 place-items-center rounded-md hover:bg-primary-contrast/10" aria-label={t('mail.actions.close')}>
           <X className="size-3.5" />
         </button>
       </div>
@@ -255,9 +255,9 @@ export const ComposeWindow = ({ seed, accounts, onClose, onSent }: { seed: Compo
   return (
     <div
       className={clsx(
-        'fixed z-[70] flex flex-col overflow-hidden border border-line bg-card text-ink shadow-[0_24px_60px_-12px_rgba(11,31,68,0.45)]',
-        maximized ? 'inset-2 rounded-2xl sm:inset-6' : 'inset-x-0 bottom-0 h-[85dvh] rounded-t-2xl sm:inset-x-auto sm:right-4 sm:h-[36rem] sm:max-h-[calc(100dvh-2rem)] sm:w-[40rem] sm:max-w-[calc(100vw-2rem)]',
-        dragging && 'ring-4 ring-brand-500/30',
+        'fixed z-[70] flex flex-col overflow-hidden border border-line bg-card text-ink shadow-[var(--tv-shadow-card)]',
+        maximized ? 'inset-2 rounded-xl sm:inset-6' : 'inset-x-0 bottom-0 h-[85dvh] rounded-t-xl sm:inset-x-auto sm:right-4 sm:h-[36rem] sm:max-h-[calc(100dvh-2rem)] sm:w-[40rem] sm:max-w-[calc(100vw-2rem)]',
+        dragging && 'ring-4 ring-focus/30',
       )}
       role="dialog"
       aria-label={title}
@@ -272,16 +272,16 @@ export const ComposeWindow = ({ seed, accounts, onClose, onSent }: { seed: Compo
         if (e.dataTransfer.files.length) void upload(e.dataTransfer.files);
       }}
     >
-      <div className="flex shrink-0 items-center gap-1 bg-navy-900 px-3 py-2 text-white">
+      <div className="flex shrink-0 items-center gap-1 bg-primary px-3 py-2 text-primary-contrast">
         <span className="min-w-0 flex-1 truncate text-sm font-semibold">{title}</span>
-        <span className="mr-1 text-[0.65rem] text-white/60">{saving === 'saving' ? t('mail.compose.draftSaving') : saving === 'saved' ? t('mail.compose.draftSaved') : saving === 'error' ? t('mail.compose.draftError') : ''}</span>
-        <button type="button" onClick={() => setMinimized(true)} className="grid size-7 place-items-center rounded-md hover:bg-white/10" aria-label={t('mail.compose.minimize')}>
+        <span className="mr-1 text-[0.65rem] text-primary-contrast/60">{saving === 'saving' ? t('mail.compose.draftSaving') : saving === 'saved' ? t('mail.compose.draftSaved') : saving === 'error' ? t('mail.compose.draftError') : ''}</span>
+        <button type="button" onClick={() => setMinimized(true)} className="grid size-7 place-items-center rounded-md hover:bg-primary-contrast/10" aria-label={t('mail.compose.minimize')}>
           <Minimize2 className="size-3.5" />
         </button>
-        <button type="button" onClick={() => setMaximized((m) => !m)} className="hidden size-7 place-items-center rounded-md hover:bg-white/10 sm:grid" aria-label={t('mail.compose.restore')}>
+        <button type="button" onClick={() => setMaximized((m) => !m)} className="hidden size-7 place-items-center rounded-md hover:bg-primary-contrast/10 sm:grid" aria-label={t('mail.compose.restore')}>
           <Maximize2 className="size-3.5" />
         </button>
-        <button type="button" onClick={close} className="grid size-7 place-items-center rounded-md hover:bg-white/10" aria-label={t('mail.actions.close')}>
+        <button type="button" onClick={close} className="grid size-7 place-items-center rounded-md hover:bg-primary-contrast/10" aria-label={t('mail.actions.close')}>
           <X className="size-3.5" />
         </button>
       </div>
@@ -336,7 +336,7 @@ export const ComposeWindow = ({ seed, accounts, onClose, onSent }: { seed: Compo
         )}
         <label className="flex items-center gap-2">
           <span className="w-12 shrink-0 text-xs text-muted">{t('mail.compose.subject')}</span>
-          <input value={subject} onChange={(e) => setSubject(e.target.value)} className="min-w-0 flex-1 bg-transparent py-2 text-sm text-ink outline-none placeholder:text-muted/70" placeholder={t('mail.compose.subject')} autoFocus={seed.mode === 'new' && to.length > 0} />
+          <input value={subject} onChange={(e) => setSubject(e.target.value)} className="min-w-0 flex-1 bg-transparent py-2 text-sm text-ink outline-none placeholder:text-muted" placeholder={t('mail.compose.subject')} autoFocus={seed.mode === 'new' && to.length > 0} />
         </label>
       </div>
 
@@ -358,21 +358,21 @@ export const ComposeWindow = ({ seed, accounts, onClose, onSent }: { seed: Compo
             original?.attachments
               .filter((a) => !a.inline)
               .map((a) => (
-                <span key={a.id} className="inline-flex items-center gap-1.5 rounded-lg border border-line bg-surface px-2 py-1 text-xs">
+                <span key={a.id} className="inline-flex items-center gap-1.5 rounded-lg border border-line bg-sunken px-2 py-1 text-xs">
                   <Paperclip className="size-3 text-muted" /> <span className="max-w-[12rem] truncate">{a.filename}</span> <span className="text-muted">{formatBytes(a.size)}</span>
                 </span>
               ))}
           {attachments.map((a) => (
-            <span key={a.id} className="inline-flex items-center gap-1.5 rounded-lg border border-line bg-surface px-2 py-1 text-xs">
+            <span key={a.id} className="inline-flex items-center gap-1.5 rounded-lg border border-line bg-sunken px-2 py-1 text-xs">
               <Paperclip className="size-3 text-muted" /> <span className="max-w-[12rem] truncate">{a.filename}</span> <span className="text-muted">{formatBytes(a.size)}</span>
-              <button type="button" onClick={() => void removeAttachment(a)} className="grid size-4 place-items-center rounded-full text-muted hover:text-danger" aria-label={t('mail.actions.delete')}>
+              <button type="button" onClick={() => void removeAttachment(a)} className="grid size-4 place-items-center rounded-full text-muted hover:text-danger-fg" aria-label={t('mail.actions.delete')}>
                 <X className="size-3" />
               </button>
             </span>
           ))}
           {uploads.map((u) => (
-            <span key={u.id} className={clsx('relative inline-flex items-center gap-1.5 overflow-hidden rounded-lg border px-2 py-1 text-xs', u.error ? 'border-danger/40 text-danger' : 'border-line text-muted')}>
-              {!u.error && <span className="absolute inset-y-0 left-0 bg-brand-100/70" style={{ width: `${u.percent}%` }} aria-hidden />}
+            <span key={u.id} className={clsx('relative inline-flex items-center gap-1.5 overflow-hidden rounded-lg border px-2 py-1 text-xs', u.error ? 'border-danger/40 text-danger-fg' : 'border-line text-muted')}>
+              {!u.error && <span className="absolute inset-y-0 left-0 bg-primary/[0.06]" style={{ width: `${u.percent}%` }} aria-hidden />}
               <span className="relative max-w-[12rem] truncate">{u.name}</span>
               <span className="relative">{u.error ?? t('mail.compose.uploading', { percent: u.percent })}</span>
               {u.error && (
@@ -389,15 +389,15 @@ export const ComposeWindow = ({ seed, accounts, onClose, onSent }: { seed: Compo
         <button type="button" onClick={() => void send()} disabled={sending || !account} className="btn-primary btn-sm" title={t('mail.compose.sendShortcut')}>
           {sending ? <Spinner className="size-3.5" /> : <Send className="size-3.5" />} {t('mail.actions.send')}
         </button>
-        <label className="grid size-9 cursor-pointer place-items-center rounded-lg text-muted hover:bg-surface hover:text-ink" title={t('mail.compose.attach')}>
+        <label className="grid size-9 cursor-pointer place-items-center rounded-lg text-muted hover:bg-sunken hover:text-ink" title={t('mail.compose.attach')}>
           <Paperclip className="size-4" />
           <input type="file" multiple className="sr-only" onChange={(e) => e.target.files && void upload(e.target.files)} />
         </label>
-        <button type="button" onClick={() => editor.current?.insertHtml(signatureBlock(account?.signatureHtml))} disabled={!account?.signatureHtml} className="grid size-9 place-items-center rounded-lg text-muted hover:bg-surface hover:text-ink disabled:opacity-40" title={t('mail.compose.insertSignature')} aria-label={t('mail.compose.insertSignature')}>
+        <button type="button" onClick={() => editor.current?.insertHtml(signatureBlock(account?.signatureHtml))} disabled={!account?.signatureHtml} className="grid size-9 place-items-center rounded-lg text-muted hover:bg-sunken hover:text-ink disabled:opacity-40" title={t('mail.compose.insertSignature')} aria-label={t('mail.compose.insertSignature')}>
           <PenLine className="size-4" />
         </button>
         <div className="relative">
-          <button type="button" onClick={() => setTemplatesOpen((o) => !o)} className="inline-flex h-9 items-center gap-1 rounded-lg px-2 text-xs font-semibold text-muted hover:bg-surface hover:text-ink" title={t('mail.compose.templates')}>
+          <button type="button" onClick={() => setTemplatesOpen((o) => !o)} className="inline-flex h-9 items-center gap-1 rounded-lg px-2 text-xs font-semibold text-muted hover:bg-sunken hover:text-ink" title={t('mail.compose.templates')}>
             <FileText className="size-4" /> <ChevronDown className="size-3" />
           </button>
           <Popover open={templatesOpen} onClose={() => setTemplatesOpen(false)} className="w-64">
@@ -419,12 +419,12 @@ export const ComposeWindow = ({ seed, accounts, onClose, onSent }: { seed: Compo
         </div>
         <span className="flex-1" />
         <span className="hidden text-[0.65rem] text-muted sm:inline">{t('mail.compose.sendShortcut')}</span>
-        <button type="button" onClick={() => setConfirmDiscard(true)} className="grid size-9 place-items-center rounded-lg text-muted hover:bg-surface hover:text-danger" title={t('mail.actions.discard')} aria-label={t('mail.actions.discard')}>
+        <button type="button" onClick={() => setConfirmDiscard(true)} className="grid size-9 place-items-center rounded-lg text-muted hover:bg-sunken hover:text-danger-fg" title={t('mail.actions.discard')} aria-label={t('mail.actions.discard')}>
           <Trash2 className="size-4" />
         </button>
       </div>
       {dragging && (
-        <div className="pointer-events-none absolute inset-0 grid place-items-center bg-brand-600/10 text-sm font-semibold text-brand-700">
+        <div className="pointer-events-none absolute inset-0 grid place-items-center bg-primary/10 text-sm font-semibold text-link">
           {t('mail.compose.dropHint')}
         </div>
       )}

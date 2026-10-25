@@ -23,11 +23,11 @@ const INTL: Record<Locale, string> = { az: 'az-Latn-AZ', de: 'de-DE', en: 'en-GB
 const fmt = (key: string, opts: Intl.DateTimeFormatOptions) => new Intl.DateTimeFormat(INTL[currentLocale()], { timeZone: 'UTC', ...opts }).format(dayDate(key));
 
 export const KIND_STYLE: Record<ShiftKind, string> = {
-  OFFICE: 'bg-brand-100 text-brand-800 ring-brand-300',
-  REMOTE: 'bg-violet-100 text-violet-800 ring-violet-300',
-  ON_CALL: 'bg-amber-100 text-amber-900 ring-amber-300',
+  OFFICE: 'bg-primary/10 text-ink ring-focus',
+  REMOTE: 'bg-accent-bg text-accent-fg ring-accent-border',
+  ON_CALL: 'bg-warning-bg text-warning-fg ring-warning-border',
 };
-const LEAVE_STYLE: Record<string, string> = { VACATION: 'bg-sky-400', SICK: 'bg-rose-400', REMOTE: 'bg-violet-400', OTHER: 'bg-slate-400' };
+const LEAVE_STYLE: Record<string, string> = { VACATION: 'bg-info', SICK: 'bg-danger', REMOTE: 'bg-accent', OTHER: 'bg-subtle' };
 
 type View = 'week' | 'month';
 type Person = CalendarData['people'][number];
@@ -96,7 +96,7 @@ const ShiftDialog = ({ open, onClose, people, initial, onSaved }: { open: boolea
       footer={
         <>
           {initial.id && (
-            <button type="button" className="btn-secondary btn-sm mr-auto text-danger" onClick={() => remove.mutate()}>
+            <button type="button" className="btn-secondary btn-sm mr-auto text-danger-fg" onClick={() => remove.mutate()}>
               <Trash2 className="size-3.5" /> {t('team.common.delete')}
             </button>
           )}
@@ -134,12 +134,12 @@ const ShiftDialog = ({ open, onClose, people, initial, onSaved }: { open: boolea
             <input type="time" className="input" required value={end} onChange={(e) => setEnd(e.target.value)} />
           </label>
         </div>
-        {!valid && start && end && <p className="text-xs text-danger">{t('team.errors.END_BEFORE_START')}</p>}
+        {!valid && start && end && <p className="text-xs text-danger-fg">{t('team.errors.END_BEFORE_START')}</p>}
         <fieldset>
           <legend className="label">{t('team.shifts.kind')}</legend>
           <div className="grid grid-cols-3 gap-2">
             {SHIFT_KINDS.map((k) => (
-              <button key={k} type="button" aria-pressed={kind === k} onClick={() => setKind(k)} className={clsx('min-h-10 rounded-lg px-2 text-xs font-semibold ring-1 transition', kind === k ? KIND_STYLE[k] : 'bg-surface text-muted ring-line')}>
+              <button key={k} type="button" aria-pressed={kind === k} onClick={() => setKind(k)} className={clsx('min-h-10 rounded-lg px-2 text-xs font-semibold ring-1 transition', kind === k ? KIND_STYLE[k] : 'bg-sunken text-muted ring-line')}>
                 {t(`team.shifts.kinds.${k}`)}
               </button>
             ))}
@@ -251,7 +251,7 @@ const CoverageDialog = ({ open, onClose, config, onDone }: { open: boolean; onCl
                 type="button"
                 aria-pressed={cfg.weekdays.includes(d)}
                 onClick={() => setCfg({ ...cfg, weekdays: cfg.weekdays.includes(d) ? cfg.weekdays.filter((x) => x !== d) : [...cfg.weekdays, d].sort() })}
-                className={clsx('min-h-9 min-w-11 rounded-lg px-2 text-xs font-semibold ring-1', cfg.weekdays.includes(d) ? 'bg-brand-600 text-white ring-brand-600' : 'bg-surface text-muted ring-line')}
+                className={clsx('min-h-9 min-w-11 rounded-lg px-2 text-xs font-semibold ring-1', cfg.weekdays.includes(d) ? 'bg-primary text-primary-contrast ring-focus' : 'bg-sunken text-muted ring-line')}
               >
                 {fmt(addDays(monday, d - 1), { weekday: 'short' })}
               </button>
@@ -287,11 +287,11 @@ const WeekView = ({ data, people, isAdmin, onAdd, onEdit }: { data: CalendarData
       <table className="w-full min-w-[860px] table-fixed text-left text-xs">
         <thead className="border-b border-line bg-surface/70">
           <tr>
-            <th className="sticky left-0 z-10 w-44 bg-surface px-3 py-2 text-[10px] font-semibold tracking-wide text-muted uppercase">{t('team.shifts.person')}</th>
+            <th className="sticky left-0 z-10 w-44 bg-sunken px-3 py-2 text-xs font-medium text-muted">{t('team.shifts.person')}</th>
             {data.days.map((d) => {
               const c = data.coverage.find((x) => x.day === d);
               return (
-                <th key={d} className={clsx('px-2 py-2 align-top font-semibold', d === today ? 'text-brand-700' : 'text-ink', c?.warnings.length && 'bg-danger-bg/60')}>
+                <th key={d} className={clsx('px-2 py-2 align-top font-semibold', d === today ? 'text-link' : 'text-ink', c?.warnings.length && 'bg-danger-bg/60')}>
                   <span className="block capitalize">{fmt(d, { weekday: 'short', day: 'numeric', month: 'short' })}</span>
                   <CoverageCell c={c} />
                 </th>
@@ -322,12 +322,12 @@ const WeekView = ({ data, people, isAdmin, onAdd, onEdit }: { data: CalendarData
                   const shifts = data.shifts.filter((s) => s.userId === p.id && s.date === d);
                   const leave = leaveOn(data, p.id, d);
                   return (
-                    <td key={d} className={clsx('group px-1.5 py-1.5 align-top', d === today && 'bg-brand-50/30')}>
+                    <td key={d} className={clsx('group px-1.5 py-1.5 align-top', d === today && 'bg-primary/[0.04]')}>
                       <div className="flex min-h-12 flex-col gap-1">
                         {leave.map((l) => (
                           <span
                             key={l.id}
-                            className={clsx('flex items-center gap-1 truncate rounded px-1.5 py-0.5 text-[10px] font-semibold', l.status === 'APPROVED' ? 'bg-surface text-ink' : 'border border-dashed border-line text-muted')}
+                            className={clsx('flex items-center gap-1 truncate rounded px-1.5 py-0.5 text-[10px] font-semibold', l.status === 'APPROVED' ? 'bg-sunken text-ink' : 'border border-dashed border-line text-muted')}
                             title={l.note ?? undefined}
                           >
                             <span className={clsx('size-2 shrink-0 rounded-full', LEAVE_STYLE[l.type])} aria-hidden />
@@ -352,7 +352,7 @@ const WeekView = ({ data, people, isAdmin, onAdd, onEdit }: { data: CalendarData
                             type="button"
                             onClick={() => onAdd(p.id, d)}
                             aria-label={t('team.shifts.addFor', { name: name(p), day: fmt(d, { day: 'numeric', month: 'long' }) })}
-                            className="flex min-h-7 items-center justify-center rounded text-muted opacity-0 transition group-hover:opacity-100 hover:bg-surface hover:text-ink focus-visible:opacity-100"
+                            className="flex min-h-7 items-center justify-center rounded text-muted opacity-0 transition group-hover:opacity-100 hover:bg-sunken hover:text-ink focus-visible:opacity-100"
                           >
                             <Plus className="size-3.5" />
                           </button>
@@ -381,7 +381,7 @@ const MonthView = ({ data, month, people, onPick }: { data: CalendarData; month:
     <div className="overflow-x-auto">
       <div className="grid min-w-[720px] grid-cols-7 gap-px overflow-hidden rounded-xl border border-line bg-line">
         {data.days.slice(0, 7).map((d) => (
-          <div key={d} className="bg-surface px-2 py-1.5 text-[10px] font-semibold tracking-wide text-muted uppercase">
+          <div key={d} className="bg-sunken px-2 py-1.5 text-[10px] font-semibold tracking-wide text-muted uppercase">
             {fmt(d, { weekday: 'short' })}
           </div>
         ))}
@@ -395,9 +395,9 @@ const MonthView = ({ data, month, people, onPick }: { data: CalendarData; month:
               key={d}
               type="button"
               onClick={() => onPick(d)}
-              className={clsx('flex min-h-24 flex-col gap-1 bg-card p-1.5 text-left text-[11px] transition hover:bg-surface', !inMonth && 'opacity-50', c?.warnings.length && inMonth && 'bg-danger-bg/40')}
+              className={clsx('flex min-h-24 flex-col gap-1 bg-card p-1.5 text-left text-[11px] transition hover:bg-sunken', !inMonth && 'opacity-50', c?.warnings.length && inMonth && 'bg-danger-bg/40')}
             >
-              <span className={clsx('flex items-center justify-between font-semibold', d === today ? 'text-brand-700' : 'text-ink')}>
+              <span className={clsx('flex items-center justify-between font-semibold', d === today ? 'text-link' : 'text-ink')}>
                 {Number(d.slice(8))}
                 {c?.warnings.length ? <AlertTriangle className={clsx('size-3.5', TONE_TEXT.danger)} aria-label={c.warnings.map((w) => t(`team.shifts.warnings.${w}`)).join(', ')} /> : null}
               </span>
@@ -500,7 +500,7 @@ export const ShiftCalendar = () => {
         </div>
         <h2 className="text-sm font-semibold text-ink capitalize">{title}</h2>
         <div className="ml-auto flex flex-wrap items-center gap-2">
-          <button type="button" aria-pressed={onlyMe} className={clsx('btn-secondary btn-sm', onlyMe && 'border-brand-500 text-brand-700')} onClick={() => setOnlyMe((v) => !v)}>
+          <button type="button" aria-pressed={onlyMe} className={clsx('btn-secondary btn-sm', onlyMe && 'border-primary text-link')} onClick={() => setOnlyMe((v) => !v)}>
             {onlyMe ? <UserRound className="size-3.5" /> : <Users className="size-3.5" />} {onlyMe ? t('team.shifts.onlyMe') : t('team.shifts.everyone')}
           </button>
           {isAdmin && view === 'week' && (

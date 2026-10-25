@@ -86,7 +86,7 @@ const VersionsList = () => {
           icon={ScrollText}
           actions={
             <div className="flex flex-wrap gap-2">
-              <a href={LEGAL_PATH[k.kind]} target="_blank" rel="noopener" className="btn-ghost btn-sm">
+              <a href={LEGAL_PATH[k.kind]} target="_blank" rel="noopener" className="btn-secondary btn-sm">
                 <ExternalLink className="size-3.5" aria-hidden /> {t('legalDocs.admin.publicLink')}
               </a>
               <Button size="sm" icon={FilePlus2} loading={create.isPending && create.variables?.kind === k.kind} onClick={() => create.mutate({ kind: k.kind })}>
@@ -104,7 +104,7 @@ const VersionsList = () => {
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full min-w-[36rem] text-sm">
-                <thead className="bg-surface text-left text-xs text-muted">
+                <thead className="bg-sunken text-left text-xs text-muted">
                   <tr>
                     {(['version', 'status', 'published', 'effective', 'reaccept'] as const).map((c) => (
                       <th key={c} className="px-3 py-2 font-medium">
@@ -125,7 +125,7 @@ const VersionsList = () => {
                       <td className="px-3 py-2 text-xs text-muted tabular-nums">{v.effectiveAt ? fmtDate(v.effectiveAt) : '—'}</td>
                       <td className="px-3 py-2 text-xs">{v.requiresReacceptance ? <b className="text-warning-fg">{t('legalDocs.admin.yes')}</b> : '—'}</td>
                       <td className="px-3 py-2 text-right">
-                        <Link to={`/admin/legal/${v.id}`} className="btn-ghost btn-sm">
+                        <Link to={`/admin/legal/${v.id}`} className="btn-secondary btn-sm">
                           {v.status === 'DRAFT' ? <Pencil className="size-3.5" aria-hidden /> : null}
                           {v.status === 'DRAFT' ? t('legalDocs.admin.edit') : t('legalDocs.admin.view')}
                         </Link>
@@ -159,7 +159,7 @@ const DiffView = ({ id, lang, enabled }: { id: string; lang: Lang; enabled: bool
         {data.previous ? t('legalDocs.admin.diffAgainst', { version: data.previous.version }) : t('legalDocs.admin.diffNone')} · {t('legalDocs.admin.diffStats', data.stats)}
       </p>
       {!changed && data.previous ? (
-        <p className="rounded-lg border border-line bg-surface p-4 text-sm text-muted">{t('legalDocs.admin.noChanges')}</p>
+        <p className="rounded-lg border border-line bg-sunken p-4 text-sm text-muted">{t('legalDocs.admin.noChanges')}</p>
       ) : (
         <pre className="max-h-[60vh] overflow-auto rounded-lg border border-line bg-card p-2 font-mono text-xs leading-relaxed whitespace-pre-wrap" lang={lang}>
           {data.lines.map((l, i) => (
@@ -291,13 +291,13 @@ const Editor = () => {
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <Link to="/admin/legal" className="inline-flex min-h-10 items-center gap-1.5 text-sm font-semibold text-brand-600 hover:underline">
+        <Link to="/admin/legal" className="inline-flex min-h-10 items-center gap-1.5 text-sm font-semibold text-link hover:underline">
           <ArrowLeft className="size-4" aria-hidden /> {t('legalDocs.admin.back')}
         </Link>
         <div className="flex flex-wrap items-center gap-2">
           <StatusPill domain="publication" status={doc.status} label={t(`legalDocs.admin.status.${doc.status}`)} />
           {doc.status !== 'DRAFT' && (
-            <a href={doc.status === 'PUBLISHED' ? LEGAL_PATH[doc.kind] : versionPath(doc.kind, doc.version)} target="_blank" rel="noopener" className="btn-ghost btn-sm">
+            <a href={doc.status === 'PUBLISHED' ? LEGAL_PATH[doc.kind] : versionPath(doc.kind, doc.version)} target="_blank" rel="noopener" className="btn-secondary btn-sm">
               <ExternalLink className="size-3.5" aria-hidden /> {t('legalDocs.admin.publicLink')}
             </a>
           )}
@@ -322,7 +322,7 @@ const Editor = () => {
       </div>
 
       <Panel title={`${t(`legalDocs.admin.kinds.${doc.kind}`)} · ${doc.version}`} icon={ScrollText}>
-        {!editable && <p className="mb-4 rounded-lg border border-line bg-surface p-3 text-sm text-muted">{t('legalDocs.admin.readOnly')}</p>}
+        {!editable && <p className="mb-4 rounded-lg border border-line bg-sunken p-3 text-sm text-muted">{t('legalDocs.admin.readOnly')}</p>}
         {data.accepted > 0 && <p className="mb-4 text-xs text-muted">{t('legalDocs.admin.acceptedCount', { count: data.accepted })}</p>}
         {editable ? (
           <div className="grid gap-4 sm:grid-cols-2">
@@ -381,14 +381,14 @@ const Editor = () => {
             onChange={(k) => void changeTab(k)}
             items={(editable ? (['edit', 'preview', 'diff'] as const) : (['preview', 'diff'] as const)).map((k) => ({ key: k, label: t(`legalDocs.admin.tabs.${k}`) }))}
           />
-          <div role="group" aria-label={t('admin.l10n.lang.de', { defaultValue: 'Language' })} className="flex gap-1 rounded-lg bg-surface p-0.5">
+          <div role="group" aria-label={t('admin.l10n.lang.de', { defaultValue: 'Language' })} className="flex gap-1 rounded-lg bg-sunken p-0.5">
             {LANGS.map((l) => (
               <button
                 key={l}
                 type="button"
                 aria-pressed={lang === l}
                 onClick={() => setLang(l)}
-                className={clsx('relative min-h-8 rounded-md px-1.5 py-1 transition', lang === l ? 'bg-card shadow-sm' : 'opacity-70 hover:opacity-100')}
+                className={clsx('relative min-h-8 rounded-md px-1.5 py-1 transition', lang === l ? 'bg-card shadow-[var(--tv-shadow-card)]' : 'opacity-70 hover:opacity-100')}
               >
                 <LangTag lang={l} />
                 {!filled.includes(l) && <span className="absolute top-0.5 right-0.5 size-1.5 rounded-full bg-warning" aria-label={t('admin.l10n.empty')} />}

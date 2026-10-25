@@ -180,8 +180,8 @@ export const VacancyForm = ({
       )}
       <section className="space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <p className="flex items-center gap-2 text-sm font-bold text-navy-900">
-            <Languages className="size-4 text-brand-600" aria-hidden /> {t('jobsArea.form.texts')}
+          <p className="flex items-center gap-2 text-sm font-bold text-ink">
+            <Languages className="size-4 text-primary" aria-hidden /> {t('jobsArea.form.texts')}
           </p>
           <Tabs
             variant="pills"
@@ -217,7 +217,7 @@ export const VacancyForm = ({
       </section>
 
       <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <p className="text-sm font-bold text-navy-900 sm:col-span-2 lg:col-span-3">{t('jobsArea.form.details')}</p>
+        <p className="text-sm font-bold text-ink sm:col-span-2 lg:col-span-3">{t('jobsArea.form.details')}</p>
         <Field id="vf-sector" label={t('jobsArea.form.sector')}>
           <select id="vf-sector" className="input" value={f.sector} onChange={(e) => set('sector', e.target.value)}>
             <option value="">—</option>
@@ -285,7 +285,7 @@ export const VacancyForm = ({
         <div className="flex items-start gap-3 rounded-xl border border-line p-3 sm:col-span-2 lg:col-span-3">
           <Switch checked={f.showCompany} onChange={(v) => set('showCompany', v)} label={t('jobsArea.form.showCompany')} />
           <div>
-            <p className="text-sm font-semibold text-navy-900">{t('jobsArea.form.showCompany')}</p>
+            <p className="text-sm font-semibold text-ink">{t('jobsArea.form.showCompany')}</p>
             <p className="text-xs text-muted">{t('jobsArea.form.showCompanyHint')}</p>
           </div>
         </div>

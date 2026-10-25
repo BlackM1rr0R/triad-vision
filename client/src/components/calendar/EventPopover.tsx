@@ -90,7 +90,7 @@ export const EventPopover = ({
       ref={ref}
       role="dialog"
       aria-label={item.title}
-      className={clsx('fixed z-[80] w-[22rem] max-w-[calc(100vw-1rem)] rounded-2xl border border-line bg-card p-4 text-ink shadow-[0_20px_50px_-12px_rgba(11,31,68,0.35)]', !pos && 'invisible')}
+      className={clsx('fixed z-[80] w-[22rem] max-w-[calc(100vw-1rem)] rounded-xl border border-line bg-card p-4 text-ink shadow-[var(--tv-shadow-card)]', !pos && 'invisible')}
       style={{ top: pos?.top ?? 0, left: pos?.left ?? 0 }}
     >
       <div className="mb-2 flex items-start gap-2">
@@ -98,16 +98,16 @@ export const EventPopover = ({
         <h3 className="min-w-0 flex-1 font-display text-base leading-snug font-bold">{item.title}</h3>
         <div className="-mt-1 -mr-1 flex shrink-0 items-center">
           {ev?.canEdit && (
-            <button type="button" onClick={() => onEdit(ev)} className="grid size-8 place-items-center rounded-lg text-muted hover:bg-surface hover:text-ink" aria-label={t('calendar.actions.edit')} title={t('calendar.actions.edit')}>
+            <button type="button" onClick={() => onEdit(ev)} className="grid size-8 place-items-center rounded-lg text-muted hover:bg-sunken hover:text-ink" aria-label={t('calendar.actions.edit')} title={t('calendar.actions.edit')}>
               <Pencil className="size-4" />
             </button>
           )}
           {ev?.canEdit && (
-            <button type="button" onClick={() => onDelete(ev)} className="grid size-8 place-items-center rounded-lg text-muted hover:bg-red-50 hover:text-danger" aria-label={t('calendar.actions.delete')} title={t('calendar.actions.delete')}>
+            <button type="button" onClick={() => onDelete(ev)} className="grid size-8 place-items-center rounded-lg text-muted hover:bg-danger-bg hover:text-danger-fg" aria-label={t('calendar.actions.delete')} title={t('calendar.actions.delete')}>
               <Trash2 className="size-4" />
             </button>
           )}
-          <button type="button" onClick={onClose} className="grid size-8 place-items-center rounded-lg text-muted hover:bg-surface hover:text-ink" aria-label={t('calendar.actions.close')}>
+          <button type="button" onClick={onClose} className="grid size-8 place-items-center rounded-lg text-muted hover:bg-sunken hover:text-ink" aria-label={t('calendar.actions.close')}>
             <X className="size-4" />
           </button>
         </div>
@@ -141,7 +141,7 @@ export const EventPopover = ({
         )}
         {ev?.case && (
           <Row icon={Briefcase}>
-            <Link to={`/admin/cases/${ev.case.id}`} className="font-semibold text-brand-600 hover:underline">
+            <Link to={`/admin/cases/${ev.case.id}`} className="font-semibold text-link hover:underline">
               {ev.case.number}
             </Link>
           </Row>
@@ -184,7 +184,7 @@ export const EventPopover = ({
                   key={s}
                   type="button"
                   onClick={() => onRespond(ev, s)}
-                  className={clsx('rounded-lg border px-2.5 py-1 text-xs font-semibold transition-colors', myStatus === s ? 'border-brand-500 bg-brand-50 text-brand-700' : 'border-line text-ink hover:bg-surface')}
+                  className={clsx('rounded-lg border px-2.5 py-1 text-xs font-semibold transition-colors', myStatus === s ? 'border-primary bg-primary/[0.06] text-link' : 'border-line text-ink hover:bg-sunken')}
                   aria-pressed={myStatus === s}
                 >
                   {t(`calendar.respond.${s === 'ACCEPTED' ? 'accept' : s === 'DECLINED' ? 'decline' : 'tentative'}`)}
@@ -193,12 +193,12 @@ export const EventPopover = ({
             </div>
           )}
           {ev && (
-            <a href={calendarApi.icsUrl(ev.id)} className="ml-auto inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-semibold text-muted hover:bg-surface hover:text-ink">
+            <a href={calendarApi.icsUrl(ev.id)} className="ml-auto inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-semibold text-muted hover:bg-sunken hover:text-ink">
               <Download className="size-3.5" /> {t('calendar.actions.ics')}
             </a>
           )}
           {link && (
-            <Link to={link} className="ml-auto inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-semibold text-brand-600 hover:bg-brand-50">
+            <Link to={link} className="ml-auto inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-semibold text-link hover:bg-primary/[0.06]">
               <ExternalLink className="size-3.5" /> {systemLinkLabel(sys!)}
             </Link>
           )}

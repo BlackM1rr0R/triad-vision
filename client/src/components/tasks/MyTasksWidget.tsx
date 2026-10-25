@@ -28,14 +28,14 @@ export const MyTasksWidget = () => {
       title={
         <span className="flex items-center gap-2">
           {t('tasks.widget.title')}
-          {!!summary.data?.open && <span className="rounded-full bg-brand-100 px-2 py-0.5 text-xs font-bold text-brand-700 tabular-nums">{summary.data.open}</span>}
-          {!!summary.data?.overdue && <span className="rounded-full bg-red-100 px-2 py-0.5 text-xs font-bold text-red-700">{t('tasks.widget.overdue', { count: summary.data.overdue })}</span>}
+          {!!summary.data?.open && <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-bold text-link tabular-nums">{summary.data.open}</span>}
+          {!!summary.data?.overdue && <span className="rounded-full bg-danger-bg px-2 py-0.5 text-xs font-bold text-danger-fg">{t('tasks.widget.overdue', { count: summary.data.overdue })}</span>}
         </span>
       }
       icon={ListTodo}
       bodyClassName="p-0!"
       actions={
-        <Link to="/workspace/tasks" className="inline-flex items-center gap-0.5 text-xs font-semibold text-brand-600 hover:underline">
+        <Link to="/workspace/tasks" className="inline-flex items-center gap-0.5 text-xs font-semibold text-link hover:underline">
           {t('tasks.widget.open')} <ArrowUpRight className="size-3" />
         </Link>
       }
@@ -52,7 +52,7 @@ export const MyTasksWidget = () => {
         <ul className="divide-y divide-line">
           {items.map((task) => (
             <li key={task.id}>
-              <Link to={`/workspace/tasks/${task.key}`} className="flex items-center gap-3 px-5 py-3 transition hover:bg-surface sm:px-6">
+              <Link to={`/workspace/tasks/${task.key}`} className="flex items-center gap-3 px-5 py-3 transition hover:bg-sunken sm:px-6">
                 <span className="w-14 shrink-0 font-mono text-[0.7rem] font-semibold text-muted">{task.key}</span>
                 <span className="min-w-0 flex-1 truncate text-sm font-semibold text-ink">{task.title}</span>
                 <PriorityChip priority={task.priority} compact />

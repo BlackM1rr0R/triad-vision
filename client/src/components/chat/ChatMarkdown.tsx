@@ -31,7 +31,7 @@ const renderInline = (text: string, ctx: Ctx, keyPrefix: string): ReactNode[] =>
     if (!part) return;
     if (part.startsWith('`') && part.endsWith('`') && part.length > 2) {
       out.push(
-        <code key={`${keyPrefix}c${i}`} className="rounded bg-surface px-1 py-0.5 font-mono text-[0.85em] text-ink ring-1 ring-line">
+        <code key={`${keyPrefix}c${i}`} className="rounded bg-sunken px-1 py-0.5 font-mono text-[0.85em] text-ink ring-1 ring-line">
           {part.slice(1, -1)}
         </code>,
       );
@@ -76,7 +76,7 @@ const renderLinks = (text: string, ctx: Ctx, keyPrefix: string): ReactNode[] => 
     const label = m[1] ?? m[3];
     if (SAFE_HREF.test(href)) {
       out.push(
-        <a key={`${keyPrefix}a${n++}`} href={href} target="_blank" rel="noopener noreferrer" className="break-all text-brand-600 underline decoration-brand-600/40 underline-offset-2 hover:decoration-brand-600">
+        <a key={`${keyPrefix}a${n++}`} href={href} target="_blank" rel="noopener noreferrer" className="break-all text-link underline decoration-link/40 underline-offset-2 hover:decoration-link">
           {label}
         </a>,
       );
@@ -124,7 +124,7 @@ const renderMentions = (text: string, ctx: Ctx, keyPrefix: string): ReactNode[] 
         flush();
         const me = hit.id === null || hit.id === ctx.meId;
         out.push(
-          <span key={`${keyPrefix}m${n++}`} className={clsx('rounded px-1 py-0.5 font-semibold', me ? 'bg-amber-100 text-amber-900' : 'bg-brand-50 text-brand-700')}>
+          <span key={`${keyPrefix}m${n++}`} className={clsx('rounded px-1 py-0.5 font-semibold', me ? 'bg-warning-bg text-warning-fg' : 'bg-primary/[0.06] text-link')}>
             @{hit.label}
           </span>,
         );
@@ -205,7 +205,7 @@ export const ChatMarkdown = ({ source, people, meId, className }: { source: stri
         switch (b.kind) {
           case 'code':
             return (
-              <pre key={k} className="overflow-x-auto rounded-lg bg-surface p-2.5 font-mono text-xs leading-relaxed text-ink ring-1 ring-line">
+              <pre key={k} className="overflow-x-auto rounded-lg bg-sunken p-2.5 font-mono text-xs leading-relaxed text-ink ring-1 ring-line">
                 {b.text}
               </pre>
             );
@@ -227,7 +227,7 @@ export const ChatMarkdown = ({ source, people, meId, className }: { source: stri
             );
           case 'quote':
             return (
-              <blockquote key={k} className="border-l-2 border-brand-400 pl-3 text-muted">
+              <blockquote key={k} className="border-l-2 border-line-strong pl-3 text-muted">
                 <Lines lines={b.lines} ctx={ctx} k={k} />
               </blockquote>
             );

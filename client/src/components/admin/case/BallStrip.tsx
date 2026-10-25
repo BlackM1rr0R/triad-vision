@@ -43,7 +43,7 @@ export default function BallStrip({ ball, onDetails }: { ball: BallInCourt | nul
           <button
             type="button"
             onClick={onDetails}
-            className="rounded-md px-1.5 py-0.5 font-semibold text-brand-700 hover:bg-brand-50"
+            className="rounded-md px-1.5 py-0.5 font-semibold text-link hover:bg-primary/[0.06]"
             title={rest.map((i) => t(`cp.ball.sideStaff.${i.side}`)).join(' · ')}
           >
             {t('cp.ball.alsoStaff')} +{rest.length}

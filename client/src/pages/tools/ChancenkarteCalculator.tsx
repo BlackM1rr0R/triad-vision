@@ -48,8 +48,8 @@ const Select = ({ id, label, value, onChange, children }: { id: string; label: s
 );
 
 const Check = ({ checked, onChange, children }: { checked: boolean; onChange: (v: boolean) => void; children: ReactNode }) => (
-  <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-line p-3 text-sm leading-snug text-ink hover:border-brand-400 has-[:checked]:border-brand-500 has-[:checked]:bg-brand-50">
-    <input type="checkbox" className="mt-0.5 size-4 shrink-0 accent-brand-600" checked={checked} onChange={(e) => onChange(e.target.checked)} />
+  <label className="flex min-h-12 cursor-pointer items-start gap-3 rounded-xl border border-line bg-card p-3.5 text-sm leading-snug text-ink transition-colors hover:border-line-strong has-[:checked]:border-primary has-[:checked]:bg-sunken">
+    <input type="checkbox" className="mt-0.5 size-4 shrink-0 accent-primary" checked={checked} onChange={(e) => onChange(e.target.checked)} />
     <span>{children}</span>
   </label>
 );
@@ -77,12 +77,12 @@ export default function ChancenkarteCalculator() {
       <PageHero title={t('ckCalc.title')} subtitle={t('ckCalc.subtitle')} image={HERO} crumb={{ to: '/tools', label: t('siteNav.tools') }} />
       <section className="section">
         <div className="container-x grid items-start gap-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] lg:gap-10">
-          <form className="card card-pad space-y-5" onSubmit={(e) => e.preventDefault()} aria-labelledby={`${id}-form`}>
+          <form className="card card-pad space-y-5 rounded-3xl" onSubmit={(e) => e.preventDefault()} aria-labelledby={`${id}-form`}>
             <div className="flex items-center justify-between gap-3">
-              <h2 id={`${id}-form`} className="font-display text-lg font-bold text-ink">
+              <h2 id={`${id}-form`} className="font-display text-lg font-semibold text-ink">
                 {t('ckCalc.form')}
               </h2>
-              <button type="button" onClick={() => setForm(DEFAULTS)} className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-semibold text-muted hover:text-brand-600">
+              <button type="button" onClick={() => setForm(DEFAULTS)} className="inline-flex min-h-10 items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-semibold text-muted transition-colors hover:bg-sunken hover:text-ink">
                 <RotateCcw className="size-3.5" aria-hidden /> {t('ckCalc.reset')}
               </button>
             </div>
@@ -93,9 +93,9 @@ export default function ChancenkarteCalculator() {
                 {(['full', 'partial', 'foreign', 'none'] as Qualification[]).map((q) => (
                   <label
                     key={q}
-                    className="flex cursor-pointer items-start gap-3 rounded-lg border border-line p-3 text-sm leading-snug hover:border-brand-400 has-[:checked]:border-brand-500 has-[:checked]:bg-brand-50"
+                    className="flex min-h-12 cursor-pointer items-start gap-3 rounded-xl border border-line bg-card p-3.5 text-sm leading-snug transition-colors hover:border-line-strong has-[:checked]:border-primary has-[:checked]:bg-sunken"
                   >
-                    <input type="radio" name={`${id}-q`} className="mt-0.5 size-4 shrink-0 accent-brand-600" checked={form.qualification === q} onChange={() => set('qualification', q)} />
+                    <input type="radio" name={`${id}-q`} className="mt-0.5 size-4 shrink-0 accent-primary" checked={form.qualification === q} onChange={() => set('qualification', q)} />
                     <span>{t(`ckCalc.qual.${q}`)}</span>
                   </label>
                 ))}
@@ -148,17 +148,17 @@ export default function ChancenkarteCalculator() {
           </form>
 
           <div className="space-y-4 lg:sticky lg:top-28" aria-live="polite">
-            <div className="card card-pad">
-              <h2 className="text-xs font-semibold tracking-wide text-muted uppercase">{t('ckCalc.result')}</h2>
+            <div className="card card-pad rounded-3xl">
+              <h2 className="type-overline text-muted">{t('ckCalc.result')}</h2>
               <div className="mt-3 flex items-end justify-between gap-3">
-                <p className="font-display text-4xl font-extrabold text-ink tabular-nums">{t('ckCalc.points', { count: result.points })}</p>
+                <p className="font-display text-4xl font-semibold text-ink tabular-nums">{t('ckCalc.points', { count: result.points })}</p>
                 <p className="pb-1 text-xs text-muted">{t('ckCalc.of')}</p>
               </div>
-              <div className="mt-3 h-2.5 overflow-hidden rounded-full bg-surface" aria-hidden>
-                <div className={clsx('h-full rounded-full transition-all', result.points >= MIN_POINTS ? 'bg-emerald-500' : 'bg-amber-500')} style={{ width: `${pct}%` }} />
+              <div className="mt-3 h-2.5 overflow-hidden rounded-full bg-sunken" aria-hidden>
+                <div className={clsx('h-full rounded-full transition-all', result.points >= MIN_POINTS ? 'bg-success' : 'bg-warning')} style={{ width: `${pct}%` }} />
               </div>
 
-              <div className={clsx('mt-5 flex gap-3 rounded-xl p-4', ok ? 'bg-emerald-50 text-emerald-900' : 'bg-amber-50 text-amber-900')}>
+              <div className={clsx('mt-5 flex gap-3 rounded-xl p-4', ok ? 'bg-success-bg text-success-fg' : 'bg-warning-bg text-warning-fg')}>
                 {ok ? <CheckCircle2 className="mt-0.5 size-5 shrink-0" aria-hidden /> : <XCircle className="mt-0.5 size-5 shrink-0" aria-hidden />}
                 <div>
                   <p className="font-semibold">{t(`ckCalc.${result.status}`)}</p>
@@ -184,7 +184,7 @@ export default function ChancenkarteCalculator() {
                     {result.rows.map((r) => (
                       <div key={r.row} className="contents">
                         <dt className="text-muted">{t(`ckCalc.rows.${r.row}`)}</dt>
-                        <dd className={clsx('text-right font-semibold tabular-nums', r.points ? 'text-ink' : 'text-muted/60')}>+{r.points}</dd>
+                        <dd className={clsx('text-right font-semibold tabular-nums', r.points ? 'text-ink' : 'text-muted')}>+{r.points}</dd>
                       </div>
                     ))}
                   </dl>
@@ -195,7 +195,7 @@ export default function ChancenkarteCalculator() {
             {result.status === 'notYet' && tips.length > 0 && (
               <div className="card card-pad">
                 <p className="flex items-center gap-2 text-sm font-semibold text-ink">
-                  <Lightbulb className="size-4 text-amber-500" aria-hidden /> {t('ckCalc.tips')}
+                  <Lightbulb className="size-4 text-highlight-fg" aria-hidden /> {t('ckCalc.tips')}
                 </p>
                 <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-ink/80">
                   {tips.map((tip) => (
@@ -209,11 +209,11 @@ export default function ChancenkarteCalculator() {
               <Info className="mt-px size-3.5 shrink-0" aria-hidden /> {t('ckCalc.note')}
             </p>
             {guidePath ? (
-              <PathLink path={guidePath} className="btn-outline w-full">
+              <PathLink path={guidePath} className="btn-secondary w-full">
                 <BookOpen className="size-4" aria-hidden /> {t('ckCalc.guide')}
               </PathLink>
             ) : (
-              <Link to="/guides" className="btn-outline w-full">
+              <Link to="/guides" className="btn-secondary w-full">
                 <BookOpen className="size-4" aria-hidden /> {t('ckCalc.guide')}
               </Link>
             )}

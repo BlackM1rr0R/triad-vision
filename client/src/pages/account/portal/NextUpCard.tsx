@@ -44,36 +44,42 @@ export function NextUpCard({ next, variant = 'hero', caseLink, tour }: { next: N
   return (
     <section
       className={clsx(
-        'card relative overflow-hidden',
-        client && 'border-brand-400/50 ring-4 ring-brand-500/10',
-        client && hero.overdue && 'border-danger-border ring-danger/10',
+        'relative overflow-hidden',
+        compact ? 'card' : 'rounded-3xl border',
+        !compact && (client ? 'bg-highlight-bg' : 'bg-card shadow-[var(--tv-shadow-card)]'),
+        !compact && (client ? (hero.overdue ? 'border-danger-border' : 'border-warning-border') : 'border-line'),
       )}
       aria-labelledby={compact ? 'next-up-compact' : 'next-up-title'}
       data-tour={tour}
     >
-      <span className={clsx('absolute inset-y-0 left-0 w-1.5', client ? (hero.overdue ? 'bg-danger' : 'bg-brand-600') : hero.side === 'NONE' ? 'bg-success' : 'bg-info')} aria-hidden />
-      <div className={clsx('flex gap-3 sm:gap-4', compact ? 'items-center py-3 pr-3 pl-4 sm:pr-4 sm:pl-5' : 'flex-col p-5 sm:flex-row sm:items-center sm:p-6 sm:pl-7')}>
+      {compact && <span className={clsx('absolute inset-y-0 left-0 w-1', client ? (hero.overdue ? 'bg-danger' : 'bg-highlight') : hero.side === 'NONE' ? 'bg-success' : 'bg-info')} aria-hidden />}
+      <div className={clsx('flex gap-3 sm:gap-4', compact ? 'items-center py-3 pr-3 pl-4 sm:pr-4 sm:pl-5' : 'flex-col p-6 sm:flex-row sm:items-center sm:p-8')}>
         <div className="flex min-w-0 flex-1 items-start gap-3 sm:gap-4">
           <span
             className={clsx(
               'grid shrink-0 place-items-center rounded-xl',
               compact ? 'size-9' : 'size-12',
-              client ? 'bg-brand-600 text-white shadow-lg shadow-brand-600/25' : hero.side === 'NONE' ? 'bg-success-bg text-success-fg' : 'bg-info-bg text-info-fg',
+              client ? (compact ? 'chip-soft' : 'bg-card text-ink') : hero.side === 'NONE' ? 'bg-success-bg text-success-fg' : 'bg-info-bg text-info-fg',
             )}
           >
             <Icon className={compact ? 'size-4' : 'size-6'} aria-hidden />
           </span>
           <div className="min-w-0 flex-1">
-            {!compact && <p className="eyebrow">{t('pux.next.eyebrow')}</p>}
+            {!compact && (
+              <p className="type-overline inline-flex items-center gap-2 text-ink">
+                <span className={clsx('size-2 rounded-full', client ? (hero.overdue ? 'bg-danger' : 'bg-highlight') : hero.side === 'NONE' ? 'bg-success' : 'bg-info')} aria-hidden />
+                {t('pux.next.eyebrow')}
+              </p>
+            )}
             <h2
               id={compact ? 'next-up-compact' : 'next-up-title'}
-              className={clsx('break-words text-ink', compact ? 'line-clamp-2 text-sm font-bold sm:text-base' : 'mt-1 text-lg font-extrabold sm:text-2xl')}
+              className={clsx('break-words text-ink', compact ? 'line-clamp-2 text-sm font-semibold sm:text-base' : 'mt-2 text-xl font-semibold sm:text-2xl')}
             >
               {lead}
               {hero.title && (
                 <>
                   <span className="font-semibold text-muted">: </span>
-                  <span className={compact ? 'font-semibold' : 'font-bold'}>{hero.title}</span>
+                  <span className="font-semibold">{hero.title}</span>
                 </>
               )}
             </h2>
@@ -103,7 +109,7 @@ export function NextUpCard({ next, variant = 'hero', caseLink, tour }: { next: N
         ) : (
           caseLink &&
           !compact && (
-            <Link to={caseLink} className={buttonClass({ variant: 'secondary', className: 'w-full shrink-0 sm:w-auto' })}>
+            <Link to={caseLink} className={buttonClass({ variant: 'secondary', size: 'lg', className: 'w-full shrink-0 sm:w-auto' })}>
               {t('pux.next.open')}
               <ArrowRight className="size-4" aria-hidden />
             </Link>

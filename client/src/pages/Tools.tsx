@@ -19,7 +19,7 @@ export default function Tools() {
           <ul className="flex flex-wrap gap-2">
             {TOOL_GROUPS.map((g) => (
               <li key={g}>
-                <Link to={{ hash: `#${g}` }} className="inline-flex min-h-10 items-center rounded-full border border-white/25 px-4 text-sm font-semibold text-white transition hover:bg-white hover:text-navy-900">
+                <Link to={{ hash: `#${g}` }} className="inline-flex min-h-11 items-center rounded-full border border-line bg-card px-4 text-sm font-semibold text-ink shadow-[var(--tv-shadow-card)] transition-colors hover:border-line-strong hover:bg-raised">
                   {t(`toolsPage.groups.${g}.title`)}
                 </Link>
               </li>
@@ -29,12 +29,12 @@ export default function Tools() {
       </PageHero>
 
       {TOOL_GROUPS.map((g, gi) => (
-        <section key={g} id={g} aria-labelledby={`${g}-title`} className={gi % 2 ? 'section scroll-mt-20 bg-surface' : 'section scroll-mt-20'}>
+        <section key={g} id={g} aria-labelledby={`${g}-title`} className={gi % 2 ? 'section scroll-mt-20 bg-sunken' : 'section scroll-mt-20'}>
           <div className="container-x">
             <Reveal y={16}>
               <div className="section-head max-w-3xl">
                 <span className="eyebrow mb-3">{t('toolsPage.eyebrow')}</span>
-                <h2 id={`${g}-title`} className="h-section text-balance text-navy-900">
+                <h2 id={`${g}-title`} className="h-section text-balance text-ink">
                   {t(`toolsPage.groups.${g}.title`)}
                 </h2>
                 <p className="mt-3 text-[0.95rem] leading-relaxed text-muted sm:text-lg">{t(`toolsPage.groups.${g}.text`)}</p>

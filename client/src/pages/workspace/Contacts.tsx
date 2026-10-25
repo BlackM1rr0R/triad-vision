@@ -138,9 +138,9 @@ export default function WorkspaceContacts() {
               else patch({ c: c.id });
             }
           }}
-          className={clsx('flex cursor-pointer items-center gap-3 px-4 py-2.5 transition hover:bg-surface lg:px-6', active && 'bg-brand-50', selected.has(c.id) && 'bg-brand-50')}
+          className={clsx('flex cursor-pointer items-center gap-3 px-4 py-2.5 transition hover:bg-sunken lg:px-6', active && 'bg-primary/[0.06]', selected.has(c.id) && 'bg-primary/[0.06]')}
         >
-          {selecting && <input type="checkbox" checked={selected.has(c.id)} onChange={() => toggleSelect(c.id)} onClick={(e) => e.stopPropagation()} className="size-4 accent-brand-600" aria-label={t('ws.contacts.actions.select')} />}
+          {selecting && <input type="checkbox" checked={selected.has(c.id)} onChange={() => toggleSelect(c.id)} onClick={(e) => e.stopPropagation()} className="size-4 accent-primary" aria-label={t('ws.contacts.actions.select')} />}
           <Avatar id={c.id} person={c} />
           <div className="min-w-0 flex-1">
             <p className="flex items-center gap-1.5 truncate text-sm font-semibold text-ink">
@@ -166,13 +166,13 @@ export default function WorkspaceContacts() {
       <header className="shrink-0 space-y-3 border-b border-line bg-card px-4 pt-4 pb-3 lg:px-6">
         <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
           <div className="flex min-w-0 items-center gap-3">
-            <span className="hidden size-10 place-items-center rounded-xl bg-brand-600 text-white shadow-sm sm:grid">
+            <span className="hidden size-10 place-items-center rounded-xl bg-primary text-primary-contrast shadow-[var(--tv-shadow-card)] sm:grid">
               <BookUser className="size-5" aria-hidden />
             </span>
             <div className="min-w-0">
-              <h1 className="flex items-center gap-2 font-display text-xl font-extrabold text-ink">
+              <h1 className="flex items-center gap-2 type-page-title">
                 {t('ws.contacts.title')}
-                {list.data && <span className="rounded-full bg-surface px-2 py-0.5 font-sans text-xs font-semibold text-muted tabular-nums ring-1 ring-line">{total}</span>}
+                {list.data && <span className="rounded-full bg-sunken px-2 py-0.5 font-sans text-xs font-semibold text-muted tabular-nums ring-1 ring-line">{total}</span>}
               </h1>
               <p className="hidden truncate text-xs text-muted sm:block">{t('ws.contacts.subtitle')}</p>
             </div>
@@ -193,19 +193,19 @@ export default function WorkspaceContacts() {
                 <button type="button" onClick={() => setDialog('merge')} disabled={selected.size < 2} className="btn-primary btn-sm h-9 px-3">
                   <Merge className="size-4" /> {t('ws.contacts.actions.merge')}
                 </button>
-                <button type="button" onClick={stopSelecting} className="btn-white btn-sm h-9 border border-line px-3">
+                <button type="button" onClick={stopSelecting} className="btn-secondary btn-sm h-9 border border-line px-3">
                   {t('ws.common.cancel')}
                 </button>
               </>
             ) : (
               <>
-                <button type="button" onClick={() => setSelecting(true)} className="btn-white btn-sm h-9 border border-line px-3" title={t('ws.contacts.actions.merge')}>
+                <button type="button" onClick={() => setSelecting(true)} className="btn-secondary btn-sm h-9 border border-line px-3" title={t('ws.contacts.actions.merge')}>
                   <CheckSquare className="size-4" /> <span className="hidden md:inline">{t('ws.contacts.actions.merge')}</span>
                 </button>
-                <button type="button" onClick={() => setDialog('suggest')} className="btn-white btn-sm h-9 border border-line px-3" title={t('ws.contacts.actions.suggestions')}>
+                <button type="button" onClick={() => setDialog('suggest')} className="btn-secondary btn-sm h-9 border border-line px-3" title={t('ws.contacts.actions.suggestions')}>
                   <Sparkles className="size-4" /> <span className="hidden md:inline">{t('ws.contacts.actions.suggestions')}</span>
                 </button>
-                <button type="button" onClick={() => setDialog('import')} className="btn-white btn-sm h-9 border border-line px-3" title={t('ws.contacts.actions.import')}>
+                <button type="button" onClick={() => setDialog('import')} className="btn-secondary btn-sm h-9 border border-line px-3" title={t('ws.contacts.actions.import')}>
                   <Upload className="size-4" /> <span className="hidden md:inline">{t('ws.contacts.actions.import')}</span>
                 </button>
                 <button type="button" onClick={() => setDialog('new')} className="btn-primary btn-sm h-9 px-4">
@@ -217,9 +217,9 @@ export default function WorkspaceContacts() {
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          <div className="flex rounded-lg border border-line bg-surface p-0.5">
+          <div className="flex rounded-lg border border-line bg-sunken p-0.5">
             {(['', 'true', 'false'] as const).map((v) => (
-              <button key={v} type="button" aria-pressed={shared === v} onClick={() => patch({ shared: v || null })} className={clsx('rounded-md px-2.5 py-1 text-xs font-semibold', shared === v ? 'bg-card text-ink shadow-sm ring-1 ring-line' : 'text-muted hover:text-ink')}>
+              <button key={v} type="button" aria-pressed={shared === v} onClick={() => patch({ shared: v || null })} className={clsx('rounded-md px-2.5 py-1 text-xs font-semibold', shared === v ? 'bg-card text-ink shadow-[var(--tv-shadow-card)] ring-1 ring-line' : 'text-muted hover:text-ink')}>
                 {v === '' ? t('ws.contacts.filters.all') : v === 'true' ? t('ws.contacts.filters.shared') : t('ws.contacts.filters.private')}
               </button>
             ))}
@@ -231,11 +231,11 @@ export default function WorkspaceContacts() {
               </option>
             ))}
           </select>
-          <button type="button" aria-pressed={group} onClick={() => patch({ group: group ? null : '1' })} className={clsx('inline-flex h-8 items-center gap-1 rounded-lg border px-2.5 text-xs font-semibold', group ? 'border-brand-400 bg-brand-50 text-brand-700' : 'border-line bg-surface text-muted hover:text-ink')}>
+          <button type="button" aria-pressed={group} onClick={() => patch({ group: group ? null : '1' })} className={clsx('inline-flex h-8 items-center gap-1 rounded-lg border px-2.5 text-xs font-semibold', group ? 'border-line-strong bg-primary/[0.06] text-link' : 'border-line bg-sunken text-muted hover:text-ink')}>
             <Building2 className="size-3.5" /> {t('ws.contacts.filters.group')}
           </button>
           {(tags.data ?? []).slice(0, 12).map((x) => (
-            <button key={x.tag} type="button" aria-pressed={tag.toLowerCase() === x.tag.toLowerCase()} onClick={() => patch({ tag: tag.toLowerCase() === x.tag.toLowerCase() ? null : x.tag })} className={clsx('inline-flex h-7 items-center gap-1 rounded-full border px-2.5 text-xs font-semibold', tag.toLowerCase() === x.tag.toLowerCase() ? 'border-brand-500 bg-brand-600 text-white' : 'border-line bg-surface text-muted hover:text-ink')}>
+            <button key={x.tag} type="button" aria-pressed={tag.toLowerCase() === x.tag.toLowerCase()} onClick={() => patch({ tag: tag.toLowerCase() === x.tag.toLowerCase() ? null : x.tag })} className={clsx('inline-flex h-7 items-center gap-1 rounded-full border px-2.5 text-xs font-semibold', tag.toLowerCase() === x.tag.toLowerCase() ? 'border-line-strong bg-sunken text-ink shadow-[inset_0_0_0_1px_var(--color-line-strong)]' : 'border-line bg-sunken text-muted hover:text-ink')}>
               {x.tag} <span className="opacity-70 tabular-nums">{x.count}</span>
             </button>
           ))}
@@ -246,7 +246,7 @@ export default function WorkspaceContacts() {
                 setSearch('');
                 patch({ q: null, tag: null, shared: null, letter: null });
               }}
-              className="inline-flex h-7 items-center gap-1 text-xs font-semibold text-brand-600 hover:underline"
+              className="inline-flex h-7 items-center gap-1 text-xs font-semibold text-link hover:underline"
             >
               <X className="size-3.5" /> {t('ws.contacts.filters.clear')}
             </button>
@@ -254,7 +254,7 @@ export default function WorkspaceContacts() {
         </div>
       </header>
 
-      <div className="relative flex min-h-0 flex-1 bg-surface">
+      <div className="relative flex min-h-0 flex-1 bg-sunken">
         <div className="min-h-0 flex-1 overflow-y-auto">
           {list.isLoading ? (
             <div className="space-y-2 p-4 lg:p-6">
@@ -299,7 +299,7 @@ export default function WorkspaceContacts() {
                 onClick={() => patch({ letter: letter === L ? null : L })}
                 disabled={!present && !letter}
                 aria-pressed={letter === L}
-                className={clsx('grid h-[1.15rem] w-5 place-items-center rounded text-[0.62rem] font-bold leading-none transition', letter === L ? 'bg-brand-600 text-white' : present ? 'text-ink hover:bg-brand-50' : 'text-muted/40')}
+                className={clsx('grid h-[1.15rem] w-5 place-items-center rounded text-[0.62rem] font-bold leading-none transition', letter === L ? 'bg-primary text-primary-contrast' : present ? 'text-ink hover:bg-primary/[0.06]' : 'text-muted opacity-60')}
               >
                 {L}
               </button>

@@ -21,16 +21,16 @@ export const TodayCard = ({ limit = 5, className }: { limit?: number; className?
   const counts = data?.counts;
 
   return (
-    <section className={clsx('min-w-0 rounded-2xl border border-line bg-card shadow-[0_1px_2px_rgba(11,31,68,0.05)]', className)}>
+    <section className={clsx('min-w-0 rounded-xl border border-line bg-card shadow-[var(--tv-shadow-card)]', className)}>
       <header className="flex flex-wrap items-center justify-between gap-2 border-b border-line px-4 py-3 sm:px-5">
         <h2 className="flex min-w-0 items-center gap-2 text-sm font-semibold text-ink">
-          <ListChecks className="size-4 shrink-0 text-brand-600" aria-hidden />
+          <ListChecks className="size-4 shrink-0 text-link" aria-hidden />
           {t('today.card.title')}
         </h2>
         <div className="flex flex-wrap items-center gap-1.5">
           {!!counts?.urgent && <span className="badge bg-danger-bg text-danger-fg tabular-nums">{t('today.card.urgent', { count: counts.urgent })}</span>}
           {!!counts?.overdue && <span className="badge bg-warning-bg text-warning-fg tabular-nums">{t('today.card.overdue', { count: counts.overdue })}</span>}
-          <Link to="/admin/today" className="inline-flex items-center gap-0.5 text-xs font-semibold text-brand-600 hover:underline">
+          <Link to="/admin/today" className="inline-flex items-center gap-0.5 text-xs font-semibold text-link hover:underline">
             {t('today.card.open')} <ArrowUpRight className="size-3" aria-hidden />
           </Link>
         </div>
@@ -53,7 +53,7 @@ export const TodayCard = ({ limit = 5, className }: { limit?: number; className?
             const due = dueText(t, i);
             return (
               <li key={i.id}>
-                <Link to="/admin/today" className="flex items-center gap-3 px-4 py-2.5 transition hover:bg-surface sm:px-5">
+                <Link to="/admin/today" className="flex items-center gap-3 px-4 py-2.5 transition hover:bg-sunken sm:px-5">
                   <span className={clsx('grid size-8 shrink-0 place-items-center rounded-lg', CATEGORY_TONE[i.category])}>
                     <Icon className="size-4" aria-hidden />
                   </span>
@@ -61,7 +61,7 @@ export const TodayCard = ({ limit = 5, className }: { limit?: number; className?
                     <span className="block truncate text-sm font-medium text-ink">{i.title}</span>
                     <span className="block truncate text-[11px] text-muted">{t(`today.kind.${i.kind}`)}</span>
                   </span>
-                  <span className={clsx('shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap', due.late ? 'bg-red-100 text-red-700' : 'bg-surface text-muted')}>{due.text}</span>
+                  <span className={clsx('shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap', due.late ? 'bg-danger-bg text-danger-fg' : 'bg-sunken text-muted')}>{due.text}</span>
                 </Link>
               </li>
             );

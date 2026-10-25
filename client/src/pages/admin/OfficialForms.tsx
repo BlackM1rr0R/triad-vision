@@ -119,14 +119,14 @@ const TemplateList = ({ onEdit }: { onEdit: (id: string) => void }) => {
       />
       {!isAdmin && <p className="text-xs text-muted">{t('officialForms.page.readOnly')}</p>}
       {results && (
-        <div className="rounded-xl border border-line bg-white p-4 text-sm" role="status">
+        <div className="rounded-xl border border-line bg-card p-4 text-sm" role="status">
           <ul className="space-y-1">
             {results.map((r) => (
               <li key={r.key} className="flex flex-wrap items-center gap-2">
                 <span className={clsx('badge', r.status === 'FAILED' ? TONE_CLASS.danger : r.status === 'INSTALLED' ? TONE_CLASS.success : TONE_CLASS.neutral)}>{t(`officialForms.page.installResult.${r.status}`)}</span>
-                <span className="font-medium text-navy-900">{r.key}</span>
+                <span className="font-medium text-ink">{r.key}</span>
                 <span className="text-xs text-muted">{r.version}</span>
-                {r.reason && <span className="text-xs text-danger">{r.reason}</span>}
+                {r.reason && <span className="text-xs text-danger-fg">{r.reason}</span>}
                 {!!r.dropped?.length && <span className="text-xs text-muted">{t('officialForms.editor.dropped', { fields: r.dropped.join(', ') })}</span>}
               </li>
             ))}
@@ -138,20 +138,20 @@ const TemplateList = ({ onEdit }: { onEdit: (id: string) => void }) => {
       ) : error ? (
         <ErrorBlock error={error} onRetry={() => refetch()} />
       ) : !groups.length ? (
-        <div className="rounded-xl border border-line bg-white">
+        <div className="rounded-xl border border-line bg-card">
           <EmptyState icon={FileText} title={t('officialForms.page.empty')}>
             {t('officialForms.page.emptyHint')}
           </EmptyState>
         </div>
       ) : (
         groups.map(([k, versions]) => (
-          <Panel key={k} title={versions.find((v) => v.active)?.title ?? versions[0].title} icon={FileText} actions={<span className="font-mono text-xs text-muted">{k}</span>} bodyClassName="p-0">
+          <Panel key={k} title={versions.find((v) => v.active)?.title ?? versions[0].title} icon={FileText} actions={<span className="code-id text-xs text-muted">{k}</span>} bodyClassName="p-0">
             <ul className="divide-y divide-line">
               {versions.map((v) => (
                 <li key={v.id} className="flex flex-wrap items-center gap-x-3 gap-y-2 px-5 py-3 text-sm">
                   <div className="min-w-0 flex-[1_1_14rem]">
                     <p className="flex flex-wrap items-center gap-2">
-                      <span className="font-semibold text-navy-900">{v.version}</span>
+                      <span className="font-semibold text-ink">{v.version}</span>
                       <span className={clsx('badge', v.active ? TONE_CLASS.success : TONE_CLASS.neutral)}>{t(v.active ? 'officialForms.page.active' : 'officialForms.page.inactive')}</span>
                       {v.builtIn && <span className={clsx('badge', TONE_CLASS.brand)}>{t('officialForms.page.builtIn')}</span>}
                     </p>
@@ -164,18 +164,18 @@ const TemplateList = ({ onEdit }: { onEdit: (id: string) => void }) => {
                       <Pencil className="size-3.5" aria-hidden />
                       {t('officialForms.page.edit')}
                     </button>
-                    <a className="btn-ghost btn-sm" href={`/api/admin/official-forms/templates/${v.id}/file`} target="_blank" rel="noreferrer">
+                    <a className="btn-secondary btn-sm" href={`/api/admin/official-forms/templates/${v.id}/file`} target="_blank" rel="noreferrer">
                       <Eye className="size-3.5" aria-hidden />
                       {t('officialForms.page.blank')}
                     </a>
                     {isAdmin && !v.active && (
-                      <button type="button" className="btn-ghost btn-sm" onClick={() => activate.mutate(v.id)} disabled={activate.isPending}>
+                      <button type="button" className="btn-secondary btn-sm" onClick={() => activate.mutate(v.id)} disabled={activate.isPending}>
                         <CheckCircle2 className="size-3.5" aria-hidden />
                         {t('officialForms.page.activate')}
                       </button>
                     )}
                     {isAdmin && (
-                      <button type="button" className="btn-ghost btn-sm text-danger" onClick={() => setToDelete(v)} aria-label={t('officialForms.page.delete')}>
+                      <button type="button" className="btn-secondary btn-sm text-danger-fg" onClick={() => setToDelete(v)} aria-label={t('officialForms.page.delete')}>
                         <Trash2 className="size-3.5" aria-hidden />
                       </button>
                     )}
@@ -244,7 +244,7 @@ const UploadDialog = ({ onClose, onCreated }: { onClose: () => void; onCreated: 
       busy={create.isPending}
       footer={
         <>
-          <button type="button" className="btn-ghost" onClick={onClose}>
+          <button type="button" className="btn-secondary" onClick={onClose}>
             {t('admin.common.cancel', { defaultValue: 'Cancel' })}
           </button>
           <button type="submit" className="btn-primary" disabled={!valid || create.isPending}>
@@ -354,7 +354,7 @@ const TemplateEditor = ({ id, onBack }: { id: string; onBack: () => void }) => {
 
   return (
     <div className="stack-page">
-      <button type="button" className="btn-ghost btn-sm w-fit" onClick={onBack}>
+      <button type="button" className="btn-secondary btn-sm w-fit" onClick={onBack}>
         <ArrowLeft className="size-4" aria-hidden />
         {t('officialForms.editor.back')}
       </button>
@@ -388,7 +388,7 @@ const TemplateEditor = ({ id, onBack }: { id: string; onBack: () => void }) => {
           <input className="input pl-9" value={q} onChange={(e) => setQ(e.target.value)} placeholder={t('officialForms.editor.search')} aria-label={t('officialForms.editor.search')} />
         </div>
       </div>
-      <ul className="divide-y divide-line rounded-xl border border-line bg-white">
+      <ul className="divide-y divide-line rounded-xl border border-line bg-card">
         {shown.map((f) => (
           <FieldRow key={f.name} field={f} mapping={map[f.name] ?? null} keys={keys} groups={groups} tr={tr} disabled={!isAdmin} onChange={(m) => setField(f.name, m)} />
         ))}
@@ -421,7 +421,7 @@ const FieldRow = ({
   return (
     <li className="grid gap-3 px-4 py-3 text-sm lg:grid-cols-[minmax(0,18rem)_minmax(0,1fr)]">
       <div className="min-w-0">
-        <p className="font-medium break-words text-navy-900">{field.name}</p>
+        <p className="font-medium break-words text-ink">{field.name}</p>
         <p className="text-xs text-muted">
           {t(`officialForms.types.${field.type}`)}
           {field.page !== null ? ` · ${t('officialForms.editor.page', { page: field.page + 1 })}` : ''}
@@ -483,7 +483,7 @@ const FieldRow = ({
           <div className="sm:col-span-2">
             <textarea
               rows={2}
-              className="input font-mono text-xs"
+              className="input code-id text-xs"
               aria-label={t('officialForms.editor.map')}
               placeholder={def?.codes ? def.codes.map((c) => `${c}=${field.options[0] ?? '…'}`).join('\n') : t('officialForms.editor.mapHint')}
               defaultValue={mapToText(mapping.map)}
@@ -553,7 +553,7 @@ const PreviewPanel = ({ templateId, fieldMap }: { templateId: string; fieldMap?:
           {run.isPending ? <Spinner className="size-4" /> : <Play className="size-4" aria-hidden />}
           {t('officialForms.editor.previewRun')}
         </button>
-        <button type="button" className="btn-ghost btn-sm" disabled={!caseId || pdf.isPending} onClick={() => pdf.mutate()}>
+        <button type="button" className="btn-secondary btn-sm" disabled={!caseId || pdf.isPending} onClick={() => pdf.mutate()}>
           <Download className="size-4" aria-hidden />
           {t('officialForms.editor.previewPdf')}
         </button>
@@ -561,7 +561,7 @@ const PreviewPanel = ({ templateId, fieldMap }: { templateId: string; fieldMap?:
       {run.data && (
         <div className="mt-4 grid gap-4 lg:grid-cols-2">
           <div>
-            <h3 className="mb-2 text-sm font-semibold text-navy-900">{t('officialForms.editor.previewMissing')}</h3>
+            <h3 className="mb-2 text-sm font-semibold text-ink">{t('officialForms.editor.previewMissing')}</h3>
             {run.data.missing.length ? (
               <ul className="space-y-1 text-xs">
                 {run.data.missing.map((m) => (
@@ -575,7 +575,7 @@ const PreviewPanel = ({ templateId, fieldMap }: { templateId: string; fieldMap?:
             )}
           </div>
           <div>
-            <h3 className="mb-2 text-sm font-semibold text-navy-900">{t('officialForms.editor.previewValues')}</h3>
+            <h3 className="mb-2 text-sm font-semibold text-ink">{t('officialForms.editor.previewValues')}</h3>
             <dl className="max-h-72 space-y-1 overflow-auto text-xs">
               {run.data.rows
                 .filter((r) => r.value)
@@ -584,7 +584,7 @@ const PreviewPanel = ({ templateId, fieldMap }: { templateId: string; fieldMap?:
                     <dt className="w-1/2 shrink-0 truncate text-muted" title={r.field}>
                       {r.field}
                     </dt>
-                    <dd className="min-w-0 break-words text-navy-900">{r.type === 'checkbox' ? '☑' : r.value}</dd>
+                    <dd className="min-w-0 break-words text-ink">{r.type === 'checkbox' ? '☑' : r.value}</dd>
                   </div>
                 ))}
             </dl>

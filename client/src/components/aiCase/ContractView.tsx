@@ -12,11 +12,11 @@ import { copyText, fmtDay, l10n, SEVERITY_STYLE, type ContractResult, type Contr
 const ICON: Record<Severity, typeof Info> = { BLOCKER: AlertOctagon, WARNING: AlertTriangle, INFO: Info };
 
 const LIGHT_STYLE = {
-  GREEN: 'border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-300',
+  GREEN: 'border-success-border bg-success-bg text-success-fg dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-300',
   YELLOW: SEVERITY_STYLE.WARNING,
   RED: SEVERITY_STYLE.BLOCKER,
 };
-const DOT = { GREEN: 'bg-emerald-500', YELLOW: 'bg-amber-400', RED: 'bg-red-500' };
+const DOT = { GREEN: 'bg-success', YELLOW: 'bg-warning', RED: 'bg-danger' };
 
 /**
  * Traffic-light card of a contract check: the terms read from the contract, every rule issue in plain
@@ -106,7 +106,7 @@ export const ContractView = ({ caseId, run, onSendAnyway, compact = false }: { c
                       </blockquote>
                     )}
                     {!compact && i.severity !== 'INFO' && (
-                      <button type="button" className="btn-white btn-sm mt-2 border border-line" disabled={!!busy} onClick={() => void task('contractIssue', i.code)}>
+                      <button type="button" className="btn-secondary btn-sm mt-2 border border-line" disabled={!!busy} onClick={() => void task('contractIssue', i.code)}>
                         {busy === `contractIssue:${i.code}` ? <Spinner className="size-3.5" /> : <ClipboardList className="size-3.5" aria-hidden />} {t('aiCase.actions.task')}
                       </button>
                     )}
@@ -138,7 +138,7 @@ export const ContractView = ({ caseId, run, onSendAnyway, compact = false }: { c
 
       {!compact && (
         <details className="rounded-lg border border-line">
-          <summary className="cursor-pointer px-3.5 py-2.5 text-sm font-semibold text-navy-900">{t('aiCase.contract.terms')}</summary>
+          <summary className="cursor-pointer px-3.5 py-2.5 text-sm font-semibold text-ink">{t('aiCase.contract.terms')}</summary>
           <dl className="grid gap-x-4 gap-y-1.5 border-t border-line px-3.5 py-3 text-sm sm:grid-cols-[minmax(0,10rem)_minmax(0,1fr)]">
             {TERMS.map((k) => (
               <div key={k} className="contents">
@@ -151,7 +151,7 @@ export const ContractView = ({ caseId, run, onSendAnyway, compact = false }: { c
       )}
       {!compact && problems > 0 && (
         <details className="rounded-lg border border-line">
-          <summary className="cursor-pointer px-3.5 py-2.5 text-sm font-semibold text-navy-900">{t('aiCase.contract.email')}</summary>
+          <summary className="cursor-pointer px-3.5 py-2.5 text-sm font-semibold text-ink">{t('aiCase.contract.email')}</summary>
           <pre className="max-h-72 overflow-auto border-t border-line px-3.5 py-3 font-sans text-xs whitespace-pre-wrap text-ink">
             {r.email.to ? `${r.email.to}\n` : ''}
             {r.email.subject}
@@ -162,7 +162,7 @@ export const ContractView = ({ caseId, run, onSendAnyway, compact = false }: { c
       )}
       {r.issues.length === 0 && (
         <p className="flex items-center gap-1.5 text-xs text-muted">
-          <CheckCircle2 className="size-3.5 text-success" aria-hidden /> {t('aiCase.contract.light.GREEN')}
+          <CheckCircle2 className="size-3.5 text-success-fg" aria-hidden /> {t('aiCase.contract.light.GREEN')}
         </p>
       )}
 

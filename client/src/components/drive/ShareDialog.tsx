@@ -19,12 +19,12 @@ import { RANK, type AccessEntry, type AccessResponse, type DriveAccess, type Dri
  * shown when a folder already has it, but new grants pick from these four plain choices.
  */
 const SIMPLE: { level: DriveAccess; icon: LucideIcon; tone: string }[] = [
-  { level: 'VIEW', icon: Eye, tone: 'bg-slate-100 text-slate-700 dark:bg-white/10 dark:text-slate-200' },
-  { level: 'EXPORT', icon: Download, tone: 'bg-sky-100 text-sky-800' },
-  { level: 'EDIT', icon: Pencil, tone: 'bg-emerald-100 text-emerald-800' },
-  { level: 'MANAGE', icon: ShieldCheck, tone: 'bg-violet-100 text-violet-800' },
+  { level: 'VIEW', icon: Eye, tone: 'bg-sunken text-muted dark:bg-white/10 dark:text-slate-200' },
+  { level: 'EXPORT', icon: Download, tone: 'bg-info-bg text-info-fg' },
+  { level: 'EDIT', icon: Pencil, tone: 'bg-success-bg text-success-fg' },
+  { level: 'MANAGE', icon: ShieldCheck, tone: 'bg-accent-bg text-accent-fg' },
 ];
-const toneOf = (l: DriveAccess) => SIMPLE.find((s) => s.level === l)?.tone ?? 'bg-sky-100 text-sky-800';
+const toneOf = (l: DriveAccess) => SIMPLE.find((s) => s.level === l)?.tone ?? 'bg-info-bg text-info-fg';
 
 type Target = { kind: 'role'; role: 'STAFF' | 'ADMIN' } | { kind: 'user'; person: StaffPerson };
 
@@ -51,11 +51,11 @@ const LevelSelect = ({ value, onChange, max }: { value: DriveAccess; onChange: (
 
 const Avatar = ({ person, group }: { person?: { firstName: string; lastName: string } | null; group?: boolean }) =>
   group || !person ? (
-    <span className="grid size-9 shrink-0 place-items-center rounded-full bg-violet-100 text-violet-700">
+    <span className="grid size-9 shrink-0 place-items-center rounded-full bg-accent-bg text-accent-fg">
       <Users className="size-4" />
     </span>
   ) : (
-    <span className="grid size-9 shrink-0 place-items-center rounded-full bg-brand-100 text-xs font-bold text-brand-700">{(person.firstName[0] ?? '') + (person.lastName[0] ?? '')}</span>
+    <span className="grid size-9 shrink-0 place-items-center rounded-full bg-primary/10 text-xs font-bold text-link">{(person.firstName[0] ?? '') + (person.lastName[0] ?? '')}</span>
   );
 
 /**
@@ -168,8 +168,8 @@ export const ShareDialog = ({ item, onClose, myId }: { item: DriveItem | null; o
       ) : (
         <div className="space-y-6">
           {/* 1. one-sentence answer to "who can see this?" */}
-          <div className="flex items-start gap-3 rounded-xl bg-brand-50 px-4 py-3 text-sm text-ink">
-            <UserCheck className="mt-0.5 size-4 shrink-0 text-brand-600" aria-hidden />
+          <div className="flex items-start gap-3 rounded-xl bg-primary/[0.06] px-4 py-3 text-sm text-ink">
+            <UserCheck className="mt-0.5 size-4 shrink-0 text-link" aria-hidden />
             <p>
               {summary}
               {a.node.virtual && <span className="mt-1 block text-xs text-muted">{t('drive.share.casesHint')}</span>}
@@ -183,7 +183,7 @@ export const ShareDialog = ({ item, onClose, myId }: { item: DriveItem | null; o
               <h3 className="mb-3 text-sm font-bold text-ink">{t('drive.simple.addTitle')}</h3>
               <span className="mb-1.5 block text-xs font-semibold text-muted">1. {t('drive.simple.stepWho')}</span>
               {target ? (
-                <div className="flex items-center gap-3 rounded-lg border border-brand-400 bg-brand-50 px-3 py-2">
+                <div className="flex items-center gap-3 rounded-lg border border-line-strong bg-primary/[0.06] px-3 py-2">
                   <Avatar person={target.kind === 'user' ? target.person : null} group={target.kind === 'role'} />
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-sm font-semibold text-ink">{target.kind === 'user' ? fullName(target.person) : t(`drive.share.role${target.role}`)}</span>
@@ -202,7 +202,7 @@ export const ShareDialog = ({ item, onClose, myId }: { item: DriveItem | null; o
                   <ul className="mt-1 max-h-56 overflow-y-auto rounded-lg border border-line bg-card">
                     {groupOptions.map((r) => (
                       <li key={r}>
-                        <button type="button" onClick={() => setTarget({ kind: 'role', role: r })} className="flex w-full items-center gap-3 px-3 py-2 text-left hover:bg-surface">
+                        <button type="button" onClick={() => setTarget({ kind: 'role', role: r })} className="flex w-full items-center gap-3 px-3 py-2 text-left hover:bg-sunken">
                           <Avatar group />
                           <span className="min-w-0">
                             <span className="block text-sm font-semibold text-ink">{t(`drive.share.role${r}`)}</span>
@@ -215,7 +215,7 @@ export const ShareDialog = ({ item, onClose, myId }: { item: DriveItem | null; o
                       ?.filter((p) => p.id !== myId)
                       .map((p) => (
                         <li key={p.id}>
-                          <button type="button" onClick={() => setTarget({ kind: 'user', person: p })} className="flex w-full items-center gap-3 px-3 py-2 text-left hover:bg-surface">
+                          <button type="button" onClick={() => setTarget({ kind: 'user', person: p })} className="flex w-full items-center gap-3 px-3 py-2 text-left hover:bg-sunken">
                             <Avatar person={p} />
                             <span className="min-w-0 flex-1">
                               <span className="block truncate text-sm font-medium text-ink">{fullName(p)}</span>
@@ -240,7 +240,7 @@ export const ShareDialog = ({ item, onClose, myId }: { item: DriveItem | null; o
                     aria-pressed={level === l}
                     className={clsx(
                       'flex items-start gap-3 rounded-xl border p-3 text-left transition',
-                      level === l ? 'border-brand-500 bg-brand-50 ring-2 ring-brand-500/20' : 'border-line hover:border-brand-400/60 hover:bg-surface',
+                      level === l ? 'border-primary bg-primary/[0.06] ring-2 ring-focus/20' : 'border-line hover:border-line-strong hover:bg-sunken',
                     )}
                   >
                     <span className={clsx('grid size-8 shrink-0 place-items-center rounded-lg', toneOf(l))}>
@@ -272,7 +272,7 @@ export const ShareDialog = ({ item, onClose, myId }: { item: DriveItem | null; o
             <h3 className="mb-2 text-sm font-bold text-ink">{t('drive.simple.listTitle')}</h3>
             <ul className="divide-y divide-line rounded-xl border border-line">
               <li className="flex items-center gap-3 px-3 py-2.5">
-                <span className="grid size-9 shrink-0 place-items-center rounded-full bg-amber-100 text-amber-700">
+                <span className="grid size-9 shrink-0 place-items-center rounded-full bg-warning-bg text-warning-fg">
                   <Crown className="size-4" />
                 </span>
                 <span className="min-w-0 flex-1">
@@ -319,7 +319,7 @@ export const ShareDialog = ({ item, onClose, myId }: { item: DriveItem | null; o
                       <button
                         type="button"
                         onClick={() => remove.mutate(e.grantId)}
-                        className="grid size-8 place-items-center rounded-lg text-muted hover:bg-red-50 hover:text-danger"
+                        className="grid size-8 place-items-center rounded-lg text-muted hover:bg-danger-bg hover:text-danger-fg"
                         aria-label={`${t('drive.share.remove')}: ${principalName(e)}`}
                         title={t('drive.share.remove')}
                       >
@@ -342,9 +342,9 @@ export const ShareDialog = ({ item, onClose, myId }: { item: DriveItem | null; o
             <section className="rounded-xl border border-line">
               <button type="button" onClick={() => setAdvanced((v) => !v)} className="flex w-full items-center justify-between gap-2 px-4 py-3 text-left text-sm font-semibold text-ink" aria-expanded={advanced}>
                 <span className="flex items-center gap-2">
-                  {!a.node.inheritPermissions && <Lock className="size-3.5 text-amber-600" />}
+                  {!a.node.inheritPermissions && <Lock className="size-3.5 text-warning-fg" />}
                   {t('drive.simple.advanced')}
-                  {!a.node.inheritPermissions && <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-800">{t('drive.simple.separate')}</span>}
+                  {!a.node.inheritPermissions && <span className="rounded-full bg-warning-bg px-2 py-0.5 text-[11px] font-semibold text-warning-fg">{t('drive.simple.separate')}</span>}
                 </span>
                 <ChevronDown className={clsx('size-4 text-muted transition', advanced && 'rotate-180')} />
               </button>
@@ -353,7 +353,7 @@ export const ShareDialog = ({ item, onClose, myId }: { item: DriveItem | null; o
                   <label className={clsx('flex items-start gap-3', manage ? 'cursor-pointer' : 'opacity-70')}>
                     <input
                       type="checkbox"
-                      className="mt-0.5 size-4 accent-brand-600"
+                      className="mt-0.5 size-4 accent-primary"
                       checked={a.node.inheritPermissions}
                       disabled={!manage || inherit.isPending}
                       onChange={(e) => (e.target.checked ? inherit.mutate({ inherit: true }) : setAskInherit(true))}
@@ -364,9 +364,9 @@ export const ShareDialog = ({ item, onClose, myId }: { item: DriveItem | null; o
                     </span>
                   </label>
                   {askInherit && (
-                    <div className="mt-3 rounded-lg bg-amber-50 p-3 text-sm">
-                      <p className="font-semibold text-amber-900">{t('drive.simple.inheritOffTitle')}</p>
-                      <p className="mt-0.5 text-xs text-amber-800">{t('drive.simple.inheritOffBody')}</p>
+                    <div className="mt-3 rounded-lg bg-warning-bg p-3 text-sm">
+                      <p className="font-semibold text-warning-fg">{t('drive.simple.inheritOffTitle')}</p>
+                      <p className="mt-0.5 text-xs text-warning-fg">{t('drive.simple.inheritOffBody')}</p>
                       <div className="mt-3 flex flex-wrap gap-2">
                         <button type="button" className="btn-primary btn-sm" disabled={inherit.isPending} onClick={() => inherit.mutate({ inherit: false, copyInherited: true })}>
                           {t('drive.simple.keepPeople')}

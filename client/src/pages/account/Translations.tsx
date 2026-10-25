@@ -46,6 +46,7 @@ import {
   type TrUrgency,
 } from '@/components/translations/shared';
 import { optimizeImages } from '@/lib/imageCompress';
+import { Documents } from '@/components/illustrations';
 
 registerCopy(pagesTranslations);
 
@@ -97,7 +98,7 @@ const OrdersList = () => {
     <div className="space-y-5">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div className="min-w-0">
-          <h2 className="text-xl font-extrabold text-ink sm:text-2xl">{t('trOrders.title')}</h2>
+          <h2 className="type-page-title">{t('trOrders.title')}</h2>
           <p className="mt-1 max-w-2xl text-sm text-muted">{t('trOrders.subtitle')}</p>
         </div>
         <Link to="new" className="btn-primary btn-sm">
@@ -107,11 +108,8 @@ const OrdersList = () => {
 
       {items.length === 0 ? (
         <div className="card flex flex-col items-center px-6 py-12 text-center">
-          {/* TODO(ui): large portal empty state (size-14 icon, display title) -> <EmptyState size="lg" tone="brand"> (portal rework) */}
-          <span className="grid size-14 place-items-center rounded-2xl bg-brand-100 text-brand-600">
-            <Languages className="size-7" aria-hidden />
-          </span>
-          <p className="mt-4 text-lg font-bold text-ink">{t('trOrders.empty')}</p>
+          <Documents className="w-40" />
+          <p className="type-card-title mt-4 text-lg">{t('trOrders.empty')}</p>
           <p className="mt-1 max-w-md text-sm text-muted">{t('trOrders.emptyHint')}</p>
           <Link to="new" className="btn-primary mt-5">
             <Plus className="size-4" aria-hidden /> {t('trOrders.newOrder')}
@@ -123,9 +121,9 @@ const OrdersList = () => {
             const Icon = SERVICE_ICON[o.service];
             return (
               <li key={o.id}>
-                <Link to={o.id} className="card block p-4 transition hover:border-brand-400/60 sm:p-5">
+                <Link to={o.id} className="card block p-4 transition hover:border-line-strong sm:p-5">
                   <div className="flex items-start gap-3">
-                    <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-brand-100 text-brand-600">
+                    <span className="grid size-11 shrink-0 place-items-center rounded-xl chip-soft">
                       <Icon className="size-5" aria-hidden />
                     </span>
                     <div className="min-w-0 flex-1">
@@ -184,13 +182,13 @@ const Choice = ({ active, onClick, children, className }: { active: boolean; onC
     onClick={onClick}
     aria-pressed={active}
     className={clsx(
-      'relative rounded-xl border p-4 text-left transition focus-visible:ring-4 focus-visible:ring-brand-500/20 focus-visible:outline-none',
-      active ? 'border-brand-600 bg-brand-50 ring-2 ring-brand-600/20' : 'border-line bg-card hover:border-brand-400',
+      'relative rounded-xl border p-4 text-left transition focus-visible:ring-4 focus-visible:ring-focus/40 focus-visible:outline-none',
+      active ? 'border-primary bg-sunken ring-2 ring-focus/40' : 'border-line bg-card hover:border-primary',
       className,
     )}
   >
     {active && (
-      <span className="absolute top-3 right-3 grid size-5 place-items-center rounded-full bg-brand-600 text-white">
+      <span className="absolute top-3 right-3 grid size-5 place-items-center rounded-full bg-primary text-primary-contrast">
         <Check className="size-3.5" aria-hidden />
       </span>
     )}
@@ -314,19 +312,19 @@ const NewOrderWizard = () => {
 
   return (
     <div className="space-y-5">
-      <Link to=".." relative="path" className="inline-flex items-center gap-1.5 text-sm font-semibold text-muted hover:text-brand-700">
+      <Link to=".." relative="path" className="inline-flex items-center gap-1.5 text-sm font-semibold text-muted hover:text-link-hover">
         <ArrowLeft className="size-4" aria-hidden /> {t('trOrders.backToList')}
       </Link>
 
       <div className="grid gap-5 lg:grid-cols-[1fr_300px]">
         <section className="card p-5 sm:p-6" aria-labelledby="wizard-title">
-          <span className="eyebrow">{t('trOrders.wizard.stepOf', { n: step + 1, total: STEP_KEYS.length })}</span>
-          <h2 id="wizard-title" className="mt-1 text-xl font-extrabold text-ink sm:text-2xl">
+          <span className="type-overline text-muted">{t('trOrders.wizard.stepOf', { n: step + 1, total: STEP_KEYS.length })}</span>
+          <h2 id="wizard-title" className="type-page-title mt-1">
             {t(`trOrders.wizard.steps.${STEP_KEYS[step]}`)}
           </h2>
           <ol className="mt-4 flex gap-1.5" aria-hidden>
             {STEP_KEYS.map((k, i) => (
-              <li key={k} className={clsx('h-1.5 flex-1 rounded-full', i <= step ? 'bg-brand-600' : 'bg-line')} />
+              <li key={k} className={clsx('h-1.5 flex-1 rounded-full', i <= step ? 'bg-primary' : 'bg-line')} />
             ))}
           </ol>
 
@@ -339,15 +337,15 @@ const NewOrderWizard = () => {
                     const Icon = SERVICE_ICON[s];
                     return (
                       <Choice key={s} active={service === s} onClick={() => setService(s)}>
-                        <Icon className="size-6 text-brand-600" aria-hidden />
+                        <Icon className="size-6 text-link" aria-hidden />
                         <span className="mt-2 block pr-6 font-bold text-ink">{t(`trOrders.service.${s}`)}</span>
                         <span className="mt-1 block text-sm leading-relaxed text-muted">{t(`trOrders.serviceHelp.${s}`)}</span>
-                        <span className="mt-2 block text-xs font-semibold text-brand-700">{t('trOrders.wizard.perPage', { price: f.money(pricing.perPage[s], pricing.currency) })}</span>
+                        <span className="mt-2 block text-xs font-semibold text-link">{t('trOrders.wizard.perPage', { price: f.money(pricing.perPage[s], pricing.currency) })}</span>
                       </Choice>
                     );
                   })}
                 </div>
-                <aside className="flex gap-3 rounded-xl border border-sky-200 bg-sky-50 p-4 text-sky-900">
+                <aside className="flex gap-3 rounded-xl border border-info-border bg-info-bg p-4 text-info-fg">
                   <Info className="mt-0.5 size-5 shrink-0" aria-hidden />
                   <div>
                     <p className="font-bold">{t('trOrders.apostille.title')}</p>
@@ -400,7 +398,7 @@ const NewOrderWizard = () => {
                           onClick={() => toggleDoc(d)}
                           className={clsx(
                             'inline-flex min-h-10 items-center gap-1.5 rounded-full border px-3.5 text-sm font-semibold transition',
-                            on ? 'border-brand-600 bg-brand-600 text-white' : 'border-line bg-card text-ink/80 hover:border-brand-400',
+                            on ? 'border-primary bg-primary text-primary-contrast' : 'border-line bg-card text-ink/80 hover:border-primary',
                           )}
                         >
                           {on && <Check className="size-3.5" aria-hidden />}
@@ -433,7 +431,7 @@ const NewOrderWizard = () => {
                       {(['STANDARD', 'EXPRESS'] as TrUrgency[]).map((u) => (
                         <Choice key={u} active={urgency === u} onClick={() => setUrgency(u)} className="p-3">
                           <span className="flex items-center gap-1.5 pr-5 text-sm font-bold text-ink">
-                            {u === 'EXPRESS' && <Zap className="size-4 text-amber-500" aria-hidden />}
+                            {u === 'EXPRESS' && <Zap className="size-4 text-highlight" aria-hidden />}
                             {t(`trOrders.urgency.${u}`)}
                           </span>
                           <span className="mt-0.5 block text-xs text-muted">{t(`trOrders.urgencyHelp.${u}`)}</span>
@@ -455,8 +453,8 @@ const NewOrderWizard = () => {
                 {files.length > 0 && (
                   <ul className="space-y-2">
                     {files.map((file, i) => (
-                      <li key={`${file.name}-${i}`} className="flex items-center gap-3 rounded-xl border border-line bg-surface/60 px-3 py-2">
-                        <FileText className="size-4 shrink-0 text-brand-600" aria-hidden />
+                      <li key={`${file.name}-${i}`} className="flex items-center gap-3 rounded-xl border border-line bg-sunken px-3 py-2">
+                        <FileText className="size-4 shrink-0 text-link" aria-hidden />
                         <span className="min-w-0 flex-1 truncate text-sm font-medium text-ink">{file.name}</span>
                         <span className="text-xs text-muted">{formatBytes(file.size)}</span>
                         <button type="button" className="text-xs font-semibold text-danger hover:underline" onClick={() => setFiles((cur) => cur.filter((_, j) => j !== i))}>
@@ -469,7 +467,7 @@ const NewOrderWizard = () => {
 
                 <div className="rounded-xl border border-line p-4">
                   <p className="flex items-center gap-2 font-semibold text-ink">
-                    <FolderOpen className="size-4 text-brand-600" aria-hidden /> {t('trOrders.wizard.fromCase')}
+                    <FolderOpen className="size-4 text-link" aria-hidden /> {t('trOrders.wizard.fromCase')}
                   </p>
                   <p className="mt-0.5 text-xs text-muted">{t('trOrders.wizard.fromCaseHint')}</p>
                   {casesWithDocs.length === 0 ? (
@@ -486,8 +484,8 @@ const NewOrderWizard = () => {
                               const on = caseDocIds.includes(d.id);
                               return (
                                 <li key={d.id}>
-                                  <label className={clsx('flex cursor-pointer items-center gap-2.5 rounded-lg border px-3 py-2 text-sm transition', on ? 'border-brand-600 bg-brand-50' : 'border-line hover:border-brand-400')}>
-                                    <input type="checkbox" className="size-4 accent-brand-600" checked={on} onChange={() => toggleCaseDoc(d.id)} />
+                                  <label className={clsx('flex cursor-pointer items-center gap-2.5 rounded-lg border px-3 py-2 text-sm transition', on ? 'border-primary bg-sunken' : 'border-line hover:border-primary')}>
+                                    <input type="checkbox" className="size-4 accent-primary" checked={on} onChange={() => toggleCaseDoc(d.id)} />
                                     <span className="min-w-0 flex-1 truncate text-ink">{d.originalName}</span>
                                   </label>
                                 </li>
@@ -496,7 +494,7 @@ const NewOrderWizard = () => {
                           </ul>
                         </div>
                       ))}
-                      {caseDocIds.length > 0 && <p className="text-xs font-semibold text-brand-700">{t('trOrders.wizard.selected', { count: caseDocIds.length })}</p>}
+                      {caseDocIds.length > 0 && <p className="text-xs font-semibold text-link">{t('trOrders.wizard.selected', { count: caseDocIds.length })}</p>}
                     </div>
                   )}
                 </div>
@@ -510,7 +508,7 @@ const NewOrderWizard = () => {
                     const Icon = DELIVERY_ICON[d];
                     return (
                       <Choice key={d} active={delivery === d} onClick={() => setDelivery(d)}>
-                        <Icon className="size-5 text-brand-600" aria-hidden />
+                        <Icon className="size-5 text-link" aria-hidden />
                         <span className="mt-2 block pr-5 font-bold text-ink">{t(`trOrders.delivery.${d}`)}</span>
                         <span className="mt-1 block text-xs leading-relaxed text-muted">{t(`trOrders.deliveryHelp.${d}`)}</span>
                       </Choice>
@@ -590,8 +588,8 @@ const NewOrderWizard = () => {
 
         <aside className="lg:sticky lg:top-28 lg:self-start">
           <div className="card p-5">
-            <p className="eyebrow">{t('trOrders.fields.estimate')}</p>
-            <p className="mt-2 text-3xl font-extrabold text-ink tabular-nums" aria-live="polite">
+            <p className="type-overline text-muted">{t('trOrders.fields.estimate')}</p>
+            <p className="mt-2 text-3xl font-semibold text-ink tabular-nums" aria-live="polite">
               {estimate ? f.money(estimate.total, pricing.currency) : '—'}
             </p>
             <ul className="mt-3 space-y-1 text-sm text-muted">
@@ -599,9 +597,9 @@ const NewOrderWizard = () => {
                 {t(`trOrders.service.${service}`)} · {t('trOrders.pagesCount', { count: pages })}
               </li>
               <li>{t('trOrders.wizard.perPage', { price: f.money(pricing.perPage[service], pricing.currency) })}</li>
-              {urgency === 'EXPRESS' && <li className="font-semibold text-amber-700">{t('trOrders.wizard.surcharge', { pct: pricing.expressSurchargePct })}</li>}
+              {urgency === 'EXPRESS' && <li className="font-semibold text-warning-fg">{t('trOrders.wizard.surcharge', { pct: pricing.expressSurchargePct })}</li>}
             </ul>
-            <p className="mt-4 rounded-lg bg-surface p-3 text-xs leading-relaxed text-muted">{t('trOrders.wizard.estimateHint')}</p>
+            <p className="mt-4 rounded-lg bg-sunken p-3 text-xs leading-relaxed text-muted">{t('trOrders.wizard.estimateHint')}</p>
           </div>
           <nav className="mt-3 hidden lg:block" aria-label={t('trOrders.wizard.title')}>
             <ol className="space-y-1">
@@ -610,10 +608,10 @@ const NewOrderWizard = () => {
                   <button
                     type="button"
                     onClick={() => go(i)}
-                    className={clsx('flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm font-semibold transition', i === step ? 'bg-card text-brand-700 shadow-sm' : 'text-muted hover:text-ink')}
+                    className={clsx('flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm font-semibold transition', i === step ? 'bg-card text-link shadow-sm' : 'text-muted hover:text-ink')}
                     aria-current={i === step ? 'step' : undefined}
                   >
-                    <span className={clsx('grid size-6 place-items-center rounded-full text-xs', i < step ? 'bg-brand-600 text-white' : i === step ? 'bg-brand-100 text-brand-700' : 'bg-line text-muted')}>
+                    <span className={clsx('grid size-6 place-items-center rounded-full text-xs', i < step ? 'bg-primary text-primary-contrast' : i === step ? 'bg-sunken text-link' : 'bg-line text-muted')}>
                       {i < step ? <Check className="size-3.5" aria-hidden /> : i + 1}
                     </span>
                     {t(`trOrders.wizard.steps.${k}`)}
@@ -713,22 +711,22 @@ const OrderDetail = () => {
 
   return (
     <div className="space-y-5">
-      <Link to="/account/translations" className="inline-flex items-center gap-1.5 text-sm font-semibold text-muted hover:text-brand-700">
+      <Link to="/account/translations" className="inline-flex items-center gap-1.5 text-sm font-semibold text-muted hover:text-link-hover">
         <ArrowLeft className="size-4" aria-hidden /> {t('trOrders.backToList')}
       </Link>
 
       <section className="card relative overflow-hidden p-5 sm:p-6">
-        <span className={clsx('absolute inset-y-0 left-0 w-1.5', order.status === 'QUOTED' ? 'bg-amber-400' : order.status === 'CANCELLED' ? 'bg-slate-300' : order.status === 'READY' || order.status === 'DELIVERED' ? 'bg-success' : 'bg-brand-500')} aria-hidden />
+        <span className={clsx('absolute inset-y-0 left-0 w-1.5', order.status === 'QUOTED' ? 'bg-warning' : order.status === 'CANCELLED' ? 'bg-line-strong' : order.status === 'READY' || order.status === 'DELIVERED' ? 'bg-success' : 'bg-primary')} aria-hidden />
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
-          <span className="grid size-12 shrink-0 place-items-center rounded-xl bg-brand-100 text-brand-600">
+          <span className="grid size-12 shrink-0 place-items-center rounded-xl chip-soft">
             {order.status === 'CANCELLED' ? <Ban className="size-6" aria-hidden /> : <Icon className="size-6" aria-hidden />}
           </span>
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="eyebrow">{t('trOrders.order', { key: order.key })}</span>
+              <span className="type-overline text-muted">{t('trOrders.order', { key: order.key })}</span>
               <TrStatusPill status={order.status} />
             </div>
-            <h2 className="mt-1 text-xl font-extrabold text-ink sm:text-2xl">{t(`trOrders.service.${order.service}`)}</h2>
+            <h2 className="type-page-title mt-1">{t(`trOrders.service.${order.service}`)}</h2>
             <p className="mt-2 max-w-2xl text-muted">{t(`trOrders.statusHelp.${order.status}`)}</p>
           </div>
         </div>
@@ -738,14 +736,14 @@ const OrderDetail = () => {
       </section>
 
       {order.status === 'QUOTED' && order.priceCents != null && (
-        <section className="card border-amber-300/60 p-5 ring-4 ring-amber-400/10 sm:p-6" aria-labelledby="quote-title">
-          <h3 id="quote-title" className="eyebrow text-amber-700">
+        <section className="card border-warning-border p-5 sm:p-6" aria-labelledby="quote-title">
+          <h3 id="quote-title" className="type-overline text-warning-fg">
             {t('trOrders.detail.quoteTitle')}
           </h3>
           <div className="mt-3 flex flex-wrap items-end gap-x-8 gap-y-3">
             <div>
               <p className="text-xs text-muted">{t('trOrders.fields.price')}</p>
-              <p className="text-3xl font-extrabold text-ink tabular-nums">{f.money(order.priceCents, order.currency)}</p>
+              <p className="text-3xl font-semibold text-ink tabular-nums">{f.money(order.priceCents, order.currency)}</p>
             </div>
             {order.dueAt && (
               <div>
@@ -754,7 +752,7 @@ const OrderDetail = () => {
               </div>
             )}
           </div>
-          {order.quoteNote && <p className="mt-3 rounded-lg bg-surface p-3 text-sm whitespace-pre-line text-ink">{order.quoteNote}</p>}
+          {order.quoteNote && <p className="mt-3 rounded-lg bg-sunken p-3 text-sm whitespace-pre-line text-ink">{order.quoteNote}</p>}
           <p className="mt-3 text-sm text-muted">{t('trOrders.detail.quoteHint')}</p>
           <button type="button" className="btn-primary mt-4" onClick={() => accept.mutate()} disabled={accept.isPending}>
             {accept.isPending ? <Spinner className="size-4" /> : <Check className="size-4" aria-hidden />} {t('trOrders.detail.accept')}
@@ -763,8 +761,8 @@ const OrderDetail = () => {
       )}
 
       {(order.status === 'READY' || order.status === 'DELIVERED') && results.length > 0 && (
-        <section className="card border-emerald-300/60 p-5 sm:p-6" aria-labelledby="results-title">
-          <h3 id="results-title" className="flex items-center gap-2 font-bold text-ink">
+        <section className="card border-success-border p-5 sm:p-6" aria-labelledby="results-title">
+          <h3 id="results-title" className="flex items-center gap-2 font-semibold text-ink">
             <FileCheck2 className="size-5 text-success" aria-hidden /> {t('trOrders.detail.results')}
           </h3>
           <p className="mt-1 text-sm text-muted">{t('trOrders.detail.resultsHint')}</p>
@@ -779,7 +777,7 @@ const OrderDetail = () => {
       <div className="grid gap-5 lg:grid-cols-[1fr_340px]">
         <div className="space-y-5">
           <section className="card p-5 sm:p-6" aria-labelledby="sources-title">
-            <h3 id="sources-title" className="font-bold text-ink">
+            <h3 id="sources-title" className="font-semibold text-ink">
               {t('trOrders.detail.sources')}
             </h3>
             {sources.length === 0 ? (
@@ -799,13 +797,13 @@ const OrderDetail = () => {
           </section>
 
           <section className="card p-5 sm:p-6" aria-labelledby="timeline-title">
-            <h3 id="timeline-title" className="font-bold text-ink">
+            <h3 id="timeline-title" className="font-semibold text-ink">
               {t('trOrders.detail.timeline')}
             </h3>
             <ol className="mt-4 space-y-4 border-l-2 border-line pl-5">
               {[...order.events].reverse().map((e) => (
                 <li key={e.id} className="relative">
-                  <span className={clsx('absolute top-1 -left-[27px] size-3 rounded-full ring-4 ring-card', e.status === 'CANCELLED' ? 'bg-slate-400' : 'bg-brand-600')} aria-hidden />
+                  <span className={clsx('absolute top-1 -left-[27px] size-3 rounded-full ring-4 ring-card', e.status === 'CANCELLED' ? 'bg-line-strong' : 'bg-primary')} aria-hidden />
                   <div className="flex flex-wrap items-center gap-2">
                     {e.status && <TrStatusPill status={e.status} />}
                     <span className="text-xs text-muted">
@@ -821,7 +819,7 @@ const OrderDetail = () => {
 
         <aside className="space-y-5">
           <section className="card p-5" aria-labelledby="details-title">
-            <h3 id="details-title" className="font-bold text-ink">
+            <h3 id="details-title" className="font-semibold text-ink">
               {t('trOrders.detail.details')}
             </h3>
             <dl className="mt-3 space-y-2.5 text-sm">
@@ -836,7 +834,7 @@ const OrderDetail = () => {
                   [t('trOrders.fields.delivery'), t(`trOrders.delivery.${order.deliveryMethod}`)],
                   ...(order.deliveryAddress ? [[t('trOrders.detail.address'), order.deliveryAddress]] : []),
                   ...(order.trackingNumber ? [[t('trOrders.fields.tracking'), order.trackingNumber]] : []),
-                  ...(order.case ? [[t('trOrders.fields.case'), <Link key="c" to={`/account/cases/${order.case.id}`} className="font-semibold text-brand-700 hover:underline">{order.case.number}</Link>]] : []),
+                  ...(order.case ? [[t('trOrders.fields.case'), <Link key="c" to={`/account/cases/${order.case.id}`} className="font-semibold text-link hover:underline">{order.case.number}</Link>]] : []),
                   [t('trOrders.fields.created'), f.day(order.createdAt)],
                 ] as [string, ReactNode][]
               ).map(([k, v]) => (
@@ -846,7 +844,7 @@ const OrderDetail = () => {
                 </div>
               ))}
             </dl>
-            {order.clientNote && <p className="mt-4 rounded-lg bg-surface p-3 text-sm whitespace-pre-line text-ink">{order.clientNote}</p>}
+            {order.clientNote && <p className="mt-4 rounded-lg bg-sunken p-3 text-sm whitespace-pre-line text-ink">{order.clientNote}</p>}
             {order.deliveryMethod === 'COURIER' && order.deliveryAddress && (
               <p className="mt-3 flex items-start gap-2 text-xs text-muted">
                 <MapPin className="mt-0.5 size-3.5 shrink-0" aria-hidden /> {t('trOrders.deliveryHelp.COURIER')}
@@ -854,7 +852,7 @@ const OrderDetail = () => {
             )}
           </section>
           {canCancel && (
-            <button type="button" className="w-full rounded-xl border border-line bg-card px-4 py-3 text-sm font-semibold text-danger transition hover:border-red-300 hover:bg-red-50" onClick={() => setCancelOpen(true)}>
+            <button type="button" className="w-full rounded-xl border border-line bg-card px-4 py-3 text-sm font-semibold text-danger transition hover:border-danger-border hover:bg-danger-bg" onClick={() => setCancelOpen(true)}>
               {t('trOrders.detail.cancel')}
             </button>
           )}

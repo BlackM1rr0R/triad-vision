@@ -38,7 +38,7 @@ export const RiskReasons = ({ reasons, className }: { reasons: RiskReason[]; cla
   return (
     <ul className={clsx('flex flex-wrap gap-x-3 gap-y-0.5 text-[11px] text-muted', className)} aria-label={t('postArrival.risk.reasonsTitle')}>
       {reasons.map((r, i) => (
-        <li key={`${r.code}${i}`} className={clsx(r.points < 0 && 'text-emerald-700')}>
+        <li key={`${r.code}${i}`} className={clsx(r.points < 0 && 'text-success-fg')}>
           {t(`postArrival.risk.reasons.${r.code}`, { ...r.params, topic: r.params?.topic ? t(`checkIn.topics.${r.params.topic}`) : undefined })}
           <span className="ml-1 tabular-nums opacity-70">
             ({r.points > 0 ? '+' : ''}

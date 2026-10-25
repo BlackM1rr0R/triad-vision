@@ -172,7 +172,7 @@ function ReportsPage() {
         title={t('reports.title')}
         subtitle={t('reports.subtitle')}
         actions={
-          <button type="button" className="btn-ghost btn-sm" onClick={() => { setParams({}, { replace: true }); setCurrent(null); setDatasetKey(''); setResult(null); setConfig(emptyConfig()); }}>
+          <button type="button" className="btn-secondary btn-sm" onClick={() => { setParams({}, { replace: true }); setCurrent(null); setDatasetKey(''); setResult(null); setConfig(emptyConfig()); }}>
             <FilePlus2 className="size-4" /> {t('reports.newReport')}
           </button>
         }
@@ -189,7 +189,7 @@ function ReportsPage() {
                   <button
                     type="button"
                     onClick={() => setParams({ report: r.id }, { replace: true })}
-                    className={clsx('w-full rounded-lg px-2.5 py-2 text-left text-sm transition hover:bg-surface', current?.id === r.id && 'bg-brand-50 text-brand-700')}
+                    className={clsx('w-full rounded-lg px-2.5 py-2 text-left text-sm transition hover:bg-sunken', current?.id === r.id && 'bg-primary/[0.06] text-link')}
                   >
                     <span className="block truncate font-medium">{r.name}</span>
                     <span className="mt-0.5 flex flex-wrap items-center gap-1.5 text-[11px] text-muted">
@@ -232,7 +232,7 @@ function ReportsPage() {
             </label>
             {dataset && <p className="mt-2 text-xs text-muted">{f.tr(dataset.description)}</p>}
             {current && <p className="mt-2 text-sm font-semibold text-ink">{current.name}</p>}
-            {readOnly && <p className="mt-1 text-xs text-amber-700">{t('reports.readOnly')}</p>}
+            {readOnly && <p className="mt-1 text-xs text-warning-fg">{t('reports.readOnly')}</p>}
             {maskedCols.length > 0 && (
               <p className="mt-2 flex items-center gap-1.5 text-xs text-muted">
                 <Lock className="size-3.5" aria-hidden /> {t('reports.maskedHint')}
@@ -246,17 +246,17 @@ function ReportsPage() {
               <FiltersEditor dataset={dataset} value={config.filters} onChange={(filters) => patch({ filters })} relativeRanges={meta.data?.relativeRanges ?? []} users={users.data ?? []} />
               <GroupEditor dataset={dataset} config={config} onChange={patch} />
 
-              <div className="sticky bottom-0 z-10 -mx-1 flex flex-wrap items-center gap-2 rounded-xl border border-line bg-card px-3 py-2.5 shadow-sm">
+              <div className="sticky bottom-0 z-10 -mx-1 flex flex-wrap items-center gap-2 rounded-xl border border-line bg-card px-3 py-2.5 shadow-[var(--tv-shadow-card)]">
                 <button type="button" className="btn-primary btn-sm" disabled={run.isPending || (!config.groupBy.length && !config.columns.length)} onClick={() => run.mutate()}>
                   {run.isPending ? <Spinner className="size-4" /> : <Play className="size-4" />} {run.isPending ? t('reports.running') : t('reports.run')}
                 </button>
                 {(!current || current.canEdit) && (
-                  <button type="button" className="btn-ghost btn-sm" onClick={() => setSaveOpen('save')}>
+                  <button type="button" className="btn-secondary btn-sm" onClick={() => setSaveOpen('save')}>
                     <Save className="size-4" /> {t('reports.save')}
                   </button>
                 )}
                 {current && (
-                  <button type="button" className="btn-ghost btn-sm" onClick={() => setSaveOpen('saveAs')}>
+                  <button type="button" className="btn-secondary btn-sm" onClick={() => setSaveOpen('saveAs')}>
                     <Save className="size-4" /> {t('reports.saveAs')}
                   </button>
                 )}
@@ -265,16 +265,16 @@ function ReportsPage() {
                     <Download className="inline size-3.5" aria-hidden /> {t('reports.export')}:
                   </span>
                   {(['xlsx', 'csv', 'pdf'] as const).map((fmt) => (
-                    <button key={fmt} type="button" className="btn-ghost btn-sm" disabled={busyExport} onClick={() => void doExport(fmt)}>
+                    <button key={fmt} type="button" className="btn-secondary btn-sm" disabled={busyExport} onClick={() => void doExport(fmt)}>
                       {fmt === 'xlsx' && <FileSpreadsheet className="size-4" />} {t(`reports.export${fmt === 'xlsx' ? 'Xlsx' : fmt === 'csv' ? 'Csv' : 'Pdf'}`)}
                     </button>
                   ))}
                 </div>
-                <button type="button" className="btn-ghost btn-sm" disabled={!current} title={current ? undefined : t('reports.schedule.needsSave')} onClick={() => setScheduleOpen(true)}>
+                <button type="button" className="btn-secondary btn-sm" disabled={!current} title={current ? undefined : t('reports.schedule.needsSave')} onClick={() => setScheduleOpen(true)}>
                   <CalendarClock className="size-4" /> {t('reports.schedule.button')}
                 </button>
                 {current?.canEdit && (
-                  <button type="button" className="btn-ghost btn-sm ml-auto" onClick={() => window.confirm(t('reports.confirmDelete', { name: current.name })) && remove.mutate(current.id)} aria-label={t('reports.deleteReport')}>
+                  <button type="button" className="btn-secondary btn-sm ml-auto" onClick={() => window.confirm(t('reports.confirmDelete', { name: current.name })) && remove.mutate(current.id)} aria-label={t('reports.deleteReport')}>
                     <Trash2 className="size-4" />
                   </button>
                 )}
@@ -289,14 +289,14 @@ function ReportsPage() {
                         {result.grouped ? t('reports.groupsCount', { count: result.total, records: result.records }) : t('reports.rowsCount', { count: result.total })}
                         {result.rows.length > result.previewRows || result.total > result.previewRows ? ` · ${t('reports.previewNote', { shown: result.previewRows, max: meta.data?.limits.exportRows })}` : ''}
                       </p>
-                      {result.truncated && <p className="mt-1 text-xs text-amber-700">{t('reports.truncated', { max: meta.data?.limits.exportRows })}</p>}
+                      {result.truncated && <p className="mt-1 text-xs text-warning-fg">{t('reports.truncated', { max: meta.data?.limits.exportRows })}</p>}
                     </div>
                     {result.grouped && (
                       <div className="inline-flex rounded-lg border border-line p-0.5" role="group">
-                        <button type="button" aria-pressed={view === 'table'} onClick={() => setView('table')} className={clsx('flex items-center gap-1 rounded-md px-3 py-1.5 text-xs font-semibold', view === 'table' ? 'bg-brand-600 text-white' : 'text-muted')}>
+                        <button type="button" aria-pressed={view === 'table'} onClick={() => setView('table')} className={clsx('flex items-center gap-1 rounded-md px-3 py-1.5 text-xs font-semibold', view === 'table' ? 'bg-card text-ink shadow-[var(--tv-shadow-card)] ring-1 ring-line' : 'text-muted')}>
                           <Table2 className="size-3.5" /> {t('reports.table')}
                         </button>
-                        <button type="button" aria-pressed={view === 'chart'} onClick={() => setView('chart')} className={clsx('flex items-center gap-1 rounded-md px-3 py-1.5 text-xs font-semibold', view === 'chart' ? 'bg-brand-600 text-white' : 'text-muted')}>
+                        <button type="button" aria-pressed={view === 'chart'} onClick={() => setView('chart')} className={clsx('flex items-center gap-1 rounded-md px-3 py-1.5 text-xs font-semibold', view === 'chart' ? 'bg-card text-ink shadow-[var(--tv-shadow-card)] ring-1 ring-line' : 'text-muted')}>
                           <BarChart3 className="size-3.5" /> {t('reports.chart')}
                         </button>
                       </div>
@@ -343,7 +343,7 @@ const SaveDialog = ({ initial, busy, onClose, onSave }: { initial: { name: strin
           <input className="input" value={name} maxLength={160} onChange={(e) => setName(e.target.value)} required autoFocus />
         </label>
         <label className="flex items-center gap-2 text-sm">
-          <input type="checkbox" className="size-4 accent-brand-600" checked={shared} onChange={(e) => setShared(e.target.checked)} />
+          <input type="checkbox" className="size-4 accent-primary" checked={shared} onChange={(e) => setShared(e.target.checked)} />
           {t('reports.shareLabel')}
         </label>
         <div className="flex justify-end">
@@ -378,7 +378,7 @@ const AllowListSettings = () => {
       <h2 className="text-sm font-semibold text-ink">{t('reports.settings.title')}</h2>
       <p className="mt-1 text-[11px] text-muted">{t('reports.settings.hint')}</p>
       <textarea className="input mt-2 font-mono text-xs" rows={4} value={value} onChange={(e) => setText(e.target.value)} aria-label={t('reports.settings.title')} />
-      <button type="button" className="btn-ghost btn-sm mt-2" disabled={save.isPending} onClick={() => save.mutate()}>
+      <button type="button" className="btn-secondary btn-sm mt-2" disabled={save.isPending} onClick={() => save.mutate()}>
         <Save className="size-4" /> {t('reports.save')}
       </button>
     </section>

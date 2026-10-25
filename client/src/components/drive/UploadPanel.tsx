@@ -27,22 +27,22 @@ export const UploadPanel = ({
   const done = tasks.filter((x) => x.status === 'done').length;
   const total = tasks.filter((x) => x.status !== 'cancelled' && x.status !== 'skipped').length;
   return (
-    <div className="fixed right-3 bottom-3 z-[70] w-[min(24rem,calc(100vw-1.5rem))] overflow-hidden rounded-2xl border border-line bg-card shadow-[0_18px_50px_-15px_rgba(11,31,68,0.45)]" role="status" aria-live="polite">
+    <div className="fixed right-3 bottom-3 z-[70] w-[min(24rem,calc(100vw-1.5rem))] overflow-hidden rounded-xl border border-line bg-card shadow-[var(--tv-shadow-raised)]" role="status" aria-live="polite">
       <div className="flex items-center gap-2 border-b border-line px-3 py-2.5">
-        {active ? <Loader2 className="size-4 animate-spin text-brand-600" /> : <UploadCloud className="size-4 text-brand-600" />}
+        {active ? <Loader2 className="size-4 animate-spin text-link" /> : <UploadCloud className="size-4 text-link" />}
         <span className="flex-1 truncate text-sm font-semibold text-ink">
           {t('drive.upload.title')} · {t('drive.upload.progress', { done, total })}
         </span>
         {active > 0 ? (
-          <button type="button" onClick={onCancelAll} className="rounded-md px-2 py-1 text-xs font-semibold text-muted hover:bg-surface hover:text-danger">
+          <button type="button" onClick={onCancelAll} className="rounded-md px-2 py-1 text-xs font-semibold text-muted hover:bg-sunken hover:text-danger-fg">
             {t('drive.upload.cancelAll')}
           </button>
         ) : (
-          <button type="button" onClick={onClear} className="grid size-7 place-items-center rounded-md text-muted hover:bg-surface hover:text-ink" aria-label={t('drive.upload.close')}>
+          <button type="button" onClick={onClear} className="grid size-7 place-items-center rounded-md text-muted hover:bg-sunken hover:text-ink" aria-label={t('drive.upload.close')}>
             <X className="size-4" />
           </button>
         )}
-        <button type="button" onClick={() => setOpen((o) => !o)} className="grid size-7 place-items-center rounded-md text-muted hover:bg-surface hover:text-ink" aria-label={t('drive.upload.title')} aria-expanded={open}>
+        <button type="button" onClick={() => setOpen((o) => !o)} className="grid size-7 place-items-center rounded-md text-muted hover:bg-sunken hover:text-ink" aria-label={t('drive.upload.title')} aria-expanded={open}>
           {open ? <ChevronDown className="size-4" /> : <ChevronUp className="size-4" />}
         </button>
       </div>
@@ -53,21 +53,21 @@ export const UploadPanel = ({
             <li key={x.id} className="px-3 py-1.5">
               <div className="flex items-center gap-2 text-xs">
                 {x.status === 'done' ? (
-                  <CheckCircle2 className="size-4 shrink-0 text-emerald-600" />
+                  <CheckCircle2 className="size-4 shrink-0 text-success-fg" />
                 ) : x.status === 'error' ? (
-                  <AlertCircle className="size-4 shrink-0 text-danger" />
+                  <AlertCircle className="size-4 shrink-0 text-danger-fg" />
                 ) : x.status === 'cancelled' ? (
                   <Ban className="size-4 shrink-0 text-muted" />
                 ) : x.status === 'skipped' ? (
                   <SkipForward className="size-4 shrink-0 text-muted" />
                 ) : (
-                  <Loader2 className={clsx('size-4 shrink-0 text-brand-600', x.status === 'uploading' && 'animate-spin')} />
+                  <Loader2 className={clsx('size-4 shrink-0 text-link', x.status === 'uploading' && 'animate-spin')} />
                 )}
                 <span className="min-w-0 flex-1">
                   <span className="block truncate font-medium text-ink" title={x.relativeDir ? `${x.relativeDir}/${x.file.name}` : x.file.name}>
                     {x.file.name}
                   </span>
-                  <span className={clsx('block truncate', x.status === 'error' ? 'text-danger' : 'text-muted')}>
+                  <span className={clsx('block truncate', x.status === 'error' ? 'text-danger-fg' : 'text-muted')}>
                     {x.status === 'error'
                       ? x.error
                       : x.status === 'uploading'
@@ -76,14 +76,14 @@ export const UploadPanel = ({
                   </span>
                 </span>
                 {(x.status === 'queued' || x.status === 'uploading') && (
-                  <button type="button" onClick={() => onCancel(x.id)} className="grid size-6 place-items-center rounded-md text-muted hover:bg-surface hover:text-danger" aria-label={t('drive.upload.cancel')}>
+                  <button type="button" onClick={() => onCancel(x.id)} className="grid size-6 place-items-center rounded-md text-muted hover:bg-sunken hover:text-danger-fg" aria-label={t('drive.upload.cancel')}>
                     <X className="size-3.5" />
                   </button>
                 )}
               </div>
               {x.status === 'uploading' && (
-                <div className="mt-1 h-1 overflow-hidden rounded-full bg-surface">
-                  <div className="h-full rounded-full bg-brand-600 transition-[width] duration-200" style={{ width: `${x.progress}%` }} />
+                <div className="mt-1 h-1 overflow-hidden rounded-full bg-sunken">
+                  <div className="h-full rounded-full bg-primary transition-[width] duration-200" style={{ width: `${x.progress}%` }} />
                 </div>
               )}
             </li>

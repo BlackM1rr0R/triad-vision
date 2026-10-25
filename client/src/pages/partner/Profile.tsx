@@ -79,7 +79,7 @@ export default function PartnerProfilePage({ me }: { me: PartnerMe }) {
           </label>
           <p className="text-xs text-muted sm:col-span-2">{t('partnerPortal.profile.noBanking')}</p>
           <div className="sm:col-span-2">
-            <button type="submit" className="btn-primary btn-sm" disabled={save.isPending || !form.firstName.trim()}>
+            <button type="submit" className="btn-primary" disabled={save.isPending || !form.firstName.trim()}>
               {save.isPending && <Spinner className="size-4" />} {t('partnerPortal.common.save')}
             </button>
           </div>
@@ -100,7 +100,7 @@ export default function PartnerProfilePage({ me }: { me: PartnerMe }) {
             </span>
           </label>
           <div>
-            <button type="submit" className="btn-primary btn-sm" disabled={change.isPending || !pw.currentPassword || pw.newPassword.length < 8}>
+            <button type="submit" className="btn-primary" disabled={change.isPending || !pw.currentPassword || pw.newPassword.length < 8}>
               {change.isPending && <Spinner className="size-4" />} {t('partnerPortal.profile.password')}
             </button>
           </div>

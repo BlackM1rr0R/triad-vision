@@ -115,14 +115,14 @@ export function PassportScan({ onFilled, onCleared }: { onFilled: (fields: Passp
       aria-labelledby={`${uid}-title`}
       aria-describedby={status}
       aria-busy={busy || undefined}
-      className="rounded-2xl border-2 border-dashed border-brand-200 bg-brand-50/60 p-4 sm:p-5 dark:border-brand-500/30"
+      className="rounded-2xl border-2 border-dashed border-line-strong bg-sunken p-4 sm:p-5"
     >
       <div className="flex items-start gap-3">
-        <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-brand-600 text-white">
+        <span className="grid size-10 shrink-0 place-items-center rounded-xl chip-soft">
           <ScanLine className="size-5" aria-hidden />
         </span>
         <div className="min-w-0">
-          <h2 id={`${uid}-title`} className="font-display text-base leading-snug font-bold text-ink sm:text-lg">
+          <h2 id={`${uid}-title`} className="font-display text-base leading-snug font-semibold text-ink sm:text-lg">
             {t('registerPage.scan.title')}
           </h2>
           <p className="mt-1 text-sm text-muted">{t('registerPage.scan.text')}</p>
@@ -144,7 +144,7 @@ export function PassportScan({ onFilled, onCleared }: { onFilled: (fields: Passp
               type="button"
               onClick={reset}
               aria-label={t('registerPage.scan.remove')}
-              className="absolute top-2 right-2 grid size-8 place-items-center rounded-full bg-card text-muted shadow transition hover:text-ink focus-visible:ring-2 focus-visible:ring-brand-500/40 focus-visible:outline-none"
+              className="absolute top-2 right-2 grid size-8 place-items-center rounded-full bg-card text-muted shadow transition hover:text-ink focus-visible:ring-2 focus-visible:ring-focus/40 focus-visible:outline-none"
             >
               <X className="size-4" aria-hidden />
             </button>
@@ -153,11 +153,11 @@ export function PassportScan({ onFilled, onCleared }: { onFilled: (fields: Passp
       )}
 
       <div className="mt-4 grid grid-cols-2 gap-2">
-        <button type="button" className="btn-primary h-11" disabled={busy} onClick={() => cameraRef.current?.click()}>
+        <button type="button" className="btn-primary min-h-11" disabled={busy} onClick={() => cameraRef.current?.click()}>
           {busy && !preview ? <Spinner className="size-4" /> : result || error ? <RotateCcw className="size-4" aria-hidden /> : <Camera className="size-4" aria-hidden />}
           {result || error ? t('registerPage.scan.retake') : t('registerPage.scan.takePhoto')}
         </button>
-        <button type="button" className="btn-ghost h-11 border border-line bg-card" disabled={busy} onClick={() => fileRef.current?.click()}>
+        <button type="button" className="btn-secondary min-h-11" disabled={busy} onClick={() => fileRef.current?.click()}>
           <ImageUp className="size-4" aria-hidden /> {t('registerPage.scan.chooseFile')}
         </button>
       </div>
@@ -167,7 +167,7 @@ export function PassportScan({ onFilled, onCleared }: { onFilled: (fields: Passp
       <div id={status} aria-live="polite" className="mt-3 space-y-2 text-sm">
         {busy && !preview && <p className="text-muted">{t('registerPage.scan.reading')}</p>}
         {result && (
-          <p className="flex items-start gap-2 text-success">
+          <p className="flex items-start gap-2 text-success-fg">
             <CheckCircle2 className="mt-0.5 size-4 shrink-0" aria-hidden />
             <span>{t('registerPage.scan.done')}</span>
           </p>
@@ -177,16 +177,16 @@ export function PassportScan({ onFilled, onCleared }: { onFilled: (fields: Passp
             key={w}
             className={clsx(
               'flex items-start gap-2 rounded-lg border px-3 py-2',
-              w === 'EXPIRED' ? 'border-danger/30 bg-danger/10 text-danger' : 'border-warning/30 bg-warning/10 text-ink',
+              w === 'EXPIRED' ? 'border-danger-border bg-danger-bg text-danger-fg' : 'border-warning-border bg-warning-bg text-warning-fg',
             )}
           >
-            <AlertTriangle className={clsx('mt-0.5 size-4 shrink-0', w === 'EXPIRED' ? 'text-danger' : 'text-warning')} aria-hidden />
+            <AlertTriangle className={clsx('mt-0.5 size-4 shrink-0', w === 'EXPIRED' ? 'text-danger-fg' : 'text-warning-fg')} aria-hidden />
             <span>{t(`registerPage.scan.warn.${w}`, { date: dmy(result.fields.expiryDate) })}</span>
           </p>
         ))}
         {error && (
-          <div className="flex items-start gap-2 rounded-lg border border-warning/30 bg-warning/10 px-3 py-2 text-ink">
-            <AlertTriangle className="mt-0.5 size-4 shrink-0 text-warning" aria-hidden />
+          <div className="flex items-start gap-2 rounded-lg border border-warning-border bg-warning-bg px-3 py-2 text-warning-fg">
+            <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden />
             <span>
               {t(`registerPage.scan.errors.${error}`)}
               {error === 'notFound' && <> {t('registerPage.scan.tips')}</>}

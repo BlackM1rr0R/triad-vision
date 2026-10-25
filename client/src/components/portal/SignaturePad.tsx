@@ -85,7 +85,7 @@ export const SignaturePad = ({
 
   return (
     <div>
-      <div className="relative overflow-hidden rounded-xl border-2 border-dashed border-brand-400/60 bg-white focus-within:border-brand-600">
+      <div className="relative overflow-hidden rounded-xl border-2 border-dashed border-brand-400/60 bg-card focus-within:border-primary">
         <canvas
           ref={canvasRef}
           className="block aspect-[2/1] max-h-60 min-h-40 w-full cursor-crosshair touch-none sm:aspect-[5/2]"
@@ -101,7 +101,7 @@ export const SignaturePad = ({
         <div className="pointer-events-none absolute right-6 bottom-10 left-6 border-b border-line" aria-hidden />
       </div>
       <div className="mt-2 flex justify-end">
-        <button type="button" onClick={clear} className="btn btn-sm min-h-10 text-muted hover:bg-surface hover:text-navy-900" disabled={empty}>
+        <button type="button" onClick={clear} className="btn btn-sm min-h-10 text-muted hover:bg-sunken hover:text-ink" disabled={empty}>
           <Eraser className="size-4" aria-hidden />
           {t('portal.contract.clear')}
         </button>

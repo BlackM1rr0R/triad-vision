@@ -22,14 +22,14 @@ export function TimerButton({ caseId, taskId, activity, className, compact }: { 
 
   if (mine)
     return (
-      <button type="button" className={clsx(base, 'bg-emerald-600 text-white hover:bg-emerald-700')} disabled={stop.isPending} onClick={(e) => (e.stopPropagation(), stop.mutate({}))}>
+      <button type="button" className={clsx(base, 'bg-success text-white hover:bg-success/90')} disabled={stop.isPending} onClick={(e) => (e.stopPropagation(), stop.mutate({}))}>
         <Square className="size-3 fill-current" aria-hidden /> {t('time.stop')}
       </button>
     );
   return (
     <button
       type="button"
-      className={clsx(base, 'border border-line bg-card text-ink hover:border-emerald-400 hover:text-emerald-700')}
+      className={clsx(base, 'border border-line bg-card text-ink hover:border-success hover:text-success-fg')}
       disabled={start.isPending}
       title={run ? t('time.switchTo') : undefined}
       onClick={(e) => {

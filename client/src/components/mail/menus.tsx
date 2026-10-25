@@ -11,10 +11,10 @@ import { SNOOZE_PRESETS } from './types';
 import { toLocalInput } from './utils';
 
 export const MenuItem = ({ onClick, children, active, icon }: { onClick: () => void; children: ReactNode; active?: boolean; icon?: ReactNode }) => (
-  <button type="button" onClick={onClick} className={clsx('flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-sm hover:bg-surface', active ? 'font-semibold text-brand-700' : 'text-ink')}>
+  <button type="button" onClick={onClick} className={clsx('flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-sm hover:bg-sunken', active ? 'font-semibold text-link' : 'text-ink')}>
     {icon}
     <span className="min-w-0 flex-1 truncate">{children}</span>
-    {active && <Check className="size-3.5 text-brand-600" aria-hidden />}
+    {active && <Check className="size-3.5 text-link" aria-hidden />}
   </button>
 );
 
@@ -127,7 +127,7 @@ export const CasePickerDialog = ({ open, onClose, onPick }: { open: boolean; onC
       <ul className="max-h-72 overflow-y-auto">
         {(results.data ?? []).map((c) => (
           <li key={c.id}>
-            <button type="button" onClick={() => onPick({ id: c.id, number: c.number, clientName: `${c.client.firstName} ${c.client.lastName}`.trim() })} className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-sm hover:bg-surface">
+            <button type="button" onClick={() => onPick({ id: c.id, number: c.number, clientName: `${c.client.firstName} ${c.client.lastName}`.trim() })} className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-sm hover:bg-sunken">
               <Briefcase className="size-3.5 shrink-0 text-muted" aria-hidden />
               <span className="font-semibold text-ink">{c.number}</span>
               <span className="truncate text-muted">

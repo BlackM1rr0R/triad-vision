@@ -31,26 +31,26 @@ export const OptionCard = ({
     className={clsx(
       'group relative flex w-full min-w-0 items-center gap-4 rounded-2xl border-2 p-4 text-left transition-[border-color,background-color,box-shadow] duration-300 sm:p-5',
       selected
-        ? 'border-brand-600 bg-brand-50 shadow-[0_14px_40px_-18px_rgba(21,101,232,0.6)]'
-        : 'border-line bg-white hover:border-brand-400 hover:bg-brand-50/40 hover:shadow-[0_14px_40px_-22px_rgba(11,31,68,0.35)]',
+        ? 'border-primary bg-card shadow-[var(--tv-shadow-raised)]'
+        : 'border-line bg-card hover:border-line-strong hover:shadow-[var(--tv-shadow-card)]',
     )}
   >
     <span
       className={clsx(
         'grid size-12 shrink-0 place-items-center rounded-xl transition duration-300 [&>svg]:size-6',
-        selected ? 'bg-brand-600 text-white' : 'bg-surface text-navy-900 group-hover:bg-brand-100 group-hover:text-brand-700',
+        selected ? 'bg-primary text-primary-contrast' : 'chip-soft',
       )}
     >
       {icon}
     </span>
     <span className="min-w-0 flex-1">
-      <span className="block font-semibold break-words text-navy-900">{label}</span>
+      <span className="block font-semibold break-words text-ink">{label}</span>
       {description && <span className="mt-0.5 block text-sm break-words text-muted">{description}</span>}
     </span>
     <span
       className={clsx(
         'grid size-6 shrink-0 place-items-center rounded-full border-2 transition duration-300',
-        selected ? 'border-brand-600 bg-brand-600 text-white' : 'border-line text-transparent',
+        selected ? 'border-primary bg-primary text-primary-contrast' : 'border-line-strong text-transparent',
       )}
       aria-hidden
     >

@@ -33,21 +33,42 @@ No headless-UI / Radix dependency: focus management, Escape stacking and scroll 
 
 ---
 
-## 2. Tokens (`src/index.css`)
+## 2. Tokens (`src/index.css`) — live catalogue: `/admin/design-system`
 
-Light values are in `@theme`; dark values are redefined on `:root[data-theme='dark']` (set by `lib/prefs.ts`;
-`dark:` variants follow it too). High-contrast mode (`html.a11y-contrast`) forces status text to black/white.
+One semantic system, two **surface flavours**, two themes. The surface attribute sits on `<html>` (`lib/theme.ts`
+`useSurface`, so portalled modals follow it) and also works on any element:
 
-| Group | Tokens (Tailwind utilities: `bg-*`, `text-*`, `border-*`) |
-| --- | --- |
-| Surfaces | `page` (body), `surface` (muted panels, table headers, hovers), `card` (cards, modals, menus), `field` (inputs), `scrim` (overlay dim) |
-| Text | `ink` (primary text), `muted` (secondary text) |
-| Lines | `line` (all borders / dividers) |
-| Brand | `brand-50 … brand-700`, `navy-700 … navy-950` (dark heroes) |
-| Status (per tone) | `{tone}-bg` tint, `{tone}-fg` text on that tint, `{tone}-border`, `{tone}` solid (bars, dots) |
+| Scope | Set by | Look |
+| --- | --- | --- |
+| default / `data-surface="portal"` | client, company, partner portals | warm: off-white `#fafaf7`, radii 10–24 px, 44 px controls, 16 px body, Inter headings |
+| `data-surface="public"` | `SiteLayout` | warm + **Fraunces** display headings (az/de/en/tr; ru/uk fall back to Inter; extrabold capped at 650) |
+| `data-surface="admin"` | `AdminLayout`, `WorkspaceLayout` | crisp: zinc greys `#f6f7f9`, radii 4–12 px, 36 px controls, 14 px UI text, tabular numbers in tables |
+| `data-theme="dark"` | `lib/prefs.ts` | soft navy-grey `#11151c` / `#0f141c`, never pure black |
+| `data-density="compact"` (with admin) | `DensityToggle` / theme default | tighter table rows (`--tv-cell-x/-y`) |
 
-Tones: `success`, `warning`, `danger`, `info`, `neutral`, `accent`. Measured contrast of `-fg` on `-bg`:
-light 6.4–7.4 : 1; dark (tint over card) 7.4–8.8 : 1. All ≥ 4.5 : 1. The `brand` badge tone is 6.1 : 1 (light) and 4.6 : 1 (dark).
+| Token (utility `bg-*` / `text-*` / `border-*`) | Use | Legacy alias |
+| --- | --- | --- |
+| `canvas` | page background (never pure white) | `page` |
+| `sunken` | wells, table headers, hover fills, muted panels | `surface` |
+| `card` · `raised` · `field` | cards · menus/dialogs/toasts · inputs | |
+| `line` · `line-strong` | hairlines · control borders | |
+| `ink` · `muted` · `subtle` | body text · secondary text (≥ 4.5:1 everywhere) · placeholders/decoration only (≥ 3:1) | |
+| `primary` (`-hover`, `-contrast`) | main action: navy; light periwinkle in dark; **amber inside dark navy sections** (`.bg-navy-9xx` or `[data-on-dark]`) | |
+| `highlight` (`-contrast`, `-fg`, `-bg`) | the rare brand amber (`-fg` = amber text that passes AA) | |
+| `link` (`-hover`) · `focus` | links · focus ring | |
+| `success · warning · danger · info · neutral · accent` + `-bg/-fg/-border` | statuses only (`accent` = violet milestone, not the brand amber) | |
+| `chart-1 … chart-8` | categorical series | |
+
+Radii (`rounded-sm … 4xl`) and `--tv-radius-control` change per surface and scale with the theme builder.
+Shadows: `shadow-[var(--tv-shadow-card|raised|overlay)]`. Fonts: `font-sans` (Inter), `font-display`
+(surface-dependent), `font-mono` (JetBrains Mono). Helpers: `.num` (tabular-nums), `.code-id` (case / invoice
+numbers), `.measure` (68ch prose), `.link`, `.kbd`, `.type-display`, `.type-overline`, `.tv-table` (hand-written
+tables), `.card-interactive`.
+
+**Theme builder** (System settings → Theme, SUPER_ADMIN): `GET/PUT/DELETE /api/site/theme` (Setting `theme`:
+`brandPrimary`, `accent`, `radiusScale` sm/md/lg, `defaultDensity`). Colours failing WCAG AA are auto-adjusted
+(or refused with `mode: "strict"`). The response carries `--tv-*` variables that `lib/theme.ts` sets on `<html>`
+(cached in localStorage). Contrast maths: `lib/contrast.ts` (mirror of `server/src/lib/site/theme.ts`).
 
 ## 3. Status vocabulary (`status.ts`)
 
@@ -236,6 +257,14 @@ cloned in. `Input/Select/Textarea` render the existing `.input` class (`invalid`
 
 `title, subtitle, icon, actions, footer, variant: panel (flat, default) | raised (site .card shadow), padding: none | sm | md | lg, as: h2 | h3,
 headerClassName` (replaces the header padding), `bodyClassName`. The admin `Panel` is a Card with admin spacing.
+
+### New in the token refresh
+
+- `Button variant="highlight"` (amber CTA, one per view), `size="lg"`; `Card variant="flat"` + `interactive`; `Badge pill`, tone `highlight`.
+- `Table` column `numeric` (right-aligned tabular figures), `hover` prop; rows follow the admin density.
+- `Radio`, `RadioGroup` (Field.tsx), `Switch` (`showLabel`, `hint`, `size`), `Avatar` (initials hue, `status`, `shape`),
+  `StatTile` (KPI: `value`, `format`, `delta`, `tone`, `to`, `loading`), `Pagination` (`page`, `pages`, `total`, `pageSize`),
+  `DensityToggle` (`icon` | `segmented`), `EmptyState illustration`.
 
 ### Menu (`Menu.tsx`)
 

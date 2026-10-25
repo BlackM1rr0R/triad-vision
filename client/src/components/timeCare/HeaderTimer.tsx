@@ -62,10 +62,10 @@ export function HeaderTimer() {
 
   return (
     <div className="relative">
-      <div className="flex min-h-9 items-center gap-1 rounded-full border border-emerald-300 bg-emerald-50 py-0.5 pr-0.5 pl-2.5 text-xs font-semibold text-emerald-800" role="status" aria-label={t('time.headerAria', { case: label, dur })}>
+      <div className="flex min-h-9 items-center gap-1 rounded-full border border-success-border bg-success-bg py-0.5 pr-0.5 pl-2.5 text-xs font-semibold text-success-fg" role="status" aria-label={t('time.headerAria', { case: label, dur })}>
         <span className="relative mr-0.5 flex size-2" aria-hidden>
-          <span className="absolute inline-flex size-full animate-ping rounded-full bg-emerald-400 opacity-60 motion-reduce:animate-none" />
-          <span className="relative inline-flex size-2 rounded-full bg-emerald-500" />
+          <span className="absolute inline-flex size-full animate-ping rounded-full bg-success opacity-60 motion-reduce:animate-none" />
+          <span className="relative inline-flex size-2 rounded-full bg-success" />
         </span>
         <Timer className="hidden size-3.5 sm:block" aria-hidden />
         {run.caseId ? (
@@ -80,7 +80,7 @@ export function HeaderTimer() {
           type="button"
           onClick={() => stop.mutate({})}
           disabled={stop.isPending}
-          className="ml-0.5 grid size-8 place-items-center rounded-full bg-emerald-600 text-white transition hover:bg-emerald-700 disabled:opacity-60"
+          className="ml-0.5 grid size-8 place-items-center rounded-full bg-success text-white transition hover:bg-success/90 disabled:opacity-60"
           aria-label={t('time.stop')}
           title={t('time.stop')}
         >
@@ -88,13 +88,13 @@ export function HeaderTimer() {
         </button>
       </div>
       {askIdle && (
-        <div role="alertdialog" aria-label={t('time.idle.title')} className="absolute top-full right-0 z-50 mt-2 w-[min(18rem,calc(100vw-2rem))] rounded-xl border border-amber-300 bg-card p-3 text-left shadow-lg">
+        <div role="alertdialog" aria-label={t('time.idle.title')} className="absolute top-full right-0 z-50 mt-2 w-[min(18rem,calc(100vw-2rem))] rounded-xl border border-warning-border bg-card p-3 text-left shadow-[var(--tv-shadow-raised)]">
           <p className="text-sm font-bold text-ink">{t('time.idle.title')}</p>
           <p className="mt-1 text-xs text-muted">{t('time.idle.text', { hours: Math.floor(elapsed / 60) })}</p>
           <div className="mt-3 flex flex-wrap justify-end gap-2">
             <button
               type="button"
-              className="btn-ghost btn-sm"
+              className="btn-secondary btn-sm"
               onClick={() => {
                 safeSet(`tv_timer_idle_${run.id}`);
                 setDismissed(true);

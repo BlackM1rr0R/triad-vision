@@ -32,7 +32,7 @@ export default function CaseHistoryPanel({ caseId, clientId, clientName }: { cas
           <HistoryButton entity="USER" entityId={clientId} name={clientName} label={t('history.clientProfile')} />
           <button
             type="button"
-            className="inline-flex min-h-8 items-center gap-1 rounded-md px-2 text-xs font-semibold text-brand-600 hover:bg-brand-50"
+            className="inline-flex min-h-8 items-center gap-1 rounded-md px-2 text-xs font-semibold text-link hover:bg-primary/[0.06]"
             aria-expanded={open}
             onClick={() => setOpen((o) => !o)}
           >

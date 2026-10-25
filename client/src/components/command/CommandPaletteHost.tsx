@@ -95,7 +95,7 @@ export const CommandPaletteButton = ({ variant = 'header', compact = false, dark
     'aria-haspopup': 'dialog' as const,
   };
   const kbd = (
-    <kbd className={clsx('rounded border px-1.5 py-0.5 font-sans text-[11px] leading-none font-semibold', dark ? 'border-white/15 text-white/50' : 'border-line bg-surface text-muted')}>{shortcut}</kbd>
+    <kbd className={clsx('rounded border border-b-2 px-1.5 py-0.5 font-mono text-[11px] leading-none font-medium', dark ? 'border-white/15 text-white/50' : 'border-line bg-card text-muted')}>{shortcut}</kbd>
   );
 
   if (variant === 'rail') {
@@ -104,13 +104,16 @@ export const CommandPaletteButton = ({ variant = 'header', compact = false, dark
         {...common}
         aria-label={compact ? label : undefined}
         className={clsx(
-          'flex min-h-10 w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition',
-          dark ? 'text-white/60 hover:bg-white/5 hover:text-white' : 'text-muted hover:bg-surface hover:text-ink',
+          // Direction A: a quiet search field in the sidebar (hairline border, card fill, kbd hint)
+          'flex w-full items-center gap-2 rounded-lg text-[13px] transition',
+          dark
+            ? 'min-h-10 px-3 py-2 text-white/60 hover:bg-white/5 hover:text-white'
+            : 'min-h-8 border border-line bg-card px-2.5 text-muted shadow-[var(--tv-shadow-card)] hover:border-line-strong hover:text-ink pointer-coarse:min-h-10',
           compact && 'justify-center px-0',
           className,
         )}
       >
-        <Search className={clsx('size-[18px] shrink-0', dark && 'text-white/50')} aria-hidden />
+        <Search className={clsx('size-4 shrink-0', dark && 'text-white/50')} aria-hidden />
         {!compact && (
           <>
             <span className="min-w-0 flex-1 truncate text-left">{label}</span>
@@ -134,8 +137,8 @@ export const CommandPaletteButton = ({ variant = 'header', compact = false, dark
       aria-label={label}
       title={`${label} (${shortcut})`}
       className={clsx(
-        'flex h-10 shrink-0 items-center gap-2 rounded-lg text-ink/70 transition hover:text-ink',
-        'w-10 justify-center hover:bg-surface sm:w-auto sm:min-w-[13rem] sm:justify-start sm:border sm:border-line sm:bg-field sm:px-3 sm:hover:border-brand-400 sm:hover:bg-field',
+        'flex h-9 shrink-0 items-center gap-2 rounded-[var(--tv-radius-control)] text-muted transition hover:text-ink',
+        'w-9 justify-center hover:bg-sunken sm:w-auto sm:min-w-[13rem] sm:justify-start sm:border sm:border-line sm:bg-field sm:px-2.5 sm:hover:border-line-strong sm:hover:bg-field',
         className,
       )}
     >

@@ -103,14 +103,14 @@ export const Messages = ({ c }: { c: CaseDetail }) => {
             >
               <div
                 className={clsx(
-                  'max-w-[85%] rounded-2xl px-3.5 py-2 text-sm',
-                  fromClient ? 'rounded-bl-sm bg-surface text-ink' : 'rounded-br-sm bg-brand-600 text-white',
+                  'max-w-[85%] rounded-xl px-3.5 py-2 text-sm',
+                  fromClient ? 'rounded-bl-sm bg-sunken text-ink' : 'rounded-br-sm bg-primary text-primary-contrast',
                   m.pending && 'opacity-70',
-                  m.failed && 'bg-red-600',
+                  m.failed && 'bg-danger',
                 )}
               >
                 <MessageBody m={m} tx={tx} onDark={!fromClient} />
-                <p className={clsx('mt-1 flex flex-wrap items-center gap-1.5 text-[10px]', fromClient ? 'text-muted' : 'text-white/70')}>
+                <p className={clsx('mt-1 flex flex-wrap items-center gap-1.5 text-[10px]', fromClient ? 'text-muted' : 'text-primary-contrast/70')}>
                   <ChannelBadge channel={m.channel} onDark={!fromClient} />
                   <span>
                     {fullName(m.author)} · {fmtDateTime(m.createdAt)}
@@ -214,21 +214,21 @@ export const InternalNotes = ({ c }: { c: CaseDetail }) => {
         </label>
         <textarea
           id="int-note"
-          className="input bg-amber-50/40"
+          className="input bg-warning-bg/40"
           rows={2}
           maxLength={4000}
           value={note}
           onChange={(e) => setNote(e.target.value)}
           placeholder={t('admin.case.comm.notePlaceholder')}
         />
-        <button type="submit" className="btn-white btn-sm border border-line" disabled={!note.trim() || busy}>
+        <button type="submit" className="btn-secondary btn-sm" disabled={!note.trim() || busy}>
           {busy ? <Spinner className="size-3.5" /> : <StickyNote className="size-3.5" />} {t('admin.case.comm.addNote')}
         </button>
       </form>
       {notes.length > 0 && (
         <ul className="mt-4 space-y-2">
           {notes.slice(0, 5).map((n) => (
-            <li key={n.id} className="rounded-lg border border-amber-200/70 bg-amber-50/60 px-3 py-2">
+            <li key={n.id} className="rounded-lg border border-warning-border/70 bg-warning-bg/60 px-3 py-2">
               <p className="text-sm break-words whitespace-pre-wrap text-ink">{n.note}</p>
               <p className="mt-1 text-[11px] text-muted">
                 {n.actor ? fullName(n.actor) : t('admin.common.system')} · {fmtDateTime(n.createdAt)}
@@ -254,14 +254,14 @@ export const Timeline = ({ c }: { c: CaseDetail }) => {
             <span
               className={clsx(
                 'absolute top-1.5 left-0 size-[11px] rounded-full border-2 border-white',
-                e.type === 'INTERNAL_NOTE' ? 'bg-amber-400' : e.toStatus ? 'bg-brand-600' : 'bg-slate-300',
+                e.type === 'INTERNAL_NOTE' ? 'bg-warning' : e.toStatus ? 'bg-primary' : 'bg-line-strong',
               )}
               aria-hidden
             />
             <p className="flex flex-wrap items-center gap-x-1.5 gap-y-1 text-sm">
-              <span className="font-semibold text-navy-900">{eventLabel(e.type)}</span>
+              <span className="font-semibold text-ink">{eventLabel(e.type)}</span>
               {!e.visibleToClient && (
-                <span className="badge bg-slate-100 text-[10px] text-slate-600">
+                <span className="badge bg-sunken text-[10px] text-muted">
                   <Lock className="size-2.5" aria-hidden /> {t('admin.common.internal')}
                 </span>
               )}
@@ -279,7 +279,7 @@ export const Timeline = ({ c }: { c: CaseDetail }) => {
         ))}
       </ol>
       {c.events.length > 12 && (
-        <button type="button" className="mt-3 inline-flex min-h-10 items-center text-xs font-semibold text-brand-600 hover:underline" onClick={() => setShowAll((v) => !v)}>
+        <button type="button" className="mt-3 inline-flex min-h-10 items-center text-xs font-semibold text-link hover:underline" onClick={() => setShowAll((v) => !v)}>
           {showAll ? t('admin.common.showLess') : t('admin.common.showAll', { count: c.events.length })}
         </button>
       )}

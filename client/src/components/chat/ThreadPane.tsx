@@ -32,12 +32,12 @@ export const ThreadPane = ({
   return (
     <div className="flex h-full flex-col">
       <div className="flex items-center gap-2 border-b border-line px-3 py-2.5">
-        <MessageSquare className="size-4 text-brand-600" />
+        <MessageSquare className="size-4 text-link" />
         <span className="min-w-0 leading-tight">
           <span className="block text-sm font-bold text-ink">{t('chat.thread.title')}</span>
           <span className="block truncate text-xs text-muted">{channelLabel(channel)}</span>
         </span>
-        <button type="button" onClick={onClose} className="ml-auto grid size-8 place-items-center rounded-lg text-muted hover:bg-surface hover:text-ink" aria-label={t('chat.actions.close')}>
+        <button type="button" onClick={onClose} className="ml-auto grid size-8 place-items-center rounded-lg text-muted hover:bg-sunken hover:text-ink" aria-label={t('chat.actions.close')}>
           <X className="size-4" />
         </button>
       </div>

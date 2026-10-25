@@ -17,9 +17,9 @@ import PackageConfirmWarning from '@/components/clientData/PackageConfirmWarning
 
 const STATUS_ICON: Record<ItemStatus, typeof CheckCircle2> = { found: CheckCircle2, pending: Hourglass, missing: CircleSlash, manual: FileStack };
 const STATUS_STYLE: Record<ItemStatus, string> = {
-  found: 'text-emerald-700 dark:text-emerald-300',
-  pending: 'text-amber-700 dark:text-amber-300',
-  missing: 'text-red-700 dark:text-red-300',
+  found: 'text-success-fg dark:text-emerald-300',
+  pending: 'text-warning-fg dark:text-amber-300',
+  missing: 'text-danger-fg dark:text-red-300',
   manual: 'text-muted',
 };
 const MAX_COPIES = 4;
@@ -163,17 +163,17 @@ export const EmbassyPackageDrawer = ({ caseId, open, onClose }: { caseId: string
       ) : (
         <div className="space-y-5">
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted">
-            <span className="font-semibold text-navy-900">{t('caseNext.pkg.summary', data.summary)}</span>
+            <span className="font-semibold text-ink">{t('caseNext.pkg.summary', data.summary)}</span>
             <span>{data.appointmentAt ? t('caseNext.pkg.appointment', { date: fmtAppointment(data.appointmentAt) }) : t('caseNext.pkg.noAppointment')}</span>
             {data.lastPackage && (
-              <a className="text-brand-700 hover:underline" href={fileUrl(data.lastPackage.documentId, true)}>
+              <a className="text-link hover:underline" href={fileUrl(data.lastPackage.documentId, true)}>
                 {t('caseNext.pkg.lastPackage', { date: fmtDateTime(data.lastPackage.createdAt) })}
               </a>
             )}
           </div>
 
           {result && (
-            <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg bg-emerald-50 px-3 py-2.5 text-sm text-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-200" role="status">
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg bg-success-bg px-3 py-2.5 text-sm text-success-fg dark:bg-emerald-950/40 dark:text-emerald-200" role="status">
               <span className="flex items-center gap-2">
                 <CheckCircle2 className="size-4 shrink-0" aria-hidden /> {t('caseNext.pkg.built', { pages: result.pages, size: formatBytes(result.sizeBytes) })}
               </span>
@@ -209,7 +209,7 @@ export const EmbassyPackageDrawer = ({ caseId, open, onClose }: { caseId: string
           <PackageConfirmWarning caseId={caseId} onBlockedChange={setDataBlocked} />
 
           {notIn.length > 0 && (
-            <p className="flex items-start gap-2 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:bg-amber-950/40 dark:text-amber-300">
+            <p className="flex items-start gap-2 rounded-lg bg-warning-bg px-3 py-2 text-xs text-warning-fg dark:bg-amber-950/40 dark:text-amber-300">
               <AlertTriangle className="mt-0.5 size-3.5 shrink-0" aria-hidden /> {t('caseNext.pkg.warnMissing', { count: notIn.length })}
             </p>
           )}
@@ -279,7 +279,7 @@ const ItemRow = ({
       onDragEnd={onDragEnd}
       onDragOver={(e) => e.preventDefault()}
       onDrop={onDrop}
-      className={clsx('rounded-xl border border-line bg-white p-3 transition', dragging && 'opacity-50', !canInclude && 'bg-surface/60')}
+      className={clsx('rounded-xl border border-line bg-card p-3 transition', dragging && 'opacity-50', !canInclude && 'bg-surface/60')}
     >
       <div className="flex min-w-0 items-start gap-2">
         <span className="mt-0.5 hidden shrink-0 cursor-grab text-muted sm:block" title={t('caseNext.pkg.drag')} aria-hidden>
@@ -289,7 +289,7 @@ const ItemRow = ({
           <I className="size-4" aria-hidden />
         </span>
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-semibold text-navy-900">
+          <p className="text-sm font-semibold text-ink">
             <span className="mr-1 text-muted tabular-nums">{index + 1}.</span>
             {tr(item.label)}
           </p>
@@ -297,7 +297,7 @@ const ItemRow = ({
             {item.source === 'extra' ? t('caseNext.pkg.extra') : t(`caseNext.pkg.status.${item.status}`)}
             {doc && <span className="text-muted"> · {doc.name}</span>}
           </p>
-          {doc && !doc.embeddable && <p className="mt-0.5 text-[11px] text-amber-700 dark:text-amber-300">{t('caseNext.pkg.notEmbeddable')}</p>}
+          {doc && !doc.embeddable && <p className="mt-0.5 text-[11px] text-warning-fg dark:text-amber-300">{t('caseNext.pkg.notEmbeddable')}</p>}
           {canInclude && item.candidates.length > 1 && (
             <select className="input mt-2 py-1.5 text-xs" value={doc?.id ?? ''} onChange={(e) => onSet({ documentId: e.target.value })} aria-label={t('caseNext.pkg.document')}>
               {item.candidates.map((d) => (
@@ -311,10 +311,10 @@ const ItemRow = ({
         <div className="flex shrink-0 flex-col items-end gap-2">
           {canInclude && <Switch checked={!!choice?.include} onChange={(v) => onSet({ include: v })} label={t('caseNext.pkg.include')} />}
           <span className="flex">
-            <button type="button" className="grid size-8 place-items-center rounded-lg text-muted hover:bg-surface disabled:opacity-30" disabled={index === 0} onClick={() => onMove(-1)} aria-label={t('caseNext.pkg.moveUp')}>
+            <button type="button" className="grid size-8 place-items-center rounded-lg text-muted hover:bg-sunken disabled:opacity-30" disabled={index === 0} onClick={() => onMove(-1)} aria-label={t('caseNext.pkg.moveUp')}>
               <ArrowUp className="size-3.5" />
             </button>
-            <button type="button" className="grid size-8 place-items-center rounded-lg text-muted hover:bg-surface disabled:opacity-30" disabled={last} onClick={() => onMove(1)} aria-label={t('caseNext.pkg.moveDown')}>
+            <button type="button" className="grid size-8 place-items-center rounded-lg text-muted hover:bg-sunken disabled:opacity-30" disabled={last} onClick={() => onMove(1)} aria-label={t('caseNext.pkg.moveDown')}>
               <ArrowDown className="size-3.5" />
             </button>
           </span>

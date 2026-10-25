@@ -9,6 +9,7 @@ import { Reveal, Stagger, StaggerItem } from '@/components/motion';
 import { ServiceCard, VisaCard } from '@/components/cards';
 import { InquiryForm } from '@/components/InquiryForm';
 import { Icon } from '@/components/ui/Icon';
+import { buttonClass } from '@/components/ui/Button';
 import { StepsTimeline } from '@/components/services/StepsTimeline';
 import { Accordion } from '@/components/visa/Accordion';
 import { PageCta } from '@/components/visa/PageCta';
@@ -28,7 +29,7 @@ registerCopy(pagesVisa);
 const Heading = ({ eyebrow, title }: { eyebrow?: string; title: string }) => (
   <Reveal y={20}>
     {eyebrow && <span className="eyebrow">{eyebrow}</span>}
-    <h2 className="mt-2 mb-6 font-display text-2xl font-extrabold text-navy-900 sm:text-[1.75rem]">{title}</h2>
+    <h2 className="mt-2 mb-6 font-display text-2xl font-semibold text-ink sm:text-[1.75rem]">{title}</h2>
   </Reveal>
 );
 
@@ -88,12 +89,12 @@ export default function ServiceDetail() {
     <>
       <PageHero title={tr(data.title)} subtitle={tr(data.summary)} image={data.image.replace('w=1200', 'w=2000')} crumb={{ to: '/services', label: t('nav.services') }} morph={{ kind: 'service', id: data.slug }}>
         <div className="mt-6 flex flex-wrap gap-2">
-          <span className="glass inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-bold">
+          <span className="inline-flex items-center gap-2 rounded-full border border-line bg-card px-4 py-2 text-sm font-semibold text-ink shadow-[var(--tv-shadow-card)]">
             <Icon name={data.icon} className="size-4" /> {audience}
           </span>
           {duration && (
-            <span className="glass inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold">
-              <Clock className="size-4 text-brand-400" /> {duration}
+            <span className="inline-flex items-center gap-2 rounded-full border border-line bg-card px-4 py-2 text-sm font-semibold text-ink shadow-[var(--tv-shadow-card)]">
+              <Clock className="size-4 text-muted" /> {duration}
             </span>
           )}
         </div>
@@ -105,7 +106,7 @@ export default function ServiceDetail() {
             <div>
               <Heading title={t('serviceDetail.overview')} />
               <Reveal>
-                <div className="prose-tv -mt-2 text-base sm:text-lg">
+                <div className="prose-tv -mt-2 max-w-[70ch] text-base sm:text-lg">
                   {tr(data.body)
                     .split(/\n{2,}/)
                     .map((p) => (
@@ -121,9 +122,9 @@ export default function ServiceDetail() {
                 <Stagger className="grid gap-3 sm:grid-cols-2">
                   {trList(data.features).map((f) => (
                     <StaggerItem key={f}>
-                      <div className="flex h-full items-start gap-3 rounded-xl border border-line bg-white p-4 transition hover:border-brand-400 hover:shadow-lg">
-                        <CheckCircle2 className="mt-0.5 size-5 shrink-0 text-brand-600" />
-                        <span className="text-sm font-semibold text-navy-900">{f}</span>
+                      <div className="flex h-full items-start gap-3 rounded-2xl border border-line bg-card p-4 shadow-[var(--tv-shadow-card)]">
+                        <CheckCircle2 className="mt-0.5 size-5 shrink-0 text-success" aria-hidden />
+                        <span className="text-sm font-semibold text-ink">{f}</span>
                       </div>
                     </StaggerItem>
                   ))}
@@ -145,13 +146,11 @@ export default function ServiceDetail() {
                   .filter((g) => g.show)
                   .map((g) => (
                     <Reveal key={g.key} className="h-full">
-                      <div className={clsx('h-full rounded-2xl p-6', g.key === 'company' ? 'bg-navy-900 text-white' : 'border border-line bg-surface')}>
-                        <span
-                          className={clsx('grid size-11 place-items-center rounded-xl', g.key === 'company' ? 'bg-white/10 text-brand-400' : 'bg-white text-brand-600 shadow-sm')}
-                        >
+                      <div className="h-full rounded-3xl border border-line bg-card p-6 shadow-[var(--tv-shadow-card)]">
+                        <span className={clsx('grid size-11 place-items-center rounded-xl', g.key === 'company' ? 'chip-sky' : 'chip-peach')}>
                           {g.icon}
                         </span>
-                        <h3 className={clsx('mt-4 font-display text-lg font-bold', g.key === 'company' ? 'text-white' : 'text-navy-900')}>
+                        <h3 className="mt-4 font-display text-lg font-semibold text-ink">
                           {t(`serviceDetail.audience.${g.key}.title`)}
                         </h3>
                         <ul className="mt-3 space-y-2">
@@ -160,8 +159,8 @@ export default function ServiceDetail() {
                               returnObjects: true,
                             }) as string[]
                           ).map((p) => (
-                            <li key={p} className={clsx('flex gap-2.5 text-sm', g.key === 'company' ? 'text-white/80' : 'text-navy-900')}>
-                              <CheckCircle2 className={clsx('mt-0.5 size-4 shrink-0', g.key === 'company' ? 'text-brand-400' : 'text-brand-600')} /> {p}
+                            <li key={p} className="flex gap-2.5 text-sm text-ink">
+                              <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-success" aria-hidden /> {p}
                             </li>
                           ))}
                         </ul>
@@ -184,25 +183,25 @@ export default function ServiceDetail() {
               <div className="card overflow-hidden">
                 <img src={sized(data.image, 760)} alt="" loading="lazy" decoding="async" width={760} height={300} className="h-40 w-full object-cover" />
                 <div className="card-pad">
-                  <h3 className="font-display text-lg font-bold text-navy-900">{t('serviceDetail.side.title')}</h3>
+                  <h3 className="font-display text-lg font-semibold text-ink">{t('serviceDetail.side.title')}</h3>
                   <dl className="mt-4 divide-y divide-line rounded-xl border border-line text-sm">
                     <div className="flex items-center gap-3 px-3.5 py-3">
-                      <Users className="size-4 shrink-0 text-brand-600" />
+                      <Users className="size-4 shrink-0 text-muted" aria-hidden />
                       <dt className="text-muted">{t('serviceDetail.side.audience')}</dt>
-                      <dd className="ml-auto text-right font-semibold text-navy-900">{audience}</dd>
+                      <dd className="ml-auto text-right font-semibold text-ink">{audience}</dd>
                     </div>
                     {duration && (
                       <div className="flex items-center gap-3 px-3.5 py-3">
-                        <Clock className="size-4 shrink-0 text-brand-600" />
+                        <Clock className="size-4 shrink-0 text-muted" aria-hidden />
                         <dt className="text-muted">{t('serviceDetail.side.duration')}</dt>
-                        <dd className="ml-auto text-right font-semibold text-navy-900">{duration}</dd>
+                        <dd className="ml-auto text-right font-semibold text-ink">{duration}</dd>
                       </div>
                     )}
                     {steps.length > 0 && (
                       <div className="flex items-center gap-3 px-3.5 py-3">
-                        <ListOrdered className="size-4 shrink-0 text-brand-600" />
+                        <ListOrdered className="size-4 shrink-0 text-muted" aria-hidden />
                         <dt className="text-muted">{t('serviceDetail.side.steps')}</dt>
-                        <dd className="ml-auto text-right font-semibold text-navy-900">
+                        <dd className="ml-auto text-right font-semibold text-ink">
                           {t('serviceDetail.side.stepsCount', {
                             count: steps.length,
                           })}
@@ -211,18 +210,18 @@ export default function ServiceDetail() {
                     )}
                   </dl>
                   <div className="mt-5 grid gap-2">
-                    <a href="#inquiry" className="btn-primary group w-full">
-                      {t('svc.getOffer')} <ArrowRight className="size-4 transition group-hover:translate-x-1" />
+                    <a href="#inquiry" className={buttonClass({ size: 'lg', block: true })}>
+                      {t('svc.getOffer')} <ArrowRight className="size-4" aria-hidden />
                     </a>
-                    <Link to={data.audience === 'company' ? '/cooperation' : '/register'} className="btn-ghost w-full">
+                    <Link to={data.audience === 'company' ? '/cooperation' : '/register'} className={buttonClass({ variant: 'outline', block: true })}>
                       {data.audience === 'company' ? t('nav.cooperation') : t('nav.apply')}
                     </Link>
                     {contact && (
                       <div className="grid grid-cols-2 gap-2">
-                        <a href={`tel:${contact.phone.replace(/\s/g, '')}`} className="btn-secondary btn-sm">
+                        <a href={`tel:${contact.phone.replace(/\s/g, '')}`} className={buttonClass({ variant: 'secondary' })}>
                           <Phone className="size-4" /> {t('contact.phone')}
                         </a>
-                        <a href={`https://wa.me/${contact.whatsapp.replace(/\D/g, '')}`} target="_blank" rel="noreferrer" className="btn-secondary btn-sm">
+                        <a href={`https://wa.me/${contact.whatsapp.replace(/\D/g, '')}`} target="_blank" rel="noreferrer" className={buttonClass({ variant: 'secondary' })}>
                           <MessageCircle className="size-4" /> WhatsApp
                         </a>
                       </div>
@@ -235,11 +234,11 @@ export default function ServiceDetail() {
         </div>
       </section>
 
-      <section id="inquiry" className="section-sm scroll-mt-24 bg-surface">
+      <section id="inquiry" className="section-sm scroll-mt-24 bg-sunken">
         <div className="container-x">
-          <div className="card mx-auto max-w-3xl card-pad sm:p-8">
-            <h2 className="font-display text-2xl font-extrabold text-navy-900">{t('serviceDetail.form.title')}</h2>
-            <p className="mt-1.5 mb-6 text-sm text-muted">{t('serviceDetail.form.text')}</p>
+          <div className="card mx-auto max-w-3xl rounded-3xl card-pad sm:p-8">
+            <h2 className="font-display text-2xl font-semibold text-ink">{t('serviceDetail.form.title')}</h2>
+            <p className="mt-1.5 mb-6 max-w-[65ch] text-muted">{t('serviceDetail.form.text')}</p>
             <InquiryForm kind={data.audience === 'company' ? 'company' : 'contact'} />
           </div>
         </div>
@@ -250,7 +249,7 @@ export default function ServiceDetail() {
           <div className="container-x">
             <div className="section-head">
               <span className="eyebrow">{t('serviceDetail.relatedVisas.eyebrow')}</span>
-              <h2 className="h-section mt-2 text-navy-900">{t('serviceDetail.relatedVisas.title')}</h2>
+              <h2 className="h-section mt-2 text-ink">{t('serviceDetail.relatedVisas.title')}</h2>
             </div>
             <Stagger className="grid-cards sm:grid-cols-2 lg:grid-cols-3">
               {visas.map((v) => (
@@ -264,9 +263,9 @@ export default function ServiceDetail() {
       )}
 
       {others.length > 0 && (
-        <section className="section bg-surface">
+        <section className="section bg-sunken">
           <div className="container-x">
-            <h2 className="h-section section-head text-navy-900">{t('serviceDetail.others')}</h2>
+            <h2 className="h-section section-head text-ink">{t('serviceDetail.others')}</h2>
             <div className="mobile-rail sm:grid-cols-2 sm:gap-5 lg:grid-cols-4 lg:gap-6">
               {others.map((s) => (
                 <ServiceCard key={s.id} service={s} index={all.indexOf(s)} />

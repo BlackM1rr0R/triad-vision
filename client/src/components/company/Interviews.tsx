@@ -13,6 +13,7 @@ import { Modal } from '@/components/admin/Modal';
 import { toLocalInput } from '@/components/admin/labels';
 import { InterviewCard } from '@/components/ops/InterviewCard';
 import { defaultStart, toastOpsError, type Interview } from '@/components/ops/shared';
+import { CalendarDay } from '@/components/illustrations';
 import { Empty, Loading, Section } from './shared';
 import { EvaluateButton } from '@/components/placement/Evaluations';
 
@@ -107,14 +108,14 @@ export const CompanyInterviews = () => {
         title={t('ops.company.title')}
         icon={Video}
         actions={
-          <button type="button" className="btn-primary btn-sm" onClick={() => setProposing(true)}>
-            <Plus className="size-3.5" /> {t('ops.company.propose')}
+          <button type="button" className="btn-primary" onClick={() => setProposing(true)}>
+            <Plus className="size-4" aria-hidden /> {t('ops.company.propose')}
           </button>
         }
       >
         <p className="-mt-2 mb-5 text-sm text-muted">{t('ops.company.subtitle')} {t('ops.company.hint')}</p>
         {upcoming.length === 0 ? (
-          <Empty icon={Video} title={t('ops.company.empty')} text={t('ops.company.subtitle')} />
+          <Empty icon={Video} illustration={<CalendarDay className="w-32" />} title={t('ops.company.empty')} text={t('ops.company.subtitle')} />
         ) : (
           <ul className="grid gap-4 lg:grid-cols-2">
             {upcoming.map((i) => (

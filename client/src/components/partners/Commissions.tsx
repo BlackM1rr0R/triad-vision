@@ -334,7 +334,7 @@ export const CommissionsPanel = ({ partnerId, isAdmin }: { partnerId?: string; i
     <section className="rounded-xl border border-line bg-card">
       <header className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-5 py-3.5">
         <h2 className="flex items-center gap-2 text-sm font-semibold text-ink">
-          <HandCoins className="size-4 text-brand-600" aria-hidden /> {t('refPartners.com.title')}
+          <HandCoins className="size-4 text-primary" aria-hidden /> {t('refPartners.com.title')}
         </h2>
         <div className="flex flex-wrap items-center gap-2">
           {isAdmin && selected.size > 0 && (
@@ -389,17 +389,17 @@ export const CommissionsPanel = ({ partnerId, isAdmin }: { partnerId?: string; i
           <dl className="grid grid-cols-2 gap-2 px-5 py-3 sm:grid-cols-4">
             {(
               [
-                ['pending', q.data.totals.pendingCents, 'text-amber-700'],
-                ['approved', q.data.totals.approvedCents, 'text-brand-700'],
-                ['paid', q.data.totals.paidCents, 'text-emerald-700'],
+                ['pending', q.data.totals.pendingCents, 'text-warning-fg'],
+                ['approved', q.data.totals.approvedCents, 'text-link'],
+                ['paid', q.data.totals.paidCents, 'text-success-fg'],
               ] as const
             ).map(([k, v, tone]) => (
-              <div key={k} className="rounded-lg bg-surface px-3 py-2">
+              <div key={k} className="rounded-lg bg-sunken px-3 py-2">
                 <dt className="text-[11px] text-muted">{t(`refPartners.totals.${k}`)}</dt>
                 <dd className={clsx('font-bold tabular-nums', tone)}>{money(v, cur)}</dd>
               </div>
             ))}
-            <div className="rounded-lg bg-surface px-3 py-2">
+            <div className="rounded-lg bg-sunken px-3 py-2">
               <dt className="text-[11px] text-muted">{t('refPartners.com.total')}</dt>
               <dd className="font-bold text-ink tabular-nums">{money(q.data.totals.totalCents, cur)}</dd>
             </div>
@@ -411,7 +411,7 @@ export const CommissionsPanel = ({ partnerId, isAdmin }: { partnerId?: string; i
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full min-w-[860px] text-left text-sm">
-                <thead className="border-y border-line bg-surface/70 text-[11px] font-semibold tracking-wide whitespace-nowrap text-muted uppercase">
+                <thead className="border-y border-line bg-sunken text-xs font-medium whitespace-nowrap text-muted">
                   <tr>
                     {isAdmin && <th className="w-10 px-4 py-2.5" />}
                     {!partnerId && <th className="px-4 py-2.5">{t('refPartners.com.partner')}</th>}
@@ -429,20 +429,20 @@ export const CommissionsPanel = ({ partnerId, isAdmin }: { partnerId?: string; i
                     <tr key={r.id} className={clsx(r.status === 'CANCELLED' && 'opacity-60')}>
                       {isAdmin && (
                         <td className="px-4 py-2.5">
-                          {selectable(r) && <input type="checkbox" className="size-4 accent-brand-600" checked={selected.has(r.id)} onChange={() => toggle(r.id)} aria-label={t('refPartners.com.selectRow')} />}
+                          {selectable(r) && <input type="checkbox" className="size-4 accent-primary" checked={selected.has(r.id)} onChange={() => toggle(r.id)} aria-label={t('refPartners.com.selectRow')} />}
                         </td>
                       )}
                       {!partnerId && (
                         <td className="px-4 py-2.5 whitespace-nowrap">
-                          <Link to={`/admin/partners/${r.partner.id}`} className="font-medium text-brand-700 hover:underline">
+                          <Link to={`/admin/partners/${r.partner.id}`} className="font-medium text-link hover:underline">
                             {r.partner.name}
                           </Link>
                         </td>
                       )}
                       <td className="px-4 py-2.5">
                         {r.case ? (
-                          <Link to={`/admin/cases/${r.case.id}`} className="hover:text-brand-700">
-                            <span className="font-medium text-ink">{r.case.client}</span> <span className="font-mono text-xs text-muted">{r.case.number}</span>
+                          <Link to={`/admin/cases/${r.case.id}`} className="hover:text-link">
+                            <span className="font-medium text-ink">{r.case.client}</span> <span className="code-id text-xs text-muted">{r.case.number}</span>
                           </Link>
                         ) : (
                           <span className={r.clientName ? 'font-medium text-ink' : 'text-muted'}>{r.clientName ?? t('refPartners.com.noCase')}</span>
@@ -460,22 +460,22 @@ export const CommissionsPanel = ({ partnerId, isAdmin }: { partnerId?: string; i
                       <td className="px-4 py-2.5">
                         <div className="flex justify-end gap-1">
                           {isAdmin && r.status === 'PENDING' && (
-                            <button type="button" className="btn-ghost btn-sm" title={t('refPartners.com.approve')} aria-label={t('refPartners.com.approve')} onClick={() => approve.mutate(r.id)} disabled={approve.isPending}>
+                            <button type="button" className="btn-secondary btn-sm" title={t('refPartners.com.approve')} aria-label={t('refPartners.com.approve')} onClick={() => approve.mutate(r.id)} disabled={approve.isPending}>
                               <Check className="size-3.5" />
                             </button>
                           )}
                           {isAdmin && (r.status === 'PENDING' || r.status === 'APPROVED') && (
-                            <button type="button" className="btn-ghost btn-sm" title={t('refPartners.com.pay')} aria-label={t('refPartners.com.pay')} onClick={() => setPayIds([r.id])}>
+                            <button type="button" className="btn-secondary btn-sm" title={t('refPartners.com.pay')} aria-label={t('refPartners.com.pay')} onClick={() => setPayIds([r.id])}>
                               <Wallet className="size-3.5" />
                             </button>
                           )}
                           {canEdit(r) && (
-                            <button type="button" className="btn-ghost btn-sm" title={t('refPartners.com.edit')} aria-label={t('refPartners.com.edit')} onClick={() => setDialog({ open: true, commission: r })}>
+                            <button type="button" className="btn-secondary btn-sm" title={t('refPartners.com.edit')} aria-label={t('refPartners.com.edit')} onClick={() => setDialog({ open: true, commission: r })}>
                               <Pencil className="size-3.5" />
                             </button>
                           )}
                           {isAdmin && (r.status === 'PENDING' || r.status === 'APPROVED') && (
-                            <button type="button" className="btn-ghost btn-sm text-danger" title={t('refPartners.com.cancel')} aria-label={t('refPartners.com.cancel')} onClick={() => setCancelRow(r)}>
+                            <button type="button" className="btn-secondary btn-sm text-danger-fg" title={t('refPartners.com.cancel')} aria-label={t('refPartners.com.cancel')} onClick={() => setCancelRow(r)}>
                               <Ban className="size-3.5" />
                             </button>
                           )}

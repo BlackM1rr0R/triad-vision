@@ -19,7 +19,7 @@ import { useCaseRefresh } from './shared';
 import { useCompanyOptions, useJobsCopy, useVacancyOptions, type CaseLink } from './caseLinks';
 
 const linkChip =
-  'inline-flex min-h-8 max-w-full min-w-0 items-center gap-1.5 rounded-md border border-line px-2.5 py-1 text-xs text-ink/80 transition hover:border-brand-400 hover:text-brand-700';
+  'inline-flex min-h-8 max-w-full min-w-0 items-center gap-1.5 rounded-md border border-line px-2.5 py-1 text-xs text-ink/80 transition hover:border-line-strong hover:text-link';
 
 /** Right column (stacked under the tabs below 1280 px): client contact, team, key facts. */
 export const CaseSummaryAside = ({ c, stats, onEdit, onTemplate }: { c: CaseDetail; stats: CaseStats; onEdit: () => void; onTemplate: () => void }) => {
@@ -92,7 +92,7 @@ export const CaseSummaryAside = ({ c, stats, onEdit, onTemplate }: { c: CaseDeta
               </option>
             ))}
           </select>
-          {assigning && <Spinner className="absolute top-1/2 right-8 size-3.5 -translate-y-1/2 text-brand-600" />}
+          {assigning && <Spinner className="absolute top-1/2 right-8 size-3.5 -translate-y-1/2 text-link" />}
         </div>
         <dl className="mt-3">
           <CasePartnerSelect c={c} />
@@ -106,7 +106,7 @@ export const CaseSummaryAside = ({ c, stats, onEdit, onTemplate }: { c: CaseDeta
         as="h2"
         className="sm:col-span-2 xl:col-span-1"
         actions={
-          <button type="button" className="inline-flex min-h-8 items-center gap-1 rounded-md px-1.5 text-xs font-semibold text-brand-600 hover:bg-brand-50" onClick={onEdit}>
+          <button type="button" className="inline-flex min-h-8 items-center gap-1 rounded-md px-1.5 text-xs font-semibold text-link hover:bg-primary/[0.06]" onClick={onEdit}>
             <Pencil className="size-3.5" aria-hidden /> {t('admin.common.edit')}
           </button>
         }
@@ -117,12 +117,12 @@ export const CaseSummaryAside = ({ c, stats, onEdit, onTemplate }: { c: CaseDeta
           {link.companyId && (
             <DefRow label={t('jobsArea.admin.caseLink.employer')}>
               <span className="inline-flex max-w-full min-w-0 flex-wrap items-center justify-end gap-x-1">
-                <Building2 className="size-3.5 shrink-0 text-brand-600" aria-hidden />
-                <Link to={`/admin/companies?id=${link.companyId}`} className="truncate hover:text-brand-700 hover:underline">
+                <Building2 className="size-3.5 shrink-0 text-link" aria-hidden />
+                <Link to={`/admin/companies?id=${link.companyId}`} className="truncate hover:text-link hover:underline">
                   {companyName ?? '…'}
                 </Link>
                 {link.vacancyId && (
-                  <Link to={`/admin/vacancies?id=${link.vacancyId}`} className="truncate text-muted hover:text-brand-700 hover:underline">
+                  <Link to={`/admin/vacancies?id=${link.vacancyId}`} className="truncate text-muted hover:text-link hover:underline">
                     · {vacancyTitle ? tr(vacancyTitle) : '…'}
                   </Link>
                 )}
@@ -169,7 +169,7 @@ export const CaseSummaryAside = ({ c, stats, onEdit, onTemplate }: { c: CaseDeta
             </span>
           </p>
         )}
-        <button type="button" className="mt-3 inline-flex min-h-9 items-center gap-1 text-xs font-semibold text-brand-600 hover:text-brand-700" onClick={onTemplate}>
+        <button type="button" className="mt-3 inline-flex min-h-9 items-center gap-1 text-xs font-semibold text-link hover:text-link" onClick={onTemplate}>
           <FileText className="size-3.5" aria-hidden /> {t('caseLayout.menu.fromTemplate')}
         </button>
       </Card>

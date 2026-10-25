@@ -61,15 +61,15 @@ const usePwa = () => useSyncExternalStore(subscribePwa, () => `${!!pwaState().wa
 const HOME_BY_ROLE: Record<string, string> = { CLIENT: '/account', COMPANY: '/company', AGENT: '/agent', STAFF: '/admin', ADMIN: '/admin', SUPER_ADMIN: '/admin' };
 
 const Banner = ({ icon, title, text, children, onClose, closeLabel }: { icon: ReactNode; title: string; text: string; children: ReactNode; onClose: () => void; closeLabel: string }) => (
-  <div role="region" aria-label={title} className="fixed inset-x-3 bottom-3 z-[46] mx-auto max-w-md rounded-2xl border border-line bg-card p-4 text-ink shadow-2xl sm:right-6 sm:bottom-6 sm:left-auto sm:mx-0">
+  <div role="region" aria-label={title} className="fixed inset-x-3 bottom-3 z-[46] mx-auto max-w-md rounded-3xl border border-line bg-card p-4 text-ink shadow-[var(--tv-shadow-raised)] sm:right-6 sm:bottom-6 sm:left-auto sm:mx-0">
     <div className="flex items-start gap-3">
-      <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-brand-50 text-brand-600">{icon}</span>
+      <span className="grid size-11 shrink-0 place-items-center rounded-xl chip-sky">{icon}</span>
       <div className="min-w-0 flex-1">
-        <p className="font-bold text-navy-900">{title}</p>
+        <p className="font-semibold text-ink">{title}</p>
         <p className="mt-0.5 text-sm text-muted">{text}</p>
         <div className="mt-3 flex flex-wrap gap-2">{children}</div>
       </div>
-      <button type="button" onClick={onClose} aria-label={closeLabel} className="-m-1.5 grid size-9 shrink-0 place-items-center rounded-lg text-muted hover:bg-surface">
+      <button type="button" onClick={onClose} aria-label={closeLabel} className="-m-1.5 grid size-10 shrink-0 place-items-center rounded-lg text-muted hover:bg-sunken">
         <X className="size-4" aria-hidden />
       </button>
     </div>
@@ -139,7 +139,7 @@ export default function SiteExtras() {
           {canPrompt ? (
             <button
               type="button"
-              className="btn-primary btn-sm min-h-10"
+              className="btn-primary btn-sm min-h-11"
               onClick={async () => {
                 const outcome = await promptInstall();
                 if (outcome !== 'accepted') closeInstall();
@@ -149,11 +149,11 @@ export default function SiteExtras() {
               {t('site.pwa.installAction')}
             </button>
           ) : (
-            <button type="button" className="btn-primary btn-sm min-h-10" onClick={() => setIosOpen(true)}>
+            <button type="button" className="btn-primary btn-sm min-h-11" onClick={() => setIosOpen(true)}>
               {t('site.pwa.iosHow')}
             </button>
           )}
-          <button type="button" className="btn-sm min-h-10 rounded-full px-3.5 text-sm font-semibold text-muted hover:bg-surface" onClick={closeInstall}>
+          <button type="button" className="btn-sm min-h-11 rounded-full px-3.5 text-sm font-semibold text-muted hover:bg-sunken" onClick={closeInstall}>
             {t('site.pwa.later')}
           </button>
         </Banner>
@@ -162,7 +162,7 @@ export default function SiteExtras() {
         <Banner icon={<Bell className="size-5" aria-hidden />} title={t('site.push.promptTitle')} text={t('site.push.promptText')} onClose={closePush} closeLabel={t('site.pwa.close')}>
           <button
             type="button"
-            className="btn-primary btn-sm min-h-10"
+            className="btn-primary btn-sm min-h-11"
             onClick={async () => {
               setHidden((h) => ({ ...h, push: true }));
               try {
@@ -177,7 +177,7 @@ export default function SiteExtras() {
           >
             {t('site.push.enable')}
           </button>
-          <button type="button" className="btn-sm min-h-10 rounded-full px-3.5 text-sm font-semibold text-muted hover:bg-surface" onClick={closePush}>
+          <button type="button" className="btn-sm min-h-11 rounded-full px-3.5 text-sm font-semibold text-muted hover:bg-sunken" onClick={closePush}>
             {t('site.push.later')}
           </button>
         </Banner>
@@ -186,10 +186,10 @@ export default function SiteExtras() {
         <ol className="space-y-3">
           {(t('site.pwa.iosSteps', { returnObjects: true }) as string[]).map((step, i) => (
             <li key={i} className="flex gap-3 text-sm">
-              <span className="grid size-7 shrink-0 place-items-center rounded-full bg-brand-50 font-bold text-brand-700">{i + 1}</span>
+              <span className="grid size-7 shrink-0 place-items-center rounded-full bg-sunken font-semibold text-ink">{i + 1}</span>
               <span className="pt-1">
                 {step}
-                {i === 0 && <Share className="ml-1 inline size-4 align-text-bottom text-brand-600" aria-hidden />}
+                {i === 0 && <Share className="ml-1 inline size-4 align-text-bottom text-primary" aria-hidden />}
               </span>
             </li>
           ))}

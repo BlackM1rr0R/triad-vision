@@ -77,7 +77,7 @@ export const LeadScoringSettingsDrawer = ({ open, onClose, canEdit }: { open: bo
               {t('mk.lead.settings.rescore')}
             </Button>
             <span className="flex gap-2">
-              <Button variant="outline" size="sm" onClick={() => data && setS({ ...data.defaults, notifyUserIds: s.notifyUserIds })}>
+              <Button variant="secondary" size="sm" onClick={() => data && setS({ ...data.defaults, notifyUserIds: s.notifyUserIds })}>
                 {t('mk.common.reset')}
               </Button>
               <Button size="sm" loading={save.isPending} disabled={invalid} onClick={() => save.mutate(s)}>
@@ -90,7 +90,7 @@ export const LeadScoringSettingsDrawer = ({ open, onClose, canEdit }: { open: bo
     >
       {!s || !data ? null : (
         <div className="space-y-4">
-          {ro && <p className="rounded-lg bg-surface px-3 py-2 text-xs text-muted">{t('mk.lead.settings.adminOnly')}</p>}
+          {ro && <p className="rounded-lg bg-sunken px-3 py-2 text-xs text-muted">{t('mk.lead.settings.adminOnly')}</p>}
           <label className="flex items-center justify-between gap-3 text-sm font-semibold text-ink">
             {t('mk.lead.settings.enabled')}
             <Switch checked={s.enabled} label={t('mk.lead.settings.enabled')} disabled={ro} onChange={(v) => up({ enabled: v })} />
@@ -99,7 +99,7 @@ export const LeadScoringSettingsDrawer = ({ open, onClose, canEdit }: { open: bo
           <Group title={t('mk.lead.settings.thresholds')}>
             <Num label={t('mk.lead.settings.warm')} value={s.thresholds.warm} min={1} max={100} disabled={ro} onChange={(v) => up({ thresholds: { ...s.thresholds, warm: v } })} />
             <Num label={t('mk.lead.settings.hot')} value={s.thresholds.hot} min={1} max={100} disabled={ro} onChange={(v) => up({ thresholds: { ...s.thresholds, hot: v } })} />
-            {invalid && <p className="py-1.5 text-xs text-danger">{t('mk.lead.settings.invalid')}</p>}
+            {invalid && <p className="py-1.5 text-xs text-danger-fg">{t('mk.lead.settings.invalid')}</p>}
           </Group>
 
           <div className="grid gap-4 sm:grid-cols-2">
@@ -161,7 +161,7 @@ export const LeadScoringSettingsDrawer = ({ open, onClose, canEdit }: { open: bo
                       type="button"
                       disabled={ro || (!on && s.notifyUserIds.length >= 20)}
                       aria-pressed={on}
-                      className={on ? 'rounded-full border border-brand-600 bg-brand-600 px-2.5 py-1 text-xs font-semibold text-white' : 'rounded-full border border-line bg-card px-2.5 py-1 text-xs text-ink hover:border-brand-500'}
+                      className={on ? 'rounded-full border border-primary bg-primary px-2.5 py-1 text-xs font-semibold text-primary-contrast' : 'rounded-full border border-line bg-card px-2.5 py-1 text-xs text-ink hover:border-line-strong'}
                       onClick={() => up({ notifyUserIds: on ? s.notifyUserIds.filter((x) => x !== u.id) : [...s.notifyUserIds, u.id] })}
                     >
                       {u.firstName} {u.lastName}

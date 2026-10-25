@@ -58,7 +58,7 @@ export const SkeletonRows = ({ rows = 5, cols = 4 }: { rows?: number; cols?: num
     {Array.from({ length: rows }, (_, r) => (
       <tr key={r} aria-hidden>
         {Array.from({ length: cols }, (_, c) => (
-          <td key={c} className="px-4 py-3">
+          <td key={c} className="px-[var(--tv-cell-x)] py-[var(--tv-cell-y)]">
             <Skeleton className={clsx('h-3.5', c === 0 ? 'w-3/4' : 'w-1/2')} />
           </td>
         ))}

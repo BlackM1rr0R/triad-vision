@@ -22,8 +22,8 @@ registerCopy(pagesEmployerWorkers);
 
 const Block = ({ title, icon: Icon, children }: { title: string; icon: typeof History; children: ReactNode }) => (
   <section>
-    <h3 className="mb-3 flex items-center gap-2 text-sm font-bold text-navy-900">
-      <Icon className="size-4 text-brand-600" aria-hidden /> {title}
+    <h3 className="type-card-title mb-3 flex items-center gap-2 text-ink">
+      <Icon className="size-4 text-muted" aria-hidden /> {title}
     </h3>
     {children}
   </section>
@@ -94,9 +94,9 @@ export const WorkerDrawer = ({ id, onClose }: { id: string | null; onClose: () =
             <Block title={t('employerWorkers.drawer.openItems')} icon={ClipboardCheck}>
               <ul className="space-y-2">
                 {w.openItems.map((i) => (
-                  <li key={`${i.kind}-${i.id}`} className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm">
+                  <li key={`${i.kind}-${i.id}`} className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-warning-border bg-warning-bg px-4 py-3 text-sm">
                     <span className="min-w-0">
-                      <span className="block text-[11px] font-semibold tracking-wide text-amber-800 uppercase">{t(`employerWorkers.docKind.${i.kind}`)}</span>
+                      <span className="block text-[11px] font-semibold tracking-wide text-warning-fg uppercase">{t(`employerWorkers.docKind.${i.kind}`)}</span>
                       <span className="font-medium text-ink">
                         {i.kind === 'CHECKIN' ? t('employerWorkers.action.ANSWER_CHECKIN') : i.kind === 'ACCELERATED' ? t(`accel.employer.todo.${i.id.split(':')[1]}`, { defaultValue: i.title, fee: euro(data.accelerated?.feeCents) }) : i.title}
                       </span>
@@ -123,7 +123,7 @@ export const WorkerDrawer = ({ id, onClose }: { id: string | null; onClose: () =
                 {data.upcoming.map((u) => (
                   <li key={`${u.code}-${u.at}`} className="flex items-center justify-between gap-3 px-4 py-2.5 text-sm">
                     <span className="text-ink">{t(`employerWorkers.upcomingCode.${u.code}`)}</span>
-                    <span className="font-semibold text-navy-900 tabular-nums">
+                    <span className="num font-semibold text-ink">
                       {u.code === 'DECISION' && u.params?.to ? t('employerWorkers.window', { from: fmtDate(u.at), to: fmtDate(String(u.params.to)) }) : fmtDate(u.at)}
                     </span>
                   </li>
@@ -136,7 +136,7 @@ export const WorkerDrawer = ({ id, onClose }: { id: string | null; onClose: () =
             <ol className="relative ml-2 space-y-3 border-l border-line pl-5">
               {data.timeline.map((e, i) => (
                 <li key={`${e.code}-${e.at}-${i}`} className="relative">
-                  <span className={clsx('absolute top-1 -left-[26px] grid size-3 place-items-center rounded-full ring-4 ring-card', i === data.timeline.length - 1 ? 'bg-brand-600' : 'bg-slate-300')} aria-hidden />
+                  <span className={clsx('absolute top-1 -left-[26px] grid size-3 place-items-center rounded-full ring-4 ring-card', i === data.timeline.length - 1 ? 'bg-primary' : 'bg-line-strong')} aria-hidden />
                   <p className="text-sm text-ink">{t(`employerWorkers.timeline.${e.code}`, { ...(e.params ?? {}), defaultValue: e.code })}</p>
                   <p className="text-xs text-muted tabular-nums">{fmtDate(e.at)}</p>
                 </li>
@@ -215,12 +215,12 @@ export const WorkerDrawer = ({ id, onClose }: { id: string | null; onClose: () =
           </Block>
 
           <Block title={t('employerWorkers.drawer.contact')} icon={CheckCircle2}>
-            <div className="rounded-2xl bg-surface px-4 py-3 text-sm">
+            <div className="rounded-2xl bg-sunken px-4 py-3 text-sm">
               {data.contact.manager ? (
                 <>
                   <p className="text-xs text-muted">{t('employerWorkers.drawer.manager')}</p>
-                  <p className="font-semibold text-navy-900">{data.contact.manager.name}</p>
-                  <a href={`mailto:${data.contact.manager.email}`} className="mt-2 inline-flex items-center gap-1.5 font-semibold text-brand-700 hover:underline">
+                  <p className="font-semibold text-ink">{data.contact.manager.name}</p>
+                  <a href={`mailto:${data.contact.manager.email}`} className="mt-2 inline-flex items-center gap-1.5 font-semibold text-link hover:underline">
                     <Mail className="size-4" aria-hidden /> {t('employerWorkers.drawer.email')}
                   </a>
                 </>
@@ -231,12 +231,12 @@ export const WorkerDrawer = ({ id, onClose }: { id: string | null; onClose: () =
                 <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 border-t border-line pt-3 text-xs">
                   <span className="text-muted">{t('employerWorkers.drawer.office')}:</span>
                   {data.contact.office.phone && (
-                    <a href={`tel:${data.contact.office.phone.replace(/\s+/g, '')}`} className="inline-flex items-center gap-1 font-semibold text-brand-700 hover:underline">
+                    <a href={`tel:${data.contact.office.phone.replace(/\s+/g, '')}`} className="inline-flex items-center gap-1 font-semibold text-link hover:underline">
                       <Phone className="size-3.5" aria-hidden /> {data.contact.office.phone}
                     </a>
                   )}
                   {data.contact.office.email && (
-                    <a href={`mailto:${data.contact.office.email}`} className="inline-flex items-center gap-1 font-semibold text-brand-700 hover:underline">
+                    <a href={`mailto:${data.contact.office.email}`} className="inline-flex items-center gap-1 font-semibold text-link hover:underline">
                       <Mail className="size-3.5" aria-hidden /> {data.contact.office.email}
                     </a>
                   )}

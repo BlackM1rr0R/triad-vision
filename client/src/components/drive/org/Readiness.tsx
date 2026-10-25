@@ -46,13 +46,13 @@ export const ReadinessIndicator = ({ caseId }: { caseId: string }) => {
         className="inline-flex items-center gap-2 rounded-md px-1.5 py-0.5 font-semibold hover:bg-white/60 dark:hover:bg-white/10"
         title={t('driveOrg.readiness.hint')}
       >
-        <span className="h-1.5 w-20 overflow-hidden rounded-full bg-violet-200 dark:bg-violet-900/60" aria-hidden>
-          <span className={clsx('block h-full rounded-full', pct === 100 ? 'bg-emerald-500' : 'bg-violet-600')} style={{ width: `${pct}%` }} />
+        <span className="h-1.5 w-20 overflow-hidden rounded-full bg-accent-bg dark:bg-violet-900/60" aria-hidden>
+          <span className={clsx('block h-full rounded-full', pct === 100 ? 'bg-success' : 'bg-accent')} style={{ width: `${pct}%` }} />
         </span>
         {t('driveOrg.readiness.label', { ready: r.ready, total: r.total })}
       </button>
       {open && (
-        <div className="absolute top-full left-0 z-30 mt-1 w-80 max-w-[90vw] rounded-xl border border-line bg-card p-3 text-xs text-ink shadow-xl">
+        <div className="absolute top-full left-0 z-30 mt-1 w-80 max-w-[90vw] rounded-xl border border-line bg-card p-3 text-xs text-ink shadow-[var(--tv-shadow-raised)]">
           <p className="font-bold">{t('driveOrg.readiness.title', { number: r.caseNumber })}</p>
           <p className="mt-0.5 text-muted">{t('driveOrg.readiness.summary', { missing: r.missing, rejected: r.rejected, pending: r.pending })}</p>
           {open_.length ? (
@@ -63,7 +63,7 @@ export const ReadinessIndicator = ({ caseId }: { caseId: string }) => {
                   const Icon = ICON[i.status];
                   return (
                     <li key={i.id}>
-                      <Link to={r.link} className="flex items-start gap-2 rounded-md px-1.5 py-1 hover:bg-surface">
+                      <Link to={r.link} className="flex items-start gap-2 rounded-md px-1.5 py-1 hover:bg-sunken">
                         <Icon className={clsx('mt-px size-3.5 shrink-0', TONE[i.status])} aria-hidden />
                         <span className="min-w-0 flex-1">
                           <span className="block truncate font-medium">{l10nText(i.title, i18n.language)}</span>
@@ -77,9 +77,9 @@ export const ReadinessIndicator = ({ caseId }: { caseId: string }) => {
                 })}
             </ul>
           ) : (
-            <p className="mt-2 font-semibold text-emerald-600">{t('driveOrg.readiness.allReady')}</p>
+            <p className="mt-2 font-semibold text-success-fg">{t('driveOrg.readiness.allReady')}</p>
           )}
-          <Link to={r.link} className="mt-2 inline-block font-semibold text-brand-700 hover:underline dark:text-brand-300">
+          <Link to={r.link} className="mt-2 inline-block font-semibold text-link hover:underline dark:text-brand-300">
             {t('driveOrg.readiness.openCase')}
           </Link>
         </div>

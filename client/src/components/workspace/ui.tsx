@@ -17,12 +17,12 @@ export const fullName = (p: { firstName: string; lastName?: string | null } | nu
 export const initialsOf = (p: { firstName: string; lastName?: string | null }) => `${p.firstName[0] ?? ''}${p.lastName?.[0] ?? ''}`.toUpperCase() || '?';
 
 const AVATAR_TONES = [
-  'bg-brand-100 text-brand-700',
-  'bg-emerald-100 text-emerald-700',
-  'bg-amber-100 text-amber-800',
-  'bg-violet-100 text-violet-700',
-  'bg-sky-100 text-sky-800',
-  'bg-rose-100 text-rose-700',
+  'bg-primary/10 text-link',
+  'bg-success-bg text-success-fg',
+  'bg-warning-bg text-warning-fg',
+  'bg-accent-bg text-accent-fg',
+  'bg-info-bg text-info-fg',
+  'bg-danger-bg text-danger-fg',
 ];
 export const avatarTone = (id: string) => {
   let h = 0;
@@ -45,7 +45,7 @@ export const Avatar = ({ id, person, size = 'md', className }: { id: string; per
 );
 
 export const PresenceDot = ({ online, className }: { online: boolean; className?: string }) => (
-  <span className={clsx('inline-block size-2.5 rounded-full ring-2 ring-card', online ? 'bg-success' : 'bg-slate-400', className)} aria-hidden />
+  <span className={clsx('inline-block size-2.5 rounded-full ring-2 ring-card', online ? 'bg-success' : 'bg-subtle', className)} aria-hidden />
 );
 
 /** Error code → translated message (ws.errors.*), else the generic failure text. */
@@ -84,12 +84,12 @@ export const utcDayKey = (iso: string) => iso.slice(0, 10);
 // ─── Layout bits ───────────────────────────────────────────────────────
 
 export const Card = ({ title, icon: Icon, actions, children, className, bodyClassName, id }: { title?: ReactNode; icon?: LucideIcon; actions?: ReactNode; children: ReactNode; className?: string; bodyClassName?: string; id?: string }) => (
-  <section id={id} className={clsx('min-w-0 rounded-2xl border border-line bg-card shadow-[0_1px_2px_rgba(11,31,68,0.05)]', className)}>
+  <section id={id} className={clsx('min-w-0 rounded-xl border border-line bg-card shadow-[var(--tv-shadow-card)]', className)}>
     {(title || actions) && (
       <header className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 border-b border-line px-4 py-3 sm:px-5">
         {title && (
           <h2 className="flex min-w-0 items-center gap-2 text-sm font-semibold text-ink">
-            {Icon && <Icon className="size-4 shrink-0 text-brand-600" aria-hidden />}
+            {Icon && <Icon className="size-4 shrink-0 text-link" aria-hidden />}
             {title}
           </h2>
         )}
@@ -116,12 +116,12 @@ export const Chip = ({ children, tone = 'neutral', className }: { children: Reac
     className={clsx(
       'badge whitespace-nowrap',
       {
-        neutral: 'bg-surface text-ink ring-1 ring-line',
+        neutral: 'bg-sunken text-ink ring-1 ring-line',
         brand: TONE_CLASS.brand,
         success: TONE_CLASS.success,
         warn: TONE_CLASS.warning,
         danger: TONE_CLASS.danger,
-        muted: 'bg-surface text-muted',
+        muted: 'bg-sunken text-muted',
       }[tone],
       className,
     )}
@@ -143,7 +143,7 @@ export const Field = ({ label, hint, children, className }: { label: ReactNode; 
 
 export const Toggle = ({ checked, onChange, label }: { checked: boolean; onChange: (v: boolean) => void; label: ReactNode }) => (
   <label className="flex cursor-pointer items-center gap-2.5 text-sm text-ink">
-    <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} className="size-4 rounded border-line accent-brand-600" />
+    <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} className="size-4 rounded border-line accent-primary" />
     {label}
   </label>
 );

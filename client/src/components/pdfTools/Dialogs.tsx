@@ -25,7 +25,7 @@ import {
 
 /** One-shot PDF tool dialogs opened from the drive's context menu (lazy-loaded by usePdfTools). */
 
-const field = 'w-full rounded-lg border border-line bg-card px-3 py-2 text-sm text-ink focus:border-brand-500 focus:outline-none';
+const field = 'w-full rounded-lg border border-line bg-card px-3 py-2 text-sm text-ink focus:border-focus focus:outline-none';
 const label = 'mb-1 block text-xs font-semibold text-muted';
 
 export const SaveAsChoice = ({ value, onChange, canVersion }: { value: SaveAs; onChange: (v: SaveAs) => void; canVersion: boolean }) => {
@@ -39,7 +39,7 @@ export const SaveAsChoice = ({ value, onChange, canVersion }: { value: SaveAs; o
             key={v}
             className={clsx(
               'flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm',
-              value === v ? 'border-brand-500 bg-brand-50 text-ink dark:bg-brand-500/10' : 'border-line text-ink',
+              value === v ? 'border-primary bg-primary/[0.06] text-ink dark:bg-brand-500/10' : 'border-line text-ink',
               v === 'version' && !canVersion && 'cursor-not-allowed opacity-50',
             )}
           >
@@ -53,7 +53,7 @@ export const SaveAsChoice = ({ value, onChange, canVersion }: { value: SaveAs; o
 };
 
 const FileList = ({ items }: { items: DriveItem[] }) => (
-  <ul className="max-h-32 space-y-1 overflow-y-auto rounded-lg border border-line bg-surface p-2">
+  <ul className="max-h-32 space-y-1 overflow-y-auto rounded-lg border border-line bg-sunken p-2">
     {items.map((i) => (
       <li key={i.id} className="flex items-center gap-2 text-sm text-ink">
         <ItemIcon item={i} className="size-4" />
@@ -123,7 +123,7 @@ export const CompressDialog = ({ items, toPdf: forcePdf = false, onClose, onDone
       {rows ? (
         <ul className="space-y-2">
           {rows.map((r) => (
-            <li key={r.id} className={clsx('rounded-lg border px-3 py-2 text-sm', r.ok ? 'border-line text-ink' : 'border-red-300 text-red-700')}>
+            <li key={r.id} className={clsx('rounded-lg border px-3 py-2 text-sm', r.ok ? 'border-line text-ink' : 'border-danger-border text-danger-fg')}>
               {!r.ok ? (
                 <>
                   {nameOf(r.id)}: {toolError(r.error ?? 'UNKNOWN')}
@@ -133,7 +133,7 @@ export const CompressDialog = ({ items, toPdf: forcePdf = false, onClose, onDone
               ) : (
                 <>
                   <div className="font-medium">{t('pdfTools.compress.result', { name: r.name ?? nameOf(r.id), before: formatSize(r.before ?? 0), after: formatSize(r.after ?? 0) })}</div>
-                  <div className={clsx('text-xs', r.reached ? 'text-emerald-700 dark:text-emerald-300' : 'text-amber-700 dark:text-amber-300')}>
+                  <div className={clsx('text-xs', r.reached ? 'text-success-fg dark:text-emerald-300' : 'text-warning-fg dark:text-amber-300')}>
                     {r.reached ? t('pdfTools.compress.reached') : t('pdfTools.compress.notReached')}
                     {saveAs === 'version' && r.savedAs === 'copy' && ` · ${t('pdfTools.compress.formatCopy')}`}
                   </div>
@@ -226,7 +226,7 @@ export const WatermarkDialog = ({ items, onClose, onDone }: { items: DriveItem[]
           <span className={label}>{t('pdfTools.watermark.presets')}</span>
           <div className="flex flex-wrap gap-2">
             {PRESETS.map((p) => (
-              <button key={p} type="button" onClick={() => setText(p)} className={clsx('rounded-full border px-3 py-1 text-xs font-semibold', text === p ? 'border-brand-500 bg-brand-50 text-brand-700 dark:bg-brand-500/10' : 'border-line text-ink hover:bg-surface')}>
+              <button key={p} type="button" onClick={() => setText(p)} className={clsx('rounded-full border px-3 py-1 text-xs font-semibold', text === p ? 'border-primary bg-primary/[0.06] text-link dark:bg-brand-500/10' : 'border-line text-ink hover:bg-sunken')}>
                 {p}
               </button>
             ))}
@@ -364,19 +364,19 @@ export const MergeDialog = ({ items, onClose, onDone }: { items: DriveItem[]; on
               <span className="w-5 text-right text-xs font-semibold text-muted">{i + 1}.</span>
               <ItemIcon item={it} className="size-4" />
               <span className="min-w-0 flex-1 truncate text-ink">{it.name}</span>
-              <button type="button" className="rounded p-1 text-muted hover:bg-surface disabled:opacity-30" disabled={i === 0} onClick={() => move(i, -1)} title={t('pdfTools.merge.up')} aria-label={t('pdfTools.merge.up')}>
+              <button type="button" className="rounded p-1 text-muted hover:bg-sunken disabled:opacity-30" disabled={i === 0} onClick={() => move(i, -1)} title={t('pdfTools.merge.up')} aria-label={t('pdfTools.merge.up')}>
                 <ArrowUp className="size-4" />
               </button>
-              <button type="button" className="rounded p-1 text-muted hover:bg-surface disabled:opacity-30" disabled={i === list.length - 1} onClick={() => move(i, 1)} title={t('pdfTools.merge.down')} aria-label={t('pdfTools.merge.down')}>
+              <button type="button" className="rounded p-1 text-muted hover:bg-sunken disabled:opacity-30" disabled={i === list.length - 1} onClick={() => move(i, 1)} title={t('pdfTools.merge.down')} aria-label={t('pdfTools.merge.down')}>
                 <ArrowDown className="size-4" />
               </button>
-              <button type="button" className="rounded p-1 text-muted hover:bg-surface hover:text-red-600" onClick={() => setList((l) => l.filter((x) => x.id !== it.id))} title={t('pdfTools.merge.remove')} aria-label={t('pdfTools.merge.remove')}>
+              <button type="button" className="rounded p-1 text-muted hover:bg-sunken hover:text-danger-fg" onClick={() => setList((l) => l.filter((x) => x.id !== it.id))} title={t('pdfTools.merge.remove')} aria-label={t('pdfTools.merge.remove')}>
                 <X className="size-4" />
               </button>
             </li>
           ))}
         </ol>
-        {list.length < 2 && <p className="text-xs text-amber-700">{t('pdfTools.merge.needTwo')}</p>}
+        {list.length < 2 && <p className="text-xs text-warning-fg">{t('pdfTools.merge.needTwo')}</p>}
         <button type="button" className="btn-secondary btn-sm" onClick={() => setPicking(true)}>
           <Plus className="size-4" /> {t('pdfTools.merge.add')}
         </button>

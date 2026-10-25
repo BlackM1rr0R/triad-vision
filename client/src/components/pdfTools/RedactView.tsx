@@ -80,7 +80,7 @@ export const RedactView = ({ doc, info, onSaved }: { doc: PDFDocumentProxy; info
           {busy ? <Spinner className="size-3.5" /> : <EyeOff className="size-4" />} {busy ? t('pdfTools.redact.working') : t('pdfTools.redact.apply')}
         </button>
       </div>
-      <div className="flex items-start gap-2 border-b border-amber-200 bg-amber-50 px-4 py-2 text-xs text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200">
+      <div className="flex items-start gap-2 border-b border-warning-border bg-warning-bg px-4 py-2 text-xs text-warning-fg dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200">
         <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden /> {t('pdfTools.redact.warn')}
       </div>
       <PageViewer
@@ -119,13 +119,13 @@ export const RedactView = ({ doc, info, onSaved }: { doc: PDFDocumentProxy; info
               {list.map((b, i) => (
                 <div
                   key={i}
-                  className="absolute bg-black/85 ring-1 ring-red-500"
+                  className="absolute bg-black/85 ring-1 ring-danger"
                   style={{ left: b.x * scale, top: b.y * scale, width: b.w * scale, height: b.h * scale }}
                   onPointerDown={(e) => e.stopPropagation()}
                   onDoubleClick={() => setBoxes((all) => ({ ...all, [page]: (all[page] ?? []).filter((_, j) => j !== i) }))}
                 />
               ))}
-              {draft && <div className="absolute border-2 border-red-500 bg-black/50" style={{ left: draft.x * scale, top: draft.y * scale, width: draft.w * scale, height: draft.h * scale }} />}
+              {draft && <div className="absolute border-2 border-danger bg-black/50" style={{ left: draft.x * scale, top: draft.y * scale, width: draft.w * scale, height: draft.h * scale }} />}
             </div>
           );
         }}

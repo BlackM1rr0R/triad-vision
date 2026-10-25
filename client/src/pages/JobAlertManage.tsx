@@ -1,7 +1,8 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { BellOff, BellRing, CheckCircle2, CircleAlert } from 'lucide-react';
+import { BellOff, BellRing, CheckCircle2 } from 'lucide-react';
+import { Lost } from '@/components/illustrations';
 import { api } from '@/lib/api';
 import { toast } from 'sonner';
 import { Spinner } from '@/components/ui/Spinner';
@@ -97,19 +98,19 @@ export default function JobAlertManage() {
   };
 
   return (
-    <section className="section bg-surface pt-28 sm:pt-36">
+    <section className="section bg-canvas pt-28 sm:pt-36 lg:pt-40">
       <div className="container-x max-w-2xl">
-        <h1 className="h-section text-navy-900">{t('discover.alerts.manage.title')}</h1>
+        <h1 className="h-section text-ink">{t('discover.alerts.manage.title')}</h1>
         {status === 'loading' ? (
           <p className="mt-6 flex items-center gap-2 text-sm text-muted">
             <Spinner className="size-4" /> {action === 'confirm' ? t('discover.alerts.manage.confirming') : t('discover.alerts.manage.loading')}
           </p>
         ) : status === 'invalid' || !alert ? (
-          <div className="card card-pad mt-6 flex gap-3">
-            <CircleAlert className="mt-0.5 size-5 shrink-0 text-amber-600" aria-hidden />
+          <div className="card card-pad mt-6 flex flex-col items-center gap-4 rounded-3xl text-center sm:flex-row sm:text-left">
+            <Lost className="w-32 shrink-0" />
             <div>
               <p className="text-sm text-ink">{t('discover.alerts.manage.invalid')}</p>
-              <Link to="/jobs" className="btn-primary btn-sm mt-4">
+              <Link to="/jobs" className="btn-primary mt-4">
                 {t('discover.alerts.manage.toJobs')}
               </Link>
             </div>
@@ -117,7 +118,7 @@ export default function JobAlertManage() {
         ) : (
           <div className="mt-6 space-y-5">
             {notice && (
-              <p className="flex items-start gap-2 rounded-xl bg-emerald-50 p-4 text-sm text-emerald-900" role="status">
+              <p className="flex items-start gap-2 rounded-xl bg-success-bg p-4 text-sm text-success-fg" role="status">
                 <CheckCircle2 className="mt-0.5 size-4 shrink-0" aria-hidden /> {notice}
               </p>
             )}
@@ -125,11 +126,11 @@ export default function JobAlertManage() {
               <dl className="grid gap-3 text-sm sm:grid-cols-2">
                 <div>
                   <dt className="text-xs font-semibold text-muted">{t('discover.alerts.manage.emailLabel')}</dt>
-                  <dd className="mt-0.5 font-semibold text-navy-900">{alert.email}</dd>
+                  <dd className="mt-0.5 font-semibold text-ink">{alert.email}</dd>
                 </div>
                 <div>
                   <dt className="text-xs font-semibold text-muted">{t('discover.alerts.manage.status')}</dt>
-                  <dd className="mt-0.5 font-semibold text-navy-900">
+                  <dd className="mt-0.5 font-semibold text-ink">
                     {alert.unsubscribed ? t('discover.alerts.manage.paused') : alert.confirmed ? t('discover.alerts.manage.active') : t('discover.alerts.manage.pending')}
                   </dd>
                 </div>
@@ -137,8 +138,8 @@ export default function JobAlertManage() {
             </div>
 
             {action === 'unsubscribe' && !alert.unsubscribed && (
-              <div className="card card-pad border-amber-200">
-                <h2 className="font-display text-lg font-bold text-navy-900">{t('discover.alerts.manage.unsubscribeTitle')}</h2>
+              <div className="card card-pad border-warning-border">
+                <h2 className="type-card-title text-ink">{t('discover.alerts.manage.unsubscribeTitle')}</h2>
                 <p className="mt-1 text-sm text-muted">{t('discover.alerts.manage.unsubscribeText')}</p>
                 <button type="button" className="btn-primary mt-4" disabled={busy} onClick={() => void post('unsubscribe')}>
                   <BellOff className="size-4" aria-hidden /> {t('discover.alerts.manage.unsubscribeBtn')}
@@ -147,7 +148,7 @@ export default function JobAlertManage() {
             )}
 
             {alert.unsubscribed ? (
-              <button type="button" className="btn-outline" disabled={busy} onClick={() => void post('resume')}>
+              <button type="button" className="btn-primary" disabled={busy} onClick={() => void post('resume')}>
                 <BellRing className="size-4" aria-hidden /> {t('discover.alerts.manage.resume')}
               </button>
             ) : (
@@ -172,7 +173,7 @@ export default function JobAlertManage() {
                     <div className="flex flex-wrap gap-x-4 gap-y-2 pt-2">
                       {(options?.kinds ?? []).map((k) => (
                         <label key={k} className="inline-flex cursor-pointer items-center gap-2 text-sm text-ink">
-                          <input type="checkbox" className="size-4 accent-brand-600" checked={draft.kinds.includes(k)} onChange={() => setDraft((d) => ({ ...d, kinds: d.kinds.includes(k) ? d.kinds.filter((x) => x !== k) : [...d.kinds, k] }))} />
+                          <input type="checkbox" className="size-4 accent-primary" checked={draft.kinds.includes(k)} onChange={() => setDraft((d) => ({ ...d, kinds: d.kinds.includes(k) ? d.kinds.filter((x) => x !== k) : [...d.kinds, k] }))} />
                           {t(`discover.alerts.kind.${k}`)}
                         </label>
                       ))}
@@ -184,14 +185,14 @@ export default function JobAlertManage() {
                     {t('discover.alerts.manage.save')}
                   </button>
                   {action !== 'unsubscribe' && (
-                    <button type="button" className="btn-ghost" disabled={busy} onClick={() => void post('unsubscribe')}>
+                    <button type="button" className="btn-secondary" disabled={busy} onClick={() => void post('unsubscribe')}>
                       <BellOff className="size-4" aria-hidden /> {t('discover.alerts.manage.unsubscribeBtn')}
                     </button>
                   )}
                 </div>
               </div>
             )}
-            <Link to="/jobs" className="inline-flex text-sm font-semibold text-brand-700 hover:underline">
+            <Link to="/jobs" className="inline-flex text-sm font-semibold text-link hover:underline">
               {t('discover.alerts.manage.toJobs')}
             </Link>
           </div>

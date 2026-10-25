@@ -1,6 +1,7 @@
 import { ContactCallbackCard } from '@/components/calls/CallbackForm';
 import { useTranslation } from 'react-i18next';
 import { Clock, Mail, MapPin, MessageCircle, Phone } from 'lucide-react';
+import clsx from 'clsx';
 import { PageHero } from '@/components/layout/PageHero';
 import { Reveal, Stagger, StaggerItem } from '@/components/motion';
 import { InquiryForm } from '@/components/InquiryForm';
@@ -29,25 +30,25 @@ export default function Contact() {
   return (
     <>
       <PageHero title={t('contact.title')} subtitle={t('contact.subtitle')} image="https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=2000&q=70" />
-      <section className="relative z-10 -mt-12">
+      <section className="pt-10 sm:pt-14">
         <div className="container-x">
           <Stagger className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {cards.map((card) => {
+            {cards.map((card, i) => {
               const inner = (
-                <div className="card group flex h-full items-center gap-4 p-5 sm:p-6 transition duration-500 hover:-translate-y-1 hover:shadow-2xl">
-                  <span className="grid size-12 shrink-0 place-items-center rounded-xl bg-brand-600 text-white transition group-hover:rotate-[-8deg]">
-                    <card.icon className="size-6" />
+                <div className={clsx('card flex h-full min-h-20 items-center gap-4 p-5 sm:p-6', card.href && 'card-interactive')}>
+                  <span className={clsx('grid size-11 shrink-0 place-items-center rounded-xl', ['chip-soft', 'chip-sage', 'chip-sky', 'chip-peach'][i % 4])}>
+                    <card.icon className="size-5" />
                   </span>
                   <span className="min-w-0">
-                    <span className="block text-xs font-semibold text-muted uppercase">{card.label}</span>
-                    <span className="block truncate font-bold text-navy-900">{card.value}</span>
+                    <span className="block text-xs font-semibold tracking-wide text-muted uppercase">{card.label}</span>
+                    <span className="block truncate font-bold text-ink">{card.value}</span>
                   </span>
                 </div>
               );
               return (
                 <StaggerItem key={card.label}>
                   {card.href ? (
-                    <a href={card.href} target={card.href.startsWith('http') ? '_blank' : undefined} rel="noreferrer">
+                    <a href={card.href} target={card.href.startsWith('http') ? '_blank' : undefined} rel="noreferrer" className="block h-full rounded-2xl">
                       {inner}
                     </a>
                   ) : (
@@ -63,8 +64,8 @@ export default function Contact() {
       <section className="section">
         <div className="container-x grid gap-10 lg:grid-cols-[1.1fr_0.9fr]">
           <Reveal>
-            <div className="card card-pad sm:p-10">
-              <h2 className="mb-6 font-display text-2xl font-extrabold text-navy-900">{t('contact.formTitle')}</h2>
+            <div className="card card-pad rounded-3xl sm:p-10">
+              <h2 className="mb-6 font-display text-2xl font-semibold text-ink">{t('contact.formTitle')}</h2>
               <InquiryForm kind="contact" />
             </div>
           </Reveal>
@@ -73,7 +74,7 @@ export default function Contact() {
             <StatusBox />
             {/* "Mənə zəng edin": callback request in a Baku office-hours window */}
             <ContactCallbackCard />
-            <h2 className="font-display text-2xl font-extrabold text-navy-900">{t('contact.offices')}</h2>
+            <h2 className="font-display text-2xl font-semibold text-ink">{t('contact.offices')}</h2>
             {c?.offices.map((o, i) => (
               <Reveal key={o.address} delay={i * 0.1}>
                 <div className="card overflow-hidden">
@@ -84,9 +85,9 @@ export default function Contact() {
                     src={`https://www.openstreetmap.org/export/embed.html?bbox=${o.lng - 0.012}%2C${o.lat - 0.006}%2C${o.lng + 0.012}%2C${o.lat + 0.006}&layer=mapnik&marker=${o.lat}%2C${o.lng}`}
                   />
                   <div className="flex items-start gap-3 p-5">
-                    <MapPin className="mt-0.5 size-5 shrink-0 text-brand-600" />
+                    <MapPin className="mt-0.5 size-5 shrink-0 text-muted" />
                     <div>
-                      <p className="font-bold text-navy-900">{tr(o.city)}</p>
+                      <p className="font-semibold text-ink">{tr(o.city)}</p>
                       <p className="text-sm text-muted">{o.address}</p>
                     </div>
                   </div>

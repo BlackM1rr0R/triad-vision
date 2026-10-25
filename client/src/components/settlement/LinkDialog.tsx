@@ -61,7 +61,7 @@ export const LinkDialog = ({ row, onClose, onLinked }: { row: Row; onClose: () =
           {score != null && ` · ${Math.round(score * 100)}%`}
         </div>
       </div>
-      <button type="button" className="btn-ghost btn-sm" disabled={busy || row.caseId === id} onClick={() => void link(id)}>
+      <button type="button" className="btn-secondary btn-sm" disabled={busy || row.caseId === id} onClick={() => void link(id)}>
         <Link2 className="size-4" /> {t('settlement.link.link')}
       </button>
     </li>
@@ -70,7 +70,7 @@ export const LinkDialog = ({ row, onClose, onLinked }: { row: Row; onClose: () =
   return (
     <Modal title={`${t('settlement.link.title')}: ${row.clientName}`} onClose={onClose}>
       <p className="text-xs text-muted">{t('settlement.link.followHint')}</p>
-      <div className="mt-3 rounded-xl border border-line bg-surface p-3 text-sm">
+      <div className="mt-3 rounded-xl border border-line bg-sunken p-3 text-sm">
         {row.case ? (
           <div className="flex flex-wrap items-center gap-2">
             <span className="font-semibold">{t('settlement.link.linkedTo', { number: row.case.number })}</span>
@@ -78,7 +78,7 @@ export const LinkDialog = ({ row, onClose, onLinked }: { row: Row; onClose: () =
               {row.case.clientName} · {row.case.status}
             </span>
             <span className="ml-auto flex gap-1">
-              <Link to={`/admin/cases/${row.case.id}`} className="btn-ghost btn-sm">
+              <Link to={`/admin/cases/${row.case.id}`} className="btn-secondary btn-sm">
                 <ExternalLink className="size-4" /> {t('settlement.link.open')}
               </Link>
               <button type="button" className="btn-danger btn-sm" disabled={busy} onClick={() => void link(null)}>

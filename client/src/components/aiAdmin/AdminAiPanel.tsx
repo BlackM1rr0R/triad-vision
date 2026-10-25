@@ -74,7 +74,7 @@ export const AdminAiButton = ({ open, onClick, className }: { open: boolean; onC
       title={t('aiAdmin.buttonTitle')}
       className={clsx(
         'inline-flex shrink-0 items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm font-semibold transition',
-        open ? 'bg-brand-600 text-white hover:brightness-110' : 'text-brand-700 hover:bg-brand-50 dark:text-brand-300 dark:hover:bg-navy-800',
+        open ? 'bg-primary text-primary-contrast hover:brightness-110' : 'text-link hover:bg-primary/[0.06] dark:text-brand-300 dark:hover:bg-navy-800',
         className,
       )}
     >
@@ -114,9 +114,9 @@ export const AdminAiPanel = ({ open, onClose, context, hint, variant = 'dock', c
   const body = (
     <div className="flex h-full min-h-0 flex-col bg-card">
       <div className="flex shrink-0 items-center gap-2 border-b border-line px-3 py-2">
-        <Sparkles className="size-4 text-brand-600" />
+        <Sparkles className="size-4 text-link" />
         <h2 className="min-w-0 flex-1 truncate text-sm font-bold text-ink">{t('aiAdmin.title')}</h2>
-        <button type="button" onClick={onClose} className="rounded p-1 text-muted hover:bg-surface hover:text-ink" aria-label={t('aiAdmin.close')}>
+        <button type="button" onClick={onClose} className="rounded p-1 text-muted hover:bg-sunken hover:text-ink" aria-label={t('aiAdmin.close')}>
           <X className="size-4" />
         </button>
       </div>
@@ -124,7 +124,7 @@ export const AdminAiPanel = ({ open, onClose, context, hint, variant = 'dock', c
         <div className="shrink-0 border-b border-line/70 px-3 py-2">
           <button
             type="button"
-            className="rounded-full border border-brand-200 bg-brand-50 px-3 py-1 text-xs font-semibold text-brand-700 hover:bg-brand-100 dark:border-navy-700 dark:bg-navy-800 dark:text-brand-200"
+            className="rounded-full border border-primary/25 bg-primary/[0.06] px-3 py-1 text-xs font-semibold text-link hover:bg-primary/10 dark:border-navy-700 dark:bg-navy-800 dark:text-brand-200"
             onClick={() => window.dispatchEvent(new CustomEvent('ai:prefill', { detail: { text: hint, context } }))}
           >
             {hint}
@@ -152,7 +152,7 @@ export const AdminAiPanel = ({ open, onClose, context, hint, variant = 'dock', c
   // One chat instance only: docked on wide screens, an overlay below lg.
   if (wide && variant === 'float') {
     return (
-      <aside className={clsx('fixed inset-y-0 right-0 z-40 w-[24rem] border-l border-line shadow-xl', className)} aria-label={t('aiAdmin.title')}>
+      <aside className={clsx('fixed inset-y-0 right-0 z-40 w-[24rem] border-l border-line shadow-[var(--tv-shadow-raised)]', className)} aria-label={t('aiAdmin.title')}>
         {body}
       </aside>
     );
@@ -165,8 +165,8 @@ export const AdminAiPanel = ({ open, onClose, context, hint, variant = 'dock', c
     // TODO(ui): same chat body is docked on lg+ and an overlay below lg (body has its own header / close),
     // so it is not the design-system Drawer yet; it lacks focus trap / Escape. Revisit with the admin layout rework.
     <div className="fixed inset-0 z-50">
-      <button type="button" className="absolute inset-0 bg-navy-900/50" onClick={onClose} aria-label={t('aiAdmin.close')} />
-      <aside className="absolute inset-y-0 right-0 w-[26rem] max-w-[94vw] border-l border-line shadow-xl" aria-label={t('aiAdmin.title')}>
+      <button type="button" className="absolute inset-0 bg-scrim" onClick={onClose} aria-label={t('aiAdmin.close')} />
+      <aside className="absolute inset-y-0 right-0 w-[26rem] max-w-[94vw] border-l border-line shadow-[var(--tv-shadow-raised)]" aria-label={t('aiAdmin.title')}>
         {body}
       </aside>
     </div>

@@ -16,8 +16,8 @@ export const HelpGuide = ({ helpKey, compact }: { helpKey: HelpKey; compact?: bo
       {!compact && <h3 className="font-display text-lg font-bold text-ink">{t(`${base}.title`)}</h3>}
       <p className="text-[15px]">{t(`${base}.summary`)}</p>
       {i18n.exists(`${base}.who`) && (
-        <p className="flex items-start gap-2 rounded-xl bg-surface px-3.5 py-2.5 text-[13px] text-ink/80">
-          <UserCheck className="mt-0.5 size-4 shrink-0 text-brand-600" aria-hidden />
+        <p className="flex items-start gap-2 rounded-xl bg-sunken px-3.5 py-2.5 text-[13px] text-ink/80">
+          <UserCheck className="mt-0.5 size-4 shrink-0 text-link" aria-hidden />
           <span>
             <span className="font-semibold text-ink">{t('adminHelpUi.who')}: </span>
             {t(`${base}.who`)}
@@ -30,7 +30,7 @@ export const HelpGuide = ({ helpKey, compact }: { helpKey: HelpKey; compact?: bo
           <ol className="space-y-2">
             {steps.map((s, i) => (
               <li key={i} className="flex gap-3">
-                <span className="grid size-6 shrink-0 place-items-center rounded-full bg-brand-100 text-xs font-bold text-brand-700">{i + 1}</span>
+                <span className="grid size-6 shrink-0 place-items-center rounded-full bg-primary/10 text-xs font-bold text-link">{i + 1}</span>
                 <span className="pt-0.5">{s}</span>
               </li>
             ))}
@@ -43,7 +43,7 @@ export const HelpGuide = ({ helpKey, compact }: { helpKey: HelpKey; compact?: bo
           <ul className="space-y-2">
             {tips.map((s, i) => (
               <li key={i} className="flex gap-2.5">
-                {i === 0 ? <Lightbulb className="mt-0.5 size-4 shrink-0 text-amber-500" aria-hidden /> : <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-emerald-600" aria-hidden />}
+                {i === 0 ? <Lightbulb className="mt-0.5 size-4 shrink-0 text-warning-fg" aria-hidden /> : <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-success-fg" aria-hidden />}
                 <span>{s}</span>
               </li>
             ))}

@@ -3,7 +3,7 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
 import { toast } from 'sonner';
-import { Check, Circle, LinkIcon, Mail, PackageCheck } from 'lucide-react';
+import { Check, Circle, Mail, PackageCheck } from 'lucide-react';
 import { api, errorCode } from '@/lib/api';
 import i18n, { registerCopy } from '@/i18n';
 import { pagesPackages } from '@/i18n/pagesPackages';
@@ -12,6 +12,8 @@ import { usePageTitle } from '@/lib/usePageTitle';
 import { useL10n } from '@/lib/l10n';
 import type { L10n } from '@/lib/types';
 import { Spinner } from '@/components/ui/Spinner';
+import { buttonClass } from '@/components/ui/Button';
+import { Lost, Success } from '@/components/illustrations';
 import { useScheduleLine } from './Packages';
 
 registerCopy(pagesPackages);
@@ -63,26 +65,25 @@ export default function PackageOrderStatus() {
     : [];
 
   return (
-    <div className="min-h-screen bg-surface px-4 pt-24 pb-16 sm:pt-28 lg:pt-36">
+    <div className="min-h-screen bg-canvas px-4 pt-24 pb-16 sm:pt-28 lg:pt-36">
       <div className="mx-auto max-w-2xl space-y-5">
         {q.isLoading ? (
-          <div className="grid min-h-[40vh] place-items-center text-brand-600" role="status" aria-label={t('pkgs.status.title')}>
+          <div className="grid min-h-[40vh] place-items-center text-primary" role="status" aria-label={t('pkgs.status.title')}>
             <Spinner className="size-8 border-[3px]" />
           </div>
         ) : q.error || !o ? (
-          <div className="card flex flex-col items-center px-6 py-14 text-center">
-            <span className="grid size-12 place-items-center rounded-full bg-danger-bg text-danger-fg">
-              <LinkIcon className="size-5" aria-hidden />
-            </span>
-            <h1 className="mt-3 font-display text-xl font-bold text-navy-900">{t('pkgs.status.invalidTitle')}</h1>
+          <div className="card flex flex-col items-center rounded-3xl px-6 py-14 text-center">
+            <Lost className="w-40" />
+            <h1 className="mt-5 font-display text-xl font-semibold text-ink">{t('pkgs.status.invalidTitle')}</h1>
             <p className="mt-1 max-w-md text-sm text-muted">{t('pkgs.status.invalidText')}</p>
           </div>
         ) : (
-          <div className="card p-6 sm:p-8">
-            <p className="eyebrow inline-flex items-center gap-1.5 text-brand-600">
+          <div className="card rounded-3xl p-6 sm:p-8">
+            <Success className="mb-5 w-32" />
+            <p className="eyebrow inline-flex items-center gap-1.5">
               <PackageCheck className="size-4" aria-hidden /> {t('pkgs.status.title')}
             </p>
-            <h1 className="mt-2 font-display text-2xl font-bold text-navy-900">{t('pkgs.status.hello', { name: o.firstName })}</h1>
+            <h1 className="mt-2 font-display text-2xl font-semibold text-ink sm:text-3xl">{t('pkgs.status.hello', { name: o.firstName })}</h1>
             {o.package && (
               <p className="mt-1 text-sm text-muted">
                 {tr(o.package.title)} · {money(o.priceCents, o.currency)}
@@ -91,21 +92,21 @@ export default function PackageOrderStatus() {
             <ol className="mt-6 space-y-3">
               {steps.map((s) => (
                 <li key={s.key} className="flex items-center gap-3 text-sm">
-                  <span className={clsx('grid size-7 place-items-center rounded-full', s.done ? 'bg-success-bg text-success-fg' : 'bg-surface text-muted')}>
+                  <span className={clsx('grid size-8 place-items-center rounded-full', s.done ? 'bg-success-bg text-success-fg' : 'bg-sunken text-muted')}>
                     {s.done ? <Check className="size-4" aria-hidden /> : <Circle className="size-3" aria-hidden />}
                   </span>
                   <span className={clsx(s.done ? 'font-semibold text-ink' : 'text-muted')}>{t(`pkgs.status.steps.${s.key}`)}</span>
                 </li>
               ))}
             </ol>
-            <div className="mt-6 rounded-xl bg-surface p-4 text-sm text-ink" aria-live="polite">
+            <div className="mt-6 rounded-2xl bg-sunken p-4 text-ink sm:p-5" aria-live="polite">
               {o.status === 'CANCELLED' ? (
                 <p>{t('pkgs.status.cancelled')}</p>
               ) : o.status === 'ACTIVE' ? (
                 <>
                   <p>{t('pkgs.status.active', { case: o.caseNumber ?? '' })}</p>
                   {o.firstInvoice && <p className="mt-2 font-semibold">{t('pkgs.status.firstInvoice', { number: o.firstInvoice.number, amount: money(o.firstInvoice.grossCents, o.currency) })}</p>}
-                  <Link to="/login" className="btn-primary btn-sm mt-4">
+                  <Link to="/login" className={buttonClass({ className: 'mt-4' })}>
                     {t('pkgs.status.login')}
                   </Link>
                 </>
@@ -116,9 +117,9 @@ export default function PackageOrderStatus() {
               ) : (
                 <>
                   <p className="flex items-start gap-2">
-                    <Mail className="mt-0.5 size-4 shrink-0 text-brand-600" aria-hidden /> {t('pkgs.status.started', { email: o.email })}
+                    <Mail className="mt-1 size-4 shrink-0 text-muted" aria-hidden /> {t('pkgs.status.started', { email: o.email })}
                   </p>
-                  <button type="button" className="btn-secondary btn-sm mt-4" disabled={resend.isPending} onClick={() => resend.mutate()}>
+                  <button type="button" className={buttonClass({ variant: 'secondary', className: 'mt-4' })} disabled={resend.isPending} onClick={() => resend.mutate()}>
                     {resend.isPending && <Spinner className="size-3.5" />}
                     {t('pkgs.status.resend')}
                   </button>
@@ -127,7 +128,7 @@ export default function PackageOrderStatus() {
             </div>
             {o.package && o.package.installments.length > 0 && (
               <div className="mt-5 text-sm">
-                <p className="font-semibold text-navy-900">{t('pkgs.schedule')}</p>
+                <p className="font-semibold text-ink">{t('pkgs.schedule')}</p>
                 <ul className="mt-1 space-y-0.5 text-muted">
                   {o.package.installments.map((i, k) => (
                     <li key={k}>{schedule(i)}</li>

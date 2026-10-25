@@ -2,12 +2,11 @@ import { useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ArrowRight, BadgeCheck, Briefcase, CalendarCheck, GraduationCap, HeartHandshake, Map as MapIcon, Scale, UserCheck, Users, Wrench, type LucideIcon } from 'lucide-react';
-import { Magnetic, Reveal, ScrollFillLine, Stagger, StaggerItem } from '../motion';
+import { Reveal, ScrollFillLine, Stagger, StaggerItem } from '../motion';
 import { SectionHeading } from '../ui/SectionHeading';
 import { FaqList, ServiceCard, TestimonialCard } from '../cards';
 import { useSiteContent } from '@/lib/content';
 import { CONTENT_AUDIENCE, type Audience } from '@/lib/audience';
-import { sized, srcSet } from '@/lib/img';
 import { registerCopy } from '@/i18n';
 import { pagesAudience } from '@/i18n/pagesAudience';
 import { TOOLS } from './tools';
@@ -21,7 +20,7 @@ registerCopy(pagesAudience);
  */
 
 const PAGE: Record<Audience, 'workersPage' | 'employersPage'> = { worker: 'workersPage', employer: 'employersPage' };
-const CTA_IMG = 'https://images.unsplash.com/photo-1521791136064-7986c2920216?auto=format&fit=crop&w=1600&q=70';
+const CHIPS = ['chip-soft', 'chip-sage', 'chip-sky', 'chip-peach'];
 
 const matches = (value: string, a: Audience) => value === 'all' || value === CONTENT_AUDIENCE[a];
 
@@ -39,12 +38,10 @@ export const AudienceCtas = ({ audience, light = true }: { audience: Audience; l
   const secondary = audience === 'worker' ? '/uygunluq-testi' : '/booking';
   return (
     <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-      <Magnetic className="w-full sm:w-auto">
-        <Link to={primary} className="btn-primary group w-full px-6 py-3.5 sm:w-auto">
-          {t(`${p}.ctaPrimary`)} <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
-        </Link>
-      </Magnetic>
-      <Link to={secondary} className={light ? 'btn-outline w-full px-6 py-3.5 sm:w-auto' : 'btn-ghost w-full px-6 py-3.5 sm:w-auto'}>
+      <Link to={primary} className="btn-primary btn-press btn-lg w-full sm:w-auto">
+        {t(`${p}.ctaPrimary`)} <ArrowRight className="size-4" aria-hidden />
+      </Link>
+      <Link to={secondary} className={light ? 'btn-outline btn-lg w-full sm:w-auto' : 'btn-secondary btn-lg w-full sm:w-auto'}>
         {t(`${p}.ctaSecondary`)}
       </Link>
     </div>
@@ -63,15 +60,15 @@ export const WorkerQuickLinks = () => {
   return (
     <section className="section-sm">
       <div className="container-x">
-        <h2 className="mb-5 font-display text-xl font-bold text-navy-900 sm:text-2xl">{t('workersPage.quickTitle')}</h2>
+        <h2 className="mb-5 font-display text-xl font-semibold text-ink sm:text-2xl">{t('workersPage.quickTitle')}</h2>
         <ul className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-          {items.map((it) => (
+          {items.map((it, i) => (
             <li key={it.to}>
-              <Link to={it.to} className="group card flex h-full items-center gap-3 p-4 transition hover:-translate-y-0.5 hover:border-brand-400 sm:p-5">
-                <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-brand-50 text-brand-700 transition group-hover:bg-brand-600 group-hover:text-white">
+              <Link to={it.to} className="card card-interactive group flex h-full min-h-16 items-center gap-3 p-4 sm:p-5">
+                <span className={`grid size-11 shrink-0 place-items-center rounded-xl ${CHIPS[i % CHIPS.length]}`}>
                   <it.icon className="size-5" aria-hidden />
                 </span>
-                <span className="min-w-0 font-semibold text-navy-900">{it.label}</span>
+                <span className="min-w-0 font-semibold text-ink">{it.label}</span>
               </Link>
             </li>
           ))}
@@ -89,7 +86,7 @@ export const AudienceServices = ({ audience }: { audience: Audience }) => {
   if (!services.length) return null;
   const p = PAGE[audience];
   return (
-    <section id="services" className="section scroll-mt-20 bg-surface">
+    <section id="services" className="section scroll-mt-20 bg-sunken">
       <div className="container-x">
         <SectionHeading eyebrow={t('svc.eyebrow')} title={t(`${p}.servicesTitle`)} subtitle={t(`${p}.servicesSubtitle`)} action={<ViewAll to="/services" label={t('common.viewAll')} />} />
         <Stagger className="mobile-rail sm:grid-cols-2 sm:gap-5 lg:grid-cols-4 lg:gap-6">
@@ -127,14 +124,14 @@ export const ToolsTeaser = () => {
 export const ToolCard = ({ tool }: { tool: (typeof TOOLS)[number] }) => {
   const { t } = useTranslation();
   return (
-    <Link to={tool.to} className="group card flex h-full flex-col p-5 transition duration-300 hover:-translate-y-1 hover:border-brand-400 hover:shadow-xl hover:shadow-brand-600/10 sm:p-6">
-      <span className="grid size-12 place-items-center rounded-xl bg-brand-50 text-brand-700 transition group-hover:bg-brand-600 group-hover:text-white">
+    <Link to={tool.to} className="card card-interactive group flex h-full flex-col p-5 sm:p-6">
+      <span className="chip-sky grid size-12 place-items-center rounded-xl">
         <tool.icon className="size-6" aria-hidden />
       </span>
-      <h3 className="mt-4 font-display text-lg font-bold text-navy-900">{t(`toolsPage.items.${tool.key}.title`)}</h3>
+      <h3 className="mt-4 font-display text-lg font-semibold text-ink">{t(`toolsPage.items.${tool.key}.title`)}</h3>
       <p className="mt-1.5 flex-1 text-sm leading-relaxed text-muted">{t(`toolsPage.items.${tool.key}.text`)}</p>
-      <span className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-brand-600">
-        {t('toolsPage.open')} <ArrowRight className="size-4 transition group-hover:translate-x-1" aria-hidden />
+      <span className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-link group-hover:underline">
+        {t('toolsPage.open')} <ArrowRight className="size-4" aria-hidden />
       </span>
     </Link>
   );
@@ -156,10 +153,10 @@ export const EmployerBenefits = () => {
             return (
               <StaggerItem key={it.title}>
                 <div className="card card-pad h-full">
-                  <span className="grid size-12 place-items-center rounded-xl bg-brand-50 text-brand-700">
+                  <span className={`grid size-12 place-items-center rounded-xl ${CHIPS[i % CHIPS.length]}`}>
                     <BenefitIcon className="size-6" aria-hidden />
                   </span>
-                  <h3 className="mt-5 font-display text-lg font-bold text-navy-900">{it.title}</h3>
+                  <h3 className="mt-5 font-display text-lg font-semibold text-ink">{it.title}</h3>
                   <p className="mt-2 text-sm leading-relaxed text-muted">{it.text}</p>
                 </div>
               </StaggerItem>
@@ -177,10 +174,9 @@ export const EmployerProcess = () => {
   const steps = t('employersPage.process.steps', { returnObjects: true }) as { title: string; text: string }[];
   const timeline = useRef<HTMLOListElement>(null);
   return (
-    <section id="process" className="section relative scroll-mt-20 overflow-hidden bg-navy-950 text-white">
-      <div className="pointer-events-none absolute top-0 right-0 size-[600px] rounded-full bg-[radial-gradient(closest-side,var(--color-brand-600),transparent)] opacity-20" />
+    <section id="process" className="section relative scroll-mt-20 bg-sunken">
       <div className="container-x relative">
-        <SectionHeading eyebrow={t('employersPage.process.eyebrow')} title={t('employersPage.process.title')} light />
+        <SectionHeading eyebrow={t('employersPage.process.eyebrow')} title={t('employersPage.process.title')} />
         <div className="relative">
           {/* A progress line under the row that fills as the steps scroll by (decorative). */}
           <ScrollFillLine target={timeline} className="inset-x-0 -bottom-4 hidden rounded-full md:block" />
@@ -188,10 +184,10 @@ export const EmployerProcess = () => {
           {steps.map((s, i) => (
             <li key={s.title}>
               <Reveal delay={i * 0.06} className="h-full">
-                <div className="glass relative h-full rounded-2xl p-5">
-                  <span aria-hidden className="grid size-10 place-items-center rounded-full bg-brand-600 font-display text-sm font-extrabold">{i + 1}</span>
-                  <h3 className="mt-4 font-display text-base font-bold">{s.title}</h3>
-                  <p className="mt-1.5 text-sm leading-relaxed text-white/75">{s.text}</p>
+                <div className="card relative h-full p-5">
+                  <span aria-hidden className="grid size-10 place-items-center rounded-full bg-highlight text-sm font-bold text-highlight-contrast">{i + 1}</span>
+                  <h3 className="mt-4 font-display text-base font-semibold text-ink">{s.title}</h3>
+                  <p className="mt-1.5 text-sm leading-relaxed text-muted">{s.text}</p>
                 </div>
               </Reveal>
             </li>
@@ -199,8 +195,8 @@ export const EmployerProcess = () => {
         </ol>
         </div>
         <div className="mt-8">
-          <Link to="/cooperation#form" className="btn-white group">
-            {t('employersPage.ctaPrimary')} <ArrowRight className="size-4 transition group-hover:translate-x-1" />
+          <Link to="/cooperation#form" className="btn-primary btn-press btn-lg">
+            {t('employersPage.ctaPrimary')} <ArrowRight className="size-4" aria-hidden />
           </Link>
         </div>
       </div>
@@ -215,23 +211,17 @@ export const AudienceTestimonials = ({ audience }: { audience: Audience }) => {
   const items = (data?.testimonials ?? []).filter((x) => x.kind === CONTENT_AUDIENCE[audience]);
   if (!items.length) return null;
   return (
-    <section id="stories" className="section relative scroll-mt-20 overflow-hidden bg-navy-950 text-white">
-      <div className="pointer-events-none absolute bottom-0 left-0 size-[500px] rounded-full bg-[radial-gradient(closest-side,var(--color-brand-600),transparent)] opacity-20" />
+    <section id="stories" className="section relative scroll-mt-20">
       <div className="container-x relative">
         <SectionHeading
           eyebrow={t('stories.title')}
           title={t(`${PAGE[audience]}.storiesTitle`)}
-          light
-          action={
-            <Link to="/stories" className="btn-outline w-full whitespace-nowrap sm:w-auto">
-              {t('common.viewAll')}
-            </Link>
-          }
+          action={<ViewAll to="/stories" label={t('common.viewAll')} />}
         />
         <Stagger className="mobile-rail md:grid-cols-2 md:gap-5 xl:grid-cols-4">
           {items.slice(0, 4).map((tm) => (
             <StaggerItem key={tm.id}>
-              <TestimonialCard item={tm} dark />
+              <TestimonialCard item={tm} />
             </StaggerItem>
           ))}
         </Stagger>
@@ -276,12 +266,10 @@ export const AudienceCta = ({ audience }: { audience: Audience }) => {
     <section className="pb-16 sm:pb-20 lg:pb-28">
       <div className="container-x">
         <Reveal>
-          <div className="relative isolate overflow-hidden rounded-3xl bg-navy-950 px-6 py-10 text-white sm:px-12 sm:py-14 lg:flex lg:items-center lg:justify-between lg:gap-10 lg:rounded-[2rem]">
-            <img src={sized(CTA_IMG, 1280)} srcSet={srcSet(CTA_IMG, [640, 960, 1280, 1600])} sizes="(min-width: 1280px) 1200px, 100vw" alt="" loading="lazy" decoding="async" className="absolute inset-0 -z-10 size-full object-cover opacity-25" />
-            <div className="absolute inset-0 -z-10 bg-gradient-to-r from-navy-950 via-navy-950/90 to-brand-700/60" />
+          <div className="rounded-3xl bg-navy-950 px-6 py-10 text-white sm:px-12 sm:py-14 lg:flex lg:items-center lg:justify-between lg:gap-10">
             <div>
-              <h2 className="font-display text-2xl leading-tight font-extrabold sm:text-4xl">{t(`${p}.ctaTitle`)}</h2>
-              <p className="mt-3 max-w-xl text-sm text-white/75 sm:text-base">{t(`${p}.ctaText`)}</p>
+              <h2 className="font-display text-2xl leading-tight font-semibold sm:text-4xl">{t(`${p}.ctaTitle`)}</h2>
+              <p className="mt-3 max-w-[56ch] text-base text-white/80">{t(`${p}.ctaText`)}</p>
             </div>
             <div className="shrink-0 lg:-mt-7">
               <AudienceCtas audience={audience} />
@@ -299,10 +287,10 @@ export const ConsultStrip = ({ title, text }: { title: string; text: string }) =
   return (
     <div className="card card-pad flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
       <div>
-        <p className="font-display text-lg font-bold text-navy-900">{title}</p>
+        <p className="font-display text-lg font-semibold text-ink">{title}</p>
         <p className="mt-1 text-sm text-muted">{text}</p>
       </div>
-      <Link to="/booking" className="btn-primary group shrink-0 px-5 py-3">
+      <Link to="/booking" className="btn-primary btn-press btn-lg shrink-0">
         <CalendarCheck className="size-4" aria-hidden /> {t('siteNav.book')}
       </Link>
     </div>

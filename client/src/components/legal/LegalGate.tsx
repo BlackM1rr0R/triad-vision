@@ -143,9 +143,9 @@ export default function LegalGate() {
         {pending.map((p) => {
           const summary = tr(p.changeSummary);
           return (
-            <li key={p.id} className="rounded-xl border border-line bg-surface p-4">
+            <li key={p.id} className="rounded-xl border border-line bg-sunken p-4">
               <p className="flex items-center gap-2 font-semibold text-ink">
-                <FileText className="size-4 shrink-0 text-brand-600" aria-hidden />
+                <FileText className="size-4 shrink-0 text-primary" aria-hidden />
                 {tr(p.title) || t(`legalDocs.reaccept.kinds.${p.kind}`)}
               </p>
               <p className="mt-0.5 text-xs text-muted">
@@ -157,7 +157,7 @@ export default function LegalGate() {
                   <p className="mt-1 text-sm whitespace-pre-line text-ink/85">{summary}</p>
                 </div>
               )}
-              <Link to={LEGAL_PATH[p.kind]} target="_blank" rel="noopener" className="mt-3 inline-flex min-h-9 items-center gap-1.5 text-sm font-semibold text-brand-600 hover:underline">
+              <Link to={LEGAL_PATH[p.kind]} target="_blank" rel="noopener" className="mt-3 inline-flex min-h-9 items-center gap-1.5 text-sm font-semibold text-link hover:underline">
                 {t('legalDocs.reaccept.readFull')}
                 <ExternalLink className="size-3.5" aria-hidden />
               </Link>
@@ -166,7 +166,7 @@ export default function LegalGate() {
         })}
       </ul>
       <label htmlFor={`${uid}-ok`} className="mt-4 flex items-start gap-2.5 text-sm text-ink">
-        <input id={`${uid}-ok`} type="checkbox" className="mt-0.5 size-4 shrink-0 accent-brand-600" checked={checked} onChange={(e) => setChecked(e.target.checked)} />
+        <input id={`${uid}-ok`} type="checkbox" className="mt-0.5 size-4 shrink-0 accent-primary" checked={checked} onChange={(e) => setChecked(e.target.checked)} />
         <span>{t('legalDocs.reaccept.checkbox')}</span>
       </label>
     </Modal>

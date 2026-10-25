@@ -63,7 +63,7 @@ export function TextEditor({ style, value, mode, onChange, onEnd, align, autoFoc
         }
       }}
       style={{ ...style, textAlign: (align as CSSProperties['textAlign']) ?? 'left' }}
-      className="absolute z-20 resize-none overflow-hidden border-2 border-brand-600 bg-field px-1.5 py-[3px] text-[13px] leading-[18px] text-ink shadow-lg outline-none"
+      className="absolute z-20 resize-none overflow-hidden border-2 border-primary bg-field px-1.5 py-[3px] text-[13px] leading-[18px] text-ink shadow-[var(--tv-shadow-raised)] outline-none"
     />
   );
 }
@@ -98,7 +98,7 @@ export function DateEditor({ style, value, onEnd }: BaseProps & { value: string 
         }
       }}
       style={{ ...style, minWidth: Math.max(Number(style.width) || 0, 150) }}
-      className="absolute z-20 border-2 border-brand-600 bg-field px-1.5 text-[13px] text-ink shadow-lg outline-none"
+      className="absolute z-20 border-2 border-primary bg-field px-1.5 text-[13px] text-ink shadow-[var(--tv-shadow-raised)] outline-none"
     />
   );
 }
@@ -121,7 +121,7 @@ export function SelectEditor({ style, value, initialFilter, options, onEnd }: Ba
   }, [hi]);
   const pick = (o: { value: string } | undefined, dr = 1, dc = 0) => onEnd(o ? { commit: true, value: o.value, dr, dc } : { commit: false });
   return (
-    <div style={{ ...style, height: 'auto', minWidth: Math.max(Number(style.width) || 0, 200) }} className="absolute z-30 rounded-lg border-2 border-brand-600 bg-card shadow-2xl">
+    <div style={{ ...style, height: 'auto', minWidth: Math.max(Number(style.width) || 0, 200) }} className="absolute z-30 rounded-lg border-2 border-primary bg-card shadow-[var(--tv-shadow-raised)]">
       <input
         ref={inputRef}
         value={q}
@@ -164,7 +164,7 @@ export function SelectEditor({ style, value, initialFilter, options, onEnd }: Ba
             onMouseDown={(e) => e.preventDefault()}
             onClick={() => pick(o, 0)}
             onMouseEnter={() => setHi(i)}
-            className={clsx('block w-full truncate px-2.5 py-1 text-left text-[13px]', i === hi ? 'bg-brand-600 text-white' : 'text-ink', o.value === value && i !== hi && 'font-semibold text-brand-600')}
+            className={clsx('block w-full truncate px-2.5 py-1 text-left text-[13px]', i === hi ? 'bg-primary text-primary-contrast' : 'text-ink', o.value === value && i !== hi && 'font-semibold text-link')}
           >
             {o.label}
           </button>

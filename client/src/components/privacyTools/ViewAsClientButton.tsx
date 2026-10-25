@@ -81,7 +81,7 @@ export const ViewAsClientButton = ({
         onClick={() => setOpen(true)}
         title={t('privacyTools.imp.buttonTitle')}
         className={clsx(
-          'inline-flex items-center gap-1.5 rounded-md border border-amber-300 bg-amber-50 px-2.5 text-xs font-semibold whitespace-nowrap text-amber-900 transition hover:bg-amber-100',
+          'inline-flex items-center gap-1.5 rounded-md border border-warning-border bg-warning-bg px-2.5 text-xs font-semibold whitespace-nowrap text-warning-fg transition hover:bg-warning-bg',
           compact ? 'min-h-8 py-1' : 'min-h-9 py-1.5',
           className,
         )}
@@ -96,7 +96,7 @@ export const ViewAsClientButton = ({
         size="sm"
         footer={
           <>
-            <button type="button" className="btn-ghost btn-sm" onClick={() => setOpen(false)} disabled={busy}>
+            <button type="button" className="btn-secondary btn-sm" onClick={() => setOpen(false)} disabled={busy}>
               {t('privacyTools.imp.cancel')}
             </button>
             <button type="button" className="btn-primary btn-sm" onClick={() => void start()} disabled={busy || noteMissing}>
@@ -131,7 +131,7 @@ export const ViewAsClientButton = ({
               onChange={(e) => setNote(e.target.value)}
               aria-invalid={noteMissing || undefined}
             />
-            {noteMissing && <p className="mt-1 text-xs text-danger">{t('privacyTools.imp.noteRequired')}</p>}
+            {noteMissing && <p className="mt-1 text-xs text-danger-fg">{t('privacyTools.imp.noteRequired')}</p>}
           </div>
         </div>
       </Modal>

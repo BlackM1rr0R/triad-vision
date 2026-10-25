@@ -17,7 +17,7 @@ export const TagChips = ({ tags, max = 3, className }: { tags: TagRef[] | undefi
         </span>
       ))}
       {rest > 0 && (
-        <span className="rounded bg-surface px-1 py-px text-[10px] font-semibold text-muted" title={tags.slice(max).map((t) => t.name).join(', ')}>
+        <span className="rounded bg-sunken px-1 py-px text-[10px] font-semibold text-muted" title={tags.slice(max).map((t) => t.name).join(', ')}>
           +{rest}
         </span>
       )}
@@ -32,7 +32,7 @@ export const FinalBadge = ({ item, compact }: { item: Pick<DriveItem, 'finalAt'>
   return (
     <span
       title={t('driveOrg.final.badgeHint')}
-      className="inline-flex shrink-0 items-center gap-0.5 rounded bg-slate-800 px-1 py-px text-[10px] font-bold text-white dark:bg-slate-200 dark:text-slate-900"
+      className="inline-flex shrink-0 items-center gap-0.5 rounded bg-muted px-1 py-px text-[10px] font-bold text-white dark:bg-slate-200 dark:text-slate-900"
     >
       <Lock className="size-2.5" aria-hidden />
       {!compact && t('driveOrg.final.badge')}

@@ -94,10 +94,10 @@ export const SensitiveValue = ({
       {plain !== null ? (
         <>
           <span className="font-mono select-all">{plain}</span>
-          <button type="button" onClick={() => void copy()} className="inline-flex size-7 items-center justify-center rounded-md text-brand-600 hover:bg-brand-50" title={t('privacyTools.sensitive.copy')} aria-label={t('privacyTools.sensitive.copy')}>
+          <button type="button" onClick={() => void copy()} className="inline-flex size-7 items-center justify-center rounded-md text-link hover:bg-primary/[0.06]" title={t('privacyTools.sensitive.copy')} aria-label={t('privacyTools.sensitive.copy')}>
             <Copy className="size-3.5" aria-hidden />
           </button>
-          <button type="button" onClick={() => setPlain(null)} className="inline-flex size-7 items-center justify-center rounded-md text-muted hover:bg-surface" title={t('privacyTools.sensitive.hide')} aria-label={t('privacyTools.sensitive.hide')}>
+          <button type="button" onClick={() => setPlain(null)} className="inline-flex size-7 items-center justify-center rounded-md text-muted hover:bg-sunken" title={t('privacyTools.sensitive.hide')} aria-label={t('privacyTools.sensitive.hide')}>
             <EyeOff className="size-3.5" aria-hidden />
           </button>
           <span className="text-[11px] text-muted tabular-nums">{t('privacyTools.sensitive.visibleFor', { s: left })}</span>
@@ -110,7 +110,7 @@ export const SensitiveValue = ({
           <button
             type="button"
             onClick={() => setOpen(true)}
-            className="inline-flex size-7 items-center justify-center rounded-md text-brand-600 hover:bg-brand-50"
+            className="inline-flex size-7 items-center justify-center rounded-md text-link hover:bg-primary/[0.06]"
             title={t('privacyTools.sensitive.reveal')}
             aria-label={t('privacyTools.sensitive.revealAria', { field: fieldLabel })}
           >
@@ -126,7 +126,7 @@ export const SensitiveValue = ({
         size="sm"
         footer={
           <>
-            <button type="button" className="btn-ghost btn-sm" onClick={() => setOpen(false)} disabled={busy}>
+            <button type="button" className="btn-secondary btn-sm" onClick={() => setOpen(false)} disabled={busy}>
               {t('privacyTools.sensitive.cancel')}
             </button>
             <button type="button" className="btn-primary btn-sm" disabled={busy || reason.trim().length < 5} onClick={() => void reveal()}>

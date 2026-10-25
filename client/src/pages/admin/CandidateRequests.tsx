@@ -66,7 +66,7 @@ const Panel = ({ title, icon: Icon, actions, children }: { title: ReactNode; ico
   <section className="min-w-0 rounded-xl border border-line bg-card">
     <header className="flex flex-wrap items-center justify-between gap-2 border-b border-line px-5 py-3.5">
       <h2 className="flex items-center gap-2 text-sm font-semibold text-ink">
-        <Icon className="size-4 text-brand-600" aria-hidden /> {title}
+        <Icon className="size-4 text-link" aria-hidden /> {title}
       </h2>
       {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
     </header>
@@ -166,7 +166,7 @@ const RequestsList = () => {
               {data.items.map((r) => (
                 <tr key={r.id} className="border-b border-line last:border-0 hover:bg-surface/60">
                   <td className="px-4 py-3">
-                    <Link to={`/admin/candidate-requests/${r.id}`} className="font-semibold text-ink hover:text-brand-700">
+                    <Link to={`/admin/candidate-requests/${r.id}`} className="font-semibold text-ink hover:text-link">
                       {r.title}
                     </Link>
                     <p className="text-xs text-muted">
@@ -194,13 +194,13 @@ const RequestsList = () => {
       )}
       {pages > 1 && (
         <div className="mt-4 flex items-center justify-end gap-2 text-sm">
-          <button type="button" className="btn-ghost btn-sm" disabled={page <= 1} onClick={() => setParam('page', String(page - 1))} aria-label="‹">
+          <button type="button" className="btn-secondary btn-sm" disabled={page <= 1} onClick={() => setParam('page', String(page - 1))} aria-label="‹">
             <ChevronLeft className="size-4" aria-hidden />
           </button>
           <span className="tabular-nums text-muted">
             {page} / {pages}
           </span>
-          <button type="button" className="btn-ghost btn-sm" disabled={page >= pages} onClick={() => setParam('page', String(page + 1))} aria-label="›">
+          <button type="button" className="btn-secondary btn-sm" disabled={page >= pages} onClick={() => setParam('page', String(page + 1))} aria-label="›">
             <ChevronRight className="size-4" aria-hidden />
           </button>
         </div>
@@ -278,7 +278,7 @@ const RequestDetail = () => {
 
   return (
     <div className="space-y-5">
-      <button type="button" onClick={() => navigate('/admin/candidate-requests')} className="inline-flex items-center gap-1.5 text-sm font-semibold text-brand-700 hover:underline">
+      <button type="button" onClick={() => navigate('/admin/candidate-requests')} className="inline-flex items-center gap-1.5 text-sm font-semibold text-link hover:underline">
         <ArrowLeft className="size-4" aria-hidden /> {t('requests.admin.back')}
       </button>
       <PageHead title={r.title} subtitle={`${r.company?.name ?? ''} · ${r.quantity} × ${r.profession}`} actions={<StatusPill status={r.status} />} />
@@ -289,7 +289,7 @@ const RequestDetail = () => {
             <dl className="grid grid-cols-1 gap-x-8 sm:grid-cols-2">
               <Def label={t('requests.admin.company')}>
                 {r.company && (
-                  <Link to={`/admin/companies?id=${r.company.id}`} className="text-brand-700 hover:underline">
+                  <Link to={`/admin/companies?id=${r.company.id}`} className="text-link hover:underline">
                     {r.company.name}
                   </Link>
                 )}
@@ -306,7 +306,7 @@ const RequestDetail = () => {
               <Def label={t('requests.fields.salary')}>{L.salary(r.salaryMin, r.salaryMax)}</Def>
               <Def label={t('requests.admin.createdAt')}>{fmtDate(r.createdAt)}</Def>
             </dl>
-            {r.notes && <p className="mt-4 rounded-lg bg-surface p-3 text-sm whitespace-pre-line text-ink">{r.notes}</p>}
+            {r.notes && <p className="mt-4 rounded-lg bg-sunken p-3 text-sm whitespace-pre-line text-ink">{r.notes}</p>}
             <div className="mt-4">
               <RequestProgressBar progress={r.progress} />
             </div>
@@ -320,7 +320,7 @@ const RequestDetail = () => {
                 <p className="text-xs text-muted">
                   {L.vacancyStatus(r.vacancy.status)} · {r.vacancy.positions}
                 </p>
-                <Link to={`/admin/vacancies?id=${r.vacancy.id}`} className="btn-ghost btn-sm">
+                <Link to={`/admin/vacancies?id=${r.vacancy.id}`} className="btn-secondary btn-sm">
                   <ExternalLink className="size-4" aria-hidden /> {t('requests.admin.openVacancy')}
                 </Link>
               </div>
@@ -394,7 +394,7 @@ const RequestDetail = () => {
                   const locked = !!s.application && ['PROPOSED', 'INTERVIEW', 'ACCEPTED'].includes(s.application.status);
                   const u = s.user;
                   return (
-                    <tr key={u.id} className={clsx('border-b border-line last:border-0', selected.has(u.id) && 'bg-brand-50/50')}>
+                    <tr key={u.id} className={clsx('border-b border-line last:border-0', selected.has(u.id) && 'bg-primary/[0.04]')}>
                       <td className="px-5 py-2.5 align-top">
                         <input type="checkbox" aria-label={`${u.firstName} ${u.lastName}`} checked={selected.has(u.id)} disabled={locked || closed} onChange={() => toggle(u.id)} />
                       </td>
@@ -413,12 +413,12 @@ const RequestDetail = () => {
                       <td className="px-3 py-2.5 align-top">
                         <div className="flex flex-wrap gap-1">
                           {s.reasons.map((code) => (
-                            <span key={code} className="rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] text-emerald-800 ring-1 ring-emerald-200">
+                            <span key={code} className="rounded-full bg-success-bg px-2 py-0.5 text-[11px] text-success-fg ring-1 ring-success-border">
                               {t(`requests.admin.reason.${code}`)}
                             </span>
                           ))}
                           {s.gaps.map((g) => (
-                            <span key={g.code} className="rounded-full bg-amber-50 px-2 py-0.5 text-[11px] text-amber-800 ring-1 ring-amber-200">
+                            <span key={g.code} className="rounded-full bg-warning-bg px-2 py-0.5 text-[11px] text-warning-fg ring-1 ring-warning-border">
                               {L.gap(g)}
                             </span>
                           ))}
@@ -426,7 +426,7 @@ const RequestDetail = () => {
                       </td>
                       <td className="px-5 py-2.5 text-right align-top whitespace-nowrap">
                         {s.application && <span className={clsx('badge mr-2', APPLICATION_STATUS_TONE[s.application.status])}>{L.appStatus(s.application.status)}</span>}
-                        <Link to={`/admin/candidates?id=${u.id}`} className="text-xs font-semibold text-brand-700 hover:underline">
+                        <Link to={`/admin/candidates?id=${u.id}`} className="text-xs font-semibold text-link hover:underline">
                           {t('requests.admin.profile')}
                         </Link>
                       </td>
@@ -445,7 +445,7 @@ const RequestDetail = () => {
             {applications.map((a) => (
               <li key={a.id} className="flex flex-wrap items-center justify-between gap-2 py-2.5 text-sm">
                 <div className="min-w-0">
-                  <Link to={`/admin/candidates?id=${a.user.id}`} className="font-semibold text-ink hover:text-brand-700">
+                  <Link to={`/admin/candidates?id=${a.user.id}`} className="font-semibold text-ink hover:text-link">
                     {a.user.firstName} {a.user.lastName}
                   </Link>
                   <p className="text-xs text-muted">{[a.user.profession, a.user.germanLevel].filter(Boolean).join(' · ')}</p>

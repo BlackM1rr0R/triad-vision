@@ -128,7 +128,7 @@ export const ContextMenu = ({
       onKeyDown={onKeyDown}
       onContextMenu={(e) => e.preventDefault()}
       className={clsx(
-        'fixed z-[90] min-w-[210px] max-w-[min(20rem,calc(100vw-1rem))] max-h-[calc(100dvh-1rem)] overflow-y-auto rounded-xl border border-line bg-card py-1 shadow-[0_12px_40px_-12px_rgba(11,31,68,0.35)] outline-none',
+        'fixed z-[90] min-w-[210px] max-w-[min(20rem,calc(100vw-1rem))] max-h-[calc(100dvh-1rem)] overflow-y-auto rounded-xl border border-line bg-card py-1 shadow-[var(--tv-shadow-raised)] outline-none',
         pos ? 'opacity-100' : 'opacity-0',
         className,
       )}
@@ -158,12 +158,12 @@ export const ContextMenu = ({
             }}
             className={clsx(
               'flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm outline-none transition',
-              it.danger ? 'text-danger hover:bg-red-50 focus-visible:bg-red-50' : 'text-ink hover:bg-surface focus-visible:bg-surface',
-              it.active && 'bg-brand-50',
+              it.danger ? 'text-danger-fg hover:bg-danger-bg focus-visible:bg-danger-bg' : 'text-ink hover:bg-sunken focus-visible:bg-sunken',
+              it.active && 'bg-primary/[0.06]',
               it.disabled && 'cursor-not-allowed opacity-45 hover:bg-transparent',
             )}
           >
-            {Icon && <Icon className={clsx('size-4 shrink-0', it.danger ? 'text-danger' : 'text-muted')} aria-hidden />}
+            {Icon && <Icon className={clsx('size-4 shrink-0', it.danger ? 'text-danger-fg' : 'text-muted')} aria-hidden />}
             <span className="min-w-0 flex-1">
               <span className="block truncate font-medium">{it.label}</span>
               {it.hint && <span className="block truncate text-[11px] font-normal text-muted">{it.hint}</span>}

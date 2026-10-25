@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
-import { CalendarClock, Check, Copy, Download, Landmark, ListOrdered, Receipt, Wallet } from 'lucide-react';
+import { CalendarClock, Check, Copy, Download, Landmark, ListOrdered, Receipt } from 'lucide-react';
 import { api } from '@/lib/api';
 import { registerCopy } from '@/i18n';
 import { pagesBilling } from '@/i18n/pagesBilling';
@@ -11,6 +11,7 @@ import { useMorphTarget } from '@/lib/viewTransition';
 import { useL10n } from '@/lib/l10n';
 import { Skeleton, SkeletonList } from '@/components/ui/Skeleton';
 import { INSTALLMENT_BADGE, OPEN_STATUSES, STATUS_BADGE, fmtEur, otherCurrencies, triggerLabel, type BillingTotals, type ClientInvoice, type ClientPayment, type PaymentPlan } from '@/components/billing/api';
+import { Documents } from '@/components/illustrations';
 
 registerCopy(pagesBilling);
 
@@ -29,7 +30,7 @@ const CopyButton = ({ value }: { value: string }) => {
   return (
     <button
       type="button"
-      className="inline-flex min-h-9 items-center gap-1 rounded-lg px-2 text-xs font-semibold text-brand-600 hover:bg-brand-50"
+      className="inline-flex min-h-9 items-center gap-1 rounded-lg px-2 text-xs font-semibold text-link hover:bg-sunken"
       onClick={() => {
         void navigator.clipboard?.writeText(value).then(() => {
           setDone(true);
@@ -83,7 +84,7 @@ export default function AccountPayments() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-extrabold text-ink sm:text-2xl" {...morph.part('title')}>
+        <h2 className="type-page-title" {...morph.part('title')}>
           {t('bill.portal.title')}
         </h2>
         <p className="mt-1 max-w-2xl text-sm text-muted">{t('bill.portal.subtitle')}</p>
@@ -114,8 +115,8 @@ export default function AccountPayments() {
 
       {open.length > 0 && (
         <section className="card p-5" aria-labelledby="pay-how">
-          <h3 id="pay-how" className="flex items-center gap-2 text-base font-bold text-ink">
-            <Landmark className="size-5 text-brand-600" aria-hidden /> {t('bill.portal.howToPay')}
+          <h3 id="pay-how" className="flex items-center gap-2 text-base font-semibold text-ink">
+            <Landmark className="size-5 text-primary" aria-hidden /> {t('bill.portal.howToPay')}
           </h3>
           <p className="mt-1 text-sm text-muted">{t('bill.portal.bankText')}</p>
           {d.bank ? (
@@ -158,13 +159,13 @@ export default function AccountPayments() {
       )}
 
       <section aria-labelledby="pay-invoices">
-        <h3 id="pay-invoices" className="mb-3 flex items-center gap-2 text-base font-bold text-ink">
-          <Receipt className="size-5 text-brand-600" aria-hidden /> {t('bill.portal.invoices')}
+        <h3 id="pay-invoices" className="mb-3 flex items-center gap-2 text-base font-semibold text-ink">
+          <Receipt className="size-5 text-primary" aria-hidden /> {t('bill.portal.invoices')}
         </h3>
         {d.invoices.length === 0 ? (
-          <div className="card p-6 text-center">
-            <Wallet className="mx-auto size-8 text-brand-600/70" aria-hidden />
-            <p className="mt-2 font-semibold text-ink">{t('bill.portal.empty')}</p>
+          <div className="card flex flex-col items-center p-8 text-center">
+            <Documents className="w-36" />
+            <p className="type-card-title mt-4">{t('bill.portal.empty')}</p>
             <p className="text-sm text-muted">{t('bill.portal.emptyText')}</p>
           </div>
         ) : (
@@ -192,8 +193,8 @@ export default function AccountPayments() {
 
       {d.plans.length > 0 && (
         <section aria-labelledby="pay-plan">
-          <h3 id="pay-plan" className="mb-3 flex items-center gap-2 text-base font-bold text-ink">
-            <ListOrdered className="size-5 text-brand-600" aria-hidden /> {t('bill.portal.plan')}
+          <h3 id="pay-plan" className="mb-3 flex items-center gap-2 text-base font-semibold text-ink">
+            <ListOrdered className="size-5 text-primary" aria-hidden /> {t('bill.portal.plan')}
           </h3>
           <div className="space-y-3">
             {d.plans.map((p) => (
@@ -207,7 +208,7 @@ export default function AccountPayments() {
                     .filter((i) => i.status !== 'CANCELLED')
                     .map((i) => (
                       <li key={i.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-3 text-sm">
-                        <span className="grid size-7 shrink-0 place-items-center rounded-full bg-brand-50 text-xs font-bold text-brand-700">{i.seq}</span>
+                        <span className="grid size-7 shrink-0 place-items-center rounded-full bg-sunken text-xs font-bold text-primary">{i.seq}</span>
                         <span className="min-w-0 flex-1">
                           <span className="block font-medium text-ink">{i.label}</span>
                           <span className="flex items-center gap-1 text-xs text-muted">
@@ -228,8 +229,8 @@ export default function AccountPayments() {
 
       {d.payments.length > 0 && (
         <section aria-labelledby="pay-payments">
-          <h3 id="pay-payments" className="mb-3 flex items-center gap-2 text-base font-bold text-ink">
-            <Check className="size-5 text-brand-600" aria-hidden /> {t('bill.portal.payments')}
+          <h3 id="pay-payments" className="mb-3 flex items-center gap-2 text-base font-semibold text-ink">
+            <Check className="size-5 text-primary" aria-hidden /> {t('bill.portal.payments')}
           </h3>
           <ul className="card divide-y divide-line">
             {d.payments.map((p) => (

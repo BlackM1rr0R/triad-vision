@@ -96,7 +96,7 @@ export const RulesDialog = ({ beneficiaries, rate, canManage, onClose, onSaved }
   return (
     <Modal wide title={t('settlement.rules.title')} onClose={onClose}>
       <p className="text-sm text-muted">{t('settlement.rules.hint')}</p>
-      {!canManage && <p className="mt-2 text-sm font-medium text-amber-800">{t('settlement.rules.readOnly')}</p>}
+      {!canManage && <p className="mt-2 text-sm font-medium text-warning-fg">{t('settlement.rules.readOnly')}</p>}
       <div className="mt-4 overflow-x-auto">
         <table className="w-full min-w-[640px] text-sm">
           <thead className="text-xs text-muted">
@@ -141,15 +141,15 @@ export const RulesDialog = ({ beneficiaries, rate, canManage, onClose, onSaved }
                   )}
                 </td>
                 <td className="px-2 py-1.5 text-center">
-                  <input type="checkbox" className="size-4 accent-brand-600" checked={d.active} disabled={!canManage} onChange={(e) => set(i, { active: e.target.checked })} />
+                  <input type="checkbox" className="size-4 accent-primary" checked={d.active} disabled={!canManage} onChange={(e) => set(i, { active: e.target.checked })} />
                 </td>
                 <td className="px-2 py-1.5">
                   {canManage && (
                     <span className="flex justify-end gap-1">
-                      <button type="button" className="rounded-lg p-1.5 text-brand-600 hover:bg-brand-50" disabled={busy} title={t('settlement.toolbar.save')} onClick={() => void saveRow(i)}>
+                      <button type="button" className="rounded-lg p-1.5 text-link hover:bg-primary/[0.06]" disabled={busy} title={t('settlement.toolbar.save')} onClick={() => void saveRow(i)}>
                         <Save className="size-4" />
                       </button>
-                      <button type="button" className="rounded-lg p-1.5 text-red-600 hover:bg-red-50" title={t('settlement.rules.delete')} onClick={() => void remove(i)}>
+                      <button type="button" className="rounded-lg p-1.5 text-danger-fg hover:bg-danger-bg" title={t('settlement.rules.delete')} onClick={() => void remove(i)}>
                         <Trash2 className="size-4" />
                       </button>
                     </span>
@@ -161,7 +161,7 @@ export const RulesDialog = ({ beneficiaries, rate, canManage, onClose, onSaved }
         </table>
       </div>
       {canManage && (
-        <button type="button" className="btn-ghost btn-sm mt-3" onClick={() => setRows((r) => [...r, { name: '', rule: 'REMAINDER', value: '', currency: 'AZN', active: true }])}>
+        <button type="button" className="btn-secondary btn-sm mt-3" onClick={() => setRows((r) => [...r, { name: '', rule: 'REMAINDER', value: '', currency: 'AZN', active: true }])}>
           <Plus className="size-4" /> {t('settlement.rules.add')}
         </button>
       )}

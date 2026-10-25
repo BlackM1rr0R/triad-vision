@@ -45,35 +45,34 @@ export default function PartnerApp() {
   };
 
   return (
-    <div className="min-h-screen bg-surface pt-24 pb-16 sm:pt-28 sm:pb-24 lg:pt-40">
+    <div className="min-h-screen bg-canvas pt-24 pb-16 sm:pt-28 sm:pb-24 lg:pt-36">
       <div className="container-x">
-        <header className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-navy-950 via-navy-900 to-navy-700 px-5 pt-6 pb-4 text-white shadow-[0_30px_60px_-30px_rgba(5,15,36,0.8)] sm:px-8 sm:pt-8 sm:pb-5">
-          <div className="pointer-events-none absolute -top-24 -right-16 size-80 rounded-full bg-[radial-gradient(closest-side,var(--color-brand-500),transparent)] opacity-30" aria-hidden />
-          <div className="relative">
+        <header className="rounded-3xl border border-line bg-card px-4 pt-5 pb-3 shadow-[var(--tv-shadow-card)] sm:px-7 sm:pt-6 sm:pb-4">
+          <div>
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div className="min-w-0">
-                <span className="eyebrow text-brand-400">{t('partnerPortal.title')}</span>
-                <motion.h1 className="mt-2 text-2xl font-extrabold break-words sm:text-4xl" initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
+                <span className="type-overline">{t('partnerPortal.title')}</span>
+                <motion.h1 className="type-page-title mt-1 break-words" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
                   {t('partnerPortal.hello', { name: user?.firstName ?? '' })}
                 </motion.h1>
-                <p className="mt-1 truncate text-sm text-white/60">
+                <p className="mt-1 truncate text-sm text-muted">
                   {me ? `${me.partner.name} · ` : ''}
                   {user?.email}
                 </p>
               </div>
               <div className="flex items-center gap-2">
                 {me?.alsoAgent && (
-                  <Link to="/agent" className="inline-flex min-h-10 items-center gap-1.5 rounded-xl border border-white/20 px-3 text-sm font-semibold text-white/85 hover:bg-white/10 hover:text-white">
+                  <Link to="/agent" className="inline-flex min-h-11 items-center gap-1.5 rounded-xl border border-line-strong px-3.5 text-sm font-semibold text-ink transition-colors hover:bg-sunken">
                     {t('partnerPortal.agentPortal')} <ArrowUpRight className="size-4" aria-hidden />
                   </Link>
                 )}
-                <button type="button" onClick={onLogout} className="inline-flex min-h-10 items-center gap-1.5 rounded-xl px-3 text-sm font-semibold text-white/80 hover:bg-white/10 hover:text-white">
+                <button type="button" onClick={onLogout} className="inline-flex min-h-11 min-w-11 items-center justify-center gap-1.5 rounded-xl px-3 text-sm font-semibold text-muted transition-colors hover:bg-sunken hover:text-ink">
                   <LogOut className="size-4" aria-hidden /> <span className="hidden sm:inline">{t('partnerPortal.logout')}</span>
                 </button>
               </div>
             </div>
 
-            <nav className="-mx-5 mt-6 flex snap-x gap-1 overflow-x-auto px-4 pb-1 [scrollbar-width:none] sm:mx-0 sm:mt-8 sm:px-0 [&::-webkit-scrollbar]:hidden" aria-label={t('partnerPortal.title')}>
+            <nav className="-mx-4 mt-5 flex snap-x gap-1 overflow-x-auto border-t border-line px-3 pt-3 pb-1 [scrollbar-width:none] sm:mx-0 sm:mt-6 sm:px-0 [&::-webkit-scrollbar]:hidden" aria-label={t('partnerPortal.title')}>
               {tabs.map((tab) => {
                 const active = tab.match(location.pathname);
                 const Icon = tab.icon;
@@ -83,11 +82,11 @@ export default function PartnerApp() {
                     to={tab.to}
                     className={clsx(
                       'relative flex min-h-11 shrink-0 snap-start items-center gap-2 rounded-xl px-3.5 py-2.5 text-sm font-semibold whitespace-nowrap transition-colors sm:px-4',
-                      active ? 'text-navy-900' : 'text-white/75 hover:bg-white/10 hover:text-white',
+                      active ? 'text-primary-contrast' : 'text-muted hover:bg-sunken hover:text-ink',
                     )}
                     aria-current={active ? 'page' : undefined}
                   >
-                    {active && <motion.span layoutId="partner-tab" className="absolute inset-0 rounded-xl bg-white shadow-lg" transition={{ type: 'spring', stiffness: 420, damping: 34 }} />}
+                    {active && <motion.span layoutId="partner-tab" className="absolute inset-0 rounded-xl bg-primary" transition={{ type: 'spring', stiffness: 420, damping: 34 }} />}
                     <Icon className="relative size-4 shrink-0" aria-hidden />
                     <span className="relative">{tab.label}</span>
                   </Link>
@@ -105,13 +104,13 @@ export default function PartnerApp() {
           ) : (
             <>
               {!me.partner.active && (
-                <div className="flex items-start gap-4 rounded-2xl border border-amber-200 bg-amber-50 p-5">
-                  <span className="grid size-10 shrink-0 place-items-center rounded-full bg-amber-100 text-amber-700">
+                <div className="flex items-start gap-4 rounded-2xl border border-warning-border bg-warning-bg p-5">
+                  <span className="grid size-10 shrink-0 place-items-center rounded-full bg-card text-warning-fg">
                     <PauseCircle className="size-5" aria-hidden />
                   </span>
                   <div>
-                    <p className="font-bold text-amber-900">{t('partnerPortal.inactiveTitle')}</p>
-                    <p className="mt-1 text-sm text-amber-900/80">{t('partnerPortal.inactiveText')}</p>
+                    <p className="font-semibold text-warning-fg">{t('partnerPortal.inactiveTitle')}</p>
+                    <p className="mt-1 text-sm text-warning-fg">{t('partnerPortal.inactiveText')}</p>
                   </div>
                 </div>
               )}

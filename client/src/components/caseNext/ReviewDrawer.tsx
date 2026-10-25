@@ -86,21 +86,21 @@ export const ReviewDrawer = ({ open, onClose, c, documentIds, onChanged }: { ope
             return (
               <li key={doc.id} className={clsx('rounded-xl border border-line p-3 sm:p-4', state && 'opacity-70')}>
                 <div className="flex min-w-0 items-start gap-3">
-                  <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-surface text-muted">
+                  <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-sunken text-muted">
                     <DocIcon mime={doc.mimeType} className="size-4" />
                   </span>
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm font-semibold text-navy-900">{tr(req.title)}</p>
+                    <p className="text-sm font-semibold text-ink">{tr(req.title)}</p>
                     <p className="truncate text-xs text-muted">
                       {doc.originalName} · {formatBytes(doc.size)} · {fmtDateTime(doc.createdAt)}
                     </p>
                   </div>
-                  <a href={fileUrl(doc.id)} target="_blank" rel="noreferrer" className="btn-white btn-sm shrink-0 border border-line" aria-label={`${t('caseNext.review.open')}: ${doc.originalName}`}>
+                  <a href={fileUrl(doc.id)} target="_blank" rel="noreferrer" className="btn-secondary btn-sm shrink-0 border border-line" aria-label={`${t('caseNext.review.open')}: ${doc.originalName}`}>
                     <ExternalLink className="size-3.5" aria-hidden /> <span className="hidden sm:inline">{t('caseNext.review.open')}</span>
                   </a>
                 </div>
                 {state ? (
-                  <p className={clsx('mt-2 text-xs font-semibold', state === 'ACCEPTED' ? 'text-emerald-700 dark:text-emerald-300' : 'text-red-700 dark:text-red-300')}>
+                  <p className={clsx('mt-2 text-xs font-semibold', state === 'ACCEPTED' ? 'text-success-fg dark:text-emerald-300' : 'text-danger-fg dark:text-red-300')}>
                     {state === 'ACCEPTED' ? t('caseNext.review.accepted') : t('caseNext.review.rejected')}
                   </p>
                 ) : (
@@ -114,7 +114,7 @@ export const ReviewDrawer = ({ open, onClose, c, documentIds, onChanged }: { ope
                   </div>
                 )}
                 {rejecting === doc.id && !state && (
-                  <div className="mt-3 rounded-lg bg-surface p-3">
+                  <div className="mt-3 rounded-lg bg-sunken p-3">
                     <p className="mb-2 text-xs text-muted">{t('caseNext.review.reasonsTitle')}</p>
                     <div className="flex flex-wrap gap-2">
                       {REASONS.map((r) => (

@@ -57,14 +57,14 @@ export const RichTextArea = ({
   const tool = (icon: LucideIcon, label: string, onClick: () => void) => {
     const Icon = icon;
     return (
-      <button type="button" title={label} aria-label={label} onClick={onClick} className="grid size-9 place-items-center rounded-md text-ink/70 hover:bg-surface hover:text-navy-900">
+      <button type="button" title={label} aria-label={label} onClick={onClick} className="grid size-9 place-items-center rounded-md text-muted hover:bg-sunken hover:text-ink">
         <Icon className="size-4" aria-hidden />
       </button>
     );
   };
 
   return (
-    <div className="rounded-lg border border-line bg-field focus-within:border-brand-500 focus-within:ring-4 focus-within:ring-brand-500/15">
+    <div className="rounded-lg border border-line bg-field focus-within:border-focus focus-within:ring-4 focus-within:ring-focus/15">
       <div className="flex flex-wrap items-center gap-0.5 border-b border-line px-1.5 py-1" role="toolbar" aria-controls={id}>
         {tool(Bold, t('campaigns.wizard.toolbar.bold'), () => wrap('**'))}
         {tool(Italic, t('campaigns.wizard.toolbar.italic'), () => wrap('*'))}
@@ -73,7 +73,7 @@ export const RichTextArea = ({
         {tool(Heading, t('campaigns.wizard.toolbar.heading'), () => prefixLines('## '))}
         <span className="mx-1 h-5 w-px bg-line" aria-hidden />
         <select
-          className="min-h-9 rounded-md border-0 bg-transparent px-1.5 text-xs font-semibold text-brand-700 outline-none"
+          className="min-h-9 rounded-md border-0 bg-transparent px-1.5 text-xs font-semibold text-link outline-none"
           value=""
           aria-label={t('campaigns.wizard.placeholders')}
           onChange={(e) => {
@@ -90,7 +90,7 @@ export const RichTextArea = ({
         </select>
       </div>
       {linkOpen && (
-        <div className="flex flex-wrap items-center gap-2 border-b border-line bg-surface px-2 py-2">
+        <div className="flex flex-wrap items-center gap-2 border-b border-line bg-sunken px-2 py-2">
           <input
             className="input min-w-0 flex-1 py-1.5"
             aria-label={t('campaigns.wizard.linkUrl')}

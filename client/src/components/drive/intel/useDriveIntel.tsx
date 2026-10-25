@@ -54,8 +54,8 @@ export const EsignChip = ({ status }: { status: EsignStatus | undefined }) => {
     <span
       className={
         status.open
-          ? 'inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-800 dark:bg-amber-500/15 dark:text-amber-300'
-          : 'inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-800 dark:bg-emerald-500/15 dark:text-emerald-300'
+          ? 'inline-flex items-center gap-1 rounded-full bg-warning-bg px-2 py-0.5 text-[10px] font-bold text-warning-fg dark:bg-amber-500/15 dark:text-amber-300'
+          : 'inline-flex items-center gap-1 rounded-full bg-success-bg px-2 py-0.5 text-[10px] font-bold text-success-fg dark:bg-emerald-500/15 dark:text-emerald-300'
       }
       title={`${status.signed}/${status.total}`}
     >

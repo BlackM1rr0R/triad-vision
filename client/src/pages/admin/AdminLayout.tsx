@@ -1,12 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Link, NavLink, Outlet, matchPath, useLocation, useNavigate } from 'react-router-dom';
+import { NavLink, Outlet, matchPath, useLocation, useNavigate } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
 import type { LucideIcon } from 'lucide-react';
-import { Bell, BookOpen, CheckCheck, ChevronDown, ChevronsLeft, ChevronsRight, ExternalLink, LogOut, Menu, Star, X } from 'lucide-react';
-import { Logo, LogoMark } from '@/components/ui/Logo';
+import { Bell, BookOpen, CheckCheck, ChevronDown, ChevronsLeft, ChevronsRight, ExternalLink, LayoutGrid, LogOut, Menu, Star, X } from 'lucide-react';
+import { LogoMark } from '@/components/ui/Logo';
+import { Avatar } from '@/components/ui/Avatar';
+import { Menu as UiMenu, type MenuItem } from '@/components/ui/Menu';
 import { Tooltip } from '@/components/ui/Tooltip';
 import { LanguageSwitcher } from '@/components/layout/LanguageSwitcher';
 import { ThemeToggle } from '@/components/a11y/ThemeToggle';
@@ -30,6 +32,8 @@ import { NAV_GROUPS, STAFF_NAV, activeNavItem, hrefFor, isVisible, type NavGroup
 import { usePageVisits, useStaffNav } from '@/components/command/navPrefs'; // server-side pins (shared with Ctrl+K), modules, page usage
 import { ModuleDisabled } from '@/components/admin/nav/ModuleDisabled';
 import { isStringArray, navGroupsKey, navPinsKey, readJson, writeJson } from '@/components/command/storage';
+import { useSurface } from '@/lib/theme'; // crisp admin surface tokens (index.css [data-surface=admin])
+import { DensityToggle } from '@/components/ui/DensityToggle'; // per-user table density (data-density)
 
 registerCopy(adminCopy);
 registerCopy(pagesCalls);
@@ -121,16 +125,18 @@ const SideLink = ({ item, role, collapsed, pinned, onTogglePin, onNavigate }: Si
       aria-label={collapsed ? label : undefined}
       className={({ isActive }) =>
         clsx(
-          'group relative flex min-h-10 items-center gap-3 rounded-lg py-2 text-sm font-medium transition',
-          collapsed ? 'w-11 justify-center' : 'pr-9 pl-3',
-          isActive ? 'bg-white/10 text-white' : 'text-white/60 hover:bg-white/5 hover:text-white',
+          // Direction A: calm rows, the active page is a white "key" with a hairline ring.
+          'group relative flex min-h-8 items-center gap-2.5 rounded-lg py-1.5 text-[13px] transition-colors pointer-coarse:min-h-10',
+          collapsed ? 'w-10 justify-center' : 'pr-8 pl-2.5',
+          isActive
+            ? 'bg-card font-medium text-ink shadow-[var(--tv-shadow-card)] ring-1 ring-line'
+            : 'text-muted hover:bg-line/60 hover:text-ink',
         )
       }
     >
       {({ isActive }) => (
         <>
-          {isActive && <span className="absolute top-1.5 bottom-1.5 left-0 w-0.5 rounded-full bg-brand-400" aria-hidden />}
-          <item.icon className={clsx('size-[18px] shrink-0', isActive ? 'text-brand-400' : 'text-white/50 group-hover:text-white/80')} aria-hidden />
+          <item.icon className={clsx('size-4 shrink-0', isActive ? 'text-ink' : 'text-muted group-hover:text-ink')} aria-hidden />
           {!collapsed && <span className="truncate">{label}</span>}
           {item.badge === 'today' && <TodayNavBadge collapsed={collapsed} />}
           {item.badge === 'training' && <TrainingNavBadge collapsed={collapsed} />}
@@ -140,7 +146,7 @@ const SideLink = ({ item, role, collapsed, pinned, onTogglePin, onNavigate }: Si
   );
   if (collapsed) {
     return (
-      <div className="pointer-events-auto flex w-11 justify-center">
+      <div className="pointer-events-auto flex w-10 justify-center">
         <Tooltip content={label} side="right">
           {link}
         </Tooltip>
@@ -158,8 +164,8 @@ const SideLink = ({ item, role, collapsed, pinned, onTogglePin, onNavigate }: Si
         aria-label={`${pinLabel}: ${label}`}
         title={pinLabel}
         className={clsx(
-          'absolute top-1/2 right-1 grid size-8 -translate-y-1/2 place-items-center rounded-md opacity-0 transition group-hover/row:opacity-100 focus-visible:opacity-100 pointer-coarse:opacity-60',
-          pinned ? 'text-amber-300' : 'text-white/40 hover:text-white',
+          'absolute top-1/2 right-0.5 grid size-7 -translate-y-1/2 place-items-center rounded-md opacity-0 transition group-hover/row:opacity-100 focus-visible:opacity-100 pointer-coarse:opacity-60',
+          pinned ? 'text-highlight-fg' : 'text-muted hover:text-ink',
         )}
       >
         <Star className={clsx('size-3.5', pinned && 'fill-current')} aria-hidden />
@@ -197,10 +203,10 @@ const SidebarNav = ({ collapsed, role, userId, idSuffix, onNavigate }: SidebarNa
   return (
     <nav
       className={clsx(
-        'flex-1 overflow-y-auto py-3',
+        'flex-1 overflow-y-auto py-2',
         // Rail: the scroll box reaches 16rem past the rail (transparent and click-through) so the tooltips
         // to the right of each icon are not clipped by it.
-        collapsed ? 'pointer-events-none -mr-64 pr-64 pl-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden' : 'px-3',
+        collapsed ? 'pointer-events-none -mr-64 pr-64 pl-3.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden' : 'px-2.5',
       )}
       aria-label={t('admin.layout.navAria')}
     >
@@ -210,9 +216,9 @@ const SidebarNav = ({ collapsed, role, userId, idSuffix, onNavigate }: SidebarNa
         const listId = `admin-nav-${g.key}-${idSuffix}`;
         const holdsActive = !!active && g.items.some((i) => i.id === active.id);
         return (
-          <div key={g.key} className={clsx(gi > 0 && (collapsed ? 'mt-1.5 w-11 border-t border-white/10 pt-1.5' : 'mt-2'))}>
+          <div key={g.key} className={clsx(gi > 0 && (collapsed ? 'mt-1.5 w-10 border-t border-line pt-1.5' : 'mt-3'))}>
             {collapsed ? (
-              <div className="pointer-events-auto flex w-11 justify-center">
+              <div className="pointer-events-auto flex w-10 justify-center">
                 <Tooltip content={name} side="right">
                   <button
                     type="button"
@@ -221,8 +227,8 @@ const SidebarNav = ({ collapsed, role, userId, idSuffix, onNavigate }: SidebarNa
                     aria-controls={listId}
                     aria-label={t('admin.layout.toggleGroup', { group: name })}
                     className={clsx(
-                      'relative grid h-7 w-11 place-items-center rounded-md transition hover:bg-white/5',
-                      holdsActive && !open ? 'text-brand-400' : 'text-white/35 hover:text-white/70',
+                      'relative grid h-7 w-10 place-items-center rounded-md transition hover:bg-line/60',
+                      holdsActive && !open ? 'text-ink' : 'text-muted hover:text-ink',
                     )}
                   >
                     <g.icon className="size-3.5" aria-hidden />
@@ -237,17 +243,17 @@ const SidebarNav = ({ collapsed, role, userId, idSuffix, onNavigate }: SidebarNa
                 aria-expanded={open}
                 aria-controls={listId}
                 className={clsx(
-                  'flex min-h-8 w-full items-center justify-between gap-2 rounded-md px-3 text-[11px] font-bold tracking-[0.14em] uppercase transition',
-                  holdsActive && !open ? 'text-brand-400' : 'text-white/60 hover:text-white/80',
+                  'type-overline flex min-h-7 w-full items-center justify-between gap-2 rounded-md px-2.5 transition-colors hover:text-ink',
+                  holdsActive && !open && 'text-ink',
                 )}
               >
                 <span className="flex min-w-0 items-center gap-2">
-                  {g.key === 'favourites' && <Star className="size-3 fill-current text-amber-300" aria-hidden />}
+                  {g.key === 'favourites' && <Star className="size-3 fill-current text-highlight-fg" aria-hidden />}
                   <span className="truncate">{name}</span>
                 </span>
                 <span className="flex items-center gap-1.5">
-                  {!open && <span className="text-[10px] font-semibold tracking-normal text-white/30 tabular-nums">{g.items.length}</span>}
-                  <ChevronDown className={clsx('size-3.5 transition-transform', !open && '-rotate-90')} aria-hidden />
+                  {!open && <span className="code-id text-[11px] font-medium tracking-normal tabular-nums">{g.items.length}</span>}
+                  <ChevronDown className={clsx('size-3 opacity-70 transition-transform', !open && '-rotate-90')} aria-hidden />
                 </span>
               </button>
             )}
@@ -338,11 +344,11 @@ const NotificationBell = () => {
         aria-expanded={open}
         aria-haspopup="true"
         aria-label={unread ? t('admin.layout.notificationsUnread', { count: unread }) : t('admin.layout.notifications')}
-        className="relative grid size-10 place-items-center rounded-lg text-ink/70 transition hover:bg-surface hover:text-navy-900"
+        className="relative grid size-9 place-items-center rounded-[var(--tv-radius-control)] text-muted transition hover:bg-sunken hover:text-ink pointer-coarse:size-10"
       >
         <Bell className="size-[18px]" />
         {unread > 0 && (
-          <span className="absolute top-1 right-1 grid min-w-4 place-items-center rounded-full bg-danger px-1 text-[10px] leading-4 font-bold text-white tabular-nums">
+          <span className="absolute top-0.5 right-0.5 grid min-w-4 place-items-center rounded-full bg-danger px-1 text-[10px] leading-4 font-semibold text-white tabular-nums ring-2 ring-canvas">
             {unread > 99 ? '99+' : unread}
           </span>
         )}
@@ -354,14 +360,14 @@ const NotificationBell = () => {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -6 }}
             transition={{ duration: 0.15 }}
-            className="fixed inset-x-3 top-16 z-50 overflow-hidden rounded-xl border border-line bg-white shadow-xl sm:absolute sm:inset-x-auto sm:top-11 sm:right-0 sm:w-96"
+            className="fixed inset-x-3 top-14 z-50 overflow-hidden rounded-xl border border-line bg-raised shadow-[var(--tv-shadow-raised)] sm:absolute sm:inset-x-auto sm:top-10 sm:right-0 sm:w-96"
           >
             <div className="flex items-center justify-between border-b border-line px-4 py-2.5">
-              <p className="text-sm font-semibold text-navy-900">{t('admin.layout.notifications')}</p>
+              <p className="type-card-title">{t('admin.layout.notifications')}</p>
               {unread > 0 && (
                 <button
                   type="button"
-                  className="inline-flex min-h-8 items-center gap-1 rounded-md px-1.5 text-xs font-semibold whitespace-nowrap text-brand-600 hover:text-brand-700"
+                  className="inline-flex min-h-8 items-center gap-1 rounded-md px-1.5 text-xs font-medium whitespace-nowrap text-link hover:text-link-hover"
                   onClick={() => markRead.mutate(undefined)}
                 >
                   <CheckCheck className="size-3.5" /> {t('admin.layout.markAllRead')}
@@ -374,7 +380,7 @@ const NotificationBell = () => {
                 <li key={n.id}>
                   <button
                     type="button"
-                    className={clsx('flex w-full gap-3 px-4 py-3 text-left transition hover:bg-surface', !n.readAt && 'bg-brand-50/60')}
+                    className={clsx('flex w-full gap-3 px-4 py-3 text-left transition hover:bg-sunken', !n.readAt && 'bg-sunken/60')}
                     onClick={() => {
                       if (!n.readAt) markRead.mutate([n.id]);
                       if (n.link) {
@@ -383,11 +389,11 @@ const NotificationBell = () => {
                       }
                     }}
                   >
-                    <span className={clsx('mt-1.5 size-2 shrink-0 rounded-full', n.readAt ? 'bg-transparent' : 'bg-brand-500')} aria-hidden />
+                    <span className={clsx('mt-1.5 size-2 shrink-0 rounded-full', n.readAt ? 'bg-transparent' : 'bg-link')} aria-hidden />
                     <span className="min-w-0 flex-1">
-                      <span className="block text-sm font-semibold text-navy-900">{n.title}</span>
+                      <span className={clsx('block text-sm text-ink', n.readAt ? 'font-medium' : 'font-semibold')}>{n.title}</span>
                       <span className="mt-0.5 line-clamp-2 block text-xs whitespace-pre-line text-muted">{n.body}</span>
-                      <span className="mt-1 block text-[11px] text-muted/80">{fmtRelative(n.createdAt)}</span>
+                      <span className="num mt-1 block text-[11px] text-muted">{fmtRelative(n.createdAt)}</span>
                     </span>
                   </button>
                 </li>
@@ -396,6 +402,91 @@ const NotificationBell = () => {
           </motion.div>
         )}
       </AnimatePresence>
+    </div>
+  );
+};
+
+// ─── Sidebar chrome (Direction A: workspace header, search, user footer) ─────
+
+/** Sidebar header: brand tile + panel name; the menu jumps to the workspace or the public site. */
+const WorkspaceSwitcher = ({ collapsed }: { collapsed: boolean }) => {
+  const { t } = useTranslation();
+  const tile = (
+    <span className="grid size-7 shrink-0 place-items-center rounded-lg bg-card shadow-[var(--tv-shadow-card)] ring-1 ring-line" aria-hidden>
+      <LogoMark className="h-4 w-[18px] text-ink" />
+    </span>
+  );
+  const items: MenuItem[] = [
+    { label: t('admin.nav.workspace'), icon: LayoutGrid, to: '/workspace/home' },
+    { label: t('admin.layout.goToSite'), icon: ExternalLink, onSelect: () => window.location.assign('/') },
+  ];
+  return (
+    <UiMenu
+      align="start"
+      label={t('admin.layout.panel')}
+      items={items}
+      trigger={
+        <button
+          type="button"
+          aria-label={collapsed ? `Triad Vision · ${t('admin.layout.panel')}` : undefined}
+          className={clsx(
+            'flex w-full items-center gap-2.5 rounded-lg py-1.5 text-left transition-colors hover:bg-line/60',
+            collapsed ? 'justify-center px-0' : 'px-2',
+          )}
+        >
+          {tile}
+          {!collapsed && (
+            <>
+              <span className="min-w-0 flex-1 leading-tight">
+                <span className="block truncate text-[13px] font-semibold text-ink">Triad Vision</span>
+                <span className="block truncate text-[11.5px] text-muted">{t('admin.layout.panel')}</span>
+              </span>
+              <ChevronDown className="size-3.5 shrink-0 text-muted" aria-hidden />
+            </>
+          )}
+        </button>
+      }
+    />
+  );
+};
+
+/** Sidebar footer: who is signed in, with sign-out. */
+const UserFooter = ({ collapsed, onLogout }: { collapsed: boolean; onLogout: () => void }) => {
+  const { t } = useTranslation();
+  const { user } = useAuth();
+  if (!user) return null;
+  const name = `${user.firstName} ${user.lastName}`;
+  const logout = (
+    <button
+      type="button"
+      onClick={onLogout}
+      className="grid size-8 shrink-0 place-items-center rounded-md text-muted transition hover:bg-danger-bg hover:text-danger-fg"
+      aria-label={t('admin.layout.logout')}
+      title={t('admin.layout.logout')}
+    >
+      <LogOut className="size-4" aria-hidden />
+    </button>
+  );
+  if (collapsed) {
+    return (
+      <div className="flex flex-col items-center gap-1 border-t border-line py-2">
+        <Tooltip content={`${name} · ${roleLabel(user.role)}`} side="right">
+          <span className="inline-flex" tabIndex={0}>
+            <Avatar name={name} size="sm" decorative={false} />
+          </span>
+        </Tooltip>
+        {logout}
+      </div>
+    );
+  }
+  return (
+    <div className="flex items-center gap-2.5 border-t border-line px-2 py-2.5">
+      <Avatar name={name} size="sm" />
+      <span className="min-w-0 flex-1 leading-tight">
+        <span className="block truncate text-[12.5px] font-semibold text-ink">{name}</span>
+        <span className="block truncate text-[11.5px] text-muted">{roleLabel(user.role)}</span>
+      </span>
+      {logout}
     </div>
   );
 };
@@ -415,6 +506,12 @@ export default function AdminLayout() {
   // A page of a switched-off module shows a notice instead.
   const page = activeNavItem(location.pathname, STAFF_NAV);
   const blocked = loaded && !!page?.module && !isModuleOn(page.module);
+  useSurface('admin');
+
+  // Breadcrumb: sidebar group › page (› detail, when the title is not the nav entry itself).
+  const crumbs: string[] = [];
+  if (page?.group) crumbs.push(t(`admin.nav.groups.${page.group}`));
+  if (page && t(page.labelKey) !== title) crumbs.push(t(page.labelKey));
 
   useEffect(() => {
     try {
@@ -448,43 +545,41 @@ export default function AdminLayout() {
     void logout();
   };
 
-  const initials = user ? `${user.firstName[0] ?? ''}${user.lastName[0] ?? ''}`.toUpperCase() : '';
+  const userName = user ? `${user.firstName} ${user.lastName}` : '';
 
   return (
-    <div className="flex min-h-screen bg-surface text-ink">
+    <div className="flex min-h-screen bg-canvas text-ink">
       <a href="#admin-main" className="skip-link">
         {t('a11y.skip')}
       </a>
-      {/* Desktop sidebar */}
+      {/* Desktop sidebar: a calm sunken column with hairline edge (Direction A) */}
       <aside
         className={clsx(
           // z-50: the rail's tooltips overlap the sticky page header (z-40).
-          'vt-admin-sidebar sticky top-0 z-50 hidden h-screen shrink-0 flex-col bg-navy-950 transition-[width] duration-300 lg:flex',
-          collapsed ? 'w-[68px]' : 'w-64',
+          'vt-admin-sidebar sticky top-0 z-50 hidden h-screen shrink-0 flex-col border-r border-line bg-sunken transition-[width] duration-300 lg:flex',
+          collapsed ? 'w-[68px]' : 'w-60',
         )}
       >
-        <div className={clsx('flex h-16 items-center border-b border-white/10', collapsed ? 'justify-center' : 'px-5')}>
-          {collapsed ? (
-            <Link to="/" aria-label="Triad Vision">
-              <LogoMark className="h-8 w-9 text-white" />
-            </Link>
-          ) : (
-            <Logo light className="origin-left scale-[0.82]" />
-          )}
+        <div className={clsx('flex flex-col gap-2 pt-3 pb-1', collapsed ? 'items-center px-3.5' : 'px-2.5')}>
+          <WorkspaceSwitcher collapsed={collapsed} />
+          <CommandPaletteButton variant="rail" compact={collapsed} className={collapsed ? 'w-10' : undefined} />
         </div>
         <SidebarNav collapsed={collapsed} role={user?.role} userId={user?.id} idSuffix={collapsed ? 'rail' : 'side'} />
-        <button
-          type="button"
-          onClick={() => setCollapsed((v) => !v)}
-          className={clsx(
-            'm-3 flex min-h-10 items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium text-white/50 transition hover:bg-white/5 hover:text-white',
-            collapsed && 'justify-center',
-          )}
-          aria-label={collapsed ? t('admin.layout.expandMenu') : t('admin.layout.collapseMenu')}
-        >
-          {collapsed ? <ChevronsRight className="size-4" /> : <ChevronsLeft className="size-4" />}
-          {!collapsed && t('admin.layout.collapseMenu')}
-        </button>
+        <div className={clsx('px-2.5', collapsed && 'flex flex-col items-center px-3.5')}>
+          <button
+            type="button"
+            onClick={() => setCollapsed((v) => !v)}
+            className={clsx(
+              'mb-1 flex min-h-8 items-center gap-2 rounded-lg px-2.5 text-xs font-medium text-muted transition hover:bg-line/60 hover:text-ink',
+              collapsed ? 'w-10 justify-center px-0' : 'w-full',
+            )}
+            aria-label={collapsed ? t('admin.layout.expandMenu') : t('admin.layout.collapseMenu')}
+          >
+            {collapsed ? <ChevronsRight className="size-4" aria-hidden /> : <ChevronsLeft className="size-4" aria-hidden />}
+            {!collapsed && t('admin.layout.collapseMenu')}
+          </button>
+          <UserFooter collapsed={collapsed} onLogout={onLogout} />
+        </div>
       </aside>
 
       {/* Mobile drawer */}
@@ -492,7 +587,7 @@ export default function AdminLayout() {
         {mobileOpen && (
           <div className="fixed inset-0 z-[60] lg:hidden">
             <motion.div
-              className="absolute inset-0 bg-navy-950/60"
+              className="absolute inset-0 bg-scrim"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -500,7 +595,7 @@ export default function AdminLayout() {
               aria-hidden
             />
             <motion.aside
-              className="absolute inset-y-0 left-0 flex w-72 max-w-[85vw] flex-col bg-navy-950"
+              className="absolute inset-y-0 left-0 flex w-72 max-w-[85vw] flex-col border-r border-line bg-sunken shadow-[var(--tv-shadow-overlay)]"
               initial={{ x: '-100%' }}
               animate={{ x: 0 }}
               exit={{ x: '-100%' }}
@@ -509,25 +604,31 @@ export default function AdminLayout() {
               aria-modal="true"
               aria-label={t('admin.layout.menu')}
             >
-              <div className="flex h-16 items-center justify-between border-b border-white/10 pr-3 pl-4">
-                <Logo light className="origin-left scale-[0.8]" />
+              <div className="flex items-center gap-1 pt-3 pr-2 pl-2.5">
+                <div className="min-w-0 flex-1">
+                  <WorkspaceSwitcher collapsed={false} />
+                </div>
                 <button
                   type="button"
                   onClick={() => setMobileOpen(false)}
-                  className="grid size-10 place-items-center rounded-lg text-white/70 hover:bg-white/10 hover:text-white"
+                  className="grid size-10 shrink-0 place-items-center rounded-lg text-muted hover:bg-line/60 hover:text-ink"
                   aria-label={t('admin.layout.closeMenu')}
                 >
-                  <X className="size-5" />
+                  <X className="size-5" aria-hidden />
                 </button>
               </div>
+              <div className="px-2.5 pt-2">
+                <CommandPaletteButton variant="rail" />
+              </div>
               <SidebarNav collapsed={false} role={user?.role} userId={user?.id} idSuffix="drawer" onNavigate={() => setMobileOpen(false)} />
-              <div className="border-t border-white/10 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+              <div className="px-2.5 pb-[max(0.25rem,env(safe-area-inset-bottom))]">
                 <a
                   href="/"
-                  className="flex min-h-10 items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-white/60 transition hover:bg-white/5 hover:text-white"
+                  className="mb-1 flex min-h-10 items-center gap-2.5 rounded-lg px-2.5 text-[13px] text-muted transition hover:bg-line/60 hover:text-ink"
                 >
-                  <ExternalLink className="size-[18px] shrink-0 text-white/50" aria-hidden /> {t('admin.layout.goToSite')}
+                  <ExternalLink className="size-4 shrink-0" aria-hidden /> {t('admin.layout.goToSite')}
                 </a>
+                <UserFooter collapsed={false} onLogout={onLogout} />
               </div>
             </motion.aside>
           </div>
@@ -535,57 +636,68 @@ export default function AdminLayout() {
       </AnimatePresence>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="vt-admin-topbar sticky top-0 z-40 flex h-16 items-center gap-1.5 border-b border-line bg-white/[0.97] px-2 sm:gap-2 sm:px-6 lg:px-8">
+        {/* Top bar: breadcrumb left, quiet tools right (solid canvas, hairline bottom; no blur) */}
+        <header className="vt-admin-topbar sticky top-0 z-40 flex h-[52px] items-center gap-1 border-b border-line bg-canvas px-2 sm:gap-1.5 sm:px-5 lg:px-6">
           <button
             type="button"
             onClick={() => setMobileOpen(true)}
-            className="grid size-10 shrink-0 place-items-center rounded-lg text-ink/70 hover:bg-surface lg:hidden"
+            className="grid size-10 shrink-0 place-items-center rounded-lg text-muted hover:bg-sunken hover:text-ink lg:hidden"
             aria-label={t('admin.layout.openMenu')}
           >
-            <Menu className="size-5" />
+            <Menu className="size-5" aria-hidden />
           </button>
-          <p className="min-w-0 flex-1 truncate pl-1 font-display text-base font-bold text-navy-900 sm:text-lg lg:pl-0">{title}</p>
+          <nav aria-label={t('ui.breadcrumb')} className="min-w-0 flex-1 pl-1 lg:pl-0">
+            <ol className="flex min-w-0 items-center gap-1.5 text-[13px]">
+              {crumbs.map((c) => (
+                <li key={c} className="hidden min-w-0 items-center gap-1.5 text-muted sm:flex">
+                  <span className="truncate">{c}</span>
+                  <span aria-hidden className="text-subtle">
+                    /
+                  </span>
+                </li>
+              ))}
+              <li className="min-w-0">
+                <span aria-current="page" className="block truncate font-medium text-ink">
+                  {title}
+                </span>
+              </li>
+            </ol>
+          </nav>
 
-          <CommandPaletteButton className="lg:min-w-[15rem]" />
+          {/* the sidebar holds the search field on desktop; phones / tablets get the icon here */}
+          <CommandPaletteButton className="lg:hidden" />
           <HelpButton />
           <LanguageSwitcher variant="pill" />
           <ThemeToggle />
+          <DensityToggle className="hidden size-9 md:grid" />
           <HeaderTimer />
           <NotificationBell />
           <a
             href="/"
-            className="hidden min-h-10 items-center gap-1.5 rounded-lg px-2.5 py-2 text-xs font-semibold whitespace-nowrap text-ink/70 transition hover:bg-surface hover:text-navy-900 sm:inline-flex"
+            className="hidden min-h-9 items-center gap-1.5 rounded-[var(--tv-radius-control)] px-2.5 text-xs font-medium whitespace-nowrap text-muted transition hover:bg-sunken hover:text-ink sm:inline-flex lg:hidden xl:inline-flex"
           >
-            <ExternalLink className="size-3.5" /> {t('admin.layout.goToSite')}
+            <ExternalLink className="size-3.5" aria-hidden /> {t('admin.layout.goToSite')}
           </a>
-          <div className="mx-1 hidden h-6 w-px bg-line sm:block" aria-hidden />
-          <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
-            <span className="grid size-8 shrink-0 place-items-center rounded-full bg-navy-900 text-[11px] font-bold text-white" aria-hidden>
-              {initials}
-            </span>
-            <span className="hidden max-w-[12rem] leading-tight md:block">
-              <span className="block truncate text-sm font-semibold text-navy-900">
-                {user?.firstName} {user?.lastName}
-              </span>
-              <span className="block text-[11px] text-muted">{user ? roleLabel(user.role) : ''}</span>
-            </span>
+          {/* phones / tablets: the sidebar footer is in the drawer, so the avatar + sign-out stay up here */}
+          <div className="ml-0.5 flex shrink-0 items-center gap-1 lg:hidden">
+            <span className="hidden sm:inline-flex">{user && <Avatar name={userName} size="sm" />}</span>
             <button
               type="button"
               onClick={onLogout}
-              className="grid size-10 place-items-center rounded-lg text-ink/60 transition hover:bg-red-50 hover:text-danger"
+              className="grid size-10 place-items-center rounded-lg text-muted transition hover:bg-danger-bg hover:text-danger-fg"
               aria-label={t('admin.layout.logout')}
               title={t('admin.layout.logout')}
             >
-              <LogOut className="size-[18px]" />
+              <LogOut className="size-[18px]" aria-hidden />
             </button>
           </div>
         </header>
 
-        <main id="admin-main" tabIndex={-1} className="mx-auto w-full max-w-[1440px] min-w-0 flex-1 p-4 outline-none sm:p-6 lg:p-8">
+        <main id="admin-main" tabIndex={-1} className="mx-auto w-full max-w-[1440px] min-w-0 flex-1 px-4 py-5 outline-none sm:px-6 sm:py-6 lg:px-8">
           {blocked && page ? <ModuleDisabled item={page} /> : <Outlet />}
           <LiveChatAlerts />
         </main>
-        <footer className="flex items-center justify-center gap-1.5 px-4 pb-5 text-[11px] text-muted/70">
+        <footer className="flex items-center justify-center gap-1.5 px-4 pb-5 text-[11px] text-muted">
           <BookOpen className="size-3" aria-hidden /> {t('admin.layout.footer')}
         </footer>
       </div>

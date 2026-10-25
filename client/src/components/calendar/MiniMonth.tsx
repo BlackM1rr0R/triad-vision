@@ -11,13 +11,13 @@ export const MiniMonth = ({ month, selected, marks, onSelect, onMonthChange }: {
   return (
     <div className="select-none">
       <div className="mb-1 flex items-center justify-between">
-        <button type="button" onClick={() => onMonthChange(addMonths(month, -1))} className="grid size-7 place-items-center rounded-md text-muted hover:bg-surface hover:text-ink" aria-label={t('calendar.prev')}>
+        <button type="button" onClick={() => onMonthChange(addMonths(month, -1))} className="grid size-7 place-items-center rounded-md text-muted hover:bg-sunken hover:text-ink" aria-label={t('calendar.prev')}>
           <ChevronLeft className="size-4" />
         </button>
-        <button type="button" onClick={() => onSelect(new Date())} className="text-xs font-bold text-ink hover:text-brand-600">
+        <button type="button" onClick={() => onSelect(new Date())} className="text-xs font-bold text-ink hover:text-link">
           {fmtMonthTitle(month)}
         </button>
-        <button type="button" onClick={() => onMonthChange(addMonths(month, 1))} className="grid size-7 place-items-center rounded-md text-muted hover:bg-surface hover:text-ink" aria-label={t('calendar.next')}>
+        <button type="button" onClick={() => onMonthChange(addMonths(month, 1))} className="grid size-7 place-items-center rounded-md text-muted hover:bg-sunken hover:text-ink" aria-label={t('calendar.next')}>
           <ChevronRight className="size-4" />
         </button>
       </div>
@@ -39,12 +39,12 @@ export const MiniMonth = ({ month, selected, marks, onSelect, onMonthChange }: {
               onClick={() => onSelect(d)}
               className={clsx(
                 'relative mx-auto my-0.5 grid size-6 place-items-center rounded-full text-[0.7rem] transition-colors',
-                k === sel ? 'bg-brand-600 font-bold text-white' : isToday(d) ? 'font-bold text-brand-600 ring-1 ring-brand-400' : other ? 'text-muted/50 hover:bg-surface' : 'text-ink hover:bg-surface',
+                k === sel ? 'bg-primary font-bold text-primary-contrast' : isToday(d) ? 'font-bold text-link ring-1 ring-focus' : other ? 'text-muted hover:bg-sunken' : 'text-ink hover:bg-sunken',
               )}
               aria-pressed={k === sel}
             >
               {d.getDate()}
-              {marks?.has(k) && k !== sel && <span className="absolute bottom-0.5 size-1 rounded-full bg-brand-500" aria-hidden />}
+              {marks?.has(k) && k !== sel && <span className="absolute bottom-0.5 size-1 rounded-full bg-primary" aria-hidden />}
             </button>
           );
         })}

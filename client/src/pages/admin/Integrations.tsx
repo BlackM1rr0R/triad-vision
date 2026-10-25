@@ -37,10 +37,10 @@ const CopyButton = ({ text, label }: { text: string; label?: string }) => {
 const SecretBox = ({ secret, hint, onClose }: { secret: string; hint: string; onClose: () => void }) => {
   const { t } = useTranslation();
   return (
-    <div className="rounded-xl border border-amber-300 bg-amber-50 p-4" role="alert">
-      <p className="text-sm font-semibold text-amber-900">{hint}</p>
+    <div className="rounded-xl border border-warning-border bg-warning-bg p-4" role="alert">
+      <p className="text-sm font-semibold text-warning-fg">{hint}</p>
       <div className="mt-2 flex flex-wrap items-center gap-2">
-        <code className="min-w-0 flex-1 rounded-lg bg-white px-3 py-2 font-mono text-xs break-all text-navy-900">{secret}</code>
+        <code className="min-w-0 flex-1 rounded-lg bg-card px-3 py-2 font-mono text-xs break-all text-ink">{secret}</code>
         <CopyButton text={secret} />
         <button type="button" className="btn-secondary btn-sm" onClick={onClose}>{t('ops.common.close')}</button>
       </div>
@@ -72,7 +72,7 @@ const CalendarFeed = () => {
     <Panel title={t('ops.integrations.calendar.title')} icon={CalendarSync}>
       <p className="mb-4 text-sm text-muted">{t('ops.integrations.calendar.hint')}</p>
       {isLoading ? (
-        <Spinner className="size-5 text-brand-600" />
+        <Spinner className="size-5 text-link" />
       ) : data?.enabled && data.url ? (
         <div className="space-y-4">
           <div>
@@ -83,13 +83,13 @@ const CalendarFeed = () => {
               <button type="button" className="btn-secondary btn-sm" disabled={create.isPending} onClick={() => create.mutate()} title={t('ops.integrations.calendar.rotateHint')}>
                 <RotateCw className="size-3.5" /> {t('ops.integrations.calendar.rotate')}
               </button>
-              <button type="button" className="btn-secondary btn-sm text-danger" onClick={() => setConfirmOff(true)}>
+              <button type="button" className="btn-secondary btn-sm text-danger-fg" onClick={() => setConfirmOff(true)}>
                 <ShieldOff className="size-3.5" /> {t('ops.integrations.calendar.disable')}
               </button>
             </div>
           </div>
           <div className="rounded-lg bg-surface/60 p-4 text-xs text-ink/80">
-            <p className="mb-2 font-semibold text-navy-900">{t('ops.integrations.calendar.howTo')}</p>
+            <p className="mb-2 font-semibold text-ink">{t('ops.integrations.calendar.howTo')}</p>
             <ul className="list-disc space-y-1 pl-5">
               <li>{t('ops.integrations.calendar.google')}</li>
               <li>{t('ops.integrations.calendar.outlook')}</li>
@@ -165,7 +165,7 @@ const ApiKeys = ({ companies }: { companies: CompanyOption[] }) => {
       ) : (
         <div className="overflow-x-auto">
           <table className="min-w-full text-left text-sm">
-            <thead className="text-[11px] font-semibold tracking-wide text-muted uppercase">
+            <thead className="text-xs font-medium text-muted">
               <tr>
                 <th className="py-2 pr-3">{t('ops.integrations.apiKeys.name')}</th>
                 <th className="py-2 pr-3">{t('ops.integrations.apiKeys.scopes')}</th>
@@ -179,18 +179,18 @@ const ApiKeys = ({ companies }: { companies: CompanyOption[] }) => {
               {data.keys.map((k) => (
                 <tr key={k.id} className={clsx(k.revokedAt && 'opacity-60')}>
                   <td className="py-2.5 pr-3">
-                    <span className="font-semibold text-navy-900">{k.name}</span>
-                    <span className="block font-mono text-[11px] text-muted">{k.prefix}…</span>
+                    <span className="font-semibold text-ink">{k.name}</span>
+                    <span className="block code-id text-[11px] text-muted">{k.prefix}…</span>
                   </td>
                   <td className="py-2.5 pr-3">
-                    <span className="flex flex-wrap gap-1">{k.scopes.map((s) => <span key={s} className="rounded bg-surface px-1.5 py-0.5 font-mono text-[10px]">{s}</span>)}</span>
+                    <span className="flex flex-wrap gap-1">{k.scopes.map((s) => <span key={s} className="rounded bg-sunken px-1.5 py-0.5 code-id text-[10px]">{s}</span>)}</span>
                   </td>
                   <td className="py-2.5 pr-3 text-xs">{k.company?.name ?? <span className="text-muted">{t('ops.integrations.apiKeys.platformWide')}</span>}</td>
                   <td className="py-2.5 pr-3 text-xs text-muted">{k.lastUsedAt ? fmtRelative(k.lastUsedAt) : t('ops.integrations.apiKeys.never')}</td>
                   <td className="py-2.5 pr-3">{k.revokedAt ? <span className="badge bg-neutral-bg text-neutral-fg">{t('ops.integrations.apiKeys.revoked')}</span> : <span className="badge bg-success-bg text-success-fg">{t('ops.integrations.apiKeys.active')}</span>}</td>
                   <td className="py-2.5 text-right">
                     {!k.revokedAt && (
-                      <button type="button" className="btn-secondary btn-sm text-danger" onClick={() => setRevoking(k)}>
+                      <button type="button" className="btn-secondary btn-sm text-danger-fg" onClick={() => setRevoking(k)}>
                         <ShieldOff className="size-3.5" /> {t('ops.integrations.apiKeys.revoke')}
                       </button>
                     )}
@@ -225,7 +225,7 @@ const ApiKeys = ({ companies }: { companies: CompanyOption[] }) => {
               {(data?.scopes ?? []).map((s) => (
                 <label key={s} className="flex items-start gap-2 rounded-lg border border-line px-3 py-2 text-sm">
                   <input type="checkbox" className="mt-0.5 size-4" checked={scopes.includes(s)} onChange={() => toggleScope(s)} />
-                  <span><span className="block font-mono text-xs text-navy-900">{s}</span><span className="text-xs text-muted">{t(`ops.integrations.apiKeys.scopeLabels.${s}`)}</span></span>
+                  <span><span className="block code-id text-xs text-ink">{s}</span><span className="text-xs text-muted">{t(`ops.integrations.apiKeys.scopeLabels.${s}`)}</span></span>
                 </label>
               ))}
             </div>
@@ -260,13 +260,13 @@ const DeliveriesLog = ({ hook }: { hook: Hook }) => {
     },
     onError: toastOpsError,
   });
-  const TONE = { PENDING: 'bg-amber-100 text-amber-800', DELIVERED: 'bg-emerald-100 text-emerald-800', FAILED: 'bg-red-100 text-red-700' } as const;
+  const TONE = { PENDING: 'bg-warning-bg text-warning-fg', DELIVERED: 'bg-success-bg text-success-fg', FAILED: 'bg-danger-bg text-danger-fg' } as const;
   if (isLoading) return <LoadingBlock className="min-h-24" />;
   if (!data?.length) return <p className="px-1 py-3 text-xs text-muted">{t('ops.integrations.webhooks.noDeliveries')}</p>;
   return (
     <div className="overflow-x-auto">
       <table className="min-w-full text-left text-xs">
-        <thead className="text-[10px] font-semibold tracking-wide text-muted uppercase">
+        <thead className="text-xs font-medium text-muted">
           <tr>
             <th className="py-1.5 pr-3">{t('ops.integrations.webhooks.event')}</th>
             <th className="py-1.5 pr-3">{t('ops.common.status')}</th>
@@ -282,7 +282,7 @@ const DeliveriesLog = ({ hook }: { hook: Hook }) => {
               <td className="py-1.5 pr-3"><span className="font-mono">{d.event}</span><span className="block text-[10px] text-muted">{fmtDateTime(d.createdAt)}</span></td>
               <td className="py-1.5 pr-3"><span className={clsx('badge', TONE[d.status])}>{t(`ops.integrations.webhooks.status.${d.status}`)}</span></td>
               <td className="py-1.5 pr-3 tabular-nums">{d.attempts}</td>
-              <td className="py-1.5 pr-3">{d.responseCode ?? '—'}{d.lastError && <span className="block max-w-56 truncate text-[10px] text-red-700" title={d.lastError}>{d.lastError}</span>}</td>
+              <td className="py-1.5 pr-3">{d.responseCode ?? '—'}{d.lastError && <span className="block max-w-56 truncate text-[10px] text-danger-fg" title={d.lastError}>{d.lastError}</span>}</td>
               <td className="py-1.5 pr-3 text-muted">{d.status === 'PENDING' && d.nextAttemptAt ? fmtDateTime(d.nextAttemptAt) : d.deliveredAt ? fmtDateTime(d.deliveredAt) : '—'}</td>
               <td className="py-1.5 text-right">
                 {d.status !== 'DELIVERED' && (
@@ -378,13 +378,13 @@ const Webhooks = ({ companies }: { companies: CompanyOption[] }) => {
               <div className="flex flex-wrap items-center gap-3 px-4 py-3">
                 <Switch checked={h.active} onChange={(active) => patch.mutate({ id: h.id, body: { active } })} label={t('ops.integrations.webhooks.active')} />
                 <div className="min-w-0 flex-1">
-                  <p className="truncate font-mono text-xs font-semibold text-navy-900">{h.url}</p>
+                  <p className="truncate code-id text-xs font-medium text-ink">{h.url}</p>
                   <p className="mt-0.5 flex flex-wrap gap-1 text-[11px] text-muted">
-                    {h.events.map((e) => <span key={e} className="rounded bg-surface px-1.5 py-0.5 font-mono text-[10px]">{e}</span>)}
-                    {h.company && <span className="rounded bg-brand-50 px-1.5 py-0.5 text-brand-700">{h.company.name}</span>}
+                    {h.events.map((e) => <span key={e} className="rounded bg-sunken px-1.5 py-0.5 code-id text-[10px]">{e}</span>)}
+                    {h.company && <span className="rounded bg-primary/[0.06] px-1.5 py-0.5 text-link">{h.company.name}</span>}
                   </p>
                 </div>
-                <span className={clsx('text-[11px] tabular-nums', h.failed ? 'text-red-700' : 'text-muted')}>{t('ops.integrations.webhooks.stats', { failed: h.failed, pending: h.pending })}</span>
+                <span className={clsx('text-[11px] tabular-nums', h.failed ? 'text-danger-fg' : 'text-muted')}>{t('ops.integrations.webhooks.stats', { failed: h.failed, pending: h.pending })}</span>
                 <div className="flex flex-wrap gap-1.5">
                   <button type="button" className="btn-secondary btn-sm" disabled={test.isPending} onClick={() => test.mutate(h.id)}>
                     <Send className="size-3.5" /> {t('ops.integrations.webhooks.test')}
@@ -395,7 +395,7 @@ const Webhooks = ({ companies }: { companies: CompanyOption[] }) => {
                   <button type="button" className="btn-secondary btn-sm" disabled={rotate.isPending} onClick={() => rotate.mutate(h.id)}>
                     <RotateCw className="size-3.5" /> {t('ops.integrations.webhooks.rotate')}
                   </button>
-                  <button type="button" className="btn-secondary btn-sm text-danger" onClick={() => setDeleting(h)} aria-label={t('ops.integrations.webhooks.delete')}>
+                  <button type="button" className="btn-secondary btn-sm text-danger-fg" onClick={() => setDeleting(h)} aria-label={t('ops.integrations.webhooks.delete')}>
                     <Trash2 className="size-3.5" />
                   </button>
                 </div>
@@ -429,7 +429,7 @@ const Webhooks = ({ companies }: { companies: CompanyOption[] }) => {
               {(data?.events ?? []).map((e) => (
                 <label key={e} className="flex items-start gap-2 rounded-lg border border-line px-3 py-2 text-sm">
                   <input type="checkbox" className="mt-0.5 size-4" checked={events.includes(e)} onChange={() => toggleEvent(e)} />
-                  <span><span className="block font-mono text-xs text-navy-900">{e}</span><span className="text-xs text-muted">{t(`ops.integrations.webhooks.eventLabels.${e}`)}</span></span>
+                  <span><span className="block code-id text-xs text-ink">{e}</span><span className="text-xs text-muted">{t(`ops.integrations.webhooks.eventLabels.${e}`)}</span></span>
                 </label>
               ))}
             </div>
@@ -469,15 +469,15 @@ const ApiDocs = ({ events }: { events: string[] }) => {
   return (
     <Panel title={t('ops.integrations.docs.title')} icon={BookText} actions={<a href="/api/v1/openapi.json" target="_blank" rel="noreferrer" className="btn-secondary btn-sm"><ExternalLink className="size-3.5" /> {t('ops.integrations.docs.openapi')}</a>}>
       <p className="mb-4 text-sm text-muted">{t('ops.integrations.docs.hint', { base })}</p>
-      <h3 className="mb-2 text-sm font-semibold text-navy-900">{t('ops.integrations.docs.endpoints')}</h3>
+      <h3 className="mb-2 text-sm font-semibold text-ink">{t('ops.integrations.docs.endpoints')}</h3>
       <div className="overflow-x-auto rounded-lg border border-line">
         <table className="min-w-full text-left text-xs">
           <tbody className="divide-y divide-line">
             {ENDPOINTS.map((e) => (
               <tr key={e.path + e.method}>
-                <td className="px-3 py-2 font-mono whitespace-nowrap"><span className={clsx('mr-2 rounded px-1.5 py-0.5 text-[10px] font-bold', e.method === 'GET' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800')}>{e.method}</span>{e.path}</td>
+                <td className="px-3 py-2 font-mono whitespace-nowrap"><span className={clsx('mr-2 rounded px-1.5 py-0.5 text-[10px] font-bold', e.method === 'GET' ? 'bg-success-bg text-success-fg' : 'bg-warning-bg text-warning-fg')}>{e.method}</span>{e.path}</td>
                 <td className="px-3 py-2 text-ink/80">{t(`ops.integrations.docs.endpointList.${e.key}`)}</td>
-                <td className="px-3 py-2 font-mono text-[10px] whitespace-nowrap text-muted">{e.scope}</td>
+                <td className="px-3 py-2 code-id text-[10px] whitespace-nowrap text-muted">{e.scope}</td>
               </tr>
             ))}
           </tbody>
@@ -485,20 +485,20 @@ const ApiDocs = ({ events }: { events: string[] }) => {
       </div>
       <div className="mt-5 grid gap-5 xl:grid-cols-2">
         <div>
-          <div className="mb-1.5 flex items-center justify-between"><h3 className="text-sm font-semibold text-navy-900">{t('ops.integrations.docs.example')}</h3><CopyButton text={curl} /></div>
-          <pre className="overflow-x-auto rounded-lg bg-navy-950 p-3 font-mono text-[11px] leading-relaxed text-white/90"><code>{curl}</code></pre>
+          <div className="mb-1.5 flex items-center justify-between"><h3 className="text-sm font-semibold text-ink">{t('ops.integrations.docs.example')}</h3><CopyButton text={curl} /></div>
+          <pre tabIndex={0} className="overflow-x-auto rounded-lg bg-navy-950 p-3 font-mono text-[11px] leading-relaxed text-white/90"><code>{curl}</code></pre>
         </div>
         <div>
-          <div className="mb-1.5 flex items-center justify-between"><h3 className="text-sm font-semibold text-navy-900">{t('ops.integrations.docs.signature')}</h3><CopyButton text={verify} /></div>
+          <div className="mb-1.5 flex items-center justify-between"><h3 className="text-sm font-semibold text-ink">{t('ops.integrations.docs.signature')}</h3><CopyButton text={verify} /></div>
           <p className="mb-1.5 text-[11px] text-muted">{t('ops.integrations.docs.signatureHint')} {t('ops.integrations.docs.headers')}</p>
-          <pre className="overflow-x-auto rounded-lg bg-navy-950 p-3 font-mono text-[11px] leading-relaxed text-white/90"><code>{verify}</code></pre>
+          <pre tabIndex={0} className="overflow-x-auto rounded-lg bg-navy-950 p-3 font-mono text-[11px] leading-relaxed text-white/90"><code>{verify}</code></pre>
         </div>
       </div>
       {events.length > 0 && (
         <div className="mt-5">
-          <h3 className="mb-1.5 text-sm font-semibold text-navy-900">{t('ops.integrations.docs.events')}</h3>
+          <h3 className="mb-1.5 text-sm font-semibold text-ink">{t('ops.integrations.docs.events')}</h3>
           <ul className="grid gap-1 text-xs sm:grid-cols-2">
-            {events.map((e) => <li key={e}><span className="font-mono text-navy-900">{e}</span> <span className="text-muted">— {t(`ops.integrations.webhooks.eventLabels.${e}`)}</span></li>)}
+            {events.map((e) => <li key={e}><span className="font-mono text-ink">{e}</span> <span className="text-muted">— {t(`ops.integrations.webhooks.eventLabels.${e}`)}</span></li>)}
           </ul>
         </div>
       )}

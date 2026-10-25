@@ -13,6 +13,8 @@ import { fmtDate, fmtDateTime } from '@/components/admin/labels';
 import { registerCopy } from '@/i18n';
 import { pagesLegal } from '@/i18n/pagesLegal';
 import { AutoAssignSettings, normalizeAutoAssign } from '@/components/ops/AutoAssignSettings';
+import { ThemePanel } from '@/components/admin/theme/ThemePanel'; // design tokens: brand colours, radius, density (SUPER_ADMIN)
+import { useAuth } from '@/lib/auth';
 import {
   LEGAL_FIELDS,
   normalizeLegal,
@@ -151,8 +153,8 @@ const ContactForm = ({ initial }: { initial: Contact }) => {
 
         <div className="mt-6">
           <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-            <h3 className="flex items-center gap-2 font-sans text-sm font-semibold text-navy-900">
-              <Building className="size-4 text-brand-600" aria-hidden /> {t('admin.settings.offices')}
+            <h3 className="flex items-center gap-2 font-sans text-sm font-semibold text-ink">
+              <Building className="size-4 text-link" aria-hidden /> {t('admin.settings.offices')}
             </h3>
             <button type="button" className="btn-secondary btn-sm" onClick={() => setC({ ...c, offices: [...c.offices, emptyOffice()] })}>
               <Plus className="size-3.5" /> {t('admin.settings.addOffice')}
@@ -170,14 +172,14 @@ const ContactForm = ({ initial }: { initial: Contact }) => {
                         href={`https://www.google.com/maps?q=${o.lat},${o.lng}`}
                         target="_blank"
                         rel="noreferrer"
-                        className="inline-flex min-h-10 items-center gap-1 rounded-md px-2 py-1 text-xs font-semibold whitespace-nowrap text-brand-600 hover:bg-brand-50 lg:min-h-8"
+                        className="inline-flex min-h-10 items-center gap-1 rounded-md px-2 py-1 text-xs font-semibold whitespace-nowrap text-link hover:bg-primary/[0.06] lg:min-h-8"
                       >
                         <MapPin className="size-3.5" /> {t('admin.settings.checkMap')}
                       </a>
                     )}
                     <button
                       type="button"
-                      className="grid size-10 place-items-center rounded-lg text-muted hover:bg-red-50 hover:text-danger lg:size-8"
+                      className="grid size-10 place-items-center rounded-lg text-muted hover:bg-danger-bg hover:text-danger-fg lg:size-8"
                       onClick={() => setC({ ...c, offices: c.offices.filter((_, j) => j !== i) })}
                       aria-label={t('admin.settings.deleteOffice', { n: i + 1 })}
                     >
@@ -293,7 +295,7 @@ const SocialForm = ({ initial }: { initial: Record<string, string> }) => {
                 {!DEFAULT_SOCIAL.includes(r.key) && (
                   <button
                     type="button"
-                    className="rounded-md px-2 text-muted hover:bg-red-50 hover:text-danger"
+                    className="rounded-md px-2 text-muted hover:bg-danger-bg hover:text-danger-fg"
                     onClick={() => setRows(rows.filter((_, j) => j !== i))}
                     aria-label={t('admin.settings.deleteNetwork', { name: r.key })}
                   >
@@ -321,7 +323,7 @@ const SocialForm = ({ initial }: { initial: Record<string, string> }) => {
               }
             }}
           />
-          <button type="button" className="btn-white btn-sm shrink-0 border border-line whitespace-nowrap" onClick={addKey} disabled={!newKey.trim()}>
+          <button type="button" className="btn-secondary btn-sm shrink-0 border border-line whitespace-nowrap" onClick={addKey} disabled={!newKey.trim()}>
             <Plus className="size-3.5" /> {t('admin.common.add')}
           </button>
         </div>
@@ -335,8 +337,8 @@ const SocialForm = ({ initial }: { initial: Record<string, string> }) => {
 const LawyerNote = () => {
   const { t } = useTranslation();
   return (
-    <div className="flex items-start gap-3 rounded-xl border border-warning/40 bg-warning/10 px-4 py-3 text-sm text-ink/85" role="note">
-      <Scale className="mt-0.5 size-5 shrink-0 text-warning" aria-hidden />
+    <div className="flex items-start gap-3 rounded-xl border border-warning/40 bg-warning-bg px-4 py-3 text-sm text-ink/85" role="note">
+      <Scale className="mt-0.5 size-5 shrink-0 text-warning-fg" aria-hidden />
       <p className="font-medium">{t('adminLegal.lawyerNote')}</p>
     </div>
   );
@@ -550,7 +552,7 @@ const RetentionForm = ({ initial }: { initial: RetentionSetting }) => {
         }
       >
         <p className="mb-4 flex items-start gap-2 text-xs text-muted">
-          <AlertTriangle className="mt-0.5 size-3.5 shrink-0 text-warning" aria-hidden /> {t('adminLegal.retentionHint')}
+          <AlertTriangle className="mt-0.5 size-3.5 shrink-0 text-warning-fg" aria-hidden /> {t('adminLegal.retentionHint')}
         </p>
         <div className="flex flex-wrap items-end gap-x-8 gap-y-4">
           <div>
@@ -569,7 +571,7 @@ const RetentionForm = ({ initial }: { initial: RetentionSetting }) => {
               onChange={(e) => setV({ ...v, months: e.target.valueAsNumber })}
             />
           </div>
-          <div className="flex min-h-11 items-center gap-3 text-sm font-medium text-navy-900">
+          <div className="flex min-h-10 sm:min-h-9 items-center gap-3 text-sm font-medium text-ink">
             <Switch checked={v.includeMessages} onChange={(includeMessages) => setV({ ...v, includeMessages })} label={t('adminLegal.includeMessages')} />
             <span>{t('adminLegal.includeMessages')}</span>
           </div>
@@ -579,7 +581,7 @@ const RetentionForm = ({ initial }: { initial: RetentionSetting }) => {
             {tiles.map((tile) => (
               <div key={tile.label} className="min-w-0 rounded-lg border border-line bg-surface/40 px-3 py-2.5">
                 <dt className="text-[11px] font-semibold tracking-wide text-muted uppercase">{tile.label}</dt>
-                <dd className={`mt-0.5 text-sm font-semibold break-words ${tile.warn ? 'text-warning' : 'text-navy-900'}`}>{tile.value}</dd>
+                <dd className={`mt-0.5 text-sm font-semibold break-words ${tile.warn ? 'text-warning-fg' : 'text-ink'}`}>{tile.value}</dd>
               </div>
             ))}
           </dl>
@@ -591,6 +593,7 @@ const RetentionForm = ({ initial }: { initial: RetentionSetting }) => {
 
 export default function Settings() {
   const { t } = useTranslation();
+  const { user } = useAuth();
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['admin-settings'],
     queryFn: async () => (await api.get<{ settings: SiteSettings }>('/admin/settings')).data.settings,
@@ -620,6 +623,7 @@ export default function Settings() {
         <ErrorBlock error={error} onRetry={() => refetch()} />
       ) : (
         <>
+          {user?.role === 'SUPER_ADMIN' && <ThemePanel />}
           <ContactForm initial={contact} />
           <SocialForm initial={social} />
           <AutoAssignSettings initial={autoAssign} />

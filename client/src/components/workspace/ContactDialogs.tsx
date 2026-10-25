@@ -72,7 +72,7 @@ export const ImportExportDialog = ({ open, onClose }: { open: boolean; onClose: 
       busy={busy}
       footer={
         <>
-          <button type="button" onClick={() => void exportCsv()} className="btn-white btn-sm mr-auto border border-line">
+          <button type="button" onClick={() => void exportCsv()} className="btn-secondary btn-sm mr-auto border border-line">
             <Download className="size-4" /> {t('ws.contacts.actions.export')}
           </button>
           <button type="button" onClick={onClose} className="btn-secondary btn-sm" disabled={busy}>
@@ -87,7 +87,7 @@ export const ImportExportDialog = ({ open, onClose }: { open: boolean; onClose: 
       <div className="space-y-4">
         <p className="text-sm text-muted">{t('ws.contacts.import.hint')}</p>
         <div className="flex flex-wrap items-center gap-3">
-          <label className="btn-white btn-sm cursor-pointer border border-line">
+          <label className="btn-secondary btn-sm cursor-pointer border border-line">
             <Upload className="size-4" /> {t('ws.contacts.import.file')}
             <input type="file" accept=".csv,text/csv,text/plain" onChange={pickFile} className="sr-only" />
           </label>
@@ -96,7 +96,7 @@ export const ImportExportDialog = ({ open, onClose }: { open: boolean; onClose: 
         </div>
         <textarea value={csv} onChange={(e) => setCsv(e.target.value)} rows={10} placeholder={`${t('ws.contacts.import.paste')}\n\nfirstName,lastName,email,phone,company,position,tags\nHans,Müller,hans@example.de,+49 30 1234,Müller GmbH,CEO,"partner, logistics"`} className="input resize-y font-mono text-xs leading-relaxed" />
         {result && (
-          <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-900">
+          <div className="rounded-lg border border-success-border bg-success-bg px-3 py-2 text-sm text-success-fg">
             <p className="font-semibold">{t('ws.contacts.import.result', { created: result.created, updated: result.updated, skipped: result.skipped })}</p>
             {result.unmapped.length > 0 && <p className="mt-1 text-xs">{t('ws.contacts.import.unmapped', { cols: result.unmapped.join(', ') })}</p>}
           </div>
@@ -156,13 +156,13 @@ export const MergeDialog = ({ open, onClose, contacts, onMerged }: { open: boole
       <ul className="space-y-2" role="radiogroup">
         {contacts.map((c) => (
           <li key={c.id}>
-            <button type="button" role="radio" aria-checked={keepId === c.id} onClick={() => setKeepId(c.id)} className={clsx('flex w-full items-center gap-3 rounded-lg border px-3 py-2 text-left transition', keepId === c.id ? 'border-brand-500 bg-brand-50' : 'border-line bg-surface hover:border-brand-300')}>
+            <button type="button" role="radio" aria-checked={keepId === c.id} onClick={() => setKeepId(c.id)} className={clsx('flex w-full items-center gap-3 rounded-lg border px-3 py-2 text-left transition', keepId === c.id ? 'border-primary bg-primary/[0.06]' : 'border-line bg-sunken hover:border-line-strong')}>
               <Avatar id={c.id} person={c} size="sm" />
               <span className="min-w-0 flex-1">
                 <span className="block truncate text-sm font-semibold text-ink">{fullName(c)}</span>
                 <span className="block truncate text-xs text-muted">{[c.email, c.company].filter(Boolean).join(' · ')}</span>
               </span>
-              {keepId === c.id && <span className="badge bg-brand-600 text-white">{t('ws.contacts.merge.keep')}</span>}
+              {keepId === c.id && <span className="badge bg-primary text-primary-contrast">{t('ws.contacts.merge.keep')}</span>}
             </button>
           </li>
         ))}
@@ -232,7 +232,7 @@ export const SuggestionsPanel = ({ open, onClose, onAdded }: { open: boolean; on
                           <span className="block truncate text-sm font-semibold text-ink">{name}</span>
                           <span className="block truncate text-xs text-muted">{sub.filter(Boolean).join(' · ')}</span>
                         </span>
-                        <button type="button" onClick={() => void add(r)} disabled={busy === id} className="btn-white btn-sm h-8 border border-line px-3">
+                        <button type="button" onClick={() => void add(r)} disabled={busy === id} className="btn-secondary btn-sm h-8 border border-line px-3">
                           <Plus className="size-3.5" /> {t('ws.contacts.suggest.add')}
                         </button>
                       </li>

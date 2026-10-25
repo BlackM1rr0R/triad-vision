@@ -98,7 +98,7 @@ export const Drawer = ({
             tabIndex={-1}
             onSubmit={onSubmit as never}
             className={clsx(
-              'absolute inset-y-0 flex h-full w-full flex-col bg-card text-ink shadow-2xl outline-none',
+              'absolute inset-y-0 flex h-full w-full flex-col bg-raised text-ink shadow-[var(--tv-shadow-overlay)] outline-none',
               side === 'right' ? 'right-0 sm:border-l' : 'left-0 sm:border-r',
               'sm:border-line',
               WIDTH[width],
@@ -111,7 +111,7 @@ export const Drawer = ({
           >
             <div className="flex shrink-0 items-start justify-between gap-3 border-b border-line py-3 pr-3 pl-5 pt-[max(0.75rem,env(safe-area-inset-top))] sm:pr-4 sm:pl-6">
               <div className="min-w-0 flex-1 py-1.5">
-                <h2 id={titleId} className="truncate text-base font-bold text-ink">
+                <h2 id={titleId} className="truncate text-base font-semibold text-ink">
                   {title}
                 </h2>
                 {description && (
@@ -125,7 +125,7 @@ export const Drawer = ({
                 type="button"
                 onClick={requestClose}
                 disabled={busy}
-                className="grid size-10 shrink-0 place-items-center rounded-lg text-muted transition hover:bg-surface hover:text-ink disabled:opacity-50"
+                className="grid size-10 shrink-0 place-items-center rounded-lg text-muted transition hover:bg-sunken hover:text-ink disabled:opacity-50"
                 aria-label={closeLabel ?? t('ui.close')}
               >
                 <X className="size-4" aria-hidden />
@@ -133,7 +133,7 @@ export const Drawer = ({
             </div>
             <div className={clsx('min-h-0 flex-1 overflow-y-auto overscroll-contain', padded && 'px-5 py-5 sm:px-6', bodyClassName)}>{children}</div>
             {footer && (
-              <div className="flex shrink-0 flex-wrap items-center justify-end gap-2 border-t border-line bg-surface/60 px-5 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:px-6">
+              <div className="flex shrink-0 flex-wrap items-center justify-end gap-2 border-t border-line bg-sunken/60 px-5 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:px-6">
                 {footer}
               </div>
             )}

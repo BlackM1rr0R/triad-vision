@@ -11,10 +11,10 @@ export const TOGGLE_KEYS: ToggleKey[] = ['mine', 'team', 'case', 'booking', 'int
 const LABEL: Record<ToggleKey, string> = { mine: 'mine', team: 'team', case: 'cases', booking: 'bookings', interview: 'interviews', task: 'tasks' };
 
 const Check = ({ on, dot, label, onChange }: { on: boolean; dot: string; label: string; onChange: () => void }) => (
-  <label className="flex cursor-pointer items-center gap-2 rounded-md px-1.5 py-1 text-sm text-ink hover:bg-surface">
+  <label className="flex cursor-pointer items-center gap-2 rounded-md px-1.5 py-1 text-sm text-ink hover:bg-sunken">
     <input type="checkbox" checked={on} onChange={onChange} className="sr-only" />
     <span className={clsx('grid size-4 shrink-0 place-items-center rounded border-2 transition-colors', on ? `${dot} border-transparent` : 'border-line bg-card')} aria-hidden>
-      {on && <span className="size-1.5 rounded-sm bg-white" />}
+      {on && <span className="size-1.5 rounded-sm bg-card" />}
     </span>
     <span className="truncate">{label}</span>
   </label>

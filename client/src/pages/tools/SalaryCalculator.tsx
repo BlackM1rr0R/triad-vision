@@ -100,13 +100,13 @@ const Segmented = <T extends string>({
 }) => (
   <fieldset>
     <legend className="label">{legend}</legend>
-    <div className="grid grid-cols-2 gap-1 rounded-lg border border-line bg-surface p-1">
+    <div className="grid grid-cols-2 gap-1 rounded-xl border border-line bg-sunken p-1">
       {options.map((o) => (
         <label
           key={o.value}
           className={clsx(
-            'cursor-pointer rounded-md px-3 py-1.5 text-center text-sm font-semibold transition-colors has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-brand-500',
-            value === o.value ? 'bg-brand-600 text-white shadow-sm' : 'text-muted hover:text-ink',
+            'flex min-h-10 cursor-pointer items-center justify-center rounded-lg px-3 py-2 text-center text-sm font-semibold transition-colors has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-focus',
+            value === o.value ? 'bg-primary text-primary-contrast shadow-sm' : 'text-muted hover:text-ink',
           )}
         >
           <input type="radio" className="sr-only" name={name} value={o.value} checked={value === o.value} onChange={() => onChange(o.value)} />
@@ -153,12 +153,12 @@ export default function SalaryCalculator() {
       <section className="section">
         <div className="container-x grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)] lg:gap-10">
           {/* Inputs */}
-          <form className="card card-pad space-y-5" onSubmit={(e) => e.preventDefault()} aria-labelledby={`${id}-form`}>
+          <form className="card card-pad space-y-5 rounded-3xl" onSubmit={(e) => e.preventDefault()} aria-labelledby={`${id}-form`}>
             <div className="flex items-center justify-between gap-3">
-              <h2 id={`${id}-form`} className="flex items-center gap-2 font-display text-lg font-bold text-ink">
-                <Calculator className="size-5 text-brand-600" aria-hidden /> {t('salaryPage.form.title')}
+              <h2 id={`${id}-form`} className="flex items-center gap-2 font-display text-lg font-semibold text-ink">
+                <Calculator className="size-5 text-primary" aria-hidden /> {t('salaryPage.form.title')}
               </h2>
-              <button type="button" onClick={() => setForm(toForm(DEFAULT_INPUT))} className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-semibold text-muted hover:text-brand-600">
+              <button type="button" onClick={() => setForm(toForm(DEFAULT_INPUT))} className="inline-flex min-h-10 items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-semibold text-muted transition-colors hover:bg-sunken hover:text-ink">
                 <RotateCcw className="size-3.5" aria-hidden /> {t('salaryPage.form.reset')}
               </button>
             </div>
@@ -272,7 +272,7 @@ export default function SalaryCalculator() {
             </div>
 
             {monthlyGross > 0 && monthlyGross < 2_000 && (
-              <p className="flex gap-2 rounded-lg bg-amber-50 p-3 text-xs leading-relaxed text-amber-800">
+              <p className="flex gap-2 rounded-xl bg-warning-bg p-3 text-xs leading-relaxed text-warning-fg">
                 <Info className="mt-px size-3.5 shrink-0" aria-hidden /> {t('salaryPage.midijob')}
               </p>
             )}
@@ -280,16 +280,16 @@ export default function SalaryCalculator() {
 
           {/* Result */}
           <div className="space-y-4 lg:sticky lg:top-28">
-            <div className="card card-pad" aria-live="polite">
+            <div className="card card-pad rounded-3xl" aria-live="polite">
               <h2 className="sr-only">{t('salaryPage.result.title')}</h2>
               <div className="grid gap-4 sm:grid-cols-2">
-                <div className="rounded-xl bg-emerald-50 p-4">
-                  <p className="text-xs font-semibold text-emerald-700">{t('salaryPage.result.netMonth')}</p>
-                  <p className="mt-1 font-display text-3xl font-extrabold text-ink tabular-nums sm:text-4xl">{euroCents(result.monthly.net)}</p>
+                <div className="rounded-xl bg-success-bg p-4">
+                  <p className="text-xs font-semibold text-success-fg">{t('salaryPage.result.netMonth')}</p>
+                  <p className="mt-1 font-display text-3xl font-semibold text-ink tabular-nums sm:text-4xl">{euroCents(result.monthly.net)}</p>
                 </div>
-                <div className="rounded-xl bg-surface p-4">
+                <div className="rounded-xl bg-sunken p-4">
                   <p className="text-xs font-semibold text-muted">{t('salaryPage.result.netYear')}</p>
-                  <p className="mt-1 font-display text-2xl font-extrabold text-ink tabular-nums sm:text-3xl">{euro(result.yearly.net)}</p>
+                  <p className="mt-1 font-display text-2xl font-semibold text-ink tabular-nums sm:text-3xl">{euro(result.yearly.net)}</p>
                 </div>
               </div>
               <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-xs text-muted">
@@ -303,14 +303,14 @@ export default function SalaryCalculator() {
                 <span className="text-xs font-semibold text-muted" id={`${id}-view`}>
                   {t('salaryPage.result.view')}
                 </span>
-                <div role="group" aria-labelledby={`${id}-view`} className="inline-flex rounded-lg border border-line bg-surface p-0.5">
+                <div role="group" aria-labelledby={`${id}-view`} className="inline-flex rounded-xl border border-line bg-sunken p-1">
                   {(['month', 'year'] as const).map((v) => (
                     <button
                       key={v}
                       type="button"
                       aria-pressed={view === v}
                       onClick={() => setView(v)}
-                      className={clsx('rounded-md px-3 py-1 text-xs font-semibold transition-colors', view === v ? 'bg-card text-brand-600 shadow-sm' : 'text-muted hover:text-ink')}
+                      className={clsx('min-h-9 rounded-lg px-3 py-1.5 text-sm font-semibold transition-colors', view === v ? 'bg-card text-ink shadow-[var(--tv-shadow-card)]' : 'text-muted hover:text-ink')}
                     >
                       {t(v === 'month' ? 'salaryPage.result.monthly' : 'salaryPage.result.yearly')}
                     </button>
@@ -322,11 +322,11 @@ export default function SalaryCalculator() {
               </div>
             </div>
 
-            <div role="note" className="flex gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 sm:p-5">
-              <AlertTriangle className="mt-0.5 size-5 shrink-0 text-amber-700" aria-hidden />
+            <div role="note" className="flex gap-3 rounded-2xl border border-warning-border bg-warning-bg p-4 sm:p-5">
+              <AlertTriangle className="mt-0.5 size-5 shrink-0 text-warning-fg" aria-hidden />
               <div>
-                <p className="font-display text-sm font-bold text-amber-900">{t('salaryPage.disclaimer.title')}</p>
-                <p className="mt-1 text-xs leading-relaxed text-amber-800">{t('salaryPage.disclaimer.text')}</p>
+                <p className="font-display text-sm font-semibold text-warning-fg">{t('salaryPage.disclaimer.title')}</p>
+                <p className="mt-1 text-xs leading-relaxed text-warning-fg">{t('salaryPage.disclaimer.text')}</p>
               </div>
             </div>
           </div>
@@ -334,7 +334,7 @@ export default function SalaryCalculator() {
       </section>
 
       {/* Method + values */}
-      <section className="section bg-surface">
+      <section className="section bg-sunken">
         <div className="container-x grid gap-8 lg:grid-cols-[1.4fr_1fr] lg:gap-12">
           <div>
             <SectionHeading eyebrow={t('salaryPage.notes.eyebrow')} title={t('salaryPage.notes.title')} />
@@ -342,7 +342,7 @@ export default function SalaryCalculator() {
               <ul className="space-y-3">
                 {notes.map((n) => (
                   <li key={n.slice(0, 32)} className="flex gap-3 text-sm leading-relaxed text-muted">
-                    <span className="mt-2 size-1.5 shrink-0 rounded-full bg-brand-500" aria-hidden />
+                    <span className="mt-2 size-1.5 shrink-0 rounded-full bg-primary" aria-hidden />
                     {n}
                   </li>
                 ))}
@@ -351,7 +351,7 @@ export default function SalaryCalculator() {
           </div>
           <Reveal delay={0.1}>
             <div className="card card-pad">
-              <h3 className="font-display text-lg font-bold text-ink">{t('salaryPage.values.title')}</h3>
+              <h3 className="font-display text-lg font-semibold text-ink">{t('salaryPage.values.title')}</h3>
               <dl className="mt-4 divide-y divide-line text-sm">
                 {[
                   [t('salaryPage.values.gfb'), `${euro(TAX.grundfreibetrag)} ${t('salaryPage.values.perYear')}`],

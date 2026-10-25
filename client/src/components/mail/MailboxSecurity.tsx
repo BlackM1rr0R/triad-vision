@@ -56,7 +56,7 @@ const ChangePassword = ({ mailbox }: { mailbox: MyMailbox }) => {
 
   if (!mailbox.canChangePassword) {
     return (
-      <p className="flex items-start gap-2 rounded-lg border border-line bg-surface p-3 text-sm text-muted">
+      <p className="flex items-start gap-2 rounded-lg border border-line bg-sunken p-3 text-sm text-muted">
         <Lock className="mt-0.5 size-4 shrink-0" aria-hidden /> {t('mailAdmin.security.senderLocked')}
       </p>
     );
@@ -80,10 +80,10 @@ const ChangePassword = ({ mailbox }: { mailbox: MyMailbox }) => {
         <input id={`${id}-c`} type="password" className="input" autoComplete="current-password" maxLength={256} value={form.current} onChange={(e) => setForm((f) => ({ ...f, current: e.target.value }))} />
       </Field>
       <div className="grid gap-3 sm:grid-cols-2">
-        <Field label={t('mailAdmin.security.next')} hint={weak ? <span className="text-danger">{t('mailAdmin.security.weak')}</span> : t('mailAdmin.security.policy')} htmlFor={`${id}-n`}>
+        <Field label={t('mailAdmin.security.next')} hint={weak ? <span className="text-danger-fg">{t('mailAdmin.security.weak')}</span> : t('mailAdmin.security.policy')} htmlFor={`${id}-n`}>
           <input id={`${id}-n`} type="password" className={clsx('input', weak && 'border-danger')} autoComplete="new-password" maxLength={128} value={form.next} onChange={(e) => setForm((f) => ({ ...f, next: e.target.value }))} />
         </Field>
-        <Field label={t('mailAdmin.security.repeat')} hint={mismatch ? <span className="text-danger">{t('mailAdmin.security.mismatch')}</span> : undefined} htmlFor={`${id}-r`}>
+        <Field label={t('mailAdmin.security.repeat')} hint={mismatch ? <span className="text-danger-fg">{t('mailAdmin.security.mismatch')}</span> : undefined} htmlFor={`${id}-r`}>
           <input id={`${id}-r`} type="password" className={clsx('input', mismatch && 'border-danger')} autoComplete="new-password" maxLength={128} value={form.repeat} onChange={(e) => setForm((f) => ({ ...f, repeat: e.target.value }))} />
         </Field>
       </div>
@@ -104,7 +104,7 @@ export const MailboxSecurityTab = () => {
   const list = q.data?.mailboxes ?? [];
   const current = list.find((m) => m.address === address) ?? list[0];
 
-  if (q.isLoading) return <Spinner className="size-6 text-brand-600" />;
+  if (q.isLoading) return <Spinner className="size-6 text-link" />;
   if (!q.data?.configured) return <p className="text-sm text-muted">{t('mailAdmin.security.notConfigured')}</p>;
   if (!current) return <p className="text-sm text-muted">{t('mailAdmin.security.none', { domain: q.data.domain })}</p>;
 
@@ -124,13 +124,13 @@ export const MailboxSecurityTab = () => {
       )}
       <section>
         <h3 className="mb-3 flex items-center gap-2 text-sm font-bold text-ink">
-          <KeyRound className="size-4 text-brand-600" aria-hidden /> {t('mailAdmin.security.changePassword')} · <span className="font-normal text-muted">{current.address}</span>
+          <KeyRound className="size-4 text-link" aria-hidden /> {t('mailAdmin.security.changePassword')} · <span className="font-normal text-muted">{current.address}</span>
         </h3>
         <ChangePassword mailbox={current} />
       </section>
       <section className="border-t border-line pt-5">
         <h3 className="mb-3 flex items-center gap-2 text-sm font-bold text-ink">
-          <Reply className="size-4 text-brand-600" aria-hidden /> {t('mailAdmin.autoReply.title')}
+          <Reply className="size-4 text-link" aria-hidden /> {t('mailAdmin.autoReply.title')}
         </h3>
         <AutoReplyForm
           key={current.address}

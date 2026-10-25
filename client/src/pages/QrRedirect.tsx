@@ -70,9 +70,11 @@ export default function QrRedirect() {
 
   return (
     <div className="mx-auto grid min-h-[60vh] max-w-md place-items-center px-4">
-      <div className="card w-full space-y-4 p-6 text-center">
-        <QrCode className="mx-auto size-8 text-brand-600" aria-hidden />
-        <h1 className="text-lg font-bold text-navy-900">{t('originals.qr.choose')}</h1>
+      <div className="card w-full space-y-4 rounded-3xl p-6 text-center sm:p-8">
+        <span className="mx-auto grid size-12 place-items-center rounded-xl chip-sky">
+          <QrCode className="size-6" aria-hidden />
+        </span>
+        <h1 className="type-card-title text-ink">{t('originals.qr.choose')}</h1>
         <p className="font-mono text-xs text-muted">{q.data.number}</p>
         {!q.data.driveFolderId && <p className="text-xs text-muted">{t('originals.qr.noFolder')}</p>}
         <div className="grid gap-2">
@@ -81,12 +83,12 @@ export default function QrRedirect() {
               <FolderOpen className="size-4" aria-hidden /> {t('originals.qr.drive')}
             </button>
           )}
-          <button type="button" className="btn-white min-h-11 w-full border border-line" onClick={() => go('case', remember)}>
+          <button type="button" className="btn-secondary min-h-11 w-full" onClick={() => go('case', remember)}>
             <FolderKanban className="size-4" aria-hidden /> {t('originals.qr.case')}
           </button>
         </div>
-        <label className="flex items-center justify-center gap-2 text-sm">
-          <input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} />
+        <label className="flex min-h-11 items-center justify-center gap-2 text-sm text-ink">
+          <input type="checkbox" className="size-4 accent-primary" checked={remember} onChange={(e) => setRemember(e.target.checked)} />
           {t('originals.qr.remember')}
         </label>
       </div>

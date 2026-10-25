@@ -28,7 +28,7 @@ const Fact = ({ label, children }: { label: string; children: React.ReactNode })
   </div>
 );
 
-const action = 'inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-line bg-card px-3 text-xs font-semibold text-ink transition hover:border-brand-400 hover:text-brand-700';
+const action = 'inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-line bg-card px-3 text-xs font-semibold text-ink transition hover:border-line-strong hover:text-link';
 
 /**
  * Right side of the cases split view: a compact summary of the selected case (facts, status, next step, open
@@ -49,12 +49,12 @@ export const CaseSplitPanel = ({ id, row, onClose }: { id: string; row?: AdminCa
 
   const openItems: { icon: typeof AlertCircle; text: string; tone: string; to: string }[] = [];
   if (c && stats) {
-    if (stats.documents.pending > 0) openItems.push({ icon: FileClock, text: t('ux.split.docsPending', { count: stats.documents.pending }), tone: 'text-amber-700', to: `/admin/cases/${id}?tab=documents` });
+    if (stats.documents.pending > 0) openItems.push({ icon: FileClock, text: t('ux.split.docsPending', { count: stats.documents.pending }), tone: 'text-warning-fg', to: `/admin/cases/${id}?tab=documents` });
     const missing = missingAccepted(c, 'INITIAL').length + missingAccepted(c, 'EMBASSY').length;
     if (stats.documents.requiredTotal > 0 && missing > 0)
       openItems.push({ icon: FileText, text: t('ux.split.requiredDocs', { done: stats.documents.requiredAccepted, total: stats.documents.requiredTotal }), tone: 'text-ink/80', to: `/admin/cases/${id}?tab=documents` });
-    if (stats.messages.awaitingStaffReply) openItems.push({ icon: MessageSquareWarning, text: t('ux.split.unanswered'), tone: 'text-red-700', to: `/admin/cases/${id}#case-messages` });
-    if (stats.daysInStatus >= 7) openItems.push({ icon: Clock, text: t('ux.split.overdue', { count: stats.daysInStatus }), tone: 'text-red-700', to: `/admin/cases/${id}` });
+    if (stats.messages.awaitingStaffReply) openItems.push({ icon: MessageSquareWarning, text: t('ux.split.unanswered'), tone: 'text-danger-fg', to: `/admin/cases/${id}#case-messages` });
+    if (stats.daysInStatus >= 7) openItems.push({ icon: Clock, text: t('ux.split.overdue', { count: stats.daysInStatus }), tone: 'text-danger-fg', to: `/admin/cases/${id}` });
   }
 
   return (
@@ -62,13 +62,13 @@ export const CaseSplitPanel = ({ id, row, onClose }: { id: string; row?: AdminCa
       <header className="flex items-start gap-3 border-b border-line px-5 py-3.5">
         <div className="min-w-0 flex-1">
           <p className="flex flex-wrap items-center gap-2">
-            <span className="font-mono text-sm font-bold text-navy-900">{c?.number ?? row?.number}</span>
+            <span className="font-mono text-sm font-bold text-ink">{c?.number ?? row?.number}</span>
             {(c ?? row) && <StatusBadge status={(c ?? row)!.status} />}
           </p>
           <p className="mt-0.5 truncate text-sm font-semibold text-ink">{c ? fullName(c.client) : row ? fullName(row.client) : <Skeleton className="h-4 w-40" />}</p>
         </div>
         <PresenceAvatars viewers={presence.others} max={3} />
-        <button type="button" onClick={onClose} className="grid size-9 shrink-0 place-items-center rounded-lg text-muted transition hover:bg-surface hover:text-ink" aria-label={t('ux.split.close')} title={`${t('ux.split.close')} (Esc)`}>
+        <button type="button" onClick={onClose} className="grid size-9 shrink-0 place-items-center rounded-lg text-muted transition hover:bg-sunken hover:text-ink" aria-label={t('ux.split.close')} title={`${t('ux.split.close')} (Esc)`}>
           <X className="size-4" aria-hidden />
         </button>
       </header>
@@ -146,11 +146,11 @@ export const CaseSplitPanel = ({ id, row, onClose }: { id: string; row?: AdminCa
               <Fact label={t('ux.split.created')}>{fmtDate(c.createdAt)}</Fact>
               <Fact label={t('ux.split.contact')}>
                 <span className="flex flex-col gap-0.5 text-xs">
-                  <a href={`mailto:${c.client.email}`} className="inline-flex min-w-0 items-center gap-1 text-brand-700 hover:underline">
+                  <a href={`mailto:${c.client.email}`} className="inline-flex min-w-0 items-center gap-1 text-link hover:underline">
                     <Mail className="size-3 shrink-0" aria-hidden /> <span className="truncate">{c.client.email}</span>
                   </a>
                   {c.client.phone && (
-                    <a href={`tel:${c.client.phone}`} className="inline-flex items-center gap-1 text-brand-700 hover:underline">
+                    <a href={`tel:${c.client.phone}`} className="inline-flex items-center gap-1 text-link hover:underline">
                       <Phone className="size-3 shrink-0" aria-hidden /> {c.client.phone}
                     </a>
                   )}

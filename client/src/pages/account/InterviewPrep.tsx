@@ -15,6 +15,7 @@ import { CalendarSubscribe } from '@/components/prep/CalendarSubscribe';
 import { categoryLabel, PREP_KINDS, type PrepKind, type PrepQuestion, type VisaType } from '@/components/prep/types';
 import { useGermanSpeech } from '@/components/prep/useSpeech';
 import { usePractised } from '@/components/prep/usePractised';
+import { Learning } from '@/components/illustrations';
 
 registerCopy(pagesPrep);
 
@@ -30,7 +31,7 @@ const AnswerText = ({ text }: { text: string }) => (
   <p className="text-[15px] leading-relaxed text-ink" lang="de">
     {text.split(/(\[[^\]]+\])/g).map((part, i) =>
       part.startsWith('[') ? (
-        <mark key={i} className="rounded bg-brand-100 px-1 text-brand-800">
+        <mark key={i} className="rounded bg-highlight-bg px-1 text-ink">
           {part}
         </mark>
       ) : (
@@ -49,7 +50,7 @@ const SpeakButton = ({ id, text, speech }: { id: string; text: string; speech: R
       type="button"
       onClick={() => (active ? speech.stop() : speech.speak(id, text))}
       aria-pressed={active}
-      className={clsx('inline-flex min-h-9 items-center gap-1.5 rounded-lg border px-3 text-xs font-semibold transition-colors', active ? 'border-brand-600 bg-brand-600 text-white' : 'border-line bg-card text-ink/80 hover:border-brand-400')}
+      className={clsx('inline-flex min-h-9 items-center gap-1.5 rounded-lg border px-3 text-xs font-semibold transition-colors', active ? 'border-primary bg-primary text-primary-contrast' : 'border-line bg-card text-ink/80 hover:border-primary')}
     >
       {active ? <Square className="size-3.5" aria-hidden /> : <Volume2 className="size-3.5" aria-hidden />}
       {active ? t('prep.page.stop') : t('prep.page.readAloud')}
@@ -79,10 +80,10 @@ const QuestionCard = ({
   return (
     <li className={clsx('card p-4 transition-colors sm:p-5', done && 'border-success/40')}>
       <div className="flex items-start gap-3">
-        <span className={clsx('grid size-8 shrink-0 place-items-center rounded-full text-xs font-bold tabular-nums', done ? 'bg-success/15 text-success' : 'bg-surface text-muted')}>{index + 1}</span>
+        <span className={clsx('grid size-8 shrink-0 place-items-center rounded-full text-xs font-bold tabular-nums', done ? 'bg-success/15 text-success' : 'bg-sunken text-muted')}>{index + 1}</span>
         <div className="min-w-0 flex-1">
-          <p className="text-xs font-semibold text-brand-700">{categoryLabel(t, (k) => i18n.exists(k), q.category)}</p>
-          <h3 className="mt-0.5 text-base font-bold text-ink">{tr(q.question)}</h3>
+          <p className="text-xs font-semibold text-link">{categoryLabel(t, (k) => i18n.exists(k), q.category)}</p>
+          <h3 className="mt-0.5 text-base font-semibold text-ink">{tr(q.question)}</h3>
           {locale !== 'de' && (
             <p className="mt-1 text-sm text-muted italic" lang="de">
               {q.question.de}
@@ -96,21 +97,21 @@ const QuestionCard = ({
           type="button"
           onClick={() => setOpen((v) => !v)}
           aria-expanded={open}
-          className="inline-flex min-h-9 items-center gap-1.5 rounded-lg bg-brand-600 px-3 text-xs font-semibold text-white transition-colors hover:bg-brand-700"
+          className="inline-flex min-h-9 items-center gap-1.5 rounded-lg bg-primary px-3 text-xs font-semibold text-primary-contrast transition-colors hover:bg-primary-hover"
         >
           {open ? <EyeOff className="size-3.5" aria-hidden /> : <Eye className="size-3.5" aria-hidden />}
           {open ? t('prep.page.hideAnswer') : t('prep.page.showAnswer')}
         </button>
         <SpeakButton id={q.id} text={speechText(q, open)} speech={speech} />
         <label className="ml-auto inline-flex min-h-9 cursor-pointer items-center gap-2 rounded-lg px-2 text-sm font-medium text-ink/85 select-none">
-          <input type="checkbox" className="size-4 accent-brand-600" checked={done} onChange={(e) => onDone(e.target.checked)} />
+          <input type="checkbox" className="size-4 accent-primary" checked={done} onChange={(e) => onDone(e.target.checked)} />
           {t('prep.page.practised')}
         </label>
       </div>
 
       <div className={clsx('grid transition-[grid-template-rows,opacity] duration-300 sm:pl-11', open ? 'mt-4 grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0')} aria-hidden={!open}>
         <div className="overflow-hidden">
-          <div className="rounded-xl border border-line bg-surface p-4">
+          <div className="rounded-xl border border-line bg-sunken p-4">
             <AnswerText text={q.answerDe} />
             <p className="mt-2 text-xs text-muted">{t('prep.page.answerHint')}</p>
           </div>
@@ -118,7 +119,7 @@ const QuestionCard = ({
       </div>
 
       {tip && (
-        <p className="mt-3 flex gap-2 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900 sm:ml-11">
+        <p className="mt-3 flex gap-2 rounded-lg bg-warning-bg px-3 py-2 text-sm text-warning-fg sm:ml-11">
           <Lightbulb className="mt-0.5 size-4 shrink-0" aria-hidden />
           <span>
             <span className="font-semibold">{t('prep.page.tips')}:</span> {tip}
@@ -179,7 +180,7 @@ const PracticeMode = ({ items, onClose, speech, onDone }: { items: PrepQuestion[
             {t('prep.page.practice.exit')}
           </button>
           {!revealed && (
-            <button type="button" className={clsx(btnSecondary, 'border-brand-600 text-brand-700')} onClick={reveal}>
+            <button type="button" className={clsx(btnSecondary, 'border-primary text-link')} onClick={reveal}>
               <Eye className="size-3.5" aria-hidden /> {t('prep.page.practice.reveal')}
             </button>
           )}
@@ -197,13 +198,13 @@ const PracticeMode = ({ items, onClose, speech, onDone }: { items: PrepQuestion[
               {left > 0 ? t('prep.page.practice.timeLeft', { s: left }) : t('prep.page.practice.timeUp')}
             </span>
             {left <= 0 && !revealed && (
-              <button type="button" className="inline-flex items-center gap-1 text-xs font-semibold text-brand-700 hover:underline" onClick={() => setLeft(PRACTICE_SECONDS)}>
+              <button type="button" className="inline-flex items-center gap-1 text-xs font-semibold text-link hover:underline" onClick={() => setLeft(PRACTICE_SECONDS)}>
                 <RotateCcw className="size-3.5" aria-hidden /> {t('prep.page.practice.restart')}
               </button>
             )}
           </div>
-          <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-surface" aria-hidden>
-            <div className={clsx('h-full rounded-full transition-[width] duration-1000 ease-linear', left <= 10 ? 'bg-danger' : 'bg-brand-600')} style={{ width: `${pct}%` }} />
+          <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-sunken" aria-hidden>
+            <div className={clsx('h-full rounded-full transition-[width] duration-1000 ease-linear', left <= 10 ? 'bg-danger' : 'bg-primary')} style={{ width: `${pct}%` }} />
           </div>
 
           <p className="mt-6 text-lg font-bold text-ink sm:text-xl">{tr(current.question)}</p>
@@ -216,7 +217,7 @@ const PracticeMode = ({ items, onClose, speech, onDone }: { items: PrepQuestion[
             <SpeakButton id={`practice-${current.id}`} text={speechText(current, revealed)} speech={speech} />
           </div>
           {revealed && (
-            <div className="mt-5 rounded-xl border border-line bg-surface p-4 transition-opacity">
+            <div className="mt-5 rounded-xl border border-line bg-sunken p-4 transition-opacity">
               <AnswerText text={current.answerDe} />
               {tr(current.tips) && (
                 <p className="mt-3 flex gap-2 text-sm text-muted">
@@ -262,7 +263,7 @@ export default function AccountInterviewPrep() {
   return (
     <div className="space-y-5">
       <div>
-        <h2 className="text-xl font-extrabold text-ink sm:text-2xl">{t('prep.page.title')}</h2>
+        <h2 className="type-page-title">{t('prep.page.title')}</h2>
         <p className="mt-1 max-w-2xl text-sm text-muted">{t('prep.page.subtitle')}</p>
       </div>
 
@@ -284,7 +285,7 @@ export default function AccountInterviewPrep() {
                 setKind(k);
                 setCategory(null);
               }}
-              className={clsx('inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-4 text-sm font-semibold transition-colors', active ? 'bg-brand-600 text-white shadow' : 'text-ink/75 hover:bg-surface')}
+              className={clsx('inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-4 text-sm font-semibold transition-colors', active ? 'bg-primary text-primary-contrast shadow' : 'text-ink/75 hover:bg-sunken')}
             >
               <Icon className="size-4" aria-hidden /> {t(`prep.page.tabs.${k}`)}
             </button>
@@ -293,13 +294,13 @@ export default function AccountInterviewPrep() {
       </div>
 
       {query.isLoading ? (
-        <div className="grid min-h-[30vh] place-items-center text-brand-600">
+        <div className="grid min-h-[30vh] place-items-center text-link">
           <Spinner className="size-8" />
         </div>
       ) : query.isError ? (
         <div className="card p-6 text-center text-sm text-muted">
           {t('prep.page.error')}{' '}
-          <button type="button" className="font-semibold text-brand-700 hover:underline" onClick={() => void query.refetch()}>
+          <button type="button" className="font-semibold text-link hover:underline" onClick={() => void query.refetch()}>
             {t('prep.page.retry')}
           </button>
         </div>
@@ -309,7 +310,7 @@ export default function AccountInterviewPrep() {
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-semibold text-ink">{t('prep.page.progress', { done: doneCount, total: ofKind.length })}</p>
-                <div className="mt-2 h-2 overflow-hidden rounded-full bg-surface" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={pct}>
+                <div className="mt-2 h-2 overflow-hidden rounded-full bg-sunken" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={pct}>
                   <div className="h-full rounded-full bg-success transition-[width] duration-500" style={{ width: `${pct}%` }} />
                 </div>
               </div>
@@ -328,7 +329,7 @@ export default function AccountInterviewPrep() {
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted">
               {caseType && !allTypes && <span>{t('prep.page.visaFor', { type: t(`prep.visa.${caseType}`) })}</span>}
               {caseType && (
-                <button type="button" className="font-semibold text-brand-700 hover:underline" onClick={() => setAllTypes((v) => !v)}>
+                <button type="button" className="font-semibold text-link hover:underline" onClick={() => setAllTypes((v) => !v)}>
                   {allTypes ? t('prep.page.showMine') : t('prep.page.showAllTypes')}
                 </button>
               )}
@@ -344,7 +345,7 @@ export default function AccountInterviewPrep() {
                       type="button"
                       aria-pressed={active}
                       onClick={() => setCategory(c)}
-                      className={clsx('inline-flex min-h-9 shrink-0 items-center rounded-full border px-3 text-xs font-semibold whitespace-nowrap transition-colors', active ? 'border-navy-900 bg-navy-900 text-white' : 'border-line bg-card text-ink/75 hover:border-brand-400')}
+                      className={clsx('inline-flex min-h-9 shrink-0 items-center rounded-full border px-3 text-xs font-semibold whitespace-nowrap transition-colors', active ? 'border-primary bg-primary text-primary-contrast' : 'border-line bg-card text-ink/75 hover:border-primary')}
                     >
                       {c ? categoryLabel(t, (k) => i18n.exists(k), c) : t('prep.page.allCategories')}
                     </button>
@@ -356,11 +357,7 @@ export default function AccountInterviewPrep() {
 
           {visible.length === 0 ? (
             <div className="card flex flex-col items-center px-6 py-12 text-center">
-              {/* TODO(ui): large portal empty state (size-14 icon, display title) -> <EmptyState size="lg" tone="brand"> (portal rework) */}
-              {(() => {
-                const Icon = KIND_ICON[kind];
-                return <Icon className="size-6 text-muted" aria-hidden />;
-              })()}
+              <Learning className="w-36" />
               <p className="mt-2 text-sm text-muted">{t('prep.page.empty')}</p>
             </div>
           ) : (

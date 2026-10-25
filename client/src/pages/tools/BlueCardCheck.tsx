@@ -45,8 +45,8 @@ export default function BlueCardCheck() {
       <PageHero title={t('bcCheck.title')} subtitle={t('bcCheck.subtitle')} image={HERO} crumb={{ to: '/tools', label: t('siteNav.tools') }} />
       <section className="section">
         <div className="container-x grid items-start gap-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] lg:gap-10">
-          <form className="card card-pad space-y-5" onSubmit={(e) => e.preventDefault()} aria-labelledby={`${id}-form`}>
-            <h2 id={`${id}-form`} className="font-display text-lg font-bold text-ink">
+          <form className="card card-pad space-y-5 rounded-3xl" onSubmit={(e) => e.preventDefault()} aria-labelledby={`${id}-form`}>
+            <h2 id={`${id}-form`} className="font-display text-lg font-semibold text-ink">
               {t('bcCheck.form')}
             </h2>
             <div className="grid gap-4 sm:grid-cols-[1fr_auto]">
@@ -56,7 +56,7 @@ export default function BlueCardCheck() {
                 </label>
                 <input
                   id={`${id}-salary`}
-                  className="input text-base font-semibold tabular-nums"
+                  className="input min-h-12 text-base font-semibold tabular-nums"
                   type="number"
                   inputMode="decimal"
                   min={0}
@@ -67,13 +67,13 @@ export default function BlueCardCheck() {
               </div>
               <fieldset>
                 <legend className="label">{t('bcCheck.period')}</legend>
-                <div className="grid grid-cols-2 gap-1 rounded-lg border border-line bg-surface p-1">
+                <div className="grid grid-cols-2 gap-1 rounded-xl border border-line bg-sunken p-1">
                   {(['year', 'month'] as const).map((p) => (
                     <label
                       key={p}
                       className={clsx(
-                        'cursor-pointer rounded-md px-3 py-1.5 text-center text-sm font-semibold transition-colors has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-brand-500',
-                        period === p ? 'bg-brand-600 text-white shadow-sm' : 'text-muted hover:text-ink',
+                        'flex min-h-10 cursor-pointer items-center justify-center rounded-lg px-3 py-2 text-center text-sm font-semibold transition-colors has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-focus/40',
+                        period === p ? 'bg-primary text-primary-contrast shadow-sm' : 'text-muted hover:text-ink',
                       )}
                     >
                       <input type="radio" className="sr-only" name={`${id}-period`} checked={period === p} onChange={() => setPeriod(p)} />
@@ -91,9 +91,9 @@ export default function BlueCardCheck() {
                 {BLUE_CARD_GROUPS.map((g) => (
                   <label
                     key={g}
-                    className="flex cursor-pointer items-start gap-3 rounded-lg border border-line p-3 text-sm leading-snug hover:border-brand-400 has-[:checked]:border-brand-500 has-[:checked]:bg-brand-50"
+                    className="flex min-h-12 cursor-pointer items-start gap-3 rounded-xl border border-line bg-card p-3.5 text-sm leading-snug transition-colors hover:border-line-strong has-[:checked]:border-primary has-[:checked]:bg-sunken"
                   >
-                    <input type="radio" name={`${id}-group`} className="mt-0.5 size-4 shrink-0 accent-brand-600" checked={group === g} onChange={() => setGroup(g)} />
+                    <input type="radio" name={`${id}-group`} className="mt-0.5 size-4 shrink-0 accent-primary" checked={group === g} onChange={() => setGroup(g)} />
                     <span>{t(`bcCheck.groups.${g}`)}</span>
                   </label>
                 ))}
@@ -102,13 +102,13 @@ export default function BlueCardCheck() {
 
             <div className="grid gap-2">
               {group !== 'it' && (
-                <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-line p-3 text-sm leading-snug has-[:checked]:border-brand-500 has-[:checked]:bg-brand-50">
-                  <input type="checkbox" className="mt-0.5 size-4 shrink-0 accent-brand-600" checked={degree} onChange={(e) => setDegree(e.target.checked)} />
+                <label className="flex min-h-12 cursor-pointer items-start gap-3 rounded-xl border border-line bg-card p-3.5 text-sm leading-snug transition-colors hover:border-line-strong has-[:checked]:border-primary has-[:checked]:bg-sunken">
+                  <input type="checkbox" className="mt-0.5 size-4 shrink-0 accent-primary" checked={degree} onChange={(e) => setDegree(e.target.checked)} />
                   <span>{t('bcCheck.degree')}</span>
                 </label>
               )}
-              <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-line p-3 text-sm leading-snug has-[:checked]:border-brand-500 has-[:checked]:bg-brand-50">
-                <input type="checkbox" className="mt-0.5 size-4 shrink-0 accent-brand-600" checked={contract} onChange={(e) => setContract(e.target.checked)} />
+              <label className="flex min-h-12 cursor-pointer items-start gap-3 rounded-xl border border-line bg-card p-3.5 text-sm leading-snug transition-colors hover:border-line-strong has-[:checked]:border-primary has-[:checked]:bg-sunken">
+                <input type="checkbox" className="mt-0.5 size-4 shrink-0 accent-primary" checked={contract} onChange={(e) => setContract(e.target.checked)} />
                 <span>{t('bcCheck.contract')}</span>
               </label>
             </div>
@@ -130,18 +130,18 @@ export default function BlueCardCheck() {
           </form>
 
           <div className="space-y-4 lg:sticky lg:top-28" aria-live="polite">
-            <div className="card card-pad">
-              <h2 className="text-xs font-semibold tracking-wide text-muted uppercase">{t('bcCheck.result')}</h2>
+            <div className="card card-pad rounded-3xl">
+              <h2 className="type-overline text-muted">{t('bcCheck.result')}</h2>
               {threshold == null ? (
-                <div className="mt-4 h-24 animate-pulse rounded-xl bg-surface" />
+                <div className="mt-4 h-24 animate-pulse rounded-xl bg-sunken" />
               ) : (
                 <>
                   <dl className="mt-3 space-y-1 text-sm">
                     <dt className="sr-only">{t('bcCheck.salary')}</dt>
-                    <dd className="font-display text-3xl font-extrabold text-ink tabular-nums">{t('bcCheck.yourSalary', { amount: fmt.format(yearly) })}</dd>
+                    <dd className="font-display text-3xl font-semibold text-ink tabular-nums">{t('bcCheck.yourSalary', { amount: fmt.format(yearly) })}</dd>
                     <dd className="text-muted">{t('bcCheck.threshold', { year, amount: fmt.format(threshold) })}</dd>
                   </dl>
-                  <div className={clsx('mt-5 flex gap-3 rounded-xl p-4', ok ? 'bg-emerald-50 text-emerald-900' : 'bg-amber-50 text-amber-900')}>
+                  <div className={clsx('mt-5 flex gap-3 rounded-xl p-4', ok ? 'bg-success-bg text-success-fg' : 'bg-warning-bg text-warning-fg')}>
                     {ok ? <CheckCircle2 className="mt-0.5 size-5 shrink-0" aria-hidden /> : <XCircle className="mt-0.5 size-5 shrink-0" aria-hidden />}
                     <div className="space-y-1 text-sm leading-relaxed">
                       <p className="font-semibold">{salaryOk ? t('bcCheck.ok') : t('bcCheck.below')}</p>
@@ -157,11 +157,11 @@ export default function BlueCardCheck() {
               <Info className="mt-px size-3.5 shrink-0" aria-hidden /> {t('bcCheck.note')}
             </p>
             {guidePath ? (
-              <PathLink path={guidePath} className="btn-outline w-full">
+              <PathLink path={guidePath} className="btn-secondary w-full">
                 <BookOpen className="size-4" aria-hidden /> {t('bcCheck.guide')}
               </PathLink>
             ) : (
-              <Link to="/guides" className="btn-outline w-full">
+              <Link to="/guides" className="btn-secondary w-full">
                 <BookOpen className="size-4" aria-hidden /> {t('bcCheck.guide')}
               </Link>
             )}

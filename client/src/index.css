@@ -4,10 +4,42 @@
    resolved system preference), not the OS setting alone. */
 @custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
 
-@theme {
-  --font-sans: 'Inter Variable', 'Inter', ui-sans-serif, system-ui, sans-serif;
-  --font-display: 'Montserrat Variable', 'Montserrat', 'Inter Variable', ui-sans-serif, sans-serif;
+/* ══════════════════════════════════════════════════════════════════════════════
+   DESIGN TOKENS  (docs: components/ui/README.md §2 · live: /admin/design-system)
 
+   One semantic system, two surface flavours, two themes:
+     default / [data-surface=portal]  "warm"  — client, company and partner portals
+     [data-surface=public]            "warm"  + serif display headings — the marketing site (SiteLayout)
+     [data-surface=admin]             "crisp" — admin + staff workspace (AdminLayout, WorkspaceLayout)
+     [data-theme=dark]                soft dark navy-grey, never pure black
+   The surface attribute sits on <html> (src/lib/theme.ts useSurface) so portalled overlays follow it; it also
+   works on any element (the design-system page previews both surfaces side by side).
+
+   Semantic colours (Tailwind utilities bg-* / text-* / border-* / ring-*):
+     canvas        page background (off-white, never #fff)          legacy alias: page
+     sunken        wells, table headers, hover fills, muted panels   legacy alias: surface
+     card          cards and panels (white in light)
+     raised        menus, popovers, dialogs, toasts
+     field         form controls
+     line / line-strong          hairline borders / control borders
+     ink / muted / subtle        body text / secondary text (≥ 4.5:1) / placeholders + decoration only (≥ 3:1)
+     primary (+ -hover, -contrast)   main action (navy; light tint in dark mode)    ← theme builder brandPrimary
+     highlight (+ -contrast, -fg, -bg)  the rare amber accent; -fg = amber text     ← theme builder accent
+     link (+ -hover), focus      links and the focus ring (clear blue)
+     success | warning | danger | info | neutral | accent  status tones, each with -bg / -fg / -border
+                                 ("accent" is the violet "booked milestone" STATUS, not the brand amber)
+     chart-1 … chart-8           categorical chart series
+   Theme-builder values arrive as --tv-* variables on <html> (GET /api/site/theme); every token below falls
+   back to the default when they are missing.
+   ══════════════════════════════════════════════════════════════════════════════ */
+@theme static {
+  --font-sans: 'Inter Variable', 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  /* Display face: Inter everywhere; the public site switches to Fraunces (see [data-surface=public] below). */
+  --font-display: 'Inter Variable', 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --font-serif: 'Fraunces Variable', 'Fraunces', Georgia, 'Times New Roman', serif;
+  --font-mono: 'JetBrains Mono Variable', 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+
+  /* ── brand scales (legacy, still used directly: dark heroes, focus, links) ── */
   --color-navy-950: #050f24;
   --color-navy-900: #0b1f44;
   --color-navy-800: #112b5c;
@@ -18,50 +50,87 @@
   --color-brand-400: #5c9bff;
   --color-brand-100: #e3eeff;
   --color-brand-50: #f1f6ff;
-  --color-ink: #0b1f44;
-  --color-muted: #5b6b88;
-  --color-line: #dfe7f3;
-  --color-surface: #f5f8fd;
-  /* page / card / form-field backgrounds: white in light mode, deep navy shades in dark mode */
-  --color-page: #ffffff;
-  --color-card: #ffffff;
-  --color-field: #ffffff;
+  --color-amber-brand: #e8a317;
   --color-de-red: #dd0000;
   --color-de-gold: #ffce00;
   --color-az-blue: #00b5e2;
   --color-az-red: #ef3340;
   --color-az-green: #509e2f;
-  --color-success: #12a150;
-  --color-warning: #e08a00;
-  --color-danger: #d92d3a;
-  --color-info: #0e8fd6;
-  --color-neutral: #94a3b8;
-  --color-accent: #8b5cf6;
 
-  /* Status tones (components/ui/status.ts). Every tone has a tint background (-bg), a text colour for
-     use ON that tint (-fg, >= 4.5:1 in light and dark), a border (-border) and the bare name above as
-     the solid colour (bars, dots, progress). Redefined for dark mode further down. */
-  --color-success-bg: #e6f6ec;
-  --color-success-fg: #0b6535;
-  --color-success-border: #a6dcbc;
-  --color-warning-bg: #fff3d9;
-  --color-warning-fg: #8a4500;
-  --color-warning-border: #f3cd84;
-  --color-danger-bg: #fdecee;
-  --color-danger-fg: #ac1527;
-  --color-danger-border: #f4b4bb;
-  --color-info-bg: #e3f2fc;
-  --color-info-fg: #075a8a;
-  --color-info-border: #a6d4f1;
-  --color-neutral-bg: #eef2f7;
-  --color-neutral-fg: #46546a;
-  --color-neutral-border: #d5dde8;
-  --color-accent-bg: #f1ebff;
-  --color-accent-fg: #5a2bb3;
-  --color-accent-border: #d3c3f7;
+  /* ── surfaces + text (warm light defaults; redefined per surface / theme below) ── */
+  --color-canvas: #fafaf7;
+  --color-sunken: #f3f1ea;
+  --color-card: #ffffff;
+  --color-raised: #ffffff;
+  --color-field: #ffffff;
+  --color-line: #e5e1d6;
+  --color-line-strong: #cbc4b2;
+  --color-ink: #13203a;
+  --color-muted: #5a6375;
+  --color-subtle: #878d99;
+  /* legacy aliases (re-declared on every scope below so they follow it) */
+  --color-page: var(--color-canvas);
+  --color-surface: var(--color-sunken);
 
-  /* Overlay scrim behind modals / drawers: a plain dim, no backdrop-filter. */
-  --color-scrim: rgba(5, 15, 36, 0.5);
+  /* ── actions ── */
+  --color-primary: var(--tv-primary, #0b1f44);
+  --color-primary-hover: var(--tv-primary-hover, #283a5a);
+  --color-primary-contrast: var(--tv-primary-contrast, #ffffff);
+  --color-highlight: var(--tv-accent, #e8a317);
+  --color-highlight-contrast: var(--tv-accent-contrast, #13203a);
+  --color-highlight-fg: var(--tv-accent-fg, #8a651b);
+  --color-highlight-bg: #fcf3dc;
+  --color-link: #1456d0;
+  --color-link-hover: #0f45a8;
+  --color-focus: #1565e8;
+  --color-scrim: rgba(11, 18, 32, 0.48);
+
+  /* ── status tones (components/ui/status.ts): solid / tint -bg / text on tint -fg (≥ 4.5:1) / -border.
+     Calm, low saturation; white text on the danger / info / accent solids passes 4.5:1. ── */
+  --color-success: #27804f;
+  --color-success-bg: #e8f4ec;
+  --color-success-fg: #1c6b40;
+  --color-success-border: #b9dcc6;
+  --color-warning: #d4911c;
+  --color-warning-bg: #fbf0d9;
+  --color-warning-fg: #7f4d06;
+  --color-warning-border: #efd29a;
+  --color-danger: #c63a31;
+  --color-danger-bg: #fbeceb;
+  --color-danger-fg: #a32f28;
+  --color-danger-border: #f0c0bc;
+  --color-info: #2f6fc0;
+  --color-info-bg: #e7effb;
+  --color-info-fg: #1d5195;
+  --color-info-border: #bcd0f0;
+  --color-neutral: #8a93a3;
+  --color-neutral-bg: #eff1f4;
+  --color-neutral-fg: #4b5262;
+  --color-neutral-border: #d6dae1;
+  --color-accent: #7a5fd3;
+  --color-accent-bg: #f0edfb;
+  --color-accent-fg: #5a3ea5;
+  --color-accent-border: #d5cbf3;
+
+  /* ── categorical chart series (not statuses) ── */
+  --color-chart-1: #1d5fd6;
+  --color-chart-2: #e0a019;
+  --color-chart-3: #1f9e89;
+  --color-chart-4: #7a5fd3;
+  --color-chart-5: #d0517a;
+  --color-chart-6: #5d6b82;
+  --color-chart-7: #5a9e3a;
+  --color-chart-8: #2a9fd6;
+
+  /* ── radii: warm defaults (× theme radius scale); the admin surface is crisper ── */
+  --radius-xs: calc(3px * var(--tv-radius-scale, 1));
+  --radius-sm: calc(5px * var(--tv-radius-scale, 1));
+  --radius-md: calc(8px * var(--tv-radius-scale, 1));
+  --radius-lg: calc(10px * var(--tv-radius-scale, 1));
+  --radius-xl: calc(14px * var(--tv-radius-scale, 1));
+  --radius-2xl: calc(18px * var(--tv-radius-scale, 1));
+  --radius-3xl: calc(24px * var(--tv-radius-scale, 1));
+  --radius-4xl: calc(32px * var(--tv-radius-scale, 1));
 
   --animate-marquee: marquee 40s linear infinite;
   --animate-float: float 6s ease-in-out infinite;
@@ -108,13 +177,280 @@
   }
 }
 
+/* ── Non-colour tokens of the warm surface (component sizing, type, elevation) ── */
+:root {
+  --tv-radius-control: calc(12px * var(--tv-radius-scale, 1));
+  --tv-btn-py: 0.75rem; /* 44 px tap targets */
+  --tv-btn-px: 1.25rem;
+  --tv-btn-py-sm: 0.5rem;
+  --tv-btn-px-sm: 0.875rem;
+  --tv-control-h: 2.75rem;
+  --tv-input-py: 0.5625rem; /* (44 px - 24 px line - 2 px border) / 2 */
+  --tv-input-text: 1rem; /* 16 px: no iOS zoom on focus */
+  --tv-label-text: 0.875rem;
+  --tv-body-text: 1rem;
+  --tv-body-leading: 1.6;
+  --tv-shadow-card: 0 1px 2px rgba(19, 32, 58, 0.04), 0 8px 24px -14px rgba(19, 32, 58, 0.16);
+  --tv-shadow-raised: 0 2px 6px rgba(19, 32, 58, 0.06), 0 14px 36px -14px rgba(19, 32, 58, 0.24);
+  --tv-shadow-overlay: 0 24px 64px -16px rgba(19, 32, 58, 0.34);
+  /* table density (admin tables follow data-density) */
+  --tv-cell-x: 1rem;
+  --tv-cell-y: 0.75rem;
+  --tv-cell-text: 0.875rem;
+}
+
+/* Legacy aliases follow whichever scope redefines canvas / sunken. */
+:root,
+[data-surface],
+[data-theme] {
+  --color-page: var(--color-canvas);
+  --color-surface: var(--color-sunken);
+}
+
+/* ── Dark theme: shared values (status, charts, actions) + the warm surface in dark ── */
+:root[data-theme='dark'],
+[data-theme='dark'] {
+  color-scheme: dark;
+  --color-canvas: #11151c;
+  --color-sunken: #0d1117;
+  --color-card: #171c25;
+  --color-raised: #1d2330;
+  --color-field: #12171f;
+  --color-line: #2a3140;
+  --color-line-strong: #3a4354;
+  --color-ink: #e7eaf0;
+  --color-muted: #a0a9b8;
+  --color-subtle: #747e8f;
+  --tv-shadow-card: 0 1px 2px rgba(3, 6, 12, 0.4);
+  --tv-shadow-raised: 0 2px 6px rgba(3, 6, 12, 0.4), 0 16px 40px -12px rgba(3, 6, 12, 0.6);
+  --tv-shadow-overlay: 0 24px 64px -12px rgba(3, 6, 12, 0.7);
+
+  --color-brand-50: rgba(47, 123, 255, 0.1);
+  --color-brand-100: rgba(47, 123, 255, 0.2);
+  --color-primary: var(--tv-primary-dark, #bacef3);
+  --color-primary-hover: var(--tv-primary-dark-hover, #d4e0f7);
+  --color-primary-contrast: var(--tv-primary-dark-contrast, #0b1f44);
+  --color-highlight-fg: var(--tv-accent-fg-dark, #e8a317);
+  --color-highlight-bg: rgba(232, 163, 23, 0.14);
+  --color-link: #7fb0ff;
+  --color-link-hover: #a9c9ff;
+  --color-focus: #6ea2ff;
+  --color-scrim: rgba(3, 6, 12, 0.62);
+
+  --color-neutral: #6b7486;
+  --color-success-bg: rgba(74, 192, 128, 0.14);
+  --color-success-fg: #8fdcb1;
+  --color-success-border: rgba(74, 192, 128, 0.38);
+  --color-warning-bg: rgba(232, 163, 23, 0.15);
+  --color-warning-fg: #f3c873;
+  --color-warning-border: rgba(232, 163, 23, 0.4);
+  --color-danger-bg: rgba(232, 96, 86, 0.16);
+  --color-danger-fg: #f5a7a0;
+  --color-danger-border: rgba(232, 96, 86, 0.42);
+  --color-info-bg: rgba(96, 150, 240, 0.16);
+  --color-info-fg: #a9c7fb;
+  --color-info-border: rgba(96, 150, 240, 0.4);
+  --color-neutral-bg: rgba(255, 255, 255, 0.07);
+  --color-neutral-fg: #c3cad6;
+  --color-neutral-border: rgba(255, 255, 255, 0.16);
+  --color-accent-bg: rgba(150, 125, 235, 0.18);
+  --color-accent-fg: #c9bcf7;
+  --color-accent-border: rgba(150, 125, 235, 0.42);
+
+  --color-chart-1: #6ea2ff;
+  --color-chart-2: #f0b43a;
+  --color-chart-3: #3cc2a8;
+  --color-chart-4: #a58ef0;
+  --color-chart-5: #ee7ba0;
+  --color-chart-6: #94a0b5;
+  --color-chart-7: #84c562;
+  --color-chart-8: #5bbcef;
+}
+
+/* ── Warm surface, explicit (resets an admin scope: previews, embedded public content) ── */
+[data-surface='public'],
+[data-surface='portal'] {
+  --color-canvas: #fafaf7;
+  --color-sunken: #f3f1ea;
+  --color-card: #ffffff;
+  --color-raised: #ffffff;
+  --color-field: #ffffff;
+  --color-line: #e5e1d6;
+  --color-line-strong: #cbc4b2;
+  --color-ink: #13203a;
+  --color-muted: #5a6375;
+  --color-subtle: #878d99;
+  --radius-xs: calc(3px * var(--tv-radius-scale, 1));
+  --radius-sm: calc(5px * var(--tv-radius-scale, 1));
+  --radius-md: calc(8px * var(--tv-radius-scale, 1));
+  --radius-lg: calc(10px * var(--tv-radius-scale, 1));
+  --radius-xl: calc(14px * var(--tv-radius-scale, 1));
+  --radius-2xl: calc(18px * var(--tv-radius-scale, 1));
+  --radius-3xl: calc(24px * var(--tv-radius-scale, 1));
+  --radius-4xl: calc(32px * var(--tv-radius-scale, 1));
+  --tv-radius-control: calc(12px * var(--tv-radius-scale, 1));
+  --tv-btn-py: 0.75rem;
+  --tv-btn-px: 1.25rem;
+  --tv-btn-py-sm: 0.5rem;
+  --tv-btn-px-sm: 0.875rem;
+  --tv-control-h: 2.75rem;
+  --tv-input-py: 0.5625rem;
+  --tv-input-text: 1rem;
+  --tv-label-text: 0.875rem;
+  --tv-body-text: 1rem;
+  --tv-body-leading: 1.6;
+  --tv-shadow-card: 0 1px 2px rgba(19, 32, 58, 0.04), 0 8px 24px -14px rgba(19, 32, 58, 0.16);
+  --tv-shadow-raised: 0 2px 6px rgba(19, 32, 58, 0.06), 0 14px 36px -14px rgba(19, 32, 58, 0.24);
+  --tv-shadow-overlay: 0 24px 64px -16px rgba(19, 32, 58, 0.34);
+  --tv-cell-x: 1rem;
+  --tv-cell-y: 0.75rem;
+  --tv-cell-text: 0.875rem;
+  --font-display: 'Inter Variable', 'Inter', ui-sans-serif, system-ui, sans-serif;
+}
+[data-theme='dark'][data-surface='public'],
+[data-theme='dark'][data-surface='portal'],
+[data-theme='dark'] [data-surface='public'],
+[data-theme='dark'] [data-surface='portal'] {
+  --color-canvas: #11151c;
+  --color-sunken: #0d1117;
+  --color-card: #171c25;
+  --color-raised: #1d2330;
+  --color-field: #12171f;
+  --color-line: #2a3140;
+  --color-line-strong: #3a4354;
+  --color-ink: #e7eaf0;
+  --color-muted: #a0a9b8;
+  --color-subtle: #747e8f;
+  --tv-shadow-card: 0 1px 2px rgba(3, 6, 12, 0.4);
+  --tv-shadow-raised: 0 2px 6px rgba(3, 6, 12, 0.4), 0 16px 40px -12px rgba(3, 6, 12, 0.6);
+  --tv-shadow-overlay: 0 24px 64px -12px rgba(3, 6, 12, 0.7);
+}
+/* Public site: warm serif display headings (Fraunces renders az/de/en/tr; it has no Cyrillic, so ru/uk keep Inter). */
+[data-surface='public'] {
+  --font-display: 'Fraunces Variable', 'Fraunces', 'Inter Variable', Georgia, serif;
+}
+/* Fraunces is at its best at semibold: heavier utility weights on public headings are capped (Inter keeps them). */
+[data-surface='public'] :is(h1, h2, h3, .font-display):is(.font-extrabold, .font-black) {
+  font-weight: 650;
+}
+[data-surface='public']:lang(ru) :is(h1, h2, h3, .font-display):is(.font-extrabold, .font-black),
+[data-surface='public']:lang(uk) :is(h1, h2, h3, .font-display):is(.font-extrabold, .font-black) {
+  font-weight: 800;
+}
+[data-surface='public']:lang(ru),
+[data-surface='public']:lang(uk),
+:lang(ru) [data-surface='public'],
+:lang(uk) [data-surface='public'] {
+  --font-display: 'Inter Variable', 'Inter', ui-sans-serif, system-ui, sans-serif;
+}
+
+/* ── Crisp admin / workspace surface (Linear / Vercel-like): zinc greys with a navy bias, hairlines,
+   small radii, quiet shadows, 14 px UI text, 36 px controls. ── */
+[data-surface='admin'] {
+  --color-canvas: #f6f7f9;
+  --color-sunken: #eef0f4;
+  --color-card: #ffffff;
+  --color-raised: #ffffff;
+  --color-field: #ffffff;
+  --color-line: #e2e5eb;
+  --color-line-strong: #c8ced8;
+  --color-ink: #121826;
+  --color-muted: #576072;
+  --color-subtle: #868d9a;
+  --radius-xs: calc(2px * var(--tv-radius-scale, 1));
+  --radius-sm: calc(3px * var(--tv-radius-scale, 1));
+  --radius-md: calc(4px * var(--tv-radius-scale, 1));
+  --radius-lg: calc(6px * var(--tv-radius-scale, 1));
+  --radius-xl: calc(8px * var(--tv-radius-scale, 1));
+  --radius-2xl: calc(10px * var(--tv-radius-scale, 1));
+  --radius-3xl: calc(12px * var(--tv-radius-scale, 1));
+  --radius-4xl: calc(16px * var(--tv-radius-scale, 1));
+  --tv-radius-control: calc(6px * var(--tv-radius-scale, 1));
+  --tv-btn-py: 0.5rem; /* 36 px */
+  --tv-btn-px: 0.875rem;
+  --tv-btn-py-sm: 0.3125rem;
+  --tv-btn-px-sm: 0.625rem;
+  --tv-control-h: 2.25rem;
+  --tv-input-py: 0.3125rem;
+  --tv-input-text: 0.875rem;
+  --tv-label-text: 0.8125rem;
+  --tv-body-text: 0.875rem;
+  --tv-body-leading: 1.5;
+  --tv-shadow-card: 0 1px 2px rgba(18, 24, 38, 0.05);
+  --tv-shadow-raised: 0 1px 3px rgba(18, 24, 38, 0.06), 0 10px 28px -10px rgba(18, 24, 38, 0.2);
+  --tv-shadow-overlay: 0 20px 48px -12px rgba(18, 24, 38, 0.3);
+  --tv-cell-x: 0.875rem;
+  --tv-cell-y: 0.625rem;
+  --tv-cell-text: 0.875rem;
+  --font-display: 'Inter Variable', 'Inter', ui-sans-serif, system-ui, sans-serif;
+}
+[data-theme='dark'][data-surface='admin'],
+[data-theme='dark'] [data-surface='admin'] {
+  --color-canvas: #0f141c;
+  --color-sunken: #0b0f15;
+  --color-card: #151b26;
+  --color-raised: #1b2230;
+  --color-field: #111620;
+  --color-line: #262e3c;
+  --color-line-strong: #364052;
+  --color-ink: #e6e9ef;
+  --color-muted: #9ca6b6;
+  --color-subtle: #717b8c;
+  --tv-shadow-card: 0 1px 2px rgba(3, 6, 12, 0.45);
+  --tv-shadow-raised: 0 2px 6px rgba(3, 6, 12, 0.45), 0 14px 36px -10px rgba(3, 6, 12, 0.65);
+  --tv-shadow-overlay: 0 24px 60px -12px rgba(3, 6, 12, 0.75);
+}
+/* Compact admin tables (user toggle / theme default, src/lib/theme.ts) */
+[data-surface='admin'][data-density='compact'],
+[data-density='compact'] [data-surface='admin'],
+[data-surface='admin'] [data-density='compact'] {
+  --tv-cell-x: 0.625rem;
+  --tv-cell-y: 0.375rem;
+  --tv-cell-text: 0.8125rem;
+}
+
+/* Admin / workspace page titles are a step smaller and tighter than the portal's (the top bar already
+   carries the breadcrumb; Direction A "crisp"). Unlayered so it applies to <h1 className="type-page-title">. */
+[data-surface='admin'] .type-page-title {
+  font-size: 1.25rem;
+  line-height: 1.75rem;
+  letter-spacing: -0.02em;
+}
+[data-surface='admin'] .type-section-title {
+  font-size: 1rem;
+  line-height: 1.5rem;
+}
+
+/* Inside dark navy sections (heroes, footers, the admin sidebar) the primary action turns amber so it never
+   sinks into the background; links and focus get the light blue. */
+:root {
+  --tv-on-fg: var(--color-ink);
+  --tv-on-bg: var(--color-card);
+}
+:is(.bg-navy-950, .bg-navy-900, .bg-navy-800, [data-on-dark]) {
+  --tv-on-fg: #ffffff;
+  --tv-on-bg: #0b1f44;
+  --color-primary: var(--tv-accent, #e8a317);
+  --color-primary-hover: #f2bb48;
+  --color-primary-contrast: var(--tv-accent-contrast, #13203a);
+  --color-highlight-fg: #f3c467;
+  --color-link: #9cc3ff;
+  --color-link-hover: #c4dbff;
+  --color-focus: #9cc3ff;
+}
+
 @layer base {
   html {
     -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
     scroll-behavior: auto;
+    scrollbar-color: var(--color-line-strong) transparent;
   }
   body {
-    @apply bg-page font-sans text-ink;
+    @apply bg-canvas font-sans text-ink;
+    font-size: var(--tv-body-text);
+    line-height: var(--tv-body-leading);
     /* clip (not hidden) so position:sticky keeps working; stops off-screen reveal animations from adding a scrollbar */
     overflow-x: clip;
   }
@@ -122,18 +458,48 @@
     @apply max-w-full;
   }
   h1, h2, h3, h4 {
-    @apply font-display;
-    letter-spacing: -0.01em;
+    font-family: var(--font-display);
+    letter-spacing: -0.015em;
+    text-wrap: balance;
+  }
+  p {
+    text-wrap: pretty;
   }
   ::selection {
-    @apply bg-brand-500 text-white;
+    background-color: color-mix(in oklab, var(--color-focus) 26%, transparent);
+    color: inherit;
   }
   :focus-visible {
-    @apply outline-2 outline-offset-2 outline-brand-500;
+    outline: 2px solid var(--color-focus);
+    outline-offset: 2px;
+  }
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-thumb {
+    background-color: var(--color-line-strong);
+    border: 2px solid transparent;
+    border-radius: 999px;
+    background-clip: padding-box;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: var(--color-subtle);
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  code, kbd, samp {
+    font-family: var(--font-mono);
+    font-size: 0.92em;
+  }
+  /* Admin tables and KPIs: numbers line up */
+  [data-surface='admin'] table {
+    font-variant-numeric: tabular-nums;
   }
   /* "Skip to content": visually hidden until it receives keyboard focus */
   .skip-link {
-    @apply fixed top-2 left-2 z-[1000] -translate-y-24 rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white shadow-xl transition-transform;
+    @apply fixed top-2 left-2 z-[1000] -translate-y-24 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-contrast shadow-xl transition-transform;
   }
   .skip-link:focus {
     @apply translate-y-0;
@@ -141,7 +507,23 @@
 }
 
 @utility btn {
-  @apply relative inline-flex items-center justify-center gap-2 overflow-hidden rounded-lg px-5 py-3 text-sm font-semibold transition-all duration-300 disabled:cursor-not-allowed disabled:opacity-60;
+  @apply relative inline-flex items-center justify-center gap-2 overflow-hidden rounded-[var(--tv-radius-control)] px-[var(--tv-btn-px)] py-[var(--tv-btn-py)] text-sm leading-5 font-semibold transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-55;
+}
+
+/* Numbers that line up (tables, KPIs, money). */
+@utility num {
+  font-variant-numeric: tabular-nums;
+}
+/* Case numbers, invoice numbers, codes. */
+@utility code-id {
+  font-family: var(--font-mono);
+  font-size: 0.92em;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums slashed-zero;
+}
+/* Comfortable reading width for prose. */
+@utility measure {
+  max-width: 68ch;
 }
 
 @layer components {
@@ -170,7 +552,7 @@
     @apply p-5 sm:p-6 lg:p-7;
   }
   .h-section {
-    @apply font-display text-[1.75rem] leading-[1.15] font-extrabold sm:text-4xl lg:text-[2.75rem];
+    @apply font-display text-[1.75rem] leading-[1.15] font-semibold tracking-[-0.02em] sm:text-4xl lg:text-[2.75rem];
   }
   /* Horizontal snap carousel on phones, regular grid from sm up */
   .mobile-rail {
@@ -179,14 +561,18 @@
   .mobile-rail > * {
     @apply w-[82%] shrink-0 snap-start sm:w-auto;
   }
+
+  /* ── Buttons (components/ui/Button.tsx maps its variants onto these) ── */
   .btn-primary {
-    @apply btn bg-brand-600 text-white shadow-lg shadow-brand-600/25 hover:bg-brand-700 hover:shadow-brand-600/40;
+    @apply btn bg-primary text-primary-contrast shadow-[0_1px_2px_rgba(11,31,68,0.18)] hover:bg-primary-hover;
   }
+  /* Outline on a dark band (white) or, since Direction B, on light surfaces (ink): follows --tv-on-fg. */
   .btn-outline {
-    @apply btn border border-white/70 text-white hover:bg-white hover:text-navy-900;
+    @apply btn border border-[color-mix(in_oklab,var(--tv-on-fg)_60%,transparent)] text-[var(--tv-on-fg)] hover:bg-[var(--tv-on-fg)] hover:text-[var(--tv-on-bg)];
   }
+  /* <Button variant="outline"> */
   .btn-ghost {
-    @apply btn border border-brand-600 text-brand-600 hover:bg-brand-600 hover:text-white;
+    @apply btn border border-primary/70 text-primary hover:bg-primary hover:text-primary-contrast;
   }
   .btn-white {
     @apply btn bg-white text-navy-900 hover:bg-brand-50;
@@ -194,31 +580,41 @@
   .btn-danger {
     @apply btn bg-danger text-white hover:brightness-110;
   }
-  /* <Button variant="secondary">: bordered neutral (replaces the ad-hoc "btn-white border border-line") */
+  /* <Button variant="secondary">: bordered neutral */
   .btn-secondary {
-    @apply btn border border-line bg-card text-ink hover:border-brand-400/60 hover:bg-surface;
+    @apply btn border border-line-strong/80 bg-card text-ink hover:border-line-strong hover:bg-sunken;
   }
   /* <Button variant="ghost">: no chrome until hover */
   .btn-quiet {
-    @apply btn text-ink hover:bg-surface;
+    @apply btn text-ink hover:bg-sunken;
   }
   .btn-sm {
-    @apply px-3.5 py-2 text-xs;
+    @apply px-[var(--tv-btn-px-sm)] py-[var(--tv-btn-py-sm)] text-xs leading-4;
+  }
+  .btn-lg {
+    @apply px-6 py-3.5 text-base leading-6;
+  }
+  .link {
+    @apply font-medium text-link underline decoration-current/30 underline-offset-[3px] transition-colors hover:text-link-hover hover:decoration-current;
   }
   .eyebrow {
-    @apply inline-flex items-center gap-2 text-xs font-bold tracking-[0.18em] text-brand-600 uppercase;
+    @apply inline-flex items-center gap-2 text-xs font-semibold tracking-[0.16em] text-highlight-fg uppercase;
   }
   .card {
-    @apply rounded-2xl border border-line bg-card shadow-[0_8px_30px_-12px_rgba(11,31,68,0.18)];
+    @apply rounded-2xl border border-line bg-card shadow-[var(--tv-shadow-card)];
+  }
+  /* Interactive card: hover lift (border + shadow only, no movement) */
+  .card-interactive {
+    @apply transition-[border-color,box-shadow] duration-200 hover:border-line-strong hover:shadow-[var(--tv-shadow-raised)];
   }
   .input {
-    @apply w-full rounded-lg border border-line bg-field px-3.5 py-2.5 text-sm text-ink transition outline-none placeholder:text-muted/70 focus:border-brand-500 focus:ring-4 focus:ring-brand-500/15;
+    @apply w-full rounded-[var(--tv-radius-control)] border border-line-strong/80 bg-field px-3.5 py-[var(--tv-input-py)] text-[length:var(--tv-input-text)] leading-6 text-ink transition outline-none placeholder:text-subtle hover:border-line-strong focus:border-focus focus:ring-[3px] focus:ring-focus/20 disabled:cursor-not-allowed disabled:bg-sunken disabled:opacity-70;
   }
   .label {
-    @apply mb-1.5 block text-xs font-semibold text-ink/80;
+    @apply mb-1.5 block text-[length:var(--tv-label-text)] leading-snug font-medium text-ink;
   }
   .badge {
-    @apply inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs font-semibold;
+    @apply inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs leading-4 font-medium;
   }
   .glass {
     /* no backdrop-filter: it re-blurs the background on every scroll frame */
@@ -228,16 +624,22 @@
     @apply bg-gradient-to-r from-brand-400 via-white to-brand-400 bg-clip-text text-transparent;
   }
   .prose-tv p {
-    @apply mb-4 leading-relaxed text-muted;
+    @apply mb-4 max-w-[70ch] leading-relaxed text-muted;
+  }
+  .kbd {
+    @apply inline-flex min-w-5 items-center justify-center rounded border border-line bg-sunken px-1 font-mono text-[11px] leading-4 text-muted;
   }
 
   /* ── App typography scale (portal, company, admin, workspace). The marketing site keeps .h-section.
      See components/ui/README.md. ── */
+  .type-display {
+    @apply font-display text-3xl leading-[1.1] font-semibold tracking-[-0.02em] text-ink sm:text-4xl;
+  }
   .type-page-title {
-    @apply font-display text-xl leading-tight font-bold text-ink sm:text-2xl;
+    @apply font-display text-xl leading-tight font-semibold tracking-[-0.015em] text-ink sm:text-2xl;
   }
   .type-section-title {
-    @apply font-display text-lg leading-snug font-bold text-ink;
+    @apply font-display text-lg leading-snug font-semibold tracking-[-0.01em] text-ink;
   }
   .type-card-title {
     @apply font-sans text-sm leading-snug font-semibold text-ink;
@@ -250,6 +652,9 @@
   }
   .type-caption {
     @apply text-xs leading-snug text-muted;
+  }
+  .type-overline {
+    @apply text-[11px] leading-4 font-semibold tracking-[0.08em] text-muted uppercase;
   }
 
   /* ── App spacing rhythm ── */
@@ -264,6 +669,27 @@
   }
   .card-body {
     @apply p-4 sm:p-5;
+  }
+
+  /* ── Table primitives (components/ui/Table.tsx; usable on hand-written tables: <table className="tv-table">) ── */
+  .tv-table {
+    @apply w-full border-collapse text-left text-[length:var(--tv-cell-text)];
+  }
+  .tv-table > thead > tr > th {
+    @apply border-b border-line bg-sunken px-[var(--tv-cell-x)] py-[calc(var(--tv-cell-y)_*_0.8)] text-xs font-medium whitespace-nowrap text-muted;
+  }
+  .tv-table > tbody > tr > td {
+    @apply px-[var(--tv-cell-x)] py-[var(--tv-cell-y)] align-middle;
+  }
+  .tv-table > tbody > tr + tr > td {
+    @apply border-t border-line;
+  }
+  .tv-table > tbody > tr:hover > td {
+    @apply bg-sunken/50;
+  }
+  .tv-table .num,
+  .tv-table [data-num] {
+    @apply text-right tabular-nums;
   }
 }
 
@@ -280,64 +706,17 @@
 }
 
 /* ══════════════════════════════════════════════════════════════════════════════
-   Dark theme. `data-theme` is set on <html> by src/lib/prefs.ts (and by the inline script in
-   index.html before the app loads). Semantic tokens are redefined, and the handful of built-in
-   Tailwind colours the components use directly (bg-white, text-navy-900, slate, badge tints…) are
-   remapped below. These rules are intentionally unlayered so they win over Tailwind's utilities.
-   Dark heroes (bg-navy-950/900), primary buttons (bg-brand-600) and text-white are left alone.
+   Dark theme: legacy raw classes. Semantic tokens are redefined above; the handful of built-in Tailwind
+   colours older components use directly (bg-white, text-navy-900, slate, badge tints…) are remapped here.
+   These rules are intentionally unlayered so they win over Tailwind's utilities. New code uses tokens.
+   Dark heroes (bg-navy-950/900), primary buttons and text-white are left alone.
    ══════════════════════════════════════════════════════════════════════════════ */
-:root[data-theme='dark'] {
-  color-scheme: dark;
-  --color-page: #0b1220;
-  --color-surface: #0f192c;
-  --color-card: #131e33;
-  --color-field: #0d1627;
-  --color-line: rgba(255, 255, 255, 0.12);
-  --color-ink: #eef2f9;
-  --color-muted: #9fb0c8;
-  --color-brand-50: rgba(47, 123, 255, 0.1);
-  --color-brand-100: rgba(47, 123, 255, 0.2);
-
-  /* --color-success / -warning / -danger solids stay as in light: white text on them keeps 4.5:1. */
-  --color-info: #0ea5e9;
-  --color-neutral: #64748b;
-  --color-accent: #8b5cf6;
-  --color-success-bg: rgba(34, 197, 94, 0.16);
-  --color-success-fg: #7ee2a8;
-  --color-success-border: rgba(34, 197, 94, 0.42);
-  --color-warning-bg: rgba(245, 158, 11, 0.16);
-  --color-warning-fg: #fcd34d;
-  --color-warning-border: rgba(245, 158, 11, 0.42);
-  --color-danger-bg: rgba(239, 68, 68, 0.18);
-  --color-danger-fg: #fca5a5;
-  --color-danger-border: rgba(239, 68, 68, 0.45);
-  --color-info-bg: rgba(14, 165, 233, 0.16);
-  --color-info-fg: #7dd3fc;
-  --color-info-border: rgba(14, 165, 233, 0.42);
-  --color-neutral-bg: rgba(255, 255, 255, 0.08);
-  --color-neutral-fg: #c3cfdf;
-  --color-neutral-border: rgba(255, 255, 255, 0.18);
-  --color-accent-bg: rgba(139, 92, 246, 0.2);
-  --color-accent-fg: #c9b8fd;
-  --color-accent-border: rgba(139, 92, 246, 0.45);
-  --color-scrim: rgba(0, 0, 0, 0.6);
-}
 [data-theme='dark'] body {
-  background-color: var(--color-page);
+  background-color: var(--color-canvas);
   color: var(--color-ink);
 }
-[data-theme='dark'] .card {
-  box-shadow: 0 8px 30px -12px rgba(0, 0, 0, 0.6);
-}
-[data-theme='dark'] .eyebrow,
-[data-theme='dark'] .btn-ghost {
-  color: var(--color-brand-400);
-}
-[data-theme='dark'] .btn-ghost {
-  border-color: var(--color-brand-400);
-}
-[data-theme='dark'] .btn-ghost:hover {
-  color: #fff;
+[data-theme='dark'] .eyebrow {
+  color: var(--color-highlight-fg);
 }
 
 /* backgrounds */
@@ -400,13 +779,13 @@
   color: var(--color-brand-400) !important;
 }
 [data-theme='dark'] :is(.text-danger, .hover\:text-danger:hover) {
-  color: #ff7a84;
+  color: #f58b82;
 }
 [data-theme='dark'] .text-warning {
-  color: #f5b14a;
+  color: #f0b54a;
 }
 [data-theme='dark'] .text-success {
-  color: #3ccf7a;
+  color: #5fcf8f;
 }
 
 /* borders / rings */
@@ -516,19 +895,28 @@
 html.a11y-contrast {
   --color-ink: #000000;
   --color-muted: #1f2937;
+  --color-subtle: #374151;
   --color-line: #000000;
+  --color-line-strong: #000000;
+  --color-link: #0b45b0;
+  --color-focus: #0b45b0;
   --color-brand-600: #0b45b0;
   --color-brand-700: #083386;
   --color-brand-500: #0b45b0;
 }
 html.a11y-contrast[data-theme='dark'] {
-  --color-page: #000000;
-  --color-surface: #000000;
+  --color-canvas: #000000;
+  --color-sunken: #000000;
   --color-card: #000000;
+  --color-raised: #000000;
   --color-field: #000000;
   --color-ink: #ffffff;
   --color-muted: #e5e7eb;
+  --color-subtle: #d1d5db;
   --color-line: #ffffff;
+  --color-line-strong: #ffffff;
+  --color-link: #9cc3ff;
+  --color-focus: #9cc3ff;
   --color-brand-400: #9cc3ff;
   --color-brand-500: #9cc3ff;
 }
@@ -715,31 +1103,34 @@ html.a11y-visual-alerts.a11y-flash::after {
     @apply mt-4;
   }
   .prose-guide h2 {
-    @apply mt-12 mb-2 scroll-mt-28 font-display text-2xl leading-tight font-bold text-navy-900 sm:text-[1.75rem];
+    @apply mt-12 mb-2 scroll-mt-28 font-display text-2xl leading-tight font-semibold text-ink sm:text-[1.75rem];
   }
   .prose-guide h3 {
-    @apply mt-8 mb-1 scroll-mt-28 font-display text-xl font-bold text-navy-900;
+    @apply mt-8 mb-1 scroll-mt-28 font-display text-xl font-semibold text-ink;
   }
   .prose-guide h4 {
-    @apply mt-6 font-semibold text-navy-900;
+    @apply mt-6 font-semibold text-ink;
+  }
+  .prose-guide :is(p, ul, ol, blockquote) {
+    max-width: 72ch;
   }
   .prose-guide p {
-    @apply text-ink/85;
+    @apply text-ink;
   }
   .prose-guide a {
-    @apply font-medium text-brand-700 underline decoration-brand-400/50 underline-offset-2 hover:decoration-brand-600;
+    @apply font-medium text-link underline decoration-link/40 underline-offset-2 hover:text-link-hover hover:decoration-current;
   }
   .prose-guide ul {
-    @apply list-disc space-y-1.5 pl-6 marker:text-brand-500;
+    @apply list-disc space-y-1.5 pl-6 marker:text-subtle;
   }
   .prose-guide ol {
-    @apply list-decimal space-y-1.5 pl-6 marker:font-semibold marker:text-brand-600;
+    @apply list-decimal space-y-1.5 pl-6 marker:font-semibold marker:text-muted;
   }
   .prose-guide blockquote {
-    @apply rounded-xl border-l-4 border-brand-500 bg-brand-50 px-5 py-4 text-navy-900;
+    @apply rounded-xl border-l-4 border-highlight bg-highlight-bg px-5 py-4 text-ink;
   }
   .prose-guide blockquote p {
-    @apply text-navy-900;
+    @apply text-ink;
   }
   .prose-guide .table-wrap {
     @apply overflow-x-auto rounded-xl border border-line;
@@ -748,13 +1139,13 @@ html.a11y-visual-alerts.a11y-flash::after {
     @apply w-full min-w-[32rem] border-collapse text-left text-[0.9375rem];
   }
   .prose-guide th {
-    @apply bg-surface px-4 py-2.5 font-semibold text-navy-900;
+    @apply bg-sunken px-4 py-2.5 font-semibold text-ink;
   }
   .prose-guide td {
     @apply border-t border-line px-4 py-2.5 align-top;
   }
   .prose-guide code {
-    @apply rounded bg-surface px-1.5 py-0.5 text-[0.9em];
+    @apply rounded bg-sunken px-1.5 py-0.5 text-[0.9em];
   }
 }
 
@@ -860,3 +1251,121 @@ html.a11y-nomotion .btn-press:hover {
   60% { transform: scale(1.15); opacity: 1; }
   100% { transform: scale(1); }
 }
+
+/* Toast colours from the tokens (sonner's own dark theme is pure black; rich colours become calm status tints
+   over the raised surface). Selector specificity beats sonner's [data-sonner-toaster][data-theme] blocks. */
+:root [data-sonner-toaster][data-theme] {
+  --normal-bg: var(--color-raised);
+  --normal-bg-hover: var(--color-sunken);
+  --normal-border: var(--color-line);
+  --normal-border-hover: var(--color-line-strong);
+  --normal-text: var(--color-ink);
+  --success-bg: color-mix(in oklab, var(--color-success) 12%, var(--color-raised));
+  --success-border: color-mix(in oklab, var(--color-success) 35%, var(--color-raised));
+  --success-text: var(--color-success-fg);
+  --info-bg: color-mix(in oklab, var(--color-info) 12%, var(--color-raised));
+  --info-border: color-mix(in oklab, var(--color-info) 35%, var(--color-raised));
+  --info-text: var(--color-info-fg);
+  --warning-bg: color-mix(in oklab, var(--color-warning) 14%, var(--color-raised));
+  --warning-border: color-mix(in oklab, var(--color-warning) 40%, var(--color-raised));
+  --warning-text: var(--color-warning-fg);
+  --error-bg: color-mix(in oklab, var(--color-danger) 12%, var(--color-raised));
+  --error-border: color-mix(in oklab, var(--color-danger) 35%, var(--color-raised));
+  --error-text: var(--color-danger-fg);
+  --border-radius: var(--radius-xl);
+  font-family: var(--font-sans);
+}
+:root [data-sonner-toaster] [data-sonner-toast][data-styled='true'] {
+  box-shadow: var(--tv-shadow-raised);
+  font-size: 0.875rem;
+  line-height: 1.45;
+}
+
+/* Theme builder live preview (components/admin/theme/ThemePanel.tsx): the --tv-* values set on the preview
+   element re-resolve the action tokens there (radii follow through the surface attribute on the same element). */
+[data-theme-preview] {
+  --color-primary: var(--tv-primary, #0b1f44);
+  --color-primary-hover: var(--tv-primary-hover, #283a5a);
+  --color-primary-contrast: var(--tv-primary-contrast, #ffffff);
+  --color-highlight: var(--tv-accent, #e8a317);
+  --color-highlight-contrast: var(--tv-accent-contrast, #13203a);
+  --color-highlight-fg: var(--tv-accent-fg, #8a651b);
+}
+[data-theme='dark'] [data-theme-preview] {
+  --color-primary: var(--tv-primary-dark, #bacef3);
+  --color-primary-hover: var(--tv-primary-dark-hover, #d4e0f7);
+  --color-primary-contrast: var(--tv-primary-dark-contrast, #0b1f44);
+  --color-highlight-fg: var(--tv-accent-fg-dark, #e8a317);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   Illustrations (components/illustrations): inline SVGs painted with these tokens, so they follow the
+   theme. Shapes use the .f-* (fill) / .s-* (stroke) classes inside an svg.tv-ill. Decorative by default.
+   ══════════════════════════════════════════════════════════════════════════════ */
+:root,
+[data-surface] {
+  --ill-ink: #1b2d5c;
+  --ill-amber: var(--color-highlight);
+  --ill-soft: #fbe6c2;
+  --ill-sand: #ecdcc2;
+  --ill-sage: #d5e6d2;
+  --ill-sky: #d8e4f6;
+  --ill-peach: #f6cfb4;
+  --ill-skin: #e3ad88;
+  --ill-hair: #2b2238;
+  --ill-paper: #ffffff;
+  --ill-line: #cbbfa8;
+}
+[data-theme='dark'],
+[data-theme='dark'] [data-surface] {
+  --ill-ink: #5b78b8;
+  --ill-soft: rgba(232, 163, 23, 0.22);
+  --ill-sand: #3a3428;
+  --ill-sage: #2b3a2f;
+  --ill-sky: #24324a;
+  --ill-peach: #4a3428;
+  --ill-skin: #c9946f;
+  --ill-hair: #0d1117;
+  --ill-paper: #232a38;
+  --ill-line: #4a5366;
+}
+/* layered so width utilities (w-24, max-w-*) on an illustration win */
+@layer components {
+  .tv-ill { display: block; width: 100%; height: auto; overflow: visible; }
+}
+.tv-ill .f-ink { fill: var(--ill-ink); }
+.tv-ill .f-amber { fill: var(--ill-amber); }
+.tv-ill .f-soft { fill: var(--ill-soft); }
+.tv-ill .f-sand { fill: var(--ill-sand); }
+.tv-ill .f-sage { fill: var(--ill-sage); }
+.tv-ill .f-sky { fill: var(--ill-sky); }
+.tv-ill .f-peach { fill: var(--ill-peach); }
+.tv-ill .f-skin { fill: var(--ill-skin); }
+.tv-ill .f-hair { fill: var(--ill-hair); }
+.tv-ill .f-paper { fill: var(--ill-paper); }
+.tv-ill .f-line { fill: var(--ill-line); }
+.tv-ill .s-ink { stroke: var(--ill-ink); fill: none; }
+.tv-ill .s-amber { stroke: var(--ill-amber); fill: none; }
+.tv-ill .s-line { stroke: var(--ill-line); fill: none; }
+.tv-ill .s-paper { stroke: var(--ill-paper); fill: none; }
+.tv-ill [class*='s-'] { stroke-linecap: round; stroke-linejoin: round; }
+@media (prefers-reduced-motion: no-preference) {
+  .tv-ill.is-animated .ill-float { animation: ill-float 5s ease-in-out infinite; transform-box: fill-box; }
+  .tv-ill.is-animated .ill-float-2 { animation: ill-float 6.5s ease-in-out -2s infinite; transform-box: fill-box; }
+}
+@keyframes ill-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+html.a11y-nomotion .tv-ill * { animation: none !important; }
+
+/* ── Warm public surface helpers (Direction B) ── */
+/* Soft sand band at the top of inner pages (PageHero) and the home hero; no gradients, no photo wash. */
+.hero-warm {
+  background-color: var(--color-sunken);
+}
+/* Rounded tinted icon chips (visa cards, small cards): the four friendly tints of the illustration set. */
+.chip-soft { background-color: var(--ill-soft); color: var(--color-ink); }
+.chip-sage { background-color: var(--ill-sage); color: var(--color-ink); }
+.chip-sky { background-color: var(--ill-sky); color: var(--color-ink); }
+.chip-peach { background-color: var(--ill-peach); color: var(--color-ink); }

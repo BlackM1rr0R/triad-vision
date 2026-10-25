@@ -115,7 +115,7 @@ export default function AdminAiSettings() {
         title={t('ai.settings.title')}
         subtitle={t('ai.settings.subtitle')}
         actions={
-          <Link to="/admin/ai" className="btn btn-sm border border-line bg-card text-ink hover:bg-surface">
+          <Link to="/admin/ai" className="btn btn-sm border border-line bg-card text-ink hover:bg-sunken">
             <Sparkles className="size-3.5" aria-hidden /> {t('ai.settings.openChat')}
           </Link>
         }
@@ -159,7 +159,7 @@ export default function AdminAiSettings() {
               </label>
             ))}
             <p className="text-[11px] text-muted">{t('ai.settings.priceHint')}</p>
-            <div className="flex items-start justify-between gap-4 rounded-lg border border-line bg-surface p-3">
+            <div className="flex items-start justify-between gap-4 rounded-lg border border-line bg-sunken p-3">
               <div>
                 <p className="text-sm font-semibold text-ink">{t('ai.settings.clientEnabled')}</p>
                 <p className="mt-0.5 text-xs text-muted">{t('ai.settings.clientEnabledHint')}</p>
@@ -167,7 +167,7 @@ export default function AdminAiSettings() {
               <Switch checked={form.clientEnabled} onChange={(v) => set('clientEnabled', v)} label={t('ai.settings.clientEnabled')} />
             </div>
             {/* AI document check of client uploads: saved right away */}
-            <div className="flex items-start justify-between gap-4 rounded-lg border border-line bg-surface p-3">
+            <div className="flex items-start justify-between gap-4 rounded-lg border border-line bg-sunken p-3">
               <div>
                 <p className="text-sm font-semibold text-ink">{t('aiDocs.settings.docCheck')}</p>
                 <p className="mt-0.5 text-xs text-muted">{t('aiDocs.settings.docCheckHint')}</p>
@@ -183,7 +183,7 @@ export default function AdminAiSettings() {
               </label>
               <p className="mt-1 text-[11px] text-muted">{t('ai.settings.apiKeyHint')}</p>
               {form.keySource === 'settings' && (
-                <button type="button" className="mt-1 text-xs font-semibold text-danger hover:underline" disabled={saving} onClick={() => void save({ apiKey: '' })}>
+                <button type="button" className="mt-1 text-xs font-semibold text-danger-fg hover:underline" disabled={saving} onClick={() => void save({ apiKey: '' })}>
                   {t('ai.settings.removeKey')}
                 </button>
               )}
@@ -262,8 +262,8 @@ export default function AdminAiSettings() {
                 <BarList
                   format={(v) => usd(v)}
                   rows={[
-                    { key: 'client', label: `${t('ai.settings.client')} · ${usage.byScope.CLIENT.messages} · ${usage.byScope.CLIENT.tokensIn}/${usage.byScope.CLIENT.tokensOut}`, value: usage.byScope.CLIENT.costUsd, tone: 'bg-[#2f7bff]' },
-                    { key: 'admin', label: `${t('ai.settings.admin')} · ${usage.byScope.ADMIN.messages} · ${usage.byScope.ADMIN.tokensIn}/${usage.byScope.ADMIN.tokensOut}`, value: usage.byScope.ADMIN.costUsd, tone: 'bg-[#eb6834]' },
+                    { key: 'client', label: `${t('ai.settings.client')} · ${usage.byScope.CLIENT.messages} · ${usage.byScope.CLIENT.tokensIn}/${usage.byScope.CLIENT.tokensOut}`, value: usage.byScope.CLIENT.costUsd, tone: 'bg-chart-1' },
+                    { key: 'admin', label: `${t('ai.settings.admin')} · ${usage.byScope.ADMIN.messages} · ${usage.byScope.ADMIN.tokensIn}/${usage.byScope.ADMIN.tokensOut}`, value: usage.byScope.ADMIN.costUsd, tone: 'bg-chart-2' },
                   ]}
                 />
                 <p className="mt-2 text-[11px] text-muted">
@@ -275,7 +275,7 @@ export default function AdminAiSettings() {
                 {usage.topUsers.length ? (
                   <div className="overflow-x-auto rounded-lg border border-line">
                     <table className="w-full text-left text-xs">
-                      <thead className="bg-surface text-muted">
+                      <thead className="bg-sunken text-muted">
                         <tr>
                           <th className="px-3 py-2 font-semibold">{t('ai.settings.user')}</th>
                           <th className="px-3 py-2 text-right font-semibold">{t('ai.settings.messages')}</th>

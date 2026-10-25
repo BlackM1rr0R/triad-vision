@@ -21,17 +21,17 @@ export const JobCard = ({ v, className }: { v: PublicVacancy; className?: string
       {...morph.part('card')}
       to={`/jobs/${v.slug}`}
       className={clsx(
-        'group card flex h-full flex-col p-5 transition duration-300 hover:-translate-y-0.5 hover:border-brand-400/60 hover:shadow-[0_20px_40px_-20px_rgba(11,31,68,0.35)] sm:p-6',
+        'group card card-interactive flex h-full flex-col rounded-3xl p-5 sm:p-6',
         className,
       )}
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-1.5">
-            {v.sector && <span className="badge bg-brand-50 text-brand-700">{L.sector(v.sector)}</span>}
-            <span className="badge bg-surface text-ink/70">{L.employmentType(v.employmentType)}</span>
+            {v.sector && <span className="badge chip-sky">{L.sector(v.sector)}</span>}
+            <span className="badge bg-sunken text-muted">{L.employmentType(v.employmentType)}</span>
           </div>
-          <h3 {...morph.part('title')} className="mt-3 w-fit font-display text-lg leading-snug font-bold break-words text-navy-900 group-hover:text-brand-700">
+          <h3 {...morph.part('title')} className="mt-3 w-fit font-display text-lg leading-snug font-semibold break-words text-ink group-hover:text-link">
             {L.title(v.title)}
           </h3>
           <p className="mt-1 flex items-center gap-1.5 text-sm text-muted">
@@ -39,37 +39,37 @@ export const JobCard = ({ v, className }: { v: PublicVacancy; className?: string
             <span className="truncate">{v.companyName ?? t('jobsArea.common.confidentialEmployer')}</span>
           </p>
         </div>
-        <span className="grid size-9 shrink-0 place-items-center rounded-full bg-surface text-navy-900 transition group-hover:bg-brand-600 group-hover:text-white" aria-hidden>
+        <span className="grid size-9 shrink-0 place-items-center rounded-full bg-sunken text-ink transition-colors group-hover:bg-primary group-hover:text-primary-contrast" aria-hidden>
           <ArrowUpRight className="size-4" />
         </span>
       </div>
 
-      <ul className="mt-4 mb-4 grid grid-cols-1 gap-2 text-sm text-ink/80 min-[400px]:grid-cols-2">
+      <ul className="mt-4 mb-4 grid grid-cols-1 gap-2 text-sm text-muted min-[400px]:grid-cols-2">
         {v.city && (
           <li className="flex min-w-0 items-center gap-2">
-            <MapPin className="size-4 shrink-0 text-brand-600" aria-hidden /> <span className="truncate">{v.city}</span>
+            <MapPin className="size-4 shrink-0 text-subtle" aria-hidden /> <span className="truncate">{v.city}</span>
           </li>
         )}
         <li className="flex min-w-0 items-center gap-2">
-          <Languages className="size-4 shrink-0 text-brand-600" aria-hidden />
+          <Languages className="size-4 shrink-0 text-subtle" aria-hidden />
           <span className="truncate">{v.germanLevel && v.germanLevel !== 'none' ? t('jobsArea.common.germanMin', { level: v.germanLevel }) : t('jobsArea.german.none')}</span>
         </li>
         {v.minExperience ? (
           <li className="flex min-w-0 items-center gap-2">
-            <Clock className="size-4 shrink-0 text-brand-600" aria-hidden /> <span className="truncate">{t('jobsArea.common.minExperience', { count: v.minExperience })}</span>
+            <Clock className="size-4 shrink-0 text-subtle" aria-hidden /> <span className="truncate">{t('jobsArea.common.minExperience', { count: v.minExperience })}</span>
           </li>
         ) : null}
         {v.positions > 1 && (
           <li className="flex min-w-0 items-center gap-2">
-            <Users className="size-4 shrink-0 text-brand-600" aria-hidden /> <span className="truncate">{t('jobsArea.common.positions', { count: v.positions })}</span>
+            <Users className="size-4 shrink-0 text-subtle" aria-hidden /> <span className="truncate">{t('jobsArea.common.positions', { count: v.positions })}</span>
           </li>
         )}
       </ul>
 
       <div className="mt-auto flex flex-wrap items-end justify-between gap-2 border-t border-line pt-4">
         {salary ? (
-          <p className="flex items-center gap-1.5 font-display text-base font-bold text-navy-900">
-            <Euro className="size-4 text-emerald-600" aria-hidden /> {salary}
+          <p className="flex items-center gap-1.5 font-display text-base font-semibold text-ink">
+            <Euro className="size-4 text-muted" aria-hidden /> {salary}
             <span className="text-xs font-medium text-muted">{t('jobsArea.common.perMonth')}</span>
           </p>
         ) : (

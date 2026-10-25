@@ -840,7 +840,7 @@ export default function WorkspaceDrive() {
         <span>{t('drive.details.trashHint', { days: trashDays })}</span>
         {!isAdmin && <span>· {t('drive.shared.purgeAdminsOnly')}</span>}
         {items.length > 0 && isAdmin && (
-          <button type="button" onClick={() => setConfirm({ kind: 'empty' })} className="ml-auto inline-flex items-center gap-1 font-semibold text-danger hover:underline">
+          <button type="button" onClick={() => setConfirm({ kind: 'empty' })} className="ml-auto inline-flex items-center gap-1 font-semibold text-danger-fg hover:underline">
             <Trash2 className="size-3.5" /> {t('drive.actions.emptyTrash')}
           </button>
         )}
@@ -869,13 +869,13 @@ export default function WorkspaceDrive() {
           : null;
 
   return (
-    <div className="flex h-full min-h-0 bg-surface">
+    <div className="flex h-full min-h-0 bg-sunken">
       {/* Folder pane */}
       <aside className="hidden w-64 shrink-0 border-r border-line bg-card lg:block xl:w-72">{sidebar}</aside>
       {sidebarOpen && (
         <div className="fixed inset-0 z-50 lg:hidden">
-          <button type="button" className="absolute inset-0 bg-navy-900/50" onClick={() => setSidebarOpen(false)} aria-label={t('drive.dialogs.close')} />
-          <aside className="absolute inset-y-0 left-0 w-72 max-w-[85vw] border-r border-line bg-card shadow-xl">{sidebar}</aside>
+          <button type="button" className="absolute inset-0 bg-scrim" onClick={() => setSidebarOpen(false)} aria-label={t('drive.dialogs.close')} />
+          <aside className="absolute inset-y-0 left-0 w-72 max-w-[85vw] border-r border-line bg-card shadow-[var(--tv-shadow-raised)]">{sidebar}</aside>
         </div>
       )}
 
@@ -1008,8 +1008,8 @@ export default function WorkspaceDrive() {
                     }}
                   >
                     <div>
-                      <div className="mx-auto grid size-20 place-items-center rounded-3xl bg-surface">
-                        {loc.kind === 'trash' ? <Trash2 className="size-9 text-muted" strokeWidth={1.4} /> : loc.kind === 'starred' ? <Star className="size-9 text-amber-400" strokeWidth={1.4} /> : <FolderOpen className="size-9 text-amber-400" strokeWidth={1.4} />}
+                      <div className="mx-auto grid size-20 place-items-center rounded-xl bg-sunken">
+                        {loc.kind === 'trash' ? <Trash2 className="size-9 text-muted" strokeWidth={1.4} /> : loc.kind === 'starred' ? <Star className="size-9 text-warning-fg" strokeWidth={1.4} /> : <FolderOpen className="size-9 text-warning-fg" strokeWidth={1.4} />}
                       </div>
                       <h2 className="mt-4 text-base font-bold text-ink">{emptyText}</h2>
                       {sectionHint ? <p className="mx-auto mt-1 max-w-md text-sm text-muted">{sectionHint}</p> : canCreateHere && <p className="mt-1 text-sm text-muted">{t('drive.empty.folderHint')}</p>}
@@ -1032,7 +1032,7 @@ export default function WorkspaceDrive() {
                       <label className="inline-flex cursor-pointer items-center gap-2 font-medium select-none hover:text-ink">
                         <input
                           type="checkbox"
-                          className="size-4 rounded accent-brand-600"
+                          className="size-4 rounded accent-primary"
                           checked={items.length > 0 && selectedItems.length === items.length}
                           ref={(el) => {
                             if (el) el.indeterminate = selectedItems.length > 0 && selectedItems.length < items.length;
@@ -1079,16 +1079,16 @@ export default function WorkspaceDrive() {
                   </div>
                 )}
                 {paneDrop.over === 'files' && folder && (
-                  <div className="pointer-events-none absolute inset-2 z-20 grid place-items-center rounded-2xl border-2 border-dashed border-brand-500 bg-brand-50/90 dark:bg-navy-950/85">
+                  <div className="pointer-events-none absolute inset-2 z-20 grid place-items-center rounded-xl border-2 border-dashed border-primary bg-primary/[0.04] dark:bg-navy-950/85">
                     <div className="text-center">
-                      <UploadCloud className="mx-auto size-12 text-brand-600" strokeWidth={1.5} />
+                      <UploadCloud className="mx-auto size-12 text-link" strokeWidth={1.5} />
                       <p className="mt-2 text-base font-bold text-ink">{t('drive.drop.upload')}</p>
                       <p className="text-sm text-muted">{t('drive.drop.into', { name: rootLabel(folder, t, myId) })}</p>
                     </div>
                   </div>
                 )}
                 {busy && (
-                  <div className="absolute top-3 right-3 z-20 rounded-full bg-card p-2 shadow">
+                  <div className="absolute top-3 right-3 z-20 rounded-full bg-card p-2 shadow-[var(--tv-shadow-card)]">
                     <Spinner className="size-4" />
                   </div>
                 )}
@@ -1111,8 +1111,8 @@ export default function WorkspaceDrive() {
                   </aside>
                   {selectedItems.length > 0 && (
                     <div className="fixed inset-0 z-40 xl:hidden">
-                      <button type="button" className="absolute inset-0 bg-navy-900/40" onClick={() => setDetailsOpen(false)} aria-label={t('drive.dialogs.close')} />
-                      <aside className="absolute inset-y-0 right-0 w-[22rem] max-w-[92vw] border-l border-line bg-card shadow-xl">
+                      <button type="button" className="absolute inset-0 bg-scrim" onClick={() => setDetailsOpen(false)} aria-label={t('drive.dialogs.close')} />
+                      <aside className="absolute inset-y-0 right-0 w-[22rem] max-w-[92vw] border-l border-line bg-card shadow-[var(--tv-shadow-raised)]">
                         <DetailsPanel
                           subject={subject}
                           multi={selectedItems}
@@ -1250,8 +1250,8 @@ export default function WorkspaceDrive() {
         }
       >
         {trashedPartners.length > 0 && (
-          <label className="flex items-start gap-2 rounded-lg border border-line bg-surface px-3 py-2">
-            <input type="checkbox" className="mt-0.5 size-4 accent-brand-600" checked={alsoDeletePartners} onChange={(e) => setAlsoDeletePartners(e.target.checked)} disabled={busy} />
+          <label className="flex items-start gap-2 rounded-lg border border-line bg-sunken px-3 py-2">
+            <input type="checkbox" className="mt-0.5 size-4 accent-primary" checked={alsoDeletePartners} onChange={(e) => setAlsoDeletePartners(e.target.checked)} disabled={busy} />
             <span>
               <span className="block font-semibold text-ink">{t('drive.partner.alsoDelete')}</span>
               <span className="block text-xs text-muted">
@@ -1275,11 +1275,11 @@ export default function WorkspaceDrive() {
       />
       <Modal open={!!colorFor} onClose={() => setColorFor(null)} size="sm" title={t('drive.actions.color')}>
         <div className="grid grid-cols-3 gap-2">
-          <button type="button" onClick={() => colorFor && setColor(colorFor, null)} className={clsx('flex items-center gap-2 rounded-lg border px-3 py-2 text-sm', !colorFor?.color ? 'border-brand-500' : 'border-line')}>
-            <span className="size-4 rounded-full bg-amber-300" /> {t('drive.colors.none')}
+          <button type="button" onClick={() => colorFor && setColor(colorFor, null)} className={clsx('flex items-center gap-2 rounded-lg border px-3 py-2 text-sm', !colorFor?.color ? 'border-primary' : 'border-line')}>
+            <span className="size-4 rounded-full bg-warning" /> {t('drive.colors.none')}
           </button>
           {FOLDER_COLORS.map((c) => (
-            <button key={c} type="button" onClick={() => colorFor && setColor(colorFor, c)} className={clsx('flex items-center gap-2 rounded-lg border px-3 py-2 text-sm', colorFor?.color === c ? 'border-brand-500' : 'border-line')}>
+            <button key={c} type="button" onClick={() => colorFor && setColor(colorFor, c)} className={clsx('flex items-center gap-2 rounded-lg border px-3 py-2 text-sm', colorFor?.color === c ? 'border-primary' : 'border-line')}>
               <span className={clsx('size-4 rounded-full', FOLDER_SWATCH[c])} /> {t(`drive.colors.${c}`)}
             </button>
           ))}

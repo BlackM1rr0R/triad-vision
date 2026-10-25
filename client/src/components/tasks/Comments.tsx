@@ -129,7 +129,7 @@ export const CommentEditor = ({
         className="input resize-y leading-relaxed"
       />
       {query !== null && matches.length > 0 && (
-        <ul className="absolute bottom-full left-0 z-30 mb-1 w-64 rounded-xl border border-line bg-card p-1 shadow-xl" role="listbox">
+        <ul className="absolute bottom-full left-0 z-30 mb-1 w-64 rounded-xl border border-line bg-card p-1 shadow-[var(--tv-shadow-raised)]" role="listbox">
           {matches.map((p, i) => (
             <li key={p.id}>
               <button
@@ -140,7 +140,7 @@ export const CommentEditor = ({
                   e.preventDefault();
                   choose(p);
                 }}
-                className={clsx('flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm', i === hi ? 'bg-brand-50' : 'hover:bg-surface')}
+                className={clsx('flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm', i === hi ? 'bg-primary/[0.06]' : 'hover:bg-sunken')}
               >
                 <Avatar person={p} size="xs" />
                 <span className="truncate font-medium text-ink">{fullName(p)}</span>
@@ -226,7 +226,7 @@ export const Timeline = ({
           const Icon = ACTIVITY_ICON[e.activity.type] ?? ActivityIcon;
           return (
             <li key={e.id} className="flex items-start gap-3 pl-1 text-xs text-muted">
-              <span className="mt-px grid size-6 shrink-0 place-items-center rounded-full bg-surface text-muted ring-1 ring-line">
+              <span className="mt-px grid size-6 shrink-0 place-items-center rounded-full bg-sunken text-muted ring-1 ring-line">
                 <Icon className="size-3" aria-hidden />
               </span>
               <p className="min-w-0 flex-1 pt-1 leading-relaxed">
@@ -238,19 +238,19 @@ export const Timeline = ({
         }
         return (
           <li key={e.id} className="flex items-start gap-3">
-            {e.author ? <Avatar person={e.author} size="md" /> : <span className="size-8 shrink-0 rounded-full bg-slate-200" />}
+            {e.author ? <Avatar person={e.author} size="md" /> : <span className="size-8 shrink-0 rounded-full bg-line" />}
             <div className="group min-w-0 flex-1">
               <div className="mb-1 flex flex-wrap items-baseline gap-x-2 text-xs">
                 <span className="font-semibold text-ink">{who}</span>
                 <span className="text-muted">{fmtDayTime(e.createdAt)}</span>
                 <span className="ml-auto flex gap-1 opacity-100 transition sm:opacity-0 sm:group-focus-within:opacity-100 sm:group-hover:opacity-100">
                   {e.canEdit && editing !== e.id && (
-                    <button type="button" onClick={() => setEditing(e.id)} className="grid size-7 place-items-center rounded-md text-muted hover:bg-surface hover:text-ink" aria-label={t('tasks.actions.edit')}>
+                    <button type="button" onClick={() => setEditing(e.id)} className="grid size-7 place-items-center rounded-md text-muted hover:bg-sunken hover:text-ink" aria-label={t('tasks.actions.edit')}>
                       <Pencil className="size-3.5" />
                     </button>
                   )}
                   {e.canDelete && (
-                    <button type="button" onClick={() => onDelete(e.id)} className="grid size-7 place-items-center rounded-md text-muted hover:bg-surface hover:text-danger" aria-label={t('tasks.actions.delete')}>
+                    <button type="button" onClick={() => onDelete(e.id)} className="grid size-7 place-items-center rounded-md text-muted hover:bg-sunken hover:text-danger-fg" aria-label={t('tasks.actions.delete')}>
                       <Trash2 className="size-3.5" />
                     </button>
                   )}
@@ -269,7 +269,7 @@ export const Timeline = ({
                   }}
                 />
               ) : (
-                <RichText text={e.body} className="rounded-2xl rounded-tl-md border border-line bg-surface px-3.5 py-2.5 text-sm leading-relaxed text-ink" />
+                <RichText text={e.body} className="rounded-xl rounded-tl-md border border-line bg-sunken px-3.5 py-2.5 text-sm leading-relaxed text-ink" />
               )}
             </div>
           </li>

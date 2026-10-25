@@ -81,7 +81,7 @@ const ActivitySection = () => {
         icon={Activity}
         actions={
           <div className="flex items-center gap-1.5">
-            {isFetching && !isLoading && <Spinner className="size-3.5 text-brand-600" />}
+            {isFetching && !isLoading && <Spinner className="size-3.5 text-link" />}
             {RANGES.map((r) => (
               <Chip key={r} active={days === r} onClick={() => setDays(r)}>
                 {t('admin.common.days', { count: r })}
@@ -118,7 +118,7 @@ const ActivitySection = () => {
         <Panel
           title={
             <span className="inline-flex items-center gap-1.5">
-              <ShieldAlert className="size-3.5 text-danger" aria-hidden /> {t('admin.oversight.failedLogins')}
+              <ShieldAlert className="size-3.5 text-danger-fg" aria-hidden /> {t('admin.oversight.failedLogins')}
             </span>
           }
           actions={<span className="text-xs text-muted tabular-nums">{t('admin.oversight.total', { count: totals.failed })}</span>}
@@ -174,7 +174,7 @@ const SortHead = ({ k, sort, onSort, align = 'right', children }: { k: SortKey; 
   const active = sort.key === k;
   return (
     <th className={clsx('px-3 py-2.5', align === 'right' && 'text-right')} aria-sort={active ? (sort.dir === 'asc' ? 'ascending' : 'descending') : 'none'}>
-      <button type="button" onClick={() => onSort(k)} className={clsx('inline-flex min-h-8 items-center gap-1 rounded px-1 whitespace-nowrap hover:text-navy-900', active && 'text-navy-900')}>
+      <button type="button" onClick={() => onSort(k)} className={clsx('inline-flex min-h-8 items-center gap-1 rounded px-1 whitespace-nowrap hover:text-ink', active && 'text-ink')}>
         {children}
         {active ? sort.dir === 'asc' ? <ArrowUp className="size-3" aria-hidden /> : <ArrowDown className="size-3" aria-hidden /> : <ArrowUpDown className="size-3 opacity-50" aria-hidden />}
       </button>
@@ -183,7 +183,7 @@ const SortHead = ({ k, sort, onSort, align = 'right', children }: { k: SortKey; 
 };
 
 const Num = ({ v, strong }: { v: number; strong?: boolean }) => (
-  <td className={clsx('px-3 py-3 text-right tabular-nums', v === 0 ? 'text-muted/60' : strong ? 'font-semibold text-navy-900' : 'text-ink')}>{v}</td>
+  <td className={clsx('px-3 py-3 text-right tabular-nums', v === 0 ? 'text-muted' : strong ? 'font-semibold text-ink' : 'text-ink')}>{v}</td>
 );
 
 const StaffTable = ({ staff }: { staff: OversightStaffRow[] }) => {
@@ -225,7 +225,7 @@ const StaffTable = ({ staff }: { staff: OversightStaffRow[] }) => {
         <>
           <div className="hidden overflow-x-auto xl:block">
             <table className="w-full min-w-[1180px] text-left text-sm">
-              <thead className="border-b border-line bg-surface/70 text-[11px] font-semibold tracking-wide whitespace-nowrap text-muted uppercase">
+              <thead className="border-b border-line bg-surface/70 text-xs font-medium whitespace-nowrap text-muted">
                 <tr>
                   <SortHead k="name" sort={sort} onSort={toggleSort} align="left">
                     {t('admin.oversight.staffCol')}
@@ -239,21 +239,21 @@ const StaffTable = ({ staff }: { staff: OversightStaffRow[] }) => {
               </thead>
               <tbody className="divide-y divide-line">
                 {rows.map((r) => (
-                  <tr key={r.id} className={clsx('cursor-pointer transition hover:bg-brand-50/50', !r.isActive && 'bg-slate-50 text-ink/60')} onClick={() => navigate(`/admin/oversight/staff/${r.id}`)}>
+                  <tr key={r.id} className={clsx('cursor-pointer transition hover:bg-primary/[0.04]', !r.isActive && 'bg-sunken text-muted')} onClick={() => navigate(`/admin/oversight/staff/${r.id}`)}>
                     <td className="px-3 py-3">
-                      <Link to={`/admin/oversight/staff/${r.id}`} className="font-semibold whitespace-nowrap text-navy-900 hover:underline" onClick={(e) => e.stopPropagation()}>
+                      <Link to={`/admin/oversight/staff/${r.id}`} className="font-semibold whitespace-nowrap text-ink hover:underline" onClick={(e) => e.stopPropagation()}>
                         {fullName(r)}
                       </Link>
                       <p className="mt-0.5 flex items-center gap-2">
                         <ToneBadge tone={ROLE_TONE[r.role]} className="text-[10px]">
                           {roleLabel(r.role)}
                         </ToneBadge>
-                        {!r.isActive && <ToneBadge tone="bg-slate-200 text-slate-600" className="text-[10px]">{t('admin.common.inactive')}</ToneBadge>}
+                        {!r.isActive && <ToneBadge tone="bg-line text-muted" className="text-[10px]">{t('admin.common.inactive')}</ToneBadge>}
                         <OnlineDot online={r.online} lastSeenAt={r.lastSeenAt} />
                       </p>
                     </td>
                     <td className="px-3 py-3 text-right whitespace-nowrap text-ink tabular-nums">{fmtMinutes(r.activeMinutes7d)}</td>
-                    <td className="px-3 py-3 text-right font-semibold whitespace-nowrap text-navy-900 tabular-nums">{fmtMinutes(r.activeMinutes30d)}</td>
+                    <td className="px-3 py-3 text-right font-semibold whitespace-nowrap text-ink tabular-nums">{fmtMinutes(r.activeMinutes30d)}</td>
                     <Num v={r.activeDays30d} />
                     <Num v={r.logins30d} />
                     <Num v={r.caseActions30d} strong />
@@ -262,12 +262,12 @@ const StaffTable = ({ staff }: { staff: OversightStaffRow[] }) => {
                     <Num v={r.workspaceUploads30d} />
                     <Num v={r.adminActions30d} />
                     <td className="px-3 py-3 text-right whitespace-nowrap tabular-nums">
-                      <span className="font-semibold text-navy-900">{r.assignedOpen}</span>
+                      <span className="font-semibold text-ink">{r.assignedOpen}</span>
                       <span className="text-muted"> / {r.assignedClosed}</span>
                     </td>
                     <td className="px-3 py-3 text-right text-xs whitespace-nowrap">
                       {r.workspace ? (
-                        <Link to={`/workspace/drive/f/${r.workspace.folderId}`} className="inline-flex items-center gap-1 text-brand-600 hover:underline" onClick={(e) => e.stopPropagation()}>
+                        <Link to={`/workspace/drive/f/${r.workspace.folderId}`} className="inline-flex items-center gap-1 text-link hover:underline" onClick={(e) => e.stopPropagation()}>
                           <FolderOpen className="size-3.5" aria-hidden />
                           <span className="tabular-nums">
                             {t('admin.common.files', { count: r.workspace.files })} · {formatBytes(r.workspace.bytes)}
@@ -286,10 +286,10 @@ const StaffTable = ({ staff }: { staff: OversightStaffRow[] }) => {
           <ul className="divide-y divide-line xl:hidden">
             {rows.map((r) => (
               <li key={r.id}>
-                <Link to={`/admin/oversight/staff/${r.id}`} className={clsx('block px-4 py-3.5 transition hover:bg-surface', !r.isActive && 'opacity-70')}>
+                <Link to={`/admin/oversight/staff/${r.id}`} className={clsx('block px-4 py-3.5 transition hover:bg-sunken', !r.isActive && 'opacity-70')}>
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
-                      <p className="truncate font-semibold text-navy-900">{fullName(r)}</p>
+                      <p className="truncate font-semibold text-ink">{fullName(r)}</p>
                       <p className="mt-0.5 flex flex-wrap items-center gap-2">
                         <ToneBadge tone={ROLE_TONE[r.role]} className="text-[10px]">
                           {roleLabel(r.role)}
@@ -298,7 +298,7 @@ const StaffTable = ({ staff }: { staff: OversightStaffRow[] }) => {
                       </p>
                     </div>
                     <span className="shrink-0 text-right text-xs">
-                      <span className="block font-semibold text-navy-900 tabular-nums">{fmtMinutes(r.activeMinutes30d)}</span>
+                      <span className="block font-semibold text-ink tabular-nums">{fmtMinutes(r.activeMinutes30d)}</span>
                       <span className="text-[10px] text-muted">{t('admin.oversight.active30short')}</span>
                     </span>
                   </div>
@@ -317,7 +317,7 @@ const StaffTable = ({ staff }: { staff: OversightStaffRow[] }) => {
                     ].map(([k, v]) => (
                       <div key={String(k)} className="min-w-0">
                         <dt className="truncate text-muted">{k}</dt>
-                        <dd className="font-semibold text-navy-900 tabular-nums">{v}</dd>
+                        <dd className="font-semibold text-ink tabular-nums">{v}</dd>
                       </div>
                     ))}
                   </dl>

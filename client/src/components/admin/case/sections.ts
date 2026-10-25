@@ -100,8 +100,8 @@ const stickyOffset = () => {
 };
 
 const highlight = (el: HTMLElement) => {
-  el.classList.add('ring-2', 'ring-brand-600/40', 'rounded-xl');
-  window.setTimeout(() => el.classList.remove('ring-2', 'ring-brand-600/40', 'rounded-xl'), 1600);
+  el.classList.add('ring-2', 'ring-focus/40', 'rounded-xl');
+  window.setTimeout(() => el.classList.remove('ring-2', 'ring-focus/40', 'rounded-xl'), 1600);
 };
 
 /**

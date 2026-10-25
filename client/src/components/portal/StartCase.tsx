@@ -11,6 +11,7 @@ import { Spinner } from '@/components/ui/Spinner';
 import { useApiError } from './useApiError';
 import { OVERVIEW_KEY } from './useOverview';
 import { forgetVisa, rememberedVisa } from '@/lib/referralCookie';
+import { Traveller } from '@/components/illustrations';
 
 type VisaTypeKey = 'WORK' | 'AUSBILDUNG' | 'WEITERBILDUNG' | 'JOB_SEEKER' | 'STUDY' | 'FAMILY' | 'TOURIST';
 
@@ -86,37 +87,40 @@ export const StartCase = ({ hasCases, defaultProfession }: { hasCases: boolean; 
   return (
     <section id="start" className="card scroll-mt-28 overflow-hidden lg:scroll-mt-36" aria-labelledby="start-title">
       <div className="grid lg:grid-cols-[1fr_1.15fr]">
-        <div className="relative overflow-hidden bg-gradient-to-br from-brand-600 to-brand-700 p-5 text-white sm:p-8">
-          <div className="pointer-events-none absolute -right-10 -bottom-10 size-48 rounded-full bg-[radial-gradient(closest-side,var(--color-white),transparent)] opacity-10" aria-hidden />
-          <span className="eyebrow text-white/75">{t('accountPage.dash.start.eyebrow')}</span>
+        <div className="relative overflow-hidden border-b border-line bg-highlight-bg p-6 text-ink sm:p-9 lg:border-r lg:border-b-0">
+          <span className="type-overline inline-flex items-center gap-2 text-ink">
+            <span className="size-2 rounded-full bg-highlight" aria-hidden />
+            {t('accountPage.dash.start.eyebrow')}
+          </span>
           <div className="mt-4 flex items-center gap-3">
-            <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-white/15">
+            <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-card text-ink">
               <Rocket className="size-5" aria-hidden />
             </span>
-            <h2 id="start-title" className="text-xl font-extrabold sm:text-2xl">
+            <h2 id="start-title" className="text-xl font-semibold sm:text-2xl">
               {t('portal.startTitle')}
             </h2>
           </div>
-          <p className="mt-3 text-sm leading-relaxed text-white/80">{t('portal.startText')}</p>
+          <p className="mt-3 max-w-[60ch] leading-relaxed text-ink/80">{t('portal.startText')}</p>
           <ol className="relative mt-6 space-y-3">
             {(Array.isArray(steps) ? steps : []).map((s, i) => (
               <li key={s} className="flex items-center gap-3 text-sm font-semibold">
                 <span
-                  className={`grid size-7 shrink-0 place-items-center rounded-full text-xs font-bold ${
-                    i === 0 ? 'bg-white text-brand-700' : 'bg-white/15 text-white'
+                  className={`grid size-7 shrink-0 place-items-center rounded-full text-xs font-semibold ${
+                    i === 0 ? 'bg-primary text-primary-contrast' : 'border border-line bg-card text-muted'
                   }`}
                   aria-hidden
                 >
                   {i + 1}
                 </span>
-                <span className={i === 0 ? 'text-white' : 'text-white/75'}>{s}</span>
+                <span className={i === 0 ? 'text-ink' : 'text-muted'}>{s}</span>
               </li>
             ))}
           </ol>
-          {!hasCases && <p className="mt-6 text-xs font-semibold text-white/60">{t('portal.noCases')}</p>}
+          {!hasCases && <p className="mt-6 text-xs font-semibold text-muted">{t('portal.noCases')}</p>}
+          <Traveller className="mt-8 hidden w-52 lg:block" />
         </div>
         <form
-          className="space-y-4 p-5 sm:p-8"
+          className="space-y-5 p-6 sm:p-9"
           onSubmit={(e) => {
             e.preventDefault();
             void submit();
@@ -131,11 +135,11 @@ export const StartCase = ({ hasCases, defaultProfession }: { hasCases: boolean; 
                   type="button"
                   onClick={() => pickType(key)}
                   aria-pressed={visaType === key}
-                  className={`flex items-start gap-3 rounded-xl border p-3 text-left transition ${
-                    visaType === key ? 'border-brand-500 bg-brand-50 ring-2 ring-brand-500/20' : 'border-line hover:border-brand-400/60 hover:bg-surface'
+                  className={`flex min-h-14 items-start gap-3 rounded-2xl border p-3.5 text-left transition-colors ${
+                    visaType === key ? 'border-primary bg-sunken ring-2 ring-focus/30' : 'border-line hover:border-line-strong hover:bg-sunken'
                   }`}
                 >
-                  <span className={`grid size-9 shrink-0 place-items-center rounded-lg ${visaType === key ? 'bg-brand-600 text-white' : 'bg-surface text-brand-600'}`}>
+                  <span className={`grid size-10 shrink-0 place-items-center rounded-xl ${visaType === key ? 'bg-primary text-primary-contrast' : 'chip-soft'}`}>
                     <Icon className="size-4" aria-hidden />
                   </span>
                   <span className="min-w-0">
@@ -163,7 +167,7 @@ export const StartCase = ({ hasCases, defaultProfession }: { hasCases: boolean; 
               </select>
             </div>
           )}
-          <button type="submit" className="btn-primary min-h-11 w-full sm:w-auto" disabled={busy || !visaType}>
+          <button type="submit" className="btn-primary btn-lg min-h-12 w-full sm:w-auto" disabled={busy || !visaType}>
             {busy ? <Spinner className="size-4" /> : <FilePlus2 className="size-4" aria-hidden />}
             {t('portal.create')}
           </button>

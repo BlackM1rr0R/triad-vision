@@ -44,27 +44,27 @@ export const currencyIn = (input: string): Currency | null => {
 
 /** Soft row tints over the card colour: readable in light and dark themes. */
 export const STAGE_TINT: Record<Stage, string> = {
-  NEW: 'rgba(14, 165, 233, 0.13)',
-  IN_PROGRESS: 'rgba(234, 179, 8, 0.16)',
-  VISA: 'rgba(34, 197, 94, 0.15)',
-  REFUSED: 'rgba(239, 68, 68, 0.15)',
-  CANCELLED: 'rgba(100, 116, 139, 0.16)',
+  NEW: 'var(--color-info-bg)',
+  IN_PROGRESS: 'var(--color-warning-bg)',
+  VISA: 'var(--color-success-bg)',
+  REFUSED: 'var(--color-danger-bg)',
+  CANCELLED: 'var(--color-neutral-bg)',
 };
 
 export const STAGE_CHIP: Record<Stage, string> = {
-  NEW: 'bg-sky-500/15 text-sky-700',
-  IN_PROGRESS: 'bg-amber-400/20 text-amber-800',
-  VISA: 'bg-emerald-500/15 text-emerald-700',
-  REFUSED: 'bg-red-500/15 text-red-700',
-  CANCELLED: 'bg-slate-500/15 text-slate-700',
+  NEW: 'bg-info-bg text-info-fg',
+  IN_PROGRESS: 'bg-warning-bg text-warning-fg',
+  VISA: 'bg-success-bg text-success-fg',
+  REFUSED: 'bg-danger-bg text-danger-fg',
+  CANCELLED: 'bg-muted/15 text-muted',
 };
 
 export const STAGE_DOT: Record<Stage, string> = {
-  NEW: 'bg-sky-500',
-  IN_PROGRESS: 'bg-amber-400',
-  VISA: 'bg-emerald-500',
-  REFUSED: 'bg-red-500',
-  CANCELLED: 'bg-slate-400',
+  NEW: 'bg-info',
+  IN_PROGRESS: 'bg-warning',
+  VISA: 'bg-success',
+  REFUSED: 'bg-danger',
+  CANCELLED: 'bg-subtle',
 };
 
 export const tintStyle = (stage: Stage) => ({

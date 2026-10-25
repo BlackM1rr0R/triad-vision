@@ -19,7 +19,7 @@ registerCopy(pagesAdminUx);
 
 /** Same footprint as TodayCard while its chunk loads, so the KPI grid below does not jump (CLS). */
 const TodayCardFallback = ({ rows }: { rows: number }) => (
-  <div className="min-w-0 rounded-2xl border border-line bg-card" aria-hidden>
+  <div className="min-w-0 rounded-xl border border-line bg-card" aria-hidden>
     <div className="h-[45px] border-b border-line" />
     <div className="divide-y divide-line">
       {Array.from({ length: rows }, (_, i) => (
@@ -97,13 +97,13 @@ export default function Dashboard() {
         subtitle={t('admin.dashboard.subtitle')}
         actions={
           <div className="flex flex-wrap gap-2">
-            <button type="button" className={editing ? 'btn-primary btn-sm' : 'btn-ghost btn-sm'} aria-pressed={editing} onClick={() => setEditing((v) => !v)}>
+            <button type="button" className={editing ? 'btn-primary btn-sm' : 'btn-secondary btn-sm'} aria-pressed={editing} onClick={() => setEditing((v) => !v)}>
               {editing ? <Check className="size-3.5" aria-hidden /> : <LayoutGrid className="size-3.5" aria-hidden />}
               {editing ? t('ux.dashboard.done') : t('ux.dashboard.edit')}
             </button>
             {!editing && (
               <>
-                <Link to="/admin/today" className="btn-ghost btn-sm">
+                <Link to="/admin/today" className="btn-secondary btn-sm">
                   {t('admin.nav.today')} <ArrowRight className="size-3.5" />
                 </Link>
                 <Link to="/admin/cases" className="btn-primary btn-sm">

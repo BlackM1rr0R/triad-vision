@@ -188,7 +188,7 @@ const CreateCompanyModal = ({ open, onClose }: { open: boolean; onClose: () => v
       >
         <CompanyFields f={f} setF={setF} idPrefix="cc" />
         <fieldset className="grid gap-3 sm:grid-cols-2">
-          <legend className="mb-2 text-sm font-semibold text-navy-900">{t('jobsArea.admin.companies.inviteOptional')}</legend>
+          <legend className="mb-2 text-sm font-semibold text-ink">{t('jobsArea.admin.companies.inviteOptional')}</legend>
           <input aria-label={t('jobsArea.register.firstName')} placeholder={t('jobsArea.register.firstName')} className="input" value={invite.firstName} onChange={(e) => setInvite({ ...invite, firstName: e.target.value })} />
           <input aria-label={t('jobsArea.register.lastName')} placeholder={t('jobsArea.register.lastName')} className="input" value={invite.lastName} onChange={(e) => setInvite({ ...invite, lastName: e.target.value })} />
           <input aria-label={t('jobsArea.register.email')} placeholder={t('jobsArea.register.email')} type="email" className="input" value={invite.email} onChange={(e) => setInvite({ ...invite, email: e.target.value })} />
@@ -309,7 +309,7 @@ const CompanyDrawer = ({ id, onClose }: { id: string | null; onClose: () => void
                 {data.users.map((u) => (
                   <li key={u.id} className="flex flex-wrap items-center justify-between gap-2 py-2.5 text-sm">
                     <div className="min-w-0">
-                      <p className="font-semibold text-navy-900">{fullName(u)}</p>
+                      <p className="font-semibold text-ink">{fullName(u)}</p>
                       <p className="truncate text-xs text-muted">
                         {u.email} · {u.locale.toUpperCase()}
                       </p>
@@ -320,7 +320,7 @@ const CompanyDrawer = ({ id, onClose }: { id: string | null; onClose: () => void
                   </li>
                 ))}
               </ul>
-              <p className="mt-4 mb-2 text-xs font-semibold text-navy-900">{t('jobsArea.admin.companies.inviteUser')}</p>
+              <p className="mt-4 mb-2 text-xs font-semibold text-ink">{t('jobsArea.admin.companies.inviteUser')}</p>
               <InviteForm idPrefix="cdi" busy={invite.isPending} onSubmit={(v) => invite.mutate(v)} />
             </Panel>
 
@@ -331,7 +331,7 @@ const CompanyDrawer = ({ id, onClose }: { id: string | null; onClose: () => void
                 <ul className="divide-y divide-line">
                   {data.vacancies.map((v) => (
                     <li key={v.id} className="flex flex-wrap items-center justify-between gap-2 py-2.5 text-sm">
-                      <Link to={`/admin/vacancies?id=${v.id}`} className="min-w-0 truncate font-semibold text-brand-700 hover:underline">
+                      <Link to={`/admin/vacancies?id=${v.id}`} className="min-w-0 truncate font-semibold text-link hover:underline">
                         {tr(v.title)}
                       </Link>
                       <span className="flex items-center gap-2 text-xs text-muted">
@@ -351,7 +351,7 @@ const CompanyDrawer = ({ id, onClose }: { id: string | null; onClose: () => void
                 <ul className="divide-y divide-line">
                   {data.cases.map((c) => (
                     <li key={c.id} className="flex flex-wrap items-center justify-between gap-2 py-2.5 text-sm">
-                      <Link to={`/admin/cases/${c.id}`} className="min-w-0 truncate font-semibold text-brand-700 hover:underline">
+                      <Link to={`/admin/cases/${c.id}`} className="min-w-0 truncate font-semibold text-link hover:underline">
                         {c.number} · {fullName(c.client)}
                       </Link>
                       <StatusBadge status={c.status} />
@@ -421,7 +421,7 @@ export default function AdminCompanies() {
         subtitle={t('jobsArea.admin.companies.subtitle')}
         actions={
           <>
-            {isFetching && !isLoading && <Spinner className="size-4 text-brand-600" />}
+            {isFetching && !isLoading && <Spinner className="size-4 text-link" />}
             <button type="button" className="btn-primary btn-sm" onClick={() => setCreating(true)}>
               <Plus className="size-3.5" /> {t('jobsArea.admin.companies.new')}
             </button>
@@ -451,7 +451,7 @@ export default function AdminCompanies() {
       ) : error ? (
         <ErrorBlock error={error} onRetry={() => refetch()} />
       ) : !data?.items.length ? (
-        <div className="rounded-xl border border-line bg-white">
+        <div className="rounded-xl border border-line bg-card">
           <EmptyState icon={Building2} title={t('jobsArea.admin.companies.empty')} />
         </div>
       ) : (
@@ -461,18 +461,18 @@ export default function AdminCompanies() {
               <button
                 type="button"
                 onClick={() => setParam('id', c.id)}
-                className="h-full w-full rounded-xl border border-line bg-white p-4 text-left transition hover:border-brand-400/60 hover:shadow-[0_8px_24px_-14px_rgba(11,31,68,0.35)]"
+                className="h-full w-full rounded-xl border border-line bg-card p-4 text-left transition hover:border-line-strong hover:shadow-[var(--tv-shadow-raised)]"
               >
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
-                    <p className="truncate font-semibold text-navy-900">
+                    <p className="truncate font-semibold text-ink">
                       {c.name} {c.legalForm && !c.name.includes(c.legalForm) ? c.legalForm : ''}
                     </p>
                     <p className="truncate text-xs text-muted">{[c.city, L.sector(c.sector)].filter(Boolean).join(' · ')}</p>
                   </div>
                   <span className={clsx('badge shrink-0', COMPANY_STATUS_TONE[c.status])}>{L.companyStatus(c.status)}</span>
                 </div>
-                <div className="mt-3 space-y-0.5 text-xs text-ink/75">
+                <div className="mt-3 space-y-0.5 text-xs text-muted">
                   {c.email && (
                     <p className="flex items-center gap-1.5 truncate">
                       <Mail className="size-3 shrink-0" /> {c.email}

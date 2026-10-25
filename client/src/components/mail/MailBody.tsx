@@ -67,10 +67,10 @@ export const MailBody = ({ html, text, showImages, onShowImages }: { html: strin
   return (
     <div className="min-w-0">
       {blocked && !showImages && (
-        <div className="mb-3 flex flex-wrap items-center gap-2 rounded-lg border border-line bg-surface px-3 py-2 text-xs text-muted">
+        <div className="mb-3 flex flex-wrap items-center gap-2 rounded-lg border border-line bg-sunken px-3 py-2 text-xs text-muted">
           <ImageOff className="size-3.5" aria-hidden />
           <span>{t('mail.actions.imagesBlocked')}</span>
-          <button type="button" onClick={onShowImages} className="font-semibold text-brand-600 hover:underline">
+          <button type="button" onClick={onShowImages} className="font-semibold text-link hover:underline">
             {t('mail.actions.showImages')}
           </button>
         </div>

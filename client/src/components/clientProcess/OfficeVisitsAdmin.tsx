@@ -85,7 +85,7 @@ const CreateModal = ({ open, onClose, offices }: { open: boolean; onClose: () =>
       <div className="space-y-4">
         <div className="flex gap-2">
           {(['single', 'template'] as const).map((m) => (
-            <button key={m} type="button" aria-pressed={mode === m} onClick={() => setMode(m)} className={clsx('min-h-9 rounded-full border px-3 text-xs font-semibold', mode === m ? 'border-navy-900 bg-navy-900 text-white' : 'border-line')}>
+            <button key={m} type="button" aria-pressed={mode === m} onClick={() => setMode(m)} className={clsx('min-h-9 rounded-full border px-3 text-xs font-semibold', mode === m ? 'border-line-strong bg-sunken text-ink shadow-[inset_0_0_0_1px_var(--color-line-strong)]' : 'border-line')}>
               {t(`cp.office.${m}`)}
             </button>
           ))}
@@ -118,7 +118,7 @@ const CreateModal = ({ open, onClose, offices }: { open: boolean; onClose: () =>
               <p className="label">{t('cp.office.weekdays')}</p>
               <div className="flex flex-wrap gap-1.5">
                 {[1, 2, 3, 4, 5, 6, 0].map((d) => (
-                  <button key={d} type="button" aria-pressed={weekdays.includes(d)} onClick={() => setWeekdays((w) => (w.includes(d) ? w.filter((x) => x !== d) : [...w, d]))} className={clsx('min-h-9 min-w-10 rounded-lg border px-2 text-xs font-semibold', weekdays.includes(d) ? 'border-brand-600 bg-brand-50 text-brand-700' : 'border-line')}>
+                  <button key={d} type="button" aria-pressed={weekdays.includes(d)} onClick={() => setWeekdays((w) => (w.includes(d) ? w.filter((x) => x !== d) : [...w, d]))} className={clsx('min-h-9 min-w-10 rounded-lg border px-2 text-xs font-semibold', weekdays.includes(d) ? 'border-primary bg-primary/[0.06] text-link' : 'border-line')}>
                     {days[d]}
                   </button>
                 ))}
@@ -188,7 +188,7 @@ export default function OfficeVisitsAdmin() {
           </button>
         }
       />
-      {offices.data && !offices.data.length && <p className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">{t('cp.office.noOffices')}</p>}
+      {offices.data && !offices.data.length && <p className="rounded-xl border border-warning-border bg-warning-bg px-4 py-3 text-sm text-warning-fg">{t('cp.office.noOffices')}</p>}
 
       <Panel
         title={t('cp.office.visitsOfDay')}
@@ -210,9 +210,9 @@ export default function OfficeVisitsAdmin() {
               const started = new Date(v.startsAt).getTime() <= Date.now();
               return (
                 <li key={v.id} className="flex flex-col gap-2 py-3 sm:flex-row sm:items-center sm:gap-4">
-                  <p className="w-32 shrink-0 text-sm font-bold text-navy-900">{fmtDateTime(v.startsAt)}</p>
+                  <p className="w-32 shrink-0 text-sm font-bold text-ink">{fmtDateTime(v.startsAt)}</p>
                   <div className="min-w-0 flex-1">
-                    <p className="font-semibold break-words text-navy-900">
+                    <p className="font-semibold break-words text-ink">
                       {v.client.name}
                       <span className={clsx('badge ml-2', STATUS_TONE[v.status])}>{t(`cp.office.status.${v.status}`)}</span>
                     </p>
@@ -239,7 +239,7 @@ export default function OfficeVisitsAdmin() {
                         {!started && (
                           <button
                             type="button"
-                            className="btn-secondary btn-sm text-danger"
+                            className="btn-secondary btn-sm text-danger-fg"
                             onClick={() => {
                               const message = window.prompt(t('cp.office.cancelMessage')) ;
                               if (message !== null) cancel.mutate({ id: v.id, message: message.trim() });
@@ -269,7 +269,7 @@ export default function OfficeVisitsAdmin() {
               <li key={s.id} className="rounded-lg border border-line p-3">
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
-                    <p className="text-sm font-bold text-navy-900">{fmtDateTime(s.startsAt)}</p>
+                    <p className="text-sm font-bold text-ink">{fmtDateTime(s.startsAt)}</p>
                     <p className="text-xs text-muted">
                       {s.staff.firstName} {s.staff.lastName} · {t('cp.office.seats', { booked: s.visits.length, capacity: s.capacity })}
                     </p>
@@ -280,7 +280,7 @@ export default function OfficeVisitsAdmin() {
                     )}
                   </div>
                   {s.visits.length < s.capacity && (
-                    <button type="button" className="btn-secondary btn-sm text-danger" aria-label={t('cp.office.deleteFree')} title={t('cp.office.deleteFree')} onClick={() => removeSlot.mutate(s.id)}>
+                    <button type="button" className="btn-secondary btn-sm text-danger-fg" aria-label={t('cp.office.deleteFree')} title={t('cp.office.deleteFree')} onClick={() => removeSlot.mutate(s.id)}>
                       <Trash2 className="size-3.5" aria-hidden />
                     </button>
                   )}
@@ -288,8 +288,8 @@ export default function OfficeVisitsAdmin() {
                 {s.visits.length > 0 && (
                   <ul className="mt-2 space-y-1 text-xs">
                     {s.visits.map((v) => (
-                      <li key={v.id} className="truncate text-navy-900">
-                        {v.case ? <Link to={`/admin/cases/${v.case.id}`} className="font-semibold hover:text-brand-700">{v.name}</Link> : v.name} · {t(`cp.office.reasons.${v.reason}`)}
+                      <li key={v.id} className="truncate text-ink">
+                        {v.case ? <Link to={`/admin/cases/${v.case.id}`} className="font-semibold hover:text-link">{v.name}</Link> : v.name} · {t(`cp.office.reasons.${v.reason}`)}
                       </li>
                     ))}
                   </ul>

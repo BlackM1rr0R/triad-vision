@@ -105,7 +105,7 @@ const Delta = ({ cur, prev, inverse }: { cur: number; prev: number; inverse?: bo
   const good = inverse ? d < 0 : d > 0;
   const Icon = d > 0 ? ArrowUpRight : ArrowDownRight;
   return (
-    <span className={clsx('inline-flex items-center gap-0.5 font-semibold', good ? 'text-emerald-700' : 'text-red-700')}>
+    <span className={clsx('inline-flex items-center gap-0.5 font-semibold', good ? 'text-success-fg' : 'text-danger-fg')}>
       <Icon className="size-3.5" aria-hidden />
       {d > 0 ? '+' : ''}
       {d}
@@ -119,7 +119,7 @@ const Td = ({ children, right, className }: { children?: ReactNode; right?: bool
 const Table = ({ head, children }: { head: ReactNode; children: ReactNode }) => (
   <div className="overflow-x-auto rounded-lg border border-line">
     <table className="w-full min-w-[28rem] text-left text-sm">
-      <thead className="bg-surface text-xs text-muted">
+      <thead className="bg-sunken text-xs text-muted">
         <tr>{head}</tr>
       </thead>
       <tbody className="[&>tr]:border-t [&>tr]:border-line">{children}</tbody>
@@ -146,7 +146,7 @@ const SettingsPanel = ({ settings }: { settings: ReportSettings }) => {
     }
   };
   const row = (label: string, hint: string, control: ReactNode) => (
-    <div className="flex items-start justify-between gap-4 rounded-lg border border-line bg-surface p-3">
+    <div className="flex items-start justify-between gap-4 rounded-lg border border-line bg-sunken p-3">
       <div className="min-w-0">
         <p className="text-sm font-semibold text-ink">{label}</p>
         <p className="mt-0.5 text-xs text-muted">{hint}</p>
@@ -223,8 +223,8 @@ const ReportView = ({ id }: { id: string }) => {
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="flex items-center gap-2 text-lg font-bold text-navy-900">
-            <CalendarRange className="size-5 text-brand-600" aria-hidden /> {t('aiMgmt.reports.week')} {weekLabel(d.weekStart, d.weekEnd)}
+          <h2 className="flex items-center gap-2 text-lg font-bold text-ink">
+            <CalendarRange className="size-5 text-link" aria-hidden /> {t('aiMgmt.reports.week')} {weekLabel(d.weekStart, d.weekEnd)}
           </h2>
           <p className="mt-0.5 text-xs text-muted">
             {t('aiMgmt.reports.created')}: {fmtDateTime(r.updatedAt)} · {t('aiMgmt.reports.sentTo', { count: r.sentTo })}
@@ -246,35 +246,35 @@ const ReportView = ({ id }: { id: string }) => {
       {n ? (
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
           <div className="rounded-xl border border-line bg-card p-4 lg:col-span-3">
-            <p className="text-base font-semibold text-navy-900">{n.headline}</p>
+            <p className="text-base font-semibold text-ink">{n.headline}</p>
           </div>
-          <div className="rounded-xl border border-emerald-200 bg-emerald-50/60 p-4">
-            <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold text-emerald-800">
+          <div className="rounded-xl border border-success-border bg-success-bg/60 p-4">
+            <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold text-success-fg">
               <Trophy className="size-4" aria-hidden /> {t('aiMgmt.reports.highlights')}
             </p>
             <ul className="list-disc space-y-1 pl-5 text-sm text-ink">{n.highlights.map((h, i) => <li key={i}>{h}</li>)}</ul>
           </div>
-          <div className="rounded-xl border border-amber-200 bg-amber-50/60 p-4">
-            <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold text-amber-800">
+          <div className="rounded-xl border border-warning-border bg-warning-bg/60 p-4">
+            <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold text-warning-fg">
               <TriangleAlert className="size-4" aria-hidden /> {t('aiMgmt.reports.problems')}
             </p>
             <ul className="list-disc space-y-1 pl-5 text-sm text-ink">{n.problems.map((h, i) => <li key={i}>{h}</li>)}</ul>
           </div>
-          <div className="rounded-xl border border-brand-100 bg-brand-50/60 p-4">
-            <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold text-brand-700">
+          <div className="rounded-xl border border-primary/25 bg-primary/[0.04] p-4">
+            <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold text-link">
               <Lightbulb className="size-4" aria-hidden /> {t('aiMgmt.reports.recommendations')}
             </p>
             <ol className="list-decimal space-y-2 pl-5 text-sm text-ink">
               {n.recommendations.map((rec, i) => (
                 <li key={i}>
-                  {rec.text} <span className="ml-1 inline-block rounded-full bg-brand-100 px-2 py-0.5 text-[11px] font-semibold text-brand-700">{t(`aiMgmt.reports.metrics.${rec.metric}`, { defaultValue: rec.metric })}</span>
+                  {rec.text} <span className="ml-1 inline-block rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-link">{t(`aiMgmt.reports.metrics.${rec.metric}`, { defaultValue: rec.metric })}</span>
                 </li>
               ))}
             </ol>
           </div>
         </div>
       ) : (
-        <p className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">{t('aiMgmt.reports.noNarrative')}</p>
+        <p className="rounded-lg border border-warning-border bg-warning-bg px-4 py-3 text-sm text-warning-fg">{t('aiMgmt.reports.noNarrative')}</p>
       )}
 
       <Panel title={t('aiMgmt.reports.keyNumbers')} icon={FileBarChart2} className="bg-card" bodyClassName="p-0 sm:p-0">
@@ -291,7 +291,7 @@ const ReportView = ({ id }: { id: string }) => {
           {METRICS.map((k) => (
             <tr key={k}>
               <Td>{t(`aiMgmt.reports.metrics.${k}`)}</Td>
-              <Td right className="font-semibold text-navy-900">{d.metrics[k].cur}</Td>
+              <Td right className="font-semibold text-ink">{d.metrics[k].cur}</Td>
               <Td right>{d.metrics[k].prev}</Td>
               <Td right>
                 <Delta cur={d.metrics[k].cur} prev={d.metrics[k].prev} inverse={LOWER_IS_BETTER.has(k)} />
@@ -307,17 +307,17 @@ const ReportView = ({ id }: { id: string }) => {
             <div className="flex justify-between gap-3">
               <dt className="text-muted">{t('aiMgmt.reports.sent')}</dt>
               <dd className="text-right tabular-nums">
-                <span className="font-semibold text-navy-900">{fmtMoney(d.money.invoicesSent.cur, locale)}</span> <span className="text-xs text-muted">/ {fmtMoney(d.money.invoicesSent.prev, locale)}</span>
+                <span className="font-semibold text-ink">{fmtMoney(d.money.invoicesSent.cur, locale)}</span> <span className="text-xs text-muted">/ {fmtMoney(d.money.invoicesSent.prev, locale)}</span>
               </dd>
             </div>
             <div className="flex justify-between gap-3">
               <dt className="text-muted">{t('aiMgmt.reports.paid')}</dt>
               <dd className="text-right tabular-nums">
-                <span className="font-semibold text-navy-900">{fmtMoney(d.money.invoicesPaid.cur, locale)}</span> <span className="text-xs text-muted">/ {fmtMoney(d.money.invoicesPaid.prev, locale)}</span>
+                <span className="font-semibold text-ink">{fmtMoney(d.money.invoicesPaid.cur, locale)}</span> <span className="text-xs text-muted">/ {fmtMoney(d.money.invoicesPaid.prev, locale)}</span>
               </dd>
             </div>
             <div className="flex justify-between gap-3">
-              <dt className={clsx(d.money.overdue.count ? 'font-semibold text-red-700' : 'text-muted')}>{t('aiMgmt.reports.overdue', { count: d.money.overdue.count })}</dt>
+              <dt className={clsx(d.money.overdue.count ? 'font-semibold text-danger-fg' : 'text-muted')}>{t('aiMgmt.reports.overdue', { count: d.money.overdue.count })}</dt>
               <dd className="text-right tabular-nums">{fmtMoney(d.money.overdue.amount, locale)}</dd>
             </div>
           </dl>
@@ -356,10 +356,10 @@ const ReportView = ({ id }: { id: string }) => {
           <ul className="space-y-1.5 text-sm">
             {open.map(([s, c]) => (
               <li key={s} className="flex justify-between gap-3">
-                <Link to={`/admin/cases?status=${s}`} className="text-ink hover:text-brand-600 hover:underline">
+                <Link to={`/admin/cases?status=${s}`} className="text-ink hover:text-link hover:underline">
                   {statusLabel(s)}
                 </Link>
-                <span className="font-semibold tabular-nums text-navy-900">{c}</span>
+                <span className="font-semibold tabular-nums text-ink">{c}</span>
               </li>
             ))}
             {!open.length && <li className="text-muted">—</li>}
@@ -372,7 +372,7 @@ const ReportView = ({ id }: { id: string }) => {
               <li key={s.status} className="flex justify-between gap-3">
                 <span>{statusLabel(s.status)}</span>
                 <span className="tabular-nums">
-                  <span className="font-semibold text-navy-900">{t('aiMgmt.reports.days', { n: s.avgDays })}</span> <span className="text-xs text-muted">· {s.transitions} {t('aiMgmt.reports.transitions')}</span>
+                  <span className="font-semibold text-ink">{t('aiMgmt.reports.days', { n: s.avgDays })}</span> <span className="text-xs text-muted">· {s.transitions} {t('aiMgmt.reports.transitions')}</span>
                 </span>
               </li>
             ))}
@@ -386,7 +386,7 @@ const ReportView = ({ id }: { id: string }) => {
           <ul className="divide-y divide-line">
             {d.stuck.items.map((c) => (
               <li key={c.id} className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 px-5 py-3 text-sm">
-                <Link to={`/admin/cases/${c.id}`} className="font-semibold text-brand-600 hover:underline">
+                <Link to={`/admin/cases/${c.id}`} className="font-semibold text-link hover:underline">
                   {c.number} · {c.client}
                 </Link>
                 <span className="text-xs text-muted">
@@ -403,7 +403,7 @@ const ReportView = ({ id }: { id: string }) => {
       <Panel title={`${t('aiMgmt.reports.overdueTasks')} · ${d.overdueTasks.total}`} className="bg-card">
         <ul className="flex flex-wrap gap-2 text-sm">
           {d.overdueTasks.perStaff.map((p) => (
-            <li key={p.staffId ?? '-'} className="rounded-full border border-line bg-surface px-3 py-1">
+            <li key={p.staffId ?? '-'} className="rounded-full border border-line bg-sunken px-3 py-1">
               {p.staffId ? p.name : t('aiMgmt.reports.unassigned')} · <span className="font-semibold tabular-nums">{p.count}</span>
             </li>
           ))}
@@ -431,7 +431,7 @@ const ReportView = ({ id }: { id: string }) => {
             {d.staff.map((s) => (
               <tr key={s.id}>
                 <Td>
-                  <Link to={`/admin/oversight/staff/${s.id}`} className="font-semibold text-ink hover:text-brand-600 hover:underline">
+                  <Link to={`/admin/oversight/staff/${s.id}`} className="font-semibold text-ink hover:text-link hover:underline">
                     {s.name}
                   </Link>
                 </Td>
@@ -443,11 +443,11 @@ const ReportView = ({ id }: { id: string }) => {
                 <Td right>{s.overdueTasks}</Td>
                 <Td>
                   {s.needsSupport ? (
-                    <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-800">
+                    <span className="rounded-full bg-warning-bg px-2 py-0.5 text-[11px] font-semibold text-warning-fg">
                       {t('aiMgmt.reports.needsSupport')}: {s.reasons.map((x) => t(`aiMgmt.reports.reasons.${x}`)).join(', ')}
                     </span>
                   ) : (
-                    <span className="text-xs text-emerald-700">{t('aiMgmt.reports.ok')}</span>
+                    <span className="text-xs text-success-fg">{t('aiMgmt.reports.ok')}</span>
                   )}
                 </Td>
               </tr>
@@ -526,10 +526,10 @@ export default function AdminWeeklyReports() {
                       <button
                         type="button"
                         onClick={() => setParams({ id: r.id }, { replace: true })}
-                        className={clsx('block w-full px-4 py-3 text-left text-sm transition hover:bg-surface', r.id === selected && 'bg-brand-50')}
+                        className={clsx('block w-full px-4 py-3 text-left text-sm transition hover:bg-sunken', r.id === selected && 'bg-primary/[0.06]')}
                         aria-current={r.id === selected ? 'true' : undefined}
                       >
-                        <span className="block font-semibold text-navy-900">{weekLabel(r.weekStart, r.weekEnd)}</span>
+                        <span className="block font-semibold text-ink">{weekLabel(r.weekStart, r.weekEnd)}</span>
                         <span className="mt-0.5 block text-xs text-muted">
                           {t('aiMgmt.reports.metrics.inquiries')}: {r.key.inquiries.cur} · {t('aiMgmt.reports.metrics.approvals')}: {r.key.approvals.cur} · {t('aiMgmt.reports.metrics.stuckCases')}: {r.key.stuck}
                         </span>

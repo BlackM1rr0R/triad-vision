@@ -37,7 +37,7 @@ export const PollCard = ({ pollId }: { pollId: string }) => {
   return (
     <div className="mt-2 max-w-md rounded-xl border border-line bg-card p-3">
       <div className="mb-2 flex items-center gap-2">
-        <BarChart3 className="size-4 text-brand-600" aria-hidden />
+        <BarChart3 className="size-4 text-link" aria-hidden />
         <span className="text-sm font-bold text-ink">{poll.question}</span>
         {closed && (
           <span className="ml-auto inline-flex items-center gap-1 text-xs text-muted">
@@ -50,8 +50,8 @@ export const PollCard = ({ pollId }: { pollId: string }) => {
           const pct = total ? Math.round(((o.count ?? 0) / total) * 100) : 0;
           return (
             <li key={o.id}>
-              <button type="button" disabled={closed} onClick={() => void vote(o.id)} className={clsx('relative block w-full overflow-hidden rounded-lg border px-3 py-1.5 text-left text-sm', o.mine ? 'border-brand-400' : 'border-line', !closed && 'hover:border-brand-300')}>
-                <span className="absolute inset-y-0 left-0 bg-brand-50" style={{ width: `${pct}%` }} aria-hidden />
+              <button type="button" disabled={closed} onClick={() => void vote(o.id)} className={clsx('relative block w-full overflow-hidden rounded-lg border px-3 py-1.5 text-left text-sm', o.mine ? 'border-line-strong' : 'border-line', !closed && 'hover:border-line-strong')}>
+                <span className="absolute inset-y-0 left-0 bg-primary/[0.06]" style={{ width: `${pct}%` }} aria-hidden />
                 <span className="relative flex items-center justify-between gap-2">
                   <span className={clsx('text-ink', o.mine && 'font-semibold')}>{o.text}</span>
                   <span className="text-xs text-muted">{pct}%</span>

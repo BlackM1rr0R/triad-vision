@@ -16,7 +16,7 @@ import { acceptAllInCase, acceptAllInFolder, fetchNodeInsight, uploadAiKeys, use
 registerCopy(pagesUploadAi);
 
 const chipTone = (status: StaffInsight['status'], open: number, warn: boolean) => {
-  if (status === 'PENDING') return 'bg-surface text-muted';
+  if (status === 'PENDING') return 'bg-sunken text-muted';
   if (warn) return TONE_CLASS.warning;
   if (open > 0) return TONE_CLASS.accent;
   return TONE_CLASS.success;
@@ -46,7 +46,7 @@ const Chip = ({ data, onOpen, compact }: { data: Pick<StaffInsight, 'docType' | 
         {data.open > 0 && <span aria-hidden>·{data.open}</span>}
       </button>
       {data.qualityLevel === 'BAD' && (
-        <span className="inline-flex shrink-0 items-center gap-0.5 rounded bg-red-100 px-1 py-px text-[10px] font-semibold text-red-700 dark:bg-red-950/40 dark:text-red-300" title={t('uploadAi.staff.lowQuality')}>
+        <span className="inline-flex shrink-0 items-center gap-0.5 rounded bg-danger-bg px-1 py-px text-[10px] font-semibold text-danger-fg dark:bg-red-950/40 dark:text-red-300" title={t('uploadAi.staff.lowQuality')}>
           <AlertTriangle className="size-2.5" aria-hidden />
           {!compact && t('uploadAi.staff.lowQuality')}
         </span>
@@ -106,7 +106,7 @@ const AcceptAllButton = ({ count, busy, onClick }: { count: number; busy: boolea
       type="button"
       onClick={onClick}
       disabled={busy}
-      className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-violet-200 bg-violet-50 px-3 py-1.5 text-xs font-semibold text-violet-800 transition hover:bg-violet-100 disabled:opacity-60 lg:min-h-8 dark:border-violet-500/30 dark:bg-violet-500/10 dark:text-violet-200 dark:hover:bg-violet-500/20"
+      className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-accent-border bg-accent-bg px-3 py-1.5 text-xs font-semibold text-accent-fg transition hover:bg-accent-bg disabled:opacity-60 lg:min-h-8 dark:border-violet-500/30 dark:bg-violet-500/10 dark:text-violet-200 dark:hover:bg-violet-500/20"
     >
       {busy ? <Spinner className="size-3.5" /> : <CheckCheck className="size-4" aria-hidden />}
       {t('uploadAi.staff.acceptAll', { count })}

@@ -33,7 +33,7 @@ const Chips = <T extends string>({ all, value, onChange, label }: { all: readonl
           onClick={() => onChange(on ? value.filter((x) => x !== v) : [...value, v])}
           className={clsx(
             'inline-flex min-h-8 items-center rounded-full border px-2.5 text-xs font-semibold transition',
-            on ? 'border-brand-600 bg-brand-600 text-white' : 'border-line bg-card text-ink/80 hover:border-brand-400',
+            on ? 'border-line-strong bg-sunken text-ink shadow-[inset_0_0_0_1px_var(--color-line-strong)]' : 'border-line bg-card text-ink/80 hover:border-line-strong',
           )}
         >
           {label(v)}
@@ -59,7 +59,7 @@ const PickList = ({ options, value, onChange, placeholder }: { options: { id: st
     {value.length > 0 && (
       <div className="flex flex-wrap gap-1.5">
         {value.map((id) => (
-          <button key={id} type="button" onClick={() => onChange(value.filter((x) => x !== id))} className="inline-flex min-h-8 items-center gap-1 rounded-full bg-brand-50 px-2.5 text-xs font-semibold text-brand-700 hover:bg-brand-100">
+          <button key={id} type="button" onClick={() => onChange(value.filter((x) => x !== id))} className="inline-flex min-h-8 items-center gap-1 rounded-full bg-primary/[0.06] px-2.5 text-xs font-semibold text-link hover:bg-primary/10">
             {options.find((o) => o.id === id)?.label ?? id} ×
           </button>
         ))}
@@ -205,7 +205,7 @@ const OpToggle = ({ value, onChange, label }: { value: 'AND' | 'OR'; onChange: (
           type="button"
           aria-pressed={value === op}
           onClick={() => onChange(op)}
-          className={clsx('min-h-8 rounded-md border px-2.5 font-semibold', value === op ? 'border-navy-900 bg-navy-900 text-white' : 'border-line bg-card text-ink/80')}
+          className={clsx('min-h-8 rounded-md border px-2.5 font-semibold', value === op ? 'border-line-strong bg-sunken text-ink shadow-[inset_0_0_0_1px_var(--color-line-strong)]' : 'border-line bg-card text-ink/80')}
         >
           {t(`campaigns.segments.${op === 'AND' ? 'and' : 'or'}`)}
         </button>
@@ -224,14 +224,14 @@ export const SegmentBuilder = ({ value, onChange }: { value: Definition; onChang
   return (
     <div className="space-y-3">
       {value.groups.length > 1 && <OpToggle value={value.op} onChange={(op) => onChange({ ...value, op })} label={s('groupsJoin')} />}
-      {value.groups.length === 0 && <p className="rounded-lg bg-surface px-3 py-2 text-sm text-muted">{s('emptyRule')}</p>}
+      {value.groups.length === 0 && <p className="rounded-lg bg-sunken px-3 py-2 text-sm text-muted">{s('emptyRule')}</p>}
       {value.groups.map((g, gi) => (
         <fieldset key={gi} className="rounded-xl border border-line bg-surface/60 p-3 sm:p-4">
           <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-            <legend className="text-sm font-semibold text-navy-900">{s('group', { n: gi + 1 })}</legend>
+            <legend className="text-sm font-semibold text-ink">{s('group', { n: gi + 1 })}</legend>
             <div className="flex flex-wrap items-center gap-2">
               {g.conditions.length > 1 && <OpToggle value={g.op} onChange={(op) => setGroup(gi, { ...g, op })} label={s('inGroup')} />}
-              <button type="button" className="inline-flex min-h-8 items-center gap-1 rounded-md px-2 text-xs font-semibold text-red-700 hover:bg-red-50" onClick={() => setGroup(gi, null)}>
+              <button type="button" className="inline-flex min-h-8 items-center gap-1 rounded-md px-2 text-xs font-semibold text-danger-fg hover:bg-danger-bg" onClick={() => setGroup(gi, null)}>
                 <Trash2 className="size-3.5" aria-hidden /> {s('remove')}
               </button>
             </div>
@@ -257,7 +257,7 @@ export const SegmentBuilder = ({ value, onChange }: { value: Definition; onChang
                 <button
                   type="button"
                   aria-label={s('remove')}
-                  className="grid size-9 place-items-center justify-self-end rounded-md text-muted hover:bg-red-50 hover:text-red-700"
+                  className="grid size-9 place-items-center justify-self-end rounded-md text-muted hover:bg-danger-bg hover:text-danger-fg"
                   onClick={() => {
                     const conditions = g.conditions.filter((_, i) => i !== ci);
                     setGroup(gi, conditions.length ? { ...g, conditions } : null);
@@ -268,7 +268,7 @@ export const SegmentBuilder = ({ value, onChange }: { value: Definition; onChang
               </div>
             ))}
           </div>
-          <button type="button" className="btn-white btn-sm mt-3 border border-line" onClick={() => setGroup(gi, { ...g, conditions: [...g.conditions, blankCondition('caseStatus')] })}>
+          <button type="button" className="btn-secondary btn-sm mt-3 border border-line" onClick={() => setGroup(gi, { ...g, conditions: [...g.conditions, blankCondition('caseStatus')] })}>
             <Plus className="size-3.5" aria-hidden /> {s('addCondition')}
           </button>
         </fieldset>
@@ -313,8 +313,8 @@ export const SegmentPreviewPanel = ({ preview, loading, footer }: { preview: Seg
   return (
     <div className="rounded-xl border border-line bg-card">
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1 border-b border-line px-4 py-3">
-        <Users className="size-4 text-brand-600" aria-hidden />
-        <p className="text-lg font-bold text-navy-900 tabular-nums" aria-live="polite">
+        <Users className="size-4 text-link" aria-hidden />
+        <p className="text-lg font-bold text-ink tabular-nums" aria-live="polite">
           {preview ? s('count', { count: preview.count }) : '—'}
         </p>
         {preview && <p className="text-xs text-muted">{s('optedIn', { count: preview.marketingOptedIn })}</p>}
@@ -337,7 +337,7 @@ export const SegmentPreviewPanel = ({ preview, loading, footer }: { preview: Seg
             <tbody className="divide-y divide-line">
               {preview.sample.map((r) => (
                 <tr key={r.id}>
-                  <td className="px-4 py-2 font-medium text-navy-900">
+                  <td className="px-4 py-2 font-medium text-ink">
                     {r.firstName} {r.lastName}
                     {r.company && <span className="block text-[11px] text-muted">{r.company.name}</span>}
                   </td>

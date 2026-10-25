@@ -13,6 +13,7 @@ import { fmtDate } from '@/components/admin/labels';
 import { ScoreRing } from '@/components/jobs/MatchMeter';
 import { toastJobsError, useJobLabels } from '@/components/jobs/labels';
 import { APPLICATION_STATUS_TONE, type AnonProfile, type ApplicationStatus } from '@/components/jobs/types';
+import { SearchEmpty } from '@/components/illustrations';
 import { Empty, Loading, Section } from './shared';
 import { CvDownloadButton } from '@/components/cv/CvDownloadButton';
 import { SharedProfile, useSharedProfiles } from '@/components/aiEmployer/SharedProfile';
@@ -110,7 +111,7 @@ export const CompanyCandidates = () => {
   return (
     <Section title={t('jobsArea.portal.candidates.title')} icon={Users}>
       <p className="-mt-2 mb-5 flex items-start gap-2 text-xs text-muted">
-        <ShieldCheck className="mt-0.5 size-3.5 shrink-0 text-brand-600" aria-hidden /> {t('jobsArea.portal.candidates.privacy')}
+        <ShieldCheck className="mt-0.5 size-3.5 shrink-0 text-primary" aria-hidden /> {t('jobsArea.portal.candidates.privacy')}
       </p>
       <PartyThreadFromQuery />
       <div className="mb-5 empty:hidden">
@@ -124,15 +125,15 @@ export const CompanyCandidates = () => {
             onClick={() => setFilter('status', f)}
             aria-pressed={status === f}
             className={clsx(
-              'inline-flex min-h-9 items-center rounded-full border px-3.5 text-xs font-semibold transition',
-              status === f ? 'border-navy-900 bg-navy-900 text-white' : 'border-line bg-white text-ink/75 hover:border-brand-400',
+              'inline-flex min-h-11 items-center rounded-full border px-3.5 text-sm font-semibold transition-colors sm:min-h-10',
+              status === f ? 'border-primary bg-primary text-primary-contrast' : 'border-line bg-card text-muted hover:border-line-strong hover:text-ink',
             )}
           >
             {f ? L.appStatus(f) : t('jobsArea.common.all')}
           </button>
         ))}
         {vacancyId && (
-          <button type="button" onClick={() => setFilter('vacancyId', '')} className="inline-flex min-h-9 items-center gap-1 rounded-full bg-brand-50 px-3 text-xs font-semibold text-brand-700">
+          <button type="button" onClick={() => setFilter('vacancyId', '')} className="inline-flex min-h-11 items-center gap-1 rounded-full bg-sunken px-3.5 text-sm font-semibold text-link sm:min-h-10">
             {t('jobsArea.portal.candidates.oneVacancy')} <XCircle className="size-3.5" />
           </button>
         )}
@@ -141,16 +142,16 @@ export const CompanyCandidates = () => {
       {isLoading ? (
         <Loading />
       ) : !data?.length ? (
-        <Empty icon={UserCheck} title={t('jobsArea.portal.candidates.empty')} text={t('jobsArea.portal.candidates.emptyText')} />
+        <Empty icon={UserCheck} illustration={<SearchEmpty className="w-32" />} title={t('jobsArea.portal.candidates.empty')} text={t('jobsArea.portal.candidates.emptyText')} />
       ) : (
         <ul className="grid grid-cols-1 gap-4 lg:grid-cols-2">
           {data.map((a) => (
-            <li key={a.id} className="min-w-0 rounded-2xl border border-line bg-white p-5">
+            <li key={a.id} className="min-w-0 rounded-2xl border border-line bg-card p-5 shadow-[var(--tv-shadow-card)]">
               <div className="flex items-start gap-4">
                 {a.matchScore != null && <ScoreRing score={a.matchScore} size={56} />}
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center justify-between gap-2">
-                    <p className="font-display text-lg font-bold text-navy-900">{a.candidate.name}</p>
+                    <p className="text-lg font-semibold text-ink">{a.candidate.name}</p>
                     <span className={clsx('badge', APPLICATION_STATUS_TONE[a.status])}>{L.appStatus(a.status)}</span>
                   </div>
                   <p className="truncate text-sm text-muted">
@@ -160,32 +161,32 @@ export const CompanyCandidates = () => {
               </div>
               <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-2.5 text-sm">
                 <div className="flex items-center gap-2">
-                  <Timer className="size-4 shrink-0 text-brand-600" aria-hidden />
+                  <Timer className="size-4 shrink-0 text-muted" aria-hidden />
                   <dt className="sr-only">{t('jobsArea.profile.experience')}</dt>
                   <dd>{a.candidate.experienceYears != null ? L.years(a.candidate.experienceYears) : '—'}</dd>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Languages className="size-4 shrink-0 text-brand-600" aria-hidden />
+                  <Languages className="size-4 shrink-0 text-muted" aria-hidden />
                   <dt className="sr-only">{t('jobsArea.profile.german')}</dt>
                   <dd>{L.german(a.candidate.germanLevel)}</dd>
                 </div>
                 <div className="flex items-center gap-2">
-                  <GraduationCap className="size-4 shrink-0 text-brand-600" aria-hidden />
+                  <GraduationCap className="size-4 shrink-0 text-muted" aria-hidden />
                   <dt className="sr-only">{t('jobsArea.profile.education')}</dt>
                   <dd className="truncate">{L.education(a.candidate.education) || '—'}</dd>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Car className="size-4 shrink-0 text-brand-600" aria-hidden />
+                  <Car className="size-4 shrink-0 text-muted" aria-hidden />
                   <dt className="sr-only">{t('jobsArea.profile.licence')}</dt>
                   <dd className="truncate">{a.candidate.drivingLicence || '—'}</dd>
                 </div>
                 <div className="col-span-2 flex items-center gap-2">
-                  <MapPin className="size-4 shrink-0 text-brand-600" aria-hidden />
+                  <MapPin className="size-4 shrink-0 text-muted" aria-hidden />
                   <dt className="sr-only">{t('jobsArea.profile.city')}</dt>
                   <dd className="truncate">{a.candidate.city ? t('jobsArea.portal.candidates.from', { city: a.candidate.city }) : '—'}</dd>
                 </div>
               </dl>
-              {a.companyNote && <p className="mt-3 rounded-lg bg-surface px-3 py-2 text-xs text-ink/80">{a.companyNote}</p>}
+              {a.companyNote && <p className="mt-3 rounded-xl bg-sunken px-3 py-2 text-sm text-ink">{a.companyNote}</p>}
               {profiles.data?.get(a.id) && <SharedProfile profile={profiles.data.get(a.id)!} />}
               <CvDownloadButton url={`/company/candidates/${a.id}/cv.pdf`} anonymised className="mt-3" />
               <PartyChatButton thread={threadByApp.get(a.id)} className="mt-3 ml-2" />

@@ -21,22 +21,22 @@ export const SecurityAlertsWidget = () => {
     <Link
       to="/admin/security-alerts"
       className={clsx(
-        'flex items-center justify-between gap-3 rounded-xl border px-4 py-3 transition hover:shadow-[0_8px_24px_-14px_rgba(11,31,68,0.35)]',
-        alarm ? (data.high ? 'border-red-200 bg-red-50' : 'border-amber-200 bg-amber-50') : 'border-line bg-card',
+        'flex items-center justify-between gap-3 rounded-xl border px-4 py-3 transition hover:shadow-[var(--tv-shadow-raised)]',
+        alarm ? (data.high ? 'border-danger-border bg-danger-bg' : 'border-warning-border bg-warning-bg') : 'border-line bg-card',
       )}
     >
       <span className="flex min-w-0 items-center gap-3">
-        <span className={clsx('grid size-9 shrink-0 place-items-center rounded-lg', alarm ? (data.high ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-800') : 'bg-emerald-100 text-emerald-700')}>
+        <span className={clsx('grid size-9 shrink-0 place-items-center rounded-lg', alarm ? (data.high ? 'bg-danger-bg text-danger-fg' : 'bg-warning-bg text-warning-fg') : 'bg-success-bg text-success-fg')}>
           <Icon className="size-[18px]" aria-hidden />
         </span>
         <span className="min-w-0">
-          <span className="block text-sm font-semibold text-navy-900">
+          <span className="block text-sm font-semibold text-ink">
             {t('aiMgmt.widget.title')}: {alarm ? t('aiMgmt.widget.open', { count: data.open }) : t('aiMgmt.widget.none')}
           </span>
-          {data.high > 0 && <span className="block text-xs font-medium text-red-700">{t('aiMgmt.widget.high', { count: data.high })}</span>}
+          {data.high > 0 && <span className="block text-xs font-medium text-danger-fg">{t('aiMgmt.widget.high', { count: data.high })}</span>}
         </span>
       </span>
-      <span className="flex shrink-0 items-center gap-1 text-xs font-semibold text-brand-600">
+      <span className="flex shrink-0 items-center gap-1 text-xs font-semibold text-link">
         {t('aiMgmt.widget.view')} <ArrowRight className="size-3.5" aria-hidden />
       </span>
     </Link>

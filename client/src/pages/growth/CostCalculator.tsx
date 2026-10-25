@@ -2,9 +2,11 @@ import { useEffect, useId, useMemo, useState, type FormEvent, type ReactNode } f
 import { Link, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
-import { CheckCircle2, Info, Minus, PiggyBank, Plus, Receipt, Send, Wallet } from 'lucide-react';
+import { Info, Minus, PiggyBank, Plus, Receipt, Send, Wallet } from 'lucide-react';
 import { PageHero } from '@/components/layout/PageHero';
 import { Spinner } from '@/components/ui/Spinner';
+import { buttonClass } from '@/components/ui/Button';
+import { Success } from '@/components/illustrations';
 import { CURRENCIES, fmtMoney, useCostConfig, type Money } from '@/components/marketing/api';
 import { costInput, resolveCostChoices, useCostEstimate } from '@/lib/calculators/cost';
 import { registerCopy } from '@/i18n';
@@ -27,11 +29,11 @@ const Stepper = ({ label, value, min, max, onChange, hint }: { label: string; va
         {label}
       </label>
       <div className="flex items-center gap-2">
-        <button type="button" className="grid size-11 shrink-0 place-items-center rounded-xl border border-line bg-card text-ink hover:border-brand-500 disabled:opacity-40" aria-label={`${label} −1`} disabled={value <= min} onClick={() => onChange(Math.max(min, value - 1))}>
+        <button type="button" className="grid size-11 shrink-0 place-items-center rounded-xl border border-line-strong/80 bg-card text-ink hover:border-line-strong hover:bg-sunken disabled:opacity-40" aria-label={`${label} −1`} disabled={value <= min} onClick={() => onChange(Math.max(min, value - 1))}>
           <Minus className="size-4" aria-hidden />
         </button>
         <input id={id} type="number" inputMode="numeric" className="input w-20 text-center tabular-nums" min={min} max={max} value={value} onChange={(e) => onChange(Math.max(min, Math.min(max, Math.round(Number(e.target.value) || 0))))} />
-        <button type="button" className="grid size-11 shrink-0 place-items-center rounded-xl border border-line bg-card text-ink hover:border-brand-500 disabled:opacity-40" aria-label={`${label} +1`} disabled={value >= max} onClick={() => onChange(Math.min(max, value + 1))}>
+        <button type="button" className="grid size-11 shrink-0 place-items-center rounded-xl border border-line-strong/80 bg-card text-ink hover:border-line-strong hover:bg-sunken disabled:opacity-40" aria-label={`${label} +1`} disabled={value >= max} onClick={() => onChange(Math.min(max, value + 1))}>
           <Plus className="size-4" aria-hidden />
         </button>
       </div>
@@ -51,8 +53,8 @@ const YesNo = ({ legend, value, onChange, hint }: { legend: string; value: boole
           <label
             key={String(v)}
             className={clsx(
-              'flex min-h-11 cursor-pointer items-center justify-center rounded-xl border px-3 py-2 text-sm font-semibold transition-colors has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-brand-500',
-              value === v ? 'border-brand-600 bg-brand-600 text-white' : 'border-line bg-card text-ink hover:border-brand-500',
+              'flex min-h-11 cursor-pointer items-center justify-center rounded-xl border px-3 py-2 text-sm font-semibold transition-colors has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-focus/40',
+              value === v ? 'border-primary bg-primary text-primary-contrast' : 'border-line bg-card text-ink hover:border-line-strong hover:bg-sunken',
             )}
           >
             <input type="radio" className="sr-only" name={name} checked={value === v} onChange={() => onChange(v)} />
@@ -93,15 +95,15 @@ const OfferForm = ({ input }: { input: Record<string, string | number> }) => {
   if (done) {
     return (
       <div className="text-center" role="status">
-        <CheckCircle2 className="mx-auto size-12 text-success" aria-hidden />
-        <h3 className="mt-3 font-display text-lg font-bold text-ink">{t('mk.cost.offer.successTitle')}</h3>
+        <Success className="mx-auto w-32" />
+        <h3 className="mt-3 font-display text-lg font-semibold text-ink">{t('mk.cost.offer.successTitle')}</h3>
         <p className="mt-1 text-sm text-muted">{t('mk.cost.offer.successText')}</p>
       </div>
     );
   }
   return (
     <form onSubmit={submit} noValidate className="space-y-3" aria-labelledby={`${id}-t`}>
-      <h3 id={`${id}-t`} className="font-display text-lg font-bold text-ink">
+      <h3 id={`${id}-t`} className="font-display text-lg font-semibold text-ink">
         {t('mk.cost.offer.title')}
       </h3>
       <p className="text-sm text-muted">{t('mk.cost.ctaText')}</p>
@@ -134,20 +136,20 @@ const OfferForm = ({ input }: { input: Record<string, string | number> }) => {
       {/* honeypot for bots */}
       <input type="text" name="website" tabIndex={-1} autoComplete="off" className="hidden" aria-hidden value={form.website} onChange={(e) => setForm({ ...form, website: e.target.value })} />
       <label className="flex items-start gap-2.5 text-sm text-muted">
-        <input type="checkbox" required className="mt-0.5 size-4 shrink-0 accent-brand-600" checked={form.consent} onChange={(e) => setForm({ ...form, consent: e.target.checked })} />
+        <input type="checkbox" required className="mt-0.5 size-4 shrink-0 accent-primary" checked={form.consent} onChange={(e) => setForm({ ...form, consent: e.target.checked })} />
         <span>
           {t('mk.cost.offer.consent')}{' '}
-          <Link to="/privacy" target="_blank" className="font-semibold text-brand-600 hover:underline">
+          <Link to="/privacy" target="_blank" className="font-semibold text-link hover:underline">
             {t('mk.cost.offer.privacy')}
           </Link>
         </span>
       </label>
       {error && (
-        <p role="alert" className="rounded-lg bg-danger/10 px-3 py-2 text-sm text-danger">
+        <p role="alert" className="rounded-xl bg-danger-bg px-3 py-2 text-sm text-danger-fg">
           {t(`mk.cost.offer.errors.${error}`)}
         </p>
       )}
-      <button type="submit" className="btn-primary w-full justify-center px-5 py-3" disabled={!ready || busy}>
+      <button type="submit" className={buttonClass({ size: 'lg', block: true })} disabled={!ready || busy}>
         {busy ? <Spinner className="size-4" /> : <Send className="size-4" aria-hidden />} {t('mk.cost.offer.submit')}
       </button>
     </form>
@@ -215,11 +217,11 @@ export default function CostCalculator() {
           {isLoading ? (
             <Spinner />
           ) : !config?.enabled ? (
-            <p className="card card-pad text-center text-muted">{t('mk.cost.disabled')}</p>
+            <p className="card card-pad rounded-3xl text-center text-muted">{t('mk.cost.disabled')}</p>
           ) : (
             <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] lg:gap-10">
-              <form className="card card-pad space-y-6" onSubmit={(e) => e.preventDefault()}>
-                <h2 className="font-display text-lg font-bold text-ink">{t('mk.cost.formTitle')}</h2>
+              <form className="card card-pad space-y-6 rounded-3xl" onSubmit={(e) => e.preventDefault()}>
+                <h2 className="font-display text-lg font-semibold text-ink">{t('mk.cost.formTitle')}</h2>
                 <fieldset>
                   <legend className="label">{t('mk.cost.visa')}</legend>
                   <div className="grid gap-2 sm:grid-cols-2">
@@ -227,8 +229,8 @@ export default function CostCalculator() {
                       <label
                         key={c.id}
                         className={clsx(
-                          'flex min-h-11 cursor-pointer items-center justify-center rounded-xl border px-3 py-2 text-center text-sm font-semibold transition-colors has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-brand-500',
-                          visaId === c.id ? 'border-brand-600 bg-brand-600 text-white' : 'border-line bg-card text-ink hover:border-brand-500',
+                          'flex min-h-11 cursor-pointer items-center justify-center rounded-xl border px-3 py-2 text-center text-sm font-semibold transition-colors has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-focus/40',
+                          visaId === c.id ? 'border-primary bg-primary text-primary-contrast' : 'border-line bg-card text-ink hover:border-line-strong hover:bg-sunken',
                         )}
                       >
                         <input
@@ -262,7 +264,7 @@ export default function CostCalculator() {
               </form>
 
               <div className="space-y-5 lg:sticky lg:top-28" aria-live="polite">
-                <div className="card card-pad">
+                <div className="card card-pad rounded-3xl">
                   {!est || !category ? (
                     <p className="flex items-center gap-2 text-sm text-muted">
                       <Info className="size-4 shrink-0" aria-hidden /> {t('mk.cost.pickVisa')}
@@ -283,22 +285,22 @@ export default function CostCalculator() {
                             </li>
                           ))}
                       </ul>
-                      <div className="mt-3 rounded-xl bg-brand-50 p-4">
+                      <div className="mt-3 rounded-xl bg-sunken p-4">
                         <p className="flex items-center justify-between gap-3">
-                          <span className="flex items-center gap-2 text-sm font-bold text-ink">
-                            <Receipt className="size-4 text-brand-600" aria-hidden /> {t('mk.cost.oneTime')}
+                          <span className="flex items-center gap-2 text-sm font-semibold text-ink">
+                            <Receipt className="size-4 text-muted" aria-hidden /> {t('mk.cost.oneTime')}
                           </span>
-                          <span className="font-display text-xl font-extrabold text-ink tabular-nums">{eur(est.oneTime)}</span>
+                          <span className="font-display text-xl font-semibold text-ink tabular-nums">{eur(est.oneTime)}</span>
                         </p>
                         <p className="mt-1 text-xs text-muted">{approx('oneTime')}</p>
                       </div>
                       {est.refundable[1] > 0 && (
-                        <div className="mt-3 rounded-xl border border-success/30 bg-success/5 p-4">
+                        <div className="mt-3 rounded-xl border border-success-border bg-success-bg p-4">
                           <p className="flex items-center justify-between gap-3">
-                            <span className="flex items-center gap-2 text-sm font-bold text-ink">
+                            <span className="flex items-center gap-2 text-sm font-semibold text-ink">
                               <PiggyBank className="size-4 text-success" aria-hidden /> {t('mk.cost.refundable')}
                             </span>
-                            <span className="font-display text-lg font-extrabold text-ink tabular-nums">{eur(est.refundable)}</span>
+                            <span className="font-display text-lg font-semibold text-ink tabular-nums">{eur(est.refundable)}</span>
                           </p>
                           <p className="mt-1 text-xs text-muted">{t('mk.cost.refundableHint')}</p>
                           <p className="mt-1 text-xs text-muted">{approx('refundable')}</p>
@@ -309,7 +311,7 @@ export default function CostCalculator() {
                           <span className="flex items-center gap-2 font-semibold text-ink">
                             <Wallet className="size-4 text-muted" aria-hidden /> {t('mk.cost.total')}
                           </span>
-                          <span className="font-bold text-ink tabular-nums">{eur(est.total)}</span>
+                          <span className="font-semibold text-ink tabular-nums">{eur(est.total)}</span>
                         </p>
                       )}
                     </div>
@@ -318,7 +320,7 @@ export default function CostCalculator() {
                     {showOffer && input ? (
                       <OfferForm input={input} />
                     ) : (
-                      <button type="button" className="btn-primary w-full justify-center px-5 py-3" disabled={!category} onClick={() => setShowOffer(true)}>
+                      <button type="button" className={buttonClass({ size: 'lg', block: true })} disabled={!category} onClick={() => setShowOffer(true)}>
                         {t('mk.cost.cta')}
                       </button>
                     )}

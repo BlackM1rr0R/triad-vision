@@ -124,15 +124,15 @@ export const DashboardGrid = ({
   return (
     <div>
       {editing && (
-        <div className="mb-4 rounded-xl border border-dashed border-brand-400/70 bg-brand-50/40 p-3 sm:p-4">
+        <div className="mb-4 rounded-xl border border-dashed border-line-strong bg-primary/[0.04] p-3 sm:p-4">
           <div className="flex flex-wrap items-center gap-2">
             <p className="min-w-0 flex-1 text-xs text-ink/80">{t('ux.dashboard.editHint')}</p>
             <button type="button" className="btn-secondary btn-sm" aria-expanded={pickerOpen} aria-controls="dash-picker" onClick={() => setPickerOpen((v) => !v)}>
               <Plus className="size-3.5" aria-hidden /> {t('ux.dashboard.add')}
-              {hidden.length > 0 && <span className="badge bg-brand-100 text-brand-700 tabular-nums">{hidden.length}</span>}
+              {hidden.length > 0 && <span className="badge bg-primary/10 text-link tabular-nums">{hidden.length}</span>}
             </button>
             {isCustom && (
-              <button type="button" className="btn-ghost btn-sm" onClick={onReset}>
+              <button type="button" className="btn-secondary btn-sm" onClick={onReset}>
                 <RotateCcw className="size-3.5" aria-hidden /> {t('ux.dashboard.reset')}
               </button>
             )}
@@ -148,10 +148,10 @@ export const DashboardGrid = ({
                     const d = byId.get(i.id)!;
                     return (
                       <li key={i.id}>
-                        <button type="button" onClick={() => setHidden(i.id, false)} className="inline-flex min-h-9 items-center gap-2 rounded-lg border border-line bg-card px-3 text-xs font-semibold text-ink transition hover:border-brand-400">
+                        <button type="button" onClick={() => setHidden(i.id, false)} className="inline-flex min-h-9 items-center gap-2 rounded-lg border border-line bg-card px-3 text-xs font-semibold text-ink transition hover:border-line-strong">
                           <d.icon className="size-3.5 text-muted" aria-hidden />
                           {t(d.titleKey)}
-                          <span className="inline-flex items-center gap-1 text-brand-700">
+                          <span className="inline-flex items-center gap-1 text-link">
                             <Eye className="size-3.5" aria-hidden /> {t('ux.dashboard.show')}
                           </span>
                         </button>
@@ -176,7 +176,7 @@ export const DashboardGrid = ({
               className={clsx('@container min-w-0', SPAN[item.size])}
             >
               <div
-                className={clsx('h-full', editing && 'relative rounded-2xl outline-2 outline-offset-4 outline-dashed', editing && (dragId === item.id ? 'opacity-50 outline-brand-500' : 'outline-brand-300/70'))}
+                className={clsx('h-full', editing && 'relative rounded-xl outline-2 outline-offset-4 outline-dashed', editing && (dragId === item.id ? 'opacity-50 outline-focus' : 'outline-focus/70'))}
                 draggable={editing || undefined}
                 onDragStart={editing ? (e) => onDragStart(e, item.id) : undefined}
                 onDragOver={editing ? (e) => onDragOver(e, item.id) : undefined}
@@ -184,11 +184,11 @@ export const DashboardGrid = ({
                 onDragEnd={editing ? onDragEnd : undefined}
               >
                 {editing && (
-                  <div className="mb-2 flex flex-wrap items-center gap-1.5 rounded-lg border border-line bg-card px-2 py-1.5 shadow-sm">
+                  <div className="mb-2 flex flex-wrap items-center gap-1.5 rounded-lg border border-line bg-card px-2 py-1.5 shadow-[var(--tv-shadow-card)]">
                     <span className="grid size-8 cursor-grab place-items-center rounded-md text-muted active:cursor-grabbing" title={t('ux.dashboard.drag', { title: t(def.titleKey) })} aria-hidden>
                       <GripVertical className="size-4" />
                     </span>
-                    <span className="min-w-0 flex-1 truncate text-xs font-semibold text-navy-900">{t(def.titleKey)}</span>
+                    <span className="min-w-0 flex-1 truncate text-xs font-semibold text-ink">{t(def.titleKey)}</span>
                     <span role="radiogroup" aria-label={`${t('ux.dashboard.size')}: ${t(def.titleKey)}`} className="inline-flex rounded-md border border-line p-0.5">
                       {WIDGET_SIZES.map((s) => (
                         <button
@@ -199,19 +199,19 @@ export const DashboardGrid = ({
                           title={t(`ux.dashboard.sizes.${s}`)}
                           aria-label={t(`ux.dashboard.sizes.${s}`)}
                           onClick={() => setSize(item.id, s)}
-                          className={clsx('min-h-7 min-w-7 rounded px-1.5 text-[11px] font-bold transition', item.size === s ? 'bg-navy-900 text-white' : 'text-muted hover:text-navy-900')}
+                          className={clsx('min-h-7 min-w-7 rounded px-1.5 text-[11px] font-bold transition', item.size === s ? 'bg-card text-ink shadow-[var(--tv-shadow-card)] ring-1 ring-line' : 'text-muted hover:text-ink')}
                         >
                           {s}
                         </button>
                       ))}
                     </span>
-                    <button id={`dw-up-${item.id}`} type="button" className="grid size-8 place-items-center rounded-md text-muted transition hover:bg-surface hover:text-navy-900 disabled:opacity-30" disabled={idx === 0} onClick={() => shift(item.id, -1)} aria-label={t('ux.dashboard.moveUp', { title: t(def.titleKey) })}>
+                    <button id={`dw-up-${item.id}`} type="button" className="grid size-8 place-items-center rounded-md text-muted transition hover:bg-sunken hover:text-ink disabled:opacity-30" disabled={idx === 0} onClick={() => shift(item.id, -1)} aria-label={t('ux.dashboard.moveUp', { title: t(def.titleKey) })}>
                       <ArrowUp className="size-4" aria-hidden />
                     </button>
-                    <button id={`dw-down-${item.id}`} type="button" className="grid size-8 place-items-center rounded-md text-muted transition hover:bg-surface hover:text-navy-900 disabled:opacity-30" disabled={idx === visible.length - 1} onClick={() => shift(item.id, 1)} aria-label={t('ux.dashboard.moveDown', { title: t(def.titleKey) })}>
+                    <button id={`dw-down-${item.id}`} type="button" className="grid size-8 place-items-center rounded-md text-muted transition hover:bg-sunken hover:text-ink disabled:opacity-30" disabled={idx === visible.length - 1} onClick={() => shift(item.id, 1)} aria-label={t('ux.dashboard.moveDown', { title: t(def.titleKey) })}>
                       <ArrowDown className="size-4" aria-hidden />
                     </button>
-                    <button type="button" className="grid size-8 place-items-center rounded-md text-muted transition hover:bg-red-50 hover:text-danger" onClick={() => setHidden(item.id, true)} aria-label={t('ux.dashboard.hide', { title: t(def.titleKey) })}>
+                    <button type="button" className="grid size-8 place-items-center rounded-md text-muted transition hover:bg-danger-bg hover:text-danger-fg" onClick={() => setHidden(item.id, true)} aria-label={t('ux.dashboard.hide', { title: t(def.titleKey) })}>
                       <EyeOff className="size-4" aria-hidden />
                     </button>
                   </div>

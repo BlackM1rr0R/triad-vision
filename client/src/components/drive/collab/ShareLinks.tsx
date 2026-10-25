@@ -46,7 +46,7 @@ const AccessLog = ({ link, onClose }: { link: ShareLink | null; onClose: () => v
           {q.data.map((a) => (
             <li key={a.id} className="grid gap-1 px-3 py-2 sm:grid-cols-[9rem_8rem_minmax(0,1fr)] sm:gap-3">
               <span className="text-muted">{fmtDateTime(a.createdAt)}</span>
-              <span className={clsx('font-semibold', a.action === 'BAD_PASSWORD' ? 'text-danger' : 'text-ink')}>
+              <span className={clsx('font-semibold', a.action === 'BAD_PASSWORD' ? 'text-danger-fg' : 'text-ink')}>
                 {t(`driveCollab.links.access.${a.action}`)}
                 {a.fileName ? <span className="block truncate font-normal text-muted">{a.fileName}</span> : null}
               </span>
@@ -124,21 +124,21 @@ export const ShareLinksSection = ({ item }: { item: DriveItem }) => {
       <div className="flex items-start justify-between gap-3">
         <div>
           <h3 className="flex items-center gap-1.5 text-sm font-bold text-ink">
-            <Globe className="size-4 text-brand-600" /> {t('driveCollab.links.title')}
+            <Globe className="size-4 text-link" /> {t('driveCollab.links.title')}
           </h3>
           <p className="mt-0.5 text-xs text-muted">{t('driveCollab.links.hint')}</p>
         </div>
         {!form && (
-          <button type="button" className="btn-white btn-sm shrink-0 border border-line" onClick={() => { setForm(true); setCreated(null); }}>
+          <button type="button" className="btn-secondary btn-sm shrink-0 border border-line" onClick={() => { setForm(true); setCreated(null); }}>
             <Plus className="size-3.5" /> {t('driveCollab.links.newLink')}
           </button>
         )}
       </div>
 
       {created && (
-        <div className="rounded-xl border border-emerald-300 bg-emerald-50 p-3 dark:border-emerald-500/40 dark:bg-emerald-500/10">
-          <p className="text-sm font-semibold text-emerald-900 dark:text-emerald-200">{t('driveCollab.links.createdTitle')}</p>
-          <p className="mt-0.5 text-xs text-emerald-800 dark:text-emerald-200/80">{t('driveCollab.links.onceHint')}</p>
+        <div className="rounded-xl border border-success-border bg-success-bg p-3 dark:border-emerald-500/40 dark:bg-emerald-500/10">
+          <p className="text-sm font-semibold text-success-fg dark:text-emerald-200">{t('driveCollab.links.createdTitle')}</p>
+          <p className="mt-0.5 text-xs text-success-fg dark:text-emerald-200/80">{t('driveCollab.links.onceHint')}</p>
           <div className="mt-2 flex gap-2">
             <input readOnly value={created} onFocus={(e) => e.target.select()} className="input !py-1.5 font-mono !text-xs" aria-label="URL" />
             <button
@@ -157,7 +157,7 @@ export const ShareLinksSection = ({ item }: { item: DriveItem }) => {
             </button>
           </div>
           <div className="mt-2 text-right">
-            <button type="button" className="text-xs font-semibold text-emerald-800 hover:underline dark:text-emerald-200" onClick={() => setCreated(null)}>
+            <button type="button" className="text-xs font-semibold text-success-fg hover:underline dark:text-emerald-200" onClick={() => setCreated(null)}>
               {t('driveCollab.links.done')}
             </button>
           </div>
@@ -174,11 +174,11 @@ export const ShareLinksSection = ({ item }: { item: DriveItem }) => {
             <span className="text-xs font-semibold text-muted">{t('driveCollab.links.expiry')}</span>
             <div className="mt-1 flex flex-wrap gap-1.5">
               {DAY_CHOICES.map((d) => (
-                <button key={d} type="button" onClick={() => setDays(d)} aria-pressed={days === d} className={clsx('rounded-lg border px-2.5 py-1 text-xs font-semibold', days === d ? 'border-brand-500 bg-brand-50 text-brand-700 dark:bg-brand-500/15 dark:text-brand-200' : 'border-line text-ink hover:bg-surface')}>
+                <button key={d} type="button" onClick={() => setDays(d)} aria-pressed={days === d} className={clsx('rounded-lg border px-2.5 py-1 text-xs font-semibold', days === d ? 'border-primary bg-primary/[0.06] text-link dark:bg-brand-500/15 dark:text-brand-200' : 'border-line text-ink hover:bg-sunken')}>
                   {t('driveCollab.links.days', { count: d })}
                 </button>
               ))}
-              <button type="button" onClick={() => setDays('custom')} aria-pressed={days === 'custom'} className={clsx('rounded-lg border px-2.5 py-1 text-xs font-semibold', days === 'custom' ? 'border-brand-500 bg-brand-50 text-brand-700 dark:bg-brand-500/15 dark:text-brand-200' : 'border-line text-ink hover:bg-surface')}>
+              <button type="button" onClick={() => setDays('custom')} aria-pressed={days === 'custom'} className={clsx('rounded-lg border px-2.5 py-1 text-xs font-semibold', days === 'custom' ? 'border-primary bg-primary/[0.06] text-link dark:bg-brand-500/15 dark:text-brand-200' : 'border-line text-ink hover:bg-sunken')}>
                 {t('driveCollab.links.customDate')}
               </button>
               {days === 'custom' && <input type="date" value={date} min={minDate} max={maxDate} onChange={(e) => setDate(e.target.value)} className="input !w-auto !py-1 !text-xs" />}
@@ -196,7 +196,7 @@ export const ShareLinksSection = ({ item }: { item: DriveItem }) => {
           </div>
           {item.kind === 'FOLDER' && (
             <label className="flex cursor-pointer items-start gap-2.5">
-              <input type="checkbox" className="mt-0.5 size-4 accent-brand-600" checked={allowUpload} onChange={(e) => setAllowUpload(e.target.checked)} />
+              <input type="checkbox" className="mt-0.5 size-4 accent-primary" checked={allowUpload} onChange={(e) => setAllowUpload(e.target.checked)} />
               <span>
                 <span className="block text-sm font-semibold text-ink">{t('driveCollab.links.allowUpload')}</span>
                 <span className="block text-xs text-muted">{t('driveCollab.links.allowUploadHint')}</span>
@@ -245,11 +245,11 @@ export const ShareLinksSection = ({ item }: { item: DriveItem }) => {
                 {l.createdBy && <span>{t('driveCollab.links.by', { name: `${l.createdBy.firstName} ${l.createdBy.lastName}` })}</span>}
               </div>
               <div className="mt-1.5 flex gap-3 text-xs font-semibold">
-                <button type="button" onClick={() => setLogFor(l)} className="inline-flex items-center gap-1 text-brand-600 hover:underline">
+                <button type="button" onClick={() => setLogFor(l)} className="inline-flex items-center gap-1 text-link hover:underline">
                   <ListTree className="size-3.5" /> {t('driveCollab.links.log')} ({l.accessCount})
                 </button>
                 {l.status !== 'revoked' && (
-                  <button type="button" onClick={() => window.confirm(t('driveCollab.links.revokeConfirm')) && revoke.mutate(l.id)} className="inline-flex items-center gap-1 text-danger hover:underline">
+                  <button type="button" onClick={() => window.confirm(t('driveCollab.links.revokeConfirm')) && revoke.mutate(l.id)} className="inline-flex items-center gap-1 text-danger-fg hover:underline">
                     <X className="size-3.5" /> {t('driveCollab.links.revoke')}
                   </button>
                 )}

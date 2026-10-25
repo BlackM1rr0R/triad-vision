@@ -153,7 +153,7 @@ export const LanguageSwitcher = ({ light = false, variant = 'pill', compact = fa
         className={clsx(
           'flex items-center gap-1.5 text-xs font-bold whitespace-nowrap transition',
           variant === 'pill' && (compact ? 'h-10 rounded-lg border px-1.5' : 'h-10 rounded-lg border px-2 min-[400px]:px-2.5'),
-          variant === 'pill' && (light ? 'border-white/25 text-white hover:bg-white/10' : 'border-line text-navy-900 hover:border-brand-400'),
+          variant === 'pill' && (light ? 'border-white/25 text-white hover:bg-white/10' : 'border-line text-ink hover:border-primary'),
           variant === 'bar' && 'h-8 rounded px-1.5 text-white/80 hover:text-white',
         )}
         aria-haspopup="listbox"
@@ -177,7 +177,7 @@ export const LanguageSwitcher = ({ light = false, variant = 'pill', compact = fa
               exit={{ opacity: 0, y: pos.up ? 6 : -6, scale: 0.97 }}
               transition={{ duration: 0.16 }}
               style={{ left: pos.left, top: pos.top, bottom: pos.bottom, width: LIST_W, maxHeight: 'calc(100dvh - 16px)' }}
-              className={clsx('fixed z-[200] overflow-y-auto rounded-xl border border-line bg-white p-1 shadow-2xl', pos.up ? 'origin-bottom' : 'origin-top')}
+              className={clsx('fixed z-[200] overflow-y-auto rounded-xl border border-line bg-card p-1 shadow-2xl', pos.up ? 'origin-bottom' : 'origin-top')}
             >
               {choices.map((l) => (
                 <li key={l}>
@@ -190,8 +190,8 @@ export const LanguageSwitcher = ({ light = false, variant = 'pill', compact = fa
                       switchLanguage(l);
                     }}
                     className={clsx(
-                      'flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm transition outline-none focus-visible:ring-2 focus-visible:ring-brand-500',
-                      l === current ? 'bg-brand-50 font-semibold text-brand-700' : 'text-navy-900 hover:bg-surface focus-visible:bg-surface',
+                      'flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm transition outline-none focus-visible:ring-2 focus-visible:ring-focus/40',
+                      l === current ? 'bg-sunken font-semibold text-link' : 'text-ink hover:bg-sunken focus-visible:bg-sunken',
                     )}
                   >
                     <Flag code={l} className="w-6" />

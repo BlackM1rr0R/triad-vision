@@ -84,23 +84,23 @@ export const CalendarSubscribe = ({ className }: { className?: string }) => {
   return (
     <section className={clsx('card card-pad', className)} aria-labelledby="calendar-subscribe-title">
       <div className="flex items-start gap-3">
-        <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-brand-50 text-brand-600" aria-hidden>
+        <span className="grid size-10 shrink-0 place-items-center rounded-xl chip-soft" aria-hidden>
           <CalendarPlus className="size-5" />
         </span>
         <div className="min-w-0">
-          <h2 id="calendar-subscribe-title" className="text-base font-bold text-navy-900">{t('prep.calendar.title')}</h2>
+          <h2 id="calendar-subscribe-title" className="text-base font-semibold text-ink">{t('prep.calendar.title')}</h2>
           <p className="mt-1 text-sm text-muted">{t('prep.calendar.intro')}</p>
         </div>
       </div>
 
       <div className="mt-5">
         {feed.isLoading ? (
-          <Spinner className="size-5 text-brand-600" />
+          <Spinner className="size-5 text-primary" />
         ) : url ? (
           <div className="space-y-4">
             <div>
               <span className="label">{t('prep.calendar.linkLabel')}</span>
-              <code className="block rounded-lg border border-line bg-surface px-3 py-2 font-mono text-xs break-all text-ink">{url}</code>
+              <code className="block rounded-lg border border-line bg-sunken px-3 py-2 font-mono text-xs break-all text-ink">{url}</code>
             </div>
             <div className="flex flex-wrap gap-2">
               <a href={webcal(url)} className="btn-primary btn-sm">
@@ -116,12 +116,12 @@ export const CalendarSubscribe = ({ className }: { className?: string }) => {
                 <Power className="size-3.5" aria-hidden /> {t('prep.calendar.turnOff')}
               </button>
             </div>
-            <div className="rounded-xl bg-surface p-4 text-sm text-ink/85">
-              <p className="mb-2 font-semibold text-navy-900">{t('prep.calendar.howTitle')}</p>
+            <div className="rounded-xl bg-sunken p-4 text-sm text-ink/85">
+              <p className="mb-2 font-semibold text-ink">{t('prep.calendar.howTitle')}</p>
               <ul className="space-y-2">
-                <li className="flex gap-2"><Smartphone className="mt-0.5 size-4 shrink-0 text-brand-600" aria-hidden /> <span>{t('prep.calendar.iphone')}</span></li>
-                <li className="flex gap-2"><Smartphone className="mt-0.5 size-4 shrink-0 text-brand-600" aria-hidden /> <span>{t('prep.calendar.android')}</span></li>
-                <li className="flex gap-2"><Laptop className="mt-0.5 size-4 shrink-0 text-brand-600" aria-hidden /> <span>{t('prep.calendar.outlook')}</span></li>
+                <li className="flex gap-2"><Smartphone className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden /> <span>{t('prep.calendar.iphone')}</span></li>
+                <li className="flex gap-2"><Smartphone className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden /> <span>{t('prep.calendar.android')}</span></li>
+                <li className="flex gap-2"><Laptop className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden /> <span>{t('prep.calendar.outlook')}</span></li>
               </ul>
               <p className="mt-3 text-xs text-muted">{t('prep.calendar.refresh')}</p>
             </div>

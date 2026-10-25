@@ -2,11 +2,12 @@ import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useQueryClient } from '@tanstack/react-query';
-import { CircleAlert, CircleCheck, MailCheck } from 'lucide-react';
+import { MailCheck } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { Spinner } from '@/components/ui/Spinner';
+import { Lost, Success } from '@/components/illustrations';
 import { ResendVerificationButton } from '@/components/auth/VerifyBanner';
 import { registerCopy } from '@/i18n';
 import { pagesLegal } from '@/i18n/pagesLegal';
@@ -63,28 +64,24 @@ export default function VerifyEmail() {
       <div className="text-center" role="status" aria-live="polite">
         {state === 'verifying' && (
           <div className="flex flex-col items-center gap-4 py-6">
-            <Spinner className="size-8 text-brand-600" />
+            <Spinner className="size-8 text-primary" />
             <p className="text-muted">{t('verifyEmail.verifying')}</p>
           </div>
         )}
         {state === 'ok' && (
           <div className="flex flex-col items-center gap-3 py-4">
-            <span className="grid size-16 place-items-center rounded-full bg-success/10 text-success">
-              <CircleCheck className="size-8" aria-hidden />
-            </span>
-            <h2 className="font-display text-xl font-bold text-navy-900">{t('verifyEmail.successTitle')}</h2>
+            <Success className="w-36" />
+            <h2 className="mt-2 font-display text-xl font-semibold text-ink">{t('verifyEmail.successTitle')}</h2>
             <p className="max-w-sm text-muted">{t('verifyEmail.successText')}</p>
-            <Link to={home} className="btn-primary mt-3">
+            <Link to={home} className="btn-primary btn-lg mt-3">
               <MailCheck className="size-4" aria-hidden /> {user ? t('verifyEmail.toAccount') : t('verifyEmail.toLogin')}
             </Link>
           </div>
         )}
         {(state === 'failed' || state === 'missing') && (
           <div className="flex flex-col items-center gap-3 py-4">
-            <span className="grid size-16 place-items-center rounded-full bg-danger/10 text-danger">
-              <CircleAlert className="size-8" aria-hidden />
-            </span>
-            <h2 className="font-display text-xl font-bold text-navy-900">{t('verifyEmail.failedTitle')}</h2>
+            <Lost className="w-40" />
+            <h2 className="mt-2 font-display text-xl font-semibold text-ink">{t('verifyEmail.failedTitle')}</h2>
             <p className="max-w-sm text-muted">{state === 'missing' ? t('verifyEmail.missingToken') : t('verifyEmail.failedText')}</p>
             <div className="mt-3 flex flex-wrap justify-center gap-2">
               {user ? (

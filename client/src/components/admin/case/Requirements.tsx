@@ -28,10 +28,10 @@ import { PHOTO_KEYS, PhotoCheckBadge, photoCheckOf } from '@/components/uploadAi
 type Stage = 'INITIAL' | 'EMBASSY';
 
 const reqState = (r: Requirement): { key: 'accepted' | 'review' | 'rejected' | 'missing'; tone: string } => {
-  if (isAccepted(r)) return { key: 'accepted', tone: 'bg-emerald-100 text-emerald-800' };
-  if (r.documents.some((d) => d.status === 'PENDING')) return { key: 'review', tone: 'bg-amber-100 text-amber-800' };
-  if (r.documents.length > 0) return { key: 'rejected', tone: 'bg-red-100 text-red-700' };
-  return { key: 'missing', tone: 'bg-slate-100 text-slate-600' };
+  if (isAccepted(r)) return { key: 'accepted', tone: 'bg-success-bg text-success-fg' };
+  if (r.documents.some((d) => d.status === 'PENDING')) return { key: 'review', tone: 'bg-warning-bg text-warning-fg' };
+  if (r.documents.length > 0) return { key: 'rejected', tone: 'bg-danger-bg text-danger-fg' };
+  return { key: 'missing', tone: 'bg-sunken text-muted' };
 };
 
 // ─── Document row with review controls ─────────────────────────────────
@@ -76,10 +76,10 @@ const DocRow = ({ c, doc, requirementKey }: { c: CaseDetail; doc: CaseDocument; 
   };
 
   return (
-    <li className="rounded-lg border border-line bg-white">
+    <li className="rounded-lg border border-line bg-card">
       <div className="flex flex-wrap items-center gap-x-3 gap-y-2 px-3 py-2.5">
         <div className="flex min-w-0 flex-[1_1_13rem] items-center gap-3">
-          <DocIcon mime={doc.mimeType} className="size-4 shrink-0 text-brand-600" />
+          <DocIcon mime={doc.mimeType} className="size-4 shrink-0 text-link" />
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-medium text-ink" title={doc.originalName}>
               {doc.originalName}
@@ -100,7 +100,7 @@ const DocRow = ({ c, doc, requirementKey }: { c: CaseDetail; doc: CaseDocument; 
             <button
               type="button"
               onClick={() => setAskDelete(true)}
-              className="grid size-8 place-items-center rounded-lg text-muted hover:bg-red-50 hover:text-danger"
+              className="grid size-8 place-items-center rounded-lg text-muted hover:bg-danger-bg hover:text-danger-fg"
               aria-label={`${t('admin.case.req.deleteDoc')}: ${doc.originalName}`}
               title={t('admin.case.req.deleteDoc')}
             >
@@ -121,7 +121,7 @@ const DocRow = ({ c, doc, requirementKey }: { c: CaseDetail; doc: CaseDocument; 
             {doc.status !== 'ACCEPTED' && (
               <button
                 type="button"
-                className="inline-flex min-h-9 items-center gap-1 rounded-md border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-semibold whitespace-nowrap text-emerald-800 lg:min-h-8 transition hover:bg-emerald-100 disabled:opacity-50"
+                className="inline-flex min-h-9 items-center gap-1 rounded-md border border-success-border bg-success-bg px-2.5 py-1 text-xs font-semibold whitespace-nowrap text-success-fg lg:min-h-8 transition hover:bg-success-bg disabled:opacity-50"
                 onClick={() => review('ACCEPTED')}
                 disabled={!!busy}
               >
@@ -132,7 +132,7 @@ const DocRow = ({ c, doc, requirementKey }: { c: CaseDetail; doc: CaseDocument; 
               <button
                 type="button"
                 aria-expanded={rejecting}
-                className="inline-flex min-h-9 items-center gap-1 rounded-md border border-red-200 bg-red-50 px-2.5 py-1 text-xs font-semibold whitespace-nowrap text-red-700 lg:min-h-8 transition hover:bg-red-100 disabled:opacity-50"
+                className="inline-flex min-h-9 items-center gap-1 rounded-md border border-danger-border bg-danger-bg px-2.5 py-1 text-xs font-semibold whitespace-nowrap text-danger-fg lg:min-h-8 transition hover:bg-danger-bg disabled:opacity-50"
                 onClick={() => setRejecting((v) => !v)}
                 disabled={!!busy}
               >
@@ -143,7 +143,7 @@ const DocRow = ({ c, doc, requirementKey }: { c: CaseDetail; doc: CaseDocument; 
         </div>
       </div>
       {doc.status === 'REJECTED' && doc.reviewNote && (
-        <p className="border-t border-line bg-red-50/50 px-3 py-1.5 text-xs text-red-800">
+        <p className="border-t border-line bg-danger-bg/50 px-3 py-1.5 text-xs text-danger-fg">
           <span className="font-semibold">{t('admin.case.req.rejectReason')}</span> {doc.reviewNote}
         </p>
       )}
@@ -152,13 +152,13 @@ const DocRow = ({ c, doc, requirementKey }: { c: CaseDetail; doc: CaseDocument; 
         {rejecting && (
           <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
             <form
-              className="space-y-2 border-t border-line bg-red-50/40 px-3 py-2.5"
+              className="space-y-2 border-t border-line bg-danger-bg/40 px-3 py-2.5"
               onSubmit={(e) => {
                 e.preventDefault();
                 if (note.trim()) void review('REJECTED');
               }}
             >
-              <label htmlFor={`rej-${doc.id}`} className="label text-red-800">
+              <label htmlFor={`rej-${doc.id}`} className="label text-danger-fg">
                 {t('admin.case.req.rejectReasonLabel')}
               </label>
               <textarea
@@ -174,7 +174,7 @@ const DocRow = ({ c, doc, requirementKey }: { c: CaseDetail; doc: CaseDocument; 
                 <button type="submit" className="btn-danger btn-sm" disabled={!note.trim() || !!busy}>
                   {busy === 'REJECTED' && <Spinner className="size-3" />} {t('admin.case.req.reject')}
                 </button>
-                <button type="button" className="btn-white btn-sm border border-line" onClick={() => setRejecting(false)}>
+                <button type="button" className="btn-secondary btn-sm" onClick={() => setRejecting(false)}>
                   {t('admin.common.close')}
                 </button>
               </div>
@@ -243,12 +243,12 @@ const RequirementCard = ({ c, r }: { c: CaseDetail; r: Requirement }) => {
     <motion.li layout="position" className="rounded-xl border border-line bg-surface/40 p-3 sm:p-4">
       <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-1">
         <div className="min-w-0 flex-[1_1_14rem] pt-1">
-          <p className="flex flex-wrap items-center gap-1.5 text-sm font-semibold text-navy-900">
+          <p className="flex flex-wrap items-center gap-1.5 text-sm font-semibold text-ink">
             {tr(r.title)}
             {r.required ? (
-              <span className="badge bg-navy-900/90 text-[10px] whitespace-nowrap text-white">{t('admin.case.req.required')}</span>
+              <span className="badge bg-primary text-[10px] whitespace-nowrap text-primary-contrast">{t('admin.case.req.required')}</span>
             ) : (
-              <span className="badge bg-slate-100 text-[10px] whitespace-nowrap text-slate-600">{t('admin.case.req.optional')}</span>
+              <span className="badge bg-sunken text-[10px] whitespace-nowrap text-muted">{t('admin.case.req.optional')}</span>
             )}
             <span className={clsx('badge text-[10px] whitespace-nowrap', state.tone)}>{t(`admin.case.req.state.${state.key}`)}</span>
           </p>
@@ -273,7 +273,7 @@ const RequirementCard = ({ c, r }: { c: CaseDetail; r: Requirement }) => {
           />
           <button
             type="button"
-            className="grid size-10 place-items-center rounded-lg text-muted transition hover:bg-white hover:text-brand-700 lg:size-8"
+            className="grid size-10 place-items-center rounded-lg text-muted transition hover:bg-card hover:text-link lg:size-8"
             onClick={() => fileRef.current?.click()}
             disabled={uploading}
             title={t('admin.case.req.uploadForClientTitle')}
@@ -283,7 +283,7 @@ const RequirementCard = ({ c, r }: { c: CaseDetail; r: Requirement }) => {
           </button>
           <button
             type="button"
-            className="grid size-10 place-items-center rounded-lg text-muted transition hover:bg-white hover:text-danger disabled:cursor-not-allowed disabled:opacity-40 lg:size-8"
+            className="grid size-10 place-items-center rounded-lg text-muted transition hover:bg-card hover:text-danger-fg disabled:cursor-not-allowed disabled:opacity-40 lg:size-8"
             onClick={() => setConfirmDelete(true)}
             disabled={r.documents.length > 0}
             title={r.documents.length > 0 ? t('admin.case.req.cantDeleteWithDocs') : t('admin.case.req.deleteReq')}
@@ -359,7 +359,7 @@ const AddRequirementModal = ({ c, stage, open, onClose }: { c: CaseDetail; stage
       description={t('admin.case.req.addReqDesc')}
       footer={
         <>
-          <button type="button" className="btn-white btn-sm border border-line" onClick={onClose}>
+          <button type="button" className="btn-secondary btn-sm" onClick={onClose}>
             {t('admin.common.cancel')}
           </button>
           <button type="submit" form="add-req-form" className="btn-primary btn-sm" disabled={!hasTitle || busy}>
@@ -379,7 +379,7 @@ const AddRequirementModal = ({ c, stage, open, onClose }: { c: CaseDetail; stage
         <L10nInput label={t('admin.case.req.titleLabel')} value={title} onChange={setTitle} required anyLang hint={t('admin.l10n.anyLangHint')} />
         <L10nInput label={t('admin.case.req.descOptional')} value={description} onChange={setDescription} multiline rows={2} anyLang />
         <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-line px-3.5 py-3 text-sm">
-          <input type="checkbox" checked={required} onChange={(e) => setRequired(e.target.checked)} className="mt-0.5 size-4 shrink-0 accent-brand-600" />
+          <input type="checkbox" checked={required} onChange={(e) => setRequired(e.target.checked)} className="mt-0.5 size-4 shrink-0 accent-primary" />
           {t('admin.case.req.requiredCheckbox')}
         </label>
       </form>
@@ -426,7 +426,7 @@ export const RequirementsSection = ({ c, stage }: { c: CaseDetail; stage: Stage 
             <span
               className={clsx(
                 'badge ml-1 tabular-nums',
-                acceptedRequired === required.length ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-600',
+                acceptedRequired === required.length ? 'bg-success-bg text-success-fg' : 'bg-sunken text-muted',
               )}
               title={t('admin.case.req.acceptedRequiredTitle')}
             >
@@ -440,11 +440,11 @@ export const RequirementsSection = ({ c, stage }: { c: CaseDetail; stage: Stage 
         <>
           {stage === 'INITIAL' && <CaseAcceptAllBar caseId={c.id} onChanged={refresh} />}
           {pending.length > 0 && (
-            <button type="button" className="btn-white btn-sm border border-emerald-200 text-emerald-800" onClick={() => setBulkOpen(true)}>
+            <button type="button" className="btn-secondary btn-sm border border-success-border text-success-fg" onClick={() => setBulkOpen(true)}>
               <CheckCheck className="size-3.5" /> {t('admin.case.req.acceptAll', { count: pending.length })}
             </button>
           )}
-          <button type="button" className="btn-white btn-sm border border-line" onClick={() => setAdding(true)}>
+          <button type="button" className="btn-secondary btn-sm" onClick={() => setAdding(true)}>
             <Plus className="size-3.5" /> {t('admin.case.req.addReq')}
           </button>
         </>

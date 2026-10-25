@@ -15,7 +15,7 @@ export const StatusLine = ({ p, now }: { p: PresenceRow; now: number }) => {
   const { t } = useTranslation();
   if (p.onLeave) {
     return (
-      <span className="inline-flex items-center gap-1 text-xs text-amber-700">
+      <span className="inline-flex items-center gap-1 text-xs text-warning-fg">
         <Palmtree className="size-3" aria-hidden /> {t('ws.presence.onLeaveUntil', { type: t(`ws.leave.types.${p.onLeave.type}`), date: fmtUtcDay(p.onLeave.until) })}
       </span>
     );
@@ -35,7 +35,7 @@ export const StatusLine = ({ p, now }: { p: PresenceRow; now: number }) => {
 export const PersonCard = ({ p, now, me }: { p: PresenceRow; now: number; me: boolean }) => {
   const { t } = useTranslation();
   return (
-    <article className="flex items-start gap-3 rounded-xl border border-line bg-card p-3 transition hover:border-brand-300">
+    <article className="flex items-start gap-3 rounded-xl border border-line bg-card p-3 transition hover:border-line-strong">
       <span className="relative shrink-0">
         <Avatar id={p.id} person={p} size="lg" />
         <PresenceDot online={p.online} className="absolute -right-0.5 -bottom-0.5 size-3" />
@@ -57,10 +57,10 @@ export const PersonCard = ({ p, now, me }: { p: PresenceRow; now: number; me: bo
       </div>
       {!me && (
         <div className="flex shrink-0 flex-col gap-0.5 sm:flex-row">
-          <Link to={`/workspace/chat?dm=${p.id}`} title={t('ws.team.chat')} aria-label={t('ws.team.chat')} className="grid size-8 place-items-center rounded-lg text-muted hover:bg-brand-50 hover:text-brand-700">
+          <Link to={`/workspace/chat?dm=${p.id}`} title={t('ws.team.chat')} aria-label={t('ws.team.chat')} className="grid size-8 place-items-center rounded-lg text-muted hover:bg-primary/[0.06] hover:text-link">
             <MessageSquare className="size-4" />
           </Link>
-          <Link to={`/workspace/mail?compose=${encodeURIComponent(p.email)}`} title={t('ws.team.email')} aria-label={t('ws.team.email')} className="grid size-8 place-items-center rounded-lg text-muted hover:bg-brand-50 hover:text-brand-700">
+          <Link to={`/workspace/mail?compose=${encodeURIComponent(p.email)}`} title={t('ws.team.email')} aria-label={t('ws.team.email')} className="grid size-8 place-items-center rounded-lg text-muted hover:bg-primary/[0.06] hover:text-link">
             <Mail className="size-4" />
           </Link>
         </div>
@@ -85,7 +85,7 @@ export const PresenceStrip = ({ people, now, loading }: { people: PresenceRow[] 
         </>
       }
       actions={
-        <Link to="/workspace/team" className="text-xs font-semibold text-brand-600 hover:underline">
+        <Link to="/workspace/team" className="text-xs font-semibold text-link hover:underline">
           {t('ws.home.presence.open')}
         </Link>
       }
@@ -96,7 +96,7 @@ export const PresenceStrip = ({ people, now, loading }: { people: PresenceRow[] 
       ) : (
         <ul className="flex flex-wrap gap-2">
           {[...people].sort((a, b) => Number(b.online) - Number(a.online)).map((p) => (
-            <li key={p.id} className="flex max-w-full items-center gap-2 rounded-full border border-line bg-surface py-1 pr-3 pl-1" title={p.online ? t('ws.presence.online') : t('ws.presence.lastSeen', { when: relativeTime(p.lastSeenAt, now) })}>
+            <li key={p.id} className="flex max-w-full items-center gap-2 rounded-full border border-line bg-sunken py-1 pr-3 pl-1" title={p.online ? t('ws.presence.online') : t('ws.presence.lastSeen', { when: relativeTime(p.lastSeenAt, now) })}>
               <span className="relative">
                 <Avatar id={p.id} person={p} size="sm" />
                 <PresenceDot online={p.online} className="absolute -right-0.5 -bottom-0.5 size-2.5" />
@@ -175,11 +175,11 @@ export const StatusEditor = ({ me }: { me: PresenceRow | undefined }) => {
         <div className="flex items-center gap-2">
           {user && <Avatar id={user.id} person={user} />}
           <div className="relative">
-            <button type="button" onClick={() => setPickerOpen((o) => !o)} aria-label={t('ws.status.emoji')} aria-expanded={pickerOpen} className="grid size-10 place-items-center rounded-lg border border-line bg-surface text-lg hover:border-brand-400">
+            <button type="button" onClick={() => setPickerOpen((o) => !o)} aria-label={t('ws.status.emoji')} aria-expanded={pickerOpen} className="grid size-10 place-items-center rounded-lg border border-line bg-sunken text-lg hover:border-line-strong">
               {emoji ?? <Smile className="size-5 text-muted" />}
             </button>
             {pickerOpen && (
-              <div className="absolute top-11 left-0 z-20 grid w-56 grid-cols-8 gap-0.5 rounded-xl border border-line bg-card p-1.5 shadow-xl" role="listbox" aria-label={t('ws.status.emoji')}>
+              <div className="absolute top-11 left-0 z-20 grid w-56 grid-cols-8 gap-0.5 rounded-xl border border-line bg-card p-1.5 shadow-[var(--tv-shadow-raised)]" role="listbox" aria-label={t('ws.status.emoji')}>
                 {EMOJIS.map((e) => (
                   <button
                     key={e}
@@ -191,7 +191,7 @@ export const StatusEditor = ({ me }: { me: PresenceRow | undefined }) => {
                       setTouched(true);
                       setPickerOpen(false);
                     }}
-                    className={clsx('grid size-6 place-items-center rounded text-base hover:bg-surface', emoji === e && 'bg-brand-100')}
+                    className={clsx('grid size-6 place-items-center rounded text-base hover:bg-sunken', emoji === e && 'bg-primary/10')}
                   >
                     {e}
                   </button>
@@ -203,7 +203,7 @@ export const StatusEditor = ({ me }: { me: PresenceRow | undefined }) => {
                     setTouched(true);
                     setPickerOpen(false);
                   }}
-                  className="grid size-6 place-items-center rounded text-muted hover:bg-surface"
+                  className="grid size-6 place-items-center rounded text-muted hover:bg-sunken"
                   aria-label={t('ws.status.clear')}
                 >
                   <X className="size-3.5" />
@@ -225,16 +225,16 @@ export const StatusEditor = ({ me }: { me: PresenceRow | undefined }) => {
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-xs font-semibold text-muted">{t('ws.status.clearAfter')}:</span>
-          <div className="flex rounded-lg border border-line bg-surface p-0.5">
+          <div className="flex rounded-lg border border-line bg-sunken p-0.5">
             {(['m30', 'h1', 'today', 'none'] as Preset[]).map((p) => (
-              <button key={p} type="button" aria-pressed={preset === p} onClick={() => setPreset(p)} className={clsx('rounded-md px-2.5 py-1 text-xs font-semibold', preset === p ? 'bg-card text-ink shadow-sm ring-1 ring-line' : 'text-muted hover:text-ink')}>
+              <button key={p} type="button" aria-pressed={preset === p} onClick={() => setPreset(p)} className={clsx('rounded-md px-2.5 py-1 text-xs font-semibold', preset === p ? 'bg-card text-ink shadow-[var(--tv-shadow-card)] ring-1 ring-line' : 'text-muted hover:text-ink')}>
                 {t(`ws.status.presets.${p}`)}
               </button>
             ))}
           </div>
           <div className="ml-auto flex items-center gap-2">
             {hasStatus && (
-              <button type="button" onClick={() => void save(true)} disabled={busy} className="btn-white btn-sm h-8 border border-line px-3">
+              <button type="button" onClick={() => void save(true)} disabled={busy} className="btn-secondary btn-sm h-8 border border-line px-3">
                 {t('ws.status.clear')}
               </button>
             )}

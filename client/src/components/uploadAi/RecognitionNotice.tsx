@@ -101,7 +101,7 @@ export const RecognitionNotice = ({
         </p>
       )}
       {wrong && (
-        <div className="rounded-md border border-amber-200 bg-amber-50 px-2.5 py-2 text-xs text-amber-900 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-100">
+        <div className="rounded-md border border-warning-border bg-warning-bg px-2.5 py-2 text-xs text-warning-fg">
           <p className="flex items-start gap-1.5 font-medium">
             <FileSearch className="mt-0.5 size-3.5 shrink-0" aria-hidden />
             {type && insight.expectedType

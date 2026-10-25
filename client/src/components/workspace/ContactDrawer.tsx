@@ -99,7 +99,7 @@ export const ContactDrawer = ({ id, onClose, onDeleted }: { id: string | null; o
           animate={{ x: 0, opacity: 1 }}
           exit={{ x: 40, opacity: 0 }}
           transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
-          className="absolute inset-y-0 right-0 z-30 flex w-full max-w-xl flex-col border-l border-line bg-card shadow-2xl"
+          className="absolute inset-y-0 right-0 z-30 flex w-full max-w-xl flex-col border-l border-line bg-card shadow-[var(--tv-shadow-raised)]"
           aria-label={c ? fullName(c) : t('ws.contacts.title')}
         >
           <header className="flex items-center justify-between gap-2 border-b border-line px-4 py-3">
@@ -136,16 +136,16 @@ export const ContactDrawer = ({ id, onClose, onDeleted }: { id: string | null; o
                 </Link>
               )}
               {isStaffUser && q.data?.user && (
-                <Link to={`/workspace/chat?dm=${q.data.user.id}`} className="btn-white btn-sm h-8 border border-line px-3">
+                <Link to={`/workspace/chat?dm=${q.data.user.id}`} className="btn-secondary btn-sm h-8 border border-line px-3">
                   <MessageSquare className="size-4" /> {t('ws.contacts.actions.startChat')}
                 </Link>
               )}
               {c.phone && (
-                <a href={`tel:${c.phone.replace(/\s+/g, '')}`} className="btn-white btn-sm h-8 border border-line px-3">
+                <a href={`tel:${c.phone.replace(/\s+/g, '')}`} className="btn-secondary btn-sm h-8 border border-line px-3">
                   <Phone className="size-4" /> {t('ws.contacts.actions.call')}
                 </a>
               )}
-              <button type="button" onClick={() => downloadVCard(c)} className="btn-white btn-sm h-8 border border-line px-3">
+              <button type="button" onClick={() => downloadVCard(c)} className="btn-secondary btn-sm h-8 border border-line px-3">
                 <Download className="size-4" /> {t('ws.contacts.actions.vcard')}
               </button>
             </div>
@@ -181,7 +181,7 @@ export const ContactDrawer = ({ id, onClose, onDeleted }: { id: string | null; o
                 {(c.email || c.emails.length > 0) && (
                   <Row icon={Mail} label={t('ws.contacts.fields.email')}>
                     {c.email && (
-                      <a href={`mailto:${c.email}`} className="text-brand-600 hover:underline">
+                      <a href={`mailto:${c.email}`} className="text-link hover:underline">
                         {c.email}
                       </a>
                     )}
@@ -201,7 +201,7 @@ export const ContactDrawer = ({ id, onClose, onDeleted }: { id: string | null; o
                   <Row icon={Building2} label={t('ws.contacts.fields.company')}>
                     {c.company}
                     {q.data?.companyRef && (
-                      <Link to={`/admin/companies/${q.data.companyRef.id}`} className="ml-2 text-xs font-semibold text-brand-600 hover:underline">
+                      <Link to={`/admin/companies/${q.data.companyRef.id}`} className="ml-2 text-xs font-semibold text-link hover:underline">
                         {t('ws.common.openIn')}
                       </Link>
                     )}
@@ -240,7 +240,7 @@ export const ContactDrawer = ({ id, onClose, onDeleted }: { id: string | null; o
                     <span>
                       · {t('ws.contacts.fields.lastContact')}: {c.lastContactAt ? fmtDateTime(c.lastContactAt) : t('ws.common.none')}
                     </span>
-                    <button type="button" onClick={() => void touch()} className="font-semibold text-brand-600 hover:underline">
+                    <button type="button" onClick={() => void touch()} className="font-semibold text-link hover:underline">
                       {t('ws.contacts.actions.touch')}
                     </button>
                   </span>
@@ -251,7 +251,7 @@ export const ContactDrawer = ({ id, onClose, onDeleted }: { id: string | null; o
                   {q.data?.user ? (
                     <div className="space-y-2">
                       <p className="flex items-center gap-2 text-sm text-ink">
-                        <UserCheck className="size-4 text-emerald-600" aria-hidden />
+                        <UserCheck className="size-4 text-success-fg" aria-hidden />
                         {t('ws.contacts.drawer.linkedUser')}: <span className="font-semibold">{fullName(q.data.user)}</span>
                         <Chip tone="muted" className="text-[0.65rem]">
                           {q.data.user.role}
@@ -261,12 +261,12 @@ export const ContactDrawer = ({ id, onClose, onDeleted }: { id: string | null; o
                         <ul className="divide-y divide-line rounded-lg border border-line">
                           {q.data.cases.map((k) => (
                             <li key={k.id} className="flex items-center gap-3 px-3 py-2 text-sm">
-                              <span className="font-mono text-xs font-semibold text-muted">{k.number}</span>
+                              <span className="code-id text-xs font-medium text-muted">{k.number}</span>
                               <span className="min-w-0 flex-1 truncate text-ink">{k.profession}</span>
                               <Chip tone="muted" className="text-[0.65rem]">
                                 {k.status}
                               </Chip>
-                              <Link to={`/admin/cases/${k.id}`} className="text-xs font-semibold text-brand-600 hover:underline">
+                              <Link to={`/admin/cases/${k.id}`} className="text-xs font-semibold text-link hover:underline">
                                 {t('ws.contacts.drawer.openCase')}
                               </Link>
                             </li>

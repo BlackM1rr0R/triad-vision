@@ -20,30 +20,30 @@ const Row = ({ c, active, meId, online, onSelect }: { c: Channel; active: boolea
     <button
       type="button"
       onClick={onSelect}
-      className={clsx('group flex w-full items-center gap-2.5 rounded-lg px-2 py-1.5 text-left transition-colors', active ? 'bg-brand-600 text-white' : 'hover:bg-surface', c.archivedAt && 'opacity-60')}
+      className={clsx('group flex w-full items-center gap-2.5 rounded-lg px-2 py-1.5 text-left transition-colors', active ? 'bg-primary text-primary-contrast' : 'hover:bg-sunken', c.archivedAt && 'opacity-60')}
     >
       {c.kind === 'DM' ? (
         <span className="relative shrink-0">
-          <span className={clsx('inline-grid size-7 place-items-center rounded-full text-[0.6rem] font-bold', active ? 'bg-white/20 text-white' : avatarTone(c.peer?.id ?? c.id))}>{initials(c.peer)}</span>
-          {online !== undefined && <span className={clsx('absolute -right-0.5 -bottom-0.5 size-2.5 rounded-full ring-2', online ? 'bg-success' : 'bg-slate-300', active ? 'ring-brand-600' : 'ring-card')} />}
+          <span className={clsx('inline-grid size-7 place-items-center rounded-full text-[0.6rem] font-bold', active ? 'bg-primary-contrast/20 text-primary-contrast' : avatarTone(c.peer?.id ?? c.id))}>{initials(c.peer)}</span>
+          {online !== undefined && <span className={clsx('absolute -right-0.5 -bottom-0.5 size-2.5 rounded-full ring-2', online ? 'bg-success' : 'bg-line-strong', active ? 'ring-focus' : 'ring-card')} />}
         </span>
       ) : (
-        <span className={clsx('grid size-7 shrink-0 place-items-center rounded-lg', active ? 'bg-white/20 text-white' : 'bg-surface text-muted')}>{c.kind === 'PRIVATE' ? <Lock className="size-3.5" /> : <Hash className="size-3.5" />}</span>
+        <span className={clsx('grid size-7 shrink-0 place-items-center rounded-lg', active ? 'bg-primary-contrast/20 text-primary-contrast' : 'bg-sunken text-muted')}>{c.kind === 'PRIVATE' ? <Lock className="size-3.5" /> : <Hash className="size-3.5" />}</span>
       )}
       <span className="min-w-0 flex-1 leading-tight">
         <span className="flex items-center gap-1.5">
-          <span className={clsx('truncate text-sm', bold ? 'font-bold' : 'font-medium', active ? 'text-white' : bold ? 'text-ink' : 'text-ink/85')}>{c.name}</span>
-          {c.pinned && <Pin className={clsx('size-3 shrink-0', active ? 'text-white/80' : 'text-muted')} aria-hidden />}
-          {c.muted && <BellOff className={clsx('size-3 shrink-0', active ? 'text-white/80' : 'text-muted')} aria-hidden />}
+          <span className={clsx('truncate text-sm', bold ? 'font-bold' : 'font-medium', active ? 'text-primary-contrast' : bold ? 'text-ink' : 'text-ink/85')}>{c.name}</span>
+          {c.pinned && <Pin className={clsx('size-3 shrink-0', active ? 'text-primary-contrast/80' : 'text-muted')} aria-hidden />}
+          {c.muted && <BellOff className={clsx('size-3 shrink-0', active ? 'text-primary-contrast/80' : 'text-muted')} aria-hidden />}
         </span>
-        {preview && <span className={clsx('block truncate text-xs', active ? 'text-white/75' : bold ? 'text-ink/80' : 'text-muted')}>{preview}</span>}
+        {preview && <span className={clsx('block truncate text-xs', active ? 'text-primary-contrast/75' : bold ? 'text-ink/80' : 'text-muted')}>{preview}</span>}
       </span>
       <span className="flex shrink-0 flex-col items-end gap-0.5">
-        {c.lastMessage && <span className={clsx('text-[0.65rem]', active ? 'text-white/70' : 'text-muted')}>{fmtShort(c.lastMessage.createdAt)}</span>}
+        {c.lastMessage && <span className={clsx('text-[0.65rem]', active ? 'text-primary-contrast/70' : 'text-muted')}>{fmtShort(c.lastMessage.createdAt)}</span>}
         {c.isMember && c.mentions > 0 ? (
-          <span className={clsx('grid min-w-5 place-items-center rounded-full px-1.5 text-[0.65rem] font-bold leading-5', active ? 'bg-white text-brand-700' : 'bg-danger text-white')}>@{c.mentions}</span>
+          <span className={clsx('grid min-w-5 place-items-center rounded-full px-1.5 text-[0.65rem] font-bold leading-5', active ? 'bg-card text-link' : 'bg-danger text-white')}>@{c.mentions}</span>
         ) : c.isMember && c.unread > 0 && !c.muted ? (
-          <span className={clsx('grid min-w-5 place-items-center rounded-full px-1.5 text-[0.65rem] font-bold leading-5', active ? 'bg-white text-brand-700' : 'bg-brand-600 text-white')}>{c.unread > 99 ? '99+' : c.unread}</span>
+          <span className={clsx('grid min-w-5 place-items-center rounded-full px-1.5 text-[0.65rem] font-bold leading-5', active ? 'bg-card text-link' : 'bg-primary text-primary-contrast')}>{c.unread > 99 ? '99+' : c.unread}</span>
         ) : null}
       </span>
     </button>
@@ -58,7 +58,7 @@ const Section = ({ title, action, actionLabel, open, onToggle, children }: { tit
         {title}
       </button>
       {action && (
-        <button type="button" onClick={action} className="grid size-6 place-items-center rounded-md text-muted hover:bg-surface hover:text-ink" aria-label={actionLabel} title={actionLabel}>
+        <button type="button" onClick={action} className="grid size-6 place-items-center rounded-md text-muted hover:bg-sunken hover:text-ink" aria-label={actionLabel} title={actionLabel}>
           <Plus className="size-3.5" />
         </button>
       )}
@@ -106,12 +106,12 @@ export const Sidebar = ({
   return (
     <div className="flex h-full flex-col">
       <div className="flex items-center gap-2 border-b border-line px-3 py-2.5">
-        <h1 className="font-display text-base font-extrabold text-ink">{t('chat.title')}</h1>
+        <h1 className="font-display text-base font-semibold text-ink">{t('chat.title')}</h1>
         <div className="ml-auto flex items-center gap-1">
-          <button type="button" onClick={onNewDm} className="grid size-8 place-items-center rounded-lg text-muted hover:bg-surface hover:text-ink" aria-label={t('chat.sidebar.newDm')} title={t('chat.sidebar.newDm')}>
+          <button type="button" onClick={onNewDm} className="grid size-8 place-items-center rounded-lg text-muted hover:bg-sunken hover:text-ink" aria-label={t('chat.sidebar.newDm')} title={t('chat.sidebar.newDm')}>
             <MessageSquarePlus className="size-4" />
           </button>
-          <button type="button" onClick={onNewChannel} className="grid size-8 place-items-center rounded-lg bg-brand-600 text-white hover:bg-brand-700" aria-label={t('chat.sidebar.newChannel')} title={t('chat.sidebar.newChannel')}>
+          <button type="button" onClick={onNewChannel} className="grid size-8 place-items-center rounded-lg bg-primary text-primary-contrast hover:bg-primary" aria-label={t('chat.sidebar.newChannel')} title={t('chat.sidebar.newChannel')}>
             <Plus className="size-4" />
           </button>
         </div>

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ArrowRight, MapPin, ShieldCheck } from 'lucide-react';
 import clsx from 'clsx';
+import { buttonClass } from '@/components/ui/Button';
 import { cityCoords, makeProjection } from '@/components/about/geo';
 import { SectionHeading } from '@/components/ui/SectionHeading';
 import { registerCopy } from '@/i18n';
@@ -48,7 +49,7 @@ export const PlacementMap = ({ data, compact = false }: { data: PublicMap; compa
           {GERMAN_STATES.map((s) => (
             <g key={s.code}>
               {s.rings.map((ring, i) => (
-                <path key={i} d={proj.path(ring)} className="fill-surface stroke-brand-500/40" strokeWidth={1.2} strokeLinejoin="round">
+                <path key={i} d={proj.path(ring)} className="fill-sunken stroke-line-strong" strokeWidth={1.2} strokeLinejoin="round">
                   <title>{s.name}</title>
                 </path>
               ))}
@@ -78,8 +79,8 @@ export const PlacementMap = ({ data, compact = false }: { data: PublicMap; compa
                 onBlur={() => setActive((a) => (a === c.city ? null : a))}
                 onClick={() => setActive((a) => (a === c.city ? null : c.city))}
               >
-                <circle cx={c.x} cy={c.y} r={c.r + 4} className="fill-brand-500/15" />
-                <circle cx={c.x} cy={c.y} r={c.r} className={clsx('stroke-white', on ? 'fill-brand-700' : 'fill-brand-500')} strokeWidth={2} />
+                <circle cx={c.x} cy={c.y} r={c.r + 4} className="fill-chart-1/15" />
+                <circle cx={c.x} cy={c.y} r={c.r} className={clsx('stroke-card', on ? 'fill-primary' : 'fill-chart-1')} strokeWidth={2} />
               </g>
             );
           })}
@@ -87,11 +88,11 @@ export const PlacementMap = ({ data, compact = false }: { data: PublicMap; compa
         {current && (
           <div
             role="tooltip"
-            className="pointer-events-none absolute z-10 w-max max-w-[220px] -translate-x-1/2 -translate-y-full rounded-lg bg-navy-900 px-3 py-2 text-xs leading-snug text-white shadow-lg"
+            className="pointer-events-none absolute z-10 w-max max-w-[220px] -translate-x-1/2 -translate-y-full rounded-xl border border-line bg-raised px-3 py-2 text-xs leading-snug text-ink shadow-[var(--tv-shadow-raised)]"
             style={{ left: `${(current.x / proj.width) * 100}%`, top: `calc(${(current.y / proj.height) * 100}% - ${current.r + 6}px)` }}
           >
-            <span className="font-bold">{t('gp.map.tooltip', { city: current.city, count: current.workers })}</span>
-            {current.professions.length > 0 && <span className="block text-white/75">{current.professions.join(', ')}</span>}
+            <span className="font-semibold">{t('gp.map.tooltip', { city: current.city, count: current.workers })}</span>
+            {current.professions.length > 0 && <span className="block text-muted">{current.professions.join(', ')}</span>}
           </div>
         )}
       </div>
@@ -99,22 +100,22 @@ export const PlacementMap = ({ data, compact = false }: { data: PublicMap; compa
       {!compact && (
         <div>
           <p className="text-sm font-semibold text-ink">{t('gp.map.total', { count: data.total, cities: data.cities.length })}</p>
-          <ul className="mt-3 divide-y divide-line rounded-xl border border-line bg-card">
+          <ul className="mt-3 divide-y divide-line overflow-hidden rounded-2xl border border-line bg-card shadow-[var(--tv-shadow-card)]">
             {[...placed].sort((a, b) => b.workers - a.workers).concat(unplaced.map((c) => ({ ...c, x: 0, y: 0, r: 0 }))).map((c) => (
               <li key={c.city}>
                 <button
                   type="button"
-                  className={clsx('flex w-full items-start gap-3 px-4 py-2.5 text-left text-sm transition-colors hover:bg-surface', active === c.city && 'bg-surface')}
+                  className={clsx('flex min-h-11 w-full items-start gap-3 px-4 py-2.5 text-left text-sm transition-colors hover:bg-sunken', active === c.city && 'bg-sunken')}
                   onMouseEnter={() => setActive(c.city)}
                   onFocus={() => setActive(c.city)}
                   onClick={() => setActive(c.city)}
                 >
-                  <MapPin className="mt-0.5 size-4 shrink-0 text-brand-600" aria-hidden />
+                  <MapPin className="mt-0.5 size-4 shrink-0 text-chart-1" aria-hidden />
                   <span className="min-w-0 flex-1">
                     <span className="font-semibold text-ink">{c.city}</span>
                     {c.professions.length > 0 && <span className="block truncate text-xs text-muted">{c.professions.join(', ')}</span>}
                   </span>
-                  <span className="shrink-0 font-semibold text-brand-600 tabular-nums">{t('gp.map.workers', { count: c.workers })}</span>
+                  <span className="shrink-0 font-semibold text-ink tabular-nums">{t('gp.map.workers', { count: c.workers })}</span>
                 </button>
               </li>
             ))}
@@ -140,8 +141,8 @@ export const PlacementMapSection = ({ where }: { where: 'home' | 'stories' }) =>
         <SectionHeading eyebrow={t('gp.map.eyebrow')} title={t('gp.map.title')} subtitle={t('gp.map.subtitle')} />
         <PlacementMap data={data} />
         <div className="mt-6 text-center">
-          <Link to="/map" className="btn-ghost group px-5 py-3">
-            {t('gp.map.cta')} <ArrowRight className="size-4 transition group-hover:translate-x-1" aria-hidden />
+          <Link to="/map" className={buttonClass({ variant: 'outline', size: 'lg' })}>
+            {t('gp.map.cta')} <ArrowRight className="size-4" aria-hidden />
           </Link>
         </div>
       </div>

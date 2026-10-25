@@ -17,25 +17,25 @@ export const CaseSummaryCard = ({ c }: { c: CaseSummary & { relation?: string | 
   return (
     <Link
       to={`/account/cases/${c.id}`}
-      className="card group flex h-full flex-col p-5 transition duration-300 hover:-translate-y-1 hover:border-brand-400/50 hover:shadow-[0_20px_40px_-18px_rgba(21,101,232,0.35)] sm:p-6"
+      className="card card-interactive group flex h-full flex-col p-5 sm:p-6"
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="text-xs font-semibold text-muted">{t('portal.caseNo')}</p>
-          <p className="truncate font-display text-lg font-extrabold text-navy-900">{c.number}</p>
-          {relationLabel && <span className="badge mt-1 bg-rose-100 text-rose-800">{relationLabel}</span>}
+          <p className="code-id truncate text-lg font-semibold text-ink">{c.number}</p>
+          {relationLabel && <span className="badge mt-1 bg-danger-bg text-danger-fg">{relationLabel}</span>}
         </div>
         <StatusBadge status={c.status} />
       </div>
 
       <div className="mt-4 space-y-1.5 text-sm">
-        <p className="flex items-center gap-2 font-semibold text-navy-900">
-          <Briefcase className="size-4 shrink-0 text-brand-600" aria-hidden />
+        <p className="flex items-center gap-2 font-semibold text-ink">
+          <Briefcase className="size-4 shrink-0 text-muted" aria-hidden />
           <span className="truncate">{c.profession}</span>
         </p>
         {c.visaCategory && (
           <p className="flex min-w-0 items-center gap-2 text-muted">
-            <span className="badge shrink-0 whitespace-nowrap bg-navy-900 text-white">{c.visaCategory.visaLabel}</span>
+            <span className="badge shrink-0 whitespace-nowrap border border-line bg-sunken text-ink">{c.visaCategory.visaLabel}</span>
             <span className="truncate">{tr(c.visaCategory.title)}</span>
           </p>
         )}
@@ -48,7 +48,7 @@ export const CaseSummaryCard = ({ c }: { c: CaseSummary & { relation?: string | 
           <CalendarClock className="size-3.5 shrink-0" aria-hidden />
           {t('portal.updated')}: {date(c.updatedAt)}
         </span>
-        <span className="inline-flex items-center gap-1 font-semibold whitespace-nowrap text-brand-600">
+        <span className="inline-flex items-center gap-1 font-semibold whitespace-nowrap text-link">
           {clientTurn ? t('portal.actionRequired') : t('portal.openCase')}
           <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-1" aria-hidden />
         </span>

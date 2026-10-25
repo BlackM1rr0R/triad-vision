@@ -12,7 +12,7 @@ export const PartnerFilterSelect = ({ value, onChange }: { value: string; onChan
   return (
     <select
       aria-label={t('refPartners.field')}
-      className="input min-h-11 w-auto max-w-[14rem] py-2 pr-8 text-sm"
+      className="input min-h-10 sm:min-h-9 w-auto max-w-[14rem] py-2 pr-8 text-sm"
       value={value}
       onChange={(e) => onChange(e.target.value || null)}
     >
@@ -33,7 +33,7 @@ export const CasePartnerCell = ({ c, empty = '—' }: { c: object; empty?: strin
   const p = casePartner(c);
   return p ? (
     <span className="inline-flex max-w-full items-center gap-1 text-xs text-ink/80">
-      <Handshake className="size-3 shrink-0 text-brand-600" aria-hidden />
+      <Handshake className="size-3 shrink-0 text-primary" aria-hidden />
       <span className="truncate">{p.name}</span>
     </span>
   ) : (
@@ -46,7 +46,7 @@ export const SelectBox = ({ checked, onChange, label }: { checked: boolean; onCh
   <input
     type="checkbox"
     aria-label={label}
-    className="size-4 cursor-pointer accent-brand-600"
+    className="size-4 cursor-pointer accent-primary"
     checked={checked}
     onClick={(e) => e.stopPropagation()}
     onChange={(e) => onChange(e.target.checked)}
@@ -61,8 +61,8 @@ export const BulkPartnerBar = ({ ids, onDone }: { ids: string[]; onDone: () => v
   const [target, setTarget] = useState('');
   if (!ids.length) return null;
   return (
-    <div className="mb-3 flex flex-wrap items-center gap-2 rounded-xl border border-brand-200 bg-brand-50 px-4 py-2.5 text-sm">
-      <span className="font-semibold text-navy-900">{t('refPartners.selected', { count: ids.length })}</span>
+    <div className="mb-3 flex flex-wrap items-center gap-2 rounded-xl border border-line-strong bg-sunken px-4 py-2.5 text-sm">
+      <span className="font-semibold text-ink">{t('refPartners.selected', { count: ids.length })}</span>
       <span className="text-muted">·</span>
       <label className="flex items-center gap-2">
         <span className="text-xs text-muted">{t('refPartners.assignTo')}</span>
@@ -95,7 +95,7 @@ export const BulkPartnerBar = ({ ids, onDone }: { ids: string[]; onDone: () => v
       >
         {assign.isPending ? <Spinner className="size-3.5" /> : <Handshake className="size-3.5" />} {t('refPartners.assignApply')}
       </button>
-      <button type="button" className="btn-white btn-sm ml-auto border border-line" onClick={onDone}>
+      <button type="button" className="btn-secondary btn-sm ml-auto" onClick={onDone}>
         <X className="size-3.5" /> {t('refPartners.clearSelection')}
       </button>
     </div>

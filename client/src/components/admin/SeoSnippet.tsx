@@ -4,7 +4,7 @@ import clsx from 'clsx';
 export const CharCount = ({ value, max, label }: { value: string; max: number; label?: (count: number, max: number) => string }) => {
   const n = value.trim().length;
   return (
-    <span className={clsx('text-[11px] tabular-nums', n > max ? 'font-semibold text-red-600' : n > max * 0.9 ? 'text-amber-600' : 'text-muted')}>
+    <span className={clsx('text-[11px] tabular-nums', n > max ? 'font-semibold text-danger-fg' : n > max * 0.9 ? 'text-warning-fg' : 'text-muted')}>
       {label ? label(n, max) : `${n} / ${max}`}
     </span>
   );
@@ -22,7 +22,7 @@ export const SeoSnippet = ({ title, description, url, caption }: { title: string
     /* keep raw */
   }
   return (
-    <figure className="rounded-xl border border-line bg-white p-4 font-[Arial,sans-serif] dark:bg-white">
+    <figure className="rounded-xl border border-line bg-card p-4 font-[Arial,sans-serif] dark:bg-white">
       {caption && <figcaption className="mb-2 text-[11px] font-semibold text-muted">{caption}</figcaption>}
       <p className="truncate text-xs text-[#202124]">{host}</p>
       <p className="mt-1 text-lg leading-snug text-[#1a0dab]">{cut(title || '—', 62)}</p>

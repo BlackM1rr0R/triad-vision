@@ -66,7 +66,7 @@ export default function AgentProfilePage({ me }: { me: AgentMe }) {
           </p>
         </div>
         <div className="sm:col-span-2">
-          <button type="submit" className="btn-primary btn-sm" disabled={save.isPending}>
+          <button type="submit" className="btn-primary" disabled={save.isPending}>
             {save.isPending && <Spinner className="size-4" />} {t('agents.common.save')}
           </button>
         </div>
