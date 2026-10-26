@@ -61,7 +61,7 @@ describe('licence tokens', () => {
     expect(verifyLicenseToken(forged, { publicKey })).toEqual({ ok: false, reason: 'signature' });
     expect(evaluate(customerEnv(forged))).toMatchObject({ status: 'invalid', mode: 'readonly', reason: 'signature', staffLimit: null });
     // a flipped signature byte as well
-    const flipped = `${token.slice(0, -2)}${token.endsWith('A') ? 'B' : 'A'}${token.slice(-1)}`;
+    const flipped = `${token.slice(0, -2)}${token.at(-2) === 'A' ? 'B' : 'A'}${token.slice(-1)}`;
     expect(verifyLicenseToken(flipped, { publicKey }).ok).toBe(false);
   });
 
