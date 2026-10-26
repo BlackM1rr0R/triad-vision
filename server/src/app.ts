@@ -44,6 +44,7 @@ import { waitingRoomRouter } from './routes/waitingRoom.js';
 import { cvRouter } from './routes/cv.js';
 import { vaultRouter } from './routes/vault.js';
 import { arrivalRouter } from './routes/arrival.js';
+import { housingRouter } from './routes/housing.js'; // housing search checklist + Anmeldung (client)
 import { interviewPrepRouter } from './routes/interviewPrep.js';
 import { surveysRouter } from './routes/surveys.js';
 import { checkInsRouter } from './routes/checkIns.js'; // post-arrival check-ins (answer side)
@@ -94,6 +95,8 @@ import { callbackRouter } from './routes/callback.js';
 import { livechatRouter } from './routes/livechat.js';
 import { candidateShareRouter } from './routes/candidateShare.js';
 import { introVideoRouter } from './routes/introVideo.js';
+import { skillVideosRouter } from './routes/skillVideos.js'; // candidate skill videos (record / upload, consent)
+import { companySkillVideosRouter } from './routes/companySkillVideos.js'; // employer side of the skill videos
 import { searchRouter } from './routes/search.js';
 import { compareRouter } from './routes/compare.js';
 import { leadMagnetsRouter } from './routes/leadMagnets.js';
@@ -101,9 +104,12 @@ import { jobAlertsRouter } from './routes/jobAlerts.js';
 import { accountRecognitionRouter } from './routes/accountRecognition.js'; // client portal: recognition status card
 import { accountSuccessShareRouter, publicSuccessShareRouter } from './routes/successShare.js'; // "visa approved" share cards + /success/:token
 import { googleReviewPublicRouter } from './routes/googleReview.js'; // Google review request: tracked redirect + opt-out
+import { budgetRouter } from './routes/budget.js'; // first-month budget calculator (/budget): config, estimate, PDF, portal prefill
+import { jobFeedsRouter } from './routes/jobFeeds.js'; // /feeds/*.xml: job board feeds (Indeed, StepStone, generic) behind a secret token
 import { brandTextResponses, registerBrandApp } from './lib/brand/index.js'; // white-label brand (API JSON follows it)
 import './lib/brand/pdfPatch.js'; // white-label brand in every generated PDF
 import { licenseGuard } from './middleware/license.js'; // white-label licence: read-only mode for staff
+import { certificatePublicRouter, courseRouter } from './routes/course.js'; // pre-departure course (client) + public certificate verification
 
 type RequestWithRawBody = import('express').Request & { rawBody?: Buffer };
 
@@ -184,6 +190,7 @@ export const createApp = () => {
   app.use('/api/share', shareRouter);
   app.use('/api/candidate-share', candidateShareRouter); // employer share link of a candidate (no login)
   app.use('/api/intro-video', introVideoRouter); // candidate's video introduction for employers
+  app.use('/api/skill-videos', skillVideosRouter); // candidate's skill videos (staff review, employer consent)
   app.use('/api/signatures', signaturesRouter);
   app.use('/api/admin/impersonate', impersonationRouter); // before the staff-only admin router (req.user is the client then)
   app.use('/api/admin', adminRouter);
@@ -195,6 +202,7 @@ export const createApp = () => {
   app.use('/api/company/quotes', companyQuotesRouter);
   app.use('/api/company/requests', companyRequestsRouter);
   app.use('/api/company/ai', companyAiRouter);
+  app.use('/api/company/skill-videos', companySkillVideosRouter); // approved + consented skill videos of presented candidates
   app.use('/api/company/forms', companyFormsRouter); // Erklärung zum Beschäftigungsverhältnis: complete + sign
   app.use('/api/company/workers', companyWorkersRouter); // "my workers" panel, worker drawer, CSV / Excel export
   app.use('/api/company/reports', companyReportsRouter); // monthly employer reports (list, PDF, e-mail opt-out)
@@ -207,6 +215,7 @@ export const createApp = () => {
   app.use('/api/lead-magnets', leadMagnetsRouter); // e-book lead magnets: form → Inquiry + signed download link
   app.use('/api/job-alerts', jobAlertsRouter); // "notify me about new jobs" (double opt-in, digests)
   app.use('/api/growth', growthRouter); // start-date calculator, placement map, info sessions, client referrals
+  app.use('/api/budget', budgetRouter); // first-month budget in Germany (public + client portal prefill)
   app.use('/api/landing', landingRouter); // landing pages: page, view counter, form → Inquiry
   app.use('/api/reviews', reviewsRouter);
   app.use('/api/track', trackRouter);
@@ -235,6 +244,7 @@ export const createApp = () => {
   app.use('/api/cv', cvRouter);
   app.use('/api/vault', vaultRouter);
   app.use('/api/arrival', arrivalRouter);
+  app.use('/api/housing', housingRouter);
   app.use('/api/interview-prep', interviewPrepRouter);
   app.use('/api/surveys', surveysRouter);
   app.use('/api/check-ins', checkInsRouter);
@@ -253,8 +263,11 @@ export const createApp = () => {
   app.use('/api/site', siteRouter); // web push (PWA), public status check, "Problem bildir" reports
   app.use('/api/success', publicSuccessShareRouter); // public success share page data, card PNGs, lead form
   app.use('/api/r/review', googleReviewPublicRouter); // Google review link (click counter) + opt-out
+  app.use('/api/course', courseRouter); // pre-departure course: lessons, video, quizzes, certificate PDF (CLIENT)
+  app.use('/api/certificates', certificatePublicRouter); // public course certificate check (initials, course, date)
   app.use('/api', campaignPublicRouter); // campaigns: /o/:token.gif, /c/:token/:link, /unsubscribe/:token
 
+  app.use('/feeds', jobFeedsRouter); // job board XML feeds (Caddy forwards /feeds/* here)
   // /sitemap.xml, /robots.txt and /api/seo/* (Caddy forwards the first two here).
   app.use(seoRouter);
 

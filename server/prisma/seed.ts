@@ -8,6 +8,7 @@ import { seedJourney } from './seed/journey';
 import { seedContractTemplates } from './seed/contractTemplates';
 import { seedInterviewPrep } from './seed/interviewPrep';
 import { seedGuideCalculators, seedGuides } from './seed/guides/index';
+import { createStarterCourse } from '../src/lib/course/starter';
 
 /**
  * SEED_PROFILE (white-label, deploy/whitelabel/README.md):
@@ -572,6 +573,7 @@ async function main() {
   await seedInterviewPrep(prisma);
   await seedGuides(prisma); // topic guides (/guides): each language version written once
   await seedGuideCalculators(prisma); // calculator shortcodes into guides seeded before they existed (once per row)
+  await createStarterCourse(prisma); // pre-departure course "Almaniyaya hazırlıq" (draft, once by slug)
 
   console.log(`Seed complete (${SEED_PROFILE} profile). Admin login: ${adminEmail}`);
 }

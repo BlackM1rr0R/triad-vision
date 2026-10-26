@@ -5,7 +5,9 @@ import { CaseAiSummary } from '@/components/aiStaff/CaseAiSummary';
 import { CaseAiChecks } from '@/components/aiCase/CaseAiChecks';
 import CaseDataPanel from '@/components/clientData/CaseDataPanel';
 import GermanStaffPanel from '@/components/german/GermanStaffPanel';
+import CaseCourseCard from '@/components/course/CaseCourseCard';
 import { CandidateEvaluations } from '@/components/placement/Evaluations';
+import CaseHousingCard from '@/components/housing/CaseHousingCard';
 import { ActionPanel } from '../ActionPanel';
 import { CaseStatsPanel } from '../CaseStats';
 import type { CaseTabProps } from './types';
@@ -31,8 +33,11 @@ export default function OverviewTab({ c, stats, goTo }: CaseTabProps) {
           <BallPanel ball={x.ballInCourt} />
         </div>
       )}
+      {/* Mənzil & Anmeldung: status + two-week deadline (approved cases only; renders nothing before). */}
+      <CaseHousingCard caseId={c.id} status={c.status} />
       <CaseDataPanel c={c} />
       {!member && <GermanStaffPanel userId={c.client.id} />}
+      {!member && <CaseCourseCard userId={c.client.id} />}
       {/* Interview evaluations of the candidate (employer + team), only when there are any. */}
       {!member && <CandidateEvaluations candidateId={c.client.id} hideEmpty />}
       <div id="case-ai-summary">

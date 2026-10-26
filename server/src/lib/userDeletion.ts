@@ -9,6 +9,7 @@ import { removeMailStored } from './mail/storage.js';
 import { ensureSharedRoot } from './drive/roots.js';
 import { pickFreeName, safeUploadName } from './drive/names.js';
 import { purgeNodes } from './drive/trash.js';
+import { deleteCourseData } from './course/service.js';
 
 /**
  * Hard delete of a user account by the super admin (Admin → Users → "Delete").
@@ -136,6 +137,8 @@ export const deleteUserAccount = async (actorId: string, userId: string, ip?: st
   // Vault documents and translation-order files are stored outside the case folder.
   const vaultFiles = await prisma.vaultDocument.findMany({ where: { userId }, select: { storageKey: true } });
   const introVideo = (await prisma.user.findUnique({ where: { id: userId }, select: { introVideoKey: true } }))?.introVideoKey ?? null;
+  // Skill videos (rows cascade with the user): video + poster files.
+  const skillVideoFiles = (await prisma.skillVideo.findMany({ where: { userId }, select: { storedName: true, posterName: true } })).flatMap((v) => [v.storedName, v.posterName]);
   const translationFiles = await prisma.translationOrderFile.findMany({ where: { storageKey: { not: null }, order: { clientId: userId } }, select: { storageKey: true } });
   const mailFiles = await prisma.mailAttachment.findMany({
     where: { storageKey: { not: null }, message: { account: { userId } } },
@@ -278,6 +281,7 @@ export const deleteUserAccount = async (actorId: string, userId: string, ip?: st
   for (const [dir, keys] of [
     ['vault', vaultFiles.map((v) => v.storageKey)],
     ['intro-video', introVideo ? [introVideo] : []],
+    ['skill-video', skillVideoFiles],
     ['translations', translationFiles.map((t) => t.storageKey)],
   ] as const) {
     for (const key of keys) {
@@ -294,6 +298,7 @@ export const deleteUserAccount = async (actorId: string, userId: string, ip?: st
   await prisma.candidateShareLink.deleteMany({ where: { candidateId: userId } });
   await prisma.interviewEvaluation.deleteMany({ where: { candidateId: userId } });
   await prisma.waitingRoomProgress.deleteMany({ where: { userId } }); // waiting room progress (plain id, no foreign key)
+  await deleteCourseData(userId); // pre-departure course: enrollments, progress, quiz attempts, certificates (plain ids)
 
   return { user: target, counts: { ...counts, files, bytes, mailAttachmentsRemoved: mailFiles.length } satisfies UserDeletionCounts };
 };

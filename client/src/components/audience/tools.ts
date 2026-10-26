@@ -14,6 +14,7 @@ import {
   Scale,
   ScanSearch,
   Sparkles,
+  PiggyBank,
   WalletCards,
   type LucideIcon,
 } from 'lucide-react';
@@ -43,6 +44,7 @@ export const TOOLS: ToolItem[] = [
   { key: 'anerkennung', to: '/anerkennung', icon: GraduationCap, group: 'eligibility' },
   { key: 'salary', to: '/salary-calculator', icon: BadgeEuro, group: 'costs' },
   { key: 'cost', to: '/cost-calculator', icon: WalletCards, group: 'costs' },
+  { key: 'budget', to: '/budget', icon: PiggyBank, group: 'costs' },
   { key: 'startDate', to: '/calculator', icon: CalendarClock, group: 'plan' },
   { key: 'cities', to: '/cities', icon: Building, group: 'plan' },
   { key: 'events', to: '/events', icon: CalendarDays, group: 'plan' },

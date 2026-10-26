@@ -18,6 +18,7 @@ import { PENDING_KEY, type PendingAcceptance } from '@/components/legal/api';
 import { useNotifications } from './useNotifications';
 import { useOverview } from './useOverview';
 import type { JourneyData } from './journey';
+import { useMyCourses } from '@/components/course/api';
 
 /** Kinds of GET /api/account/next-step (server: lib/account/nextStep.ts). */
 export type NextKind =
@@ -96,6 +97,7 @@ export function usePortalNav() {
   const { data: notif } = useNotifications(!!user);
   const { data: signatures } = useMySignatures({ enabled: !!user });
   const impersonating = getImpersonation() !== null;
+  const courses = useMyCourses(!!user && isClient); // Learn › Course appears once the client is enrolled
   const legal = useQuery({
     queryKey: PENDING_KEY,
     queryFn: async () => (await api.get<{ pending: PendingAcceptance[]; blocking: boolean }>('/legal/me/pending')).data,
@@ -124,6 +126,7 @@ export function usePortalNav() {
     hasSignatures,
     openDocActions: actions.some((a) => DOC_KINDS.includes(a.kind)),
     hasPayments: !!next.data?.counts.hasBilling,
+    hasCourse: (courses.data?.length ?? 0) > 0,
   });
 
   const badges: SectionBadges = {

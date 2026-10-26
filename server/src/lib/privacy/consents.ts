@@ -16,6 +16,7 @@ export const CONSENT_TYPES = [
   'SMS',
   'EMPLOYER_SHARING',
   'PASSPORT_OCR',
+  'SKILL_VIDEO', // per skill video: may be shown to prospective employers (routes/skillVideos.ts)
   // Cookie banner: COOKIES = any optional category allowed; the categories are logged next to it.
   'COOKIES',
   'COOKIES_ANALYTICS',

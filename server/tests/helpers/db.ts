@@ -6,6 +6,9 @@ export { prisma };
 
 /** Deletes all rows, children before parents so foreign keys are never violated. */
 export const resetDb = async () => {
+  await prisma.cityCost.deleteMany(); // first-month budget city costs (no relations)
+  // Pre-departure course (plain ids, no foreign keys)
+  for (const m of [prisma.courseQuizAttempt, prisma.courseLessonProgress, prisma.courseCertificate, prisma.courseEnrollment, prisma.courseQuizQuestion, prisma.courseLesson, prisma.courseModule, prisma.course] as { deleteMany: () => Promise<unknown> }[]) await m.deleteMany();
   // Recognition tracker + § 81a accelerated procedure (plain ids, no foreign keys)
   await prisma.recognitionEvent.deleteMany();
   await prisma.recognitionProcess.deleteMany();
@@ -36,6 +39,7 @@ export const resetDb = async () => {
   await prisma.timeEntry.deleteMany();
   await prisma.staffCostRate.deleteMany();
   await prisma.arrivalCheckIn.deleteMany();
+  await prisma.partnerHousing.deleteMany(); // partner landlord listings (proposals cascade; CaseHousing cascades with the case)
   await prisma.arrivalFollowUp.deleteMany();
   await prisma.embassyPackageApproval.deleteMany(); // four-eyes check of the embassy package (plain ids)
   await prisma.documentAccessLog.deleteMany();

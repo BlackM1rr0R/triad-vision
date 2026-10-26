@@ -20,6 +20,7 @@ import { guideAlternates, guidePath, parseFaq, type GuideRow } from './guides/se
 import { videoEmbedUrl } from './marketing/landing.js';
 import { getCaseAiSettings } from './ai/features/caseAi/config.js';
 import { compareContent, currentThresholds, type CompareThresholds } from './compare/visaCompare.js';
+import { occupationByCode } from './jobFeeds/occupations.js';
 
 /*
  * SEO for a client-rendered SPA.
@@ -215,6 +216,9 @@ export interface SeoData {
     createdAt: Date;
     updatedAt: Date;
     company: { name: string; website: string | null } | null;
+    /** Optional so older fixtures stay valid: Google for Jobs extras (experience, KldB code, postal code). */
+    minExperience?: number | null;
+    distribution?: { occupationCode: string | null; postalCode: string | null } | null;
   }[];
   settings: Record<string, unknown>;
   rating: { count: number; average: number } | null;
@@ -303,6 +307,8 @@ const loadSeoData = async (): Promise<SeoData> => {
         createdAt: true,
         updatedAt: true,
         company: { select: { name: true, website: true } },
+        minExperience: true,
+        distribution: { select: { occupationCode: true, postalCode: true } }, // job feeds (lib/jobFeeds)
       },
     }),
     prisma.setting.findMany({ where: { key: { in: ['contact', 'social', 'legal', 'analytics'] } } }),
@@ -577,13 +583,27 @@ export const jobPostingLd = (job: SeoData['jobs'][number], lng: SeoLocale, url: 
     hiringOrganization,
     jobLocation: {
       '@type': 'Place',
-      address: { '@type': 'PostalAddress', ...(job.city ? { addressLocality: job.city } : {}), addressCountry: 'DE' },
+      address: {
+        '@type': 'PostalAddress',
+        ...(job.city ? { addressLocality: job.city } : {}),
+        ...(job.distribution?.postalCode ? { postalCode: job.distribution.postalCode } : {}),
+        addressCountry: 'DE',
+      },
     },
     directApply: true,
     totalJobOpenings: job.positions,
     url,
     inLanguage: lng,
   };
+  // KldB 2010 occupation code (vacancy distribution settings, lib/jobFeeds) as the occupational category.
+  const occupationCode = job.distribution?.occupationCode;
+  if (occupationCode) {
+    const occupation = occupationByCode(occupationCode);
+    ld.occupationalCategory = occupation ? `${occupation.code} ${occupation.de}` : occupationCode;
+  }
+  if (job.minExperience != null && job.minExperience > 0) {
+    ld.experienceRequirements = { '@type': 'OccupationalExperienceRequirements', monthsOfExperience: job.minExperience * 12 };
+  }
   if (job.salaryMin != null || job.salaryMax != null) {
     const min = job.salaryMin ?? job.salaryMax!;
     const max = job.salaryMax ?? job.salaryMin!;
@@ -603,7 +623,7 @@ export const jobPostingLd = (job: SeoData['jobs'][number], lng: SeoLocale, url: 
 const TOOL_CRUMB_PAGES = new Set(TOOL_GROUPS.flatMap((g) => g.paths).filter((p) => !['/guides', '/jobs', '/visas'].includes(p)));
 
 /** Interactive tools: WebApplication JSON-LD (free, runs in the browser). */
-const TOOL_PAGES = new Set(['/chancenkarte-calculator', '/blue-card-check', '/salary-calculator', '/calculator', '/cost-calculator', '/anerkennung']);
+const TOOL_PAGES = new Set(['/chancenkarte-calculator', '/blue-card-check', '/salary-calculator', '/calculator', '/cost-calculator', '/anerkennung', '/budget']);
 
 const faqPageLd = (items: { q: string; a: string }[], lng: SeoLocale) =>
   items.length

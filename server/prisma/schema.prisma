@@ -191,6 +191,7 @@ model User {
   referralCode            ClientReferralCode?      @relation("ReferralCodeOwner")
   referralsMade           ClientReferral[]         @relation("ReferralReferrer")
   referredBy              ClientReferral?          @relation("ReferralReferred")
+  skillVideos             SkillVideo[]             @relation("SkillVideoOwner")
 
   @@index([companyId])
   @@index([mergedIntoId])
@@ -432,6 +433,8 @@ model Case {
   caseForms               CaseForm[] // smart questionnaires (lib/clientData)
   dataConfirmations       DataConfirmation[] // client confirms the embassy data (lib/clientData)
   dataValues              CaseDataValue[] // client-provided VIDEX values (lib/clientData)
+  housing                 CaseHousing? // housing search checklist + Anmeldung (lib/housing)
+  housingProposals        HousingProposal[] // partner landlord listings proposed to the client (lib/housing)
   /// Partner (middleman) who brought this client; their folder in the shared drive holds the client folder.
   partnerId               String?
   partner                 ReferralPartner?      @relation(fields: [partnerId], references: [id], onDelete: SetNull)
@@ -813,6 +816,7 @@ model Company {
   candidateRequests CandidateRequest[]
   quotes            Quote[]
   partyThreads      PartyThread[]
+  partnerHousing    PartnerHousing[] // partner landlord listings linked to this employer (lib/housing)
 
   @@index([status])
 }
@@ -832,12 +836,12 @@ enum EmploymentType {
 }
 
 model Vacancy {
-  id             String               @id @default(cuid())
-  slug           String               @unique
+  id             String                @id @default(cuid())
+  slug           String                @unique
   companyId      String?
-  company        Company?             @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  company        Company?              @relation(fields: [companyId], references: [id], onDelete: SetNull)
   visaCategoryId String?
-  visaCategory   VisaCategory?        @relation(fields: [visaCategoryId], references: [id], onDelete: SetNull)
+  visaCategory   VisaCategory?         @relation(fields: [visaCategoryId], references: [id], onDelete: SetNull)
   title          Json // L10n
   description    Json // L10n
   requirements   Json? // L10nList
@@ -850,16 +854,18 @@ model Vacancy {
   drivingLicence String? // e.g. "CE"
   salaryMin      Int? // EUR gross per month
   salaryMax      Int?
-  positions      Int                  @default(1)
-  employmentType EmploymentType       @default(FULL_TIME)
-  showCompany    Boolean              @default(false) // publish the employer's name on the public board
-  status         VacancyStatus        @default(DRAFT)
+  positions      Int                   @default(1)
+  employmentType EmploymentType        @default(FULL_TIME)
+  showCompany    Boolean               @default(false) // publish the employer's name on the public board
+  status         VacancyStatus         @default(DRAFT)
   publishedAt    DateTime?
   closesAt       DateTime?
-  createdAt      DateTime             @default(now())
-  updatedAt      DateTime             @updatedAt
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @updatedAt
   applications   VacancyApplication[]
   cases          Case[]
+  distribution   VacancyDistribution? // external job boards (lib/jobFeeds)
+  channelStates  VacancyChannelState[]
 
   @@index([status, publishedAt])
   @@index([companyId])
@@ -895,6 +901,74 @@ model VacancyApplication {
   @@unique([vacancyId, userId])
   @@index([userId])
   @@index([status])
+}
+
+// ─── Job feeds: vacancies on external job boards (lib/jobFeeds) ──────
+
+enum JobChannelStatus {
+  PENDING // switched on, not exported yet
+  PUBLISHED // in the last feed build / BA file
+  ERROR // left out: required fields missing (error says which)
+  EXPIRED // was published, the vacancy is closed or past closesAt
+}
+
+/// Per-vacancy distribution settings: which boards, which language, how the employer is shown.
+model VacancyDistribution {
+  vacancyId      String    @id
+  vacancy        Vacancy   @relation(fields: [vacancyId], references: [id], onDelete: Cascade)
+  /// Channel keys: indeed | stepstone | generic | ba
+  channels       Json
+  language       String    @default("de") @db.VarChar(5)
+  hideEmployer   Boolean   @default(true)
+  /// Shown instead of the employer when hidden (default "<brand> (für einen Kunden)").
+  employerLabel  String?   @db.VarChar(160)
+  /// External apply URL override; default the public /de/jobs/<slug> page. UTM parameters are added per channel.
+  applyUrl       String?   @db.VarChar(500)
+  /// KldB 2010 occupation code (5 digits, Statistik der BA).
+  occupationCode String?   @db.VarChar(10)
+  /// BA Jobbörse TitleCode (Berufe-ID / DKZ from the HR-BA-XML catalogue).
+  baTitleCode    String?   @db.VarChar(12)
+  postalCode     String?   @db.VarChar(10)
+  weeklyHours    Int?
+  /// Befristung: fixed-term contract (until limitedUntil when known).
+  limited        Boolean   @default(false)
+  limitedUntil   DateTime?
+  startDate      DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+}
+
+/// Export status of one vacancy on one channel.
+model VacancyChannelState {
+  id           String           @id @default(cuid())
+  vacancyId    String
+  vacancy      Vacancy          @relation(fields: [vacancyId], references: [id], onDelete: Cascade)
+  channel      String           @db.VarChar(20)
+  status       JobChannelStatus @default(PENDING)
+  lastExportAt DateTime?
+  error        String?          @db.Text
+  updatedAt    DateTime         @updatedAt
+
+  @@unique([vacancyId, channel])
+  @@index([channel, status])
+}
+
+/// Singleton (id "default"): feed token, BA partner credentials (sealed with lib/secretBox), last fetches.
+model JobFeedConfig {
+  id              String    @id @default("default")
+  tokenSealed     String    @db.Text
+  tokenRotatedAt  DateTime  @default(now())
+  baSupplierId    String?   @db.VarChar(40)
+  baPartnerId     String?   @db.VarChar(40)
+  baCertSealed    String?   @db.MediumText
+  baPassSealed    String?   @db.Text
+  baUploadUrl     String?   @db.VarChar(500)
+  baUploadEnabled Boolean   @default(false)
+  baLastUploadAt  DateTime?
+  baLastError     String?   @db.Text
+  /// { [channel]: { at: ISO, items: number } } — last feed build per channel
+  feedStats       Json?
+  updatedAt       DateTime  @updatedAt
 }
 
 // ─── Consultation booking ────────────────────────────────────────────
@@ -2482,6 +2556,111 @@ model ArrivalPlan {
   updatedAt        DateTime      @updatedAt
 
   @@index([status, flightDate])
+}
+
+// ─── Housing search + Anmeldung (lib/housing) ──────────────────────────
+
+enum HousingListingType {
+  ROOM // single room
+  SHARED_FLAT // WG
+  APARTMENT
+  WORKER_HOUSING // employer / partner accommodation for several workers
+  BOARDING_HOUSE // furnished short-term flat
+}
+
+enum ContractReviewStatus {
+  NONE
+  REQUESTED // client asked the team to look at the uploaded rental contract
+  REVIEWED // staff answered
+}
+
+enum HousingProposalResponse {
+  PENDING
+  INTERESTED
+  NOT_INTERESTED
+}
+
+/// Housing search checklist and Anmeldung of one (approved) case. Files live in the client's vault.
+model CaseHousing {
+  id                        String               @id @default(cuid())
+  caseId                    String               @unique
+  case                      Case                 @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  city                      String?              @db.VarChar(80) // where the client looks for a flat (overrides arrival plan / employer city)
+  budgetMax                 Int? // EUR warm rent per month
+  housingSteps              Json? // { stepKey: ISO date done }
+  bringItems                Json? // Anmeldung "what to bring" ticks { itemKey: ISO date }
+  moveInDate                DateTime? // calendar day (00:00 UTC); Anmeldung deadline = + 14 days
+  contractVaultDocId        String?              @db.VarChar(40)
+  contractUploadedAt        DateTime?
+  contractReview            ContractReviewStatus @default(NONE)
+  contractQuestion          String?              @db.Text
+  contractReply             String?              @db.Text
+  contractReviewRequestedAt DateTime?
+  contractReviewedAt        DateTime?
+  contractReviewedById      String?              @db.VarChar(40)
+  appointmentAt             DateTime? // Bürgeramt appointment (UTC; entered as Berlin wall time)
+  appointmentAddress        String?              @db.VarChar(300)
+  appointmentNote           String?              @db.VarChar(500)
+  appointmentSetAt          DateTime?
+  appointmentSetById        String?              @db.VarChar(40)
+  meldeVaultDocId           String?              @db.VarChar(40) // Meldebescheinigung
+  anmeldungDoneAt           DateTime?
+  anmeldungDoneVia          String?              @db.VarChar(12) // UPLOAD | STAFF
+  createdAt                 DateTime             @default(now())
+  updatedAt                 DateTime             @updatedAt
+
+  @@index([anmeldungDoneAt, moveInDate])
+  @@index([appointmentAt])
+}
+
+/// Partner landlord listing (admin-managed). Contact details reach a client only once staff introduced them.
+model PartnerHousing {
+  id           String             @id @default(cuid())
+  name         String             @db.VarChar(160)
+  city         String             @db.VarChar(80)
+  type         HousingListingType @default(APARTMENT)
+  priceMin     Int? // EUR per month
+  priceMax     Int?
+  description  String?            @db.Text // shown to clients
+  contactName  String?            @db.VarChar(160)
+  contactPhone String?            @db.VarChar(60)
+  contactEmail String?            @db.VarChar(190)
+  address      String?            @db.VarChar(300) // contact detail: hidden until introduced
+  notes        String?            @db.Text // internal
+  photos       Json? // string[] of /uploads/... URLs
+  active       Boolean            @default(true)
+  companyId    String? // employer link: only that employer's workers see it
+  company      Company?           @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  createdById  String?            @db.VarChar(40)
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+  proposals    HousingProposal[]
+
+  @@index([active, city])
+  @@index([companyId])
+}
+
+/// A partner listing offered to a case (by staff) or asked about (by the client).
+model HousingProposal {
+  id             String                  @id @default(cuid())
+  listingId      String
+  listing        PartnerHousing          @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  caseId         String
+  case           Case                    @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  source         String                  @default("STAFF") @db.VarChar(10) // STAFF | CLIENT
+  staffNote      String?                 @db.Text // message to the client
+  response       HousingProposalResponse @default(PENDING)
+  clientNote     String?                 @db.Text
+  respondedAt    DateTime?
+  proposedById   String?                 @db.VarChar(40)
+  introducedAt   DateTime?
+  introducedById String?                 @db.VarChar(40)
+  withdrawnAt    DateTime?
+  createdAt      DateTime                @default(now())
+  updatedAt      DateTime                @updatedAt
+
+  @@unique([listingId, caseId])
+  @@index([caseId])
 }
 
 // ─── Interview preparation, satisfaction, contract templates, employer requests ─
@@ -5301,4 +5480,250 @@ model AcceleratedMessage {
   at          DateTime  @default(now())
 
   @@index([procedureId, at])
+}
+
+// ─── Skill videos (candidate shows a skill: vehicle check, weld seam, …) ─────
+
+enum SkillVideoStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+/// Short video a candidate records or uploads to show a practical skill. Employers see it only when staff
+/// approved it, the candidate consents (consentAt set, not withdrawn) and the candidate was presented to them.
+/// Files: <uploads>/private/skill-video/<storedName> (+ optional JPEG/PNG poster). Design: lib/skillVideos.
+model SkillVideo {
+  id                 String           @id @default(cuid())
+  userId             String
+  user               User             @relation("SkillVideoOwner", fields: [userId], references: [id], onDelete: Cascade)
+  /// Case of the candidate at upload time (plain id); retention runs off the candidate's closed cases.
+  caseId             String?          @db.VarChar(40)
+  title              String           @db.VarChar(120)
+  skill              String           @db.VarChar(40) // tag key: driver | welder | cook | nurse | … | safety | other
+  source             String           @db.VarChar(10) // RECORDED | UPLOADED
+  storedName         String           @db.VarChar(200)
+  mimeType           String           @db.VarChar(40)
+  size               Int
+  durationSec        Int?
+  posterName         String?          @db.VarChar(200)
+  status             SkillVideoStatus @default(PENDING)
+  rejectReason       String?          @db.Text
+  reviewedById       String?          @db.VarChar(40)
+  reviewedAt         DateTime?
+  /// Consent that prospective employers may watch it; withdrawing hides it immediately.
+  consentAt          DateTime?
+  consentWithdrawnAt DateTime?
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+  views              SkillVideoView[]
+
+  @@index([userId, createdAt])
+  @@index([status, createdAt])
+}
+
+/// One employer view of a skill video (deduplicated per viewer and video within 30 minutes).
+model SkillVideoView {
+  id            String     @id @default(cuid())
+  videoId       String
+  video         SkillVideo @relation(fields: [videoId], references: [id], onDelete: Cascade)
+  companyId     String     @db.VarChar(40)
+  viewerId      String?    @db.VarChar(40)
+  applicationId String?    @db.VarChar(40)
+  createdAt     DateTime   @default(now())
+
+  @@index([videoId, createdAt])
+  @@index([companyId])
+}
+
+// ─── Pre-departure course (LMS) for candidates: course → module → lesson, quizzes, certificate ─────
+
+enum CourseLessonKind {
+  VIDEO
+  TEXT
+  QUIZ
+}
+
+enum CourseQuestionKind {
+  SINGLE
+  MULTIPLE
+}
+
+/// A course for candidates (client portal → Öyrən → Kurs). Texts are L10n JSON. Design: lib/course.
+model Course {
+  id                 String    @id @default(cuid())
+  /// Stable key (the starter course is "pre-departure"); unique, so seeding is idempotent.
+  slug               String    @unique @db.VarChar(80)
+  title              Json
+  description        Json?
+  /// Shown on the overview and in every lesson ("general information, not legal advice").
+  disclaimer         Json?
+  published          Boolean   @default(false)
+  /// CaseStatus[]: CLIENT users with a case in one of these statuses are enrolled automatically; null / [] = manual only.
+  autoEnrollStatuses Json?
+  sortOrder          Int       @default(0)
+  createdById        String?   @db.VarChar(40)
+  publishedAt        DateTime?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  @@index([published, sortOrder])
+}
+
+model CourseModule {
+  id          String   @id @default(cuid())
+  courseId    String   @db.VarChar(40)
+  title       Json
+  description Json?
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([courseId, sortOrder])
+}
+
+/// Files live in <uploads>/private/course/ (video with HTTP range streaming, poster image, WebVTT subtitles per locale).
+model CourseLesson {
+  id            String           @id @default(cuid())
+  courseId      String           @db.VarChar(40)
+  moduleId      String           @db.VarChar(40)
+  kind          CourseLessonKind
+  title         Json
+  body          Json? // L10n markdown (TEXT; intro text for VIDEO / QUIZ)
+  minutes       Int?
+  videoKey      String?          @db.VarChar(200)
+  videoMime     String?          @db.VarChar(40)
+  videoSize     Int?
+  videoDuration Int? // seconds
+  posterKey     String?          @db.VarChar(200)
+  subtitles     Json? // { az?: key, de?: key, en?: key, ru?: key }
+  passMark      Int              @default(70) // QUIZ: percent needed to pass
+  sortOrder     Int              @default(0)
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  @@index([moduleId, sortOrder])
+  @@index([courseId])
+}
+
+model CourseQuizQuestion {
+  id          String             @id @default(cuid())
+  lessonId    String             @db.VarChar(40)
+  kind        CourseQuestionKind @default(SINGLE)
+  prompt      Json // L10n
+  options     Json // L10n[]
+  correct     Json // number[] (indexes into options)
+  explanation Json? // L10n, shown after answering
+  sortOrder   Int                @default(0)
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+
+  @@index([lessonId, sortOrder])
+}
+
+model CourseEnrollment {
+  id             String    @id @default(cuid())
+  courseId       String    @db.VarChar(40)
+  userId         String    @db.VarChar(40)
+  source         String    @default("AUTO") @db.VarChar(8) // AUTO | MANUAL
+  enrolledById   String?   @db.VarChar(40)
+  enrolledAt     DateTime  @default(now())
+  /// Staff removed the enrollment (kept, so automatic enrollment does not bring it back).
+  removedAt      DateTime?
+  completedAt    DateTime?
+  lastActivityAt DateTime?
+
+  @@unique([courseId, userId])
+  @@index([userId])
+}
+
+model CourseLessonProgress {
+  id              String    @id @default(cuid())
+  userId          String    @db.VarChar(40)
+  courseId        String    @db.VarChar(40)
+  lessonId        String    @db.VarChar(40)
+  startedAt       DateTime  @default(now())
+  completedAt     DateTime?
+  watchedSeconds  Int       @default(0)
+  positionSeconds Int       @default(0)
+  updatedAt       DateTime  @updatedAt
+
+  @@unique([userId, lessonId])
+  @@index([courseId, userId])
+}
+
+model CourseQuizAttempt {
+  id        String   @id @default(cuid())
+  userId    String   @db.VarChar(40)
+  courseId  String   @db.VarChar(40)
+  lessonId  String   @db.VarChar(40)
+  answers   Json // number[][] (chosen option indexes per question)
+  score     Int
+  passed    Boolean
+  createdAt DateTime @default(now())
+
+  @@index([userId, lessonId, createdAt])
+  @@index([courseId])
+}
+
+/// Completion certificate. The public page /certificate/:code shows only the holder's initials, course and date.
+model CourseCertificate {
+  id         String   @id @default(cuid())
+  number     String   @unique @db.VarChar(40)
+  code       String   @unique @db.VarChar(32)
+  courseId   String   @db.VarChar(40)
+  userId     String   @db.VarChar(40)
+  holderName String   @db.VarChar(200)
+  issuedAt   DateTime @default(now())
+
+  @@unique([courseId, userId])
+  @@index([userId])
+}
+
+// ─── First-month budget calculator (lib/budget) ─────────────────────────
+
+/// Cost of living per destination for the first-month budget (/budget). Conservative, dated estimates,
+/// editable by ADMIN+ (Sayt → Şəhər xərcləri, audit-logged). kind GENERIC = fallback per size class.
+model CityCost {
+  id            String   @id @default(cuid())
+  slug          String   @unique @db.VarChar(60)
+  name          String   @db.VarChar(80)
+  /// CITY (a real city) | GENERIC (size-class fallback for places without an own row)
+  kind          String   @default("CITY") @db.VarChar(10)
+  /// Bundesland code (BW, BY, BE …); null for GENERIC rows
+  state         String?  @db.VarChar(2)
+  /// METRO | LARGE | MEDIUM | SMALL
+  sizeClass     String   @default("LARGE") @db.VarChar(10)
+  /// Nearby towns matched to this row (comma separated), e.g. vacancy cities around a big city
+  aliases       String?  @db.Text
+  /// EUR per month: WG room all-in; flats cold (Kaltmiete) + utilities incl. heating (Nebenkosten)
+  wgMin         Int
+  wgMax         Int
+  flat1ColdMin  Int
+  flat1ColdMax  Int
+  flat1UtilMin  Int
+  flat1UtilMax  Int
+  flat2ColdMin  Int
+  flat2ColdMax  Int
+  flat2UtilMin  Int
+  flat2UtilMax  Int
+  /// Typical employer-provided room (all-in) when the company gives no figure
+  companyMin    Int
+  companyMax    Int
+  /// Food and household per adult and month
+  foodMin       Int
+  foodMax       Int
+  /// Local transport per adult and month (Deutschlandticket unless set otherwise)
+  transport     Int      @default(63)
+  /// Typical deposit in net cold rents (legal maximum 3, §551 BGB)
+  depositMonths Float    @default(3)
+  sourceNote    String?  @db.Text
+  /// Date the figures were checked (shown as "as of")
+  checkedAt     DateTime @db.Date
+  active        Boolean  @default(true)
+  sortOrder     Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([active, sortOrder])
 }

@@ -20,7 +20,7 @@ type Source = 'contact' | 'footer' | 'advisor' | 'portal' | 'livechat';
  * "Mənə zəng edin": name, phone (prefilled for signed-in clients), language, topic and a time window
  * (today / tomorrow, 1-hour windows in Baku office hours, or "as soon as possible"). POST /api/callback.
  */
-export const CallbackForm = ({ source, onDone, compact }: { source: Source; onDone?: () => void; compact?: boolean }) => {
+export const CallbackForm = ({ source, onDone, compact, initialMessage }: { source: Source; onDone?: () => void; compact?: boolean; /** Prefilled message (e.g. a calculator result). */ initialMessage?: string }) => {
   const { t, i18n } = useTranslation();
   const { user } = useAuth();
   const ids = useId();
@@ -31,7 +31,7 @@ export const CallbackForm = ({ source, onDone, compact }: { source: Source; onDo
   const [phone, setPhone] = useState(isClient ? (user!.phone ?? '') : '');
   const [lang, setLang] = useState<string>(LANGS.includes(uiLang as 'az') ? uiLang : 'az');
   const [topic, setTopic] = useState<string>('');
-  const [message, setMessage] = useState('');
+  const [message, setMessage] = useState(initialMessage ?? '');
   const [slot, setSlot] = useState<string>('asap');
   const [consent, setConsent] = useState(false);
   const [honeypot, setHoneypot] = useState('');

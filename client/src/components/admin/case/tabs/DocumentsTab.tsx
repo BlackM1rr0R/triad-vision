@@ -7,6 +7,7 @@ import { EmploymentContractPanel } from '@/components/placement/EmploymentContra
 import { CaseOfficialFormsPanel } from '@/components/officialForms/CaseOfficialFormsPanel';
 import { RecognitionPanel } from '@/components/recognition/RecognitionPanel';
 import { AcceleratedPanel } from '@/components/recognition/AcceleratedPanel';
+import { CaseSkillVideos } from '@/components/skillVideos/StaffSkillVideos';
 import { ClientFiles } from '../ClientFiles';
 import { ContractBox } from '../Contract';
 import { RequirementsSection } from '../Requirements';
@@ -56,6 +57,10 @@ export default function DocumentsTab({ c, isAdmin }: CaseTabProps) {
       </div>
       <div id="case-originals" className="empty:hidden">
         <CaseOriginalsPanel caseId={c.id} />
+      </div>
+      {/* The client's skill videos (review: approve / reject, employer views); hidden when there are none. */}
+      <div id="case-skill-videos" className="empty:hidden">
+        <CaseSkillVideos caseId={c.id} />
       </div>
     </div>
   );

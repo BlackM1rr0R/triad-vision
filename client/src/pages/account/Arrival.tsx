@@ -33,6 +33,7 @@ import { PageLoader, Spinner } from '@/components/ui/Spinner';
 import { Tabs } from '@/components/ui/Tabs';
 import { ConfirmDialog } from '@/components/portal/ConfirmDialog';
 import { CITIES } from '@/lib/cities/data';
+import { BudgetLink } from '@/components/budget/BudgetTeaser';
 import { Germany, Success } from '@/components/illustrations';
 import {
   ArrivalStatusPill,
@@ -603,6 +604,7 @@ export default function AccountArrival() {
       <div>
         <h2 className="type-page-title">{t('arrival.title')}</h2>
         <p className="mt-1 max-w-2xl text-sm text-muted">{t('arrival.subtitle')}</p>
+        <BudgetLink portal className="mt-1 text-sm" />
       </div>
 
       {list.isError ? (

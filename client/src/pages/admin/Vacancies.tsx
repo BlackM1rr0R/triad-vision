@@ -25,6 +25,7 @@ import { EmployerAiToggle } from '@/components/aiEmployer/EmployerAiToggle';
 import { reportAiSaved } from '@/components/aiEmployer/shared';
 import { toastJobsError, useJobLabels } from '@/components/jobs/labels';
 import { VacancyStatusCell } from '@/components/inline/VacancyStatusCell'; // inline publish / close
+import { VacancyDistributionPanel } from '@/components/jobFeeds/VacancyDistributionPanel'; // "Paylaşım": job boards (ADMIN+)
 import { requestInlineEdit } from '@/components/inline/optimistic';
 import { useListNav } from '@/components/shortcuts/useListNav'; // J / K / Enter / E / '/' / Esc
 import {
@@ -390,6 +391,7 @@ const VacancyDrawer = ({ id, onClose }: { id: string | null; onClose: () => void
               extra={(f, set) => <StaffFields f={f} set={set} />}
             />
           </Panel>
+          <VacancyDistributionPanel vacancyId={v.id} />
           <ConfirmDialog
             open={confirmDelete}
             onClose={() => setConfirmDelete(false)}

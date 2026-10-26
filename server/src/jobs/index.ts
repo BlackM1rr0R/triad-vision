@@ -19,6 +19,7 @@ import './translations.js'; // translation order reminders
 import './privacy.js'; // privacy request deadlines
 import './vault.js'; // vault document expiry reminders
 import './arrival.js'; // arrival / pickup reminders
+import './housing.js'; // Anmeldung appointment reminders (3 d / 1 d / morning) + two-week deadline warnings
 import './clientsExcel.js'; // super admin's Excel of all clients
 import './surveys.js'; // satisfaction surveys after visa approval / case closure
 import './googleReviews.js'; // one Google review request per client after approval / arrival (low survey score → staff task)
@@ -45,3 +46,5 @@ import './clientBilling.js'; // client invoices: DATE instalments, overdue + rem
 import './employerReports.js'; // monthly employer PDF report (1st of the month, 08:00 Baku) to the company's portal users
 import './recognition.js'; // Anerkennung + § 81a deadline reminders / escalation, signed Vollmacht pick-up
 import './license.js'; // white-label licence re-check (daily)
+import './course.js'; // pre-departure course: auto-enrollment + reminder after 7 days without progress
+import './jobFeeds.js'; // BA Jobbörse HR-BA-XML upload (off until partner id + certificate are entered)

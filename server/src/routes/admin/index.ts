@@ -30,6 +30,7 @@ import { adminPrivacyRouter } from './privacy.js';
 import { adminLegalRouter } from './legal.js';
 import { adminWaitingRoomRouter } from './waitingRoom.js';
 import { adminArrivalsRouter } from './arrivals.js';
+import { adminHousingRouter } from './housing.js'; // housing + Anmeldung, partner landlord listings
 import { adminInterviewPrepRouter } from './interviewPrep.js';
 import { adminFinanceRouter } from './finance.js';
 import { adminSurveysRouter } from './surveys.js';
@@ -38,6 +39,7 @@ import { adminCandidateRequestsRouter } from './candidateRequests.js';
 import { adminPartnersRouter } from './partners.js';
 import { adminRegisterRouter } from './register.js';
 import { adminDocumentExpiryRouter } from './documentExpiry.js';
+import { adminSkillVideosRouter } from './skillVideos.js';
 import { adminSettlementsRouter } from './settlements.js';
 import { adminTranslateRouter } from './translate.js';
 import { adminAiStaffRouter } from './aiStaff.js';
@@ -81,6 +83,9 @@ import { adminAcceleratedRouter, adminRecognitionRouter } from './recognition.js
 import { adminDashboardLayoutRouter } from './dashboardLayout.js'; // personal dashboard widget layout
 import { adminPresenceRouter } from './presence.js'; // live "who is viewing this case / inquiry"
 import { adminBrandRouter, adminLicenseRouter, adminWhitelabelRouter } from './whitelabel.js'; // white-label: brand, licence, owner's customer list
+import { adminCourseRouter } from './course.js'; // pre-departure course: builder (ADMIN+), progress report + enroll (STAFF+)
+import { adminCityCostsRouter } from './cityCosts.js'; // first-month budget: city cost table (Sayt → Şəhər xərcləri)
+import { adminJobFeedsRouter } from './jobFeeds.js'; // external job boards: feed URLs + token, per-vacancy distribution, BA HR-BA-XML
 
 export const adminRouter = Router();
 adminRouter.use(requireMinRole('STAFF'));
@@ -165,6 +170,7 @@ adminRouter.use('/campaigns', adminCampaignsRouter); // campaigns to client segm
 adminRouter.use('/time', adminTimeRouter); // time tracking (STAFF: own entries; rates SUPER_ADMIN)
 adminRouter.use('/kpi', adminKpiRouter); // staff KPI (own card STAFF; team + others ADMIN+)
 adminRouter.use('/training', adminTrainingRouter); // training: learn (STAFF), authoring + progress (ADMIN+)
+adminRouter.use('/course', adminCourseRouter); // pre-departure course (client LMS): builder ADMIN+, report STAFF+
 adminRouter.use('/shifts', adminShiftsRouter); // team calendar (STAFF read, ADMIN+ edit)
 adminRouter.use('/handover-notes', adminHandoverNotesRouter); // handover notes / checklists
 adminRouter.use('/check-ins', adminCheckInsRouter); // post-arrival check-ins, retention
@@ -175,6 +181,7 @@ adminRouter.use(adminFourEyesRouter); // /cases/:id/four-eyes*, /four-eyes/* (em
 adminRouter.use('/access-log', adminAccessLogRouter); // "who viewed my documents" per client
 adminRouter.use('/placement', adminPlacementRouter); // recognition, employer share links, interview evaluations, Arbeitsvertrag tracker
 adminRouter.use('/growth', adminGrowthRouter); // events (Tədbirlər), calculator assumptions, placement map, client referrals
+adminRouter.use('/city-costs', requireMinRole('ADMIN'), adminCityCostsRouter); // first-month budget city costs (ADMIN+, audited)
 adminRouter.use('/marketing', adminMarketingRouter); // lead scoring, landing pages, cost calculator, origin → destination analytics
 adminRouter.use('/oversight', oversightRouter);
 adminRouter.use('/messaging', adminMessagingRouter);
@@ -188,6 +195,7 @@ adminRouter.use('/privacy', adminPrivacyRouter);
 adminRouter.use('/legal', adminLegalRouter); // versioned AGB / privacy / cookie texts (ADMIN+)
 adminRouter.use('/waiting-room', adminWaitingRoomRouter); // client waiting room CMS (STAFF read, ADMIN+ edit)
 adminRouter.use('/arrivals', adminArrivalsRouter);
+adminRouter.use('/housing', adminHousingRouter); // STAFF+; listing edits ADMIN+ (checked in the router)
 adminRouter.use('/interview-prep', adminInterviewPrepRouter);
 adminRouter.use('/finance', adminFinanceRouter);
 adminRouter.use('/reports', adminReportsRouter); // report builder (ADMIN+)
@@ -195,6 +203,7 @@ adminRouter.use('/profitability', adminProfitabilityRouter); // profitability pe
 adminRouter.use('/surveys', adminSurveysRouter);
 adminRouter.use('/contract-templates', adminContractTemplatesRouter);
 adminRouter.use('/candidate-requests', adminCandidateRequestsRouter);
+adminRouter.use('/skill-videos', adminSkillVideosRouter); // candidates' skill videos: review queue, approve / reject, view log
 adminRouter.use('/partners', adminPartnersRouter);
 adminRouter.use('/register', adminRegisterRouter);
 adminRouter.use('/settlements', adminSettlementsRouter);
@@ -228,6 +237,7 @@ adminRouter.use('/mailboxes', requireMinRole('ADMIN'), adminMailboxesRouter);
 adminRouter.use('/companies', adminCompaniesRouter);
 adminRouter.use('/employer-reports', adminEmployerReportsRouter); // monthly employer report: preview, regenerate, send
 adminRouter.use('/vacancies', adminVacanciesRouter);
+adminRouter.use('/job-feeds', requireMinRole('ADMIN'), adminJobFeedsRouter); // İş elanı kanalları (ADMIN+)
 adminRouter.use('/candidates', adminCandidatesRouter);
 adminRouter.use('/booking', adminBookingRouter);
 adminRouter.use('/invoices', requireMinRole('ADMIN'), adminInvoicesRouter);

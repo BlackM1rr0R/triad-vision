@@ -39,6 +39,18 @@ www.{$SITE_DOMAIN} {
 		}
 	}
 
+	# Job board feeds (/feeds/indeed.xml, /feeds/stepstone.xml, /feeds/generic.xml ?token=…) come from the API,
+	# which checks the secret token and caches each feed for 10 minutes (server/src/routes/jobFeeds.ts,
+	# deploy/README-jobfeeds.md). The token travels in the query string and so appears in the access log below;
+	# rotate it (Admin → İş elanı kanalları) if logs are shared with anyone who should not read the feeds.
+	@jobfeeds path /feeds/*
+	handle @jobfeeds {
+		reverse_proxy api:4000 {
+			header_up X-Forwarded-For {client_ip}
+			header_up X-Forwarded-Proto {scheme}
+		}
+	}
+
 	# Per-page <head> tags (title, description, canonical, hreflang, Open Graph, JSON-LD), the white-label brand
 	# tags (/__seo/brand: theme colour, icons, app title) and the crawlable page
 	# body (/__seo/body, placed inside <div id="root">) for crawlers that do not run JavaScript. index.html
