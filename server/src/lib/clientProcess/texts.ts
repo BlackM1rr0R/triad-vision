@@ -96,6 +96,40 @@ export const TASK_TEMPLATES: TaskTemplate[] = [
     },
     dueDays: 7,
   },
+  // After the Anmeldung (lib/housing creates these automatically once the Meldebescheinigung is on file).
+  {
+    key: 'STEUER_ID',
+    title: { az: 'Steuer-ID məktubunu gözləyin və işəgötürənə verin', de: 'Steuer-ID abwarten und dem Arbeitgeber geben', en: 'Wait for your Steuer-ID and give it to your employer', ru: 'Дождитесь Steuer-ID и передайте его работодателю' },
+    description: {
+      az: 'Anmeldung-dan sonra Bundeszentralamt für Steuern vergi identifikasiya nömrənizi (11 rəqəm) adətən bir neçə həftə ərzində poçtla göndərir. Nömrəni işəgötürənə verin. Məktub gəlməyibsə, Finanzamt-dan soruşun.',
+      de: 'Nach der Anmeldung schickt das Bundeszentralamt für Steuern Ihre steuerliche Identifikationsnummer (11 Ziffern) in der Regel innerhalb einiger Wochen per Post. Geben Sie die Nummer Ihrem Arbeitgeber. Kommt kein Brief, fragen Sie beim Finanzamt nach.',
+      en: 'After the Anmeldung the Federal Central Tax Office usually sends your tax identification number (11 digits) by post within a few weeks. Give the number to your employer. If no letter arrives, ask the local Finanzamt.',
+      ru: 'После Anmeldung Федеральное центральное налоговое ведомство обычно в течение нескольких недель присылает по почте ваш налоговый идентификатор (11 цифр). Передайте номер работодателю. Если письма нет, обратитесь в Finanzamt.',
+    },
+    dueDays: 28,
+  },
+  {
+    key: 'BANK_ACCOUNT',
+    title: { az: 'Almaniyada bank hesabı açın', de: 'Eröffnen Sie ein Girokonto in Deutschland', en: 'Open a German bank account', ru: 'Откройте банковский счёт в Германии' },
+    description: {
+      az: 'Pasport və Meldebescheinigung ilə Girokonto açın. IBAN-ı işəgötürənə və tibbi sığorta kassasına bildirin.',
+      de: 'Eröffnen Sie mit Reisepass und Meldebescheinigung ein Girokonto. Teilen Sie die IBAN Ihrem Arbeitgeber und Ihrer Krankenkasse mit.',
+      en: 'Open a current account (Girokonto) with your passport and Meldebescheinigung. Give the IBAN to your employer and your health insurer.',
+      ru: 'Откройте Girokonto с паспортом и Meldebescheinigung. Сообщите IBAN работодателю и больничной кассе.',
+    },
+    dueDays: 14,
+  },
+  {
+    key: 'HEALTH_CARD',
+    title: { az: 'Tibbi sığorta kartını alın', de: 'Gesundheitskarte erhalten', en: 'Get your health insurance card', ru: 'Получите карту медицинской страховки' },
+    description: {
+      az: 'Tibbi sığorta kassası elektron sığorta kartını (eGK) poçtla göndərir; çox vaxt şəkil tələb olunur. Kart gələndə bu tapşırığı tamamlayın.',
+      de: 'Die Krankenkasse schickt die elektronische Gesundheitskarte (eGK) per Post; oft wird dafür ein Foto verlangt. Erledigen Sie diese Aufgabe, sobald die Karte da ist.',
+      en: 'Your health insurer sends the electronic health card (eGK) by post; a photo is often required. Mark this task done when the card has arrived.',
+      ru: 'Больничная касса присылает электронную карту (eGK) по почте; часто нужна фотография. Отметьте задачу, когда карта придёт.',
+    },
+    dueDays: 28,
+  },
 ];
 
 export const templateByKey = (key: string | null | undefined) => (key ? TASK_TEMPLATES.find((t) => t.key === key) : undefined);

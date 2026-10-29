@@ -61,6 +61,7 @@ import {
   Receipt,
   Rocket,
   Route,
+  Rss,
   Scale,
   Settings,
   Sheet,
@@ -80,6 +81,7 @@ import {
   Vault,
   Video,
   Wallet,
+  Clapperboard,
   Wand2,
   Workflow,
   ScrollText,
@@ -221,6 +223,7 @@ export const STAFF_NAV: StaffNavItem[] = [
   a('accelerated', '/admin/accelerated', Rocket, 'work'), // § 81a accelerated skilled-worker procedures
   a('originals', '/admin/originals', Vault, 'work', { module: 'originals' }),
   a('arrivals', '/admin/arrivals', PlaneLanding, 'work'),
+  a('partnerHousing', '/admin/partner-housing', KeyRound, 'work'), // partner landlords (ADMIN+ edit, STAFF+ propose) + Anmeldung deadlines
   a('checkIns', '/admin/check-ins', HeartHandshake, 'work', { module: 'checkIns' }),
   a('examDates', '/admin/exam-dates', CalendarClock, 'work', { module: 'examDates' }),
   a('journey', '/admin/journey', Route, 'work', { module: 'journey' }),
@@ -228,6 +231,7 @@ export const STAFF_NAV: StaffNavItem[] = [
   // Müştərilər
   a('users', '/admin/users', Users, 'clients'),
   a('candidates', '/admin/candidates', UserSearch, 'clients'),
+  a('skillVideos', '/admin/skill-videos', Clapperboard, 'clients'), // candidates' skill videos: review queue (approve / reject)
   a('register', '/admin/register', Sheet, 'clients'),
   a('duplicates', '/admin/duplicates', Copy, 'clients', { adminOnly: true }),
   a('inquiries', '/admin/inquiries', Inbox, 'clients'),
@@ -236,6 +240,7 @@ export const STAFF_NAV: StaffNavItem[] = [
   // İşəgötürənlər
   a('companies', '/admin/companies', Building2, 'employers'),
   a('vacancies', '/admin/vacancies', BriefcaseBusiness, 'employers'),
+  a('jobChannels', '/admin/job-channels', Rss, 'employers', { adminOnly: true }), // job board feeds: Indeed, StepStone, BA Jobbörse, generic XML
   a('candidateRequests', '/admin/candidate-requests', UsersRound, 'employers'),
   a('quotes', '/admin/quotes', FileSignature, 'employers', { adminOnly: true, module: 'quotes' }),
   a('interviews', '/admin/interviews', Video, 'employers'),
@@ -277,9 +282,11 @@ export const STAFF_NAV: StaffNavItem[] = [
   a('translations', '/admin/translations', Languages, 'site', { module: 'translations' }),
   a('docGuides', '/admin/doc-guides', BookOpen, 'site'),
   a('waitingRoom', '/admin/waiting-room', Hourglass, 'site', { module: 'waitingRoom' }),
+  a('preCourse', '/admin/course', GraduationCap, 'clients'), // pre-departure course for candidates: builder (ADMIN+), progress report (STAFF+)
   a('caseForms', '/admin/case-forms', ListChecks, 'site'),
   a('contractTemplates', '/admin/contract-templates', FileText, 'site', { adminOnly: true }),
   a('siteTools', '/admin/site-tools', Wand2, 'site'),
+  a('cityCosts', '/admin/city-costs', Banknote, 'site', { adminOnly: true }), // first-month budget: city cost table (ADMIN+)
   a('landingPages', '/admin/landing-pages', PanelsTopLeft, 'site', { module: 'landingPages' }),
   a('leadMagnets', '/admin/lead-magnets', BookOpen, 'site', { adminOnly: true, module: 'landingPages' }), // e-book lead magnets
   a('guides', '/admin/guides', BookOpen, 'site', { adminOnly: true, module: 'guides' }), // SEO topic guides (6 languages)
@@ -358,15 +365,15 @@ export type HubKey = 'today' | 'cases' | 'clients' | 'employers' | 'comms' | 'fi
 export const HUBS: { key: HubKey; icon: LucideIcon; tabs: string[] }[] = [
   { key: 'today', icon: LayoutDashboard, tabs: ['today', 'dashboard', 'kanban', 'tasks', 'clientTasks'] },
   { key: 'cases', icon: FolderKanban, tabs: ['cases', 'requirements', 'docsAudit', 'expiring', 'recognition', 'accelerated', 'originals', 'signatures', 'countersign', 'officialForms', 'caseForms', 'contractTemplates', 'translations'] },
-  { key: 'clients', icon: Users, tabs: ['candidates', 'register', 'duplicates', 'checkIns', 'arrivals', 'journey', 'examDates', 'waitingRoom'] },
-  { key: 'employers', icon: Building2, tabs: ['companies', 'vacancies', 'candidateRequests', 'interviews', 'employmentContracts', 'interviewPrep'] },
+  { key: 'clients', icon: Users, tabs: ['candidates', 'skillVideos', 'register', 'duplicates', 'checkIns', 'arrivals', 'partnerHousing', 'journey', 'examDates', 'waitingRoom', 'preCourse'] },
+  { key: 'employers', icon: Building2, tabs: ['companies', 'vacancies', 'jobChannels', 'candidateRequests', 'interviews', 'employmentContracts', 'interviewPrep'] },
   { key: 'comms', icon: MessageSquareText, tabs: ['messaging', 'calls', 'campaigns', 'announcements', 'surveys', 'reviews'] },
   { key: 'finance', icon: Wallet, tabs: ['finance', 'invoices', 'clientInvoices', 'packages', 'accounting', 'quotes', 'settlements', 'profitability', 'reports'] },
   { key: 'leads', icon: Target, tabs: ['inquiries', 'bookings', 'analytics', 'referralPartners', 'agents'] },
   {
     key: 'site',
     icon: Globe,
-    tabs: ['services', 'visaCategories', 'partners', 'visaSamples', 'testimonials', 'stats', 'faqs', 'posts', 'landingPages', 'leadMagnets', 'guides', 'docGuides', 'events', 'siteTools'],
+    tabs: ['services', 'visaCategories', 'partners', 'visaSamples', 'testimonials', 'stats', 'faqs', 'posts', 'landingPages', 'leadMagnets', 'guides', 'docGuides', 'events', 'siteTools', 'cityCosts'],
   },
   { key: 'team', icon: UsersRound, tabs: ['users', 'mailboxes', 'kpi', 'shifts', 'training', 'timeTracking', 'oversight', 'weeklyReports'] },
   { key: 'compliance', icon: Scale, tabs: ['privacyRequests', 'legal', 'history', 'security', 'securityAlerts', 'sensitiveAccess', 'storage'] },

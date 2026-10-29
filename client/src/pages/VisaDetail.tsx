@@ -25,6 +25,7 @@ import { pagesVisa } from '@/i18n/pagesVisa';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { CalculatorTeaser } from '@/components/growth/CalculatorTeaser';
 import { CostCalculatorTeaser } from '@/components/marketing/CostCalculatorTeaser';
+import { BudgetTeaser } from '@/components/budget/BudgetTeaser';
 
 registerCopy(pagesVisa);
 
@@ -307,6 +308,7 @@ export default function VisaDetail() {
 
       <CalculatorTeaser visa={data.slug} />
       <CostCalculatorTeaser visa={data.slug} />
+      <BudgetTeaser visa={data.slug} gross={data.salaryMin} grossMax={data.salaryMax} />
 
       {services.length > 0 && (
         <section className="section bg-sunken">

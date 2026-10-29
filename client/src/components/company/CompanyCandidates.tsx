@@ -17,6 +17,7 @@ import { SearchEmpty } from '@/components/illustrations';
 import { Empty, Loading, Section } from './shared';
 import { CvDownloadButton } from '@/components/cv/CvDownloadButton';
 import { SharedProfile, useSharedProfiles } from '@/components/aiEmployer/SharedProfile';
+import { EmployerSkillVideos, useEmployerSkillVideos } from '@/components/skillVideos/EmployerSkillVideos';
 import { PartyChatButton, PartyConversations, PartyThreadFromQuery, usePartyThreads } from '@/components/messagingPlus/PartyThread';
 
 interface Item {
@@ -94,6 +95,7 @@ export const CompanyCandidates = () => {
       (await api.get<{ items: Item[] }>('/company/candidates', { params: { status: status || undefined, vacancyId: vacancyId || undefined } })).data.items,
   });
   const profiles = useSharedProfiles();
+  const skillVideos = useEmployerSkillVideos(); // approved + consented skill videos, by application
   // Three-party threads (messaging plus): "Söhbət" on a card once Triad Vision opened the conversation.
   const threads = usePartyThreads();
   const threadByApp = new Map((threads.data ?? []).filter((th) => th.applicationId).map((th) => [th.applicationId!, th]));
@@ -188,6 +190,7 @@ export const CompanyCandidates = () => {
               </dl>
               {a.companyNote && <p className="mt-3 rounded-xl bg-sunken px-3 py-2 text-sm text-ink">{a.companyNote}</p>}
               {profiles.data?.get(a.id) && <SharedProfile profile={profiles.data.get(a.id)!} />}
+              <EmployerSkillVideos applicationId={a.id} videos={skillVideos.data?.get(a.id)} />
               <CvDownloadButton url={`/company/candidates/${a.id}/cv.pdf`} anonymised className="mt-3" />
               <PartyChatButton thread={threadByApp.get(a.id)} className="mt-3 ml-2" />
               <p className="mt-3 text-[11px] text-muted">{t('jobsArea.portal.candidates.updated', { date: fmtDate(a.updatedAt) })}</p>

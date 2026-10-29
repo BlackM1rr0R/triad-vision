@@ -19,6 +19,7 @@ export type SubKey =
   | 'application'
   | 'arrival'
   | 'onboarding'
+  | 'housing'
   // documents
   | 'caseDocs'
   | 'signatures'
@@ -30,6 +31,7 @@ export type SubKey =
   | 'chat'
   | 'notifications'
   // learn
+  | 'course'
   | 'waitingRoom'
   | 'german'
   | 'interviewPrep'
@@ -46,10 +48,10 @@ export type SubKey =
 
 /** Every sub-tab in display order, grouped by section. */
 export const SECTION_SUBS: Record<SectionKey, readonly SubKey[]> = {
-  home: ['overview', 'application', 'arrival', 'onboarding'],
+  home: ['overview', 'application', 'arrival', 'onboarding', 'housing'],
   documents: ['caseDocs', 'signatures', 'payments', 'vault', 'translations', 'letterExplain'],
   messages: ['chat', 'notifications'],
-  learn: ['waitingRoom', 'german', 'interviewPrep', 'interviews', 'jobs', 'cv', 'letters', 'guides'],
+  learn: ['course', 'waitingRoom', 'german', 'interviewPrep', 'interviews', 'jobs', 'cv', 'letters', 'guides'],
   profile: ['personal', 'family', 'privacy', 'referral'],
 };
 
@@ -94,6 +96,8 @@ export interface VisibilityContext {
   openDocActions: boolean;
   /** Client invoices or a payment plan exist (Documents › Payments). */
   hasPayments?: boolean;
+  /** Enrolled in a pre-departure course (Learn › Course). */
+  hasCourse?: boolean;
 }
 
 const PRE_APPROVAL: PortalStage[] = ['LEAD', 'PREPARING', 'AT_EMBASSY'];
@@ -119,6 +123,7 @@ export const isSubVisible = (sub: SubKey, stage: PortalStage, ctx: VisibilityCon
     case 'arrival':
       return stage === 'TRAVEL';
     case 'onboarding':
+    case 'housing': // housing search + Anmeldung (from the visa approval on)
       return stage === 'TRAVEL' || stage === 'IN_GERMANY';
     case 'caseDocs':
       // In Germany only while something is still open there (renewal, family member, missing file).
@@ -128,6 +133,8 @@ export const isSubVisible = (sub: SubKey, stage: PortalStage, ctx: VisibilityCon
       return ctx.hasSignatures;
     case 'payments':
       return !!ctx.hasPayments;
+    case 'course':
+      return !!ctx.hasCourse;
     case 'waitingRoom':
       return stage === 'PREPARING' || stage === 'AT_EMBASSY';
     case 'interviewPrep':
@@ -174,6 +181,8 @@ export const subOfLocation = (pathname: string, search = ''): SubKey | null => {
       return 'arrival';
     case 'onboarding':
       return 'onboarding';
+    case 'housing':
+      return 'housing';
     case 'signatures':
       return 'signatures';
     case 'payments':
@@ -186,6 +195,8 @@ export const subOfLocation = (pathname: string, search = ''): SubKey | null => {
       return 'letterExplain';
     case 'notifications':
       return 'notifications';
+    case 'course':
+      return 'course';
     case 'waiting-room':
       return 'waitingRoom';
     case 'german':
@@ -230,6 +241,8 @@ export const subPath = (sub: SubKey, caseId: string | null, caseCount = caseId ?
       return '/account/arrival';
     case 'onboarding':
       return '/account/onboarding';
+    case 'housing':
+      return '/account/housing';
     case 'caseDocs':
       return kase('docs');
     case 'signatures':
@@ -246,6 +259,8 @@ export const subPath = (sub: SubKey, caseId: string | null, caseCount = caseId ?
       return kase('messages');
     case 'notifications':
       return '/account/notifications';
+    case 'course':
+      return '/account/course';
     case 'waitingRoom':
       return '/account/waiting-room';
     case 'german':

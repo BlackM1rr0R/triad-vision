@@ -6,6 +6,7 @@ import { registerCopy } from '@/i18n';
 import { pagesAccount } from '@/i18n/pagesAccount';
 import { pagesPortalNav } from '@/i18n/pagesPortalNav';
 import { GermanTeaser } from './portal/SecondaryCards';
+import { BudgetLink } from '@/components/budget/BudgetTeaser';
 
 registerCopy(pagesAccount);
 registerCopy(pagesPortalNav);
@@ -23,6 +24,7 @@ export default function AccountGuides() {
       <div>
         <h2 className="type-page-title">{t('pnav.guides.title')}</h2>
         <p className="mt-1 max-w-2xl text-sm text-muted">{t('pnav.guides.intro')}</p>
+        <BudgetLink portal className="mt-1 text-sm" />
       </div>
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 [&>*]:min-w-0">
         <TipsCard status={latest?.status ?? null} />

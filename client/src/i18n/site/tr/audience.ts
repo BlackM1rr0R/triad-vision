@@ -23,6 +23,7 @@ const copy: SiteCopy<(typeof pagesAudience)['en']> = {
       anerkennung: { title: 'Diploma denkliği', text: 'Diplomanızın Almanya’da tanınması (Anerkennung) için adım adım rehber.' },
       salary: { title: 'Maaş hesaplayıcı', text: 'Brütten nete: vergi sınıfı ve sosyal sigortalarla.' },
       cost: { title: 'Maliyet hesaplayıcı', text: 'Vize, tercüme, dil kursu ve taşınma maliyetlerini tahmin edin.' },
+      budget: { title: 'İlk ay bütçesi', text: 'Net maaş, depozito, ilk maaşa kadar masraflar ve yanınıza almanız gereken para.' },
       startDate: { title: 'Ne zaman başlayabilirim?', text: 'Vize türüne göre Almanya’da işe başlama tarihinizi tahmin edin.' },
       cities: { title: 'Alman şehirleri', text: '14 şehri karşılaştırın: kira, toplu taşıma, market ve aylık bütçe.' },
       events: { title: 'Etkinlikler ve webinarlar', text: 'Çevrim içi veya yüz yüze ücretsiz bilgilendirme oturumlarına katılın.' },

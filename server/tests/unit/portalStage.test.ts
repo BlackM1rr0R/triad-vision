@@ -72,14 +72,14 @@ describe('portal stage', () => {
 
   it('travel: arrival plan and onboarding appear, the waiting room goes', () => {
     const subs = m.visibleSubs('TRAVEL', ctx({ hasOpenCase: false }));
-    expect(subs.home).toEqual(['overview', 'application', 'arrival', 'onboarding']);
+    expect(subs.home).toEqual(['overview', 'application', 'arrival', 'onboarding', 'housing']);
     expect(subs.learn).not.toContain('waitingRoom');
     expect(subs.learn).not.toContain('jobs');
   });
 
   it('in Germany: onboarding and family, document collection only while something is open', () => {
     const closed = m.visibleSubs('IN_GERMANY', ctx({ hasOpenCase: false }));
-    expect(closed.home).toEqual(['overview', 'application', 'onboarding']);
+    expect(closed.home).toEqual(['overview', 'application', 'onboarding', 'housing']);
     expect(closed.documents).not.toContain('caseDocs');
     expect(closed.documents).toEqual(expect.arrayContaining(['vault', 'letterExplain']));
     expect(closed.profile).toContain('family');

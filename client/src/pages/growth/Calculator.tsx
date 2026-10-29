@@ -8,6 +8,7 @@ import { PageHero } from '@/components/layout/PageHero';
 import { Spinner } from '@/components/ui/Spinner';
 import { buttonClass } from '@/components/ui/Button';
 import { CalendarDay } from '@/components/illustrations';
+import { BudgetTeaser } from '@/components/budget/BudgetTeaser';
 import { registerCopy } from '@/i18n';
 import { pagesGrowthPlus } from '@/i18n/pagesGrowthPlus';
 import { api } from '@/lib/api';
@@ -253,6 +254,7 @@ export default function Calculator() {
           )}
         </div>
       </section>
+      <BudgetTeaser visa={category?.slug ?? null} />
     </>
   );
 }

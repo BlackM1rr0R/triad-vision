@@ -36,6 +36,7 @@ const PAGE_SECTIONS = new Set([
   'eligibility',
   'calculator',
   'cost-calculator',
+  'budget',
   'salary-calculator',
   'events',
   'contact',

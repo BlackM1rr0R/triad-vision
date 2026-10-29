@@ -266,6 +266,18 @@ export const STATIC_PAGES: Record<string, StaticPageMeta> = {
       uk: 'Оцініть візовий збір, переклади, апостиль, визнання диплома, страховку, переліт і блокований рахунок — за типом візи та складом сім’ї.',
     },
   },
+  '/budget': {
+    name: { az: 'İlk ayın büdcəsi', de: 'Budget erster Monat', en: 'First-month budget', ru: 'Бюджет первого месяца', tr: 'İlk ay bütçesi', uk: 'Бюджет першого місяця' },
+    title: { az: 'Almaniyada ilk ayın büdcəsi', de: 'Budget für den ersten Monat in Deutschland', en: 'First-month budget in Germany', ru: 'Бюджет на первый месяц в Германии', tr: 'Almanya\'da ilk ay bütçesi', uk: 'Бюджет на перший місяць у Німеччині' },
+    description: {
+      az: 'Xalis maaş, depozit, ilk maaşa qədər xərclər, aylıq büdcə və özünüzlə nə qədər pul gətirməli — şəhər, maaş və ailəyə görə təxmini hesab.',
+      de: 'Nettogehalt, Kaution, Kosten bis zum ersten Gehalt, Monatsbudget und wie viel Geld Sie mitbringen sollten – geschätzt nach Stadt und Gehalt.',
+      en: 'Net salary, deposit, costs until the first salary, monthly budget and how much money to bring — estimated by city, salary and household.',
+      ru: 'Зарплата нетто, залог, расходы до первой зарплаты, бюджет на месяц и сколько денег взять с собой — оценка по городу и зарплате.',
+      tr: 'Net maaş, depozito, ilk maaşa kadar masraflar, aylık bütçe ve yanınıza almanız gereken para — şehir ve maaşa göre tahmin.',
+      uk: 'Зарплата нетто, застава, витрати до першої зарплати, місячний бюджет і скільки грошей узяти з собою — оцінка за містом і зарплатою.',
+    },
+  },
   '/map': {
     name: { az: 'İşçilərimizin xəritəsi', de: 'Karte unserer Fachkräfte', en: 'Placement map', ru: 'Карта трудоустройства', tr: 'Yerleştirme haritası', uk: 'Карта працевлаштування' },
     title: { az: 'Almaniyada işçilərimiz harada çalışır', de: 'Wo unsere Fachkräfte arbeiten', en: 'Where our workers are in Germany', ru: 'Где работают наши специалисты', tr: 'Çalışanlarımız Almanya\'da nerede?', uk: 'Де працюють наші фахівці' },
@@ -670,7 +682,7 @@ export const PRIVATE_PREFIXES = [
 export type ToolGroupKey = 'eligibility' | 'costs' | 'plan' | 'explore';
 export const TOOL_GROUPS: { key: ToolGroupKey; paths: string[] }[] = [
   { key: 'eligibility', paths: ['/uygunluq-testi', '/eligibility', '/compare-visas', '/blue-card-check', '/chancenkarte-calculator', '/anerkennung'] },
-  { key: 'costs', paths: ['/salary-calculator', '/cost-calculator'] },
+  { key: 'costs', paths: ['/salary-calculator', '/cost-calculator', '/budget'] },
   { key: 'plan', paths: ['/calculator', '/cities', '/events', '/status'] },
   { key: 'explore', paths: ['/map', '/guides', '/jobs', '/visas'] },
 ];

@@ -131,6 +131,9 @@ const PlacementMapPage = lazy(() => import('./pages/growth/MapPage'));
 const InfoEvents = lazy(() => import('./pages/growth/Events'));
 const InfoEventDetail = lazy(() => import('./pages/growth/EventDetail'));
 const CostCalculatorPage = lazy(() => import('./pages/growth/CostCalculator')); // client cost calculator
+const BudgetPage = lazy(() => import('./pages/tools/Budget')); // first-month budget in Germany (/budget)
+const AccountBudget = lazy(() => import('./pages/account/Budget')); // personalised first-month budget
+const AdminCityCosts = lazy(() => import('./pages/admin/CityCosts')); // Sayt → Şəhər xərcləri (budget calculator data)
 const LandingPageView = lazy(() => import('./pages/growth/LandingPage')); // public landing pages /l/:slug
 const AccountReferral = lazy(() => import('./pages/account/Referral'));
 const AdminGrowthEvents = lazy(() => import('./pages/admin/GrowthEvents'));
@@ -150,6 +153,7 @@ const ChancenkarteCalculator = lazy(() => import('./pages/tools/ChancenkarteCalc
 const BlueCardCheck = lazy(() => import('./pages/tools/BlueCardCheck'));
 const AdminGuides = lazy(() => import('./pages/admin/Guides'));
 const AdminArrivals = lazy(() => import('./pages/admin/Arrivals'));
+const AdminPartnerHousing = lazy(() => import('./pages/admin/PartnerHousing')); // partner landlords + Anmeldung deadlines
 const AdminExpiring = lazy(() => import('./pages/admin/Expiring'));
 const AdminRecognition = lazy(() => import('./pages/admin/Recognition')); // Anerkennung procedures
 const AdminAccelerated = lazy(() => import('./pages/admin/Accelerated')); // § 81a accelerated procedures
@@ -188,6 +192,7 @@ const AdminCampaigns = lazy(() => import('./pages/admin/Campaigns'));
 const Unsubscribe = lazy(() => import('./pages/Unsubscribe'));
 const AdminContractTemplates = lazy(() => import('./pages/admin/ContractTemplates'));
 const AdminCandidateRequests = lazy(() => import('./pages/admin/CandidateRequests'));
+const AdminSkillVideos = lazy(() => import('./pages/admin/SkillVideos'));
 const SurveyAnswer = lazy(() => import('./pages/SurveyAnswer'));
 const SuccessSharePage = lazy(() => import('./pages/SuccessSharePage')); // public "visa approved" share card + lead form
 const GoogleReviewOptOut = lazy(() => import('./pages/GoogleReviewLink')); // Google review request: opt-out
@@ -196,6 +201,9 @@ const CheckInAnswer = lazy(() => import('./pages/CheckInAnswer')); // post-arriv
 const AdminTimeTracking = lazy(() => import('./pages/admin/TimeTracking')); // staff time tracking
 const AdminKpi = lazy(() => import('./pages/admin/Kpi')); // staff KPI leaderboard (ADMIN+)
 const AdminTraining = lazy(() => import('./pages/admin/Training')); // internal training: learn / authoring / progress
+const AdminCourse = lazy(() => import('./pages/admin/Course')); // pre-departure course: builder + progress report
+const AccountCourse = lazy(() => import('./pages/account/Course')); // Learn › Course: overview, lesson player, quizzes, certificate
+const CertificateVerify = lazy(() => import('./pages/CertificateVerify')); // public course certificate check
 const AdminShifts = lazy(() => import('./pages/admin/Shifts')); // team calendar: shifts, leave, handovers
 const AdminCheckIns = lazy(() => import('./pages/admin/CheckIns')); // post-arrival check-ins + retention
 const AdminAgents = lazy(() => import('./pages/admin/Agents'));
@@ -209,6 +217,7 @@ const ReviewPage = lazy(() => import('./pages/ReviewPage'));
 const AdminSecurity = lazy(() => import('./pages/admin/Security'));
 const AdminCompanies = lazy(() => import('./pages/admin/Companies'));
 const AdminVacancies = lazy(() => import('./pages/admin/Vacancies'));
+const AdminJobChannels = lazy(() => import('./pages/admin/JobChannels')); // job board feeds (ADMIN+)
 const AdminCandidates = lazy(() => import('./pages/admin/Candidates'));
 const AdminBookings = lazy(() => import('./pages/admin/Bookings'));
 const AdminClientTasks = lazy(() => import('./pages/admin/ClientTasks')); // client tasks across cases (client process)
@@ -237,6 +246,7 @@ const AdminDesignSystem = lazy(() => import('./pages/admin/DesignSystem')); // d
 const AccountCaseForm = lazy(() => import('./pages/account/CaseForm'));
 const AccountConfirmData = lazy(() => import('./pages/account/ConfirmData'));
 const AccountOnboarding = lazy(() => import('./pages/account/Onboarding'));
+const AccountHousing = lazy(() => import('./pages/account/Housing')); // housing search checklist + Anmeldung
 const AccountGerman = lazy(() => import('./pages/account/German'));
 const AccountInterviews = lazy(() => import('./pages/account/Interviews'));
 const AdminAnalytics = lazy(() => import('./pages/admin/Analytics'));
@@ -389,9 +399,11 @@ export default function App() {
             <Route path="events" element={<InfoEvents />} />
             <Route path="events/:slug" element={<InfoEventDetail />} />
             <Route path="cost-calculator" element={<CostCalculatorPage />} />
+            <Route path="budget" element={<BudgetPage />} />
             <Route path="l/:slug" element={<LandingPageView />} />
             <Route path="survey/:token" element={<SurveyAnswer />} />
             <Route path="success/:token" element={<SuccessSharePage />} />
+            <Route path="certificate/:code" element={<CertificateVerify />} />
             <Route path="r/review/:token" element={<GoogleReviewRedirect />} />
             <Route path="r/review/:token/optout" element={<GoogleReviewOptOut />} />
             <Route path="check-in/:key" element={<CheckInAnswer />} />
@@ -467,11 +479,15 @@ export default function App() {
               <Route path="profile" element={<Profile />} />
               <Route path="applications" element={<AccountApplications />} />
               <Route path="onboarding" element={<AccountOnboarding />} />
+              <Route path="housing" element={<AccountHousing />} />
               <Route path="german" element={<AccountGerman />} />
               <Route path="interviews" element={<AccountInterviews />} />
               <Route path="translations/*" element={<AccountTranslations />} />
               <Route path="privacy" element={<AccountPrivacyCenter />} />
               <Route path="waiting-room" element={<AccountWaitingRoom />} />
+              <Route path="course" element={<AccountCourse />} />
+              <Route path="course/:courseId" element={<AccountCourse />} />
+              <Route path="course/:courseId/lesson/:lessonId" element={<AccountCourse />} />
               <Route path="guides" element={<AccountGuides />} />
               <Route path="cv" element={<AccountCv />} />
               <Route path="letters/*" element={<AccountLetters />} />
@@ -479,6 +495,7 @@ export default function App() {
               <Route path="vault" element={<AccountVault />} />
               <Route path="referral" element={<AccountReferral />} />
               <Route path="arrival" element={<AccountArrival />} />
+              <Route path="budget" element={<AccountBudget />} />
               <Route path="interview-prep" element={<AccountInterviewPrep />} />
               <Route path="signatures" element={<AccountSignatures />} />
               <Route path="signatures/:signerId" element={<AccountSignatures />} />
@@ -655,6 +672,7 @@ export default function App() {
             <Route path="security" element={<AdminSecurity />} />
             <Route path="companies" element={<AdminCompanies />} />
             <Route path="vacancies" element={<AdminVacancies />} />
+            <Route path="job-channels" element={<RequireAuth roles={['ADMIN', 'SUPER_ADMIN']}><AdminJobChannels /></RequireAuth>} />
             <Route path="candidates" element={<AdminCandidates />} />
             <Route path="bookings" element={<AdminBookings />} />
             <Route path="client-tasks" element={<AdminClientTasks />} />
@@ -715,6 +733,7 @@ export default function App() {
             <Route path="tasks/*" element={<WorkspaceTasks />} />
             <Route path="announcements" element={<AdminAnnouncements />} />
             <Route path="arrivals/*" element={<AdminArrivals />} />
+            <Route path="partner-housing" element={<AdminPartnerHousing />} />
             <Route path="expiring" element={<AdminExpiring />} />
             <Route path="recognition" element={<AdminRecognition />} />
             <Route path="accelerated" element={<AdminAccelerated />} />
@@ -764,6 +783,7 @@ export default function App() {
               }
             />
             <Route path="training" element={<AdminTraining />} />
+            <Route path="course" element={<AdminCourse />} />
             <Route path="shifts" element={<AdminShifts />} />
             <Route path="check-ins" element={<AdminCheckIns />} />
             <Route
@@ -776,10 +796,19 @@ export default function App() {
             />
             <Route path="events" element={<AdminGrowthEvents />} />
             <Route path="site-tools" element={<AdminGrowthTools />} />
+            <Route
+              path="city-costs"
+              element={
+                <RequireAuth roles={['ADMIN', 'SUPER_ADMIN']}>
+                  <AdminCityCosts />
+                </RequireAuth>
+              }
+            />
             <Route path="landing-pages/*" element={<AdminLandingPages />} />
             <Route path="lead-magnets" element={<AdminLeadMagnets />} />
             <Route path="contract-templates/*" element={<AdminContractTemplates />} />
             <Route path="candidate-requests/*" element={<AdminCandidateRequests />} />
+            <Route path="skill-videos" element={<AdminSkillVideos />} />
             <Route path="agents/*" element={<AdminAgents />} />
             <Route path="translations/*" element={<AdminTranslations />} />
             <Route path="privacy-requests/*" element={<AdminPrivacyRequests />} />

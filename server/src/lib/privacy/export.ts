@@ -1,6 +1,7 @@
 import { prisma } from '../../db.js';
 import { publicUser } from '../../routes/auth.js';
 import { buildAccessLog } from './accessLog.js'; // "who viewed my documents"
+import { housingExport } from '../housing/core.js'; // housing checklist, Anmeldung, partner listings
 
 /** Adds kind / version / publication date of the accepted legal text to each consent row. */
 const withLegalVersions = async <T extends { legalDocumentId: string | null }>(rows: T[]) => {
@@ -125,6 +126,8 @@ export const buildUserExport = async (userId: string) => {
     translationOrders: translationOrders.map((o) => ({ ...o, number: `TR-${String(o.number).padStart(4, '0')}` })),
     interviews: interviews.map(({ company, ...i }) => ({ ...i, company: company?.name ?? null })),
     vacancyApplications: applications,
+    // Housing search checklist, Anmeldung (appointment, deadline, contract review) and partner listings.
+    housing: await housingExport(userId),
     // Each consent with the legal text version it refers to (AGB / privacy / cookie policy).
     consents: await withLegalVersions(consents),
     privacyRequests,

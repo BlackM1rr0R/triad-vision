@@ -35,6 +35,7 @@ import { registerCopy } from '@/i18n';
 import { pagesJobs } from '@/i18n/pagesJobs';
 import { PageHero, PageHeroSkeleton } from '@/components/layout/PageHero';
 import { SalaryEstimate } from '@/components/tools/SalaryEstimate';
+import { BudgetLink } from '@/components/budget/BudgetTeaser';
 import { Spinner } from '@/components/ui/Spinner';
 import { buttonClass } from '@/components/ui/Button';
 import { Lost } from '@/components/illustrations';
@@ -448,6 +449,7 @@ export default function JobDetail() {
                   <Fact icon={Euro} label={t('jobsArea.detail.facts.salary')}>
                     {salary} <span className="text-xs font-medium text-muted">{t('jobsArea.common.perMonth')}</span>
                     <SalaryEstimate min={v.salaryMin} max={v.salaryMax} className="mt-1 font-normal" />
+                    <BudgetLink gross={v.salaryMin} grossMax={v.salaryMax} place={v.city} visa={v.visaCategory?.slug} className="mt-0.5 font-normal" />
                   </Fact>
                 )}
                 {v.city && <Fact icon={MapPin} label={t('jobsArea.detail.facts.location')}>{v.city}</Fact>}

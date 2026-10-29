@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import type { LucideIcon } from 'lucide-react';
-import { CalendarCheck, ClipboardList, FileSignature, FileUp, ListChecks, PenLine, ShieldCheck } from 'lucide-react';
+import { BookOpenCheck, CalendarCheck, ClipboardList, FileSignature, FileUp, ListChecks, PenLine, ShieldCheck } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { useL10n } from '@/lib/l10n';
@@ -12,6 +12,11 @@ import { useBallLine } from '@/components/clientProcess/Ball';
 import type { BallInCourt, BallReason } from '@/components/clientProcess/api';
 import { clientTasksKey, type FormStatus } from '@/components/clientData/api';
 import { useMySignatures } from '@/components/esign/MySignatures';
+import { lessonHref, useMyCourses } from '@/components/course/api';
+import { registerCopy } from '@/i18n';
+import { pagesCourse } from '@/i18n/pagesCourse';
+
+registerCopy(pagesCourse); // the "continue the course" item
 
 /** GET /cases/:id — same key and shape as the case page, so both share one cache entry. */
 export const useCaseDetail = (caseId: string | null | undefined, opts: { refetchInterval?: number } = {}) =>
@@ -108,6 +113,7 @@ export const useNextUp = (caseId: string | null | undefined) => {
   const tasks = useMyTasks();
   const dataTasks = useDataTasks(caseId);
   const sigs = useMySignatures({ enabled: !!user });
+  const courses = useMyCourses(user?.role === 'CLIENT');
 
   const c = detail.data;
   const ball = (c as (CaseDetail & { ballInCourt?: BallInCourt | null }) | undefined)?.ballInCourt ?? null;
@@ -214,5 +220,19 @@ export const useNextUp = (caseId: string | null | undefined) => {
   const rest =
     ball?.side === 'CLIENT' ? items.filter((i) => i.key !== `ball-${ball.reason}`) : hero?.kind === 'client' ? items.slice(1) : items;
 
-  return { loading: detail.isLoading, detail: c ?? null, ball, hero, items: rest, allItems: items, short };
+  // Lowest priority: continue (or start) the pre-departure course — never the hero, always last, not counted as a to-do.
+  const course = (courses.data ?? []).find((x) => x.next && !x.certificate);
+  const courseItem: NextItem | null = course?.next
+    ? {
+        key: `course-${course.id}`,
+        icon: BookOpenCheck,
+        title: t(course.started ? 'course.next.continue' : 'course.next.start', { title: tr(course.started ? course.next.title : course.title) }),
+        due: null,
+        overdue: false,
+        to: lessonHref(course.id, course.next.lessonId),
+        action: t('course.next.action'),
+      }
+    : null;
+
+  return { loading: detail.isLoading, detail: c ?? null, ball, hero, items: courseItem ? [...rest, courseItem] : rest, allItems: items, short };
 };

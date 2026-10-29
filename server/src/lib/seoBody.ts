@@ -76,7 +76,7 @@ const LANGUAGE_NAMES: Record<SeoLocale, string> = { az: 'Azərbaycan', de: 'Deut
 
 // Same structure as the site header (For workers, For employers, Visas, Guides, Contact + Tools) and footer.
 const NAV = ['/for-workers', '/for-employers', '/visas', '/guides', '/contact', '/tools'];
-const TOOLS = ['/uygunluq-testi', '/eligibility', '/compare-visas', '/chancenkarte-calculator', '/blue-card-check', '/salary-calculator', '/cost-calculator', '/anerkennung', '/calculator', '/cities', '/map', '/tools'];
+const TOOLS = ['/uygunluq-testi', '/eligibility', '/compare-visas', '/chancenkarte-calculator', '/blue-card-check', '/salary-calculator', '/cost-calculator', '/budget', '/anerkennung', '/calculator', '/cities', '/map', '/tools'];
 const FOOTER = ['/jobs', '/ausbildung', '/services', '/packages', '/cooperation', '/partners', '/stories', '/events', '/news', '/faq', '/booking', '/about', '/impressum', '/privacy', '/accessibility'];
 /** Links of the employer landing page besides its services. */
 const EMPLOYER_LINKS = ['/cooperation', '/employers/register', '/partners', '/stories', '/booking'];

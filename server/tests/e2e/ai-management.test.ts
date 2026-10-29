@@ -1,4 +1,4 @@
-import { afterAll, afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterAll, afterEach, beforeEach, describe, expect, it, onTestFinished, vi } from 'vitest';
 import type { Role } from '@prisma/client';
 import { asAdmin, asStaff, asSuperAdmin, sessionAgent } from '../helpers/api';
 import { prisma, waitFor } from '../helpers/db';
@@ -350,6 +350,11 @@ describe('weekly report: narrative, e-mail and job', () => {
   });
 
   it('admin page API: list, detail, generate now, narrative in my language, e-mail me; super admin only', async () => {
+    // "Generate now" reports the last full week before the real clock: pin the clock to the seeded week.
+    vi.useFakeTimers({ toFake: ['Date'], now: NOW });
+    onTestFinished(() => {
+      vi.useRealTimers();
+    });
     const sa = await asSuperAdmin({ locale: 'en' });
     await seedWeek();
     fake.fail = true;

@@ -57,6 +57,7 @@ import { pagesMessaging } from '@/i18n/pagesMessaging';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { pagesPlacement } from '@/i18n/pagesPlacement';
 import { IntroVideoPanel } from '@/components/placement/IntroVideo';
+import { SkillVideosPanel } from '@/components/skillVideos/SkillVideosPanel';
 import { RECOGNITION_STATUSES } from '@/components/placement/api';
 import { MyJobAlerts } from '@/components/jobs/MyJobAlerts';
 
@@ -1111,6 +1112,7 @@ export default function Profile() {
         {tab === 'personal' && <PersonalPanel key={user.id} user={user} />}
         {tab === 'professional' && <ProfessionalPanel key={user.id} user={user} />}
         {tab === 'professional' && <IntroVideoPanel className="mt-6" />}
+        {tab === 'professional' && <SkillVideosPanel className="mt-6" />}
         {tab === 'notifications' && <NotificationsPanel user={user} />}
         {tab === 'notifications' && <CalendarSubscribe className="mt-6" />}
         {tab === 'notifications' && <MyJobAlerts className="mt-6" />}

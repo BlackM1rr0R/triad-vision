@@ -17,6 +17,7 @@ import { APPLICATION_STATUS_TONE } from '@/components/jobs/types';
 import { Empty, Loading, Section } from '@/components/company/shared';
 import { RequestForm } from './RequestForm';
 import { RequestProgressBar } from './RequestProgressBar';
+import { EmployerSkillVideos, useEmployerSkillVideos } from '@/components/skillVideos/EmployerSkillVideos';
 import { REQUEST_STATUS_TONE, emptyForm, formFromRequest, payloadFromForm, type EmployerRequest, type EmployerRequestCandidate } from './types';
 
 registerCopy(pagesRequests);
@@ -175,6 +176,7 @@ const CandidateCard = ({ item, vacancyId }: { item: EmployerRequestCandidate; va
   const { t } = useTranslation();
   const L = useJobLabels();
   const c = item.candidate;
+  const skillVideos = useEmployerSkillVideos(); // approved + consented skill videos (one shared query)
   return (
     <li className="flex min-w-0 flex-col rounded-2xl border border-line bg-card p-4">
       <div className="flex items-start gap-3">
@@ -205,6 +207,7 @@ const CandidateCard = ({ item, vacancyId }: { item: EmployerRequestCandidate; va
           </li>
         )}
       </ul>
+      <EmployerSkillVideos applicationId={item.id} videos={skillVideos.data?.get(item.id)} />
       {['PROPOSED', 'INTERVIEW'].includes(item.status) && vacancyId && (
         <Link to={`/company/candidates?vacancyId=${vacancyId}`} className="btn-primary btn-sm mt-4 self-start">
           {t('requests.company.decide')}

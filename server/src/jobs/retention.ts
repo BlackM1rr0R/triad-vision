@@ -7,6 +7,7 @@ import { audit } from '../lib/audit.js';
 import { FINAL_STATUSES } from '../lib/caseFlow.js';
 import { getRetentionSettings } from '../lib/legalSettings.js';
 import { pruneAdminPageVisits } from '../lib/navModules.js';
+import { purgeSkillVideos } from '../lib/skillVideos/core.js';
 
 /**
  * DSGVO storage limitation (Art. 5(1)(e), Art. 17): once a case has been closed (APPROVED /
@@ -61,6 +62,8 @@ export interface RetentionRunResult {
   bytes: number;
   messages: number;
   failed: number;
+  /** Skill videos of candidates whose cases are all closed longer than the period (lib/skillVideos/core.ts). */
+  skillVideos?: number;
 }
 
 let lastRunAt: Date | null = null;
@@ -91,6 +94,9 @@ export const runRetention = async (now = new Date()): Promise<RetentionRunResult
       const [deletedDocs, deletedMsgs] = await prisma.$transaction(async (tx) => {
         const dd = await tx.document.deleteMany({ where: { caseId: c.id } });
         const dm = includeMessages ? await tx.caseMessage.deleteMany({ where: { caseId: c.id } }) : { count: 0 };
+        // Housing + Anmeldung record and partner-listing proposals of the case (the files stay in the client's own vault).
+        await tx.housingProposal.deleteMany({ where: { caseId: c.id } });
+        await tx.caseHousing.deleteMany({ where: { caseId: c.id } });
         await tx.case.update({ where: { id: c.id }, data: { documentsPurgedAt: now } });
         await tx.caseEvent.create({
           data: {
@@ -113,7 +119,19 @@ export const runRetention = async (now = new Date()): Promise<RetentionRunResult
     }
   }
 
-  if (result.cases > 0 || result.failed > 0) {
+  // Skill videos (faces are personal data): same period, counted from the candidate's last closed case.
+  try {
+    const sv = await purgeSkillVideos(cutoff);
+    if (sv.videos) {
+      result.skillVideos = sv.videos;
+      result.bytes += sv.bytes;
+    }
+  } catch (err) {
+    result.failed++;
+    console.error('[retention] skill videos failed', err);
+  }
+
+  if (result.cases > 0 || result.failed > 0 || result.skillVideos) {
     await audit({ user: undefined, ip: undefined }, 'RETENTION_PURGE', undefined, {
       ...result,
       months,
