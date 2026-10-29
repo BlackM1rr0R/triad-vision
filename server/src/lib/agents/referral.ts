@@ -34,7 +34,7 @@ const TRANSLIT: Record<string, string> = {
 };
 
 /** Latin, upper-case, dash-separated slug of a name part ("Gəncə" → "GENCE"). */
-const slugPart = (s: string | null | undefined) =>
+export const slugPart = (s: string | null | undefined) =>
   (s ?? '')
     .split('')
     .map((ch) => TRANSLIT[ch] ?? TRANSLIT[ch.toUpperCase()] ?? ch)

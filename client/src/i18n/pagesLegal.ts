@@ -153,6 +153,15 @@ const az = {
     submit: 'Qeydiyyatdan keç',
     haveAccount: 'Artıq hesabınız var?',
     login: 'Daxil olun',
+    referral: {
+      label: 'Referans kodu (istəyə bağlı)',
+      placeholder: 'Məs. GENCE-ALI',
+      hint: 'Sizi agent və ya dostunuz dəvət edibsə, onun kodunu yazın.',
+      checking: 'Kod yoxlanılır…',
+      validAgent: 'Kod təsdiqləndi: agent dəvəti.',
+      validClient: 'Kod təsdiqləndi: dost dəvəti.',
+      invalid: 'Belə referans kodu tapılmadı. Kodu yoxlayın və ya sahəni boş buraxın.',
+    },
     scan: {
       title: 'Pasportun şəklini çəkin — məlumatlar avtomatik dolsun',
       text: 'Xarici pasportun şəkilli səhifəsini çəkin: ad, soyad, doğum tarixi və pasport nömrəsi özü doldurulacaq. Hər şeyi sonra düzəldə bilərsiniz.',
@@ -485,6 +494,15 @@ const de: LegalCopy = {
     submit: 'Registrieren',
     haveAccount: 'Sie haben bereits ein Konto?',
     login: 'Anmelden',
+    referral: {
+      label: 'Empfehlungscode (optional)',
+      placeholder: 'z. B. GENCE-ALI',
+      hint: 'Wurden Sie von einem Agenten oder Bekannten empfohlen? Geben Sie dessen Code ein.',
+      checking: 'Code wird geprüft…',
+      validAgent: 'Code bestätigt: Empfehlung durch einen Agenten.',
+      validClient: 'Code bestätigt: Empfehlung durch einen Bekannten.',
+      invalid: 'Diesen Empfehlungscode gibt es nicht. Bitte prüfen Sie ihn oder lassen Sie das Feld leer.',
+    },
     scan: {
       title: 'Reisepass fotografieren – die Daten werden automatisch ausgefüllt',
       text: 'Fotografieren Sie die Bildseite Ihres Reisepasses: Vorname, Nachname, Geburtsdatum und Passnummer werden automatisch eingetragen. Sie können alles danach noch ändern.',
@@ -815,6 +833,15 @@ const en: LegalCopy = {
     submit: 'Sign up',
     haveAccount: 'Already have an account?',
     login: 'Log in',
+    referral: {
+      label: 'Referral code (optional)',
+      placeholder: 'e.g. GENCE-ALI',
+      hint: 'Were you invited by an agent or a friend? Enter their code.',
+      checking: 'Checking the code…',
+      validAgent: 'Code confirmed: agent referral.',
+      validClient: 'Code confirmed: friend referral.',
+      invalid: 'We could not find this referral code. Please check it or leave the field empty.',
+    },
     scan: {
       title: 'Take a photo of your passport — the form fills itself',
       text: 'Photograph the photo page of your international passport: first name, last name, date of birth and passport number are filled in automatically. You can still edit everything.',
@@ -1145,6 +1172,15 @@ const ru: LegalCopy = {
     submit: 'Зарегистрироваться',
     haveAccount: 'Уже есть аккаунт?',
     login: 'Войти',
+    referral: {
+      label: 'Реферальный код (необязательно)',
+      placeholder: 'Напр. GENCE-ALI',
+      hint: 'Вас пригласил агент или друг? Введите его код.',
+      checking: 'Проверяем код…',
+      validAgent: 'Код подтверждён: приглашение агента.',
+      validClient: 'Код подтверждён: приглашение друга.',
+      invalid: 'Такой реферальный код не найден. Проверьте его или оставьте поле пустым.',
+    },
     scan: {
       title: 'Сфотографируйте паспорт — данные заполнятся автоматически',
       text: 'Сфотографируйте страницу заграничного паспорта с фото: имя, фамилия, дата рождения и номер паспорта заполнятся сами. Всё можно будет исправить.',

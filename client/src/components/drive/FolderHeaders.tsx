@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import clsx from 'clsx';
-import { Briefcase, ExternalLink, FileSpreadsheet, FolderOpen, FolderPlus, Handshake, Pencil, Phone, Plus, Search, Trash2, UserPlus, Users } from 'lucide-react';
+import { Ban, Briefcase, ExternalLink, FileSpreadsheet, FolderOpen, FolderPlus, Handshake, Pencil, Phone, Plus, Search, Trash2, UserPlus, Users } from 'lucide-react';
 import { api } from '@/lib/api';
 import { statusLabel } from '@/components/admin/labels';
 import { STATUS_TONE } from '@/lib/caseStatus';
@@ -316,6 +316,8 @@ export const PartnersOverview = ({ items, onOpen }: { items: DriveItem[]; onOpen
                   <Count icon={Users} label={t('drive.partner.clients', { count: p.counts?.clients ?? 0 })} />
                   <Count icon={Briefcase} label={t('drive.partner.active', { count: p.counts?.activeCases ?? 0 })} />
                   <Count icon={FolderOpen} label={t('drive.partner.approved', { count: p.counts?.approved ?? 0 })} />
+                  {/* Visa refused ("rədd"): REJECTED or marked "Ablehnung" (pagesCaseProcessing, registered by partners/api). */}
+                  <Count icon={Ban} label={t('drive.partner.rejected', { count: p.counts?.rejected ?? 0 })} />
                 </div>
                 <div className="mt-3 flex flex-wrap gap-1.5">
                   {folderId ? (

@@ -165,22 +165,23 @@ describe('shared workspace: case documents become files', () => {
     const x = await caseFor({ firstName: 'Kamran', lastName: 'Aliyev', passport: 'C5' });
     const req = (await clientCase(x.client.agent, x.c.id)).requirements.find((r) => r.stage === 'INITIAL')!;
     const doc = expectStatus(await uploadDoc(x.client.agent, x.c.id, req.id, 'passport.pdf'), 201).body.document as { id: string };
+    // Client uploads are copied into the client folder right away (still PENDING), into the folder of their type.
+    await waitFor(() => prisma.driveNode.findUnique({ where: { documentId: doc.id } }), 8000);
     return { ...x, doc, req };
   };
 
-  it('copies an accepted document into the stage folder; deleting the copy keeps the case document', async () => {
+  it('copies a document into the folder of its type; deleting the copy keeps the case document', async () => {
     const staff = await asStaff();
     const admin = await asAdmin();
     const { c, doc, folderId } = await uploaded();
-    expect(await prisma.driveNode.count({ where: { documentId: doc.id } })).toBe(0);
-    expectStatus(await staff.agent.post(`/api/admin/cases/${c.id}/documents/${doc.id}/review`).send({ status: 'ACCEPTED' }), 200);
-    const copy = await waitFor(() => prisma.driveNode.findUnique({ where: { documentId: doc.id } }));
-    expect(await pathOf(copy.id)).toBe('Gemeinsame Dokumente/Anträge/Arbeitsvisum/Ohne Kategorie/Kamran Aliyev · Pass-Nr. C5/Erstdokumente/passport.pdf');
-    expect(copy).toMatchObject({ kind: 'FILE', space: 'SHARED', mimeType: 'application/pdf' });
+    const copy = await prisma.driveNode.findUniqueOrThrow({ where: { documentId: doc.id } });
+    expect(await pathOf(copy.id)).toBe('Gemeinsame Dokumente/Anträge/Arbeitsvisum/Ohne Kategorie/Kamran Aliyev · Pass-Nr. C5/Reisepass/passport.pdf');
+    expect(copy).toMatchObject({ kind: 'FILE', space: 'SHARED', mimeType: 'application/pdf', workflowStage: 'INCOMING' });
     expect(fs.existsSync(driveFile(copy.storageKey!))).toBe(true);
+    expectStatus(await staff.agent.post(`/api/admin/cases/${c.id}/documents/${doc.id}/review`).send({ status: 'ACCEPTED' }), 200);
 
-    const stage = (await list(staff.agent, folderId)).items[0];
-    expect(stage.name).toBe('Erstdokumente');
+    const stage = (await list(staff.agent, folderId)).items.find((i: { name: string }) => i.name === 'Reisepass');
+    expect(stage).toBeTruthy();
     const files = (await list(staff.agent, stage.id)).items;
     expect(files[0]).toMatchObject({ id: copy.id, documentId: doc.id, caseId: c.id, caseNumber: c.number, docStatus: 'ACCEPTED', stage: 'INITIAL', myAccess: 'EDIT' });
 
@@ -218,7 +219,7 @@ describe('shared workspace: case documents become files', () => {
     expect(first).toMatchObject({ folders: 1, copied: 1, missing: 0 });
     const newFolder = (await prisma.case.findUniqueOrThrow({ where: { id: c.id } })).driveFolderId!;
     const copy = await prisma.driveNode.findUniqueOrThrow({ where: { documentId: doc.id } });
-    expect(await pathOf(copy.id)).toBe(`${await pathOf(newFolder)}/Erstdokumente/passport.pdf`);
+    expect(await pathOf(copy.id)).toBe(`${await pathOf(newFolder)}/Reisepass/passport.pdf`);
 
     const second = await backfillCaseDrive();
     expect(second).toMatchObject({ folders: 0, copied: 0, existing: 1 });

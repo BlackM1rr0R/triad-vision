@@ -23,7 +23,7 @@ import { badRequest, conflict, HttpError, notFound, parse } from '../../lib/http
 import { notifyClient } from '../../lib/notifications.js';
 import { createCaseMessage, listMessages, markMessagesRead, publishTyping } from '../../lib/messaging/caseMessages.js';
 import { deleteCaseDocument } from '../../lib/caseDocDelete.js';
-import { copyDocumentToDrive, syncCaseFolder } from '../../lib/drive/caseFolders.js';
+import { copyDocumentToDrive, syncCaseFolder, trashRejectedCopy } from '../../lib/drive/caseFolders.js';
 import { requireMinRole } from '../../middleware/auth.js';
 import { hasMissing, translateMany } from '../../lib/ai/translate.js';
 import { prepareCaseDocument, publicQuality, scheduleUploadAnalysis } from '../../lib/uploadAi/index.js';
@@ -32,6 +32,7 @@ import { nextStepSummaries } from '../../lib/caseNext/nextStep.js';
 import { emitAutomationEvent } from '../../lib/automation/events.js';
 import { onLanguageCertAccepted } from '../../lib/german/progress.js';
 import { ballInCourtMany } from '../../lib/clientProcess/ballInCourt.js';
+import { PROCESSING_STAGES, processingSummaries, stageCounts, stageWhere } from '../../lib/caseProcessing/index.js'; // Schon geschrieben → Fertig
 
 export const adminCasesRouter = Router();
 
@@ -50,11 +51,16 @@ adminCasesRouter.get('/', async (req, res) => {
       page: z.coerce.number().int().min(1).default(1),
       // Referral partner who brought the client ('none' = cases without a partner).
       partnerId: z.string().trim().min(1).max(40).optional(),
+      // Team document workflow stage (lib/caseProcessing) and its next assignee ('me' = the viewer).
+      processing: z.enum(PROCESSING_STAGES).optional(),
+      processingAssignee: z.string().trim().min(1).max(40).optional(),
     }),
     req.query,
   );
   const where: Prisma.CaseWhereInput = {
     ...(q.status ? { status: q.status } : {}),
+    ...(q.processing ? { AND: [stageWhere(q.processing)] } : {}),
+    ...(q.processingAssignee ? { processingAssigneeId: q.processingAssignee === 'me' ? req.user!.id : q.processingAssignee } : {}),
     ...(q.partnerId ? { partnerId: q.partnerId === 'none' ? null : q.partnerId } : {}),
     ...(q.mine ? { assignedStaffId: req.user!.id } : {}),
     ...(q.search
@@ -70,7 +76,7 @@ adminCasesRouter.get('/', async (req, res) => {
       : {}),
   };
   const pageSize = 25;
-  const [items, total, byStatus] = await Promise.all([
+  const [items, total, byStatus, processingCounts] = await Promise.all([
     prisma.case.findMany({
       where,
       orderBy: { updatedAt: 'desc' },
@@ -87,6 +93,7 @@ adminCasesRouter.get('/', async (req, res) => {
     }),
     prisma.case.count({ where }),
     prisma.case.groupBy({ by: ['status'], _count: { _all: true } }),
+    stageCounts(),
   ]);
   // When the current status was entered (first status-changing event into it, newest first).
   const entered = items.length
@@ -106,9 +113,11 @@ adminCasesRouter.get('/', async (req, res) => {
   const nextSteps = await nextStepSummaries(items.map((c) => c.id), { statusSince });
   // "Top kimdÉ™dir?" column: who acts next, batched (lib/clientProcess/ballInCourt).
   const balls = await ballInCourtMany(items.map((c) => c.id)).catch(() => new Map());
+  const processing = await processingSummaries(items);
   res.json({
     items: items.map(({ events, _count, ...c }) => ({
       ...c,
+      processing: processing.get(c.id) ?? null,
       nextStep: nextSteps.get(c.id) ?? null,
       ballInCourt: balls.get(c.id) ?? null,
       lastEvent: events[0] ?? null,
@@ -121,6 +130,7 @@ adminCasesRouter.get('/', async (req, res) => {
     total,
     pageSize,
     counts: Object.fromEntries(byStatus.map((b) => [b.status, b._count._all])),
+    processingCounts,
   });
 });
 
@@ -265,6 +275,7 @@ adminCasesRouter.post('/:id/documents/:docId/review', async (req, res) => {
     data: { status: body.status, reviewNote: body.status === 'REJECTED' ? body.note : null },
   });
   if (body.status === 'ACCEPTED') void copyDocumentToDrive(doc.id); // a copy in the client's drive folder
+  if (body.status === 'REJECTED') await trashRejectedCopy(doc.id); // the incoming copy leaves the client folder (bin; back on accept)
   if (body.status === 'ACCEPTED') await onLanguageCertAccepted(doc.id, req.user!.id); // language certificate → profile German level (never throws)
   await prisma.caseEvent.create({
     data: {

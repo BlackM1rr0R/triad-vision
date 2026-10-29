@@ -3,7 +3,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import clsx from 'clsx';
-import { AlertCircle, Briefcase, CheckCircle2, Pencil, Play, Plus, RefreshCw, Share2, Trash2, X } from 'lucide-react';
+import { AlertCircle, Briefcase, CheckCircle2, ChevronDown, Pencil, Play, Plus, RefreshCw, Share2, Trash2, X } from 'lucide-react';
 import { api } from '@/lib/api';
 import { fmtDateTime } from '@/components/admin/labels';
 import { Spinner } from '@/components/ui/Spinner';
@@ -60,6 +60,23 @@ interface AccountForm {
 
 const emptyForm = (): AccountForm => ({ email: '', displayName: '', provider: 'CUSTOM', imapHost: '', imapPort: 993, imapSecure: true, smtpHost: '', smtpPort: 465, smtpSecure: true, username: '', password: '', isDefault: false, syncEnabled: true });
 
+/** GET /mail/autoconfig: server settings for an address (own domain, known provider, autoconfig / ISPDB). */
+interface DiscoveredSettings {
+  source: 'OWN' | 'PRESET' | 'AUTOCONFIG' | 'ISPDB' | 'NONE';
+  domain: string;
+  provider: MailProvider;
+  hint: string;
+  imapHost: string;
+  imapPort: number;
+  imapSecure: boolean;
+  smtpHost: string;
+  smtpPort: number;
+  smtpSecure: boolean;
+  username: string;
+}
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+const PROVIDER_NAMES: Record<string, string> = { GMAIL: 'Gmail', OUTLOOK: 'Outlook / Microsoft 365', YANDEX: 'Yandex', MAILRU: 'Mail.ru', ICLOUD: 'iCloud', YAHOO: 'Yahoo', GMX: 'GMX', WEBDE: 'WEB.DE', TONLINE: 'T-Online' };
+
 const AccountDialog = ({ open, onClose, account }: { open: boolean; onClose: () => void; account: MailAccount | null }) => {
   const { t } = useTranslation();
   const qc = useQueryClient();
@@ -68,25 +85,77 @@ const AccountDialog = ({ open, onClose, account }: { open: boolean; onClose: () 
   const [testing, setTesting] = useState(false);
   const [test, setTest] = useState<{ imap: { ok: boolean; error?: string }; smtp: { ok: boolean; error?: string } } | null>(null);
   const set = (patch: Partial<AccountForm>) => setForm((f) => ({ ...f, ...patch }));
+  // E-mail + password is enough: the servers come from GET /mail/autoconfig; "Advanced" shows them for other providers.
+  const [discovery, setDiscovery] = useState<{ email: string; settings: DiscoveredSettings | null } | null>(null);
+  const [advanced, setAdvanced] = useState(false);
+  // The username follows the address (default = full address) until it is edited by hand.
+  const [usernameEdited, setUsernameEdited] = useState(false);
 
   useEffect(() => {
     if (!open) return;
     setTest(null);
+    setDiscovery(null);
+    setAdvanced(false);
+    setUsernameEdited(!!account && account.username.toLowerCase() !== account.email.toLowerCase());
     setForm(account ? { ...emptyForm(), ...account, displayName: account.displayName ?? '', password: '' } : emptyForm());
   }, [open, account]);
+
+  const emailKey = form.email.trim().toLowerCase();
+  const lookupEmail = open && EMAIL_RE.test(emailKey) && (!account || emailKey !== account.email.toLowerCase()) ? emailKey : '';
+  useEffect(() => {
+    if (!lookupEmail) return;
+    let alive = true;
+    const timer = window.setTimeout(() => {
+      api
+        .get<{ settings: DiscoveredSettings }>('/mail/autoconfig', { params: { email: lookupEmail } })
+        .then(({ data }) => {
+          if (!alive) return;
+          const s = data.settings;
+          setDiscovery({ email: lookupEmail, settings: s });
+          if (s.source === 'NONE') {
+            setAdvanced(true);
+            return;
+          }
+          setForm((f) => ({
+            ...f,
+            provider: s.provider,
+            imapHost: s.imapHost,
+            imapPort: s.imapPort,
+            imapSecure: s.imapSecure,
+            smtpHost: s.smtpHost,
+            smtpPort: s.smtpPort,
+            smtpSecure: s.smtpSecure,
+            ...(usernameEdited ? {} : { username: s.username }),
+          }));
+        })
+        .catch(() => {
+          // Lookup failed (network / rate limit): the fields stay editable under "Advanced".
+          if (!alive) return;
+          setDiscovery({ email: lookupEmail, settings: null });
+          setAdvanced(true);
+        });
+    }, 450);
+    return () => {
+      alive = false;
+      window.clearTimeout(timer);
+    };
+    // usernameEdited is read once per lookup on purpose
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lookupEmail]);
+
+  const found = discovery && discovery.email === emailKey ? discovery.settings : null;
+  const detecting = !!lookupEmail && discovery?.email !== lookupEmail;
+  /** Our own domain: nothing to configure, the advanced fields stay hidden. */
+  const ownDomain = found?.source === 'OWN';
+  const hintKey = found && found.source !== 'NONE' ? found.hint : form.provider;
 
   const applyPreset = (provider: MailProvider, email = form.email) => {
     const p = providers.data?.find((x) => x.provider === provider);
     if (!p) return set({ provider });
-    set({ provider, imapHost: p.imapHost || form.imapHost, imapPort: p.imapPort, imapSecure: p.imapSecure, smtpHost: p.smtpHost || form.smtpHost, smtpPort: p.smtpPort, smtpSecure: p.smtpSecure, username: form.username || email });
+    set({ provider, imapHost: p.imapHost || form.imapHost, imapPort: p.imapPort, imapSecure: p.imapSecure, smtpHost: p.smtpHost || form.smtpHost, smtpPort: p.smtpPort, smtpSecure: p.smtpSecure, username: usernameEdited ? form.username : email.trim().toLowerCase() });
   };
 
-  const onEmail = (email: string) => {
-    const domain = email.split('@')[1]?.toLowerCase();
-    const p = domain ? providers.data?.find((x) => x.domains.includes(domain)) : undefined;
-    set({ email, username: form.username && form.username !== form.email ? form.username : email });
-    if (p && p.provider !== form.provider && !account) applyPreset(p.provider, email);
-  };
+  const onEmail = (email: string) => set({ email, ...(usernameEdited ? {} : { username: email.trim().toLowerCase() }) });
 
   const body = () => ({ ...form, displayName: form.displayName || null, password: form.password || undefined });
 
@@ -138,64 +207,103 @@ const AccountDialog = ({ open, onClose, account }: { open: boolean; onClose: () 
       }
     >
       <div className="grid gap-4 sm:grid-cols-2">
-        <Field label={t('mail.settings.accounts.provider')}>
-          <select value={form.provider} onChange={(e) => applyPreset(e.target.value as MailProvider)} className="input">
-            {PROVIDERS.map((p) => (
-              <option key={p} value={p}>
-                {p === 'CUSTOM' ? 'IMAP/SMTP' : p === 'MAILRU' ? 'Mail.ru' : p === 'GMAIL' ? 'Gmail' : p === 'OUTLOOK' ? 'Outlook / Microsoft 365' : 'Yandex'}
-              </option>
-            ))}
-          </select>
-        </Field>
         <Field label={t('mail.settings.accounts.email')}>
-          <input type="email" value={form.email} onChange={(e) => onEmail(e.target.value)} className="input" autoComplete="off" data-autofocus />
-        </Field>
-        <div className="sm:col-span-2 flex items-start gap-2 rounded-lg border border-line bg-sunken px-3 py-2 text-xs text-muted">
-          <AlertCircle className="mt-0.5 size-3.5 shrink-0 text-link" aria-hidden />
-          <span>{t(`mail.settings.accounts.hint.${form.provider}`)}</span>
-        </div>
-        <Field label={t('mail.settings.accounts.displayName')}>
-          <input value={form.displayName} onChange={(e) => set({ displayName: e.target.value })} className="input" />
-        </Field>
-        <Field label={t('mail.settings.accounts.username')}>
-          <input value={form.username} onChange={(e) => set({ username: e.target.value })} className="input" autoComplete="off" />
+          <input type="email" value={form.email} onChange={(e) => onEmail(e.target.value)} className="input" autoComplete="off" inputMode="email" spellCheck={false} data-autofocus />
         </Field>
         <Field label={t('mail.settings.accounts.password')} hint={account ? t('mail.settings.accounts.passwordKeep') : undefined}>
           <input type="password" value={form.password} onChange={(e) => set({ password: e.target.value })} className="input" autoComplete="new-password" />
+        </Field>
+        <div className="sm:col-span-2 space-y-1.5 rounded-lg border border-line bg-sunken px-3 py-2 text-xs text-muted" aria-live="polite">
+          {detecting ? (
+            <p className="flex items-center gap-2">
+              <Spinner className="size-3.5" /> {t('mail.settings.accounts.detecting')}
+            </p>
+          ) : found ? (
+            <p className={clsx('flex items-start gap-2', found.source === 'NONE' ? 'text-warning-fg' : 'text-success-fg')}>
+              {found.source === 'NONE' ? <AlertCircle className="mt-0.5 size-3.5 shrink-0" aria-hidden /> : <CheckCircle2 className="mt-0.5 size-3.5 shrink-0" aria-hidden />}
+              <span>{t(`mail.settings.accounts.detected.${found.source}`, { host: found.imapHost, name: PROVIDER_NAMES[found.hint] ?? found.domain })}</span>
+            </p>
+          ) : (
+            !account && <p>{t('mail.settings.accounts.simpleHint')}</p>
+          )}
+          {(found || account) && (
+            <p className="flex items-start gap-2">
+              <AlertCircle className="mt-0.5 size-3.5 shrink-0 text-link" aria-hidden />
+              <span>{t(`mail.settings.accounts.hint.${hintKey}`, { defaultValue: t('mail.settings.accounts.hint.CUSTOM') })}</span>
+            </p>
+          )}
+        </div>
+        <Field label={t('mail.settings.accounts.displayName')}>
+          <input value={form.displayName} onChange={(e) => set({ displayName: e.target.value })} className="input" />
         </Field>
         <div className="flex flex-col justify-end gap-2 pb-1">
           <Toggle checked={form.isDefault} onChange={(v) => set({ isDefault: v })} label={t('mail.settings.accounts.isDefault')} />
           <Toggle checked={form.syncEnabled} onChange={(v) => set({ syncEnabled: v })} label={t('mail.settings.accounts.syncEnabled')} />
         </div>
-        <fieldset className="rounded-xl border border-line p-3">
-          <legend className="px-1 text-xs font-bold text-muted">{t('mail.settings.accounts.imap')}</legend>
-          <div className="grid grid-cols-[1fr_5rem] gap-2">
-            <Field label={t('mail.settings.accounts.host')}>
-              <input value={form.imapHost} onChange={(e) => set({ imapHost: e.target.value })} className="input" />
+        {!ownDomain && (
+          <button
+            type="button"
+            className="sm:col-span-2 inline-flex items-center gap-1.5 justify-self-start rounded-md text-xs font-semibold text-link hover:underline focus-visible:ring-2 focus-visible:ring-focus/40 focus-visible:outline-none"
+            aria-expanded={advanced}
+            onClick={() => setAdvanced((v) => !v)}
+          >
+            <ChevronDown className={clsx('size-3.5 transition-transform', advanced && 'rotate-180')} aria-hidden /> {t('mail.settings.accounts.advanced')}
+          </button>
+        )}
+        {advanced && !ownDomain && (
+          <>
+            <Field label={t('mail.settings.accounts.provider')}>
+              <select value={form.provider} onChange={(e) => applyPreset(e.target.value as MailProvider)} className="input">
+                {PROVIDERS.map((p) => (
+                  <option key={p} value={p}>
+                    {p === 'CUSTOM' ? 'IMAP/SMTP' : PROVIDER_NAMES[p]}
+                  </option>
+                ))}
+              </select>
             </Field>
-            <Field label={t('mail.settings.accounts.port')}>
-              <input type="number" value={form.imapPort} onChange={(e) => set({ imapPort: Number(e.target.value) })} className="input" />
+            <Field label={t('mail.settings.accounts.username')}>
+              <input
+                value={form.username}
+                onChange={(e) => {
+                  setUsernameEdited(e.target.value.trim().toLowerCase() !== emailKey);
+                  set({ username: e.target.value });
+                }}
+                className="input"
+                autoComplete="off"
+                spellCheck={false}
+              />
             </Field>
-          </div>
-          <div className="mt-2">
-            <Toggle checked={form.imapSecure} onChange={(v) => set({ imapSecure: v, imapPort: v ? 993 : 143 })} label={t('mail.settings.accounts.secure')} />
-          </div>
-        </fieldset>
-        <fieldset className="rounded-xl border border-line p-3">
-          <legend className="px-1 text-xs font-bold text-muted">{t('mail.settings.accounts.smtp')}</legend>
-          <div className="grid grid-cols-[1fr_5rem] gap-2">
-            <Field label={t('mail.settings.accounts.host')}>
-              <input value={form.smtpHost} onChange={(e) => set({ smtpHost: e.target.value })} className="input" />
-            </Field>
-            <Field label={t('mail.settings.accounts.port')}>
-              <input type="number" value={form.smtpPort} onChange={(e) => set({ smtpPort: Number(e.target.value) })} className="input" />
-            </Field>
-          </div>
-          <div className="mt-2 flex gap-4">
-            <Toggle checked={form.smtpSecure} onChange={(v) => set({ smtpSecure: v, smtpPort: v ? 465 : 587 })} label={t('mail.settings.accounts.secure')} />
-            <span className="text-xs text-muted">{!form.smtpSecure && t('mail.settings.accounts.starttls')}</span>
-          </div>
-        </fieldset>
+            <fieldset className="rounded-xl border border-line p-3">
+              <legend className="px-1 text-xs font-bold text-muted">{t('mail.settings.accounts.imap')}</legend>
+              <div className="grid grid-cols-[1fr_5rem] gap-2">
+                <Field label={t('mail.settings.accounts.host')}>
+                  <input value={form.imapHost} onChange={(e) => set({ imapHost: e.target.value })} className="input" />
+                </Field>
+                <Field label={t('mail.settings.accounts.port')}>
+                  <input type="number" value={form.imapPort} onChange={(e) => set({ imapPort: Number(e.target.value) })} className="input" />
+                </Field>
+              </div>
+              <div className="mt-2">
+                <Toggle checked={form.imapSecure} onChange={(v) => set({ imapSecure: v, imapPort: v ? 993 : 143 })} label={t('mail.settings.accounts.secure')} />
+              </div>
+            </fieldset>
+            <fieldset className="rounded-xl border border-line p-3">
+              <legend className="px-1 text-xs font-bold text-muted">{t('mail.settings.accounts.smtp')}</legend>
+              <div className="grid grid-cols-[1fr_5rem] gap-2">
+                <Field label={t('mail.settings.accounts.host')}>
+                  <input value={form.smtpHost} onChange={(e) => set({ smtpHost: e.target.value })} className="input" />
+                </Field>
+                <Field label={t('mail.settings.accounts.port')}>
+                  <input type="number" value={form.smtpPort} onChange={(e) => set({ smtpPort: Number(e.target.value) })} className="input" />
+                </Field>
+              </div>
+              <div className="mt-2 flex gap-4">
+                <Toggle checked={form.smtpSecure} onChange={(v) => set({ smtpSecure: v, smtpPort: v ? 465 : 587 })} label={t('mail.settings.accounts.secure')} />
+                <span className="text-xs text-muted">{!form.smtpSecure && t('mail.settings.accounts.starttls')}</span>
+              </div>
+            </fieldset>
+          </>
+        )}
         {test && (
           <div className="sm:col-span-2 space-y-1 text-sm">
             {test.imap.ok && test.smtp.ok ? (

@@ -3,10 +3,12 @@ import { toast } from 'sonner';
 import { api, errorCode } from '@/lib/api';
 import i18n, { registerCopy } from '@/i18n';
 import { pagesPartners } from '@/i18n/pagesPartners';
+import { pagesCaseProcessing } from '@/i18n/pagesCaseProcessing'; // visa kinds, "rədd", Ablehnung report, drive card count
 import { toastError } from '@/components/admin/labels';
 import type { CaseStatus, L10n } from '@/lib/types';
 
 registerCopy(pagesPartners);
+registerCopy(pagesCaseProcessing);
 
 /** Referral partners (middlemen who bring clients) — shared client code. */
 export interface PartnerRef {
@@ -19,6 +21,11 @@ export interface PartnerCounts {
   activeCases: number;
   approved: number;
   closedNegative: number;
+  /** Visa refused ("rədd"): REJECTED or marked "Ablehnung" by the team. */
+  rejected?: number;
+  cancelled?: number;
+  /** Team document workflow: cases per stage. */
+  stages?: import('@/components/caseProcessing/api').StageCounts;
   lastCaseAt: string | null;
 }
 
@@ -79,6 +86,11 @@ export interface PartnerCase {
   client: { id: string; firstName: string; lastName: string; phone: string | null; passportNumber: string | null };
   visaCategory: { title: L10n; visaLabel: string } | null;
   assignedStaff: { firstName: string; lastName: string } | null;
+  /** `cat:<visaCategoryId>` or `type:<VisaType>` — the visa kind filter. */
+  visaKey?: string;
+  refused?: boolean;
+  company?: { id: string; name: string } | null;
+  processing?: import('@/components/caseProcessing/api').ProcessingSummary | null;
 }
 
 export const PARTNERS_KEY = ['referral-partners'] as const;

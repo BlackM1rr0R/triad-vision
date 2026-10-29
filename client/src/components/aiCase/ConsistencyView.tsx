@@ -9,7 +9,7 @@ import { Spinner } from '@/components/ui/Spinner';
 import { ConfirmDialog } from '@/components/admin/ConfirmDialog';
 import { toastError } from '@/components/admin/labels';
 import { caseKey } from '@/components/admin/case/shared';
-import { fmtDay, l10n, overviewKey, SEVERITY_STYLE, type ConsistencyResult, type Finding, type FindingState, type FindingStatus, type Overview, type Run, type Severity } from './api';
+import { findingTaskMessage, fmtDay, l10n, overviewKey, SEVERITY_STYLE, type FindingTaskResponse, type ConsistencyResult, type Finding, type FindingState, type FindingStatus, type Overview, type Run, type Severity } from './api';
 
 const ICON: Record<Severity, typeof Info> = { BLOCKER: AlertOctagon, WARNING: AlertTriangle, INFO: Info };
 const DATE_FIELDS = ['birthDate', 'passportExpiry'];
@@ -66,8 +66,15 @@ export const ConsistencyView = ({ caseId, run, states }: { caseId: string; run: 
 
   const task = (f: Finding) =>
     act(`${f.key}:task`, async () => {
-      const res = await api.post<{ task: { key: string } }>(`/admin/cases/${caseId}/ai/tasks`, { runId: run.id, target: 'finding', key: f.key });
-      toast.success(t('aiCase.actions.taskCreated', { key: res.data.task.key }));
+      const res = await api.post<FindingTaskResponse>(`/admin/cases/${caseId}/ai/tasks`, { runId: run.id, target: 'finding', key: f.key });
+      toast.success(findingTaskMessage(t, res.data));
+    });
+
+  // All open findings of this client in one task (checklist), appended to the open one when it exists.
+  const taskAll = () =>
+    act('all:task', async () => {
+      const res = await api.post<FindingTaskResponse>(`/admin/cases/${caseId}/ai/tasks`, { runId: run.id, target: 'allFindings' });
+      toast.success(findingTaskMessage(t, res.data));
     });
 
   const showValue = (f: Finding) => (f.suggestedFix?.field && DATE_FIELDS.includes(f.suggestedFix.field) ? fmtDay(f.suggestedFix.value) : (f.suggestedFix?.value ?? ''));
@@ -141,6 +148,11 @@ export const ConsistencyView = ({ caseId, run, states }: { caseId: string; run: 
         <span className="font-semibold text-ink">{t('aiCase.consistency.summary', { blockers: count('BLOCKER'), warnings: count('WARNING'), infos: count('INFO') })}</span>
         <span>{t('aiCase.consistency.plannedEntry', { date: fmtDay(r.plannedEntry.date), source: t(`aiCase.consistency.entrySource.${r.plannedEntry.source}`) })}</span>
         {r.ai.status === 'done' && <span>{t('aiCase.consistency.docsRead', { count: r.documentsRead, files: r.filesSent })}</span>}
+        {open.length > 1 && (
+          <button type="button" className="btn-secondary btn-sm ml-auto" disabled={!!busy} onClick={() => void taskAll()} title={t('aiCase.actions.taskAllHint')}>
+            {busy === 'all:task' ? <Spinner className="size-3.5" /> : <ClipboardList className="size-3.5" aria-hidden />} {t('aiCase.actions.taskAll')}
+          </button>
+        )}
       </div>
       {r.purged && <p className="rounded-lg bg-warning-bg px-3 py-2 text-xs text-warning-fg dark:bg-amber-950/40 dark:text-amber-300">{t('aiCase.consistency.purged')}</p>}
       {!open.length ? (

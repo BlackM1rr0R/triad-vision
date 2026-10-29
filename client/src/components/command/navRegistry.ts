@@ -243,7 +243,7 @@ export const STAFF_NAV: StaffNavItem[] = [
   a('interviewPrep', '/admin/interview-prep', MessageCircleQuestion, 'employers', { module: 'interviewPrep' }),
   // Ünsiyyət
   a('messaging', '/admin/messaging', MessageSquareText, 'comms'),
-  a('mailboxes', '/admin/mailboxes', AtSign, 'comms', { adminOnly: true }),
+  a('mailboxes', '/admin/mailboxes', AtSign, 'system', { adminOnly: true }), // our own @domain mailboxes (Team hub, next to users)
   a('mailTriage', '/admin/ai/mail-triage', MailCheck, 'comms', { superOnly: true, module: 'aiAssistant' }),
   a('campaigns', '/admin/campaigns', Megaphone, 'comms', { adminOnly: true, module: 'campaigns' }),
   a('calls', '/admin/calls', PhoneCall, 'comms', { module: 'calls' }),
@@ -360,7 +360,7 @@ export const HUBS: { key: HubKey; icon: LucideIcon; tabs: string[] }[] = [
   { key: 'cases', icon: FolderKanban, tabs: ['cases', 'requirements', 'docsAudit', 'expiring', 'recognition', 'accelerated', 'originals', 'signatures', 'countersign', 'officialForms', 'caseForms', 'contractTemplates', 'translations'] },
   { key: 'clients', icon: Users, tabs: ['candidates', 'register', 'duplicates', 'checkIns', 'arrivals', 'journey', 'examDates', 'waitingRoom'] },
   { key: 'employers', icon: Building2, tabs: ['companies', 'vacancies', 'candidateRequests', 'interviews', 'employmentContracts', 'interviewPrep'] },
-  { key: 'comms', icon: MessageSquareText, tabs: ['messaging', 'mailboxes', 'calls', 'campaigns', 'announcements', 'surveys', 'reviews'] },
+  { key: 'comms', icon: MessageSquareText, tabs: ['messaging', 'calls', 'campaigns', 'announcements', 'surveys', 'reviews'] },
   { key: 'finance', icon: Wallet, tabs: ['finance', 'invoices', 'clientInvoices', 'packages', 'accounting', 'quotes', 'settlements', 'profitability', 'reports'] },
   { key: 'leads', icon: Target, tabs: ['inquiries', 'bookings', 'analytics', 'referralPartners', 'agents'] },
   {
@@ -368,7 +368,7 @@ export const HUBS: { key: HubKey; icon: LucideIcon; tabs: string[] }[] = [
     icon: Globe,
     tabs: ['services', 'visaCategories', 'partners', 'visaSamples', 'testimonials', 'stats', 'faqs', 'posts', 'landingPages', 'leadMagnets', 'guides', 'docGuides', 'events', 'siteTools'],
   },
-  { key: 'team', icon: UsersRound, tabs: ['users', 'kpi', 'shifts', 'training', 'timeTracking', 'oversight', 'weeklyReports'] },
+  { key: 'team', icon: UsersRound, tabs: ['users', 'mailboxes', 'kpi', 'shifts', 'training', 'timeTracking', 'oversight', 'weeklyReports'] },
   { key: 'compliance', icon: Scale, tabs: ['privacyRequests', 'legal', 'history', 'security', 'securityAlerts', 'sensitiveAccess', 'storage'] },
   { key: 'ai', icon: Sparkles, tabs: ['ai', 'aiSettings', 'mailTriage'] },
   { key: 'system', icon: Settings, tabs: ['settings', 'integrations', 'automation', 'modules', 'usage', 'brand', 'license', 'customers', 'designSystem', 'kb', 'problemReports', 'help'] },

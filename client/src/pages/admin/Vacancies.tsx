@@ -6,6 +6,8 @@ import { toast } from 'sonner';
 import clsx from 'clsx';
 import { Briefcase, CheckCircle2, ChevronLeft, ChevronRight, ExternalLink, Plus, Search, Sparkles, Trash2, Undo2, UserPlus, Users, XCircle } from 'lucide-react';
 import { api } from '@/lib/api';
+import { useAuth } from '@/lib/auth';
+import { hasMinRole } from '@/lib/types';
 import { useL10n } from '@/lib/l10n';
 import { useSiteContent } from '@/lib/content';
 import type { L10n } from '@/lib/types';
@@ -80,9 +82,13 @@ const useCompanyOptions = () =>
     staleTime: 60_000,
   });
 
-/** Staff-only fields of the vacancy form: employer, visa category, slug. */
-const StaffFields = ({ f, set }: { f: VacancyFormState; set: <K extends keyof VacancyFormState>(k: K, v: VacancyFormState[K]) => void }) => {
+/** SUPER_ADMIN may edit everything, in every state: status and publication date included (audited server-side). */
+const useIsSuperAdmin = () => hasMinRole(useAuth().user?.role, 'SUPER_ADMIN');
+
+/** Staff-only fields of the vacancy form: employer, visa category, slug (+ status and publication date for the super admin). */
+const StaffFields = ({ f, set, superFields }: { f: VacancyFormState; set: <K extends keyof VacancyFormState>(k: K, v: VacancyFormState[K]) => void; superFields?: boolean }) => {
   const { t } = useTranslation();
+  const L = useJobLabels();
   const { tr } = useL10n();
   const { data: companies } = useCompanyOptions();
   const { data: content } = useSiteContent();
@@ -122,6 +128,29 @@ const StaffFields = ({ f, set }: { f: VacancyFormState; set: <K extends keyof Va
         </label>
         <input id="sv-slug" className="input code-id text-xs" value={f.slug} onChange={(e) => set('slug', e.target.value)} placeholder={t('jobsArea.admin.vacancies.slugAuto')} pattern="[a-z0-9]+(-[a-z0-9]+)*" />
       </div>
+      {superFields && (
+        <>
+          <div>
+            <label className="label" htmlFor="sv-status">
+              {t('jobsArea.admin.vacancies.statusField')}
+            </label>
+            <select id="sv-status" className="input" value={f.status} onChange={(e) => set('status', e.target.value)}>
+              {STATUSES.map((s) => (
+                <option key={s} value={s}>
+                  {L.vacancyStatus(s)}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="label" htmlFor="sv-published">
+              {t('jobsArea.admin.vacancies.publishedAtField')}
+            </label>
+            <input id="sv-published" type="date" className="input" value={f.publishedAt} onChange={(e) => set('publishedAt', e.target.value)} />
+          </div>
+          <p className="self-end text-[11px] text-muted">{t('jobsArea.admin.vacancies.superHint')}</p>
+        </>
+      )}
     </section>
   );
 };
@@ -204,6 +233,7 @@ const VacancyDrawer = ({ id, onClose }: { id: string | null; onClose: () => void
   const L = useJobLabels();
   const qc = useQueryClient();
   const isNew = id === 'new';
+  const isSuper = useIsSuperAdmin();
   const [rejecting, setRejecting] = useState(false);
   const [reason, setReason] = useState('');
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -228,7 +258,7 @@ const VacancyDrawer = ({ id, onClose }: { id: string | null; onClose: () => void
     mutationFn: async ({ f }: { f: VacancyFormState; ai: string[] }) =>
       isNew
         ? (await api.post<{ vacancy: VacancyRow }>('/admin/vacancies', { ...payloadFromForm(f, true), publish })).data.vacancy
-        : (await api.patch<{ vacancy: VacancyRow }>(`/admin/vacancies/${id}`, payloadFromForm(f, true))).data.vacancy,
+        : (await api.patch<{ vacancy: VacancyRow }>(`/admin/vacancies/${id}`, { ...payloadFromForm(f, true), ...superChanges(f) })).data.vacancy,
     onSuccess: (v, { ai }) => {
       reportAiSaved('staff', v.id, ai);
       if (isNew && v.status === 'DRAFT') toast.info(t('jobsArea.admin.savedDraft'));
@@ -263,11 +293,21 @@ const VacancyDrawer = ({ id, onClose }: { id: string | null; onClose: () => void
   });
 
   const v = data;
+  /** Status / publication date: sent only when the super admin changed them (the date keeps its time otherwise). */
+  function superChanges(f: VacancyFormState) {
+    if (!isSuper || !v) return {};
+    const initial = formFromVacancy(v);
+    return {
+      ...(f.status !== initial.status ? { status: f.status } : {}),
+      ...(f.publishedAt !== initial.publishedAt ? { publishedAt: f.publishedAt || null } : {}),
+    };
+  }
   return (
     <Drawer open={!!id} onClose={onClose} title={isNew ? t('jobsArea.admin.vacancies.new') : v ? L.title(v.title) : t('admin.nav.vacancies')}>
       {isNew ? (
         <VacancyForm
           staff
+          anyDate={isSuper}
           ai="staff"
           initial={formFromVacancy(null)}
           busy={save.isPending}
@@ -382,12 +422,13 @@ const VacancyDrawer = ({ id, onClose }: { id: string | null; onClose: () => void
             <VacancyForm
               key={v.updatedAt}
               staff
+              anyDate={isSuper}
               ai="staff"
               initial={formFromVacancy(v)}
               busy={save.isPending}
               submitLabel={t('admin.common.save')}
               onSubmit={(f, ai) => save.mutate({ f, ai })}
-              extra={(f, set) => <StaffFields f={f} set={set} />}
+              extra={(f, set) => <StaffFields f={f} set={set} superFields={isSuper} />}
             />
           </Panel>
           <ConfirmDialog

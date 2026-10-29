@@ -89,6 +89,22 @@ export const nameSkeleton = (s: string) =>
     .replace(/[aeiou]/g, '')
     .replace(/(.)\1+/g, '$1');
 
+/**
+ * A name in plain Latin letters, vowels kept ("Əli" → "ali", "Лейла" → "leila", "Şahin" → "sahin"): for first
+ * names, where the consonant skeleton is too coarse ("Leyla" and "Ali" both end up as "l").
+ */
+export const nameLatin = (s: string) =>
+  s
+    .toLowerCase()
+    .normalize('NFC')
+    .replace(/dzh|sch|sh|ch|kh|zh|gh|дж/g, (m) => ({ dzh: 'c', sch: 's', sh: 's', ch: 'c', kh: 'h', zh: 'c', gh: 'g', дж: 'c' })[m] ?? m)
+    .split('')
+    .map((ch) => TRANSLIT[ch] ?? ch)
+    .join('')
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-z]/g, '');
+
 /** True when the profile's last name appears in the name read from the document (any word order). */
 export const nameMatches = (docName: string, profile: { firstName: string; lastName: string }) => {
   const last = nameSkeleton(profile.lastName);

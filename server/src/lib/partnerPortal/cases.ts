@@ -1,9 +1,12 @@
-import type { CaseStatus, DocStatus, Prisma } from '@prisma/client';
+import { VisaType as VisaTypes, type CaseStatus, type DocStatus, type Prisma, type VisaType } from '@prisma/client';
 import { prisma } from '../../db.js';
 import { checkCaseDocument } from '../docCheck/index.js';
 import { badRequest, conflict, notFound } from '../http.js';
 import { CLIENT_UPLOAD_STAGE } from '../caseFlow.js';
-import { emitAutomationEvent } from '../automation/events.js';
+
+import { emitAutomationEvent } from '../automation/events.js';
+import { isRefused } from '../caseProcessing/index.js';
+import { visaKeyOf } from '../partners/index.js';
 
 /**
  * What a referral partner may see of "their" clients' cases (data minimisation):
@@ -94,7 +97,9 @@ const LIST_SELECT = {
   id: true,
   number: true,
   visaType: true,
+  visaCategoryId: true,
   status: true,
+  processingStage: true,
   createdAt: true,
   updatedAt: true,
   appointmentAt: true,
@@ -114,6 +119,10 @@ const listView = (c: ListCase) => {
     client: { firstName: c.client.firstName, lastName: c.client.lastName, passport: maskPassport(c.client.passportNumber) },
     visaType: c.visaType,
     visaCategory: c.visaCategory ? { title: c.visaCategory.title, visaLabel: c.visaCategory.visaLabel } : null,
+    /** Visa kind for the filter: `cat:<visaCategoryId>` or `type:<VisaType>`. */
+    visaKey: visaKeyOf(c),
+    /** Visa refused (REJECTED, or marked "Ablehnung" by the team). */
+    refused: isRefused(c),
     status: c.status,
     step: stepOf(c.status),
     nextAction: nextActionOf(c.status, missing),
@@ -127,10 +136,46 @@ const listView = (c: ListCase) => {
 
 export const ACTIVE_FILTER = ['active', 'closed', 'all'] as const;
 
-export const listPartnerCases = async (partnerId: string, q: { search?: string; filter: (typeof ACTIVE_FILTER)[number] }) => {
+/** Visa key → where-clause (`cat:<id>` / `type:<VisaType>`; a type key means "that type without a category"). */
+export const visaKeyWhere = (key: string | undefined): Prisma.CaseWhereInput => {
+  if (!key) return {};
+  if (key.startsWith('cat:')) return { visaCategoryId: key.slice(4) };
+  const type = key.slice(5) as VisaType;
+  if (key.startsWith('type:') && (Object.values(VisaTypes) as string[]).includes(type)) return { visaType: type, visaCategoryId: null };
+  return { id: '__none__' };
+};
+
+export interface VisaFacet {
+  key: string;
+  visaType: string;
+  visaCategory: { title: unknown; visaLabel: string } | null;
+  count: number;
+  active: number;
+  approved: number;
+  refused: number;
+}
+
+/** Counts per visa kind (category, else type) over the given cases — the filter chips of the partner views. */
+export const visaFacets = async (where: Prisma.CaseWhereInput): Promise<VisaFacet[]> => {
+  const rows = await prisma.case.findMany({ where, select: { visaType: true, visaCategoryId: true, status: true, processingStage: true, visaCategory: { select: { title: true, visaLabel: true } } } });
+  const out = new Map<string, VisaFacet>();
+  for (const r of rows) {
+    const key = visaKeyOf(r);
+    if (!out.has(key)) out.set(key, { key, visaType: r.visaType, visaCategory: r.visaCategory ? { title: r.visaCategory.title, visaLabel: r.visaCategory.visaLabel } : null, count: 0, active: 0, approved: 0, refused: 0 });
+    const f = out.get(key)!;
+    f.count++;
+    if (isRefused(r)) f.refused++;
+    else if (r.status === 'APPROVED') f.approved++;
+    else if (r.status !== 'CANCELLED') f.active++;
+  }
+  return [...out.values()].sort((a, b) => b.count - a.count || a.key.localeCompare(b.key));
+};
+
+export const listPartnerCases = async (partnerId: string, q: { search?: string; filter: (typeof ACTIVE_FILTER)[number]; visa?: string }) => {
   const final: CaseStatus[] = ['APPROVED', 'REJECTED', 'CANCELLED'];
   const where: Prisma.CaseWhereInput = {
     partnerId,
+    ...visaKeyWhere(q.visa),
     ...(q.filter === 'active' ? { status: { notIn: final } } : q.filter === 'closed' ? { status: { in: final } } : {}),
     ...(q.search
       ? {

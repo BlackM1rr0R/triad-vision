@@ -94,8 +94,12 @@ export const useTaskActions = () => {
     },
     checklistAdd: async (ref: string, text: string) =>
       withChecklist(ref, (await api.post<{ checklist: ChecklistItem[] }>(`/tasks/${ref}/checklist`, { text })).data.checklist),
-    checklistUpdate: async (ref: string, id: string, body: { text?: string; done?: boolean }) =>
-      withChecklist(ref, (await api.patch<{ checklist: ChecklistItem[] }>(`/tasks/${ref}/checklist/${id}`, body)).data.checklist),
+    checklistUpdate: async (ref: string, id: string, body: { text?: string; done?: boolean }) => {
+      const data = (await api.patch<{ checklist: ChecklistItem[]; completed?: boolean }>(`/tasks/${ref}/checklist/${id}`, body)).data;
+      // An AI document-problems task completes itself when the last item is ticked: reload its status.
+      if (data.completed) void qc.invalidateQueries({ queryKey: taskKeys.detail(ref) });
+      return withChecklist(ref, data.checklist);
+    },
     checklistDelete: async (ref: string, id: string) =>
       withChecklist(ref, (await api.delete<{ checklist: ChecklistItem[] }>(`/tasks/${ref}/checklist/${id}`)).data.checklist),
     checklistOrder: async (ref: string, ids: string[]) =>

@@ -8,6 +8,7 @@ import { l10nTitle, trackedDocuments, daysLeft, kindForKey, toneOf } from './exp
 import { presentAlert } from './aiMgmt/security/alerts.js';
 import { taskKey } from './tasks/core.js';
 import { acceleratedWork, recognitionWork } from './recognition/work.js'; // recognition + § 81a deadlines
+import { stageLabel } from './caseProcessing/texts.js'; // team document workflow (Schon geschrieben → Fertig)
 
 /**
  * "My work today" (GET /api/admin/my-work): one queue of everything that waits for the signed-in staff
@@ -40,6 +41,7 @@ export const WORK_KINDS = [
   'handover', // cases covered for an absent colleague with a handover note / open checklist (lib/shifts/handoverNotes)
   'recognition_deadline', // Anerkennung: next deadline / end of the adaptation measure (lib/recognition)
   'accelerated_deadline', // § 81a: embassy appointment / decision, fee, reply to the authority (lib/recognition)
+  'processing', // team document workflow: a colleague handed the case to the viewer ("Schon geschrieben", lib/caseProcessing)
 ] as const;
 export type WorkKind = (typeof WORK_KINDS)[number];
 
@@ -71,6 +73,7 @@ const CATEGORY: Record<WorkKind, WorkCategory> = {
   handover: 'other',
   recognition_deadline: 'documents',
   accelerated_deadline: 'documents',
+  processing: 'documents',
 };
 
 /** Page that lists all items of a kind (the "+N more" link). */
@@ -99,6 +102,7 @@ const MORE_LINK: Record<WorkKind, string> = {
   handover: '/workspace/team?tab=handover',
   recognition_deadline: '/admin/recognition?soon=14',
   accelerated_deadline: '/admin/accelerated?soon=7',
+  processing: '/admin/cases?processingAssignee=me',
 };
 
 export type WorkPriority = 'URGENT' | 'HIGH' | 'NORMAL';
@@ -1104,6 +1108,49 @@ const handovers = async (ctx: Ctx): Promise<Source> => {
   };
 };
 
+/** Team document workflow: cases a colleague handed to the viewer (assignee) that still wait (In Bearbeitung / Schon geschrieben). */
+const processingHandoffs = async (ctx: Ctx): Promise<Source> => {
+  const where: Prisma.CaseWhereInput = {
+    processingStage: { in: ['IN_PROGRESS', 'WRITTEN'] },
+    processingAssigneeId: ctx.team ? { not: null } : ctx.viewer.id,
+  };
+  const [rows, total] = await Promise.all([
+    prisma.case.findMany({
+      where,
+      orderBy: { processingStageAt: 'asc' },
+      take: LIMIT_PER_KIND,
+      select: { id: true, number: true, processingStage: true, processingStageAt: true, processingStageById: true, processingAssigneeId: true, updatedAt: true, client: { select: { firstName: true, lastName: true } } },
+    }),
+    prisma.case.count({ where }),
+  ]);
+  const ids = [...new Set(rows.flatMap((r) => [r.processingStageById, r.processingAssigneeId]).filter((x): x is string => !!x))];
+  const people = new Map((ids.length ? await prisma.user.findMany({ where: { id: { in: ids } }, select: { id: true, firstName: true, lastName: true } }) : []).map((u) => [u.id, u]));
+  return {
+    kind: 'processing',
+    total,
+    items: rows.map((r) => {
+      const since = r.processingStageAt ?? r.updatedAt;
+      const href = `${caseLink(r.id)}#case-processing`;
+      const by = name(r.processingStageById ? people.get(r.processingStageById) : null);
+      return {
+        id: `processing:${r.id}`,
+        kind: 'processing' as const,
+        title: name(r.client) || r.number,
+        subtitle: join(r.number, by),
+        note: { key: 'processing', params: { by: by || '—', stage: stageLabel(r.processingStage) } },
+        priority: r.processingStage === 'WRITTEN' ? ('HIGH' as const) : ('NORMAL' as const),
+        // One working day to pick it up.
+        dueAt: new Date(since.getTime() + DAY),
+        since,
+        link: href,
+        refs: { caseId: r.id, caseNumber: r.number },
+        assignee: person(r.processingAssigneeId ? people.get(r.processingAssigneeId) : null),
+        actions: [open(href, true)],
+      };
+    }),
+  };
+};
+
 // ─── Assembly ─────────────────────────────────────────────────────────
 
 export const buildMyWork = async (viewer: WorkViewer, opts: { team: boolean; tz?: number; now?: Date }): Promise<WorkResult> => {
@@ -1130,6 +1177,7 @@ export const buildMyWork = async (viewer: WorkViewer, opts: { team: boolean; tz?
     arrivalIssues(ctx), // post-arrival check-ins
     handovers(ctx), // absence handover notes / checklists
     embassyReviews(ctx), // four-eyes check of embassy packages
+    processingHandoffs(ctx), // "X sent you Schon geschrieben" (team document workflow)
     recognitionWork({ status: { not: 'CANCELLED' }, ...myCases(ctx) }, ctx.c.now), // Anerkennung deadlines (lib/recognition/work)
     acceleratedWork({ status: { not: 'CANCELLED' }, ...myCases(ctx) }, ctx.c.now), // § 81a deadlines
   ]);

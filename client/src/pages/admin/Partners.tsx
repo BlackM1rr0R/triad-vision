@@ -1,10 +1,10 @@
-import { useEffect, useState, type ChangeEvent } from 'react';
+import { useEffect, useMemo, useState, type ChangeEvent } from 'react';
 import { Link, Route, Routes, useNavigate, useParams } from 'react-router-dom';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import clsx from 'clsx';
-import { ArrowLeft, Download, FolderOpen, FolderPlus, HandCoins, Handshake, Mail, Pencil, Phone, Plus, Search, Trash2, Users } from 'lucide-react';
+import { ArrowLeft, Ban, ClipboardPen, Download, FolderOpen, FolderPlus, HandCoins, Handshake, Mail, Pencil, Phone, Plus, Search, Trash2, Users, X } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { hasMinRole } from '@/lib/types';
@@ -22,6 +22,9 @@ import { PortalLoginPanel } from '@/components/partners/PortalLogin';
 import { DeletePartnerDialog, invalidatePartnerViews } from '@/components/partners/DeletePartnerDialog';
 import { money } from '@/components/agents/format';
 import { SensitiveValue } from '@/components/privacyTools/SensitiveValue';
+import { RefusalReport } from '@/components/partners/RefusalReport'; // Ablehnung by partner / employer company
+import { PROCESSING_STAGES, stageLabel, type ProcessingStage } from '@/components/caseProcessing/api'; // team document workflow
+import { StageCell } from '@/components/caseProcessing/parts';
 
 type ActiveFilter = 'all' | 'true' | 'false';
 
@@ -31,7 +34,8 @@ const CountRow = ({ counts }: { counts: PartnerCounts }) => {
     [t('refPartners.counts.clients'), counts.clients, 'text-ink'],
     [t('refPartners.counts.active'), counts.activeCases, 'text-link'],
     [t('refPartners.counts.approved'), counts.approved, 'text-success-fg'],
-    [t('refPartners.counts.negative'), counts.closedNegative, 'text-danger-fg'],
+    // Visa refused ("rədd"): REJECTED or marked "Ablehnung" by the team; cancellations are listed separately.
+    [t('refPartners.counts.rejected'), counts.rejected ?? counts.closedNegative, 'text-danger-fg'],
   ];
   return (
     <dl className="grid grid-cols-4 gap-2">
@@ -177,6 +181,9 @@ const PartnerList = ({ isAdmin }: { isAdmin: boolean }) => {
         actions={
           <>
             {isFetching && !isLoading && <Spinner className="size-4 text-link" />}
+            <Link to="/admin/partners/refusals" className="btn-secondary btn-sm">
+              <Ban className="size-4" /> {t('refPartners.refusals.open')}
+            </Link>
             <Link to="/admin/partners/commissions" className="btn-secondary btn-sm">
               <HandCoins className="size-4" /> {t('refPartners.allCommissions')}
             </Link>
@@ -247,7 +254,10 @@ const PartnerList = ({ isAdmin }: { isAdmin: boolean }) => {
               <div className="mt-3">
                 <CountRow counts={p.counts} />
               </div>
-              <p className="mt-2 text-[11px] text-muted">{p.counts.lastCaseAt ? t('refPartners.lastCase', { date: fmtDate(p.counts.lastCaseAt) }) : t('refPartners.noCases')}</p>
+              <p className="mt-2 text-[11px] text-muted">
+                {p.counts.lastCaseAt ? t('refPartners.lastCase', { date: fmtDate(p.counts.lastCaseAt) }) : t('refPartners.noCases')}
+                {!!p.counts.cancelled && ` · ${t('refPartners.counts.cancelled', { count: p.counts.cancelled })}`}
+              </p>
               {(p.commissionCents != null || (p.commissionTotals && p.commissionTotals.totalCents > 0)) && (
                 <p className="mt-1 flex flex-wrap gap-x-3 text-[11px] text-muted">
                   {p.commissionCents != null && <span>{t('refPartners.perClient', { amount: money(p.commissionCents, p.currency ?? 'EUR') })}</span>}
@@ -275,7 +285,10 @@ const PartnerDetail = ({ isAdmin }: { isAdmin: boolean }) => {
   const qc = useQueryClient();
   const [editing, setEditing] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
-  const [tab, setTab] = useState<'clients' | 'commissions'>('clients');
+  const [tab, setTab] = useState<'clients' | 'refusals' | 'commissions'>('clients');
+  // Client list filters: visa kind (category, else type) and team workflow stage.
+  const [visa, setVisa] = useState('');
+  const [stage, setStage] = useState<ProcessingStage | ''>('');
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: [...PARTNERS_KEY, 'one', id],
     queryFn: async () => (await api.get<{ partner: Partner; cases: PartnerCase[] }>(`/admin/partners/${id}`)).data,
@@ -293,10 +306,32 @@ const PartnerDetail = ({ isAdmin }: { isAdmin: boolean }) => {
     onError: partnerError,
   });
 
+  const allCases = data?.cases;
+  // Visa kinds of the partner's cases with counts (the filter chips): "LKW-Fahrer", "Ausbildung", …
+  const visaKinds = useMemo(() => {
+    const out = new Map<string, { key: string; label: string; count: number; refused: number }>();
+    for (const c of allCases ?? []) {
+      const key = c.visaKey ?? (c.visaCategory ? `cat:${c.visaCategory.visaLabel}` : `type:${c.visaType}`);
+      const label = c.visaCategory ? tr(c.visaCategory.title) : t(`refPartners.types.${c.visaType}`, { defaultValue: c.visaType });
+      const k = out.get(key) ?? { key, label, count: 0, refused: 0 };
+      k.count++;
+      if (c.refused) k.refused++;
+      out.set(key, k);
+    }
+    return [...out.values()].sort((a, b) => b.count - a.count || a.label.localeCompare(b.label));
+  }, [allCases, tr, t]);
+  const stageCounts = useMemo(() => {
+    const out = Object.fromEntries(PROCESSING_STAGES.map((s) => [s, 0])) as Record<ProcessingStage, number>;
+    for (const c of allCases ?? []) if (c.processing?.stage) out[c.processing.stage]++;
+    return out;
+  }, [allCases]);
+
   if (isLoading) return <LoadingBlock />;
   if (error || !data) return <ErrorBlock error={error} onRetry={() => refetch()} />;
-  const { partner, cases } = data;
-  const hasCases = cases.length > 0;
+  const { partner } = data;
+  const cases = data.cases.filter((c) => (!visa || c.visaKey === visa) && (!stage || c.processing?.stage === stage));
+  const hasCases = data.cases.length > 0;
+  const filtered = !!visa || !!stage;
 
   return (
     <div>
@@ -370,28 +405,72 @@ const PartnerDetail = ({ isAdmin }: { isAdmin: boolean }) => {
         <PortalLoginPanel partner={partner} isAdmin={isAdmin} />
       </div>
 
-      <Tabs className="mb-4" label={partner.name} items={(['clients', 'commissions'] as const).map((k) => ({ key: k, label: t(`refPartners.tabs.${k}`) }))} value={tab} onChange={setTab} />
+      <Tabs
+        className="mb-4"
+        label={partner.name}
+        items={(['clients', 'refusals', 'commissions'] as const).map((k) => ({ key: k, label: k === 'refusals' ? t('refPartners.tabs2.refusals') : t(`refPartners.tabs.${k}`) }))}
+        value={tab}
+        onChange={setTab}
+      />
 
       {tab === 'commissions' ? (
         <CommissionsPanel partnerId={partner.id} isAdmin={isAdmin} />
+      ) : tab === 'refusals' ? (
+        <div className="space-y-2">
+          <p className="text-sm text-muted">{t('refPartners.refusals.companiesOfPartner')}</p>
+          <RefusalReport partnerId={partner.id} />
+        </div>
       ) : (
       <section className="rounded-xl border border-line bg-card">
         <header className="flex items-center gap-2 border-b border-line px-5 py-3.5">
           <Users className="size-4 text-link" aria-hidden />
-          <h2 className="text-sm font-semibold text-ink">{t('refPartners.clientsTitle', { count: cases.length })}</h2>
+          <h2 className="text-sm font-semibold text-ink">{t('refPartners.clientsTitle', { count: data.cases.length })}</h2>
+          {filtered && <span className="text-xs text-muted">{t('refPartners.filteredCount', { shown: cases.length, total: data.cases.length })}</span>}
         </header>
-        {!hasCases ? (
-          <p className="px-5 py-8 text-center text-sm text-muted">{t('refPartners.clientsEmpty')}</p>
+        {hasCases && (
+          <div className="space-y-2 border-b border-line px-5 py-3">
+            <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label={t('refPartners.visa.label')}>
+              <span className="pr-1 text-xs font-semibold text-muted">{t('refPartners.visa.label')}</span>
+              <Chip active={!visa} onClick={() => setVisa('')} count={data.cases.length}>
+                {t('refPartners.visa.all')}
+              </Chip>
+              {visaKinds.map((v) => (
+                <Chip key={v.key} active={visa === v.key} onClick={() => setVisa(visa === v.key ? '' : v.key)} count={v.count}>
+                  <span title={v.refused ? `${t('refPartners.counts.rejected')}: ${v.refused}` : undefined}>{v.label}</span>
+                </Chip>
+              ))}
+            </div>
+            <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label={t('refPartners.stageFilter')}>
+              <span className="inline-flex items-center gap-1 pr-1 text-xs font-semibold text-muted">
+                <ClipboardPen className="size-3.5" aria-hidden /> {t('refPartners.stageFilter')}
+              </span>
+              {PROCESSING_STAGES.map((s) => (
+                <Chip key={s} active={stage === s} onClick={() => setStage(stage === s ? '' : s)} count={stageCounts[s]}>
+                  <span title={t(`caseProcessing.hints.${s}`)}>{stageLabel(s)}</span>
+                </Chip>
+              ))}
+              {filtered && (
+                <button type="button" className="btn-secondary btn-sm ml-auto" onClick={() => (setVisa(''), setStage(''))}>
+                  <X className="size-3.5" aria-hidden /> {t('refPartners.resetFilters')}
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+        {!hasCases || cases.length === 0 ? (
+          <p className="px-5 py-8 text-center text-sm text-muted">{hasCases ? t('refPartners.notFound') : t('refPartners.clientsEmpty')}</p>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[900px] text-left text-sm">
+            <table className="w-full min-w-[1100px] text-left text-sm">
               <thead className="border-b border-line bg-surface/70 text-xs font-medium whitespace-nowrap text-muted">
                 <tr>
                   <th className="px-4 py-2.5">{t('refPartners.th.number')}</th>
                   <th className="px-4 py-2.5">{t('refPartners.th.client')}</th>
                   <th className="px-4 py-2.5">{t('refPartners.th.passport')}</th>
-                  <th className="px-4 py-2.5">{t('refPartners.th.type')}</th>
+                  <th className="px-4 py-2.5">{t('refPartners.th2.visa')}</th>
                   <th className="px-4 py-2.5">{t('refPartners.th.status')}</th>
+                  <th className="px-4 py-2.5">{t('refPartners.th2.stage')}</th>
+                  <th className="px-4 py-2.5">{t('refPartners.th2.company')}</th>
                   <th className="px-4 py-2.5">{t('refPartners.th.staff')}</th>
                   <th className="px-4 py-2.5">{t('refPartners.th.created')}</th>
                   <th className="px-4 py-2.5">{t('refPartners.th.decision')}</th>
@@ -413,16 +492,20 @@ const PartnerDetail = ({ isAdmin }: { isAdmin: boolean }) => {
                       <SensitiveValue value={c.client.passportNumber} entity="user" id={c.client.id} field="passportNumber" />
                     </td>
                     <td className="px-4 py-3 align-top">
-                      <p className="text-ink">{t(`refPartners.types.${c.visaType}`, { defaultValue: c.visaType })}</p>
-                      {c.visaCategory && (
-                        <p className="text-xs text-muted">
-                          {tr(c.visaCategory.title)} · {c.visaCategory.visaLabel}
-                        </p>
-                      )}
+                      {/* The real visa kind: the category ("LKW-Fahrer") when there is one, else the visa type. */}
+                      <p className="font-medium text-ink">{c.visaCategory ? tr(c.visaCategory.title) : t(`refPartners.types.${c.visaType}`, { defaultValue: c.visaType })}</p>
+                      <p className="text-xs text-muted">
+                        {c.visaCategory ? `${c.visaCategory.visaLabel} · ${t(`refPartners.types.${c.visaType}`, { defaultValue: c.visaType })}` : ''}
+                      </p>
                     </td>
                     <td className="px-4 py-3 align-top">
                       <StatusBadge status={c.status} />
+                      {c.refused && c.status !== 'REJECTED' && <p className="mt-1 text-[11px] font-semibold text-danger-fg">{t('refPartners.counts.rejected')}</p>}
                     </td>
+                    <td className="px-4 py-3 align-top" onClick={(e) => e.stopPropagation()}>
+                      <StageCell p={c.processing} />
+                    </td>
+                    <td className="max-w-[12rem] truncate px-4 py-3 align-top text-xs text-ink/80">{c.company?.name ?? '—'}</td>
                     <td className="px-4 py-3 align-top whitespace-nowrap text-ink/80">{c.assignedStaff ? fullName(c.assignedStaff) : '—'}</td>
                     <td className="px-4 py-3 align-top text-xs whitespace-nowrap text-muted">{fmtDate(c.createdAt)}</td>
                     <td className="px-4 py-3 align-top text-xs whitespace-nowrap text-muted">{c.decisionAt ? fmtDate(c.decisionAt) : '—'}</td>
@@ -456,6 +539,21 @@ const AllCommissions = ({ isAdmin }: { isAdmin: boolean }) => {
   );
 };
 
+/** /admin/partners/refusals — visa refusals ("Ablehnung") by partner and by employer company, with CSV. */
+const Refusals = () => {
+  const { t } = useTranslation();
+  usePageTitle(t('refPartners.refusals.title'));
+  return (
+    <div>
+      <Link to="/admin/partners" className="mb-3 inline-flex items-center gap-1 text-xs font-semibold text-link hover:text-link">
+        <ArrowLeft className="size-3.5" /> {t('refPartners.back')}
+      </Link>
+      <PageHead title={t('refPartners.refusals.title')} subtitle={t('refPartners.refusals.subtitle')} />
+      <RefusalReport />
+    </div>
+  );
+};
+
 /** /admin/partners/* — referral partners (middlemen who bring visa clients). */
 export default function AdminPartners() {
   const { user } = useAuth();
@@ -464,6 +562,7 @@ export default function AdminPartners() {
     <Routes>
       <Route index element={<PartnerList isAdmin={isAdmin} />} />
       <Route path="commissions" element={<AllCommissions isAdmin={isAdmin} />} />
+      <Route path="refusals" element={<Refusals />} />
       <Route path=":id" element={<PartnerDetail isAdmin={isAdmin} />} />
     </Routes>
   );

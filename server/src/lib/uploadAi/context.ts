@@ -16,7 +16,13 @@ export interface CaseContext {
   clientId: string;
   assignedStaffId: string | null;
   driveFolderId: string | null;
+  /**
+   * The person the case's documents belong to: the client, or — on a family member's case — the member
+   * (FamilyMember names, as in their passport). Name checks and file names use it; `locale` stays the client's.
+   */
   client: { firstName: string; lastName: string; locale: string };
+  /** True on a family member's case (`client` holds the member's names). */
+  member?: boolean;
   requirements: { id: string; key: string | null; stage: DocStage; title: unknown; docs: { status: string }[] }[];
 }
 
@@ -59,6 +65,7 @@ export const loadCaseContext = async (caseId: string | null | undefined): Promis
       assignedStaffId: true,
       driveFolderId: true,
       client: { select: { firstName: true, lastName: true, locale: true } },
+      familyProfile: { select: { firstName: true, lastName: true } },
       requirements: {
         orderBy: [{ stage: 'asc' }, { sortOrder: 'asc' }],
         select: { id: true, key: true, stage: true, title: true, documents: { select: { status: true } } },
@@ -66,7 +73,14 @@ export const loadCaseContext = async (caseId: string | null | undefined): Promis
     },
   });
   if (!c) return null;
-  return { ...c, requirements: c.requirements.map((r) => ({ id: r.id, key: r.key, stage: r.stage, title: r.title, docs: r.documents })) };
+  const { familyProfile, ...rest } = c;
+  const member = !!familyProfile && !!(familyProfile.firstName || familyProfile.lastName);
+  return {
+    ...rest,
+    client: member ? { firstName: familyProfile!.firstName, lastName: familyProfile!.lastName, locale: c.client.locale } : c.client,
+    member,
+    requirements: c.requirements.map((r) => ({ id: r.id, key: r.key, stage: r.stage, title: r.title, docs: r.documents })),
+  };
 };
 
 export const loadDocumentSubject = async (documentId: string): Promise<{ subject: Subject; caseId: string } | null> => {

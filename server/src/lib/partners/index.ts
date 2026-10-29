@@ -4,6 +4,7 @@ import { FINAL_STATUSES } from '../caseFlow.js';
 import { buildXlsx } from '../xlsx.js';
 import { syncCaseFolder } from '../drive/caseFolders.js';
 import { maskWith, type MaskGroup } from '../privacy/mask.js';
+import { effectiveStage, emptyStageCounts, isRefused, processingSummaries, PROCESSING_SELECT, type StageCounts } from '../caseProcessing/index.js';
 
 /**
  * Referral partners — middlemen (Ilqar, Ənvər, …) who bring visa clients. Each case can name the
@@ -16,27 +17,43 @@ export interface PartnerCounts {
   activeCases: number;
   approved: number;
   closedNegative: number; // rejected or cancelled
+  /** Visa refused: CaseStatus REJECTED or marked "Ablehnung" by the team (lib/caseProcessing). */
+  rejected: number;
+  cancelled: number;
+  /** Team document workflow: cases per stage (In Bearbeitung / Schon geschrieben / Fertig / Ablehnung). */
+  stages: StageCounts;
   lastCaseAt: Date | null;
 }
 
-const emptyCounts = (): PartnerCounts => ({ clients: 0, activeCases: 0, approved: 0, closedNegative: 0, lastCaseAt: null });
+const emptyCounts = (): PartnerCounts => ({ clients: 0, activeCases: 0, approved: 0, closedNegative: 0, rejected: 0, cancelled: 0, stages: emptyStageCounts(), lastCaseAt: null });
 
-/** Per-partner counters (distinct clients, active / approved / rejected+cancelled cases, newest case). */
+/** Visa kind of a case for filters and counts: its visa category when it has one, else the visa type. */
+export const visaKeyOf = (c: { visaType: VisaType; visaCategoryId?: string | null }) => (c.visaCategoryId ? `cat:${c.visaCategoryId}` : `type:${c.visaType}`);
+
+/** Per-partner counters (distinct clients, active / approved / refused / cancelled cases, workflow stages, newest case). */
 export const partnerCounts = async (partnerIds: string[]) => {
   const out = new Map<string, PartnerCounts>(partnerIds.map((id) => [id, emptyCounts()]));
   if (!partnerIds.length) return out;
   const cases = await prisma.case.findMany({
     where: { partnerId: { in: partnerIds } },
-    select: { partnerId: true, clientId: true, status: true, createdAt: true },
+    select: { partnerId: true, clientId: true, status: true, processingStage: true, createdAt: true },
   });
   const clients = new Map<string, Set<string>>();
   for (const c of cases) {
     const k = out.get(c.partnerId!)!;
     if (!clients.has(c.partnerId!)) clients.set(c.partnerId!, new Set());
     clients.get(c.partnerId!)!.add(c.clientId);
-    if (!FINAL_STATUSES.includes(c.status)) k.activeCases++;
-    else if (c.status === 'APPROVED') k.approved++;
-    else k.closedNegative++;
+    const refused = isRefused(c);
+    if (refused) k.rejected++;
+    if (!FINAL_STATUSES.includes(c.status)) {
+      if (!refused) k.activeCases++;
+    } else if (c.status === 'APPROVED') k.approved++;
+    else {
+      k.closedNegative++;
+      if (c.status === 'CANCELLED') k.cancelled++;
+    }
+    const stage = effectiveStage(c.processingStage, c.status);
+    if (stage) k.stages[stage]++;
     if (!k.lastCaseAt || c.createdAt > k.lastCaseAt) k.lastCaseAt = c.createdAt;
   }
   for (const [id, set] of clients) out.get(id)!.clients = set.size;
@@ -52,14 +69,28 @@ export const partnerCases = (partnerId: string) =>
       id: true,
       number: true,
       visaType: true,
-      status: true,
+      visaCategoryId: true,
       createdAt: true,
       decisionAt: true,
+      ...PROCESSING_SELECT,
       client: { select: { id: true, firstName: true, lastName: true, phone: true, passportNumber: true } },
       visaCategory: { select: { title: true, visaLabel: true } },
       assignedStaff: { select: { firstName: true, lastName: true } },
+      company: { select: { id: true, name: true } },
     },
   });
+
+/** The partner's cases for the admin detail page: + visa key, refused flag and the workflow summary. */
+export const partnerCaseRows = async (partnerId: string) => {
+  const rows = await partnerCases(partnerId);
+  const summaries = await processingSummaries(rows);
+  return rows.map(({ processingStage: _s, processingStageAt: _a, processingStageById: _b, processingAssigneeId: _c, ...c }, i) => ({
+    ...c,
+    visaKey: visaKeyOf(c),
+    refused: isRefused(rows[i]!),
+    processing: summaries.get(c.id) ?? null,
+  }));
+};
 
 /** Re-syncs the drive folders of these cases a few at a time, in the background (never throws). */
 export const syncFoldersLater = (caseIds: string[]) => {

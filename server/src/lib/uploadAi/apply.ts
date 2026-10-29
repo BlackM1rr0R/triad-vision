@@ -11,6 +11,7 @@ import { storagePath } from '../drive/storage.js';
 import { logDriveActivity } from '../driveCollab/activity.js';
 import { assertNotLockedByOther } from '../driveCollab/lock.js';
 import { setDocumentExpiry } from '../expiry/index.js';
+import { trashRejectedCopy } from '../drive/caseFolders.js';
 import { badRequest, conflict, notFound } from '../http.js';
 import type { QualityReason } from './quality.js';
 import { reuploadNote } from './texts.js';
@@ -33,7 +34,7 @@ export type AppliedChange = { action: InsightAction; from: unknown; to: unknown 
 
 export const proposalsOf = (insight: Pick<DocumentInsight, 'proposals'>): Proposals => {
   const p = (insight.proposals ?? {}) as Partial<Proposals>;
-  return { actions: (Array.isArray(p.actions) ? p.actions : []).filter((a): a is InsightAction => (ACTIONS as readonly string[]).includes(a)), currentName: p.currentName ?? '', folder: p.folder, requirement: p.requirement, expected: p.expected };
+  return { actions: (Array.isArray(p.actions) ? p.actions : []).filter((a): a is InsightAction => (ACTIONS as readonly string[]).includes(a)), currentName: p.currentName ?? '', folder: p.folder, requirement: p.requirement, expected: p.expected, holder: p.holder };
 };
 
 const actionOrder: InsightAction[] = ['link', 'expiry', 'rename', 'move'];
@@ -216,6 +217,7 @@ export const requestReupload = async (documentId: string, actor: { id: string; i
   const note = reuploadNote(locale, { reasons, found, expected: isDocType(expected) ? expected : null });
 
   await prisma.document.update({ where: { id: doc.id }, data: { status: 'REJECTED', reviewNote: note } });
+  await trashRejectedCopy(doc.id); // its incoming copy leaves the client folder (bin; back when accepted)
   await prisma.caseEvent.create({ data: { caseId: doc.caseId, type: 'DOCUMENT_REJECTED', note: `${doc.originalName}: ${note}`, actorId: actor.id } });
   void emitAutomationEvent({ type: 'DOCUMENT_REJECTED', entityType: 'document', entityId: doc.id, caseId: doc.caseId }); // automation hook
   const title = (doc.requirement?.title as Record<string, string> | null)?.[locale] ?? doc.originalName;

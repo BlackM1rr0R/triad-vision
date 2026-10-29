@@ -9,6 +9,9 @@ import { GERMAN_LEVELS, germanRank, licenceCovers, matchCandidate } from '../../
 import { notifyApplicationStatus, notifyCandidateProposed } from '../../lib/jobsNotifications.js';
 import { emitWebhook } from '../../lib/ops/webhooks.js';
 import { sendStaffCv } from '../../lib/cv/access.js';
+import path from 'node:path';
+import { applicationUploadsOf, originOf } from '../../lib/applicationUploads.js';
+import { vaultDir } from '../../lib/docCheck/index.js';
 
 // Admin: candidates — mounted at /api/admin/candidates
 export const adminCandidatesRouter = Router();
@@ -155,12 +158,29 @@ adminCandidatesRouter.get('/:id', async (req, res) => {
       ...rest,
       hasIntroVideo: !!introVideoKey, // the stored file name never leaves the server
       applications: user.applications.map((a) => ({ ...a, match: matchCandidate(user, a.vacancy) })),
+      // Documents uploaded with an application (before / besides a case); attachedCaseId once they joined a case.
+      applicationDocuments: await applicationUploadsOf(user.id),
     },
   });
 });
 
 /** Full CV PDF of a candidate (staff). */
 adminCandidatesRouter.get('/:userId/cv.pdf', sendStaffCv);
+
+/** A document the candidate uploaded with an application (staff download; only application uploads). */
+adminCandidatesRouter.get('/:userId/application-documents/:docId', async (req, res) => {
+  const d = await prisma.vaultDocument.findUnique({ where: { id: String(req.params.docId) } });
+  if (!d || d.userId !== req.params.userId || !originOf(d)) throw notFound('DOCUMENT_NOT_FOUND');
+  await audit(req, 'APPLICATION_DOCUMENT_VIEWED', `user:${d.userId}`, { documentId: d.id, kind: d.kind });
+  res.setHeader('Content-Type', d.mimeType);
+  res.setHeader('Content-Disposition', `${req.query.download ? 'attachment' : 'inline'}; filename*=UTF-8''${encodeURIComponent(d.filename)}`);
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('Content-Security-Policy', "default-src 'none'; img-src 'self'; style-src 'unsafe-inline'; sandbox");
+  res.setHeader('Cache-Control', 'private, no-store');
+  res.sendFile(path.join(vaultDir(), path.basename(d.storageKey)), (err) => {
+    if (err && !res.headersSent) res.status(404).json({ error: 'FILE_NOT_FOUND' });
+  });
+});
 
 /** Staff add a candidate to a vacancy (SHORTLISTED). A withdrawn / new application is re-used. */
 adminCandidatesRouter.post('/:id/applications', async (req, res) => {

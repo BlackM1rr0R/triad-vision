@@ -20,6 +20,7 @@ import { prepareCaseDocument, publicQuality, scheduleUploadAnalysis } from '../l
 import { photoCheckOnUpload } from '../lib/photoCheck/index.js'; // biometric photo rules (PHOTO / PHOTO_2 uploads)
 import { emitAutomationEvent } from '../lib/automation/events.js';
 import { completeTasksForUpload } from '../lib/clientProcess/tasks.js';
+import { copyDocumentToDrive } from '../lib/drive/caseFolders.js';
 
 export const casesRouter = Router();
 casesRouter.use(requireAuth);
@@ -103,6 +104,7 @@ casesRouter.post('/:id/documents', documentUpload.single('file'), async (req, re
       data: { caseId: c.id, type: 'DOCUMENT_UPLOADED', note: doc.originalName, actorId: req.user!.id, visibleToClient: false },
     });
     void emitAutomationEvent({ type: 'DOCUMENT_UPLOADED', entityType: 'document', entityId: doc.id, caseId: c.id }); // automation hook
+    void copyDocumentToDrive(doc.id, { pending: true }); // into the client folder right away: "<client>/Reisepass" … (never throws)
     // Automatic quality checks (PDF readable, photo is an image, resolution, passport MRZ/expiry); never throws.
     const checks = await checkCaseDocument(doc.id);
     // Smart uploads: scan quality (blur, darkness, glare, cut-off) for instant feedback; never throws.

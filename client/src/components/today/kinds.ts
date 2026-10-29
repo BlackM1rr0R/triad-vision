@@ -18,7 +18,7 @@ import {
   UserSearch,
   UsersRound,
 } from 'lucide-react';
-import { ArrowRightLeft, GraduationCap, HeartHandshake, Rocket, ScanEye } from 'lucide-react';
+import { ArrowRightLeft, ClipboardPen, GraduationCap, HeartHandshake, Rocket, ScanEye } from 'lucide-react';
 import { Signature as SignatureIcon } from 'lucide-react';
 import type { WorkCategory, WorkKind, WorkPriority } from './api';
 import { registerCopy } from '@/i18n';
@@ -27,12 +27,14 @@ import { pagesPostArrival } from '@/i18n/pagesPostArrival';
 import { pagesTeam } from '@/i18n/pagesTeam';
 import { pagesAccounting } from '@/i18n/pagesAccounting';
 import { pagesRecognition } from '@/i18n/pagesRecognition';
+import { pagesCaseProcessing } from '@/i18n/pagesCaseProcessing';
 
 registerCopy(pagesClientProcessToday); // client_task_overdue kind + office-visit notes (client process)
 registerCopy(pagesPostArrival); // embassy_review kind (four-eyes check of the embassy package)
 registerCopy(pagesTeam); // handover kind + notes (absence handover)
 registerCopy(pagesAccounting); // countersign kind (Triad Vision countersignature)
 registerCopy(pagesRecognition); // recognition_deadline / accelerated_deadline kinds + notes
+registerCopy(pagesCaseProcessing); // processing kind + note (team document workflow)
 
 export const KIND_ICON: Record<WorkKind, LucideIcon> = {
   doc_review: FileCheck2,
@@ -59,6 +61,7 @@ export const KIND_ICON: Record<WorkKind, LucideIcon> = {
   handover: ArrowRightLeft, // covering an absent colleague's case (handover note / checklist)
   recognition_deadline: GraduationCap, // Anerkennung: next deadline / end of the adaptation measure
   accelerated_deadline: Rocket, // § 81a: embassy appointment / decision, fee, reply to the authority
+  processing: ClipboardPen, // team document workflow: a colleague handed the case over (Schon geschrieben)
 };
 
 /** Icon tile colours per category (light + dark via the brand / status tokens used across the admin). */

@@ -318,10 +318,14 @@ describe('case AI: consistency check', () => {
 
     const birth = run.result.findings.find((f: { code: string }) => f.code === 'BIRTHDATE_MISMATCH');
     const task = expectStatus(await staff.agent.post(`/api/admin/cases/${c.id}/ai/tasks`).send({ runId: run.id, target: 'finding', key: birth.key }), 201).body.task;
-    const row = await prisma.task.findUniqueOrThrow({ where: { id: task.id }, include: { assignees: true } });
+    const row = await prisma.task.findUniqueOrThrow({ where: { id: task.id }, include: { assignees: true, checklist: true } });
     expect(row).toMatchObject({ caseId: c.id, createdById: staff.user.id });
-    expect(row.title).toContain(c.number);
+    // One task per client ("<Name> — 1 sənəd problemi"), the finding is a checklist item naming the document.
+    expect(row.title).toMatch(/ — 1 /);
+    expect(row.description).toContain(c.number);
     expect(row.description).toContain('pasport.jpg');
+    expect(row.checklist).toHaveLength(1);
+    expect(row.checklist[0].text).toContain('pasport.jpg');
     expect(row.assignees.map((a) => a.userId)).toEqual([staff.user.id]);
     expect(await prisma.auditLog.count({ where: { action: 'AI_CASE_TASK_CREATED', target: c.id } })).toBe(1);
   });

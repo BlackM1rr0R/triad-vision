@@ -219,7 +219,8 @@ const CreateDialog = ({ open, onClose, domain }: { open: boolean; onClose: () =>
       {created ? (
         <div className="space-y-4 text-sm">
           <p className="text-ink/80">{t('mailAdmin.created.body', { address: created.mailbox.address })}</p>
-          {created.generated ? <SecretOnce value={created.password} note={t('mailAdmin.created.passwordOnce')} /> : <p className="text-muted">{t('mailAdmin.created.passwordChosen')}</p>}
+          {/* Generated or typed: shown once with a copy button, never again. */}
+          <SecretOnce value={created.password} note={t('mailAdmin.created.passwordOnce')} />
           <ClientSettingsTable settings={created.settings} address={created.mailbox.address} />
         </div>
       ) : (
@@ -370,7 +371,7 @@ const ResetDialog = ({ mailbox, onClose }: { mailbox: Mailbox | null; onClose: (
         (result ? (
           <div className="space-y-3 text-sm">
             <p className="font-semibold text-ink">{t('mailAdmin.reset.done', { address: mailbox.address })}</p>
-            {result.generated ? <SecretOnce value={result.password} note={t('mailAdmin.created.passwordOnce')} /> : <p className="text-muted">{t('mailAdmin.created.passwordChosen')}</p>}
+            <SecretOnce value={result.password} note={t('mailAdmin.created.passwordOnce')} />
             <p className="text-muted">{t('mailAdmin.reset.workspaceUpdated', { count: result.workspaceAccountsUpdated })}</p>
           </div>
         ) : (

@@ -31,6 +31,7 @@ import { partnerRouter } from './routes/partner.js';
 import { calendarRouter } from './routes/calendar.js';
 import { mailRouter } from './routes/mail.js';
 import { mailboxRouter } from './routes/mailbox.js';
+import { mailAutoconfigRouter } from './routes/mailAutoconfig.js';
 import { chatRouter } from './routes/chat.js';
 import { eventsRouter } from './routes/events.js';
 import { contactsRouter } from './routes/contacts.js';
@@ -221,6 +222,7 @@ export const createApp = () => {
   app.use('/api/calendar', calendarRouter);
   app.use('/api/mail', mailRouter);
   app.use('/api/mailbox', mailboxRouter);
+  app.use('/api/mail-autoconfig', mailAutoconfigRouter); // public: Thunderbird autoconfig + Outlook autodiscover (Caddy routes them here)
   app.use('/api/chat', chatRouter);
   app.use('/api/events', eventsRouter);
   app.use('/api/contacts', contactsRouter);

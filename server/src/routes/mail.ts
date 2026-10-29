@@ -11,7 +11,7 @@ import { decodeOriginalName } from '../middleware/upload.js';
 import { audit } from '../lib/audit.js';
 import { incomingDir } from '../lib/drive/storage.js';
 import { FileCheckError, INLINE_MIME, WORKSPACE_MIME, resolveMime, verifyStoredFile } from '../lib/fileCheck.js';
-import { HttpError, badRequest, forbidden, notFound, parse } from '../lib/http.js';
+import { HttpError, badRequest, forbidden, limiter, notFound, parse } from '../lib/http.js';
 import { publish } from '../lib/messaging/realtime.js';
 import { seal } from '../lib/secretBox.js';
 import { asAddressList, dedupeAddresses, normalizeEmail, type Address } from '../lib/mail/address.js';
@@ -36,6 +36,7 @@ import {
 import { refreshMailIdle } from '../lib/mail/idle.js';
 import { verifyImap } from '../lib/mail/imap.js';
 import { PROVIDERS, providerForEmail } from '../lib/mail/providers.js';
+import { discoverMailSettings } from '../lib/mail/autoconfig.js';
 import { ruleActionsSchema, ruleConditionsSchema } from '../lib/mail/rules.js';
 import { htmlToText, sanitizeMailHtml, snippetOf } from '../lib/mail/sanitize.js';
 import { sendMessage } from '../lib/mail/send.js';
@@ -72,6 +73,16 @@ const uid = (req: Request) => req.user!.id;
 
 mailRouter.get('/providers', (_req, res) => {
   res.json({ providers: PROVIDERS });
+});
+
+/**
+ * "E-mail + password is enough": IMAP/SMTP settings for an address (own domain → our mail server,
+ * well-known providers, else the domain's autoconfig / Mozilla ISPDB with a short timeout).
+ */
+const autoconfigLimiter = limiter({ windowMs: 60 * 1000, limit: 30, keyGenerator: (req) => `u:${(req as Request).user?.id ?? req.ip}` });
+mailRouter.get('/autoconfig', autoconfigLimiter, async (req, res) => {
+  const { email } = parse(z.object({ email: z.string().trim().toLowerCase().email().max(190) }), req.query);
+  res.json({ settings: await discoverMailSettings(email) });
 });
 
 const connectionSchema = z.object({

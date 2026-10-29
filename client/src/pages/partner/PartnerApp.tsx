@@ -8,6 +8,7 @@ import { usePageTitle } from '@/lib/usePageTitle';
 import { errorCode } from '@/lib/api';
 import { registerCopy } from '@/i18n';
 import { pagesPartnerPortal } from '@/i18n/pagesPartnerPortal';
+import { pagesCaseProcessing } from '@/i18n/pagesCaseProcessing'; // visa kind filter + "rədd" KPI
 import { usePartnerMe } from '@/components/partnerPortal/api';
 import { ErrorRetry, Loading } from '@/components/partnerPortal/ui';
 import PartnerDashboardPage from './Dashboard';
@@ -17,6 +18,7 @@ import PartnerCommissionsPage from './Commissions';
 import PartnerProfilePage from './Profile';
 
 registerCopy(pagesPartnerPortal);
+registerCopy(pagesCaseProcessing);
 
 /**
  * Referral-partner portal, mounted at /partner/* behind RequireAuth roles=['AGENT']. Only logins linked to a

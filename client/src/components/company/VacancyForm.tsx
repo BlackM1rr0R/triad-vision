@@ -33,6 +33,9 @@ export interface VacancyFormState {
   companyId: string;
   visaCategoryId: string;
   slug: string;
+  // super admin only (sent by the admin page when changed)
+  status: string;
+  publishedAt: string;
 }
 
 const emptyL10n = (): L10nText => ({ az: '', de: '', en: '', ru: '' });
@@ -75,6 +78,8 @@ export const formFromVacancy = (v?: VacancyRow | null): VacancyFormState => ({
   companyId: v?.companyId ?? '',
   visaCategoryId: v?.visaCategoryId ?? '',
   slug: v?.slug ?? '',
+  status: v?.status ?? 'DRAFT',
+  publishedAt: v?.publishedAt ? v.publishedAt.slice(0, 10) : '',
 });
 
 const pickFilled = (v: L10nText) => Object.fromEntries(LOCALES.filter((l) => v[l].trim()).map((l) => [l, v[l].trim()]));
@@ -134,6 +139,7 @@ export const VacancyForm = ({
   formId = 'vacancy-form',
   hideSubmit,
   staff = false,
+  anyDate = false,
   ai,
 }: {
   initial: VacancyFormState;
@@ -145,6 +151,8 @@ export const VacancyForm = ({
   formId?: string;
   hideSubmit?: boolean;
   staff?: boolean;
+  /** SUPER_ADMIN: the closing date may also lie in the past. */
+  anyDate?: boolean;
   /** Shows the "Write with AI" panel (staff or employer portal). */
   ai?: 'staff' | 'company';
 }) => {
@@ -280,7 +288,15 @@ export const VacancyForm = ({
           <input id="vf-pos" type="number" min={1} max={500} inputMode="numeric" className="input" value={f.positions} onChange={(e) => set('positions', e.target.value)} />
         </Field>
         <Field id="vf-closes" label={t('jobsArea.form.closesAt')}>
-          <input id="vf-closes" type="date" className="input" value={f.closesAt} min={new Date(Date.now() + 86_400_000).toISOString().slice(0, 10)} onChange={(e) => set('closesAt', e.target.value)} />
+          {/* A stored date that has passed can be sent back unchanged (expired vacancies stay editable). */}
+          <input
+            id="vf-closes"
+            type="date"
+            className="input"
+            value={f.closesAt}
+            min={anyDate || (staff && f.closesAt === initial.closesAt) ? undefined : new Date(Date.now() + 86_400_000).toISOString().slice(0, 10)}
+            onChange={(e) => set('closesAt', e.target.value)}
+          />
         </Field>
         <div className="flex items-start gap-3 rounded-xl border border-line p-3 sm:col-span-2 lg:col-span-3">
           <Switch checked={f.showCompany} onChange={(v) => set('showCompany', v)} label={t('jobsArea.form.showCompany')} />

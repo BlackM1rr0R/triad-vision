@@ -4,12 +4,14 @@ import { z } from 'zod';
 import { assertStaffSeat, STAFF_ROLES } from '../../lib/license/index.js';
 import { prisma } from '../../db.js';
 import { requireMinRole, revokeUserSessions } from '../../middleware/auth.js';
-import { badRequest, conflict, notFound, parse } from '../../lib/http.js';
+import { HttpError, badRequest, conflict, notFound, parse } from '../../lib/http.js';
 import { audit } from '../../lib/audit.js';
 import { ensurePersonalRoot } from '../../lib/drive/roots.js';
 import { password } from '../auth.js';
 import { deleteUserAccount, loadDeletionTarget, userDeletionPreview } from '../../lib/userDeletion.js';
 import { XLSX_MIME, buildClientsWorkbook } from '../../lib/clientsExcel.js';
+import { clientSettings, stalwartConfig, stalwartDomain } from '../../lib/stalwart/config.js';
+import { createStaffMailbox, localPartSchema, preflightStaffMailbox, suggestLocalPart } from '../../lib/stalwart/service.js';
 
 export const adminUsersRouter = Router();
 
@@ -86,6 +88,12 @@ adminUsersRouter.get('/staff', async (_req, res) => {
   res.json({ staff });
 });
 
+/** "Create mailbox" checkbox of the new-staff dialog: the suggested ad.soyad local part and our domain. */
+adminUsersRouter.get('/mailbox-suggestion', requireMinRole('SUPER_ADMIN'), async (req, res) => {
+  const q = parse(z.object({ firstName: z.string().trim().max(80).default(''), lastName: z.string().trim().max(80).default('') }), req.query);
+  res.json({ localPart: suggestLocalPart(q.firstName, q.lastName), domain: stalwartDomain(), configured: !!stalwartConfig() });
+});
+
 /** Only the super admin creates staff accounts. A new account also gets its document workspace. */
 adminUsersRouter.post('/', requireMinRole('SUPER_ADMIN'), async (req, res) => {
   const body = parse(
@@ -96,19 +104,41 @@ adminUsersRouter.post('/', requireMinRole('SUPER_ADMIN'), async (req, res) => {
       lastName: z.string().trim().min(1).max(80),
       phone: z.string().trim().max(40).optional(),
       role: z.enum(['STAFF', 'ADMIN']),
+      // Optional: also create the @domain mailbox (default ad.soyad) on our mail server; password shown once.
+      createMailbox: z.boolean().optional(),
+      mailboxLocalPart: localPartSchema.optional(),
     }),
     req.body,
   );
   if (await prisma.user.findUnique({ where: { email: body.email } })) throw conflict('EMAIL_TAKEN');
   await assertStaffSeat(); // white-label plan: staff seat limit (lib/license)
-  const { password: pw, ...rest } = body;
+  const { password: pw, createMailbox: wantsMailbox, mailboxLocalPart, ...rest } = body;
+  // Mailbox: checked before the account exists (mail server configured, address free), so a refusal creates nothing.
+  let plan: (Awaited<ReturnType<typeof preflightStaffMailbox>> & { localPart: string }) | null = null;
+  if (wantsMailbox) {
+    const localPart = mailboxLocalPart || suggestLocalPart(rest.firstName, rest.lastName);
+    if (!localPart) throw badRequest('INVALID_LOCAL_PART');
+    plan = { ...(await preflightStaffMailbox(localPart)), localPart };
+  }
   const user = await prisma.user.create({
     data: { ...rest, passwordHash: await bcrypt.hash(pw, 12) },
     select: userSelect,
   });
   await ensurePersonalRoot(user.id);
-  await audit(req, 'USER_CREATED', `user:${user.id}`, { email: user.email, role: user.role });
-  res.status(201).json({ user });
+  await audit(req, 'USER_CREATED', `user:${user.id}`, { email: user.email, role: user.role, ...(plan ? { mailbox: plan.address } : {}) });
+  let mailbox: { address: string; password: string; workspaceConnected: boolean; settings: ReturnType<typeof clientSettings> } | { address: string; error: string } | null = null;
+  if (plan) {
+    try {
+      const r = await createStaffMailbox(plan.cfg, user, plan.localPart);
+      await audit(req, 'MAILBOX_CREATED', r.mailbox.address, { id: r.mailbox.id, forUser: user.id, generatedPassword: true, workspaceConnected: !!r.workspaceAccountId });
+      // The only time this password leaves the server: the admin hands it to the new colleague.
+      mailbox = { address: r.mailbox.address, password: r.password, workspaceConnected: !!r.workspaceAccountId, settings: clientSettings() };
+    } catch (err) {
+      // The staff account stays; the admin can retry on the mailboxes page.
+      mailbox = { address: plan.address, error: err instanceof HttpError ? err.code : 'MAIL_SERVER_ERROR' };
+    }
+  }
+  res.status(201).json({ user, mailbox });
 });
 
 adminUsersRouter.patch('/:id', requireMinRole('SUPER_ADMIN'), async (req, res) => {

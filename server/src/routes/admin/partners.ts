@@ -6,7 +6,8 @@ import { requireMinRole } from '../../middleware/auth.js';
 import { HttpError, badRequest, conflict, notFound, parse } from '../../lib/http.js';
 import { audit } from '../../lib/audit.js';
 import { XLSX_MIME } from '../../lib/clientsExcel.js';
-import { buildPartnerWorkbook, partnerCases, partnerCounts, syncFoldersLater } from '../../lib/partners/index.js';
+import { buildPartnerWorkbook, partnerCaseRows, partnerCounts, syncFoldersLater } from '../../lib/partners/index.js';
+import { refusalCsv, refusalQuery, refusalReport } from '../../lib/partners/refusals.js'; // Ablehnung by partner / company
 import { ensurePartnerFolder, partnerFolderId, partnerFolderIds, syncPartnerFolder } from '../../lib/drive/caseFolders.js';
 import { partnerCommissionTotals } from '../../lib/partners/commissions.js';
 import { assignCases, deletePartner } from '../../lib/partners/manage.js';
@@ -76,6 +77,25 @@ adminPartnersRouter.get('/', async (req, res) => {
 adminPartnersRouter.use('/commissions', partnerCommissionsRouter);
 adminPartnersRouter.use('/', partnerLoginRouter);
 
+/**
+ * GET /refusals — visa refusals ("Ablehnung") per partner or per employer company: cases, visas, refusals,
+ * refusal rate (?group=partner|company, ?from, ?to, ?basis=created|decision, ?partnerId, ?withPartner=0).
+ * GET /refusals.csv — the same as CSV.
+ */
+adminPartnersRouter.get('/refusals', async (req, res) => {
+  res.json(await refusalReport(parse(refusalQuery, req.query)));
+});
+
+adminPartnersRouter.get('/refusals.csv', async (req, res) => {
+  const q = parse(refusalQuery, req.query);
+  const report = await refusalReport(q);
+  await audit(req, 'PARTNER_REFUSALS_EXPORTED', q.partnerId, { group: q.group, from: q.from ?? null, to: q.to ?? null, basis: q.basis });
+  const name = `Ablehnung-${q.group === 'partner' ? 'partnyorlar' : 'sirketler'}${q.from ? `-${q.from}` : ''}${q.to ? `_${q.to}` : ''}.csv`;
+  res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+  res.setHeader('Content-Disposition', `attachment; filename="${name}"`);
+  res.send(refusalCsv(report));
+});
+
 /** PATCH /assign { caseIds, partnerId | null } — staff link (or unlink) cases to a partner in bulk. */
 adminPartnersRouter.patch('/assign', async (req, res) => {
   const body = parse(
@@ -102,7 +122,7 @@ adminPartnersRouter.get('/:id', async (req, res) => {
   const partner = await prisma.referralPartner.findUnique({ where: { id: String(req.params.id) } });
   if (!partner) throw notFound('PARTNER_NOT_FOUND');
   const [cases, counts, totals, login] = await Promise.all([
-    partnerCases(partner.id),
+    partnerCaseRows(partner.id),
     partnerCounts([partner.id]),
     partnerCommissionTotals([partner.id]),
     partnerLoginView(partner.userId),

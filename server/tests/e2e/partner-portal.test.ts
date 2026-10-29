@@ -184,7 +184,7 @@ describe('partner portal: dashboard, commissions and notifications', () => {
     expect(paid.link).toBe('/partner/commissions');
 
     const dash = expectStatus(await p.agent.get('/api/partner/dashboard'), 200).body;
-    expect(dash.counts).toEqual({ clients: 1, cases: 1, activeCases: 0, approvedVisas: 1 });
+    expect(dash.counts).toEqual({ clients: 1, cases: 1, activeCases: 0, approvedVisas: 1, rejected: 0 });
     expect(dash.commissions).toMatchObject({ paidCents: 10000, pendingCents: 0 });
     expect(dash.recent.length).toBeGreaterThan(0);
     expect(dash.recent[0]).toMatchObject({ caseId: c.id, client: 'Rəşad Həsənov' });

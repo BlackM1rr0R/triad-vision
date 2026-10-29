@@ -439,6 +439,13 @@ model Case {
   driveFolderId           String?               @unique
   /// Extra columns of the client register (admin-defined), keyed by ClientRegisterColumn.id.
   registerData            Json?
+  /// Team document workflow (lib/caseProcessing): null = "In Bearbeitung" (default) | IN_PROGRESS | WRITTEN ("Schon geschrieben") | DONE ("Fertig") | REFUSED ("Ablehnung").
+  processingStage         String?               @db.VarChar(16)
+  processingStageAt       DateTime?
+  processingStageById     String?               @db.VarChar(40)
+  /// Staff member who should take the next step (gets a notification and a "my work" item).
+  processingAssigneeId    String?               @db.VarChar(40)
+  processingMoves         CaseProcessingMove[]
 
   @@index([clientId])
   @@index([status])
@@ -446,6 +453,8 @@ model Case {
   @@index([closedAt])
   @@index([parentCaseId])
   @@index([partnerId])
+  @@index([processingStage])
+  @@index([processingAssigneeId])
 }
 
 model DocumentRequirement {
@@ -5301,4 +5310,20 @@ model AcceleratedMessage {
   at          DateTime  @default(now())
 
   @@index([procedureId, at])
+}
+
+/// History of the team document workflow of a case ("Schon geschrieben" → "Fertig", "Ablehnung"): who moved it, when, to whom, with a note.
+model CaseProcessingMove {
+  id         String   @id @default(cuid())
+  caseId     String
+  case       Case     @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  fromStage  String?  @db.VarChar(16)
+  toStage    String   @db.VarChar(16)
+  actorId    String?  @db.VarChar(40)
+  assigneeId String?  @db.VarChar(40)
+  note       String?  @db.Text
+  createdAt  DateTime @default(now())
+
+  @@index([caseId, createdAt])
+  @@index([assigneeId])
 }

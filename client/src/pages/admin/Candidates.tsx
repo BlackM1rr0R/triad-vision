@@ -4,7 +4,7 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tansta
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import clsx from 'clsx';
-import { BadgeCheck, ChevronLeft, ChevronRight, FolderPlus, Mail, Phone, Search, UserPlus, UserSearch } from 'lucide-react';
+import { BadgeCheck, ChevronLeft, ChevronRight, FolderPlus, Mail, Paperclip, Phone, Search, UserPlus, UserSearch } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useL10n } from '@/lib/l10n';
 import type { CaseStatus, L10n } from '@/lib/types';
@@ -81,6 +81,8 @@ interface CandidateDetail extends Omit<Row, 'activeCase' | 'applicationsCount' |
     match: Match;
     vacancy: { id: string; slug: string; title: L10n; status: VacancyStatus; city: string | null; company: { name: string } | null };
   }[];
+  /** Documents uploaded with an application (server: lib/applicationUploads.ts). */
+  applicationDocuments?: { id: string; kind: string; title: string; filename: string; createdAt: string; attachedCaseId: string | null }[];
 }
 
 const useVacancyOptions = () =>
@@ -345,6 +347,29 @@ const CandidateDrawer = ({ id, onClose, onAdd }: { id: string | null; onClose: (
               <CandidateProfileCard userId={data.id} />
             </div>
           </Panel>
+
+          {!!data.applicationDocuments?.length && (
+            <Panel title={t('jobsArea.admin.candidates.appDocs', { count: data.applicationDocuments.length })}>
+              <ul className="divide-y divide-line">
+                {data.applicationDocuments.map((d) => (
+                  <li key={d.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 py-2 text-sm">
+                    <Paperclip className="size-4 shrink-0 text-muted" aria-hidden />
+                    <a href={`/api/admin/candidates/${data.id}/application-documents/${d.id}`} target="_blank" rel="noopener noreferrer" className="min-w-0 flex-1 truncate font-medium text-link hover:underline" title={d.filename}>
+                      {d.title} · {d.filename}
+                    </a>
+                    <span className="text-xs text-muted">{fmtDate(d.createdAt)}</span>
+                    {d.attachedCaseId ? (
+                      <Link to={`/admin/cases/${d.attachedCaseId}#documents`} className="badge bg-success-bg text-success-fg">
+                        {t('jobsArea.admin.candidates.appDocInCase')}
+                      </Link>
+                    ) : (
+                      <span className="badge bg-sunken text-muted">{t('jobsArea.admin.candidates.appDocWaiting')}</span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </Panel>
+          )}
 
           <Panel
             title={t('jobsArea.admin.candidates.applications', { count: data.applications.length })}

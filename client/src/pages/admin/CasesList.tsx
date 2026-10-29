@@ -3,7 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
-import { ChevronLeft, ChevronRight, Columns2, FileClock, FolderSearch, Hourglass, Mail, MessageSquare, Phone, Search, UserCheck, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ClipboardPen, Columns2, FileClock, FolderSearch, Hourglass, KanbanSquare, List, Mail, MessageSquare, Phone, Search, UserCheck, X } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useL10n } from '@/lib/l10n';
 import type { CaseStatus } from '@/lib/types';
@@ -23,6 +23,9 @@ import { useSplitView } from '@/components/admin/split/useSplitView';
 import { useListNav } from '@/components/shortcuts/useListNav'; // J / K / Enter / E / '/' / Esc
 import { registerCopy } from '@/i18n';
 import { pagesAdminUx } from '@/i18n/pagesAdminUx';
+import { PROCESSING_STAGES, isProcessingStage, stageLabel } from '@/components/caseProcessing/api'; // team document workflow
+import { StageBadge, StageCell } from '@/components/caseProcessing/parts';
+import { ProcessingBoard } from '@/components/caseProcessing/ProcessingBoard';
 import { BallChip } from '@/components/clientProcess/Ball'; // "Top kimdÉ™dir?" column
 
 registerCopy(pagesAdminUx);
@@ -97,6 +100,11 @@ export default function CasesList() {
   // Referral partner filter ('none' = without partner) and the rows picked for a bulk partner change.
   const partner = params.get('partner') ?? '';
   const [picked, setPicked] = useState<string[]>([]);
+  // Team document workflow: stage filter, "sent to me" and the board view (?view=board).
+  const processingParam = params.get('processing');
+  const processing = isProcessingStage(processingParam) ? processingParam : null;
+  const processingAssignee = params.get('processingAssignee') ?? '';
+  const board = params.get('view') === 'board';
 
   const [searchInput, setSearchInput] = useState(search);
   useEffect(() => setSearchInput(search), [search]);
@@ -125,11 +133,19 @@ export default function CasesList() {
   }, [searchInput]);
 
   const { data, isLoading, isFetching, error, refetch } = useQuery({
-    queryKey: ['admin-cases', { status, search, mine, page, partner }],
+    queryKey: ['admin-cases', { status, search, mine, page, partner, processing, processingAssignee }],
     queryFn: async () =>
       (
         await api.get<AdminCasesResponse>('/admin/cases', {
-          params: { status: status ?? undefined, search: search || undefined, mine: mine ? '1' : undefined, page, partnerId: partner || undefined },
+          params: {
+            status: status ?? undefined,
+            search: search || undefined,
+            mine: mine ? '1' : undefined,
+            page,
+            partnerId: partner || undefined,
+            processing: processing ?? undefined,
+            processingAssignee: processingAssignee || undefined,
+          },
         })
       ).data,
     placeholderData: keepPreviousData,
@@ -146,7 +162,7 @@ export default function CasesList() {
     if (sort === 'age') return [...list].sort((a, b) => b.ageDays - a.ageDays);
     return list;
   }, [data, overdue, sort]);
-  useEffect(() => setPicked([]), [status, search, mine, page, partner]);
+  useEffect(() => setPicked([]), [status, search, mine, page, partner, processing, processingAssignee]);
   const togglePick = (id: string, on: boolean) => setPicked((prev) => (on ? [...new Set([...prev, id])] : prev.filter((x) => x !== id)));
 
   // Split view (list left, compact case right; remembered per user) and keyboard selection (?selected=<id>).
@@ -210,6 +226,17 @@ export default function CasesList() {
           <PartnerFilterSelect value={partner} onChange={(v) => update({ partner: v })} />
           <button
             type="button"
+            aria-pressed={board}
+            onClick={() => update({ view: board ? null : 'board' })}
+            className={clsx(
+              'inline-flex min-h-10 sm:min-h-9 shrink-0 items-center justify-center gap-2 rounded-lg border px-3.5 py-2.5 text-sm font-semibold whitespace-nowrap transition',
+              board ? 'border-line-strong bg-sunken text-ink shadow-[inset_0_0_0_1px_var(--color-line-strong)]' : 'border-line bg-card text-ink/80 hover:border-line-strong',
+            )}
+          >
+            {board ? <List className="size-4" aria-hidden /> : <KanbanSquare className="size-4" aria-hidden />} {board ? t('caseProcessing.board.list') : t('caseProcessing.board.toggle')}
+          </button>
+          <button
+            type="button"
             aria-pressed={split.enabled}
             onClick={split.toggle}
             title={t('ux.split.toggleHint')}
@@ -234,7 +261,27 @@ export default function CasesList() {
             </Chip>
           ))}
         </div>
+        {!board && (
+          <div className="-mx-4 flex items-center gap-1.5 overflow-x-auto px-4 pb-1 [scrollbar-width:none] sm:mx-0 sm:flex-wrap sm:px-0 sm:pb-0" role="group" aria-label={t('caseProcessing.filterLabel')}>
+            <span className="inline-flex shrink-0 items-center gap-1 pr-1 text-xs font-semibold text-muted">
+              <ClipboardPen className="size-3.5" aria-hidden /> {t('caseProcessing.filterLabel')}
+            </span>
+            {PROCESSING_STAGES.map((s) => (
+              <Chip key={s} active={processing === s} onClick={() => update({ processing: processing === s ? null : s })} count={data?.processingCounts?.[s] ?? 0}>
+                <span title={t(`caseProcessing.hints.${s}`)}>{stageLabel(s)}</span>
+              </Chip>
+            ))}
+            <Chip active={processingAssignee === 'me'} onClick={() => update({ processingAssignee: processingAssignee === 'me' ? null : 'me' })}>
+              <UserCheck className="size-3" aria-hidden /> {t('caseProcessing.board.mine')}
+            </Chip>
+          </div>
+        )}
       </div>
+
+      {board ? (
+        <ProcessingBoard partnerId={partner || undefined} search={search || undefined} onShowStage={(s) => update({ view: null, processing: s })} />
+      ) : (
+      <>
 
       {isLoading ? (
         <CasesListSkeleton />
@@ -244,7 +291,7 @@ export default function CasesList() {
         <div className="rounded-xl border border-line bg-card">
           <EmptyState icon={FolderSearch} title={t('admin.cases.notFound')}>
             {t('admin.cases.notFoundText')}
-            {(status || search || mine || overdue || partner) && (
+            {(status || search || mine || overdue || partner || processing || processingAssignee) && (
               <div className="mt-3">
                 <button type="button" className="btn-secondary btn-sm" onClick={() => setParams({}, { replace: true })}>
                   <X className="size-3.5" /> {t('admin.cases.resetFilters')}
@@ -308,7 +355,7 @@ export default function CasesList() {
           <>
           {/* Desktop table */}
           <div className="hidden overflow-x-auto rounded-xl border border-line bg-card xl:block">
-            <table className="w-full min-w-[1320px] text-left text-sm">
+            <table className="w-full min-w-[1460px] text-left text-sm">
               <thead className="border-b border-line bg-surface/70 text-xs font-medium whitespace-nowrap text-muted">
                 <tr>
                   <th className="w-8 py-2.5 pl-4">
@@ -322,6 +369,7 @@ export default function CasesList() {
                   <th className="px-4 py-2.5">{t('admin.cases.th.client')}</th>
                   <th className="px-4 py-2.5">{t('admin.cases.th.profession')}</th>
                   <th className="px-4 py-2.5">{t('admin.cases.th.status')}</th>
+                  <th className="px-4 py-2.5">{t('caseProcessing.column')}</th>
                   <th className="px-4 py-2.5">{t('caseNext.chip.column')}</th>
                   <th className="px-4 py-2.5">{t('cp.ball.column')}</th>
                   <th className="px-4 py-2.5">{t('admin.cases.th.lastEvent')}</th>
@@ -385,6 +433,9 @@ export default function CasesList() {
                         <RowMeta c={c} />
                       </div>
                     </td>
+                    <td className="px-4 py-3 align-top">
+                      <StageCell p={c.processing} />
+                    </td>
                     <td className="w-56 max-w-[15rem] px-4 py-3 align-top">
                       <NextStepChip step={c.nextStep} />
                     </td>
@@ -424,6 +475,7 @@ export default function CasesList() {
                   </div>
                   <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
                     <DaysInStatus c={c} />
+                    {c.processing?.stage && <StageBadge stage={c.processing.stage} />}
                     <RowMeta c={c} />
                   </div>
                   {c.nextStep && <NextStepChip step={c.nextStep} className="mt-2.5" />}
@@ -471,6 +523,8 @@ export default function CasesList() {
             </nav>
           )}
         </>
+      )}
+      </>
       )}
     </div>
   );

@@ -218,6 +218,11 @@ export const analyzeInsight = async (ref: InsightRef, opts: { force?: boolean } 
       folderId: insight.folderId,
       docType: insight.docType,
       status: insight.status,
+      // Name check for the uploader's screen (staff uploads on a client's behalf get the same warning as clients).
+      flags: Array.isArray(insight.flags) ? insight.flags : [],
+      uploadedById: insight.uploadedById,
+      fileName: subject.name,
+      holder: proposalsOf(insight).holder ?? null,
     });
     return insight;
   } catch (err) {
@@ -338,4 +343,6 @@ export const chipView = (i: DocumentInsight) => ({
   qualityLevel: i.qualityLevel,
   open: i.status === 'PROPOSED' ? proposalsOf(i).actions.length : 0,
   flags: (Array.isArray(i.flags) ? i.flags : []) as string[],
+  /** NAME_MISMATCH: name on the document vs. the case person (the drive row shows the warning). */
+  holder: proposalsOf(i).holder ?? null,
 });

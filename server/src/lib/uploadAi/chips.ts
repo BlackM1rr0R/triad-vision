@@ -12,11 +12,18 @@ export interface UploadAiChip {
   qualityLevel: string | null;
   open: number;
   flags: string[];
+  /** NAME_MISMATCH: the name on the document and the case person's name (warning on the row). */
+  holder?: { found: string; expected: string } | null;
 }
 
 const openActions = (proposals: unknown) => {
   const a = (proposals as { actions?: unknown } | null)?.actions;
   return Array.isArray(a) ? a.filter((x) => (ACTIONS as readonly string[]).includes(x)).length : 0;
+};
+
+const holderOf = (proposals: unknown) => {
+  const h = (proposals as { holder?: { found?: unknown; expected?: unknown } } | null)?.holder;
+  return h && typeof h.found === 'string' && typeof h.expected === 'string' ? { found: h.found, expected: h.expected } : null;
 };
 
 export const chipsForNodes = async (nodeIds: string[]): Promise<Map<string, UploadAiChip>> => {
@@ -34,6 +41,7 @@ export const chipsForNodes = async (nodeIds: string[]): Promise<Map<string, Uplo
         qualityLevel: r.qualityLevel,
         open: r.status === 'PROPOSED' ? openActions(r.proposals) : 0,
         flags: Array.isArray(r.flags) ? (r.flags as string[]) : [],
+        holder: holderOf(r.proposals),
       },
     ]),
   );

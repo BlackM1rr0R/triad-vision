@@ -182,7 +182,8 @@ export const SuggestionDrawer = ({
             <ul className="space-y-1">
               {i.flags.map((f) => (
                 <li key={f} className="flex items-start gap-1.5 text-xs text-warning-fg">
-                  <AlertTriangle className="mt-0.5 size-3.5 shrink-0" aria-hidden /> {t(`uploadAi.staff.flags.${f}`, { defaultValue: f })}
+                  <AlertTriangle className="mt-0.5 size-3.5 shrink-0" aria-hidden />{' '}
+                  {f === 'NAME_MISMATCH' && i.proposals.holder ? t('uploadAi.staff.nameMismatchFor', i.proposals.holder) : t(`uploadAi.staff.flags.${f}`, { defaultValue: f })}
                 </li>
               ))}
               {i.quality && i.quality.level !== 'OK' && (

@@ -1,19 +1,40 @@
-import { Router } from 'express';
+import { Router, type Request } from 'express';
 import { z } from 'zod';
-import type { Prisma } from '@prisma/client';
+import type { Prisma, Vacancy } from '@prisma/client';
 import { prisma } from '../../db.js';
-import { badRequest, conflict, notFound, parse } from '../../lib/http.js';
+import { badRequest, conflict, forbidden, notFound, parse } from '../../lib/http.js';
 import { audit } from '../../lib/audit.js';
 import { emitWebhook } from '../../lib/ops/webhooks.js';
 import { onVacancyPublished } from '../../lib/jobAlerts/service.js';
 import { notifyVacancyReviewed } from '../../lib/jobsNotifications.js';
 import { matchCandidate } from '../../lib/matching.js';
 import { fillL10n, staffVacancyInput, staffVacancyPatch, uniqueSlug, vacancyData } from '../../lib/vacancies.js';
+import { hasMinRole } from '../../middleware/auth.js';
 
 // Admin: vacancies — mounted at /api/admin/vacancies
 export const adminVacanciesRouter = Router();
 
 const STATUSES = ['DRAFT', 'PENDING', 'OPEN', 'CLOSED'] as const;
+
+const isSuper = (req: Request) => hasMinRole(req.user?.role, 'SUPER_ADMIN');
+
+/** STAFF / ADMIN may not set a closing date in the past; sending back the stored (possibly past) one is fine. */
+const checkClosesAt = (req: Request, next: Date | null | undefined, stored: Date | null = null) => {
+  if (!next || isSuper(req) || next.getTime() > Date.now()) return;
+  if (stored && stored.toISOString().slice(0, 10) === next.toISOString().slice(0, 10)) return;
+  throw badRequest('DATE_NOT_IN_FUTURE');
+};
+
+/** Before → after of every changed column, for the audit log (long texts only flagged as changed). */
+const SCALAR_FIELDS = ['slug', 'companyId', 'visaCategoryId', 'sector', 'city', 'profession', 'germanLevel', 'minExperience', 'drivingLicence', 'salaryMin', 'salaryMax', 'positions', 'employmentType', 'showCompany', 'status', 'publishedAt', 'closesAt'] as const;
+const JSON_FIELDS = ['title', 'description', 'requirements', 'benefits'] as const;
+const diffVacancy = (a: Vacancy, b: Vacancy) => {
+  const norm = (v: string | number | boolean | Date | null): string | number | boolean | null => (v instanceof Date ? v.toISOString() : v);
+  const changes: Record<string, Prisma.InputJsonValue> = {};
+  for (const k of SCALAR_FIELDS) if (norm(a[k]) !== norm(b[k])) changes[k] = { from: norm(a[k]), to: norm(b[k]) };
+  for (const k of JSON_FIELDS) if (JSON.stringify(a[k] ?? null) !== JSON.stringify(b[k] ?? null)) changes[k] = 'changed';
+  return changes;
+};
 
 const checkRefs = async (b: { companyId?: string | null; visaCategoryId?: string | null }) => {
   if (b.companyId && !(await prisma.company.count({ where: { id: b.companyId } }))) throw badRequest('INVALID_COMPANY');
@@ -139,6 +160,7 @@ adminVacanciesRouter.get('/:id', async (req, res) => {
 adminVacanciesRouter.post('/', async (req, res) => {
   const body = parse(staffVacancyInput, req.body);
   await checkRefs(body);
+  checkClosesAt(req, body.closesAt);
   if (body.slug && (await prisma.vacancy.count({ where: { slug: body.slug } }))) throw conflict('SLUG_TAKEN');
   const title = fillL10n(body.title);
   const vacancy = await prisma.vacancy.create({
@@ -165,7 +187,10 @@ adminVacanciesRouter.patch('/:id', async (req, res) => {
   const body = parse(staffVacancyPatch, req.body);
   const before = await prisma.vacancy.findUnique({ where: { id: req.params.id } });
   if (!before) throw notFound('VACANCY_NOT_FOUND');
+  // Status and publication date bypass the review workflow (approve / reject / close): SUPER_ADMIN only.
+  if ((body.status !== undefined || body.publishedAt !== undefined) && !isSuper(req)) throw forbidden('SUPER_ADMIN_ONLY');
   await checkRefs(body);
+  checkClosesAt(req, body.closesAt, before.closesAt);
   if (body.slug && body.slug !== before.slug && (await prisma.vacancy.count({ where: { slug: body.slug } }))) throw conflict('SLUG_TAKEN');
   const min = body.salaryMin !== undefined ? body.salaryMin : before.salaryMin;
   const max = body.salaryMax !== undefined ? body.salaryMax : before.salaryMax;
@@ -177,9 +202,18 @@ adminVacanciesRouter.patch('/:id', async (req, res) => {
       ...(body.slug ? { slug: body.slug } : {}),
       ...(body.companyId !== undefined ? { companyId: body.companyId } : {}),
       ...(body.visaCategoryId !== undefined ? { visaCategoryId: body.visaCategoryId } : {}),
+      ...(body.status !== undefined ? { status: body.status } : {}),
+      ...(body.publishedAt !== undefined ? { publishedAt: body.publishedAt } : {}),
+      // Opened directly by the super admin: it gets a first publication date like an approval would.
+      ...(body.status === 'OPEN' && before.status !== 'OPEN' && body.publishedAt === undefined && !before.publishedAt ? { publishedAt: new Date() } : {}),
     },
   });
-  await audit(req, 'VACANCY_UPDATED', `vacancy:${vacancy.id}`, { fields: Object.keys(body) });
+  await audit(req, 'VACANCY_UPDATED', `vacancy:${vacancy.id}`, { fields: Object.keys(body), changes: diffVacancy(before, vacancy), ...(isSuper(req) ? { by: 'SUPER_ADMIN' } : {}) });
+  if (vacancy.status === 'OPEN' && before.status !== 'OPEN') {
+    if (before.status === 'PENDING') await notifyVacancyReviewed(vacancy, true);
+    await emitWebhook('vacancy.published', { id: vacancy.id, slug: vacancy.slug, publishedAt: vacancy.publishedAt?.toISOString() ?? null }, vacancy.companyId);
+    onVacancyPublished(); // job alert digests (background)
+  }
   res.json({ vacancy });
 });
 
@@ -188,7 +222,8 @@ adminVacanciesRouter.post('/:id/approve', async (req, res) => {
   const v = await prisma.vacancy.findUnique({ where: { id: req.params.id }, include: { company: { select: { status: true } } } });
   if (!v) throw notFound('VACANCY_NOT_FOUND');
   if (v.status === 'OPEN') throw conflict('INVALID_TRANSITION');
-  if (v.company && v.company.status !== 'ACTIVE') throw conflict('COMPANY_NOT_ACTIVE');
+  // The super admin may publish for an employer that is not (yet) active.
+  if (v.company && v.company.status !== 'ACTIVE' && !isSuper(req)) throw conflict('COMPANY_NOT_ACTIVE');
   if (v.closesAt && v.closesAt <= new Date()) throw conflict('CLOSING_DATE_PASSED');
   const wasPending = v.status === 'PENDING';
   const vacancy = await prisma.vacancy.update({ where: { id: v.id }, data: { status: 'OPEN', publishedAt: v.publishedAt ?? new Date() } });

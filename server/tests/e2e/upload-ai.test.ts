@@ -357,7 +357,7 @@ describe('staff uploads into the client folder (drive)', () => {
   const folderOf = (caseId: string) =>
     waitFor(async () => (await prisma.case.findUnique({ where: { id: caseId }, select: { driveFolderId: true } }))?.driveFolderId ?? null);
 
-  it('proposes move to the stage folder, attach to the requirement, rename and expiry; "Accept all" applies them', async () => {
+  it('proposes move to the folder of the type, attach to the requirement, rename and expiry; "Accept all" applies them', async () => {
     const { c, req } = await setupCase();
     const staff = await asStaff();
     const folderId = await folderOf(c.id);
@@ -368,7 +368,7 @@ describe('staff uploads into the client folder (drive)', () => {
     const i = await prisma.documentInsight.findUniqueOrThrow({ where: { driveNodeId: nodeId } });
     expect(i).toMatchObject({ caseId: c.id, folderId, docType: 'PASSPORT', proposedRequirementId: req('PASSPORT').id, status: 'PROPOSED' });
     expect((i.proposals as { actions: string[]; folder: { name: string } }).actions.sort()).toEqual(['expiry', 'link', 'move', 'rename']);
-    expect((i.proposals as { folder: { name: string } }).folder.name).toBe('Erstdokumente');
+    expect((i.proposals as { folder: { name: string } }).folder.name).toBe('Reisepass');
 
     // The drive row carries the AI chip.
     const kids = expectStatus(await staff.agent.get(`/api/drive/nodes/${folderId}/children`), 200).body;
@@ -382,7 +382,7 @@ describe('staff uploads into the client folder (drive)', () => {
 
     const node = await prisma.driveNode.findUniqueOrThrow({ where: { id: nodeId }, include: { parent: true } });
     expect(node.name).toBe(`Mammadov_Ali_Reisepass_${EXPIRY}.pdf`);
-    expect(node.parent).toMatchObject({ name: 'Erstdokumente', parentId: folderId });
+    expect(node.parent).toMatchObject({ name: 'Reisepass', parentId: folderId });
     const doc = await prisma.document.findUniqueOrThrow({ where: { id: node.documentId! } });
     expect(doc).toMatchObject({ caseId: c.id, requirementId: req('PASSPORT').id, stage: 'INITIAL', status: 'ACCEPTED', uploadedById: staff.user.id });
     expect(doc.expiresAt?.toISOString().slice(0, 10)).toBe(EXPIRY);

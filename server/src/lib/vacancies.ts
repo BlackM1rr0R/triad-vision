@@ -55,24 +55,32 @@ export const fillL10nList = (v: Partial<Record<Loc, string[] | undefined>> | nul
   return { az: pick('az') ?? source, de: pick('de') ?? source, en: pick('en') ?? source, ru: pick('ru') ?? source };
 };
 
-/** YYYY-MM-DD (end of that day, UTC) or a full ISO timestamp; must be in the future. Null clears. */
-const closesAt = z
-  .union([z.null(), z.literal(''), z.string().max(40)])
-  .optional()
-  .transform((v, ctx) => {
-    if (v === undefined) return undefined;
-    if (v === null || v === '') return null;
-    const d = /^\d{4}-\d{2}-\d{2}$/.test(v) ? new Date(`${v}T23:59:59.000Z`) : new Date(v);
-    if (Number.isNaN(d.getTime())) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'INVALID_DATE' });
-      return z.NEVER;
-    }
-    if (d.getTime() <= Date.now()) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'DATE_NOT_IN_FUTURE' });
-      return z.NEVER;
-    }
-    return d;
-  });
+/** YYYY-MM-DD (end of that day, UTC) or a full ISO timestamp. Null clears. `future`: must be in the future. */
+const dateField = (opts: { future: boolean; endOfDay: boolean }) =>
+  z
+    .union([z.null(), z.literal(''), z.string().max(40)])
+    .optional()
+    .transform((v, ctx) => {
+      if (v === undefined) return undefined;
+      if (v === null || v === '') return null;
+      const d = /^\d{4}-\d{2}-\d{2}$/.test(v) ? new Date(`${v}T${opts.endOfDay ? '23:59:59' : '00:00:00'}.000Z`) : new Date(v);
+      if (Number.isNaN(d.getTime())) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'INVALID_DATE' });
+        return z.NEVER;
+      }
+      if (opts.future && d.getTime() <= Date.now()) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'DATE_NOT_IN_FUTURE' });
+        return z.NEVER;
+      }
+      return d;
+    });
+/** Employers: the closing date must lie in the future. */
+const closesAt = dateField({ future: true, endOfDay: true });
+/**
+ * Staff: any valid date. The admin route still refuses a new past date for STAFF / ADMIN (an unchanged one
+ * may be sent back, so expired vacancies stay editable); SUPER_ADMIN may set any date.
+ */
+const staffClosesAt = dateField({ future: false, endOfDay: true });
 
 const optStr = (max: number) =>
   z
@@ -111,8 +119,10 @@ export const companyVacancyPatch = z
   .object({ title: partialL10n(160).optional(), description: partialL10n(8000).optional(), ...vacancyFields })
   .refine(salaryOrder, { message: 'SALARY_RANGE', path: ['salaryMax'] });
 
+export const VACANCY_STATUSES = ['DRAFT', 'PENDING', 'OPEN', 'CLOSED'] as const;
 /** Staff input: the same plus company / visa category / slug; languages may still be partial (auto-filled). */
 const staffExtra = {
+  closesAt: staffClosesAt,
   companyId: z.string().max(40).nullable().optional(),
   visaCategoryId: z.string().max(40).nullable().optional(),
   slug: z
@@ -128,7 +138,15 @@ export const staffVacancyInput = z
   .object({ title: partialL10n(160), description: partialL10n(8000), ...vacancyFields, ...staffExtra, publish: z.boolean().optional() })
   .refine(salaryOrder, { message: 'SALARY_RANGE', path: ['salaryMax'] });
 export const staffVacancyPatch = z
-  .object({ title: partialL10n(160).optional(), description: partialL10n(8000).optional(), ...vacancyFields, ...staffExtra })
+  .object({
+    title: partialL10n(160).optional(),
+    description: partialL10n(8000).optional(),
+    ...vacancyFields,
+    ...staffExtra,
+    // SUPER_ADMIN only (checked in the route): set the status / publication date directly, whatever the state.
+    status: z.enum(VACANCY_STATUSES).optional(),
+    publishedAt: dateField({ future: false, endOfDay: false }),
+  })
   .refine(salaryOrder, { message: 'SALARY_RANGE', path: ['salaryMax'] });
 
 type VacancyBody = z.infer<typeof staffVacancyPatch>;

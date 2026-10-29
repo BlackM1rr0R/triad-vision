@@ -137,6 +137,15 @@ const copy: SiteCopy<(typeof pagesLegal)['en']> = {
     submit: 'Kayıt ol',
     haveAccount: 'Zaten hesabınız var mı?',
     login: 'Giriş yap',
+    referral: {
+      label: 'Referans kodu (isteğe bağlı)',
+      placeholder: 'örn. GENCE-ALI',
+      hint: 'Sizi bir temsilci veya arkadaşınız mı davet etti? Kodunu girin.',
+      checking: 'Kod kontrol ediliyor…',
+      validAgent: 'Kod onaylandı: temsilci daveti.',
+      validClient: 'Kod onaylandı: arkadaş daveti.',
+      invalid: 'Bu referans kodu bulunamadı. Lütfen kontrol edin veya alanı boş bırakın.',
+    },
     scan: {
       title: 'Pasaportunuzun fotoğrafını çekin — form kendiliğinden dolsun',
       text: 'Pasaportunuzun fotoğraflı sayfasını çekin: ad, soyad, doğum tarihi ve pasaport numarası otomatik olarak doldurulur. Ardından her şeyi değiştirebilirsiniz.',

@@ -139,6 +139,27 @@ export const attachClientReferral = async (referredId: string, rawCode: string |
   }
 };
 
+/**
+ * Which programme a typed referral code belongs to, for the live check on the sign-up form: an ACTIVE
+ * agent's code ("AGENT") or an active client's "bring a friend" code while the programme is on ("CLIENT").
+ * Returns null for unknown / paused codes. Reveals nothing about the owner. Never throws.
+ */
+export const resolveReferralCode = async (rawCode: string | null | undefined): Promise<'AGENT' | 'CLIENT' | null> => {
+  const code = normaliseRefCode(rawCode ?? '');
+  if (!code) return null;
+  try {
+    const agent = await prisma.agent.findFirst({ where: { code, status: 'ACTIVE' }, select: { id: true } });
+    if (agent) return 'AGENT';
+    const owner = await prisma.clientReferralCode.findUnique({ where: { code }, select: { user: { select: { role: true, isActive: true } } } });
+    if (!owner || owner.user.role !== 'CLIENT' || !owner.user.isActive) return null;
+    const settings = await getReferralSettings();
+    return settings.enabled ? 'CLIENT' : null;
+  } catch (err) {
+    console.error('[referral] resolve failed', err);
+    return null;
+  }
+};
+
 const EARNED_TEXT: Record<Locale, (amount: string) => { title: string; body: string }> = {
   az: (a) => ({ title: 'Dostunuz üçün mükafat qazandınız', body: `Dəvət etdiyiniz dost növbəti mərhələyə çatdı. Mükafatınız: ${a}. Ətraflı "Dostunu gətir" bölməsində.` }),
   de: (a) => ({ title: 'Sie haben eine Empfehlungsprämie erhalten', body: `Die von Ihnen empfohlene Person hat den nächsten Schritt erreicht. Ihre Prämie: ${a}. Details unter „Freunde werben“.` }),

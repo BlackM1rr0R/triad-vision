@@ -7,7 +7,7 @@ import { api } from '@/lib/api';
 import { Spinner } from '@/components/ui/Spinner';
 import { ConfirmDialog } from '@/components/admin/ConfirmDialog';
 import { toastError } from '@/components/admin/labels';
-import { copyText, fmtDay, l10n, SEVERITY_STYLE, type ContractResult, type ContractTerms, type Run, type Severity } from './api';
+import { copyText, findingTaskMessage, fmtDay, l10n, SEVERITY_STYLE, type ContractResult, type FindingTaskResponse, type ContractTerms, type Run, type Severity } from './api';
 
 const ICON: Record<Severity, typeof Info> = { BLOCKER: AlertOctagon, WARNING: AlertTriangle, INFO: Info };
 
@@ -33,8 +33,8 @@ export const ContractView = ({ caseId, run, onSendAnyway, compact = false }: { c
   const task = async (target: 'employer' | 'contractIssue', key?: string) => {
     setBusy(`${target}:${key ?? ''}`);
     try {
-      const res = await api.post<{ task: { key: string } }>(`/admin/cases/${caseId}/ai/tasks`, { runId: run.id, target, key });
-      toast.success(t('aiCase.actions.taskCreated', { key: res.data.task.key }));
+      const res = await api.post<FindingTaskResponse>(`/admin/cases/${caseId}/ai/tasks`, { runId: run.id, target, key });
+      toast.success(findingTaskMessage(t, res.data));
     } catch (err) {
       toastError(err);
     } finally {

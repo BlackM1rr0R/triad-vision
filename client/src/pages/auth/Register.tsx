@@ -1,4 +1,4 @@
-import { useId, useMemo, useState, type FormEvent, type ReactNode } from 'react';
+import { useEffect, useId, useMemo, useState, type FormEvent, type ReactNode } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
@@ -141,6 +141,7 @@ const Field = ({
   icon: Icon,
   hint,
   error,
+  ok,
   trailing,
   tag,
   children,
@@ -150,6 +151,8 @@ const Field = ({
   icon: LucideIcon;
   hint: string;
   error?: string | null;
+  /** The hint is a confirmation (green), e.g. a referral code that was found. */
+  ok?: boolean;
   trailing?: ReactNode;
   /** Small badge next to the label (e.g. "filled from passport"). */
   tag?: ReactNode;
@@ -167,7 +170,7 @@ const Field = ({
       {children}
       {trailing}
     </div>
-    <p id={`${id}-hint`} className={clsx('mt-1.5 text-xs leading-snug', error ? 'text-danger' : 'text-muted')} aria-live={error ? 'polite' : undefined}>
+    <p id={`${id}-hint`} className={clsx('mt-1.5 text-xs leading-snug', error ? 'text-danger' : ok ? 'text-success-fg' : 'text-muted')} aria-live={error ? 'polite' : undefined}>
       {error ?? hint}
     </p>
   </div>
@@ -239,7 +242,38 @@ export default function Register() {
   const bounds = useMemo(birthBounds, []);
   /** Values the passport scan put into the form (a field keeps its badge while it still holds that value). */
   const [scanned, setScanned] = useState<Partial<Form> | null>(null);
-  const [refCode] = useState(() => readRef(location.search));
+  // Optional, visible "Referral code" field: prefilled from ?ref= / the tab / the 60-day cookie, checked live.
+  const [refInput, setRefInput] = useState(() => readRef(location.search));
+  const refCode = normaliseRef(refInput);
+  const [refCheck, setRefCheck] = useState<{ code: string; kind: 'AGENT' | 'CLIENT' | null; failed?: boolean } | null>(null);
+  useEffect(() => {
+    if (!refCode) return;
+    let alive = true;
+    const timer = window.setTimeout(() => {
+      api
+        .get<{ valid: boolean; kind: 'AGENT' | 'CLIENT' | null }>('/auth/referral-code', { params: { code: refCode } })
+        .then(({ data }) => {
+          if (alive) setRefCheck({ code: refCode, kind: data.kind });
+        })
+        // Network trouble / rate limit: do not block the sign-up, the server checks the code again.
+        .catch(() => {
+          if (alive) setRefCheck({ code: refCode, kind: null, failed: true });
+        });
+    }, 350);
+    return () => {
+      alive = false;
+      window.clearTimeout(timer);
+    };
+  }, [refCode]);
+  const refState: 'empty' | 'checking' | 'valid' | 'invalid' | 'unverified' = !refCode
+    ? 'empty'
+    : refCheck?.code !== refCode
+      ? 'checking'
+      : refCheck.kind
+        ? 'valid'
+        : refCheck.failed
+          ? 'unverified'
+          : 'invalid';
   usePageTitle(t('auth.registerTitle'));
 
   const fillFromPassport = (p: PassportScanFields) => {
@@ -299,6 +333,11 @@ export default function Register() {
   const submit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setSubmitted(true);
+    if (refState === 'invalid' && !Object.values(clientErrors).some(Boolean)) {
+      toast.error(t('registerPage.referral.invalid'));
+      focusField('ref');
+      return;
+    }
     if (Object.values(clientErrors).some(Boolean) || !privacy || !terms) {
       const failing = (Object.keys(clientErrors) as FieldKey[]).filter((k) => clientErrors[k]);
       if (failing.length === 1 && failing[0] === 'password') toast.error(t('auth.errors.PASSWORD_TOO_WEAK'));
@@ -319,7 +358,7 @@ export default function Register() {
         phone: compactPhone(f.phone),
         password: f.password,
         locale,
-        ...(refCode ? { ref: refCode } : {}),
+        ...(refCode ? { ref: refCode, refEntered: true } : {}),
         ...(scanned && Object.keys(scanned).length ? { passportScanned: true } : {}),
         ...(marketing ? { marketingOptIn: true } : {}),
         acceptTerms: true,
@@ -332,6 +371,12 @@ export default function Register() {
       if ((data.user as User & { emailVerified?: boolean }).emailVerified === false) setRegistered({ email: data.user.email, next });
       else navigate(next, { replace: true });
     } catch (err) {
+      if (errorCode(err) === 'REFERRAL_CODE_UNKNOWN') {
+        setRefCheck({ code: refCode, kind: null });
+        focusField('ref');
+        toast.error(t('registerPage.referral.invalid'));
+        return;
+      }
       const fields = serverFieldErrors(err);
       setServerErrors(fields);
       const first = (Object.keys(fields) as FieldKey[])[0];
@@ -363,13 +408,6 @@ export default function Register() {
             <BookUser className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden />
             <span>{t('registerPage.passportNotice')}</span>
           </p>
-          {refCode && (
-            <p className="mt-3">
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-line bg-sunken px-2.5 py-1 text-xs font-medium text-muted">
-                <Ticket className="size-3.5" aria-hidden /> {t('registerPage.scan.agentCode', { code: refCode })}
-              </span>
-            </p>
-          )}
 
           <div className="mt-6">
             <PassportScan onFilled={fillFromPassport} onCleared={() => setScanned(null)} />
@@ -500,6 +538,37 @@ export default function Register() {
                 value={f.password}
                 onChange={set('password')}
                 {...aria('password')}
+              />
+            </Field>
+
+            <Field
+              id={id('ref')}
+              label={t('registerPage.referral.label')}
+              icon={Ticket}
+              hint={
+                refState === 'checking'
+                  ? t('registerPage.referral.checking')
+                  : refState === 'valid'
+                    ? t(refCheck?.kind === 'AGENT' ? 'registerPage.referral.validAgent' : 'registerPage.referral.validClient')
+                    : t('registerPage.referral.hint')
+              }
+              ok={refState === 'valid'}
+              error={refState === 'invalid' ? t('registerPage.referral.invalid') : null}
+            >
+              <input
+                id={id('ref')}
+                name="ref"
+                type="text"
+                maxLength={32}
+                autoComplete="off"
+                autoCapitalize="characters"
+                spellCheck={false}
+                placeholder={t('registerPage.referral.placeholder')}
+                className={clsx('input h-11 pl-10 uppercase placeholder:normal-case', refState === 'invalid' && 'border-danger focus:border-danger focus:ring-danger/15')}
+                value={refInput}
+                onChange={(e) => setRefInput(e.target.value.toUpperCase().replace(/[^A-Za-z0-9-]/g, '').slice(0, 32))}
+                aria-invalid={refState === 'invalid' ? true : undefined}
+                aria-describedby={`${id('ref')}-hint`}
               />
             </Field>
 

@@ -28,7 +28,7 @@ import { PASSPORT_SCAN_TIMEOUT_MS, scanPassportImage } from '../lib/docsIntel/pa
 import { recordConsent } from '../lib/privacy/consents.js';
 import { setMarketingOptIn } from '../lib/campaigns/consent.js';
 import { attachReferral } from '../lib/agents/referral.js';
-import { attachClientReferral, REF_COOKIE } from '../lib/growth/referral.js';
+import { attachClientReferral, REF_COOKIE, normaliseRefCode, resolveReferralCode } from '../lib/growth/referral.js';
 import { markClientsExcelDirty } from '../lib/clientsExcel.js';
 import { syncClientFolders } from '../lib/drive/caseFolders.js';
 import { scanUserDuplicates } from '../lib/duplicates/detect.js';
@@ -197,6 +197,9 @@ authRouter.post('/register', authLimiter, async (req, res) => {
       locale: locale.default('az'),
       // Agent referral code from the sign-up link (?ref=CODE); unknown or paused codes are ignored.
       ref: z.string().trim().max(64).optional().nullable(),
+      // True when the client typed the code into the visible "Referral code" field: an unknown code is then
+      // refused (REFERRAL_CODE_UNKNOWN) instead of silently ignored, so the person can fix a typo.
+      refEntered: z.boolean().optional(),
       // The form was filled from a passport photo (POST /passport-scan): logged as a PASSPORT_OCR consent.
       passportScanned: z.boolean().optional(),
       // Optional, unchecked by default: news and offers by e-mail (marketing consent, logged).
@@ -208,6 +211,7 @@ authRouter.post('/register', authLimiter, async (req, res) => {
     req.body,
   );
   if (body.acceptTerms === false) throw badRequest('TERMS_REQUIRED');
+  if (body.refEntered && body.ref && !(await resolveReferralCode(body.ref))) throw badRequest('REFERRAL_CODE_UNKNOWN');
   const exists = await prisma.user.findUnique({ where: { email: body.email } });
   if (exists) throw conflict('EMAIL_TAKEN');
 
@@ -244,6 +248,16 @@ authRouter.post('/register', authLimiter, async (req, res) => {
   markClientsExcelDirty();
   void scanUserDuplicates(user.id); // possible duplicate accounts (Admin → Dublikatlar)
   res.status(201).json(await startSession(req, res, user));
+});
+
+// ─── Referral code check (public, sign-up form) ──────────────────────
+
+/** Live check of the optional "Referral code" field. Rate-limited; says only whether and which kind of code it is. */
+const referralCheckLimiter = limiter({ windowMs: 10 * 60 * 1000, limit: 60 });
+authRouter.get('/referral-code', referralCheckLimiter, async (req, res) => {
+  const code = normaliseRefCode(typeof req.query.code === 'string' ? req.query.code.slice(0, 64) : '');
+  const kind = code ? await resolveReferralCode(code) : null;
+  res.json({ code, valid: !!kind, kind });
 });
 
 // ─── Passport photo → sign-up fields (public) ─────────────────────────

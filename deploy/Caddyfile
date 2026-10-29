@@ -16,6 +16,24 @@ www.{$SITE_DOMAIN} {
 	redir https://{$SITE_DOMAIN}{uri} permanent
 }
 
+# Mail client autoconfiguration (e-mail + password is enough in Thunderbird, Outlook and most mobile apps).
+# DNS: CNAME autoconfig and autodiscover → the apex. The API answers with the settings of our own mail
+# server (routes/mailAutoconfig.ts); Stalwart's management listener (8080) stays private.
+autoconfig.{$SITE_DOMAIN}, autodiscover.{$SITE_DOMAIN} {
+	@mailconfig path /mail/config-v1.1.xml /.well-known/autoconfig/mail/config-v1.1.xml /autodiscover/autodiscover.xml
+	handle @mailconfig {
+		rewrite * /api/mail-autoconfig{path}
+		reverse_proxy api:4000 {
+			header_up X-Forwarded-For {client_ip}
+			header_up X-Forwarded-Proto {scheme}
+			header_up -Cookie
+		}
+	}
+	handle {
+		respond 404
+	}
+}
+
 {$SITE_DOMAIN} {
 	encode zstd gzip
 
@@ -73,6 +91,18 @@ www.{$SITE_DOMAIN} {
 			transport http {
 				response_header_timeout 0
 			}
+		}
+	}
+
+	# Mail client autoconfiguration on the apex: Thunderbird's well-known fallback and Outlook, which tries
+	# https://<domain>/autodiscover/autodiscover.xml before the autodiscover subdomain (paths match case-insensitively).
+	@mailconfig path /.well-known/autoconfig/mail/config-v1.1.xml /autodiscover/autodiscover.xml
+	handle @mailconfig {
+		rewrite * /api/mail-autoconfig{path}
+		reverse_proxy api:4000 {
+			header_up X-Forwarded-For {client_ip}
+			header_up X-Forwarded-Proto {scheme}
+			header_up -Cookie
 		}
 	}
 

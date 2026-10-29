@@ -46,6 +46,7 @@ import { adminCaseNextRouter } from './caseNext.js';
 import { adminAiEmployerRouter } from './aiEmployer.js';
 import { adminMgmtRouter } from './aiMgmt.js';
 import { adminMyWorkRouter } from './myWork.js';
+import { adminCaseProcessingRouter } from './caseProcessing.js'; // team document workflow: Schon geschrieben → Fertig, Ablehnung
 import { adminHistoryRouter } from './history.js';
 import { adminAssignmentRouter, adminAutomationRouter } from './automation.js'; // no-code automation rules + automatic assignment
 import { adminReportsRouter } from './reports.js';
@@ -172,6 +173,7 @@ adminRouter.use('/renewals', adminRenewalsRouter); // residence-title renewal ca
 adminRouter.use('/recognition', adminRecognitionRouter); // Anerkennung: processes, checklist, letters, deficits, fee, deadlines
 adminRouter.use('/accelerated', adminAcceleratedRouter); // § 81a beschleunigtes Fachkräfteverfahren: stepper, correspondence, deadlines
 adminRouter.use(adminFourEyesRouter); // /cases/:id/four-eyes*, /four-eyes/* (embassy package review)
+adminRouter.use(adminCaseProcessingRouter); // /cases/:id/processing, /case-processing/board (Schon geschrieben → Fertig, Ablehnung)
 adminRouter.use('/access-log', adminAccessLogRouter); // "who viewed my documents" per client
 adminRouter.use('/placement', adminPlacementRouter); // recognition, employer share links, interview evaluations, Arbeitsvertrag tracker
 adminRouter.use('/growth', adminGrowthRouter); // events (Tədbirlər), calculator assumptions, placement map, client referrals

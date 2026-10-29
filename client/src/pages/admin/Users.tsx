@@ -6,7 +6,10 @@ import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
 import { toast } from 'sonner';
 import { FileSpreadsheet, FolderOpen, KeyRound, LogOut, Mail, Trash2, MessageSquare, MonitorSmartphone, Phone, Search, UserPlus, Users as UsersIcon, Wifi } from 'lucide-react';
-import { api } from '@/lib/api';
+import { api, errorCode } from '@/lib/api';
+import { registerCopy } from '@/i18n';
+import { pagesMailAdmin } from '@/i18n/pagesMailAdmin';
+import { ClientSettingsTable, SecretOnce, toastMailboxError, type ServerSettings } from '@/components/mailboxes/shared';
 import { useAuth } from '@/lib/auth';
 import { hasMinRole, isStrongPassword, PASSWORD_MAX, PASSWORD_MIN, type Role } from '@/lib/types';
 import { Spinner } from '@/components/ui/Spinner';
@@ -19,6 +22,8 @@ import { Chip, EmptyState, ErrorBlock, LoadingBlock, OnlineDot, PageHead, Switch
 import { DuplicateChip, useOpenDuplicateIds } from '@/components/duplicates/DuplicateBadge';
 import { ViewAsClientButton } from '@/components/privacyTools/ViewAsClientButton';
 import { useNewParam } from '@/components/command/useNewParam'; // ?new=1 deep link (Ctrl+K palette)
+registerCopy(pagesMailAdmin); // "Create mailbox" option of the new-staff dialog
+
 // Field-level change history of the user (ADMIN+, own chunk).
 const HistoryButton = lazy(() => import('@/components/history/HistoryButton'));
 
@@ -47,44 +52,100 @@ const useUserPatch = () => {
   });
 };
 
+/** New-staff answer: the optional mailbox (password shown once) or why it could not be created. */
+type CreatedMailbox = { address: string; password: string; workspaceConnected: boolean; settings: ServerSettings } | { address: string; error: string };
+const LOCAL_PART_RE = /^[a-z0-9](?:[a-z0-9._-]*[a-z0-9])?$/;
+
 const CreateUserModal = ({ open, onClose }: { open: boolean; onClose: () => void }) => {
   const { t } = useTranslation();
   const passwordHint = usePasswordHint();
   const qc = useQueryClient();
   const empty = { email: '', password: '', firstName: '', lastName: '', phone: '', role: 'STAFF' as 'STAFF' | 'ADMIN' };
   const [f, setF] = useState(empty);
+  // Optional "Create mailbox ad.soyad@domain": the local part follows the name until it is edited by hand.
+  const [mb, setMb] = useState({ on: false, localPart: '', edited: false });
+  const [created, setCreated] = useState<CreatedMailbox | null>(null);
+  const suggestion = useQuery({
+    queryKey: ['admin-mailbox-suggestion', f.firstName.trim(), f.lastName.trim()],
+    queryFn: async () =>
+      (await api.get<{ localPart: string; domain: string; configured: boolean }>('/admin/users/mailbox-suggestion', { params: { firstName: f.firstName.trim(), lastName: f.lastName.trim() } })).data,
+    enabled: open && mb.on,
+    staleTime: 60_000,
+    placeholderData: keepPreviousData,
+  });
+  const localPart = (mb.edited ? mb.localPart : (suggestion.data?.localPart ?? '')).trim().toLowerCase();
+  const domain = suggestion.data?.domain ?? '';
+  const mailboxReady = !mb.on || (!!suggestion.data?.configured && LOCAL_PART_RE.test(localPart) && !localPart.includes('..'));
+  const close = () => {
+    setF(empty);
+    setMb({ on: false, localPart: '', edited: false });
+    setCreated(null);
+    onClose();
+  };
   const m = useMutation({
-    mutationFn: () =>
-      api.post('/admin/users', {
-        email: f.email.trim(),
-        password: f.password,
-        firstName: f.firstName.trim(),
-        lastName: f.lastName.trim(),
-        phone: f.phone.trim() || undefined,
-        role: f.role,
-      }),
-    onSuccess: () => {
+    mutationFn: async () =>
+      (
+        await api.post<{ mailbox: CreatedMailbox | null }>('/admin/users', {
+          email: f.email.trim(),
+          password: f.password,
+          firstName: f.firstName.trim(),
+          lastName: f.lastName.trim(),
+          phone: f.phone.trim() || undefined,
+          role: f.role,
+          ...(mb.on ? { createMailbox: true, mailboxLocalPart: localPart } : {}),
+        })
+      ).data,
+    onSuccess: (data) => {
       void qc.invalidateQueries({ queryKey: ['admin-users'] });
       void qc.invalidateQueries({ queryKey: ['admin-staff'] });
       void qc.invalidateQueries({ queryKey: ['docs-folders'] });
+      void qc.invalidateQueries({ queryKey: ['admin-mailboxes'] });
       toast.success(t('admin.users.created'));
-      setF(empty);
-      onClose();
+      // With a mailbox the dialog stays open: its password is shown exactly once.
+      if (data.mailbox) setCreated(data.mailbox);
+      else close();
     },
-    onError: (err) => toastError(err),
+    onError: (err) => (errorCode(err).startsWith('MAIL') ? toastMailboxError(err) : toastError(err)),
   });
   const passwordOk = isStrongPassword(f.password);
-  const valid = /\S+@\S+\.\S+/.test(f.email) && passwordOk && f.firstName.trim() && f.lastName.trim();
+  const valid = /\S+@\S+\.\S+/.test(f.email) && passwordOk && f.firstName.trim() && f.lastName.trim() && mailboxReady;
+
+  if (created) {
+    return (
+      <Modal
+        open={open}
+        onClose={close}
+        title={t('mailAdmin.staffCreate.doneTitle')}
+        footer={
+          <button type="button" className="btn-primary btn-sm" onClick={close}>
+            {t('mailAdmin.actions.done')}
+          </button>
+        }
+      >
+        {'error' in created ? (
+          <p className="rounded-lg border border-danger-border bg-danger-bg p-3 text-sm text-danger-fg" role="alert">
+            {t('mailAdmin.staffCreate.mailboxFailed', { address: created.address, reason: t(`mailAdmin.errors.${created.error}`, { defaultValue: t('mailAdmin.errors.fallback') }) })}
+          </p>
+        ) : (
+          <div className="space-y-4 text-sm">
+            <p className="text-ink/80">{t(created.workspaceConnected ? 'mailAdmin.staffCreate.mailboxCreated' : 'mailAdmin.staffCreate.mailboxCreatedNoWs', { address: created.address })}</p>
+            <SecretOnce value={created.password} note={t('mailAdmin.created.passwordOnce')} />
+            <ClientSettingsTable settings={created.settings} address={created.address} />
+          </div>
+        )}
+      </Modal>
+    );
+  }
 
   return (
     <Modal
       open={open}
-      onClose={onClose}
+      onClose={close}
       title={t('admin.users.newStaff')}
       description={t('admin.users.newStaffDesc')}
       footer={
         <>
-          <button type="button" className="btn-secondary btn-sm" onClick={onClose}>
+          <button type="button" className="btn-secondary btn-sm" onClick={close}>
             {t('admin.common.cancel')}
           </button>
           <button type="submit" form="create-user" className="btn-primary btn-sm" disabled={!valid || m.isPending}>
@@ -150,6 +211,42 @@ const CreateUserModal = ({ open, onClose }: { open: boolean; onClose: () => void
             onChange={(e) => setF({ ...f, password: e.target.value })}
           />
           <p className={clsx('mt-1 text-[11px]', f.password && !passwordOk ? 'text-danger-fg' : 'text-muted')}>{passwordHint}</p>
+        </div>
+        <div className="rounded-lg border border-line p-3 sm:col-span-2">
+          <label className="flex items-start gap-2.5 text-sm text-ink">
+            <input type="checkbox" className="mt-0.5 size-4 shrink-0 accent-primary" checked={mb.on} onChange={(e) => setMb((v) => ({ ...v, on: e.target.checked }))} />
+            <span className="min-w-0 break-all">
+              {localPart && domain ? t('mailAdmin.staffCreate.checkbox', { address: `${localPart}@${domain}` }) : t('mailAdmin.staffCreate.checkboxPlain', { domain: domain || '…' })}
+            </span>
+          </label>
+          {mb.on && (
+            <div className="mt-3 pl-6.5">
+              {suggestion.data && !suggestion.data.configured ? (
+                <p className="text-xs text-danger-fg" role="alert">
+                  {t('mailAdmin.staffCreate.notConfigured')}
+                </p>
+              ) : (
+                <>
+                  <label className="label" htmlFor="cu-mailbox">
+                    {t('mailAdmin.staffCreate.localPart')}
+                  </label>
+                  <div className="flex items-stretch">
+                    <input
+                      id="cu-mailbox"
+                      className={clsx('input rounded-r-none', localPart && !mailboxReady && 'border-danger')}
+                      autoComplete="off"
+                      spellCheck={false}
+                      maxLength={64}
+                      value={localPart}
+                      onChange={(e) => setMb((v) => ({ ...v, localPart: e.target.value, edited: true }))}
+                    />
+                    <span className="grid shrink-0 place-items-center rounded-r-lg border border-l-0 border-line bg-sunken px-3 text-sm text-muted">@{domain}</span>
+                  </div>
+                  <p className="mt-1 text-[11px] text-muted">{t('mailAdmin.staffCreate.hint')}</p>
+                </>
+              )}
+            </div>
+          )}
         </div>
       </form>
     </Modal>

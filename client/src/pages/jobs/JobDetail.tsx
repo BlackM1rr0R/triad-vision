@@ -19,14 +19,17 @@ import {
   ListChecks,
   MailWarning,
   MapPin,
+  Paperclip,
   Send,
   Stamp,
   Users,
+  X,
 } from 'lucide-react';
 import { api, errorCode } from '@/lib/api';
 import { currentHref, useAuth } from '@/lib/auth';
 import { useL10n } from '@/lib/l10n';
 import { usePageTitle } from '@/lib/usePageTitle';
+import { optimizeImage } from '@/lib/imageCompress';
 import { isStaffRole } from '@/lib/types';
 import { registerCopy } from '@/i18n';
 import { pagesJobs } from '@/i18n/pagesJobs';
@@ -45,6 +48,10 @@ import { JobAlertForm } from '@/components/jobs/JobAlertForm';
 registerCopy(pagesJobs);
 
 const HERO = 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=2000&q=70';
+
+/** Documents a candidate may attach when applying (server: lib/applicationUploads.ts). */
+const APPLY_DOC_KINDS = ['PASSPORT', 'CV', 'DIPLOMA', 'LANGUAGE_CERT', 'OTHER'] as const;
+type ApplyDocKind = (typeof APPLY_DOC_KINDS)[number];
 
 interface MeResponse {
   match: Match;
@@ -72,6 +79,8 @@ const ApplyBox = ({ v }: { v: PublicVacancy }) => {
   const L = useJobLabels();
   const [message, setMessage] = useState('');
   const [open, setOpen] = useState(false);
+  // Optional documents (Reisepass, CV, diploma …): one file per kind, attached to the case once it exists.
+  const [docs, setDocs] = useState<Partial<Record<ApplyDocKind, File>>>({});
   const isClient = user?.role === 'CLIENT';
   const me = useQuery({
     queryKey: ['job-me', v.slug],
@@ -79,9 +88,21 @@ const ApplyBox = ({ v }: { v: PublicVacancy }) => {
     enabled: isClient,
   });
   const apply = useMutation({
-    mutationFn: async () => api.post(`/vacancies/${v.slug}/apply`, { message: message.trim() || undefined }),
-    onSuccess: () => {
-      toast.success(t('jobsArea.detail.success'));
+    mutationFn: async () => {
+      const picked = APPLY_DOC_KINDS.filter((k) => docs[k]);
+      if (!picked.length) return api.post(`/vacancies/${v.slug}/apply`, { message: message.trim() || undefined });
+      const form = new FormData();
+      if (message.trim()) form.append('message', message.trim());
+      for (const k of picked) {
+        form.append('files', await optimizeImage(docs[k]!));
+        form.append('kinds', k);
+      }
+      return api.post(`/vacancies/${v.slug}/apply`, form, { headers: { 'Content-Type': 'multipart/form-data' } });
+    },
+    onSuccess: (res) => {
+      const sent = ((res.data as { documents?: unknown[] } | undefined)?.documents ?? []).length;
+      toast.success(sent ? `${t('jobsArea.detail.success')} ${t('jobsArea.detail.docsSent', { count: sent })}` : t('jobsArea.detail.success'));
+      setDocs({});
       setOpen(false);
       void qc.invalidateQueries({ queryKey: ['job-me', v.slug] });
       void qc.invalidateQueries({ queryKey: ['my-applications'] });
@@ -177,6 +198,47 @@ const ApplyBox = ({ v }: { v: PublicVacancy }) => {
               placeholder={t('jobsArea.detail.messagePlaceholder')}
             />
           </div>
+          <fieldset className="space-y-2">
+            <legend className="label">{t('jobsArea.detail.docsTitle')}</legend>
+            <p className="text-xs text-muted">{t('jobsArea.detail.docsHint')}</p>
+            <ul className="space-y-1.5">
+              {APPLY_DOC_KINDS.map((k) => {
+                const f = docs[k];
+                const id = `apply-doc-${k}`;
+                return (
+                  <li key={k} className="flex min-h-11 flex-wrap items-center gap-2 rounded-lg border border-line px-3 py-1.5">
+                    <Paperclip className="size-4 shrink-0 text-muted" aria-hidden />
+                    <span className="text-sm font-medium text-ink">{t(`jobsArea.detail.doc${k}`)}</span>
+                    {f ? (
+                      <>
+                        <span className="min-w-0 flex-1 truncate text-xs text-muted" title={f.name}>
+                          {f.name}
+                        </span>
+                        <button type="button" className="inline-flex min-h-11 items-center gap-1 text-xs font-semibold text-danger-fg hover:underline" onClick={() => setDocs((d) => ({ ...d, [k]: undefined }))}>
+                          <X className="size-3.5" aria-hidden /> {t('jobsArea.detail.docRemove')}
+                        </button>
+                      </>
+                    ) : (
+                      <label htmlFor={id} className="ml-auto inline-flex min-h-11 cursor-pointer items-center text-xs font-semibold text-link hover:underline">
+                        {t('jobsArea.detail.docChoose')}
+                        <input
+                          id={id}
+                          type="file"
+                          className="sr-only"
+                          accept="application/pdf,image/jpeg,image/png,image/webp,.doc,.docx"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            e.target.value = '';
+                            if (file) setDocs((d) => ({ ...d, [k]: file }));
+                          }}
+                        />
+                      </label>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          </fieldset>
           <div className="flex gap-2">
             <button type="submit" className={buttonClass({ className: 'flex-1' })} disabled={apply.isPending}>
               {apply.isPending ? <Spinner className="size-4" /> : <Send className="size-4" />} {t('jobsArea.detail.send')}

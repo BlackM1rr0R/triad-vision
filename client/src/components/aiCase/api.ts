@@ -190,3 +190,18 @@ export const SEVERITY_STYLE: Record<Severity, string> = {
   WARNING: 'border-warning-border bg-warning-bg text-warning-fg dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-300',
   INFO: 'border-info-border bg-info-bg text-info-fg dark:border-sky-900/60 dark:bg-sky-950/40 dark:text-sky-300',
 };
+
+/** Response of POST /admin/cases/:id/ai/tasks: document findings are grouped into one open task per client. */
+export interface FindingTaskResponse {
+  task: { key: string };
+  created?: boolean;
+  added?: number;
+}
+
+/** Toast text for a task action: created, appended to the client's open task, or already on it. */
+export const findingTaskMessage = (t: TFunction, r: FindingTaskResponse) =>
+  r.created === false
+    ? r.added
+      ? t('aiCase.actions.taskAdded', { key: r.task.key, count: r.added })
+      : t('aiCase.actions.taskAlready', { key: r.task.key })
+    : t('aiCase.actions.taskCreated', { key: r.task.key });

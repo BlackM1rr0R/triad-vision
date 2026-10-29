@@ -20,6 +20,7 @@ import { scheduleAiDocCheck } from '../lib/aiDocs/docCheck.js';
 import { prepareCaseDocument, publicQuality, scheduleUploadAnalysis } from '../lib/uploadAi/index.js';
 import { photoCheckOnUpload } from '../lib/photoCheck/index.js'; // biometric photo rules (PHOTO / PHOTO_2)
 import { emitAutomationEvent } from '../lib/automation/events.js';
+import { copyDocumentToDrive } from '../lib/drive/caseFolders.js';
 
 /**
  * Personal document vault: clients keep their documents (passport, diplomas, photos…) once and reuse
@@ -300,6 +301,7 @@ vaultRouter.post('/:id/use', async (req, res) => {
       data: { caseId: c.id, type: 'DOCUMENT_UPLOADED', note: doc.originalName, actorId: req.user!.id, visibleToClient: false },
     });
     void emitAutomationEvent({ type: 'DOCUMENT_UPLOADED', entityType: 'document', entityId: doc.id, caseId: c.id }); // automation hook
+    void copyDocumentToDrive(doc.id, { pending: true }); // into the client folder right away (type folder; never throws)
     const checks = await checkCaseDocument(doc.id);
     await audit(req, 'vault.use', v.id, { caseId: c.id, documentId: doc.id });
     const quality = publicQuality(await prepareCaseDocument(doc.id)); // smart uploads: scan quality, never throws

@@ -153,4 +153,6 @@ export interface Proposals {
   requirement?: { id: string; title: unknown; stage: DocStage };
   /** The requirement the file is attached to now and the type it expects (client warning). */
   expected?: { requirementId: string; docType: DocType | null };
+  /** NAME_MISMATCH: the name read from the document and the case person's name (client or family member). */
+  holder?: { found: string; expected: string };
 }

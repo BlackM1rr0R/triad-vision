@@ -95,6 +95,8 @@ export const createCase = async (
       await awardCaseCommission(created.id, 'CASE_CREATED'); // agent programme (never throws)
       void emitWebhook('case.created', { caseId: created.id, number: created.number, status: created.status, visaCategoryId: created.visaCategoryId }, created.companyId);
       void syncCaseFolder(created.id); // the client's folder in the shared drive
+      // Documents uploaded with a vacancy application before this case existed join it (requirement + type folder).
+      if (!input.parentCaseId) void import('./applicationUploads.js').then((m) => m.attachApplicationUploadsOnCaseCreated(created.id)).catch(() => undefined);
       void emitAutomationEvent({ type: 'CASE_CREATED', entityType: 'case', entityId: created.id, caseId: created.id, payload: { to: created.status } }); // automation hook
       return created;
     } catch (err) {

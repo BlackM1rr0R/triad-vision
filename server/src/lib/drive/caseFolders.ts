@@ -9,6 +9,7 @@ import { purgeNodes, restoreSubtree } from './trash.js';
 import { hashStored } from './org/hash.js';
 import { autoNameFor, caseNaming, requirementTitle } from './org/naming.js';
 import { applyTemplateToCaseFolder } from './org/templates.js';
+import { ensureTypeFolder, typeOfRequirement } from './typeFolders.js';
 
 /**
  * Real client folders in the shared workspace. Every case gets one folder ("Vorname Nachname · Pass-Nr.
@@ -18,9 +19,11 @@ import { applyTemplateToCaseFolder } from './org/templates.js';
  *   Partner/<Partner name>/<client folder>                              cases a referral partner brought
  *   <main applicant's folder>/Familie/<Vorname Nachname>                family-member cases
  *
- * Inside it, stage folders (Erstdokumente, Botschaftsunterlagen, …) appear when a file goes there. Accepted
- * case documents are COPIED into them as ordinary drive files (DriveNode.documentId links back): staff move,
- * rename, replace or delete them like any file; the case document itself never changes.
+ * Inside it, one folder per document type (Reisepass, Lebenslauf, Diplom … — lib/drive/typeFolders.ts) and the
+ * stage folders (Erstdokumente, Botschaftsunterlagen, …) for documents without a type appear when a file goes
+ * there. Accepted case documents — and client / application uploads right away, while still PENDING — are
+ * COPIED into them as ordinary drive files (DriveNode.documentId links back): staff move, rename, replace or
+ * delete them like any file; the case document itself never changes.
  *
  * All writes go through one queue, so a case created and a document accepted at the same moment never
  * produce two folders.
@@ -321,19 +324,28 @@ export async function syncClientFolders(clientId: string): Promise<void> {
 
 export type CopyResult = 'copied' | 'exists' | 'missing' | 'skipped';
 
-const copyInner = async (documentId: string): Promise<CopyResult> => {
+const copyInner = async (documentId: string, opts: CopyOptions = {}): Promise<CopyResult> => {
   const doc = await prisma.document.findUnique({
     where: { id: documentId },
-    select: { id: true, caseId: true, stage: true, originalName: true, storedName: true, mimeType: true, size: true, status: true, uploadedById: true, createdAt: true, requirement: { select: { title: true } } },
+    select: { id: true, caseId: true, stage: true, originalName: true, storedName: true, mimeType: true, size: true, status: true, uploadedById: true, createdAt: true, requirement: { select: { title: true, key: true } } },
   });
-  if (!doc || doc.status !== 'ACCEPTED') return 'skipped';
-  if (await prisma.driveNode.findUnique({ where: { documentId: doc.id }, select: { id: true } })) return 'exists';
+  if (!doc || !(doc.status === 'ACCEPTED' || (opts.pending && doc.status === 'PENDING'))) return 'skipped';
+  const existing = await prisma.driveNode.findUnique({ where: { documentId: doc.id }, select: { id: true, deletedAt: true, deletedById: true, parent: { select: { deletedAt: true } } } });
+  if (existing) {
+    // A copy the system put in the bin when the upload was rejected comes back when it is accepted after all.
+    if (existing.deletedAt && !existing.deletedById && doc.status === 'ACCEPTED' && existing.parent && !existing.parent.deletedAt) {
+      await prisma.driveNode.update({ where: { id: existing.id }, data: { deletedAt: null } });
+    }
+    return 'exists';
+  }
   const src = docFilePath(doc.storedName);
   const stat = await fs.stat(src).catch(() => null);
   if (!stat?.isFile()) return 'missing';
   const folderId = await ensureFolderInner(doc.caseId);
   if (!folderId) return 'skipped';
-  const stageId = await ensureChild(folderId, STAGE_FOLDER[doc.stage]);
+  // The folder of the document's type ("Reisepass", "Lebenslauf" …); else its stage folder (Erstdokumente …).
+  const type = typeOfRequirement(doc.requirement?.key);
+  const stageId = (type ? await ensureTypeFolder(folderId, type) : null) ?? (await ensureChild(folderId, STAGE_FOLDER[doc.stage]));
   // Automatic name "<Nachname>_<Vorname>_<requirement title>_<date>.pdf" when it is switched on.
   const naming = await caseNaming(doc.caseId);
   const auto = naming ? await autoNameFor(naming, { typ: requirementTitle(doc.requirement?.title), date: doc.createdAt, originalName: doc.originalName }) : null;
@@ -366,15 +378,35 @@ const copyInner = async (documentId: string): Promise<CopyResult> => {
   return 'copied';
 };
 
+export interface CopyOptions {
+  /** Also copy a PENDING document (client / application uploads land in the client folder right away). */
+  pending?: boolean;
+}
+
 /**
- * Copies an ACCEPTED case document into the client folder's stage folder (idempotent: one copy per
- * document, ever — a copy staff deleted stays deleted until the bin is emptied). Never throws.
+ * Copies an ACCEPTED case document (with `pending`, also a just-uploaded PENDING one) into the client folder:
+ * the folder of its document type ("Reisepass" …) or else its stage folder. Idempotent: one copy per document,
+ * ever — a copy staff deleted stays deleted until the bin is emptied. Never throws.
  */
-export const copyDocumentToDrive = (documentId: string): Promise<CopyResult> =>
-  serial(() => copyInner(documentId)).catch((err) => {
+export const copyDocumentToDrive = (documentId: string, opts: CopyOptions = {}): Promise<CopyResult> =>
+  serial(() => copyInner(documentId, opts)).catch((err) => {
     console.error(`[drive] case document ${documentId} could not be copied into the drive`, err);
     return 'skipped' as const;
   });
+
+/**
+ * A case document was rejected: its drive copy goes to the bin (system deletion, restored when the document is
+ * accepted later) unless staff already worked on it (marked final). Never throws.
+ */
+export const trashRejectedCopy = async (documentId: string) => {
+  try {
+    const r = await prisma.driveNode.updateMany({ where: { documentId, deletedAt: null, finalAt: null }, data: { deletedAt: new Date(), deletedById: null } });
+    return r.count;
+  } catch (err) {
+    console.error(`[drive] copy of rejected document ${documentId} could not be moved to the bin`, err);
+    return 0;
+  }
+};
 
 /** Removes the drive copy of a case document for good (the document itself was deleted). */
 export const removeDocumentCopy = async (documentId: string) => {

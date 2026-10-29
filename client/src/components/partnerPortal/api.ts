@@ -39,9 +39,22 @@ export interface Totals {
 
 export interface PartnerDashboard {
   currency: string;
-  counts: { clients: number; cases: number; activeCases: number; approvedVisas: number };
+  counts: { clients: number; cases: number; activeCases: number; approvedVisas: number; rejected?: number };
   commissions: Totals & { thisMonthCents: number };
+  /** Counts per visa kind (category, else type). */
+  byVisa?: VisaFacet[];
   recent: { id: string; type: string; toStatus: CaseStatus | null; createdAt: string; caseId: string; caseNumber: string; client: string }[];
+}
+
+/** One visa kind of the partner's cases: `cat:<visaCategoryId>` or `type:<VisaType>` with counts. */
+export interface VisaFacet {
+  key: string;
+  visaType: string;
+  visaCategory: { title: L10n; visaLabel: string } | null;
+  count: number;
+  active: number;
+  approved: number;
+  refused: number;
 }
 
 export interface PartnerCaseRow {
@@ -50,6 +63,9 @@ export interface PartnerCaseRow {
   client: { firstName: string; lastName: string; passport: string | null };
   visaType: string;
   visaCategory: { title: L10n; visaLabel: string } | null;
+  visaKey?: string;
+  /** Visa refused (REJECTED or marked "Ablehnung" by the team). */
+  refused?: boolean;
   status: CaseStatus;
   step: PortalStep;
   nextAction: NextAction;

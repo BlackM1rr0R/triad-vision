@@ -7,7 +7,7 @@ import { AlertCircle, CalendarClock, ChevronRight, Gavel, Search, Users } from '
 import { api } from '@/lib/api';
 import { useL10n } from '@/lib/l10n';
 import { day } from '@/components/agents/format';
-import type { PartnerCaseRow } from '@/components/partnerPortal/api';
+import type { PartnerCaseRow, VisaFacet } from '@/components/partnerPortal/api';
 import { ErrorRetry, Loading, Section, StatusPill, StepBar } from '@/components/partnerPortal/ui';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Handshake, SearchEmpty } from '@/components/illustrations';
@@ -20,15 +20,21 @@ export default function PartnerClientsPage() {
   const [input, setInput] = useState('');
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<Filter>('all');
+  const [visa, setVisa] = useState('');
   useEffect(() => {
     const id = window.setTimeout(() => setSearch(input.trim()), 300);
     return () => window.clearTimeout(id);
   }, [input]);
   const q = useQuery({
-    queryKey: ['partner-portal', 'cases', { search, filter }],
-    queryFn: async () => (await api.get<{ items: PartnerCaseRow[] }>('/partner/cases', { params: { search: search || undefined, filter } })).data.items,
+    queryKey: ['partner-portal', 'cases', { search, filter, visa }],
+    queryFn: async () => (await api.get<{ items: PartnerCaseRow[]; visaFacets?: VisaFacet[] }>('/partner/cases', { params: { search: search || undefined, filter, visa: visa || undefined } })).data,
     placeholderData: keepPreviousData,
   });
+  const facets = q.data?.visaFacets ?? [];
+  const facetLabel = (f: VisaFacet) => (f.visaCategory ? tr(f.visaCategory.title) : t(`partnerPortal.types.${f.visaType}`, { defaultValue: f.visaType }));
+  const chip = (on: boolean) =>
+    clsx('min-h-11 rounded-full border px-3.5 text-sm font-semibold transition-colors sm:min-h-10', on ? 'border-primary bg-primary text-primary-contrast' : 'border-line bg-card text-muted hover:border-line-strong hover:text-ink');
+  const items = q.data?.items;
 
   return (
     <Section title={t('partnerPortal.clients.title')} icon={Users}>
@@ -52,20 +58,32 @@ export default function PartnerClientsPage() {
           ))}
         </div>
       </div>
+      {facets.length > 1 && (
+        <div className="-mt-2 mb-5 flex flex-wrap items-center gap-1.5" role="group" aria-label={t('partnerPortal.clients.visaFilter')}>
+          <button type="button" onClick={() => setVisa('')} aria-pressed={!visa} className={chip(!visa)}>
+            {t('partnerPortal.clients.visaAll')}
+          </button>
+          {facets.map((f) => (
+            <button key={f.key} type="button" onClick={() => setVisa(visa === f.key ? '' : f.key)} aria-pressed={visa === f.key} className={chip(visa === f.key)}>
+              {facetLabel(f)} <span className="tabular-nums opacity-75">{f.count}</span>
+            </button>
+          ))}
+        </div>
+      )}
 
       {q.isLoading ? (
         <Loading />
-      ) : q.isError || !q.data ? (
+      ) : q.isError || !items ? (
         <ErrorRetry onRetry={() => q.refetch()} />
-      ) : q.data.length === 0 ? (
+      ) : items.length === 0 ? (
         <EmptyState
-          illustration={search || filter !== 'all' ? <SearchEmpty className="w-32" /> : <Handshake className="w-36" />}
-          title={search || filter !== 'all' ? t('partnerPortal.clients.notFound') : t('partnerPortal.clients.empty')}
-          text={!search && filter === 'all' ? t('partnerPortal.clients.emptyHint') : undefined}
+          illustration={search || filter !== 'all' || visa ? <SearchEmpty className="w-32" /> : <Handshake className="w-36" />}
+          title={search || filter !== 'all' || visa ? t('partnerPortal.clients.notFound') : t('partnerPortal.clients.empty')}
+          text={!search && filter === 'all' && !visa ? t('partnerPortal.clients.emptyHint') : undefined}
         />
       ) : (
         <ul className="space-y-3">
-          {q.data.map((c) => (
+          {items.map((c) => (
             <li key={c.id}>
               <Link to={`/partner/clients/${c.id}`} className="group card-interactive block rounded-2xl border border-line bg-card p-4">
                 <div className="flex flex-wrap items-start justify-between gap-2">
@@ -80,9 +98,9 @@ export default function PartnerClientsPage() {
                           {t('partnerPortal.clients.passport')}: <span className="font-mono">{c.client.passport}</span>
                         </span>
                       )}
-                      <span>
-                        {t(`partnerPortal.types.${c.visaType}`, { defaultValue: c.visaType })}
-                        {c.visaCategory && ` · ${tr(c.visaCategory.title)} (${c.visaCategory.visaLabel})`}
+                      {/* The real visa kind first: the category ("LKW-Fahrer") when there is one, else the visa type. */}
+                      <span className="font-medium text-ink/80">
+                        {c.visaCategory ? `${tr(c.visaCategory.title)} (${c.visaCategory.visaLabel})` : t(`partnerPortal.types.${c.visaType}`, { defaultValue: c.visaType })}
                       </span>
                     </p>
                   </div>

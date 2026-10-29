@@ -8,7 +8,7 @@ import { api } from '@/lib/api';
 import { Spinner } from '@/components/ui/Spinner';
 import { toastError } from '@/components/admin/labels';
 import { caseKey } from '@/components/admin/case/shared';
-import { copyText, l10n, overviewKey, type ChecklistEntry, type FindingState, type Overview, type Run, type Section, type VidexField, type VidexResult } from './api';
+import { copyText, findingTaskMessage, l10n, overviewKey, type ChecklistEntry, type FindingTaskResponse, type FindingState, type Overview, type Run, type Section, type VidexField, type VidexResult } from './api';
 
 const SECTIONS: Section[] = ['person', 'passport', 'contact', 'occupation', 'stay', 'employer', 'history'];
 const CONF_STYLE = {
@@ -75,8 +75,8 @@ export const VidexView = ({ caseId, run, states }: { caseId: string; run: Run<Vi
 
   const taskItem = (c: ChecklistEntry) =>
     act(`task:${c.key}`, async () => {
-      const res = await api.post<{ task: { key: string } }>(`/admin/cases/${caseId}/ai/tasks`, { runId: run.id, target: 'checklist', key: c.key });
-      toast.success(t('aiCase.actions.taskCreated', { key: res.data.task.key }));
+      const res = await api.post<FindingTaskResponse>(`/admin/cases/${caseId}/ai/tasks`, { runId: run.id, target: 'checklist', key: c.key });
+      toast.success(findingTaskMessage(t, res.data));
     });
 
   const toggle = (key: string) => setSelected((s) => (s.includes(key) ? s.filter((k) => k !== key) : [...s, key]));

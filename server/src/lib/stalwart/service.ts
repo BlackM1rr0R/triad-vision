@@ -3,8 +3,9 @@ import { z } from 'zod';
 import { prisma } from '../../db.js';
 import { HttpError } from '../http.js';
 import { seal } from '../secretBox.js';
-import { StalwartError } from './client.js';
-import { stalwartConfig, stalwartDomain, stalwartMailHost, type StalwartConfig } from './config.js';
+import { slugPart } from '../agents/referral.js';
+import { StalwartError, createMailbox, findMailboxByAddress, type Mailbox } from './client.js';
+import { clientSettings, stalwartConfig, stalwartDomain, stalwartMailHost, type StalwartConfig } from './config.js';
 
 /** Helpers shared by the admin and the self-service mailbox routes. */
 
@@ -182,3 +183,63 @@ export const autoReplySchema = z
     fromDate: v.fromDate ?? null,
     toDate: v.toDate ?? null,
   }));
+
+// ─── Mailbox for a new staff account ─────────────────────────────────
+
+/** "Əli", "Məmmədov" → "eli.memmedov" (Latin, lower case; a valid local part or "" when nothing is left). */
+export const suggestLocalPart = (firstName: string, lastName: string) => {
+  const part = (s: string) => slugPart(s).toLowerCase().replace(/-+/g, '-');
+  const lp = [part(firstName), part(lastName)].filter(Boolean).join('.').slice(0, 64).replace(/[._-]+$/, '');
+  return localPartSchema.safeParse(lp).success ? lp : '';
+};
+
+/** Workspace mail settings of a mailbox on our own server (IMAP 993 / SMTP 465, both implicit TLS). */
+export const ownServerAccount = (address: string) => {
+  const s = clientSettings();
+  return { imapHost: s.imap.host, imapPort: s.imap.port, imapSecure: true, smtpHost: s.smtp.host, smtpPort: s.smtp.port, smtpSecure: true, username: address.toLowerCase() };
+};
+
+/** Before the staff account is created: the mail server is configured and the address is still free. */
+export const preflightStaffMailbox = async (localPart: string) => {
+  const cfg = requireStalwart();
+  const address = `${localPart}@${stalwartDomain()}`;
+  if (await viaStalwart(() => findMailboxByAddress(cfg, address))) throw new HttpError(409, 'MAILBOX_EXISTS');
+  return { cfg, address };
+};
+
+/**
+ * Creates the staff member's mailbox with a generated password and connects it in their workspace mail
+ * (password stored encrypted, like any workspace account). The password is returned once, for the admin
+ * to hand over; it is never logged.
+ */
+export const createStaffMailbox = async (
+  cfg: StalwartConfig,
+  user: { id: string; firstName: string; lastName: string },
+  localPart: string,
+): Promise<{ mailbox: Mailbox; password: string; workspaceAccountId: string | null }> => {
+  const password = generatePassword();
+  const mailbox = await viaStalwart(() =>
+    createMailbox(cfg, { localPart, displayName: `${user.firstName} ${user.lastName}`.trim() || null, password, quotaBytes: null, aliases: [] }),
+  );
+  let workspaceAccountId: string | null = null;
+  try {
+    const hasDefault = (await prisma.mailAccount.count({ where: { userId: user.id, isDefault: true } })) > 0;
+    const account = await prisma.mailAccount.create({
+      data: {
+        userId: user.id,
+        email: mailbox.address,
+        displayName: mailbox.displayName,
+        provider: 'CUSTOM',
+        ...ownServerAccount(mailbox.address),
+        passwordEnc: seal(password),
+        isDefault: !hasDefault,
+      },
+      select: { id: true },
+    });
+    workspaceAccountId = account.id;
+  } catch (err) {
+    // The mailbox exists either way; the staff member can still connect it with e-mail + password.
+    console.warn('[stalwart] workspace account for new mailbox not created', (err as Error).message);
+  }
+  return { mailbox, password, workspaceAccountId };
+};

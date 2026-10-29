@@ -1,7 +1,8 @@
 import type { DocStage } from '@prisma/client';
 import { prisma } from '../../db.js';
-import { nameMatches } from '../aiDocs/docCheck.js';
+import { nameLatin, nameMatches } from '../aiDocs/docCheck.js';
 import { STAGE_FOLDER } from '../drive/cases.js';
+import { findTypeFolder, isTypeFolderName } from '../drive/typeFolders.js';
 import { parseDay } from '../expiry/rules.js';
 import { scoreText } from './classify.js';
 import type { CaseContext, Subject } from './context.js';
@@ -13,7 +14,8 @@ import { DEFAULT_STAGE, REQUIREMENT_KEYS, satisfiesKey, typeForRequirementKey, t
  *   rename  the standard name, when it differs from the current one;
  *   link    the case requirement the type belongs to — a document uploaded into the wrong slot, a staff
  *           document without one, or a drive file not yet attached to the case;
- *   move    (drive) the stage folder of the client folder ("Erstdokumente", "Botschaftsunterlagen" …);
+ *   move    (drive) the folder of the type inside the client folder ("Reisepass", "Lebenslauf" …), else the
+ *           stage folder ("Erstdokumente", "Botschaftsunterlagen" …);
  *   expiry  the validity date, when it differs from the document's;
  * and the flags: holder ≠ case client, expired, expires within 6 months, wrong requirement.
  */
@@ -64,6 +66,22 @@ export interface ProposalResult {
 
 const lower = (s: string) => s.toLocaleLowerCase('en');
 
+/**
+ * Does the name read from the document belong to the case's person? The last name decides (spelling tolerant:
+ * ə/e, ı/i, ş/sh, Cyrillic …, see nameSkeleton). On a family member's case the first name must fit as well —
+ * relatives share the last name, and a parent's passport in the child's case is exactly the mistake to catch.
+ */
+export const holderMatches = (holder: string, fields: InsightFields, person: { firstName: string; lastName: string }, opts: { member?: boolean } = {}) => {
+  if (!nameMatches(holder, person)) return false;
+  if (!opts.member) return true;
+  // First names compared in plain Latin letters with their vowels (the consonant skeleton is too coarse).
+  const want = nameLatin(person.firstName);
+  if (!want) return true;
+  const given = (fields.firstName ? fields.firstName.split(/[\s,/.-]+/) : holder.split(/[\s,/.-]+/)).map(nameLatin).filter(Boolean);
+  const head = (x: string) => x.slice(0, Math.min(3, x.length));
+  return given.some((g) => g.startsWith(head(want)) || want.startsWith(head(g)));
+};
+
 export const buildProposals = async (input: {
   docType: DocType;
   confidence: number;
@@ -82,7 +100,11 @@ export const buildProposals = async (input: {
 
   // Flags: holder vs. the case client, validity.
   const holder = fields.holderName ?? [fields.firstName, fields.lastName].filter(Boolean).join(' ');
-  if (ctx && holder && !nameMatches(holder, ctx.client)) flags.push('NAME_MISMATCH');
+  if (ctx && holder && !holderMatches(holder, fields, ctx.client, { member: ctx.member })) {
+    flags.push('NAME_MISMATCH');
+    // Both names for the warning staff / client see ("… does not match the client: X ≠ Y").
+    proposals.holder = { found: holder.slice(0, 160), expected: `${ctx.client.firstName} ${ctx.client.lastName}`.trim() };
+  }
   const expiry = parseDay(fields.expiryDate);
   if (expiry) {
     const left = expiry.getTime() - now.getTime();
@@ -133,14 +155,18 @@ export const buildProposals = async (input: {
   // Move (drive files inside a client folder).
   let proposedFolderId: string | null = null;
   if (s.kind === 'drive' && sure && input.clientFolderId) {
+    // The folder of the type ("Reisepass", "Lebenslauf" … — lib/drive/typeFolders.ts), else the stage folder.
+    const typeFolder = await findTypeFolder(input.clientFolderId, docType);
     const stage = proposals.requirement?.stage ?? DEFAULT_STAGE[docType];
-    const folderName = STAGE_FOLDER[stage];
+    const folderName = typeFolder?.name ?? STAGE_FOLDER[stage];
     const parent = s.parentId ? await prisma.driveNode.findUnique({ where: { id: s.parentId }, select: { name: true, parentId: true } }) : null;
-    const alreadyThere = parent && lower(parent.name) === lower(folderName) && parent.parentId === input.clientFolderId;
+    const alreadyThere = parent && parent.parentId === input.clientFolderId && (typeFolder ? isTypeFolderName(docType, parent.name) : lower(parent.name) === lower(folderName));
     if (!alreadyThere) {
-      const rows = await prisma.driveNode.findMany({ where: { parentId: input.clientFolderId, name: folderName, kind: 'FOLDER', deletedAt: null }, select: { id: true, name: true } });
-      const existing = rows.find((r) => lower(r.name) === lower(folderName)) ?? null;
-      proposedFolderId = existing?.id ?? null;
+      if (typeFolder) proposedFolderId = typeFolder.id;
+      else {
+        const rows = await prisma.driveNode.findMany({ where: { parentId: input.clientFolderId, name: folderName, kind: 'FOLDER', deletedAt: null }, select: { id: true, name: true } });
+        proposedFolderId = rows.find((r) => lower(r.name) === lower(folderName))?.id ?? null;
+      }
       proposals.folder = { parentId: input.clientFolderId, name: folderName, id: proposedFolderId };
       actions.push('move');
     }

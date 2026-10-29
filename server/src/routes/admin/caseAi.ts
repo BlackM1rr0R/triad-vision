@@ -22,7 +22,7 @@ import { runConsistencyCheck, type ConsistencyResult } from '../../lib/ai/featur
 import { MAX_CONTRACT_BYTES, runContractCheck, type ContractResult } from '../../lib/ai/features/caseAi/contract.js';
 import { FIELD_DEFS, FIELD_KEYS, runVidex, videxFileName, videxPdf, type VidexResult } from '../../lib/ai/features/caseAi/videx.js';
 import { applyFieldValue, askClientForFields, createCaseTask, requestDocument } from '../../lib/ai/features/caseAi/actions.js';
-import { dmy } from '../../lib/ai/features/caseAi/texts.js';
+import { addFindingsToCaseTask, findingItemText, type FindingTaskItem } from '../../lib/ai/features/caseAi/findingTasks.js';
 import { maskJson, requestMaskGroups } from '../../lib/privacy/mask.js';
 
 /**
@@ -39,7 +39,8 @@ import { maskJson, requestMaskGroups } from '../../lib/privacy/mask.js';
  *   PUT    /cases/:id/ai/findings/state                { kind, key, status: OK|FIXED|IGNORED|null }
  *   POST   /cases/:id/ai/findings/apply                { runId, key, value? } writes the proposed profile / case value
  *   POST   /cases/:id/ai/findings/request-document     { runId, key } | { runId, checklistKey }
- *   POST   /cases/:id/ai/tasks                         { runId, key?, target: finding|contractIssue|employer|checklist }
+ *   POST   /cases/:id/ai/tasks                         { runId, key?, target: finding|allFindings|contractIssue|employer|checklist }
+ *                                                      document findings → ONE open task per case (checklist item each)
  *   GET    /case-ai/settings                           thresholds + embassy checklists;  PUT (ADMIN+)
  *
  * The model never writes: runs only store proposals; each write above is a staff click, audited as AI_CASE_*.
@@ -285,44 +286,65 @@ adminCaseAiRouter.post('/cases/:id/ai/findings/request-document', async (req, re
   res.status(201).json({ requirement: out.requirement, created: out.created, states: await findingStates(c.id) });
 });
 
-const evidenceLines = (f: Finding) => f.evidence.map((e) => `– ${e.documentName}: ${e.value}`).join('\n');
-
 adminCaseAiRouter.post('/cases/:id/ai/tasks', async (req, res) => {
   const body = parse(
-    z.object({ runId: z.string().min(1).max(40), target: z.enum(['finding', 'contractIssue', 'employer', 'checklist']), key: z.string().min(1).max(191).optional() }),
+    z.object({ runId: z.string().min(1).max(40), target: z.enum(['finding', 'allFindings', 'contractIssue', 'employer', 'checklist']), key: z.string().min(1).max(191).optional() }),
     req.body ?? {},
   );
   const c = await ensureCase(String(req.params.id));
-  let title: string;
-  let description: string;
-  if (body.target === 'finding') {
-    if (!body.key) throw badRequest('KEY_REQUIRED');
-    const { finding } = await consistencyFinding(c.id, body.runId, body.key);
-    title = `[KI] ${c.number}: ${finding.message.de}`;
-    description = [finding.message.de, evidenceLines(finding)].filter(Boolean).join('\n\n');
+  const locale = (['az', 'de', 'en', 'ru'] as const).find((l) => l === req.user!.locale) ?? 'az';
+  const pick = (m: { az: string; de: string; en: string; ru: string }) => m[locale] || m.de;
+
+  // The employer e-mail stays a task of its own (it is not a document problem of the client).
+  if (body.target === 'employer') {
+    const run = await loadRun(c.id, body.runId, 'CONTRACT');
+    if (!run) throw notFound('RUN_NOT_FOUND');
+    const r = run.result as unknown as ContractResult;
+    const title = `Arbeitgeber: Vertrag anpassen – ${c.number}`;
+    const description = `${r.email.to ? `An: ${r.email.to}
+` : ''}Betreff: ${r.email.subject}
+
+${r.email.body}`;
+    const task = await createCaseTask(c.id, { title, description }, actorOf(req));
+    await audit(req, 'AI_CASE_TASK_CREATED', c.id, { runId: body.runId, target: body.target, key: null, taskId: task.id });
+    res.status(201).json({ task });
+    return;
+  }
+
+  // Document findings of one client go into ONE task: a checklist item each, the documents linked.
+  const items: FindingTaskItem[] = [];
+  const fromFinding = (f: Finding) => {
+    const documents = f.evidence.filter((e) => e.documentId).map((e) => ({ id: e.documentId, name: e.documentName }));
+    items.push({ text: findingItemText(pick(f.message), documents), documents });
+  };
+  if (body.target === 'finding' || body.target === 'allFindings') {
+    if (body.target === 'finding') {
+      if (!body.key) throw badRequest('KEY_REQUIRED');
+      fromFinding((await consistencyFinding(c.id, body.runId, body.key)).finding);
+    } else {
+      const run = await loadRun(c.id, body.runId, 'CONSISTENCY');
+      if (!run) throw notFound('RUN_NOT_FOUND');
+      const decided = new Set((await findingStates(c.id)).filter((s) => s.kind === 'CONSISTENCY').map((s) => s.key));
+      for (const f of (run.result as unknown as ConsistencyResult).findings) if (!decided.has(f.key)) fromFinding(f);
+      if (!items.length) throw badRequest('NO_OPEN_FINDINGS');
+    }
   } else if (body.target === 'checklist') {
     const run = await loadRun(c.id, body.runId, 'VIDEX');
     const item = run ? (run.result as unknown as VidexResult).checklist.find((i) => i.key === body.key) : null;
     if (!item) throw notFound('CHECKLIST_ITEM_NOT_FOUND');
-    title = `[KI] ${c.number}: Botschaft – ${item.label.de}`;
-    description = `Unterlage für die Botschaft besorgen / prüfen: ${item.label.de}`;
+    items.push({ text: `${({ az: 'Səfirlik', de: 'Botschaft', en: 'Embassy', ru: 'Посольство' } as const)[locale]}: ${pick(item.label)}`, documents: [] });
   } else {
     const run = await loadRun(c.id, body.runId, 'CONTRACT');
     if (!run) throw notFound('RUN_NOT_FOUND');
     const r = run.result as unknown as ContractResult;
-    if (body.target === 'employer') {
-      title = `Arbeitgeber: Vertrag anpassen – ${c.number}`;
-      description = `${r.email.to ? `An: ${r.email.to}\n` : ''}Betreff: ${r.email.subject}\n\n${r.email.body}`;
-    } else {
-      const issue = r.issues.find((i) => i.code === body.key);
-      if (!issue) throw notFound('FINDING_NOT_FOUND');
-      title = `[KI] Vertrag ${c.number}: ${issue.message.de}`;
-      description = [issue.message.de, issue.quote ? `Vertragstext: „${issue.quote}“` : '', `Datei: ${r.file.name} (geprüft ${dmy(r.generatedAt)})`].filter(Boolean).join('\n\n');
-    }
+    const issue = r.issues.find((i) => i.code === body.key);
+    if (!issue) throw notFound('FINDING_NOT_FOUND');
+    const documents = [{ id: r.file.documentId, name: r.file.name }];
+    items.push({ text: findingItemText(pick(issue.message), documents), documents });
   }
-  const task = await createCaseTask(c.id, { title, description }, actorOf(req));
-  await audit(req, 'AI_CASE_TASK_CREATED', c.id, { runId: body.runId, target: body.target, key: body.key ?? null, taskId: task.id });
-  res.status(201).json({ task });
+  const task = await addFindingsToCaseTask(c.id, items, { ...actorOf(req), locale });
+  await audit(req, task.created ? 'AI_CASE_TASK_CREATED' : 'AI_CASE_TASK_UPDATED', c.id, { runId: body.runId, target: body.target, key: body.key ?? null, taskId: task.id, added: task.added });
+  res.status(task.created ? 201 : 200).json({ task, created: task.created, added: task.added });
 });
 
 // ─── Settings ──────────────────────────────────────────────────────

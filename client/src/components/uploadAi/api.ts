@@ -53,6 +53,8 @@ export interface StaffInsight {
     folder?: { parentId: string; name: string; id: string | null };
     requirement?: { id: string; title: Record<string, string> | null; stage: string };
     expected?: { requirementId: string; docType: DocType | null };
+    /** NAME_MISMATCH: name read from the document vs. the case person (client or family member). */
+    holder?: { found: string; expected: string };
   };
   expiryDate: string | null;
   flags: string[];
@@ -72,6 +74,7 @@ export interface UploadAiChipData {
   qualityLevel: QualityLevel | null;
   open: number;
   flags: string[];
+  holder?: { found: string; expected: string } | null;
 }
 
 export const uploadAiKeys = {

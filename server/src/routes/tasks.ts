@@ -34,6 +34,7 @@ import { decodeOriginalName, verifyUploadedFile } from '../middleware/upload.js'
 import { driveUpload } from '../lib/drive/upload.js';
 import { adoptUpload, removeStored } from '../lib/drive/storage.js';
 import { freeNameIn, safeUploadName } from '../lib/drive/names.js';
+import { completeFindingTaskIfDone } from '../lib/ai/features/caseAi/findingTasks.js';
 
 /** Team tasks (/api/tasks): create, assign, deadlines, board, comments, checklist. */
 export const tasksRouter = Router();
@@ -549,7 +550,9 @@ tasksRouter.patch('/:ref/checklist/:itemId', async (req, res) => {
   const task = await checklistTask(req);
   await findItem(task.id, String(req.params.itemId));
   await prisma.taskChecklistItem.update({ where: { id: String(req.params.itemId) }, data: body });
-  res.json({ checklist: await checklistOf(task.id) });
+  // An AI document-problems task (one per client) completes itself once every item is ticked.
+  const completed = body.done ? await completeFindingTaskIfDone(task.id, actorOf(req).id) : false;
+  res.json({ checklist: await checklistOf(task.id), ...(completed ? { completed: true } : {}) });
 });
 
 tasksRouter.delete('/:ref/checklist/:itemId', async (req, res) => {

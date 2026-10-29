@@ -22,7 +22,7 @@ import { ExpiryEditor } from '@/components/expiry/Expiry';
 // AI verdict chip (issues + fields), "Yenidən yoxla" and "AI layihə tərcüməsi".
 import { AiDocActions } from '@/components/aiDocs/AiDocActions';
 // Smart uploads: "AI · type" chip with the suggestion card, "Low quality", and "Accept all suggestions (N)".
-import { CaseAcceptAllBar, CaseDocAiChip } from '@/components/uploadAi/StaffChips';
+import { CaseAcceptAllBar, CaseDocAiChip, CaseDocNameWarning } from '@/components/uploadAi/StaffChips';
 import { PHOTO_KEYS, PhotoCheckBadge, photoCheckOf } from '@/components/uploadAi/PhotoCheckNotice'; // biometric photo rules badge
 
 type Stage = 'INITIAL' | 'EMBASSY';
@@ -85,6 +85,8 @@ const DocRow = ({ c, doc, requirementKey }: { c: CaseDetail; doc: CaseDocument; 
               {doc.originalName}
             </p>
             <DocMeta doc={doc} />
+            {/* name on the document ≠ client (or family member): same check as client uploads, a warning only */}
+            <CaseDocNameWarning caseId={c.id} docId={doc.id} />
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5">

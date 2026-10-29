@@ -7,6 +7,8 @@ import { requireVerifiedEmail } from '../middleware/verified.js';
 import { conflict, forbidden, limiter, notFound, parse } from '../lib/http.js';
 import { notifyStaff } from '../lib/notifications.js';
 import { emitWebhook } from '../lib/ops/webhooks.js';
+import { verifyUploadedFile } from '../middleware/upload.js';
+import { applicationUpload, discardUploads, MAX_APPLICATION_FILES, parseKinds, storeApplicationFiles } from '../lib/applicationUploads.js';
 import { GERMAN_LEVELS, germanRank } from '../lib/matching.js';
 import {
   EMPLOYMENT_TYPES,
@@ -172,42 +174,61 @@ vacanciesRouter.get('/:slug/me', requireAuth, requireCandidate, async (req, res)
   res.json({ match: matchFor(user, v), application, emailVerified: !!user.emailVerifiedAt });
 });
 
-vacanciesRouter.post('/:slug/apply', applyLimiter, requireAuth, requireCandidate, requireVerifiedEmail, async (req, res) => {
-  const body = parse(z.object({ message: z.string().trim().max(2000).optional() }), req.body ?? {});
-  const v = await prisma.vacancy.findUnique({
-    where: { slug: String(req.params.slug) },
-    include: { visaCategory: visaForMatch },
-  });
-  if (!v || !isOpen(v)) throw notFound('VACANCY_NOT_FOUND');
-  const user = await prisma.user.findUniqueOrThrow({ where: { id: req.user!.id } });
-  const { score } = matchFor(user, v);
-  const message = body.message || null;
-
-  const existing = await prisma.vacancyApplication.findUnique({ where: { vacancyId_userId: { vacancyId: v.id, userId: user.id } } });
-  let application;
-  if (existing) {
-    // A withdrawn application may be re-submitted; anything else is a duplicate.
-    if (existing.status !== 'WITHDRAWN') throw conflict('ALREADY_APPLIED');
-    application = await prisma.vacancyApplication.update({
-      where: { id: existing.id },
-      data: { status: 'NEW', matchScore: score, message, companyNote: null },
+/**
+ * Apply: JSON { message? } or multipart with optional documents — "files" (≤ 6, case-document rules) and one
+ * "kinds" entry per file (PASSPORT | CV | DIPLOMA …). The files are kept as application uploads and attached to
+ * the client's case (requirement + "<client folder>/<type folder>") now or once a case exists
+ * (lib/applicationUploads.ts).
+ */
+vacanciesRouter.post('/:slug/apply', applyLimiter, requireAuth, requireCandidate, requireVerifiedEmail, applicationUpload.array('files', MAX_APPLICATION_FILES), async (req, res) => {
+  const files = (req.files as Express.Multer.File[] | undefined) ?? [];
+  let stored = false;
+  try {
+    const body = parse(z.object({ message: z.string().trim().max(2000).optional() }).passthrough(), req.body ?? {});
+    const v = await prisma.vacancy.findUnique({
+      where: { slug: String(req.params.slug) },
+      include: { visaCategory: visaForMatch },
     });
-  } else {
-    try {
-      application = await prisma.vacancyApplication.create({ data: { vacancyId: v.id, userId: user.id, matchScore: score, message } });
-    } catch (err) {
-      if ((err as { code?: string }).code === 'P2002') throw conflict('ALREADY_APPLIED');
-      throw err;
+    if (!v || !isOpen(v)) throw notFound('VACANCY_NOT_FOUND');
+    for (const f of files) await verifyUploadedFile(f); // invalid content: nothing is created
+    const user = await prisma.user.findUniqueOrThrow({ where: { id: req.user!.id } });
+    const { score } = matchFor(user, v);
+    const message = body.message || null;
+
+    const existing = await prisma.vacancyApplication.findUnique({ where: { vacancyId_userId: { vacancyId: v.id, userId: user.id } } });
+    let application;
+    if (existing) {
+      // A withdrawn application may be re-submitted; anything else is a duplicate.
+      if (existing.status !== 'WITHDRAWN') throw conflict('ALREADY_APPLIED');
+      application = await prisma.vacancyApplication.update({
+        where: { id: existing.id },
+        data: { status: 'NEW', matchScore: score, message, companyNote: null },
+      });
+    } else {
+      try {
+        application = await prisma.vacancyApplication.create({ data: { vacancyId: v.id, userId: user.id, matchScore: score, message } });
+      } catch (err) {
+        if ((err as { code?: string }).code === 'P2002') throw conflict('ALREADY_APPLIED');
+        throw err;
+      }
     }
+    const uploads = files.length ? await storeApplicationFiles(user.id, files, parseKinds(req.body?.kinds, files.length), { vacancyId: v.id, applicationId: application.id }) : null;
+    stored = true;
+    await emitWebhook('application.created', { id: application.id, vacancyId: v.id, status: application.status, matchScore: application.matchScore, candidateId: user.id }, v.companyId);
+    const title = (v.title as Record<string, string>).az ?? '';
+    const docsLine = uploads?.documents.length ? `\n\nSənədlər: ${uploads.documents.map((d) => d.title).join(', ')}` : '';
+    await notifyStaff(
+      `Yeni vakansiya müraciəti: ${title}`.slice(0, 180),
+      `${user.firstName} ${user.lastName} "${title}" vakansiyasına müraciət etdi.\n\nUyğunluq: ${score}%${message ? `\n\nMesaj: ${message}` : ''}${docsLine}`,
+      { link: `/admin/vacancies?id=${v.id}`, type: 'VACANCY_APPLICATION' },
+    );
+    res.status(201).json({
+      application: { id: application.id, status: application.status, matchScore: application.matchScore, createdAt: application.createdAt },
+      documents: (uploads?.documents ?? []).map((d) => ({ id: d.id, kind: d.kind, title: d.title, filename: d.filename })),
+      attachedCaseId: uploads?.caseId ?? null,
+    });
+  } catch (err) {
+    if (!stored) await discardUploads(files);
+    throw err;
   }
-  await emitWebhook('application.created', { id: application.id, vacancyId: v.id, status: application.status, matchScore: application.matchScore, candidateId: user.id }, v.companyId);
-  const title = (v.title as Record<string, string>).az ?? '';
-  await notifyStaff(
-    `Yeni vakansiya müraciəti: ${title}`.slice(0, 180),
-    `${user.firstName} ${user.lastName} "${title}" vakansiyasına müraciət etdi.\n\nUyğunluq: ${score}%${message ? `\n\nMesaj: ${message}` : ''}`,
-    { link: `/admin/vacancies?id=${v.id}`, type: 'VACANCY_APPLICATION' },
-  );
-  res.status(201).json({
-    application: { id: application.id, status: application.status, matchScore: application.matchScore, createdAt: application.createdAt },
-  });
 });

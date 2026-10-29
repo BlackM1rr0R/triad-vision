@@ -13,7 +13,8 @@ import { XLSX_MIME } from '../lib/clientsExcel.js';
 import { FINAL_STATUSES } from '../lib/caseFlow.js';
 import { caseLabels, commissionTotals, monthRange, settlementClientNames } from '../lib/partners/commissions.js';
 import { buildCommissionWorkbook } from '../lib/partners/report.js';
-import { ACTIVE_FILTER, listPartnerCases, partnerCaseDetail, storePartnerUpload } from '../lib/partnerPortal/cases.js';
+import { ACTIVE_FILTER, listPartnerCases, partnerCaseDetail, storePartnerUpload, visaFacets } from '../lib/partnerPortal/cases.js';
+import { isRefused } from '../lib/caseProcessing/index.js';
 
 /**
  * Referral-partner portal API — mounted at /api/partner. The login is a user with role AGENT that is
@@ -46,7 +47,7 @@ partnerPortalRouter.get('/me', async (req, res) => {
 partnerPortalRouter.get('/dashboard', async (req, res) => {
   const partner = await partnerOf(req);
   const [cases, commissions, events] = await Promise.all([
-    prisma.case.findMany({ where: { partnerId: partner.id }, select: { clientId: true, status: true } }),
+    prisma.case.findMany({ where: { partnerId: partner.id }, select: { clientId: true, status: true, processingStage: true } }),
     prisma.partnerCommission.findMany({ where: { partnerId: partner.id }, select: { amountCents: true, status: true, createdAt: true, paidAt: true } }),
     prisma.caseEvent.findMany({
       where: { visibleToClient: true, case: { partnerId: partner.id } },
@@ -62,9 +63,12 @@ partnerPortalRouter.get('/dashboard', async (req, res) => {
     counts: {
       clients: new Set(cases.map((c) => c.clientId)).size,
       cases: cases.length,
-      activeCases: cases.filter((c) => !FINAL_STATUSES.includes(c.status)).length,
+      activeCases: cases.filter((c) => !FINAL_STATUSES.includes(c.status) && !isRefused(c)).length,
       approvedVisas: cases.filter((c) => c.status === 'APPROVED').length,
+      // Visa refused ("rədd"): REJECTED, or marked "Ablehnung" by the team.
+      rejected: cases.filter((c) => isRefused(c)).length,
     },
+    byVisa: await visaFacets({ partnerId: partner.id }),
     commissions: { ...all, thisMonthCents: commissionTotals(commissions, start, end).totalCents },
     recent: events.map((e) => ({
       id: e.id,
@@ -80,8 +84,13 @@ partnerPortalRouter.get('/dashboard', async (req, res) => {
 
 partnerPortalRouter.get('/cases', async (req, res) => {
   const partner = await partnerOf(req);
-  const q = parse(z.object({ search: z.string().trim().max(120).optional(), filter: z.enum(ACTIVE_FILTER).default('all') }), req.query);
-  res.json({ items: await listPartnerCases(partner.id, q) });
+  const q = parse(
+    z.object({ search: z.string().trim().max(120).optional(), filter: z.enum(ACTIVE_FILTER).default('all'), visa: z.string().trim().max(60).optional() }),
+    req.query,
+  );
+  // visaFacets: counts per visa kind over all of the partner's cases (the filter chips).
+  const [items, facets] = await Promise.all([listPartnerCases(partner.id, q), visaFacets({ partnerId: partner.id })]);
+  res.json({ items, visaFacets: facets });
 });
 
 partnerPortalRouter.get('/cases/:id', async (req, res) => {

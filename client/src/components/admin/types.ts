@@ -22,6 +22,8 @@ export interface AdminCaseListItem {
   nextStep?: NextStepSummary | null;
   /** "Top kimdÉ™dir?" â€” who acts next (lib/clientProcess/ballInCourt). */
   ballInCourt?: import('@/components/clientProcess/api').BallInCourt | null;
+  /** Team document workflow (Schon geschrieben → Fertig, lib/caseProcessing). */
+  processing?: import('@/components/caseProcessing/api').ProcessingSummary | null;
 }
 
 export interface AdminCasesResponse {
@@ -29,6 +31,7 @@ export interface AdminCasesResponse {
   total: number;
   pageSize: number;
   counts: Partial<Record<CaseStatus, number>>;
+  processingCounts?: import('@/components/caseProcessing/api').StageCounts;
 }
 
 export interface DashboardEvent {
