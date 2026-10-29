@@ -4,7 +4,7 @@ import type { CaseStatus } from '@prisma/client';
 import { asAdmin, asClient, asStaff, asSuperAdmin } from '../helpers/api';
 import { prisma } from '../helpers/db';
 import { makePdf, PDF } from '../helpers/files';
-import { anmeldungDeadline, berlinParts, berlinWallToUtc, dayToDate, deadlineInfo, dueReminder, listingMatchesCase, reminderPlan } from '../../src/lib/housing/core.js';
+import { anmeldungDeadline, berlinParts, berlinWallToUtc, dateToDay, dayToDate, deadlineInfo, dueReminder, listingMatchesCase, reminderPlan } from '../../src/lib/housing/core.js';
 import { runAnmeldungAppointmentReminders, runAnmeldungDeadlineWarnings } from '../../src/jobs/housing.js';
 import { registeredJobs } from '../../src/lib/scheduler.js';
 
@@ -17,7 +17,8 @@ const makeCase = (clientId: string, opts: { status?: CaseStatus; staff?: string 
   });
 
 const notes = (userId: string, type: string) => prisma.notification.findMany({ where: { userId, type } });
-const berlinDayIn = (days: number) => berlinParts(new Date(Date.now() + days * DAY)).day;
+// Calendar arithmetic on today's German date: "now ± n×24 h" shifts by a day across a DST change late in the evening.
+const berlinDayIn = (days: number) => dateToDay(new Date(dayToDate(berlinParts(new Date()).day).getTime() + days * DAY));
 
 describe('housing: pure rules', () => {
   it('converts German wall time (DST aware) and computes the two-week deadline', () => {
