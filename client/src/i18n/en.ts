@@ -81,7 +81,7 @@ const en: Messages = {
   },
   visas: {
     eyebrow: 'Visa types',
-    title: 'Visa support across many sectors',
+    title: 'Support across many sectors',
     subtitle: 'For these and other visa types, we fully support candidate selection, paperwork and arrival in Germany.',
     all: 'See all visa types',
     pageTitle: 'Visa types and professions',

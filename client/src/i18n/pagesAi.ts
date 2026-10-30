@@ -27,10 +27,10 @@ const az = {
     emptyTextAdmin: 'Disk, cədvəllər, müştərilər və hesablaşmalar üzrə tapşırıq verin. Hər dəyişiklik sizin təsdiqinizlə icra olunur.',
     suggestionsTitle: 'Məsələn:',
     suggestions: {
-      CLIENT: ['Müraciətim hansı mərhələdədir?', 'Hansı sənədləri yükləməliyəm?', 'Səfirlik müsahibəsinə necə hazırlaşım?', '2800 € brutto maaşdan nə qədər xalis qalır?'],
+      CLIENT: ['Müraciətim hansı mərhələdədir?', 'Hansı sənədlərim çatışmır?', 'Səfirlik görüşüm nə vaxtdır?', '“Vorabzustimmung” nə deməkdir?', '2800 € brutto maaşdan nə qədər xalis qalır?', 'Sualımı menecerimə göndərmək istəyirəm'],
       ADMIN: ['Bu qovluqda nə var?', 'Bu həftə müddəti bitən sənədləri göstər', 'Son yüklənən faylları siyahıla', 'Bu cədvəli yoxla və səhvləri tap'],
     },
-    disclaimer: 'AI səhv edə bilər. Vacib qərarlar üçün menecerinizlə əlaqə saxlayın.',
+    disclaimer: 'AI səhv edə bilər və hüquqi zəmanət vermir. Vacib qərarlar üçün menecerinizlə əlaqə saxlayın.',
     disclaimerAdmin: 'Dəyişikliklər yalnız təsdiq kartında “Təsdiqlə” düyməsini basdıqdan sonra icra olunur.',
     action: {
       title: 'Təsdiq tələb olunur',
@@ -93,6 +93,8 @@ const az = {
       user: 'İstifadəçi',
       noUsage: 'Hələ istifadə yoxdur',
       days: 'Son {{n}} gün',
+      activeClients: 'aktiv müştəri',
+      handovers: 'menecerə ötürülən sual',
     },
   },
 };
@@ -126,10 +128,10 @@ const de: Copy = {
     emptyTextAdmin: 'Aufgaben zu Ablage, Tabellen, Kunden und Abrechnungen. Jede Änderung läuft erst nach Ihrer Bestätigung.',
     suggestionsTitle: 'Zum Beispiel:',
     suggestions: {
-      CLIENT: ['Wo steht mein Antrag gerade?', 'Welche Dokumente muss ich hochladen?', 'Wie bereite ich mich auf das Botschaftsinterview vor?', 'Wie viel netto bleibt von 2.800 € brutto?'],
+      CLIENT: ['Wo steht mein Antrag gerade?', 'Welche Dokumente fehlen noch?', 'Wann ist mein Botschaftstermin?', 'Was bedeutet „Vorabzustimmung“?', 'Wie viel netto bleibt von 2.800 € brutto?', 'Ich möchte meinem Betreuer eine Frage stellen'],
       ADMIN: ['Was liegt in diesem Ordner?', 'Zeig Dokumente, die diese Woche ablaufen', 'Liste die zuletzt hochgeladenen Dateien', 'Prüfe diese Tabelle auf Fehler'],
     },
-    disclaimer: 'Die KI kann sich irren. Für wichtige Entscheidungen wenden Sie sich an Ihren Betreuer.',
+    disclaimer: 'Die KI kann sich irren und gibt keine rechtliche Garantie. Für wichtige Entscheidungen wenden Sie sich an Ihren Betreuer.',
     disclaimerAdmin: 'Änderungen werden erst ausgeführt, wenn Sie auf der Karte „Bestätigen“ drücken.',
     action: {
       title: 'Bestätigung erforderlich',
@@ -192,6 +194,8 @@ const de: Copy = {
       user: 'Nutzer',
       noUsage: 'Noch keine Nutzung',
       days: 'Letzte {{n}} Tage',
+      activeClients: 'aktive Kunden',
+      handovers: 'an Betreuer weitergeleitet',
     },
   },
 };
@@ -223,10 +227,10 @@ const en: Copy = {
     emptyTextAdmin: 'Give tasks for the drive, spreadsheets, clients and settlements. Every change runs only after you confirm it.',
     suggestionsTitle: 'For example:',
     suggestions: {
-      CLIENT: ['Where is my application now?', 'Which documents do I need to upload?', 'How do I prepare for the embassy interview?', 'How much net is left from €2,800 gross?'],
+      CLIENT: ['Where is my application now?', 'Which documents are still missing?', 'When is my embassy appointment?', 'What does “Vorabzustimmung” mean?', 'How much net is left from €2,800 gross?', 'I want to ask my case manager a question'],
       ADMIN: ['What is in this folder?', 'Show documents expiring this week', 'List the latest uploaded files', 'Check this spreadsheet for mistakes'],
     },
-    disclaimer: 'AI can make mistakes. For important decisions, contact your case manager.',
+    disclaimer: 'AI can make mistakes and gives no legal guarantee. For important decisions, contact your case manager.',
     disclaimerAdmin: 'Changes run only after you press “Confirm” on the card.',
     action: {
       title: 'Confirmation needed',
@@ -289,6 +293,8 @@ const en: Copy = {
       user: 'User',
       noUsage: 'No usage yet',
       days: 'Last {{n}} days',
+      activeClients: 'active clients',
+      handovers: 'forwarded to managers',
     },
   },
 };
@@ -320,10 +326,10 @@ const ru: Copy = {
     emptyTextAdmin: 'Задачи по диску, таблицам, клиентам и расчётам. Любое изменение выполняется только после вашего подтверждения.',
     suggestionsTitle: 'Например:',
     suggestions: {
-      CLIENT: ['На каком этапе моя заявка?', 'Какие документы нужно загрузить?', 'Как подготовиться к собеседованию в посольстве?', 'Сколько останется на руки с 2800 € брутто?'],
+      CLIENT: ['На каком этапе моя заявка?', 'Каких документов не хватает?', 'Когда моя запись в посольство?', 'Что означает «Vorabzustimmung»?', 'Сколько останется на руки с 2800 € брутто?', 'Хочу задать вопрос своему менеджеру'],
       ADMIN: ['Что лежит в этой папке?', 'Покажи документы, срок которых истекает на этой неделе', 'Список последних загруженных файлов', 'Проверь эту таблицу на ошибки'],
     },
-    disclaimer: 'AI может ошибаться. По важным решениям обращайтесь к своему менеджеру.',
+    disclaimer: 'AI может ошибаться и не даёт юридических гарантий. По важным решениям обращайтесь к своему менеджеру.',
     disclaimerAdmin: 'Изменения выполняются только после нажатия «Подтвердить» на карточке.',
     action: {
       title: 'Нужно подтверждение',
@@ -386,6 +392,8 @@ const ru: Copy = {
       user: 'Пользователь',
       noUsage: 'Использования пока нет',
       days: 'Последние {{n}} дн.',
+      activeClients: 'активных клиентов',
+      handovers: 'передано менеджерам',
     },
   },
 };

@@ -13,6 +13,7 @@ export { Badge, StatusPill, StatusDot, type BadgeProps, type StatusPillProps } f
 export { EmptyState, type EmptyStateProps } from './EmptyState';
 export { Skeleton, SkeletonText, SkeletonBlock, SkeletonList, SkeletonRows, SkeletonAvatar, SkeletonCard, SkeletonGrid, SkeletonStat, SkeletonStats, SkeletonTable, SkeletonHero } from './Skeleton';
 export { Field, Input, Select, Textarea, Checkbox, Radio, RadioGroup, useFieldControl, type FieldProps, type InputProps, type SelectProps, type TextareaProps, type RadioGroupProps } from './Field';
+export { PasswordInput, type PasswordInputProps } from './PasswordInput';
 export { Switch, type SwitchProps } from './Switch';
 export { Avatar, initialsOf, type AvatarProps, type AvatarSize } from './Avatar';
 export { StatTile, type StatTileProps, type StatDelta } from './StatTile';
@@ -23,3 +24,4 @@ export { Tabs, TabPanel, tabIds, useTabParam, type TabItem, type TabsProps } fro
 export { Table, SortableTh, type Column, type TableProps, type SortState, type SortDir } from './Table';
 export { Menu, type MenuItem, type MenuProps } from './Menu';
 export { Tooltip, type TooltipProps } from './Tooltip';
+export { TooltipHost } from './TooltipHost';

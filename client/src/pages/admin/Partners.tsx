@@ -1,23 +1,25 @@
-import { useEffect, useMemo, useState, type ChangeEvent } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, Route, Routes, useNavigate, useParams } from 'react-router-dom';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import clsx from 'clsx';
-import { ArrowLeft, Ban, ClipboardPen, Download, FolderOpen, FolderPlus, HandCoins, Handshake, Mail, Pencil, Phone, Plus, Search, Trash2, Users, X } from 'lucide-react';
+import { ArrowLeft, Ban, ClipboardPen, Download, FolderOpen, FolderPlus, HandCoins, Handshake, Mail, Pencil, Phone, Plus, Search, Settings2, Trash2, Users, X } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { hasMinRole } from '@/lib/types';
 import { useL10n } from '@/lib/l10n';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { Spinner } from '@/components/ui/Spinner';
-import { Modal } from '@/components/admin/Modal';
 import { StatusBadge } from '@/components/admin/StatusBadge';
-import { Chip, EmptyState, ErrorBlock, LoadingBlock, PageHead, Switch } from '@/components/admin/ui';
+import { Chip, EmptyState, ErrorBlock, LoadingBlock, PageHead } from '@/components/admin/ui';
 import { Tabs } from '@/components/ui/Tabs';
 import { fmtDate, fullName } from '@/components/admin/labels';
 import { PARTNERS_KEY, partnerError, type Partner, type PartnerCase, type PartnerCounts } from '@/components/partners/api';
-import { CommissionsPanel, fromCents, toCents } from '@/components/partners/Commissions';
+import { CommissionsPanel } from '@/components/partners/Commissions';
+import { PartnerFormDialog } from '@/components/partners/PartnerForm'; // the one partner form (also used by the drive)
+import { PartnerFieldsManager } from '@/components/partners/PartnerFieldsManager';
+import { PartnerKeyInfo, PartnerProfileCard } from '@/components/partners/PartnerProfile';
 import { PortalLoginPanel } from '@/components/partners/PortalLogin';
 import { OwnershipPanel, type OwnedClient, type PartnerOwnershipFields } from '@/components/partners/Ownership'; // sign-up code, rules, own clients
 import { DeletePartnerDialog, invalidatePartnerViews } from '@/components/partners/DeletePartnerDialog';
@@ -52,117 +54,13 @@ const CountRow = ({ counts }: { counts: PartnerCounts }) => {
   );
 };
 
-/** Add / edit dialog (admins only). */
-const PartnerDialog = ({ open, partner, onClose }: { open: boolean; partner: Partner | null; onClose: () => void }) => {
-  const { t } = useTranslation();
-  const qc = useQueryClient();
-  const [form, setForm] = useState({ name: '', phone: '', email: '', note: '', active: true, commission: '', currency: 'EUR' });
-  useEffect(() => {
-    if (open)
-      setForm({
-        name: partner?.name ?? '',
-        phone: partner?.phone ?? '',
-        email: partner?.email ?? '',
-        note: partner?.note ?? '',
-        active: partner?.active ?? true,
-        commission: fromCents(partner?.commissionCents),
-        currency: partner?.currency ?? 'EUR',
-      });
-  }, [open, partner]);
-  const commissionInvalid = form.commission.trim() !== '' && toCents(form.commission) === null;
-  const save = useMutation({
-    mutationFn: async () => {
-      const { commission, ...rest } = form;
-      const body = { ...rest, name: form.name.trim(), commissionCents: toCents(commission), currency: form.currency.trim().toUpperCase() || 'EUR' };
-      if (partner) await api.patch(`/admin/partners/${partner.id}`, body);
-      else await api.post('/admin/partners', body);
-    },
-    onSuccess: async () => {
-      toast.success(t('refPartners.saved'));
-      await qc.invalidateQueries({ queryKey: PARTNERS_KEY });
-      onClose();
-    },
-    onError: partnerError,
-  });
-  const set = (k: keyof typeof form) => (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => setForm((f) => ({ ...f, [k]: e.target.value }));
-  return (
-    <Modal
-      open={open}
-      onClose={() => !save.isPending && onClose()}
-      title={partner ? t('refPartners.edit') : t('refPartners.add')}
-      footer={
-        <div className="flex justify-end gap-2">
-          <button type="button" className="btn-secondary btn-sm" onClick={onClose} disabled={save.isPending}>
-            {t('refPartners.form.cancel')}
-          </button>
-          <button type="submit" form="partner-form" className="btn-primary btn-sm" disabled={save.isPending || !form.name.trim() || commissionInvalid}>
-            {save.isPending && <Spinner className="size-3.5" />} {t('refPartners.form.save')}
-          </button>
-        </div>
-      }
-    >
-      <form
-        id="partner-form"
-        className="space-y-4"
-        onSubmit={(e) => {
-          e.preventDefault();
-          if (form.name.trim() && !commissionInvalid) save.mutate();
-        }}
-      >
-        <label className="block">
-          <span className="label">{t('refPartners.form.name')}</span>
-          <input className="input" required maxLength={120} value={form.name} onChange={set('name')} autoFocus />
-        </label>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <label className="block">
-            <span className="label">{t('refPartners.form.phone')}</span>
-            <input className="input" type="tel" maxLength={40} value={form.phone} onChange={set('phone')} />
-          </label>
-          <label className="block">
-            <span className="label">{t('refPartners.form.email')}</span>
-            <input className="input" type="email" maxLength={191} value={form.email} onChange={set('email')} />
-          </label>
-        </div>
-        <div className="grid gap-4 sm:grid-cols-[1fr_7rem]">
-          <label className="block">
-            <span className="label">{t('refPartners.commissionField')}</span>
-            <input
-              className="input tabular-nums"
-              inputMode="decimal"
-              placeholder="150.00"
-              value={form.commission}
-              onChange={set('commission')}
-              aria-invalid={commissionInvalid || undefined}
-              aria-describedby="partner-commission-hint"
-            />
-          </label>
-          <label className="block">
-            <span className="label">{t('refPartners.currency')}</span>
-            <input className="input uppercase" maxLength={3} value={form.currency} onChange={set('currency')} />
-          </label>
-          <p id="partner-commission-hint" className="-mt-2 text-xs text-muted sm:col-span-2">
-            {t('refPartners.commissionHint')}
-          </p>
-        </div>
-        <label className="block">
-          <span className="label">{t('refPartners.form.note')}</span>
-          <textarea className="input min-h-24" maxLength={5000} placeholder={t('refPartners.form.notePh')} value={form.note} onChange={set('note')} />
-        </label>
-        <div className="flex items-center gap-3">
-          <Switch checked={form.active} onChange={(v) => setForm((f) => ({ ...f, active: v }))} label={t('refPartners.form.active')} />
-          <span className="text-sm text-ink">{t('refPartners.form.active')}</span>
-        </div>
-      </form>
-    </Modal>
-  );
-};
-
 const PartnerList = ({ isAdmin }: { isAdmin: boolean }) => {
   const { t } = useTranslation();
   const [searchInput, setSearchInput] = useState('');
   const [search, setSearch] = useState('');
   const [active, setActive] = useState<ActiveFilter>('all');
   const [dialog, setDialog] = useState<{ open: boolean; partner: Partner | null }>({ open: false, partner: null });
+  const [managingFields, setManagingFields] = useState(false);
   usePageTitle(t('refPartners.title'));
   useEffect(() => {
     const id = window.setTimeout(() => setSearch(searchInput.trim()), 300);
@@ -189,6 +87,11 @@ const PartnerList = ({ isAdmin }: { isAdmin: boolean }) => {
               <HandCoins className="size-4" /> {t('refPartners.allCommissions')}
             </Link>
             {isAdmin && (
+              <button type="button" className="btn-secondary btn-sm" onClick={() => setManagingFields(true)}>
+                <Settings2 className="size-4" /> {t('partnerForm.custom.manage')}
+              </button>
+            )}
+            {isAdmin && (
               <button type="button" className="btn-primary btn-sm" onClick={() => setDialog({ open: true, partner: null })}>
                 <Plus className="size-4" /> {t('refPartners.add')}
               </button>
@@ -198,9 +101,9 @@ const PartnerList = ({ isAdmin }: { isAdmin: boolean }) => {
       />
       <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-center">
         <label className="relative flex-1">
-          <span className="sr-only">{t('refPartners.searchPh')}</span>
+          <span className="sr-only">{t('partnerForm.searchPh')}</span>
           <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted" aria-hidden />
-          <input type="search" className="input pl-9" placeholder={t('refPartners.searchPh')} value={searchInput} onChange={(e) => setSearchInput(e.target.value)} />
+          <input type="search" className="input pl-9" placeholder={t('partnerForm.searchPh')} value={searchInput} onChange={(e) => setSearchInput(e.target.value)} />
         </label>
         <div className="flex gap-1.5">
           {(['all', 'true', 'false'] as const).map((v) => (
@@ -252,6 +155,7 @@ const PartnerList = ({ isAdmin }: { isAdmin: boolean }) => {
                   </span>
                 )}
               </p>
+              <PartnerKeyInfo partner={p} className="mt-1" />
               <div className="mt-3">
                 <CountRow counts={p.counts} />
               </div>
@@ -273,7 +177,8 @@ const PartnerList = ({ isAdmin }: { isAdmin: boolean }) => {
           ))}
         </ul>
       )}
-      <PartnerDialog open={dialog.open} partner={dialog.partner} onClose={() => setDialog({ open: false, partner: null })} />
+      <PartnerFormDialog open={dialog.open} partner={dialog.partner} onClose={() => setDialog({ open: false, partner: null })} />
+      {isAdmin && <PartnerFieldsManager open={managingFields} onClose={() => setManagingFields(false)} />}
     </div>
   );
 };
@@ -405,6 +310,9 @@ const PartnerDetail = ({ isAdmin }: { isAdmin: boolean }) => {
         </div>
         <PortalLoginPanel partner={partner} isAdmin={isAdmin} />
       </div>
+      <div className="mb-5">
+        <PartnerProfileCard partner={partner} />
+      </div>
       <OwnershipPanel partner={partner} ownedClients={data.ownedClients ?? []} isAdmin={isAdmin} />
 
       <Tabs
@@ -520,7 +428,7 @@ const PartnerDetail = ({ isAdmin }: { isAdmin: boolean }) => {
       </section>
       )}
 
-      <PartnerDialog open={editing} partner={partner} onClose={() => setEditing(false)} />
+      <PartnerFormDialog open={editing} partner={partner} onClose={() => setEditing(false)} />
       <DeletePartnerDialog partner={confirmDelete ? partner : null} onClose={() => setConfirmDelete(false)} onDeleted={() => navigate('/admin/partners')} />
     </div>
   );

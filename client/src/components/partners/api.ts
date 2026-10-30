@@ -74,7 +74,61 @@ export interface Partner extends PartnerRef {
   login?: PartnerLogin | null;
   /** The partner's live folder in the drive ("Partner/<name>"); null when it was deleted there. */
   folderId?: string | null;
+  // Profile (server lib/partners/profile.ts); bank data arrives masked for staff (bankLocked).
+  partnerType?: PartnerType;
+  companyName?: string | null;
+  contactPerson?: string | null;
+  phone2?: string | null;
+  whatsapp?: string | null;
+  address?: string | null;
+  city?: string | null;
+  country?: string | null;
+  /** VÖEN; masked ("•••• 7890") per the masking settings. */
+  taxId?: string | null;
+  bankName?: string | null;
+  bankAccountHolder?: string | null;
+  iban?: string | null;
+  bic?: string | null;
+  /** True when the viewer is below ADMIN: bank data is masked and read-only. */
+  bankLocked?: boolean;
+  /** "YYYY-MM-DD" */
+  contractStart?: string | null;
+  contractEnd?: string | null;
+  preferredLanguage?: PartnerLang | null;
+  website?: string | null;
+  tags?: string[];
+  /** Values of the admin-defined fields: { [fieldId]: value }. */
+  customData?: Record<string, string | number | boolean>;
+  /** The partner's own extra fields ("+ add field"). */
+  extraFields?: { label: string; value: string }[];
 }
+
+export type PartnerType = 'INDIVIDUAL' | 'COMPANY';
+export const PARTNER_LANGS = ['az', 'de', 'en', 'ru', 'tr'] as const;
+export type PartnerLang = (typeof PARTNER_LANGS)[number];
+export const PARTNER_FIELD_TYPES = ['TEXT', 'LONG_TEXT', 'NUMBER', 'DATE', 'SELECT', 'CHECKBOX'] as const;
+export type PartnerFieldType = (typeof PARTNER_FIELD_TYPES)[number];
+
+/** Admin-defined field shown on every partner form (GET /admin/partners/fields). */
+export interface PartnerFieldDef {
+  id: string;
+  label: string;
+  type: PartnerFieldType;
+  options: string[];
+  sortOrder: number;
+}
+
+/** Below PARTNERS_KEY, so invalidating the partners refreshes the definitions too. */
+export const PARTNER_FIELDS_KEY = ['referral-partners', 'fields'] as const;
+
+/** The admin-defined partner form fields. */
+export const usePartnerFields = (enabled = true) =>
+  useQuery({
+    queryKey: PARTNER_FIELDS_KEY,
+    queryFn: async () => (await api.get<{ fields: PartnerFieldDef[] }>('/admin/partners/fields')).data.fields,
+    staleTime: 60_000,
+    enabled,
+  });
 
 export interface PartnerCase {
   id: string;

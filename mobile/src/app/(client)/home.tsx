@@ -10,6 +10,7 @@ import { ExploreGrid } from '@/features/common/Explore';
 import { CheckInCard } from '@/features/checkin/CheckInCard'; // post-arrival check-in (one tap)
 import { GermanHomeCard } from '@/features/german/GermanHomeCard'; // daily vocabulary practice
 import { InviteHomeCard } from '@/features/invite/InviteScreen'; // refer a friend from the phone's contacts
+import { AssistantHomeCard } from '@/features/assistant/AssistantScreen'; // AI assistant (own case questions)
 import { InterviewStatusPill, interviewTitle } from '@/features/interviews/InterviewCard';
 import { useAuth } from '@/lib/auth';
 import { CLIENT_UPLOAD_STAGE, STATUS_STEP, STEP_KEYS, hasActiveCase, missingRequirements, pickActiveCase } from '@/lib/caseStatus';
@@ -130,6 +131,7 @@ export default function Home() {
       <UpcomingInterview />
       <GermanHomeCard index={3} />
       <InviteHomeCard index={4} />
+      <AssistantHomeCard index={5} />
 
       {!isLoading && !error && canApply ? (
         <Card index={1} style={{ backgroundColor: colors.navy, borderColor: colors.navy }}>

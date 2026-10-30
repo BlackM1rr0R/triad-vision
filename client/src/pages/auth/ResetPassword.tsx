@@ -10,6 +10,7 @@ import { Spinner } from '@/components/ui/Spinner';
 import { Success } from '@/components/illustrations';
 import { AuthShell } from './AuthShell';
 import { authError } from './Login';
+import { PasswordInput } from '@/components/ui/PasswordInput';
 
 export default function ResetPassword() {
   const { t } = useTranslation();
@@ -51,10 +52,9 @@ export default function ResetPassword() {
         <form onSubmit={submit} className="space-y-4">
           <div>
             <label className="label" htmlFor="password">{t('auth.newPassword')}</label>
-            <input
+            <PasswordInput
               id="password"
               name="password"
-              type="password"
               required
               minLength={PASSWORD_MIN}
               maxLength={PASSWORD_MAX}

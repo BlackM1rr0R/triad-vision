@@ -207,9 +207,13 @@ export default function WorkspaceDrive() {
   // ── data for the current view ──
   const folder = folderId ? listing.data?.folder : undefined;
   const rawItems: DriveItem[] = useMemo(() => (folderId ? (listing.data?.items ?? []) : flatKind ? (flat.data?.items ?? []) : []), [folderId, listing.data, flatKind, flat.data]);
+  // "Gemeinsame Dokumente → Partner": each partner folder is a card of PartnersOverview, so the listing below the
+  // cards does not repeat them as folder tiles (only other files / folders kept there are listed). Not in the board view.
+  const partnersRoot = !!folder && folder.id === roots.data?.partners?.id;
+  const hidePartnerFolders = partnersRoot && view !== 'board';
   const items = useMemo(() => {
     const dir = sortDir === 'asc' ? 1 : -1;
-    const keyed = [...rawItems];
+    const keyed = hidePartnerFolders ? rawItems.filter((i) => !(i.kind === 'FOLDER' && i.partner)) : [...rawItems];
     keyed.sort((a, b) => {
       if (a.kind !== b.kind) return a.kind === 'FOLDER' ? -1 : 1;
       let r = 0;
@@ -221,7 +225,7 @@ export default function WorkspaceDrive() {
       return r * dir;
     });
     return org.filterItems(keyed);
-  }, [rawItems, sortKey, sortDir, loc.kind, org.filterItems]);
+  }, [rawItems, sortKey, sortDir, loc.kind, org.filterItems, hidePartnerFolders]);
   const mode: ListMode = loc.kind === 'trash' ? 'trash' : folderId ? 'folder' : 'flat';
 
   // ── selection ──
@@ -852,7 +856,8 @@ export default function WorkspaceDrive() {
     ) : folder && sectionOf(folder) ? (
       <>
         <SectionHeader folder={folder} />
-        {folder.id === roots.data?.partners?.id && <PartnersOverview items={items} onOpen={(id) => go(folderHref(id))} />}
+        {/* the partner cards live in the main pane (scrolling with the listing); in the board view they stay up here */}
+        {partnersRoot && view === 'board' && <PartnersOverview items={rawItems} onOpen={(id) => go(folderHref(id))} />}
       </>
     ) : folder && folder.system && !folder.parentId ? (
       <div className="border-b border-line bg-surface/60 px-3 py-2 text-xs text-muted sm:px-4">{t('drive.shared.subtitle')}</div>
@@ -983,7 +988,7 @@ export default function WorkspaceDrive() {
                   <div className="grid grid-cols-[repeat(auto-fill,minmax(136px,1fr))] gap-2 p-4" aria-busy="true">
                     {Array.from({ length: 12 }, (_, i) => (
                       <div key={i} className="flex flex-col items-center gap-2 rounded-xl p-3">
-                        <Skeleton className="size-16" rounded="xl" />
+                        <Skeleton className="size-14" rounded="xl" />
                         <Skeleton className="h-3 w-20" rounded="md" />
                       </div>
                     ))}
@@ -999,7 +1004,7 @@ export default function WorkspaceDrive() {
                       </Link>
                     </div>
                   </div>
-                ) : items.length === 0 ? (
+                ) : items.length === 0 && !partnersRoot ? (
                   <div
                     className="grid h-full place-items-center p-6 text-center"
                     onContextMenu={(e) => {
@@ -1028,54 +1033,64 @@ export default function WorkspaceDrive() {
                   </div>
                 ) : (
                   <div className="flex h-full min-h-0 flex-col">
-                    <div className="flex shrink-0 items-center gap-2 border-b border-line/70 px-4 py-1.5 text-xs text-muted">
-                      <label className="inline-flex cursor-pointer items-center gap-2 font-medium select-none hover:text-ink">
-                        <input
-                          type="checkbox"
-                          className="size-4 rounded accent-primary"
-                          checked={items.length > 0 && selectedItems.length === items.length}
-                          ref={(el) => {
-                            if (el) el.indeterminate = selectedItems.length > 0 && selectedItems.length < items.length;
-                          }}
-                          onChange={() => (selectedItems.length === items.length ? clear() : select(new Set(items.map((i) => i.id)), null, null))}
-                        />
-                        {t('drive.shared.selectAll', { count: items.length })}
-                      </label>
-                      {/* Smart uploads: one click applies every AI suggestion of the files in this folder */}
-                      <span className={selectedItems.length > 0 ? '' : 'ml-auto'}>
-                        <DriveAcceptAllBar folderId={folderId} items={items} />
-                      </span>
-                      {selectedItems.length > 0 && <span className="ml-auto font-semibold text-ink">{t('drive.toolbar.selected', { count: selectedItems.length })}</span>}
-                    </div>
-                    <div className="min-h-0 flex-1">
-                      <ItemsView
-                        items={items}
-                        view={view}
-                        mode={mode}
-                        selected={selected}
-                        focusId={focusId}
-                        anchorId={anchorId}
-                        myId={myId}
-                        sortKey={sortKey}
-                        sortDir={sortDir}
-                        onSort={(k) => {
-                          if (k === sortKey) setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
-                          else {
-                            setSortKey(k);
-                            setSortDir('asc');
-                          }
-                        }}
-                        onSelect={select}
-                        onOpen={open}
-                        onContext={(e: MouseEvent, item) =>
-                          setMenu({ at: { x: e.clientX, y: e.clientY }, items: item ? (selected.has(item.id) ? selectedItems : [item]) : null })
-                        }
-                        onKey={onKey}
-                        onFiles={onFiles}
-                        onItems={onItems}
-                        canDrag={(i) => loc.kind !== 'trash' && (can(i.myAccess, 'EDIT') && unprotected(i) ? true : can(i.myAccess, i.kind === 'FILE' ? 'DOWNLOAD' : 'EXPORT'))}
-                      />
-                    </div>
+                    {partnersRoot && (
+                      // partner cards first; with other items in the folder they keep at most ~60 % of the pane
+                      <div className={clsx('min-h-0 overflow-y-auto overscroll-contain', items.length ? 'max-h-[60%] shrink-0' : 'flex-1')}>
+                        <PartnersOverview items={rawItems} onOpen={(id) => go(folderHref(id))} />
+                      </div>
+                    )}
+                    {items.length > 0 && (
+                      <>
+                        <div className="flex shrink-0 items-center gap-2 border-b border-line/70 px-4 py-1.5 text-xs text-muted">
+                          <label className="inline-flex cursor-pointer items-center gap-2 font-medium select-none hover:text-ink">
+                            <input
+                              type="checkbox"
+                              className="size-4 rounded accent-primary"
+                              checked={items.length > 0 && selectedItems.length === items.length}
+                              ref={(el) => {
+                                if (el) el.indeterminate = selectedItems.length > 0 && selectedItems.length < items.length;
+                              }}
+                              onChange={() => (selectedItems.length === items.length ? clear() : select(new Set(items.map((i) => i.id)), null, null))}
+                            />
+                            {t('drive.shared.selectAll', { count: items.length })}
+                          </label>
+                          {/* Smart uploads: one click applies every AI suggestion of the files in this folder */}
+                          <span className={selectedItems.length > 0 ? '' : 'ml-auto'}>
+                            <DriveAcceptAllBar folderId={folderId} items={items} />
+                          </span>
+                          {selectedItems.length > 0 && <span className="ml-auto font-semibold text-ink">{t('drive.toolbar.selected', { count: selectedItems.length })}</span>}
+                        </div>
+                        <div className="min-h-0 flex-1">
+                          <ItemsView
+                            items={items}
+                            view={view}
+                            mode={mode}
+                            selected={selected}
+                            focusId={focusId}
+                            anchorId={anchorId}
+                            myId={myId}
+                            sortKey={sortKey}
+                            sortDir={sortDir}
+                            onSort={(k) => {
+                              if (k === sortKey) setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
+                              else {
+                                setSortKey(k);
+                                setSortDir('asc');
+                              }
+                            }}
+                            onSelect={select}
+                            onOpen={open}
+                            onContext={(e: MouseEvent, item) =>
+                              setMenu({ at: { x: e.clientX, y: e.clientY }, items: item ? (selected.has(item.id) ? selectedItems : [item]) : null })
+                            }
+                            onKey={onKey}
+                            onFiles={onFiles}
+                            onItems={onItems}
+                            canDrag={(i) => loc.kind !== 'trash' && (can(i.myAccess, 'EDIT') && unprotected(i) ? true : can(i.myAccess, i.kind === 'FILE' ? 'DOWNLOAD' : 'EXPORT'))}
+                          />
+                        </div>
+                      </>
+                    )}
                   </div>
                 )}
                 {paneDrop.over === 'files' && folder && (

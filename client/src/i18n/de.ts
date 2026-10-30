@@ -81,7 +81,7 @@ const de: Messages = {
   },
   visas: {
     eyebrow: 'Visaarten',
-    title: 'Visa für verschiedene Branchen',
+    title: 'Unterstützung für verschiedene Branchen',
     subtitle: 'Für diese und weitere Visaarten unterstützen wir Sie umfassend bei Auswahl, Dokumentation und Einreise der Kandidaten nach Deutschland.',
     all: 'Alle Visaarten ansehen',
     pageTitle: 'Visaarten und Berufsfelder',

@@ -11,6 +11,7 @@ import { Spinner } from '@/components/ui/Spinner';
 import { AuthShell } from './AuthShell';
 import { registerCopy } from '@/i18n';
 import { pagesLegal } from '@/i18n/pagesLegal';
+import { PasswordInput } from '@/components/ui/PasswordInput';
 
 registerCopy(pagesLegal);
 
@@ -77,7 +78,7 @@ export default function Login() {
               {t('auth.forgot')}
             </Link>
           </div>
-          <input id="password" name="password" type="password" required autoComplete="current-password" className="input" />
+          <PasswordInput id="password" name="password" required autoComplete="current-password" className="input" />
         </div>
         <button type="submit" disabled={busy} className="btn-primary btn-lg w-full">
           {busy ? <Spinner className="size-4" /> : <LogIn className="size-4" />} {t('auth.login')}

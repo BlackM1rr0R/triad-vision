@@ -9,6 +9,7 @@ import type { User } from '@/lib/types';
 import { Spinner } from '@/components/ui/Spinner';
 import { PARTNER_ME_KEY, portalError, type PartnerMe } from '@/components/partnerPortal/api';
 import { Section } from '@/components/partnerPortal/ui';
+import { PasswordInput } from '@/components/ui/PasswordInput';
 
 /** Name and phone of the login, password change (the regular PATCH /auth/me). No banking fields. */
 export default function PartnerProfilePage({ me }: { me: PartnerMe }) {
@@ -90,11 +91,11 @@ export default function PartnerProfilePage({ me }: { me: PartnerMe }) {
         <form onSubmit={submitPw} className="grid gap-4">
           <label className="block">
             <span className="label">{t('partnerPortal.profile.currentPassword')}</span>
-            <input className="input" type="password" autoComplete="current-password" maxLength={128} value={pw.currentPassword} onChange={(e) => setPw((p) => ({ ...p, currentPassword: e.target.value }))} />
+            <PasswordInput className="input" autoComplete="current-password" maxLength={128} value={pw.currentPassword} onChange={(e) => setPw((p) => ({ ...p, currentPassword: e.target.value }))} />
           </label>
           <label className="block">
             <span className="label">{t('partnerPortal.profile.newPassword')}</span>
-            <input className="input" type="password" autoComplete="new-password" minLength={8} maxLength={128} value={pw.newPassword} onChange={(e) => setPw((p) => ({ ...p, newPassword: e.target.value }))} aria-describedby="pp-pw-hint" />
+            <PasswordInput className="input" autoComplete="new-password" minLength={8} maxLength={128} value={pw.newPassword} onChange={(e) => setPw((p) => ({ ...p, newPassword: e.target.value }))} aria-describedby="pp-pw-hint" />
             <span id="pp-pw-hint" className="mt-1 block text-xs text-muted">
               {t('partnerPortal.profile.passwordHint')}
             </span>

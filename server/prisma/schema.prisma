@@ -2906,6 +2906,34 @@ model ReferralPartner {
   commissionTrigger String            @default("ASSIGNED") @db.VarChar(20)
   /// What the portal shows of the clients: MINIMAL (masked) | EXTENDED (contacts + payments, only for clients who consented).
   visibility      String              @default("MINIMAL") @db.VarChar(12)
+  // Profile (lib/partners/profile.ts): all optional; bank data only ADMIN+ (masked / hidden for staff).
+  /// INDIVIDUAL | COMPANY
+  partnerType       String            @default("INDIVIDUAL") @db.VarChar(12)
+  companyName       String?           @db.VarChar(160)
+  contactPerson     String?           @db.VarChar(120)
+  phone2            String?           @db.VarChar(40)
+  whatsapp          String?           @db.VarChar(40)
+  address           String?           @db.VarChar(255)
+  city              String?           @db.VarChar(120)
+  country           String?           @db.VarChar(80)
+  /// VÖEN / Steuernummer (mask group TAX_ID).
+  taxId             String?           @db.VarChar(40)
+  bankName          String?           @db.VarChar(120)
+  bankAccountHolder String?           @db.VarChar(120)
+  /// Mask group IBAN; only ADMIN+ see or edit it.
+  iban              String?           @db.VarChar(42)
+  bic               String?           @db.VarChar(11)
+  contractStart     DateTime?         @db.Date
+  contractEnd       DateTime?         @db.Date
+  /// az | de | en | ru | tr
+  preferredLanguage String?           @db.VarChar(5)
+  website           String?           @db.VarChar(255)
+  /// string[]
+  tags              Json?
+  /// Values of the admin-defined fields: { [PartnerFieldDef.id]: string | number | boolean }.
+  customData        Json?
+  /// The partner's own extra fields: [{ label, value }].
+  extraFields       Json?
   createdAt       DateTime            @default(now())
   updatedAt       DateTime            @updatedAt
   cases           Case[]
@@ -2947,6 +2975,18 @@ model ClientRegisterColumn {
   sortOrder Int                @default(0)
   createdAt DateTime           @default(now())
   updatedAt DateTime           @updatedAt
+}
+
+/// Admin-defined extra field of every referral partner form; values live in ReferralPartner.customData.
+model PartnerFieldDef {
+  id        String   @id @default(cuid())
+  label     String   @db.VarChar(80)
+  /// TEXT | LONG_TEXT | NUMBER | DATE | SELECT | CHECKBOX
+  type      String   @default("TEXT") @db.VarChar(12)
+  options   Json? // SELECT choices: string[]
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 // ─── Drive collaboration: comments, share links, activity; partner commissions ─

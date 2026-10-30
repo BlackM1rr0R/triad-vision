@@ -17,7 +17,7 @@ type Group = (typeof GROUPS)[number];
 const ROLES = ['STAFF', 'ADMIN'] as const;
 type MaskRole = (typeof ROLES)[number];
 type Settings = Record<MaskRole, Group[]>;
-const ENTITIES = ['user', 'company', 'agent', 'invoiceSettings', 'document', 'insight'] as const;
+const ENTITIES = ['user', 'company', 'agent', 'invoiceSettings', 'document', 'insight', 'partner'] as const;
 const FIELDS = ['passportNumber', 'documentNumber', 'iban', 'bic', 'vatId', 'taxNumber'] as const;
 
 interface RevealRow {

@@ -8,6 +8,7 @@ import { ensureToolsLoaded, getTool, toolSpecs } from './registry.js';
 import { systemPrompt } from './prompts.js';
 import { getAiSettings, privacyRouting, resolveApiKey, type AiSettings } from './settings.js';
 import { checkLimits, checkSpendDuringTurn, limitMessage, type LimitReason } from './limits.js';
+import { scrubIdentifiers } from './redact.js';
 
 /**
  * The conversation engine: one user message → up to MAX_TOOL_ROUNDS model calls with tool calls in
@@ -242,7 +243,8 @@ const runToolCall = async (
     }
   }
   emit('tool', { callId: call.id, name: call.name, status: ok ? 'done' : 'error', label });
-  return clampResult(result);
+  // Client tools never select identifiers; this also catches any typed into free text (notes, titles).
+  return conv.scope === 'CLIENT' ? scrubIdentifiers(clampResult(result)) : clampResult(result);
 };
 
 export interface TurnOptions {
@@ -289,7 +291,13 @@ export const runTurn = async ({ conversation, user, content, emit, signal }: Tur
     ).reverse();
     const trimmed = trimHistory(toChatMessages(rows));
     const ctx = toolCtx(user, conversation);
-    const messages: ChatMessage[] = [{ role: 'system', content: systemPrompt(scope, ctx, { omitted: trimmed.omitted }) }, ...trimmed.messages];
+    // CLIENT: the caller's own data (+ help snippets for the latest question) grounds the answer.
+    let grounding: string | null = null;
+    if (scope === 'CLIENT') {
+      // (No help search on the follow-up after a confirm / reject: there is no new question.)
+      grounding = await (await import('./client/grounding.js')).clientGroundingBlock(ctx, content).catch(() => null);
+    }
+    const messages: ChatMessage[] = [{ role: 'system', content: systemPrompt(scope, ctx, { omitted: trimmed.omitted, grounding }) }, ...trimmed.messages];
     const tools = toolSpecs(scope);
 
     let lastAssistantId: string | null = null;

@@ -1,6 +1,7 @@
 import '@/i18n';
 import '@/i18n/german'; // m.german.* (screen title below)
 import '@/i18n/invite'; // m.invite.* (screen title below)
+import '@/i18n/assistant'; // m.assistant.* (screen title below)
 import { useEffect, useRef } from 'react';
 import { View } from 'react-native';
 import { Stack, router } from 'expo-router';
@@ -117,6 +118,7 @@ const RootStack = () => {
         <Stack.Screen name="chat/[id]" options={{ title: t('m.chat.title') }} />
         <Stack.Screen name="interviews/[id]" options={{ title: t('m.interviews.detailTitle') }} />
         <Stack.Screen name="german" options={{ title: t('m.german.title') }} />
+        <Stack.Screen name="assistant" options={{ title: t('m.assistant.title') }} />
         <Stack.Screen name="invite" options={{ title: t('m.invite.title') }} />
         <Stack.Screen name="sign/[id]" options={{ title: t('m.sign.title'), presentation: 'modal', animation: 'slide_from_bottom' }} />
         <Stack.Screen name="apply" options={{ title: t('m.apply.title'), presentation: 'modal', animation: 'slide_from_bottom' }} />

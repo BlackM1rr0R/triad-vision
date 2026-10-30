@@ -143,7 +143,6 @@ export default function SalaryCalculator() {
     [form],
   );
   const result = useMemo(() => calculateSalary(input), [input]);
-  const monthlyGross = result.monthly.gross;
   const notes = t('salaryPage.notes.items', { returnObjects: true }) as string[];
 
   return (
@@ -271,7 +270,7 @@ export default function SalaryCalculator() {
               </Field>
             </div>
 
-            {monthlyGross > 0 && monthlyGross < 2_000 && (
+            {result.lowWage && (
               <p className="flex gap-2 rounded-xl bg-warning-bg p-3 text-xs leading-relaxed text-warning-fg">
                 <Info className="mt-px size-3.5 shrink-0" aria-hidden /> {t('salaryPage.midijob')}
               </p>

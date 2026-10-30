@@ -318,7 +318,7 @@ export default function VisaDetail() {
               <h2 className="h-section mt-2 text-ink">{t('visaDetail.services.title')}</h2>
               <p className="mt-3 text-muted sm:text-lg">{t('visaDetail.services.subtitle')}</p>
             </div>
-            <div className="mobile-rail sm:grid-cols-2 sm:gap-5 lg:grid-cols-4 lg:gap-6">
+            <div className="mobile-rail cards-balanced sm:[--cols:2] lg:[--cols:4]">
               {services.map((s) => (
                 <ServiceCard key={s.id} service={s} index={allServices.indexOf(s)} />
               ))}
@@ -331,7 +331,7 @@ export default function VisaDetail() {
         <section className="section">
           <div className="container-x">
             <h2 className="h-section section-head text-ink">{t('visaDetail.others')}</h2>
-            <Stagger className="grid-cards sm:grid-cols-2 lg:grid-cols-3">
+            <Stagger className="grid-cards cards-balanced sm:[--cols:2] lg:[--cols:3]">
               {others.map((v) => (
                 <StaggerItem key={v.id}>
                   <VisaCard visa={v} />

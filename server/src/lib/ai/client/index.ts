@@ -4,6 +4,7 @@ import { prisma } from '../../../db.js';
 import type { AiTool, AiToolContext, AnyAiTool } from '../types.js';
 import { forecastForCase } from '../../journey/forecast.js';
 import { calculateSalary, type TaxClass } from './salary/calc.js';
+import { askConsultant } from './handover.js';
 
 /**
  * Client tools (scope CLIENT): read-only and always limited to the calling user's own records
@@ -417,7 +418,7 @@ const salary: AiTool<{ grossMonthlyEur?: number; taxClass?: number; children?: n
 const contactManager: AiTool<{ caseId?: string }> = {
   name: 'contact_my_manager',
   scope: 'CLIENT',
-  description: "How the user can reach their case manager (messages in the application) and the office contacts. It does NOT send anything; tell the user where to write.",
+  description: "How the user can reach their case manager (messages in the application) and the office contacts. It does NOT send anything; tell the user where to write (or offer ask_my_consultant to forward the question).",
   schema: z.object({ caseId: z.string().max(40).optional() }).strict(),
   parameters: { type: 'object', properties: { caseId: { type: 'string' } }, additionalProperties: false },
   label: { az: 'Əlaqə məlumatlarını tapıram…', de: 'Ich suche die Kontaktdaten…', en: 'Finding contact details…', ru: 'Ищу контакты…' },
@@ -431,9 +432,9 @@ const contactManager: AiTool<{ caseId?: string }> = {
       caseManager: c ? { firstName: c.assignedStaff?.firstName ?? null, caseNumber: c.number, writeHere: `/account/cases/${c.id}#messages` } : null,
       office: { phone: contact.phone ?? null, whatsapp: contact.whatsapp ?? null, email: contact.email ?? null, hours: tr(contact.hours ?? null, l) || null },
       bookConsultation: '/booking',
-      note: 'Nothing was sent. The user writes the message themselves.',
+      note: 'Nothing was sent. The user writes the message themselves, or you offer to forward the question with ask_my_consultant.',
     };
   },
 };
 
-export const clientTools: AnyAiTool[] = [myCases, requiredDocs, deadlines, prepQuestions, knowledge, salary, contactManager];
+export const clientTools: AnyAiTool[] = [myCases, requiredDocs, deadlines, prepQuestions, knowledge, salary, contactManager, askConsultant];

@@ -14,6 +14,7 @@ import { Spinner } from '@/components/ui/Spinner';
 import { optimizeImages } from '@/lib/imageCompress';
 import { Lost } from '@/components/illustrations';
 import { getBrand } from '@/lib/brand';
+import { PasswordInput } from '@/components/ui/PasswordInput';
 
 registerCopy(driveCollabCopy);
 
@@ -180,7 +181,7 @@ export default function SharePage() {
             <KeyRound className="size-4" /> {t('driveCollab.share.passwordTitle')}
           </p>
           <div className="mt-3 flex gap-2">
-            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder={t('driveCollab.share.passwordPh')} className="input" autoFocus autoComplete="off" aria-invalid={pwError} />
+            <PasswordInput value={password} onChange={(e) => setPassword(e.target.value)} placeholder={t('driveCollab.share.passwordPh')} className="input" autoFocus autoComplete="off" aria-invalid={pwError} />
             <button type="submit" className="btn-primary shrink-0" disabled={!password || unlocking}>
               {unlocking && <Spinner className="size-4" />} {t('driveCollab.share.unlock')}
             </button>

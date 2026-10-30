@@ -293,7 +293,8 @@ const Tile = memo(function Tile({ item, p, click, toggle, context, dragStart, t 
         label={t('drive.shared.selectItem')}
         className={clsx('absolute top-2 left-2 z-10 transition-opacity', selected || p.selected.size > 0 ? 'opacity-100' : 'opacity-0 group-hover:opacity-100 focus-visible:opacity-100')}
       />
-      <div className="relative grid h-[76px] w-full place-items-center">
+      {/* fixed-height icon box: the name below always stays visible (line-clamp-2), whatever the column width */}
+      <div className="relative grid h-[68px] w-full shrink-0 place-items-center">
         {thumb ? (
           <img
             src={contentUrl(item.id)}
@@ -302,10 +303,10 @@ const Tile = memo(function Tile({ item, p, click, toggle, context, dragStart, t 
             decoding="async"
             draggable={false}
             onError={() => setImgFailed(true)}
-            className="max-h-[76px] max-w-[96px] rounded-md border border-line object-cover shadow-[var(--tv-shadow-card)]"
+            className="max-h-[68px] max-w-[96px] rounded-md border border-line object-cover shadow-[var(--tv-shadow-card)]"
           />
         ) : (
-          <ItemIcon item={item} className="size-16" />
+          <ItemIcon item={item} className="size-14" />
         )}
         {isSheet(item) && (
           <span className="absolute top-0 left-1/2 -translate-x-1/2 rounded bg-success px-1.5 py-px text-[9px] font-bold tracking-wide text-white shadow-[var(--tv-shadow-card)]">{t('drive.partner.sheetBadge')}</span>

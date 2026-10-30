@@ -89,7 +89,7 @@ export const AudienceServices = ({ audience }: { audience: Audience }) => {
     <section id="services" className="section scroll-mt-20 bg-sunken">
       <div className="container-x">
         <SectionHeading eyebrow={t('svc.eyebrow')} title={t(`${p}.servicesTitle`)} subtitle={t(`${p}.servicesSubtitle`)} action={<ViewAll to="/services" label={t('common.viewAll')} />} />
-        <Stagger className="mobile-rail sm:grid-cols-2 sm:gap-5 lg:grid-cols-4 lg:gap-6">
+        <Stagger className="mobile-rail cards-balanced sm:[--cols:2] lg:[--cols:4]">
           {services.slice(0, 8).map((s, i) => (
             <StaggerItem key={s.id}>
               <ServiceCard service={s} index={i} />
@@ -109,7 +109,7 @@ export const ToolsTeaser = () => {
     <section className="section">
       <div className="container-x">
         <SectionHeading eyebrow={t('toolsPage.eyebrow')} title={t('workersPage.toolsTitle')} subtitle={t('workersPage.toolsSubtitle')} action={<ViewAll to="/tools" label={t('workersPage.toolsAll')} />} />
-        <Stagger className="grid-cards sm:grid-cols-2 lg:grid-cols-4">
+        <Stagger className="grid-cards cards-balanced sm:[--cols:2] lg:[--cols:4]">
           {TOOLS.filter((x) => picks.includes(x.key)).map((tool) => (
             <StaggerItem key={tool.key}>
               <ToolCard tool={tool} />
@@ -147,7 +147,7 @@ export const EmployerBenefits = () => {
     <section className="section">
       <div className="container-x">
         <SectionHeading eyebrow={t('employersPage.eyebrow')} title={t('employersPage.benefitsTitle')} center />
-        <Stagger className="grid-cards sm:grid-cols-2 lg:grid-cols-4">
+        <Stagger className="grid-cards cards-balanced sm:[--cols:2] lg:[--cols:4]">
           {items.map((it, i) => {
             const BenefitIcon = BENEFIT_ICONS[i] ?? BadgeCheck;
             return (
@@ -218,7 +218,7 @@ export const AudienceTestimonials = ({ audience }: { audience: Audience }) => {
           title={t(`${PAGE[audience]}.storiesTitle`)}
           action={<ViewAll to="/stories" label={t('common.viewAll')} />}
         />
-        <Stagger className="mobile-rail md:grid-cols-2 md:gap-5 xl:grid-cols-4">
+        <Stagger className="mobile-rail cards-balanced [--cols:1] md:[--cols:2] xl:[--cols:4]">
           {items.slice(0, 4).map((tm) => (
             <StaggerItem key={tm.id}>
               <TestimonialCard item={tm} />

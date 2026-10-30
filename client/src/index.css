@@ -1441,3 +1441,30 @@ html.a11y-nomotion .tv-ill * { animation: none !important; }
 .chip-sage { background-color: var(--ill-sage); color: var(--color-ink); }
 .chip-sky { background-color: var(--ill-sky); color: var(--color-ink); }
 .chip-peach { background-color: var(--ill-peach); color: var(--color-ink); }
+
+/* Balanced card rows (add to .grid-cards or .mobile-rail): from sm up the cards wrap in centred rows of
+   --cols equal-width cards, so 3 cards in a 4-column section sit in the middle instead of leaving a gap on the
+   right. Set the columns per breakpoint at the call site: "cards-balanced sm:[--cols:2] lg:[--cols:3] xl:[--cols:4]".
+   The gap is part of the width formula, so it lives here (no gap-* utilities next to it). Unlayered on purpose:
+   it must win over the `grid` / `sm:grid` display of .grid-cards, .mobile-rail and SkeletonGrid. */
+.cards-balanced {
+  --cards-gap: 1rem;
+}
+@media (width >= 40rem) {
+  .cards-balanced {
+    --cards-gap: 1.25rem;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--cards-gap);
+  }
+  .cards-balanced > * {
+    flex: none;
+    width: calc((100% - (var(--cols, 2) - 1) * var(--cards-gap)) / var(--cols, 2));
+  }
+}
+@media (width >= 64rem) {
+  .cards-balanced {
+    --cards-gap: 1.5rem;
+  }
+}

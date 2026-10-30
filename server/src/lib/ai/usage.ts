@@ -53,6 +53,12 @@ export const usageReport = async (days = 30) => {
   });
   const byId = new Map(users.map((u) => [u.id, u]));
 
+  // Client assistant counts (never content): distinct clients who asked, questions forwarded to the team.
+  const [activeClients, handovers] = await Promise.all([
+    prisma.aiConversation.findMany({ where: { scope: 'CLIENT', messages: { some: { role: 'user', createdAt: { gte: since } } } }, distinct: ['userId'], select: { userId: true } }),
+    prisma.aiAction.count({ where: { tool: 'ask_my_consultant', status: 'DONE', decidedAt: { gte: since } } }),
+  ]);
+
   const settings = await getAiSettings();
   const key = await getKeyInfo(resolveApiKey(settings));
   return {
@@ -62,6 +68,7 @@ export const usageReport = async (days = 30) => {
       const u = byId.get(t.userId);
       return { userId: t.userId, name: u ? `${u.firstName} ${u.lastName}`.trim() : '—', email: u?.email ?? null, role: u?.role ?? null, scope: t.scope, costUsd: n(t.cost) / 1e6, messages: n(t.msgs) };
     }),
+    client: { activeUsers: activeClients.length, handovers },
     month: { spentUsd: await monthSpentUsd(), budgetUsd: settings.monthlyBudgetUsd },
     key: key ? { limitUsd: key.limit, remainingUsd: key.limitRemaining, usageUsd: key.usage, usageMonthlyUsd: key.usageMonthly } : null,
   };

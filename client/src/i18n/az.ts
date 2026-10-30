@@ -79,7 +79,7 @@ const az = {
   },
   visas: {
     eyebrow: 'Viza növləri',
-    title: 'Müxtəlif sahələr üzrə viza təminatı',
+    title: 'Müxtəlif sahələr üzrə peşəkar təminat',
     subtitle: 'Aşağıdakı və digər viza növləri üzrə namizədlərin seçimi, sənədləşməsi və Almaniyaya gəlişi üçün tam dəstək veririk.',
     all: 'Bütün viza növlərini gör',
     pageTitle: 'Viza növləri və peşə sahələri',

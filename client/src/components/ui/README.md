@@ -293,8 +293,19 @@ It needs to render inside the router.
 
 ### Tooltip (`Tooltip.tsx`)
 
-`<Tooltip content="Download" side="top|bottom|left|right"><button …/></Tooltip>`: CSS only. It shows on hover after 300 ms and
+`<Tooltip content="Download" side="top|bottom|left|right"><button …/></Tooltip>`: CSS only. It shows on hover after 150 ms and
 on keyboard focus, Escape hides it, and it sets `aria-describedby`. Keep the text short; it's supplementary, never the only label.
+
+**Every `title` on a button / link is a quick tooltip too:** `TooltipHost` (mounted once in `main.tsx`) shows a chip after
+200 ms of hover or on keyboard focus instead of the browser's slow native title (it parks the `title` while the chip is up).
+So icon-only buttons just need `aria-label` + `title` (IconButton sets both from `label`). `data-tooltip="…"` gives a chip
+without a native title; `data-no-tooltip` opts out.
+
+### PasswordInput (`PasswordInput.tsx`)
+
+`<PasswordInput autoComplete="current-password" value={…} onChange={…} />`: an `<Input>` with a show / hide eye button
+(`aria-pressed`, `aria-controls`, localized `ui.showPassword` / `ui.hidePassword`). Use it for every password / secret field;
+margins go on `wrapperClassName`.
 
 ### PageHeader / Breadcrumbs / Section / Toolbar / FilterBar (`PageHeader.tsx`)
 

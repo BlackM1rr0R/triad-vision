@@ -58,8 +58,8 @@ export const VisaSection = () => {
     <section className="section">
       <div className="container-x">
         <SectionHeading eyebrow={t('visas.eyebrow')} title={t('visas.title')} subtitle={t('visas.subtitle')} action={<ViewAll to="/visas" label={t('visas.all')} />} />
-        {!data && <RailSkeleton count={4} media className="mobile-rail sm:grid-cols-2 sm:gap-5 lg:grid-cols-3 lg:gap-6 xl:grid-cols-4" />}
-        <Stagger className="mobile-rail sm:grid-cols-2 sm:gap-5 lg:grid-cols-3 lg:gap-6 xl:grid-cols-4">
+        {!data && <RailSkeleton count={4} media className="mobile-rail cards-balanced sm:[--cols:2] lg:[--cols:3] xl:[--cols:4]" />}
+        <Stagger className="mobile-rail cards-balanced sm:[--cols:2] lg:[--cols:3] xl:[--cols:4]">
           {data?.visaCategories.slice(0, 8).map((v) => (
             <StaggerItem key={v.id}>
               <VisaCard visa={v} />
@@ -79,8 +79,8 @@ export const ServicesSection = () => {
     <section className="section bg-sunken">
       <div className="container-x">
         <SectionHeading eyebrow={t('svc.eyebrow')} title={t('svc.title')} subtitle={t('svc.subtitle')} action={<ViewAll to="/services" label={t('common.viewAll')} />} />
-        {!data && <RailSkeleton count={4} className="mobile-rail sm:grid-cols-2 sm:gap-5 lg:grid-cols-4 lg:gap-6" />}
-        <Stagger className="mobile-rail sm:grid-cols-2 sm:gap-5 lg:grid-cols-4 lg:gap-6">
+        {!data && <RailSkeleton count={4} className="mobile-rail cards-balanced sm:[--cols:2] lg:[--cols:4]" />}
+        <Stagger className="mobile-rail cards-balanced sm:[--cols:2] lg:[--cols:4]">
           {data?.services.slice(0, 8).map((s, i) => (
             <StaggerItem key={s.id}>
               <ServiceCard service={s} index={i} />
@@ -415,7 +415,7 @@ export const TestimonialsSection = () => {
     <section className="section">
       <div className="container-x">
         <SectionHeading eyebrow={t('stories.title')} title={t('stories.subtitle')} action={<ViewAll to="/stories" label={t('common.viewAll')} />} />
-        <Stagger className="mobile-rail md:grid-cols-2 md:gap-5 xl:grid-cols-4">
+        <Stagger className="mobile-rail cards-balanced [--cols:1] md:[--cols:2] xl:[--cols:4]">
           {data?.testimonials.map((tm) => (
             <StaggerItem key={tm.id}>
               <TestimonialCard item={tm} />
@@ -460,7 +460,7 @@ export const NewsSection = () => {
     <section className="section bg-sunken">
       <div className="container-x">
         <SectionHeading eyebrow={t('news.eyebrow')} title={t('news.title')} action={<ViewAll to="/news" label={t('common.viewAll')} />} />
-        <Stagger className="mobile-rail md:grid-cols-2 md:gap-5 lg:grid-cols-3 lg:gap-6">
+        <Stagger className="mobile-rail cards-balanced [--cols:1] md:[--cols:2] lg:[--cols:3]">
           {data.posts.slice(0, 3).map((p) => (
             <StaggerItem key={p.id}>
               <PostCard post={p} />

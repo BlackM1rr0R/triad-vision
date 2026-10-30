@@ -24,6 +24,8 @@ const az = {
     next: 'Növbəti',
     page: 'Səhifə {{page}}',
     range: '{{from}}–{{to}} / {{total}}',
+    showPassword: 'Parolu göstər',
+    hidePassword: 'Parolu gizlət',
   },
 };
 
@@ -49,6 +51,8 @@ const de: Shape = {
     next: 'Weiter',
     page: 'Seite {{page}}',
     range: '{{from}}–{{to}} von {{total}}',
+    showPassword: 'Passwort anzeigen',
+    hidePassword: 'Passwort verbergen',
   },
 };
 
@@ -72,6 +76,8 @@ const en: Shape = {
     next: 'Next',
     page: 'Page {{page}}',
     range: '{{from}}–{{to}} of {{total}}',
+    showPassword: 'Show password',
+    hidePassword: 'Hide password',
   },
 };
 
@@ -95,6 +101,8 @@ const ru: Shape = {
     next: 'Далее',
     page: 'Страница {{page}}',
     range: '{{from}}–{{to}} из {{total}}',
+    showPassword: 'Показать пароль',
+    hidePassword: 'Скрыть пароль',
   },
 };
 

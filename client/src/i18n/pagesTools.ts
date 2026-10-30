@@ -62,16 +62,16 @@ const az = {
       title: 'Bu, təxmini hesablamadır',
       text: 'Kalkulyator vergi məsləhəti deyil. Real maaş vərəqəsi fərdi güzəştlərə, sığorta kassasına, birdəfəlik ödənişlərə və işəgötürənin hesablamasına görə fərqlənə bilər.',
     },
-    midijob: 'Ayda 2 000 €-dan aşağı maaşlarda minijob/midijob qaydaları ilə sosial sığorta daha az ola bilər — kalkulyator bunu nəzərə almır.',
+    midijob: '603 €-ya qədər minijob (yalnız 3,6 % pensiya payı, vergini işəgötürən ödəyir), 603–2 000 € arası Übergangsbereich (midijob): işçinin sosial sığorta payı azaldılmış bazadan hesablanır. Ausbildung maaşlarına bu qaydalar tətbiq olunmur.',
     notes: {
       eyebrow: 'Necə hesablayırıq',
       title: 'Sadələşdirmələr və istifadə olunan göstəricilər',
       items: [
         'Gəlir vergisi §32a EStG-nin 2026-cı il formulu ilə hesablanır (vergisiz minimum 12 348 €). İşçi üçün 1 230 € və xüsusi xərclər üçün 36 € paušal çıxılır.',
-        'Vorsorgepauschale (vergidən azad sığorta payı) işçinin öz sığorta ödənişlərinə əsasən təxmini hesablanır.',
-        'III sinifdə splitting (gəlirin yarısına vergi × 2), V və VI siniflərdə rəsmi alqoritmin sadələşdirilmiş variantı istifadə olunur.',
+        'Vorsorgepauschale (vergidən azad sığorta payı) BMF-in 2026 rəsmi alqoritmi ilə hesablanır: pensiya payı + tibbi və qulluq sığortası; işsizlik sığortası yalnız tibbi/qulluq ilə birlikdə 1 900 € həddinə qədər.',
+        'III sinifdə splitting (gəlirin yarısına vergi × 2), II sinifdə tək valideyn güzəşti 4 260 €, V və VI siniflərdə rəsmi alqoritm (Programmablaufplan 2026) istifadə olunur.',
         'Həmrəylik əlavəsi yalnız gəlir vergisi ildə 20 350 €-nu (III sinifdə 40 700 €) keçdikdə tutulur. Uşaqlar üçün güzəşt yalnız həmrəylik əlavəsinə və kilsə vergisinə təsir edir.',
-        'Dövlət tibbi sığortasında olan işçi nəzərdə tutulur. Özəl sığorta, minijob/midijob, birdəfəlik ödənişlər, fərdi vergi güzəştləri və işəgötürənin payı hesablanmır.',
+        'Dövlət tibbi sığortasında olan işçi nəzərdə tutulur. Özəl sığorta, birdəfəlik ödənişlər, fərdi vergi güzəştləri və işəgötürənin payı hesablanmır.',
       ],
     },
     values: {
@@ -331,16 +331,16 @@ const de: Copy = {
       title: 'Dies ist eine Schätzung',
       text: 'Der Rechner ist keine Steuerberatung. Die echte Gehaltsabrechnung kann wegen individueller Freibeträge, der Krankenkasse, Einmalzahlungen und der Berechnung des Arbeitgebers abweichen.',
     },
-    midijob: 'Unter 2.000 € im Monat können Minijob-/Midijob-Regeln die Sozialabgaben senken — das berücksichtigt der Rechner nicht.',
+    midijob: 'Bis 603 € gilt der Minijob (nur 3,6 % Rentenbeitrag, Pauschalsteuer trägt der Arbeitgeber), von 603 bis 2.000 € der Übergangsbereich (Midijob): die Arbeitnehmerbeiträge werden aus einer reduzierten Bemessungsgrundlage berechnet. Für Auszubildende gelten diese Regeln nicht.',
     notes: {
       eyebrow: 'So rechnen wir',
       title: 'Vereinfachungen und verwendete Werte',
       items: [
         'Die Lohnsteuer folgt der Formel des §32a EStG für 2026 (Grundfreibetrag 12.348 €). Abgezogen werden Arbeitnehmer-Pauschbetrag (1.230 €) und Sonderausgaben-Pauschbetrag (36 €).',
-        'Die Vorsorgepauschale wird aus den eigenen Sozialbeiträgen des Arbeitnehmers näherungsweise berechnet.',
-        'Klasse III nutzt das Splittingverfahren, Klassen V und VI eine vereinfachte Form des amtlichen Programmablaufplans.',
+        'Die Vorsorgepauschale folgt dem amtlichen Programmablaufplan 2026: Rententeil + Kranken- und Pflegeteil; der Arbeitslosenteil zählt nur, soweit er zusammen mit Kranken- und Pflegeteil unter 1.900 € bleibt.',
+        'Klasse III nutzt das Splittingverfahren, Klasse II den Entlastungsbetrag für Alleinerziehende (4.260 €), Klassen V und VI den amtlichen Programmablaufplan 2026.',
         'Der Solidaritätszuschlag fällt erst an, wenn die Lohnsteuer 20.350 € im Jahr übersteigt (Klasse III: 40.700 €). Kinderfreibeträge wirken nur auf Soli und Kirchensteuer.',
-        'Angenommen wird ein gesetzlich versicherter Arbeitnehmer. Nicht berücksichtigt: private Krankenversicherung, Mini-/Midijob, Einmalzahlungen, individuelle Freibeträge, Arbeitgeberanteil.',
+        'Angenommen wird ein gesetzlich versicherter Arbeitnehmer. Nicht berücksichtigt: private Krankenversicherung, Einmalzahlungen, individuelle Freibeträge, Arbeitgeberanteil.',
       ],
     },
     values: {
@@ -598,16 +598,16 @@ const en: Copy = {
       title: 'This is an estimate',
       text: 'The calculator is not tax advice. Your real payslip can differ because of personal allowances, your health insurer, one-off payments and your employer\'s payroll calculation.',
     },
-    midijob: 'Below 2,000 € a month, mini-job / midi-job rules can lower social contributions — the calculator does not apply them.',
+    midijob: 'Up to 603 € the mini-job rules apply (only the 3.6 % pension share; the employer pays the flat-rate tax), from 603 to 2,000 € the transition zone (midi-job): employee contributions are taken from a reduced base. These rules do not apply to apprentices.',
     notes: {
       eyebrow: 'How we calculate',
       title: 'Simplifications and values used',
       items: [
         'Income tax follows the §32a EStG formula for 2026 (basic allowance 12,348 €). The employee lump sum (1,230 €) and the special-expenses lump sum (36 €) are deducted.',
-        'The Vorsorgepauschale (tax-free share for insurance) is approximated from the employee\'s own contributions.',
-        'Class III uses income splitting; classes V and VI use a simplified form of the official payroll-tax algorithm.',
+        'The Vorsorgepauschale (tax-free share for insurance) follows the official 2026 payroll-tax algorithm: pension part + health and care part; the unemployment part only counts while it stays, together with health and care, under 1,900 €.',
+        'Class III uses income splitting, class II the single-parent relief (4,260 €), classes V and VI the official 2026 payroll-tax algorithm.',
         'The solidarity surcharge only applies once income tax exceeds 20,350 € a year (class III: 40,700 €). Child allowances only affect the solidarity surcharge and church tax.',
-        'Assumes an employee in statutory health insurance. Not included: private health insurance, mini-/midi-jobs, one-off payments, personal allowances, the employer\'s share.',
+        'Assumes an employee in statutory health insurance. Not included: private health insurance, one-off payments, personal allowances, the employer\'s share.',
       ],
     },
     values: {
@@ -865,16 +865,16 @@ const ru: Copy = {
       title: 'Это примерный расчёт',
       text: 'Калькулятор не является налоговой консультацией. Реальный расчётный лист может отличаться из-за индивидуальных льгот, больничной кассы, разовых выплат и расчёта работодателя.',
     },
-    midijob: 'При зарплате ниже 2 000 € в месяц правила минижоба/мидижоба могут снизить соцвзносы — калькулятор их не учитывает.',
+    midijob: 'До 603 € действуют правила минижоба (только 3,6 % пенсионного взноса, паушальный налог платит работодатель), от 603 до 2 000 € — переходная зона (мидижоб): взносы работника считаются от уменьшенной базы. Для Ausbildung эти правила не действуют.',
     notes: {
       eyebrow: 'Как мы считаем',
       title: 'Упрощения и используемые значения',
       items: [
         'Подоходный налог рассчитывается по формуле §32a EStG на 2026 год (необлагаемый минимум 12 348 €). Вычитаются паушальные суммы работника (1 230 €) и особых расходов (36 €).',
-        'Vorsorgepauschale (необлагаемая доля страховых взносов) рассчитывается приблизительно по собственным взносам работника.',
-        'В классе III применяется сплиттинг, в классах V и VI — упрощённый вариант официального алгоритма.',
+        'Vorsorgepauschale (необлагаемая доля страховых взносов) считается по официальному алгоритму BMF 2026: пенсионная часть + медицинская и по уходу; часть по безработице учитывается, только пока вместе с ними не превышает 1 900 €.',
+        'В классе III применяется сплиттинг, в классе II — льгота для одиноких родителей (4 260 €), в классах V и VI — официальный алгоритм 2026 года.',
         'Налог солидарности взимается, только если подоходный налог превышает 20 350 € в год (класс III: 40 700 €). Детские вычеты влияют только на налог солидарности и церковный налог.',
-        'Предполагается работник с государственной медицинской страховкой. Не учитываются: частная страховка, минижоб/мидижоб, разовые выплаты, индивидуальные вычеты, доля работодателя.',
+        'Предполагается работник с государственной медицинской страховкой. Не учитываются: частная страховка, разовые выплаты, индивидуальные вычеты, доля работодателя.',
       ],
     },
     values: {

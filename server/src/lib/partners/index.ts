@@ -1,9 +1,11 @@
 import type { CaseStatus, VisaType } from '@prisma/client';
 import { prisma } from '../../db.js';
 import { FINAL_STATUSES } from '../caseFlow.js';
-import { buildXlsx } from '../xlsx.js';
+import { buildXlsxBook } from '../xlsx.js';
 import { syncCaseFolder } from '../drive/caseFolders.js';
 import { maskWith, type MaskGroup } from '../privacy/mask.js';
+import { profileRows } from './profile.js'; // second sheet: the partner's profile
+import { listFieldDefs } from './fieldDefs.js';
 import { effectiveStage, emptyStageCounts, isRefused, processingSummaries, PROCESSING_SELECT, type StageCounts } from '../caseProcessing/index.js';
 
 /**
@@ -144,9 +146,12 @@ export const PARTNER_EXPORT_HEADERS = [
   'Qərar tarixi',
 ];
 
-/** The partner's client list as an .xlsx workbook (for settling accounts). */
-export const buildPartnerWorkbook = async (partner: { id: string; name: string }, mask: Set<MaskGroup> = new Set()) => {
-  const cases = await partnerCases(partner.id);
+/**
+ * The partner's client list as an .xlsx workbook (for settling accounts), with the partner's profile
+ * (contacts, company, custom fields; bank data only with `canSeeBank`) on a second sheet.
+ */
+export const buildPartnerWorkbook = async (partner: { id: string; name: string }, mask: Set<MaskGroup> = new Set(), opts: { canSeeBank?: boolean } = {}) => {
+  const [cases, record, defs] = await Promise.all([partnerCases(partner.id), prisma.referralPartner.findUnique({ where: { id: partner.id } }), listFieldDefs()]);
   const rows = cases.map((c, i) => [
     i + 1,
     c.number,
@@ -163,5 +168,8 @@ export const buildPartnerWorkbook = async (partner: { id: string; name: string }
   ]);
   // Excel sheet names: max 31 chars, no []:*?/\
   const sheet = partner.name.replace(/[[\]:*?/\\]/g, ' ').slice(0, 31) || 'Partnyor';
-  return buildXlsx(sheet, PARTNER_EXPORT_HEADERS, rows, [5, 14, 16, 18, 14, 16, 18, 26, 26, 22, 14, 14]);
+  return buildXlsxBook([
+    { name: sheet, headers: PARTNER_EXPORT_HEADERS, rows, widths: [5, 14, 16, 18, 14, 16, 18, 26, 26, 22, 14, 14] },
+    ...(record ? [{ name: 'Profil', headers: ['Sahə', 'Dəyər'], rows: profileRows(record, defs, { mask, canSeeBank: !!opts.canSeeBank }), widths: [26, 60] }] : []),
+  ]);
 };

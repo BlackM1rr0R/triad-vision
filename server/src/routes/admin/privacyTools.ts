@@ -118,7 +118,7 @@ impersonationRouter.post('/:userId', requireMinRole('ADMIN'), startLimiter, asyn
 
 export const adminSensitiveRouter = Router();
 
-const REVEAL_ENTITIES = ['user', 'company', 'agent', 'invoiceSettings', 'document', 'insight', 'familyMember'] as const;
+const REVEAL_ENTITIES = ['user', 'company', 'agent', 'invoiceSettings', 'document', 'insight', 'familyMember', 'partner'] as const;
 type RevealEntity = (typeof REVEAL_ENTITIES)[number];
 
 const str = (v: unknown) => (typeof v === 'string' && v ? v : null);
@@ -132,7 +132,7 @@ const jsonField = (j: Prisma.JsonValue | null | undefined, field: string): strin
 };
 
 /** What can be revealed, who may reveal it (on top of STAFF+), and where the plaintext lives. */
-const REVEALERS: Record<RevealEntity, { fields: string[]; minRole: Role; load: (id: string, field: string) => Promise<{ found: boolean; value: string | null }> }> = {
+const REVEALERS: Record<RevealEntity, { fields: string[]; minRole: Role; fieldMinRole?: Record<string, Role>; load: (id: string, field: string) => Promise<{ found: boolean; value: string | null }> }> = {
   user: {
     fields: ['passportNumber'],
     minRole: 'STAFF',
@@ -182,6 +182,16 @@ const REVEALERS: Record<RevealEntity, { fields: string[]; minRole: Role; load: (
       return { found: !!m, value: m ? (field === 'birthPlace' ? m.birthPlace : m.passportNumber) : null };
     },
   },
+  partner: {
+    // Referral partner (ReferralPartner.id): the tax id for staff, bank data only for ADMIN+.
+    fields: ['taxId', 'iban', 'bic'],
+    minRole: 'STAFF',
+    fieldMinRole: { iban: 'ADMIN', bic: 'ADMIN' },
+    load: async (id, field) => {
+      const p = await prisma.referralPartner.findUnique({ where: { id }, select: { taxId: true, iban: true, bic: true } });
+      return { found: !!p, value: p ? (field === 'iban' ? p.iban : field === 'bic' ? p.bic : p.taxId) : null };
+    },
+  },
   insight: {
     fields: ['documentNumber'],
     minRole: 'STAFF',
@@ -205,7 +215,7 @@ adminSensitiveRouter.post('/reveal', revealLimiter, async (req, res) => {
   const body = parse(revealSchema, req.body ?? {});
   const spec = REVEALERS[body.entity];
   if (!spec.fields.includes(body.field)) throw badRequest('FIELD_NOT_REVEALABLE');
-  if (!hasMinRole(req.user!.role, spec.minRole)) throw forbidden();
+  if (!hasMinRole(req.user!.role, spec.fieldMinRole?.[body.field] ?? spec.minRole)) throw forbidden();
   const { found, value } = await spec.load(body.id, body.field);
   if (!found) throw notFound();
   const group = groupOfField(body.field);

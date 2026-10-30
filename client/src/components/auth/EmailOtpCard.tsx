@@ -11,6 +11,7 @@ import { useL10n } from '@/lib/l10n';
 import { Spinner } from '@/components/ui/Spinner';
 import { registerCopy } from '@/i18n';
 import { pagesLegal } from '@/i18n/pagesLegal';
+import { PasswordInput } from '@/components/ui/PasswordInput';
 
 registerCopy(pagesLegal);
 
@@ -146,9 +147,8 @@ export const EmailOtpCard = ({ className }: { className?: string }) => {
       <label className="label" htmlFor={`${uid}-pw`}>
         {k('password')}
       </label>
-      <input
+      <PasswordInput
         id={`${uid}-pw`}
-        type="password"
         className="input"
         autoComplete="current-password"
         maxLength={128}

@@ -13,6 +13,8 @@ import { Modal } from '@/components/admin/Modal';
 import { Spinner } from '@/components/ui/Spinner';
 import { PARTNERS_KEY, partnerError, useAssignPartner, usePartnerOptions, type Partner } from '@/components/partners/api';
 import { DeletePartnerDialog } from '@/components/partners/DeletePartnerDialog';
+import { PartnerFormDialog } from '@/components/partners/PartnerForm';
+import { PartnerKeyInfo } from '@/components/partners/PartnerProfile';
 import { useAuth } from '@/lib/auth';
 import { driveKeys, startDownload } from './api';
 import { sectionOf } from './fileIcons';
@@ -61,81 +63,22 @@ export const SectionHeader = ({ folder }: { folder: DriveItem }) => {
 
 // ─── Partner dialogs ───────────────────────────────────────────────────
 
-interface PartnerForm {
-  name: string;
-  phone: string;
-  email: string;
-  note: string;
-  active: boolean;
-}
-
-/** Create or edit a referral partner (the partner's folder is created / renamed by the server). */
+/**
+ * Create or edit a referral partner with the shared partner form (components/partners/PartnerForm: profile,
+ * bank data for admins, custom fields); the server creates / renames the partner's folder.
+ */
 export const PartnerDialog = ({ open, partner, onClose, onSaved }: { open: boolean; partner: Partner | null; onClose: () => void; onSaved?: (folderId: string | null) => void }) => {
-  const { t } = useTranslation();
   const refresh = useRefreshDrive();
-  const [f, setF] = useState<PartnerForm>({ name: '', phone: '', email: '', note: '', active: true });
-  useEffect(() => {
-    if (open) setF({ name: partner?.name ?? '', phone: partner?.phone ?? '', email: partner?.email ?? '', note: partner?.note ?? '', active: partner?.active ?? true });
-  }, [open, partner]);
-  const save = useMutation({
-    mutationFn: async () => {
-      const body = { name: f.name.trim(), phone: f.phone.trim(), email: f.email.trim(), note: f.note.trim(), active: f.active };
-      if (partner) return { folderId: null, ...(await api.patch(`/admin/partners/${partner.id}`, body)).data };
-      return (await api.post<{ folderId: string | null }>('/admin/partners', body)).data;
-    },
-    onSuccess: (data) => {
-      toast.success(t(partner ? 'drive.partner.saved' : 'drive.partner.created'));
-      refresh();
-      onSaved?.(data.folderId ?? null);
-      onClose();
-    },
-    onError: partnerError,
-  });
-  const field = (key: 'name' | 'phone' | 'email', type = 'text') => (
-    <label className="block text-sm">
-      <span className="mb-1 block text-xs font-semibold text-muted">{t(`drive.partner.${key}`)}</span>
-      <input type={type} value={f[key]} onChange={(e) => setF({ ...f, [key]: e.target.value })} className="input" maxLength={key === 'name' ? 120 : 191} required={key === 'name'} data-autofocus={key === 'name' || undefined} />
-    </label>
-  );
   return (
-    <Modal
+    <PartnerFormDialog
       open={open}
-      onClose={() => !save.isPending && onClose()}
-      size="sm"
-      title={t(partner ? 'drive.partner.editTitle' : 'drive.partner.newPartner')}
-      footer={
-        <>
-          <button type="button" className="btn-secondary btn-sm" onClick={onClose} disabled={save.isPending}>
-            {t('drive.partner.cancel')}
-          </button>
-          <button type="button" className="btn-primary btn-sm" disabled={!f.name.trim() || save.isPending} onClick={() => save.mutate()}>
-            {save.isPending && <Spinner className="size-3.5" />} {t('drive.partner.save')}
-          </button>
-        </>
-      }
-    >
-      <form
-        className="space-y-3"
-        onSubmit={(e) => {
-          e.preventDefault();
-          if (f.name.trim()) save.mutate();
-        }}
-      >
-        {field('name')}
-        <div className="grid gap-3 sm:grid-cols-2">
-          {field('phone', 'tel')}
-          {field('email', 'email')}
-        </div>
-        <label className="block text-sm">
-          <span className="mb-1 block text-xs font-semibold text-muted">{t('drive.partner.note')}</span>
-          <textarea value={f.note} onChange={(e) => setF({ ...f, note: e.target.value })} className="input min-h-20" maxLength={5000} />
-        </label>
-        <label className="flex items-center gap-2 text-sm text-ink">
-          <input type="checkbox" className="size-4 accent-brand-600" checked={f.active} onChange={(e) => setF({ ...f, active: e.target.checked })} />
-          {t('drive.partner.isActive')}
-        </label>
-      </form>
-    </Modal>
+      partner={partner}
+      onClose={onClose}
+      onSaved={(r) => {
+        refresh();
+        onSaved?.(r.folderId);
+      }}
+    />
   );
 };
 
@@ -258,7 +201,8 @@ const Count = ({ icon: Icon, label }: { icon: typeof Users; label: string }) => 
 
 /**
  * "Partner" section: one card per referral partner with counts and actions (new, edit, assign clients,
- * open the partner's folder). The folders themselves are listed below as usual.
+ * open the partner's folder). In the Drive's partner section these cards replace the partner folder tiles (the
+ * listing below them shows only other items kept there); `items` is the unfiltered listing of the section.
  */
 export const PartnersOverview = ({ items, onOpen }: { items: DriveItem[]; onOpen: (folderId: string) => void }) => {
   const { t } = useTranslation();
@@ -283,10 +227,11 @@ export const PartnersOverview = ({ items, onOpen }: { items: DriveItem[]; onOpen
     onError: partnerError,
   });
   return (
-    <div className="border-b border-line px-3 py-3 sm:px-4">
-      <div className="mb-2 flex items-center gap-2">
+    <div className="border-b border-line px-3 py-3 sm:px-5 sm:py-4">
+      <div className="mb-3 flex items-center gap-2">
         <Handshake className="size-4 text-teal-600" />
         <h2 className="text-sm font-bold text-ink">{t('drive.partner.label')}</h2>
+        {!!partners.data?.length && <span className="rounded-full bg-surface px-2 py-px text-xs font-semibold text-muted">{partners.data.length}</span>}
         <button type="button" className="btn-primary btn-sm ml-auto !rounded-lg" onClick={() => setEdit({ partner: null })}>
           <Plus className="size-4" /> {t('drive.partner.newPartner')}
         </button>
@@ -295,8 +240,14 @@ export const PartnersOverview = ({ items, onOpen }: { items: DriveItem[]; onOpen
         <div className="grid place-items-center py-4">
           <Spinner />
         </div>
+      ) : !partners.data?.length ? (
+        <div className="rounded-xl border border-dashed border-line px-4 py-8 text-center">
+          <FolderOpen className="mx-auto size-9 text-muted" strokeWidth={1.4} aria-hidden />
+          <p className="mt-2 text-sm font-bold text-ink">{t('drive.shared.emptyPartners')}</p>
+          <p className="mx-auto mt-1 max-w-md text-sm text-muted">{t('drive.shared.emptyPartnersHint')}</p>
+        </div>
       ) : (
-        <div className="grid grid-cols-[repeat(auto-fill,minmax(15rem,1fr))] gap-2">
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(15rem,1fr))] gap-3">
           {(partners.data ?? []).map((p) => {
             const folderId = folderOf(p);
             const creating = ensureFolder.isPending && ensureFolder.variables?.id === p.id;
@@ -312,6 +263,7 @@ export const PartnersOverview = ({ items, onOpen }: { items: DriveItem[]; onOpen
                   </div>
                   {!p.active && <span className="shrink-0 rounded bg-surface px-1.5 py-px text-[10px] font-semibold text-muted">{t('drive.partner.inactive')}</span>}
                 </div>
+                <PartnerKeyInfo partner={p} className="mt-1.5" />
                 <div className="mt-2 flex flex-wrap gap-1">
                   <Count icon={Users} label={t('drive.partner.clients', { count: p.counts?.clients ?? 0 })} />
                   <Count icon={Briefcase} label={t('drive.partner.active', { count: p.counts?.activeCases ?? 0 })} />

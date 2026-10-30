@@ -251,7 +251,7 @@ export default function ServiceDetail() {
               <span className="eyebrow">{t('serviceDetail.relatedVisas.eyebrow')}</span>
               <h2 className="h-section mt-2 text-ink">{t('serviceDetail.relatedVisas.title')}</h2>
             </div>
-            <Stagger className="grid-cards sm:grid-cols-2 lg:grid-cols-3">
+            <Stagger className="grid-cards cards-balanced sm:[--cols:2] lg:[--cols:3]">
               {visas.map((v) => (
                 <StaggerItem key={v.id}>
                   <VisaCard visa={v} />
@@ -266,7 +266,7 @@ export default function ServiceDetail() {
         <section className="section bg-sunken">
           <div className="container-x">
             <h2 className="h-section section-head text-ink">{t('serviceDetail.others')}</h2>
-            <div className="mobile-rail sm:grid-cols-2 sm:gap-5 lg:grid-cols-4 lg:gap-6">
+            <div className="mobile-rail cards-balanced sm:[--cols:2] lg:[--cols:4]">
               {others.map((s) => (
                 <ServiceCard key={s.id} service={s} index={all.indexOf(s)} />
               ))}

@@ -15,6 +15,7 @@ import type { CaseRef, MailAccount, MailLabel, MailProvider, MailRule, MailTempl
 import { PROVIDERS } from './types';
 import { errorText } from './utils';
 import { MailboxSecurityTab, useMyMailboxes } from './MailboxSecurity';
+import { PasswordInput } from '@/components/ui/PasswordInput';
 
 export type SettingsTab = 'accounts' | 'signatures' | 'labels' | 'rules' | 'templates' | 'security';
 const TABS: SettingsTab[] = ['accounts', 'signatures', 'labels', 'rules', 'templates'];
@@ -211,7 +212,7 @@ const AccountDialog = ({ open, onClose, account }: { open: boolean; onClose: () 
           <input type="email" value={form.email} onChange={(e) => onEmail(e.target.value)} className="input" autoComplete="off" inputMode="email" spellCheck={false} data-autofocus />
         </Field>
         <Field label={t('mail.settings.accounts.password')} hint={account ? t('mail.settings.accounts.passwordKeep') : undefined}>
-          <input type="password" value={form.password} onChange={(e) => set({ password: e.target.value })} className="input" autoComplete="new-password" />
+          <PasswordInput value={form.password} onChange={(e) => set({ password: e.target.value })} className="input" autoComplete="new-password" />
         </Field>
         <div className="sm:col-span-2 space-y-1.5 rounded-lg border border-line bg-sunken px-3 py-2 text-xs text-muted" aria-live="polite">
           {detecting ? (

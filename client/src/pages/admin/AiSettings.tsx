@@ -15,6 +15,7 @@ import { BriefingSettings } from '@/components/aiStaff/BriefingSettings';
 import { AdminPublicAdvisor } from '@/components/publicAi/AdminPublicAdvisor';
 import { PrivacySetting } from '@/components/aiMgmt/PrivacySetting';
 import { UploadAiSettingsPanel } from '@/components/uploadAi/UploadAiSettings';
+import { PasswordInput } from '@/components/ui/PasswordInput';
 
 registerCopy(pagesAi);
 registerCopy(pagesAiDocs);
@@ -45,6 +46,8 @@ interface Usage {
   days: { date: string; clientUsd: number; adminUsd: number; messages: number }[];
   byScope: Record<Scope, { costUsd: number; messages: number; tokensIn: number; tokensOut: number }>;
   topUsers: { userId: string; name: string; email: string | null; role: string | null; scope: Scope; costUsd: number; messages: number }[];
+  /** Client assistant counts only (no content): distinct clients who asked, questions forwarded to a manager. */
+  client?: { activeUsers: number; handovers: number };
   month: { spentUsd: number; budgetUsd: number };
   key: { limitUsd: number | null; remainingUsd: number | null; usageUsd: number; usageMonthlyUsd: number | null } | null;
 }
@@ -138,7 +141,10 @@ export default function AdminAiSettings() {
           icon={KeyRound}
           className="bg-card"
         />
-        <StatTile label={`${t('ai.settings.client')} · ${t('ai.settings.cost')}`} value={usd(usage?.byScope.CLIENT.costUsd)} hint={`${usage?.byScope.CLIENT.messages ?? 0} ${t('ai.settings.messages').toLowerCase()}`} icon={Coins} className="bg-card" />
+        <StatTile label={`${t('ai.settings.client')} · ${t('ai.settings.cost')}`} value={usd(usage?.byScope.CLIENT.costUsd)} hint={[
+            `${usage?.byScope.CLIENT.messages ?? 0} ${t('ai.settings.messages').toLowerCase()}`,
+            ...(usage?.client ? [`${usage.client.activeUsers} ${t('ai.settings.activeClients')}`, `${usage.client.handovers} ${t('ai.settings.handovers')}`] : []),
+          ].join(' · ')} icon={Coins} className="bg-card" />
         <StatTile label={`${t('ai.settings.admin')} · ${t('ai.settings.cost')}`} value={usd(usage?.byScope.ADMIN.costUsd)} hint={`${usage?.byScope.ADMIN.messages ?? 0} ${t('ai.settings.messages').toLowerCase()}`} icon={Coins} className="bg-card" />
       </div>
 
@@ -179,7 +185,7 @@ export default function AdminAiSettings() {
                 <span className="text-xs font-semibold text-ink">
                   {t('ai.settings.apiKey')} <span className="font-normal text-muted">· {t(`ai.settings.keySource.${form.keySource}`)}</span>
                 </span>
-                <input type="password" autoComplete="off" className="input mt-1" value={apiKey} placeholder={t('ai.settings.apiKeyPlaceholder')} onChange={(e) => setApiKey(e.target.value)} />
+                <PasswordInput autoComplete="off" wrapperClassName="mt-1" value={apiKey} placeholder={t('ai.settings.apiKeyPlaceholder')} onChange={(e) => setApiKey(e.target.value)} />
               </label>
               <p className="mt-1 text-[11px] text-muted">{t('ai.settings.apiKeyHint')}</p>
               {form.keySource === 'settings' && (

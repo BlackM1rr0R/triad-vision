@@ -12,6 +12,7 @@ import { Modal } from '@/components/admin/Modal';
 import { EmptyState, LoadingBlock, PageHead } from '@/components/admin/ui';
 import { fmtDate } from '@/components/admin/labels';
 import { AutoReplyForm, ClientSettingsTable, Field, SecretOnce, mailboxErrorText, passwordOk, toastMailboxError, type AutoReply, type ServerSettings } from '@/components/mailboxes/shared';
+import { PasswordInput } from '@/components/ui/PasswordInput';
 
 registerCopy(pagesMailAdmin);
 
@@ -242,7 +243,7 @@ const CreateDialog = ({ open, onClose, domain }: { open: boolean; onClose: () =>
             <input id={`${id}-dn`} className="input" maxLength={120} value={form.displayName} onChange={(e) => setForm((f) => ({ ...f, displayName: e.target.value }))} />
           </Field>
           <Field label={t('mailAdmin.form.password')} hint={t('mailAdmin.form.passwordHint')} htmlFor={`${id}-pw`}>
-            <input id={`${id}-pw`} type="password" className={clsx('input', !pwOk && 'border-danger')} autoComplete="new-password" maxLength={128} value={form.password} onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))} />
+            <PasswordInput id={`${id}-pw`} className={clsx('input', !pwOk && 'border-danger')} autoComplete="new-password" maxLength={128} value={form.password} onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))} />
           </Field>
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label={t('mailAdmin.form.quota')} hint={t('mailAdmin.form.quotaHint')} htmlFor={`${id}-q`}>
@@ -385,7 +386,7 @@ const ResetDialog = ({ mailbox, onClose }: { mailbox: Mailbox | null; onClose: (
           >
             <p className="text-ink/80">{t('mailAdmin.reset.body', { address: mailbox.address })}</p>
             <Field label={t('mailAdmin.reset.own')} hint={t('mailAdmin.security.policy')} htmlFor={`${id}-pw`}>
-              <input id={`${id}-pw`} type="password" autoComplete="new-password" maxLength={128} className={clsx('input', !ok && 'border-danger')} value={own} onChange={(e) => setOwn(e.target.value)} />
+              <PasswordInput id={`${id}-pw`} autoComplete="new-password" maxLength={128} className={clsx('input', !ok && 'border-danger')} value={own} onChange={(e) => setOwn(e.target.value)} />
             </Field>
           </form>
         ))}

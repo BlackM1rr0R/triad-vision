@@ -23,6 +23,7 @@ import { DuplicateChip, useOpenDuplicateIds } from '@/components/duplicates/Dupl
 import { ViewAsClientButton } from '@/components/privacyTools/ViewAsClientButton';
 import { useNewParam } from '@/components/command/useNewParam'; // ?new=1 deep link (Ctrl+K palette)
 import { usePartnerOptions } from '@/components/partners/api';
+import { PasswordInput } from '@/components/ui/PasswordInput';
 import { ClientOwnerDialog } from '@/components/partners/Ownership'; // partner-owned clients: badge, filter, owner change
 registerCopy(pagesMailAdmin); // "Create mailbox" option of the new-staff dialog
 
@@ -201,9 +202,8 @@ const CreateUserModal = ({ open, onClose }: { open: boolean; onClose: () => void
           <label className="label" htmlFor="cu-pass">
             {t('admin.users.password')}
           </label>
-          <input
+          <PasswordInput
             id="cu-pass"
-            type="password"
             className={clsx('input', f.password && !passwordOk && 'border-danger')}
             required
             minLength={PASSWORD_MIN}
@@ -299,9 +299,8 @@ const ResetPasswordModal = ({ user, onClose }: { user: AdminUser | null; onClose
         <label className="label" htmlFor="rp-pass">
           {t('admin.users.newPassword')}
         </label>
-        <input
+        <PasswordInput
           id="rp-pass"
-          type="password"
           className={clsx('input', password && !ok && 'border-danger')}
           minLength={PASSWORD_MIN}
           maxLength={PASSWORD_MAX}

@@ -156,7 +156,7 @@ export default function Visas() {
             })}
           </p>
           {isLoading ? (
-            <SkeletonGrid count={6} media mediaClassName="aspect-[16/11]" lines={3} className="grid-cards sm:grid-cols-2 lg:grid-cols-3" />
+            <SkeletonGrid count={6} media mediaClassName="aspect-[16/11]" lines={3} className="grid-cards cards-balanced sm:[--cols:2] lg:[--cols:3]" />
           ) : shown.length === 0 ? (
             <div className="rounded-3xl border border-line bg-card">
               <EmptyState
@@ -171,7 +171,7 @@ export default function Visas() {
               />
             </div>
           ) : (
-            <Stagger key={`${filter}-${sort}`} className="grid-cards sm:grid-cols-2 lg:grid-cols-3">
+            <Stagger key={`${filter}-${sort}`} className="grid-cards cards-balanced sm:[--cols:2] lg:[--cols:3]">
               {shown.map((v) => (
                 <StaggerItem key={v.id}>
                   <VisaCard visa={v} />

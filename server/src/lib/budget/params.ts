@@ -9,8 +9,11 @@
  *    RVSATZAN 0.093, AVSATZAN 0.013, KVSATZAN = KVZ/2/100 + 0.07, PVSATZAN 0.018 (Saxony 0.023) + 0.006
  *    childless − 0.0025 per reduction child; MZTABFB: ANP 1,230 €, SAP 36 €, KFB 9,756 € (4,878 € in class IV),
  *    UPTAB26 tariff (§32a EStG 2026), UPEVP / MVSPHB (Vorsorgepauschale incl. the new 2026 unemployment
- *    insurance part, capped together with health + care at 1,900 €). Its "Prüftabelle" (page 39) is the
- *    reference table the unit tests check against.
+ *    insurance part, capped together with health + care at 1,900 €), EFA 4,260 € (class II), MST5_6 with W1STKL5 14,071 €,
+ *    W2STKL5 34,939 €, W3STKL5 222,260 € (classes V / VI). Its "Prüftabelle" (page 39) is the reference
+ *    table the unit tests check against.
+ *  - Minijob limit 2026: 603 €/month (minimum wage 13.90 € × 130 / 3, §8 Abs. 1a SGB IV); Übergangsbereich
+ *    603.01 – 2,000 € (§20 Abs. 2 SGB IV), employee base 2,000 / (2,000 − 603) × (gross − 603).
  *  - Sozialversicherungsrechengrößen-Verordnung 2026: BBG pension/unemployment 8,450 €/month,
  *    health/care 5,812.50 €/month.
  *  - BMG, average Zusatzbeitrag 2026 (§242a SGB V): 2.9 % (individual funds charge more or less).
@@ -54,6 +57,10 @@ export interface PayrollParams {
     /** Freibeträge für Kinder per child (both parents) / half (one parent). */
     kfbFull: number;
     kfbHalf: number;
+    /** Entlastungsbetrag für Alleinerziehende in class II (PAP MZTABFB: EFA; the +240 € per further child is an ELStAM Freibetrag, not in the PAP). */
+    efa: number;
+    /** Classes V / VI (PAP MST5_6): W1STKL5, W2STKL5, W3STKL5. */
+    class56: { w1: number; w2: number; w3: number };
   };
   soli: { rate: number; freigrenze: number; milderung: number };
   church: { low: number; default: number; lowStates: readonly FederalState[] };
@@ -79,8 +86,12 @@ export interface PayrollParams {
     /** Höchstbetrag of health + care + unemployment inside the Vorsorgepauschale (§39b Abs. 2 S. 5 Nr. 3 e EStG). */
     vspCap: number;
   };
-  /** Gross per month up to which the Übergangsbereich (Midijob) applies — not modelled, only flagged. */
+  /** Gross per month up to which the Übergangsbereich (Midijob, §20 Abs. 2 SGB IV) applies. */
   midijobUpTo: number;
+  /** Geringfügigkeitsgrenze (Minijob, §8 Abs. 1a SGB IV): 130 h × minimum wage / 3, rounded up. */
+  minijobUpTo: number;
+  /** Employee pension share in a Minijob (18.6 % − the employer's 15 % flat rate) unless exempted. */
+  minijobPensionEmployee: number;
 }
 
 export interface CostParams {
@@ -140,6 +151,8 @@ export const BUDGET_PARAMS_2026: BudgetParams = {
       sap: 36,
       kfbFull: 9_756,
       kfbHalf: 4_878,
+      efa: 4_260,
+      class56: { w1: 14_071, w2: 34_939, w3: 222_260 },
     },
     soli: { rate: 0.055, freigrenze: 20_350, milderung: 0.119 },
     church: { low: 0.08, default: 0.09, lowStates: ['BY', 'BW'] },
@@ -160,6 +173,8 @@ export const BUDGET_PARAMS_2026: BudgetParams = {
       vspCap: 1_900,
     },
     midijobUpTo: 2_000,
+    minijobUpTo: 603,
+    minijobPensionEmployee: 0.036,
   },
   costs: {
     deutschlandticket: 63,

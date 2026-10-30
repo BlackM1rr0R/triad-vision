@@ -10,6 +10,7 @@ import { pagesMailAdmin } from '@/i18n/pagesMailAdmin';
 import { Spinner } from '@/components/ui/Spinner';
 import { AutoReplyForm, Field, passwordOk, toastMailboxError, type AutoReply } from '@/components/mailboxes/shared';
 import { mailKeys } from './api';
+import { PasswordInput } from '@/components/ui/PasswordInput';
 
 registerCopy(pagesMailAdmin);
 
@@ -77,14 +78,14 @@ const ChangePassword = ({ mailbox }: { mailbox: MyMailbox }) => {
       {/* Lets password managers attach the new password to the right account. */}
       <input type="email" name="username" autoComplete="username" value={mailbox.address} readOnly hidden />
       <Field label={t('mailAdmin.security.current')} htmlFor={`${id}-c`}>
-        <input id={`${id}-c`} type="password" className="input" autoComplete="current-password" maxLength={256} value={form.current} onChange={(e) => setForm((f) => ({ ...f, current: e.target.value }))} />
+        <PasswordInput id={`${id}-c`} className="input" autoComplete="current-password" maxLength={256} value={form.current} onChange={(e) => setForm((f) => ({ ...f, current: e.target.value }))} />
       </Field>
       <div className="grid gap-3 sm:grid-cols-2">
         <Field label={t('mailAdmin.security.next')} hint={weak ? <span className="text-danger-fg">{t('mailAdmin.security.weak')}</span> : t('mailAdmin.security.policy')} htmlFor={`${id}-n`}>
-          <input id={`${id}-n`} type="password" className={clsx('input', weak && 'border-danger')} autoComplete="new-password" maxLength={128} value={form.next} onChange={(e) => setForm((f) => ({ ...f, next: e.target.value }))} />
+          <PasswordInput id={`${id}-n`} className={clsx('input', weak && 'border-danger')} autoComplete="new-password" maxLength={128} value={form.next} onChange={(e) => setForm((f) => ({ ...f, next: e.target.value }))} />
         </Field>
         <Field label={t('mailAdmin.security.repeat')} hint={mismatch ? <span className="text-danger-fg">{t('mailAdmin.security.mismatch')}</span> : undefined} htmlFor={`${id}-r`}>
-          <input id={`${id}-r`} type="password" className={clsx('input', mismatch && 'border-danger')} autoComplete="new-password" maxLength={128} value={form.repeat} onChange={(e) => setForm((f) => ({ ...f, repeat: e.target.value }))} />
+          <PasswordInput id={`${id}-r`} className={clsx('input', mismatch && 'border-danger')} autoComplete="new-password" maxLength={128} value={form.repeat} onChange={(e) => setForm((f) => ({ ...f, repeat: e.target.value }))} />
         </Field>
       </div>
       <div className="flex justify-end">

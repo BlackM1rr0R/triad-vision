@@ -15,6 +15,7 @@ import { fmtDateTime, toastError } from '@/components/admin/labels';
 import { Badge } from '@/components/ui/Badge';
 import { Checkbox, Field, Input } from '@/components/ui/Field';
 import { Spinner } from '@/components/ui/Spinner';
+import { PasswordInput } from '@/components/ui/PasswordInput';
 import { CHANNELS, STATUS_TONE, type BaView, type ChannelStatus, type FeedsOverview } from '@/components/jobFeeds/types';
 import { useErrorLabel } from '@/components/jobFeeds/VacancyDistributionPanel';
 import type { L10n } from '@/lib/types';
@@ -164,7 +165,7 @@ const BaPanel = ({ ba }: { ba: BaView }) => {
             />
           </Field>
           <Field label={t('jobFeeds.ba.passphrase')} hint={ba.hasPassphrase ? t('jobFeeds.ba.passphraseSet') : undefined}>
-            <Input type="password" autoComplete="new-password" maxLength={200} value={form.passphrase} onChange={(e) => setForm({ ...form, passphrase: e.target.value })} />
+            <PasswordInput autoComplete="new-password" maxLength={200} value={form.passphrase} onChange={(e) => setForm({ ...form, passphrase: e.target.value })} />
           </Field>
           <div className="flex flex-wrap items-center gap-2 sm:col-span-2">
             <button type="submit" className="btn-primary btn-sm" disabled={put.isPending}>

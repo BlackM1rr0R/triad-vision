@@ -1,6 +1,6 @@
-import { Router } from 'express';
+import { Router, type Request } from 'express';
 import { z } from 'zod';
-import type { Prisma } from '@prisma/client';
+import { Prisma, type ReferralPartner } from '@prisma/client';
 import { prisma } from '../../db.js';
 import { hasMinRole, requireMinRole } from '../../middleware/auth.js';
 import { HttpError, badRequest, conflict, forbidden, notFound, parse } from '../../lib/http.js';
@@ -16,6 +16,21 @@ import { assignCases, deletePartner } from '../../lib/partners/manage.js';
 import { partnerLoginRouter, partnerLoginView } from '../../lib/partners/adminLoginRoutes.js';
 import { partnerCommissionsRouter } from '../../lib/partners/adminCommissionRoutes.js';
 import { requestMaskGroups } from '../../lib/privacy/mask.js';
+import { partnerFieldsRouter, listFieldDefs } from '../../lib/partners/adminFieldRoutes.js'; // admin-defined form fields
+import {
+  BANK_FIELDS,
+  CustomFieldError,
+  contractDatesInvalid,
+  customDataOf,
+  dayToDate,
+  extraFieldsOf,
+  mergeCustomData,
+  partnerProfileShape,
+  partnerView,
+  profileChanges,
+  stripMaskedProfileInput,
+  tagsOf,
+} from '../../lib/partners/profile.js';
 
 /**
  * Referral partners (middlemen who bring visa clients) — /api/admin/partners.
@@ -58,7 +73,79 @@ const partnerBody = z.object({
     .optional(),
   commissionTrigger: z.enum(PARTNER_COMMISSION_TRIGGERS).optional(),
   visibility: z.enum(PARTNER_VISIBILITY).optional(),
+  // Type, company, contacts, address, tax id, bank (ADMIN+), contract, language, website, tags, custom fields.
+  ...partnerProfileShape,
 });
+type PartnerBody = Partial<z.infer<typeof partnerBody>>;
+
+const canSeeBank = (req: Request) => hasMinRole(req.user!.role, 'ADMIN');
+const view = (req: Request, p: ReferralPartner) => partnerView(p, { canSeeBank: canSeeBank(req) });
+
+/**
+ * The columns written for a create / update: profile days as dates, JSON columns (tags, extra fields,
+ * custom data — the latter validated against the admin-defined fields) and everything else as sent.
+ */
+const partnerData = async (body: PartnerBody, current: ReferralPartner | null) => {
+  const { customData, contractStart, contractEnd, tags, extraFields, ...rest } = body;
+  if (contractDatesInvalid(contractStart !== undefined ? contractStart : current?.contractStart, contractEnd !== undefined ? contractEnd : current?.contractEnd))
+    throw badRequest('CONTRACT_DATES_INVALID');
+  const defs = customData !== undefined ? await listFieldDefs() : [];
+  let merged: ReturnType<typeof mergeCustomData> | undefined;
+  if (customData !== undefined) {
+    try {
+      merged = mergeCustomData(defs, current?.customData, customData);
+    } catch (e) {
+      if (e instanceof CustomFieldError) throw badRequest('INVALID_CUSTOM_FIELD', defs.find((d) => d.id === e.field)?.label ?? e.field);
+      throw e;
+    }
+  }
+  const json = (v: unknown) => (v === null ? Prisma.DbNull : (v as Prisma.InputJsonValue));
+  const data = {
+    ...rest,
+    ...(contractStart !== undefined ? { contractStart: dayToDate(contractStart) } : {}),
+    ...(contractEnd !== undefined ? { contractEnd: dayToDate(contractEnd) } : {}),
+    ...(tags !== undefined ? { tags: json(tags?.length ? tags : null) } : {}),
+    ...(extraFields !== undefined ? { extraFields: json(extraFields?.length ? extraFields : null) } : {}),
+    ...(merged !== undefined ? { customData: json(merged) } : {}),
+  };
+  // The same values in plain form for the audit diff (field names only for bank data).
+  const plain: Record<string, unknown> = {
+    ...rest,
+    ...(contractStart !== undefined ? { contractStart: contractStart ?? null } : {}),
+    ...(contractEnd !== undefined ? { contractEnd: contractEnd ?? null } : {}),
+    ...(tags !== undefined ? { tags: tags?.length ? tags : null } : {}),
+    ...(extraFields !== undefined ? { extraFields: extraFields?.length ? extraFields : null } : {}),
+    ...(merged !== undefined ? { customData: merged } : {}),
+  };
+  return { data, plain, labels: new Map(defs.map((d) => [d.id, d.label])) };
+};
+
+/** Bank data is ADMIN+ only: staff may not set or change it (masked values were already dropped). */
+const assertBankAllowed = (req: Request, body: PartnerBody, current: ReferralPartner | null) => {
+  if (canSeeBank(req)) return;
+  const touched = BANK_FIELDS.some((k) => body[k] !== undefined && (body[k] ?? null) !== (current?.[k] ?? null));
+  if (touched) throw forbidden('ADMIN_REQUIRED');
+};
+
+/** Search over the JSON columns (tags, custom and extra field values) — the partner table is small. */
+const jsonSearchIds = async (needle: string) => {
+  const n = needle.toLocaleLowerCase();
+  const rows = await prisma.referralPartner.findMany({ select: { id: true, tags: true, customData: true, extraFields: true } });
+  return rows
+    .filter((r) =>
+      [
+        ...tagsOf(r.tags),
+        ...Object.values(customDataOf(r.customData))
+          .filter((v) => typeof v !== 'boolean')
+          .map(String),
+        ...extraFieldsOf(r.extraFields).flatMap((f) => [f.label, f.value]),
+      ].some((s) => s.toLocaleLowerCase().includes(n)),
+    )
+    .map((r) => r.id);
+};
+
+/** Text columns the partner search looks in (besides tags and custom / extra field values). */
+const SEARCH_COLUMNS = ['name', 'phone', 'email', 'companyName', 'contactPerson', 'phone2', 'whatsapp', 'city', 'country', 'address', 'taxId', 'website', 'code'] as const;
 
 /** Codes are unique across partners, agents and client "bring a friend" codes. */
 const assertCodeFree = async (code: string | null | undefined, exceptId?: string) => {
@@ -79,16 +166,15 @@ adminPartnersRouter.get('/', async (req, res) => {
     }),
     req.query,
   );
+  const search = q.search;
   const where: Prisma.ReferralPartnerWhereInput = {
     ...(q.active !== 'all' ? { active: q.active === 'true' } : {}),
-    ...(q.search
-      ? { OR: [{ name: { contains: q.search } }, { phone: { contains: q.search } }, { email: { contains: q.search } }] }
-      : {}),
+    ...(search ? { OR: [...SEARCH_COLUMNS.map((k) => ({ [k]: { contains: search } })), { id: { in: await jsonSearchIds(search) } }] } : {}),
   };
   const partners = await prisma.referralPartner.findMany({ where, orderBy: [{ active: 'desc' }, { name: 'asc' }] });
   const [counts, totals, folders] = await Promise.all([partnerCounts(partners.map((p) => p.id)), partnerCommissionTotals(partners.map((p) => p.id)), partnerFolderIds(partners)]);
   // folderId: the partner's live folder below "Partner" (null when it was deleted in the drive — the card offers to recreate it).
-  res.json({ items: partners.map((p) => ({ ...p, counts: counts.get(p.id), commissionTotals: totals.get(p.id), folderId: folders.get(p.id) ?? null })) });
+  res.json({ items: partners.map((p) => ({ ...view(req, p), counts: counts.get(p.id), commissionTotals: totals.get(p.id), folderId: folders.get(p.id) ?? null })) });
 });
 
 /**
@@ -140,6 +226,7 @@ adminPartnersRouter.patch('/clients/:userId/owner', requireMinRole('ADMIN'), asy
 // Commissions (all partners) and portal logins live in their own routers; mounted before "/:id".
 adminPartnersRouter.use('/commissions', partnerCommissionsRouter);
 adminPartnersRouter.use('/', partnerLoginRouter);
+adminPartnersRouter.use('/', partnerFieldsRouter); // GET/POST/PATCH/DELETE /fields, PUT /fields/order
 
 /**
  * GET /refusals — visa refusals ("Ablehnung") per partner or per employer company: cases, visas, refusals,
@@ -199,7 +286,7 @@ adminPartnersRouter.get('/:id', async (req, res) => {
   ]);
   res.json({
     partner: {
-      ...partner,
+      ...view(req, partner),
       ...(partner.code ? partnerLinks(partner.code) : { shareLink: null, shortLink: null }),
       counts: counts.get(partner.id),
       commissionTotals: totals.get(partner.id),
@@ -219,7 +306,7 @@ adminPartnersRouter.post('/:id/code', requireMinRole('ADMIN'), async (req, res) 
   const code = await suggestPartnerCode(current.name, current.id);
   const partner = await prisma.referralPartner.update({ where: { id: current.id }, data: { code } });
   await audit(req, 'PARTNER_CODE_GENERATED', partner.id, { from: current.code, to: code });
-  res.json({ partner: { ...partner, ...partnerLinks(code) } });
+  res.json({ partner: { ...view(req, partner), ...partnerLinks(code) } });
 });
 
 /**
@@ -243,7 +330,7 @@ adminPartnersRouter.post('/:id/folder', async (req, res) => {
 adminPartnersRouter.get('/:id/export.xlsx', async (req, res) => {
   const partner = await prisma.referralPartner.findUnique({ where: { id: String(req.params.id) }, select: { id: true, name: true } });
   if (!partner) throw notFound('PARTNER_NOT_FOUND');
-  const data = await buildPartnerWorkbook(partner, requestMaskGroups(res)); // masked for STAFF per settings
+  const data = await buildPartnerWorkbook(partner, requestMaskGroups(res), { canSeeBank: canSeeBank(req) }); // masked for STAFF per settings
   await audit(req, 'PARTNER_EXPORTED', partner.id, { format: 'xlsx' });
   const ascii = partner.name.normalize('NFKD').replace(/[^\w.-]+/g, '-').replace(/^-+|-+$/g, '') || 'partner';
   res.setHeader('Content-Type', XLSX_MIME);
@@ -255,13 +342,18 @@ adminPartnersRouter.get('/:id/export.xlsx', async (req, res) => {
 });
 
 adminPartnersRouter.post('/', async (req, res) => {
-  const body = parse(partnerBody, req.body);
+  const body = parse(partnerBody, stripMaskedProfileInput(req.body));
   await assertNameFree(body.name);
   // Code, commission rule and visibility decide ownership, money and data access: ADMIN and above.
   if ((body.code || body.commissionTrigger || body.visibility) && !hasMinRole(req.user!.role, 'ADMIN')) throw forbidden('ADMIN_REQUIRED');
+  assertBankAllowed(req, body, null);
   await assertCodeFree(body.code);
+  // Profile fields; the basic ones are set explicitly below.
+  const { name: _n, code: _c, commissionTrigger: _t, visibility: _v, phone: _p, email: _e, note: _no, active: _a, commissionCents: _cc, currency: _cu, ...profileBody } = body;
+  const { data: profile } = await partnerData(profileBody, null);
   const partner = await prisma.referralPartner.create({
     data: {
+      ...profile,
       name: body.name,
       // Every new partner gets a sign-up code right away (editable later).
       code: body.code ?? (await suggestPartnerCode(body.name)),
@@ -275,14 +367,15 @@ adminPartnersRouter.post('/', async (req, res) => {
       ...(body.currency ? { currency: body.currency } : {}),
     },
   });
-  await audit(req, 'PARTNER_CREATED', partner.id, { name: partner.name });
+  // Field names only: bank data and custom values are not repeated in the audit log.
+  await audit(req, 'PARTNER_CREATED', partner.id, { name: partner.name, fields: Object.entries(body).filter(([, v]) => v != null).map(([k]) => k) });
   // The partner's folder in "Gemeinsame Dokumente/Partner" exists from the start, even without clients.
   const folderId = await syncPartnerFolder(partner.id);
-  res.status(201).json({ partner, folderId });
+  res.status(201).json({ partner: view(req, partner), folderId });
 });
 
 adminPartnersRouter.patch('/:id', async (req, res) => {
-  const body = parse(partnerBody.partial(), req.body);
+  const body = parse(partnerBody.partial(), stripMaskedProfileInput(req.body));
   const current = await prisma.referralPartner.findUnique({ where: { id: String(req.params.id) } });
   if (!current) throw notFound('PARTNER_NOT_FOUND');
   if (body.name !== undefined && body.name !== current.name) await assertNameFree(body.name, current.id);
@@ -292,16 +385,24 @@ adminPartnersRouter.patch('/:id', async (req, res) => {
     (body.commissionTrigger !== undefined && body.commissionTrigger !== current.commissionTrigger) ||
     (body.visibility !== undefined && body.visibility !== current.visibility);
   if (sensitive && !hasMinRole(req.user!.role, 'ADMIN')) throw forbidden('ADMIN_REQUIRED');
+  assertBankAllowed(req, body, current);
   if (body.code !== undefined && body.code !== current.code) await assertCodeFree(body.code, current.id);
-  const partner = await prisma.referralPartner.update({ where: { id: current.id }, data: body });
-  await audit(req, 'PARTNER_UPDATED', partner.id, { fields: Object.keys(body), ...(partner.name !== current.name ? { from: current.name, to: partner.name } : {}) });
+  const { data, plain, labels } = await partnerData(body, current);
+  const partner = await prisma.referralPartner.update({ where: { id: current.id }, data });
+  // What changed: before / after for ordinary fields, names only for bank data, tax id, note and extra fields.
+  const { fields, changes } = profileChanges(current as unknown as Record<string, unknown>, plain, labels);
+  await audit(req, 'PARTNER_UPDATED', partner.id, {
+    fields,
+    changes: changes as Prisma.InputJsonValue,
+    ...(partner.name !== current.name ? { from: current.name, to: partner.name } : {}),
+  });
   if (partner.name !== current.name) {
     // The partner's drive folder is renamed (files stay); the client folders inside follow.
     await syncPartnerFolder(partner.id, { previousName: current.name });
     const cases = await prisma.case.findMany({ where: { partnerId: partner.id }, select: { id: true } });
     syncFoldersLater(cases.map((c) => c.id));
   }
-  res.json({ partner });
+  res.json({ partner: view(req, partner) });
 });
 
 /**

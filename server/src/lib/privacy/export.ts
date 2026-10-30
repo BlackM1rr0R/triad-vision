@@ -2,6 +2,23 @@ import { prisma } from '../../db.js';
 import { publicUser } from '../../routes/auth.js';
 import { buildAccessLog } from './accessLog.js'; // "who viewed my documents"
 import { housingExport } from '../housing/core.js'; // housing checklist, Anmeldung, partner listings
+import { partnerExportProfile } from '../partners/profile.js'; // referral partner logins: their partner profile
+import { listFieldDefs } from '../partners/fieldDefs.js';
+
+/** The user's AI assistant conversations: their questions, the answers and proposed actions (no tool internals). */
+const aiAssistantExport = (userId: string) =>
+  prisma.aiConversation.findMany({
+    where: { userId },
+    orderBy: { createdAt: 'asc' },
+    select: {
+      title: true,
+      scope: true,
+      archived: true,
+      createdAt: true,
+      messages: { where: { role: { in: ['user', 'assistant'] }, content: { not: null } }, orderBy: { createdAt: 'asc' }, select: { role: true, content: true, createdAt: true } },
+      actions: { orderBy: { createdAt: 'asc' }, select: { tool: true, summary: true, status: true, createdAt: true, decidedAt: true } },
+    },
+  });
 
 /** Adds kind / version / publication date of the accepted legal text to each consent row. */
 const withLegalVersions = async <T extends { legalDocumentId: string | null }>(rows: T[]) => {
@@ -140,6 +157,13 @@ export const buildUserExport = async (userId: string) => {
       pagesViewed: v.requestCount,
       note: 'A Triad Vision team member viewed your portal read-only (no changes possible).',
     })),
+    // Questions to the AI assistant and its answers (deleted together with the account).
+    aiAssistant: await aiAssistantExport(userId),
+    // A referral partner's login: the partner profile kept about them (internal notes excluded).
+    partnerProfile: await (async () => {
+      const p = await prisma.referralPartner.findUnique({ where: { userId } });
+      return p ? partnerExportProfile(p, await listFieldDefs()) : null;
+    })(),
     // Who on the team accessed your documents and sensitive data (previews, downloads, reveals, checks).
     accessLog: (await buildAccessLog(userId)).days.flatMap((d) => d.items.map(({ id: _id, ...i }) => i)),
   };

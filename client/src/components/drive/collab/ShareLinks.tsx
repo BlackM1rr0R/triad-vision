@@ -13,6 +13,7 @@ import { STATUS_TONES, toneClasses } from '@/components/ui/status';
 import { toastDriveError } from '../api';
 import type { DriveItem } from '../types';
 import { collabKeys, createLink, fetchAccesses, fetchLinks, revokeLink, type LinkStatus, type ShareLink } from './api';
+import { PasswordInput } from '@/components/ui/PasswordInput';
 
 registerCopy(driveCollabCopy);
 
@@ -187,7 +188,7 @@ export const ShareLinksSection = ({ item }: { item: DriveItem }) => {
           <div className="grid gap-3 sm:grid-cols-2">
             <label className="block text-xs font-semibold text-muted">
               {t('driveCollab.links.password')}
-              <input type="password" autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder={t('driveCollab.links.passwordPh')} className="input mt-1 !text-sm" />
+              <PasswordInput autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder={t('driveCollab.links.passwordPh')} wrapperClassName="mt-1" className="!text-sm" />
             </label>
             <label className="block text-xs font-semibold text-muted">
               {t('driveCollab.links.maxDownloads')}

@@ -13,7 +13,7 @@ registerCopy(pagesPrivacyTools);
 /** The server masks values as "•••• 3456" (lib/privacy/mask.ts on the server). */
 export const isMaskedValue = (v: unknown): v is string => typeof v === 'string' && v.includes('•');
 
-export type RevealEntity = 'user' | 'company' | 'agent' | 'invoiceSettings' | 'document' | 'insight' | 'familyMember';
+export type RevealEntity = 'user' | 'company' | 'agent' | 'invoiceSettings' | 'document' | 'insight' | 'familyMember' | 'partner';
 
 const VISIBLE_SEC = 60;
 

@@ -17,6 +17,7 @@ import { RouteFlags } from '@/components/ui/Flag';
 import { jobsError, useJobLabels } from '@/components/jobs/labels';
 import { SECTORS } from '@/components/jobs/types';
 import { Employer } from '@/components/illustrations';
+import { PasswordInput } from '@/components/ui/PasswordInput';
 
 
 registerCopy(pagesJobs);
@@ -152,9 +153,8 @@ export default function EmployerRegister() {
                 <input id="email" name="email" type="email" required maxLength={200} autoComplete="email" className="input" />
               </Field>
               <Field id="password" label={t('jobsArea.register.password')} className="sm:col-span-2">
-                <input
+                <PasswordInput
                   id="password"
-                  type="password"
                   required
                   minLength={PASSWORD_MIN}
                   maxLength={PASSWORD_MAX}

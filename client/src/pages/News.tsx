@@ -23,7 +23,7 @@ export default function News() {
           {isLoading ? (
             <PageLoader />
           ) : (
-            <Stagger className="grid-cards md:grid-cols-2 lg:grid-cols-3">
+            <Stagger className="grid-cards cards-balanced [--cols:1] md:[--cols:2] lg:[--cols:3]">
               {data?.map((p) => (
                 <StaggerItem key={p.id}>
                   <PostCard post={p} />

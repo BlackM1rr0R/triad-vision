@@ -83,6 +83,7 @@ export const resetDb = async () => {
   await prisma.driveActivity.deleteMany();
   await prisma.partnerCommission.deleteMany();
   await prisma.clientRegisterColumn.deleteMany();
+  await prisma.partnerFieldDef.deleteMany(); // admin-defined partner form fields
   await prisma.referralPartner.deleteMany(); // cases keep partnerId = null (SetNull)
   // Interview prep, surveys, contract templates, employer requests
   await prisma.satisfactionSurvey.deleteMany();

@@ -82,7 +82,7 @@ const tr: SiteCopy<Messages> = {
   },
   visas: {
     eyebrow: 'Vize türleri',
-    title: 'Pek çok sektörde vize desteği',
+    title: 'Pek çok sektörde destek',
     subtitle: 'Bu ve diğer vize türlerinde aday seçimi, evrak işleri ve Almanya’ya varış için eksiksiz destek veriyoruz.',
     all: 'Tüm vize türlerini gör',
     pageTitle: 'Vize türleri ve meslekler',

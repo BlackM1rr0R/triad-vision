@@ -68,9 +68,9 @@ export default function Services() {
             }
           />
           {isLoading ? (
-            <SkeletonGrid count={8} lines={3} footer className="grid-cards sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" />
+            <SkeletonGrid count={8} lines={3} footer className="grid-cards cards-balanced sm:[--cols:2] lg:[--cols:3] xl:[--cols:4]" />
           ) : (
-            <Stagger key={filter} className="grid-cards sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            <Stagger key={filter} className="grid-cards cards-balanced sm:[--cols:2] lg:[--cols:3] xl:[--cols:4]">
               {items.map((s) => (
                 <StaggerItem key={s.id}>
                   <ServiceCard service={s} index={all.indexOf(s)} />

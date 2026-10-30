@@ -98,7 +98,7 @@ export default function NewsDetail() {
         <section className="section bg-sunken">
           <div className="container-x">
             <h2 className="h-section section-head text-ink">{t('article.related')}</h2>
-            <div className="mobile-rail md:grid-cols-2 md:gap-5 lg:grid-cols-3 lg:gap-6">
+            <div className="mobile-rail cards-balanced [--cols:1] md:[--cols:2] lg:[--cols:3]">
               {related.map((p) => (
                 <PostCard key={p.id} post={p} />
               ))}

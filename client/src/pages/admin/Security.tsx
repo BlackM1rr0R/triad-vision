@@ -27,6 +27,7 @@ import { errorMessage, fmtDate, roleLabel } from '@/components/admin/labels';
 import { registerCopy } from '@/i18n';
 import { pagesLegal } from '@/i18n/pagesLegal';
 import { getBrand } from '@/lib/brand';
+import { PasswordInput } from '@/components/ui/PasswordInput';
 
 registerCopy(pagesLegal);
 
@@ -329,7 +330,7 @@ const Manage = ({ status, onCodes, onDisabled }: { status: Status; onCodes: (c: 
               <label htmlFor="tf-pw" className="label">
                 {t('adminSecurity.password')}
               </label>
-              <input id="tf-pw" type="password" autoComplete="current-password" required className="input" value={password} onChange={(e) => setPassword(e.target.value)} />
+              <PasswordInput id="tf-pw" autoComplete="current-password" required className="input" value={password} onChange={(e) => setPassword(e.target.value)} />
             </div>
             <div>
               <label htmlFor="tf-dis-code" className="label">

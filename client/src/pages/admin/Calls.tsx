@@ -11,6 +11,7 @@ import { registerCopy } from '@/i18n';
 import { pagesCalls } from '@/i18n/pagesCalls';
 import { PageHead, Panel } from '@/components/admin/ui';
 import { Tabs } from '@/components/ui/Tabs';
+import { PasswordInput } from '@/components/ui/PasswordInput';
 import { CallLog } from '@/components/calls/CallLog';
 import { CallButton } from '@/components/calls/CallButton';
 import { bakuDateTime, bakuTime, callError } from '@/components/calls/api';
@@ -348,7 +349,11 @@ const SettingsTab = () => {
 const Field = ({ label, hint, value, onChange, type = 'text' }: { label: string; hint?: string; value: string; onChange: (v: string) => void; type?: string }) => (
   <label className="block">
     <span className="label">{label}</span>
-    <input className="input" type={type} autoComplete={type === 'password' ? 'new-password' : 'off'} value={value} onChange={(e) => onChange(e.target.value)} />
+    {type === 'password' ? (
+      <PasswordInput autoComplete="new-password" value={value} onChange={(e) => onChange(e.target.value)} />
+    ) : (
+      <input className="input" type={type} autoComplete="off" value={value} onChange={(e) => onChange(e.target.value)} />
+    )}
     {hint && <span className="mt-1 block text-[11px] text-muted">{hint}</span>}
   </label>
 );

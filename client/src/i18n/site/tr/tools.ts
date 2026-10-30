@@ -63,16 +63,16 @@ const copy: SiteCopy<(typeof pagesTools)['en']> = {
       title: 'Bu bir tahmindir',
       text: 'Hesaplayıcı vergi danışmanlığı değildir. Gerçek maaş bordronuz kişisel muafiyetler, sağlık sigortanız, tek seferlik ödemeler ve işvereninizin bordro hesaplaması nedeniyle farklı olabilir.',
     },
-    midijob: 'Aylık 2.000 €’nun altında mini-job / midi-job kuralları sosyal sigorta primlerini düşürebilir — hesaplayıcı bunları uygulamaz.',
+    midijob: '603 €’ya kadar mini-job kuralları geçerlidir (yalnızca %3,6 emeklilik primi; götürü vergiyi işveren öder), 603 ile 2.000 € arasında geçiş bölgesi (midi-job): çalışan primleri indirimli bir matrahtan hesaplanır. Bu kurallar çıraklar (Ausbildung) için geçerli değildir.',
     notes: {
       eyebrow: 'Nasıl hesaplıyoruz',
       title: 'Basitleştirmeler ve kullanılan değerler',
       items: [
         'Gelir vergisi 2026 için §32a EStG formülüne göre hesaplanır (temel muafiyet 12.348 €). Çalışan götürü indirimi (1.230 €) ve özel giderler götürü indirimi (36 €) düşülür.',
-        'Vorsorgepauschale (sigortalar için vergiden muaf pay), çalışanın kendi primlerinden yaklaşık olarak hesaplanır.',
-        'III. sınıfta gelir bölme (splitting) uygulanır; V. ve VI. sınıflarda resmî bordro vergisi algoritmasının basitleştirilmiş bir biçimi kullanılır.',
+        'Vorsorgepauschale (sigortalar için vergiden muaf pay) resmî 2026 bordro vergisi algoritmasına göre hesaplanır: emeklilik payı + sağlık ve bakım payı; işsizlik payı ancak bunlarla birlikte 1.900 €’nun altında kaldığı ölçüde sayılır.',
+        'III. sınıfta gelir bölme (splitting), II. sınıfta tek ebeveyn indirimi (4.260 €), V. ve VI. sınıflarda resmî 2026 bordro vergisi algoritması uygulanır.',
         'Dayanışma vergisi yalnızca gelir vergisi yılda 20.350 €’yu (III. sınıf: 40.700 €) aştığında uygulanır. Çocuk muafiyetleri yalnızca dayanışma vergisini ve kilise vergisini etkiler.',
-        'Yasal sağlık sigortasındaki bir çalışan varsayılır. Dahil değildir: özel sağlık sigortası, mini/midi-job’lar, tek seferlik ödemeler, kişisel muafiyetler, işveren payı.',
+        'Yasal sağlık sigortasındaki bir çalışan varsayılır. Dahil değildir: özel sağlık sigortası, tek seferlik ödemeler, kişisel muafiyetler, işveren payı.',
       ],
     },
     values: {

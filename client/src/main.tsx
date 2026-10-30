@@ -19,6 +19,7 @@ import { initPwa } from './lib/pwa';
 import { whenIdle } from './lib/idle';
 import { captureRefFromUrl } from './lib/referralCookie';
 import { LocaleRouter } from './lib/localeRouter';
+import { TooltipHost } from './components/ui/TooltipHost';
 import { initAnalytics } from './lib/analytics';
 
 // Site theme (SUPER_ADMIN theme builder): cached CSS variables now, fresh ones after the first paint; table density.
@@ -69,6 +70,8 @@ const Shell = () => {
       </MotionConfig>
       {/* gap / visibleToasts: a burst of toasts stacks compactly instead of filling the corner (polish in index.css). */}
       <Toaster position="top-right" richColors closeButton theme={theme} duration={visualAlerts ? 10000 : 4000} gap={10} visibleToasts={4} />
+      {/* Quick tooltips for every titled button / link (the native title waits ~1 s). */}
+      <TooltipHost />
       <LateExtras />
     </>
   );

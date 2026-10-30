@@ -30,6 +30,7 @@ import { isStrongPassword, PASSWORD_MAX, PASSWORD_MIN, type User, type UserSessi
 import { LOCALES, type Locale } from '@/i18n';
 import { Flag } from '@/components/ui/Flag';
 import { Spinner } from '@/components/ui/Spinner';
+import { PasswordInput } from '@/components/ui/PasswordInput';
 import { ConfirmDialog } from '@/components/portal/ConfirmDialog';
 import { EmailOtpCard } from '@/components/auth/EmailOtpCard';
 import { CalendarSubscribe } from '@/components/prep/CalendarSubscribe';
@@ -82,19 +83,31 @@ const Field = ({
   id,
   error,
   hint,
+  type,
   ...props
 }: { label: string; id: string; error?: string | null; hint?: ReactNode } & InputHTMLAttributes<HTMLInputElement>) => (
   <div className="min-w-0">
     <label htmlFor={id} className="label">
       {label}
     </label>
-    <input
-      id={id}
-      className={clsx('input', error && 'border-danger focus:border-danger focus:ring-danger/15')}
-      aria-invalid={!!error || undefined}
-      aria-describedby={error || hint ? `${id}-desc` : undefined}
-      {...props}
-    />
+    {type === 'password' ? (
+      <PasswordInput
+        id={id}
+        className={clsx(error && 'border-danger focus:border-danger focus:ring-danger/15')}
+        aria-invalid={!!error || undefined}
+        aria-describedby={error || hint ? `${id}-desc` : undefined}
+        {...props}
+      />
+    ) : (
+      <input
+        id={id}
+        type={type}
+        className={clsx('input', error && 'border-danger focus:border-danger focus:ring-danger/15')}
+        aria-invalid={!!error || undefined}
+        aria-describedby={error || hint ? `${id}-desc` : undefined}
+        {...props}
+      />
+    )}
     {(error || hint) && (
       <p id={`${id}-desc`} className={clsx('mt-1.5 text-xs', error ? 'text-danger' : 'text-muted')}>
         {error || hint}

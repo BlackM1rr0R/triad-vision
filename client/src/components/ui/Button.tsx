@@ -96,12 +96,12 @@ const ICON_BOX: Record<ButtonSize, string> = { sm: 'size-10 sm:size-8', md: 'siz
 export type IconButtonProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'children' | 'aria-label'> & {
   /** Lucide component or element. */
   icon: LucideIcon | ReactNode;
-  /** Required accessible name; also shown as the native tooltip unless `title` is given or `tooltip={false}`. */
+  /** Required accessible name; also shown as the tooltip (the quick chip of TooltipHost) unless `title` is given or `tooltip={false}`. */
   label: string;
   variant?: IconButtonVariant;
   size?: ButtonSize;
   loading?: boolean;
-  /** Show `label` as the native title tooltip (default true). */
+  /** Show `label` as the tooltip (default true; TooltipHost turns the title into a quick chip). */
   tooltip?: boolean;
   /** Legacy alias for variant="danger". */
   danger?: boolean;

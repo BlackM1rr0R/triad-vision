@@ -45,6 +45,7 @@ import {
   type PrivacyState,
   type ToggleType,
 } from '@/components/privacy/types';
+import { PasswordInput } from '@/components/ui/PasswordInput';
 
 registerCopy(pagesPrivacy);
 
@@ -327,7 +328,7 @@ const RequestForm = ({ state }: { state: PrivacyState }) => {
                 <label htmlFor={`${uid}-pw`} className="label">
                   {t('privacy.deletion.password')}
                 </label>
-                <input id={`${uid}-pw`} type="password" autoComplete="current-password" className="input" value={password} onChange={(e) => setPassword(e.target.value)} />
+                <PasswordInput id={`${uid}-pw`} autoComplete="current-password" className="input" value={password} onChange={(e) => setPassword(e.target.value)} />
               </div>
               <label className="flex items-start gap-2.5 text-sm text-ink">
                 <input type="checkbox" className="mt-0.5 size-4 shrink-0 accent-danger" checked={understood} onChange={(e) => setUnderstood(e.target.checked)} />
