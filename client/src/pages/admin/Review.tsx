@@ -164,6 +164,8 @@ export default function Review() {
   const send = useCallback(
     (item: ReviewItem, decision: Decision, note?: string, marks?: ReviewMark[]) => {
       setQueue((q) => decide(q, item.id, decision));
+      const reviewUrl = `/admin/cases/${item.caseId}/documents/${item.id}/review`;
+      const reviewBody = { status: decision, ...(decision === 'REJECTED' ? { note, ...(marks?.length ? { reviewMarks: marks } : {}) } : {}) };
       const entry: Pending = {
         id: item.id,
         caseId: item.caseId,
@@ -171,11 +173,8 @@ export default function Review() {
         at: Date.now(),
         handle: delayedCommit({
           message: t(decision === 'ACCEPTED' ? 'sp.review.approvedToast' : 'sp.review.rejectedToast', { name: item.requirement ? tr(item.requirement.title) : item.originalName }),
-          commit: () =>
-            api.post(`/admin/cases/${item.caseId}/documents/${item.id}/review`, {
-              status: decision,
-              ...(decision === 'REJECTED' ? { note, ...(marks?.length ? { reviewMarks: marks } : {}) } : {}),
-            }),
+          commit: () => api.post(reviewUrl, reviewBody),
+          keepalive: { method: 'POST', url: reviewUrl, body: reviewBody },
           onCommitted: () => {
             pendingRef.current = pendingRef.current.filter((p) => p.id !== item.id);
             force((n) => n + 1);

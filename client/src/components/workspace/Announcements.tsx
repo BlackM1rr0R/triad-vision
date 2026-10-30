@@ -9,6 +9,7 @@ import { Markdown } from '@/components/ops/Markdown';
 import type { Announcement } from './api';
 import { useWorkspaceInvalidate } from './api';
 import { Card, Chip, Empty, Field, IconButton, Modal, Skeleton, Toggle, errorText, fmtDay, fullName } from './ui';
+import { confirmDialog } from '@/components/ui/ConfirmHost';
 
 const toLocalInput = (iso: string | null) => {
   if (!iso) return '';
@@ -125,8 +126,7 @@ export const AnnouncementItem = ({ a, highlight, onEdit }: { a: Announcement; hi
     }
   };
   const remove = async () => {
-    // TODO(ui): ConfirmDialog
-    if (!window.confirm(t('ws.common.confirmDelete'))) return;
+    if (!(await confirmDialog({ title: t('ui.confirmDlg.deleteTitle', { name: a.title }), message: t('ws.common.confirmDelete'), confirmLabel: t('ui.confirmDlg.delete') }))) return;
     try {
       await api.delete(`/workspace/announcements/${a.id}`);
       toast.success(t('ws.ann.deleted'));

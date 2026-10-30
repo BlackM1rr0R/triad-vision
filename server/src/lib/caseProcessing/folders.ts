@@ -3,7 +3,8 @@ import { z } from 'zod';
 import { prisma } from '../../db.js';
 import { DriveAccessCtx } from '../drive/access.js';
 import { allows } from '../drive/levels.js';
-import { OPEN_STAGES, PROCESSING_SELECT, PROCESSING_STAGES, processingSummaries, stageCounts, stageWhere, type ProcessingStage } from './index.js';
+import { loadMaskingSettings, maskedGroupsFor } from '../privacy/mask.js';
+import { effectiveStage, emptyStageCounts, OPEN_STAGES, PROCESSING_SELECT, PROCESSING_STAGES, processingSummaries, type ProcessingStage } from './index.js';
 
 /**
  * "İş axını" in the documents section (drive): the client folders per team workflow stage — the same
@@ -30,26 +31,49 @@ const MAX_DEPTH = 4;
 
 const fullName = (u: { firstName: string; lastName: string } | null | undefined) => (u ? `${u.firstName} ${u.lastName}`.trim() : '');
 
-/** The narrowed "In Bearbeitung" set (see above). */
-const inProgressScope = (viewerId: string): Prisma.CaseWhereInput => ({
-  OR: [
-    { processingAssigneeId: viewerId },
-    { assignedStaffId: viewerId },
-    { processingStageById: viewerId },
-    { processingStage: 'IN_PROGRESS' },
-    { updatedAt: { gte: new Date(Date.now() - RECENT_DAYS * 86_400_000) } },
-  ],
-});
+/**
+ * Search: case number and client name by substring. A passport number only matches as the exact full value (no
+ * guessing a number digit by digit through the result list), and only for viewers who see passport numbers
+ * unmasked (lib/privacy/mask: masked roles never find a case by its passport).
+ */
+const baseWhere = (viewerId: string, mine: boolean, search: string | undefined, passportSearch: boolean): Prisma.CaseWhereInput => {
+  const passport = search?.replace(/\s+/g, '').toUpperCase() ?? '';
+  return {
+    AND: [
+      { driveFolderId: { not: null } },
+      mine ? { processingAssigneeId: viewerId } : {},
+      search
+        ? {
+            OR: [
+              { number: { contains: search } },
+              { client: { firstName: { contains: search } } },
+              { client: { lastName: { contains: search } } },
+              ...(passportSearch && passport.length >= 5 ? [{ client: { passportNumber: passport } }] : []),
+            ],
+          }
+        : {},
+    ],
+  };
+};
 
-const baseWhere = (viewerId: string, mine: boolean, search?: string): Prisma.CaseWhereInput => ({
-  AND: [
-    { driveFolderId: { not: null } },
-    mine ? { processingAssigneeId: viewerId } : {},
-    search
-      ? { OR: [{ number: { contains: search } }, { client: { firstName: { contains: search } } }, { client: { lastName: { contains: search } } }, { client: { passportNumber: { contains: search } } }] }
-      : {},
-  ],
-});
+/** Whether the viewer sees passport numbers in plaintext (only they may search by one). */
+const seesPassports = async (viewer: { role: Role }) => !maskedGroupsFor(viewer, await loadMaskingSettings()).has('PASSPORT');
+
+const DAY_MS = 86_400_000;
+type ScopeRow = {
+  processingAssigneeId: string | null;
+  assignedStaffId: string | null;
+  processingStageById: string | null;
+  processingStage: string | null;
+  updatedAt: Date;
+};
+/** The narrowed "In Bearbeitung" set (see above): handed / assigned to the viewer, sent back, or changed recently. */
+const inScope = (r: ScopeRow, viewerId: string, now: number) =>
+  r.processingAssigneeId === viewerId ||
+  r.assignedStaffId === viewerId ||
+  r.processingStageById === viewerId ||
+  r.processingStage === 'IN_PROGRESS' ||
+  r.updatedAt.getTime() >= now - RECENT_DAYS * DAY_MS;
 
 /** Files below each folder (a few levels deep), one query per level for all folders together. */
 export const fileCounts = async (rootIds: string[]) => {
@@ -70,42 +94,65 @@ export const fileCounts = async (rootIds: string[]) => {
 
 /** GET /admin/case-processing/folders — counts per stage + the client folders of one stage. */
 export const processingFolders = async (q: z.infer<typeof foldersQuery>, viewer: { id: string; role: Role }) => {
-  const base = baseWhere(viewer.id, q.mine, q.search);
-  const scope = inProgressScope(viewer.id);
-  const [counts, inProgress, waitingForMe] = await Promise.all([
-    stageCounts(base),
-    prisma.case.count({ where: { AND: [base, stageWhere('IN_PROGRESS'), scope] } }),
-    prisma.case.count({ where: { driveFolderId: { not: null }, processingAssigneeId: viewer.id, processingStage: { in: OPEN_STAGES } } }),
-  ]);
-  counts.IN_PROGRESS = inProgress;
-
+  const base = baseWhere(viewer.id, q.mine, q.search, await seesPassports(viewer));
   const stage: ProcessingStage = q.stage;
-  const rows = await prisma.case.findMany({
-    where: { AND: [base, stageWhere(stage), stage === 'IN_PROGRESS' ? scope : {}] },
-    orderBy: [{ processingStageAt: { sort: 'desc', nulls: 'last' } }, { updatedAt: 'desc' }],
-    take: LIMIT,
-    select: {
-      id: true,
-      number: true,
-      visaType: true,
-      driveFolderId: true,
-      ...PROCESSING_SELECT,
-      client: { select: { firstName: true, lastName: true } },
-      visaCategory: { select: { id: true, title: true, visaLabel: true } },
-      partner: { select: { id: true, name: true } },
-      processingMoves: { orderBy: [{ createdAt: 'desc' }, { id: 'desc' }], take: 1, select: { note: true } },
-    },
-  });
+  const now = Date.now();
 
-  // Drive permissions: a restricted client folder the viewer cannot open is not listed.
+  // Drive permissions first: a restricted client folder the viewer cannot open is neither listed nor counted.
+  // One light query for every candidate case (the stage counts need all of them), then the folder check.
+  const [candidates, waiting] = await Promise.all([
+    prisma.case.findMany({
+      where: base,
+      select: { id: true, driveFolderId: true, status: true, processingStage: true, processingStageAt: true, processingAssigneeId: true, assignedStaffId: true, processingStageById: true, updatedAt: true },
+    }),
+    prisma.case.findMany({ where: { driveFolderId: { not: null }, processingAssigneeId: viewer.id, processingStage: { in: OPEN_STAGES } }, select: { driveFolderId: true } }),
+  ]);
   const ctx = new DriveAccessCtx({ id: viewer.id, role: viewer.role });
-  const folderIds = rows.map((r) => r.driveFolderId!);
-  await ctx.load(folderIds);
-  const visible = rows.filter((r) => {
-    const n = ctx.nodes.get(r.driveFolderId!);
+  await ctx.load([...candidates.map((r) => r.driveFolderId!), ...waiting.map((r) => r.driveFolderId!)]);
+  const canOpen = (folderId: string) => {
+    const n = ctx.nodes.get(folderId);
     return !!n && !n.deletedAt && allows(ctx.level(n.id), 'VIEW');
-  });
-  const [summaries, files] = await Promise.all([processingSummaries(visible), fileCounts(visible.map((r) => r.driveFolderId!))]);
+  };
+
+  const counts = emptyStageCounts();
+  const inStage: typeof candidates = [];
+  for (const r of candidates) {
+    if (!canOpen(r.driveFolderId!)) continue;
+    const st = effectiveStage(r.processingStage, r.status);
+    if (!st) continue;
+    // "In Bearbeitung" holds every open case: counted and listed only within the viewer's scope.
+    if (st === 'IN_PROGRESS' && !inScope(r, viewer.id, now)) continue;
+    counts[st]++;
+    if (st === stage) inStage.push(r);
+  }
+  const waitingForMe = waiting.filter((r) => canOpen(r.driveFolderId!)).length;
+
+  // Newest hand-over first (cases never moved last), then the last change.
+  inStage.sort(
+    (a, b) =>
+      (a.processingStageAt ? 0 : 1) - (b.processingStageAt ? 0 : 1) ||
+      (b.processingStageAt?.getTime() ?? 0) - (a.processingStageAt?.getTime() ?? 0) ||
+      b.updatedAt.getTime() - a.updatedAt.getTime(),
+  );
+  const pageIds = inStage.slice(0, LIMIT).map((r) => r.id);
+  const order = new Map(pageIds.map((id, i) => [id, i]));
+  const rows = (
+    await prisma.case.findMany({
+      where: { id: { in: pageIds } },
+      select: {
+        id: true,
+        number: true,
+        visaType: true,
+        driveFolderId: true,
+        ...PROCESSING_SELECT,
+        client: { select: { firstName: true, lastName: true } },
+        visaCategory: { select: { id: true, title: true, visaLabel: true } },
+        partner: { select: { id: true, name: true } },
+        processingMoves: { orderBy: [{ createdAt: 'desc' }, { id: 'desc' }], take: 1, select: { note: true } },
+      },
+    })
+  ).sort((a, b) => order.get(a.id)! - order.get(b.id)!);
+  const [summaries, files] = await Promise.all([processingSummaries(rows), fileCounts(rows.map((r) => r.driveFolderId!))]);
 
   return {
     stage,
@@ -114,7 +161,7 @@ export const processingFolders = async (q: z.infer<typeof foldersQuery>, viewer:
     total: counts[stage],
     limit: LIMIT,
     recentDays: RECENT_DAYS,
-    items: visible.map((r) => ({
+    items: rows.map((r) => ({
       caseId: r.id,
       number: r.number,
       folderId: r.driveFolderId!,

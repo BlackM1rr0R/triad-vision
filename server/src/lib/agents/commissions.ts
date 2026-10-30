@@ -65,13 +65,18 @@ const awardAgent = async (input: {
   if (amountCents === null) return null;
 
   const { caseId, sourceRef } = input;
-  // MySQL unique indexes treat NULLs as distinct, so the duplicate check is done here.
-  const existing = await prisma.agentCommission.findFirst({ where: { agentId: agent.id, event: input.event, caseId, sourceRef }, select: { id: true } });
-  if (existing) return null;
-
-  const row = await prisma.agentCommission.create({
-    data: { agentId: agent.id, clientId: input.clientId, caseId, event: input.event, sourceRef, amountCents, currency: agent.currency },
+  // MySQL unique indexes treat NULLs as distinct (caseId is null for EMPLOYER_APPROVED / INVOICE_PAID), so the
+  // duplicate check is done here — serialized per agent with a row lock, so two approvals of the same employer
+  // (double click, two staff members) cannot both pass the check and pay twice.
+  const row = await prisma.$transaction(async (tx) => {
+    await tx.$queryRaw`SELECT id FROM \`Agent\` WHERE id = ${agent.id} FOR UPDATE`;
+    const existing = await tx.agentCommission.findFirst({ where: { agentId: agent.id, event: input.event, caseId, sourceRef }, select: { id: true } });
+    if (existing) return null;
+    return tx.agentCommission.create({
+      data: { agentId: agent.id, clientId: input.clientId, caseId, event: input.event, sourceRef, amountCents, currency: agent.currency },
+    });
   });
+  if (!row) return null;
 
   const user = await prisma.user.findUnique({ where: { id: agent.userId }, select: { locale: true } });
   const locale = user?.locale ?? 'az';

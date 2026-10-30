@@ -1,14 +1,5 @@
-import crypto from 'node:crypto';
-import fs from 'node:fs/promises';
-import path from 'node:path';
-import type { NextFunction, Request, Response } from 'express';
-import multer from 'multer';
-import sharp from 'sharp';
 import { z } from 'zod';
-import { config } from '../config.js';
-import { badRequest } from './http.js';
-import { decodeOriginalName } from '../middleware/upload.js';
-import { resolveMime } from './fileCheck.js';
+import { PRESETS, singleRasterImage, storePublicImage } from './publicImages.js';
 
 /**
  * Vacancy cover + gallery images (Vacancy.images = [{ url, alt?, w?, h? }], first = cover).
@@ -21,11 +12,8 @@ import { resolveMime } from './fileCheck.js';
  */
 
 export const VACANCY_IMAGE_MAX = 8;
-export const VACANCY_IMAGE_WIDTHS = [480, 960] as const;
-const MAIN_WIDTH = 1600;
-const DIR = () => path.join(config.uploads.publicDir, 'vacancies');
+export const VACANCY_IMAGE_WIDTHS = PRESETS.vacancy.widths;
 const URL_RE = /^\/uploads\/vacancies\/[a-f0-9]{32}\.webp$/;
-const ACCEPTED = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/avif']);
 
 export const vacancyImageSchema = z.object({
   url: z.string().max(200).regex(URL_RE, 'INVALID_IMAGE_URL'),
@@ -63,40 +51,11 @@ export const vacancyImagesOf = (value: unknown): VacancyImage[] => {
 /** URL of a width variant ("/uploads/vacancies/<hex>-480.webp"). */
 export const variantUrl = (url: string, width: number) => url.replace(/\.webp$/, `-${width}.webp`);
 
-const memory = multer({
-  storage: multer.memoryStorage(),
-  limits: { fileSize: 8 * 1024 * 1024, files: 1 },
-  fileFilter: (_req, file, cb) => {
-    const mime = resolveMime(file.mimetype, decodeOriginalName(file.originalname));
-    if (mime && ACCEPTED.has(mime)) cb(null, true);
-    else cb(badRequest('UNSUPPORTED_FILE_TYPE'));
-  },
-});
+/** multer (memory, one `file`) with readable error codes (lib/publicImages.ts). */
+export const singleVacancyImage = singleRasterImage;
 
-/** multer (memory, one `file`) with readable error codes. */
-export const singleVacancyImage = (req: Request, res: Response, next: NextFunction) =>
-  memory.single('file')(req, res, (err: unknown) => {
-    if (err instanceof multer.MulterError) return next(badRequest(err.code === 'LIMIT_FILE_SIZE' ? 'IMAGE_TOO_LARGE' : 'INVALID_IMAGE'));
-    next(err as Error | undefined);
-  });
-
-/** Re-encodes and stores one photo. Returns the main URL and its size. */
+/** Re-encodes and stores one photo (lib/publicImages.ts, preset "vacancy"). Returns the main URL and its size. */
 export const storeVacancyImage = async (buf: Buffer): Promise<{ url: string; w: number; h: number }> => {
-  let main: { data: Buffer; info: sharp.OutputInfo };
-  let variants: Buffer[];
-  try {
-    const base = () => sharp(buf, { limitInputPixels: 40_000_000 }).rotate();
-    main = await base().resize({ width: MAIN_WIDTH, height: MAIN_WIDTH, fit: 'inside', withoutEnlargement: true }).webp({ quality: 80 }).toBuffer({ resolveWithObject: true });
-    if (main.info.width < 200 || main.info.height < 120) throw new Error('small');
-    variants = await Promise.all(
-      VACANCY_IMAGE_WIDTHS.map((w) => base().resize({ width: w, withoutEnlargement: true }).webp({ quality: 78 }).toBuffer()),
-    );
-  } catch (err) {
-    throw badRequest((err as Error)?.message === 'small' ? 'IMAGE_TOO_SMALL' : 'INVALID_IMAGE');
-  }
-  await fs.mkdir(DIR(), { recursive: true });
-  const id = crypto.randomBytes(16).toString('hex');
-  await fs.writeFile(path.join(DIR(), `${id}.webp`), main.data);
-  await Promise.all(VACANCY_IMAGE_WIDTHS.map((w, i) => fs.writeFile(path.join(DIR(), `${id}-${w}.webp`), variants[i])));
-  return { url: `/uploads/vacancies/${id}.webp`, w: main.info.width, h: main.info.height };
+  const { url, w, h } = await storePublicImage(buf, 'vacancy');
+  return { url, w, h };
 };

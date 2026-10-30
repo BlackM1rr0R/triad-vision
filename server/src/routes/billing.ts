@@ -13,7 +13,9 @@ accountBillingRouter.use(requireAuth);
 accountBillingRouter.use((req, _res, next) => (req.user?.role === 'CLIENT' ? next() : next(forbidden())));
 
 accountBillingRouter.get('/', async (req, res) => {
-  res.json(await clientBilling(req.user!.id));
+  // ?case=<own case id>: one family member's billing (portal family switcher); without it everything.
+  const caseId = typeof req.query.case === 'string' && /^[A-Za-z0-9_-]{1,40}$/.test(req.query.case) ? req.query.case : null;
+  res.json(await clientBilling(req.user!.id, { caseId }));
 });
 
 accountBillingRouter.get('/invoices/:id/pdf', async (req, res) => {

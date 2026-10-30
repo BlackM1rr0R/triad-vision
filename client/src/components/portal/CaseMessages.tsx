@@ -37,6 +37,9 @@ export const CaseMessages = ({ data, onChanged }: { data: CaseDetail; onChanged:
   const inputId = useId();
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const [body, setBody] = useState('');
+  // Quick replies: one tap = one message (a double tap before the re-render would send it twice).
+  const quickBusy = useRef(false);
+  const [quickSending, setQuickSending] = useState(false);
   const meId = user?.id ?? '';
 
   const thread = useThread({ caseId: data.id, base: '/cases', initial: data.messages, meId, onNewMessage: () => void onChanged() });
@@ -164,13 +167,20 @@ export const CaseMessages = ({ data, onChanged }: { data: CaseDetail; onChanged:
             <button
               key={k}
               type="button"
-              className="min-h-9 shrink-0 rounded-full border border-line bg-card px-3 text-sm font-medium whitespace-nowrap text-ink transition-colors hover:border-primary hover:bg-sunken"
+              className="min-h-9 shrink-0 rounded-full border border-line bg-card px-3 text-sm font-medium whitespace-nowrap text-ink transition-colors hover:border-primary hover:bg-sunken disabled:opacity-60"
+              disabled={quickSending}
               onClick={() => {
-                if (!user) return;
+                if (!user || quickBusy.current) return;
+                quickBusy.current = true;
+                setQuickSending(true);
                 thread
                   .send(t(`cplus.chat.q.${k}`), { id: user.id, firstName: user.firstName, lastName: user.lastName, role: user.role })
                   .then(() => void onChanged())
-                  .catch(onError);
+                  .catch(onError)
+                  .finally(() => {
+                    quickBusy.current = false;
+                    setQuickSending(false);
+                  });
               }}
             >
               {t(`cplus.chat.q.${k}`)}

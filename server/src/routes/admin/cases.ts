@@ -29,7 +29,8 @@ import { hasMissing, translateMany } from '../../lib/ai/translate.js';
 import { prepareCaseDocument, publicQuality, scheduleUploadAnalysis } from '../../lib/uploadAi/index.js';
 import { checkDocumentPhoto, photoCheckOnUpload } from '../../lib/photoCheck/index.js'; // biometric photo rules
 import { nextStepSummaries } from '../../lib/caseNext/nextStep.js';
-import { emitAutomationEvent } from '../../lib/automation/events.js';
+
+import { emitAutomationEvent } from '../../lib/automation/events.js';
 import { onLanguageCertAccepted } from '../../lib/german/progress.js';
 import { ballInCourtMany } from '../../lib/clientProcess/ballInCourt.js';
 import { marksForStatus, reviewMarksSchema } from '../../lib/review/marks.js'; // marks on a rejected scan
@@ -54,12 +55,33 @@ export const caseListQuery = z.object({
   // Team document workflow stage (lib/caseProcessing) and its next assignee ('me' = the viewer).
   processing: z.enum(PROCESSING_STAGES).optional(),
   processingAssignee: z.string().trim().min(1).max(40).optional(),
+  // "3+ gün eyni statusda" chip: the current status was entered at least OVERDUE_DAYS days ago.
+  overdue: z.enum(['true', 'false', '1', '0']).transform((v) => v === 'true' || v === '1').optional(),
 });
 
+/** Days in one status after which a case counts as overdue (the list's `daysInStatus >= 3` chip). */
+export const OVERDUE_DAYS = 3;
+
+/**
+ * Overdue = entered the current status at least OVERDUE_DAYS ago. "Entered" is the newest status event into
+ * the current status, else the creation time (as `daysInStatus` in the list). Since every event is newer than
+ * the case itself: created before the cutoff and no event into the current status after it.
+ */
+export const overdueWhere = (now = new Date()): Prisma.CaseWhereInput => {
+  const cutoff = new Date(now.getTime() - OVERDUE_DAYS * 24 * 60 * 60 * 1000);
+  return {
+    createdAt: { lte: cutoff },
+    OR: STATUSES.map((s) => ({ status: s, events: { none: { toStatus: s, createdAt: { gt: cutoff } } } })),
+  };
+};
+
 export const caseListWhere = (q: z.infer<typeof caseListQuery>, viewerId: string): Prisma.CaseWhereInput => {
+  const and: Prisma.CaseWhereInput[] = [];
+  if (q.processing) and.push(stageWhere(q.processing));
+  if (q.overdue) and.push(overdueWhere());
   return {
     ...(q.status ? { status: q.status } : {}),
-    ...(q.processing ? { AND: [stageWhere(q.processing)] } : {}),
+    ...(and.length ? { AND: and } : {}),
     ...(q.processingAssignee ? { processingAssigneeId: q.processingAssignee === 'me' ? viewerId : q.processingAssignee } : {}),
     ...(q.partnerId ? { partnerId: q.partnerId === 'none' ? null : q.partnerId } : {}),
     ...(q.mine ? { assignedStaffId: viewerId } : {}),

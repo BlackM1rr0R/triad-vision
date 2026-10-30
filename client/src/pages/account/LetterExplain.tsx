@@ -14,6 +14,7 @@ import { useL10n } from '@/lib/l10n';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { aiLimitMessage, errorCode, fetchLetters, lettersKey, type LetterItem } from '@/components/aiDocs/api';
 import { EmptyInbox } from '@/components/illustrations';
+import { confirmDialog } from '@/components/ui/ConfirmHost';
 
 registerCopy(pagesAiDocs);
 
@@ -208,7 +209,7 @@ const LetterCard = ({ item, defaultOpen }: { item: LetterItem; defaultOpen?: boo
               type="button"
               className="btn-white btn-sm ml-auto border border-line text-danger"
               disabled={remove.isPending}
-              onClick={() => window.confirm(t('aiDocs.letters.deleteConfirm')) && remove.mutate()}
+              onClick={async () => (await confirmDialog({ title: t('ui.confirmDlg.deleteTitle', { name: e.subject ?? item.filename }), message: t('aiDocs.letters.deleteConfirm'), confirmLabel: t('ui.confirmDlg.delete') })) && remove.mutate()}
             >
               <Trash2 className="size-4" aria-hidden /> {t('aiDocs.letters.delete')}
             </button>

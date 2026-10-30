@@ -50,6 +50,8 @@ export const LEGAL_SETTING_SCHEMAS: Record<string, ZodTypeAny> = {
   legal: legalSchema,
   privacy: privacySchema,
   retention: retentionSchema,
+  // DSGVO anonymisation of website leads (lib/privacy/inquiries.ts; same shape, kept here to avoid an import cycle).
+  inquiryRetention: z.object({ months: z.number().int().min(1).max(120) }),
 };
 
 export type RetentionSettings = z.infer<typeof retentionSchema>;

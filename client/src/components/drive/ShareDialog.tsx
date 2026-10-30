@@ -13,6 +13,7 @@ import { driveKeys, invalidateDrive, toastDriveError } from './api';
 import { crumbLabel } from './labels';
 import { ShareLinksSection } from './collab/ShareLinks';
 import { RANK, type AccessEntry, type AccessResponse, type DriveAccess, type DriveItem, type StaffPerson } from './types';
+import { confirmDialog } from '@/components/ui/ConfirmHost';
 
 /**
  * The four levels offered in the UI. DOWNLOAD (single files only) still exists on the server and is
@@ -318,7 +319,7 @@ export const ShareDialog = ({ item, onClose, myId }: { item: DriveItem | null; o
                       <LevelSelect value={e.access} max={a.myAccess} onChange={(v) => put.mutate(e.userId ? { userId: e.userId, access: v } : { role: e.role!, access: v })} />
                       <button
                         type="button"
-                        onClick={() => remove.mutate(e.grantId)}
+                        onClick={async () => (await confirmDialog({ title: t('drive.share.remove'), message: t('ui.confirmDlg.removeNamed', { name: principalName(e) }), confirmLabel: t('ui.confirmDlg.remove') })) && remove.mutate(e.grantId)}
                         className="grid size-8 place-items-center rounded-lg text-muted hover:bg-danger-bg hover:text-danger-fg"
                         aria-label={`${t('drive.share.remove')}: ${principalName(e)}`}
                         title={t('drive.share.remove')}

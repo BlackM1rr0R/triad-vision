@@ -501,12 +501,24 @@ export const caseBilling = async (caseId: string) => {
   };
 };
 
-/** Client portal: issued invoices, payments, plans, balance and how to pay. */
-export const clientBilling = async (clientId: string) => {
+/**
+ * Client portal: issued invoices, payments, plans, balance and how to pay. With `caseId` (one of the client's own
+ * cases — the family switcher's person) only that case's billing: its invoices / payments / plans, plus the ones
+ * without a case when it is the main application (they belong to the account holder). Totals follow the filter.
+ */
+export const clientBilling = async (clientId: string, opts: { caseId?: string | null } = {}) => {
+  // Same shape for invoices, payments and plans (all have a nullable caseId).
+  let scope: { caseId?: string; OR?: { caseId: string | null }[] } = {};
+  let scopedCase: { id: string; parentCaseId: string | null } | null = null;
+  if (opts.caseId) {
+    scopedCase = await prisma.case.findFirst({ where: { id: opts.caseId, clientId }, select: { id: true, parentCaseId: true } });
+    if (!scopedCase) throw notFound('CASE_NOT_FOUND');
+    scope = scopedCase.parentCaseId ? { caseId: scopedCase.id } : { OR: [{ caseId: scopedCase.id }, { caseId: null }] };
+  }
   const [invoices, payments, plans, ctx] = await Promise.all([
-    prisma.clientInvoice.findMany({ where: { clientId, status: { not: 'DRAFT' } }, orderBy: [{ issueDate: 'desc' }, { createdAt: 'desc' }] }),
-    prisma.clientPayment.findMany({ where: { clientId }, orderBy: [{ paidAt: 'desc' }, { createdAt: 'desc' }] }),
-    plansWithItems({ clientId, status: { not: 'CANCELLED' } }),
+    prisma.clientInvoice.findMany({ where: { clientId, status: { not: 'DRAFT' }, ...scope }, orderBy: [{ issueDate: 'desc' }, { createdAt: 'desc' }] }),
+    prisma.clientPayment.findMany({ where: { clientId, ...scope }, orderBy: [{ paidAt: 'desc' }, { createdAt: 'desc' }] }),
+    plansWithItems({ clientId, status: { not: 'CANCELLED' }, ...scope }),
     loadBillingContext(),
   ]);
   const numbers = new Map(invoices.map((i) => [i.id, i.number]));
@@ -517,6 +529,7 @@ export const clientBilling = async (clientId: string) => {
     totals: totalsOf(invoices),
     bank: ctx.bank.iban ? ctx.bank : null,
     seller: { name: ctx.seller.name },
+    caseId: scopedCase?.id ?? null,
   };
 };
 

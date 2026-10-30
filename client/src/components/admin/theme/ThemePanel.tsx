@@ -16,6 +16,7 @@ import { Field, Input } from '@/components/ui/Field';
 import { Checkbox } from '@/components/ui/Field';
 import { DensityToggle } from '@/components/ui/DensityToggle';
 import { toastError } from '@/components/admin/labels';
+import { confirmDialog } from '@/components/ui/ConfirmHost';
 
 registerCopy(designSystemCopy);
 
@@ -137,7 +138,7 @@ export const ThemePanel = () => {
       padding="lg"
       footer={
         <>
-          <Button variant="ghost" icon={RotateCcw} onClick={() => reset.mutate()} loading={reset.isPending}>
+          <Button variant="ghost" icon={RotateCcw} onClick={async () => (await confirmDialog({ message: t('ui.confirmDlg.resetNamed', { name: t('ds.theme.title') }), confirmLabel: t('ui.confirmDlg.reset') })) && reset.mutate()} loading={reset.isPending}>
             {t('ds.theme.reset')}
           </Button>
           <Button icon={Save} onClick={() => save.mutate()} loading={save.isPending} disabled={!valid || !dirty}>

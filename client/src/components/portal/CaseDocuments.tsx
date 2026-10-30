@@ -182,7 +182,7 @@ const RequirementCard = ({
     setLastPhoto(null);
     const form = new FormData();
     form.append('requirementId', req.id);
-    form.append('file', await optimizeImages([file]).then((l) => l[0]));
+    form.append('file', file); // FileDrop already compressed an image (before its size check)
     setProgress(0);
     try {
       const { data } = await api.post<{ checks?: unknown }>(`/cases/${caseId}/documents`, form, {

@@ -10,6 +10,7 @@ import { toastDriveError } from '../api';
 import { WORKFLOW_STAGES, type StaffPerson, type WorkflowStage } from '../types';
 import { TAG_TONE, fetchTags, orgKeys, type SmartFolder, type SmartQuery } from './api';
 import { STAGE_TONE } from './SmallDialogs';
+import { confirmDialog } from '@/components/ui/ConfirmHost';
 
 const TYPES = ['pdf', 'image', 'word', 'excel', 'presentation', 'archive', 'text', 'folder'] as const;
 
@@ -86,7 +87,7 @@ export default function SmartFolderDialog({
       footer={
         <>
           {existing?.canEdit && (
-            <button type="button" className="btn-secondary btn-sm mr-auto border border-line text-danger-fg" onClick={() => window.confirm(t('driveOrg.smart.deleteConfirm', { name: existing.name })) && remove.mutate()}>
+            <button type="button" className="btn-secondary btn-sm mr-auto border border-line text-danger-fg" onClick={async () => (await confirmDialog({ message: t('driveOrg.smart.deleteConfirm', { name: existing.name }), confirmLabel: t('ui.confirmDlg.delete') })) && remove.mutate()}>
               <Trash2 className="size-4" /> {t('driveOrg.common.delete')}
             </button>
           )}

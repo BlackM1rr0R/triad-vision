@@ -1,7 +1,7 @@
 import { Router, type RequestHandler } from 'express';
 import bcrypt from 'bcryptjs';
 import { z } from 'zod';
-import type { ApplicationStatus, Company } from '@prisma/client';
+import { Prisma, type ApplicationStatus, type Company } from '@prisma/client';
 import { prisma } from '../db.js';
 import { issueSession, requireRole, setSessionCookie, wantsBearerToken } from '../middleware/auth.js';
 import { HttpError, badRequest, conflict, forbidden, limiter, notFound, parse } from '../lib/http.js';
@@ -25,7 +25,9 @@ import { password, publicUser } from './auth.js';
 import { emitWebhook } from '../lib/ops/webhooks.js';
 import { sendEmployerCv } from '../lib/cv/access.js';
 import { listWorkers, workerSummary, workersXlsx } from '../lib/requests/workers.js';
-import { singleVacancyImage, storeVacancyImage } from '../lib/vacancyImages.js';
+import { singleVacancyImage, storeVacancyImage, vacancyImagesOf } from '../lib/vacancyImages.js';
+import { companyLogoOf, singleRasterImage, storePublicImage } from '../lib/publicImages.js';
+import { cleanupRemovedImages } from '../lib/publicImageRefs.js';
 import { REF_COOKIE, normaliseRefCode, resolveReferralCode } from '../lib/growth/referral.js';
 import { findPartnerByCode } from '../lib/partners/owned.js';
 import { attachCompanyReferral } from '../lib/agents/referral.js';
@@ -195,6 +197,7 @@ const companyView = (c: Company) => ({
   email: c.email,
   status: c.status,
   createdAt: c.createdAt,
+  logo: companyLogoOf(c.logo),
 });
 
 companyRouter.get('/me', async (_req, res) => {
@@ -218,6 +221,34 @@ companyRouter.patch('/me', async (req, res) => {
   );
   const company = await prisma.company.update({ where: { id: co(res).id }, data: body });
   await audit(req, 'COMPANY_PROFILE_UPDATED', `company:${company.id}`, { fields: Object.keys(body) });
+  res.json({ company: companyView(company) });
+});
+
+/**
+ * Company logo (lib/publicImages.ts, preset "logo": WebP ≤ 512 px, transparency kept, no SVG). The profile has no
+ * review step, so the logo goes live at once (public job cards / JobPosting of vacancies that show the employer) and
+ * the staff is notified to check it. The replaced file is deleted unless something else references it.
+ */
+const logoLimiter = limiter({ windowMs: 60 * 60 * 1000, limit: 30 });
+companyRouter.post('/me/logo', logoLimiter, singleRasterImage, async (req, res) => {
+  if (!req.file) throw badRequest('FILE_REQUIRED');
+  const before = co(res);
+  const { url, w, h } = await storePublicImage(req.file.buffer, 'logo');
+  const company = await prisma.company.update({ where: { id: before.id }, data: { logo: { url, w, h } } });
+  cleanupRemovedImages([companyLogoOf(before.logo)?.url]);
+  await audit(req, 'COMPANY_LOGO_UPDATED', `company:${company.id}`, { url });
+  await notifyStaff(`Şirkət loqosu dəyişdirildi: ${company.name}`.slice(0, 180), `${company.name} işəgötürən portalında yeni loqo yüklədi. Zəhmət olmasa yoxlayın.`, {
+    link: `/admin/companies?id=${company.id}`,
+    type: 'COMPANY_LOGO',
+  });
+  res.status(201).json({ company: companyView(company) });
+});
+
+companyRouter.delete('/me/logo', async (req, res) => {
+  const before = co(res);
+  const company = await prisma.company.update({ where: { id: before.id }, data: { logo: Prisma.DbNull } });
+  cleanupRemovedImages([companyLogoOf(before.logo)?.url]);
+  await audit(req, 'COMPANY_LOGO_REMOVED', `company:${company.id}`);
   res.json({ company: companyView(company) });
 });
 
@@ -337,6 +368,11 @@ companyRouter.patch('/vacancies/:id', async (req, res) => {
   // A live vacancy that changes goes back to review before the public sees the new text.
   const backToReview = v.status === 'OPEN';
   const vacancy = await prisma.vacancy.update({ where: { id: v.id }, data: { ...data, ...(backToReview ? { status: 'PENDING' } : {}) } });
+  // Photos taken out of the vacancy: their files go unless something else still uses them.
+  if (body.images !== undefined) {
+    const kept = new Set(vacancyImagesOf(vacancy.images).map((i) => i.url));
+    cleanupRemovedImages(vacancyImagesOf(v.images).map((i) => i.url).filter((u) => !kept.has(u)));
+  }
   if (backToReview) {
     await notifyStaff(
       `Vakansiya dəyişdirildi: ${co(res).name}`.slice(0, 180),
@@ -373,6 +409,7 @@ companyRouter.delete('/vacancies/:id', async (req, res) => {
   if (v.status !== 'DRAFT') throw conflict('ONLY_DRAFTS_CAN_BE_DELETED');
   if (await prisma.vacancyApplication.count({ where: { vacancyId: v.id } })) throw conflict('VACANCY_HAS_APPLICATIONS');
   await prisma.vacancy.delete({ where: { id: v.id } });
+  cleanupRemovedImages(vacancyImagesOf(v.images).map((i) => i.url));
   res.json({ ok: true });
 });
 

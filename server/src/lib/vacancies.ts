@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { prisma } from '../db.js';
 import { GERMAN_LEVELS, matchCandidate, type MatchResult } from './matching.js';
 import { vacancyImagesField, vacancyImagesOf } from './vacancyImages.js';
+import { companyLogoOf } from './publicImages.js';
 
 /** Shared pieces of the employers & vacancies area (company portal, public board, staff admin). */
 
@@ -208,7 +209,7 @@ export const uniqueSlug = async (title: L10n, city?: string | null, exceptId?: s
 // ─── Serialisation ──────────────────────────────────────────────────────
 
 type VacancyWithRels = Vacancy & {
-  company?: { name: string } | null;
+  company?: { name: string; logo?: unknown } | null;
   visaCategory?: { slug: string; title: unknown; visaLabel: string; germanLevel?: string | null } | null;
 };
 
@@ -235,6 +236,8 @@ export const publicVacancy = (v: VacancyWithRels) => ({
   datePosted: v.publishedAt,
   validThrough: v.closesAt,
   companyName: v.showCompany && v.company ? v.company.name : null,
+  // Employer logo ({ url, w?, h? }, lib/publicImages.ts): only when the employer is shown at all.
+  companyLogo: v.showCompany && v.company ? companyLogoOf(v.company.logo) : null,
   visaCategory: v.visaCategory ? { slug: v.visaCategory.slug, title: v.visaCategory.title, visaLabel: v.visaCategory.visaLabel } : null,
   images: vacancyImagesOf(v.images),
 });

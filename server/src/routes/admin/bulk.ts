@@ -14,7 +14,8 @@ import { notifyApplicationStatus, notifyCandidateProposed } from '../../lib/jobs
 import { emitWebhook } from '../../lib/ops/webhooks.js';
 import { BULK_MAX, CASE_BULK_ACTION_KEYS, commonCaseActions, renderTemplate, runBatched, summarize, toCsv, type BulkItemResult } from '../../lib/bulk/index.js';
 import { caseListQuery, caseListWhere } from './cases.js';
-import { candidateListQuery, candidateListWhere } from './candidates.js';
+import { inquiryListQuery, inquiryListWhere, inquiryOrderBy, notifyInquiryAssigneeBulk } from '../../lib/inquiries/index.js';
+import { candidateListQuery, candidateListWhere, candidateSelect, loadRankVacancy, RANK_LIMIT } from './candidates.js';
 
 /**
  * Bulk actions of the admin lists (mounted on /api/admin/bulk, STAFF+). Every write returns per-item results
@@ -23,10 +24,9 @@ import { candidateListQuery, candidateListWhere } from './candidates.js';
  *
  *   Cases       POST /cases/resolve | /cases/assign | /cases/restore-assign | /cases/status | /cases/processing
  *               POST /cases/message | /cases/export
- *   Inquiries   POST /inquiries/status | /inquiries/restore-status | /inquiries/message | /inquiries/export
+ *   Inquiries   POST /inquiries/status | /inquiries/restore-status | /inquiries/assign | /inquiries/restore-assign
+ *               POST /inquiries/message | /inquiries/export
  *   Candidates  POST /candidates/resolve | /candidates/assign | /candidates/status | /candidates/message | /candidates/export
- *
- * Inquiries have no responsible staff field yet (no bulk assign) — that needs Inquiry.assignedStaffId.
  */
 export const adminBulkRouter = Router();
 
@@ -101,7 +101,7 @@ adminBulkRouter.post('/cases/restore-assign', async (req, res) => {
   const body = parse(z.object({ items: z.array(z.object({ id, staffId: id.nullable() })).min(1).max(BULK_MAX) }), req.body ?? {});
   const staffIds = [...new Set(body.items.map((i) => i.staffId).filter((x): x is string => !!x))];
   const valid = new Set(
-    (await prisma.user.findMany({ where: { id: { in: staffIds }, role: { in: ['STAFF', 'ADMIN', 'SUPER_ADMIN'] } }, select: { id: true } })).map((u) => u.id),
+    (await prisma.user.findMany({ where: { id: { in: staffIds }, isActive: true, role: { in: ['STAFF', 'ADMIN', 'SUPER_ADMIN'] } }, select: { id: true } })).map((u) => u.id),
   );
   const target = new Map(body.items.map((i) => [i.id, i.staffId]));
   const results = await runBatched(body.items.map((i) => i.id), async (caseId) => {
@@ -250,6 +250,55 @@ adminBulkRouter.post('/inquiries/restore-status', async (req, res) => {
   res.json(await send(req, 'BULK_INQUIRIES_STATUS_UNDONE', results));
 });
 
+const inquirySelection = selection(inquiryListQuery.omit({ page: true, pageSize: true }).partial());
+
+/** Explicit ids (existing ones) or every lead matching the list filters, at most BULK_MAX. */
+const resolveInquiries = async (req: Request, sel: z.infer<typeof inquirySelection>) => {
+  if (sel.ids) {
+    const rows = await prisma.inquiry.findMany({ where: { id: { in: sel.ids } }, select: { id: true } });
+    const found = new Set(rows.map((r) => r.id));
+    return sel.ids.filter((x) => found.has(x));
+  }
+  const all = sel.all!;
+  const rows = await prisma.inquiry.findMany({ where: inquiryListWhere(all, req.user!.id), orderBy: inquiryOrderBy(all.sort ?? 'hot'), take: BULK_MAX, select: { id: true } });
+  return rows.map((r) => r.id);
+};
+
+/** Owner of many leads (staff id or null = unassign); the new owner gets one notice. `previous` feeds the undo. */
+adminBulkRouter.post('/inquiries/assign', async (req, res) => {
+  const body = parse(z.object({ selection: inquirySelection, staffId: id.nullable() }), req.body ?? {});
+  await assertStaff(body.staffId);
+  const targetIds = await resolveInquiries(req, body.selection);
+  const before = await prisma.inquiry.findMany({ where: { id: { in: targetIds } }, select: { id: true, assignedStaffId: true } });
+  const prev = new Map(before.map((b) => [b.id, b.assignedStaffId]));
+  const now = new Date();
+  const results = await runBatched(targetIds, async (inquiryId) => {
+    if (prev.get(inquiryId) === body.staffId) return;
+    await prisma.inquiry.update({ where: { id: inquiryId }, data: { assignedStaffId: body.staffId, assignedAt: body.staffId ? now : null } });
+  });
+  const okIds = results.filter((r) => r.ok).map((r) => r.id);
+  if (body.staffId) void notifyInquiryAssigneeBulk(body.staffId, okIds.filter((x) => prev.get(x) !== body.staffId), req.user!.id);
+  const previous = okIds.map((x) => ({ id: x, staffId: prev.get(x) ?? null }));
+  res.json({ ...(await send(req, 'BULK_INQUIRIES_ASSIGNED', results, { staffId: body.staffId })), previous });
+});
+
+/** Undo of a bulk assignment: every lead back to its own previous owner (inactive staff → unassigned is refused per item). */
+adminBulkRouter.post('/inquiries/restore-assign', async (req, res) => {
+  const body = parse(z.object({ items: z.array(z.object({ id, staffId: id.nullable() })).min(1).max(BULK_MAX) }), req.body ?? {});
+  const staffIds = [...new Set(body.items.map((i) => i.staffId).filter((x): x is string => !!x))];
+  const valid = new Set(
+    (await prisma.user.findMany({ where: { id: { in: staffIds }, isActive: true, role: { in: ['STAFF', 'ADMIN', 'SUPER_ADMIN'] } }, select: { id: true } })).map((u) => u.id),
+  );
+  const target = new Map(body.items.map((i) => [i.id, i.staffId]));
+  const results = await runBatched(body.items.map((i) => i.id), async (inquiryId) => {
+    const staffId = target.get(inquiryId) ?? null;
+    if (staffId && !valid.has(staffId)) throw badRequest('INVALID_STAFF');
+    const n = await prisma.inquiry.updateMany({ where: { id: inquiryId }, data: { assignedStaffId: staffId, assignedAt: staffId ? new Date() : null } });
+    if (!n.count) throw notFound('INQUIRY_NOT_FOUND');
+  });
+  res.json(await send(req, 'BULK_INQUIRIES_ASSIGN_UNDONE', results));
+});
+
 /** E-mail to each inquiry's contact (subject + body with {{contactName}} / {{companyName}} / {{staffName}}). */
 adminBulkRouter.post('/inquiries/message', async (req, res) => {
   const body = parse(z.object({ ids, subject: z.string().trim().min(1).max(200), body: messageBody }), req.body ?? {});
@@ -296,6 +345,16 @@ const resolveCandidates = async (sel: z.infer<typeof candidateSelection>) => {
   }
   const q = { page: 1, ...sel.all! };
   const where = candidateListWhere(q);
+  // With a vacancy the list is ranked by match score (routes/admin/candidates.ts): "all matching" takes the
+  // same order before capping at BULK_MAX, so the first N are the ones the user sees on top.
+  if (q.vacancyId) {
+    const vacancy = await loadRankVacancy(q.vacancyId);
+    if (!vacancy) throw badRequest('INVALID_VACANCY');
+    const rows = await prisma.user.findMany({ where, orderBy: { createdAt: 'desc' }, take: RANK_LIMIT, select: candidateSelect });
+    const hit = q.licence ? rows.filter((r) => licenceCovers(r.drivingLicence, q.licence)) : rows;
+    const ranked = hit.map((u) => ({ id: u.id, score: matchCandidate(u, vacancy).score })).sort((a, b) => b.score - a.score);
+    return { ids: ranked.slice(0, BULK_MAX).map((r) => r.id), total: ranked.length };
+  }
   if (q.licence) {
     const rows = await prisma.user.findMany({ where, orderBy: { createdAt: 'desc' }, take: 3000, select: { id: true, drivingLicence: true } });
     const hit = rows.filter((r) => licenceCovers(r.drivingLicence, q.licence));

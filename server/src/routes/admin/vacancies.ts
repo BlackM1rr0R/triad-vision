@@ -10,7 +10,8 @@ import { notifyVacancyReviewed } from '../../lib/jobsNotifications.js';
 import { matchCandidate } from '../../lib/matching.js';
 import { fillL10n, staffVacancyInput, staffVacancyPatch, uniqueSlug, vacancyData } from '../../lib/vacancies.js';
 import { hasMinRole } from '../../middleware/auth.js';
-import { singleVacancyImage, storeVacancyImage } from '../../lib/vacancyImages.js';
+import { singleVacancyImage, storeVacancyImage, vacancyImagesOf } from '../../lib/vacancyImages.js';
+import { cleanupRemovedImages } from '../../lib/publicImageRefs.js';
 
 // Admin: vacancies — mounted at /api/admin/vacancies
 export const adminVacanciesRouter = Router();
@@ -215,6 +216,11 @@ adminVacanciesRouter.patch('/:id', async (req, res) => {
       ...(body.status === 'OPEN' && before.status !== 'OPEN' && body.publishedAt === undefined && !before.publishedAt ? { publishedAt: new Date() } : {}),
     },
   });
+  // Photos taken out of the vacancy: their files go unless something else still uses them.
+  if (body.images !== undefined) {
+    const kept = new Set(vacancyImagesOf(vacancy.images).map((i) => i.url));
+    cleanupRemovedImages(vacancyImagesOf(before.images).map((i) => i.url).filter((u) => !kept.has(u)));
+  }
   await audit(req, 'VACANCY_UPDATED', `vacancy:${vacancy.id}`, { fields: Object.keys(body), changes: diffVacancy(before, vacancy), ...(isSuper(req) ? { by: 'SUPER_ADMIN' } : {}) });
   if (vacancy.status === 'OPEN' && before.status !== 'OPEN') {
     if (before.status === 'PENDING') await notifyVacancyReviewed(vacancy, true);
@@ -267,6 +273,7 @@ adminVacanciesRouter.delete('/:id', async (req, res) => {
   if (!v) throw notFound('VACANCY_NOT_FOUND');
   if (v._count.applications || v._count.cases) throw conflict('VACANCY_IN_USE');
   await prisma.vacancy.delete({ where: { id: v.id } });
+  cleanupRemovedImages(vacancyImagesOf(v.images).map((i) => i.url));
   await audit(req, 'VACANCY_DELETED', `vacancy:${v.id}`, { slug: v.slug });
   res.json({ ok: true });
 });

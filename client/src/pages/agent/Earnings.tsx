@@ -58,7 +58,34 @@ export default function AgentEarningsPage() {
         <EmptyState compact illustration={<Documents className="w-28" />} title={t('agents.earn.empty')} />
       ) : (
         <>
-          <div className="overflow-x-auto rounded-2xl border border-line">
+          {/* Cards on phones, a table from sm up (like the partner commissions). */}
+          <ul className="space-y-2 sm:hidden">
+            {q.data.items.map((r) => (
+              <li key={r.id} className="rounded-xl border border-line bg-card p-3">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="font-semibold break-words text-ink">{t(`agents.events.${r.event}`, { defaultValue: r.event })}</p>
+                    <p className="text-xs text-muted">
+                      {day(r.createdAt)}
+                      {r.client ? ` · ${r.client}` : ''}
+                    </p>
+                  </div>
+                  <p className={clsx('num shrink-0 font-semibold', r.amountCents < 0 ? 'text-danger' : 'text-ink')}>{money(r.amountCents, r.currency)}</p>
+                </div>
+                <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted">
+                  <span className={`badge ${STATUS_TONE[r.status]}`}>{t(`agents.status.${r.status}`)}</span>
+                  {r.paidAt && (
+                    <span>
+                      {t('agents.earn.payout')}: {day(r.paidAt)}
+                      {r.payoutRef && <span className="font-mono"> · {r.payoutRef}</span>}
+                    </span>
+                  )}
+                  {r.note && <span className="w-full">{r.note}</span>}
+                </div>
+              </li>
+            ))}
+          </ul>
+          <div className="hidden overflow-x-auto rounded-2xl border border-line sm:block">
             <table className="tv-table min-w-[640px]">
               <thead>
                 <tr>

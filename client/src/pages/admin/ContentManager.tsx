@@ -13,7 +13,7 @@ import { ICON_NAMES, Icon, hasIcon } from '@/components/ui/Icon';
 import { Spinner } from '@/components/ui/Spinner';
 import { ConfirmDialog } from '@/components/admin/ConfirmDialog';
 import { Drawer } from '@/components/admin/Drawer';
-import { ImageField } from '@/components/admin/ImageField';
+import { ImageField, type ImageKind } from '@/components/admin/ImageField';
 import { L10nInput, L10nListInput, emptyL10n, emptyL10nList, fillFromAz, fillListFromAz, LANGS } from '@/components/admin/L10nInput';
 import { fmtDate, toDateInput, toastError } from '@/components/admin/labels';
 import { EmptyState, ErrorBlock, LoadingBlock, PageHead, Switch } from '@/components/admin/ui';
@@ -51,6 +51,8 @@ interface FieldDef {
   unit?: string;
   /** Maximum length for text / url inputs. */
   maxLength?: number;
+  /** Image fields: upload preset, hint and aspect-ratio check (cover 16:9, logo 1:1, avatar…). */
+  imageKind?: ImageKind;
 }
 
 type FaqItem = { q: L10n; a: L10n };
@@ -109,7 +111,7 @@ const buildResources = (t: Tr): Record<string, ResourceDef> => {
         { key: 'slug', label: f('slug'), type: 'slug', required: true, hint: hint('slugServices') },
         { key: 'audience', label: f('audience'), type: 'select', options: audienceOptions(['all', 'company', 'candidate']) },
         { key: 'icon', label: f('icon'), type: 'icon' },
-        { key: 'image', label: f('image'), type: 'image', wide: true },
+        { key: 'image', label: f('image'), type: 'image', wide: true, imageKind: 'cover' },
         { key: 'summary', label: f('summary'), type: 'l10n-textarea', rows: 3, wide: true },
         { key: 'features', label: f('features'), type: 'l10n-list', wide: true },
         { key: 'body', label: f('body'), type: 'l10n-textarea', rows: 8, wide: true, hint: hint('paragraphs') },
@@ -131,7 +133,7 @@ const buildResources = (t: Tr): Record<string, ResourceDef> => {
         { key: 'slug', label: f('slug'), type: 'slug', required: true, hint: hint('slugVisa') },
         { key: 'visaLabel', label: f('visaLabel'), type: 'text', required: true, hint: hint('visaLabel') },
         { key: 'icon', label: f('icon'), type: 'icon' },
-        { key: 'image', label: f('image'), type: 'image', wide: true },
+        { key: 'image', label: f('image'), type: 'image', wide: true, imageKind: 'cover' },
         { key: 'summary', label: f('summary'), type: 'l10n-textarea', rows: 3, wide: true },
         { key: 'items', label: f('items'), type: 'l10n-list', wide: true },
         { key: 'body', label: f('body'), type: 'l10n-textarea', rows: 8, wide: true },
@@ -176,7 +178,7 @@ const buildResources = (t: Tr): Record<string, ResourceDef> => {
       fields: [
         { key: 'name', label: f('name'), type: 'text', required: true },
         { key: 'website', label: f('website'), type: 'url', nullable: true },
-        { key: 'logo', label: f('logo'), type: 'image', nullable: true, wide: true },
+        { key: 'logo', label: f('logo'), type: 'image', nullable: true, wide: true, imageKind: 'logo' },
         {
           key: 'sector',
           label: f('sector'),
@@ -198,7 +200,7 @@ const buildResources = (t: Tr): Record<string, ResourceDef> => {
       titleOf: (i) => l10nAz(i.profession),
       subtitleOf: (i) => `${str(i.visaLabel)} · ${l10nAz(i.dateLabel)}`,
       fields: [
-        { key: 'image', label: f('image'), type: 'image', required: true, wide: true },
+        { key: 'image', label: f('image'), type: 'image', required: true, wide: true, imageKind: 'photo' },
         { key: 'profession', label: f('profession'), type: 'l10n', required: true, wide: true },
         { key: 'visaLabel', label: f('visaLabel'), type: 'text' },
         { key: 'dateLabel', label: f('dateLabel'), type: 'l10n', hint: hint('dateLabel') },
@@ -209,12 +211,15 @@ const buildResources = (t: Tr): Record<string, ResourceDef> => {
       ...res('testimonials'),
       sortable: true,
       publishable: true,
+      imageKey: 'authorPhoto',
       titleOf: (i) => l10nAz(i.author),
       subtitleOf: (i) => l10nAz(i.quote),
       fields: [
         { key: 'quote', label: f('quote'), type: 'l10n-textarea', required: true, rows: 4, wide: true },
         { key: 'author', label: f('author'), type: 'l10n', required: true },
         { key: 'role', label: f('role'), type: 'l10n' },
+        // Round photo next to the quote (home + /stories); initials when empty.
+        { key: 'authorPhoto', label: f('authorPhoto'), type: 'image', nullable: true, wide: true, imageKind: 'avatar', hint: hint('authorPhoto') },
         {
           key: 'kind',
           label: f('kind'),
@@ -226,7 +231,7 @@ const buildResources = (t: Tr): Record<string, ResourceDef> => {
         },
         // Video success story + filters of the /stories page.
         { key: 'videoUrl', label: f('videoUrl'), type: 'video', nullable: true, wide: true, group: t('discoverAdmin.story.group'), hint: t('discoverAdmin.story.videoHint') },
-        { key: 'posterUrl', label: f('posterUrl'), type: 'image', nullable: true, wide: true },
+        { key: 'posterUrl', label: f('posterUrl'), type: 'image', nullable: true, wide: true, imageKind: 'cover' },
         { key: 'profession', label: f('profession'), type: 'text', nullable: true, maxLength: 120 },
         { key: 'city', label: f('city'), type: 'text', nullable: true, maxLength: 80 },
         {
@@ -288,7 +293,7 @@ const buildResources = (t: Tr): Record<string, ResourceDef> => {
         { key: 'title', label: f('title'), type: 'l10n', required: true, wide: true },
         { key: 'slug', label: f('slug'), type: 'slug', required: true, hint: hint('slugPost') },
         { key: 'publishedAt', label: f('publishedAt'), type: 'date', required: true },
-        { key: 'cover', label: f('cover'), type: 'image', wide: true },
+        { key: 'cover', label: f('cover'), type: 'image', wide: true, imageKind: 'cover' },
         { key: 'excerpt', label: f('excerpt'), type: 'l10n-textarea', rows: 3, wide: true },
         { key: 'body', label: f('text'), type: 'l10n-textarea', rows: 12, wide: true, hint: hint('paragraphs') },
         PUBLISHED,
@@ -598,7 +603,7 @@ const FieldInput = ({ f, value, onChange }: { f: FieldDef; value: Value; onChang
       );
     }
     case 'image':
-      return <ImageField label={f.label} value={typeof value === 'string' ? value : ''} onChange={onChange} required={f.required} />;
+      return <ImageField label={f.label} value={typeof value === 'string' ? value : ''} onChange={onChange} required={f.required} kind={f.imageKind} />;
     case 'video':
       return <VideoUrlField label={f.label} hint={f.hint} value={typeof value === 'string' ? value : ''} onChange={onChange} />;
     case 'icon':

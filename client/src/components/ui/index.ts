@@ -9,6 +9,7 @@ export { Spinner, PageLoader } from './Spinner';
 export { Modal, type ModalProps, type ModalSize } from './Modal';
 export { Drawer, type DrawerProps, type DrawerWidth } from './Drawer';
 export { ConfirmDialog, type ConfirmDialogProps } from './ConfirmDialog';
+export { ConfirmHost, confirmDialog, useConfirm, type ConfirmOptions } from './ConfirmHost';
 export { Badge, StatusPill, StatusDot, type BadgeProps, type StatusPillProps } from './Badge';
 export { EmptyState, type EmptyStateProps } from './EmptyState';
 export { Skeleton, SkeletonText, SkeletonBlock, SkeletonList, SkeletonRows, SkeletonAvatar, SkeletonCard, SkeletonGrid, SkeletonStat, SkeletonStats, SkeletonTable, SkeletonHero } from './Skeleton';

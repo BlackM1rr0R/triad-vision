@@ -7,7 +7,7 @@ const az = {
     cand: { action: 'Əməliyyat' },
     vac: { title: 'Vakansiya', status: 'Status', company: 'İşəgötürən', visa: 'Viza', city: 'Şəhər', employment: 'Məşğulluq', salary: 'Maaş', applications: 'Müraciətlər', updated: 'Yeniləndi' },
     comp: { name: 'Şirkət', status: 'Status', city: 'Şəhər', sector: 'Sahə', email: 'E-poçt', phone: 'Telefon', users: 'İstifadəçilər', vacancies: 'Vakansiyalar', workers: 'İşçilər', invoices: 'Hesablar', created: 'Yaradılıb' },
-    undo: { action: 'Geri al', undone: 'Geri alındı', failed: 'Geri almaq alınmadı' },
+    undo: { action: 'Geri al', undone: 'Geri alındı', failed: 'Geri almaq alınmadı', tooLate: 'Gecdir — əməliyyat artıq tətbiq olunub' },
     table: {
       columns: 'Sütunlar',
       hiddenCount: '{{count}} gizli',
@@ -305,7 +305,7 @@ const de: Copy = {
     cand: { action: 'Aktion' },
     vac: { title: 'Stelle', status: 'Status', company: 'Arbeitgeber', visa: 'Visum', city: 'Ort', employment: 'Beschäftigung', salary: 'Gehalt', applications: 'Bewerbungen', updated: 'Aktualisiert' },
     comp: { name: 'Firma', status: 'Status', city: 'Ort', sector: 'Branche', email: 'E-Mail', phone: 'Telefon', users: 'Benutzer', vacancies: 'Stellen', workers: 'Arbeitskräfte', invoices: 'Rechnungen', created: 'Angelegt' },
-    undo: { action: 'Rückgängig', undone: 'Rückgängig gemacht', failed: 'Rückgängig machen fehlgeschlagen' },
+    undo: { action: 'Rückgängig', undone: 'Rückgängig gemacht', failed: 'Rückgängig machen fehlgeschlagen', tooLate: 'Zu spät — die Aktion wurde bereits ausgeführt' },
     table: {
       columns: 'Spalten',
       hiddenCount: '{{count}} ausgeblendet',
@@ -601,7 +601,7 @@ const en: Copy = {
     cand: { action: 'Action' },
     vac: { title: 'Vacancy', status: 'Status', company: 'Employer', visa: 'Visa', city: 'City', employment: 'Employment', salary: 'Salary', applications: 'Applications', updated: 'Updated' },
     comp: { name: 'Company', status: 'Status', city: 'City', sector: 'Sector', email: 'E-mail', phone: 'Phone', users: 'Users', vacancies: 'Vacancies', workers: 'Workers', invoices: 'Invoices', created: 'Created' },
-    undo: { action: 'Undo', undone: 'Undone', failed: 'Could not undo' },
+    undo: { action: 'Undo', undone: 'Undone', failed: 'Could not undo', tooLate: 'Too late — the action has already been applied' },
     table: {
       columns: 'Columns',
       hiddenCount: '{{count}} hidden',
@@ -897,7 +897,7 @@ const ru: Copy = {
     cand: { action: 'Действие' },
     vac: { title: 'Вакансия', status: 'Статус', company: 'Работодатель', visa: 'Виза', city: 'Город', employment: 'Занятость', salary: 'Зарплата', applications: 'Отклики', updated: 'Обновлено' },
     comp: { name: 'Компания', status: 'Статус', city: 'Город', sector: 'Отрасль', email: 'E-mail', phone: 'Телефон', users: 'Пользователи', vacancies: 'Вакансии', workers: 'Работники', invoices: 'Счета', created: 'Создана' },
-    undo: { action: 'Отменить', undone: 'Отменено', failed: 'Не удалось отменить' },
+    undo: { action: 'Отменить', undone: 'Отменено', failed: 'Не удалось отменить', tooLate: 'Слишком поздно — действие уже выполнено' },
     table: {
       columns: 'Столбцы',
       hiddenCount: 'скрыто: {{count}}',

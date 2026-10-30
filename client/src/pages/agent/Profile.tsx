@@ -7,6 +7,8 @@ import { api, errorCode } from '@/lib/api';
 import { Spinner } from '@/components/ui/Spinner';
 import { Section, type AgentMe } from '@/components/agents/portal';
 import { agentError } from '@/components/agents/types';
+import { ChangeEmailCard, ChangePasswordCard } from '@/components/account/AccountSecurity';
+import { EmailOtpCard } from '@/components/auth/EmailOtpCard';
 
 const Field = ({ label, value }: { label: string; value: string }) => (
   <div className="min-w-0">
@@ -39,7 +41,8 @@ export default function AgentProfilePage({ me }: { me: AgentMe }) {
   };
 
   return (
-    <Section title={t('agents.profile.title')} icon={CircleUser}>
+    <div className="space-y-6">
+      <Section title={t('agents.profile.title')} icon={CircleUser}>
       <dl className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Field label={t('agents.profile.name')} value={`${me.user.firstName} ${me.user.lastName}`} />
         <Field label={t('agents.profile.email')} value={me.user.email} />
@@ -71,6 +74,13 @@ export default function AgentProfilePage({ me }: { me: AgentMe }) {
           </button>
         </div>
       </form>
-    </Section>
+      </Section>
+      {/* Account security: password, e-mail change (link to the new address), two-step login by e-mail. */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        <ChangePasswordCard />
+        <ChangeEmailCard />
+      </div>
+      <EmailOtpCard />
+    </div>
   );
 }

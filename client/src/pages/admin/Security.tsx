@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { api, errorCode } from '@/lib/api';
 import { needsTwoFactorEnrollment, useAuth } from '@/lib/auth';
+import { ChangeEmailCard, ChangePasswordCard } from '@/components/account/AccountSecurity';
 import type { Role } from '@/lib/types';
 import { Spinner } from '@/components/ui/Spinner';
 import { ErrorBlock, LoadingBlock, PageHead, Panel } from '@/components/admin/ui';
@@ -506,6 +507,14 @@ export default function AdminSecurity() {
           )}
           {!status.required && <p className="mt-5 text-xs text-muted">{t('adminSecurity.clientOptional')}</p>}
         </Panel>
+      )}
+
+      {/* Own login: password and e-mail change (link to the new address), like in every portal profile. */}
+      {!mustEnroll && (
+        <div className="grid gap-6 xl:grid-cols-2">
+          <ChangePasswordCard />
+          <ChangeEmailCard />
+        </div>
       )}
 
       {user?.role === 'SUPER_ADMIN' && !mustEnroll && <StaffTwoFactor />}

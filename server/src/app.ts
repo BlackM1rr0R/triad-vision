@@ -8,7 +8,8 @@ import { csrfGuard, loadUser } from './middleware/auth.js';
 import { errorHandler, limiter, noStore, requestId } from './lib/http.js';
 import { authRouter } from './routes/auth.js';
 import { casesRouter } from './routes/cases.js';
-import { scanUploadRouter } from './routes/scanUpload.js';
+import { scanPdfRouter, scanUploadRouter } from './routes/scanUpload.js';
+import { companyTeamRouter } from './routes/companyTeam.js';
 import { devicesRouter } from './routes/devices.js';
 import { filesRouter } from './routes/files.js';
 import { notificationsRouter } from './routes/notifications.js';
@@ -177,6 +178,7 @@ export const createApp = () => {
   app.use('/api/auth', authRouter);
   app.use('/api/public', publicRouter);
   app.use('/api/cases', scanUploadRouter); // POST /:caseId/documents/scan (before the cases router)
+  app.use('/api/scan', scanPdfRouter); // POST /pdf: scanner pages → one PDF for any upload spot
   app.use('/api/cases', casesRouter);
   app.use('/api/files', filesRouter);
   app.use('/api/notifications', notificationsRouter);
@@ -212,6 +214,7 @@ export const createApp = () => {
   app.use('/api/company/skill-videos', companySkillVideosRouter); // approved + consented skill videos of presented candidates
   app.use('/api/company/forms', companyFormsRouter); // Erklärung zum Beschäftigungsverhältnis: complete + sign
   app.use('/api/company/workers', companyWorkersRouter); // "my workers" panel, worker drawer, CSV / Excel export
+  app.use('/api/company/team', companyTeamRouter); // employer team: invite / list / deactivate colleagues (owner)
   app.use('/api/company/reports', companyReportsRouter); // monthly employer reports (list, PDF, e-mail opt-out)
   app.use('/api/company', companyRouter);
   app.use('/api/vacancies', vacanciesRouter);

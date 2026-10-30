@@ -16,6 +16,7 @@ import type { DriveItem } from '@/components/drive/types';
 import PageCanvas from '@/components/pdfTools/PageCanvas';
 import { openPdf } from '@/components/pdfTools/pdfjs';
 import { applyOps, editorHref, fetchInfo, isPdfItem, pdfToolKeys, splitPdf, toastToolError, type PageOp, type SavedResponse } from '@/components/pdfTools/api';
+import { confirmDialog } from '@/components/ui/ConfirmHost';
 
 registerCopy(pdfToolsCopy);
 
@@ -298,9 +299,8 @@ export default function PdfEditor() {
     setHistory((h) => h.slice(0, -1));
   };
 
-  const setMode = (m: Mode) => {
-    // TODO(ui): ConfirmDialog
-    if (dirty && m !== 'pages' && !window.confirm(t('pdfTools.editor.leaveUnsaved'))) return;
+  const setMode = async (m: Mode) => {
+    if (dirty && m !== 'pages' && !(await confirmDialog({ title: t('ui.confirmDlg.unsavedTitle'), message: t('pdfTools.editor.leaveUnsaved'), confirmLabel: t('ui.confirmDlg.discard') }))) return;
     if (dirty && m !== 'pages' && doc) {
       setEntries(initial(doc.numPages));
       setHistory([]);
@@ -348,8 +348,9 @@ export default function PdfEditor() {
         <Link
           to={backHref}
           onClick={(e) => {
-            // TODO(ui): ConfirmDialog
-            if (dirty && !window.confirm(t('pdfTools.editor.leaveUnsaved'))) e.preventDefault();
+            if (!dirty) return;
+            e.preventDefault();
+            void confirmDialog({ title: t('ui.confirmDlg.unsavedTitle'), message: t('pdfTools.editor.leaveUnsaved'), confirmLabel: t('ui.confirmDlg.discard') }).then((ok) => ok && navigate(backHref));
           }}
           className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-sm text-muted hover:bg-sunken hover:text-ink"
         >

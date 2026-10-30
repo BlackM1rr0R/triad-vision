@@ -87,6 +87,7 @@ export const useTaskActions = () => {
       delayedCommit({
         message,
         commit: () => api.delete(`/tasks/${ref}`),
+        keepalive: { method: 'DELETE', url: `/tasks/${ref}` },
         onCommitted: () => {
           hiddenTasks.delete(id);
           qc.removeQueries({ queryKey: taskKeys.detail(ref) });

@@ -10,6 +10,7 @@ import { ensureSharedRoot } from './drive/roots.js';
 import { pickFreeName, safeUploadName } from './drive/names.js';
 import { purgeNodes } from './drive/trash.js';
 import { deleteCourseData } from './course/service.js';
+import { eraseInquiries } from './privacy/inquiries.js';
 
 /**
  * Hard delete of a user account by the super admin (Admin → Users → "Delete").
@@ -71,6 +72,8 @@ export interface UserDeletionCounts {
   driveNodesMoved: number;
   driveFolder: string | null;
   mailAttachmentsRemoved: number;
+  /** Website enquiries of the person's e-mail / converted account that were anonymised. */
+  inquiriesAnonymized?: number;
 }
 
 export interface UserDeletionTarget {
@@ -214,6 +217,11 @@ export const deleteUserAccount = async (actorId: string, userId: string, ip?: st
         await tx.jobAlert.deleteMany({ where: { OR: [{ userId }, { email: target.email.toLowerCase() }] } });
         if (ownCaseIds.length) await tx.casePublicStatus.deleteMany({ where: { caseId: { in: ownCaseIds } } });
 
+        // Website enquiries of the address / converted account: anonymised (the row stays for statistics).
+        const inquiriesAnonymized = await eraseInquiries(target.email, userId, tx);
+        // Leads owned by a deleted team member become unassigned (plain id, no foreign key).
+        await tx.inquiry.updateMany({ where: { assignedStaffId: userId }, data: { assignedStaffId: null, assignedAt: null } });
+
         await tx.user.delete({ where: { id: userId } });
 
         const result = {
@@ -235,6 +243,7 @@ export const deleteUserAccount = async (actorId: string, userId: string, ip?: st
           calendarEventsReassigned,
           driveNodesMoved,
           driveFolder,
+          inquiriesAnonymized,
         };
         // Written in the same transaction: the actor is the super admin, never the deleted id.
         await tx.auditLog.create({

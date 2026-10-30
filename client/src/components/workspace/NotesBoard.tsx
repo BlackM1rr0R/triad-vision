@@ -6,6 +6,7 @@ import { GripVertical, Pin, PinOff, Plus, StickyNote, Trash2 } from 'lucide-reac
 import { api } from '@/lib/api';
 import { NOTE_COLORS, type Note, type NoteColor, useWorkspaceInvalidate } from './api';
 import { Card, Empty, IconButton, Skeleton, errorText } from './ui';
+import { confirmDialog } from '@/components/ui/ConfirmHost';
 
 /** Sticky-note tints: readable on both themes (text stays dark on the pastel). */
 const TONE: Record<NoteColor, string> = {
@@ -55,8 +56,7 @@ const NoteCard = ({ note, onDragStart, onDragOver, onDrop, dragging }: { note: N
     void save({ title: title.trim() || null, body });
   };
   const remove = async () => {
-    // TODO(ui): ConfirmDialog
-    if ((note.body.trim() || note.title) && !window.confirm(t('ws.common.confirmDelete'))) return;
+    if ((note.body.trim() || note.title) && !(await confirmDialog({ title: note.title ? t('ui.confirmDlg.deleteTitle', { name: note.title }) : undefined, message: t('ws.common.confirmDelete'), confirmLabel: t('ui.confirmDlg.delete') }))) return;
     try {
       await api.delete(`/workspace/notes/${note.id}`);
       toast.success(t('ws.notes.deleted'));

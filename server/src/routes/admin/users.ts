@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import bcrypt from 'bcryptjs';
 import { z } from 'zod';
+import type { Prisma } from '@prisma/client';
 import { assertStaffSeat, STAFF_ROLES } from '../../lib/license/index.js';
 import { prisma } from '../../db.js';
 import { requireMinRole, revokeUserSessions } from '../../middleware/auth.js';
@@ -37,27 +38,37 @@ adminUsersRouter.get('/', async (req, res) => {
       search: z.string().trim().max(120).optional(),
       // Clients of a referral partner: a partner id, "any" (some partner) or "none".
       ownerPartnerId: z.string().trim().min(1).max(40).optional(),
+      // Only accounts with a live session seen in the last 5 minutes.
+      online: z.enum(['1']).optional(),
+      // Server paging (default 50 per page, at most 200).
+      page: z.coerce.number().int().min(1).max(100_000).default(1),
+      pageSize: z.coerce.number().int().min(1).max(200).default(50),
     }),
     req.query,
   );
-  const users = await prisma.user.findMany({
-    where: {
-      ...(q.role ? { role: q.role } : {}),
-      ...(q.ownerPartnerId ? { ownerPartnerId: q.ownerPartnerId === 'none' ? null : q.ownerPartnerId === 'any' ? { not: null } : q.ownerPartnerId } : {}),
-      ...(q.search
-        ? {
-            OR: [
-              { email: { contains: q.search } },
-              { firstName: { contains: q.search } },
-              { lastName: { contains: q.search } },
-            ],
-          }
-        : {}),
-    },
-    orderBy: { createdAt: 'desc' },
-    take: 200,
-    select: userSelect,
-  });
+  const ONLINE_MS = 5 * 60 * 1000;
+  const now = new Date();
+  const onlineWhere: Prisma.UserWhereInput = { sessions: { some: { revokedAt: null, expiresAt: { gt: now }, lastSeenAt: { gte: new Date(now.getTime() - ONLINE_MS) } } } };
+  const base: Prisma.UserWhereInput = {
+    ...(q.role ? { role: q.role } : {}),
+    ...(q.ownerPartnerId ? { ownerPartnerId: q.ownerPartnerId === 'none' ? null : q.ownerPartnerId === 'any' ? { not: null } : q.ownerPartnerId } : {}),
+    ...(q.search
+      ? {
+          OR: [
+            { email: { contains: q.search } },
+            { firstName: { contains: q.search } },
+            { lastName: { contains: q.search } },
+            { phone: { contains: q.search } },
+          ],
+        }
+      : {}),
+  };
+  const where: Prisma.UserWhereInput = q.online ? { AND: [base, onlineWhere] } : base;
+  const [users, total, onlineCount] = await Promise.all([
+    prisma.user.findMany({ where, orderBy: [{ createdAt: 'desc' }, { id: 'desc' }], skip: (q.page - 1) * q.pageSize, take: q.pageSize, select: userSelect }),
+    prisma.user.count({ where }),
+    prisma.user.count({ where: { AND: [base, onlineWhere] } }),
+  ]);
   // Last activity and live sessions, from the session table (one query for the whole page).
   const ids = users.map((u) => u.id);
   const [seen, live, logins30] = ids.length
@@ -70,8 +81,11 @@ adminUsersRouter.get('/', async (req, res) => {
   const seenBy = new Map(seen.map((s) => [s.userId, s._max]));
   const liveBy = new Map(live.map((s) => [s.userId, s._count._all]));
   const loginsBy = new Map(logins30.map((s) => [s.userId, s._count._all]));
-  const ONLINE_MS = 5 * 60 * 1000;
   res.json({
+    total,
+    page: q.page,
+    pageSize: q.pageSize,
+    onlineCount,
     users: users.map((u) => {
       const m = seenBy.get(u.id);
       return {

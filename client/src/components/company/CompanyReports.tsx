@@ -1,4 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { ErrorState } from '@/components/ui/ErrorState';
+import { Spinner } from '@/components/ui/Spinner';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { Download, FileBarChart2, MailCheck } from 'lucide-react';
@@ -33,14 +35,18 @@ export const monthLabel = (month: string, locale: string) => {
 /** Past monthly reports of the company (download as PDF). */
 export const CompanyReports = () => {
   const { t, i18n } = useTranslation();
-  const { data } = useQuery({
+  const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ['company-reports'],
     queryFn: async () => (await api.get<{ items: ReportRow[] }>('/company/reports')).data.items,
   });
   return (
     <Section title={t('employerReports.title')} icon={FileBarChart2}>
       <p className="-mt-2 mb-5 text-sm text-muted">{t('employerReports.subtitle')}</p>
-      {!data?.length ? (
+      {isLoading ? (
+        <Spinner className="mx-auto size-6 text-primary" />
+      ) : isError ? (
+        <ErrorState compact onRetry={() => void refetch()} />
+      ) : !data?.length ? (
         <Empty icon={FileBarChart2} illustration={<Documents className="w-32" />} title={t('employerReports.empty')} />
       ) : (
         <ul className="divide-y divide-line rounded-2xl border border-line">

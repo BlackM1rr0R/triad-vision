@@ -14,6 +14,7 @@ import { Modal } from '@/components/admin/Modal';
 import { Panel } from '@/components/admin/ui';
 import { fmtDate, fmtDateTime } from '@/components/admin/labels';
 import { EVAL_CRITERIA, REC_TONE, toastPlacementError, type CandidateEvaluationList, type EvalCriterion, type Evaluation, type EvaluationSummary, type InterviewEvaluations as IEvals, type Recommendation } from './api';
+import { confirmDialog } from '@/components/ui/ConfirmHost';
 
 registerCopy(pagesPlacement);
 
@@ -161,7 +162,7 @@ const EvaluationCard = ({ e, onDelete, deleting, extra }: { e: Evaluation; onDel
           <Stars value={e.overall} />
           <span className={clsx('badge', REC_TONE[e.recommendation])}>{t(`placement.evaluations.rec.${e.recommendation}`)}</span>
           {onDelete && (
-            <button type="button" className="btn-ghost btn-sm text-danger" disabled={deleting} onClick={onDelete} aria-label={t('placement.evaluations.delete')}>
+            <button type="button" className="btn-ghost btn-sm text-danger" disabled={deleting} onClick={async () => (await confirmDialog({ title: t('placement.evaluations.delete'), message: t('ui.confirmDlg.deleteNamed', { name: [e.authorName ?? '—', fmtDateTime(e.updatedAt)].join(' · ') }), confirmLabel: t('ui.confirmDlg.delete') })) && onDelete()} aria-label={t('placement.evaluations.delete')}>
               <Trash2 className="size-3.5" />
             </button>
           )}

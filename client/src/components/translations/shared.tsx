@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { Check, Download, FileText, FolderOpen, Image as ImageIcon, Trash2 } from 'lucide-react';
 import { errorCode, formatBytes } from '@/lib/api';
+import { confirmDialog } from '@/components/ui/ConfirmHost';
 
 // ─── Types (mirror server/src/lib/translations/core.ts) ───────────────────
 
@@ -217,7 +218,7 @@ export const TrFileRow = ({ file, onRemove, busy }: { file: TrFile; onRemove?: (
       {onRemove && (
         <button
           type="button"
-          onClick={onRemove}
+          onClick={async () => (await confirmDialog({ message: t('ui.confirmDlg.deleteNamed', { name: file.filename }), confirmLabel: t('ui.confirmDlg.delete') })) && onRemove()}
           disabled={busy}
           className="grid size-9 place-items-center rounded-lg text-muted hover:bg-red-50 hover:text-danger disabled:opacity-50"
           aria-label={`${t('trOrders.detail.remove')}: ${file.filename}`}

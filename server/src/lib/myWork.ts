@@ -675,9 +675,12 @@ const mail = async (ctx: Ctx): Promise<Source[]> => {
   ];
 };
 
-/** Leads have no owner: every staff member sees the unhandled ones. */
-const inquiries = async (): Promise<Source> => {
-  const where: Prisma.InquiryWhereInput = { status: 'NEW' };
+/**
+ * New leads. Mine: the new ones assigned to me plus the unassigned new ones (anyone may take those); team view:
+ * every new lead. "Take" makes the lead mine and IN_PROGRESS.
+ */
+const inquiries = async (ctx: Ctx): Promise<Source> => {
+  const where: Prisma.InquiryWhereInput = ctx.team ? { status: 'NEW' } : { status: 'NEW', OR: [{ assignedStaffId: ctx.viewer.id }, { assignedStaffId: null }] };
   const [rows, total] = await Promise.all([prisma.inquiry.findMany({ where, orderBy: { createdAt: 'asc' }, take: LIMIT_PER_KIND }), prisma.inquiry.count({ where })]);
   return {
     kind: 'inquiry',
@@ -695,9 +698,9 @@ const inquiries = async (): Promise<Source> => {
         since: q.createdAt,
         link: '/admin/inquiries?status=NEW',
         refs: { inquiryId: q.id, phone: q.phone ?? null }, // phone: "call" button (components/calls)
-        assignee: null,
+        assignee: q.assignedStaffId === ctx.viewer.id ? person(ctx.viewer) : null,
         actions: [
-          { key: 'take', label: 'take', type: 'api', method: 'PATCH', endpoint, body: { status: 'IN_PROGRESS' }, primary: true },
+          { key: 'take', label: 'take', type: 'api', method: 'PATCH', endpoint, body: { status: 'IN_PROGRESS', assignToMe: true }, primary: true },
           { key: 'done', label: 'done', type: 'api', method: 'PATCH', endpoint, body: { status: 'DONE' } },
           { key: 'archive', label: 'archive', type: 'api', method: 'PATCH', endpoint, body: { status: 'ARCHIVED' } },
         ],
@@ -1169,7 +1172,7 @@ export const buildMyWork = async (viewer: WorkViewer, opts: { team: boolean; tz?
     signatures(ctx),
     tasks(ctx),
     mail(ctx),
-    inquiries(),
+    inquiries(ctx),
     bookings(ctx),
     applications(ctx),
     expiring(ctx),

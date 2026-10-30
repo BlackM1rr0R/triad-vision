@@ -122,6 +122,8 @@ describe('automatic assignment: strategy and eligibility', () => {
     const task = await waitFor(() => prisma.task.findFirst({ include: { assignees: true } }));
     expect(task.title).toBe('Anfrage: Hans Becker (Nord GmbH) kontaktieren');
     expect(task.assignees.map((a) => a.userId)).toEqual([s1.user.id]);
+    // The same staff member becomes the lead's owner.
+    expect(await prisma.inquiry.findFirstOrThrow({ where: { email: 'hans@nord.test' } })).toMatchObject({ assignedStaffId: s1.user.id, assignedAt: expect.any(Date) });
   });
 
   it('automation action "run auto-assignment" uses the strategy even when automatic assignment is off', async () => {

@@ -113,6 +113,7 @@ const AccountWaitingRoom = lazy(() => import('./pages/account/WaitingRoom'));
 const AccountCases = lazy(() => import('./pages/account/Cases')); // Home › My applications
 const AccountGuides = lazy(() => import('./pages/account/Guides')); // Learn › Guides
 const VerifyEmail = lazy(() => import('./pages/auth/VerifyEmail'));
+const ConfirmEmailChange = lazy(() => import('./pages/auth/ConfirmEmailChange')); // link mailed to the new address (e-mail change)
 const TwoFactor = lazy(() => import('./pages/auth/TwoFactor'));
 const Jobs = lazy(() => import('./pages/jobs/Jobs'));
 const JobDetail = lazy(() => import('./pages/jobs/JobDetail'));
@@ -427,6 +428,7 @@ export default function App() {
             <Route path="forgot-password" element={<ForgotPassword />} />
             <Route path="reset-password" element={<ResetPassword />} />
             <Route path="verify-email" element={<VerifyEmail />} />
+            <Route path="confirm-email-change" element={<ConfirmEmailChange />} />
             <Route path="login/2fa" element={<TwoFactor />} />
             <Route path="impressum" element={<Impressum />} />
             <Route path="privacy" element={<Privacy />} />

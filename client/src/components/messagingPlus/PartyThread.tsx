@@ -15,6 +15,7 @@ import { Modal } from '@/components/ui/Modal';
 import { MessageBody, ShowOriginalsToggle, TranslationNote } from './MessageBody';
 import { VoiceRecorder } from './VoiceRecorder';
 import { LANGS, translatableText, useMessageTranslations, useShowOriginals, type Lang, type TranslationMap, type VoiceInfo } from './useTranslations';
+import { confirmDialog } from '@/components/ui/ConfirmHost';
 
 registerCopy(pagesMessagingPlus);
 
@@ -135,9 +136,8 @@ const ModerationBar = ({ m, onAction, busy }: { m: PartyMessage; onAction: (a: s
         type="button"
         className={clsx(btn, 'text-danger')}
         disabled={busy}
-        onClick={() => {
-          // TODO(ui): ConfirmDialog
-          if (window.confirm(t('msgPlus.party.deleteConfirm'))) onAction('DELETE');
+        onClick={async () => {
+          if (await confirmDialog({ message: t('msgPlus.party.deleteConfirm'), confirmLabel: t('ui.confirmDlg.delete') })) onAction('DELETE');
         }}
       >
         <Trash2 className="size-3" aria-hidden /> {t('msgPlus.party.delete')}

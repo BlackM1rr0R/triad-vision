@@ -165,6 +165,15 @@ describe('employer referral', () => {
     expect(adminAgent.status).toBe(200);
   });
 
+  it('EMPLOYER_APPROVED is paid once even when approvals run at the same moment', async () => {
+    const a = await makeAgent();
+    const res = await anon().post('/api/company/register').set('Origin', ORIGIN).send(registration({ ref: a.row.code }));
+    const companyId = res.body.company.id as string;
+    const { awardEmployerCommission } = await import('../../src/lib/agents/commissions.js');
+    await Promise.all(Array.from({ length: 5 }, () => awardEmployerCommission(companyId)));
+    expect(await prisma.agentCommission.count({ where: { agentId: a.row.id, event: 'EMPLOYER_APPROVED' } })).toBe(1);
+  });
+
   it('INVOICE_PAID of a referred employer goes to the agent it signed up with', async () => {
     const a = await makeAgent({ commissionType: 'PERCENT', commissionValue: 1000, payoutEvents: ['INVOICE_PAID'] });
     const res = await anon().post('/api/company/register').set('Origin', ORIGIN).send(registration({ ref: a.row.code }));

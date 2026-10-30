@@ -119,7 +119,7 @@ const az = {
       phone: 'Telefon',
       iban: 'IBAN (ödənişlər üçün)',
       ibanHint: 'Komissiyalar bu hesaba köçürülür. Boşluqlarla yaza bilərsiniz.',
-      readOnly: 'Ad, e-poçt, kod və şərtləri yalnız {{brand}} dəyişə bilər.',
+      readOnly: 'Ad, kod və şərtləri yalnız {{brand}} dəyişə bilər. E-poçtu aşağıda özünüz dəyişə bilərsiniz.',
     },
     admin: {
       title: 'Agentlər',
@@ -351,7 +351,7 @@ const de: typeof az = {
       phone: 'Telefon',
       iban: 'IBAN (für Auszahlungen)',
       ibanHint: 'Provisionen werden auf dieses Konto überwiesen. Leerzeichen sind erlaubt.',
-      readOnly: 'Name, E-Mail, Code und Bedingungen kann nur {{brand}} ändern.',
+      readOnly: 'Name, Code und Bedingungen kann nur {{brand}} ändern. Die E-Mail-Adresse ändern Sie unten selbst.',
     },
     admin: {
       title: 'Agenten',
@@ -583,7 +583,7 @@ const en: typeof az = {
       phone: 'Phone',
       iban: 'IBAN (for payouts)',
       ibanHint: 'Commissions are transferred to this account. Spaces are fine.',
-      readOnly: 'Only {{brand}} can change your name, email, code and terms.',
+      readOnly: 'Only {{brand}} can change your name, code and terms. You can change your email below.',
     },
     admin: {
       title: 'Agents',
@@ -815,7 +815,7 @@ const ru: typeof az = {
       phone: 'Телефон',
       iban: 'IBAN (для выплат)',
       ibanHint: 'Комиссии переводятся на этот счёт. Пробелы допускаются.',
-      readOnly: 'Имя, эл. почту, код и условия может изменить только {{brand}}.',
+      readOnly: 'Имя, код и условия может изменить только {{brand}}. E-mail вы можете изменить ниже.',
     },
     admin: {
       title: 'Агенты',

@@ -15,6 +15,7 @@ import { Grid, Sep, ToolButton } from '@/components/sheet/Grid';
 import { useLeaveGuard } from '@/components/sheet/useLeaveGuard';
 import { parseDateText } from '@/components/sheet/model';
 import type { CellChange, ColumnDef, GridSource } from '@/components/sheet/types';
+import { confirmDialog } from '@/components/ui/ConfirmHost';
 
 registerCopy(pagesSheet);
 
@@ -409,16 +410,14 @@ export default function AdminClientRegister() {
     return () => window.removeEventListener('keydown', onKey);
   }, []);
 
-  const discard = () => {
-    // TODO(ui): ConfirmDialog
-    if (!pending.size || !window.confirm(t('register.discardConfirm'))) return;
+  const discard = async () => {
+    if (!pending.size || !(await confirmDialog({ title: t('ui.confirmDlg.unsavedTitle'), message: t('register.discardConfirm'), confirmLabel: t('ui.confirmDlg.discard') }))) return;
     setPending(new Map());
     setErrors(new Map());
   };
 
   const refresh = async () => {
-    // TODO(ui): ConfirmDialog
-    if (pending.size && !window.confirm(t('register.refreshConfirm'))) return;
+    if (pending.size && !(await confirmDialog({ title: t('ui.confirmDlg.unsavedTitle'), message: t('register.refreshConfirm'), confirmLabel: t('ui.confirmDlg.discard') }))) return;
     setPending(new Map(), false);
     setErrors(new Map());
     await query.refetch();
@@ -573,9 +572,8 @@ function ManageColumns({ columns, onClose, onChanged }: { columns: CustomColumn[
       setList((l) => l.map((x) => (x.id === c.id ? res.data.column : x)));
     });
 
-  const remove = (c: CustomColumn) => {
-    // TODO(ui): ConfirmDialog
-    if (!window.confirm(t('register.manage.confirmDelete', { label: c.label }))) return;
+  const remove = async (c: CustomColumn) => {
+    if (!(await confirmDialog({ message: t('register.manage.confirmDelete', { label: c.label }), confirmLabel: t('ui.confirmDlg.delete') }))) return;
     void run(async () => {
       await api.delete(`/admin/register/columns/${c.id}`);
       setList((l) => l.filter((x) => x.id !== c.id));

@@ -45,7 +45,8 @@ export const videoEmbedUrl = (url: string) => {
 const items = <T extends z.ZodTypeAny>(item: T, max = 12) => z.array(item).max(max).default([]);
 
 export const sectionDataSchemas = {
-  hero: z.object({ title: text(200), subtitle: text(600), image: imageUrl, ctaLabel: text(60), ctaTarget: target }),
+  // imageAlt: alt text of the hero image (empty = decorative, the title says it all).
+  hero: z.object({ title: text(200), subtitle: text(600), image: imageUrl, imageAlt: text(200), ctaLabel: text(60), ctaTarget: target }),
   text: z.object({ title: text(200), body: text(10_000) }),
   benefits: z.object({ title: text(200), items: items(z.object({ icon: text(40), title: text(120), text: text(400) })) }),
   steps: z.object({ title: text(200), items: items(z.object({ title: text(120), text: text(400) })) }),

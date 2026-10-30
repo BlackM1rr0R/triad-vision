@@ -24,6 +24,7 @@ import { DEFAULT_COL_WIDTH, countCells, getCell, mergeIndex, rawOf, type Sheet }
 import type { GridSource } from '@/components/sheet/types';
 import { useAuth } from '@/lib/auth';
 import { AdminAiButton, AdminAiPanel, useAiActionDone } from '@/components/aiAdmin/AdminAiPanel';
+import { confirmDialog } from '@/components/ui/ConfirmHost';
 
 registerCopy(pagesSheet);
 
@@ -358,9 +359,8 @@ export default function SheetEditor() {
           </button>
           <button
             type="button"
-            onClick={() => {
-              // TODO(ui): ConfirmDialog
-              if (window.confirm(t('sheet.conflictOverwriteConfirm'))) void save(true);
+            onClick={async () => {
+              if (await confirmDialog({ message: t('sheet.conflictOverwriteConfirm'), confirmLabel: t('ui.confirmDlg.overwrite') })) void save(true);
             }}
             className="flex items-center gap-1 rounded-lg bg-danger px-3 py-1 text-xs font-semibold text-white hover:brightness-110"
           >

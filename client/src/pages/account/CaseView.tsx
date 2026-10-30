@@ -15,6 +15,7 @@ import { CaseViewSkeleton } from '@/components/portal/PortalSkeletons';
 import { Reveal } from '@/components/motion';
 import { StatusBadge } from '@/components/portal/StatusBadge';
 import { CaseDocuments } from '@/components/portal/CaseDocuments';
+import { DocumentsPurgedNotice } from '@/components/retention/DocumentsPurgedNotice';
 import { CaseContract } from '@/components/portal/CaseContract';
 import { CaseMessages } from '@/components/portal/CaseMessages';
 import { AppointmentCard, CaseTimeline, DecisionCard, OtherFiles } from '@/components/portal/CaseCards';
@@ -320,6 +321,7 @@ export default function CaseView() {
 
         {current === 'docs' && (
           <>
+            <DocumentsPurgedNotice at={data.documentsPurgedAt} audience="client" />
             {mainBlocks}
             <OtherFiles data={data} />
             <div id="originals" className="scroll-mt-40 empty:hidden">

@@ -9,6 +9,7 @@ const az = {
     leaveWarning: 'Saxlanılmamış dəyişikliklər var. Səhifədən çıxılsın?',
     shortcuts: 'Enter — redaktə / təsdiq · Tab — növbəti xana · Esc — ləğv · Ctrl+S — yadda saxla · Ctrl+Z — geri al',
     tabs: { all: 'Hamısı', unpaid: 'Ödənilməyənlər', projects: 'Vərəqlər', partners: 'Partnyorlar' },
+    rename: { button: 'Vərəqin adını dəyiş', title: '“{{name}}” vərəqinin adını dəyiş', label: 'Yeni ad', hint: 'Bu vərəqin bütün sətirləri yeni ada keçir. Belə adda vərəq artıq varsa, sətirlər onunla birləşir.', save: 'Adını dəyiş', done: '{{count}} sətir “{{to}}” vərəqinə keçdi', notFound: 'Vərəq tapılmadı (artıq dəyişdirilib?)' },
     cols: {
       select: 'Seç',
       partner: 'Zwischen Person',
@@ -157,6 +158,7 @@ const de: Copy = {
     leaveWarning: 'Es gibt ungespeicherte Änderungen. Seite verlassen?',
     shortcuts: 'Enter — bearbeiten / übernehmen · Tab — nächste Zelle · Esc — abbrechen · Strg+S — speichern · Strg+Z — rückgängig',
     tabs: { all: 'Alle', unpaid: 'Offen', projects: 'Blätter', partners: 'Partner' },
+    rename: { button: 'Blatt umbenennen', title: 'Blatt „{{name}}“ umbenennen', label: 'Neuer Name', hint: 'Alle Zeilen dieses Blatts erhalten den neuen Namen. Gibt es das Blatt schon, werden die Zeilen zusammengeführt.', save: 'Umbenennen', done: '{{count}} Zeilen nach „{{to}}“ verschoben', notFound: 'Blatt nicht gefunden (bereits umbenannt?)' },
     cols: {
       select: 'Auswahl',
       partner: 'Zwischen Person',
@@ -303,6 +305,7 @@ const en: Copy = {
     leaveWarning: 'You have unsaved changes. Leave the page?',
     shortcuts: 'Enter — edit / confirm · Tab — next cell · Esc — cancel · Ctrl+S — save · Ctrl+Z — undo',
     tabs: { all: 'All', unpaid: 'Unpaid', projects: 'Sheets', partners: 'Partners' },
+    rename: { button: 'Rename sheet', title: 'Rename sheet “{{name}}”', label: 'New name', hint: 'Every row of this sheet moves to the new name. If a sheet with that name exists, the rows are merged into it.', save: 'Rename', done: '{{count}} rows moved to “{{to}}”', notFound: 'Sheet not found (already renamed?)' },
     cols: {
       select: 'Select',
       partner: 'Middleman',
@@ -449,6 +452,7 @@ const ru: Copy = {
     leaveWarning: 'Есть несохранённые изменения. Покинуть страницу?',
     shortcuts: 'Enter — редактировать / подтвердить · Tab — следующая ячейка · Esc — отмена · Ctrl+S — сохранить · Ctrl+Z — отменить',
     tabs: { all: 'Все', unpaid: 'Неоплаченные', projects: 'Листы', partners: 'Партнёры' },
+    rename: { button: 'Переименовать лист', title: 'Переименовать лист «{{name}}»', label: 'Новое название', hint: 'Все строки этого листа получат новое название. Если такой лист уже есть, строки объединятся с ним.', save: 'Переименовать', done: '{{count}} строк перенесено в «{{to}}»', notFound: 'Лист не найден (уже переименован?)' },
     cols: {
       select: 'Выбор',
       partner: 'Посредник',

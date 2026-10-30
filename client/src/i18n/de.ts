@@ -356,7 +356,7 @@ const de: Messages = {
       upload: 'Datei hochladen',
       uploading: 'Wird hochgeladen...',
       replace: 'Neu hochladen',
-      formats: 'PDF, JPG, PNG, WEBP, DOC, DOCX · max. 5 MB',
+      formats: 'PDF, JPG, PNG, WEBP, HEIC, DOC, DOCX · max. 5 MB',
       submit: 'Zur Prüfung senden',
       submitConfirm: 'Möchten Sie die Dokumente zur Prüfung senden? Während der Prüfung sind keine Änderungen möglich.',
       missing: 'Laden Sie alle Pflichtdokumente hoch',

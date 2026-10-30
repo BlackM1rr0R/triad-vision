@@ -8,6 +8,7 @@ import { api } from '@/lib/api';
 import { useL10n } from '@/lib/l10n';
 import { STATUS_TONES, toneClasses } from '@/components/ui/status';
 import { cpKeys, useCpError, VISIT_REASONS, type OfficeSlot, type OfficeVisit, type VisitReason } from './api';
+import { confirmDialog } from '@/components/ui/ConfirmHost';
 
 const STATUS_TONE: Record<OfficeVisit['status'], string> = toneClasses(STATUS_TONES.officeVisit);
 
@@ -205,9 +206,8 @@ export const PortalOfficeVisits = ({ caseId, closed }: { caseId: string; closed?
                     type="button"
                     className="btn-ghost btn-sm text-danger-fg"
                     disabled={cancel.isPending}
-                    onClick={() => {
-                      // TODO(ui): ConfirmDialog
-                      if (window.confirm(t('cp.office.cancelConfirm'))) cancel.mutate(v.id);
+                    onClick={async () => {
+                      if (await confirmDialog({ title: t('cp.office.cancelConfirm'), message: dateTime(v.startsAt), confirmLabel: t('ui.confirmDlg.yesCancel') })) cancel.mutate(v.id);
                     }}
                   >
                     {t('cp.office.cancel')}

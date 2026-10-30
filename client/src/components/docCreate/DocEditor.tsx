@@ -38,6 +38,7 @@ import { getOffsets, insertText, normalize, runsLength, runsText, sliceRuns, tog
 import { RichBlock, type PendingSelection } from './RichBlock';
 import { TableEditor } from './TableEditor';
 import { getBrand } from '@/lib/brand';
+import { confirmDialog } from '@/components/ui/ConfirmHost';
 
 export type DocEditorTarget = { mode: 'new'; parentId: string } | { mode: 'edit'; nodeId: string };
 
@@ -458,9 +459,8 @@ export default function DocEditor({ target, folderName, onClose, onSaved }: { ta
     }
   };
 
-  const close = () => {
-    // TODO(ui): ConfirmDialog
-    if (dirty && !window.confirm(t('docCreate.editor.discard'))) return;
+  const close = async () => {
+    if (dirty && !(await confirmDialog({ title: t('ui.confirmDlg.unsavedTitle'), message: t('docCreate.editor.discard'), confirmLabel: t('ui.confirmDlg.discard') }))) return;
     onClose();
   };
 

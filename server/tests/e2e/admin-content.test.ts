@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import sharp from 'sharp';
 import { describe, expect, it } from 'vitest';
 import { anon, asAdmin } from '../helpers/api';
 import { prisma } from '../helpers/db';
@@ -120,12 +121,14 @@ describe('/api/admin/settings', () => {
     const put = await agent.put('/api/admin/settings/contact').send({ value: contact });
     expect(put.status).toBe(200);
     expect(put.body.setting).toEqual({ key: 'contact', value: contact });
-    await agent.put('/api/admin/settings/social.instagram').send({ value: 'https://instagram.com/triad' });
+    await agent.put('/api/admin/settings/social').send({ value: { instagram: 'https://instagram.com/triad' } });
     await agent.put('/api/admin/settings/contact').send({ value: { ...contact, phone: '+49 1' } });
+    // Internal settings (settlements, staff preferences…) are not on the public allowlist.
+    await agent.put('/api/admin/settings/autoAssign').send({ value: { mode: 'off' } });
 
     const all = await agent.get('/api/admin/settings');
-    expect(all.body.settings).toEqual({ contact: { ...contact, phone: '+49 1' }, 'social.instagram': 'https://instagram.com/triad' });
-    expect((await anon().get('/api/public/content')).body.settings).toEqual(all.body.settings);
+    expect(all.body.settings).toEqual({ contact: { ...contact, phone: '+49 1' }, social: { instagram: 'https://instagram.com/triad' }, autoAssign: { mode: 'off' } });
+    expect((await anon().get('/api/public/content')).body.settings).toEqual({ contact: { ...contact, phone: '+49 1' }, social: { instagram: 'https://instagram.com/triad' } });
   });
 
   it('validates key and value', async () => {
@@ -141,18 +144,21 @@ describe('/api/admin/settings', () => {
 });
 
 describe('POST /api/admin/upload', () => {
+  // Raster images are re-encoded to WebP (lib/publicImages.ts); SVG only with purpose=logo / icon.
   it.each([
-    ['logo.png', 'image/png'],
-    ['photo.jpg', 'image/jpeg'],
-    ['photo.webp', 'image/webp'],
-    ['photo.avif', 'image/avif'],
-    ['icon.svg', 'image/svg+xml'],
-  ])('accepts %s and serves it publicly with a locked-down CSP', async (filename, contentType) => {
+    ['logo.png', 'image/png', ''],
+    ['photo.jpg', 'image/jpeg', ''],
+    ['photo.webp', 'image/webp', ''],
+    ['photo.avif', 'image/avif', ''],
+    ['icon.svg', 'image/svg+xml', '?purpose=icon'],
+  ])('accepts %s and serves it publicly with a locked-down CSP', async (filename, contentType, query) => {
     const { agent } = await asAdmin();
-    const data = sampleFor(contentType);
-    const res = await agent.post('/api/admin/upload').attach('file', data, { filename, contentType });
+    const fmt = path.extname(filename).slice(1).replace('jpg', 'jpeg') as 'png' | 'jpeg' | 'webp' | 'avif';
+    const data =
+      contentType === 'image/svg+xml' ? sampleFor(contentType) : await sharp({ create: { width: 64, height: 48, channels: 3, background: '#22aa66' } })[fmt]().toBuffer();
+    const res = await agent.post(`/api/admin/upload${query}`).attach('file', data, { filename, contentType });
     expect(res.status).toBe(201);
-    const ext = path.extname(filename);
+    const ext = contentType === 'image/svg+xml' ? '.svg' : '.webp';
     expect(res.body.url).toMatch(new RegExp(`^/uploads/\\d+-[0-9a-f]{24}\\${ext}$`));
     expect(fs.existsSync(path.join(TEST_UPLOADS_DIR, 'public', path.basename(res.body.url)))).toBe(true);
 

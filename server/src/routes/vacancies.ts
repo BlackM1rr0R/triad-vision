@@ -4,11 +4,12 @@ import type { Prisma } from '@prisma/client';
 import { prisma } from '../db.js';
 import { requireAuth } from '../middleware/auth.js';
 import { requireVerifiedEmail } from '../middleware/verified.js';
-import { conflict, forbidden, limiter, notFound, parse } from '../lib/http.js';
+import { badRequest, conflict, forbidden, limiter, notFound, parse } from '../lib/http.js';
+import { audit } from '../lib/audit.js';
 import { notifyStaff } from '../lib/notifications.js';
 import { emitWebhook } from '../lib/ops/webhooks.js';
 import { verifyUploadedFile } from '../middleware/upload.js';
-import { applicationUpload, discardUploads, MAX_APPLICATION_FILES, parseKinds, storeApplicationFiles } from '../lib/applicationUploads.js';
+import { applicationUpload, discardUploads, linkPickedVaultDocs, MAX_APPLICATION_FILES, ownPickableVaultDocs, parseKinds, parseVaultIds, storeApplicationFiles } from '../lib/applicationUploads.js';
 import { GERMAN_LEVELS, germanRank } from '../lib/matching.js';
 import {
   EMPLOYMENT_TYPES,
@@ -27,7 +28,7 @@ const publicLimiter = limiter({ windowMs: 60 * 1000, limit: 120 });
 const applyLimiter = limiter({ windowMs: 60 * 60 * 1000, limit: 30 });
 
 const publicInclude = {
-  company: { select: { name: true } },
+  company: { select: { name: true, logo: true } },
   visaCategory: { select: { slug: true, title: true, visaLabel: true, germanLevel: true } },
 } as const;
 
@@ -191,6 +192,10 @@ vacanciesRouter.post('/:slug/apply', applyLimiter, requireAuth, requireCandidate
     });
     if (!v || !isOpen(v)) throw notFound('VACANCY_NOT_FOUND');
     for (const f of files) await verifyUploadedFile(f); // invalid content: nothing is created
+    // Documents picked from the vault instead of re-uploading: own + not expired, checked before anything is created.
+    const vaultIds = parseVaultIds(req.body?.vaultIds ?? req.body?.['vaultIds[]']);
+    if (files.length + vaultIds.length > MAX_APPLICATION_FILES) throw badRequest('TOO_MANY_FILES');
+    const picked = await ownPickableVaultDocs(req.user!.id, vaultIds);
     const user = await prisma.user.findUniqueOrThrow({ where: { id: req.user!.id } });
     const { score } = matchFor(user, v);
     const message = body.message || null;
@@ -214,9 +219,12 @@ vacanciesRouter.post('/:slug/apply', applyLimiter, requireAuth, requireCandidate
     }
     const uploads = files.length ? await storeApplicationFiles(user.id, files, parseKinds(req.body?.kinds, files.length), { vacancyId: v.id, applicationId: application.id }) : null;
     stored = true;
+    const linked = picked.length ? await linkPickedVaultDocs(user.id, picked, { vacancyId: v.id, applicationId: application.id }) : null;
+    if (linked) await audit(req, 'APPLICATION_VAULT_DOCS_LINKED', `application:${application.id}`, { vaultIds: picked.map((d) => d.id) });
+    const sentDocs = [...(uploads?.documents ?? []), ...picked];
     await emitWebhook('application.created', { id: application.id, vacancyId: v.id, status: application.status, matchScore: application.matchScore, candidateId: user.id }, v.companyId);
     const title = (v.title as Record<string, string>).az ?? '';
-    const docsLine = uploads?.documents.length ? `\n\nSənədlər: ${uploads.documents.map((d) => d.title).join(', ')}` : '';
+    const docsLine = sentDocs.length ? `\n\nSənədlər: ${sentDocs.map((d) => d.title).join(', ')}` : '';
     await notifyStaff(
       `Yeni vakansiya müraciəti: ${title}`.slice(0, 180),
       `${user.firstName} ${user.lastName} "${title}" vakansiyasına müraciət etdi.\n\nUyğunluq: ${score}%${message ? `\n\nMesaj: ${message}` : ''}${docsLine}`,
@@ -224,8 +232,8 @@ vacanciesRouter.post('/:slug/apply', applyLimiter, requireAuth, requireCandidate
     );
     res.status(201).json({
       application: { id: application.id, status: application.status, matchScore: application.matchScore, createdAt: application.createdAt },
-      documents: (uploads?.documents ?? []).map((d) => ({ id: d.id, kind: d.kind, title: d.title, filename: d.filename })),
-      attachedCaseId: uploads?.caseId ?? null,
+      documents: sentDocs.map((d) => ({ id: d.id, kind: d.kind, title: d.title, filename: d.filename })),
+      attachedCaseId: uploads?.caseId ?? linked?.caseId ?? null,
     });
   } catch (err) {
     if (!stored) await discardUploads(files);

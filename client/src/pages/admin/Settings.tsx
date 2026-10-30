@@ -66,7 +66,7 @@ const useSaveSetting = () => {
   const { t } = useTranslation();
   const qc = useQueryClient();
   const [busy, setBusy] = useState(false);
-  const save = async (key: 'contact' | 'social' | 'legal' | 'privacy' | 'retention', value: unknown) => {
+  const save = async (key: 'contact' | 'social' | 'legal' | 'privacy' | 'retention' | 'inquiryRetention', value: unknown) => {
     setBusy(true);
     try {
       await api.put(`/admin/settings/${key}`, { value });
@@ -591,6 +591,87 @@ const RetentionForm = ({ initial }: { initial: RetentionSetting }) => {
   );
 };
 
+interface InquiryRetentionStatus {
+  settings: { months: number };
+  cutoff: string;
+  due: number;
+  anonymizedTotal: number;
+  lastRun: { at: string; anonymized: number; failed: number } | null;
+}
+
+/** DSGVO anonymisation of old, closed, never converted website leads (daily job, lib/privacy/inquiries.ts). */
+const InquiryRetentionForm = ({ initial }: { initial: number }) => {
+  const { t } = useTranslation();
+  const [months, setMonths] = useState(initial);
+  const { save, busy } = useSaveSetting();
+  useEffect(() => setMonths(initial), [initial]);
+  const { data: status } = useQuery({
+    queryKey: ['retention-status', 'inquiries'],
+    queryFn: async () => (await api.get<InquiryRetentionStatus>('/admin/settings/inquiry-retention-status')).data,
+  });
+  const tiles: { label: string; value: string; warn?: boolean }[] = status
+    ? [
+        { label: t('adminLegal.inquiryDue'), value: String(status.due), warn: status.due > 0 },
+        { label: t('adminLegal.inquiryCutoff'), value: fmtDate(status.cutoff) },
+        { label: t('adminLegal.inquiryAnonymized'), value: String(status.anonymizedTotal) },
+        {
+          label: t('adminLegal.inquiryLastRun'),
+          value: status.lastRun ? `${fmtDateTime(status.lastRun.at)} · ${t('adminLegal.inquiryLastRunDetails', { count: status.lastRun.anonymized })}` : t('adminLegal.never'),
+        },
+      ]
+    : [];
+  return (
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        if (!Number.isInteger(months) || months < 1 || months > 120) {
+          toast.error(t('adminLegal.invalidMonths'));
+          return;
+        }
+        void save('inquiryRetention', { months });
+      }}
+    >
+      <Panel
+        title={t('adminLegal.inquiryRetentionTitle')}
+        icon={Timer}
+        actions={
+          <button type="submit" className="btn-primary btn-sm" disabled={busy}>
+            {busy ? <Spinner className="size-3.5" /> : <Save className="size-3.5" />} {t('admin.common.save')}
+          </button>
+        }
+      >
+        <p className="mb-4 flex items-start gap-2 text-xs text-muted">
+          <AlertTriangle className="mt-0.5 size-3.5 shrink-0 text-warning-fg" aria-hidden /> {t('adminLegal.inquiryRetentionHint')}
+        </p>
+        <label htmlFor="irt-months" className="label">
+          {t('adminLegal.months')}
+        </label>
+        <input
+          id="irt-months"
+          type="number"
+          min={1}
+          max={120}
+          step={1}
+          required
+          className="input w-32 tabular-nums"
+          value={Number.isNaN(months) ? '' : months}
+          onChange={(e) => setMonths(e.target.valueAsNumber)}
+        />
+        {tiles.length > 0 && (
+          <dl className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {tiles.map((tile) => (
+              <div key={tile.label} className="min-w-0 rounded-lg border border-line bg-surface/40 px-3 py-2.5">
+                <dt className="text-[11px] font-semibold tracking-wide text-muted uppercase">{tile.label}</dt>
+                <dd className={`mt-0.5 text-sm font-semibold break-words ${tile.warn ? 'text-warning-fg' : 'text-ink'}`}>{tile.value}</dd>
+              </div>
+            ))}
+          </dl>
+        )}
+      </Panel>
+    </form>
+  );
+};
+
 export default function Settings() {
   const { t } = useTranslation();
   const { user } = useAuth();
@@ -606,6 +687,10 @@ export default function Settings() {
   const privacy = useMemo(() => normalizePrivacy(raw?.privacy), [raw?.privacy]);
   const retention = useMemo(() => normalizeRetention(raw?.retention), [raw?.retention]);
   const autoAssign = useMemo(() => normalizeAutoAssign(raw?.autoAssign), [raw?.autoAssign]);
+  const inquiryRetentionMonths = useMemo(() => {
+    const m = (raw?.inquiryRetention as { months?: unknown } | undefined)?.months;
+    return typeof m === 'number' && Number.isInteger(m) && m >= 1 && m <= 120 ? m : 24;
+  }, [raw?.inquiryRetention]);
   useEffect(() => {
     if (!data) return;
     setContact(normalizeContact(data.contact));
@@ -631,6 +716,7 @@ export default function Settings() {
           <LegalForm initial={legal} />
           <PrivacyForm initial={privacy} />
           <RetentionForm initial={retention} />
+          <InquiryRetentionForm initial={inquiryRetentionMonths} />
         </>
       )}
     </div>

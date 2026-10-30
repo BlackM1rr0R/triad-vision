@@ -20,6 +20,7 @@ import { whenIdle } from './lib/idle';
 import { captureRefFromUrl } from './lib/referralCookie';
 import { LocaleRouter } from './lib/localeRouter';
 import { TooltipHost } from './components/ui/TooltipHost';
+import { ConfirmHost } from './components/ui/ConfirmHost';
 import { initAnalytics } from './lib/analytics';
 
 // Site theme (SUPER_ADMIN theme builder): cached CSS variables now, fresh ones after the first paint; table density.
@@ -72,6 +73,8 @@ const Shell = () => {
       <Toaster position="top-right" richColors closeButton theme={theme} duration={visualAlerts ? 10000 : 4000} gap={10} visibleToasts={4} />
       {/* Quick tooltips for every titled button / link (the native title waits ~1 s). */}
       <TooltipHost />
+      {/* Promise-based confirmations (confirmDialog / useConfirm): replaces window.confirm everywhere. */}
+      <ConfirmHost />
       <LateExtras />
     </>
   );

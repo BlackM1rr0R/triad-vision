@@ -139,6 +139,25 @@ describe('documents section: team workflow (Schon geschrieben → Fertig, Ablehn
     expect((await folders(writer.agent, { stage: 'REFUSED' })).items[0]).toMatchObject({ caseId: c.id, lastNote: 'Səfirlik imtina etdi' });
   });
 
+  it('two colleagues pressing "Götür" at the same moment: exactly one wins, one move row', async () => {
+    const writer = await asStaff({ firstName: 'Leyla', lastName: 'Əliyeva' });
+    const a = await asStaff({ firstName: 'Nərmin', lastName: 'Həsənova' });
+    const b = await asStaff({ firstName: 'Orxan', lastName: 'Rzayev' });
+    const r = await roots(writer.agent);
+    const { c } = await makeCase(r.cases.id);
+    expectStatus(await move(writer.agent, c.id, { stage: 'WRITTEN', origin: 'drive' }), 200);
+    const before = await prisma.caseProcessingMove.count({ where: { caseId: c.id } });
+    const [ra, rb] = await Promise.all([claim(a.agent, c.id), claim(b.agent, c.id)]);
+    const statuses = [ra.status, rb.status].sort();
+    expect(statuses).toEqual([200, 409]);
+    const loser = ra.status === 409 ? ra : rb;
+    expect(loser.body.error).toBe('PROCESSING_CLAIMED_BY_OTHER');
+    const winner = ra.status === 200 ? a : b;
+    const row = await prisma.case.findUniqueOrThrow({ where: { id: c.id }, select: { processingAssigneeId: true } });
+    expect(row.processingAssigneeId).toBe(winner.user.id);
+    expect(await prisma.caseProcessingMove.count({ where: { caseId: c.id } })).toBe(before + 1);
+  });
+
   it('permissions, In Bearbeitung narrowing and restricted folders', async () => {
     const staff = await asStaff();
     const su = await asSuperAdmin();
@@ -172,7 +191,29 @@ describe('documents section: team workflow (Schon geschrieben → Fertig, Ablehn
     const locked = await prisma.driveNode.create({ data: { space: 'SHARED', kind: 'FOLDER', name: uniq('Gizli · '), parentId: r.cases.id, inheritPermissions: false } });
     const { user: cl2 } = await createClient();
     await prisma.case.create({ data: { number: uniq('TV-'), clientId: cl2.id, profession: 'X', status: 'DOCUMENTS_REVIEW', visaType: 'WORK', processingStage: 'WRITTEN', driveFolderId: locked.id } });
-    expect((await folders(staff.agent, { stage: 'WRITTEN' })).items).toHaveLength(0);
-    expect((await folders(su.agent, { stage: 'WRITTEN' })).items).toHaveLength(1);
+    const hidden = await folders(staff.agent, { stage: 'WRITTEN' });
+    expect(hidden.items).toHaveLength(0);
+    // …nor counted (the counts come from the folders the viewer may open).
+    expect(hidden.counts.WRITTEN).toBe(0);
+    expect(hidden.total).toBe(0);
+    const all = await folders(su.agent, { stage: 'WRITTEN' });
+    expect(all.items).toHaveLength(1);
+    expect(all.counts.WRITTEN).toBe(1);
+  });
+
+  it('passport search: exact full number only, and only for viewers who see passports unmasked', async () => {
+    const staff = await asStaff();
+    const su = await asSuperAdmin();
+    const r = await roots(su.agent);
+    const { c } = await makeCase(r.cases.id, { firstName: 'Səbinə' });
+    await prisma.user.update({ where: { id: (await prisma.case.findUniqueOrThrow({ where: { id: c.id } })).clientId }, data: { passportNumber: 'C01X00T47' } });
+    const ids = (body: { items: { caseId: string }[] }) => body.items.map((i) => i.caseId);
+    expect(ids(await folders(su.agent, { stage: 'IN_PROGRESS', search: 'C01X00T47' }))).toEqual([c.id]);
+    expect(ids(await folders(su.agent, { stage: 'IN_PROGRESS', search: 'c01x 00t47' }))).toEqual([c.id]);
+    // A part of the number finds nothing.
+    expect(ids(await folders(su.agent, { stage: 'IN_PROGRESS', search: 'C01X' }))).toEqual([]);
+    expect(ids(await folders(su.agent, { stage: 'IN_PROGRESS', search: '00T4' }))).toEqual([]);
+    // Staff see passports masked by default: no search by passport at all.
+    expect(ids(await folders(staff.agent, { stage: 'IN_PROGRESS', search: 'C01X00T47' }))).toEqual([]);
   });
 });

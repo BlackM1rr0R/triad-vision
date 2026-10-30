@@ -35,6 +35,9 @@ const az = {
     sections: { favourites: 'Sevimlilər', desk: '{{desk}} masası', recent: 'Son açılanlar', hubs: 'Bölmələr', more: 'Daha çox' },
     deskLabel: 'Masa',
     deskDefault: '{{desk}} (standart)',
+    deskSaved: '{{name}}: masa — {{desk}}',
+    deskAria: '{{name}} — masa',
+    deskHint: 'Əməkdaşın menyusunun ilk bloku (masa). Standart: rola görə.',
     hubTabsAria: '{{hub}} — səhifələr',
     hubEmpty: 'Bu bölmədə sizin üçün açıq səhifə yoxdur.',
     disabled: {
@@ -153,6 +156,9 @@ const de: Copy = {
     sections: { favourites: 'Favoriten', desk: 'Arbeitsplatz {{desk}}', recent: 'Zuletzt geöffnet', hubs: 'Bereiche', more: 'Mehr' },
     deskLabel: 'Arbeitsplatz',
     deskDefault: '{{desk}} (Standard)',
+    deskSaved: '{{name}}: Arbeitsplatz — {{desk}}',
+    deskAria: '{{name}} — Arbeitsplatz',
+    deskHint: 'Erster Block der Seitenleiste dieser Person (Arbeitsplatz). Standard: nach Rolle.',
     hubTabsAria: '{{hub}} — Seiten',
     hubEmpty: 'In diesem Bereich gibt es keine Seite, die Sie öffnen dürfen.',
     disabled: {
@@ -269,6 +275,9 @@ const en: Copy = {
     sections: { favourites: 'Favourites', desk: '{{desk}} desk', recent: 'Recently opened', hubs: 'Sections', more: 'More' },
     deskLabel: 'Desk',
     deskDefault: '{{desk}} (default)',
+    deskSaved: '{{name}}: desk — {{desk}}',
+    deskAria: '{{name}} — desk',
+    deskHint: 'First block of this person’s sidebar (desk). Default: by role.',
     hubTabsAria: '{{hub}} — pages',
     hubEmpty: 'There is no page in this section you can open.',
     disabled: {
@@ -385,6 +394,9 @@ const ru: Copy = {
     sections: { favourites: 'Избранное', desk: 'Место: {{desk}}', recent: 'Недавно открытые', hubs: 'Разделы', more: 'Ещё' },
     deskLabel: 'Рабочее место',
     deskDefault: '{{desk}} (по умолчанию)',
+    deskSaved: '{{name}}: рабочее место — {{desk}}',
+    deskAria: '{{name}} — рабочее место',
+    deskHint: 'Первый блок бокового меню сотрудника (рабочее место). По умолчанию: по роли.',
     hubTabsAria: '{{hub}} — страницы',
     hubEmpty: 'В этом разделе нет доступных вам страниц.',
     disabled: {

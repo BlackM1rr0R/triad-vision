@@ -12,6 +12,7 @@ import { Panel } from '@/components/admin/ui';
 import { Modal } from '@/components/settlement/Modal';
 import { useReportFormat } from './types';
 import { COST_KEYS, MANUAL_CATEGORIES, type CaseCost, type CaseProfitResponse, type ManualCategory } from './profitTypes';
+import { confirmDialog } from '@/components/ui/ConfirmHost';
 
 registerCopy(pagesReports);
 
@@ -222,7 +223,7 @@ const CostDialog = ({ caseId, cost, defaultRate, documents, onClose }: { caseId:
         </label>
         <div className="flex flex-wrap justify-between gap-2 pt-1">
           {cost ? (
-            <button type="button" className="btn-secondary btn-sm" disabled={remove.isPending} onClick={() => window.confirm(t('profit.card.confirmDelete')) && remove.mutate()}>
+            <button type="button" className="btn-secondary btn-sm" disabled={remove.isPending} onClick={async () => (await confirmDialog({ message: t('profit.card.confirmDelete'), confirmLabel: t('ui.confirmDlg.delete') })) && remove.mutate()}>
               <Trash2 className="size-4" /> {t('profit.card.delete')}
             </button>
           ) : (

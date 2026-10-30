@@ -1,12 +1,12 @@
-import { useEffect, useId, useState } from 'react';
+import { useId, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
-import { Bell, Copy, Link2, ListChecks, RefreshCw, Trash2 } from 'lucide-react';
+import { Copy, Link2, ListChecks, RefreshCw, Trash2 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { registerCopy } from '@/i18n';
 import { pagesSite } from '@/i18n/pagesSite';
-import { currentPushSubscription, disablePush, enablePush, pushSupported } from '@/lib/pwa';
+import { confirmDialog } from '@/components/ui/ConfirmHost';
 
 registerCopy(pagesSite);
 
@@ -111,7 +111,7 @@ const CaseRow = ({ item }: { item: Item }) => {
               {item.hasLink ? t('site.statusSettings.rotate') : t('site.statusSettings.create')}
             </button>
             {item.hasLink && (
-              <button type="button" onClick={() => revoke.mutate()} disabled={revoke.isPending} className="btn-sm min-h-10 rounded-full px-3.5 font-semibold text-danger-fg hover:bg-danger-bg">
+              <button type="button" onClick={async () => (await confirmDialog({ title: t('site.statusSettings.revoke'), message: t('ui.confirmDlg.revokeLinkNamed', { name: item.number }), confirmLabel: t('ui.confirmDlg.revoke') })) && revoke.mutate()} disabled={revoke.isPending} className="btn-sm min-h-10 rounded-full px-3.5 font-semibold text-danger-fg hover:bg-danger-bg">
                 <Trash2 className="size-4" aria-hidden />
                 {t('site.statusSettings.revoke')}
               </button>
@@ -120,43 +120,6 @@ const CaseRow = ({ item }: { item: Item }) => {
         </div>
       )}
     </li>
-  );
-};
-
-/** Browser notifications on this device (Web Push) — switch next to the status settings. */
-const BrowserPush = () => {
-  const { t } = useTranslation();
-  const [on, setOn] = useState<boolean | null>(null);
-  const id = useId();
-  useEffect(() => {
-    void currentPushSubscription().then((s) => setOn(!!s && Notification.permission === 'granted'));
-  }, []);
-  if (!pushSupported() || on === null) return null;
-  return (
-    <div className="mt-4 flex items-center justify-between gap-3 rounded-xl border border-line p-4">
-      <label htmlFor={id} className="flex min-w-0 items-center gap-2 text-sm font-semibold text-ink">
-        <Bell className="size-4 shrink-0 text-primary" aria-hidden />
-        {t('site.push.promptTitle')}
-      </label>
-      <input
-        id={id}
-        type="checkbox"
-        role="switch"
-        className="size-6 shrink-0 accent-primary"
-        checked={on}
-        onChange={async (e) => {
-          if (e.target.checked) {
-            const r = await enablePush().catch(() => 'unavailable' as const);
-            setOn(r === 'enabled');
-            if (r === 'denied') toast.error(t('site.push.denied'));
-            else if (r === 'unavailable') toast.error(t('site.push.unavailable'));
-          } else {
-            await disablePush();
-            setOn(false);
-          }
-        }}
-      />
-    </div>
   );
 };
 
@@ -180,7 +143,6 @@ export const PublicStatusSettings = () => {
           ))}
         </ul>
       )}
-      <BrowserPush />
     </section>
   );
 };

@@ -27,6 +27,7 @@ import { registerCopy } from '@/i18n';
 import { pagesAi } from '@/i18n/pagesAi';
 import { Markdown } from './Markdown';
 import { AiHttpError, streamPost, type AiAction, type AiContext, type AiConversationItem, type AiScope, type AiStoredMessage, type AiStreamEvent, type AiToolChip } from './api';
+import { confirmDialog } from '@/components/ui/ConfirmHost';
 
 registerCopy(pagesAi);
 
@@ -172,8 +173,8 @@ export default function ChatPanel({ scope, context, compact = false, className, 
   };
 
   const deleteConversation = async (id: string) => {
-    // TODO(ui): ConfirmDialog
-    if (!window.confirm(t('ai.deleteConfirm'))) return;
+    const title = conversations?.find((c) => c.id === id)?.title || t('ai.untitled');
+    if (!(await confirmDialog({ title: t('ui.confirmDlg.deleteTitle', { name: title }), message: t('ai.deleteConfirm'), confirmLabel: t('ui.confirmDlg.delete') }))) return;
     try {
       await api.delete(`/ai/conversations/${id}`);
       if (id === convId) newChat();

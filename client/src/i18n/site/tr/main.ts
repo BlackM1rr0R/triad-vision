@@ -365,7 +365,7 @@ const tr: SiteCopy<Messages> = {
       upload: 'Dosya yükle',
       uploading: 'Yükleniyor...',
       replace: 'Yenisini yükle',
-      formats: 'PDF, JPG, PNG, WEBP, DOC, DOCX · maks. 5 MB',
+      formats: 'PDF, JPG, PNG, WEBP, HEIC, DOC, DOCX · maks. 5 MB',
       submit: 'İncelemeye gönder',
       submitConfirm: 'Belgeleri incelemeye göndermek istiyor musunuz? İnceleme sırasında değişiklik yapılamaz.',
       missing: 'Tüm zorunlu belgeleri yükleyin',

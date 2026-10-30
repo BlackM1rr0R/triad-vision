@@ -194,7 +194,7 @@ const ListingModal = ({ listing, onClose }: { listing: StaffListing | null; onCl
           {form.photos.map((p, i) => (
             <div key={i} className="flex items-start gap-2">
               <div className="min-w-0 flex-1">
-                <ImageField label={`${t('housing.page.fields.photos')} ${i + 1}`} value={p} onChange={(url) => set('photos', form.photos.map((x, j) => (j === i ? url : x)))} />
+                <ImageField label={`${t('housing.page.fields.photos')} ${i + 1}`} value={p} onChange={(url) => set('photos', form.photos.map((x, j) => (j === i ? url : x)))} kind="photo" />
               </div>
               <IconButton icon={X} size="sm" label={t('housing.page.delete')} onClick={() => set('photos', form.photos.filter((_, j) => j !== i))} />
             </div>

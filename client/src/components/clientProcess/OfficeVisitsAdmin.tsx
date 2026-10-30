@@ -11,6 +11,7 @@ import { Modal } from '@/components/admin/Modal';
 import { fmtDateTime } from '@/components/admin/labels';
 import { STATUS_TONES, toneClasses } from '@/components/ui/status';
 import { cpKeys, useCpError, type VisitReason } from './api';
+import { confirmDialog } from '@/components/ui/ConfirmHost';
 
 type Office = { index: number; city: string; address: string };
 type DayVisit = {
@@ -280,7 +281,7 @@ export default function OfficeVisitsAdmin() {
                     )}
                   </div>
                   {s.visits.length < s.capacity && (
-                    <button type="button" className="btn-secondary btn-sm text-danger-fg" aria-label={t('cp.office.deleteFree')} title={t('cp.office.deleteFree')} onClick={() => removeSlot.mutate(s.id)}>
+                    <button type="button" className="btn-secondary btn-sm text-danger-fg" aria-label={t('cp.office.deleteFree')} title={t('cp.office.deleteFree')} onClick={async () => (await confirmDialog({ title: t('cp.office.deleteFree'), message: t('ui.confirmDlg.deleteNamed', { name: `${fmtDateTime(s.startsAt)} · ${s.staff.firstName} ${s.staff.lastName}` }), confirmLabel: t('ui.confirmDlg.delete') })) && removeSlot.mutate(s.id)}>
                       <Trash2 className="size-3.5" aria-hidden />
                     </button>
                   )}

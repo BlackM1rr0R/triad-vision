@@ -33,6 +33,9 @@ import { Spinner } from '@/components/ui/Spinner';
 import { PasswordInput } from '@/components/ui/PasswordInput';
 import { ConfirmDialog } from '@/components/portal/ConfirmDialog';
 import { EmailOtpCard } from '@/components/auth/EmailOtpCard';
+import { ChangeEmailCard } from '@/components/account/AccountSecurity'; // e-mail change with a link to the new address
+import { BrowserPushSwitch } from '@/components/notifications/BrowserPushSwitch';
+import { DownloadAllButton } from '@/components/vault/DownloadAllButton';
 import { CalendarSubscribe } from '@/components/prep/CalendarSubscribe';
 import { ProgressRing } from '@/components/portal/ProgressRing';
 import { useApiError } from '@/components/portal/useApiError';
@@ -698,6 +701,8 @@ const NotificationsPanel = ({ user }: { user: User }) => {
           busy={busy === 'push'}
           onChange={(v) => void update('push', { pushNotifications: v })}
         />
+        {/* This device's browser subscription (moved here from Privacy › public status settings). */}
+        <BrowserPushSwitch className="ml-0 sm:ml-12" disabled={!pushOn} />
         <Toggle
           icon={Megaphone}
           label={t('campaignConsent.profileLabel')}
@@ -928,6 +933,8 @@ const SecurityPanel = ({ user }: { user: User }) => {
         </Panel>
       </form>
 
+      <ChangeEmailCard />
+
       <EmailOtpCard />
 
       <SessionsPanel />
@@ -981,10 +988,14 @@ const PrivacyPanel = () => {
   return (
     <div className="space-y-6">
       <Panel id={`${uid}-export`} title={t('accountPage.profile.privacy.exportTitle')} icon={Download} intro={t('accountPage.profile.privacy.exportText')}>
-        <a href="/api/account/export" download className="btn-primary min-h-11 w-full sm:w-auto">
-          <Download className="size-4" aria-hidden />
-          {t('accountPage.profile.privacy.export')}
-        </a>
+        <div className="flex flex-wrap items-start gap-3">
+          <a href="/api/account/export" download className="btn-primary min-h-11 w-full sm:w-auto">
+            <Download className="size-4" aria-hidden />
+            {t('accountPage.profile.privacy.export')}
+          </a>
+          {/* The files themselves (vault + case documents) as one ZIP. */}
+          <DownloadAllButton className="btn-secondary min-h-11 w-full sm:w-auto" withHint />
+        </div>
       </Panel>
 
       <div className="card card-pad border-danger-border">

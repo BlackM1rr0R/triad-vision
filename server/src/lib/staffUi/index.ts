@@ -104,17 +104,34 @@ export interface StaffUiDoc {
   whatsNewSeen: string | null;
 }
 
-const read = async (key: string) => (await prisma.setting.findUnique({ where: { key } }))?.value as Record<string, unknown> | undefined;
-const write = (key: string, value: object) =>
-  prisma.setting.upsert({ where: { key }, create: { key, value: value as Prisma.InputJsonValue }, update: { value: value as Prisma.InputJsonValue } });
+type Db = Prisma.TransactionClient | typeof prisma;
+const read = async (key: string, db: Db = prisma) => (await db.setting.findUnique({ where: { key } }))?.value as Record<string, unknown> | undefined;
+const write = (key: string, value: object, db: Db = prisma) =>
+  db.setting.upsert({ where: { key }, create: { key, value: value as Prisma.InputJsonValue }, update: { value: value as Prisma.InputJsonValue } });
 
-export const readUserViews = async (userId: string): Promise<UserViewsDoc> => {
-  const raw = await read(userViewsKey(userId));
+export const readUserViews = async (userId: string, db: Db = prisma): Promise<UserViewsDoc> => {
+  const raw = await read(userViewsKey(userId), db);
   return { views: asViews(raw?.views), pins: Array.isArray(raw?.pins) ? (raw.pins as unknown[]).filter((x): x is string => typeof x === 'string').slice(0, 200) : [] };
 };
-export const readTeamViews = async (): Promise<TeamViewsDoc> => ({ views: asViews((await read(TEAM_VIEWS_KEY))?.views) });
-export const writeUserViews = (userId: string, doc: UserViewsDoc) => write(userViewsKey(userId), doc);
-export const writeTeamViews = (doc: TeamViewsDoc) => write(TEAM_VIEWS_KEY, doc);
+export const readTeamViews = async (db: Db = prisma): Promise<TeamViewsDoc> => ({ views: asViews((await read(TEAM_VIEWS_KEY, db))?.views) });
+export const writeUserViews = (userId: string, doc: UserViewsDoc, db: Db = prisma) => write(userViewsKey(userId), doc, db);
+export const writeTeamViews = (doc: TeamViewsDoc, db: Db = prisma) => write(TEAM_VIEWS_KEY, doc, db);
+
+/**
+ * Saved views are read-modify-write JSON documents (the team one is shared by everyone): two colleagues saving
+ * at the same moment would overwrite each other. Every change runs in a transaction holding SELECT … FOR UPDATE
+ * on the Setting rows it touches. Missing rows are created first (outside the transaction, INSERT IGNORE: an
+ * insert's shared lock on an existing row followed by FOR UPDATE would deadlock two writers). Keys are locked in
+ * sorted order so two transactions never wait on each other crosswise.
+ */
+export const withViewLocks = async <T>(keys: string[], fn: (db: Prisma.TransactionClient) => Promise<T>): Promise<T> => {
+  const sorted = [...new Set(keys)].sort();
+  for (const k of sorted) await prisma.$executeRaw`INSERT IGNORE INTO \`Setting\` (\`key\`, \`value\`) VALUES (${k}, JSON_OBJECT())`;
+  return prisma.$transaction(async (tx) => {
+    for (const k of sorted) await tx.$queryRaw`SELECT \`key\` FROM \`Setting\` WHERE \`key\` = ${k} FOR UPDATE`;
+    return fn(tx);
+  });
+};
 
 export const newViewId = () => `v${crypto.randomBytes(8).toString('hex')}`;
 

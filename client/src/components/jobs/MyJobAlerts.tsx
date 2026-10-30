@@ -10,6 +10,7 @@ import { optimistic } from '@/lib/optimistic';
 import { currentSiteLocale, registerCopy } from '@/i18n';
 import { pagesDiscover } from '@/i18n/pagesDiscover';
 import { ProfessionPicker, useAlertOptions } from './JobAlertForm';
+import { confirmDialog } from '@/components/ui/ConfirmHost';
 
 registerCopy(pagesDiscover);
 
@@ -102,7 +103,7 @@ export const MyJobAlerts = ({ className }: { className?: string }) => {
                   {[a.germanLevel, ...a.kinds.map((k) => t(`discover.alerts.kind.${k}`)), t('discover.alerts.mine.sent', { count: a.sentCount })].filter(Boolean).join(' · ')}
                 </p>
               </div>
-              <button type="button" className={buttonClass({ variant: 'ghost', size: 'sm', className: 'text-danger-fg' })} disabled={remove.isPending} onClick={() => remove.mutate(a.id)}>
+              <button type="button" className={buttonClass({ variant: 'ghost', size: 'sm', className: 'text-danger-fg' })} disabled={remove.isPending} onClick={async () => (await confirmDialog({ message: t('ui.confirmDlg.removeNamed', { name: a.professions.map(label).join(', ') }), confirmLabel: t('ui.confirmDlg.remove') })) && remove.mutate(a.id)}>
                 <Trash2 className="size-4" aria-hidden /> {t('discover.alerts.mine.remove')}
               </button>
             </li>

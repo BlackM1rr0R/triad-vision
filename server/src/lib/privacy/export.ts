@@ -4,6 +4,7 @@ import { buildAccessLog } from './accessLog.js'; // "who viewed my documents"
 import { housingExport } from '../housing/core.js'; // housing checklist, Anmeldung, partner listings
 import { partnerExportProfile } from '../partners/profile.js'; // referral partner logins: their partner profile
 import { listFieldDefs } from '../partners/fieldDefs.js';
+import { exportInquiries } from './inquiries.js'; // website contact / employer enquiries sent with this e-mail
 
 /** The user's AI assistant conversations: their questions, the answers and proposed actions (no tool internals). */
 const aiAssistantExport = (userId: string) =>
@@ -148,6 +149,8 @@ export const buildUserExport = async (userId: string) => {
     // Each consent with the legal text version it refers to (AGB / privacy / cookie policy).
     consents: await withLegalVersions(consents),
     privacyRequests,
+    // Contact and employer enquiries sent from the website with this e-mail address.
+    inquiries: await exportInquiries(user.email, userId),
     notifications,
     devices,
     supportViews: supportViews.map((v) => ({

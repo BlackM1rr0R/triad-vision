@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import QRCode from 'qrcode';
 import { STATUS_TONES, toneClasses } from '@/components/ui/status';
 import { useQuery } from '@tanstack/react-query';
+import { ErrorState } from '@/components/ui/ErrorState';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import clsx from 'clsx';
@@ -86,9 +87,10 @@ export default function AccountReferral() {
   const { tr, date } = useL10n();
   usePageTitle(t('gp.ref.title'));
   const [copied, setCopied] = useState<'link' | 'code' | null>(null);
-  const { data, isLoading } = useQuery({ queryKey: ['growth', 'referral'], queryFn: async () => (await api.get<ReferralData>('/growth/referral')).data });
+  const { data, isLoading, isError, refetch } = useQuery({ queryKey: ['growth', 'referral'], queryFn: async () => (await api.get<ReferralData>('/growth/referral')).data });
   const qr = useQr(data?.enabled ? data.link : null);
 
+  if (isError) return <ErrorState onRetry={() => void refetch()} />;
   if (isLoading || !data) return <Spinner />;
   const copy = async (what: 'link' | 'code') => {
     try {

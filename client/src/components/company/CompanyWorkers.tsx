@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
+import { ErrorState } from '@/components/ui/ErrorState';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
 import { AlertTriangle, CalendarClock, Download, FileSpreadsheet, Handshake, Hourglass, PlaneLanding, Search, ShieldAlert, Users, Wrench } from 'lucide-react';
@@ -43,7 +44,7 @@ export const CompanyWorkers = () => {
   const openId = params.get('worker');
   const milestone = useMilestoneText();
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ['company-workers'],
     queryFn: async () => (await api.get<WorkersResponse>('/company/workers')).data,
   });
@@ -122,6 +123,7 @@ export const CompanyWorkers = () => {
     },
   ];
 
+  if (isError) return <ErrorState onRetry={() => void refetch()} />;
   if (isLoading || !data) return <WorkersSkeleton />;
   const s = data.summary;
   const counts = Object.fromEntries(PHASES.map((p) => [p, data.items.filter((w) => w.phase === p).length])) as Record<Phase, number>;

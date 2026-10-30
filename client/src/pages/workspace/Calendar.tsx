@@ -23,6 +23,7 @@ import { TimeGrid } from '@/components/calendar/TimeGrid';
 import type { AttendeeStatus, CalItem, EventDto, View } from '@/components/calendar/types';
 import { VIEWS } from '@/components/calendar/types';
 import { addDays, addMonths, dayKey, errorText, fmtDate, fmtMonthTitle, monthGrid, parseDayKey, startOfDay, startOfWeek, toItems, weekNumber } from '@/components/calendar/utils';
+import { confirmDialog } from '@/components/ui/ConfirmHost';
 
 registerCopy(pagesTasks);
 registerCopy(pagesCalendar);
@@ -140,8 +141,7 @@ export default function WorkspaceCalendar() {
     }
   };
   const remove = async (e: EventDto) => {
-    // TODO(ui): ConfirmDialog
-    if (!window.confirm(t('calendar.actions.confirmDelete', { title: e.title }))) return;
+    if (!(await confirmDialog({ message: t('calendar.actions.confirmDelete', { title: e.title }), confirmLabel: t('ui.confirmDlg.delete') }))) return;
     try {
       await calendarApi.remove(e.id);
       toast.success(t('calendar.toasts.deleted'));

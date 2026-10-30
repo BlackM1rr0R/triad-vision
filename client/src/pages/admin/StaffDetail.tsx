@@ -22,6 +22,8 @@ import {
 } from 'lucide-react';
 import { api, formatBytes } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
+import { hasMinRole } from '@/lib/types';
+import { StaffDeskSelect } from '@/components/admin/StaffDeskSelect';
 import { DeleteUserDialog } from '@/components/admin/DeleteUserDialog';
 import { StatusBadge, ToneBadge } from '@/components/admin/StatusBadge';
 import {
@@ -175,6 +177,8 @@ export default function StaffDetail() {
             </div>
           </div>
           <div className="flex flex-wrap gap-2">
+            {/* Sidebar desk of this staff member (ADMIN+; GET/PUT /admin/nav/desks). */}
+            {hasMinRole(me?.role, 'ADMIN') && user.isActive && <StaffDeskSelect userId={user.id} name={fullName(user)} />}
             <Link to={`/admin/cases?search=${encodeURIComponent(user.email)}`} className="btn-secondary btn-sm">
               <Briefcase className="size-3.5" /> {t('admin.staff.cases')}
             </Link>

@@ -30,6 +30,7 @@ import { useAuth } from '@/lib/auth';
 import { useL10n } from '@/lib/l10n';
 import { hasMinRole, type L10n } from '@/lib/types';
 import { usePageTitle } from '@/lib/usePageTitle';
+import { confirmDialog } from '@/components/ui/ConfirmHost';
 
 registerCopy(pagesGrowthPlus);
 registerCopy(pagesMarketing);
@@ -321,7 +322,7 @@ const MapTab = ({ canEdit }: { canEdit: boolean }) => {
                   {e.note && <span className="block text-xs text-muted">{e.note}</span>}
                 </span>
                 {canEdit && (
-                  <button type="button" className="rounded-lg p-2 text-muted hover:bg-sunken hover:text-danger-fg" aria-label={t('gp.common.delete')} onClick={() => delEntry.mutate(e.id)}>
+                  <button type="button" className="rounded-lg p-2 text-muted hover:bg-sunken hover:text-danger-fg" aria-label={t('gp.common.delete')} onClick={async () => (await confirmDialog({ message: t('ui.confirmDlg.deleteNamed', { name: `${e.city} · ${t(`gp.admin.map.modes.${e.mode}`)}` }), confirmLabel: t('ui.confirmDlg.delete') })) && delEntry.mutate(e.id)}>
                     <Trash2 className="size-4" aria-hidden />
                   </button>
                 )}

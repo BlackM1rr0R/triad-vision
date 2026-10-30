@@ -14,7 +14,7 @@ const TITLE: Record<Locale, (name: string) => string> = {
 /**
  * Hook for every new inquiry / lead (contact form, AI advisor, unknown WhatsApp number): queues the automation
  * event and — when "assign inquiries" is on — gives a follow-up task to an eligible staff member (language of the
- * inquiry, least loaded). Never throws.
+ * inquiry, least loaded), who also becomes the lead's owner (Inquiry.assignedStaffId). Never throws.
  */
 export const onInquiryCreated = async (inquiryId: string) => {
   try {
@@ -26,6 +26,8 @@ export const onInquiryCreated = async (inquiryId: string) => {
     const locale = (['az', 'de', 'en', 'ru'].includes(q.locale) ? q.locale : 'az') as Locale;
     const staffId = await pickAssignee(prisma, { clientLocale: locale });
     if (!staffId) return null;
+    // The lead's owner (only if nobody took it in the meantime); the follow-up task stays as before.
+    await prisma.inquiry.updateMany({ where: { id: q.id, assignedStaffId: null }, data: { assignedStaffId: staffId, assignedAt: new Date() } });
     const staff = await prisma.user.findUnique({ where: { id: staffId }, select: { locale: true } });
     const name = q.companyName ? `${q.contactName} (${q.companyName})` : q.contactName;
     return await createAutomationTask({

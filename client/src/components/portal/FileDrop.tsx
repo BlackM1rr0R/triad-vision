@@ -4,9 +4,12 @@ import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { UploadCloud } from 'lucide-react';
+import { optimizeImage } from '@/lib/imageCompress';
 
 export const MAX_FILE_SIZE = 5 * 1024 * 1024;
 const EXTENSIONS = ['pdf', 'jpg', 'jpeg', 'png', 'webp', 'doc', 'docx'];
+/** iPhone photos: client document uploads (case documents, vault) take them; the server stores a JPEG. */
+const HEIC_EXTENSIONS = ['heic', 'heif'];
 const MIME = new Set([
   'application/pdf',
   'image/jpeg',
@@ -15,14 +18,40 @@ const MIME = new Set([
   'application/msword',
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
 ]);
-export const ACCEPT = EXTENSIONS.map((e) => `.${e}`).join(',');
+const HEIC_MIME = new Set(['image/heic', 'image/heif']);
+/** Types without HEIC (uploads whose server side does not convert it, e.g. translations). */
+export const ACCEPT_NO_HEIC = EXTENSIONS.map((e) => `.${e}`).join(',');
+/** Client document uploads: the case-document types plus HEIC/HEIF. */
+export const ACCEPT = [...EXTENSIONS, ...HEIC_EXTENSIONS].map((e) => `.${e}`).join(',');
 
-/** Returns an i18n key describing why the file is not acceptable, or null when it is fine. */
-export const validateFile = (file: File): string | null => {
+export interface ValidateOptions {
+  /** Accept HEIC/HEIF (default true: client document uploads convert them on the server). */
+  heic?: boolean;
+}
+
+/** i18n key when the type is not acceptable, else null (the size is checked after compression: prepareFile). */
+export const validateType = (file: File, opts: ValidateOptions = {}): string | null => {
+  const heic = opts.heic ?? true;
   const ext = file.name.split('.').pop()?.toLowerCase() ?? '';
-  if (!EXTENSIONS.includes(ext) || (file.type && !MIME.has(file.type))) return 'portal.docs.badType';
-  if (file.size > MAX_FILE_SIZE) return 'portal.docs.tooLarge';
-  return null;
+  const extOk = EXTENSIONS.includes(ext) || (heic && HEIC_EXTENSIONS.includes(ext));
+  // Phones often send HEIC as octet-stream / an empty type: the extension decides then.
+  const typeOk = !file.type || file.type === 'application/octet-stream' || MIME.has(file.type) || (heic && HEIC_MIME.has(file.type));
+  return extOk && typeOk ? null : 'portal.docs.badType';
+};
+
+/** Returns an i18n key describing why the file is not acceptable, or null when it is fine (type and size as is). */
+export const validateFile = (file: File, opts: ValidateOptions = {}): string | null =>
+  validateType(file, opts) ?? (file.size > MAX_FILE_SIZE ? 'portal.docs.tooLarge' : null);
+
+/**
+ * Type check, then images are compressed in the browser (a 9 MB phone photo becomes ~1 MB) and only then the
+ * 5 MB limit applies — a big photo is not refused for a size it will not have. Other files keep the limit as is.
+ */
+export const prepareFile = async (file: File, opts: ValidateOptions = {}): Promise<{ file: File; problem: string | null }> => {
+  const typeProblem = validateType(file, opts);
+  if (typeProblem) return { file, problem: typeProblem };
+  const out = file.type.startsWith('image/') ? await optimizeImage(file) : file;
+  return { file: out, problem: out.size > MAX_FILE_SIZE ? 'portal.docs.tooLarge' : null };
 };
 
 /**
@@ -46,24 +75,31 @@ export const FileDrop = ({
   const inputRef = useRef<HTMLInputElement>(null);
   const id = useId();
   const [over, setOver] = useState(false);
+  const [preparing, setPreparing] = useState(false);
   const uploading = progress !== null;
-  const blocked = disabled || uploading;
+  const blocked = disabled || uploading || preparing;
 
-  const pick = (files: FileList | null) => {
-    const file = files?.[0];
-    if (!file) return;
-    const problem = validateFile(file);
-    if (problem) {
-      toast.error(t(problem));
-      return;
+  const pick = async (files: FileList | null) => {
+    const picked = files?.[0];
+    if (!picked) return;
+    setPreparing(true);
+    try {
+      // onFile gets the already compressed image (callers must not compress again).
+      const { file, problem } = await prepareFile(picked);
+      if (problem) {
+        toast.error(t(problem));
+        return;
+      }
+      onFile(file);
+    } finally {
+      setPreparing(false);
     }
-    onFile(file);
   };
 
   const onDrop = (e: DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     setOver(false);
-    if (!blocked) pick(e.dataTransfer.files);
+    if (!blocked) void pick(e.dataTransfer.files);
   };
 
   return (
@@ -88,7 +124,7 @@ export const FileDrop = ({
         className="sr-only"
         disabled={blocked}
         onChange={(e) => {
-          pick(e.target.files);
+          void pick(e.target.files); // reads the File before its first await
           e.target.value = '';
         }}
       />

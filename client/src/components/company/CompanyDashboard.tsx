@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
+import { ErrorState } from '@/components/ui/ErrorState';
 import { useTranslation } from 'react-i18next';
 import { ArrowRight, Briefcase, CalendarCheck, Handshake, Plus, UserCheck, Users } from 'lucide-react';
 import { api } from '@/lib/api';
@@ -24,10 +25,11 @@ interface Dashboard {
 export const CompanyDashboard = () => {
   const { t } = useTranslation();
   const { tr } = useL10n();
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ['company-dashboard'],
     queryFn: async () => (await api.get<Dashboard>('/company/dashboard')).data,
   });
+  if (isError) return <ErrorState onRetry={() => void refetch()} />;
   if (isLoading || !data) return <Loading />;
   const maxStep = Math.max(1, ...data.workers.byStep);
 

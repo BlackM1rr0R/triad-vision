@@ -4,6 +4,7 @@ import clsx from 'clsx';
 import { ChevronLeft, ChevronRight, Pencil, Plus, Trash2 } from 'lucide-react';
 import type { Sheet } from './model';
 import { ContextMenu } from './Popups';
+import { confirmDialog } from '@/components/ui/ConfirmHost';
 
 /** Excel-like sheet tabs: switch, add, rename (double-click), delete, reorder (drag or menu). */
 export function SheetTabs({
@@ -112,8 +113,8 @@ export function SheetTabs({
               danger: true,
               disabled: sheets.length <= 1,
               onClick: () => {
-                // TODO(ui): ConfirmDialog
-                if (window.confirm(t('sheet.tabs.confirmDelete', { name: sheets[menu.i].name }))) onDelete(sheets[menu.i].key);
+                const target = sheets[menu.i];
+                void confirmDialog({ message: t('sheet.tabs.confirmDelete', { name: target.name }), confirmLabel: t('ui.confirmDlg.delete') }).then((ok) => ok && onDelete(target.key));
               },
             },
           ]}

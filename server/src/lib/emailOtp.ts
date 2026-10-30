@@ -26,8 +26,8 @@ export const EMAIL_OTP_RESEND_SECONDS = 60;
 export const EMAIL_OTP_MAX_PER_CHALLENGE = 5;
 export const EMAIL_OTP_MAX_PER_HOUR = 5;
 
-/** Only candidates and employers can choose email codes as their second factor. */
-export const canEnableEmailOtp = (role: Role) => role === 'CLIENT' || role === 'COMPANY';
+/** Candidates, employers and agents / referral partners can choose email codes as their second factor. */
+export const canEnableEmailOtp = (role: Role) => role === 'CLIENT' || role === 'COMPANY' || role === 'AGENT';
 
 const isStaffRole = (role: Role) => role === 'STAFF' || role === 'ADMIN' || role === 'SUPER_ADMIN';
 

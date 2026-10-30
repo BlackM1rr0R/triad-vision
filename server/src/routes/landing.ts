@@ -34,7 +34,7 @@ export const renderableSections = async (raw: unknown) => {
   return sections.map((s): LandingSection & { resolved?: unknown } => {
     if (s.type === 'testimonials') {
       const picked = ((s.data.ids as string[]) ?? []).map((id) => byId.get(id)).filter((t): t is NonNullable<typeof t> => !!t);
-      return { ...s, resolved: picked.map((t) => ({ id: t.id, quote: t.quote, author: t.author, role: t.role })) };
+      return { ...s, resolved: picked.map((t) => ({ id: t.id, quote: t.quote, author: t.author, role: t.role, authorPhoto: t.authorPhoto })) };
     }
     if (s.type === 'video') return { ...s, resolved: { embedUrl: videoEmbedUrl(String(s.data.url ?? '')) } };
     return s;

@@ -100,11 +100,26 @@ const writeIndex = async (idx: OfflineIndex | null) => {
   emit();
 };
 
+/**
+ * Every read-modify-write of the index runs one after another (module-level promise chain): two documents saved
+ * at once would otherwise both read the same index and the second write would drop the first entry. Inside the
+ * chain the index is always re-read right before it is written.
+ */
+let indexChain: Promise<unknown> = Promise.resolve();
+export const withIndexLock = <T>(fn: () => Promise<T>): Promise<T> => {
+  const run = indexChain.then(fn, fn);
+  indexChain = run.catch(() => undefined);
+  return run;
+};
+
 export const expired = (savedAt: string, now = Date.now()) => now - new Date(savedAt).getTime() > KEEP_DAYS * DAY;
 
 /** Portal start: load the index, drop expired items and everything of another user. */
 export const initOffline = async (userId: string | null) => {
   if (!offlineSupported()) return;
+  await withIndexLock(() => initOfflineLocked(userId));
+};
+const initOfflineLocked = async (userId: string | null) => {
   const idx = await readIndex();
   if (!idx) {
     snapshot = null;
@@ -112,7 +127,7 @@ export const initOffline = async (userId: string | null) => {
     return;
   }
   if (!userId || idx.userId !== userId) {
-    await clearOffline();
+    await clearLocked();
     return;
   }
   const cache = await open();
@@ -124,6 +139,9 @@ export const initOffline = async (userId: string | null) => {
 /** Logout / user change: everything offline goes. */
 export const clearOffline = async () => {
   if (!offlineSupported()) return;
+  await withIndexLock(clearLocked);
+};
+const clearLocked = async () => {
   await caches.delete(OFFLINE_CACHE).catch(() => false);
   snapshot = null;
   emit();
@@ -149,54 +167,61 @@ export const saveDocOffline = async (
 ): Promise<SaveError | null> => {
   if (!offlineSupported()) return 'UNSUPPORTED';
   if (doc.size > MAX_FILE_BYTES) return 'TOO_BIG';
-  const prev = await readIndex();
-  const idx = baseIndex(prev, who);
-  const used = idx.docs.filter((d) => d.id !== doc.id).reduce((a, d) => a + d.size, 0);
-  if (used + doc.size > MAX_TOTAL_BYTES) return 'FULL';
+  const usedBy = (idx: OfflineIndex) => idx.docs.filter((d) => d.id !== doc.id).reduce((a, d) => a + d.size, 0);
+  if (usedBy(baseIndex(await readIndex(), who)) + doc.size > MAX_TOTAL_BYTES) return 'FULL';
   try {
     const res = await fetch(fileUrl(doc.id), { credentials: 'include' });
     if (!res.ok) return 'FAILED';
     const blob = await res.blob();
     if (blob.size > MAX_FILE_BYTES) return 'TOO_BIG';
     const cache = await open();
-    await cache.put(
-      docUrl(doc.id),
-      new Response(blob, {
-        headers: {
-          'content-type': doc.mimeType || blob.type || 'application/octet-stream',
-          'content-disposition': `inline; filename*=UTF-8''${encodeURIComponent(doc.originalName)}`,
-          'x-content-type-options': 'nosniff',
-          'content-security-policy': "default-src 'none'; img-src 'self' blob: data:; style-src 'unsafe-inline'; sandbox",
-        },
-      }),
-    );
-    const entry: OfflineDoc = { id: doc.id, caseId: doc.caseId, caseNumber: meta.caseNumber, name: doc.originalName, title: meta.title, mimeType: doc.mimeType, size: blob.size, savedAt: new Date().toISOString() };
-    await writeIndex({ ...idx, docs: [...idx.docs.filter((d) => d.id !== doc.id), entry] });
-    return null;
+    // The download runs in parallel; the index update (re-read, re-checked against the cap) is serialized.
+    return await withIndexLock(async () => {
+      const idx = baseIndex(await readIndex(), who);
+      if (usedBy(idx) + blob.size > MAX_TOTAL_BYTES) return 'FULL' as const;
+      await cache.put(
+        docUrl(doc.id),
+        new Response(blob, {
+          headers: {
+            'content-type': doc.mimeType || blob.type || 'application/octet-stream',
+            'content-disposition': `inline; filename*=UTF-8''${encodeURIComponent(doc.originalName)}`,
+            'x-content-type-options': 'nosniff',
+            'content-security-policy': "default-src 'none'; img-src 'self' blob: data:; style-src 'unsafe-inline'; sandbox",
+          },
+        }),
+      );
+      const entry: OfflineDoc = { id: doc.id, caseId: doc.caseId, caseNumber: meta.caseNumber, name: doc.originalName, title: meta.title, mimeType: doc.mimeType, size: blob.size, savedAt: new Date().toISOString() };
+      await writeIndex({ ...idx, docs: [...idx.docs.filter((d) => d.id !== doc.id), entry] });
+      return null;
+    });
   } catch {
     return 'FAILED';
   }
 };
 
-export const removeDocOffline = async (id: string) => {
-  const idx = await readIndex();
-  if (!idx) return;
-  await (await open()).delete(docUrl(id));
-  await writeIndex({ ...idx, docs: idx.docs.filter((d) => d.id !== id) });
-};
+export const removeDocOffline = (id: string) =>
+  withIndexLock(async () => {
+    const idx = await readIndex();
+    if (!idx) return;
+    await (await open()).delete(docUrl(id));
+    await writeIndex({ ...idx, docs: idx.docs.filter((d) => d.id !== id) });
+  });
 
 /** "Termin məlumatı": the appointment card(s) and countdowns for the offline page. */
 export const saveAppointmentOffline = async (cases: OfflineCase[], who: { userId: string; holder: string; lang: string; labels: Record<string, string> }) => {
   if (!offlineSupported()) return 'UNSUPPORTED' as const;
-  const idx = baseIndex(await readIndex(), who);
-  await writeIndex({ ...idx, appointment: { savedAt: new Date().toISOString(), cases } });
-  return null;
+  return withIndexLock(async () => {
+    const idx = baseIndex(await readIndex(), who);
+    await writeIndex({ ...idx, appointment: { savedAt: new Date().toISOString(), cases } });
+    return null;
+  });
 };
 
-export const removeAppointmentOffline = async () => {
-  const idx = await readIndex();
-  if (idx) await writeIndex({ ...idx, appointment: null });
-};
+export const removeAppointmentOffline = () =>
+  withIndexLock(async () => {
+    const idx = await readIndex();
+    if (idx) await writeIndex({ ...idx, appointment: null });
+  });
 
 /** Opens a kept file even when the service worker does not control the tab (blob URL from the cache). */
 export const openOfflineDoc = async (id: string) => {

@@ -356,7 +356,7 @@ const ru: Messages = {
       upload: 'Загрузить файл',
       uploading: 'Загрузка...',
       replace: 'Загрузить новый',
-      formats: 'PDF, JPG, PNG, WEBP, DOC, DOCX · макс. 5 MB',
+      formats: 'PDF, JPG, PNG, WEBP, HEIC, DOC, DOCX · макс. 5 MB',
       submit: 'Отправить на проверку',
       submitConfirm: 'Отправить документы на проверку? Во время проверки вносить изменения нельзя.',
       missing: 'Загрузите все обязательные документы',

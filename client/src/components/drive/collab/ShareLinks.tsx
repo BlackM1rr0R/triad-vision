@@ -14,6 +14,7 @@ import { toastDriveError } from '../api';
 import type { DriveItem } from '../types';
 import { collabKeys, createLink, fetchAccesses, fetchLinks, revokeLink, type LinkStatus, type ShareLink } from './api';
 import { PasswordInput } from '@/components/ui/PasswordInput';
+import { confirmDialog } from '@/components/ui/ConfirmHost';
 
 registerCopy(driveCollabCopy);
 
@@ -250,7 +251,7 @@ export const ShareLinksSection = ({ item }: { item: DriveItem }) => {
                   <ListTree className="size-3.5" /> {t('driveCollab.links.log')} ({l.accessCount})
                 </button>
                 {l.status !== 'revoked' && (
-                  <button type="button" onClick={() => window.confirm(t('driveCollab.links.revokeConfirm')) && revoke.mutate(l.id)} className="inline-flex items-center gap-1 text-danger-fg hover:underline">
+                  <button type="button" onClick={async () => (await confirmDialog({ title: l.label || t('driveCollab.links.unnamed'), message: t('driveCollab.links.revokeConfirm'), confirmLabel: t('ui.confirmDlg.revoke') })) && revoke.mutate(l.id)} className="inline-flex items-center gap-1 text-danger-fg hover:underline">
                     <X className="size-3.5" /> {t('driveCollab.links.revoke')}
                   </button>
                 )}

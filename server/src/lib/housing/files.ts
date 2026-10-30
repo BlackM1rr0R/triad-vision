@@ -7,9 +7,8 @@ import multer from 'multer';
 import type { Locale } from '@prisma/client';
 import { config } from '../../config.js';
 import { prisma } from '../../db.js';
-import { decodeOriginalName, verifyUploadedFile } from '../../middleware/upload.js';
-import { CASE_DOC_MIME, resolveMime } from '../fileCheck.js';
-import { badRequest, notFound } from '../http.js';
+import { clientDocFilter, decodeOriginalName, verifyUploadedFile } from '../../middleware/upload.js';
+import { notFound } from '../http.js';
 import { vaultDir } from '../docCheck/index.js';
 import { vaultTitles } from './texts.js';
 
@@ -29,13 +28,8 @@ export const housingUpload = multer({
     filename: (_req, file, cb) => cb(null, randomName(file.originalname)),
   }),
   limits: { fileSize: config.uploads.maxFileSize, files: 1 },
-  fileFilter: (_req, file, cb) => {
-    const mime = resolveMime(file.mimetype, decodeOriginalName(file.originalname));
-    if (mime && CASE_DOC_MIME.has(mime)) {
-      file.mimetype = mime;
-      cb(null, true);
-    } else cb(badRequest('UNSUPPORTED_FILE_TYPE'));
-  },
+  // Case-document types + HEIC/HEIF photos (converted to JPEG by verifyUploadedFile).
+  fileFilter: clientDocFilter,
 });
 
 export const removeUpload = (file: Express.Multer.File | undefined) => (file ? fsp.unlink(file.path).catch(() => undefined) : Promise.resolve());

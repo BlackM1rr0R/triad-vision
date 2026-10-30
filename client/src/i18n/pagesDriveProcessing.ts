@@ -61,6 +61,8 @@ const az = {
       claimed: 'Götürdün — indi sən işləyirsən.',
       already: 'Bu qovluq onsuz da səndədir.',
       moved: '{{count}} qovluq: {{stage}}',
+      partial: '{{ok}}/{{total}} köçürüldü: {{stage}}. Alınmayanlar pəncərədə qalıb.',
+      failedTitle: 'Köçürülmədi:',
     },
     drop: {
       hint: 'Müştəri qovluğunu bura at',
@@ -147,6 +149,8 @@ const de: typeof az = {
       claimed: 'Übernommen — du arbeitest jetzt daran.',
       already: 'Dieser Ordner ist schon deiner.',
       moved: '{{count}} Ordner: {{stage}}',
+      partial: '{{ok}}/{{total}} verschoben: {{stage}}. Die übrigen bleiben im Dialog.',
+      failedTitle: 'Nicht verschoben:',
     },
     drop: {
       hint: 'Kundenordner hier ablegen',
@@ -233,6 +237,8 @@ const en: typeof az = {
       claimed: 'Taken — you are working on it now.',
       already: 'This folder is already yours.',
       moved: '{{count}} folders: {{stage}}',
+      partial: '{{ok}}/{{total}} moved: {{stage}}. The rest stay in the dialog.',
+      failedTitle: 'Not moved:',
     },
     drop: {
       hint: 'Drop a client folder here',
@@ -319,6 +325,8 @@ const ru: typeof az = {
       claimed: 'Взято — теперь работаете вы.',
       already: 'Эта папка уже у вас.',
       moved: 'Папок: {{count}} — {{stage}}',
+      partial: 'Перемещено {{ok}}/{{total}}: {{stage}}. Остальные остались в окне.',
+      failedTitle: 'Не перемещены:',
     },
     drop: {
       hint: 'Перетащите сюда папку клиента',

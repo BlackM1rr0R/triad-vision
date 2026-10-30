@@ -18,6 +18,7 @@ import PartnerClientDetailPage from './ClientDetail';
 import PartnerCommissionsPage from './Commissions';
 import PartnerProfilePage from './Profile';
 import PartnerPeoplePage from './People';
+import { PortalNotificationBell, PortalNotificationsPage } from '@/components/notifications/PortalNotifications';
 
 registerCopy(pagesPartnerPortal);
 registerCopy(pagesCaseProcessing);
@@ -72,6 +73,7 @@ export default function PartnerApp() {
                     {t('partnerPortal.agentPortal')} <ArrowUpRight className="size-4" aria-hidden />
                   </Link>
                 )}
+                {me && <PortalNotificationBell allTo="/partner/notifications" />}
                 <button type="button" onClick={onLogout} className="inline-flex min-h-11 min-w-11 items-center justify-center gap-1.5 rounded-xl px-3 text-sm font-semibold text-muted transition-colors hover:bg-sunken hover:text-ink">
                   <LogOut className="size-4" aria-hidden /> <span className="hidden sm:inline">{t('partnerPortal.logout')}</span>
                 </button>
@@ -126,6 +128,7 @@ export default function PartnerApp() {
                 <Route path="clients" element={<PartnerClientsPage />} />
                 <Route path="clients/:id" element={<PartnerClientDetailPage />} />
                 <Route path="commissions" element={<PartnerCommissionsPage />} />
+                <Route path="notifications" element={<PortalNotificationsPage />} />
                 <Route path="profile" element={<PartnerProfilePage me={me} />} />
                 <Route path="*" element={<Navigate to="/partner" replace />} />
               </Routes>

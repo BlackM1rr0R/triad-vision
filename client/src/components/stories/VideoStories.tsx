@@ -10,6 +10,7 @@ import { useL10n } from '@/lib/l10n';
 import { registerCopy } from '@/i18n';
 import { pagesDiscover } from '@/i18n/pagesDiscover';
 import type { Testimonial } from '@/lib/types';
+import { AuthorAvatar } from '@/components/ui/AuthorAvatar';
 
 registerCopy(pagesDiscover);
 
@@ -162,8 +163,13 @@ export const VideoStories = ({ testimonials, fallbackHeading }: { testimonials: 
                         {!video && <Quote className="size-8 text-highlight" aria-hidden />}
                         <blockquote className={clsx('flex-1 text-[0.97rem] leading-relaxed text-ink/85', !video && 'mt-3')}>„{tr(s.quote)}“</blockquote>
                         <figcaption className="mt-5 border-t border-line pt-4">
-                          <span className="block text-sm font-bold text-ink">{name}</span>
-                          {tr(s.role) && <span className="block text-xs text-muted">{tr(s.role)}</span>}
+                          <span className="flex items-center gap-3">
+                            <AuthorAvatar name={name} photo={s.authorPhoto} className="size-10" fallbackClassName="chip-peach" />
+                            <span className="min-w-0">
+                              <span className="block text-sm font-bold text-ink">{name}</span>
+                              {tr(s.role) && <span className="block text-xs text-muted">{tr(s.role)}</span>}
+                            </span>
+                          </span>
                           {chips.length > 0 && (
                             <span className="mt-3 flex flex-wrap gap-1.5">
                               {chips.map((c, ci) => (

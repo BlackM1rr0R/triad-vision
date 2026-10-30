@@ -686,20 +686,22 @@ model VisaSample {
 }
 
 model Testimonial {
-  id         String  @id @default(cuid())
-  quote      Json
-  author     Json
-  role       Json
-  kind       String  @default("company") // company | candidate
-  sortOrder  Int     @default(0)
-  published  Boolean @default(true)
+  id          String  @id @default(cuid())
+  quote       Json
+  author      Json
+  role        Json
+  kind        String  @default("company") // company | candidate
+  sortOrder   Int     @default(0)
+  published   Boolean @default(true)
   /// Video success story: YouTube/Vimeo link or uploaded file, plus filters for the stories page.
-  videoUrl   String? @db.Text
-  posterUrl  String? @db.Text
-  profession String? @db.VarChar(120)
-  country    String? @db.VarChar(40) // origin country code: AZ | TR | UA …
-  city       String? @db.VarChar(80) // German city
-  visaType   String? @db.VarChar(30)
+  videoUrl    String? @db.Text
+  posterUrl   String? @db.Text
+  profession  String? @db.VarChar(120)
+  country     String? @db.VarChar(40) // origin country code: AZ | TR | UA …
+  city        String? @db.VarChar(80) // German city
+  visaType    String? @db.VarChar(30)
+  /// Author photo for text testimonials (public upload, re-encoded).
+  authorPhoto String? @db.Text
 }
 
 model Stat {
@@ -772,8 +774,24 @@ model Inquiry {
   /// Referral partner whose link the visitor came with (tv_ref cookie holding a partner code).
   partnerId     String?       @db.VarChar(40)
 
+  /// Staff member who owns this lead.
+  assignedStaffId    String?   @db.VarChar(40)
+  assignedAt         DateTime?
+  /// Internal notes of the team (never shown to the lead).
+  staffNotes         String?   @db.Text
+  /// Set when the lead was converted into a client account / employer.
+  convertedUserId    String?   @db.VarChar(40)
+  convertedCompanyId String?   @db.VarChar(40)
+  convertedAt        DateTime?
+  /// Agent who registered this lead in the agent portal.
+  agentId            String?   @db.VarChar(40)
+  /// Personal data removed after the retention period (GDPR); the row stays for statistics.
+  anonymizedAt       DateTime?
+
   @@index([status, createdAt])
   @@index([score])
+  @@index([assignedStaffId])
+  @@index([agentId])
   @@index([visitorId])
 }
 
@@ -792,6 +810,8 @@ model EmailVerificationToken {
   expiresAt DateTime
   usedAt    DateTime?
   createdAt DateTime  @default(now())
+  /// Set for an e-mail change: the address becomes the user's e-mail once this token is used.
+  newEmail  String?   @db.VarChar(191)
 
   @@index([userId])
 }
@@ -857,6 +877,8 @@ model Company {
   referredByAgentId     String?                      @db.VarChar(40)
   referralCode          String?                      @db.VarChar(40)
   referredAt            DateTime?
+  /// Employer logo (public upload, re-encoded): { url, w?, h? }.
+  logo                  Json?
 
   @@index([status])
 }

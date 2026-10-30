@@ -29,6 +29,9 @@ import { useAuth } from '@/lib/auth';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { registerCopy } from '@/i18n';
 import { pagesHousing } from '@/i18n/pagesHousing';
+import { pagesPortalExtras } from '@/i18n/pagesPortalExtras';
+import { ScanCameraButton } from '@/components/scanner/ScanCameraButton'; // camera scan → PDF
+import { scanPagesToPdf } from '@/components/scanner/scanPdf';
 import { Badge, Button, Card, Field, Input, PageLoader, Tabs, TabPanel, Textarea, useTabParam } from '@/components/ui';
 import {
   BRING_ITEMS,
@@ -47,6 +50,7 @@ import {
 import { LandlordLetter } from '@/components/housing/LandlordLetter';
 
 registerCopy(pagesHousing);
+registerCopy(pagesPortalExtras); // px.scan.*
 
 const TABS = ['housing', 'anmeldung', 'offers'] as const;
 type Tab = (typeof TABS)[number];
@@ -261,6 +265,20 @@ const ContractPanel = ({ h }: { h: HousingView }) => {
               <Button icon={Upload} loading={upload.isPending} onClick={() => fileRef.current?.click()}>
                 {c.file ? t('housing.contract.replace') : t('housing.contract.upload')}
               </Button>
+              <ScanCameraButton
+                className="btn-secondary min-h-11"
+                disabled={upload.isPending}
+                title={t('housing.contract.title')}
+                onPages={async (pages) => {
+                  try {
+                    send(await scanPagesToPdf(pages, t('housing.contract.title')));
+                    return true;
+                  } catch {
+                    toast.error(t('px.scan.failed'));
+                    return false;
+                  }
+                }}
+              />
               {c.file && c.review === 'NONE' && (
                 <Button variant="secondary" loading={ask.isPending} onClick={() => ask.mutate()}>
                   {t('housing.contract.askReview')}
@@ -507,9 +525,27 @@ const AnmeldungTab = ({ data, h }: { data: HousingResponse; h: HousingView }) =>
               upload.mutate(fd, { onSettled: () => fileRef.current && (fileRef.current.value = '') });
             }}
           />
-          <Button icon={Upload} loading={upload.isPending} onClick={() => fileRef.current?.click()}>
-            {t('housing.anmeldung.uploadCertificate')}
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button icon={Upload} loading={upload.isPending} onClick={() => fileRef.current?.click()}>
+              {t('housing.anmeldung.uploadCertificate')}
+            </Button>
+            <ScanCameraButton
+              className="btn-secondary min-h-11"
+              disabled={upload.isPending}
+              title={t('housing.anmeldung.certificateTitle')}
+              onPages={async (pages) => {
+                try {
+                  const fd = new FormData();
+                  fd.append('file', await scanPagesToPdf(pages, t('housing.anmeldung.certificateTitle')));
+                  upload.mutate(fd);
+                  return true;
+                } catch {
+                  toast.error(t('px.scan.failed'));
+                  return false;
+                }
+              }}
+            />
+          </div>
         </Card>
       )}
     </div>

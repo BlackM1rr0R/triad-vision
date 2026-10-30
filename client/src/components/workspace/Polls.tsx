@@ -7,6 +7,7 @@ import { api } from '@/lib/api';
 import type { Poll } from './api';
 import { useWorkspaceInvalidate } from './api';
 import { Card, Chip, Empty, Field, IconButton, Modal, Skeleton, Toggle, errorText, fmtDateTime, fullName } from './ui';
+import { confirmDialog } from '@/components/ui/ConfirmHost';
 
 /** One poll with vote toggles and a result bar per option. Also used by the chat module's poll card. */
 export const PollCard = ({ poll, compact = false, onChanged }: { poll: Poll; compact?: boolean; onChanged?: (p: Poll) => void }) => {
@@ -38,8 +39,7 @@ export const PollCard = ({ poll, compact = false, onChanged }: { poll: Poll; com
     }
   };
   const remove = async () => {
-    // TODO(ui): ConfirmDialog
-    if (!window.confirm(t('ws.common.confirmDelete'))) return;
+    if (!(await confirmDialog({ title: t('ui.confirmDlg.deleteTitle', { name: poll.question }), message: t('ws.common.confirmDelete'), confirmLabel: t('ui.confirmDlg.delete') }))) return;
     try {
       await api.delete(`/workspace/polls/${poll.id}`);
       toast.success(t('ws.polls.deleted'));

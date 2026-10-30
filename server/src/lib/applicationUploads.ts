@@ -6,7 +6,7 @@ import multer from 'multer';
 import type { Prisma, VaultDocKind, VaultDocument } from '@prisma/client';
 import { config } from '../config.js';
 import { prisma } from '../db.js';
-import { decodeOriginalName, verifyUploadedFile } from '../middleware/upload.js';
+import { clientDocFilter, decodeOriginalName, verifyUploadedFile } from '../middleware/upload.js';
 import { nameMatches, scheduleAiDocCheck } from './aiDocs/docCheck.js';
 import { CLIENT_UPLOAD_STAGE, FINAL_STATUSES } from './caseFlow.js';
 import { checkCaseDocument, runChecks, targetForVaultKind, vaultDir } from './docCheck/index.js';
@@ -17,8 +17,7 @@ import { freeNameIn, safeUploadName } from './drive/names.js';
 import { hashStored } from './drive/org/hash.js';
 import { copyIntoStore, removeStored } from './drive/storage.js';
 import { ensureTypeFolder, VAULT_KIND_TYPE } from './drive/typeFolders.js';
-import { CASE_DOC_MIME, resolveMime } from './fileCheck.js';
-import { badRequest } from './http.js';
+import { badRequest, notFound } from './http.js';
 import { prepareCaseDocument, prepareDriveFile, scheduleUploadAnalysis } from './uploadAi/index.js';
 import { FILE_LABEL } from './uploadAi/types.js';
 
@@ -53,6 +52,21 @@ export const originOf = (v: Pick<VaultDocument, 'checks'>): ApplicationOrigin | 
   return o && o.kind === 'application' ? o : null;
 };
 
+/** An existing vault document the candidate picked for an application (VaultDocument.checks.applicationPicks). */
+export interface ApplicationPick {
+  vacancyId: string | null;
+  applicationId: string | null;
+  at: string;
+}
+
+export const picksOf = (v: Pick<VaultDocument, 'checks'>): ApplicationPick[] => {
+  const p = (v.checks as { applicationPicks?: unknown } | null)?.applicationPicks;
+  return Array.isArray(p) ? (p as ApplicationPick[]).filter((x) => x && typeof x.at === 'string') : [];
+};
+
+/** Uploaded with an application or picked from the vault for one: staff may see / download it. */
+export const isApplicationDocument = (v: Pick<VaultDocument, 'checks'>) => !!originOf(v) || picksOf(v).length > 0;
+
 /** Kinds a candidate can pick for an application upload. */
 export const APPLICATION_KINDS = ['PASSPORT', 'CV', 'DIPLOMA', 'TRANSCRIPT', 'CERTIFICATE', 'LANGUAGE_CERT', 'EMPLOYMENT_REF', 'DRIVING_LICENCE', 'PHOTO', 'OTHER'] as const satisfies readonly VaultDocKind[];
 export const MAX_APPLICATION_FILES = 6;
@@ -66,13 +80,8 @@ export const applicationUpload = multer({
     filename: (_req, file, cb) => cb(null, randomName(file.originalname)),
   }),
   limits: { fileSize: config.uploads.maxFileSize, files: MAX_APPLICATION_FILES, fields: 20, fieldSize: 4000 },
-  fileFilter: (_req, file, cb) => {
-    const mime = resolveMime(file.mimetype, decodeOriginalName(file.originalname));
-    if (mime && CASE_DOC_MIME.has(mime)) {
-      file.mimetype = mime;
-      cb(null, true);
-    } else cb(badRequest('UNSUPPORTED_FILE_TYPE'));
-  },
+  // Case-document types + HEIC/HEIF photos (converted to JPEG by verifyUploadedFile).
+  fileFilter: clientDocFilter,
 });
 
 /** Removes uploaded multipart files (request failed before they were stored). */
@@ -153,6 +162,48 @@ export const storeApplicationFiles = async (
   const active = await prisma.case.findFirst({ where: { clientId: userId, parentCaseId: null, status: { notIn: FINAL_STATUSES } }, orderBy: { createdAt: 'desc' }, select: { id: true } });
   const attached = active ? await attachVaultDocsToCase(active.id, created.map((c) => c.id)) : null;
   return { documents: created, caseId: active?.id ?? null, attached };
+};
+
+// ─── Pick from the vault ────────────────────────────────────────────────
+
+/** `vaultIds` from JSON (array) or multipart (repeated field / comma list); unique, trimmed. */
+export const parseVaultIds = (raw: unknown): string[] => {
+  const list = Array.isArray(raw) ? raw : typeof raw === 'string' && raw ? raw.split(',') : [];
+  return [...new Set(list.map((x) => String(x).trim()).filter((x) => /^[A-Za-z0-9_-]{1,40}$/.test(x)))];
+};
+
+/**
+ * The candidate's own, not expired vault documents with these ids — or an error before anything is created:
+ * someone else's (or an unknown) id → 404 VAULT_DOCUMENT_NOT_FOUND, an expired one → 400 VAULT_DOCUMENT_EXPIRED.
+ */
+export const ownPickableVaultDocs = async (userId: string, ids: string[]) => {
+  if (!ids.length) return [];
+  const docs = await prisma.vaultDocument.findMany({ where: { id: { in: ids }, userId } });
+  if (docs.length !== ids.length) throw notFound('VAULT_DOCUMENT_NOT_FOUND');
+  const now = Date.now();
+  if (docs.some((d) => d.expiresAt && d.expiresAt.getTime() <= now)) throw badRequest('VAULT_DOCUMENT_EXPIRED');
+  return ids.map((id) => docs.find((d) => d.id === id)!);
+};
+
+/**
+ * Links picked vault documents to the application (no copy in the vault: the marker lists the applications the
+ * document was sent with) and attaches them to the active case like fresh application uploads — except documents
+ * already in that case (a document of the case was copied from them before).
+ */
+export const linkPickedVaultDocs = async (userId: string, docs: VaultDocument[], ctx: { vacancyId?: string | null; applicationId?: string | null }) => {
+  const at = new Date().toISOString();
+  for (const d of docs) {
+    const picks = picksOf(d).filter((p) => p.applicationId !== (ctx.applicationId ?? null));
+    picks.push({ vacancyId: ctx.vacancyId ?? null, applicationId: ctx.applicationId ?? null, at });
+    const checks = { ...((d.checks ?? {}) as Record<string, unknown>), applicationPicks: picks.slice(-20) };
+    await prisma.vaultDocument.update({ where: { id: d.id }, data: { checks: checks as unknown as Prisma.InputJsonValue } });
+  }
+  const active = await prisma.case.findFirst({ where: { clientId: userId, parentCaseId: null, status: { notIn: FINAL_STATUSES } }, orderBy: { createdAt: 'desc' }, select: { id: true } });
+  if (!active || !docs.length) return { caseId: active?.id ?? null, attached: null };
+  const inCase = await prisma.document.findMany({ where: { caseId: active.id, vaultDocumentId: { in: docs.map((d) => d.id) } }, select: { vaultDocumentId: true } });
+  const already = new Set(inCase.map((x) => x.vaultDocumentId));
+  const attached = await attachVaultDocsToCase(active.id, docs.filter((d) => !already.has(d.id)).map((d) => d.id));
+  return { caseId: active.id, attached };
 };
 
 // ─── Attach to a case ──────────────────────────────────────────────────
@@ -321,8 +372,12 @@ export const attachApplicationUploadsOnCaseCreated = (caseId: string) =>
 /** Application uploads of a candidate (staff view of the candidate / application). */
 export const applicationUploadsOf = async (userId: string) => {
   const rows = await prisma.vaultDocument.findMany({ where: { userId }, orderBy: { createdAt: 'desc' } });
-  return rows
-    .map((r) => ({ r, o: originOf(r) }))
-    .filter((x): x is { r: VaultDocument; o: ApplicationOrigin } => !!x.o)
-    .map(({ r, o }) => ({ id: r.id, kind: r.kind, title: r.title, filename: r.filename, mimeType: r.mimeType, size: r.size, expiresAt: r.expiresAt, createdAt: r.createdAt, vacancyId: o.vacancyId, applicationId: o.applicationId, attachedCaseId: o.attachedCaseId ?? null }));
+  return rows.flatMap((r) => {
+    const o = originOf(r);
+    const base = { id: r.id, kind: r.kind, title: r.title, filename: r.filename, mimeType: r.mimeType, size: r.size, expiresAt: r.expiresAt, createdAt: r.createdAt };
+    if (o) return [{ ...base, vacancyId: o.vacancyId, applicationId: o.applicationId, attachedCaseId: o.attachedCaseId ?? null, fromVault: false }];
+    // Picked from the vault: listed with the latest application it was sent with.
+    const last = picksOf(r).at(-1);
+    return last ? [{ ...base, vacancyId: last.vacancyId, applicationId: last.applicationId, attachedCaseId: null, fromVault: true }] : [];
+  });
 };

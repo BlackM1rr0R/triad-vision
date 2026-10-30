@@ -41,7 +41,8 @@ export interface DocCheckResult {
 // ─── Thresholds ───────────────────────────────────────────────────────
 
 export const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
-export const ALLOWED_EXT = ['pdf', 'jpg', 'jpeg', 'png', 'webp', 'doc', 'docx'];
+// HEIC/HEIF: iPhone photos, converted to JPEG by the server (not analysed here: browsers mostly cannot decode them).
+export const ALLOWED_EXT = ['pdf', 'jpg', 'jpeg', 'png', 'webp', 'doc', 'docx', 'heic', 'heif'];
 export const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 /** Long edge (px) below which an image is reported as low resolution. */
 export const MIN_LONG_EDGE = 1000;

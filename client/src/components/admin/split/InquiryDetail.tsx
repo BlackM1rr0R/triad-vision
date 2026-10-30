@@ -15,6 +15,7 @@ import { InlineSelect } from '@/components/inline/InlineSelect';
 import { optimisticListEdit } from '@/components/inline/optimistic';
 import { PresenceAvatars } from '@/components/presence/PresenceAvatars';
 import { usePresence } from '@/components/presence/usePresence';
+import { InquiryBadges, InquiryWork } from './InquiryWork'; // owner, internal notes, conversion, agent badge
 
 registerCopy(pagesAdminUx);
 
@@ -35,7 +36,7 @@ export const InquiryStatusCell = ({ item }: { item: Inquiry }) => {
       request: () => api.patch(`/admin/inquiries/${item.id}`, { status }),
       success: t('admin.inquiries.statusToast', { status: inquiryStatusLabel(status) }),
       undo: () => api.patch(`/admin/inquiries/${item.id}`, { status: item.status }), // "Geri al": the previous status
-      invalidate: [['admin-dashboard']],
+      invalidate: [['admin-dashboard'], ['admin-inquiry'], ['my-work']],
     });
   };
   return (
@@ -64,8 +65,10 @@ export const InquiryDetailBody = ({ i, className }: { i: Inquiry; className?: st
   const { t } = useTranslation();
   return (
     <div className={clsx('space-y-4', className)}>
-      <p className="rounded-lg border border-line bg-card px-3.5 py-3 text-sm break-words whitespace-pre-wrap text-ink">{i.message}</p>
-      <LeadDetailsPanel inquiryId={i.id} />
+      <InquiryBadges i={i} />
+      {i.message && <p className="rounded-lg border border-line bg-card px-3.5 py-3 text-sm break-words whitespace-pre-wrap text-ink">{i.message}</p>}
+      <InquiryWork i={i} />
+      {!i.anonymizedAt && <LeadDetailsPanel inquiryId={i.id} />}
       <dl className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <Detail label={t('admin.inquiries.contactPerson')}>{i.contactName}</Detail>
         {i.companyName && <Detail label={t('admin.inquiries.company')}>{i.companyName}</Detail>}
@@ -120,6 +123,7 @@ export const InquirySplitPanel = ({ i, onClose }: { i: ScoredInquiry; onClose: (
             <span className="font-semibold break-words text-ink">{i.companyName || i.contactName}</span>
             <LeadScoreBadge level={i.scoreLevel ?? null} score={i.score ?? 0} reasons={i.scoreReasons ?? null} />
           </p>
+          {i.assignedStaff && <p className="mt-0.5 text-[11px] text-muted">{t('inq.owner.assigned', { name: i.assignedStaff.name })}</p>}
           <p className="mt-0.5 text-[11px] text-muted">
             {inquiryKindLabel(i.kind)} · {fmtDateTime(i.createdAt)}
           </p>

@@ -10,10 +10,12 @@ import { registerCopy } from '@/i18n';
 import { pagesOps } from '@/i18n/pagesOps';
 import { pagesInterviewCalendar } from '@/i18n/pagesInterviewCalendar';
 import { Spinner } from '@/components/ui/Spinner';
+import { ErrorState } from '@/components/ui/ErrorState';
 import { Modal } from '@/components/admin/Modal';
 import { toastOpsError } from '@/components/ops/shared';
 import { SETTING_KEYS, type Availability, type AvailabilityRule, type InterviewInvite, type SchedulingSettings, type Slot } from '@/components/ops/interviewCalendar';
 import { Section } from './shared';
+import { confirmDialog } from '@/components/ui/ConfirmHost';
 
 registerCopy(pagesOps);
 registerCopy(pagesInterviewCalendar);
@@ -150,6 +152,8 @@ export const CompanyInterviewCalendar = ({ onChanged }: { onChanged?: () => void
       <p className="-mt-2 mb-3 text-sm text-muted">{t('ivcal.subtitle')}</p>
       {availability.isLoading ? (
         <Spinner className="size-5 text-primary" />
+      ) : availability.isError ? (
+        <ErrorState compact onRetry={() => void availability.refetch()} />
       ) : !hasHours ? (
         <p className="text-sm text-amber-800">{t('ivcal.noAvailability')}</p>
       ) : (
@@ -167,7 +171,7 @@ export const CompanyInterviewCalendar = ({ onChanged }: { onChanged?: () => void
                   {v.application && <span className="text-muted"> · {tr(v.application.vacancy.title)}</span>}
                   <span className="text-muted"> · {t('ivcal.minutes', { count: v.minutes })}</span>
                 </span>
-                <button type="button" className="btn-ghost btn-sm text-danger" disabled={withdraw.isPending} onClick={() => withdraw.mutate(v.id)}>
+                <button type="button" className="btn-ghost btn-sm text-danger" disabled={withdraw.isPending} onClick={async () => (await confirmDialog({ title: t('ivcal.withdraw'), message: [v.candidate.name, v.application && tr(v.application.vacancy.title)].filter(Boolean).join(' · '), confirmLabel: t('ivcal.withdraw') })) && withdraw.mutate(v.id)}>
                   <Undo2 className="size-3.5" /> {t('ivcal.withdraw')}
                 </button>
               </li>
@@ -295,7 +299,9 @@ export const CompanyInterviewCalendar = ({ onChanged }: { onChanged?: () => void
         <div className="space-y-4">
           <div>
             <label className="label" htmlFor="ivi-app">{t('ops.company.applicant')}</label>
-            {applicants.data && applicants.data.length === 0 ? (
+            {applicants.isError ? (
+              <ErrorState compact onRetry={() => void applicants.refetch()} />
+            ) : applicants.data && applicants.data.length === 0 ? (
               <p className="text-sm text-muted">{t('ops.company.noApplicants')}</p>
             ) : (
               <select id="ivi-app" data-autofocus className="input" value={applicationId} onChange={(e) => setApplicationId(e.target.value)}>

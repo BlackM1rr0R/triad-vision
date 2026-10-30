@@ -354,7 +354,7 @@ const az = {
       upload: 'Fayl yüklə',
       uploading: 'Yüklənir...',
       replace: 'Yenisini yüklə',
-      formats: 'PDF, JPG, PNG, WEBP, DOC, DOCX · maks. 5 MB',
+      formats: 'PDF, JPG, PNG, WEBP, HEIC, DOC, DOCX · maks. 5 MB',
       submit: 'Yoxlamaya göndər',
       submitConfirm: 'Sənədləri yoxlamaya göndərmək istəyirsiniz? Yoxlama zamanı dəyişiklik etmək olmaz.',
       missing: 'Bütün mütləq sənədləri yükləyin',

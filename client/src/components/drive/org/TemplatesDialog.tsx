@@ -9,6 +9,7 @@ import { Modal } from '@/components/admin/Modal';
 import { Spinner } from '@/components/ui/Spinner';
 import { invalidateDrive, toastDriveError } from '../api';
 import { fetchTemplates, l10nText, orgKeys, type FolderTemplate } from './api';
+import { confirmDialog } from '@/components/ui/ConfirmHost';
 
 const VISA_TYPE_DE: Record<string, string> = {
   WORK: 'Arbeitsvisum',
@@ -97,7 +98,7 @@ export default function TemplatesDialog({ onClose }: { onClose: () => void }) {
             type="button"
             className="btn-secondary btn-sm mr-auto border border-line"
             disabled={apply.isPending}
-            onClick={() => window.confirm(t('driveOrg.templates.applyConfirm')) && apply.mutate()}
+            onClick={async () => (await confirmDialog({ message: t('driveOrg.templates.applyConfirm'), tone: 'primary', confirmLabel: t('ui.confirmDlg.apply') })) && apply.mutate()}
           >
             {apply.isPending ? <Spinner className="size-4" /> : <Wand2 className="size-4" />} {t('driveOrg.templates.applyExisting')}
           </button>
@@ -187,7 +188,7 @@ export default function TemplatesDialog({ onClose }: { onClose: () => void }) {
                     type="button"
                     className="btn-secondary btn-sm text-danger-fg"
                     disabled={remove.isPending}
-                    onClick={() => window.confirm(t('driveOrg.templates.deleteConfirm', { name: draft.name })) && remove.mutate(draft.id!)}
+                    onClick={async () => (await confirmDialog({ message: t('driveOrg.templates.deleteConfirm', { name: draft.name }), confirmLabel: t('ui.confirmDlg.delete') })) && remove.mutate(draft.id!)}
                   >
                     <Trash2 className="size-4" /> {t('driveOrg.common.delete')}
                   </button>

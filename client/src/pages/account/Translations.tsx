@@ -449,7 +449,7 @@ const NewOrderWizard = () => {
                   <p className="font-semibold text-ink">{t('trOrders.wizard.filesTitle')}</p>
                   <p className="mt-1 text-sm text-muted">{t('trOrders.wizard.filesHint')}</p>
                 </div>
-                <MultiFileDrop onFiles={(list) => setFiles((cur) => [...cur, ...list].slice(0, 20))} progress={progress} />
+                <MultiFileDrop onFiles={(list) => setFiles((cur) => [...cur, ...list].slice(0, 20))} progress={progress} scan={t('trOrders.title')} />
                 {files.length > 0 && (
                   <ul className="space-y-2">
                     {files.map((file, i) => (
@@ -791,7 +791,7 @@ const OrderDetail = () => {
             )}
             {canEditSources && (
               <div className="mt-4">
-                <MultiFileDrop onFiles={(list) => upload.mutate(list)} progress={progress} label={t('trOrders.detail.addFiles')} />
+                <MultiFileDrop onFiles={(list) => upload.mutate(list)} progress={progress} label={t('trOrders.detail.addFiles')} scan={t('trOrders.title')} />
               </div>
             )}
           </section>

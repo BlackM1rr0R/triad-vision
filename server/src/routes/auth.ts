@@ -19,6 +19,7 @@ import { renderEmail, sendMail } from '../lib/mailer.js';
 import { loginLockedForAsync as loginLockedFor, recordLoginFailureAsync as recordLoginFailure, recordLoginSuccessAsync as recordLoginSuccess } from '../lib/loginGuard.js';
 import { audit } from '../lib/audit.js';
 import { consumeVerificationToken, sendVerificationEmail } from '../lib/emailVerification.js';
+import { cancelEmailChange, confirmEmailChange, emailTaken, pendingEmailChange, requestEmailChange } from '../lib/emailChange.js';
 import { createLoginChallenge, securityFlags } from '../lib/twoFactor.js';
 import { issueEmailOtp, loginMethods, maskEmail } from '../lib/emailOtp.js';
 import multer from 'multer';
@@ -566,4 +567,58 @@ authRouter.post('/resend-verification', resendLimiter, requireAuth, async (req, 
   if (recent > 0) throw new HttpError(429, 'TOO_MANY_REQUESTS');
   await sendVerificationEmail(req.user!.id);
   res.json({ ok: true });
+});
+
+// ─── E-mail change (every role; lib/emailChange.ts) ────────────────────
+
+const emailChangeLimiter = limiter({ windowMs: 60 * 60 * 1000, limit: 10 });
+
+/** The open change request (or null), for the profile card. */
+authRouter.get('/email-change', requireAuth, async (req, res) => {
+  res.json({ pending: await pendingEmailChange(req.user!.id) });
+});
+
+/** { newEmail, currentPassword } → link to the new address (24 h) + information mail to the current one. */
+authRouter.post('/email-change', emailChangeLimiter, requireAuth, async (req, res) => {
+  const body = parse(
+    z.object({ newEmail: z.string().trim().toLowerCase().email().max(191), currentPassword: z.string().min(1).max(128) }),
+    req.body,
+  );
+  const user = await prisma.user.findUniqueOrThrow({ where: { id: req.user!.id } });
+  if (!(await bcrypt.compare(body.currentPassword, user.passwordHash))) {
+    await audit(req, 'EMAIL_CHANGE_WRONG_PASSWORD', `user:${user.id}`);
+    throw new HttpError(400, 'WRONG_PASSWORD');
+  }
+  if (body.newEmail === user.email) throw badRequest('SAME_EMAIL');
+  if (await emailTaken(body.newEmail, user.id)) throw conflict('EMAIL_TAKEN');
+  // At most one new link per minute per account (on top of the per-IP limit).
+  const recent = await prisma.emailVerificationToken.count({ where: { userId: user.id, newEmail: { not: null }, createdAt: { gt: new Date(Date.now() - 60 * 1000) } } });
+  if (recent > 0) throw new HttpError(429, 'TOO_MANY_REQUESTS');
+  await requestEmailChange(user, body.newEmail);
+  await audit(req, 'EMAIL_CHANGE_REQUESTED', `user:${user.id}`, { to: maskEmail(body.newEmail) });
+  res.json({ ok: true, pending: await pendingEmailChange(user.id) });
+});
+
+authRouter.delete('/email-change', requireAuth, async (req, res) => {
+  const count = await cancelEmailChange(req.user!.id);
+  if (count) await audit(req, 'EMAIL_CHANGE_CANCELLED', `user:${req.user!.id}`);
+  res.json({ ok: true });
+});
+
+/** The link from the new mailbox (the site's /confirm-email-change page POSTs it); no session needed. */
+authRouter.post('/email-change/confirm', verifyLimiter, async (req, res) => {
+  const { token } = parse(verifyToken, req.body);
+  const result = await confirmEmailChange(token);
+  if (!result.ok) throw result.error === 'EMAIL_TAKEN' ? conflict('EMAIL_TAKEN') : new HttpError(400, 'INVALID_TOKEN');
+  // Every other device logs in again with the new address; the browser confirming it (when it is the same account) stays.
+  const keep = req.user?.id === result.userId ? req.session?.id : undefined;
+  const { count } = await revokeUserSessions(result.userId, keep);
+  await audit({ user: req.user?.id === result.userId ? req.user : undefined, ip: req.ip }, 'EMAIL_CHANGED', `user:${result.userId}`, {
+    from: maskEmail(result.oldEmail),
+    to: maskEmail(result.newEmail),
+    sessionsRevoked: count,
+  });
+  markClientsExcelDirty(); // the clients sheet shows the e-mail
+  const fresh = await prisma.user.findUniqueOrThrow({ where: { id: result.userId } });
+  res.json({ ok: true, email: fresh.email, user: keep ? publicUser(fresh) : null });
 });

@@ -2,14 +2,17 @@ import { useState, type FormEvent } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
-import { Building2 } from 'lucide-react';
+import { Building2, Image as ImageIcon } from 'lucide-react';
 import { api } from '@/lib/api';
 import { Spinner } from '@/components/ui/Spinner';
 import { toastJobsError, useJobLabels } from '@/components/jobs/labels';
 import { SECTORS, type Company } from '@/components/jobs/types';
 import { EmailOtpCard } from '@/components/auth/EmailOtpCard';
 import { Section } from './shared';
+import { CompanyLogoUploader } from '@/components/jobs/CompanyLogoUploader';
 import { EmployerReportPrefs } from './CompanyReports';
+import { CompanyTeam } from './CompanyTeam';
+import { ChangeEmailCard, ChangePasswordCard } from '@/components/account/AccountSecurity';
 
 const FIELDS = ['name', 'legalForm', 'city', 'phone', 'address', 'vatId', 'website', 'contactName'] as const;
 type Field = (typeof FIELDS)[number];
@@ -95,7 +98,23 @@ export const CompanyProfile = ({ company }: { company: Company }) => {
           </div>
         </form>
       </Section>
-      {/* Account security of the employer login: optional two-step login by email. */}
+      {/* Logo on the public job ads (no review step: live at once, staff notified — server routes/company.ts). */}
+      <Section title={t('publicImages.companyLogo.title')} icon={ImageIcon}>
+        <CompanyLogoUploader
+          endpoint="/company/me/logo"
+          logo={company.logo}
+          name={company.name}
+          note={t('publicImages.companyLogo.employerNote')}
+          onChange={(logo) => qc.setQueryData(['company-me'], (old: Company | undefined) => (old ? { ...old, logo } : old))}
+        />
+      </Section>
+      {/* Colleagues with their own logins (owner invites / deactivates). */}
+      <CompanyTeam />
+      {/* Account security of the employer login: password, e-mail change, optional two-step login by email. */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        <ChangePasswordCard />
+        <ChangeEmailCard />
+      </div>
       <EmailOtpCard />
       {/* Monthly PDF report about the company's workers by e-mail (opt-out per portal user). */}
       <EmployerReportPrefs />

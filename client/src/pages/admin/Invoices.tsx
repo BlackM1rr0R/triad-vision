@@ -14,6 +14,7 @@ import {
   Download,
   Euro,
   FileCode2,
+  FileSpreadsheet,
   FileText,
   Landmark,
   Pencil,
@@ -38,6 +39,7 @@ import { isMaskedValue, SensitiveValue } from '@/components/privacyTools/Sensiti
 import { useNewParam } from '@/components/command/useNewParam'; // ?new=1 deep link (Ctrl+K palette)
 import { CURRENCIES, fmtMoney, type Currency } from '@/components/billing/api'; // document currencies (EUR / AZN / TRY)
 import { EInvoiceDialog } from '@/components/accounting/EInvoiceDialog';
+import { Pagination } from '@/components/ui/Pagination';
 
 registerCopy(adminInvoicesCopy);
 
@@ -215,6 +217,8 @@ export default function AdminInvoices() {
 
 // ─── List ───────────────────────────────────────────────────────────
 
+const INVOICE_PAGE = 50;
+
 const InvoiceList = ({ onEdit, legalMissing }: { onEdit: (i: Invoice) => void; legalMissing: string[] }) => {
   const { t } = useTranslation();
   const [status, setStatus] = useState<InvoiceStatus | ''>('');
@@ -229,11 +233,16 @@ const InvoiceList = ({ onEdit, legalMissing }: { onEdit: (i: Invoice) => void; l
   }, [q]);
 
   const filters = { status: status || undefined, companyId: companyId || undefined, from: from || undefined, to: to || undefined, q: debouncedQ || undefined };
+  // Server paging: 50 per page; any filter change goes back to page 1.
+  const [page, setPage] = useState(1);
+  const filterKey = JSON.stringify(filters);
+  useEffect(() => setPage(1), [filterKey]);
   const listQ = useQuery({
-    queryKey: [...KEY, filters],
-    queryFn: async () => (await api.get<{ invoices: Invoice[]; totals: Totals }>('/admin/invoices', { params: filters })).data,
+    queryKey: [...KEY, filters, page],
+    queryFn: async () => (await api.get<{ invoices: Invoice[]; totals: Totals; total: number; page: number }>('/admin/invoices', { params: { ...filters, page, pageSize: INVOICE_PAGE } })).data,
     placeholderData: (prev) => prev,
   });
+  const csvHref = `/api/admin/invoices/export.csv?${new URLSearchParams(Object.entries(filters).filter((e): e is [string, string] => !!e[1])).toString()}`;
   const companiesQ = useCompanies();
   const totals = listQ.data?.totals;
   const [action, setAction] = useState<{ kind: 'send' | 'paid' | 'cancel' | 'delete'; invoice: Invoice } | null>(null);
@@ -306,6 +315,9 @@ const InvoiceList = ({ onEdit, legalMissing }: { onEdit: (i: Invoice) => void; l
               {t(`adminInvoices.status.${s}`)}
             </Chip>
           ))}
+          <a href={csvHref} className="btn-secondary btn-sm ml-auto shrink-0" title={t('adminInvoices.exportCsvHint')} download>
+            <FileSpreadsheet className="size-3.5" aria-hidden /> {t('adminInvoices.exportCsv')}
+          </a>
         </div>
       </div>
 
@@ -374,6 +386,7 @@ const InvoiceList = ({ onEdit, legalMissing }: { onEdit: (i: Invoice) => void; l
               ))}
             </tbody>
           </table>
+          <Pagination className="border-t border-line px-4 py-3" page={listQ.data.page ?? page} pages={Math.max(1, Math.ceil((listQ.data.total ?? 0) / INVOICE_PAGE))} total={listQ.data.total} pageSize={INVOICE_PAGE} onChange={setPage} />
         </div>
       )}
 

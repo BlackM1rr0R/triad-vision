@@ -16,6 +16,7 @@ import { caseKey } from '@/components/admin/case/shared';
 import { nextStepKey, packageKey } from '@/components/caseNext/api';
 import { caseFormsKey, confirmKey, CONFIRM_TONE, fetchConfirmation, type ConfirmationView, type FormStatus, type StaffForm } from './api';
 import { FormRenderer } from './FormRenderer';
+import { confirmDialog } from '@/components/ui/ConfirmHost';
 
 const FORM_TONE: Record<FormStatus, string> = toneClasses(STATUS_TONES.form);
 
@@ -83,7 +84,7 @@ const ConfirmationSection = ({ caseId }: { caseId: string }) => {
               <button type="button" className="btn-secondary btn-sm" disabled={!!busy} onClick={() => void run('remind', async () => (await api.post<ConfirmationView>(`/admin/cases/${caseId}/data-confirmation/${conf.id}/remind`, {})).data, t('clientData.admin.reminded'))}>
                 <Bell className="size-3.5" aria-hidden /> {t('clientData.admin.remind')}
               </button>
-              <button type="button" className="btn-secondary btn-sm" disabled={!!busy} onClick={() => void run('cancel', async () => (await api.delete<ConfirmationView>(`/admin/cases/${caseId}/data-confirmation/${conf.id}`)).data)}>
+              <button type="button" className="btn-secondary btn-sm" disabled={!!busy} onClick={async () => (await confirmDialog({ message: t('ui.confirmDlg.cancelRequest'), confirmLabel: t('ui.confirmDlg.yesCancel') })) && void run('cancel', async () => (await api.delete<ConfirmationView>(`/admin/cases/${caseId}/data-confirmation/${conf.id}`)).data)}>
                 <X className="size-3.5" aria-hidden /> {t('clientData.common.cancel')}
               </button>
             </>

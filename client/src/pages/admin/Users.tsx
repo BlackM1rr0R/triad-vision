@@ -25,9 +25,12 @@ import { useNewParam } from '@/components/command/useNewParam'; // ?new=1 deep l
 import { usePartnerOptions } from '@/components/partners/api';
 import { PasswordInput } from '@/components/ui/PasswordInput';
 import { ClientOwnerDialog } from '@/components/partners/Ownership'; // partner-owned clients: badge, filter, owner change
+import { Pagination } from '@/components/ui/Pagination';
+import { StaffDeskSelect } from '@/components/admin/StaffDeskSelect'; // sidebar desk of a staff member (ADMIN+)
 registerCopy(pagesMailAdmin); // "Create mailbox" option of the new-staff dialog
 
 // Field-level change history of the user (ADMIN+, own chunk).
+const USERS_PAGE = 50;
 const HistoryButton = lazy(() => import('@/components/history/HistoryButton'));
 
 /** Roles that can be filtered on. */
@@ -475,6 +478,7 @@ export default function Users() {
   const { user: me } = useAuth();
   /** Only the super admin manages accounts; admins and staff see the list. */
   const canManage = hasMinRole(me?.role, 'SUPER_ADMIN');
+  const isAdmin = hasMinRole(me?.role, 'ADMIN');
   const [params, setParams] = useSearchParams();
   const roleParam = params.get('role');
   const role = isRole(roleParam) ? roleParam : null;
@@ -500,41 +504,57 @@ export default function Users() {
     const next = new URLSearchParams(params);
     if (search) next.set('search', search);
     else next.delete('search');
+    if ((params.get('search') ?? '') !== search) next.delete('page');
     if (next.toString() !== params.toString()) setParams(next, { replace: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search]);
 
+  // Server paging (?page= in the URL, 50 per page); every filter resets to page 1.
+  const page = Math.max(1, Number(params.get('page')) || 1);
   const { data, isLoading, isFetching, error, refetch } = useQuery({
-    queryKey: ['admin-users', { role, search, partnerFilter }],
+    queryKey: ['admin-users', { role, search, partnerFilter, onlineOnly, page }],
     queryFn: async () =>
-      (await api.get<{ users: AdminUser[] }>('/admin/users', { params: { role: role ?? undefined, search: search || undefined, ownerPartnerId: partnerFilter || undefined } })).data.users,
+      (
+        await api.get<{ users: AdminUser[]; total: number; page: number; pageSize: number; onlineCount: number }>('/admin/users', {
+          params: { role: role ?? undefined, search: search || undefined, ownerPartnerId: partnerFilter || undefined, online: onlineOnly ? '1' : undefined, page, pageSize: USERS_PAGE },
+        })
+      ).data,
     placeholderData: keepPreviousData,
   });
+  const setPage = (p: number) => {
+    const next = new URLSearchParams(params);
+    if (p > 1) next.set('page', String(p));
+    else next.delete('page');
+    setParams(next, { replace: true });
+  };
 
   const setRole = (r: Role | null) => {
     const next = new URLSearchParams(params);
+    next.delete('page');
     if (r) next.set('role', r);
     else next.delete('role');
     setParams(next, { replace: true });
   };
   const setPartnerFilter = (v: string) => {
     const next = new URLSearchParams(params);
+    next.delete('page');
     if (v) next.set('partner', v);
     else next.delete('partner');
     setParams(next, { replace: true });
   };
   const setOnline = (v: boolean) => {
     const next = new URLSearchParams(params);
+    next.delete('page');
     if (v) next.set('online', '1');
     else next.delete('online');
     setParams(next, { replace: true });
   };
 
-  const all = data ?? [];
-  const onlineCount = all.filter((u) => u.online).length;
-  const users = onlineOnly ? all.filter((u) => u.online) : all;
+  const users = data?.users ?? [];
+  const onlineCount = data?.onlineCount ?? 0;
+  const total = data?.total ?? 0;
   // Possible duplicate clients (badge) and merged-away accounts (link to the primary).
-  const dupIds = useOpenDuplicateIds(all.filter((u) => u.role === 'CLIENT' && !u.mergedIntoId).map((u) => u.id));
+  const dupIds = useOpenDuplicateIds(users.filter((u) => u.role === 'CLIENT' && !u.mergedIntoId).map((u) => u.id));
   const dupMark = (u: AdminUser) => (
     <>
       {u.mergedIntoId ? <DuplicateChip userId={u.id} merged className="mt-1" /> : dupIds.has(u.id) ? <DuplicateChip userId={u.id} className="mt-1" /> : null}
@@ -550,7 +570,7 @@ export default function Users() {
   const editable = (u: AdminUser) => canManage && u.id !== me?.id && u.role !== 'SUPER_ADMIN';
 
   const subtitle = data
-    ? [t('admin.users.usersCount', { count: users.length }) + (all.length >= 200 ? ` ${t('admin.users.first200')}` : ''), t('admin.users.onlineCount', { count: onlineCount })].join(' · ')
+    ? [t('admin.users.usersCount', { count: total }), t('admin.users.onlineCount', { count: onlineCount })].join(' · ')
     : undefined;
 
   return (
@@ -670,6 +690,7 @@ export default function Users() {
                       </td>
                       <td className="px-4 py-3">
                         <RoleControl u={u} editable={can} />
+                        {isAdmin && u.role !== 'CLIENT' && u.isActive && <StaffDeskSelect userId={u.id} name={fullName(u)} className="mt-1.5 block" />}
                       </td>
                       <td className="px-4 py-3">
                         <ActiveControl u={u} editable={can} />
@@ -715,6 +736,7 @@ export default function Users() {
                     </div>
                     <RoleControl u={u} editable={can} />
                   </div>
+                  {isAdmin && u.role !== 'CLIENT' && u.isActive && <StaffDeskSelect userId={u.id} name={fullName(u)} className="mt-2 block" />}
                   <div className="mt-3 space-y-1.5 border-t border-line pt-3">
                     <ActivityCell u={u} />
                     <CountsCell u={u} />
@@ -728,6 +750,7 @@ export default function Users() {
               );
             })}
           </ul>
+          <Pagination className="mt-4" page={data?.page ?? page} pages={Math.max(1, Math.ceil(total / USERS_PAGE))} total={total} pageSize={USERS_PAGE} onChange={setPage} />
         </>
       )}
 

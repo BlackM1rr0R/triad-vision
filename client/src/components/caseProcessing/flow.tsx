@@ -7,7 +7,7 @@ import { Modal } from '@/components/admin/Modal';
 import { ConfirmDialog } from '@/components/admin/ConfirmDialog';
 import { Spinner } from '@/components/ui/Spinner';
 import { useStaffOptions } from '@/components/inline/CaseInlineCells';
-import { toastError } from '@/components/admin/labels';
+import { errorMessage, toastError } from '@/components/admin/labels';
 import { useAuth } from '@/lib/auth';
 import { api, errorCode } from '@/lib/api';
 import { DRIVE_DRAG_TYPE, draggingItems, endItemDrag } from '@/components/drive/dnd';
@@ -155,10 +155,13 @@ export const FlowDialog = ({ targets, kind, origin, onClose }: { targets: FlowTa
   const [note, setNote] = useState('');
   const [busy, setBusy] = useState(false);
   const [missingNote, setMissingNote] = useState(false);
+  /** Cases still to move: after a partial failure only the failed ones stay (with their error). */
+  const [items, setItems] = useState(targets);
+  const [failures, setFailures] = useState<Record<string, string>>({});
   const stage = KIND_STAGE[kind];
   const needNote = kind === 'refuse';
   const withAssignee = kind === 'send' || kind === 'back';
-  const others = targets.filter((x) => x.assigneeId && x.assigneeId !== user?.id);
+  const others = items.filter((x) => x.assigneeId && x.assigneeId !== user?.id);
   const formId = `flow-${kind}`;
 
   const submit = async () => {
@@ -167,23 +170,31 @@ export const FlowDialog = ({ targets, kind, origin, onClose }: { targets: FlowTa
       return;
     }
     setBusy(true);
+    // Every case is tried (one refused move must not stop the rest); the failed ones stay in the dialog.
     let ok = 0;
-    for (const x of targets) {
+    const failed: Record<string, string> = {};
+    for (const x of items) {
       try {
         const view = await postMove(x.caseId, { stage, assigneeId: withAssignee ? assigneeId || null : null, note: note.trim() || null, origin });
         qc.setQueryData(processingKey(x.caseId), view);
         ok++;
       } catch (e) {
-        toastError(e);
-        break;
+        failed[x.caseId] = errorMessage(e);
       }
     }
     setBusy(false);
-    if (ok) {
+    if (ok) refreshProcessing(qc);
+    const failedCount = Object.keys(failed).length;
+    if (!failedCount) {
       toast.success(t('driveProcessing.toasts.moved', { count: ok, stage: stageLabel(stage) }));
-      refreshProcessing(qc);
       onClose();
+      return;
     }
+    if (ok) toast.warning(t('driveProcessing.toasts.partial', { ok, total: items.length, stage: stageLabel(stage) }));
+    else if (failedCount === 1) toast.error(Object.values(failed)[0]);
+    else toast.error(t('driveProcessing.toasts.partial', { ok, total: items.length, stage: stageLabel(stage) }));
+    setItems((cur) => cur.filter((x) => failed[x.caseId]));
+    setFailures(failed);
   };
 
   return (
@@ -191,7 +202,7 @@ export const FlowDialog = ({ targets, kind, origin, onClose }: { targets: FlowTa
       open
       onClose={() => !busy && onClose()}
       title={t(`driveProcessing.dialog.${kind}Title`)}
-      description={targets.length === 1 ? `${targets[0].name}${targets[0].number ? ` · ${targets[0].number}` : ''}` : t('driveProcessing.dialog.folders', { count: targets.length })}
+      description={items.length === 1 ? `${items[0].name}${items[0].number ? ` · ${items[0].number}` : ''}` : t('driveProcessing.dialog.folders', { count: items.length })}
       footer={
         <div className="flex justify-end gap-2">
           <button type="button" className="btn-secondary btn-sm" onClick={onClose} disabled={busy}>
@@ -211,9 +222,22 @@ export const FlowDialog = ({ targets, kind, origin, onClose }: { targets: FlowTa
           void submit();
         }}
       >
-        {targets.length > 1 && (
+        {Object.keys(failures).length > 0 && (
+          <div className="rounded-lg bg-danger-bg px-3 py-2 text-xs text-danger-fg" role="alert">
+            <p className="font-medium">{t('driveProcessing.toasts.failedTitle')}</p>
+            <ul className="mt-1 max-h-28 space-y-0.5 overflow-y-auto">
+              {items.map((x) => (
+                <li key={x.caseId}>
+                  <span className="font-medium">{x.name}</span>
+                  {x.number && <span> · {x.number}</span>} — {failures[x.caseId]}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+        {items.length > 1 && !Object.keys(failures).length && (
           <ul className="max-h-28 space-y-0.5 overflow-y-auto rounded-lg bg-sunken px-3 py-2 text-xs text-ink/80">
-            {targets.map((x) => (
+            {items.map((x) => (
               <li key={x.caseId} className="truncate">
                 {x.name} {x.number && <span className="text-muted">· {x.number}</span>}
               </li>

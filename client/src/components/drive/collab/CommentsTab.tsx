@@ -16,6 +16,7 @@ import { toastDriveError } from '../api';
 import type { DriveItem, StaffPerson } from '../types';
 import { collabKeys, deleteComment, fetchComments, patchComment, postComment, taskFromComment, MENTION_RE, type DriveComment, type TaskStatus } from './api';
 import { CommentBody, MentionInput, type MentionInputHandle } from './MentionInput';
+import { confirmDialog } from '@/components/ui/ConfirmHost';
 
 registerCopy(driveCollabCopy);
 
@@ -170,10 +171,9 @@ const CommentItem = ({ c, reply, focused, onReply, onTask, refresh }: ItemProps)
                     <button
                       type="button"
                       onMouseDown={(e) => e.preventDefault()}
-                      onClick={() => {
+                      onClick={async () => {
                         setMenu(false);
-                        // TODO(ui): ConfirmDialog
-                        if (window.confirm(t('driveCollab.comments.deleteConfirm'))) remove.mutate();
+                        if (await confirmDialog({ message: t('driveCollab.comments.deleteConfirm'), confirmLabel: t('ui.confirmDlg.delete') })) remove.mutate();
                       }}
                       className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs text-danger-fg hover:bg-danger-bg dark:hover:bg-red-500/10"
                     >

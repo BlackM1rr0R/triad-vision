@@ -1,5 +1,6 @@
 // Importing these modules registers their jobs with the scheduler.
 import './retention.js'; // DSGVO document retention
+import './inquiryRetention.js'; // DSGVO anonymisation of old, closed, not converted leads
 import './reminders.js'; // appointment / missing-documents / passport / staff-SLA reminders, review invitations
 import './booking.js'; // consultation reminders
 import './clientProcess.js'; // client task reminders (2 d / due day / overdue Ã—3), office visit reminders (24 h / 2 h)
@@ -48,4 +49,5 @@ import './employerReports.js'; // monthly employer PDF report (1st of the month,
 import './recognition.js'; // Anerkennung + § 81a deadline reminders / escalation, signed Vollmacht pick-up
 import './license.js'; // white-label licence re-check (daily)
 import './course.js'; // pre-departure course: auto-enrollment + reminder after 7 days without progress
+import './publicUploads.js'; // nightly: unreferenced public upload files (CMS, vacancy photos, logos) older than 7 days
 import './jobFeeds.js'; // BA Jobbörse HR-BA-XML upload (off until partner id + certificate are entered)

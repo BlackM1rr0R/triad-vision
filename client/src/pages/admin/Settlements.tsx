@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import clsx from 'clsx';
-import { Banknote, CheckCheck, FileDown, FileSpreadsheet, FileUp, FolderInput, Plus, RotateCcw, Save, Scale, Search, Trash2, Undo2, X } from 'lucide-react';
+import { Banknote, CheckCheck, FileDown, FileSpreadsheet, FileUp, FolderInput, Pencil, Plus, RotateCcw, Save, Scale, Search, Trash2, Undo2, X } from 'lucide-react';
 import { api, errorCode } from '@/lib/api';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { PageLoader } from '@/components/ui/Spinner';
@@ -17,10 +17,12 @@ import { ImportDialog } from '@/components/settlement/ImportDialog';
 import { RowImportDialog } from '@/components/settlement/RowImportDialog';
 import { RulesDialog } from '@/components/settlement/RulesDialog';
 import { LinkDialog } from '@/components/settlement/LinkDialog';
+import { RenameProjectDialog } from '@/components/settlement/RenameProjectDialog';
 import { addBag, fmtBag } from '@/components/settlement/money';
 import { STAGES, type Bag, type CellValue, type ListResponse, type Row, type Stage, type Summary, type Tab } from '@/components/settlement/types';
 import { useAuth } from '@/lib/auth';
 import { AdminAiButton, AdminAiPanel, useAiActionDone } from '@/components/aiAdmin/AdminAiPanel';
+import { confirmDialog } from '@/components/ui/ConfirmHost';
 
 registerCopy(pagesSettlement);
 
@@ -113,6 +115,7 @@ export default function Settlements() {
   const [saving, setSaving] = useState(false);
   const [dialog, setDialog] = useState<'import' | 'rowImport' | 'rules' | null>(null);
   const [linkRow, setLinkRow] = useState<Row | null>(null);
+  const [renaming, setRenaming] = useState<string | null>(null); // sheet (project) being renamed
   const [newName, setNewName] = useState('');
   const [moveTo, setMoveTo] = useState('');
 
@@ -367,8 +370,7 @@ export default function Settlements() {
   const allSelected = viewRows.length > 0 && selectedIds.length === viewRows.length;
 
   const bulkDelete = async () => {
-    // TODO(ui): ConfirmDialog
-    if (!window.confirm(t('settlement.bulk.confirmDelete', { count: selectedIds.length }))) return;
+    if (!(await confirmDialog({ message: t('settlement.bulk.confirmDelete', { count: selectedIds.length }), confirmLabel: t('ui.confirmDlg.delete') }))) return;
     try {
       await api.delete('/admin/settlements/bulk', { data: { ids: selectedIds } });
       const gone = new Set(selectedIds);
@@ -587,6 +589,11 @@ export default function Settlements() {
         <nav className="flex min-w-0 gap-0.5 overflow-x-auto border-t border-line px-1 [scrollbar-width:thin]" aria-label={t('settlement.tabs.projects')}>
           {tabBtn('all', tab.kind === 'all', t('settlement.tabs.all'), () => setTab({ kind: 'all' }), rows.length)}
           {projectTabs.map((p) => tabBtn(`p:${p.name}`, sameTab(tab, { kind: 'project', name: p.name }), p.name, () => setTab({ kind: 'project', name: p.name }), p.count))}
+          {canManage && tab.kind === 'project' && (
+            <button type="button" className="shrink-0 self-start rounded-b-lg px-2 py-1.5 text-muted transition hover:bg-card/60 hover:text-ink" title={t('settlement.rename.button')} aria-label={t('settlement.rename.button')} onClick={() => setRenaming(tab.name)}>
+              <Pencil className="size-3.5" aria-hidden />
+            </button>
+          )}
           {partnerTabs.length > 0 && <span className="mx-1 my-1.5 w-px shrink-0 bg-line" />}
           {partnerTabs.map((p) =>
             tabBtn(`r:${p.id}`, sameTab(tab, { kind: 'partner', id: p.id }), p.name, () => setTab({ kind: 'partner', id: p.id }), rows.filter((r) => r.partnerId === p.id).length),
@@ -600,6 +607,16 @@ export default function Settlements() {
       {dialog === 'import' && <ImportDialog onClose={() => setDialog(null)} onDone={reloadAll} />}
       {dialog === 'rowImport' && <RowImportDialog onClose={() => setDialog(null)} onDone={reloadAll} />}
       {dialog === 'rules' && <RulesDialog beneficiaries={beneficiaries} rate={data.settings.eurAzn} canManage={canManage} onClose={() => setDialog(null)} onSaved={reloadAll} />}
+      {renaming && (
+        <RenameProjectDialog
+          name={renaming}
+          onClose={() => setRenaming(null)}
+          onRenamed={(to) => {
+            setTab({ kind: 'project', name: to });
+            reloadAll();
+          }}
+        />
+      )}
       {linkRow && <LinkDialog row={linkRow} onClose={() => setLinkRow(null)} onLinked={(r) => mergeRows([r])} />}
       {isSuper && <AdminAiPanel variant="float" open={aiOpen} onClose={() => setAiOpen(false)} context={AI_CONTEXT} hint={t('aiAdmin.settlementsHint')} />}
     </div>

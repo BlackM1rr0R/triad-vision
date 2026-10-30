@@ -129,7 +129,7 @@ export const SeoFields = ({
       </div>
       <SeoSnippet title={shownTitle} description={shownDescription} url={url} caption={s('snippet')} />
       <div>
-        <ImageField label={s('ogImage')} value={value.ogImage} onChange={(v) => onChange({ ...value, ogImage: v })} />
+        <ImageField label={s('ogImage')} value={value.ogImage} onChange={(v) => onChange({ ...value, ogImage: v })} kind="og" />
         <p className="mt-1 text-[11px] text-muted">{s('ogImageHelp')}</p>
       </div>
       <label className="flex min-h-10 sm:min-h-9 cursor-pointer items-center gap-3 rounded-lg border border-line px-3.5 py-2.5 text-sm font-medium">

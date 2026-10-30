@@ -67,6 +67,17 @@ const copy: SiteCopy<(typeof pagesJobs)['en']> = {
       positions_many: '{{count}} pozisyon',
       positions_other: '{{count}} pozisyon',
     },
+    applyErrors: {
+      UNSUPPORTED_FILE_TYPE: 'Bu dosya türü kabul edilmiyor. Lütfen PDF, JPG, PNG, WebP, HEIC, DOC veya DOCX yükleyin.',
+      FILE_CONTENT_MISMATCH: 'Dosya içeriği uzantısıyla uyuşmuyor. Lütfen dosyayı yeniden kaydedip yükleyin.',
+      HEIC_UNREADABLE: 'HEIC fotoğrafı okunamadı. Lütfen JPG olarak kaydedip tekrar yükleyin.',
+      FILE_TOO_LARGE: 'Dosya çok büyük (her biri en fazla 5 MB).',
+      UNEXPECTED_FILE: 'Çok fazla dosya. En fazla 6 belge ekleyebilirsiniz.',
+      TOO_MANY_FILES: 'Çok fazla dosya. En fazla 6 belge ekleyebilirsiniz.',
+      fileTooLarge: '{{name}}: dosya çok büyük (en fazla 5 MB).',
+      badType: '{{name}}: bu dosya türü kabul edilmiyor (PDF, JPG, PNG, WebP, HEIC, DOC, DOCX).',
+      uploading: 'Gönderiliyor… %{{percent}}',
+    },
     errors: {
       generic: 'Bir sorun oluştu. Lütfen tekrar deneyin.',
       NETWORK: 'Sunucuya ulaşılamadı. Lütfen bağlantınızı kontrol edin.',

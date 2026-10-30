@@ -262,6 +262,7 @@ export const CasesBulkBar = ({ sel, filters, total, pageCount, labelOf, invalida
     delayedCommit({
       message: t('sp.bulk.statusQueued', { count: resolved.ids.length, action: t(`sp.bulk.actions.${action}`) }),
       commit: async () => (await api.post<BulkResponse>('/admin/bulk/cases/status', body)).data,
+      keepalive: { method: 'POST', url: '/admin/bulk/cases/status', body },
       onCommitted: (res) => {
         refresh();
         report(res as BulkResponse, labelOf, 'sp.bulk.statusDone');
@@ -452,7 +453,7 @@ export const InquiriesBulkBar = ({ sel, total, pageCount, labelOf, invalidate }:
   const { t } = useTranslation();
   const qc = useQueryClient();
   const { report, dialog } = useBulkReport();
-  const [open, setOpen] = useState<null | 'status' | 'message'>(null);
+  const [open, setOpen] = useState<null | 'status' | 'message' | 'assign'>(null);
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState<InquiryStatus>('IN_PROGRESS');
   const [subject, setSubject] = useState('');
@@ -487,6 +488,25 @@ export const InquiriesBulkBar = ({ sel, total, pageCount, labelOf, invalidate }:
       if (res.failed) report({ ...res, ok: 0 }, labelOf);
       sel.clear();
     });
+  // Owner of the selected leads (POST /admin/bulk/inquiries/assign); "Geri al" restores each lead's previous owner.
+  const assign = (staffId: string | null) =>
+    run(async () => {
+      const res = (await api.post<BulkResponse>('/admin/bulk/inquiries/assign', { selection: { ids }, staffId })).data;
+      setOpen(null);
+      refresh();
+      if (res.ok && res.previous?.length) {
+        const prev = res.previous;
+        undoToast({
+          message: t('sp.bulk.assigned', { count: res.ok }),
+          undo: async () => {
+            await api.post('/admin/bulk/inquiries/restore-assign', { items: prev.map((p) => ({ id: p.id, staffId: p.staffId ?? null })) });
+            refresh();
+          },
+        });
+      }
+      if (res.failed) report({ ...res, ok: 0 }, labelOf);
+      sel.clear();
+    });
   const applyMessage = () =>
     run(async () => {
       const res = (await api.post<BulkResponse>('/admin/bulk/inquiries/message', { ids, subject, body })).data;
@@ -498,6 +518,9 @@ export const InquiriesBulkBar = ({ sel, total, pageCount, labelOf, invalidate }:
   return (
     <>
       <BulkBarShell sel={sel} pageCount={pageCount} total={total} canSelectAll={false}>
+        <BarButton icon={UserCog} onClick={() => setOpen('assign')} disabled={busy}>
+          {t('sp.bulk.assign')}
+        </BarButton>
         <BarButton icon={ListChecks} onClick={() => setOpen('status')} disabled={busy}>
           {t('sp.bulk.status')}
         </BarButton>
@@ -507,10 +530,8 @@ export const InquiriesBulkBar = ({ sel, total, pageCount, labelOf, invalidate }:
         <BarButton icon={Download} onClick={() => void run(() => downloadCsv('/admin/bulk/inquiries/export', { ids }, 'inquiries.csv'))} disabled={busy}>
           {t('sp.bulk.export')}
         </BarButton>
-        <span className="text-[11px] text-muted" title={t('sp.bulk.inquiryAssignNa')}>
-          {t('sp.bulk.inquiryAssignShort')}
-        </span>
       </BulkBarShell>
+      <AssignDialog open={open === 'assign'} onClose={() => setOpen(null)} onApply={(staffId) => void assign(staffId)} busy={busy} count={ids.length} />
       <Modal
         open={open === 'status'}
         onClose={() => setOpen(null)}
@@ -637,6 +658,7 @@ export const CandidatesBulkBar = ({
     delayedCommit({
       message: t('sp.bulk.appStatusQueued', { count: n, status: appStatusLabel(status) }),
       commit: async () => (await api.post<BulkResponse>('/admin/bulk/candidates/status', body)).data,
+      keepalive: { method: 'POST', url: '/admin/bulk/candidates/status', body },
       onCommitted: (res) => {
         refresh();
         report(res as BulkResponse, labelOf, 'sp.bulk.statusDone');

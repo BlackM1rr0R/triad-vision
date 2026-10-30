@@ -12,6 +12,7 @@ import { ClientFiles } from '../ClientFiles';
 import { ContractBox } from '../Contract';
 import { RequirementsSection } from '../Requirements';
 import type { CaseTabProps } from './types';
+import { DocumentsPurgedNotice } from '@/components/retention/DocumentsPurgedNotice';
 import { FastReviewButton } from '@/components/staffPower/review/FastReviewButton'; // "Sürətli yoxlama" for this case
 
 /**
@@ -33,6 +34,7 @@ export default function DocumentsTab({ c, isAdmin }: CaseTabProps) {
   const pending = c.requirements.reduce((n, r) => n + r.documents.filter((d) => d.status === 'PENDING').length, 0);
   return (
     <div className="stack-page">
+      <DocumentsPurgedNotice at={c.documentsPurgedAt} audience="staff" />
       {pending > 0 && (
         <div className="flex justify-end">
           <FastReviewButton caseId={c.id} pending={pending} />

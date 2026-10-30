@@ -9,6 +9,7 @@ import { useL10n } from '@/lib/l10n';
 import { sized, srcSet } from '@/lib/img';
 import { useMorphSource } from '@/lib/viewTransition';
 import type { Faq, Partner, PostSummary, Service, Testimonial, VisaCategory, VisaSample } from '@/lib/types';
+import { AuthorAvatar } from '@/components/ui/AuthorAvatar';
 
 /** Friendly tints for icon chips (index.css), rotated across a set of cards. */
 const CHIPS = ['chip-soft', 'chip-sage', 'chip-sky', 'chip-peach'];
@@ -29,7 +30,7 @@ export const VisaCard = ({ visa }: { visa: VisaCategory }) => {
         {/* The icon badge sits on the image edge, so it must live OUTSIDE the clipped image box. */}
         <div className="relative">
           <div {...morph.part('card')} className="relative aspect-[16/11] overflow-hidden">
-            <img src={sized(visa.image, 640)} srcSet={srcSet(visa.image, [400, 640, 900])} sizes="(min-width:1280px) 300px, (min-width:640px) 45vw, 82vw" alt="" loading="lazy" decoding="async" className="size-full object-cover object-[center_35%]" />
+            <img src={sized(visa.image, 640)} srcSet={srcSet(visa.image, [400, 640, 900])} sizes="(min-width:1280px) 300px, (min-width:640px) 45vw, 82vw" alt={tr(visa.title)} loading="lazy" decoding="async" className="size-full object-cover object-[center_35%]" />
             <span className="absolute top-3 right-3 rounded-full bg-card px-2.5 py-1 text-xs font-semibold text-ink shadow-sm">{visa.visaLabel}</span>
           </div>
           <span className="chip-soft absolute bottom-0 left-5 z-10 grid size-14 translate-y-1/2 place-items-center rounded-2xl border-4 border-card shadow-sm">
@@ -167,9 +168,7 @@ export const TestimonialCard = ({ item, dark = false }: { item: Testimonial; dar
       <Quote className="size-8 text-highlight-fg" aria-hidden />
       <blockquote className={clsx('mt-4 flex-1 text-[0.97rem] leading-relaxed', dark ? 'text-white/85' : 'text-ink')}>„{tr(item.quote)}"</blockquote>
       <figcaption className="mt-6 flex items-center gap-3">
-        <span className={clsx('grid size-10 place-items-center rounded-full font-display text-sm font-bold', dark ? 'bg-white/10' : 'chip-peach')}>
-          {tr(item.author).charAt(0)}
-        </span>
+        <AuthorAvatar name={tr(item.author)} photo={item.authorPhoto} className="size-10" fallbackClassName={dark ? 'bg-white/10' : 'chip-peach'} />
         <span>
           <span className="block text-sm font-semibold">{tr(item.author)}</span>
           <span className={clsx('text-xs', dark ? 'text-white/55' : 'text-muted')}>
@@ -187,7 +186,7 @@ export const PostCard = ({ post }: { post: PostSummary }) => {
   return (
     <Link to={`/news/${post.slug}`} className="group card card-interactive flex h-full flex-col overflow-hidden rounded-3xl">
       <div className="relative h-52 overflow-hidden">
-        <img src={sized(post.cover, 720)} srcSet={srcSet(post.cover, [480, 720, 1000])} sizes="(min-width:1024px) 400px, (min-width:768px) 45vw, 82vw" alt="" loading="lazy" decoding="async" className="size-full object-cover" />
+        <img src={sized(post.cover, 720)} srcSet={srcSet(post.cover, [480, 720, 1000])} sizes="(min-width:1024px) 400px, (min-width:768px) 45vw, 82vw" alt={tr(post.title)} loading="lazy" decoding="async" className="size-full object-cover" />
         <span className="absolute top-4 left-4 inline-flex items-center gap-1.5 rounded-full bg-card px-3 py-1 text-xs font-semibold text-ink">
           <Calendar className="size-3.5" /> {date(post.publishedAt)}
         </span>

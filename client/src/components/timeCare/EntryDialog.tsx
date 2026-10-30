@@ -6,6 +6,7 @@ import { Save, Trash2 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { Modal } from '@/components/settlement/Modal';
 import { ACTIVITIES, timeError, useInvalidateTime, type Activity, type TimeEntry } from './api';
+import { confirmDialog } from '@/components/ui/ConfirmHost';
 
 const bakuToday = () => new Date(Date.now() + 4 * 3600_000).toISOString().slice(0, 10);
 
@@ -88,7 +89,7 @@ export function EntryDialog({ entry, caseId, taskId, onClose }: { entry?: TimeEn
         </label>
         <div className="flex flex-wrap justify-between gap-2 pt-1">
           {entry ? (
-            <button type="button" className="btn-secondary btn-sm" disabled={remove.isPending} onClick={() => window.confirm(t('time.form.confirmDelete')) && remove.mutate()}>
+            <button type="button" className="btn-secondary btn-sm" disabled={remove.isPending} onClick={async () => (await confirmDialog({ message: t('time.form.confirmDelete'), confirmLabel: t('ui.confirmDlg.delete') })) && remove.mutate()}>
               <Trash2 className="size-4" /> {t('time.form.delete')}
             </button>
           ) : (

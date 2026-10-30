@@ -14,6 +14,7 @@ import { usePageTitle } from '@/lib/usePageTitle';
 import { registerCopy } from '@/i18n';
 import { pagesJourney } from '@/i18n/pagesJourney';
 import { Spinner } from '@/components/ui/Spinner';
+import { ErrorState } from '@/components/ui/ErrorState';
 import { OptionCard } from '@/components/quiz/OptionCard';
 import { useApiError } from '@/components/portal/useApiError';
 import { GERMAN_STATUS_KEY, useGermanCourses, useGermanStatus } from '@/components/journey/api';
@@ -133,6 +134,8 @@ const LevelTest = ({ requiredLevel }: { requiredLevel: string | null }) => {
                 <div className="grid place-items-center py-10">
                   <Spinner className="size-6 text-primary" />
                 </div>
+              ) : test.isError ? (
+                <ErrorState onRetry={() => void test.refetch()} />
               ) : !current ? (
                 <p className="text-muted">{t('journey.german.test.empty')}</p>
               ) : (
@@ -381,14 +384,26 @@ export default function German() {
   const { tr } = useL10n();
   const { user } = useAuth();
   usePageTitle(t('journey.german.title'));
-  const { data: status } = useGermanStatus(!!user);
-  const { data: courses } = useGermanCourses(!!user);
+  const statusQ = useGermanStatus(!!user);
+  const coursesQ = useGermanCourses(!!user);
+  const status = statusQ.data;
+  const courses = coursesQ.data;
   const userLevel = status?.userLevel ?? user?.germanLevel ?? null;
   const required = status?.requiredLevel ?? null;
   const meets = required ? levelRank(userLevel) >= levelRank(required) : null;
 
   return (
     <div className="space-y-6 lg:space-y-8">
+      {/* A failed load is shown as such (not as "no level required" / "no courses"). */}
+      {(statusQ.isError || coursesQ.isError) && (
+        <ErrorState
+          compact
+          onRetry={() => {
+            if (statusQ.isError) void statusQ.refetch();
+            if (coursesQ.isError) void coursesQ.refetch();
+          }}
+        />
+      )}
       <section className="relative overflow-hidden rounded-3xl border border-line bg-card p-6 text-ink shadow-[var(--tv-shadow-card)] sm:p-8" aria-labelledby="german-title">
         <div className="relative grid gap-6 lg:grid-cols-[minmax(0,1fr)_auto_auto] lg:items-center">
           <div className="min-w-0">

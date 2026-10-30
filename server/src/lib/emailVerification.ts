@@ -38,7 +38,8 @@ const VERIFY_TEXT = {
 export const createVerificationToken = async (userId: string) => {
   const token = crypto.randomBytes(32).toString('hex');
   await prisma.$transaction([
-    prisma.emailVerificationToken.updateMany({ where: { userId, usedAt: null }, data: { usedAt: new Date() } }),
+    // E-mail change tokens (newEmail set, lib/emailChange.ts) are a separate flow and stay valid.
+    prisma.emailVerificationToken.updateMany({ where: { userId, usedAt: null, newEmail: null }, data: { usedAt: new Date() } }),
     prisma.emailVerificationToken.create({
       data: { userId, tokenHash: hashToken(token), expiresAt: new Date(Date.now() + VERIFY_TOKEN_TTL_MS) },
     }),
@@ -76,7 +77,8 @@ export const sendVerificationEmail = async (userId: string): Promise<void> => {
  */
 export const consumeVerificationToken = async (token: string): Promise<string | null> => {
   const record = await prisma.emailVerificationToken.findUnique({ where: { tokenHash: hashToken(token) } });
-  if (!record || record.usedAt || record.expiresAt < new Date()) return null;
+  // An e-mail change token only works on its own confirm route (it must not verify the old address).
+  if (!record || record.usedAt || record.newEmail || record.expiresAt < new Date()) return null;
   const now = new Date();
   const { count } = await prisma.emailVerificationToken.updateMany({
     where: { id: record.id, usedAt: null },

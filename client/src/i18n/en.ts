@@ -356,7 +356,7 @@ const en: Messages = {
       upload: 'Upload file',
       uploading: 'Uploading...',
       replace: 'Upload new',
-      formats: 'PDF, JPG, PNG, WEBP, DOC, DOCX · max. 5 MB',
+      formats: 'PDF, JPG, PNG, WEBP, HEIC, DOC, DOCX · max. 5 MB',
       submit: 'Submit for review',
       submitConfirm: 'Do you want to submit the documents for review? No changes can be made during the review.',
       missing: 'Upload all required documents',

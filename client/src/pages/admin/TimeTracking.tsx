@@ -13,6 +13,7 @@ import { ErrorBlock, LoadingBlock, PageHead, Panel } from '@/components/admin/ui
 import { Tabs } from '@/components/ui/Tabs';
 import { ACTIVITIES, fmtDuration, timeError, type Activity, type TimeEntry } from '@/components/timeCare/api';
 import { EntryDialog } from '@/components/timeCare/EntryDialog';
+import { confirmDialog } from '@/components/ui/ConfirmHost';
 
 interface EntriesResponse {
   items: TimeEntry[];
@@ -372,7 +373,7 @@ const RatesTab = () => {
                   {s.history.map((h) => (
                     <li key={h.id} className="inline-flex items-center gap-1 rounded-full bg-sunken px-2 py-0.5 text-[11px]">
                       {h.effectiveFrom}: {eur(h.centsPerHour)}
-                      <button type="button" className="text-muted hover:text-danger-fg" aria-label={t('time.rates.remove')} onClick={() => remove.mutate(h.id)}>
+                      <button type="button" className="text-muted hover:text-danger-fg" aria-label={t('time.rates.remove')} onClick={async () => (await confirmDialog({ title: t('time.rates.remove'), message: t('ui.confirmDlg.removeNamed', { name: `${s.name} · ${h.effectiveFrom}: ${eur(h.centsPerHour)}` }), confirmLabel: t('ui.confirmDlg.remove') })) && remove.mutate(h.id)}>
                         <Trash2 className="size-3" />
                       </button>
                     </li>

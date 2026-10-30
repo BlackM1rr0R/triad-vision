@@ -17,6 +17,7 @@ import { Modal } from '@/components/settlement/Modal';
 import { ColumnsPicker, FiltersEditor, GroupEditor, PreviewTable, ReportChart } from '@/components/reports/Builder';
 import { ScheduleDialog } from '@/components/reports/ScheduleDialog';
 import { emptyConfig, useReportFormat, type ChartType, type Dataset, type DatasetsResponse, type ReportConfig, type ReportResult, type SavedReport, type StaffUser } from '@/components/reports/types';
+import { confirmDialog } from '@/components/ui/ConfirmHost';
 
 registerCopy(pagesReports);
 
@@ -274,7 +275,7 @@ function ReportsPage() {
                   <CalendarClock className="size-4" /> {t('reports.schedule.button')}
                 </button>
                 {current?.canEdit && (
-                  <button type="button" className="btn-secondary btn-sm ml-auto" onClick={() => window.confirm(t('reports.confirmDelete', { name: current.name })) && remove.mutate(current.id)} aria-label={t('reports.deleteReport')}>
+                  <button type="button" className="btn-secondary btn-sm ml-auto" onClick={async () => (await confirmDialog({ message: t('reports.confirmDelete', { name: current.name }), confirmLabel: t('ui.confirmDlg.delete') })) && remove.mutate(current.id)} aria-label={t('reports.deleteReport')}>
                     <Trash2 className="size-4" />
                   </button>
                 )}

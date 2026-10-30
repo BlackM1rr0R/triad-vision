@@ -2,10 +2,12 @@ import crypto from 'node:crypto';
 import { Router } from 'express';
 import bcrypt from 'bcryptjs';
 import { z } from 'zod';
-import type { Locale, Prisma } from '@prisma/client';
+import { Prisma, type Locale } from '@prisma/client';
 import { config } from '../../config.js';
 import { prisma } from '../../db.js';
-import { conflict, notFound, parse } from '../../lib/http.js';
+import { badRequest, conflict, notFound, parse } from '../../lib/http.js';
+import { companyLogoOf, singleRasterImage, storePublicImage } from '../../lib/publicImages.js';
+import { cleanupRemovedImages } from '../../lib/publicImageRefs.js';
 import { audit } from '../../lib/audit.js';
 import { renderEmail, sendMail } from '../../lib/mailer.js';
 import { notifyCompanyStatus } from '../../lib/jobsNotifications.js';
@@ -122,7 +124,7 @@ const INVITE_TEXT: Record<Locale, { title: string; body: (company: string) => st
 };
 
 /** Creates an employer user with an unusable random password and emails a 7-day "set your password" link. */
-const inviteUser = async (companyId: string, companyName: string, input: z.infer<typeof inviteInput>) => {
+export const inviteUser = async (companyId: string, companyName: string, input: z.infer<typeof inviteInput>) => {
   if (await prisma.user.findUnique({ where: { email: input.email } })) throw conflict('EMAIL_TAKEN');
   const user = await prisma.user.create({
     data: {
@@ -204,6 +206,27 @@ adminCompaniesRouter.patch('/:id', async (req, res) => {
   const company = await prisma.company.update({ where: { id: before.id }, data: body });
   await audit(req, 'COMPANY_UPDATED', `company:${company.id}`, { fields: Object.keys(body) });
   res.json({ company });
+});
+
+/** Company logo (lib/publicImages.ts, preset "logo"): WebP ≤ 512 px, transparency kept, no SVG. */
+adminCompaniesRouter.post('/:id/logo', singleRasterImage, async (req, res) => {
+  if (!req.file) throw badRequest('FILE_REQUIRED');
+  const before = await prisma.company.findUnique({ where: { id: String(req.params.id) } });
+  if (!before) throw notFound('COMPANY_NOT_FOUND');
+  const { url, w, h } = await storePublicImage(req.file.buffer, 'logo');
+  const company = await prisma.company.update({ where: { id: before.id }, data: { logo: { url, w, h } } });
+  cleanupRemovedImages([companyLogoOf(before.logo)?.url]);
+  await audit(req, 'COMPANY_LOGO_UPDATED', `company:${company.id}`, { url });
+  res.status(201).json({ logo: companyLogoOf(company.logo) });
+});
+
+adminCompaniesRouter.delete('/:id/logo', async (req, res) => {
+  const before = await prisma.company.findUnique({ where: { id: String(req.params.id) } });
+  if (!before) throw notFound('COMPANY_NOT_FOUND');
+  await prisma.company.update({ where: { id: before.id }, data: { logo: Prisma.DbNull } });
+  cleanupRemovedImages([companyLogoOf(before.logo)?.url]);
+  await audit(req, 'COMPANY_LOGO_REMOVED', `company:${before.id}`);
+  res.json({ logo: null });
 });
 
 /** Approve (ACTIVE), suspend or reset to PENDING. The employer is notified in their language. */

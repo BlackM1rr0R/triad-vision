@@ -176,23 +176,52 @@ export const claimSchema = z.object({
  * nothing. A case a colleague claimed answers 409 PROCESSING_CLAIMED_BY_OTHER unless `force`.
  */
 export const claimCase = async (caseId: string, actor: { id: string; firstName: string; lastName: string }, input: z.infer<typeof claimSchema>) => {
-  const c = await prisma.case.findUnique({
-    where: { id: caseId },
-    select: { id: true, number: true, driveFolderId: true, ...PROCESSING_SELECT, client: { select: { firstName: true, lastName: true } } },
-  });
-  if (!c) throw notFound('CASE_NOT_FOUND');
-  const stage = effectiveStage(c.processingStage, c.status);
-  if (!stage || !OPEN_STAGES.includes(stage)) throw conflict('PROCESSING_NOT_OPEN');
-  if (c.processingAssigneeId === actor.id) return { claimed: false, stage, previousAssigneeId: actor.id };
-  if (c.processingAssigneeId && !input.force) throw conflict('PROCESSING_CLAIMED_BY_OTHER');
-  const previous = c.processingAssigneeId;
-  const now = new Date();
-  await prisma.$transaction([
-    prisma.caseProcessingMove.create({ data: { caseId, fromStage: stage, toStage: stage, actorId: actor.id, assigneeId: actor.id, note: null, createdAt: now } }),
-    // The stage is stored (nothing stored = In Bearbeitung) so "my work" finds it; who sent it and when stay.
-    prisma.case.update({ where: { id: caseId }, data: { processingStage: stage, processingAssigneeId: actor.id } }),
-    prisma.caseEvent.create({ data: { caseId, type: 'PROCESSING_STAGE', note: `${stageLabel(stage)}: übernommen von ${fullName(actor)}`, actorId: actor.id, visibleToClient: false } }),
-  ]);
+  // Check-then-write is raced by a colleague pressing "Götür" at the same moment: the update is conditional on
+  // the assignee (and stage) still being what was read, and the move / event rows are written only when it won.
+  // With `force` a lost race simply re-reads and tries again (a few times).
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const c = await prisma.case.findUnique({
+      where: { id: caseId },
+      select: { id: true, number: true, driveFolderId: true, ...PROCESSING_SELECT, client: { select: { firstName: true, lastName: true } } },
+    });
+    if (!c) throw notFound('CASE_NOT_FOUND');
+    const stage = effectiveStage(c.processingStage, c.status);
+    if (!stage || !OPEN_STAGES.includes(stage)) throw conflict('PROCESSING_NOT_OPEN');
+    if (c.processingAssigneeId === actor.id) return { claimed: false, stage, previousAssigneeId: actor.id };
+    if (c.processingAssigneeId && !input.force) throw conflict('PROCESSING_CLAIMED_BY_OTHER');
+    const previous = c.processingAssigneeId;
+    const now = new Date();
+    const won = await prisma.$transaction(async (tx) => {
+      // The stage is stored (nothing stored = In Bearbeitung) so "my work" finds it; who sent it and when stay.
+      const res = await tx.case.updateMany({
+        where: { id: caseId, processingAssigneeId: previous, processingStage: c.processingStage, status: c.status },
+        data: { processingStage: stage, processingAssigneeId: actor.id },
+      });
+      if (res.count === 0) return false;
+      await tx.caseProcessingMove.create({ data: { caseId, fromStage: stage, toStage: stage, actorId: actor.id, assigneeId: actor.id, note: null, createdAt: now } });
+      await tx.caseEvent.create({ data: { caseId, type: 'PROCESSING_STAGE', note: `${stageLabel(stage)}: übernommen von ${fullName(actor)}`, actorId: actor.id, visibleToClient: false } });
+      return true;
+    });
+    if (!won) {
+      if (input.force) continue;
+      // Someone else changed it in between: their claim wins unless it was the viewer's own (double click).
+      const now2 = await prisma.case.findUnique({ where: { id: caseId }, select: { processingAssigneeId: true } });
+      if (now2?.processingAssigneeId === actor.id) return { claimed: false, stage, previousAssigneeId: actor.id };
+      throw conflict('PROCESSING_CLAIMED_BY_OTHER');
+    }
+    return finishClaim(c, stage, previous, actor, input);
+  }
+  throw conflict('PROCESSING_CLAIMED_BY_OTHER');
+};
+
+const finishClaim = async (
+  c: { id: string; number: string; driveFolderId: string | null; processingStageById: string | null; client: { firstName: string; lastName: string } },
+  stage: ProcessingStage,
+  previous: string | null,
+  actor: { id: string; firstName: string; lastName: string },
+  input: z.infer<typeof claimSchema>,
+) => {
+  const caseId = c.id;
   const p = { number: c.number, worker: fullName(c.client) || c.number, by: fullName(actor), stage: stageLabel(stage), note: null };
   const link = input.origin === 'case' ? caseLink(caseId) : driveFolderLink(caseId, c.driveFolderId);
   // The sender (and a colleague it was taken from) hear who works on it now.

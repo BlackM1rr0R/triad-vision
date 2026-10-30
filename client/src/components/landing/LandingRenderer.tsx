@@ -97,7 +97,7 @@ const Hero = ({ d, ctx }: { d: SectionDataMap['hero']; ctx: Ctx }) => (
         // lg-only photo: smaller screens get an inline pixel, so phones don't download it at high priority.
         <picture className="hidden lg:block">
           <source media="(min-width: 1024px)" srcSet={sized(d.image, 1200)} />
-          <img src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" alt="" fetchPriority="high" decoding="async" className="aspect-[4/3] w-full rounded-3xl object-cover shadow-[var(--tv-shadow-raised)]" />
+          <img src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" alt={d.imageAlt || d.title} fetchPriority="high" decoding="async" className="aspect-[4/3] w-full rounded-3xl object-cover shadow-[var(--tv-shadow-raised)]" />
         </picture>
       )}
     </div>
@@ -181,7 +181,7 @@ const Testimonials = ({ s, ctx }: { s: Extract<LandingSection, { type: 'testimon
     ? (s.resolved as ResolvedTestimonial[])
     : d.ids.map((id) => ctx.testimonialPool?.get(id)).filter((x): x is ResolvedTestimonial => !!x);
   const cards = [
-    ...resolved.map((r) => ({ key: r.id, name: pick(r.author, ctx.locale), role: pick(r.role, ctx.locale), text: pick(r.quote, ctx.locale), photo: '' })),
+    ...resolved.map((r) => ({ key: r.id, name: pick(r.author, ctx.locale), role: pick(r.role, ctx.locale), text: pick(r.quote, ctx.locale), photo: r.authorPhoto ?? '' })),
     ...d.custom.map((c, i) => ({ key: `c${i}`, ...c })),
   ].filter((c) => c.text);
   if (!cards.length) return null;

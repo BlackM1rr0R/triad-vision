@@ -7,6 +7,7 @@ import { useJobLabels } from './labels';
 import type { PublicVacancy } from './types';
 import { useMorphSource } from '@/lib/viewTransition';
 import { vacancyImageSrcSet, vacancyImages } from './images';
+import { CompanyLogo } from './CompanyLogo';
 
 /** Vacancy card on the public board. */
 export const JobCard = ({ v, className }: { v: PublicVacancy; className?: string }) => {
@@ -54,7 +55,11 @@ export const JobCard = ({ v, className }: { v: PublicVacancy; className?: string
             {L.title(v.title)}
           </h3>
           <p className="mt-1 flex items-center gap-1.5 text-sm text-muted">
-            <Building2 className="size-3.5 shrink-0" aria-hidden />
+            {v.companyLogo && v.companyName ? (
+              <CompanyLogo logo={v.companyLogo} name={v.companyName} className="size-7 rounded-md p-0.5" />
+            ) : (
+              <Building2 className="size-3.5 shrink-0" aria-hidden />
+            )}
             <span className="truncate">{v.companyName ?? t('jobsArea.common.confidentialEmployer')}</span>
           </p>
         </div>

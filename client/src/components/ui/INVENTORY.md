@@ -35,7 +35,7 @@ For the APIs, see `README.md`.
 | `mail/Dialog` `Confirm` | adapter (mail labels kept) |
 | `tasks/TaskPanel` `ConfirmBox` | adapter; focus now starts on the confirm button (was Cancel) |
 | `pages/admin/Duplicates` `ConfirmMerge` | ConfirmDialog with `confirmText="MERGE"` (shared "Type … to confirm" wording) |
-| native `window.confirm()` | **TODO(ui)**: 37 call sites, listed below |
+| native `window.confirm()` | **done**: all 37 call sites use `confirmDialog()` (`ui/ConfirmHost`) |
 
 ## Drawers → `ui/Drawer`
 
@@ -155,28 +155,8 @@ There is a single sonner `<Toaster>` in `main.tsx` (262 files call `toast`). It 
 
 Excluded files, owned by the next phase: AdminLayout, CaseAdmin, `admin/case/**`, AccountLayout, AccountHome, CaseView, WorkspaceLayout.
 
-## TODO(ui): native `confirm()` → ConfirmDialog
+## native `confirm()` → ConfirmDialog (done)
 
-These have `// TODO(ui): ConfirmDialog` comments:
-
-- components:
-  - ai/ChatPanel
-  - clientProcess/AdminCaseTasks, clientProcess/PortalOfficeVisits
-  - docCreate/DocEditor
-  - drive/collab/CommentsTab
-  - messagingPlus/PartyThread
-  - settlement/RulesDialog
-  - sheet/SheetTabs, sheet/useLeaveGuard
-  - workspace/Announcements, ContactDrawer, NotesBoard, Polls
-- pages:
-  - admin/ClientRegister (×3), admin/Messaging (×2), admin/Settlements
-  - workspace/Calendar, workspace/Chat (×3), workspace/PdfEditor (×2), workspace/SheetEditor
-
-Inline in JSX `onClick` (no comment):
-
-- drive/collab/ShareLinks
-- drive/org/SmartFolderDialog, drive/org/TagsDialog, drive/org/TemplatesDialog (×2)
-- reports/CaseProfitCard, reports/ScheduleDialog
-- timeCare/EntryDialog
-- account/LetterExplain
-- admin/Originals, admin/Reports
+Every former `window.confirm` call site now awaits `confirmDialog()` from `ui/ConfirmHost` (promise-based, queued,
+rendered by the one `<ConfirmHost />` in main.tsx). Link guards (sheet/useLeaveGuard, PdfEditor back link) hold the
+navigation, ask, then replay it.

@@ -10,6 +10,8 @@ import { Spinner } from '@/components/ui/Spinner';
 import { PARTNER_ME_KEY, portalError, type PartnerMe } from '@/components/partnerPortal/api';
 import { Section } from '@/components/partnerPortal/ui';
 import { PasswordInput } from '@/components/ui/PasswordInput';
+import { ChangeEmailCard } from '@/components/account/AccountSecurity';
+import { EmailOtpCard } from '@/components/auth/EmailOtpCard';
 
 /** Name and phone of the login, password change (the regular PATCH /auth/me). No banking fields. */
 export default function PartnerProfilePage({ me }: { me: PartnerMe }) {
@@ -107,6 +109,10 @@ export default function PartnerProfilePage({ me }: { me: PartnerMe }) {
           </div>
         </form>
       </Section>
+
+      {/* E-mail change (link to the new address) and the two-step login by e-mail. */}
+      <ChangeEmailCard />
+      <EmailOtpCard />
     </div>
   );
 }

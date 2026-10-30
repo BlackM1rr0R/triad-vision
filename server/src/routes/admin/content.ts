@@ -4,11 +4,12 @@ import { BRAND_SETTING_KEY } from '../../lib/brand/index.js';
 import { WHITELABEL_CUSTOMERS_KEY } from '../../lib/whitelabel/customers.js';
 import { Prisma } from '@prisma/client';
 import { prisma } from '../../db.js';
-import { imageUpload, verifyUploadedFile } from '../../middleware/upload.js';
+import { isSvgUrl, presetForPurpose, singleAnyImage, storeCmsUpload } from '../../lib/publicImages.js';
 import { badRequest, forbidden, notFound, parse } from '../../lib/http.js';
 import { audit } from '../../lib/audit.js';
 import { LEGAL_SETTING_SCHEMAS } from '../../lib/legalSettings.js';
 import { retentionStatus } from '../../jobs/retention.js';
+import { inquiryRetentionStatus } from '../../lib/privacy/inquiries.js';
 import { MODULES_SETTING_KEY } from '../../lib/navModules.js';
 import { STAFF_UI_PREFIXES } from '../../lib/staffUi/index.js'; // private per-user rows left out of the listing
 import { storyVideo } from '../../lib/seo.js';
@@ -47,7 +48,8 @@ const seoText = (max: number) => z.object({ az: z.string().max(max), de: z.strin
 const seoFields = {
   seoTitle: seoText(120),
   seoDescription: seoText(320),
-  ogImage: safeUrlOrEmpty.nullable().optional(),
+  // Social previews: raster only (crawlers ignore SVG).
+  ogImage: safeUrlOrEmpty.refine((v) => !isSvgUrl(v), 'OG_IMAGE_SVG').nullable().optional(),
   noindex: z.boolean().optional(),
 };
 
@@ -137,6 +139,8 @@ const resources: Record<string, { delegate: () => Delegate; schema: z.ZodObject<
       // Video success story (/stories): YouTube / Vimeo link or an uploaded MP4 / WebM (/uploads/…), poster image, filters.
       videoUrl: storyVideoUrl.nullable().optional(),
       posterUrl: safeUrlOrEmpty.nullable().optional(),
+      // Round author photo of a text testimonial (home + /stories), uploaded with purpose=avatar.
+      authorPhoto: safeUrlOrEmpty.nullable().optional(),
       profession: z.string().trim().max(120).nullable().optional(),
       country: z.string().trim().max(40).nullable().optional(),
       city: z.string().trim().max(80).nullable().optional(),
@@ -251,6 +255,11 @@ adminSettingsRouter.get('/retention-status', async (_req, res) => {
   res.json(await retentionStatus());
 });
 
+/** DSGVO anonymisation of old website leads: the rule, what is due, the last daily run. */
+adminSettingsRouter.get('/inquiry-retention-status', async (_req, res) => {
+  res.json(await inquiryRetentionStatus());
+});
+
 adminSettingsRouter.put('/:key', async (req, res) => {
   const key = parse(z.string().regex(/^[a-zA-Z0-9_.-]{1,64}$/), req.params.key);
   const body = parse(z.object({ value: z.unknown() }), req.body);
@@ -276,8 +285,13 @@ adminSettingsRouter.put('/:key', async (req, res) => {
 
 export const adminUploadRouter = Router();
 
-adminUploadRouter.post('/', imageUpload.single('file'), async (req, res) => {
+/**
+ * Public CMS image (lib/publicImages.ts): raster images are re-encoded (EXIF / GPS stripped, auto-rotated, WebP,
+ * long side ≤ 2400 px; `purpose=og` → JPEG ≤ 1600 px). `purpose` (query or form field): photo (default) | logo | icon
+ * (SVG allowed, kept as sent after the content sniff) | avatar | og (never SVG). Returns { url, w, h, format }.
+ */
+adminUploadRouter.post('/', singleAnyImage, async (req, res) => {
   if (!req.file) throw badRequest('FILE_REQUIRED');
-  await verifyUploadedFile(req.file);
-  res.status(201).json({ url: `/uploads/${req.file.filename}` });
+  const preset = presetForPurpose(req.query.purpose ?? (req.body as { purpose?: unknown } | undefined)?.purpose);
+  res.status(201).json(await storeCmsUpload(req.file, preset));
 });

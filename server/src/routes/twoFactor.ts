@@ -47,7 +47,7 @@ import { startSession } from './auth.js';
  *
  * Email one-time codes (see lib/emailOtp.ts):
  *   POST /email/send      { challenge } → { ok, email, retryAfter }   (login step: send / resend a code)
- *   POST /email/start     { password }  → { ok, email, retryAfter }   (CLIENT / COMPANY: code to turn it on)
+ *   POST /email/start     { password }  → { ok, email, retryAfter }   (CLIENT / COMPANY / AGENT: code to turn it on)
  *   POST /email/enable    { code }      → { ok, emailOtpEnabled: true }
  *   POST /email/disable   { password }  → { ok, emailOtpEnabled: false }
  */

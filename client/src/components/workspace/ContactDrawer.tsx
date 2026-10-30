@@ -11,6 +11,7 @@ import { useContact, useWorkspaceInvalidate } from './api';
 import { ContactFields, inputFrom } from './ContactForm';
 import { Avatar, Chip, IconButton, Skeleton, errorText, fmtDay, fmtDateTime, fullName } from './ui';
 import { downloadVCard } from './vcard';
+import { confirmDialog } from '@/components/ui/ConfirmHost';
 
 const Row = ({ icon: Icon, label, children }: { icon: typeof Mail; label: string; children: React.ReactNode }) => (
   <div className="flex items-start gap-3 py-2">
@@ -64,8 +65,7 @@ export const ContactDrawer = ({ id, onClose, onDeleted }: { id: string | null; o
     }
   };
   const remove = async () => {
-    // TODO(ui): ConfirmDialog
-    if (!c || !window.confirm(t('ws.common.confirmDelete'))) return;
+    if (!c || !(await confirmDialog({ title: t('ui.confirmDlg.deleteTitle', { name: [c.firstName, c.lastName].filter(Boolean).join(' ') }), message: t('ws.common.confirmDelete'), confirmLabel: t('ui.confirmDlg.delete') }))) return;
     setBusy(true);
     try {
       await api.delete(`/contacts/${c.id}`);

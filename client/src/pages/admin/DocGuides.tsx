@@ -15,6 +15,7 @@ import { Spinner } from '@/components/ui/Spinner';
 import { fmtDateTime, toastError } from '@/components/admin/labels';
 import { GUIDE_FIELDS, GUIDES_KEY, type AdminGuide, type GuideExamples, type GuideLink, type GuideText } from '@/components/clientData/api';
 import { GuideView } from '@/components/clientData/DocGuideButton';
+import { confirmDialog } from '@/components/ui/ConfirmHost';
 import { HowToShootBody } from '@/components/docGuide/HowToShoot'; // "Necə çəkməli?" good / bad examples
 import { registerCopy } from '@/i18n';
 import { pagesClientPlus } from '@/i18n/pagesClientPlus';
@@ -88,6 +89,12 @@ export default function DocGuidesPage() {
   };
   const reset = async () => {
     if (!key) return;
+    const ok = await confirmDialog(
+      row?.guide?.hasDefault
+        ? { message: t('ui.confirmDlg.resetNamed', { name: key }), confirmLabel: t('ui.confirmDlg.reset') }
+        : { message: t('ui.confirmDlg.deleteNamed', { name: key }), confirmLabel: t('ui.confirmDlg.delete') },
+    );
+    if (!ok) return;
     setBusy(true);
     try {
       await api.delete(`/admin/doc-guides/${key}`);

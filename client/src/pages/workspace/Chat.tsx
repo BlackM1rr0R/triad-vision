@@ -24,6 +24,7 @@ import { Sidebar } from '@/components/chat/Sidebar';
 import { ThreadPane } from '@/components/chat/ThreadPane';
 import type { Channel, Message, Reaction } from '@/components/chat/types';
 import { channelLabel, errorText, fullName, messageLink } from '@/components/chat/utils';
+import { confirmDialog } from '@/components/ui/ConfirmHost';
 
 registerCopy(pagesTasks);
 registerCopy(pagesChat);
@@ -265,9 +266,8 @@ export default function WorkspaceChat() {
         throw err;
       }
     },
-    remove: (m) => {
-      // TODO(ui): ConfirmDialog
-      if (!window.confirm(t('chat.actions.confirmDelete'))) return;
+    remove: async (m) => {
+      if (!(await confirmDialog({ message: t('chat.actions.confirmDelete'), confirmLabel: t('ui.confirmDlg.delete') }))) return;
       chatApi
         .remove(m.id)
         .then(() => {
@@ -301,18 +301,16 @@ export default function WorkspaceChat() {
       .catch((err) => toast.error(errorText(err)));
 
   const join = () => channel && run(async () => updateChannelCache(await chatApi.join(channel.id)), t('chat.toasts.joined'));
-  const leave = () => {
-    // TODO(ui): ConfirmDialog
-    if (!channel || !window.confirm(t('chat.actions.confirmLeave', { name: channel.name }))) return;
+  const leave = async () => {
+    if (!channel || !(await confirmDialog({ message: t('chat.actions.confirmLeave', { name: channel.name }), confirmLabel: t('ui.confirmDlg.leave') }))) return;
     void run(async () => {
       await chatApi.leave(channel.id);
       refreshChannels(qc);
       navigate('/workspace/chat');
     }, t('chat.toasts.left'));
   };
-  const archive = () => {
-    // TODO(ui): ConfirmDialog
-    if (!channel || !window.confirm(t('chat.actions.confirmArchive', { name: channel.name }))) return;
+  const archive = async () => {
+    if (!channel || !(await confirmDialog({ message: t('chat.actions.confirmArchive', { name: channel.name }), confirmLabel: t('ui.confirmDlg.archive') }))) return;
     void run(async () => updateChannelCache(await chatApi.archive(channel.id)), t('chat.toasts.archived'));
   };
   const mute = () => channel && run(async () => updateChannelCache({ ...channel, muted: (await chatApi.mute(channel.id, !channel.muted)).muted }));

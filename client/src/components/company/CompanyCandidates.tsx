@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
+import { ErrorState } from '@/components/ui/ErrorState';
 import clsx from 'clsx';
 import { Car, CheckCircle2, GraduationCap, Languages, MapPin, ShieldCheck, Timer, UserCheck, Users, Video, XCircle } from 'lucide-react';
 import { api } from '@/lib/api';
@@ -89,7 +90,7 @@ export const CompanyCandidates = () => {
   const [params, setParams] = useSearchParams();
   const status = params.get('status') ?? '';
   const vacancyId = params.get('vacancyId') ?? '';
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ['company-candidates', status, vacancyId],
     queryFn: async () =>
       (await api.get<{ items: Item[] }>('/company/candidates', { params: { status: status || undefined, vacancyId: vacancyId || undefined } })).data.items,
@@ -143,6 +144,8 @@ export const CompanyCandidates = () => {
 
       {isLoading ? (
         <Loading />
+      ) : isError ? (
+        <ErrorState onRetry={() => void refetch()} />
       ) : !data?.length ? (
         <Empty icon={UserCheck} illustration={<SearchEmpty className="w-32" />} title={t('jobsArea.portal.candidates.empty')} text={t('jobsArea.portal.candidates.emptyText')} />
       ) : (

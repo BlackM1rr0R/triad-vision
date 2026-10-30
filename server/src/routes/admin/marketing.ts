@@ -27,6 +27,7 @@ import {
 } from '../../lib/marketing/landing.js';
 import { COST_DEFAULTS, costCalculatorSchema, costCategories, documentPrices, getCostSettings, saveCostSettings } from '../../lib/marketing/costCalculator.js';
 import { aggregateOrigins } from '../../lib/marketing/originMap.js';
+import { presetForPurpose, singleAnyImage, storeCmsUpload } from '../../lib/publicImages.js';
 
 /**
  * Admin side of growth & marketing — mounted at /api/admin/marketing (STAFF+; settings, publishing and
@@ -38,6 +39,19 @@ import { aggregateOrigins } from '../../lib/marketing/originMap.js';
  */
 export const adminMarketingRouter = Router();
 const adminOnly = requireMinRole('ADMIN');
+
+/**
+ * Images for landing pages (section photos, testimonial portraits, social preview). The general CMS upload
+ * (/admin/upload) stays ADMIN-only; landing pages are edited by STAFF too, so their editor uploads here — the
+ * same public-image pipeline (lib/publicImages: content sniff, re-encode, EXIF stripped, size presets).
+ */
+adminMarketingRouter.post('/upload', singleAnyImage, async (req, res) => {
+  if (!req.file) throw badRequest('FILE_REQUIRED');
+  const preset = presetForPurpose(req.query.purpose ?? (req.body as { purpose?: unknown } | undefined)?.purpose);
+  const stored = await storeCmsUpload(req.file, preset);
+  await audit(req, 'LANDING_IMAGE_UPLOADED', undefined, { url: stored.url });
+  res.status(201).json(stored);
+});
 
 // ─── Lead scoring ──────────────────────────────────────────────────────
 
@@ -116,6 +130,8 @@ const pageBody = z.object({
     .trim()
     .max(1000)
     .refine((u) => u === '' || /^https:\/\//i.test(u) || /^\/uploads\/[\w.-]+$/.test(u), 'IMAGE_URL')
+    // Social previews: raster only (crawlers ignore SVG).
+    .refine((u) => !/\.svg(?:[?#].*)?$/i.test(u), 'OG_IMAGE_SVG')
     .nullable()
     .optional(),
 });

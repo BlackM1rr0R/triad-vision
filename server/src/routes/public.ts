@@ -4,8 +4,9 @@ import { prisma } from '../db.js';
 import { limiter, notFound, parse } from '../lib/http.js';
 import { notifyStaff } from '../lib/notifications.js';
 
-// whitelabel.customers: the owner's list of agencies that bought the platform (white-label, never public).
-const PRIVATE_SETTING_KEYS = ['invoicing', 'retention', 'whitelabel.customers'];
+// Allowlist: the Setting table also holds internal data (settlements, security scans, staff saved views,
+// seed markers…), so only the keys the public site actually reads are served here.
+const PUBLIC_SETTING_KEYS = ['contact', 'social', 'legal', 'privacy'];
 import { cached } from '../lib/cache.js';
 
 import { onInquiryCreated } from '../lib/assignment/inquiry.js';
@@ -43,8 +44,8 @@ const loadContent = async () => {
       take: 6,
       select: { id: true, slug: true, cover: true, title: true, excerpt: true, publishedAt: true },
     }),
-    // Internal settings (bank details for invoices, retention policy) never leave the admin API.
-    prisma.setting.findMany({ where: { key: { notIn: PRIVATE_SETTING_KEYS } } }),
+    // Internal settings (bank details, settlements, security, staff preferences) never leave the admin API.
+    prisma.setting.findMany({ where: { key: { in: PUBLIC_SETTING_KEYS } } }),
   ]);
   return {
     stats,

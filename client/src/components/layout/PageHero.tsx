@@ -19,6 +19,7 @@ export const PageHero = ({
   title,
   subtitle,
   image,
+  imageAlt,
   illustration,
   crumb,
   children,
@@ -28,6 +29,8 @@ export const PageHero = ({
   subtitle?: string;
   /** Page photo, shown in a rounded frame next to the text from lg up (decorative). */
   image?: string;
+  /** Alt text of the photo (CMS images: the item's localized title); empty = decorative. */
+  imageAlt?: string;
   /** Drawing from components/illustrations, shown instead of the photo (also on tablets). */
   illustration?: ReactNode;
   crumb?: { to: string; label: string };
@@ -47,7 +50,7 @@ export const PageHero = ({
         <source media="(min-width: 1024px)" srcSet={srcSet(image, [480, 800, 1200]) ?? sized(image, 800)} sizes="(min-width: 1280px) 26rem, 22rem" />
         <img
           src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="
-          alt=""
+          alt={imageAlt ?? ''}
           fetchPriority="high"
           decoding="async"
           className="aspect-[4/3] w-full rounded-3xl border border-line object-cover shadow-[var(--tv-shadow-card)]"

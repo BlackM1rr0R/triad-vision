@@ -1,5 +1,9 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import sharp from 'sharp';
 import { describe, expect, it } from 'vitest';
-import { anon, asAdmin, asStaff } from '../helpers/api';
+import { TEST_UPLOADS_DIR } from '../helpers/testEnv';
+import { anon, asAdmin, asClient, asStaff } from '../helpers/api';
 import { prisma, waitFor } from '../helpers/db';
 import { createClient, createVisaCategory, l10n, uniq } from '../helpers/factories';
 import { registrantToken } from '../../src/lib/growth/events.js';
@@ -162,6 +166,20 @@ describe('landing pages', () => {
     expect(head.text).toContain('<title data-seo>Almaniyada sürücü işi</title>');
     expect(head.text).toContain('C/CE sürücülər üçün Almaniyada iş və viza.');
     expect(head.text).toContain('/uploads/hero.webp');
+  });
+
+  it('staff upload landing images through the marketing endpoint; the CMS upload stays ADMIN-only', async () => {
+    fs.mkdirSync(path.join(TEST_UPLOADS_DIR, 'public'), { recursive: true });
+    const staff = await asStaff();
+    const img = await sharp({ create: { width: 800, height: 420, channels: 3, background: { r: 20, g: 90, b: 160 } } }).jpeg().toBuffer();
+    const up = await staff.agent.post('/api/admin/marketing/upload?purpose=og').attach('file', img, 'hero.jpg');
+    expect(up.status).toBe(201);
+    expect(up.body.url).toMatch(/^\/uploads\//);
+    expect(await prisma.auditLog.count({ where: { action: 'LANDING_IMAGE_UPLOADED', actorId: staff.user.id } })).toBe(1);
+    expect((await staff.agent.post('/api/admin/upload').attach('file', img, 'hero.jpg')).status).toBe(403);
+    expect((await staff.agent.post('/api/admin/marketing/upload').attach('file', Buffer.from('<html>no</html>'), { filename: 'x.jpg', contentType: 'image/jpeg' })).status).toBe(400);
+    const client = await asClient();
+    expect((await client.agent.post('/api/admin/marketing/upload').attach('file', img, 'hero.jpg')).status).toBe(403);
   });
 
   it('validates sections, duplicates, keeps slugs unique and deletes only unpublished pages', async () => {

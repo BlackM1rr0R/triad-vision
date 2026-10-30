@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useQueryClient } from '@tanstack/react-query';
 import { MailCheck } from 'lucide-react';
 import { api } from '@/lib/api';
-import { useAuth } from '@/lib/auth';
+import { landingAfterLogin, useAuth } from '@/lib/auth';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { Spinner } from '@/components/ui/Spinner';
 import { Lost, Success } from '@/components/illustrations';
@@ -57,7 +57,8 @@ export default function VerifyEmail() {
     };
   }, [token, valid, qc]);
 
-  const home = user ? (user.role === 'COMPANY' ? '/company' : '/account') : '/login';
+  // Each role's own start page (agents → /partner, staff → /admin…), the same as after a login.
+  const home = user ? landingAfterLogin(user.role) : '/login';
 
   return (
     <AuthShell title={t('verifyEmail.title')}>

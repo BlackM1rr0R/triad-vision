@@ -137,6 +137,8 @@ export interface Testimonial {
   /** Video success story (/stories): YouTube / Vimeo link or an uploaded /uploads/….mp4, plus filter fields. */
   videoUrl?: string | null;
   posterUrl?: string | null;
+  /** Round author photo (CMS upload); initials when empty. */
+  authorPhoto?: string | null;
   profession?: string | null;
   country?: string | null;
   city?: string | null;
@@ -304,6 +306,8 @@ export interface CaseDetail extends CaseSummary {
   visaCategory: { id: string; slug: string; title: L10n; visaLabel: string } | null;
   requirements: Requirement[];
   otherDocuments: CaseDocument[];
+  /** Set when the retention job deleted the files of this (closed) case. */
+  documentsPurgedAt?: string | null;
   contract: Contract | null;
   events: CaseEvent[];
   messages: CaseMessage[];

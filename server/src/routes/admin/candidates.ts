@@ -10,7 +10,7 @@ import { notifyApplicationStatus, notifyCandidateProposed } from '../../lib/jobs
 import { emitWebhook } from '../../lib/ops/webhooks.js';
 import { sendStaffCv } from '../../lib/cv/access.js';
 import path from 'node:path';
-import { applicationUploadsOf, originOf } from '../../lib/applicationUploads.js';
+import { applicationUploadsOf, isApplicationDocument } from '../../lib/applicationUploads.js';
 import { vaultDir } from '../../lib/docCheck/index.js';
 
 // Admin: candidates — mounted at /api/admin/candidates
@@ -19,7 +19,7 @@ export const adminCandidatesRouter = Router();
 const EDUCATION = ['school', 'vocational', 'university'] as const;
 const STAFF_STATUSES = ['NEW', 'SHORTLISTED', 'PROPOSED', 'INTERVIEW', 'ACCEPTED', 'REJECTED'] as const;
 
-const candidateSelect = {
+export const candidateSelect = {
   id: true,
   firstName: true,
   lastName: true,
@@ -45,7 +45,14 @@ const candidateSelect = {
 } satisfies Prisma.UserSelect;
 
 /** Upper bound of rows scored in memory when ranking by match. */
-const RANK_LIMIT = 3000;
+export const RANK_LIMIT = 3000;
+
+/** The vacancy candidates are ranked against (match score), with what matchCandidate needs. */
+export const loadRankVacancy = (vacancyId: string) =>
+  prisma.vacancy.findUnique({
+    where: { id: vacancyId },
+    include: { visaCategory: { select: { visaLabel: true, germanLevel: true } }, applications: { select: { userId: true, status: true, id: true } } },
+  });
 
 /** Filters of the candidates list; shared with the bulk actions ("all matching", routes/admin/bulk.ts). */
 export const candidateListQuery = z.object({
@@ -120,12 +127,7 @@ adminCandidatesRouter.get('/', async (req, res) => {
   const where: Prisma.UserWhereInput = { AND: and };
   const pageSize = 25;
 
-  const vacancy = q.vacancyId
-    ? await prisma.vacancy.findUnique({
-        where: { id: q.vacancyId },
-        include: { visaCategory: { select: { visaLabel: true, germanLevel: true } }, applications: { select: { userId: true, status: true, id: true } } },
-      })
-    : null;
+  const vacancy = q.vacancyId ? await loadRankVacancy(q.vacancyId) : null;
   if (q.vacancyId && !vacancy) throw badRequest('INVALID_VACANCY');
 
   const needsMemory = !!vacancy || !!q.licence;
@@ -198,7 +200,7 @@ adminCandidatesRouter.get('/:userId/cv.pdf', sendStaffCv);
 /** A document the candidate uploaded with an application (staff download; only application uploads). */
 adminCandidatesRouter.get('/:userId/application-documents/:docId', async (req, res) => {
   const d = await prisma.vaultDocument.findUnique({ where: { id: String(req.params.docId) } });
-  if (!d || d.userId !== req.params.userId || !originOf(d)) throw notFound('DOCUMENT_NOT_FOUND');
+  if (!d || d.userId !== req.params.userId || !isApplicationDocument(d)) throw notFound('DOCUMENT_NOT_FOUND'); // uploaded with or picked for an application
   await audit(req, 'APPLICATION_DOCUMENT_VIEWED', `user:${d.userId}`, { documentId: d.id, kind: d.kind });
   res.setHeader('Content-Type', d.mimeType);
   res.setHeader('Content-Disposition', `${req.query.download ? 'attachment' : 'inline'}; filename*=UTF-8''${encodeURIComponent(d.filename)}`);

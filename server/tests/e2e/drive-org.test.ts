@@ -514,11 +514,13 @@ describe('drive organisation: HEIC photos', () => {
     const fake = await staff.agent.post(`/api/drive/nodes/${shared.id}/files`).attach('file', Buffer.from('not a photo at all, really'), { filename: 'x.heic', contentType: 'image/heic' });
     expect(fake.status).toBe(400);
     expect(fake.body.error).toBe('FILE_CONTENT_MISMATCH');
-    // Case documents still refuse HEIC.
+    // Case documents take HEIC too but store it as JPEG: an undecodable one is refused (nothing stored).
     const client = await asClient();
     const c = await newCase(client.agent);
     const req = await prisma.documentRequirement.findFirstOrThrow({ where: { caseId: c.id } });
     const doc = await client.agent.post(`/api/cases/${c.id}/documents`).field('requirementId', req.id).attach('file', heic('ftypheic'), { filename: 'pass.heic', contentType: 'image/heic' });
     expect(doc.status).toBe(400);
+    expect(doc.body.error).toBe('HEIC_UNREADABLE');
+    expect(await prisma.document.count({ where: { caseId: c.id } })).toBe(0);
   });
 });

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { ErrorState } from '@/components/ui/ErrorState';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import {
@@ -33,6 +34,7 @@ import { VAULT_KINDS, VAULT_QUERY, isImageMime, vaultFileUrl, type VaultDoc, typ
 import { ExpiryBadge } from '@/components/vault/ExpiryBadge';
 import { DocCheckBadge } from '@/components/vault/DocCheckBadge';
 import { UseInCaseDialog, VaultEditDialog, VaultUploadDialog } from '@/components/vault/VaultDialogs';
+import { DownloadAllButton } from '@/components/vault/DownloadAllButton';
 import { VaultModal } from '@/components/vault/VaultModal';
 import { useVaultError } from '@/components/vault/useVaultError';
 import { Documents } from '@/components/illustrations';
@@ -147,7 +149,7 @@ export default function AccountVault() {
   const [toDelete, setToDelete] = useState<VaultDoc | null>(null);
   const [deleting, setDeleting] = useState(false);
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, refetch } = useQuery({
     queryKey: VAULT_QUERY,
     queryFn: async () => (await api.get<{ documents: VaultDoc[]; groups: Partial<Record<VaultKind, VaultDoc[]>> }>('/vault')).data,
   });
@@ -174,6 +176,8 @@ export default function AccountVault() {
   };
 
   if (isLoading) return <VaultSkeleton />;
+  // A failed load must not look like an empty vault ("upload your first document").
+  if (isError) return <ErrorState onRetry={() => void refetch()} />;
   const documents = data?.documents ?? [];
   const groups = data?.groups ?? {};
   const kinds = VAULT_KINDS.filter((k) => groups[k]?.length);
@@ -185,9 +189,13 @@ export default function AccountVault() {
           <h2 className="type-page-title">{t('vault.title')}</h2>
           <p className="mt-1 max-w-2xl text-sm text-muted">{t('vault.subtitle')}</p>
         </div>
-        <button type="button" className="btn-primary btn-sm" onClick={() => setUploadKind('PASSPORT')}>
-          <Plus className="size-4" aria-hidden /> {t('vault.upload')}
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Vault + every file of the own cases as one ZIP. */}
+          <DownloadAllButton />
+          <button type="button" className="btn-primary btn-sm" onClick={() => setUploadKind('PASSPORT')}>
+            <Plus className="size-4" aria-hidden /> {t('vault.upload')}
+          </button>
+        </div>
       </div>
 
       {documents.length === 0 ? (

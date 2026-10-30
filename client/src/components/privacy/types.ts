@@ -135,6 +135,8 @@ export interface AdminRequestDetail {
   deletionBlocked: string | null;
   consentLog: ConsentLogRow[];
   otherRequests: { id: string; type: RequestType; status: RequestStatus; createdAt: string; dueAt: string }[];
+  /** Website enquiries (leads) sent with the request's e-mail (not yet anonymised). */
+  inquiries?: { id: string; kind: string; contactName: string; companyName: string | null; status: string; createdAt: string }[];
 }
 
 export interface ConsentLogResponse {

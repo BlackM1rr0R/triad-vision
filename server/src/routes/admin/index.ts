@@ -7,6 +7,7 @@ import { clearCache } from '../../lib/cache.js';
 import { adminCasesRouter } from './cases.js';
 import { adminContentRouter, adminSettingsRouter, adminUploadRouter } from './content.js';
 import { adminUsersRouter } from './users.js';
+import { adminInquiriesRouter } from './inquiries.js';
 import { adminMailboxesRouter } from './mailboxes.js';
 import { adminCompaniesRouter } from './companies.js';
 import { adminEmployerReportsRouter } from './employerReports.js';
@@ -89,6 +90,7 @@ import { adminCourseRouter } from './course.js'; // pre-departure course: builde
 import { adminCityCostsRouter } from './cityCosts.js'; // first-month budget: city cost table (Sayt → Şəhər xərcləri)
 import { adminJobFeedsRouter } from './jobFeeds.js'; // external job boards: feed URLs + token, per-vacancy distribution, BA HR-BA-XML
 import { adminStaffUiRouter } from './staffUi.js'; // saved views, table settings, "what's new" (Setting rows per user / team)
+import { audit } from '../../lib/audit.js';
 import { adminBulkRouter } from './bulk.js'; // bulk actions on cases / inquiries / candidates (per-item results, audited)
 import { adminReviewRouter } from './review.js'; // fast document review queue
 
@@ -264,28 +266,4 @@ adminRouter.use('/content', requireMinRole('ADMIN'), adminContentRouter);
 adminRouter.use('/guides', requireMinRole('ADMIN'), adminGuidesRouter);
 adminRouter.use('/site-features', adminSiteFeaturesRouter); // read: staff; writes: ADMIN (checked per route)
 
-adminRouter.get('/inquiries', async (_req, res) => {
-  const DAY = 24 * 60 * 60 * 1000;
-  const [items, byStatus, byKind, new7d, openOldest] = await Promise.all([
-    prisma.inquiry.findMany({ orderBy: { createdAt: 'desc' }, take: 300 }),
-    prisma.inquiry.groupBy({ by: ['status'], _count: { _all: true } }),
-    prisma.inquiry.groupBy({ by: ['kind'], _count: { _all: true } }),
-    prisma.inquiry.count({ where: { createdAt: { gte: new Date(Date.now() - 7 * DAY) } } }),
-    prisma.inquiry.findFirst({ where: { status: 'NEW' }, orderBy: { createdAt: 'asc' }, select: { createdAt: true } }),
-  ]);
-  res.json({
-    items,
-    summary: {
-      byStatus: Object.fromEntries(byStatus.map((b) => [b.status, b._count._all])),
-      byKind: Object.fromEntries(byKind.map((b) => [b.kind, b._count._all])),
-      new7d,
-      oldestOpenDays: openOldest ? Math.floor((Date.now() - openOldest.createdAt.getTime()) / DAY) : null,
-      workersRequested: items.reduce((a, i) => a + (i.workersNeeded ?? 0), 0),
-    },
-  });
-});
-
-adminRouter.patch('/inquiries/:id', async (req, res) => {
-  const { status } = parse(z.object({ status: z.enum(['NEW', 'IN_PROGRESS', 'DONE', 'ARCHIVED']) }), req.body);
-  res.json({ item: await prisma.inquiry.update({ where: { id: req.params.id }, data: { status } }) });
-});
+adminRouter.use('/inquiries', adminInquiriesRouter); // leads: paged list, owner, notes, conversion (routes/admin/inquiries.ts)

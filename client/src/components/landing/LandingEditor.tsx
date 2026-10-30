@@ -27,6 +27,9 @@ import {
   type SectionType,
 } from '@/components/marketing/api';
 
+/** Landing pages are edited by STAFF too: their images go through the marketing upload (the CMS one is ADMIN-only). */
+const LANDING_UPLOAD = '/admin/marketing/upload';
+
 /**
  * Landing page editor: settings, sections (add / reorder / remove, a form per section type), the page
  * form and SEO, with a live preview rendered by the public LandingRenderer. Staff edit drafts; publishing,
@@ -148,7 +151,16 @@ const SectionFields = ({ s, onChange, testimonials, locale }: { s: LandingSectio
         <div className="space-y-3">
           <Text label={f('title')} value={s.data.title} onChange={(v) => set({ title: v })} />
           <Text label={f('subtitle')} value={s.data.subtitle} max={600} multiline rows={2} onChange={(v) => set({ subtitle: v })} />
-          <ImageField label={f('image')} value={s.data.image} onChange={(v) => set({ image: v })} />
+          <ImageField
+            label={f('image')}
+            value={s.data.image}
+            onChange={(v) => set({ image: v })}
+            kind="photo"
+            alt={s.data.imageAlt ?? ''}
+            onAltChange={(v) => set({ imageAlt: v })}
+            altFallback={s.data.title || undefined}
+            uploadUrl={LANDING_UPLOAD}
+          />
           <Text label={f('ctaLabel')} value={s.data.ctaLabel} max={60} onChange={(v) => set({ ctaLabel: v })} />
           <TargetInput value={s.data.ctaTarget} onChange={(v) => set({ ctaTarget: v })} />
         </div>
@@ -270,7 +282,7 @@ const SectionFields = ({ s, onChange, testimonials, locale }: { s: LandingSectio
                   <Text label={f('text')} value={it.text} max={800} multiline rows={3} onChange={(v) => up({ text: v })} />
                 </div>
                 <div className="sm:col-span-2">
-                  <ImageField label={f('photo')} value={it.photo} onChange={(v) => up({ photo: v })} />
+                  <ImageField label={f('photo')} value={it.photo} onChange={(v) => up({ photo: v })} kind="avatar" uploadUrl={LANDING_UPLOAD} />
                 </div>
               </>
             )}
@@ -615,7 +627,7 @@ export const LandingEditor = ({ id, canPublish }: { id: string | null; canPublis
               <div className="space-y-4">
                 <Text label={t('mk.landing.editor.seoTitle')} value={draft.seoTitle} max={200} onChange={(v) => up({ seoTitle: v })} hint={`${draft.seoTitle.length} / 60`} />
                 <Text label={t('mk.landing.editor.seoDescription')} value={draft.seoDescription} max={400} multiline rows={3} onChange={(v) => up({ seoDescription: v })} hint={`${draft.seoDescription.length} / 155`} />
-                <ImageField label={t('mk.landing.editor.ogImage')} value={draft.ogImage} onChange={(v) => up({ ogImage: v })} />
+                <ImageField label={t('mk.landing.editor.ogImage')} value={draft.ogImage} onChange={(v) => up({ ogImage: v })} kind="og" uploadUrl={LANDING_UPLOAD} />
                 <p className="text-xs text-muted">{t('mk.landing.editor.seoHint')}</p>
               </div>
             </Panel>

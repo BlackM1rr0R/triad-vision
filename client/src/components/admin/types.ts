@@ -152,16 +152,47 @@ export interface Inquiry {
   locale: string;
   status: InquiryStatus;
   createdAt: string;
+  source?: string | null;
+  /** Owner of the lead (server lib/inquiries). */
+  assignedStaffId?: string | null;
+  assignedAt?: string | null;
+  assignedStaff?: { id: string; name: string } | null;
+  /** Internal notes of the team (never shown to the lead). */
+  staffNotes?: string | null;
+  agentId?: string | null;
+  agent?: { id: string; code: string; name: string } | null;
+  partnerId?: string | null;
+  partner?: { id: string; name: string } | null;
+  convertedUserId?: string | null;
+  convertedCompanyId?: string | null;
+  convertedAt?: string | null;
+  convertedUser?: { id: string; name: string; email: string; role: string } | null;
+  convertedCompany?: { id: string; name: string } | null;
+  /** Personal data removed after the retention period (GDPR). */
+  anonymizedAt?: string | null;
 }
 
 export interface InquiriesResponse {
   items: Inquiry[];
+  total?: number;
+  page?: number;
+  pageSize?: number;
   summary: {
+    total?: number;
     byStatus: Partial<Record<InquiryStatus, number>>;
     byKind: Partial<Record<string, number>>;
     new7d: number;
+    hotOpen?: number;
     oldestOpenDays: number | null;
     workersRequested: number;
+    mine?: number;
+    unassigned?: number;
+  };
+  facets?: {
+    sources: { key: string; count: number }[];
+    agents: { id: string; code: string; name: string; count: number }[];
+    partners: { id: string; name: string; count: number }[];
+    staff: { id: string; name: string }[];
   };
 }
 

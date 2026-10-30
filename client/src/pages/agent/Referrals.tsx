@@ -55,7 +55,23 @@ export default function AgentReferralsPage() {
       {items.length === 0 ? (
         <EmptyState compact illustration={<Handshake className="w-28" />} title={t('agents.ref.empty')} />
       ) : (
-        <div className="overflow-x-auto rounded-2xl border border-line">
+        <>
+        {/* Cards on phones, a table from sm up. */}
+        <ul className="space-y-2 sm:hidden">
+          {items.map((r) => (
+            <li key={r.key} className="rounded-xl border border-line bg-card p-3">
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="truncate font-semibold text-ink">{r.name}</p>
+                  <p className="text-xs text-muted">{day(r.registeredAt)}</p>
+                </div>
+                <p className="num shrink-0 font-semibold text-ink">{r.earnedCents ? money(r.earnedCents, currency) : '—'}</p>
+              </div>
+              <span className={`badge mt-2 ${STAGE_TONE[r.stage]}`}>{t(`agents.stages.${r.stage}`)}</span>
+            </li>
+          ))}
+        </ul>
+        <div className="hidden overflow-x-auto rounded-2xl border border-line sm:block">
           <table className="tv-table min-w-[520px]">
             <thead>
               <tr>
@@ -79,12 +95,30 @@ export default function AgentReferralsPage() {
             </tbody>
           </table>
         </div>
+        </>
       )}
       <Pager page={page} total={total} pageSize={pageSize} onPage={setPage} />
     </Section>
     {employers.length > 0 && (
       <Section title={t('agents.ref.employersTitle')} icon={Building2}>
-        <div className="overflow-x-auto rounded-2xl border border-line">
+        <ul className="space-y-2 sm:hidden">
+          {employers.map((e) => (
+            <li key={e.key} className="rounded-xl border border-line bg-card p-3">
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="truncate font-semibold text-ink">{e.name}</p>
+                  <p className="text-xs text-muted">
+                    {e.city ? `${e.city} · ` : ''}
+                    {day(e.registeredAt)}
+                  </p>
+                </div>
+                <p className="num shrink-0 font-semibold text-ink">{e.earnedCents ? money(e.earnedCents, currency) : '—'}</p>
+              </div>
+              <span className={`badge mt-2 ${EMPLOYER_TONE[e.status]}`}>{t(`agents.ref.employerStatus.${e.status}`)}</span>
+            </li>
+          ))}
+        </ul>
+        <div className="hidden overflow-x-auto rounded-2xl border border-line sm:block">
           <table className="tv-table min-w-[520px]">
             <thead>
               <tr>

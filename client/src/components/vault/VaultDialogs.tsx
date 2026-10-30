@@ -8,13 +8,18 @@ import { api, formatBytes } from '@/lib/api';
 import { useL10n } from '@/lib/l10n';
 import type { CaseStatus } from '@/lib/types';
 import { Spinner } from '@/components/ui/Spinner';
-import { ACCEPT } from '@/components/portal/FileDrop';
+import { ACCEPT, prepareFile } from '@/components/portal/FileDrop';
+import { ScanCameraButton } from '@/components/scanner/ScanCameraButton'; // camera scanner (multi-page → PDF)
+import { scanPagesToPdf } from '@/components/scanner/scanPdf';
+import { registerCopy } from '@/i18n';
+import { pagesPortalExtras } from '@/i18n/pagesPortalExtras';
 import { VAULT_KINDS, suggestionsQuery, type ServerChecks, type VaultDoc, type VaultKind, type VaultSuggestion } from './api';
 import { useDocCheckGate } from './DocCheckDialog';
 import { CheckResultNotice } from './CheckResultNotice';
 import { VaultModal } from './VaultModal';
 import { useVaultError } from './useVaultError';
-import { optimizeImage } from '@/lib/imageCompress';
+
+registerCopy(pagesPortalExtras); // px.scan.*
 
 const toDateInput = (iso: string | null) => (iso ? iso.slice(0, 10) : '');
 
@@ -70,15 +75,21 @@ export const VaultUploadDialog = ({
     setResult(null);
   }, [open, initialKind]);
 
+  // Images are compressed first, then type / size are checked (a big phone photo is not refused for its raw size).
   const choose = async (f: File | undefined) => {
     if (!f) return;
-    if (await gate(f)) setFile(f);
+    const { file: ready, problem } = await prepareFile(f);
+    if (problem) {
+      toast.error(t(problem));
+      return;
+    }
+    if (await gate(ready)) setFile(ready);
   };
 
   const submit = async () => {
     if (!file) return;
     const form = new FormData();
-    form.append('file', await optimizeImage(file));
+    form.append('file', file); // compressed in choose()
     form.append('kind', kind);
     form.append('title', title.trim() || t(`vault.kinds.${kind}`));
     if (ownerName.trim()) form.append('ownerName', ownerName.trim());
@@ -169,6 +180,22 @@ export const VaultUploadDialog = ({
                   <span className="block text-xs text-muted">{file ? `${formatBytes(file.size)} · ${t('vault.uploadDialog.change')}` : t('vault.uploadDialog.formats')}</span>
                 </span>
               </button>
+              {/* Multi-page camera scan → one PDF, then the same checks as a picked file. */}
+              <div className="mt-2 flex flex-wrap items-center gap-2">
+                <ScanCameraButton
+                  disabled={busy || checking}
+                  title={title.trim() || t(`vault.kinds.${kind}`)}
+                  onPages={async (pages) => {
+                    try {
+                      await choose(await scanPagesToPdf(pages, title.trim() || t(`vault.kinds.${kind}`)));
+                      return true;
+                    } catch {
+                      toast.error(t('px.scan.failed'));
+                      return false;
+                    }
+                  }}
+                />
+              </div>
             </div>
             <div className="grid gap-3 sm:grid-cols-2">
               <div>

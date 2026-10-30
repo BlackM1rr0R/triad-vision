@@ -71,7 +71,13 @@ const loadAgent = async (id: string) => {
 
 adminAgentsRouter.get('/', async (req, res) => {
   const q = parse(
-    z.object({ status: z.enum(['ACTIVE', 'PAUSED']).optional(), search: z.string().trim().max(120).optional() }),
+    z.object({
+      status: z.enum(['ACTIVE', 'PAUSED']).optional(),
+      search: z.string().trim().max(120).optional(),
+      // Server paging (default 50 per page, at most 200).
+      page: z.coerce.number().int().min(1).max(100_000).default(1),
+      pageSize: z.coerce.number().int().min(1).max(200).default(50),
+    }),
     req.query,
   );
   const where: Prisma.AgentWhereInput = {
@@ -89,12 +95,16 @@ adminAgentsRouter.get('/', async (req, res) => {
         }
       : {}),
   };
-  const [items, byStatus] = await Promise.all([
-    prisma.agent.findMany({ where, include: agentInclude, orderBy: { createdAt: 'desc' }, take: 500 }),
+  const [items, total, byStatus] = await Promise.all([
+    prisma.agent.findMany({ where, include: agentInclude, orderBy: [{ createdAt: 'desc' }, { id: 'desc' }], skip: (q.page - 1) * q.pageSize, take: q.pageSize }),
+    prisma.agent.count({ where }),
     prisma.agent.groupBy({ by: ['status'], _count: { _all: true } }),
   ]);
   const stats = await agentStats(items.map((a) => a.id));
   res.json({
+    total,
+    page: q.page,
+    pageSize: q.pageSize,
     items: items.map((a) => ({ ...agentView(a), stats: stats.get(a.id) })),
     counts: Object.fromEntries(byStatus.map((b) => [b.status, b._count._all])),
   });

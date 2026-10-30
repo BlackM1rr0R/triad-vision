@@ -16,6 +16,8 @@ const copy: SiteCopy<(typeof uiCopy)['en']> = {
     sortDescending: 'За спаданням',
     progress: 'Поступ',
     uploadProgress: 'Хід завантаження',
+    // Confirmation dialogs appear on logged-in screens only: strings fall back to English.
+    confirmDlg: {},
   },
 };
 

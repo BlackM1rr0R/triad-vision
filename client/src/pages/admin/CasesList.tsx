@@ -138,7 +138,7 @@ export default function CasesList() {
   }, [searchInput]);
 
   const { data, isLoading, isFetching, error, refetch } = useQuery({
-    queryKey: ['admin-cases', { status, search, mine, page, partner, processing, processingAssignee }],
+    queryKey: ['admin-cases', { status, search, mine, page, partner, processing, processingAssignee, overdue }],
     queryFn: async () =>
       (
         await api.get<AdminCasesResponse>('/admin/cases', {
@@ -150,6 +150,7 @@ export default function CasesList() {
             partnerId: partner || undefined,
             processing: processing ?? undefined,
             processingAssignee: processingAssignee || undefined,
+            overdue: overdue ? '1' : undefined,
           },
         })
       ).data,
@@ -160,13 +161,14 @@ export default function CasesList() {
   const allCount = ALL_STATUSES.reduce((a, s) => a + (counts[s] ?? 0), 0);
   const pages = data ? Math.max(1, Math.ceil(data.total / data.pageSize)) : 1;
 
-  // Client-side view options on the current page: the overdue chip and the sort order.
+  // The overdue chip is filtered by the server (paging and "all matching" bulk actions agree); the sort order
+  // is a client-side view option on the current page.
   const items = useMemo(() => {
-    const list = (data?.items ?? []).filter((c) => !overdue || c.daysInStatus >= 3);
+    const list = data?.items ?? [];
     if (sort === 'daysInStatus') return [...list].sort((a, b) => b.daysInStatus - a.daysInStatus);
     if (sort === 'age') return [...list].sort((a, b) => b.ageDays - a.ageDays);
     return list;
-  }, [data, overdue, sort]);
+  }, [data, sort]);
   // Multi-select (checkbox column, Shift + click range, whole page, all matching the filters) for the bulk bars.
   const sel = useRowSelection(
     items.map((c) => c.id),
@@ -180,6 +182,7 @@ export default function CasesList() {
     partnerId: partner || undefined,
     processing: processing ?? undefined,
     processingAssignee: processingAssignee || undefined,
+    overdue: overdue ? '1' : undefined,
   };
   // Column settings of the desktop table (per user: order, visibility, width).
   const columnDefs = useMemo<ColumnDef[]>(

@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useEffect, useState } from 'react';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
 import { CalendarClock, Check, Copy, Download, Landmark, ListOrdered, Receipt } from 'lucide-react';
@@ -12,8 +12,13 @@ import { useL10n } from '@/lib/l10n';
 import { Skeleton, SkeletonList } from '@/components/ui/Skeleton';
 import { INSTALLMENT_BADGE, OPEN_STATUSES, STATUS_BADGE, fmtEur, otherCurrencies, triggerLabel, type BillingTotals, type ClientInvoice, type ClientPayment, type PaymentPlan } from '@/components/billing/api';
 import { Documents } from '@/components/illustrations';
+import { useAuth } from '@/lib/auth';
+import { setChosenCase, useChosenCase } from '@/lib/caseContext';
+import { switchLabel, useFamilyCases } from '@/components/portal/FamilySwitcher';
+import { pagesPortalExtras } from '@/i18n/pagesPortalExtras';
 
 registerCopy(pagesBilling);
+registerCopy(pagesPortalExtras); // px.pay.*
 
 interface Billing {
   invoices: ClientInvoice[];
@@ -22,6 +27,8 @@ interface Billing {
   totals: BillingTotals;
   bank: { accountHolder: string; iban: string; bic: string; bank: string } | null;
   seller: { name: string };
+  /** The case the list is filtered to (?case=), null = everything. */
+  caseId?: string | null;
 }
 
 const CopyButton = ({ value }: { value: string }) => {
@@ -74,7 +81,23 @@ export default function AccountPayments() {
   usePageTitle(t('bill.portal.title'));
   // the portal home's next-step card ("pay the invoice") morphs into this heading
   const morph = useMorphTarget('portal-next', 'step');
-  const q = useQuery({ queryKey: ['account-billing'], queryFn: async () => (await api.get<Billing>('/account/billing')).data });
+  // Per family member: the filter follows the portal's family switcher (lib/caseContext); "Hamısı" shows everything.
+  const { user } = useAuth();
+  const { data: family } = useFamilyCases(user?.role === 'CLIENT');
+  const chosen = useChosenCase(user?.id);
+  const [showAll, setShowAll] = useState(false);
+  useEffect(() => setShowAll(false), [chosen]); // a switch elsewhere in the portal wins over "all"
+  const people = family && family.length > 1 ? family : null;
+  const scope = people && !showAll && chosen && people.some((c) => c.id === chosen) ? chosen : null;
+  const q = useQuery({
+    queryKey: ['account-billing', scope ?? 'all'],
+    queryFn: async () => (await api.get<Billing>('/account/billing', { params: scope ? { case: scope } : undefined })).data,
+    placeholderData: keepPreviousData,
+  });
+  const personOf = (caseId: string | null) => {
+    const c = caseId ? people?.find((x) => x.id === caseId) : null;
+    return c ? switchLabel(t, c) : t('px.pay.general');
+  };
   if (q.isLoading) return <PaymentsSkeleton />;
   const d = q.data;
   if (!d) return <p className="text-sm text-danger">{t('bill.admin.errors.default')}</p>;
@@ -89,6 +112,34 @@ export default function AccountPayments() {
         </h2>
         <p className="mt-1 max-w-2xl text-sm text-muted">{t('bill.portal.subtitle')}</p>
       </div>
+
+      {people && (
+        <div role="group" aria-label={t('px.pay.filter')} className="-mt-2 flex flex-wrap gap-1.5">
+          {[{ id: null as string | null, label: t('px.pay.all') }, ...people.map((c) => ({ id: c.id as string | null, label: switchLabel(t, c) }))].map((o) => {
+            const active = (o.id ?? null) === scope;
+            return (
+              <button
+                key={o.id ?? 'all'}
+                type="button"
+                aria-pressed={active}
+                onClick={() => {
+                  if (!o.id) setShowAll(true);
+                  else {
+                    setShowAll(false);
+                    if (user) setChosenCase(user.id, o.id); // the whole portal follows the person
+                  }
+                }}
+                className={clsx(
+                  'min-h-11 rounded-full border px-3.5 text-sm font-semibold transition-colors sm:min-h-10',
+                  active ? 'border-primary bg-primary text-primary-contrast' : 'border-line bg-card text-muted hover:border-line-strong hover:text-ink',
+                )}
+              >
+                {o.label}
+              </button>
+            );
+          })}
+        </div>
+      )}
 
       <dl className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         {(
@@ -173,7 +224,10 @@ export default function AccountPayments() {
             {d.invoices.map((i) => (
               <li key={i.id} id={`invoice-${i.number}`} className="flex flex-wrap items-center gap-x-3 gap-y-2 p-4">
                 <div className="min-w-0 flex-1">
-                  <p className="font-semibold text-ink tabular-nums">{i.number}</p>
+                  <p className="font-semibold text-ink tabular-nums">
+                    {i.number}
+                    {people && !scope && <span className="badge ml-2 bg-sunken align-middle text-[11px] font-medium text-muted">{personOf(i.caseId)}</span>}
+                  </p>
                   <p className={clsx('text-xs', i.status === 'OVERDUE' ? 'font-semibold text-danger-fg' : 'text-muted')}>
                     {i.status === 'PAID' && i.paidAt ? t('bill.portal.paidOn', { date: day(i.paidAt) }) : t('bill.portal.due', { date: day(i.dueDate) })}
                     {i.openCents > 0 && i.paidCents > 0 && ` · ${t('bill.portal.openAmount', { amount: fmtEur(i.openCents, i.currency) })}`}
@@ -200,7 +254,10 @@ export default function AccountPayments() {
             {d.plans.map((p) => (
               <div key={p.id} className="card">
                 <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line px-4 py-3">
-                  <p className="font-semibold text-ink">{p.title}</p>
+                  <p className="font-semibold text-ink">
+                    {p.title}
+                    {people && !scope && <span className="badge ml-2 bg-sunken align-middle text-[11px] font-medium text-muted">{personOf(p.caseId)}</span>}
+                  </p>
                   <span className="text-sm font-semibold tabular-nums">{fmtEur(p.totalCents, p.currency)}</span>
                 </div>
                 <ol className="divide-y divide-line">

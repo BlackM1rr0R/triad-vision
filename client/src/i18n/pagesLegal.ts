@@ -353,6 +353,13 @@ const az = {
     never: 'hələ olmayıb',
     lastPurgeDetails: '{{cases}} müraciət, {{documents}} sənəd',
     invalidMonths: 'Müddət 1 ilə 120 ay arasında olmalıdır.',
+    inquiryRetentionTitle: 'Saytdan gələn müraciətlərin saxlanması (DSGVO)',
+    inquiryRetentionHint: 'Müştəriyə və ya işəgötürənə çevrilməmiş, statusu «Bitib» və ya «Arxiv» olan müraciətlər son fəaliyyətdən (yaranma və ya təyinat) bu müddət keçdikdən sonra hər gün avtomatik anonimləşdirilir: ad, e-poçt, telefon, mesaj, şirkət adı, UTM, kalkulyator/quiz nəticəsi və qeydlər silinir. Statistika üçün sətir qalır.',
+    inquiryDue: 'İndi anonimləşdiriləcək',
+    inquiryAnonymized: 'Anonimləşdirilib (cəmi)',
+    inquiryLastRun: 'Son yoxlama',
+    inquiryLastRunDetails: '{{count}} anonimləşdirildi',
+    inquiryCutoff: 'Bu tarixdən əvvəlki fəaliyyət',
   },
 };
 
@@ -694,6 +701,13 @@ const de: LegalCopy = {
     never: 'noch keine',
     lastPurgeDetails: '{{cases}} Anträge, {{documents}} Dokumente',
     invalidMonths: 'Die Frist muss zwischen 1 und 120 Monaten liegen.',
+    inquiryRetentionTitle: 'Aufbewahrung von Website-Anfragen (DSGVO)',
+    inquiryRetentionHint: 'Nicht in Mandanten oder Arbeitgeber umgewandelte Anfragen im Status «Erledigt» oder «Archiviert» werden täglich automatisch anonymisiert, sobald die letzte Aktivität (Eingang oder Zuweisung) länger als diese Frist zurückliegt: Name, E-Mail, Telefon, Nachricht, Firmenname, UTM, Rechner-/Quiz-Ergebnis und Notizen werden entfernt. Die Zeile bleibt für die Statistik.',
+    inquiryDue: 'Jetzt fällig',
+    inquiryAnonymized: 'Anonymisiert (gesamt)',
+    inquiryLastRun: 'Letzter Lauf',
+    inquiryLastRunDetails: '{{count}} anonymisiert',
+    inquiryCutoff: 'Letzte Aktivität vor',
   },
 };
 
@@ -1033,6 +1047,13 @@ const en: LegalCopy = {
     never: 'none yet',
     lastPurgeDetails: '{{cases}} cases, {{documents}} documents',
     invalidMonths: 'The period must be between 1 and 120 months.',
+    inquiryRetentionTitle: 'Website enquiry retention (GDPR)',
+    inquiryRetentionHint: 'Enquiries that were never converted into a client or employer and are Done or Archived are anonymised automatically every day once their last activity (received or assigned) is older than this period: name, e-mail, phone, message, company name, UTM, calculator/quiz result and notes are removed. The row stays for statistics.',
+    inquiryDue: 'Due now',
+    inquiryAnonymized: 'Anonymised (total)',
+    inquiryLastRun: 'Last run',
+    inquiryLastRunDetails: '{{count}} anonymised',
+    inquiryCutoff: 'Last activity before',
   },
 };
 
@@ -1372,6 +1393,13 @@ const ru: LegalCopy = {
     never: 'ещё не было',
     lastPurgeDetails: '{{cases}} заявок, {{documents}} документов',
     invalidMonths: 'Срок должен быть от 1 до 120 месяцев.',
+    inquiryRetentionTitle: 'Хранение заявок с сайта (GDPR)',
+    inquiryRetentionHint: 'Заявки, не преобразованные в клиента или работодателя, со статусом «Готово» или «Архив» ежедневно автоматически анонимизируются, когда последняя активность (поступление или назначение) старше этого срока: удаляются имя, e-mail, телефон, сообщение, название компании, UTM, результат калькулятора/квиза и заметки. Строка остаётся для статистики.',
+    inquiryDue: 'К анонимизации сейчас',
+    inquiryAnonymized: 'Анонимизировано (всего)',
+    inquiryLastRun: 'Последний запуск',
+    inquiryLastRunDetails: 'анонимизировано: {{count}}',
+    inquiryCutoff: 'Последняя активность до',
   },
 };
 

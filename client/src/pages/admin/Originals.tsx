@@ -15,6 +15,7 @@ import { Chip, EmptyState, ErrorBlock, LoadingBlock, PageHead } from '@/componen
 import { STATUSES, driveFolderHref, originalsKey, type Original, type OriginalStatus } from '@/components/originals/api';
 import { EventDialog, SignActDialog, useOriginalError } from '@/components/originals/dialogs';
 import { DaysChip, LabelMenu, StatusChip, TimelineDrawer, WhereCell } from '@/components/originals/parts';
+import { confirmDialog } from '@/components/ui/ConfirmHost';
 
 registerCopy(pagesOriginals);
 
@@ -212,7 +213,7 @@ const Originals = () => {
                           className="grid size-9 place-items-center rounded-lg text-muted hover:bg-danger-bg hover:text-danger-fg"
                           title={t('originals.delete')}
                           aria-label={t('originals.delete')}
-                          onClick={() => window.confirm(t('originals.deleteConfirm')) && remove.mutate(r.id)}
+                          onClick={async () => (await confirmDialog({ title: t('ui.confirmDlg.deleteTitle', { name: r.title }), message: t('originals.deleteConfirm'), confirmLabel: t('ui.confirmDlg.delete') })) && remove.mutate(r.id)}
                         >
                           <Trash2 className="size-4" aria-hidden />
                         </button>

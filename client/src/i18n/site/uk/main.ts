@@ -365,7 +365,7 @@ const uk: SiteCopy<Messages> = {
       upload: 'Завантажити файл',
       uploading: 'Завантаження...',
       replace: 'Завантажити новий',
-      formats: 'PDF, JPG, PNG, WEBP, DOC, DOCX · макс. 5 MB',
+      formats: 'PDF, JPG, PNG, WEBP, HEIC, DOC, DOCX · макс. 5 MB',
       submit: 'Надіслати на перевірку',
       submitConfirm: 'Надіслати документи на перевірку? Під час перевірки вносити зміни не можна.',
       missing: 'Завантажте всі обов’язкові документи',

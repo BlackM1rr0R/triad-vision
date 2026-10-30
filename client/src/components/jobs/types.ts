@@ -35,9 +35,17 @@ export interface PublicVacancy {
   datePosted: string | null;
   validThrough: string | null;
   companyName: string | null;
+  /** Employer logo (WebP ≤ 512 px, server lib/publicImages.ts); only when the employer is shown. Optional for older payloads. */
+  companyLogo?: CompanyLogo | null;
   visaCategory: { slug: string; title: L10n; visaLabel: string } | null;
   /** Cover (first) + gallery photos; re-encoded WebP with -480 / -960 width variants (server lib/vacancyImages.ts). */
   images?: VacancyImage[] | null;
+}
+
+export interface CompanyLogo {
+  url: string;
+  w?: number;
+  h?: number;
 }
 
 export interface VacancyImage {
@@ -70,7 +78,7 @@ export interface Match {
 }
 
 /** Full vacancy row (company portal / admin). */
-export interface VacancyRow extends Omit<PublicVacancy, 'datePosted' | 'validThrough' | 'companyName' | 'visaCategory'> {
+export interface VacancyRow extends Omit<PublicVacancy, 'datePosted' | 'validThrough' | 'companyName' | 'companyLogo' | 'visaCategory'> {
   companyId: string | null;
   visaCategoryId: string | null;
   showCompany: boolean;
@@ -107,6 +115,8 @@ export interface Company {
   status: CompanyStatus;
   note?: string | null;
   createdAt: string;
+  /** Employer logo (server lib/publicImages.ts, preset "logo"). */
+  logo?: CompanyLogo | null;
 }
 
 export const VACANCY_STATUS_TONE: Record<VacancyStatus, string> = toneClasses(STATUS_TONES.vacancy);

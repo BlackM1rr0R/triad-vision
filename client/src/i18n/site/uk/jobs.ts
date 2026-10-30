@@ -67,6 +67,17 @@ const copy: SiteCopy<(typeof pagesJobs)['en']> = {
       positions_many: '{{count}} місць',
       positions_other: '{{count}} місця',
     },
+    applyErrors: {
+      UNSUPPORTED_FILE_TYPE: 'Цей тип файлу не приймається. Завантажте PDF, JPG, PNG, WebP, HEIC, DOC або DOCX.',
+      FILE_CONTENT_MISMATCH: 'Вміст файлу не відповідає розширенню. Збережіть файл заново й завантажте ще раз.',
+      HEIC_UNREADABLE: 'Не вдалося прочитати фото HEIC. Збережіть його як JPG і завантажте знову.',
+      FILE_TOO_LARGE: 'Файл завеликий (до 5 МБ кожен).',
+      UNEXPECTED_FILE: 'Забагато файлів. Можна додати щонайбільше 6 документів.',
+      TOO_MANY_FILES: 'Забагато файлів. Можна додати щонайбільше 6 документів.',
+      fileTooLarge: '{{name}}: файл завеликий (макс. 5 МБ).',
+      badType: '{{name}}: цей тип файлу не приймається (PDF, JPG, PNG, WebP, HEIC, DOC, DOCX).',
+      uploading: 'Надсилання… {{percent}}%',
+    },
     errors: {
       generic: 'Щось пішло не так. Спробуйте ще раз.',
       NETWORK: 'Не вдалося зв’язатися із сервером. Перевірте з’єднання.',

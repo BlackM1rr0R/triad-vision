@@ -76,7 +76,8 @@ export const FORM_FIELDS = ['name', 'phone', 'email', 'profession', 'germanLevel
 export type FormField = (typeof FORM_FIELDS)[number];
 export type LandingStatus = 'DRAFT' | 'PUBLISHED' | 'ARCHIVED';
 
-export interface HeroData { title: string; subtitle: string; image: string; ctaLabel: string; ctaTarget: string }
+/** imageAlt: alt text of the hero image (empty = the hero title is used). */
+export interface HeroData { title: string; subtitle: string; image: string; imageAlt?: string; ctaLabel: string; ctaTarget: string }
 export interface TextData { title: string; body: string }
 export interface BenefitsData { title: string; items: { icon: string; title: string; text: string }[] }
 export interface StepsData { title: string; items: { title: string; text: string }[] }
@@ -114,6 +115,7 @@ export interface ResolvedTestimonial {
   quote: L10n;
   author: L10n;
   role: L10n;
+  authorPhoto?: string | null;
 }
 
 export interface PublicLanding {
@@ -174,7 +176,7 @@ export const emptySection = (type: SectionType): LandingSection => {
   const id = newSectionId();
   switch (type) {
     case 'hero':
-      return { id, type, data: { title: '', subtitle: '', image: '', ctaLabel: '', ctaTarget: '#form' } };
+      return { id, type, data: { title: '', subtitle: '', image: '', imageAlt: '', ctaLabel: '', ctaTarget: '#form' } };
     case 'text':
       return { id, type, data: { title: '', body: '' } };
     case 'benefits':

@@ -200,6 +200,19 @@ plain `bg-scrim` (no blur).
 `message` + `children`, **`confirmText`**: "type to confirm" (the confirm button stays disabled until the exact text
 is typed; Enter submits), `hideIcon`, `zIndex`. role = `alertdialog`; focus starts on the confirm button (or on the text field).
 
+**Promise form (`ConfirmHost.tsx`)**: for one-off questions use `confirmDialog()` / `useConfirm()` instead of local state.
+`<ConfirmHost />` is mounted once in `main.tsx` (z 120, above every overlay); requests queue and show one at a time.
+Never use `window.confirm`.
+
+```tsx
+import { confirmDialog } from '@/components/ui/ConfirmHost';
+if (!(await confirmDialog({ message: t('ui.confirmDlg.deleteNamed', { name: file.name }), confirmLabel: t('ui.confirmDlg.delete') }))) return;
+```
+
+Options: `title` (default `ui.confirmDlg.title`), `message` (put the item name here), `confirmLabel` (default `ui.confirm`),
+`cancelLabel`, `tone` (`danger` default), `confirmText`. Resolves `false` on cancel / Esc / backdrop. Generic copy lives in
+`ui.confirmDlg.*` (deleteNamed, deleteTitle, removeNamed, resetNamed, deactivateNamed, revokeLinkNamed, unsavedTitle, labels).
+
 ### Drawer (`Drawer.tsx`)
 
 `open, onClose, title, description, headerActions, children, footer, side: 'right' | 'left', width: 'sm' 24rem | 'md' 32rem | 'lg' 42rem (default) | 'xl' 56rem,

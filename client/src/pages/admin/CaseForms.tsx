@@ -14,6 +14,7 @@ import { Spinner } from '@/components/ui/Spinner';
 import { toastError } from '@/components/admin/labels';
 import { FIELD_TYPES, SUB_FIELD_TYPES, TEMPLATES_KEY, type Answers, type FieldType, type FormField, type TargetOption, type Template } from '@/components/clientData/api';
 import { FormRenderer } from '@/components/clientData/FormRenderer';
+import { confirmDialog } from '@/components/ui/ConfirmHost';
 
 /**
  * Admin → "Ağıllı anketlər": click-only form builder for questionnaire templates. Field types, required,
@@ -268,6 +269,13 @@ export default function CaseFormsPage() {
   };
   const remove = async () => {
     if (!draft?.id) return;
+    const name = tr(draft.title) || draft.id;
+    const ok = await confirmDialog(
+      draft.builtIn
+        ? { message: t('ui.confirmDlg.deactivateNamed', { name }), confirmLabel: t('ui.confirmDlg.deactivate') }
+        : { message: t('ui.confirmDlg.deleteNamed', { name }), confirmLabel: t('ui.confirmDlg.delete') },
+    );
+    if (!ok) return;
     setBusy(true);
     try {
       const res = (await api.delete<{ deactivated: boolean }>(`/admin/case-forms/templates/${draft.id}`)).data;

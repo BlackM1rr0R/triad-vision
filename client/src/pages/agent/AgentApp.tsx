@@ -2,7 +2,7 @@ import { Link, Navigate, Route, Routes, useLocation, useNavigate } from 'react-r
 import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
 import clsx from 'clsx';
-import { CircleUser, Coins, LayoutDashboard, LogOut, PauseCircle, ShieldAlert, Users } from 'lucide-react';
+import { CircleUser, Coins, LayoutDashboard, LogOut, PauseCircle, ShieldAlert, UserPlus, Users } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { registerCopy } from '@/i18n';
@@ -14,6 +14,8 @@ import AgentDashboardPage from './Dashboard';
 import AgentReferralsPage from './Referrals';
 import AgentEarningsPage from './Earnings';
 import AgentProfilePage from './Profile';
+import AgentLeadsPage from './Leads'; // "Yeni müştəri" form + my leads
+import { PortalNotificationBell, PortalNotificationsPage } from '@/components/notifications/PortalNotifications';
 
 registerCopy(pagesAgents);
 
@@ -33,6 +35,7 @@ export default function AgentApp() {
   const tabs = [
     { to: '/agent', label: t('agents.portal.nav.dashboard'), icon: LayoutDashboard, match: (p: string) => p === '/agent' || p === '/agent/' },
     { to: '/agent/referrals', label: t('agents.portal.nav.referrals'), icon: Users, match: (p: string) => p.startsWith('/agent/referrals') },
+    { to: '/agent/leads', label: t('px.leads.nav'), icon: UserPlus, match: (p: string) => p.startsWith('/agent/leads') },
     { to: '/agent/earnings', label: t('agents.portal.nav.earnings'), icon: Coins, match: (p: string) => p.startsWith('/agent/earnings') },
     { to: '/agent/profile', label: t('agents.portal.nav.profile'), icon: CircleUser, match: (p: string) => p.startsWith('/agent/profile') },
   ];
@@ -64,6 +67,7 @@ export default function AgentApp() {
                     {t(`agents.agentStatus.${me.agent.status}`)}
                   </span>
                 )}
+                {me && <PortalNotificationBell allTo="/agent/notifications" />}
                 <button type="button" onClick={onLogout} className="inline-flex min-h-11 min-w-11 items-center justify-center gap-1.5 rounded-xl px-3 text-sm font-semibold text-muted transition-colors hover:bg-sunken hover:text-ink">
                   <LogOut className="size-4" aria-hidden /> <span className="hidden sm:inline">{t('agents.portal.logout')}</span>
                 </button>
@@ -127,6 +131,8 @@ export default function AgentApp() {
                 <Route index element={<AgentDashboardPage me={me} />} />
                 <Route path="referrals" element={<AgentReferralsPage />} />
                 <Route path="earnings" element={<AgentEarningsPage />} />
+                <Route path="leads" element={<AgentLeadsPage me={me} />} />
+                <Route path="notifications" element={<PortalNotificationsPage />} />
                 <Route path="profile" element={<AgentProfilePage me={me} />} />
                 <Route path="*" element={<Navigate to="/agent" replace />} />
               </Routes>

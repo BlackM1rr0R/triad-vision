@@ -15,6 +15,7 @@ import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { Spinner } from '@/components/ui/Spinner';
 import type { L10n } from '@/lib/types';
 import { withLocale } from '@/lib/siteLocale';
+import { confirmDialog } from '@/components/ui/ConfirmHost';
 
 registerCopy(pagesDiscoverAdmin);
 
@@ -314,7 +315,7 @@ export default function AdminLeadMagnets() {
                                 <FileUp className="size-4" aria-hidden />
                               </button>
                               {has && (
-                                <button type="button" className="rounded p-1 text-muted hover:text-danger-fg" disabled={working} onClick={() => void removeFile(item.id, lng)} aria-label={`${m('remove')} ${lng}`}>
+                                <button type="button" className="rounded p-1 text-muted hover:text-danger-fg" disabled={working} onClick={async () => (await confirmDialog({ message: t('ui.confirmDlg.deleteNamed', { name: `${item.slug} · PDF ${lng.toUpperCase()}` }), confirmLabel: t('ui.confirmDlg.delete') })) && void removeFile(item.id, lng)} aria-label={`${m('remove')} ${lng}`}>
                                   <X className="size-4" aria-hidden />
                                 </button>
                               )}

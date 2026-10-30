@@ -9,17 +9,19 @@ import type { Prisma, VaultDocKind } from '@prisma/client';
 import { config } from '../config.js';
 import { prisma } from '../db.js';
 import { requireAuth } from '../middleware/auth.js';
-import { decodeOriginalName, verifyUploadedFile } from '../middleware/upload.js';
+import { clientDocFilter, decodeOriginalName, verifyUploadedFile } from '../middleware/upload.js';
 import { audit } from '../lib/audit.js';
 import { CLIENT_UPLOAD_STAGE } from '../lib/caseFlow.js';
-import { CASE_DOC_MIME, resolveMime } from '../lib/fileCheck.js';
-import { badRequest, conflict, notFound, parse } from '../lib/http.js';
+import { CASE_DOC_MIME } from '../lib/fileCheck.js';
+import { badRequest, conflict, limiter, notFound, parse } from '../lib/http.js';
+import { buildDocumentsZip, zipFileName } from '../lib/vaultExport.js';
 import { checkCaseDocument, runChecks, targetForVaultKind, vaultDir } from '../lib/docCheck/index.js';
 import { vaultDto, vaultKindsFor } from '../lib/docCheck/vault.js';
 import { scheduleAiDocCheck } from '../lib/aiDocs/docCheck.js';
 import { prepareCaseDocument, publicQuality, scheduleUploadAnalysis } from '../lib/uploadAi/index.js';
 import { photoCheckOnUpload } from '../lib/photoCheck/index.js'; // biometric photo rules (PHOTO / PHOTO_2)
-import { emitAutomationEvent } from '../lib/automation/events.js';
+
+import { emitAutomationEvent } from '../lib/automation/events.js';
 import { copyDocumentToDrive } from '../lib/drive/caseFolders.js';
 
 /**
@@ -50,13 +52,8 @@ const vaultUpload = multer({
     filename: (_req, file, cb) => cb(null, randomName(file.originalname)),
   }),
   limits: { fileSize: config.uploads.maxFileSize, files: 1 },
-  fileFilter: (_req, file, cb) => {
-    const mime = resolveMime(file.mimetype, decodeOriginalName(file.originalname));
-    if (mime && CASE_DOC_MIME.has(mime)) {
-      file.mimetype = mime;
-      cb(null, true);
-    } else cb(badRequest('UNSUPPORTED_FILE_TYPE'));
-  },
+  // Case-document types + HEIC/HEIF photos (converted to JPEG by verifyUploadedFile).
+  fileFilter: clientDocFilter,
 });
 
 const vaultPath = (key: string) => path.join(vaultDir(), key);
@@ -213,6 +210,28 @@ vaultRouter.post('/from-document', async (req, res) => {
     await fsp.unlink(vaultPath(key)).catch(() => undefined);
     throw err;
   }
+});
+
+// ─── Everything as one ZIP ("Bütün sənədlərimi yüklə") ───────────────
+
+/** Per account: building the archive reads every file of the user. */
+const zipLimiter = limiter({ windowMs: 60 * 60 * 1000, limit: 5, keyGenerator: (req) => `vault-zip:${req.user?.id ?? req.ip}` });
+
+/** GET /api/vault/export.zip — own vault + own case files, streamed (lib/vaultExport.ts). 404 NO_DOCUMENTS when empty. */
+vaultRouter.get('/export.zip', zipLimiter, async (req, res) => {
+  const built = await buildDocumentsZip(req.user!.id);
+  if (!built) throw notFound('NO_DOCUMENTS');
+  await audit(req, 'vault.export_zip', `user:${req.user!.id}`, { ...built.summary });
+  res.setHeader('Content-Type', 'application/zip');
+  res.setHeader('Content-Disposition', `attachment; filename="${zipFileName()}"`);
+  res.setHeader('Cache-Control', 'private, no-store');
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  const stream = built.zip.generateNodeStream({ type: 'nodebuffer', streamFiles: true, compression: 'STORE' });
+  stream.on('error', (err) => {
+    console.error('[vault] zip export failed', err);
+    res.destroy(err);
+  });
+  stream.pipe(res);
 });
 
 // ─── Single document ─────────────────────────────────────────────────

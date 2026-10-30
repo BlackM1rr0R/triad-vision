@@ -7,6 +7,7 @@ import { CalendarClock, History, Pause, Play, Plus, Send, Trash2, X } from 'luci
 import { api, errorCode } from '@/lib/api';
 import { Modal } from '@/components/settlement/Modal';
 import { useReportFormat, type Delivery, type Schedule, type StaffUser } from './types';
+import { confirmDialog } from '@/components/ui/ConfirmHost';
 
 /** "Send this report": the schedules of a saved report, their delivery log and a form for a new one. */
 
@@ -128,7 +129,7 @@ export const ScheduleDialog = ({ reportId, users, onClose }: { reportId: string;
                     <button type="button" className="btn-secondary btn-sm" aria-expanded={open === s.id} onClick={() => setOpen(open === s.id ? null : s.id)}>
                       <History className="size-3.5" /> {t('reports.schedule.deliveries')}
                     </button>
-                    <button type="button" className="btn-secondary btn-sm" onClick={() => window.confirm(t('reports.schedule.deleteConfirm')) && remove.mutate(s.id)} aria-label={t('reports.remove')}>
+                    <button type="button" className="btn-secondary btn-sm" onClick={async () => (await confirmDialog({ message: t('reports.schedule.deleteConfirm'), confirmLabel: t('ui.confirmDlg.delete') })) && remove.mutate(s.id)} aria-label={t('reports.remove')}>
                       <Trash2 className="size-3.5" />
                     </button>
                   </div>

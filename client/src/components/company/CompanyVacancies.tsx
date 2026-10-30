@@ -8,6 +8,7 @@ import { ArrowLeft, Briefcase, ExternalLink, Info, Lock, Pencil, Plus, Send, Tra
 import { api } from '@/lib/api';
 import { useL10n } from '@/lib/l10n';
 import { Spinner } from '@/components/ui/Spinner';
+import { ErrorState } from '@/components/ui/ErrorState';
 import { ConfirmDialog } from '@/components/portal/ConfirmDialog';
 import { fmtDate } from '@/components/admin/labels';
 import { toastJobsError, useJobLabels } from '@/components/jobs/labels';
@@ -50,11 +51,13 @@ export const CompanyVacancies = ({ company }: { company: Company }) => {
   const L = useJobLabels();
   const action = useVacancyActions();
   const [confirm, setConfirm] = useState<{ id: string; kind: 'close' | 'delete' } | null>(null);
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ['company-vacancies'],
     queryFn: async () => (await api.get<{ items: Row[] }>('/company/vacancies')).data.items,
   });
   if (isLoading) return <Loading />;
+  // A failed load is not "no vacancies yet".
+  if (isError) return <ErrorState onRetry={() => void refetch()} />;
   const items = data ?? [];
   const canSubmit = company.status === 'ACTIVE';
 
@@ -166,7 +169,7 @@ export const CompanyVacancyEditor = ({ company }: { company: Company }) => {
   const navigate = useNavigate();
   const invalidate = useInvalidate();
   const action = useVacancyActions();
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ['company-vacancy', id],
     queryFn: async () => (await api.get<{ vacancy: VacancyRow }>(`/company/vacancies/${id}`)).data.vacancy,
     enabled: !isNew,
@@ -185,6 +188,7 @@ export const CompanyVacancyEditor = ({ company }: { company: Company }) => {
     onError: toastJobsError,
   });
 
+  if (!isNew && isError) return <ErrorState onRetry={() => void refetch()} />;
   if (!isNew && (isLoading || !data)) return <Loading />;
   const v = data ?? null;
   const locked = v?.status === 'CLOSED';

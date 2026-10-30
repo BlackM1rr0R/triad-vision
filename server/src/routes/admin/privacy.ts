@@ -8,6 +8,7 @@ import { badRequest, conflict, notFound, parse } from '../../lib/http.js';
 import { deleteUserAccount, userDeletionPreview } from '../../lib/userDeletion.js';
 import { CONSENT_TYPES } from '../../lib/privacy/consents.js';
 import { dataOverview, notifyRequestDecided, OPEN_STATUSES } from '../../lib/privacy/requests.js';
+import { eraseInquiries, exportInquiries } from '../../lib/privacy/inquiries.js';
 
 /**
  * Admin → Privacy requests (ADMIN+; executing a deletion is SUPER_ADMIN only).
@@ -18,6 +19,8 @@ import { dataOverview, notifyRequestDecided, OPEN_STATUSES } from '../../lib/pri
  *   POST /requests/:id/execute-deletion          { confirmEmail } → deleteUserAccount, request COMPLETED
  *   GET  /consents?email=&type=&version=&source=&from=&to=&format=csv|download   consent register search / CSV / JSON
  *   GET  /consents/person?userId=|email=|visitorId=   one person's consent timeline with the accepted text versions
+ *   GET  /inquiries?email=[&userId=][&format=download]  website enquiries of a person (Art. 15 export)
+ *   POST /inquiries/erase                        { email, userId?, requestId? } anonymise them (Art. 17)
  */
 export const adminPrivacyRouter = Router();
 adminPrivacyRouter.use(requireMinRole('ADMIN'));
@@ -106,7 +109,7 @@ adminPrivacyRouter.get('/requests/:id', async (req, res) => {
       }
     }
   }
-  const [consentLog, otherRequests] = await Promise.all([
+  const [consentLog, otherRequests, inquiries] = await Promise.all([
     subject
       ? prisma.consentRecord.findMany({ where: { userId: subject.id }, orderBy: { createdAt: 'desc' }, take: 50 })
       : prisma.consentRecord.findMany({ where: { email: r.email }, orderBy: { createdAt: 'desc' }, take: 50 }),
@@ -116,6 +119,7 @@ adminPrivacyRouter.get('/requests/:id', async (req, res) => {
       take: 20,
       select: { id: true, type: true, status: true, createdAt: true, dueAt: true },
     }),
+    exportInquiries(r.email, subject?.id),
   ]);
   res.json({
     item: withFlags(r),
@@ -137,6 +141,8 @@ adminPrivacyRouter.get('/requests/:id', async (req, res) => {
     deletionBlocked,
     consentLog,
     otherRequests,
+    // Website enquiries (leads) sent with this e-mail: shown, exportable and erasable from the request.
+    inquiries: inquiries.map((i) => ({ id: i.id, kind: i.kind, contactName: i.contactName, companyName: i.companyName, status: i.status, createdAt: i.createdAt })),
   });
 });
 
@@ -193,6 +199,27 @@ adminPrivacyRouter.post('/requests/:id/execute-deletion', requireMinRole('SUPER_
   await audit(req, 'PRIVACY_DELETION_EXECUTED', `privacy-request:${r.id}`, { userId: user.id, email: user.email, counts: { ...counts } });
   await notifyRequestDecided(updated, locale);
   res.json({ ok: true, counts, item: withFlags(updated) });
+});
+
+// ─── Website enquiries (leads) of a person ─────────────────────────────
+
+const inquiryPerson = z.object({ email: z.string().trim().toLowerCase().email().max(200), userId: z.string().trim().max(40).optional() });
+
+adminPrivacyRouter.get('/inquiries', async (req, res) => {
+  const q = parse(inquiryPerson.extend({ format: z.enum(['json', 'download']).optional() }), req.query);
+  const items = await exportInquiries(q.email, q.userId);
+  await audit(req, 'PRIVACY_INQUIRIES_EXPORTED', `email:${q.email}`, { count: items.length });
+  if (q.format === 'download') {
+    res.setHeader('Content-Disposition', `attachment; filename="inquiries-${new Date().toISOString().slice(0, 10)}.json"`);
+  }
+  res.json({ exportedAt: new Date().toISOString(), email: q.email, items });
+});
+
+adminPrivacyRouter.post('/inquiries/erase', async (req, res) => {
+  const body = parse(inquiryPerson.extend({ requestId: z.string().trim().max(40).optional() }), req.body ?? {});
+  const anonymized = await eraseInquiries(body.email, body.userId);
+  await audit(req, 'PRIVACY_INQUIRIES_ERASED', body.requestId ? `privacy-request:${body.requestId}` : `email:${body.email}`, { email: body.email, anonymized });
+  res.json({ ok: true, anonymized });
 });
 
 // ─── Consent log ───────────────────────────────────────────────────────

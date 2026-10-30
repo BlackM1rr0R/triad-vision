@@ -45,6 +45,7 @@ export const ROUTING_PRIVATE_PREFIXES = [
   '/booking/manage',
   '/review',
   '/verify-email',
+  '/confirm-email-change', // e-mail change link (token)
   '/login/2fa',
   '/reset-password',
   '/sign',

@@ -25,6 +25,8 @@ import { CompanyForms } from '@/components/company/CompanyForms'; // official fo
 import { pagesOfficialForms } from '@/i18n/pagesOfficialForms';
 import { CompanyRequests } from '@/components/requests/CompanyRequests';
 import { pagesRequests } from '@/i18n/pagesRequests';
+import { PortalNotificationBell, PortalNotificationsPage } from '@/components/notifications/PortalNotifications';
+import { CompanyLogo } from '@/components/jobs/CompanyLogo';
 
 registerCopy(pagesJobs);
 registerCopy(pagesSign);
@@ -63,21 +65,27 @@ export default function CompanyApp() {
         <header className="rounded-3xl border border-line bg-card px-4 pt-5 pb-3 shadow-[var(--tv-shadow-card)] sm:px-7 sm:pt-6 sm:pb-4">
           <div>
             <div className="flex flex-wrap items-start justify-between gap-3">
-              <div className="min-w-0">
-                <span className="type-overline">{t('jobsArea.portal.title')}</span>
-                <motion.h1
-                  className="type-page-title mt-1 break-words"
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.4 }}
-                >
-                  {company?.name ?? ' '}
-                </motion.h1>
-                <p className="mt-1 truncate text-sm text-muted">
-                  {t('jobsArea.portal.hello', { name: user?.firstName ?? '' })} · {user?.email}
-                </p>
+              <div className="flex min-w-0 items-start gap-4">
+                {company?.logo && <CompanyLogo logo={company.logo} name={company.name} className="mt-1 size-14 sm:size-16" />}
+                <div className="min-w-0">
+                  <span className="type-overline">{t('jobsArea.portal.title')}</span>
+                  <motion.h1
+                    className="type-page-title mt-1 break-words"
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4 }}
+                  >
+                    {company?.name ?? ' '}
+                  </motion.h1>
+                  <p className="mt-1 truncate text-sm text-muted">
+                    {t('jobsArea.portal.hello', { name: user?.firstName ?? '' })} · {user?.email}
+                  </p>
+                </div>
               </div>
-              {company && <span className={clsx('badge mt-1', COMPANY_STATUS_TONE[company.status])}>{L.companyStatus(company.status)}</span>}
+              <div className="flex items-center gap-2">
+                {company && <span className={clsx('badge', COMPANY_STATUS_TONE[company.status])}>{L.companyStatus(company.status)}</span>}
+                {company && <PortalNotificationBell allTo="/company/notifications" />}
+              </div>
             </div>
 
             {!suspended && (
@@ -165,6 +173,7 @@ export default function CompanyApp() {
                 <Route path="quotes" element={<CompanyQuotes />} />
                 <Route path="quotes/:id" element={<CompanyQuotes />} />
                 <Route path="invoices" element={<CompanyInvoices />} />
+                <Route path="notifications" element={<PortalNotificationsPage />} />
                 <Route path="profile" element={<CompanyProfile company={company} />} />
                 <Route path="*" element={<Navigate to="/company" replace />} />
               </Routes>

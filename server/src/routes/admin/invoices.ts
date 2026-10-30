@@ -21,6 +21,7 @@ import { companyEInvoiceSchema, companyXRechnung, getCompanyEInvoice, saveCompan
 import { config } from '../../config.js';
 import { awardInvoiceCommission } from '../../lib/agents/commissions.js';
 import { requestMaskGroups } from '../../lib/privacy/mask.js';
+import { toCsv } from '../../lib/bulk/index.js';
 
 // Admin: invoices — mounted at /api/admin/invoices (ADMIN+, gated in admin/index.ts)
 export const adminInvoicesRouter = Router();
@@ -234,29 +235,53 @@ adminInvoicesRouter.get('/companies', async (_req, res) => {
 
 // ─── List + totals ──────────────────────────────────────────────────
 
+const listFilter = z.object({
+  status: z.enum(['DRAFT', 'SENT', 'PAID', 'OVERDUE', 'CANCELLED']).optional(),
+  companyId: z.string().max(64).optional(),
+  from: day.optional(),
+  to: day.optional(),
+  q: z.string().trim().max(60).optional(),
+});
+const listWhere = (q: z.infer<typeof listFilter>): Prisma.InvoiceWhereInput => ({
+  ...(q.status ? { status: q.status } : {}),
+  ...(q.companyId ? { companyId: q.companyId } : {}),
+  ...(q.from || q.to ? { issueDate: { ...(q.from ? { gte: new Date(`${q.from}T00:00:00Z`) } : {}), ...(q.to ? { lte: new Date(`${q.to}T23:59:59Z`) } : {}) } } : {}),
+  ...(q.q ? { OR: [{ number: { contains: q.q } }, { company: { name: { contains: q.q } } }] } : {}),
+});
+const listOrder: Prisma.InvoiceOrderByWithRelationInput[] = [{ issueDate: 'desc' }, { createdAt: 'desc' }, { id: 'desc' }];
+
+/** CSV of the filtered list (same filters as the list; at most 10 000 rows; semicolon-separated for Excel). */
+adminInvoicesRouter.get('/export.csv', async (req, res) => {
+  const q = parse(listFilter, req.query);
+  const rows = await prisma.invoice.findMany({ where: listWhere(q), include: withCompany, orderBy: listOrder, take: 10_000 });
+  const money = (c: number) => (c / 100).toFixed(2);
+  const csv = toCsv(
+    ['number', 'status', 'company', 'vatId', 'issueDate', 'dueDate', 'currency', 'net', 'vat', 'gross', 'sentAt', 'paidAt'],
+    rows.map((i) => [i.status === 'DRAFT' ? '' : i.number, i.status, i.company.name, i.company.vatId, i.issueDate, i.dueDate, i.currency, money(i.netCents), money(i.vatCents), money(i.grossCents), i.sentAt, i.paidAt]),
+  );
+  await audit(req, 'INVOICES_EXPORTED', undefined, { count: rows.length, filter: q });
+  res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+  res.setHeader('Content-Disposition', `attachment; filename="invoices-${new Date().toISOString().slice(0, 10)}.csv"`);
+  res.send(csv);
+});
+
 adminInvoicesRouter.get('/', async (req, res) => {
   const q = parse(
-    z.object({
-      status: z.enum(['DRAFT', 'SENT', 'PAID', 'OVERDUE', 'CANCELLED']).optional(),
-      companyId: z.string().max(64).optional(),
-      from: day.optional(),
-      to: day.optional(),
-      q: z.string().trim().max(60).optional(),
+    listFilter.extend({
+      // Server paging (default 50 per page, at most 200).
+      page: z.coerce.number().int().min(1).max(100_000).default(1),
+      pageSize: z.coerce.number().int().min(1).max(200).default(50),
     }),
     req.query,
   );
-  const where: Prisma.InvoiceWhereInput = {
-    ...(q.status ? { status: q.status } : {}),
-    ...(q.companyId ? { companyId: q.companyId } : {}),
-    ...(q.from || q.to ? { issueDate: { ...(q.from ? { gte: new Date(`${q.from}T00:00:00Z`) } : {}), ...(q.to ? { lte: new Date(`${q.to}T23:59:59Z`) } : {}) } } : {}),
-    ...(q.q ? { OR: [{ number: { contains: q.q } }, { company: { name: { contains: q.q } } }] } : {}),
-  };
+  const where = listWhere(q);
   const now = new Date();
   const monthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
   // Totals in EUR only (the flat fields); other currencies are listed separately — currencies are never added up.
   const eur = { currency: 'EUR' };
-  const [invoices, open, overdue, paid, drafts, live] = await Promise.all([
-    prisma.invoice.findMany({ where, include: withCompany, orderBy: [{ issueDate: 'desc' }, { createdAt: 'desc' }], take: 500 }),
+  const [invoices, total, open, overdue, paid, drafts, live] = await Promise.all([
+    prisma.invoice.findMany({ where, include: withCompany, orderBy: listOrder, skip: (q.page - 1) * q.pageSize, take: q.pageSize }),
+    prisma.invoice.count({ where }),
     prisma.invoice.aggregate({ where: { ...eur, status: { in: ['SENT', 'OVERDUE'] } }, _sum: { grossCents: true }, _count: { _all: true } }),
     prisma.invoice.aggregate({ where: { ...eur, status: 'OVERDUE' }, _sum: { grossCents: true }, _count: { _all: true } }),
     prisma.invoice.aggregate({ where: { ...eur, status: 'PAID', paidAt: { gte: monthStart } }, _sum: { grossCents: true }, _count: { _all: true } }),
@@ -270,6 +295,9 @@ adminInvoicesRouter.get('/', async (req, res) => {
   })).map(({ count: _c, ...t }) => t);
   res.json({
     invoices: invoices.map(view),
+    total,
+    page: q.page,
+    pageSize: q.pageSize,
     totals: {
       currency: 'EUR',
       byCurrency,

@@ -21,6 +21,8 @@ import { COMPANY_STATUS_TONE, SECTORS, VACANCY_STATUS_TONE, type Company, type C
 import { SignaturesPanel } from '@/components/esign/CaseSignatures';
 import { CompanyQuotesPanel } from '@/components/quotes/CompanyQuotesPanel';
 import { EmployerReportsPanel } from '@/components/employerReports/EmployerReportsPanel';
+import { CompanyLogo } from '@/components/jobs/CompanyLogo';
+import { CompanyLogoUploader } from '@/components/jobs/CompanyLogoUploader';
 import RecordHistoryPanel from '@/components/history/RecordHistoryPanel';
 import { useNewParam } from '@/components/command/useNewParam'; // ?new=1 deep link (Ctrl+K palette)
 import { pagesStaffPower } from '@/i18n/pagesStaffPower'; // saved views + table settings
@@ -312,6 +314,11 @@ const CompanyDrawer = ({ id, onClose }: { id: string | null; onClose: () => void
               )}
             </Panel>
 
+            {/* Logo: public job cards / job page / JobPosting of vacancies that show the employer. */}
+            <Panel title={t('publicImages.companyLogo.title')}>
+              <CompanyLogoUploader endpoint={`/admin/companies/${data.id}/logo`} logo={data.logo} name={data.name} onChange={() => refresh()} />
+            </Panel>
+
             <Panel title={t('jobsArea.admin.companies.details')}>
               <form
                 onSubmit={(e) => {
@@ -512,8 +519,11 @@ export default function AdminCompanies() {
           onRowClick={(c) => setParam('id', c.id)}
           cells={{
             name: (c) => (
-              <span className="font-semibold text-ink">
-                {c.name} {c.legalForm && !c.name.includes(c.legalForm) ? c.legalForm : ''}
+              <span className="flex items-center gap-2 font-semibold text-ink">
+                {c.logo && <CompanyLogo logo={c.logo} name={c.name} className="size-7 rounded-md p-0.5" />}
+                <span>
+                  {c.name} {c.legalForm && !c.name.includes(c.legalForm) ? c.legalForm : ''}
+                </span>
               </span>
             ),
             status: (c) => <span className={clsx('badge', COMPANY_STATUS_TONE[c.status])}>{L.companyStatus(c.status)}</span>,
@@ -538,7 +548,8 @@ export default function AdminCompanies() {
                 className="h-full w-full rounded-xl border border-line bg-card p-4 text-left transition hover:border-line-strong hover:shadow-[var(--tv-shadow-raised)]"
               >
                 <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0">
+                  {c.logo && <CompanyLogo logo={c.logo} name={c.name} className="size-10" />}
+                  <div className="min-w-0 flex-1">
                     <p className="truncate font-semibold text-ink">
                       {c.name} {c.legalForm && !c.name.includes(c.legalForm) ? c.legalForm : ''}
                     </p>

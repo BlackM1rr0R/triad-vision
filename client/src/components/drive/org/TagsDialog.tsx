@@ -9,6 +9,7 @@ import { Modal } from '@/components/admin/Modal';
 import { invalidateDrive, reportBatch, toastDriveError } from '../api';
 import type { DriveItem } from '../types';
 import { TAG_COLORS, TAG_DOT, TAG_TONE, applyTags, fetchTags, orgKeys, type Tag } from './api';
+import { confirmDialog } from '@/components/ui/ConfirmHost';
 
 const ColorPicker = ({ value, onChange }: { value: string; onChange: (c: string) => void }) => {
   const { t } = useTranslation();
@@ -154,7 +155,7 @@ export default function TagsDialog({ items, manage, onClose }: { items: DriveIte
                     type="button"
                     className="grid size-7 place-items-center rounded-md text-muted hover:bg-sunken hover:text-danger-fg"
                     aria-label={t('driveOrg.common.delete')}
-                    onClick={() => window.confirm(t('driveOrg.tags.deleteConfirm', { name: tag.name })) && remove.mutate(tag.id)}
+                    onClick={async () => (await confirmDialog({ message: t('driveOrg.tags.deleteConfirm', { name: tag.name }), confirmLabel: t('ui.confirmDlg.delete') })) && remove.mutate(tag.id)}
                   >
                     <Trash2 className="size-4" />
                   </button>

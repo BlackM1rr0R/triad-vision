@@ -305,6 +305,7 @@ const vacancy = (i, slug, az, de, sector, city, level, min, max, type, visa) => 
   datePosted: `2026-01-${String(12 - i).padStart(2, '0')}`,
   validThrough: '2026-03-31',
   companyName: null,
+  companyLogo: null, // employer logo (only with companyName); none, so the cards render the same every run
   visaCategory: visa === null ? null : visaRef(visa),
 });
 const vacancies = [

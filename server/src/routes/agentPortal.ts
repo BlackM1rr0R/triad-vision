@@ -4,7 +4,10 @@ import { z } from 'zod';
 import type { Agent, Prisma } from '@prisma/client';
 import { prisma } from '../db.js';
 import { requireRole } from '../middleware/auth.js';
-import { forbidden, parse } from '../lib/http.js';
+import { conflict, forbidden, limiter, parse } from '../lib/http.js';
+import { notifyStaff } from '../lib/notifications.js';
+import { onInquiryCreated } from '../lib/assignment/inquiry.js';
+import { attachLeadContext } from '../lib/marketing/leadScoring.js';
 import { audit } from '../lib/audit.js';
 import { payoutEventsOf } from '../lib/agents/commissions.js';
 import { shareLink } from '../lib/agents/referral.js';
@@ -203,6 +206,113 @@ agentPortalRouter.get('/commissions', async (req, res) => {
       payoutRef: r.payoutRef,
       note: r.event === 'MANUAL' ? r.note : null,
       client: r.client ? displayName(r.client) : null,
+    })),
+    total,
+    pageSize,
+  });
+});
+
+// ─── Leads registered by the agent ("Yeni müştəri" form → Inquiry) ──────
+
+/** What the person is interested in (shown to staff in the inquiry text). */
+export const LEAD_INTERESTS = ['WORK', 'AUSBILDUNG', 'STUDY', 'CHANCENKARTE', 'FAMILY', 'RECOGNITION', 'OTHER'] as const;
+const INTEREST_AZ: Record<(typeof LEAD_INTERESTS)[number], string> = {
+  WORK: 'İş vizası',
+  AUSBILDUNG: 'Ausbildung',
+  STUDY: 'Təhsil',
+  CHANCENKARTE: 'Chancenkarte',
+  FAMILY: 'Ailə birləşməsi',
+  RECOGNITION: 'Diplomun tanınması',
+  OTHER: 'Digər',
+};
+
+/** Per agent (not per IP: agents often share an office network). */
+const leadLimiter = limiter({ windowMs: 60 * 60 * 1000, limit: 20, keyGenerator: (req) => `agent-lead:${req.user?.id ?? req.ip}` });
+
+const leadInput = z.object({
+  name: z.string().trim().min(2).max(120),
+  phone: z.string().trim().min(5).max(40).refine((v) => /^\+?[0-9 ()-]{5,40}$/.test(v), 'INVALID_PHONE'),
+  email: z.string().trim().toLowerCase().email().max(200),
+  country: z.string().trim().min(2).max(80),
+  interest: z.enum(LEAD_INTERESTS),
+  message: z.string().trim().max(3000).optional().default(''),
+  locale: z.enum(['az', 'de', 'en', 'ru']).optional(),
+  // The person agreed to be contacted by Triad Vision (the agent confirms it; required).
+  consent: z.literal(true),
+});
+
+/** Status as the agent sees it (no staff notes, no assignee). ARCHIVED counts as done. */
+const leadStatus = (s: string) => (s === 'NEW' ? 'NEW' : s === 'IN_PROGRESS' ? 'IN_PROGRESS' : 'DONE');
+
+agentPortalRouter.post('/leads', leadLimiter, async (req, res) => {
+  const body = parse(leadInput, req.body);
+  const agent = await agentOf(req);
+  if (agent.status !== 'ACTIVE') throw forbidden('AGENT_PAUSED');
+  // The same person twice within a day by the same agent is a double click, not a new lead.
+  const dup = await prisma.inquiry.findFirst({
+    where: { agentId: agent.id, email: body.email, createdAt: { gt: new Date(Date.now() - 24 * 60 * 60 * 1000) } },
+    select: { id: true },
+  });
+  if (dup) throw conflict('DUPLICATE_LEAD');
+  const me = await prisma.user.findUniqueOrThrow({ where: { id: req.user!.id }, select: { firstName: true, lastName: true, locale: true } });
+  // An agent login that is also a referral partner: the lead counts for that partner too.
+  const partner = await prisma.referralPartner.findUnique({ where: { userId: req.user!.id }, select: { id: true } });
+  const message = [
+    `Agent: ${me.firstName} ${me.lastName} (${agent.code})`,
+    `Ölkə: ${body.country}`,
+    `Maraq: ${INTEREST_AZ[body.interest]}`,
+    'Razılıq: şəxs Triad Vision ilə əlaqə saxlanılmasına razıdır (agent təsdiqləyib).',
+    body.message ? `\n${body.message}` : null,
+  ]
+    .filter((l) => l !== null)
+    .join('\n');
+  const inquiry = await prisma.inquiry.create({
+    data: {
+      kind: 'contact',
+      contactName: body.name,
+      email: body.email,
+      phone: body.phone,
+      sector: INTEREST_AZ[body.interest],
+      message,
+      locale: body.locale ?? me.locale,
+      source: `agent:${agent.id}`,
+      agentId: agent.id,
+      partnerId: partner?.id ?? null,
+    },
+  });
+  await audit(req, 'AGENT_LEAD_CREATED', `inquiry:${inquiry.id}`, { agentId: agent.id, consent: true, interest: body.interest });
+  void onInquiryCreated(inquiry.id); // automation rules + optional auto-assignment (never throws)
+  await notifyStaff(`Agentdən yeni lead: ${body.name}`, `${message}\n\nAd: ${body.name}\nEmail: ${body.email}\nTelefon: ${body.phone}`, { link: '/admin/inquiries', type: 'AGENT_LEAD' });
+  await attachLeadContext(inquiry.id); // lead score (never throws)
+  res.status(201).json({ lead: { id: inquiry.id, name: inquiry.contactName, status: 'NEW', converted: false, createdAt: inquiry.createdAt } });
+});
+
+agentPortalRouter.get('/leads', async (req, res) => {
+  const agent = await agentOf(req);
+  const q = parse(z.object({ page: z.coerce.number().int().min(1).max(1000).default(1) }), req.query);
+  const pageSize = 50;
+  const where: Prisma.InquiryWhereInput = { agentId: agent.id };
+  const [rows, total] = await Promise.all([
+    prisma.inquiry.findMany({
+      where,
+      orderBy: { createdAt: 'desc' },
+      skip: (q.page - 1) * pageSize,
+      take: pageSize,
+      // Never staffNotes, assignee or scoring: the agent sees what they entered and how far it got.
+      select: { id: true, contactName: true, email: true, phone: true, sector: true, status: true, createdAt: true, convertedAt: true, convertedUserId: true, convertedCompanyId: true, anonymizedAt: true },
+    }),
+    prisma.inquiry.count({ where }),
+  ]);
+  res.json({
+    items: rows.map((r) => ({
+      id: r.id,
+      name: r.anonymizedAt ? null : r.contactName,
+      email: r.anonymizedAt ? null : r.email,
+      phone: r.anonymizedAt ? null : r.phone,
+      interest: r.sector,
+      status: leadStatus(r.status),
+      converted: !!(r.convertedAt || r.convertedUserId || r.convertedCompanyId),
+      createdAt: r.createdAt,
     })),
     total,
     pageSize,

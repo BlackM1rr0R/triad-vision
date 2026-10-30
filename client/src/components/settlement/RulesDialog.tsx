@@ -5,6 +5,7 @@ import { Plus, Save, Trash2 } from 'lucide-react';
 import { api, errorCode } from '@/lib/api';
 import { Modal } from './Modal';
 import { RULES, type Beneficiary, type Currency, type Rule } from './types';
+import { confirmDialog } from '@/components/ui/ConfirmHost';
 
 interface Draft {
   id?: string;
@@ -68,8 +69,7 @@ export const RulesDialog = ({ beneficiaries, rate, canManage, onClose, onSaved }
 
   const remove = async (i: number) => {
     const d = rows[i]!;
-    // TODO(ui): ConfirmDialog
-    if (d.id && !window.confirm(t('settlement.rules.confirmDelete', { name: d.name }))) return;
+    if (d.id && !(await confirmDialog({ message: t('settlement.rules.confirmDelete', { name: d.name }), confirmLabel: t('ui.confirmDlg.delete') }))) return;
     try {
       if (d.id) await api.delete(`/admin/settlements/beneficiaries/${d.id}`);
       setRows((r) => r.filter((_, j) => j !== i));

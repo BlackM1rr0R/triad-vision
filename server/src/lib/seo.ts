@@ -22,6 +22,7 @@ import { getCaseAiSettings } from './ai/features/caseAi/config.js';
 import { compareContent, currentThresholds, type CompareThresholds } from './compare/visaCompare.js';
 import { occupationByCode } from './jobFeeds/occupations.js';
 import { vacancyImagesOf } from './vacancyImages.js';
+import { companyLogoOf } from './publicImages.js';
 
 /*
  * SEO for a client-rendered SPA.
@@ -216,7 +217,8 @@ export interface SeoData {
     closesAt: Date | null;
     createdAt: Date;
     updatedAt: Date;
-    company: { name: string; website: string | null } | null;
+    /** logo: Company.logo JSON ({ url, w?, h? }); optional for older fixtures. */
+    company: { name: string; website: string | null; logo?: unknown } | null;
     /** Optional so older fixtures stay valid: Google for Jobs extras (experience, KldB code, postal code). */
     minExperience?: number | null;
     distribution?: { occupationCode: string | null; postalCode: string | null } | null;
@@ -309,7 +311,7 @@ const loadSeoData = async (): Promise<SeoData> => {
         closesAt: true,
         createdAt: true,
         updatedAt: true,
-        company: { select: { name: true, website: true } },
+        company: { select: { name: true, website: true, logo: true } },
         minExperience: true,
         distribution: { select: { occupationCode: true, postalCode: true } }, // job feeds (lib/jobFeeds)
         images: true, // cover = first (lib/vacancyImages.ts)
@@ -560,6 +562,12 @@ export const JOB_LABELS: Record<SeoLocale, { requirements: string; benefits: str
   uk: { requirements: 'Вимоги', benefits: 'Ми пропонуємо' },
 };
 
+/** Absolute URL of an employer logo (Company.logo JSON), or null. */
+const companyLogoUrl = (logo: unknown) => {
+  const l = companyLogoOf(logo);
+  return l ? absoluteImage(l.url) : null;
+};
+
 /** Absolute URLs of a vacancy's photos (cover first). */
 export const jobImageUrls = (job: { images?: unknown }) =>
   vacancyImagesOf(job.images)
@@ -579,6 +587,7 @@ export const jobPostingLd = (job: SeoData['jobs'][number], lng: SeoLocale, url: 
           '@type': 'Organization',
           name: job.company.name,
           ...(isHttpUrl(job.company.website) ? { sameAs: job.company.website } : {}),
+          ...(companyLogoUrl(job.company.logo) ? { logo: companyLogoUrl(job.company.logo) } : {}),
         }
       : { '@type': 'Organization', name: SITE_NAME, sameAs: `${origin}/`, logo: `${origin}/logo-512.png` };
   const ld: Record<string, unknown> = {

@@ -16,6 +16,7 @@ import { Spinner } from '@/components/ui/Spinner';
 import { fmtDateTime, fmtRelative, fullName, toastError } from '@/components/admin/labels';
 import { Chip, EmptyState, ErrorBlock, LoadingBlock, PageHead, Panel, StatTile } from '@/components/admin/ui';
 import { TabPanel, Tabs } from '@/components/ui/Tabs';
+import { confirmDialog } from '@/components/ui/ConfirmHost';
 
 registerCopy(pagesMessaging);
 
@@ -501,10 +502,9 @@ const TemplatesTab = () => {
     return () => window.removeEventListener('beforeunload', onBeforeUnload);
   }, [dirty]);
 
-  const select = (type: string) => {
+  const select = async (type: string) => {
     if (type === selected) return;
-    // TODO(ui): ConfirmDialog
-    if (dirty && !window.confirm(t('messaging.admin.templates.unsavedLeave'))) return;
+    if (dirty && !(await confirmDialog({ title: t('ui.confirmDlg.unsavedTitle'), message: t('messaging.admin.templates.unsavedLeave'), confirmLabel: t('ui.confirmDlg.discard') }))) return;
     setSelected(type);
     setDraft(null);
   };
@@ -701,10 +701,9 @@ const TemplatesTab = () => {
                           type="button"
                           className="btn-secondary btn-sm"
                           disabled={save.isPending}
-                          onClick={() => {
+                          onClick={async () => {
                             if (loc.override) {
-                              // TODO(ui): ConfirmDialog
-                              if (!window.confirm(t('messaging.admin.templates.resetConfirm', { locale: l.toUpperCase() }))) return;
+                              if (!(await confirmDialog({ message: t('messaging.admin.templates.resetConfirm', { locale: l.toUpperCase() }), confirmLabel: t('ui.confirmDlg.reset') }))) return;
                               save.mutate({ locale: l, title: '', body: '' });
                             } else {
                               setDraft((x) => x && { ...x, [l]: { title: '', body: '' } });

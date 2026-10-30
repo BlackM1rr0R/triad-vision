@@ -16,6 +16,7 @@ import { Tabs } from '@/components/ui/Tabs';
 import { TONE_CLASS, TONE_TEXT } from '@/components/ui/status';
 import { SHIFT_KINDS, addDays, bakuDay, dayDate, hhmm, mondayOf, parseHhmm, useShiftCalendar, type CalendarData, type CoverageConfig, type Shift, type ShiftKind } from './api';
 import { toastTeamError } from './shared';
+import { confirmDialog } from '@/components/ui/ConfirmHost';
 
 registerCopy(pagesTeam);
 
@@ -96,7 +97,13 @@ const ShiftDialog = ({ open, onClose, people, initial, onSaved }: { open: boolea
       footer={
         <>
           {initial.id && (
-            <button type="button" className="btn-secondary btn-sm mr-auto text-danger-fg" onClick={() => remove.mutate()}>
+            <button
+              type="button"
+              className="btn-secondary btn-sm mr-auto text-danger-fg"
+              onClick={async () =>
+                (await confirmDialog({ message: t('ui.confirmDlg.deleteNamed', { name: `${name(people.find((p) => p.id === initial.userId))} · ${initial.date} ${hhmm(initial.startMin ?? 540)}–${hhmm(initial.endMin ?? 1080)}` }), confirmLabel: t('ui.confirmDlg.delete') })) && remove.mutate()
+              }
+            >
               <Trash2 className="size-3.5" /> {t('team.common.delete')}
             </button>
           )}

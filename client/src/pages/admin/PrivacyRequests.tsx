@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import clsx from 'clsx';
-import { AlertTriangle, ArrowLeft, Clock, FileText, Inbox, ListChecks, Search, ShieldHalf, Trash2, UserRound } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, Clock, Download, Eraser, FileText, Inbox, ListChecks, MessageSquareText, Search, ShieldHalf, Trash2, UserRound } from 'lucide-react';
 import { api, errorCode } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { registerCopy } from '@/i18n';
@@ -14,6 +14,7 @@ import { Spinner } from '@/components/ui/Spinner';
 import { Modal } from '@/components/admin/Modal';
 import { Chip, DefRow, EmptyState, ErrorBlock, LoadingBlock, PageHead, Panel, StatTile } from '@/components/admin/ui';
 import { Tabs } from '@/components/ui/Tabs';
+import { confirmDialog } from '@/components/ui/ConfirmHost';
 import { fmtDate, fmtDateTime, fullName } from '@/components/admin/labels';
 import {
   REQUEST_STATUSES,
@@ -283,6 +284,84 @@ const DeletionPanel = ({ detail }: { detail: AdminRequestDetail }) => {
   );
 };
 
+// ─── Website enquiries (leads) of the person ───────────────────────────
+
+/** Leads sent with the request's e-mail: download them (Art. 15) or anonymise them (Art. 17). */
+const InquiriesPanel = ({ detail }: { detail: AdminRequestDetail }) => {
+  const { t } = useTranslation();
+  const qc = useQueryClient();
+  const onError = useAdminError();
+  const rows = detail.inquiries ?? [];
+  const person = { email: detail.item.email, userId: detail.subject?.id };
+  const download = useMutation({
+    mutationFn: async () => {
+      const params = new URLSearchParams({ email: person.email });
+      if (person.userId) params.set('userId', person.userId);
+      return (await api.get(`/admin/privacy/inquiries?${params.toString()}`)).data as unknown;
+    },
+    onSuccess: (json) => {
+      const url = URL.createObjectURL(new Blob([JSON.stringify(json, null, 2)], { type: 'application/json' }));
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `inquiries-${new Date().toISOString().slice(0, 10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    },
+    onError,
+  });
+  const erase = useMutation({
+    mutationFn: async () => (await api.post<{ anonymized: number }>('/admin/privacy/inquiries/erase', { ...person, requestId: detail.item.id })).data,
+    onSuccess: (r) => {
+      toast.success(t('privacy.admin.inquiries.erased', { count: r.anonymized }));
+      void qc.invalidateQueries({ queryKey: ['admin-privacy-request', detail.item.id] });
+    },
+    onError,
+  });
+  return (
+    <Panel title={t('privacy.admin.inquiries.title')} icon={MessageSquareText}>
+      {rows.length === 0 ? (
+        <p className="text-sm text-muted">{t('privacy.admin.inquiries.none')}</p>
+      ) : (
+        <>
+          <ul className="mb-3 space-y-1.5">
+            {rows.map((i) => (
+              <li key={i.id} className="flex items-baseline justify-between gap-2 text-xs">
+                <span className="min-w-0 truncate text-ink">
+                  {i.companyName ? `${i.companyName} · ` : ''}
+                  {i.contactName} <span className="text-muted">({i.kind})</span>
+                </span>
+                <span className="shrink-0 text-muted">{fmtDate(i.createdAt)}</span>
+              </li>
+            ))}
+          </ul>
+          <div className="flex flex-wrap gap-2">
+            <button type="button" className="btn-secondary btn-sm min-h-10" disabled={download.isPending} onClick={() => download.mutate()}>
+              {download.isPending ? <Spinner className="size-3.5" /> : <Download className="size-3.5" aria-hidden />} {t('privacy.admin.inquiries.export')}
+            </button>
+            <button
+              type="button"
+              className="btn-danger btn-sm min-h-10"
+              disabled={erase.isPending}
+              onClick={async () => {
+                if (
+                  await confirmDialog({
+                    title: t('privacy.admin.inquiries.eraseConfirm', { count: rows.length }),
+                    message: t('privacy.admin.inquiries.eraseHint'),
+                    confirmLabel: t('privacy.admin.inquiries.erase'),
+                  })
+                )
+                  erase.mutate();
+              }}
+            >
+              {erase.isPending ? <Spinner className="size-3.5" /> : <Eraser className="size-3.5" aria-hidden />} {t('privacy.admin.inquiries.erase')}
+            </button>
+          </div>
+        </>
+      )}
+    </Panel>
+  );
+};
+
 // ─── Request detail ────────────────────────────────────────────────────
 
 const RequestDetail = () => {
@@ -414,6 +493,8 @@ const RequestDetail = () => {
               </dl>
             </Panel>
           )}
+
+          <InquiriesPanel detail={data} />
 
           {data.otherRequests.length > 0 && (
             <Panel title={t('privacy.admin.other')} icon={Inbox}>

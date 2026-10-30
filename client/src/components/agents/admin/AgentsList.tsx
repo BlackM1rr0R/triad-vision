@@ -8,9 +8,14 @@ import { Chip, EmptyState, ErrorBlock, LoadingBlock, Panel } from '@/components/
 import type { AdminAgent, AgentStatus } from '../types';
 import { money, percent } from '../format';
 import { CreateAgentDialog } from './CreateAgentDialog';
+import { Pagination } from '@/components/ui/Pagination';
+
+const PAGE_SIZE = 50;
 
 interface ListResp {
   items: AdminAgent[];
+  total: number;
+  page: number;
   counts: Partial<Record<AgentStatus, number>>;
 }
 
@@ -22,9 +27,10 @@ export const AgentsList = () => {
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState<AgentStatus | ''>('');
   const [creating, setCreating] = useState(false);
+  const [page, setPage] = useState(1); // server paging; filters reset it
   const q = useQuery({
-    queryKey: ['admin-agents', 'list', search.trim(), status],
-    queryFn: async () => (await api.get<ListResp>('/admin/agents', { params: { search: search.trim() || undefined, status: status || undefined } })).data,
+    queryKey: ['admin-agents', 'list', search.trim(), status, page],
+    queryFn: async () => (await api.get<ListResp>('/admin/agents', { params: { search: search.trim() || undefined, status: status || undefined, page, pageSize: PAGE_SIZE } })).data,
     placeholderData: keepPreviousData,
   });
   const counts = q.data?.counts ?? {};
@@ -48,13 +54,22 @@ export const AgentsList = () => {
         <div className="flex flex-wrap items-center gap-2 border-b border-line px-5 py-3 sm:px-6">
           <div className="relative min-w-0 flex-1 sm:max-w-xs">
             <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted" aria-hidden />
-            <input className="input pl-9" type="search" value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t('agents.admin.search')} aria-label={t('agents.admin.search')} />
+            <input className="input pl-9" type="search" value={search} onChange={(e) => {
+                setSearch(e.target.value);
+                setPage(1);
+              }} placeholder={t('agents.admin.search')} aria-label={t('agents.admin.search')} />
           </div>
-          <Chip active={status === ''} onClick={() => setStatus('')} count={total}>
+          <Chip active={status === ''} onClick={() => {
+              setStatus('');
+              setPage(1);
+            }} count={total}>
             {t('agents.common.all')}
           </Chip>
           {(['ACTIVE', 'PAUSED'] as const).map((s) => (
-            <Chip key={s} active={status === s} onClick={() => setStatus(s)} count={counts[s] ?? 0}>
+            <Chip key={s} active={status === s} onClick={() => {
+                setStatus(s);
+                setPage(1);
+              }} count={counts[s] ?? 0}>
               {t(`agents.agentStatus.${s}`)}
             </Chip>
           ))}
@@ -109,6 +124,7 @@ export const AgentsList = () => {
                 ))}
               </tbody>
             </table>
+            <Pagination className="border-t border-line px-5 py-3 sm:px-6" page={q.data.page ?? page} pages={Math.max(1, Math.ceil((q.data.total ?? 0) / PAGE_SIZE))} total={q.data.total} pageSize={PAGE_SIZE} onChange={setPage} />
           </div>
         )}
       </Panel>

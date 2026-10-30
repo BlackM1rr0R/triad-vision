@@ -119,7 +119,7 @@ export default function VisaDetail() {
 
   return (
     <>
-      <PageHero title={tr(data.title)} subtitle={tr(data.summary)} image={data.image.replace('w=1200', 'w=2000')} crumb={{ to: '/visas', label: t('nav.visas') }} morph={{ kind: 'visa', id: data.slug }}>
+      <PageHero title={tr(data.title)} subtitle={tr(data.summary)} image={data.image.replace('w=1200', 'w=2000')} imageAlt={tr(data.title)} crumb={{ to: '/visas', label: t('nav.visas') }} morph={{ kind: 'visa', id: data.slug }}>
         <div className="mt-6 flex flex-wrap items-center gap-2">
           <span className="inline-flex items-center gap-2 rounded-full border border-line bg-card px-4 py-2 text-sm font-semibold text-ink shadow-[var(--tv-shadow-card)]">
             <Icon name={data.icon} className="size-4" /> {data.visaLabel}
@@ -255,7 +255,7 @@ export default function VisaDetail() {
             <Reveal y={24}>
               <div className="card overflow-hidden">
                 <div className="relative h-40">
-                  <img src={sized(data.image, 760)} alt="" loading="lazy" decoding="async" width={760} height={320} className="size-full object-cover" />
+                  <img src={sized(data.image, 760)} alt={tr(data.title)} loading="lazy" decoding="async" width={760} height={320} className="size-full object-cover" />
                   <span className="absolute bottom-3 left-4 rounded-full border border-line bg-card px-2.5 py-1 text-xs font-semibold text-ink shadow-[var(--tv-shadow-card)]">{data.visaLabel}</span>
                 </div>
                 <div className="card-pad">

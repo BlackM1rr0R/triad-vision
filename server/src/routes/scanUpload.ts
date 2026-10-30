@@ -8,7 +8,7 @@ import { z } from 'zod';
 import { config } from '../config.js';
 import { isStaff, requireAuth } from '../middleware/auth.js';
 import { audit } from '../lib/audit.js';
-import { badRequest, HttpError, parse } from '../lib/http.js';
+import { badRequest, HttpError, limiter, parse } from '../lib/http.js';
 import { FileCheckError, verifyStoredFile } from '../lib/fileCheck.js';
 import { buildScanPdf, SCAN_IMAGE_MIME, SCAN_MAX_PAGES, SCAN_MAX_PDF_BYTES, ScanImageError } from '../lib/scan/pdf.js';
 import { scheduleAiDocCheck } from '../lib/aiDocs/docCheck.js';
@@ -92,6 +92,50 @@ scanUploadRouter.post('/:caseId/documents/scan', receivePages, async (req, res) 
     res.status(201).json({ ...result, pages: pages.length, quality, photoCheck });
     if (!target.asStaff) scheduleAiDocCheck(result.document.id); // AI check of client scans (checks.ai)
     scheduleUploadAnalysis({ documentId: result.document.id }); // recognition + proposals, in the background
+  } finally {
+    await Promise.all(files.map((f) => fs.unlink(f.path).catch(() => undefined)));
+  }
+});
+
+/**
+ * POST /api/scan/pdf — the camera scanner's pages (multipart `pages`, ≤ 20 JPEG/PNG, in order) as ONE PDF in the
+ * response, stored nowhere. Lets every upload spot that takes a PDF (vault, housing, translations, job
+ * applications) reuse the scanner: the browser sends the returned PDF through that spot's normal upload.
+ * Any signed-in user; rate-limited per account.
+ */
+export const scanPdfRouter = Router();
+scanPdfRouter.use(requireAuth);
+
+const scanPdfLimiter = limiter({ windowMs: 10 * 60 * 1000, limit: 30, keyGenerator: (req) => `scan-pdf:${req.user?.id ?? req.ip}` });
+
+scanPdfRouter.post('/pdf', scanPdfLimiter, receivePages, async (req, res) => {
+  const files = (req.files as Express.Multer.File[] | undefined) ?? [];
+  try {
+    if (!files.length) throw badRequest('PAGES_REQUIRED');
+    const body = parse(z.object({ name: z.string().trim().max(180).optional() }), req.body);
+    const pages: { data: Buffer; mime: string }[] = [];
+    for (const f of files) {
+      try {
+        await verifyStoredFile(f.path, f.mimetype);
+      } catch (err) {
+        if (err instanceof FileCheckError) throw badRequest(err.code);
+        throw err;
+      }
+      pages.push({ data: await fs.readFile(f.path), mime: f.mimetype });
+    }
+    let pdf: Buffer;
+    try {
+      pdf = await buildScanPdf(pages, { title: body.name });
+    } catch (err) {
+      if (err instanceof ScanImageError) throw badRequest('INVALID_IMAGE', err.message);
+      throw err;
+    }
+    if (pdf.length > SCAN_MAX_PDF_BYTES) throw new HttpError(413, 'SCAN_TOO_LARGE');
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${scanFileName(body.name).replace(/[^\w.-]/g, '_')}"`);
+    res.setHeader('X-Scan-Pages', String(pages.length));
+    res.setHeader('Cache-Control', 'private, no-store');
+    res.send(pdf);
   } finally {
     await Promise.all(files.map((f) => fs.unlink(f.path).catch(() => undefined)));
   }

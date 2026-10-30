@@ -12,6 +12,7 @@ import { Modal } from '@/components/admin/Modal';
 import { fmtDate } from '@/components/admin/labels';
 import { caseKey } from '@/components/admin/case/shared';
 import { cpKeys, STATE_TONE, useCpError, type StaffTaskView, type TaskTemplate } from './api';
+import { confirmDialog } from '@/components/ui/ConfirmHost';
 
 const ymd = (d: Date) => new Date(d.getTime() + 4 * 3600 * 1000).toISOString().slice(0, 10);
 
@@ -241,9 +242,8 @@ export const AdminCaseTasks = ({ c }: { c: CaseDetail }) => {
                   type="button"
                   className="btn-secondary btn-sm text-danger-fg"
                   aria-label={t('cp.tasks.delete')}
-                  onClick={() => {
-                    // TODO(ui): ConfirmDialog
-                    if (window.confirm(t('cp.tasks.deleteConfirm'))) remove.mutate(task.id);
+                  onClick={async () => {
+                    if (await confirmDialog({ title: t('cp.tasks.deleteConfirm'), message: task.rawTitle, confirmLabel: t('ui.confirmDlg.delete') })) remove.mutate(task.id);
                   }}
                 >
                   <Trash2 className="size-3.5" aria-hidden />

@@ -11,6 +11,7 @@ import { pagesSettlementImport } from '@/i18n/pagesSettlementImport';
 import { Modal as UiModal } from '@/components/ui/Modal';
 import { STAGE_CHIP } from './money';
 import { STAGES, type Stage } from './types';
+import { confirmDialog } from '@/components/ui/ConfirmHost';
 
 registerCopy(pagesSettlementImport);
 
@@ -249,7 +250,7 @@ export const RowImportDialog = ({ onClose, onDone }: { onClose: () => void; onDo
   };
 
   const undo = async (b: Batch) => {
-    if (!window.confirm(t('settlementImport.undoConfirm', { count: b.remaining }))) return;
+    if (!(await confirmDialog({ message: t('settlementImport.undoConfirm', { count: b.remaining }), confirmLabel: t('ui.confirmDlg.undo') }))) return;
     setBusy(true);
     try {
       const { data } = await api.delete<{ deleted: number }>(`/admin/settlements/import/batches/${b.id}`);

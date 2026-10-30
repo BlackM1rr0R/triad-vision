@@ -52,6 +52,19 @@ describe('saved views', () => {
     expect(await prisma.auditLog.count({ where: { action: 'SAVED_VIEW_SHARED', target: `view:${v.id}` } })).toBe(1);
   });
 
+  it('team views saved by several colleagues at the same moment are all kept (no lost update)', async () => {
+    const staff = await Promise.all([asStaff(), asStaff(), asStaff(), asStaff(), asStaff()]);
+    const before = expectStatus(await staff[0].agent.get('/api/admin/me/saved-views'), 200).body.views.filter((v: { shared: boolean }) => v.shared).length;
+    const created = await Promise.all(staff.map((s, i) => s.agent.post('/api/admin/me/saved-views').send(viewBody({ shared: true, pinned: true, name: `Paralel ${i}` }))));
+    for (const r of created) expect(r.status).toBe(201);
+    const team = expectStatus(await staff[0].agent.get('/api/admin/me/saved-views'), 200).body.views.filter((v: { shared: boolean }) => v.shared);
+    expect(team.length).toBe(before + staff.length);
+    // Each owner deletes their own at once: none survives, none is resurrected.
+    await Promise.all(created.map((r, i) => staff[i].agent.delete(`/api/admin/me/saved-views/${r.body.view.id}`)));
+    const after = expectStatus(await staff[0].agent.get('/api/admin/me/saved-views'), 200).body.views.filter((v: { shared: boolean }) => v.shared);
+    expect(after.length).toBe(before);
+  });
+
   it('validates input, needs staff, and stays out of the generic settings listing', async () => {
     const staff = await asStaff();
     expect((await staff.agent.post('/api/admin/me/saved-views').send(viewBody({ page: 'users' }))).status).toBe(400);
@@ -146,6 +159,35 @@ describe('bulk actions: cases', () => {
     expect(r).toMatchObject({ total: 2, capped: false, statuses: { DOCUMENTS_PENDING: 2 } });
     expect(r.actions).toEqual(['CANCEL']);
     expect((await staff.agent.post('/api/admin/bulk/cases/resolve').send({ ids: [lkw[0].id], all: {} })).status).toBe(400);
+  });
+
+  it('"all matching" honours the overdue chip (3+ days in the current status), as the list does', async () => {
+    const staff = await asStaff();
+    const [fresh, old, reentered] = await seedCases(3, uniq('Overdue'));
+    const days = (n: number) => new Date(Date.now() - n * 24 * 60 * 60 * 1000);
+    // Created 10 days ago, never changed status → overdue.
+    await prisma.$executeRaw`UPDATE \`Case\` SET createdAt = ${days(10)} WHERE id = ${old.id}`;
+    await prisma.caseEvent.updateMany({ where: { caseId: { in: [old.id, reentered.id] } }, data: { createdAt: days(10) } });
+    // Created 10 days ago but entered its current status yesterday → not overdue.
+    await prisma.$executeRaw`UPDATE \`Case\` SET createdAt = ${days(10)} WHERE id = ${reentered.id}`;
+    await prisma.caseEvent.create({ data: { caseId: reentered.id, type: 'STATUS_CHANGED', toStatus: 'DOCUMENTS_PENDING', visibleToClient: false, createdAt: days(1) } });
+    const profession = (await prisma.case.findUniqueOrThrow({ where: { id: fresh.id } })).profession;
+    const r = expectStatus(await staff.agent.post('/api/admin/bulk/cases/resolve').send({ all: { search: profession, overdue: '1' } }), 200).body;
+    expect(r.ids).toEqual([old.id]);
+    const list = expectStatus(await staff.agent.get('/api/admin/cases').query({ search: profession, overdue: '1' }), 200).body;
+    expect(list.items.map((c: { id: string }) => c.id)).toEqual([old.id]);
+    expect(list.items[0].daysInStatus).toBeGreaterThanOrEqual(3);
+    expect(list.total).toBe(1);
+  });
+
+  it('undo of a bulk assignment refuses a staff member deactivated meanwhile', async () => {
+    const staff = await asStaff();
+    const gone = await asStaff();
+    const [c] = await seedCases(1);
+    await prisma.user.update({ where: { id: gone.user.id }, data: { isActive: false } });
+    const res = expectStatus(await staff.agent.post('/api/admin/bulk/cases/restore-assign').send({ items: [{ id: c.id, staffId: gone.user.id }] }), 200).body;
+    expect(res).toMatchObject({ ok: 0, failed: 1 });
+    expect((await prisma.case.findUniqueOrThrow({ where: { id: c.id } })).assignedStaffId).toBeNull();
   });
 
   it('status: only transitions valid for every case; per-item results; reopen undoes a cancellation', async () => {
@@ -250,6 +292,24 @@ describe('bulk actions: inquiries and candidates', () => {
 
     const all = expectStatus(await staff.agent.post('/api/admin/bulk/candidates/resolve').send({ all: { hasCase: 'true' } }), 200).body;
     expect(all.ids).toEqual([withCase.user.id]);
+  });
+
+  it('candidates "all matching" with a vacancy takes the match ranking of the list', async () => {
+    const staff = await asStaff();
+    const tag = uniq('Rank');
+    const good = await asClient({ firstName: 'Kamran' });
+    const weak = await asClient({ firstName: 'Tural' });
+    // The well-matching candidate registered first: by date it would come last.
+    await prisma.user.update({ where: { id: good.user.id }, data: { city: tag, profession: 'Berufskraftfahrer', germanLevel: 'B1', experienceYears: 8, drivingLicence: 'CE', createdAt: new Date(Date.now() - 60_000) } });
+    await prisma.user.update({ where: { id: weak.user.id }, data: { city: tag, profession: 'Aşpaz', germanLevel: null, experienceYears: 0 } });
+    const vacancy = await prisma.vacancy.create({
+      data: { slug: uniq('job-'), title: { az: 'Sürücü', de: 'Fahrer', en: 'Driver', ru: 'Водитель' }, description: { az: 'x', de: 'x', en: 'x', ru: 'x' }, status: 'OPEN', profession: 'Berufskraftfahrer', germanLevel: 'A2', minExperience: 2, drivingLicence: 'CE' },
+    });
+    const list = expectStatus(await staff.agent.get('/api/admin/candidates').query({ city: tag, vacancyId: vacancy.id }), 200).body;
+    const r = expectStatus(await staff.agent.post('/api/admin/bulk/candidates/resolve').send({ all: { city: tag, vacancyId: vacancy.id } }), 200).body;
+    expect(list.items.map((i: { id: string }) => i.id)).toEqual([good.user.id, weak.user.id]);
+    expect(r.ids).toEqual([good.user.id, weak.user.id]);
+    expect((await staff.agent.post('/api/admin/bulk/candidates/resolve').send({ all: { city: tag, vacancyId: 'missing' } })).status).toBe(400);
   });
 });
 

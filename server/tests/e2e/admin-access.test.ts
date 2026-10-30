@@ -112,6 +112,8 @@ describe('/api/admin/inquiries', () => {
     expect(res.status).toBe(200);
     expect(res.body.item.status).toBe('IN_PROGRESS');
     expect((await prisma.inquiry.findUniqueOrThrow({ where: { id: older.id } })).status).toBe('IN_PROGRESS');
+    // The change is in the audit log.
+    expect(await prisma.auditLog.findFirst({ where: { action: 'INQUIRY_STATUS_CHANGED', target: older.id } })).toMatchObject({ details: { status: 'IN_PROGRESS' } });
   });
 
   it('validates the status and 404s unknown inquiries', async () => {

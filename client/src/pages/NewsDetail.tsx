@@ -54,7 +54,7 @@ export default function NewsDetail() {
 
   return (
     <>
-      <PageHero title={tr(data.title)} image={data.cover.replace('w=1200', 'w=2000')} crumb={{ to: '/news', label: t('nav.news') }}>
+      <PageHero title={tr(data.title)} image={data.cover.replace('w=1200', 'w=2000')} imageAlt={tr(data.title)} crumb={{ to: '/news', label: t('nav.news') }}>
         <div className="mt-6 flex flex-wrap gap-x-5 gap-y-2 text-sm text-muted">
           <span className="flex items-center gap-1.5"><Calendar className="size-4" /> {date(data.publishedAt, { dateStyle: 'long' })}</span>
           <span className="flex items-center gap-1.5"><Clock className="size-4" /> {minutes} {t('common.minRead')}</span>
