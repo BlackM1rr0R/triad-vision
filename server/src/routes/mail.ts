@@ -23,6 +23,7 @@ import {
   enqueueRemote,
   ensureRoleFolder,
   folderDto,
+  isAuthBlocked,
   isLocalFolder,
   labelDto,
   loadOwnAccount,
@@ -177,6 +178,12 @@ mailRouter.patch('/accounts/:id', async (req, res) => {
     if (body[k] !== undefined) (data as Record<string, unknown>)[k] = body[k];
   }
   if (body.password !== undefined) data.passwordEnc = seal(body.password);
+  // A refused login is retried again once the login itself changes.
+  const loginChanged = (['password', 'username', 'imapHost', 'imapPort', 'imapSecure'] as const).some((k) => body[k] !== undefined);
+  if (loginChanged && isAuthBlocked(account)) {
+    data.syncStatus = 'IDLE';
+    data.syncError = null;
+  }
   if (body.signatureHtml !== undefined) data.signatureHtml = body.signatureHtml ? sanitizeMailHtml(body.signatureHtml, { keepRemoteImages: true }) : null;
   if (body.isDefault !== undefined) data.isDefault = body.isDefault;
   const updated = await prisma.$transaction(async (tx) => {

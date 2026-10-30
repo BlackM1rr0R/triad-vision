@@ -1,7 +1,7 @@
 import crypto from 'node:crypto';
 import type { MailAccount } from '@prisma/client';
 import { prisma } from '../../db.js';
-import { imapConnectionOf } from './core.js';
+import { AUTH_FAILED_PREFIX, imapConnectionOf, isAuthBlocked, isImapAuthFailure } from './core.js';
 import { createImapWatch, type ImapChangeKind, type ImapWatch } from './imap.js';
 import { mailSettings } from './settings.js';
 import { syncMailbox, type FolderSyncResult } from './sync.js';
@@ -40,6 +40,8 @@ export interface IdleManagerOptions {
   listAccounts: () => Promise<MailAccount[]>;
   loadAccount: (accountId: string) => Promise<MailAccount | null>;
   sync: (accountId: string, path: string) => Promise<FolderSyncResult | unknown>;
+  /** the server refused the login: record it so neither IDLE nor the poll retries until the login changes */
+  markAuthFailed: (accountId: string, error: string) => Promise<unknown>;
   random: () => number;
   log: (msg: string) => void;
 }
@@ -51,9 +53,11 @@ export const defaultIdleOptions = (): IdleManagerOptions => ({
   backoffBaseMs: 2000,
   backoffMaxMs: 5 * 60 * 1000,
   stableMs: 60_000,
-  listAccounts: () => prisma.mailAccount.findMany({ where: { syncEnabled: true }, orderBy: [{ createdAt: 'asc' }, { id: 'asc' }] }),
+  listAccounts: async () =>
+    (await prisma.mailAccount.findMany({ where: { syncEnabled: true }, orderBy: [{ createdAt: 'asc' }, { id: 'asc' }] })).filter((a) => !isAuthBlocked(a)),
   loadAccount: (id) => prisma.mailAccount.findUnique({ where: { id } }),
   sync: (accountId, path) => syncMailbox(accountId, path),
+  markAuthFailed: (id, error) => prisma.mailAccount.update({ where: { id }, data: { syncStatus: 'ERROR', syncError: `${AUTH_FAILED_PREFIX}${error}`.slice(0, 500) } }),
   random: Math.random,
   log: (msg) => console.warn(msg),
 });
@@ -248,6 +252,13 @@ export class IdleManager {
     if (w.state === 'stopped') return;
     w.watch = null;
     w.lastError = errorText(err);
+    if (isImapAuthFailure(err)) {
+      // Retrying a wrong password gets our IP banned by the mail server, which then also stops our outgoing mail.
+      this.opts.log(`[mail-idle] account ${w.accountId}: login refused; not retried until the login changes`);
+      void this.opts.markAuthFailed(w.accountId, w.lastError).catch(() => undefined);
+      void this.stopWatcher(w);
+      return;
+    }
     const delay = backoffDelay(w.failures, this.opts.backoffBaseMs, this.opts.backoffMaxMs, this.opts.random);
     w.failures += 1;
     w.state = 'waiting';

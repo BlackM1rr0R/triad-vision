@@ -5,7 +5,7 @@ import type { MessageStructureObject } from 'imapflow';
 import { prisma } from '../../db.js';
 import { publish } from '../messaging/realtime.js';
 import { fromParsed } from './address.js';
-import { LOCAL_PREFIX, ROLE_ORDER, enqueueRemote, imapConnectionOf, isLocalFolder, recountFolders } from './core.js';
+import { AUTH_FAILED_PREFIX, LOCAL_PREFIX, ROLE_ORDER, enqueueRemote, imapConnectionOf, isAuthBlocked, isImapAuthFailure, isLocalFolder, recountFolders } from './core.js';
 import { leafParts, withImap, type ImapClient, type ImapFetched, type ImapFolder } from './imap.js';
 import { parseActions, ruleMatches } from './rules.js';
 import { htmlToText, sanitizeMailHtml, snippetOf } from './sanitize.js';
@@ -475,7 +475,8 @@ const doSync = async (accountId: string): Promise<SyncResult> => {
     });
     await prisma.mailAccount.update({ where: { id: accountId }, data: { syncStatus: 'OK', syncError: null, lastSyncAt: new Date() } });
   } catch (err) {
-    const error = errorText(err);
+    // A refused login is marked so the poll stops retrying it (see runMailSync) until the login changes.
+    const error = isImapAuthFailure(err) ? `${AUTH_FAILED_PREFIX}${errorText(err)}`.slice(0, 500) : errorText(err);
     await prisma.mailAccount.update({ where: { id: accountId }, data: { syncStatus: 'ERROR', syncError: error, lastSyncAt: new Date() } }).catch(() => undefined);
     publish(account.userId, 'mail.updated', { accountId, reason: 'sync-error', error });
     return { ok: false, error, newMessages: arrived.length, folders: folderCount };
@@ -566,9 +567,11 @@ export const syncMailbox = (accountId: string, path = 'INBOX'): Promise<FolderSy
  * (the job polls accounts kept current by IDLE less often).
  */
 export const runMailSync = async (opts: { due?: (a: { id: string; lastSyncAt: Date | null }) => boolean } = {}) => {
-  const accounts = await prisma.mailAccount.findMany({ where: { syncEnabled: true }, select: { id: true, lastSyncAt: true } });
+  const accounts = await prisma.mailAccount.findMany({ where: { syncEnabled: true }, select: { id: true, lastSyncAt: true, syncStatus: true, syncError: true } });
   for (const a of accounts) {
     if (isSyncing(a.id)) continue;
+    // Wrong password: polling it every minute gets our IP banned by the mail server. A manual sync still tries.
+    if (isAuthBlocked(a)) continue;
     if (opts.due && !opts.due(a)) continue;
     try {
       await syncAccount(a.id);

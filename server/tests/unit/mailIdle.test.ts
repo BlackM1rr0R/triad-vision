@@ -156,6 +156,30 @@ describe('mail idle: watcher', () => {
     expect(logs.join('\n')).not.toContain('app-password');
   });
 
+  it('a refused login is marked once and never retried, so the mail server does not ban our IP', async () => {
+    imap.credentials = { username: 'a1@example.az', password: 'other-password' };
+    const markAuthFailed = vi.fn<IdleManagerOptions['markAuthFailed']>(async () => undefined);
+    manager = make({ markAuthFailed });
+    await manager.start();
+    await tick();
+    const attempts = () => imap.log.filter((l) => l.op === 'idle').length;
+    expect(attempts()).toBe(1);
+    expect(markAuthFailed).toHaveBeenCalledTimes(1);
+    expect(markAuthFailed.mock.calls[0]![0]).toBe('a1');
+    expect(manager.isWatching('a1')).toBe(false);
+    expect(manager.status()).toHaveLength(0);
+    await tick(10 * 60_000);
+    expect(attempts()).toBe(1);
+    expect(logs.join('\n')).not.toContain('app-password');
+
+    // the password is fixed: the next reconcile connects again
+    imap.credentials = { username: 'a1@example.az', password: 'new-password' };
+    accounts = [account('a1', { passwordEnc: seal('new-password') })];
+    await manager.reconcile();
+    await tick();
+    expect(manager.isWatching('a1')).toBe(true);
+  });
+
   it('reconnects after a dropped connection and resets the backoff when it had been stable', async () => {
     manager = make();
     await manager.start();

@@ -40,6 +40,19 @@ export class MailCredentialsError extends HttpError {
   }
 }
 
+/** syncError prefix of an account whose IMAP login was refused: it is not retried until the login changes. */
+export const AUTH_FAILED_PREFIX = 'AUTH_FAILED: ';
+
+/** The server refused the login (wrong user or password). Retrying only gets our IP banned by the mail server. */
+export const isImapAuthFailure = (err: unknown) => {
+  const e = err as { authenticationFailed?: boolean; serverResponseCode?: string; responseText?: string; message?: string } | null;
+  if (!e) return false;
+  if (e.authenticationFailed || e.serverResponseCode === 'AUTHENTICATIONFAILED') return true;
+  return /AUTHENTICATIONFAILED/i.test(`${e.responseText ?? ''} ${e.message ?? ''}`);
+};
+
+export const isAuthBlocked = (a: { syncStatus: string; syncError: string | null }) => a.syncStatus === 'ERROR' && !!a.syncError?.startsWith(AUTH_FAILED_PREFIX);
+
 export const imapConnectionOf = (a: MailAccount): ImapConnection => {
   const password = open(a.passwordEnc);
   if (password === null) throw new MailCredentialsError();
