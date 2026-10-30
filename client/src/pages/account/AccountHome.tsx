@@ -16,6 +16,8 @@ import { pagesPortalNav } from '@/i18n/pagesPortalNav';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { NextWhileYouWait } from '@/components/waitingRoom/NextWhileYouWait'; // "Next while you wait" (waiting room)
 import { SuccessShareCard } from '@/components/portal/SuccessShareCard'; // visa approved: congratulations + share card (hideable)
+import { PermitExpiryCard } from '@/components/portal/PermitExpiryCard'; // after the visa: residence permit / Blue Card, insurance, passport validity
+import { PartnerSharingCard } from '@/components/portal/PartnerSharingCard'; // client of a referral partner: who it is + data-sharing consent
 import { NextStepCard } from './portal/NextStepCard';
 import { HomeProgress } from './portal/HomeProgress';
 import { caseHref } from './portal/useNextUp';
@@ -83,11 +85,14 @@ export default function AccountHome() {
       )}
 
       {cases.some((c) => c.status === 'APPROVED') && <SuccessShareCard dismissible />}
+      {cases.some((c) => c.status === 'APPROVED') && <PermitExpiryCard />}
 
       {step?.case && <HomeProgress next={step} stage={stage} detailsTo={caseId && activeCase ? caseHref(caseId, 'overview', '#forecast') : null} tour="portal-progress" />}
 
       {/* Home city → German city with the six milestones (map on tablet / desktop, list on phones). */}
       {step?.case && <JourneyCard next={step} />}
+
+      <PartnerSharingCard />
 
       {(lastMessage || appointmentAhead || waitingStage) && (
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3 [&>*]:min-w-0">

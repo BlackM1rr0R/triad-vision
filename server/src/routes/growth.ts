@@ -10,6 +10,8 @@ import { publicMap } from '../lib/growth/map.js';
 import { eventIcs, leadForRegistrant, mailRegistrant, registrationIdOf } from '../lib/growth/events.js';
 import { asEventLocale } from '../lib/growth/eventTexts.js';
 import { ensureReferralCode, getReferralSettings, maskedName, referralLink, syncReferrals } from '../lib/growth/referral.js';
+import { campaignActive, caseOpenedBonus, friendDiscount, nextTier } from '../lib/growth/referralRules.js';
+import { referralShareRouter } from './referralShare.js';
 import { attachLeadContext, utmSchema, visitorIdSchema } from '../lib/marketing/leadScoring.js';
 import { visitorDid } from '../lib/marketing/visitors.js';
 import { costCategories, costInputSchema, estimateCost, getCostSettings, ITEM_KEYS } from '../lib/marketing/costCalculator.js';
@@ -28,9 +30,10 @@ import { onInquiryCreated } from '../lib/assignment/inquiry.js';
  *   GET  /cost-calculator, /…/estimate       client cost calculator
  *   POST /cost-calculator/offer              "get an exact offer" → Inquiry with the estimate
  *   GET  /origins                            origin → destination map (aggregates ≥ 3)
- *   GET  /referral                           the signed-in client's referral code, referrals and rewards
+ *   GET  /referral                           the signed-in client's referral code, referrals, rewards and bonuses
  */
 export const growthRouter = Router();
+growthRouter.use(referralShareRouter); // referral landing page, share messages, QR card, receipts, terms
 
 const publicCache = (res: import('express').Response, seconds = 60) =>
   res.setHeader('Cache-Control', `public, max-age=${seconds}, stale-while-revalidate=600`);
@@ -354,7 +357,7 @@ growthRouter.get('/referral', requireRole('CLIENT'), async (req, res) => {
   const userId = req.user!.id;
   const settings = await getReferralSettings();
   await syncReferrals({ referrerId: userId });
-  const [code, referrals] = await Promise.all([
+  const [code, referrals, ledger] = await Promise.all([
     settings.enabled ? ensureReferralCode(userId) : prisma.clientReferralCode.findUnique({ where: { userId } }),
     prisma.clientReferral.findMany({
       where: { referrerId: userId },
@@ -362,12 +365,31 @@ growthRouter.get('/referral', requireRole('CLIENT'), async (req, res) => {
       take: 200,
       include: { referred: { select: { firstName: true, lastName: true } }, reward: true },
     }),
+    // Every ledger row for this user: main rewards, bonuses, and their own discount as a referred friend.
+    prisma.referralReward.findMany({ where: { referrerId: userId }, orderBy: { createdAt: 'desc' }, take: 500 }),
   ]);
-  const rewards = referrals.map((r) => r.reward).filter((r): r is NonNullable<typeof r> => !!r);
-  const sum = (status: string[]) => rewards.filter((r) => status.includes(r.status)).reduce((a, r) => a + r.amount, 0);
+  const mine = ledger.filter((r) => r.type !== 'FRIEND');
+  const sum = (status: string[]) => mine.filter((r) => status.includes(r.status)).reduce((a, r) => a + r.amount, 0);
+  const brief = (r: (typeof ledger)[number]) => ({ id: r.id, amount: r.amount, currency: r.currency, kind: r.kind, status: r.status, earnedAt: r.earnedAt, settledAt: r.settledAt });
+  const stageBonus = new Map(mine.filter((r) => r.type === 'STAGE' && r.sourceReferralId).map((r) => [r.sourceReferralId!, r]));
+  const welcome = ledger.find((r) => r.type === 'FRIEND' && r.status !== 'CANCELLED');
+  const approved = referrals.filter((r) => r.stage === 'VISA_APPROVED').length;
+  const now = new Date();
   res.json({
     enabled: settings.enabled,
-    rule: { trigger: settings.trigger, kind: settings.kind, amount: settings.amount, currency: settings.currency, terms: settings.terms },
+    rule: {
+      trigger: settings.trigger,
+      kind: settings.kind,
+      amount: settings.amount,
+      currency: settings.currency,
+      terms: settings.terms,
+      caseOpenedBonus: caseOpenedBonus(settings, now),
+      tiers: settings.tiers,
+      friendDiscount: friendDiscount(settings),
+      campaign: campaignActive(settings.campaign, now)
+        ? { multiplier: settings.campaign.multiplier, endsAt: settings.campaign.endsAt || null, label: settings.campaign.label }
+        : null,
+    },
     code: code?.code ?? null,
     link: code ? referralLink(code.code) : null,
     referrals: referrals.map((r) => ({
@@ -377,8 +399,12 @@ growthRouter.get('/referral', requireRole('CLIENT'), async (req, res) => {
       createdAt: r.createdAt,
       caseOpenedAt: r.caseOpenedAt,
       approvedAt: r.approvedAt,
-      reward: r.reward ? { amount: r.reward.amount, currency: r.reward.currency, kind: r.reward.kind, status: r.reward.status, earnedAt: r.reward.earnedAt, settledAt: r.reward.settledAt } : null,
+      reward: r.reward ? brief(r.reward) : null,
+      bonus: stageBonus.has(r.id) ? brief(stageBonus.get(r.id)!) : null,
     })),
+    tierBonuses: mine.filter((r) => r.type === 'TIER').map((r) => ({ ...brief(r), approved: Number(r.dedupeKey?.split(':')[2]) || null })),
+    progress: { approved, next: nextTier(settings.tiers, approved) },
+    welcome: welcome ? brief(welcome) : null,
     totals: { pending: sum(['PENDING']), earned: sum(['EARNED']), settled: sum(['PAID', 'USED']), currency: settings.currency },
   });
 });

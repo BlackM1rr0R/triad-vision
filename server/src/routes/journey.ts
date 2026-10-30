@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { z } from 'zod';
-import type { CaseStatus } from '@prisma/client';
+import type { CaseStatus, Prisma } from '@prisma/client';
 import { prisma } from '../db.js';
 import { isStaff, requireAuth, requireMinRole, type AuthUser } from '../middleware/auth.js';
 import { FINAL_STATUSES } from '../lib/caseFlow.js';
@@ -110,6 +110,12 @@ journeyRouter.post('/german/test', async (req, res) => {
   const questions = await prisma.germanQuestion.findMany({ where: { id: { in: ids } }, select: { id: true, level: true, answer: true } });
   if (!questions.length) throw badRequest('UNKNOWN_QUESTIONS');
   const score = scoreTest(questions, answers);
+  // A candidate's attempt is kept for staff (case page → German panel); staff trying the test are not.
+  if (req.user!.role === 'CLIENT') {
+    await prisma.germanTestAttempt.create({
+      data: { userId: req.user!.id, estimated: score.estimated, correct: score.correct, total: score.total, percent: score.percent, levels: score.levels as unknown as Prisma.InputJsonValue },
+    });
+  }
   res.json({ result: score, correct: Object.fromEntries(questions.map((q) => [q.id, q.answer])) });
 });
 

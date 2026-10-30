@@ -673,6 +673,7 @@ export const PRIVATE_PREFIXES = [
   '/check-in',
   '/unsubscribe',
   '/job-alert', // job alert confirm / manage link (token)
+  '/r', // personal referral landing pages (/r/<slug>) and tracked review links
 ];
 
 /**

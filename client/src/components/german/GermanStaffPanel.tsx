@@ -6,15 +6,18 @@ import { useL10n } from '@/lib/l10n';
 import { registerCopy } from '@/i18n';
 import { pagesFamilyLanguage } from '@/i18n/pagesFamilyLanguage';
 import { pagesJourney } from '@/i18n/pagesJourney';
+import { pagesGermanVocab } from '@/i18n/pagesGermanVocab';
 import { useApiError } from '@/components/portal/useApiError';
 import { Modal } from '@/components/admin/Modal';
 import { DefRow, Panel } from '@/components/admin/ui';
-import { useGermanOverview, useGermanWrite } from './api';
+import { useGermanOverview, useGermanWrite, useStaffPractice } from './api';
 import { GermanProgressBoard, LevelProgress } from './GermanProgressBoard';
+import { ActivityBars } from './VocabTrainer';
 import { levelLabel, PROFILE_LEVELS } from './types';
 
 registerCopy(pagesJourney);
 registerCopy(pagesFamilyLanguage);
+registerCopy(pagesGermanVocab);
 
 /**
  * Admin case page sidebar: the candidate's German level (User.germanLevel — the value matching and vacancies
@@ -26,8 +29,10 @@ export const GermanStaffPanel = ({ userId }: { userId: string }) => {
   const apiError = useApiError();
   const write = useGermanWrite(userId);
   const { data: ov } = useGermanOverview(userId);
+  const { data: practice } = useStaffPractice(userId);
   const [open, setOpen] = useState(false);
   if (!ov) return null;
+  const vocab = practice?.vocab;
 
   const now = Date.now();
   const next = ov.exams
@@ -80,6 +85,40 @@ export const GermanStaffPanel = ({ userId }: { userId: string }) => {
           </DefRow>
           <DefRow label={t('germanProgress.courses.title')}>{ov.courses.length}</DefRow>
         </dl>
+        {practice && vocab && (
+          <div className="space-y-3 border-t border-line pt-4">
+            <h3 className="text-xs font-semibold text-muted uppercase">{t('germanVocab.staff.title')}</h3>
+            <dl className="space-y-1 text-sm">
+              <DefRow label={t('germanVocab.streak')}>
+                {vocab.streak.current} · {t('germanVocab.best', { count: vocab.streak.best })}
+              </DefRow>
+              <DefRow label={t('germanVocab.staff.lastPractice')}>{vocab.lastPracticeAt ? dateTime(vocab.lastPracticeAt) : t('germanVocab.staff.never')}</DefRow>
+              <DefRow label={t('germanVocab.learned')}>
+                {vocab.learned} / {vocab.started} · {t('germanVocab.of', { total: vocab.total })}
+              </DefRow>
+              <DefRow label={t('germanVocab.staff.totalReviews')}>
+                {vocab.totals.reviews}
+                {vocab.totals.reviews > 0 && ` · ${t('germanVocab.staff.accuracy')} ${Math.round((vocab.totals.correct / vocab.totals.reviews) * 100)}%`}
+              </DefRow>
+            </dl>
+            {vocab.totals.reviews > 0 && <ActivityBars activity={vocab.activity} />}
+            <div>
+              <h4 className="text-xs font-semibold text-muted">{t('germanVocab.staff.tests')}</h4>
+              {practice.attempts.length === 0 ? (
+                <p className="mt-1 text-sm text-muted">{t('germanVocab.staff.noTests')}</p>
+              ) : (
+                <ul className="mt-1 space-y-0.5 text-sm">
+                  {practice.attempts.map((a) => (
+                    <li key={a.id} className="flex justify-between gap-2">
+                      <span className="text-ink">{t('germanVocab.staff.testResult', { level: levelLabel(a.estimated), correct: a.correct, total: a.total, percent: a.percent })}</span>
+                      <span className="shrink-0 text-xs text-muted">{dateTime(a.createdAt)}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
+        )}
       </div>
       <Modal open={open} onClose={() => setOpen(false)} title={`${t('germanProgress.title')} · ${ov.user.firstName} ${ov.user.lastName}`} size="lg">
         {open && <GermanProgressBoard userId={userId} />}

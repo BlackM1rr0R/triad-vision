@@ -20,7 +20,21 @@ export type NextAction =
 export type DocState = 'MISSING' | 'UPLOADED' | 'ACCEPTED' | 'REJECTED';
 
 export interface PartnerMe {
-  partner: { id: string; name: string; phone: string | null; email: string | null; active: boolean; commissionCents: number | null; currency: string };
+  partner: {
+    id: string;
+    name: string;
+    phone: string | null;
+    email: string | null;
+    active: boolean;
+    commissionCents: number | null;
+    currency: string;
+    /** Personal sign-up code and links (clients who use them belong to the partner). */
+    code?: string | null;
+    shareLink?: string | null;
+    shortLink?: string | null;
+    commissionTrigger?: 'ASSIGNED' | 'CONTRACT_SIGNED' | 'VISA_APPROVED';
+    visibility?: 'MINIMAL' | 'EXTENDED';
+  };
   user: { firstName: string; lastName: string; email: string; phone: string | null; locale: string };
   alsoAgent: boolean;
 }
@@ -74,6 +88,25 @@ export interface PartnerCaseRow {
   decisionAt: string | null;
   createdAt: string;
   updatedAt: string;
+}
+
+export type PaymentState = 'NONE' | 'OPEN' | 'PARTIAL' | 'PAID' | 'OVERDUE';
+
+/** One client of GET /partner/clients (owned clients + clients of cases linked by the team). */
+export interface PartnerClientRow {
+  id: string;
+  firstName: string;
+  lastName: string;
+  passport: string | null;
+  registeredAt: string;
+  owned: boolean;
+  activated: boolean;
+  consent: boolean | null;
+  extended: boolean;
+  contact: { email: string; phone: string | null } | null;
+  payment: { state: PaymentState; totalCents?: number; paidCents?: number; currency?: string };
+  cases: number;
+  latestCase: { id: string; number: string; status: CaseStatus; step: PortalStep; nextAction: NextAction; missingDocuments: number; refused: boolean; updatedAt: string } | null;
 }
 
 export interface PartnerRequirement {

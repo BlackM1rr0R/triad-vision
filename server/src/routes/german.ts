@@ -29,6 +29,7 @@ import {
   updateCourse,
   updateExam,
 } from '../lib/german/service.js';
+import { recordReview, reviewSchema, sessionQuerySchema, vocabSession, vocabSummary } from '../lib/german/vocabService.js';
 
 /**
  * German language progress of the signed-in candidate — mounted at /api/german ("Alman dili" page, app).
@@ -39,6 +40,9 @@ import {
  *   POST   /me/exams     PATCH|DELETE /me/exams/:id      (examDateId picks one of the admin's exam dates)
  *   POST   /me/exams/:id/certificate    multipart file → language-certificate document of the main case
  *   GET    /exam-dates                  upcoming published exam dates
+ *   GET    /vocab                       vocabulary trainer: streak, today, due, groups by level / job field
+ *   GET    /vocab/session?level&field   today's cards (due reviews, then new words)
+ *   POST   /vocab/review                { wordId, grade 0–5 } → SM-2 state + fresh summary
  *
  * The level itself changes through the self-test (journey), staff, or an accepted certificate.
  */
@@ -99,6 +103,20 @@ germanRouter.delete('/me/exams/:id', async (req, res) => {
   const userId = clientOnly(req);
   await deleteExam(userId, String(req.params.id));
   res.json(await germanOverview(userId));
+});
+
+// ─── Vocabulary trainer (portal and app) ─────────────────────────────
+
+germanRouter.get('/vocab', async (req, res) => {
+  res.json(await vocabSummary(clientOnly(req)));
+});
+
+germanRouter.get('/vocab/session', async (req, res) => {
+  res.json(await vocabSession(clientOnly(req), parse(sessionQuerySchema, req.query)));
+});
+
+germanRouter.post('/vocab/review', async (req, res) => {
+  res.json(await recordReview(clientOnly(req), parse(reviewSchema, req.body ?? {})));
 });
 
 const removeFile = (storedName: string) => fs.unlink(path.join(config.uploads.privateDir, storedName)).catch(() => undefined);

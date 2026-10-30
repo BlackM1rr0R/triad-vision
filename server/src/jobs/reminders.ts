@@ -7,6 +7,7 @@ import { inviteForCase } from '../lib/reviewInvites.js';
 import { FINAL_STATUSES } from '../lib/caseFlow.js';
 import { preferredChannel, sendSms, sendWhatsApp } from '../lib/messaging/outbound.js';
 import { clientsWithTrackedPassport } from '../lib/expiry/index.js';
+import { clientsInPermitCare } from '../lib/permits/service.js';
 
 /**
  * Appointment, missing-document, passport-expiry, contract-signature and staff-SLA reminders,
@@ -196,8 +197,10 @@ export const runPassportReminders = async (now = new Date()) => {
   });
   // A passport whose validity is tracked on a case document is warned by jobs/expiry.ts (no double warning).
   const tracked = await clientsWithTrackedPassport(users.map((u) => u.id));
+  // After the visa (approved case, nothing open) the passport belongs to the permit reminders (lib/permits).
+  const inCare = await clientsInPermitCare(users.map((u) => u.id));
   for (const u of users) {
-    if (tracked.has(u.id)) continue;
+    if (tracked.has(u.id) || inCare.has(u.id)) continue;
     const expiry = u.passportExpiry!;
     const level = passportLevel(expiry, now);
     if (!level) continue;

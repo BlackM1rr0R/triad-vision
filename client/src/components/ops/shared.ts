@@ -27,6 +27,8 @@ export interface Interview {
   candidate: { id: string; name: string; email?: string; profession: string | null };
   staff: { id: string; name: string } | null;
   createdBy: { id: string; name: string; role: string } | null;
+  /** Set when the candidate picked the time from the employer's free slots. */
+  inviteId?: string | null;
 }
 
 export const INTERVIEW_TONE: Record<InterviewStatus, string> = toneClasses(STATUS_TONES.interview);

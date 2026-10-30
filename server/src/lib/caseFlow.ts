@@ -45,6 +45,8 @@ export const createCase = async (
     actorId?: string;
     /** Skip the generic "case created" notices (the caller sends its own, e.g. a residence-title renewal). */
     quiet?: boolean;
+    /** Referral partner of the case (e.g. a renewal keeps the old case's); default: the main case's, else the client's owner. */
+    partnerId?: string | null;
   },
 ) => {
   // One active case per client — except family-member cases, which are separate applications.
@@ -59,9 +61,12 @@ export const createCase = async (
       const created = await prisma.$transaction(async (tx) => {
         const number = await nextCaseNumber(tx);
         // A family member inherits the main case's staff; otherwise auto-assignment (if enabled) picks one.
-        const parent = input.parentCaseId ? await tx.case.findUnique({ where: { id: input.parentCaseId }, select: { assignedStaffId: true, visaCategoryId: true, visaType: true } }) : null;
+        const parent = input.parentCaseId ? await tx.case.findUnique({ where: { id: input.parentCaseId }, select: { assignedStaffId: true, visaCategoryId: true, visaType: true, partnerId: true } }) : null;
         const visaCategoryId = input.visaCategoryId ?? parent?.visaCategoryId ?? null;
-        const clientLocale = (await tx.user.findUnique({ where: { id: clientId }, select: { locale: true } }))?.locale ?? null;
+        const clientRow = await tx.user.findUnique({ where: { id: clientId }, select: { locale: true, ownerPartnerId: true } });
+        const clientLocale = clientRow?.locale ?? null;
+        // Partner-owned clients: every case belongs to the owning partner (lib/partners/owned.ts).
+        const partnerId = input.partnerId ?? parent?.partnerId ?? clientRow?.ownerPartnerId ?? null;
         const assignedStaffId = parent?.assignedStaffId ?? (await pickAssignee(tx, { clientLocale, visaType: input.visaType ?? parent?.visaType ?? 'WORK', visaCategoryId }));
         const c = await tx.case.create({
           data: {
@@ -73,6 +78,7 @@ export const createCase = async (
             assignedStaffId,
             parentCaseId: input.parentCaseId ?? null,
             relation: input.relation ?? null,
+            partnerId,
           },
         });
         await createRequirements(tx, c.id, 'INITIAL', visaCategoryId);
@@ -93,6 +99,8 @@ export const createCase = async (
         );
       }
       await awardCaseCommission(created.id, 'CASE_CREATED'); // agent programme (never throws)
+      // Referral partner: automatic commission + message to the partner (never throws).
+      if (created.partnerId) await import('./partners/owned.js').then((m) => m.onPartnerCaseCreated(created.id, input.actorId ?? clientId)).catch(() => undefined);
       void emitWebhook('case.created', { caseId: created.id, number: created.number, status: created.status, visaCategoryId: created.visaCategoryId }, created.companyId);
       void syncCaseFolder(created.id); // the client's folder in the shared drive
       // Documents uploaded with a vacancy application before this case existed join it (requirement + type folder).
@@ -149,6 +157,7 @@ const transition = async (
   if (after) void emitWebhook(FINAL_STATUSES.includes(to) && to !== 'CANCELLED' ? 'case.decided' : 'case.status_changed', { caseId, number: after.number, from: current.status, to }, after.companyId);
   if (FINAL_STATUSES.includes(to)) void surveyOnCaseFinal(caseId, to); // satisfaction survey (never throws)
   void notifyPartnerCaseStatus(caseId, to, opts.eventType); // referral partner portal (never throws)
+  void import('./partners/owned.js').then((m) => m.partnerCommissionOnStatus(caseId, to)).catch(() => undefined); // partner commission trigger (never throws)
   void syncSettlementsForCase(caseId); // settlement ledger rows follow the case (never throws)
   // Payment plans: instalments whose trigger is this status (or ON_SIGN on the contract signature) get their invoice (lazy import: no cycle; never throws).
   void import('./billing/plans.js').then((m) => m.fireCaseStatusInstallments(caseId, to)).catch(() => undefined);

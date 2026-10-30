@@ -39,6 +39,7 @@ import './growth.js'; // info-session reminders (24 h / 1 h) + client referral s
 import './jobAlerts.js'; // job alert digests (≤ 1 per alert per day) + purge of unconfirmed / unsubscribed alerts
 import './timeCare.js'; // staff timer idle protection (10 / 12 h) + post-arrival check-ins (1 / 3 / 6 months)
 import './postArrivalCare.js'; // churn risk (twice a day), residence-title renewal cases + probation-end reminders
+import './permits.js'; // permit expiry reminders after arrival: residence permit / Blue Card, passport, health insurance (90 / 60 / 30 days)
 import './calls.js'; // callback reminders (10 min before) + live chats nobody accepted in 2 min
 import './automation.js'; // automation rules (event queue, delayed actions, time triggers) + absence handover
 import './clientData.js'; // reminders for unsubmitted questionnaires and open data confirmations

@@ -14,7 +14,12 @@ import { buildMap, cityKeyOf, getMapSettings, MAP_DEFAULTS, mapSchema } from '..
 import { mailRegistrant, pickL10n, sendFollowUps } from '../../lib/growth/events.js';
 import { asEventLocale, eventTexts, formatEventTime } from '../../lib/growth/eventTexts.js';
 import { eventUrl, eventWhere, bookingUrl } from '../../lib/growth/events.js';
-import { getReferralSettings, REFERRAL_DEFAULTS, referralSchema, syncReferrals } from '../../lib/growth/referral.js';
+import { blockReferral, getReferralSettings, REFERRAL_DEFAULTS, referralPeriodQuery, referralSchema, syncReferrals } from '../../lib/growth/referral.js';
+import { bakuPeriod, leaderboard, leaderboardCsv, signupBursts } from '../../lib/growth/referralRules.js';
+import { getReferralTemplates, getReferralTerms, REFERRAL_EXTRA_KEYS, TEMPLATE_DEFAULTS, templatesSchema, TERMS_DEFAULTS, termsSchema } from '../../lib/growth/referralExtras.js';
+import { receiptNumber } from '../../lib/growth/referralPdf.js';
+import { receiptFor, sendReceipt } from '../referralShare.js';
+import { csvSafe } from '../../lib/csvSafe.js';
 import { emptyConversion, eventConversions } from '../../lib/growth/eventStats.js';
 
 /**
@@ -329,31 +334,121 @@ adminGrowthRouter.post('/events/:id/follow-up', async (req, res) => {
 
 // ─── Client referral programme ─────────────────────────────────────────
 
+const personSelect = { id: true, firstName: true, lastName: true, email: true } as const;
+
+/** GET /referrals — settings, the latest 500 referrals (with their main reward), bonus rows and totals. */
 adminGrowthRouter.get('/referrals', async (_req, res) => {
   await syncReferrals();
-  const [settings, referrals] = await Promise.all([
+  const [settings, referrals, bonuses, sums] = await Promise.all([
     getReferralSettings(),
     prisma.clientReferral.findMany({
       orderBy: { createdAt: 'desc' },
       take: 500,
       include: {
         reward: true,
-        referrer: { select: { id: true, firstName: true, lastName: true, email: true } },
-        referred: { select: { id: true, firstName: true, lastName: true, email: true, referredByAgentId: true } },
+        referrer: { select: personSelect },
+        referred: { select: { ...personSelect, referredByAgentId: true } },
       },
     }),
+    prisma.referralReward.findMany({
+      where: { type: { not: 'REFERRAL' } },
+      orderBy: { createdAt: 'desc' },
+      take: 500,
+      include: { source: { select: { id: true, stage: true, referrer: { select: personSelect }, referred: { select: personSelect } } } },
+    }),
+    // The referrers' money (the friend's own discount is not part of it).
+    prisma.referralReward.groupBy({ by: ['status'], where: { type: { not: 'FRIEND' } }, _sum: { amount: true } }),
   ]);
   const totals: Record<string, number> = { PENDING: 0, EARNED: 0, PAID: 0, USED: 0, CANCELLED: 0 };
-  for (const r of referrals) if (r.reward) totals[r.reward.status] += r.reward.amount;
-  res.json({ settings, defaults: REFERRAL_DEFAULTS, referrals, totals });
+  for (const s of sums) totals[s.status] = s._sum.amount ?? 0;
+  res.json({ settings, defaults: REFERRAL_DEFAULTS, referrals, bonuses, totals });
 });
 
 adminGrowthRouter.put('/referrals/settings', adminOnly, async (req, res) => {
   const settings = parse(referralSchema, req.body);
   await writeSetting(GROWTH_SETTING_KEYS.referral, settings);
   fresh();
-  await audit(req, 'GROWTH_REFERRAL_SETTINGS_UPDATED', GROWTH_SETTING_KEYS.referral, { trigger: settings.trigger, kind: settings.kind, amount: settings.amount });
+  await audit(req, 'GROWTH_REFERRAL_SETTINGS_UPDATED', GROWTH_SETTING_KEYS.referral, {
+    trigger: settings.trigger,
+    kind: settings.kind,
+    amount: settings.amount,
+    caseOpenedBonus: settings.caseOpenedBonus,
+    tiers: settings.tiers,
+    friendDiscount: settings.friendDiscount,
+    campaign: { enabled: settings.campaign.enabled, multiplier: settings.campaign.multiplier, startsAt: settings.campaign.startsAt, endsAt: settings.campaign.endsAt },
+  });
   res.json({ settings });
+});
+
+/**
+ * Leaderboard per referrer for a period (?from, ?to: Baku days, inclusive): friends registered / case
+ * opened / visa approved / blocked in the period, rewards earned, pending, settled, and what is owed now.
+ */
+const loadLeaderboard = async (q: { from?: string; to?: string }) => {
+  const [settings, referrals, rewards] = await Promise.all([
+    getReferralSettings(),
+    prisma.clientReferral.findMany({ select: { referrerId: true, stage: true, createdAt: true, caseOpenedAt: true, approvedAt: true } }),
+    prisma.referralReward.findMany({ select: { referrerId: true, type: true, status: true, amount: true, createdAt: true, earnedAt: true, settledAt: true } }),
+  ]);
+  const rows = leaderboard(referrals, rewards, bakuPeriod(q.from, q.to));
+  const users = await prisma.user.findMany({ where: { id: { in: rows.map((r) => r.referrerId) } }, select: personSelect });
+  const byId = new Map(users.map((u) => [u.id, u]));
+  return {
+    from: q.from ?? null,
+    to: q.to ?? null,
+    currency: settings.currency,
+    rows: rows.map((r) => {
+      const u = byId.get(r.referrerId);
+      return { ...r, name: u ? `${u.firstName} ${u.lastName}`.trim() : '—', email: u?.email ?? '' };
+    }),
+  };
+};
+
+adminGrowthRouter.get('/referrals/leaderboard', async (req, res) => {
+  await syncReferrals();
+  res.json(await loadLeaderboard(parse(referralPeriodQuery, req.query)));
+});
+
+adminGrowthRouter.get('/referrals/leaderboard.csv', async (req, res) => {
+  const q = parse(referralPeriodQuery, req.query);
+  const board = await loadLeaderboard(q);
+  await audit(req, 'REFERRAL_LEADERBOARD_EXPORTED', undefined, { from: board.from, to: board.to, rows: board.rows.length });
+  res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+  res.setHeader('Content-Disposition', `attachment; filename="dostunu-getir${q.from ? `-${q.from}` : ''}${q.to ? `_${q.to}` : ''}.csv"`);
+  res.send(leaderboardCsv(board.rows, board.currency));
+});
+
+/**
+ * GET /referrals/suspicious — blocked referrals (self-referral checks or blocked by an admin) and
+ * referrers with a burst of sign-ups (≥ 5 within 24 h in the last 90 days).
+ */
+adminGrowthRouter.get('/referrals/suspicious', async (_req, res) => {
+  const since = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
+  const [blocked, recent] = await Promise.all([
+    prisma.clientReferral.findMany({
+      where: { stage: 'BLOCKED' },
+      orderBy: { updatedAt: 'desc' },
+      take: 300,
+      include: { referrer: { select: personSelect }, referred: { select: personSelect } },
+    }),
+    prisma.clientReferral.findMany({ where: { createdAt: { gte: since } }, select: { referrerId: true, createdAt: true } }),
+  ]);
+  const bursts = signupBursts(recent);
+  const users = await prisma.user.findMany({ where: { id: { in: [...bursts.keys()] } }, select: personSelect });
+  res.json({
+    blocked: blocked.map((r) => ({ id: r.id, blockedReason: r.blockedReason, createdAt: r.createdAt, updatedAt: r.updatedAt, referrer: r.referrer, referred: r.referred })),
+    bursts: users.map((u) => ({ referrer: u, maxIn24h: bursts.get(u.id)! })).sort((a, b) => b.maxIn24h - a.maxIn24h),
+  });
+});
+
+/** POST /referrals/:id/block — an admin blocks a referral (MANUAL); its unsettled rewards are cancelled. */
+adminGrowthRouter.post('/referrals/:id/block', adminOnly, async (req, res) => {
+  const body = parse(z.object({ note: z.string().trim().max(300).optional() }), req.body ?? {});
+  const referral = await prisma.clientReferral.findUnique({ where: { id: String(req.params.id) }, select: { id: true, stage: true } });
+  if (!referral) throw notFound();
+  if (!(await blockReferral(referral.id, 'MANUAL'))) throw badRequest('ALREADY_BLOCKED');
+  await audit(req, 'REFERRAL_BLOCKED', referral.id, { from: referral.stage, note: body.note ?? null });
+  res.json({ ok: true });
 });
 
 /** Allowed ledger moves (admin): EARNED → PAID / USED, anything open → CANCELLED, CANCELLED → PENDING (undo). */
@@ -365,24 +460,141 @@ const MOVES: Record<string, string[]> = {
   CANCELLED: ['PENDING'],
 };
 
+/**
+ * POST /referrals/rewards/settle { ids? | referrerId?, note? } — marks EARNED rewards settled in one go:
+ * PAYOUT → PAID, DISCOUNT → USED. Only EARNED rows move; everything else is skipped. Audited.
+ */
+adminGrowthRouter.post('/referrals/rewards/settle', adminOnly, async (req, res) => {
+  const body = parse(
+    z
+      .object({
+        ids: z.array(z.string().trim().min(1).max(40)).min(1).max(500).optional(),
+        referrerId: z.string().trim().min(1).max(40).optional(),
+        note: z.string().trim().max(300).optional(),
+      })
+      .refine((b) => !!b.ids !== !!b.referrerId, 'IDS_OR_REFERRER'),
+    req.body,
+  );
+  const where: Prisma.ReferralRewardWhereInput = { status: 'EARNED', ...(body.ids ? { id: { in: body.ids } } : { referrerId: body.referrerId }) };
+  const rows = await prisma.referralReward.findMany({ where, select: { id: true, kind: true, amount: true } });
+  const stamp = { settledAt: new Date(), settledById: req.user!.id, ...(body.note !== undefined ? { note: body.note } : {}) };
+  const ids = (kind: string) => rows.filter((r) => (kind === 'PAYOUT' ? r.kind === 'PAYOUT' : r.kind !== 'PAYOUT')).map((r) => r.id);
+  // status: 'EARNED' again in the update, so a row settled concurrently is not counted twice.
+  const [paid, used] = await Promise.all([
+    prisma.referralReward.updateMany({ where: { id: { in: ids('PAYOUT') }, status: 'EARNED' }, data: { status: 'PAID', ...stamp } }),
+    prisma.referralReward.updateMany({ where: { id: { in: ids('DISCOUNT') }, status: 'EARNED' }, data: { status: 'USED', ...stamp } }),
+  ]);
+  const total = rows.reduce((a, r) => a + r.amount, 0);
+  await audit(req, 'REFERRAL_REWARDS_SETTLED', body.referrerId, { paid: paid.count, used: used.count, total, ids: rows.map((r) => r.id).slice(0, 100) });
+  res.json({ paid: paid.count, used: used.count, total });
+});
+
 adminGrowthRouter.patch('/referrals/rewards/:id', adminOnly, async (req, res) => {
   const body = parse(z.object({ status: z.enum(['PENDING', 'PAID', 'USED', 'CANCELLED']), note: z.string().trim().max(300).optional() }), req.body);
-  const reward = await prisma.referralReward.findUnique({ where: { id: String(req.params.id) }, include: { referral: { select: { stage: true } } } });
+  const reward = await prisma.referralReward.findUnique({
+    where: { id: String(req.params.id) },
+    include: { referral: { select: { stage: true } }, source: { select: { stage: true } } },
+  });
   if (!reward) throw notFound();
   if (!MOVES[reward.status].includes(body.status)) throw badRequest('INVALID_TRANSITION');
-  if (body.status === 'PENDING' && reward.referral.stage === 'BLOCKED') throw badRequest('REFERRAL_BLOCKED');
-  const settled = body.status === 'PAID' || body.status === 'USED';
+  if (body.status === 'PENDING' && (reward.referral ?? reward.source)?.stage === 'BLOCKED') throw badRequest('REFERRAL_BLOCKED');
+  // A bonus is granted already earned, so its undo goes back to EARNED; only the main reward waits for its trigger.
+  const status = body.status === 'PENDING' && reward.type !== 'REFERRAL' ? 'EARNED' : body.status;
+  const settled = status === 'PAID' || status === 'USED';
   const updated = await prisma.referralReward.update({
     where: { id: reward.id },
     data: {
-      status: body.status,
+      status,
       ...(body.note !== undefined ? { note: body.note } : {}),
       settledAt: settled ? new Date() : null,
       settledById: settled ? req.user!.id : null,
-      ...(body.status === 'PENDING' ? { earnedAt: null } : {}),
+      ...(status === 'PENDING' ? { earnedAt: null } : {}),
     },
   });
-  if (body.status === 'PENDING') await syncReferrals({ id: reward.referralId }); // may be earned again right away
-  await audit(req, 'REFERRAL_REWARD_UPDATED', reward.id, { from: reward.status, to: body.status });
+  if (status === 'PENDING' && reward.referralId) await syncReferrals({ id: reward.referralId }); // may be earned again right away
+  await audit(req, 'REFERRAL_REWARD_UPDATED', reward.id, { from: reward.status, to: status, type: reward.type });
   res.json({ reward: await prisma.referralReward.findUnique({ where: { id: updated.id } }) });
+});
+
+// ─── Share templates, terms, payout report, receipts ───────────────────
+
+/** Share messages per profession: staff may edit (STAFF+ like the rest of this router). */
+adminGrowthRouter.get('/referrals/templates', async (_req, res) => {
+  res.json({ ...(await getReferralTemplates()), defaults: TEMPLATE_DEFAULTS });
+});
+
+adminGrowthRouter.put('/referrals/templates', async (req, res) => {
+  const value = parse(templatesSchema, req.body);
+  await writeSetting(REFERRAL_EXTRA_KEYS.templates, value);
+  await audit(req, 'REFERRAL_TEMPLATES_UPDATED', REFERRAL_EXTRA_KEYS.templates, { count: value.items.length });
+  res.json(value);
+});
+
+adminGrowthRouter.get('/referrals/terms', async (_req, res) => {
+  res.json({ ...(await getReferralTerms()), defaults: TERMS_DEFAULTS });
+});
+
+adminGrowthRouter.put('/referrals/terms', adminOnly, async (req, res) => {
+  const body = parse(termsSchema.pick({ body: true }), req.body);
+  const value = { body: body.body, updatedAt: new Date().toISOString() };
+  await writeSetting(REFERRAL_EXTRA_KEYS.terms, value);
+  fresh();
+  await audit(req, 'REFERRAL_TERMS_UPDATED', REFERRAL_EXTRA_KEYS.terms);
+  res.json(value);
+});
+
+/**
+ * GET /referrals/payouts.csv?from&to[&all=1] — rewards settled in the period for accounting: cash payouts
+ * (PAID) by default, with ?all=1 also discounts used (USED). Semicolon CSV with BOM, receipt numbers.
+ */
+adminGrowthRouter.get('/referrals/payouts.csv', async (req, res) => {
+  const q = parse(referralPeriodQuery.extend({ all: z.enum(['1', '0']).optional() }), req.query);
+  const period = bakuPeriod(q.from, q.to);
+  const rows = await prisma.referralReward.findMany({
+    where: {
+      status: q.all === '1' ? { in: ['PAID', 'USED'] } : 'PAID',
+      settledAt: { not: null, ...(period.from ? { gte: period.from } : {}), ...(period.to ? { lt: period.to } : {}) },
+    },
+    orderBy: { settledAt: 'asc' },
+    take: 20_000,
+  });
+  const ids = [...new Set(rows.flatMap((r) => [r.referrerId, r.settledById ?? '']).filter(Boolean))];
+  const users = new Map((await prisma.user.findMany({ where: { id: { in: ids } }, select: { id: true, firstName: true, lastName: true, email: true } })).map((u) => [u.id, u]));
+  const name = (id: string | null) => {
+    const u = id ? users.get(id) : null;
+    return u ? `${u.firstName} ${u.lastName}`.trim() : '';
+  };
+  const cell = (v: string | number) => {
+    const s = csvSafe(String(v));
+    return /[;"\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  };
+  const lines = [
+    ['Qəbz', 'Tarix', 'Alan', 'E-poçt', 'Növ', 'Mükafat', 'Status', 'Məbləğ', 'Valyuta', 'Kim bağladı', 'Qeyd'],
+    ...rows.map((r) => [
+      r.status === 'PAID' ? receiptNumber({ id: r.id, settledAt: r.settledAt! }) : '',
+      r.settledAt!.toISOString().slice(0, 10),
+      name(r.referrerId),
+      users.get(r.referrerId)?.email ?? '',
+      r.type,
+      r.kind,
+      r.status,
+      r.amount,
+      r.currency,
+      name(r.settledById),
+      r.note ?? '',
+    ]),
+  ];
+  const total = rows.reduce((a, r) => a + r.amount, 0);
+  lines.push(['Cəmi', '', '', '', '', '', '', total, '', '', '']);
+  await audit(req, 'REFERRAL_PAYOUTS_EXPORTED', undefined, { from: q.from ?? null, to: q.to ?? null, rows: rows.length, total });
+  res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+  res.setHeader('Content-Disposition', `attachment; filename="dostunu-getir-odenisler${q.from ? `-${q.from}` : ''}${q.to ? `_${q.to}` : ''}.csv"`);
+  res.send(`﻿${lines.map((l) => l.map(cell).join(';')).join('\r\n')}\r\n`);
+});
+
+adminGrowthRouter.get('/referrals/rewards/:id/receipt.pdf', async (req, res) => {
+  const r = await receiptFor(String(req.params.id));
+  if (!r) throw notFound();
+  await audit(req, 'REFERRAL_RECEIPT_DOWNLOADED', String(req.params.id), { number: r.number });
+  await sendReceipt(res, r);
 });

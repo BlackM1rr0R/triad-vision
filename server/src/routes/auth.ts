@@ -28,6 +28,7 @@ import { PASSPORT_SCAN_TIMEOUT_MS, scanPassportImage } from '../lib/docsIntel/pa
 import { recordConsent } from '../lib/privacy/consents.js';
 import { setMarketingOptIn } from '../lib/campaigns/consent.js';
 import { attachReferral } from '../lib/agents/referral.js';
+import { attachPartnerOwner, findPartnerByCode } from '../lib/partners/owned.js';
 import { attachClientReferral, REF_COOKIE, normaliseRefCode, resolveReferralCode } from '../lib/growth/referral.js';
 import { markClientsExcelDirty } from '../lib/clientsExcel.js';
 import { syncClientFolders } from '../lib/drive/caseFolders.js';
@@ -207,11 +208,13 @@ authRouter.post('/register', authLimiter, async (req, res) => {
       // Required checkbox on the web form: "I accept the AGB" (logged as a TERMS consent with the version).
       // Older app builds do not send it: they accept the terms later in the re-acceptance dialog.
       acceptTerms: z.boolean().optional(),
+      // Signing up with a referral partner's code: "my application data may be shared with <partner>" (PARTNER_SHARING consent).
+      partnerConsent: z.boolean().optional(),
     }),
     req.body,
   );
   if (body.acceptTerms === false) throw badRequest('TERMS_REQUIRED');
-  if (body.refEntered && body.ref && !(await resolveReferralCode(body.ref))) throw badRequest('REFERRAL_CODE_UNKNOWN');
+  if (body.refEntered && body.ref && !(await findPartnerByCode(body.ref)) && !(await resolveReferralCode(body.ref))) throw badRequest('REFERRAL_CODE_UNKNOWN');
   const exists = await prisma.user.findUnique({ where: { email: body.email } });
   if (exists) throw conflict('EMAIL_TAKEN');
 
@@ -239,8 +242,15 @@ authRouter.post('/register', authLimiter, async (req, res) => {
   // it may be a client's "bring a friend" code (lib/growth/referral.ts).
   const refCode = body.ref || (typeof req.cookies?.[REF_COOKIE] === 'string' ? String(req.cookies[REF_COOKIE]).slice(0, 64) : null);
   if (refCode) {
-    const agentId = await attachReferral(user.id, refCode);
-    if (!agentId) await attachClientReferral(user.id, refCode);
+    // A referral partner's code wins: the client belongs to the partner (lib/partners/owned.ts) and creates
+    // neither an agent commission nor a client-referral reward.
+    const partner = await findPartnerByCode(refCode);
+    const owned = partner ? await attachPartnerOwner(user.id, partner.id, { source: 'SIGNUP_LINK', actorId: user.id }) : false;
+    if (owned && body.partnerConsent !== undefined) {
+      await recordConsent({ userId: user.id, email: user.email, type: 'PARTNER_SHARING', granted: body.partnerConsent, source: 'REGISTER', req });
+    }
+    const agentId = owned ? null : await attachReferral(user.id, refCode);
+    if (!owned && !agentId) await attachClientReferral(user.id, refCode);
     res.clearCookie(REF_COOKIE, { path: '/' });
   }
   await sendVerificationEmail(user.id);
@@ -256,8 +266,10 @@ authRouter.post('/register', authLimiter, async (req, res) => {
 const referralCheckLimiter = limiter({ windowMs: 10 * 60 * 1000, limit: 60 });
 authRouter.get('/referral-code', referralCheckLimiter, async (req, res) => {
   const code = normaliseRefCode(typeof req.query.code === 'string' ? req.query.code.slice(0, 64) : '');
-  const kind = code ? await resolveReferralCode(code) : null;
-  res.json({ code, valid: !!kind, kind });
+  // A referral partner's code: the form names the partner for the data-sharing checkbox.
+  const partner = code ? await findPartnerByCode(code) : null;
+  const kind = partner ? 'PARTNER' : code ? await resolveReferralCode(code) : null;
+  res.json({ code, valid: !!kind, kind, ...(partner ? { partnerName: partner.name } : {}) });
 });
 
 // ─── Passport photo → sign-up fields (public) ─────────────────────────

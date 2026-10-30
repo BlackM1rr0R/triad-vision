@@ -109,6 +109,7 @@ model User {
   interviewsAsCandidate   Interview[]              @relation("InterviewCandidate")
   interviewsAsStaff       Interview[]              @relation("InterviewStaff")
   interviewsCreated       Interview[]              @relation("InterviewCreatedBy")
+  interviewInvites        InterviewInvite[]        @relation("InterviewInviteCandidate")
   statusText              String?                  @db.VarChar(120) // workspace presence: "In a meeting", …
   statusEmoji             String?                  @db.VarChar(16)
   statusUntil             DateTime?
@@ -134,6 +135,11 @@ model User {
   referredByAgentId       String? // agent whose link / code the client signed up with
   referredByAgent         Agent?                   @relation("AgentReferrals", fields: [referredByAgentId], references: [id], onDelete: SetNull)
   referredAt              DateTime?
+  /// Referral partner who owns this client (signed up with the partner's link / code, or registered by the
+  /// partner). Locked once set: only ADMIN+ reassign it (PartnerClientChange keeps the history).
+  ownerPartnerId          String?
+  ownerPartner            ReferralPartner?         @relation("PartnerOwnedClients", fields: [ownerPartnerId], references: [id], onDelete: SetNull)
+  ownerPartnerAt          DateTime?
   agentProfile            Agent?                   @relation("AgentUser")
   agentCommissions        AgentCommission[]        @relation("CommissionClient")
   translationOrders       TranslationOrder[]       @relation("TranslationClient")
@@ -188,6 +194,9 @@ model User {
   germanPlan              GermanPlan?              @relation("GermanPlanUser")
   germanCourses           GermanCourse[]           @relation("GermanCourseUser")
   germanExams             GermanExam[]             @relation("GermanExamUser")
+  germanWordProgress      GermanWordProgress[]     @relation("GermanWordProgressUser")
+  germanPracticeDays      GermanPracticeDay[]      @relation("GermanPracticeDayUser")
+  germanTestAttempts      GermanTestAttempt[]      @relation("GermanTestAttemptUser")
   referralCode            ClientReferralCode?      @relation("ReferralCodeOwner")
   referralsMade           ClientReferral[]         @relation("ReferralReferrer")
   referredBy              ClientReferral?          @relation("ReferralReferred")
@@ -195,6 +204,7 @@ model User {
 
   @@index([companyId])
   @@index([mergedIntoId])
+  @@index([ownerPartnerId])
 }
 
 /// Server-side login session. The JWT only carries the session id, so a session can be revoked
@@ -332,6 +342,12 @@ enum VisaType {
   TOURIST // Schengen visitor visa
 }
 
+/// Residence title held in Germany after arrival (Case.residenceTitleKind).
+enum ResidenceTitleKind {
+  RESIDENCE_PERMIT // Aufenthaltserlaubnis (§18a, §16a …)
+  EU_BLUE_CARD // Blaue Karte EU (§18g)
+}
+
 enum CaseStatus {
   DOCUMENTS_PENDING // client uploads initial documents
   DOCUMENTS_REVIEW // client submitted, staff reviewing
@@ -362,93 +378,97 @@ enum DocStatus {
 }
 
 model Case {
-  id                      String                @id @default(cuid())
-  number                  String                @unique
-  clientId                String
-  client                  User                  @relation("CaseClient", fields: [clientId], references: [id], onDelete: Cascade)
-  assignedStaffId         String?
-  assignedStaff           User?                 @relation("CaseStaff", fields: [assignedStaffId], references: [id], onDelete: SetNull)
-  visaCategoryId          String?
-  visaCategory            VisaCategory?         @relation(fields: [visaCategoryId], references: [id], onDelete: SetNull)
-  profession              String
-  visaType                VisaType              @default(WORK) // what the client applies for: drives step names and expected durations
-  status                  CaseStatus            @default(DOCUMENTS_PENDING)
-  staffNote               String?               @db.Text // latest note visible to client (e.g. what to fix)
-  appointmentAt           DateTime?
-  appointmentPlace        String?               @db.Text
-  decisionAt              DateTime?
-  decisionReason          String?               @db.Text // rejection reason or approval remark
-  visaValidFrom           DateTime?
-  visaValidTo             DateTime?
+  id                       String                @id @default(cuid())
+  number                   String                @unique
+  clientId                 String
+  client                   User                  @relation("CaseClient", fields: [clientId], references: [id], onDelete: Cascade)
+  assignedStaffId          String?
+  assignedStaff            User?                 @relation("CaseStaff", fields: [assignedStaffId], references: [id], onDelete: SetNull)
+  visaCategoryId           String?
+  visaCategory             VisaCategory?         @relation(fields: [visaCategoryId], references: [id], onDelete: SetNull)
+  profession               String
+  visaType                 VisaType              @default(WORK) // what the client applies for: drives step names and expected durations
+  status                   CaseStatus            @default(DOCUMENTS_PENDING)
+  staffNote                String?               @db.Text // latest note visible to client (e.g. what to fix)
+  appointmentAt            DateTime?
+  appointmentPlace         String?               @db.Text
+  decisionAt               DateTime?
+  decisionReason           String?               @db.Text // rejection reason or approval remark
+  visaValidFrom            DateTime?
+  visaValidTo              DateTime?
   /// Residence title in Germany after arrival (Aufenthaltstitel); drives the renewal reminder.
-  residenceTitleExpiresAt DateTime?
+  residenceTitleExpiresAt  DateTime?
+  /// Which title it is (null = an ordinary Aufenthaltserlaubnis) and the health insurance end date (lib/permits reminders).
+  residenceTitleKind       ResidenceTitleKind?
+  healthInsuranceExpiresAt DateTime?
   /// Renewal case: the case this one renews (plain id) / when the renewal case for this one was opened.
-  renewalOfCaseId         String?               @db.VarChar(40)
-  renewalCaseCreatedAt    DateTime?
-  probationReminderAt     DateTime?
-  cancelReason            String?               @db.Text
-  companyId               String? // employer this candidate is placed with (company portal visibility)
-  company                 Company?              @relation(fields: [companyId], references: [id], onDelete: SetNull)
-  vacancyId               String?
-  vacancy                 Vacancy?              @relation(fields: [vacancyId], references: [id], onDelete: SetNull)
+  renewalOfCaseId          String?               @db.VarChar(40)
+  renewalCaseCreatedAt     DateTime?
+  probationReminderAt      DateTime?
+  cancelReason             String?               @db.Text
+  companyId                String? // employer this candidate is placed with (company portal visibility)
+  company                  Company?              @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  vacancyId                String?
+  vacancy                  Vacancy?              @relation(fields: [vacancyId], references: [id], onDelete: SetNull)
   // Family reunion (Familiennachzug): member cases hang under the main applicant's case.
-  parentCaseId            String?
-  parentCase              Case?                 @relation("CaseFamily", fields: [parentCaseId], references: [id], onDelete: SetNull)
-  familyMembers           Case[]                @relation("CaseFamily")
-  relation                String? // spouse | child | parent (for member cases)
-  closedAt                DateTime? // set when the case reaches APPROVED / REJECTED / CANCELLED
-  documentsPurgedAt       DateTime? // DSGVO retention: files deleted after the retention period
-  createdAt               DateTime              @default(now())
-  updatedAt               DateTime              @updatedAt
-  requirements            DocumentRequirement[]
-  documents               Document[]
-  contract                Contract?
-  events                  CaseEvent[]
-  messages                CaseMessage[]
-  notifications           Notification[]
-  tasks                   Task[]
-  outboundMessages        OutboundMessage[]
-  onboarding              CaseOnboarding[]
-  mailMessages            MailMessage[]
-  chatChannels            ChatChannel[]
-  calendarEvents          CalendarEvent[]
-  agentCommissions        AgentCommission[]
-  translationOrders       TranslationOrder[]
-  arrivalPlan             ArrivalPlan?
-  motivationLetters       MotivationLetter[]
-  surveys                 SatisfactionSurvey[]
-  signatureRequests       SignatureRequest[]
-  originals               OriginalDocument[]
-  settlements             SettlementEntry[]
-  aiRuns                  CaseAiRun[]
-  aiFindingStates         CaseAiFindingState[]
-  costs                   CaseCost[] // manual costs for the profitability view (lib/profitability)
-  partyThread             PartyThread?          @relation("PartyThreadCase")
-  timeEntries             TimeEntry[] // staff time tracking (lib/timeTracking)
-  arrivalFollowUp         ArrivalFollowUp? // post-arrival check-ins (lib/checkIns)
-  familyProfiles          FamilyMember[]        @relation("FamilyMemberMain") // members of this main case (details)
-  familyProfile           FamilyMember?         @relation("FamilyMemberCase") // this case is a member's case
-  clientTasks             ClientTask[] // to-dos the team gives the client (lib/clientProcess)
-  officeVisits            Booking[] // office visits booked from the portal (lib/clientProcess)
-  caseForms               CaseForm[] // smart questionnaires (lib/clientData)
-  dataConfirmations       DataConfirmation[] // client confirms the embassy data (lib/clientData)
-  dataValues              CaseDataValue[] // client-provided VIDEX values (lib/clientData)
-  housing                 CaseHousing? // housing search checklist + Anmeldung (lib/housing)
-  housingProposals        HousingProposal[] // partner landlord listings proposed to the client (lib/housing)
+  parentCaseId             String?
+  parentCase               Case?                 @relation("CaseFamily", fields: [parentCaseId], references: [id], onDelete: SetNull)
+  familyMembers            Case[]                @relation("CaseFamily")
+  relation                 String? // spouse | child | parent (for member cases)
+  closedAt                 DateTime? // set when the case reaches APPROVED / REJECTED / CANCELLED
+  documentsPurgedAt        DateTime? // DSGVO retention: files deleted after the retention period
+  createdAt                DateTime              @default(now())
+  updatedAt                DateTime              @updatedAt
+  requirements             DocumentRequirement[]
+  documents                Document[]
+  contract                 Contract?
+  events                   CaseEvent[]
+  messages                 CaseMessage[]
+  notifications            Notification[]
+  tasks                    Task[]
+  outboundMessages         OutboundMessage[]
+  onboarding               CaseOnboarding[]
+  mailMessages             MailMessage[]
+  chatChannels             ChatChannel[]
+  calendarEvents           CalendarEvent[]
+  agentCommissions         AgentCommission[]
+  translationOrders        TranslationOrder[]
+  arrivalPlan              ArrivalPlan?
+  motivationLetters        MotivationLetter[]
+  surveys                  SatisfactionSurvey[]
+  signatureRequests        SignatureRequest[]
+  originals                OriginalDocument[]
+  settlements              SettlementEntry[]
+  aiRuns                   CaseAiRun[]
+  aiFindingStates          CaseAiFindingState[]
+  costs                    CaseCost[] // manual costs for the profitability view (lib/profitability)
+  partyThread              PartyThread?          @relation("PartyThreadCase")
+  timeEntries              TimeEntry[] // staff time tracking (lib/timeTracking)
+  arrivalFollowUp          ArrivalFollowUp? // post-arrival check-ins (lib/checkIns)
+  familyProfiles           FamilyMember[]        @relation("FamilyMemberMain") // members of this main case (details)
+  familyProfile            FamilyMember?         @relation("FamilyMemberCase") // this case is a member's case
+  familyReunionInfo        FamilyReunionInfo?    @relation("FamilyReunionInfo") // main applicant's title / flat / income for the reunion check
+  clientTasks              ClientTask[] // to-dos the team gives the client (lib/clientProcess)
+  officeVisits             Booking[] // office visits booked from the portal (lib/clientProcess)
+  caseForms                CaseForm[] // smart questionnaires (lib/clientData)
+  dataConfirmations        DataConfirmation[] // client confirms the embassy data (lib/clientData)
+  dataValues               CaseDataValue[] // client-provided VIDEX values (lib/clientData)
+  housing                  CaseHousing? // housing search checklist + Anmeldung (lib/housing)
+  housingProposals         HousingProposal[] // partner landlord listings proposed to the client (lib/housing)
   /// Partner (middleman) who brought this client; their folder in the shared drive holds the client folder.
-  partnerId               String?
-  partner                 ReferralPartner?      @relation(fields: [partnerId], references: [id], onDelete: SetNull)
+  partnerId                String?
+  partner                  ReferralPartner?      @relation(fields: [partnerId], references: [id], onDelete: SetNull)
   /// The client's real folder in the shared drive ("Ad Soyad · Pass-Nr."), created with the case.
-  driveFolderId           String?               @unique
+  driveFolderId            String?               @unique
   /// Extra columns of the client register (admin-defined), keyed by ClientRegisterColumn.id.
-  registerData            Json?
+  registerData             Json?
   /// Team document workflow (lib/caseProcessing): null = "In Bearbeitung" (default) | IN_PROGRESS | WRITTEN ("Schon geschrieben") | DONE ("Fertig") | REFUSED ("Ablehnung").
-  processingStage         String?               @db.VarChar(16)
-  processingStageAt       DateTime?
-  processingStageById     String?               @db.VarChar(40)
+  processingStage          String?               @db.VarChar(16)
+  processingStageAt        DateTime?
+  processingStageById      String?               @db.VarChar(40)
   /// Staff member who should take the next step (gets a notification and a "my work" item).
-  processingAssigneeId    String?               @db.VarChar(40)
-  processingMoves         CaseProcessingMove[]
+  processingAssigneeId     String?               @db.VarChar(40)
+  processingMoves          CaseProcessingMove[]
 
   @@index([clientId])
   @@index([status])
@@ -747,6 +767,8 @@ model Inquiry {
   estimate      Json? // cost calculator result the lead asked about
   landingPageId String?       @db.VarChar(40)
   utm           Json?
+  /// Referral partner whose link the visitor came with (tv_ref cookie holding a partner code).
+  partnerId     String?       @db.VarChar(40)
 
   @@index([status, createdAt])
   @@index([score])
@@ -798,34 +820,37 @@ enum CompanyStatus {
 }
 
 model Company {
-  id                String             @id @default(cuid())
-  name              String
-  legalForm         String?
-  sector            String? // logistics | courier | industry | construction | hospitality | healthcare | agriculture | other
-  city              String?
-  address           String?            @db.Text
-  vatId             String?
-  website           String?            @db.Text
-  contactName       String?
-  phone             String?
-  email             String?
-  status            CompanyStatus      @default(PENDING)
-  note              String?            @db.Text // internal staff note
-  createdAt         DateTime           @default(now())
-  updatedAt         DateTime           @updatedAt
-  users             User[]
-  vacancies         Vacancy[]
-  cases             Case[]
-  invoices          Invoice[]
-  interviews        Interview[]
-  apiKeys           ApiKey[]
-  webhooks          Webhook[]
-  contacts          Contact[]
-  signatureRequests SignatureRequest[]
-  candidateRequests CandidateRequest[]
-  quotes            Quote[]
-  partyThreads      PartyThread[]
-  partnerHousing    PartnerHousing[] // partner landlord listings linked to this employer (lib/housing)
+  id                    String                       @id @default(cuid())
+  name                  String
+  legalForm             String?
+  sector                String? // logistics | courier | industry | construction | hospitality | healthcare | agriculture | other
+  city                  String?
+  address               String?                      @db.Text
+  vatId                 String?
+  website               String?                      @db.Text
+  contactName           String?
+  phone                 String?
+  email                 String?
+  status                CompanyStatus                @default(PENDING)
+  note                  String?                      @db.Text // internal staff note
+  createdAt             DateTime                     @default(now())
+  updatedAt             DateTime                     @updatedAt
+  users                 User[]
+  vacancies             Vacancy[]
+  cases                 Case[]
+  invoices              Invoice[]
+  interviews            Interview[]
+  interviewAvailability InterviewAvailability[]
+  interviewScheduling   InterviewSchedulingSettings?
+  interviewInvites      InterviewInvite[]
+  apiKeys               ApiKey[]
+  webhooks              Webhook[]
+  contacts              Contact[]
+  signatureRequests     SignatureRequest[]
+  candidateRequests     CandidateRequest[]
+  quotes                Quote[]
+  partyThreads          PartyThread[]
+  partnerHousing        PartnerHousing[] // partner landlord listings linked to this employer (lib/housing)
 
   @@index([status])
 }
@@ -891,21 +916,22 @@ enum ApplicationStatus {
 }
 
 model VacancyApplication {
-  id           String                 @id @default(cuid())
-  vacancyId    String
-  vacancy      Vacancy                @relation(fields: [vacancyId], references: [id], onDelete: Cascade)
-  userId       String
-  user         User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  status       ApplicationStatus      @default(NEW)
-  matchScore   Int? // 0–100 at the time of applying / last recompute
-  message      String?                @db.Text // candidate's note
-  staffNote    String?                @db.Text // internal
-  companyNote  String?                @db.Text // employer feedback
-  createdAt    DateTime               @default(now())
-  updatedAt    DateTime               @updatedAt
-  interviews   Interview[]
-  profileDraft CandidateProfileDraft?
-  partyThread  PartyThread?           @relation("PartyThreadApplication")
+  id               String                 @id @default(cuid())
+  vacancyId        String
+  vacancy          Vacancy                @relation(fields: [vacancyId], references: [id], onDelete: Cascade)
+  userId           String
+  user             User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status           ApplicationStatus      @default(NEW)
+  matchScore       Int? // 0–100 at the time of applying / last recompute
+  message          String?                @db.Text // candidate's note
+  staffNote        String?                @db.Text // internal
+  companyNote      String?                @db.Text // employer feedback
+  createdAt        DateTime               @default(now())
+  updatedAt        DateTime               @updatedAt
+  interviews       Interview[]
+  interviewInvites InterviewInvite[]
+  profileDraft     CandidateProfileDraft?
+  partyThread      PartyThread?           @relation("PartyThreadApplication")
 
   @@unique([vacancyId, userId])
   @@index([userId])
@@ -1028,6 +1054,8 @@ model Booking {
   /// Office visits: the case the visit belongs to (topic = originals | passport | sign | other).
   caseId      String?
   case        Case?            @relation(fields: [caseId], references: [id], onDelete: SetNull)
+  /// Referral partner whose link the visitor came with (tv_ref cookie holding a partner code).
+  partnerId   String?          @db.VarChar(40)
 
   @@index([email])
   @@index([caseId])
@@ -1484,9 +1512,82 @@ model Interview {
   createdAt     DateTime            @default(now())
   updatedAt     DateTime            @updatedAt
 
+  /// Set when the candidate picked the time themselves from the employer's free slots.
+  invite InterviewInvite?
+
   @@index([candidateId, startsAt])
   @@index([companyId, startsAt])
   @@index([startsAt])
+}
+
+// ─── Interview calendar: employer availability, candidate picks the time ───
+
+enum InterviewAvailabilityKind {
+  WEEKLY // recurring free hours on a weekday
+  DATE // one-off free hours on one day
+  BLOCK // one-off unavailable time (whole day without times)
+}
+
+/// The employer's free hours for interviews, as German wall-clock time (Europe/Berlin).
+model InterviewAvailability {
+  id        String                    @id @default(cuid())
+  companyId String
+  company   Company                   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  kind      InterviewAvailabilityKind
+  /// WEEKLY: ISO weekday, 1 = Monday … 7 = Sunday.
+  weekday   Int?
+  /// DATE / BLOCK: German calendar day "YYYY-MM-DD".
+  day       String?                   @db.VarChar(10)
+  /// "HH:MM" (end may be "24:00"); a BLOCK without times covers the whole day.
+  startTime String?                   @db.VarChar(5)
+  endTime   String?                   @db.VarChar(5)
+  note      String?                   @db.VarChar(200)
+  createdAt DateTime                  @default(now())
+
+  @@index([companyId, kind])
+}
+
+/// Per-employer booking rules for self-scheduled interviews.
+model InterviewSchedulingSettings {
+  companyId         String   @id
+  company           Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  slotMinutes       Int      @default(45)
+  bufferMinutes     Int      @default(15)
+  minNoticeHours    Int      @default(24)
+  horizonDays       Int      @default(21)
+  /// The candidate may move or cancel a self-booked interview until this many hours before it.
+  cancelCutoffHours Int      @default(12)
+  maxReschedules    Int      @default(2)
+  updatedAt         DateTime @updatedAt
+}
+
+enum InterviewInviteStatus {
+  OPEN
+  BOOKED
+  CANCELLED
+}
+
+/// "Pick a time": the employer (or staff) invites a presented candidate, who books a free slot.
+model InterviewInvite {
+  id            String                @id @default(cuid())
+  companyId     String
+  company       Company               @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  applicationId String?
+  application   VacancyApplication?   @relation(fields: [applicationId], references: [id], onDelete: SetNull)
+  candidateId   String
+  candidate     User                  @relation("InterviewInviteCandidate", fields: [candidateId], references: [id], onDelete: Cascade)
+  minutes       Int
+  notes         String?               @db.Text
+  status        InterviewInviteStatus @default(OPEN)
+  interviewId   String?               @unique
+  interview     Interview?            @relation(fields: [interviewId], references: [id], onDelete: SetNull)
+  reschedules   Int                   @default(0)
+  createdById   String?
+  createdAt     DateTime              @default(now())
+  updatedAt     DateTime              @updatedAt
+
+  @@index([candidateId, status])
+  @@index([companyId, status])
 }
 
 // ─── Internal knowledge base ───────────────────────────────────────────
@@ -2799,11 +2900,33 @@ model ReferralPartner {
   /// Default commission per client in cents (copied into each new commission row).
   commissionCents Int?
   currency        String              @default("EUR") @db.VarChar(3)
+  /// Personal sign-up code (/register?ref=CODE, short /p/CODE): clients who use it belong to the partner.
+  code            String?             @unique @db.VarChar(32)
+  /// When the automatic commission of a case is created: ASSIGNED (the case gets the partner) | CONTRACT_SIGNED | VISA_APPROVED.
+  commissionTrigger String            @default("ASSIGNED") @db.VarChar(20)
+  /// What the portal shows of the clients: MINIMAL (masked) | EXTENDED (contacts + payments, only for clients who consented).
+  visibility      String              @default("MINIMAL") @db.VarChar(12)
   createdAt       DateTime            @default(now())
   updatedAt       DateTime            @updatedAt
   cases           Case[]
   commissions     PartnerCommission[]
   settlements     SettlementEntry[]
+  ownedClients    User[]              @relation("PartnerOwnedClients")
+}
+
+/// History of client ownership by referral partners (sign-up link, partner registration, admin reassignment).
+model PartnerClientChange {
+  id            String   @id @default(cuid())
+  userId        String   @db.VarChar(40)
+  fromPartnerId String?  @db.VarChar(40)
+  toPartnerId   String?  @db.VarChar(40)
+  source        String   @db.VarChar(24) // SIGNUP_LINK | PARTNER_PORTAL | ADMIN
+  actorId       String?  @db.VarChar(40)
+  note          String?  @db.VarChar(500)
+  createdAt     DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@index([toPartnerId])
 }
 
 enum RegisterColumnType {
@@ -4069,6 +4192,11 @@ model ClientReferralCode {
   user      User     @relation("ReferralCodeOwner", fields: [userId], references: [id], onDelete: Cascade)
   code      String   @unique @db.VarChar(16)
   createdAt DateTime @default(now())
+  /// Personal landing page /r/<slug> (opt-in; public, noindex): chosen slug, quote and optional photo.
+  slug            String?  @unique @db.VarChar(40)
+  landingEnabled  Boolean  @default(false)
+  landingQuote    String?  @db.VarChar(280)
+  landingPhotoUrl String?  @db.VarChar(200) // /uploads/referral/… (re-encoded, EXIF stripped); only shown while enabled
 }
 
 enum ReferralStage {
@@ -4099,18 +4227,27 @@ model ClientReferral {
   approvedAt    DateTime?
   createdAt     DateTime        @default(now())
   updatedAt     DateTime        @updatedAt
-  reward        ReferralReward?
+  reward        ReferralReward? @relation("ReferralMainReward")
+  bonuses       ReferralReward[] @relation("ReferralBonusSource") // case-opened, tier and friend rewards
 
   @@index([referrerId])
 }
 
+/// Ledger of the client referral programme. type REFERRAL = the one main reward per referral (referralId);
+/// STAGE (extra amount at case opened), TIER (bonus at N approved friends) and FRIEND (the referred
+/// friend's own discount) have referralId null, the referral that caused them in sourceReferralId and a
+/// unique dedupeKey so a sync can never grant them twice.
 model ReferralReward {
-  id          String               @id @default(cuid())
-  referralId  String               @unique
-  referral    ClientReferral       @relation(fields: [referralId], references: [id], onDelete: Cascade)
-  referrerId  String // plain id (= referral.referrerId), for the ledger queries
+  id               String               @id @default(cuid())
+  referralId       String?              @unique
+  referral         ClientReferral?      @relation("ReferralMainReward", fields: [referralId], references: [id], onDelete: Cascade)
+  type             String               @default("REFERRAL") @db.VarChar(12) // REFERRAL | STAGE | TIER | FRIEND
+  sourceReferralId String?
+  source           ClientReferral?      @relation("ReferralBonusSource", fields: [sourceReferralId], references: [id], onDelete: Cascade)
+  dedupeKey        String?              @unique @db.VarChar(80) // STAGE:<referralId>:CASE_OPENED | TIER:<userId>:<n> | FRIEND:<referralId>
+  referrerId  String // plain id of who gets it (= referral.referrerId; the referred friend for FRIEND), for the ledger queries
   kind        String               @default("DISCOUNT") @db.VarChar(12) // DISCOUNT | PAYOUT (rule at creation)
-  trigger     String               @default("VISA_APPROVED") @db.VarChar(16) // CASE_OPENED | VISA_APPROVED
+  trigger     String               @default("VISA_APPROVED") @db.VarChar(16) // CASE_OPENED | VISA_APPROVED (TIER / REGISTERED for bonuses)
   amount      Int // whole currency units
   currency    String               @default("AZN") @db.VarChar(3)
   status      ReferralRewardStatus @default(PENDING)
@@ -4123,6 +4260,7 @@ model ReferralReward {
 
   @@index([referrerId, status])
   @@index([status])
+  @@index([sourceReferralId])
 }
 
 // ─── Family members (Familiennachzug) + German language progress ─────
@@ -4171,6 +4309,23 @@ model FamilyMember {
   updatedAt         DateTime        @updatedAt
 
   @@index([mainCaseId])
+}
+
+/// Familiennachzug: the main applicant's situation in Germany for the readiness check (lib/family/legal.ts).
+/// Empty fields fall back to the case (visa category → title, decision date, employment contract gross).
+model FamilyReunionInfo {
+  id            String    @id @default(cuid())
+  mainCaseId    String    @unique
+  mainCase      Case      @relation("FamilyReunionInfo", fields: [mainCaseId], references: [id], onDelete: Cascade)
+  sponsorTitle  String?   @db.VarChar(20) // legal.ts SPONSOR_TITLES
+  titleIssuedAt DateTime? // first issue of the residence title (calendar day, 00:00 UTC)
+  livingSpaceM2 Int? // Wohnfläche of the flat in Germany
+  warmRent      Int? // EUR per month incl. heating
+  netMonthly    Int? // EUR net salary per month
+  notes         String?   @db.Text
+  updatedById   String?   @db.VarChar(40)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 }
 
 enum GermanCourseStatus {
@@ -4278,6 +4433,75 @@ model GermanExam {
   @@index([examDate])
   @@index([registrationDeadline])
   @@index([certificateDocumentId])
+}
+
+/// A self-test (placement test) result of a candidate, kept so staff see the history on the case page.
+model GermanTestAttempt {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation("GermanTestAttemptUser", fields: [userId], references: [id], onDelete: Cascade)
+  estimated String   @db.VarChar(4) // none | A1 … B2
+  correct   Int
+  total     Int
+  percent   Int
+  levels    Json // [{ level, total, correct, percent, passed }]
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
+}
+
+/// Vocabulary trainer word (starter list seeded from prisma/seed/germanVocabulary.ts, upsert by slug).
+model GermanWord {
+  id           String               @id @default(cuid())
+  slug         String               @unique @db.VarChar(80)
+  level        String               @db.VarChar(4) // A1 | A2 | B1 | B2
+  field        String               @db.VarChar(20) // GENERAL | WORK | CARE | CONSTRUCTION | HOSPITALITY | DRIVING
+  de           String               @db.VarChar(120) // the word without article
+  article      String?              @db.VarChar(3) // der | die | das (nouns)
+  plural       String?              @db.VarChar(120)
+  example      String?              @db.VarChar(300) // German example sentence
+  translations Json // { az, ru, en }
+  sortOrder    Int                  @default(0)
+  published    Boolean              @default(true)
+  progress     GermanWordProgress[]
+
+  @@index([level, field])
+}
+
+/// Spaced-repetition state (SM-2) of one word for one candidate.
+model GermanWordProgress {
+  id             String     @id @default(cuid())
+  userId         String
+  user           User       @relation("GermanWordProgressUser", fields: [userId], references: [id], onDelete: Cascade)
+  wordId         String
+  word           GermanWord @relation(fields: [wordId], references: [id], onDelete: Cascade)
+  repetitions    Int        @default(0) // successful reviews in a row
+  easiness       Float      @default(2.5)
+  intervalDays   Int        @default(0)
+  dueAt          DateTime
+  reviews        Int        @default(0)
+  correct        Int        @default(0)
+  lapses         Int        @default(0)
+  lastGrade      Int?
+  lastReviewedAt DateTime?
+  createdAt      DateTime   @default(now())
+
+  @@unique([userId, wordId])
+  @@index([userId, dueAt])
+}
+
+/// Vocabulary practice per candidate and day (Baku calendar day) — streaks and the staff activity view.
+model GermanPracticeDay {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation("GermanPracticeDayUser", fields: [userId], references: [id], onDelete: Cascade)
+  day       String   @db.VarChar(10) // YYYY-MM-DD (Asia/Baku)
+  reviews   Int      @default(0)
+  correct   Int      @default(0)
+  newWords  Int      @default(0)
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, day])
 }
 
 // ─── Staff time tracking, post-arrival check-ins, client access log ─────

@@ -134,6 +134,12 @@ const listView = (c: ListCase) => {
   };
 };
 
+/** List rows (newest first) with the client id, for the partner's client list (lib/partners/owned.ts). */
+export const caseListView = async (where: Prisma.CaseWhereInput) => {
+  const rows = await prisma.case.findMany({ where, orderBy: { createdAt: 'desc' }, take: 2000, select: { ...LIST_SELECT, clientId: true } });
+  return rows.map((c) => ({ ...listView(c), clientId: c.clientId }));
+};
+
 export const ACTIVE_FILTER = ['active', 'closed', 'all'] as const;
 
 /** Visa key → where-clause (`cat:<id>` / `type:<VisaType>`; a type key means "that type without a category"). */

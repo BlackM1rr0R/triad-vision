@@ -6,7 +6,7 @@ const az = {
     hello: 'Salam, {{name}}',
     logout: 'Çıxış',
     agentPortal: 'Agent kabineti',
-    nav: { dashboard: 'İcmal', clients: 'Müştərilərim', commissions: 'Komissiyalar', profile: 'Profil' },
+    nav: { dashboard: 'İcmal', clients: 'Müraciətlər', commissions: 'Komissiyalar', profile: 'Profil' },
     common: {
       loading: 'Yüklənir…',
       error: 'Məlumat yüklənmədi.',
@@ -167,7 +167,7 @@ const de: typeof az = {
     hello: 'Hallo, {{name}}',
     logout: 'Abmelden',
     agentPortal: 'Agentenportal',
-    nav: { dashboard: 'Überblick', clients: 'Meine Kunden', commissions: 'Provisionen', profile: 'Profil' },
+    nav: { dashboard: 'Überblick', clients: 'Anträge', commissions: 'Provisionen', profile: 'Profil' },
     common: {
       loading: 'Wird geladen…',
       error: 'Daten konnten nicht geladen werden.',
@@ -328,7 +328,7 @@ const en: typeof az = {
     hello: 'Hello, {{name}}',
     logout: 'Log out',
     agentPortal: 'Agent portal',
-    nav: { dashboard: 'Overview', clients: 'My clients', commissions: 'Commissions', profile: 'Profile' },
+    nav: { dashboard: 'Overview', clients: 'Applications', commissions: 'Commissions', profile: 'Profile' },
     common: {
       loading: 'Loading…',
       error: 'Could not load the data.',
@@ -489,7 +489,7 @@ const ru: typeof az = {
     hello: 'Здравствуйте, {{name}}',
     logout: 'Выйти',
     agentPortal: 'Кабинет агента',
-    nav: { dashboard: 'Обзор', clients: 'Мои клиенты', commissions: 'Комиссии', profile: 'Профиль' },
+    nav: { dashboard: 'Обзор', clients: 'Заявки', commissions: 'Комиссии', profile: 'Профиль' },
     common: {
       loading: 'Загрузка…',
       error: 'Не удалось загрузить данные.',

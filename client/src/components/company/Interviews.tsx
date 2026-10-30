@@ -16,6 +16,7 @@ import { defaultStart, toastOpsError, type Interview } from '@/components/ops/sh
 import { CalendarDay } from '@/components/illustrations';
 import { Empty, Loading, Section } from './shared';
 import { EvaluateButton } from '@/components/placement/Evaluations';
+import { CompanyInterviewCalendar } from './InterviewAvailability';
 
 registerCopy(pagesOps);
 
@@ -124,6 +125,7 @@ export const CompanyInterviews = () => {
           </ul>
         )}
       </Section>
+      <CompanyInterviewCalendar onChanged={invalidate} />
       {past.length > 0 && (
         <Section title={t('ops.interviews.past')}>
           <ul className="grid gap-4 lg:grid-cols-2">

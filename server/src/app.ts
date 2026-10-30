@@ -27,6 +27,7 @@ import { journeyRouter } from './routes/journey.js';
 import { familyRouter } from './routes/family.js';
 import { germanRouter } from './routes/german.js';
 import { interviewsRouter } from './routes/interviews.js';
+import { interviewCalendarRouter } from './routes/interviewCalendar.js';
 import { partnerRouter } from './routes/partner.js';
 import { calendarRouter } from './routes/calendar.js';
 import { mailRouter } from './routes/mail.js';
@@ -38,6 +39,7 @@ import { contactsRouter } from './routes/contacts.js';
 import { workspaceRouter } from './routes/workspace.js';
 import { agentPortalRouter } from './routes/agentPortal.js';
 import { partnerPortalRouter } from './routes/partnerPortal.js';
+import { partnerSharingRouter } from './routes/partnerSharing.js';
 import { translationsRouter } from './routes/translations.js';
 import { privacyRouter } from './routes/privacy.js';
 import { legalRouter } from './routes/legal.js';
@@ -103,6 +105,7 @@ import { compareRouter } from './routes/compare.js';
 import { leadMagnetsRouter } from './routes/leadMagnets.js';
 import { jobAlertsRouter } from './routes/jobAlerts.js';
 import { accountRecognitionRouter } from './routes/accountRecognition.js'; // client portal: recognition status card
+import { accountPermitsRouter } from './routes/accountPermits.js'; // client portal: own permit / passport / insurance expiry dates
 import { accountSuccessShareRouter, publicSuccessShareRouter } from './routes/successShare.js'; // "visa approved" share cards + /success/:token
 import { googleReviewPublicRouter } from './routes/googleReview.js'; // Google review request: tracked redirect + opt-out
 import { budgetRouter } from './routes/budget.js'; // first-month budget calculator (/budget): config, estimate, PDF, portal prefill
@@ -197,6 +200,7 @@ export const createApp = () => {
   app.use('/api/admin', adminRouter);
   app.use('/api/account/billing', accountBillingRouter); // before the account router
   app.use('/api/account/recognition', accountRecognitionRouter); // read-only Anerkennung status of the own case
+  app.use('/api/account/permits', accountPermitsRouter); // residence permit / Blue Card, insurance, passport: days left
   app.use('/api/account/success-share', accountSuccessShareRouter); // visa approved: share card (consent, revoke)
   app.use('/api/account', accountRouter);
   app.use('/api/company/invoices', companyInvoicesRouter);
@@ -226,6 +230,7 @@ export const createApp = () => {
   app.use('/api/journey', journeyRouter);
   app.use('/api/family', familyRouter); // family members (Familiennachzug): details + checklists per member
   app.use('/api/german', germanRouter); // German language progress: goal, courses, exams, certificate
+  app.use('/api/interview-calendar', interviewCalendarRouter); // employer free hours, candidate picks the interview time
   app.use('/api/interviews', interviewsRouter);
   app.use('/api/v1', partnerRouter);
   app.use('/api/calendar', calendarRouter);
@@ -238,6 +243,7 @@ export const createApp = () => {
   app.use('/api/workspace', workspaceRouter);
   app.use('/api/agent', agentPortalRouter);
   app.use('/api/partner', partnerPortalRouter);
+  app.use('/api/partner-sharing', partnerSharingRouter); // client: consent to share data with the owning partner
   app.use('/api/translations', translationsRouter);
   app.use('/api/legal', legalRouter); // versioned AGB / privacy / cookie texts, re-acceptance, cookie consent log
   app.use('/api/waiting-room', waitingRoomRouter); // client "while you wait" lessons, exercises, checklists

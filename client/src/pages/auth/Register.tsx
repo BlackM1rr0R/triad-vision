@@ -38,6 +38,7 @@ import { ResendVerificationButton } from '@/components/auth/VerifyBanner';
 import { PassportScan, type PassportScanFields } from '@/components/auth/PassportScan';
 import { registerCopy } from '@/i18n';
 import { pagesLegal } from '@/i18n/pagesLegal';
+import { pagesPartnerClients } from '@/i18n/pagesPartnerClients';
 import { campaignConsentCopy } from '@/i18n/pagesCampaigns';
 import { cookieConsentCopy } from '@/i18n/cookieConsent'; // AGB checkbox copy
 import { clearRefCookie, readRefCookie, rememberVisa } from '@/lib/referralCookie';
@@ -45,6 +46,7 @@ import { clearRefCookie, readRefCookie, rememberVisa } from '@/lib/referralCooki
 registerCopy(pagesLegal);
 registerCopy(campaignConsentCopy);
 registerCopy(cookieConsentCopy);
+registerCopy(pagesPartnerClients); // partner sign-up code: partner name + data-sharing checkbox
 
 /** Same photo as the home hero (already cached for most visitors). */
 
@@ -81,7 +83,8 @@ const passportValid = (v: string) => /^[A-Z0-9]{5,20}$/.test(compactPassport(v))
 const REF_KEY = 'tv_ref';
 const normaliseRef = (v: string | null) => (v ?? '').trim().toUpperCase().replace(/[^A-Z0-9-]/g, '').slice(0, 32);
 const readRef = (search: string) => {
-  const fromUrl = normaliseRef(new URLSearchParams(search).get('ref'));
+  const params = new URLSearchParams(search);
+  const fromUrl = normaliseRef(params.get('ref') ?? params.get('p'));
   // ?visa=<slug> (calculator "Apply" button): preselected later in the "start your application" card.
   rememberVisa(new URLSearchParams(search).get('visa'));
   try {
@@ -245,15 +248,17 @@ export default function Register() {
   // Optional, visible "Referral code" field: prefilled from ?ref= / the tab / the 60-day cookie, checked live.
   const [refInput, setRefInput] = useState(() => readRef(location.search));
   const refCode = normaliseRef(refInput);
-  const [refCheck, setRefCheck] = useState<{ code: string; kind: 'AGENT' | 'CLIENT' | null; failed?: boolean } | null>(null);
+  const [refCheck, setRefCheck] = useState<{ code: string; kind: 'AGENT' | 'CLIENT' | 'PARTNER' | null; partnerName?: string; failed?: boolean } | null>(null);
+  // Partner code: optional consent to share the application with the partner (unchecked by default, logged).
+  const [partnerShare, setPartnerShare] = useState(false);
   useEffect(() => {
     if (!refCode) return;
     let alive = true;
     const timer = window.setTimeout(() => {
       api
-        .get<{ valid: boolean; kind: 'AGENT' | 'CLIENT' | null }>('/auth/referral-code', { params: { code: refCode } })
+        .get<{ valid: boolean; kind: 'AGENT' | 'CLIENT' | 'PARTNER' | null; partnerName?: string }>('/auth/referral-code', { params: { code: refCode } })
         .then(({ data }) => {
-          if (alive) setRefCheck({ code: refCode, kind: data.kind });
+          if (alive) setRefCheck({ code: refCode, kind: data.kind, partnerName: data.partnerName });
         })
         // Network trouble / rate limit: do not block the sign-up, the server checks the code again.
         .catch(() => {
@@ -359,6 +364,7 @@ export default function Register() {
         password: f.password,
         locale,
         ...(refCode ? { ref: refCode, refEntered: true } : {}),
+        ...(refCode && refCheck?.code === refCode && refCheck.kind === 'PARTNER' ? { partnerConsent: partnerShare } : {}),
         ...(scanned && Object.keys(scanned).length ? { passportScanned: true } : {}),
         ...(marketing ? { marketingOptIn: true } : {}),
         acceptTerms: true,
@@ -549,7 +555,9 @@ export default function Register() {
                 refState === 'checking'
                   ? t('registerPage.referral.checking')
                   : refState === 'valid'
-                    ? t(refCheck?.kind === 'AGENT' ? 'registerPage.referral.validAgent' : 'registerPage.referral.validClient')
+                    ? refCheck?.kind === 'PARTNER'
+                      ? t('partnerClients.signup.partner', { name: refCheck.partnerName ?? refCode })
+                      : t(refCheck?.kind === 'AGENT' ? 'registerPage.referral.validAgent' : 'registerPage.referral.validClient')
                     : t('registerPage.referral.hint')
               }
               ok={refState === 'valid'}
@@ -571,6 +579,12 @@ export default function Register() {
                 aria-describedby={`${id('ref')}-hint`}
               />
             </Field>
+            {refState === 'valid' && refCheck?.kind === 'PARTNER' && (
+              <label className="flex items-start gap-2.5 text-sm text-ink/80">
+                <input type="checkbox" id={id('partnerShare')} name="partnerConsent" checked={partnerShare} onChange={(e) => setPartnerShare(e.target.checked)} className="mt-0.5 size-4 shrink-0 accent-primary" />
+                <span>{t('partnerClients.signup.consent', { name: refCheck.partnerName ?? refCode })}</span>
+              </label>
+            )}
 
             <div>
               <label className="flex items-start gap-2.5 pt-1 text-sm text-ink/80">

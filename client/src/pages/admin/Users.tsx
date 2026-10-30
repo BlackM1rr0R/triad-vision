@@ -5,7 +5,7 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tansta
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
 import { toast } from 'sonner';
-import { FileSpreadsheet, FolderOpen, KeyRound, LogOut, Mail, Trash2, MessageSquare, MonitorSmartphone, Phone, Search, UserPlus, Users as UsersIcon, Wifi } from 'lucide-react';
+import { FileSpreadsheet, FolderOpen, Handshake, KeyRound, LogOut, Mail, Trash2, MessageSquare, MonitorSmartphone, Phone, Search, UserPlus, Users as UsersIcon, Wifi } from 'lucide-react';
 import { api, errorCode } from '@/lib/api';
 import { registerCopy } from '@/i18n';
 import { pagesMailAdmin } from '@/i18n/pagesMailAdmin';
@@ -22,6 +22,8 @@ import { Chip, EmptyState, ErrorBlock, LoadingBlock, OnlineDot, PageHead, Switch
 import { DuplicateChip, useOpenDuplicateIds } from '@/components/duplicates/DuplicateBadge';
 import { ViewAsClientButton } from '@/components/privacyTools/ViewAsClientButton';
 import { useNewParam } from '@/components/command/useNewParam'; // ?new=1 deep link (Ctrl+K palette)
+import { usePartnerOptions } from '@/components/partners/api';
+import { ClientOwnerDialog } from '@/components/partners/Ownership'; // partner-owned clients: badge, filter, owner change
 registerCopy(pagesMailAdmin); // "Create mailbox" option of the new-staff dialog
 
 // Field-level change history of the user (ADMIN+, own chunk).
@@ -478,6 +480,10 @@ export default function Users() {
   const roleParam = params.get('role');
   const role = isRole(roleParam) ? roleParam : null;
   const onlineOnly = params.get('online') === '1';
+  // Clients of a referral partner: a partner id, "any" or "none" (server: ?ownerPartnerId=).
+  const partnerFilter = params.get('partner') ?? '';
+  const partnerOptions = usePartnerOptions();
+  const [ownerFor, setOwnerFor] = useState<AdminUser | null>(null);
   const [searchInput, setSearchInput] = useState(params.get('search') ?? '');
   const [search, setSearch] = useState(searchInput);
   const [creating, setCreating] = useState(false);
@@ -500,8 +506,9 @@ export default function Users() {
   }, [search]);
 
   const { data, isLoading, isFetching, error, refetch } = useQuery({
-    queryKey: ['admin-users', { role, search }],
-    queryFn: async () => (await api.get<{ users: AdminUser[] }>('/admin/users', { params: { role: role ?? undefined, search: search || undefined } })).data.users,
+    queryKey: ['admin-users', { role, search, partnerFilter }],
+    queryFn: async () =>
+      (await api.get<{ users: AdminUser[] }>('/admin/users', { params: { role: role ?? undefined, search: search || undefined, ownerPartnerId: partnerFilter || undefined } })).data.users,
     placeholderData: keepPreviousData,
   });
 
@@ -509,6 +516,12 @@ export default function Users() {
     const next = new URLSearchParams(params);
     if (r) next.set('role', r);
     else next.delete('role');
+    setParams(next, { replace: true });
+  };
+  const setPartnerFilter = (v: string) => {
+    const next = new URLSearchParams(params);
+    if (v) next.set('partner', v);
+    else next.delete('partner');
     setParams(next, { replace: true });
   };
   const setOnline = (v: boolean) => {
@@ -523,8 +536,17 @@ export default function Users() {
   const users = onlineOnly ? all.filter((u) => u.online) : all;
   // Possible duplicate clients (badge) and merged-away accounts (link to the primary).
   const dupIds = useOpenDuplicateIds(all.filter((u) => u.role === 'CLIENT' && !u.mergedIntoId).map((u) => u.id));
-  const dupMark = (u: AdminUser) =>
-    u.mergedIntoId ? <DuplicateChip userId={u.id} merged className="mt-1" /> : dupIds.has(u.id) ? <DuplicateChip userId={u.id} className="mt-1" /> : null;
+  const dupMark = (u: AdminUser) => (
+    <>
+      {u.mergedIntoId ? <DuplicateChip userId={u.id} merged className="mt-1" /> : dupIds.has(u.id) ? <DuplicateChip userId={u.id} className="mt-1" /> : null}
+      {/* Partner-owned client: badge opens the owner / history dialog (changing it is ADMIN+). */}
+      {u.ownerPartner && (
+        <button type="button" className="badge mt-1 bg-accent-bg text-accent-fg hover:underline" onClick={() => setOwnerFor(u)}>
+          <Handshake className="size-3" aria-hidden /> {t('partnerClients.admin.badge', { name: u.ownerPartner.name })}
+        </button>
+      )}
+    </>
+  );
   /** The super admin account itself and the viewer's own row are never editable. */
   const editable = (u: AdminUser) => canManage && u.id !== me?.id && u.role !== 'SUPER_ADMIN';
 
@@ -578,6 +600,19 @@ export default function Users() {
             </Chip>
           ))}
         </div>
+        <label className="shrink-0">
+          <span className="sr-only">{t('partnerClients.admin.filter')}</span>
+          <select className="input h-10 min-w-40" value={partnerFilter} onChange={(e) => setPartnerFilter(e.target.value)}>
+            <option value="">{t('partnerClients.admin.filterAll')}</option>
+            <option value="any">{t('partnerClients.admin.filterAny')}</option>
+            <option value="none">{t('partnerClients.admin.filterNone')}</option>
+            {(partnerOptions.data ?? []).map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.name}
+              </option>
+            ))}
+          </select>
+        </label>
       </div>
 
       {!canManage && <p className="mb-3 rounded-lg bg-primary/[0.06] px-3 py-2 text-xs text-link">{t('admin.users.readOnly')}</p>}
@@ -701,6 +736,7 @@ export default function Users() {
       {canManage && <ResetPasswordModal user={resetFor} onClose={() => setResetFor(null)} />}
       {canManage && <RevokeSessionsDialog user={revokeFor} onClose={() => setRevokeFor(null)} />}
       {canManage && <DeleteUserDialog user={deleteFor} onClose={() => setDeleteFor(null)} />}
+      <ClientOwnerDialog userId={ownerFor?.id ?? null} name={ownerFor ? fullName(ownerFor) : ''} isAdmin={hasMinRole(me?.role, 'ADMIN')} onClose={() => setOwnerFor(null)} />
     </div>
   );
 }

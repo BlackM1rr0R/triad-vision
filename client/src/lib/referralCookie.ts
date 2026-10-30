@@ -27,10 +27,12 @@ export const clearRefCookie = () => {
   }
 };
 
-/** Stores `?ref=` from the current URL (call once at start-up). */
+/** Stores `?ref=` (or a partner's `?p=`) from the current URL (call once at start-up). */
 export const captureRefFromUrl = (search = window.location.search) => {
   try {
-    const code = normaliseRef(new URLSearchParams(search).get('ref'));
+    const params = new URLSearchParams(search);
+    // ?p=CODE is the referral partner's link (/p/CODE redirects to /register?ref=CODE); same cookie.
+    const code = normaliseRef(params.get('ref') ?? params.get('p'));
     if (!code) return;
     const secure = window.location.protocol === 'https:' ? '; Secure' : '';
     document.cookie = `${REF_COOKIE}=${encodeURIComponent(code)}; Max-Age=${REF_DAYS * 24 * 60 * 60}; Path=/; SameSite=Lax${secure}`;

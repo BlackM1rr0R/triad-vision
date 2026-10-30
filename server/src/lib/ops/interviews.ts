@@ -26,6 +26,7 @@ export const interviewInclude = {
   createdBy: { select: { id: true, firstName: true, lastName: true, role: true, locale: true } },
   company: { select: { id: true, name: true } },
   application: { select: { id: true, status: true, vacancy: { select: { id: true, title: true, slug: true } } } },
+  invite: { select: { id: true } },
 } satisfies Prisma.InterviewInclude;
 
 export type InterviewFull = Prisma.InterviewGetPayload<{ include: typeof interviewInclude }>;
@@ -53,6 +54,8 @@ export const interviewView = (i: InterviewFull, audience: 'staff' | 'company' | 
       : { id: i.candidate.id, name: `${i.candidate.firstName} ${i.candidate.lastName}`.trim(), email: audience === 'staff' ? i.candidate.email : undefined, profession: i.candidate.profession },
   staff: i.staff ? { id: i.staff.id, name: `${i.staff.firstName} ${i.staff.lastName}`.trim() } : null,
   createdBy: i.createdBy ? { id: i.createdBy.id, name: `${i.createdBy.firstName} ${i.createdBy.lastName}`.trim(), role: i.createdBy.role } : null,
+  /** Set when the candidate picked the time from the employer's free slots (routes/interviewCalendar.ts). */
+  inviteId: i.invite?.id ?? null,
 });
 
 /** Payload for partner webhooks (no personal data beyond what the employer already sees). */
@@ -69,7 +72,7 @@ export const interviewWebhookPayload = (i: InterviewFull) => ({
 
 // ─── Texts ──────────────────────────────────────────────────────────────
 
-export type InterviewMail = 'scheduled' | 'confirmed' | 'cancelled' | 'rescheduled' | 'reminder24h' | 'reminder1h' | 'declined';
+export type InterviewMail = 'scheduled' | 'confirmed' | 'cancelled' | 'rescheduled' | 'reminder24h' | 'reminder1h' | 'declined' | 'booked' | 'moved';
 
 interface Ctx {
   when: string;
@@ -89,6 +92,9 @@ interface Catalogue {
   reminder24h: (c: Ctx) => Msg;
   reminder1h: (c: Ctx) => Msg;
   declined: (c: Ctx) => Msg;
+  /** Employer / staff: the candidate picked a free slot, or moved their self-booked interview. */
+  booked: (c: Ctx) => Msg;
+  moved: (c: Ctx) => Msg;
   icsSummary: (c: Ctx) => string;
   cta: string;
   ctaStaff: string;
@@ -112,6 +118,8 @@ const az: Catalogue = {
   reminder24h: (c) => ({ title: 'Xatırlatma: sabah müsahibəniz var', body: `Sabah ${c.company ? `${c.company} ilə ` : ''}müsahibəniz var.\n\nVaxt:\n${c.when}` + tail(c, az) }),
   reminder1h: (c) => ({ title: 'Xatırlatma: müsahibə 1 saatdan sonra', body: `Müsahibə 1 saatdan sonra başlayır.\n\nVaxt:\n${c.when}` + tail(c, az) }),
   declined: (c) => ({ title: `Namizəd müsahibəni rədd etdi: ${c.candidate}`, body: `${c.candidate} ${c.when.split('\n')[0]} tarixinə təklif olunan müsahibəni rədd etdi. Zəhmət olmasa yeni vaxt təklif edin.` }),
+  booked: (c) => ({ title: `Namizəd müsahibə vaxtını seçdi: ${c.candidate}`, body: `${c.candidate} müsahibə üçün boş vaxtlarınızdan birini seçdi.\n\nVaxt:\n${c.when}` + tail(c, az) }),
+  moved: (c) => ({ title: `Müsahibə başqa vaxta keçirildi: ${c.candidate}`, body: `${c.candidate} ilə müsahibə yeni vaxta keçirildi.\n\nYeni vaxt:\n${c.when}` + tail(c, az) }),
 };
 
 const de: Catalogue = {
@@ -127,6 +135,8 @@ const de: Catalogue = {
   reminder24h: (c) => ({ title: 'Erinnerung: morgen Vorstellungsgespräch', body: `Morgen findet Ihr Vorstellungsgespräch${c.company ? ` mit ${c.company}` : ''} statt.\n\nTermin:\n${c.when}` + tail(c, de) }),
   reminder1h: (c) => ({ title: 'Erinnerung: Vorstellungsgespräch in 1 Stunde', body: `Das Vorstellungsgespräch beginnt in einer Stunde.\n\nTermin:\n${c.when}` + tail(c, de) }),
   declined: (c) => ({ title: `Kandidat hat abgelehnt: ${c.candidate}`, body: `${c.candidate} hat den vorgeschlagenen Termin am ${c.when.split('\n')[0]} abgelehnt. Bitte schlagen Sie einen neuen Termin vor.` }),
+  booked: (c) => ({ title: `Termin gewählt: ${c.candidate}`, body: `${c.candidate} hat einen Ihrer freien Termine für das Vorstellungsgespräch gewählt.\n\nTermin:\n${c.when}` + tail(c, de) }),
+  moved: (c) => ({ title: `Termin verschoben: ${c.candidate}`, body: `Das Vorstellungsgespräch mit ${c.candidate} wurde verschoben.\n\nNeuer Termin:\n${c.when}` + tail(c, de) }),
 };
 
 const en: Catalogue = {
@@ -142,6 +152,8 @@ const en: Catalogue = {
   reminder24h: (c) => ({ title: 'Reminder: interview tomorrow', body: `Your interview${c.company ? ` with ${c.company}` : ''} is tomorrow.\n\nTime:\n${c.when}` + tail(c, en) }),
   reminder1h: (c) => ({ title: 'Reminder: interview in 1 hour', body: `The interview starts in one hour.\n\nTime:\n${c.when}` + tail(c, en) }),
   declined: (c) => ({ title: `Candidate declined: ${c.candidate}`, body: `${c.candidate} declined the interview proposed for ${c.when.split('\n')[0]}. Please propose a new time.` }),
+  booked: (c) => ({ title: `Interview time chosen: ${c.candidate}`, body: `${c.candidate} picked one of your free times for the interview.\n\nTime:\n${c.when}` + tail(c, en) }),
+  moved: (c) => ({ title: `Interview moved: ${c.candidate}`, body: `The interview with ${c.candidate} was moved.\n\nNew time:\n${c.when}` + tail(c, en) }),
 };
 
 const ru: Catalogue = {
@@ -157,6 +169,8 @@ const ru: Catalogue = {
   reminder24h: (c) => ({ title: 'Напоминание: завтра собеседование', body: `Завтра у вас собеседование${c.company ? ` с ${c.company}` : ''}.\n\nВремя:\n${c.when}` + tail(c, ru) }),
   reminder1h: (c) => ({ title: 'Напоминание: собеседование через 1 час', body: `Собеседование начнётся через час.\n\nВремя:\n${c.when}` + tail(c, ru) }),
   declined: (c) => ({ title: `Кандидат отклонил собеседование: ${c.candidate}`, body: `${c.candidate} отклонил(а) собеседование, предложенное на ${c.when.split('\n')[0]}. Пожалуйста, предложите новое время.` }),
+  booked: (c) => ({ title: `Кандидат выбрал время собеседования: ${c.candidate}`, body: `${c.candidate} выбрал(а) одно из ваших свободных окон для собеседования.\n\nВремя:\n${c.when}` + tail(c, ru) }),
+  moved: (c) => ({ title: `Собеседование перенесено: ${c.candidate}`, body: `Собеседование с ${c.candidate} перенесено.\n\nНовое время:\n${c.when}` + tail(c, ru) }),
 };
 
 export const interviewTexts: Record<Locale, Catalogue> = { az, de, en, ru };
@@ -187,7 +201,8 @@ export const interviewIcs = (i: InterviewFull, locale: Locale, cancelled = i.sta
     location: c.meetingUrl || undefined,
     url: c.meetingUrl || undefined,
     status: cancelled ? 'CANCELLED' : 'CONFIRMED',
-    sequence: cancelled ? 1 : 0,
+    // Grows with every change, so calendar apps apply a moved time or a cancellation to the same event.
+    sequence: Math.max(0, Math.floor((i.updatedAt.getTime() - i.createdAt.getTime()) / 1000)) + (cancelled ? 1 : 0),
   });
 };
 
@@ -197,6 +212,13 @@ const CANDIDATE_LINK = '/account/interviews';
 const COMPANY_LINK = '/company/interviews';
 const STAFF_LINK = '/admin/interviews';
 
+/** Mails that carry the calendar invite (.ics): every change of the time or the status. */
+const ICS_KINDS: InterviewMail[] = ['scheduled', 'confirmed', 'cancelled', 'rescheduled', 'booked', 'moved'];
+
+const icsAttachment = (i: InterviewFull, locale: Locale, kind: InterviewMail) => [
+  { filename: 'triad-vision-interview.ics', content: interviewIcs(i, locale, kind === 'cancelled'), contentType: 'text/calendar; charset=utf-8' },
+];
+
 /** In-app + push through notifyUser; the e-mail is sent here so the .ics can be attached. */
 export const notifyCandidate = async (i: InterviewFull, kind: InterviewMail, notes?: string | null) => {
   const u = i.candidate;
@@ -204,23 +226,25 @@ export const notifyCandidate = async (i: InterviewFull, kind: InterviewMail, not
   const msg = t[kind](interviewCtx(i, u.locale, 'candidate', notes));
   await notifyUser(u.id, { type: `INTERVIEW_${kind.toUpperCase()}`, title: msg.title, body: msg.body, link: CANDIDATE_LINK, email: false, ctaLabel: t.cta });
   if (u.emailNotifications === false) return;
-  const withIcs = kind === 'scheduled' || kind === 'confirmed' || kind === 'cancelled' || kind === 'rescheduled';
+  const withIcs = ICS_KINDS.includes(kind);
   const html = renderEmail(msg.title, msg.body, { label: t.cta, url: `${config.clientUrl}${CANDIDATE_LINK}` });
-  const attachments = withIcs
-    ? [{ filename: 'triad-vision-interview.ics', content: interviewIcs(i, u.locale, kind === 'cancelled'), contentType: 'text/calendar; charset=utf-8' }]
-    : undefined;
-  void sendMail(u.email, `Triad Vision · ${msg.title}`, html, attachments);
+  void sendMail(u.email, `Triad Vision · ${msg.title}`, html, withIcs ? icsAttachment(i, u.locale, kind) : undefined);
 };
 
-/** Every active employer user of the interview's company, in their own language. */
+/** Every active employer user of the interview's company, in their own language (time changes with the .ics). */
 export const notifyCompany = async (i: InterviewFull, kind: InterviewMail, notes?: string | null, except?: string) => {
   if (!i.companyId) return;
-  const users = await prisma.user.findMany({ where: { companyId: i.companyId, role: 'COMPANY', isActive: true }, select: { id: true, locale: true } });
+  const users = await prisma.user.findMany({ where: { companyId: i.companyId, role: 'COMPANY', isActive: true }, select: { id: true, locale: true, email: true, emailNotifications: true } });
+  const withIcs = ICS_KINDS.includes(kind);
   for (const u of users) {
     if (u.id === except) continue;
     const t = interviewTexts[u.locale];
     const msg = t[kind](interviewCtx(i, u.locale, 'company', notes));
-    await notifyUser(u.id, { type: `INTERVIEW_${kind.toUpperCase()}`, title: msg.title, body: msg.body, link: COMPANY_LINK, ctaLabel: t.cta });
+    await notifyUser(u.id, { type: `INTERVIEW_${kind.toUpperCase()}`, title: msg.title, body: msg.body, link: COMPANY_LINK, ctaLabel: t.cta, email: !withIcs });
+    if (withIcs && u.emailNotifications !== false) {
+      const html = renderEmail(msg.title, msg.body, { label: t.cta, url: `${config.clientUrl}${COMPANY_LINK}` });
+      void sendMail(u.email, `Triad Vision · ${msg.title}`, html, icsAttachment(i, u.locale, kind));
+    }
   }
 };
 

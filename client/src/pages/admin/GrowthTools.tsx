@@ -13,6 +13,18 @@ import { pagesGrowthPlus } from '@/i18n/pagesGrowthPlus';
 import { pagesMarketing } from '@/i18n/pagesMarketing';
 import { CostCalculatorSettings } from '@/components/marketing/CostCalculatorSettings';
 import { OriginAnalytics } from '@/components/marketing/OriginAnalytics';
+import {
+  BlockReferralButton,
+  OtherProgrammes,
+  ReferralBonuses,
+  ReferralLeaderboard,
+  ReferralRuleExtras,
+  ReferralSuspicious,
+  ruleExtrasError,
+  type BonusRow,
+  type RuleExtras,
+} from '@/components/referrals/AdminReferralExtras';
+import { ReferralPayoutReport, ReferralTemplatesEditor, ReferralTermsEditor } from '@/components/referrals/AdminReferralShare';
 import { api, errorCode } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { useL10n } from '@/lib/l10n';
@@ -370,7 +382,7 @@ const MapTab = ({ canEdit }: { canEdit: boolean }) => {
   );
 };
 
-interface RefSettings {
+interface RefSettings extends RuleExtras {
   enabled: boolean;
   trigger: 'VISA_APPROVED' | 'CASE_OPENED';
   kind: 'DISCOUNT' | 'PAYOUT';
@@ -395,11 +407,11 @@ const ReferralsTab = ({ canEdit }: { canEdit: boolean }) => {
   const qc = useQueryClient();
   const { data } = useQuery({
     queryKey: ['admin', 'growth', 'referrals'],
-    queryFn: async () => (await api.get<{ settings: RefSettings; referrals: RefRow[]; totals: Record<RewardStatus, number> }>('/admin/growth/referrals')).data,
+    queryFn: async () => (await api.get<{ settings: RefSettings; referrals: RefRow[]; bonuses: BonusRow[]; totals: Record<RewardStatus, number> }>('/admin/growth/referrals')).data,
   });
   const [s, setS] = useState<RefSettings | null>(null);
   useEffect(() => {
-    if (data && !s) setS({ ...data.settings, terms: data.settings.terms ?? emptyL10n() });
+    if (data && !s) setS({ ...data.settings, terms: data.settings.terms ?? emptyL10n(), campaign: { ...data.settings.campaign, label: data.settings.campaign?.label ?? emptyL10n() } });
   }, [data, s]);
   const refresh = () => void qc.invalidateQueries({ queryKey: ['admin', 'growth', 'referrals'] });
   const save = useMutation({
@@ -408,7 +420,10 @@ const ReferralsTab = ({ canEdit }: { canEdit: boolean }) => {
       toast.success(t('gp.common.saved'));
       refresh();
     },
-    onError: () => toast.error(t('gp.common.error')),
+    onError: (e) => {
+      const code = errorCode(e);
+      toast.error(code === 'DUPLICATE_TIER' || code === 'CAMPAIGN_DATES' ? t(`rp.admin.errors.${code}`) : t('gp.common.error'));
+    },
   });
   const move = useMutation({
     mutationFn: ({ id, status }: { id: string; status: RewardStatus }) => api.patch(`/admin/growth/referrals/rewards/${id}`, { status }),
@@ -416,6 +431,7 @@ const ReferralsTab = ({ canEdit }: { canEdit: boolean }) => {
     onError: () => toast.error(t('gp.common.error')),
   });
   if (!data || !s) return <LoadingBlock />;
+  const extrasError = ruleExtrasError(s);
   const actions = (r: NonNullable<RefRow['reward']>) => {
     const out: { status: RewardStatus; label: string }[] = [];
     if (r.status === 'EARNED') out.push({ status: r.kind === 'PAYOUT' ? 'PAID' : 'USED', label: r.kind === 'PAYOUT' ? t('gp.admin.ref.markPaid') : t('gp.admin.ref.markUsed') });
@@ -459,15 +475,22 @@ const ReferralsTab = ({ canEdit }: { canEdit: boolean }) => {
         <div className="mt-4">
           <L10nInput label={t('gp.admin.ref.terms')} value={s.terms} onChange={(v) => setS({ ...s, terms: v })} multiline rows={2} />
         </div>
-        <p className="mt-3 text-xs text-muted">{t('gp.admin.ref.agentNote')}</p>
+        <ReferralRuleExtras value={s} trigger={s.trigger} currency={s.currency} canEdit={canEdit} onChange={(v) => setS({ ...s, ...v })} />
+        <p className="mt-4 text-xs text-muted">{t('gp.admin.ref.agentNote')}</p>
+        <div className="mt-1">
+          <OtherProgrammes />
+        </div>
         {canEdit && (
-          <div className="mt-4 flex justify-end">
-            <button type="button" className="btn-primary btn-sm" disabled={save.isPending || !/^[A-Z]{3}$/.test(s.currency)} onClick={() => save.mutate(s)}>
+          <div className="mt-4 flex items-center justify-end gap-3">
+            {extrasError && <span className="text-xs text-danger-fg">{t(`rp.admin.errors.${extrasError}`)}</span>}
+            <button type="button" className="btn-primary btn-sm" disabled={save.isPending || !/^[A-Z]{3}$/.test(s.currency) || !!extrasError} onClick={() => save.mutate(s)}>
               {t('gp.common.save')}
             </button>
           </div>
         )}
       </Panel>
+
+      <ReferralLeaderboard canEdit={canEdit} />
 
       <Panel
         title={t('gp.admin.ref.ledger')}
@@ -526,6 +549,12 @@ const ReferralsTab = ({ canEdit }: { canEdit: boolean }) => {
                               {a.label}
                             </button>
                           ))}
+                        {r.reward?.status === 'PAID' && r.reward.kind === 'PAYOUT' && (
+                          <a href={`/api/admin/growth/referrals/rewards/${r.reward.id}/receipt.pdf`} className="btn-ghost btn-sm" download>
+                            {t('rs.admin.receipt')}
+                          </a>
+                        )}
+                        {canEdit && r.stage !== 'BLOCKED' && <BlockReferralButton referralId={r.id} />}
                       </span>
                     </td>
                   </tr>
@@ -535,6 +564,12 @@ const ReferralsTab = ({ canEdit }: { canEdit: boolean }) => {
           </div>
         )}
       </Panel>
+
+      <ReferralBonuses rows={data.bonuses ?? []} canEdit={canEdit} />
+      <ReferralSuspicious />
+      <ReferralPayoutReport />
+      <ReferralTemplatesEditor />
+      <ReferralTermsEditor canEdit={canEdit} />
     </div>
   );
 };

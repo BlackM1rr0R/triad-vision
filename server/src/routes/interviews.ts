@@ -17,6 +17,7 @@ import {
   newMeetingUrl,
   type InterviewFull,
 } from '../lib/ops/interviews.js';
+import { closeInviteOf, loadSettings } from '../lib/ops/interviewBooking.js';
 import { canEvaluate, evaluationInput, evaluationSummary, evaluationsOfInterview, notifyEvaluation, saveEvaluation } from '../lib/placement/evaluations.js';
 
 /**
@@ -273,6 +274,7 @@ interviewsRouter.patch('/:id', async (req, res) => {
   const { interview: i, audience } = await loadVisible(req);
   if (audience === 'candidate') throw forbidden();
   const { interview, kind } = await applyPatch(req, i, body, audience);
+  if (kind === 'cancelled') await closeInviteOf(i.id);
   if (kind) await broadcastInterview(interview, kind, { actorId: req.user!.id, notes: kind === 'cancelled' ? body.reason : undefined, webhook: 'interview.updated' });
   res.json({ interview: interviewView(interview, audience) });
 });
@@ -284,6 +286,7 @@ interviewsRouter.delete('/:id', async (req, res) => {
     const cancelled = await prisma.interview.update({ where: { id: i.id }, data: { status: 'CANCELLED' }, include: interviewInclude });
     await broadcastInterview(cancelled, 'cancelled', { actorId: req.user!.id, webhook: 'interview.updated' });
   }
+  await closeInviteOf(i.id);
   await prisma.interview.delete({ where: { id: i.id } });
   await audit(req, 'INTERVIEW_DELETED', `interview:${i.id}`);
   res.json({ ok: true });
@@ -307,7 +310,13 @@ interviewsRouter.post('/:id/decline', async (req, res) => {
   const { interview: i, audience } = await loadVisible(req);
   if (audience !== 'candidate') throw forbidden();
   if (i.status !== 'PROPOSED' && i.status !== 'CONFIRMED') throw new HttpError(409, 'INVALID_TRANSITION');
+  // A time the candidate picked themselves can only be given back before the employer's cut-off.
+  if (i.invite && i.companyId) {
+    const { cancelCutoffHours } = await loadSettings(i.companyId);
+    if (Date.now() > i.startsAt.getTime() - cancelCutoffHours * 60 * MIN) throw conflict('CANCEL_TOO_LATE');
+  }
   const interview = await prisma.interview.update({ where: { id: i.id }, data: { status: 'CANCELLED', notes: reason ? `${i.notes ? `${i.notes}\n\n` : ''}${reason}` : i.notes }, include: interviewInclude });
+  await closeInviteOf(i.id);
   await audit(req, 'INTERVIEW_DECLINED', `interview:${i.id}`, { reason: reason ?? null });
   await broadcastInterview(interview, 'declined', { actorId: req.user!.id, notes: reason, webhook: 'interview.updated' });
   res.json({ interview: interviewView(interview, audience) });

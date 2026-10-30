@@ -1,4 +1,6 @@
+import crypto from 'node:crypto';
 import fs from 'node:fs/promises';
+import bcrypt from 'bcryptjs';
 import path from 'node:path';
 import { Router, type Request } from 'express';
 import { z } from 'zod';
@@ -7,14 +9,17 @@ import { config } from '../config.js';
 import { prisma } from '../db.js';
 import { requireRole } from '../middleware/auth.js';
 import { decodeOriginalName, documentUpload, verifyUploadedFile } from '../middleware/upload.js';
-import { badRequest, forbidden, parse } from '../lib/http.js';
+import { badRequest, conflict, forbidden, limiter, notFound, parse } from '../lib/http.js';
 import { audit } from '../lib/audit.js';
-import { XLSX_MIME } from '../lib/clientsExcel.js';
 import { FINAL_STATUSES } from '../lib/caseFlow.js';
 import { caseLabels, commissionTotals, monthRange, settlementClientNames } from '../lib/partners/commissions.js';
 import { buildCommissionWorkbook } from '../lib/partners/report.js';
 import { ACTIVE_FILTER, listPartnerCases, partnerCaseDetail, storePartnerUpload, visaFacets } from '../lib/partnerPortal/cases.js';
 import { isRefused } from '../lib/caseProcessing/index.js';
+import { attachPartnerOwner, extendedContact, listPartnerClients, partnerLinks, sendClientInvite, suggestPartnerCode } from '../lib/partners/owned.js';
+import { XLSX_MIME, markClientsExcelDirty } from '../lib/clientsExcel.js';
+import { scanUserDuplicates } from '../lib/duplicates/detect.js';
+import { intlPhone, passportNo } from './auth.js';
 
 /**
  * Referral-partner portal API — mounted at /api/partner. The login is a user with role AGENT that is
@@ -31,13 +36,31 @@ const partnerOf = async (req: Request): Promise<ReferralPartner> => {
 };
 
 partnerPortalRouter.get('/me', async (req, res) => {
-  const partner = await partnerOf(req);
+  let partner = await partnerOf(req);
+  // Partners created before sign-up codes existed (or by the settlement import) get one on first visit.
+  if (!partner.code) {
+    const code = await suggestPartnerCode(partner.name, partner.id);
+    partner = await prisma.referralPartner.update({ where: { id: partner.id }, data: { code } }).catch(() => partner);
+  }
   const [user, agent] = await Promise.all([
     prisma.user.findUniqueOrThrow({ where: { id: req.user!.id }, select: { firstName: true, lastName: true, email: true, phone: true, locale: true } }),
     prisma.agent.findUnique({ where: { userId: req.user!.id }, select: { id: true } }),
   ]);
   res.json({
-    partner: { id: partner.id, name: partner.name, phone: partner.phone, email: partner.email, active: partner.active, commissionCents: partner.commissionCents, currency: partner.currency },
+    partner: {
+      id: partner.id,
+      name: partner.name,
+      phone: partner.phone,
+      email: partner.email,
+      active: partner.active,
+      commissionCents: partner.commissionCents,
+      currency: partner.currency,
+      // Personal sign-up code and links: clients who use them belong to the partner (lib/partners/owned.ts).
+      code: partner.code,
+      ...(partner.code ? partnerLinks(partner.code) : { shareLink: null, shortLink: null }),
+      commissionTrigger: partner.commissionTrigger,
+      visibility: partner.visibility,
+    },
     user,
     // The same login may also take part in the agent programme: the portal then links to /agent.
     alsoAgent: !!agent,
@@ -95,7 +118,9 @@ partnerPortalRouter.get('/cases', async (req, res) => {
 
 partnerPortalRouter.get('/cases/:id', async (req, res) => {
   const partner = await partnerOf(req);
-  res.json({ case: await partnerCaseDetail(partner.id, String(req.params.id), req.user!.id) });
+  const detail = await partnerCaseDetail(partner.id, String(req.params.id), req.user!.id);
+  // Contacts only with extended visibility and the client's consent (lib/partners/owned.ts).
+  res.json({ case: { ...detail, contact: await extendedContact(partner, detail.id) } });
 });
 
 /** Upload on behalf of the client (multipart: file + requirementId); goes to the normal staff review. */
@@ -172,4 +197,71 @@ partnerPortalRouter.get('/commissions/export.xlsx', async (req, res) => {
   res.setHeader('Content-Type', XLSX_MIME);
   res.setHeader('Content-Disposition', `attachment; filename="${name}"`);
   res.send(buffer);
+});
+
+// ─── Own clients (partner-owned clients, lib/partners/owned.ts) ─────────
+
+partnerPortalRouter.get('/clients', async (req, res) => {
+  const partner = await partnerOf(req);
+  const q = parse(z.object({ search: z.string().trim().max(120).optional() }), req.query);
+  res.json({ items: await listPartnerClients(partner, q), visibility: partner.visibility });
+});
+
+const registerLimiter = limiter({ windowMs: 60 * 60 * 1000, limit: 30, keyGenerator: (req) => `partner-clients:${req.user?.id ?? 'anon'}` });
+
+/**
+ * POST /clients — the partner registers a client on their behalf. The client gets an e-mail to set their
+ * password and belongs to the partner from now on. The partner confirms the client asked for it; the
+ * client's own consent to share data with the partner (PARTNER_SHARING) is asked in the client's account.
+ */
+partnerPortalRouter.post('/clients', registerLimiter, async (req, res) => {
+  const partner = await partnerOf(req);
+  const body = parse(
+    z.object({
+      firstName: z.string().trim().min(1).max(80),
+      lastName: z.string().trim().min(1).max(80),
+      email: z.string().trim().toLowerCase().email().max(191),
+      phone: intlPhone,
+      passportNumber: passportNo.optional().nullable(),
+      locale: z.enum(['az', 'de', 'en', 'ru']).default('az'),
+      /** The partner confirms the client asked to be registered (required). */
+      clientAgreed: z.literal(true),
+    }),
+    req.body,
+  );
+  if (!partner.active) throw forbidden('PARTNER_INACTIVE');
+  if (await prisma.user.findUnique({ where: { email: body.email }, select: { id: true } })) throw conflict('EMAIL_TAKEN');
+  const user = await prisma.user.create({
+    data: {
+      email: body.email,
+      // Unusable random password: the client sets their own through the invitation link.
+      passwordHash: await bcrypt.hash(crypto.randomBytes(32).toString('hex'), 10),
+      role: 'CLIENT',
+      firstName: body.firstName,
+      lastName: body.lastName,
+      phone: body.phone,
+      passportNumber: body.passportNumber ?? null,
+      locale: body.locale,
+    },
+  });
+  await attachPartnerOwner(user.id, partner.id, { source: 'PARTNER_PORTAL', actorId: req.user!.id, notify: false });
+  await sendClientInvite(user, partner.name);
+  await audit(req, 'PARTNER_CLIENT_REGISTERED', `user:${user.id}`, { partnerId: partner.id, clientAgreed: true });
+  markClientsExcelDirty();
+  void scanUserDuplicates(user.id);
+  res.status(201).json({ client: (await listPartnerClients(partner)).find((c) => c.id === user.id) ?? { id: user.id } });
+});
+
+/** POST /clients/:id/invite — a fresh set-password e-mail for an own client who has not signed in yet. */
+partnerPortalRouter.post('/clients/:id/invite', registerLimiter, async (req, res) => {
+  const partner = await partnerOf(req);
+  const user = await prisma.user.findFirst({
+    where: { id: String(req.params.id), ownerPartnerId: partner.id, role: 'CLIENT' },
+    select: { id: true, email: true, locale: true, firstName: true, emailVerifiedAt: true, isActive: true, _count: { select: { sessions: true } } },
+  });
+  if (!user || !user.isActive) throw notFound('CLIENT_NOT_FOUND');
+  if (user.emailVerifiedAt || user._count.sessions > 0) throw conflict('CLIENT_ALREADY_ACTIVE');
+  await sendClientInvite(user, partner.name);
+  await audit(req, 'PARTNER_CLIENT_INVITED', `user:${user.id}`, { partnerId: partner.id });
+  res.json({ ok: true });
 });

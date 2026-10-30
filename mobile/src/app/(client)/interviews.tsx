@@ -6,6 +6,7 @@ import { Video } from '@/components/icons';
 import { useTranslation } from 'react-i18next';
 import { EmptyState, ErrorState, NavyHeader, ScrollScreen, SkeletonList, Text } from '@/components/ui';
 import { InterviewCard } from '@/features/interviews/InterviewCard';
+import { InviteCard, useMyInvites } from '@/features/interviews/InviteCard';
 import { useMyInterviews } from '@/lib/queries';
 import { qk } from '@/lib/queryClient';
 import { space } from '@/theme';
@@ -15,6 +16,8 @@ export default function Interviews() {
   const { t } = useTranslation();
   const qc = useQueryClient();
   const { data, isLoading, error, refetch } = useMyInterviews();
+  // "Pick a time" invitations: open ones, and booked ones the candidate may still move.
+  const invites = (useMyInvites().data ?? []).filter((v) => v.status === 'OPEN' || (v.status === 'BOOKED' && v.canMove));
   const refresh = useCallback(() => qc.invalidateQueries({ queryKey: qk.interviews }), [qc]);
 
   return (
@@ -25,6 +28,10 @@ export default function Interviews() {
         <ErrorState error={error} onRetry={() => void refetch()} />
       ) : (
         <>
+          {invites.filter((v) => v.status === 'OPEN').length > 0 && <Text variant="h3">{t('m.ivcal.pickTitle')}</Text>}
+          {invites.map((v, idx) => (
+            <InviteCard key={v.id} invite={v} index={idx} />
+          ))}
           <Text variant="h3">{t('m.interviews.upcoming')}</Text>
           {data.upcoming.length === 0 ? (
             <EmptyState icon={Video} title={t('m.interviews.emptyTitle')} text={t('m.interviews.empty')} />

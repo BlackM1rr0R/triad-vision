@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { GERMAN_STATUS_KEY } from '@/components/journey/api';
-import type { GermanExamDate, GermanOverview } from './types';
+import type { GermanExamDate, GermanOverview, StaffPractice, VocabSummary } from './types';
 
 /**
  * One client for both sides: the candidate's own data (/german/me) or a candidate seen by staff
@@ -35,3 +35,14 @@ export const useAdminExamDates = (scope: 'upcoming' | 'all') =>
     queryKey: [...EXAM_DATES_KEY, scope],
     queryFn: async () => (await api.get<{ items: GermanExamDate[] }>('/admin/german/exam-dates', { params: { scope } })).data.items,
   });
+
+// ─── Vocabulary trainer ────────────────────────────────────────────────
+
+export const VOCAB_KEY = ['german-vocab'] as const;
+
+export const useVocabSummary = (enabled = true) =>
+  useQuery({ queryKey: VOCAB_KEY, queryFn: async () => (await api.get<VocabSummary>('/german/vocab')).data, enabled, staleTime: 15_000 });
+
+/** Staff (case page): a candidate's practice activity and self-test attempts. */
+export const useStaffPractice = (userId: string) =>
+  useQuery({ queryKey: ['german-practice', userId], queryFn: async () => (await api.get<StaffPractice>(`/admin/german/users/${userId}/practice`)).data, staleTime: 30_000 });

@@ -26,17 +26,24 @@ const userSelect = {
   isActive: true,
   createdAt: true,
   mergedIntoId: true, // merged duplicate (closed stub) → link to the primary
+  ownerPartner: { select: { id: true, name: true } }, // partner-owned client (badge; lib/partners/owned.ts)
   _count: { select: { cases: true, assignedCases: true, docFiles: true, messages: true } },
 } as const;
 
 adminUsersRouter.get('/', async (req, res) => {
   const q = parse(
-    z.object({ role: z.enum(['CLIENT', 'STAFF', 'ADMIN', 'SUPER_ADMIN']).optional(), search: z.string().trim().max(120).optional() }),
+    z.object({
+      role: z.enum(['CLIENT', 'STAFF', 'ADMIN', 'SUPER_ADMIN']).optional(),
+      search: z.string().trim().max(120).optional(),
+      // Clients of a referral partner: a partner id, "any" (some partner) or "none".
+      ownerPartnerId: z.string().trim().min(1).max(40).optional(),
+    }),
     req.query,
   );
   const users = await prisma.user.findMany({
     where: {
       ...(q.role ? { role: q.role } : {}),
+      ...(q.ownerPartnerId ? { ownerPartnerId: q.ownerPartnerId === 'none' ? null : q.ownerPartnerId === 'any' ? { not: null } : q.ownerPartnerId } : {}),
       ...(q.search
         ? {
             OR: [

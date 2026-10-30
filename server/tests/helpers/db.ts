@@ -7,6 +7,7 @@ export { prisma };
 /** Deletes all rows, children before parents so foreign keys are never violated. */
 export const resetDb = async () => {
   await prisma.cityCost.deleteMany(); // first-month budget city costs (no relations)
+  await prisma.partnerClientChange.deleteMany(); // partner client ownership history (plain ids)
   // Pre-departure course (plain ids, no foreign keys)
   for (const m of [prisma.courseQuizAttempt, prisma.courseLessonProgress, prisma.courseCertificate, prisma.courseEnrollment, prisma.courseQuizQuestion, prisma.courseLesson, prisma.courseModule, prisma.course] as { deleteMany: () => Promise<unknown> }[]) await m.deleteMany();
   // Recognition tracker + § 81a accelerated procedure (plain ids, no foreign keys)
@@ -142,6 +143,7 @@ export const resetDb = async () => {
   await prisma.caseOnboarding.deleteMany();
   await prisma.onboardingItem.deleteMany();
   await prisma.germanQuestion.deleteMany();
+  await prisma.germanWord.deleteMany(); // vocabulary progress cascades with the word / user
   await prisma.languageCourse.deleteMany();
   await prisma.requirementTemplate.deleteMany();
   // E-signatures (events and signers cascade with the request)

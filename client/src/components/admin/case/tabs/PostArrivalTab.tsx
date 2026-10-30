@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { OnboardingAdminPanel } from '@/components/journey/OnboardingAdmin';
 import RenewalPanel from '@/components/postArrival/RenewalPanel';
+import PermitPanel from '@/components/postArrival/PermitPanel';
 import CaseCheckInsPanel from '@/components/postArrival/CaseCheckInsPanel';
 import type { CaseTabProps } from './types';
 
@@ -22,6 +23,8 @@ export default function PostArrivalTab({ c }: CaseTabProps) {
       {approved && <CaseCheckInsPanel caseId={c.id} />}
       {/* Residence title expiry → renewal case, probation end, links to / from the renewal (renders nothing when not relevant). */}
       <RenewalPanel caseId={c.id} status={c.status} />
+      {/* Expiry reminders: Blue Card / residence permit, health insurance, passport (90 / 60 / 30 days). */}
+      <PermitPanel caseId={c.id} status={c.status} />
     </div>
   );
 }

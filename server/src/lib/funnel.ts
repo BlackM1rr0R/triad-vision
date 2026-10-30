@@ -79,8 +79,8 @@ const STAGE_STATUS: Partial<Record<FunnelStage, CaseStatus>> = {
 /** Visa steps for the drop-off view (cohort of cases created in the period). */
 export const VISA_STEPS = ['created', 'documentsSubmitted', 'contractSent', 'contractSigned', 'embassySubmitted', 'appointment', 'lodged', 'approved'] as const;
 
-/** Furthest step index a status implies. */
-const STATUS_RANK: Record<CaseStatus, number> = {
+/** Furthest step index a status implies (also used by lib/bizAnalytics). */
+export const STATUS_RANK: Record<CaseStatus, number> = {
   DOCUMENTS_PENDING: 0,
   DOCUMENTS_REVIEW: 1,
   CONTRACT_SENT: 2,

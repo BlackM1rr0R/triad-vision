@@ -8,6 +8,8 @@ import { Button, Card, NavyHeader, ScrollScreen, SkeletonCard, StatusBadge, Step
 import { AppointmentCard } from '@/features/case/ClientCaseView';
 import { ExploreGrid } from '@/features/common/Explore';
 import { CheckInCard } from '@/features/checkin/CheckInCard'; // post-arrival check-in (one tap)
+import { GermanHomeCard } from '@/features/german/GermanHomeCard'; // daily vocabulary practice
+import { InviteHomeCard } from '@/features/invite/InviteScreen'; // refer a friend from the phone's contacts
 import { InterviewStatusPill, interviewTitle } from '@/features/interviews/InterviewCard';
 import { useAuth } from '@/lib/auth';
 import { CLIENT_UPLOAD_STAGE, STATUS_STEP, STEP_KEYS, hasActiveCase, missingRequirements, pickActiveCase } from '@/lib/caseStatus';
@@ -126,6 +128,8 @@ export default function Home() {
 
       <CheckInCard />
       <UpcomingInterview />
+      <GermanHomeCard index={3} />
+      <InviteHomeCard index={4} />
 
       {!isLoading && !error && canApply ? (
         <Card index={1} style={{ backgroundColor: colors.navy, borderColor: colors.navy }}>

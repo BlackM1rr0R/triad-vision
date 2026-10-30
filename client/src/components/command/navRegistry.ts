@@ -4,6 +4,7 @@ import {
   AtSign,
   Banknote,
   BarChart3,
+  ChartNoAxesCombined,
   BookOpen,
   BookOpenText,
   BookUser,
@@ -225,6 +226,7 @@ export const STAFF_NAV: StaffNavItem[] = [
   a('arrivals', '/admin/arrivals', PlaneLanding, 'work'),
   a('partnerHousing', '/admin/partner-housing', KeyRound, 'work'), // partner landlords (ADMIN+ edit, STAFF+ propose) + Anmeldung deadlines
   a('checkIns', '/admin/check-ins', HeartHandshake, 'work', { module: 'checkIns' }),
+  a('familyReunion', '/admin/family-reunion', UsersRound, 'work'), // Familiennachzug: families with members joining later
   a('examDates', '/admin/exam-dates', CalendarClock, 'work', { module: 'examDates' }),
   a('journey', '/admin/journey', Route, 'work', { module: 'journey' }),
   a('shifts', '/admin/shifts', CalendarRange, 'work', { module: 'shifts' }), // team calendar: shifts, leave, handovers
@@ -268,6 +270,7 @@ export const STAFF_NAV: StaffNavItem[] = [
   a('timeTracking', '/admin/time', Timer, 'finance', { module: 'timeTracking' }),
   a('reports', '/admin/reports', FileBarChart2, 'finance', { adminOnly: true }),
   a('analytics', '/admin/analytics', BarChart3, 'finance'),
+  a('bizAnalytics', '/admin/business-analytics', ChartNoAxesCombined, 'finance', { adminOnly: true }), // stage times, partner performance, client funnel (management)
   a('weeklyReports', '/admin/weekly-reports', FileBarChart2, 'finance', { superOnly: true }),
   // Sayt
   content('services', 'services', Layers),
@@ -365,10 +368,10 @@ export type HubKey = 'today' | 'cases' | 'clients' | 'employers' | 'comms' | 'fi
 export const HUBS: { key: HubKey; icon: LucideIcon; tabs: string[] }[] = [
   { key: 'today', icon: LayoutDashboard, tabs: ['today', 'dashboard', 'kanban', 'tasks', 'clientTasks'] },
   { key: 'cases', icon: FolderKanban, tabs: ['cases', 'requirements', 'docsAudit', 'expiring', 'recognition', 'accelerated', 'originals', 'signatures', 'countersign', 'officialForms', 'caseForms', 'contractTemplates', 'translations'] },
-  { key: 'clients', icon: Users, tabs: ['candidates', 'skillVideos', 'register', 'duplicates', 'checkIns', 'arrivals', 'partnerHousing', 'journey', 'examDates', 'waitingRoom', 'preCourse'] },
+  { key: 'clients', icon: Users, tabs: ['candidates', 'skillVideos', 'register', 'duplicates', 'checkIns', 'arrivals', 'familyReunion', 'partnerHousing', 'journey', 'examDates', 'waitingRoom', 'preCourse'] },
   { key: 'employers', icon: Building2, tabs: ['companies', 'vacancies', 'jobChannels', 'candidateRequests', 'interviews', 'employmentContracts', 'interviewPrep'] },
   { key: 'comms', icon: MessageSquareText, tabs: ['messaging', 'calls', 'campaigns', 'announcements', 'surveys', 'reviews'] },
-  { key: 'finance', icon: Wallet, tabs: ['finance', 'invoices', 'clientInvoices', 'packages', 'accounting', 'quotes', 'settlements', 'profitability', 'reports'] },
+  { key: 'finance', icon: Wallet, tabs: ['finance', 'invoices', 'clientInvoices', 'packages', 'accounting', 'quotes', 'settlements', 'profitability', 'bizAnalytics', 'reports'] },
   { key: 'leads', icon: Target, tabs: ['inquiries', 'bookings', 'analytics', 'referralPartners', 'agents'] },
   {
     key: 'site',

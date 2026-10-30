@@ -61,6 +61,7 @@ import { adminClientDataRouter } from './clientData.js';
 import { adminTimeRouter } from './time.js'; // staff time tracking
 import { adminCheckInsRouter } from './checkIns.js'; // post-arrival check-ins + retention
 import { adminRenewalsRouter } from './renewals.js'; // residence-title renewal + probation end
+import { adminPermitsRouter } from './permits.js'; // permit expiry reminders (residence permit / Blue Card, passport, insurance)
 import { adminFourEyesRouter } from './fourEyes.js'; // four-eyes check of the embassy package
 import { adminAccessLogRouter } from '../accessLog.js'; // client access log (ADMIN+)
 import { adminClientProcessRouter } from './clientProcess.js';
@@ -176,6 +177,7 @@ adminRouter.use('/shifts', adminShiftsRouter); // team calendar (STAFF read, ADM
 adminRouter.use('/handover-notes', adminHandoverNotesRouter); // handover notes / checklists
 adminRouter.use('/check-ins', adminCheckInsRouter); // post-arrival check-ins, retention
 adminRouter.use('/renewals', adminRenewalsRouter); // residence-title renewal cases, probation reminders
+adminRouter.use('/permits', adminPermitsRouter); // permit expiry reminders after arrival (90 / 60 / 30 days)
 adminRouter.use('/recognition', adminRecognitionRouter); // Anerkennung: processes, checklist, letters, deficits, fee, deadlines
 adminRouter.use('/accelerated', adminAcceleratedRouter); // § 81a beschleunigtes Fachkräfteverfahren: stepper, correspondence, deadlines
 adminRouter.use(adminFourEyesRouter); // /cases/:id/four-eyes*, /four-eyes/* (embassy package review)

@@ -20,6 +20,7 @@ import { ConfirmDialog } from '@/components/admin/ConfirmDialog';
 import { useFamilyOverview, useFamilyRefresh } from './api';
 import { MemberFormFields } from './MemberFormFields';
 import { ReunionStatus } from './ReunionPanel';
+import { ReunionReadinessCard } from './ReunionReadiness';
 import { bodyFromForm, emptyMemberForm, formFromProfile, memberName, type ChecklistState, type FamilyMemberSummary, type FamilyRelation, type MemberForm } from './types';
 
 registerCopy(pagesFamilyLanguage);
@@ -200,6 +201,8 @@ export const FamilyMembersSection = ({ caseId }: { caseId: string }) => {
 
       {/* Familiennachzug: waiting for the approval / started (members joining later). */}
       {data.members.length > 0 && <ReunionStatus data={data} className="mt-4" />}
+      {/* Title / flat / income check + the steps until the family's entry (lib/family/readiness.ts). */}
+      {data.members.length > 0 && <ReunionReadinessCard caseId={caseId} data={data} onChanged={() => refresh(data)} className="mt-4" />}
       {data.members.length === 0 ? (
         <div className="mt-4 rounded-xl border border-dashed border-line px-4 py-6 text-center">
           <p className="font-semibold text-ink">{t('familyMembers.empty')}</p>

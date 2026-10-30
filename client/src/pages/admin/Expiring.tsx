@@ -12,6 +12,9 @@ import { Chip, EmptyState, ErrorBlock, LoadingBlock, PageHead } from '@/componen
 import { TONE_CLASS, type ExpiryTone } from '@/components/expiry/Expiry';
 import { RenewalSections } from '@/components/postArrival/RenewalSections';
 import { RecognitionDeadlineSection } from '@/components/recognition/DeadlineSections';
+import { PermitSettingsPanel } from '@/components/postArrival/PermitSettingsPanel';
+import { useAuth } from '@/lib/auth';
+import { hasMinRole } from '@/lib/types';
 
 registerCopy(pagesExpiry);
 
@@ -43,6 +46,7 @@ const VISA_TYPES = ['WORK', 'AUSBILDUNG', 'WEITERBILDUNG', 'JOB_SEEKER', 'STUDY'
 const Expiring = () => {
   const { t } = useTranslation();
   const { date } = useL10n();
+  const isAdmin = hasMinRole(useAuth().user?.role, 'ADMIN');
   usePageTitle(t('expiry.page.title'));
   const [params, setParams] = useSearchParams();
   const days = PERIODS.find((p) => String(p) === params.get('days')) ?? 30;
@@ -200,6 +204,8 @@ const Expiring = () => {
       <RenewalSections days={days} staffId={staffId} />
       {/* Recognition (Anerkennung) and § 81a deadlines in the same period. */}
       <RecognitionDeadlineSection days={days} staffId={staffId} />
+      {/* ADMIN+: windows of the permit expiry reminders after arrival (residence permit / Blue Card, passport, insurance). */}
+      {isAdmin && <PermitSettingsPanel />}
     </div>
   );
 };

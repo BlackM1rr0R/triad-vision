@@ -49,7 +49,11 @@ export const RenewalPanel = ({ caseId, status }: { caseId: string; status: CaseS
   useEffect(() => setValue(q.data?.residenceTitleExpiresAt?.slice(0, 10) ?? ''), [q.data?.residenceTitleExpiresAt]);
   const save = useMutation({
     mutationFn: async (v: string | null) => (await api.patch<{ care: Care }>(`/admin/renewals/cases/${caseId}`, { residenceTitleExpiresAt: v })).data.care,
-    onSuccess: (care) => (qc.setQueryData(careKey(caseId), care), toast.success(t('postArrival.renewal.saved'))),
+    onSuccess: (care) => {
+      qc.setQueryData(careKey(caseId), care);
+      void qc.invalidateQueries({ queryKey: ['case-permits', caseId] }); // PermitPanel: the title reminders
+      toast.success(t('postArrival.renewal.saved'));
+    },
     onError: (e) => toastError(e),
   });
   const open = useMutation({

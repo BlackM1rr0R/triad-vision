@@ -18,6 +18,7 @@ import { OptionCard } from '@/components/quiz/OptionCard';
 import { useApiError } from '@/components/portal/useApiError';
 import { GERMAN_STATUS_KEY, useGermanCourses, useGermanStatus } from '@/components/journey/api';
 import { GermanProgressBoard } from '@/components/german/GermanProgressBoard';
+import { VocabTrainer } from '@/components/german/VocabTrainer';
 import { GERMAN_LEVELS, type CertificateState, type EstimatedLevel, type GermanQuestion, type GermanTestResult, type LanguageCourse } from '@/components/journey/types';
 import { Learning } from '@/components/illustrations';
 
@@ -420,6 +421,9 @@ export default function German() {
           status?.case && <p className="relative mt-4 text-xs text-muted">{t('journey.german.requiredNone')}</p>
         )}
       </section>
+
+      {/* Daily vocabulary practice (spaced repetition, streak). */}
+      <VocabTrainer />
 
       {/* Goal, courses, exams (Baku exam dates), timeline and certificate upload. */}
       <GermanProgressBoard />

@@ -6,6 +6,7 @@ import { renderEmail, sendMail } from '../mailer.js';
 import { formatDateTime, notifyUser } from '../notifications.js';
 import { formatMoney } from '../agents/texts.js';
 import { PARTNER_TEXT } from './texts.js';
+import { PARTNER_CLIENT_TEXT, type PartnerClientText } from './clientTexts.js';
 
 /**
  * Notifications for referral partners with a portal login (in-app + e-mail in their language).
@@ -14,13 +15,22 @@ import { PARTNER_TEXT } from './texts.js';
 
 const clientName = (u: { firstName: string; lastName: string }) => `${u.firstName} ${u.lastName}`.trim();
 
+/** Steps where the client has to act (the partner can chase them): message per status. */
+const ACTION_TEXT: Partial<Record<CaseStatus, (t: PartnerClientText, client: string, number: string) => { title: string; body: string }>> = {
+  CONTRACT_SENT: (t, c, n) => ({ title: t.contractTitle(c), body: t.contractBody(c, n) }),
+  EMBASSY_DOCUMENTS: (t, c, n) => ({ title: t.embassyDocsTitle(c), body: t.embassyDocsBody(c, n) }),
+  DOCUMENTS_PENDING: (t, c, n) => ({ title: t.docsBackTitle(c), body: t.docsBackBody(c, n) }),
+  CANCELLED: (t, c, n) => ({ title: t.cancelledTitle(c), body: t.cancelledBody(c, n) }),
+};
+
 /**
  * Called from every case transition (caseFlow): tells the case's partner about the steps that matter
- * to them — appointment set / rescheduled, visa approved, visa refused.
+ * to them — appointment set / rescheduled, visa approved, visa refused, and the steps where the client
+ * has to act (contract to sign, embassy documents, documents to correct) or the case was cancelled.
  */
 export const notifyPartnerCaseStatus = async (caseId: string, to: CaseStatus, eventType?: string) => {
   try {
-    if (to !== 'APPROVED' && to !== 'REJECTED' && to !== 'APPOINTMENT_SCHEDULED') return;
+    if (to !== 'APPROVED' && to !== 'REJECTED' && to !== 'APPOINTMENT_SCHEDULED' && !ACTION_TEXT[to]) return;
     const c = await prisma.case.findUnique({
       where: { id: caseId },
       select: {
@@ -35,8 +45,10 @@ export const notifyPartnerCaseStatus = async (caseId: string, to: CaseStatus, ev
     const locale: Locale = c.partner.user.locale ?? 'az';
     const t = PARTNER_TEXT[locale];
     const name = clientName(c.client);
-    const msg =
-      to === 'APPROVED'
+    const action = ACTION_TEXT[to];
+    const msg = action
+      ? action(PARTNER_CLIENT_TEXT[locale], name, c.number)
+      : to === 'APPROVED'
         ? { title: t.approvedTitle(name), body: t.approvedBody(name, c.number) }
         : to === 'REJECTED'
           ? { title: t.rejectedTitle(name), body: t.rejectedBody(name, c.number) }

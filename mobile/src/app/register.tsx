@@ -53,8 +53,9 @@ export default function Register() {
   const [errors, setErrors] = useState<Partial<Record<FormKey | 'birthDate' | 'form', string>>>({});
   const [busy, setBusy] = useState(false);
   const set = (k: FormKey) => (v: string) => setForm((f) => ({ ...f, [k]: v }));
-  const params = useLocalSearchParams<{ ref?: string }>();
-  const refCode = normaliseRef(params.ref);
+  // ?ref=CODE (agent / client / referral partner code) or a partner link's ?p=CODE.
+  const params = useLocalSearchParams<{ ref?: string; p?: string }>();
+  const refCode = normaliseRef(params.ref ?? params.p);
   /** Values the passport scan filled in (a field keeps its badge while it still holds that value). */
   const [scanned, setScanned] = useState<{ firstName?: string; lastName?: string; passportNumber?: string; birthDate?: string } | null>(null);
 

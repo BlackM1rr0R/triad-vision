@@ -7,6 +7,7 @@ import { notifyStaff } from '../lib/notifications.js';
 import { addFamilyMember, removeFamilyMember } from '../lib/journey/family.js';
 import { assertCanAdd, createMemberSchema, ensureProfile, familyOverview, loadMemberCase, rootCaseId, serializeProfile, updateMemberSchema, updateProfile } from '../lib/family/members.js';
 import { copyForAllMembers, startReunion } from '../lib/family/reunion.js';
+import { reunionInfoSchema, saveReunionInfo, WAITING_STAGES, waitingFamilies, type WaitingStage } from '../lib/family/readiness.js';
 
 /**
  * Family members (Familiennachzug) — mounted at /api/family. The main client manages their family from
@@ -18,6 +19,8 @@ import { copyForAllMembers, startReunion } from '../lib/family/reunion.js';
  *   DELETE /members/:caseId           remove a member case created by mistake (nothing uploaded yet)
  *   POST   /cases/:id/reunion/start   STAFF+: start the Familiennachzug of the LATER members (lib/family/reunion.ts)
  *   POST   /cases/:id/copy-documents  STAFF+: copy reusable main-case documents into every member case again
+ *   PUT    /cases/:id/reunion/info    main applicant's title / flat / income for the readiness check (lib/family/readiness.ts)
+ *   GET    /reunion/waiting           STAFF+: families with members joining later (?stage=waiting|ready|active|all)
  *
  * Access: the client who owns the case, or STAFF+. Passport fields are masked for staff by maskResponses.
  */
@@ -98,4 +101,22 @@ familyRouter.post('/cases/:id/copy-documents', async (req, res) => {
   const copied = await copyForAllMembers(mainId, req.user!.id);
   await audit(req, 'FAMILY_DOCS_COPIED', `case:${mainId}`, { copied: copied.filter((c) => c.copied).map((c) => ({ caseId: c.caseId, n: c.copied })) });
   res.json({ copied, ...(await familyOverview(mainId)) });
+});
+
+familyRouter.put('/cases/:id/reunion/info', async (req, res) => {
+  const c = await accessible(String(req.params.id), req.user!);
+  assertActor(req.user!, c.clientId);
+  const body = parse(reunionInfoSchema, req.body ?? {});
+  const mainId = await rootCaseId(c.id);
+  const fields = await saveReunionInfo(mainId, body, req.user!.id);
+  // Field names only: income and rent stay out of the audit log.
+  await audit(req, 'FAMILY_REUNION_INFO_UPDATED', `case:${mainId}`, { fields });
+  res.json(await familyOverview(mainId));
+});
+
+familyRouter.get('/reunion/waiting', async (req, res) => {
+  if (!isStaff(req.user!)) throw forbidden();
+  const q = String(req.query.stage ?? 'all');
+  const stage: WaitingStage = (WAITING_STAGES as readonly string[]).includes(q) ? (q as WaitingStage) : 'all';
+  res.json(await waitingFamilies(stage));
 });

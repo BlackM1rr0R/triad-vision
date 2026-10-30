@@ -74,6 +74,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     'expo-secure-store',
     'expo-localization',
     'expo-sharing',
+    ['expo-contacts', { contactsPermission: 'Triad Vision opens your contacts only so you can pick friends to invite. Nothing from your contacts is uploaded.' }],
     'expo-web-browser',
     [
       'expo-notifications',

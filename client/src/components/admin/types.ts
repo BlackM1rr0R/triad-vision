@@ -134,6 +134,8 @@ export interface AdminUser {
   logins30d: number;
   /** Set on a client account that was merged into another one (closed stub). */
   mergedIntoId?: string | null;
+  /** Referral partner who owns this client (sign-up link / partner portal / admin). */
+  ownerPartner?: { id: string; name: string } | null;
   _count: { cases: number; assignedCases: number; docFiles: number; messages: number };
 }
 

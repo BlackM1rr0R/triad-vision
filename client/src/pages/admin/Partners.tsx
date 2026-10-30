@@ -19,6 +19,7 @@ import { fmtDate, fullName } from '@/components/admin/labels';
 import { PARTNERS_KEY, partnerError, type Partner, type PartnerCase, type PartnerCounts } from '@/components/partners/api';
 import { CommissionsPanel, fromCents, toCents } from '@/components/partners/Commissions';
 import { PortalLoginPanel } from '@/components/partners/PortalLogin';
+import { OwnershipPanel, type OwnedClient, type PartnerOwnershipFields } from '@/components/partners/Ownership'; // sign-up code, rules, own clients
 import { DeletePartnerDialog, invalidatePartnerViews } from '@/components/partners/DeletePartnerDialog';
 import { money } from '@/components/agents/format';
 import { SensitiveValue } from '@/components/privacyTools/SensitiveValue';
@@ -291,7 +292,7 @@ const PartnerDetail = ({ isAdmin }: { isAdmin: boolean }) => {
   const [stage, setStage] = useState<ProcessingStage | ''>('');
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: [...PARTNERS_KEY, 'one', id],
-    queryFn: async () => (await api.get<{ partner: Partner; cases: PartnerCase[] }>(`/admin/partners/${id}`)).data,
+    queryFn: async () => (await api.get<{ partner: Partner & PartnerOwnershipFields; cases: PartnerCase[]; ownedClients?: OwnedClient[] }>(`/admin/partners/${id}`)).data,
   });
   usePageTitle(data?.partner.name ?? t('refPartners.title'));
   // The partner's drive folder: opened when it exists, restored from the bin or created when it does not.
@@ -404,6 +405,7 @@ const PartnerDetail = ({ isAdmin }: { isAdmin: boolean }) => {
         </div>
         <PortalLoginPanel partner={partner} isAdmin={isAdmin} />
       </div>
+      <OwnershipPanel partner={partner} ownedClients={data.ownedClients ?? []} isAdmin={isAdmin} />
 
       <Tabs
         className="mb-4"

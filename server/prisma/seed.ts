@@ -5,6 +5,7 @@ import { PrismaClient } from '@prisma/client';
 import { services } from './seedServices';
 import { seedRequirements } from './seed/requirements';
 import { seedJourney } from './seed/journey';
+import { seedGermanVocabulary } from './seed/germanVocabulary';
 import { seedContractTemplates } from './seed/contractTemplates';
 import { seedInterviewPrep } from './seed/interviewPrep';
 import { seedGuideCalculators, seedGuides } from './seed/guides/index';
@@ -569,6 +570,7 @@ async function main() {
 
   await seedRequirements(prisma);
   await seedJourney(prisma);
+  await seedGermanVocabulary(prisma); // vocabulary trainer starter words (upsert by slug)
   await seedContractTemplates(prisma);
   await seedInterviewPrep(prisma);
   await seedGuides(prisma); // topic guides (/guides): each language version written once

@@ -220,6 +220,12 @@ const germanQuestions: Q[] = [
   { level: 'B2', question: meaning('sich auseinandersetzen mit'), options: ['Bir şeylə ətraflı məşğul olmaq / to deal with', 'Ayrılmaq / to separate', 'Oturmaq / to sit down', 'Mübahisə etmək / to quarrel'], answer: 0 },
   { level: 'B2', question: gap('___ der hohen Nachfrage wurden zusätzliche Kurse angeboten.'), options: ['Trotz', 'Wegen', 'Statt', 'Während'], answer: 1 },
   { level: 'B2', question: correct(), options: ['Es wird erwartet, dass die Lieferung morgen eintrifft.', 'Es wird erwartet, dass die Lieferung morgen eintrifft wird.', 'Es erwartet, dass die Lieferung morgen eintreffen.', 'Es wird erwarten, dass die Lieferung morgen eintrifft.'], answer: 0 },
+  { level: 'B2', question: gap('Je länger ich in Deutschland lebe, ___ besser verstehe ich die Kultur.'), options: ['umso', 'als', 'wie', 'desto mehr'], answer: 0 },
+  { level: 'B2', question: gap('Er tut so, ___ er nichts davon gewusst hätte.'), options: ['als ob', 'wenn', 'obwohl', 'damit'], answer: 0 },
+  { level: 'B2', question: gap('Die Kosten werden ___ dem Arbeitgeber übernommen.'), options: ['von', 'durch', 'bei', 'mit'], answer: 0 },
+  { level: 'B2', question: gap('___ seiner langen Erfahrung bekam er die Stelle leider nicht.'), options: ['Trotz', 'Statt', 'Dank', 'Infolge'], answer: 0 },
+  { level: 'B2', question: meaning('die Voraussetzung'), options: ['İlkin şərt / prerequisite', 'Gözlənti / expectation', 'Təklif / offer', 'Nəticə / result'], answer: 0 },
+  { level: 'B2', question: gap('Sie behauptet, den Vertrag nie gesehen zu ___.'), options: ['haben', 'sein', 'hatte', 'werden'], answer: 0 },
 ];
 
 /** Examples only – edit or replace them in Admin → Client journey → Courses. */

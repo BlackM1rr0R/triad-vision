@@ -1,11 +1,13 @@
-import type { CommissionStatus, Prisma } from '@prisma/client';
+import type { CaseStatus, CommissionStatus, Prisma } from '@prisma/client';
 import { prisma } from '../../db.js';
 
 /**
  * Commissions of referral partners (one row per client case, or manual rows without a case).
  *
  * - Assigning a case to a partner with a default amount (`ReferralPartner.commissionCents`) creates a
- *   PENDING commission for that case; the unique (partnerId, caseId) keeps it idempotent.
+ *   PENDING commission for that case; the unique (partnerId, caseId) keeps it idempotent. A partner whose
+ *   `commissionTrigger` is CONTRACT_SIGNED / VISA_APPROVED gets it when the case reaches that step
+ *   (lib/partners/owned.ts → partnerCommissionOnStatus, called from every case transition).
  * - Unassigning cancels the commission while it is still PENDING (approved / paid rows stay).
  * - Rows with `settlementEntryId` belong to the settlement ledger (lib/settlement) and are never
  *   touched by the automatic assign / unassign logic here.
@@ -101,10 +103,56 @@ export const partnerCommissionTotals = async (partnerIds: string[], now = new Da
   return out;
 };
 
+/** When a partner's automatic commission of a case is due (ReferralPartner.commissionTrigger). */
+export const PARTNER_COMMISSION_TRIGGERS = ['ASSIGNED', 'CONTRACT_SIGNED', 'VISA_APPROVED'] as const;
+export type PartnerCommissionTrigger = (typeof PARTNER_COMMISSION_TRIGGERS)[number];
+
+/** Statuses a case only reaches after the client signed the contract (a refusal or cancellation does not say). */
+const AFTER_CONTRACT: CaseStatus[] = ['CONTRACT_SIGNED', 'EMBASSY_DOCUMENTS', 'EMBASSY_REVIEW', 'APPOINTMENT_SCHEDULED', 'DECISION_PENDING', 'APPROVED'];
+
+/** Whether a case in `status` has reached the trigger; unknown triggers behave like ASSIGNED (the old rule). */
+export const commissionTriggerReached = (trigger: string | null | undefined, status: CaseStatus) => {
+  if (trigger === 'VISA_APPROVED') return status === 'APPROVED';
+  if (trigger === 'CONTRACT_SIGNED') return AFTER_CONTRACT.includes(status);
+  return true;
+};
+
+/**
+ * The partner's automatic PENDING commission for one case, with their default amount (a cancelled row of
+ * the same pair is revived). Nothing when the partner has no default amount or the case has not reached
+ * the partner's trigger yet. Returns true when a row was created or revived.
+ */
+export const ensurePartnerCommission = async (partnerId: string, caseId: string, actorId: string | null) => {
+  const partner = await prisma.referralPartner.findUnique({ where: { id: partnerId }, select: { commissionCents: true, currency: true, commissionTrigger: true } });
+  if (!partner?.commissionCents || partner.commissionCents <= 0) return false;
+  if (partner.commissionTrigger !== 'ASSIGNED') {
+    const c = await prisma.case.findUnique({ where: { id: caseId }, select: { status: true } });
+    if (!c || !commissionTriggerReached(partner.commissionTrigger, c.status)) return false;
+  }
+  const existing = await prisma.partnerCommission.findUnique({ where: { partnerId_caseId: { partnerId, caseId } } });
+  if (existing) {
+    // Never a second row for the same partner + case; settlement-owned rows stay as they are.
+    if (existing.status !== 'CANCELLED' || existing.settlementEntryId) return false;
+    await prisma.partnerCommission.update({
+      where: { id: existing.id },
+      data: { status: 'PENDING', amountCents: partner.commissionCents, currency: partner.currency, note: null, paidAt: null },
+    });
+    return true;
+  }
+  try {
+    await prisma.partnerCommission.create({ data: { partnerId, caseId, amountCents: partner.commissionCents, currency: partner.currency, createdById: actorId } });
+    return true;
+  } catch (err) {
+    // A concurrent assign created it first (unique partnerId + caseId): nothing to do.
+    if ((err as { code?: string }).code !== 'P2002') throw err;
+    return false;
+  }
+};
+
 /**
  * Keeps the automatic commissions in line after cases changed partner: a PENDING commission of the
- * previous partner is cancelled; the new partner gets a PENDING row with their default amount
- * (a cancelled row of the same pair is revived). Returns the number of rows created or revived.
+ * previous partner is cancelled; the new partner gets a PENDING row with their default amount once the
+ * case reached their trigger (ensurePartnerCommission). Returns the number of rows created or revived.
  */
 export const syncCaseCommissions = async (
   changes: { caseId: string; from: string | null; to: string | null }[],
@@ -119,30 +167,7 @@ export const syncCaseCommissions = async (
         data: { status: 'CANCELLED', note: 'Partnyor müraciətdən ayrıldı' },
       });
     }
-    if (!ch.to) continue;
-    const partner = await prisma.referralPartner.findUnique({ where: { id: ch.to }, select: { commissionCents: true, currency: true } });
-    if (!partner?.commissionCents || partner.commissionCents <= 0) continue;
-    const existing = await prisma.partnerCommission.findUnique({ where: { partnerId_caseId: { partnerId: ch.to, caseId: ch.caseId } } });
-    if (existing) {
-      // Never a second row for the same partner + case; settlement-owned rows stay as they are.
-      if (existing.status === 'CANCELLED' && !existing.settlementEntryId) {
-        await prisma.partnerCommission.update({
-          where: { id: existing.id },
-          data: { status: 'PENDING', amountCents: partner.commissionCents, currency: partner.currency, note: null, paidAt: null },
-        });
-        created++;
-      }
-      continue;
-    }
-    try {
-      await prisma.partnerCommission.create({
-        data: { partnerId: ch.to, caseId: ch.caseId, amountCents: partner.commissionCents, currency: partner.currency, createdById: actorId },
-      });
-      created++;
-    } catch (err) {
-      // A concurrent assign created it first (unique partnerId + caseId): nothing to do.
-      if ((err as { code?: string }).code !== 'P2002') throw err;
-    }
+    if (ch.to && (await ensurePartnerCommission(ch.to, ch.caseId, actorId))) created++;
   }
   return created;
 };

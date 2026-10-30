@@ -25,6 +25,7 @@ import {
   updateCourse,
   updateExam,
 } from '../../lib/german/service.js';
+import { practiceForStaff } from '../../lib/german/vocabService.js';
 
 /**
  * admin/german — mounted at /api/admin/german (STAFF+; exam-date writes ADMIN+).
@@ -32,6 +33,7 @@ import {
  *   GET    /exam-dates                       all exam dates (Admin → İmtahan tarixləri)
  *   POST   /exam-dates  PATCH|DELETE /exam-dates/:id
  *   GET    /users/:userId                    a candidate's German progress (case / user page panel)
+ *   GET    /users/:userId/practice           vocabulary practice (streak, activity) + self-test attempts
  *   PUT    /users/:userId/level              { level } — sets User.germanLevel (audited)
  *   PUT    /users/:userId/plan
  *   POST   /users/:userId/courses|exams  PATCH|DELETE …/:id
@@ -85,6 +87,10 @@ const candidate = async (userId: string) => {
 
 adminGermanRouter.get('/users/:userId', async (req, res) => {
   res.json(await germanOverview(await candidate(String(req.params.userId))));
+});
+
+adminGermanRouter.get('/users/:userId/practice', async (req, res) => {
+  res.json(await practiceForStaff(await candidate(String(req.params.userId))));
 });
 
 adminGermanRouter.put('/users/:userId/level', async (req, res) => {

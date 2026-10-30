@@ -227,6 +227,8 @@ export const familyOverview = async (caseId: string) => {
   const rows = await prisma.case.findMany({ where: { parentCaseId: mainId }, orderBy: { createdAt: 'asc' }, select: memberCaseSelect });
   const profiles = await Promise.all(rows.map((r) => ensureProfile(r.id)));
   const members = rows.map((r, i) => summarizeMember(r, profiles[i]));
+  // Familiennachzug start + document copies (lazy imports: reunion.ts / readiness.ts import this module).
+  const reunion = await (await import('./reunion.js')).reunionSummary(mainId);
   return {
     main: { id: main.id, number: main.number, status: main.status, visaType: main.visaType, name: `${main.client.firstName} ${main.client.lastName}`.trim() },
     requestedCaseId: caseId,
@@ -238,8 +240,9 @@ export const familyOverview = async (caseId: string) => {
       openItems: members.reduce((a, m) => a + m.counts.missing + m.counts.rejected, 0),
       percent: members.length ? Math.round(members.reduce((a, m) => a + m.percent, 0) / members.length) : 0,
     },
-    // Familiennachzug start + document copies (lazy import: reunion.ts imports this module).
-    reunion: await (await import('./reunion.js')).reunionSummary(mainId),
+    reunion,
+    // Title / flat / income vs. the family (lib/family/legal.ts) + the step timeline; none without members.
+    readiness: members.length ? await (await import('./readiness.js')).familyReadiness(mainId, members, !!reunion?.ready) : null,
   };
 };
 

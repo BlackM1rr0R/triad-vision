@@ -2,13 +2,14 @@ import { Link, Navigate, Route, Routes, useLocation, useNavigate } from 'react-r
 import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
 import clsx from 'clsx';
-import { ArrowUpRight, CircleUser, Coins, LayoutDashboard, LogOut, PauseCircle, Users } from 'lucide-react';
+import { ArrowUpRight, CircleUser, Coins, FolderOpen, LayoutDashboard, LogOut, PauseCircle, Users } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { errorCode } from '@/lib/api';
 import { registerCopy } from '@/i18n';
 import { pagesPartnerPortal } from '@/i18n/pagesPartnerPortal';
 import { pagesCaseProcessing } from '@/i18n/pagesCaseProcessing'; // visa kind filter + "rədd" KPI
+import { pagesPartnerClients } from '@/i18n/pagesPartnerClients'; // own clients, sign-up link
 import { usePartnerMe } from '@/components/partnerPortal/api';
 import { ErrorRetry, Loading } from '@/components/partnerPortal/ui';
 import PartnerDashboardPage from './Dashboard';
@@ -16,9 +17,11 @@ import PartnerClientsPage from './Clients';
 import PartnerClientDetailPage from './ClientDetail';
 import PartnerCommissionsPage from './Commissions';
 import PartnerProfilePage from './Profile';
+import PartnerPeoplePage from './People';
 
 registerCopy(pagesPartnerPortal);
 registerCopy(pagesCaseProcessing);
+registerCopy(pagesPartnerClients);
 
 /**
  * Referral-partner portal, mounted at /partner/* behind RequireAuth roles=['AGENT']. Only logins linked to a
@@ -36,7 +39,8 @@ export default function PartnerApp() {
 
   const tabs = [
     { to: '/partner', label: t('partnerPortal.nav.dashboard'), icon: LayoutDashboard, match: (p: string) => p === '/partner' || p === '/partner/' },
-    { to: '/partner/clients', label: t('partnerPortal.nav.clients'), icon: Users, match: (p: string) => p.startsWith('/partner/clients') },
+    { to: '/partner/people', label: t('partnerClients.nav'), icon: Users, match: (p: string) => p.startsWith('/partner/people') },
+    { to: '/partner/clients', label: t('partnerPortal.nav.clients'), icon: FolderOpen, match: (p: string) => p.startsWith('/partner/clients') },
     { to: '/partner/commissions', label: t('partnerPortal.nav.commissions'), icon: Coins, match: (p: string) => p.startsWith('/partner/commissions') },
     { to: '/partner/profile', label: t('partnerPortal.nav.profile'), icon: CircleUser, match: (p: string) => p.startsWith('/partner/profile') },
   ];
@@ -118,6 +122,7 @@ export default function PartnerApp() {
               )}
               <Routes>
                 <Route index element={<PartnerDashboardPage me={me} />} />
+                <Route path="people" element={<PartnerPeoplePage me={me} />} />
                 <Route path="clients" element={<PartnerClientsPage />} />
                 <Route path="clients/:id" element={<PartnerClientDetailPage />} />
                 <Route path="commissions" element={<PartnerCommissionsPage />} />

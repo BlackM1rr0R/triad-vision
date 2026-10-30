@@ -1,6 +1,7 @@
 import { prisma } from '../db.js';
 import { registerJob } from '../lib/scheduler.js';
 import { interviewInclude, notifyCandidate, notifyCompany, notifyInterviewStaff } from '../lib/ops/interviews.js';
+import { inviteInclude, notifyInvite } from '../lib/ops/interviewBooking.js';
 import { claimReminder } from './reminders.js';
 
 /**
@@ -31,4 +32,16 @@ export const runInterviewReminders = async (now = new Date()) => {
   return sent;
 };
 
-registerJob({ name: 'interview-reminders', everyMs: 10 * 60 * 1000, run: async () => void (await runInterviewReminders()) });
+/** One nudge to candidates who have not picked a time 48 h after a "pick a time" invite. Returns the number nudged. */
+export const runInviteNudges = async (now = new Date()) => {
+  const items = await prisma.interviewInvite.findMany({ where: { status: 'OPEN', createdAt: { lte: new Date(now.getTime() - 48 * HOUR) } }, include: inviteInclude, take: 200 });
+  let sent = 0;
+  for (const i of items) {
+    if (!(await claimReminder(`interview-invite-nudge:${i.id}`, now))) continue;
+    await notifyInvite(i, 'nudge').catch((e) => console.error('[job:interview-reminders] nudge failed', e));
+    sent++;
+  }
+  return sent;
+};
+
+registerJob({ name: 'interview-reminders', everyMs: 10 * 60 * 1000, run: async () => void (await runInterviewReminders(), await runInviteNudges()) });

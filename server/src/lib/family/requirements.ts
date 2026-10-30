@@ -47,10 +47,10 @@ export const SPOUSE_A1: FamilyRequirementDef = {
   required: true,
   title: { az: 'Alman dili A1 sertifikatı', de: 'Deutschzertifikat A1', en: 'German A1 certificate', ru: 'Сертификат немецкого A1' },
   description: {
-    az: 'Goethe, telc və ya ÖSD. İstisnalar var (məs. əsas müraciətçi Mavi Kart / ixtisaslı işçi, ali təhsilli həyat yoldaşı) — menecerinizlə dəqiqləşdirin.',
-    de: 'Goethe, telc oder ÖSD. Ausnahmen möglich (z. B. Ehegatten von Blue-Card-Inhabern / Fachkräften, Hochschulabschluss) — bitte mit Ihrem Betreuer klären.',
-    en: 'Goethe, telc or ÖSD. Exceptions exist (e.g. spouses of Blue Card holders / skilled workers, university degree) — please check with your manager.',
-    ru: 'Goethe, telc или ÖSD. Есть исключения (напр. супруги обладателей Blue Card / специалистов, высшее образование) — уточните у вашего менеджера.',
+    az: 'Goethe, telc və ya ÖSD (§ 30 AufenthG). İstisnalar var (məs. əsas müraciətçi Mavi Kart / ixtisaslı işçi § 18a/18b, ali təhsilli həyat yoldaşı) — menecerinizlə dəqiqləşdirin.',
+    de: 'Goethe, telc oder ÖSD (§ 30 AufenthG). Ausnahmen möglich (z. B. Ehegatten von Blue-Card-Inhabern / Fachkräften § 18a/18b, Hochschulabschluss) — bitte mit Ihrem Betreuer klären.',
+    en: 'Goethe, telc or ÖSD (§ 30 AufenthG). Exceptions exist (e.g. spouses of Blue Card holders / skilled workers § 18a/18b, university degree) — please check with your manager.',
+    ru: 'Goethe, telc или ÖSD (§ 30 AufenthG). Есть исключения (напр. супруги обладателей Blue Card / специалистов § 18a/18b, высшее образование) — уточните у вашего менеджера.',
   },
 };
 const BIRTH_CERT: FamilyRequirementDef = {
@@ -63,10 +63,10 @@ const PARENT_CONSENT: FamilyRequirementDef = {
   required: false,
   title: { az: 'Digər valideynin razılığı (lazım olduqda)', de: 'Zustimmung des anderen Elternteils (falls zutreffend)', en: 'Consent of the other parent (if applicable)', ru: 'Согласие второго родителя (если требуется)' },
   description: {
-    az: 'Notarial razılıq və ya tək qəyyumluq sübutu — uşaq yalnız bir valideynlə köçürsə.',
-    de: 'Notarielle Zustimmung oder Nachweis des alleinigen Sorgerechts — wenn das Kind nur mit einem Elternteil zieht.',
-    en: 'Notarised consent or proof of sole custody — if the child moves with one parent only.',
-    ru: 'Нотариальное согласие или подтверждение единоличной опеки — если ребёнок переезжает с одним родителем.',
+    az: 'Notarial razılıq (apostil + tərcümə) və ya tək qəyyumluq sübutu — uşaq yalnız bir valideynin yanına köçürsə (§ 32 AufenthG).',
+    de: 'Notarielle Zustimmung (mit Apostille und Übersetzung) oder Nachweis des alleinigen Sorgerechts — wenn das Kind nur zu einem Elternteil zieht (§ 32 AufenthG).',
+    en: 'Notarised consent (apostille + translation) or proof of sole custody — if the child moves to one parent only (§ 32 AufenthG).',
+    ru: 'Нотариальное согласие (апостиль + перевод) или подтверждение единоличной опеки — если ребёнок переезжает только к одному родителю (§ 32 AufenthG).',
   },
 };
 const RELATIONSHIP_PROOF: FamilyRequirementDef = {
@@ -75,11 +75,52 @@ const RELATIONSHIP_PROOF: FamilyRequirementDef = {
   title: { az: 'Qohumluq sübutu (apostil + tərcümə)', de: 'Nachweis des Verwandtschaftsverhältnisses (Apostille + Übersetzung)', en: 'Proof of relationship (apostille + translation)', ru: 'Подтверждение родства (апостиль + перевод)' },
 };
 
+/**
+ * The main applicant's (Bezugsperson's) proofs every member needs at the embassy: residence title, employment
+ * contract, payslips (livelihood, § 5 (1) Nr. 1 AufenthG) and the flat (§ 29 (1) Nr. 2). Same keys as
+ * reunion.ts REUSABLE_DOCS, so accepted main-case documents are copied in and a copied requirement is not added
+ * twice. The flat stays optional: Blue Card / skilled-worker families are exempt (lib/family/legal.ts).
+ */
+const SPONSOR: FamilyRequirementDef[] = [
+  {
+    key: 'SPONSOR_RESIDENCE_TITLE',
+    required: true,
+    title: { az: 'Əsas müraciətçinin vizası / yaşayış icazəsi', de: 'Visum / Aufenthaltstitel der Bezugsperson', en: "Main applicant's visa / residence permit", ru: 'Виза / вид на жительство основного заявителя' },
+  },
+  {
+    key: 'SPONSOR_CONTRACT',
+    required: true,
+    title: { az: 'Əsas müraciətçinin əmək müqaviləsi', de: 'Arbeitsvertrag der Bezugsperson', en: "Main applicant's employment contract", ru: 'Трудовой договор основного заявителя' },
+  },
+  {
+    key: 'SPONSOR_SALARY',
+    required: true,
+    title: { az: 'Əsas müraciətçinin maaş arayışları', de: 'Gehaltsabrechnungen der Bezugsperson', en: "Main applicant's salary slips", ru: 'Расчётные листы основного заявителя' },
+    description: {
+      az: 'Son 3 ayın maaş arayışları (Almaniyada işə başlayıbsa).',
+      de: 'Die letzten 3 Gehaltsabrechnungen (sobald die Arbeit in Deutschland begonnen hat).',
+      en: 'The last 3 salary slips (once work in Germany has started).',
+      ru: 'Последние 3 расчётных листа (после начала работы в Германии).',
+    },
+  },
+  {
+    key: 'ACCOMMODATION',
+    required: false,
+    title: { az: 'Kifayət qədər yaşayış sahəsi sübutu', de: 'Nachweis über ausreichenden Wohnraum', en: 'Proof of sufficient housing', ru: 'Подтверждение жилья' },
+    description: {
+      az: 'Kirayə müqaviləsi (sahə m² ilə), Wohnungsgeberbestätigung və ya Meldebescheinigung. Mavi Kart / ixtisaslı işçi ailələri üçün adətən tələb olunmur.',
+      de: 'Mietvertrag (mit Wohnfläche in m²), Wohnungsgeberbestätigung oder Meldebescheinigung. Für Familien von Blue-Card-Inhabern / Fachkräften in der Regel nicht nötig.',
+      en: 'Rental contract (with the living space in m²), Wohnungsgeberbestätigung or Meldebescheinigung. Usually not needed for families of Blue Card holders / skilled workers.',
+      ru: 'Договор аренды (с площадью в м²), Wohnungsgeberbestätigung или Meldebescheinigung. Для семей обладателей Blue Card / специалистов обычно не требуется.',
+    },
+  },
+];
+
 const EMBASSY: FamilyRequirementDef[] = [
   { key: 'VIDEX', required: true, title: { az: 'Doldurulmuş viza ərizəsi (VIDEX)', de: 'Ausgefüllter Visumantrag (VIDEX)', en: 'Completed visa application form (VIDEX)', ru: 'Заполненная визовая анкета (VIDEX)' } },
   { key: 'PHOTO_2', required: true, title: { az: '2 ədəd biometrik foto', de: '2 biometrische Passfotos', en: '2 biometric photos', ru: '2 биометрических фото' } },
   { key: 'HEALTH_INSURANCE', required: true, title: { az: 'Tibbi sığorta', de: 'Krankenversicherungsnachweis', en: 'Health insurance', ru: 'Медицинская страховка' } },
-  { key: 'ACCOMMODATION', required: false, title: { az: 'Kifayət qədər yaşayış sahəsi sübutu', de: 'Nachweis über ausreichenden Wohnraum', en: 'Proof of sufficient housing', ru: 'Подтверждение жилья' } },
+  ...SPONSOR,
 ];
 
 export const FAMILY_REQUIREMENTS: Record<FamilyRelationKey, { INITIAL: FamilyRequirementDef[]; EMBASSY: FamilyRequirementDef[] }> = {

@@ -47,6 +47,7 @@ const Contact = lazy(() => import('./pages/Contact'));
 const Cooperation = lazy(() => import('./pages/Cooperation'));
 const Login = lazy(() => import('./pages/auth/Login'));
 const Register = lazy(() => import('./pages/auth/Register'));
+const PartnerLink = lazy(() => import('./pages/auth/PartnerLink')); // /p/:code — referral partner's short sign-up link
 const ForgotPassword = lazy(() => import('./pages/auth/ForgotPassword'));
 const ResetPassword = lazy(() => import('./pages/auth/ResetPassword'));
 const NotFound = lazy(() => import('./pages/NotFound'));
@@ -157,6 +158,7 @@ const AdminPartnerHousing = lazy(() => import('./pages/admin/PartnerHousing')); 
 const AdminExpiring = lazy(() => import('./pages/admin/Expiring'));
 const AdminRecognition = lazy(() => import('./pages/admin/Recognition')); // Anerkennung procedures
 const AdminAccelerated = lazy(() => import('./pages/admin/Accelerated')); // § 81a accelerated procedures
+const AdminFamilyReunion = lazy(() => import('./pages/admin/FamilyReunion')); // Familiennachzug: waiting families
 const AdminOriginals = lazy(() => import('./pages/admin/Originals'));
 const AdminDuplicates = lazy(() => import('./pages/admin/Duplicates'));
 const AdminHistory = lazy(() => import('./pages/admin/History')); // field-level change history + revert
@@ -181,6 +183,7 @@ const AdminInterviewPrep = lazy(() => import('./pages/admin/InterviewPrep'));
 const AdminFinance = lazy(() => import('./pages/admin/Finance'));
 const AdminReports = lazy(() => import('./pages/admin/Reports'));
 const AdminProfitability = lazy(() => import('./pages/admin/Profitability'));
+const AdminBizAnalytics = lazy(() => import('./pages/admin/BizAnalytics'));
 const AdminAi = lazy(() => import('./pages/admin/Ai'));
 const AdminAiSettings = lazy(() => import('./pages/admin/AiSettings'));
 const AdminWeeklyReports = lazy(() => import('./pages/admin/WeeklyReports'));
@@ -197,6 +200,8 @@ const SurveyAnswer = lazy(() => import('./pages/SurveyAnswer'));
 const SuccessSharePage = lazy(() => import('./pages/SuccessSharePage')); // public "visa approved" share card + lead form
 const GoogleReviewOptOut = lazy(() => import('./pages/GoogleReviewLink')); // Google review request: opt-out
 const GoogleReviewRedirect = lazy(() => import('./pages/GoogleReviewLink').then((m) => ({ default: m.GoogleReviewRedirect }))); // tracked link → Google
+const ReferralLandingPage = lazy(() => import('./pages/ReferralLandingPage')); // personal referral page /r/<slug>
+const ReferralTermsPage = lazy(() => import('./pages/ReferralTermsPage'));
 const CheckInAnswer = lazy(() => import('./pages/CheckInAnswer')); // post-arrival check-in (one tap)
 const AdminTimeTracking = lazy(() => import('./pages/admin/TimeTracking')); // staff time tracking
 const AdminKpi = lazy(() => import('./pages/admin/Kpi')); // staff KPI leaderboard (ADMIN+)
@@ -406,6 +411,8 @@ export default function App() {
             <Route path="certificate/:code" element={<CertificateVerify />} />
             <Route path="r/review/:token" element={<GoogleReviewRedirect />} />
             <Route path="r/review/:token/optout" element={<GoogleReviewOptOut />} />
+            <Route path="r/:slug" element={<ReferralLandingPage />} />
+            <Route path="referral-terms" element={<ReferralTermsPage />} />
             <Route path="check-in/:key" element={<CheckInAnswer />} />
             <Route path="unsubscribe" element={<Unsubscribe />} />
             <Route path="news/:slug" element={<NewsDetail />} />
@@ -415,6 +422,7 @@ export default function App() {
             <Route path="status" element={<StatusPage />} />
             <Route path="login" element={<Login />} />
             <Route path="register" element={<Register />} />
+            <Route path="p/:code" element={<PartnerLink />} />
             <Route path="forgot-password" element={<ForgotPassword />} />
             <Route path="reset-password" element={<ResetPassword />} />
             <Route path="verify-email" element={<VerifyEmail />} />
@@ -737,6 +745,7 @@ export default function App() {
             <Route path="expiring" element={<AdminExpiring />} />
             <Route path="recognition" element={<AdminRecognition />} />
             <Route path="accelerated" element={<AdminAccelerated />} />
+            <Route path="family-reunion" element={<AdminFamilyReunion />} />
             <Route path="originals" element={<AdminOriginals />} />
             <Route
               path="duplicates"
@@ -772,6 +781,14 @@ export default function App() {
             <Route path="finance/*" element={<AdminFinance />} />
             <Route path="reports" element={<AdminReports />} />
             <Route path="profitability" element={<AdminProfitability />} />
+            <Route
+              path="business-analytics"
+              element={
+                <RequireAuth roles={['ADMIN', 'SUPER_ADMIN']}>
+                  <AdminBizAnalytics />
+                </RequireAuth>
+              }
+            />
             <Route path="surveys/*" element={<AdminSurveys />} />
             <Route path="time" element={<AdminTimeTracking />} />
             <Route

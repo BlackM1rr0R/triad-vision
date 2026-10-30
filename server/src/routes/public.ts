@@ -10,6 +10,7 @@ import { cached } from '../lib/cache.js';
 
 import { onInquiryCreated } from '../lib/assignment/inquiry.js';
 import { attachLeadContext, utmSchema, visitorIdSchema } from '../lib/marketing/leadScoring.js';
+import { partnerIdFromRequest } from '../lib/partners/owned.js';
 
 export const publicRouter = Router();
 
@@ -121,7 +122,8 @@ publicRouter.post('/inquiries', inquiryLimiter, async (req, res) => {
     res.status(201).json({ ok: true, id: 'ok' });
     return;
   }
-  const inquiry = await prisma.inquiry.create({ data });
+  // Came with a referral partner's link (tv_ref cookie): the inquiry is attributed to the partner.
+  const inquiry = await prisma.inquiry.create({ data: { ...data, partnerId: await partnerIdFromRequest(req) } });
   void onInquiryCreated(inquiry.id); // automation rules + optional auto-assignment (never throws)
 
   const lines = [

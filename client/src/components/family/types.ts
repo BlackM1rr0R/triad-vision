@@ -81,6 +81,47 @@ export interface FamilyOverview {
   aggregate: { total: number; approved: number; openItems: number; percent: number };
   /** Familiennachzug start (null on a member case's own lookup). */
   reunion: ReunionSummary | null;
+  /** Title / flat / income vs. the family + step timeline (server/src/lib/family/readiness.ts); null without members. */
+  readiness: FamilyReadiness | null;
+}
+
+// Familiennachzug readiness (server/src/lib/family/legal.ts)
+
+export const SPONSOR_TITLES = ['BLUE_CARD', 'SKILLED', 'ICT', 'RESEARCH', 'AUSBILDUNG', 'STUDY', 'JOB_SEEKER', 'SETTLEMENT', 'OTHER'] as const;
+export type SponsorTitle = (typeof SPONSOR_TITLES)[number];
+export type CheckStatus = 'ok' | 'warn' | 'fail' | 'missing';
+export type ReadinessStatus = 'READY' | 'ATTENTION' | 'INCOMPLETE' | 'BLOCKED';
+export const TIMELINE_STEPS = ['family', 'worker', 'proof', 'documents', 'appointment', 'decision', 'entry'] as const;
+export type TimelineStep = (typeof TIMELINE_STEPS)[number];
+
+export interface ReunionInfo {
+  sponsorTitle: SponsorTitle | null;
+  titleIssuedAt: string | null;
+  livingSpaceM2: number | null;
+  warmRent: number | null;
+  netMonthly: number | null;
+  notes: string | null;
+  updatedAt: string;
+}
+
+export interface ReadinessCheck {
+  code: 'SPONSOR_TITLE' | 'LIVING_SPACE' | 'INCOME' | 'SPOUSE_AGE' | 'SPOUSE_LANGUAGE' | 'CHILD_AGE' | 'CHILD_LANGUAGE' | 'PARENT_ALLOWED' | 'OTHER_HARDSHIP';
+  status: CheckStatus;
+  memberCaseId: string | null;
+  params: Record<string, number | string | boolean | null>;
+}
+
+export interface FamilyReadiness {
+  info: ReunionInfo | null;
+  /** Guesses used when a field is empty: title from the visa, issue day = visa decision, gross from the employment contract. */
+  inferred: { sponsorTitle: SponsorTitle | null; titleIssuedAt: string | null; grossMonthly: number | null };
+  status: ReadinessStatus;
+  checks: ReadinessCheck[];
+  livingSpace: { required: number; actual: number | null; persons: number };
+  income: { need: number; available: number | null; estimated: boolean };
+  /** "Rules as of" (YYYY-MM). */
+  asOf: string;
+  timeline: { key: TimelineStep; state: 'done' | 'current' | 'upcoming'; date: string | null }[];
 }
 
 export interface ReunionSummary {

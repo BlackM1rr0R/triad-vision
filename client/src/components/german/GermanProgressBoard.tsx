@@ -8,6 +8,7 @@ import { api } from '@/lib/api';
 import { useL10n } from '@/lib/l10n';
 import { registerCopy } from '@/i18n';
 import { pagesFamilyLanguage } from '@/i18n/pagesFamilyLanguage';
+import { pagesGermanVocab } from '@/i18n/pagesGermanVocab';
 import { Spinner } from '@/components/ui/Spinner';
 import { useApiError } from '@/components/portal/useApiError';
 import { Modal } from '@/components/admin/Modal';
@@ -18,6 +19,7 @@ import { CEFR, COURSE_STATUSES, day, EXAM_STATUSES, levelLabel, MODULES, PROVIDE
 import { useQueryClient } from '@tanstack/react-query';
 
 registerCopy(pagesFamilyLanguage);
+registerCopy(pagesGermanVocab);
 
 const STEPS = ['none', ...CEFR] as const;
 
@@ -444,6 +446,15 @@ export const GermanProgressBoard = ({ userId }: { userId?: string }) => {
                           </ul>
                         )}
                         <div className="mt-2 flex flex-wrap items-center gap-3 text-xs">
+                          {e.status === 'PLANNED' && (
+                            <button
+                              type="button"
+                              className="inline-flex min-h-9 items-center gap-1 font-semibold text-link hover:underline"
+                              onClick={() => void run(() => write('patch', `/exams/${e.id}`, { status: 'REGISTERED' }), t('germanVocab.registered'))}
+                            >
+                              <CheckCircle2 className="size-3.5" aria-hidden /> {t('germanVocab.markRegistered')}
+                            </button>
+                          )}
                           {link && (
                             <a href={link} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 font-semibold text-link hover:underline">
                               {t('germanProgress.exams.register')} <ExternalLink className="size-3" aria-hidden />

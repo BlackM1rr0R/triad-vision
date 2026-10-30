@@ -66,11 +66,11 @@ export const openRenewalCase = async (caseId: string, now = new Date(), actorId?
   if (!claim.count) return null;
   const old = await prisma.case.findUniqueOrThrow({
     where: { id: caseId },
-    select: { id: true, number: true, clientId: true, profession: true, visaType: true, visaCategoryId: true, assignedStaffId: true, companyId: true, residenceTitleExpiresAt: true, client: { select: { firstName: true, lastName: true, locale: true } } },
+    select: { id: true, number: true, clientId: true, profession: true, visaType: true, visaCategoryId: true, assignedStaffId: true, companyId: true, partnerId: true, residenceTitleExpiresAt: true, client: { select: { firstName: true, lastName: true, locale: true } } },
   });
   let created;
   try {
-    created = await createCase(old.clientId, { profession: old.profession, visaType: old.visaType, visaCategoryId: old.visaCategoryId, actorId, quiet: true });
+    created = await createCase(old.clientId, { profession: old.profession, visaType: old.visaType, visaCategoryId: old.visaCategoryId, actorId, quiet: true, partnerId: old.partnerId });
   } catch (err) {
     // Not now (e.g. another open case of the client): release the claim, the next run tries again.
     await prisma.case.update({ where: { id: old.id }, data: { renewalCaseCreatedAt: null } });

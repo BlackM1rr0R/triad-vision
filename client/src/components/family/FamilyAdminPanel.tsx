@@ -23,6 +23,7 @@ import { useFamilyOverview, useFamilyRefresh } from './api';
 import { MemberFormFields } from './MemberFormFields';
 import { MemberProgress, RELATION_ICON, STATE_TONE } from './FamilyMembersSection';
 import { MemberReunionLine, ReunionPanel } from './ReunionPanel';
+import { ReunionReadinessCard } from './ReunionReadiness';
 import { bodyFromForm, emptyMemberForm, formFromProfile, memberName, type FamilyMemberSummary, type FamilyProfile, type MemberForm } from './types';
 
 registerCopy(pagesFamilyLanguage);
@@ -284,6 +285,7 @@ export const FamilyAdminPanel = ({ caseId, parentCaseId }: { caseId: string; par
           <p className="mb-4 text-xs text-muted">{t('familyMembers.staffHint')}</p>
           {/* Familiennachzug start + document copies (lib/family/reunion.ts). */}
           <ReunionPanel caseId={caseId} data={data} onChanged={() => refresh(data)} />
+          <ReunionReadinessCard caseId={caseId} data={data} onChanged={() => refresh(data)} className="mb-4" />
           <ul className="divide-y divide-line">
             {data.members.map((m) => (
               <MemberRow

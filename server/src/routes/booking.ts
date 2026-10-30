@@ -9,10 +9,12 @@ import { renderEmail, sendMail } from '../lib/mailer.js';
 import { notifyUser } from '../lib/notifications.js';
 import { buildIcs } from '../lib/ics.js';
 import { asBookingLocale, bookingTexts, formatSlot, topicLabel, type BookingLocale } from '../lib/bookingTexts.js';
-import { emitAutomationEvent } from '../lib/automation/events.js';
+
+import { emitAutomationEvent } from '../lib/automation/events.js';
 import { recordConsent } from '../lib/privacy/consents.js';
 import { visitorIdSchema } from '../lib/marketing/leadScoring.js';
 import { onBookingLead } from '../lib/marketing/leads.js';
+import { partnerIdFromRequest } from '../lib/partners/owned.js';
 
 // Public consultation booking — mounted at /api/booking
 export const bookingRouter = Router();
@@ -191,6 +193,8 @@ bookingRouter.post('/', createLimiter, async (req, res) => {
   const id = crypto.randomUUID();
   const token = manageTokenFor(id);
   let booking: BookingFull;
+  // Came with a referral partner's link (tv_ref cookie), or the signed-in client belongs to a partner.
+  const partnerId = (req.user ? (await prisma.user.findUnique({ where: { id: req.user.id }, select: { ownerPartnerId: true } }))?.ownerPartnerId : null) ?? (await partnerIdFromRequest(req));
   try {
     booking = await prisma.$transaction(async (tx) => {
       // A cancelled booking still holds the slot row (slotId is unique); replace it.
@@ -208,6 +212,7 @@ bookingRouter.post('/', createLimiter, async (req, res) => {
           locale: body.locale,
           meetingUrl: newMeetingUrl(),
           manageToken: hashToken(token),
+          partnerId,
         },
         include: bookingInclude,
       });

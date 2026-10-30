@@ -49,6 +49,7 @@ export const SYNONYMS: Record<string, string> = {
   timeTracking: 'vaxt, saat, timer, time tracking, zeiterfassung, учёт времени',
   reports: 'hesabat, report, bericht, auswertung, отчёт, конструктор',
   analytics: 'analitika, statistika, analytics, statistik, kpi, аналитика',
+  bizAnalytics: 'biznes analitikası, darboğaz, huni, kohort, partnyor nəticələri, bottleneck, funnel, cohort, geschäftsanalyse, engpass, trichter, воронка, узкое место, бизнес-аналитика',
   weeklyReports: 'həftəlik, weekly, wöchentlich, management, еженедельный',
   services: 'xidmət, service, leistung, услуга, sayt',
   visaCategories: 'viza kateqoriyası, visa category, visakategorie, категория визы',

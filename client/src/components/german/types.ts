@@ -94,3 +94,70 @@ export const RANK: Record<string, number> = { none: 0, A1: 1, A2: 2, B1: 3, B2: 
 
 /** YYYY-MM-DD of an ISO string (date inputs). */
 export const day = (iso: string | null | undefined) => (iso ? iso.slice(0, 10) : '');
+
+// ─── Vocabulary trainer (server/src/lib/german/vocabService.ts) ───────
+
+export const VOCAB_LEVELS = ['A1', 'A2', 'B1', 'B2'] as const;
+export const VOCAB_FIELDS = ['GENERAL', 'WORK', 'CARE', 'CONSTRUCTION', 'HOSPITALITY', 'DRIVING'] as const;
+export type VocabField = (typeof VOCAB_FIELDS)[number];
+/** SM-2 grades the answer buttons send. */
+export const GRADES = { again: 1, hard: 3, good: 4, easy: 5 } as const;
+export type GradeKey = keyof typeof GRADES;
+
+export interface VocabGroup {
+  key: string;
+  total: number;
+  started: number;
+  learned: number;
+}
+
+export interface VocabSummary {
+  profileLevel: string;
+  recommendedLevel: string;
+  streak: { current: number; best: number; practisedToday: boolean };
+  today: { day: string; reviews: number; correct: number; newWords: number; goal: number; newLimit: number };
+  due: number;
+  total: number;
+  started: number;
+  learned: number;
+  levels: VocabGroup[];
+  fields: VocabGroup[];
+  activity: { day: string; reviews: number; correct: number; newWords: number }[];
+  totals: { reviews: number; correct: number; days: number };
+  lastPracticeAt: string | null;
+}
+
+export interface VocabCard {
+  id: string;
+  de: string;
+  article: string | null;
+  plural: string | null;
+  example: string | null;
+  level: string;
+  field: VocabField;
+  translations: { az: string; ru: string; en: string };
+  state: 'new' | 'review';
+  repetitions: number;
+  intervalDays: number;
+  preview: Record<GradeKey, number>;
+}
+
+export interface VocabSession {
+  cards: VocabCard[];
+  dueTotal: number;
+  newLeft: number;
+}
+
+export interface TestAttempt {
+  id: string;
+  estimated: string;
+  correct: number;
+  total: number;
+  percent: number;
+  createdAt: string;
+}
+
+export interface StaffPractice {
+  vocab: VocabSummary;
+  attempts: TestAttempt[];
+}
