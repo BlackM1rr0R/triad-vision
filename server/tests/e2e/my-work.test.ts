@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { anon, asAdmin, asClient, asStaff, asSuperAdmin } from '../helpers/api';
 import { prisma } from '../helpers/db';
 import { createClient, createStaff, uniq } from '../helpers/factories';
-import { compareItems, type WorkItem } from '../../src/lib/myWork.js';
+import { clockFor, compareItems, type WorkItem } from '../../src/lib/myWork.js';
 import { snoozedDue } from '../../src/routes/admin/myWork.js';
 
 const HOUR = 60 * 60 * 1000;
@@ -286,9 +286,11 @@ describe('my work: mail, leads, bookings, applications', () => {
     const inq = await prisma.inquiry.create({ data: { kind: 'company', companyName: 'Spedition GmbH', contactName: 'Herr Weber', email: 'w@x.de', message: 'Wir suchen Fahrer', locale: 'de', workersNeeded: 5 } });
     await prisma.inquiry.create({ data: { kind: 'contact', contactName: 'Done', email: 'd@x.de', message: '-', locale: 'de', status: 'DONE' } });
 
-    const slot = await prisma.consultationSlot.create({ data: { staffId: me.user.id, startsAt: ahead(30 * 60_000), endsAt: ahead(60 * 60_000) } });
+    // "Today" is the Baku day: near midnight a slot 30 min ahead would fall on tomorrow, so keep it before midnight.
+    const soon = Math.max(1000, Math.min(30 * 60_000, clockFor(undefined).endOfToday.getTime() - Date.now() - 60_000));
+    const slot = await prisma.consultationSlot.create({ data: { staffId: me.user.id, startsAt: ahead(soon), endsAt: ahead(soon + 30 * 60_000) } });
     const booking = await prisma.booking.create({ data: { slotId: slot.id, name: 'Rauf', email: 'r@x.az', meetingUrl: 'https://meet.example/abc', manageToken: uniq('tok') } });
-    const otherSlot = await prisma.consultationSlot.create({ data: { staffId: other.user.id, startsAt: ahead(30 * 60_000), endsAt: ahead(60 * 60_000) } });
+    const otherSlot = await prisma.consultationSlot.create({ data: { staffId: other.user.id, startsAt: ahead(soon), endsAt: ahead(soon + 30 * 60_000) } });
     await prisma.booking.create({ data: { slotId: otherSlot.id, name: 'Other', email: 'o@x.az', meetingUrl: 'https://meet.example/x', manageToken: uniq('tok') } });
 
     const company = await prisma.company.create({ data: { name: 'Logistik AG', status: 'ACTIVE' } });
