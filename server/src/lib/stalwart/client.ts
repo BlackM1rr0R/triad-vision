@@ -443,6 +443,35 @@ export const changeOwnPassword = async (cfg: StalwartConfig, address: string, cu
   }
 };
 
+// ─── Allowed IPs (never auto-banned after failed logins) ─────────────
+
+export interface AllowedIp {
+  id: string;
+  address: string;
+  reason: string | null;
+}
+
+export const listAllowedIps = async (cfg: StalwartConfig): Promise<AllowedIp[]> => {
+  const r = await adminCall(cfg, [CORE, STALWART], (accountId) => [
+    ['x:AllowedIp/query', { accountId }, 'q'],
+    ['x:AllowedIp/get', { accountId, '#ids': { resultOf: 'q', name: 'x:AllowedIp/query', path: '/ids' } }, 'g'],
+  ]);
+  const list = (response(r, 'g').list as { id: string; address: string; reason?: string | null }[] | undefined) ?? [];
+  return list.map((a) => ({ id: String(a.id), address: String(a.address), reason: a.reason ?? null }));
+};
+
+/** Adds and removes allowed IPs in one call, then makes Stalwart reload its allow/block lists. */
+export const changeAllowedIps = async (cfg: StalwartConfig, add: { address: string; reason: string }[], removeIds: string[]) => {
+  if (!add.length && !removeIds.length) return;
+  const create = Object.fromEntries(add.map((a, i) => [`a${i}`, { address: a.address, reason: a.reason }]));
+  const r = await adminCall(cfg, [CORE, STALWART], (accountId) => [
+    ['x:AllowedIp/set', { accountId, ...(add.length ? { create } : {}), ...(removeIds.length ? { destroy: removeIds } : {}) }, 's'],
+    ['x:Action/set', { accountId, create: { r: { '@type': 'ReloadBlockedIps' } } }, 'r'],
+  ]);
+  checkSet(response(r, 's'));
+  checkSet(response(r, 'r'));
+};
+
 /** Test hook: forget cached session ids and domains. */
 export const resetStalwartCaches = () => {
   adminIds.clear();

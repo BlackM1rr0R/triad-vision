@@ -3,7 +3,7 @@ import type { AddressInfo } from 'node:net';
 
 /**
  * In-process stand-in for Stalwart v0.16's JMAP management API: GET /jmap/session and POST /jmap
- * with the x:Domain / x:Account / x:AccountPassword / VacationResponse methods our client uses.
+ * with the x:Domain / x:Account / x:AccountPassword / VacationResponse / x:AllowedIp / x:Action methods our client uses.
  * Mirrors the real server's shapes and error types (verified against v0.16.24).
  */
 
@@ -32,6 +32,9 @@ export interface FakeStalwart {
   delayMs: number;
   /** Failed logins seen (wrong passwords). */
   failedLogins: number;
+  /** The allow list (x:AllowedIp) and how often the IP lists were reloaded (x:Action ReloadBlockedIps). */
+  allowedIps: Map<string, { id: string; address: string; reason: string | null }>;
+  ipListReloads: number;
   addAccount: (a: { name: string; domain?: string; password: string; description?: string | null; admin?: boolean; type?: 'User' | 'Group'; usedDiskQuota?: number }) => Account;
   reset: () => void;
   close: () => Promise<void>;
@@ -44,6 +47,7 @@ export const startFakeStalwart = async (opts: { domain: string; adminUser: strin
   const nextId = () => (seq++).toString(36) + 'x';
   const domains: Record<string, string> = {};
   const accounts = new Map<string, Account>();
+  const allowedIps: FakeStalwart['allowedIps'] = new Map();
 
   const domainIdOf = (name: string) => {
     const hit = Object.entries(domains).find(([, n]) => n === name);
@@ -90,12 +94,16 @@ export const startFakeStalwart = async (opts: { domain: string; adminUser: strin
     calls: [],
     delayMs: 0,
     failedLogins: 0,
+    allowedIps,
+    ipListReloads: 0,
     addAccount,
     reset: () => {
       seed();
       fake.calls.length = 0;
       fake.delayMs = 0;
       fake.failedLogins = 0;
+      allowedIps.clear();
+      fake.ipListReloads = 0;
     },
     close: () =>
       new Promise((resolve) => {
@@ -229,6 +237,42 @@ export const startFakeStalwart = async (opts: { domain: string; adminUser: strin
         const u = ((args.update as Record<string, Record<string, unknown>>)?.singleton ?? {}) as Partial<Account['vacation']>;
         acc.vacation = { ...acc.vacation, ...u };
         return [method, { accountId: acc.id, updated: { singleton: null } }];
+      }
+      case 'x:AllowedIp/query':
+        if (!isAdmin) return forbidden;
+        return [method, { accountId: args.accountId, ids: [...allowedIps.keys()] }];
+      case 'x:AllowedIp/get': {
+        if (!isAdmin) return forbidden;
+        const ref = args['#ids'] as { resultOf: string } | undefined;
+        const ids = (ref ? (results.get(ref.resultOf)?.ids as string[]) : (args.ids as string[] | undefined)) ?? [...allowedIps.keys()];
+        return [method, { accountId: args.accountId, list: ids.filter((id) => allowedIps.has(id)).map((id) => ({ ...allowedIps.get(id)!, createdAt: '2026-10-01T10:00:00Z', expiresAt: null })), notFound: ids.filter((id) => !allowedIps.has(id)) }];
+      }
+      case 'x:AllowedIp/set': {
+        if (!isAdmin) return forbidden;
+        const out: Record<string, unknown> = { accountId: args.accountId };
+        for (const [key, v] of Object.entries((args.create ?? {}) as Record<string, { address?: string; reason?: string }>)) {
+          if ([...allowedIps.values()].some((a) => a.address === v.address)) {
+            out.notCreated = { ...(out.notCreated as object), [key]: { type: 'primaryKeyViolation' } };
+            continue;
+          }
+          const id = nextId();
+          allowedIps.set(id, { id, address: String(v.address), reason: v.reason ?? null });
+          out.created = { ...(out.created as object), [key]: { id } };
+        }
+        for (const id of (args.destroy as string[] | undefined) ?? []) {
+          if (allowedIps.delete(id)) out.destroyed = [...((out.destroyed as string[]) ?? []), id];
+          else out.notDestroyed = { ...(out.notDestroyed as object), [id]: { type: 'notFound' } };
+        }
+        return [method, out];
+      }
+      case 'x:Action/set': {
+        if (!isAdmin) return forbidden;
+        const created: Record<string, { id: string }> = {};
+        for (const [key, v] of Object.entries((args.create ?? {}) as Record<string, { '@type'?: string }>)) {
+          if (v['@type'] === 'ReloadBlockedIps') fake.ipListReloads++;
+          created[key] = { id: nextId() };
+        }
+        return [method, { accountId: args.accountId, created }];
       }
       default:
         return ['error', { type: 'unknownMethod', description: method }];

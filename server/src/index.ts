@@ -7,6 +7,7 @@ import { startMailIdle, stopMailIdle } from './lib/mail/idle.js';
 import './jobs/index.js';
 import { getBrand } from './lib/brand/index.js';
 import { logLicense, refreshLicense } from './lib/license/index.js';
+import { allowSelfOnMailServer } from './lib/stalwart/allowSelf.js';
 
 // White-label: verify the licence and load the brand before the first request (both are cached afterwards).
 logLicense(refreshLicense());
@@ -31,6 +32,9 @@ const stopJobs = startScheduler();
 
 // Push mail: one IMAP IDLE connection per mailbox (lib/mail/idle.ts); the mail-sync job polls the rest.
 if (mailSettings.idleEnabled) void startMailIdle();
+
+// Our own mail server must never ban this container's address (lib/stalwart/allowSelf.ts).
+void allowSelfOnMailServer();
 
 const shutdown = () => {
   clearInterval(cleanup);
