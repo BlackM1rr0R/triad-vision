@@ -232,7 +232,8 @@ describe('passport expiry reminders', () => {
     const { user: admin } = await createAdmin();
     const expiry = new Date('2031-06-30T00:00:00Z');
     await prisma.user.update({ where: { id: client.id }, data: { passportExpiry: expiry } });
-    await makeCase(client.id, { status: 'APPROVED' });
+    // REJECTED, not APPROVED: after an approved visa the passport belongs to the permit reminders (permit-expiry.test.ts).
+    await makeCase(client.id, { status: 'REJECTED' });
     await runPassportReminders(addMonths(expiry, -5));
     expect(await notes(client.id, 'PASSPORT_EXPIRY')).toHaveLength(1);
     expect(await prisma.notification.count({ where: { userId: admin.id } })).toBe(0);

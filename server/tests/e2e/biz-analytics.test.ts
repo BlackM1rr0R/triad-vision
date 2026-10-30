@@ -55,7 +55,8 @@ describe('GET /api/admin/analytics/business', () => {
     expect((await admin.agent.get('/api/admin/analytics/business.csv').query({ section: 'nope' })).status).toBe(400);
     const empty = expectStatus(await admin.agent.get('/api/admin/analytics/business'), 200).body;
     expect(empty.range.months).toHaveLength(12);
-    expect(empty.funnel.steps.map((s: { count: number }) => s.count)).toEqual([0, 0, 0, 0, 0, 0]);
+    // Only the client account signed in above registered (staff / admin accounts are not clients).
+    expect(empty.funnel.steps.map((s: { count: number }) => s.count)).toEqual([1, 0, 0, 0, 0, 0]);
     expect(empty.stages.bottleneck.stage).toBeNull();
   });
 

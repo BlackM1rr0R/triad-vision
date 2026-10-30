@@ -1,3 +1,4 @@
+import crypto from 'node:crypto';
 import { describe, expect, it } from 'vitest';
 import { anon, asAdmin, asStaff, ORIGIN, sessionAgent } from '../helpers/api';
 import { prisma, waitFor } from '../helpers/db';
@@ -36,7 +37,11 @@ const partnerWithLogin = async (admin: Awaited<ReturnType<typeof asAdmin>>, name
   return { partner: created as { id: string; code: string }, user: login.user, agent: sessionAgent(login.token) };
 };
 
-const clientAgent = async (userId: string) => sessionAgent((await issueSession(userId, { client: 'web' })).token);
+/** Session of a freshly registered client, with the e-mail confirmed (opening a case needs a verified address). */
+const clientAgent = async (userId: string) => {
+  await prisma.user.update({ where: { id: userId }, data: { emailVerifiedAt: new Date() } });
+  return sessionAgent((await issueSession(userId, { client: 'web' })).token);
+};
 
 describe('partner-owned clients: sign-up link → cases → portal → commission', () => {
   it('attributes the client for good, links every case, lets the partner follow and creates the commission', async () => {
@@ -108,6 +113,14 @@ describe('partner-owned clients: sign-up link → cases → portal → commissio
     expectStatus(await p.agent.post('/api/partner/clients').send({ ...body, clientAgreed: true }), 409);
     expectStatus(await p.agent.post(`/api/partner/clients/${userId}/invite`), 200);
     expectStatus(await other.agent.post(`/api/partner/clients/${userId}/invite`), 404);
+
+    // Setting the password through the invitation (reset-token) link also confirms the e-mail.
+    const token = crypto.randomBytes(32).toString('hex');
+    await prisma.passwordResetToken.create({ data: { userId, tokenHash: crypto.createHash('sha256').update(token).digest('hex'), expiresAt: new Date(Date.now() + 60 * 60 * 1000) } });
+    expectStatus(await anon().post('/api/auth/reset-password').set('Origin', ORIGIN).send({ token, password: 'Password123' }), 200);
+    expect((await prisma.user.findUniqueOrThrow({ where: { id: userId } })).emailVerifiedAt).not.toBeNull();
+    expect(expectStatus(await p.agent.get('/api/partner/clients'), 200).body.items[0]).toMatchObject({ id: userId, activated: true });
+    expectStatus(await p.agent.post(`/api/partner/clients/${userId}/invite`), 409); // already active
 
     const c = await createCase(userId, { profession: 'Sürücü', actorId: admin.user.id });
     expect(c.partnerId).toBe(p.partner.id);

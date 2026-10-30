@@ -520,6 +520,9 @@ authRouter.post('/reset-password', authLimiter, async (req, res) => {
     prisma.passwordResetToken.updateMany({ where: { userId: record.userId, usedAt: null }, data: { usedAt: new Date() } }),
     // A reset usually follows a compromise: log every device out.
     prisma.session.updateMany({ where: { userId: record.userId, revokedAt: null }, data: { revokedAt: new Date() } }),
+    // The link arrived in the account's mailbox, which proves the address: invited accounts (partner-registered
+    // clients, package orders, partner / agent logins) count as verified once they set their password.
+    prisma.user.updateMany({ where: { id: record.userId, emailVerifiedAt: null }, data: { emailVerifiedAt: new Date() } }),
   ]);
   await audit({ user: undefined, ip: req.ip }, 'PASSWORD_RESET', `user:${record.userId}`);
   res.json({ ok: true });
