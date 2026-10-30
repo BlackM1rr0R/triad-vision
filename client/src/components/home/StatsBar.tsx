@@ -7,6 +7,9 @@ import { Skeleton } from '../ui/Skeleton';
 
 /** Key figures in one calm card right under the hero (Direction B). */
 const CHIPS = ['chip-soft', 'chip-sage', 'chip-sky', 'chip-peach', 'chip-soft'];
+// One column per figure on wide screens, so 4 figures never leave an empty tile in a 5-column card.
+const LG_COLS = ['', 'lg:grid-cols-1', 'lg:grid-cols-2', 'lg:grid-cols-3', 'lg:grid-cols-4', 'lg:grid-cols-5'];
+const MD_COLS = ['', 'md:grid-cols-1', 'md:grid-cols-2', 'md:grid-cols-3', 'md:grid-cols-2', 'md:grid-cols-3'];
 export const StatsBar = () => {
   const { data } = useSiteContent();
   const { tr } = useL10n();
@@ -35,7 +38,7 @@ export const StatsBar = () => {
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
         transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-        className="card grid grid-cols-2 gap-px overflow-hidden bg-line md:grid-cols-3 lg:grid-cols-5 [&>*:last-child:nth-child(odd)]:col-span-2 md:[&>*:last-child:nth-child(odd)]:col-span-1"
+        className={`card grid grid-cols-2 gap-px overflow-hidden bg-line ${MD_COLS[Math.min(data.stats.length, 5)]} ${LG_COLS[Math.min(data.stats.length, 5)]} [&>*:last-child:nth-child(odd)]:col-span-2 md:[&>*:last-child:nth-child(odd)]:col-span-1`}
       >
         {data.stats.map((s, i) => (
           <motion.div
