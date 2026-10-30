@@ -16,7 +16,7 @@ vi.mock('../../src/config.js', async (importOriginal) => {
 });
 m.createTransport.mockReturnValue({ sendMail: m.sendMail });
 
-const { sendMail, renderEmail } = await import('../../src/lib/mailer.js');
+const { sendMail, renderEmail, plainTextOf } = await import('../../src/lib/mailer.js');
 
 beforeEach(() => {
   m.prisma.emailLog.create.mockClear();
@@ -33,7 +33,7 @@ describe('sendMail via SMTP', () => {
   it('sends and logs SENT', async () => {
     m.sendMail.mockResolvedValue({});
     await sendMail('a@test.local', 'Subject', '<p>x</p>');
-    expect(m.sendMail).toHaveBeenCalledWith({ from: 'TV <no-reply@test.local>', to: 'a@test.local', subject: 'Subject', html: '<p>x</p>' });
+    expect(m.sendMail).toHaveBeenCalledWith({ from: 'TV <no-reply@test.local>', to: 'a@test.local', subject: 'Subject', html: '<p>x</p>', text: 'x' });
     expect(m.prisma.emailLog.create).toHaveBeenCalledWith({ data: { to: 'a@test.local', subject: 'Subject', status: 'SENT' } });
   });
 
@@ -61,5 +61,15 @@ describe('renderEmail', () => {
     expect(html).toContain('href="https://x.test/a"');
     expect(html).toContain('Open &quot;it&quot;');
     expect(renderEmail('t', 'b')).not.toContain('<a ');
+  });
+
+  it('has a plain-text twin that keeps the link address (HTML-only mail scores as spam)', () => {
+    const html = renderEmail('Confirm your e-mail', 'Hello Ali\n\nPlease confirm.', { label: 'Confirm', url: 'https://x.test/verify?t=1&u=2' });
+    expect(html).toMatch(/^<!doctype html><html lang="[a-z]{2}"><head><meta charset="utf-8">/);
+    const text = plainTextOf(html);
+    expect(text).toContain('Confirm your e-mail');
+    expect(text).toContain('Please confirm.');
+    expect(text).toContain('Confirm: https://x.test/verify?t=1&u=2');
+    expect(text).not.toMatch(/<[a-z]/i);
   });
 });

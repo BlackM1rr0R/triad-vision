@@ -3,6 +3,7 @@ import { config } from '../config.js';
 import { prisma } from '../db.js';
 import { isImpersonating } from './privacy/impersonationContext.js';
 import { brandify, brandSync } from './brand/index.js';
+import { htmlToText } from './mail/sanitize.js';
 
 const transporter = config.smtp.host
   ? nodemailer.createTransport({
@@ -18,6 +19,21 @@ const escapeHtml = (s: string) =>
 
 /** Header values must be a single line; anything else would let user input inject mail headers. */
 const headerSafe = (s: string) => s.replace(/[\r\n]+/g, ' ').slice(0, 300);
+
+/**
+ * Plain-text alternative of an HTML mail. HTML-only mail is a spam signal (Gmail, SpamAssassin MIME_HTML_ONLY),
+ * so every mail carries both parts. Links keep their address ("Confirm: https://…"), otherwise the text part
+ * of a verification or reset mail would be useless.
+ */
+export const plainTextOf = (html: string) =>
+  htmlToText(
+    html.replace(/<a\b[^>]*\bhref="([^"]*)"[^>]*>([\s\S]*?)<\/a>/gi, (_m, href: string, label: string) => {
+      const url = href.replace(/&amp;/g, '&');
+      const text = label.replace(/<[^>]+>/g, '').trim();
+      if (!/^https?:/i.test(url)) return text;
+      return !text || text === url ? url : `${text}: ${url}`;
+    }),
+  );
 
 /**
  * Header and footer of the e-mail wrapper from the instance brand (lib/brand). With the default brand this is
@@ -49,7 +65,7 @@ export const renderEmail = (title: string, body: string, cta?: { label: string; 
     ? `<p style="margin:24px 0 8px"><a href="${escapeHtml(cta.url)}" style="background:#1565e8;color:#fff;text-decoration:none;padding:12px 22px;border-radius:8px;font-weight:600;display:inline-block">${escapeHtml(cta.label)}</a></p>`
     : '';
   const header = emailBrand();
-  return `<!doctype html><html><body style="margin:0;background:#eef3fb;font-family:Segoe UI,Arial,sans-serif;color:#0b1f44">
+  return `<!doctype html><html lang="${escapeHtml(brandSync().defaultLanguage)}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeHtml(title)}</title></head><body style="margin:0;background:#eef3fb;font-family:Segoe UI,Arial,sans-serif;color:#0b1f44">
 <table width="100%" cellpadding="0" cellspacing="0" style="padding:32px 12px"><tr><td align="center">
 <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;background:#fff;border-radius:14px;overflow:hidden">
 <tr><td style="background:${header.color};padding:22px 28px;color:#fff;font-size:20px;font-weight:700;letter-spacing:2px">${header.name}
@@ -98,6 +114,7 @@ export const sendMail = async (to: string, subject: string, html: string, attach
         to: headerSafe(to),
         subject: safeSubject,
         html,
+        text: plainTextOf(html),
         ...(attachments?.length
           ? { attachments: attachments.map((a) => ({ filename: headerSafe(a.filename), content: a.content, contentType: a.contentType })) }
           : {}),
@@ -139,7 +156,7 @@ export const sendMailDetailed = async (msg: { to: string; subject: string; html:
       Object.entries(msg.headers ?? {}).map(([k, v]) => [k.replace(/[^A-Za-z0-9-]/g, ''), headerSafe(v).slice(0, 900)]),
     );
     try {
-      await transporter.sendMail({ from: brandSync().emailFrom, to: headerSafe(msg.to), subject: safeSubject, html: brandify(msg.html), text: msg.text === undefined ? undefined : brandify(msg.text), headers });
+      await transporter.sendMail({ from: brandSync().emailFrom, to: headerSafe(msg.to), subject: safeSubject, html: brandify(msg.html), text: msg.text === undefined ? plainTextOf(brandify(msg.html)) : brandify(msg.text), headers });
       await log({ to: msg.to, subject: safeSubject, status: 'SENT' });
       return { status: 'SENT' };
     } catch (err) {

@@ -22,6 +22,7 @@ describe('sendMail attachments', () => {
       to: 'a@test.local',
       subject: 'S',
       html: '<p>x</p>',
+      text: 'x',
       attachments: [{ filename: 'Rechnung 1.pdf', content: pdf, contentType: 'application/pdf' }],
     });
   });
