@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import type { Prisma } from '@prisma/client';
 import { asAdmin, asStaff } from '../helpers/api';
 import { createUser } from '../helpers/factories';
@@ -72,7 +72,8 @@ describe('admin inquiries: owner, notes, take', () => {
 
     const r = (await admin.agent.put(`/api/admin/inquiries/${q.id}/assignee`).send({ staffId: staff.user.id }).expect(200)).body;
     expect(r.item).toMatchObject({ assignedStaffId: staff.user.id, assignedStaff: { id: staff.user.id } });
-    const n = await prisma.notification.findFirstOrThrow({ where: { userId: staff.user.id, type: 'INQUIRY_ASSIGNED' } });
+    // The notice is sent after the response (fire-and-forget).
+    const n = await vi.waitFor(() => prisma.notification.findFirstOrThrow({ where: { userId: staff.user.id, type: 'INQUIRY_ASSIGNED' } }), { timeout: 5000, interval: 50 });
     expect(n.link).toBe(`/admin/inquiries?open=${q.id}`);
     expect(n.title).toContain('Muster AG');
     expect(await prisma.auditLog.findFirst({ where: { action: 'INQUIRY_ASSIGNED', target: `inquiry:${q.id}` } })).toMatchObject({ details: { from: null, to: staff.user.id } });
