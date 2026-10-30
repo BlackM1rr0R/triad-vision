@@ -1,0 +1,413 @@
+{
+  "stats": [
+    {
+      "id": "st-1",
+      "icon": "Users",
+      "value": 500,
+      "prefix": "",
+      "suffix": "+",
+      "label": {
+        "az": "Almaniyaya göndərilən işçilər",
+        "de": "erfolgreich vermittelte Mitarbeiter",
+        "en": "erfolgreich vermittelte Mitarbeiter",
+        "ru": "erfolgreich vermittelte Mitarbeiter"
+      },
+      "sortOrder": 0
+    },
+    {
+      "id": "st-2",
+      "icon": "ShieldCheck",
+      "value": 98,
+      "prefix": "",
+      "suffix": "%",
+      "label": {
+        "az": "Uğurlu viza nəticəsi",
+        "de": "positive Visaergebnisse",
+        "en": "positive Visaergebnisse",
+        "ru": "positive Visaergebnisse"
+      },
+      "sortOrder": 1
+    },
+    {
+      "id": "st-3",
+      "icon": "Building2",
+      "value": 25,
+      "prefix": "",
+      "suffix": "+",
+      "label": {
+        "az": "Almaniyada tərəfdaş şirkətlər",
+        "de": "Partnerunternehmen in Deutschland",
+        "en": "Partnerunternehmen in Deutschland",
+        "ru": "Partnerunternehmen in Deutschland"
+      },
+      "sortOrder": 2
+    },
+    {
+      "id": "st-4",
+      "icon": "Clock",
+      "value": 8,
+      "prefix": "3–",
+      "suffix": "",
+      "label": {
+        "az": "həftə — orta viza emal müddəti",
+        "de": "Wochen durchschnittliche Visabearbeitung",
+        "en": "Wochen durchschnittliche Visabearbeitung",
+        "ru": "Wochen durchschnittliche Visabearbeitung"
+      },
+      "sortOrder": 3
+    }
+  ],
+  "visaCategories": [
+    {
+      "id": "visa-0",
+      "slug": "lkw-fahrer",
+      "icon": "Truck",
+      "image": "/og-default.png",
+      "visaLabel": "§19c",
+      "title": {
+        "az": "LKW sürücüləri",
+        "de": "LKW-Fahrer",
+        "en": "LKW-Fahrer",
+        "ru": "LKW-Fahrer"
+      },
+      "summary": {
+        "az": "C/CE kateqoriyalı peşəkar sürücülər üçün Almaniyada uzunmüddətli iş və viza.",
+        "de": "Langfristige Anstellung und Visum für Berufskraftfahrer mit Klasse C/CE.",
+        "en": "Langfristige Anstellung und Visum für Berufskraftfahrer mit Klasse C/CE.",
+        "ru": "Langfristige Anstellung und Visum für Berufskraftfahrer mit Klasse C/CE."
+      },
+      "items": {
+        "az": [
+          "Berufskraftfahrer (CE)",
+          "Uzunmüddətli əmək müqaviləsi"
+        ],
+        "de": [
+          "Berufskraftfahrer (CE)",
+          "Langfristige Anstellung"
+        ],
+        "en": [
+          "Berufskraftfahrer (CE)",
+          "Langfristige Anstellung"
+        ],
+        "ru": [
+          "Berufskraftfahrer (CE)",
+          "Langfristige Anstellung"
+        ]
+      },
+      "body": {
+        "az": "Mətn.",
+        "de": "Text.",
+        "en": "Text.",
+        "ru": "Text."
+      },
+      "germanLevel": "A2",
+      "salaryMin": 2600,
+      "salaryMax": 3400,
+      "processingMin": 8,
+      "processingMax": 16,
+      "familyReunion": true,
+      "requirements": null,
+      "documents": null,
+      "faq": null,
+      "sortOrder": 0,
+      "published": true
+    },
+    {
+      "id": "visa-1",
+      "slug": "pflege",
+      "icon": "HeartPulse",
+      "image": "/og-default.png",
+      "visaLabel": "§16d",
+      "title": {
+        "az": "Tibb bacıları",
+        "de": "Pflegekräfte",
+        "en": "Pflegekräfte",
+        "ru": "Pflegekräfte"
+      },
+      "summary": {
+        "az": "Tibb bacıları üçün tanınma və viza.",
+        "de": "Anerkennung und Visum für Pflegefachkräfte.",
+        "en": "Anerkennung und Visum für Pflegefachkräfte.",
+        "ru": "Anerkennung und Visum für Pflegefachkräfte."
+      },
+      "items": {
+        "az": [
+          "Anerkennung",
+          "B1 alman dili"
+        ],
+        "de": [
+          "Anerkennung",
+          "Deutsch B1"
+        ],
+        "en": [
+          "Anerkennung",
+          "Deutsch B1"
+        ],
+        "ru": [
+          "Anerkennung",
+          "Deutsch B1"
+        ]
+      },
+      "body": {
+        "az": "Mətn.",
+        "de": "Text.",
+        "en": "Text.",
+        "ru": "Text."
+      },
+      "germanLevel": "A2",
+      "salaryMin": 2600,
+      "salaryMax": 3400,
+      "processingMin": 8,
+      "processingMax": 16,
+      "familyReunion": true,
+      "requirements": null,
+      "documents": null,
+      "faq": null,
+      "sortOrder": 1,
+      "published": true
+    },
+    {
+      "id": "visa-2",
+      "slug": "handwerk",
+      "icon": "HardHat",
+      "image": "/og-default.png",
+      "visaLabel": "§18a",
+      "title": {
+        "az": "Tikinti ustaları",
+        "de": "Handwerker",
+        "en": "Handwerker",
+        "ru": "Handwerker"
+      },
+      "summary": {
+        "az": "Tikinti və sənaye peşələri üçün iş vizası.",
+        "de": "Arbeitsvisum für Bau- und Industrieberufe.",
+        "en": "Arbeitsvisum für Bau- und Industrieberufe.",
+        "ru": "Arbeitsvisum für Bau- und Industrieberufe."
+      },
+      "items": {
+        "az": [
+          "Elektrik",
+          "Qaynaqçı"
+        ],
+        "de": [
+          "Elektriker",
+          "Schweißer"
+        ],
+        "en": [
+          "Elektriker",
+          "Schweißer"
+        ],
+        "ru": [
+          "Elektriker",
+          "Schweißer"
+        ]
+      },
+      "body": {
+        "az": "Mətn.",
+        "de": "Text.",
+        "en": "Text.",
+        "ru": "Text."
+      },
+      "germanLevel": "A2",
+      "salaryMin": 2600,
+      "salaryMax": 3400,
+      "processingMin": 8,
+      "processingMax": 16,
+      "familyReunion": true,
+      "requirements": null,
+      "documents": null,
+      "faq": null,
+      "sortOrder": 2,
+      "published": true
+    }
+  ],
+  "services": [
+    {
+      "id": "sv-1",
+      "slug": "recruiting",
+      "icon": "Users",
+      "image": "/og-default.png",
+      "audience": "company",
+      "title": {
+        "az": "İşçi seçimi",
+        "de": "Personalauswahl",
+        "en": "Personalauswahl",
+        "ru": "Personalauswahl"
+      },
+      "summary": {
+        "az": "Uyğun namizədlərin seçimi.",
+        "de": "Auswahl passender Kandidaten.",
+        "en": "Auswahl passender Kandidaten.",
+        "ru": "Auswahl passender Kandidaten."
+      },
+      "body": {
+        "az": "Mətn.",
+        "de": "Text.",
+        "en": "Text.",
+        "ru": "Text."
+      },
+      "features": {
+        "az": [
+          "Müsahibə"
+        ],
+        "de": [
+          "Interview"
+        ],
+        "en": [
+          "Interview"
+        ],
+        "ru": [
+          "Interview"
+        ]
+      },
+      "steps": null,
+      "duration": null,
+      "sortOrder": 0,
+      "published": true
+    },
+    {
+      "id": "sv-2",
+      "slug": "visa",
+      "icon": "FileCheck",
+      "image": "/og-default.png",
+      "audience": "candidate",
+      "title": {
+        "az": "Viza dəstəyi",
+        "de": "Visumservice",
+        "en": "Visumservice",
+        "ru": "Visumservice"
+      },
+      "summary": {
+        "az": "Sənədlərin hazırlanması.",
+        "de": "Vorbereitung der Unterlagen.",
+        "en": "Vorbereitung der Unterlagen.",
+        "ru": "Vorbereitung der Unterlagen."
+      },
+      "body": {
+        "az": "Mətn.",
+        "de": "Text.",
+        "en": "Text.",
+        "ru": "Text."
+      },
+      "features": {
+        "az": [
+          "Sənədlər"
+        ],
+        "de": [
+          "Unterlagen"
+        ],
+        "en": [
+          "Unterlagen"
+        ],
+        "ru": [
+          "Unterlagen"
+        ]
+      },
+      "steps": null,
+      "duration": null,
+      "sortOrder": 1,
+      "published": true
+    }
+  ],
+  "partners": [
+    {
+      "id": "pt-1",
+      "name": "Muster Logistik GmbH",
+      "logo": null,
+      "website": null,
+      "sector": "logistics",
+      "city": "Berlin",
+      "description": null,
+      "featured": true,
+      "sortOrder": 0,
+      "published": true
+    },
+    {
+      "id": "pt-2",
+      "name": "Beispiel Bau AG",
+      "logo": null,
+      "website": null,
+      "sector": "construction",
+      "city": "Hamburg",
+      "description": null,
+      "featured": false,
+      "sortOrder": 1,
+      "published": true
+    }
+  ],
+  "samples": [],
+  "testimonials": [
+    {
+      "id": "tm-1",
+      "quote": {
+        "az": "Bütün proses aydın və sürətli idi.",
+        "de": "Der ganze Ablauf war klar und schnell.",
+        "en": "Der ganze Ablauf war klar und schnell.",
+        "ru": "Der ganze Ablauf war klar und schnell."
+      },
+      "author": {
+        "az": "Namizəd A.",
+        "de": "Kandidat A.",
+        "en": "Kandidat A.",
+        "ru": "Kandidat A."
+      },
+      "role": {
+        "az": "LKW sürücüsü",
+        "de": "LKW-Fahrer",
+        "en": "LKW-Fahrer",
+        "ru": "LKW-Fahrer"
+      },
+      "kind": "candidate",
+      "sortOrder": 0,
+      "published": true
+    }
+  ],
+  "faqs": [
+    {
+      "id": "fq-1",
+      "audience": "candidate",
+      "question": {
+        "az": "Almaniyada işləmək üçün alman dili mütləqdirmi?",
+        "de": "Sind Deutschkenntnisse Pflicht?",
+        "en": "Sind Deutschkenntnisse Pflicht?",
+        "ru": "Sind Deutschkenntnisse Pflicht?"
+      },
+      "answer": {
+        "az": "Peşədən asılıdır.",
+        "de": "Das hängt vom Beruf ab.",
+        "en": "Das hängt vom Beruf ab.",
+        "ru": "Das hängt vom Beruf ab."
+      },
+      "sortOrder": 0,
+      "published": true
+    }
+  ],
+  "posts": [],
+  "settings": {
+    "contact": {
+      "phone": "+994 00 000 00 00",
+      "whatsapp": "+994000000000",
+      "email": "info@example.com",
+      "hours": {
+        "az": "B.e.–Cümə 09:00–18:00",
+        "de": "Mo–Fr 09:00–18:00",
+        "en": "Mo–Fr 09:00–18:00",
+        "ru": "Mo–Fr 09:00–18:00"
+      },
+      "offices": [
+        {
+          "city": {
+            "az": "Bakı",
+            "de": "Baku",
+            "en": "Baku",
+            "ru": "Baku"
+          },
+          "address": "Nümunə küç. 1",
+          "lat": 40.4093,
+          "lng": 49.8671
+        }
+      ]
+    },
+    "social": {}
+  }
+}

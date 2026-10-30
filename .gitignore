@@ -22,3 +22,6 @@ server/uploads/og-cache/
 # White-label licence signing key (owner only, never in git)
 license-private.pem
 *.private.pem
+
+# Visual regression test output (diffs, actual screenshots; scripts/ci/visual.mjs)
+tests/visual/output/

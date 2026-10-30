@@ -1,0 +1,49 @@
+# Regenerates the visual regression baselines (tests/visual/baseline/) on the same runner image, Chrome
+# and fonts as the "Visual regression test" step of CI/CD, and uploads them as the artifact
+# "visual-baselines". Nothing is committed: download the artifact, unpack it into tests/visual/baseline/
+# and commit (see tests/visual/README.md).
+#
+# Run: Actions -> Visual baselines -> Run workflow (pick the branch whose UI the baselines should show).
+name: Visual baselines
+
+on:
+  workflow_dispatch:
+    inputs:
+      only:
+        description: 'Only these shots (comma-separated name parts, e.g. "home,drive"); empty = all'
+        type: string
+        default: ''
+
+permissions:
+  contents: read
+
+env:
+  NODE_VERSION: '22'
+  NPM_CONFIG_FUND: 'false'
+  NPM_CONFIG_AUDIT: 'false'
+
+jobs:
+  baselines:
+    name: Generate visual baselines
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - run: npx prisma generate --schema server/prisma/schema.prisma
+      - name: Client build
+        run: npm run build -w client
+      - name: Screenshots -> tests/visual/baseline
+        run: node scripts/ci/visual.mjs --dir client/dist --update ${ONLY:+--only "$ONLY"}
+        env:
+          CHROME_PATH: /usr/bin/google-chrome
+          ONLY: ${{ inputs.only }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: visual-baselines
+          path: tests/visual/baseline/
+          retention-days: 14

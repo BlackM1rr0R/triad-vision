@@ -61,6 +61,20 @@ jobs:
         run: node scripts/ci/a11y-smoke.mjs --dir client/dist
         env:
           CHROME_PATH: /usr/bin/google-chrome
+      # Screenshots of key pages (fixtures instead of the API, frozen clock, no animations) compared with
+      # tests/visual/baseline/ (pixelmatch). Shots without a baseline pass and are uploaded as new-baselines/
+      # (bootstrap). Update baselines: Actions -> "Visual baselines" (see tests/visual/README.md).
+      - name: Visual regression test
+        run: node scripts/ci/visual.mjs --dir client/dist
+        env:
+          CHROME_PATH: /usr/bin/google-chrome
+      - name: Upload visual diffs / new baselines
+        if: ${{ !cancelled() && hashFiles('tests/visual/output/**') != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-regression
+          path: tests/visual/output/
+          retention-days: 14
       - name: Caddyfile is valid
         run: docker run --rm -e SITE_DOMAIN=localhost -e ACME_EMAIL=ci@example.com -v "$PWD/deploy/Caddyfile:/etc/caddy/Caddyfile:ro" caddy:2-alpine caddy validate --config /etc/caddy/Caddyfile
       - name: Mobile install
