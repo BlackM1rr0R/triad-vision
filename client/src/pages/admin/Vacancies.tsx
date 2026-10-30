@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
@@ -30,6 +30,9 @@ import { VacancyStatusCell } from '@/components/inline/VacancyStatusCell'; // in
 import { VacancyDistributionPanel } from '@/components/jobFeeds/VacancyDistributionPanel'; // "Paylaşım": job boards (ADMIN+)
 import { requestInlineEdit } from '@/components/inline/optimistic';
 import { useListNav } from '@/components/shortcuts/useListNav'; // J / K / Enter / E / '/' / Esc
+import { pagesStaffPower } from '@/i18n/pagesStaffPower'; // saved views + table settings
+import { SavedViewsMenu } from '@/components/staffPower/SavedViews';
+import { ColumnChooser, SettingsTable, ViewModeToggle, useTableSettings, type ColumnDef } from '@/components/staffPower/tableSettings';
 import {
   APPLICATION_STATUS_TONE,
   VACANCY_STATUS_TONE,
@@ -41,6 +44,7 @@ import {
 } from '@/components/jobs/types';
 
 registerCopy(pagesJobs);
+registerCopy(pagesStaffPower);
 
 const STATUSES: VacancyStatus[] = ['PENDING', 'OPEN', 'DRAFT', 'CLOSED'];
 const STAFF_APP_STATUSES: ApplicationStatus[] = ['NEW', 'SHORTLISTED', 'PROPOSED', 'INTERVIEW', 'ACCEPTED', 'REJECTED'];
@@ -486,6 +490,22 @@ export default function AdminVacancies() {
     placeholderData: keepPreviousData,
   });
   const pages = data ? Math.max(1, Math.ceil(data.total / data.pageSize)) : 1;
+  // Per-user table settings (list or table view; columns: order, visibility, width).
+  const columnDefs = useMemo<ColumnDef[]>(
+    () => [
+      { id: 'title', label: t('sp.vac.title'), required: true },
+      { id: 'status', label: t('sp.vac.status') },
+      { id: 'company', label: t('sp.vac.company') },
+      { id: 'visa', label: t('sp.vac.visa'), defaultHidden: true },
+      { id: 'city', label: t('sp.vac.city') },
+      { id: 'employment', label: t('sp.vac.employment'), defaultHidden: true },
+      { id: 'salary', label: t('sp.vac.salary') },
+      { id: 'applications', label: t('sp.vac.applications'), align: 'right' },
+      { id: 'updated', label: t('sp.vac.updated'), align: 'right', className: 'text-xs whitespace-nowrap text-muted' },
+    ],
+    [t],
+  );
+  const table = useTableSettings('vacancies', columnDefs);
 
   // Keyboard: J / K select a row, Enter opens it, E edits its status in place, "/" searches.
   const [selected, setSelected] = useState<string | null>(null);
@@ -531,6 +551,11 @@ export default function AdminVacancies() {
             </option>
           ))}
         </select>
+        <div className="flex shrink-0 items-center gap-2">
+          <SavedViewsMenu page="vacancies" settings={table} />
+          <ViewModeToggle settings={table} />
+          {table.mode === 'table' && <ColumnChooser settings={table} />}
+        </div>
         <div className="-mx-4 flex gap-1.5 overflow-x-auto px-4 pb-1 [scrollbar-width:none] sm:mx-0 sm:px-0 sm:pb-0">
           <Chip active={!status} onClick={() => setParam('status', null)}>
             {t('admin.common.all')}
@@ -551,6 +576,39 @@ export default function AdminVacancies() {
         <div className="rounded-xl border border-line bg-card">
           <EmptyState icon={Briefcase} title={t('jobsArea.admin.vacancies.empty')} />
         </div>
+      ) : table.mode === 'table' ? (
+        <SettingsTable
+          settings={table}
+          rows={data.items}
+          rowKey={(v) => v.id}
+          caption={t('admin.nav.vacancies')}
+          tableClassName="min-w-[960px]"
+          onRowClick={(v) => setParam('id', v.id)}
+          rowClassName={(v) => (selected === v.id ? 'bg-primary/[0.04] shadow-[inset_3px_0_0_var(--color-brand-600)]' : undefined)}
+          cells={{
+            title: (v) => <span className="font-semibold break-words text-ink">{L.title(v.title)}</span>,
+            status: (v) => (
+              <span onClick={(e) => e.stopPropagation()}>
+                <VacancyStatusCell id={v.id} status={v.status} />
+              </span>
+            ),
+            company: (v) => <span className="text-ink/80">{v.company?.name ?? t('jobsArea.admin.vacancies.noCompany')}</span>,
+            visa: (v) => <span className="text-xs text-muted">{v.visaCategory?.visaLabel ?? '—'}</span>,
+            city: (v) => <span className="text-ink/80">{v.city || '—'}</span>,
+            employment: (v) => <span className="text-xs">{L.employmentType(v.employmentType) || '—'}</span>,
+            salary: (v) => <span className="text-xs whitespace-nowrap">{L.salary(v.salaryMin, v.salaryMax) || '—'}</span>,
+            applications: (v) => {
+              const total = Object.values(v.applications).reduce<number>((a, b) => a + (b ?? 0), 0);
+              return (
+                <span className="inline-flex items-center gap-1 text-xs tabular-nums">
+                  {total}
+                  {v.applications.NEW ? <span className="badge bg-primary/10 text-link">+{v.applications.NEW}</span> : null}
+                </span>
+              );
+            },
+            updated: (v) => <span title={fmtDate(v.updatedAt)}>{fmtRelative(v.updatedAt)}</span>,
+          }}
+        />
       ) : (
         <ul className="divide-y divide-line overflow-hidden rounded-xl border border-line bg-card">
           {data.items.map((v) => {

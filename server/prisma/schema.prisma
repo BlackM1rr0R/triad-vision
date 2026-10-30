@@ -522,6 +522,8 @@ model Document {
   createdAt        DateTime             @default(now())
   /// Biometric photo check result (passport photo rules: size, ratio, background, face area …).
   photoCheck       Json?
+  /// Staff marks on a rejected scan shown to the client: [{ page, x, y, w, h (0–1), note }].
+  reviewMarks      Json?
 
   @@index([caseId, stage])
 }
@@ -851,6 +853,10 @@ model Company {
   quotes                Quote[]
   partyThreads          PartyThread[]
   partnerHousing        PartnerHousing[] // partner landlord listings linked to this employer (lib/housing)
+  /// Agent (or client) referral the employer signed up with (same codes as the client sign-up).
+  referredByAgentId     String?                      @db.VarChar(40)
+  referralCode          String?                      @db.VarChar(40)
+  referredAt            DateTime?
 
   @@index([status])
 }
@@ -900,6 +906,8 @@ model Vacancy {
   cases          Case[]
   distribution   VacancyDistribution? // external job boards (lib/jobFeeds)
   channelStates  VacancyChannelState[]
+  /// Cover image and gallery: [{ url, alt? }] (public uploads); the first one is the card/OG image.
+  images         Json?
 
   @@index([status, publishedAt])
   @@index([companyId])
@@ -2888,58 +2896,58 @@ model CandidateRequest {
 
 /// Person who brings clients and cooperates on visas (e.g. Ilqar, Ənvər); own folder in the shared drive.
 model ReferralPartner {
-  id              String              @id @default(cuid())
-  name            String              @unique @db.VarChar(120)
-  phone           String?             @db.VarChar(40)
-  email           String?             @db.VarChar(191)
-  note            String?             @db.Text
-  active          Boolean             @default(true)
+  id                String              @id @default(cuid())
+  name              String              @unique @db.VarChar(120)
+  phone             String?             @db.VarChar(40)
+  email             String?             @db.VarChar(191)
+  note              String?             @db.Text
+  active            Boolean             @default(true)
   /// Login of the partner for the partner portal (own clients, commissions, uploads).
-  userId          String?             @unique
-  user            User?               @relation("PartnerUser", fields: [userId], references: [id], onDelete: SetNull)
+  userId            String?             @unique
+  user              User?               @relation("PartnerUser", fields: [userId], references: [id], onDelete: SetNull)
   /// Default commission per client in cents (copied into each new commission row).
-  commissionCents Int?
-  currency        String              @default("EUR") @db.VarChar(3)
+  commissionCents   Int?
+  currency          String              @default("EUR") @db.VarChar(3)
   /// Personal sign-up code (/register?ref=CODE, short /p/CODE): clients who use it belong to the partner.
-  code            String?             @unique @db.VarChar(32)
+  code              String?             @unique @db.VarChar(32)
   /// When the automatic commission of a case is created: ASSIGNED (the case gets the partner) | CONTRACT_SIGNED | VISA_APPROVED.
-  commissionTrigger String            @default("ASSIGNED") @db.VarChar(20)
+  commissionTrigger String              @default("ASSIGNED") @db.VarChar(20)
   /// What the portal shows of the clients: MINIMAL (masked) | EXTENDED (contacts + payments, only for clients who consented).
-  visibility      String              @default("MINIMAL") @db.VarChar(12)
+  visibility        String              @default("MINIMAL") @db.VarChar(12)
   // Profile (lib/partners/profile.ts): all optional; bank data only ADMIN+ (masked / hidden for staff).
   /// INDIVIDUAL | COMPANY
-  partnerType       String            @default("INDIVIDUAL") @db.VarChar(12)
-  companyName       String?           @db.VarChar(160)
-  contactPerson     String?           @db.VarChar(120)
-  phone2            String?           @db.VarChar(40)
-  whatsapp          String?           @db.VarChar(40)
-  address           String?           @db.VarChar(255)
-  city              String?           @db.VarChar(120)
-  country           String?           @db.VarChar(80)
+  partnerType       String              @default("INDIVIDUAL") @db.VarChar(12)
+  companyName       String?             @db.VarChar(160)
+  contactPerson     String?             @db.VarChar(120)
+  phone2            String?             @db.VarChar(40)
+  whatsapp          String?             @db.VarChar(40)
+  address           String?             @db.VarChar(255)
+  city              String?             @db.VarChar(120)
+  country           String?             @db.VarChar(80)
   /// VÖEN / Steuernummer (mask group TAX_ID).
-  taxId             String?           @db.VarChar(40)
-  bankName          String?           @db.VarChar(120)
-  bankAccountHolder String?           @db.VarChar(120)
+  taxId             String?             @db.VarChar(40)
+  bankName          String?             @db.VarChar(120)
+  bankAccountHolder String?             @db.VarChar(120)
   /// Mask group IBAN; only ADMIN+ see or edit it.
-  iban              String?           @db.VarChar(42)
-  bic               String?           @db.VarChar(11)
-  contractStart     DateTime?         @db.Date
-  contractEnd       DateTime?         @db.Date
+  iban              String?             @db.VarChar(42)
+  bic               String?             @db.VarChar(11)
+  contractStart     DateTime?           @db.Date
+  contractEnd       DateTime?           @db.Date
   /// az | de | en | ru | tr
-  preferredLanguage String?           @db.VarChar(5)
-  website           String?           @db.VarChar(255)
+  preferredLanguage String?             @db.VarChar(5)
+  website           String?             @db.VarChar(255)
   /// string[]
   tags              Json?
   /// Values of the admin-defined fields: { [PartnerFieldDef.id]: string | number | boolean }.
   customData        Json?
   /// The partner's own extra fields: [{ label, value }].
   extraFields       Json?
-  createdAt       DateTime            @default(now())
-  updatedAt       DateTime            @updatedAt
-  cases           Case[]
-  commissions     PartnerCommission[]
-  settlements     SettlementEntry[]
-  ownedClients    User[]              @relation("PartnerOwnedClients")
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  cases             Case[]
+  commissions       PartnerCommission[]
+  settlements       SettlementEntry[]
+  ownedClients      User[]              @relation("PartnerOwnedClients")
 }
 
 /// History of client ownership by referral partners (sign-up link, partner registration, admin reassignment).
@@ -4227,11 +4235,11 @@ model InfoEventRegistration {
 /// Client referral programme ("Dostunu gətir"): one personal code per CLIENT. Separate from the B2B agent
 /// programme (Agent.code); when a sign-up carries an agent code the agent attribution wins.
 model ClientReferralCode {
-  id        String   @id @default(cuid())
-  userId    String   @unique
-  user      User     @relation("ReferralCodeOwner", fields: [userId], references: [id], onDelete: Cascade)
-  code      String   @unique @db.VarChar(16)
-  createdAt DateTime @default(now())
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  user            User     @relation("ReferralCodeOwner", fields: [userId], references: [id], onDelete: Cascade)
+  code            String   @unique @db.VarChar(16)
+  createdAt       DateTime @default(now())
   /// Personal landing page /r/<slug> (opt-in; public, noindex): chosen slug, quote and optional photo.
   slug            String?  @unique @db.VarChar(40)
   landingEnabled  Boolean  @default(false)
@@ -4255,19 +4263,19 @@ enum ReferralRewardStatus {
 }
 
 model ClientReferral {
-  id            String          @id @default(cuid())
+  id            String           @id @default(cuid())
   referrerId    String
-  referrer      User            @relation("ReferralReferrer", fields: [referrerId], references: [id], onDelete: Cascade)
-  referredId    String          @unique // one attribution (and so one reward) per referred client
-  referred      User            @relation("ReferralReferred", fields: [referredId], references: [id], onDelete: Cascade)
-  code          String          @db.VarChar(16)
-  stage         ReferralStage   @default(REGISTERED)
-  blockedReason String?         @db.VarChar(40) // SAME_EMAIL | SAME_PHONE | SAME_PASSPORT
+  referrer      User             @relation("ReferralReferrer", fields: [referrerId], references: [id], onDelete: Cascade)
+  referredId    String           @unique // one attribution (and so one reward) per referred client
+  referred      User             @relation("ReferralReferred", fields: [referredId], references: [id], onDelete: Cascade)
+  code          String           @db.VarChar(16)
+  stage         ReferralStage    @default(REGISTERED)
+  blockedReason String?          @db.VarChar(40) // SAME_EMAIL | SAME_PHONE | SAME_PASSPORT
   caseOpenedAt  DateTime?
   approvedAt    DateTime?
-  createdAt     DateTime        @default(now())
-  updatedAt     DateTime        @updatedAt
-  reward        ReferralReward? @relation("ReferralMainReward")
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+  reward        ReferralReward?  @relation("ReferralMainReward")
   bonuses       ReferralReward[] @relation("ReferralBonusSource") // case-opened, tier and friend rewards
 
   @@index([referrerId])
@@ -4285,18 +4293,18 @@ model ReferralReward {
   sourceReferralId String?
   source           ClientReferral?      @relation("ReferralBonusSource", fields: [sourceReferralId], references: [id], onDelete: Cascade)
   dedupeKey        String?              @unique @db.VarChar(80) // STAGE:<referralId>:CASE_OPENED | TIER:<userId>:<n> | FRIEND:<referralId>
-  referrerId  String // plain id of who gets it (= referral.referrerId; the referred friend for FRIEND), for the ledger queries
-  kind        String               @default("DISCOUNT") @db.VarChar(12) // DISCOUNT | PAYOUT (rule at creation)
-  trigger     String               @default("VISA_APPROVED") @db.VarChar(16) // CASE_OPENED | VISA_APPROVED (TIER / REGISTERED for bonuses)
-  amount      Int // whole currency units
-  currency    String               @default("AZN") @db.VarChar(3)
-  status      ReferralRewardStatus @default(PENDING)
-  earnedAt    DateTime?
-  settledAt   DateTime?
-  settledById String? // plain id (admin)
-  note        String?              @db.VarChar(300)
-  createdAt   DateTime             @default(now())
-  updatedAt   DateTime             @updatedAt
+  referrerId       String // plain id of who gets it (= referral.referrerId; the referred friend for FRIEND), for the ledger queries
+  kind             String               @default("DISCOUNT") @db.VarChar(12) // DISCOUNT | PAYOUT (rule at creation)
+  trigger          String               @default("VISA_APPROVED") @db.VarChar(16) // CASE_OPENED | VISA_APPROVED (TIER / REGISTERED for bonuses)
+  amount           Int // whole currency units
+  currency         String               @default("AZN") @db.VarChar(3)
+  status           ReferralRewardStatus @default(PENDING)
+  earnedAt         DateTime?
+  settledAt        DateTime?
+  settledById      String? // plain id (admin)
+  note             String?              @db.VarChar(300)
+  createdAt        DateTime             @default(now())
+  updatedAt        DateTime             @updatedAt
 
   @@index([referrerId, status])
   @@index([status])

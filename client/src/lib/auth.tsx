@@ -6,6 +6,8 @@ import { toast } from 'sonner';
 import { api, onSessionLost, setImpersonation, type ImpersonationState, type SessionLostReason } from './api';
 import { isStaffRole, type Role, type SessionInfo, type User } from './types';
 import { Spinner } from '@/components/ui/Spinner';
+import { clearOffline } from './offlineDocs'; // offline documents (PWA cache) go on logout
+import { clearChosenCase } from './caseContext'; // family switcher choice
 
 interface AuthState {
   user: User | null;
@@ -49,6 +51,15 @@ export interface TwoFactorChallenge {
 }
 export const isTwoFactorChallenge = (d: unknown): d is TwoFactorChallenge =>
   !!d && typeof d === 'object' && (d as { twoFactorRequired?: unknown }).twoFactorRequired === true && typeof (d as { challenge?: unknown }).challenge === 'string';
+
+/**
+ * Logout: the client portal's device data goes — offline documents (Cache Storage, lib/offlineDocs) and the family
+ * switcher's remembered case (lib/caseContext).
+ */
+const forgetDevicePortalData = () => {
+  void clearOffline().catch(() => undefined);
+  clearChosenCase();
+};
 
 /** Query keys holding public CMS data that is safe to keep after logout. */
 const PUBLIC_QUERY_KEYS = new Set(['content', 'posts', 'post', 'visa', 'service']);
@@ -94,6 +105,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const logout = async () => {
     qc.setQueryData(['me'], null);
     dropPrivateQueries();
+    forgetDevicePortalData();
     try {
       // This browser stops getting the user's push notifications (shared computers). Needs the session, so first.
       await import('./pwa').then((m) => m.forgetPush()).catch(() => undefined);
@@ -165,6 +177,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (elapsed >= IDLE_LIMIT_MS) {
         window.clearTimeout(timer);
         void api.post('/auth/logout').catch(() => undefined);
+        forgetDevicePortalData(); // idle logout on a shared computer: offline documents go too
         sessionLostRef.current('IDLE');
         return;
       }

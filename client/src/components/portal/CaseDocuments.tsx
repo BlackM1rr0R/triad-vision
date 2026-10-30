@@ -30,6 +30,10 @@ import { PHOTO_KEYS, PhotoCheckNotice, photoCheckOf, type PhotoCheck } from '@/c
 import { optimizeImages } from '@/lib/imageCompress';
 import { ScanCameraButton } from '@/components/scanner/ScanCameraButton'; // in-browser camera document scanner
 import DocGuideButton from '@/components/clientData/DocGuideButton'; // "Necə almalı?" guide per requirement key
+import { HowToShoot } from '@/components/docGuide/HowToShoot'; // "Necə çəkməli?" good / bad example + tips
+import { MarkedScan } from '@/components/review/MarkedScan'; // staff marks on a rejected scan
+import { marksOf } from '@/components/review/marks';
+import { OfflineToggle } from '@/components/offline/OfflineToggle'; // "Oflayn saxla" (PWA cache, own device)
 
 type UploadStage = 'INITIAL' | 'EMBASSY';
 
@@ -96,6 +100,7 @@ const DocRow = ({
         {requirementKey && PHOTO_KEYS.includes(requirementKey) && photoCheckOf((doc as CaseDocument & { photoCheck?: unknown }).photoCheck)?.level === 'BAD' && <XCircle className="size-4 text-danger" aria-label={t('photoCheck.badge.BAD')} />}
         {doc.status !== 'REJECTED' && <ExpiryChip expiresAt={expiresAt} requirementKey={requirementKey} />}
         <DocStatusBadge status={doc.status} className="mr-1" />
+          {doc.status !== 'REJECTED' && <OfflineToggle doc={doc} caseId={caseId} />}
           <a
             href={fileUrl(doc.id)}
             target="_blank"
@@ -136,11 +141,9 @@ const DocRow = ({
             : undefined
         }
       />
-      {doc.status === 'REJECTED' && doc.reviewNote && (
-        <p className="mt-1.5 mb-1.5 mr-1.5 flex gap-2 rounded-md bg-danger-bg px-2.5 py-1.5 text-xs leading-relaxed whitespace-pre-line text-danger">
-          <AlertCircle className="mt-0.5 size-3.5 shrink-0" aria-hidden />
-          {doc.reviewNote}
-        </p>
+      {/* Rejected: the reason, the staff's red numbered marks on the scan and "Yenidən yüklə". */}
+      {doc.status === 'REJECTED' && (doc.reviewNote || marksOf(doc).length > 0) && (
+        <MarkedScan className="mt-1.5 mr-1.5 mb-1.5" src={fileUrl(doc.id)} mimeType={doc.mimeType} marks={marksOf(doc)} reason={doc.reviewNote} onReupload={onReupload} />
       )}
     </motion.li>
   );
@@ -284,6 +287,7 @@ const RequirementCard = ({
         {open && lastChecks != null && <CheckResultNotice checks={lastChecks} onDismiss={() => setLastChecks(null)} />}
         {open && <QualityNotice quality={lastQuality} onRetake={(f) => void upload(f)} onDismiss={() => setLastQuality(null)} />}
         {open && <PhotoCheckNotice check={lastPhoto} onRetake={(f) => void upload(f)} onDismiss={() => setLastPhoto(null)} />}
+        {open && <HowToShoot requirementKey={(req as Requirement & { key?: string | null }).key} title={tr(req.title)} />}
         {open && (
           <FileDrop
             onFile={upload}

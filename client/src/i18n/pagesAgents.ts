@@ -9,6 +9,7 @@ const az = {
       CONTRACT_SIGNED: 'Müqavilə imzalandı',
       VISA_APPROVED: 'Viza təsdiqləndi',
       INVOICE_PAID: 'Faktura ödənildi',
+      EMPLOYER_APPROVED: 'İşəgötürən təsdiqləndi',
       MANUAL: 'Əl ilə əlavə',
     },
     eventsHelp: {
@@ -16,6 +17,7 @@ const az = {
       CONTRACT_SIGNED: 'Müştəri müqaviləni elektron imzalayanda.',
       VISA_APPROVED: 'Səfirlik vizanı təsdiqləyəndə (ən çox istifadə olunan seçim).',
       INVOICE_PAID: 'Tövsiyə olunan işəgötürənin fakturası ödəniləndə (faiz yalnız burada işləyir).',
+      EMPLOYER_APPROVED: 'Sizin kodunuzla qeydiyyatdan keçən işəgötürən əməkdaşlarımız tərəfindən təsdiqləndikdə (hər işəgötürən üçün bir dəfə).',
     },
     stages: {
       REGISTERED: 'Qeydiyyatdan keçib',
@@ -84,6 +86,12 @@ const az = {
       },
     },
     ref: {
+      employersTitle: 'Tövsiyə etdiyiniz işəgötürənlər',
+      employer: 'Şirkət',
+      employerCity: 'Şəhər',
+      employerState: 'Status',
+      employersEmpty: 'Hələ işəgötürən tövsiyəsi yoxdur.',
+      employerStatus: { PENDING: 'Təsdiq gözləyir', ACTIVE: 'Aktiv', SUSPENDED: 'Dayandırılıb' },
       title: 'Tövsiyə etdiyiniz müştərilər',
       privacy: 'Məxfilik üçün yalnız ad, soyadın ilk hərfi və müraciətin ümumi mərhələsi göstərilir.',
       name: 'Müştəri',
@@ -233,6 +241,7 @@ const de: typeof az = {
       CONTRACT_SIGNED: 'Vertrag unterschrieben',
       VISA_APPROVED: 'Visum erteilt',
       INVOICE_PAID: 'Rechnung bezahlt',
+      EMPLOYER_APPROVED: 'Arbeitgeber freigeschaltet',
       MANUAL: 'Manuell',
     },
     eventsHelp: {
@@ -240,6 +249,7 @@ const de: typeof az = {
       CONTRACT_SIGNED: 'Wenn der Kunde den Vertrag elektronisch unterschreibt.',
       VISA_APPROVED: 'Wenn die Botschaft das Visum erteilt (die übliche Wahl).',
       INVOICE_PAID: 'Wenn eine Rechnung des geworbenen Arbeitgebers bezahlt wird (nur hier wirkt der Prozentsatz).',
+      EMPLOYER_APPROVED: 'Wenn ein Arbeitgeber, der sich mit Ihrem Code registriert hat, von unserem Team freigeschaltet wird (einmal pro Arbeitgeber).',
     },
     stages: {
       REGISTERED: 'Registriert',
@@ -308,6 +318,12 @@ const de: typeof az = {
       },
     },
     ref: {
+      employersTitle: 'Von Ihnen geworbene Arbeitgeber',
+      employer: 'Unternehmen',
+      employerCity: 'Ort',
+      employerState: 'Status',
+      employersEmpty: 'Noch keine geworbenen Arbeitgeber.',
+      employerStatus: { PENDING: 'Freigabe ausstehend', ACTIVE: 'Aktiv', SUSPENDED: 'Gesperrt' },
       title: 'Ihre geworbenen Kunden',
       privacy: 'Aus Datenschutzgründen sehen Sie nur Vorname, Initiale des Nachnamens und die grobe Phase des Antrags.',
       name: 'Kunde',
@@ -457,6 +473,7 @@ const en: typeof az = {
       CONTRACT_SIGNED: 'Contract signed',
       VISA_APPROVED: 'Visa approved',
       INVOICE_PAID: 'Invoice paid',
+      EMPLOYER_APPROVED: 'Employer approved',
       MANUAL: 'Manual',
     },
     eventsHelp: {
@@ -464,6 +481,7 @@ const en: typeof az = {
       CONTRACT_SIGNED: 'When the client signs the contract electronically.',
       VISA_APPROVED: 'When the embassy approves the visa (the usual choice).',
       INVOICE_PAID: 'When an invoice of the referred employer is paid (the only event where a percentage applies).',
+      EMPLOYER_APPROVED: 'When an employer that signed up with your code is approved by our team (once per employer).',
     },
     stages: {
       REGISTERED: 'Registered',
@@ -532,6 +550,12 @@ const en: typeof az = {
       },
     },
     ref: {
+      employersTitle: 'Employers you referred',
+      employer: 'Company',
+      employerCity: 'City',
+      employerState: 'Status',
+      employersEmpty: 'No referred employers yet.',
+      employerStatus: { PENDING: 'Awaiting approval', ACTIVE: 'Active', SUSPENDED: 'Suspended' },
       title: 'Clients you referred',
       privacy: 'For privacy you only see the first name, the last-name initial and the general stage of the application.',
       name: 'Client',
@@ -681,6 +705,7 @@ const ru: typeof az = {
       CONTRACT_SIGNED: 'Договор подписан',
       VISA_APPROVED: 'Виза одобрена',
       INVOICE_PAID: 'Счёт оплачен',
+      EMPLOYER_APPROVED: 'Работодатель одобрен',
       MANUAL: 'Вручную',
     },
     eventsHelp: {
@@ -688,6 +713,7 @@ const ru: typeof az = {
       CONTRACT_SIGNED: 'Когда клиент подписывает договор электронно.',
       VISA_APPROVED: 'Когда посольство одобряет визу (обычный выбор).',
       INVOICE_PAID: 'Когда оплачен счёт приглашённого работодателя (процент работает только здесь).',
+      EMPLOYER_APPROVED: 'Когда работодатель, зарегистрировавшийся по вашему коду, одобрен нашей командой (один раз на работодателя).',
     },
     stages: {
       REGISTERED: 'Зарегистрирован',
@@ -756,6 +782,12 @@ const ru: typeof az = {
       },
     },
     ref: {
+      employersTitle: 'Приглашённые вами работодатели',
+      employer: 'Компания',
+      employerCity: 'Город',
+      employerState: 'Статус',
+      employersEmpty: 'Пока нет приглашённых работодателей.',
+      employerStatus: { PENDING: 'Ожидает одобрения', ACTIVE: 'Активен', SUSPENDED: 'Приостановлен' },
       title: 'Приглашённые клиенты',
       privacy: 'В целях конфиденциальности видны только имя, первая буква фамилии и общий этап заявки.',
       name: 'Клиент',

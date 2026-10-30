@@ -327,6 +327,10 @@ const ROUTES = [
   ['POST', '/api/track', { status: 204, body: '' }],
   ['POST', '/api/admin/me/nav/visit', { status: 204, body: '' }],
   ['POST', /^\/api\/admin\/presence\//, { viewers: [] }],
+  // staff power features (saved views, table settings, "what's new"): empty / read state
+  ['GET', '/api/admin/me/saved-views', { views: [] }],
+  ['GET', '/api/admin/me/table-prefs', { tables: {} }],
+  ['GET', '/api/admin/me/whats-new', { items: [], unread: 0, latest: null, seen: null }],
 
   // public
   ['GET', '/api/vacancies', { items: vacancies, total: vacancies.length, page: 1, pageSize: 12, facets: { sectors: facet('sector'), cities: facet('city') } }],

@@ -92,6 +92,7 @@ import {
   BadgeCheck,
   KeyRound,
   Store,
+  ScanEye,
 } from 'lucide-react';
 // Relative (not '@/'): the server unit tests load this module directly (tests/unit/adminNavRegistry.test.ts).
 import { hasMinRole, type Role } from '../../lib/types';
@@ -212,6 +213,7 @@ export const STAFF_NAV: StaffNavItem[] = [
   a('workspace', '/workspace/home', LayoutGrid, 'today'),
   // İşlər
   a('cases', '/admin/cases', FolderKanban, 'work'),
+  a('review', '/admin/review', ScanEye, 'work'), // fast document review queue (J / K / A / R / S / Z)
   a('kanban', '/admin/kanban', KanbanSquare, 'work'),
   a('tasks', '/admin/tasks', ListTodo, 'work'),
   a('clientTasks', '/admin/client-tasks', ClipboardList, 'work'),
@@ -367,7 +369,7 @@ export type HubKey = 'today' | 'cases' | 'clients' | 'employers' | 'comms' | 'fi
  */
 export const HUBS: { key: HubKey; icon: LucideIcon; tabs: string[] }[] = [
   { key: 'today', icon: LayoutDashboard, tabs: ['today', 'dashboard', 'kanban', 'tasks', 'clientTasks'] },
-  { key: 'cases', icon: FolderKanban, tabs: ['cases', 'requirements', 'docsAudit', 'expiring', 'recognition', 'accelerated', 'originals', 'signatures', 'countersign', 'officialForms', 'caseForms', 'contractTemplates', 'translations'] },
+  { key: 'cases', icon: FolderKanban, tabs: ['cases', 'review', 'requirements', 'docsAudit', 'expiring', 'recognition', 'accelerated', 'originals', 'signatures', 'countersign', 'officialForms', 'caseForms', 'contractTemplates', 'translations'] },
   { key: 'clients', icon: Users, tabs: ['candidates', 'skillVideos', 'register', 'duplicates', 'checkIns', 'arrivals', 'familyReunion', 'partnerHousing', 'journey', 'examDates', 'waitingRoom', 'preCourse'] },
   { key: 'employers', icon: Building2, tabs: ['companies', 'vacancies', 'jobChannels', 'candidateRequests', 'interviews', 'employmentContracts', 'interviewPrep'] },
   { key: 'comms', icon: MessageSquareText, tabs: ['messaging', 'calls', 'campaigns', 'announcements', 'surveys', 'reviews'] },

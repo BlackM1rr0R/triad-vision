@@ -9,6 +9,7 @@ import type { CaseStatus } from '@/lib/types';
 import { STATUS_TONE } from '@/lib/caseStatus';
 import { contentUrl, isSheet } from './api';
 import { endItemDrag, startItemDrag, useDropTarget, type PickedFile } from './dnd';
+import { isProcessingStage, stageLabel } from '@/components/caseProcessing/api';
 import { ItemIcon, extLabel, fileTone } from './fileIcons';
 import { displayName, typeLabel } from './labels';
 import { can, type DriveItem } from './types';
@@ -46,6 +47,12 @@ export type ViewMode = 'grid' | 'list' | 'board';
 export type SortKey = 'name' | 'modified' | 'size' | 'type' | 'owner';
 export type ListMode = 'folder' | 'flat' | 'trash';
 
+/** Team workflow stage of a client folder worth showing (Schon geschrieben, Fertig, Ablehnung). */
+const folderStage = (item: DriveItem) => {
+  const s = item.kind === 'FOLDER' ? item.caseInfo?.processing?.stage : null;
+  return isProcessingStage(s) && s !== 'IN_PROGRESS' ? s : null;
+};
+
 /** "Müraciət sənədi · TV-…" on copies of case documents, "Müraciət TV-…" on client folders; links to the case. */
 const CaseBadge = ({ item, t, className }: { item: DriveItem; t: ReturnType<typeof useTranslation>['t']; className?: string }) =>
   item.caseId && item.caseNumber ? (
@@ -62,7 +69,11 @@ const CaseBadge = ({ item, t, className }: { item: DriveItem; t: ReturnType<type
       )}
     >
       <Briefcase className="size-2.5 shrink-0" aria-hidden />
-      <span className="truncate">{item.kind === 'FILE' ? t('drive.shared.caseDoc', { number: item.caseNumber }) : t('drive.shared.clientFolder', { number: item.caseNumber })}</span>
+      <span className="truncate">
+        {item.kind === 'FILE' ? t('drive.shared.caseDoc', { number: item.caseNumber }) : t('drive.shared.clientFolder', { number: item.caseNumber })}
+        {/* team workflow stage of a client folder ("İş axını"), once it left In Bearbeitung */}
+        {folderStage(item) && ` · ${stageLabel(folderStage(item))}`}
+      </span>
     </Link>
   ) : null;
 

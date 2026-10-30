@@ -69,6 +69,7 @@ const AdminDashboard = lazy(() => import('./pages/admin/Dashboard'));
 const AdminOversight = lazy(() => import('./pages/admin/Oversight'));
 const AdminStaffDetail = lazy(() => import('./pages/admin/StaffDetail'));
 const AdminCases = lazy(() => import('./pages/admin/CasesList'));
+const AdminReview = lazy(() => import('./pages/admin/Review')); // fast document review queue (full screen)
 const AdminCase = lazy(() => import('./pages/admin/CaseAdmin'));
 const AdminInquiries = lazy(() => import('./pages/admin/Inquiries'));
 const AdminUsers = lazy(() => import('./pages/admin/Users'));
@@ -652,6 +653,7 @@ export default function App() {
               }
             />
             <Route path="cases" element={<AdminCases />} />
+            <Route path="review" element={<AdminReview />} />
             <Route path="cases/:id" element={<AdminCase />} />
             <Route path="inquiries" element={<AdminInquiries />} />
             <Route path="calls" element={<AdminCalls />} />

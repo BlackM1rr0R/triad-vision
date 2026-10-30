@@ -3,6 +3,7 @@ import { Link, Navigate, useLocation, useNavigate, useNavigationType, useParams,
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
+import { undoToast } from '@/lib/undo'; // "Geri al" after moving items to the bin
 import clsx from 'clsx';
 import {
   Briefcase,
@@ -90,6 +91,7 @@ import { convertFiles, convertKind } from '@/components/docCreate/api';
 import type { DocEditorTarget } from '@/components/docCreate/DocEditor';
 import { useDriveIntel, useSearchInContent } from '@/components/drive/intel/useDriveIntel';
 import { BoardView, useDriveOrg } from '@/components/drive/org/useDriveOrg';
+import { parseWorkflow, useDriveProcessing } from '@/components/drive/processing/useDriveProcessing';
 import { usePdfTools } from '@/components/pdfTools/usePdfTools';
 import { Skeleton } from '@/components/ui/Skeleton';
 
@@ -127,6 +129,7 @@ const parseLocation = (splat: string, params: URLSearchParams): DriveLocation =>
   if (head === 'shared' || head === 'recent' || head === 'starred' || head === 'trash' || head === 'access') return { kind: head };
   if (head === 'search') return { kind: 'search', q: params.get('q') ?? '', type: params.get('type') ?? '', after: params.get('after') ?? '' };
   if ((head === 'smart' || head === 'tag') && rest[0]) return { kind: head, id: decodeURIComponent(rest[0]) };
+  if (head === 'workflow') return parseWorkflow(rest, params);
   return { kind: 'home' };
 };
 
@@ -182,6 +185,8 @@ export default function WorkspaceDrive() {
   });
   // Document organisation (tags, board, Final, templates, naming, smart folders, duplicates): components/drive/org.
   const org = useDriveOrg({ folder: folderId ? listing.data?.folder : undefined, loc, isAdmin, isSuper, onNavigate: (href) => navigate(href) });
+  // Team workflow of client folders ("İş axını": In Bearbeitung → Schon geschrieben → Fertig, Ablehnung): components/drive/processing.
+  const proc = useDriveProcessing({ loc, onNavigate: (href) => navigate(href) });
   const orgSource = org.flatSource(loc);
   const flatKind = loc.kind === 'shared' || loc.kind === 'recent' || loc.kind === 'starred' || loc.kind === 'trash' || loc.kind === 'search' || orgSource ? loc.kind : null;
   const [inContent, setInContent] = useSearchInContent();
@@ -301,6 +306,8 @@ export default function WorkspaceDrive() {
               ? t('drive.nav.search')
               : loc.kind === 'access'
                 ? t('drive.nav.access')
+                : loc.kind === 'workflow'
+                ? (proc.viewTitle ?? t('drive.title'))
                 : loc.kind === 'smart' || loc.kind === 'tag'
                   ? (org.viewTitle(loc) ?? t('drive.title'))
                   : folder
@@ -427,7 +434,19 @@ export default function WorkspaceDrive() {
           }
           toast.success(t('drive.partner.partnersDeleted', { count: deleted }));
         }
-        const done = new Set(reportBatch(await bulkCall('delete', { ids: c.items.map((i) => i.id) }), 'drive.toasts.trashed'));
+        const results = await bulkCall('delete', { ids: c.items.map((i) => i.id) });
+        const trashed = results.filter((r) => r.ok).map((r) => r.id);
+        reportBatch(results.filter((r) => !r.ok), 'drive.toasts.trashed'); // failures only
+        // "Geri al" (10 s): the items come back from the bin (compensating restore).
+        if (trashed.length)
+          undoToast({
+            message: t('drive.toasts.trashed', { count: trashed.length }),
+            undo: async () => {
+              await batchCall('/drive/restore', { ids: trashed });
+              await invalidateDrive(qc);
+            },
+          });
+        const done = new Set(trashed);
         // The open folder (or one above it) went to the bin: go to the closest folder that is left.
         const path = listing.data?.path ?? [];
         const hit = path.findIndex((p) => done.has(p.id));
@@ -549,6 +568,7 @@ export default function WorkspaceDrive() {
       }
       if (loc.kind === 'trash' && items.length && isAdmin) out.push({ id: 'empty', label: t('drive.actions.emptyTrash'), icon: Trash2, danger: true, onSelect: () => setConfirm({ kind: 'empty' }) });
       out.push(...org.menuEntries(null));
+      out.push(...proc.menuEntries(folder ? [folder] : null));
       out.push({ id: 'refresh', label: t('drive.toolbar.refresh'), icon: RefreshCw, onSelect: refresh });
       if (items.length) out.push({ id: 'all', label: t('drive.actions.selectAll'), icon: Clipboard, onSelect: () => select(new Set(items.map((i) => i.id)), null, null) });
       if (folder) {
@@ -586,6 +606,7 @@ export default function WorkspaceDrive() {
     if (conv.length) out.push({ kind: 'separator', id: 'sc' }, ...conv);
     out.push(...intel.menuEntries(list), ...pdfTools.menuEntries(list));
     out.push(...org.menuEntries(list));
+    out.push(...proc.menuEntries(list));
     out.push({ kind: 'separator', id: 's1' });
     if (single && writable(single)) {
       out.push(
@@ -632,7 +653,7 @@ export default function WorkspaceDrive() {
       ];
     }
     const single = list.length === 1 ? list[0] : null;
-    const out: ToolAction[] = [];
+    const out: ToolAction[] = [...proc.toolActions(list)];
     if (single && isSheet(single)) out.push({ id: 'table', icon: FileSpreadsheet, label: t('drive.shared.openAsTable'), onClick: () => go(sheetHref(single.id)), primary: true });
     if (single?.kind === 'FILE' && can(single.myAccess, 'DOWNLOAD')) out.push({ id: 'dl', icon: Download, label: t('drive.actions.download'), onClick: () => startDownload(contentUrl(single.id, true)), primary: true });
     if (zippable(list) && (list.length > 1 || single?.kind === 'FOLDER')) out.push({ id: 'zip', icon: FileArchive, label: t('drive.actions.downloadZip'), onClick: () => zip(list), primary: true });
@@ -802,7 +823,12 @@ export default function WorkspaceDrive() {
       onFiles={onFiles}
       onItems={onItems}
       onContext={(at, item) => setMenu({ at, items: [item], tree: true })}
-      extra={org.sidebar}
+      extra={
+        <>
+          {proc.sidebar}
+          {org.sidebar}
+        </>
+      }
     />
   );
 
@@ -850,7 +876,10 @@ export default function WorkspaceDrive() {
         )}
       </div>
     ) : folder?.caseId ? (
-      <ClientFolderHeader folder={folder} />
+      <>
+        <ClientFolderHeader folder={folder} />
+        {proc.folderBar(folder)}
+      </>
     ) : folder?.partner ? (
       <PartnerFolderHeader folder={folder} />
     ) : folder && sectionOf(folder) ? (
@@ -885,7 +914,7 @@ export default function WorkspaceDrive() {
       )}
 
       <div className="flex min-w-0 flex-1 flex-col">
-        {loc.kind === 'access' ? (
+        {loc.kind === 'access' || loc.kind === 'workflow' ? (
           <>
             <Toolbar
               canBack={histIdx > 0}
@@ -919,7 +948,7 @@ export default function WorkspaceDrive() {
               minimal
             />
             <div className="min-h-0 flex-1 bg-card">
-              <AccessOverview onOpenFolder={(id) => go(folderHref(id))} />
+              {loc.kind === 'workflow' ? proc.view : <AccessOverview onOpenFolder={(id) => go(folderHref(id))} />}
             </div>
           </>
         ) : (
@@ -1328,6 +1357,7 @@ export default function WorkspaceDrive() {
       {intel.dialogs}
       {pdfTools.dialogs}
       {org.dialogs}
+      {proc.dialogs}
       <UploadPanel tasks={uploads.tasks} onCancel={uploads.cancel} onCancelAll={uploads.cancelAll} onClear={uploads.clearFinished} extra={org.uploadExtra} />
     </div>
   );

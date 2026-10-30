@@ -32,6 +32,7 @@ import { nextStepSummaries } from '../../lib/caseNext/nextStep.js';
 import { emitAutomationEvent } from '../../lib/automation/events.js';
 import { onLanguageCertAccepted } from '../../lib/german/progress.js';
 import { ballInCourtMany } from '../../lib/clientProcess/ballInCourt.js';
+import { marksForStatus, reviewMarksSchema } from '../../lib/review/marks.js'; // marks on a rejected scan
 import { PROCESSING_STAGES, processingSummaries, stageCounts, stageWhere } from '../../lib/caseProcessing/index.js'; // Schon geschrieben → Fertig
 
 export const adminCasesRouter = Router();
@@ -42,27 +43,26 @@ const STATUSES = [
   'EMBASSY_REVIEW', 'APPOINTMENT_SCHEDULED', 'DECISION_PENDING', 'APPROVED', 'REJECTED', 'CANCELLED',
 ] as const;
 
-adminCasesRouter.get('/', async (req, res) => {
-  const q = parse(
-    z.object({
-      status: z.enum(STATUSES).optional(),
-      search: z.string().trim().max(120).optional(),
-      mine: z.enum(['true', 'false', '1', '0']).transform((v) => v === 'true' || v === '1').optional(),
-      page: z.coerce.number().int().min(1).default(1),
-      // Referral partner who brought the client ('none' = cases without a partner).
-      partnerId: z.string().trim().min(1).max(40).optional(),
-      // Team document workflow stage (lib/caseProcessing) and its next assignee ('me' = the viewer).
-      processing: z.enum(PROCESSING_STAGES).optional(),
-      processingAssignee: z.string().trim().min(1).max(40).optional(),
-    }),
-    req.query,
-  );
-  const where: Prisma.CaseWhereInput = {
+/** Filters of the cases list; shared with the bulk actions ("all matching", routes/admin/bulk.ts). */
+export const caseListQuery = z.object({
+  status: z.enum(STATUSES).optional(),
+  search: z.string().trim().max(120).optional(),
+  mine: z.enum(['true', 'false', '1', '0']).transform((v) => v === 'true' || v === '1').optional(),
+  page: z.coerce.number().int().min(1).default(1),
+  // Referral partner who brought the client ('none' = cases without a partner).
+  partnerId: z.string().trim().min(1).max(40).optional(),
+  // Team document workflow stage (lib/caseProcessing) and its next assignee ('me' = the viewer).
+  processing: z.enum(PROCESSING_STAGES).optional(),
+  processingAssignee: z.string().trim().min(1).max(40).optional(),
+});
+
+export const caseListWhere = (q: z.infer<typeof caseListQuery>, viewerId: string): Prisma.CaseWhereInput => {
+  return {
     ...(q.status ? { status: q.status } : {}),
     ...(q.processing ? { AND: [stageWhere(q.processing)] } : {}),
-    ...(q.processingAssignee ? { processingAssigneeId: q.processingAssignee === 'me' ? req.user!.id : q.processingAssignee } : {}),
+    ...(q.processingAssignee ? { processingAssigneeId: q.processingAssignee === 'me' ? viewerId : q.processingAssignee } : {}),
     ...(q.partnerId ? { partnerId: q.partnerId === 'none' ? null : q.partnerId } : {}),
-    ...(q.mine ? { assignedStaffId: req.user!.id } : {}),
+    ...(q.mine ? { assignedStaffId: viewerId } : {}),
     ...(q.search
       ? {
           OR: [
@@ -75,6 +75,11 @@ adminCasesRouter.get('/', async (req, res) => {
         }
       : {}),
   };
+};
+
+adminCasesRouter.get('/', async (req, res) => {
+  const q = parse(caseListQuery, req.query);
+  const where: Prisma.CaseWhereInput = caseListWhere(q, req.user!.id);
   const pageSize = 25;
   const [items, total, byStatus, processingCounts] = await Promise.all([
     prisma.case.findMany({
@@ -263,7 +268,8 @@ adminCasesRouter.post('/:id/documents/:docId/photo-check', async (req, res) => {
 
 adminCasesRouter.post('/:id/documents/:docId/review', async (req, res) => {
   const body = parse(
-    z.object({ status: z.enum(['ACCEPTED', 'REJECTED', 'PENDING']), note: z.string().trim().max(1000).optional() }),
+    // reviewMarks: staff marks on the rejected scan (lib/review/marks.ts); kept only with REJECTED.
+    z.object({ status: z.enum(['ACCEPTED', 'REJECTED', 'PENDING']), note: z.string().trim().max(1000).optional(), reviewMarks: reviewMarksSchema.optional() }),
     req.body,
   );
   if (body.status === 'REJECTED' && !body.note) throw badRequest('NOTE_REQUIRED');
@@ -272,7 +278,7 @@ adminCasesRouter.post('/:id/documents/:docId/review', async (req, res) => {
 
   const updated = await prisma.document.update({
     where: { id: doc.id },
-    data: { status: body.status, reviewNote: body.status === 'REJECTED' ? body.note : null },
+    data: { status: body.status, reviewNote: body.status === 'REJECTED' ? body.note : null, reviewMarks: marksForStatus(body.status, body.reviewMarks) },
   });
   if (body.status === 'ACCEPTED') void copyDocumentToDrive(doc.id); // a copy in the client's drive folder
   if (body.status === 'REJECTED') await trashRejectedCopy(doc.id); // the incoming copy leaves the client folder (bin; back on accept)

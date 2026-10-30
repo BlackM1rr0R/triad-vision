@@ -18,6 +18,7 @@ import { impersonationRouter } from './routes/admin/privacyTools.js';
 import { impersonation } from './lib/privacy/impersonation.js';
 import { maskResponses } from './lib/privacy/mask.js';
 import { accountRouter } from './routes/account.js';
+import { accountPlusRouter } from './routes/accountPlus.js';
 import { accountBillingRouter } from './routes/billing.js'; // client portal: invoices, receipts, payment plan
 import { packagesRouter } from './routes/packages.js'; // public service packages + online order
 import { messagingRouter } from './routes/messaging.js';
@@ -202,6 +203,7 @@ export const createApp = () => {
   app.use('/api/account/recognition', accountRecognitionRouter); // read-only Anerkennung status of the own case
   app.use('/api/account/permits', accountPermitsRouter); // residence permit / Blue Card, insurance, passport: days left
   app.use('/api/account/success-share', accountSuccessShareRouter); // visa approved: share card (consent, revoke)
+  app.use('/api/account/plus', accountPlusRouter); // family switcher, countdown cards + weather, offline pack (lib/clientPlus)
   app.use('/api/account', accountRouter);
   app.use('/api/company/invoices', companyInvoicesRouter);
   app.use('/api/company/quotes', companyQuotesRouter);

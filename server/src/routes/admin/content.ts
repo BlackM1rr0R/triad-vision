@@ -10,6 +10,7 @@ import { audit } from '../../lib/audit.js';
 import { LEGAL_SETTING_SCHEMAS } from '../../lib/legalSettings.js';
 import { retentionStatus } from '../../jobs/retention.js';
 import { MODULES_SETTING_KEY } from '../../lib/navModules.js';
+import { STAFF_UI_PREFIXES } from '../../lib/staffUi/index.js'; // private per-user rows left out of the listing
 import { storyVideo } from '../../lib/seo.js';
 
 export const adminContentRouter = Router();
@@ -238,7 +239,10 @@ export const adminSettingsRouter = Router();
 
 adminSettingsRouter.get('/', async (_req, res) => {
   // The owner's customer list (white-label, System → Customers) has its own SUPER_ADMIN endpoint.
-  const settings = await prisma.setting.findMany({ where: { key: { notIn: [WHITELABEL_CUSTOMERS_KEY] } } });
+  // Per-user staff UI rows (saved views, table settings: lib/staffUi) are private and have their own endpoints.
+  const settings = await prisma.setting.findMany({
+    where: { key: { notIn: [WHITELABEL_CUSTOMERS_KEY] }, NOT: STAFF_UI_PREFIXES.map((p) => ({ key: { startsWith: p } })) },
+  });
   res.json({ settings: Object.fromEntries(settings.map((s) => [s.key, s.value])) });
 });
 

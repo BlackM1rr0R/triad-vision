@@ -270,7 +270,7 @@ describe('agent portal', () => {
     expect(me.agent.notes).toBeUndefined();
 
     const dash = expectStatus(await a.agent.get('/api/agent/dashboard'), 200).body;
-    expect(dash.counts).toEqual({ referrals: 2, registeredThisMonth: 2, activeCases: 1, approvedVisas: 0 });
+    expect(dash.counts).toEqual({ referrals: 2, employers: 0, registeredThisMonth: 2, activeCases: 1, approvedVisas: 0 });
     expect(dash.earnings).toEqual({ pendingCents: 20000, approvedCents: 0, paidCents: 0 });
     expect(dash.series).toHaveLength(12);
     expect(dash.series[11]).toMatchObject({ referrals: 2, earningsCents: 20000 });

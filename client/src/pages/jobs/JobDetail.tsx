@@ -28,6 +28,8 @@ import {
 import { api, errorCode } from '@/lib/api';
 import { currentHref, useAuth } from '@/lib/auth';
 import { useL10n } from '@/lib/l10n';
+import { JobGallery } from '@/components/jobs/JobGallery';
+import { vacancyImages } from '@/components/jobs/images';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { optimizeImage } from '@/lib/imageCompress';
 import { isStaffRole } from '@/lib/types';
@@ -375,6 +377,8 @@ export default function JobDetail() {
             <Link to="/jobs" className="-my-2 inline-flex min-h-10 items-center gap-1.5 text-sm font-semibold text-muted hover:text-ink">
               <ArrowLeft className="size-4" /> {t('jobsArea.detail.back')}
             </Link>
+
+            {vacancyImages(v).length > 0 && <JobGallery images={vacancyImages(v)} title={tr(v.title)} />}
 
             <article className="card card-pad rounded-3xl">
               <h2 className="font-display text-xl font-semibold text-ink">{t('jobsArea.detail.about')}</h2>

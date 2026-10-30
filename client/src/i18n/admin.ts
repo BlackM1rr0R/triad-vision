@@ -89,6 +89,7 @@ const az = {
 
       sensitiveAccess: 'Həssas məlumat girişləri',
       cases: 'Müraciətlər',
+      review: 'Sürətli yoxlama',
       docs: 'Sənədlər',
       inquiries: 'Sorğular',
       users: 'İstifadəçilər',
@@ -1397,6 +1398,7 @@ const de: typeof az = {
 
       sensitiveAccess: 'Zugriffe auf sensible Daten',
       cases: 'Anträge',
+      review: 'Schnellprüfung',
       docs: 'Dokumente',
       inquiries: 'Anfragen',
       users: 'Benutzer',
@@ -2705,6 +2707,7 @@ const en: typeof az = {
 
       sensitiveAccess: 'Sensitive data access',
       cases: 'Cases',
+      review: 'Fast review',
       docs: 'Documents',
       inquiries: 'Inquiries',
       users: 'Users',
@@ -4015,6 +4018,7 @@ const ru = {
 
       sensitiveAccess: 'Доступ к конфиденциальным данным',
       cases: 'Заявки',
+      review: 'Быстрая проверка',
       docs: 'Документы',
       inquiries: 'Запросы',
       users: 'Пользователи',

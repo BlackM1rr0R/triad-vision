@@ -1119,7 +1119,7 @@ const processingHandoffs = async (ctx: Ctx): Promise<Source> => {
       where,
       orderBy: { processingStageAt: 'asc' },
       take: LIMIT_PER_KIND,
-      select: { id: true, number: true, processingStage: true, processingStageAt: true, processingStageById: true, processingAssigneeId: true, updatedAt: true, client: { select: { firstName: true, lastName: true } } },
+      select: { id: true, number: true, driveFolderId: true, processingStage: true, processingStageAt: true, processingStageById: true, processingAssigneeId: true, updatedAt: true, client: { select: { firstName: true, lastName: true } } },
     }),
     prisma.case.count({ where }),
   ]);
@@ -1130,7 +1130,9 @@ const processingHandoffs = async (ctx: Ctx): Promise<Source> => {
     total,
     items: rows.map((r) => {
       const since = r.processingStageAt ?? r.updatedAt;
-      const href = `${caseLink(r.id)}#case-processing`;
+      const caseHref = `${caseLink(r.id)}#case-processing`;
+      // The work happens in the client folder of the documents section; the case page stays one click away.
+      const href = r.driveFolderId ? `/workspace/drive/f/${encodeURIComponent(r.driveFolderId)}` : caseHref;
       const by = name(r.processingStageById ? people.get(r.processingStageById) : null);
       return {
         id: `processing:${r.id}`,
@@ -1145,7 +1147,7 @@ const processingHandoffs = async (ctx: Ctx): Promise<Source> => {
         link: href,
         refs: { caseId: r.id, caseNumber: r.number },
         assignee: person(r.processingAssigneeId ? people.get(r.processingAssigneeId) : null),
-        actions: [open(href, true)],
+        actions: r.driveFolderId ? [open(href, true), { key: 'case', label: 'view', type: 'link' as const, href: caseHref }] : [open(href, true)],
       };
     }),
   };

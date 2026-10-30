@@ -188,19 +188,26 @@ const caseSummarySelect = {
 /** Everything the client dashboard needs, in one request. */
 accountRouter.get('/overview', async (req, res) => {
   const userId = req.user!.id;
+  // Family switcher (?case=<id>): the portal is about that case of the client (own cases only, else ignored).
+  const pick = typeof req.query.case === 'string' && req.query.case.length <= 40 ? req.query.case : null;
+  const picked = pick ? await prisma.case.findFirst({ where: { id: pick, clientId: userId }, select: { id: true } }) : null;
   const [user, cases, unread, notifications, lastMessage] = await Promise.all([
     prisma.user.findUniqueOrThrow({ where: { id: userId } }),
     prisma.case.findMany({ where: { clientId: userId }, orderBy: { createdAt: 'desc' }, select: caseSummarySelect }),
     prisma.notification.count({ where: { userId, readAt: null } }),
     prisma.notification.findMany({ where: { userId }, orderBy: { createdAt: 'desc' }, take: 5 }),
     prisma.caseMessage.findFirst({
-      where: { case: { clientId: userId } },
+      where: picked ? { caseId: picked.id } : { case: { clientId: userId } },
       orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
       include: { author: { select: { id: true, firstName: true, lastName: true, role: true } }, case: { select: { number: true } } },
     }),
   ]);
 
-  const activeRow = cases.find((c) => !FINAL_STATUSES.includes(c.status));
+  // Default: the open main application before open family-member cases (same order as the next-step card).
+  const activeRow =
+    (picked && cases.find((c) => c.id === picked.id)) ||
+    cases.find((c) => !FINAL_STATUSES.includes(c.status) && !c.parentCaseId) ||
+    cases.find((c) => !FINAL_STATUSES.includes(c.status));
   let activeCase = null;
   if (activeRow) {
     const c = await prisma.case.findUniqueOrThrow({
@@ -266,7 +273,9 @@ accountRouter.get('/overview', async (req, res) => {
  */
 accountRouter.get('/next-step', async (req, res) => {
   res.setHeader('Cache-Control', 'no-store');
-  res.json(await loadNextStep(req.user!.id));
+  // ?case=<id>: the family switcher's case (own cases only; lib/account/nextStep.ts ignores anything else).
+  const pick = typeof req.query.case === 'string' && req.query.case.length <= 40 ? req.query.case : undefined;
+  res.json(await loadNextStep(req.user!.id, new Date(), { caseId: pick }));
 });
 
 /** GDPR export: everything stored about the user, as a JSON download (file metadata only, no contents). */

@@ -46,7 +46,7 @@ const termsFields = {
     .trim()
     .toUpperCase()
     .regex(/^[A-Z]{3}$/),
-  payoutEvents: z.array(z.enum(PAYOUT_EVENTS)).max(4),
+  payoutEvents: z.array(z.enum(PAYOUT_EVENTS)).max(PAYOUT_EVENTS.length),
 };
 
 const checkTerms = (type: string | undefined, value: number | undefined) => {

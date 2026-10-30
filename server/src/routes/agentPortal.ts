@@ -94,11 +94,42 @@ agentPortalRouter.get('/dashboard', async (req, res) => {
   res.json({
     status: agent.status,
     currency: agent.currency,
-    counts: { referrals: s.referrals, registeredThisMonth: thisMonth, activeCases: s.activeCases, approvedVisas: s.approvedVisas },
+    counts: { referrals: s.referrals, employers: s.employers, registeredThisMonth: thisMonth, activeCases: s.activeCases, approvedVisas: s.approvedVisas },
     earnings: { pendingCents: s.pendingCents, approvedCents: s.approvedCents, paidCents: s.paidCents },
     series: [...series.values()],
   });
 });
+
+/** Employers referred by the agent: name, sign-up date, approval status and the commissions they produced. */
+const referredEmployers = async (agentId: string) => {
+  const companies = await prisma.company.findMany({
+    where: { referredByAgentId: agentId },
+    orderBy: [{ referredAt: 'desc' }, { createdAt: 'desc' }],
+    take: 200,
+    select: { id: true, name: true, city: true, status: true, createdAt: true, referredAt: true },
+  });
+  if (!companies.length) return [];
+  const ids = companies.map((c) => c.id);
+  const invoices = await prisma.invoice.findMany({ where: { companyId: { in: ids } }, select: { id: true, companyId: true } });
+  const companyOf = new Map<string, string>([...ids.map((id) => [id, id] as const), ...invoices.map((i) => [i.id, i.companyId] as const)]);
+  const rows = await prisma.agentCommission.findMany({
+    where: { agentId, status: { not: 'CANCELLED' }, clientId: null, sourceRef: { in: [...companyOf.keys()] } },
+    select: { sourceRef: true, amountCents: true },
+  });
+  const earned = new Map<string, number>();
+  for (const r of rows) {
+    const cid = companyOf.get(r.sourceRef ?? '');
+    if (cid) earned.set(cid, (earned.get(cid) ?? 0) + r.amountCents);
+  }
+  return companies.map((c) => ({
+    key: refKey(agentId, c.id),
+    name: c.name,
+    city: c.city,
+    status: c.status,
+    registeredAt: c.referredAt ?? c.createdAt,
+    earnedCents: earned.get(c.id) ?? 0,
+  }));
+};
 
 agentPortalRouter.get('/referrals', async (req, res) => {
   const agent = await agentOf(req);
@@ -133,6 +164,8 @@ agentPortalRouter.get('/referrals', async (req, res) => {
       stage: coarseStage(u.cases[0]?.status),
       earnedCents: earnedBy.get(u.id) ?? 0,
     })),
+    // Employers that signed up with the agent's code (first page only; business names, no contacts).
+    employers: q.page === 1 ? await referredEmployers(agent.id) : [],
     total,
     pageSize,
     currency: agent.currency,

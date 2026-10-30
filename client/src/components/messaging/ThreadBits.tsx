@@ -3,13 +3,25 @@ import { useTranslation } from 'react-i18next';
 import { AlertCircle, Check, CheckCheck, Clock, MessageCircle, Smartphone } from 'lucide-react';
 import { registerCopy } from '@/i18n';
 import { pagesMessaging } from '@/i18n/pagesMessaging';
+import { pagesClientPlus } from '@/i18n/pagesClientPlus';
 import type { ThreadMessage } from './useThread';
 
 registerCopy(pagesMessaging);
+registerCopy(pagesClientPlus);
 
-/** WhatsApp-style delivery ticks for the sender's own messages: clock (sending), one tick (sent), two blue ticks (read). */
-export const ReadTicks = ({ m, onDark }: { m: ThreadMessage; onDark?: boolean }) => {
-  const { t } = useTranslation();
+const readTime = (iso: string, lng: string) => {
+  const d = new Date(iso);
+  const sameDay = d.toDateString() === new Date().toDateString();
+  return new Intl.DateTimeFormat(lng, sameDay ? { hour: '2-digit', minute: '2-digit' } : { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }).format(d);
+};
+
+/**
+ * WhatsApp-style delivery ticks for the sender's own messages: clock (sending), one tick (sent), two blue ticks (read).
+ * Read: the time is in the tooltip / screen-reader label ("Oxundu · 14:32"); `withTime` also prints it (the latest
+ * read message of a thread).
+ */
+export const ReadTicks = ({ m, onDark, withTime }: { m: ThreadMessage; onDark?: boolean; withTime?: boolean }) => {
+  const { t, i18n } = useTranslation();
   if (m.failed) {
     return (
       <span className="inline-flex items-center text-red-200" title={t('messaging.chat.failed')} aria-label={t('messaging.chat.failed')}>
@@ -25,9 +37,11 @@ export const ReadTicks = ({ m, onDark }: { m: ThreadMessage; onDark?: boolean })
     );
   }
   if (m.readAt) {
+    const label = t('cplus.chat.readAt', { time: readTime(m.readAt, i18n.resolvedLanguage ?? 'az') });
     return (
-      <span className="inline-flex items-center text-sky-300" title={t('messaging.chat.read')} aria-label={t('messaging.chat.read')}>
+      <span className={clsx('inline-flex items-center gap-1', onDark ? 'text-sky-300' : 'text-sky-600 dark:text-sky-300')} title={label} aria-label={label}>
         <CheckCheck className="size-3.5" aria-hidden />
+        {withTime && <span aria-hidden>{label}</span>}
       </span>
     );
   }

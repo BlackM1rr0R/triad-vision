@@ -44,6 +44,7 @@ import { NextUpCard, StickyBelowHeader } from './portal/NextUpCard';
 import { CaseNumbers } from './portal/SecondaryCards';
 import { NextItems } from './portal/NextItems';
 import { tabOfAnchor, useNextUp, type CaseTab } from './portal/useNextUp';
+import { OfflineCard } from '@/components/offline/OfflineCard'; // "Oflayn sənədlərim" + "Termin məlumatı" (PWA, own device)
 
 registerCopy(pagesPortalUx);
 
@@ -324,6 +325,7 @@ export default function CaseView() {
             <div id="originals" className="scroll-mt-40 empty:hidden">
               <ClientOriginals caseId={data.id} />
             </div>
+            <OfflineCard />
           </>
         )}
 

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
-import { ArrowRight, ClipboardPen, FileText, FolderOpen, History, Paperclip } from 'lucide-react';
+import { ArrowRight, ClipboardPen, FileText, FolderOpen, Hand, History, Paperclip } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { useL10n } from '@/lib/l10n';
 import { fileUrl } from '@/lib/api';
@@ -10,6 +10,7 @@ import { fmtDateTime } from '@/components/admin/labels';
 import { TONE_CLASS } from '@/components/ui/status';
 import { stageLabel, useProcessing, type ProcessingStage, type ProcessingView } from './api';
 import { MoveStageDialog, StageBadge } from './parts';
+import { useClaimFlow } from './flow';
 
 const FILES_SHOWN = 8;
 
@@ -92,6 +93,7 @@ export default function ProcessingCard({ caseId }: { caseId: string }) {
   const { user } = useAuth();
   const q = useProcessing(caseId);
   const [dialog, setDialog] = useState<{ open: boolean; initial?: ProcessingStage }>({ open: false });
+  const claimFlow = useClaimFlow('case');
   const p = q.data;
   if (!p) return null;
   const mine = !!p.assignee && p.assignee.id === user?.id;
@@ -112,6 +114,17 @@ export default function ProcessingCard({ caseId }: { caseId: string }) {
           </span>
         )}
         <div className="ml-auto flex flex-wrap gap-1.5">
+          {/* "Götür": take the written documents (a colleague's case asks first) */}
+          {p.stage === 'WRITTEN' && !mine && (
+            <button
+              type="button"
+              className="btn-secondary btn-sm"
+              disabled={claimFlow.busy}
+              onClick={() => claimFlow.claim({ caseId, name: '', stage: p.stage, assigneeId: p.assignee?.id ?? null })}
+            >
+              <Hand className="size-3.5" aria-hidden /> {t('caseProcessing.claim')}
+            </button>
+          )}
           {next && (
             <button type="button" className="btn-primary btn-sm" onClick={() => setDialog({ open: true, initial: next })}>
               {t('caseProcessing.moveTo', { stage: stageLabel(next) })} <ArrowRight className="size-3.5" aria-hidden />
@@ -143,10 +156,20 @@ export default function ProcessingCard({ caseId }: { caseId: string }) {
             <ol className="space-y-2">
               {p.history.map((h) => (
                 <li key={h.id} className="rounded-lg border border-line px-3 py-2 text-sm">
-                  <p className="flex flex-wrap items-center gap-1.5">
-                    <StageBadge stage={h.fromStage} /> <ArrowRight className="size-3 text-muted" aria-hidden /> <StageBadge stage={h.toStage} />
-                    {h.assignee && <span className="text-xs font-medium text-ink/80">{t('caseProcessing.toPerson', { name: h.assignee.name })}</span>}
-                  </p>
+                  {h.fromStage === h.toStage && h.assignee && h.assignee.id === h.by?.id ? (
+                    // a claim ("Götür"): same stage, taken by the actor
+                    <p className="flex flex-wrap items-center gap-1.5">
+                      <StageBadge stage={h.toStage} /> <Hand className="size-3 text-muted" aria-hidden />
+                      <span className="text-xs font-medium text-ink/80">
+                        {h.assignee.name} {t('caseProcessing.claimedLine')}
+                      </span>
+                    </p>
+                  ) : (
+                    <p className="flex flex-wrap items-center gap-1.5">
+                      <StageBadge stage={h.fromStage} /> <ArrowRight className="size-3 text-muted" aria-hidden /> <StageBadge stage={h.toStage} />
+                      {h.assignee && <span className="text-xs font-medium text-ink/80">{t('caseProcessing.toPerson', { name: h.assignee.name })}</span>}
+                    </p>
+                  )}
                   <p className="mt-0.5 text-[11px] text-muted">{t('caseProcessing.movedBy', { name: h.by?.name ?? '—', date: fmtDateTime(h.createdAt) })}</p>
                   {h.note && <p className="mt-1 break-words whitespace-pre-line text-ink/90">{h.note}</p>}
                 </li>
@@ -157,6 +180,7 @@ export default function ProcessingCard({ caseId }: { caseId: string }) {
       </details>
 
       <MoveStageDialog caseId={caseId} open={dialog.open} initial={dialog.initial} current={p.stage} onClose={() => setDialog({ open: false })} />
+      {claimFlow.dialog}
     </section>
   );
 }

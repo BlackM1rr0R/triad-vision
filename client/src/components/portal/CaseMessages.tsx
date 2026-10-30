@@ -16,8 +16,13 @@ import { MessageBody, ShowOriginalsToggle, TranslationNote } from '@/components/
 import { VoiceRecorder } from '@/components/messagingPlus/VoiceRecorder';
 import { EmptyInbox } from '@/components/illustrations';
 import { translatableText, useMessageTranslations, useShowOriginals } from '@/components/messagingPlus/useTranslations';
+import { pagesClientPlus } from '@/i18n/pagesClientPlus';
 
 registerCopy(pagesMessaging);
+registerCopy(pagesClientPlus);
+
+/** Suggested short answers (cplus.chat.q.*), shown after a team message while the box is empty. */
+const QUICK_REPLIES = ['yes', 'tomorrow', 'call', 'thanks', 'no'] as const;
 
 /**
  * Chat between the client and the case manager. Messages arrive in realtime (SSE), sends are
@@ -38,6 +43,10 @@ export const CaseMessages = ({ data, onChanged }: { data: CaseDetail; onChanged:
   const { messages, typingName } = thread;
   const count = messages.length;
   const lastId = messages[count - 1]?.id;
+  const last = messages[count - 1];
+  // "Oxundu · 14:32" under the newest own message the team has read.
+  const lastReadMineId = [...messages].reverse().find((m) => (m.author.id === meId || (!meId && m.author.role === 'CLIENT')) && m.readAt)?.id;
+  const showQuick = !!last && last.author.id !== meId && last.author.role !== 'CLIENT' && !body.trim();
   // Messaging plus: messages in the reader's language (translated on demand, cached on the server).
   const prefs = useShowOriginals();
   const tx = useMessageTranslations({
@@ -124,7 +133,7 @@ export const CaseMessages = ({ data, onChanged }: { data: CaseDetail; onChanged:
                   </div>
                   <span className="mt-1 flex items-center gap-1.5 px-1 text-[10px] text-muted">
                     <time dateTime={m.createdAt}>{dateTime(m.createdAt)}</time>
-                    {mine && <ReadTicks m={m} />}
+                    {mine && <ReadTicks m={m} withTime={m.id === lastReadMineId} />}
                     {m.failed && (
                       <>
                         <span className="text-danger-fg" role="alert">{t('messaging.chat.failed')}</span>
@@ -148,6 +157,27 @@ export const CaseMessages = ({ data, onChanged }: { data: CaseDetail; onChanged:
       <div className="border-t border-line px-4 pt-2">
         <ShowOriginalsToggle tx={tx} setter={prefs.set} />
       </div>
+
+      {showQuick && (
+        <div className="flex gap-2 overflow-x-auto border-t border-line px-3 pt-2.5 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" role="group" aria-label={t('cplus.chat.quick')}>
+          {QUICK_REPLIES.map((k) => (
+            <button
+              key={k}
+              type="button"
+              className="min-h-9 shrink-0 rounded-full border border-line bg-card px-3 text-sm font-medium whitespace-nowrap text-ink transition-colors hover:border-primary hover:bg-sunken"
+              onClick={() => {
+                if (!user) return;
+                thread
+                  .send(t(`cplus.chat.q.${k}`), { id: user.id, firstName: user.firstName, lastName: user.lastName, role: user.role })
+                  .then(() => void onChanged())
+                  .catch(onError);
+              }}
+            >
+              {t(`cplus.chat.q.${k}`)}
+            </button>
+          ))}
+        </div>
+      )}
 
       <form
         className="flex items-end gap-2 border-t border-line p-3"

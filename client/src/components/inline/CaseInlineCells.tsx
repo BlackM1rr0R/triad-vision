@@ -44,6 +44,8 @@ export const CaseAssigneeCell = ({ c, className }: { c: Row; className?: string 
       update: (old) => patchRows(old, c.id, (r) => ({ ...r, assignedStaffId: value || null, assignedStaff: member ? { firstName: member.firstName, lastName: member.lastName } : null })),
       request: () => api.patch(`/admin/cases/${c.id}`, { assignedStaffId: value || null }),
       success: member ? t('ux.inline.assigned', { name: fullName(member) }) : t('ux.inline.unassignedToast'),
+      // "Geri al": back to the previous assignee.
+      undo: () => api.patch(`/admin/cases/${c.id}`, { assignedStaffId: current || null }),
       invalidate: [caseKey(c.id), ['admin-dashboard']],
     });
   };
@@ -88,6 +90,8 @@ export const CaseStatusCell = ({ c }: { c: Row }) => {
       update: (old) => patchRows(old, c.id, (r) => ({ ...r, status: m.to, daysInStatus: 0, statusSince: new Date().toISOString() })),
       request: () => api.post(`/admin/cases/${c.id}/actions`, { action: m.action }),
       success: t('ux.inline.statusChanged', { status: statusLabel(m.to) }),
+      // These steps notify the client and have no reverse transition: sent when the 10 s undo window ends.
+      delayed: true,
       invalidate: [caseKey(c.id), ['admin-dashboard']],
     });
   };

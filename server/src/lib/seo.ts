@@ -21,6 +21,7 @@ import { videoEmbedUrl } from './marketing/landing.js';
 import { getCaseAiSettings } from './ai/features/caseAi/config.js';
 import { compareContent, currentThresholds, type CompareThresholds } from './compare/visaCompare.js';
 import { occupationByCode } from './jobFeeds/occupations.js';
+import { vacancyImagesOf } from './vacancyImages.js';
 
 /*
  * SEO for a client-rendered SPA.
@@ -219,6 +220,8 @@ export interface SeoData {
     /** Optional so older fixtures stay valid: Google for Jobs extras (experience, KldB code, postal code). */
     minExperience?: number | null;
     distribution?: { occupationCode: string | null; postalCode: string | null } | null;
+    /** Cover + gallery photos ([{ url, alt? }], lib/vacancyImages.ts); optional for older fixtures. */
+    images?: unknown;
   }[];
   settings: Record<string, unknown>;
   rating: { count: number; average: number } | null;
@@ -309,6 +312,7 @@ const loadSeoData = async (): Promise<SeoData> => {
         company: { select: { name: true, website: true } },
         minExperience: true,
         distribution: { select: { occupationCode: true, postalCode: true } }, // job feeds (lib/jobFeeds)
+        images: true, // cover = first (lib/vacancyImages.ts)
       },
     }),
     prisma.setting.findMany({ where: { key: { in: ['contact', 'social', 'legal', 'analytics'] } } }),
@@ -556,6 +560,12 @@ export const JOB_LABELS: Record<SeoLocale, { requirements: string; benefits: str
   uk: { requirements: 'Вимоги', benefits: 'Ми пропонуємо' },
 };
 
+/** Absolute URLs of a vacancy's photos (cover first). */
+export const jobImageUrls = (job: { images?: unknown }) =>
+  vacancyImagesOf(job.images)
+    .map((i) => absoluteImage(i.url))
+    .filter((u): u is string => !!u);
+
 export const jobPostingLd = (job: SeoData['jobs'][number], lng: SeoLocale, url: string) => {
   const origin = siteOrigin();
   const title = collapse(pick(job.title, lng));
@@ -595,6 +605,9 @@ export const jobPostingLd = (job: SeoData['jobs'][number], lng: SeoLocale, url: 
     url,
     inLanguage: lng,
   };
+  // Cover + gallery photos (absolute URLs) when the vacancy has any.
+  const images = jobImageUrls(job);
+  if (images.length) ld.image = images;
   // KldB 2010 occupation code (vacancy distribution settings, lib/jobFeeds) as the occupational category.
   const occupationCode = job.distribution?.occupationCode;
   if (occupationCode) {
@@ -1037,7 +1050,8 @@ export const resolvePage = (path: string, lng: SeoLocale, data: SeoData): Resolv
     title: pageTitle(where),
     description: truncate(pick(job.description, lng) || textIn(STATIC_PAGES['/jobs'].description, lng), DESCRIPTION_MAX),
     index: true,
-    image: null,
+    // The vacancy's cover photo when it has one, else the generated card.
+    image: jobImageUrls(job)[0] ?? null,
     ogCard: { kind: 'jobs', slug },
     ogType: 'website',
     crumbs: crumbsFor(name),
@@ -1229,7 +1243,7 @@ export const sitemapUrls = (data: SeoData, group: SitemapGroup): SitemapUrl[] =>
         });
     }
     case 'jobs':
-      return jobs.flatMap((j) => allLanguages(`/jobs/${j.slug}`, j.updatedAt));
+      return jobs.flatMap((j) => allLanguages(`/jobs/${j.slug}`, j.updatedAt, { src: vacancyImagesOf(j.images)[0]?.url, title: (l) => collapse(pick(j.title, l)) }));
     case 'events':
       return (data.events ?? []).flatMap((e) => allLanguages(`/events/${e.slug}`, e.updatedAt));
     case 'landing':

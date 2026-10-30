@@ -10,6 +10,7 @@ import { notifyVacancyReviewed } from '../../lib/jobsNotifications.js';
 import { matchCandidate } from '../../lib/matching.js';
 import { fillL10n, staffVacancyInput, staffVacancyPatch, uniqueSlug, vacancyData } from '../../lib/vacancies.js';
 import { hasMinRole } from '../../middleware/auth.js';
+import { singleVacancyImage, storeVacancyImage } from '../../lib/vacancyImages.js';
 
 // Admin: vacancies — mounted at /api/admin/vacancies
 export const adminVacanciesRouter = Router();
@@ -27,7 +28,7 @@ const checkClosesAt = (req: Request, next: Date | null | undefined, stored: Date
 
 /** Before → after of every changed column, for the audit log (long texts only flagged as changed). */
 const SCALAR_FIELDS = ['slug', 'companyId', 'visaCategoryId', 'sector', 'city', 'profession', 'germanLevel', 'minExperience', 'drivingLicence', 'salaryMin', 'salaryMax', 'positions', 'employmentType', 'showCompany', 'status', 'publishedAt', 'closesAt'] as const;
-const JSON_FIELDS = ['title', 'description', 'requirements', 'benefits'] as const;
+const JSON_FIELDS = ['title', 'description', 'requirements', 'benefits', 'images'] as const;
 const diffVacancy = (a: Vacancy, b: Vacancy) => {
   const norm = (v: string | number | boolean | Date | null): string | number | boolean | null => (v instanceof Date ? v.toISOString() : v);
   const changes: Record<string, Prisma.InputJsonValue> = {};
@@ -96,6 +97,12 @@ adminVacanciesRouter.get('/', async (req, res) => {
 /** Statuses a candidate can be added to (CLOSED is refused by POST /admin/candidates/:id/applications). */
 export const ASSIGNABLE_STATUSES = ['OPEN', 'PENDING', 'DRAFT'] as const;
 const STATUS_ORDER: Record<string, number> = { OPEN: 0, PENDING: 1, DRAFT: 2 };
+
+/** Cover / gallery photo: re-encoded to WebP + width variants (lib/vacancyImages.ts); saved with the vacancy. */
+adminVacanciesRouter.post('/images', singleVacancyImage, async (req, res) => {
+  if (!req.file) throw badRequest('FILE_REQUIRED');
+  res.status(201).json(await storeVacancyImage(req.file.buffer));
+});
 
 adminVacanciesRouter.get('/options', async (req, res) => {
   // Small list for selects (add a candidate to a vacancy, rank candidates, link a case): every vacancy that is not

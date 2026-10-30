@@ -3,7 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
-import { ChevronLeft, ChevronRight, ClipboardPen, Columns2, FileClock, FolderSearch, Hourglass, KanbanSquare, List, Mail, MessageSquare, Phone, Search, UserCheck, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ClipboardPen, Columns2, FileClock, FolderSearch, Hourglass, KanbanSquare, List, Mail, MessageSquare, Phone, ScanEye, Search, UserCheck, X } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useL10n } from '@/lib/l10n';
 import type { CaseStatus } from '@/lib/types';
@@ -12,7 +12,7 @@ import { StatusBadge } from '@/components/admin/StatusBadge';
 import { ALL_STATUSES, actorSideLabel, eventLabel, fmtDate, fmtDateTime, fmtRelative, fullName, statusLabel } from '@/components/admin/labels';
 import type { AdminCaseListItem, AdminCasesResponse } from '@/components/admin/types';
 import { Chip, EmptyState, ErrorBlock, PageHead } from '@/components/admin/ui';
-import { BulkPartnerBar, CasePartnerCell, PartnerFilterSelect, SelectBox } from '@/components/partners/CasesPartnerTools';
+import { BulkPartnerBar, CasePartnerCell, PartnerFilterSelect } from '@/components/partners/CasesPartnerTools';
 import { NextStepChip } from '@/components/caseNext/NextStepChip';
 import { CasesListSkeleton } from '@/components/admin/CasesListSkeleton';
 import { morphCaseRow } from '@/components/admin/caseMorph';
@@ -27,8 +27,14 @@ import { PROCESSING_STAGES, isProcessingStage, stageLabel } from '@/components/c
 import { StageBadge, StageCell } from '@/components/caseProcessing/parts';
 import { ProcessingBoard } from '@/components/caseProcessing/ProcessingBoard';
 import { BallChip } from '@/components/clientProcess/Ball'; // "Top kimdÉ™dir?" column
+import { pagesStaffPower } from '@/i18n/pagesStaffPower'; // saved views, table settings, bulk actions, fast review
+import { SavedViewsMenu } from '@/components/staffPower/SavedViews';
+import { ColumnChooser, SettingsTable, useTableSettings, type ColumnDef } from '@/components/staffPower/tableSettings';
+import { useRowSelection } from '@/components/staffPower/selection';
+import { CasesBulkBar } from '@/components/staffPower/BulkBar';
 
 registerCopy(pagesAdminUx);
+registerCopy(pagesStaffPower);
 
 const isStatus = (v: string | null): v is CaseStatus => !!v && (ALL_STATUSES as string[]).includes(v);
 
@@ -99,7 +105,6 @@ export default function CasesList() {
   const page = Math.max(1, Number(params.get('page')) || 1);
   // Referral partner filter ('none' = without partner) and the rows picked for a bulk partner change.
   const partner = params.get('partner') ?? '';
-  const [picked, setPicked] = useState<string[]>([]);
   // Team document workflow: stage filter, "sent to me" and the board view (?view=board).
   const processingParam = params.get('processing');
   const processing = isProcessingStage(processingParam) ? processingParam : null;
@@ -162,8 +167,38 @@ export default function CasesList() {
     if (sort === 'age') return [...list].sort((a, b) => b.ageDays - a.ageDays);
     return list;
   }, [data, overdue, sort]);
-  useEffect(() => setPicked([]), [status, search, mine, page, partner, processing, processingAssignee]);
-  const togglePick = (id: string, on: boolean) => setPicked((prev) => (on ? [...new Set([...prev, id])] : prev.filter((x) => x !== id)));
+  // Multi-select (checkbox column, Shift + click range, whole page, all matching the filters) for the bulk bars.
+  const sel = useRowSelection(
+    items.map((c) => c.id),
+    JSON.stringify({ status, search, mine, page, partner, processing, processingAssignee, overdue }),
+  );
+  const picked = sel.picked;
+  const bulkFilters = {
+    status: status ?? undefined,
+    search: search || undefined,
+    mine: mine ? '1' : undefined,
+    partnerId: partner || undefined,
+    processing: processing ?? undefined,
+    processingAssignee: processingAssignee || undefined,
+  };
+  // Column settings of the desktop table (per user: order, visibility, width).
+  const columnDefs = useMemo<ColumnDef[]>(
+    () => [
+      { id: 'number', label: t('admin.cases.th.number'), required: true },
+      { id: 'client', label: t('admin.cases.th.client') },
+      { id: 'profession', label: t('admin.cases.th.profession') },
+      { id: 'status', label: t('admin.cases.th.status') },
+      { id: 'processing', label: t('caseProcessing.column') },
+      { id: 'nextStep', label: t('caseNext.chip.column'), width: 224 },
+      { id: 'ball', label: t('cp.ball.column') },
+      { id: 'lastEvent', label: t('admin.cases.th.lastEvent') },
+      { id: 'staff', label: t('admin.cases.th.staff'), className: 'whitespace-nowrap text-ink/80' },
+      { id: 'partner', label: t('refPartners.field'), className: 'max-w-[10rem]' },
+      { id: 'updated', label: t('admin.cases.th.updated'), align: 'right', className: 'text-xs whitespace-nowrap text-muted' },
+    ],
+    [t],
+  );
+  const table = useTableSettings('cases', columnDefs);
 
   // Split view (list left, compact case right; remembered per user) and keyboard selection (?selected=<id>).
   const split = useSplitView('cases');
@@ -224,8 +259,18 @@ export default function CasesList() {
             </select>
           </label>
           <PartnerFilterSelect value={partner} onChange={(v) => update({ partner: v })} />
+          <SavedViewsMenu page="cases" settings={table} />
+          {!board && <ColumnChooser settings={table} className="hidden xl:block" />}
+          <Link
+            to="/admin/review?back=%2Fadmin%2Fcases"
+            title={t('sp.review.openHint')}
+            className="inline-flex min-h-10 shrink-0 items-center justify-center gap-2 rounded-lg border border-line bg-card px-3.5 text-sm font-semibold whitespace-nowrap text-ink/80 transition hover:border-line-strong sm:min-h-9"
+          >
+            <ScanEye className="size-4" aria-hidden /> {t('sp.review.open')}
+          </Link>
           <button
             type="button"
+            data-tour="sp-docflow-board"
             aria-pressed={board}
             onClick={() => update({ view: board ? null : 'board' })}
             className={clsx(
@@ -262,7 +307,7 @@ export default function CasesList() {
           ))}
         </div>
         {!board && (
-          <div className="-mx-4 flex items-center gap-1.5 overflow-x-auto px-4 pb-1 [scrollbar-width:none] sm:mx-0 sm:flex-wrap sm:px-0 sm:pb-0" role="group" aria-label={t('caseProcessing.filterLabel')}>
+          <div className="-mx-4 flex items-center gap-1.5 overflow-x-auto px-4 pb-1 [scrollbar-width:none] sm:mx-0 sm:flex-wrap sm:px-0 sm:pb-0" role="group" aria-label={t('caseProcessing.filterLabel')} data-tour="sp-docflow-filter">
             <span className="inline-flex shrink-0 items-center gap-1 pr-1 text-xs font-semibold text-muted">
               <ClipboardPen className="size-3.5" aria-hidden /> {t('caseProcessing.filterLabel')}
             </span>
@@ -302,7 +347,15 @@ export default function CasesList() {
         </div>
       ) : (
         <>
-          <BulkPartnerBar ids={picked} onDone={() => setPicked([])} />
+          <CasesBulkBar
+            sel={sel}
+            filters={bulkFilters}
+            total={data.total}
+            pageCount={items.length}
+            labelOf={(id) => items.find((c) => c.id === id)?.number ?? id}
+            invalidate={[['admin-cases'], ['admin-dashboard']]}
+          />
+          {!sel.allMatching && <BulkPartnerBar ids={picked} onDone={sel.clear} />}
           {split.active ? (
             <div className="grid items-start gap-4 lg:grid-cols-[minmax(17rem,22rem)_minmax(0,1fr)] xl:gap-6">
               <ul className={clsx('max-h-[calc(100dvh-12rem)] divide-y divide-line overflow-y-auto rounded-xl border border-line bg-card lg:sticky lg:top-20', isFetching && 'opacity-60')} aria-label={t('admin.nav.cases')}>
@@ -353,112 +406,82 @@ export default function CasesList() {
             </div>
           ) : (
           <>
-          {/* Desktop table */}
-          <div className="hidden overflow-x-auto rounded-xl border border-line bg-card xl:block">
-            <table className="w-full min-w-[1460px] text-left text-sm">
-              <thead className="border-b border-line bg-surface/70 text-xs font-medium whitespace-nowrap text-muted">
-                <tr>
-                  <th className="w-8 py-2.5 pl-4">
-                    <SelectBox
-                      label={t('refPartners.selectAll')}
-                      checked={items.length > 0 && items.every((c) => picked.includes(c.id))}
-                      onChange={(on) => setPicked(on ? items.map((c) => c.id) : [])}
-                    />
-                  </th>
-                  <th className="px-4 py-2.5">{t('admin.cases.th.number')}</th>
-                  <th className="px-4 py-2.5">{t('admin.cases.th.client')}</th>
-                  <th className="px-4 py-2.5">{t('admin.cases.th.profession')}</th>
-                  <th className="px-4 py-2.5">{t('admin.cases.th.status')}</th>
-                  <th className="px-4 py-2.5">{t('caseProcessing.column')}</th>
-                  <th className="px-4 py-2.5">{t('caseNext.chip.column')}</th>
-                  <th className="px-4 py-2.5">{t('cp.ball.column')}</th>
-                  <th className="px-4 py-2.5">{t('admin.cases.th.lastEvent')}</th>
-                  <th className="px-4 py-2.5">{t('admin.cases.th.staff')}</th>
-                  <th className="px-4 py-2.5">{t('refPartners.field')}</th>
-                  <th className="px-4 py-2.5 text-right">{t('admin.cases.th.updated')}</th>
-                </tr>
-              </thead>
-              <tbody className={clsx('divide-y divide-line transition-opacity', isFetching && 'opacity-60')}>
-                {items.map((c) => (
-                  <tr
-                    key={c.id}
-                    data-row-id={c.id}
-                    aria-current={c.id === split.selected || undefined}
-                    className={clsx('cursor-pointer transition hover:bg-primary/[0.04]', c.id === split.selected && 'bg-primary/[0.04] shadow-[inset_3px_0_0_var(--color-brand-600)]')}
+          {/* Desktop table (columns follow the user's table settings: order, visibility, width) */}
+          <SettingsTable
+            settings={table}
+            rows={items}
+            rowKey={(c) => c.id}
+            className="hidden xl:block"
+            tableClassName="min-w-[1460px]"
+            bodyClassName={clsx('transition-opacity', isFetching && 'opacity-60')}
+            caption={t('admin.nav.cases')}
+            selection={sel.props}
+            selectLabel={t('refPartners.selectRow')}
+            selectAllLabel={t('refPartners.selectAll')}
+            onRowClick={(c, e) => {
+              morphCaseRow(e, c.id);
+              navigate(`/admin/cases/${c.id}`);
+            }}
+            rowProps={(c) => ({ 'aria-current': c.id === split.selected || undefined })}
+            rowClassName={(c) => (c.id === split.selected ? 'bg-primary/[0.04] shadow-[inset_3px_0_0_var(--color-brand-600)]' : undefined)}
+            cells={{
+              number: (c) => (
+                <>
+                  <Link
+                    to={`/admin/cases/${c.id}`}
+                    className="code-id text-xs font-medium text-link hover:underline whitespace-nowrap"
+                    data-vt-part="title"
                     onClick={(e) => {
+                      e.stopPropagation();
                       morphCaseRow(e, c.id);
-                      navigate(`/admin/cases/${c.id}`);
                     }}
                   >
-                    <td className="py-3 pl-4 align-top" onClick={(e) => e.stopPropagation()}>
-                      <SelectBox label={t('refPartners.selectRow')} checked={picked.includes(c.id)} onChange={(on) => togglePick(c.id, on)} />
-                    </td>
-                    <td className="px-4 py-3 align-top">
-                      <Link
-                        to={`/admin/cases/${c.id}`}
-                        className="code-id text-xs font-medium text-link hover:underline whitespace-nowrap"
-                        data-vt-part="title"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          morphCaseRow(e, c.id);
-                        }}
-                      >
-                        {c.number}
-                      </Link>
-                      <p className="mt-0.5 text-[11px] text-muted">{fmtDate(c.createdAt)}</p>
-                    </td>
-                    <td className="px-4 py-3 align-top">
-                      <p className="font-semibold whitespace-nowrap text-ink">{fullName(c.client)}</p>
-                      <p className="mt-0.5 flex flex-wrap gap-x-3 text-xs text-muted">
-                        <span className="inline-flex items-center gap-1">
-                          <Mail className="size-3" aria-hidden />
-                          {c.client.email}
-                        </span>
-                        {c.client.phone && (
-                          <span className="inline-flex items-center gap-1">
-                            <Phone className="size-3" aria-hidden />
-                            {c.client.phone}
-                          </span>
-                        )}
-                      </p>
-                    </td>
-                    <td className="px-4 py-3 align-top">
-                      <p className="text-ink">{c.profession}</p>
-                      <p className="mt-0.5 text-xs text-muted">{c.visaCategory ? `${tr(c.visaCategory.title)} · ${c.visaCategory.visaLabel}` : '—'}</p>
-                    </td>
-                    <td className="px-4 py-3 align-top">
-                      <CaseStatusCell c={c} />
-                      <div className="mt-1.5 flex flex-col items-start gap-1">
-                        <DaysInStatus c={c} />
-                        <RowMeta c={c} />
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 align-top">
-                      <StageCell p={c.processing} />
-                    </td>
-                    <td className="w-56 max-w-[15rem] px-4 py-3 align-top">
-                      <NextStepChip step={c.nextStep} />
-                    </td>
-                    <td className="px-4 py-3 align-top">
-                      <BallChip ball={c.ballInCourt} />
-                    </td>
-                    <td className="px-4 py-3 align-top">
-                      <LastEvent c={c} />
-                    </td>
-                    <td className="px-4 py-3 align-top whitespace-nowrap text-ink/80">
-                      <CaseAssigneeCell c={c} />
-                    </td>
-                    <td className="max-w-[10rem] px-4 py-3 align-top">
-                      <CasePartnerCell c={c} />
-                    </td>
-                    <td className="px-4 py-3 text-right align-top text-xs whitespace-nowrap text-muted" title={fmtDate(c.updatedAt)}>
-                      {fmtRelative(c.updatedAt)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                    {c.number}
+                  </Link>
+                  <p className="mt-0.5 text-[11px] text-muted">{fmtDate(c.createdAt)}</p>
+                </>
+              ),
+              client: (c) => (
+                <>
+                  <p className="font-semibold whitespace-nowrap text-ink">{fullName(c.client)}</p>
+                  <p className="mt-0.5 flex flex-wrap gap-x-3 text-xs text-muted">
+                    <span className="inline-flex items-center gap-1">
+                      <Mail className="size-3" aria-hidden />
+                      {c.client.email}
+                    </span>
+                    {c.client.phone && (
+                      <span className="inline-flex items-center gap-1">
+                        <Phone className="size-3" aria-hidden />
+                        {c.client.phone}
+                      </span>
+                    )}
+                  </p>
+                </>
+              ),
+              profession: (c) => (
+                <>
+                  <p className="text-ink">{c.profession}</p>
+                  <p className="mt-0.5 text-xs text-muted">{c.visaCategory ? `${tr(c.visaCategory.title)} · ${c.visaCategory.visaLabel}` : '—'}</p>
+                </>
+              ),
+              status: (c) => (
+                <>
+                  <CaseStatusCell c={c} />
+                  <div className="mt-1.5 flex flex-col items-start gap-1">
+                    <DaysInStatus c={c} />
+                    <RowMeta c={c} />
+                  </div>
+                </>
+              ),
+              processing: (c) => <StageCell p={c.processing} />,
+              nextStep: (c) => <NextStepChip step={c.nextStep} />,
+              ball: (c) => <BallChip ball={c.ballInCourt} />,
+              lastEvent: (c) => <LastEvent c={c} />,
+              staff: (c) => <CaseAssigneeCell c={c} />,
+              partner: (c) => <CasePartnerCell c={c} />,
+              updated: (c) => <span title={fmtDate(c.updatedAt)}>{fmtRelative(c.updatedAt)}</span>,
+            }}
+          />
 
           {/* Cards below xl (table needs ~1080px next to the sidebar) */}
           <ul className={clsx('grid grid-cols-1 gap-3 md:grid-cols-2 xl:hidden', isFetching && 'opacity-60')}>

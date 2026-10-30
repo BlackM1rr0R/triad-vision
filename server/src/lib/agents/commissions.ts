@@ -4,7 +4,11 @@ import { notifyUser } from '../notifications.js';
 import { AGENT_TEXT, EVENT_LABEL, formatMoney } from './texts.js';
 import { displayName } from './privacy.js';
 
-export const PAYOUT_EVENTS = ['CASE_CREATED', 'CONTRACT_SIGNED', 'VISA_APPROVED', 'INVOICE_PAID'] as const;
+/**
+ * Events that can pay an agent. EMPLOYER_APPROVED: an employer that signed up with the agent's code
+ * (Company.referredByAgentId) is approved by the staff (company status → ACTIVE), once per employer.
+ */
+export const PAYOUT_EVENTS = ['CASE_CREATED', 'CONTRACT_SIGNED', 'VISA_APPROVED', 'INVOICE_PAID', 'EMPLOYER_APPROVED'] as const;
 export type PayoutEvent = (typeof PAYOUT_EVENTS)[number];
 /** Agents without explicit settings are paid when the visa is approved. */
 export const DEFAULT_PAYOUT_EVENTS: PayoutEvent[] = ['VISA_APPROVED'];
@@ -41,9 +45,51 @@ export interface AwardInput {
 }
 
 /**
- * Creates a PENDING commission for the agent who referred `clientId`, if that agent is ACTIVE, pays
- * for `event` and the same (agent, event, case, sourceRef) has not been paid yet. Notifies the agent
- * in their language. Never throws: a commission problem must not break a case or invoice action.
+ * Creates a PENDING commission for `agentId` if that agent is ACTIVE, pays for `event` and the same
+ * (agent, event, case, sourceRef) has not been paid yet. Notifies the agent in their language; `subject`
+ * names the client / employer in that message. Never throws.
+ */
+const awardAgent = async (input: {
+  agentId: string;
+  clientId: string | null;
+  caseId: string | null;
+  event: PayoutEvent;
+  sourceRef: string | null;
+  invoiceAmountCents?: number | null;
+  subject: string;
+}) => {
+  const agent = await prisma.agent.findUnique({ where: { id: input.agentId } });
+  if (!agent || agent.status !== 'ACTIVE') return null;
+  if (!payoutEventsOf(agent.payoutEvents).includes(input.event)) return null;
+  const amountCents = computeCommission(agent, input.event, input.invoiceAmountCents);
+  if (amountCents === null) return null;
+
+  const { caseId, sourceRef } = input;
+  // MySQL unique indexes treat NULLs as distinct, so the duplicate check is done here.
+  const existing = await prisma.agentCommission.findFirst({ where: { agentId: agent.id, event: input.event, caseId, sourceRef }, select: { id: true } });
+  if (existing) return null;
+
+  const row = await prisma.agentCommission.create({
+    data: { agentId: agent.id, clientId: input.clientId, caseId, event: input.event, sourceRef, amountCents, currency: agent.currency },
+  });
+
+  const user = await prisma.user.findUnique({ where: { id: agent.userId }, select: { locale: true } });
+  const locale = user?.locale ?? 'az';
+  const t = AGENT_TEXT[locale];
+  await notifyUser(agent.userId, {
+    type: 'AGENT_COMMISSION',
+    title: t.earnedTitle(formatMoney(amountCents, agent.currency, locale)),
+    body: t.earnedBody(EVENT_LABEL[locale][input.event] ?? input.event, input.subject),
+    link: '/agent/earnings',
+    ctaLabel: t.cta,
+    push: false,
+  });
+  return row;
+};
+
+/**
+ * Creates a PENDING commission for the agent who referred `clientId` (see awardAgent). Never throws: a
+ * commission problem must not break a case or invoice action.
  */
 export const awardCommission = async (input: AwardInput) => {
   try {
@@ -52,43 +98,51 @@ export const awardCommission = async (input: AwardInput) => {
       select: { firstName: true, lastName: true, referredByAgentId: true },
     });
     if (!client?.referredByAgentId) return null;
-    const agent = await prisma.agent.findUnique({ where: { id: client.referredByAgentId } });
-    if (!agent || agent.status !== 'ACTIVE') return null;
-    if (!payoutEventsOf(agent.payoutEvents).includes(input.event)) return null;
-    const amountCents = computeCommission(agent, input.event, input.invoiceAmountCents);
-    if (amountCents === null) return null;
-
-    const caseId = input.caseId ?? null;
-    const sourceRef = input.sourceRef ?? null;
-    // MySQL unique indexes treat NULLs as distinct, so the duplicate check is done here.
-    const existing = await prisma.agentCommission.findFirst({ where: { agentId: agent.id, event: input.event, caseId, sourceRef }, select: { id: true } });
-    if (existing) return null;
-
-    const row = await prisma.agentCommission.create({
-      data: { agentId: agent.id, clientId: input.clientId, caseId, event: input.event, sourceRef, amountCents, currency: agent.currency },
+    return await awardAgent({
+      agentId: client.referredByAgentId,
+      clientId: input.clientId,
+      caseId: input.caseId ?? null,
+      event: input.event,
+      sourceRef: input.sourceRef ?? null,
+      invoiceAmountCents: input.invoiceAmountCents,
+      subject: displayName(client),
     });
-
-    const user = await prisma.user.findUnique({ where: { id: agent.userId }, select: { locale: true } });
-    const locale = user?.locale ?? 'az';
-    const t = AGENT_TEXT[locale];
-    await notifyUser(agent.userId, {
-      type: 'AGENT_COMMISSION',
-      title: t.earnedTitle(formatMoney(amountCents, agent.currency, locale)),
-      body: t.earnedBody(EVENT_LABEL[locale][input.event] ?? input.event, displayName(client)),
-      link: '/agent/earnings',
-      ctaLabel: t.cta,
-      push: false,
-    });
-    return row;
   } catch (err) {
     console.error('[agents] award commission failed', input, err);
     return null;
   }
 };
 
-/** INVOICE_PAID: invoices go to companies, so the commission goes to the agent who referred one of its users. */
+/** EMPLOYER_APPROVED: the staff approved an employer that signed up with an agent's code. Once per employer. Never throws. */
+export const awardEmployerCommission = async (companyId: string) => {
+  try {
+    const company = await prisma.company.findUnique({ where: { id: companyId }, select: { id: true, name: true, referredByAgentId: true } });
+    if (!company?.referredByAgentId) return null;
+    return await awardAgent({ agentId: company.referredByAgentId, clientId: null, caseId: null, event: 'EMPLOYER_APPROVED', sourceRef: company.id, subject: company.name });
+  } catch (err) {
+    console.error('[agents] employer commission failed', companyId, err);
+    return null;
+  }
+};
+
+/**
+ * INVOICE_PAID: invoices go to companies, so the commission goes to the agent the employer signed up with
+ * (Company.referredByAgentId) or else to the agent who referred one of its users.
+ */
 export const awardInvoiceCommission = async (invoice: { id: string; companyId: string; grossCents: number }) => {
   try {
+    const company = await prisma.company.findUnique({ where: { id: invoice.companyId }, select: { name: true, referredByAgentId: true } });
+    if (company?.referredByAgentId) {
+      return await awardAgent({
+        agentId: company.referredByAgentId,
+        clientId: null,
+        caseId: null,
+        event: 'INVOICE_PAID',
+        sourceRef: invoice.id,
+        invoiceAmountCents: invoice.grossCents,
+        subject: company.name,
+      });
+    }
     const referred = await prisma.user.findFirst({
       where: { companyId: invoice.companyId, referredByAgentId: { not: null } },
       orderBy: { referredAt: 'asc' },
@@ -103,7 +157,7 @@ export const awardInvoiceCommission = async (invoice: { id: string; companyId: s
 };
 
 /** Case hooks (caseFlow): resolves the case's client and awards the event. Never throws. */
-export const awardCaseCommission = async (caseId: string, event: Exclude<PayoutEvent, 'INVOICE_PAID'>) => {
+export const awardCaseCommission = async (caseId: string, event: Exclude<PayoutEvent, 'INVOICE_PAID' | 'EMPLOYER_APPROVED'>) => {
   try {
     const c = await prisma.case.findUnique({ where: { id: caseId }, select: { clientId: true } });
     return c ? await awardCommission({ clientId: c.clientId, caseId, event }) : null;

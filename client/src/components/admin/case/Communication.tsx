@@ -91,8 +91,10 @@ export const Messages = ({ c }: { c: CaseDetail }) => {
         className="max-h-[420px] space-y-3 overflow-y-auto px-5 py-5 sm:px-6"
       >
         {messages.length === 0 && <p className="py-6 text-center text-sm text-muted">{t('admin.case.comm.noMessages')}</p>}
-        {messages.map((m) => {
+        {messages.map((m, i) => {
           const fromClient = m.author.role === 'CLIENT';
+          // "Oxundu · 14:32" printed under the newest team message the client has read (all ticks keep it in the tooltip).
+          const lastRead = !fromClient && !!m.readAt && !messages.slice(i + 1).some((x) => x.author.role !== 'CLIENT' && x.readAt);
           const mine = m.author.id === meId;
           return (
             <motion.div
@@ -115,7 +117,7 @@ export const Messages = ({ c }: { c: CaseDetail }) => {
                   <span>
                     {fullName(m.author)} · {fmtDateTime(m.createdAt)}
                   </span>
-                  {!fromClient && <ReadTicks m={m} onDark />}
+                  {!fromClient && <ReadTicks m={m} onDark withTime={lastRead} />}
                   {mine && m.failed && (
                     <button type="button" className="inline-flex items-center gap-0.5 underline" onClick={() => thread.dismissFailed(m.id)}>
                       <X className="size-3" aria-hidden /> {t('messaging.chat.failed')}

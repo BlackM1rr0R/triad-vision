@@ -25,6 +25,10 @@ import { password, publicUser } from './auth.js';
 import { emitWebhook } from '../lib/ops/webhooks.js';
 import { sendEmployerCv } from '../lib/cv/access.js';
 import { listWorkers, workerSummary, workersXlsx } from '../lib/requests/workers.js';
+import { singleVacancyImage, storeVacancyImage } from '../lib/vacancyImages.js';
+import { REF_COOKIE, normaliseRefCode, resolveReferralCode } from '../lib/growth/referral.js';
+import { findPartnerByCode } from '../lib/partners/owned.js';
+import { attachCompanyReferral } from '../lib/agents/referral.js';
 
 // Employer portal API — mounted at /api/company (COMPANY role)
 export const companyRouter = Router();
@@ -95,9 +99,15 @@ companyRouter.post('/register', registerLimiter, async (req, res) => {
       }),
       locale: z.enum(['az', 'de', 'en', 'ru']).default('de'),
       acceptTerms: z.literal(true),
+      // Optional referral code (same codes as the client sign-up: agent, client "bring a friend", partner).
+      ref: z.string().trim().max(64).optional().nullable(),
+      // Typed into the visible field: an unknown code is refused (REFERRAL_CODE_UNKNOWN) instead of ignored.
+      refEntered: z.boolean().optional(),
     }),
     req.body,
   );
+  const knownCode = async (code: string) => !!(await findPartnerByCode(code)) || !!(await resolveReferralCode(code));
+  if (body.refEntered && body.ref && !(await knownCode(body.ref))) throw badRequest('REFERRAL_CODE_UNKNOWN');
   if (await prisma.user.findUnique({ where: { email: body.user.email } })) throw conflict('EMAIL_TAKEN');
 
   const passwordHash = await bcrypt.hash(body.user.password, 12);
@@ -129,12 +139,20 @@ companyRouter.post('/register', registerLimiter, async (req, res) => {
   await recordConsent({ userId: user.id, email: user.email, type: 'TERMS', granted: true, source: 'REGISTER', req });
   await recordConsent({ userId: user.id, email: user.email, type: 'PRIVACY_POLICY', granted: true, source: 'REGISTER', req });
   await sendVerificationEmail(user.id).catch((err) => console.error('[company] verification email failed', err));
+  // `ref` from the form or the 60-day first-party cookie (?ref= on any page); unknown cookie codes are ignored.
+  const rawRef = body.ref || (typeof req.cookies?.[REF_COOKIE] === 'string' ? String(req.cookies[REF_COOKIE]).slice(0, 64) : null);
+  const refCode = rawRef ? normaliseRefCode(rawRef) : '';
+  let referredByAgentId: string | null = null;
+  if (refCode) {
+    referredByAgentId = await attachCompanyReferral(company.id, refCode, { known: await knownCode(refCode) });
+    res.clearCookie(REF_COOKIE, { path: '/' });
+  }
   await notifyStaff(
     `Yeni işəgötürən qeydiyyatı: ${company.name}`.slice(0, 180),
-    `${company.name} (${company.city}) qeydiyyatdan keçdi və təsdiq gözləyir.\n\nƏlaqə: ${user.firstName} ${user.lastName}, ${user.email}, ${company.phone ?? ''}`,
+    `${company.name} (${company.city}) qeydiyyatdan keçdi və təsdiq gözləyir.\n\nƏlaqə: ${user.firstName} ${user.lastName}, ${user.email}, ${company.phone ?? ''}${refCode ? `\n\nReferans kodu: ${refCode}` : ''}`,
     { link: `/admin/companies?id=${company.id}`, type: 'COMPANY_REGISTERED' },
   );
-  await audit(req, 'COMPANY_REGISTERED', `company:${company.id}`, { userId: user.id });
+  await audit(req, 'COMPANY_REGISTERED', `company:${company.id}`, { userId: user.id, ...(refCode ? { referralCode: refCode, referredByAgentId } : {}) });
 
   const client = wantsBearerToken(req) ? 'mobile' : 'web';
   const { token, session } = await issueSession(user.id, { client, ip: req.ip, userAgent: req.get('user-agent') });
@@ -277,6 +295,13 @@ companyRouter.get('/vacancies', async (_req, res) => {
       candidates: Object.fromEntries(counts.filter((c) => c.vacancyId === v.id).map((c) => [c.status, c._count._all])),
     })),
   });
+});
+
+/** Cover / gallery photo for a vacancy (lib/vacancyImages.ts); public only after the vacancy review. */
+const vacancyImageLimiter = limiter({ windowMs: 60 * 60 * 1000, limit: 60 });
+companyRouter.post('/vacancies/images', vacancyImageLimiter, singleVacancyImage, async (req, res) => {
+  if (!req.file) throw badRequest('FILE_REQUIRED');
+  res.status(201).json(await storeVacancyImage(req.file.buffer));
 });
 
 companyRouter.get('/vacancies/:id', async (req, res) => {

@@ -86,7 +86,7 @@ export default function DocGuideButton({ requirementKey, title }: { requirementK
     enabled: !!key,
     staleTime: 10 * 60 * 1000,
   });
-  if (!data) return null;
+  if (!data || data.hasText === false) return null; // examples only: shown by "Necə çəkməli?" (components/docGuide)
   return (
     <>
       <button type="button" className="inline-flex min-h-8 items-center gap-1 rounded-md px-1.5 text-xs font-semibold text-brand-700 hover:bg-brand-50 hover:underline dark:hover:bg-brand-950/30" onClick={() => setOpen(true)}>

@@ -13,8 +13,15 @@ import { EmptyState, ErrorBlock, LoadingBlock, PageHead, Panel, Switch } from '@
 import { Tabs } from '@/components/ui/Tabs';
 import { Spinner } from '@/components/ui/Spinner';
 import { fmtDateTime, toastError } from '@/components/admin/labels';
-import { GUIDE_FIELDS, GUIDES_KEY, type AdminGuide, type GuideLink, type GuideText } from '@/components/clientData/api';
+import { GUIDE_FIELDS, GUIDES_KEY, type AdminGuide, type GuideExamples, type GuideLink, type GuideText } from '@/components/clientData/api';
 import { GuideView } from '@/components/clientData/DocGuideButton';
+import { HowToShootBody } from '@/components/docGuide/HowToShoot'; // "Necə çəkməli?" good / bad examples
+import { registerCopy } from '@/i18n';
+import { pagesClientPlus } from '@/i18n/pagesClientPlus';
+
+registerCopy(pagesClientPlus);
+
+const emptyExamples = (): GuideExamples => ({ goodImage: null, badImage: null, tips: { az: '', de: '', en: '', ru: '' } });
 
 /**
  * Admin → "Sənəd bələdçiləri": the "Necə almalı?" guide of every requirement key in 4 languages, sample image,
@@ -62,7 +69,14 @@ export default function DocGuidesPage() {
     if (!draft || !key) return;
     setBusy(true);
     try {
-      await api.put(`/admin/doc-guides/${key}`, { content: draft.content, links: draft.links.filter((l) => l.label.trim() && l.url.trim()), sampleImage: draft.sampleImage || null, verified: draft.verified, published: draft.published });
+      await api.put(`/admin/doc-guides/${key}`, {
+        content: draft.content,
+        links: draft.links.filter((l) => l.label.trim() && l.url.trim()),
+        sampleImage: draft.sampleImage || null,
+        verified: draft.verified,
+        published: draft.published,
+        examples: draft.examples ?? null,
+      });
       await qc.invalidateQueries({ queryKey: GUIDES_KEY });
       void qc.invalidateQueries({ queryKey: ['client-guide'] });
       toast.success(t('clientData.guides.saved'));
@@ -165,6 +179,14 @@ export default function DocGuidesPage() {
             {preview ? (
               <div className="mx-auto max-w-lg rounded-xl border border-line p-4">
                 <GuideView guide={{ text: draft.content[lang], links: draft.links, sampleImage: draft.sampleImage, verified: draft.verified }} />
+                <div className="mt-4 border-t border-line pt-4">
+                  <p className="mb-2 text-xs font-semibold text-muted">{t('cplus.guide.button')}</p>
+                  <HowToShootBody
+                    requirementKey={key}
+                    title={key}
+                    examples={draft.examples ? { goodImage: draft.examples.goodImage, badImage: draft.examples.badImage, tips: draft.examples.tips[lang].split('\n').map((l) => l.trim()).filter(Boolean) } : null}
+                  />
+                </div>
               </div>
             ) : (
               <fieldset disabled={!canEdit} className="space-y-4">
@@ -177,6 +199,36 @@ export default function DocGuidesPage() {
                   </label>
                 ))}
                 <ImageField label={t('clientData.guide.sample')} value={draft.sampleImage ?? ''} onChange={(url) => setDraft({ ...draft, sampleImage: url || null })} />
+                {/* "Necə çəkməli?": GOOD / BAD example pictures and tips (empty → the built-in illustrated set). */}
+                <fieldset className="space-y-3 rounded-xl border border-line p-3">
+                  <legend className="px-1 text-xs font-semibold text-ink/80">{t('cplus.guide.button')}</legend>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <ImageField
+                      label={t('cplus.guide.good')}
+                      value={draft.examples?.goodImage ?? ''}
+                      onChange={(url) => setDraft({ ...draft, examples: { ...(draft.examples ?? emptyExamples()), goodImage: url || null } })}
+                    />
+                    <ImageField
+                      label={t('cplus.guide.bad')}
+                      value={draft.examples?.badImage ?? ''}
+                      onChange={(url) => setDraft({ ...draft, examples: { ...(draft.examples ?? emptyExamples()), badImage: url || null } })}
+                    />
+                  </div>
+                  <label className="block text-xs font-semibold text-ink/80">
+                    {t('cplus.guide.tips')} <span className="uppercase">({lang})</span>
+                    <span className="font-normal text-muted"> · {t('clientData.guides.onePerLine')}</span>
+                    <textarea
+                      className="input mt-1 w-full"
+                      rows={4}
+                      maxLength={800}
+                      value={draft.examples?.tips[lang] ?? ''}
+                      onChange={(e) => {
+                        const ex = draft.examples ?? emptyExamples();
+                        setDraft({ ...draft, examples: { ...ex, tips: { ...ex.tips, [lang]: e.target.value } } });
+                      }}
+                    />
+                  </label>
+                </fieldset>
                 <div className="space-y-2">
                   <p className="text-xs font-semibold text-ink/80">{t('clientData.guide.links')}</p>
                   {draft.links.map((l, i) => (

@@ -36,6 +36,15 @@ export interface PublicVacancy {
   validThrough: string | null;
   companyName: string | null;
   visaCategory: { slug: string; title: L10n; visaLabel: string } | null;
+  /** Cover (first) + gallery photos; re-encoded WebP with -480 / -960 width variants (server lib/vacancyImages.ts). */
+  images?: VacancyImage[] | null;
+}
+
+export interface VacancyImage {
+  url: string;
+  alt?: string;
+  w?: number;
+  h?: number;
 }
 
 export interface VacancyList {

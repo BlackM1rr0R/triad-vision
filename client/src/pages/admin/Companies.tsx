@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
@@ -23,8 +23,12 @@ import { CompanyQuotesPanel } from '@/components/quotes/CompanyQuotesPanel';
 import { EmployerReportsPanel } from '@/components/employerReports/EmployerReportsPanel';
 import RecordHistoryPanel from '@/components/history/RecordHistoryPanel';
 import { useNewParam } from '@/components/command/useNewParam'; // ?new=1 deep link (Ctrl+K palette)
+import { pagesStaffPower } from '@/i18n/pagesStaffPower'; // saved views + table settings
+import { SavedViewsMenu } from '@/components/staffPower/SavedViews';
+import { ColumnChooser, SettingsTable, ViewModeToggle, useTableSettings, type ColumnDef } from '@/components/staffPower/tableSettings';
 
 registerCopy(pagesJobs);
+registerCopy(pagesStaffPower);
 
 const STATUSES: CompanyStatus[] = ['PENDING', 'ACTIVE', 'SUSPENDED'];
 
@@ -38,6 +42,8 @@ interface CompanyDetail extends Company {
   vacancies: { id: string; slug: string; title: L10n; status: VacancyStatus; city: string | null; positions: number; createdAt: string; _count: { applications: number } }[];
   cases: { id: string; number: string; status: CaseStatus; profession: string; createdAt: string; client: { firstName: string; lastName: string } }[];
   _count: { invoices: number };
+  /** Referral the employer signed up with (agent attribution or just the code). */
+  referral?: { code: string | null; at: string | null; agent: { id: string; code: string; name: string } | null } | null;
 }
 
 const COMPANY_FIELDS = ['name', 'legalForm', 'city', 'phone', 'email', 'address', 'vatId', 'website', 'contactName'] as const;
@@ -213,7 +219,10 @@ const CompanyDrawer = ({ id, onClose }: { id: string | null; onClose: () => void
   const qc = useQueryClient();
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['admin-company', id],
-    queryFn: async () => (await api.get<{ company: CompanyDetail }>(`/admin/companies/${id}`)).data.company,
+    queryFn: async () => {
+      const { data } = await api.get<{ company: CompanyDetail; referral?: CompanyDetail['referral'] }>(`/admin/companies/${id}`);
+      return { ...data.company, referral: data.referral ?? null };
+    },
     enabled: !!id,
   });
   const [f, setF] = useState<CompanyForm | null>(null);
@@ -285,6 +294,22 @@ const CompanyDrawer = ({ id, onClose }: { id: string | null; onClose: () => void
                 )}
               </div>
               <p className="mt-2 text-[11px] text-muted">{t('jobsArea.admin.companies.statusHint')}</p>
+              {data.referral && (
+                <dl className="mt-3 border-t border-line pt-2">
+                  <DefRow label={t('jobsArea.admin.companies.referredBy')}>
+                    {data.referral.agent ? (
+                      <Link to={`/admin/agents/${data.referral.agent.id}`} className="font-semibold text-link hover:underline">
+                        {t('jobsArea.admin.companies.referredByAgent')}: {data.referral.agent.name} ({data.referral.agent.code})
+                      </Link>
+                    ) : (
+                      <span>
+                        {t('jobsArea.admin.companies.referralCode')}: <span className="font-mono">{data.referral.code}</span>
+                      </span>
+                    )}
+                    {data.referral.at && <span className="ml-1 text-xs text-muted">· {fmtDate(data.referral.at)}</span>}
+                  </DefRow>
+                </dl>
+              )}
             </Panel>
 
             <Panel title={t('jobsArea.admin.companies.details')}>
@@ -413,6 +438,24 @@ export default function AdminCompanies() {
     placeholderData: keepPreviousData,
   });
   const pages = data ? Math.max(1, Math.ceil(data.total / data.pageSize)) : 1;
+  // Per-user table settings (cards or table; columns: order, visibility, width).
+  const columnDefs = useMemo<ColumnDef[]>(
+    () => [
+      { id: 'name', label: t('sp.comp.name'), required: true },
+      { id: 'status', label: t('sp.comp.status') },
+      { id: 'city', label: t('sp.comp.city') },
+      { id: 'sector', label: t('sp.comp.sector') },
+      { id: 'email', label: t('sp.comp.email') },
+      { id: 'phone', label: t('sp.comp.phone'), defaultHidden: true },
+      { id: 'users', label: t('sp.comp.users'), align: 'right', defaultHidden: true },
+      { id: 'vacancies', label: t('sp.comp.vacancies'), align: 'right' },
+      { id: 'workers', label: t('sp.comp.workers'), align: 'right' },
+      { id: 'invoices', label: t('sp.comp.invoices'), align: 'right', defaultHidden: true },
+      { id: 'created', label: t('sp.comp.created'), align: 'right', className: 'text-xs whitespace-nowrap text-muted' },
+    ],
+    [t],
+  );
+  const table = useTableSettings('companies', columnDefs);
 
   return (
     <div>
@@ -434,6 +477,11 @@ export default function AdminCompanies() {
           <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted" aria-hidden />
           <input type="search" className="input pl-9" placeholder={t('jobsArea.admin.companies.search')} value={searchInput} onChange={(e) => setSearchInput(e.target.value)} />
         </label>
+        <div className="flex shrink-0 items-center gap-2">
+          <SavedViewsMenu page="companies" settings={table} />
+          <ViewModeToggle settings={table} />
+          {table.mode === 'table' && <ColumnChooser settings={table} />}
+        </div>
         <div className="-mx-4 flex gap-1.5 overflow-x-auto px-4 pb-1 [scrollbar-width:none] sm:mx-0 sm:px-0 sm:pb-0">
           <Chip active={!status} onClick={() => setParam('status', null)}>
             {t('admin.common.all')}
@@ -454,6 +502,32 @@ export default function AdminCompanies() {
         <div className="rounded-xl border border-line bg-card">
           <EmptyState icon={Building2} title={t('jobsArea.admin.companies.empty')} />
         </div>
+      ) : table.mode === 'table' ? (
+        <SettingsTable
+          settings={table}
+          rows={data.items}
+          rowKey={(c) => c.id}
+          caption={t('admin.nav.companies')}
+          tableClassName="min-w-[900px]"
+          onRowClick={(c) => setParam('id', c.id)}
+          cells={{
+            name: (c) => (
+              <span className="font-semibold text-ink">
+                {c.name} {c.legalForm && !c.name.includes(c.legalForm) ? c.legalForm : ''}
+              </span>
+            ),
+            status: (c) => <span className={clsx('badge', COMPANY_STATUS_TONE[c.status])}>{L.companyStatus(c.status)}</span>,
+            city: (c) => <span className="text-ink/80">{c.city || '—'}</span>,
+            sector: (c) => <span className="text-xs">{L.sector(c.sector) || '—'}</span>,
+            email: (c) => <span className="text-xs break-all">{c.email || '—'}</span>,
+            phone: (c) => <span className="text-xs whitespace-nowrap">{c.phone || '—'}</span>,
+            users: (c) => <span className="tabular-nums">{c._count.users}</span>,
+            vacancies: (c) => <span className="tabular-nums">{c._count.vacancies}</span>,
+            workers: (c) => <span className="tabular-nums">{c._count.cases}</span>,
+            invoices: (c) => <span className="tabular-nums">{c._count.invoices}</span>,
+            created: (c) => fmtDate(c.createdAt),
+          }}
+        />
       ) : (
         <ul className="grid gap-3 md:grid-cols-2 2xl:grid-cols-3">
           {data.items.map((c) => (

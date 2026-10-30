@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="az">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#0b1f44" />
+    <meta name="robots" content="noindex" />
+    <title>Triad Vision — Oflayn sənədlərim</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <!--
+      Offline documents of the client portal ("Oflayn saxla", src/lib/offlineDocs.ts). Precached and served by the
+      service worker (public/sw.js) when a portal page cannot load. The list comes from Cache Storage on this device
+      only (/offline-docs.js, an external script: the CSP allows 'self' scripts, no inline ones).
+    -->
+    <style>
+      :root { color-scheme: light dark; --bg: #f5f8fd; --card: #ffffff; --ink: #0b1f44; --muted: #4f5f7c; --line: #dfe7f3; --brand: #1565e8; --soft: #eef3fb; }
+      @media (prefers-color-scheme: dark) { :root { --bg: #050f24; --card: #0b1f44; --ink: #e8eefb; --muted: #a9b8d4; --line: #18397a; --brand: #7aaeff; --soft: #0f2756; } }
+      * { box-sizing: border-box; }
+      body { margin: 0; min-height: 100vh; padding: 16px; background: var(--bg); color: var(--ink); font: 16px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+      main { width: 100%; max-width: 640px; margin: 0 auto; }
+      header { display: flex; align-items: center; gap: 12px; margin: 8px 0 16px; }
+      header img { width: 44px; height: 44px; }
+      h1 { margin: 0; font-size: 1.3rem; }
+      h2 { margin: 0 0 8px; font-size: 1.05rem; }
+      section { background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 18px; margin-bottom: 14px; }
+      p { margin: 0; color: var(--muted); font-size: 0.95rem; }
+      dl { margin: 0; display: grid; grid-template-columns: max-content 1fr; gap: 4px 12px; font-size: 0.95rem; }
+      dt { color: var(--muted); }
+      dd { margin: 0; font-weight: 600; }
+      ul { list-style: none; margin: 0; padding: 0; }
+      li + li { border-top: 1px solid var(--line); }
+      .doc { display: flex; align-items: center; gap: 12px; min-height: 56px; padding: 8px 0; }
+      .doc span { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+      .doc small { display: block; color: var(--muted); }
+      .card { background: var(--soft); border-radius: 12px; padding: 10px 12px; margin-top: 8px; }
+      .card strong { display: block; }
+      a.btn { display: inline-flex; align-items: center; min-height: 44px; padding: 0 16px; border-radius: 999px; background: var(--brand); color: #fff; font-weight: 600; text-decoration: none; white-space: nowrap; }
+      a.link { color: var(--brand); font-weight: 600; }
+      .note { font-size: 0.85rem; margin-top: 8px; }
+      [hidden] { display: none !important; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header>
+        <img src="/icons/icon-192.png" alt="Triad Vision" width="44" height="44" />
+        <h1 id="title">Oflayn sənədlərim · Offline-Dokumente · Offline documents · Офлайн-документы</h1>
+      </header>
+      <div id="appointment"></div>
+      <section id="docs-section" hidden>
+        <h2 id="docs-title">Sənədlər</h2>
+        <ul id="docs"></ul>
+      </section>
+      <section id="empty">
+        <p id="empty-text">Bu cihazda oflayn sənəd yoxdur. · Keine Offline-Dokumente auf diesem Gerät. · No offline documents on this device. · На этом устройстве нет офлайн-документов.</p>
+      </section>
+      <p class="note" id="privacy"></p>
+      <p class="note"><a class="link" id="back" href="/account">Portal</a></p>
+    </main>
+    <script src="/offline-docs.js" defer></script>
+  </body>
+</html>

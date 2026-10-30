@@ -3,26 +3,47 @@ import { Link } from 'react-router-dom';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
-import { ArrowRightLeft, UserCheck } from 'lucide-react';
+import { ArrowRightLeft, GripVertical, UserCheck } from 'lucide-react';
 import { api } from '@/lib/api';
+import { useAuth } from '@/lib/auth';
 import { useL10n } from '@/lib/l10n';
 import { fmtRelative, fullName } from '@/components/admin/labels';
 import { ErrorBlock, LoadingBlock } from '@/components/admin/ui';
 import { TONE_TEXT } from '@/components/ui/status';
-import { STAGE_TONE, stageLabel, type BoardColumn, type BoardItem } from './api';
+import { ContextMenu, type MenuEntry, type MenuPosition } from '@/components/drive/ContextMenu';
+import { PROCESSING_STAGES, STAGE_TONE, stageLabel, type BoardColumn, type BoardItem, type ProcessingStage } from './api';
+import { STAGE_KIND, endCaseDrag, startCaseDrag, useFlowActions, useStageDrop, type FlowAction, type FlowTarget } from './flow';
 import { MoveStageDialog } from './parts';
 
-const Card = ({ c, onMove }: { c: BoardItem; onMove: () => void }) => {
+const targetOf = (c: BoardItem): FlowTarget => ({ caseId: c.id, name: fullName(c.client), number: c.number, stage: c.processing.stage, assigneeId: c.processing.assignee?.id ?? null });
+
+const Card = ({ c, onMenu }: { c: BoardItem; onMenu: (at: MenuPosition) => void }) => {
   const { t } = useTranslation();
   const { tr } = useL10n();
   return (
-    <li className="rounded-lg border border-line bg-card p-3 shadow-sm transition hover:border-line-strong">
+    <li
+      draggable
+      onDragStart={(e) => startCaseDrag(e, [targetOf(c)])}
+      onDragEnd={endCaseDrag}
+      className="group cursor-grab rounded-lg border border-line bg-card p-3 shadow-sm transition hover:border-line-strong active:cursor-grabbing"
+    >
       <div className="flex items-start justify-between gap-2">
-        <Link to={`/admin/cases/${c.id}#case-processing`} className="min-w-0">
+        <GripVertical className="mt-0.5 -ml-1 size-3.5 shrink-0 text-muted opacity-0 transition group-hover:opacity-100" aria-hidden />
+        <Link to={`/admin/cases/${c.id}#case-processing`} className="min-w-0 flex-1" draggable={false}>
           <span className="block code-id text-[11px] font-medium text-link">{c.number}</span>
           <span className="block truncate text-sm font-semibold text-ink hover:text-link">{fullName(c.client)}</span>
         </Link>
-        <button type="button" className="btn-secondary btn-sm shrink-0 !px-2" onClick={onMove} title={t('caseProcessing.move')} aria-label={t('caseProcessing.move')}>
+        <button
+          type="button"
+          className="btn-secondary btn-sm shrink-0 !px-2"
+          onClick={(e) => {
+            const r = e.currentTarget.getBoundingClientRect();
+            onMenu({ x: r.left, y: r.bottom + 4 });
+          }}
+          title={t('caseProcessing.board.moveMenu')}
+          aria-label={t('caseProcessing.board.moveMenu')}
+          aria-haspopup="menu"
+        >
           <ArrowRightLeft className="size-3.5" aria-hidden />
         </button>
       </div>
@@ -41,14 +62,63 @@ const Card = ({ c, onMove }: { c: BoardItem; onMove: () => void }) => {
   );
 };
 
+const Column = ({
+  col,
+  onShowStage,
+  onDrop,
+  onMenu,
+}: {
+  col: BoardColumn;
+  onShowStage: (stage: string) => void;
+  onDrop: (stage: ProcessingStage, targets: FlowTarget[]) => void;
+  onMenu: (c: BoardItem, at: MenuPosition) => void;
+}) => {
+  const { t } = useTranslation();
+  const drop = useStageDrop(col.stage, (targets) => onDrop(col.stage, targets));
+  return (
+    <section
+      aria-label={stageLabel(col.stage)}
+      {...drop.handlers}
+      className={clsx('flex min-w-0 flex-col rounded-xl border bg-sunken/60 p-2 transition', drop.over ? 'border-primary ring-2 ring-focus' : 'border-line')}
+    >
+      <header className="flex items-baseline justify-between gap-2 px-1.5 pt-1 pb-2">
+        <h3 className={clsx('text-sm font-bold', TONE_TEXT[STAGE_TONE[col.stage]])} title={t(`caseProcessing.hints.${col.stage}`)}>
+          {stageLabel(col.stage)}
+        </h3>
+        <span className="text-xs font-semibold text-muted tabular-nums">{col.total}</span>
+      </header>
+      {drop.over && <p className="mb-2 rounded-lg border border-dashed border-primary px-2 py-2 text-center text-xs font-semibold text-link">{t('caseProcessing.board.dropHere')}</p>}
+      {col.items.length === 0 ? (
+        <p className="px-1.5 py-4 text-center text-xs text-muted">{t('caseProcessing.board.empty')}</p>
+      ) : (
+        <ul className="space-y-2">
+          {col.items.map((c) => (
+            <Card key={c.id} c={c} onMenu={(at) => onMenu(c, at)} />
+          ))}
+        </ul>
+      )}
+      {col.total > col.items.length && (
+        <button type="button" className="mt-2 rounded-lg px-2 py-1.5 text-xs font-semibold text-link hover:bg-card" onClick={() => onShowStage(col.stage)}>
+          {t('caseProcessing.board.more', { count: col.total - col.items.length })}
+        </button>
+      )}
+    </section>
+  );
+};
+
 /**
  * Cases by team workflow stage (In Bearbeitung · Schon geschrieben · Fertig · Ablehnung) — the "board" view of
- * the cases list. Each column shows the newest moves; "+N more" opens the list filtered by that stage.
+ * the cases list. Each column shows the newest moves; "+N more" opens the list filtered by that stage. Cards
+ * are dragged between columns (native drag & drop; the drop asks for the note / next admin); the ⇄ menu is
+ * the keyboard way: "Götür", the other stages, or the full stage dialog.
  */
 export const ProcessingBoard = ({ partnerId, search, onShowStage }: { partnerId?: string; search?: string; onShowStage: (stage: string) => void }) => {
   const { t } = useTranslation();
+  const { user } = useAuth();
   const [mine, setMine] = useState(false);
   const [moving, setMoving] = useState<BoardItem | null>(null);
+  const [menu, setMenu] = useState<{ c: BoardItem; at: MenuPosition } | null>(null);
+  const flow = useFlowActions('case');
   const q = useQuery({
     queryKey: ['case-processing-board', { partnerId, search, mine }],
     queryFn: async () =>
@@ -57,10 +127,26 @@ export const ProcessingBoard = ({ partnerId, search, onShowStage }: { partnerId?
   });
   if (q.isLoading) return <LoadingBlock />;
   if (q.isError || !q.data) return <ErrorBlock error={q.error} onRetry={() => q.refetch()} />;
+
+  const menuEntries = (c: BoardItem): MenuEntry[] => {
+    const x = targetOf(c);
+    const out: MenuEntry[] = [];
+    if (c.processing.stage === 'WRITTEN' && x.assigneeId !== user?.id) out.push({ id: 'claim', label: t('caseProcessing.claim'), onSelect: () => flow.act('claim', [x]) });
+    out.push({ kind: 'heading', id: 'h', label: t('caseProcessing.board.moveMenu') });
+    for (const s of PROCESSING_STAGES) {
+      if (s === c.processing.stage) continue;
+      const action: FlowAction = STAGE_KIND[s];
+      out.push({ id: `to-${s}`, label: stageLabel(s), hint: t(`caseProcessing.hints.${s}`), danger: s === 'REFUSED', onSelect: () => flow.act(action, [x]) });
+    }
+    out.push({ kind: 'separator', id: 's' }, { id: 'full', label: t('caseProcessing.move'), onSelect: () => setMoving(c) });
+    return out;
+  };
+
   return (
     <div>
       <div className="mb-3 flex flex-wrap items-center gap-2">
         <h2 className="text-sm font-semibold text-ink">{t('caseProcessing.board.title')}</h2>
+        <p className="hidden text-xs text-muted md:block">{t('caseProcessing.board.dragHint')}</p>
         <button
           type="button"
           aria-pressed={mine}
@@ -75,31 +161,12 @@ export const ProcessingBoard = ({ partnerId, search, onShowStage }: { partnerId?
       </div>
       <div className={clsx('grid gap-3 sm:grid-cols-2 xl:grid-cols-4', q.isFetching && 'opacity-60')}>
         {q.data.map((col) => (
-          <section key={col.stage} aria-label={stageLabel(col.stage)} className="flex min-w-0 flex-col rounded-xl border border-line bg-sunken/60 p-2">
-            <header className="flex items-baseline justify-between gap-2 px-1.5 pt-1 pb-2">
-              <h3 className={clsx('text-sm font-bold', TONE_TEXT[STAGE_TONE[col.stage]])} title={t(`caseProcessing.hints.${col.stage}`)}>
-                {stageLabel(col.stage)}
-              </h3>
-              <span className="text-xs font-semibold text-muted tabular-nums">{col.total}</span>
-            </header>
-            {col.items.length === 0 ? (
-              <p className="px-1.5 py-4 text-center text-xs text-muted">{t('caseProcessing.board.empty')}</p>
-            ) : (
-              <ul className="space-y-2">
-                {col.items.map((c) => (
-                  <Card key={c.id} c={c} onMove={() => setMoving(c)} />
-                ))}
-              </ul>
-            )}
-            {col.total > col.items.length && (
-              <button type="button" className="mt-2 rounded-lg px-2 py-1.5 text-xs font-semibold text-link hover:bg-card" onClick={() => onShowStage(col.stage)}>
-                {t('caseProcessing.board.more', { count: col.total - col.items.length })}
-              </button>
-            )}
-          </section>
+          <Column key={col.stage} col={col} onShowStage={onShowStage} onDrop={(stage, targets) => flow.act(STAGE_KIND[stage], targets)} onMenu={(c, at) => setMenu({ c, at })} />
         ))}
       </div>
+      <ContextMenu open={!!menu} at={menu?.at ?? null} items={menu ? menuEntries(menu.c) : []} onClose={() => setMenu(null)} label={t('caseProcessing.board.moveMenu')} />
       {moving && <MoveStageDialog caseId={moving.id} open current={moving.processing.stage} onClose={() => setMoving(null)} />}
+      {flow.dialogs}
     </div>
   );
 };

@@ -251,13 +251,14 @@ export const choosePrimary = <C extends { status: CaseStatus; parentCaseId: stri
   cases[0] ??
   null;
 
-export const loadNextStep = async (userId: string, now = new Date()) => {
+export const loadNextStep = async (userId: string, now = new Date(), opts: { caseId?: string } = {}) => {
   const [user, cases, legal] = await Promise.all([
     prisma.user.findUniqueOrThrow({ where: { id: userId } }),
     prisma.case.findMany({ where: { clientId: userId }, orderBy: { createdAt: 'desc' }, select: caseSelect }),
     pendingAcceptances(userId),
   ]);
-  const primary = choosePrimary(cases);
+  // Family switcher: a chosen case of the same client wins over the automatic choice.
+  const primary = (opts.caseId && cases.find((c) => c.id === opts.caseId)) || choosePrimary(cases);
   const open = primary && !FINAL_STATUSES.includes(primary.status) ? primary : null;
   const approved = cases.find((c) => c.status === 'APPROVED' && !c.parentCaseId) ?? cases.find((c) => c.status === 'APPROVED') ?? null;
   const caseIds = cases.map((c) => c.id);

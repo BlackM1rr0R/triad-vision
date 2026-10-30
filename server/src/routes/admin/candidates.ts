@@ -47,24 +47,52 @@ const candidateSelect = {
 /** Upper bound of rows scored in memory when ranking by match. */
 const RANK_LIMIT = 3000;
 
+/** Filters of the candidates list; shared with the bulk actions ("all matching", routes/admin/bulk.ts). */
+export const candidateListQuery = z.object({
+  search: z.string().trim().max(120).optional(),
+  profession: z.string().trim().max(120).optional(),
+  city: z.string().trim().max(80).optional(),
+  // minimum German level the candidate must have
+  germanLevel: z.enum(GERMAN_LEVELS).optional(),
+  education: z.enum(EDUCATION).optional(),
+  licence: z.string().trim().max(20).optional(),
+  minExperience: z.coerce.number().int().min(0).max(50).optional(),
+  verified: z.enum(['true', 'false']).optional(),
+  hasCase: z.enum(['true', 'false']).optional(),
+  vacancyId: z.string().max(40).optional(),
+  page: z.coerce.number().int().min(1).max(1000).default(1),
+});
+
+/** SQL part of the candidate filters (the licence coverage is checked in memory with licenceCovers). */
+export const candidateListWhere = (q: z.infer<typeof candidateListQuery>): Prisma.UserWhereInput => {
+  const and: Prisma.UserWhereInput[] = [{ role: 'CLIENT' }];
+  if (q.search) {
+    and.push({
+      OR: [
+        { firstName: { contains: q.search } },
+        { lastName: { contains: q.search } },
+        { email: { contains: q.search } },
+        { phone: { contains: q.search } },
+        { profession: { contains: q.search } },
+      ],
+    });
+  }
+  if (q.profession) and.push({ profession: { contains: q.profession } });
+  if (q.city) and.push({ city: { contains: q.city } });
+  if (q.education) and.push({ education: q.education });
+  if (q.minExperience !== undefined) and.push({ experienceYears: { gte: q.minExperience } });
+  if (q.germanLevel) and.push({ germanLevel: { in: GERMAN_LEVELS.filter((l) => germanRank(l) >= germanRank(q.germanLevel)) } });
+  if (q.verified) and.push({ emailVerifiedAt: q.verified === 'true' ? { not: null } : null });
+  if (q.hasCase) {
+    const active = { some: { status: { notIn: FINAL_STATUSES } } };
+    and.push(q.hasCase === 'true' ? { cases: active } : { NOT: { cases: active } });
+  }
+  if (q.licence) and.push({ drivingLicence: { not: null } });
+  return { AND: and };
+};
+
 adminCandidatesRouter.get('/', async (req, res) => {
-  const q = parse(
-    z.object({
-      search: z.string().trim().max(120).optional(),
-      profession: z.string().trim().max(120).optional(),
-      city: z.string().trim().max(80).optional(),
-      // minimum German level the candidate must have
-      germanLevel: z.enum(GERMAN_LEVELS).optional(),
-      education: z.enum(EDUCATION).optional(),
-      licence: z.string().trim().max(20).optional(),
-      minExperience: z.coerce.number().int().min(0).max(50).optional(),
-      verified: z.enum(['true', 'false']).optional(),
-      hasCase: z.enum(['true', 'false']).optional(),
-      vacancyId: z.string().max(40).optional(),
-      page: z.coerce.number().int().min(1).max(1000).default(1),
-    }),
-    req.query,
-  );
+  const q = parse(candidateListQuery, req.query);
   const and: Prisma.UserWhereInput[] = [{ role: 'CLIENT' }];
   if (q.search) {
     and.push({

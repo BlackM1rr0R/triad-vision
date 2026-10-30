@@ -19,6 +19,7 @@ import { useNotifications } from './useNotifications';
 import { useOverview } from './useOverview';
 import type { JourneyData } from './journey';
 import { useMyCourses } from '@/components/course/api';
+import { useChosenCase } from '@/lib/caseContext';
 
 /** Kinds of GET /api/account/next-step (server: lib/account/nextStep.ts). */
 export type NextKind =
@@ -69,15 +70,19 @@ export interface NextStep {
 // Under the overview key: every invalidation of the overview (upload, signature, status change) refreshes it too.
 export const NEXT_STEP_KEY = ['account-overview', 'next-step'] as const;
 
-/** GET /api/account/next-step — the portal home card and the section badges. */
-export const useNextStep = (enabled = true) =>
-  useQuery({
-    queryKey: NEXT_STEP_KEY,
-    queryFn: async () => (await api.get<NextStep>('/account/next-step')).data,
+/** GET /api/account/next-step — the portal home card and the section badges (?case= = the family switcher's case). */
+export const useNextStep = (enabled = true) => {
+  const { user } = useAuth();
+  const chosen = useChosenCase(user?.id);
+  return useQuery({
+    queryKey: chosen ? [...NEXT_STEP_KEY, chosen] : NEXT_STEP_KEY,
+    queryFn: async () => (await api.get<NextStep>('/account/next-step', { params: chosen ? { case: chosen } : undefined })).data,
     staleTime: 20_000,
     refetchInterval: 60_000,
+    placeholderData: (prev) => prev,
     enabled,
   });
+};
 
 const DOC_KINDS: NextKind[] = ['FIX_DOCS', 'UPLOAD_DOCS', 'SUBMIT_DOCS', 'SIGN_CONTRACT'];
 const FINAL: CaseStatus[] = ['APPROVED', 'REJECTED', 'CANCELLED'];
@@ -107,7 +112,10 @@ export function usePortalNav() {
   });
 
   const cases = overview?.cases ?? [];
-  const caseId = next.data?.case?.id ?? cases.find((c) => !FINAL.includes(c.status))?.id ?? cases[0]?.id ?? null;
+  // Family switcher: the chosen case (own cases only) is the case every section links to.
+  const chosen = useChosenCase(user?.id);
+  const chosenOwn = chosen && cases.some((c) => c.id === chosen) ? chosen : null;
+  const caseId = chosenOwn ?? next.data?.case?.id ?? cases.find((c) => !FINAL.includes(c.status))?.id ?? cases[0]?.id ?? null;
   // The case page's own query (same key): read its messages while it is cached, never fetch it from here.
   const caseQ = useQuery({
     queryKey: ['case', caseId ?? ''],
@@ -141,5 +149,7 @@ export function usePortalNav() {
   const sectionBadges = Object.fromEntries(SECTIONS.map((s) => [s, sectionBadge(s, allSubs, badges)])) as Record<SectionKey, number>;
   const subBadges = (sub: SubKey) => subBadge(sub, badges);
 
-  return { stage, subs, badges, sectionBadges, subBadges, caseId, caseCount: cases.length, next, overview, cases, isClient };
+  // With a family (several cases) and a chosen case, section links go straight to that case, not to the case list.
+  const caseCount = chosenOwn ? 1 : cases.length;
+  return { stage, subs, badges, sectionBadges, subBadges, caseId, caseCount, next, overview, cases, isClient };
 }

@@ -6,6 +6,7 @@ import { fmtDate } from '@/components/admin/labels';
 import { useJobLabels } from './labels';
 import type { PublicVacancy } from './types';
 import { useMorphSource } from '@/lib/viewTransition';
+import { vacancyImageSrcSet, vacancyImages } from './images';
 
 /** Vacancy card on the public board. */
 export const JobCard = ({ v, className }: { v: PublicVacancy; className?: string }) => {
@@ -14,6 +15,7 @@ export const JobCard = ({ v, className }: { v: PublicVacancy; className?: string
   const salary = L.salary(v.salaryMin, v.salaryMax);
   // The card grows into the vacancy page's hero and its title moves into the hero title (lib/viewTransition.ts).
   const morph = useMorphSource('job', v.slug);
+  const cover = vacancyImages(v)[0];
   return (
     <Link
       ref={morph.ref}
@@ -25,6 +27,23 @@ export const JobCard = ({ v, className }: { v: PublicVacancy; className?: string
         className,
       )}
     >
+      {cover && (
+        // Cover photo (lazy; the server's -480 / -960 WebP variants via srcset). Decorative next to the title
+        // unless the employer gave it an alt text.
+        <div className="-mx-5 -mt-5 mb-4 aspect-[16/9] overflow-hidden rounded-t-3xl bg-sunken sm:-mx-6 sm:-mt-6">
+          <img
+            src={cover.url}
+            srcSet={vacancyImageSrcSet(cover)}
+            sizes="(min-width: 1280px) 400px, (min-width: 768px) 50vw, 100vw"
+            width={cover.w ?? 1600}
+            height={cover.h ?? 900}
+            alt={cover.alt ?? ''}
+            loading="lazy"
+            decoding="async"
+            className="size-full object-cover transition-transform duration-500 group-hover:scale-[1.03] motion-reduce:transition-none motion-reduce:group-hover:scale-100"
+          />
+        </div>
+      )}
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-1.5">

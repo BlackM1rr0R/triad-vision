@@ -88,6 +88,9 @@ import { adminBrandRouter, adminLicenseRouter, adminWhitelabelRouter } from './w
 import { adminCourseRouter } from './course.js'; // pre-departure course: builder (ADMIN+), progress report + enroll (STAFF+)
 import { adminCityCostsRouter } from './cityCosts.js'; // first-month budget: city cost table (Sayt → Şəhər xərcləri)
 import { adminJobFeedsRouter } from './jobFeeds.js'; // external job boards: feed URLs + token, per-vacancy distribution, BA HR-BA-XML
+import { adminStaffUiRouter } from './staffUi.js'; // saved views, table settings, "what's new" (Setting rows per user / team)
+import { adminBulkRouter } from './bulk.js'; // bulk actions on cases / inquiries / candidates (per-item results, audited)
+import { adminReviewRouter } from './review.js'; // fast document review queue
 
 export const adminRouter = Router();
 adminRouter.use(requireMinRole('STAFF'));
@@ -160,6 +163,9 @@ adminRouter.use('/brand', requireMinRole('SUPER_ADMIN'), adminBrandRouter); // w
 adminRouter.use('/license', requireMinRole('SUPER_ADMIN'), adminLicenseRouter); // white-label licence status (System → License)
 adminRouter.use('/whitelabel', requireMinRole('SUPER_ADMIN'), adminWhitelabelRouter); // owner instance: customers / instances
 adminRouter.use(adminDashboardLayoutRouter); // /me/dashboard (widget order, sizes, hidden widgets)
+adminRouter.use(adminStaffUiRouter); // /me/saved-views, /me/table-prefs, /me/whats-new, /whats-new/overrides
+adminRouter.use('/bulk', adminBulkRouter); // /bulk/cases/*, /bulk/inquiries/*, /bulk/candidates/*
+adminRouter.use('/review', adminReviewRouter); // /review/queue (pending uploads with AI findings + checklist)
 adminRouter.use('/presence', adminPresenceRouter); // /presence/:kind/:id (join / heartbeat / leave)
 adminRouter.use('/command-search', adminCommandSearchRouter); // staff command palette: cases, people, companies, vacancies, drive, tasks
 adminRouter.use(adminSensitiveRouter); // /reveal, /sensitive/* (masked fields: reveal with reason, settings, reveal log)

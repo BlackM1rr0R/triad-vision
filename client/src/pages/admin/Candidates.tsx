@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
@@ -27,8 +27,14 @@ import { RecognitionEditor } from '@/components/placement/RecognitionEditor';
 import { CandidateShareLinks } from '@/components/placement/CandidateShareLinks';
 import { CandidateEvaluations } from '@/components/placement/Evaluations';
 import { CandidateIntroVideo } from '@/components/placement/IntroVideo';
+import { pagesStaffPower } from '@/i18n/pagesStaffPower'; // saved views, table settings, bulk actions
+import { SavedViewsMenu } from '@/components/staffPower/SavedViews';
+import { ColumnChooser, SettingsTable, useTableSettings, type ColumnDef } from '@/components/staffPower/tableSettings';
+import { useRowSelection } from '@/components/staffPower/selection';
+import { CandidatesBulkBar } from '@/components/staffPower/BulkBar';
 
 registerCopy(pagesJobs);
+registerCopy(pagesStaffPower);
 
 const STAFF_APP_STATUSES: ApplicationStatus[] = ['NEW', 'SHORTLISTED', 'PROPOSED', 'INTERVIEW', 'ACCEPTED', 'REJECTED'];
 const FILTERS = ['search', 'vacancyId', 'germanLevel', 'licence', 'education', 'minExperience', 'city', 'verified', 'hasCase'] as const;
@@ -463,6 +469,31 @@ export default function AdminCandidates() {
   });
   const pages = data ? Math.max(1, Math.ceil(data.total / data.pageSize)) : 1;
   const ranked = !!filters.vacancyId;
+  // Multi-select for the bulk bar and the per-user column settings of the table.
+  const rows = data?.items ?? [];
+  const sel = useRowSelection(
+    rows.map((c) => c.id),
+    JSON.stringify({ filters, page }),
+  );
+  const bulkFilters = Object.fromEntries(Object.entries(filters).filter(([, v]) => v)) as Record<string, string>;
+  const columnDefs = useMemo<ColumnDef[]>(
+    () => [
+      { id: 'match', label: t('jobsArea.common.match') },
+      { id: 'candidate', label: t('jobsArea.admin.candidates.th.candidate'), required: true },
+      { id: 'profession', label: t('jobsArea.profile.profession') },
+      { id: 'german', label: t('jobsArea.profile.german') },
+      { id: 'experience', label: t('jobsArea.profile.experience'), className: 'whitespace-nowrap' },
+      { id: 'licence', label: t('jobsArea.profile.licence') },
+      { id: 'education', label: t('jobsArea.profile.education') },
+      { id: 'city', label: t('jobsArea.profile.city') },
+      { id: 'case', label: t('jobsArea.admin.candidates.case') },
+      { id: 'action', label: t('sp.cand.action'), header: <span className="sr-only">{t('sp.cand.action')}</span>, align: 'right' },
+    ],
+    [t],
+  );
+  const tableSettings = useTableSettings('candidates', columnDefs);
+  // The match column only exists while the list is ranked for a vacancy.
+  const table = ranked ? tableSettings : { ...tableSettings, columns: tableSettings.columns.filter((c) => c.id !== 'match') };
 
   const select = (k: (typeof FILTERS)[number], label: string, options: { value: string; label: string }[]) => (
     <select aria-label={label} className="input py-2 text-xs" value={filters[k]} onChange={(e) => setParam(k, e.target.value || null)}>
@@ -495,6 +526,10 @@ export default function AdminCandidates() {
           (vacancies ?? []).map((v) => ({ value: v.id, label: `${tr(v.title)}${v.company ? ` · ${v.company.name}` : ''}` })),
         )}
       </div>
+      <div className="mb-3 flex flex-wrap items-center justify-end gap-2">
+        <SavedViewsMenu page="candidates" settings={tableSettings} />
+        <ColumnChooser settings={tableSettings} className="hidden xl:block" />
+      </div>
       <div className="mb-6 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
         {select('germanLevel', t('jobsArea.admin.candidates.germanMin'), GERMAN_LEVELS.filter((g) => g !== 'none').map((g) => ({ value: g, label: `≥ ${g}` })))}
         {select('licence', t('jobsArea.admin.candidates.licence'), ['B', 'C', 'CE', 'D'].map((l) => ({ value: l, label: l })))}
@@ -520,57 +555,56 @@ export default function AdminCandidates() {
         </div>
       ) : (
         <>
-          <div className="hidden overflow-x-auto rounded-xl border border-line bg-card xl:block">
-            <table className="w-full min-w-[1100px] text-left text-sm">
-              <thead className="border-b border-line bg-surface/70 text-xs font-medium whitespace-nowrap text-muted">
-                <tr>
-                  {ranked && <th className="px-4 py-2.5">{t('jobsArea.common.match')}</th>}
-                  <th className="px-4 py-2.5">{t('jobsArea.admin.candidates.th.candidate')}</th>
-                  <th className="px-4 py-2.5">{t('jobsArea.profile.profession')}</th>
-                  <th className="px-4 py-2.5">{t('jobsArea.profile.german')}</th>
-                  <th className="px-4 py-2.5">{t('jobsArea.profile.experience')}</th>
-                  <th className="px-4 py-2.5">{t('jobsArea.profile.licence')}</th>
-                  <th className="px-4 py-2.5">{t('jobsArea.profile.education')}</th>
-                  <th className="px-4 py-2.5">{t('jobsArea.profile.city')}</th>
-                  <th className="px-4 py-2.5">{t('jobsArea.admin.candidates.case')}</th>
-                  <th className="px-4 py-2.5" />
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-line">
-                {data.items.map((c) => (
-                  <tr key={c.id} className="hover:bg-surface/50">
-                    {ranked && (
-                      <td className="px-4 py-3">
-                        <ScorePill score={c.match?.score} />
-                      </td>
-                    )}
-                    <td className="px-4 py-3">
-                      <button type="button" onClick={() => setParam('id', c.id)} className="text-left font-semibold whitespace-nowrap text-ink hover:text-link">
-                        {fullName(c)} {c.emailVerifiedAt && <BadgeCheck className="inline size-3.5 text-success-fg" aria-label={t('jobsArea.admin.verified')} />}
-                      </button>
-                      <p className="text-xs text-muted">{c.email}</p>
-                    </td>
-                    <td className="px-4 py-3 text-ink/80">{c.profession ?? '—'}</td>
-                    <td className="px-4 py-3 text-ink/80">{c.germanLevel ?? '—'}</td>
-                    <td className="px-4 py-3 whitespace-nowrap text-ink/80">{c.experienceYears != null ? L.years(c.experienceYears) : '—'}</td>
-                    <td className="px-4 py-3 text-ink/80">{c.drivingLicence ?? '—'}</td>
-                    <td className="px-4 py-3 text-ink/80">{L.education(c.education) || '—'}</td>
-                    <td className="px-4 py-3 text-ink/80">{c.city ?? '—'}</td>
-                    <td className="px-4 py-3">{c.activeCase ? <StatusBadge status={c.activeCase.status} /> : <span className="text-xs text-muted">—</span>}</td>
-                    <td className="px-4 py-3 text-right">
-                      {ranked && c.application ? (
-                        <span className={clsx('badge', APPLICATION_STATUS_TONE[c.application.status])}>{L.appStatus(c.application.status)}</span>
-                      ) : (
-                        <button type="button" className="inline-flex min-h-8 items-center gap-1 rounded-md px-2 text-xs font-semibold whitespace-nowrap text-link hover:bg-primary/[0.06]" onClick={() => setAddFor(c.id)}>
-                          <UserPlus className="size-3.5" /> {t('jobsArea.admin.shortlist')}
-                        </button>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <CandidatesBulkBar
+            sel={sel}
+            filters={bulkFilters}
+            total={data.total}
+            pageCount={rows.length}
+            labelOf={(id) => {
+              const c = rows.find((x) => x.id === id);
+              return c ? fullName(c) : id;
+            }}
+            invalidate={[['admin-candidates']]}
+            vacancyId={filters.vacancyId || undefined}
+            appStatusLabel={(st) => L.appStatus(st as ApplicationStatus)}
+          />
+          <SettingsTable
+            settings={table}
+            rows={rows}
+            rowKey={(c) => c.id}
+            className="hidden xl:block"
+            tableClassName="min-w-[1100px]"
+            caption={t('admin.nav.candidates')}
+            selection={sel.props}
+            selectLabel={t('sp.select.row')}
+            selectAllLabel={t('sp.select.page')}
+            cells={{
+              match: (c) => <ScorePill score={c.match?.score} />,
+              candidate: (c) => (
+                <>
+                  <button type="button" onClick={() => setParam('id', c.id)} className="text-left font-semibold whitespace-nowrap text-ink hover:text-link">
+                    {fullName(c)} {c.emailVerifiedAt && <BadgeCheck className="inline size-3.5 text-success-fg" aria-label={t('jobsArea.admin.verified')} />}
+                  </button>
+                  <p className="text-xs text-muted">{c.email}</p>
+                </>
+              ),
+              profession: (c) => <span className="text-ink/80">{c.profession ?? '—'}</span>,
+              german: (c) => <span className="text-ink/80">{c.germanLevel ?? '—'}</span>,
+              experience: (c) => <span className="text-ink/80">{c.experienceYears != null ? L.years(c.experienceYears) : '—'}</span>,
+              licence: (c) => <span className="text-ink/80">{c.drivingLicence ?? '—'}</span>,
+              education: (c) => <span className="text-ink/80">{L.education(c.education) || '—'}</span>,
+              city: (c) => <span className="text-ink/80">{c.city ?? '—'}</span>,
+              case: (c) => (c.activeCase ? <StatusBadge status={c.activeCase.status} /> : <span className="text-xs text-muted">—</span>),
+              action: (c) =>
+                ranked && c.application ? (
+                  <span className={clsx('badge', APPLICATION_STATUS_TONE[c.application.status])}>{L.appStatus(c.application.status)}</span>
+                ) : (
+                  <button type="button" className="inline-flex min-h-8 items-center gap-1 rounded-md px-2 text-xs font-semibold whitespace-nowrap text-link hover:bg-primary/[0.06]" onClick={() => setAddFor(c.id)}>
+                    <UserPlus className="size-3.5" /> {t('jobsArea.admin.shortlist')}
+                  </button>
+                ),
+            }}
+          />
 
           <ul className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:hidden">
             {data.items.map((c) => (

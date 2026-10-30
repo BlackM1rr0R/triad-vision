@@ -31,9 +31,15 @@ import { useListNav } from '@/components/shortcuts/useListNav';
 import { requestInlineEdit } from '@/components/inline/optimistic';
 import { useAuth } from '@/lib/auth';
 import { hasMinRole } from '@/lib/types';
+import { pagesStaffPower } from '@/i18n/pagesStaffPower'; // saved views, table settings, bulk actions
+import { SavedViewsMenu } from '@/components/staffPower/SavedViews';
+import { ColumnChooser, SettingsTable, ViewModeToggle, useTableSettings, type ColumnDef } from '@/components/staffPower/tableSettings';
+import { useRowSelection } from '@/components/staffPower/selection';
+import { InquiriesBulkBar } from '@/components/staffPower/BulkBar';
 
 registerCopy(pagesMarketing);
 registerCopy(pagesAdminUx);
+registerCopy(pagesStaffPower);
 
 /** Lead scoring fields on every inquiry (server lib/marketing/leadScoring.ts). */
 type Scored = Inquiry & { score?: number; scoreLevel?: LeadLevel | null; scoreReasons?: ScoreReason[] | null; source?: string | null };
@@ -105,6 +111,29 @@ export default function Inquiries() {
     const bo = OPEN.has(b.status) ? 1 : 0;
     return bo - ao || (bo ? rank(b) - rank(a) || (b.score ?? 0) - (a.score ?? 0) : 0) || date;
   });
+
+  // Multi-select for the bulk bar (checkboxes, Shift + click range, whole list) and the per-user table settings.
+  const sel = useRowSelection(
+    sorted.map((i) => i.id),
+    JSON.stringify({ status, kind, level, sort, q }),
+  );
+  const columnDefs = useMemo<ColumnDef[]>(
+    () => [
+      { id: 'contact', label: t('sp.inq.contact'), required: true },
+      { id: 'kind', label: t('sp.inq.kind') },
+      { id: 'score', label: t('sp.inq.score') },
+      { id: 'status', label: t('sp.inq.status') },
+      { id: 'email', label: t('sp.inq.email') },
+      { id: 'phone', label: t('sp.inq.phone'), defaultHidden: true },
+      { id: 'sector', label: t('sp.inq.sector'), defaultHidden: true },
+      { id: 'workers', label: t('sp.inq.workers'), align: 'right' },
+      { id: 'message', label: t('sp.inq.message'), width: 320 },
+      { id: 'created', label: t('sp.inq.created'), align: 'right', className: 'text-xs whitespace-nowrap text-muted' },
+    ],
+    [t],
+  );
+  const table = useTableSettings('inquiries', columnDefs);
+  const tableMode = table.mode === 'table';
 
   // Split view (list left, inquiry right) and keyboard selection (?selected=<id>): J / K, Enter, E, "/", Esc.
   const split = useSplitView('inquiries');
@@ -198,6 +227,11 @@ export default function Inquiries() {
             ))}
           </select>
         </div>
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          <SavedViewsMenu page="inquiries" settings={table} />
+          {!split.active && <ViewModeToggle settings={table} />}
+          {tableMode && !split.active && <ColumnChooser settings={table} />}
+        </div>
         <div className="-mx-4 flex gap-1.5 overflow-x-auto px-4 pb-1 [scrollbar-width:none] sm:mx-0 sm:flex-wrap sm:px-0 sm:pb-0">
           <Chip active={!status} onClick={() => setParam('status', null)} count={Object.values(counts).reduce((a, b) => a + (b ?? 0), 0)}>
             {t('admin.common.all')}
@@ -272,8 +306,55 @@ export default function Inquiries() {
             </div>
           )}
         </div>
+      ) : tableMode ? (
+        <>
+          <InquiriesBulkBar sel={sel} total={sorted.length} pageCount={sorted.length} labelOf={(id) => { const i = sorted.find((x) => x.id === id); return i ? i.companyName || i.contactName : id; }} invalidate={[KEY, ['admin-dashboard']]} />
+          <SettingsTable
+            settings={table}
+            rows={sorted}
+            rowKey={(i) => i.id}
+            caption={t('admin.nav.inquiries')}
+            selection={sel.props}
+            selectLabel={t('sp.select.row')}
+            selectAllLabel={t('sp.select.page')}
+            tableClassName="min-w-[980px]"
+            onRowClick={(i) => split.select(i.id)}
+            rowClassName={(i) => clsx(i.status === 'NEW' && 'bg-primary/[0.04]', i.id === split.selected && 'shadow-[inset_3px_0_0_var(--color-brand-600)]')}
+            cells={{
+              contact: (i) => (
+                <>
+                  <p className="font-semibold break-words text-ink">{i.companyName || i.contactName}</p>
+                  {i.companyName && <p className="text-xs text-muted">{i.contactName}</p>}
+                </>
+              ),
+              kind: (i) => <span className="text-xs whitespace-nowrap text-muted">{inquiryKindLabel(i.kind)}</span>,
+              score: (i) => <LeadScoreBadge level={i.scoreLevel ?? null} score={i.score ?? 0} reasons={i.scoreReasons ?? null} />,
+              status: (i) => <InquiryStatusCell item={i} />,
+              email: (i) => <a href={`mailto:${i.email}`} onClick={(e) => e.stopPropagation()} className="text-xs break-all text-link hover:underline">{i.email}</a>,
+              phone: (i) => <span className="text-xs whitespace-nowrap">{i.phone ?? '—'}</span>,
+              sector: (i) => <span className="text-xs">{i.sector ?? '—'}</span>,
+              workers: (i) => <span className="tabular-nums">{i.workersNeeded ?? '—'}</span>,
+              message: (i) => <p className="line-clamp-2 text-xs text-muted">{i.message}</p>,
+              created: (i) => <span title={fmtDateTime(i.createdAt)}>{fmtRelative(i.createdAt)}</span>,
+            }}
+          />
+        </>
       ) : (
+        <>
+        <InquiriesBulkBar sel={sel} total={sorted.length} pageCount={sorted.length} labelOf={(id) => { const i = sorted.find((x) => x.id === id); return i ? i.companyName || i.contactName : id; }} invalidate={[KEY, ['admin-dashboard']]} />
         <ul className="divide-y divide-line overflow-hidden rounded-xl border border-line bg-card">
+          {sorted.length > 1 && (
+            <li className="flex items-center gap-3 bg-surface/70 px-4 py-2 text-xs text-muted sm:px-5" data-tour="sp-select-all">
+              <input
+                type="checkbox"
+                className="size-4 cursor-pointer accent-primary"
+                aria-label={t('sp.select.page')}
+                checked={sel.allOnPage}
+                onChange={(e) => sel.props.togglePage(e.target.checked)}
+              />
+              <span>{t('sp.select.page')}</span>
+            </li>
+          )}
           {sorted.map((i) => {
             const expanded = open === i.id;
             return (
@@ -291,6 +372,20 @@ export default function Inquiries() {
                   }}
                   className="flex cursor-pointer items-start gap-3 px-4 py-3.5 transition hover:bg-sunken sm:px-5"
                 >
+                  <input
+                    type="checkbox"
+                    className="mt-2 size-4 shrink-0 cursor-pointer accent-primary"
+                    aria-label={`${t('sp.select.row')}: ${i.companyName || i.contactName}`}
+                    checked={sel.props.isSelected(i.id)}
+                    onKeyDown={(e) => e.stopPropagation()}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      sel.props.toggle(i.id, e.currentTarget.checked, e.shiftKey);
+                    }}
+                    onChange={() => {
+                      /* handled in onClick (needs shiftKey) */
+                    }}
+                  />
                   <span
                     className={clsx(
                       'mt-0.5 grid size-8 shrink-0 place-items-center rounded-lg',
@@ -337,6 +432,7 @@ export default function Inquiries() {
             );
           })}
         </ul>
+        </>
       )}
     </div>
   );

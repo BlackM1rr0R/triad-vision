@@ -65,7 +65,15 @@ export interface DriveItem {
   /** Client folders and case document copies: the case they belong to. */
   caseId?: string;
   /** Client folders: who the client is (header strip in the explorer). */
-  caseInfo?: { clientId?: string; clientName: string; passportNumber: string | null; visaType: string; partner: { id: string; name: string } | null };
+  caseInfo?: {
+    clientId?: string;
+    clientName: string;
+    passportNumber: string | null;
+    visaType: string;
+    partner: { id: string; name: string } | null;
+    /** Team workflow stage of the case (lib/caseProcessing; null once the case is closed without one) and who works on it. */
+    processing?: { stage: string | null; assigneeId: string | null };
+  };
   /** Partner folders below "Partner": the referral partner. */
   partner?: { id: string; name: string; phone: string | null; email: string | null; active: boolean };
   caseNumber?: string;
@@ -123,6 +131,8 @@ export const toItem = (row: ItemRow, myAccess: DriveAccess, extra: { childCount?
  * Links items to their case: a client folder (Case.driveFolderId) and a copy of a case document
  * (DriveNode.documentId) get the case id, number and status (badge "Müraciət sənədi · TV-…" in the UI).
  */
+const CLOSED_STATUSES = new Set<string>(['APPROVED', 'REJECTED', 'CANCELLED']);
+
 export const decorateCaseLinks = async (items: DriveItem[]) => {
   const folderIds = items.filter((i) => i.kind === 'FOLDER').map((i) => i.id);
   // Partner folders: matched by name among the children of the "Partner" section (found by id, so a renamed section works).
@@ -141,7 +151,7 @@ export const decorateCaseLinks = async (items: DriveItem[]) => {
     folderIds.length
       ? prisma.case.findMany({
           where: { driveFolderId: { in: folderIds } },
-          select: { id: true, number: true, status: true, driveFolderId: true, visaType: true, partner: { select: { id: true, name: true } }, client: { select: { id: true, firstName: true, lastName: true, passportNumber: true } } },
+          select: { id: true, number: true, status: true, driveFolderId: true, visaType: true, processingStage: true, processingAssigneeId: true, partner: { select: { id: true, name: true } }, client: { select: { id: true, firstName: true, lastName: true, passportNumber: true } } },
         })
       : Promise.resolve([]),
     docIds.length
@@ -154,7 +164,16 @@ export const decorateCaseLinks = async (items: DriveItem[]) => {
     const c = byFolder.get(item.id);
     if (c) {
       Object.assign(item, { caseId: c.id, caseNumber: c.number, caseStatus: c.status });
-      item.caseInfo = { clientId: c.client.id, clientName: `${c.client.firstName} ${c.client.lastName}`.trim(), passportNumber: c.client.passportNumber, visaType: c.visaType, partner: c.partner };
+      // Effective stage as in lib/caseProcessing: nothing stored = "In Bearbeitung" while the case is open.
+      const stage = c.processingStage ?? (CLOSED_STATUSES.has(c.status) ? null : 'IN_PROGRESS');
+      item.caseInfo = {
+        clientId: c.client.id,
+        clientName: `${c.client.firstName} ${c.client.lastName}`.trim(),
+        passportNumber: c.client.passportNumber,
+        visaType: c.visaType,
+        partner: c.partner,
+        processing: { stage, assigneeId: c.processingAssigneeId },
+      };
     }
     const d = item.documentId ? byDoc.get(item.documentId) : undefined;
     if (d) Object.assign(item, { caseId: d.case.id, caseNumber: d.case.number, caseStatus: d.case.status, stage: d.stage, docStatus: d.status });

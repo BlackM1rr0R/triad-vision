@@ -4,6 +4,8 @@ import { FINAL_STATUSES } from '../caseFlow.js';
 
 export interface AgentStats {
   referrals: number;
+  /** Employers that signed up with the agent's code (Company.referredByAgentId). */
+  employers: number;
   activeCases: number;
   approvedVisas: number;
   pendingCents: number;
@@ -11,21 +13,23 @@ export interface AgentStats {
   paidCents: number;
 }
 
-const empty = (): AgentStats => ({ referrals: 0, activeCases: 0, approvedVisas: 0, pendingCents: 0, approvedCents: 0, paidCents: 0 });
+const empty = (): AgentStats => ({ referrals: 0, employers: 0, activeCases: 0, approvedVisas: 0, pendingCents: 0, approvedCents: 0, paidCents: 0 });
 
 /** Per-agent counters for the admin list and the agent dashboard (main cases only, family cases excluded). */
 export const agentStats = async (agentIds: string[]): Promise<Map<string, AgentStats>> => {
   const out = new Map(agentIds.map((id) => [id, empty()]));
   if (!agentIds.length) return out;
-  const [refs, cases, sums] = await Promise.all([
+  const [refs, cases, sums, employers] = await Promise.all([
     prisma.user.groupBy({ by: ['referredByAgentId'], where: { referredByAgentId: { in: agentIds } }, _count: { _all: true } }),
     prisma.case.findMany({
       where: { parentCaseId: null, client: { referredByAgentId: { in: agentIds } } },
       select: { status: true, client: { select: { referredByAgentId: true } } },
     }),
     prisma.agentCommission.groupBy({ by: ['agentId', 'status'], where: { agentId: { in: agentIds } }, _sum: { amountCents: true } }),
+    prisma.company.groupBy({ by: ['referredByAgentId'], where: { referredByAgentId: { in: agentIds } }, _count: { _all: true } }),
   ]);
   for (const r of refs) if (r.referredByAgentId) out.get(r.referredByAgentId)!.referrals = r._count._all;
+  for (const e of employers) if (e.referredByAgentId && out.has(e.referredByAgentId)) out.get(e.referredByAgentId)!.employers = e._count._all;
   for (const c of cases) {
     const s = out.get(c.client.referredByAgentId ?? '');
     if (!s) continue;

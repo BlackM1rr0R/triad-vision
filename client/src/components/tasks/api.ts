@@ -2,6 +2,10 @@ import { useQuery, useQueryClient, type QueryClient } from '@tanstack/react-quer
 import { api } from '@/lib/api';
 import type { CaseRef, ChecklistItem, Person, TaskDetail, TaskListResponse } from './types';
 import { optimizeImage } from '@/lib/imageCompress';
+import { delayedCommit } from '@/lib/undo';
+
+/** Tasks deleted with "Geri al" still pending (hidden from every list until the delete is sent or undone). */
+const hiddenTasks = new Set<string>();
 
 export const taskKeys = {
   all: ['tasks'] as const,
@@ -22,6 +26,7 @@ export const useTaskList = (params: Record<string, string>, opts: { enabled?: bo
     staleTime: 15_000,
     refetchInterval: 60_000,
     enabled: opts.enabled ?? true,
+    select: (d) => (hiddenTasks.size ? { ...d, items: d.items.filter((i) => !hiddenTasks.has(i.id)) } : d),
   });
 
 export const useTask = (ref: string | null) =>
@@ -73,6 +78,25 @@ export const useTaskActions = () => {
       await api.delete(`/tasks/${ref}`);
       qc.removeQueries({ queryKey: taskKeys.detail(ref) });
       afterChange(qc);
+    },
+    /** Delete with "Geri al" (10 s): hidden at once, the DELETE is sent when the undo window ends. */
+    removeLater: (ref: string, id: string, message: string) => {
+      hiddenTasks.add(id);
+      void qc.cancelQueries({ queryKey: taskKeys.lists });
+      qc.setQueriesData<TaskListResponse>({ queryKey: taskKeys.lists }, (old) => (old ? { ...old, items: old.items.filter((i) => i.id !== id), total: Math.max(0, old.total - 1) } : old));
+      delayedCommit({
+        message,
+        commit: () => api.delete(`/tasks/${ref}`),
+        onCommitted: () => {
+          hiddenTasks.delete(id);
+          qc.removeQueries({ queryKey: taskKeys.detail(ref) });
+          afterChange(qc);
+        },
+        rollback: () => {
+          hiddenTasks.delete(id);
+          afterChange(qc);
+        },
+      });
     },
     addAssignee: async (ref: string, userId: string) =>
       done((await api.post<{ task: TaskDetail }>(`/tasks/${ref}/assignees`, { userId })).data.task),

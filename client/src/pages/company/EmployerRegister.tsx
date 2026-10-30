@@ -1,10 +1,13 @@
 import { useState, type FormEvent, type ReactNode } from 'react';
-import { Link, Navigate, useNavigate } from 'react-router-dom';
+import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
-import { Building2, CheckCircle2, ShieldCheck, UserRound } from 'lucide-react';
-import { api } from '@/lib/api';
+import { Building2, CheckCircle2, ShieldCheck, Ticket, UserRound } from 'lucide-react';
+import clsx from 'clsx';
+import { api, errorCode } from '@/lib/api';
+import { clearRefCookie, normaliseRef, readRefCookie } from '@/lib/referralCookie';
+import { useReferralCheck } from '@/lib/useReferralCheck';
 import { useAuth } from '@/lib/auth';
 import { useL10n } from '@/lib/l10n';
 import { usePageTitle } from '@/lib/usePageTitle';
@@ -40,6 +43,13 @@ export default function EmployerRegister() {
   const L = useJobLabels();
   const [busy, setBusy] = useState(false);
   const [password, setPassword] = useState('');
+  // Optional "Referral code": prefilled from ?ref= / ?p= or the 60-day first-party cookie, checked live.
+  const location = useLocation();
+  const [refInput, setRefInput] = useState(() => {
+    const params = new URLSearchParams(location.search);
+    return normaliseRef(params.get('ref') ?? params.get('p')) || readRefCookie();
+  });
+  const ref = useReferralCheck(refInput);
   const weak = password.length > 0 && !isStrongPassword(password);
   usePageTitle(t('jobsArea.register.title'));
 
@@ -51,6 +61,11 @@ export default function EmployerRegister() {
     const s = (k: string) => String(fd.get(k) ?? '').trim();
     if (!isStrongPassword(password)) {
       toast.error(t('jobsArea.errors.PASSWORD_TOO_WEAK'));
+      return;
+    }
+    if (ref.state === 'invalid') {
+      toast.error(t('jobsArea.register.refInvalid'));
+      document.getElementById('ref')?.focus();
       return;
     }
     setBusy(true);
@@ -69,11 +84,17 @@ export default function EmployerRegister() {
         user: { firstName: s('firstName'), lastName: s('lastName'), email: s('email'), password },
         locale,
         acceptTerms: true,
+        ...(ref.code ? { ref: ref.code, refEntered: true } : {}),
       });
+      if (ref.code) clearRefCookie();
       setUser(data.user);
       toast.success(t('jobsArea.register.success'));
       navigate('/company', { replace: true });
     } catch (err) {
+      if (errorCode(err) === 'REFERRAL_CODE_UNKNOWN') {
+        ref.markInvalid();
+        document.getElementById('ref')?.focus();
+      }
       toast.error(jobsError(err));
     } finally {
       setBusy(false);
@@ -165,6 +186,39 @@ export default function EmployerRegister() {
                   onChange={(e) => setPassword(e.target.value)}
                 />
                 <p className={`mt-1 text-xs ${weak ? 'text-danger' : 'text-muted'}`}>{t('jobsArea.register.passwordHint')}</p>
+              </Field>
+              <Field id="ref" label={t('jobsArea.register.refLabel')} className="sm:col-span-2">
+                <div className="relative">
+                  <Ticket className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-subtle" aria-hidden />
+                  <input
+                    id="ref"
+                    name="ref"
+                    type="text"
+                    maxLength={32}
+                    autoComplete="off"
+                    autoCapitalize="characters"
+                    spellCheck={false}
+                    placeholder={t('jobsArea.register.refPlaceholder')}
+                    className={clsx('input pl-9 uppercase placeholder:normal-case', ref.state === 'invalid' && 'border-danger')}
+                    value={refInput}
+                    onChange={(e) => setRefInput(e.target.value.toUpperCase().replace(/[^A-Za-z0-9-]/g, '').slice(0, 32))}
+                    aria-invalid={ref.state === 'invalid' ? true : undefined}
+                    aria-describedby="ref-hint"
+                  />
+                </div>
+                <p
+                  id="ref-hint"
+                  aria-live="polite"
+                  className={clsx('mt-1 text-xs', ref.state === 'invalid' ? 'text-danger' : ref.state === 'valid' ? 'text-success-fg' : 'text-muted')}
+                >
+                  {ref.state === 'checking'
+                    ? t('jobsArea.register.refChecking')
+                    : ref.state === 'valid'
+                      ? t(ref.kind === 'AGENT' ? 'jobsArea.register.refValidAgent' : 'jobsArea.register.refValidOther')
+                      : ref.state === 'invalid'
+                        ? t('jobsArea.register.refInvalid')
+                        : t('jobsArea.register.refHint')}
+                </p>
               </Field>
             </fieldset>
 

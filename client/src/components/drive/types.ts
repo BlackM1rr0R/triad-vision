@@ -52,7 +52,15 @@ export interface DriveItem {
   /** Client folders and case document copies: the case they belong to. */
   caseId?: string;
   /** Client folders: who the client is (header strip). */
-  caseInfo?: { clientId?: string; clientName: string; passportNumber: string | null; visaType: string; partner: { id: string; name: string } | null };
+  caseInfo?: {
+    clientId?: string;
+    clientName: string;
+    passportNumber: string | null;
+    visaType: string;
+    partner: { id: string; name: string } | null;
+    /** Team workflow stage of the case (In Bearbeitung · Schon geschrieben · Fertig · Ablehnung) and who works on it. */
+    processing?: { stage: string | null; assigneeId: string | null };
+  };
   /** Partner folders below "Partner": the referral partner. */
   partner?: { id: string; name: string; phone: string | null; email: string | null; active: boolean };
   caseNumber?: string;
@@ -205,4 +213,6 @@ export type DriveLocation =
   | { kind: 'search'; q: string; type: string; after: string }
   | { kind: 'smart'; id: string }
   | { kind: 'tag'; id: string }
-  | { kind: 'access' };
+  | { kind: 'access' }
+  /** "İş axını": the client folders of one team workflow stage (components/drive/processing). */
+  | { kind: 'workflow'; stage: string; mine: boolean };

@@ -2,6 +2,7 @@ import { Prisma, type ApplicationStatus, type User, type Vacancy } from '@prisma
 import { z } from 'zod';
 import { prisma } from '../db.js';
 import { GERMAN_LEVELS, matchCandidate, type MatchResult } from './matching.js';
+import { vacancyImagesField, vacancyImagesOf } from './vacancyImages.js';
 
 /** Shared pieces of the employers & vacancies area (company portal, public board, staff admin). */
 
@@ -106,6 +107,8 @@ const vacancyFields = {
   employmentType: z.enum(EMPLOYMENT_TYPES).optional(),
   showCompany: z.boolean().optional(),
   closesAt,
+  /** Cover + gallery (lib/vacancyImages.ts); null / [] clears. */
+  images: vacancyImagesField,
 };
 
 const salaryOrder = (v: { salaryMin?: number | null; salaryMax?: number | null }) =>
@@ -158,6 +161,7 @@ export const vacancyData = (b: VacancyBody) => {
   if (b.description) data.description = fillL10n(b.description);
   if (b.requirements !== undefined) data.requirements = fillL10nList(b.requirements) ?? Prisma.DbNull;
   if (b.benefits !== undefined) data.benefits = fillL10nList(b.benefits) ?? Prisma.DbNull;
+  if (b.images !== undefined) data.images = b.images?.length ? b.images : Prisma.DbNull;
   for (const k of ['sector', 'city', 'profession', 'germanLevel', 'minExperience', 'drivingLicence', 'salaryMin', 'salaryMax', 'positions', 'employmentType', 'showCompany', 'closesAt'] as const) {
     if (b[k] !== undefined) (data as Record<string, unknown>)[k] = b[k];
   }
@@ -232,6 +236,7 @@ export const publicVacancy = (v: VacancyWithRels) => ({
   validThrough: v.closesAt,
   companyName: v.showCompany && v.company ? v.company.name : null,
   visaCategory: v.visaCategory ? { slug: v.visaCategory.slug, title: v.visaCategory.title, visaLabel: v.visaCategory.visaLabel } : null,
+  images: vacancyImagesOf(v.images),
 });
 
 /** "Ali M." — the only name an employer ever sees. */

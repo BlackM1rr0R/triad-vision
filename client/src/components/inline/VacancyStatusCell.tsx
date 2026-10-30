@@ -37,6 +37,8 @@ export const VacancyStatusCell = ({ id, status }: { id: string; status: VacancyS
       update: (old) => ({ ...old, items: old.items.map((v) => (v.id === id ? { ...v, status: m.to } : v)) }),
       request: () => api.post(`/admin/vacancies/${id}/${m.path}`),
       success: t('ux.inline.statusChanged', { status: L.vacancyStatus(m.to) }),
+      // "Geri al" only between published and closed (the reverse transition exists); a draft is not sent back.
+      undo: status === 'OPEN' || status === 'CLOSED' ? () => api.post(`/admin/vacancies/${id}/${status === 'OPEN' ? 'approve' : 'close'}`) : undefined,
       invalidate: [['admin-vacancy', id]],
     });
   };

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
@@ -16,6 +16,9 @@ import { useNewParam } from '@/components/command/useNewParam';
 import { InvoiceEditor, useBillingSettings } from '@/components/billing/InvoiceEditor';
 import { InvoiceActionDialogs, type InvoiceAction } from '@/components/billing/Dialogs';
 import { InvoiceRowActions } from '@/components/billing/CaseBillingPanel';
+import { pagesStaffPower } from '@/i18n/pagesStaffPower'; // saved views + table settings
+import { SavedViewsMenu } from '@/components/staffPower/SavedViews';
+import { ColumnChooser, SettingsTable, useTableSettings, type ColumnDef } from '@/components/staffPower/tableSettings';
 import {
   BILLING_KEY,
   INVOICE_STATUSES,
@@ -30,6 +33,7 @@ import {
 } from '@/components/billing/api';
 
 registerCopy(pagesBilling);
+registerCopy(pagesStaffPower);
 
 /** Admin → Maliyyə → Müştəri hesab-fakturaları: every client invoice (filters, totals, CSV) + billing settings. */
 export default function AdminClientInvoices() {
@@ -83,16 +87,50 @@ export default function AdminClientInvoices() {
 
 const List = ({ onEdit }: { onEdit: (i: ClientInvoice) => void }) => {
   const { t } = useTranslation();
-  const [status, setStatus] = useState<InvoiceStatus | ''>('');
-  const [overdue, setOverdue] = useState(false);
-  const [from, setFrom] = useState('');
-  const [to, setTo] = useState('');
-  const [q, setQ] = useState('');
-  const [debounced, setDebounced] = useState('');
+  // Filters live in the URL (shareable, and saved views restore them).
+  const [params, setParams] = useSearchParams();
+  const setParam = (k: string, v: string | null) =>
+    setParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        if (v) next.set(k, v);
+        else next.delete(k);
+        return next;
+      },
+      { replace: true },
+    );
+  const status = (params.get('status') ?? '') as InvoiceStatus | '';
+  const setStatus = (v: InvoiceStatus | '') => setParam('status', v || null);
+  const overdue = params.get('overdue') === '1';
+  const setOverdue = (fn: boolean | ((v: boolean) => boolean)) => setParam('overdue', (typeof fn === 'function' ? fn(overdue) : fn) ? '1' : null);
+  const from = params.get('from') ?? '';
+  const setFrom = (v: string) => setParam('from', v || null);
+  const to = params.get('to') ?? '';
+  const setTo = (v: string) => setParam('to', v || null);
+  const debounced = params.get('q') ?? '';
+  const [q, setQ] = useState(debounced);
+  useEffect(() => setQ(debounced), [debounced]);
   useEffect(() => {
-    const h = window.setTimeout(() => setDebounced(q.trim()), 300);
+    const h = window.setTimeout(() => {
+      if (q.trim() !== debounced) setParam('q', q.trim() || null);
+    }, 300);
     return () => window.clearTimeout(h);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [q]);
+  const columnDefs = useMemo<ColumnDef[]>(
+    () => [
+      { id: 'number', label: t('bill.admin.cols.number'), required: true },
+      { id: 'client', label: t('bill.admin.cols.client') },
+      { id: 'issued', label: t('bill.admin.cols.issued') },
+      { id: 'due', label: t('bill.admin.cols.due') },
+      { id: 'amount', label: t('bill.admin.cols.amount'), align: 'right' },
+      { id: 'open', label: t('bill.admin.cols.open'), align: 'right' },
+      { id: 'status', label: t('bill.admin.cols.status') },
+      { id: 'actions', label: t('bill.admin.more'), header: <span className="sr-only">{t('bill.admin.more')}</span>, required: true },
+    ],
+    [t],
+  );
+  const table = useTableSettings('clientInvoices', columnDefs);
   const filters = { status: status || undefined, overdue: overdue ? '1' : undefined, from: from || undefined, to: to || undefined, q: debounced || undefined };
   const listQ = useQuery({
     queryKey: [...BILLING_KEY, 'list', filters],
@@ -127,6 +165,10 @@ const List = ({ onEdit }: { onEdit: (i: ClientInvoice) => void }) => {
             <Download className="size-3.5" aria-hidden /> {t('bill.admin.export')}
           </a>
         </div>
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          <SavedViewsMenu page="clientInvoices" settings={table} />
+          <ColumnChooser settings={table} className="hidden md:block" />
+        </div>
         <div className="-mx-4 flex gap-1.5 overflow-x-auto px-4 pb-1 [scrollbar-width:none] sm:mx-0 sm:flex-wrap sm:px-0">
           <Chip active={!status && !overdue} onClick={() => { setStatus(''); setOverdue(false); }}>
             {t('bill.admin.all')}
@@ -153,7 +195,35 @@ const List = ({ onEdit }: { onEdit: (i: ClientInvoice) => void }) => {
           </EmptyState>
         </div>
       ) : (
-        <div className="overflow-hidden rounded-xl border border-line bg-card">
+        <>
+        <SettingsTable
+          settings={table}
+          rows={listQ.data.invoices}
+          rowKey={(inv) => inv.id}
+          className="hidden md:block"
+          caption={t('bill.admin.tabs.list')}
+          cells={{
+            number: (inv) => <span className="font-semibold text-ink tabular-nums">{inv.number ?? <span className="text-muted italic">{t('bill.admin.draftNo')}</span>}</span>,
+            client: (inv) => (
+              <>
+                <span className="line-clamp-1 text-ink">{inv.clientName}</span>
+                {inv.caseId && inv.caseNumber && (
+                  <Link to={`/admin/cases/${inv.caseId}?tab=finance`} className="text-xs text-link hover:underline">
+                    {inv.caseNumber}
+                  </Link>
+                )}
+              </>
+            ),
+            issued: (inv) => fmtDate(inv.issueDate),
+            due: (inv) => <span className={clsx(inv.status === 'OVERDUE' && 'font-semibold text-danger-fg')}>{fmtDate(inv.dueDate)}</span>,
+            amount: (inv) => <span className="font-semibold text-ink tabular-nums">{fmtEur(inv.grossCents, inv.currency)}</span>,
+            open: (inv) => <span className="tabular-nums">{inv.openCents ? fmtEur(inv.openCents, inv.currency) : '—'}</span>,
+            status: (inv) => <span className={clsx('badge', STATUS_BADGE[inv.status])}>{t(`bill.status.${inv.status}`)}</span>,
+            actions: (inv) => <InvoiceRowActions inv={inv} onEdit={onEdit} onAction={(kind) => setAction({ kind, invoice: inv, email: inv.clientEmail })} />,
+          }}
+        />
+        {/* phones: stacked rows */}
+        <div className="overflow-hidden rounded-xl border border-line bg-card md:hidden">
           <table className="w-full text-sm">
             <thead className="hidden bg-sunken text-left text-xs text-muted md:table-header-group">
               <tr>
@@ -199,6 +269,7 @@ const List = ({ onEdit }: { onEdit: (i: ClientInvoice) => void }) => {
             </tbody>
           </table>
         </div>
+        </>
       )}
       <InvoiceActionDialogs action={action} onClose={() => setAction(null)} />
     </>

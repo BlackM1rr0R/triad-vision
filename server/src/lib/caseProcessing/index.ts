@@ -102,14 +102,18 @@ export const moveSchema = z.object({
   /** Who takes the next step (notified, "my work"); empty = nobody in particular. */
   assigneeId: z.string().trim().min(1).max(40).nullish(),
   note: z.string().trim().max(2000).nullish(),
+  /** Where the move was made: 'drive' (the documents section) links the notification to the client folder. */
+  origin: z.enum(['case', 'drive']).optional(),
 });
 
 const caseLink = (id: string) => `/admin/cases/${id}#case-processing`;
+/** The client folder in the documents section ("Sənədlər"), else the case page. */
+export const driveFolderLink = (caseId: string, folderId: string | null | undefined) => (folderId ? `/workspace/drive/f/${encodeURIComponent(folderId)}` : caseLink(caseId));
 
 export const moveStage = async (caseId: string, actor: { id: string; firstName: string; lastName: string }, input: z.infer<typeof moveSchema>) => {
   const c = await prisma.case.findUnique({
     where: { id: caseId },
-    select: { id: true, number: true, ...PROCESSING_SELECT, client: { select: { firstName: true, lastName: true } } },
+    select: { id: true, number: true, driveFolderId: true, ...PROCESSING_SELECT, client: { select: { firstName: true, lastName: true } } },
   });
   if (!c) throw notFound('CASE_NOT_FOUND');
   let assignee: { id: string; locale: 'az' | 'de' | 'en' | 'ru' } | null = null;
@@ -135,22 +139,75 @@ export const moveStage = async (caseId: string, actor: { id: string; firstName: 
   ]);
 
   const p = { number: c.number, worker: fullName(c.client) || c.number, by: fullName(actor), stage: stageLabel(input.stage), note };
-  // The next assignee: "X sent you Schon geschrieben".
+  // A move made in the documents section links straight to the client folder there.
+  const link = input.origin === 'drive' ? driveFolderLink(caseId, c.driveFolderId) : caseLink(caseId);
+  // The next assignee: "X sent you Schon geschrieben" (+ "open the folder and press Götür").
   if (assignee && assignee.id !== actor.id) {
     const tx = processingTexts(assignee.locale);
-    await notifyUser(assignee.id, { type: 'PROCESSING_STAGE', title: tx.assignedTitle(p), body: tx.assignedBody(p), link: caseLink(caseId), caseId, email: false }).catch(() => undefined);
+    const body = tx.assignedBody(p) + (input.stage === 'WRITTEN' ? `\n${tx.claimHint}` : '');
+    const title = tx.assignedTitle(p) + (input.stage === 'WRITTEN' ? ` — ${tx.claimShort}` : '');
+    await notifyUser(assignee.id, { type: 'PROCESSING_STAGE', title, body, link, caseId, email: false }).catch(() => undefined);
   }
   // Finished or refused: whoever moved it before (usually the one who wrote the documents) hears about it.
   if ((input.stage === 'DONE' || input.stage === 'REFUSED') && previousBy && previousBy !== actor.id && previousBy !== assignee?.id) {
     const u = await prisma.user.findFirst({ where: { id: previousBy, isActive: true }, select: { id: true, locale: true } });
     if (u) {
       const tx = processingTexts(u.locale);
-      await notifyUser(u.id, { type: 'PROCESSING_STAGE', title: tx.movedTitle(p), body: tx.movedBody(p), link: caseLink(caseId), caseId, email: false }).catch(() => undefined);
+      await notifyUser(u.id, { type: 'PROCESSING_STAGE', title: tx.movedTitle(p), body: tx.movedBody(p), link, caseId, email: false }).catch(() => undefined);
     }
   }
   for (const id of [actor.id, assignee?.id, previousAssignee]) if (id) invalidateMyWork(id);
   invalidateMyWork();
   return { from, to: input.stage };
+};
+
+// ─── Claim ("Götür") ──────────────────────────────────────────────────
+
+export const claimSchema = z.object({
+  /** Take it over although a colleague already claimed it (the UI asks first). */
+  force: z.boolean().optional(),
+  origin: z.enum(['case', 'drive']).optional(),
+});
+
+/**
+ * "Götür": the viewer takes the case of an open stage (usually "Schon geschrieben") — it becomes their
+ * assignee, so colleagues see "X işləyir" and it shows in their "my work". Stage, sender and time stay as
+ * they are (the sender still hears about Fertig / Ablehnung). Idempotent: claiming one's own case changes
+ * nothing. A case a colleague claimed answers 409 PROCESSING_CLAIMED_BY_OTHER unless `force`.
+ */
+export const claimCase = async (caseId: string, actor: { id: string; firstName: string; lastName: string }, input: z.infer<typeof claimSchema>) => {
+  const c = await prisma.case.findUnique({
+    where: { id: caseId },
+    select: { id: true, number: true, driveFolderId: true, ...PROCESSING_SELECT, client: { select: { firstName: true, lastName: true } } },
+  });
+  if (!c) throw notFound('CASE_NOT_FOUND');
+  const stage = effectiveStage(c.processingStage, c.status);
+  if (!stage || !OPEN_STAGES.includes(stage)) throw conflict('PROCESSING_NOT_OPEN');
+  if (c.processingAssigneeId === actor.id) return { claimed: false, stage, previousAssigneeId: actor.id };
+  if (c.processingAssigneeId && !input.force) throw conflict('PROCESSING_CLAIMED_BY_OTHER');
+  const previous = c.processingAssigneeId;
+  const now = new Date();
+  await prisma.$transaction([
+    prisma.caseProcessingMove.create({ data: { caseId, fromStage: stage, toStage: stage, actorId: actor.id, assigneeId: actor.id, note: null, createdAt: now } }),
+    // The stage is stored (nothing stored = In Bearbeitung) so "my work" finds it; who sent it and when stay.
+    prisma.case.update({ where: { id: caseId }, data: { processingStage: stage, processingAssigneeId: actor.id } }),
+    prisma.caseEvent.create({ data: { caseId, type: 'PROCESSING_STAGE', note: `${stageLabel(stage)}: übernommen von ${fullName(actor)}`, actorId: actor.id, visibleToClient: false } }),
+  ]);
+  const p = { number: c.number, worker: fullName(c.client) || c.number, by: fullName(actor), stage: stageLabel(stage), note: null };
+  const link = input.origin === 'case' ? caseLink(caseId) : driveFolderLink(caseId, c.driveFolderId);
+  // The sender (and a colleague it was taken from) hear who works on it now.
+  const told = new Set<string>();
+  for (const id of [c.processingStageById, previous]) {
+    if (!id || id === actor.id || told.has(id)) continue;
+    told.add(id);
+    const u = await prisma.user.findFirst({ where: { id, isActive: true }, select: { id: true, locale: true } });
+    if (!u) continue;
+    const tx = processingTexts(u.locale);
+    await notifyUser(u.id, { type: 'PROCESSING_STAGE', title: tx.claimedTitle(p), body: tx.claimedBody(p), link, caseId, email: false }).catch(() => undefined);
+  }
+  for (const id of [actor.id, previous, c.processingStageById]) if (id) invalidateMyWork(id);
+  invalidateMyWork();
+  return { claimed: true, stage, previousAssigneeId: previous };
 };
 
 // ─── Case view ────────────────────────────────────────────────────────

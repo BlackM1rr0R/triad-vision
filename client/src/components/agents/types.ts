@@ -1,7 +1,7 @@
 import { STATUS_TONES, toneClasses } from '@/components/ui/status';
 
-export type PayoutEvent = 'CASE_CREATED' | 'CONTRACT_SIGNED' | 'VISA_APPROVED' | 'INVOICE_PAID';
-export const PAYOUT_EVENTS: PayoutEvent[] = ['CASE_CREATED', 'CONTRACT_SIGNED', 'VISA_APPROVED', 'INVOICE_PAID'];
+export type PayoutEvent = 'CASE_CREATED' | 'CONTRACT_SIGNED' | 'VISA_APPROVED' | 'INVOICE_PAID' | 'EMPLOYER_APPROVED';
+export const PAYOUT_EVENTS: PayoutEvent[] = ['CASE_CREATED', 'CONTRACT_SIGNED', 'VISA_APPROVED', 'INVOICE_PAID', 'EMPLOYER_APPROVED'];
 export type CommissionStatus = 'PENDING' | 'APPROVED' | 'PAID' | 'CANCELLED';
 export const COMMISSION_STATUSES: CommissionStatus[] = ['PENDING', 'APPROVED', 'PAID', 'CANCELLED'];
 export type AgentStatus = 'ACTIVE' | 'PAUSED';
@@ -10,6 +10,7 @@ export type Stage = 'REGISTERED' | 'DOCUMENTS' | 'CONTRACT' | 'EMBASSY' | 'APPRO
 
 export interface AgentStats {
   referrals: number;
+  employers?: number;
   activeCases: number;
   approvedVisas: number;
   pendingCents: number;

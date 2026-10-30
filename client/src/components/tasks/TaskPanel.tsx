@@ -208,8 +208,8 @@ const PanelBody = ({
     setBusy(true);
     try {
       if (confirm.kind === 'task') {
-        await actions.remove(taskRef);
-        toast.success(t('tasks.toast.deleted'));
+        // "Geri al" for 10 s: the task disappears now, the delete is sent when the window ends.
+        actions.removeLater(taskRef, task.id, t('tasks.toast.deleted'));
         setConfirm(null);
         onDeleted();
         return;

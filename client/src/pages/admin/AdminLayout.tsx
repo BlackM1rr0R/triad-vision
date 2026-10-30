@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { Fragment, useCallback, useEffect, useRef, useState } from 'react';
 import { NavLink, Outlet, matchPath, useLocation, useNavigate } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -35,6 +35,9 @@ import { ModuleDisabled } from '@/components/admin/nav/ModuleDisabled';
 import { isStringArray, navGroupsKey, navPinsKey, readJson, writeJson } from '@/components/command/storage';
 import { useSurface } from '@/lib/theme'; // crisp admin surface tokens (index.css [data-surface=admin])
 import { DensityToggle } from '@/components/ui/DensityToggle'; // per-user table density (data-density)
+import { WhatsNewButton } from '@/components/staffPower/WhatsNew'; // "Yeniliklər": release notes + guided tours
+import { SidebarPinnedViews } from '@/components/staffPower/SavedViews'; // saved views pinned under their page
+import { TourHost } from '@/components/onboarding/TourHost';
 
 registerCopy(adminCopy);
 import { getBrand } from '@/lib/brand';
@@ -271,15 +274,18 @@ const SidebarNav = ({ collapsed, role, userId, idSuffix, onNavigate }: SidebarNa
                   className={clsx('space-y-0.5', collapsed ? 'pt-0.5' : 'overflow-hidden')}
                 >
                   {g.items.map((item) => (
-                    <SideLink
-                      key={`${g.key}:${item.id}`}
-                      item={item}
-                      role={role}
-                      collapsed={collapsed}
-                      pinned={pins.includes(item.id)}
-                      onTogglePin={togglePin}
-                      onNavigate={onNavigate}
-                    />
+                    <Fragment key={`${g.key}:${item.id}`}>
+                      <SideLink
+                        item={item}
+                        role={role}
+                        collapsed={collapsed}
+                        pinned={pins.includes(item.id)}
+                        onTogglePin={togglePin}
+                        onNavigate={onNavigate}
+                      />
+                      {/* saved views pinned by the user: a small sub-list under the page's own item */}
+                      {!collapsed && g.key !== 'favourites' && <SidebarPinnedViews navId={item.id} onNavigate={onNavigate} />}
+                    </Fragment>
                   ))}
                 </motion.div>
               )}
@@ -673,6 +679,7 @@ export default function AdminLayout() {
           <ThemeToggle />
           <DensityToggle className="hidden size-9 md:grid" />
           <HeaderTimer />
+          <WhatsNewButton />
           <NotificationBell />
           <a
             href="/"
@@ -706,6 +713,8 @@ export default function AdminLayout() {
       </div>
       <CommandPaletteHotkey />
       <ShortcutLayer />
+      <TourHost />
+      {/* guided tours of the staff features, started from "Yeniliklər" (never on their own) */}
       <AccessibilityWidget standalone panelClass="sm:bottom-[5.75rem] sm:max-h-[calc(100dvh-6.75rem)]" />
     </div>
   );

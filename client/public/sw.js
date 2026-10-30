@@ -9,7 +9,12 @@
  *   icons, manifest,     stale-while-revalidate
  *   offline page
  *   /api/*, /uploads/*,  never touched: requests go straight to the network, nothing with personal data is
- *   /__seo/*, sitemap    ever written to a cache
+ *   /__seo/*, sitemap    written to a cache by the worker
+ *   /__offline/*         offline documents the CLIENT chose to keep ("Oflayn saxla", src/lib/offlineDocs.ts): the page
+ *                        writes them into the tv-offline-v1 cache, the worker only serves them from there (never from
+ *                        the network), refuses items older than 30 days and deletes the whole cache once its index is
+ *                        gone or expired. Offline navigations to /account/* open /offline-docs.html when something is
+ *                        kept. Logout deletes the cache (src/lib/auth.tsx).
  *
  * Updates: the build stamps BUILD below (vite.config.ts → swBuildStamp), so every deployment ships a changed
  * sw.js. The new worker waits until the page asks it to take over ("New version available — Reload" toast,
@@ -19,7 +24,10 @@ const BUILD = '__TV_BUILD__';
 const SHELL_CACHE = 'tv-shell-' + BUILD;
 const ASSET_CACHE = 'tv-assets-v1';
 const MAX_ASSETS = 400;
-const PRECACHE = ['/offline.html', '/favicon.svg', '/manifest.webmanifest', '/icons/icon-192.png', '/icons/badge-96.png'];
+const PRECACHE = ['/offline.html', '/offline-docs.html', '/offline-docs.js', '/favicon.svg', '/manifest.webmanifest', '/icons/icon-192.png', '/icons/badge-96.png'];
+const OFFLINE_CACHE = 'tv-offline-v1';
+const OFFLINE_INDEX = '/__offline/index.json';
+const OFFLINE_KEEP_MS = 30 * 24 * 60 * 60 * 1000;
 const BYPASS = [/^\/api\//, /^\/uploads\//, /^\/__seo\//, /^\/sitemap\.xml$/, /^\/robots\.txt$/, /^\/sw\.js$/];
 
 self.addEventListener('install', (event) => {
@@ -37,6 +45,7 @@ self.addEventListener('activate', (event) => {
     (async () => {
       const names = await caches.keys();
       await Promise.all(names.filter((n) => n.startsWith('tv-shell-') && n !== SHELL_CACHE).map((n) => caches.delete(n)));
+      await offlineIndex(); // drops expired offline documents
       await self.clients.claim();
     })(),
   );
@@ -76,10 +85,59 @@ const staleWhileRevalidate = async (event) => {
   return (await refresh) || Response.error();
 };
 
+// ─── Offline documents ("Oflayn saxla") ─────────────────────────────────
+
+const expiredAt = (savedAt) => !savedAt || Date.now() - new Date(savedAt).getTime() > OFFLINE_KEEP_MS;
+
+/** The index of kept documents with expired items removed (null: nothing kept; the cache is deleted then). */
+const offlineIndex = async () => {
+  if (!(await caches.has(OFFLINE_CACHE))) return null;
+  const cache = await caches.open(OFFLINE_CACHE);
+  const res = await cache.match(OFFLINE_INDEX);
+  let idx = null;
+  try {
+    idx = res ? await res.json() : null;
+  } catch (e) {
+    idx = null;
+  }
+  if (!idx || !Array.isArray(idx.docs)) {
+    await caches.delete(OFFLINE_CACHE);
+    return null;
+  }
+  const keep = idx.docs.filter((d) => !expiredAt(d.savedAt));
+  const appointment = idx.appointment && !expiredAt(idx.appointment.savedAt) ? idx.appointment : null;
+  if (!keep.length && !appointment) {
+    await caches.delete(OFFLINE_CACHE);
+    return null;
+  }
+  if (keep.length !== idx.docs.length || appointment !== idx.appointment) {
+    await Promise.all(idx.docs.filter((d) => !keep.includes(d)).map((d) => cache.delete('/__offline/doc/' + d.id)));
+    idx = Object.assign({}, idx, { docs: keep, appointment });
+    await cache.put(OFFLINE_INDEX, new Response(JSON.stringify(idx), { headers: { 'content-type': 'application/json' } }));
+  }
+  return idx;
+};
+
+const serveOffline = async (url) => {
+  const idx = await offlineIndex();
+  if (!idx) return new Response('Not found', { status: 404 });
+  if (url.pathname === OFFLINE_INDEX) return (await caches.open(OFFLINE_CACHE)).match(OFFLINE_INDEX);
+  const id = url.pathname.slice('/__offline/doc/'.length);
+  if (!idx.docs.some((d) => d.id === id)) return new Response('Not found', { status: 404 });
+  const hit = await (await caches.open(OFFLINE_CACHE)).match('/__offline/doc/' + id);
+  return hit || new Response('Not found', { status: 404 });
+};
+
 const navigate = async (request) => {
   try {
     return await fetch(request);
   } catch (err) {
+    // Portal pages without internet: the kept documents and the appointment card, when there are any.
+    const url = new URL(request.url);
+    if (url.pathname.startsWith('/account') && (await offlineIndex())) {
+      const docs = await caches.match('/offline-docs.html');
+      if (docs) return docs;
+    }
     const offline = await caches.match('/offline.html');
     if (offline) return offline;
     throw err;
@@ -91,6 +149,7 @@ self.addEventListener('fetch', (event) => {
   if (request.method !== 'GET') return;
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
+  if (url.pathname.startsWith('/__offline/')) return event.respondWith(serveOffline(url));
   if (BYPASS.some((re) => re.test(url.pathname))) return;
   if (request.mode === 'navigate') return event.respondWith(navigate(request));
   if (url.pathname.startsWith('/assets/')) return event.respondWith(cacheFirst(request));

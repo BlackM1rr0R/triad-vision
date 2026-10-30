@@ -10,6 +10,7 @@ import { audit } from '../../lib/audit.js';
 import { renderEmail, sendMail } from '../../lib/mailer.js';
 import { notifyCompanyStatus } from '../../lib/jobsNotifications.js';
 import { companyFields } from '../company.js';
+import { awardEmployerCommission } from '../../lib/agents/commissions.js';
 
 // Admin: companies — mounted at /api/admin/companies
 export const adminCompaniesRouter = Router();
@@ -80,7 +81,16 @@ adminCompaniesRouter.get('/:id', async (req, res) => {
     },
   });
   if (!company) throw notFound('COMPANY_NOT_FOUND');
-  res.json({ company });
+  // "Referred by": the agent (Company.referredByAgentId) or just the code the employer signed up with.
+  const agent = company.referredByAgentId
+    ? await prisma.agent.findUnique({ where: { id: company.referredByAgentId }, select: { id: true, code: true, user: { select: { firstName: true, lastName: true } } } })
+    : null;
+  res.json({
+    company,
+    referral: company.referralCode || agent
+      ? { code: company.referralCode, at: company.referredAt, agent: agent ? { id: agent.id, code: agent.code, name: `${agent.user.firstName} ${agent.user.lastName}`.trim() } : null }
+      : null,
+  });
 });
 
 const optionalCompanyFields = z.object({
@@ -208,6 +218,8 @@ adminCompaniesRouter.post('/:id/status', async (req, res) => {
     await prisma.vacancy.updateMany({ where: { companyId: company.id, status: { in: ['OPEN', 'PENDING'] } }, data: { status: 'CLOSED' } });
   }
   if (body.status !== 'PENDING') await notifyCompanyStatus(company.id, body.status, body.reason);
+  // Employer referred by an agent: EMPLOYER_APPROVED commission (once per employer; never throws).
+  if (body.status === 'ACTIVE' && company.referredByAgentId) await awardEmployerCommission(company.id);
   await audit(req, 'COMPANY_STATUS_CHANGED', `company:${company.id}`, { from: before.status, to: body.status, reason: body.reason ?? null });
   res.json({ company });
 });

@@ -34,6 +34,7 @@ export const InquiryStatusCell = ({ item }: { item: Inquiry }) => {
       update: (old) => ({ ...old, items: old.items.map((i) => (i.id === item.id ? { ...i, status } : i)) }),
       request: () => api.patch(`/admin/inquiries/${item.id}`, { status }),
       success: t('admin.inquiries.statusToast', { status: inquiryStatusLabel(status) }),
+      undo: () => api.patch(`/admin/inquiries/${item.id}`, { status: item.status }), // "Geri al": the previous status
       invalidate: [['admin-dashboard']],
     });
   };

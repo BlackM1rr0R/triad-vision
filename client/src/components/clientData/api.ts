@@ -195,9 +195,21 @@ export interface GuideLink {
 export interface ClientGuide {
   key: string;
   text: GuideText;
+  /** false: the guide only carries "Necə çəkməli?" examples (no "Necə almalı?" text). */
+  hasText?: boolean;
   links: GuideLink[];
   sampleImage: string | null;
+  /** "Necə çəkməli?" overrides (components/docGuide); null → the built-in illustrated examples. */
+  examples?: { goodImage: string | null; badImage: string | null; tips: string[] } | null;
   verified: boolean;
+}
+
+/** Admin side of the "Necə çəkməli?" examples (stored in DocumentGuide.content._examples). */
+export interface GuideExamples {
+  goodImage: string | null;
+  badImage: string | null;
+  /** One tip per line, per language (at most 5 shown). */
+  tips: Record<'az' | 'de' | 'en' | 'ru', string>;
 }
 
 export interface AdminGuide {
@@ -205,6 +217,7 @@ export interface AdminGuide {
   content: Record<'az' | 'de' | 'en' | 'ru', GuideText>;
   links: GuideLink[];
   sampleImage: string | null;
+  examples?: GuideExamples | null;
   verified: boolean;
   published: boolean;
   builtIn: boolean;

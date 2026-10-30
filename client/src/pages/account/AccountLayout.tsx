@@ -23,6 +23,8 @@ import { CLIENT_TOUR, TourHost, TourRestartButton } from '@/components/onboardin
 import { pagesPortalUx } from '@/i18n/pagesPortalUx';
 import { pagesPortalNav } from '@/i18n/pagesPortalNav';
 import { pagesWaitingRoom } from '@/i18n/pagesWaitingRoom';
+import { FamilySwitcher } from '@/components/portal/FamilySwitcher'; // family member cases: "Mən" / spouse / child chips
+import { OfflineBadge } from '@/components/offline/OfflineBadge'; // "no internet — offline documents" strip
 
 registerCopy(pagesAccount);
 registerCopy(pagesSign);
@@ -176,6 +178,8 @@ export default function AccountLayout() {
               </p>
             )}
 
+            {isClient && <FamilySwitcher className="clear-both mt-4" />}
+
             {/* Sections: desktop only (phones: bottom bar). */}
             <nav className="clear-both -mx-2 mt-6 hidden gap-1 border-t border-line pt-1 sm:mt-7 md:flex" aria-label={t('pnav.label')}>
               {SECTIONS.map((s) => (
@@ -220,6 +224,7 @@ export default function AccountLayout() {
         </header>
 
         <VerifyBanner className="mt-6" />
+        {isClient && <OfflineBadge className="mt-4" />}
 
         <div className="mt-6 lg:mt-8">
           {/* Tab change: mount at once and fade in (CSS, compositor only) instead of waiting for an exit animation. */}

@@ -12,6 +12,7 @@ import { ClientFiles } from '../ClientFiles';
 import { ContractBox } from '../Contract';
 import { RequirementsSection } from '../Requirements';
 import type { CaseTabProps } from './types';
+import { FastReviewButton } from '@/components/staffPower/review/FastReviewButton'; // "Sürətli yoxlama" for this case
 
 /**
  * Sənədlər: requirement review (accept / reject / request, smart-upload suggestions), the embassy package,
@@ -28,8 +29,15 @@ export default function DocumentsTab({ c, isAdmin }: CaseTabProps) {
       <RequirementsSection c={c} stage="EMBASSY" />
     </div>
   );
+  // Uploads waiting for a decision: the fast review mode goes through them with the keyboard.
+  const pending = c.requirements.reduce((n, r) => n + r.documents.filter((d) => d.status === 'PENDING').length, 0);
   return (
     <div className="stack-page">
+      {pending > 0 && (
+        <div className="flex justify-end">
+          <FastReviewButton caseId={c.id} pending={pending} />
+        </div>
+      )}
       {embassyFirst && embassy}
       <div id="case-docs-initial">
         <RequirementsSection c={c} stage="INITIAL" />

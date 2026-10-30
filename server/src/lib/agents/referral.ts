@@ -27,6 +27,31 @@ export const attachReferral = async (userId: string, rawCode: string | null | un
   }
 };
 
+/**
+ * Employer sign-up with a referral code (same codes as the client sign-up): an ACTIVE agent's code records
+ * the agent attribution (Company.referredByAgentId — counted in the agent portal, pays EMPLOYER_APPROVED /
+ * INVOICE_PAID commissions); any other known code (client "bring a friend", referral partner) is only kept as
+ * Company.referralCode for the staff. `known`: the caller already checked the code is not an agent's but valid.
+ * First attribution wins. Returns the agent id (or null). Never throws.
+ */
+export const attachCompanyReferral = async (companyId: string, rawCode: string | null | undefined, opts: { known: boolean }) => {
+  if (!rawCode) return null;
+  const code = normaliseAgentCode(rawCode);
+  if (!code) return null;
+  try {
+    const agent = await prisma.agent.findFirst({ where: { code, status: 'ACTIVE' }, select: { id: true } });
+    if (!agent && !opts.known) return null;
+    await prisma.company.updateMany({
+      where: { id: companyId, referralCode: null },
+      data: { referralCode: code, referredAt: new Date(), ...(agent ? { referredByAgentId: agent.id } : {}) },
+    });
+    return agent?.id ?? null;
+  } catch (err) {
+    console.error('[agents] attach company referral failed', err);
+    return null;
+  }
+};
+
 const TRANSLIT: Record<string, string> = {
   Ə: 'E', ə: 'E', Ş: 'SH', ş: 'SH', Ç: 'CH', ç: 'CH', Ğ: 'G', ğ: 'G', Ö: 'O', ö: 'O', Ü: 'U', ü: 'U', İ: 'I', ı: 'I', ß: 'SS', Ä: 'AE', ä: 'AE',
   А: 'A', Б: 'B', В: 'V', Г: 'G', Д: 'D', Е: 'E', Ё: 'E', Ж: 'ZH', З: 'Z', И: 'I', Й: 'Y', К: 'K', Л: 'L', М: 'M', Н: 'N', О: 'O', П: 'P', Р: 'R',

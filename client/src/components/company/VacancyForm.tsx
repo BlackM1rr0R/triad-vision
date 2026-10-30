@@ -9,6 +9,8 @@ import { Switch } from '@/components/admin/ui';
 import { useJobLabels } from '@/components/jobs/labels';
 import { EMPLOYMENT_TYPES, GERMAN_LEVELS, SECTORS, type VacancyRow } from '@/components/jobs/types';
 import { VacancyAiPanel, type AiFeature } from '@/components/aiEmployer/VacancyAiPanel';
+import { VacancyImagesField } from './VacancyImagesField';
+import type { VacancyImage } from '@/components/jobs/types';
 
 type L10nText = Record<Locale, string>;
 
@@ -29,6 +31,8 @@ export interface VacancyFormState {
   employmentType: string;
   showCompany: boolean;
   closesAt: string;
+  /** Cover (first) + gallery photos. */
+  images: VacancyImage[];
   // staff only
   companyId: string;
   visaCategoryId: string;
@@ -75,6 +79,7 @@ export const formFromVacancy = (v?: VacancyRow | null): VacancyFormState => ({
   employmentType: v?.employmentType ?? 'FULL_TIME',
   showCompany: v?.showCompany ?? false,
   closesAt: v?.closesAt ? v.closesAt.slice(0, 10) : '',
+  images: (v?.images ?? []).map((i) => ({ ...i })),
   companyId: v?.companyId ?? '',
   visaCategoryId: v?.visaCategoryId ?? '',
   slug: v?.slug ?? '',
@@ -109,6 +114,7 @@ export const payloadFromForm = (f: VacancyFormState, staff: boolean) => ({
   employmentType: f.employmentType,
   showCompany: f.showCompany,
   closesAt: f.closesAt || null,
+  images: f.images.map((i) => ({ url: i.url, ...(i.alt?.trim() ? { alt: i.alt.trim() } : {}), ...(i.w ? { w: i.w } : {}), ...(i.h ? { h: i.h } : {}) })),
   ...(staff
     ? { companyId: f.companyId || null, visaCategoryId: f.visaCategoryId || null, ...(f.slug.trim() ? { slug: f.slug.trim().toLowerCase() } : {}) }
     : {}),
@@ -306,6 +312,8 @@ export const VacancyForm = ({
           </div>
         </div>
       </section>
+
+      <VacancyImagesField value={f.images} onChange={(v) => set('images', v)} uploadUrl={staff ? '/admin/vacancies/images' : '/company/vacancies/images'} />
 
       {extra?.(f, set)}
 

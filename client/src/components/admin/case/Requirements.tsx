@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
 import { toast } from 'sonner';
 import { Check, CheckCheck, ClipboardList, Plus, Trash2, Upload, X } from 'lucide-react';
-import { api } from '@/lib/api';
+import { api, fileUrl } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { useL10n } from '@/lib/l10n';
 import type { CaseDetail, CaseDocument, Requirement } from '@/lib/types';
@@ -24,6 +24,11 @@ import { AiDocActions } from '@/components/aiDocs/AiDocActions';
 // Smart uploads: "AI · type" chip with the suggestion card, "Low quality", and "Accept all suggestions (N)".
 import { CaseAcceptAllBar, CaseDocAiChip, CaseDocNameWarning } from '@/components/uploadAi/StaffChips';
 import { PHOTO_KEYS, PhotoCheckBadge, photoCheckOf } from '@/components/uploadAi/PhotoCheckNotice'; // biometric photo rules badge
+// Marks on a rejected scan: red boxes + notes drawn while rejecting (sent as reviewMarks), read-only view afterwards.
+import { MarkEditor } from '@/components/review/MarkEditor';
+import { MarkedScan } from '@/components/review/MarkedScan';
+import { cleanMarks, marksOf, type ReviewMark } from '@/components/review/marks';
+import { scanKind } from '@/components/review/ScanPage';
 
 type Stage = 'INITIAL' | 'EMBASSY';
 
@@ -41,6 +46,8 @@ const DocRow = ({ c, doc, requirementKey }: { c: CaseDetail; doc: CaseDocument; 
   const refresh = useCaseRefresh(c.id);
   const [rejecting, setRejecting] = useState(false);
   const [note, setNote] = useState('');
+  const [marks, setMarks] = useState<ReviewMark[]>([]);
+  const [marking, setMarking] = useState(false);
   const [busy, setBusy] = useState<'ACCEPTED' | 'REJECTED' | null>(null);
   // Permanent removal of a case document is reserved for super admins.
   const isSuper = useAuth().user?.role === 'SUPER_ADMIN';
@@ -63,11 +70,17 @@ const DocRow = ({ c, doc, requirementKey }: { c: CaseDetail; doc: CaseDocument; 
   const review = async (status: 'ACCEPTED' | 'REJECTED') => {
     setBusy(status);
     try {
-      await api.post(`/admin/cases/${c.id}/documents/${doc.id}/review`, { status, note: status === 'REJECTED' ? note.trim() : undefined });
+      await api.post(`/admin/cases/${c.id}/documents/${doc.id}/review`, {
+        status,
+        note: status === 'REJECTED' ? note.trim() : undefined,
+        reviewMarks: status === 'REJECTED' && marks.length ? cleanMarks(marks) : undefined,
+      });
       await refresh();
       toast.success(status === 'ACCEPTED' ? t('admin.case.req.docAccepted') : t('admin.case.req.docRejected'));
       setRejecting(false);
       setNote('');
+      setMarks([]);
+      setMarking(false);
     } catch (err) {
       toastError(err);
     } finally {
@@ -149,6 +162,12 @@ const DocRow = ({ c, doc, requirementKey }: { c: CaseDetail; doc: CaseDocument; 
           <span className="font-semibold">{t('admin.case.req.rejectReason')}</span> {doc.reviewNote}
         </p>
       )}
+      {doc.status === 'REJECTED' && marksOf(doc).length > 0 && (
+        <details className="border-t border-line px-3 py-1.5 text-xs">
+          <summary className="cursor-pointer font-semibold text-danger-fg">{t('cplus.editor.count', { count: marksOf(doc).length })}</summary>
+          <MarkedScan className="mt-2" src={fileUrl(doc.id)} mimeType={doc.mimeType} marks={marksOf(doc)} />
+        </details>
+      )}
       <OcrBadge caseId={c.id} doc={doc as DocWithOcr} requirementKey={requirementKey} />
       <AnimatePresence initial={false}>
         {rejecting && (
@@ -172,6 +191,15 @@ const DocRow = ({ c, doc, requirementKey }: { c: CaseDetail; doc: CaseDocument; 
                 onChange={(e) => setNote(e.target.value)}
                 placeholder={t('admin.case.req.rejectPlaceholder')}
               />
+              {scanKind(doc.mimeType) !== 'unsupported' && (
+                <div>
+                  <button type="button" className="text-xs font-semibold text-danger-fg hover:underline" aria-expanded={marking} onClick={() => setMarking((v) => !v)}>
+                    {t('cplus.editor.open')}
+                    {marks.length > 0 && ` (${marks.length})`}
+                  </button>
+                  {marking && <MarkEditor className="mt-2 rounded-lg border border-line bg-card p-2" src={fileUrl(doc.id)} mimeType={doc.mimeType} value={marks} onChange={setMarks} />}
+                </div>
+              )}
               <div className="flex gap-2">
                 <button type="submit" className="btn-danger btn-sm" disabled={!note.trim() || !!busy}>
                   {busy === 'REJECTED' && <Spinner className="size-3" />} {t('admin.case.req.reject')}
