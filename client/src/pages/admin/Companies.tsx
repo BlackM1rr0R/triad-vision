@@ -4,7 +4,7 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tansta
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import clsx from 'clsx';
-import { Ban, Building2, CheckCircle2, ChevronLeft, ChevronRight, Mail, Phone, Plus, RotateCcw, Search, UserPlus } from 'lucide-react';
+import { Ban, Building2, CheckCircle2, ChevronLeft, ChevronRight, Mail, Maximize2, Phone, Plus, RotateCcw, Search, UserPlus } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useL10n } from '@/lib/l10n';
 import type { CaseStatus, L10n } from '@/lib/types';
@@ -28,6 +28,9 @@ import { useNewParam } from '@/components/command/useNewParam'; // ?new=1 deep l
 import { pagesStaffPower } from '@/i18n/pagesStaffPower'; // saved views + table settings
 import { SavedViewsMenu } from '@/components/staffPower/SavedViews';
 import { ColumnChooser, SettingsTable, ViewModeToggle, useTableSettings, type ColumnDef } from '@/components/staffPower/tableSettings';
+import { CompletenessBar, LegalDataForm, legalFormOf, legalPayload, type Completeness, type LegalFormValue } from '@/components/partnerRecords/LegalDataForm'; // legal data (Betriebsnummer, register, signatory, bank)
+import { useAuth } from '@/lib/auth';
+import { hasMinRole } from '@/lib/types';
 
 registerCopy(pagesJobs);
 registerCopy(pagesStaffPower);
@@ -46,32 +49,37 @@ interface CompanyDetail extends Company {
   _count: { invoices: number };
   /** Referral the employer signed up with (agent attribution or just the code). */
   referral?: { code: string | null; at: string | null; agent: { id: string; code: string; name: string } | null } | null;
+  /** Legal data (Company columns; bank masked for staff — bankLocked). */
+  bankLocked?: boolean;
+  completeness?: Completeness;
 }
 
-const COMPANY_FIELDS = ['name', 'legalForm', 'city', 'phone', 'email', 'address', 'vatId', 'website', 'contactName'] as const;
+// Legal form, city and VAT id live in the legal sections (components/partnerRecords/LegalDataForm).
+const COMPANY_FIELDS = ['name', 'phone', 'email', 'address', 'website', 'contactName'] as const;
 type CompanyField = (typeof COMPANY_FIELDS)[number];
-type CompanyForm = Record<CompanyField, string> & { sector: string; note: string };
+type CompanyForm = Record<CompanyField, string> & { sector: string; note: string; legal: LegalFormValue };
 
 const emptyForm = (c?: Partial<CompanyDetail>): CompanyForm => ({
   ...(Object.fromEntries(COMPANY_FIELDS.map((k) => [k, (c?.[k] as string | null | undefined) ?? ''])) as Record<CompanyField, string>),
   sector: c?.sector ?? 'logistics',
   note: c?.note ?? '',
+  legal: legalFormOf(c as Partial<Record<string, unknown>> | undefined),
 });
-const formPayload = (f: CompanyForm) => ({
+/** `bank`: include bank data (ADMIN+ only; staff get it masked and may not change it). */
+const formPayload = (f: CompanyForm, bank = false) => ({
   name: f.name.trim(),
-  legalForm: f.legalForm.trim() || null,
   sector: f.sector,
-  city: f.city.trim(),
   phone: f.phone.trim() || undefined,
   email: f.email.trim() || null,
   address: f.address.trim() || null,
-  vatId: f.vatId.trim() || null,
   website: f.website.trim() || null,
   contactName: f.contactName.trim() || null,
   note: f.note.trim() || null,
+  ...legalPayload(f.legal, { bank }),
+  city: f.legal.city.trim(),
 });
 
-const CompanyFields = ({ f, setF, idPrefix }: { f: CompanyForm; setF: (f: CompanyForm) => void; idPrefix: string }) => {
+const CompanyFields = ({ f, setF, idPrefix, bank = 'hidden' }: { f: CompanyForm; setF: (f: CompanyForm) => void; idPrefix: string; bank?: 'edit' | 'locked' | 'hidden' }) => {
   const { t } = useTranslation();
   const L = useJobLabels();
   const input = (k: CompanyField, label: string, span = false, required = false) => (
@@ -85,7 +93,6 @@ const CompanyFields = ({ f, setF, idPrefix }: { f: CompanyForm; setF: (f: Compan
   return (
     <div className="grid gap-3 sm:grid-cols-2">
       {input('name', t('jobsArea.register.companyName'), true, true)}
-      {input('legalForm', t('jobsArea.register.legalForm'))}
       <div>
         <label className="label" htmlFor={`${idPrefix}-sector`}>
           {t('jobsArea.register.sector')}
@@ -98,13 +105,14 @@ const CompanyFields = ({ f, setF, idPrefix }: { f: CompanyForm; setF: (f: Compan
           ))}
         </select>
       </div>
-      {input('city', t('jobsArea.register.city'), false, true)}
       {input('phone', t('jobsArea.register.phone'))}
       {input('email', t('jobsArea.register.email'))}
       {input('contactName', t('jobsArea.register.contactName'))}
-      {input('address', t('jobsArea.register.address'), true)}
-      {input('vatId', t('jobsArea.register.vatId'))}
       {input('website', t('jobsArea.register.website'))}
+      {input('address', t('jobsArea.register.address'), true)}
+      <div className="sm:col-span-2">
+        <LegalDataForm value={f.legal} onChange={(legal) => setF({ ...f, legal })} idPrefix={`${idPrefix}-legal`} bank={bank} required={['city']} />
+      </div>
       <div className="sm:col-span-2">
         <label className="label" htmlFor={`${idPrefix}-note`}>
           {t('jobsArea.admin.companies.note')}
@@ -152,12 +160,13 @@ const InviteForm = ({ onSubmit, busy, idPrefix }: { onSubmit: (v: { firstName: s
 const CreateCompanyModal = ({ open, onClose }: { open: boolean; onClose: () => void }) => {
   const { t } = useTranslation();
   const qc = useQueryClient();
+  const isAdmin = hasMinRole(useAuth().user?.role, 'ADMIN');
   const [f, setF] = useState(emptyForm());
   const [invite, setInvite] = useState({ firstName: '', lastName: '', email: '', locale: 'de' });
   const m = useMutation({
     mutationFn: () =>
       api.post('/admin/companies', {
-        company: formPayload(f),
+        company: formPayload(f, isAdmin),
         invite: invite.email.trim() ? { ...invite, email: invite.email.trim().toLowerCase() } : undefined,
       }),
     onSuccess: () => {
@@ -180,7 +189,7 @@ const CreateCompanyModal = ({ open, onClose }: { open: boolean; onClose: () => v
           <button type="button" className="btn-secondary btn-sm" onClick={onClose}>
             {t('admin.common.cancel')}
           </button>
-          <button type="submit" form="create-company" className="btn-primary btn-sm" disabled={m.isPending || f.name.trim().length < 2 || f.city.trim().length < 2}>
+          <button type="submit" form="create-company" className="btn-primary btn-sm" disabled={m.isPending || f.name.trim().length < 2 || f.legal.city.trim().length < 2}>
             {m.isPending && <Spinner className="size-3.5" />} {t('admin.common.create')}
           </button>
         </>
@@ -194,7 +203,7 @@ const CreateCompanyModal = ({ open, onClose }: { open: boolean; onClose: () => v
           m.mutate();
         }}
       >
-        <CompanyFields f={f} setF={setF} idPrefix="cc" />
+        <CompanyFields f={f} setF={setF} idPrefix="cc" bank={isAdmin ? 'edit' : 'hidden'} />
         <fieldset className="grid gap-3 sm:grid-cols-2">
           <legend className="mb-2 text-sm font-semibold text-ink">{t('jobsArea.admin.companies.inviteOptional')}</legend>
           <input aria-label={t('jobsArea.register.firstName')} placeholder={t('jobsArea.register.firstName')} className="input" value={invite.firstName} onChange={(e) => setInvite({ ...invite, firstName: e.target.value })} />
@@ -219,11 +228,12 @@ const CompanyDrawer = ({ id, onClose }: { id: string | null; onClose: () => void
   const { tr } = useL10n();
   const L = useJobLabels();
   const qc = useQueryClient();
+  const isAdmin = hasMinRole(useAuth().user?.role, 'ADMIN');
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['admin-company', id],
     queryFn: async () => {
-      const { data } = await api.get<{ company: CompanyDetail; referral?: CompanyDetail['referral'] }>(`/admin/companies/${id}`);
-      return { ...data.company, referral: data.referral ?? null };
+      const { data } = await api.get<{ company: CompanyDetail; referral?: CompanyDetail['referral']; completeness?: Completeness }>(`/admin/companies/${id}`);
+      return { ...data.company, referral: data.referral ?? null, completeness: data.completeness };
     },
     enabled: !!id,
   });
@@ -237,7 +247,7 @@ const CompanyDrawer = ({ id, onClose }: { id: string | null; onClose: () => void
     void qc.invalidateQueries({ queryKey: ['admin-company', id] });
   };
   const save = useMutation({
-    mutationFn: () => api.patch(`/admin/companies/${id}`, formPayload(f!)),
+    mutationFn: () => api.patch(`/admin/companies/${id}`, formPayload(f!, isAdmin)),
     onSuccess: () => {
       toast.success(t('jobsArea.admin.companies.saved'));
       refresh();
@@ -269,6 +279,13 @@ const CompanyDrawer = ({ id, onClose }: { id: string | null; onClose: () => void
       ) : (
         data && (
           <div className="space-y-6">
+            {/* Full profile page: contracts, contact persons, history, workers, invoices (/admin/companies/:id). */}
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <Link to={`/admin/companies/${data.id}`} className="btn-primary btn-sm">
+                <Maximize2 className="size-3.5" aria-hidden /> {t('companyProfile.fullProfile')}
+              </Link>
+            </div>
+            {data.completeness && <CompletenessBar completeness={data.completeness} />}
             <Panel title={t('jobsArea.admin.companies.status')}>
               <div className="flex flex-wrap items-center gap-2">
                 <span className={clsx('badge', COMPANY_STATUS_TONE[data.status])}>{L.companyStatus(data.status)}</span>
@@ -327,7 +344,7 @@ const CompanyDrawer = ({ id, onClose }: { id: string | null; onClose: () => void
                 }}
                 className="space-y-4"
               >
-                <CompanyFields f={f} setF={setF} idPrefix="cd" />
+                <CompanyFields f={f} setF={setF} idPrefix="cd" bank={isAdmin ? 'edit' : data.bankLocked ? 'locked' : 'hidden'} />
                 <div className="flex justify-end">
                   <button type="submit" className="btn-primary btn-sm" disabled={save.isPending}>
                     {save.isPending && <Spinner className="size-3.5" />} {t('admin.common.save')}
@@ -524,6 +541,15 @@ export default function AdminCompanies() {
                 <span>
                   {c.name} {c.legalForm && !c.name.includes(c.legalForm) ? c.legalForm : ''}
                 </span>
+                <Link
+                  to={`/admin/companies/${c.id}`}
+                  onClick={(e) => e.stopPropagation()}
+                  className="rounded p-0.5 text-muted hover:bg-sunken hover:text-link"
+                  title={t('companyProfile.fullProfile')}
+                  aria-label={`${t('companyProfile.fullProfile')}: ${c.name}`}
+                >
+                  <Maximize2 className="size-3.5" />
+                </Link>
               </span>
             ),
             status: (c) => <span className={clsx('badge', COMPANY_STATUS_TONE[c.status])}>{L.companyStatus(c.status)}</span>,
@@ -570,6 +596,9 @@ export default function AdminCompanies() {
                   )}
                 </div>
                 <p className="mt-3 flex flex-wrap gap-x-3 gap-y-1 border-t border-line pt-3 text-[11px] text-muted tabular-nums">
+                  <Link to={`/admin/companies/${c.id}`} onClick={(e) => e.stopPropagation()} className="font-semibold text-link hover:underline">
+                    {t('companyProfile.fullProfile')}
+                  </Link>
                   <span>{t('jobsArea.admin.companies.usersCount', { count: c._count.users })}</span>
                   <span>{t('jobsArea.admin.companies.vacanciesCount', { count: c._count.vacancies })}</span>
                   <span>{t('jobsArea.admin.companies.workersCount', { count: c._count.cases })}</span>

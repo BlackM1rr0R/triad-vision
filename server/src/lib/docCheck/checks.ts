@@ -141,9 +141,17 @@ export const runChecks = async (input: {
   target: CheckTarget;
   now?: Date;
   timeoutMs?: number;
-}): Promise<CheckResult> => {
+}): Promise<CheckResult> => checkBuffer(await fsp.readFile(input.path), input);
+
+/**
+ * The same checks on file content in memory: stored files (runChecks) and the pre-upload check of a
+ * passport / ID photo in the client portal (POST /api/vault/precheck), which stores nothing.
+ */
+export const checkBuffer = async (
+  buf: Buffer,
+  input: { mimeType: string; target: CheckTarget; now?: Date; timeoutMs?: number },
+): Promise<CheckResult> => {
   const now = input.now ?? new Date();
-  const buf = await fsp.readFile(input.path);
   const issues: CheckIssue[] = [];
   if (buf.length === 0) return { checks: buildChecks([{ code: 'EMPTY_FILE', level: 'error' }], now) };
 

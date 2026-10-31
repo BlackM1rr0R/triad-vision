@@ -5,6 +5,7 @@ import { prisma } from '../../db.js';
 import { badRequest, conflict, notFound, parse } from '../../lib/http.js';
 import { audit } from '../../lib/audit.js';
 import { STAFF_ROLES, STAFF_TRANSITIONS, loadPlan, notifyPlanClient, notifyPlanStaff, planInclude, staffView } from '../../lib/arrival/core.js';
+import { progressByCase, staffChecklist } from '../../lib/employerArrival.js';
 
 /** Staff side of arrival planning (/api/admin/arrivals; the admin router requires STAFF). */
 export const adminArrivalsRouter = Router();
@@ -72,8 +73,9 @@ adminArrivalsRouter.get('/', async (req, res) => {
     prisma.arrivalPlan.count({ where: { status: { in: ['SUBMITTED', 'CONFIRMED'] }, pickupRequested: true, pickupConfirmed: false } }),
     prisma.arrivalPlan.count({ where: { status: { in: ['SUBMITTED', 'CONFIRMED'] }, housingStatus: { in: ['REQUESTED', 'SEARCHING'] } } }),
   ]);
+  const checklists = await progressByCase(items.map((p) => p.caseId)); // employer arrival checklist progress
   res.json({
-    items: items.map((p) => staffView(p, now)),
+    items: items.map((p) => ({ ...staffView(p, now), employerChecklist: checklists.get(p.caseId) ?? null })),
     total,
     page: q.page,
     pageSize: q.pageSize,
@@ -94,7 +96,7 @@ adminArrivalsRouter.get('/staff', async (_req, res) => {
 adminArrivalsRouter.get('/:caseId', async (req, res) => {
   const plan = await loadPlan(String(req.params.caseId));
   if (!plan) throw notFound('PLAN_NOT_FOUND');
-  res.json({ plan: staffView(plan) });
+  res.json({ plan: staffView(plan), employerChecklist: await staffChecklist(plan.caseId) });
 });
 
 const text = (max: number) => z.string().trim().max(max).nullable().optional();

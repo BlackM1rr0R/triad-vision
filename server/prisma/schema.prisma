@@ -72,6 +72,7 @@ model User {
   createdAt               DateTime                 @default(now())
   updatedAt               DateTime                 @updatedAt
   cases                   Case[]                   @relation("CaseClient")
+  employerCandidateVotes  EmployerCandidateVote[]  @relation("EmployerCandidateVoter")
   assignedCases           Case[]                   @relation("CaseStaff")
   notifications           Notification[]
   events                  CaseEvent[]
@@ -454,6 +455,7 @@ model Case {
   dataConfirmations        DataConfirmation[] // client confirms the embassy data (lib/clientData)
   dataValues               CaseDataValue[] // client-provided VIDEX values (lib/clientData)
   housing                  CaseHousing? // housing search checklist + Anmeldung (lib/housing)
+  employerArrivalItems     EmployerArrivalItem[] // employer-side arrival checklist (lib/employerArrival)
   housingProposals         HousingProposal[] // partner landlord listings proposed to the client (lib/housing)
   /// Partner (middleman) who brought this client; their folder in the shared drive holds the client folder.
   partnerId                String?
@@ -469,6 +471,12 @@ model Case {
   /// Staff member who should take the next step (gets a notification and a "my work" item).
   processingAssigneeId     String?               @db.VarChar(40)
   processingMoves          CaseProcessingMove[]
+  /// Authorities catalogue (lib/authorities): the German embassy / consulate and the Ausländerbehörde of the case; further ones in authorityLinks.
+  embassyAuthorityId       String?
+  embassyAuthority         Authority?            @relation("CaseEmbassyAuthority", fields: [embassyAuthorityId], references: [id], onDelete: SetNull)
+  abhAuthorityId           String?
+  abhAuthority             Authority?            @relation("CaseAbhAuthority", fields: [abhAuthorityId], references: [id], onDelete: SetNull)
+  authorityLinks           CaseAuthority[]
 
   @@index([clientId])
   @@index([status])
@@ -478,6 +486,8 @@ model Case {
   @@index([partnerId])
   @@index([processingStage])
   @@index([processingAssigneeId])
+  @@index([embassyAuthorityId])
+  @@index([abhAuthorityId])
 }
 
 model DocumentRequirement {
@@ -879,6 +889,33 @@ model Company {
   referredAt            DateTime?
   /// Employer logo (public upload, re-encoded): { url, w?, h? }.
   logo                  Json?
+  // Legal / registration data used by employment contracts and official forms (lib/officialForms).
+  /// Betriebsnummer of the Bundesagentur fuer Arbeit (8 digits).
+  betriebsnummer        String?                      @db.VarChar(20)
+  /// Handelsregister number (e.g. "HRB 12345") and court (Amtsgericht).
+  registerNumber        String?                      @db.VarChar(40)
+  registerCourt         String?                      @db.VarChar(120)
+  /// Steuernummer (vatId = USt-IdNr).
+  taxNumber             String?                      @db.VarChar(40)
+  street                String?                      @db.VarChar(160)
+  postalCode            String?                      @db.VarChar(12)
+  country               String?                      @db.VarChar(80)
+  /// Geschaeftsfuehrer and the person who signs contracts (if different).
+  managingDirector      String?                      @db.VarChar(160)
+  signatoryName         String?                      @db.VarChar(160)
+  signatoryRole         String?                      @db.VarChar(80)
+  fax                   String?                      @db.VarChar(40)
+  foundedYear           Int?
+  employeeCount         Int?
+  /// Applicable collective agreement (Tarifvertrag), if any.
+  collectiveAgreement   String?                      @db.VarChar(160)
+  /// Bank data (ADMIN+ only, mask group IBAN).
+  bankName              String?                      @db.VarChar(120)
+  bankAccountHolder     String?                      @db.VarChar(120)
+  iban                  String?                      @db.VarChar(42)
+  bic                   String?                      @db.VarChar(11)
+  partnerContracts      PartnerContract[]
+  partnerActivities     PartnerActivity[]
 
   @@index([status])
 }
@@ -946,22 +983,23 @@ enum ApplicationStatus {
 }
 
 model VacancyApplication {
-  id               String                 @id @default(cuid())
+  id               String                  @id @default(cuid())
   vacancyId        String
-  vacancy          Vacancy                @relation(fields: [vacancyId], references: [id], onDelete: Cascade)
+  vacancy          Vacancy                 @relation(fields: [vacancyId], references: [id], onDelete: Cascade)
   userId           String
-  user             User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  status           ApplicationStatus      @default(NEW)
+  user             User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status           ApplicationStatus       @default(NEW)
   matchScore       Int? // 0–100 at the time of applying / last recompute
-  message          String?                @db.Text // candidate's note
-  staffNote        String?                @db.Text // internal
-  companyNote      String?                @db.Text // employer feedback
-  createdAt        DateTime               @default(now())
-  updatedAt        DateTime               @updatedAt
+  message          String?                 @db.Text // candidate's note
+  staffNote        String?                 @db.Text // internal
+  companyNote      String?                 @db.Text // employer feedback
+  createdAt        DateTime                @default(now())
+  updatedAt        DateTime                @updatedAt
   interviews       Interview[]
   interviewInvites InterviewInvite[]
   profileDraft     CandidateProfileDraft?
-  partyThread      PartyThread?           @relation("PartyThreadApplication")
+  partyThread      PartyThread?            @relation("PartyThreadApplication")
+  employerVotes    EmployerCandidateVote[]
 
   @@unique([vacancyId, userId])
   @@index([userId])
@@ -2046,29 +2084,35 @@ enum ContactSource {
 
 /// Shared address book (plus private contacts when shared = false).
 model Contact {
-  id            String        @id @default(cuid())
-  createdById   String?
-  createdBy     User?         @relation("ContactCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
-  shared        Boolean       @default(true)
-  firstName     String        @db.VarChar(80)
-  lastName      String?       @db.VarChar(80)
-  email         String?       @db.VarChar(190)
-  emails        Json? // additional addresses
-  phone         String?       @db.VarChar(40)
-  company       String?       @db.VarChar(120)
-  companyId     String?
-  companyRef    Company?      @relation(fields: [companyId], references: [id], onDelete: SetNull)
-  position      String?       @db.VarChar(120)
-  address       String?       @db.VarChar(255)
-  notes         String?       @db.Text
-  tags          Json?
-  userId        String? // linked platform account (client / employer)
-  user          User?         @relation("ContactUser", fields: [userId], references: [id], onDelete: SetNull)
-  source        ContactSource @default(MANUAL)
-  lastContactAt DateTime?
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
+  id                String           @id @default(cuid())
+  createdById       String?
+  createdBy         User?            @relation("ContactCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  shared            Boolean          @default(true)
+  firstName         String           @db.VarChar(80)
+  lastName          String?          @db.VarChar(80)
+  email             String?          @db.VarChar(190)
+  emails            Json? // additional addresses
+  phone             String?          @db.VarChar(40)
+  company           String?          @db.VarChar(120)
+  companyId         String?
+  companyRef        Company?         @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  position          String?          @db.VarChar(120)
+  address           String?          @db.VarChar(255)
+  notes             String?          @db.Text
+  tags              Json?
+  userId            String? // linked platform account (client / employer)
+  user              User?            @relation("ContactUser", fields: [userId], references: [id], onDelete: SetNull)
+  source            ContactSource    @default(MANUAL)
+  lastContactAt     DateTime?
+  /// Contact person of a referral partner (companyId covers employers).
+  referralPartnerId String?
+  referralPartner   ReferralPartner? @relation(fields: [referralPartnerId], references: [id], onDelete: SetNull)
+  /// Main contact of the company / partner.
+  isPrimary         Boolean          @default(false)
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
 
+  @@index([referralPartnerId])
   @@index([email])
   @@index([createdById, shared])
   @@fulltext([firstName, lastName, email, company])
@@ -2859,6 +2903,8 @@ enum ContractKind {
   WORK // Arbeitsvertrag
   AUSBILDUNG // Ausbildungsvertrag
   SERVICE // Dienstleistungsvertrag (Triad Vision ↔ client)
+  EMPLOYER // Personalvermittlungs- / Kooperationsvertrag (Triad Vision ↔ employer)
+  PARTNER // Kooperations- / Provisionsvertrag (Triad Vision ↔ referral partner)
 }
 
 /// Contract template with {{placeholders}} filled from client / case / company data, then sent for e-signature.
@@ -2964,6 +3010,19 @@ model ReferralPartner {
   customData        Json?
   /// The partner's own extra fields: [{ label, value }].
   extraFields       Json?
+  /// Legal data for partner companies (contracts are generated from it).
+  legalForm         String?             @db.VarChar(60)
+  registerNumber    String?             @db.VarChar(40)
+  registerCourt     String?             @db.VarChar(120)
+  vatId             String?             @db.VarChar(40)
+  betriebsnummer    String?             @db.VarChar(20)
+  street            String?             @db.VarChar(160)
+  postalCode        String?             @db.VarChar(12)
+  signatoryName     String?             @db.VarChar(160)
+  signatoryRole     String?             @db.VarChar(80)
+  partnerContracts  PartnerContract[]
+  partnerActivities PartnerActivity[]
+  contacts          Contact[]
   createdAt         DateTime            @default(now())
   updatedAt         DateTime            @updatedAt
   cases             Case[]
@@ -6045,4 +6104,198 @@ model CityCost {
   updatedAt     DateTime @updatedAt
 
   @@index([active, sortOrder])
+}
+
+/// Contract with an employer (companyId) or a referral partner (referralPartnerId): uploaded or generated from a
+/// ContractTemplate, with term, renewal and expiry reminders (lib/partnerContracts).
+model PartnerContract {
+  id                String           @id @default(cuid())
+  companyId         String?
+  company           Company?         @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  referralPartnerId String?
+  referralPartner   ReferralPartner? @relation(fields: [referralPartnerId], references: [id], onDelete: Cascade)
+  title             String           @db.VarChar(200)
+  /// COOPERATION | PERSONNEL | COMMISSION | FRAMEWORK | NDA | OTHER
+  kind              String           @default("COOPERATION") @db.VarChar(20)
+  /// DRAFT | SENT | ACTIVE | EXPIRED | TERMINATED
+  status            String           @default("DRAFT") @db.VarChar(12)
+  startDate         DateTime?        @db.Date
+  endDate           DateTime?        @db.Date
+  autoRenew         Boolean          @default(false)
+  noticePeriodDays  Int?
+  /// Days before endDate (or the notice deadline) when staff are reminded.
+  reminderDays      Int              @default(30)
+  reminderSentAt    DateTime?
+  signedAt          DateTime?
+  /// Contract value / fee per placement in cents.
+  valueCents        Int?
+  currency          String           @default("EUR") @db.VarChar(3)
+  templateId        String?          @db.VarChar(40)
+  /// Stored files (private uploads): the uploaded or generated contract and the signed copy.
+  fileName          String?          @db.VarChar(255)
+  filePath          String?          @db.VarChar(255)
+  mimeType          String?          @db.VarChar(100)
+  sizeBytes         Int?
+  signedFileName    String?          @db.VarChar(255)
+  signedFilePath    String?          @db.VarChar(255)
+  note              String?          @db.Text
+  createdById       String?          @db.VarChar(40)
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+
+  @@index([companyId])
+  @@index([referralPartnerId])
+  @@index([status, endDate])
+}
+
+/// Timeline of an employer or referral partner: notes, calls, meetings, e-mails (field changes come from AuditLog).
+model PartnerActivity {
+  id                String           @id @default(cuid())
+  companyId         String?
+  company           Company?         @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  referralPartnerId String?
+  referralPartner   ReferralPartner? @relation(fields: [referralPartnerId], references: [id], onDelete: Cascade)
+  /// NOTE | CALL | MEETING | EMAIL | TASK
+  kind              String           @default("NOTE") @db.VarChar(12)
+  body              String           @db.Text
+  at                DateTime         @default(now())
+  contactId         String?          @db.VarChar(40)
+  createdById       String?          @db.VarChar(40)
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+
+  @@index([companyId, at])
+  @@index([referralPartnerId, at])
+}
+
+// ─── Employer portal: candidate votes + arrival checklist ───────────────
+
+/// One employer user's vote on a presented candidate (advisory; the company's final decision stays VacancyApplication.status).
+model EmployerCandidateVote {
+  id            String             @id @default(cuid())
+  applicationId String
+  application   VacancyApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  companyId     String             @db.VarChar(40)
+  userId        String?
+  user          User?              @relation("EmployerCandidateVoter", fields: [userId], references: [id], onDelete: SetNull)
+  /// Snapshot of the voter's name (kept when the employer user is removed).
+  voterName     String             @db.VarChar(160)
+  /// LIKE | INTERVIEW | REJECT
+  vote          String             @db.VarChar(12)
+  /// REJECT only: GERMAN | EXPERIENCE | QUALIFICATION | SALARY | AVAILABILITY | OTHER
+  rejectReason  String?            @db.VarChar(20)
+  comment       String?            @db.Text
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+
+  @@unique([applicationId, userId])
+  @@index([companyId, updatedAt])
+}
+
+/// The employer's own arrival checklist for a placed worker (housing, Anmeldung, bank, insurance, first day …).
+model EmployerArrivalItem {
+  id              String    @id @default(cuid())
+  caseId          String
+  case            Case      @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  companyId       String    @db.VarChar(40)
+  /// Default item key (HOUSING, ANMELDUNG, …); null for an item the company added itself.
+  key             String?   @db.VarChar(30)
+  /// Custom items only (default items are translated in the UI).
+  label           String?   @db.VarChar(200)
+  sortOrder       Int       @default(0)
+  done            Boolean   @default(false)
+  doneAt          DateTime?
+  doneById        String?   @db.VarChar(40)
+  doneByName      String?   @db.VarChar(160)
+  /// Date of the item (Anmeldung appointment, first work day …), calendar day.
+  dueDate         DateTime? @db.Date
+  note            String?   @db.VarChar(1000)
+  /// Shown read-only in the worker's arrival page.
+  visibleToWorker Boolean   @default(true)
+  /// First-work-day reminder to the company was sent (FIRST_DAY item only).
+  remindedAt      DateTime?
+  createdById     String?   @db.VarChar(40)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@unique([caseId, key])
+  @@index([companyId])
+  @@index([key, done, dueDate])
+}
+
+// ─── Authorities catalogue (Botschaft / Ausländerbehörde / other Behörden) ─
+
+enum AuthorityType {
+  EMBASSY // German embassy / consulate general (visa section)
+  AUSLAENDERBEHOERDE // immigration office of the employer's / client's city in Germany
+  AGENTUR_FUER_ARBEIT // Bundesagentur für Arbeit (Zustimmung, ZAV)
+  RECOGNITION // recognition body (ZAB, Landesamt, IHK FOSA, HWK …)
+  OTHER
+}
+
+/// One authority of the catalogue (lib/authorities): address, contact data, what it requires and how long it takes.
+/// Cases point at it (Case.embassyAuthorityId / abhAuthorityId, CaseAuthority for further ones).
+model Authority {
+  id                String             @id @default(cuid())
+  type              AuthorityType
+  name              String             @db.VarChar(200)
+  city              String?            @db.VarChar(120)
+  country           String?            @db.VarChar(80)
+  address           String?            @db.Text
+  website           String?            @db.VarChar(300)
+  email             String?            @db.VarChar(190)
+  phone             String?            @db.VarChar(60)
+  openingHours      String?            @db.Text
+  /// What the authority expects (free text); shown on the case and, read-only, to the client.
+  requirements      String?            @db.Text
+  /// Required documents: [{ label, required }].
+  checklist         Json?
+  /// Internal notes (never shown to clients).
+  notes             String?            @db.Text
+  /// Average waiting time in days entered by the team (the computed value comes from linked cases).
+  waitingDaysManual Int?
+  /// Other spellings, one per line: used to find cases whose free-text appointment place / authority names it.
+  aliases           String?            @db.Text
+  active            Boolean            @default(true)
+  createdById       String?            @db.VarChar(40)
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  contacts          AuthorityContact[]
+  embassyCases      Case[]             @relation("CaseEmbassyAuthority")
+  abhCases          Case[]             @relation("CaseAbhAuthority")
+  caseLinks         CaseAuthority[]
+
+  @@index([type, active])
+  @@index([city])
+}
+
+/// Contact person at an authority (internal: never shown to clients).
+model AuthorityContact {
+  id          String    @id @default(cuid())
+  authorityId String
+  authority   Authority @relation(fields: [authorityId], references: [id], onDelete: Cascade)
+  name        String    @db.VarChar(160)
+  role        String?   @db.VarChar(120)
+  phone       String?   @db.VarChar(60)
+  email       String?   @db.VarChar(190)
+  note        String?   @db.VarChar(500)
+  sortOrder   Int       @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([authorityId])
+}
+
+/// Further authorities of a case besides its embassy and Ausländerbehörde (Agentur für Arbeit, recognition body …).
+model CaseAuthority {
+  id          String    @id @default(cuid())
+  caseId      String
+  case        Case      @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  authorityId String
+  authority   Authority @relation(fields: [authorityId], references: [id], onDelete: Cascade)
+  note        String?   @db.VarChar(300)
+  createdAt   DateTime  @default(now())
+
+  @@unique([caseId, authorityId])
+  @@index([authorityId])
 }

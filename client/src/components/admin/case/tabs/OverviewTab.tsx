@@ -8,6 +8,7 @@ import GermanStaffPanel from '@/components/german/GermanStaffPanel';
 import CaseCourseCard from '@/components/course/CaseCourseCard';
 import { CandidateEvaluations } from '@/components/placement/Evaluations';
 import CaseHousingCard from '@/components/housing/CaseHousingCard';
+import CaseAuthoritiesCard from '@/components/authorities/CaseAuthoritiesCard'; // embassy + Ausländerbehörde from the catalogue
 import { ActionPanel } from '../ActionPanel';
 import { CaseStatsPanel } from '../CaseStats';
 import type { CaseTabProps } from './types';
@@ -35,6 +36,8 @@ export default function OverviewTab({ c, stats, goTo }: CaseTabProps) {
       )}
       {/* Mənzil & Anmeldung: status + two-week deadline (approved cases only; renders nothing before). */}
       <CaseHousingCard caseId={c.id} status={c.status} />
+      {/* Qurumlar: embassy / Ausländerbehörde of the case with address, requirements, waiting time. */}
+      <CaseAuthoritiesCard caseId={c.id} />
       <CaseDataPanel c={c} />
       {!member && <GermanStaffPanel userId={c.client.id} />}
       {!member && <CaseCourseCard userId={c.client.id} />}

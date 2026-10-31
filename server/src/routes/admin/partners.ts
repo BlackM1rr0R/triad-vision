@@ -15,14 +15,18 @@ import { normaliseAgentCode } from '../../lib/agents/referral.js';
 import { assignCases, deletePartner } from '../../lib/partners/manage.js';
 import { partnerLoginRouter, partnerLoginView } from '../../lib/partners/adminLoginRoutes.js';
 import { partnerCommissionsRouter } from '../../lib/partners/adminCommissionRoutes.js';
-import { requestMaskGroups } from '../../lib/privacy/mask.js';
+import { maskWith, requestMaskGroups } from '../../lib/privacy/mask.js';
 import { partnerFieldsRouter, listFieldDefs } from '../../lib/partners/adminFieldRoutes.js'; // admin-defined form fields
 import {
   BANK_FIELDS,
+  PARTNER_TYPES,
   CustomFieldError,
   contractDatesInvalid,
+  contractReadiness,
   customDataOf,
+  dateToDay,
   dayToDate,
+  legalCrossError,
   extraFieldsOf,
   mergeCustomData,
   partnerProfileShape,
@@ -31,6 +35,10 @@ import {
   stripMaskedProfileInput,
   tagsOf,
 } from '../../lib/partners/profile.js';
+import { CONTRACT_STATUSES, contractSummaries, lastActivities, partnerClientTotals } from '../../lib/partners/overview.js'; // list filters, profile header
+import { loadRows, totalsOf } from '../../lib/settlement/service.js';
+import { csvSafe } from '../../lib/csvSafe.js';
+import { todayOf } from '../../lib/partnerRecords/contracts.js';
 
 /**
  * Referral partners (middlemen who bring visa clients) — /api/admin/partners.
@@ -89,6 +97,10 @@ const partnerData = async (body: PartnerBody, current: ReferralPartner | null) =
   const { customData, contractStart, contractEnd, tags, extraFields, ...rest } = body;
   if (contractDatesInvalid(contractStart !== undefined ? contractStart : current?.contractStart, contractEnd !== undefined ? contractEnd : current?.contractEnd))
     throw badRequest('CONTRACT_DATES_INVALID');
+  // Betriebsnummer only for German partners, 5-digit PLZ in Germany (on the merged values).
+  const pick = <K extends 'country' | 'betriebsnummer' | 'postalCode'>(k: K) => (body[k] !== undefined ? body[k] : current?.[k]);
+  const cross = legalCrossError({ country: pick('country'), betriebsnummer: pick('betriebsnummer'), postalCode: pick('postalCode') });
+  if (cross) throw badRequest(cross);
   const defs = customData !== undefined ? await listFieldDefs() : [];
   let merged: ReturnType<typeof mergeCustomData> | undefined;
   if (customData !== undefined) {
@@ -145,7 +157,7 @@ const jsonSearchIds = async (needle: string) => {
 };
 
 /** Text columns the partner search looks in (besides tags and custom / extra field values). */
-const SEARCH_COLUMNS = ['name', 'phone', 'email', 'companyName', 'contactPerson', 'phone2', 'whatsapp', 'city', 'country', 'address', 'taxId', 'website', 'code'] as const;
+const SEARCH_COLUMNS = ['name', 'phone', 'email', 'companyName', 'contactPerson', 'phone2', 'whatsapp', 'city', 'country', 'address', 'street', 'postalCode', 'taxId', 'vatId', 'betriebsnummer', 'registerNumber', 'website', 'code'] as const;
 
 /** Codes are unique across partners, agents and client "bring a friend" codes. */
 const assertCodeFree = async (code: string | null | undefined, exceptId?: string) => {
@@ -158,23 +170,169 @@ const assertNameFree = async (name: string, exceptId?: string) => {
   if (clash) throw conflict('PARTNER_NAME_TAKEN');
 };
 
-adminPartnersRouter.get('/', async (req, res) => {
-  const q = parse(
-    z.object({
-      search: z.string().trim().max(120).optional(),
-      active: z.enum(['true', 'false', 'all']).default('all'),
-    }),
-    req.query,
-  );
+const listQuery = z.object({
+  search: z.string().trim().max(120).optional(),
+  active: z.enum(['true', 'false', 'all']).default('all'),
+  type: z.enum(PARTNER_TYPES).optional(),
+  country: z.string().trim().max(80).optional(),
+  tag: z.string().trim().max(40).optional(),
+  /** active | expiring (≤ 30 days left) | expired | none (lib/partners/overview.ts). */
+  contract: z.enum(CONTRACT_STATUSES).optional(),
+  sort: z.enum(['name', 'clients', 'activeCases', 'commissions', 'pending', 'lastActivity', 'created', 'contractEnd']).optional(),
+  dir: z.enum(['asc', 'desc']).optional(),
+});
+type ListQuery = z.infer<typeof listQuery>;
+
+/** The partner list with counts, commission totals, contract status and last activity — filtered and sorted. */
+const listPartners = async (req: Request, q: ListQuery) => {
   const search = q.search;
   const where: Prisma.ReferralPartnerWhereInput = {
     ...(q.active !== 'all' ? { active: q.active === 'true' } : {}),
+    ...(q.type ? { partnerType: q.type } : {}),
+    ...(q.country ? { country: q.country } : {}),
     ...(search ? { OR: [...SEARCH_COLUMNS.map((k) => ({ [k]: { contains: search } })), { id: { in: await jsonSearchIds(search) } }] } : {}),
   };
-  const partners = await prisma.referralPartner.findMany({ where, orderBy: [{ active: 'desc' }, { name: 'asc' }] });
-  const [counts, totals, folders] = await Promise.all([partnerCounts(partners.map((p) => p.id)), partnerCommissionTotals(partners.map((p) => p.id)), partnerFolderIds(partners)]);
+  let partners = await prisma.referralPartner.findMany({ where, orderBy: [{ active: 'desc' }, { name: 'asc' }] });
+  if (q.tag) {
+    const tag = q.tag.toLocaleLowerCase();
+    partners = partners.filter((p) => tagsOf(p.tags).some((t) => t.toLocaleLowerCase() === tag));
+  }
+  const contracts = await contractSummaries(partners);
+  if (q.contract) partners = partners.filter((p) => contracts.get(p.id)?.status === q.contract);
+  const ids = partners.map((p) => p.id);
+  const [counts, totals, folders, activity] = await Promise.all([partnerCounts(ids), partnerCommissionTotals(ids), partnerFolderIds(partners), lastActivities(partners)]);
   // folderId: the partner's live folder below "Partner" (null when it was deleted in the drive — the card offers to recreate it).
-  res.json({ items: partners.map((p) => ({ ...view(req, p), counts: counts.get(p.id), commissionTotals: totals.get(p.id), folderId: folders.get(p.id) ?? null })) });
+  const items = partners.map((p) => ({
+    ...view(req, p),
+    counts: counts.get(p.id)!,
+    commissionTotals: totals.get(p.id),
+    folderId: folders.get(p.id) ?? null,
+    contract: contracts.get(p.id)!,
+    lastActivityAt: activity.get(p.id) ?? null,
+    readiness: contractReadiness(p),
+  }));
+  if (q.sort) {
+    const dir = q.dir === 'desc' ? -1 : 1;
+    const num = (v: number | null | undefined) => v ?? Number.NEGATIVE_INFINITY;
+    const key = (i: (typeof items)[number]): number | string => {
+      switch (q.sort) {
+        case 'clients':
+          return i.counts.clients;
+        case 'activeCases':
+          return i.counts.activeCases;
+        case 'commissions':
+          return num(i.commissionTotals?.totalCents);
+        case 'pending':
+          return num(i.commissionTotals && i.commissionTotals.pendingCents + i.commissionTotals.approvedCents);
+        case 'lastActivity':
+          return num(i.lastActivityAt?.getTime());
+        case 'created':
+          return i.createdAt.getTime();
+        case 'contractEnd':
+          // Open-ended contracts after every dated one, partners without a contract last.
+          return i.contract.status === 'none' ? Number.POSITIVE_INFINITY : i.contract.endDate ? Date.parse(i.contract.endDate) : Number.MAX_SAFE_INTEGER;
+        default:
+          return i.name.toLocaleLowerCase();
+      }
+    };
+    items.sort((a, b) => {
+      const x = key(a);
+      const y = key(b);
+      const c = typeof x === 'string' && typeof y === 'string' ? x.localeCompare(y) : x < y ? -1 : x > y ? 1 : 0;
+      return c * dir || a.name.localeCompare(b.name);
+    });
+  }
+  return items;
+};
+
+/** Distinct countries and tags of all partners (the list filter options). */
+const listFacets = async () => {
+  const rows = await prisma.referralPartner.findMany({ select: { country: true, tags: true } });
+  const countries = [...new Set(rows.map((r) => r.country?.trim()).filter((c): c is string => !!c))].sort((a, b) => a.localeCompare(b));
+  const tagMap = new Map<string, string>();
+  for (const r of rows) for (const t of tagsOf(r.tags)) if (!tagMap.has(t.toLocaleLowerCase())) tagMap.set(t.toLocaleLowerCase(), t);
+  return { countries, tags: [...tagMap.values()].sort((a, b) => a.localeCompare(b)) };
+};
+
+/**
+ * GET / — partners (?search name/company/phone/code/VÖEN/…, ?active, ?type, ?country, ?tag, ?contract,
+ * ?sort, ?dir) + filter facets. GET /export.csv — the same list as CSV (VÖEN masked per settings).
+ */
+adminPartnersRouter.get('/', async (req, res) => {
+  const q = parse(listQuery, req.query);
+  const [items, facets] = await Promise.all([listPartners(req, q), listFacets()]);
+  res.json({ items, facets });
+});
+
+const CSV_HEADERS = [
+  'Ad',
+  'Növ',
+  'Şirkət',
+  'Əlaqədar şəxs',
+  'Telefon',
+  'E-poçt',
+  'Kod',
+  'Şəhər',
+  'Ölkə',
+  'VÖEN',
+  'USt-IdNr',
+  'Aktiv',
+  'Müştərilər',
+  'Aktiv müraciətlər',
+  'Viza verilib',
+  'Rədd',
+  'Komissiya (cəmi)',
+  'Gözləyən',
+  'Ödənilib',
+  'Valyuta',
+  'Müqavilə',
+  'Müqavilə sonu',
+  'Son fəaliyyət',
+  'Teqlər',
+];
+const CONTRACT_AZ: Record<string, string> = { active: 'Aktiv', expiring: 'Bitir (30 gün)', expired: 'Bitib', none: 'Yoxdur' };
+const dmy = (day: string | null | undefined) => (day ? day.split('-').reverse().join('.') : '');
+
+adminPartnersRouter.get('/export.csv', async (req, res) => {
+  const q = parse(listQuery, req.query);
+  const items = await listPartners(req, q);
+  const mask = requestMaskGroups(res);
+  const cents = (v: number | null | undefined) => (v == null ? '' : (v / 100).toFixed(2));
+  const cell = (v: unknown) => {
+    const s = csvSafe(v == null ? '' : String(v));
+    return /[",;\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  };
+  const rows = items.map((p) => [
+    p.name,
+    p.partnerType === 'COMPANY' ? 'Şirkət' : 'Fiziki şəxs',
+    p.companyName,
+    p.contactPerson,
+    p.phone,
+    p.email,
+    p.code,
+    p.city,
+    p.country,
+    maskWith(mask, 'taxId', p.taxId),
+    p.vatId,
+    p.active ? 'Bəli' : 'Xeyr',
+    p.counts.clients,
+    p.counts.activeCases,
+    p.counts.approved,
+    p.counts.rejected,
+    cents(p.commissionTotals?.totalCents),
+    cents(p.commissionTotals ? p.commissionTotals.pendingCents + p.commissionTotals.approvedCents : null),
+    cents(p.commissionTotals?.paidCents),
+    p.currency,
+    CONTRACT_AZ[p.contract.status],
+    dmy(p.contract.endDate),
+    dmy(dateToDay(p.lastActivityAt)),
+    p.tags.join(', '),
+  ]);
+  await audit(req, 'PARTNERS_EXPORTED', undefined, { format: 'csv', count: items.length, filters: { ...q } });
+  res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+  res.setHeader('Content-Disposition', `attachment; filename="partnyorlar-${dateToDay(new Date())}.csv"`);
+  // BOM so Excel opens the UTF-8 file with the right characters.
+  res.send(`﻿${[CSV_HEADERS, ...rows].map((r) => r.map(cell).join(',')).join('\r\n')}\r\n`);
 });
 
 /**
@@ -292,11 +450,110 @@ adminPartnersRouter.get('/:id', async (req, res) => {
       commissionTotals: totals.get(partner.id),
       login,
       folderId: await partnerFolderId(partner),
+      contract: (await contractSummaries([partner])).get(partner.id),
+      readiness: contractReadiness(partner),
     },
     cases,
     // Clients who belong to the partner (sign-up link, partner portal, admin) — with or without a case.
     ownedClients,
   });
+});
+
+/**
+ * GET /:id/stats — the header of the full profile page: clients (total / active), cases by stage, visas,
+ * refusals, commissions (earned / pending / paid), contract status with days left, last activity, data
+ * completeness for contract generation and counts of the tabs.
+ */
+adminPartnersRouter.get('/:id/stats', async (req, res) => {
+  const partner = await prisma.referralPartner.findUnique({ where: { id: String(req.params.id) } });
+  if (!partner) throw notFound('PARTNER_NOT_FOUND');
+  const [counts, totals, contracts, activity, clients, caseCount, settlements, contacts, activities, login] = await Promise.all([
+    partnerCounts([partner.id]),
+    partnerCommissionTotals([partner.id]),
+    contractSummaries([partner]),
+    lastActivities([partner]),
+    partnerClientTotals(partner.id),
+    prisma.case.count({ where: { partnerId: partner.id } }),
+    prisma.settlementEntry.count({ where: { partnerId: partner.id } }),
+    prisma.contact.count({ where: { referralPartnerId: partner.id } }),
+    prisma.partnerActivity.count({ where: { referralPartnerId: partner.id } }),
+    partner.userId ? partnerLoginView(partner.userId) : Promise.resolve(null),
+  ]);
+  const c = counts.get(partner.id)!;
+  const t = totals.get(partner.id)!;
+  res.json({
+    stats: {
+      clients,
+      cases: { total: caseCount, active: c.activeCases, approved: c.approved, refused: c.rejected, cancelled: c.cancelled, stages: c.stages },
+      commissions: {
+        currency: partner.currency,
+        earnedCents: t.totalCents,
+        pendingCents: t.pendingCents + t.approvedCents,
+        paidCents: t.paidCents,
+        thisMonthCents: t.thisMonthCents,
+        count: t.pendingCount + t.approvedCount + t.paidCount,
+      },
+      contract: contracts.get(partner.id)!,
+      lastActivityAt: activity.get(partner.id) ?? null,
+      readiness: contractReadiness(partner),
+      legacyContract: partner.contractStart || partner.contractEnd ? { start: dateToDay(partner.contractStart), end: dateToDay(partner.contractEnd) } : null,
+      counts: { settlements, contacts, activities },
+      portal: { hasLogin: !!partner.userId, active: login?.isActive ?? false, lastSeenAt: login?.lastSeenAt ?? null, visibility: partner.visibility },
+    },
+  });
+});
+
+/**
+ * POST /:id/legacy-contract { title? } — the old profile dates (contractStart / contractEnd) become a
+ * PartnerContract once: the contract is created (ACTIVE, or EXPIRED when the end has passed) and the
+ * profile dates are cleared (409 NO_LEGACY_CONTRACT when there are none). Staff and above, audited.
+ */
+adminPartnersRouter.post('/:id/legacy-contract', async (req, res) => {
+  const body = parse(z.object({ title: z.string().trim().min(1).max(200).optional() }), req.body ?? {});
+  const partner = await prisma.referralPartner.findUnique({ where: { id: String(req.params.id) } });
+  if (!partner) throw notFound('PARTNER_NOT_FOUND');
+  if (!partner.contractStart && !partner.contractEnd) throw conflict('NO_LEGACY_CONTRACT');
+  const ended = !!partner.contractEnd && partner.contractEnd < todayOf(); // Baku day, like lib/partnerRecords
+  const contract = await prisma.$transaction(async (tx) => {
+    // Conditional clear: a second click at the same time finds no dates and creates nothing.
+    const cleared = await tx.referralPartner.updateMany({
+      where: { id: partner.id, OR: [{ contractStart: { not: null } }, { contractEnd: { not: null } }] },
+      data: { contractStart: null, contractEnd: null },
+    });
+    if (!cleared.count) throw conflict('NO_LEGACY_CONTRACT');
+    return tx.partnerContract.create({
+      data: {
+        referralPartnerId: partner.id,
+        title: body.title ?? 'Əməkdaşlıq müqaviləsi',
+        kind: 'COMMISSION',
+        status: ended ? 'EXPIRED' : 'ACTIVE',
+        startDate: partner.contractStart,
+        endDate: partner.contractEnd,
+        note: 'Profildəki müqavilə tarixlərindən yaradılıb.',
+        createdById: req.user!.id,
+      },
+    });
+  });
+  await audit(req, 'PARTNER_LEGACY_CONTRACT_CONVERTED', partner.id, {
+    contractId: contract.id,
+    fields: ['contractStart', 'contractEnd'],
+    changes: {
+      contractStart: { from: dateToDay(partner.contractStart), to: null },
+      contractEnd: { from: dateToDay(partner.contractEnd), to: null },
+    },
+  });
+  res.status(201).json({ contract: { ...contract, startDate: dateToDay(contract.startDate), endDate: dateToDay(contract.endDate) } });
+});
+
+/** GET /:id/settlements — the partner's rows of the settlement ledger (Hesablaşmalar) and the partner-share totals. */
+adminPartnersRouter.get('/:id/settlements', async (req, res) => {
+  const partner = await prisma.referralPartner.findUnique({ where: { id: String(req.params.id) }, select: { id: true } });
+  if (!partner) throw notFound('PARTNER_NOT_FOUND');
+  const { rows, beneficiaries } = await loadRows({ partnerId: partner.id });
+  const totals = totalsOf(rows, beneficiaries);
+  // The partner's view of the ledger: no owner / team shares (those stay on the Hesablaşmalar page).
+  const items = rows.map(({ shares: _s, netCents: _n, roundingCents: _r, expensesCents: _e, ...r }) => r);
+  res.json({ rows: items, totals: { count: totals.count, amount: totals.amount, paid: totals.paid, partner: totals.partner } });
 });
 
 /** POST /:id/code (ADMIN+) — a fresh suggested code from the partner's name (stored at once). */

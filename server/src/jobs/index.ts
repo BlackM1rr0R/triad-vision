@@ -51,3 +51,8 @@ import './license.js'; // white-label licence re-check (daily)
 import './course.js'; // pre-departure course: auto-enrollment + reminder after 7 days without progress
 import './publicUploads.js'; // nightly: unreferenced public upload files (CMS, vacancy photos, logos) older than 7 days
 import './jobFeeds.js'; // BA Jobbörse HR-BA-XML upload (off until partner id + certificate are entered)
+import './partnerContracts.js'; // employer / partner contracts: lifecycle (active / expired / auto-renew) + expiry reminders; official-form extras → Company columns
+import './phoneReminders.js'; // WhatsApp / SMS reminders before embassy appointments, German exams, bookings and interviews (configurable lead times)
+import './employerArrival.js'; // employer arrival checklist: reminder to the company before the first work day when items are open
+import './staffDigest.js'; // staff morning digest e-mail (08:00-12:00 Baku, once per day, from the own my-work queue; per-user opt-out)
+import './backupCheck.js'; // weekly backup restore test result (deploy/backup-verify.sh -> Setting ops:backupCheck) -> admin notification + e-mail, stale warning

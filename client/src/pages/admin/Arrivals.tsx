@@ -7,6 +7,7 @@ import clsx from 'clsx';
 import { AlertTriangle, BedDouble, Car, CheckCircle2, ChevronLeft, ChevronRight, Clock, ExternalLink, Inbox, Mail, Phone, Plane, PlaneLanding, Search, XCircle } from 'lucide-react';
 import { api } from '@/lib/api';
 import { registerCopy } from '@/i18n';
+import { StaffEmployerChecklistCard } from '@/components/employerExtras/ArrivalChecklist';
 import { pagesArrival } from '@/i18n/pagesArrival';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { useRealtime } from '@/lib/realtime';
@@ -259,6 +260,7 @@ const Drawer = ({ caseId, onClose }: { caseId: string; onClose: () => void }) =>
                   </label>
                 </div>
               </Section>
+              <StaffEmployerChecklistCard caseId={caseId} />
             </>
           )}
     </UiDrawer>

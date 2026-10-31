@@ -45,8 +45,81 @@ export const triadParty = async () => {
   const name = [str(legal.companyName), str(legal.legalForm)].filter(Boolean).join(' ') || 'Triad Vision';
   const legalAddress = [str(legal.street), [str(legal.postalCode), str(legal.city)].filter(Boolean).join(' '), str(legal.country)].filter(Boolean).join(', ');
   const offices = Array.isArray(contact.offices) ? (contact.offices as Record<string, unknown>[]) : [];
-  return { name, address: legalAddress || str(offices[0]?.address) };
+  return {
+    name,
+    address: legalAddress || str(offices[0]?.address),
+    representative: str(legal.representative),
+    registerNumber: str(legal.registerNumber),
+    registerCourt: str(legal.registerCourt),
+    vatId: str(legal.vatId),
+    email: str(legal.email) || str(contact.email),
+    phone: str(legal.phone) || str(contact.phone),
+  };
 };
+
+export type TriadParty = Awaited<ReturnType<typeof triadParty>>;
+
+/** triad.* placeholder values (Impressum settings "legal", contact settings as fallback). */
+export const triadValues = (triad: TriadParty): Record<string, string> => ({
+  'triad.name': triad.name,
+  'triad.address': triad.address,
+  'triad.representative': triad.representative,
+  'triad.registerNumber': triad.registerNumber,
+  'triad.registerCourt': triad.registerCourt,
+  'triad.vatId': triad.vatId,
+  'triad.email': triad.email,
+  'triad.phone': triad.phone,
+});
+
+/** Employer columns used by the company.* placeholders (legal data from the Company row). */
+export interface CompanyParty {
+  name: string;
+  legalForm: string | null;
+  address: string | null;
+  city: string | null;
+  street?: string | null;
+  postalCode?: string | null;
+  country?: string | null;
+  betriebsnummer?: string | null;
+  registerNumber?: string | null;
+  registerCourt?: string | null;
+  taxNumber?: string | null;
+  vatId?: string | null;
+  managingDirector?: string | null;
+  signatoryName?: string | null;
+  signatoryRole?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  contactName?: string | null;
+}
+
+/** "Hauptstraße 1, 10115 Berlin": the structured columns when filled, else the legacy free-text address + city. */
+export const companyAddressLine = (co: Pick<CompanyParty, 'address' | 'city' | 'street' | 'postalCode'>) => {
+  if (co.street?.trim()) return [co.street.trim(), [co.postalCode?.trim(), co.city?.trim()].filter(Boolean).join(' ')].filter(Boolean).join(', ');
+  return [co.address?.replace(/\s*\n\s*/g, ', '), co.address && co.city && co.address.includes(co.city) ? '' : co.city].filter(Boolean).join(', ');
+};
+
+/** company.* placeholder values ('' = unknown). `contact`: the contact person (contact name or first login). */
+export const companyValues = (co: CompanyParty | null | undefined, contact = ''): Record<string, string> => ({
+  'company.name': co ? [co.name, co.legalForm && !co.name.includes(co.legalForm) ? co.legalForm : ''].filter(Boolean).join(' ') : '',
+  'company.address': co ? companyAddressLine(co) : '',
+  'company.contactPerson': contact || co?.contactName?.trim() || '',
+  'company.legalForm': co?.legalForm ?? '',
+  'company.street': co?.street ?? '',
+  'company.postalCode': co?.postalCode ?? '',
+  'company.city': co?.city ?? '',
+  'company.country': co?.country ?? '',
+  'company.betriebsnummer': co?.betriebsnummer ?? '',
+  'company.registerNumber': co?.registerNumber ?? '',
+  'company.registerCourt': co?.registerCourt ?? '',
+  'company.taxNumber': co?.taxNumber ?? '',
+  'company.vatId': co?.vatId ?? '',
+  'company.managingDirector': co?.managingDirector ?? '',
+  'company.signatoryName': co?.signatoryName?.trim() || co?.managingDirector?.trim() || '',
+  'company.signatoryRole': co?.signatoryRole ?? '',
+  'company.email': co?.email ?? '',
+  'company.phone': co?.phone ?? '',
+});
 
 export const loadContractCase = async (caseId: string) => {
   const c = await prisma.case.findUnique({
@@ -89,15 +162,12 @@ export const contractValues = async (
     'case.visaType': VISA_TYPE[lang][c.visaType] ?? c.visaType,
     'case.visaCategory': c.visaCategory ? [l10n(c.visaCategory.title, lang), c.visaCategory.visaLabel].filter(Boolean).join(' · ') : '',
     'case.profession': c.profession,
-    'company.name': co ? [co.name, co.legalForm && !co.name.includes(co.legalForm) ? co.legalForm : ''].filter(Boolean).join(' ') : '',
-    'company.address': co ? [co.address?.replace(/\s*\n\s*/g, ', '), co.address && co.city && co.address.includes(co.city) ? '' : co.city].filter(Boolean).join(', ') : '',
-    'company.contactPerson': contact,
+    ...companyValues(co, contact),
     'vacancy.title': c.vacancy ? l10n(c.vacancy.title, lang) : '',
     'vacancy.city': c.vacancy?.city ?? '',
     'vacancy.salaryMin': fmtMoney(c.vacancy?.salaryMin, lang),
     'vacancy.salaryMax': fmtMoney(c.vacancy?.salaryMax, lang),
-    'triad.name': triad.name,
-    'triad.address': triad.address,
+    ...triadValues(triad),
     'staff.fullName': staff ? `${staff.firstName} ${staff.lastName}`.trim() : '',
     today: fmtContractDate(now, lang),
   };

@@ -160,6 +160,7 @@ const AdminPartnerHousing = lazy(() => import('./pages/admin/PartnerHousing')); 
 const AdminExpiring = lazy(() => import('./pages/admin/Expiring'));
 const AdminRecognition = lazy(() => import('./pages/admin/Recognition')); // Anerkennung procedures
 const AdminAccelerated = lazy(() => import('./pages/admin/Accelerated')); // § 81a accelerated procedures
+const AdminAuthorities = lazy(() => import('./pages/admin/Authorities')); // authorities catalogue: Botschaft / Ausländerbehörde / …
 const AdminFamilyReunion = lazy(() => import('./pages/admin/FamilyReunion')); // Familiennachzug: waiting families
 const AdminOriginals = lazy(() => import('./pages/admin/Originals'));
 const AdminDuplicates = lazy(() => import('./pages/admin/Duplicates'));
@@ -223,6 +224,7 @@ const BookingManage = lazy(() => import('./pages/booking/BookingManage'));
 const ReviewPage = lazy(() => import('./pages/ReviewPage'));
 const AdminSecurity = lazy(() => import('./pages/admin/Security'));
 const AdminCompanies = lazy(() => import('./pages/admin/Companies'));
+const AdminCompanyProfile = lazy(() => import('./pages/admin/CompanyProfile')); // full employer profile: legal data, contracts, contacts, history
 const AdminVacancies = lazy(() => import('./pages/admin/Vacancies'));
 const AdminJobChannels = lazy(() => import('./pages/admin/JobChannels')); // job board feeds (ADMIN+)
 const AdminCandidates = lazy(() => import('./pages/admin/Candidates'));
@@ -683,6 +685,7 @@ export default function App() {
             />
             <Route path="security" element={<AdminSecurity />} />
             <Route path="companies" element={<AdminCompanies />} />
+            <Route path="companies/:id" element={<AdminCompanyProfile />} />
             <Route path="vacancies" element={<AdminVacancies />} />
             <Route path="job-channels" element={<RequireAuth roles={['ADMIN', 'SUPER_ADMIN']}><AdminJobChannels /></RequireAuth>} />
             <Route path="candidates" element={<AdminCandidates />} />
@@ -749,6 +752,7 @@ export default function App() {
             <Route path="expiring" element={<AdminExpiring />} />
             <Route path="recognition" element={<AdminRecognition />} />
             <Route path="accelerated" element={<AdminAccelerated />} />
+            <Route path="authorities/*" element={<AdminAuthorities />} />
             <Route path="family-reunion" element={<AdminFamilyReunion />} />
             <Route path="originals" element={<AdminOriginals />} />
             <Route

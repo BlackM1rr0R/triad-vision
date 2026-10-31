@@ -3,7 +3,7 @@ import { Router } from 'express';
 import type { Company } from '@prisma/client';
 import { prisma } from '../db.js';
 import { requireRole } from '../middleware/auth.js';
-import { badRequest, forbidden, notFound } from '../lib/http.js';
+import { badRequest, forbidden, notFound, parse } from '../lib/http.js';
 import { audit } from '../lib/audit.js';
 import { STEP_COUNT, workersXlsx } from '../lib/requests/workers.js';
 import { buildPanel, employerDocumentFile, panelSummary, workerDetail } from '../lib/employerWorkers/panel.js';
@@ -11,6 +11,7 @@ import { workersCsv } from '../lib/employerWorkers/csv.js';
 import { pickLoc } from '../lib/employerWorkers/texts.js';
 import { sendPdf } from '../lib/esign/http.js';
 import { storedPath } from '../lib/esign/service.js';
+import { addItem, companyChecklist, companyOverview, createInput, deleteItem, patchInput, updateItem } from '../lib/employerArrival.js';
 
 /**
  * "My workers" (Mitarbeiter) — mounted at /api/company/workers, before the main company router, so the
@@ -20,6 +21,8 @@ import { storedPath } from '../lib/esign/service.js';
  *   GET /export.xlsx|csv        the panel as a sheet (?lang=de|en|az|ru)
  *   GET /:caseId                worker drawer: timeline, upcoming dates, documents, check-in history, contact
  *   GET /:caseId/documents/:kind/:id   download of an employer-visible PDF (kind = signature | form)
+ *   GET /checklists/overview   arrival checklist progress of every approved / arrived worker (lib/employerArrival)
+ *   GET|POST /:caseId/checklist, PATCH|DELETE /:caseId/checklist/:itemId   the company's arrival checklist of one worker
  *
  * Every lookup is scoped by Case.companyId: another company's worker answers 404 exactly like a missing one.
  */
@@ -57,6 +60,36 @@ companyWorkersRouter.get('/export.csv', async (req, res) => {
   res.setHeader('Content-Type', 'text/csv; charset=utf-8');
   res.setHeader('Content-Disposition', `attachment; filename="workers-${new Date().toISOString().slice(0, 10)}.csv"`);
   res.send(csv);
+});
+
+/** Arrival checklists: progress of every worker whose visa was approved (travelling or arrived). */
+companyWorkersRouter.get('/checklists/overview', async (_req, res) => {
+  res.json({ items: await companyOverview(co(res).id) });
+});
+
+const caseIdOf = (req: { params: Record<string, string> }) => {
+  const caseId = String(req.params.caseId);
+  if (!ID_RE.test(caseId)) throw notFound('WORKER_NOT_FOUND');
+  return caseId;
+};
+
+companyWorkersRouter.get('/:caseId/checklist', async (req, res) => {
+  res.json(await companyChecklist(co(res).id, caseIdOf(req)));
+});
+
+companyWorkersRouter.post('/:caseId/checklist', async (req, res) => {
+  const body = parse(createInput, req.body);
+  res.status(201).json({ item: await addItem(req, co(res).id, caseIdOf(req), body) });
+});
+
+companyWorkersRouter.patch('/:caseId/checklist/:itemId', async (req, res) => {
+  const body = parse(patchInput, req.body);
+  res.json({ item: await updateItem(req, co(res).id, caseIdOf(req), String(req.params.itemId).slice(0, 40), body) });
+});
+
+companyWorkersRouter.delete('/:caseId/checklist/:itemId', async (req, res) => {
+  await deleteItem(req, co(res).id, caseIdOf(req), String(req.params.itemId).slice(0, 40));
+  res.json({ ok: true });
 });
 
 companyWorkersRouter.get('/:caseId', async (req, res) => {

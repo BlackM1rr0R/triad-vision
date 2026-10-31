@@ -2,7 +2,9 @@ import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
 import { AlertTriangle, FileText, Upload, XCircle } from 'lucide-react';
-import { checkFile, isImageFile, type DocCheckResult } from '@/lib/docCheck';
+import { checkFile, isImageFile, result as toResult, type DocCheckIssue, type DocCheckResult } from '@/lib/docCheck';
+import { api } from '@/lib/api';
+import { asChecks } from './api';
 import { VaultModal } from './VaultModal';
 import './api';
 
@@ -81,10 +83,10 @@ export const DocCheckDialog = ({
                 key={i.code}
                 className={clsx(
                   'flex gap-2 rounded-lg px-3 py-2 text-sm leading-relaxed',
-                  i.level === 'error' ? 'bg-danger-bg text-danger' : 'bg-warning-bg text-warning-fg',
+                  i.level === 'error' || i.severe ? 'bg-danger-bg text-danger' : 'bg-warning-bg text-warning-fg',
                 )}
               >
-                {i.level === 'error' ? <XCircle className="mt-0.5 size-4 shrink-0" aria-hidden /> : <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden />}
+                {i.level === 'error' || i.severe ? <XCircle className="mt-0.5 size-4 shrink-0" aria-hidden /> : <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden />}
                 <span>{t(i.key, i.params)}</span>
               </li>
             ))}
@@ -96,13 +98,50 @@ export const DocCheckDialog = ({
   );
 };
 
+/** What the file is for: a passport / ID photo is also checked by the server (MRZ expiry) before the upload. */
+export interface GateContext {
+  requirementKey?: string | null;
+  kind?: string | null;
+}
+const MRZ_TARGETS = ['PASSPORT', 'ID_CARD'];
+const PRECHECK_CODES = ['PASSPORT_EXPIRED', 'PASSPORT_EXPIRES_SOON', 'WRONG_TYPE_SUSPECTED'] as const;
+
+/**
+ * Server pre-upload check of a passport / ID photo (POST /api/vault/precheck): an expired or soon expiring
+ * passport and an unreadable MRZ, as non-blocking issues. Nothing is stored; any failure → no issues.
+ */
+export const precheckOnServer = async (file: File, ctx: GateContext): Promise<DocCheckIssue[]> => {
+  const target = ctx.kind ?? ctx.requirementKey ?? null;
+  if (!target || !MRZ_TARGETS.includes(target) || !isImageFile(file) || !['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) return [];
+  const form = new FormData();
+  form.append('file', file);
+  if (ctx.kind) form.append('kind', ctx.kind);
+  else if (ctx.requirementKey) form.append('requirementKey', ctx.requirementKey);
+  try {
+    const { data } = await api.post<{ checks?: unknown }>('/vault/precheck', form, { timeout: 15_000 });
+    const checks = asChecks(data.checks);
+    return (checks?.issues ?? [])
+      .filter((i) => (PRECHECK_CODES as readonly string[]).includes(i.code))
+      .map((i) => ({
+        code: i.code as DocCheckIssue['code'],
+        level: 'warn' as const,
+        key: `vault.check.server.${i.code}`,
+        ...(i.params ? { params: i.params } : {}),
+        ...(i.level === 'error' ? { severe: true } : {}),
+      }));
+  } catch {
+    return []; // offline, rate limited, OCR unavailable: the check after the upload still runs
+  }
+};
+
 /**
  * Hook that runs the client-side check before an upload:
  *   const { gate, dialog } = useDocCheckGate();
- *   if (!(await gate(file))) return;   // the user chose another file
- * Files without findings pass straight through; otherwise the dialog decides.
+ *   if (!(await gate(file, { requirementKey }))) return;   // the user chose another file
+ * Files without findings pass straight through; otherwise the dialog decides. With a passport / ID context
+ * the photo is also pre-checked by the server (expiry from the MRZ).
  */
-export const useDocCheckGate = (): { gate: (file: File) => Promise<boolean>; dialog: ReactNode; checking: boolean } => {
+export const useDocCheckGate = (): { gate: (file: File, ctx?: GateContext) => Promise<boolean>; dialog: ReactNode; checking: boolean } => {
   const [state, setState] = useState<{ file: File; result: DocCheckResult } | null>(null);
   const [checking, setChecking] = useState(false);
   const resolver = useRef<((ok: boolean) => void) | null>(null);
@@ -113,11 +152,15 @@ export const useDocCheckGate = (): { gate: (file: File) => Promise<boolean>; dia
     setState(null);
   }, []);
 
-  const gate = useCallback(async (file: File) => {
+  const gate = useCallback(async (file: File, ctx: GateContext = {}) => {
     setChecking(true);
     let result: DocCheckResult;
     try {
       result = await checkFile(file);
+      if (result.level !== 'error') {
+        const server = await precheckOnServer(file, ctx);
+        if (server.length) result = toResult([...result.issues, ...server]);
+      }
     } finally {
       setChecking(false);
     }

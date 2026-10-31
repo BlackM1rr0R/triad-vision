@@ -7,7 +7,7 @@
  * ("________") and is reported, so nothing is silently dropped.
  */
 
-export type PlaceholderGroup = 'client' | 'case' | 'company' | 'vacancy' | 'triad' | 'staff' | 'date' | 'input';
+export type PlaceholderGroup = 'client' | 'case' | 'company' | 'partner' | 'contract' | 'vacancy' | 'triad' | 'staff' | 'date' | 'input';
 
 export interface PlaceholderDef {
   key: string;
@@ -35,12 +35,59 @@ export const PLACEHOLDERS: PlaceholderDef[] = [
   { key: 'company.name', group: 'company' },
   { key: 'company.address', group: 'company' },
   { key: 'company.contactPerson', group: 'company' },
+  // Legal data of the employer (Company columns; employer contracts and employment contracts)
+  { key: 'company.legalForm', group: 'company' },
+  { key: 'company.street', group: 'company' },
+  { key: 'company.postalCode', group: 'company' },
+  { key: 'company.city', group: 'company' },
+  { key: 'company.country', group: 'company' },
+  { key: 'company.betriebsnummer', group: 'company' },
+  { key: 'company.registerNumber', group: 'company' },
+  { key: 'company.registerCourt', group: 'company' },
+  { key: 'company.taxNumber', group: 'company' },
+  { key: 'company.vatId', group: 'company' },
+  { key: 'company.managingDirector', group: 'company' },
+  { key: 'company.signatoryName', group: 'company' },
+  { key: 'company.signatoryRole', group: 'company' },
+  { key: 'company.email', group: 'company' },
+  { key: 'company.phone', group: 'company' },
+  // Referral partner (PARTNER templates, lib/partnerRecords)
+  { key: 'partner.name', group: 'partner' },
+  { key: 'partner.legalForm', group: 'partner' },
+  { key: 'partner.address', group: 'partner' },
+  { key: 'partner.street', group: 'partner' },
+  { key: 'partner.postalCode', group: 'partner' },
+  { key: 'partner.city', group: 'partner' },
+  { key: 'partner.country', group: 'partner' },
+  { key: 'partner.registerNumber', group: 'partner' },
+  { key: 'partner.registerCourt', group: 'partner' },
+  { key: 'partner.vatId', group: 'partner' },
+  { key: 'partner.taxId', group: 'partner' },
+  { key: 'partner.betriebsnummer', group: 'partner' },
+  { key: 'partner.signatoryName', group: 'partner' },
+  { key: 'partner.signatoryRole', group: 'partner' },
+  { key: 'partner.contactPerson', group: 'partner' },
+  { key: 'partner.email', group: 'partner' },
+  { key: 'partner.phone', group: 'partner' },
+  { key: 'partner.commission', group: 'partner' },
+  // The partner contract itself (employer / partner contracts)
+  { key: 'contract.title', group: 'contract' },
+  { key: 'contract.startDate', group: 'contract' },
+  { key: 'contract.endDate', group: 'contract' },
+  { key: 'contract.value', group: 'contract' },
+  { key: 'contract.noticePeriodDays', group: 'contract' },
   { key: 'vacancy.title', group: 'vacancy' },
   { key: 'vacancy.city', group: 'vacancy' },
   { key: 'vacancy.salaryMin', group: 'vacancy' },
   { key: 'vacancy.salaryMax', group: 'vacancy' },
   { key: 'triad.name', group: 'triad' },
   { key: 'triad.address', group: 'triad' },
+  { key: 'triad.representative', group: 'triad' },
+  { key: 'triad.registerNumber', group: 'triad' },
+  { key: 'triad.registerCourt', group: 'triad' },
+  { key: 'triad.vatId', group: 'triad' },
+  { key: 'triad.email', group: 'triad' },
+  { key: 'triad.phone', group: 'triad' },
   { key: 'staff.fullName', group: 'staff' },
   { key: 'today', group: 'date' },
   { key: 'startDate', group: 'input', input: true, type: 'date' },

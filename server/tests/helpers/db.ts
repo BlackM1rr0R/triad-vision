@@ -7,6 +7,7 @@ export { prisma };
 /** Deletes all rows, children before parents so foreign keys are never violated. */
 export const resetDb = async () => {
   await prisma.cityCost.deleteMany(); // first-month budget city costs (no relations)
+  await prisma.authority.deleteMany(); // authorities catalogue (contacts + case links cascade, Case FKs set null)
   await prisma.partnerClientChange.deleteMany(); // partner client ownership history (plain ids)
   // Pre-departure course (plain ids, no foreign keys)
   for (const m of [prisma.courseQuizAttempt, prisma.courseLessonProgress, prisma.courseCertificate, prisma.courseEnrollment, prisma.courseQuizQuestion, prisma.courseLesson, prisma.courseModule, prisma.course] as { deleteMany: () => Promise<unknown> }[]) await m.deleteMany();

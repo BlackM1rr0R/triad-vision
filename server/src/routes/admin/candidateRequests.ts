@@ -6,6 +6,7 @@ import { badRequest, conflict, notFound, parse } from '../../lib/http.js';
 import { audit } from '../../lib/audit.js';
 import { progressFor, REQUEST_STATUSES, syncStatuses } from '../../lib/requests/shared.js';
 import { ensureVacancy, proposeCandidates, suggestCandidates } from '../../lib/requests/staff.js';
+import { votesByApplication } from '../../lib/employerVotes.js';
 
 // Admin: employer bulk candidate requests — mounted at /api/admin/candidate-requests (STAFF+).
 export const adminCandidateRequestsRouter = Router();
@@ -78,7 +79,12 @@ adminCandidateRequestsRouter.get('/:id', async (req, res) => {
     suggestCandidates(r),
     progressFor([r]),
   ]);
-  res.json({ request: { ...r, company, createdBy, visaCategory, vacancy, progress: progress.get(r.id) }, applications, suggestions });
+  const votes = await votesByApplication(applications.map((a) => a.id)); // employer team votes (company portal)
+  res.json({
+    request: { ...r, company, createdBy, visaCategory, vacancy, progress: progress.get(r.id) },
+    applications: applications.map((a) => ({ ...a, employerVotes: votes.get(a.id) ?? [] })),
+    suggestions,
+  });
 });
 
 adminCandidateRequestsRouter.post('/:id/vacancy', async (req, res) => {

@@ -168,7 +168,7 @@ const RequirementCard = ({
   const onError = useApiError();
   const [progress, setProgress] = useState<number | null>(null);
   // Client-side quality check dialog and the server check result of the last upload.
-  const { gate, dialog: checkDialog } = useDocCheckGate();
+  const { gate, dialog: checkDialog, checking } = useDocCheckGate();
   const [lastChecks, setLastChecks] = useState<unknown>(null);
   const [lastQuality, setLastQuality] = useState<Quality | null>(null);
   const [lastPhoto, setLastPhoto] = useState<PhotoCheck | null>(null);
@@ -176,7 +176,8 @@ const RequirementCard = ({
   const description = tr(req.description);
 
   const upload = async (file: File) => {
-    if (!(await gate(file))) return; // the client chose another file
+    // Client-side photo check (blur, light, edges); passport / ID photos also get the server MRZ expiry check.
+    if (!(await gate(file, { requirementKey: (req as Requirement & { key?: string | null }).key ?? null }))) return; // the client chose another file
     setLastChecks(null);
     setLastQuality(null);
     setLastPhoto(null);
@@ -287,6 +288,12 @@ const RequirementCard = ({
         {open && lastChecks != null && <CheckResultNotice checks={lastChecks} onDismiss={() => setLastChecks(null)} />}
         {open && <QualityNotice quality={lastQuality} onRetake={(f) => void upload(f)} onDismiss={() => setLastQuality(null)} />}
         {open && <PhotoCheckNotice check={lastPhoto} onRetake={(f) => void upload(f)} onDismiss={() => setLastPhoto(null)} />}
+        {open && checking && (
+          <p className="flex items-center gap-2 text-xs text-muted" role="status">
+            <Clock className="size-3.5 animate-pulse" aria-hidden />
+            {t('vault.check.checking')}
+          </p>
+        )}
         {open && <HowToShoot requirementKey={(req as Requirement & { key?: string | null }).key} title={tr(req.title)} />}
         {open && (
           <FileDrop

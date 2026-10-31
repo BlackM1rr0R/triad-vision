@@ -12,7 +12,7 @@ import { Modal } from '@/components/admin/Modal';
 import { ConfirmDialog } from '@/components/admin/ConfirmDialog';
 import { toastError } from '@/components/admin/labels';
 import { Spinner } from '@/components/ui/Spinner';
-import { BLANK, placeholderLabelKey, usePlaceholders, type ContractTemplate, type Preview } from './shared';
+import { BLANK, CASE_CONTRACT_KINDS, placeholderLabelKey, usePlaceholders, type ContractTemplate, type Preview } from './shared';
 
 registerCopy(pagesContracts);
 
@@ -56,7 +56,8 @@ export const FromTemplateDialog = ({ open, onClose, caseId, caseNumber }: { open
   const { data: defs } = usePlaceholders();
   const { data: templates, isLoading: loadingTemplates } = useQuery({
     queryKey: ['contract-templates', 'active'],
-    queryFn: async () => (await api.get<{ items: ContractTemplate[] }>('/admin/contract-templates', { params: { active: 'true' } })).data.items,
+    // EMPLOYER / PARTNER templates belong to the partner records (components/partnerRecords), not to a case.
+    queryFn: async () => (await api.get<{ items: ContractTemplate[] }>('/admin/contract-templates', { params: { active: 'true' } })).data.items.filter((x) => CASE_CONTRACT_KINDS.includes(x.kind)),
     enabled: open,
   });
   const [templateId, setTemplateId] = useState('');

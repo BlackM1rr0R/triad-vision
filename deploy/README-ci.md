@@ -41,3 +41,31 @@ Manual deploys from a workstation (`bash deploy/push.sh root@172.104.149.241`) k
 
 - Settings → Environments → `production`: add yourself as a required reviewer to approve each deploy by hand.
 - Settings → Branches: protect `main` (require the CI/CD checks before merging pull requests).
+
+## Backup restore test (weekly)
+
+`deploy/backup-verify.sh` restores the newest archive of the nightly backup (`/usr/local/sbin/triad-backup`,
+`/var/backups/triad/triad-*.tar.gz.enc`) into a throwaway MySQL container (same `mysql:8.4` image, no network,
+random root password that is never printed, removed afterwards), checks it (at least 50 tables; `User`, `Setting`,
+`_prisma_migrations` not empty; `User`, `Case`, `Document`, `Inquiry`, `Task`, `Setting`, `_prisma_migrations` at
+least 90 % of the live row counts; newest archive not older than 48 h) and writes the result into the live
+database (Setting row `ops:backupCheck`, via `docker exec` into the db container). The API then notifies all
+admins (in-app + e-mail; a failure is e-mailed even to admins with e-mail notifications off), warns once when no
+check arrived for 9 days, and shows the last result on **Admin → Security** ("Backup verification").
+
+Install once on the server (as root, from a checkout of the repo, e.g. `/opt/triad-vision/src`):
+
+```bash
+install -m 700 deploy/backup-verify.sh /usr/local/sbin/triad-backup-verify
+printf '%s\n' 'SHELL=/bin/bash' \
+  '30 4 * * 0 root /usr/local/sbin/triad-backup-verify >> /var/log/triad-backup-verify.log 2>&1' \
+  > /etc/cron.d/triad-backup-verify
+chmod 644 /etc/cron.d/triad-backup-verify
+/usr/local/sbin/triad-backup-verify   # first run by hand (2-5 minutes); then check Admin → Security
+```
+
+Sunday 04:30 server time, after the nightly backup (02:30). Settings via environment in the cron line if needed:
+`BACKUP_DIR`, `KEY_FILE`, `DB_CONTAINER` (default `src-db-1`), `VERIFY_IMAGE`, `MAX_AGE_HOURS`, `MIN_TABLES`,
+`MIN_RATIO`, `KEY_TABLES`, `REQUIRED_TABLES`, `VERIFY_MEMORY` (default `768m`). `NO_REPORT=1` only prints the
+result JSON (dry run). Exit code 0 = verified, 1 = failed (reported), 2 = the result could not be written.
+After changing `deploy/backup-verify.sh` in the repo, run the `install` line again.

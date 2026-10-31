@@ -16,6 +16,7 @@ import { buttonClass } from '@/components/ui/Button';
 import { Employer, SearchEmpty } from '@/components/illustrations';
 import { Empty, Kpi, Section } from './shared';
 import { WorkerDrawer } from './WorkerDrawer';
+import { CompanyArrivalChecklists } from '@/components/employerExtras/ArrivalChecklist';
 import { WorkersSkeleton } from './WorkersSkeleton';
 import { CompanyReports } from './CompanyReports';
 import { CheckInCell, DateCell, RISK_TONE, useMilestoneText } from './workerCells';
@@ -138,6 +139,8 @@ export const CompanyWorkers = () => {
         <Kpi label={t('employerWorkers.tiles.titlesExpiring')} value={s.titlesExpiring} hint={t('employerWorkers.tileHints.titlesExpiring')} icon={ShieldAlert} tone={s.titlesExpiring ? 'warn' : undefined} />
         <Kpi label={t('employerWorkers.tiles.atRisk')} value={s.atRisk} hint={t('employerWorkers.tileHints.atRisk')} icon={AlertTriangle} tone={s.atRisk ? 'warn' : undefined} />
       </div>
+
+      <CompanyArrivalChecklists />
 
       <Section
         title={t('employerWorkers.title')}

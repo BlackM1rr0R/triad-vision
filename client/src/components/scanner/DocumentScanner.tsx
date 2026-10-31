@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import clsx from 'clsx';
 import {
+  AlertTriangle,
   ArrowDown,
   ArrowUp,
   Camera,
@@ -27,6 +28,8 @@ import { registerCopy } from '@/i18n';
 import { pagesScanner } from '@/i18n/pagesScanner';
 import { fullFrame, type EnhanceMode, type Pt, type Quad } from '@/lib/scanner/geometry';
 import { cameraApiAvailable, decodeImage, detectCorners, openCamera, renderPage } from '@/lib/scanner/client';
+import { checkShot, type DocCheckIssue } from '@/lib/docCheck'; // instant blur / light check of each shot
+import '@/components/vault/api'; // registers the check texts (vault.check.client.*)
 
 registerCopy(pagesScanner);
 
@@ -44,6 +47,8 @@ interface Shot {
   height: number;
   quad: Quad;
   found: boolean;
+  /** Instant quality findings of the photo (blurry, too dark …); empty = fine. */
+  issues?: DocCheckIssue[];
 }
 interface Page extends Shot {
   id: string;
@@ -286,7 +291,8 @@ export default function DocumentScanner({
   const takeShot = async (src: CanvasImageSource, width: number, height: number) => {
     const jpeg = await toSourceJpeg(src, width, height);
     const d = await detectCorners(jpeg.canvas, jpeg.width, jpeg.height).catch(() => ({ quad: fullFrame(jpeg.width, jpeg.height), found: false }));
-    const next: Shot = { source: jpeg.blob, url: URL.createObjectURL(jpeg.blob), width: jpeg.width, height: jpeg.height, quad: d.quad, found: d.found };
+    const issues = checkShot(jpeg.canvas, jpeg.width, jpeg.height);
+    const next: Shot = { source: jpeg.blob, url: URL.createObjectURL(jpeg.blob), width: jpeg.width, height: jpeg.height, quad: d.quad, found: d.found, issues };
     setShot(next);
     setQuad(d.quad);
     stopCamera();
@@ -550,6 +556,20 @@ export default function DocumentScanner({
 
         {view === 'adjust' && shot && quad && (
           <div>
+            {!!shot.issues?.length && (
+              <div role="alert" className="mx-4 mt-3 flex gap-2 rounded-lg border border-warning-border bg-warning-bg px-3 py-2.5 text-sm text-warning-fg">
+                <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden />
+                <div className="min-w-0">
+                  <p className="font-semibold">{t('scanner.adjust.qualityTitle')}</p>
+                  <ul className="mt-1 list-disc space-y-0.5 pl-4 text-xs">
+                    {shot.issues.map((i) => (
+                      <li key={i.code}>{t(i.key, i.params)}</li>
+                    ))}
+                  </ul>
+                  <p className="mt-1 text-xs opacity-90">{t('scanner.adjust.qualityHint')}</p>
+                </div>
+              </div>
+            )}
             <CornerEditor shot={shot} quad={quad} onChange={setQuad} />
             <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-3">
               <p className="text-xs text-muted">
@@ -583,6 +603,12 @@ export default function DocumentScanner({
                         </span>
                       )}
                       <span className="absolute top-2 left-2 rounded-full bg-navy-900/80 px-2 py-0.5 text-[11px] font-bold text-white">{i + 1}</span>
+                      {!!p.issues?.length && (
+                        <span className="absolute top-2 right-2 inline-flex items-center gap-1 rounded-full bg-warning-bg px-2 py-0.5 text-[11px] font-semibold text-warning-fg" title={p.issues.map((x) => t(x.key, x.params)).join(' ')}>
+                          <AlertTriangle className="size-3" aria-hidden />
+                          {t('scanner.review.qualityChip')}
+                        </span>
+                      )}
                     </div>
                     <div className="space-y-2 p-3">
                       <div role="radiogroup" aria-label={t('scanner.review.mode')} className="grid grid-cols-4 gap-1 rounded-lg bg-surface p-0.5">

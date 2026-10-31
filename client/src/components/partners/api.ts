@@ -101,6 +101,24 @@ export interface Partner extends PartnerRef {
   customData?: Record<string, string | number | boolean>;
   /** The partner's own extra fields ("+ add field"). */
   extraFields?: { label: string; value: string }[];
+  // Legal data (contracts are generated from it; server lib/partners/profile.ts).
+  legalForm?: string | null;
+  registerNumber?: string | null;
+  registerCourt?: string | null;
+  /** USt-IdNr; masked for staff like the tax id (mask group TAX_ID). */
+  vatId?: string | null;
+  /** 8 digits, German partners only. */
+  betriebsnummer?: string | null;
+  street?: string | null;
+  postalCode?: string | null;
+  signatoryName?: string | null;
+  signatoryRole?: string | null;
+  /** List / detail: contract status from PartnerContract rows (else the legacy dates). */
+  contract?: import('./hub/types').ContractSummary;
+  /** List / detail: which contract fields are filled in. */
+  readiness?: import('./hub/types').Readiness;
+  /** List: newest case, timeline entry, commission, contract change or portal visit. */
+  lastActivityAt?: string | null;
 }
 
 export type PartnerType = 'INDIVIDUAL' | 'COMPANY';

@@ -4,7 +4,7 @@ import { CLIENT_UPLOAD_STAGE, FINAL_STATUSES } from '../caseFlow.js';
 import { ballInCourtFor, type BallInCourt } from '../clientProcess/ballInCourt.js';
 import { currentTurn } from '../esign/service.js';
 import { isExpired as checkInExpired } from '../checkIns/service.js';
-import { forecastForCase, type Forecast } from '../journey/forecast.js';
+import { forecastForCase, travelRange, travelWindow, type Forecast } from '../journey/forecast.js';
 import { normaliseOrigin } from '../marketing/originMap.js';
 import { onboardingForCase } from '../journey/onboarding.js';
 import { pendingAcceptances } from '../legal/documents.js';
@@ -354,6 +354,16 @@ export const loadNextStep = async (userId: string, now = new Date(), opts: { cas
     }
   }
   const flight = plan?.arrivalTime ?? plan?.flightDate ?? null;
+  // Expected travel / arrival window on the journey map until a flight is booked (decision → arrival history).
+  let travelExpected: { from: Date; to: Date } | null = null;
+  if (primary && !arrived && !flight && (primary.status === 'APPROVED' || fc?.estimatedDecision)) {
+    try {
+      const outcome = primary.status === 'APPROVED' ? ('APPROVED' as const) : null;
+      travelExpected = travelWindow({ outcome, decisionAt: primary.decisionAt, estimatedDecision: fc?.estimatedDecision ?? null, range: await travelRange(), booked: false, now });
+    } catch {
+      travelExpected = null; // a nice-to-have like the forecast
+    }
+  }
   if (primary) {
     if (open) {
       const hasEmbassy = requirements.some((r) => r.stage === 'EMBASSY');
@@ -387,7 +397,9 @@ export const loadNextStep = async (userId: string, now = new Date(), opts: { cas
     arrived,
     arrivedAt: arrived ? iso(followUp?.arrivedAt ?? null) : null,
     onboarding: onboarding?.progress ?? null,
-    journey: primary ? buildJourney(user, primary, fc, { flight, arrived, arrivedAt: followUp?.arrivedAt ?? null, travelPlanned: !!plan && plan.status !== 'DRAFT', now }) : null,
+    journey: primary
+      ? buildJourney(user, primary, fc, { flight, arrived, arrivedAt: followUp?.arrivedAt ?? null, travelPlanned: !!plan && plan.status !== 'DRAFT', travelExpected, now })
+      : null,
     ...picked,
     counts: {
       actions: actionCount,
@@ -411,9 +423,16 @@ export type NextStepResponse = Awaited<ReturnType<typeof loadNextStep>>;
  */
 export const buildJourney = (
   user: { city: string | null; nationality: string | null },
-  c: { status: CaseStatus; decisionAt: Date | null; company: { city: string | null } | null; vacancy: { city: string | null } | null },
+  c: {
+    status: CaseStatus;
+    decisionAt: Date | null;
+    appointmentAt?: Date | null;
+    appointmentPlace?: string | null;
+    company: { city: string | null } | null;
+    vacancy: { city: string | null } | null;
+  },
   fc: Forecast | null,
-  o: { flight: Date | null; arrived: boolean; arrivedAt: Date | null; travelPlanned: boolean; now: Date },
+  o: { flight: Date | null; arrived: boolean; arrivedAt: Date | null; travelPlanned: boolean; travelExpected?: { from: Date; to: Date } | null; now: Date },
 ) => {
   const origin = normaliseOrigin(user.city, user.nationality);
   const rawCity = user.city?.trim() || null;
@@ -433,7 +452,15 @@ export const buildJourney = (
       expectedFrom: iso(st.expectedFrom),
       expectedTo: iso(st.expectedTo),
     })),
-    travel: { at: iso(o.flight), planned: o.travelPlanned, done: o.arrived || (!!o.flight && o.flight <= o.now) },
+    // The booked Botschaft appointment (shown on the embassy milestone while it is still ahead or just passed).
+    appointment: c.appointmentAt ? { at: iso(c.appointmentAt), place: c.appointmentPlace ?? null } : null,
+    travel: {
+      at: iso(o.flight),
+      planned: o.travelPlanned,
+      done: o.arrived || (!!o.flight && o.flight <= o.now),
+      expectedFrom: iso(o.travelExpected?.from ?? null),
+      expectedTo: iso(o.travelExpected?.to ?? null),
+    },
     arrival: { at: iso(o.arrivedAt), done: o.arrived },
   };
 };

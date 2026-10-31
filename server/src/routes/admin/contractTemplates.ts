@@ -20,7 +20,9 @@ import { metaOf } from '../../lib/esign/http.js';
  */
 export const adminContractTemplatesRouter = Router();
 
-const KINDS = ['WORK', 'AUSBILDUNG', 'SERVICE'] as const;
+// EMPLOYER / PARTNER: contracts with an employer or a referral partner, generated in lib/partnerRecords (not per case).
+const KINDS = ['WORK', 'AUSBILDUNG', 'SERVICE', 'EMPLOYER', 'PARTNER'] as const;
+const PARTY_KINDS: ContractKind[] = ['EMPLOYER', 'PARTNER'];
 const LANGS = ['de', 'en', 'az', 'ru'] as const;
 const id = z.string().trim().min(1).max(40);
 const MAX_BODY = 200_000;
@@ -136,6 +138,7 @@ adminContractTemplatesRouter.delete('/:id', requireMinRole('ADMIN'), async (req,
 
 const renderFor = async (req: Request, templateId: string, caseId: string, inputs: Record<string, string | undefined>) => {
   const t = await loadTemplate(templateId);
+  if (PARTY_KINDS.includes(t.kind)) throw badRequest('TEMPLATE_NOT_FOR_CASE'); // employer / partner contracts: /api/admin/partner-records
   const c = await loadContractCase(caseId);
   const lang = asContractLang(t.language);
   const values = await contractValues(c, inputs, lang, req.user ? { firstName: req.user.firstName, lastName: req.user.lastName } : null);

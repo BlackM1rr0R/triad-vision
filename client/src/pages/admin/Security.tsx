@@ -29,6 +29,8 @@ import { registerCopy } from '@/i18n';
 import { pagesLegal } from '@/i18n/pagesLegal';
 import { getBrand } from '@/lib/brand';
 import { PasswordInput } from '@/components/ui/PasswordInput';
+import { DigestCard } from '@/components/staffOps/DigestCard'; // own morning digest e-mail (opt-out)
+import { BackupCheckCard } from '@/components/staffOps/BackupCheckCard'; // weekly backup restore test (ADMIN+)
 
 registerCopy(pagesLegal);
 
@@ -516,6 +518,10 @@ export default function AdminSecurity() {
           <ChangeEmailCard />
         </div>
       )}
+
+      {!mustEnroll && <DigestCard />}
+
+      {(user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN') && !mustEnroll && <BackupCheckCard />}
 
       {user?.role === 'SUPER_ADMIN' && !mustEnroll && <StaffTwoFactor />}
     </div>

@@ -15,7 +15,8 @@ import { CLIENT_UPLOAD_STAGE } from '../lib/caseFlow.js';
 import { CASE_DOC_MIME } from '../lib/fileCheck.js';
 import { badRequest, conflict, limiter, notFound, parse } from '../lib/http.js';
 import { buildDocumentsZip, zipFileName } from '../lib/vaultExport.js';
-import { checkCaseDocument, runChecks, targetForVaultKind, vaultDir } from '../lib/docCheck/index.js';
+import { checkBuffer, checkCaseDocument, runChecks, targetForRequirement, targetForVaultKind, vaultDir } from '../lib/docCheck/index.js';
+import { imageSize } from '../lib/docsIntel/passportScan.js';
 import { vaultDto, vaultKindsFor } from '../lib/docCheck/vault.js';
 import { scheduleAiDocCheck } from '../lib/aiDocs/docCheck.js';
 import { prepareCaseDocument, publicQuality, scheduleUploadAnalysis } from '../lib/uploadAi/index.js';
@@ -169,6 +170,37 @@ vaultRouter.post('/', vaultUpload.single('file'), async (req, res) => {
     await fsp.unlink(file.path).catch(() => undefined);
     throw err;
   }
+});
+
+// ─── Pre-upload check (passport / ID photo) ─────────────────────────
+
+const PRECHECK_MIME = ['image/jpeg', 'image/png', 'image/webp'];
+/** Images only, in memory: the pre-upload check never stores anything. */
+const precheckUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: config.uploads.maxFileSize, files: 1 },
+  fileFilter: (_req, file, cb) => (PRECHECK_MIME.includes(file.mimetype) ? cb(null, true) : cb(badRequest('UNSUPPORTED_FILE_TYPE'))),
+});
+const precheckLimiter = limiter({ windowMs: 10 * 60 * 1000, limit: 30, keyGenerator: (req) => `vault-precheck:${req.user?.id ?? req.ip}` });
+/** Shorter OCR budget than after the upload: the client is waiting with the file in hand. */
+export const PRECHECK_OCR_TIMEOUT_MS = 6_000;
+
+/**
+ * POST /api/vault/precheck (multipart `file`, `kind` = vault kind or `requirementKey` = case requirement key)
+ * → { checks }. The client portal sends a passport / ID photo here before uploading it, so an expired or
+ * soon expiring passport (MRZ) is reported while the client can still pick another file. Nothing is stored
+ * and no personal data is returned; when OCR is unavailable or too slow the result simply has no MRZ issue.
+ */
+vaultRouter.post('/precheck', precheckLimiter, precheckUpload.single('file'), async (req, res) => {
+  const file = req.file;
+  if (!file) throw badRequest('FILE_REQUIRED');
+  const body = parse(z.object({ kind: z.enum(VAULT_KINDS).optional(), requirementKey: z.string().trim().max(60).optional() }), req.body);
+  // Magic bytes: the declared type must really be an image.
+  if (!imageSize(file.buffer)) throw badRequest('UNSUPPORTED_FILE_TYPE');
+  const target = body.kind ? targetForVaultKind(body.kind) : targetForRequirement(body.requirementKey);
+  const { checks } = await checkBuffer(file.buffer, { mimeType: file.mimetype, target, timeoutMs: PRECHECK_OCR_TIMEOUT_MS });
+  // A timed-out OCR is not finished in the background here (nothing is stored): drop the pending flag.
+  res.json({ checks: { ...checks, pending: undefined }, target });
 });
 
 // ─── Save an own case document to the vault ─────────────────────────

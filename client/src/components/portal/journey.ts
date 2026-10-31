@@ -2,7 +2,9 @@
  * Client journey milestones (portal home + case view): pure mapping of the `journey` block of
  * GET /api/account/next-step (server: lib/account/nextStep.ts → buildJourney) to six milestones
  *   documents → contract → embassy → decision → travel → arrival
- * each done / current / upcoming (or skipped after a refusal / cancellation) with the date to show.
+ * each done / current / upcoming (or skipped after a refusal / cancellation) with the date to show:
+ * the real date of done steps, the booked Botschaft appointment, the booked flight, otherwise the
+ * expected window (forecast steps; travel / arrival from the decision → arrival history).
  */
 
 export type ForecastStepKey = 'DOCUMENTS' | 'CONTRACT' | 'EMBASSY' | 'APPOINTMENT' | 'DECISION';
@@ -22,7 +24,9 @@ export interface JourneyData {
   outcome: 'APPROVED' | 'REJECTED' | 'CANCELLED' | null;
   decisionAt: string | null;
   steps: JourneyStep[];
-  travel: { at: string | null; planned: boolean; done: boolean };
+  /** The booked Botschaft appointment (older servers: absent). */
+  appointment?: { at: string | null; place: string | null } | null;
+  travel: { at: string | null; planned: boolean; done: boolean; expectedFrom?: string | null; expectedTo?: string | null };
   arrival: { at: string | null; done: boolean };
 }
 
@@ -33,12 +37,14 @@ export type MilestoneStatus = 'done' | 'current' | 'upcoming' | 'skipped';
 export interface Milestone {
   key: MilestoneKey;
   status: MilestoneStatus;
-  /** done: the day it happened; planned: the booked day (flight). */
+  /** done: the day it happened; planned: the booked day (flight); appointment: the booked Botschaft date and time. */
   date: string | null;
   /** Expected window (current / upcoming steps of the forecast). */
   from: string | null;
   to: string | null;
-  dateKind: 'done' | 'expected' | 'planned' | null;
+  dateKind: 'done' | 'expected' | 'planned' | 'appointment' | null;
+  /** Place of the booked appointment (embassy milestone). */
+  place?: string | null;
   /** The decision was a refusal. */
   negative?: boolean;
 }
@@ -73,7 +79,11 @@ export const buildMilestones = (j: JourneyData): Milestone[] => {
 
   const documents = fromStep(step('DOCUMENTS'));
   const contract = fromStep(step('CONTRACT'));
-  const embassy = embassyOf(step('EMBASSY'), step('APPOINTMENT'));
+  let embassy: Part & { place?: string | null } = embassyOf(step('EMBASSY'), step('APPOINTMENT'));
+  // A booked appointment replaces the estimate on the embassy milestone.
+  if (embassy.status !== 'done' && !stopped && j.appointment?.at) {
+    embassy = { ...embassy, date: j.appointment.at, from: null, to: null, dateKind: 'appointment', place: j.appointment.place };
+  }
   let decision: Part = fromStep(step('DECISION'));
   if (j.outcome === 'APPROVED' || j.outcome === 'REJECTED') {
     const date = j.decisionAt ?? step('DECISION')?.leftAt ?? null;
@@ -86,11 +96,16 @@ export const buildMilestones = (j: JourneyData): Milestone[] => {
     travel = { status: 'skipped', date: null, from: null, to: null, dateKind: null };
     arrival = { status: 'skipped', date: null, from: null, to: null, dateKind: null };
   } else {
-    const planned = j.travel.at ? { date: j.travel.at, dateKind: 'planned' as const } : { date: null, dateKind: null };
+    // Booked flight first, else the expected window (nothing booked yet).
+    const planned: Pick<Part, 'date' | 'from' | 'to' | 'dateKind'> = j.travel.at
+      ? { date: j.travel.at, from: null, to: null, dateKind: 'planned' }
+      : j.travel.expectedTo
+        ? { date: null, from: j.travel.expectedFrom ?? null, to: j.travel.expectedTo, dateKind: 'expected' }
+        : { date: null, from: null, to: null, dateKind: null };
     if (j.travel.done) travel = { status: 'done', date: j.travel.at, from: null, to: null, dateKind: j.travel.at ? 'done' : null };
-    else travel = { status: j.outcome === 'APPROVED' ? 'current' : 'upcoming', from: null, to: null, ...planned };
+    else travel = { status: j.outcome === 'APPROVED' ? 'current' : 'upcoming', ...planned };
     if (j.arrival.done) arrival = { status: 'done', date: j.arrival.at ?? j.travel.at, from: null, to: null, dateKind: (j.arrival.at ?? j.travel.at) ? 'done' : null };
-    else arrival = { status: j.travel.done ? 'current' : 'upcoming', from: null, to: null, ...planned };
+    else arrival = { status: j.travel.done ? 'current' : 'upcoming', ...planned };
   }
 
   const list: Milestone[] = [

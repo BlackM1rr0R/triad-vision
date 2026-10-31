@@ -4,7 +4,7 @@
 const az = {
   partnerForm: {
     addTitle: 'Yeni partnyor',
-    searchPh: 'Ad, şirkət, şəhər, teq, telefon, e-poçt…',
+    searchPh: 'Ad, şirkət, telefon, kod, VÖEN, şəhər, teq…',
     editTitle: 'Partnyoru redaktə et',
     save: 'Yadda saxla',
     cancel: 'Ləğv et',
@@ -107,7 +107,7 @@ const az = {
 const de: typeof az = {
   partnerForm: {
     addTitle: 'Neuer Vermittler',
-    searchPh: 'Name, Firma, Stadt, Tag, Telefon, E-Mail …',
+    searchPh: 'Name, Firma, Telefon, Code, VÖEN, Stadt, Tag …',
     editTitle: 'Vermittler bearbeiten',
     save: 'Speichern',
     cancel: 'Abbrechen',
@@ -210,7 +210,7 @@ const de: typeof az = {
 const en: typeof az = {
   partnerForm: {
     addTitle: 'New partner',
-    searchPh: 'Name, company, city, tag, phone, e-mail…',
+    searchPh: 'Name, company, phone, code, VÖEN, city, tag…',
     editTitle: 'Edit partner',
     save: 'Save',
     cancel: 'Cancel',
@@ -313,7 +313,7 @@ const en: typeof az = {
 const ru: typeof az = {
   partnerForm: {
     addTitle: 'Новый партнёр',
-    searchPh: 'Имя, компания, город, тег, телефон, e-mail…',
+    searchPh: 'Имя, компания, телефон, код, VÖEN, город, тег…',
     editTitle: 'Редактировать партнёра',
     save: 'Сохранить',
     cancel: 'Отмена',

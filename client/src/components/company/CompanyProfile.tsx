@@ -2,7 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
-import { Building2, Image as ImageIcon } from 'lucide-react';
+import { Building2, Image as ImageIcon, Scale } from 'lucide-react';
 import { api } from '@/lib/api';
 import { Spinner } from '@/components/ui/Spinner';
 import { toastJobsError, useJobLabels } from '@/components/jobs/labels';
@@ -13,6 +13,8 @@ import { CompanyLogoUploader } from '@/components/jobs/CompanyLogoUploader';
 import { EmployerReportPrefs } from './CompanyReports';
 import { CompanyTeam } from './CompanyTeam';
 import { ChangeEmailCard, ChangePasswordCard } from '@/components/account/AccountSecurity';
+import { LegalDataForm, betriebsnummerInvalid, legalFormOf, legalPayload, type LegalKey } from '@/components/partnerRecords/LegalDataForm'; // Betriebsnummer, register, signatory (no bank)
+import { recordsError } from '@/components/partnerRecords/api';
 
 const FIELDS = ['name', 'legalForm', 'city', 'phone', 'address', 'vatId', 'website', 'contactName'] as const;
 type Field = (typeof FIELDS)[number];
@@ -98,6 +100,8 @@ export const CompanyProfile = ({ company }: { company: Company }) => {
           </div>
         </form>
       </Section>
+      {/* Legal data used for contracts and official forms (no bank data, no internal note); staff are notified. */}
+      <CompanyLegalSection company={company} />
       {/* Logo on the public job ads (no review step: live at once, staff notified — server routes/company.ts). */}
       <Section title={t('publicImages.companyLogo.title')} icon={ImageIcon}>
         <CompanyLogoUploader
@@ -119,5 +123,41 @@ export const CompanyProfile = ({ company }: { company: Company }) => {
       {/* Monthly PDF report about the company's workers by e-mail (opt-out per portal user). */}
       <EmployerReportPrefs />
     </div>
+  );
+};
+
+/** Fields of the main profile form above: not repeated in the legal section. */
+const IN_MAIN_FORM: LegalKey[] = ['legalForm', 'city', 'vatId'];
+
+const CompanyLegalSection = ({ company }: { company: Company }) => {
+  const { t } = useTranslation();
+  const qc = useQueryClient();
+  const [legal, setLegal] = useState(() => legalFormOf(company as unknown as Record<string, unknown>));
+  const save = useMutation({
+    mutationFn: async () => (await api.patch<{ company: Company }>('/company/me', legalPayload(legal, { bank: false, omit: IN_MAIN_FORM }))).data.company,
+    onSuccess: (c) => {
+      qc.setQueryData(['company-me'], c);
+      toast.success(t('jobsArea.portal.profile.saved'));
+    },
+    onError: (err) => toast.error(recordsError(err)),
+  });
+  return (
+    <Section title={t('partnerRecords.legal.sections.legal')} icon={Scale}>
+      <p className="mb-4 text-sm text-muted">{t('partnerRecords.legal.employerNote')}</p>
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          save.mutate();
+        }}
+        className="space-y-4"
+      >
+        <LegalDataForm value={legal} onChange={setLegal} idPrefix="cp-legal" bank="hidden" omit={IN_MAIN_FORM} />
+        <div className="flex justify-end">
+          <button type="submit" className="btn-primary" disabled={save.isPending || betriebsnummerInvalid(legal.betriebsnummer)}>
+            {save.isPending && <Spinner className="size-4" />} {t('jobsArea.common.save')}
+          </button>
+        </div>
+      </form>
+    </Section>
   );
 };

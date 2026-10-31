@@ -676,6 +676,7 @@ const afterCompletion = async (r: RequestWithSigners, built: { pdf: Buffer; sha2
 
     await saveSignedCopyToDrive(id, built.pdf).catch((err) => console.error('[esign] signed copy for the drive failed', id, err)); // started from the drive: signed PDF next to the original
     await officialFormSigned(id, built.pdf); // official form (Erklärung zum Beschäftigungsverhältnis) signed by the employer → SIGNED + drive + staff notified
+    await import('../partnerRecords/signature.js').then((m) => m.partnerContractSigned(id, built.pdf)).catch((err) => console.error('[esign] partner contract hook failed', id, err)); // employer / partner contract → signed copy + ACTIVE
 
     // Everyone gets the signed PDF.
     const attachment = { filename: `${safeFileBase(r.title)}-signed.pdf`, content: built.pdf, contentType: 'application/pdf' };

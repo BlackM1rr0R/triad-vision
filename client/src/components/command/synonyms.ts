@@ -14,6 +14,7 @@ export const SYNONYMS: Record<string, string> = {
   signatures: 'imza, e-imza, signature, esign, unterschrift, подпись',
   expiring: 'vaxtı bitən, expiry, ablauf, gültigkeit, истекающие, срок',
   originals: 'orijinal, original, apostil, apostille, оригинал, embassy, səfirlik, botschaft, посольство',
+  authorities: 'qurum, səfirlik, konsulluq, miqrasiya, behörde, botschaft, konsulat, ausländerbehörde, abh, agentur für arbeit, zav, embassy, consulate, authority, immigration office, ведомство, посольство, консульство',
   arrivals: 'gəliş, arrival, ankunft, flight, flug, uçuş, прибытие, рейс',
   checkIns: 'check-in, yoxlama, nachbetreuung, retention, проверка, опрос',
   examDates: 'imtahan, alman dili, goethe, telc, exam, prüfung, deutsch, экзамен, немецкий',

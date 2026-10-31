@@ -31,6 +31,8 @@ import { cleanupRemovedImages } from '../lib/publicImageRefs.js';
 import { REF_COOKIE, normaliseRefCode, resolveReferralCode } from '../lib/growth/referral.js';
 import { findPartnerByCode } from '../lib/partners/owned.js';
 import { attachCompanyReferral } from '../lib/agents/referral.js';
+import { LEGAL_FIELDS, auditDiff, companyLegalShape, stripMaskedBank } from '../lib/partnerRecords/legal.js'; // legal data (no bank, no internal note)
+import { castVote, voteInput, voteSummary, votesByApplication, withdrawVote } from '../lib/employerVotes.js'; // team votes on candidates
 
 // Employer portal API — mounted at /api/company (COMPANY role)
 export const companyRouter = Router();
@@ -198,6 +200,8 @@ const companyView = (c: Company) => ({
   status: c.status,
   createdAt: c.createdAt,
   logo: companyLogoOf(c.logo),
+  // Legal data (Betriebsnummer, register, tax number, address, signatory …) — bank data stays staff-internal.
+  ...Object.fromEntries(LEGAL_FIELDS.map((k) => [k, c[k]])),
 });
 
 companyRouter.get('/me', async (_req, res) => {
@@ -216,11 +220,21 @@ companyRouter.patch('/me', async (req, res) => {
       website: companyFields.website,
       phone: companyFields.phone.optional(),
       contactName: companyFields.contactName,
+      ...companyLegalShape,
     }),
-    req.body,
+    stripMaskedBank(req.body),
   );
-  const company = await prisma.company.update({ where: { id: co(res).id }, data: body });
-  await audit(req, 'COMPANY_PROFILE_UPDATED', `company:${company.id}`, { fields: Object.keys(body) });
+  const before = co(res);
+  const company = await prisma.company.update({ where: { id: before.id }, data: body });
+  const { fields, changes } = auditDiff(before as unknown as Record<string, unknown>, body as Record<string, unknown>);
+  await audit(req, 'COMPANY_PROFILE_UPDATED', `company:${company.id}`, { fields, changes: changes as Prisma.InputJsonValue });
+  // Contract-relevant data changed by the employer: staff should know (contracts / official forms use it).
+  const legalChanged = fields.filter((f) => (LEGAL_FIELDS as readonly string[]).includes(f) || f === 'name' || f === 'legalForm' || f === 'vatId');
+  if (legalChanged.length)
+    void notifyStaff(`İşəgötürən məlumatlarını dəyişdi: ${company.name}`, `${company.name} hüquqi məlumatlarını yenilədi: ${legalChanged.join(', ')}.`, {
+      link: `/admin/companies/${company.id}?tab=history`,
+      type: 'COMPANY_LEGAL_UPDATED',
+    }).catch((err) => console.error('[company] legal change notice failed', err));
   res.json({ company: companyView(company) });
 });
 
@@ -437,7 +451,29 @@ companyRouter.get('/candidates', async (req, res) => {
       user: { select: anonymisedProfileSelect },
     },
   });
-  res.json({ items: items.map(({ user, ...a }) => ({ ...a, candidate: anonymisedProfile(user) })) });
+  // Team votes (lib/employerVotes): colleagues of this company only, with the signed-in user's own vote marked.
+  const votes = await votesByApplication(
+    items.map((a) => a.id),
+    { companyId: co(res).id, me: req.user!.id },
+  );
+  res.json({
+    items: items.map(({ user, ...a }) => {
+      const list = votes.get(a.id) ?? [];
+      return { ...a, candidate: anonymisedProfile(user), votes: list, voteSummary: voteSummary(list) };
+    }),
+  });
+});
+
+/** The signed-in employer user's vote on a presented candidate (like / interview / reject + comment). */
+companyRouter.put('/candidates/:id/vote', async (req, res) => {
+  const body = parse(voteInput, req.body);
+  const result = await castVote(req, co(res), String(req.params.id), body);
+  res.json({ ok: true, ...result });
+});
+
+companyRouter.delete('/candidates/:id/vote', async (req, res) => {
+  await withdrawVote(req, co(res).id, String(req.params.id));
+  res.json({ ok: true });
 });
 
 /** Anonymised CV of a presented candidate (only when the candidate shares it). */

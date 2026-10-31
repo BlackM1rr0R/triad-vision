@@ -32,8 +32,10 @@ const KIND_TONE: Record<ContractKind, string> = {
   WORK: 'bg-primary/10 text-ink',
   AUSBILDUNG: 'bg-accent-bg text-accent-fg',
   SERVICE: 'bg-success-bg text-success-fg',
+  EMPLOYER: 'bg-info-bg text-info-fg',
+  PARTNER: 'bg-warning-bg text-warning-fg',
 };
-const GROUP_ORDER: PlaceholderGroup[] = ['input', 'client', 'case', 'company', 'vacancy', 'triad', 'staff', 'date'];
+const GROUP_ORDER: PlaceholderGroup[] = ['input', 'client', 'case', 'company', 'partner', 'contract', 'vacancy', 'triad', 'staff', 'date'];
 const TOKEN = /\{\{\s*([A-Za-z][A-Za-z0-9_.]*)\s*\}\}/g;
 
 const useTemplates = () =>

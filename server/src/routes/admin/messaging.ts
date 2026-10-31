@@ -15,6 +15,7 @@ import { deliver, resendOutbound } from '../../lib/messaging/outbound.js';
 import { normalizePhone, providerStatus } from '../../lib/messaging/providers.js';
 import { invalidateTemplateCache, placeholdersIn, renderTemplate } from '../../lib/messaging/templates.js';
 import { subscriberCount } from '../../lib/messaging/realtime.js';
+import { getPhoneReminderSettings, MAX_LEAD, MIN_LEAD, REMINDER_KINDS, savePhoneReminderSettings } from '../../lib/messaging/appointmentReminders.js';
 
 /** admin/messaging — outbound log, provider status, notification template editor. STAFF+ (mounted in routes/admin/index.ts). */
 export const adminMessagingRouter = Router();
@@ -80,6 +81,24 @@ adminMessagingRouter.post('/providers/test', requireMinRole('SUPER_ADMIN'), asyn
   if (!to) throw badRequest('INVALID_PHONE');
   const item = await deliver(body.channel, to, body.text ?? `Triad Vision test message (${new Date().toISOString()})`, { userId: null });
   res.json({ item });
+});
+
+// ─── Phone reminders (WhatsApp / SMS before appointments) ─────────────
+
+adminMessagingRouter.get('/reminders', async (_req, res) => {
+  res.json({ settings: await getPhoneReminderSettings(), limits: { minLead: MIN_LEAD, maxLead: MAX_LEAD, maxLeads: 3 } });
+});
+
+adminMessagingRouter.put('/reminders', requireMinRole('ADMIN'), async (req, res) => {
+  const body = parse(
+    z.object({
+      enabled: z.boolean(),
+      leadMinutes: z.array(z.number().int().min(MIN_LEAD).max(MAX_LEAD)).min(1).max(3),
+      kinds: z.object(Object.fromEntries(REMINDER_KINDS.map((k) => [k, z.boolean()])) as Record<(typeof REMINDER_KINDS)[number], z.ZodBoolean>),
+    }),
+    req.body,
+  );
+  res.json({ settings: await savePhoneReminderSettings(body) });
 });
 
 // ─── Notification templates ───────────────────────────────────────────

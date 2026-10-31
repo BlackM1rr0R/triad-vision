@@ -43,13 +43,30 @@ export interface KpiStaff {
 
 /** Metrics of every given staff member for every month in `months` (oldest first, consecutive). */
 export const computeKpis = async (staffIds: string[], months: string[], now = new Date()) => {
+  if (!staffIds.length || !months.length) {
+    const out = new Map<string, Map<string, KpiMetrics>>();
+    for (const id of staffIds) out.set(id, new Map(months.map((m) => [m, emptyMetrics()])));
+    return out;
+  }
+  return computeKpiBuckets(staffIds, months, monthRange(months[0]).start, monthRange(months[months.length - 1]).end, monthOf, now);
+};
+
+/**
+ * Metrics of every given staff member over one free period [from, to) (staff performance report): the same
+ * computation as the monthly KPI, with a single bucket.
+ */
+export const computeKpiPeriod = async (staffIds: string[], from: Date, to: Date, now = new Date()) => {
+  const all = await computeKpiBuckets(staffIds, ['period'], from, to, () => 'period', now);
+  return new Map([...all].map(([id, m]) => [id, m.get('period')!]));
+};
+
+/** Metrics per staff member and bucket; `bucketOf` maps an instant inside [from, to) to one of `buckets`. */
+const computeKpiBuckets = async (staffIds: string[], buckets: string[], from: Date, to: Date, bucketOf: (d: Date) => string, now: Date) => {
   const out = new Map<string, Map<string, KpiMetrics>>();
-  for (const id of staffIds) out.set(id, new Map(months.map((m) => [m, emptyMetrics()])));
-  if (!staffIds.length || !months.length) return out;
-  const from = monthRange(months[0]).start;
-  const to = monthRange(months[months.length - 1]).end;
+  for (const id of staffIds) out.set(id, new Map(buckets.map((m) => [m, emptyMetrics()])));
+  if (!staffIds.length || !buckets.length) return out;
   const ids = new Set(staffIds);
-  const cell = (staffId: string | null | undefined, at: Date | null | undefined) => (staffId && at && ids.has(staffId) ? out.get(staffId)!.get(monthOf(at)) : undefined);
+  const cell = (staffId: string | null | undefined, at: Date | null | undefined) => (staffId && at && ids.has(staffId) ? out.get(staffId)!.get(bucketOf(at)) : undefined);
 
   const [closed, created, assignments, reviews, messages, surveys, time, tasksDone, tasksDue, approvals] = await Promise.all([
     prisma.case.findMany({
@@ -108,12 +125,12 @@ export const computeKpis = async (staffIds: string[], months: string[], now = ne
   for (const a of assignments) {
     const to = typeof a.newValue === 'string' ? a.newValue : null;
     const m = cell(to, a.createdAt);
-    if (!m || seen.has(`${to}:${a.entityId}:${monthOf(a.createdAt)}`)) continue;
-    seen.add(`${to}:${a.entityId}:${monthOf(a.createdAt)}`);
+    if (!m || seen.has(`${to}:${a.entityId}:${bucketOf(a.createdAt)}`)) continue;
+    seen.add(`${to}:${a.entityId}:${bucketOf(a.createdAt)}`);
     m.assigned += 1;
   }
   for (const c of created) {
-    const key = `${c.assignedStaffId}:${c.id}:${monthOf(c.createdAt)}`;
+    const key = `${c.assignedStaffId}:${c.id}:${bucketOf(c.createdAt)}`;
     const m = cell(c.assignedStaffId, c.createdAt);
     if (!m || seen.has(key)) continue;
     seen.add(key);

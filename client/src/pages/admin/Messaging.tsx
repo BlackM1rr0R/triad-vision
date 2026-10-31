@@ -5,7 +5,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
 import { toast } from 'sonner';
-import { AlertTriangle, CheckCircle2, FileText, Inbox, MessageCircle, Plug, RefreshCw, RotateCcw, Save, Search, Send, Smartphone, XCircle } from 'lucide-react';
+import { AlertTriangle, BellRing, CheckCircle2, FileText, Inbox, MessageCircle, Plug, Plus, RefreshCw, RotateCcw, Save, Search, Send, Smartphone, Trash2, XCircle } from 'lucide-react';
 import { api, errorCode } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { hasMinRole } from '@/lib/types';
@@ -360,6 +360,119 @@ const ConfiguredBadge = ({ ok }: { ok: boolean }) => {
   );
 };
 
+// ─── Phone reminders (lib/messaging/appointmentReminders.ts) ─────────
+
+const REMINDER_KINDS = ['EMBASSY', 'GERMAN_EXAM', 'BOOKING', 'INTERVIEW'] as const;
+type ReminderKind = (typeof REMINDER_KINDS)[number];
+interface ReminderSettings {
+  enabled: boolean;
+  leadMinutes: number[];
+  kinds: Record<ReminderKind, boolean>;
+}
+const REMINDERS_KEY = ['admin-messaging-reminders'] as const;
+const LEAD_UNITS = { minutes: 1, hours: 60, days: 1440 } as const;
+type LeadUnit = keyof typeof LEAD_UNITS;
+/** 1440 → 1 day, 120 → 2 hours, 45 → 45 minutes. */
+const leadToDraft = (m: number): { value: number; unit: LeadUnit } =>
+  m % 1440 === 0 ? { value: m / 1440, unit: 'days' } : m % 60 === 0 ? { value: m / 60, unit: 'hours' } : { value: m, unit: 'minutes' };
+
+/** Lead times and kinds of the WhatsApp / SMS appointment reminders; ADMIN+ may edit. */
+const RemindersPanel = () => {
+  const { t } = useTranslation();
+  const { user } = useAuth();
+  const qc = useQueryClient();
+  const canEdit = hasMinRole(user?.role, 'ADMIN');
+  const { data } = useQuery({
+    queryKey: REMINDERS_KEY,
+    queryFn: async () => (await api.get<{ settings: ReminderSettings }>('/admin/messaging/reminders')).data.settings,
+  });
+  const [draft, setDraft] = useState<{ enabled: boolean; leads: { value: number; unit: LeadUnit }[]; kinds: Record<ReminderKind, boolean> } | null>(null);
+  useEffect(() => {
+    if (data) setDraft({ enabled: data.enabled, leads: data.leadMinutes.map(leadToDraft), kinds: data.kinds });
+  }, [data]);
+  const save = useMutation({
+    mutationFn: async (body: ReminderSettings) => (await api.put<{ settings: ReminderSettings }>('/admin/messaging/reminders', body)).data.settings,
+    onSuccess: (settings) => {
+      qc.setQueryData(REMINDERS_KEY, settings);
+      toast.success(t('messaging.admin.reminders.saved'));
+    },
+    onError: (err) => toastError(err),
+  });
+  if (!draft) return null;
+  const minutes = draft.leads.map((l) => Math.round(l.value * LEAD_UNITS[l.unit]));
+  const valid = minutes.length > 0 && minutes.every((m) => Number.isFinite(m) && m >= 15 && m <= 7 * 1440);
+  const k = 'messaging.admin.reminders';
+
+  return (
+    <Panel title={t(`${k}.title`)} icon={BellRing}>
+      <p className="mb-4 text-xs leading-relaxed text-muted">{t(`${k}.hint`)}</p>
+      <fieldset disabled={!canEdit || save.isPending} className="space-y-4">
+        <label className="flex items-center gap-2 text-sm font-medium text-ink">
+          <input type="checkbox" className="size-4" checked={draft.enabled} onChange={(e) => setDraft({ ...draft, enabled: e.target.checked })} />
+          {t(`${k}.enabled`)}
+        </label>
+        <div>
+          <p className="text-sm font-semibold text-ink">{t(`${k}.leads`)}</p>
+          <p className="mb-2 text-xs text-muted">{t(`${k}.leadsHint`)}</p>
+          <ul className="space-y-2">
+            {draft.leads.map((l, i) => (
+              <li key={i} className="flex flex-wrap items-center gap-2">
+                <input
+                  type="number"
+                  min={1}
+                  className="input w-24"
+                  value={l.value}
+                  aria-label={t(`${k}.leads`)}
+                  onChange={(e) => setDraft({ ...draft, leads: draft.leads.map((x, j) => (j === i ? { ...x, value: Number(e.target.value) } : x)) })}
+                />
+                <select
+                  className="input w-32"
+                  value={l.unit}
+                  aria-label={t(`${k}.leads`)}
+                  onChange={(e) => setDraft({ ...draft, leads: draft.leads.map((x, j) => (j === i ? { ...x, unit: e.target.value as LeadUnit } : x)) })}
+                >
+                  {(Object.keys(LEAD_UNITS) as LeadUnit[]).map((u) => (
+                    <option key={u} value={u}>
+                      {t(`${k}.${u}`)}
+                    </option>
+                  ))}
+                </select>
+                {draft.leads.length > 1 && (
+                  <button type="button" className="btn-ghost btn-sm" onClick={() => setDraft({ ...draft, leads: draft.leads.filter((_, j) => j !== i) })} aria-label={t(`${k}.remove`)} title={t(`${k}.remove`)}>
+                    <Trash2 className="size-3.5" aria-hidden />
+                  </button>
+                )}
+              </li>
+            ))}
+          </ul>
+          {draft.leads.length < 3 && (
+            <button type="button" className="btn-secondary btn-sm mt-2" onClick={() => setDraft({ ...draft, leads: [...draft.leads, { value: 1, unit: 'hours' }] })}>
+              <Plus className="size-3.5" aria-hidden /> {t(`${k}.add`)}
+            </button>
+          )}
+          {!valid && <p className="mt-2 text-xs text-danger-fg">{t(`${k}.invalid`)}</p>}
+        </div>
+        <div>
+          <p className="mb-2 text-sm font-semibold text-ink">{t(`${k}.kinds`)}</p>
+          <div className="grid gap-2 sm:grid-cols-2">
+            {REMINDER_KINDS.map((kind) => (
+              <label key={kind} className="flex items-center gap-2 text-sm text-ink">
+                <input type="checkbox" className="size-4" checked={draft.kinds[kind]} onChange={(e) => setDraft({ ...draft, kinds: { ...draft.kinds, [kind]: e.target.checked } })} />
+                {t(`${k}.kind.${kind}`)}
+              </label>
+            ))}
+          </div>
+        </div>
+        {canEdit && (
+          <button type="button" className="btn-primary btn-sm" disabled={!valid || save.isPending} onClick={() => save.mutate({ enabled: draft.enabled, leadMinutes: minutes, kinds: draft.kinds })}>
+            {save.isPending ? <Spinner className="size-3.5" /> : <Save className="size-3.5" aria-hidden />} {t(`${k}.save`)}
+          </button>
+        )}
+      </fieldset>
+    </Panel>
+  );
+};
+
 const ProvidersTab = () => {
   const { t } = useTranslation();
   const { user } = useAuth();
@@ -431,6 +544,8 @@ const ProvidersTab = () => {
           </dl>
         </Panel>
       </div>
+
+      <RemindersPanel />
 
       {isRoot && (
         <Panel title={t('messaging.admin.providers.test')} icon={Send}>

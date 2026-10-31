@@ -11,6 +11,8 @@ import { EmptyState, ErrorBlock, LoadingBlock, PageHead, Panel } from '@/compone
 import { DeltaBadge, METRICS, MonthSwitcher, monthShort, type MetricDef } from '@/components/team/KpiCard';
 import { Sparkline } from '@/components/team/Sparkline';
 import { bakuMonth, useTeamKpi, type NumericKey, type TeamKpi } from '@/components/team/api';
+import { Tabs, useTabParam } from '@/components/ui/Tabs';
+import { PerformanceReport } from '@/components/staffOps/PerformanceReport'; // free-period staff performance report + CSV
 
 registerCopy(pagesTeam);
 
@@ -30,6 +32,7 @@ export default function AdminKpi() {
   const [sortKey, setSortKey] = useState<NumericKey>('closed');
   const [spark, setSpark] = useState<NumericKey>('closed');
   const { data, isLoading, error, refetch } = useTeamKpi(month);
+  const [tab, setTab] = useTabParam('tab', ['leaderboard', 'report'] as const, 'leaderboard');
 
   const def = (key: NumericKey) => METRICS.find((m) => m.key === key)!;
   const rows = useMemo(() => {
@@ -54,15 +57,28 @@ export default function AdminKpi() {
         title={t('team.kpi.pageTitle')}
         subtitle={t('team.kpi.pageSubtitle')}
         actions={
-          <div className="flex flex-wrap items-center gap-2">
-            <MonthSwitcher month={month} onChange={setMonth} />
-            <a href={exportUrl} className="btn-secondary btn-sm" download>
-              <Download className="size-3.5" /> {t('team.kpi.csv')}
-            </a>
-          </div>
+          tab === 'leaderboard' ? (
+            <div className="flex flex-wrap items-center gap-2">
+              <MonthSwitcher month={month} onChange={setMonth} />
+              <a href={exportUrl} className="btn-secondary btn-sm" download>
+                <Download className="size-3.5" /> {t('team.kpi.csv')}
+              </a>
+            </div>
+          ) : undefined
         }
       />
-      {isLoading ? (
+      <Tabs
+        label={t('team.kpi.pageTitle')}
+        items={[
+          { key: 'leaderboard', label: t('staffOps.perf.tabLeaderboard') },
+          { key: 'report', label: t('staffOps.perf.tabReport') },
+        ]}
+        value={tab}
+        onChange={setTab}
+      />
+      {tab === 'report' ? (
+        <PerformanceReport />
+      ) : isLoading ? (
         <LoadingBlock />
       ) : error || !data ? (
         <ErrorBlock error={error} onRetry={() => refetch()} />

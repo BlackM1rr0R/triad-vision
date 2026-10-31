@@ -18,6 +18,8 @@ const az = {
       searching: 'Sənədi kadra salın',
     },
     adjust: {
+      qualityTitle: 'Şəklin keyfiyyəti zəifdir',
+      qualityHint: 'Daha aydın nəticə üçün yenidən çəkin və ya belə davam edin.',
       title: 'Kənarları düzəldin',
       hint: 'Künclərdəki dairələri sənədin künclərinə çəkin.',
       found: 'Kənarlar avtomatik tapıldı.',
@@ -30,6 +32,7 @@ const az = {
       retake: 'Yenidən çək',
     },
     review: {
+      qualityChip: 'Zəif keyfiyyət',
       title: 'Səhifələr',
       mode: 'Görünüş',
       modes: { auto: 'Avtomatik', gray: 'Boz', bw: 'Ağ-qara', original: 'Orijinal' },
@@ -73,6 +76,8 @@ const de: typeof az = {
       searching: 'Dokument ins Bild halten',
     },
     adjust: {
+      qualityTitle: 'Die Bildqualität ist schwach',
+      qualityHint: 'Für ein gut lesbares Ergebnis neu fotografieren oder trotzdem fortfahren.',
       title: 'Ränder anpassen',
       hint: 'Ziehen Sie die Kreise auf die Ecken des Dokuments.',
       found: 'Ränder automatisch erkannt.',
@@ -85,6 +90,7 @@ const de: typeof az = {
       retake: 'Neu aufnehmen',
     },
     review: {
+      qualityChip: 'Schwache Qualität',
       title: 'Seiten',
       mode: 'Darstellung',
       modes: { auto: 'Automatisch', gray: 'Graustufen', bw: 'Schwarz-Weiß', original: 'Original' },
@@ -128,6 +134,8 @@ const en: typeof az = {
       searching: 'Fit the document in the frame',
     },
     adjust: {
+      qualityTitle: 'The photo quality is poor',
+      qualityHint: 'Retake it for a clearly readable result, or continue anyway.',
       title: 'Adjust the edges',
       hint: 'Drag the circles onto the corners of the document.',
       found: 'Edges found automatically.',
@@ -140,6 +148,7 @@ const en: typeof az = {
       retake: 'Retake',
     },
     review: {
+      qualityChip: 'Poor quality',
       title: 'Pages',
       mode: 'Look',
       modes: { auto: 'Auto', gray: 'Grayscale', bw: 'Black & white', original: 'Original' },
@@ -183,6 +192,8 @@ const ru: typeof az = {
       searching: 'Поместите документ в кадр',
     },
     adjust: {
+      qualityTitle: 'Качество фото низкое',
+      qualityHint: 'Для чёткого результата переснимите или продолжите как есть.',
       title: 'Поправьте края',
       hint: 'Перетащите кружки на углы документа.',
       found: 'Края найдены автоматически.',
@@ -195,6 +206,7 @@ const ru: typeof az = {
       retake: 'Переснять',
     },
     review: {
+      qualityChip: 'Низкое качество',
       title: 'Страницы',
       mode: 'Вид',
       modes: { auto: 'Авто', gray: 'Оттенки серого', bw: 'Чёрно-белый', original: 'Оригинал' },

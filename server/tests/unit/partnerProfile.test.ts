@@ -5,6 +5,9 @@ import {
   bicValid,
   cleanTags,
   contractDatesInvalid,
+  contractReadiness,
+  isGermany,
+  legalCrossError,
   CustomFieldError,
   customValue,
   ibanValid,
@@ -55,6 +58,15 @@ const partner = (over: Partial<ReferralPartner> = {}): ReferralPartner => ({
   tags: null,
   customData: null,
   extraFields: null,
+  legalForm: null,
+  registerNumber: null,
+  registerCourt: null,
+  vatId: null,
+  betriebsnummer: null,
+  street: null,
+  postalCode: null,
+  signatoryName: null,
+  signatoryRole: null,
   createdAt: new Date('2026-10-01T10:00:00Z'),
   updatedAt: new Date('2026-10-01T10:00:00Z'),
   ...over,
@@ -177,5 +189,36 @@ describe('partner profile: output and audit', () => {
     expect(staffRows).toContainEqual(['Telegram', '@ilqar']);
     expect(staffRows).toContainEqual(['Müqavilə başlanğıcı', '01.01.2026']);
     expect(profileRows(p, defs, { mask: new Set(), canSeeBank: true })).toContainEqual(['IBAN', 'DE89370400440532013000']);
+  });
+});
+
+describe('partner legal data', () => {
+  it('normalises and validates the VAT id, Betriebsnummer and postal code', () => {
+    expect(schema.parse({ vatId: 'de 123.456-789', betriebsnummer: '1234 5678' })).toMatchObject({ vatId: 'DE123456789', betriebsnummer: '12345678' });
+    expect(schema.safeParse({ vatId: '123' }).success).toBe(false);
+    expect(schema.safeParse({ betriebsnummer: '1234567' }).success).toBe(false);
+    expect(schema.safeParse({ postalCode: '#1' }).success).toBe(false);
+    expect(schema.parse({ vatId: '', betriebsnummer: '' })).toMatchObject({ vatId: null, betriebsnummer: null });
+  });
+
+  it('checks Germany-only rules on the merged values', () => {
+    expect(isGermany(' Deutschland ')).toBe(true);
+    expect(isGermany('Almaniya')).toBe(true);
+    expect(isGermany('Azərbaycan')).toBe(false);
+    expect(legalCrossError({ country: 'Azərbaycan', betriebsnummer: '12345678' })).toBe('BETRIEBSNUMMER_GERMANY_ONLY');
+    expect(legalCrossError({ country: null, betriebsnummer: '12345678' })).toBeNull();
+    expect(legalCrossError({ country: 'Germany', postalCode: '8080' })).toBe('INVALID_POSTAL_CODE');
+    expect(legalCrossError({ country: 'Azərbaycan', postalCode: 'AZ1000' })).toBeNull();
+  });
+
+  it('lists the contract fields that are still missing', () => {
+    expect(contractReadiness(partner())).toMatchObject({ missing: ['street', 'postalCode', 'city', 'country', 'taxId', 'phone'] });
+    const full = partner({ street: 'Nizami 1', postalCode: 'AZ1000', city: 'Bakı', country: 'Azərbaycan', taxId: '123', whatsapp: '+994' });
+    expect(contractReadiness(full)).toEqual({ required: expect.any(Array), missing: [], percent: 100 });
+    const gmbh = partner({ partnerType: 'COMPANY', country: 'Deutschland', companyName: 'XTA GmbH', vatId: 'DE123456789' });
+    const r = contractReadiness(gmbh);
+    expect(r.required).toContain('registerNumber');
+    expect(r.missing).not.toContain('taxId'); // the VAT id stands in for the tax number
+    expect(r.missing).toEqual(expect.arrayContaining(['legalForm', 'registerNumber', 'registerCourt', 'signatoryName', 'email']));
   });
 });

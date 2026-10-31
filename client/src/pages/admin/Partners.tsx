@@ -1,76 +1,114 @@
-import { useEffect, useMemo, useState } from 'react';
-import { Link, Route, Routes, useNavigate, useParams } from 'react-router-dom';
-import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useEffect, useState } from 'react';
+import { Link, Route, Routes, useNavigate, useSearchParams } from 'react-router-dom';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { toast } from 'sonner';
 import clsx from 'clsx';
-import { ArrowLeft, Ban, ClipboardPen, Download, FolderOpen, FolderPlus, HandCoins, Handshake, Mail, Pencil, Phone, Plus, Search, Settings2, Trash2, Users, X } from 'lucide-react';
+import { ArrowDown, ArrowLeft, ArrowUp, ArrowUpDown, Ban, Building2, Download, HandCoins, Handshake, Mail, Pencil, Phone, Plus, Search, Settings2, X } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { hasMinRole } from '@/lib/types';
-import { useL10n } from '@/lib/l10n';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { Spinner } from '@/components/ui/Spinner';
-import { StatusBadge } from '@/components/admin/StatusBadge';
 import { Chip, EmptyState, ErrorBlock, LoadingBlock, PageHead } from '@/components/admin/ui';
-import { Tabs } from '@/components/ui/Tabs';
-import { fmtDate, fullName } from '@/components/admin/labels';
-import { PARTNERS_KEY, partnerError, type Partner, type PartnerCase, type PartnerCounts } from '@/components/partners/api';
+import { fmtDate, fmtRelative } from '@/components/admin/labels';
+import { PARTNERS_KEY, type Partner, type PartnerType } from '@/components/partners/api';
 import { CommissionsPanel } from '@/components/partners/Commissions';
 import { PartnerFormDialog } from '@/components/partners/PartnerForm'; // the one partner form (also used by the drive)
 import { PartnerFieldsManager } from '@/components/partners/PartnerFieldsManager';
-import { PartnerKeyInfo, PartnerProfileCard } from '@/components/partners/PartnerProfile';
-import { PortalLoginPanel } from '@/components/partners/PortalLogin';
-import { OwnershipPanel, type OwnedClient, type PartnerOwnershipFields } from '@/components/partners/Ownership'; // sign-up code, rules, own clients
-import { DeletePartnerDialog, invalidatePartnerViews } from '@/components/partners/DeletePartnerDialog';
+import { PartnerKeyInfo } from '@/components/partners/PartnerProfile';
+import type { PartnerOwnershipFields } from '@/components/partners/Ownership';
 import { money } from '@/components/agents/format';
-import { SensitiveValue } from '@/components/privacyTools/SensitiveValue';
 import { RefusalReport } from '@/components/partners/RefusalReport'; // Ablehnung by partner / employer company
-import { PROCESSING_STAGES, stageLabel, type ProcessingStage } from '@/components/caseProcessing/api'; // team document workflow
-import { StageCell } from '@/components/caseProcessing/parts';
+import { PartnerHub } from '@/components/partners/hub/PartnerHub'; // full profile page with tabs
+import { ContractBadge } from '@/components/partners/hub/parts';
+import { CONTRACT_STATUSES } from '@/components/partners/hub/types';
 
 type ActiveFilter = 'all' | 'true' | 'false';
+type SortKey = 'name' | 'clients' | 'activeCases' | 'commissions' | 'pending' | 'lastActivity' | 'contractEnd';
+const SORTS: SortKey[] = ['name', 'clients', 'activeCases', 'commissions', 'pending', 'lastActivity', 'contractEnd'];
 
-const CountRow = ({ counts }: { counts: PartnerCounts }) => {
+interface ListResponse {
+  items: (Partner & PartnerOwnershipFields)[];
+  facets: { countries: string[]; tags: string[] };
+}
+
+/** List filters kept in the URL (?q, ?active, ?type, ?country, ?tag, ?contract, ?sort, ?dir) so a filtered view can be linked and survives reloads. */
+const useListParams = () => {
+  const [params, setParams] = useSearchParams();
+  const get = (k: string) => params.get(k) ?? '';
+  const active = (['all', 'true', 'false'] as const).find((v) => v === params.get('active')) ?? 'all';
+  const sort = SORTS.find((s) => s === params.get('sort'));
+  const dir: 'asc' | 'desc' = params.get('dir') === 'desc' ? 'desc' : 'asc';
+  const contract = CONTRACT_STATUSES.find((s) => s === params.get('contract'));
+  const type = params.get('type') === 'COMPANY' || params.get('type') === 'INDIVIDUAL' ? (params.get('type') as PartnerType) : undefined;
+  const set = (patch: Record<string, string | undefined>) =>
+    setParams(
+      (prev) => {
+        const p = new URLSearchParams(prev);
+        for (const [k, v] of Object.entries(patch)) {
+          if (!v || (k === 'active' && v === 'all')) p.delete(k);
+          else p.set(k, v);
+        }
+        return p;
+      },
+      { replace: true },
+    );
+  return { q: get('q'), active: active as ActiveFilter, type, country: get('country'), tag: get('tag'), contract, sort, dir, set };
+};
+
+const SortHeader = ({ k, label, sort, dir, onSort, className }: { k: SortKey; label: string; sort?: SortKey; dir: 'asc' | 'desc'; onSort: (k: SortKey) => void; className?: string }) => {
   const { t } = useTranslation();
-  const cells: [string, number, string][] = [
-    [t('refPartners.counts.clients'), counts.clients, 'text-ink'],
-    [t('refPartners.counts.active'), counts.activeCases, 'text-link'],
-    [t('refPartners.counts.approved'), counts.approved, 'text-success-fg'],
-    // Visa refused ("rədd"): REJECTED or marked "Ablehnung" by the team; cancellations are listed separately.
-    [t('refPartners.counts.rejected'), counts.rejected ?? counts.closedNegative, 'text-danger-fg'],
-  ];
+  const on = sort === k;
+  const Icon = on ? (dir === 'desc' ? ArrowDown : ArrowUp) : ArrowUpDown;
   return (
-    <dl className="grid grid-cols-4 gap-2">
-      {cells.map(([label, n, tone]) => (
-        <div key={label} className="min-w-0 rounded-lg bg-sunken px-2 py-1.5 text-center">
-          <dd className={clsx('text-base font-bold tabular-nums', tone)}>{n}</dd>
-          <dt className="truncate text-[10px] text-muted" title={label}>
-            {label}
-          </dt>
-        </div>
-      ))}
-    </dl>
+    <th className={clsx('px-3 py-2.5', className)} aria-sort={on ? (dir === 'desc' ? 'descending' : 'ascending') : undefined}>
+      <button type="button" className={clsx('inline-flex items-center gap-1 whitespace-nowrap hover:text-ink', on && 'font-semibold text-ink')} onClick={() => onSort(k)} title={t('partnerHub.list.sortBy', { column: label })}>
+        {label} <Icon className={clsx('size-3', !on && 'opacity-50')} aria-hidden />
+      </button>
+    </th>
   );
 };
 
 const PartnerList = ({ isAdmin }: { isAdmin: boolean }) => {
   const { t } = useTranslation();
-  const [searchInput, setSearchInput] = useState('');
-  const [search, setSearch] = useState('');
-  const [active, setActive] = useState<ActiveFilter>('all');
+  const navigate = useNavigate();
+  const lp = useListParams();
+  const [searchInput, setSearchInput] = useState(lp.q);
   const [dialog, setDialog] = useState<{ open: boolean; partner: Partner | null }>({ open: false, partner: null });
   const [managingFields, setManagingFields] = useState(false);
   usePageTitle(t('refPartners.title'));
   useEffect(() => {
-    const id = window.setTimeout(() => setSearch(searchInput.trim()), 300);
+    const id = window.setTimeout(() => {
+      if (searchInput.trim() !== lp.q) lp.set({ q: searchInput.trim() || undefined });
+    }, 300);
     return () => window.clearTimeout(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only the typed text debounces into the URL
   }, [searchInput]);
+  const query = {
+    search: lp.q || undefined,
+    active: lp.active,
+    type: lp.type,
+    country: lp.country || undefined,
+    tag: lp.tag || undefined,
+    contract: lp.contract,
+    sort: lp.sort,
+    dir: lp.sort ? lp.dir : undefined,
+  };
   const { data, isLoading, isFetching, error, refetch } = useQuery({
-    queryKey: [...PARTNERS_KEY, 'list', { search, active }],
-    queryFn: async () => (await api.get<{ items: Partner[] }>('/admin/partners', { params: { search: search || undefined, active } })).data.items,
+    queryKey: [...PARTNERS_KEY, 'list', query],
+    queryFn: async () => (await api.get<ListResponse>('/admin/partners', { params: query })).data,
     placeholderData: keepPreviousData,
   });
+  const items = data?.items;
+  const facets = data?.facets ?? { countries: [], tags: [] };
+  const filtered = !!(lp.q || lp.active !== 'all' || lp.type || lp.country || lp.tag || lp.contract);
+  const onSort = (k: SortKey) => {
+    // name / contract end start ascending, the numbers descending; a second click flips the direction.
+    const first: 'asc' | 'desc' = k === 'name' || k === 'contractEnd' ? 'asc' : 'desc';
+    lp.set({ sort: k, dir: lp.sort === k ? (lp.dir === 'asc' ? 'desc' : 'asc') : first });
+  };
+  const csvHref = `/api/admin/partners/export.csv?${new URLSearchParams(Object.entries(query).filter((e): e is [string, string] => !!e[1])).toString()}`;
+  const sortProps = { sort: lp.sort, dir: lp.dir, onSort };
 
   return (
     <div>
@@ -86,6 +124,9 @@ const PartnerList = ({ isAdmin }: { isAdmin: boolean }) => {
             <Link to="/admin/partners/commissions" className="btn-secondary btn-sm">
               <HandCoins className="size-4" /> {t('refPartners.allCommissions')}
             </Link>
+            <a href={csvHref} className="btn-secondary btn-sm" download>
+              <Download className="size-4" /> {t('partnerHub.list.exportCsv')}
+            </a>
             {isAdmin && (
               <button type="button" className="btn-secondary btn-sm" onClick={() => setManagingFields(true)}>
                 <Settings2 className="size-4" /> {t('partnerForm.custom.manage')}
@@ -99,337 +140,206 @@ const PartnerList = ({ isAdmin }: { isAdmin: boolean }) => {
           </>
         }
       />
-      <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-center">
-        <label className="relative flex-1">
-          <span className="sr-only">{t('partnerForm.searchPh')}</span>
-          <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted" aria-hidden />
-          <input type="search" className="input pl-9" placeholder={t('partnerForm.searchPh')} value={searchInput} onChange={(e) => setSearchInput(e.target.value)} />
-        </label>
-        <div className="flex gap-1.5">
-          {(['all', 'true', 'false'] as const).map((v) => (
-            <Chip key={v} active={active === v} onClick={() => setActive(v)}>
-              {t(`refPartners.filter.${v === 'all' ? 'all' : v === 'true' ? 'active' : 'inactive'}`)}
-            </Chip>
-          ))}
+      <div className="mb-4 space-y-2">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+          <label className="relative flex-1">
+            <span className="sr-only">{t('partnerForm.searchPh')}</span>
+            <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted" aria-hidden />
+            <input type="search" className="input pl-9" placeholder={t('partnerForm.searchPh')} value={searchInput} onChange={(e) => setSearchInput(e.target.value)} />
+          </label>
+          <div className="flex gap-1.5 overflow-x-auto">
+            {(['all', 'true', 'false'] as const).map((v) => (
+              <Chip key={v} active={lp.active === v} onClick={() => lp.set({ active: v })}>
+                {t(`refPartners.filter.${v === 'all' ? 'all' : v === 'true' ? 'active' : 'inactive'}`)}
+              </Chip>
+            ))}
+          </div>
+        </div>
+        <div className="grid grid-cols-2 gap-2 md:grid-cols-4 xl:flex xl:flex-wrap xl:items-center">
+          <select className="input xl:w-44" aria-label={t('partnerHub.list.th.type')} value={lp.type ?? ''} onChange={(e) => lp.set({ type: e.target.value || undefined })}>
+            <option value="">{t('partnerHub.list.type.all')}</option>
+            <option value="INDIVIDUAL">{t('partnerHub.list.type.INDIVIDUAL')}</option>
+            <option value="COMPANY">{t('partnerHub.list.type.COMPANY')}</option>
+          </select>
+          <select className="input xl:w-44" aria-label={t('partnerHub.list.th.country')} value={lp.country} onChange={(e) => lp.set({ country: e.target.value || undefined })}>
+            <option value="">{t('partnerHub.list.country.all')}</option>
+            {lp.country && !facets.countries.includes(lp.country) && <option value={lp.country}>{lp.country}</option>}
+            {facets.countries.map((c) => (
+              <option key={c} value={c}>
+                {c}
+              </option>
+            ))}
+          </select>
+          <select className="input xl:w-44" aria-label={t('partnerForm.f.tags')} value={lp.tag} onChange={(e) => lp.set({ tag: e.target.value || undefined })}>
+            <option value="">{t('partnerHub.list.tag.all')}</option>
+            {lp.tag && !facets.tags.includes(lp.tag) && <option value={lp.tag}>{lp.tag}</option>}
+            {facets.tags.map((c) => (
+              <option key={c} value={c}>
+                {c}
+              </option>
+            ))}
+          </select>
+          <select className="input xl:w-52" aria-label={t('partnerHub.list.th.contract')} value={lp.contract ?? ''} onChange={(e) => lp.set({ contract: e.target.value || undefined })}>
+            <option value="">{t('partnerHub.list.contract.all')}</option>
+            {CONTRACT_STATUSES.map((s) => (
+              <option key={s} value={s}>
+                {t(`partnerHub.list.contract.${s}`)}
+              </option>
+            ))}
+          </select>
+          {filtered && (
+            <button
+              type="button"
+              className="btn-ghost btn-sm col-span-2 md:col-span-4 xl:col-span-1"
+              onClick={() => {
+                setSearchInput('');
+                lp.set({ q: undefined, active: undefined, type: undefined, country: undefined, tag: undefined, contract: undefined });
+              }}
+            >
+              <X className="size-3.5" aria-hidden /> {t('partnerHub.list.reset')}
+            </button>
+          )}
+          {items && <span className="text-xs text-muted xl:ml-auto">{t('partnerHub.list.shown', { count: items.length })}</span>}
         </div>
       </div>
 
       {isLoading ? (
         <LoadingBlock />
-      ) : error || !data ? (
+      ) : error || !items ? (
         <ErrorBlock error={error} onRetry={() => refetch()} />
-      ) : data.length === 0 ? (
+      ) : items.length === 0 ? (
         <div className="rounded-xl border border-line bg-card">
-          <EmptyState icon={Handshake} title={search || active !== 'all' ? t('refPartners.notFound') : t('refPartners.emptyTitle')}>
-            {!search && active === 'all' && t('refPartners.emptyText')}
+          <EmptyState icon={Handshake} title={filtered ? t('refPartners.notFound') : t('refPartners.emptyTitle')}>
+            {!filtered && t('refPartners.emptyText')}
           </EmptyState>
         </div>
       ) : (
-        <ul className="grid grid-cols-1 gap-3 md:grid-cols-2 2xl:grid-cols-3">
-          {data.map((p) => (
-            <li key={p.id} className={clsx('flex flex-col rounded-xl border border-line bg-card p-4 transition hover:border-line-strong', !p.active && 'opacity-70')}>
-              <div className="flex items-start justify-between gap-2">
-                <Link to={`/admin/partners/${p.id}`} className="min-w-0">
-                  <p className="flex items-center gap-2 truncate font-semibold text-ink hover:text-link">
-                    <Handshake className="size-4 shrink-0 text-link" aria-hidden /> <span className="truncate">{p.name}</span>
-                  </p>
-                </Link>
-                <div className="flex shrink-0 items-center gap-1">
-                  {!p.active && <span className="badge bg-sunken text-muted">{t('refPartners.inactive')}</span>}
-                  {isAdmin && (
-                    <button type="button" className="btn-secondary btn-sm" aria-label={t('refPartners.edit')} title={t('refPartners.edit')} onClick={() => setDialog({ open: true, partner: p })}>
-                      <Pencil className="size-3.5" />
-                    </button>
-                  )}
+        <>
+          {/* Phones / small tablets: cards */}
+          <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:hidden">
+            {items.map((p) => (
+              <li key={p.id} className={clsx('flex flex-col rounded-xl border border-line bg-card p-4', !p.active && 'opacity-70')}>
+                <div className="flex items-start justify-between gap-2">
+                  <Link to={`/admin/partners/${p.id}`} className="min-w-0">
+                    <p className="flex items-center gap-2 truncate font-semibold text-ink hover:text-link">
+                      {p.partnerType === 'COMPANY' ? <Building2 className="size-4 shrink-0 text-link" aria-hidden /> : <Handshake className="size-4 shrink-0 text-link" aria-hidden />}
+                      <span className="truncate">{p.name}</span>
+                    </p>
+                  </Link>
+                  <ContractBadge contract={p.contract} compact />
                 </div>
-              </div>
-              <p className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-muted">
-                {p.phone && (
-                  <span className="inline-flex items-center gap-1">
-                    <Phone className="size-3" aria-hidden /> {p.phone}
-                  </span>
-                )}
-                {p.email && (
-                  <span className="inline-flex min-w-0 items-center gap-1">
-                    <Mail className="size-3" aria-hidden /> <span className="truncate">{p.email}</span>
-                  </span>
-                )}
-              </p>
-              <PartnerKeyInfo partner={p} className="mt-1" />
-              <div className="mt-3">
-                <CountRow counts={p.counts} />
-              </div>
-              <p className="mt-2 text-[11px] text-muted">
-                {p.counts.lastCaseAt ? t('refPartners.lastCase', { date: fmtDate(p.counts.lastCaseAt) }) : t('refPartners.noCases')}
-                {!!p.counts.cancelled && ` · ${t('refPartners.counts.cancelled', { count: p.counts.cancelled })}`}
-              </p>
-              {(p.commissionCents != null || (p.commissionTotals && p.commissionTotals.totalCents > 0)) && (
-                <p className="mt-1 flex flex-wrap gap-x-3 text-[11px] text-muted">
-                  {p.commissionCents != null && <span>{t('refPartners.perClient', { amount: money(p.commissionCents, p.currency ?? 'EUR') })}</span>}
-                  {p.commissionTotals && p.commissionTotals.pendingCents + p.commissionTotals.approvedCents > 0 && (
-                    <span className="text-warning-fg">
-                      {t('refPartners.totals.pending')}: {money(p.commissionTotals.pendingCents + p.commissionTotals.approvedCents, p.currency ?? 'EUR')}
+                <p className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-muted">
+                  {p.phone && (
+                    <span className="inline-flex items-center gap-1">
+                      <Phone className="size-3" aria-hidden /> {p.phone}
+                    </span>
+                  )}
+                  {p.email && (
+                    <span className="inline-flex min-w-0 items-center gap-1">
+                      <Mail className="size-3" aria-hidden /> <span className="truncate">{p.email}</span>
                     </span>
                   )}
                 </p>
-              )}
-            </li>
-          ))}
-        </ul>
-      )}
-      <PartnerFormDialog open={dialog.open} partner={dialog.partner} onClose={() => setDialog({ open: false, partner: null })} />
-      {isAdmin && <PartnerFieldsManager open={managingFields} onClose={() => setManagingFields(false)} />}
-    </div>
-  );
-};
+                <PartnerKeyInfo partner={p} className="mt-1" />
+                <dl className="mt-3 grid grid-cols-3 gap-2 text-center">
+                  {(
+                    [
+                      [t('partnerHub.list.th.clients'), p.counts.clients],
+                      [t('partnerHub.list.th.activeCases'), p.counts.activeCases],
+                      [t('partnerHub.list.th.pending'), p.commissionTotals ? money(p.commissionTotals.pendingCents + p.commissionTotals.approvedCents, p.currency ?? 'EUR') : '—'],
+                    ] as const
+                  ).map(([label, v]) => (
+                    <div key={label} className="min-w-0 rounded-lg bg-sunken px-2 py-1.5">
+                      <dd className="truncate text-sm font-bold text-ink tabular-nums">{v}</dd>
+                      <dt className="truncate text-[10px] text-muted">{label}</dt>
+                    </div>
+                  ))}
+                </dl>
+                <p className="mt-2 text-[11px] text-muted">
+                  {t('partnerHub.list.th.lastActivity')}: {p.lastActivityAt ? fmtRelative(p.lastActivityAt) : '—'}
+                </p>
+              </li>
+            ))}
+          </ul>
 
-const PartnerDetail = ({ isAdmin }: { isAdmin: boolean }) => {
-  const { t } = useTranslation();
-  const { tr } = useL10n();
-  const { id = '' } = useParams();
-  const navigate = useNavigate();
-  const qc = useQueryClient();
-  const [editing, setEditing] = useState(false);
-  const [confirmDelete, setConfirmDelete] = useState(false);
-  const [tab, setTab] = useState<'clients' | 'refusals' | 'commissions'>('clients');
-  // Client list filters: visa kind (category, else type) and team workflow stage.
-  const [visa, setVisa] = useState('');
-  const [stage, setStage] = useState<ProcessingStage | ''>('');
-  const { data, isLoading, error, refetch } = useQuery({
-    queryKey: [...PARTNERS_KEY, 'one', id],
-    queryFn: async () => (await api.get<{ partner: Partner & PartnerOwnershipFields; cases: PartnerCase[]; ownedClients?: OwnedClient[] }>(`/admin/partners/${id}`)).data,
-  });
-  usePageTitle(data?.partner.name ?? t('refPartners.title'));
-  // The partner's drive folder: opened when it exists, restored from the bin or created when it does not.
-  const openFolder = useMutation({
-    mutationFn: async () => (await api.post<{ folderId: string; restored: boolean; created: boolean }>(`/admin/partners/${id}/folder`)).data,
-    onSuccess: (r) => {
-      if (r.restored) toast.success(t('refPartners.folderRestored'));
-      else if (r.created) toast.success(t('refPartners.folderCreated'));
-      void invalidatePartnerViews(qc);
-      navigate(`/workspace/drive/f/${encodeURIComponent(r.folderId)}`);
-    },
-    onError: partnerError,
-  });
-
-  const allCases = data?.cases;
-  // Visa kinds of the partner's cases with counts (the filter chips): "LKW-Fahrer", "Ausbildung", …
-  const visaKinds = useMemo(() => {
-    const out = new Map<string, { key: string; label: string; count: number; refused: number }>();
-    for (const c of allCases ?? []) {
-      const key = c.visaKey ?? (c.visaCategory ? `cat:${c.visaCategory.visaLabel}` : `type:${c.visaType}`);
-      const label = c.visaCategory ? tr(c.visaCategory.title) : t(`refPartners.types.${c.visaType}`, { defaultValue: c.visaType });
-      const k = out.get(key) ?? { key, label, count: 0, refused: 0 };
-      k.count++;
-      if (c.refused) k.refused++;
-      out.set(key, k);
-    }
-    return [...out.values()].sort((a, b) => b.count - a.count || a.label.localeCompare(b.label));
-  }, [allCases, tr, t]);
-  const stageCounts = useMemo(() => {
-    const out = Object.fromEntries(PROCESSING_STAGES.map((s) => [s, 0])) as Record<ProcessingStage, number>;
-    for (const c of allCases ?? []) if (c.processing?.stage) out[c.processing.stage]++;
-    return out;
-  }, [allCases]);
-
-  if (isLoading) return <LoadingBlock />;
-  if (error || !data) return <ErrorBlock error={error} onRetry={() => refetch()} />;
-  const { partner } = data;
-  const cases = data.cases.filter((c) => (!visa || c.visaKey === visa) && (!stage || c.processing?.stage === stage));
-  const hasCases = data.cases.length > 0;
-  const filtered = !!visa || !!stage;
-
-  return (
-    <div>
-      <Link to="/admin/partners" className="mb-3 inline-flex items-center gap-1 text-xs font-semibold text-link hover:text-link">
-        <ArrowLeft className="size-3.5" /> {t('refPartners.back')}
-      </Link>
-      <PageHead
-        title={partner.name}
-        subtitle={
-          <span className="flex flex-wrap gap-x-3 gap-y-1">
-            {!partner.active && <span className="badge bg-sunken text-muted">{t('refPartners.inactive')}</span>}
-            {partner.phone && (
-              <a href={`tel:${partner.phone}`} className="inline-flex items-center gap-1 hover:text-link">
-                <Phone className="size-3.5" /> {partner.phone}
-              </a>
-            )}
-            {partner.email && (
-              <a href={`mailto:${partner.email}`} className="inline-flex items-center gap-1 hover:text-link">
-                <Mail className="size-3.5" /> {partner.email}
-              </a>
-            )}
-          </span>
-        }
-        actions={
-          <>
-            <a href={`/api/admin/partners/${partner.id}/export.xlsx`} className="btn-secondary btn-sm" download>
-              <Download className="size-3.5" /> {t('refPartners.download')}
-            </a>
-            <button type="button" className="btn-secondary btn-sm" onClick={() => openFolder.mutate()} disabled={openFolder.isPending}>
-              {openFolder.isPending ? <Spinner className="size-3.5" /> : partner.folderId === null ? <FolderPlus className="size-3.5" /> : <FolderOpen className="size-3.5" />}{' '}
-              {partner.folderId === null ? t('refPartners.noFolder') : t('refPartners.openFolder')}
-            </button>
-            {isAdmin && (
-              <>
-                <button type="button" className="btn-secondary btn-sm" onClick={() => setEditing(true)}>
-                  <Pencil className="size-3.5" /> {t('refPartners.edit')}
-                </button>
-                <button type="button" className="btn-secondary btn-sm text-danger-fg" onClick={() => setConfirmDelete(true)}>
-                  <Trash2 className="size-3.5" /> {t('refPartners.delete')}
-                </button>
-              </>
-            )}
-          </>
-        }
-      />
-      {partner.note && <p className="mb-4 rounded-xl border border-line bg-sunken px-4 py-3 text-sm whitespace-pre-line text-ink/80">{partner.note}</p>}
-      <div className="mb-5 grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,22rem)]">
-        <div className="space-y-3">
-          <div className="max-w-xl">
-            <CountRow counts={partner.counts} />
-          </div>
-          {partner.commissionTotals && (
-            <dl className="grid max-w-xl grid-cols-2 gap-2 sm:grid-cols-4">
-              {(
-                [
-                  ['pending', partner.commissionTotals.pendingCents, 'text-warning-fg'],
-                  ['approved', partner.commissionTotals.approvedCents, 'text-link'],
-                  ['paid', partner.commissionTotals.paidCents, 'text-success-fg'],
-                  ['thisMonth', partner.commissionTotals.thisMonthCents, 'text-ink'],
-                ] as const
-              ).map(([k, v, tone]) => (
-                <div key={k} className="min-w-0 rounded-lg bg-sunken px-2 py-1.5 text-center">
-                  <dd className={clsx('truncate text-sm font-bold tabular-nums', tone)}>{money(v, partner.currency ?? 'EUR')}</dd>
-                  <dt className="truncate text-[10px] text-muted">{t(`refPartners.totals.${k}`)}</dt>
-                </div>
-              ))}
-            </dl>
-          )}
-          {partner.commissionCents != null && <p className="text-xs text-muted">{t('refPartners.perClient', { amount: money(partner.commissionCents, partner.currency ?? 'EUR') })}</p>}
-        </div>
-        <PortalLoginPanel partner={partner} isAdmin={isAdmin} />
-      </div>
-      <div className="mb-5">
-        <PartnerProfileCard partner={partner} />
-      </div>
-      <OwnershipPanel partner={partner} ownedClients={data.ownedClients ?? []} isAdmin={isAdmin} />
-
-      <Tabs
-        className="mb-4"
-        label={partner.name}
-        items={(['clients', 'refusals', 'commissions'] as const).map((k) => ({ key: k, label: k === 'refusals' ? t('refPartners.tabs2.refusals') : t(`refPartners.tabs.${k}`) }))}
-        value={tab}
-        onChange={setTab}
-      />
-
-      {tab === 'commissions' ? (
-        <CommissionsPanel partnerId={partner.id} isAdmin={isAdmin} />
-      ) : tab === 'refusals' ? (
-        <div className="space-y-2">
-          <p className="text-sm text-muted">{t('refPartners.refusals.companiesOfPartner')}</p>
-          <RefusalReport partnerId={partner.id} />
-        </div>
-      ) : (
-      <section className="rounded-xl border border-line bg-card">
-        <header className="flex items-center gap-2 border-b border-line px-5 py-3.5">
-          <Users className="size-4 text-link" aria-hidden />
-          <h2 className="text-sm font-semibold text-ink">{t('refPartners.clientsTitle', { count: data.cases.length })}</h2>
-          {filtered && <span className="text-xs text-muted">{t('refPartners.filteredCount', { shown: cases.length, total: data.cases.length })}</span>}
-        </header>
-        {hasCases && (
-          <div className="space-y-2 border-b border-line px-5 py-3">
-            <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label={t('refPartners.visa.label')}>
-              <span className="pr-1 text-xs font-semibold text-muted">{t('refPartners.visa.label')}</span>
-              <Chip active={!visa} onClick={() => setVisa('')} count={data.cases.length}>
-                {t('refPartners.visa.all')}
-              </Chip>
-              {visaKinds.map((v) => (
-                <Chip key={v.key} active={visa === v.key} onClick={() => setVisa(visa === v.key ? '' : v.key)} count={v.count}>
-                  <span title={v.refused ? `${t('refPartners.counts.rejected')}: ${v.refused}` : undefined}>{v.label}</span>
-                </Chip>
-              ))}
-            </div>
-            <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label={t('refPartners.stageFilter')}>
-              <span className="inline-flex items-center gap-1 pr-1 text-xs font-semibold text-muted">
-                <ClipboardPen className="size-3.5" aria-hidden /> {t('refPartners.stageFilter')}
-              </span>
-              {PROCESSING_STAGES.map((s) => (
-                <Chip key={s} active={stage === s} onClick={() => setStage(stage === s ? '' : s)} count={stageCounts[s]}>
-                  <span title={t(`caseProcessing.hints.${s}`)}>{stageLabel(s)}</span>
-                </Chip>
-              ))}
-              {filtered && (
-                <button type="button" className="btn-secondary btn-sm ml-auto" onClick={() => (setVisa(''), setStage(''))}>
-                  <X className="size-3.5" aria-hidden /> {t('refPartners.resetFilters')}
-                </button>
-              )}
-            </div>
-          </div>
-        )}
-        {!hasCases || cases.length === 0 ? (
-          <p className="px-5 py-8 text-center text-sm text-muted">{hasCases ? t('refPartners.notFound') : t('refPartners.clientsEmpty')}</p>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[1100px] text-left text-sm">
-              <thead className="border-b border-line bg-surface/70 text-xs font-medium whitespace-nowrap text-muted">
+          {/* Desktop: sortable table */}
+          <div className="hidden overflow-x-auto rounded-xl border border-line bg-card lg:block">
+            <table className="w-full min-w-[1080px] text-left text-sm">
+              <caption className="sr-only">{t('partnerHub.list.table')}</caption>
+              <thead className="border-b border-line bg-surface/70 text-xs font-medium text-muted">
                 <tr>
-                  <th className="px-4 py-2.5">{t('refPartners.th.number')}</th>
-                  <th className="px-4 py-2.5">{t('refPartners.th.client')}</th>
-                  <th className="px-4 py-2.5">{t('refPartners.th.passport')}</th>
-                  <th className="px-4 py-2.5">{t('refPartners.th2.visa')}</th>
-                  <th className="px-4 py-2.5">{t('refPartners.th.status')}</th>
-                  <th className="px-4 py-2.5">{t('refPartners.th2.stage')}</th>
-                  <th className="px-4 py-2.5">{t('refPartners.th2.company')}</th>
-                  <th className="px-4 py-2.5">{t('refPartners.th.staff')}</th>
-                  <th className="px-4 py-2.5">{t('refPartners.th.created')}</th>
-                  <th className="px-4 py-2.5">{t('refPartners.th.decision')}</th>
+                  <SortHeader k="name" label={t('partnerHub.list.th.name')} {...sortProps} />
+                  <th className="px-3 py-2.5">{t('partnerHub.list.th.contact')}</th>
+                  <th className="px-3 py-2.5">{t('partnerHub.list.th.country')}</th>
+                  <SortHeader k="clients" label={t('partnerHub.list.th.clients')} className="text-right" {...sortProps} />
+                  <SortHeader k="activeCases" label={t('partnerHub.list.th.activeCases')} className="text-right" {...sortProps} />
+                  <SortHeader k="commissions" label={t('partnerHub.list.th.commissions')} className="text-right" {...sortProps} />
+                  <SortHeader k="pending" label={t('partnerHub.list.th.pending')} className="text-right" {...sortProps} />
+                  <SortHeader k="contractEnd" label={t('partnerHub.list.th.contract')} {...sortProps} />
+                  <SortHeader k="lastActivity" label={t('partnerHub.list.th.lastActivity')} {...sortProps} />
+                  <th className="px-3 py-2.5 text-right">
+                    <span className="sr-only">{t('partnerHub.list.th.actions')}</span>
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-line">
-                {cases.map((c) => (
-                  <tr key={c.id} className="cursor-pointer transition hover:bg-primary/[0.04]" onClick={() => navigate(`/admin/cases/${c.id}`)}>
-                    <td className="px-4 py-3 align-top">
-                      <Link to={`/admin/cases/${c.id}`} className="code-id text-xs font-medium text-link hover:underline whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
-                        {c.number}
-                      </Link>
-                    </td>
-                    <td className="px-4 py-3 align-top">
-                      <p className="font-semibold whitespace-nowrap text-ink">{fullName(c.client)}</p>
-                      {c.client.phone && <p className="text-xs text-muted">{c.client.phone}</p>}
-                    </td>
-                    <td className="px-4 py-3 align-top code-id text-xs text-ink/80">
-                      <SensitiveValue value={c.client.passportNumber} entity="user" id={c.client.id} field="passportNumber" />
-                    </td>
-                    <td className="px-4 py-3 align-top">
-                      {/* The real visa kind: the category ("LKW-Fahrer") when there is one, else the visa type. */}
-                      <p className="font-medium text-ink">{c.visaCategory ? tr(c.visaCategory.title) : t(`refPartners.types.${c.visaType}`, { defaultValue: c.visaType })}</p>
-                      <p className="text-xs text-muted">
-                        {c.visaCategory ? `${c.visaCategory.visaLabel} · ${t(`refPartners.types.${c.visaType}`, { defaultValue: c.visaType })}` : ''}
-                      </p>
-                    </td>
-                    <td className="px-4 py-3 align-top">
-                      <StatusBadge status={c.status} />
-                      {c.refused && c.status !== 'REJECTED' && <p className="mt-1 text-[11px] font-semibold text-danger-fg">{t('refPartners.counts.rejected')}</p>}
-                    </td>
-                    <td className="px-4 py-3 align-top" onClick={(e) => e.stopPropagation()}>
-                      <StageCell p={c.processing} />
-                    </td>
-                    <td className="max-w-[12rem] truncate px-4 py-3 align-top text-xs text-ink/80">{c.company?.name ?? '—'}</td>
-                    <td className="px-4 py-3 align-top whitespace-nowrap text-ink/80">{c.assignedStaff ? fullName(c.assignedStaff) : '—'}</td>
-                    <td className="px-4 py-3 align-top text-xs whitespace-nowrap text-muted">{fmtDate(c.createdAt)}</td>
-                    <td className="px-4 py-3 align-top text-xs whitespace-nowrap text-muted">{c.decisionAt ? fmtDate(c.decisionAt) : '—'}</td>
-                  </tr>
-                ))}
+                {items.map((p) => {
+                  const cur = p.currency ?? 'EUR';
+                  return (
+                    <tr key={p.id} className={clsx('cursor-pointer transition hover:bg-primary/[0.04]', !p.active && 'opacity-70')} onClick={() => navigate(`/admin/partners/${p.id}`)}>
+                      <td className="max-w-[16rem] px-3 py-2.5 align-top">
+                        <Link to={`/admin/partners/${p.id}`} className="flex items-center gap-2 font-semibold text-ink hover:text-link" onClick={(e) => e.stopPropagation()}>
+                          {p.partnerType === 'COMPANY' ? <Building2 className="size-4 shrink-0 text-link" aria-hidden /> : <Handshake className="size-4 shrink-0 text-link" aria-hidden />}
+                          <span className="truncate">{p.name}</span>
+                        </Link>
+                        <p className="mt-0.5 flex flex-wrap items-center gap-x-2 text-[11px] text-muted">
+                          {p.companyName && p.companyName !== p.name && <span className="truncate">{p.companyName}</span>}
+                          {p.code && <span className="code-id">{p.code}</span>}
+                          {!p.active && <span className="badge bg-sunken text-muted">{t('refPartners.inactive')}</span>}
+                          {(p.tags ?? []).slice(0, 2).map((tag) => (
+                            <span key={tag} className="rounded bg-sunken px-1 text-ink/80">
+                              {tag}
+                            </span>
+                          ))}
+                        </p>
+                      </td>
+                      <td className="max-w-[13rem] px-3 py-2.5 align-top text-xs">
+                        {p.phone && <p className="whitespace-nowrap text-ink/80">{p.phone}</p>}
+                        {p.email && <p className="truncate text-muted">{p.email}</p>}
+                      </td>
+                      <td className="px-3 py-2.5 align-top text-xs text-ink/80">{[p.city, p.country].filter(Boolean).join(', ') || '—'}</td>
+                      <td className="px-3 py-2.5 text-right align-top font-semibold tabular-nums">{p.counts.clients}</td>
+                      <td className="px-3 py-2.5 text-right align-top text-link tabular-nums">{p.counts.activeCases}</td>
+                      <td className="px-3 py-2.5 text-right align-top whitespace-nowrap tabular-nums">{p.commissionTotals?.totalCents ? money(p.commissionTotals.totalCents, cur) : '—'}</td>
+                      <td className="px-3 py-2.5 text-right align-top whitespace-nowrap text-warning-fg tabular-nums">
+                        {p.commissionTotals && p.commissionTotals.pendingCents + p.commissionTotals.approvedCents > 0 ? money(p.commissionTotals.pendingCents + p.commissionTotals.approvedCents, cur) : '—'}
+                      </td>
+                      <td className="px-3 py-2.5 align-top">
+                        <ContractBadge contract={p.contract} />
+                      </td>
+                      <td className="px-3 py-2.5 align-top text-xs whitespace-nowrap text-muted" title={p.lastActivityAt ? fmtDate(p.lastActivityAt) : undefined}>
+                        {p.lastActivityAt ? fmtRelative(p.lastActivityAt) : '—'}
+                      </td>
+                      <td className="px-3 py-2.5 text-right align-top whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+                        <Link to={`/admin/partners/${p.id}`} className="btn-secondary btn-sm">
+                          {t('partnerHub.list.profile')}
+                        </Link>
+                        {isAdmin && (
+                          <button type="button" className="btn-ghost btn-sm ml-1" aria-label={t('refPartners.edit')} title={t('refPartners.edit')} onClick={() => setDialog({ open: true, partner: p })}>
+                            <Pencil className="size-3.5" />
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
-        )}
-      </section>
+        </>
       )}
-
-      <PartnerFormDialog open={editing} partner={partner} onClose={() => setEditing(false)} />
-      <DeletePartnerDialog partner={confirmDelete ? partner : null} onClose={() => setConfirmDelete(false)} onDeleted={() => navigate('/admin/partners')} />
+      <PartnerFormDialog open={dialog.open} partner={dialog.partner} onClose={() => setDialog({ open: false, partner: null })} onSaved={(r) => !dialog.partner && navigate(`/admin/partners/${r.partner.id}`)} />
+      {isAdmin && <PartnerFieldsManager open={managingFields} onClose={() => setManagingFields(false)} />}
     </div>
   );
 };
@@ -473,7 +383,7 @@ export default function AdminPartners() {
       <Route index element={<PartnerList isAdmin={isAdmin} />} />
       <Route path="commissions" element={<AllCommissions isAdmin={isAdmin} />} />
       <Route path="refusals" element={<Refusals />} />
-      <Route path=":id" element={<PartnerDetail isAdmin={isAdmin} />} />
+      <Route path=":id" element={<PartnerHub isAdmin={isAdmin} />} />
     </Routes>
   );
 }

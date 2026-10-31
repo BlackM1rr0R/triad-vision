@@ -9,6 +9,7 @@ import { buildIcs } from '../lib/ics.js';
 import { config } from '../config.js';
 import { CLIENT_EDITABLE, clientView, ensurePlans, loadPlan, notifyPlanStaff, planInclude } from '../lib/arrival/core.js';
 import { icsLabels } from '../lib/arrival/texts.js';
+import { workerChecklist } from '../lib/employerArrival.js';
 
 /**
  * Arrival planning for clients (/api/arrival): flight, airport pickup and first accommodation for
@@ -42,7 +43,9 @@ arrivalRouter.get('/', async (req, res) => {
 });
 
 arrivalRouter.get('/:caseId', async (req, res) => {
-  res.json({ plan: clientView(await ownPlan(req)) });
+  const plan = await ownPlan(req);
+  // What the employer prepares (items it shares with the worker; read-only, no notes / names).
+  res.json({ plan: clientView(plan), employerChecklist: await workerChecklist(plan.caseId) });
 });
 
 /** IATA (2 characters, e.g. J2 / LH) or ICAO (3 letters) airline code + 1–4 digits (+ optional suffix). */

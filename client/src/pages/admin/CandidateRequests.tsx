@@ -8,6 +8,7 @@ import clsx from 'clsx';
 import { ArrowLeft, Briefcase, ChevronLeft, ChevronRight, ClipboardList, ExternalLink, Search, Send, Sparkles, StickyNote, Users } from 'lucide-react';
 import { api } from '@/lib/api';
 import { registerCopy } from '@/i18n';
+import { EmployerVotesList, type EmployerVote } from '@/components/employerExtras/CandidateVotes';
 import { pagesRequests } from '@/i18n/pagesRequests';
 import { pagesJobs } from '@/i18n/pagesJobs';
 import { usePageTitle } from '@/lib/usePageTitle';
@@ -58,6 +59,8 @@ interface DetailResponse {
     companyNote: string | null;
     updatedAt: string;
     user: { id: string; firstName: string; lastName: string; profession: string | null; germanLevel: string | null };
+    /** Votes of the employer's portal users (lib/employerVotes). */
+    employerVotes?: EmployerVote[];
   }[];
   suggestions: Suggestion[];
 }
@@ -450,6 +453,7 @@ const RequestDetail = () => {
                   </Link>
                   <p className="text-xs text-muted">{[a.user.profession, a.user.germanLevel].filter(Boolean).join(' · ')}</p>
                   {a.companyNote && <p className="mt-0.5 text-xs text-ink/80 italic">“{a.companyNote}”</p>}
+                  {!!a.employerVotes?.length && <EmployerVotesList votes={a.employerVotes} title={t('employerVotes.staffTitle')} className="mt-1.5" />}
                 </div>
                 <div className="flex items-center gap-2">
                   {a.matchScore != null && <span className={clsx('badge tabular-nums', scoreTone(a.matchScore))}>{a.matchScore}</span>}

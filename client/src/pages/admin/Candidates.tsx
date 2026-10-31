@@ -9,6 +9,7 @@ import { api } from '@/lib/api';
 import { useL10n } from '@/lib/l10n';
 import type { CaseStatus, L10n } from '@/lib/types';
 import { registerCopy } from '@/i18n';
+import { EmployerVotesList, type EmployerVote } from '@/components/employerExtras/CandidateVotes';
 import { CvDownloadButton } from '@/components/cv/CvDownloadButton';
 import { pagesJobs } from '@/i18n/pagesJobs';
 import { Spinner } from '@/components/ui/Spinner';
@@ -85,6 +86,8 @@ interface CandidateDetail extends Omit<Row, 'activeCase' | 'applicationsCount' |
     companyNote: string | null;
     createdAt: string;
     match: Match;
+    /** Votes of the employer's portal users (lib/employerVotes). */
+    employerVotes?: EmployerVote[];
     vacancy: { id: string; slug: string; title: L10n; status: VacancyStatus; city: string | null; company: { name: string } | null };
   }[];
   /** Documents uploaded with an application (server: lib/applicationUploads.ts). */
@@ -248,6 +251,7 @@ const ApplicationCard = ({ a, userId, onChanged }: { a: CandidateDetail['applica
           {t('jobsArea.admin.employerNote')}: {a.companyNote}
         </p>
       )}
+      {!!a.employerVotes?.length && <EmployerVotesList votes={a.employerVotes} title={t('employerVotes.staffTitle')} className="mt-2" />}
       <div className="mt-3 grid gap-2 sm:grid-cols-[auto_1fr]">
         {a.status === 'WITHDRAWN' ? (
           <span className={clsx('badge self-center', APPLICATION_STATUS_TONE.WITHDRAWN)}>{L.appStatus('WITHDRAWN')}</span>

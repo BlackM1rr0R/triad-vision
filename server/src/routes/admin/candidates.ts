@@ -9,6 +9,7 @@ import { GERMAN_LEVELS, germanRank, licenceCovers, matchCandidate } from '../../
 import { notifyApplicationStatus, notifyCandidateProposed } from '../../lib/jobsNotifications.js';
 import { emitWebhook } from '../../lib/ops/webhooks.js';
 import { sendStaffCv } from '../../lib/cv/access.js';
+import { votesByApplication } from '../../lib/employerVotes.js';
 import path from 'node:path';
 import { applicationUploadsOf, isApplicationDocument } from '../../lib/applicationUploads.js';
 import { vaultDir } from '../../lib/docCheck/index.js';
@@ -183,11 +184,12 @@ adminCandidatesRouter.get('/:id', async (req, res) => {
   });
   if (!user || user.role !== 'CLIENT') throw notFound('CANDIDATE_NOT_FOUND');
   const { introVideoKey, ...rest } = user;
+  const votes = await votesByApplication(user.applications.map((a) => a.id)); // employer team votes (company portal)
   res.json({
     candidate: {
       ...rest,
       hasIntroVideo: !!introVideoKey, // the stored file name never leaves the server
-      applications: user.applications.map((a) => ({ ...a, match: matchCandidate(user, a.vacancy) })),
+      applications: user.applications.map((a) => ({ ...a, match: matchCandidate(user, a.vacancy), employerVotes: votes.get(a.id) ?? [] })),
       // Documents uploaded with an application (before / besides a case); attachedCaseId once they joined a case.
       applicationDocuments: await applicationUploadsOf(user.id),
     },

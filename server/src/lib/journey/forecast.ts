@@ -332,3 +332,67 @@ export const forecastForCase = async (caseId: string): Promise<Forecast> => {
   if (!history.length) history.push({ status: 'DOCUMENTS_PENDING', at: c.createdAt });
   return { ...computeForecast({ status: c.status, history, ranges }), visaType: c.visaType };
 };
+
+// ─── Travel after the visa ─────────────────────────────────────────────
+
+/** Days from the visa decision to arrival in Germany when there is no usable history. */
+export const DEFAULT_TRAVEL_RANGE: [number, number] = [14, 42];
+let travelCache: { at: number; range: StepRange } | null = null;
+
+export const clearTravelCache = () => {
+  travelCache = null;
+};
+
+/**
+ * Decision → arrival (days) over the most recent approved cases with a recorded arrival: p25–p75 around
+ * the median like the steps, else DEFAULT_TRAVEL_RANGE. Cached for CACHE_TTL_MS.
+ */
+export const travelRange = async (): Promise<StepRange> => {
+  if (travelCache && Date.now() - travelCache.at < CACHE_TTL_MS) return travelCache.range;
+  const rows = await prisma.arrivalFollowUp.findMany({
+    where: { case: { status: 'APPROVED', decisionAt: { not: null } } },
+    select: { arrivedAt: true, case: { select: { decisionAt: true } } },
+    orderBy: { arrivedAt: 'desc' },
+    take: HISTORY_CASES,
+  });
+  const days = rows
+    .map((r) => (r.arrivedAt.getTime() - r.case.decisionAt!.getTime()) / DAY)
+    .filter((d) => d >= 0 && d <= 365);
+  let range: StepRange;
+  if (days.length >= MIN_SAMPLE) {
+    const [minDays, maxDays] = rangeFromSample(days);
+    range = { minDays, maxDays, basedOn: 'history', sample: days.length };
+  } else {
+    range = { minDays: DEFAULT_TRAVEL_RANGE[0], maxDays: DEFAULT_TRAVEL_RANGE[1], basedOn: 'default', sample: 0 };
+  }
+  travelCache = { at: Date.now(), range };
+  return range;
+};
+
+/**
+ * Expected travel / arrival window: from the decision (approved, nothing booked yet) or from the
+ * forecast decision window (open case). Null once travel is booked or done, or the window is past.
+ */
+export const travelWindow = (input: {
+  outcome: 'APPROVED' | 'REJECTED' | 'CANCELLED' | null;
+  decisionAt: Date | null;
+  estimatedDecision: { from: Date; to: Date } | null;
+  range: Pick<StepRange, 'minDays' | 'maxDays'>;
+  booked: boolean;
+  now: Date;
+}): { from: Date; to: Date } | null => {
+  const { outcome, range, now } = input;
+  if (input.booked || outcome === 'REJECTED' || outcome === 'CANCELLED') return null;
+  let from: Date;
+  let to: Date;
+  if (outcome === 'APPROVED') {
+    const base = input.decisionAt ?? now;
+    from = addDays(base, range.minDays);
+    to = addDays(base, range.maxDays);
+  } else if (input.estimatedDecision) {
+    from = addDays(input.estimatedDecision.from, range.minDays);
+    to = addDays(input.estimatedDecision.to, range.maxDays);
+  } else return null;
+  if (to < now) return null;
+  return { from: from < now ? now : from, to };
+};

@@ -1,11 +1,12 @@
 import crypto from 'node:crypto';
-import { Router } from 'express';
+import { Router, type Request } from 'express';
 import bcrypt from 'bcryptjs';
 import { z } from 'zod';
 import { Prisma, type Locale } from '@prisma/client';
 import { config } from '../../config.js';
 import { prisma } from '../../db.js';
-import { badRequest, conflict, notFound, parse } from '../../lib/http.js';
+import { badRequest, conflict, forbidden, notFound, parse } from '../../lib/http.js';
+import { hasMinRole } from '../../middleware/auth.js';
 import { companyLogoOf, singleRasterImage, storePublicImage } from '../../lib/publicImages.js';
 import { cleanupRemovedImages } from '../../lib/publicImageRefs.js';
 import { audit } from '../../lib/audit.js';
@@ -13,11 +14,18 @@ import { renderEmail, sendMail } from '../../lib/mailer.js';
 import { notifyCompanyStatus } from '../../lib/jobsNotifications.js';
 import { companyFields } from '../company.js';
 import { awardEmployerCommission } from '../../lib/agents/commissions.js';
+import { auditDiff, companyBankShape, companyBankView, companyLegalShape, completenessOf, stripMaskedBank, touchesBank } from '../../lib/partnerRecords/legal.js';
+import { contractView, currentContract } from '../../lib/partnerRecords/contracts.js';
+import { FINAL_STATUSES } from '../../lib/caseFlow.js';
 
 // Admin: companies — mounted at /api/admin/companies
 export const adminCompaniesRouter = Router();
 
 const STATUSES = ['PENDING', 'ACTIVE', 'SUSPENDED'] as const;
+
+/** Bank data (bank, account holder, IBAN, BIC) is ADMIN+ only: staff get it masked and may not change it. */
+const canSeeBank = (req: Request) => hasMinRole(req.user!.role, 'ADMIN');
+const view = <C extends Parameters<typeof companyBankView>[0]>(req: Request, c: C) => companyBankView(c, canSeeBank(req));
 
 adminCompaniesRouter.get('/', async (req, res) => {
   const q = parse(
@@ -54,7 +62,7 @@ adminCompaniesRouter.get('/', async (req, res) => {
     prisma.company.count({ where }),
     prisma.company.groupBy({ by: ['status'], _count: { _all: true } }),
   ]);
-  res.json({ items, total, pageSize, counts: Object.fromEntries(byStatus.map((b) => [b.status, b._count._all])) });
+  res.json({ items: items.map((c) => view(req, c)), total, pageSize, counts: Object.fromEntries(byStatus.map((b) => [b.status, b._count._all])) });
 });
 
 adminCompaniesRouter.get('/options', async (_req, res) => {
@@ -88,10 +96,48 @@ adminCompaniesRouter.get('/:id', async (req, res) => {
     ? await prisma.agent.findUnique({ where: { id: company.referredByAgentId }, select: { id: true, code: true, user: { select: { firstName: true, lastName: true } } } })
     : null;
   res.json({
-    company,
+    company: view(req, company),
+    completeness: completenessOf(company),
     referral: company.referralCode || agent
       ? { code: company.referralCode, at: company.referredAt, agent: agent ? { id: agent.id, code: agent.code, name: `${agent.user.firstName} ${agent.user.lastName}`.trim() } : null }
       : null,
+  });
+});
+
+/**
+ * Key numbers for the full company profile (/admin/companies/:id): cases per status, workers in process /
+ * approved, refusals, open vacancies, the current contract with days left, contacts / activities, and — for
+ * ADMIN+ — invoices (open / paid sums) and quotes.
+ */
+adminCompaniesRouter.get('/:id/profile', async (req, res) => {
+  const company = await prisma.company.findUnique({ where: { id: String(req.params.id) }, select: { id: true } });
+  if (!company) throw notFound('COMPANY_NOT_FOUND');
+  const companyId = company.id;
+  const admin = canSeeBank(req);
+  const [byStatus, openVacancies, vacancies, contracts, contacts, activities, invoices, quotes] = await Promise.all([
+    prisma.case.groupBy({ by: ['status'], where: { companyId }, _count: { _all: true } }),
+    prisma.vacancy.count({ where: { companyId, status: 'OPEN' } }),
+    prisma.vacancy.count({ where: { companyId } }),
+    prisma.partnerContract.findMany({ where: { companyId } }),
+    prisma.contact.count({ where: { companyId } }),
+    prisma.partnerActivity.count({ where: { companyId } }),
+    admin ? prisma.invoice.groupBy({ by: ['status'], where: { companyId }, _count: { _all: true }, _sum: { grossCents: true } }) : Promise.resolve(null),
+    admin ? prisma.quote.count({ where: { companyId } }) : Promise.resolve(null),
+  ]);
+  const cases = Object.fromEntries(byStatus.map((b) => [b.status, b._count._all])) as Partial<Record<string, number>>;
+  const total = byStatus.reduce((a, b) => a + b._count._all, 0);
+  const current = currentContract(contracts);
+  const sum = (statuses: string[]) => (invoices ?? []).filter((i) => statuses.includes(i.status)).reduce((a, i) => a + (i._sum.grossCents ?? 0), 0);
+  res.json({
+    cases: { total, byStatus: cases, inProcess: byStatus.filter((b) => !FINAL_STATUSES.includes(b.status)).reduce((a, b) => a + b._count._all, 0), approved: cases.APPROVED ?? 0, refusals: cases.REJECTED ?? 0 },
+    vacancies: { open: openVacancies, total: vacancies },
+    contracts: { total: contracts.length, active: contracts.filter((c) => c.status === 'ACTIVE').length, current: current ? contractView(current) : null },
+    contacts,
+    activities,
+    invoices: invoices
+      ? { count: invoices.reduce((a, i) => a + i._count._all, 0), openCents: sum(['SENT', 'OVERDUE']), paidCents: sum(['PAID']), overdue: invoices.find((i) => i.status === 'OVERDUE')?._count._all ?? 0 }
+      : null,
+    quotes,
   });
 });
 
@@ -107,6 +153,8 @@ const optionalCompanyFields = z.object({
   contactName: companyFields.contactName,
   email: z.string().trim().toLowerCase().email().max(200).nullable().optional(),
   note: z.string().trim().max(5000).nullable().optional(),
+  ...companyLegalShape,
+  ...companyBankShape,
 });
 
 const inviteInput = z.object({
@@ -170,12 +218,15 @@ adminCompaniesRouter.post('/', async (req, res) => {
         contactName: companyFields.contactName,
         email: z.string().trim().toLowerCase().email().max(200).nullable().optional(),
         note: z.string().trim().max(5000).nullable().optional(),
+        ...companyLegalShape,
+        ...companyBankShape,
       }),
       status: z.enum(STATUSES).default('ACTIVE'),
       invite: inviteInput.optional(),
     }),
     req.body,
   );
+  if (!canSeeBank(req) && touchesBank(body.company, null)) throw forbidden('ADMIN_REQUIRED');
   if (body.invite && (await prisma.user.findUnique({ where: { email: body.invite.email } }))) throw conflict('EMAIL_TAKEN');
   const company = await prisma.company.create({
     data: {
@@ -186,8 +237,8 @@ adminCompaniesRouter.post('/', async (req, res) => {
     },
   });
   const user = body.invite ? await inviteUser(company.id, company.name, body.invite) : null;
-  await audit(req, 'COMPANY_CREATED', `company:${company.id}`, { invited: user?.email ?? null });
-  res.status(201).json({ company, invitedUserId: user?.id ?? null });
+  await audit(req, 'COMPANY_CREATED', `company:${company.id}`, { invited: user?.email ?? null, fields: Object.entries(body.company).filter(([, v]) => v != null && v !== '').map(([k]) => k) });
+  res.status(201).json({ company: view(req, company), invitedUserId: user?.id ?? null });
 });
 
 adminCompaniesRouter.post('/:id/users', async (req, res) => {
@@ -200,12 +251,15 @@ adminCompaniesRouter.post('/:id/users', async (req, res) => {
 });
 
 adminCompaniesRouter.patch('/:id', async (req, res) => {
-  const body = parse(optionalCompanyFields, req.body);
+  const body = parse(optionalCompanyFields, stripMaskedBank(req.body));
   const before = await prisma.company.findUnique({ where: { id: req.params.id } });
   if (!before) throw notFound('COMPANY_NOT_FOUND');
+  if (!canSeeBank(req) && touchesBank(body, before)) throw forbidden('ADMIN_REQUIRED');
   const company = await prisma.company.update({ where: { id: before.id }, data: body });
-  await audit(req, 'COMPANY_UPDATED', `company:${company.id}`, { fields: Object.keys(body) });
-  res.json({ company });
+  // What changed (before / after; bank data, tax number and note by name only) — shown in the partner-records timeline.
+  const { fields, changes } = auditDiff(before as unknown as Record<string, unknown>, body as Record<string, unknown>);
+  await audit(req, 'COMPANY_UPDATED', `company:${company.id}`, { fields, changes: changes as Prisma.InputJsonValue });
+  res.json({ company: view(req, company), completeness: completenessOf(company) });
 });
 
 /** Company logo (lib/publicImages.ts, preset "logo"): WebP ≤ 512 px, transparency kept, no SVG. */
@@ -244,5 +298,5 @@ adminCompaniesRouter.post('/:id/status', async (req, res) => {
   // Employer referred by an agent: EMPLOYER_APPROVED commission (once per employer; never throws).
   if (body.status === 'ACTIVE' && company.referredByAgentId) await awardEmployerCommission(company.id);
   await audit(req, 'COMPANY_STATUS_CHANGED', `company:${company.id}`, { from: before.status, to: body.status, reason: body.reason ?? null });
-  res.json({ company });
+  res.json({ company: view(req, company) });
 });

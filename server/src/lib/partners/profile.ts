@@ -21,7 +21,7 @@ export type PartnerFieldType = (typeof PARTNER_FIELD_TYPES)[number];
 export const BANK_FIELDS = ['bankName', 'bankAccountHolder', 'iban', 'bic'] as const;
 export type BankField = (typeof BANK_FIELDS)[number];
 /** Fields that may come back masked from a form ("•••• 3456") and then mean "unchanged". */
-const MASKABLE_INPUT = [...BANK_FIELDS, 'taxId'] as const;
+const MASKABLE_INPUT = [...BANK_FIELDS, 'taxId', 'vatId'] as const;
 
 export const MAX_TAGS = 20;
 export const MAX_EXTRA_FIELDS = 30;
@@ -58,6 +58,18 @@ export const normaliseWebsite = (v: string): string | null => {
     return null;
   }
 };
+
+/** "Germany" in the spellings the team uses (country is free text): Betriebsnummer and 5-digit PLZ apply only there. */
+const GERMANY = new Set(['de', 'deu', 'germany', 'deutschland', 'almaniya', 'almanya', 'германия', 'allemagne']);
+export const isGermany = (country: string | null | undefined) => !!country && GERMANY.has(country.trim().toLocaleLowerCase());
+
+/** "DE 123 456 789" → "DE123456789"; EU VAT ids are a 2-letter country prefix and 2–13 letters / digits. */
+export const normaliseVatId = (v: string) => v.replace(/[\s.-]+/g, '').toUpperCase();
+export const vatIdValid = (v: string) => /^[A-Z]{2}[A-Z0-9]{2,13}$/.test(v);
+/** Betriebsnummer of the Bundesagentur für Arbeit: exactly 8 digits. */
+export const normaliseBetriebsnummer = (v: string) => v.replace(/[\s.-]+/g, '');
+export const betriebsnummerValid = (v: string) => /^\d{8}$/.test(v);
+export const postalCodeValid = (v: string) => /^[A-Za-z0-9][A-Za-z0-9 -]{1,11}$/.test(v);
 
 /** "2026-11-01" (a real calendar day) or null. */
 export const parseDay = (v: string): string | null => {
@@ -109,6 +121,28 @@ export const partnerProfileShape = {
   city: text(120),
   country: text(80),
   taxId: text(40),
+  // Legal data (contracts are generated from it): company form, Handelsregister, USt-IdNr, Betriebsnummer, signatory.
+  legalForm: text(60),
+  registerNumber: text(40),
+  registerCourt: text(120),
+  vatId: z
+    .string()
+    .max(40)
+    .nullable()
+    .optional()
+    .transform((v) => (v == null ? v : normaliseVatId(v) || null))
+    .refine((v) => v == null || vatIdValid(v), 'INVALID_VAT_ID'),
+  betriebsnummer: z
+    .string()
+    .max(20)
+    .nullable()
+    .optional()
+    .transform((v) => (v == null ? v : normaliseBetriebsnummer(v) || null))
+    .refine((v) => v == null || betriebsnummerValid(v), 'INVALID_BETRIEBSNUMMER'),
+  street: text(160),
+  postalCode: text(12).refine((v) => v == null || postalCodeValid(v), 'INVALID_POSTAL_CODE'),
+  signatoryName: text(160),
+  signatoryRole: text(80),
   bankName: text(120),
   bankAccountHolder: text(120),
   iban: z
@@ -167,6 +201,37 @@ export const contractDatesInvalid = (start: string | Date | null | undefined, en
   const s = start instanceof Date ? dateToDay(start) : start;
   const e = end instanceof Date ? dateToDay(end) : end;
   return !!s && !!e && e < s;
+};
+
+/**
+ * Checks across fields on the merged values of a create / update (null = fine): the Betriebsnummer exists
+ * only for German partners and a German PLZ has 5 digits.
+ */
+export const legalCrossError = (m: { country?: string | null; betriebsnummer?: string | null; postalCode?: string | null }) => {
+  if (m.betriebsnummer && m.country && !isGermany(m.country)) return 'BETRIEBSNUMMER_GERMANY_ONLY';
+  if (m.postalCode && isGermany(m.country) && !/^\d{5}$/.test(m.postalCode)) return 'INVALID_POSTAL_CODE';
+  return null;
+};
+
+// ─── Contract readiness: the data a partner contract (ContractKind PARTNER) is generated from ─
+
+/** Profile fields a contract needs, by partner type (`taxId` stands for "VÖEN / Steuernummer or USt-IdNr"). */
+export const contractFieldsFor = (p: { partnerType?: string | null; country?: string | null }): string[] =>
+  p.partnerType === 'COMPANY'
+    ? ['companyName', 'legalForm', ...(isGermany(p.country) ? ['registerNumber', 'registerCourt'] : []), 'street', 'postalCode', 'city', 'country', 'taxId', 'signatoryName', 'signatoryRole', 'email']
+    : ['name', 'street', 'postalCode', 'city', 'country', 'taxId', 'phone'];
+
+/** Which contract fields are filled in: { required, missing, percent }. */
+export const contractReadiness = (p: Partial<Record<string, unknown>> & { partnerType?: string | null; country?: string | null }) => {
+  const required = contractFieldsFor(p);
+  const filled = (k: string) => {
+    if (k === 'taxId') return !isBlank(p.taxId) || !isBlank(p.vatId);
+    if (k === 'street') return !isBlank(p.street) || !isBlank(p.address);
+    if (k === 'phone') return !isBlank(p.phone) || !isBlank(p.whatsapp);
+    return !isBlank(p[k]);
+  };
+  const missing = required.filter((k) => !filled(k));
+  return { required, missing, percent: required.length ? Math.round(((required.length - missing.length) / required.length) * 100) : 100 };
 };
 
 /** Masked values of bank / tax fields sent back unchanged by a form are dropped (= not changed). */
@@ -353,6 +418,13 @@ export const profileRows = (p: ReferralPartner, defs: FieldDef[], opts: { mask: 
     ['Şəhər', p.city],
     ['Ölkə', p.country],
     ['VÖEN', maskWith(opts.mask, 'taxId', p.taxId)],
+    ['Hüquqi forma', p.legalForm],
+    ['Reyestr nömrəsi', [p.registerNumber, p.registerCourt].filter(Boolean).join(' · ')],
+    ['USt-IdNr', p.vatId],
+    ['Betriebsnummer', p.betriebsnummer],
+    ['Küçə', p.street],
+    ['Poçt indeksi', p.postalCode],
+    ['İmza edən', [p.signatoryName, p.signatoryRole].filter(Boolean).join(', ')],
     ...(opts.canSeeBank
       ? ([
           ['Bank', p.bankName],
@@ -392,6 +464,15 @@ export const partnerExportProfile = (p: ReferralPartner, defs: FieldDef[]) => {
     city: p.city,
     country: p.country,
     taxId: p.taxId,
+    legalForm: p.legalForm,
+    registerNumber: p.registerNumber,
+    registerCourt: p.registerCourt,
+    vatId: p.vatId,
+    betriebsnummer: p.betriebsnummer,
+    street: p.street,
+    postalCode: p.postalCode,
+    signatoryName: p.signatoryName,
+    signatoryRole: p.signatoryRole,
     bankName: p.bankName,
     bankAccountHolder: p.bankAccountHolder,
     iban: p.iban,

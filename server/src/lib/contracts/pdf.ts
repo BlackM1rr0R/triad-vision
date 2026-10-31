@@ -9,10 +9,10 @@ import type { ContractLang } from './values.js';
  */
 
 const SIGN_LABELS: Record<ContractLang, Record<ContractKind, [string, string]> & { place: string; page: [string, string] }> = {
-  de: { WORK: ['Arbeitgeber', 'Arbeitnehmer/in'], AUSBILDUNG: ['Ausbildende/r', 'Auszubildende/r'], SERVICE: ['Triad Vision', 'Auftraggeber/in'], place: 'Ort, Datum', page: ['Seite', 'von'] },
-  en: { WORK: ['Employer', 'Employee'], AUSBILDUNG: ['Training company', 'Trainee'], SERVICE: ['Triad Vision', 'Client'], place: 'Place, date', page: ['Page', 'of'] },
-  az: { WORK: ['İşəgötürən', 'İşçi'], AUSBILDUNG: ['Təhsil verən', 'Təhsil alan'], SERVICE: ['Triad Vision', 'Sifarişçi'], place: 'Yer, tarix', page: ['Səhifə', '/'] },
-  ru: { WORK: ['Работодатель', 'Работник'], AUSBILDUNG: ['Обучающая сторона', 'Обучающийся'], SERVICE: ['Triad Vision', 'Заказчик'], place: 'Место, дата', page: ['Стр.', 'из'] },
+  de: { WORK: ['Arbeitgeber', 'Arbeitnehmer/in'], AUSBILDUNG: ['Ausbildende/r', 'Auszubildende/r'], SERVICE: ['Triad Vision', 'Auftraggeber/in'], EMPLOYER: ['Triad Vision', 'Arbeitgeber'], PARTNER: ['Triad Vision', 'Kooperationspartner/in'], place: 'Ort, Datum', page: ['Seite', 'von'] },
+  en: { WORK: ['Employer', 'Employee'], AUSBILDUNG: ['Training company', 'Trainee'], SERVICE: ['Triad Vision', 'Client'], EMPLOYER: ['Triad Vision', 'Employer'], PARTNER: ['Triad Vision', 'Partner'], place: 'Place, date', page: ['Page', 'of'] },
+  az: { WORK: ['İşəgötürən', 'İşçi'], AUSBILDUNG: ['Təhsil verən', 'Təhsil alan'], SERVICE: ['Triad Vision', 'Sifarişçi'], EMPLOYER: ['Triad Vision', 'İşəgötürən'], PARTNER: ['Triad Vision', 'Tərəfdaş'], place: 'Yer, tarix', page: ['Səhifə', '/'] },
+  ru: { WORK: ['Работодатель', 'Работник'], AUSBILDUNG: ['Обучающая сторона', 'Обучающийся'], SERVICE: ['Triad Vision', 'Заказчик'], EMPLOYER: ['Triad Vision', 'Работодатель'], PARTNER: ['Triad Vision', 'Партнёр'], place: 'Место, дата', page: ['Стр.', 'из'] },
 };
 
 export interface ContractPdfInput {
@@ -20,7 +20,7 @@ export interface ContractPdfInput {
   text: string;
   kind: ContractKind;
   language: ContractLang;
-  /** names printed under the two signature lines (left: employer / Triad Vision, right: worker / client) */
+  /** names printed under the two signature lines (left: employer / Triad Vision, right: worker / client / employer / partner) */
   parties?: [string, string];
 }
 

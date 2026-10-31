@@ -1,8 +1,11 @@
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 
-export type ContractKind = 'WORK' | 'AUSBILDUNG' | 'SERVICE';
-export const CONTRACT_KINDS: ContractKind[] = ['WORK', 'AUSBILDUNG', 'SERVICE'];
+// EMPLOYER / PARTNER: contracts with an employer or a referral partner (components/partnerRecords), not per case.
+export type ContractKind = 'WORK' | 'AUSBILDUNG' | 'SERVICE' | 'EMPLOYER' | 'PARTNER';
+export const CONTRACT_KINDS: ContractKind[] = ['WORK', 'AUSBILDUNG', 'SERVICE', 'EMPLOYER', 'PARTNER'];
+/** Kinds used for a case (the case-contract dialog); EMPLOYER / PARTNER are generated in the partner records. */
+export const CASE_CONTRACT_KINDS: ContractKind[] = ['WORK', 'AUSBILDUNG', 'SERVICE'];
 export const CONTRACT_LANGS = ['de', 'en', 'az', 'ru'] as const;
 
 export interface ContractTemplate {
@@ -19,7 +22,7 @@ export interface ContractTemplate {
   createdBy?: { id: string; firstName: string; lastName: string } | null;
 }
 
-export type PlaceholderGroup = 'client' | 'case' | 'company' | 'vacancy' | 'triad' | 'staff' | 'date' | 'input';
+export type PlaceholderGroup = 'client' | 'case' | 'company' | 'partner' | 'contract' | 'vacancy' | 'triad' | 'staff' | 'date' | 'input';
 export interface PlaceholderDef {
   key: string;
   group: PlaceholderGroup;

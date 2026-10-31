@@ -9,6 +9,7 @@ import { presentAlert } from './aiMgmt/security/alerts.js';
 import { taskKey } from './tasks/core.js';
 import { acceleratedWork, recognitionWork } from './recognition/work.js'; // recognition + § 81a deadlines
 import { stageLabel } from './caseProcessing/texts.js'; // team document workflow (Schon geschrieben → Fertig)
+import { partnerContractWork } from './partnerRecords/work.js'; // employer / partner contracts ending or at their notice deadline
 
 /**
  * "My work today" (GET /api/admin/my-work): one queue of everything that waits for the signed-in staff
@@ -42,6 +43,7 @@ export const WORK_KINDS = [
   'recognition_deadline', // Anerkennung: next deadline / end of the adaptation measure (lib/recognition)
   'accelerated_deadline', // § 81a: embassy appointment / decision, fee, reply to the authority (lib/recognition)
   'processing', // team document workflow: a colleague handed the case to the viewer ("Schon geschrieben", lib/caseProcessing)
+  'partner_contract', // employer / referral partner contract: end date or notice deadline within its reminder lead time (lib/partnerRecords)
 ] as const;
 export type WorkKind = (typeof WORK_KINDS)[number];
 
@@ -74,6 +76,7 @@ const CATEGORY: Record<WorkKind, WorkCategory> = {
   recognition_deadline: 'documents',
   accelerated_deadline: 'documents',
   processing: 'documents',
+  partner_contract: 'documents',
 };
 
 /** Page that lists all items of a kind (the "+N more" link). */
@@ -103,6 +106,7 @@ const MORE_LINK: Record<WorkKind, string> = {
   recognition_deadline: '/admin/recognition?soon=14',
   accelerated_deadline: '/admin/accelerated?soon=7',
   processing: '/admin/cases?processingAssignee=me',
+  partner_contract: '/admin/companies',
 };
 
 export type WorkPriority = 'URGENT' | 'HIGH' | 'NORMAL';
@@ -1185,6 +1189,7 @@ export const buildMyWork = async (viewer: WorkViewer, opts: { team: boolean; tz?
     processingHandoffs(ctx), // "X sent you Schon geschrieben" (team document workflow)
     recognitionWork({ status: { not: 'CANCELLED' }, ...myCases(ctx) }, ctx.c.now), // Anerkennung deadlines (lib/recognition/work)
     acceleratedWork({ status: { not: 'CANCELLED' }, ...myCases(ctx) }, ctx.c.now), // § 81a deadlines
+    partnerContractWork({ team: ctx.team, viewerId: ctx.viewer.id, isAdmin: ctx.isAdmin }, ctx.c.now), // employer / partner contracts ending (lib/partnerRecords/work)
   ]);
   const sources = groups.flat().filter((s): s is Source => !!s);
   const items = sources.flatMap((s) => s.items.map((d) => finish(d, ctx.c))).sort(compareItems);

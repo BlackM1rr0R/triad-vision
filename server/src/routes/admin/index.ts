@@ -38,6 +38,7 @@ import { adminSurveysRouter } from './surveys.js';
 import { adminContractTemplatesRouter } from './contractTemplates.js';
 import { adminCandidateRequestsRouter } from './candidateRequests.js';
 import { adminPartnersRouter } from './partners.js';
+import { adminPartnerRecordsRouter } from './partnerRecords.js'; // contracts, timeline, contact persons of employers + referral partners
 import { adminRegisterRouter } from './register.js';
 import { adminDocumentExpiryRouter } from './documentExpiry.js';
 import { adminSkillVideosRouter } from './skillVideos.js';
@@ -71,6 +72,7 @@ import { adminMarketingRouter } from './marketing.js'; // lead scoring, landing 
 import { adminCommandSearchRouter } from './commandSearch.js'; // Ctrl+K command palette search
 import { adminPlacementRouter } from './placement.js'; // recognition, employer share links, evaluations, employment contracts
 import { adminKpiRouter } from './kpi.js'; // staff KPI card + team leaderboard
+import { adminStaffOpsRouter } from './staffOps.js'; // morning digest preference + backup restore test status
 import { adminTrainingRouter } from './training.js'; // internal training courses / lessons / quizzes
 import { adminShiftsRouter } from './shifts.js'; // team calendar: shifts, leave, handovers, coverage
 import { adminHandoverNotesRouter } from './handoverNotes.js'; // handover notes + checklists for absence handovers
@@ -93,6 +95,7 @@ import { adminStaffUiRouter } from './staffUi.js'; // saved views, table setting
 import { audit } from '../../lib/audit.js';
 import { adminBulkRouter } from './bulk.js'; // bulk actions on cases / inquiries / candidates (per-item results, audited)
 import { adminReviewRouter } from './review.js'; // fast document review queue
+import { adminAuthoritiesRouter } from './authorities.js'; // authorities catalogue: embassies, Ausländerbehörden, … (STAFF read, ADMIN+ edit)
 
 export const adminRouter = Router();
 adminRouter.use(requireMinRole('STAFF'));
@@ -179,6 +182,7 @@ adminRouter.use('/assignment', adminAssignmentRouter); // auto-assignment settin
 adminRouter.use('/campaigns', adminCampaignsRouter); // campaigns to client segments (ADMIN+)
 adminRouter.use('/time', adminTimeRouter); // time tracking (STAFF: own entries; rates SUPER_ADMIN)
 adminRouter.use('/kpi', adminKpiRouter); // staff KPI (own card STAFF; team + others ADMIN+)
+adminRouter.use('/staff-ops', adminStaffOpsRouter); // /digest (own morning e-mail opt-out), /backup-check (ADMIN+)
 adminRouter.use('/training', adminTrainingRouter); // training: learn (STAFF), authoring + progress (ADMIN+)
 adminRouter.use('/course', adminCourseRouter); // pre-departure course (client LMS): builder ADMIN+, report STAFF+
 adminRouter.use('/shifts', adminShiftsRouter); // team calendar (STAFF read, ADMIN+ edit)
@@ -188,6 +192,7 @@ adminRouter.use('/renewals', adminRenewalsRouter); // residence-title renewal ca
 adminRouter.use('/permits', adminPermitsRouter); // permit expiry reminders after arrival (90 / 60 / 30 days)
 adminRouter.use('/recognition', adminRecognitionRouter); // Anerkennung: processes, checklist, letters, deficits, fee, deadlines
 adminRouter.use('/accelerated', adminAcceleratedRouter); // § 81a beschleunigtes Fachkräfteverfahren: stepper, correspondence, deadlines
+adminRouter.use('/authorities', adminAuthoritiesRouter); // Botschaft / Ausländerbehörde catalogue + case links
 adminRouter.use(adminFourEyesRouter); // /cases/:id/four-eyes*, /four-eyes/* (embassy package review)
 adminRouter.use(adminCaseProcessingRouter); // /cases/:id/processing, /case-processing/board (Schon geschrieben → Fertig, Ablehnung)
 adminRouter.use('/access-log', adminAccessLogRouter); // "who viewed my documents" per client
@@ -217,6 +222,7 @@ adminRouter.use('/contract-templates', adminContractTemplatesRouter);
 adminRouter.use('/candidate-requests', adminCandidateRequestsRouter);
 adminRouter.use('/skill-videos', adminSkillVideosRouter); // candidates' skill videos: review queue, approve / reject, view log
 adminRouter.use('/partners', adminPartnersRouter);
+adminRouter.use('/partner-records', adminPartnerRecordsRouter); // /contracts*, /activities*, /contacts* (owner: companyId | referralPartnerId)
 adminRouter.use('/register', adminRegisterRouter);
 adminRouter.use('/settlements', adminSettlementsRouter);
 adminRouter.use('/signatures', adminSignaturesRouter);

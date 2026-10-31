@@ -36,6 +36,7 @@ import ClientDataTasks from '@/components/clientData/ClientDataTasks';
 import { FamilyMembersSection } from '@/components/family/FamilyMembersSection';
 import { PortalTasks } from '@/components/clientProcess/PortalTasks'; // "MÉ™nim tapÅŸÄ±rÄ±qlarÄ±m"
 import { ClientRecognitionCard } from '@/components/recognition/ClientRecognitionCard'; // Anerkennung status (read-only)
+import { ClientAuthoritiesCard } from '@/components/authorities/ClientAuthoritiesCard'; // embassy / Ausländerbehörde info (read-only)
 import { PortalOfficeVisits } from '@/components/clientProcess/PortalOfficeVisits'; // "OfisÉ™ gÉ™liÅŸ tÉ™yin et"
 import { useFamilyOverview } from '@/components/family/api';
 import { useAuth } from '@/lib/auth';
@@ -310,6 +311,8 @@ export default function CaseView() {
             <PortalTasks caseId={data.id} onChanged={refresh} />
             {/* Recognition of the qualification (read-only; nothing when the case has none). */}
             <ClientRecognitionCard caseId={data.id} />
+            {/* Embassy / Ausländerbehörde from the authorities catalogue (read-only; nothing while none is linked). */}
+            <ClientAuthoritiesCard caseId={data.id} />
             {/* Home city → German city with the six milestones (primary case only). */}
             {nextStep.data?.case?.id === data.id && <JourneyCard next={nextStep.data} />}
             {/* One timeline: steps with their dates. */}

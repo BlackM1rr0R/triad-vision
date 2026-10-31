@@ -90,27 +90,84 @@ export interface CompanyExtras {
   handelsregister?: string;
   fax?: string;
 }
+/**
+ * Legacy store (before the Company legal columns existed): Setting officialForms:company:<id>. Still read as a
+ * fallback and copied into empty columns once (moveCompanyExtrasToColumns); never written or deleted any more.
+ */
 const extrasKey = (companyId: string) => `officialForms:company:${companyId}`;
+const EXTRAS_PREFIX = 'officialForms:company:';
 
-export const companyExtras = async (companyId: string): Promise<CompanyExtras> => {
+const legacyExtras = async (companyId: string): Promise<CompanyExtras> => {
   const row = await prisma.setting.findUnique({ where: { key: extrasKey(companyId) } });
-  return (row?.value as CompanyExtras | undefined) ?? {};
+  const v = row?.value;
+  return v && typeof v === 'object' && !Array.isArray(v) ? (v as CompanyExtras) : {};
 };
 
+/** "Amtsgericht München, HRB 12345" → { registerNumber: "HRB 12345", registerCourt: "Amtsgericht München" }. */
+export const splitHandelsregister = (s: string): { registerNumber: string; registerCourt: string | null } => {
+  const t = s.trim().replace(/\s+/g, ' ');
+  const m = t.match(/\b(HR\s?[AB]|GnR|PR|VR|GsR)\s*\d+(\s?[A-Z]{1,2}\b)?/i);
+  if (!m) return { registerNumber: t.slice(0, 40), registerCourt: null };
+  const court = (t.slice(0, m.index) + t.slice((m.index ?? 0) + m[0].length)).replace(/^[\s,;:–-]+|[\s,;:–-]+$/g, '').replace(/\s*,\s*,/g, ',').trim();
+  return { registerNumber: m[0].trim().slice(0, 40), registerCourt: court ? court.slice(0, 120) : null };
+};
+
+/** Register number and court as one line, as the official forms print it. */
+export const handelsregisterOf = (co: { registerNumber: string | null; registerCourt: string | null }) =>
+  [co.registerCourt?.trim(), co.registerNumber?.trim()].filter(Boolean).join(', ');
+
+/** Betriebsnummer / Handelsregister / fax of the company: the Company columns first, the legacy Setting values as fallback. */
+export const companyExtras = async (companyId: string): Promise<CompanyExtras> => {
+  const [co, legacy] = await Promise.all([
+    prisma.company.findUnique({ where: { id: companyId }, select: { betriebsnummer: true, registerNumber: true, registerCourt: true, fax: true } }),
+    legacyExtras(companyId),
+  ]);
+  const out: CompanyExtras = {};
+  const betriebsnummer = co?.betriebsnummer?.trim() || legacy.betriebsnummer?.trim();
+  const handelsregister = (co ? handelsregisterOf(co) : '') || legacy.handelsregister?.trim();
+  const fax = co?.fax?.trim() || legacy.fax?.trim();
+  if (betriebsnummer) out.betriebsnummer = betriebsnummer;
+  if (handelsregister) out.handelsregister = handelsregister;
+  if (fax) out.fax = fax;
+  return out;
+};
+
+/** Writes changed extras into the Company columns (undefined = unchanged, '' = clear). */
 export const saveCompanyExtras = async (companyId: string, patch: CompanyExtras) => {
   const current = await companyExtras(companyId);
-  const next: CompanyExtras = { ...current };
-  for (const [k, v] of Object.entries(patch) as [keyof CompanyExtras, string | undefined][]) {
-    if (v === undefined) continue;
-    if (v) next[k] = v.slice(0, 120);
-    else delete next[k];
+  const data: Prisma.CompanyUpdateInput = {};
+  if (patch.betriebsnummer !== undefined && patch.betriebsnummer.trim() !== (current.betriebsnummer ?? '')) data.betriebsnummer = patch.betriebsnummer.trim().slice(0, 20) || null;
+  if (patch.fax !== undefined && patch.fax.trim() !== (current.fax ?? '')) data.fax = patch.fax.trim().slice(0, 40) || null;
+  if (patch.handelsregister !== undefined && patch.handelsregister.trim() !== (current.handelsregister ?? '')) {
+    const v = patch.handelsregister.trim();
+    if (v) Object.assign(data, splitHandelsregister(v));
+    else Object.assign(data, { registerNumber: null, registerCourt: null });
   }
-  await prisma.setting.upsert({
-    where: { key: extrasKey(companyId) },
-    create: { key: extrasKey(companyId), value: next as unknown as Prisma.InputJsonValue },
-    update: { value: next as unknown as Prisma.InputJsonValue },
-  });
-  return next;
+  if (Object.keys(data).length) await prisma.company.update({ where: { id: companyId }, data });
+  return companyExtras(companyId);
+};
+
+/**
+ * One-time data move (idempotent; jobs/partnerContracts.ts and tests): every legacy Setting row's values are
+ * copied into the company's EMPTY columns — filled columns are never overwritten, the Setting rows stay.
+ */
+export const moveCompanyExtrasToColumns = async () => {
+  const rows = await prisma.setting.findMany({ where: { key: { startsWith: EXTRAS_PREFIX } } });
+  let moved = 0;
+  for (const row of rows) {
+    const companyId = row.key.slice(EXTRAS_PREFIX.length);
+    const v = (row.value && typeof row.value === 'object' && !Array.isArray(row.value) ? row.value : {}) as CompanyExtras;
+    const co = await prisma.company.findUnique({ where: { id: companyId }, select: { betriebsnummer: true, registerNumber: true, registerCourt: true, fax: true } });
+    if (!co) continue;
+    const data: Prisma.CompanyUpdateInput = {};
+    if (!co.betriebsnummer && v.betriebsnummer?.trim()) data.betriebsnummer = v.betriebsnummer.trim().slice(0, 20);
+    if (!co.fax && v.fax?.trim()) data.fax = v.fax.trim().slice(0, 40);
+    if (!co.registerNumber && !co.registerCourt && v.handelsregister?.trim()) Object.assign(data, splitHandelsregister(v.handelsregister));
+    if (!Object.keys(data).length) continue;
+    await prisma.company.update({ where: { id: companyId }, data });
+    moved++;
+  }
+  return { checked: rows.length, moved };
 };
 
 // ─── Case data ──────────────────────────────────────────────────────────
@@ -213,7 +270,11 @@ export const loadCaseData = async (caseId: string, now = new Date()): Promise<Ca
   const co = ctx.company;
   if (co) {
     const extras = await companyExtras(co.id);
-    const addr = splitGermanAddress(co.address, co.city);
+    // Structured address columns (Company.street / postalCode) win over the free-text address.
+    const legal = await prisma.company.findUnique({ where: { id: co.id }, select: { street: true, postalCode: true, city: true } });
+    const addr = legal?.street?.trim()
+      ? { ...splitGermanAddress(legal.street, legal.city ?? co.city), postalCode: legal.postalCode?.trim() ?? '', city: legal.city?.trim() || co.city?.trim() || '' }
+      : splitGermanAddress(co.address, co.city);
     set('company.name', `${co.name}${co.legalForm && !co.name.includes(co.legalForm) ? ` ${co.legalForm}` : ''}`);
     set('company.street', addr.street);
     set('company.houseNumber', addr.houseNumber);

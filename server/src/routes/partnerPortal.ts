@@ -20,6 +20,7 @@ import { attachPartnerOwner, extendedContact, listPartnerClients, partnerLinks, 
 import { XLSX_MIME, markClientsExcelDirty } from '../lib/clientsExcel.js';
 import { scanUserDuplicates } from '../lib/duplicates/detect.js';
 import { intlPhone, passportNo } from './auth.js';
+import { partnerPortalProfileRouter } from '../lib/partners/portalProfileRoutes.js'; // own legal data, change requests, own contracts
 
 /**
  * Referral-partner portal API — mounted at /api/partner. The login is a user with role AGENT that is
@@ -28,6 +29,7 @@ import { intlPhone, passportNo } from './auth.js';
  */
 export const partnerPortalRouter = Router();
 partnerPortalRouter.use(requireRole('AGENT'));
+partnerPortalRouter.use('/', partnerPortalProfileRouter); // GET/PATCH /profile, POST /profile/change-request, GET /contracts[/:id/file]
 
 const partnerOf = async (req: Request): Promise<ReferralPartner> => {
   const partner = await prisma.referralPartner.findUnique({ where: { userId: req.user!.id } });

@@ -91,6 +91,7 @@ import {
   Palette,
   BadgeCheck,
   KeyRound,
+  Landmark,
   Store,
   ScanEye,
 } from 'lucide-react';
@@ -224,6 +225,7 @@ export const STAFF_NAV: StaffNavItem[] = [
   a('expiring', '/admin/expiring', Hourglass, 'work'),
   a('recognition', '/admin/recognition', GraduationCap, 'work'), // Anerkennung procedures of all cases
   a('accelerated', '/admin/accelerated', Rocket, 'work'), // § 81a accelerated skilled-worker procedures
+  a('authorities', '/admin/authorities', Landmark, 'work'), // authorities catalogue: Botschaft / Ausländerbehörde / … (STAFF read, ADMIN+ edit)
   a('originals', '/admin/originals', Vault, 'work', { module: 'originals' }),
   a('arrivals', '/admin/arrivals', PlaneLanding, 'work'),
   a('partnerHousing', '/admin/partner-housing', KeyRound, 'work'), // partner landlords (ADMIN+ edit, STAFF+ propose) + Anmeldung deadlines
@@ -369,7 +371,7 @@ export type HubKey = 'today' | 'cases' | 'clients' | 'employers' | 'comms' | 'fi
  */
 export const HUBS: { key: HubKey; icon: LucideIcon; tabs: string[] }[] = [
   { key: 'today', icon: LayoutDashboard, tabs: ['today', 'dashboard', 'kanban', 'tasks', 'clientTasks'] },
-  { key: 'cases', icon: FolderKanban, tabs: ['cases', 'review', 'requirements', 'docsAudit', 'expiring', 'recognition', 'accelerated', 'originals', 'signatures', 'countersign', 'officialForms', 'caseForms', 'contractTemplates', 'translations'] },
+  { key: 'cases', icon: FolderKanban, tabs: ['cases', 'review', 'requirements', 'docsAudit', 'expiring', 'recognition', 'accelerated', 'authorities', 'originals', 'signatures', 'countersign', 'officialForms', 'caseForms', 'contractTemplates', 'translations'] },
   { key: 'clients', icon: Users, tabs: ['candidates', 'skillVideos', 'register', 'duplicates', 'checkIns', 'arrivals', 'familyReunion', 'partnerHousing', 'journey', 'examDates', 'waitingRoom', 'preCourse'] },
   { key: 'employers', icon: Building2, tabs: ['companies', 'vacancies', 'jobChannels', 'candidateRequests', 'interviews', 'employmentContracts', 'interviewPrep'] },
   { key: 'comms', icon: MessageSquareText, tabs: ['messaging', 'calls', 'campaigns', 'announcements', 'surveys', 'reviews'] },

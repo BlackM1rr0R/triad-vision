@@ -83,7 +83,7 @@ export const VaultUploadDialog = ({
       toast.error(t(problem));
       return;
     }
-    if (await gate(ready)) setFile(ready);
+    if (await gate(ready, { kind })) setFile(ready);
   };
 
   const submit = async () => {

@@ -4,10 +4,11 @@ import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { AxiosError } from 'axios';
 import clsx from 'clsx';
-import { Building2, FileSignature, Lock, Phone, Plus, Settings2, SlidersHorizontal, Trash2, UserRound, X } from 'lucide-react';
+import { Building2, FileSignature, Landmark, Lock, MapPin, Phone, Plus, Scale, Settings2, SlidersHorizontal, Trash2, UserRound, X } from 'lucide-react';
 import { api, errorCode } from '@/lib/api';
 import i18n, { registerCopy } from '@/i18n';
 import { pagesPartnerProfile } from '@/i18n/pagesPartnerProfile';
+import { pagesPartnerHub } from '@/i18n/pagesPartnerHub'; // legal data, contract hints
 import { useAuth } from '@/lib/auth';
 import { hasMinRole } from '@/lib/types';
 import { Modal } from '@/components/admin/Modal';
@@ -17,8 +18,10 @@ import { isMaskedValue, SensitiveValue } from '@/components/privacyTools/Sensiti
 import { fromCents, toCents } from './Commissions';
 import { PARTNER_LANGS, PARTNERS_KEY, partnerError, usePartnerFields, type Partner, type PartnerFieldDef, type PartnerLang, type PartnerType } from './api';
 import { PartnerFieldsManager } from './PartnerFieldsManager';
+import { contractFieldsFor, isGermany } from './hub/types';
 
 registerCopy(pagesPartnerProfile);
+registerCopy(pagesPartnerHub);
 
 /**
  * The one referral partner form — used by /admin/partners and the drive "Partner" section. Grouped
@@ -51,6 +54,15 @@ interface FormState {
   city: string;
   country: string;
   taxId: string;
+  street: string;
+  postalCode: string;
+  legalForm: string;
+  registerNumber: string;
+  registerCourt: string;
+  vatId: string;
+  betriebsnummer: string;
+  signatoryName: string;
+  signatoryRole: string;
   bankName: string;
   bankAccountHolder: string;
   iban: string;
@@ -83,6 +95,15 @@ const formOf = (p: Partner | null): FormState => ({
   city: p?.city ?? '',
   country: p?.country ?? '',
   taxId: p?.taxId ?? '',
+  street: p?.street ?? '',
+  postalCode: p?.postalCode ?? '',
+  legalForm: p?.legalForm ?? '',
+  registerNumber: p?.registerNumber ?? '',
+  registerCourt: p?.registerCourt ?? '',
+  vatId: p?.vatId ?? '',
+  betriebsnummer: p?.betriebsnummer ?? '',
+  signatoryName: p?.signatoryName ?? '',
+  signatoryRole: p?.signatoryRole ?? '',
   bankName: p?.bankName ?? '',
   bankAccountHolder: p?.bankAccountHolder ?? '',
   iban: p?.iban ?? '',
@@ -114,6 +135,16 @@ const bodyOf = (f: FormState, defs: PartnerFieldDef[], bankEditable: boolean) =>
   city: f.city,
   country: f.country,
   taxId: f.taxId,
+  street: f.street,
+  postalCode: f.postalCode,
+  // Company-only legal data is cleared for individuals; the Betriebsnummer exists only for German partners.
+  legalForm: f.partnerType === 'COMPANY' ? f.legalForm : '',
+  registerNumber: f.partnerType === 'COMPANY' ? f.registerNumber : '',
+  registerCourt: f.partnerType === 'COMPANY' ? f.registerCourt : '',
+  vatId: f.partnerType === 'COMPANY' ? f.vatId : '',
+  betriebsnummer: f.partnerType === 'COMPANY' && (isGermany(f.country) || !f.country.trim()) ? f.betriebsnummer : '',
+  signatoryName: f.partnerType === 'COMPANY' ? f.signatoryName : '',
+  signatoryRole: f.partnerType === 'COMPANY' ? f.signatoryRole : '',
   ...(bankEditable ? { bankName: f.bankName, bankAccountHolder: f.bankAccountHolder, iban: f.iban, bic: f.bic } : {}),
   contractStart: f.contractStart,
   contractEnd: f.contractEnd,
@@ -138,16 +169,31 @@ const saveError = (err: unknown) => {
 
 // ─── Small building blocks ─────────────────────────────────────────────
 
-const Field = ({ label, children, className, hint }: { label: string; children: (id: string) => ReactNode; className?: string; hint?: ReactNode }) => {
+const Field = ({ label, children, className, hint, need }: { label: string; children: (id: string) => ReactNode; className?: string; hint?: ReactNode; need?: 'filled' | 'missing' }) => {
   const id = useId();
   return (
     <div className={clsx('min-w-0', className)}>
-      <label htmlFor={id} className="label">
-        {label}
+      <label htmlFor={id} className="label flex items-center gap-1.5">
+        <span className="min-w-0 truncate">{label}</span>
+        {need && <NeedMark state={need} />}
       </label>
       {children(id)}
       {hint && <div className="mt-1 text-xs text-muted">{hint}</div>}
     </div>
+  );
+};
+
+/** "Needed for contracts" marker next to a label (amber while empty). */
+const NeedMark = ({ state }: { state: 'filled' | 'missing' }) => {
+  const { t } = useTranslation();
+  return (
+    <span
+      title={t('partnerForm.needed')}
+      className={clsx('inline-flex shrink-0 items-center gap-0.5 rounded px-1 text-[10px] font-semibold', state === 'missing' ? 'bg-warning-bg text-warning-fg' : 'bg-sunken text-muted')}
+    >
+      <FileSignature className="size-2.5" aria-hidden /> {t('partnerForm.neededShort')}
+      <span className="sr-only">{t('partnerForm.needed')}</span>
+    </span>
   );
 };
 
@@ -252,7 +298,9 @@ const CustomInput = ({ def, value, onChange }: { def: PartnerFieldDef; value: st
 const SECTIONS = [
   ['basic', UserRound],
   ['contact', Phone],
-  ['company', Building2],
+  ['address', MapPin],
+  ['legal', Scale],
+  ['bank', Landmark],
   ['contract', FileSignature],
   ['custom', SlidersHorizontal],
 ] as const;
@@ -289,7 +337,22 @@ export const PartnerFormDialog = ({
   const commissionInvalid = f.commission.trim() !== '' && toCents(f.commission) === null;
   const datesInvalid = !!f.contractStart && !!f.contractEnd && f.contractEnd < f.contractStart;
   const extraInvalid = f.extraFields.some((r) => !r.label.trim() && r.value.trim());
-  const invalid = !f.name.trim() || commissionInvalid || datesInvalid || extraInvalid;
+  const betriebsnummerInvalid = f.partnerType === 'COMPANY' && f.betriebsnummer.trim() !== '' && !/^\d{8}$/.test(f.betriebsnummer.replace(/[\s.-]+/g, ''));
+  const invalid = !f.name.trim() || commissionInvalid || datesInvalid || extraInvalid || betriebsnummerInvalid;
+  // Which fields a partner contract is generated from (and which of them are still empty).
+  const contractFields = useMemo(() => new Set(contractFieldsFor(f)), [f]);
+  const isFilled = (k: string) => {
+    const v = (key: keyof FormState) => String(f[key] ?? '').trim() !== '';
+    if (k === 'taxId') return v('taxId') || v('vatId');
+    if (k === 'street') return v('street') || v('address');
+    if (k === 'phone') return v('phone') || v('whatsapp');
+    return v(k as keyof FormState);
+  };
+  const need = (k: string): 'filled' | 'missing' | undefined => (contractFields.has(k) ? (isFilled(k) ? 'filled' : 'missing') : undefined);
+  const missing = [...contractFields].filter((k) => !isFilled(k));
+  const percent = contractFields.size ? Math.round(((contractFields.size - missing.length) / contractFields.size) * 100) : 100;
+  const german = isGermany(f.country);
+  const legacyDates = !!partner && (!!partner.contractStart || !!partner.contractEnd);
 
   const save = useMutation({
     mutationFn: async () => {
@@ -307,8 +370,12 @@ export const PartnerFormDialog = ({
   });
 
   const set = <K extends keyof FormState>(k: K, v: FormState[K]) => setF((s) => ({ ...s, [k]: v }));
-  const text = (k: keyof FormState, label: string, opts: { type?: string; max?: number; className?: string; inputClass?: string; placeholder?: string; autoComplete?: string; required?: boolean } = {}) => (
-    <Field label={label} className={opts.className}>
+  const text = (
+    k: keyof FormState,
+    label: string,
+    opts: { type?: string; max?: number; className?: string; inputClass?: string; placeholder?: string; autoComplete?: string; required?: boolean; hint?: ReactNode; inputMode?: 'numeric' | 'text' } = {},
+  ) => (
+    <Field label={label} className={opts.className} need={need(k)} hint={opts.hint}>
       {(id) => (
         <input
           id={id}
@@ -317,6 +384,7 @@ export const PartnerFormDialog = ({
           maxLength={opts.max}
           required={opts.required}
           placeholder={opts.placeholder}
+          inputMode={opts.inputMode}
           autoComplete={opts.autoComplete ?? 'off'}
           value={f[k] as string}
           onChange={(e) => set(k, e.target.value as never)}
@@ -384,6 +452,20 @@ export const PartnerFormDialog = ({
             </button>
           ))}
         </nav>
+        <div className="mb-4 rounded-xl border border-line bg-sunken/60 px-4 py-3" aria-live="polite">
+          <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
+            <span className="inline-flex items-center gap-1.5 font-semibold text-ink">
+              <FileSignature className="size-3.5 text-link" aria-hidden /> {t('partnerForm.readiness.title')}
+            </span>
+            <span className={clsx('font-semibold tabular-nums', missing.length ? 'text-warning-fg' : 'text-success-fg')}>{t('partnerForm.readiness.percent', { percent })}</span>
+          </div>
+          <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-card" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={percent} aria-label={t('partnerForm.readiness.title')}>
+            <div className={clsx('h-full rounded-full transition-all', missing.length ? 'bg-warning' : 'bg-success')} style={{ width: `${percent}%` }} />
+          </div>
+          <p className="mt-1.5 text-xs text-muted">
+            {missing.length ? t('partnerForm.readiness.missing', { fields: missing.map((k) => t(`partnerHub.fields.${k}`)).join(', ') }) : t('partnerForm.readiness.complete')}
+          </p>
+        </div>
         <div className="space-y-5">
           <Section id={`${uid}-basic`} icon={UserRound} title={t('partnerForm.sections.basic')}>
             {text('name', t('partnerForm.f.name'), { max: 120, required: true, className: 'sm:col-span-2' })}
@@ -430,15 +512,66 @@ export const PartnerFormDialog = ({
             {text('whatsapp', t('partnerForm.f.whatsapp'), { type: 'tel', max: 40 })}
             {text('email', t('partnerForm.f.email'), { type: 'email', max: 191, autoComplete: 'email' })}
             {text('website', t('partnerForm.f.website'), { max: 255, placeholder: t('partnerForm.f.websitePh'), className: 'sm:col-span-2' })}
-            {text('address', t('partnerForm.f.address'), { max: 255, className: 'sm:col-span-2' })}
+          </Section>
+
+          <Section id={`${uid}-address`} icon={MapPin} title={t('partnerForm.sections.address')}>
+            {text('street', t('partnerForm.f.street'), { max: 160, className: 'sm:col-span-2', autoComplete: 'street-address' })}
+            {text('postalCode', t('partnerForm.f.postalCode'), { max: 12, autoComplete: 'postal-code', inputMode: german ? 'numeric' : 'text' })}
             {text('city', t('partnerForm.f.city'), { max: 120 })}
             {text('country', t('partnerForm.f.country'), { max: 80 })}
+            {text('address', t('partnerForm.f.address'), { max: 255 })}
+          </Section>
+
+          <Section id={`${uid}-legal`} icon={Scale} title={t('partnerForm.sections.legal')}>
+            <Field label={f.partnerType === 'COMPANY' ? t('partnerForm.f.taxIdCompany') : t('partnerForm.f.taxIdIndividual')} need={need('taxId')}>
+              {(id) => (
+                <>
+                  <input id={id} className="input font-mono" maxLength={40} autoComplete="off" value={f.taxId} onChange={(e) => set('taxId', e.target.value)} />
+                  {partner && isMaskedValue(partner.taxId) && <SensitiveValue value={partner.taxId} entity="partner" id={partner.id} field="taxId" className="mt-1 text-xs" />}
+                </>
+              )}
+            </Field>
+            {f.partnerType === 'COMPANY' && (
+              <>
+                {text('legalForm', t('partnerForm.f.legalForm'), { max: 60, placeholder: t('partnerForm.f.legalFormPh') })}
+                {text('registerNumber', t('partnerForm.f.registerNumber'), { max: 40, placeholder: t('partnerForm.f.registerNumberPh') })}
+                {text('registerCourt', t('partnerForm.f.registerCourt'), { max: 120, placeholder: t('partnerForm.f.registerCourtPh') })}
+                <Field label={t('partnerForm.f.vatId')}>
+                  {(id) => (
+                    <>
+                      <input id={id} className="input font-mono uppercase" maxLength={40} autoComplete="off" placeholder="DE123456789" value={f.vatId} onChange={(e) => set('vatId', e.target.value)} />
+                      {partner && isMaskedValue(partner.vatId) && <SensitiveValue value={partner.vatId} entity="partner" id={partner.id} field="vatId" className="mt-1 text-xs" />}
+                    </>
+                  )}
+                </Field>
+                {/* The Betriebsnummer exists only for German partners (country Germany or not set yet). */}
+                {(german || (!f.country.trim() && !!f.betriebsnummer)) && (
+                  <Field label={t('partnerForm.f.betriebsnummer')} hint={betriebsnummerInvalid ? <span className="text-danger-fg">{t('partnerForm.errors.INVALID_BETRIEBSNUMMER')}</span> : t('partnerForm.f.betriebsnummerHint')}>
+                    {(id) => (
+                      <input
+                        id={id}
+                        className="input font-mono tabular-nums"
+                        inputMode="numeric"
+                        maxLength={20}
+                        autoComplete="off"
+                        placeholder="12345678"
+                        value={f.betriebsnummer}
+                        aria-invalid={betriebsnummerInvalid || undefined}
+                        onChange={(e) => set('betriebsnummer', e.target.value)}
+                      />
+                    )}
+                  </Field>
+                )}
+                {text('signatoryName', t('partnerForm.f.signatoryName'), { max: 160 })}
+                {text('signatoryRole', t('partnerForm.f.signatoryRole'), { max: 80, placeholder: t('partnerForm.f.signatoryRolePh') })}
+              </>
+            )}
           </Section>
 
           <Section
-            id={`${uid}-company`}
-            icon={Building2}
-            title={t('partnerForm.sections.company')}
+            id={`${uid}-bank`}
+            icon={Landmark}
+            title={t('partnerForm.sections.bank')}
             aside={
               !bankEditable && (
                 <p className="mb-3 flex items-center gap-1.5 rounded-lg bg-sunken px-3 py-2 text-xs text-muted">
@@ -447,14 +580,6 @@ export const PartnerFormDialog = ({
               )
             }
           >
-            <Field label={t('partnerForm.f.taxId')}>
-              {(id) => (
-                <>
-                  <input id={id} className="input font-mono" maxLength={40} autoComplete="off" value={f.taxId} onChange={(e) => set('taxId', e.target.value)} />
-                  {partner && isMaskedValue(partner.taxId) && <SensitiveValue value={partner.taxId} entity="partner" id={partner.id} field="taxId" className="mt-1 text-xs" />}
-                </>
-              )}
-            </Field>
             {bankInput('bankName', t('partnerForm.f.bankName'), 120)}
             {bankInput('bankAccountHolder', t('partnerForm.f.bankAccountHolder'), 120)}
             {bankInput('iban', t('partnerForm.f.iban'), 42, true)}
@@ -462,10 +587,18 @@ export const PartnerFormDialog = ({
           </Section>
 
           <Section id={`${uid}-contract`} icon={FileSignature} title={t('partnerForm.sections.contract')}>
-            {text('contractStart', t('partnerForm.f.contractStart'), { type: 'date' })}
-            <Field label={t('partnerForm.f.contractEnd')} hint={datesInvalid && <span className="text-danger-fg">{t('partnerForm.errors.CONTRACT_DATES_INVALID')}</span>}>
-              {(id) => <input id={id} className="input" type="date" min={f.contractStart || undefined} value={f.contractEnd} onChange={(e) => set('contractEnd', e.target.value)} aria-invalid={datesInvalid || undefined} />}
-            </Field>
+            {/* Contracts live in PartnerContract now; the old profile dates stay editable until converted on the profile. */}
+            {legacyDates && (
+              <>
+                <p className="rounded-lg bg-sunken px-3 py-2 text-xs text-muted sm:col-span-2">
+                  <span className="font-semibold text-ink">{t('partnerForm.f.legacyContract')}:</span> {t('partnerForm.f.legacyContractHint')}
+                </p>
+                {text('contractStart', t('partnerForm.f.contractStart'), { type: 'date' })}
+                <Field label={t('partnerForm.f.contractEnd')} hint={datesInvalid && <span className="text-danger-fg">{t('partnerForm.errors.CONTRACT_DATES_INVALID')}</span>}>
+                  {(id) => <input id={id} className="input" type="date" min={f.contractStart || undefined} value={f.contractEnd} onChange={(e) => set('contractEnd', e.target.value)} aria-invalid={datesInvalid || undefined} />}
+                </Field>
+              </>
+            )}
             <Field label={t('partnerForm.f.commission')} hint={commissionInvalid ? <span className="text-danger-fg">{t('partnerForm.errors.invalidCommission')}</span> : t('partnerForm.f.commissionHint')}>
               {(id) => <input id={id} className="input tabular-nums" inputMode="decimal" placeholder="150.00" value={f.commission} onChange={(e) => set('commission', e.target.value)} aria-invalid={commissionInvalid || undefined} />}
             </Field>

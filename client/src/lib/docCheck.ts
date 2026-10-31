@@ -23,7 +23,11 @@ export type ClientCheckCode =
   | 'TOO_BRIGHT'
   | 'BLURRY'
   | 'CUT_OFF'
-  | 'UNREADABLE_IMAGE';
+  | 'UNREADABLE_IMAGE'
+  // Pre-upload server check of a passport / ID photo (POST /api/vault/precheck, MRZ).
+  | 'PASSPORT_EXPIRED'
+  | 'PASSPORT_EXPIRES_SOON'
+  | 'WRONG_TYPE_SUSPECTED';
 
 export interface DocCheckIssue {
   code: ClientCheckCode;
@@ -31,6 +35,8 @@ export interface DocCheckIssue {
   /** i18n key of the friendly explanation (pagesVault). */
   key: string;
   params?: Record<string, string | number>;
+  /** Shown in red although the client may still upload (an expired passport). */
+  severe?: boolean;
 }
 
 export interface DocCheckResult {
@@ -221,26 +227,42 @@ const loadImage = (url: string) =>
     img.src = url;
   });
 
+/** Draws any drawable (image, video frame, canvas) to the small analysis canvas and measures it. */
+const measureDrawable = (src: CanvasImageSource, width: number, height: number): ImageMetrics => {
+  const scale = Math.min(1, ANALYSIS_EDGE / Math.max(width, height));
+  const w = Math.max(1, Math.round(width * scale));
+  const h = Math.max(1, Math.round(height * scale));
+  const canvas = document.createElement('canvas');
+  canvas.width = w;
+  canvas.height = h;
+  const ctx = canvas.getContext('2d', { willReadFrequently: true });
+  if (!ctx) throw new Error('no canvas');
+  ctx.drawImage(src, 0, 0, w, h);
+  const gray = toGray(ctx.getImageData(0, 0, w, h).data, w, h);
+  return analyseGray(gray, w, h, { width, height });
+};
+
 /** Draws the image to a small canvas and measures it. */
 const measureImage = async (file: File): Promise<ImageMetrics> => {
   const url = URL.createObjectURL(file);
   try {
     const img = await loadImage(url);
-    const width = img.naturalWidth;
-    const height = img.naturalHeight;
-    const scale = Math.min(1, ANALYSIS_EDGE / Math.max(width, height));
-    const w = Math.max(1, Math.round(width * scale));
-    const h = Math.max(1, Math.round(height * scale));
-    const canvas = document.createElement('canvas');
-    canvas.width = w;
-    canvas.height = h;
-    const ctx = canvas.getContext('2d', { willReadFrequently: true });
-    if (!ctx) throw new Error('no canvas');
-    ctx.drawImage(img, 0, 0, w, h);
-    const gray = toGray(ctx.getImageData(0, 0, w, h).data, w, h);
-    return analyseGray(gray, w, h, { width, height });
+    return measureDrawable(img, img.naturalWidth, img.naturalHeight);
   } finally {
     URL.revokeObjectURL(url);
+  }
+};
+
+/**
+ * Instant check of a photo taken with the in-browser scanner (camera frame or chosen photo): blur, light
+ * and resolution. No cut-off check — the frame shows the table around the page and the client crops it
+ * next. Never throws (an unreadable frame → no findings).
+ */
+export const checkShot = (src: CanvasImageSource, width: number, height: number): DocCheckIssue[] => {
+  try {
+    return evaluateImage(measureDrawable(src, width, height)).filter((i) => i.code !== 'CUT_OFF');
+  } catch {
+    return [];
   }
 };
 

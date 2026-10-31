@@ -15,7 +15,7 @@ export const MILESTONE_ICON: Record<MilestoneKey, LucideIcon> = {
   arrival: MapPin,
 };
 
-/** "on 3 May" / "Expected: 3 – 20 May" / "Planned: 12 June" for a milestone (empty when there is no date). */
+/** "on 3 May" / "Expected: 3 – 20 May" / "Planned: 12 June" / "Appointment: 3 May, 09:30" for a milestone (empty when there is no date). */
 export const useMilestoneDate = () => {
   const { t } = useTranslation();
   const { date } = useL10n();
@@ -23,6 +23,10 @@ export const useMilestoneDate = () => {
   return (m: Milestone): string => {
     if (m.dateKind === 'done' && m.date) return t('jmap.doneOn', { date: fmt(m.date) });
     if (m.dateKind === 'planned' && m.date) return t('jmap.planned', { date: fmt(m.date) });
+    if (m.dateKind === 'appointment' && m.date) {
+      const when = date(m.date, { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Baku' });
+      return m.place ? t('jmap.appointmentAt', { date: when, place: m.place }) : t('jmap.appointment', { date: when });
+    }
     if (m.dateKind === 'expected' && m.to) {
       return m.from && fmt(m.from) !== fmt(m.to) ? t('jmap.expectedRange', { from: date(m.from, { day: 'numeric', month: 'short' }), to: fmt(m.to) }) : t('jmap.expected', { date: fmt(m.to) });
     }

@@ -20,6 +20,7 @@ import { CvDownloadButton } from '@/components/cv/CvDownloadButton';
 import { SharedProfile, useSharedProfiles } from '@/components/aiEmployer/SharedProfile';
 import { EmployerSkillVideos, useEmployerSkillVideos } from '@/components/skillVideos/EmployerSkillVideos';
 import { PartyChatButton, PartyConversations, PartyThreadFromQuery, usePartyThreads } from '@/components/messagingPlus/PartyThread';
+import { CandidateVotes, type EmployerVote } from '@/components/employerExtras/CandidateVotes';
 
 interface Item {
   id: string;
@@ -29,6 +30,8 @@ interface Item {
   updatedAt: string;
   vacancy: { id: string; title: L10n; slug: string };
   candidate: AnonProfile;
+  /** Team votes (colleagues of this company); `mine` marks the signed-in user's vote. */
+  votes?: EmployerVote[];
 }
 
 type Action = 'INTERVIEW' | 'ACCEPT' | 'REJECT';
@@ -197,6 +200,9 @@ export const CompanyCandidates = () => {
               <CvDownloadButton url={`/company/candidates/${a.id}/cv.pdf`} anonymised className="mt-3" />
               <PartyChatButton thread={threadByApp.get(a.id)} className="mt-3 ml-2" />
               <p className="mt-3 text-[11px] text-muted">{t('jobsArea.portal.candidates.updated', { date: fmtDate(a.updatedAt) })}</p>
+              {(a.status === 'PROPOSED' || a.status === 'INTERVIEW' || !!a.votes?.length) && (
+                <CandidateVotes key={(a.votes ?? []).map((v) => v.id + v.updatedAt).join()} applicationId={a.id} status={a.status} votes={a.votes ?? []} onDone={refresh} />
+              )}
               {(a.status === 'PROPOSED' || a.status === 'INTERVIEW') && <DecisionBox item={a} onDone={refresh} />}
             </li>
           ))}

@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { registerCopy } from '@/i18n';
+import { WorkerEmployerChecklist } from '@/components/employerExtras/ArrivalChecklist';
 import { pagesArrival } from '@/i18n/pagesArrival';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { useRealtime } from '@/lib/realtime';
@@ -626,6 +627,7 @@ export default function AccountArrival() {
             <Tabs variant="pills" label={t('arrival.title')} items={items.map((p) => ({ key: p.caseId, label: p.case.number }))} value={plan.caseId} onChange={setActive} />
           )}
           <PlanView key={plan.caseId} plan={plan} />
+          <WorkerEmployerChecklist key={`employer-${plan.caseId}`} caseId={plan.caseId} />
         </>
       )}
     </div>

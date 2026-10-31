@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { buildJourney } from '../../src/lib/account/nextStep.js';
-import type { Forecast } from '../../src/lib/journey/forecast.js';
+import { travelWindow, type Forecast } from '../../src/lib/journey/forecast.js';
 
 // Portal journey map (GET /api/account/next-step → journey): origin, destination, milestones, travel / arrival.
 
@@ -52,7 +52,8 @@ describe('buildJourney', () => {
       ['DECISION', 'upcoming'],
     ]);
     expect(j.steps[2].expectedFrom).toBe(d('2026-10-25').toISOString());
-    expect(j.travel).toEqual({ at: null, planned: false, done: false });
+    expect(j.travel).toEqual({ at: null, planned: false, done: false, expectedFrom: null, expectedTo: null });
+    expect(j.appointment).toBeNull();
     expect(j.arrival).toEqual({ at: null, done: false });
   });
 
@@ -72,7 +73,7 @@ describe('buildJourney', () => {
     );
     expect(j.outcome).toBe('APPROVED');
     expect(j.decisionAt).toBe(d('2026-10-10').toISOString());
-    expect(j.travel).toEqual({ at: d('2026-10-18').toISOString(), planned: true, done: true });
+    expect(j.travel).toMatchObject({ at: d('2026-10-18').toISOString(), planned: true, done: true });
     expect(j.arrival.done).toBe(false);
   });
 
@@ -87,5 +88,35 @@ describe('buildJourney', () => {
   it('reports refused and cancelled applications', () => {
     expect(buildJourney({ city: null, nationality: 'AZ' }, caseOf({ status: 'REJECTED' }), null, travel()).outcome).toBe('REJECTED');
     expect(buildJourney({ city: null, nationality: 'AZ' }, caseOf({ status: 'CANCELLED' }), null, travel()).outcome).toBe('CANCELLED');
+  });
+  it('carries the booked embassy appointment and the expected travel window', () => {
+    const j = buildJourney(
+      { city: 'Baku', nationality: 'AZ' },
+      caseOf({ status: 'APPOINTMENT_SCHEDULED', appointmentAt: d('2026-11-03'), appointmentPlace: 'VFS Baku' }),
+      forecast(),
+      travel({ travelExpected: { from: d('2026-11-24'), to: d('2027-01-12') } }),
+    );
+    expect(j.appointment).toEqual({ at: d('2026-11-03').toISOString(), place: 'VFS Baku' });
+    expect(j.travel).toMatchObject({ expectedFrom: d('2026-11-24').toISOString(), expectedTo: d('2027-01-12').toISOString() });
+  });
+});
+
+describe('travelWindow', () => {
+  const range = { minDays: 14, maxDays: 42 };
+  it('chains from the forecast decision window of an open case', () => {
+    const w = travelWindow({ outcome: null, decisionAt: null, estimatedDecision: { from: d('2026-11-10'), to: d('2026-12-01') }, range, booked: false, now: NOW });
+    expect(w).toEqual({ from: d('2026-11-24'), to: d('2027-01-12') });
+  });
+
+  it('counts from the decision of an approved case and never starts in the past', () => {
+    const w = travelWindow({ outcome: 'APPROVED', decisionAt: d('2026-10-01'), estimatedDecision: null, range, booked: false, now: NOW });
+    expect(w).toEqual({ from: NOW, to: d('2026-11-12') });
+  });
+
+  it('nothing once travel is booked, after a refusal, or when the window is over', () => {
+    expect(travelWindow({ outcome: 'APPROVED', decisionAt: d('2026-10-01'), estimatedDecision: null, range, booked: true, now: NOW })).toBeNull();
+    expect(travelWindow({ outcome: 'REJECTED', decisionAt: d('2026-10-01'), estimatedDecision: null, range, booked: false, now: NOW })).toBeNull();
+    expect(travelWindow({ outcome: 'APPROVED', decisionAt: d('2026-01-01'), estimatedDecision: null, range, booked: false, now: NOW })).toBeNull();
+    expect(travelWindow({ outcome: null, decisionAt: null, estimatedDecision: null, range, booked: false, now: NOW })).toBeNull();
   });
 });

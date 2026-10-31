@@ -323,7 +323,8 @@ describe('Erklärung zum Beschäftigungsverhältnis with the employer', () => {
     expect(await prisma.notification.count({ where: { userId: staff.user.id, type: 'STAFF', link: { contains: 'case-official-forms' } } })).toBe(1);
     expect(await prisma.caseEvent.count({ where: { caseId: c.id, type: 'OFFICIAL_FORM_SIGNED' } })).toBe(1);
     // the company's Betriebsnummer is remembered for the next form
-    expect((await prisma.setting.findUniqueOrThrow({ where: { key: `officialForms:company:${employer.company.id}` } })).value).toMatchObject({ betriebsnummer: '87654321' });
+    // (stored in the Company legal columns since lib/partnerRecords; the legacy Setting row is no longer written)
+    expect((await prisma.company.findUniqueOrThrow({ where: { id: employer.company.id } })).betriebsnummer).toBe('87654321');
 
     const after = expectStatus(await employer.agent.get(`/api/company/forms/${fillId}`), 200);
     expect(after.body.form).toMatchObject({ status: 'SIGNED', editable: false });

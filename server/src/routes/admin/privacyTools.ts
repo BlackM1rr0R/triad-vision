@@ -184,12 +184,12 @@ const REVEALERS: Record<RevealEntity, { fields: string[]; minRole: Role; fieldMi
   },
   partner: {
     // Referral partner (ReferralPartner.id): the tax id for staff, bank data only for ADMIN+.
-    fields: ['taxId', 'iban', 'bic'],
+    fields: ['taxId', 'vatId', 'iban', 'bic'],
     minRole: 'STAFF',
     fieldMinRole: { iban: 'ADMIN', bic: 'ADMIN' },
     load: async (id, field) => {
-      const p = await prisma.referralPartner.findUnique({ where: { id }, select: { taxId: true, iban: true, bic: true } });
-      return { found: !!p, value: p ? (field === 'iban' ? p.iban : field === 'bic' ? p.bic : p.taxId) : null };
+      const p = await prisma.referralPartner.findUnique({ where: { id }, select: { taxId: true, vatId: true, iban: true, bic: true } });
+      return { found: !!p, value: p ? (field === 'iban' ? p.iban : field === 'bic' ? p.bic : field === 'vatId' ? p.vatId : p.taxId) : null };
     },
   },
   insight: {

@@ -12,8 +12,9 @@ import { Section } from '@/components/partnerPortal/ui';
 import { PasswordInput } from '@/components/ui/PasswordInput';
 import { ChangeEmailCard } from '@/components/account/AccountSecurity';
 import { EmailOtpCard } from '@/components/auth/EmailOtpCard';
+import { PortalLegalProfile } from '@/components/partnerPortal/LegalProfile'; // legal data, change requests, own contracts
 
-/** Name and phone of the login, password change (the regular PATCH /auth/me). No banking fields. */
+/** Legal data and contracts of the partner, name and phone of the login, password change (the regular PATCH /auth/me). No banking fields. */
 export default function PartnerProfilePage({ me }: { me: PartnerMe }) {
   const { t } = useTranslation();
   const qc = useQueryClient();
@@ -53,6 +54,7 @@ export default function PartnerProfilePage({ me }: { me: PartnerMe }) {
 
   return (
     <div className="grid gap-6 lg:grid-cols-2">
+      <PortalLegalProfile />
       <Section title={t('partnerPortal.profile.title')} icon={CircleUser}>
         <dl className="mb-5 grid gap-4 sm:grid-cols-2">
           <div className="min-w-0">
