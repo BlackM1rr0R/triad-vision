@@ -131,8 +131,6 @@ export const toItem = (row: ItemRow, myAccess: DriveAccess, extra: { childCount?
  * Links items to their case: a client folder (Case.driveFolderId) and a copy of a case document
  * (DriveNode.documentId) get the case id, number and status (badge "Müraciət sənədi · TV-…" in the UI).
  */
-const CLOSED_STATUSES = new Set<string>(['APPROVED', 'REJECTED', 'CANCELLED']);
-
 export const decorateCaseLinks = async (items: DriveItem[]) => {
   const folderIds = items.filter((i) => i.kind === 'FOLDER').map((i) => i.id);
   // Partner folders: matched by name among the children of the "Partner" section (found by id, so a renamed section works).
@@ -164,8 +162,8 @@ export const decorateCaseLinks = async (items: DriveItem[]) => {
     const c = byFolder.get(item.id);
     if (c) {
       Object.assign(item, { caseId: c.id, caseNumber: c.number, caseStatus: c.status });
-      // Effective stage as in lib/caseProcessing: nothing stored = "In Bearbeitung" while the case is open.
-      const stage = c.processingStage ?? (CLOSED_STATUSES.has(c.status) ? null : 'IN_PROGRESS');
+      // As in lib/caseProcessing: nothing stored = not in the team workflow (no default "In Bearbeitung").
+      const stage = c.processingStage ?? null;
       item.caseInfo = {
         clientId: c.client.id,
         clientName: `${c.client.firstName} ${c.client.lastName}`.trim(),

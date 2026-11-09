@@ -8,7 +8,7 @@ import { useL10n } from '@/lib/l10n';
 import { fileUrl } from '@/lib/api';
 import { fmtDateTime } from '@/components/admin/labels';
 import { TONE_CLASS } from '@/components/ui/status';
-import { stageLabel, useProcessing, type ProcessingStage, type ProcessingView } from './api';
+import { nextStage, stageLabel, useProcessing, type ProcessingStage, type ProcessingView } from './api';
 import { MoveStageDialog, StageBadge } from './parts';
 import { useClaimFlow } from './flow';
 
@@ -97,8 +97,8 @@ export default function ProcessingCard({ caseId }: { caseId: string }) {
   const p = q.data;
   if (!p) return null;
   const mine = !!p.assignee && p.assignee.id === user?.id;
-  // The obvious next move: write → check → done.
-  const next: ProcessingStage | null = p.stage === 'WRITTEN' ? 'DONE' : p.stage === 'IN_PROGRESS' || p.stage === null ? 'WRITTEN' : null;
+  // The obvious next move: Schon geschrieben → In Bearbeitung → Fertig.
+  const next: ProcessingStage | null = nextStage(p.stage);
   const docCount = p.documents.files.length + p.documents.uploads.length;
 
   return (

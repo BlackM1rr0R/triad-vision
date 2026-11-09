@@ -24,6 +24,7 @@ import { notifyClient } from '../../lib/notifications.js';
 import { createCaseMessage, listMessages, markMessagesRead, publishTyping } from '../../lib/messaging/caseMessages.js';
 import { deleteCaseDocument } from '../../lib/caseDocDelete.js';
 import { copyDocumentToDrive, syncCaseFolder, trashRejectedCopy } from '../../lib/drive/caseFolders.js';
+import { caseParentFor, checkTargetFolder, folderInfos, vacancyProfession } from '../../lib/drive/vacancyFolders.js'; // vacancy folders
 import { requireMinRole } from '../../middleware/auth.js';
 import { hasMissing, translateMany } from '../../lib/ai/translate.js';
 import { prepareCaseDocument, publicQuality, scheduleUploadAnalysis } from '../../lib/uploadAi/index.js';
@@ -165,7 +166,10 @@ adminCasesRouter.get('/:id', async (req, res) => {
   const detail = await loadCaseDetail(req.params.id, { forStaff: true });
   // Referral partner who brought the client (shown and edited in the case header).
   const partner = (await prisma.case.findUnique({ where: { id: detail.id }, select: { partner: { select: { id: true, name: true } } } }))?.partner ?? null;
-  res.json({ case: { ...detail, partner }, stats: caseStats(detail) });
+  // The client folder in the drive and the folder chosen for it (vacancy folder / override), with their paths.
+  const folders = await folderInfos([detail.driveFolderId, detail.driveParentId]);
+  const driveFolders = { folder: (detail.driveFolderId && folders.get(detail.driveFolderId)) || null, parent: (detail.driveParentId && folders.get(detail.driveParentId)) || null };
+  res.json({ case: { ...detail, partner, driveFolders }, stats: caseStats(detail) });
 });
 
 adminCasesRouter.patch('/:id', async (req, res) => {
@@ -177,9 +181,14 @@ adminCasesRouter.patch('/:id', async (req, res) => {
       // Employer / vacancy this candidate is placed with (company portal "our workers").
       companyId: z.string().max(40).nullable().optional(),
       vacancyId: z.string().max(40).nullable().optional(),
+      // Drive folder the client folder lives in (default: the vacancy's folder); null = the usual place.
+      driveParentId: z.string().max(40).nullable().optional(),
     }),
     req.body,
   );
+  const current = await prisma.case.findUnique({ where: { id: req.params.id }, select: { id: true, clientId: true, vacancyId: true, driveFolderId: true, driveParentId: true } });
+  if (!current) throw notFound('CASE_NOT_FOUND');
+  if (body.driveParentId) body.driveParentId = await checkTargetFolder(req.user!, body.driveParentId, current.driveFolderId);
   if (body.assignedStaffId) {
     const staff = await prisma.user.findUnique({ where: { id: body.assignedStaffId } });
     if (!staff || staff.role === 'CLIENT' || staff.role === 'COMPANY') throw badRequest('INVALID_STAFF');
@@ -189,8 +198,16 @@ adminCasesRouter.patch('/:id', async (req, res) => {
   }
   if (body.companyId && !(await prisma.company.count({ where: { id: body.companyId } }))) throw badRequest('INVALID_COMPANY');
   if (body.vacancyId) {
-    const vacancy = await prisma.vacancy.findUnique({ where: { id: body.vacancyId }, select: { companyId: true } });
+    const vacancy = await prisma.vacancy.findUnique({ where: { id: body.vacancyId }, select: { companyId: true, profession: true, title: true } });
     if (!vacancy) throw badRequest('INVALID_VACANCY');
+    if (body.vacancyId !== current.vacancyId) {
+      // The target job is one of our vacancies: the profession follows it, the client folder goes to its folder.
+      if (body.profession === undefined) body.profession = vacancyProfession(vacancy);
+      if (body.driveParentId === undefined) {
+        const parent = await caseParentFor({ vacancyId: body.vacancyId, userId: current.clientId });
+        if (parent && parent !== current.driveParentId) body.driveParentId = await checkTargetFolder(req.user!, parent, current.driveFolderId).catch(() => undefined);
+      }
+    }
     if (body.companyId === undefined) {
       // Linking a vacancy implies its employer.
       if (vacancy.companyId) body.companyId = vacancy.companyId;
@@ -199,7 +216,7 @@ adminCasesRouter.patch('/:id', async (req, res) => {
     }
   }
   const updated = await prisma.case.update({ where: { id: req.params.id }, data: body });
-  if (body.visaCategoryId !== undefined) void syncCaseFolder(updated.id); // client folder follows the category
+  if (body.visaCategoryId !== undefined || (body.driveParentId !== undefined && body.driveParentId !== current.driveParentId)) void syncCaseFolder(updated.id); // client folder follows the category / chosen folder
   await prisma.caseEvent.create({
     data: { caseId: updated.id, type: 'CASE_UPDATED', actorId: req.user!.id, visibleToClient: false },
   });

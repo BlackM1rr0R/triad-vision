@@ -462,6 +462,8 @@ model Case {
   partner                  ReferralPartner?      @relation(fields: [partnerId], references: [id], onDelete: SetNull)
   /// The client's real folder in the shared drive ("Ad Soyad · Pass-Nr."), created with the case.
   driveFolderId            String?               @unique
+  /// Folder chosen for this application (the vacancy's folder or a staff override): the client folder lives inside it (lib/drive/vacancyFolders.ts).
+  driveParentId            String?               @db.VarChar(40)
   /// Extra columns of the client register (admin-defined), keyed by ClientRegisterColumn.id.
   registerData             Json?
   /// Team document workflow (lib/caseProcessing): null = "In Bearbeitung" (default) | IN_PROGRESS | WRITTEN ("Schon geschrieben") | DONE ("Fertig") | REFUSED ("Ablehnung").
@@ -967,6 +969,8 @@ model Vacancy {
   channelStates  VacancyChannelState[]
   /// Cover image and gallery: [{ url, alt? }] (public uploads); the first one is the card/OG image.
   images         Json?
+  /// Drive folder the applicants of this vacancy are collected in (one sub-folder per applicant; lib/drive/vacancyFolders.ts).
+  driveFolderId  String?               @db.VarChar(40)
 
   @@index([status, publishedAt])
   @@index([companyId])
@@ -1000,6 +1004,10 @@ model VacancyApplication {
   profileDraft     CandidateProfileDraft?
   partyThread      PartyThread?            @relation("PartyThreadApplication")
   employerVotes    EmployerCandidateVote[]
+  /// Staff override of the folder this application is collected in (default: the vacancy's folder).
+  targetFolderId   String?                 @db.VarChar(40)
+  /// The applicant's sub-folder ("Nachname Vorname – YYYY-MM-DD") inside that folder (lib/drive/vacancyFolders.ts).
+  driveFolderId    String?                 @db.VarChar(40)
 
   @@unique([vacancyId, userId])
   @@index([userId])
@@ -3020,6 +3028,8 @@ model ReferralPartner {
   postalCode        String?             @db.VarChar(12)
   signatoryName     String?             @db.VarChar(160)
   signatoryRole     String?             @db.VarChar(80)
+  /// How many clients the partner should bring / needs (quota; null = no target). Progress = distinct clients via cases + owned clients.
+  clientQuota       Int?
   partnerContracts  PartnerContract[]
   partnerActivities PartnerActivity[]
   contacts          Contact[]
@@ -6298,4 +6308,17 @@ model CaseAuthority {
 
   @@unique([caseId, authorityId])
   @@index([authorityId])
+}
+
+/// App-side state of our own @domain mailboxes on the Stalwart server (Admin → Mailboxes) that Stalwart
+/// itself does not keep. A row exists only while the mailbox is disabled: its password was replaced by
+/// a random secret nobody knows (mail is still received), and the workspace accounts using it are paused.
+model StaffMailbox {
+  id           String    @id @default(cuid())
+  address      String    @unique @db.VarChar(190)
+  stalwartId   String    @db.VarChar(40)
+  disabledAt   DateTime?
+  disabledById String? // plain id of the super admin who disabled it
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 }

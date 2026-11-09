@@ -133,6 +133,7 @@ export const resetDb = async () => {
   await prisma.mailTemplate.deleteMany();
   await prisma.mailFolder.deleteMany();
   await prisma.mailAccount.deleteMany();
+  await prisma.staffMailbox.deleteMany(); // disabled-state of our own Stalwart mailboxes (plain ids)
   // Operations / messaging / journey / document-intelligence rows (no dependants of their own)
   await prisma.webhookDelivery.deleteMany();
   await prisma.webhook.deleteMany();

@@ -45,9 +45,10 @@ describe('documents section: team workflow (Schon geschrieben → Fertig, Ablehn
     await prisma.driveNode.create({ data: { space: 'SHARED', kind: 'FILE', name: 'Pass.pdf', parentId: sub.id, mimeType: 'application/pdf', size: 100, storageKey: uniq('k-') } });
     await prisma.driveNode.create({ data: { space: 'SHARED', kind: 'FILE', name: 'Antrag.pdf', parentId: folder.id, mimeType: 'application/pdf', size: 100, storageKey: uniq('k-') } });
 
-    // The drive listing carries the stage of the client folder (nothing stored = In Bearbeitung).
+    // The drive listing carries the stage of the client folder (nothing stored = not in the workflow; no default In Bearbeitung).
     const listed = expectStatus(await writer.agent.get(`/api/drive/nodes/${r.cases.id}/children`), 200).body.items.find((i: { id: string }) => i.id === folder.id);
-    expect(listed.caseInfo.processing).toEqual({ stage: 'IN_PROGRESS', assigneeId: null });
+    expect(listed.caseInfo.processing).toEqual({ stage: null, assigneeId: null });
+    expect((await folders(writer.agent, { stage: 'IN_PROGRESS' })).counts.IN_PROGRESS).toBe(0);
 
     // Writer: "Schon geschrieben-ə göndər" from the drive, to the checker.
     expectStatus(await move(writer.agent, c.id, { stage: 'WRITTEN', assigneeId: checker.user.id, note: 'Tərcümələr hazırdır', origin: 'drive' }), 200);
@@ -104,6 +105,13 @@ describe('documents section: team workflow (Schon geschrieben → Fertig, Ablehn
     expect(work).toHaveLength(1);
     expect(work[0].link).toBe(`/workspace/drive/f/${folder.id}`);
 
+    // Fertig straight from Schon geschrieben is not allowed: In Bearbeitung first.
+    const skip = await move(third.agent, c.id, { stage: 'DONE', origin: 'drive' });
+    expect(skip.status).toBe(409);
+    expect(skip.body.error).toBe('PROCESSING_TRANSITION_NOT_ALLOWED');
+    expectStatus(await move(third.agent, c.id, { stage: 'IN_PROGRESS', assigneeId: third.user.id, origin: 'drive' }), 200);
+    expect((await folders(third.agent, { stage: 'IN_PROGRESS' })).items.map((i: { caseId: string }) => i.caseId)).toEqual([c.id]);
+
     // "Fertig-ə göndər" from the drive: the writer hears about it, linked to the folder.
     expectStatus(await move(third.agent, c.id, { stage: 'DONE', note: 'Paket hazırdır', origin: 'drive' }), 200);
     const done = await prisma.notification.findFirst({ where: { userId: writer.user.id, type: 'PROCESSING_STAGE', title: { contains: 'Fertig' } } });
@@ -117,7 +125,7 @@ describe('documents section: team workflow (Schon geschrieben → Fertig, Ablehn
     expect(afterList.caseInfo.processing).toEqual({ stage: 'DONE', assigneeId: null });
   });
 
-  it('claiming an unassigned "Schon geschrieben" case; back to In Bearbeitung; Ablehnung', async () => {
+  it('claiming an unassigned "Schon geschrieben" case; on to In Bearbeitung; Ablehnung', async () => {
     const writer = await asStaff({ firstName: 'Leyla', lastName: 'Əliyeva' });
     const checker = await asStaff({ firstName: 'Murad', lastName: 'Quliyev' });
     const r = await roots(writer.agent);
@@ -129,7 +137,7 @@ describe('documents section: team workflow (Schon geschrieben → Fertig, Ablehn
     expect(res).toMatchObject({ claimed: true, processing: { stage: 'WRITTEN', assignee: { id: checker.user.id }, by: { id: writer.user.id } } });
     expect(await prisma.notification.count({ where: { userId: writer.user.id, type: 'PROCESSING_STAGE' } })).toBe(1);
 
-    // "Geri qaytar": back to In Bearbeitung with a note, to the writer.
+    // "In Bearbeitung-a göndər" with a note, to the writer.
     expectStatus(await move(checker.agent, c.id, { stage: 'IN_PROGRESS', assigneeId: writer.user.id, note: 'Pasport səhifəsi çatmır', origin: 'drive' }), 200);
     const back = await folders(writer.agent, { stage: 'IN_PROGRESS', mine: '1' });
     expect(back.items.map((i: { caseId: string }) => i.caseId)).toEqual([c.id]);
@@ -158,7 +166,7 @@ describe('documents section: team workflow (Schon geschrieben → Fertig, Ablehn
     expect(await prisma.caseProcessingMove.count({ where: { caseId: c.id } })).toBe(before + 1);
   });
 
-  it('permissions, In Bearbeitung narrowing and restricted folders', async () => {
+  it('permissions, In Bearbeitung only holds explicit sends, restricted folders', async () => {
     const staff = await asStaff();
     const su = await asSuperAdmin();
     const r = await roots(staff.agent);
@@ -172,16 +180,19 @@ describe('documents section: team workflow (Schon geschrieben → Fertig, Ablehn
     expect((await claim(staff.agent, 'nope')).status).toBe(404);
     expect((await staff.agent.get('/api/admin/case-processing/folders?stage=NOPE')).status).toBe(400);
 
-    // In Bearbeitung: recent cases and the viewer's own; an old, foreign case is not listed.
+    // In Bearbeitung: only what an admin sent there — new open cases do not land there by themselves.
     const old = new Date(Date.now() - 60 * 86_400_000);
     const stale = await makeCase(r.cases.id, { firstName: 'Kamran', updatedAt: old });
     const own = await makeCase(r.cases.id, { firstName: 'Orxan', updatedAt: old, assignedStaffId: staff.user.id });
+    expect((await folders(staff.agent, { stage: 'IN_PROGRESS' })).counts.IN_PROGRESS).toBe(0);
+    expectStatus(await move(staff.agent, stale.c.id, { stage: 'WRITTEN' }), 200);
+    expectStatus(await move(staff.agent, stale.c.id, { stage: 'IN_PROGRESS' }), 200);
     const ip = await folders(staff.agent, { stage: 'IN_PROGRESS' });
     const ids = ip.items.map((i: { caseId: string }) => i.caseId);
-    expect(ids).toContain(c.id);
-    expect(ids).toContain(own.c.id);
-    expect(ids).not.toContain(stale.c.id);
-    expect(ip.counts.IN_PROGRESS).toBe(2);
+    expect(ids).toEqual([stale.c.id]);
+    expect(ids).not.toContain(c.id);
+    expect(ids).not.toContain(own.c.id);
+    expect(ip.counts).toMatchObject({ IN_PROGRESS: 1, WRITTEN: 0 });
     // Cases without a client folder never appear.
     const { user: cl } = await createClient();
     await prisma.case.create({ data: { number: uniq('TV-'), clientId: cl.id, profession: 'X', status: 'DOCUMENTS_REVIEW', visaType: 'WORK', processingStage: 'WRITTEN' } });
@@ -206,6 +217,7 @@ describe('documents section: team workflow (Schon geschrieben → Fertig, Ablehn
     const su = await asSuperAdmin();
     const r = await roots(su.agent);
     const { c } = await makeCase(r.cases.id, { firstName: 'Səbinə' });
+    expectStatus(await move(su.agent, c.id, { stage: 'IN_PROGRESS' }), 200); // only explicit sends are in In Bearbeitung
     await prisma.user.update({ where: { id: (await prisma.case.findUniqueOrThrow({ where: { id: c.id } })).clientId }, data: { passportNumber: 'C01X00T47' } });
     const ids = (body: { items: { caseId: string }[] }) => body.items.map((i) => i.caseId);
     expect(ids(await folders(su.agent, { stage: 'IN_PROGRESS', search: 'C01X00T47' }))).toEqual([c.id]);

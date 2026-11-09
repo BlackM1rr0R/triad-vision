@@ -10,8 +10,10 @@ import { Skeleton } from '@/components/ui/Skeleton';
 import { TONE_CLASS, TONE_TEXT } from '@/components/ui/status';
 import { PROCESSING_STAGES, STAGE_TONE, stageLabel, useProcessingFolders, type ProcessingFolder, type ProcessingStage, type StageCounts } from '@/components/caseProcessing/api';
 import { endCaseDrag, flowActions, startCaseDrag, useStageDrop, type FlowAction, type FlowTarget } from '@/components/caseProcessing/flow';
+import type { DriveItem } from '../types';
 import { ACTION_ICON, STAGE_ICON } from './icons';
 import { WorkflowHelp } from './Help';
+import { StageTree, type StageFolder } from './stageFolders';
 
 const BASE = '/workspace/drive';
 const folderHref = (id: string) => `${BASE}/f/${encodeURIComponent(id)}`;
@@ -62,7 +64,7 @@ const Row = ({ f, onNavigate, onAct }: { f: ProcessingFolder; onNavigate: (href:
   const { tr } = useL10n();
   const { user } = useAuth();
   const x = targetOf(f);
-  const actions = flowActions(f.processing.stage, x.assigneeId, user?.id);
+  const actions = flowActions(f.processing.stage, x.assigneeId, user?.id, x.closed);
   const mine = !!x.assigneeId && x.assigneeId === user?.id;
   const href = folderHref(f.folderId);
   return (
@@ -130,9 +132,11 @@ const Row = ({ f, onNavigate, onAct }: { f: ProcessingFolder; onNavigate: (href:
 };
 
 /**
- * "İş axını → <stage>" in the documents section: the client folders in that team workflow stage, with
- * client, case number, visa kind, who sent it and when, who took it, the document count and the stage
- * buttons. Rows can be dragged onto another stage tab (or the stages in the sidebar).
+ * "İş axını → <stage>" in the documents section: first the folder tree of the stage folder (what was copied or
+ * sent there — folder-structured, expandable, every row opens in the drive and can be sent on), then the client
+ * folders of the cases in that team workflow stage, with client, case number, visa kind, who sent it and when,
+ * who took it, the document count and the stage buttons. Case rows can be dragged onto another stage tab (or
+ * the stages in the sidebar).
  */
 export const WorkflowView = ({
   stage,
@@ -140,12 +144,17 @@ export const WorkflowView = ({
   onNavigate,
   onAct,
   onDropTargets,
+  stageFolders,
+  onSendItem,
 }: {
   stage: ProcessingStage;
   mine: boolean;
   onNavigate: (href: string) => void;
   onAct: (a: FlowAction, x: FlowTarget) => void;
   onDropTargets: (stage: ProcessingStage, targets: FlowTarget[]) => void;
+  /** The stage folders of the drive (null while loading). */
+  stageFolders?: StageFolder[];
+  onSendItem: (item: DriveItem, to: ProcessingStage) => void;
 }) => {
   const { t } = useTranslation();
   const [input, setInput] = useState('');
@@ -158,6 +167,8 @@ export const WorkflowView = ({
   const q = useProcessingFolders({ stage, mine, search });
   const counts: StageCounts | undefined = q.data?.counts;
   const items = q.data?.stage === stage ? q.data.items : [];
+  const stageFolder = stageFolders?.find((f) => f.stage === stage);
+  const tabCount = (s: ProcessingStage) => (counts ? counts[s] + (stageFolders?.find((f) => f.stage === s)?.count ?? 0) : undefined);
 
   return (
     <div className="flex h-full min-h-0 flex-col">
@@ -183,7 +194,7 @@ export const WorkflowView = ({
         {help && <WorkflowHelp className="text-xs" />}
         <div className="flex flex-wrap items-center gap-2" role="tablist" aria-label={t('driveProcessing.group')}>
           {PROCESSING_STAGES.map((s) => (
-            <StageTab key={s} stage={s} active={s === stage} count={counts?.[s]} mine={mine} onNavigate={onNavigate} onDropTargets={onDropTargets} />
+            <StageTab key={s} stage={s} active={s === stage} count={tabCount(s)} mine={mine} onNavigate={onNavigate} onDropTargets={onDropTargets} />
           ))}
           <button
             type="button"
@@ -197,29 +208,36 @@ export const WorkflowView = ({
             <UserCheck className="size-4" aria-hidden /> {t('driveProcessing.mine')}
           </button>
         </div>
-        {stage === 'IN_PROGRESS' && q.data && <p className="text-xs text-muted">{t('driveProcessing.inProgressScope', { days: q.data.recentDays })}</p>}
       </div>
-      <div className={clsx('min-h-0 flex-1 overflow-y-auto', q.isFetching && 'opacity-70')}>
-        {q.isLoading ? (
-          <div className="space-y-3 p-4" aria-busy="true">
-            {Array.from({ length: 6 }, (_, i) => (
-              <Skeleton key={i} className="h-14 w-full" rounded="lg" />
-            ))}
+      <div className="min-h-0 flex-1 overflow-y-auto">
+        {!mine && stageFolder && (
+          <div className="border-b border-line pb-2">
+            <StageTree key={stageFolder.id} folder={stageFolder} onNavigate={onNavigate} onSend={onSendItem} />
           </div>
-        ) : q.isError ? (
-          <ErrorBlock error={q.error} onRetry={() => q.refetch()} />
-        ) : items.length === 0 ? (
-          <p className="px-4 py-12 text-center text-sm text-muted">{mine ? t('driveProcessing.emptyMine') : t('driveProcessing.empty')}</p>
-        ) : (
-          <>
-            <ul className="divide-y divide-line">
-              {items.map((f) => (
-                <Row key={f.caseId} f={f} onNavigate={onNavigate} onAct={onAct} />
-              ))}
-            </ul>
-            {q.data && q.data.total > items.length && <p className="px-4 py-3 text-center text-xs text-muted">{t('driveProcessing.limited', { shown: items.length, total: q.data.total })}</p>}
-          </>
         )}
+        <h2 className="px-3 pt-3 pb-1 text-xs font-bold tracking-wider text-muted uppercase sm:px-4">{t('driveProcessing.folders.cases')}</h2>
+        <div className={clsx(q.isFetching && 'opacity-70')}>
+          {q.isLoading ? (
+            <div className="space-y-3 p-4" aria-busy="true">
+              {Array.from({ length: 6 }, (_, i) => (
+                <Skeleton key={i} className="h-14 w-full" rounded="lg" />
+              ))}
+            </div>
+          ) : q.isError ? (
+            <ErrorBlock error={q.error} onRetry={() => q.refetch()} />
+          ) : items.length === 0 ? (
+            <p className="px-4 py-8 text-center text-sm text-muted">{mine ? t('driveProcessing.emptyMine') : t('driveProcessing.empty')}</p>
+          ) : (
+            <>
+              <ul className="divide-y divide-line">
+                {items.map((f) => (
+                  <Row key={f.caseId} f={f} onNavigate={onNavigate} onAct={onAct} />
+                ))}
+              </ul>
+              {q.data && q.data.total > items.length && <p className="px-4 py-3 text-center text-xs text-muted">{t('driveProcessing.limited', { shown: items.length, total: q.data.total })}</p>}
+            </>
+          )}
+        </div>
       </div>
     </div>
   );

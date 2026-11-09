@@ -568,7 +568,7 @@ export default function WorkspaceDrive() {
       }
       if (loc.kind === 'trash' && items.length && isAdmin) out.push({ id: 'empty', label: t('drive.actions.emptyTrash'), icon: Trash2, danger: true, onSelect: () => setConfirm({ kind: 'empty' }) });
       out.push(...org.menuEntries(null));
-      out.push(...proc.menuEntries(folder ? [folder] : null));
+      out.push(...proc.menuEntries(folder ? [folder] : null, listing.data?.path.map((c) => c.id)));
       out.push({ id: 'refresh', label: t('drive.toolbar.refresh'), icon: RefreshCw, onSelect: refresh });
       if (items.length) out.push({ id: 'all', label: t('drive.actions.selectAll'), icon: Clipboard, onSelect: () => select(new Set(items.map((i) => i.id)), null, null) });
       if (folder) {
@@ -606,7 +606,7 @@ export default function WorkspaceDrive() {
     if (conv.length) out.push({ kind: 'separator', id: 'sc' }, ...conv);
     out.push(...intel.menuEntries(list), ...pdfTools.menuEntries(list));
     out.push(...org.menuEntries(list));
-    out.push(...proc.menuEntries(list));
+    out.push(...proc.menuEntries(list, listing.data?.path.map((c) => c.id)));
     out.push({ kind: 'separator', id: 's1' });
     if (single && writable(single)) {
       out.push(
@@ -653,7 +653,7 @@ export default function WorkspaceDrive() {
       ];
     }
     const single = list.length === 1 ? list[0] : null;
-    const out: ToolAction[] = [...proc.toolActions(list)];
+    const out: ToolAction[] = [...proc.toolActions(list, listing.data?.path.map((c) => c.id))];
     if (single && isSheet(single)) out.push({ id: 'table', icon: FileSpreadsheet, label: t('drive.shared.openAsTable'), onClick: () => go(sheetHref(single.id)), primary: true });
     if (single?.kind === 'FILE' && can(single.myAccess, 'DOWNLOAD')) out.push({ id: 'dl', icon: Download, label: t('drive.actions.download'), onClick: () => startDownload(contentUrl(single.id, true)), primary: true });
     if (zippable(list) && (list.length > 1 || single?.kind === 'FOLDER')) out.push({ id: 'zip', icon: FileArchive, label: t('drive.actions.downloadZip'), onClick: () => zip(list), primary: true });
@@ -878,7 +878,7 @@ export default function WorkspaceDrive() {
     ) : folder?.caseId ? (
       <>
         <ClientFolderHeader folder={folder} />
-        {proc.folderBar(folder)}
+        {proc.folderBar(folder, listing.data?.path.map((c) => c.id))}
       </>
     ) : folder?.partner ? (
       <PartnerFolderHeader folder={folder} />
@@ -973,6 +973,7 @@ export default function WorkspaceDrive() {
               extra={
                 <>
                   {intel.toolbarExtra(selectedItems)}
+                  {proc.toolbarExtra(selectedItems)}
                   {org.toolbarExtra}
                   {isSuper && <AdminAiButton open={aiOpen} onClick={() => (aiOpen ? closeAi() : setAiOpen(true))} />}
                 </>

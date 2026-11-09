@@ -45,6 +45,7 @@ const caseSelect = {
   visaCategoryId: true,
   parentCaseId: true,
   driveFolderId: true,
+  driveParentId: true,
   relation: true,
   partner: { select: { name: true } },
   visaCategory: { select: { title: true, visaLabel: true } },
@@ -121,6 +122,9 @@ const canonical = async (c: CaseRow): Promise<{ parentId: string; base: string }
     }
   }
   const base = clientFolderBaseName(c);
+  // Folder chosen for this application (vacancy folder / applicant folder / staff override, lib/drive/vacancyFolders.ts).
+  const chosen = await liveFolder(c.driveParentId);
+  if (chosen) return { parentId: chosen.id, base };
   // The sections are created again here when a super admin had deleted them (a client folder needs them).
   if (c.partner) return { parentId: await ensureChild(await ensureSection('partners'), cleanName(c.partner.name, 'Partner')), base };
   const typeId = await ensureChild(await ensureSection('cases'), VISA_TYPE_FOLDER[c.visaType]);

@@ -39,6 +39,7 @@ import { PartnerFormDialog } from '../PartnerForm';
 import { DeletePartnerDialog } from '../DeletePartnerDialog';
 import type { OwnedClient, PartnerOwnershipFields } from '../Ownership';
 import { ContractBadge, ReadinessMeter } from './parts';
+import { QuotaMeter } from '../QuotaMeter'; // "needed clients" progress
 import { InfoTab } from './InfoTab';
 import { ClientsTab } from './ClientsTab';
 import { CommissionsTab, DocumentsTab, PortalTab, VisasTab } from './OtherTabs';
@@ -169,7 +170,10 @@ export const PartnerHub = ({ isAdmin }: { isAdmin: boolean }) => {
             )}
           </div>
         </div>
-        <ReadinessMeter readiness={stats?.readiness ?? partner.readiness} className="mt-4 max-w-xl" onFill={isAdmin ? () => setEditing(true) : undefined} />
+        <div className="mt-4 grid gap-4 md:grid-cols-2">
+          <ReadinessMeter readiness={stats?.readiness ?? partner.readiness} className="max-w-xl" onFill={isAdmin ? () => setEditing(true) : undefined} />
+          <QuotaMeter quota={stats?.quota ?? partner.quota} className="max-w-xl" />
+        </div>
       </header>
 
       {/* Key figures */}
@@ -218,7 +222,7 @@ export const PartnerHub = ({ isAdmin }: { isAdmin: boolean }) => {
       <TabPanel idPrefix="partner-hub" tabKey={tab} className={clsx('min-w-0')}>
         {tab === 'info' && <InfoTab partner={partner} canEdit={isAdmin} onEdit={() => setEditing(true)} />}
         {tab === 'contracts' && <ContractsTab partnerId={partner.id} legacy={stats?.legacyContract ?? null} onFillData={isAdmin ? () => setEditing(true) : () => setTab('info')} />}
-        {tab === 'clients' && <ClientsTab cases={cases} ownedClients={owned} />}
+        {tab === 'clients' && <ClientsTab cases={cases} ownedClients={owned} partner={partner} />}
         {tab === 'commissions' && <CommissionsTab partner={partner} isAdmin={isAdmin} />}
         {tab === 'visas' && <VisasTab partner={partner} cases={cases} />}
         {tab === 'documents' && <DocumentsTab partner={partner} />}

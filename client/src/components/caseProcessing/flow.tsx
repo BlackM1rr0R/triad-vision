@@ -12,14 +12,15 @@ import { useAuth } from '@/lib/auth';
 import { api, errorCode } from '@/lib/api';
 import { DRIVE_DRAG_TYPE, draggingItems, endItemDrag } from '@/components/drive/dnd';
 import type { DriveItem } from '@/components/drive/types';
-import { isProcessingStage, postClaim, postMove, processingKey, refreshProcessing, stageLabel, type ProcessingStage } from './api';
+import { canMoveStage, isProcessingStage, postClaim, postMove, processingKey, refreshProcessing, stageLabel, type ProcessingStage } from './api';
 
 /**
  * The hand-over actions of the team workflow, shared by the documents section ("İş axını", client folder
  * strip, context menu, drag & drop onto a stage) and the board of the cases list:
  *
- *   In Bearbeitung → "Schon geschrieben-ə göndər" (next admin, note) · Schon geschrieben → "Götür" (claim),
- *   "Fertig-ə göndər", "Geri qaytar" · any → "Ablehnung" (note required).
+ *   (not in the workflow) → "Schon geschrieben-ə göndər" / "In Bearbeitung-a göndər" · Schon geschrieben →
+ *   "Götür" (claim), "In Bearbeitung-a göndər" · In Bearbeitung → "Fertig-ə göndər", "Ablehnung" (note
+ *   required), "Geri qaytar" (back to Schon geschrieben) · Fertig / Ablehnung → "In Bearbeitung-a göndər" (reopen).
  *
  * Everything goes through the caseProcessing endpoints, so the case card, the board and the drive show the
  * same Case.processingStage.
@@ -32,28 +33,41 @@ export interface FlowTarget {
   number?: string;
   stage: ProcessingStage | null;
   assigneeId: string | null;
+  /** The case is closed (approved / rejected / cancelled): a closed case outside the workflow offers nothing. */
+  closed?: boolean;
 }
 
-export type FlowKind = 'send' | 'finish' | 'back' | 'refuse';
+export type FlowKind = 'send' | 'work' | 'finish' | 'back' | 'refuse';
 export type FlowAction = FlowKind | 'claim';
 
-export const KIND_STAGE: Record<FlowKind, ProcessingStage> = { send: 'WRITTEN', finish: 'DONE', back: 'IN_PROGRESS', refuse: 'REFUSED' };
-export const STAGE_KIND: Record<ProcessingStage, FlowKind> = { WRITTEN: 'send', DONE: 'finish', IN_PROGRESS: 'back', REFUSED: 'refuse' };
+export const KIND_STAGE: Record<FlowKind, ProcessingStage> = { send: 'WRITTEN', work: 'IN_PROGRESS', finish: 'DONE', back: 'WRITTEN', refuse: 'REFUSED' };
+export const STAGE_KIND: Record<ProcessingStage, FlowKind> = { WRITTEN: 'send', IN_PROGRESS: 'work', DONE: 'finish', REFUSED: 'refuse' };
 
-/** The buttons a stage offers (closed cases without a stage: none). */
-export const flowActions = (stage: ProcessingStage | null, assigneeId: string | null, myId: string | undefined): FlowAction[] => {
-  if (stage === 'IN_PROGRESS') return ['send', 'refuse'];
-  if (stage === 'WRITTEN') return [...(assigneeId !== myId ? (['claim'] as const) : []), 'finish', 'back', 'refuse'];
-  if (stage === 'DONE') return ['back', 'refuse'];
-  if (stage === 'REFUSED') return ['back'];
-  return [];
+/**
+ * The buttons a stage offers — the way is Schon geschrieben → In Bearbeitung → Fertig / Ablehnung (the server
+ * enforces it). Nothing goes to In Bearbeitung by itself: an admin sends it there.
+ */
+export const flowActions = (stage: ProcessingStage | null, assigneeId: string | null, myId: string | undefined, closed = false): FlowAction[] => {
+  if (!stage) return closed ? [] : ['send', 'work'];
+  if (stage === 'WRITTEN') return [...(assigneeId !== myId ? (['claim'] as const) : []), 'work'];
+  if (stage === 'IN_PROGRESS') return ['finish', 'refuse', 'back'];
+  return ['work']; // Fertig / Ablehnung: reopen
 };
+
+const CLOSED_STATUSES = new Set(['APPROVED', 'REJECTED', 'CANCELLED']);
 
 /** A drive client folder as a flow target (null for anything else). */
 export const targetOfItem = (i: DriveItem): FlowTarget | null => {
   if (i.kind !== 'FOLDER' || !i.caseId || !i.caseInfo) return null;
   const stage = i.caseInfo.processing?.stage;
-  return { caseId: i.caseId, name: i.caseInfo.clientName, number: i.caseNumber, stage: isProcessingStage(stage) ? stage : null, assigneeId: i.caseInfo.processing?.assigneeId ?? null };
+  return {
+    caseId: i.caseId,
+    name: i.caseInfo.clientName,
+    number: i.caseNumber,
+    stage: isProcessingStage(stage) ? stage : null,
+    assigneeId: i.caseInfo.processing?.assigneeId ?? null,
+    closed: !!i.caseStatus && CLOSED_STATUSES.has(i.caseStatus),
+  };
 };
 
 // ─── Drag & drop (native HTML5, like the drive) ───────────────────────
@@ -123,7 +137,7 @@ export const useStageDrop = (stage: ProcessingStage, onDrop: (targets: FlowTarge
       e.stopPropagation();
       endItemDrag();
       endCaseDrag();
-      const moving = targets.filter((x) => x.stage !== stage);
+      const moving = targets.filter((x) => x.stage !== stage && canMoveStage(x.stage, stage));
       if (moving.length) onDrop(moving);
     },
     [accepts, onDrop, stage],
@@ -160,7 +174,7 @@ export const FlowDialog = ({ targets, kind, origin, onClose }: { targets: FlowTa
   const [failures, setFailures] = useState<Record<string, string>>({});
   const stage = KIND_STAGE[kind];
   const needNote = kind === 'refuse';
-  const withAssignee = kind === 'send' || kind === 'back';
+  const withAssignee = kind === 'send' || kind === 'back' || kind === 'work';
   const others = items.filter((x) => x.assigneeId && x.assigneeId !== user?.id);
   const formId = `flow-${kind}`;
 

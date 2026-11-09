@@ -17,6 +17,7 @@ import type { CaseStats, StaffMember } from '../types';
 import { DefRow } from '../ui';
 import { useCaseRefresh } from './shared';
 import { useCompanyOptions, useJobsCopy, useVacancyOptions, type CaseLink } from './caseLinks';
+import { FolderLine, type FolderInfo } from '@/components/vacancyFolders/FolderPicker'; // client folder in the drive (vacancy folder)
 
 const linkChip =
   'inline-flex min-h-8 max-w-full min-w-0 items-center gap-1.5 rounded-md border border-line px-2.5 py-1 text-xs text-ink/80 transition hover:border-line-strong hover:text-link';
@@ -28,6 +29,7 @@ export const CaseSummaryAside = ({ c, stats, onEdit, onTemplate }: { c: CaseDeta
   const refresh = useCaseRefresh(c.id);
   const client = c.client;
   const link = c as CaseDetail & CaseLink;
+  const folders = (c as CaseDetail & { driveFolders?: { folder: FolderInfo | null; parent: FolderInfo | null } }).driveFolders;
   const [assigning, setAssigning] = useState(false);
   const { data: staff } = useQuery({
     queryKey: ['admin-staff'],
@@ -37,6 +39,7 @@ export const CaseSummaryAside = ({ c, stats, onEdit, onTemplate }: { c: CaseDeta
   useJobsCopy(!!link.companyId);
   const { data: companies } = useCompanyOptions(!!link.companyId);
   const { data: vacancies } = useVacancyOptions(!!link.vacancyId);
+  useJobsCopy(!!link.vacancyId);
   const companyName = companies?.find((x) => x.id === link.companyId)?.name;
   const vacancyTitle = vacancies?.find((x) => x.id === link.vacancyId)?.title;
   const d = stats.documents;
@@ -125,6 +128,25 @@ export const CaseSummaryAside = ({ c, stats, onEdit, onTemplate }: { c: CaseDeta
                   <Link to={`/admin/vacancies?id=${link.vacancyId}`} className="truncate text-muted hover:text-link hover:underline">
                     · {vacancyTitle ? tr(vacancyTitle) : '…'}
                   </Link>
+                )}
+              </span>
+            </DefRow>
+          )}
+          {!link.companyId && link.vacancyId && (
+            <DefRow label={t('vacFolders.position.label')}>
+              <Link to={`/admin/vacancies?id=${link.vacancyId}`} className="truncate hover:text-link hover:underline">
+                {vacancyTitle ? tr(vacancyTitle) : '…'}
+              </Link>
+            </DefRow>
+          )}
+          {folders && (
+            <DefRow label={t('vacFolders.case.folder')}>
+              <span className="inline-flex max-w-full min-w-0 flex-col items-end">
+                <FolderLine folder={folders.folder} compact />
+                {folders.parent && (
+                  <span className="max-w-full truncate text-xs font-normal text-muted" title={folders.parent.path}>
+                    {t('vacFolders.case.parent')}: {folders.parent.name}
+                  </span>
                 )}
               </span>
             </DefRow>

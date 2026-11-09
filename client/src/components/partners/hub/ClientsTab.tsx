@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { ClipboardPen, Search, UserRound, Users, X } from 'lucide-react';
+import { ClipboardPen, Search, UserPlus, UserRound, Users, X } from 'lucide-react';
 import { useL10n } from '@/lib/l10n';
 import { Chip } from '@/components/admin/ui';
 import { StatusBadge } from '@/components/admin/StatusBadge';
@@ -11,6 +11,7 @@ import { PROCESSING_STAGES, stageLabel, type ProcessingStage } from '@/component
 import { StageCell } from '@/components/caseProcessing/parts';
 import type { PartnerCase } from '../api';
 import type { OwnedClient } from '../Ownership';
+import { AddClientsDialog } from '../AddClientsDialog'; // hides applications already linked to the partner
 
 /** Final case statuses (no longer running). */
 const FINAL = new Set(['APPROVED', 'REJECTED', 'CANCELLED']);
@@ -37,7 +38,7 @@ export const useVisaKinds = (cases: PartnerCase[] | undefined) => {
 };
 
 /** "Müştərilər / müraciətlər": the partner's cases (visa kind, stage, status, search) and own clients without a case. */
-export const ClientsTab = ({ cases: all, ownedClients }: { cases: PartnerCase[]; ownedClients: OwnedClient[] }) => {
+export const ClientsTab = ({ cases: all, ownedClients, partner }: { cases: PartnerCase[]; ownedClients: OwnedClient[]; partner?: { id: string; name: string } }) => {
   const { t } = useTranslation();
   const { tr } = useL10n();
   const navigate = useNavigate();
@@ -45,6 +46,7 @@ export const ClientsTab = ({ cases: all, ownedClients }: { cases: PartnerCase[];
   const [stage, setStage] = useState<ProcessingStage | ''>('');
   const [q, setQ] = useState('');
   const [onlyActive, setOnlyActive] = useState(false);
+  const [adding, setAdding] = useState(false);
   const visaKinds = useVisaKinds(all);
   const stageCounts = useMemo(() => {
     const out = Object.fromEntries(PROCESSING_STAGES.map((s) => [s, 0])) as Record<ProcessingStage, number>;
@@ -70,6 +72,11 @@ export const ClientsTab = ({ cases: all, ownedClients }: { cases: PartnerCase[];
           <Users className="size-4 text-link" aria-hidden />
           <h2 className="text-sm font-semibold text-ink">{t('refPartners.clientsTitle', { count: all.length })}</h2>
           {filtered && <span className="text-xs text-muted">{t('refPartners.filteredCount', { shown: cases.length, total: all.length })}</span>}
+          {partner && (
+            <button type="button" className="btn-secondary btn-sm ml-auto" onClick={() => setAdding(true)}>
+              <UserPlus className="size-3.5" aria-hidden /> {t('partnerQuota.add.button')}
+            </button>
+          )}
         </header>
         {all.length > 0 && (
           <div className="space-y-2 border-b border-line px-4 py-3 sm:px-5">
@@ -229,6 +236,7 @@ export const ClientsTab = ({ cases: all, ownedClients }: { cases: PartnerCase[];
           </ul>
         )}
       </section>
+      <AddClientsDialog partner={adding && partner ? partner : null} onClose={() => setAdding(false)} />
     </div>
   );
 };

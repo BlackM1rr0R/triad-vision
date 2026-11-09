@@ -19,6 +19,7 @@ import { fromCents, toCents } from './Commissions';
 import { PARTNER_LANGS, PARTNERS_KEY, partnerError, usePartnerFields, type Partner, type PartnerFieldDef, type PartnerLang, type PartnerType } from './api';
 import { PartnerFieldsManager } from './PartnerFieldsManager';
 import { contractFieldsFor, isGermany } from './hub/types';
+import { parseQuota } from './QuotaMeter'; // "needed clients" (registers its copy)
 
 registerCopy(pagesPartnerProfile);
 registerCopy(pagesPartnerHub);
@@ -71,6 +72,8 @@ interface FormState {
   contractEnd: string;
   commission: string;
   currency: string;
+  /** How many clients the partner needs ('' = no target). */
+  clientQuota: string;
   customData: Record<string, string | boolean>;
   extraFields: ExtraRow[];
 }
@@ -112,6 +115,7 @@ const formOf = (p: Partner | null): FormState => ({
   contractEnd: p?.contractEnd ?? '',
   commission: fromCents(p?.commissionCents),
   currency: p?.currency ?? 'EUR',
+  clientQuota: p?.clientQuota != null ? String(p.clientQuota) : '',
   customData: Object.fromEntries(Object.entries(p?.customData ?? {}).map(([k, v]) => [k, typeof v === 'boolean' ? v : String(v)])),
   extraFields: (p?.extraFields ?? []).map((f) => ({ key: ++rowKey, ...f })),
 });
@@ -150,6 +154,7 @@ const bodyOf = (f: FormState, defs: PartnerFieldDef[], bankEditable: boolean) =>
   contractEnd: f.contractEnd,
   commissionCents: toCents(f.commission),
   currency: f.currency.trim().toUpperCase() || 'EUR',
+  clientQuota: parseQuota(f.clientQuota) ?? null,
   customData: Object.fromEntries(defs.map((d) => [d.id, d.type === 'CHECKBOX' ? f.customData[d.id] === true : typeof f.customData[d.id] === 'string' ? f.customData[d.id] : ''])),
   extraFields: f.extraFields.filter((r) => r.label.trim() && r.value.trim()).map((r) => ({ label: r.label.trim(), value: r.value.trim() })),
 });
@@ -338,7 +343,8 @@ export const PartnerFormDialog = ({
   const datesInvalid = !!f.contractStart && !!f.contractEnd && f.contractEnd < f.contractStart;
   const extraInvalid = f.extraFields.some((r) => !r.label.trim() && r.value.trim());
   const betriebsnummerInvalid = f.partnerType === 'COMPANY' && f.betriebsnummer.trim() !== '' && !/^\d{8}$/.test(f.betriebsnummer.replace(/[\s.-]+/g, ''));
-  const invalid = !f.name.trim() || commissionInvalid || datesInvalid || extraInvalid || betriebsnummerInvalid;
+  const quotaInvalid = parseQuota(f.clientQuota) === undefined;
+  const invalid = !f.name.trim() || commissionInvalid || datesInvalid || extraInvalid || betriebsnummerInvalid || quotaInvalid;
   // Which fields a partner contract is generated from (and which of them are still empty).
   const contractFields = useMemo(() => new Set(contractFieldsFor(f)), [f]);
   const isFilled = (k: string) => {
@@ -492,6 +498,23 @@ export const PartnerFormDialog = ({
                     </option>
                   ))}
                 </select>
+              )}
+            </Field>
+            <Field label={t('partnerQuota.field')} hint={quotaInvalid ? <span className="text-danger-fg">{t('partnerQuota.invalid')}</span> : t('partnerQuota.fieldHint')}>
+              {(id) => (
+                <input
+                  id={id}
+                  className="input tabular-nums"
+                  type="number"
+                  inputMode="numeric"
+                  min={1}
+                  max={100000}
+                  step={1}
+                  placeholder="10"
+                  value={f.clientQuota}
+                  onChange={(e) => set('clientQuota', e.target.value)}
+                  aria-invalid={quotaInvalid || undefined}
+                />
               )}
             </Field>
             <Field label={t('partnerForm.f.tags')} hint={t('partnerForm.f.tagsHint')} className="sm:col-span-2">

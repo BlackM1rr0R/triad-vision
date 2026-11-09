@@ -1,7 +1,6 @@
 import type { CaseStatus, Prisma, Role } from '@prisma/client';
 import { z } from 'zod';
 import { prisma } from '../../db.js';
-import { FINAL_STATUSES } from '../caseFlow.js';
 import { badRequest, conflict, notFound } from '../http.js';
 import { invalidateMyWork } from '../myWork.js';
 import { notifyUser } from '../notifications.js';
@@ -11,28 +10,47 @@ import { processingTexts, stageLabel } from './texts.js';
  * Team document workflow of a case — a lightweight hand-over between two staff members, independent of the
  * client-facing CaseStatus, the drive board (DocWorkflowStage) and the four-eyes check of the embassy package:
  *
- *   In Bearbeitung (default, nothing stored) → Schon geschrieben (WRITTEN: documents prepared, ready for the
- *   second person) → Fertig (DONE) · Ablehnung (REFUSED: the visa was refused).
+ *   Schon geschrieben (WRITTEN: documents written, waiting) → In Bearbeitung (IN_PROGRESS: an admin works on
+ *   it — only cases somebody sent there explicitly) → Fertig (DONE) · Ablehnung (REFUSED: the visa was refused).
+ *
+ * Nothing stored = the case is not in the workflow at all (new applications no longer land in "In Bearbeitung"
+ * by default). The allowed moves are in NEXT_STAGES: Fertig only from In Bearbeitung, In Bearbeitung from
+ * Schon geschrieben (or reopened from Fertig / Ablehnung), Ablehnung (a visa refusal) from any stage.
  *
  * Every move is kept (CaseProcessingMove: from, to, who, when, note, next assignee); the optional assignee is
  * notified and sees the case in "my work" until they move it on. A case counts as refused for the partner
  * statistics when CaseStatus is REJECTED or the team marked it "Ablehnung" (unless the visa was approved).
  */
 
-export const PROCESSING_STAGES = ['IN_PROGRESS', 'WRITTEN', 'DONE', 'REFUSED'] as const;
+export const PROCESSING_STAGES = ['WRITTEN', 'IN_PROGRESS', 'DONE', 'REFUSED'] as const; // in the order of the way through
 export type ProcessingStage = (typeof PROCESSING_STAGES)[number];
 export const isStage = (v: unknown): v is ProcessingStage => typeof v === 'string' && (PROCESSING_STAGES as readonly string[]).includes(v);
 
 /** Stages that still wait for somebody (the assignee sees them in "my work"). */
 export const OPEN_STAGES: ProcessingStage[] = ['IN_PROGRESS', 'WRITTEN'];
 
-/** The stage shown for a case: the stored one; nothing stored = "In Bearbeitung" while the case is open, none once closed. */
-export const effectiveStage = (stored: string | null | undefined, status: CaseStatus): ProcessingStage | null =>
-  isStage(stored) ? stored : FINAL_STATUSES.includes(status) ? null : 'IN_PROGRESS';
+/**
+ * The stage shown for a case: the stored one; nothing stored = not in the workflow (null). Cases are no longer
+ * "In Bearbeitung" by default — only the ones an admin sent there. `status` is kept for the callers' signature.
+ */
+export const effectiveStage = (stored: string | null | undefined, _status?: CaseStatus): ProcessingStage | null => (isStage(stored) ? stored : null);
 
 /** Where-clause of the cases whose effective stage is `stage`. */
-export const stageWhere = (stage: ProcessingStage): Prisma.CaseWhereInput =>
-  stage === 'IN_PROGRESS' ? { OR: [{ processingStage: 'IN_PROGRESS' }, { processingStage: null, status: { notIn: FINAL_STATUSES } }] } : { processingStage: stage };
+export const stageWhere = (stage: ProcessingStage): Prisma.CaseWhereInput => ({ processingStage: stage });
+
+/**
+ * Allowed moves (key 'NONE' = not in the workflow yet): Schon geschrieben → In Bearbeitung → Fertig, and
+ * Ablehnung (the visa was refused) from anywhere. In Bearbeitung → Schon geschrieben sends it back; Fertig /
+ * Ablehnung → In Bearbeitung reopens. Staying in the same stage (new assignee or note) is always allowed.
+ */
+export const NEXT_STAGES: Record<ProcessingStage | 'NONE', ProcessingStage[]> = {
+  NONE: ['WRITTEN', 'IN_PROGRESS', 'REFUSED'],
+  WRITTEN: ['IN_PROGRESS', 'REFUSED'],
+  IN_PROGRESS: ['DONE', 'REFUSED', 'WRITTEN'],
+  DONE: ['IN_PROGRESS', 'REFUSED'],
+  REFUSED: ['IN_PROGRESS'],
+};
+export const canMoveStage = (from: ProcessingStage | null, to: ProcessingStage) => from === to || NEXT_STAGES[from ?? 'NONE'].includes(to);
 
 /** Visa refused: CaseStatus REJECTED, or marked "Ablehnung" by the team (an approved visa wins). */
 export const isRefused = (c: { status: CaseStatus; processingStage?: string | null }) => c.status === 'REJECTED' || (c.processingStage === 'REFUSED' && c.status !== 'APPROVED');
@@ -41,15 +59,11 @@ export const refusedWhere: Prisma.CaseWhereInput = { OR: [{ status: 'REJECTED' }
 export type StageCounts = Record<ProcessingStage, number>;
 export const emptyStageCounts = (): StageCounts => ({ IN_PROGRESS: 0, WRITTEN: 0, DONE: 0, REFUSED: 0 });
 
-/** Effective-stage counts of the cases matching `where` (two queries). */
+/** Stage counts of the cases matching `where` (one query). */
 export const stageCounts = async (where: Prisma.CaseWhereInput = {}): Promise<StageCounts> => {
-  const [stored, blank] = await Promise.all([
-    prisma.case.groupBy({ by: ['processingStage'], where: { AND: [where, { processingStage: { not: null } }] }, _count: { _all: true } }),
-    prisma.case.count({ where: { AND: [where, { processingStage: null, status: { notIn: FINAL_STATUSES } }] } }),
-  ]);
+  const stored = await prisma.case.groupBy({ by: ['processingStage'], where: { AND: [where, { processingStage: { not: null } }] }, _count: { _all: true } });
   const out = emptyStageCounts();
   for (const r of stored) if (isStage(r.processingStage)) out[r.processingStage] += r._count._all;
-  out.IN_PROGRESS += blank;
   return out;
 };
 
@@ -124,6 +138,7 @@ export const moveStage = async (caseId: string, actor: { id: string; firstName: 
   const from = effectiveStage(c.processingStage, c.status);
   const note = input.note || null;
   if (from === input.stage && (assignee?.id ?? null) === c.processingAssigneeId && !note) throw conflict('PROCESSING_UNCHANGED');
+  if (!canMoveStage(from, input.stage)) throw conflict('PROCESSING_TRANSITION_NOT_ALLOWED');
   const previousBy = c.processingStageById;
   const previousAssignee = c.processingAssigneeId;
   const now = new Date();
@@ -148,10 +163,20 @@ export const moveStage = async (caseId: string, actor: { id: string; firstName: 
     const title = tx.assignedTitle(p) + (input.stage === 'WRITTEN' ? ` — ${tx.claimShort}` : '');
     await notifyUser(assignee.id, { type: 'PROCESSING_STAGE', title, body, link, caseId, email: false }).catch(() => undefined);
   }
-  // Finished or refused: whoever moved it before (usually the one who wrote the documents) hears about it.
-  if ((input.stage === 'DONE' || input.stage === 'REFUSED') && previousBy && previousBy !== actor.id && previousBy !== assignee?.id) {
-    const u = await prisma.user.findFirst({ where: { id: previousBy, isActive: true }, select: { id: true, locale: true } });
-    if (u) {
+  // Finished or refused: whoever moved it before and whoever wrote the documents (sent it to Schon geschrieben)
+  // hear about it.
+  if (input.stage === 'DONE' || input.stage === 'REFUSED') {
+    const wrote = await prisma.caseProcessingMove.findFirst({
+      where: { caseId, toStage: 'WRITTEN', OR: [{ fromStage: null }, { fromStage: { not: 'WRITTEN' } }] },
+      orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+      select: { actorId: true },
+    });
+    const told = new Set<string>([actor.id, ...(assignee ? [assignee.id] : [])]);
+    for (const id of [previousBy, wrote?.actorId]) {
+      if (!id || told.has(id)) continue;
+      told.add(id);
+      const u = await prisma.user.findFirst({ where: { id, isActive: true }, select: { id: true, locale: true } });
+      if (!u) continue;
       const tx = processingTexts(u.locale);
       await notifyUser(u.id, { type: 'PROCESSING_STAGE', title: tx.movedTitle(p), body: tx.movedBody(p), link, caseId, email: false }).catch(() => undefined);
     }

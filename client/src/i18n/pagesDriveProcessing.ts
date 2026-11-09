@@ -1,5 +1,5 @@
-// "İş axını" in the documents section (drive): the team hand-over of client folders — In Bearbeitung →
-// Schon geschrieben → Fertig, Ablehnung. The German stage names stay in every language (the team uses them);
+// "İş axını" in the documents section (drive): the team hand-over of client folders and the stage folders —
+// Schon geschrieben → In Bearbeitung → Fertig, Ablehnung. The German stage names stay in every language (the team uses them);
 // they come from caseProcessing.stages (pagesCaseProcessing). Registered by components/drive/processing.
 
 const az = {
@@ -9,16 +9,15 @@ const az = {
     help: {
       title: 'İki admin, bir axın',
       steps: [
-        'Birinci admin müştərinin sənədlərini hazırlayır və qovluğu «Schon geschrieben»-ə göndərir (istəsə, növbəti admini seçir).',
-        'İkinci admin «Schon geschrieben»-dən qovluğu açıb «Götür» basır — başqaları «X işləyir» görür.',
-        'İş bitəndə «Fertig»-ə göndərir; çatışmazlıq varsa «Geri qaytar» ilə qeyd yazıb geri göndərir.',
-        'Viza rədd olunubsa — «Ablehnung» (qeyd mütləqdir).',
+        'Yazılmış sənədlər «Schon geschrieben»-ə düşür: diskdə qovluq və ya faylı seçib «İş axınına kopyala» → «Schon geschrieben» basın (Fertig və Ablehnung da seçilə bilər).',
+        'Kim üzərində işləyirsə, özü «In Bearbeitung»-a göndərir — ora avtomatik heç nə düşmür.',
+        'İş bitəndə «In Bearbeitung»-dan «Fertig»-ə, viza rədd olunubsa «Ablehnung»-a göndərilir.',
+        'Qovluq quruluşu hər mərhələdə saxlanılır (müştəri qovluğu / alt qovluqlar).',
       ],
-      dnd: 'Müştəri qovluğunu soldakı «Schon geschrieben», «Fertig» və ya «Ablehnung» üzərinə sürüşdürmək də olar.',
+      dnd: 'Müştəri qovluğunu soldakı mərhələlərin üzərinə sürüşdürmək də olar.',
     },
     mine: 'Mənə göndərilənlər',
     waitingForMe: 'Səni gözləyir: {{count}}',
-    inProgressScope: 'Yalnız sənə aid olan, geri qaytarılan və son {{days}} gündə dəyişən müraciətlər.',
     searchPh: 'Müştəri, müraciət və ya pasport №…',
     empty: 'Bu mərhələdə qovluq yoxdur.',
     emptyMine: 'Sənə göndərilən qovluq yoxdur.',
@@ -34,6 +33,7 @@ const az = {
     openCase: 'Müraciəti aç',
     actions: {
       send: 'Schon geschrieben-ə göndər',
+      work: 'In Bearbeitung-a göndər',
       claim: 'Götür',
       finish: 'Fertig-ə göndər',
       back: 'Geri qaytar',
@@ -41,8 +41,9 @@ const az = {
     },
     dialog: {
       sendTitle: '«Schon geschrieben»-ə göndər',
+      workTitle: '«In Bearbeitung»-a göndər',
       finishTitle: '«Fertig»-ə göndər',
-      backTitle: '«In Bearbeitung»-ə geri qaytar',
+      backTitle: '«Schon geschrieben»-ə geri qaytar',
       refuseTitle: '«Ablehnung» — viza rədd olunub',
       folders: '{{count}} qovluq',
       nextAdmin: 'Növbəti admin (istəyə görə)',
@@ -64,6 +65,42 @@ const az = {
       partial: '{{ok}}/{{total}} köçürüldü: {{stage}}. Alınmayanlar pəncərədə qalıb.',
       failedTitle: 'Köçürülmədi:',
     },
+    folders: {
+      copyButton: 'İş axınına kopyala',
+      copyMenu: 'Hara kopyalansın?',
+      copying: 'Kopyalanır…',
+      copyHint: {
+        WRITTEN: 'yazılıb, işlənməyi gözləyir',
+        DONE: 'hazırdır',
+        REFUSED: 'viza rədd olunub',
+      },
+      copied: 'Kopyalandı → «{{stage}}»: {{count}}',
+      sent: 'Göndərildi → «{{stage}}»: {{count}}',
+      partial: 'Alınmadı: {{failed}} — {{reason}}',
+      open: 'Aç',
+      sendTo: {
+        IN_PROGRESS: 'In Bearbeitung-a göndər',
+        DONE: 'Fertig-ə göndər',
+        REFUSED: 'Ablehnung-a göndər',
+      },
+      title: 'Qovluqlar və fayllar',
+      hint: 'Bu mərhələyə kopyalanan və göndərilən qovluqlar — quruluş saxlanılır.',
+      empty: 'Bu mərhələdə hələ qovluq və ya fayl yoxdur.',
+      emptyInProgress: 'Burada yalnız «Schon geschrieben»-dən özünüzün göndərdikləriniz olur.',
+      openInDrive: 'Diskdə aç',
+      expand: 'Aç',
+      collapse: 'Bağla',
+      items: 'Element: {{count}}',
+      more: 'Hamısı diskdə…',
+      cases: 'Müraciətlər (iş)',
+      inStage: 'İş axını · {{stage}}',
+      stageBar: {
+        WRITTEN: 'Seçib «In Bearbeitung»-a göndərin.',
+        IN_PROGRESS: 'İş bitəndə seçib «Fertig» və ya «Ablehnung»-a göndərin.',
+        DONE: 'Son mərhələ.',
+        REFUSED: 'Son mərhələ.',
+      },
+    },
     drop: {
       hint: 'Müştəri qovluğunu bura at',
       onlyClient: 'Yalnız müştəri qovluqları iş axınına göndərilir.',
@@ -80,12 +117,21 @@ const az = {
     errors: {
       PROCESSING_CLAIMED_BY_OTHER: 'Bu qovluğu artıq başqa əməkdaş götürüb.',
       PROCESSING_NOT_OPEN: 'Bu mərhələdə götürmək olmaz (artıq Fertig və ya Ablehnung).',
+      PROCESSING_TRANSITION_NOT_ALLOWED: 'Bu keçid olmaz: Schon geschrieben → In Bearbeitung → Fertig (və ya Ablehnung).',
     },
   },
   admin: {
     errors: {
       PROCESSING_CLAIMED_BY_OTHER: 'Bu qovluğu artıq başqa əməkdaş götürüb.',
       PROCESSING_NOT_OPEN: 'Bu mərhələdə götürmək olmaz (artıq Fertig və ya Ablehnung).',
+      PROCESSING_TRANSITION_NOT_ALLOWED: 'Bu keçid olmaz: Schon geschrieben → In Bearbeitung → Fertig (və ya Ablehnung).',
+    },
+  },
+  drive: {
+    errors: {
+      WORKFLOW_FOLDER: 'İş axını qovluqlarının özü kopyalanmır və göndərilmir.',
+      NOT_IN_WORKFLOW: 'Bu element iş axını mərhələsində deyil.',
+      WORKFLOW_TRANSITION_NOT_ALLOWED: 'Bu keçid olmaz: Schon geschrieben → In Bearbeitung → Fertig və ya Ablehnung.',
     },
   },
 };
@@ -97,16 +143,15 @@ const de: typeof az = {
     help: {
       title: 'Zwei Admins, ein Ablauf',
       steps: [
-        'Der erste Admin bereitet die Unterlagen vor und schickt den Ordner nach „Schon geschrieben“ (optional an einen bestimmten Kollegen).',
-        'Der zweite Admin öffnet den Ordner in „Schon geschrieben“ und klickt „Übernehmen“ — die anderen sehen „X arbeitet daran“.',
-        'Fertig? Nach „Fertig“ schicken; fehlt etwas, mit „Zurückgeben“ und einer Notiz zurück.',
-        'Visum abgelehnt — „Ablehnung“ (Notiz Pflicht).',
+        'Geschriebene Unterlagen kommen nach „Schon geschrieben“: im Laufwerk Ordner oder Datei wählen und „In Arbeitsablauf kopieren“ → „Schon geschrieben“ (auch Fertig und Ablehnung möglich).',
+        'Wer daran arbeitet, schickt es selbst nach „In Bearbeitung“ — dort landet nichts automatisch.',
+        'Fertig? Von „In Bearbeitung“ nach „Fertig“; Visum abgelehnt — nach „Ablehnung“.',
+        'Die Ordnerstruktur bleibt in jeder Stufe erhalten (Kundenordner / Unterordner).',
       ],
-      dnd: 'Einen Kundenordner kann man auch links auf „Schon geschrieben“, „Fertig“ oder „Ablehnung“ ziehen.',
+      dnd: 'Einen Kundenordner kann man auch links auf eine Stufe ziehen.',
     },
     mine: 'An mich geschickt',
     waitingForMe: 'Wartet auf dich: {{count}}',
-    inProgressScope: 'Nur Fälle, die dich betreffen, zurückgegebene und in den letzten {{days}} Tagen geänderte.',
     searchPh: 'Kunde, Fall- oder Pass-Nr.…',
     empty: 'Keine Ordner in dieser Stufe.',
     emptyMine: 'Keine Ordner an dich.',
@@ -122,6 +167,7 @@ const de: typeof az = {
     openCase: 'Fall öffnen',
     actions: {
       send: 'Nach Schon geschrieben',
+      work: 'Nach In Bearbeitung',
       claim: 'Übernehmen',
       finish: 'Nach Fertig',
       back: 'Zurückgeben',
@@ -129,8 +175,9 @@ const de: typeof az = {
     },
     dialog: {
       sendTitle: 'Nach „Schon geschrieben“ schicken',
+      workTitle: 'Nach „In Bearbeitung“ schicken',
       finishTitle: 'Nach „Fertig“ schicken',
-      backTitle: 'Zurück nach „In Bearbeitung“',
+      backTitle: 'Zurück nach „Schon geschrieben“',
       refuseTitle: '„Ablehnung“ — Visum abgelehnt',
       folders: '{{count}} Ordner',
       nextAdmin: 'Nächster Admin (optional)',
@@ -152,6 +199,42 @@ const de: typeof az = {
       partial: '{{ok}}/{{total}} verschoben: {{stage}}. Die übrigen bleiben im Dialog.',
       failedTitle: 'Nicht verschoben:',
     },
+    folders: {
+      copyButton: 'In Arbeitsablauf kopieren',
+      copyMenu: 'Wohin kopieren?',
+      copying: 'Wird kopiert…',
+      copyHint: {
+        WRITTEN: 'geschrieben, wartet auf Bearbeitung',
+        DONE: 'erledigt',
+        REFUSED: 'Visum abgelehnt',
+      },
+      copied: 'Kopiert → „{{stage}}“: {{count}}',
+      sent: 'Geschickt → „{{stage}}“: {{count}}',
+      partial: 'Fehlgeschlagen: {{failed}} — {{reason}}',
+      open: 'Öffnen',
+      sendTo: {
+        IN_PROGRESS: 'Nach In Bearbeitung',
+        DONE: 'Nach Fertig',
+        REFUSED: 'Nach Ablehnung',
+      },
+      title: 'Ordner und Dateien',
+      hint: 'In diese Stufe kopierte und geschickte Ordner — die Struktur bleibt erhalten.',
+      empty: 'In dieser Stufe gibt es noch keine Ordner oder Dateien.',
+      emptyInProgress: 'Hier liegt nur, was jemand selbst aus „Schon geschrieben“ geschickt hat.',
+      openInDrive: 'Im Laufwerk öffnen',
+      expand: 'Aufklappen',
+      collapse: 'Zuklappen',
+      items: 'Elemente: {{count}}',
+      more: 'Alles im Laufwerk…',
+      cases: 'Fälle (Team)',
+      inStage: 'Arbeitsablauf · {{stage}}',
+      stageBar: {
+        WRITTEN: 'Auswählen und nach „In Bearbeitung“ schicken.',
+        IN_PROGRESS: 'Wenn erledigt: auswählen und nach „Fertig“ oder „Ablehnung“ schicken.',
+        DONE: 'Letzte Stufe.',
+        REFUSED: 'Letzte Stufe.',
+      },
+    },
     drop: {
       hint: 'Kundenordner hier ablegen',
       onlyClient: 'Nur Kundenordner gehen in den Arbeitsablauf.',
@@ -168,12 +251,21 @@ const de: typeof az = {
     errors: {
       PROCESSING_CLAIMED_BY_OTHER: 'Ein Kollege hat diesen Ordner schon übernommen.',
       PROCESSING_NOT_OPEN: 'In dieser Stufe nicht möglich (schon Fertig oder Ablehnung).',
+      PROCESSING_TRANSITION_NOT_ALLOWED: 'Dieser Schritt ist nicht möglich: Schon geschrieben → In Bearbeitung → Fertig (oder Ablehnung).',
     },
   },
   admin: {
     errors: {
       PROCESSING_CLAIMED_BY_OTHER: 'Ein Kollege hat diesen Ordner schon übernommen.',
       PROCESSING_NOT_OPEN: 'In dieser Stufe nicht möglich (schon Fertig oder Ablehnung).',
+      PROCESSING_TRANSITION_NOT_ALLOWED: 'Dieser Schritt ist nicht möglich: Schon geschrieben → In Bearbeitung → Fertig (oder Ablehnung).',
+    },
+  },
+  drive: {
+    errors: {
+      WORKFLOW_FOLDER: 'Die Ordner des Arbeitsablaufs selbst werden weder kopiert noch geschickt.',
+      NOT_IN_WORKFLOW: 'Dieses Element liegt in keiner Stufe des Arbeitsablaufs.',
+      WORKFLOW_TRANSITION_NOT_ALLOWED: 'Dieser Schritt ist nicht möglich: Schon geschrieben → In Bearbeitung → Fertig oder Ablehnung.',
     },
   },
 };
@@ -185,16 +277,15 @@ const en: typeof az = {
     help: {
       title: 'Two admins, one flow',
       steps: [
-        'The first admin prepares the documents and sends the folder to "Schon geschrieben" (optionally to a specific colleague).',
-        'The second admin opens the folder in "Schon geschrieben" and presses "Take" — the others see "X is working on it".',
-        'Done? Send it to "Fertig"; if something is missing, "Send back" with a note.',
-        'Visa refused — "Ablehnung" (note required).',
+        'Written documents land in "Schon geschrieben": pick a folder or file in the drive and press "Copy to workflow" → "Schon geschrieben" (Fertig and Ablehnung work too).',
+        'Whoever works on it sends it to "In Bearbeitung" themselves — nothing lands there automatically.',
+        'Done? From "In Bearbeitung" to "Fertig"; visa refused — to "Ablehnung".',
+        'The folder structure is kept in every stage (client folder / sub-folders).',
       ],
-      dnd: 'You can also drag a client folder onto "Schon geschrieben", "Fertig" or "Ablehnung" on the left.',
+      dnd: 'You can also drag a client folder onto a stage on the left.',
     },
     mine: 'Sent to me',
     waitingForMe: 'Waiting for you: {{count}}',
-    inProgressScope: 'Only cases that concern you, sent back ones and those changed in the last {{days}} days.',
     searchPh: 'Client, case or passport no.…',
     empty: 'No folders in this stage.',
     emptyMine: 'No folders sent to you.',
@@ -210,6 +301,7 @@ const en: typeof az = {
     openCase: 'Open case',
     actions: {
       send: 'Send to Schon geschrieben',
+      work: 'Send to In Bearbeitung',
       claim: 'Take',
       finish: 'Send to Fertig',
       back: 'Send back',
@@ -217,8 +309,9 @@ const en: typeof az = {
     },
     dialog: {
       sendTitle: 'Send to "Schon geschrieben"',
+      workTitle: 'Send to "In Bearbeitung"',
       finishTitle: 'Send to "Fertig"',
-      backTitle: 'Back to "In Bearbeitung"',
+      backTitle: 'Back to "Schon geschrieben"',
       refuseTitle: '"Ablehnung" — visa refused',
       folders: '{{count}} folders',
       nextAdmin: 'Next admin (optional)',
@@ -240,6 +333,42 @@ const en: typeof az = {
       partial: '{{ok}}/{{total}} moved: {{stage}}. The rest stay in the dialog.',
       failedTitle: 'Not moved:',
     },
+    folders: {
+      copyButton: 'Copy to workflow',
+      copyMenu: 'Copy where?',
+      copying: 'Copying…',
+      copyHint: {
+        WRITTEN: 'written, waiting to be worked on',
+        DONE: 'done',
+        REFUSED: 'visa refused',
+      },
+      copied: 'Copied → "{{stage}}": {{count}}',
+      sent: 'Sent → "{{stage}}": {{count}}',
+      partial: 'Failed: {{failed}} — {{reason}}',
+      open: 'Open',
+      sendTo: {
+        IN_PROGRESS: 'Send to In Bearbeitung',
+        DONE: 'Send to Fertig',
+        REFUSED: 'Send to Ablehnung',
+      },
+      title: 'Folders and files',
+      hint: 'Folders copied or sent to this stage — the structure is kept.',
+      empty: 'No folders or files in this stage yet.',
+      emptyInProgress: 'Only what someone sent here from "Schon geschrieben" themselves.',
+      openInDrive: 'Open in drive',
+      expand: 'Expand',
+      collapse: 'Collapse',
+      items: 'Items: {{count}}',
+      more: 'All of it in the drive…',
+      cases: 'Cases (team)',
+      inStage: 'Workflow · {{stage}}',
+      stageBar: {
+        WRITTEN: 'Select and send to "In Bearbeitung".',
+        IN_PROGRESS: 'When done: select and send to "Fertig" or "Ablehnung".',
+        DONE: 'Last stage.',
+        REFUSED: 'Last stage.',
+      },
+    },
     drop: {
       hint: 'Drop a client folder here',
       onlyClient: 'Only client folders go into the workflow.',
@@ -256,12 +385,21 @@ const en: typeof az = {
     errors: {
       PROCESSING_CLAIMED_BY_OTHER: 'A colleague already took this folder.',
       PROCESSING_NOT_OPEN: 'Not possible in this stage (already Fertig or Ablehnung).',
+      PROCESSING_TRANSITION_NOT_ALLOWED: 'This step is not allowed: Schon geschrieben → In Bearbeitung → Fertig (or Ablehnung).',
     },
   },
   admin: {
     errors: {
       PROCESSING_CLAIMED_BY_OTHER: 'A colleague already took this folder.',
       PROCESSING_NOT_OPEN: 'Not possible in this stage (already Fertig or Ablehnung).',
+      PROCESSING_TRANSITION_NOT_ALLOWED: 'This step is not allowed: Schon geschrieben → In Bearbeitung → Fertig (or Ablehnung).',
+    },
+  },
+  drive: {
+    errors: {
+      WORKFLOW_FOLDER: 'The workflow folders themselves are neither copied nor sent.',
+      NOT_IN_WORKFLOW: 'This item is not in a workflow stage.',
+      WORKFLOW_TRANSITION_NOT_ALLOWED: 'This step is not allowed: Schon geschrieben → In Bearbeitung → Fertig or Ablehnung.',
     },
   },
 };
@@ -273,16 +411,15 @@ const ru: typeof az = {
     help: {
       title: 'Два админа, один процесс',
       steps: [
-        'Первый админ готовит документы клиента и отправляет папку в «Schon geschrieben» (можно выбрать следующего админа).',
-        'Второй админ открывает папку в «Schon geschrieben» и нажимает «Взять» — остальные видят «X работает».',
-        'Готово — отправляет в «Fertig»; если чего-то не хватает — «Вернуть» с заметкой.',
-        'Виза отклонена — «Ablehnung» (заметка обязательна).',
+        'Написанные документы попадают в «Schon geschrieben»: выберите папку или файл на диске и нажмите «Копировать в процесс» → «Schon geschrieben» (можно и Fertig, и Ablehnung).',
+        'Кто над этим работает, сам отправляет в «In Bearbeitung» — автоматически туда ничего не попадает.',
+        'Готово? Из «In Bearbeitung» в «Fertig»; отказ в визе — в «Ablehnung».',
+        'Структура папок сохраняется на каждом этапе (папка клиента / подпапки).',
       ],
-      dnd: 'Папку клиента можно также перетащить слева на «Schon geschrieben», «Fertig» или «Ablehnung».',
+      dnd: 'Папку клиента можно также перетащить на этап слева.',
     },
     mine: 'Отправлено мне',
     waitingForMe: 'Ждёт вас: {{count}}',
-    inProgressScope: 'Только дела, касающиеся вас, возвращённые и изменённые за последние {{days}} дней.',
     searchPh: 'Клиент, номер дела или паспорта…',
     empty: 'В этом этапе нет папок.',
     emptyMine: 'Вам ничего не отправлено.',
@@ -298,6 +435,7 @@ const ru: typeof az = {
     openCase: 'Открыть дело',
     actions: {
       send: 'В Schon geschrieben',
+      work: 'В In Bearbeitung',
       claim: 'Взять',
       finish: 'В Fertig',
       back: 'Вернуть',
@@ -305,8 +443,9 @@ const ru: typeof az = {
     },
     dialog: {
       sendTitle: 'Отправить в «Schon geschrieben»',
+      workTitle: 'Отправить в «In Bearbeitung»',
       finishTitle: 'Отправить в «Fertig»',
-      backTitle: 'Вернуть в «In Bearbeitung»',
+      backTitle: 'Вернуть в «Schon geschrieben»',
       refuseTitle: '«Ablehnung» — виза отклонена',
       folders: 'Папок: {{count}}',
       nextAdmin: 'Следующий админ (необязательно)',
@@ -328,6 +467,42 @@ const ru: typeof az = {
       partial: 'Перемещено {{ok}}/{{total}}: {{stage}}. Остальные остались в окне.',
       failedTitle: 'Не перемещены:',
     },
+    folders: {
+      copyButton: 'Копировать в процесс',
+      copyMenu: 'Куда копировать?',
+      copying: 'Копирование…',
+      copyHint: {
+        WRITTEN: 'написано, ждёт работы',
+        DONE: 'готово',
+        REFUSED: 'отказ в визе',
+      },
+      copied: 'Скопировано → «{{stage}}»: {{count}}',
+      sent: 'Отправлено → «{{stage}}»: {{count}}',
+      partial: 'Не удалось: {{failed}} — {{reason}}',
+      open: 'Открыть',
+      sendTo: {
+        IN_PROGRESS: 'В In Bearbeitung',
+        DONE: 'В Fertig',
+        REFUSED: 'В Ablehnung',
+      },
+      title: 'Папки и файлы',
+      hint: 'Папки, скопированные или отправленные на этот этап, — структура сохраняется.',
+      empty: 'На этом этапе пока нет папок и файлов.',
+      emptyInProgress: 'Здесь только то, что кто-то сам отправил из «Schon geschrieben».',
+      openInDrive: 'Открыть на диске',
+      expand: 'Развернуть',
+      collapse: 'Свернуть',
+      items: 'Элементов: {{count}}',
+      more: 'Всё на диске…',
+      cases: 'Дела (команда)',
+      inStage: 'Рабочий процесс · {{stage}}',
+      stageBar: {
+        WRITTEN: 'Выберите и отправьте в «In Bearbeitung».',
+        IN_PROGRESS: 'Когда готово: выберите и отправьте в «Fertig» или «Ablehnung».',
+        DONE: 'Последний этап.',
+        REFUSED: 'Последний этап.',
+      },
+    },
     drop: {
       hint: 'Перетащите сюда папку клиента',
       onlyClient: 'В процесс отправляются только папки клиентов.',
@@ -344,12 +519,21 @@ const ru: typeof az = {
     errors: {
       PROCESSING_CLAIMED_BY_OTHER: 'Коллега уже взял(а) эту папку.',
       PROCESSING_NOT_OPEN: 'На этом этапе нельзя (уже Fertig или Ablehnung).',
+      PROCESSING_TRANSITION_NOT_ALLOWED: 'Такой переход невозможен: Schon geschrieben → In Bearbeitung → Fertig (или Ablehnung).',
     },
   },
   admin: {
     errors: {
       PROCESSING_CLAIMED_BY_OTHER: 'Коллега уже взял(а) эту папку.',
       PROCESSING_NOT_OPEN: 'На этом этапе нельзя (уже Fertig или Ablehnung).',
+      PROCESSING_TRANSITION_NOT_ALLOWED: 'Такой переход невозможен: Schon geschrieben → In Bearbeitung → Fertig (или Ablehnung).',
+    },
+  },
+  drive: {
+    errors: {
+      WORKFLOW_FOLDER: 'Сами папки рабочего процесса не копируются и не отправляются.',
+      NOT_IN_WORKFLOW: 'Этот элемент не находится на этапе рабочего процесса.',
+      WORKFLOW_TRANSITION_NOT_ALLOWED: 'Такой переход невозможен: Schon geschrieben → In Bearbeitung → Fertig или Ablehnung.',
     },
   },
 };

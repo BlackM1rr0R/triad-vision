@@ -74,6 +74,31 @@ export const localPartSchema = z
   .regex(/^[a-z0-9](?:[a-z0-9._-]*[a-z0-9])?$/, 'INVALID_LOCAL_PART')
   .refine((s) => !s.includes('..'), 'INVALID_LOCAL_PART');
 
+/**
+ * Role / system addresses (RFC 2142 and common no-reply names). New mailboxes and aliases may only use
+ * them when the super admin explicitly allows it (allowReserved), so nobody grabs postmaster@ by accident.
+ */
+export const RESERVED_LOCAL_PARTS: readonly string[] = [
+  'postmaster',
+  'abuse',
+  'admin',
+  'administrator',
+  'root',
+  'hostmaster',
+  'webmaster',
+  'noreply',
+  'no-reply',
+  'donotreply',
+  'do-not-reply',
+  'mailer-daemon',
+  'nobody',
+  'security',
+  'sysadmin',
+  'ssladmin',
+];
+
+export const isReservedLocalPart = (localPart: string) => RESERVED_LOCAL_PARTS.includes(localPart.trim().toLowerCase());
+
 export const isOurAddress = (address: string) => address.trim().toLowerCase().endsWith(`@${stalwartDomain()}`);
 
 const fullAddress = (s: string) => {
@@ -119,6 +144,10 @@ export const reencryptWorkspaceAccounts = async (address: string, password: stri
   ]);
   return all.count;
 };
+
+/** Pauses / resumes syncing of every workspace account that logs in to this mailbox (disable / enable). */
+export const setWorkspaceSync = async (address: string, enabled: boolean) =>
+  (await prisma.mailAccount.updateMany({ where: workspaceWhere(address), data: { syncEnabled: enabled, ...(enabled ? { syncStatus: 'IDLE', syncError: null } : {}) } })).count;
 
 /** Staff users linked to mailboxes: by their login email, or by a workspace account on our server. */
 export const linkedUsers = async (addresses: string[]) => {
@@ -221,25 +250,30 @@ export const createStaffMailbox = async (
   const mailbox = await viaStalwart(() =>
     createMailbox(cfg, { localPart, displayName: `${user.firstName} ${user.lastName}`.trim() || null, password, quotaBytes: null, aliases: [] }),
   );
-  let workspaceAccountId: string | null = null;
+  const workspaceAccountId = await connectWorkspaceMailbox(user.id, mailbox, password);
+  return { mailbox, password, workspaceAccountId };
+};
+
+/**
+ * Connects a mailbox of our server in a staff member's workspace mail (Poçt), password stored encrypted
+ * with secretBox, so it shows up in their mail section without them typing anything. An existing
+ * workspace account for the same address (e.g. left over from a deleted mailbox) gets the new settings.
+ * Returns the workspace account id, or null when it could not be stored (the mailbox exists either way;
+ * the staff member can still connect it with e-mail + password).
+ */
+export const connectWorkspaceMailbox = async (userId: string, mailbox: Pick<Mailbox, 'address' | 'displayName'>, password: string): Promise<string | null> => {
   try {
-    const hasDefault = (await prisma.mailAccount.count({ where: { userId: user.id, isDefault: true } })) > 0;
-    const account = await prisma.mailAccount.create({
-      data: {
-        userId: user.id,
-        email: mailbox.address,
-        displayName: mailbox.displayName,
-        provider: 'CUSTOM',
-        ...ownServerAccount(mailbox.address),
-        passwordEnc: seal(password),
-        isDefault: !hasDefault,
-      },
+    const hasDefault = (await prisma.mailAccount.count({ where: { userId, isDefault: true } })) > 0;
+    const settings = { ...ownServerAccount(mailbox.address), passwordEnc: seal(password) };
+    const account = await prisma.mailAccount.upsert({
+      where: { userId_email: { userId, email: mailbox.address } },
+      create: { userId, email: mailbox.address, displayName: mailbox.displayName, provider: 'CUSTOM', ...settings, isDefault: !hasDefault },
+      update: { ...settings, syncEnabled: true, syncStatus: 'IDLE', syncError: null },
       select: { id: true },
     });
-    workspaceAccountId = account.id;
+    return account.id;
   } catch (err) {
-    // The mailbox exists either way; the staff member can still connect it with e-mail + password.
-    console.warn('[stalwart] workspace account for new mailbox not created', (err as Error).message);
+    console.warn('[stalwart] workspace account for mailbox not connected', (err as Error).message);
+    return null;
   }
-  return { mailbox, password, workspaceAccountId };
 };

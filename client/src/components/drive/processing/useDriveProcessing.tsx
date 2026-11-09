@@ -13,12 +13,13 @@ import { ProcessingFolderBar } from './FolderBar';
 import { WorkflowView } from './WorkflowView';
 import { ACTION_ICON, STAGE_ICON } from './icons';
 import { WorkflowHelp } from './Help';
+import { useStageFolders } from './stageFolders';
 
 const BASE = '/workspace/drive';
 export const workflowHref = (stage: ProcessingStage, mine = false) => `${BASE}/workflow/${stage}${mine ? '?mine=1' : ''}`;
 
-/** Stages a client folder can be dropped on in the sidebar (In Bearbeitung = "Geri qaytar" goes through the menu). */
-const DROP_STAGES: ProcessingStage[] = ['WRITTEN', 'DONE', 'REFUSED'];
+/** Stages a client folder can be dropped on in the sidebar (only allowed moves are taken, see useStageDrop). */
+const DROP_STAGES: ProcessingStage[] = ['WRITTEN', 'IN_PROGRESS', 'DONE', 'REFUSED'];
 
 /** Parses /workspace/drive/workflow/<STAGE>[?mine=1]. */
 export const parseWorkflow = (rest: string[], params: URLSearchParams): DriveLocation => ({
@@ -75,15 +76,19 @@ interface Options {
 }
 
 /**
- * Team workflow of client folders in the documents section ("İş axını"): the sidebar group with the four
- * stages (counts, drop targets), the list view of one stage, the stage strip of an open client folder and
- * the context-menu / toolbar actions. Drive.tsx only wires the pieces in.
+ * Team workflow in the documents section ("İş axını"): the sidebar group with the four stages (counts, drop
+ * targets), the view of one stage (its folder tree + the client folders of cases in that stage), the stage strip
+ * of an open client folder / stage folder, "İş axınına kopyala" in the command bar and the context-menu /
+ * toolbar actions (stageFolders.tsx: copy and send of the stage folders). Drive.tsx only wires the pieces in;
+ * `trail` is the breadcrumb (folder ids, root first) of the open folder.
  */
 export const useDriveProcessing = ({ loc, onNavigate }: Options) => {
   const { t } = useTranslation();
   const { user } = useAuth();
   const myId = user?.id;
   const flow = useFlowActions('drive');
+  const folders = useStageFolders({ onOpen: onNavigate });
+  const folderCount = (s: ProcessingStage) => folders.wf?.stages.find((x) => x.stage === s)?.count ?? 0;
   const [helpOpen, setHelpOpen] = useState(false);
   // Counts for the sidebar (and "waiting for me"); the view below shares the cache when it shows WRITTEN.
   const summary = useProcessingFolders({ stage: 'WRITTEN' });
@@ -129,7 +134,7 @@ export const useDriveProcessing = ({ loc, onNavigate }: Options) => {
           </a>
         </li>
         {PROCESSING_STAGES.map((s) => (
-          <StageLink key={s} stage={s} count={counts?.[s]} active={activeStage === s && !activeMine} onOpen={onNavigate} onDropTargets={onDropTargets} />
+          <StageLink key={s} stage={s} count={counts ? counts[s] + folderCount(s) : undefined} active={activeStage === s && !activeMine} onOpen={onNavigate} onDropTargets={onDropTargets} />
         ))}
       </ul>
     </section>
@@ -137,22 +142,26 @@ export const useDriveProcessing = ({ loc, onNavigate }: Options) => {
 
   // ── actions on a client folder ──
   const actionLabel = (a: FlowAction) => t(`driveProcessing.actions.${a}`);
-  const actionsOf = (x: FlowTarget) => flowActions(x.stage, x.assigneeId, myId);
+  const actionsOf = (x: FlowTarget) => flowActions(x.stage, x.assigneeId, myId, x.closed);
 
-  const menuEntries = (list: DriveItem[] | null): MenuEntry[] => {
+  const menuEntries = (list: DriveItem[] | null, trail?: string[]): MenuEntry[] => [...caseMenuEntries(list), ...folders.menuEntries(list, trail)];
+
+  const caseMenuEntries = (list: DriveItem[] | null): MenuEntry[] => {
     if (!list || list.length !== 1) return [];
     const x = targetOfItem(list[0]);
-    if (!x || !x.stage) return [];
+    if (!x) return [];
     const acts = actionsOf(x);
     if (!acts.length) return [];
     return [
       { kind: 'separator', id: 'proc-s' },
-      { kind: 'heading', id: 'proc-h', label: `${t('driveProcessing.group')} · ${stageLabel(x.stage)}` },
+      { kind: 'heading', id: 'proc-h', label: x.stage ? `${t('driveProcessing.group')} · ${stageLabel(x.stage)}` : t('driveProcessing.group') },
       ...acts.map((a): MenuEntry => ({ id: `proc-${a}`, label: actionLabel(a), icon: ACTION_ICON[a], danger: a === 'refuse', onSelect: () => flow.act(a, [x]) })),
     ];
   };
 
-  const toolActions = (list: DriveItem[]): ToolAction[] => {
+  const toolActions = (list: DriveItem[], trail?: string[]): ToolAction[] => [...caseToolActions(list), ...folders.toolActions(list, trail)];
+
+  const caseToolActions = (list: DriveItem[]): ToolAction[] => {
     if (list.length !== 1) return [];
     const x = targetOfItem(list[0]);
     if (!x) return [];
@@ -160,18 +169,43 @@ export const useDriveProcessing = ({ loc, onNavigate }: Options) => {
     return first ? [{ id: `proc-${first}`, icon: ACTION_ICON[first], label: actionLabel(first), onClick: () => flow.act(first, [x]), primary: true, danger: first === 'refuse' }] : [];
   };
 
-  /** Stage strip under the header of an open client folder. */
-  const folderBar = (folder: DriveItem | null | undefined): ReactNode => {
+  /** "İş axınına kopyala ▾" in the command bar, next to the selection actions. */
+  const toolbarExtra = (list: DriveItem[]): ReactNode => folders.copyButton(list);
+
+  /** Stage strip under the header of an open client folder; the stage strip of an open stage folder. */
+  const folderBar = (folder: DriveItem | null | undefined, trail?: string[]): ReactNode => {
     const x = folder ? targetOfItem(folder) : null;
-    return x ? <ProcessingFolderBar target={x} folder={folder!} onAct={(a, live) => flow.act(a, [live])} /> : null;
+    const stage = folders.stageBar(trail);
+    const bar = x ? <ProcessingFolderBar target={x} folder={folder!} onAct={(a, live) => flow.act(a, [live])} /> : null;
+    return stage || bar ? (
+      <>
+        {stage}
+        {bar}
+      </>
+    ) : null;
   };
 
   const view: ReactNode =
     loc.kind === 'workflow' ? (
-      <WorkflowView stage={loc.stage as ProcessingStage} mine={loc.mine} onNavigate={onNavigate} onAct={(a, x) => flow.act(a, [x])} onDropTargets={onDropTargets} />
+      <WorkflowView
+        stage={loc.stage as ProcessingStage}
+        mine={loc.mine}
+        onNavigate={onNavigate}
+        onAct={(a, x) => flow.act(a, [x])}
+        onDropTargets={onDropTargets}
+        stageFolders={folders.wf?.stages}
+        onSendItem={(item, to) => void folders.run('send', [item], to)}
+      />
     ) : null;
 
   const viewTitle = loc.kind === 'workflow' ? `${t('driveProcessing.group')} · ${loc.mine ? t('driveProcessing.mine') : stageLabel(loc.stage as ProcessingStage)}` : null;
 
-  return { sidebar, menuEntries, toolActions, folderBar, view, viewTitle, dialogs: flow.dialogs };
+  const dialogs = (
+    <>
+      {flow.dialogs}
+      {folders.dialogs}
+    </>
+  );
+
+  return { sidebar, menuEntries, toolActions, toolbarExtra, folderBar, view, viewTitle, dialogs };
 };

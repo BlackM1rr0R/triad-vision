@@ -38,6 +38,7 @@ const partner = (over: Partial<ReferralPartner> = {}): ReferralPartner => ({
   code: null,
   commissionTrigger: 'ASSIGNED',
   visibility: 'MINIMAL',
+  clientQuota: null,
   partnerType: 'INDIVIDUAL',
   companyName: null,
   contactPerson: null,

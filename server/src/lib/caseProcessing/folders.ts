@@ -11,8 +11,9 @@ import { effectiveStage, emptyStageCounts, OPEN_STAGES, PROCESSING_SELECT, PROCE
  * Case.processingStage the case card and the board show (one source of truth). Only cases that have a client
  * folder (Case.driveFolderId) are listed; a folder the viewer may not open in the drive is left out.
  *
- * "In Bearbeitung" holds every open case, so that list is narrowed to what concerns the viewer: cases handed
- * or assigned to them, cases sent back explicitly, and cases changed in the last RECENT_DAYS days.
+ * Every stage holds only the cases somebody moved there (nothing stored = not in the workflow): "In Bearbeitung"
+ * is no longer the default of every open case, so it is listed in full like the other stages. The copied
+ * folders and files of each stage live in the stage folders of the drive (lib/drive/workflowFolders).
  */
 
 export const foldersQuery = z.object({
@@ -26,7 +27,6 @@ export const foldersQuery = z.object({
 });
 
 const LIMIT = 100;
-const RECENT_DAYS = 14;
 const MAX_DEPTH = 4;
 
 const fullName = (u: { firstName: string; lastName: string } | null | undefined) => (u ? `${u.firstName} ${u.lastName}`.trim() : '');
@@ -59,22 +59,6 @@ const baseWhere = (viewerId: string, mine: boolean, search: string | undefined, 
 /** Whether the viewer sees passport numbers in plaintext (only they may search by one). */
 const seesPassports = async (viewer: { role: Role }) => !maskedGroupsFor(viewer, await loadMaskingSettings()).has('PASSPORT');
 
-const DAY_MS = 86_400_000;
-type ScopeRow = {
-  processingAssigneeId: string | null;
-  assignedStaffId: string | null;
-  processingStageById: string | null;
-  processingStage: string | null;
-  updatedAt: Date;
-};
-/** The narrowed "In Bearbeitung" set (see above): handed / assigned to the viewer, sent back, or changed recently. */
-const inScope = (r: ScopeRow, viewerId: string, now: number) =>
-  r.processingAssigneeId === viewerId ||
-  r.assignedStaffId === viewerId ||
-  r.processingStageById === viewerId ||
-  r.processingStage === 'IN_PROGRESS' ||
-  r.updatedAt.getTime() >= now - RECENT_DAYS * DAY_MS;
-
 /** Files below each folder (a few levels deep), one query per level for all folders together. */
 export const fileCounts = async (rootIds: string[]) => {
   const out = new Map<string, number>(rootIds.map((id) => [id, 0]));
@@ -96,14 +80,13 @@ export const fileCounts = async (rootIds: string[]) => {
 export const processingFolders = async (q: z.infer<typeof foldersQuery>, viewer: { id: string; role: Role }) => {
   const base = baseWhere(viewer.id, q.mine, q.search, await seesPassports(viewer));
   const stage: ProcessingStage = q.stage;
-  const now = Date.now();
 
   // Drive permissions first: a restricted client folder the viewer cannot open is neither listed nor counted.
   // One light query for every candidate case (the stage counts need all of them), then the folder check.
   const [candidates, waiting] = await Promise.all([
     prisma.case.findMany({
-      where: base,
-      select: { id: true, driveFolderId: true, status: true, processingStage: true, processingStageAt: true, processingAssigneeId: true, assignedStaffId: true, processingStageById: true, updatedAt: true },
+      where: { AND: [base, { processingStage: { not: null } }] },
+      select: { id: true, driveFolderId: true, status: true, processingStage: true, processingStageAt: true, updatedAt: true },
     }),
     prisma.case.findMany({ where: { driveFolderId: { not: null }, processingAssigneeId: viewer.id, processingStage: { in: OPEN_STAGES } }, select: { driveFolderId: true } }),
   ]);
@@ -120,8 +103,6 @@ export const processingFolders = async (q: z.infer<typeof foldersQuery>, viewer:
     if (!canOpen(r.driveFolderId!)) continue;
     const st = effectiveStage(r.processingStage, r.status);
     if (!st) continue;
-    // "In Bearbeitung" holds every open case: counted and listed only within the viewer's scope.
-    if (st === 'IN_PROGRESS' && !inScope(r, viewer.id, now)) continue;
     counts[st]++;
     if (st === stage) inStage.push(r);
   }
@@ -160,7 +141,6 @@ export const processingFolders = async (q: z.infer<typeof foldersQuery>, viewer:
     waitingForMe,
     total: counts[stage],
     limit: LIMIT,
-    recentDays: RECENT_DAYS,
     items: rows.map((r) => ({
       caseId: r.id,
       number: r.number,

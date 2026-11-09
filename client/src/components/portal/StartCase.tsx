@@ -1,6 +1,6 @@
 import { useId, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { Award, Briefcase, FilePlus2, GraduationCap, Plane, Rocket, School, Search, Users } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
@@ -12,6 +12,14 @@ import { useApiError } from './useApiError';
 import { OVERVIEW_KEY } from './useOverview';
 import { forgetVisa, rememberedVisa } from '@/lib/referralCookie';
 import { Traveller } from '@/components/illustrations';
+import { registerCopy } from '@/i18n';
+import { vacancyFolders } from '@/i18n/vacancyFolders';
+import type { L10n } from '@/lib/types';
+
+registerCopy(vacancyFolders);
+
+/** Application kinds with a target job: the job is one of our open vacancies (never free text). */
+const JOB_TYPES: VisaTypeKey[] = ['WORK', 'AUSBILDUNG', 'WEITERBILDUNG'];
 
 type VisaTypeKey = 'WORK' | 'AUSBILDUNG' | 'WEITERBILDUNG' | 'JOB_SEEKER' | 'STUDY' | 'FAMILY' | 'TOURIST';
 
@@ -49,6 +57,15 @@ export const StartCase = ({ hasCases, defaultProfession }: { hasCases: boolean; 
     }
   }
   const [busy, setBusy] = useState(false);
+  const [vacancyId, setVacancyId] = useState('');
+  const vacancyFieldId = useId();
+  const withJob = !!visaType && JOB_TYPES.includes(visaType);
+  const { data: vacancies } = useQuery({
+    queryKey: ['vacancy-options'],
+    queryFn: async () => (await api.get<{ items: { id: string; title: L10n; city: string | null }[] }>('/vacancies/options')).data.items,
+    enabled: withJob,
+    staleTime: 60_000,
+  });
 
   const categories = [...(content?.visaCategories ?? [])].sort((a, b) => a.sortOrder - b.sortOrder);
   const steps = t('accountPage.dash.start.steps', { returnObjects: true }) as unknown as string[];
@@ -70,8 +87,8 @@ export const StartCase = ({ hasCases, defaultProfession }: { hasCases: boolean; 
     try {
       const res = await api.post<{ case: { id: string } }>('/cases', {
         visaType,
-        // The profession comes from the profile (if filled); the server falls back to the visa type.
-        ...(defaultProfession ? { profession: defaultProfession } : {}),
+        // The target job is one of our vacancies (it sets the profession); else the profile's profession, else the visa type.
+        ...(withJob && vacancyId ? { vacancyId } : defaultProfession ? { profession: defaultProfession } : {}),
         visaCategoryId: visaCategoryId || null,
       });
       await refresh();
@@ -164,6 +181,22 @@ export const StartCase = ({ hasCases, defaultProfession }: { hasCases: boolean; 
                       {tr(v.title)} ({v.visaLabel})
                     </option>
                   ))}
+              </select>
+            </div>
+          )}
+          {withJob && !!vacancies?.length && (
+            <div>
+              <label htmlFor={vacancyFieldId} className="label">
+                {t('vacFolders.position.label')}
+              </label>
+              <select id={vacancyFieldId} className="input" value={vacancyId} onChange={(e) => setVacancyId(e.target.value)}>
+                <option value="">{t('vacFolders.position.notSure')}</option>
+                {vacancies.map((v) => (
+                  <option key={v.id} value={v.id}>
+                    {tr(v.title)}
+                    {v.city ? ` · ${v.city}` : ''}
+                  </option>
+                ))}
               </select>
             </div>
           )}

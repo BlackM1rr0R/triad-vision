@@ -3,7 +3,7 @@ import { Link, Route, Routes, useNavigate, useSearchParams } from 'react-router-
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
-import { ArrowDown, ArrowLeft, ArrowUp, ArrowUpDown, Ban, Building2, Download, HandCoins, Handshake, Mail, Pencil, Phone, Plus, Search, Settings2, X } from 'lucide-react';
+import { ArrowDown, ArrowLeft, ArrowUp, ArrowUpDown, Ban, Building2, Download, HandCoins, Handshake, Info, Mail, Pencil, Phone, Plus, Search, Settings2, X } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { hasMinRole } from '@/lib/types';
@@ -22,17 +22,21 @@ import { RefusalReport } from '@/components/partners/RefusalReport'; // Ablehnun
 import { PartnerHub } from '@/components/partners/hub/PartnerHub'; // full profile page with tabs
 import { ContractBadge } from '@/components/partners/hub/parts';
 import { CONTRACT_STATUSES } from '@/components/partners/hub/types';
+import { QuotaMeter } from '@/components/partners/QuotaMeter'; // "needed clients" progress (registers its copy)
+import { PartnerInfoDrawer } from '@/components/partners/PartnerInfoDrawer'; // the row's info button
 
 type ActiveFilter = 'all' | 'true' | 'false';
-type SortKey = 'name' | 'clients' | 'activeCases' | 'commissions' | 'pending' | 'lastActivity' | 'contractEnd';
-const SORTS: SortKey[] = ['name', 'clients', 'activeCases', 'commissions', 'pending', 'lastActivity', 'contractEnd'];
+type SortKey = 'name' | 'clients' | 'activeCases' | 'commissions' | 'pending' | 'lastActivity' | 'contractEnd' | 'quota';
+const SORTS: SortKey[] = ['name', 'clients', 'activeCases', 'commissions', 'pending', 'lastActivity', 'contractEnd', 'quota'];
+const QUOTA_FILTERS = ['open', 'filled', 'none'] as const;
+type QuotaFilter = (typeof QUOTA_FILTERS)[number];
 
 interface ListResponse {
   items: (Partner & PartnerOwnershipFields)[];
   facets: { countries: string[]; tags: string[] };
 }
 
-/** List filters kept in the URL (?q, ?active, ?type, ?country, ?tag, ?contract, ?sort, ?dir) so a filtered view can be linked and survives reloads. */
+/** List filters kept in the URL (?q, ?active, ?type, ?country, ?tag, ?contract, ?quota, ?sort, ?dir) so a filtered view can be linked and survives reloads. */
 const useListParams = () => {
   const [params, setParams] = useSearchParams();
   const get = (k: string) => params.get(k) ?? '';
@@ -40,6 +44,7 @@ const useListParams = () => {
   const sort = SORTS.find((s) => s === params.get('sort'));
   const dir: 'asc' | 'desc' = params.get('dir') === 'desc' ? 'desc' : 'asc';
   const contract = CONTRACT_STATUSES.find((s) => s === params.get('contract'));
+  const quota: QuotaFilter | undefined = QUOTA_FILTERS.find((s) => s === params.get('quota'));
   const type = params.get('type') === 'COMPANY' || params.get('type') === 'INDIVIDUAL' ? (params.get('type') as PartnerType) : undefined;
   const set = (patch: Record<string, string | undefined>) =>
     setParams(
@@ -53,7 +58,7 @@ const useListParams = () => {
       },
       { replace: true },
     );
-  return { q: get('q'), active: active as ActiveFilter, type, country: get('country'), tag: get('tag'), contract, sort, dir, set };
+  return { q: get('q'), active: active as ActiveFilter, type, country: get('country'), tag: get('tag'), contract, quota, sort, dir, set };
 };
 
 const SortHeader = ({ k, label, sort, dir, onSort, className }: { k: SortKey; label: string; sort?: SortKey; dir: 'asc' | 'desc'; onSort: (k: SortKey) => void; className?: string }) => {
@@ -76,6 +81,7 @@ const PartnerList = ({ isAdmin }: { isAdmin: boolean }) => {
   const [searchInput, setSearchInput] = useState(lp.q);
   const [dialog, setDialog] = useState<{ open: boolean; partner: Partner | null }>({ open: false, partner: null });
   const [managingFields, setManagingFields] = useState(false);
+  const [infoId, setInfoId] = useState<string | null>(null);
   usePageTitle(t('refPartners.title'));
   useEffect(() => {
     const id = window.setTimeout(() => {
@@ -91,6 +97,7 @@ const PartnerList = ({ isAdmin }: { isAdmin: boolean }) => {
     country: lp.country || undefined,
     tag: lp.tag || undefined,
     contract: lp.contract,
+    quota: lp.quota,
     sort: lp.sort,
     dir: lp.sort ? lp.dir : undefined,
   };
@@ -101,7 +108,7 @@ const PartnerList = ({ isAdmin }: { isAdmin: boolean }) => {
   });
   const items = data?.items;
   const facets = data?.facets ?? { countries: [], tags: [] };
-  const filtered = !!(lp.q || lp.active !== 'all' || lp.type || lp.country || lp.tag || lp.contract);
+  const filtered = !!(lp.q || lp.active !== 'all' || lp.type || lp.country || lp.tag || lp.contract || lp.quota);
   const onSort = (k: SortKey) => {
     // name / contract end start ascending, the numbers descending; a second click flips the direction.
     const first: 'asc' | 'desc' = k === 'name' || k === 'contractEnd' ? 'asc' : 'desc';
@@ -187,13 +194,21 @@ const PartnerList = ({ isAdmin }: { isAdmin: boolean }) => {
               </option>
             ))}
           </select>
+          <select className="input xl:w-52" aria-label={t('partnerQuota.column')} value={lp.quota ?? ''} onChange={(e) => lp.set({ quota: e.target.value || undefined })}>
+            <option value="">{t('partnerQuota.filter.all')}</option>
+            {QUOTA_FILTERS.map((s) => (
+              <option key={s} value={s}>
+                {t(`partnerQuota.filter.${s}`)}
+              </option>
+            ))}
+          </select>
           {filtered && (
             <button
               type="button"
               className="btn-ghost btn-sm col-span-2 md:col-span-4 xl:col-span-1"
               onClick={() => {
                 setSearchInput('');
-                lp.set({ q: undefined, active: undefined, type: undefined, country: undefined, tag: undefined, contract: undefined });
+                lp.set({ q: undefined, active: undefined, type: undefined, country: undefined, tag: undefined, contract: undefined, quota: undefined });
               }}
             >
               <X className="size-3.5" aria-hidden /> {t('partnerHub.list.reset')}
@@ -226,7 +241,12 @@ const PartnerList = ({ isAdmin }: { isAdmin: boolean }) => {
                       <span className="truncate">{p.name}</span>
                     </p>
                   </Link>
-                  <ContractBadge contract={p.contract} compact />
+                  <span className="flex shrink-0 items-center gap-1.5">
+                    <ContractBadge contract={p.contract} compact />
+                    <button type="button" className="btn-ghost btn-sm !px-1.5" aria-label={t('partnerQuota.info.aria', { name: p.name })} title={t('partnerQuota.info.button')} aria-haspopup="dialog" onClick={() => setInfoId(p.id)}>
+                      <Info className="size-4" aria-hidden />
+                    </button>
+                  </span>
                 </div>
                 <p className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-muted">
                   {p.phone && (
@@ -241,6 +261,7 @@ const PartnerList = ({ isAdmin }: { isAdmin: boolean }) => {
                   )}
                 </p>
                 <PartnerKeyInfo partner={p} className="mt-1" />
+                {p.quota?.needed != null && <QuotaMeter quota={p.quota} className="mt-2" />}
                 <dl className="mt-3 grid grid-cols-3 gap-2 text-center">
                   {(
                     [
@@ -264,7 +285,7 @@ const PartnerList = ({ isAdmin }: { isAdmin: boolean }) => {
 
           {/* Desktop: sortable table */}
           <div className="hidden overflow-x-auto rounded-xl border border-line bg-card lg:block">
-            <table className="w-full min-w-[1080px] text-left text-sm">
+            <table className="w-full min-w-[1180px] text-left text-sm">
               <caption className="sr-only">{t('partnerHub.list.table')}</caption>
               <thead className="border-b border-line bg-surface/70 text-xs font-medium text-muted">
                 <tr>
@@ -272,6 +293,7 @@ const PartnerList = ({ isAdmin }: { isAdmin: boolean }) => {
                   <th className="px-3 py-2.5">{t('partnerHub.list.th.contact')}</th>
                   <th className="px-3 py-2.5">{t('partnerHub.list.th.country')}</th>
                   <SortHeader k="clients" label={t('partnerHub.list.th.clients')} className="text-right" {...sortProps} />
+                  <SortHeader k="quota" label={t('partnerQuota.column')} {...sortProps} />
                   <SortHeader k="activeCases" label={t('partnerHub.list.th.activeCases')} className="text-right" {...sortProps} />
                   <SortHeader k="commissions" label={t('partnerHub.list.th.commissions')} className="text-right" {...sortProps} />
                   <SortHeader k="pending" label={t('partnerHub.list.th.pending')} className="text-right" {...sortProps} />
@@ -309,6 +331,9 @@ const PartnerList = ({ isAdmin }: { isAdmin: boolean }) => {
                       </td>
                       <td className="px-3 py-2.5 align-top text-xs text-ink/80">{[p.city, p.country].filter(Boolean).join(', ') || '—'}</td>
                       <td className="px-3 py-2.5 text-right align-top font-semibold tabular-nums">{p.counts.clients}</td>
+                      <td className="px-3 py-2.5 align-top">
+                        <QuotaMeter quota={p.quota} compact />
+                      </td>
                       <td className="px-3 py-2.5 text-right align-top text-link tabular-nums">{p.counts.activeCases}</td>
                       <td className="px-3 py-2.5 text-right align-top whitespace-nowrap tabular-nums">{p.commissionTotals?.totalCents ? money(p.commissionTotals.totalCents, cur) : '—'}</td>
                       <td className="px-3 py-2.5 text-right align-top whitespace-nowrap text-warning-fg tabular-nums">
@@ -329,6 +354,16 @@ const PartnerList = ({ isAdmin }: { isAdmin: boolean }) => {
                             <Pencil className="size-3.5" />
                           </button>
                         )}
+                        <button
+                          type="button"
+                          className="btn-ghost btn-sm ml-1"
+                          aria-label={t('partnerQuota.info.aria', { name: p.name })}
+                          title={t('partnerQuota.info.button')}
+                          aria-haspopup="dialog"
+                          onClick={() => setInfoId(p.id)}
+                        >
+                          <Info className="size-4" aria-hidden />
+                        </button>
                       </td>
                     </tr>
                   );
@@ -340,6 +375,7 @@ const PartnerList = ({ isAdmin }: { isAdmin: boolean }) => {
       )}
       <PartnerFormDialog open={dialog.open} partner={dialog.partner} onClose={() => setDialog({ open: false, partner: null })} onSaved={(r) => !dialog.partner && navigate(`/admin/partners/${r.partner.id}`)} />
       {isAdmin && <PartnerFieldsManager open={managingFields} onClose={() => setManagingFields(false)} />}
+      <PartnerInfoDrawer partnerId={infoId} onClose={() => setInfoId(null)} isAdmin={isAdmin} />
     </div>
   );
 };

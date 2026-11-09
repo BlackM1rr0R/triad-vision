@@ -39,6 +39,7 @@ import { CONTRACT_STATUSES, contractSummaries, lastActivities, partnerClientTota
 import { loadRows, totalsOf } from '../../lib/settlement/service.js';
 import { csvSafe } from '../../lib/csvSafe.js';
 import { todayOf } from '../../lib/partnerRecords/contracts.js';
+import { QUOTA_FILTERS, assignedClientCounts, matchesQuotaFilter, quotaOf } from '../../lib/partners/quota.js'; // "needed clients" target
 
 /**
  * Referral partners (middlemen who bring visa clients) — /api/admin/partners.
@@ -81,6 +82,8 @@ const partnerBody = z.object({
     .optional(),
   commissionTrigger: z.enum(PARTNER_COMMISSION_TRIGGERS).optional(),
   visibility: z.enum(PARTNER_VISIBILITY).optional(),
+  /** How many clients the partner needs (quota; null = no target). */
+  clientQuota: z.number().int().min(1).max(100_000).nullable().optional(),
   // Type, company, contacts, address, tax id, bank (ADMIN+), contract, language, website, tags, custom fields.
   ...partnerProfileShape,
 });
@@ -178,7 +181,9 @@ const listQuery = z.object({
   tag: z.string().trim().max(40).optional(),
   /** active | expiring (≤ 30 days left) | expired | none (lib/partners/overview.ts). */
   contract: z.enum(CONTRACT_STATUSES).optional(),
-  sort: z.enum(['name', 'clients', 'activeCases', 'commissions', 'pending', 'lastActivity', 'created', 'contractEnd']).optional(),
+  /** Client quota: open (target not reached) | filled | none (no target) — lib/partners/quota.ts. */
+  quota: z.enum(QUOTA_FILTERS).optional(),
+  sort: z.enum(['name', 'clients', 'activeCases', 'commissions', 'pending', 'lastActivity', 'created', 'contractEnd', 'quota']).optional(),
   dir: z.enum(['asc', 'desc']).optional(),
 });
 type ListQuery = z.infer<typeof listQuery>;
@@ -199,6 +204,8 @@ const listPartners = async (req: Request, q: ListQuery) => {
   }
   const contracts = await contractSummaries(partners);
   if (q.contract) partners = partners.filter((p) => contracts.get(p.id)?.status === q.contract);
+  const assigned = await assignedClientCounts(partners.map((p) => p.id));
+  if (q.quota) partners = partners.filter((p) => matchesQuotaFilter(quotaOf(p.clientQuota, assigned.get(p.id) ?? 0), q.quota!));
   const ids = partners.map((p) => p.id);
   const [counts, totals, folders, activity] = await Promise.all([partnerCounts(ids), partnerCommissionTotals(ids), partnerFolderIds(partners), lastActivities(partners)]);
   // folderId: the partner's live folder below "Partner" (null when it was deleted in the drive — the card offers to recreate it).
@@ -210,6 +217,7 @@ const listPartners = async (req: Request, q: ListQuery) => {
     contract: contracts.get(p.id)!,
     lastActivityAt: activity.get(p.id) ?? null,
     readiness: contractReadiness(p),
+    quota: quotaOf(p.clientQuota, assigned.get(p.id) ?? 0),
   }));
   if (q.sort) {
     const dir = q.dir === 'desc' ? -1 : 1;
@@ -228,6 +236,9 @@ const listPartners = async (req: Request, q: ListQuery) => {
           return num(i.lastActivityAt?.getTime());
         case 'created':
           return i.createdAt.getTime();
+        case 'quota':
+          // Clients still missing; partners without a target first (ascending) / last (descending).
+          return i.quota.needed == null ? Number.NEGATIVE_INFINITY : i.quota.remaining;
         case 'contractEnd':
           // Open-ended contracts after every dated one, partners without a contract last.
           return i.contract.status === 'none' ? Number.POSITIVE_INFINITY : i.contract.endDate ? Date.parse(i.contract.endDate) : Number.MAX_SAFE_INTEGER;
@@ -427,6 +438,54 @@ adminPartnersRouter.patch('/assign', async (req, res) => {
   res.json({ ok: true, updated: changed.length, commissionsCreated });
 });
 
+/**
+ * GET /:id/assignable-cases?search&take — the "add clients" picker: applications NOT yet linked to this
+ * partner (newest first), plus how many are linked already and the partner's quota. Cases of another
+ * partner stay listed (with that partner's name) so they can be moved on purpose.
+ */
+adminPartnersRouter.get('/:id/assignable-cases', async (req, res) => {
+  const q = parse(z.object({ search: z.string().trim().max(120).optional(), take: z.coerce.number().int().min(1).max(100).default(50) }), req.query);
+  const partner = await prisma.referralPartner.findUnique({ where: { id: String(req.params.id) }, select: { id: true, clientQuota: true } });
+  if (!partner) throw notFound('PARTNER_NOT_FOUND');
+  const search = q.search || undefined;
+  const where: Prisma.CaseWhereInput = {
+    OR: [{ partnerId: null }, { partnerId: { not: partner.id } }],
+    ...(search
+      ? {
+          AND: [
+            {
+              OR: [
+                { number: { contains: search } },
+                { client: { email: { contains: search } } },
+                { client: { firstName: { contains: search } } },
+                { client: { lastName: { contains: search } } },
+                { client: { phone: { contains: search } } },
+              ],
+            },
+          ],
+        }
+      : {}),
+  };
+  const [items, total, linkedCases, assigned] = await Promise.all([
+    prisma.case.findMany({
+      where,
+      orderBy: { updatedAt: 'desc' },
+      take: q.take,
+      select: {
+        id: true,
+        number: true,
+        status: true,
+        client: { select: { id: true, firstName: true, lastName: true } },
+        partner: { select: { id: true, name: true } },
+      },
+    }),
+    prisma.case.count({ where }),
+    prisma.case.count({ where: { partnerId: partner.id } }),
+    assignedClientCounts([partner.id]),
+  ]);
+  res.json({ items, total, linkedCases, quota: quotaOf(partner.clientQuota, assigned.get(partner.id) ?? 0) });
+});
+
 adminPartnersRouter.get('/:id', async (req, res) => {
   const partner = await prisma.referralPartner.findUnique({ where: { id: String(req.params.id) } });
   if (!partner) throw notFound('PARTNER_NOT_FOUND');
@@ -452,6 +511,7 @@ adminPartnersRouter.get('/:id', async (req, res) => {
       folderId: await partnerFolderId(partner),
       contract: (await contractSummaries([partner])).get(partner.id),
       readiness: contractReadiness(partner),
+      quota: quotaOf(partner.clientQuota, (await assignedClientCounts([partner.id])).get(partner.id) ?? 0),
     },
     cases,
     // Clients who belong to the partner (sign-up link, partner portal, admin) — with or without a case.
@@ -484,6 +544,7 @@ adminPartnersRouter.get('/:id/stats', async (req, res) => {
   res.json({
     stats: {
       clients,
+      quota: quotaOf(partner.clientQuota, clients.total),
       cases: { total: caseCount, active: c.activeCases, approved: c.approved, refused: c.rejected, cancelled: c.cancelled, stages: c.stages },
       commissions: {
         currency: partner.currency,

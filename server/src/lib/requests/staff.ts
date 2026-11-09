@@ -9,6 +9,7 @@ import { emitWebhook } from '../ops/webhooks.js';
 import { onVacancyPublished } from '../jobAlerts/service.js';
 import { notifyApplicationStatus, notifyCandidateProposed } from '../jobsNotifications.js';
 import { conflict } from '../http.js';
+import { syncApplicationFolder } from '../drive/vacancyFolders.js';
 
 /** Upper bound of candidate rows scored in memory. */
 const POOL_LIMIT = 3000;
@@ -207,6 +208,7 @@ export const proposeCandidates = async (req: Request, vacancyId: string, userIds
     await notifyApplicationStatus(u.id, vacancy, 'PROPOSED');
     await audit(req, 'APPLICATION_STATUS_CHANGED', `application:${app.id}`, { from: prev?.status ?? null, to: 'PROPOSED' });
     await emitWebhook('application.status_changed', { id: app.id, vacancyId, from: prev?.status ?? null, to: 'PROPOSED', by: 'staff' }, vacancy.companyId);
+    void syncApplicationFolder(app.id, { summary: true }); // applicant folder in the vacancy's drive folder
     proposed.push({ applicationId: app.id, userId: u.id });
   }
   // One notification per batch for the employer's users.

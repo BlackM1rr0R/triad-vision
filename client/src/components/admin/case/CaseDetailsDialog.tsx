@@ -10,18 +10,25 @@ import { Button } from '@/components/ui/Button';
 import { toastError } from '../labels';
 import { useCaseRefresh } from './shared';
 import { useCompanyOptions, useJobsCopy, useVacancyOptions, type CaseLink } from './caseLinks';
+import { FolderField, type FolderInfo } from '@/components/vacancyFolders/FolderPicker'; // vacancy folder of the client folder
 
-/** "Edit details" of the case (profession, visa category, employer, vacancy) — was the inline form of the old header. */
+/**
+ * "Edit details" of the case (visa category, employer, vacancy, drive folder) — was the inline form of the old header.
+ * The profession is no free text any more: it follows the vacancy (server side); an old free-text value stays readable.
+ */
 export const CaseDetailsDialog = ({ c, open, onClose }: { c: CaseDetail; open: boolean; onClose: () => void }) => {
   const { t } = useTranslation();
   const { tr } = useL10n();
   const refresh = useCaseRefresh(c.id);
   const { data: content } = useSiteContent();
   const link = c as CaseDetail & CaseLink;
-  const [profession, setProfession] = useState(c.profession);
   const [visaId, setVisaId] = useState(c.visaCategory?.id ?? '');
   const [companyId, setCompanyId] = useState(link.companyId ?? '');
   const [vacancyId, setVacancyId] = useState(link.vacancyId ?? '');
+  // Folder the client folder lives in (default: the vacancy's folder; null = Anträge / Partner). Sent only when changed.
+  const initialParent = (c as CaseDetail & { driveFolders?: { parent: FolderInfo | null } }).driveFolders?.parent ?? null;
+  const [parent, setParent] = useState<FolderInfo | null>(initialParent);
+  const [parentTouched, setParentTouched] = useState(false);
   const [saving, setSaving] = useState(false);
   useJobsCopy(open);
   const { data: companies } = useCompanyOptions(open);
@@ -33,7 +40,12 @@ export const CaseDetailsDialog = ({ c, open, onClose }: { c: CaseDetail; open: b
   const save = async () => {
     setSaving(true);
     try {
-      await api.patch(`/admin/cases/${c.id}`, { profession: profession.trim(), visaCategoryId: visaId || null, companyId: companyId || null, vacancyId: vacancyId || null });
+      await api.patch(`/admin/cases/${c.id}`, {
+        visaCategoryId: visaId || null,
+        companyId: companyId || null,
+        vacancyId: vacancyId || null,
+        ...(parentTouched ? { driveParentId: parent?.id ?? null } : {}),
+      });
       await refresh();
       onClose();
       toast.success(t('admin.case.header.updated'));
@@ -62,7 +74,7 @@ export const CaseDetailsDialog = ({ c, open, onClose }: { c: CaseDetail; open: b
           <Button variant="secondary" size="sm" onClick={onClose} disabled={saving}>
             {t('admin.common.cancel')}
           </Button>
-          <Button type="submit" size="sm" loading={saving} disabled={profession.trim().length < 2}>
+          <Button type="submit" size="sm" loading={saving}>
             {t('admin.common.save')}
           </Button>
         </>
@@ -70,10 +82,9 @@ export const CaseDetailsDialog = ({ c, open, onClose }: { c: CaseDetail; open: b
     >
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
-          <label htmlFor="ed-prof" className="label">
-            {t('admin.case.header.profession')}
-          </label>
-          <input id="ed-prof" className="input" value={profession} minLength={2} maxLength={120} required onChange={(e) => setProfession(e.target.value)} data-autofocus />
+          <span className="label">{t('admin.case.header.profession')}</span>
+          <p className="min-h-10 rounded-lg bg-sunken px-3 py-2 text-sm text-ink">{c.profession}</p>
+          <p className="mt-1 text-xs text-muted">{t('vacFolders.position.hint')}</p>
         </div>
         <div>
           <label htmlFor="ed-visa" className="label">
@@ -135,6 +146,19 @@ export const CaseDetailsDialog = ({ c, open, onClose }: { c: CaseDetail; open: b
                 </option>
               ))}
           </select>
+        </div>
+        <div className="sm:col-span-2">
+          <span className="label">{t('vacFolders.case.parent')}</span>
+          <FolderField
+            value={parent}
+            empty={t('vacFolders.case.parentDefault')}
+            clearLabel={t('vacFolders.app.reset')}
+            onChange={(f) => {
+              setParent(f);
+              setParentTouched(true);
+            }}
+          />
+          <p className="mt-1 text-xs text-muted">{t('vacFolders.case.parentHint')}</p>
         </div>
       </div>
     </Modal>

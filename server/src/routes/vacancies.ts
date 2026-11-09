@@ -20,6 +20,7 @@ import {
   publicVacancy,
   visaForMatch,
 } from '../lib/vacancies.js';
+import { syncApplicationFolder } from '../lib/drive/vacancyFolders.js';
 
 // Public vacancy board + candidate applications — mounted at /api/vacancies
 export const vacanciesRouter = Router();
@@ -150,6 +151,18 @@ vacanciesRouter.get('/', publicLimiter, async (req, res) => {
   });
 });
 
+/** Open vacancies for pickers (the client's "start application": the target job is one of our vacancies). */
+vacanciesRouter.get('/options', publicLimiter, async (_req, res) => {
+  const rows = await prisma.vacancy.findMany({
+    where: openVacancyWhere(),
+    orderBy: [{ publishedAt: 'desc' }, { createdAt: 'desc' }],
+    take: 300,
+    select: { id: true, slug: true, title: true, city: true, profession: true, visaCategoryId: true, employmentType: true },
+  });
+  res.setHeader('Cache-Control', 'public, max-age=30');
+  res.json({ items: rows });
+});
+
 const loadOpen = async (slug: string) => {
   const v = await prisma.vacancy.findUnique({ where: { slug }, include: publicInclude });
   if (!v || !isOpen(v)) throw notFound('VACANCY_NOT_FOUND');
@@ -222,6 +235,8 @@ vacanciesRouter.post('/:slug/apply', applyLimiter, requireAuth, requireCandidate
     const linked = picked.length ? await linkPickedVaultDocs(user.id, picked, { vacancyId: v.id, applicationId: application.id }) : null;
     if (linked) await audit(req, 'APPLICATION_VAULT_DOCS_LINKED', `application:${application.id}`, { vaultIds: picked.map((d) => d.id) });
     const sentDocs = [...(uploads?.documents ?? []), ...picked];
+    // The applicant's folder in the vacancy's drive folder: summary, CV, the files sent (lib/drive/vacancyFolders.ts).
+    void syncApplicationFolder(application.id, { summary: true });
     await emitWebhook('application.created', { id: application.id, vacancyId: v.id, status: application.status, matchScore: application.matchScore, candidateId: user.id }, v.companyId);
     const title = (v.title as Record<string, string>).az ?? '';
     const docsLine = sentDocs.length ? `\n\nSənədlər: ${sentDocs.map((d) => d.title).join(', ')}` : '';

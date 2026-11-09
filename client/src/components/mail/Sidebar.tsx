@@ -1,8 +1,14 @@
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
 import type { LucideIcon } from 'lucide-react';
-import { AlertCircle, Archive, ChevronDown, Clock, FileText, Flag, Folder, Inbox, Mail, MailOpen, PenSquare, RefreshCw, Send, Settings, ShieldAlert, Trash2 } from 'lucide-react';
+import { AlertCircle, Archive, AtSign, ChevronDown, Clock, FileText, Flag, Folder, Inbox, Mail, MailOpen, PenSquare, RefreshCw, Send, Settings, ShieldAlert, Trash2 } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { useAuth } from '@/lib/auth';
+import { registerCopy } from '@/i18n';
+import { pagesMailAdmin } from '@/i18n/pagesMailAdmin';
 import type { FoldersResponse, MailAccount, MailFolder, View } from './types';
+
+registerCopy(pagesMailAdmin); // "manage mailboxes" link for the super admin
 
 export interface Selection {
   accountId: string | null;
@@ -47,6 +53,7 @@ export const MailSidebar = ({
   syncing: boolean;
 }) => {
   const { t } = useTranslation();
+  const isSuperAdmin = useAuth().user?.role === 'SUPER_ADMIN';
   const accounts = data?.accounts ?? [];
   const account: MailAccount | undefined = accounts.find((a) => a.id === selection.accountId);
   const folders = (data?.folders ?? []).filter((f) => !selection.accountId || f.accountId === selection.accountId);
@@ -120,6 +127,12 @@ export const MailSidebar = ({
           <Settings className="size-3.5" /> {t('mail.settingsButton')}
         </button>
       </div>
+      {isSuperAdmin && (
+        // Super admin: create / manage the team's @domain mailboxes (Admin → Mailboxes).
+        <Link to="/admin/mailboxes" className="inline-flex items-center justify-center gap-1.5 rounded-lg px-2 py-2 text-xs font-semibold text-muted hover:bg-primary/[0.06] hover:text-ink">
+          <AtSign className="size-3.5" aria-hidden /> {t('mailAdmin.manage.link')}
+        </Link>
+      )}
     </div>
   );
 };

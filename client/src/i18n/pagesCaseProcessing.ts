@@ -1,4 +1,4 @@
-// Team document workflow of a case (In Bearbeitung → Schon geschrieben → Fertig, Ablehnung — the German stage
+// Team document workflow of a case (Schon geschrieben → In Bearbeitung → Fertig, Ablehnung — the German stage
 // names stay in every language because the team uses them), visa kinds and the "rədd" counter in the partner
 // area, the refusal report by partner / employer company and the matching partner-portal bits.
 // Registered with registerCopy(pagesCaseProcessing) by components/caseProcessing/api.ts and the partner pages.
@@ -8,11 +8,11 @@ const STAGES = { IN_PROGRESS: 'In Bearbeitung', WRITTEN: 'Schon geschrieben', DO
 const az = {
   caseProcessing: {
     title: 'Sənəd işi (komanda)',
-    subtitle: 'Bir əməkdaş sənədləri hazırlayır və «Schon geschrieben»-ə göndərir, ikinci əməkdaş qalan işi görüb «Fertig» edir.',
+    subtitle: 'Yazılmış sənədlər «Schon geschrieben»-ə düşür; üzərində işləyən admin özü «In Bearbeitung»-a göndərir, bitəndə «Fertig» və ya «Ablehnung».',
     stages: STAGES,
     hints: {
       IN_PROGRESS: 'üzərində işlənir',
-      WRITTEN: 'yazılıb, yoxlamaya hazırdır',
+      WRITTEN: 'yazılıb, «In Bearbeitung»-a göndərilməyi gözləyir',
       DONE: 'hazırdır, tamamlanıb',
       REFUSED: 'imtina (rədd)',
     },
@@ -36,7 +36,7 @@ const az = {
     cancel: 'Ləğv et',
     moved: 'Mərhələ dəyişdi: {{stage}}',
     history: 'Tarixçə',
-    historyEmpty: 'Hələ dəyişiklik yoxdur — standart mərhələ «In Bearbeitung».',
+    historyEmpty: 'Hələ iş axınında deyil — «Schon geschrieben» və ya «In Bearbeitung»-a özünüz göndərin.',
     historyLine: '{{from}} → {{to}}',
     toPerson: '→ {{name}}',
     documents: 'Sənədlər',
@@ -59,6 +59,7 @@ const az = {
     },
     errors: {
       PROCESSING_UNCHANGED: 'Heç nə dəyişmədi — başqa mərhələ, əməkdaş və ya qeyd seçin.',
+      PROCESSING_TRANSITION_NOT_ALLOWED: 'Bu keçid olmaz: Schon geschrieben → In Bearbeitung → Fertig (və ya Ablehnung).',
       INVALID_ASSIGNEE: 'Seçilən əməkdaş tapılmadı.',
     },
   },
@@ -110,6 +111,7 @@ const az = {
     labels: { event: { PROCESSING_STAGE: 'Sənəd işi: mərhələ dəyişdi' } },
     errors: {
       PROCESSING_UNCHANGED: 'Heç nə dəyişmədi — başqa mərhələ, əməkdaş və ya qeyd seçin.',
+      PROCESSING_TRANSITION_NOT_ALLOWED: 'Bu keçid olmaz: Schon geschrieben → In Bearbeitung → Fertig (və ya Ablehnung).',
       INVALID_ASSIGNEE: 'Seçilən əməkdaş tapılmadı.',
     },
   },
@@ -118,11 +120,11 @@ const az = {
 const de: typeof az = {
   caseProcessing: {
     title: 'Dokumentenarbeit (Team)',
-    subtitle: 'Eine Person bereitet die Unterlagen vor und setzt „Schon geschrieben“, die zweite erledigt den Rest und setzt „Fertig“.',
+    subtitle: 'Geschriebene Unterlagen kommen nach „Schon geschrieben“; wer daran arbeitet, schickt sie selbst nach „In Bearbeitung“, danach „Fertig“ oder „Ablehnung“.',
     stages: STAGES,
     hints: {
       IN_PROGRESS: 'wird bearbeitet',
-      WRITTEN: 'vorbereitet, bereit zur Prüfung',
+      WRITTEN: 'geschrieben, wartet auf „In Bearbeitung“',
       DONE: 'erledigt',
       REFUSED: 'Visum abgelehnt',
     },
@@ -146,7 +148,7 @@ const de: typeof az = {
     cancel: 'Abbrechen',
     moved: 'Stufe geändert: {{stage}}',
     history: 'Verlauf',
-    historyEmpty: 'Noch keine Änderung — Standardstufe „In Bearbeitung“.',
+    historyEmpty: 'Noch nicht im Arbeitsablauf — selbst nach „Schon geschrieben“ oder „In Bearbeitung“ schicken.',
     historyLine: '{{from}} → {{to}}',
     toPerson: '→ {{name}}',
     documents: 'Dokumente',
@@ -169,6 +171,7 @@ const de: typeof az = {
     },
     errors: {
       PROCESSING_UNCHANGED: 'Nichts geändert — andere Stufe, Person oder Notiz wählen.',
+      PROCESSING_TRANSITION_NOT_ALLOWED: 'Dieser Schritt ist nicht möglich: Schon geschrieben → In Bearbeitung → Fertig (oder Ablehnung).',
       INVALID_ASSIGNEE: 'Die gewählte Person wurde nicht gefunden.',
     },
   },
@@ -220,6 +223,7 @@ const de: typeof az = {
     labels: { event: { PROCESSING_STAGE: 'Dokumentenarbeit: Stufe geändert' } },
     errors: {
       PROCESSING_UNCHANGED: 'Nichts geändert — andere Stufe, Person oder Notiz wählen.',
+      PROCESSING_TRANSITION_NOT_ALLOWED: 'Dieser Schritt ist nicht möglich: Schon geschrieben → In Bearbeitung → Fertig (oder Ablehnung).',
       INVALID_ASSIGNEE: 'Die gewählte Person wurde nicht gefunden.',
     },
   },
@@ -228,11 +232,11 @@ const de: typeof az = {
 const en: typeof az = {
   caseProcessing: {
     title: 'Document work (team)',
-    subtitle: 'One person prepares the documents and sets "Schon geschrieben"; the second does the rest and sets "Fertig".',
+    subtitle: 'Written documents land in "Schon geschrieben"; whoever works on them sends them to "In Bearbeitung" themselves, then "Fertig" or "Ablehnung".',
     stages: STAGES,
     hints: {
       IN_PROGRESS: 'being worked on',
-      WRITTEN: 'written, ready for the check',
+      WRITTEN: 'written, waiting to go to "In Bearbeitung"',
       DONE: 'done',
       REFUSED: 'visa refused',
     },
@@ -256,7 +260,7 @@ const en: typeof az = {
     cancel: 'Cancel',
     moved: 'Stage changed: {{stage}}',
     history: 'History',
-    historyEmpty: 'No change yet — default stage "In Bearbeitung".',
+    historyEmpty: 'Not in the workflow yet — send it to "Schon geschrieben" or "In Bearbeitung" yourself.',
     historyLine: '{{from}} → {{to}}',
     toPerson: '→ {{name}}',
     documents: 'Documents',
@@ -279,6 +283,7 @@ const en: typeof az = {
     },
     errors: {
       PROCESSING_UNCHANGED: 'Nothing changed — pick another stage, colleague or note.',
+      PROCESSING_TRANSITION_NOT_ALLOWED: 'This step is not allowed: Schon geschrieben → In Bearbeitung → Fertig (or Ablehnung).',
       INVALID_ASSIGNEE: 'The chosen colleague was not found.',
     },
   },
@@ -330,6 +335,7 @@ const en: typeof az = {
     labels: { event: { PROCESSING_STAGE: 'Document work: stage changed' } },
     errors: {
       PROCESSING_UNCHANGED: 'Nothing changed — pick another stage, colleague or note.',
+      PROCESSING_TRANSITION_NOT_ALLOWED: 'This step is not allowed: Schon geschrieben → In Bearbeitung → Fertig (or Ablehnung).',
       INVALID_ASSIGNEE: 'The chosen colleague was not found.',
     },
   },
@@ -338,11 +344,11 @@ const en: typeof az = {
 const ru: typeof az = {
   caseProcessing: {
     title: 'Работа с документами (команда)',
-    subtitle: 'Один сотрудник готовит документы и ставит «Schon geschrieben», второй доделывает остальное и ставит «Fertig».',
+    subtitle: 'Написанные документы попадают в «Schon geschrieben»; кто над ними работает, сам отправляет их в «In Bearbeitung», затем «Fertig» или «Ablehnung».',
     stages: STAGES,
     hints: {
       IN_PROGRESS: 'в работе',
-      WRITTEN: 'подготовлено, готово к проверке',
+      WRITTEN: 'написано, ждёт отправки в «In Bearbeitung»',
       DONE: 'готово',
       REFUSED: 'отказ в визе',
     },
@@ -366,7 +372,7 @@ const ru: typeof az = {
     cancel: 'Отмена',
     moved: 'Этап изменён: {{stage}}',
     history: 'История',
-    historyEmpty: 'Изменений пока нет — этап по умолчанию «In Bearbeitung».',
+    historyEmpty: 'Пока не в рабочем процессе — отправьте сами в «Schon geschrieben» или «In Bearbeitung».',
     historyLine: '{{from}} → {{to}}',
     toPerson: '→ {{name}}',
     documents: 'Документы',
@@ -389,6 +395,7 @@ const ru: typeof az = {
     },
     errors: {
       PROCESSING_UNCHANGED: 'Ничего не изменилось — выберите другой этап, сотрудника или заметку.',
+      PROCESSING_TRANSITION_NOT_ALLOWED: 'Такой переход невозможен: Schon geschrieben → In Bearbeitung → Fertig (или Ablehnung).',
       INVALID_ASSIGNEE: 'Выбранный сотрудник не найден.',
     },
   },
@@ -440,6 +447,7 @@ const ru: typeof az = {
     labels: { event: { PROCESSING_STAGE: 'Работа с документами: этап изменён' } },
     errors: {
       PROCESSING_UNCHANGED: 'Ничего не изменилось — выберите другой этап, сотрудника или заметку.',
+      PROCESSING_TRANSITION_NOT_ALLOWED: 'Такой переход невозможен: Schon geschrieben → In Bearbeitung → Fertig (или Ablehnung).',
       INVALID_ASSIGNEE: 'Выбранный сотрудник не найден.',
     },
   },

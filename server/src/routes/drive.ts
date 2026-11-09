@@ -31,6 +31,8 @@ import { findDuplicates, hashFile, hashStored } from '../lib/drive/org/hash.js';
 import { assertNoFinalInside } from '../lib/drive/org/final.js';
 import { autoNameFor, caseOfChain } from '../lib/drive/org/naming.js';
 import { driveOrgRouter } from './driveOrg.js';
+import { driveWorkflowRouter } from './driveWorkflow.js';
+import { copyNodeInto } from '../lib/drive/copy.js';
 import { logDriveDocumentAccess } from '../lib/privacy/accessLog.js'; // client access log
 import { prepareDriveFile, publicQuality, scheduleUploadAnalysis } from '../lib/uploadAi/index.js';
 
@@ -45,6 +47,8 @@ export const driveRouter = Router();
 driveRouter.use(requireMinRole('STAFF'));
 // Document organisation: tags, workflow board, smart folders, templates, naming, duplicates, Final (routes/driveOrg.ts).
 driveRouter.use(driveOrgRouter);
+// İş axını stage folders: copy into Schon geschrieben / Fertig / Ablehnung, send on (routes/driveWorkflow.ts).
+driveRouter.use(driveWorkflowRouter);
 
 const ACCESS = z.enum(['VIEW', 'DOWNLOAD', 'EXPORT', 'EDIT', 'MANAGE']);
 const COLORS = ['blue', 'green', 'amber', 'red', 'violet', 'pink', 'teal', 'slate'] as const;
@@ -593,11 +597,10 @@ driveRouter.post('/move', async (req, res) => {
   res.json({ results });
 });
 
-const copySelect = { ...nodeLiteSelect, storageKey: true, mimeType: true, size: true, contentHash: true } satisfies Prisma.DriveNodeSelect;
-
 /**
- * Copies nodes (files need DOWNLOAD, folders EXPORT) into a folder (EDIT). Copies get fresh storage
- * keys, no grants (they inherit from the target), no version history and no link to a case document.
+ * Copies nodes (files need DOWNLOAD, folders EXPORT) into a folder (EDIT), recursively with the folder
+ * structure (lib/drive/copy.ts). Copies get fresh storage keys, no grants (they inherit from the target), no
+ * version history and no link to a case document.
  */
 driveRouter.post('/copy', async (req, res) => {
   const ctx = ctxOf(req);
@@ -605,45 +608,12 @@ driveRouter.post('/copy', async (req, res) => {
   const { node: target } = await requireNode(ctx, targetId, 'EDIT');
   assertWritableFolder(target);
   const taken = await siblingNames(targetId);
-  const targetChain = new Set(ctx.chain(targetId).map((n) => n.id));
   const me = req.user!.id;
-  const base = { space: target.space, ownerId: target.ownerId, createdById: me };
-
-  const copyFile = async (parentId: string, name: string, src: string, mimeType: string, size: number, contentHash: string | null) => {
-    const key = await copyIntoStore(src);
-    try {
-      await prisma.driveNode.create({ data: { ...base, kind: 'FILE', name, parentId, storageKey: key, mimeType, size, contentHash: contentHash ?? (await hashStored(key)) } });
-    } catch (err) {
-      await removeStored([key]);
-      throw err;
-    }
-  };
-  const newFolder = async (parentId: string, name: string) =>
-    (await prisma.driveNode.create({ data: { ...base, kind: 'FOLDER', name, parentId }, select: { id: true } })).id;
-
   const results = await batch(ids, async (id) => {
-    const { node, level } = await requireNode(ctx, id, 'VIEW');
-    if (!allows(level, node.kind === 'FILE' ? 'DOWNLOAD' : 'EXPORT')) throw new HttpError(403, 'INSUFFICIENT_ACCESS');
-    if (node.kind === 'FOLDER' && targetChain.has(id)) throw badRequest('INTO_ITSELF');
-    const sub = await collectSubtree([id], copySelect, { limit: 5000 });
-    ctx.add(sub as NodeLite[]);
-    const newIds = new Map<string, string>();
-    for (const n of sub) {
-      const isRoot = n.id === id;
-      const parentNew = isRoot ? targetId : newIds.get(n.parentId!);
-      if (!parentNew) continue; // parent folder was not visible: skip its contents
-      if (n.kind === 'FOLDER') {
-        if (!allows(ctx.level(n.id), 'VIEW')) continue;
-        newIds.set(n.id, await newFolder(parentNew, isRoot ? pickFreeName(taken, n.name, false) : n.name));
-      } else if (allows(ctx.level(n.id), 'DOWNLOAD') && n.storageKey) {
-        await copyFile(parentNew, isRoot ? pickFreeName(taken, n.name, true) : n.name, storagePath(n.storageKey), n.mimeType ?? 'application/octet-stream', n.size ?? 0, n.contentHash).catch((err) => {
-          if ((err as NodeJS.ErrnoException).code !== 'ENOENT') throw err;
-        });
-      }
-    }
-    await audit(req, 'DRIVE_COPIED', `drive:${id}`, { name: node.name, to: targetId, nodes: sub.length });
-    await logDriveActivity({ nodeId: newIds.get(id) ?? null, folderId: targetId, actorId: me, action: 'COPY', name: node.name, meta: { sourceId: id, fromId: node.parentId, toId: targetId, toName: target.name, kind: node.kind } });
-    return { name: node.name };
+    const r = await copyNodeInto(ctx, me, id, target, taken);
+    await audit(req, 'DRIVE_COPIED', `drive:${id}`, { name: r.node.name, to: targetId, nodes: r.nodes });
+    await logDriveActivity({ nodeId: r.newId, folderId: targetId, actorId: me, action: 'COPY', name: r.node.name, meta: { sourceId: id, fromId: r.node.parentId, toId: targetId, toName: target.name, kind: r.node.kind } });
+    return { name: r.node.name };
   });
   res.json({ results });
 });

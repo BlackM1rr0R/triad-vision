@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import clsx from 'clsx';
-import { AlertTriangle, AtSign, KeyRound, Mail, Pencil, Plus, RefreshCw, Reply, Search, ShieldAlert, Trash2, Unplug, User } from 'lucide-react';
+import { AlertTriangle, AtSign, Info, KeyRound, Lock, LockOpen, Mail, Pencil, Plus, RefreshCw, Reply, Search, ShieldAlert, Trash2, Unplug, User } from 'lucide-react';
 import { api, formatBytes } from '@/lib/api';
 import { registerCopy } from '@/i18n';
 import { pagesMailAdmin } from '@/i18n/pagesMailAdmin';
@@ -38,12 +38,17 @@ interface Mailbox {
   protection: Protection;
   canDelete: boolean;
   canResetPassword: boolean;
+  canDisable: boolean;
+  status: 'ACTIVE' | 'DISABLED';
+  disabledAt: string | null;
   linkedUser: LinkedUser | null;
   workspaceUsers: LinkedUser[];
 }
 
 interface ListResponse extends ServerSettings {
   configured: boolean;
+  /** SUPER_ADMIN: may create and change mailboxes (ADMIN only views the list). */
+  canManage: boolean;
   domain: string;
   mailboxes: Mailbox[];
 }
@@ -58,6 +63,34 @@ const splitAliases = (s: string) =>
     .filter(Boolean);
 
 const localAliases = (m: Mailbox, domain: string) => m.aliases.filter((a) => a.endsWith(`@${domain}`)).map((a) => a.slice(0, -domain.length - 1));
+
+/** Same list as the server: role / system addresses that need an explicit "allow". */
+const RESERVED = new Set(['postmaster', 'abuse', 'admin', 'administrator', 'root', 'hostmaster', 'webmaster', 'noreply', 'no-reply', 'donotreply', 'do-not-reply', 'mailer-daemon', 'nobody', 'security', 'sysadmin', 'ssladmin']);
+const DEFAULT_QUOTA_MB = '5120';
+
+/** 0 weak (fails the policy), 1 fair, 2 strong: only a hint, the server enforces the policy. */
+const strengthOf = (p: string) => {
+  if (!passwordOk(p)) return 0;
+  const classes = [/[a-z]/, /[A-Z]/, /\d/, /[^A-Za-z0-9]/].filter((r) => r.test(p)).length;
+  return p.length >= 14 && classes >= 3 ? 2 : p.length >= 12 || classes >= 3 ? 1 : 0;
+};
+
+const Strength = ({ password }: { password: string }) => {
+  const { t } = useTranslation();
+  if (!password) return null;
+  const s = strengthOf(password);
+  const level = t(['mailAdmin.manage.strengthWeak', 'mailAdmin.manage.strengthFair', 'mailAdmin.manage.strengthStrong'][s]);
+  return (
+    <div className="mt-1.5 flex items-center gap-2 text-xs text-muted" aria-live="polite">
+      <div className="flex gap-1" aria-hidden>
+        {[0, 1, 2].map((i) => (
+          <span key={i} className={clsx('h-1.5 w-8 rounded-full', i <= s ? ['bg-danger', 'bg-warning', 'bg-success'][s] : 'bg-sunken')} />
+        ))}
+      </div>
+      {t('mailAdmin.manage.strength', { level })}
+    </div>
+  );
+};
 
 // ─── Row ───────────────────────────────────────────────────────────────
 
@@ -92,9 +125,9 @@ const IconAction = ({ icon: Icon, label, onClick, disabled, danger, hint }: { ic
   </button>
 );
 
-type DialogState = { kind: 'edit' | 'reset' | 'delete' | 'autoReply'; mailbox: Mailbox } | null;
+type DialogState = { kind: 'edit' | 'reset' | 'enable' | 'disable' | 'delete' | 'autoReply'; mailbox: Mailbox } | null;
 
-const Row = ({ m, onOpen }: { m: Mailbox; onOpen: (d: NonNullable<DialogState>) => void }) => {
+const Row = ({ m, onOpen, canManage }: { m: Mailbox; onOpen: (d: NonNullable<DialogState>) => void; canManage: boolean }) => {
   const { t } = useTranslation();
   const hint = m.protection ? t(`mailAdmin.protectedHint.${m.protection}`) : undefined;
   return (
@@ -105,6 +138,14 @@ const Row = ({ m, onOpen }: { m: Mailbox; onOpen: (d: NonNullable<DialogState>) 
           {m.protection && (
             <span className="inline-flex items-center gap-1 rounded-full bg-warning-bg px-2 py-0.5 text-[11px] font-semibold text-warning-fg" title={hint}>
               <ShieldAlert className="size-3" aria-hidden /> {t(`mailAdmin.badge.${m.protection}`)}
+            </span>
+          )}
+          {m.status === 'DISABLED' && (
+            <span
+              className="inline-flex items-center gap-1 rounded-full bg-danger-bg px-2 py-0.5 text-[11px] font-semibold text-danger-fg"
+              title={m.disabledAt ? t('mailAdmin.manage.disabledSince', { date: fmtDate(m.disabledAt) }) : undefined}
+            >
+              <Lock className="size-3" aria-hidden /> {t('mailAdmin.manage.statusDisabled')}
             </span>
           )}
         </div>
@@ -134,11 +175,27 @@ const Row = ({ m, onOpen }: { m: Mailbox; onOpen: (d: NonNullable<DialogState>) 
         )}
         {m.createdAt && <span className="w-full text-[11px] text-muted lg:hidden">{`${t('mailAdmin.col.created')}: ${fmtDate(m.createdAt)}`}</span>}
       </div>
+      {/* Changes are SUPER_ADMIN only (the server enforces it too); an ADMIN sees the list. */}
       <div className="flex flex-wrap gap-1.5 lg:justify-end">
-        <IconAction icon={Pencil} label={t('mailAdmin.actions.edit')} onClick={() => onOpen({ kind: 'edit', mailbox: m })} />
-        <IconAction icon={Reply} label={t('mailAdmin.actions.autoReply')} onClick={() => onOpen({ kind: 'autoReply', mailbox: m })} />
-        <IconAction icon={KeyRound} label={t('mailAdmin.actions.password')} onClick={() => onOpen({ kind: 'reset', mailbox: m })} disabled={!m.canResetPassword} hint={hint} />
-        <IconAction icon={Trash2} label={t('mailAdmin.actions.delete')} onClick={() => onOpen({ kind: 'delete', mailbox: m })} disabled={!m.canDelete} hint={hint} danger />
+        {canManage && (
+          <>
+            <IconAction icon={Pencil} label={t('mailAdmin.actions.edit')} onClick={() => onOpen({ kind: 'edit', mailbox: m })} />
+            <IconAction icon={Reply} label={t('mailAdmin.actions.autoReply')} onClick={() => onOpen({ kind: 'autoReply', mailbox: m })} />
+            <IconAction
+              icon={KeyRound}
+              label={t('mailAdmin.actions.password')}
+              onClick={() => onOpen({ kind: 'reset', mailbox: m })}
+              disabled={!m.canResetPassword || m.status === 'DISABLED'}
+              hint={hint ?? t('mailAdmin.manage.resetDisabledHint')}
+            />
+            {m.status === 'DISABLED' ? (
+              <IconAction icon={LockOpen} label={t('mailAdmin.manage.enable')} onClick={() => onOpen({ kind: 'enable', mailbox: m })} disabled={!m.canDisable} hint={hint} />
+            ) : (
+              <IconAction icon={Lock} label={t('mailAdmin.manage.disable')} onClick={() => onOpen({ kind: 'disable', mailbox: m })} disabled={!m.canDisable} hint={hint} />
+            )}
+            <IconAction icon={Trash2} label={t('mailAdmin.actions.delete')} onClick={() => onOpen({ kind: 'delete', mailbox: m })} disabled={!m.canDelete} hint={hint} danger />
+          </>
+        )}
       </div>
     </li>
   );
@@ -159,31 +216,62 @@ interface Created {
   mailbox: Mailbox;
   password: string;
   generated: boolean;
+  workspaceConnected: boolean;
   settings: ServerSettings;
 }
+
+interface StaffOption {
+  id: string;
+  email: string;
+  name: string;
+  role: string;
+  suggestedLocalPart: string;
+}
+
+const emptyForm = () => ({ userId: '', localPart: '', displayName: '', pwMode: 'generate' as 'generate' | 'manual', password: '', quotaMb: DEFAULT_QUOTA_MB, aliases: '', allowReserved: false });
 
 const CreateDialog = ({ open, onClose, domain }: { open: boolean; onClose: () => void; domain: string }) => {
   const { t } = useTranslation();
   const qc = useQueryClient();
   const id = useId();
-  const [form, setForm] = useState({ localPart: '', displayName: '', password: '', quotaMb: '', aliases: '' });
+  const [form, setForm] = useState(emptyForm);
   const [created, setCreated] = useState<Created | null>(null);
+  const staff = useQuery({
+    queryKey: ['admin-mailboxes-staff'],
+    queryFn: async () => (await api.get<{ users: StaffOption[] }>('/admin/mailboxes/staff')).data.users,
+    enabled: open,
+    staleTime: 60_000,
+  });
   useEffect(() => {
     if (open) {
-      setForm({ localPart: '', displayName: '', password: '', quotaMb: '', aliases: '' });
+      setForm(emptyForm());
       setCreated(null);
     }
   }, [open]);
 
+  // Picking a staff member prefills the address (ad.soyad) and name, unless they were typed by hand.
+  const pickStaff = (userId: string) =>
+    setForm((f) => {
+      const prev = staff.data?.find((u) => u.id === f.userId);
+      const next = staff.data?.find((u) => u.id === userId);
+      const lpFree = !f.localPart || f.localPart === prev?.suggestedLocalPart;
+      const dnFree = !f.displayName || f.displayName === prev?.name;
+      return { ...f, userId, localPart: lpFree ? (next?.suggestedLocalPart ?? '') : f.localPart, displayName: dnFree ? (next?.name ?? '') : f.displayName };
+    });
+
+  const lp = form.localPart.trim().toLowerCase();
+  const aliasList = splitAliases(form.aliases);
   const m = useMutation({
     mutationFn: async () =>
       (
         await api.post<Created>('/admin/mailboxes', {
-          localPart: form.localPart.trim().toLowerCase(),
+          localPart: lp,
           displayName: form.displayName.trim() || null,
-          ...(form.password ? { password: form.password } : {}),
+          ...(form.pwMode === 'manual' ? { password: form.password } : {}),
           ...(form.quotaMb ? { quotaMb: Number(form.quotaMb) } : {}),
-          aliases: splitAliases(form.aliases),
+          aliases: aliasList,
+          ...(form.userId ? { userId: form.userId } : {}),
+          ...(form.allowReserved ? { allowReserved: true } : {}),
         })
       ).data,
     onSuccess: (r) => {
@@ -193,8 +281,12 @@ const CreateDialog = ({ open, onClose, domain }: { open: boolean; onClose: () =>
     onError: toastMailboxError,
   });
 
-  const localOk = /^[a-z0-9](?:[a-z0-9._-]*[a-z0-9])?$/.test(form.localPart.trim().toLowerCase());
-  const pwOk = !form.password || passwordOk(form.password);
+  const localOk = /^[a-z0-9](?:[a-z0-9._-]*[a-z0-9])?$/.test(lp) && !lp.includes('..');
+  const reservedHit = [lp, ...aliasList.map((a) => a.split('@')[0])].some((x) => RESERVED.has(x));
+  const reservedOk = !reservedHit || form.allowReserved;
+  const pwOk = form.pwMode === 'generate' || passwordOk(form.password);
+  const canSubmit = localOk && reservedOk && pwOk && !m.isPending;
+  const pickedName = staff.data?.find((u) => u.id === form.userId)?.name ?? '';
   const close = () => !m.isPending && onClose();
 
   return (
@@ -210,7 +302,7 @@ const CreateDialog = ({ open, onClose, domain }: { open: boolean; onClose: () =>
         ) : (
           <>
             <CancelButton onClick={close} disabled={m.isPending} />
-            <button type="submit" form={`${id}-form`} className="btn-primary btn-sm" disabled={!localOk || !pwOk || m.isPending}>
+            <button type="submit" form={`${id}-form`} className="btn-primary btn-sm" disabled={!canSubmit}>
               {m.isPending ? <Spinner className="size-3.5" /> : <Plus className="size-3.5" aria-hidden />} {t('mailAdmin.actions.create')}
             </button>
           </>
@@ -220,6 +312,11 @@ const CreateDialog = ({ open, onClose, domain }: { open: boolean; onClose: () =>
       {created ? (
         <div className="space-y-4 text-sm">
           <p className="text-ink/80">{t('mailAdmin.created.body', { address: created.mailbox.address })}</p>
+          {form.userId && (
+            <p className={clsx('rounded-lg p-3', created.workspaceConnected ? 'bg-sunken text-ink/80' : 'border border-warning-border bg-warning-bg text-warning-fg')}>
+              {t(created.workspaceConnected ? 'mailAdmin.manage.workspaceConnected' : 'mailAdmin.manage.workspaceFailed', { name: pickedName })}
+            </p>
+          )}
           {/* Generated or typed: shown once with a copy button, never again. */}
           <SecretOnce value={created.password} note={t('mailAdmin.created.passwordOnce')} />
           <ClientSettingsTable settings={created.settings} address={created.mailbox.address} />
@@ -230,23 +327,65 @@ const CreateDialog = ({ open, onClose, domain }: { open: boolean; onClose: () =>
           className="space-y-4"
           onSubmit={(e) => {
             e.preventDefault();
-            if (localOk && pwOk && !m.isPending) m.mutate();
+            if (canSubmit) m.mutate();
           }}
         >
+          <Field label={t('mailAdmin.manage.staff')} hint={t('mailAdmin.manage.staffHint')} htmlFor={`${id}-user`}>
+            <select id={`${id}-user`} className="input" value={form.userId} onChange={(e) => pickStaff(e.target.value)} disabled={staff.isLoading}>
+              <option value="">{t('mailAdmin.manage.staffNone')}</option>
+              {(staff.data ?? []).map((u) => (
+                <option key={u.id} value={u.id}>
+                  {`${u.name} · ${u.email}`}
+                </option>
+              ))}
+            </select>
+          </Field>
           <Field label={t('mailAdmin.form.localPart')} htmlFor={`${id}-lp`}>
             <div className="flex items-stretch">
-              <input id={`${id}-lp`} className="input rounded-r-none" autoComplete="off" spellCheck={false} maxLength={64} value={form.localPart} onChange={(e) => setForm((f) => ({ ...f, localPart: e.target.value }))} required data-autofocus />
+              <input id={`${id}-lp`} className={clsx('input rounded-r-none', lp && !localOk && 'border-danger')} autoComplete="off" spellCheck={false} maxLength={64} value={form.localPart} onChange={(e) => setForm((f) => ({ ...f, localPart: e.target.value }))} required data-autofocus />
               <span className="grid shrink-0 place-items-center rounded-r-lg border border-l-0 border-line bg-sunken px-3 text-sm text-muted">@{domain}</span>
             </div>
           </Field>
+          {reservedHit && (
+            <div className="rounded-lg border border-warning-border bg-warning-bg p-3 text-sm text-warning-fg">
+              <p className="flex items-start gap-2">
+                <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden /> {t('mailAdmin.manage.reserved')}
+              </p>
+              <label className="mt-2 flex items-center gap-2 font-medium">
+                <input type="checkbox" className="size-4 accent-primary" checked={form.allowReserved} onChange={(e) => setForm((f) => ({ ...f, allowReserved: e.target.checked }))} />
+                {t('mailAdmin.manage.allowReserved')}
+              </label>
+            </div>
+          )}
           <Field label={t('mailAdmin.form.displayName')} htmlFor={`${id}-dn`}>
             <input id={`${id}-dn`} className="input" maxLength={120} value={form.displayName} onChange={(e) => setForm((f) => ({ ...f, displayName: e.target.value }))} />
           </Field>
-          <Field label={t('mailAdmin.form.password')} hint={t('mailAdmin.form.passwordHint')} htmlFor={`${id}-pw`}>
-            <PasswordInput id={`${id}-pw`} className={clsx('input', !pwOk && 'border-danger')} autoComplete="new-password" maxLength={128} value={form.password} onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))} />
-          </Field>
+          <fieldset className="space-y-2">
+            <legend className="label">{t('mailAdmin.form.password')}</legend>
+            {(['generate', 'manual'] as const).map((mode) => (
+              <label key={mode} className="flex items-center gap-2 text-sm text-ink">
+                <input type="radio" name={`${id}-pwmode`} className="size-4 accent-primary" checked={form.pwMode === mode} onChange={() => setForm((f) => ({ ...f, pwMode: mode }))} />
+                {t(mode === 'generate' ? 'mailAdmin.manage.passwordGenerate' : 'mailAdmin.manage.passwordManual')}
+              </label>
+            ))}
+            {form.pwMode === 'manual' && (
+              <div>
+                <PasswordInput
+                  id={`${id}-pw`}
+                  aria-label={t('mailAdmin.form.password')}
+                  className={clsx('input', form.password && !pwOk && 'border-danger')}
+                  autoComplete="new-password"
+                  maxLength={128}
+                  value={form.password}
+                  onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))}
+                />
+                <p className="mt-1 text-xs text-muted">{t('mailAdmin.security.policy')}</p>
+                <Strength password={form.password} />
+              </div>
+            )}
+          </fieldset>
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field label={t('mailAdmin.form.quota')} hint={t('mailAdmin.form.quotaHint')} htmlFor={`${id}-q`}>
+            <Field label={t('mailAdmin.form.quota')} hint={t('mailAdmin.manage.quotaHint')} htmlFor={`${id}-q`}>
               <input id={`${id}-q`} type="number" min={1} inputMode="numeric" className="input" value={form.quotaMb} onChange={(e) => setForm((f) => ({ ...f, quotaMb: e.target.value }))} />
             </Field>
             <Field label={t('mailAdmin.form.aliases')} hint={t('mailAdmin.form.aliasesHint')} htmlFor={`${id}-al`}>
@@ -325,7 +464,8 @@ interface ResetResult {
   workspaceAccountsUpdated: number;
 }
 
-const ResetDialog = ({ mailbox, onClose }: { mailbox: Mailbox | null; onClose: () => void }) => {
+/** Reset the password, or enable a disabled mailbox (which also sets a new password): shown once. */
+const ResetDialog = ({ mailbox, onClose, mode = 'reset' }: { mailbox: Mailbox | null; onClose: () => void; mode?: 'reset' | 'enable' }) => {
   const { t } = useTranslation();
   const qc = useQueryClient();
   const id = useId();
@@ -336,8 +476,9 @@ const ResetDialog = ({ mailbox, onClose }: { mailbox: Mailbox | null; onClose: (
     setResult(null);
   }, [mailbox?.id]);
 
+  const enabling = mode === 'enable';
   const m = useMutation({
-    mutationFn: async (mb: Mailbox) => (await api.post<ResetResult>(`/admin/mailboxes/${mb.id}/password`, own ? { password: own } : {})).data,
+    mutationFn: async (mb: Mailbox) => (await api.post<ResetResult>(`/admin/mailboxes/${mb.id}/${enabling ? 'enable' : 'password'}`, own ? { password: own } : {})).data,
     onSuccess: (r) => {
       setResult(r);
       void qc.invalidateQueries({ queryKey: KEY });
@@ -351,7 +492,7 @@ const ResetDialog = ({ mailbox, onClose }: { mailbox: Mailbox | null; onClose: (
     <Modal
       open={!!mailbox}
       onClose={close}
-      title={t('mailAdmin.reset.title')}
+      title={t(enabling ? 'mailAdmin.manage.enableTitle' : 'mailAdmin.reset.title')}
       description={mailbox?.address}
       footer={
         result ? (
@@ -362,7 +503,8 @@ const ResetDialog = ({ mailbox, onClose }: { mailbox: Mailbox | null; onClose: (
           <>
             <CancelButton onClick={close} disabled={m.isPending} />
             <button type="submit" form={`${id}-form`} className="btn-primary btn-sm" disabled={!ok || m.isPending}>
-              {m.isPending ? <Spinner className="size-3.5" /> : <KeyRound className="size-3.5" aria-hidden />} {t('mailAdmin.reset.confirm')}
+              {m.isPending ? <Spinner className="size-3.5" /> : enabling ? <LockOpen className="size-3.5" aria-hidden /> : <KeyRound className="size-3.5" aria-hidden />}{' '}
+              {t(enabling ? 'mailAdmin.manage.enable' : 'mailAdmin.reset.confirm')}
             </button>
           </>
         )
@@ -371,7 +513,7 @@ const ResetDialog = ({ mailbox, onClose }: { mailbox: Mailbox | null; onClose: (
       {mailbox &&
         (result ? (
           <div className="space-y-3 text-sm">
-            <p className="font-semibold text-ink">{t('mailAdmin.reset.done', { address: mailbox.address })}</p>
+            <p className="font-semibold text-ink">{t(enabling ? 'mailAdmin.manage.enabledDone' : 'mailAdmin.reset.done', { address: mailbox.address })}</p>
             <SecretOnce value={result.password} note={t('mailAdmin.created.passwordOnce')} />
             <p className="text-muted">{t('mailAdmin.reset.workspaceUpdated', { count: result.workspaceAccountsUpdated })}</p>
           </div>
@@ -384,12 +526,51 @@ const ResetDialog = ({ mailbox, onClose }: { mailbox: Mailbox | null; onClose: (
               if (ok && !m.isPending) m.mutate(mailbox);
             }}
           >
-            <p className="text-ink/80">{t('mailAdmin.reset.body', { address: mailbox.address })}</p>
+            <p className="text-ink/80">{t(enabling ? 'mailAdmin.manage.enableBody' : 'mailAdmin.reset.body', { address: mailbox.address })}</p>
             <Field label={t('mailAdmin.reset.own')} hint={t('mailAdmin.security.policy')} htmlFor={`${id}-pw`}>
               <PasswordInput id={`${id}-pw`} autoComplete="new-password" maxLength={128} className={clsx('input', !ok && 'border-danger')} value={own} onChange={(e) => setOwn(e.target.value)} />
             </Field>
+            <Strength password={own} />
           </form>
         ))}
+    </Modal>
+  );
+};
+
+const DisableDialog = ({ mailbox, onClose }: { mailbox: Mailbox | null; onClose: () => void }) => {
+  const { t } = useTranslation();
+  const qc = useQueryClient();
+  const m = useMutation({
+    mutationFn: async (mb: Mailbox) => (await api.post(`/admin/mailboxes/${mb.id}/disable`, {})).data,
+    onSuccess: (_r, mb) => {
+      toast.success(t('mailAdmin.manage.disabled', { address: mb.address }));
+      void qc.invalidateQueries({ queryKey: KEY });
+      onClose();
+    },
+    onError: toastMailboxError,
+  });
+  const close = () => !m.isPending && onClose();
+  return (
+    <Modal
+      open={!!mailbox}
+      onClose={close}
+      size="sm"
+      title={
+        <span className="flex items-center gap-2">
+          <Lock className="size-4 text-danger-fg" aria-hidden /> {t('mailAdmin.manage.disableTitle')}
+        </span>
+      }
+      description={mailbox?.address}
+      footer={
+        <>
+          <CancelButton onClick={close} disabled={m.isPending} />
+          <button type="button" className="btn-danger btn-sm" disabled={m.isPending || !mailbox} onClick={() => mailbox && m.mutate(mailbox)}>
+            {m.isPending ? <Spinner className="size-3.5" /> : <Lock className="size-3.5" aria-hidden />} {t('mailAdmin.manage.disable')}
+          </button>
+        </>
+      }
+    >
+      {mailbox && <p className="rounded-lg border border-danger-border bg-danger-bg/60 p-3 text-sm text-danger-fg">{t('mailAdmin.manage.disableBody', { address: mailbox.address })}</p>}
     </Modal>
   );
 };
@@ -496,7 +677,7 @@ export default function Mailboxes() {
         title={t('admin.nav.mailboxes')}
         subtitle={t('mailAdmin.subtitle')}
         actions={
-          data?.configured ? (
+          data?.configured && data.canManage ? (
             <>
               <button type="button" className="btn-secondary btn-sm" onClick={() => void refetch()} disabled={isFetching} aria-label={t('mailAdmin.refresh')}>
                 <RefreshCw className={clsx('size-3.5', isFetching && 'animate-spin')} aria-hidden /> <span className="hidden sm:inline">{t('mailAdmin.refresh')}</span>
@@ -527,6 +708,11 @@ export default function Mailboxes() {
         </div>
       ) : (
         <>
+          {!data.canManage && (
+            <p className="mb-4 flex items-start gap-2 rounded-lg border border-line bg-sunken px-3 py-2 text-sm text-muted">
+              <Info className="mt-0.5 size-4 shrink-0" aria-hidden /> {t('mailAdmin.manage.readOnly')}
+            </p>
+          )}
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
             <label className="relative block w-full max-w-sm">
               <span className="sr-only">{t('mailAdmin.search')}</span>
@@ -540,12 +726,12 @@ export default function Mailboxes() {
               <span>{t('mailAdmin.col.address')}</span>
               <span>{t('mailAdmin.col.usage')}</span>
               <span>{t('mailAdmin.col.aliases')}</span>
-              <span className="w-[10.5rem]" />
+              <span className={data.canManage ? 'w-[13rem]' : undefined} />
             </div>
             {list.length ? (
               <ul className="divide-y divide-line">
                 {list.map((m) => (
-                  <Row key={m.id} m={m} onOpen={setDialog} />
+                  <Row key={m.id} m={m} onOpen={setDialog} canManage={data.canManage} />
                 ))}
               </ul>
             ) : (
@@ -558,6 +744,8 @@ export default function Mailboxes() {
       <CreateDialog open={creating} onClose={() => setCreating(false)} domain={domain} />
       <EditDialog mailbox={pick('edit')} onClose={close} domain={domain} />
       <ResetDialog mailbox={pick('reset')} onClose={close} />
+      <ResetDialog mailbox={pick('enable')} onClose={close} mode="enable" />
+      <DisableDialog mailbox={pick('disable')} onClose={close} />
       <DeleteDialog mailbox={pick('delete')} onClose={close} />
       <AutoReplyDialog mailbox={pick('autoReply')} onClose={close} />
     </div>

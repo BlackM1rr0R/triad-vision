@@ -9,6 +9,10 @@ import { usePartnerFields, type Partner } from '../api';
 import type { PartnerOwnershipFields } from '../Ownership';
 import { ReadinessMeter } from './parts';
 import { isGermany } from './types';
+import { registerCopy } from '@/i18n';
+import { pagesPartnerQuota } from '@/i18n/pagesPartnerQuota';
+
+registerCopy(pagesPartnerQuota); // "needed clients" row
 
 /** "Məlumat" tab: every profile field (empty ones as "—"), admin-defined fields, extra fields, terms and note. */
 
@@ -140,6 +144,7 @@ export const InfoTab = ({ partner: p, canEdit, onEdit }: { partner: Partner & Pa
         </Card>
 
         <Card title={t('partnerHub.info.terms')} icon={Landmark}>
+          <Row label={t('partnerQuota.field')} value={p.clientQuota != null && p.quota ? t('partnerQuota.progressLong', { assigned: p.quota.assigned, needed: p.clientQuota }) : p.clientQuota} />
           <Row label={t('partnerHub.info.perClient')} value={p.commissionCents != null && money(p.commissionCents, p.currency ?? 'EUR')} />
           <Row label={t('partnerHub.info.trigger')} value={p.commissionTrigger && t(`partnerHub.info.triggers.${p.commissionTrigger}`)} />
           <Row label={t('partnerForm.f.currency')} value={p.currency} />

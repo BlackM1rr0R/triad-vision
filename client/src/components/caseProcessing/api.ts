@@ -12,12 +12,26 @@ registerCopy(pagesCaseProcessing);
 registerCopy(pagesDriveProcessing); // "İş axını" of the documents section, claim, board drag & drop
 
 /**
- * Team document workflow of a case (server lib/caseProcessing): In Bearbeitung → Schon geschrieben → Fertig,
- * and Ablehnung. The German stage names are the labels in every language (the team uses them).
+ * Team document workflow of a case (server lib/caseProcessing): Schon geschrieben → In Bearbeitung → Fertig,
+ * and Ablehnung. Nothing stored = not in the workflow (nothing lands in In Bearbeitung by itself). The German
+ * stage names are the labels in every language (the team uses them).
  */
-export const PROCESSING_STAGES = ['IN_PROGRESS', 'WRITTEN', 'DONE', 'REFUSED'] as const;
+export const PROCESSING_STAGES = ['WRITTEN', 'IN_PROGRESS', 'DONE', 'REFUSED'] as const;
 export type ProcessingStage = (typeof PROCESSING_STAGES)[number];
 export const isProcessingStage = (v: string | null | undefined): v is ProcessingStage => !!v && (PROCESSING_STAGES as readonly string[]).includes(v);
+
+/** Allowed moves, as enforced by the server (NEXT_STAGES in lib/caseProcessing); 'NONE' = not in the workflow yet. */
+export const NEXT_STAGES: Record<ProcessingStage | 'NONE', ProcessingStage[]> = {
+  NONE: ['WRITTEN', 'IN_PROGRESS', 'REFUSED'],
+  WRITTEN: ['IN_PROGRESS', 'REFUSED'],
+  IN_PROGRESS: ['DONE', 'REFUSED', 'WRITTEN'],
+  DONE: ['IN_PROGRESS', 'REFUSED'],
+  REFUSED: ['IN_PROGRESS'],
+};
+export const canMoveStage = (from: ProcessingStage | null | undefined, to: ProcessingStage) => from === to || NEXT_STAGES[from ?? 'NONE'].includes(to);
+/** The obvious next step: (none) → Schon geschrieben → In Bearbeitung → Fertig. */
+export const nextStage = (s: ProcessingStage | null | undefined): ProcessingStage | null =>
+  !s ? 'WRITTEN' : s === 'WRITTEN' ? 'IN_PROGRESS' : s === 'IN_PROGRESS' ? 'DONE' : null;
 
 export const STAGE_TONE: Record<ProcessingStage, BadgeTone> = { IN_PROGRESS: 'neutral', WRITTEN: 'info', DONE: 'success', REFUSED: 'danger' };
 
@@ -182,7 +196,6 @@ export interface ProcessingFolders {
   waitingForMe: number;
   total: number;
   limit: number;
-  recentDays: number;
   items: ProcessingFolder[];
 }
 

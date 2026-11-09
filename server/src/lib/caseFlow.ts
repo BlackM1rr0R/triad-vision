@@ -47,6 +47,9 @@ export const createCase = async (
     quiet?: boolean;
     /** Referral partner of the case (e.g. a renewal keeps the old case's); default: the main case's, else the client's owner. */
     partnerId?: string | null;
+    /** Vacancy the application is for (its employer is NOT linked here; staff do that) and the drive folder the client folder goes into. */
+    vacancyId?: string | null;
+    driveParentId?: string | null;
   },
 ) => {
   // One active case per client — except family-member cases, which are separate applications.
@@ -79,6 +82,8 @@ export const createCase = async (
             parentCaseId: input.parentCaseId ?? null,
             relation: input.relation ?? null,
             partnerId,
+            vacancyId: input.vacancyId ?? null,
+            driveParentId: input.driveParentId ?? null,
           },
         });
         await createRequirements(tx, c.id, 'INITIAL', visaCategoryId);

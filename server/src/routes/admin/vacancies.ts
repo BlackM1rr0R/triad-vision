@@ -12,6 +12,7 @@ import { fillL10n, staffVacancyInput, staffVacancyPatch, uniqueSlug, vacancyData
 import { hasMinRole } from '../../middleware/auth.js';
 import { singleVacancyImage, storeVacancyImage, vacancyImagesOf } from '../../lib/vacancyImages.js';
 import { cleanupRemovedImages } from '../../lib/publicImageRefs.js';
+import { checkTargetFolder, createFolder, folderInfo, folderInfos, syncApplicationFolder, syncVacancyApplications, vacancyFolderName } from '../../lib/drive/vacancyFolders.js';
 
 // Admin: vacancies — mounted at /api/admin/vacancies
 export const adminVacanciesRouter = Router();
@@ -36,6 +37,20 @@ const diffVacancy = (a: Vacancy, b: Vacancy) => {
   for (const k of SCALAR_FIELDS) if (norm(a[k]) !== norm(b[k])) changes[k] = { from: norm(a[k]), to: norm(b[k]) };
   for (const k of JSON_FIELDS) if (JSON.stringify(a[k] ?? null) !== JSON.stringify(b[k] ?? null)) changes[k] = 'changed';
   return changes;
+};
+
+/**
+ * Drive folder of a vacancy (lib/drive/vacancyFolders.ts): an existing folder the admin picked (`driveFolderId`), or a
+ * new one (`newFolder`: in `parentId`, default "Stellenangebote"; name default "<title> – <city>"). null unlinks.
+ */
+const folderBody = z.object({
+  driveFolderId: z.string().max(40).nullable().optional(),
+  newFolder: z.object({ parentId: z.string().max(40).nullable().optional(), name: z.string().trim().max(200).optional() }).optional(),
+});
+const resolveFolder = async (req: Request, b: z.infer<typeof folderBody>, v: { title: unknown; city?: string | null }): Promise<string | null | undefined> => {
+  if (b.newFolder) return (await createFolder(req.user!, { parentId: b.newFolder.parentId, name: b.newFolder.name || vacancyFolderName(v) })).id;
+  if (b.driveFolderId) return checkTargetFolder(req.user!, b.driveFolderId);
+  return b.driveFolderId;
 };
 
 const checkRefs = async (b: { companyId?: string | null; visaCategoryId?: string | null }) => {
@@ -157,20 +172,26 @@ adminVacanciesRouter.get('/:id', async (req, res) => {
     },
   });
   if (!vacancy) throw notFound('VACANCY_NOT_FOUND');
+  // Drive folders: the vacancy's and each applicant's (with their paths; missing / trashed ones are null).
+  const folders = await folderInfos([vacancy.driveFolderId, ...vacancy.applications.flatMap((a) => [a.driveFolderId, a.targetFolderId])]);
+  const info = (id: string | null) => (id ? (folders.get(id) ?? null) : null);
   res.json({
     vacancy: {
       ...vacancy,
-      applications: vacancy.applications.map((a) => ({ ...a, match: matchCandidate(a.user, vacancy) })),
+      folder: info(vacancy.driveFolderId),
+      applications: vacancy.applications.map((a) => ({ ...a, match: matchCandidate(a.user, vacancy), folder: info(a.driveFolderId), targetFolder: info(a.targetFolderId) })),
     },
   });
 });
 
 adminVacanciesRouter.post('/', async (req, res) => {
   const body = parse(staffVacancyInput, req.body);
+  const folder = parse(folderBody, req.body ?? {});
   await checkRefs(body);
   checkClosesAt(req, body.closesAt);
   if (body.slug && (await prisma.vacancy.count({ where: { slug: body.slug } }))) throw conflict('SLUG_TAKEN');
   const title = fillL10n(body.title);
+  const driveFolderId = await resolveFolder(req, folder, { title, city: body.city });
   const vacancy = await prisma.vacancy.create({
     data: {
       ...(vacancyData(body) as object),
@@ -181,9 +202,10 @@ adminVacanciesRouter.post('/', async (req, res) => {
       visaCategoryId: body.visaCategoryId ?? null,
       status: body.publish ? 'OPEN' : 'DRAFT',
       publishedAt: body.publish ? new Date() : null,
+      driveFolderId: driveFolderId ?? null,
     } as never,
   });
-  await audit(req, 'VACANCY_CREATED', `vacancy:${vacancy.id}`, { companyId: vacancy.companyId, status: vacancy.status });
+  await audit(req, 'VACANCY_CREATED', `vacancy:${vacancy.id}`, { companyId: vacancy.companyId, status: vacancy.status, driveFolderId: vacancy.driveFolderId });
   if (vacancy.status === 'OPEN') {
     await emitWebhook('vacancy.published', { id: vacancy.id, slug: vacancy.slug, publishedAt: vacancy.publishedAt?.toISOString() ?? null }, vacancy.companyId);
     onVacancyPublished(); // job alert digests (background)
@@ -257,6 +279,32 @@ adminVacanciesRouter.post('/:id/reject', async (req, res) => {
   await notifyVacancyReviewed(vacancy, false, reason);
   await audit(req, 'VACANCY_REJECTED', `vacancy:${v.id}`, { reason });
   res.json({ vacancy });
+});
+
+/** Link the vacancy to a drive folder (existing or new) or unlink it (driveFolderId: null). Its applicants follow. */
+adminVacanciesRouter.put('/:id/folder', async (req, res) => {
+  const body = parse(folderBody, req.body ?? {});
+  if (body.driveFolderId === undefined && !body.newFolder) throw badRequest('FOLDER_REQUIRED');
+  const v = await prisma.vacancy.findUnique({ where: { id: req.params.id }, select: { id: true, title: true, city: true, driveFolderId: true } });
+  if (!v) throw notFound('VACANCY_NOT_FOUND');
+  const driveFolderId = (await resolveFolder(req, body, v)) ?? null;
+  await prisma.vacancy.update({ where: { id: v.id }, data: { driveFolderId } });
+  await audit(req, 'VACANCY_FOLDER_LINKED', `vacancy:${v.id}`, { from: v.driveFolderId, to: driveFolderId });
+  // Applications collected so far are placed there too (an explicit staff action; nothing happens without a folder).
+  if (driveFolderId && driveFolderId !== v.driveFolderId) void syncVacancyApplications(v.id);
+  res.json({ driveFolderId, folder: await folderInfo(driveFolderId) });
+});
+
+/** Staff override: collect this application in another folder (null = back to the vacancy's folder). */
+adminVacanciesRouter.put('/applications/:appId/folder', async (req, res) => {
+  const body = parse(z.object({ folderId: z.string().max(40).nullable() }), req.body ?? {});
+  const app = await prisma.vacancyApplication.findUnique({ where: { id: req.params.appId }, select: { id: true, targetFolderId: true } });
+  if (!app) throw notFound('APPLICATION_NOT_FOUND');
+  const targetFolderId = body.folderId ? await checkTargetFolder(req.user!, body.folderId) : null;
+  await prisma.vacancyApplication.update({ where: { id: app.id }, data: { targetFolderId } });
+  await audit(req, 'APPLICATION_FOLDER_SET', `application:${app.id}`, { from: app.targetFolderId, to: targetFolderId });
+  const folderId = await syncApplicationFolder(app.id);
+  res.json({ targetFolder: await folderInfo(targetFolderId), folder: await folderInfo(folderId) });
 });
 
 adminVacanciesRouter.post('/:id/close', async (req, res) => {

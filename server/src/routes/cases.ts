@@ -21,6 +21,8 @@ import { photoCheckOnUpload } from '../lib/photoCheck/index.js'; // biometric ph
 import { emitAutomationEvent } from '../lib/automation/events.js';
 import { completeTasksForUpload } from '../lib/clientProcess/tasks.js';
 import { copyDocumentToDrive } from '../lib/drive/caseFolders.js';
+import { caseParentFor, vacancyProfession } from '../lib/drive/vacancyFolders.js';
+import { openVacancyWhere } from '../lib/vacancies.js';
 
 export const casesRouter = Router();
 casesRouter.use(requireAuth);
@@ -55,16 +57,28 @@ casesRouter.post('/', requireVerifiedEmail, async (req, res) => {
       visaType: z.enum(['WORK', 'AUSBILDUNG', 'WEITERBILDUNG', 'JOB_SEEKER', 'STUDY', 'FAMILY', 'TOURIST']).default('WORK'),
       profession: z.string().trim().max(120).optional(),
       visaCategoryId: z.string().nullable().optional(),
+      // The job the client applies for: one of our open vacancies (no free text); sets the profession.
+      vacancyId: z.string().max(40).nullable().optional(),
     }),
     req.body,
   );
+  const vacancy = body.vacancyId
+    ? await prisma.vacancy.findFirst({ where: { AND: [{ id: body.vacancyId }, openVacancyWhere()] }, select: { id: true, profession: true, title: true, visaCategoryId: true } })
+    : null;
+  if (body.vacancyId && !vacancy) throw badRequest('INVALID_VACANCY');
   if (body.visaCategoryId) {
     const exists = await prisma.visaCategory.count({ where: { id: body.visaCategoryId, published: true } });
     if (!exists) throw badRequest('INVALID_VISA_CATEGORY');
   }
   const me = await prisma.user.findUnique({ where: { id: req.user!.id }, select: { profession: true } });
-  const profession = body.profession || me?.profession || VISA_TYPE_LABEL_AZ[body.visaType];
-  const created = await createCase(req.user!.id, { profession, visaType: body.visaType, visaCategoryId: body.visaCategoryId });
+  const profession = vacancy ? vacancyProfession(vacancy) : body.profession || me?.profession || VISA_TYPE_LABEL_AZ[body.visaType];
+  const created = await createCase(req.user!.id, {
+    profession,
+    visaType: body.visaType,
+    visaCategoryId: body.visaCategoryId ?? vacancy?.visaCategoryId ?? null,
+    // The client folder goes into the vacancy's drive folder (or the client's applicant folder there).
+    ...(vacancy ? { vacancyId: vacancy.id, driveParentId: await caseParentFor({ vacancyId: vacancy.id, userId: req.user!.id }) } : {}),
+  });
   res.status(201).json({ case: created });
 });
 

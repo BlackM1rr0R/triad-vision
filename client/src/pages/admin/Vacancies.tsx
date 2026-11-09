@@ -29,6 +29,8 @@ import { toastJobsError, useJobLabels } from '@/components/jobs/labels';
 import { VacancyStatusCell } from '@/components/inline/VacancyStatusCell'; // inline publish / close
 import { VacancyDistributionPanel } from '@/components/jobFeeds/VacancyDistributionPanel'; // "Paylaşım": job boards (ADMIN+)
 import { requestInlineEdit } from '@/components/inline/optimistic';
+import { ApplicationFolder, NewVacancyFolder, VacancyFolderPanel, folderPayload, initialFolderChoice } from '@/components/vacancyFolders/VacancyFolder'; // drive folder of the vacancy / applicants
+import type { FolderInfo } from '@/components/vacancyFolders/FolderPicker';
 import { useListNav } from '@/components/shortcuts/useListNav'; // J / K / Enter / E / '/' / Esc
 import { pagesStaffPower } from '@/i18n/pagesStaffPower'; // saved views + table settings
 import { SavedViewsMenu } from '@/components/staffPower/SavedViews';
@@ -64,11 +66,16 @@ interface DetailApplication {
   createdAt: string;
   match: Match;
   user: { id: string; firstName: string; lastName: string; email: string; phone: string | null; profession: string | null; germanLevel: string | null; experienceYears: number | null; drivingLicence: string | null; city: string | null };
+  /** The applicant's drive folder and the staff override of where it is collected. */
+  folder?: FolderInfo | null;
+  targetFolder?: FolderInfo | null;
 }
 interface Detail extends VacancyRow {
   company: { id: string; name: string; status: CompanyStatus } | null;
   visaCategory: { id: string; slug: string; title: L10n; visaLabel: string } | null;
   applications: DetailApplication[];
+  /** Drive folder the applicants are collected in. */
+  folder?: FolderInfo | null;
 }
 interface Suggestion {
   id: string;
@@ -160,7 +167,7 @@ const StaffFields = ({ f, set, superFields }: { f: VacancyFormState; set: <K ext
   );
 };
 
-const ApplicationRow = ({ a, onChanged, hasCompany }: { a: DetailApplication; onChanged: () => void; hasCompany: boolean }) => {
+const ApplicationRow = ({ a, onChanged, hasCompany, vacancyHasFolder }: { a: DetailApplication; onChanged: () => void; hasCompany: boolean; vacancyHasFolder: boolean }) => {
   const { t } = useTranslation();
   const L = useJobLabels();
   const [note, setNote] = useState(a.staffNote ?? '');
@@ -205,6 +212,7 @@ const ApplicationRow = ({ a, onChanged, hasCompany }: { a: DetailApplication; on
         </div>
       </div>
       <MatchBreakdown match={a.match} className="mt-1" />
+      <ApplicationFolder applicationId={a.id} folder={a.folder ?? null} targetFolder={a.targetFolder ?? null} vacancyHasFolder={vacancyHasFolder} onSaved={onChanged} />
       {a.message && <p className="mt-2 rounded-md bg-sunken px-2.5 py-1.5 text-xs text-ink/80">“{a.message}”</p>}
       {a.companyNote && (
         <p className="mt-2 rounded-md bg-accent-bg px-2.5 py-1.5 text-xs whitespace-pre-line text-accent-fg">
@@ -244,6 +252,8 @@ const VacancyDrawer = ({ id, onClose }: { id: string | null; onClose: () => void
   const [confirmDelete, setConfirmDelete] = useState(false);
   // Staff-created vacancies go live right away unless the box is unticked (a draft is invisible on /jobs).
   const [publish, setPublish] = useState(true);
+  // New vacancy: its drive folder (new in "Stellenangebote" by default, an existing one, or none).
+  const [folderChoice, setFolderChoice] = useState(initialFolderChoice);
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['admin-vacancy', id],
     queryFn: async () => (await api.get<{ vacancy: Detail }>(`/admin/vacancies/${id}`)).data.vacancy,
@@ -262,7 +272,7 @@ const VacancyDrawer = ({ id, onClose }: { id: string | null; onClose: () => void
   const save = useMutation({
     mutationFn: async ({ f }: { f: VacancyFormState; ai: string[] }) =>
       isNew
-        ? (await api.post<{ vacancy: VacancyRow }>('/admin/vacancies', { ...payloadFromForm(f, true), publish })).data.vacancy
+        ? (await api.post<{ vacancy: VacancyRow }>('/admin/vacancies', { ...payloadFromForm(f, true), publish, ...folderPayload(folderChoice) })).data.vacancy
         : (await api.patch<{ vacancy: VacancyRow }>(`/admin/vacancies/${id}`, { ...payloadFromForm(f, true), ...superChanges(f) })).data.vacancy,
     onSuccess: (v, { ai }) => {
       reportAiSaved('staff', v.id, ai);
@@ -321,6 +331,7 @@ const VacancyDrawer = ({ id, onClose }: { id: string | null; onClose: () => void
           extra={(f, set) => (
             <>
               <StaffFields f={f} set={set} />
+              <NewVacancyFolder value={folderChoice} onChange={setFolderChoice} />
               <label className="flex items-center gap-2 text-sm font-semibold text-ink">
                 <input type="checkbox" className="size-4 accent-primary" checked={publish} onChange={(e) => setPublish(e.target.checked)} /> {t('jobsArea.admin.vacancies.publishNow')}
               </label>
@@ -383,13 +394,17 @@ const VacancyDrawer = ({ id, onClose }: { id: string | null; onClose: () => void
             )}
           </Panel>
 
+          <Panel title={t('vacFolders.folder')}>
+            <VacancyFolderPanel vacancyId={v.id} folder={v.folder ?? null} onSaved={refresh} />
+          </Panel>
+
           <Panel title={t('jobsArea.admin.vacancies.applications', { count: v.applications.length })} icon={Users}>
             {v.applications.length === 0 ? (
               <p className="text-sm text-muted">{t('jobsArea.admin.vacancies.noApplications')}</p>
             ) : (
               <ul className="divide-y divide-line">
                 {v.applications.map((a) => (
-                  <ApplicationRow key={`${a.id}-${a.status}`} a={a} onChanged={refresh} hasCompany={v.company?.status === 'ACTIVE'} />
+                  <ApplicationRow key={`${a.id}-${a.status}`} a={a} onChanged={refresh} hasCompany={v.company?.status === 'ACTIVE'} vacancyHasFolder={!!v.folder} />
                 ))}
               </ul>
             )}

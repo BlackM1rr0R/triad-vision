@@ -7,7 +7,7 @@ import { TONE_CLASS } from '@/components/ui/status';
 import { useStaffOptions } from '@/components/inline/CaseInlineCells';
 import { useAuth } from '@/lib/auth';
 import { fmtDateTime } from '@/components/admin/labels';
-import { PROCESSING_STAGES, STAGE_TONE, stageLabel, useMoveStage, type ProcessingStage, type ProcessingSummary } from './api';
+import { PROCESSING_STAGES, STAGE_TONE, canMoveStage, nextStage, stageLabel, useMoveStage, type ProcessingStage, type ProcessingSummary } from './api';
 
 /** "Schon geschrieben" etc. as a small badge; the local explanation as the tooltip. */
 export const StageBadge = ({ stage, className }: { stage: ProcessingStage | null | undefined; className?: string }) => {
@@ -48,7 +48,7 @@ export const MoveStageDialog = ({ caseId, open, onClose, current, initial }: { c
   const [note, setNote] = useState('');
   useEffect(() => {
     if (!open) return;
-    setStage(initial ?? (current === 'WRITTEN' ? 'DONE' : 'WRITTEN'));
+    setStage(initial ?? nextStage(current) ?? 'IN_PROGRESS');
     setAssigneeId('');
     setNote('');
   }, [open, initial, current]);
@@ -84,11 +84,13 @@ export const MoveStageDialog = ({ caseId, open, onClose, current, initial }: { c
               <label
                 key={s}
                 className={clsx(
-                  'flex min-h-11 cursor-pointer items-start gap-2 rounded-lg border px-3 py-2 text-sm transition',
+                  'flex min-h-11 items-start gap-2 rounded-lg border px-3 py-2 text-sm transition',
+                  // Schon geschrieben → In Bearbeitung → Fertig / Ablehnung: other moves are greyed out (the server refuses them).
+                  !canMoveStage(current, s) ? 'cursor-not-allowed border-line opacity-50' : 'cursor-pointer',
                   stage === s ? 'border-primary bg-primary/[0.06] shadow-[inset_0_0_0_1px_var(--color-brand-600)]' : 'border-line hover:border-line-strong',
                 )}
               >
-                <input type="radio" name="stage" className="mt-1" checked={stage === s} onChange={() => setStage(s)} />
+                <input type="radio" name="stage" className="mt-1" checked={stage === s} disabled={!canMoveStage(current, s)} onChange={() => setStage(s)} />
                 <span className="min-w-0">
                   <span className="block font-semibold text-ink">
                     {stageLabel(s)}

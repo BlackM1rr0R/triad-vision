@@ -11,7 +11,7 @@ import { fmtRelative, fullName } from '@/components/admin/labels';
 import { ErrorBlock, LoadingBlock } from '@/components/admin/ui';
 import { TONE_TEXT } from '@/components/ui/status';
 import { ContextMenu, type MenuEntry, type MenuPosition } from '@/components/drive/ContextMenu';
-import { PROCESSING_STAGES, STAGE_TONE, stageLabel, type BoardColumn, type BoardItem, type ProcessingStage } from './api';
+import { PROCESSING_STAGES, STAGE_TONE, canMoveStage, stageLabel, type BoardColumn, type BoardItem, type ProcessingStage } from './api';
 import { STAGE_KIND, endCaseDrag, startCaseDrag, useFlowActions, useStageDrop, type FlowAction, type FlowTarget } from './flow';
 import { MoveStageDialog } from './parts';
 
@@ -134,7 +134,7 @@ export const ProcessingBoard = ({ partnerId, search, onShowStage }: { partnerId?
     if (c.processing.stage === 'WRITTEN' && x.assigneeId !== user?.id) out.push({ id: 'claim', label: t('caseProcessing.claim'), onSelect: () => flow.act('claim', [x]) });
     out.push({ kind: 'heading', id: 'h', label: t('caseProcessing.board.moveMenu') });
     for (const s of PROCESSING_STAGES) {
-      if (s === c.processing.stage) continue;
+      if (s === c.processing.stage || !canMoveStage(c.processing.stage, s)) continue;
       const action: FlowAction = STAGE_KIND[s];
       out.push({ id: `to-${s}`, label: stageLabel(s), hint: t(`caseProcessing.hints.${s}`), danger: s === 'REFUSED', onSelect: () => flow.act(action, [x]) });
     }

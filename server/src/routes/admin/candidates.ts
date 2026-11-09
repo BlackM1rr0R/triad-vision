@@ -5,6 +5,7 @@ import { prisma } from '../../db.js';
 import { badRequest, conflict, notFound, parse } from '../../lib/http.js';
 import { audit } from '../../lib/audit.js';
 import { createCase, FINAL_STATUSES } from '../../lib/caseFlow.js';
+import { syncCaseFolder } from '../../lib/drive/caseFolders.js';
 import { GERMAN_LEVELS, germanRank, licenceCovers, matchCandidate } from '../../lib/matching.js';
 import { notifyApplicationStatus, notifyCandidateProposed } from '../../lib/jobsNotifications.js';
 import { emitWebhook } from '../../lib/ops/webhooks.js';
@@ -13,6 +14,7 @@ import { votesByApplication } from '../../lib/employerVotes.js';
 import path from 'node:path';
 import { applicationUploadsOf, isApplicationDocument } from '../../lib/applicationUploads.js';
 import { vaultDir } from '../../lib/docCheck/index.js';
+import { caseParentFor, checkTargetFolder, syncApplicationFolder, vacancyProfession } from '../../lib/drive/vacancyFolders.js';
 
 // Admin: candidates — mounted at /api/admin/candidates
 export const adminCandidatesRouter = Router();
@@ -216,7 +218,8 @@ adminCandidatesRouter.get('/:userId/application-documents/:docId', async (req, r
 
 /** Staff add a candidate to a vacancy (SHORTLISTED). A withdrawn / new application is re-used. */
 adminCandidatesRouter.post('/:id/applications', async (req, res) => {
-  const body = parse(z.object({ vacancyId: z.string().max(40), note: z.string().trim().max(2000).optional() }), req.body);
+  // folderId: drive folder for this application instead of the vacancy's folder (staff override).
+  const body = parse(z.object({ vacancyId: z.string().max(40), note: z.string().trim().max(2000).optional(), folderId: z.string().max(40).nullable().optional() }), req.body);
   const [user, vacancy] = await Promise.all([
     prisma.user.findUnique({ where: { id: req.params.id } }),
     prisma.vacancy.findUnique({ where: { id: body.vacancyId }, include: { visaCategory: { select: { visaLabel: true, germanLevel: true } } } }),
@@ -227,14 +230,16 @@ adminCandidatesRouter.post('/:id/applications', async (req, res) => {
   const { score } = matchCandidate(user, vacancy);
   const existing = await prisma.vacancyApplication.findUnique({ where: { vacancyId_userId: { vacancyId: vacancy.id, userId: user.id } } });
   if (existing && !['NEW', 'WITHDRAWN'].includes(existing.status)) throw conflict('ALREADY_APPLIED');
+  const targetFolderId = body.folderId ? await checkTargetFolder(req.user!, body.folderId) : body.folderId;
   const application = existing
     ? await prisma.vacancyApplication.update({
         where: { id: existing.id },
-        data: { status: 'SHORTLISTED', matchScore: score, ...(body.note ? { staffNote: body.note } : {}) },
+        data: { status: 'SHORTLISTED', matchScore: score, ...(body.note ? { staffNote: body.note } : {}), ...(targetFolderId !== undefined ? { targetFolderId } : {}) },
       })
     : await prisma.vacancyApplication.create({
-        data: { vacancyId: vacancy.id, userId: user.id, status: 'SHORTLISTED', matchScore: score, staffNote: body.note ?? null },
+        data: { vacancyId: vacancy.id, userId: user.id, status: 'SHORTLISTED', matchScore: score, staffNote: body.note ?? null, targetFolderId: targetFolderId ?? null },
       });
+  void syncApplicationFolder(application.id, { summary: true }); // applicant folder in the vacancy's drive folder
   await notifyApplicationStatus(user.id, vacancy, 'SHORTLISTED');
   await audit(req, 'APPLICATION_ADDED', `application:${application.id}`, { vacancyId: vacancy.id, userId: user.id });
   res.status(201).json({ application });
@@ -286,7 +291,8 @@ adminCandidatesRouter.patch('/applications/:appId', async (req, res) => {
  * existing case (given, or the active one) or a new case created with the normal case flow.
  */
 adminCandidatesRouter.post('/applications/:appId/case', async (req, res) => {
-  const body = parse(z.object({ caseId: z.string().max(40).optional(), visaCategoryId: z.string().max(40).nullable().optional() }), req.body ?? {});
+  // driveParentId: folder for the new client folder (default: the applicant folder / the vacancy's folder).
+  const body = parse(z.object({ caseId: z.string().max(40).optional(), visaCategoryId: z.string().max(40).nullable().optional(), driveParentId: z.string().max(40).nullable().optional() }), req.body ?? {});
   const app = await prisma.vacancyApplication.findUnique({ where: { id: req.params.appId }, include: { vacancy: true, user: true } });
   if (!app) throw notFound('APPLICATION_NOT_FOUND');
   if (app.status !== 'ACCEPTED') throw conflict('APPLICATION_NOT_ACCEPTED');
@@ -299,13 +305,20 @@ adminCandidatesRouter.post('/applications/:appId/case', async (req, res) => {
 
   let created = false;
   if (target) {
-    target = await prisma.case.update({ where: { id: target.id }, data: link });
+    // Newly linked to this vacancy: the client folder moves into the applicant / vacancy folder (when there is one).
+    const parent = target.vacancyId !== app.vacancyId && body.driveParentId !== null
+      ? await caseParentFor({ vacancyId: app.vacancyId, userId: app.userId, override: body.driveParentId ? await checkTargetFolder(req.user!, body.driveParentId, target.driveFolderId) : null })
+      : null;
+    const safeParent = parent ? await checkTargetFolder(req.user!, parent, target.driveFolderId).catch(() => null) : null;
+    target = await prisma.case.update({ where: { id: target.id }, data: { ...link, ...(safeParent ? { driveParentId: safeParent } : {}) } });
+    if (safeParent) void syncCaseFolder(target.id);
   } else {
     const visaCategoryId = body.visaCategoryId !== undefined ? body.visaCategoryId : app.vacancy.visaCategoryId;
     if (visaCategoryId && !(await prisma.visaCategory.count({ where: { id: visaCategoryId } }))) throw badRequest('INVALID_VISA_CATEGORY');
-    const title = app.vacancy.title as Record<string, string>;
-    const profession = (app.vacancy.profession || app.user.profession || title.de || title.az || 'Worker').slice(0, 120);
-    const c = await createCase(app.userId, { profession: profession.length >= 2 ? profession : `${profession} worker`, visaCategoryId });
+    // The profession is the vacancy's (the target job is one of our vacancies); the client folder joins the applicant folder.
+    const override = body.driveParentId ? await checkTargetFolder(req.user!, body.driveParentId) : null;
+    const driveParentId = body.driveParentId === null ? null : await caseParentFor({ vacancyId: app.vacancyId, userId: app.userId, override });
+    const c = await createCase(app.userId, { profession: vacancyProfession(app.vacancy), visaCategoryId, vacancyId: app.vacancyId, driveParentId });
     target = await prisma.case.update({ where: { id: c.id }, data: link });
     created = true;
   }

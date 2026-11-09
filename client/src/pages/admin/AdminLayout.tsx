@@ -5,7 +5,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
 import type { LucideIcon } from 'lucide-react';
-import { Bell, BookOpen, CheckCheck, ChevronDown, ChevronsLeft, ChevronsRight, ExternalLink, LayoutGrid, LogOut, Menu, Star, X } from 'lucide-react';
+import { Bell, BookOpen, CheckCheck, ChevronDown, ChevronsLeft, ChevronsRight, ExternalLink, LayoutGrid, LogOut, Menu, PanelLeftClose, PanelLeftOpen, Star, X } from 'lucide-react';
 import { LogoMark } from '@/components/ui/Logo';
 import { Avatar } from '@/components/ui/Avatar';
 import { Menu as UiMenu, type MenuItem } from '@/components/ui/Menu';
@@ -562,6 +562,7 @@ export default function AdminLayout() {
       </a>
       {/* Desktop sidebar: a calm sunken column with hairline edge (Direction A) */}
       <aside
+        id="admin-sidebar"
         className={clsx(
           // z-50: the rail's tooltips overlap the sticky page header (z-40).
           'vt-admin-sidebar sticky top-0 z-50 hidden h-screen shrink-0 flex-col border-r border-line bg-sunken transition-[width] duration-300 lg:flex',
@@ -574,18 +575,32 @@ export default function AdminLayout() {
         </div>
         <SidebarNav collapsed={collapsed} role={user?.role} userId={user?.id} idSuffix={collapsed ? 'rail' : 'side'} />
         <div className={clsx('px-2.5', collapsed && 'flex flex-col items-center px-3.5')}>
-          <button
-            type="button"
-            onClick={() => setCollapsed((v) => !v)}
-            className={clsx(
-              'mb-1 flex min-h-8 items-center gap-2 rounded-lg px-2.5 text-xs font-medium text-muted transition hover:bg-line/60 hover:text-ink',
-              collapsed ? 'w-10 justify-center px-0' : 'w-full',
-            )}
-            aria-label={collapsed ? t('admin.layout.expandMenu') : t('admin.layout.collapseMenu')}
-          >
-            {collapsed ? <ChevronsRight className="size-4" aria-hidden /> : <ChevronsLeft className="size-4" aria-hidden />}
-            {!collapsed && t('admin.layout.collapseMenu')}
-          </button>
+          {/* Rail <-> full sidebar (also in the top bar); the choice stays in localStorage (COLLAPSE_KEY). */}
+          {collapsed ? (
+            <Tooltip content={t('admin.layout.expandMenu')} side="right">
+              <button
+                type="button"
+                onClick={() => setCollapsed(false)}
+                className="mb-1 flex min-h-8 w-10 items-center justify-center rounded-lg text-xs font-medium text-muted transition hover:bg-line/60 hover:text-ink"
+                aria-label={t('admin.layout.expandMenu')}
+                aria-expanded={false}
+                aria-controls="admin-sidebar"
+              >
+                <ChevronsRight className="size-4" aria-hidden />
+              </button>
+            </Tooltip>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setCollapsed(true)}
+              className="mb-1 flex min-h-8 w-full items-center gap-2 rounded-lg px-2.5 text-xs font-medium text-muted transition hover:bg-line/60 hover:text-ink"
+              aria-expanded
+              aria-controls="admin-sidebar"
+            >
+              <ChevronsLeft className="size-4" aria-hidden />
+              {t('admin.layout.collapseMenu')}
+            </button>
+          )}
           <UserFooter collapsed={collapsed} onLogout={onLogout} />
         </div>
       </aside>
@@ -653,6 +668,18 @@ export default function AdminLayout() {
             aria-label={t('admin.layout.openMenu')}
           >
             <Menu className="size-5" aria-hidden />
+          </button>
+          {/* desktop: collapse the sidebar to the icon rail / expand it again */}
+          <button
+            type="button"
+            onClick={() => setCollapsed((v) => !v)}
+            className="mr-1 hidden size-9 shrink-0 place-items-center rounded-lg text-muted transition hover:bg-sunken hover:text-ink lg:grid"
+            aria-label={collapsed ? t('admin.layout.expandMenu') : t('admin.layout.collapseMenu')}
+            title={collapsed ? t('admin.layout.expandMenu') : t('admin.layout.collapseMenu')}
+            aria-expanded={!collapsed}
+            aria-controls="admin-sidebar"
+          >
+            {collapsed ? <PanelLeftOpen className="size-[18px]" aria-hidden /> : <PanelLeftClose className="size-[18px]" aria-hidden />}
           </button>
           <nav aria-label={t('ui.breadcrumb')} className="min-w-0 flex-1 pl-1 lg:pl-0">
             <ol className="flex min-w-0 items-center gap-1.5 text-[13px]">

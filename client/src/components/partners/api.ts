@@ -119,6 +119,19 @@ export interface Partner extends PartnerRef {
   readiness?: import('./hub/types').Readiness;
   /** List: newest case, timeline entry, commission, contract change or portal visit. */
   lastActivityAt?: string | null;
+  /** How many clients the partner needs (null = no target). */
+  clientQuota?: number | null;
+  /** List / detail: the quota against the assigned clients (server lib/partners/quota.ts). */
+  quota?: PartnerQuota;
+}
+
+/** Client quota progress: assigned = distinct clients via cases + owned clients. */
+export interface PartnerQuota {
+  needed: number | null;
+  assigned: number;
+  remaining: number;
+  percent: number | null;
+  filled: boolean;
 }
 
 export type PartnerType = 'INDIVIDUAL' | 'COMPANY';

@@ -12,7 +12,8 @@ export const STAGE_LABEL: Record<string, string> = {
   REFUSED: 'Ablehnung',
 };
 
-export const stageLabel = (s: string | null | undefined) => (s ? (STAGE_LABEL[s] ?? s) : STAGE_LABEL.IN_PROGRESS!);
+/** Nothing stored = not in the workflow ("—"); new cases are no longer "In Bearbeitung" by default. */
+export const stageLabel = (s: string | null | undefined) => (s ? (STAGE_LABEL[s] ?? s) : '—');
 
 interface P {
   number: string;

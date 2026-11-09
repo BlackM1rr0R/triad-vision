@@ -37,7 +37,7 @@ const workOf = async (agent: Agent) => {
   return (res.body.items as { kind: string; refs: Record<string, string>; note?: { key: string; params?: Record<string, string> } }[]).filter((i) => i.kind === 'processing');
 };
 
-describe('team document workflow (Schon geschrieben → Fertig, Ablehnung)', () => {
+describe('team document workflow (Schon geschrieben → In Bearbeitung → Fertig, Ablehnung)', () => {
   it('moves a case with a note and an assignee, notifies, shows it in my work and keeps the history', async () => {
     const writer = await asStaff({ firstName: 'Leyla', lastName: 'Əliyeva' });
     const checker = await asStaff({ firstName: 'Murad', lastName: 'Quliyev', locale: 'de' });
@@ -46,9 +46,9 @@ describe('team document workflow (Schon geschrieben → Fertig, Ablehnung)', () 
     expect((await anon().get(`/api/admin/cases/${c.id}/processing`)).status).toBe(401);
     expect((await (await asClient()).agent.get(`/api/admin/cases/${c.id}/processing`)).status).toBe(403);
 
-    // Default: nothing stored = "In Bearbeitung" while the case is open.
+    // Default: nothing stored = not in the workflow (new cases no longer land in "In Bearbeitung").
     const before = expectStatus(await writer.agent.get(`/api/admin/cases/${c.id}/processing`), 200).body.processing;
-    expect(before).toMatchObject({ stage: 'IN_PROGRESS', stored: null, history: [], assignee: null });
+    expect(before).toMatchObject({ stage: null, stored: null, history: [], assignee: null });
 
     // A drive folder with a prepared form and an uploaded document without a copy: both listed for the checker.
     const root = await prisma.driveNode.create({ data: { space: 'SHARED', kind: 'FOLDER', name: uniq('Aysel ') } });
@@ -59,12 +59,15 @@ describe('team document workflow (Schon geschrieben → Fertig, Ablehnung)', () 
 
     expect((await move(writer.agent, c.id, { stage: 'NOPE' })).status).toBe(400);
     expect((await move(writer.agent, c.id, { stage: 'WRITTEN', assigneeId: 'nobody' })).status).toBe(400);
-    expect((await move(writer.agent, c.id, { stage: 'IN_PROGRESS' })).status).toBe(409); // nothing changes
+    // Fertig only from In Bearbeitung.
+    const skip = await move(writer.agent, c.id, { stage: 'DONE' });
+    expect(skip.status).toBe(409);
+    expect(skip.body.error).toBe('PROCESSING_TRANSITION_NOT_ALLOWED');
 
     const moved = expectStatus(await move(writer.agent, c.id, { stage: 'WRITTEN', assigneeId: checker.user.id, note: 'Tərcümələr hazırdır' }), 200).body.processing;
     expect(moved).toMatchObject({ stage: 'WRITTEN', stored: 'WRITTEN', by: { id: writer.user.id }, assignee: { id: checker.user.id, name: 'Murad Quliyev' } });
     expect(moved.history).toHaveLength(1);
-    expect(moved.history[0]).toMatchObject({ fromStage: 'IN_PROGRESS', toStage: 'WRITTEN', note: 'Tərcümələr hazırdır', by: { id: writer.user.id } });
+    expect(moved.history[0]).toMatchObject({ fromStage: null, toStage: 'WRITTEN', note: 'Tərcümələr hazırdır', by: { id: writer.user.id } });
     expect(moved.documents.files).toEqual([expect.objectContaining({ id: file.id, name: 'Antrag.pdf', path: 'Botschaft', link: `/workspace/drive/f/${sub.id}?item=${file.id}` })]);
     expect(moved.documents.uploads).toEqual([expect.objectContaining({ id: doc.id, name: 'pass.pdf', url: `/api/files/${doc.id}` })]);
 
@@ -89,19 +92,20 @@ describe('team document workflow (Schon geschrieben → Fertig, Ablehnung)', () 
 
     // Board: one column per stage.
     const board = expectStatus(await writer.agent.get('/api/admin/case-processing/board'), 200).body.columns as { stage: string; total: number; items: { id: string; lastNote: string | null }[] }[];
-    expect(board.map((col) => col.stage)).toEqual(['IN_PROGRESS', 'WRITTEN', 'DONE', 'REFUSED']);
-    expect(board[1]).toMatchObject({ total: 1, items: [{ id: c.id, lastNote: 'Tərcümələr hazırdır' }] });
-    expect(expectStatus(await checker.agent.get('/api/admin/case-processing/board?assignee=me'), 200).body.columns[1].total).toBe(1);
+    expect(board.map((col) => col.stage)).toEqual(['WRITTEN', 'IN_PROGRESS', 'DONE', 'REFUSED']);
+    expect(board[0]).toMatchObject({ total: 1, items: [{ id: c.id, lastNote: 'Tərcümələr hazırdır' }] });
+    expect(expectStatus(await checker.agent.get('/api/admin/case-processing/board?assignee=me'), 200).body.columns[0].total).toBe(1);
 
-    // The checker finishes it: the writer hears about it, the item leaves "my work".
+    // The checker sends it to In Bearbeitung (works on it), then finishes it: the writer hears about it, the item leaves "my work".
+    expectStatus(await move(checker.agent, c.id, { stage: 'IN_PROGRESS', assigneeId: checker.user.id }), 200);
     const done = expectStatus(await move(checker.agent, c.id, { stage: 'DONE', note: 'Paket göndərildi' }), 200).body.processing;
     expect(done).toMatchObject({ stage: 'DONE', assignee: null, by: { id: checker.user.id } });
-    expect(done.history.map((h: { toStage: string }) => h.toStage)).toEqual(['DONE', 'WRITTEN']);
+    expect(done.history.map((h: { toStage: string }) => h.toStage)).toEqual(['DONE', 'IN_PROGRESS', 'WRITTEN']);
     const back = await prisma.notification.findFirst({ where: { userId: writer.user.id, type: 'PROCESSING_STAGE' } });
     expect(back?.title).toContain('Fertig');
     expect(await workOf(checker.agent)).toHaveLength(0);
     const audit = await prisma.auditLog.findMany({ where: { action: 'CASE_PROCESSING_MOVED' } });
-    expect(audit).toHaveLength(2);
+    expect(audit).toHaveLength(3);
   });
 
   it('closed cases without a stage have none; Ablehnung counts as a refusal', async () => {

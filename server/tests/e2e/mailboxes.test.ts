@@ -42,13 +42,13 @@ const mailAccount = (userId: string, username: string, password: string, host = 
 const auditRows = (action: string) => prisma.auditLog.findMany({ where: { action } });
 
 describe('admin mailboxes — access and configuration', () => {
-  it('ADMIN and SUPER_ADMIN only', async () => {
+  it('list: ADMIN and SUPER_ADMIN only', async () => {
     for (const actor of [await asStaff(), await asClient()]) expectStatus(await actor.agent.get('/api/admin/mailboxes'), 403);
     for (const actor of [await asAdmin(), await asSuperAdmin()]) expectStatus(await actor.agent.get('/api/admin/mailboxes'), 200);
   });
 
   it('reports configured: false without admin credentials', async () => {
-    const admin = await asAdmin();
+    const admin = await asSuperAdmin();
     const pass = process.env.STALWART_ADMIN_PASSWORD;
     delete process.env.STALWART_ADMIN_PASSWORD;
     try {
@@ -96,7 +96,7 @@ describe('admin mailboxes — list / create / update', () => {
   });
 
   it('creates with a generated password returned exactly once', async () => {
-    const admin = await asAdmin();
+    const admin = await asSuperAdmin();
     const res = expectStatus(await admin.agent.post('/api/admin/mailboxes').send({ localPart: 'Jobs', displayName: 'Jobs', quotaMb: 512, aliases: ['karriere', `bewerbung@${DOMAIN}`] }), 201);
     expect(res.body.generated).toBe(true);
     expect(res.body.password).toMatch(/^[A-Za-z0-9]{5}(-[A-Za-z0-9]{5}){3}$/);
@@ -115,7 +115,7 @@ describe('admin mailboxes — list / create / update', () => {
   });
 
   it('validates input: local part, own password policy, alias domain', async () => {
-    const admin = await asAdmin();
+    const admin = await asSuperAdmin();
     for (const body of [{ localPart: 'bad name' }, { localPart: '.x' }, { localPart: 'ok', password: 'short1' }, { localPart: 'ok', password: 'onlyletterss' }, { localPart: 'ok', aliases: ['x@gmail.com'] }, { localPart: 'ok', quotaMb: 0 }]) {
       expectStatus(await admin.agent.post('/api/admin/mailboxes').send(body), 400);
     }
@@ -125,7 +125,7 @@ describe('admin mailboxes — list / create / update', () => {
   });
 
   it('updates display name, quota and aliases', async () => {
-    const admin = await asAdmin();
+    const admin = await asSuperAdmin();
     const acc = fake.addAccount({ name: 'info', password: 'Info-Pass-12345' });
     const res = expectStatus(await admin.agent.patch(`/api/admin/mailboxes/${acc.id}`).send({ displayName: 'Triad Info', quotaMb: 1024, aliases: ['kontakt'] }), 200);
     expect(res.body.mailbox).toMatchObject({ displayName: 'Triad Info', quotaBytes: 1024 * 1024 * 1024, aliases: [`kontakt@${DOMAIN}`] });
@@ -139,7 +139,7 @@ describe('admin mailboxes — list / create / update', () => {
 
 describe('admin mailboxes — password reset and delete', () => {
   it('resets the password once and re-encrypts every workspace account using it', async () => {
-    const admin = await asAdmin();
+    const admin = await asSuperAdmin();
     const s1 = await asStaff();
     const s2 = await asStaff();
     const acc = fake.addAccount({ name: 'info', password: 'Info-Old-Pass-1' });
@@ -177,7 +177,7 @@ describe('admin mailboxes — password reset and delete', () => {
   });
 
   it('delete: protected addresses 409, confirmation required, audit row', async () => {
-    const admin = await asAdmin();
+    const admin = await asSuperAdmin();
     const sender = fake.addAccount({ name: 'no-reply', password: 'Site-Pass-12345' });
     const adminAcc = [...fake.accounts.values()].find((a) => a.name === 'admin')!;
     const old = fake.addAccount({ name: 'old', password: 'Old-Pass-12345', usedDiskQuota: 99 });
@@ -194,7 +194,7 @@ describe('admin mailboxes — password reset and delete', () => {
 
 describe('admin mailboxes — auto-reply', () => {
   it('reads and writes any mailbox auto-reply', async () => {
-    const admin = await asAdmin();
+    const admin = await asSuperAdmin();
     const acc = fake.addAccount({ name: 'info', password: 'Info-Pass-12345' });
     acc.vacation = { isEnabled: true, subject: 'Danke', textBody: 'Wir melden uns.', htmlBody: null, fromDate: null, toDate: null };
     expect(expectStatus(await admin.agent.get(`/api/admin/mailboxes/${acc.id}/auto-reply`), 200).body.autoReply).toEqual({ enabled: true, subject: 'Danke', text: 'Wir melden uns.', fromDate: null, toDate: null });

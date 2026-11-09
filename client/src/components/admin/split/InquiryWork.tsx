@@ -12,7 +12,9 @@ import { pagesInquiries } from '@/i18n/pagesInquiries';
 import { fmtDate, fullName, toastError } from '@/components/admin/labels';
 import type { Inquiry } from '@/components/admin/types';
 import { useStaffOptions } from '@/components/inline/CaseInlineCells';
-import { useCompanyOptions } from '@/components/admin/case/caseLinks';
+import { useCompanyOptions, useVacancyOptions } from '@/components/admin/case/caseLinks';
+import { FolderField, type FolderInfo } from '@/components/vacancyFolders/FolderPicker'; // the new case's target job = one of our vacancies
+import { useL10n } from '@/lib/l10n';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { SECTORS } from '@/components/jobs/types';
@@ -197,9 +199,13 @@ const Field = ({ label, children, className }: { label: string; children: React.
 
 const ConvertClientDialog = ({ i, open, onClose }: { i: Inquiry; open: boolean; onClose: () => void }) => {
   const { t } = useTranslation();
+  const { tr } = useL10n();
   const refresh = useRefresh(i.id);
   const guess = splitName(i.contactName);
-  const [f, setF] = useState({ firstName: guess.first, lastName: guess.last, email: i.email, phone: i.phone ?? '', locale: (LOCALES as readonly string[]).includes(i.locale) ? i.locale : 'az', invite: true, createCase: false, profession: i.sector ?? '' });
+  const [f, setF] = useState({ firstName: guess.first, lastName: guess.last, email: i.email, phone: i.phone ?? '', locale: (LOCALES as readonly string[]).includes(i.locale) ? i.locale : 'az', invite: true, createCase: false, vacancyId: '' });
+  // The profession of the new case comes from one of our vacancies; its documents go to the vacancy's folder unless overridden.
+  const [folder, setFolder] = useState<FolderInfo | null>(null);
+  const { data: vacancies } = useVacancyOptions(open && f.createCase);
   const [busy, setBusy] = useState(false);
   const set = <K extends keyof typeof f>(k: K, v: (typeof f)[K]) => setF((x) => ({ ...x, [k]: v }));
   const submit = async () => {
@@ -214,7 +220,7 @@ const ConvertClientDialog = ({ i, open, onClose }: { i: Inquiry; open: boolean; 
           locale: f.locale,
           invite: f.invite,
           createCase: f.createCase,
-          ...(f.createCase ? { profession: f.profession } : {}),
+          ...(f.createCase ? { vacancyId: f.vacancyId, ...(folder ? { driveParentId: folder.id } : {}) } : {}),
         })
       ).data;
       toast.success(r.created ? t('inq.convert.clientCreated') : t('inq.convert.clientLinked'), { description: r.caseNumber ? t('inq.convert.caseCreated', { number: r.caseNumber }) : undefined });
@@ -226,7 +232,7 @@ const ConvertClientDialog = ({ i, open, onClose }: { i: Inquiry; open: boolean; 
       setBusy(false);
     }
   };
-  const valid = f.firstName.trim() && f.lastName.trim() && /\S+@\S+\.\S+/.test(f.email) && (!f.createCase || f.profession.trim().length >= 2);
+  const valid = f.firstName.trim() && f.lastName.trim() && /\S+@\S+\.\S+/.test(f.email) && (!f.createCase || !!f.vacancyId);
   return (
     <Modal
       open={open}
@@ -279,9 +285,23 @@ const ConvertClientDialog = ({ i, open, onClose }: { i: Inquiry; open: boolean; 
           <span>{t('inq.convert.createCase')}</span>
         </label>
         {f.createCase && (
-          <Field label={t('inq.convert.profession')}>
-            <input className="input" value={f.profession} onChange={(e) => set('profession', e.target.value)} maxLength={120} />
-          </Field>
+          <>
+            <Field label={t('vacFolders.position.label')}>
+              <select className="input" value={f.vacancyId} onChange={(e) => set('vacancyId', e.target.value)}>
+                <option value="">{vacancies && !vacancies.length ? t('vacFolders.position.none') : t('vacFolders.position.pick')}</option>
+                {vacancies?.map((v) => (
+                  <option key={v.id} value={v.id}>
+                    {tr(v.title)}
+                  </option>
+                ))}
+              </select>
+              <span className="mt-1 block text-xs text-muted">{t('vacFolders.position.hint')}</span>
+            </Field>
+            <div className="block text-sm">
+              <span className="mb-1 block text-xs font-semibold text-muted">{t('vacFolders.position.folderOverride')}</span>
+              <FolderField value={folder} onChange={setFolder} empty={t('vacFolders.position.folderDefault')} clearLabel={t('vacFolders.app.reset')} compact />
+            </div>
+          </>
         )}
         {i.agent && <p className="text-xs text-muted">{t('inq.convert.agentNote', { name: i.agent.name })}</p>}
         {i.partner && <p className="text-xs text-muted">{t('inq.convert.partnerNote', { name: i.partner.name })}</p>}

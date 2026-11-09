@@ -1,18 +1,18 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import clsx from 'clsx';
-import { Ban, Briefcase, ExternalLink, FileSpreadsheet, FolderOpen, FolderPlus, Handshake, Pencil, Phone, Plus, Search, Trash2, UserPlus, Users } from 'lucide-react';
+import { Ban, Briefcase, ExternalLink, FileSpreadsheet, FolderOpen, FolderPlus, Handshake, Pencil, Phone, Plus, Trash2, UserPlus, Users } from 'lucide-react';
 import { api } from '@/lib/api';
 import { statusLabel } from '@/components/admin/labels';
 import { STATUS_TONE } from '@/lib/caseStatus';
 import type { CaseStatus } from '@/lib/types';
-import { Modal } from '@/components/admin/Modal';
 import { Spinner } from '@/components/ui/Spinner';
 import { PARTNERS_KEY, partnerError, useAssignPartner, usePartnerOptions, type Partner } from '@/components/partners/api';
 import { DeletePartnerDialog } from '@/components/partners/DeletePartnerDialog';
+import { AddClientsDialog } from '@/components/partners/AddClientsDialog'; // hides already linked applications
 import { PartnerFormDialog } from '@/components/partners/PartnerForm';
 import { PartnerKeyInfo } from '@/components/partners/PartnerProfile';
 import { useAuth } from '@/lib/auth';
@@ -82,113 +82,13 @@ export const PartnerDialog = ({ open, partner, onClose, onSaved }: { open: boole
   );
 };
 
-interface CaseRow {
-  id: string;
-  number: string;
-  status: CaseStatus;
-  client: { firstName: string; lastName: string };
-  partner?: { id: string; name: string } | null;
-}
-
-/** Search applications and link the selected ones to a partner (their folders move into the partner folder). */
+/**
+ * Search applications and link the selected ones to a partner (their folders move into the partner folder).
+ * The shared partner picker (components/partners/AddClientsDialog) hides applications already linked to it.
+ */
 export const AssignClientsDialog = ({ partner, onClose }: { partner: { id: string; name: string } | null; onClose: () => void }) => {
-  const { t } = useTranslation();
   const refresh = useRefreshDrive();
-  const [q, setQ] = useState('');
-  const [debounced, setDebounced] = useState('');
-  const [picked, setPicked] = useState<Set<string>>(new Set());
-  useEffect(() => {
-    const h = window.setTimeout(() => setDebounced(q.trim()), 250);
-    return () => window.clearTimeout(h);
-  }, [q]);
-  useEffect(() => {
-    if (partner) {
-      setQ('');
-      setPicked(new Set());
-    }
-  }, [partner]);
-  const cases = useQuery({
-    queryKey: ['drive', 'assign-cases', debounced],
-    queryFn: async () => (await api.get<{ items: CaseRow[] }>('/admin/cases', { params: { search: debounced || undefined } })).data.items,
-    enabled: !!partner,
-  });
-  const assign = useAssignPartner();
-  const toggle = (id: string) =>
-    setPicked((s) => {
-      const n = new Set(s);
-      if (n.has(id)) n.delete(id);
-      else n.add(id);
-      return n;
-    });
-  return (
-    <Modal
-      open={!!partner}
-      onClose={() => !assign.isPending && onClose()}
-      size="md"
-      title={t('drive.partner.assignTitle', { name: partner?.name ?? '' })}
-      description={t('drive.partner.assignHint')}
-      footer={
-        <>
-          <span className="mr-auto text-xs text-muted">{t('drive.partner.selectedN', { count: picked.size })}</span>
-          <button type="button" className="btn-secondary btn-sm" onClick={onClose} disabled={assign.isPending}>
-            {t('drive.partner.cancel')}
-          </button>
-          <button
-            type="button"
-            className="btn-primary btn-sm"
-            disabled={!picked.size || assign.isPending}
-            onClick={() =>
-              partner &&
-              assign.mutate(
-                { caseIds: [...picked], partnerId: partner.id },
-                {
-                  onSuccess: (r) => {
-                    toast.success(t('drive.partner.assigned', { count: r.updated }));
-                    refresh();
-                    onClose();
-                  },
-                },
-              )
-            }
-          >
-            {assign.isPending && <Spinner className="size-3.5" />} {t('drive.partner.assign')}
-          </button>
-        </>
-      }
-    >
-      <div className="relative mb-3">
-        <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted" />
-        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={t('drive.partner.searchCases')} className="input !pl-9" data-autofocus />
-      </div>
-      <ul className="max-h-80 min-h-32 overflow-y-auto rounded-xl border border-line">
-        {cases.isLoading ? (
-          <li className="grid place-items-center py-8">
-            <Spinner />
-          </li>
-        ) : !cases.data?.length ? (
-          <li className="px-3 py-6 text-center text-xs text-muted">{t('drive.partner.noCases')}</li>
-        ) : (
-          cases.data.map((c) => (
-            <li key={c.id}>
-              <label className="flex cursor-pointer items-center gap-3 px-3 py-2 text-sm hover:bg-surface">
-                <input type="checkbox" className="size-4 accent-brand-600" checked={picked.has(c.id)} onChange={() => toggle(c.id)} />
-                <span className="min-w-0 flex-1">
-                  <span className="block truncate font-medium text-ink">
-                    {c.client.firstName} {c.client.lastName}
-                  </span>
-                  <span className="block truncate text-xs text-muted">
-                    {c.number}
-                    {c.partner ? ` · ${c.partner.name}` : ''}
-                  </span>
-                </span>
-                <span className={clsx('shrink-0 rounded px-1.5 py-px text-[10px] font-semibold', STATUS_TONE[c.status])}>{statusLabel(c.status)}</span>
-              </label>
-            </li>
-          ))
-        )}
-      </ul>
-    </Modal>
-  );
+  return <AddClientsDialog partner={partner} onClose={onClose} onDone={refresh} />;
 };
 
 // ─── Partner section and partner folders ───────────────────────────────

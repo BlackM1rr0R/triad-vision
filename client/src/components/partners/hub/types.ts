@@ -24,6 +24,8 @@ export interface Readiness {
 /** GET /admin/partners/:id/stats */
 export interface PartnerStats {
   clients: { total: number; active: number; owned: number; withoutCase: number };
+  /** Client quota ("how many clients the partner needs") against clients.total. */
+  quota?: import('../api').PartnerQuota;
   cases: { total: number; active: number; approved: number; refused: number; cancelled: number; stages: StageCounts };
   commissions: { currency: string; earnedCents: number; pendingCents: number; paidCents: number; thisMonthCents: number; count: number };
   contract: ContractSummary;

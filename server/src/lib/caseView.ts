@@ -99,6 +99,8 @@ export const loadCaseDetail = async (caseId: string, opts: { forStaff: boolean }
 
   return {
     ...c,
+    // Internal drive placement (vacancy folder): staff only.
+    driveParentId: opts.forStaff ? c.driveParentId : undefined,
     contract: c.contract && {
       ...c.contract,
       file: byId.get(c.contract.fileDocumentId) ?? null,

@@ -26,7 +26,7 @@ export const ProcessingFolderBar = ({ target, folder, onAct }: { target: FlowTar
   const mine = !!assigneeId && assigneeId === user?.id;
   // The freshest state decides the buttons (the drive listing may be a few seconds old).
   const live: FlowTarget = { ...target, stage, assigneeId };
-  const actions = flowActions(stage, assigneeId, user?.id);
+  const actions = flowActions(stage, assigneeId, user?.id, target.closed);
   if (!stage && !actions.length) return null;
   const note = p?.history.find((h) => h.note)?.note;
 

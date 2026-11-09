@@ -9,6 +9,7 @@ import { audit } from '../../lib/audit.js';
 import { badRequest, conflict, notFound, parse } from '../../lib/http.js';
 import { renderEmail, sendMail } from '../../lib/mailer.js';
 import { createCase, FINAL_STATUSES } from '../../lib/caseFlow.js';
+import { caseParentFor, checkTargetFolder, vacancyProfession } from '../../lib/drive/vacancyFolders.js';
 import { attachPartnerOwner } from '../../lib/partners/owned.js';
 import { markClientsExcelDirty } from '../../lib/clientsExcel.js';
 import { scanUserDuplicates } from '../../lib/duplicates/detect.js';
@@ -206,11 +207,18 @@ adminInquiriesRouter.post('/:id/convert-client', async (req, res) => {
       locale: locale.default((['az', 'de', 'en', 'ru'].includes(q.locale) ? q.locale : 'az') as Locale),
       invite: z.boolean().default(true),
       createCase: z.boolean().default(false),
+      /** @deprecated free text; the UI picks one of our vacancies (vacancyId) and the profession follows it. */
       profession: z.string().trim().min(2).max(120).optional(),
+      vacancyId: z.string().max(40).optional(),
+      /** Drive folder for the client folder (default: the vacancy's folder). */
+      driveParentId: z.string().max(40).nullable().optional(),
     }),
     req.body ?? {},
   );
-  if (body.createCase && !body.profession) throw badRequest('PROFESSION_REQUIRED');
+  const vacancy = body.vacancyId ? await prisma.vacancy.findFirst({ where: { id: body.vacancyId, status: { not: 'CLOSED' } }, select: { id: true, profession: true, title: true, visaCategoryId: true } }) : null;
+  if (body.vacancyId && !vacancy) throw badRequest('INVALID_VACANCY');
+  if (body.createCase && !body.profession && !vacancy) throw badRequest('PROFESSION_REQUIRED');
+  const parentOverride = body.createCase && body.driveParentId ? await checkTargetFolder(req.user!, body.driveParentId) : null;
   const existing = await prisma.user.findUnique({ where: { email: body.email }, select: { id: true, role: true, firstName: true, email: true, locale: true, referredByAgentId: true } });
   if (existing && existing.role !== 'CLIENT') throw conflict('EMAIL_NOT_CLIENT');
   if (existing && body.createCase) {
@@ -237,7 +245,15 @@ adminInquiriesRouter.post('/:id/convert-client', async (req, res) => {
   if (existing && q.agentId && !existing.referredByAgentId) await prisma.user.update({ where: { id: existing.id }, data: { referredByAgentId: q.agentId } });
   if (q.partnerId) await attachPartnerOwner(user.id, q.partnerId, { source: 'ADMIN', actorId: req.user!.id, note: `inquiry:${q.id}` });
   if (created && body.invite) await sendClientInvite(user);
-  const kase = body.createCase ? await createCase(user.id, { profession: body.profession!, actorId: req.user!.id }) : null;
+  const kase = body.createCase
+    ? await createCase(user.id, {
+        profession: vacancy ? vacancyProfession(vacancy) : body.profession!,
+        actorId: req.user!.id,
+        ...(vacancy
+          ? { vacancyId: vacancy.id, visaCategoryId: vacancy.visaCategoryId, driveParentId: body.driveParentId === null ? null : await caseParentFor({ vacancyId: vacancy.id, userId: user.id, override: parentOverride }) }
+          : parentOverride ? { driveParentId: parentOverride } : {}),
+      })
+    : null;
   await prisma.inquiry.update({
     where: { id: q.id },
     data: { convertedUserId: user.id, convertedAt: new Date(), status: 'DONE', ...(q.assignedStaffId ? {} : { assignedStaffId: req.user!.id, assignedAt: new Date() }) },
