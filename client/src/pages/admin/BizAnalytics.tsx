@@ -13,7 +13,7 @@ import { Spinner } from '@/components/ui/Spinner';
 import { Tabs } from '@/components/ui/Tabs';
 import { statusLabel } from '@/components/admin/labels';
 import { Chip, ErrorBlock, LoadingBlock, PageHead, Panel, StatTile } from '@/components/admin/ui';
-import { BarList, LineChart, SERIES_COLORS, type Series } from '@/components/admin/charts';
+import { AreaChart, HBarList, VIZ, type ChartSeries } from '@/components/charts';
 import { useReportFormat } from '@/components/reports/types';
 import type { CaseStatus } from '@/lib/types';
 
@@ -215,7 +215,7 @@ export default function AdminBizAnalytics() {
     setHidden(new Set(stageKeys.filter((s) => !TREND_DEFAULT.includes(s))));
     setHiddenInit(true);
   }
-  const series = useMemo<Series[]>(() => stageKeys.map((s, i) => ({ key: s, label: statusLabel(s), color: SERIES_COLORS[i % SERIES_COLORS.length] })), [stageKeys]);
+  const series = useMemo<ChartSeries[]>(() => stageKeys.map((s, i) => ({ key: s, label: statusLabel(s), color: VIZ[i % VIZ.length] })), [stageKeys]);
   const points = useMemo(
     () => (data ? data.stages.trend.months.map((m, i) => ({ x: m, values: Object.fromEntries(data.stages.trend.rows.map((r) => [r.stage, r.medianDays[i] ?? 0])) })) : []),
     [data],
@@ -325,7 +325,7 @@ const StagesView = ({
   data: BizResponse;
   days: (v: number | null | undefined) => string;
   catName: (id: string | null) => string;
-  series: Series[];
+  series: ChartSeries[];
   points: { x: string; values: Record<string, number> }[];
   hidden: ReadonlySet<string>;
   toggle: (key: string) => void;
@@ -399,15 +399,15 @@ const StagesView = ({
       </Panel>
 
       <Panel title={t('biz.stages.trend')} icon={LineIcon}>
-        <LineChart points={points} series={series} hidden={hidden} onToggle={toggle} xLabel={monthLabel} ariaLabel={t('biz.stages.trendAria')} emptyText={t('biz.empty')} />
+        <AreaChart mode="line" points={points} series={series} hidden={hidden} onToggle={toggle} xLabel={monthLabel} format={(v) => days(v)} axisFormat={(v) => String(Math.round(v))} ariaLabel={t('biz.stages.trendAria')} emptyText={t('biz.empty')} />
       </Panel>
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)]">
         <Panel title={t('biz.stages.bottleneckTitle')} icon={Hourglass}>
           <p className="-mt-1 mb-4 text-xs text-muted">{t('biz.stages.bottleneckNote')}</p>
           <p className="mb-2 text-[11px] font-medium text-muted">{t('biz.stages.caseDays')}</p>
-          <BarList
-            rows={s.bottleneck.rows.map((r) => ({ key: r.stage, label: `${statusLabel(r.stage)} (${r.open})`, value: r.waitingDays, tone: r.stage === s.bottleneck.stage ? 'bg-danger' : 'bg-chart-1' }))}
+          <HBarList
+            rows={s.bottleneck.rows.map((r) => ({ key: r.stage, label: `${statusLabel(r.stage)} (${r.open})`, value: r.waitingDays, color: r.stage === s.bottleneck.stage ? 'var(--color-danger)' : VIZ[0] }))}
             format={(v) => String(Math.round(v))}
           />
         </Panel>

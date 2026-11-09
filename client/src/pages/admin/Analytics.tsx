@@ -2,12 +2,13 @@ import { useMemo, useState, type FormEvent } from 'react';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
-import { Download, Filter, Globe2, Layers, LineChart as LineIcon, ShieldCheck, TrendingDown } from 'lucide-react';
+import { Download, Filter, Globe2, Layers, LineChart as LineIcon, PieChart, ShieldCheck, TrendingDown } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { api } from '@/lib/api';
 import { Spinner } from '@/components/ui/Spinner';
 import { dayIso, fmtDate, fmtDayShort } from '@/components/admin/labels';
-import { Chip, ErrorBlock, LoadingBlock, PageHead, Panel, StatTile } from '@/components/admin/ui';
-import { LineChart, SERIES_COLORS, type Series } from '@/components/admin/charts';
+import { Chip, ErrorBlock, LoadingBlock, PageHead, Panel } from '@/components/admin/ui';
+import { AreaChart, FunnelBars, Sparkline, StatCard, VIZ, type ChartSeries } from '@/components/charts';
 import { registerCopy } from '@/i18n';
 import { pagesGrowth } from '@/i18n/pagesGrowth';
 import { useL10n } from '@/lib/l10n';
@@ -52,68 +53,6 @@ const DEFAULT_HIDDEN = ['visits', 'emailVerified'];
 
 const pct = (v: number | null | undefined) => (v === null || v === undefined ? '—' : `${v.toLocaleString(undefined, { maximumFractionDigits: 1 })}%`);
 
-// ─── Funnel (hand-made SVG: one trapezoid per stage, stacked into a funnel) ─────────
-
-const FUNNEL_COLOR = 'var(--color-chart-1)';
-
-const Funnel = ({ stages }: { stages: AnalyticsResponse['funnel'] }) => {
-  const { t } = useTranslation();
-  const max = Math.max(1, ...stages.map((s) => s.count));
-  // Square-root scale: visits are orders of magnitude above approvals; a linear scale would hide the tail.
-  const width = (v: number) => (v <= 0 ? 4 : Math.max(6, Math.sqrt(v / max) * 100));
-  const summary = stages.map((s) => `${t(`growth.analytics.stages.${s.key}`)} ${s.count}`).join(', ');
-  return (
-    <figure>
-      <figcaption className="sr-only">{t('growth.analytics.funnelAria', { summary })}</figcaption>
-      <ol className="space-y-0.5" aria-hidden>
-        {stages.map((s, i) => {
-          const top = width(s.count);
-          const bottom = width(stages[i + 1]?.count ?? s.count * 0.92);
-          const opacity = 1 - (i / Math.max(1, stages.length - 1)) * 0.55;
-          return (
-            <li key={s.key} className="grid grid-cols-[minmax(0,7.5rem)_minmax(0,1fr)_4.5rem] items-center gap-3 sm:grid-cols-[minmax(0,11rem)_minmax(0,1fr)_6.5rem]">
-              <span className="truncate text-xs font-medium text-ink/80">{t(`growth.analytics.stages.${s.key}`)}</span>
-              <span className="relative block h-9">
-                <svg viewBox="0 0 100 10" preserveAspectRatio="none" className="absolute inset-0 size-full">
-                  <polygon
-                    points={`${50 - top / 2},0 ${50 + top / 2},0 ${50 + bottom / 2},10 ${50 - bottom / 2},10`}
-                    fill={FUNNEL_COLOR}
-                    fillOpacity={opacity}
-                  />
-                </svg>
-                <span className="absolute inset-0 grid place-items-center">
-                  <span className="rounded bg-white/90 px-1.5 text-xs font-bold text-ink tabular-nums">{s.count.toLocaleString()}</span>
-                </span>
-              </span>
-              <span className="text-right text-[11px] leading-tight text-muted tabular-nums">
-                {s.rate === null ? '' : (
-                  <>
-                    <span className="block text-xs font-semibold text-ink">{pct(s.rate)}</span>
-                    <span className="hidden sm:inline">{t('growth.analytics.fromPrev')}</span>
-                  </>
-                )}
-              </span>
-            </li>
-          );
-        })}
-      </ol>
-      <div className="sr-only">
-        <table>
-          <tbody>
-            {stages.map((s) => (
-              <tr key={s.key}>
-                <th scope="row">{t(`growth.analytics.stages.${s.key}`)}</th>
-                <td>{s.count}</td>
-                <td>{pct(s.rate)}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </figure>
-  );
-};
-
 // ─── Drop-off per visa step (hand-made SVG bars) ──────────────────────────
 
 const Dropoff = ({ rows }: { rows: AnalyticsResponse['dropoff'] }) => {
@@ -136,15 +75,15 @@ const Dropoff = ({ rows }: { rows: AnalyticsResponse['dropoff'] }) => {
             </div>
             <svg viewBox="0 0 100 4" preserveAspectRatio="none" className="mt-1 block h-3 w-full" aria-hidden>
               <rect x={0} y={0} width={100} height={4} rx={1} fill="var(--color-surface)" />
-              <rect x={0} y={0} width={Math.max(0, w - activeW - lostW)} height={4} fill="var(--color-chart-1)" />
-              <rect x={Math.max(0, w - activeW - lostW)} y={0} width={activeW} height={4} fill="var(--color-chart-2)" />
+              <rect x={0} y={0} width={Math.max(0, w - activeW - lostW)} height={4} fill="var(--viz-1)" />
+              <rect x={Math.max(0, w - activeW - lostW)} y={0} width={activeW} height={4} fill="var(--viz-2)" />
               <rect x={Math.max(0, w - lostW)} y={0} width={lostW} height={4} fill="var(--color-danger)" />
             </svg>
             {(r.active > 0 || r.lost > 0) && (
               <p className="mt-1 text-[11px] text-muted">
                 {r.active > 0 && (
                   <span className="mr-3 inline-flex items-center gap-1">
-                    <span className="size-2 rounded-sm bg-chart-2" aria-hidden /> {r.active} {t('growth.analytics.active')}
+                    <span className="size-2 rounded-sm bg-[var(--viz-2)]" aria-hidden /> {r.active} {t('growth.analytics.active')}
                   </span>
                 )}
                 {r.lost > 0 && (
@@ -205,7 +144,7 @@ export default function AdminAnalytics() {
   });
 
   const stageLabel = (k: string) => t(`growth.analytics.stages.${k}`);
-  const series = useMemo<Series[]>(() => SERIES_KEYS.map((key, i) => ({ key, label: t(`growth.analytics.stages.${key}`), color: SERIES_COLORS[i] })), [t]);
+  const series = useMemo<ChartSeries[]>(() => SERIES_KEYS.map((key, i) => ({ key, label: t(`growth.analytics.stages.${key}`), color: VIZ[i] })), [t]);
   const points = useMemo(
     () => (data ? data.series.buckets.map((b, i) => ({ x: b, values: Object.fromEntries(Object.entries(data.series.values).map(([k, v]) => [k, v[i] ?? 0])) })) : []),
     [data],
@@ -236,9 +175,14 @@ export default function AdminAnalytics() {
         title={t('growth.analytics.title')}
         subtitle={t('growth.analytics.subtitle')}
         actions={
-          <button type="button" className="btn-secondary btn-sm" onClick={() => data && exportCsv(data, stageLabel)} disabled={!data}>
-            <Download className="size-3.5" aria-hidden /> {t('growth.analytics.exportCsv')}
-          </button>
+          <>
+            <Link to="/admin/overview" className="btn-secondary btn-sm">
+              <PieChart className="size-3.5" aria-hidden /> {t('admin.nav.overview')}
+            </Link>
+            <button type="button" className="btn-secondary btn-sm" onClick={() => data && exportCsv(data, stageLabel)} disabled={!data}>
+              <Download className="size-3.5" aria-hidden /> {t('growth.analytics.exportCsv')}
+            </button>
+          </>
         }
       />
 
@@ -286,25 +230,26 @@ export default function AdminAnalytics() {
       ) : data ? (
         <div className={clsx('space-y-6 transition-opacity', isFetching && 'opacity-70')}>
           <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-            <StatTile label={t('growth.analytics.stages.visits')} value={(data.totals.visits ?? 0).toLocaleString()} hint={t('growth.analytics.visitToApproved') + ': ' + pct(data.totals.visitToApproved)} />
-            <StatTile label={t('growth.analytics.stages.registrations')} value={data.totals.registrations ?? 0} hint={t('growth.analytics.regToCase') + ': ' + pct(data.totals.registrationToCase)} />
-            <StatTile
-              label={t('growth.analytics.medianRegToCase')}
-              value={days(data.medians.registrationToCaseDays)}
-              hint={t('growth.analytics.samples', { count: data.medians.registrationToCaseSamples })}
+            <StatCard
+              label={t('growth.analytics.stages.visits')}
+              value={(data.totals.visits ?? 0).toLocaleString()}
+              hint={t('growth.analytics.visitToApproved') + ': ' + pct(data.totals.visitToApproved)}
+              visual={<Sparkline values={data.series.values.visits ?? []} width={84} height={34} area pointLabel={(i) => xTitle(data.series.buckets[i])} label={`${t('growth.analytics.stages.visits')}: ${(data.series.values.visits ?? []).join(', ')}`} />}
             />
-            <StatTile
-              label={t('growth.analytics.medianCaseToApproval')}
-              value={days(data.medians.caseToApprovalDays)}
-              hint={t('growth.analytics.samples', { count: data.medians.caseToApprovalSamples })}
-              tone="good"
+            <StatCard
+              label={t('growth.analytics.stages.registrations')}
+              value={data.totals.registrations ?? 0}
+              hint={t('growth.analytics.regToCase') + ': ' + pct(data.totals.registrationToCase)}
+              visual={<Sparkline values={data.series.values.registrations ?? []} width={84} height={34} area color={VIZ[1]} pointLabel={(i) => xTitle(data.series.buckets[i])} label={`${t('growth.analytics.stages.registrations')}: ${(data.series.values.registrations ?? []).join(', ')}`} />}
             />
+            <StatCard label={t('growth.analytics.medianRegToCase')} value={days(data.medians.registrationToCaseDays)} hint={t('growth.analytics.samples', { count: data.medians.registrationToCaseSamples })} />
+            <StatCard label={t('growth.analytics.medianCaseToApproval')} value={days(data.medians.caseToApprovalDays)} hint={t('growth.analytics.samples', { count: data.medians.caseToApprovalSamples })} />
           </div>
 
-          <div className="grid gap-6 xl:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]">
+          <div className="grid gap-6">
             <Panel title={t('growth.analytics.funnel')} icon={Filter}>
               <p className="-mt-1 mb-4 text-xs text-muted">{t('growth.analytics.funnelNote')}</p>
-              <Funnel stages={data.funnel} />
+              <FunnelBars steps={data.funnel.map((s) => ({ key: s.key, label: t(`growth.analytics.stages.${s.key}`), count: s.count }))} showPrev={false} ariaLabel={t('growth.analytics.funnel')} />
               <div className="mt-5 grid grid-cols-3 gap-2 border-t border-line pt-4 text-center">
                 {(['inquiries', 'bookings', 'applications'] as const).map((k) => (
                   <div key={k} className="min-w-0">
@@ -322,7 +267,7 @@ export default function AdminAnalytics() {
           </div>
 
           <Panel title={t('growth.analytics.series')} icon={LineIcon}>
-            <LineChart points={points} series={series} hidden={hidden} onToggle={toggle} xLabel={xLabel} xTitle={xTitle} ariaLabel={t('growth.analytics.seriesAria')} emptyText={t('growth.analytics.empty')} area />
+            <AreaChart mode="area" points={points} series={series} hidden={hidden} onToggle={toggle} xLabel={xLabel} xTitle={xTitle} ariaLabel={t('growth.analytics.seriesAria')} emptyText={t('growth.analytics.empty')} />
           </Panel>
 
           <div className="grid gap-6 lg:grid-cols-2">
@@ -348,7 +293,7 @@ export default function AdminAnalytics() {
                             <span className="flex items-center gap-2">
                               <svg viewBox="0 0 100 4" preserveAspectRatio="none" className="h-2 min-w-0 flex-1" aria-hidden>
                                 <rect width={100} height={4} rx={2} fill="var(--color-surface)" />
-                                <rect width={s.share ?? 0} height={4} rx={2} fill="var(--color-chart-1)" />
+                                <rect width={s.share ?? 0} height={4} rx={2} fill="var(--viz-1)" />
                               </svg>
                               <span className="w-12 text-right text-xs text-muted tabular-nums">{pct(s.share)}</span>
                             </span>

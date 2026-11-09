@@ -186,7 +186,7 @@ export const EXPIRY_WINDOW_DAYS = 30;
 /** A manual or automatic expiry reminder hides the row for this long. */
 export const EXPIRY_REMIND_QUIET_DAYS = 7;
 export const MAIL_WINDOW_DAYS = 7;
-const WAITING_STATUSES: CaseStatus[] = ['DOCUMENTS_REVIEW', 'CONTRACT_SIGNED', 'EMBASSY_REVIEW'];
+export const WAITING_STATUSES: CaseStatus[] = ['DOCUMENTS_REVIEW', 'CONTRACT_SIGNED', 'EMBASSY_REVIEW'];
 
 const name = (u: { firstName: string; lastName: string } | null | undefined) => (u ? `${u.firstName} ${u.lastName}`.trim() : '');
 const person = (u: { id: string; firstName: string; lastName: string } | null | undefined) => (u ? { id: u.id, name: name(u) } : null);

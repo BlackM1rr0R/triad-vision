@@ -89,6 +89,7 @@ import {
   BookOpenCheck,
   Signature as SignatureIcon,
   Palette,
+  PieChart,
   BadgeCheck,
   KeyRound,
   Landmark,
@@ -273,6 +274,7 @@ export const STAFF_NAV: StaffNavItem[] = [
   a('profitability', '/admin/profitability', TrendingUp, 'finance', { adminOnly: true }),
   a('timeTracking', '/admin/time', Timer, 'finance', { module: 'timeTracking' }),
   a('reports', '/admin/reports', FileBarChart2, 'finance', { adminOnly: true }),
+  a('overview', '/admin/overview', PieChart, 'finance'), // analytics landing: trend, KPIs, funnel, cases that need a look, goal
   a('analytics', '/admin/analytics', BarChart3, 'finance'),
   a('bizAnalytics', '/admin/business-analytics', ChartNoAxesCombined, 'finance', { adminOnly: true }), // stage times, partner performance, client funnel (management)
   a('weeklyReports', '/admin/weekly-reports', FileBarChart2, 'finance', { superOnly: true }),
@@ -376,7 +378,7 @@ export const HUBS: { key: HubKey; icon: LucideIcon; tabs: string[] }[] = [
   { key: 'employers', icon: Building2, tabs: ['companies', 'vacancies', 'jobChannels', 'candidateRequests', 'interviews', 'employmentContracts', 'interviewPrep'] },
   { key: 'comms', icon: MessageSquareText, tabs: ['messaging', 'calls', 'campaigns', 'announcements', 'surveys', 'reviews'] },
   { key: 'finance', icon: Wallet, tabs: ['finance', 'invoices', 'clientInvoices', 'packages', 'accounting', 'quotes', 'settlements', 'profitability', 'bizAnalytics', 'reports'] },
-  { key: 'leads', icon: Target, tabs: ['inquiries', 'bookings', 'analytics', 'referralPartners', 'agents'] },
+  { key: 'leads', icon: Target, tabs: ['inquiries', 'bookings', 'overview', 'analytics', 'referralPartners', 'agents'] },
   {
     key: 'site',
     icon: Globe,
@@ -433,8 +435,8 @@ export const defaultDeskFor = (role: Role | null | undefined): Desk => (hasMinRo
 export const DESK_ITEMS: Record<Desk, string[]> = {
   MANAGER: ['today', 'cases', 'candidates', 'messaging', 'ws.mail', 'interviews', 'ws.calendar', 'ws.drive'],
   FINANCE: ['today', 'finance', 'invoices', 'quotes', 'settlements', 'profitability', 'candidates'],
-  MARKETING: ['today', 'inquiries', 'campaigns', 'hub.site', 'landingPages', 'analytics'],
-  ALL: ['today', 'dashboard'],
+  MARKETING: ['today', 'inquiries', 'campaigns', 'hub.site', 'landingPages', 'overview', 'analytics'],
+  ALL: ['today', 'dashboard', 'overview'],
 };
 
 /** Favourites shown on top of the sidebar; recently opened pages listed under the desk. */

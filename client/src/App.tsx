@@ -259,6 +259,7 @@ const AccountHousing = lazy(() => import('./pages/account/Housing')); // housing
 const AccountGerman = lazy(() => import('./pages/account/German'));
 const AccountInterviews = lazy(() => import('./pages/account/Interviews'));
 const AdminAnalytics = lazy(() => import('./pages/admin/Analytics'));
+const AdminOverview = lazy(() => import('./pages/admin/Overview')); // analytics landing ("İcmal")
 
 /**
  * Warm the route chunks once the first page is interactive, so later navigations render
@@ -741,6 +742,7 @@ export default function App() {
             />
             <Route path="reviews" element={<AdminReviews />} />
             <Route path="analytics" element={<AdminAnalytics />} />
+            <Route path="overview" element={<AdminOverview />} />
             <Route path="messaging" element={<AdminMessaging />} />
             <Route path="kanban" element={<AdminKanban />} />
             <Route path="kb" element={<AdminKnowledgeBase />} />

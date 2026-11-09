@@ -9,10 +9,10 @@ import { useTranslation } from 'react-i18next';
  * ink/muted tokens (never the series colour) and a legend whenever there is more than one series.
  */
 
-/** Categorical palette, fixed slot order (validated for CVD separation; slot 1 = brand blue). */
-export const SERIES_COLORS = ['var(--color-chart-1)', 'var(--color-chart-2)', 'var(--color-chart-3)', 'var(--color-chart-4)', 'var(--color-chart-5)', 'var(--color-chart-7)', 'var(--color-chart-6)', 'var(--color-chart-8)'] as const;
+/** Categorical palette, fixed slot order: the data-viz kit's --viz-* tokens (components/charts, validated light + dark). */
+export const SERIES_COLORS = ['var(--viz-1)', 'var(--viz-2)', 'var(--viz-3)', 'var(--viz-4)', 'var(--viz-5)', 'var(--viz-6)', 'var(--viz-7)', 'var(--viz-8)'] as const;
 /** Single-series accent (brand) and the reserved "critical" status colour. */
-export const ACCENT = 'var(--color-chart-1)';
+export const ACCENT = 'var(--viz-1)';
 export const CRITICAL = 'var(--color-danger)';
 
 // Theme tokens, so axes and grid lines follow light/dark mode.

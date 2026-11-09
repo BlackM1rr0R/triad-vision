@@ -766,6 +766,37 @@
 }
 
 
+/* ── Data-viz kit (components/charts): categorical series in a fixed order, validated with the dataviz
+   palette checks against the admin card surfaces (light #ffffff, dark #151b26): lightness band, chroma floor,
+   adjacent CVD ΔE ≥ 8 and normal-vision ΔE ≥ 15 in both modes. Light slots 3–5 sit below 3:1 on white, so
+   every chart of the kit ships a legend with values and a table view. Dark steps are their own selection. ── */
+:root {
+  --viz-1: #2a78d6;
+  --viz-2: #eb6834;
+  --viz-3: #1baf7a;
+  --viz-4: #eda100;
+  --viz-5: #e87ba4;
+  --viz-6: #008300;
+  --viz-7: #6250d6;
+  --viz-8: #e34948;
+  /* previous-period ghost / marker and the unfilled track of meters */
+  --viz-ghost: color-mix(in oklab, var(--color-ink) 16%, transparent);
+  --viz-track: color-mix(in oklab, var(--viz-1) 12%, var(--color-sunken));
+}
+:root[data-theme='dark'],
+[data-theme='dark'] {
+  --viz-1: #3987e5;
+  --viz-2: #d95926;
+  --viz-3: #199e70;
+  --viz-4: #c98500;
+  --viz-5: #d55181;
+  --viz-6: #008300;
+  --viz-7: #9085e9;
+  --viz-8: #e66767;
+  --viz-ghost: color-mix(in oklab, var(--color-ink) 22%, transparent);
+  --viz-track: color-mix(in oklab, var(--viz-1) 18%, var(--color-sunken));
+}
+
 @media (prefers-reduced-motion: reduce) {
   /* No transitions at all (not "0.01ms" ones): with a tiny duration every JS-driven style change
      still starts and cancels a CSS transition per frame, which made scrolling stutter for users who

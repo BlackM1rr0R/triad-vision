@@ -66,6 +66,7 @@ const ROUTES: [string, HelpKey][] = [
   ['/admin/invoices/*', 'invoices'],
   ['/admin/reviews/*', 'reviews'],
   ['/admin/analytics/*', 'analytics'],
+  ['/admin/overview', 'analytics'],
   ['/admin/security/*', 'security'],
   ['/admin/kanban/*', 'kanban'],
   ['/admin/messaging/*', 'messaging'],

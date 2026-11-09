@@ -28,7 +28,7 @@ import { LiveChatAlerts } from '@/components/livechat/LiveChatAlerts'; // live c
 import { HeaderTimer } from '@/components/timeCare/HeaderTimer'; // running staff timer (registers its copy)
 import { CommandPaletteButton, CommandPaletteHotkey } from '@/components/command/CommandPaletteHost'; // Ctrl+K staff palette
 import { ShortcutLayer } from '@/components/shortcuts/ShortcutLayer'; // ? cheat sheet, g+c/i/t/d, page shortcuts (J/K, E, /)
-import { NAV_GROUPS, STAFF_NAV, activeNavItem, hrefFor, isVisible, type NavGroupKey, type StaffNavItem } from '@/components/command/navRegistry';
+import { NAV_GROUPS, STAFF_NAV, activeNavItem, hrefFor, hubOf, isVisible, type NavGroupKey, type StaffNavItem } from '@/components/command/navRegistry';
 import { usePageVisits, useStaffNav } from '@/components/command/navPrefs'; // server-side pins (shared with Ctrl+K), modules, page usage
 import { LicenseBanner } from '@/components/admin/LicenseBanner'; // white-label licence: grace / read-only notice
 import { ModuleDisabled } from '@/components/admin/nav/ModuleDisabled';
@@ -40,6 +40,8 @@ import { SidebarPinnedViews } from '@/components/staffPower/SavedViews'; // save
 import { TourHost } from '@/components/onboarding/TourHost';
 
 registerCopy(adminCopy);
+import { adminNavCopy } from '@/i18n/adminNav'; // hub names for the breadcrumb
+registerCopy(adminNavCopy);
 import { getBrand } from '@/lib/brand';
 registerCopy(pagesCalls);
 
@@ -516,9 +518,12 @@ export default function AdminLayout() {
   const blocked = loaded && !!page?.module && !isModuleOn(page.module);
   useSurface('admin');
 
-  // Breadcrumb: sidebar group › page (› detail, when the title is not the nav entry itself).
+  // Breadcrumb: hub › page (› detail, when the title is not the nav entry itself). The hub is where the page
+  // sits in the sidebar; pages outside every hub fall back to their former group.
   const crumbs: string[] = [];
-  if (page?.group) crumbs.push(t(`admin.nav.groups.${page.group}`));
+  const hub = page ? hubOf(page.id) : undefined;
+  if (hub) crumbs.push(t(`anav.hubs.${hub}`));
+  else if (page?.group) crumbs.push(t(`admin.nav.groups.${page.group}`));
   if (page && t(page.labelKey) !== title) crumbs.push(t(page.labelKey));
 
   useEffect(() => {
