@@ -27,8 +27,13 @@ describe('SEO guide drafts', () => {
 
   it('cannot be published while review placeholders remain; published after the review', async () => {
     await seedGuideDrafts(prisma);
-    const d = GUIDE_DRAFTS.find((x) => guidePlaceholders(x).length > 0)!;
-    const row = await prisma.guidePage.findUniqueOrThrow({ where: { key_locale: { key: d.key, locale: d.locale } } });
+    // The shipped drafts are fact-checked; the owner's own edit adds a placeholder back.
+    const d = GUIDE_DRAFTS[0];
+    expect(guidePlaceholders(d)).toEqual([]);
+    const seeded = await prisma.guidePage.findUniqueOrThrow({ where: { key_locale: { key: d.key, locale: d.locale } } });
+    const row = await prisma.guidePage.update({ where: { id: seeded.id }, data: { body: `${seeded.body}
+
+Fee [PRÜFEN: 411 €] confirmed.` } });
     const { agent: admin } = await asAdmin();
 
     const refused = await admin.put(`/api/admin/guides/${row.id}`).send({ published: true });

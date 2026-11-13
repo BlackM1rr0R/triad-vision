@@ -5,7 +5,7 @@ import { GUIDES } from '../../prisma/seed/guides/index.js';
 import { markdownToText, renderGuideMarkdown } from '../../src/lib/guides/markdown.js';
 import { PLACEHOLDER_RE, guidePlaceholders } from '../../src/lib/guides/placeholders.js';
 
-type Row = { id: string; key: string; locale: string; slug: string; published: boolean; title: string };
+type Row = { id: string; key: string; locale: string; slug: string; published: boolean; title: string; description?: string; body?: string; faq?: unknown };
 
 /** In-memory stand-in for the two Prisma delegates the draft seed uses. */
 const fakePrisma = (rows: Row[] = []) => {
@@ -23,6 +23,7 @@ const fakePrisma = (rows: Row[] = []) => {
         rows.find((r) =>
           where.key_locale ? r.key === where.key_locale.key && r.locale === where.key_locale.locale : r.locale === where.locale_slug!.locale && r.slug === where.locale_slug!.slug,
         ) ?? null,
+      update: async ({ where, data }: { where: { id: string }; data: Partial<Row> }) => Object.assign(rows.find((r) => r.id === where.id)!, data),
       create: async ({ data }: { data: Omit<Row, 'id'> }) => {
         const row = { ...data, id: `g${++seq}` };
         rows.push(row);
@@ -79,7 +80,8 @@ describe('SEO guide drafts (content)', () => {
       const loose = [d.title, d.description, d.body, ...d.faq.flatMap((f) => [f.q, f.a])].join('\n').match(/\[(YOXLA|PRÜFEN|ПРОВЕРИТЬ|CHECK)\b[^\]]*\]/g) ?? [];
       expect(loose.every((p) => new RegExp(PLACEHOLDER_RE.source).test(p)), `${d.key} ${d.locale}`).toBe(true);
     }
-    expect(draftPlaceholders().reduce((n, p) => n + p.placeholders.length, 0)).toBeGreaterThan(0);
+    // Every fact of the drafts is checked in the repository: no placeholder is left.
+    expect(draftPlaceholders().filter((p) => p.placeholders.length)).toEqual([]);
     expect(guidePlaceholders({ title: 'x', body: 'a [PRÜFEN: 411 €] b', faq: [{ q: 'q', a: '[YOXLA: x]' }] })).toEqual(['[PRÜFEN: 411 €]', '[YOXLA: x]']);
   });
 });
@@ -108,5 +110,19 @@ describe('seedGuideDrafts', () => {
     const idx = rows.findIndex((r) => r.key === GUIDE_DRAFTS[2].key && r.locale === GUIDE_DRAFTS[2].locale);
     rows.splice(idx, 1);
     expect(await seedGuideDrafts(prisma)).toBe(0);
+  });
+
+  it('refreshes an unfinished draft (unpublished, placeholders left) with the checked text, never a reviewed or published page', async () => {
+    const { prisma, rows } = fakePrisma();
+    await seedGuideDrafts(prisma);
+    const [a, b, c] = rows;
+    Object.assign(a, { body: 'old [YOXLA: x] text', title: 'Old' });
+    Object.assign(b, { body: 'owner edited, no markers', title: 'Owner' });
+    Object.assign(c, { body: 'old [CHECK: y]', title: 'Live', published: true });
+    await seedGuideDrafts(prisma);
+    const da = GUIDE_DRAFTS.find((d) => d.key === a.key && d.locale === a.locale)!;
+    expect(a).toMatchObject({ title: da.title, body: da.body, published: false });
+    expect(b).toMatchObject({ title: 'Owner', body: 'owner edited, no markers' });
+    expect(c).toMatchObject({ title: 'Live', body: 'old [CHECK: y]', published: true });
   });
 });

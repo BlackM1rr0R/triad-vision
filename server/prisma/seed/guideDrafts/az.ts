@@ -23,7 +23,7 @@ Bundan əlavə, əlbəttə, işləmək hüququ verən viza və yaşayış icazə
 
 ### Azərbaycan vəsiqəsinin dəyişdirilməsi (Führerscheinumschreibung)
 
-Xarici vəsiqə Almaniyada yaşayış yeri qeydiyyatından sonra ümumilikdə **6 ay** etibarlıdır (§ 29 FeV), amma bu, peşəkar yük daşımaları üçün kifayət deyil: kommersiya daşımaları üçün AB vəsiqəsi və kod 95 tələb olunur. Azərbaycan Almaniyanın sürücülük qaydalarındakı (FeV) Əlavə 11 siyahısında olmadığı üçün vəsiqənin dəyişdirilməsi zamanı Almaniyada **nəzəri və praktiki imtahan** vermək lazımdır [YOXLA: Azərbaycanın FeV Anlage 11 statusu və hər kateqoriya üzrə imtahan tələbləri]. C/CE kateqoriyaları üçün həmçinin tibbi müayinə və görmə testi tələb olunur.
+Xarici vəsiqə Almaniyada yaşayış yeri qeydiyyatından sonra ümumilikdə **6 ay** etibarlıdır (§ 29 FeV), amma bu, peşəkar yük daşımaları üçün kifayət deyil: kommersiya daşımaları üçün AB vəsiqəsi və kod 95 tələb olunur. Azərbaycan Almaniyanın sürücülük qaydalarındakı (FeV) Əlavə 11 siyahısında olmadığı üçün vəsiqənin dəyişdirilməsi zamanı hər kateqoriya üzrə Almaniyada **nəzəri və praktiki imtahan** vermək lazımdır; sürücülük məktəbində məcburi təlim isə tələb olunmur (§ 31 Abs. 2 FeV). C/CE kateqoriyaları üçün həmçinin tibbi müayinə və görmə testi tələb olunur.
 
 Praktikada çox vaxt əvvəlcə B kateqoriyası, sonra C/CE dəyişdirilir və ya yenidən alınır. Sürücülük məktəbində bir neçə dərs keçmək, hətta məcburi olmasa belə, imtahanı ilk cəhddə vermək şansını artırır: alman yol nişanları, imtahan marşrutları və texniki yoxlama sualları Azərbaycandakından fərqlənir.
 
@@ -34,11 +34,11 @@ Kod 95 almaq üçün iki yol var:
 - **Grundqualifikation** – IHK-da (Sənaye və Ticarət Palatası) uzun nəzəri və praktiki imtahan.
 - **Beschleunigte Grundqualifikation** (sürətləndirilmiş əsas ixtisas) – **140 saatlıq** təlim və sonda IHK-da **90 dəqiqəlik** nəzəri test. Sürücülərin əksəriyyəti bu yolu seçir.
 
-Sonra hər **5 ildən bir 35 saatlıq** təkmilləşdirmə kursu (Weiterbildung) keçmək lazımdır. İmtahanın hansı dildə verilə biləcəyi IHK-dan asılıdır [YOXLA: IHK-larda kod 95 imtahanının dili]. Buna görə alman dilini erkən öyrənməyə başlamaq vacibdir.
+Sonra hər **5 ildən bir 35 saatlıq** təkmilləşdirmə kursu (Weiterbildung) keçmək lazımdır. 2026-cı ilin avqustunda peşəkar sürücülərin ixtisası haqqında əsasnamə (BKrFQV) dəyişdikdən sonra IHK-lar nəzəri imtahanı alman dilindən başqa doqquz dildə də qəbul edir: alban, ingilis, ərəb, xorvat, polyak, rumın, **rus**, **türk** və ukrayna. Tərcümə yalnız sual və cavablara aiddir; qeydiyyat, dəvət və təlimat alman dilində aparılır. Azərbaycan dili siyahıda yoxdur, amma bir çox sürücü üçün rus və ya türk dili yaxşı seçimdir. Konkret IHK bu dilləri hansı tarixdən təklif etdiyini qeydiyyat zamanı bildirir. Gündəlik iş üçün yenə də alman dilini erkən öyrənməyə başlamaq vacibdir.
 
 ## Hansı viza: § 19c və § 24a BeschV
 
-Peşəkar sürücülər üçün əsas hüquqi əsas Yaşayış Qanununun **§ 19c (1)** maddəsi və Məşğulluq Əsasnaməsinin (BeschV) **§ 24a** maddəsidir. Bu yolda Federal Məşğulluq Agentliyinin razılığı tələb olunur: agentlik iş şərtlərinin və maaşın alman işçiləri ilə müqayisədə pis olmadığını yoxlayır. Vəsiqə və kod 95-in Almaniyada əldə edilə bilməsi və prioritet yoxlamanın (Vorrangprüfung) tətbiq olunub-olunmaması ilə bağlı cari qaydalar müraciətdən əvvəl dəqiqləşdirilməlidir [YOXLA: § 24a BeschV-nin cari mətni].
+Peşəkar sürücülər üçün əsas hüquqi əsas Yaşayış Qanununun **§ 19c (1)** maddəsi və Məşğulluq Əsasnaməsinin (BeschV) **§ 24a** maddəsidir. Bu yolda Federal Məşğulluq Agentliyinin razılığı tələb olunur: agentlik iş şərtlərinin və maaşın alman işçiləri ilə müqayisədə pis olmadığını yoxlayır. § 24a BeschV prioritet yoxlaması (Vorrangprüfung) nəzərdə tutmur. AB vəsiqəsi və kod 95 artıq varsa, § 24a Abs. 1 tətbiq olunur. § 24a Abs. 2-yə görə hər ikisini gəlişdən sonra Almaniyada da əldə etmək olar: əmək müqaviləsi sizi təlimdə iştiraka məcbur edir, vəsiqə və ixtisas **15 ay** ərzində alına bilməlidir, sonra eyni işəgötürəndə konkret sürücü iş yeri olmalıdır və siz öz ölkənizin müvafiq sürücülük vəsiqəsini təqdim edirsiniz. Bu halda razılıq 15 aya qədər, əsaslı hallarda isə daha 6 aya qədər verilir.
 
 Ayrıca peşə təhsiliniz varsa və Azərbaycanda dövlət tərəfindən tanınırsa, təcrübəyə əsaslanan yol (**§ 19c (2)**) də mümkün ola bilər. Hansı yolun sizə uyğun olduğunu [viza müqayisəsi](/compare-visas) səhifəsində və [uyğunluq testində](/eligibility) yoxlaya bilərsiniz. Viza prosesi barədə ümumi məlumat üçün [Almaniya iş vizası bələdçisinə](guide:work-visa) baxın.
 
@@ -130,7 +130,7 @@ Biz Bakı və Berlin ofislərimizlə C/CE sürücülərini alman ekspeditor şir
 
 Peşə və ya ali təhsiliniz Almaniyada tanınıbsa, siz qanun üzrə "Fachkraft" sayılırsınız. 1 mart 2024-cü ildən tanınmış mütəxəssis yalnız ixtisasına uyğun deyil, istənilən ixtisaslı işdə çalışa bilər. Adətən Federal Məşğulluq Agentliyinin (BA) razılığı lazımdır, lakin prioritet yoxlaması aparılmır. Tanınma prosesi barədə [diplomun tanınması bələdçisində](guide:anerkennung) və [Anerkennung səhifəsində](/anerkennung) oxuyun.
 
-45 yaşdan yuxarı şəxslər ilk dəfə § 18a və ya § 18b icazəsi alırsa, ya illik ən azı **55.770 € brutto** maaş [YOXLA: 2026 üçün 55 % BBG həddi], ya da kifayət qədər pensiya təminatı sübut etməlidirlər.
+45 yaşdan yuxarı şəxslər ilk dəfə § 18a və ya § 18b icazəsi alırsa, ya illik ən azı **55.770 € brutto** maaş (2026-cı ildə pensiya sığortası tavanının 55 %-i), ya da kifayət qədər pensiya təminatı sübut etməlidirlər.
 
 ### AB Mavi Kartı
 
@@ -142,7 +142,7 @@ Diplomunuzun Almaniyada tanınması lazım deyil, əgər:
 
 - son 5 ildə ən azı **2 il** peşə təcrübəniz varsa;
 - ixtisasınız Azərbaycanda dövlət tərəfindən tanınırsa (ən azı 2 illik peşə təhsili və ya ali təhsil);
-- maaş ildə ən azı **45.630 €** brutto-dursa [YOXLA: 2026 üçün 45 % BBG həddi] **və ya** işəgötürən kollektiv müqaviləyə bağlıdır və tarif maaşı ödəyir.
+- maaş ildə ən azı **45.630 €** brutto-dursa (2026-cı ildə pensiya sığortası tavanının 45 %-i) **və ya** işəgötürən kollektiv müqaviləyə bağlıdır və tarif maaşı ödəyir.
 
 ### Chancenkarte və Ausbildung
 
@@ -165,7 +165,7 @@ Sənədlər **and içmiş tərcüməçi** tərəfindən alman dilinə tərcümə
 
 ## Bakı səfirliyinə müraciət
 
-Azərbaycanda yaşayanlar milli vizaya Almaniyanın Bakıdakı səfirliyində müraciət edir. Görüş təyini kanalı vaxtaşırı dəyişir [YOXLA: Bakı səfirliyində cari görüş kanalı – Auslandsportal və ya xidmət təminatçısı]; aktual məlumatı həmişə [baku.diplo.de](https://baku.diplo.de) saytında yoxlayın. Milli viza rüsumu **75 €**-dur.
+Azərbaycanda yaşayanlar milli vizaya Almaniyanın Bakıdakı səfirliyində müraciət edir. Viza kateqoriyasından asılı olaraq müraciət Almaniya XİN-in onlayn portalı (digital.diplo.de) və ya səfirliyin xarici xidmət təminatçısı vasitəsilə edilir; sizin kateqoriyanız üçün hansı yolun keçərli olduğunu [baku.diplo.de](https://baku.diplo.de) saytındakı müvafiq məlumat vərəqəsində yoxlayın. Milli viza rüsumu **75 €**-dur.
 
 Görüşə bütün orijinalları və surətləri aparın. İş yeriniz, vəzifəniz, maaşınız və dil biliyiniz barədə suallar verilə bilər. Hazırlıq üçün [viza dəstəyi xidmətimizə](/services/visa-support) baxın.
 
@@ -173,7 +173,7 @@ Görüşə bütün orijinalları və surətləri aparın. İş yeriniz, vəzifə
 
 Sənədlərin hazırlanmasından vizanın verilməsinə qədər adətən bir neçə ay keçir; ən uzun mərhələlər çox vaxt diplomun tanınması və səfirlikdə görüş gözləməsidir.
 
-Alman işəgötürəni **sürətləndirilmiş ixtisaslı işçi proseduru (§ 81a AufenthG)** ilə prosesi qısalda bilər. Bu halda işəgötürən sizin etibarnamənizlə Almaniyada xarici işlər idarəsinə (Ausländerbehörde) müraciət edir, idarə tanınmanı və BA razılığını koordinasiya edir və ilkin razılıq (Vorabzustimmung) verir. Bundan sonra səfirlik adətən **3 həftə ərzində** görüş təklif edir və tam müraciətdən sonra əksər hallarda **3 həftə ərzində** qərar verir. Prosedurun rüsumu **411 €**-dur [YOXLA: § 81a rüsumu 2026] və adətən işəgötürən tərəfindən ödənilir.
+Alman işəgötürəni **sürətləndirilmiş ixtisaslı işçi proseduru (§ 81a AufenthG)** ilə prosesi qısalda bilər. Bu halda işəgötürən sizin etibarnamənizlə Almaniyada xarici işlər idarəsinə (Ausländerbehörde) müraciət edir, idarə tanınmanı və BA razılığını koordinasiya edir və ilkin razılıq (Vorabzustimmung) verir. Bundan sonra səfirlik adətən **3 həftə ərzində** görüş təklif edir və tam müraciətdən sonra əksər hallarda **3 həftə ərzində** qərar verir. Prosedurun rüsumu **411 €**-dur (§ 47 Abs. 1 Nr. 15 AufenthV) və adətən işəgötürən tərəfindən ödənilir.
 
 ## Viza alındıqdan sonra
 

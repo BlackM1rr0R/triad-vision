@@ -28,7 +28,7 @@ To drive a truck commercially in Germany you need an **EU or German licence of c
 
 ### Converting the licence (Führerscheinumschreibung)
 
-Germany lists the countries whose licences can be converted with simplified rules in Annex 11 of the Driving Licence Regulation (FeV). Azerbaijan is not on that list, so converting an Azerbaijani licence normally means passing the **theory and practical exams in Germany** [CHECK: Annex 11 status of Azerbaijan and exam requirements per licence class]. For classes C and CE you also need a **medical examination and an eye test**.
+Germany lists the countries whose licences can be converted with simplified rules in Annex 11 of the Driving Licence Regulation (FeV). Azerbaijan is not on that list, so converting an Azerbaijani licence means passing the **theory and practical exams in Germany** for every class; driving school lessons are not compulsory (§ 31 (2) FeV). For classes C and CE you also need a **medical examination and an eye test**.
 
 In practice, many employers organise and pay for driving school lessons and exam fees, sometimes in exchange for a commitment to stay with the company for a certain time. Ask about this clearly before you sign a contract.
 
@@ -39,13 +39,13 @@ Under the German Professional Drivers' Qualification Act (BKrFQG), anyone who dr
 - **Grundqualifikation:** a theory and practical exam at the Chamber of Industry and Commerce (IHK).
 - **Beschleunigte Grundqualifikation:** **140 hours of training** at an approved training centre, followed by a **90-minute theory test** at the IHK.
 
-After that, drivers must complete **35 hours of periodic training every 5 years** to keep Code 95. Whether the IHK exam can be taken in a language other than German depends on the chamber [CHECK: exam languages offered by the IHK for the Code 95 test].
+After that, drivers must complete **35 hours of periodic training every 5 years** to keep Code 95. Since an amendment to the professional driver qualification regulation (BKrFQV) in August 2026, the IHKs offer the theory exam in German and nine other languages: Albanian, English, Standard Arabic, Croatian, Polish, Romanian, Russian, Turkish and Ukrainian. Only the questions and answers are translated; registration, invitation and instructions remain in German. Azerbaijani is not on the list, but Russian or Turkish works well for many drivers. Your IHK tells you from which date it offers the languages.
 
 You also need a **driver card (Fahrerkarte)** for the digital tachograph, issued by the German licensing authority.
 
 ## Which visa applies to truck drivers
 
-Professional drivers from non-EU countries usually come under **§ 19c (1) of the Residence Act (AufenthG) together with § 24a of the Employment Regulation (BeschV)**. The Federal Employment Agency (Bundesagentur für Arbeit, BA) has to approve the employment. The exact conditions – for example whether the BA checks for priority candidates, and whether the licence and qualification can be obtained in Germany after arrival – are set out in § 24a BeschV [CHECK: current wording of § 24a BeschV, priority check and acquisition of licence/Code 95 in Germany].
+Professional drivers from non-EU countries usually come under **§ 19c (1) of the Residence Act (AufenthG) together with § 24a of the Employment Regulation (BeschV)**. The Federal Employment Agency (Bundesagentur für Arbeit, BA) has to approve the employment. There is no priority check under § 24a BeschV. Drivers who already hold the EU licence and Code 95 come under § 24a (1). Under § 24a (2) you can also obtain both in Germany after arrival: the employment contract must oblige you to take part in the training, the licence and qualification must be obtainable within **15 months**, the same employer must offer you a concrete driving job afterwards, and you must prove that you hold the relevant licence from your home country. Approval is then granted for up to 15 months, and in justified cases for up to six more months.
 
 Legally, German language skills are not the main criterion, but employers expect you to communicate at the depot, with customers and with the police. **A2 German** is a realistic minimum.
 
@@ -149,7 +149,7 @@ You can compare the routes side by side on our [visa comparison page](/compare-v
 
 If your vocational qualification or university degree is **recognised in Germany**, you count as a skilled worker (Fachkraft). Since 1 March 2024 you may take **any qualified job**, not only one that matches your training. The Federal Employment Agency (BA) usually has to approve the job, but it does not check whether a German or EU candidate is available. How recognition works is explained in our [recognition guide](guide:anerkennung) and on the [Anerkennung page](/anerkennung).
 
-If you are **45 or older** and apply for your first skilled worker permit, you need a salary of at least 55 % of the pension insurance ceiling – **55,770 € per year in 2026** [CHECK: 2026 threshold for applicants aged 45+] – or proof of adequate pension provision.
+If you are **45 or older** and apply for your first skilled worker permit, you need a salary of at least 55 % of the pension insurance ceiling – **55,770 € per year in 2026** (55 % of 101,400 €) – or proof of adequate pension provision.
 
 ### EU Blue Card (§ 18g)
 
@@ -161,7 +161,7 @@ This route does not require recognition in Germany. You need:
 
 - at least **2 years of professional experience** in the last 5 years,
 - a qualification **recognised by your home country** (vocational training of at least 2 years or a degree), and
-- a salary of at least **45,630 € per year in 2026** [CHECK: 2026 threshold for § 19c (2)] **or** an employer bound by a collective agreement that pays the agreed wage.
+- a salary of at least **45,630 € per year in 2026** (45 % of the pension insurance ceiling) **or** an employer bound by a collective agreement that pays the agreed wage.
 
 ### Opportunity Card (§ 20a)
 
@@ -192,18 +192,18 @@ Azerbaijani civil status documents (birth or marriage certificates) need an **ap
 1. **Choose the route** – based on your qualification, job offer and salary. The [eligibility test](/eligibility) gives a first indication.
 2. **Start recognition early** if your route requires it – it is often the longest step.
 3. **Get the job offer and contract** – the employer fills in the BA form.
-4. **Book the visa appointment** – check the current appointment channel on the [embassy website](https://baku.diplo.de) [CHECK: current appointment channel for national visas in Baku, e.g. Auslandsportal or service provider].
+4. **Book the visa appointment** – depending on the visa category, you apply through the Federal Foreign Office's online portal (digital.diplo.de) or through the embassy's external service provider; the information sheet for your category on the [embassy website](https://baku.diplo.de) tells you which applies.
 5. **Submit the application** – the national (D) visa fee is **75 €**.
 6. **Wait for the decision** – the embassy involves the BA and, in some cases, the local foreigners' office in Germany.
 7. **Travel and register** – after arrival you register your address and apply for the residence permit before the visa expires.
 
 ## How long does it take?
 
-Processing times vary by route, embassy workload and how complete your file is. Recognition can take several months on its own. As a rough planning figure, allow **several months from job offer to visa** [CHECK: current typical processing time at the embassy in Baku].
+Processing times vary by route, embassy workload and how complete your file is. Recognition can take several months on its own. In our experience the embassy stage alone takes a few weeks to a few months, so as a rough planning figure allow **several months from job offer to visa**. Nobody can guarantee these times.
 
 ### The accelerated procedure (§ 81a)
 
-Employers can speed things up with the **accelerated skilled worker procedure**. The employer applies at the foreigners' office in Germany with your power of attorney. The authority coordinates recognition (target: a decision within 2 months of a complete file) and BA approval (1 week). The embassy then offers an appointment within **3 weeks** and normally decides within **3 weeks** of the complete application. The fee is **411 €** [CHECK: current § 81a fee], paid by the employer in most cases, plus the visa fee.
+Employers can speed things up with the **accelerated skilled worker procedure**. The employer applies at the foreigners' office in Germany with your power of attorney. The authority coordinates recognition (target: a decision within 2 months of a complete file) and BA approval (1 week). The embassy then offers an appointment within **3 weeks** and normally decides within **3 weeks** of the complete application. The fee is **411 €** (§ 47 (1) no. 15 AufenthV), paid by the employer in most cases, plus the visa fee.
 
 ## Family and long-term perspective
 
@@ -276,7 +276,7 @@ We do not publish success rates or candidate counts: what matters is whether a s
 
 ### Recognition or experience?
 
-For § 18a and § 18b the foreign qualification must be **recognised in Germany**. Recognition is handled by different authorities depending on the profession and the federal state; regulated professions such as nursing always need it. Where recognition would take too long, the **experience route (§ 19c (2))** can be an alternative: at least 2 years of experience in the last 5 years, a qualification recognised in the home country, and a salary of at least **45,630 € per year in 2026** [CHECK: 2026 threshold for § 19c (2)] – or a collective agreement that the employer applies.
+For § 18a and § 18b the foreign qualification must be **recognised in Germany**. Recognition is handled by different authorities depending on the profession and the federal state; regulated professions such as nursing always need it. Where recognition would take too long, the **experience route (§ 19c (2))** can be an alternative: at least 2 years of experience in the last 5 years, a qualification recognised in the home country, and a salary of at least **45,630 € per year in 2026** (45 % of the pension insurance ceiling) – or a collective agreement that the employer applies.
 
 For nurses, the **recognition partnership (§ 16d (3))** lets the candidate come with A2 German and work while completing recognition, provided the employer commits to supporting the procedure.
 
@@ -297,27 +297,27 @@ With the employee's power of attorney, the employer can apply for the **accelera
 - **BA approval** – within 1 week,
 - the **pre-approval** sent to the embassy.
 
-The embassy offers a visa appointment within **3 weeks** and normally decides within **3 weeks** of a complete application. The fee is **411 €** [CHECK: current § 81a fee]. For many employers this is the most reliable way to plan a start date.
+The embassy offers a visa appointment within **3 weeks** and normally decides within **3 weeks** of a complete application. The fee is **411 €** (§ 47 (1) no. 15 AufenthV). For many employers this is the most reliable way to plan a start date.
 
 ## Timeline: what to expect
 
-The total time from candidate selection to the first working day depends heavily on the route:
+The total time from candidate selection to the first working day depends heavily on the route. The ranges below are based on experience, not guarantees:
 
 | Route | Typical duration from selection to start |
 |---|---|
-| Blue Card / § 18b with recognised degree | [CHECK: typical duration] |
-| § 18a with recognition still to do | [CHECK: typical duration] |
-| § 19c (2) experience route | [CHECK: typical duration] |
-| Drivers under § 24a BeschV | [CHECK: typical duration] |
+| Blue Card / § 18b with recognised degree | often around 2–4 months |
+| § 18a with recognition still to do | often 6–12 months, sometimes longer |
+| § 19c (2) experience route | often around 3–6 months |
+| Drivers under § 24a BeschV | often 2–5 months to arrival, then several months for licence conversion and Code 95 (up to 15 months allowed under § 24a (2)) |
 
-As a general orientation, plan for **3 to 9 months** [CHECK: overall planning range], with recognition and German courses being the longest steps.
+As a general orientation, plan for **3 to 9 months** in most cases, longer if recognition is still needed, with recognition and German courses being the longest steps.
 
 ## Cost items to budget
 
 We do not publish fixed amounts here because they depend on the route, the authority and your choices. Typical cost items on the employer side:
 
 - **§ 81a fee**, if you use the accelerated procedure
-- **Recognition fees** – these vary by authority [CHECK: typical range of recognition fees]
+- **Recognition fees** – usually several hundred euros; the exact fee is set by the competent authority
 - **Translations** of diplomas and certificates
 - **Language courses** before and after arrival
 - **Relocation support** – flight, first accommodation, deposit

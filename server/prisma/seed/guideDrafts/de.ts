@@ -3,7 +3,7 @@ import type { DraftKey } from './index.js';
 
 /**
  * German drafts for employers (Arbeitgeber, Personalabteilungen, Inhaber). Unpublished until the owner has
- * checked every "[PRÜFEN: …]" placeholder in Admin → Guides.
+ * checked every PRÜFEN review placeholder (see src/lib/guides/placeholders.ts) in Admin → Guides.
  */
 export const DE_DRAFTS: Partial<Record<DraftKey, GuidePageSeed>> = {
   'employer-azerbaijan': {
@@ -24,7 +24,7 @@ Welcher Weg passt, hängt vor allem von der Qualifikation der Person und von der
 | § 18a AufenthG | Fachkräfte mit Berufsausbildung | In Deutschland anerkannter Berufsabschluss, Arbeitsplatzangebot |
 | § 18b AufenthG | Fachkräfte mit Hochschulabschluss | Anerkannter oder vergleichbarer Abschluss, qualifizierte Stelle |
 | § 18g AufenthG (Blaue Karte EU) | Akademikerinnen und Akademiker | Gehalt ab 50.700 € brutto/Jahr, in Engpassberufen und für Berufsanfänger ab 45.934,20 € |
-| § 19c Abs. 2 AufenthG | Berufserfahrene ohne deutsche Anerkennung | Mind. 2 Jahre Erfahrung in den letzten 5 Jahren, im Herkunftsstaat anerkannter Abschluss, Gehalt ab 45.630 € [PRÜFEN: 45.630 € = 45 % der BBG RV 2026] oder Tarifbindung |
+| § 19c Abs. 2 AufenthG | Berufserfahrene ohne deutsche Anerkennung | Mind. 2 Jahre Erfahrung in den letzten 5 Jahren, im Herkunftsstaat anerkannter Abschluss, Gehalt ab 45.630 € (2026: 45 % der Beitragsbemessungsgrenze der Rentenversicherung) oder Tarifbindung |
 | § 19c Abs. 1 i. V. m. BeschV | Bestimmte Beschäftigungen, z. B. Berufskraftfahrer | Je nach Vorschrift der Beschäftigungsverordnung |
 | § 16a / § 16d AufenthG | Auszubildende / Anerkennung in Deutschland | Ausbildungsvertrag bzw. Anerkennungsmaßnahme oder Anerkennungspartnerschaft |
 
@@ -32,7 +32,7 @@ Seit dem 1. März 2024 dürfen anerkannte Fachkräfte jede qualifizierte Beschä
 
 ### Besonderheit ab 45 Jahren
 
-Wer mit 45 Jahren oder älter erstmals einen Titel als Fachkraft erhält, muss ein Gehalt von mindestens 55 % der Beitragsbemessungsgrenze der Rentenversicherung erreichen – 2026 rund 55.770 € brutto im Jahr [PRÜFEN: 55.770 € = 55 % der BBG RV 2026] – oder eine angemessene Altersversorgung nachweisen.
+Wer mit 45 Jahren oder älter erstmals einen Titel als Fachkraft erhält, muss ein Gehalt von mindestens 55 % der Beitragsbemessungsgrenze der Rentenversicherung erreichen – 2026 sind das 55.770 € brutto im Jahr (55 % von 101.400 €) – oder eine angemessene Altersversorgung nachweisen.
 
 Einen Vergleich der Wege finden Sie auf unserer Seite [Visa vergleichen](/compare-visas); zur Blauen Karte gibt es einen eigenen [Gehaltscheck](/blue-card-check).
 
@@ -43,18 +43,18 @@ Einen Vergleich der Wege finden Sie auf unserer Seite [Visa vergleichen](/compar
 3. **Anerkennung prüfen:** Ist der Beruf reglementiert (z. B. Pflege) oder wird für § 18a/§ 18b eine Anerkennung benötigt? Bei § 19c Abs. 2 entfällt das deutsche Anerkennungsverfahren.
 4. **Arbeitsvertrag oder verbindliches Angebot** sowie das Formular „Erklärung zum Beschäftigungsverhältnis" für die BA.
 5. **Optional: beschleunigtes Fachkräfteverfahren nach § 81a** bei der zuständigen Ausländerbehörde.
-6. **Visumantrag** der Fachkraft bei der Deutschen Botschaft in Baku (nationales Visum, Gebühr 75 €). Der Terminweg kann sich ändern [PRÜFEN: aktueller Terminweg der Botschaft Baku].
+6. **Visumantrag** der Fachkraft bei der Deutschen Botschaft in Baku (nationales Visum, Gebühr 75 €). Je nach Visumkategorie läuft der Antrag über das Auslandsportal des Auswärtigen Amts (digital.diplo.de) oder über einen externen Dienstleister der Botschaft; welcher Weg gilt, steht im jeweiligen Merkblatt auf [baku.diplo.de](https://baku.diplo.de).
 7. **Einreise und Start:** Wohnung, Anmeldung, Krankenkasse, Konto und Aufenthaltstitel bei der Ausländerbehörde vor Ablauf des Visums.
 
 ### Wie lange dauert es?
 
-Rechnen Sie je nach Weg mit **3 bis 9 Monaten** von der Auswahl bis zum ersten Arbeitstag [PRÜFEN: typische Dauer je Weg und aktuelle Wartezeiten Botschaft Baku]. Den größten Einfluss haben Anerkennungsverfahren, Sprachstand der Kandidaten und die Terminlage der Botschaft. Mit dem beschleunigten Fachkräfteverfahren werden die Behördenschritte an feste Fristen gebunden – mehr dazu im [Leitfaden zu § 81a](guide:fast-track-81a).
+Rechnen Sie erfahrungsgemäß je nach Weg mit **3 bis 9 Monaten** von der Auswahl bis zum ersten Arbeitstag; ist zuerst ein Anerkennungsverfahren nötig, oft auch länger. Garantieren kann diese Zeiten niemand. Den größten Einfluss haben Anerkennungsverfahren, Sprachstand der Kandidaten und die Terminlage der Botschaft. Mit dem beschleunigten Fachkräfteverfahren werden die Behördenschritte an feste Fristen gebunden – mehr dazu im [Leitfaden zu § 81a](guide:fast-track-81a).
 
 ## Kostenpositionen im Überblick
 
 Feste Gesamtbeträge lassen sich seriös nicht nennen, weil sie von Beruf, Weg und Umfang der Unterstützung abhängen. Planen Sie folgende Positionen ein:
 
-- **Behördengebühren:** Gebühr für das beschleunigte Fachkräfteverfahren (falls genutzt), Visumgebühr, Gebühren der Anerkennungsstelle [PRÜFEN: Gebühren der zuständigen Anerkennungsstelle].
+- **Behördengebühren:** Gebühr für das beschleunigte Fachkräfteverfahren (falls genutzt), Visumgebühr, Gebühren der Anerkennungsstelle (in der Regel mehrere hundert Euro; die genaue Höhe legt die zuständige Stelle fest).
 - **Übersetzungen und Beglaubigungen:** Zeugnisse, Diplome, ggf. Apostille für Personenstandsurkunden.
 - **Sprachförderung:** Kurse bis zum geforderten Niveau, später berufsbezogenes Deutsch.
 - **Anreise und Unterkunft:** Flug, ggf. Übergangswohnung, Kaution (gesetzlich höchstens drei Nettokaltmieten).
@@ -121,7 +121,7 @@ Alle Angaben dienen der Orientierung. Maßgeblich sind die Entscheidungen von Au
 
 ## Rechtsgrundlage: § 19c AufenthG und § 24a BeschV
 
-Für Berufskraftfahrer aus Drittstaaten gibt es in der Beschäftigungsverordnung eine eigene Regelung: **§ 24a BeschV**. Der Aufenthaltstitel wird nach **§ 19c Abs. 1 AufenthG** erteilt, die Bundesagentur für Arbeit muss zustimmen. Voraussetzung ist im Kern, dass der Fahrer die in der EU erforderliche Fahrerlaubnis und Berufskraftfahrerqualifikation besitzt oder diese in Deutschland erwirbt [PRÜFEN: aktuelle Fassung § 24a BeschV – Vorrangprüfung und Erwerb von Fahrerlaubnis/Qualifikation in Deutschland].
+Für Berufskraftfahrer aus Drittstaaten gibt es in der Beschäftigungsverordnung eine eigene Regelung: **§ 24a BeschV**. Der Aufenthaltstitel wird nach **§ 19c Abs. 1 AufenthG** erteilt, die Bundesagentur für Arbeit muss zustimmen. Voraussetzung ist im Kern, dass der Fahrer die in der EU erforderliche Fahrerlaubnis und Berufskraftfahrerqualifikation besitzt (§ 24a Abs. 1 BeschV) oder diese in Deutschland erwirbt (§ 24a Abs. 2 BeschV). Für den zweiten Fall muss der Arbeitsvertrag zur Teilnahme an den nötigen Maßnahmen verpflichten, Fahrerlaubnis und Qualifikation müssen innerhalb von **15 Monaten** erreichbar sein, danach muss ein konkretes Arbeitsplatzangebot beim selben Arbeitgeber bestehen, und der Fahrer muss die einschlägige Fahrerlaubnis seines Herkunftslandes nachweisen. Die Zustimmung wird dann für bis zu 15 Monate erteilt, im begründeten Einzelfall für bis zu sechs weitere Monate. Eine Vorrangprüfung sieht § 24a BeschV nicht vor.
 
 Wichtig für Ihre Planung: Die Zustimmung der BA bezieht sich auf einen konkreten Arbeitsplatz mit konkreten Bedingungen. Lohn und Arbeitsbedingungen müssen denen vergleichbarer inländischer Fahrer entsprechen.
 
@@ -129,7 +129,7 @@ Wichtig für Ihre Planung: Die Zustimmung der BA bezieht sich auf einen konkrete
 
 Ein ausländischer Führerschein berechtigt nach Begründung des ordentlichen Wohnsitzes in Deutschland nur für **sechs Monate** zum Fahren (§ 29 FeV). Für die gewerbliche Güterbeförderung reicht das nicht: Hier brauchen Fahrer eine EU-Fahrerlaubnis der Klasse C/CE mit eingetragener Schlüsselzahl 95.
 
-Aserbaidschan gehört nicht zu den Staaten der Anlage 11 FeV. Für die Umschreibung eines aserbaidschanischen Führerscheins sind deshalb **theoretische und praktische Prüfungen** in Deutschland erforderlich [PRÜFEN: Aserbaidschan nicht in Anlage 11 FeV; Prüfungsumfang je Klasse]. Hinzu kommen für die Klassen C/CE:
+Aserbaidschan gehört nicht zu den Staaten der Anlage 11 FeV. Für die Umschreibung eines aserbaidschanischen Führerscheins sind deshalb für jede Klasse **theoretische und praktische Prüfungen** in Deutschland erforderlich; eine Pflichtausbildung in der Fahrschule ist dabei nicht vorgeschrieben (§ 31 Abs. 2 FeV). Hinzu kommen für die Klassen C/CE:
 
 - ärztliche Untersuchung und Sehtest (Anlagen 5 und 6 FeV),
 - Erste-Hilfe-Nachweis,
@@ -146,7 +146,7 @@ Wer gewerblich Güter mit Fahrzeugen über 3,5 t befördert, braucht die Qualifi
 | Grundqualifikation | Umfassende Prüfung ohne Pflichtunterricht | Theoretische und praktische Prüfung bei der IHK |
 | Beschleunigte Grundqualifikation | 140 Stunden Unterricht in einer anerkannten Ausbildungsstätte | 90-minütige theoretische Prüfung bei der IHK |
 
-In der Praxis wählen die meisten Unternehmen die **beschleunigte Grundqualifikation**. Danach gilt: alle fünf Jahre **35 Stunden Weiterbildung**. In welchen Sprachen die IHK die Prüfung abnimmt, sollten Sie vorab klären [PRÜFEN: Prüfungssprache der IHK für die beschleunigte Grundqualifikation].
+In der Praxis wählen die meisten Unternehmen die **beschleunigte Grundqualifikation**. Danach gilt: alle fünf Jahre **35 Stunden Weiterbildung**. Seit der Änderung der Berufskraftfahrerqualifikationsverordnung im August 2026 bieten die IHKs die theoretische Prüfung neben Deutsch auch in neun Fremdsprachen an: Albanisch, Englisch, Hocharabisch, Kroatisch, Polnisch, Rumänisch, Russisch, Türkisch und Ukrainisch. Die Fremdsprache gilt nur für Prüfungsfragen und Antworten; Anmeldung, Einladung und Belehrung laufen auf Deutsch. Aserbaidschanisch ist nicht dabei, für viele Fahrer aus Aserbaidschan sind Russisch oder Türkisch aber eine gute Wahl. Ab wann Ihre IHK die Sprachen anbietet, nennt sie bei der Anmeldung.
 
 ### Fahrerkarte
 
@@ -158,7 +158,7 @@ Gesetzlich ist für § 24a BeschV kein bestimmtes Sprachniveau vorgeschrieben. P
 
 ## Typischer Zeitplan
 
-Ein möglicher Ablauf – die Dauer hängt stark von Behörden, Fahrschulen und IHK-Terminen ab [PRÜFEN: typische Dauer je Schritt]:
+Ein möglicher Ablauf – die Dauer hängt stark von Behörden, Fahrschulen und IHK-Terminen ab. Erfahrungsgemäß dauert das Visumverfahren einige Wochen bis wenige Monate, Umschreibung und beschleunigte Grundqualifikation nach der Einreise zusammen meist mehrere Monate; nach § 24a Abs. 2 BeschV muss beides innerhalb von 15 Monaten möglich sein:
 
 1. **Auswahl** erfahrener C/CE-Fahrer in Aserbaidschan, Prüfung von Führerschein, Fahrpraxis und Arbeitszeugnissen.
 2. **Arbeitsvertrag** und „Erklärung zum Beschäftigungsverhältnis" für die BA.
@@ -250,7 +250,7 @@ Typische Unterlagen für die Anerkennung:
 - Nachweise über Berufserfahrung,
 - Lebenslauf, Pass, beglaubigte Übersetzungen.
 
-Die Gebühren unterscheiden sich je nach Behörde [PRÜFEN: Gebühren der Anerkennungsstellen für Pflegeberufe]. Allgemeine Informationen bietet [Anerkennung in Deutschland](https://www.anerkennung-in-deutschland.de) sowie unser [Leitfaden zur Anerkennung](guide:anerkennung).
+Die Gebühren unterscheiden sich je nach Bundesland und Behörde; erfahrungsgemäß liegen sie bei mehreren hundert Euro, hinzu kommen Übersetzungen und Beglaubigungen. Die genaue Höhe nennt die zuständige Anerkennungsstelle. Allgemeine Informationen bietet [Anerkennung in Deutschland](https://www.anerkennung-in-deutschland.de) sowie unser [Leitfaden zur Anerkennung](guide:anerkennung).
 
 ## Defizitbescheid und Ausgleichsmaßnahmen
 
@@ -278,7 +278,7 @@ Für die Behördenschritte kann das [beschleunigte Fachkräfteverfahren](guide:f
 
 ## Sprachniveau
 
-Für die Berufserlaubnis verlangen die Behörden in der Regel **Deutsch auf B2**, häufig als pflegebezogene Prüfung [PRÜFEN: geforderter Sprachnachweis B2 je Bundesland]. Für den Einstieg über § 16d genügen oft niedrigere Niveaus, für die Anerkennungspartnerschaft A2. Planen Sie deshalb eine **Sprachförderung nach der Einreise** fest ein:
+Für die Berufserlaubnis verlangen die Behörden in der Regel **Deutsch auf B2** (GER), häufig nachgewiesen über eine pflegebezogene Fachsprachprüfung; welcher Nachweis genau anerkannt wird, legt die zuständige Landesbehörde fest. Für den Einstieg über § 16d genügen oft niedrigere Niveaus, für die Anerkennungspartnerschaft A2. Planen Sie deshalb eine **Sprachförderung nach der Einreise** fest ein:
 
 - Fachsprachkurs während der Arbeitszeit,
 - Praxisanleitung mit bewusst einfacher Sprache,
@@ -300,7 +300,7 @@ Für Einrichtungen, die Wert auf ethische Rekrutierung legen, lohnt ein Blick au
 
 ## Zeitplan realistisch planen
 
-Wie lange es von der Auswahl bis zur anerkannten Pflegefachkraft dauert, hängt von Sprachstand, Unterlagen, Bundesland und Ausgleichsmaßnahme ab [PRÜFEN: typische Gesamtdauer bis zur Anerkennung]. Ein grober Rahmen hilft bei der Planung:
+Wie lange es von der Auswahl bis zur anerkannten Pflegefachkraft dauert, hängt von Sprachstand, Unterlagen, Bundesland und Ausgleichsmaßnahme ab. Erfahrungsgemäß sollten Sie mit insgesamt **12 bis 24 Monaten** rechnen; mit guten Deutschkenntnissen und vollständigen Unterlagen geht es auch schneller. Ein grober Rahmen hilft bei der Planung:
 
 1. **Auswahl und Unterlagen:** Interviews, Prüfung von Diplom und Stundenübersicht, Übersetzungen.
 2. **Antrag auf Anerkennung** bei der Landesbehörde – direkt oder über das beschleunigte Verfahren.
@@ -369,14 +369,14 @@ Weitere Voraussetzungen:
 
 - **Deutschkenntnisse:** Gesetzlich „ausreichend"; in der Praxis erwarten Betriebe und Berufsschulen meist **B1**, weil Unterricht und Prüfungen auf Deutsch stattfinden.
 - **Schulabschluss:** Ein Schulabschluss wird vorausgesetzt; je nach Beruf und Betrieb kann eine Bewertung der Gleichwertigkeit sinnvoll sein.
-- **Lebensunterhalt:** Vergütung und weitere Mittel müssen einen jährlich festgelegten Referenzbetrag decken [PRÜFEN: Referenzbetrag Lebensunterhalt Ausbildung 2026]. Reicht die Vergütung nicht, kann der Bewerber die Lücke z. B. mit einem Sperrkonto schließen – das verzögert das Verfahren aber häufig.
+- **Lebensunterhalt:** Vergütung und weitere Mittel müssen einen jährlich festgelegten Referenzbetrag decken. Für eine betriebliche oder schulische Ausbildung sind das 2026 **959 € im Monat** (Bekanntmachung des BMI zu § 2 Abs. 3 AufenthG); liegen Miete und Nebenkosten unter 380 €, sinkt der Betrag entsprechend. Reicht die Vergütung nicht, kann der Bewerber die Lücke z. B. mit einem Sperrkonto schließen – das verzögert das Verfahren aber häufig.
 - **Krankenversicherung:** Ab Ausbildungsbeginn gesetzlich, davor meist eine Reisekrankenversicherung.
 
 Seit 2024 dürfen Auszubildende **bis zu 20 Stunden pro Woche** nebenher arbeiten.
 
 ## Vergütung und Lebensunterhalt
 
-Die gesetzliche Mindestausbildungsvergütung gilt für alle Auszubildenden – für Verträge mit Beginn 2026 im ersten Jahr [PRÜFEN: Mindestausbildungsvergütung 2026, 1. Jahr 724 €]. Tarifverträge liegen oft deutlich darüber, in der Pflege etwa bei rund 1.300 € und mehr im ersten Jahr.
+Die gesetzliche Mindestausbildungsvergütung gilt für alle Auszubildenden – für Ausbildungen mit Beginn 2026 im ersten Jahr **724 €** im Monat (2. Jahr 854 €, 3. Jahr 977 €, 4. Jahr 1.014 €). Tarifverträge liegen oft deutlich darüber, in der Pflege etwa bei rund 1.300 € und mehr im ersten Jahr.
 
 Für Bewerber aus dem Ausland ist die Vergütung doppelt wichtig: Sie entscheidet über den Nachweis des Lebensunterhalts und darüber, ob Miete und Alltag ohne Nebenjob finanzierbar sind. Prüfen Sie deshalb vor der Vertragsunterzeichnung:
 
@@ -395,7 +395,7 @@ Die meisten Ausbildungen beginnen am **1. August oder 1. September**. Das Visumv
 | 9–12 Monate | Bedarf festlegen, Ausbildungsplätze ausschreiben, Kandidatensuche |
 | 6–9 Monate | Interviews per Video, ggf. Probearbeit online oder Aufgaben |
 | 5–7 Monate | Vertrag unterschreiben, Eintragung bei der Kammer, BA-Unterlagen |
-| 3–5 Monate | Visumantrag in Baku (Gebühr 75 €) [PRÜFEN: aktuelle Wartezeiten Botschaft Baku] |
+| 3–5 Monate | Visumantrag in Baku (Gebühr 75 €); Termin- und Bearbeitungszeiten schwanken, erfahrungsgemäß einige Wochen bis wenige Monate |
 | 1–2 Monate | Wohnung klären, Ankunft planen |
 | Start | Anmeldung, Krankenkasse, Konto, Berufsschule |
 
@@ -434,7 +434,7 @@ Die zuständige Stelle – meist IHK oder Handwerkskammer – trägt den Ausbild
 
 ## Nach der Ausbildung
 
-Nach erfolgreichem Abschluss kann die Fachkraft direkt in eine Aufenthaltserlaubnis nach **§ 18a AufenthG** wechseln, wenn sie einen passenden Arbeitsplatz hat – idealerweise in Ihrem Betrieb. Ohne Arbeitsplatz ist eine Aufenthaltserlaubnis zur Arbeitsplatzsuche möglich [PRÜFEN: 12 Monate nach § 20 Abs. 3 Nr. 3 AufenthG]. Ein Übernahmeangebot rechtzeitig vor der Abschlussprüfung bindet gute Azubis.
+Nach erfolgreichem Abschluss kann die Fachkraft direkt in eine Aufenthaltserlaubnis nach **§ 18a AufenthG** wechseln, wenn sie einen passenden Arbeitsplatz hat – idealerweise in Ihrem Betrieb. Ohne Arbeitsplatz erhält sie eine Aufenthaltserlaubnis zur Arbeitsplatzsuche für bis zu **18 Monate** (§ 20 Abs. 1 Nr. 3, Abs. 2 AufenthG), wenn der Lebensunterhalt gesichert ist. Ein Übernahmeangebot rechtzeitig vor der Abschlussprüfung bindet gute Azubis.
 
 ## Unterstützung durch Triad Vision
 
@@ -499,16 +499,16 @@ Das Verfahren steht für mehrere Aufenthaltszwecke offen, unter anderem:
 3. **Anerkennung:** Ist eine Anerkennung nötig, leitet die Ausländerbehörde das Verfahren an die zuständige Stelle weiter. Diese soll innerhalb von **zwei Monaten** nach Vorliegen der vollständigen Unterlagen entscheiden.
 4. **Zustimmung der BA:** Die Bundesagentur für Arbeit entscheidet im beschleunigten Verfahren in der Regel innerhalb von **einer Woche**.
 5. **Vorabzustimmung:** Liegen alle Voraussetzungen vor, erteilt die Ausländerbehörde die Vorabzustimmung und leitet sie an die Auslandsvertretung weiter.
-6. **Visumtermin:** Die Botschaft soll der Fachkraft innerhalb von **drei Wochen** einen Termin anbieten [PRÜFEN: aktueller Terminweg der Botschaft Baku].
+6. **Visumtermin:** Die Botschaft soll der Fachkraft innerhalb von **drei Wochen** einen Termin anbieten (§ 31a AufenthV). Wie die Fachkraft den Termin anfragt, steht im Merkblatt der Botschaft auf [baku.diplo.de](https://baku.diplo.de).
 7. **Visumentscheidung:** Über den vollständigen Antrag entscheidet die Botschaft in der Regel innerhalb von **drei Wochen**.
 8. **Einreise:** Nach der Ankunft beantragt die Fachkraft den Aufenthaltstitel bei der örtlichen Ausländerbehörde.
 
 ## Kosten
 
-Für das beschleunigte Fachkräfteverfahren erhebt die Ausländerbehörde eine Gebühr von **411 €** [PRÜFEN: Gebühr 411 € nach § 47 AufenthV, Stand 2026]. Hinzu kommen:
+Für das beschleunigte Fachkräfteverfahren erhebt die Ausländerbehörde eine Gebühr von **411 €** (§ 47 Abs. 1 Nr. 15 AufenthV). Hinzu kommen:
 
 - die Visumgebühr der Fachkraft (75 €),
-- Gebühren des Anerkennungsverfahrens [PRÜFEN: Gebühren der zuständigen Anerkennungsstelle],
+- Gebühren des Anerkennungsverfahrens (in der Regel mehrere hundert Euro, festgelegt von der zuständigen Stelle),
 - Übersetzungen und Beglaubigungen,
 - ggf. Kosten für Sprachzertifikate.
 
@@ -537,7 +537,7 @@ Im beschleunigten Verfahren sind Sie die zentrale Ansprechperson der Behörde. B
 
 - **Unvollständige Unterlagen:** Fehlende Fächerübersichten oder Arbeitszeugnisse stoppen die Fristen.
 - **Unklare Stellenbeschreibung:** Tätigkeit, Gehalt und Arbeitszeit müssen in Vertrag und BA-Erklärung übereinstimmen.
-- **Gehalt unter der Schwelle:** Bei der Blauen Karte (2026: 50.700 € bzw. 45.934,20 €), beim erfahrungsbasierten Weg nach § 19c Abs. 2 (45.630 € [PRÜFEN: 45.630 € = 45 % der BBG RV 2026]) oder bei Bewerbern ab 45 Jahren (55.770 € [PRÜFEN: 55.770 € = 55 % der BBG RV 2026]) entscheidet das Bruttojahresgehalt. Prüfen Sie es mit unserem [Blaue-Karte-Check](/blue-card-check).
+- **Gehalt unter der Schwelle:** Bei der Blauen Karte (2026: 50.700 € bzw. 45.934,20 €), beim erfahrungsbasierten Weg nach § 19c Abs. 2 (45.630 €) oder bei Bewerbern ab 45 Jahren (55.770 €) entscheidet das Bruttojahresgehalt. Prüfen Sie es mit unserem [Blaue-Karte-Check](/blue-card-check).
 - **Falscher Ansprechpartner:** Zuständig ist die Behörde am Sitz der Betriebsstätte bzw. die zentrale Stelle des Landes – nicht automatisch die Behörde am Wohnort der Geschäftsführung.
 - **Vorabzustimmung verfallen lassen:** Die Fachkraft sollte den Visumtermin zeitnah wahrnehmen.
 
@@ -551,7 +551,7 @@ Wir bereiten die Unterlagen Ihrer künftigen Mitarbeitenden aus Aserbaidschan vo
       },
       {
         q: 'Wie viel kostet das beschleunigte Fachkräfteverfahren?',
-        a: 'Die Gebühr beträgt 411 Euro [PRÜFEN: Gebühr 411 € nach § 47 AufenthV, Stand 2026]. Hinzu kommen Visumgebühr, Anerkennungsgebühren und Übersetzungen.',
+        a: 'Die Gebühr beträgt 411 Euro (§ 47 Abs. 1 Nr. 15 AufenthV). Hinzu kommen Visumgebühr, Anerkennungsgebühren und Übersetzungen.',
       },
       {
         q: 'Welche Fristen gelten?',

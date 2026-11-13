@@ -9,8 +9,8 @@ import { EN_DRAFTS } from './en.js';
 /**
  * SEO landing guides written for the target queries in docs/SEO.md ("Content suggestions"), seeded as
  * UNPUBLISHED drafts (GuidePage.published = false): the owner checks the legal facts in Admin → Guides
- * (/admin/guides), removes every review placeholder ("[YOXLA: …]", "[ПРОВЕРИТЬ: …]", "[PRÜFEN: …]",
- * "[CHECK: …]" — the admin API refuses to publish a guide that still has one) and switches "Published" on.
+ * (/admin/guides), removes every review placeholder (YOXLA / ПРОВЕРИТЬ / PRÜFEN / CHECK in square brackets,
+ * see src/lib/guides/placeholders.ts — the admin API refuses to publish a guide that still has one) and switches "Published" on.
  * Until then a draft is not in the public API, the sitemap, the guide lists or the crawler HTML, and
  * /__seo/status answers 404 for its URL.
  *
@@ -61,8 +61,23 @@ const MARKER = 'seed.guideDrafts';
  * Inserts the missing drafts, unpublished. Idempotent and non-destructive: an existing (key, locale) row or a
  * slug already used in that language is never touched (whatever its state), and the marker setting remembers
  * every (key, locale) handled, so a draft the owner deletes is not re-created by a later deploy.
+ * One exception: a row that is still an unpublished draft with review placeholders (the owner has not
+ * finished it) is refreshed with the seed's text once the seed's version has none (facts checked in the
+ * repository), so the checked text reaches the admin without overwriting a reviewed page.
  * Returns the number of rows created.
  */
+/** Seed text over an unfinished draft row (unpublished, still with placeholders) when the seed text is clean. */
+const refreshDraft = async (prisma: PrismaClient, d: GuideDraft) => {
+  if (guidePlaceholders(d).length) return false;
+  const row = await prisma.guidePage.findUnique({
+    where: { key_locale: { key: d.key, locale: d.locale } },
+    select: { id: true, published: true, title: true, description: true, body: true, faq: true },
+  });
+  if (!row || row.published || !guidePlaceholders(row).length) return false;
+  await prisma.guidePage.update({ where: { id: row.id }, data: { title: d.title, description: d.description, body: d.body, faq: d.faq } });
+  return true;
+};
+
 export const seedGuideDrafts = async (prisma: PrismaClient) => {
   const row = await prisma.setting.findUnique({ where: { key: MARKER } });
   const prev = (row?.value as { done?: unknown } | null)?.done;
@@ -70,7 +85,10 @@ export const seedGuideDrafts = async (prisma: PrismaClient) => {
   let created = 0;
   for (const d of GUIDE_DRAFTS) {
     const id = `${d.key}:${d.locale}`;
-    if (done.has(id)) continue;
+    if (done.has(id)) {
+      await refreshDraft(prisma, d);
+      continue;
+    }
     const [existing, slugTaken] = await Promise.all([
       prisma.guidePage.findUnique({ where: { key_locale: { key: d.key, locale: d.locale } }, select: { id: true } }),
       prisma.guidePage.findUnique({ where: { locale_slug: { locale: d.locale, slug: d.slug } }, select: { id: true } }),
