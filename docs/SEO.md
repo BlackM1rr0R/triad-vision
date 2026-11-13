@@ -75,6 +75,12 @@ Write these as guides (`/guides`, one per language) or landing pages; each needs
 | de | Azubis aus dem Ausland gewinnen | "Auszubildende aus dem Ausland", "Azubis aus Drittstaaten" |
 | en / tr / uk | Translate the strongest az/ru guides first; tr/uk CMS texts (see owner action 5) | — |
 
+**Status:** these topics exist as UNPUBLISHED guide drafts (seed `server/prisma/seed/guideDrafts/`, keys driver-jobs,
+work-visa, salary-net, first-month, jobs-azerbaijan in az/ru (+ en for the first two), employer-azerbaijan (de, en),
+employer-drivers, employer-nursing, employer-apprentices, fast-track-81a (de)). Review them in Admin → Guides
+(`/admin/guides`): facts to confirm are marked `[YOXLA: …]` / `[ПРОВЕРИТЬ: …]` / `[PRÜFEN: …]` / `[CHECK: …]`, and the
+API refuses to publish a guide that still contains such a marker. Drafts are not in the sitemap and answer 404 to crawlers.
+
 ## Next steps (not done here)
 
 - **Performance**: LCP on mobile ~10 s (Lighthouse simulation) because the first paint waits for the JS bundle

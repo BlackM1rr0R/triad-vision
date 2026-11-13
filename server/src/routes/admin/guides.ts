@@ -7,6 +7,7 @@ import { audit } from '../../lib/audit.js';
 import { SEO_LOCALES } from '../../lib/seoCatalogue.js';
 import { renderGuideMarkdown } from '../../lib/guides/markdown.js';
 import { guidePath, localizedPath } from '../../lib/guides/service.js';
+import { guidePlaceholders } from '../../lib/guides/placeholders.js';
 
 /**
  * Admin CRUD for the topic guides (/admin/guides). One row per (key, locale); each language version has its
@@ -26,6 +27,11 @@ const schema = z.object({
   faq: z.array(faqItem).max(20).default([]),
   published: z.boolean().default(true),
 });
+
+/** A guide that still contains review placeholders ("[PRÜFEN: …]", see lib/guides/placeholders.ts) cannot go live. */
+const assertPublishable = (g: { published?: boolean; title?: string; description?: string; body?: string; faq?: unknown }) => {
+  if (g.published && guidePlaceholders(g).length) throw conflict('GUIDE_HAS_PLACEHOLDERS');
+};
 
 const uniqueError = (err: unknown) => {
   if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') {
@@ -67,6 +73,7 @@ adminGuidesRouter.post('/preview', async (req, res) => {
 
 adminGuidesRouter.post('/', async (req, res) => {
   const data = parse(schema, req.body);
+  assertPublishable(data);
   const item = await prisma.guidePage.create({ data }).catch((err) => {
     throw uniqueError(err);
   });
@@ -76,8 +83,9 @@ adminGuidesRouter.post('/', async (req, res) => {
 
 adminGuidesRouter.put('/:id', async (req, res) => {
   const data = parse(schema.partial(), req.body);
-  const exists = await prisma.guidePage.findUnique({ where: { id: req.params.id }, select: { id: true } });
+  const exists = await prisma.guidePage.findUnique({ where: { id: req.params.id }, select: { id: true, published: true, title: true, description: true, body: true, faq: true } });
   if (!exists) throw notFound('GUIDE_NOT_FOUND');
+  assertPublishable({ ...exists, ...data });
   const item = await prisma.guidePage.update({ where: { id: req.params.id }, data }).catch((err) => {
     throw uniqueError(err);
   });

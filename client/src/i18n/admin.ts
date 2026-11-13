@@ -323,6 +323,7 @@ const az = {
       daysCount_other: '{{count}} gün',
     },
     errors: {
+      GUIDE_HAS_PLACEHOLDERS: 'Bələdçidə hələ yoxlanmamış yer tutucular var ([YOXLA: …], [PRÜFEN: …], [ПРОВЕРИТЬ: …], [CHECK: …]). Faktları yoxlayıb onları silin, sonra dərc edin.',
       LICENSE_READ_ONLY: 'Lisenziyanın müddəti bitib: panel yalnız oxumaq rejimindədir. Lisenziyanı yeniləmək üçün platformanın sahibi ilə əlaqə saxlayın.',
       LICENSE_SEAT_LIMIT: 'Planınızdakı əməkdaş yerlərinin hamısı istifadə olunur. Yeni əməkdaş üçün başqa hesabı deaktiv edin və ya planı genişləndirin.',
       BRAND_IMAGE_INVALID: 'Şəkil oxunmadı: PNG, JPEG, WebP və ya SVG yükləyin.',
@@ -1634,6 +1635,7 @@ const de: typeof az = {
       daysCount_other: '{{count}} Tage',
     },
     errors: {
+      GUIDE_HAS_PLACEHOLDERS: 'Der Ratgeber enthält noch Prüfvermerke ([YOXLA: …], [PRÜFEN: …], [ПРОВЕРИТЬ: …], [CHECK: …]). Fakten prüfen, Vermerke entfernen, dann veröffentlichen.',
       LICENSE_READ_ONLY: 'Die Lizenz ist abgelaufen: das Panel ist schreibgeschützt. Wenden Sie sich zur Verlängerung an den Anbieter der Plattform.',
       LICENSE_SEAT_LIMIT: 'Alle Mitarbeiterplätze Ihres Plans sind belegt. Deaktivieren Sie ein anderes Konto oder erweitern Sie den Plan.',
       BRAND_IMAGE_INVALID: 'Bild nicht lesbar: bitte PNG, JPEG, WebP oder SVG hochladen.',
@@ -2945,6 +2947,7 @@ const en: typeof az = {
       daysCount_other: '{{count}} days',
     },
     errors: {
+      GUIDE_HAS_PLACEHOLDERS: 'The guide still contains review placeholders ([YOXLA: …], [PRÜFEN: …], [ПРОВЕРИТЬ: …], [CHECK: …]). Check the facts, remove them, then publish.',
       LICENSE_READ_ONLY: 'The licence has expired: the panel is read-only. Contact the platform provider to renew it.',
       LICENSE_SEAT_LIMIT: 'All staff seats of your plan are in use. Deactivate another account or upgrade the plan.',
       BRAND_IMAGE_INVALID: 'The image could not be read: upload a PNG, JPEG, WebP or SVG.',
@@ -4270,6 +4273,7 @@ const ru = {
       daysCount_other: '{{count}} дня',
     },
     errors: {
+      GUIDE_HAS_PLACEHOLDERS: 'В гайде остались пометки для проверки ([YOXLA: …], [PRÜFEN: …], [ПРОВЕРИТЬ: …], [CHECK: …]). Проверьте факты, удалите пометки и опубликуйте.',
       LICENSE_READ_ONLY: 'Срок лицензии истёк: панель доступна только для чтения. Для продления обратитесь к владельцу платформы.',
       LICENSE_SEAT_LIMIT: 'Все места сотрудников в вашем плане заняты. Деактивируйте другой аккаунт или расширьте план.',
       BRAND_IMAGE_INVALID: 'Не удалось прочитать изображение: загрузите PNG, JPEG, WebP или SVG.',
