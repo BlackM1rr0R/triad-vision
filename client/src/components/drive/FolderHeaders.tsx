@@ -4,7 +4,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import clsx from 'clsx';
-import { Ban, Briefcase, ExternalLink, FileSpreadsheet, FolderOpen, FolderPlus, Handshake, Pencil, Phone, Plus, Trash2, UserPlus, Users } from 'lucide-react';
+import { Ban, Briefcase, ExternalLink, FileSpreadsheet, FolderOpen, FolderPlus, Handshake, Info, Pencil, Phone, Plus, Trash2, UserPlus, Users } from 'lucide-react';
 import { api } from '@/lib/api';
 import { statusLabel } from '@/components/admin/labels';
 import { STATUS_TONE } from '@/lib/caseStatus';
@@ -15,6 +15,7 @@ import { DeletePartnerDialog } from '@/components/partners/DeletePartnerDialog';
 import { AddClientsDialog } from '@/components/partners/AddClientsDialog'; // hides already linked applications
 import { PartnerFormDialog } from '@/components/partners/PartnerForm';
 import { PartnerKeyInfo } from '@/components/partners/PartnerProfile';
+import { PartnerInfoDrawer } from '@/components/partners/PartnerInfoDrawer';
 import { useAuth } from '@/lib/auth';
 import { driveKeys, startDownload } from './api';
 import { sectionOf } from './fileIcons';
@@ -113,6 +114,7 @@ export const PartnersOverview = ({ items, onOpen }: { items: DriveItem[]; onOpen
   const [edit, setEdit] = useState<{ partner: Partner | null } | null>(null);
   const [assignTo, setAssignTo] = useState<Partner | null>(null);
   const [deleting, setDeleting] = useState<Partner | null>(null);
+  const [infoId, setInfoId] = useState<string | null>(null);
   // The listing of this section is the truth; the partner list's folderId covers the moment before it loads.
   const folderOf = (p: Partner) => items.find((i) => i.partner?.id === p.id)?.id ?? (items.length ? null : (p.folderId ?? null));
   /** A partner whose folder was deleted (or never made): restored from the bin or created again, then opened. */
@@ -156,9 +158,9 @@ export const PartnersOverview = ({ items, onOpen }: { items: DriveItem[]; onOpen
                 <div className="flex items-start gap-2">
                   <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-teal-50 text-sm font-bold text-teal-700 dark:bg-teal-500/15 dark:text-teal-300">{p.name.slice(0, 1).toUpperCase()}</span>
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-bold text-ink" title={p.name}>
+                    <button type="button" className="block max-w-full truncate text-left text-sm font-bold text-ink hover:underline" title={p.name} aria-haspopup="dialog" onClick={() => setInfoId(p.id)}>
                       {p.name}
-                    </p>
+                    </button>
                     <p className="truncate text-xs text-muted">{p.phone || p.email || '—'}</p>
                   </div>
                   {!p.active && <span className="shrink-0 rounded bg-surface px-1.5 py-px text-[10px] font-semibold text-muted">{t('drive.partner.inactive')}</span>}
@@ -181,6 +183,9 @@ export const PartnersOverview = ({ items, onOpen }: { items: DriveItem[]; onOpen
                       {creating ? <Spinner className="size-3.5" /> : <FolderPlus className="size-3.5" />} {t('drive.partner.noFolder')}
                     </button>
                   )}
+                  <button type="button" className="btn-secondary btn-sm !px-2" aria-haspopup="dialog" onClick={() => setInfoId(p.id)}>
+                    <Info className="size-3.5" /> {t('drive.partner.info')}
+                  </button>
                   <button type="button" className="btn-secondary btn-sm !px-2" onClick={() => setAssignTo(p)} title={t('drive.partner.assign')}>
                     <UserPlus className="size-3.5" />
                     <span className="sr-only">{t('drive.partner.assign')}</span>
@@ -204,6 +209,7 @@ export const PartnersOverview = ({ items, onOpen }: { items: DriveItem[]; onOpen
       <PartnerDialog open={!!edit} partner={edit?.partner ?? null} onClose={() => setEdit(null)} onSaved={(id) => id && onOpen(id)} />
       <AssignClientsDialog partner={assignTo} onClose={() => setAssignTo(null)} />
       <DeletePartnerDialog partner={deleting} onClose={() => setDeleting(null)} />
+      <PartnerInfoDrawer partnerId={infoId} onClose={() => setInfoId(null)} isAdmin={canDelete} />
     </div>
   );
 };
@@ -215,6 +221,7 @@ export const PartnerFolderHeader = ({ folder }: { folder: DriveItem }) => {
   const [editing, setEditing] = useState(false);
   const [assigning, setAssigning] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [info, setInfo] = useState(false);
   const { user } = useAuth();
   const navigate = useNavigate();
   const canDelete = user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN';
@@ -234,6 +241,9 @@ export const PartnerFolderHeader = ({ folder }: { folder: DriveItem }) => {
       </span>
       {!folder.partner.active && <span className="rounded bg-card px-1.5 py-px font-semibold text-muted">{t('drive.partner.inactive')}</span>}
       <span className="ml-auto flex flex-wrap gap-1.5">
+        <button type="button" className="btn-secondary btn-sm !px-2" aria-haspopup="dialog" onClick={() => setInfo(true)}>
+          <Info className="size-3.5" /> {t('drive.partner.info')}
+        </button>
         <button type="button" className="btn-secondary btn-sm !px-2" onClick={() => startDownload(`/api/admin/partners/${encodeURIComponent(folder.partner!.id)}/export.xlsx`)}>
           <FileSpreadsheet className="size-3.5 text-emerald-600" /> {t('drive.partner.excel')}
         </button>
@@ -257,6 +267,7 @@ export const PartnerFolderHeader = ({ folder }: { folder: DriveItem }) => {
         onDeleted={() => folder.parentId && navigate(`/workspace/drive/f/${encodeURIComponent(folder.parentId)}`)}
       />
       <AssignClientsDialog partner={assigning ? folder.partner : null} onClose={() => setAssigning(false)} />
+      <PartnerInfoDrawer partnerId={info ? folder.partner.id : null} onClose={() => setInfo(false)} isAdmin={canDelete} />
     </div>
   );
 };
