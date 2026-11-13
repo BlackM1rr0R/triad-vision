@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { Prisma } from '@prisma/client';
 import { asAdmin, asStaff, asSuperAdmin } from '../helpers/api';
-import { prisma } from '../helpers/db';
+import { prisma, settle } from '../helpers/db';
 import { createClient, createStaff } from '../helpers/factories';
 import { expectStatus } from '../helpers/workflow';
 import { createCase } from '../../src/lib/caseFlow.js';
@@ -116,7 +116,6 @@ describe('staff performance report', () => {
     // A case of B's waiting on the team for 5 days (overdue now), and an open overdue task of B.
     const { c: waiting } = await newCase(b.id);
     await prisma.case.update({ where: { id: waiting.id }, data: { status: 'DOCUMENTS_REVIEW' } });
-    await prisma.$executeRaw`UPDATE \`Case\` SET updatedAt = ${new Date(Date.now() - 5 * DAY)} WHERE id = ${waiting.id}`;
     await task('Open overdue', new Date(Date.now() - 2 * DAY), b.id);
     // Tasks of A in September: one done on time, one done late (missed deadline).
     await task('Done', inSep(5), a.id, { status: 'DONE', completedAt: inSep(4) });
@@ -128,6 +127,10 @@ describe('staff performance report', () => {
     // Assigning to someone else is not a response.
     const lead2 = await prisma.inquiry.create({ data: { kind: 'contact', contactName: 'Lead 2', email: 'lead2@example.com', message: 'Hallo', locale: 'de', createdAt: inSep(16) } });
     await prisma.auditLog.create({ data: { actorId: b.id, action: 'INQUIRY_ASSIGNED', target: `inquiry:${lead2.id}`, details: { to: a.id }, createdAt: inSep(16, 11) } });
+
+    // Last: the status change above starts background work that touches the case (and so updatedAt).
+    await settle();
+    await prisma.$executeRaw`UPDATE \`Case\` SET updatedAt = ${new Date(Date.now() - 5 * DAY)} WHERE id = ${waiting.id}`;
 
     expectStatus(await staff.agent.get('/api/admin/kpi/performance').query({ from: '2026-09-01', to: '2026-09-30' }), 403);
     expectStatus(await admin.agent.get('/api/admin/kpi/performance').query({ from: '2026-09-30', to: '2026-09-01' }), 400);
