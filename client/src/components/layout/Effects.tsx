@@ -5,6 +5,7 @@ import { LogoMark } from '../ui/Logo';
 import { smoothScrollTo, startSmoothScroll, stopSmoothScroll } from '@/lib/smoothScroll';
 import { usePrefs } from '@/lib/prefs';
 import { getBrand } from '@/lib/brand';
+import { isHydrating } from '@/lib/ssr';
 
 export const scrollToTop = (immediate = false) => {
   smoothScrollTo(0, { immediate });
@@ -132,9 +133,12 @@ export const ScrollProgress = () => {
 /**
  * Intro animation shown once per browser session. Skipped for visitors who asked for less motion (OS
  * setting or "stop animations" in the accessibility panel): it is pure motion and only delays the page.
+ * Also skipped when the page arrived server-rendered (src/lib/ssr.ts).
  */
 export const Preloader = () => {
   const [show, setShow] = useState(() => {
+    // A server-rendered page is already on screen: covering it with the intro would only hide it again.
+    if (isHydrating()) return false;
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches || document.documentElement.classList.contains('a11y-nomotion')) return false;
     try {
       return !sessionStorage.getItem('tv_intro');

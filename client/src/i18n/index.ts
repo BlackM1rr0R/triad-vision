@@ -62,6 +62,7 @@ onBrandChange(() => {
 // <html lang> drives CSS text-transform rules (Azerbaijani uppercases "i" as "İ"), so keep it in sync
 // from the very first render, not only after a language switch.
 const syncLang = (lng?: string) => {
+  if (typeof document === 'undefined') return; // server render (entry-server.tsx)
   document.documentElement.lang = (lng ?? i18n.resolvedLanguage ?? 'az').slice(0, 2);
 };
 i18n.on('languageChanged', syncLang);
@@ -149,8 +150,15 @@ export const loadSiteLanguage = (lng: string): Promise<void> => {
   return Promise.all([core, pendingExtra[l]]).then(() => undefined);
 };
 
-/** Resolves once the starting language's copy is available (main.tsx renders after it). */
-export const i18nReady = (): Promise<void> => loadSiteLanguage(i18n.language);
+/**
+ * Resolves once the starting language's copy is available (main.tsx renders after it). i18next picked
+ * `resolvedLanguage` at init, when tr / uk had no copy yet (it said "en"); resolving again now makes the first
+ * render use the URL's language everywhere (links, formats), like the server render (entry-server.tsx).
+ */
+export const i18nReady = (): Promise<void> =>
+  loadSiteLanguage(i18n.language).then(async () => {
+    if (i18n.resolvedLanguage !== i18n.language && i18n.hasResourceBundle(i18n.language, 'translation')) await i18n.changeLanguage(i18n.language);
+  });
 
 /** Changes the UI language (after loading its copy), as a non-blocking React transition. */
 export const setUiLanguage = (lng: SiteLocale): Promise<void> =>

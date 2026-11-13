@@ -1,4 +1,5 @@
 import { lazy, Suspense, useEffect } from 'react';
+import { useClientOnly } from '@/lib/ssr';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { AnimatePresence } from 'framer-motion';
@@ -57,6 +58,7 @@ export const SearchButton = ({ light = false, className }: { light?: boolean; cl
 /** Site-wide command palette. Mount once (e.g. in the site layout); open with Ctrl/Cmd+K, "/", or `openSearch()`. */
 export const SearchPalette = () => {
   const { open } = useSearchPalette();
+  const client = useClientOnly(); // portal only in the browser, after hydration (lib/ssr.ts)
 
   // Global shortcuts.
   useEffect(() => {
@@ -73,7 +75,7 @@ export const SearchPalette = () => {
     return () => window.removeEventListener('keydown', onKey);
   }, []);
 
-  if (typeof document === 'undefined') return null;
+  if (!client) return null;
   return createPortal(
     <AnimatePresence>
       {open && (

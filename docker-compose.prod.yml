@@ -127,3 +127,30 @@ services:
       - ./data/caddy/config:/config
     depends_on:
       - api
+
+  # Server-side render of the public pages (client/ssr/server.mjs, built by deploy/web.Dockerfile): Caddy includes
+  # the rendered markup into the page, so visitors and crawlers see it before the JavaScript has loaded. Optional:
+  # while it is down or slow, Caddy serves the page as before (client-side render). Reads the public API only.
+  ssr:
+    build:
+      context: .
+      dockerfile: deploy/web.Dockerfile
+      target: ssr
+    <<: *hardening
+    restart: unless-stopped
+    cap_drop: [ALL]
+    read_only: true
+    mem_limit: 256m
+    pids_limit: 64
+    environment:
+      NODE_ENV: production
+      API_ORIGIN: http://api:4000
+      NODE_OPTIONS: --max-old-space-size=192
+    depends_on:
+      - api
+    healthcheck:
+      test: ['CMD', 'node', '-e', "fetch('http://localhost:4100/health').then((r) => process.exit(r.ok ? 0 : 1), () => process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s

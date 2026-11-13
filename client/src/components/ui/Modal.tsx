@@ -1,4 +1,5 @@
 import { useId, type FormEvent, type ReactNode, type RefObject } from 'react';
+import { useClientOnly } from '@/lib/ssr';
 import { createPortal } from 'react-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import clsx from 'clsx';
@@ -99,6 +100,7 @@ export const Modal = ({
   closeLabel,
 }: ModalProps) => {
   const { t } = useTranslation();
+  const client = useClientOnly(); // portal only in the browser, after hydration (lib/ssr.ts)
   const requestClose = () => {
     if (!busy) onClose();
   };
@@ -108,7 +110,7 @@ export const Modal = ({
   const Panel = as === 'form' ? motion.form : motion.div;
   const full = mobile === 'full';
 
-  if (typeof document === 'undefined') return null;
+  if (!client) return null;
   return createPortal(
     <AnimatePresence>
       {open && (

@@ -16,7 +16,7 @@
 # page falls back to defaults. googletagmanager / google-analytics: optional GA4, loaded only after analytics
 # consent (src/lib/analytics.ts).
 (spa_csp) {
-	header Content-Security-Policy "default-src 'self'; script-src 'self' 'sha256-zUR5+Rmsjc5COIO4FlT1fUy3SHmD9+E2patl/cA7NFg=' https://static.cloudflareinsights.com https://www.googletagmanager.com; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob: https:; connect-src 'self' https://cloudflareinsights.com https://www.googletagmanager.com https://*.google-analytics.com https://*.analytics.google.com; frame-src https://www.openstreetmap.org https://www.youtube-nocookie.com https://player.vimeo.com; worker-src 'self' blob:; media-src 'self' blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests"
+	header Content-Security-Policy "default-src 'self'; script-src 'self' 'sha256-sNwUVmDspMX6YHVZ8Jci0RFWQlS7b6Bm5BlswyrkSJA=' https://static.cloudflareinsights.com https://www.googletagmanager.com; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob: https:; connect-src 'self' https://cloudflareinsights.com https://www.googletagmanager.com https://*.google-analytics.com https://*.analytics.google.com; frame-src https://www.openstreetmap.org https://www.youtube-nocookie.com https://player.vimeo.com; worker-src 'self' blob:; media-src 'self' blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests"
 }
 
 # The HTML shell is a Caddy template (custom delimiters, so the actions are plain HTML comments in
@@ -106,6 +106,27 @@ autoconfig.{$SITE_DOMAIN}, autodiscover.{$SITE_DOMAIN} {
 			transport http {
 				dial_timeout 1s
 				response_header_timeout 2s
+			}
+		}
+	}
+
+	# Server-rendered page markup (SSR service, client/ssr/server.mjs; index.html includes /__ssr/render?url=…
+	# into <div id="root">, and the browser hydrates it). Same rules as the SEO includes: only Caddy's own include
+	# sub-requests, no cookies (the render is the anonymous visitor's page), short timeouts — when the service is
+	# slow, down or not deployed, handle_errors answers empty and the page falls back to the client-side render.
+	@ssrrender {
+		path /__ssr/render
+		remote_ip 127.0.0.1
+		header Caddy-Templates-Include *
+	}
+	handle @ssrrender {
+		rewrite * /render?{query}
+		reverse_proxy {$SSR_UPSTREAM:ssr:4100} {
+			header_up -Cookie
+			header_up -Authorization
+			transport http {
+				dial_timeout 500ms
+				response_header_timeout 1500ms
 			}
 		}
 	}
@@ -253,6 +274,12 @@ autoconfig.{$SITE_DOMAIN}, autodiscover.{$SITE_DOMAIN} {
 	handle_errors {
 		@seoheadFailed path /__seo/head /__seo/body /__seo/brand /__seo/status
 		respond @seoheadFailed 200
+		# The SSR include (rewritten to /render above): empty = the page renders on the client.
+		@ssrFailed {
+			path /render /__ssr/render
+			header Caddy-Templates-Include *
+		}
+		respond @ssrFailed 200
 		# Unknown page (httpError 404 from the shell template, see client/index.html): the same SPA shell with
 		# status 404, so crawlers get a real 404 (no soft 404) and visitors the app's "not found" page. The
 		# template skips its status check here (http.error.status_code is set), so this cannot loop.

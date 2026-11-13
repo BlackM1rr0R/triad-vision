@@ -4,7 +4,7 @@ Workflow: `.github/workflows/ci-cd.yml`
 
 | Trigger | What runs |
 |---|---|
-| Push to any branch / pull request | Typecheck (server, client, mobile), client build, CSP-hash check, Caddyfile validation, mobile tests, server unit tests, server e2e tests in 12 parallel shards (each with its own MySQL 8.4) |
+| Push to any branch / pull request | Typecheck (server, client, mobile), client build, CSP-hash check, SSR render check, Caddyfile validation, mobile tests, server unit tests, server e2e tests in 12 parallel shards (each with its own MySQL 8.4) |
 | Push to `main`, everything green | Deploy to production, then `https://triad-vision.de/api/health` must answer 200 |
 | Actions → CI/CD → Run workflow | Same as a push; untick "deploy" to only test |
 

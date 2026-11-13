@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react';
+import { useClientOnly } from '@/lib/ssr';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -53,6 +54,7 @@ const samePos = (a: ListPos, b: ListPos) => a.up === b.up && a.left === b.left &
 export const LanguageSwitcher = ({ light = false, variant = 'pill', compact = false }: { light?: boolean; variant?: 'pill' | 'bar'; /** Flag only (the collapsed sidebar). */ compact?: boolean }) => {
   const { i18n } = useTranslation();
   const [open, setOpen] = useState(false);
+  const client = useClientOnly(); // portal only in the browser, after hydration (lib/ssr.ts)
   const [pos, setPos] = useState<ListPos | null>(null);
   const ref = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -164,7 +166,8 @@ export const LanguageSwitcher = ({ light = false, variant = 'pill', compact = fa
         {!compact && <span className={variant === 'pill' ? 'hidden min-[400px]:inline' : undefined}>{current.toUpperCase()}</span>}
         <ChevronDown className={clsx('size-3.5 opacity-70 transition-transform', open && 'rotate-180', compact ? 'hidden' : variant === 'pill' && 'hidden min-[400px]:block')} />
       </button>
-      {createPortal(
+      {client &&
+        createPortal(
         <AnimatePresence>
           {open && pos && (
             <motion.ul

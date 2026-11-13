@@ -42,6 +42,8 @@ $COMPOSE pull db
 # One image at a time: the server has 2 GB RAM, and the API compile and the site build together run out of memory.
 $COMPOSE build --pull api
 $COMPOSE build --pull web
+# Same Dockerfile as web (stage `ssr`): reuses the cached site build, only adds the small Node image.
+$COMPOSE build --pull ssr
 $COMPOSE up -d --remove-orphans
 
 echo "== waiting for the API (migrations run on start)"

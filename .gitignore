@@ -1,5 +1,7 @@
 node_modules/
 dist/
+# SSR build of the site (client: npm run build:ssr)
+dist-ssr/
 .env
 *.log
 server/uploads/private/*

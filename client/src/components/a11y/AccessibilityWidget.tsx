@@ -1,4 +1,5 @@
 import { lazy, Suspense, useEffect, useId, useRef, useState } from 'react';
+import { useClientOnly } from '@/lib/ssr';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -82,6 +83,7 @@ export const AccessibilityWidget = ({ standalone = false, panelClass, buttonClas
   const { t, i18n } = useTranslation();
   const prefs = usePrefs();
   const [open, setOpen] = useState(false);
+  const client = useClientOnly(); // portal only in the browser, after hydration (lib/ssr.ts)
   const btnRef = useRef<HTMLButtonElement>(null);
   const titleId = useId();
 
@@ -133,7 +135,8 @@ export const AccessibilityWidget = ({ standalone = false, panelClass, buttonClas
     <div data-a11y-widget>
       {standalone ? <div className="fixed right-4 bottom-4 z-40 sm:right-6 sm:bottom-6">{button}</div> : button}
       {/* Portal: the floating-actions stack is its own stacking context (z-40), which would put the panel under the site header. */}
-      {createPortal(
+      {client &&
+        createPortal(
         <div data-a11y-widget>
           <AnimatePresence>
             {open && (

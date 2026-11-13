@@ -54,6 +54,12 @@ jobs:
         run: npm run build -w client
       - name: CSP allows the inline scripts of the built page
         run: node scripts/ci/check-csp-hash.mjs client/dist/index.html
+      # Server-side render of the public pages (client/ssr/server.mjs, the `ssr` service): the bundle builds and
+      # renders the home page without errors (no API here: content queries fail and render their loading state).
+      - name: SSR build renders
+        run: npm run build:ssr -w client && node client/ssr/server.mjs --check
+        env:
+          API_ORIGIN: http://127.0.0.1:9
       # axe-core (WCAG 2.2 A/AA rules) in headless Chrome on public pages of the built site, light and dark
       # theme; fails on serious/critical violations. Runs without the API (content-less pages still test the
       # shell, navigation, forms and empty/error states). Local run with data: add --api http://localhost:4000.

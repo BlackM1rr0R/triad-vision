@@ -1,4 +1,6 @@
-import { lazy, Suspense, useState } from 'react';
+import { lazy, Suspense, useEffect, useState, type ReactNode } from 'react';
+import { isHydrating, setHydrating } from '@/lib/ssr';
+import { afterLoad } from '@/lib/idle';
 import { TrackBeacon } from '../analytics/TrackBeacon';
 import { SeoManager } from '@/lib/usePageTitle';
 import { useTranslation } from 'react-i18next';
@@ -34,6 +36,10 @@ const FloatingActions = () => {
   const advisor = !NO_ADVISOR.some((p) => pathname === p || pathname.startsWith(`${p}/`));
   const { data } = useSiteContent();
   const [showTop, setShowTop] = useState(false);
+  // The AI advisor (own chunk and copy; its launcher is hidden on phones) joins once the page has loaded: it
+  // must not compete with the page's first paint, and server-rendered pages stay the same without it.
+  const [advisorReady, setAdvisorReady] = useState(false);
+  useEffect(() => afterLoad(() => setAdvisorReady(true)), []);
   // framer-motion reads scroll once per frame in its read phase; a raw scroll listener reading
   // window.scrollY forced a synchronous layout on every scroll event.
   const { scrollY } = useScroll();
@@ -60,7 +66,7 @@ const FloatingActions = () => {
       {/* Accessibility panel button sits above WhatsApp; the panel itself is fixed above the whole stack.
           Phones: these buttons hide and the help button below lists them (HelpFab, lib/helpMenu.ts). */}
       <AccessibilityWidget buttonClass="max-sm:hidden" panelClass={advisor ? 'sm:bottom-[14.5rem] sm:max-h-[calc(100dvh-15.5rem)]' : 'sm:bottom-[10rem] sm:max-h-[calc(100dvh-11rem)]'} />
-      {advisor && (
+      {advisor && advisorReady && (
         <Suspense fallback={null}>
           <AdvisorBubble launcherClass="max-sm:hidden" />
         </Suspense>
@@ -98,6 +104,30 @@ const RouteFallback = ({ pathname }: { pathname: string }) => {
   );
 };
 
+/**
+ * Sits next to the page inside its Suspense boundary: its effect runs when the server-rendered page has been
+ * hydrated, and from then on newly mounted content animates normally again (src/lib/ssr.ts).
+ */
+const HydrationDone = () => {
+  useEffect(() => {
+    if (isHydrating()) setHydrating(false);
+  }, []);
+  return null;
+};
+
+/**
+ * The page area. A new page fades in (CSS `page-in`), except the server-rendered first page: it is on screen
+ * before the JavaScript runs, and an element at opacity 0 does not count as painted for the LCP.
+ */
+const PageMain = ({ children }: { children: ReactNode }) => {
+  const [fade] = useState(() => !isHydrating());
+  return (
+    <main id="main" tabIndex={-1} className={fade ? 'page-in min-h-[100svh] outline-none' : 'min-h-[100svh] outline-none'}>
+      {children}
+    </main>
+  );
+};
+
 export const SiteLayout = () => {
   const { pathname } = useLocation();
   // Portals (client / employer / partner / agent) use the warm portal surface (Inter headings, denser data);
@@ -118,14 +148,15 @@ export const SiteLayout = () => {
         No exit animation / "wait" mode: holding the old page and then mounting the heavy new one in a
         single frame is what made navigation stutter.
       */}
-      <main id="main" tabIndex={-1} className="page-in min-h-[100svh] outline-none" key={pathname}>
+      <PageMain key={pathname}>
         {/* Suspense lives inside the layout so header/footer stay put while a page chunk loads. */}
         <RouteErrorBoundary>
           <Suspense fallback={<RouteFallback pathname={pathname} />}>
             <Outlet />
+            <HydrationDone />
           </Suspense>
         </RouteErrorBoundary>
-      </main>
+      </PageMain>
       <Footer />
       <FloatingActions />
       <SearchPalette />

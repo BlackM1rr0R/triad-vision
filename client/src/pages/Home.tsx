@@ -80,6 +80,8 @@ const NeutralHome = () => (
 /**
  * True one frame after the first paint. The sections below the hero are rendered then, as an interruptible
  * transition: the hero (the LCP element) no longer waits for the whole page to render in one long task.
+ * Also on server-rendered pages (lib/ssr.ts): the sections' horizontal snap rails scroll themselves into place
+ * at layout, and a scroll before the first paint stops Chrome from recording the LCP at all.
  */
 const useAfterFirstPaint = () => {
   const [ready, setReady] = useState(false);

@@ -57,7 +57,7 @@ export const useHelpAction = (action: HelpAction, active: boolean, onOpen: () =>
 
 /** The features currently available from the help menu. */
 export const useHelpActions = (): ReadonlySet<HelpAction> => {
-  const v = useSyncExternalStore(subscribe, () => version);
+  const v = useSyncExternalStore(subscribe, () => version, () => version);
   // `version` changes on every registration; the set itself is a snapshot of the registry.
   return useMemo(() => new Set(available.keys()), [v]);
 };
@@ -74,7 +74,7 @@ export const useHelpFab = () => {
   }, []);
 };
 
-export const useHelpFabPresent = () => useSyncExternalStore(subscribe, () => fabCount > 0);
+export const useHelpFabPresent = () => useSyncExternalStore(subscribe, () => fabCount > 0, () => false);
 
 /**
  * Focus after closing a panel: its own launcher when visible, else the help button (on phones the

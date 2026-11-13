@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useSyncExternalStore } from 'react';
+import { Suspense, useEffect, useSyncExternalStore } from 'react';
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { RequireAuth, useAuth } from './lib/auth';
 import { whenIdle } from './lib/idle';
@@ -6,9 +6,11 @@ import { PageLoader } from './components/ui/Spinner';
 import { SiteLayout } from './components/layout/SiteLayout';
 import { getImpersonation, subscribeImpersonation } from './lib/api';
 import { splitLocalePath } from './lib/siteLocale';
+// Route pages: React.lazy plus preloading before hydration of server-rendered pages (lib/lazyRoute.tsx).
+import { lazyRoute } from './lib/lazyRoute';
 
 // "View as client" bar: its chunk (and copy) loads only while an admin is actually viewing a portal.
-const ImpersonationBanner = lazy(() => import('./components/privacyTools/ImpersonationBanner').then((m) => ({ default: m.ImpersonationBanner })));
+const ImpersonationBanner = lazyRoute('ImpersonationBanner', () => import('./components/privacyTools/ImpersonationBanner').then((m) => ({ default: m.ImpersonationBanner })));
 const ImpersonationGate = () => {
   const active = useSyncExternalStore(subscribeImpersonation, getImpersonation, getImpersonation) !== null;
   return active ? (
@@ -19,7 +21,7 @@ const ImpersonationGate = () => {
 };
 
 // Re-acceptance of updated legal texts: own chunk, fetched only for signed-in users.
-const LegalGate = lazy(() => import('./components/legal/LegalGate'));
+const LegalGate = lazyRoute('LegalGate', () => import('./components/legal/LegalGate'));
 const LegalGateHost = () => {
   const { user } = useAuth();
   return user ? (
@@ -29,237 +31,237 @@ const LegalGateHost = () => {
   ) : null;
 };
 
-const Home = lazy(() => import('./pages/Home'));
-const About = lazy(() => import('./pages/About'));
-const Services = lazy(() => import('./pages/Services'));
-const ServiceDetail = lazy(() => import('./pages/ServiceDetail'));
-const Eligibility = lazy(() => import('./pages/Eligibility'));
-const EligibilityQuiz = lazy(() => import('./pages/EligibilityQuiz'));
-const Visas = lazy(() => import('./pages/Visas'));
-const VisaDetail = lazy(() => import('./pages/VisaDetail'));
-const Partners = lazy(() => import('./pages/Partners'));
-const Stories = lazy(() => import('./pages/Stories'));
-const Ausbildung = lazy(() => import('./pages/Ausbildung'));
-const FaqPage = lazy(() => import('./pages/FaqPage'));
-const News = lazy(() => import('./pages/News'));
-const NewsDetail = lazy(() => import('./pages/NewsDetail'));
-const Contact = lazy(() => import('./pages/Contact'));
-const Cooperation = lazy(() => import('./pages/Cooperation'));
-const Login = lazy(() => import('./pages/auth/Login'));
-const Register = lazy(() => import('./pages/auth/Register'));
-const PartnerLink = lazy(() => import('./pages/auth/PartnerLink')); // /p/:code — referral partner's short sign-up link
-const ForgotPassword = lazy(() => import('./pages/auth/ForgotPassword'));
-const ResetPassword = lazy(() => import('./pages/auth/ResetPassword'));
-const NotFound = lazy(() => import('./pages/NotFound'));
-const AccessibilityPage = lazy(() => import('./pages/Accessibility'));
+const Home = lazyRoute('Home', () => import('./pages/Home'));
+const About = lazyRoute('About', () => import('./pages/About'));
+const Services = lazyRoute('Services', () => import('./pages/Services'));
+const ServiceDetail = lazyRoute('ServiceDetail', () => import('./pages/ServiceDetail'));
+const Eligibility = lazyRoute('Eligibility', () => import('./pages/Eligibility'));
+const EligibilityQuiz = lazyRoute('EligibilityQuiz', () => import('./pages/EligibilityQuiz'));
+const Visas = lazyRoute('Visas', () => import('./pages/Visas'));
+const VisaDetail = lazyRoute('VisaDetail', () => import('./pages/VisaDetail'));
+const Partners = lazyRoute('Partners', () => import('./pages/Partners'));
+const Stories = lazyRoute('Stories', () => import('./pages/Stories'));
+const Ausbildung = lazyRoute('Ausbildung', () => import('./pages/Ausbildung'));
+const FaqPage = lazyRoute('FaqPage', () => import('./pages/FaqPage'));
+const News = lazyRoute('News', () => import('./pages/News'));
+const NewsDetail = lazyRoute('NewsDetail', () => import('./pages/NewsDetail'));
+const Contact = lazyRoute('Contact', () => import('./pages/Contact'));
+const Cooperation = lazyRoute('Cooperation', () => import('./pages/Cooperation'));
+const Login = lazyRoute('Login', () => import('./pages/auth/Login'));
+const Register = lazyRoute('Register', () => import('./pages/auth/Register'));
+const PartnerLink = lazyRoute('PartnerLink', () => import('./pages/auth/PartnerLink')); // /p/:code — referral partner's short sign-up link
+const ForgotPassword = lazyRoute('ForgotPassword', () => import('./pages/auth/ForgotPassword'));
+const ResetPassword = lazyRoute('ResetPassword', () => import('./pages/auth/ResetPassword'));
+const NotFound = lazyRoute('NotFound', () => import('./pages/NotFound'));
+const AccessibilityPage = lazyRoute('AccessibilityPage', () => import('./pages/Accessibility'));
 // Simplified public navigation: all tools on one page, one landing page per audience.
-const ToolsPage = lazy(() => import('./pages/Tools'));
-const ForWorkers = lazy(() => import('./pages/ForWorkers'));
-const ForEmployers = lazy(() => import('./pages/ForEmployers'));
+const ToolsPage = lazyRoute('ToolsPage', () => import('./pages/Tools'));
+const ForWorkers = lazyRoute('ForWorkers', () => import('./pages/ForWorkers'));
+const ForEmployers = lazyRoute('ForEmployers', () => import('./pages/ForEmployers'));
 
-const AccountLayout = lazy(() => import('./pages/account/AccountLayout'));
-const AccountHome = lazy(() => import('./pages/account/AccountHome'));
-const CaseView = lazy(() => import('./pages/account/CaseView'));
-const Notifications = lazy(() => import('./pages/account/Notifications'));
-const Profile = lazy(() => import('./pages/account/Profile'));
-const AccountApplications = lazy(() => import('./pages/account/Applications'));
+const AccountLayout = lazyRoute('AccountLayout', () => import('./pages/account/AccountLayout'));
+const AccountHome = lazyRoute('AccountHome', () => import('./pages/account/AccountHome'));
+const CaseView = lazyRoute('CaseView', () => import('./pages/account/CaseView'));
+const Notifications = lazyRoute('Notifications', () => import('./pages/account/Notifications'));
+const Profile = lazyRoute('Profile', () => import('./pages/account/Profile'));
+const AccountApplications = lazyRoute('AccountApplications', () => import('./pages/account/Applications'));
 
-const AdminLayout = lazy(() => import('./pages/admin/AdminLayout'));
-const AdminDashboard = lazy(() => import('./pages/admin/Dashboard'));
-const AdminOversight = lazy(() => import('./pages/admin/Oversight'));
-const AdminStaffDetail = lazy(() => import('./pages/admin/StaffDetail'));
-const AdminCases = lazy(() => import('./pages/admin/CasesList'));
-const AdminReview = lazy(() => import('./pages/admin/Review')); // fast document review queue (full screen)
-const AdminCase = lazy(() => import('./pages/admin/CaseAdmin'));
-const AdminInquiries = lazy(() => import('./pages/admin/Inquiries'));
-const AdminUsers = lazy(() => import('./pages/admin/Users'));
-const AdminMailboxes = lazy(() => import('./pages/admin/Mailboxes'));
-const AdminSignatures = lazy(() => import('./pages/admin/Signatures'));
-const SignPage = lazy(() => import('./pages/SignPage'));
-const QuotePage = lazy(() => import('./pages/QuotePage'));
-const PackagesPage = lazy(() => import('./pages/Packages')); // service packages + online order
-const PackageOrderStatus = lazy(() => import('./pages/PackageOrderStatus'));
-const AccountPayments = lazy(() => import('./pages/account/Payments')); // Documents › Payments
-const AdminClientInvoices = lazy(() => import('./pages/admin/ClientInvoices'));
-const AdminPackages = lazy(() => import('./pages/admin/Packages'));
-const AdminAccounting = lazy(() => import('./pages/admin/Accounting'));
-const AdminCountersign = lazy(() => import('./pages/admin/Countersign'));
-const SharePage = lazy(() => import('./pages/SharePage'));
-const CandidateSharePage = lazy(() => import('./pages/CandidateSharePage')); // employer share link of a candidate
-const AccountSignatures = lazy(() => import('./pages/account/Signatures'));
-const WorkspaceLayout = lazy(() => import('./pages/workspace/WorkspaceLayout'));
-const WorkspaceDrive = lazy(() => import('./pages/workspace/Drive'));
-const WorkspaceTasks = lazy(() => import('./pages/workspace/Tasks'));
-const WorkspaceHome = lazy(() => import('./pages/workspace/Home'));
-const WorkspaceMail = lazy(() => import('./pages/workspace/Mail'));
-const WorkspaceChat = lazy(() => import('./pages/workspace/Chat'));
-const WorkspaceCalendar = lazy(() => import('./pages/workspace/Calendar'));
-const WorkspaceContacts = lazy(() => import('./pages/workspace/Contacts'));
-const WorkspaceTeam = lazy(() => import('./pages/workspace/Team'));
-const WorkspaceLiveChats = lazy(() => import('./pages/workspace/LiveChats')); // AI → human live chat queue
-const AdminCalls = lazy(() => import('./pages/admin/Calls')); // call log, callback requests, phone provider
-const AdminDocsAudit = lazy(() => import('./pages/admin/DocsAudit'));
-const AdminContent = lazy(() => import('./pages/admin/ContentManager'));
-const AdminSettings = lazy(() => import('./pages/admin/Settings'));
-const Impressum = lazy(() => import('./pages/legal/Impressum'));
-const Privacy = lazy(() => import('./pages/legal/Privacy'));
+const AdminLayout = lazyRoute('AdminLayout', () => import('./pages/admin/AdminLayout'));
+const AdminDashboard = lazyRoute('AdminDashboard', () => import('./pages/admin/Dashboard'));
+const AdminOversight = lazyRoute('AdminOversight', () => import('./pages/admin/Oversight'));
+const AdminStaffDetail = lazyRoute('AdminStaffDetail', () => import('./pages/admin/StaffDetail'));
+const AdminCases = lazyRoute('AdminCases', () => import('./pages/admin/CasesList'));
+const AdminReview = lazyRoute('AdminReview', () => import('./pages/admin/Review')); // fast document review queue (full screen)
+const AdminCase = lazyRoute('AdminCase', () => import('./pages/admin/CaseAdmin'));
+const AdminInquiries = lazyRoute('AdminInquiries', () => import('./pages/admin/Inquiries'));
+const AdminUsers = lazyRoute('AdminUsers', () => import('./pages/admin/Users'));
+const AdminMailboxes = lazyRoute('AdminMailboxes', () => import('./pages/admin/Mailboxes'));
+const AdminSignatures = lazyRoute('AdminSignatures', () => import('./pages/admin/Signatures'));
+const SignPage = lazyRoute('SignPage', () => import('./pages/SignPage'));
+const QuotePage = lazyRoute('QuotePage', () => import('./pages/QuotePage'));
+const PackagesPage = lazyRoute('PackagesPage', () => import('./pages/Packages')); // service packages + online order
+const PackageOrderStatus = lazyRoute('PackageOrderStatus', () => import('./pages/PackageOrderStatus'));
+const AccountPayments = lazyRoute('AccountPayments', () => import('./pages/account/Payments')); // Documents › Payments
+const AdminClientInvoices = lazyRoute('AdminClientInvoices', () => import('./pages/admin/ClientInvoices'));
+const AdminPackages = lazyRoute('AdminPackages', () => import('./pages/admin/Packages'));
+const AdminAccounting = lazyRoute('AdminAccounting', () => import('./pages/admin/Accounting'));
+const AdminCountersign = lazyRoute('AdminCountersign', () => import('./pages/admin/Countersign'));
+const SharePage = lazyRoute('SharePage', () => import('./pages/SharePage'));
+const CandidateSharePage = lazyRoute('CandidateSharePage', () => import('./pages/CandidateSharePage')); // employer share link of a candidate
+const AccountSignatures = lazyRoute('AccountSignatures', () => import('./pages/account/Signatures'));
+const WorkspaceLayout = lazyRoute('WorkspaceLayout', () => import('./pages/workspace/WorkspaceLayout'));
+const WorkspaceDrive = lazyRoute('WorkspaceDrive', () => import('./pages/workspace/Drive'));
+const WorkspaceTasks = lazyRoute('WorkspaceTasks', () => import('./pages/workspace/Tasks'));
+const WorkspaceHome = lazyRoute('WorkspaceHome', () => import('./pages/workspace/Home'));
+const WorkspaceMail = lazyRoute('WorkspaceMail', () => import('./pages/workspace/Mail'));
+const WorkspaceChat = lazyRoute('WorkspaceChat', () => import('./pages/workspace/Chat'));
+const WorkspaceCalendar = lazyRoute('WorkspaceCalendar', () => import('./pages/workspace/Calendar'));
+const WorkspaceContacts = lazyRoute('WorkspaceContacts', () => import('./pages/workspace/Contacts'));
+const WorkspaceTeam = lazyRoute('WorkspaceTeam', () => import('./pages/workspace/Team'));
+const WorkspaceLiveChats = lazyRoute('WorkspaceLiveChats', () => import('./pages/workspace/LiveChats')); // AI → human live chat queue
+const AdminCalls = lazyRoute('AdminCalls', () => import('./pages/admin/Calls')); // call log, callback requests, phone provider
+const AdminDocsAudit = lazyRoute('AdminDocsAudit', () => import('./pages/admin/DocsAudit'));
+const AdminContent = lazyRoute('AdminContent', () => import('./pages/admin/ContentManager'));
+const AdminSettings = lazyRoute('AdminSettings', () => import('./pages/admin/Settings'));
+const Impressum = lazyRoute('Impressum', () => import('./pages/legal/Impressum'));
+const Privacy = lazyRoute('Privacy', () => import('./pages/legal/Privacy'));
 // Versioned legal texts: AGB (/agb, /terms), cookie policy, archived versions.
-const TermsPage = lazy(() => import('./pages/legal/LegalDocument').then((m) => ({ default: m.TermsPage })));
-const CookiesPage = lazy(() => import('./pages/legal/LegalDocument').then((m) => ({ default: m.CookiesPage })));
-const LegalArchivedVersion = lazy(() => import('./pages/legal/LegalDocument').then((m) => ({ default: m.LegalArchivedVersion })));
-const AdminLegal = lazy(() => import('./pages/admin/Legal'));
-const AdminWaitingRoom = lazy(() => import('./pages/admin/WaitingRoom'));
-const AccountWaitingRoom = lazy(() => import('./pages/account/WaitingRoom'));
-const AccountCases = lazy(() => import('./pages/account/Cases')); // Home › My applications
-const AccountGuides = lazy(() => import('./pages/account/Guides')); // Learn › Guides
-const VerifyEmail = lazy(() => import('./pages/auth/VerifyEmail'));
-const ConfirmEmailChange = lazy(() => import('./pages/auth/ConfirmEmailChange')); // link mailed to the new address (e-mail change)
-const TwoFactor = lazy(() => import('./pages/auth/TwoFactor'));
-const Jobs = lazy(() => import('./pages/jobs/Jobs'));
-const JobDetail = lazy(() => import('./pages/jobs/JobDetail'));
-const EmployerRegister = lazy(() => import('./pages/company/EmployerRegister'));
-const CompanyApp = lazy(() => import('./pages/company/CompanyApp'));
-const AgentApp = lazy(() => import('./pages/agent/AgentApp'));
-const PartnerApp = lazy(() => import('./pages/partner/PartnerApp'));
-const AdminHelp = lazy(() => import('./pages/admin/Help'));
-const AdminAnnouncements = lazy(() => import('./pages/admin/Announcements'));
-const AccountCv = lazy(() => import('./pages/account/Cv'));
-const AccountLetters = lazy(() => import('./pages/account/Letters'));
-const AccountLetterExplain = lazy(() => import('./pages/account/LetterExplain'));
-const AccountVault = lazy(() => import('./pages/account/Vault'));
-const AccountArrival = lazy(() => import('./pages/account/Arrival'));
-const SalaryCalculator = lazy(() => import('./pages/tools/SalaryCalculator'));
-const StartCalculator = lazy(() => import('./pages/growth/Calculator'));
-const PlacementMapPage = lazy(() => import('./pages/growth/MapPage'));
-const InfoEvents = lazy(() => import('./pages/growth/Events'));
-const InfoEventDetail = lazy(() => import('./pages/growth/EventDetail'));
-const CostCalculatorPage = lazy(() => import('./pages/growth/CostCalculator')); // client cost calculator
-const BudgetPage = lazy(() => import('./pages/tools/Budget')); // first-month budget in Germany (/budget)
-const AccountBudget = lazy(() => import('./pages/account/Budget')); // personalised first-month budget
-const AdminCityCosts = lazy(() => import('./pages/admin/CityCosts')); // Sayt → Şəhər xərcləri (budget calculator data)
-const LandingPageView = lazy(() => import('./pages/growth/LandingPage')); // public landing pages /l/:slug
-const AccountReferral = lazy(() => import('./pages/account/Referral'));
-const AdminGrowthEvents = lazy(() => import('./pages/admin/GrowthEvents'));
-const AdminGrowthTools = lazy(() => import('./pages/admin/GrowthTools'));
-const AdminLandingPages = lazy(() => import('./pages/admin/LandingPages')); // landing page builder
-const AdminLeadMagnets = lazy(() => import('./pages/admin/LeadMagnets')); // e-book lead magnets + starter e-book
-const SearchPage = lazy(() => import('./pages/SearchPage')); // full site search results (/search?q=, noindex)
-const CompareVisas = lazy(() => import('./pages/tools/CompareVisas')); // "which visa fits me?" table + wizard
-const EbookPage = lazy(() => import('./pages/growth/Ebook')); // e-book lead magnet /ebook/:slug
-const JobAlertManage = lazy(() => import('./pages/JobAlertManage')); // job alert confirm / manage / unsubscribe link
-const AnerkennungGuide = lazy(() => import('./pages/tools/Anerkennung'));
-const CitiesGuide = lazy(() => import('./pages/tools/Cities'));
+const TermsPage = lazyRoute('TermsPage', () => import('./pages/legal/LegalDocument').then((m) => ({ default: m.TermsPage })));
+const CookiesPage = lazyRoute('CookiesPage', () => import('./pages/legal/LegalDocument').then((m) => ({ default: m.CookiesPage })));
+const LegalArchivedVersion = lazyRoute('LegalArchivedVersion', () => import('./pages/legal/LegalDocument').then((m) => ({ default: m.LegalArchivedVersion })));
+const AdminLegal = lazyRoute('AdminLegal', () => import('./pages/admin/Legal'));
+const AdminWaitingRoom = lazyRoute('AdminWaitingRoom', () => import('./pages/admin/WaitingRoom'));
+const AccountWaitingRoom = lazyRoute('AccountWaitingRoom', () => import('./pages/account/WaitingRoom'));
+const AccountCases = lazyRoute('AccountCases', () => import('./pages/account/Cases')); // Home › My applications
+const AccountGuides = lazyRoute('AccountGuides', () => import('./pages/account/Guides')); // Learn › Guides
+const VerifyEmail = lazyRoute('VerifyEmail', () => import('./pages/auth/VerifyEmail'));
+const ConfirmEmailChange = lazyRoute('ConfirmEmailChange', () => import('./pages/auth/ConfirmEmailChange')); // link mailed to the new address (e-mail change)
+const TwoFactor = lazyRoute('TwoFactor', () => import('./pages/auth/TwoFactor'));
+const Jobs = lazyRoute('Jobs', () => import('./pages/jobs/Jobs'));
+const JobDetail = lazyRoute('JobDetail', () => import('./pages/jobs/JobDetail'));
+const EmployerRegister = lazyRoute('EmployerRegister', () => import('./pages/company/EmployerRegister'));
+const CompanyApp = lazyRoute('CompanyApp', () => import('./pages/company/CompanyApp'));
+const AgentApp = lazyRoute('AgentApp', () => import('./pages/agent/AgentApp'));
+const PartnerApp = lazyRoute('PartnerApp', () => import('./pages/partner/PartnerApp'));
+const AdminHelp = lazyRoute('AdminHelp', () => import('./pages/admin/Help'));
+const AdminAnnouncements = lazyRoute('AdminAnnouncements', () => import('./pages/admin/Announcements'));
+const AccountCv = lazyRoute('AccountCv', () => import('./pages/account/Cv'));
+const AccountLetters = lazyRoute('AccountLetters', () => import('./pages/account/Letters'));
+const AccountLetterExplain = lazyRoute('AccountLetterExplain', () => import('./pages/account/LetterExplain'));
+const AccountVault = lazyRoute('AccountVault', () => import('./pages/account/Vault'));
+const AccountArrival = lazyRoute('AccountArrival', () => import('./pages/account/Arrival'));
+const SalaryCalculator = lazyRoute('SalaryCalculator', () => import('./pages/tools/SalaryCalculator'));
+const StartCalculator = lazyRoute('StartCalculator', () => import('./pages/growth/Calculator'));
+const PlacementMapPage = lazyRoute('PlacementMapPage', () => import('./pages/growth/MapPage'));
+const InfoEvents = lazyRoute('InfoEvents', () => import('./pages/growth/Events'));
+const InfoEventDetail = lazyRoute('InfoEventDetail', () => import('./pages/growth/EventDetail'));
+const CostCalculatorPage = lazyRoute('CostCalculatorPage', () => import('./pages/growth/CostCalculator')); // client cost calculator
+const BudgetPage = lazyRoute('BudgetPage', () => import('./pages/tools/Budget')); // first-month budget in Germany (/budget)
+const AccountBudget = lazyRoute('AccountBudget', () => import('./pages/account/Budget')); // personalised first-month budget
+const AdminCityCosts = lazyRoute('AdminCityCosts', () => import('./pages/admin/CityCosts')); // Sayt → Şəhər xərcləri (budget calculator data)
+const LandingPageView = lazyRoute('LandingPageView', () => import('./pages/growth/LandingPage')); // public landing pages /l/:slug
+const AccountReferral = lazyRoute('AccountReferral', () => import('./pages/account/Referral'));
+const AdminGrowthEvents = lazyRoute('AdminGrowthEvents', () => import('./pages/admin/GrowthEvents'));
+const AdminGrowthTools = lazyRoute('AdminGrowthTools', () => import('./pages/admin/GrowthTools'));
+const AdminLandingPages = lazyRoute('AdminLandingPages', () => import('./pages/admin/LandingPages')); // landing page builder
+const AdminLeadMagnets = lazyRoute('AdminLeadMagnets', () => import('./pages/admin/LeadMagnets')); // e-book lead magnets + starter e-book
+const SearchPage = lazyRoute('SearchPage', () => import('./pages/SearchPage')); // full site search results (/search?q=, noindex)
+const CompareVisas = lazyRoute('CompareVisas', () => import('./pages/tools/CompareVisas')); // "which visa fits me?" table + wizard
+const EbookPage = lazyRoute('EbookPage', () => import('./pages/growth/Ebook')); // e-book lead magnet /ebook/:slug
+const JobAlertManage = lazyRoute('JobAlertManage', () => import('./pages/JobAlertManage')); // job alert confirm / manage / unsubscribe link
+const AnerkennungGuide = lazyRoute('AnerkennungGuide', () => import('./pages/tools/Anerkennung'));
+const CitiesGuide = lazyRoute('CitiesGuide', () => import('./pages/tools/Cities'));
 // SEO: topic guides and interactive tools (Chancenkarte points, Blue Card salary check)
-const Guides = lazy(() => import('./pages/guides/Guides'));
-const GuideDetail = lazy(() => import('./pages/guides/GuideDetail'));
-const ChancenkarteCalculator = lazy(() => import('./pages/tools/ChancenkarteCalculator'));
-const BlueCardCheck = lazy(() => import('./pages/tools/BlueCardCheck'));
-const AdminGuides = lazy(() => import('./pages/admin/Guides'));
-const AdminArrivals = lazy(() => import('./pages/admin/Arrivals'));
-const AdminPartnerHousing = lazy(() => import('./pages/admin/PartnerHousing')); // partner landlords + Anmeldung deadlines
-const AdminExpiring = lazy(() => import('./pages/admin/Expiring'));
-const AdminRecognition = lazy(() => import('./pages/admin/Recognition')); // Anerkennung procedures
-const AdminAccelerated = lazy(() => import('./pages/admin/Accelerated')); // § 81a accelerated procedures
-const AdminAuthorities = lazy(() => import('./pages/admin/Authorities')); // authorities catalogue: Botschaft / Ausländerbehörde / …
-const AdminFamilyReunion = lazy(() => import('./pages/admin/FamilyReunion')); // Familiennachzug: waiting families
-const AdminOriginals = lazy(() => import('./pages/admin/Originals'));
-const AdminDuplicates = lazy(() => import('./pages/admin/Duplicates'));
-const AdminHistory = lazy(() => import('./pages/admin/History')); // field-level change history + revert
-const AdminStorageReport = lazy(() => import('./pages/admin/StorageReport'));
-const QrRedirect = lazy(() => import('./pages/QrRedirect'));
-const AdminToday = lazy(() => import('./pages/admin/Today'));
-const StatusPage = lazy(() => import('./pages/Status')); // public status check without login
-const AdminProblemReports = lazy(() => import('./pages/admin/ProblemReports')); // "Problem bildirişləri"
+const Guides = lazyRoute('Guides', () => import('./pages/guides/Guides'));
+const GuideDetail = lazyRoute('GuideDetail', () => import('./pages/guides/GuideDetail'));
+const ChancenkarteCalculator = lazyRoute('ChancenkarteCalculator', () => import('./pages/tools/ChancenkarteCalculator'));
+const BlueCardCheck = lazyRoute('BlueCardCheck', () => import('./pages/tools/BlueCardCheck'));
+const AdminGuides = lazyRoute('AdminGuides', () => import('./pages/admin/Guides'));
+const AdminArrivals = lazyRoute('AdminArrivals', () => import('./pages/admin/Arrivals'));
+const AdminPartnerHousing = lazyRoute('AdminPartnerHousing', () => import('./pages/admin/PartnerHousing')); // partner landlords + Anmeldung deadlines
+const AdminExpiring = lazyRoute('AdminExpiring', () => import('./pages/admin/Expiring'));
+const AdminRecognition = lazyRoute('AdminRecognition', () => import('./pages/admin/Recognition')); // Anerkennung procedures
+const AdminAccelerated = lazyRoute('AdminAccelerated', () => import('./pages/admin/Accelerated')); // § 81a accelerated procedures
+const AdminAuthorities = lazyRoute('AdminAuthorities', () => import('./pages/admin/Authorities')); // authorities catalogue: Botschaft / Ausländerbehörde / …
+const AdminFamilyReunion = lazyRoute('AdminFamilyReunion', () => import('./pages/admin/FamilyReunion')); // Familiennachzug: waiting families
+const AdminOriginals = lazyRoute('AdminOriginals', () => import('./pages/admin/Originals'));
+const AdminDuplicates = lazyRoute('AdminDuplicates', () => import('./pages/admin/Duplicates'));
+const AdminHistory = lazyRoute('AdminHistory', () => import('./pages/admin/History')); // field-level change history + revert
+const AdminStorageReport = lazyRoute('AdminStorageReport', () => import('./pages/admin/StorageReport'));
+const QrRedirect = lazyRoute('QrRedirect', () => import('./pages/QrRedirect'));
+const AdminToday = lazyRoute('AdminToday', () => import('./pages/admin/Today'));
+const StatusPage = lazyRoute('StatusPage', () => import('./pages/Status')); // public status check without login
+const AdminProblemReports = lazyRoute('AdminProblemReports', () => import('./pages/admin/ProblemReports')); // "Problem bildirişləri"
 
 /** /admin: STAFF land on their "my work today" queue, ADMIN / SUPER_ADMIN on the dashboard (also at /admin/dashboard). */
 const AdminIndex = () => {
   const { user } = useAuth();
   return user?.role === 'STAFF' ? <Navigate to="/admin/today" replace /> : <AdminDashboard />;
 };
-const AdminPartners = lazy(() => import('./pages/admin/Partners'));
-const AdminClientRegister = lazy(() => import('./pages/admin/ClientRegister'));
-const AdminSettlements = lazy(() => import('./pages/admin/Settlements'));
-const SheetEditor = lazy(() => import('./pages/workspace/SheetEditor'));
-const PdfEditor = lazy(() => import('./pages/workspace/PdfEditor'));
-const AccountInterviewPrep = lazy(() => import('./pages/account/InterviewPrep'));
-const AdminInterviewPrep = lazy(() => import('./pages/admin/InterviewPrep'));
-const AdminFinance = lazy(() => import('./pages/admin/Finance'));
-const AdminReports = lazy(() => import('./pages/admin/Reports'));
-const AdminProfitability = lazy(() => import('./pages/admin/Profitability'));
-const AdminBizAnalytics = lazy(() => import('./pages/admin/BizAnalytics'));
-const AdminAi = lazy(() => import('./pages/admin/Ai'));
-const AdminAiSettings = lazy(() => import('./pages/admin/AiSettings'));
-const AdminWeeklyReports = lazy(() => import('./pages/admin/WeeklyReports'));
-const AdminSecurityAlerts = lazy(() => import('./pages/admin/SecurityAlerts'));
-const AdminSensitiveAccess = lazy(() => import('./pages/admin/SensitiveAccess'));
-const AdminAiMailTriage = lazy(() => import('./pages/admin/AiMailTriage'));
-const AdminSurveys = lazy(() => import('./pages/admin/Surveys'));
-const AdminCampaigns = lazy(() => import('./pages/admin/Campaigns'));
-const Unsubscribe = lazy(() => import('./pages/Unsubscribe'));
-const AdminContractTemplates = lazy(() => import('./pages/admin/ContractTemplates'));
-const AdminCandidateRequests = lazy(() => import('./pages/admin/CandidateRequests'));
-const AdminSkillVideos = lazy(() => import('./pages/admin/SkillVideos'));
-const SurveyAnswer = lazy(() => import('./pages/SurveyAnswer'));
-const SuccessSharePage = lazy(() => import('./pages/SuccessSharePage')); // public "visa approved" share card + lead form
-const GoogleReviewOptOut = lazy(() => import('./pages/GoogleReviewLink')); // Google review request: opt-out
-const GoogleReviewRedirect = lazy(() => import('./pages/GoogleReviewLink').then((m) => ({ default: m.GoogleReviewRedirect }))); // tracked link → Google
-const ReferralLandingPage = lazy(() => import('./pages/ReferralLandingPage')); // personal referral page /r/<slug>
-const ReferralTermsPage = lazy(() => import('./pages/ReferralTermsPage'));
-const CheckInAnswer = lazy(() => import('./pages/CheckInAnswer')); // post-arrival check-in (one tap)
-const AdminTimeTracking = lazy(() => import('./pages/admin/TimeTracking')); // staff time tracking
-const AdminKpi = lazy(() => import('./pages/admin/Kpi')); // staff KPI leaderboard (ADMIN+)
-const AdminTraining = lazy(() => import('./pages/admin/Training')); // internal training: learn / authoring / progress
-const AdminCourse = lazy(() => import('./pages/admin/Course')); // pre-departure course: builder + progress report
-const AccountCourse = lazy(() => import('./pages/account/Course')); // Learn › Course: overview, lesson player, quizzes, certificate
-const CertificateVerify = lazy(() => import('./pages/CertificateVerify')); // public course certificate check
-const AdminShifts = lazy(() => import('./pages/admin/Shifts')); // team calendar: shifts, leave, handovers
-const AdminCheckIns = lazy(() => import('./pages/admin/CheckIns')); // post-arrival check-ins + retention
-const AdminAgents = lazy(() => import('./pages/admin/Agents'));
-const AdminTranslations = lazy(() => import('./pages/admin/Translations'));
-const AdminPrivacyRequests = lazy(() => import('./pages/admin/PrivacyRequests'));
-const AccountTranslations = lazy(() => import('./pages/account/Translations'));
-const AccountPrivacyCenter = lazy(() => import('./pages/account/PrivacyCenter'));
-const Booking = lazy(() => import('./pages/booking/Booking'));
-const BookingManage = lazy(() => import('./pages/booking/BookingManage'));
-const ReviewPage = lazy(() => import('./pages/ReviewPage'));
-const AdminSecurity = lazy(() => import('./pages/admin/Security'));
-const AdminCompanies = lazy(() => import('./pages/admin/Companies'));
-const AdminCompanyProfile = lazy(() => import('./pages/admin/CompanyProfile')); // full employer profile: legal data, contracts, contacts, history
-const AdminVacancies = lazy(() => import('./pages/admin/Vacancies'));
-const AdminJobChannels = lazy(() => import('./pages/admin/JobChannels')); // job board feeds (ADMIN+)
-const AdminCandidates = lazy(() => import('./pages/admin/Candidates'));
-const AdminBookings = lazy(() => import('./pages/admin/Bookings'));
-const AdminClientTasks = lazy(() => import('./pages/admin/ClientTasks')); // client tasks across cases (client process)
-const AdminInvoices = lazy(() => import('./pages/admin/Invoices'));
-const AdminQuotes = lazy(() => import('./pages/admin/Quotes'));
-const AdminReviews = lazy(() => import('./pages/admin/Reviews'));
-const AdminMessaging = lazy(() => import('./pages/admin/Messaging'));
-const AdminKanban = lazy(() => import('./pages/admin/Kanban'));
-const AdminKnowledgeBase = lazy(() => import('./pages/admin/KnowledgeBase'));
-const AdminIntegrations = lazy(() => import('./pages/admin/Integrations'));
-const AdminAutomation = lazy(() => import('./pages/admin/Automation')); // automation rules + automatic assignment
-const AdminInterviews = lazy(() => import('./pages/admin/Interviews'));
-const AdminOfficialForms = lazy(() => import('./pages/admin/OfficialForms')); // official forms: templates, field mapping, preview
-const AdminEmploymentContracts = lazy(() => import('./pages/admin/EmploymentContracts')); // Arbeitsvertrag tracker: warnings, probation ending
-const AdminJourney = lazy(() => import('./pages/admin/Journey'));
-const AdminGermanExamDates = lazy(() => import('./pages/admin/GermanExamDates'));
-const AdminRequirements = lazy(() => import('./pages/admin/Requirements'));
-const AdminCaseForms = lazy(() => import('./pages/admin/CaseForms')); // smart questionnaire builder
-const AdminDocGuides = lazy(() => import('./pages/admin/DocGuides')); // "Necə almalı?" document guides
-const AdminModules = lazy(() => import('./pages/admin/SystemModules')); // module toggles (SUPER_ADMIN)
-const AdminBrand = lazy(() => import('./pages/admin/SystemBrand')); // white-label brand (SUPER_ADMIN)
-const AdminLicense = lazy(() => import('./pages/admin/SystemLicense')); // white-label licence status (SUPER_ADMIN)
-const AdminCustomers = lazy(() => import('./pages/admin/SystemCustomers')); // owner instance: customer agencies (SUPER_ADMIN)
-const AdminUsage = lazy(() => import('./pages/admin/SystemUsage')); // admin page usage statistics (SUPER_ADMIN)
-const AdminDesignSystem = lazy(() => import('./pages/admin/DesignSystem')); // design tokens + component catalogue (ADMIN+)
-const AccountCaseForm = lazy(() => import('./pages/account/CaseForm'));
-const AccountConfirmData = lazy(() => import('./pages/account/ConfirmData'));
-const AccountOnboarding = lazy(() => import('./pages/account/Onboarding'));
-const AccountHousing = lazy(() => import('./pages/account/Housing')); // housing search checklist + Anmeldung
-const AccountGerman = lazy(() => import('./pages/account/German'));
-const AccountInterviews = lazy(() => import('./pages/account/Interviews'));
-const AdminAnalytics = lazy(() => import('./pages/admin/Analytics'));
-const AdminOverview = lazy(() => import('./pages/admin/Overview')); // analytics landing ("İcmal")
+const AdminPartners = lazyRoute('AdminPartners', () => import('./pages/admin/Partners'));
+const AdminClientRegister = lazyRoute('AdminClientRegister', () => import('./pages/admin/ClientRegister'));
+const AdminSettlements = lazyRoute('AdminSettlements', () => import('./pages/admin/Settlements'));
+const SheetEditor = lazyRoute('SheetEditor', () => import('./pages/workspace/SheetEditor'));
+const PdfEditor = lazyRoute('PdfEditor', () => import('./pages/workspace/PdfEditor'));
+const AccountInterviewPrep = lazyRoute('AccountInterviewPrep', () => import('./pages/account/InterviewPrep'));
+const AdminInterviewPrep = lazyRoute('AdminInterviewPrep', () => import('./pages/admin/InterviewPrep'));
+const AdminFinance = lazyRoute('AdminFinance', () => import('./pages/admin/Finance'));
+const AdminReports = lazyRoute('AdminReports', () => import('./pages/admin/Reports'));
+const AdminProfitability = lazyRoute('AdminProfitability', () => import('./pages/admin/Profitability'));
+const AdminBizAnalytics = lazyRoute('AdminBizAnalytics', () => import('./pages/admin/BizAnalytics'));
+const AdminAi = lazyRoute('AdminAi', () => import('./pages/admin/Ai'));
+const AdminAiSettings = lazyRoute('AdminAiSettings', () => import('./pages/admin/AiSettings'));
+const AdminWeeklyReports = lazyRoute('AdminWeeklyReports', () => import('./pages/admin/WeeklyReports'));
+const AdminSecurityAlerts = lazyRoute('AdminSecurityAlerts', () => import('./pages/admin/SecurityAlerts'));
+const AdminSensitiveAccess = lazyRoute('AdminSensitiveAccess', () => import('./pages/admin/SensitiveAccess'));
+const AdminAiMailTriage = lazyRoute('AdminAiMailTriage', () => import('./pages/admin/AiMailTriage'));
+const AdminSurveys = lazyRoute('AdminSurveys', () => import('./pages/admin/Surveys'));
+const AdminCampaigns = lazyRoute('AdminCampaigns', () => import('./pages/admin/Campaigns'));
+const Unsubscribe = lazyRoute('Unsubscribe', () => import('./pages/Unsubscribe'));
+const AdminContractTemplates = lazyRoute('AdminContractTemplates', () => import('./pages/admin/ContractTemplates'));
+const AdminCandidateRequests = lazyRoute('AdminCandidateRequests', () => import('./pages/admin/CandidateRequests'));
+const AdminSkillVideos = lazyRoute('AdminSkillVideos', () => import('./pages/admin/SkillVideos'));
+const SurveyAnswer = lazyRoute('SurveyAnswer', () => import('./pages/SurveyAnswer'));
+const SuccessSharePage = lazyRoute('SuccessSharePage', () => import('./pages/SuccessSharePage')); // public "visa approved" share card + lead form
+const GoogleReviewOptOut = lazyRoute('GoogleReviewOptOut', () => import('./pages/GoogleReviewLink')); // Google review request: opt-out
+const GoogleReviewRedirect = lazyRoute('GoogleReviewRedirect', () => import('./pages/GoogleReviewLink').then((m) => ({ default: m.GoogleReviewRedirect }))); // tracked link → Google
+const ReferralLandingPage = lazyRoute('ReferralLandingPage', () => import('./pages/ReferralLandingPage')); // personal referral page /r/<slug>
+const ReferralTermsPage = lazyRoute('ReferralTermsPage', () => import('./pages/ReferralTermsPage'));
+const CheckInAnswer = lazyRoute('CheckInAnswer', () => import('./pages/CheckInAnswer')); // post-arrival check-in (one tap)
+const AdminTimeTracking = lazyRoute('AdminTimeTracking', () => import('./pages/admin/TimeTracking')); // staff time tracking
+const AdminKpi = lazyRoute('AdminKpi', () => import('./pages/admin/Kpi')); // staff KPI leaderboard (ADMIN+)
+const AdminTraining = lazyRoute('AdminTraining', () => import('./pages/admin/Training')); // internal training: learn / authoring / progress
+const AdminCourse = lazyRoute('AdminCourse', () => import('./pages/admin/Course')); // pre-departure course: builder + progress report
+const AccountCourse = lazyRoute('AccountCourse', () => import('./pages/account/Course')); // Learn › Course: overview, lesson player, quizzes, certificate
+const CertificateVerify = lazyRoute('CertificateVerify', () => import('./pages/CertificateVerify')); // public course certificate check
+const AdminShifts = lazyRoute('AdminShifts', () => import('./pages/admin/Shifts')); // team calendar: shifts, leave, handovers
+const AdminCheckIns = lazyRoute('AdminCheckIns', () => import('./pages/admin/CheckIns')); // post-arrival check-ins + retention
+const AdminAgents = lazyRoute('AdminAgents', () => import('./pages/admin/Agents'));
+const AdminTranslations = lazyRoute('AdminTranslations', () => import('./pages/admin/Translations'));
+const AdminPrivacyRequests = lazyRoute('AdminPrivacyRequests', () => import('./pages/admin/PrivacyRequests'));
+const AccountTranslations = lazyRoute('AccountTranslations', () => import('./pages/account/Translations'));
+const AccountPrivacyCenter = lazyRoute('AccountPrivacyCenter', () => import('./pages/account/PrivacyCenter'));
+const Booking = lazyRoute('Booking', () => import('./pages/booking/Booking'));
+const BookingManage = lazyRoute('BookingManage', () => import('./pages/booking/BookingManage'));
+const ReviewPage = lazyRoute('ReviewPage', () => import('./pages/ReviewPage'));
+const AdminSecurity = lazyRoute('AdminSecurity', () => import('./pages/admin/Security'));
+const AdminCompanies = lazyRoute('AdminCompanies', () => import('./pages/admin/Companies'));
+const AdminCompanyProfile = lazyRoute('AdminCompanyProfile', () => import('./pages/admin/CompanyProfile')); // full employer profile: legal data, contracts, contacts, history
+const AdminVacancies = lazyRoute('AdminVacancies', () => import('./pages/admin/Vacancies'));
+const AdminJobChannels = lazyRoute('AdminJobChannels', () => import('./pages/admin/JobChannels')); // job board feeds (ADMIN+)
+const AdminCandidates = lazyRoute('AdminCandidates', () => import('./pages/admin/Candidates'));
+const AdminBookings = lazyRoute('AdminBookings', () => import('./pages/admin/Bookings'));
+const AdminClientTasks = lazyRoute('AdminClientTasks', () => import('./pages/admin/ClientTasks')); // client tasks across cases (client process)
+const AdminInvoices = lazyRoute('AdminInvoices', () => import('./pages/admin/Invoices'));
+const AdminQuotes = lazyRoute('AdminQuotes', () => import('./pages/admin/Quotes'));
+const AdminReviews = lazyRoute('AdminReviews', () => import('./pages/admin/Reviews'));
+const AdminMessaging = lazyRoute('AdminMessaging', () => import('./pages/admin/Messaging'));
+const AdminKanban = lazyRoute('AdminKanban', () => import('./pages/admin/Kanban'));
+const AdminKnowledgeBase = lazyRoute('AdminKnowledgeBase', () => import('./pages/admin/KnowledgeBase'));
+const AdminIntegrations = lazyRoute('AdminIntegrations', () => import('./pages/admin/Integrations'));
+const AdminAutomation = lazyRoute('AdminAutomation', () => import('./pages/admin/Automation')); // automation rules + automatic assignment
+const AdminInterviews = lazyRoute('AdminInterviews', () => import('./pages/admin/Interviews'));
+const AdminOfficialForms = lazyRoute('AdminOfficialForms', () => import('./pages/admin/OfficialForms')); // official forms: templates, field mapping, preview
+const AdminEmploymentContracts = lazyRoute('AdminEmploymentContracts', () => import('./pages/admin/EmploymentContracts')); // Arbeitsvertrag tracker: warnings, probation ending
+const AdminJourney = lazyRoute('AdminJourney', () => import('./pages/admin/Journey'));
+const AdminGermanExamDates = lazyRoute('AdminGermanExamDates', () => import('./pages/admin/GermanExamDates'));
+const AdminRequirements = lazyRoute('AdminRequirements', () => import('./pages/admin/Requirements'));
+const AdminCaseForms = lazyRoute('AdminCaseForms', () => import('./pages/admin/CaseForms')); // smart questionnaire builder
+const AdminDocGuides = lazyRoute('AdminDocGuides', () => import('./pages/admin/DocGuides')); // "Necə almalı?" document guides
+const AdminModules = lazyRoute('AdminModules', () => import('./pages/admin/SystemModules')); // module toggles (SUPER_ADMIN)
+const AdminBrand = lazyRoute('AdminBrand', () => import('./pages/admin/SystemBrand')); // white-label brand (SUPER_ADMIN)
+const AdminLicense = lazyRoute('AdminLicense', () => import('./pages/admin/SystemLicense')); // white-label licence status (SUPER_ADMIN)
+const AdminCustomers = lazyRoute('AdminCustomers', () => import('./pages/admin/SystemCustomers')); // owner instance: customer agencies (SUPER_ADMIN)
+const AdminUsage = lazyRoute('AdminUsage', () => import('./pages/admin/SystemUsage')); // admin page usage statistics (SUPER_ADMIN)
+const AdminDesignSystem = lazyRoute('AdminDesignSystem', () => import('./pages/admin/DesignSystem')); // design tokens + component catalogue (ADMIN+)
+const AccountCaseForm = lazyRoute('AccountCaseForm', () => import('./pages/account/CaseForm'));
+const AccountConfirmData = lazyRoute('AccountConfirmData', () => import('./pages/account/ConfirmData'));
+const AccountOnboarding = lazyRoute('AccountOnboarding', () => import('./pages/account/Onboarding'));
+const AccountHousing = lazyRoute('AccountHousing', () => import('./pages/account/Housing')); // housing search checklist + Anmeldung
+const AccountGerman = lazyRoute('AccountGerman', () => import('./pages/account/German'));
+const AccountInterviews = lazyRoute('AccountInterviews', () => import('./pages/account/Interviews'));
+const AdminAnalytics = lazyRoute('AdminAnalytics', () => import('./pages/admin/Analytics'));
+const AdminOverview = lazyRoute('AdminOverview', () => import('./pages/admin/Overview')); // analytics landing ("İcmal")
 
 /**
  * Warm the route chunks once the first page is interactive, so later navigations render

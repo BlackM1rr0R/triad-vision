@@ -1,5 +1,5 @@
 import { startTransition, useLayoutEffect, useState, type ReactNode } from 'react';
-import { Router, UNSAFE_createBrowserHistory, parsePath, type Navigator, type To } from 'react-router-dom';
+import { Router, UNSAFE_createBrowserHistory, createPath, parsePath, type Navigator, type To } from 'react-router-dom';
 import i18n, { currentSiteLocale, setLocaleNavigator, setUiLanguage } from '@/i18n';
 import { isPrivatePath, splitLocalePath, withLocale, type SiteLocale } from './siteLocale';
 import { navigateWithTransition } from './viewTransition';
@@ -19,7 +19,8 @@ import { navigateWithTransition } from './viewTransition';
  * On every location change the UI language follows the URL of public pages (/x → az, /de/x → de).
  */
 
-const history = UNSAFE_createBrowserHistory({ v5Compat: true });
+// The SSR build (entry-server.tsx) renders one fixed URL and never navigates: no browser history there.
+const history = import.meta.env.SSR ? (null as unknown as ReturnType<typeof UNSAFE_createBrowserHistory>) : UNSAFE_createBrowserHistory({ v5Compat: true });
 
 const rewritePath = (pathname: string): string => {
   const { lang, rest } = splitLocalePath(pathname);
@@ -78,7 +79,39 @@ export const navigateToUrl = (url: string, opts: { replace?: boolean } = {}) => 
   startTransition(() => (opts.replace ? history.replace(url) : history.push(url)));
 };
 
-export const LocaleRouter = ({ children }: { children: ReactNode }) => {
+/**
+ * Server render (entry-server.tsx): the request's URL, read-only. Hrefs and link matching go through the same
+ * rewrite as in the browser (createHref / encodeLocation of the browser history), so NavLink states and link
+ * targets in the server markup are exactly what the hydrating client renders.
+ */
+const staticHref = (to: To) => {
+  const t = rewrite(to);
+  return typeof t === 'string' ? t : createPath(t);
+};
+const staticNavigator: Navigator = {
+  createHref: staticHref,
+  encodeLocation: (to) => {
+    const url = new URL(staticHref(to).replace(/ $/, '%20'), 'http://localhost');
+    return { pathname: url.pathname, search: url.search, hash: url.hash };
+  },
+  go: () => undefined,
+  push: () => undefined,
+  replace: () => undefined,
+};
+const StaticLocaleRouter = ({ url, children }: { url: string; children: ReactNode }) => {
+  const { pathname = '/', search = '', hash = '' } = parsePath(url);
+  const { lang } = splitLocalePath(pathname);
+  return (
+    <Router basename={lang ? `/${lang}` : '/'} location={{ pathname, search, hash, state: null, key: 'default' }} navigator={staticNavigator} static>
+      {children}
+    </Router>
+  );
+};
+
+export const LocaleRouter = ({ children, location }: { children: ReactNode; location?: string }) =>
+  import.meta.env.SSR && location !== undefined ? <StaticLocaleRouter url={location}>{children}</StaticLocaleRouter> : <BrowserLocaleRouter>{children}</BrowserLocaleRouter>;
+
+const BrowserLocaleRouter = ({ children }: { children: ReactNode }) => {
   const [state, setState] = useState({ action: history.action, location: history.location });
   useLayoutEffect(() => {
     let shownPath = history.location.pathname;

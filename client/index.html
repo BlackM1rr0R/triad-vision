@@ -5,6 +5,13 @@
   page stops with a 404, which deploy/Caddyfile (handle_errors) answers with this same shell and status 404 —
   crawlers get a real 404, visitors the app's "not found" page. Skipped while rendering that error page. */:tv-->
 <!--tv:if not (placeholder "http.error.status_code"):tv--><!--tv:if eq (httpInclude (printf "/__seo/status?path=%s" (urlquery .OriginalReq.URL.Path))) "404":tv--><!--tv:httpError 404:tv--><!--tv:end:tv--><!--tv:end:tv-->
+<!--tv:/* Server-rendered page (SSR service, client/ssr/server.mjs): the real page markup inside #root, which the
+  app hydrates (src/main.tsx), and after #root the JSON it was rendered with (a script element of type
+  application/json: never executed, so no CSP hash). The service answers "markup@@tv-ssr-state@@script", or
+  nothing when the page is not server-rendered (private path, error, timeout) — then #root gets the crawler HTML
+  from the API (/__seo/body) and the app renders on the client, as before. Asked for before <head>: the head
+  skips the /api/public/content preload when the page data came with the markup. */:tv-->
+<!--tv:$ssr := splitList "@@tv-ssr-state@@" (httpInclude (printf "/__ssr/render?url=%s" (urlquery .OriginalReq.URL.RequestURI))):tv-->
 <!--tv:if $lang:tv--><!--tv:printf "<html lang=\"%s\" dir=\"ltr\">" $lang:tv--><!--tv:else:tv--><html lang="az" dir="ltr"><!--tv:end:tv-->
   <head>
     <meta charset="UTF-8" />
@@ -22,14 +29,17 @@
     <meta name="apple-mobile-web-app-title" content="Triad Vision" />
     <!--tv:end:tv-->
     <link rel="manifest" href="/manifest.webmanifest" />
-    <!-- Third-party origins used on most pages: CMS stock photos and the Cloudflare analytics beacon. -->
-    <link rel="preconnect" href="https://images.unsplash.com" crossorigin />
+    <!-- Third-party origins used on most pages: CMS stock photos and the Cloudflare analytics beacon. No
+         crossorigin on the photo origin: <img> requests are not CORS requests and could not reuse that connection. -->
+    <link rel="preconnect" href="https://images.unsplash.com" />
     <link rel="dns-prefetch" href="https://images.unsplash.com" />
     <link rel="dns-prefetch" href="https://static.cloudflareinsights.com" />
     <!-- Crawler HTML inside #root (Caddy include of /__seo/body): readable without JavaScript, hidden as soon as
          JavaScript runs (the script below adds html.js) — React replaces it on its first render. -->
     <style>
       html.js .ssr { display: none }
+      html.tv-relocate #root { visibility: hidden }
+      html.tv-consented [data-cookie-banner] { display: none }
       .ssr { max-width: 60rem; margin: 0 auto; padding: 1rem 1rem 3rem; font: 16px/1.6 system-ui, -apple-system, "Segoe UI", sans-serif; color: #0b1f44 }
       .ssr a { color: #1d4ed8 } .ssr ul, .ssr ol { padding-left: 1.25rem } .ssr nav ul { list-style: none; padding: 0; display: flex; flex-wrap: wrap; gap: .25rem 1rem }
       .ssr table { border-collapse: collapse } .ssr th, .ssr td { border: 1px solid #cbd5e1; padding: .25rem .5rem; text-align: left }
@@ -61,6 +71,17 @@
         } catch (e) {}
         var h = document.documentElement;
         h.classList.add('js');
+        // A stored language other than az on an unprefixed public URL: the app moves to /<lng>/… before its first
+        // render (lib/siteLocale.ts). Hide the server-rendered az markup until then (main.tsx drops the class).
+        try {
+          var sl = localStorage.getItem('tv_lang');
+          if (sl && /^(de|en|ru|tr|uk)$/.test(sl) && !/^\/(de|en|ru|tr|uk)(\/|$)/.test(location.pathname)) h.classList.add('tv-relocate');
+        } catch (e) {}
+        // Cookie choice already made (lib/consent.ts): the server-rendered banner stays hidden.
+        try {
+          var cc = JSON.parse(localStorage.getItem('tv.consent') || 'null');
+          if (cc && typeof cc.analytics === 'boolean' && typeof cc.marketing === 'boolean') h.classList.add('tv-consented');
+        } catch (e) {}
         var dark = p.theme === 'dark' || (p.theme !== 'light' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
         h.setAttribute('data-theme', dark ? 'dark' : 'light');
         h.style.colorScheme = dark ? 'dark' : 'light';
@@ -86,9 +107,9 @@
     </script>
   </head>
   <body>
-    <!-- Cloudflare e-mail obfuscation is switched off for the crawler body (the markers around the include):
+    <!-- Cloudflare e-mail obfuscation is switched off for the page markup (the markers around the includes):
          it would rewrite the address there and add a render-blocking decoder script to every page. -->
-    <div id="root"><!--email_off--><!--tv:httpInclude (printf "/__seo/body?path=%s" (urlquery .OriginalReq.URL.Path)):tv--><!--/email_off--></div>
+    <div id="root"><!--tv:if eq (len $ssr) 2:tv--><!--tv:index $ssr 0:tv--><!--tv:else:tv--><!--email_off--><!--tv:httpInclude (printf "/__seo/body?path=%s" (urlquery .OriginalReq.URL.Path)):tv--><!--/email_off--><!--tv:end:tv--></div><!--tv:if eq (len $ssr) 2:tv--><!--tv:index $ssr 1:tv--><!--tv:end:tv-->
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

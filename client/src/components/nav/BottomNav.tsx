@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useClientOnly } from '@/lib/ssr';
 import { createPortal } from 'react-dom';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -81,6 +82,7 @@ export function BottomNav({ items, fixed = true, className, hidden: forceHidden 
   const { t } = useTranslation();
   const keyboard = useSoftKeyboardOpen();
   const locked = useBodyScrollLocked();
+  const client = useClientOnly(); // portal only in the browser, after hydration (lib/ssr.ts)
   const hidden = forceHidden || keyboard || (fixed && locked);
 
   useEffect(() => {
@@ -152,5 +154,5 @@ export function BottomNav({ items, fixed = true, className, hidden: forceHidden 
   );
   // Fixed: portal to <body>, so the bar is above the footer even when the page sits in an animated
   // (stacking-context) wrapper such as the layout's .page-in.
-  return fixed ? createPortal(bar, document.body) : bar;
+  return fixed ? (client ? createPortal(bar, document.body) : null) : bar;
 }

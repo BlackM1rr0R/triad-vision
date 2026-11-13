@@ -1,27 +1,22 @@
 import './lib/azIntlInstall'; // first: Azerbaijani dates in browsers without "az" ICU data (Chrome)
-import { lazy, StrictMode, Suspense, useEffect, useState } from 'react';
-import { createRoot } from 'react-dom/client';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { MotionConfig } from 'framer-motion';
-import { Toaster } from 'sonner';
+import { createRoot, hydrateRoot } from 'react-dom/client';
+import { hydrate } from '@tanstack/react-query';
 // Fonts are bundled and served from our own domain (no requests to Google — DSGVO).
 import '@fontsource-variable/onest'; // the one UI family (az/tr/de/ru/uk + € ₼ ₺, tabular figures)
-import { i18nReady, preloadAllLanguages } from './i18n';
+import i18n, { i18nReady, preloadAllLanguages } from './i18n';
 import './index.css';
 import { initSiteTheme } from './lib/theme';
 import { initBrand } from './lib/brand';
-import App from './App';
-import { AuthProvider } from './lib/auth';
+import { createQueryClient, Root } from './Root';
 import { reloadOnce } from './components/ui/RouteErrorBoundary';
-import { usePrefs, useResolvedTheme } from './lib/prefs';
 import { installDiagnostics } from './lib/diagnostics';
 import { initPwa } from './lib/pwa';
-import { whenIdle } from './lib/idle';
+import { afterLoad } from './lib/idle';
 import { captureRefFromUrl } from './lib/referralCookie';
-import { LocaleRouter } from './lib/localeRouter';
-import { TooltipHost } from './components/ui/TooltipHost';
-import { ConfirmHost } from './components/ui/ConfirmHost';
 import { initAnalytics } from './lib/analytics';
+import { readSsrPayload, setHydrating } from './lib/ssr';
+import { preloadRoutes } from './lib/lazyRoute';
+import { splitLocalePath } from './lib/siteLocale';
 
 // Site theme (SUPER_ADMIN theme builder): cached CSS variables now, fresh ones after the first paint; table density.
 initSiteTheme();
@@ -33,70 +28,44 @@ initPwa();
 // ?ref=CODE (agent or client referral) → first-party cookie for 60 days.
 captureRefFromUrl();
 
-// Update toast, install banner, push prompt and the "Problem bildir" button: own chunk, loaded when idle.
-const SiteExtras = lazy(() => import('./components/site/SiteExtras'));
-const LateExtras = () => {
-  const [ready, setReady] = useState(false);
-  useEffect(() => whenIdle(() => setReady(true), 2000), []);
-  return ready ? (
-    <Suspense fallback={null}>
-      <SiteExtras />
-    </Suspense>
-  ) : null;
-};
-
 // After a deployment the old page may try to load chunks that no longer exist; a reload fixes it.
 window.addEventListener('vite:preloadError', (event) => {
   event.preventDefault();
   if (reloadOnce()) window.location.reload();
 });
 
-const queryClient = new QueryClient({
-  // staleTime: data fetched in the last 20 s is reused when another widget or page mounts the same query
-  // (dashboards mount several widgets sharing queries; back/forward navigation re-mounts whole pages).
-  // Mutations still refresh at once through invalidateQueries; queries that need it set their own value.
-  defaultOptions: { queries: { retry: 1, refetchOnWindowFocus: false, staleTime: 20_000 } },
-});
-
-/** Motion and toast settings follow the accessibility preferences (src/lib/prefs.ts). */
-const Shell = () => {
-  const { noMotion, visualAlerts } = usePrefs();
-  const theme = useResolvedTheme();
-  return (
-    <>
-      {/* Users who disabled animations in their OS get opacity-only motion: less work, no jank.
-          "Stop animations" in the accessibility widget forces the same for everyone. */}
-      <MotionConfig reducedMotion={noMotion ? 'always' : 'user'}>
-        <App />
-      </MotionConfig>
-      {/* gap / visibleToasts: a burst of toasts stacks compactly instead of filling the corner (polish in index.css). */}
-      <Toaster position="top-right" richColors closeButton theme={theme} duration={visualAlerts ? 10000 : 4000} gap={10} visibleToasts={4} />
-      {/* Quick tooltips for every titled button / link (the native title waits ~1 s). */}
-      <TooltipHost />
-      {/* Promise-based confirmations (confirmDialog / useConfirm): replaces window.confirm everywhere. */}
-      <ConfirmHost />
-      <LateExtras />
-    </>
-  );
-};
+const queryClient = createQueryClient();
 
 // GA4 (only when configured and the visitor consented to analytics cookies).
 initAnalytics();
 
+// Public pages come with server-rendered markup (src/lib/ssr.ts, Caddy include from the SSR service): React
+// hydrates it, so the page is on screen before this bundle even ran. It is only used when it was rendered for
+// this very URL and language (the stored language may have moved "/" to "/de" before this point); otherwise
+// — and for the crawler-only HTML of the fallback — the app renders from scratch and replaces it.
+const ssr = readSsrPayload();
+const container = document.getElementById('root')!;
+
 // Non-Azerbaijani copy is in its own chunks: render once the starting language is available (instant for
-// az; de/en/ru/tr/uk chunks are preloaded by the HTML shell). The crawler-only HTML inside #root (Caddy include, /__seo/body) is replaced by this render.
-void i18nReady().finally(() => {
-  createRoot(document.getElementById('root')!).render(
-    <StrictMode>
-      <QueryClientProvider client={queryClient}>
-        <LocaleRouter>
-          <AuthProvider>
-            <Shell />
-          </AuthProvider>
-        </LocaleRouter>
-      </QueryClientProvider>
-    </StrictMode>,
-  );
-  // The other languages' copy (for getFixedT in another language), once the page has settled.
-  whenIdle(preloadAllLanguages, 5000);
+// az; de/en/ru/tr/uk chunks are preloaded by the HTML shell).
+// Server-rendered: also the page chunks the markup was rendered with, so hydration never meets a pending page.
+void Promise.all([i18nReady(), ssr ? preloadRoutes(ssr.routes ?? []) : undefined]).finally(() => {
+  const { lang } = splitLocalePath(window.location.pathname);
+  // index.html hid the server markup if the stored language was about to move the page (/ → /de); moved by now.
+  document.documentElement.classList.remove('tv-relocate');
+  const usable = ssr !== null && ssr.path === window.location.pathname && ssr.lang === (lang ?? 'az') && (i18n.resolvedLanguage ?? i18n.language) === ssr.lang;
+  if (usable) {
+    hydrate(queryClient, ssr.queries);
+    setHydrating(true);
+    hydrateRoot(container, <Root queryClient={queryClient} />, {
+      // A mismatch is not fatal: React renders that part again on the client. Logged for "Problem bildir".
+      onRecoverableError: (error) => console.warn('[ssr] hydration', error),
+    });
+    // The page's own boundary ends it once hydrated (SiteLayout → HydrationDone); this is only the safety net.
+    window.setTimeout(() => setHydrating(false), 10_000);
+  } else {
+    createRoot(container).render(<Root queryClient={queryClient} />);
+  }
+  // The other languages' copy (for getFixedT in another language), once the page has loaded and settled.
+  afterLoad(preloadAllLanguages, 5000);
 });

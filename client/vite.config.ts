@@ -162,7 +162,8 @@ const shellPreloads = (): Plugin => ({
         // Site content (header, footer, home sections; language-independent, cached by the API): every page in
         // the site layout waits for it before showing its main content. Fetching it here starts it while the
         // JS is still downloading. use-credentials = the same request the axios client (withCredentials) makes.
-        tv('if not (or (hasPrefix "/admin" $tvPath) (hasPrefix "/workspace" $tvPath))') +
+        // Not needed when the page came server-rendered: its data is in the page (client/index.html, $ssr).
+        tv('if not (or (hasPrefix "/admin" $tvPath) (hasPrefix "/workspace" $tvPath) (eq (len $ssr) 2))') +
           '<link rel="preload" as="fetch" href="/api/public/content" crossorigin="use-credentials">' +
           tv('end'),
       ].join('\n    ');
@@ -171,8 +172,13 @@ const shellPreloads = (): Plugin => ({
   },
 });
 
-export default defineConfig({
-  plugins: [react(), tailwindcss(), swBuildStamp(), shellPreloads(), brotliAssets()],
+export default defineConfig(({ isSsrBuild }) => ({
+  // SSR build (npm run build:ssr → dist-ssr/entry-server.js for client/ssr/server.mjs): one self-contained
+  // Node module (every dependency bundled), none of the browser-build plugins.
+  plugins: isSsrBuild ? [react(), tailwindcss()] : [react(), tailwindcss(), swBuildStamp(), shellPreloads(), brotliAssets()],
+  ssr: { noExternal: true, target: 'node' },
+  // Dependencies are bundled: pick their production builds at build time (React's dev build is ~3× slower).
+  define: isSsrBuild ? { 'process.env.NODE_ENV': JSON.stringify('production') } : undefined,
   resolve: { alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) } },
   // Pre-bundle heavy deps up front so the dev server never stops mid-navigation to re-optimise and reload.
   optimizeDeps: {
@@ -198,18 +204,20 @@ export default defineConfig({
   },
   // `vite preview` serves the production build; proxy the API the same way so it can be measured locally.
   preview: { port: 4173, proxy: { '/api': 'http://localhost:4000', '/uploads': 'http://localhost:4000' } },
-  build: {
-    target: 'es2022',
-    rollupOptions: {
-      output: {
-        // Only libraries every page needs go in shared chunks.
-        manualChunks: {
-          react: ['react', 'react-dom', 'react-dom/client', 'react-router-dom', 'scheduler'],
-          motion: ['framer-motion'],
-          data: ['axios', '@tanstack/react-query'],
-          i18n: ['i18next', 'react-i18next', 'i18next-browser-languagedetector'],
+  build: isSsrBuild
+    ? { target: 'node22', outDir: 'dist-ssr', emptyOutDir: true, copyPublicDir: false, minify: false, sourcemap: false }
+    : {
+        target: 'es2022',
+        rollupOptions: {
+          output: {
+            // Only libraries every page needs go in shared chunks.
+            manualChunks: {
+              react: ['react', 'react-dom', 'react-dom/client', 'react-router-dom', 'scheduler'],
+              motion: ['framer-motion'],
+              data: ['axios', '@tanstack/react-query'],
+              i18n: ['i18next', 'react-i18next', 'i18next-browser-languagedetector'],
+            },
+          },
         },
       },
-    },
-  },
-});
+}));

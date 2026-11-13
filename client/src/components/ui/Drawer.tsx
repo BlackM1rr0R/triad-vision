@@ -1,4 +1,5 @@
 import { useId, type FormEvent, type ReactNode, type RefObject } from 'react';
+import { useClientOnly } from '@/lib/ssr';
 import { createPortal } from 'react-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import clsx from 'clsx';
@@ -66,6 +67,7 @@ export const Drawer = ({
   closeLabel,
 }: DrawerProps) => {
   const { t } = useTranslation();
+  const client = useClientOnly(); // portal only in the browser, after hydration (lib/ssr.ts)
   const requestClose = () => {
     if (!busy) onClose();
   };
@@ -75,7 +77,7 @@ export const Drawer = ({
   const Panel = as === 'form' ? motion.form : motion.div;
   const from = side === 'right' ? '100%' : '-100%';
 
-  if (typeof document === 'undefined') return null;
+  if (!client) return null;
   return createPortal(
     <AnimatePresence>
       {open && (

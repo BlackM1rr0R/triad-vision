@@ -180,13 +180,14 @@ export const TestimonialCard = ({ item, dark = false }: { item: Testimonial; dar
   );
 };
 
-export const PostCard = ({ post }: { post: PostSummary }) => {
+/** priority: the first card of a list that starts above the fold (its cover is the page's LCP image on phones). */
+export const PostCard = ({ post, priority = false }: { post: PostSummary; priority?: boolean }) => {
   const { t } = useTranslation();
   const { tr, date } = useL10n();
   return (
     <Link to={`/news/${post.slug}`} className="group card card-interactive flex h-full flex-col overflow-hidden rounded-3xl">
       <div className="relative h-52 overflow-hidden">
-        <img src={sized(post.cover, 720)} srcSet={srcSet(post.cover, [480, 720, 1000])} sizes="(min-width:1024px) 400px, (min-width:768px) 45vw, 82vw" alt={tr(post.title)} loading="lazy" decoding="async" className="size-full object-cover" />
+        <img src={sized(post.cover, 720)} srcSet={srcSet(post.cover, [480, 720, 1000])} sizes="(min-width:1024px) 400px, (min-width:768px) 45vw, 82vw" alt={tr(post.title)} loading={priority ? 'eager' : 'lazy'} fetchPriority={priority ? 'high' : undefined} decoding="async" className="size-full object-cover" />
         <span className="absolute top-4 left-4 inline-flex items-center gap-1.5 rounded-full bg-card px-3 py-1 text-xs font-semibold text-ink">
           <Calendar className="size-3.5" /> {date(post.publishedAt)}
         </span>

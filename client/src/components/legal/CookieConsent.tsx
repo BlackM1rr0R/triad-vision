@@ -8,6 +8,7 @@ import { useAuth } from '@/lib/auth';
 import { CONSENT_OPEN_EVENT, getConsent, setConsent } from '@/lib/consent';
 import { registerCopy } from '@/i18n';
 import { cookieConsentCopy } from '@/i18n/cookieConsent';
+import { isHydrating } from '@/lib/ssr';
 
 registerCopy(cookieConsentCopy);
 
@@ -25,6 +26,8 @@ const fetchCookieVersion = async (): Promise<string> => {
 /** One request per page load, shared by the delayed check and an early click. */
 let versionRequest: Promise<string> | null = null;
 const cookieVersion = () => (versionRequest ??= fetchCookieVersion());
+/** index.html hides the server-rendered banner for visitors who already chose; any later opening must show it. */
+const unhide = () => document.documentElement.classList.remove('tv-consented');
 
 const Toggle = ({ checked, disabled, onChange, labelledBy }: { checked: boolean; disabled?: boolean; onChange?: (v: boolean) => void; labelledBy: string }) => (
   <button
@@ -54,7 +57,10 @@ export const CookieConsent = () => {
   const { t } = useTranslation();
   const { user } = useAuth();
   const uid = useId();
-  const [open, setOpen] = useState(false);
+  // Server-rendered pages (lib/ssr.ts) carry the banner in their markup, so it paints with the page instead of
+  // seconds later as the Largest Contentful Paint. The server cannot know the stored choice: index.html hides the
+  // banner before the first paint for visitors who already chose (html.tv-consented), and it closes on mount.
+  const [open, setOpen] = useState(isHydrating);
   const [view, setView] = useState<'banner' | 'settings'>('banner');
   // Set once the visitor chose: a version check still in flight must not reopen the banner.
   const decided = useRef(false);
@@ -68,7 +74,10 @@ export const CookieConsent = () => {
     // still fetched after the page settles; a click before that waits for it (save).
     if (!getConsent()) {
       setView('banner');
+      unhide();
       setOpen(true);
+    } else {
+      setOpen(false); // server-rendered banner of a visitor who already chose (hidden by index.html until now)
     }
     // A moment after the page settles, so the version check never competes with the first paint.
     const id = window.setTimeout(() => {
@@ -79,6 +88,7 @@ export const CookieConsent = () => {
           setAnalytics(current?.analytics ?? false);
           setMarketing(current?.marketing ?? false);
           setView('banner');
+          unhide();
           setOpen(true);
         }
       });
@@ -88,6 +98,7 @@ export const CookieConsent = () => {
       setAnalytics(current?.analytics ?? false);
       setMarketing(current?.marketing ?? false);
       setView('settings');
+      unhide();
       setOpen(true);
     };
     window.addEventListener(CONSENT_OPEN_EVENT, reopen);
@@ -116,7 +127,8 @@ export const CookieConsent = () => {
   ] as const;
 
   return (
-    <AnimatePresence>
+    // initial: no slide-in for the server-rendered banner (it is on screen already).
+    <AnimatePresence initial={!isHydrating()}>
       {open && (
         <motion.section
           role="dialog"
@@ -126,6 +138,7 @@ export const CookieConsent = () => {
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: 40, opacity: 0 }}
           data-bnav-lift
+          data-cookie-banner
           className="fixed inset-x-3 bottom-3 z-[60] max-h-[calc(100dvh-1.5rem)] overflow-y-auto rounded-3xl border border-line bg-card p-4 shadow-[var(--tv-shadow-raised)] sm:right-auto sm:bottom-6 sm:left-6 sm:max-w-md sm:p-5"
         >
           <div className="flex items-start gap-3">

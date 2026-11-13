@@ -1,6 +1,7 @@
-import { useEffect, useLayoutEffect, useRef } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { motionAllowed } from '@/lib/viewTransition';
+import { isHydrating } from '@/lib/ssr';
 
 /**
  * A number that counts up when it first scrolls into view, and glides from the old to the new value when it
@@ -31,7 +32,8 @@ export const AnimatedNumber = ({
 }) => {
   const { i18n } = useTranslation();
   const ref = useRef<HTMLSpanElement>(null);
-  const shown = useRef<number | null>(null);
+  // Server-rendered page (lib/ssr.ts): the markup already shows the final value, so it stays (no count from 0).
+  const shown = useRef<number | null>(isHydrating() ? value : null);
   const decimals = Number.isInteger(value) ? 0 : Math.min(2, (String(value).split('.')[1] ?? '').length);
   const fmt = (n: number) => {
     if (format) return format(n);
@@ -41,6 +43,7 @@ export const AnimatedNumber = ({
       return `${prefix}${n.toFixed(decimals)}${suffix}`;
     }
   };
+  const [ssrText] = useState(() => (isHydrating() ? fmt(value) : ''));
   const fmtRef = useRef(fmt);
   fmtRef.current = fmt;
 
@@ -91,9 +94,9 @@ export const AnimatedNumber = ({
     return () => cancelAnimationFrame(raf);
   }, [value, duration, decimals]);
 
-  // The visible text is owned by the DOM writes above (React never renders it, so a re-render — e.g. a
-  // language switch — cannot reset a running count). Before the first count it shows zero when motion is on,
-  // otherwise the final value.
+  // The visible text is owned by the DOM writes above (React renders at most the server-rendered first value,
+  // so a re-render — e.g. a language switch — cannot reset a running count). Before the first count it shows
+  // zero when motion is on, otherwise the final value.
   useLayoutEffect(() => {
     const el = ref.current;
     if (!el) return;
@@ -103,7 +106,11 @@ export const AnimatedNumber = ({
 
   return (
     <span className={className}>
-      <span ref={ref} aria-hidden className="tabular-nums" />
+      {/* suppressHydrationWarning: number formatting may differ slightly between the server's and the browser's
+          ICU data; the layout effect writes the browser's version right away. */}
+      <span ref={ref} aria-hidden className="tabular-nums" suppressHydrationWarning>
+        {ssrText}
+      </span>
       <span className="sr-only">{fmt(value)}</span>
     </span>
   );
