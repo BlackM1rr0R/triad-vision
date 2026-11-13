@@ -13,6 +13,7 @@ import {
   type SitemapGroup,
 } from '../lib/seo.js';
 import { getBody } from '../lib/seoBody.js';
+import { indexNowKey, KEY_PATH } from '../lib/indexNow.js';
 import { ogCardPng, ogCardText } from '../lib/ogImage.js';
 import { getCaseAiSettings } from '../lib/ai/features/caseAi/config.js';
 import { successShareHead } from '../lib/successShare/service.js';
@@ -33,6 +34,13 @@ const xml = (res: Response, body: string, maxAge = 600) => {
   res.setHeader('Cache-Control', `public, max-age=${maxAge}`);
   res.send(body);
 };
+
+/** IndexNow key file (lib/indexNow): the search engines fetch it to verify the submitting site. */
+seoRouter.get(KEY_PATH, (_req, res) => {
+  res.type('text/plain; charset=utf-8');
+  res.setHeader('Cache-Control', 'public, max-age=86400');
+  res.send(indexNowKey());
+});
 
 /** Sitemap index: one child sitemap per content group (see SITEMAP_GROUPS). */
 seoRouter.get('/sitemap.xml', async (_req, res) => xml(res, await getSitemap()));

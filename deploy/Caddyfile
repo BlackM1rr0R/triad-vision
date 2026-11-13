@@ -66,8 +66,8 @@ autoconfig.{$SITE_DOMAIN}, autodiscover.{$SITE_DOMAIN} {
 	}
 
 	# robots.txt, the sitemaps (index + /sitemaps/*.xml), the RSS feeds (/rss.xml, /de/rss.xml …) and the
-	# generated Open Graph title cards (/og/…) come from the API (cached there).
-	@seofiles path /robots.txt /sitemap.xml /sitemaps/* /rss.xml /de/rss.xml /en/rss.xml /ru/rss.xml /tr/rss.xml /uk/rss.xml /og/*
+	# generated Open Graph title cards (/og/…) and the IndexNow key file come from the API (cached there).
+	@seofiles path /robots.txt /indexnow.txt /sitemap.xml /sitemaps/* /rss.xml /de/rss.xml /en/rss.xml /ru/rss.xml /tr/rss.xml /uk/rss.xml /og/*
 	handle @seofiles {
 		reverse_proxy api:4000 {
 			header_up X-Forwarded-For {client_ip}
