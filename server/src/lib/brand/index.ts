@@ -26,7 +26,7 @@ export const DEFAULT_BRAND = {
   shortName: 'Triad Vision',
   tagline: 'People · Work · Opportunities',
   domain: 'triad-vision.de',
-  phone: '+994 50 748 70 48',
+  phone: '+994 51 414 14 01',
   legalName: '',
   supportEmail: '',
   country: 'DE',

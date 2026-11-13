@@ -546,8 +546,8 @@ async function main() {
 
   const settings: Record<string, unknown> = {
     contact: {
-      phone: '+994 50 748 70 48',
-      whatsapp: '+994507487048',
+      phone: '+994 51 414 14 01',
+      whatsapp: '+994514141401',
       email: 'abdllyevv@gmail.com',
       hours: { az: 'B.e – Cümə, 09:00 – 18:00', de: 'Mo – Fr, 09:00 – 18:00', en: 'Mon – Fri, 09:00 – 18:00', ru: 'Пн – Пт, 09:00 – 18:00' },
       offices: [

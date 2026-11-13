@@ -20,7 +20,7 @@ describe('resolveBrand', () => {
       shortName: 'Triad Vision',
       tagline: 'People · Work · Opportunities',
       domain: 'triad-vision.de',
-      phone: '+994 50 748 70 48',
+      phone: '+994 51 414 14 01',
       emailFrom: 'Triad Vision <no-reply@triad-vision.de>',
       primaryColor: '#0b1f44',
       isDefault: true,
@@ -56,7 +56,7 @@ describe('brandify (output sinks)', () => {
 
   it('is a no-op for the default brand', () => {
     resetBrandForTests();
-    const text = 'Triad Vision · triad-vision.de · +994 50 748 70 48 — TRIAD VISION, Triad-Vision-Team';
+    const text = 'Triad Vision · triad-vision.de · +994 51 414 14 01 — TRIAD VISION, Triad-Vision-Team';
     expect(brandify(text)).toBe(text);
   });
 
@@ -64,7 +64,7 @@ describe('brandify (output sinks)', () => {
     const b = resolveBrand({ name: 'Acme Visa', tagline: 'Visas made simple', phone: '+49 30 1' }, { ...OPTS, env: { BRAND_DOMAIN: 'acme.example' } });
     const pairs = replacementPairs(b);
     const swap = (s: string) => pairs.reduce((acc, [from, to]) => acc.split(from).join(to), s);
-    const out = swap('TRIAD VISION | PEOPLE · WORK · OPPORTUNITIES | Triad Vision · triad-vision.de · +994 50 748 70 48 | Triad-Vision-Team');
+    const out = swap('TRIAD VISION | PEOPLE · WORK · OPPORTUNITIES | Triad Vision · triad-vision.de · +994 51 414 14 01 | Triad-Vision-Team');
     expect(out).toBe('ACME VISA | VISAS MADE SIMPLE | Acme Visa · acme.example · +49 30 1 | Acme-Visa-Team');
     expect(swap(out)).toBe(out);
   });

@@ -38,7 +38,7 @@ export const plainTextOf = (html: string) =>
 /**
  * Header and footer of the e-mail wrapper from the instance brand (lib/brand). With the default brand this is
  * exactly the former fixed markup: "TRIAD VISION", "PEOPLE · WORK · OPPORTUNITIES", navy, and the footer
- * "Triad Vision · triad-vision.de · +994 50 748 70 48".
+ * "Triad Vision · triad-vision.de · +994 51 414 14 01".
  */
 const emailBrand = () => {
   const b = brandSync();

@@ -25,7 +25,7 @@ const seedContent = async () => {
     await createPost({ slug: `post-${i}`, publishedAt: new Date(Date.UTC(2026, 0, i)) });
   }
   await createPost({ slug: 'draft', published: false, publishedAt: new Date(Date.UTC(2027, 0, 1)) });
-  await prisma.setting.create({ data: { key: 'contact', value: { phone: '+994 50 748 70 48' } } });
+  await prisma.setting.create({ data: { key: 'contact', value: { phone: '+994 51 414 14 01' } } });
   return { v0, v1 };
 };
 
@@ -62,7 +62,7 @@ describe('GET /api/public/content', () => {
     // latest 6 published posts, newest first, without body
     expect(b.posts.map((p: { slug: string }) => p.slug)).toEqual(['post-8', 'post-7', 'post-6', 'post-5', 'post-4', 'post-3']);
     expect(b.posts[0].body).toBeUndefined();
-    expect(b.settings).toEqual({ contact: { phone: '+994 50 748 70 48' } });
+    expect(b.settings).toEqual({ contact: { phone: '+994 51 414 14 01' } });
   });
 
   it('is cached in memory until an admin write clears it', async () => {

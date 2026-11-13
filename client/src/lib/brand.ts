@@ -48,7 +48,7 @@ export const DEFAULT_BRAND: Brand = {
   domain: 'triad-vision.de',
   legalName: '',
   supportEmail: '',
-  phone: '+994 50 748 70 48',
+  phone: '+994 51 414 14 01',
   country: 'DE',
   footerText: '',
   languages: ['az', 'de', 'en', 'ru', 'tr', 'uk'],

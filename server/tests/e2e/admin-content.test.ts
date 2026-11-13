@@ -117,7 +117,7 @@ describe('/api/admin/settings', () => {
     expect((await agent.get('/api/admin/settings')).body).toEqual({ settings: {} });
     expect((await anon().get('/api/public/content')).body.settings).toEqual({});
 
-    const contact = { phone: '+994 50 748 70 48', email: 'info@triad-vision.de' };
+    const contact = { phone: '+994 51 414 14 01', email: 'info@triad-vision.de' };
     const put = await agent.put('/api/admin/settings/contact').send({ value: contact });
     expect(put.status).toBe(200);
     expect(put.body.setting).toEqual({ key: 'contact', value: contact });
