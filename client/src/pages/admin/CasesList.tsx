@@ -15,7 +15,7 @@ import { Chip, EmptyState, ErrorBlock, PageHead } from '@/components/admin/ui';
 import { BulkPartnerBar, CasePartnerCell, PartnerFilterSelect } from '@/components/partners/CasesPartnerTools';
 import { NextStepChip } from '@/components/caseNext/NextStepChip';
 import { CasesListSkeleton } from '@/components/admin/CasesListSkeleton';
-import { morphCaseRow } from '@/components/admin/caseMorph';
+import { CASES_LIST_QS_KEY, morphCaseRow } from '@/components/admin/caseMorph';
 import { CaseAssigneeCell, CaseStatusCell } from '@/components/inline/CaseInlineCells'; // inline assignee / quick status
 import { requestInlineEdit } from '@/components/inline/optimistic';
 import { CaseSplitPanel } from '@/components/admin/split/CaseSplitPanel'; // split view: compact case summary
@@ -95,6 +95,15 @@ export default function CasesList() {
   const { tr } = useL10n();
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
+  // The case page's back arrow returns to this list with its filters and page (CASES_LIST_QS_KEY).
+  const qsNow = params.toString();
+  useEffect(() => {
+    try {
+      sessionStorage.setItem(CASES_LIST_QS_KEY, qsNow);
+    } catch {
+      /* private mode */
+    }
+  }, [qsNow]);
   const statusParam = params.get('status');
   const status = isStatus(statusParam) ? statusParam : null;
   const search = params.get('search') ?? '';

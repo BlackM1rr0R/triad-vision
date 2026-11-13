@@ -37,7 +37,7 @@ export const EmployerReportsPanel = ({ companyId }: { companyId: string }) => {
   useEffect(() => {
     if (q.data && !month) setMonth(q.data.defaultMonth);
   }, [q.data, month]);
-  const onError = (err: unknown) => toast.error(t(`employerReports.admin.${errorCode(err)}`, { defaultValue: t('admin.common.error', { defaultValue: errorCode(err) }) }));
+  const onError = (err: unknown) => toast.error(t(`employerReports.admin.${errorCode(err)}`, { defaultValue: t('admin.common.opFailed') }));
 
   const generate = useMutation({
     mutationFn: () => api.post('/admin/employer-reports/generate', { companyId, month, ...(lang ? { lang } : {}) }),

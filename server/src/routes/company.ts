@@ -137,6 +137,10 @@ companyRouter.post('/register', registerLimiter, async (req, res) => {
       },
     });
     return { company, user };
+  }).catch((err: unknown) => {
+    // Two submits at once: the unique e-mail index answers like the check above.
+    if ((err as { code?: string }).code === 'P2002') throw conflict('EMAIL_TAKEN');
+    throw err;
   });
 
   // The form requires accepting the terms (and links the privacy policy): logged with the current versions.

@@ -1,5 +1,6 @@
 import type { Request } from 'express';
 import type { Prisma } from '@prisma/client';
+import { config } from '../config.js';
 import { prisma } from '../db.js';
 
 /** Called after every recorded action (security alert rules react to critical ones in real time). Must not throw. */
@@ -15,10 +16,32 @@ const withImpersonation = (details: Prisma.InputJsonValue | undefined, viewedUse
     : { value: details ?? null, impersonating: viewedUserId };
 
 /**
+ * Tests only: audit writes still in flight. Routes fire most audits without awaiting them (`void audit(...)`), so
+ * a test that counts AuditLog rows right after the response could race the write; in tests the app holds every
+ * response until these settle (app.ts). Empty and unused outside tests.
+ */
+const inFlight = new Set<Promise<void>>();
+export const auditsSettled = () => (inFlight.size ? Promise.allSettled([...inFlight]).then(() => undefined) : Promise.resolve());
+
+/**
  * Records a security-relevant action. Never throws: auditing must not break the action itself,
  * so failures are only logged.
  */
-export const audit = async (
+export const audit = (
+  req: Pick<Request, 'user' | 'ip'> & Partial<Pick<Request, 'impersonator'>>,
+  action: string,
+  target?: string,
+  details?: Prisma.InputJsonValue,
+): Promise<void> => {
+  const p = writeAudit(req, action, target, details);
+  if (config.isTest) {
+    inFlight.add(p);
+    void p.finally(() => inFlight.delete(p));
+  }
+  return p;
+};
+
+const writeAudit = async (
   req: Pick<Request, 'user' | 'ip'> & Partial<Pick<Request, 'impersonator'>>,
   action: string,
   target?: string,

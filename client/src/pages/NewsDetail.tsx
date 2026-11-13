@@ -13,6 +13,7 @@ import { useL10n } from '@/lib/l10n';
 import type { Post } from '@/lib/types';
 import NotFound from './NotFound';
 import { usePageTitle } from '@/lib/usePageTitle';
+import { useClientOnly } from '@/lib/ssr';
 import { registerCopy } from '@/i18n';
 import { pagesSeo } from '@/i18n/pagesSeo';
 
@@ -28,12 +29,15 @@ export default function NewsDetail() {
     queryFn: async () => (await api.get<{ post: Post }>(`/public/posts/${slug}`)).data.post,
   });
   usePageTitle(data ? tr(data.title) : t('nav.news'));
+  // The page URL exists only in the browser: share links get it right after hydration (the server markup has
+  // none, and React does not patch mismatching attributes — they would stay empty).
+  const client = useClientOnly();
   if (isLoading) return <PageHeroSkeleton />;
   if (isError || !data) return <NotFound />;
 
   const body = tr(data.body);
   const related = (content?.posts ?? []).filter((p) => p.slug !== data.slug).slice(0, 3);
-  const url = typeof window !== 'undefined' ? window.location.href : '';
+  const url = client ? window.location.href : '';
   const share = [
     { name: 'WhatsApp', href: `https://wa.me/?text=${encodeURIComponent(`${tr(data.title)} ${url}`)}` },
     { name: 'Facebook', href: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}` },

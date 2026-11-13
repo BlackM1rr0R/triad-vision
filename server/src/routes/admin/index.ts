@@ -124,7 +124,8 @@ adminRouter.get('/dashboard', async (req, res) => {
       take: 10,
       include: { client: { select: { firstName: true, lastName: true } } },
     }),
-    prisma.document.count({ where: { status: 'PENDING', stage: { in: ['INITIAL', 'EMBASSY'] } } }),
+    // the same documents as the review queue (/admin/review): pending uploads of open cases
+    prisma.document.count({ where: { status: 'PENDING', stage: { in: ['INITIAL', 'EMBASSY'] }, case: { status: { notIn: FINAL_STATUSES } } } }),
     prisma.case.count({ where: { createdAt: { gte: weekAgo } } }),
     // embassy appointments in the next 14 days
     prisma.case.findMany({

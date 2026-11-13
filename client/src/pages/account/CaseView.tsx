@@ -34,10 +34,10 @@ import { usePageTitle } from '@/lib/usePageTitle';
 import { ClientOriginals } from '@/components/originals/ClientOriginals';
 import ClientDataTasks from '@/components/clientData/ClientDataTasks';
 import { FamilyMembersSection } from '@/components/family/FamilyMembersSection';
-import { PortalTasks } from '@/components/clientProcess/PortalTasks'; // "MÉ™nim tapÅŸÄ±rÄ±qlarÄ±m"
+import { PortalTasks } from '@/components/clientProcess/PortalTasks'; // "Mənim tapşırıqlarım"
 import { ClientRecognitionCard } from '@/components/recognition/ClientRecognitionCard'; // Anerkennung status (read-only)
 import { ClientAuthoritiesCard } from '@/components/authorities/ClientAuthoritiesCard'; // embassy / Ausländerbehörde info (read-only)
-import { PortalOfficeVisits } from '@/components/clientProcess/PortalOfficeVisits'; // "OfisÉ™ gÉ™liÅŸ tÉ™yin et"
+import { PortalOfficeVisits } from '@/components/clientProcess/PortalOfficeVisits'; // "Ofisə gəliş təyin et"
 import { useFamilyOverview } from '@/components/family/api';
 import { useAuth } from '@/lib/auth';
 import { registerCopy } from '@/i18n';

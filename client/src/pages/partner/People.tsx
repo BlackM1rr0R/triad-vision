@@ -233,8 +233,8 @@ export default function PartnerPeoplePage({ me }: { me: PartnerMe }) {
                       {c.passport && <span className="font-mono">{c.passport}</span>}
                       {!c.owned && <span>{t('partnerClients.list.viaCase')}</span>}
                       {c.contact && (
-                        <span className="inline-flex items-center gap-1">
-                          <Mail className="size-3.5" aria-hidden /> {c.contact.email}
+                        <span className="inline-flex min-w-0 items-center gap-1 break-all">
+                          <Mail className="size-3.5 shrink-0" aria-hidden /> {c.contact.email}
                           {c.contact.phone ? ` · ${c.contact.phone}` : ''}
                         </span>
                       )}

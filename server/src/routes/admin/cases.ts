@@ -25,7 +25,7 @@ import { createCaseMessage, listMessages, markMessagesRead, publishTyping } from
 import { deleteCaseDocument } from '../../lib/caseDocDelete.js';
 import { copyDocumentToDrive, syncCaseFolder, trashRejectedCopy } from '../../lib/drive/caseFolders.js';
 import { caseParentFor, checkTargetFolder, folderInfos, vacancyProfession } from '../../lib/drive/vacancyFolders.js'; // vacancy folders
-import { requireMinRole } from '../../middleware/auth.js';
+import { hasMinRole, requireMinRole } from '../../middleware/auth.js';
 import { hasMissing, translateMany } from '../../lib/ai/translate.js';
 import { prepareCaseDocument, publicQuality, scheduleUploadAnalysis } from '../../lib/uploadAi/index.js';
 import { checkDocumentPhoto, photoCheckOnUpload } from '../../lib/photoCheck/index.js'; // biometric photo rules
@@ -80,24 +80,29 @@ export const caseListWhere = (q: z.infer<typeof caseListQuery>, viewerId: string
   const and: Prisma.CaseWhereInput[] = [];
   if (q.processing) and.push(stageWhere(q.processing));
   if (q.overdue) and.push(overdueWhere());
+  if (q.search) and.push(...searchWhere(q.search));
   return {
     ...(q.status ? { status: q.status } : {}),
     ...(and.length ? { AND: and } : {}),
     ...(q.processingAssignee ? { processingAssigneeId: q.processingAssignee === 'me' ? viewerId : q.processingAssignee } : {}),
     ...(q.partnerId ? { partnerId: q.partnerId === 'none' ? null : q.partnerId } : {}),
     ...(q.mine ? { assignedStaffId: viewerId } : {}),
-    ...(q.search
-      ? {
-          OR: [
-            { number: { contains: q.search } },
-            { profession: { contains: q.search } },
-            { client: { email: { contains: q.search } } },
-            { client: { firstName: { contains: q.search } } },
-            { client: { lastName: { contains: q.search } } },
-          ],
-        }
-      : {}),
   };
+};
+
+/** One OR over the searchable fields per word: "Ali Aliyev" finds the client whose first and last name match. */
+const searchWhere = (search: string): Prisma.CaseWhereInput[] => {
+  const words = search.split(/\s+/).filter(Boolean).slice(0, 5);
+  const one = (w: string): Prisma.CaseWhereInput => ({
+    OR: [
+      { number: { contains: w } },
+      { profession: { contains: w } },
+      { client: { email: { contains: w } } },
+      { client: { firstName: { contains: w } } },
+      { client: { lastName: { contains: w } } },
+    ],
+  });
+  return (words.length ? words : [search]).map(one);
 };
 
 adminCasesRouter.get('/', async (req, res) => {
@@ -190,8 +195,9 @@ adminCasesRouter.patch('/:id', async (req, res) => {
   if (!current) throw notFound('CASE_NOT_FOUND');
   if (body.driveParentId) body.driveParentId = await checkTargetFolder(req.user!, body.driveParentId, current.driveFolderId);
   if (body.assignedStaffId) {
-    const staff = await prisma.user.findUnique({ where: { id: body.assignedStaffId } });
-    if (!staff || staff.role === 'CLIENT' || staff.role === 'COMPANY') throw badRequest('INVALID_STAFF');
+    // Same rule as the Kanban and the bulk assignment: an active team member (not an agent / employer / client).
+    const staff = await prisma.user.findUnique({ where: { id: body.assignedStaffId }, select: { role: true, isActive: true } });
+    if (!staff || !staff.isActive || !hasMinRole(staff.role, 'STAFF')) throw badRequest('INVALID_STAFF');
   }
   if (body.visaCategoryId && !(await prisma.visaCategory.count({ where: { id: body.visaCategoryId } }))) {
     throw badRequest('INVALID_VISA_CATEGORY');

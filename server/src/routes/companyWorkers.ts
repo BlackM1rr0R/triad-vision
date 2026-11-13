@@ -40,9 +40,9 @@ const co = (res: { locals: Record<string, unknown> }) => res.locals.company as C
 const ID_RE = /^[A-Za-z0-9_-]{8,40}$/;
 const langOf = (req: { query: Record<string, unknown>; get: (h: string) => string | undefined }) => pickLoc(req.query.lang) ?? pickLoc(req.get('X-Locale')) ?? 'de';
 
-companyWorkersRouter.get('/', async (_req, res) => {
+companyWorkersRouter.get('/', async (req, res) => {
   const now = new Date();
-  const items = await buildPanel(co(res).id, now);
+  const items = await buildPanel(co(res).id, now, req.user!.id);
   res.json({ stepCount: STEP_COUNT, summary: panelSummary(items, now), items });
 });
 
@@ -95,7 +95,7 @@ companyWorkersRouter.delete('/:caseId/checklist/:itemId', async (req, res) => {
 companyWorkersRouter.get('/:caseId', async (req, res) => {
   const caseId = String(req.params.caseId);
   if (!ID_RE.test(caseId)) throw notFound('WORKER_NOT_FOUND');
-  const detail = await workerDetail(co(res).id, caseId);
+  const detail = await workerDetail(co(res).id, caseId, new Date(), req.user!.id);
   if (!detail) throw notFound('WORKER_NOT_FOUND');
   res.json(detail);
 });

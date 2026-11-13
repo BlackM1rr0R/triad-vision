@@ -9,7 +9,7 @@ import { requireAuth } from '../middleware/auth.js';
 import { requireVerifiedEmail } from '../middleware/verified.js';
 import { decodeOriginalName, documentUpload, verifyUploadedFile } from '../middleware/upload.js';
 import { CLIENT_UPLOAD_STAGE, clientSignContract, clientSubmitDocuments, createCase } from '../lib/caseFlow.js';
-import { loadCaseDetail } from '../lib/caseView.js';
+import { CLIENT_HIDDEN_CASE_FIELDS, loadCaseDetail } from '../lib/caseView.js';
 import { badRequest, conflict, forbidden, HttpError, notFound, parse } from '../lib/http.js';
 import { createCaseMessage, listMessages, markMessagesRead, publishTyping } from '../lib/messaging/caseMessages.js';
 import { PDFDocument } from 'pdf-lib';
@@ -40,6 +40,7 @@ casesRouter.get('/', async (req, res) => {
   const cases = await prisma.case.findMany({
     where: { clientId: req.user!.id },
     orderBy: { createdAt: 'desc' },
+    omit: CLIENT_HIDDEN_CASE_FIELDS, // internal note / register columns / team workflow stay with staff
     include: { visaCategory: { select: { title: true, visaLabel: true } } },
   });
   res.json({ cases });

@@ -243,12 +243,12 @@ export default function Jobs() {
                 </div>
                 {pages > 1 && (
                   <nav className="mt-8 flex items-center justify-center gap-2" aria-label={t('jobsArea.board.pagination')}>
-                    <button type="button" className={buttonClass({ variant: 'secondary' })} disabled={page <= 1} onClick={() => set('page', String(page - 1))}>
-                      <ChevronLeft className="size-4" /> <span className="hidden sm:inline">{t('jobsArea.common.prev')}</span>
+                    <button type="button" className={buttonClass({ variant: 'secondary' })} disabled={page <= 1} onClick={() => set('page', String(page - 1))} aria-label={t('jobsArea.common.prev')}>
+                      <ChevronLeft className="size-4" aria-hidden /> <span className="hidden sm:inline">{t('jobsArea.common.prev')}</span>
                     </button>
                     <span className="px-2 text-sm text-muted tabular-nums">{t('jobsArea.board.pageOf', { page, pages })}</span>
-                    <button type="button" className={buttonClass({ variant: 'secondary' })} disabled={page >= pages} onClick={() => set('page', String(page + 1))}>
-                      <span className="hidden sm:inline">{t('jobsArea.common.next')}</span> <ChevronRight className="size-4" />
+                    <button type="button" className={buttonClass({ variant: 'secondary' })} disabled={page >= pages} onClick={() => set('page', String(page + 1))} aria-label={t('jobsArea.common.next')}>
+                      <span className="hidden sm:inline">{t('jobsArea.common.next')}</span> <ChevronRight className="size-4" aria-hidden />
                     </button>
                   </nav>
                 )}

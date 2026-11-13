@@ -62,7 +62,8 @@ describe('partner-owned clients: sign-up link → cases → portal → commissio
     expect(await prisma.clientReferral.count({ where: { referredId: userId } })).toBe(0);
     expect(await prisma.partnerClientChange.findFirst({ where: { userId } })).toMatchObject({ toPartnerId: p.partner.id, source: 'SIGNUP_LINK' });
     expect(await prisma.consentRecord.findFirst({ where: { userId, type: 'PARTNER_SHARING' } })).toMatchObject({ granted: true, source: 'REGISTER' });
-    await waitFor(() => prisma.notification.findFirst({ where: { userId: p.user.id, type: 'PARTNER_NEW_CLIENT' } }));
+    // Links to the own-clients page (the new client has no case yet, so /partner/clients would not list them).
+    expect(await waitFor(() => prisma.notification.findFirst({ where: { userId: p.user.id, type: 'PARTNER_NEW_CLIENT' } }))).toMatchObject({ link: '/partner/people' });
 
     // The client's own case belongs to the partner; the default commission is created at once.
     const client = await clientAgent(userId);

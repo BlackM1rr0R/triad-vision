@@ -12,6 +12,8 @@ const NativeRTF = Intl.RelativeTimeFormat;
 const nativeDate = Date.prototype.toLocaleDateString;
 const nativeTime = Date.prototype.toLocaleTimeString;
 const nativeBoth = Date.prototype.toLocaleString;
+const NativeNF = Intl.NumberFormat;
+const nativeNumber = Number.prototype.toLocaleString;
 
 const strip = (l: unknown): unknown => (typeof l === 'string' && /^az/i.test(l) ? 'und' : Array.isArray(l) ? l.map(strip) : l);
 
@@ -26,6 +28,11 @@ beforeAll(async () => {
   } as unknown as typeof Intl.RelativeTimeFormat;
   Object.assign(rtf, { prototype: NativeRTF.prototype, supportedLocalesOf: NativeRTF.supportedLocalesOf });
   (Intl as { RelativeTimeFormat: unknown }).RelativeTimeFormat = rtf;
+  const nf = function (l?: Intl.LocalesArgument, o?: Intl.NumberFormatOptions) {
+    return new NativeNF(strip(l) as Intl.LocalesArgument, o);
+  } as unknown as typeof Intl.NumberFormat;
+  Object.assign(nf, { prototype: NativeNF.prototype, supportedLocalesOf: NativeNF.supportedLocalesOf });
+  Intl.NumberFormat = nf;
 
   const file = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../client/src/lib/azIntl.ts');
   const m = (await import(/* @vite-ignore */ pathToFileURL(file).href)) as { installAzIntl: () => void };
@@ -38,6 +45,8 @@ afterAll(() => {
   Date.prototype.toLocaleDateString = nativeDate;
   Date.prototype.toLocaleTimeString = nativeTime;
   Date.prototype.toLocaleString = nativeBoth;
+  Intl.NumberFormat = NativeNF;
+  Number.prototype.toLocaleString = nativeNumber;
 });
 
 describe('Azerbaijani dates without "az" ICU data', () => {
@@ -61,6 +70,18 @@ describe('Azerbaijani dates without "az" ICU data', () => {
       '5 dəqiqə əvvəl',
       'keçən ay',
     ]);
+  });
+
+  it('formats numbers like the full ICU does (the SSR server: no hydration mismatch)', () => {
+    const nb = (v: string) => v.replace(/\s/g, ' ');
+    expect(nb(new Intl.NumberFormat('az-Latn-AZ', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(2800))).toBe('2.800 €');
+    expect(nb(new Intl.NumberFormat('az', { style: 'currency', currency: 'EUR' }).format(2054.42))).toBe('2.054,42 €');
+    expect(nb(new Intl.NumberFormat('az', { style: 'currency', currency: 'AZN' }).format(1500))).toBe('1.500,00 ₼');
+    expect(new Intl.NumberFormat('az', { style: 'percent' }).format(0.25)).toBe('25%');
+    expect(nb(new Intl.NumberFormat('az', { notation: 'compact' }).format(1_200_000))).toBe('1,2 mln');
+    expect((1234567.5).toLocaleString('az')).toBe('1.234.567,5');
+    expect(new Intl.NumberFormat('az') instanceof Intl.NumberFormat).toBe(true);
+    expect(new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'EUR' }).format(2800)).toBe('€2,800.00');
   });
 
   it('leaves other locales alone', () => {

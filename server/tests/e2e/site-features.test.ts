@@ -276,7 +276,10 @@ describe('problem reports', () => {
     const done = await adm.agent.patch(`/api/site/admin/problems/${report.id}`).send({ status: 'DONE', internalNote: 'fixed in build 42' });
     expect(done.body.report).toMatchObject({ status: 'DONE', internalNote: 'fixed in build 42' });
     expect((await prisma.task.findUniqueOrThrow({ where: { id: task.id } })).status).toBe('DONE');
-    expect(await prisma.auditLog.count({ where: { action: { in: ['PROBLEM_REPORTED', 'PROBLEM_REPLIED', 'PROBLEM_STATUS_CHANGED'] } } })).toBe(3);
+    // The routes write their audit rows fire-and-forget (void audit): wait for them instead of counting at once.
+    const auditWhere = { action: { in: ['PROBLEM_REPORTED', 'PROBLEM_REPLIED', 'PROBLEM_STATUS_CHANGED'] } };
+    await waitFor(async () => (await prisma.auditLog.count({ where: auditWhere })) >= 3);
+    expect(await prisma.auditLog.count({ where: auditWhere })).toBe(3);
   });
 
   it('logged-in reporter: user and role recorded, answer arrives as a notification; configured staff gets the task', async () => {

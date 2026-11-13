@@ -316,7 +316,12 @@ const CompanyDrawer = ({ id, onClose }: { id: string | null; onClose: () => void
               {data.referral && (
                 <dl className="mt-3 border-t border-line pt-2">
                   <DefRow label={t('jobsArea.admin.companies.referredBy')}>
-                    {data.referral.agent ? (
+                    {data.referral.agent && !isAdmin ? (
+                      // The agents section is ADMIN+ (its API answers staff with 403): name only.
+                      <span className="font-semibold">
+                        {t('jobsArea.admin.companies.referredByAgent')}: {data.referral.agent.name} ({data.referral.agent.code})
+                      </span>
+                    ) : data.referral.agent ? (
                       <Link to={`/admin/agents/${data.referral.agent.id}`} className="font-semibold text-link hover:underline">
                         {t('jobsArea.admin.companies.referredByAgent')}: {data.referral.agent.name} ({data.referral.agent.code})
                       </Link>

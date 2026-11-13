@@ -8,9 +8,10 @@ import { usePageTitle } from '@/lib/usePageTitle';
 import { registerCopy } from '@/i18n';
 import { pagesTeam } from '@/i18n/pagesTeam';
 import { EmptyState, ErrorBlock, LoadingBlock, PageHead, Panel } from '@/components/admin/ui';
-import { DeltaBadge, METRICS, MonthSwitcher, monthShort, type MetricDef } from '@/components/team/KpiCard';
+import { DeltaBadge, KpiCard, METRICS, MonthSwitcher, monthShort, type MetricDef } from '@/components/team/KpiCard';
 import { Sparkline } from '@/components/team/Sparkline';
-import { bakuMonth, useTeamKpi, type NumericKey, type TeamKpi } from '@/components/team/api';
+import { bakuMonth, useStaffKpi, useTeamKpi, type NumericKey, type TeamKpi } from '@/components/team/api';
+import { Drawer } from '@/components/admin/Drawer';
 import { Tabs, useTabParam } from '@/components/ui/Tabs';
 import { PerformanceReport } from '@/components/staffOps/PerformanceReport'; // free-period staff performance report + CSV
 
@@ -33,6 +34,8 @@ export default function AdminKpi() {
   const [spark, setSpark] = useState<NumericKey>('closed');
   const { data, isLoading, error, refetch } = useTeamKpi(month);
   const [tab, setTab] = useTabParam('tab', ['leaderboard', 'report'] as const, 'leaderboard');
+  // ADMIN (no oversight page): a staff member's name opens their KPI card (GET /admin/kpi/staff/:id, ADMIN+).
+  const [cardFor, setCardFor] = useState<{ id: string; name: string } | null>(null);
 
   const def = (key: NumericKey) => METRICS.find((m) => m.key === key)!;
   const rows = useMemo(() => {
@@ -109,7 +112,7 @@ export default function AdminKpi() {
                   <tr>
                     <th className="sticky left-0 z-10 bg-sunken px-4 py-2">{t('team.kpi.staff')}</th>
                     {METRICS.map((m) => (
-                      <th key={m.key} className="px-2 py-2 text-right" aria-sort={sortKey === m.key ? 'descending' : undefined}>
+                      <th key={m.key} className="px-2 py-2 text-right" aria-sort={sortKey === m.key ? (m.better === 'down' ? 'ascending' : 'descending') : undefined}>
                         <button type="button" onClick={() => setSortKey(m.key)} className={clsx('inline-flex min-h-8 items-center uppercase hover:text-ink', sortKey === m.key && 'text-link')}>
                           {t(`team.kpi.short.${m.key}`)}
                         </button>
@@ -129,7 +132,9 @@ export default function AdminKpi() {
                               {r.staff.name}
                             </Link>
                           ) : (
-                            <span className="font-semibold text-ink">{r.staff.name}</span>
+                            <button type="button" aria-haspopup="dialog" onClick={() => setCardFor(r.staff)} className="font-semibold text-ink hover:text-link hover:underline">
+                              {r.staff.name}
+                            </button>
                           )}
                         </span>
                       </td>
@@ -162,9 +167,26 @@ export default function AdminKpi() {
           <p className="text-xs text-muted">{t('team.kpi.attributionNote')}</p>
         </>
       )}
+      <StaffKpiDrawer staff={cardFor} month={month} onClose={() => setCardFor(null)} />
     </div>
   );
 }
+
+const StaffKpiDrawer = ({ staff, month: initial, onClose }: { staff: { id: string; name: string } | null; month: string; onClose: () => void }) => {
+  const [month, setMonth] = useState(initial);
+  const [shownFor, setShownFor] = useState<string | null>(null);
+  // Every opening starts on the leaderboard's month.
+  if ((staff?.id ?? null) !== shownFor) {
+    setShownFor(staff?.id ?? null);
+    setMonth(initial);
+  }
+  const q = useStaffKpi(staff?.id ?? '', month, !!staff);
+  return (
+    <Drawer open={!!staff} onClose={onClose} width="xl" title={staff?.name ?? ''}>
+      {staff && <KpiCard data={q.data} isLoading={q.isLoading} error={q.error} onRetry={() => q.refetch()} month={month} onMonth={setMonth} />}
+    </Drawer>
+  );
+};
 
 const Cell = ({ def, row }: { def: MetricDef; row: Row }) => (
   <td className="px-2 py-2 text-right whitespace-nowrap">

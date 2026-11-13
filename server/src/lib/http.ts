@@ -57,7 +57,12 @@ export const noStore = (_req: Request, res: Response, next: NextFunction) => {
   next();
 };
 
-export const errorHandler = (err: unknown, _req: Request, res: Response, _next: NextFunction) => {
+export const errorHandler = (err: unknown, _req: Request, res: Response, next: NextFunction) => {
+  // Failed mid-stream (file download, export): the status line is gone; Express closes the connection.
+  if (res.headersSent) {
+    next(err);
+    return;
+  }
   if (err instanceof HttpError) {
     res.status(err.status).json({ error: err.code, message: err.message });
     return;
@@ -85,6 +90,11 @@ export const errorHandler = (err: unknown, _req: Request, res: Response, _next: 
   }
   if ((err as { type?: string })?.type === 'entity.too.large') {
     res.status(413).json({ error: 'PAYLOAD_TOO_LARGE' });
+    return;
+  }
+  // res.sendFile of a stored file that is gone (deleted, not restored from a backup): a 404, not a 500.
+  if (code === 'ENOENT' && (err as { status?: number })?.status === 404) {
+    res.status(404).json({ error: 'FILE_NOT_FOUND' });
     return;
   }
   if ((err as { type?: string })?.type === 'entity.parse.failed') {

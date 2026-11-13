@@ -39,6 +39,12 @@ export const SSR_QUERY_KEYS = new Set<string>([
   'public-packages',
   'public-reviews',
   'landing', // /l/:slug landing pages
+  // Without these the AGB / privacy / cookie pages, the visa comparison, the Blue Card check and the referral
+  // terms reached crawlers as an empty skeleton (the server markup replaces the crawler HTML).
+  'legal', // GET /legal/:kind(/versions…): published texts, the same for everyone
+  'compare-visas',
+  'blue-card-thresholds',
+  'referral-terms',
 ]);
 
 export interface RenderResult {

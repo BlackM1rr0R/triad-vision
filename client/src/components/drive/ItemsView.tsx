@@ -126,8 +126,8 @@ export const ItemsView = (p: ItemsViewProps) => {
   const sentinel = useRef<HTMLDivElement>(null);
   const coarse = useRef(typeof window !== 'undefined' && window.matchMedia?.('(pointer: coarse)').matches);
 
-  // Large folders render progressively: the next page appears when the end comes into view.
-  useEffect(() => setLimit(PAGE), [p.items]);
+  // Large folders render progressively: the next page appears when the end comes into view. The explorer
+  // remounts this view per folder / view (key), so a refetch after an action keeps what is already shown.
   useEffect(() => {
     const el = sentinel.current;
     if (!el || limit >= p.items.length) return;

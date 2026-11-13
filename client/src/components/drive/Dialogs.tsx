@@ -171,6 +171,8 @@ export const FolderPicker = ({
                 <Spinner />
               </li>
             )
+            : q.isError
+              ? <li className="px-3 py-6 text-center text-xs text-danger-fg">{t('drive.errors.generic')}</li>
             : children.length === 0
               ? <li className="px-3 py-6 text-center text-xs text-muted">{t('drive.dialogs.noSubfolders')}</li>
               : children.map((f) => (

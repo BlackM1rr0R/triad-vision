@@ -27,6 +27,7 @@ import { StatusPill } from '@/components/ui/Badge';
 import { Button, IconButton } from '@/components/ui/Button';
 import { Menu, type MenuItem } from '@/components/ui/Menu';
 import { fmtDate, fmtDateTime, fullName, statusLabel, waLink } from '../labels';
+import { CASES_LIST_QS_KEY } from '../caseMorph';
 import type { CaseStats } from '../types';
 
 const HeaderChips = lazy(() => import('./HeaderChips'));
@@ -40,6 +41,15 @@ const Meta = ({ label, children, className }: { label: string; children: React.R
     {children}
   </span>
 );
+
+const casesListHref = () => {
+  try {
+    const qs = sessionStorage.getItem(CASES_LIST_QS_KEY);
+    return qs ? `/admin/cases?${qs}` : '/admin/cases';
+  } catch {
+    return '/admin/cases';
+  }
+};
 
 /**
  * Sticky compact case header: number, status, client, visa, owner, key dates and the quick actions
@@ -102,7 +112,7 @@ export const CaseTopBar = ({
     >
       <div className="flex items-start gap-2 sm:gap-3">
         <Link
-          to="/admin/cases"
+          to={casesListHref()}
           className="-ml-1.5 grid size-9 shrink-0 place-items-center rounded-lg text-muted transition hover:bg-sunken hover:text-ink"
           aria-label={t('caseLayout.back')}
           title={t('caseLayout.back')}

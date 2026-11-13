@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { CheckCircle2, Printer, Square } from 'lucide-react';
 import { Stagger, StaggerItem } from '@/components/motion';
 import { getBrand } from '@/lib/brand';
+import { useClientOnly } from '@/lib/ssr';
 
 /** While printing, everything except the print sheet is hidden. Scoped by a body class so normal printing is untouched. */
 const PRINT_CSS = `
@@ -40,6 +41,7 @@ export const PrintableChecklist = ({
   note: string;
   printLabel: string;
 }) => {
+  const client = useClientOnly(); // print sheet portal only in the browser, after hydration (lib/ssr.ts)
   useEffect(() => {
     const done = () => document.body.classList.remove('tv-print-list');
     window.addEventListener('afterprint', done);
@@ -73,7 +75,7 @@ export const PrintableChecklist = ({
           <Printer className="size-4" /> {printLabel}
         </button>
       </div>
-      {createPortal(
+      {client && createPortal(
         <div className="tv-print-sheet" aria-hidden>
           <p
             style={{

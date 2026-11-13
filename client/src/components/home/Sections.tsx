@@ -415,7 +415,7 @@ export const TestimonialsSection = () => {
     <section className="section">
       <div className="container-x">
         <SectionHeading eyebrow={t('stories.title')} title={t('stories.subtitle')} action={<ViewAll to="/stories" label={t('common.viewAll')} />} />
-        <Stagger className="mobile-rail cards-balanced [--cols:1] md:[--cols:2] xl:[--cols:4]">
+        <Stagger className="mobile-rail cards-balanced [--cols:1] md:[--cols:2] xl:[--cols:4]" rail={t('stories.title')}>
           {data?.testimonials.map((tm) => (
             <StaggerItem key={tm.id}>
               <TestimonialCard item={tm} />

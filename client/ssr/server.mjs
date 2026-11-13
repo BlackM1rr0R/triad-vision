@@ -80,7 +80,14 @@ if (process.argv.includes('--check')) {
 }
 
 const server = http.createServer(async (req, res) => {
-  const u = new URL(req.url ?? '/', 'http://ssr');
+  // An unparsable request target must not become an unhandled rejection (that would end the process).
+  let u;
+  try {
+    u = new URL(req.url ?? '/', 'http://ssr');
+  } catch {
+    res.writeHead(404).end();
+    return;
+  }
   if (u.pathname === '/health') {
     res.writeHead(200, { 'content-type': 'text/plain' }).end('ok');
     return;

@@ -189,6 +189,21 @@ describe('login brute-force protection', () => {
     expect((await anon().post('/api/auth/login').send({ email: 'brute@test.local', password: TEST_PASSWORD })).status).toBe(200);
   });
 
+  it('a password reset lifts the lock, so the new password works right away', async () => {
+    resetLoginGuard();
+    const { user } = await createClient({ email: 'locked-reset@test.local' });
+    for (let i = 0; i < config.login.maxFailures; i++) await anon().post('/api/auth/login').send({ email: 'locked-reset@test.local', password: 'wrong-pass-1' });
+    expect((await anon().post('/api/auth/login').send({ email: 'locked-reset@test.local', password: TEST_PASSWORD })).body.error).toBe('ACCOUNT_LOCKED');
+    const raw = 'b'.repeat(64);
+    const crypto = await import('node:crypto');
+    await prisma.passwordResetToken.create({
+      data: { userId: user.id, tokenHash: crypto.createHash('sha256').update(raw).digest('hex'), expiresAt: new Date(Date.now() + 60_000) },
+    });
+    expect((await anon().post('/api/auth/reset-password').send({ token: raw, password: 'Fresh12345' })).status).toBe(200);
+    expect((await anon().post('/api/auth/login').send({ email: 'locked-reset@test.local', password: 'Fresh12345' })).status).toBe(200);
+    resetLoginGuard();
+  });
+
   it('rejects weak passwords on register and change', async () => {
     const res = await anon().post('/api/auth/register').send({ email: 'weak@test.local', password: 'abcdefgh', firstName: 'A', lastName: 'B', phone: '+994501234567', birthDate: '1990-05-14', passportNumber: 'C01234567' });
     expect(res.status).toBe(400);

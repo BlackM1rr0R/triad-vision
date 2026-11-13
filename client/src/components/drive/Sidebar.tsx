@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
 import type { LucideIcon } from 'lucide-react';
-import { ChevronRight, Clock, MoreHorizontal, Star, Trash2 } from 'lucide-react';
+import { ChevronRight, Clock, MoreHorizontal, ShieldCheck, Star, Trash2 } from 'lucide-react';
 import { formatBytes } from '@/lib/api';
 import { driveKeys, fetchChildren } from './api';
 import { useDropTarget, type PickedFile } from './dnd';
@@ -192,6 +192,8 @@ export const Sidebar = (props: SidebarProps) => {
             <QuickLink icon={Star} tone="text-warning-fg" label={t('drive.shared.favorites')} href={`${base}/starred`} active={activeView === 'starred'} onOpen={onOpen} />
             <QuickLink icon={Clock} tone="text-info-fg" label={t('drive.nav.recent')} href={`${base}/recent`} active={activeView === 'recent'} onOpen={onOpen} />
             <QuickLink icon={Trash2} tone="text-muted" label={t('drive.nav.trash')} href={`${base}/trash`} active={activeView === 'trash'} onOpen={onOpen} />
+            {/* Super admins: who can see which restricted folder (the /access view). */}
+            {props.isSuper && <QuickLink icon={ShieldCheck} tone="text-violet-600" label={t('drive.nav.access')} href={`${base}/access`} active={activeView === 'access'} onOpen={onOpen} />}
           </ul>
         </section>
         {props.extra}

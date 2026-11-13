@@ -128,6 +128,8 @@ documentsRouter.get('/cases/:caseId/intel', async (req, res) => {
 documentsRouter.get('/cases/:caseId/packet', async (req, res) => {
   const c = await loadCase(req);
   if (!staffAccess(req) && !packetAllowedForClient(c)) throw forbidden('PACKET_NOT_AVAILABLE');
+  // Saving the packet into the case (an ACCEPTED document + a client-visible event) is a staff action.
+  if (req.query.store === '1' && !staffAccess(req)) throw forbidden('STAFF_ONLY');
   const locale = (req.user!.locale as Locale) ?? 'az';
   const stageLabel: Record<string, string> = {
     INITIAL: { az: 'İlkin sənədlər', de: 'Erste Unterlagen', en: 'Initial documents', ru: 'Первичные документы' }[locale]!,

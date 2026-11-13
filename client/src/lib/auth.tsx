@@ -240,7 +240,7 @@ export const RequireAuth = ({ roles, children }: { roles?: Role[]; children: Rea
   }
   if (!user) return <Navigate to="/login" replace state={{ from: currentHref(location) }} />;
   // Staff who land on a client-only page (or vice versa) go to their own area instead of a dead end.
-  if (roles && !roles.includes(user.role)) return <Navigate to={isStaffRole(user.role) ? '/admin' : '/'} replace />;
+  if (roles && !roles.includes(user.role)) return <Navigate to={landingAfterLogin(user.role)} replace />;
   return <>{children}</>;
 };
 
@@ -256,5 +256,6 @@ export const landingAfterLogin = (role: Role, from?: unknown) => {
   if (typeof from !== 'string' || !from.startsWith('/') || from.startsWith('//')) return home;
   const adminTarget = /^\/(admin|workspace)(\/|\?|$)/.test(from);
   if (staff) return adminTarget ? from : home;
-  return adminTarget ? home : from;
+  // Clients: other portals (employer, partner, agent) would only bounce them again.
+  return adminTarget || /^\/(company|partner|agent)(\/|\?|$)/.test(from) ? home : from;
 };

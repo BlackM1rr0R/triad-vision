@@ -233,19 +233,25 @@ partnerPortalRouter.post('/clients', registerLimiter, async (req, res) => {
   );
   if (!partner.active) throw forbidden('PARTNER_INACTIVE');
   if (await prisma.user.findUnique({ where: { email: body.email }, select: { id: true } })) throw conflict('EMAIL_TAKEN');
-  const user = await prisma.user.create({
-    data: {
-      email: body.email,
-      // Unusable random password: the client sets their own through the invitation link.
-      passwordHash: await bcrypt.hash(crypto.randomBytes(32).toString('hex'), 10),
-      role: 'CLIENT',
-      firstName: body.firstName,
-      lastName: body.lastName,
-      phone: body.phone,
-      passportNumber: body.passportNumber ?? null,
-      locale: body.locale,
-    },
-  });
+  const user = await prisma.user
+    .create({
+      data: {
+        email: body.email,
+        // Unusable random password: the client sets their own through the invitation link.
+        passwordHash: await bcrypt.hash(crypto.randomBytes(32).toString('hex'), 10),
+        role: 'CLIENT',
+        firstName: body.firstName,
+        lastName: body.lastName,
+        phone: body.phone,
+        passportNumber: body.passportNumber ?? null,
+        locale: body.locale,
+      },
+    })
+    .catch((err: unknown) => {
+      // Two submits at once: the unique e-mail index answers like the check above.
+      if ((err as { code?: string }).code === 'P2002') throw conflict('EMAIL_TAKEN');
+      throw err;
+    });
   await attachPartnerOwner(user.id, partner.id, { source: 'PARTNER_PORTAL', actorId: req.user!.id, notify: false });
   await sendClientInvite(user, partner.name);
   await audit(req, 'PARTNER_CLIENT_REGISTERED', `user:${user.id}`, { partnerId: partner.id, clientAgreed: true });

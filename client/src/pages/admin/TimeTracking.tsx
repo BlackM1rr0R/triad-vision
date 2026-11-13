@@ -75,8 +75,10 @@ type FilterState = { from: string; to: string; userId: string; activity: '' | Ac
 const Filters = ({ value, onChange, showStaff }: { value: FilterState; onChange: (v: FilterState) => void; showStaff: boolean }) => {
   const { t } = useTranslation();
   const staff = useQuery({
-    queryKey: ['time', 'summary', 'staff-list'],
-    queryFn: async () => (await api.get<Summary>('/admin/time/summary')).data.byStaff.map((s) => ({ id: s.userId, name: s.name })),
+    // Every active staff member (not just whoever logged time before — the all-time summary was heavy and missed new staff).
+    queryKey: ['time', 'staff-list'],
+    queryFn: async () =>
+      (await api.get<{ staff: { id: string; firstName: string; lastName: string }[] }>('/admin/users/staff')).data.staff.map((s) => ({ id: s.id, name: `${s.firstName} ${s.lastName}`.trim() })),
     enabled: showStaff,
   });
   return (

@@ -75,7 +75,7 @@ export default function SearchPage() {
             className="input h-12 min-w-0 flex-1 text-base shadow-[var(--tv-shadow-card)]"
             autoComplete="off"
           />
-          <button type="submit" className="btn-primary h-12 shrink-0 px-5">
+          <button type="submit" className="btn-primary h-12 shrink-0 px-5" aria-label={t('discover.search.submit')}>
             <Search className="size-4" aria-hidden /> <span className="hidden sm:inline">{t('discover.search.submit')}</span>
           </button>
         </form>
@@ -126,7 +126,7 @@ export default function SearchPage() {
                       type === x ? 'border-primary bg-primary text-primary-contrast' : 'border-line bg-card text-ink hover:border-line-strong',
                     )}
                   >
-                    {x === 'all' ? t('discover.search.all') : t(`discover.search.groups.${x}`)} <span className="opacity-60 tabular-nums">{x === 'all' ? items.length : counts[x]}</span>
+                    {x === 'all' ? t('discover.search.all') : t(`discover.search.groups.${x}`)} <span className="opacity-80 tabular-nums">{x === 'all' ? items.length : counts[x]}</span>
                   </button>
                 ))}
               </div>

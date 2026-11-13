@@ -17,6 +17,9 @@ export default function ResetPassword() {
   const [params] = useSearchParams();
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(false);
+  const token = params.get('token') ?? '';
+  // No token in the link, or the server refused it (used / expired): offer a new link instead of a dead end.
+  const [invalid, setInvalid] = useState(token.length < 10);
   const [password, setPassword] = useState('');
   const weak = password.length > 0 && !isStrongPassword(password);
   usePageTitle(t('auth.resetTitle'));
@@ -29,10 +32,11 @@ export default function ResetPassword() {
     }
     setBusy(true);
     try {
-      await api.post('/auth/reset-password', { token: params.get('token') ?? '', password });
+      await api.post('/auth/reset-password', { token, password });
       setDone(true);
     } catch (err) {
-      toast.error(authError(t, errorCode(err)));
+      if (errorCode(err) === 'INVALID_TOKEN') setInvalid(true);
+      else toast.error(authError(t, errorCode(err)));
     } finally {
       setBusy(false);
     }
@@ -46,6 +50,13 @@ export default function ResetPassword() {
           <p className="max-w-sm rounded-2xl bg-success-bg px-4 py-3 text-sm text-success-fg" role="status">{t('auth.resetDone')}</p>
           <Link to="/login" className="btn-primary btn-lg w-full">
             {t('auth.login')}
+          </Link>
+        </div>
+      ) : invalid ? (
+        <div className="flex flex-col items-center gap-5 text-center">
+          <p className="max-w-sm rounded-2xl bg-danger-bg px-4 py-3 text-sm text-danger-fg" role="alert">{t('auth.errors.INVALID_TOKEN')}</p>
+          <Link to="/forgot-password" className="btn-primary btn-lg w-full">
+            {t('auth.forgot')}
           </Link>
         </div>
       ) : (

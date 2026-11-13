@@ -60,7 +60,7 @@ export const logSearch = (q: string, lng: string) => {
 };
 
 /** Text with the server's match ranges wrapped in <mark>. */
-export const Marked = ({ text, ranges, className = 'rounded-sm bg-brand-100 px-0.5 text-brand-800' }: { text: string; ranges: [number, number][]; className?: string }): ReactNode => {
+export const Marked = ({ text, ranges, className = 'rounded-sm bg-brand-100 px-0.5 font-semibold text-ink' }: { text: string; ranges: [number, number][]; className?: string }): ReactNode => {
   if (!ranges.length) return text;
   const out: ReactNode[] = [];
   let pos = 0;

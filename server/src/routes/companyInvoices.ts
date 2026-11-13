@@ -9,8 +9,10 @@ export const companyInvoicesRouter = Router();
 companyInvoicesRouter.use(requireRole('COMPANY'));
 
 const companyIdOf = async (req: Request) => {
-  const u = await prisma.user.findUnique({ where: { id: req.user!.id }, select: { companyId: true } });
+  const u = await prisma.user.findUnique({ where: { id: req.user!.id }, select: { companyId: true, company: { select: { status: true } } } });
   if (!u?.companyId) throw forbidden('NO_COMPANY');
+  // Same rule as every other employer route: a suspended company sees only its status page.
+  if (u.company?.status === 'SUSPENDED') throw forbidden('COMPANY_SUSPENDED');
   return u.companyId;
 };
 

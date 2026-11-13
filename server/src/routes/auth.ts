@@ -230,6 +230,10 @@ authRouter.post('/register', authLimiter, async (req, res) => {
       passportNumber: body.passportNumber,
       locale: body.locale,
     },
+  }).catch((err: unknown) => {
+    // Two submits at once: the unique e-mail index answers like the check above.
+    if ((err as { code?: string }).code === 'P2002') throw conflict('EMAIL_TAKEN');
+    throw err;
   });
   // The sign-up form requires accepting the privacy policy; the consent log is the proof.
   // Both rows carry the current published version (recordConsent resolves version + legalDocumentId).
@@ -526,6 +530,9 @@ authRouter.post('/reset-password', authLimiter, async (req, res) => {
     prisma.user.updateMany({ where: { id: record.userId, emailVerifiedAt: null }, data: { emailVerifiedAt: new Date() } }),
   ]);
   await audit({ user: undefined, ip: req.ip }, 'PASSWORD_RESET', `user:${record.userId}`);
+  // The link proved the mailbox: failed attempts before the reset must not keep the new password locked out.
+  const owner = await prisma.user.findUnique({ where: { id: record.userId }, select: { email: true } });
+  if (owner) await recordLoginSuccess(owner.email);
   res.json({ ok: true });
 });
 

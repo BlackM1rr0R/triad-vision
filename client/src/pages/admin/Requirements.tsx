@@ -46,7 +46,7 @@ const useErrorToast = () => {
   const { t, i18n } = useTranslation();
   return (err: unknown) => {
     const code = errorCode(err);
-    toast.error(i18n.exists(`docsIntel.admin.errors.${code}`) ? t(`docsIntel.admin.errors.${code}`) : t('admin.common.error', { defaultValue: code }));
+    toast.error(i18n.exists(`docsIntel.admin.errors.${code}`) ? t(`docsIntel.admin.errors.${code}`) : t('admin.common.opFailed'));
   };
 };
 

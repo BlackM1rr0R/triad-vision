@@ -1,6 +1,7 @@
 import { useRef, type CSSProperties } from 'react';
 import { flushSync } from 'react-dom';
 import { getPrefs } from './prefs';
+import { useHydrating } from './ssr';
 
 /*
  * View Transitions (https://developer.chrome.com/docs/web-platform/view-transitions) for route changes.
@@ -141,7 +142,9 @@ export function useMorphSource<E extends HTMLElement = HTMLAnchorElement>(kind: 
  */
 export function useMorphTarget(kind: string, id: string | number | undefined | null) {
   const key = id == null ? '' : String(id);
-  const on = key !== '' && transitionsEnabled();
+  // Not on the server (no document) and not while hydrating its markup: named once the hydration is over.
+  const hydrating = useHydrating();
+  const on = key !== '' && !hydrating && transitionsEnabled();
   /** The user arrived through a morph from a card (skip the hero's own entrance animation). */
   const arrived = on && lastOpened.get(kind) === key;
   const part = (p: MorphPart) => {

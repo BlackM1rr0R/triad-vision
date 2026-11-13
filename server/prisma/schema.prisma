@@ -239,6 +239,10 @@ model AuditLog {
 
   @@index([actorId, createdAt])
   @@index([createdAt])
+  // Security alert rules (every 10 min), oversight counts and retention look up by action + time window;
+  // drive version history and retention by target ("drive:<id>").
+  @@index([action, createdAt])
+  @@index([target])
 }
 
 // ─── Staff document workspace (/docs/<user>) ───────────────────────────

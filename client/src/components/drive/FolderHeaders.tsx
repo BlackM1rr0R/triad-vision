@@ -281,6 +281,8 @@ export const ClientFolderHeader = ({ folder }: { folder: DriveItem }) => {
   const refresh = useRefreshDrive();
   const partners = usePartnerOptions();
   const assign = useAssignPartner();
+  const { user } = useAuth();
+  const [partnerInfo, setPartnerInfo] = useState(false);
   if (!folder.caseId) return null;
   const info = folder.caseInfo;
   return (
@@ -296,9 +298,10 @@ export const ClientFolderHeader = ({ folder }: { folder: DriveItem }) => {
       {info && <span>{VISA_TYPE_DE[info.visaType] ?? info.visaType}</span>}
       {folder.caseStatus && <span className={clsx('rounded px-1.5 py-px text-[10px] font-semibold', STATUS_TONE[folder.caseStatus as CaseStatus])}>{statusLabel(folder.caseStatus as CaseStatus)}</span>}
       {info?.partner ? (
-        <span className="inline-flex items-center gap-1">
+        // The partner's name opens the same details panel as the partner cards and the partner list.
+        <button type="button" className="inline-flex items-center gap-1 hover:underline" aria-haspopup="dialog" title={t('drive.partner.info')} onClick={() => setPartnerInfo(true)}>
           <Handshake className="size-3.5" /> {info.partner.name}
-        </span>
+        </button>
       ) : (
         <label className="inline-flex items-center gap-1.5">
           <Handshake className="size-3.5" />
@@ -336,6 +339,7 @@ export const ClientFolderHeader = ({ folder }: { folder: DriveItem }) => {
       <Link to={`/admin/cases/${folder.caseId}`} className="ml-auto inline-flex items-center gap-1 font-semibold hover:underline">
         <ExternalLink className="size-3.5" /> {t('drive.actions.openCase')} {folder.caseNumber}
       </Link>
+      <PartnerInfoDrawer partnerId={partnerInfo && info?.partner ? info.partner.id : null} onClose={() => setPartnerInfo(false)} isAdmin={user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN'} />
     </div>
   );
 };

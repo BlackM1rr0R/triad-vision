@@ -1034,6 +1034,16 @@ export default function WorkspaceDrive() {
                       </Link>
                     </div>
                   </div>
+                ) : flatKind && flat.isError && !flat.data ? (
+                  // Recent / starred / trash / search / smart views: a failed load is not an empty list.
+                  <div className="grid h-full place-items-center p-6 text-center">
+                    <div>
+                      <p className="text-sm font-semibold text-ink">{driveError(flat.error)}</p>
+                      <button type="button" className="btn-secondary btn-sm mt-3" onClick={() => void flat.refetch()}>
+                        <RefreshCw className="size-4" /> {t('drive.toolbar.refresh')}
+                      </button>
+                    </div>
+                  </div>
                 ) : items.length === 0 && !partnersRoot ? (
                   <div
                     className="grid h-full place-items-center p-6 text-center"
@@ -1092,6 +1102,7 @@ export default function WorkspaceDrive() {
                         </div>
                         <div className="min-h-0 flex-1">
                           <ItemsView
+                            key={viewKey}
                             items={items}
                             view={view}
                             mode={mode}
@@ -1104,8 +1115,9 @@ export default function WorkspaceDrive() {
                             onSort={(k) => {
                               if (k === sortKey) setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
                               else {
+                                // same default direction as the sort menu: newest / largest first
                                 setSortKey(k);
-                                setSortDir('asc');
+                                setSortDir(k === 'modified' || k === 'size' ? 'desc' : 'asc');
                               }
                             }}
                             onSelect={select}

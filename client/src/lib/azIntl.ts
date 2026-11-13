@@ -7,7 +7,8 @@
  * formatter (keeping every option, time zone included) and swap the month, weekday and relative-time words.
  *
  * Installed once at startup, only when the browser lacks "az"; other locales and browsers with full ICU are
- * untouched. Covers Intl.DateTimeFormat, Intl.RelativeTimeFormat and Date#toLocale*String.
+ * untouched. Covers Intl.DateTimeFormat, Intl.RelativeTimeFormat, Date#toLocale*String, and Intl.NumberFormat /
+ * Number#toLocaleString (German figures, which match Azerbaijani: "2.800 €").
  */
 
 const MONTHS_LONG = ['yanvar', 'fevral', 'mart', 'aprel', 'may', 'iyun', 'iyul', 'avqust', 'sentyabr', 'oktyabr', 'noyabr', 'dekabr'];
@@ -129,6 +130,38 @@ export const installAzIntl = () => {
     (AzAwareRTF as { prototype: unknown }).prototype = NativeRTF.prototype;
     (Intl as { RelativeTimeFormat: unknown }).RelativeTimeFormat = AzAwareRTF;
   }
+
+  // Numbers: without "az" data Chrome prints English figures ("€2,800") while the SSR server (Node, full ICU)
+  // prints "2.800 €" — a visible inconsistency and a hydration mismatch on every page with prices. German uses
+  // the same symbols and currency position as Azerbaijani; only the manat sign, the percent spacing and the
+  // compact words differ.
+  const NativeNF = Intl.NumberFormat;
+  const COMPACT: Record<string, string> = { 'Tsd.': 'min', 'Mio.': 'mln', 'Mrd.': 'mlrd', 'Bio.': 'trln' };
+  const fixNumberParts = (parts: Intl.NumberFormatPart[]) =>
+    parts
+      .map((p) => (p.type === 'currency' && p.value === 'AZN' ? { ...p, value: '₼' } : p.type === 'compact' ? { ...p, value: COMPACT[p.value] ?? p.value } : p))
+      .filter((p, i, all) => !(p.type === 'literal' && /^\s+$/.test(p.value) && all[i + 1]?.type === 'percentSign'));
+  const AzAwareNF = function (this: unknown, locales?: Intl.LocalesArgument, options?: Intl.NumberFormatOptions) {
+    if (!isAz(locales)) return new NativeNF(locales, options);
+    const inner = new NativeNF('de', options);
+    const keepCode = options?.currencyDisplay === 'code' || options?.currencyDisplay === 'name';
+    const fix = (parts: Intl.NumberFormatPart[]) => (keepCode ? parts : fixNumberParts(parts));
+    const fmt = Object.create(inner) as Intl.NumberFormat;
+    Object.defineProperties(fmt, {
+      format: { value: (n: number | bigint) => fix(inner.formatToParts(n)).map((p) => p.value).join('') },
+      formatToParts: { value: (n: number | bigint) => fix(inner.formatToParts(n)) },
+      resolvedOptions: { value: () => ({ ...inner.resolvedOptions(), locale: 'az' }) },
+    });
+    return fmt;
+  } as unknown as typeof Intl.NumberFormat;
+  Object.assign(AzAwareNF, { supportedLocalesOf: NativeNF.supportedLocalesOf.bind(NativeNF) });
+  (AzAwareNF as { prototype: unknown }).prototype = NativeNF.prototype;
+  Intl.NumberFormat = AzAwareNF;
+  const nativeNumber = Number.prototype.toLocaleString;
+  Number.prototype.toLocaleString = function (this: number, locales?: Intl.LocalesArgument, options?: Intl.NumberFormatOptions) {
+    if (!isAz(locales)) return nativeNumber.call(this, locales as string | string[] | undefined, options);
+    return new Intl.NumberFormat('az', options).format(Number(this));
+  };
 
   // Date#toLocale*String use the engine's internal formatter, not the global: route "az" through ours.
   const proto = Date.prototype;

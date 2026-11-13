@@ -75,7 +75,7 @@ const KpisMain = ({ data }: { data: DashboardResponse }) => {
         <SegmentBar parts={openStatuses.map((s) => ({ key: s, value: caseCount(data, s), className: STATUS_BAR_TONE[s], title: `${statusLabel(s)}: ${caseCount(data, s)}` }))} />
       </KpiCell>
       <KpiCell label={t('admin.dashboard.awaiting')} value={<Counter to={awaitingStaff} />} icon={Clock} tone={awaitingStaff > 0 ? 'warning' : undefined} hint={t('admin.dashboard.awaitingHint')} />
-      <KpiCell label={t('admin.dashboard.newInquiries')} value={<Counter to={data.newInquiries} />} icon={Inbox} to="/admin/inquiries" />
+      <KpiCell label={t('admin.dashboard.newInquiries')} value={<Counter to={data.newInquiries} />} icon={Inbox} to="/admin/inquiries?status=NEW" />
       <KpiCell label={t('admin.dashboard.newClients30')} value={<Counter to={data.newClients30d} />} icon={UserPlus} to="/admin/users?role=CLIENT" />
     </KpiStrip>
   );
@@ -94,7 +94,7 @@ const KpisMore = ({ data }: { data: DashboardResponse }) => {
         to="/admin/cases"
         hint={t('admin.dashboard.unansweredHint')}
       />
-      <KpiCell label={t('admin.dashboard.docsPending')} value={<Counter to={data.docsPending} />} icon={FileCheck2} tone={data.docsPending > 0 ? 'warning' : undefined} to="/admin/cases?status=DOCUMENTS_REVIEW" />
+      <KpiCell label={t('admin.dashboard.docsPending')} value={<Counter to={data.docsPending} />} icon={FileCheck2} tone={data.docsPending > 0 ? 'warning' : undefined} to="/admin/review" />
       <KpiCell label={t('admin.dashboard.overdue')} value={<Counter to={data.waitingOverdue3d} />} icon={Hourglass} tone={data.waitingOverdue3d > 0 ? 'danger' : undefined} to="/admin/cases?overdue=1" hint={t('admin.dashboard.overdueHint')} />
       <KpiCell label={t('admin.dashboard.new7d')} value={<Counter to={data.casesNew7d} />} icon={Sparkles} to="/admin/cases" />
       <KpiCell

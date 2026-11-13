@@ -9,6 +9,12 @@ import { getBrand } from './lib/brand/index.js';
 import { logLicense, refreshLicense } from './lib/license/index.js';
 import { allowSelfOnMailServer } from './lib/stalwart/allowSelf.js';
 
+// Many side effects run fire-and-forget (`void promise`). Node 22 would end the whole API (and every job) on
+// one stray rejection; log it with its reason instead and keep serving.
+process.on('unhandledRejection', (reason) => {
+  console.error('[process] unhandled rejection', reason);
+});
+
 // White-label: verify the licence and load the brand before the first request (both are cached afterwards).
 logLicense(refreshLicense());
 void getBrand();

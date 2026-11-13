@@ -218,7 +218,7 @@ export const AudienceTestimonials = ({ audience }: { audience: Audience }) => {
           title={t(`${PAGE[audience]}.storiesTitle`)}
           action={<ViewAll to="/stories" label={t('common.viewAll')} />}
         />
-        <Stagger className="mobile-rail cards-balanced [--cols:1] md:[--cols:2] xl:[--cols:4]">
+        <Stagger className="mobile-rail cards-balanced [--cols:1] md:[--cols:2] xl:[--cols:4]" rail={t('stories.title')}>
           {items.slice(0, 4).map((tm) => (
             <StaggerItem key={tm.id}>
               <TestimonialCard item={tm} />

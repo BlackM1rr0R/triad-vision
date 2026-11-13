@@ -116,7 +116,7 @@ export const attachPartnerOwner = async (
     if (open.length) await assignCases(open.map((c) => c.id), partnerId, opts.actorId ?? null);
     if (opts.notify !== false) {
       const u = await prisma.user.findUnique({ where: { id: userId }, select: { firstName: true, lastName: true } });
-      if (u) void notifyPartner(partnerId, (t) => ({ type: 'PARTNER_NEW_CLIENT', title: t.newClientTitle(fullName(u)), body: t.newClientBody(fullName(u)), link: '/partner/clients' }));
+      if (u) void notifyPartner(partnerId, (t) => ({ type: 'PARTNER_NEW_CLIENT', title: t.newClientTitle(fullName(u)), body: t.newClientBody(fullName(u)), link: '/partner/people' })); // owned clients (with or without a case): /partner/people
     }
     return true;
   } catch (err) {

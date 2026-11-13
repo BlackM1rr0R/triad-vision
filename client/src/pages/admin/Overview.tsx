@@ -197,7 +197,7 @@ export default function AdminOverview() {
             <KpiStack data={data} />
           </div>
           <div className="grid gap-5 xl:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]">
-            <FunnelCard data={data} />
+            <FunnelCard data={data} canOpenBiz={isAdmin} />
             <SegmentsCard data={data} />
           </div>
           <div className="grid gap-5 xl:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)]">
@@ -389,7 +389,7 @@ const KpiStack = ({ data }: { data: OverviewResponse }) => {
 
 // ─── Funnel ─────────────────────────────────────────────────────────────
 
-const FunnelCard = ({ data }: { data: OverviewResponse }) => {
+const FunnelCard = ({ data, canOpenBiz }: { data: OverviewResponse; canOpenBiz: boolean }) => {
   const { t } = useTranslation();
   const f = useVizFormat();
   const [source, setSource] = useState<Source>('all');
@@ -408,9 +408,12 @@ const FunnelCard = ({ data }: { data: OverviewResponse }) => {
         <span className="text-muted">
           <span className="font-semibold text-ink">{t('ov.funnel.overall')}</span> <span className="font-semibold text-link tabular-nums">{f.pct(first ? Math.round((approved / first) * 1000) / 10 : null)}</span>
         </span>
-        <Link to="/admin/business-analytics" className="inline-flex items-center gap-1 font-semibold text-link hover:underline">
-          {t('ov.funnel.open')} <ArrowRight className="size-3.5" aria-hidden />
-        </Link>
+        {/* Business analytics is ADMIN+ (the route sends staff back to /admin). */}
+        {canOpenBiz && (
+          <Link to="/admin/business-analytics" className="inline-flex items-center gap-1 font-semibold text-link hover:underline">
+            {t('ov.funnel.open')} <ArrowRight className="size-3.5" aria-hidden />
+          </Link>
+        )}
       </div>
     </Card>
   );

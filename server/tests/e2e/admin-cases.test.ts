@@ -3,7 +3,7 @@ import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { asAdmin, asClient, asStaff, type Agent } from '../helpers/api';
 import { prisma, settle } from '../helpers/db';
-import { createClient, createVisaCategory, l10n } from '../helpers/factories';
+import { createClient, createUser, createVisaCategory, l10n } from '../helpers/factories';
 import { makePdf, PDF, sampleFor } from '../helpers/files';
 import { expectClientNotified } from '../helpers/notify';
 import { TEST_UPLOADS_DIR } from '../helpers/testEnv';
@@ -94,6 +94,13 @@ describe('GET /api/admin/cases', () => {
     expect((await admin.agent.get('/api/admin/cases?search=zzz-no-match')).body.total).toBe(0);
   });
 
+  it('searches by full name (every word must match a field)', async () => {
+    const { admin, cases } = await seed();
+    expect(ids(await admin.agent.get(`/api/admin/cases?search=${encodeURIComponent('Əli Məmmədov')}`))).toEqual([cases[0].id]);
+    expect(ids(await admin.agent.get(`/api/admin/cases?search=${encodeURIComponent('  hans   koch ')}`))).toEqual([cases[2].id]);
+    expect((await admin.agent.get(`/api/admin/cases?search=${encodeURIComponent('Əli Müller')}`)).body.total).toBe(0);
+  });
+
   it('mine=true shows only cases assigned to me, mine=false shows all', async () => {
     const { staff, cases } = await seed();
     expect(ids(await staff.agent.get('/api/admin/cases?mine=true'))).toEqual([cases[1].id]);
@@ -176,9 +183,11 @@ describe('PATCH /api/admin/cases/:id', () => {
     expect(await prisma.notification.count({ where: { userId: staff.user.id, type: 'STAFF' } })).toBe(1);
   });
 
-  it('refuses a client or unknown user as staff', async () => {
+  it('refuses a client, an agent, an inactive staff member or an unknown user as staff', async () => {
     const { client, admin, c } = await setup();
-    for (const id of [client.user.id, 'nope']) {
+    const agentUser = await createUser({ role: 'AGENT' });
+    const inactive = await createUser({ role: 'STAFF', isActive: false });
+    for (const id of [client.user.id, agentUser.user.id, inactive.user.id, 'nope']) {
       const res = await admin.agent.patch(`/api/admin/cases/${c.id}`).send({ assignedStaffId: id });
       expect(res.status).toBe(400);
       expect(res.body.error).toBe('INVALID_STAFF');

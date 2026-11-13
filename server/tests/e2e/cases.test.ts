@@ -168,6 +168,25 @@ describe('GET /api/cases/:id', () => {
     expect(detail.documents).toBeUndefined();
     expect(detail.otherDocuments).toEqual([]);
   });
+
+  it('never sends the register columns, the internal note or the team workflow fields to the client', async () => {
+    const { client, admin } = await setup();
+    const c = await createCaseVia(client.agent);
+    await prisma.case.update({
+      where: { id: c.id },
+      data: { registerData: { _note: 'Secret register note' }, processingStage: 'WRITTEN', processingStageAt: new Date(), processingStageById: admin.user.id, processingAssigneeId: admin.user.id },
+    });
+    const hidden = ['registerData', 'processingStage', 'processingStageAt', 'processingStageById', 'processingAssigneeId', 'driveParentId'];
+    const detail = (await client.agent.get(`/api/cases/${c.id}`)).body.case;
+    const [listed] = (await client.agent.get('/api/cases')).body.cases;
+    for (const row of [detail, listed]) {
+      expect(row.id).toBe(c.id);
+      for (const k of hidden) expect(row, k).not.toHaveProperty(k);
+    }
+    expect(JSON.stringify(detail)).not.toContain('Secret register note');
+    // Staff still see them.
+    expect((await admin.agent.get(`/api/admin/cases/${c.id}`)).body.case).toMatchObject({ registerData: { _note: 'Secret register note' }, processingStage: 'WRITTEN' });
+  });
 });
 
 describe('POST /api/cases/:id/documents', () => {

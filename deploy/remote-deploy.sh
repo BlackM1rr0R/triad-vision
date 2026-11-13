@@ -47,13 +47,21 @@ $COMPOSE build --pull ssr
 $COMPOSE up -d --remove-orphans
 
 echo "== waiting for the API (migrations run on start)"
+api_up=0
 for _ in $(seq 1 90); do
   if $COMPOSE exec -T api curl -fsS http://localhost:4000/api/health >/dev/null 2>&1 </dev/null; then
     echo "   api is up"
+    api_up=1
     break
   fi
   sleep 2
 done
+# A failed migration or crash loop must fail the deploy with the reason, not surface later as a seed error.
+if [ "$api_up" != 1 ]; then
+  echo "== the API did not become healthy in 180 s; last log lines:" >&2
+  $COMPOSE logs --tail 80 api >&2 || true
+  exit 1
+fi
 
 echo "== seed (idempotent: super admin + initial content when the tables are empty)"
 $COMPOSE exec -T api npm run seed -w server </dev/null

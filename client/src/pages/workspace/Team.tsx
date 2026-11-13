@@ -46,7 +46,8 @@ export default function WorkspaceTeam() {
   const now = useMemo(() => Date.now(), [presence.dataUpdatedAt]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const mine = useLeave(user ? { userId: user.id } : {}, tab === 'leave');
-  const pending = useLeave({ status: 'PENDING' }, tab === 'leave' && isAdmin);
+  // Loaded on every tab: the "Leave" tab's badge tells admins that requests wait for them.
+  const pending = useLeave({ status: 'PENDING' }, isAdmin);
   const balance = useLeaveBalance();
 
   const people = useMemo(() => {

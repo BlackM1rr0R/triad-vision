@@ -169,6 +169,15 @@ export default function BoardView({ folderId, folderName, onOpen, onOpenFolder }
         <div className="grid flex-1 place-items-center">
           <Spinner className="size-6" />
         </div>
+      ) : board.isError && !board.data ? (
+        <div className="grid flex-1 place-items-center p-6 text-center">
+          <div>
+            <p className="text-sm font-semibold text-ink">{t('drive.errors.generic')}</p>
+            <button type="button" className="btn-secondary btn-sm mt-3" onClick={() => void board.refetch()}>
+              {t('drive.toolbar.refresh')}
+            </button>
+          </div>
+        </div>
       ) : (
         <div className="flex min-h-0 flex-1 gap-3 overflow-x-auto overscroll-contain p-3 sm:p-4">
           {WORKFLOW_STAGES.map((stage) => {

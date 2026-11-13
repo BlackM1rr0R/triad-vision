@@ -206,6 +206,12 @@ describe('GET /api/documents/cases/:caseId/packet', () => {
     const client = await asClient();
     const admin = await asAdmin();
     const c = await driveCaseTo('EMBASSY_DOCUMENTS', { client: client.agent, admin: admin.agent });
+    // The client may download the packet but not file it into the case (an ACCEPTED document).
+    const before = await prisma.document.count({ where: { caseId: c.id } });
+    const own = await client.agent.get(`/api/documents/cases/${c.id}/packet?store=1`);
+    expect(own.status).toBe(403);
+    expect(own.body.error).toBe('STAFF_ONLY');
+    expect(await prisma.document.count({ where: { caseId: c.id } })).toBe(before);
     const res = await admin.agent.get(`/api/documents/cases/${c.id}/packet?store=1`);
     expect(res.status).toBe(201);
     expect(res.body.document).toMatchObject({ caseId: c.id, stage: 'OTHER', mimeType: 'application/pdf', originalName: `${c.number}-sefirlik-paketi.pdf` });

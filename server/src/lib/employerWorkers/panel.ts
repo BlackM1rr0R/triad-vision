@@ -196,16 +196,27 @@ const loadExtras = async (companyId: string, caseIds: string[]) => {
 
 type Extras = NonNullable<Awaited<ReturnType<typeof loadExtras>>>;
 
+/**
+ * The sign page of a pending company signer: only the signer's own login may open /company/contracts/:signerId
+ * (routes/signatures.ts → ownSigner), so with a known viewer a colleague's signature gets no link.
+ */
+export const signerLink = (signers: { id: string; userId: string | null }[], viewerId?: string) => {
+  if (!viewerId) return signers[0] ? `/company/contracts/${signers[0].id}` : null;
+  const own = signers.find((s) => s.userId === viewerId);
+  return own ? `/company/contracts/${own.id}` : null;
+};
+
 /** Signature requests where a user of this company still has to sign (running, not expired). */
-const pendingSignatures = (x: Extras, caseId: string, now: Date): OpenItem[] =>
+const pendingSignatures = (x: Extras, caseId: string, now: Date, viewerId?: string): OpenItem[] =>
   x.signatures
     .filter((r) => r.caseId === caseId && r.status === 'SENT' && !signatureExpired(r, now))
     .flatMap((r) => {
       const mine = r.signers.filter((s) => s.role === 'COMPANY' && s.userId && x.companyUserIds.has(s.userId) && (s.status === 'PENDING' || s.status === 'VIEWED'));
-      return mine.length ? [{ kind: 'SIGNATURE' as const, id: r.id, title: r.title, link: `/company/contracts/${mine[0].id}`, since: r.sentAt }] : [];
+      return mine.length ? [{ kind: 'SIGNATURE' as const, id: r.id, title: r.title, link: signerLink(mine, viewerId), since: r.sentAt }] : [];
     });
 
-export const buildPanel = async (companyId: string, now = new Date()): Promise<PanelRow[]> => {
+/** `viewerId`: the signed-in employer user (sign links only for their own signatures). */
+export const buildPanel = async (companyId: string, now = new Date(), viewerId?: string): Promise<PanelRow[]> => {
   const base = await listWorkers(companyId, now);
   const x = await loadExtras(
     companyId,
@@ -293,7 +304,7 @@ export const buildPanel = async (companyId: string, now = new Date()): Promise<P
     }
 
     // Open items the employer has to do.
-    const openItems: OpenItem[] = [...pendingSignatures(x, w.id, now)];
+    const openItems: OpenItem[] = [...pendingSignatures(x, w.id, now, viewerId)];
     for (const fill of x.fills.filter((ff) => ff.caseId === w.id && ff.status === 'SENT_TO_EMPLOYER')) {
       // A form sent out for signature is already listed as a signature item.
       if (fill.signatureRequestId && openItems.some((i) => i.id === fill.signatureRequestId)) continue;
@@ -381,8 +392,8 @@ export interface TimelineItem {
 }
 
 /** One worker of the company with timeline, upcoming dates, the employer's documents and check-in history. */
-export const workerDetail = async (companyId: string, caseId: string, now = new Date()) => {
-  const rows = await buildPanel(companyId, now);
+export const workerDetail = async (companyId: string, caseId: string, now = new Date(), viewerId?: string) => {
+  const rows = await buildPanel(companyId, now, viewerId);
   const row = rows.find((r) => r.id === caseId);
   if (!row) return null;
   const [signatures, fills, followUp, contact] = await Promise.all([
@@ -447,7 +458,7 @@ export const workerDetail = async (companyId: string, caseId: string, now = new 
   const documents = [
     ...signatures.map((s) => {
       const status = s.status === 'SENT' && signatureExpired(s, now) ? 'EXPIRED' : s.status;
-      const pending = s.signers.find((x) => x.role === 'COMPANY' && x.userId && companyUserIds.has(x.userId) && (x.status === 'PENDING' || x.status === 'VIEWED'));
+      const pending = s.signers.filter((x) => x.role === 'COMPANY' && x.userId && companyUserIds.has(x.userId) && (x.status === 'PENDING' || x.status === 'VIEWED'));
       return {
         kind: 'SIGNATURE' as const,
         id: s.id,
@@ -455,7 +466,7 @@ export const workerDetail = async (companyId: string, caseId: string, now = new 
         status,
         isContract: s.isCaseContract,
         date: s.completedAt ?? s.sentAt,
-        signLink: status === 'SENT' && pending ? `/company/contracts/${pending.id}` : null,
+        signLink: status === 'SENT' ? signerLink(pending, viewerId) : null,
         downloadable: s.status === 'COMPLETED' && !!s.finalKey,
       };
     }),

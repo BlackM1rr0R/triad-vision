@@ -101,7 +101,7 @@ export const CostCalculator = ({ citySlug, onCityChange }: { citySlug: string; o
             render={(h) => (
               <span className="block leading-tight">
                 {t(`citiesPage.calc.${h}`)}
-                {h !== 'wg' && <span className="block text-[10px] font-normal opacity-70">{t('citiesPage.calc.size', { m2: FLAT_SIZE[h] })}</span>}
+                {h !== 'wg' && <span className="block text-[11px] font-normal opacity-90">{t('citiesPage.calc.size', { m2: FLAT_SIZE[h] })}</span>}
               </span>
             )}
           />

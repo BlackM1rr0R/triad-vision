@@ -332,7 +332,8 @@ export const listEntries = async (viewer: Viewer, q: z.infer<typeof listQuery>, 
 /** Per staff per (ISO) week, per case and per activity — finished entries only. */
 export const summarize = async (viewer: Viewer, q: Omit<z.infer<typeof listQuery>, 'page'>) => {
   const where: Prisma.TimeEntryWhereInput = { AND: [entriesWhere(viewer, q), { endedAt: { not: null } }] };
-  const rows = await prisma.timeEntry.findMany({ where, include: entryInclude, orderBy: { startedAt: 'asc' }, take: 20_000 });
+  // Newest first: when the cap bites, the oldest entries drop out, not the current weeks (aggregates do not depend on order).
+  const rows = await prisma.timeEntry.findMany({ where, include: entryInclude, orderBy: { startedAt: 'desc' }, take: 20_000 });
   const staff = new Map<string, { userId: string; name: string; minutes: number; weeks: Record<string, number> }>();
   const cases = new Map<string, { caseId: string | null; number: string | null; clientName: string | null; minutes: number; entries: number }>();
   const activities = Object.fromEntries(ACTIVITIES.map((a) => [a, 0])) as Record<TimeActivity, number>;

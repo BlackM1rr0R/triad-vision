@@ -118,7 +118,7 @@ describe('employer portal: strict company scoping', () => {
   it('a suspended company reaches none of the employer modules', async () => {
     const s = await setup();
     await prisma.company.update({ where: { id: s.employer.company.id }, data: { status: 'SUSPENDED' } });
-    for (const url of ['/api/company/workers', `/api/company/workers/${s.kase.id}`, '/api/company/workers/export.csv', '/api/company/reports', '/api/company/forms', `/api/company/forms/${s.fill.id}`]) {
+    for (const url of ['/api/company/workers', `/api/company/workers/${s.kase.id}`, '/api/company/workers/export.csv', '/api/company/reports', '/api/company/forms', `/api/company/forms/${s.fill.id}`, '/api/company/invoices']) {
       const res = await s.employer.agent.get(url);
       expect(res.status, url).toBe(403);
       expect(res.body.error, url).toBe('COMPANY_SUSPENDED');

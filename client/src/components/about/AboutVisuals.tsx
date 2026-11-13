@@ -212,7 +212,12 @@ const haversineKm = (a: LngLat, b: LngLat) => {
   return 2 * 6371 * Math.asin(Math.sqrt(h));
 };
 
+// Chrome ships no Azerbaijani ICU data (lib/azIntl.ts): DisplayNames('az') would print "Germany" in the browser
+// and "Almaniya" on the SSR server (hydration mismatch). The map only ever shows these two.
+const AZ_REGIONS: Record<string, string> = { DE: 'Almaniya', AZ: 'Azərbaycan' };
+
 const regionName = (locale: string, code: string) => {
+  if (/^az(-|$)/i.test(locale) && AZ_REGIONS[code]) return AZ_REGIONS[code];
   try {
     return new Intl.DisplayNames([locale], { type: 'region' }).of(code) ?? code;
   } catch {

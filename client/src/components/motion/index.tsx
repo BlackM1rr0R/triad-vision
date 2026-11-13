@@ -71,9 +71,14 @@ const staggerChild: Variants = {
   show: { opacity: 1, y: 0, transition: { duration: 0.7, ease: EASE } },
 };
 
-export const Stagger = ({ children, className }: { children: ReactNode; className?: string }) => (
+/**
+ * `rail`: accessible name of a scrollable card rail (.mobile-rail) whose cards contain nothing focusable — the
+ * rail itself then takes keyboard focus so it can be scrolled with the arrow keys (WCAG 2.1.1).
+ */
+export const Stagger = ({ children, className, rail }: { children: ReactNode; className?: string; rail?: string }) => (
   <motion.div
     className={className}
+    {...(rail ? { role: 'region', 'aria-label': rail, tabIndex: 0 } : {})}
     variants={staggerParent}
     initial="hidden"
     whileInView="show"

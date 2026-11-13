@@ -3,10 +3,12 @@ import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
-import { Activity, Download, ExternalLink, Globe, History, Info, MessageSquare, RotateCcw, Shield, Users, X } from 'lucide-react';
+import { Activity, Download, ExternalLink, Globe, Handshake, History, Info, MessageSquare, RotateCcw, Shield, Users, X } from 'lucide-react';
 import { api, formatBytes } from '@/lib/api';
 import { docStatusLabel, fmtDateTime, fullName, roleLabel, stageLabel, statusLabel } from '@/components/admin/labels';
-import type { CaseStatus, DocStage, DocStatus } from '@/lib/types';
+import { hasMinRole, type CaseStatus, type DocStage, type DocStatus } from '@/lib/types';
+import { useAuth } from '@/lib/auth';
+import { PartnerInfoDrawer } from '@/components/partners/PartnerInfoDrawer';
 import { contentUrl, driveKeys, versionUrl } from './api';
 import { ItemIcon } from './fileIcons';
 import { crumbLabel, displayName, typeLabel } from './labels';
@@ -82,6 +84,8 @@ export const DetailsPanel = ({
   }, [id, focusCommentId]);
   const [journalFor, setJournalFor] = useState<DriveItem | null>(null);
   const [linksFor, setLinksFor] = useState<DriveItem | null>(null);
+  const [partnerInfo, setPartnerInfo] = useState<string | null>(null);
+  const isAdmin = hasMinRole(useAuth().user?.role, 'ADMIN');
 
   const header = (
     <div className="flex items-center justify-between border-b border-line px-4 py-2.5">
@@ -242,6 +246,18 @@ export const DetailsPanel = ({
           </div>
         )}
 
+        {/* A partner's folder: the same details panel as the partner cards and the partner list. */}
+        {item.partner && (
+          <div className="border-b border-line px-4 py-3 text-xs text-muted">
+            <p className="flex items-center gap-1.5">
+              <Handshake className="size-3.5 shrink-0" /> <span className="truncate font-semibold text-ink">{item.partner.name}</span>
+            </p>
+            <button type="button" aria-haspopup="dialog" onClick={() => setPartnerInfo(item.partner!.id)} className="mt-2 inline-flex items-center gap-1 font-semibold text-link hover:underline">
+              <Info className="size-3.5" /> {t('drive.partner.info')}
+            </button>
+          </div>
+        )}
+
         {/* Access: the whole team edits everything; only people who can manage a folder see the details. */}
         {a && !a.canManage && a.myAccess && (a.myAccess === 'EDIT' || a.myAccess === 'MANAGE') && (
           <p className="flex items-center gap-1.5 border-b border-line px-4 py-3 text-xs text-muted">
@@ -339,6 +355,7 @@ export const DetailsPanel = ({
       )}
       <ActivityJournal folder={journalFor} title={journalFor ? displayName(journalFor, t, myId) : ''} onClose={() => setJournalFor(null)} />
       <ShareLinksDialog item={linksFor} onClose={() => setLinksFor(null)} />
+      <PartnerInfoDrawer partnerId={partnerInfo} onClose={() => setPartnerInfo(null)} isAdmin={isAdmin} />
     </div>
   );
 };

@@ -6,6 +6,7 @@ import helmet from 'helmet';
 import { config } from './config.js';
 import { csrfGuard, loadUser } from './middleware/auth.js';
 import { errorHandler, limiter, noStore, requestId } from './lib/http.js';
+import { auditsSettled } from './lib/audit.js';
 import { authRouter } from './routes/auth.js';
 import { casesRouter } from './routes/cases.js';
 import { scanPdfRouter, scanUploadRouter } from './routes/scanUpload.js';
@@ -128,6 +129,18 @@ export const createApp = () => {
   app.disable('x-powered-by');
   app.set('etag', 'weak');
   app.use(requestId);
+  // Tests only: a response is finished once the audit rows its request fired (void audit) are written, so
+  // assertions on AuditLog right after a request never race the write (lib/audit.ts).
+  if (config.isTest) {
+    app.use((_req, res, next) => {
+      const end = res.end.bind(res) as (...a: unknown[]) => typeof res;
+      res.end = ((...args: unknown[]) => {
+        void auditsSettled().then(() => end(...args));
+        return res;
+      }) as typeof res.end;
+      next();
+    });
+  }
   app.use(brandTextResponses); // white-label brand in text responses (no-op for the default brand)
   app.use(
     helmet({

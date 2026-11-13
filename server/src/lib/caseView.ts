@@ -65,10 +65,25 @@ export const caseStats = (c: DetailForStats) => {
   };
 };
 
+/**
+ * Case columns that are internal to the team and never go to the client portal: the client register's
+ * extra columns + internal note (registerData._note), the team document workflow and the drive placement.
+ * Used as a Prisma `omit` for every client-facing read of whole Case rows.
+ */
+export const CLIENT_HIDDEN_CASE_FIELDS = {
+  registerData: true,
+  processingStage: true,
+  processingStageAt: true,
+  processingStageById: true,
+  processingAssigneeId: true,
+  driveParentId: true,
+} as const;
+
 /** Full case detail used by both the client portal and the admin panel. */
 export const loadCaseDetail = async (caseId: string, opts: { forStaff: boolean }) => {
   const c = await prisma.case.findUnique({
     where: { id: caseId },
+    omit: opts.forStaff ? undefined : CLIENT_HIDDEN_CASE_FIELDS,
     include: {
       client: { select: { id: true, firstName: true, lastName: true, email: true, phone: true, locale: true } },
       assignedStaff: { select: { id: true, firstName: true, lastName: true } },
@@ -100,7 +115,7 @@ export const loadCaseDetail = async (caseId: string, opts: { forStaff: boolean }
   return {
     ...c,
     // Internal drive placement (vacancy folder): staff only.
-    driveParentId: opts.forStaff ? c.driveParentId : undefined,
+    driveParentId: opts.forStaff ? (c as { driveParentId?: string | null }).driveParentId : undefined,
     contract: c.contract && {
       ...c.contract,
       file: byId.get(c.contract.fileDocumentId) ?? null,

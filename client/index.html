@@ -9,7 +9,8 @@
   app hydrates (src/main.tsx), and after #root the JSON it was rendered with (a script element of type
   application/json: never executed, so no CSP hash). The service answers "markup@@tv-ssr-state@@script", or
   nothing when the page is not server-rendered (private path, error, timeout) — then #root gets the crawler HTML
-  from the API (/__seo/body) and the app renders on the client, as before. Asked for before <head>: the head
+  from the API (/__seo/body) and the app renders on the client, as before. Asked for before the head element (no literal tag in this comment: Vite injects its dev scripts after the
+  first one it finds): the head
   skips the /api/public/content preload when the page data came with the markup. */:tv-->
 <!--tv:$ssr := splitList "@@tv-ssr-state@@" (httpInclude (printf "/__ssr/render?url=%s" (urlquery .OriginalReq.URL.RequestURI))):tv-->
 <!--tv:if $lang:tv--><!--tv:printf "<html lang=\"%s\" dir=\"ltr\">" $lang:tv--><!--tv:else:tv--><html lang="az" dir="ltr"><!--tv:end:tv-->
