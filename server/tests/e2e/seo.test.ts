@@ -45,7 +45,8 @@ describe('GET /robots.txt', () => {
     expect(res.status).toBe(200);
     expect(res.headers['content-type']).toMatch(/^text\/plain/);
     expect(res.headers['cache-control']).toBe('public, max-age=3600');
-    expect(res.text).toContain('Disallow: /admin\n');
+    expect(res.text).toContain('Disallow: /admin$\nDisallow: /admin/\nDisallow: /admin?\n');
+    expect(res.text).not.toContain('Disallow: /r\n'); // would block every /ru/… page
     expect(res.text).toContain('Disallow: /api/\n');
     expect(res.text).toContain(`Sitemap: ${ORIGIN}/sitemap.xml`);
   });
@@ -82,12 +83,16 @@ describe('GET /sitemap.xml', () => {
     for (const p of ['/', '/about', '/jobs', '/booking', '/impressum', '/privacy', '/visas/lkw-fahrer', '/services/recruiting', '/news/news-1', `/jobs/${open.slug}`]) {
       expect(xml).toContain(`<loc>${ORIGIN}${p === '/' ? '/' : p}</loc>`);
       expect(xml).toContain(`<loc>${ORIGIN}/de${p === '/' ? '' : p}</loc>`);
-      expect(xml).toContain(`<loc>${ORIGIN}/tr${p === '/' ? '' : p}</loc>`);
+      expect(xml).toContain(`<loc>${ORIGIN}/ru${p === '/' ? '' : p}</loc>`);
     }
+    // Static pages exist in all six languages; CMS items only in the languages they are written in
+    // (the fixtures have az/de/en/ru: the Turkish URL would only repeat the English text).
+    expect(xml).toContain(`<loc>${ORIGIN}/tr/about</loc>`);
+    expect(xml).not.toContain(`<loc>${ORIGIN}/tr/visas/lkw-fahrer</loc>`);
     for (const slug of ['hidden-visa', 'hidden-service', 'draft-post', expired.slug, closed.slug, future.slug]) expect(xml).not.toContain(slug);
     expect(xml).toContain(`<xhtml:link rel="alternate" hreflang="x-default" href="${ORIGIN}/visas/lkw-fahrer"/>`);
     expect(xml).toContain(`<xhtml:link rel="alternate" hreflang="ru" href="${ORIGIN}/ru/visas/lkw-fahrer"/>`);
-    expect(xml).toContain(`<xhtml:link rel="alternate" hreflang="uk" href="${ORIGIN}/uk/visas/lkw-fahrer"/>`);
+    expect(xml).not.toContain(`hreflang="uk" href="${ORIGIN}/uk/visas/lkw-fahrer"`);
     expect(xml).not.toContain('/admin');
   });
 
@@ -110,8 +115,8 @@ describe('GET /api/seo/head', () => {
     expect(res.status).toBe(200);
     expect(res.headers['content-type']).toMatch(/^text\/html/);
     expect(res.headers['cache-control']).toBe('public, max-age=60, stale-while-revalidate=600');
-    expect(res.text).toContain('<title data-seo>LKW de | Triad Vision</title>');
-    expect(res.text).toContain('name="description" content="Trucks across Europe de"');
+    expect(res.text).toContain('<title data-seo>LKW de: Arbeit und Visum in Deutschland | Triad Vision</title>');
+    expect(res.text).toContain('name="description" content="Trucks across Europe de. Voraussetzungen, Unterlagen, Visumverfahren und offene Stellen."');
     expect(res.text).toContain(`rel="canonical" href="${ORIGIN}/de/visas/lkw-fahrer"`);
     expect(res.text).toContain(`hreflang="x-default" href="${ORIGIN}/visas/lkw-fahrer"`);
     expect(res.text).toContain('property="og:locale" content="de_DE"');
@@ -150,7 +155,7 @@ describe('GET /api/seo/head', () => {
     });
   });
 
-  it('adds a JobPosting for open jobs and hides the employer unless showCompany', async () => {
+  it('adds a JobPosting for open jobs and hides the employer ("confidential") unless showCompany', async () => {
     const hidden = await createJob();
     const shown = await createJob({ showCompany: true, employmentType: 'AUSBILDUNG' });
     const expired = await createJob({ closesAt: new Date(Date.now() - day) });
@@ -161,8 +166,10 @@ describe('GET /api/seo/head', () => {
       title: 'Driver de',
       description: '<p>Drive trucks de</p>',
       employmentType: 'FULL_TIME',
-      hiringOrganization: { name: 'Triad Vision' },
-      jobLocation: { address: { addressLocality: 'Hamburg', addressCountry: 'DE' } },
+      hiringOrganization: { '@type': 'Organization', name: 'confidential' },
+      identifier: { '@type': 'PropertyValue', value: hidden.slug },
+      datePosted: hidden.publishedAt!.toISOString(),
+      jobLocation: { address: { addressLocality: 'Hamburg', addressRegion: 'Hamburg', addressCountry: 'DE' } },
       baseSalary: { currency: 'EUR', value: { minValue: 2800, maxValue: 3400, unitText: 'MONTH' } },
       directApply: true,
     });
@@ -180,7 +187,7 @@ describe('GET /api/seo/head', () => {
     expect(gone.text).not.toContain('JobPosting');
   });
 
-  it('adds an AggregateRating only with three or more approved, consented reviews', async () => {
+  it('never adds an AggregateRating for our own organisation (self-serving reviews), even with approved reviews', async () => {
     const { user } = await createClient();
     const review = (i: number, over: Record<string, unknown> = {}) =>
       prisma.review.create({
@@ -191,14 +198,12 @@ describe('GET /api/seo/head', () => {
     await review(3, { status: 'PENDING' });
     await review(4, { consentPublish: false });
     const org = () => anon().get('/api/seo/head').query({ path: '/' }).then((r) => ld(r.text)[0]);
-    expect((await org()).aggregateRating).toBeUndefined();
-
     await review(5, { rating: 4 });
     // The SEO data is cached; a CMS write (or the TTL) refreshes it.
     const { agent: admin } = await asAdmin();
     await admin.put('/api/admin/settings/contact').send({ value: { phone: '+49 30 1234', email: 'info@triad.test' } });
     const o = await org();
-    expect(o.aggregateRating).toEqual({ '@type': 'AggregateRating', ratingValue: 4.3, reviewCount: 3, bestRating: 5, worstRating: 1 });
+    expect(o.aggregateRating).toBeUndefined();
     expect(o.contactPoint[0]).toMatchObject({ telephone: '+49 30 1234', email: 'info@triad.test' });
   });
 
@@ -213,5 +218,46 @@ describe('GET /api/seo/head', () => {
     expect(res.status).toBe(200);
     expect(res.text).toContain('"@type":"WebSite"');
     expect(res.headers['ratelimit-policy']).toBeUndefined();
+  });
+});
+
+describe('GET /__seo/status (crawler status code of the HTML shell)', () => {
+  const status = (path: string) => anon().get('/__seo/status').query({ path });
+
+  it('answers empty (200) for real pages and "404" for unknown URLs and missing or closed content', async () => {
+    await createVisaCategory({ slug: 'lkw-fahrer' });
+    await createVisaCategory({ slug: 'hidden-visa', published: false });
+    const open = await createJob();
+    const expired = await createJob({ closesAt: new Date(Date.now() - day) });
+    const closed = await createJob({ status: 'CLOSED' });
+
+    const res = await status('/de/visas/lkw-fahrer');
+    expect(res.status).toBe(200);
+    expect(res.headers['content-type']).toMatch(/^text\/plain/);
+    expect(res.headers['x-robots-tag']).toBe('noindex');
+    expect(res.text).toBe('');
+    for (const p of ['/', '/de', '/ru/about', '/jobs', `/jobs/${open.slug}`, `/en/jobs/${open.slug}`, '/admin/cases', '/account', '/sign/abc', '/success/tok']) {
+      expect((await status(p)).text, p).toBe('');
+    }
+    for (const p of ['/this-does-not-exist', '/visas/nonexistent', '/visas/hidden-visa', '/jobs/nonexistent', `/jobs/${expired.slug}`, `/de/jobs/${closed.slug}`, '/de/xx/yy']) {
+      expect((await status(p)).text, p).toBe('404');
+    }
+  });
+
+  it('serves a crawlable, server-rendered job page with JobPosting in every language', async () => {
+    const job = await createJob({ showCompany: true });
+    for (const lng of ['az', 'de', 'ru']) {
+      const path = lng === 'az' ? `/jobs/${job.slug}` : `/${lng}/jobs/${job.slug}`;
+      const head = await anon().get('/__seo/head').query({ path });
+      expect(head.text, path).toContain(`rel="canonical" href="${ORIGIN}${path}"`);
+      const posting = ld(head.text).find((b) => b['@type'] === 'JobPosting');
+      expect(posting, path).toMatchObject({ title: `Driver ${lng}`, hiringOrganization: { name: 'SEO Co Logistik GmbH' }, url: `${ORIGIN}${path}` });
+      const body = await anon().get('/__seo/body').query({ path });
+      expect(body.text, path).toContain(`<h1>Driver ${lng} — Hamburg</h1>`);
+      expect(body.text, path).toContain(`Drive trucks ${lng}`);
+    }
+    const sitemap = await anon().get('/sitemaps/jobs.xml');
+    expect(sitemap.text).toContain(`<loc>${ORIGIN}/de/jobs/${job.slug}</loc>`);
+    expect(sitemap.text).toMatch(/<lastmod>\d{4}-\d{2}-\d{2}T/);
   });
 });

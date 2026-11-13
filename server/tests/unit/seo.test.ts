@@ -1,11 +1,15 @@
+import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import {
   escapeHtml,
+  isKnownRoute,
   isPrivatePath,
   jobPostingLd,
   localBusinessLd,
   normalizePath,
   organizationLd,
+  padDescription,
+  pageStatus,
   pageUrl,
   parseLocale,
   parseOpeningHours,
@@ -16,6 +20,7 @@ import {
   renderSitemap,
   renderSitemapGroup,
   renderSitemapIndex,
+  resolvePage,
   safeJsonLd,
   splitLocalePath,
   truncate,
@@ -232,9 +237,31 @@ describe('renderHead', () => {
     expect(tr).toContain('property="og:locale" content="tr_TR"');
     const data = emptyData({ visas: [{ slug: 'x', title: { az: 'Viza', en: 'Visa EN' }, summary: { az: 'Xülasə', en: 'Summary EN' }, image: '', updatedAt: new Date() }] });
     const uk = renderHead('/uk/visas/x', null, data);
-    expect(uk).toContain('<title data-seo>Visa EN | Triad Vision</title>');
+    expect(uk).toContain('<title data-seo>Visa EN: work and visa in Germany | Triad Vision</title>');
     expect(uk).toContain('property="og:locale" content="uk_UA"');
-    expect(uk).toContain(`rel="canonical" href="${ORIGIN}/uk/visas/x"`);
+    // The Ukrainian URL shows the English text: canonical to the English page, no hreflang of its own.
+    expect(uk).toContain(`rel="canonical" href="${ORIGIN}/en/visas/x"`);
+    expect(uk).not.toContain('hreflang');
+  });
+
+  it('lists only the languages a CMS item is written in (hreflang, canonical, sitemap)', () => {
+    const data = emptyData({ visas: [{ slug: 'x', title: { az: 'Viza', de: 'Visum', en: 'Visa' }, summary: {}, image: '', updatedAt: new Date() }] });
+    const de = renderHead('/de/visas/x', null, data);
+    expect(de).toContain(`rel="canonical" href="${ORIGIN}/de/visas/x"`);
+    for (const [l, href] of [['az', '/visas/x'], ['de', '/de/visas/x'], ['en', '/en/visas/x'], ['x-default', '/visas/x']]) {
+      expect(de).toContain(`hreflang="${l}" href="${ORIGIN}${href}"`);
+    }
+    expect(de).not.toContain('hreflang="ru"');
+    expect(de).not.toContain('hreflang="tr"');
+    // Russian falls back to the az text: canonical to the root URL.
+    expect(renderHead('/ru/visas/x', null, data)).toContain(`rel="canonical" href="${ORIGIN}/visas/x"`);
+    const xml = renderSitemapGroup(data, 'content');
+    expect(xml.match(/<url>/g)).toHaveLength(3);
+    expect(xml).not.toContain('/ru/visas/x');
+    expect(xml).not.toContain('/tr/visas/x');
+    // Fully translated items keep all six languages.
+    const full = emptyData({ visas: [{ slug: 'y', title: Object.fromEntries(SEO_LOCALES.map((l) => [l, `V ${l}`])), summary: {}, image: '', updatedAt: new Date() }] });
+    expect(renderSitemapGroup(full, 'content').match(/<url>/g)).toHaveLength(6);
   });
 
   it('still honours a legacy ?lng= on unprefixed paths (canonical points to the prefixed URL)', () => {
@@ -264,8 +291,8 @@ describe('renderHead', () => {
       visas: [{ slug: 'x', title: { az: '<b>"Visa"</b>' }, summary: { az: `It's <script>` }, image: 'data:image/png;base64,AA', updatedAt: new Date() }],
     });
     const html = renderHead('/visas/x', null, data);
-    expect(html).toContain('&lt;b&gt;&quot;Visa&quot;&lt;/b&gt; | Triad Vision');
-    expect(html).toContain('content="It&#39;s &lt;script&gt;"');
+    expect(html).toContain('&lt;b&gt;&quot;Visa&quot;&lt;/b&gt;: Almaniyada iş və viza | Triad Vision');
+    expect(html).toContain('content="It&#39;s &lt;script&gt;. Tələblər, sənədlər');
     expect(html).not.toContain('<b>');
     // data: URIs are not usable as og:image; the generated title card is used instead.
     expect(html).toContain(`property="og:image" content="${ORIGIN}/og/visas/az/x.png"`);
@@ -351,21 +378,27 @@ describe('renderHead', () => {
 });
 
 describe('JSON-LD builders', () => {
-  it('builds a JobPosting with Triad Vision as hiring organisation when the company is hidden', () => {
+  it('builds a JobPosting with a "confidential" hiring organisation when the company is hidden (Google agency rule)', () => {
     const ld = jobPostingLd(job(), 'de', `${ORIGIN}/de/jobs/lkw-hamburg`);
     expect(ld).toMatchObject({
       '@type': 'JobPosting',
       title: 'Driver de',
       datePosted: '2026-10-01T00:00:00.000Z',
       employmentType: 'FULL_TIME',
-      hiringOrganization: { '@type': 'Organization', name: 'Triad Vision' },
-      jobLocation: { '@type': 'Place', address: { '@type': 'PostalAddress', addressLocality: 'Hamburg', addressCountry: 'DE' } },
+      hiringOrganization: { '@type': 'Organization', name: 'confidential' },
+      identifier: { '@type': 'PropertyValue', name: 'Triad Vision', value: 'lkw-hamburg' },
+      jobLocation: { '@type': 'Place', address: { '@type': 'PostalAddress', addressLocality: 'Hamburg', addressRegion: 'Hamburg', addressCountry: 'DE' } },
       baseSalary: { '@type': 'MonetaryAmount', currency: 'EUR', value: { minValue: 2800, maxValue: 3400, unitText: 'MONTH' } },
       directApply: true,
     });
     expect(ld.description).toBe('<p>Line one</p><p>Line two de</p><p><strong>Anforderungen</strong></p><ul><li>CE</li></ul>');
     expect(JSON.stringify(ld)).not.toContain('Hidden GmbH');
+    expect(ld.hiringOrganization).toEqual({ '@type': 'Organization', name: 'confidential' });
     expect(ld.validThrough).toBeDefined();
+    // Region from the city (names and aliases of the budget city data); unknown places get none.
+    expect(jobPostingLd(job({ city: 'Munich' }), 'en', 'u').jobLocation).toMatchObject({ address: { addressRegion: 'Bayern' } });
+    expect(jobPostingLd(job({ city: 'Mörfelden-Walldorf' }), 'en', 'u').jobLocation).toMatchObject({ address: { addressRegion: 'Hessen' } });
+    expect((jobPostingLd(job({ city: 'Nowhere' }), 'en', 'u').jobLocation as { address: object }).address).not.toHaveProperty('addressRegion');
   });
 
   it('names the employer when showCompany is set and maps employment types and salaries', () => {
@@ -381,7 +414,7 @@ describe('JSON-LD builders', () => {
     expect(jobPostingLd(job({ requirements: { en: ['B1'] } }), 'tr', 'u').description).toContain('Aranan nitelikler');
   });
 
-  it('builds the Organization from settings and adds AggregateRating only with enough reviews', () => {
+  it('builds the Organization from settings and never adds a (self-serving) AggregateRating', () => {
     const settings = {
       contact: { phone: '+49 1', email: 'info@x.de', offices: [{ city: { en: 'Berlin', de: 'Berlin' }, address: 'Str. 1' }] },
       social: { instagram: 'https://instagram.com/x', bad: 'javascript:alert(1)', empty: '' },
@@ -398,8 +431,9 @@ describe('JSON-LD builders', () => {
       logo: { '@type': 'ImageObject', url: `${ORIGIN}/logo-512.png` },
     });
     expect(org.aggregateRating).toBeUndefined();
-    const rated = organizationLd(emptyData({ rating: { count: 3, average: 4.7 } }), 'az');
-    expect(rated.aggregateRating).toEqual({ '@type': 'AggregateRating', ratingValue: 4.7, reviewCount: 3, bestRating: 5, worstRating: 1 });
+    const rated = emptyData({ rating: { count: 30, average: 4.7 }, settings });
+    expect(organizationLd(rated, 'az').aggregateRating).toBeUndefined();
+    expect(localBusinessLd(rated, 'az')[0]).not.toHaveProperty('aggregateRating');
   });
 
   it('builds one ProfessionalService per office with NAP, geo, hours and sameAs', () => {
@@ -432,13 +466,14 @@ describe('JSON-LD builders', () => {
 describe('robots.txt, sitemaps and RSS', () => {
   it('disallows private areas and points to the sitemap index', () => {
     const txt = renderRobots();
-    for (const d of ['/admin', '/account', '/company', '/api/', '/booking/manage', '/review', '/verify-email', '/login/2fa', '/reset-password', '/__seo/']) {
+    for (const d of ['/admin/', '/account$', '/company/', '/api/', '/booking/manage/', '/review?', '/verify-email$', '/login/2fa/', '/reset-password?', '/r/', '/__seo/']) {
       expect(txt).toContain(`Disallow: ${d}\n`);
     }
     expect(txt).toContain('User-agent: *\nAllow: /\n');
-    // "/partner" (portal) must not block the public /partners page.
-    expect(txt).toContain('Disallow: /partner$\nDisallow: /partner/\n');
-    expect(txt).not.toContain('Disallow: /partner\n');
+    // Every private area is matched on a segment boundary: "/partner" (portal) must not block /partners,
+    // and "/r" (referral links) must not block /ru/… or /register.
+    expect(txt).toContain('Disallow: /partner$\nDisallow: /partner/\nDisallow: /partner?\n');
+    expect(txt).not.toMatch(/^Disallow: \/(partner|r|admin)$/m);
     expect(txt).toContain(`Sitemap: ${ORIGIN}/sitemap.xml`);
   });
 
@@ -515,8 +550,10 @@ describe('crawlable body (/__seo/body)', () => {
     expect(html).toContain('<p>Para one de</p>'.replace('one de', 'one'));
     expect(html).toContain('<li>CE de</li>');
     expect(html).toContain('href="/de/visas"');
-    expect(html).toContain('hreflang="tr" lang="tr"');
-    expect(html).toContain('href="/tr/visas/lkw"');
+    expect(html).toContain('hreflang="ru" lang="ru"');
+    expect(html).toContain('href="/ru/visas/lkw"');
+    // The item has no Turkish text: no Turkish language link (that URL canonicalises to English).
+    expect(html).not.toContain('href="/tr/visas/lkw"');
     expect(html).toContain('Nizami 96');
     expect(html).toContain('href="tel:+994501"');
     expect(html).not.toContain('<b>');
@@ -568,5 +605,154 @@ describe('crawlable body (/__seo/body)', () => {
     expect(renderBody('/admin/cases', data)).toBe('');
     expect(renderBody('/de/account', data)).toBe('');
     expect(renderBody('/nope', data)).toBe('');
+  });
+});
+
+/** Google's robots.txt matching: prefix rules, "$" anchors the end, the path includes the query. */
+const blockedBy = (robots: string, url: string) => {
+  const u = new URL(url);
+  const target = u.pathname + u.search;
+  return robots
+    .split('\n')
+    .filter((l) => l.startsWith('Disallow: '))
+    .map((l) => l.slice('Disallow: '.length))
+    .some((rule) => (rule.endsWith('$') ? target === rule.slice(0, -1) : target.startsWith(rule)));
+};
+
+describe('robots.txt vs. public URLs', () => {
+  const data = emptyData({
+    visas: [{ slug: 'lkw', title: l10n('V'), summary: {}, image: '', updatedAt: new Date() }],
+    jobs: [job()],
+    guides: [guide(), guide({ id: 'g-ru', locale: 'ru', slug: 'karta-vozmozhnostey', title: 'Карта' })],
+  });
+
+  it('blocks no URL of the sitemap (every language, /ru/… included)', () => {
+    const robots = renderRobots();
+    const urls = [...renderSitemap(data).matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1].replace(/&amp;/g, '&'));
+    expect(urls.some((u) => u.includes('/ru/'))).toBe(true);
+    for (const u of urls) expect(blockedBy(robots, u), u).toBe(false);
+    for (const p of ['/ru', '/register', '/referral-terms', '/partners', '/reviews', '/signup', '/questions']) expect(blockedBy(robots, `${ORIGIN}${p}`), p).toBe(false);
+  });
+
+  it('still blocks the private areas, with and without subpaths or a query', () => {
+    const robots = renderRobots();
+    for (const p of ['/admin', '/admin/cases', '/r', '/r/abc', '/r/review/tok', '/partner/x', '/q/123', '/review?token=1', '/sign/tok', '/job-alert?t=1', '/api/x']) {
+      expect(blockedBy(robots, `${ORIGIN}${p}`), p).toBe(true);
+    }
+  });
+});
+
+describe('HTTP status for crawlers (pageStatus)', () => {
+  const data = emptyData({
+    visas: [{ slug: 'lkw', title: l10n('V'), summary: {}, image: '', updatedAt: new Date(), noindex: true }],
+    services: [{ slug: 'recruiting', title: l10n('S'), summary: {}, image: '', updatedAt: new Date() }],
+    posts: [{ slug: 'law', title: l10n('P'), excerpt: {}, cover: '', publishedAt: new Date(), updatedAt: new Date() }],
+    jobs: [job({ slug: 'open' }), job({ slug: 'expired', closesAt: new Date(Date.now() - 1000) })],
+    guides: [guide()],
+    events: [
+      { slug: 'soon', title: l10n('E'), description: {}, mode: 'ONLINE', address: null, startsAt: new Date(Date.now() + 86_400_000), endsAt: new Date(Date.now() + 90_000_000), language: 'az', updatedAt: new Date() },
+      { slug: 'past', title: l10n('E'), description: {}, mode: 'ONLINE', address: null, startsAt: new Date(Date.now() - 90_000_000), endsAt: new Date(Date.now() - 86_400_000), language: 'az', updatedAt: new Date() },
+    ],
+  });
+
+  it('answers 200 for every static page, SPA route and private area, in every language', () => {
+    const paths = [...Object.keys(STATIC_PAGES), '/success/abc', '/legal/agb/3', '/p/CODE1', '/packages/order/tok', '/admin/cases/1', '/account/cases', '/r/review/tok/optout', '/workspace/drive/x', '/company/jobs', '/calculators'];
+    for (const p of paths) {
+      for (const l of ['', '/de', '/ru', '/uk']) {
+        const url = p === '/' && l ? l : `${l}${p}`;
+        expect(pageStatus(url, data), url).toBe(200);
+      }
+    }
+    expect(pageStatus('/visas/', data)).toBe(200); // trailing slashes are redirected by Caddy
+  });
+
+  it('answers 404 for unknown paths and for missing, closed or past content', () => {
+    for (const p of ['/this-does-not-exist', '/visas/nonexistent', '/jobs/nonexistent', '/jobs/expired', '/events/past', '/de/news/nope', '/guides/nope', '/ebook/nope', '/l/nope', '/de/xx/yy', '/fr/visas', '/about/extra', '/Visas', '/visas/lkw/more']) {
+      expect(pageStatus(p, data), p).toBe(404);
+    }
+  });
+
+  it("answers 200 for existing content, also when it is noindex or another language's guide slug", () => {
+    for (const p of ['/visas/lkw', '/de/services/recruiting', '/ru/news/law', '/jobs/open', '/uk/events/soon', '/guides/almaniya-imkan-karti', '/de/guides/almaniya-imkan-karti']) {
+      expect(pageStatus(p, data), p).toBe(200);
+    }
+  });
+
+  it('knows every route of the site layout in client/src/App.tsx', () => {
+    const app = readFileSync(new URL('../../../client/src/App.tsx', import.meta.url), 'utf8');
+    const start = app.indexOf('<Route element={<SiteLayout />}>');
+    const end = app.indexOf('<Route path="*" element={<NotFound />} />', start);
+    expect(start).toBeGreaterThan(0);
+    expect(end).toBeGreaterThan(start);
+    const paths = [...app.slice(start, end).matchAll(/path="([^"]+)"/g)].map((m) => m[1]);
+    expect(paths.length).toBeGreaterThan(60);
+    // Nested account routes ("cases", "profile" …) live under /account.
+    const sample = (p: string) => `/${p.replace(/:[^/]+/g, 'x').replace(/\/\*$/, '/x')}`;
+    for (const p of paths) expect(isKnownRoute(sample(p)) || isKnownRoute(`/account${sample(p)}`), p).toBe(true);
+  });
+});
+
+describe('titles, descriptions and JSON-LD of every page type', () => {
+  const full = (base: string) => Object.fromEntries(SEO_LOCALES.map((l) => [l, `${base} ${l}`]));
+  const data = emptyData({
+    visas: [{ slug: 'lkw-fahrer', title: full('LKW-Fahrer'), summary: full('Kurz'), image: 'https://img.example/v.jpg', updatedAt: new Date(), faq: [{ q: full('Q?'), a: full('A.') }] }],
+    services: [{ slug: 'recruiting', title: full('Recruiting'), summary: full('Auswahl'), image: '', updatedAt: new Date() }],
+    posts: [{ slug: 'law', title: full('Gesetz'), excerpt: full('Neu'), cover: '', publishedAt: new Date('2026-01-01'), updatedAt: new Date('2026-02-01') }],
+    jobs: [job({ title: full('Fahrer'), description: full('Kurz') })],
+    faqs: [{ question: full('Frage'), answer: full('Antwort') }],
+    guides: SEO_LOCALES.map((l) => guide({ id: `g-${l}`, locale: l, slug: `guide-${l}` })),
+    settings: { contact: { phone: '+49 1', offices: [{ city: { en: 'Berlin' }, address: 'Str. 1, 10117 Berlin' }] } },
+  });
+  const detail = ['/visas/lkw-fahrer', '/services/recruiting', '/news/law', '/jobs/lkw-hamburg'];
+
+  it('emits parseable JSON-LD with @context and @type on every page in every language', () => {
+    for (const l of SEO_LOCALES) {
+      const prefix = l === 'az' ? '' : `/${l}`;
+      for (const p of [...Object.keys(STATIC_PAGES), ...detail, `/guides/guide-${l}`]) {
+        const url = p === '/' && prefix ? prefix : `${prefix}${p}`;
+        const html = renderHead(url, null, data);
+        const blocks = ldBlocks(html);
+        expect(blocks.length, url).toBeGreaterThan(0);
+        for (const b of blocks) {
+          expect(b['@context'], url).toBe('https://schema.org');
+          expect(typeof b['@type'], url).toBe('string');
+        }
+        expect(html).not.toContain('aggregateRating');
+      }
+    }
+  });
+
+  it('gives detail pages unique titles per language, ≤ 60 characters, and descriptions ≤ 155', () => {
+    for (const p of detail) {
+      const titles = SEO_LOCALES.map((l) => resolvePage(p, l, data).title);
+      expect(new Set(titles).size, p).toBe(SEO_LOCALES.length);
+      for (const l of SEO_LOCALES) {
+        const r = resolvePage(p, l, data);
+        expect(r.title.length, `${l} ${p}`).toBeLessThanOrEqual(60);
+        expect(r.description.length, `${l} ${p}`).toBeLessThanOrEqual(155);
+      }
+    }
+    expect(resolvePage('/visas/lkw-fahrer', 'en', data).title).toBe('LKW-Fahrer en: work and visa in Germany | Triad Vision');
+    // Too long with the keyword tail (61 characters): the plain name.
+    expect(resolvePage('/visas/lkw-fahrer', 'de', data).title).toBe('LKW-Fahrer de | Triad Vision');
+    expect(resolvePage('/visas/lkw-fahrer', 'de', data).description).toBe('Kurz de. Voraussetzungen, Unterlagen, Visumverfahren und offene Stellen.');
+  });
+
+  it('pads short descriptions only while they fit', () => {
+    expect(padDescription('Short.', 'Tail.')).toBe('Short. Tail.');
+    expect(padDescription('Short', 'Tail.')).toBe('Short. Tail.');
+    const long = 'x'.repeat(130);
+    expect(padDescription(long, 'Tail.')).toBe(long);
+    expect(padDescription('', 'Tail.')).toBe('Tail.');
+  });
+
+  it('renders the job detail body with salary, type, other jobs and visa links in the page language', () => {
+    const d = emptyData({ ...data, jobs: [job({ slug: 'a', title: full('Fahrer') }), job({ slug: 'b', title: full('Koch'), city: 'Berlin' })] });
+    const html = renderBody('/de/jobs/a', d);
+    expect(html).toContain('Gehalt: 2.800 – 3.400 € brutto im Monat · Vollzeit · Hamburg');
+    expect(html).toContain('<h2>Weitere Stellen</h2>');
+    expect(html).toContain('<a href="/de/jobs/b">Koch de</a>');
+    expect(html).toContain('<a href="/de/visas/lkw-fahrer">');
+    expect(html).not.toContain('/month');
   });
 });

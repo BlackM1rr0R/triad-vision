@@ -177,7 +177,8 @@ describe('company logo', () => {
     const head = (await anon().get('/api/seo/head').query({ path: `/jobs/${shown.slug}`, lng: 'de' })).text;
     expect(ld(head).find((b) => b['@type'] === 'JobPosting').hiringOrganization.logo).toBe(`${ORIGIN}${logo.url}`);
     const hiddenHead = (await anon().get('/api/seo/head').query({ path: `/jobs/${hidden.slug}`, lng: 'de' })).text;
-    expect(ld(hiddenHead).find((b) => b['@type'] === 'JobPosting').hiringOrganization.logo).not.toContain('/uploads/logos/');
+    // Hidden employer: "confidential" (Google's rule for agencies), never the employer's logo.
+    expect(ld(hiddenHead).find((b) => b['@type'] === 'JobPosting').hiringOrganization).toEqual({ '@type': 'Organization', name: 'confidential' });
 
     expectStatus(await co.agent.delete('/api/company/me/logo'), 200);
     await flushImageCleanups();

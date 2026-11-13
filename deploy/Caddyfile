@@ -11,6 +11,24 @@
 	}
 }
 
+# CSP of the site pages (the API sets its own); shared by the SPA and its 404 page (handle_errors). The sha256 is
+# the theme/accessibility script inlined in client/index.html — if that script changes, recompute the hash or the
+# page falls back to defaults. googletagmanager / google-analytics: optional GA4, loaded only after analytics
+# consent (src/lib/analytics.ts).
+(spa_csp) {
+	header Content-Security-Policy "default-src 'self'; script-src 'self' 'sha256-zUR5+Rmsjc5COIO4FlT1fUy3SHmD9+E2patl/cA7NFg=' https://static.cloudflareinsights.com https://www.googletagmanager.com; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob: https:; connect-src 'self' https://cloudflareinsights.com https://www.googletagmanager.com https://*.google-analytics.com https://*.analytics.google.com; frame-src https://www.openstreetmap.org https://www.youtube-nocookie.com https://player.vimeo.com; worker-src 'self' blob:; media-src 'self' blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests"
+}
+
+# The HTML shell is a Caddy template (custom delimiters, so the actions are plain HTML comments in
+# client/index.html and the Vite dev server ignores them). The included tags are built by the API with all text
+# escaped; it can never contain the delimiters.
+(spa_templates) {
+	templates @shell {
+		mime text/html
+		between "<!--tv:" ":tv-->"
+	}
+}
+
 # www → apex, so the session cookie and CSRF origin always see one host.
 www.{$SITE_DOMAIN} {
 	redir https://{$SITE_DOMAIN}{uri} permanent
@@ -69,14 +87,15 @@ autoconfig.{$SITE_DOMAIN}, autodiscover.{$SITE_DOMAIN} {
 		}
 	}
 
-	# Per-page <head> tags (title, description, canonical, hreflang, Open Graph, JSON-LD), the white-label brand
+	# Per-page <head> tags (title, description, canonical, hreflang, Open Graph, JSON-LD), the page's HTTP status
+	# (/__seo/status: "404" for unknown URLs and missing/expired content), the white-label brand
 	# tags (/__seo/brand: theme colour, icons, app title) and the crawlable page
 	# body (/__seo/body, placed inside <div id="root">) for crawlers that do not run JavaScript. index.html
 	# includes them via httpInclude (see the templates directive below). Only Caddy's own include sub-requests
 	# match here (they come from 127.0.0.1 and carry Caddy-Templates-Include);
 	# anyone else asking for /__seo/head just gets the SPA. Short timeouts: a slow API must not hold pages up.
 	@seohead {
-		path /__seo/head /__seo/body /__seo/brand
+		path /__seo/head /__seo/body /__seo/brand /__seo/status
 		remote_ip 127.0.0.1
 		header Caddy-Templates-Include *
 	}
@@ -188,29 +207,39 @@ autoconfig.{$SITE_DOMAIN}, autodiscover.{$SITE_DOMAIN} {
 		}
 	}
 
+	# Old alias routes of the SPA (client-side <Navigate>): a permanent redirect, so crawlers see one URL.
+	@aliasTools path_regexp aliasTools ^(/(?:de|en|ru|tr|uk))?/calculators$
+	redir @aliasTools {re.aliasTools.1}/tools permanent
+	@aliasWorkers path_regexp aliasWorkers ^(/(?:de|en|ru|tr|uk))?/(?:workers|candidates)$
+	redir @aliasWorkers {re.aliasWorkers.1}/for-workers permanent
+	@aliasEmployers path_regexp aliasEmployers ^(/(?:de|en|ru|tr|uk))?/employers$
+	redir @aliasEmployers {re.aliasEmployers.1}/for-employers permanent
+
 	# Single-page app: hashed assets are immutable, everything else falls back to index.html.
 	handle {
-		# CSP for the site pages (the API sets its own). The sha256 is the theme/accessibility script inlined
-		# in client/index.html — if that script changes, recompute the hash or the page falls back to defaults.
-		# googletagmanager / google-analytics: optional GA4, loaded only after analytics consent (src/lib/analytics.ts).
-		header Content-Security-Policy "default-src 'self'; script-src 'self' 'sha256-zUR5+Rmsjc5COIO4FlT1fUy3SHmD9+E2patl/cA7NFg=' https://static.cloudflareinsights.com https://www.googletagmanager.com; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob: https:; connect-src 'self' https://cloudflareinsights.com https://www.googletagmanager.com https://*.google-analytics.com https://*.analytics.google.com; frame-src https://www.openstreetmap.org https://www.youtube-nocookie.com https://player.vimeo.com; worker-src 'self' blob:; media-src 'self' blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests"
+		import spa_csp
 		root * /srv
+		# One URL per page: a trailing slash (/visas/, /de/) gets a permanent redirect to the bare path.
+		@trailingSlash path_regexp trailingSlash ^(/.*[^/])/+$
+		redir @trailingSlash {re.trailingSlash.1}{?query} permanent
+		# Browsers and some crawlers (Bing, Yandex) ask for /favicon.ico without reading the <link> tags.
+		@faviconIco path /favicon.ico
+		rewrite @faviconIco /icons/icon-192.png
 		@assets path /assets/*
 		header @assets Cache-Control "public, max-age=31536000, immutable"
+		# Unhashed images and icons in the web root (og-default.png, logo, favicons): a week, then revalidate.
+		@staticImages path_regexp staticImages ^/(?:icons/)?[^/]+\.(?:png|svg|ico|webp|jpg)$
+		header @staticImages Cache-Control "public, max-age=604800, stale-while-revalidate=86400"
 		# Installable site (PWA): the service worker, manifest and offline page are always revalidated, so
 		# Cloudflare or the browser never hold an old sw.js (that would delay the "new version" prompt).
 		@pwa path /sw.js /manifest.webmanifest /offline.html
 		header @pwa Cache-Control "no-cache"
 		@manifest path /manifest.webmanifest
 		header @manifest Content-Type "application/manifest+json"
-		# Only the HTML shell is a template (never JS/CSS/images). Custom delimiters, so the actions are plain
-		# HTML comments in client/index.html and the Vite dev server ignores them. The included tags are built by
-		# the API with all text escaped; it can never contain the delimiters.
+		# Only the HTML shell is a template (never JS/CSS/images), see (spa_templates). It asks the API for the
+		# page's status and stops with httpError 404 for unknown URLs (handle_errors below serves the shell then).
 		@shell path / /index.html
-		templates @shell {
-			mime text/html
-			between "<!--tv:" ":tv-->"
-		}
+		import spa_templates
 		try_files {path} /index.html
 		# Hashed JS/CSS/SVG ship with a Brotli copy (*.br, written by the client build, quality 11): ~15 % smaller
 		# than the gzip `encode` makes on the fly. Everything else (index.html is a template) is compressed live.
@@ -222,8 +251,23 @@ autoconfig.{$SITE_DOMAIN}, autodiscover.{$SITE_DOMAIN} {
 	# Fail soft: if the API is down or too slow, the head and body includes answer empty and index.html keeps
 	# its static fallback title/description (and an empty #root) instead of the whole page failing. Other errors keep Caddy's default.
 	handle_errors {
-		@seoheadFailed path /__seo/head /__seo/body /__seo/brand
+		@seoheadFailed path /__seo/head /__seo/body /__seo/brand /__seo/status
 		respond @seoheadFailed 200
+		# Unknown page (httpError 404 from the shell template, see client/index.html): the same SPA shell with
+		# status 404, so crawlers get a real 404 (no soft 404) and visitors the app's "not found" page. The
+		# template skips its status check here (http.error.status_code is set), so this cannot loop.
+		@pageNotFound expression {err.status_code} == 404
+		handle @pageNotFound {
+			import spa_csp
+			header Cache-Control "no-cache"
+			root * /srv
+			rewrite * /index.html
+			@shell path /index.html
+			import spa_templates
+			file_server {
+				status 404
+			}
+		}
 		@manifestFailed path /manifest.webmanifest
 		handle @manifestFailed {
 			root * /srv

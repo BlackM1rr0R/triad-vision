@@ -4,6 +4,7 @@ import {
   getSeoData,
   getSitemap,
   getSitemapGroup,
+  pageStatus,
   parseLocale,
   renderHead,
   renderRobots,
@@ -113,6 +114,26 @@ seoRouter.get('/__seo/body', async (req, res) => {
     res.send(html);
   } catch (err) {
     console.error('[seo] body failed', err);
+    res.setHeader('Cache-Control', 'no-store');
+    res.send('');
+  }
+});
+
+/**
+ * HTTP status of a page for the HTML shell (Caddy include): the body is "404" for URLs the site has no page
+ * for (unknown paths, missing or expired content), else empty. client/index.html turns "404" into
+ * httpError 404 and Caddy's handle_errors serves the same SPA shell with status 404 (deploy/Caddyfile),
+ * so crawlers see a real 404 while visitors still get the app's "not found" page. Fails soft (empty = 200).
+ */
+seoRouter.get('/__seo/status', async (req, res) => {
+  res.type('text/plain; charset=utf-8');
+  res.setHeader('X-Robots-Tag', 'noindex');
+  try {
+    const status = pageStatus(String(req.query.path ?? '/'), await getSeoData());
+    res.setHeader('Cache-Control', 'public, max-age=60, stale-while-revalidate=600');
+    res.send(status === 404 ? '404' : '');
+  } catch (err) {
+    console.error('[seo] status failed', err);
     res.setHeader('Cache-Control', 'no-store');
     res.send('');
   }

@@ -9,6 +9,7 @@ import {
   SEO_LOCALES,
   SITE_NAME,
   SITEMAP_STATIC,
+  SPA_ROUTES,
   STATIC_PAGES,
   textIn,
   TOOL_GROUPS,
@@ -23,6 +24,9 @@ import { compareContent, currentThresholds, type CompareThresholds } from './com
 import { occupationByCode } from './jobFeeds/occupations.js';
 import { vacancyImagesOf } from './vacancyImages.js';
 import { companyLogoOf } from './publicImages.js';
+import { DEFAULT_CITY_COSTS, matchCity } from './budget/cities.js';
+import type { FederalState } from './budget/params.js';
+import type { CityCost } from '@prisma/client';
 
 /*
  * SEO for a client-rendered SPA.
@@ -226,6 +230,7 @@ export interface SeoData {
     images?: unknown;
   }[];
   settings: Record<string, unknown>;
+  /** Approved, consented client ratings (≥ 3). Not emitted as structured data (self-serving reviews). */
   rating: { count: number; average: number } | null;
   /** Upcoming published info sessions / webinars (/events/:slug). Optional so older fixtures stay valid. */
   events?: {
@@ -452,15 +457,8 @@ export const organizationLd = (data: SeoData, lng: SeoLocale) => {
   if (addresses.length) org.address = addresses;
   const sameAs = Object.values(social).filter(isHttpUrl);
   if (sameAs.length) org.sameAs = sameAs;
-  if (data.rating) {
-    org.aggregateRating = {
-      '@type': 'AggregateRating',
-      ratingValue: data.rating.average,
-      reviewCount: data.rating.count,
-      bestRating: 5,
-      worstRating: 1,
-    };
-  }
+  // No AggregateRating here or on the offices: ratings collected by the business about itself are
+  // "self-serving" reviews under Google's review-snippet policy (not eligible, risk of a manual action).
   return org;
 };
 
@@ -526,9 +524,6 @@ export const localBusinessLd = (data: SeoData, lng: SeoLocale) => {
       areaServed: SERVED_COUNTRIES.map((name) => ({ '@type': 'Country', name })),
       knowsLanguage: [...SEO_LOCALES],
       parentOrganization: { '@id': organizationId() },
-      ...(data.rating
-        ? { aggregateRating: { '@type': 'AggregateRating', ratingValue: data.rating.average, reviewCount: data.rating.count, bestRating: 5, worstRating: 1 } }
-        : {}),
     };
   });
 };
@@ -574,8 +569,23 @@ export const jobImageUrls = (job: { images?: unknown }) =>
     .map((i) => absoluteImage(i.url))
     .filter((u): u is string => !!u);
 
+const STATE_NAMES: Record<FederalState, string> = {
+  BW: 'Baden-Württemberg', BY: 'Bayern', BE: 'Berlin', BB: 'Brandenburg', HB: 'Bremen', HH: 'Hamburg', HE: 'Hessen', MV: 'Mecklenburg-Vorpommern',
+  NI: 'Niedersachsen', NW: 'Nordrhein-Westfalen', RP: 'Rheinland-Pfalz', SL: 'Saarland', SN: 'Sachsen', ST: 'Sachsen-Anhalt', SH: 'Schleswig-Holstein', TH: 'Thüringen',
+};
+
+/** German federal state of a vacancy city (the cities of the budget data: names and aliases), or null. */
+export const jobRegion = (city: string | null | undefined) => {
+  const row = matchCity(DEFAULT_CITY_COSTS as unknown as CityCost[], city);
+  return row?.state ? (STATE_NAMES[row.state as FederalState] ?? null) : null;
+};
+
+/**
+ * JobPosting for Google for Jobs. We are a staffing agency: when the employer is not named on the page
+ * (showCompany off), Google's guidelines ask for hiringOrganization.name "confidential" — not the agency's
+ * own name (https://developers.google.com/search/docs/appearance/structured-data/job-posting).
+ */
 export const jobPostingLd = (job: SeoData['jobs'][number], lng: SeoLocale, url: string) => {
-  const origin = siteOrigin();
   const title = collapse(pick(job.title, lng));
   const description =
     textToHtml(pick(job.description, lng)) +
@@ -589,7 +599,8 @@ export const jobPostingLd = (job: SeoData['jobs'][number], lng: SeoLocale, url: 
           ...(isHttpUrl(job.company.website) ? { sameAs: job.company.website } : {}),
           ...(companyLogoUrl(job.company.logo) ? { logo: companyLogoUrl(job.company.logo) } : {}),
         }
-      : { '@type': 'Organization', name: SITE_NAME, sameAs: `${origin}/`, logo: `${origin}/logo-512.png` };
+      : { '@type': 'Organization', name: 'confidential' };
+  const region = jobRegion(job.city);
   const ld: Record<string, unknown> = {
     '@context': 'https://schema.org',
     '@type': 'JobPosting',
@@ -605,6 +616,7 @@ export const jobPostingLd = (job: SeoData['jobs'][number], lng: SeoLocale, url: 
       address: {
         '@type': 'PostalAddress',
         ...(job.city ? { addressLocality: job.city } : {}),
+        ...(region ? { addressRegion: region } : {}),
         ...(job.distribution?.postalCode ? { postalCode: job.distribution.postalCode } : {}),
         addressCountry: 'DE',
       },
@@ -701,15 +713,113 @@ export const storyVideosLd = (data: SeoData, lng: SeoLocale) =>
   });
 
 /** Title / description / image / robots of a CMS item, honouring its per-item SEO overrides. */
-const withOverrides = (item: SeoOverrides & { image?: string; cover?: string }, lng: SeoLocale, name: string, fallbackDescription: string) => {
+const withOverrides = (
+  item: SeoOverrides & { image?: string; cover?: string },
+  lng: SeoLocale,
+  name: string,
+  fallbackDescription: string,
+  defaults: { title?: string; tail?: string } = {},
+) => {
   const ownTitle = collapse(pick(item.seoTitle, lng));
   const ownDescription = collapse(pick(item.seoDescription, lng));
   return {
-    title: ownTitle ? fullTitle(ownTitle) : pageTitle(name),
-    description: truncate(ownDescription || fallbackDescription, DESCRIPTION_MAX),
+    title: ownTitle ? fullTitle(ownTitle) : (defaults.title ?? pageTitle(name)),
+    description: ownDescription
+      ? truncate(ownDescription, DESCRIPTION_MAX)
+      : defaults.tail
+        ? padDescription(fallbackDescription, defaults.tail)
+        : truncate(fallbackDescription, DESCRIPTION_MAX),
     image: absoluteImage(item.ogImage) ?? absoluteImage(item.image ?? item.cover),
     index: !item.noindex,
   };
+};
+
+/** Languages a CMS L10n value has its own (non-empty) text in (a plain string counts for every language). */
+export const ownLocales = (value: unknown): SeoLocale[] => {
+  if (typeof value === 'string') return value.trim() ? [...SEO_LOCALES] : [];
+  const v = asRecord(value);
+  return SEO_LOCALES.filter((l) => typeof v[l] === 'string' && !!(v[l] as string).trim());
+};
+
+/** The language whose text pick(value, lng) shows (tr → en when Turkish is missing, de → az …). */
+export const contentLocale = (value: unknown, lng: SeoLocale): SeoLocale => {
+  if (typeof value === 'string') return lng;
+  const v = asRecord(value);
+  const hit = fallbackOrder(lng).find((key) => typeof v[key] === 'string' && !!(v[key] as string).trim());
+  return (hit as SeoLocale | undefined) ?? lng;
+};
+
+/**
+ * hreflang set and canonical language of a CMS page (visa, service, post, job, event, e-book), from the
+ * languages its title is written in. A language without its own text shows the fallback text (tr/uk →
+ * English): that URL is a duplicate, so it is left out of hreflang and the sitemap and its canonical points
+ * to the language whose text it shows. Items written in every language keep the default (all six).
+ */
+export const cmsLanguages = (title: unknown, path: string, lng: SeoLocale): Pick<ResolvedPage, 'alternates' | 'canonicalLng'> => {
+  const own = ownLocales(title);
+  if (!own.length || own.length === SEO_LOCALES.length) return {};
+  const shown = contentLocale(title, lng);
+  return { alternates: Object.fromEntries(own.map((l) => [l, path])), ...(shown !== lng ? { canonicalLng: shown } : {}) };
+};
+
+/** Keyword tail of detail-page titles ("LKW-Fahrer: Arbeit und Visum in Deutschland | Triad Vision"). */
+const VISA_TITLE_TAIL: Record<SeoLocale, string> = {
+  az: 'Almaniyada iş və viza',
+  de: 'Arbeit und Visum in Deutschland',
+  en: 'work and visa in Germany',
+  ru: 'работа и виза в Германии',
+  tr: "Almanya'da iş ve vize",
+  uk: 'робота й віза в Німеччині',
+};
+
+/** Sentences appended to short CMS descriptions (only when the result still fits 155 characters). */
+const DESCRIPTION_TAIL: Record<'visas' | 'services' | 'news' | 'jobs', Record<SeoLocale, string>> = {
+  visas: {
+    az: 'Tələblər, sənədlər, viza prosesi və açıq vakansiyalar.',
+    de: 'Voraussetzungen, Unterlagen, Visumverfahren und offene Stellen.',
+    en: 'Requirements, documents, visa process and open jobs.',
+    ru: 'Требования, документы, визовый процесс и открытые вакансии.',
+    tr: 'Şartlar, belgeler, vize süreci ve açık pozisyonlar.',
+    uk: 'Вимоги, документи, візовий процес і відкриті вакансії.',
+  },
+  services: {
+    az: 'Triad Vision: Almaniyada iş, viza və inteqrasiya üzrə dəstək.',
+    de: 'Triad Vision: Fachkräfte, Visum und Integration aus einer Hand.',
+    en: 'Triad Vision: support with work, visa and integration in Germany.',
+    ru: 'Triad Vision: работа, виза и интеграция в Германии под ключ.',
+    tr: "Triad Vision: Almanya'da iş, vize ve uyum desteği.",
+    uk: 'Triad Vision: робота, віза та інтеграція в Німеччині під ключ.',
+  },
+  news: {
+    az: 'Almaniyada iş, viza və həyat haqqında Triad Vision xəbərləri.',
+    de: 'News von Triad Vision zu Arbeit, Visum und Leben in Deutschland.',
+    en: 'Triad Vision news on work, visas and life in Germany.',
+    ru: 'Новости Triad Vision о работе, визах и жизни в Германии.',
+    tr: "Triad Vision'dan Almanya'da iş, vize ve yaşam haberleri.",
+    uk: 'Новини Triad Vision про роботу, візи та життя в Німеччині.',
+  },
+  jobs: {
+    az: 'Almaniyada iş: maaş, tələblər və viza dəstəyi — onlayn müraciət edin.',
+    de: 'Job in Deutschland: Gehalt, Anforderungen, Visum-Begleitung — online bewerben.',
+    en: 'Job in Germany: salary, requirements and visa support — apply online.',
+    ru: 'Работа в Германии: зарплата, требования, помощь с визой — откликнитесь онлайн.',
+    tr: "Almanya'da iş: maaş, şartlar ve vize desteği — online başvurun.",
+    uk: 'Робота в Німеччині: зарплата, вимоги, допомога з візою — подайте заявку онлайн.',
+  },
+};
+
+/** A short description with a keyword sentence appended when the whole still fits; otherwise just shortened. */
+export const padDescription = (text: string, tail: string) => {
+  const base = truncate(text, DESCRIPTION_MAX);
+  if (!base) return truncate(tail, DESCRIPTION_MAX);
+  const joined = `${base}${/[.!?…]$/.test(base) ? '' : '.'} ${tail}`;
+  return base.length < 120 && joined.length <= DESCRIPTION_MAX ? joined : base;
+};
+
+/** "Name: keyword tail | Triad Vision" when it fits 60 characters without shortening, else "Name | Triad Vision". */
+const titleWithTail = (name: string, tail: string) => {
+  const long = `${name}: ${tail} | ${SITE_NAME}`;
+  return long.length <= TITLE_MAX ? long : pageTitle(name);
 };
 
 /** Published guides shown for a language (its own versions, English for keys it lacks). */
@@ -847,6 +957,7 @@ export const resolvePage = (path: string, lng: SeoLocale, data: SeoData): Resolv
     if (!magnet) return generic;
     const name = collapse(pick(magnet.title, lng));
     return {
+      ...cmsLanguages(magnet.title, path, lng),
       title: pageTitle(name),
       description: truncate(pick(magnet.description, lng) || name, DESCRIPTION_MAX),
       index: true,
@@ -941,21 +1052,28 @@ export const resolvePage = (path: string, lng: SeoLocale, data: SeoData): Resolv
     const visa = data.visas.find((v) => v.slug === slug);
     if (!visa) return generic;
     const name = collapse(pick(visa.title, lng));
-    const o = withOverrides(visa, lng, name, pick(visa.summary, lng) || textIn(STATIC_PAGES['/visas'].description, lng));
+    const shown = contentLocale(visa.title, lng);
+    const o = withOverrides(visa, lng, name, pick(visa.summary, lng) || textIn(STATIC_PAGES['/visas'].description, lng), {
+      title: titleWithTail(name, VISA_TITLE_TAIL[shown]),
+      tail: DESCRIPTION_TAIL.visas[shown],
+    });
     const faq = Array.isArray(visa.faq)
       ? (visa.faq as { q?: unknown; a?: unknown }[]).map((f) => ({ q: collapse(pick(f?.q, lng)), a: pick(f?.a, lng).trim() })).filter((f) => f.q && f.a)
       : [];
     const faqLd = faqPageLd(faq, lng);
-    return { ...o, ogCard: { kind: 'visas', slug }, ogType: 'website', crumbs: crumbsFor(name), jsonLd: faqLd ? [faqLd] : [], extraMeta: [] };
+    return { ...o, ...cmsLanguages(visa.title, path, lng), ogCard: { kind: 'visas', slug }, ogType: 'website', crumbs: crumbsFor(name), jsonLd: faqLd ? [faqLd] : [], extraMeta: [] };
   }
 
   if (section === 'services') {
     const service = data.services.find((s) => s.slug === slug);
     if (!service) return generic;
     const name = collapse(pick(service.title, lng));
-    const o = withOverrides(service, lng, name, pick(service.summary, lng) || textIn(STATIC_PAGES['/services'].description, lng));
+    const o = withOverrides(service, lng, name, pick(service.summary, lng) || textIn(STATIC_PAGES['/services'].description, lng), {
+      tail: DESCRIPTION_TAIL.services[contentLocale(service.title, lng)],
+    });
     return {
       ...o,
+      ...cmsLanguages(service.title, path, lng),
       ogCard: { kind: 'services', slug },
       ogType: 'website',
       crumbs: crumbsFor(name),
@@ -981,10 +1099,13 @@ export const resolvePage = (path: string, lng: SeoLocale, data: SeoData): Resolv
     const post = data.posts.find((p) => p.slug === slug);
     if (!post) return generic;
     const name = collapse(pick(post.title, lng));
-    const o = withOverrides(post, lng, name, pick(post.excerpt, lng) || textIn(STATIC_PAGES['/news'].description, lng));
+    const o = withOverrides(post, lng, name, pick(post.excerpt, lng) || textIn(STATIC_PAGES['/news'].description, lng), {
+      tail: DESCRIPTION_TAIL.news[contentLocale(post.title, lng)],
+    });
     const modified = post.updatedAt > post.publishedAt ? post.updatedAt : post.publishedAt;
     return {
       ...o,
+      ...cmsLanguages(post.title, path, lng),
       ogCard: { kind: 'news', slug },
       ogType: 'article',
       crumbs: crumbsFor(name),
@@ -1018,6 +1139,7 @@ export const resolvePage = (path: string, lng: SeoLocale, data: SeoData): Resolv
     const description = truncate(pick(ev.description, lng) || textIn(STATIC_PAGES['/events'].description, lng), DESCRIPTION_MAX);
     const online = ev.mode === 'ONLINE';
     return {
+      ...cmsLanguages(ev.title, path, lng),
       title: pageTitle(name),
       description,
       index: true,
@@ -1056,8 +1178,9 @@ export const resolvePage = (path: string, lng: SeoLocale, data: SeoData): Resolv
   const name = collapse(pick(job.title, lng));
   const where = job.city ? `${name} — ${job.city}` : name;
   return {
+    ...cmsLanguages(job.title, path, lng),
     title: pageTitle(where),
-    description: truncate(pick(job.description, lng) || textIn(STATIC_PAGES['/jobs'].description, lng), DESCRIPTION_MAX),
+    description: padDescription(pick(job.description, lng) || textIn(STATIC_PAGES['/jobs'].description, lng), DESCRIPTION_TAIL.jobs[contentLocale(job.title, lng)]),
     index: true,
     // The vacancy's cover photo when it has one, else the generated card.
     image: jobImageUrls(job)[0] ?? null,
@@ -1067,6 +1190,56 @@ export const resolvePage = (path: string, lng: SeoLocale, data: SeoData): Resolv
     jsonLd: [jobPostingLd(job, lng, url)],
     extraMeta: [],
   };
+};
+
+// ─── HTTP status for crawlers ─────────────────────────────────────────
+
+/** "/legal/:kind/:version" matches "/legal/agb/3"; a pattern ending in "/*" matches the path and below. */
+export const routeMatches = (pattern: string, path: string) => {
+  if (pattern.endsWith('/*')) {
+    const base = pattern.slice(0, -2);
+    return path === base || path.startsWith(`${base}/`);
+  }
+  const want = pattern.split('/');
+  const got = path.split('/');
+  return want.length === got.length && want.every((seg, i) => (seg.startsWith(':') ? !!got[i] : seg === got[i]));
+};
+
+/** True for a path the SPA has a page for (the content slugs are not checked here). */
+export const isKnownRoute = (path: string) =>
+  path === '/' || !!STATIC_PAGES[path] || isPrivatePath(path) || SPA_ROUTES.some((r) => routeMatches(r, path)) || /^\/(visas|services|news|jobs|events|guides)\/[^/]+$/.test(path);
+
+/**
+ * HTTP status of a page URL for the HTML shell (Caddy include /__seo/status, deploy/Caddyfile): 404 for
+ * paths the SPA has no page for and for detail pages whose item does not exist or is no longer public
+ * (unpublished, closed or expired vacancies, past events), so crawlers never see a soft 404.
+ * Private areas, token pages and the SPA's other routes answer 200 (the app handles them).
+ */
+export const pageStatus = (rawPath: string, data: SeoData): 200 | 404 => {
+  const { path } = requestTarget(rawPath, null);
+  const m = /^\/(visas|services|news|jobs|events|guides|ebook|l)\/([^/]+)$/.exec(path);
+  if (m) {
+    const [, section, slug] = m;
+    const now = Date.now();
+    const exists =
+      section === 'visas'
+        ? data.visas.some((v) => v.slug === slug)
+        : section === 'services'
+          ? data.services.some((x) => x.slug === slug)
+          : section === 'news'
+            ? data.posts.some((p) => p.slug === slug)
+            : section === 'jobs'
+              ? liveJobs(data).some((j) => j.slug === slug)
+              : section === 'events'
+                ? (data.events ?? []).some((e) => e.slug === slug && e.endsAt.getTime() > now)
+                : section === 'guides'
+                  ? (data.guides ?? []).some((g) => g.slug === slug)
+                  : section === 'ebook'
+                    ? (data.leadMagnets ?? []).some((x) => x.slug === slug)
+                    : (data.landings ?? []).some((x) => x.slug === slug);
+    return exists ? 200 : 404;
+  }
+  return isKnownRoute(path) ? 200 : 404;
 };
 
 // ─── rendering ────────────────────────────────────────────────────────
@@ -1110,7 +1283,10 @@ export const renderHead = (rawPath: string, queryLng: SeoLocale | null, data: Se
   meta('name', 'robots', page.index ? 'index, follow, max-image-preview:large' : 'noindex, nofollow');
   if (page.index) {
     out.push(`<link data-seo rel="canonical" href="${a(url)}">`);
-    if (page.alternates === undefined) {
+    // A page whose canonical is another language's URL (it shows that language's text) carries no hreflang.
+    if (page.canonicalLng && page.canonicalLng !== lng) {
+      /* no alternates */
+    } else if (page.alternates === undefined) {
       for (const l of SEO_LOCALES) out.push(`<link data-seo rel="alternate" hreflang="${l}" href="${a(pageUrl(path, l))}">`);
       out.push(`<link data-seo rel="alternate" hreflang="x-default" href="${a(pageUrl(path, null))}">`);
     } else if (page.alternates) {
@@ -1162,17 +1338,18 @@ export const renderHead = (rawPath: string, queryLng: SeoLocale | null, data: Se
 
 // ─── robots.txt / sitemaps / RSS ──────────────────────────────────────
 
-const ROBOTS_EXACT = new Set(['/partner', '/q', '/share', '/agent']);
+/**
+ * robots.txt rules are plain prefixes: "Disallow: /r" would also block /ru/… (every Russian page) and
+ * /register, "/partner" the public /partners. Each private area is therefore matched on a segment boundary:
+ * the path itself ("/r$"), its subpaths ("/r/") and the path with a query ("/r?").
+ */
+export const robotsRules = (prefix: string) => (prefix === '/api' ? ['/api/'] : [`${prefix}$`, `${prefix}/`, `${prefix}?`]);
 
 export const renderRobots = () =>
   [
     'User-agent: *',
     'Allow: /',
-    // robots.txt rules are plain prefixes: "/partner" would also block the public /partners page, so prefixes
-    // that start a public path are written as "/partner$" + "/partner/".
-    ...PRIVATE_PREFIXES.flatMap((p) =>
-      p === '/api' ? ['Disallow: /api/'] : ROBOTS_EXACT.has(p) ? [`Disallow: ${p}$`, `Disallow: ${p}/`] : [`Disallow: ${p}`],
-    ),
+    ...PRIVATE_PREFIXES.flatMap((p) => robotsRules(p).map((r) => `Disallow: ${r}`)),
     'Disallow: /__seo/',
     '',
     `Sitemap: ${siteOrigin()}/sitemap.xml`,
@@ -1200,11 +1377,25 @@ interface SitemapUrl {
   images: { loc: string; title: string }[];
 }
 
-/** One <url> per language version, each listing the full set of language alternates (+ x-default). */
-const allLanguages = (path: string, lastmod: Date, image?: { src: string | null | undefined; title: (l: SeoLocale) => string }): SitemapUrl[] => {
-  const alternates: [string, string][] = [...SEO_LOCALES.map((l): [string, string] => [l, pageUrl(path, l)]), ['x-default', pageUrl(path, null)]];
+/**
+ * One <url> per language version, each listing the full set of language alternates (+ x-default). CMS items
+ * pass their title so only the languages with their own text are listed (see cmsLanguages).
+ */
+const allLanguages = (
+  path: string,
+  lastmod: Date,
+  image?: { src: string | null | undefined; title: (l: SeoLocale) => string },
+  title?: unknown,
+): SitemapUrl[] => {
+  const own = title === undefined ? [] : ownLocales(title);
+  const locales: SeoLocale[] = own.length ? own : [...SEO_LOCALES];
+  const xDefault = locales.includes('az') ? 'az' : locales.includes('en') ? 'en' : null;
+  const alternates: [string, string][] = [
+    ...locales.map((l): [string, string] => [l, pageUrl(path, l)]),
+    ...(xDefault ? [['x-default', pageUrl(path, xDefault === 'az' ? null : xDefault)] as [string, string]] : []),
+  ];
   const img = absoluteImage(image?.src);
-  return SEO_LOCALES.map((l) => ({
+  return locales.map((l) => ({
     loc: pageUrl(path, l),
     lastmod,
     alternates,
@@ -1234,10 +1425,10 @@ export const sitemapUrls = (data: SeoData, group: SitemapGroup): SitemapUrl[] =>
     }
     case 'content':
       return [
-        ...visas.flatMap((v) => allLanguages(`/visas/${v.slug}`, v.updatedAt, { src: v.ogImage || v.image, title: (l) => collapse(pick(v.title, l)) })),
-        ...services.flatMap((s) => allLanguages(`/services/${s.slug}`, s.updatedAt, { src: s.ogImage || s.image, title: (l) => collapse(pick(s.title, l)) })),
-        ...posts.flatMap((p) => allLanguages(`/news/${p.slug}`, p.updatedAt, { src: p.ogImage || p.cover, title: (l) => collapse(pick(p.title, l)) })),
-        ...(data.leadMagnets ?? []).flatMap((m) => allLanguages(`/ebook/${m.slug}`, m.updatedAt, { src: m.coverUrl, title: (l) => collapse(pick(m.title, l)) })),
+        ...visas.flatMap((v) => allLanguages(`/visas/${v.slug}`, v.updatedAt, { src: v.ogImage || v.image, title: (l) => collapse(pick(v.title, l)) }, v.title)),
+        ...services.flatMap((s) => allLanguages(`/services/${s.slug}`, s.updatedAt, { src: s.ogImage || s.image, title: (l) => collapse(pick(s.title, l)) }, s.title)),
+        ...posts.flatMap((p) => allLanguages(`/news/${p.slug}`, p.updatedAt, { src: p.ogImage || p.cover, title: (l) => collapse(pick(p.title, l)) }, p.title)),
+        ...(data.leadMagnets ?? []).flatMap((m) => allLanguages(`/ebook/${m.slug}`, m.updatedAt, { src: m.coverUrl, title: (l) => collapse(pick(m.title, l)) }, m.title)),
       ];
     case 'guides': {
       const guides = data.guides ?? [];
@@ -1252,9 +1443,9 @@ export const sitemapUrls = (data: SeoData, group: SitemapGroup): SitemapUrl[] =>
         });
     }
     case 'jobs':
-      return jobs.flatMap((j) => allLanguages(`/jobs/${j.slug}`, j.updatedAt, { src: vacancyImagesOf(j.images)[0]?.url, title: (l) => collapse(pick(j.title, l)) }));
+      return jobs.flatMap((j) => allLanguages(`/jobs/${j.slug}`, j.updatedAt, { src: vacancyImagesOf(j.images)[0]?.url, title: (l) => collapse(pick(j.title, l)) }, j.title));
     case 'events':
-      return (data.events ?? []).flatMap((e) => allLanguages(`/events/${e.slug}`, e.updatedAt));
+      return (data.events ?? []).flatMap((e) => allLanguages(`/events/${e.slug}`, e.updatedAt, undefined, e.title));
     case 'landing':
       return (data.landings ?? []).map((l) => {
         const img = absoluteImage(l.ogImage || l.heroImage);
@@ -1313,7 +1504,7 @@ export const renderRss = (data: SeoData, lng: SeoLocale) => {
   for (const p of indexable(data.posts).filter((x) => x.publishedAt.getTime() <= now).slice(0, 50)) {
     items.push({
       title: collapse(pick(p.title, lng)),
-      link: pageUrl(`/news/${p.slug}`, lng),
+      link: pageUrl(`/news/${p.slug}`, contentLocale(p.title, lng)), // the canonical URL of the text shown
       description: collapse(pick(p.excerpt, lng)),
       date: p.publishedAt,
       category: NEWS,

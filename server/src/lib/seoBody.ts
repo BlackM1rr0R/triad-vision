@@ -72,6 +72,16 @@ const L: Record<SeoLocale, Labels> = {
   },
 };
 
+/** Job detail labels: monthly gross salary, employment type, other vacancies. */
+const JL: Record<SeoLocale, { salary: string; month: string; type: Record<string, string>; more: string }> = {
+  az: { salary: 'Maaş', month: '€ aylıq (brutto)', type: { FULL_TIME: 'Tam ştat', PART_TIME: 'Yarım ştat', SEASONAL: 'Mövsümi iş', AUSBILDUNG: 'Ausbildung (peşə təhsili)' }, more: 'Digər vakansiyalar' },
+  de: { salary: 'Gehalt', month: '€ brutto im Monat', type: { FULL_TIME: 'Vollzeit', PART_TIME: 'Teilzeit', SEASONAL: 'Saisonarbeit', AUSBILDUNG: 'Ausbildung' }, more: 'Weitere Stellen' },
+  en: { salary: 'Salary', month: '€ gross per month', type: { FULL_TIME: 'Full-time', PART_TIME: 'Part-time', SEASONAL: 'Seasonal', AUSBILDUNG: 'Ausbildung (vocational training)' }, more: 'More jobs' },
+  ru: { salary: 'Зарплата', month: '€ брутто в месяц', type: { FULL_TIME: 'Полная занятость', PART_TIME: 'Частичная занятость', SEASONAL: 'Сезонная работа', AUSBILDUNG: 'Ausbildung (профобучение)' }, more: 'Другие вакансии' },
+  tr: { salary: 'Maaş', month: '€ brüt / ay', type: { FULL_TIME: 'Tam zamanlı', PART_TIME: 'Yarı zamanlı', SEASONAL: 'Sezonluk', AUSBILDUNG: 'Ausbildung (meslek eğitimi)' }, more: 'Diğer ilanlar' },
+  uk: { salary: 'Зарплата', month: '€ брутто на місяць', type: { FULL_TIME: 'Повна зайнятість', PART_TIME: 'Часткова зайнятість', SEASONAL: 'Сезонна робота', AUSBILDUNG: 'Ausbildung (профнавчання)' }, more: 'Інші вакансії' },
+};
+
 const LANGUAGE_NAMES: Record<SeoLocale, string> = { az: 'Azərbaycan', de: 'Deutsch', en: 'English', ru: 'Русский', tr: 'Türkçe', uk: 'Українська' };
 
 // Same structure as the site header (For workers, For employers, Visas, Guides, Contact + Tools) and footer.
@@ -205,15 +215,25 @@ export const renderBody = (rawPath: string, data: SeoData): string => {
       );
     } else if (kind === 'jobs') {
       const j = jobs.find((x) => x.slug === slug)!;
-      const salary = j.salaryMin != null || j.salaryMax != null ? `<p>${[j.salaryMin, j.salaryMax].filter((x) => x != null).join(' – ')} € / month (brutto)</p>` : '';
+      const jl = JL[lng];
+      const amounts = [...new Set([j.salaryMin, j.salaryMax].filter((x): x is number => x != null))];
+      const facts = [
+        amounts.length ? `${e(jl.salary)}: ${amounts.map((x) => x.toLocaleString('de-DE')).join(' – ')} ${e(jl.month)}` : '',
+        jl.type[j.employmentType] ? e(jl.type[j.employmentType]) : '',
+        j.city ? e(j.city) : '',
+      ].filter(Boolean);
+      // Other open vacancies (same city first) and the visa types: crawl paths between detail pages.
+      const others = jobs.filter((x) => x.slug !== j.slug).sort((a, b) => Number(b.city === j.city) - Number(a.city === j.city)).slice(0, 6);
       out.push(
         `<article><h1>${e(collapse(pick(j.title, lng)))}${j.city ? ` — ${e(j.city)}` : ''}</h1>`,
-        salary,
+        facts.length ? `<p>${facts.join(' · ')}</p>` : '',
         paragraphs(pick(j.description, lng)),
         section(JOB_LABELS[lng].requirements, list(pickList(j.requirements, lng))),
         section(JOB_LABELS[lng].benefits, list(pickList(j.benefits, lng))),
-        `<p>${link('/jobs', staticLabel('/jobs'))}</p>`,
+        `<p>${link('/jobs', staticLabel('/jobs'))} · ${link('/booking', t.cta)}</p>`,
         '</article>',
+        others.length ? section(jl.more, `<ul>${others.map((x) => `<li>${link(`/jobs/${x.slug}`, collapse(pick(x.title, lng)))}${x.city ? ` — ${e(x.city)}` : ''}</li>`).join('')}</ul>`) : '',
+        section(t.visas, visaList()),
       );
     } else if (kind === 'events') {
       const ev = (data.events ?? []).find((x) => x.slug === slug)!;

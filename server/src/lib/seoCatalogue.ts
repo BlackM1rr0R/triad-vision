@@ -678,6 +678,31 @@ export const PRIVATE_PREFIXES = [
 ];
 
 /**
+ * Public SPA routes besides STATIC_PAGES and the private areas (client/src/App.tsx, site layout). Used for the
+ * crawler status code (lib/seo.ts pageStatus): any other path answers 404 instead of a soft-404 SPA shell.
+ * ":param" matches one path segment. Content routes (/visas/:slug …) are checked against the data.
+ * tests/unit/seo.test.ts fails when App.tsx gains a route this list does not know.
+ */
+export const SPA_ROUTES = [
+  '/calculators', // → /tools (client redirect; Caddy answers 301)
+  '/workers',
+  '/candidates',
+  '/employers',
+  '/ebook/:slug',
+  '/l/:slug',
+  '/success/:token',
+  '/certificate/:code',
+  '/referral-terms',
+  '/status',
+  '/p/:code',
+  '/agb',
+  '/terms',
+  '/cookies',
+  '/legal/:kind/:version',
+  '/packages/order/:token',
+];
+
+/**
  * The tools hub (/tools): every calculator, check and planning aid, grouped as on the page
  * (client/src/components/audience/tools.ts). Paths without a catalogue entry are skipped in the crawlable body.
  */

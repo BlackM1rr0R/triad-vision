@@ -29,6 +29,8 @@ export const brandHeadTags = async () => {
     ...(verification ? [`<meta name="google-site-verification" content="${esc(verification)}" />`] : []),
     `<meta name="theme-color" content="${esc(themeColor(b))}" />`,
     `<link rel="icon" type="${esc(b.icons.faviconType)}" href="${esc(b.icons.favicon)}" />`,
+    // PNG fallback (a multiple of 48 px, as Google Search asks for its result favicon).
+    `<link rel="icon" type="image/png" sizes="192x192" href="${esc(b.icons.icon192)}" />`,
     `<link rel="apple-touch-icon" href="${esc(b.icons.appleTouch)}" />`,
     `<meta name="apple-mobile-web-app-title" content="${esc(b.shortName)}" />`,
     // The SPA reads its brand from here synchronously (client/src/lib/brand.ts): no flash of another name.

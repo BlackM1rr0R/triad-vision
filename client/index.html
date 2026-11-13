@@ -1,6 +1,10 @@
 <!doctype html>
 <!--tv:/* Language of the URL: /de/…, /en/…, /ru/…, /tr/…, /uk/…; the root is Azerbaijani (see deploy/Caddyfile). */:tv-->
 <!--tv:$seg := index (splitList "/" .OriginalReq.URL.Path) 1:tv--><!--tv:$lang := "az":tv--><!--tv:if has $seg (list "de" "en" "ru" "tr" "uk"):tv--><!--tv:$lang = $seg:tv--><!--tv:end:tv-->
+<!--tv:/* Unknown URL (no such page, missing or expired content): the API's /__seo/status answers "404" and the
+  page stops with a 404, which deploy/Caddyfile (handle_errors) answers with this same shell and status 404 —
+  crawlers get a real 404, visitors the app's "not found" page. Skipped while rendering that error page. */:tv-->
+<!--tv:if not (placeholder "http.error.status_code"):tv--><!--tv:if eq (httpInclude (printf "/__seo/status?path=%s" (urlquery .OriginalReq.URL.Path))) "404":tv--><!--tv:httpError 404:tv--><!--tv:end:tv--><!--tv:end:tv-->
 <!--tv:if $lang:tv--><!--tv:printf "<html lang=\"%s\" dir=\"ltr\">" $lang:tv--><!--tv:else:tv--><html lang="az" dir="ltr"><!--tv:end:tv-->
   <head>
     <meta charset="UTF-8" />
@@ -13,6 +17,7 @@
     <meta name="google-site-verification" content="W7ASmkW0-5qq0rKMp2DrlQfP0kCTxliKR5rQQgiH7w4" />
     <meta name="theme-color" content="#0b1f44" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png" />
     <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
     <meta name="apple-mobile-web-app-title" content="Triad Vision" />
     <!--tv:end:tv-->
