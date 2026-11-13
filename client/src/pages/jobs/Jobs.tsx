@@ -200,7 +200,7 @@ export default function Jobs() {
             {filtersOpen && <div className="card mb-5 rounded-3xl p-5 lg:hidden">{filters}</div>}
 
             {isLoading ? (
-              <SkeletonGrid count={6} lines={3} footer className="grid-cards grid-cols-1 md:grid-cols-2 2xl:grid-cols-3" />
+              <SkeletonGrid count={6} lines={3} footer className="grid-cards cards-balanced grid-cols-1 [--cols:1] md:[--cols:2] 2xl:[--cols:3]" />
             ) : isError ? (
               <div className="card rounded-3xl">
                 <EmptyState
@@ -236,7 +236,7 @@ export default function Jobs() {
               </div>
             ) : (
               <>
-                <div className={clsx('grid-cards grid-cols-1 md:grid-cols-2 2xl:grid-cols-3', isFetching && 'opacity-70 transition-opacity')}>
+                <div className={clsx('grid-cards cards-balanced grid-cols-1 [--cols:1] md:[--cols:2] 2xl:[--cols:3]', isFetching && 'opacity-70 transition-opacity')}>
                   {data.items.map((v) => (
                     <JobCard key={v.id} v={v} />
                   ))}
