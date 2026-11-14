@@ -32,7 +32,9 @@ import {
 import { api, errorCode } from '@/lib/api';
 import i18n, { registerCopy } from '@/i18n';
 import { pagesQuotes } from '@/i18n/pagesQuotes';
-import { Chip, DefRow, EmptyState, ErrorBlock, LoadingBlock, PageHead, Panel, StatTile, Switch } from '@/components/admin/ui';
+import { Chip, DefRow, EmptyState, ErrorBlock, ListSkeleton, LoadingBlock, PageHead, Panel, StatTile, Switch } from '@/components/admin/ui';
+import { Pagination } from '@/components/ui/Pagination';
+import { SkeletonStats } from '@/components/ui/Skeleton';
 import { Tabs } from '@/components/ui/Tabs';
 import { Modal } from '@/components/admin/Modal';
 import { Drawer } from '@/components/admin/Drawer';
@@ -282,7 +284,7 @@ export default function AdminQuotes() {
         onChange={(v) => setParam('tab', v === 'settings' ? 'settings' : null)}
       />
 
-      {tab === 'list' ? <QuoteList onOpen={(id) => setParam('id', id)} /> : <SettingsTab q={settingsQ} />}
+      {tab === 'list' ? <QuoteList onOpen={(id) => setParam('id', id)} onNew={() => setWizard({})} /> : <SettingsTab q={settingsQ} />}
 
       <QuoteDrawer id={tab === 'list' ? openId : null} onClose={() => setParam('id', null)} onEdit={(q) => setWizard({ quote: q })} onOpen={(id) => setParam('id', id)} />
       {wizard && settingsQ.data && (
@@ -302,7 +304,9 @@ export default function AdminQuotes() {
 
 // ─── List ───────────────────────────────────────────────────────────
 
-const QuoteList = ({ onOpen }: { onOpen: (id: string) => void }) => {
+const PAGE_SIZE = 50;
+
+const QuoteList = ({ onOpen, onNew }: { onOpen: (id: string) => void; onNew: () => void }) => {
   const { t } = useTranslation();
   const [status, setStatus] = useState<QuoteStatus | ''>('');
   const [companyId, setCompanyId] = useState('');
@@ -315,9 +319,23 @@ const QuoteList = ({ onOpen }: { onOpen: (id: string) => void }) => {
     return () => window.clearTimeout(h);
   }, [q]);
   const filters = { status: status || undefined, companyId: companyId || undefined, from: from || undefined, to: to || undefined, q: debouncedQ || undefined };
+  const filtered = Object.values(filters).some(Boolean);
+  // A new filter starts again on page 1.
+  const [page, setPage] = useState(1);
+  const filterKey = JSON.stringify(filters);
+  useEffect(() => setPage(1), [filterKey]);
+  const clearFilters = () => {
+    setStatus('');
+    setCompanyId('');
+    setFrom('');
+    setTo('');
+    setQ('');
+    setDebouncedQ('');
+  };
   const listQ = useQuery({
-    queryKey: [...KEY, filters],
-    queryFn: async () => (await api.get<{ quotes: ListQuote[]; totals: Totals }>('/admin/quotes', { params: filters })).data,
+    queryKey: [...KEY, filters, page],
+    queryFn: async () =>
+      (await api.get<{ quotes: ListQuote[]; totals: Totals; total: number; page: number; pages: number }>('/admin/quotes', { params: { ...filters, page, pageSize: PAGE_SIZE } })).data,
     placeholderData: (prev) => prev,
   });
   const optionsQ = useOptions();
@@ -325,6 +343,7 @@ const QuoteList = ({ onOpen }: { onOpen: (id: string) => void }) => {
 
   return (
     <>
+      {!totals && listQ.isLoading && <SkeletonStats count={4} className="mb-6 grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4" />}
       {totals && (
         <div className="mb-6 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
           <StatTile label={t('adminQuotes.tiles.open')} value={fmtEurShort(totals.openCents)} hint={t('adminQuotes.countHint', { count: totals.openCount })} icon={Euro} />
@@ -377,16 +396,27 @@ const QuoteList = ({ onOpen }: { onOpen: (id: string) => void }) => {
       </div>
 
       {listQ.isLoading ? (
-        <LoadingBlock />
+        <ListSkeleton cols={5} />
       ) : listQ.error ? (
         <ErrorBlock error={listQ.error} onRetry={() => listQ.refetch()} />
       ) : !listQ.data?.quotes.length ? (
-        <div className="rounded-xl border border-line bg-card">
-          <EmptyState icon={FileSignature} title={t('adminQuotes.empty')}>
-            {t('adminQuotes.emptyText')}
-          </EmptyState>
-        </div>
+        filtered ? (
+          <EmptyState framed filtered onClearFilters={clearFilters} />
+        ) : (
+          <EmptyState
+            framed
+            icon={FileSignature}
+            title={t('adminQuotes.empty')}
+            text={t('adminQuotes.emptyText')}
+            action={
+              <button type="button" className="btn-primary btn-sm" onClick={onNew}>
+                <Plus className="size-4" aria-hidden /> {t('adminQuotes.create')}
+              </button>
+            }
+          />
+        )
       ) : (
+        <>
         <div className="overflow-hidden rounded-xl border border-line bg-card">
           <table className="w-full text-sm">
             <thead className="hidden bg-sunken text-left text-xs text-muted md:table-header-group">
@@ -420,6 +450,8 @@ const QuoteList = ({ onOpen }: { onOpen: (id: string) => void }) => {
             </tbody>
           </table>
         </div>
+        <Pagination className="mt-4" page={page} pages={listQ.data.pages} total={listQ.data.total} pageSize={PAGE_SIZE} onChange={setPage} />
+        </>
       )}
     </>
   );

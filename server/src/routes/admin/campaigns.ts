@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import type { Prisma } from '@prisma/client';
+import type { CampaignStatus, Prisma } from '@prisma/client';
 import { z } from 'zod';
 import { prisma } from '../../db.js';
 import { config } from '../../config.js';
@@ -26,6 +26,9 @@ import {
   SAMPLE_VARS,
 } from '../../lib/campaigns/content.js';
 import { campaignStats, cancelCampaign, CHANNELS, pauseCampaign, readChannels, resumeCampaign, startCampaign } from '../../lib/campaigns/engine.js';
+import { pageArgs, pageMeta, pageShape } from '../../lib/paging.js';
+
+const CAMPAIGN_STATUSES = ['DRAFT', 'SCHEDULED', 'SENDING', 'PAUSED', 'COMPLETED', 'CANCELLED'] as const satisfies readonly CampaignStatus[];
 
 /**
  * Admin → Kampaniyalar (ADMIN and SUPER_ADMIN): segments, campaigns, sending controls, statistics.
@@ -146,10 +149,15 @@ const listSelect = {
   createdBy: { select: { firstName: true, lastName: true } },
 } as const;
 
-adminCampaignsRouter.get('/', async (_req, res) => {
-  const items = await prisma.campaign.findMany({ orderBy: { createdAt: 'desc' }, take: 300, select: listSelect });
+adminCampaignsRouter.get('/', async (req, res) => {
+  const q = parse(z.object({ status: z.enum(CAMPAIGN_STATUSES).optional(), ...pageShape(50) }), req.query);
+  const where: Prisma.CampaignWhereInput = q.status ? { status: q.status } : {};
+  const [items, total] = await Promise.all([
+    prisma.campaign.findMany({ where, orderBy: [{ createdAt: 'desc' }, { id: 'desc' }], select: listSelect, ...pageArgs(q) }),
+    prisma.campaign.count({ where }),
+  ]);
   const stats = await campaignStats(items.map((i) => i.id));
-  res.json({ items: items.map((i) => ({ ...i, channels: readChannels(i.channels), stats: stats[i.id] })) });
+  res.json({ items: items.map((i) => ({ ...i, channels: readChannels(i.channels), stats: stats[i.id] })), ...pageMeta(q, total) });
 });
 
 const loadCampaign = async (id: string) => {

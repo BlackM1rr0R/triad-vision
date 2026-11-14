@@ -24,7 +24,7 @@ import { useOcrStatus } from '@/components/docsIntel/OcrBadge';
 import { FormButtons, PacketActions } from '@/components/docsIntel/PacketAndForms';
 
 const Section = ({ icon: Icon, title, desc, children }: { icon: typeof ScanLine; title: string; desc?: string; children: React.ReactNode }) => (
-  <div className="rounded-xl border border-line bg-white/60 p-4 sm:p-5">
+  <div className="rounded-xl border border-line bg-card/60 p-4 sm:p-5">
     <h4 className="flex items-center gap-2 text-sm font-bold text-ink">
       <Icon className="size-4 text-primary" aria-hidden /> {title}
     </h4>

@@ -259,12 +259,23 @@ Props: `columns, rows, rowKey, loading, loadingRows, empty, sort, onSortChange` 
 
 ### EmptyState (`EmptyState.tsx`)
 
-`icon, title, text, action, tone: neutral | brand, size: md | lg (page-level), padding: none | sm | md | lg, compact` (= padding sm).
+`icon, illustration, title, text, action, tone: neutral | brand, size: md | lg (page-level), padding: none | sm | md | lg, compact` (= padding sm),
+`framed` (card border + background, for lists that render nothing else), `filtered` + `onClearFilters` (the "nothing matches the
+filters" variant with default copy and a "Clear filters" button). Lists distinguish the two cases: a first-use empty state with the
+primary action (`action={<Button>New …</Button>}`), and `filtered` when only the search / filters hide everything.
+
+### PhoneInput (`PhoneInput.tsx`)
+
+`<PhoneInput id value onChange country? current?>` with `phoneInvalid(value, { country, current })` for the submit button. Same
+normaliser as the server (`lib/phone.ts`): on blur "050 123 45 67" becomes "+994501234567" (`country="DE"`: "0151…" → "+49151…");
+an unreadable number shows `ui.phone.invalid`. `current` = the stored value: a legacy value sent back unchanged is accepted.
 
 ### Skeleton (`Skeleton.tsx`)
 
 `<Skeleton className="h-4 w-40" rounded="md|lg|xl|full" style>`, `<SkeletonText lines>`, `<SkeletonBlock>` (role=status),
 `<SkeletonList count>`, `<SkeletonRows rows cols>` (inside a `<tbody>`). Spinner: `<Spinner className label?>` (decorative unless `label`), `<PageLoader>`.
+List pages show a skeleton shaped like the page on first load (admin: `ListSkeleton` from `components/admin/ui` = optional
+`SkeletonStats` + `SkeletonTable`), never a centred spinner; refetches keep the old rows (`placeholderData`).
 
 ### Field / Input / Select / Textarea / Checkbox (`Field.tsx`)
 

@@ -1,6 +1,7 @@
 import type { LucideIcon } from 'lucide-react';
 import {
   Activity,
+  Sun,
   AtSign,
   Banknote,
   BarChart3,
@@ -211,6 +212,7 @@ const w = (id: string, path: string, icon: LucideIcon, module?: ModuleKey): Staf
 export const STAFF_NAV: StaffNavItem[] = [
   // Bu gün
   a('today', '/admin/today', ListChecks, 'today', { badge: 'today' }),
+  a('myDay', '/admin/my-day', Sun, 'today'),
   a('dashboard', '/admin', LayoutDashboard, 'today', { end: true }),
   a('workspace', '/workspace/home', LayoutGrid, 'today'),
   // İşlər
@@ -299,6 +301,7 @@ export const STAFF_NAV: StaffNavItem[] = [
   a('landingPages', '/admin/landing-pages', PanelsTopLeft, 'site', { module: 'landingPages' }),
   a('leadMagnets', '/admin/lead-magnets', BookOpen, 'site', { adminOnly: true, module: 'landingPages' }), // e-book lead magnets
   a('guides', '/admin/guides', BookOpen, 'site', { adminOnly: true, module: 'guides' }), // SEO topic guides (6 languages)
+  a('searchPerformance', '/admin/search-performance', ChartNoAxesCombined, 'site', { adminOnly: true }), // Google Search Console: queries, pages, CTR (ADMIN+)
   a('problemReports', '/admin/problems', Bug, 'site', { adminOnly: true }),
   // Sistem
   a('settings', '/admin/settings', Settings, 'system', { adminOnly: true }),
@@ -372,7 +375,7 @@ export type HubKey = 'today' | 'cases' | 'clients' | 'employers' | 'comms' | 'fi
  * their own URLs, so old links and bookmarks still open them. Labels: anav.hubs.<key>.
  */
 export const HUBS: { key: HubKey; icon: LucideIcon; tabs: string[] }[] = [
-  { key: 'today', icon: LayoutDashboard, tabs: ['today', 'dashboard', 'kanban', 'tasks', 'clientTasks'] },
+  { key: 'today', icon: LayoutDashboard, tabs: ['today', 'myDay', 'dashboard', 'kanban', 'tasks', 'clientTasks'] },
   { key: 'cases', icon: FolderKanban, tabs: ['cases', 'review', 'requirements', 'docsAudit', 'expiring', 'recognition', 'accelerated', 'authorities', 'originals', 'signatures', 'countersign', 'officialForms', 'caseForms', 'contractTemplates', 'translations'] },
   { key: 'clients', icon: Users, tabs: ['candidates', 'skillVideos', 'register', 'duplicates', 'checkIns', 'arrivals', 'familyReunion', 'partnerHousing', 'journey', 'examDates', 'waitingRoom', 'preCourse'] },
   { key: 'employers', icon: Building2, tabs: ['companies', 'vacancies', 'jobChannels', 'candidateRequests', 'interviews', 'employmentContracts', 'interviewPrep'] },
@@ -382,7 +385,7 @@ export const HUBS: { key: HubKey; icon: LucideIcon; tabs: string[] }[] = [
   {
     key: 'site',
     icon: Globe,
-    tabs: ['services', 'visaCategories', 'partners', 'visaSamples', 'testimonials', 'stats', 'faqs', 'posts', 'landingPages', 'leadMagnets', 'guides', 'docGuides', 'events', 'siteTools', 'cityCosts'],
+    tabs: ['services', 'visaCategories', 'partners', 'visaSamples', 'testimonials', 'stats', 'faqs', 'posts', 'landingPages', 'leadMagnets', 'guides', 'searchPerformance', 'docGuides', 'events', 'siteTools', 'cityCosts'],
   },
   { key: 'team', icon: UsersRound, tabs: ['users', 'mailboxes', 'kpi', 'shifts', 'training', 'timeTracking', 'oversight', 'weeklyReports'] },
   { key: 'compliance', icon: Scale, tabs: ['privacyRequests', 'legal', 'history', 'security', 'securityAlerts', 'sensitiveAccess', 'storage'] },

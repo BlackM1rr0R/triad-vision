@@ -5,6 +5,8 @@ import { AZ_DRAFTS } from './az.js';
 import { RU_DRAFTS } from './ru.js';
 import { DE_DRAFTS } from './de.js';
 import { EN_DRAFTS } from './en.js';
+import { TR_DRAFTS } from './tr.js';
+import { UK_DRAFTS } from './uk.js';
 
 /**
  * SEO landing guides written for the target queries in docs/SEO.md ("Content suggestions"), seeded as
@@ -15,12 +17,16 @@ import { EN_DRAFTS } from './en.js';
  * /__seo/status answers 404 for its URL.
  *
  * Keys (one row per key and language; a key's languages are hreflang alternates of each other):
- *   job seekers  driver-jobs (az, ru, en), work-visa (az, ru, en), salary-net (az, ru), first-month (az, ru),
- *                jobs-azerbaijan (az, ru)
+ *   job seekers  driver-jobs (az, ru, en, tr, uk), work-visa (az, ru, en, tr, uk), salary-net (az, ru, tr, uk),
+ *                first-month (az, ru, tr, uk), jobs-azerbaijan (az, ru, tr, uk)
  *   employers    employer-azerbaijan (de, en), employer-drivers (de), employer-nursing (de),
  *                employer-apprentices (de), fast-track-81a (de)
- * tr / uk are deliberately not written (no machine-quality duplicates). The existing guides (chancenkarte,
- * blue-card, ausbildung, anerkennung, pflege, familiennachzug) already cover those topics in every language.
+ *
+ * tr / uk (added 2026-11-14) are faithful translations of the checked en (driver-jobs, work-visa) and ru
+ * (salary-net, first-month, jobs-azerbaijan) texts, written after the az/ru/de/en drafts were reviewed and
+ * published on production (2026-11-13, one-off script). Their facts are already checked, so their rows are
+ * created PUBLISHED (PUBLISHED_ON_CREATE); every other language is still created unpublished. As for all
+ * drafts, an existing row (whatever its state) is never touched.
  */
 export const DRAFT_KEYS = [
   'driver-jobs',
@@ -46,7 +52,15 @@ const BY_LOCALE: [GuideLocale, Partial<Record<DraftKey, GuidePageSeed>>][] = [
   ['ru', RU_DRAFTS],
   ['de', DE_DRAFTS],
   ['en', EN_DRAFTS],
+  ['tr', TR_DRAFTS],
+  ['uk', UK_DRAFTS],
 ];
+
+/**
+ * Languages whose new rows are created published: translations of texts that were already reviewed and
+ * published (see the comment above). A text that still had a review placeholder would stay a draft.
+ */
+export const PUBLISHED_ON_CREATE: readonly GuideLocale[] = ['tr', 'uk'];
 
 export const GUIDE_DRAFTS: GuideDraft[] = BY_LOCALE.flatMap(([locale, pages]) =>
   DRAFT_KEYS.filter((key) => pages[key]).map((key) => ({ ...pages[key]!, body: pages[key]!.body.trim(), key, locale })),
@@ -58,7 +72,7 @@ export const draftPlaceholders = () => GUIDE_DRAFTS.map((d) => ({ key: d.key, lo
 const MARKER = 'seed.guideDrafts';
 
 /**
- * Inserts the missing drafts, unpublished. Idempotent and non-destructive: an existing (key, locale) row or a
+ * Inserts the missing drafts, unpublished (tr/uk: published, see PUBLISHED_ON_CREATE). Idempotent and non-destructive: an existing (key, locale) row or a
  * slug already used in that language is never touched (whatever its state), and the marker setting remembers
  * every (key, locale) handled, so a draft the owner deletes is not re-created by a later deploy.
  * One exception: a row that is still an unpublished draft with review placeholders (the owner has not
@@ -94,8 +108,9 @@ export const seedGuideDrafts = async (prisma: PrismaClient) => {
       prisma.guidePage.findUnique({ where: { locale_slug: { locale: d.locale, slug: d.slug } }, select: { id: true } }),
     ]);
     if (!existing && !slugTaken) {
+      const published = PUBLISHED_ON_CREATE.includes(d.locale) && !guidePlaceholders(d).length;
       await prisma.guidePage.create({
-        data: { key: d.key, locale: d.locale, slug: d.slug, title: d.title, description: d.description, body: d.body, faq: d.faq, published: false },
+        data: { key: d.key, locale: d.locale, slug: d.slug, title: d.title, description: d.description, body: d.body, faq: d.faq, published },
       });
       created++;
     }

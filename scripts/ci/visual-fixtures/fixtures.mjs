@@ -318,6 +318,27 @@ const vacancies = [
 ];
 const facet = (key) => Object.entries(vacancies.reduce((a, v) => ({ ...a, [v[key]]: (a[v[key]] ?? 0) + 1 }), {})).map(([value, count]) => ({ value, count }));
 
+// Saved filter tabs of the cases list: the defaults every staff member gets (lib/staffUi DEFAULT_VIEWS), already added.
+const savedView = (id, name, params) => ({ id, page: 'cases', name, params, columns: null, ownerId: 'staff-1', shared: false, mine: true, pinned: false, createdAt: '2026-01-10T09:00:00.000Z', updatedAt: '2026-01-10T09:00:00.000Z' });
+const savedViews = [
+  savedView('v-mine', 'Mənim aktiv müraciətlərim', { scope: 'open', assignee: 'me' }),
+  savedView('v-recog', 'Gecikən tanınmalar', { recognition: 'overdue' }),
+  savedView('v-embassy', 'Bu həftə səfirlik', { appointment: 'week' }),
+  savedView('v-unassigned', 'Təyinatsız', { scope: 'open', assignee: 'none' }),
+  savedView('v-docs', 'Yoxlanılacaq sənədlər', { scope: 'open', pendingDocs: '1' }),
+];
+const tile = (count, params) => ({ count, params });
+const casesSummary = {
+  tiles: {
+    open: tile(42, { scope: 'open' }),
+    mine: tile(9, { scope: 'open', assignee: 'me' }),
+    unassigned: tile(3, { scope: 'open', assignee: 'none' }),
+    stuck: tile(5, { scope: 'open', overdue: '1' }),
+    embassyWeek: tile(2, { appointment: 'week' }),
+    recognitionOverdue: tile(1, { recognition: 'overdue' }),
+  },
+};
+
 /** @type {[string, string | RegExp, unknown][]} */
 const ROUTES = [
   // shared
@@ -329,7 +350,7 @@ const ROUTES = [
   ['POST', '/api/admin/me/nav/visit', { status: 204, body: '' }],
   ['POST', /^\/api\/admin\/presence\//, { viewers: [] }],
   // staff power features (saved views, table settings, "what's new"): empty / read state
-  ['GET', '/api/admin/me/saved-views', { views: [] }],
+  ['GET', '/api/admin/me/saved-views', { views: savedViews, seeded: ['cases', 'inquiries'] }],
   ['GET', '/api/admin/me/table-prefs', { tables: {} }],
   ['GET', '/api/admin/me/whats-new', { items: [], unread: 0, latest: null, seen: null }],
 
@@ -344,6 +365,7 @@ const ROUTES = [
 
   // admin / workspace
   ['GET', '/api/admin/cases', { items: caseRows, total: caseRows.length, pageSize: 25, counts: statusCounts }],
+  ['GET', '/api/admin/cases/summary', casesSummary],
   ['GET', '/api/admin/cases/case-1', caseDetail],
   ['GET', '/api/drive/roots', driveRoots],
   ['GET', '/api/drive/stats', { shared: { files: 1284, bytes: 3_912_000_000 }, trash: { files: 12, bytes: 18_000_000 }, total: null, versions: null, limits }],

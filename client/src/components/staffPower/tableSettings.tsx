@@ -373,17 +373,19 @@ export interface SettingsTableProps<T> {
   rowClassName?: (row: T) => string | undefined;
   rowProps?: (row: T) => Record<string, unknown>;
   tableClassName?: string;
+  /** Inline style of the <table> (e.g. a min width from the column widths). */
+  tableStyle?: CSSProperties;
   bodyClassName?: string;
   className?: string;
   caption?: string;
 }
 
 /** Plain admin table that follows the user's column settings (order, visibility, width) with an optional select column. */
-export function SettingsTable<T>({ settings, rows, rowKey, cells, selection, selectLabel, selectAllLabel, onRowClick, rowClassName, rowProps, tableClassName, bodyClassName, className, caption }: SettingsTableProps<T>) {
+export function SettingsTable<T>({ settings, rows, rowKey, cells, selection, selectLabel, selectAllLabel, onRowClick, rowClassName, rowProps, tableClassName, tableStyle, bodyClassName, className, caption }: SettingsTableProps<T>) {
   const [dragId, setDragId] = useState<string | null>(null);
   return (
     <div className={clsx('overflow-x-auto rounded-xl border border-line bg-card', className)}>
-      <table className={clsx('w-full text-left text-sm', tableClassName)}>
+      <table className={clsx('w-full text-left text-sm', tableClassName)} style={tableStyle}>
         {caption && <caption className="sr-only">{caption}</caption>}
         <thead className="border-b border-line bg-surface/70 text-xs font-medium whitespace-nowrap text-muted">
           <tr>

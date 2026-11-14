@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import clsx from 'clsx';
-import type { LucideIcon } from 'lucide-react';
+import { SearchX, type LucideIcon } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 export type EmptyStateProps = {
   icon?: LucideIcon;
@@ -20,22 +21,63 @@ export type EmptyStateProps = {
   padding?: 'none' | 'sm' | 'md' | 'lg';
   /** Shorthand for padding="sm" (inside cards / table bodies). */
   compact?: boolean;
+  /** Draws the card frame (border, card background) around the block: lists that render nothing else. */
+  framed?: boolean;
+  /**
+   * "Nothing matches the filters" variant: default icon, title and hint, plus a "Clear filters" button when
+   * `onClearFilters` is given. Use it when the list is empty only because of a search / filter.
+   */
+  filtered?: boolean;
+  onClearFilters?: () => void;
   className?: string;
 };
 
 const PAD = { none: '', sm: 'py-6', md: 'py-10', lg: 'py-14' } as const;
 
 /**
- * "Nothing here yet" block.
+ * "Nothing here yet" block: the one empty state of every surface (lists, panels, pages).
+ * Import: `import { EmptyState } from '@/components/ui/EmptyState'` (or `@/components/ui`).
  *
  *   <EmptyState icon={Inbox} title="No messages" text="New messages appear here." action={<Button size="sm">Compose</Button>} />
  *   <EmptyState size="lg" tone="brand" icon={Briefcase} title="No applications yet" text="…" action={<Link className={buttonClass()} to="/jobs">Browse jobs</Link>} />
+ *   <EmptyState framed icon={Receipt} title="No invoices yet" text="…" action={<Button size="sm" onClick={create}>New invoice</Button>} />
+ *   <EmptyState framed filtered onClearFilters={reset} />   // the list is empty only because of the filters
  */
-export const EmptyState = ({ icon: Icon, illustration, title, text, children, action, tone = 'neutral', size = 'md', padding, compact = false, className }: EmptyStateProps) => {
+export const EmptyState = ({
+  icon,
+  illustration,
+  title,
+  text,
+  children,
+  action,
+  tone = 'neutral',
+  size = 'md',
+  padding,
+  compact = false,
+  framed = false,
+  filtered = false,
+  onClearFilters,
+  className,
+}: EmptyStateProps) => {
+  const { t } = useTranslation();
   const lg = size === 'lg';
   const pad = padding ?? (compact ? 'sm' : lg ? 'lg' : 'md');
+  const Icon = icon ?? (filtered ? SearchX : undefined);
+  if (filtered) {
+    title ??= t('ui.empty.filteredTitle');
+    if (text === undefined && children === undefined) text = t('ui.empty.filteredText');
+    if (action === undefined && onClearFilters)
+      action = (
+        <button type="button" className="btn-secondary btn-sm" onClick={onClearFilters}>
+          {t('ui.empty.clearFilters')}
+        </button>
+      );
+  }
   return (
-    <div className={clsx('flex flex-col items-center justify-center px-4 text-center', PAD[pad], className)}>
+    <div
+      className={clsx('flex flex-col items-center justify-center px-4 text-center', PAD[pad], framed && 'rounded-xl border border-line bg-card', className)}
+      role={filtered ? 'status' : undefined}
+    >
       {illustration && (
         <div className={clsx('text-muted [&_img]:mx-auto [&_svg]:mx-auto', lg ? 'mb-5 max-w-[12rem]' : 'mb-4 max-w-[9rem]')} aria-hidden>
           {illustration}

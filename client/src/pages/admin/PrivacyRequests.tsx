@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, Route, Routes, useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import clsx from 'clsx';
@@ -12,7 +12,9 @@ import { pagesPrivacy } from '@/i18n/pagesPrivacy';
 import { ConsentRegister } from '@/components/legal/ConsentRegister'; // consent register: filters, timeline, versions, CSV / JSON
 import { Spinner } from '@/components/ui/Spinner';
 import { Modal } from '@/components/admin/Modal';
-import { Chip, DefRow, EmptyState, ErrorBlock, LoadingBlock, PageHead, Panel, StatTile } from '@/components/admin/ui';
+import { Chip, DefRow, EmptyState, ErrorBlock, ListSkeleton, LoadingBlock, PageHead, Panel, StatTile } from '@/components/admin/ui';
+import { Pagination } from '@/components/ui/Pagination';
+import { SkeletonStats } from '@/components/ui/Skeleton';
 import { Tabs } from '@/components/ui/Tabs';
 import { confirmDialog } from '@/components/ui/ConfirmHost';
 import { fmtDate, fmtDateTime, fullName } from '@/components/admin/labels';
@@ -47,6 +49,8 @@ const StatusBadge = ({ status }: { status: RequestStatus }) => {
 
 // ─── Requests list ─────────────────────────────────────────────────────
 
+const PAGE_SIZE = 50;
+
 const RequestsList = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -55,6 +59,12 @@ const RequestsList = () => {
   const type = params.get('type') ?? '';
   const overdue = params.get('overdue') === '1';
   const [q, setQ] = useState('');
+  const [debouncedQ, setDebouncedQ] = useState('');
+  useEffect(() => {
+    const h = window.setTimeout(() => setDebouncedQ(q.trim()), 300);
+    return () => window.clearTimeout(h);
+  }, [q]);
+  const [page, setPage] = useState(1);
 
   const setParam = (k: string, v: string | null) => {
     const next = new URLSearchParams(params);
@@ -67,18 +77,33 @@ const RequestsList = () => {
   if (status) query.set('status', status);
   if (type) query.set('type', type);
   if (overdue) query.set('overdue', '1');
-  if (q.trim()) query.set('q', q.trim());
+  if (debouncedQ) query.set('q', debouncedQ);
+  const filterQs = query.toString();
+  const filtered = !!filterQs;
+  // A new filter starts again on page 1.
+  useEffect(() => setPage(1), [filterQs]);
+  query.set('page', String(page));
+  query.set('pageSize', String(PAGE_SIZE));
   const qs = query.toString();
 
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: [...LIST_KEY, qs],
-    queryFn: async () => (await api.get<AdminRequestsResponse>(`/admin/privacy/requests${qs ? `?${qs}` : ''}`)).data,
+    queryFn: async () => (await api.get<AdminRequestsResponse>(`/admin/privacy/requests?${qs}`)).data,
+    placeholderData: keepPreviousData,
     refetchInterval: 120_000,
   });
   const counts = data?.counts;
+  const clearFilters = () => {
+    setQ('');
+    setDebouncedQ('');
+    const next = new URLSearchParams(params);
+    for (const k of ['status', 'type', 'overdue']) next.delete(k);
+    setParams(next, { replace: true });
+  };
 
   return (
     <>
+      {!counts && isLoading && <SkeletonStats count={4} className="mb-6 grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4" />}
       {counts && (
         <div className="mb-6 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
           <StatTile label={t('privacy.admin.stats.open')} value={counts.byStatus.OPEN} icon={Inbox} />
@@ -118,14 +143,13 @@ const RequestsList = () => {
       </div>
 
       {isLoading ? (
-        <LoadingBlock />
+        <ListSkeleton cols={5} />
       ) : error ? (
         <ErrorBlock error={error} onRetry={() => refetch()} />
       ) : !data?.items.length ? (
-        <div className="rounded-xl border border-line bg-card">
-          <EmptyState icon={ShieldHalf} title={t('privacy.admin.empty')} />
-        </div>
+        filtered ? <EmptyState framed filtered onClearFilters={clearFilters} /> : <EmptyState framed icon={ShieldHalf} title={t('privacy.admin.empty')} />
       ) : (
+        <>
         <div className="overflow-hidden rounded-xl border border-line bg-card">
           <table className="w-full text-sm">
             <thead className="hidden bg-sunken text-left text-xs text-muted sm:table-header-group">
@@ -147,7 +171,7 @@ const RequestsList = () => {
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') navigate(r.id);
                   }}
-                  className={clsx('flex cursor-pointer flex-col gap-1 px-4 py-3 transition hover:bg-sunken sm:table-row sm:p-0', r.overdue && 'bg-danger-bg/60 dark:bg-red-950/20')}
+                  className={clsx('flex cursor-pointer flex-col gap-1 px-4 py-3 transition hover:bg-sunken sm:table-row sm:p-0', r.overdue && 'bg-danger-bg/60')}
                 >
                   <td className="sm:px-4 sm:py-3">
                     <p className="font-semibold break-all text-ink">{r.user ? fullName(r.user) : r.email}</p>
@@ -172,6 +196,8 @@ const RequestsList = () => {
             </tbody>
           </table>
         </div>
+        <Pagination className="mt-4" page={page} pages={data.pages} total={data.total} pageSize={PAGE_SIZE} onChange={setPage} />
+        </>
       )}
     </>
   );

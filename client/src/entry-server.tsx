@@ -34,6 +34,7 @@ export const SSR_QUERY_KEYS = new Set<string>([
   'service',
   'jobs',
   'job',
+  'job-landing', // /jobs/in/:city/:profession (GET /vacancies/landing/…)
   'guides',
   'guide',
   'public-packages',

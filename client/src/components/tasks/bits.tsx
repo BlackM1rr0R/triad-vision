@@ -26,7 +26,7 @@ export const Avatar = ({ person, size = 'md', ring = false }: { person: Person; 
     className={clsx(
       'inline-grid shrink-0 place-items-center rounded-full font-bold select-none',
       avatarTone(person.id),
-      ring && 'ring-2 ring-white',
+      ring && 'ring-2 ring-card',
       { xs: 'size-5 text-[0.55rem]', sm: 'size-6 text-[0.6rem]', md: 'size-8 text-[0.7rem]', lg: 'size-10 text-xs' }[size],
     )}
   >
@@ -44,7 +44,7 @@ export const AvatarStack = ({ people, max = 3, size = 'sm' }: { people: Person[]
         <Avatar key={p.id} person={p} size={size} ring />
       ))}
       {rest > 0 && (
-        <span className={clsx('inline-grid place-items-center rounded-full bg-line font-bold text-muted ring-2 ring-white', size === 'xs' ? 'size-5 text-[0.55rem]' : 'size-6 text-[0.6rem]')}>
+        <span className={clsx('inline-grid place-items-center rounded-full bg-line font-bold text-muted ring-2 ring-card', size === 'xs' ? 'size-5 text-[0.55rem]' : 'size-6 text-[0.6rem]')}>
           +{rest}
         </span>
       )}

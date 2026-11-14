@@ -2,12 +2,13 @@ import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
 import { motion } from 'framer-motion';
 import type { LucideIcon } from 'lucide-react';
-import { Check, FileCheck2, Landmark, MapPin, Minus, PenLine, Plane, Stamp, X } from 'lucide-react';
+import { Check, FileCheck2, GraduationCap, Landmark, MapPin, Minus, PenLine, Plane, Stamp, X } from 'lucide-react';
 import { useL10n } from '@/lib/l10n';
 import type { Milestone, MilestoneKey } from './journey';
 
 export const MILESTONE_ICON: Record<MilestoneKey, LucideIcon> = {
   documents: FileCheck2,
+  recognition: GraduationCap,
   contract: PenLine,
   embassy: Landmark,
   decision: Stamp,
@@ -23,6 +24,7 @@ export const useMilestoneDate = () => {
   return (m: Milestone): string => {
     if (m.dateKind === 'done' && m.date) return t('jmap.doneOn', { date: fmt(m.date) });
     if (m.dateKind === 'planned' && m.date) return t('jmap.planned', { date: fmt(m.date) });
+    if (m.dateKind === 'submitted' && m.date) return t('jmap.submitted', { date: fmt(m.date) });
     if (m.dateKind === 'appointment' && m.date) {
       const when = date(m.date, { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Baku' });
       return m.place ? t('jmap.appointmentAt', { date: when, place: m.place }) : t('jmap.appointment', { date: when });
@@ -78,7 +80,7 @@ export function JourneyTimeline({ milestones, labelOf, className }: { milestones
                     m.negative ? 'text-danger-fg' : m.status === 'current' ? 'text-highlight-fg' : m.status === 'done' ? 'text-success-fg' : 'text-muted',
                   )}
                 >
-                  {m.negative ? t('jmap.rejected') : t(`jmap.status.${m.status}`)}
+                  {m.negative ? t(m.key === 'recognition' ? 'jmap.recognitionRejected' : 'jmap.rejected') : t(`jmap.status.${m.status}`)}
                 </span>
               </span>
               {when && <span className="mt-0.5 block text-xs text-muted">{when}</span>}

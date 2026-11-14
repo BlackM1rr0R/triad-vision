@@ -20,6 +20,7 @@ import { TimerButton } from '@/components/timeCare/TimerButton'; // "⏱ Başlat
 import { RequiredTrainingBanner } from '@/components/team/training/TrainingNotice'; // unfinished required courses
 import { useStaffNav } from '@/components/command/navPrefs'; // training banner follows the module toggle
 import { useShortcuts } from '@/components/shortcuts/registry'; // lists this page's keys in the ? cheat sheet
+import { FastReviewButton } from '@/components/staffPower/review/FastReviewButton'; // full-screen document review queue
 
 registerCopy(pagesToday);
 
@@ -241,6 +242,7 @@ export default function Today() {
         subtitle={t('today.subtitle')}
         actions={
           <div className="flex flex-wrap items-center gap-2">
+            {!!data?.counts.byKind.doc_review && <FastReviewButton pending={data.counts.byKind.doc_review} className="min-h-8 py-0 text-xs" />}
             {isAdmin && (
               <div className="inline-flex rounded-lg border border-line bg-sunken p-0.5" role="group" aria-label={t('today.scope.label')}>
                 {(['mine', 'all'] as const).map((s) => (

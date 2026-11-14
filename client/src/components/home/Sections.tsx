@@ -35,6 +35,7 @@ const ELIGIBILITY_IMG = 'https://images.unsplash.com/photo-1576765608535-5f04d1e
 import { useSiteContent } from '@/lib/content';
 import { SkeletonCard } from '../ui/Skeleton';
 import { setAudience } from '@/lib/audience';
+import { useHydrating } from '@/lib/ssr';
 
 const ViewAll = ({ to, label }: { to: string; label: string }) => (
   <Link to={to} className="btn-ghost group w-full whitespace-nowrap sm:w-auto">
@@ -176,8 +177,10 @@ export const ProcessSection = () => {
   // The progress line fills as the section scrolls through the viewport (scroll-linked, no JS timers).
   const { scrollYProgress } = useScroll({ target: root, offset: ['start 75%', 'end 55%'] });
   const lineProgress = useSpring(scrollYProgress, { stiffness: 120, damping: 30 });
-  // Reduced motion: the line is simply full (no scroll-linked movement).
-  const line = useMotionOK() ? lineProgress : 1;
+  // Reduced motion: the line is simply full (no scroll-linked movement). Also while server markup is hydrated:
+  // the server cannot know the visitor's motion preference, so it renders the full line and so does hydration.
+  const hydrating = useHydrating();
+  const line = useMotionOK() && !hydrating ? lineProgress : 1;
 
   const OpenIcon = open !== null ? STEP_ICONS[open] ?? Search : Search;
 

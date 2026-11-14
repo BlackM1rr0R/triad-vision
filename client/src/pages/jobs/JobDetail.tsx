@@ -33,7 +33,7 @@ import { vacancyImages } from '@/components/jobs/images';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { ACCEPT as DOC_ACCEPT, prepareFile } from '@/components/portal/FileDrop';
 import { isStaffRole } from '@/lib/types';
-import i18n, { registerCopy } from '@/i18n';
+import i18n, { currentSiteLocale, registerCopy } from '@/i18n';
 import { pagesJobs } from '@/i18n/pagesJobs';
 import { PageHero, PageHeroSkeleton } from '@/components/layout/PageHero';
 import { SalaryEstimate } from '@/components/tools/SalaryEstimate';
@@ -507,6 +507,17 @@ export default function JobDetail() {
                     {tr(v.visaCategory.title)} · {v.visaCategory.visaLabel}
                   </span>
                 </span>
+                <ArrowRight className="size-5 shrink-0 text-muted group-hover:text-ink" aria-hidden />
+              </Link>
+            )}
+
+            {/* More vacancies of this profession in this city (/jobs/in/:city/:profession, server lib/jobLandings.ts). */}
+            {v.landing && (v.landing.label[currentSiteLocale()] ?? v.landing.label.en) && (
+              <Link to={v.landing.path} className="group card card-interactive flex items-center gap-4 rounded-3xl p-5">
+                <span className="grid size-12 shrink-0 place-items-center rounded-xl chip-sky">
+                  <MapPin className="size-5" aria-hidden />
+                </span>
+                <span className="min-w-0 flex-1 font-semibold text-ink">{v.landing.label[currentSiteLocale()] ?? v.landing.label.en}</span>
                 <ArrowRight className="size-5 shrink-0 text-muted group-hover:text-ink" aria-hidden />
               </Link>
             )}

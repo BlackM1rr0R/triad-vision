@@ -86,6 +86,11 @@ export interface AdminPrivacyRequest extends MyPrivacyRequest {
 
 export interface AdminRequestsResponse {
   items: AdminPrivacyRequest[];
+  /** Paging (open requests first by deadline, then closed newest first). */
+  total: number;
+  page: number;
+  pageSize: number;
+  pages: number;
   counts: { byStatus: Record<RequestStatus, number>; overdue: number; dueSoon: number };
 }
 

@@ -65,7 +65,8 @@ For the APIs, see `README.md`.
 
 | Legacy | Status |
 | --- | --- |
-| `admin/ui` `EmptyState` (58 files) | delegates |
+| `admin/ui` `EmptyState` (58 files) | re-export with all props (`text`, `action`, `framed`, `filtered`…) |
+| hand-made `rounded-xl border bg-card` wrappers + "no results" texts (Quotes, Invoices, ClientInvoices, Companies, Campaigns, PrivacyRequests, ClientTasks, Agents, workspace Tasks) | migrated to `framed` / `filtered` |
 | `company/shared` `Empty` (35 importers) | adapter (`tone="brand"`) |
 | `workspace/ui` `Empty` | adapter |
 | inline blocks: CompanyInvoices, CompanyQuotes, mail MessageList, partner Clients / Commissions, cities CompareTable | migrated |

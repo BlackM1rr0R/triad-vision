@@ -30,10 +30,8 @@
     <meta name="apple-mobile-web-app-title" content="Triad Vision" />
     <!--tv:end:tv-->
     <link rel="manifest" href="/manifest.webmanifest" />
-    <!-- Third-party origins used on most pages: CMS stock photos and the Cloudflare analytics beacon. No
-         crossorigin on the photo origin: <img> requests are not CORS requests and could not reuse that connection. -->
-    <link rel="preconnect" href="https://images.unsplash.com" />
-    <link rel="dns-prefetch" href="https://images.unsplash.com" />
+    <!-- Third-party origin used on most pages: the Cloudflare analytics beacon. Photos (CMS covers, stock photos)
+         come from our own origin as resized WebP (/api/img, client/src/lib/img.ts): no photo origin to preconnect. -->
     <link rel="dns-prefetch" href="https://static.cloudflareinsights.com" />
     <!-- Crawler HTML inside #root (Caddy include of /__seo/body): readable without JavaScript, hidden as soon as
          JavaScript runs (the script below adds html.js) — React replaces it on its first render. -->

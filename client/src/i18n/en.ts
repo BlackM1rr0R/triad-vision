@@ -457,6 +457,7 @@ const en: Messages = {
       INVALID_TRANSITION: 'This action is not possible at the current stage. Please refresh the page.',
       UPLOAD_NOT_ALLOWED: 'Documents cannot be uploaded at this stage.',
       WRONG_PASSWORD: 'The current password is incorrect.',
+      INVALID_PHONE: 'Enter the phone number with the country code, e.g. +994 50 123 45 67.',
       DELETE_NOT_ALLOWED: 'This file cannot be deleted.',
       UNSUPPORTED_FILE_TYPE: 'This file type is not accepted.',
       FILE_TOO_LARGE: 'The file is too large (max. 5 MB).',

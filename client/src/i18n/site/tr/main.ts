@@ -466,6 +466,7 @@ const tr: SiteCopy<Messages> = {
       INVALID_TRANSITION: 'Bu işlem mevcut aşamada yapılamaz. Lütfen sayfayı yenileyin.',
       UPLOAD_NOT_ALLOWED: 'Bu aşamada belge yüklenemez.',
       WRONG_PASSWORD: 'Mevcut şifre hatalı.',
+      INVALID_PHONE: 'Telefon numarasını ülke koduyla yazın, örneğin +994 50 123 45 67.',
       DELETE_NOT_ALLOWED: 'Bu dosya silinemez.',
       UNSUPPORTED_FILE_TYPE: 'Bu dosya türü kabul edilmiyor.',
       FILE_TOO_LARGE: 'Dosya çok büyük (maks. 5 MB).',

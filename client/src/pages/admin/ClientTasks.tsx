@@ -1,13 +1,15 @@
 import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
 import { toast } from 'sonner';
 import { BellRing, CheckCircle2, ClipboardList, Search, Timer } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
-import { Chip, EmptyState, ErrorBlock, LoadingBlock, PageHead, Panel } from '@/components/admin/ui';
+import { Chip, EmptyState, ErrorBlock, PageHead, Panel } from '@/components/admin/ui';
+import { Pagination } from '@/components/ui/Pagination';
+import { SkeletonList } from '@/components/ui/Skeleton';
 import { fmtDate } from '@/components/admin/labels';
 import { cpKeys, STATE_TONE, useCpError, type StaffTaskView } from '@/components/clientProcess/api';
 
@@ -81,10 +83,15 @@ export default function ClientTasks() {
   const filter = (FILTERS as readonly string[]).includes(params.get('filter') ?? '') ? (params.get('filter') as Filter) : 'overdue';
   const mine = params.get('mine') === '1';
   const [search, setSearch] = useState('');
-  const q = new URLSearchParams({ filter, ...(mine ? { mine: '1' } : {}), ...(search.trim() ? { search: search.trim() } : {}) }).toString();
+  const filterQs = new URLSearchParams({ filter, ...(mine ? { mine: '1' } : {}), ...(search.trim() ? { search: search.trim() } : {}) }).toString();
+  // The server sends 50 tasks per page; a new filter starts again on page 1.
+  const [page, setPage] = useState(1);
+  useEffect(() => setPage(1), [filterQs]);
+  const q = `${filterQs}&page=${page}`;
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: cpKeys.allTasks(q),
     queryFn: async () => (await api.get<ListResponse>(`/admin/client-process/tasks?${q}`)).data,
+    placeholderData: keepPreviousData,
   });
   const refresh = () => void qc.invalidateQueries({ queryKey: ['admin', 'client-process', 'tasks'] });
   const remind = useMutation({ mutationFn: (id: string) => api.post(`/admin/client-process/tasks/${id}/remind`), onSuccess: () => toast.success(t('cp.tasks.reminded')), onError });
@@ -121,12 +128,26 @@ export default function ClientTasks() {
       </div>
 
       {isLoading ? (
-        <LoadingBlock />
+        <Panel>
+          <SkeletonList count={6} />
+        </Panel>
       ) : error || !data ? (
         <ErrorBlock error={error} onRetry={() => refetch()} />
       ) : data.tasks.length === 0 ? (
-        <EmptyState icon={ClipboardList} title={t('cp.page.empty')} />
+        search.trim() || mine ? (
+          <EmptyState
+            framed
+            filtered
+            onClearFilters={() => {
+              setSearch('');
+              setParam('mine', null);
+            }}
+          />
+        ) : (
+          <EmptyState framed icon={ClipboardList} title={t('cp.page.empty')} />
+        )
       ) : (
+        <>
         <Panel bodyClassName="p-0">
           <ul className="divide-y divide-line">
             {data.tasks.map((task) => (
@@ -160,6 +181,8 @@ export default function ClientTasks() {
             ))}
           </ul>
         </Panel>
+        <Pagination page={page} pages={Math.max(1, Math.ceil(data.total / data.pageSize))} total={data.total} pageSize={data.pageSize} onChange={setPage} />
+        </>
       )}
       {(user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN') && <EtaSettings />}
     </div>

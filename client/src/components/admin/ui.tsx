@@ -6,7 +6,8 @@ import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Spinner } from '@/components/ui/Spinner';
 import { Card } from '@/components/ui/Card';
-import { EmptyState as UiEmptyState } from '@/components/ui/EmptyState';
+import { EmptyState as UiEmptyState, type EmptyStateProps } from '@/components/ui/EmptyState';
+import { SkeletonStats, SkeletonTable } from '@/components/ui/Skeleton';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Switch as UiSwitch } from '@/components/ui/Switch';
 import { StatTile as UiStatTile } from '@/components/ui/StatTile';
@@ -44,11 +45,21 @@ export const Panel = ({
   </Card>
 );
 
-/** Legacy admin signature (icon required, text as children) of the design-system EmptyState. */
-export const EmptyState = ({ icon, title, children }: { icon: LucideIcon; title: string; children?: ReactNode }) => (
-  <UiEmptyState icon={icon} title={title}>
-    {children}
-  </UiEmptyState>
+/**
+ * The design-system EmptyState (components/ui/EmptyState) re-exported for admin pages: same props
+ * (icon, title, text / children, action, framed, filtered + onClearFilters…).
+ */
+export const EmptyState = (props: EmptyStateProps) => <UiEmptyState {...props} />;
+
+/**
+ * First-load placeholder of a list page shaped like the page: optional stat tiles, then a table with
+ * `cols` columns. Replaces the centred spinner (LoadingBlock) so the layout does not jump when data arrives.
+ */
+export const ListSkeleton = ({ rows = 8, cols = 5, stats = 0, className }: { rows?: number; cols?: number; stats?: number; className?: string }) => (
+  <div className={clsx('space-y-6', className)}>
+    {stats > 0 && <SkeletonStats count={stats} className="grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4" />}
+    <SkeletonTable rows={rows} cols={cols} />
+  </div>
 );
 
 export const LoadingBlock = ({ className }: { className?: string }) => {

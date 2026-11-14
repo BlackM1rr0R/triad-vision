@@ -6,9 +6,10 @@ import { AlertTriangle, AtSign, Building, ExternalLink, FileText, Landmark, MapP
 import { api } from '@/lib/api';
 import type { L10n, Office, SiteSettings } from '@/lib/types';
 import { Spinner } from '@/components/ui/Spinner';
+import { Skeleton } from '@/components/ui/Skeleton';
 import { L10nInput, emptyL10n, fillFromAz } from '@/components/admin/L10nInput';
 import { toastError } from '@/components/admin/labels';
-import { ErrorBlock, LoadingBlock, PageHead, Panel, Switch } from '@/components/admin/ui';
+import { ErrorBlock, PageHead, Panel, Switch } from '@/components/admin/ui';
 import { fmtDate, fmtDateTime } from '@/components/admin/labels';
 import { registerCopy } from '@/i18n';
 import { pagesLegal } from '@/i18n/pagesLegal';
@@ -703,7 +704,21 @@ export default function Settings() {
     <div className="space-y-6 lg:space-y-8">
       <PageHead title={t('admin.nav.settings')} subtitle={t('admin.settings.subtitle')} />
       {isLoading ? (
-        <LoadingBlock />
+        <div className="space-y-6 lg:space-y-8" role="status" aria-label={t('admin.common.loading')}>
+          {[0, 1, 2].map((i) => (
+            <div key={i} className="rounded-xl border border-line bg-card p-4 sm:p-5" aria-hidden>
+              <Skeleton className="h-4 w-48" />
+              <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                {[0, 1, 2, 3].map((j) => (
+                  <div key={j} className="space-y-2">
+                    <Skeleton className="h-3 w-24" />
+                    <Skeleton className="h-9 w-full" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
       ) : error ? (
         <ErrorBlock error={error} onRetry={() => refetch()} />
       ) : (

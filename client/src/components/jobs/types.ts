@@ -40,6 +40,8 @@ export interface PublicVacancy {
   visaCategory: { slug: string; title: L10n; visaLabel: string } | null;
   /** Cover (first) + gallery photos; re-encoded WebP with -480 / -960 width variants (server lib/vacancyImages.ts). */
   images?: VacancyImage[] | null;
+  /** GET /api/vacancies/:slug only: its profession × city page (/jobs/in/:city/:profession), link text per language. */
+  landing?: { path: string; label: Partial<Record<string, string>> } | null;
 }
 
 export interface CompanyLogo {

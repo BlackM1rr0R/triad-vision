@@ -95,6 +95,8 @@ const asViews = (raw: unknown): SavedView[] => {
 interface UserViewsDoc {
   views: SavedView[];
   pins: string[];
+  /** List pages whose default views were already added once (deleting a default does not bring it back). */
+  seeded?: string[];
 }
 interface TeamViewsDoc {
   views: SavedView[];
@@ -111,7 +113,8 @@ const write = (key: string, value: object, db: Db = prisma) =>
 
 export const readUserViews = async (userId: string, db: Db = prisma): Promise<UserViewsDoc> => {
   const raw = await read(userViewsKey(userId), db);
-  return { views: asViews(raw?.views), pins: Array.isArray(raw?.pins) ? (raw.pins as unknown[]).filter((x): x is string => typeof x === 'string').slice(0, 200) : [] };
+  const strings = (v: unknown, max: number) => (Array.isArray(v) ? (v as unknown[]).filter((x): x is string => typeof x === 'string').slice(0, max) : []);
+  return { views: asViews(raw?.views), pins: strings(raw?.pins, 200), seeded: strings(raw?.seeded, VIEW_PAGES.length) };
 };
 export const readTeamViews = async (db: Db = prisma): Promise<TeamViewsDoc> => ({ views: asViews((await read(TEAM_VIEWS_KEY, db))?.views) });
 export const writeUserViews = (userId: string, doc: UserViewsDoc, db: Db = prisma) => write(userViewsKey(userId), doc, db);
@@ -148,6 +151,60 @@ export const viewsFor = async (userId: string, page?: ViewPage) => {
   ];
   return rows.filter((v) => !page || v.page === page);
 };
+
+// ─── Default views ("Gecikən tanınmalar", "Bu həftə səfirlik" …) ───────
+
+type Locale4 = 'az' | 'de' | 'en' | 'ru';
+/**
+ * Saved filters every staff member starts with on a list page, added once to their private views (then
+ * renamed / deleted like their own). Params are list filters that stay relative (this week, overdue now).
+ */
+export const DEFAULT_VIEWS: Partial<Record<ViewPage, { key: string; params: Record<string, string>; name: Record<Locale4, string> }[]>> = {
+  cases: [
+    { key: 'mine', params: { scope: 'open', assignee: 'me' }, name: { az: 'Mənim aktiv müraciətlərim', de: 'Meine offenen Fälle', en: 'My open cases', ru: 'Мои активные заявки' } },
+    { key: 'recognitionOverdue', params: { recognition: 'overdue' }, name: { az: 'Gecikən tanınmalar', de: 'Überfällige Anerkennungen', en: 'Overdue recognitions', ru: 'Просроченные признания' } },
+    { key: 'embassyWeek', params: { appointment: 'week' }, name: { az: 'Bu həftə səfirlik', de: 'Botschaft diese Woche', en: 'Embassy this week', ru: 'Посольство на этой неделе' } },
+    { key: 'unassigned', params: { scope: 'open', assignee: 'none' }, name: { az: 'Təyinatsız', de: 'Ohne Zuständigen', en: 'Unassigned', ru: 'Без ответственного' } },
+    { key: 'pendingDocs', params: { scope: 'open', pendingDocs: '1' }, name: { az: 'Yoxlanılacaq sənədlər', de: 'Dokumente zu prüfen', en: 'Documents to review', ru: 'Документы на проверку' } },
+  ],
+  inquiries: [
+    { key: 'new', params: { status: 'NEW' }, name: { az: 'Yeni sorğular', de: 'Neue Anfragen', en: 'New inquiries', ru: 'Новые запросы' } },
+    { key: 'mine', params: { assignee: 'me' }, name: { az: 'Mənim sorğularım', de: 'Meine Anfragen', en: 'My inquiries', ru: 'Мои запросы' } },
+    { key: 'unassigned', params: { assignee: 'none' }, name: { az: 'Təyinatsız', de: 'Ohne Zuständigen', en: 'Unassigned', ru: 'Без ответственного' } },
+  ],
+};
+
+/**
+ * Adds the default views of `page` to the user's private views once (or, with `restore`, the defaults whose
+ * filters the user no longer has). Returns how many were added.
+ */
+export const seedDefaultViews = async (userId: string, page: ViewPage, locale: string, restore = false) => {
+  const defs = DEFAULT_VIEWS[page] ?? [];
+  const lang: Locale4 = (['az', 'de', 'en', 'ru'] as const).find((l) => l === locale) ?? 'az';
+  return withViewLocks([userViewsKey(userId)], async (db) => {
+    const own = await readUserViews(userId, db);
+    const seeded = own.seeded ?? [];
+    if (seeded.includes(page) && !restore) return 0;
+    const now = new Date().toISOString();
+    const have = own.views.filter((v) => v.page === page);
+    const missing = defs.filter((d) => !have.some((v) => sameViewParams(v.params, d.params)));
+    const room = Math.max(0, VIEWS_PER_USER_MAX - own.views.length);
+    const added = missing.slice(0, room).map((d) => ({ id: newViewId(), page, name: d.name[lang], params: { ...d.params }, columns: null, ownerId: userId, createdAt: now, updatedAt: now }));
+    own.views.push(...added);
+    own.seeded = [...new Set([...seeded, page])];
+    await writeUserViews(userId, own, db);
+    return added.length;
+  });
+};
+
+const sameViewParams = (a: Record<string, string>, b: Record<string, string>) => {
+  const ka = Object.keys(a).sort();
+  const kb = Object.keys(b).sort();
+  return ka.length === kb.length && ka.every((k, i) => k === kb[i] && a[k] === b[k]);
+};
+
+/** List pages whose defaults the user already received. */
+export const seededPages = async (userId: string) => (await readUserViews(userId)).seeded ?? [];
 
 // ─── Table settings + "what's new" ─────────────────────────────────────
 

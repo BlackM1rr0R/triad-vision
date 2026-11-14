@@ -119,6 +119,7 @@ const ConfirmEmailChange = lazyRoute('ConfirmEmailChange', () => import('./pages
 const TwoFactor = lazyRoute('TwoFactor', () => import('./pages/auth/TwoFactor'));
 const Jobs = lazyRoute('Jobs', () => import('./pages/jobs/Jobs'));
 const JobDetail = lazyRoute('JobDetail', () => import('./pages/jobs/JobDetail'));
+const JobLanding = lazyRoute('JobLanding', () => import('./pages/jobs/JobLanding')); // /jobs/in/:city/:profession (server lib/jobLandings.ts)
 const EmployerRegister = lazyRoute('EmployerRegister', () => import('./pages/company/EmployerRegister'));
 const CompanyApp = lazyRoute('CompanyApp', () => import('./pages/company/CompanyApp'));
 const AgentApp = lazyRoute('AgentApp', () => import('./pages/agent/AgentApp'));
@@ -157,6 +158,7 @@ const GuideDetail = lazyRoute('GuideDetail', () => import('./pages/guides/GuideD
 const ChancenkarteCalculator = lazyRoute('ChancenkarteCalculator', () => import('./pages/tools/ChancenkarteCalculator'));
 const BlueCardCheck = lazyRoute('BlueCardCheck', () => import('./pages/tools/BlueCardCheck'));
 const AdminGuides = lazyRoute('AdminGuides', () => import('./pages/admin/Guides'));
+const AdminSearchPerformance = lazyRoute('AdminSearchPerformance', () => import('./pages/admin/SearchPerformance')); // Google Search Console (ADMIN+)
 const AdminArrivals = lazyRoute('AdminArrivals', () => import('./pages/admin/Arrivals'));
 const AdminPartnerHousing = lazyRoute('AdminPartnerHousing', () => import('./pages/admin/PartnerHousing')); // partner landlords + Anmeldung deadlines
 const AdminExpiring = lazyRoute('AdminExpiring', () => import('./pages/admin/Expiring'));
@@ -173,11 +175,9 @@ const AdminToday = lazyRoute('AdminToday', () => import('./pages/admin/Today'));
 const StatusPage = lazyRoute('StatusPage', () => import('./pages/Status')); // public status check without login
 const AdminProblemReports = lazyRoute('AdminProblemReports', () => import('./pages/admin/ProblemReports')); // "Problem bildirişləri"
 
-/** /admin: STAFF land on their "my work today" queue, ADMIN / SUPER_ADMIN on the dashboard (also at /admin/dashboard). */
-const AdminIndex = () => {
-  const { user } = useAuth();
-  return user?.role === 'STAFF' ? <Navigate to="/admin/today" replace /> : <AdminDashboard />;
-};
+const AdminMyDay = lazyRoute('AdminMyDay', () => import('./pages/admin/MyDay')); // "Bu günüm": day plan on the my-work queue
+/** /admin: the own start page (pages/admin/AdminIndex), else STAFF → queue, ADMIN+ → dashboard (also at /admin/dashboard). */
+const AdminIndex = lazyRoute('AdminIndex', () => import('./pages/admin/AdminIndex'));
 const AdminPartners = lazyRoute('AdminPartners', () => import('./pages/admin/Partners'));
 const AdminClientRegister = lazyRoute('AdminClientRegister', () => import('./pages/admin/ClientRegister'));
 const AdminSettlements = lazyRoute('AdminSettlements', () => import('./pages/admin/Settlements'));
@@ -443,6 +443,7 @@ export default function App() {
             <Route path="legal/:kind/:version" element={<LegalArchivedVersion />} />
             <Route path="jobs" element={<Jobs />} />
             <Route path="jobs/:slug" element={<JobDetail />} />
+            <Route path="jobs/in/:city/:profession" element={<JobLanding />} />
             <Route path="employers/register" element={<EmployerRegister />} />
             <Route
               path="company/*"
@@ -554,6 +555,7 @@ export default function App() {
           >
             <Route index element={<AdminIndex />} />
             <Route path="today" element={<AdminToday />} />
+            <Route path="my-day" element={<AdminMyDay />} />
             <Route
               path="system/modules"
               element={
@@ -677,6 +679,14 @@ export default function App() {
             <Route path="docs/audit" element={<AdminDocsAudit />} />
             <Route path="content/:resource" element={<AdminContent />} />
             <Route path="guides" element={<AdminGuides />} />
+            <Route
+              path="search-performance"
+              element={
+                <RequireAuth roles={['ADMIN', 'SUPER_ADMIN']}>
+                  <AdminSearchPerformance />
+                </RequireAuth>
+              }
+            />
             <Route path="settings" element={<AdminSettings />} />
             <Route
               path="design-system"

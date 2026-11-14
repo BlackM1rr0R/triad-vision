@@ -186,6 +186,14 @@ const az = {
       restoreVersionBody: 'Bu versiya yeni cari versiya kimi saxlanacaq; tarixçə itmir.',
       previewTitle: 'Önizləmə',
     },
+    quick: {
+      title: 'Cəld baxış: {{name}}',
+      counter: '{{n}} / {{total}}',
+      prev: 'Əvvəlki fayl',
+      next: 'Növbəti fayl',
+      openTab: 'Yeni vərəqdə aç',
+      hint: 'Boşluq və ya Esc — bağla · ← → — əvvəlki / növbəti fayl',
+    },
     toasts: {
       folderCreated: 'Qovluq yaradıldı',
       renamed: 'Adı dəyişdirildi',
@@ -663,6 +671,14 @@ const de: Copy = {
       restoreVersionBody: 'Diese Version wird als neue aktuelle Version gespeichert; der Verlauf bleibt erhalten.',
       previewTitle: 'Vorschau',
     },
+    quick: {
+      title: 'Schnellansicht: {{name}}',
+      counter: '{{n}} / {{total}}',
+      prev: 'Vorherige Datei',
+      next: 'Nächste Datei',
+      openTab: 'In neuem Tab öffnen',
+      hint: 'Leertaste oder Esc — schließen · ← → — vorherige / nächste Datei',
+    },
     toasts: {
       folderCreated: 'Ordner angelegt',
       renamed: 'Umbenannt',
@@ -1138,6 +1154,14 @@ const en: Copy = {
       restoreVersionBody: 'This version becomes the new current version; the history is kept.',
       previewTitle: 'Preview',
     },
+    quick: {
+      title: 'Quick look: {{name}}',
+      counter: '{{n}} / {{total}}',
+      prev: 'Previous file',
+      next: 'Next file',
+      openTab: 'Open in a new tab',
+      hint: 'Space or Esc — close · ← → — previous / next file',
+    },
     toasts: {
       folderCreated: 'Folder created',
       renamed: 'Renamed',
@@ -1612,6 +1636,14 @@ const ru: Copy = {
       restoreVersionTitle: 'Восстановить версию {{version}}?',
       restoreVersionBody: 'Эта версия станет новой текущей; история сохранится.',
       previewTitle: 'Просмотр',
+    },
+    quick: {
+      title: 'Быстрый просмотр: {{name}}',
+      counter: '{{n}} / {{total}}',
+      prev: 'Предыдущий файл',
+      next: 'Следующий файл',
+      openTab: 'Открыть в новой вкладке',
+      hint: 'Пробел или Esc — закрыть · ← → — предыдущий / следующий файл',
     },
     toasts: {
       folderCreated: 'Папка создана',

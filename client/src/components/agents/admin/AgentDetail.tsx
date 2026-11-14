@@ -9,6 +9,7 @@ import { EmptyState, ErrorBlock, LoadingBlock, Panel, StatTile } from '@/compone
 import { StatusBadge } from '@/components/admin/StatusBadge';
 import { fmtDate } from '@/components/admin/labels';
 import { Spinner } from '@/components/ui/Spinner';
+import { PhoneInput, phoneInvalid } from '@/components/ui/PhoneInput';
 import type { CaseStatus } from '@/lib/types';
 import type { AdminAgent, AdminCommission, AdminReferral } from '../types';
 import { money } from '../format';
@@ -100,7 +101,12 @@ const ProfileForm = ({ agent }: { agent: AdminAgent }) => {
         <div className="grid gap-3 sm:grid-cols-2">
           {input('firstName', t('agents.admin.create.firstName'), { required: true, maxLength: 80 })}
           {input('lastName', t('agents.admin.create.lastName'), { required: true, maxLength: 80 })}
-          {input('phone', t('agents.admin.create.phone'), { type: 'tel', maxLength: 40 })}
+          <div>
+            <label className="label" htmlFor="agent-phone">
+              {t('agents.admin.create.phone')}
+            </label>
+            <PhoneInput id="agent-phone" country="AZ" current={agent.user.phone} value={f.phone} onChange={(phone) => setF((s) => ({ ...s, phone }))} />
+          </div>
           {input('code', t('agents.admin.create.code'), { required: true, maxLength: 32, className: 'input font-mono uppercase' })}
           {input('region', t('agents.admin.create.region'), { maxLength: 120 })}
           {input('company', t('agents.admin.create.company'), { maxLength: 160 })}
@@ -119,7 +125,7 @@ const ProfileForm = ({ agent }: { agent: AdminAgent }) => {
         <TermsFields value={terms} onChange={setTerms} />
       </div>
       <div className="lg:col-span-2">
-        <button type="submit" className="btn-primary btn-sm" disabled={save.isPending}>
+        <button type="submit" className="btn-primary btn-sm" disabled={save.isPending || phoneInvalid(f.phone, { country: 'AZ', current: agent.user.phone })}>
           {save.isPending && <Spinner className="size-4" />} {t('agents.common.save')}
         </button>
       </div>

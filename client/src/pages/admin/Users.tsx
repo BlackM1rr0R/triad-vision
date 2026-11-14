@@ -24,6 +24,7 @@ import { ViewAsClientButton } from '@/components/privacyTools/ViewAsClientButton
 import { useNewParam } from '@/components/command/useNewParam'; // ?new=1 deep link (Ctrl+K palette)
 import { usePartnerOptions } from '@/components/partners/api';
 import { PasswordInput } from '@/components/ui/PasswordInput';
+import { PhoneInput, phoneInvalid } from '@/components/ui/PhoneInput';
 import { ClientOwnerDialog } from '@/components/partners/Ownership'; // partner-owned clients: badge, filter, owner change
 import { Pagination } from '@/components/ui/Pagination';
 import { StaffDeskSelect } from '@/components/admin/StaffDeskSelect'; // sidebar desk of a staff member (ADMIN+)
@@ -114,7 +115,7 @@ const CreateUserModal = ({ open, onClose }: { open: boolean; onClose: () => void
     onError: (err) => (errorCode(err).startsWith('MAIL') ? toastMailboxError(err) : toastError(err)),
   });
   const passwordOk = isStrongPassword(f.password);
-  const valid = /\S+@\S+\.\S+/.test(f.email) && passwordOk && f.firstName.trim() && f.lastName.trim() && mailboxReady;
+  const valid = /\S+@\S+\.\S+/.test(f.email) && passwordOk && f.firstName.trim() && f.lastName.trim() && mailboxReady && !phoneInvalid(f.phone);
 
   if (created) {
     return (
@@ -190,7 +191,7 @@ const CreateUserModal = ({ open, onClose }: { open: boolean; onClose: () => void
           <label className="label" htmlFor="cu-phone">
             {t('admin.users.phoneOptional')}
           </label>
-          <input id="cu-phone" type="tel" className="input" value={f.phone} onChange={(e) => setF({ ...f, phone: e.target.value })} />
+          <PhoneInput id="cu-phone" value={f.phone} onChange={(phone) => setF({ ...f, phone })} />
         </div>
         <div>
           <label className="label" htmlFor="cu-role">

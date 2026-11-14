@@ -42,7 +42,8 @@ if [ -d "$APP_DIR/data/mail" ]; then
     RESTART_MAIL=1
   fi
 fi
-tar -czf "$WORK/backup.tar.gz" -C "$WORK" database.sql -C "$APP_DIR/data" uploads docs "${MAIL_DIRS[@]}"
+# uploads/cache: resized public images (/api/img), re-created on demand — not worth backing up.
+tar -czf "$WORK/backup.tar.gz" --exclude=uploads/cache -C "$WORK" database.sql -C "$APP_DIR/data" uploads docs "${MAIL_DIRS[@]}"
 if [ "${RESTART_MAIL:-0}" = 1 ]; then docker start "$MAIL_CONTAINER" >/dev/null; fi
 OUT="$BACKUP_DIR/triad-$STAMP.tar.gz.enc"
 openssl enc -aes-256-cbc -pbkdf2 -iter 200000 -salt -pass "file:$KEY_FILE" -in "$WORK/backup.tar.gz" -out "$OUT"

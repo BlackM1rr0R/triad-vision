@@ -57,6 +57,16 @@ describe('buildJourney', () => {
     expect(j.arrival).toEqual({ at: null, done: false });
   });
 
+  it('recognition: none without a procedure; running = current; decided = done with the outcome', () => {
+    expect(buildJourney({ city: 'Baku', nationality: 'AZ' }, caseOf(), forecast(), travel()).recognition).toBeNull();
+    const running = buildJourney({ city: 'Baku', nationality: 'AZ' }, caseOf(), forecast(), travel({ recognition: { status: 'IN_REVIEW', createdAt: d('2026-08-10'), submittedAt: d('2026-08-20'), decisionAt: null } }));
+    expect(running.recognition).toEqual({ status: 'current', outcome: null, startedAt: d('2026-08-10').toISOString(), submittedAt: d('2026-08-20').toISOString(), decisionAt: null });
+    const partial = buildJourney({ city: 'Baku', nationality: 'AZ' }, caseOf(), forecast(), travel({ recognition: { status: 'PARTIALLY_RECOGNISED', createdAt: d('2026-08-10'), submittedAt: null, decisionAt: d('2026-09-15') } }));
+    expect(partial.recognition).toMatchObject({ status: 'done', outcome: 'PARTIAL', decisionAt: d('2026-09-15').toISOString() });
+    const refused = buildJourney({ city: 'Baku', nationality: 'AZ' }, caseOf(), forecast(), travel({ recognition: { status: 'REJECTED', createdAt: d('2026-08-10'), submittedAt: null, decisionAt: d('2026-09-15') } }));
+    expect(refused.recognition).toMatchObject({ status: 'done', outcome: 'REJECTED' });
+  });
+
   it('falls back to the vacancy city, and to an unknown origin without coordinates', () => {
     const j = buildJourney({ city: null, nationality: null }, caseOf({ company: null }), null, travel());
     expect(j.destination.city).toBe('Berlin');

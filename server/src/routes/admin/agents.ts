@@ -14,6 +14,7 @@ import { agentStats } from '../../lib/agents/stats.js';
 import { sendAgentInvite } from '../../lib/agents/invite.js';
 import { AGENT_TEXT, formatMoney } from '../../lib/agents/texts.js';
 import { ibanField } from '../../lib/agents/validation.js';
+import { phoneInput } from '../../lib/phoneField.js';
 
 // Admin: agents (partner programme) and their commissions — mounted at /api/admin/agents (ADMIN+)
 export const adminAgentsRouter = Router();
@@ -176,7 +177,7 @@ adminAgentsRouter.post('/', async (req, res) => {
         role: 'AGENT',
         firstName: body.firstName,
         lastName: body.lastName,
-        phone: body.phone ?? null,
+        phone: phoneInput(body.phone, { country: 'AZ' }) ?? null,
         locale: body.locale,
       },
     });
@@ -459,7 +460,8 @@ adminAgentsRouter.patch('/:id', async (req, res) => {
   const before = await loadAgent(req.params.id);
   checkTerms(body.commissionType ?? before.commissionType, body.commissionValue ?? (body.commissionType ? before.commissionValue : undefined));
   if (body.code && body.code !== before.code && (await prisma.agent.findUnique({ where: { code: body.code } }))) throw conflict('CODE_TAKEN');
-  const { firstName, lastName, phone, ...agentData } = body;
+  const { firstName, lastName, phone: phoneRaw, ...agentData } = body;
+  const phone = phoneInput(phoneRaw, { current: before.user.phone, country: 'AZ' });
   await prisma.$transaction(async (tx) => {
     await tx.agent.update({ where: { id: before.id }, data: agentData });
     if (firstName !== undefined || lastName !== undefined || phone !== undefined) {

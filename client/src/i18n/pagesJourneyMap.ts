@@ -13,6 +13,7 @@ const az = {
     stopped: 'Müraciət dayandırılıb',
     milestones: {
       documents: 'Sənədlər',
+      recognition: 'Diplomun tanınması',
       contract: 'Müqavilə',
       embassy: 'Səfirlik',
       decision: 'Qərar',
@@ -29,6 +30,10 @@ const az = {
     rejected: 'Müraciət rədd edilib',
     approved: 'Viza təsdiqlənib',
     estimateNote: 'Tarixlər oxşar müraciətlərə əsaslanan təxmini proqnozdur.',
+    submitted: 'Göndərilib: {{date}}',
+    recognitionRejected: 'Tanınmadı',
+    nowLabel: 'İndi',
+    nextLabel: 'Növbəti addım',
   },
 };
 
@@ -47,6 +52,7 @@ const de: Copy = {
     stopped: 'Antrag beendet',
     milestones: {
       documents: 'Unterlagen',
+      recognition: 'Anerkennung',
       contract: 'Vertrag',
       embassy: 'Botschaft',
       decision: 'Entscheidung',
@@ -63,6 +69,10 @@ const de: Copy = {
     rejected: 'Antrag abgelehnt',
     approved: 'Visum erteilt',
     estimateNote: 'Die Daten sind eine Schätzung auf Basis ähnlicher Anträge.',
+    submitted: 'Eingereicht: {{date}}',
+    recognitionRejected: 'Nicht anerkannt',
+    nowLabel: 'Jetzt',
+    nextLabel: 'Nächster Schritt',
   },
 };
 
@@ -79,6 +89,7 @@ const en: Copy = {
     stopped: 'Application closed',
     milestones: {
       documents: 'Documents',
+      recognition: 'Recognition',
       contract: 'Contract',
       embassy: 'Embassy',
       decision: 'Decision',
@@ -95,6 +106,10 @@ const en: Copy = {
     rejected: 'Application refused',
     approved: 'Visa approved',
     estimateNote: 'Dates are an estimate based on similar applications.',
+    submitted: 'Submitted: {{date}}',
+    recognitionRejected: 'Not recognised',
+    nowLabel: 'Now',
+    nextLabel: 'Next step',
   },
 };
 
@@ -111,6 +126,7 @@ const ru: Copy = {
     stopped: 'Заявка закрыта',
     milestones: {
       documents: 'Документы',
+      recognition: 'Признание диплома',
       contract: 'Договор',
       embassy: 'Посольство',
       decision: 'Решение',
@@ -127,6 +143,10 @@ const ru: Copy = {
     rejected: 'В заявке отказано',
     approved: 'Виза одобрена',
     estimateNote: 'Даты — примерный прогноз на основе похожих заявок.',
+    submitted: 'Подано: {{date}}',
+    recognitionRejected: 'Не признано',
+    nowLabel: 'Сейчас',
+    nextLabel: 'Следующий шаг',
   },
 };
 

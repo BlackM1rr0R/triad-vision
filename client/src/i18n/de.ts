@@ -457,6 +457,7 @@ const de: Messages = {
       INVALID_TRANSITION: 'Diese Aktion ist im aktuellen Schritt nicht möglich. Bitte laden Sie die Seite neu.',
       UPLOAD_NOT_ALLOWED: 'In dieser Phase ist kein Dokumentenupload möglich.',
       WRONG_PASSWORD: 'Das aktuelle Passwort ist falsch.',
+      INVALID_PHONE: 'Bitte die Telefonnummer mit Ländervorwahl eingeben, z. B. +49 151 12345678 oder +994 50 123 45 67.',
       DELETE_NOT_ALLOWED: 'Diese Datei kann nicht gelöscht werden.',
       UNSUPPORTED_FILE_TYPE: 'Dieser Dateityp wird nicht akzeptiert.',
       FILE_TOO_LARGE: 'Die Datei ist zu groß (max. 5 MB).',

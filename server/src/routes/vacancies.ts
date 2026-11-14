@@ -21,6 +21,9 @@ import {
   visaForMatch,
 } from '../lib/vacancies.js';
 import { syncApplicationFolder } from '../lib/drive/vacancyFolders.js';
+import { getSeoData, jobRegion, liveJobs, parseLocale } from '../lib/seo.js';
+import { SEO_LOCALES } from '../lib/seoCatalogue.js';
+import { jobLandingTexts, jobLandings, landingOfJob, relatedLandings, type JobLanding } from '../lib/jobLandings.js';
 
 // Public vacancy board + candidate applications — mounted at /api/vacancies
 export const vacanciesRouter = Router();
@@ -163,6 +166,38 @@ vacanciesRouter.get('/options', publicLimiter, async (_req, res) => {
   res.json({ items: rows });
 });
 
+// ─── Profession × city landing pages (lib/jobLandings.ts) ──────────────
+
+/**
+ * GET /api/vacancies/landing/:city/:profession?lng=de — the page /jobs/in/:city/:profession: its texts (H1,
+ * title, intro, labels) in that language, the open vacancies (public shape, newest first) and the related
+ * landing pages. 404 when the combination has no live vacancy. Same source as the sitemap and /__seo/status.
+ */
+vacanciesRouter.get('/landing/:city/:profession', publicLimiter, async (req, res) => {
+  const lng = parseLocale(req.query.lng) ?? 'az';
+  const all = jobLandings(liveJobs(await getSeoData()));
+  const landing = all.find((l) => l.citySlug === req.params.city && l.professionSlug === req.params.profession);
+  if (!landing) throw notFound('JOB_LANDING_NOT_FOUND');
+  const rows = await prisma.vacancy.findMany({ where: { AND: [openVacancyWhere(), { slug: { in: landing.jobs.map((j) => j.slug) } }] }, include: publicInclude });
+  const bySlug = new Map(rows.map((r) => [r.slug, r]));
+  const items = landing.jobs.flatMap((j) => (bySlug.has(j.slug) ? [publicVacancy(bySlug.get(j.slug)!)] : []));
+  if (!items.length) throw notFound('JOB_LANDING_NOT_FOUND');
+  const rel = relatedLandings(all, landing);
+  const linkOf = (x: JobLanding) => ({ path: x.path, label: jobLandingTexts(x, lng, null).linkLabel });
+  res.setHeader('Cache-Control', 'public, max-age=60');
+  res.json({
+    landing: { path: landing.path, city: landing.city, citySlug: landing.citySlug, profession: landing.profession, professionSlug: landing.professionSlug, ...jobLandingTexts(landing, lng, jobRegion(landing.city)) },
+    items,
+    related: { sameCity: rel.sameCity.map(linkOf), sameProfession: rel.sameProfession.map(linkOf) },
+  });
+});
+
+/** The landing page of a vacancy (link on the vacancy page), with its link text in every language. */
+const landingLinkOf = async (v: { city: string | null; profession: string | null; title: unknown }) => {
+  const own = landingOfJob(liveJobs(await getSeoData()), v);
+  return own ? { path: own.path, label: Object.fromEntries(SEO_LOCALES.map((l) => [l, jobLandingTexts(own, l, null).linkLabel])) } : null;
+};
+
 const loadOpen = async (slug: string) => {
   const v = await prisma.vacancy.findUnique({ where: { slug }, include: publicInclude });
   if (!v || !isOpen(v)) throw notFound('VACANCY_NOT_FOUND');
@@ -172,7 +207,7 @@ const loadOpen = async (slug: string) => {
 vacanciesRouter.get('/:slug', publicLimiter, async (req, res) => {
   const v = await loadOpen(String(req.params.slug));
   res.setHeader('Cache-Control', 'public, max-age=30');
-  res.json({ vacancy: publicVacancy(v) });
+  res.json({ vacancy: { ...publicVacancy(v), landing: await landingLinkOf(v) } });
 });
 
 /** The signed-in candidate's view of a vacancy: match score, gaps and their application (if any). */

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { PrismaClient } from '@prisma/client';
-import { DRAFT_KEYS, GUIDE_DRAFTS, draftPlaceholders, seedGuideDrafts } from '../../prisma/seed/guideDrafts/index.js';
+import { DRAFT_KEYS, GUIDE_DRAFTS, PUBLISHED_ON_CREATE, draftPlaceholders, seedGuideDrafts } from '../../prisma/seed/guideDrafts/index.js';
 import { GUIDES } from '../../prisma/seed/guides/index.js';
 import { markdownToText, renderGuideMarkdown } from '../../src/lib/guides/markdown.js';
 import { PLACEHOLDER_RE, guidePlaceholders } from '../../src/lib/guides/placeholders.js';
@@ -37,15 +37,15 @@ const fakePrisma = (rows: Row[] = []) => {
 const opts = { localize: (p: string) => p, guideHref: () => null };
 
 describe('SEO guide drafts (content)', () => {
-  it('covers the planned keys and languages, no tr/uk', () => {
+  it('covers the planned keys and languages (tr/uk for the job-seeker guides)', () => {
     const ids = GUIDE_DRAFTS.map((d) => `${d.key}:${d.locale}`).sort();
     expect(ids).toEqual(
       [
-        'driver-jobs:az', 'driver-jobs:ru', 'driver-jobs:en',
-        'work-visa:az', 'work-visa:ru', 'work-visa:en',
-        'salary-net:az', 'salary-net:ru',
-        'first-month:az', 'first-month:ru',
-        'jobs-azerbaijan:az', 'jobs-azerbaijan:ru',
+        'driver-jobs:az', 'driver-jobs:ru', 'driver-jobs:en', 'driver-jobs:tr', 'driver-jobs:uk',
+        'work-visa:az', 'work-visa:ru', 'work-visa:en', 'work-visa:tr', 'work-visa:uk',
+        'salary-net:az', 'salary-net:ru', 'salary-net:tr', 'salary-net:uk',
+        'first-month:az', 'first-month:ru', 'first-month:tr', 'first-month:uk',
+        'jobs-azerbaijan:az', 'jobs-azerbaijan:ru', 'jobs-azerbaijan:tr', 'jobs-azerbaijan:uk',
         'employer-azerbaijan:de', 'employer-azerbaijan:en',
         'employer-drivers:de', 'employer-nursing:de', 'employer-apprentices:de', 'fast-track-81a:de',
       ].sort(),
@@ -87,11 +87,12 @@ describe('SEO guide drafts (content)', () => {
 });
 
 describe('seedGuideDrafts', () => {
-  it('creates only unpublished rows and is idempotent', async () => {
+  it('creates unpublished rows (tr/uk translations of checked texts: published) and is idempotent', async () => {
     const { prisma, rows } = fakePrisma();
     expect(await seedGuideDrafts(prisma)).toBe(GUIDE_DRAFTS.length);
     expect(rows).toHaveLength(GUIDE_DRAFTS.length);
-    expect(rows.every((r) => r.published === false)).toBe(true);
+    for (const r of rows) expect(r.published, `${r.key} ${r.locale}`).toBe(PUBLISHED_ON_CREATE.includes(r.locale as never));
+    expect(rows.filter((r) => r.published).map((r) => r.locale).sort()).toEqual([...Array(5).fill('tr'), ...Array(5).fill('uk')]);
     expect(await seedGuideDrafts(prisma)).toBe(0);
     expect(rows).toHaveLength(GUIDE_DRAFTS.length);
   });
@@ -115,7 +116,7 @@ describe('seedGuideDrafts', () => {
   it('refreshes an unfinished draft (unpublished, placeholders left) with the checked text, never a reviewed or published page', async () => {
     const { prisma, rows } = fakePrisma();
     await seedGuideDrafts(prisma);
-    const [a, b, c] = rows;
+    const [a, b, c] = rows.filter((r) => !r.published);
     Object.assign(a, { body: 'old [YOXLA: x] text', title: 'Old' });
     Object.assign(b, { body: 'owner edited, no markers', title: 'Owner' });
     Object.assign(c, { body: 'old [CHECK: y]', title: 'Live', published: true });

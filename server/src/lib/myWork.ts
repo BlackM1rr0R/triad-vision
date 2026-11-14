@@ -44,6 +44,8 @@ export const WORK_KINDS = [
   'accelerated_deadline', // § 81a: embassy appointment / decision, fee, reply to the authority (lib/recognition)
   'processing', // team document workflow: a colleague handed the case to the viewer ("Schon geschrieben", lib/caseProcessing)
   'partner_contract', // employer / referral partner contract: end date or notice deadline within its reminder lead time (lib/partnerRecords)
+  'client_message', // the client wrote in the case messages and the team has not answered yet ("Bu günüm")
+  'interview', // employer ↔ candidate interview today / this week run by the viewer ("Bu günüm")
 ] as const;
 export type WorkKind = (typeof WORK_KINDS)[number];
 
@@ -77,6 +79,8 @@ const CATEGORY: Record<WorkKind, WorkCategory> = {
   accelerated_deadline: 'documents',
   processing: 'documents',
   partner_contract: 'documents',
+  client_message: 'mail',
+  interview: 'bookings',
 };
 
 /** Page that lists all items of a kind (the "+N more" link). */
@@ -107,6 +111,8 @@ const MORE_LINK: Record<WorkKind, string> = {
   accelerated_deadline: '/admin/accelerated?soon=7',
   processing: '/admin/cases?processingAssignee=me',
   partner_contract: '/admin/companies',
+  client_message: '/admin/cases',
+  interview: '/admin/interviews',
 };
 
 export type WorkPriority = 'URGENT' | 'HIGH' | 'NORMAL';
@@ -1160,6 +1166,137 @@ const processingHandoffs = async (ctx: Ctx): Promise<Source> => {
   };
 };
 
+// ─── "Bu günüm": unanswered client messages, interviews ─────────────────
+
+/** Client messages are looked at this far back (older unanswered threads are a case for the case list). */
+export const CLIENT_MESSAGE_WINDOW_DAYS = 14;
+/** The team answers a client message within one day. */
+export const CLIENT_REPLY_SLA_HOURS = 24;
+const CLIENT_MESSAGE_SCAN = 1500;
+
+/**
+ * Cases whose latest message is from the client (the rule of the case page's "awaiting reply": a message by
+ * anyone but the case's client counts as the team's answer). `since` = the first client message after the
+ * team's last one.
+ */
+export const unansweredThreads = (rows: { caseId: string; createdAt: Date; fromClient: boolean }[]) => {
+  // rows: newest first
+  const out = new Map<string, { since: Date; count: number }>();
+  const closed = new Set<string>();
+  for (const m of rows) {
+    if (closed.has(m.caseId)) continue;
+    if (!m.fromClient) {
+      closed.add(m.caseId);
+      continue;
+    }
+    const cur = out.get(m.caseId);
+    out.set(m.caseId, { since: m.createdAt, count: (cur?.count ?? 0) + 1 });
+  }
+  return out;
+};
+
+const clientMessages = async (ctx: Ctx): Promise<Source> => {
+  const { now } = ctx.c;
+  const rows = await prisma.caseMessage.findMany({
+    where: { createdAt: { gte: new Date(now.getTime() - CLIENT_MESSAGE_WINDOW_DAYS * DAY) }, case: { status: { notIn: FINAL_STATUSES }, ...myCases(ctx) } },
+    select: { caseId: true, createdAt: true, authorId: true, body: true, case: { select: { clientId: true } } },
+    orderBy: { createdAt: 'desc' },
+    take: CLIENT_MESSAGE_SCAN,
+  });
+  const open = unansweredThreads(rows.map((m) => ({ caseId: m.caseId, createdAt: m.createdAt, fromClient: m.authorId === m.case.clientId })));
+  const ids = [...open.entries()].sort((a, b) => a[1].since.getTime() - b[1].since.getTime()).map(([id]) => id);
+  const latest = new Map<string, string>();
+  for (const m of rows) if (open.has(m.caseId) && !latest.has(m.caseId)) latest.set(m.caseId, m.body);
+  const cases = ids.length
+    ? await prisma.case.findMany({
+        where: { id: { in: ids.slice(0, LIMIT_PER_KIND) } },
+        select: { id: true, number: true, client: { select: { firstName: true, lastName: true, phone: true } }, assignedStaff: staffSelect },
+      })
+    : [];
+  const byId = new Map(cases.map((c) => [c.id, c]));
+  return {
+    kind: 'client_message',
+    total: ids.length,
+    items: ids
+      .slice(0, LIMIT_PER_KIND)
+      .map((id) => byId.get(id))
+      .filter((c): c is NonNullable<typeof c> => !!c)
+      .map((c) => {
+        const t = open.get(c.id)!;
+        const href = `${caseLink(c.id)}?tab=communication`;
+        const text = (latest.get(c.id) ?? '').replace(/\s+/g, ' ').trim();
+        return {
+          id: `client_message:${c.id}`,
+          kind: 'client_message' as const,
+          title: `${c.number} · ${name(c.client)}`,
+          subtitle: text ? (text.length > 140 ? `${text.slice(0, 139)}…` : text) : null,
+          note: { key: 'clientMessages', params: { count: t.count } },
+          priority: now.getTime() - t.since.getTime() > 2 * CLIENT_REPLY_SLA_HOURS * HOUR ? ('HIGH' as const) : ('NORMAL' as const),
+          dueAt: new Date(t.since.getTime() + CLIENT_REPLY_SLA_HOURS * HOUR),
+          since: t.since,
+          link: href,
+          refs: { caseId: c.id, caseNumber: c.number, phone: c.client.phone ?? null },
+          assignee: person(c.assignedStaff),
+          actions: [{ key: 'reply', label: 'reply', type: 'link' as const, href, primary: true }],
+        };
+      }),
+  };
+};
+
+const interviews = async (ctx: Ctx): Promise<Source> => {
+  const { now, endOfWeek } = ctx.c;
+  const where: Prisma.InterviewWhereInput = {
+    status: { in: ['PROPOSED', 'CONFIRMED'] },
+    // Still running (ends later than now) up to the end of the 7-day window.
+    endsAt: { gt: now },
+    startsAt: { lt: endOfWeek },
+    ...(ctx.team ? {} : ctx.isAdmin ? { OR: [{ staffId: ctx.viewer.id }, { staffId: null }] } : { staffId: ctx.viewer.id }),
+  };
+  const [rows, total] = await Promise.all([
+    prisma.interview.findMany({
+      where,
+      orderBy: { startsAt: 'asc' },
+      take: LIMIT_PER_KIND,
+      select: {
+        id: true,
+        startsAt: true,
+        endsAt: true,
+        status: true,
+        meetingUrl: true,
+        createdAt: true,
+        company: { select: { name: true } },
+        candidate: { select: { firstName: true, lastName: true } },
+        staff: staffSelect,
+      },
+    }),
+    prisma.interview.count({ where }),
+  ]);
+  return {
+    kind: 'interview',
+    total,
+    items: rows.map((iv) => {
+      const left = iv.startsAt.getTime() - now.getTime();
+      const actions: WorkAction[] = [open('/admin/interviews', !iv.meetingUrl)];
+      if (iv.meetingUrl && /^https:\/\//i.test(iv.meetingUrl)) actions.unshift({ key: 'join', label: 'join', type: 'url', href: iv.meetingUrl, primary: true });
+      return {
+        id: `interview:${iv.id}`,
+        kind: 'interview' as const,
+        title: join(name(iv.candidate), iv.company?.name) ?? name(iv.candidate),
+        subtitle: null,
+        note: { key: `interviewStatus.${iv.status}` },
+        priority: left < 2 * HOUR ? ('URGENT' as const) : left < DAY ? ('HIGH' as const) : ('NORMAL' as const),
+        // The end is the deadline: an interview in progress is not "overdue" (refs.startsAt carries the start).
+        dueAt: iv.endsAt,
+        since: iv.createdAt,
+        link: '/admin/interviews',
+        refs: { interviewId: iv.id, startsAt: iv.startsAt.toISOString(), endsAt: iv.endsAt.toISOString() },
+        assignee: person(iv.staff),
+        actions,
+      };
+    }),
+  };
+};
+
 // ─── Assembly ─────────────────────────────────────────────────────────
 
 export const buildMyWork = async (viewer: WorkViewer, opts: { team: boolean; tz?: number; now?: Date }): Promise<WorkResult> => {
@@ -1187,6 +1324,8 @@ export const buildMyWork = async (viewer: WorkViewer, opts: { team: boolean; tz?
     handovers(ctx), // absence handover notes / checklists
     embassyReviews(ctx), // four-eyes check of embassy packages
     processingHandoffs(ctx), // "X sent you Schon geschrieben" (team document workflow)
+    clientMessages(ctx), // client wrote, the team has not answered
+    interviews(ctx), // employer ↔ candidate interviews today / this week
     recognitionWork({ status: { not: 'CANCELLED' }, ...myCases(ctx) }, ctx.c.now), // Anerkennung deadlines (lib/recognition/work)
     acceleratedWork({ status: { not: 'CANCELLED' }, ...myCases(ctx) }, ctx.c.now), // § 81a deadlines
     partnerContractWork({ team: ctx.team, viewerId: ctx.viewer.id, isAdmin: ctx.isAdmin }, ctx.c.now), // employer / partner contracts ending (lib/partnerRecords/work)

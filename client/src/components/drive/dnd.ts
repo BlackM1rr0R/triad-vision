@@ -66,20 +66,60 @@ export const readDropped = async (dt: DataTransfer): Promise<PickedFile[]> => {
 
 export type DropKind = 'files' | 'move' | 'copy';
 
+/** Why a drop of explorer items onto a folder is refused (null: it is accepted). */
+export type DropRefusal = 'self' | 'descendant' | 'noop' | null;
+
+/**
+ * Pure check behind every drop target: never into one of the dragged items, never into a folder below a dragged
+ * folder (`targetAncestors` = ids from the root down to the target's parent, when the target knows them), and a
+ * move whose items all already live in the target is a no-op. The server refuses the same cases (INTO_ITSELF).
+ */
+export const dropRefusal = (
+  items: readonly Pick<DriveItem, 'id' | 'parentId'>[],
+  targetId: string,
+  copy: boolean,
+  targetAncestors: readonly string[] = [],
+): DropRefusal => {
+  if (items.some((i) => i.id === targetId)) return 'self';
+  if (targetAncestors.length && items.some((i) => targetAncestors.includes(i.id))) return 'descendant';
+  if (!copy && items.length > 0 && items.every((i) => i.parentId === targetId)) return 'noop';
+  return null;
+};
+
+/**
+ * "Geri al" after a move: the moved items go back to the folders they came from, one request per original folder.
+ * Items without a parent (roots) and items that failed to move are left out.
+ */
+export const undoMovePlan = (items: readonly Pick<DriveItem, 'id' | 'parentId'>[], movedIds: readonly string[]) => {
+  const moved = new Set(movedIds);
+  const byParent = new Map<string, string[]>();
+  for (const i of items) {
+    if (!moved.has(i.id) || !i.parentId) continue;
+    const list = byParent.get(i.parentId) ?? [];
+    list.push(i.id);
+    byParent.set(i.parentId, list);
+  }
+  return [...byParent].map(([targetId, ids]) => ({ targetId, ids }));
+};
+
 /**
  * Makes an element a drop target for OS files (upload) and explorer items (move; copy with Ctrl/⌥).
- * A target refuses internal drags of itself, of its direct children (no-op move) and of its ancestors.
+ * A target refuses internal drags of itself, of its direct children (no-op move) and, when `ancestorIds`
+ * is given (sidebar tree), drags of the folders above it.
  */
 export const useDropTarget = ({
   targetId,
   enabled,
   onFiles,
   onItems,
+  ancestorIds,
 }: {
   targetId: string;
   enabled: boolean;
   onFiles?: (files: PickedFile[], targetId: string) => void;
   onItems?: (items: DriveItem[], targetId: string, copy: boolean) => void;
+  /** Ids from the root down to the target's parent. */
+  ancestorIds?: readonly string[];
 }) => {
   const [over, setOver] = useState<DropKind | null>(null);
   const depth = useRef(0);
@@ -90,15 +130,14 @@ export const useDropTarget = ({
       const types = Array.from(e.dataTransfer.types);
       if (types.includes(DRIVE_DRAG_TYPE)) {
         if (!onItems || !current) return null;
-        if (current.some((i) => i.id === targetId)) return null;
         const copy = e.ctrlKey || e.altKey || e.metaKey || current.some((i) => i.virtual);
-        if (!copy && current.every((i) => i.parentId === targetId)) return null;
+        if (dropRefusal(current, targetId, copy, ancestorIds)) return null;
         return copy ? 'copy' : 'move';
       }
       if (types.includes('Files')) return onFiles ? 'files' : null;
       return null;
     },
-    [enabled, onFiles, onItems, targetId],
+    [enabled, onFiles, onItems, targetId, ancestorIds],
   );
 
   const onDragEnter = useCallback(

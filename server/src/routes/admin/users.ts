@@ -9,6 +9,7 @@ import { HttpError, badRequest, conflict, notFound, parse } from '../../lib/http
 import { audit } from '../../lib/audit.js';
 import { ensurePersonalRoot } from '../../lib/drive/roots.js';
 import { password } from '../auth.js';
+import { phoneInput } from '../../lib/phoneField.js';
 import { deleteUserAccount, loadDeletionTarget, userDeletionPreview } from '../../lib/userDeletion.js';
 import { XLSX_MIME, buildClientsWorkbook } from '../../lib/clientsExcel.js';
 import { clientSettings, stalwartConfig, stalwartDomain } from '../../lib/stalwart/config.js';
@@ -142,7 +143,7 @@ adminUsersRouter.post('/', requireMinRole('SUPER_ADMIN'), async (req, res) => {
     plan = { ...(await preflightStaffMailbox(localPart)), localPart };
   }
   const user = await prisma.user.create({
-    data: { ...rest, passwordHash: await bcrypt.hash(pw, 12) },
+    data: { ...rest, phone: phoneInput(rest.phone) ?? null, passwordHash: await bcrypt.hash(pw, 12) },
     select: userSelect,
   });
   await ensurePersonalRoot(user.id);

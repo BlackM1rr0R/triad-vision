@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import clsx from 'clsx';
 import { Tabs } from '@/components/ui/Tabs';
+import { EmptyState } from '@/components/ui/EmptyState';
 import { CalendarDays, Columns3, List, ListTodo, Plus, User, Users } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { registerCopy } from '@/i18n';
@@ -340,13 +341,17 @@ export default function WorkspaceTasks() {
 
         {empty && view !== 'calendar' && (
           <div className={clsx('pointer-events-none absolute inset-0 grid place-items-center p-6', view === 'board' && 'bg-surface/40')}>
-            <div className="pointer-events-auto max-w-sm rounded-xl border border-line bg-card p-7 text-center shadow-[var(--tv-shadow-card)]">
-              <span className="mx-auto mb-4 grid size-14 place-items-center rounded-xl bg-primary/[0.06] text-link">
-                <ListTodo className="size-7" aria-hidden />
-              </span>
-              <h2 className="font-display text-lg font-bold text-ink">{anyFilter || mine ? t('tasks.empty.filtered') : t('tasks.empty.board')}</h2>
-              <p className="mt-1.5 text-sm text-muted">{anyFilter ? t('tasks.empty.filteredHint') : t('tasks.empty.boardHint')}</p>
-              <div className="mt-5 flex flex-wrap justify-center gap-2">
+            <EmptyState
+              framed
+              size="lg"
+              padding="md"
+              tone="brand"
+              icon={ListTodo}
+              className="pointer-events-auto max-w-sm px-7 shadow-[var(--tv-shadow-card)]"
+              title={anyFilter || mine ? t('tasks.empty.filtered') : t('tasks.empty.board')}
+              text={anyFilter ? t('tasks.empty.filteredHint') : t('tasks.empty.boardHint')}
+              action={
+              <>
                 {anyFilter && (
                   <button type="button" onClick={() => setFilters(EMPTY_FILTERS)} className="btn-secondary btn-sm">
                     {t('tasks.filters.clear')}
@@ -360,8 +365,9 @@ export default function WorkspaceTasks() {
                 <button type="button" onClick={() => startCreate()} className="btn-primary btn-sm">
                   <Plus className="size-4" /> {t('tasks.newTask')}
                 </button>
-              </div>
-            </div>
+              </>
+              }
+            />
           </div>
         )}
       </div>

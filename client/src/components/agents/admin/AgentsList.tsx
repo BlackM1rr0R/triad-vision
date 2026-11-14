@@ -4,11 +4,12 @@ import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { Handshake, Plus, Search } from 'lucide-react';
 import { api } from '@/lib/api';
-import { Chip, EmptyState, ErrorBlock, LoadingBlock, Panel } from '@/components/admin/ui';
+import { Chip, EmptyState, ErrorBlock, Panel } from '@/components/admin/ui';
 import type { AdminAgent, AgentStatus } from '../types';
 import { money, percent } from '../format';
 import { CreateAgentDialog } from './CreateAgentDialog';
 import { Pagination } from '@/components/ui/Pagination';
+import { SkeletonRows } from '@/components/ui/Skeleton';
 
 const PAGE_SIZE = 50;
 
@@ -75,13 +76,30 @@ export const AgentsList = () => {
           ))}
         </div>
         {q.isLoading ? (
-          <LoadingBlock />
+          <div role="status" aria-label={t('admin.common.loading')} className="overflow-hidden">
+            <table className="w-full" aria-hidden>
+              <tbody className="divide-y divide-line">
+                <SkeletonRows rows={6} cols={6} />
+              </tbody>
+            </table>
+          </div>
         ) : q.isError || !q.data ? (
           <div className="p-5">
             <ErrorBlock error={q.error} onRetry={() => q.refetch()} />
           </div>
         ) : q.data.items.length === 0 ? (
-          <EmptyState icon={Handshake} title={t('agents.admin.empty')} />
+          search.trim() || status ? (
+            <EmptyState
+              filtered
+              onClearFilters={() => {
+                setSearch('');
+                setStatus('');
+                setPage(1);
+              }}
+            />
+          ) : (
+            <EmptyState icon={Handshake} title={t('agents.admin.empty')} />
+          )
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full min-w-[980px] text-sm">

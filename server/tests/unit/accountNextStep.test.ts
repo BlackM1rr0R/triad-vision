@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { collectActions, choosePrimary, pickNextStep, type NextStepFacts } from '../../src/lib/account/nextStep.js';
+import { collectActions, choosePrimary, pickNextStep, questionOf, type NextStepFacts } from '../../src/lib/account/nextStep.js';
 
 const NOW = new Date('2026-10-20T09:00:00Z');
 const DAY = 24 * 3600 * 1000;
@@ -151,6 +151,33 @@ describe('account next step: collectActions / pickNextStep', () => {
     const r = collectActions(facts({ passportExpiry: inDays(100), confirmation: { fields: 2 } }));
     expect(r.map((a) => a.kind)).toEqual(['CONFIRM_DATA', 'PASSPORT_EXPIRY']);
     expect(collectActions(facts({ passportExpiry: inDays(400) }))).toEqual([]);
+  });
+
+  it('an interview to book / confirm and an unanswered team question are actions; the rest goes to "more"', () => {
+    const r = pickNextStep(
+      facts({
+        confirmation: { fields: 3 },
+        interviews: { invites: 1, proposed: [inDays(5), inDays(2)] },
+        question: { caseId: 'c1', at: inDays(-1), snippet: 'Do you have a driving licence?' },
+        passportExpiry: inDays(100),
+      }),
+    );
+    expect(r.primary).toMatchObject({ kind: 'BOOK_INTERVIEW', to: '/account/interviews', count: 3, dueAt: inDays(2).toISOString(), overdue: false });
+    expect(r.secondary.map((a) => a.kind)).toEqual(['CONFIRM_DATA', 'ANSWER_MESSAGE']);
+    expect(r.secondary[1]).toMatchObject({ to: '/account/cases/c1?tab=messages', detail: 'Do you have a driving licence?' });
+    expect(r.more.map((a) => a.kind)).toEqual(['PASSPORT_EXPIRY']);
+    expect(r.actionCount).toBe(3);
+    expect(collectActions(facts({ interviews: { invites: 0, proposed: [] } }))).toEqual([]);
+  });
+
+  it('questionOf: only a team message with a question mark that is the newest of the open case', () => {
+    const at = inDays(-1);
+    expect(questionOf({ authorId: 'staff', body: 'Wann  ist\n Ihr Termin?', createdAt: at }, 'me', 'c1')).toEqual({ caseId: 'c1', at, snippet: 'Wann ist Ihr Termin?' });
+    expect(questionOf({ authorId: 'me', body: 'Any news?', createdAt: at }, 'me', 'c1')).toBeNull();
+    expect(questionOf({ authorId: 'staff', body: 'Thanks, all good.', createdAt: at }, 'me', 'c1')).toBeNull();
+    expect(questionOf({ authorId: 'staff', body: 'Ok?', createdAt: at }, 'me', null)).toBeNull();
+    expect(questionOf(null, 'me', 'c1')).toBeNull();
+    expect(questionOf({ authorId: 'staff', body: `${'x'.repeat(120)}?`, createdAt: at }, 'me', 'c1')?.snippet).toHaveLength(90);
   });
 
   it('choosePrimary: open main case, then open member case, then the approval', () => {

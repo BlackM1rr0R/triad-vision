@@ -35,7 +35,7 @@ describe('GET /api/admin/command-search', () => {
     expectStatus(await staff.agent.post('/api/tasks').send({ title: `${tag} Pass abholen`, caseId: c.id }), 201);
 
     const body = expectStatus(await staff.agent.get(URL).query({ q: tag }), 200).body;
-    expect(Object.keys(body).sort()).toEqual(['cases', 'companies', 'files', 'q', 'tasks', 'users', 'vacancies']);
+    expect(Object.keys(body).sort()).toEqual(['cases', 'companies', 'files', 'messages', 'partners', 'q', 'tasks', 'users', 'vacancies']);
     expect(body.cases).toEqual([expect.objectContaining({ id: c.id, number: c.number, clientName: `${tag} Həsənov`, status: 'DOCUMENTS_PENDING' })]);
     expect(body.users).toEqual([expect.objectContaining({ id: client.user.id, role: 'CLIENT', email: client.user.email, phone: '+994 50 777 66 55' })]);
     expect(body.companies).toEqual([expect.objectContaining({ name: `${tag} Logistik GmbH` })]);
@@ -90,6 +90,38 @@ describe('GET /api/admin/command-search', () => {
     // A grant on the restricted folder opens it (and its children) for that staff member.
     expectStatus(await su.agent.put(`/api/drive/nodes/${secret.id}/grants`).send({ userId: staff.user.id, access: 'VIEW' }), 200);
     expect(await names(staff.agent)).toEqual([open.id, secret.id, inside.id].sort());
+  });
+
+  it('finds referral partners by name, company, contact and code', async () => {
+    const tag = uniq('Prt');
+    const p = await prisma.referralPartner.create({ data: { name: `${tag} Agentlik`, companyName: 'Bakı Yol MMC', code: `${tag}CODE`.toUpperCase().slice(0, 32), city: 'Gəncə' } });
+    const staff = await asStaff();
+    const body = expectStatus(await staff.agent.get(URL).query({ q: tag }), 200).body;
+    expect(body.partners).toEqual([expect.objectContaining({ id: p.id, name: `${tag} Agentlik`, companyName: 'Bakı Yol MMC', active: true })]);
+    expect(expectStatus(await staff.agent.get(URL).query({ q: p.code! }), 200).body.partners.map((x: { id: string }) => x.id)).toContain(p.id);
+  });
+
+  it('messages: case messages for staff, team chat only in channels the user may read', async () => {
+    const tag = uniq('Msg');
+    const client = await asClient({ firstName: 'Nərmin', lastName: 'Quliyeva' });
+    const c = await createCaseVia(client.agent);
+    await prisma.caseMessage.create({ data: { caseId: c.id, authorId: client.user.id, body: `Salam, ${tag} pasportun surəti hazırdır` } });
+    const owner = await asStaff();
+    const outsider = await asStaff();
+    const open = expectStatus(await owner.agent.post('/api/chat/channels').send({ kind: 'PUBLIC', name: uniq('room-') }), 201).body.channel;
+    const closed = expectStatus(await owner.agent.post('/api/chat/channels').send({ kind: 'PRIVATE', name: uniq('room-'), memberIds: [owner.user.id] }), 201).body.channel;
+    expectStatus(await owner.agent.post(`/api/chat/channels/${open.id}/messages`).send({ body: `açıq ${tag} mesaj` }), 201);
+    expectStatus(await owner.agent.post(`/api/chat/channels/${closed.id}/messages`).send({ body: `gizli ${tag} mesaj` }), 201);
+
+    const mine = expectStatus(await owner.agent.get(URL).query({ q: tag }), 200).body.messages as { source: string; caseId: string | null; channelId: string | null; snippet: string; fromClient: boolean; title: string }[];
+    expect(mine).toHaveLength(3);
+    expect(mine).toContainEqual(expect.objectContaining({ source: 'case', caseId: c.id, caseNumber: c.number, fromClient: true, title: 'Nərmin Quliyeva' }));
+    expect(mine.filter((m) => m.source === 'chat').map((m) => m.channelId).sort()).toEqual([open.id, closed.id].sort());
+
+    const theirs = expectStatus(await outsider.agent.get(URL).query({ q: tag }), 200).body.messages as { channelId: string | null; snippet: string }[];
+    expect(theirs.map((m) => m.channelId)).not.toContain(closed.id);
+    expect(JSON.stringify(theirs)).not.toContain('gizli');
+    expect(theirs).toHaveLength(2);
   });
 
   it('STAFF see masked sensitive fields, super admins the plaintext', async () => {

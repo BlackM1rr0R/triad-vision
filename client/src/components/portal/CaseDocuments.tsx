@@ -34,6 +34,12 @@ import { HowToShoot } from '@/components/docGuide/HowToShoot'; // "Necə çəkm�
 import { MarkedScan } from '@/components/review/MarkedScan'; // staff marks on a rejected scan
 import { marksOf } from '@/components/review/marks';
 import { OfflineToggle } from '@/components/offline/OfflineToggle'; // "Oflayn saxla" (PWA cache, own device)
+import { TONE_CLASS } from '@/components/ui/status';
+import { requirementState, type RequirementState } from './requirementState';
+import { registerCopy } from '@/i18n';
+import { pagesPortalMoments } from '@/i18n/pagesPortalMoments'; // requirement state chips, rejected without a reason
+
+registerCopy(pagesPortalMoments);
 
 type UploadStage = 'INITIAL' | 'EMBASSY';
 
@@ -44,6 +50,26 @@ export const UPLOAD_STAGE: Partial<Record<CaseStatus, UploadStage>> = {
 };
 
 const isSatisfied = (r: Requirement) => r.documents.some((d) => d.status !== 'REJECTED');
+
+const STATE_TONE: Record<RequirementState, string> = {
+  waiting: TONE_CLASS.neutral,
+  review: TONE_CLASS.warning,
+  accepted: TONE_CLASS.success,
+  rejected: TONE_CLASS.danger,
+};
+const STATE_ICON = { waiting: Circle, review: Clock, accepted: CheckCircle2, rejected: XCircle } as const;
+
+const RequirementStateChip = ({ state }: { state: RequirementState }) => {
+  const { t } = useTranslation();
+  const Icon = STATE_ICON[state];
+  return (
+    <span className={clsx('badge whitespace-nowrap', STATE_TONE[state])}>
+      <Icon className="size-3.5" aria-hidden />
+      <span className="sr-only">{t('pmom.docState.label')}: </span>
+      {t(`pmom.docState.${state}`)}
+    </span>
+  );
+};
 
 const RequirementIcon = ({ req }: { req: Requirement }) => {
   const docs = req.documents;
@@ -141,9 +167,16 @@ const DocRow = ({
             : undefined
         }
       />
-      {/* Rejected: the reason, the staff's red numbered marks on the scan and "Yenidən yüklə". */}
-      {doc.status === 'REJECTED' && (doc.reviewNote || marksOf(doc).length > 0) && (
-        <MarkedScan className="mt-1.5 mr-1.5 mb-1.5" src={fileUrl(doc.id)} mimeType={doc.mimeType} marks={marksOf(doc)} reason={doc.reviewNote} onReupload={onReupload} />
+      {/* Rejected: the reason (or a generic line when the team gave none), the staff's red numbered marks on the scan and "Yenidən yüklə". */}
+      {doc.status === 'REJECTED' && (
+        <MarkedScan
+          className="mt-1.5 mr-1.5 mb-1.5"
+          src={fileUrl(doc.id)}
+          mimeType={doc.mimeType}
+          marks={marksOf(doc)}
+          reason={doc.reviewNote ? `${t('pmom.reasonLabel')}: ${doc.reviewNote}` : t('pmom.rejectedNoReason')}
+          onReupload={onReupload}
+        />
       )}
     </motion.li>
   );
@@ -257,6 +290,7 @@ const RequirementCard = ({
           <div className="flex flex-wrap items-center gap-2">
             <h4 className="min-w-0 font-sans text-[0.95rem] font-semibold break-words text-ink">{tr(req.title)}</h4>
             <DocGuideButton requirementKey={(req as Requirement & { key?: string | null }).key} title={tr(req.title)} />
+            <RequirementStateChip state={requirementState(req.documents)} />
             <span className={clsx('badge whitespace-nowrap', req.required ? 'border border-line bg-sunken text-ink' : 'bg-sunken text-muted')}>
               {req.required ? t('common.required') : t('common.optional')}
             </span>

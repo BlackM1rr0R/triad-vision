@@ -1,8 +1,8 @@
 /**
  * Copy of the Google review request (e-mail, in-app notification, WhatsApp) and of the staff task created
- * instead when the client was unhappy. Client languages az / de / en / ru; anything else (tr / uk) → English.
+ * instead when the client was unhappy. Client languages az / de / en / ru / tr / uk; anything else → English.
  */
-export const GR_LOCALES = ['az', 'de', 'en', 'ru'] as const;
+export const GR_LOCALES = ['az', 'de', 'en', 'ru', 'tr', 'uk'] as const;
 export type GrLocale = (typeof GR_LOCALES)[number];
 export const grLocale = (l: string | null | undefined): GrLocale => ((GR_LOCALES as readonly string[]).includes(l ?? '') ? (l as GrLocale) : 'en');
 
@@ -51,6 +51,36 @@ export const GR_TEXTS: Record<GrLocale, GrTexts> = {
     optOut: 'Мы отправляем эту просьбу только один раз. Если вы не хотите получать такие просьбы:',
     optOutLink: 'отписаться',
     whatsapp: ({ firstName, url }) => `Здравствуйте, ${firstName}! Отзыв о Triad Vision в Google очень поможет другим (1 минута): ${url}`,
+  },
+  tr: {
+    title: 'Deneyiminizi Google’da paylaşır mısınız?',
+    body: ({ firstName, trigger }) =>
+      `Merhaba ${firstName},
+
+${trigger === 'ARRIVAL' ? 'Almanya’ya hoş geldiniz! İlk günlerinizin iyi geçtiğini umuyoruz.' : 'vizenizin onaylanmasına çok sevindik.'} Sizinle çalışmak bizim için bir zevkti.
+
+Triad Vision ile deneyiminizi birkaç cümleyle Google’da paylaşırsanız, Almanya yolundaki diğer insanlara çok yardımcı olursunuz. Sadece bir dakikanızı alır.
+
+Teşekkür ederiz!`,
+    cta: 'Google’da yorum yazın',
+    optOut: 'Bu isteği yalnızca bir kez gönderiyoruz. Bu tür istekler almak istemiyorsanız:',
+    optOutLink: 'abonelikten çıkın',
+    whatsapp: ({ firstName, url }) => `Merhaba ${firstName}! Triad Vision deneyiminizi Google’da paylaşmanız başkalarına çok yardımcı olur (1 dakika): ${url}`,
+  },
+  uk: {
+    title: 'Поділитеся враженнями в Google?',
+    body: ({ firstName, trigger }) =>
+      `Вітаємо, ${firstName}!
+
+${trigger === 'ARRIVAL' ? 'Ласкаво просимо до Німеччини! Сподіваємося, перші дні минають добре.' : 'Ми дуже раді, що вашу візу схвалено.'} Нам було приємно з вами працювати.
+
+Якщо ви поділитеся досвідом співпраці з Triad Vision кількома реченнями в Google, ви дуже допоможете іншим людям на шляху до Німеччини. Це займе лише хвилину.
+
+Дякуємо!`,
+    cta: 'Написати відгук у Google',
+    optOut: 'Ми надсилаємо це прохання лише один раз. Якщо ви не хочете отримувати такі прохання:',
+    optOutLink: 'відмовитися',
+    whatsapp: ({ firstName, url }) => `Вітаємо, ${firstName}! Відгук про Triad Vision у Google дуже допоможе іншим (1 хвилина): ${url}`,
   },
 };
 

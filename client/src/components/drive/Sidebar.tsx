@@ -1,4 +1,4 @@
-import { memo, useEffect, useState, type ReactNode } from 'react';
+import { memo, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
@@ -29,6 +29,8 @@ export interface SidebarProps {
   extra?: ReactNode;
 }
 
+const NO_ANCESTORS: readonly string[] = [];
+
 const folderHref = (item: DriveItem) => `/workspace/drive/f/${encodeURIComponent(item.id)}`;
 
 const TreeNode = memo(function TreeNode({
@@ -36,11 +38,14 @@ const TreeNode = memo(function TreeNode({
   depth,
   props,
   label,
+  ancestors = NO_ANCESTORS,
 }: {
   item: DriveItem;
   depth: number;
   props: SidebarProps;
   label?: string;
+  /** Ids of the tree rows above this one: a folder is never dropped into its own sub-folder. */
+  ancestors?: readonly string[];
 }) {
   const { t } = useTranslation();
   const auto = props.trail.includes(item.id);
@@ -59,7 +64,8 @@ const TreeNode = memo(function TreeNode({
   const folders = q.data?.items.filter((i) => i.kind === 'FOLDER') ?? [];
   const noFolders = knownEmpty || (!!q.data && folders.length === 0);
   const writable = can(item.myAccess, 'EDIT');
-  const drop = useDropTarget({ targetId: item.id, enabled: writable, onFiles: props.onFiles, onItems: props.onItems });
+  const drop = useDropTarget({ targetId: item.id, enabled: writable, onFiles: props.onFiles, onItems: props.onItems, ancestorIds: ancestors });
+  const childAncestors = useMemo(() => [...ancestors, item.id], [ancestors, item.id]);
   // Hovering a closed folder while dragging opens it, so items can go deeper.
   useEffect(() => {
     if (!drop.over || expanded) return;
@@ -141,7 +147,7 @@ const TreeNode = memo(function TreeNode({
             </li>
           )}
           {folders.map((f) => (
-            <TreeNode key={f.id} item={f} depth={depth + 1} props={props} />
+            <TreeNode key={f.id} item={f} depth={depth + 1} props={props} ancestors={childAncestors} />
           ))}
         </ul>
       )}

@@ -17,6 +17,7 @@ import {
   staffRequestChanges,
   staffScheduleAppointment,
   staffSendContract,
+  FINAL_STATUSES,
 } from '../../lib/caseFlow.js';
 import { caseStats, loadCaseDetail } from '../../lib/caseView.js';
 import { badRequest, conflict, HttpError, notFound, parse } from '../../lib/http.js';
@@ -36,10 +37,12 @@ import { onLanguageCertAccepted } from '../../lib/german/progress.js';
 import { ballInCourtMany } from '../../lib/clientProcess/ballInCourt.js';
 import { marksForStatus, reviewMarksSchema } from '../../lib/review/marks.js'; // marks on a rejected scan
 import { PROCESSING_STAGES, processingSummaries, stageCounts, stageWhere } from '../../lib/caseProcessing/index.js'; // Schon geschrieben → Fertig
+import { FINAL_PROCESS_STATUSES } from '../../lib/recognition/rules.js';
 
 export const adminCasesRouter = Router();
 
 const l10n = z.object({ az: z.string(), de: z.string(), en: z.string(), ru: z.string() });
+const VISA_TYPES = ['WORK', 'AUSBILDUNG', 'WEITERBILDUNG', 'JOB_SEEKER', 'STUDY', 'FAMILY', 'TOURIST'] as const;
 const STATUSES = [
   'DOCUMENTS_PENDING', 'DOCUMENTS_REVIEW', 'CONTRACT_SENT', 'CONTRACT_SIGNED', 'EMBASSY_DOCUMENTS',
   'EMBASSY_REVIEW', 'APPOINTMENT_SCHEDULED', 'DECISION_PENDING', 'APPROVED', 'REJECTED', 'CANCELLED',
@@ -58,7 +61,37 @@ export const caseListQuery = z.object({
   processingAssignee: z.string().trim().min(1).max(40).optional(),
   // "3+ gün eyni statusda" chip: the current status was entered at least OVERDUE_DAYS days ago.
   overdue: z.enum(['true', 'false', '1', '0']).transform((v) => v === 'true' || v === '1').optional(),
+  // Responsible staff member: 'me', 'none' (unassigned) or a staff id.
+  assignee: z.string().trim().min(1).max(40).optional(),
+  // Open (not approved / rejected / cancelled) or closed cases.
+  scope: z.enum(['open', 'closed']).optional(),
+  visaType: z.enum(VISA_TYPES).optional(),
+  // Date range (YYYY-MM-DD, Baku days, inclusive) on the creation date, the last change or the embassy appointment.
+  dateBy: z.enum(['created', 'updated', 'appointment']).optional(),
+  from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  // Embassy appointment this calendar week (Baku time, Monday to Sunday) or any upcoming one.
+  appointment: z.enum(['week', 'upcoming']).optional(),
+  // Recognition (Anerkennung) procedure with a passed deadline / any open procedure.
+  recognition: z.enum(['overdue', 'open']).optional(),
+  // Uploads waiting for review.
+  pendingDocs: z.enum(['true', 'false', '1', '0']).transform((v) => v === 'true' || v === '1').optional(),
 });
+
+export type CaseListQuery = z.infer<typeof caseListQuery>;
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+/** Azerbaijan has no daylight saving time: UTC+4 all year. */
+const BAKU_OFFSET_MS = 4 * 60 * 60 * 1000;
+/** Start of a Baku calendar day given as YYYY-MM-DD. */
+const bakuDayStart = (day: string) => new Date(Date.parse(`${day}T00:00:00.000Z`) - BAKU_OFFSET_MS);
+/** Monday 00:00 up to the next Monday 00:00 (Baku time) of the week containing `now`. */
+export const bakuWeek = (now = new Date()) => {
+  const local = new Date(now.getTime() + BAKU_OFFSET_MS);
+  const dow = (local.getUTCDay() + 6) % 7;
+  const start = Date.UTC(local.getUTCFullYear(), local.getUTCMonth(), local.getUTCDate() - dow) - BAKU_OFFSET_MS;
+  return { gte: new Date(start), lt: new Date(start + 7 * DAY_MS) };
+};
 
 /** Days in one status after which a case counts as overdue (the list's `daysInStatus >= 3` chip). */
 export const OVERDUE_DAYS = 3;
@@ -76,19 +109,51 @@ export const overdueWhere = (now = new Date()): Prisma.CaseWhereInput => {
   };
 };
 
-export const caseListWhere = (q: z.infer<typeof caseListQuery>, viewerId: string): Prisma.CaseWhereInput => {
+/**
+ * Prisma filter of the cases list. `recognitionCaseIds` = the cases matching the recognition filter (the
+ * procedures have no relation to Case; resolveCaseListWhere looks them up).
+ */
+export const caseListWhere = (q: CaseListQuery, viewerId: string, recognitionCaseIds?: string[]): Prisma.CaseWhereInput => {
   const and: Prisma.CaseWhereInput[] = [];
   if (q.processing) and.push(stageWhere(q.processing));
   if (q.overdue) and.push(overdueWhere());
   if (q.search) and.push(...searchWhere(q.search));
+  if (q.mine) and.push({ assignedStaffId: viewerId });
+  if (q.assignee) and.push({ assignedStaffId: q.assignee === 'none' ? null : q.assignee === 'me' ? viewerId : q.assignee });
+  if (q.scope) and.push({ status: q.scope === 'open' ? { notIn: FINAL_STATUSES } : { in: FINAL_STATUSES } });
+  if (q.visaType) and.push({ visaType: q.visaType });
+  if (q.from || q.to) {
+    const range: Prisma.DateTimeFilter = {
+      ...(q.from ? { gte: bakuDayStart(q.from) } : {}),
+      ...(q.to ? { lt: new Date(bakuDayStart(q.to).getTime() + DAY_MS) } : {}),
+    };
+    const by = q.dateBy ?? 'created';
+    and.push(by === 'appointment' ? { appointmentAt: range } : by === 'updated' ? { updatedAt: range } : { createdAt: range });
+  }
+  if (q.appointment === 'week') and.push({ appointmentAt: bakuWeek() });
+  if (q.appointment === 'upcoming') and.push({ appointmentAt: { gte: new Date() } });
+  if (q.recognition) and.push({ id: { in: recognitionCaseIds ?? [] } });
+  if (q.pendingDocs) and.push({ documents: { some: { status: 'PENDING', stage: { in: ['INITIAL', 'EMBASSY'] } } } });
   return {
     ...(q.status ? { status: q.status } : {}),
     ...(and.length ? { AND: and } : {}),
     ...(q.processingAssignee ? { processingAssigneeId: q.processingAssignee === 'me' ? viewerId : q.processingAssignee } : {}),
     ...(q.partnerId ? { partnerId: q.partnerId === 'none' ? null : q.partnerId } : {}),
-    ...(q.mine ? { assignedStaffId: viewerId } : {}),
   };
 };
+
+/** Case ids with an open recognition procedure (`open`) or one whose next deadline has passed (`overdue`). */
+export const recognitionCaseIds = async (kind: 'overdue' | 'open', now = new Date()) => {
+  const open = { status: { notIn: [...FINAL_PROCESS_STATUSES] } };
+  const where: Prisma.RecognitionProcessWhereInput =
+    kind === 'open' ? open : { ...open, OR: [{ nextDeadline: { lt: now } }, { status: 'ADAPTATION', nextDeadline: null, adaptationUntil: { lt: now } }] };
+  const rows = await prisma.recognitionProcess.findMany({ where, select: { caseId: true }, distinct: ['caseId'], take: 5000 });
+  return rows.map((r) => r.caseId);
+};
+
+/** caseListWhere with the lookups it needs (list, summary, bulk "all matching"). */
+export const resolveCaseListWhere = async (q: CaseListQuery, viewerId: string) =>
+  caseListWhere(q, viewerId, q.recognition ? await recognitionCaseIds(q.recognition) : undefined);
 
 /** One OR over the searchable fields per word: "Ali Aliyev" finds the client whose first and last name match. */
 const searchWhere = (search: string): Prisma.CaseWhereInput[] => {
@@ -107,7 +172,7 @@ const searchWhere = (search: string): Prisma.CaseWhereInput[] => {
 
 adminCasesRouter.get('/', async (req, res) => {
   const q = parse(caseListQuery, req.query);
-  const where: Prisma.CaseWhereInput = caseListWhere(q, req.user!.id);
+  const where: Prisma.CaseWhereInput = await resolveCaseListWhere(q, req.user!.id);
   const pageSize = 25;
   const [items, total, byStatus, processingCounts] = await Promise.all([
     prisma.case.findMany({
@@ -165,6 +230,30 @@ adminCasesRouter.get('/', async (req, res) => {
     counts: Object.fromEntries(byStatus.map((b) => [b.status, b._count._all])),
     processingCounts,
   });
+});
+
+/**
+ * Key counts of the cases list header. Each count uses exactly the list filter its tile links to (the
+ * `params`), so a click shows the same number of cases.
+ */
+export const CASE_SUMMARY_TILES = {
+  open: { scope: 'open' },
+  mine: { scope: 'open', assignee: 'me' },
+  unassigned: { scope: 'open', assignee: 'none' },
+  stuck: { scope: 'open', overdue: '1' },
+  embassyWeek: { appointment: 'week' },
+  recognitionOverdue: { recognition: 'overdue' },
+} as const satisfies Record<string, Record<string, string>>;
+
+adminCasesRouter.get('/summary', async (req, res) => {
+  const viewer = req.user!.id;
+  const entries = await Promise.all(
+    Object.entries(CASE_SUMMARY_TILES).map(async ([key, params]) => {
+      const where = await resolveCaseListWhere(parse(caseListQuery, params), viewer);
+      return [key, { count: await prisma.case.count({ where }), params }] as const;
+    }),
+  );
+  res.json({ tiles: Object.fromEntries(entries) });
 });
 
 adminCasesRouter.get('/:id', async (req, res) => {

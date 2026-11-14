@@ -35,6 +35,8 @@ import { markClientsExcelDirty } from '../lib/clientsExcel.js';
 import { syncClientFolders } from '../lib/drive/caseFolders.js';
 import { scanUserDuplicates } from '../lib/duplicates/detect.js';
 import { RECOGNITION_STATUSES } from '../lib/matching.js';
+import { phoneCountryForRole } from '../lib/phone.js';
+import { phoneInput } from '../lib/phoneField.js';
 
 export const authRouter = Router();
 
@@ -420,6 +422,11 @@ authRouter.patch('/me', requireAuth, async (req, res) => {
   );
   const { currentPassword: _currentPassword, newPassword: _newPassword, marketingOptIn, ...fields } = body;
   const data: Record<string, unknown> = { ...fields };
+  if (body.phone !== undefined) {
+    // Normalised to +…; an old value the normaliser cannot read is kept when it is sent back unchanged.
+    const current = await prisma.user.findUniqueOrThrow({ where: { id: req.user!.id }, select: { phone: true, role: true } });
+    data.phone = phoneInput(body.phone, { current: current.phone, country: phoneCountryForRole(current.role) });
+  }
   const channelsTouched = body.whatsappOptIn !== undefined || body.smsNotifications !== undefined;
   const before = channelsTouched
     ? await prisma.user.findUniqueOrThrow({ where: { id: req.user!.id }, select: { whatsappOptIn: true, smsNotifications: true } })

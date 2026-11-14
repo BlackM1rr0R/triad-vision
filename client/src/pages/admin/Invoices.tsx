@@ -29,7 +29,8 @@ import {
 import { api, errorCode } from '@/lib/api';
 import i18n, { registerCopy } from '@/i18n';
 import { adminInvoicesCopy } from '@/i18n/pagesBooking';
-import { Chip, EmptyState, ErrorBlock, LoadingBlock, PageHead, Panel, StatTile, Switch } from '@/components/admin/ui';
+import { Chip, EmptyState, ErrorBlock, ListSkeleton, LoadingBlock, PageHead, Panel, StatTile, Switch } from '@/components/admin/ui';
+import { SkeletonStats } from '@/components/ui/Skeleton';
 import { TabPanel, Tabs } from '@/components/ui/Tabs';
 import { Modal } from '@/components/admin/Modal';
 import { ConfirmDialog } from '@/components/admin/ConfirmDialog';
@@ -237,6 +238,15 @@ const InvoiceList = ({ onEdit, legalMissing }: { onEdit: (i: Invoice) => void; l
   const [page, setPage] = useState(1);
   const filterKey = JSON.stringify(filters);
   useEffect(() => setPage(1), [filterKey]);
+  const filtered = Object.values(filters).some(Boolean);
+  const clearFilters = () => {
+    setStatus('');
+    setCompanyId('');
+    setFrom('');
+    setTo('');
+    setQ('');
+    setDebouncedQ('');
+  };
   const listQ = useQuery({
     queryKey: [...KEY, filters, page],
     queryFn: async () => (await api.get<{ invoices: Invoice[]; totals: Totals; total: number; page: number }>('/admin/invoices', { params: { ...filters, page, pageSize: INVOICE_PAGE } })).data,
@@ -271,6 +281,7 @@ const InvoiceList = ({ onEdit, legalMissing }: { onEdit: (i: Invoice) => void; l
         </div>
       )}
 
+      {!totals && listQ.isLoading && <SkeletonStats count={4} className="mb-6 grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4" />}
       {totals && (
         <div className="mb-6 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
           <StatTile label={t('adminInvoices.tiles.open')} value={fmtEurShort(totals.openCents)} hint={t('adminInvoices.countHint', { count: totals.openCount })} icon={Euro} />
@@ -322,15 +333,15 @@ const InvoiceList = ({ onEdit, legalMissing }: { onEdit: (i: Invoice) => void; l
       </div>
 
       {listQ.isLoading ? (
-        <LoadingBlock />
+        <ListSkeleton cols={6} />
       ) : listQ.error ? (
         <ErrorBlock error={listQ.error} onRetry={() => listQ.refetch()} />
       ) : !listQ.data?.invoices.length ? (
-        <div className="rounded-xl border border-line bg-card">
-          <EmptyState icon={Receipt} title={t('adminInvoices.empty')}>
-            {t('adminInvoices.emptyText')}
-          </EmptyState>
-        </div>
+        filtered ? (
+          <EmptyState framed filtered onClearFilters={clearFilters} />
+        ) : (
+          <EmptyState framed icon={Receipt} title={t('adminInvoices.empty')} text={t('adminInvoices.emptyText')} />
+        )
       ) : (
         <div className="overflow-hidden rounded-xl border border-line bg-card">
           <table className="w-full text-sm">

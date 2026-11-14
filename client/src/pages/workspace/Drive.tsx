@@ -62,7 +62,8 @@ import { Sidebar } from '@/components/drive/Sidebar';
 import { Toolbar, type CrumbView, type ToolAction } from '@/components/drive/Toolbar';
 import { AdminAiButton, AdminAiPanel, useAiActionDone } from '@/components/aiAdmin/AdminAiPanel';
 import { UploadPanel } from '@/components/drive/UploadPanel';
-import { useDropTarget, type PickedFile } from '@/components/drive/dnd';
+import { undoMovePlan, useDropTarget, type PickedFile } from '@/components/drive/dnd';
+import { QuickPreview, isQuickPreviewable } from '@/components/drive/QuickPreview'; // Space / hover quick look (images, PDFs)
 import { FOLDER_SWATCH, sectionOf, setSectionIds } from '@/components/drive/fileIcons';
 import { ClientFolderHeader, PartnerFolderHeader, PartnersOverview, SectionHeader } from '@/components/drive/FolderHeaders';
 import { PARTNERS_KEY, usePartnerOptions } from '@/components/partners/api';
@@ -86,7 +87,7 @@ import {
 } from '@/components/drive/api';
 import { ACCEPT_ATTR, useUploads, type ConflictChoice } from '@/components/drive/useUploads';
 import { useCollabRealtime } from '@/components/drive/collab/useCollabRealtime';
-import { FOLDER_COLORS, can, type DriveItem, type DriveLocation, type FolderColor, type StatsResponse, type VersionRow } from '@/components/drive/types';
+import { FOLDER_COLORS, can, type DriveItem, type DriveLocation, type FolderColor, type StatsResponse, type VersionRow, type BatchResult } from '@/components/drive/types';
 import { convertFiles, convertKind } from '@/components/docCreate/api';
 import type { DocEditorTarget } from '@/components/docCreate/DocEditor';
 import { useDriveIntel, useSearchInContent } from '@/components/drive/intel/useDriveIntel';
@@ -348,10 +349,34 @@ export default function WorkspaceDrive() {
     }
   };
 
+  /**
+   * Result of a move (drag & drop, paste after cut, "Move to…"): failures as before, successes with "Geri al",
+   * which sends the moved items back to the folders they came from (the same move endpoint, permissions and audit).
+   */
+  const reportMove = (list: DriveItem[], results: BatchResult[]) => {
+    reportBatch(results.filter((r) => !r.ok), 'drive.toasts.moved'); // failures only
+    const okIds = results.filter((r) => r.ok).map((r) => r.id);
+    if (!okIds.length) return;
+    const plan = undoMovePlan(list, okIds);
+    if (!plan.length) {
+      toast.success(t('drive.toasts.moved', { count: okIds.length }));
+      return;
+    }
+    undoToast({
+      message: t('drive.toasts.moved', { count: okIds.length }),
+      undo: async () => {
+        const back = (await Promise.all(plan.map((g) => batchCall('/drive/move', { ids: g.ids, targetId: g.targetId })))).flat();
+        reportBatch(back.filter((r) => !r.ok), 'drive.toasts.moved');
+      },
+      onUndone: refresh,
+    });
+  };
+
   const moveOrCopy = (list: DriveItem[], targetId: string, copy: boolean) =>
     run(async () => {
       const results = await batchCall(copy ? '/drive/copy' : '/drive/move', { ids: list.map((i) => i.id), targetId });
-      reportBatch(results, copy ? 'drive.toasts.copied' : 'drive.toasts.moved');
+      if (copy) reportBatch(results, 'drive.toasts.copied');
+      else reportMove(list, results);
       clear();
     });
   const onItems = useCallback((list: DriveItem[], targetId: string, copy: boolean) => void moveOrCopy(list, targetId, copy), // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -359,7 +384,7 @@ export default function WorkspaceDrive() {
   /** "Move to…" with the folder picker: one bulk request for the whole selection. */
   const bulkMove = (list: DriveItem[], targetId: string) =>
     run(async () => {
-      reportBatch(await bulkCall('move', { ids: list.map((i) => i.id), targetId }), 'drive.toasts.moved');
+      reportMove(list, await bulkCall('move', { ids: list.map((i) => i.id), targetId }));
       clear();
     });
 
@@ -416,6 +441,9 @@ export default function WorkspaceDrive() {
   const trashedPartners = confirm?.kind === 'trash' && isAdmin ? confirm.items.filter((i) => i.kind === 'FOLDER' && i.partner).map((i) => i.partner!) : [];
   const [shareItem, setShareItem] = useState<DriveItem | null>(null);
   const [previewItem, setPreviewItem] = useState<DriveItem | null>(null);
+  /** Quick look (Space): the file shown in the overlay; ← → move the selection along with it. */
+  const [quickId, setQuickId] = useState<string | null>(null);
+  useEffect(() => setQuickId(null), [folderId, loc.kind]);
   const [colorFor, setColorFor] = useState<DriveItem | null>(null);
   const [menu, setMenu] = useState<{ at: MenuPosition; items: DriveItem[] | null; tree?: boolean } | null>(null);
   const [clipboard, setClipboard] = useState<{ mode: 'cut' | 'copy'; items: DriveItem[] } | null>(null);
@@ -719,6 +747,13 @@ export default function WorkspaceDrive() {
         }
         else if (editable(selectedItems)) setConfirm({ kind: 'trash', items: selectedItems });
         return true;
+      case ' ': {
+        if (mod || e.altKey) return false;
+        const target = selectedItems.length === 1 ? selectedItems[0] : items[idx];
+        if (!target || !isQuickPreviewable(target)) return false;
+        setQuickId(target.id);
+        return true;
+      }
       case 'F2':
         if (selectedItems.length === 1 && editable(selectedItems)) setDialog({ kind: 'rename', item: selectedItems[0] });
         return true;
@@ -1323,6 +1358,15 @@ export default function WorkspaceDrive() {
       </ConfirmDialog>
       <ShareDialog item={shareItem} onClose={() => setShareItem(null)} myId={myId} />
       <ImagePreview item={previewItem} src={previewItem ? contentUrl(previewItem.id) : ''} onClose={() => setPreviewItem(null)} />
+      <QuickPreview
+        items={items}
+        currentId={quickId}
+        onChange={(it) => {
+          setQuickId(it.id);
+          select(new Set([it.id]), it.id, it.id);
+        }}
+        onClose={() => setQuickId(null)}
+      />
       <ConflictDialog
         name={conflict?.name ?? null}
         onAnswer={(choice, all) => {

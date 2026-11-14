@@ -1,15 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
-import { AnimatePresence, motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
-import { Building2, ChevronDown, Columns2, Filter, Flame, Inbox, Search, SlidersHorizontal, User, UserCheck, Users, X } from 'lucide-react';
+import { Building2, ChevronDown, ChevronRight, ChevronUp, Filter, Flame, Inbox, Search, SlidersHorizontal, User, UserCheck, Users, X } from 'lucide-react';
 import { api } from '@/lib/api';
 import {
   INQUIRY_KINDS,
   INQUIRY_STATUSES,
-  INQUIRY_STATUS_TONE,
   fmtDateTime,
   fmtRelative,
   inquiryKindLabel,
@@ -27,15 +25,18 @@ import { registerCopy } from '@/i18n';
 import { pagesMarketing } from '@/i18n/pagesMarketing';
 import { pagesAdminUx } from '@/i18n/pagesAdminUx';
 import { pagesInquiries } from '@/i18n/pagesInquiries';
-import { InquiryDetailBody, InquiryPresence, InquirySplitPanel, InquiryStatusCell } from '@/components/admin/split/InquiryDetail'; // inline status, split panel, presence
+import { InquiryDetailBody, InquiryPresence, InquiryStatusCell } from '@/components/admin/split/InquiryDetail'; // inline status, presence
 import { InquiryBadges, inquiryItemKey } from '@/components/admin/split/InquiryWork';
-import { useSplitView } from '@/components/admin/split/useSplitView';
+import { Drawer } from '@/components/ui/Drawer';
+import { IconButton } from '@/components/ui/Button';
+import { SavedFilterTabs } from '@/components/casesList/SavedFilterTabs'; // saved filters as tabs (shared with Müraciətlər)
+import { useDrawerParam } from '@/components/casesList/api'; // ?open=<id> drawer, browser back closes it
+import { pagesCasesList } from '@/i18n/pagesCasesList';
 import { useListNav } from '@/components/shortcuts/useListNav';
 import { requestInlineEdit } from '@/components/inline/optimistic';
 import { useAuth } from '@/lib/auth';
 import { hasMinRole } from '@/lib/types';
 import { pagesStaffPower } from '@/i18n/pagesStaffPower'; // saved views, table settings, bulk actions
-import { SavedViewsMenu } from '@/components/staffPower/SavedViews';
 import { ColumnChooser, SettingsTable, ViewModeToggle, useTableSettings, type ColumnDef } from '@/components/staffPower/tableSettings';
 import { useRowSelection } from '@/components/staffPower/selection';
 import { InquiriesBulkBar } from '@/components/staffPower/BulkBar';
@@ -44,6 +45,7 @@ registerCopy(pagesMarketing);
 registerCopy(pagesAdminUx);
 registerCopy(pagesStaffPower);
 registerCopy(pagesInquiries);
+registerCopy(pagesCasesList);
 
 /** Lead scoring fields on every inquiry (server lib/marketing/leadScoring.ts). */
 type Scored = Inquiry & { score?: number; scoreLevel?: LeadLevel | null; scoreReasons?: ScoreReason[] | null };
@@ -67,18 +69,14 @@ export default function Inquiries() {
   const assignee = params.get('assignee');
   const page = Math.max(1, Number(params.get('page')) || 1);
   const [qInput, setQInput] = useState(params.get('q') ?? '');
-  const [open, setOpen] = useState<string | null>(() => params.get('open'));
+  // Quick-view drawer (?open=<id>: a notification links here with it; pushing it lets the back button close it).
+  const drawer = useDrawerParam('open');
+  const open = drawer.id;
   const [rulesOpen, setRulesOpen] = useState(false);
   const panelCount = PANEL_KEYS.filter((k) => k !== 'assignee' && params.get(k)).length;
   const [filtersOpen, setFiltersOpen] = useState(panelCount > 0);
   const { user } = useAuth();
   const { data: scoring } = useLeadScoring();
-  // A notification links here with ?open=<id>: expand that inquiry once (fetched even when it is not on this page).
-  useEffect(() => {
-    const id = params.get('open');
-    if (id) setOpen(id);
-  }, [params]);
-
   const setParam = (k: string, v: string | null) => {
     const next = new URLSearchParams(params);
     if (v) next.set(k, v);
@@ -119,15 +117,16 @@ export default function Inquiries() {
     placeholderData: keepPreviousData,
   });
 
-  const pageItems = (data?.items ?? []) as Scored[];
-  // The lead named in ?open= is shown on top when it is not on the current page.
-  const openMissing = !!open && !!data && !pageItems.some((i) => i.id === open);
+  const items = (data?.items ?? []) as Scored[];
+  // The lead named in ?open= is fetched on its own when it is not on the current page.
+  const openMissing = !!open && !!data && !items.some((i) => i.id === open);
   const { data: openItem } = useQuery({
     queryKey: inquiryItemKey(open ?? ''),
     queryFn: async () => (await api.get<{ item: Scored }>(`/admin/inquiries/${open}`)).data.item,
     enabled: openMissing,
   });
-  const items = openMissing && openItem ? [openItem, ...pageItems] : pageItems;
+  const openIndex = open ? items.findIndex((i) => i.id === open) : -1;
+  const drawerItem = openIndex >= 0 ? items[openIndex] : openMissing ? openItem : undefined;
   const summary = data?.summary;
   const facets = data?.facets;
   const total = data?.total ?? 0;
@@ -159,20 +158,24 @@ export default function Inquiries() {
   const table = useTableSettings('inquiries', columnDefs);
   const tableMode = table.mode === 'table';
 
-  // Split view (list left, inquiry right) and keyboard selection (?selected=<id>): J / K, Enter, E, "/", Esc.
-  const split = useSplitView('inquiries');
+  // Keyboard cursor (?selected=<id>): J / K move, Enter opens the drawer, E edits inline, "/" searches, Esc clears.
   const searchRef = useRef<HTMLInputElement>(null);
-  const selectedItem = items.find((i) => i.id === split.selected);
+  const selected = params.get('selected');
+  const select = (id: string | null) => {
+    const next = new URLSearchParams(params);
+    if (id) next.set('selected', id);
+    else next.delete('selected');
+    setParams(next, { replace: true });
+  };
   useListNav({
     ids: items.map((i) => i.id),
-    selected: split.selected,
-    onSelect: split.select,
-    onOpen: split.active ? undefined : (id) => setOpen((cur) => (cur === id ? null : id)),
+    selected,
+    onSelect: select,
+    onOpen: (id) => drawer.open(id),
     onEdit: (id) => requestInlineEdit(id),
-    onEscape: () => (open && !split.active ? setOpen(null) : split.select(null)),
     searchRef,
     titleKey: 'ux.shortcuts.lists.inquiries',
-    extra: split.wide ? [{ id: 'split', keys: ['s'], labelKey: 'ux.shortcuts.keys.split', handler: split.toggle }] : [],
+    enabled: !open,
   });
 
   const sourceLabel = (key: string) => (t(`inq.sources.${key}`, { defaultValue: key }) as string);
@@ -192,7 +195,8 @@ export default function Inquiries() {
   };
 
   const pager = total > PAGE_SIZE && <Pagination className="mt-4" page={data?.page ?? page} pages={Math.max(1, Math.ceil(total / PAGE_SIZE))} total={total} pageSize={PAGE_SIZE} onChange={(p) => setParam('page', p > 1 ? String(p) : null)} />;
-  const bulkBar = <InquiriesBulkBar sel={sel} total={items.length} pageCount={items.length} labelOf={labelOf} invalidate={[KEY, ['admin-dashboard'], ['my-work']]} />;
+  const bulkBar = <InquiriesBulkBar sel={sel} total={items.length} pageCount={items.length} labelOf={labelOf} invalidate={[KEY, ['admin-dashboard'], ['my-work']]} placement="bottom" />;
+  const rowTone = (i: Scored) => clsx(i.status === 'NEW' && 'bg-primary/[0.04]', i.id === open ? 'bg-primary/[0.06] shadow-[inset_3px_0_0_var(--color-brand-600)]' : i.id === selected && 'shadow-[inset_3px_0_0_var(--color-line-strong)]');
 
   return (
     <div>
@@ -229,6 +233,8 @@ export default function Inquiries() {
         </div>
       )}
 
+      <SavedFilterTabs page="inquiries" settings={table} className="mb-3" />
+
       <div className="mb-6 space-y-3">
         <div className="flex flex-col gap-2 sm:flex-row">
           <label className="relative flex-1">
@@ -236,18 +242,6 @@ export default function Inquiries() {
             <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted" aria-hidden />
             <input ref={searchRef} type="search" className="input pl-9" placeholder={t('admin.inquiries.searchPlaceholder')} value={qInput} onChange={(e) => setQInput(e.target.value)} />
           </label>
-          <button
-            type="button"
-            aria-pressed={split.enabled}
-            onClick={split.toggle}
-            title={t('ux.split.toggleHint')}
-            className={clsx(
-              'hidden min-h-10 sm:min-h-9 shrink-0 items-center justify-center gap-2 rounded-lg border px-3.5 text-sm font-semibold whitespace-nowrap transition lg:inline-flex',
-              split.enabled ? 'border-line-strong bg-sunken text-ink shadow-[inset_0_0_0_1px_var(--color-line-strong)]' : 'border-line bg-card text-ink/80 hover:border-line-strong',
-            )}
-          >
-            <Columns2 className="size-4" aria-hidden /> {t('ux.split.toggle')}
-          </button>
           <select aria-label={t('mk.lead.filterLevel')} className="input sm:w-40" value={level ?? ''} onChange={(e) => setParam('level', e.target.value || null)}>
             <option value="">{t('mk.lead.allLevels')}</option>
             {LEAD_LEVELS.map((l) => (
@@ -302,9 +296,8 @@ export default function Inquiries() {
             )}
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <SavedViewsMenu page="inquiries" settings={table} />
-            {!split.active && <ViewModeToggle settings={table} />}
-            {tableMode && !split.active && <ColumnChooser settings={table} />}
+            <ViewModeToggle settings={table} />
+            {tableMode && <ColumnChooser settings={table} />}
           </div>
         </div>
         {filtersOpen && (
@@ -412,57 +405,8 @@ export default function Inquiries() {
             )}
           </EmptyState>
         </div>
-      ) : split.active ? (
-        <div className="grid items-start gap-4 lg:grid-cols-[minmax(17rem,22rem)_minmax(0,1fr)] xl:gap-6">
-          <div>
-            <ul className="max-h-[calc(100dvh-12rem)] divide-y divide-line overflow-y-auto rounded-xl border border-line bg-card lg:sticky lg:top-20" aria-label={t('admin.nav.inquiries')}>
-              {items.map((i) => {
-                const on = i.id === split.selected;
-                return (
-                  <li key={i.id} data-row-id={i.id}>
-                    <button
-                      type="button"
-                      aria-current={on || undefined}
-                      onClick={() => split.select(i.id)}
-                      className={clsx(
-                        'block w-full px-4 py-3 text-left transition outline-none focus-visible:ring-2 focus-visible:ring-focus/40 focus-visible:ring-inset',
-                        on ? 'bg-primary/[0.06] shadow-[inset_3px_0_0_var(--color-brand-600)]' : i.status === 'NEW' ? 'bg-primary/[0.04] hover:bg-sunken' : 'hover:bg-sunken',
-                      )}
-                    >
-                      <span className="flex items-start justify-between gap-2">
-                        <span className="min-w-0 truncate text-sm font-semibold text-ink">{i.companyName || i.contactName}</span>
-                        <span className={clsx('badge shrink-0', INQUIRY_STATUS_TONE[i.status])}>{inquiryStatusLabel(i.status)}</span>
-                      </span>
-                      <span className="mt-0.5 line-clamp-1 block text-xs text-muted">{i.message}</span>
-                      <span className="mt-1 block text-[11px] text-muted">
-                        {inquiryKindLabel(i.kind)} · {fmtRelative(i.createdAt)}
-                        {i.assignedStaff && <> · {i.assignedStaff.name}</>}
-                        {i.agent && <> · {t('inq.badge.agent', { name: i.agent.name })}</>}
-                      </span>
-                    </button>
-                  </li>
-                );
-              })}
-            </ul>
-            {pager}
-          </div>
-          {selectedItem ? (
-            <div className="lg:sticky lg:top-20 lg:flex lg:max-h-[calc(100dvh-6rem)] lg:flex-col">
-              <InquirySplitPanel key={selectedItem.id} i={selectedItem} onClose={() => split.select(null)} />
-            </div>
-          ) : (
-            <div className="grid min-h-64 place-items-center rounded-xl border border-dashed border-line bg-card p-8 text-center">
-              <div>
-                <Columns2 className="mx-auto size-8 text-subtle" aria-hidden />
-                <p className="mt-2 text-sm font-semibold text-ink">{t('ux.split.empty')}</p>
-                <p className="mt-1 text-xs text-muted">{t('ux.split.emptyHint')}</p>
-              </div>
-            </div>
-          )}
-        </div>
       ) : tableMode ? (
         <>
-          {bulkBar}
           <SettingsTable
             settings={table}
             rows={items}
@@ -472,8 +416,9 @@ export default function Inquiries() {
             selectLabel={t('sp.select.row')}
             selectAllLabel={t('sp.select.page')}
             tableClassName="min-w-[1080px]"
-            onRowClick={(i) => split.select(i.id)}
-            rowClassName={(i) => clsx(i.status === 'NEW' && 'bg-primary/[0.04]', i.id === split.selected && 'shadow-[inset_3px_0_0_var(--color-brand-600)]')}
+            onRowClick={(i) => drawer.open(i.id)}
+            rowProps={(i) => ({ 'aria-current': i.id === open || undefined })}
+            rowClassName={(i) => rowTone(i)}
             cells={{
               contact: (i) => (
                 <>
@@ -496,10 +441,10 @@ export default function Inquiries() {
             }}
           />
           {pager}
+          {bulkBar}
         </>
       ) : (
         <>
-          {bulkBar}
           <ul className="divide-y divide-line overflow-hidden rounded-xl border border-line bg-card">
             {items.length > 1 && (
               <li className="flex items-center gap-3 bg-surface/70 px-4 py-2 text-xs text-muted sm:px-5" data-tour="sp-select-all">
@@ -513,92 +458,108 @@ export default function Inquiries() {
                 <span>{t('sp.select.page')}</span>
               </li>
             )}
-            {items.map((i) => {
-              const expanded = open === i.id;
-              return (
-                <li key={i.id} data-row-id={i.id} className={clsx(i.status === 'NEW' && 'bg-primary/[0.04]', i.id === split.selected && 'shadow-[inset_3px_0_0_var(--color-brand-600)]')}>
-                  <div
-                    role="button"
-                    tabIndex={0}
-                    aria-expanded={expanded}
-                    onClick={() => setOpen(expanded ? null : i.id)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault();
-                        setOpen(expanded ? null : i.id);
-                      }
+            {items.map((i) => (
+              <li key={i.id} data-row-id={i.id} className={rowTone(i)}>
+                <div
+                  role="button"
+                  tabIndex={0}
+                  aria-haspopup="dialog"
+                  aria-current={i.id === open || undefined}
+                  onClick={() => drawer.open(i.id)}
+                  onKeyDown={(e) => {
+                    if (e.target !== e.currentTarget) return;
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      drawer.open(i.id);
+                    }
+                  }}
+                  className="group flex cursor-pointer items-start gap-3 px-4 py-3.5 transition outline-none hover:bg-sunken focus-visible:bg-sunken focus-visible:ring-2 focus-visible:ring-focus/40 focus-visible:ring-inset sm:px-5"
+                >
+                  <input
+                    type="checkbox"
+                    className="mt-2 size-4 shrink-0 cursor-pointer accent-primary"
+                    aria-label={`${t('sp.select.row')}: ${i.companyName || i.contactName}`}
+                    checked={sel.props.isSelected(i.id)}
+                    onKeyDown={(e) => e.stopPropagation()}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      sel.props.toggle(i.id, e.currentTarget.checked, e.shiftKey);
                     }}
-                    className="flex cursor-pointer items-start gap-3 px-4 py-3.5 transition hover:bg-sunken sm:px-5"
+                    onChange={() => {
+                      /* handled in onClick (needs shiftKey) */
+                    }}
+                  />
+                  <span
+                    className={clsx('mt-0.5 grid size-8 shrink-0 place-items-center rounded-lg', i.kind === 'company' ? 'bg-accent-bg text-accent-fg' : 'bg-primary/10 text-link')}
+                    aria-hidden
                   >
-                    <input
-                      type="checkbox"
-                      className="mt-2 size-4 shrink-0 cursor-pointer accent-primary"
-                      aria-label={`${t('sp.select.row')}: ${i.companyName || i.contactName}`}
-                      checked={sel.props.isSelected(i.id)}
-                      onKeyDown={(e) => e.stopPropagation()}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        sel.props.toggle(i.id, e.currentTarget.checked, e.shiftKey);
-                      }}
-                      onChange={() => {
-                        /* handled in onClick (needs shiftKey) */
-                      }}
-                    />
-                    <span
-                      className={clsx(
-                        'mt-0.5 grid size-8 shrink-0 place-items-center rounded-lg',
-                        i.kind === 'company' ? 'bg-accent-bg text-accent-fg' : 'bg-primary/10 text-link',
-                      )}
-                      aria-hidden
-                    >
-                      {i.kind === 'company' ? <Building2 className="size-4" /> : <User className="size-4" />}
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
-                        <span className="min-w-0 font-semibold break-words text-ink">{i.companyName || i.contactName}</span>
-                        {i.companyName && <span className="text-muted">{i.contactName}</span>}
-                        <span className="text-[11px] whitespace-nowrap text-muted">{inquiryKindLabel(i.kind)}</span>
-                        <LeadScoreBadge level={i.scoreLevel ?? null} score={i.score ?? 0} reasons={i.scoreReasons ?? null} />
-                        <InquiryBadges i={i} />
-                      </p>
-                      <p className={clsx('mt-0.5 text-xs text-muted', !expanded && 'line-clamp-1')}>{i.message}</p>
-                    </div>
-                    <div className="flex shrink-0 flex-col items-end gap-1.5 sm:flex-row sm:items-center sm:gap-3">
-                      {i.assignedStaff && (
-                        <span className="hidden items-center gap-1 text-[11px] whitespace-nowrap text-muted md:inline-flex" title={t('inq.owner.label')}>
-                          <UserCheck className="size-3" aria-hidden /> {i.assignedStaff.name}
-                        </span>
-                      )}
-                      <span className="text-[11px] whitespace-nowrap text-muted" title={fmtDateTime(i.createdAt)}>
-                        {fmtRelative(i.createdAt)}
-                      </span>
-                      <InquiryStatusCell item={i} />
-                      <ChevronDown className={clsx('hidden size-4 text-muted transition-transform sm:block', expanded && 'rotate-180')} aria-hidden />
-                    </div>
+                    {i.kind === 'company' ? <Building2 className="size-4" /> : <User className="size-4" />}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
+                      <span className="min-w-0 font-semibold break-words text-ink">{i.companyName || i.contactName}</span>
+                      {i.companyName && <span className="text-muted">{i.contactName}</span>}
+                      <span className="text-[11px] whitespace-nowrap text-muted">{inquiryKindLabel(i.kind)}</span>
+                      <LeadScoreBadge level={i.scoreLevel ?? null} score={i.score ?? 0} reasons={i.scoreReasons ?? null} />
+                      <InquiryBadges i={i} />
+                    </p>
+                    <p className="mt-0.5 line-clamp-1 text-xs text-muted">{i.message}</p>
                   </div>
-                  <AnimatePresence initial={false}>
-                    {expanded && (
-                      <motion.div
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: 'auto', opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        transition={{ duration: 0.2 }}
-                        className="overflow-hidden"
-                      >
-                        <div className="border-t border-line bg-surface/50 px-4 py-4 sm:pr-5 sm:pl-16">
-                          <InquiryPresence id={i.id} className="mb-3 justify-end" />
-                          <InquiryDetailBody i={i} />
-                        </div>
-                      </motion.div>
+                  <div className="flex shrink-0 flex-col items-end gap-1.5 sm:flex-row sm:items-center sm:gap-3">
+                    {i.assignedStaff && (
+                      <span className="hidden items-center gap-1 text-[11px] whitespace-nowrap text-muted md:inline-flex" title={t('inq.owner.label')}>
+                        <UserCheck className="size-3" aria-hidden /> {i.assignedStaff.name}
+                      </span>
                     )}
-                  </AnimatePresence>
-                </li>
-              );
-            })}
+                    <span className="text-[11px] whitespace-nowrap text-muted" title={fmtDateTime(i.createdAt)}>
+                      {fmtRelative(i.createdAt)}
+                    </span>
+                    <InquiryStatusCell item={i} />
+                    <ChevronRight className="hidden size-4 text-subtle transition group-hover:translate-x-0.5 group-hover:text-muted sm:block" aria-hidden />
+                  </div>
+                </div>
+              </li>
+            ))}
           </ul>
           {pager}
+          {bulkBar}
         </>
       )}
+
+      <Drawer
+        open={!!open}
+        onClose={drawer.close}
+        width="lg"
+        title={drawerItem ? drawerItem.companyName || drawerItem.contactName : '…'}
+        description={
+          drawerItem
+            ? [inquiryKindLabel(drawerItem.kind), fmtDateTime(drawerItem.createdAt), drawerItem.assignedStaff ? t('inq.owner.assigned', { name: drawerItem.assignedStaff.name }) : null].filter(Boolean).join(' · ')
+            : undefined
+        }
+        headerActions={
+          <>
+            {open && <InquiryPresence id={open} className="mr-1 hidden sm:flex" />}
+            {openIndex > 0 && <IconButton icon={ChevronUp} label={t('cl.drawer.prev')} size="sm" onClick={() => drawer.open(items[openIndex - 1].id)} />}
+            {openIndex >= 0 && openIndex < items.length - 1 && <IconButton icon={ChevronDown} label={t('cl.drawer.next')} size="sm" onClick={() => drawer.open(items[openIndex + 1].id)} />}
+          </>
+        }
+        bodyClassName="bg-surface/40"
+      >
+        {drawerItem ? (
+          <div className="space-y-4">
+            <div className="flex flex-wrap items-center gap-2">
+              <InquiryStatusCell item={drawerItem} />
+              <LeadScoreBadge level={drawerItem.scoreLevel ?? null} score={drawerItem.score ?? 0} reasons={drawerItem.scoreReasons ?? null} />
+            </div>
+            <InquiryDetailBody i={drawerItem} />
+          </div>
+        ) : (
+          <div className="space-y-3" aria-busy>
+            <Skeleton className="h-16 w-full" rounded="xl" />
+            <Skeleton className="h-32 w-full" rounded="xl" />
+          </div>
+        )}
+      </Drawer>
     </div>
   );
 }

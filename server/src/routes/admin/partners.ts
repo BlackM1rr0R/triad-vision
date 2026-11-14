@@ -40,6 +40,7 @@ import { loadRows, totalsOf } from '../../lib/settlement/service.js';
 import { csvSafe } from '../../lib/csvSafe.js';
 import { todayOf } from '../../lib/partnerRecords/contracts.js';
 import { QUOTA_FILTERS, assignedClientCounts, matchesQuotaFilter, quotaOf } from '../../lib/partners/quota.js'; // "needed clients" target
+import { partnerDashboard } from '../../lib/partners/dashboard.js'; // "Panel" tab of the profile
 
 /**
  * Referral partners (middlemen who bring visa clients) — /api/admin/partners.
@@ -562,6 +563,17 @@ adminPartnersRouter.get('/:id/stats', async (req, res) => {
       portal: { hasLogin: !!partner.userId, active: login?.isActive ?? false, lastSeenAt: login?.lastSeenAt ?? null, visibility: partner.visibility },
     },
   });
+});
+
+/**
+ * GET /:id/dashboard — the "Panel" tab of the profile (lib/partners/dashboard.ts): cases by status, new
+ * clients and commissions per month (12 Baku months), refusal rate, quota and the latest activity, for
+ * STAFF+ (like /stats). Client payments per month ("revenue") only for ADMIN+ (as the client billing lists).
+ */
+adminPartnersRouter.get('/:id/dashboard', async (req, res) => {
+  const partner = await prisma.referralPartner.findUnique({ where: { id: String(req.params.id) }, select: { id: true, clientQuota: true, currency: true } });
+  if (!partner) throw notFound('PARTNER_NOT_FOUND');
+  res.json({ dashboard: await partnerDashboard(partner, { withRevenue: hasMinRole(req.user!.role, 'ADMIN') }) });
 });
 
 /**

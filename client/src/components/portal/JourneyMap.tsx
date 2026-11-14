@@ -5,7 +5,7 @@ import { cityCoords, makeProjection, type LngLat } from '@/components/about/geo'
 import { GERMAN_STATES } from '@/components/growth/germanyStates';
 import { COUNTRY_SHAPES, DE_CENTRE, ORIGIN_MAP_BOUNDS, arc, inRing, pointsAlongArc } from '@/components/growth/originMapShapes';
 import { motionAllowed } from '@/lib/viewTransition';
-import { MILESTONE_POSITIONS, routeProgress, type JourneyData, type Milestone } from './journey';
+import { milestonePositions, routeProgress, type JourneyData, type Milestone } from './journey';
 
 const W = 800;
 const EASE = [0.22, 1, 0.36, 1] as const;
@@ -41,7 +41,7 @@ const labelPos = (x: number): { x: number; textAnchor: 'start' | 'middle' | 'end
 /**
  * Decorative-but-labelled SVG map of the client's journey: simplified country outlines (shared with the public
  * origin map), a curved route from the home city to the German city, the part already travelled drawn in the
- * brand colour, and the six milestones as markers. The route draws itself once when it scrolls into view;
+ * brand colour, and the milestones (six, seven with recognition) as markers. The route draws itself once when it scrolls into view;
  * with reduced motion (OS setting or "Stop animations") it is shown fully drawn at once.
  * The ordered list next to it (JourneyTimeline) carries the same information for screen readers.
  */
@@ -65,6 +65,7 @@ export function JourneyMap({
 }) {
   const reduce = useReducedMotion();
   const animated = !reduce && motionAllowed();
+  const milestoneCount = milestones.length;
 
   const geo = useMemo(() => {
     const o = journey.origin;
@@ -75,10 +76,10 @@ export function JourneyMap({
     const proj = makeProjection(boundsFor(from, to), W, 0);
     const a = proj.project(from);
     const b = proj.project(to);
-    const markers = pointsAlongArc(a, b, [...MILESTONE_POSITIONS]);
+    const markers = pointsAlongArc(a, b, milestonePositions(milestoneCount));
     const destState = journey.destination.city ? GERMAN_STATES.find((st) => st.rings.some((r) => inRing(to, r)))?.code ?? null : null;
     return { proj, a, b, d: arc(a, b), markers, destState, known };
-  }, [journey.origin, journey.destination.city]);
+  }, [journey.origin, journey.destination.city, milestoneCount]);
 
   const progress = routeProgress(milestones);
   const current = milestones.findIndex((m) => m.status === 'current');

@@ -3,100 +3,69 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
-import { ChevronLeft, ChevronRight, ClipboardPen, Columns2, FileClock, FolderSearch, Hourglass, KanbanSquare, List, Mail, MessageSquare, Phone, ScanEye, Search, UserCheck, X } from 'lucide-react';
+import { CalendarClock, FolderOpen, FolderSearch, GraduationCap, Hourglass, KanbanSquare, List, Mail, Phone, ScanEye, UserCheck, UserX, X } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useL10n } from '@/lib/l10n';
-import type { CaseStatus } from '@/lib/types';
 import { Spinner } from '@/components/ui/Spinner';
-import { StatusBadge } from '@/components/admin/StatusBadge';
-import { ALL_STATUSES, actorSideLabel, eventLabel, fmtDate, fmtDateTime, fmtRelative, fullName, statusLabel } from '@/components/admin/labels';
-import type { AdminCaseListItem, AdminCasesResponse } from '@/components/admin/types';
-import { Chip, EmptyState, ErrorBlock, PageHead } from '@/components/admin/ui';
-import { BulkPartnerBar, CasePartnerCell, PartnerFilterSelect } from '@/components/partners/CasesPartnerTools';
+import { Pagination } from '@/components/ui/Pagination';
+import { fmtDate, fmtRelative, fullName, actorSideLabel, eventLabel, fmtDateTime } from '@/components/admin/labels';
+import type { AdminCasesResponse } from '@/components/admin/types';
+import { EmptyState, ErrorBlock, KpiCell, KpiStrip, PageHead } from '@/components/admin/ui';
+import { CasePartnerCell } from '@/components/partners/CasesPartnerTools';
 import { NextStepChip } from '@/components/caseNext/NextStepChip';
 import { CasesListSkeleton } from '@/components/admin/CasesListSkeleton';
 import { CASES_LIST_QS_KEY, morphCaseRow } from '@/components/admin/caseMorph';
 import { CaseAssigneeCell, CaseStatusCell } from '@/components/inline/CaseInlineCells'; // inline assignee / quick status
 import { requestInlineEdit } from '@/components/inline/optimistic';
-import { CaseSplitPanel } from '@/components/admin/split/CaseSplitPanel'; // split view: compact case summary
-import { useSplitView } from '@/components/admin/split/useSplitView';
 import { useListNav } from '@/components/shortcuts/useListNav'; // J / K / Enter / E / '/' / Esc
 import { registerCopy } from '@/i18n';
 import { pagesAdminUx } from '@/i18n/pagesAdminUx';
-import { PROCESSING_STAGES, isProcessingStage, stageLabel } from '@/components/caseProcessing/api'; // team document workflow
-import { StageBadge, StageCell } from '@/components/caseProcessing/parts';
+import { pagesStaffPower } from '@/i18n/pagesStaffPower';
+import { pagesCasesList } from '@/i18n/pagesCasesList';
+import { StageCell } from '@/components/caseProcessing/parts';
 import { ProcessingBoard } from '@/components/caseProcessing/ProcessingBoard';
-import { BallChip } from '@/components/clientProcess/Ball'; // "Top kimdÉ™dir?" column
-import { pagesStaffPower } from '@/i18n/pagesStaffPower'; // saved views, table settings, bulk actions, fast review
-import { SavedViewsMenu } from '@/components/staffPower/SavedViews';
+import { BallChip } from '@/components/clientProcess/Ball';
 import { ColumnChooser, SettingsTable, useTableSettings, type ColumnDef } from '@/components/staffPower/tableSettings';
 import { useRowSelection } from '@/components/staffPower/selection';
 import { CasesBulkBar } from '@/components/staffPower/BulkBar';
+import { SUMMARY_TILES, hasAnyFilter, serverParams, useCasesSummary, useDrawerParam, type SummaryTile } from '@/components/casesList/api';
+import { CaseFilterBar, SORT_KEYS, type SortKey } from '@/components/casesList/CaseFilterBar';
+import { SavedFilterTabs } from '@/components/casesList/SavedFilterTabs';
+import { CaseQuickDrawer } from '@/components/casesList/CaseQuickDrawer';
+import { ActivityCell, AppointmentCell, CaseCard, DaysInStatus, PartnerBulkControl, RowActions, type CaseRow } from '@/components/casesList/parts';
 
 registerCopy(pagesAdminUx);
 registerCopy(pagesStaffPower);
+registerCopy(pagesCasesList);
 
-const isStatus = (v: string | null): v is CaseStatus => !!v && (ALL_STATUSES as string[]).includes(v);
+const isSort = (v: string | null): v is SortKey => !!v && (SORT_KEYS as string[]).includes(v);
 
-type SortKey = 'updated' | 'daysInStatus' | 'age';
-const SORT_KEYS: SortKey[] = ['updated', 'daysInStatus', 'age'];
-const isSort = (v: string | null): v is SortKey => v === 'updated' || v === 'daysInStatus' || v === 'age';
-
-/** Days in the current status, amber from 3 days and red from 7. */
-const DaysInStatus = ({ c, className }: { c: AdminCaseListItem; className?: string }) => {
-  const { t } = useTranslation();
-  return (
-    <span
-      className={clsx(
-        'inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] font-semibold whitespace-nowrap tabular-nums',
-        c.daysInStatus >= 7 ? 'bg-danger-bg text-danger-fg' : c.daysInStatus >= 3 ? 'bg-warning-bg text-warning-fg' : 'bg-sunken text-muted',
-        className,
-      )}
-      title={t('admin.cases.sinceTitle', { date: fmtDate(c.statusSince) })}
-    >
-      <Hourglass className="size-3" aria-hidden /> {t('admin.cases.inStatusDays', { count: c.daysInStatus })}
-    </span>
-  );
+const TILE_ICON: Record<SummaryTile, typeof FolderOpen> = {
+  open: FolderOpen,
+  mine: UserCheck,
+  unassigned: UserX,
+  stuck: Hourglass,
+  embassyWeek: CalendarClock,
+  recognitionOverdue: GraduationCap,
 };
 
-const RowMeta = ({ c }: { c: AdminCaseListItem }) => {
-  const { t } = useTranslation();
-  return (
-    <span className="inline-flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[11px] text-muted">
-      {c.pendingDocs > 0 && (
-        <span className="inline-flex items-center gap-1 rounded-md bg-warning-bg px-1.5 py-0.5 font-semibold text-warning-fg tabular-nums" title={t('admin.cases.pendingDocsTitle')}>
-          <FileClock className="size-3" aria-hidden /> {t('admin.cases.docsCount', { count: c.pendingDocs })}
-        </span>
-      )}
-      <span className="inline-flex items-center gap-1 tabular-nums" title={t('admin.common.messages')}>
-        <MessageSquare className="size-3" aria-hidden /> {c.messagesCount}
-      </span>
-      <span className="tabular-nums" title={t('admin.cases.createdTitle', { date: fmtDate(c.createdAt) })}>
-        {t('admin.cases.ageDays', { count: c.ageDays })}
-      </span>
-    </span>
-  );
-};
-
-const LastEvent = ({ c }: { c: AdminCaseListItem }) =>
-  c.lastEvent ? (
-    <span className="block text-xs" title={fmtDateTime(c.lastEvent.createdAt)}>
-      <span className="font-medium text-ink/80">{eventLabel(c.lastEvent.type)}</span>
-      <span className="block text-[11px] text-muted">
-        {actorSideLabel(c.lastEvent.actor?.role)} · {fmtRelative(c.lastEvent.createdAt)}
-      </span>
-    </span>
-  ) : (
-    <span className="text-xs text-muted">—</span>
-  );
-
+/**
+ * Admin → Müraciətlər. Header with the key counts (each a filter link), saved-filter tabs, a compact filter bar
+ * (search, status, owner, date, more filters in a popover), then a fixed-width table from xl and cards below.
+ * A row opens the quick-view drawer (?open=<id>, browser back closes it); the full case page stays one click
+ * away. Selecting rows shows the bulk bar at the bottom of the screen.
+ */
 export default function CasesList() {
   const { t } = useTranslation();
   const { tr } = useL10n();
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
-  // The case page's back arrow returns to this list with its filters and page (CASES_LIST_QS_KEY).
-  const qsNow = params.toString();
+  // The case page's back arrow returns to this list with its filters and page (CASES_LIST_QS_KEY), drawer closed.
+  const qsNow = useMemo(() => {
+    const p = new URLSearchParams(params);
+    p.delete('open');
+    return p.toString();
+  }, [params]);
   useEffect(() => {
     try {
       sessionStorage.setItem(CASES_LIST_QS_KEY, qsNow);
@@ -104,26 +73,19 @@ export default function CasesList() {
       /* private mode */
     }
   }, [qsNow]);
-  const statusParam = params.get('status');
-  const status = isStatus(statusParam) ? statusParam : null;
+
   const search = params.get('search') ?? '';
-  const mine = params.get('mine') === '1';
-  const overdue = params.get('overdue') === '1';
   const sortParam = params.get('sort');
   const sort: SortKey = isSort(sortParam) ? sortParam : 'updated';
   const page = Math.max(1, Number(params.get('page')) || 1);
-  // Referral partner filter ('none' = without partner) and the rows picked for a bulk partner change.
-  const partner = params.get('partner') ?? '';
-  // Team document workflow: stage filter, "sent to me" and the board view (?view=board).
-  const processingParam = params.get('processing');
-  const processing = isProcessingStage(processingParam) ? processingParam : null;
-  const processingAssignee = params.get('processingAssignee') ?? '';
   const board = params.get('view') === 'board';
+  const filters = useMemo(() => serverParams(params), [params]);
+  const filterKey = JSON.stringify(filters);
 
   const [searchInput, setSearchInput] = useState(search);
   useEffect(() => setSearchInput(search), [search]);
 
-  const update = (patch: Record<string, string | null>) =>
+  const update = (patch: Record<string, string | null | undefined>) =>
     setParams(
       (prev) => {
         const next = new URLSearchParams(prev);
@@ -139,208 +101,167 @@ export default function CasesList() {
 
   // Debounce search box → URL
   useEffect(() => {
-    const t = window.setTimeout(() => {
+    const h = window.setTimeout(() => {
       if (searchInput.trim() !== search) update({ search: searchInput.trim() || null });
     }, 350);
-    return () => window.clearTimeout(t);
+    return () => window.clearTimeout(h);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchInput]);
 
   const { data, isLoading, isFetching, error, refetch } = useQuery({
-    queryKey: ['admin-cases', { status, search, mine, page, partner, processing, processingAssignee, overdue }],
-    queryFn: async () =>
-      (
-        await api.get<AdminCasesResponse>('/admin/cases', {
-          params: {
-            status: status ?? undefined,
-            search: search || undefined,
-            mine: mine ? '1' : undefined,
-            page,
-            partnerId: partner || undefined,
-            processing: processing ?? undefined,
-            processingAssignee: processingAssignee || undefined,
-            overdue: overdue ? '1' : undefined,
-          },
-        })
-      ).data,
+    queryKey: ['admin-cases', { ...filters, page }],
+    queryFn: async () => (await api.get<AdminCasesResponse>('/admin/cases', { params: { ...filters, page } })).data,
     placeholderData: keepPreviousData,
   });
+  const summary = useCasesSummary();
 
   const counts = data?.counts ?? {};
-  const allCount = ALL_STATUSES.reduce((a, s) => a + (counts[s] ?? 0), 0);
   const pages = data ? Math.max(1, Math.ceil(data.total / data.pageSize)) : 1;
 
-  // The overdue chip is filtered by the server (paging and "all matching" bulk actions agree); the sort order
-  // is a client-side view option on the current page.
+  // Sort order of the current page (a view option; the server pages by the last change).
   const items = useMemo(() => {
-    const list = data?.items ?? [];
+    const list = (data?.items ?? []) as CaseRow[];
     if (sort === 'daysInStatus') return [...list].sort((a, b) => b.daysInStatus - a.daysInStatus);
     if (sort === 'age') return [...list].sort((a, b) => b.ageDays - a.ageDays);
     return list;
   }, [data, sort]);
-  // Multi-select (checkbox column, Shift + click range, whole page, all matching the filters) for the bulk bars.
-  const sel = useRowSelection(
-    items.map((c) => c.id),
-    JSON.stringify({ status, search, mine, page, partner, processing, processingAssignee, overdue }),
-  );
-  const picked = sel.picked;
-  const bulkFilters = {
-    status: status ?? undefined,
-    search: search || undefined,
-    mine: mine ? '1' : undefined,
-    partnerId: partner || undefined,
-    processing: processing ?? undefined,
-    processingAssignee: processingAssignee || undefined,
-    overdue: overdue ? '1' : undefined,
-  };
-  // Column settings of the desktop table (per user: order, visibility, width).
-  const columnDefs = useMemo<ColumnDef[]>(
-    () => [
-      { id: 'number', label: t('admin.cases.th.number'), required: true },
-      { id: 'client', label: t('admin.cases.th.client') },
-      { id: 'profession', label: t('admin.cases.th.profession') },
-      { id: 'status', label: t('admin.cases.th.status') },
-      { id: 'processing', label: t('caseProcessing.column') },
-      { id: 'nextStep', label: t('caseNext.chip.column'), width: 224 },
-      { id: 'ball', label: t('cp.ball.column') },
-      { id: 'lastEvent', label: t('admin.cases.th.lastEvent') },
-      { id: 'staff', label: t('admin.cases.th.staff'), className: 'whitespace-nowrap text-ink/80' },
-      { id: 'partner', label: t('refPartners.field'), className: 'max-w-[10rem]' },
-      { id: 'updated', label: t('admin.cases.th.updated'), align: 'right', className: 'text-xs whitespace-nowrap text-muted' },
-    ],
-    [t],
-  );
-  const table = useTableSettings('cases', columnDefs);
+  const ids = useMemo(() => items.map((c) => c.id), [items]);
 
-  // Split view (list left, compact case right; remembered per user) and keyboard selection (?selected=<id>).
-  const split = useSplitView('cases');
+  // Multi-select (checkbox column, Shift + click range, whole page, all matching the filters) for the bulk bar.
+  const sel = useRowSelection(ids, `${filterKey}|${page}`);
+
+  // Quick-view drawer (?open=<id>) and the keyboard cursor (?selected=<id>).
+  const drawer = useDrawerParam('open');
+  const [focusReply, setFocusReply] = useState(false);
+  const openDrawer = (id: string, reply = false) => {
+    setFocusReply(reply);
+    drawer.open(id);
+  };
+  const selected = params.get('selected');
+  const setSelected = (id: string | null) => update({ selected: id, page: params.get('page') });
+  const drawerIndex = drawer.id ? ids.indexOf(drawer.id) : -1;
+  const drawerRow = drawerIndex >= 0 ? items[drawerIndex] : undefined;
+
   const searchRef = useRef<HTMLInputElement>(null);
-  const selectedRow = items.find((c) => c.id === split.selected);
   useListNav({
-    ids: items.map((c) => c.id),
-    selected: split.selected,
-    onSelect: split.select,
-    onOpen: (id) => navigate(`/admin/cases/${id}`),
+    ids,
+    selected,
+    onSelect: setSelected,
+    onOpen: (id) => openDrawer(id),
     onEdit: (id) => requestInlineEdit(id),
     searchRef,
     titleKey: 'ux.shortcuts.lists.cases',
-    extra: split.wide ? [{ id: 'split', keys: ['s'], labelKey: 'ux.shortcuts.keys.split', handler: split.toggle }] : [],
+    extra: [{ id: 'full', keys: ['o'], labelKey: 'cl.row.openFull', handler: () => selected && navigate(`/admin/cases/${selected}`) }],
+    enabled: !drawer.id,
   });
+
+  // Desktop table columns (per-user order / visibility / width; "cases.v2" = the tidy default set).
+  const columnDefs = useMemo<ColumnDef[]>(
+    () => [
+      { id: 'case', label: t('cl.col.case'), required: true, width: 264 },
+      { id: 'status', label: t('cl.col.status'), width: 184 },
+      { id: 'nextStep', label: t('caseNext.chip.column'), width: 216 },
+      { id: 'staff', label: t('cl.col.staff'), width: 156 },
+      { id: 'activity', label: t('cl.col.activity'), width: 112 },
+      { id: 'appointment', label: t('cl.col.appointment'), width: 124 },
+      { id: 'updated', label: t('cl.col.updated'), width: 104, align: 'right', className: 'text-xs whitespace-nowrap text-muted' },
+      { id: 'visa', label: t('cl.col.visa'), width: 180, defaultHidden: true },
+      { id: 'contact', label: t('cl.col.contact'), width: 220, defaultHidden: true },
+      { id: 'processing', label: t('caseProcessing.column'), width: 160, defaultHidden: true },
+      { id: 'ball', label: t('cp.ball.column'), width: 160, defaultHidden: true },
+      { id: 'lastEvent', label: t('admin.cases.th.lastEvent'), width: 200, defaultHidden: true },
+      { id: 'partner', label: t('refPartners.field'), width: 150, defaultHidden: true },
+      { id: 'created', label: t('cl.col.created'), width: 112, defaultHidden: true, className: 'text-xs whitespace-nowrap text-muted' },
+      { id: 'actions', label: t('cl.col.actions'), header: <span className="sr-only">{t('cl.col.actions')}</span>, required: true, width: 112, align: 'right' },
+    ],
+    [t],
+  );
+  const table = useTableSettings('cases.v2', columnDefs);
+  const tableWidth = table.columns.reduce((a, c) => a + (table.widthOf(c.id) ?? 140), 40);
+
+  const tiles = summary.data?.tiles;
+  const tileHref = (p: Record<string, string>) => `/admin/cases?${new URLSearchParams(p).toString()}`;
+  const tileTone = (k: SummaryTile, n: number) => (n === 0 ? undefined : k === 'recognitionOverdue' || k === 'stuck' ? ('danger' as const) : k === 'unassigned' ? ('warning' as const) : undefined);
+
+  const viewSwitch = (
+    <div className="inline-flex rounded-lg border border-line bg-card p-0.5" role="group" aria-label={t('caseProcessing.board.toggle')} data-tour="sp-docflow-board">
+      {[
+        { on: !board, icon: List, label: t('caseProcessing.board.list'), view: null },
+        { on: board, icon: KanbanSquare, label: t('caseProcessing.board.toggle'), view: 'board' },
+      ].map((b) => (
+        <button
+          key={b.label}
+          type="button"
+          aria-pressed={b.on}
+          onClick={() => update({ view: b.view, open: null })}
+          className={clsx('inline-flex min-h-9 items-center gap-1.5 rounded-md px-2.5 text-xs font-semibold transition sm:min-h-8', b.on ? 'bg-sunken text-ink shadow-[inset_0_0_0_1px_var(--color-line-strong)]' : 'text-muted hover:text-ink')}
+        >
+          <b.icon className="size-3.5" aria-hidden /> {b.label}
+        </button>
+      ))}
+    </div>
+  );
+
+  const anyFilter = hasAnyFilter(params);
 
   return (
     <div>
       <PageHead
         title={t('admin.nav.cases')}
-        subtitle={data ? t('admin.cases.results', { count: data.total }) : undefined}
+        subtitle={t('cl.headSubtitle')}
         actions={isFetching && !isLoading ? <Spinner className="size-4 text-link" /> : undefined}
       />
 
-      <div className="mb-6 space-y-3">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-          <label className="relative flex-1">
-            <span className="sr-only">{t('admin.common.search')}</span>
-            <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted" aria-hidden />
-            <input
-              ref={searchRef}
-              type="search"
-              className="input pl-9"
-              placeholder={t('admin.cases.searchPlaceholder')}
-              value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-            />
-          </label>
-          <button
-            type="button"
-            aria-pressed={mine}
-            onClick={() => update({ mine: mine ? null : '1' })}
-            className={clsx(
-              'inline-flex min-h-10 sm:min-h-9 shrink-0 items-center justify-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-semibold whitespace-nowrap transition',
-              mine ? 'border-line-strong bg-sunken text-ink shadow-[inset_0_0_0_1px_var(--color-line-strong)]' : 'border-line bg-card text-ink/80 hover:border-line-strong',
-            )}
-          >
-            <UserCheck className="size-4" /> {t('admin.cases.mine')}
-          </button>
-          <label className="flex min-h-10 sm:min-h-9 shrink-0 items-center gap-2 text-xs text-muted">
-            <span className="whitespace-nowrap">{t('admin.cases.sortLabel')}</span>
-            <select aria-label={t('admin.cases.sortAria')} className="input min-h-10 sm:min-h-9 w-auto py-2 pr-8 text-sm" value={sort} onChange={(e) => update({ sort: e.target.value === 'updated' ? null : e.target.value })}>
-              {SORT_KEYS.map((k) => (
-                <option key={k} value={k}>
-                  {t(`admin.cases.sort.${k}`)}
-                </option>
-              ))}
-            </select>
-          </label>
-          <PartnerFilterSelect value={partner} onChange={(v) => update({ partner: v })} />
-          <SavedViewsMenu page="cases" settings={table} />
-          {!board && <ColumnChooser settings={table} className="hidden xl:block" />}
-          <Link
-            to="/admin/review?back=%2Fadmin%2Fcases"
-            title={t('sp.review.openHint')}
-            className="inline-flex min-h-10 shrink-0 items-center justify-center gap-2 rounded-lg border border-line bg-card px-3.5 text-sm font-semibold whitespace-nowrap text-ink/80 transition hover:border-line-strong sm:min-h-9"
-          >
-            <ScanEye className="size-4" aria-hidden /> {t('sp.review.open')}
-          </Link>
-          <button
-            type="button"
-            data-tour="sp-docflow-board"
-            aria-pressed={board}
-            onClick={() => update({ view: board ? null : 'board' })}
-            className={clsx(
-              'inline-flex min-h-10 sm:min-h-9 shrink-0 items-center justify-center gap-2 rounded-lg border px-3.5 py-2.5 text-sm font-semibold whitespace-nowrap transition',
-              board ? 'border-line-strong bg-sunken text-ink shadow-[inset_0_0_0_1px_var(--color-line-strong)]' : 'border-line bg-card text-ink/80 hover:border-line-strong',
-            )}
-          >
-            {board ? <List className="size-4" aria-hidden /> : <KanbanSquare className="size-4" aria-hidden />} {board ? t('caseProcessing.board.list') : t('caseProcessing.board.toggle')}
-          </button>
-          <button
-            type="button"
-            aria-pressed={split.enabled}
-            onClick={split.toggle}
-            title={t('ux.split.toggleHint')}
-            className={clsx(
-              'hidden min-h-10 sm:min-h-9 shrink-0 items-center justify-center gap-2 rounded-lg border px-3.5 py-2.5 text-sm font-semibold whitespace-nowrap transition lg:inline-flex',
-              split.enabled ? 'border-line-strong bg-sunken text-ink shadow-[inset_0_0_0_1px_var(--color-line-strong)]' : 'border-line bg-card text-ink/80 hover:border-line-strong',
-            )}
-          >
-            <Columns2 className="size-4" aria-hidden /> {t('ux.split.toggle')}
-          </button>
-        </div>
-        <div className="-mx-4 flex gap-1.5 overflow-x-auto px-4 pb-1 [scrollbar-width:none] sm:mx-0 sm:flex-wrap sm:px-0 sm:pb-0">
-          <Chip active={overdue} onClick={() => update({ overdue: overdue ? null : '1' })}>
-            <Hourglass className="size-3" aria-hidden /> {t('admin.cases.overdueChip')}
-          </Chip>
-          <Chip active={!status} onClick={() => update({ status: null })} count={allCount}>
-            {t('admin.common.all')}
-          </Chip>
-          {ALL_STATUSES.map((s) => (
-            <Chip key={s} active={status === s} onClick={() => update({ status: status === s ? null : s })} count={counts[s] ?? 0}>
-              {statusLabel(s)}
-            </Chip>
-          ))}
-        </div>
-        {!board && (
-          <div className="-mx-4 flex items-center gap-1.5 overflow-x-auto px-4 pb-1 [scrollbar-width:none] sm:mx-0 sm:flex-wrap sm:px-0 sm:pb-0" role="group" aria-label={t('caseProcessing.filterLabel')} data-tour="sp-docflow-filter">
-            <span className="inline-flex shrink-0 items-center gap-1 pr-1 text-xs font-semibold text-muted">
-              <ClipboardPen className="size-3.5" aria-hidden /> {t('caseProcessing.filterLabel')}
-            </span>
-            {PROCESSING_STAGES.map((s) => (
-              <Chip key={s} active={processing === s} onClick={() => update({ processing: processing === s ? null : s })} count={data?.processingCounts?.[s] ?? 0}>
-                <span title={t(`caseProcessing.hints.${s}`)}>{stageLabel(s)}</span>
-              </Chip>
-            ))}
-            <Chip active={processingAssignee === 'me'} onClick={() => update({ processingAssignee: processingAssignee === 'me' ? null : 'me' })}>
-              <UserCheck className="size-3" aria-hidden /> {t('caseProcessing.board.mine')}
-            </Chip>
-          </div>
-        )}
+      {/* Key counts: each tile is the list filtered exactly as counted */}
+      <section aria-label={t('cl.tiles.aria')} className="mb-5">
+        <KpiStrip cols={6}>
+          {SUMMARY_TILES.map((k) => {
+            const tile = tiles?.[k];
+            return (
+              <KpiCell
+                key={k}
+                label={t(`cl.tiles.${k}`)}
+                icon={TILE_ICON[k]}
+                value={tile ? tile.count : <span className="inline-block h-7 w-10 animate-pulse rounded bg-sunken align-middle" aria-hidden />}
+                hint={t(`cl.tiles.${k}Hint`)}
+                tone={tile ? tileTone(k, tile.count) : undefined}
+                to={tile ? tileHref(tile.params) : undefined}
+              />
+            );
+          })}
+        </KpiStrip>
+      </section>
+
+      <SavedFilterTabs page="cases" settings={table} className="mb-3" />
+
+      <div className="mb-4">
+        <CaseFilterBar
+          searchInput={searchInput}
+          onSearchInput={setSearchInput}
+          searchRef={searchRef}
+          update={update}
+          counts={counts}
+          total={board ? null : (data?.total ?? null)}
+          busy={isFetching}
+          actions={
+            <>
+              {viewSwitch}
+              <Link
+                to="/admin/review?back=%2Fadmin%2Fcases"
+                title={t('sp.review.openHint')}
+                className="inline-flex min-h-10 items-center gap-1.5 rounded-lg border border-line bg-card px-3 text-xs font-semibold whitespace-nowrap text-ink/80 transition hover:border-line-strong sm:min-h-9"
+              >
+                <ScanEye className="size-3.5" aria-hidden /> {t('sp.review.open')}
+              </Link>
+              {!board && <ColumnChooser settings={table} className="hidden xl:block" />}
+            </>
+          }
+        />
       </div>
 
       {board ? (
-        <ProcessingBoard partnerId={partner || undefined} search={search || undefined} onShowStage={(s) => update({ view: null, processing: s })} />
-      ) : (
-      <>
-
-      {isLoading ? (
+        <ProcessingBoard partnerId={params.get('partner') || undefined} search={search || undefined} onShowStage={(s) => update({ view: null, processing: s })} />
+      ) : isLoading ? (
         <CasesListSkeleton />
       ) : error || !data ? (
         <ErrorBlock error={error} onRetry={() => refetch()} />
@@ -348,9 +269,16 @@ export default function CasesList() {
         <div className="rounded-xl border border-line bg-card">
           <EmptyState icon={FolderSearch} title={t('admin.cases.notFound')}>
             {t('admin.cases.notFoundText')}
-            {(status || search || mine || overdue || partner || processing || processingAssignee) && (
+            {anyFilter && (
               <div className="mt-3">
-                <button type="button" className="btn-secondary btn-sm" onClick={() => setParams({}, { replace: true })}>
+                <button
+                  type="button"
+                  className="btn-secondary btn-sm"
+                  onClick={() => {
+                    setSearchInput('');
+                    setParams({}, { replace: true });
+                  }}
+                >
                   <X className="size-3.5" /> {t('admin.cases.resetFilters')}
                 </button>
               </div>
@@ -359,208 +287,143 @@ export default function CasesList() {
         </div>
       ) : (
         <>
-          <CasesBulkBar
-            sel={sel}
-            filters={bulkFilters}
-            total={data.total}
-            pageCount={items.length}
-            labelOf={(id) => items.find((c) => c.id === id)?.number ?? id}
-            invalidate={[['admin-cases'], ['admin-dashboard']]}
-          />
-          {!sel.allMatching && <BulkPartnerBar ids={picked} onDone={sel.clear} />}
-          {split.active ? (
-            <div className="grid items-start gap-4 lg:grid-cols-[minmax(17rem,22rem)_minmax(0,1fr)] xl:gap-6">
-              <ul className={clsx('max-h-[calc(100dvh-12rem)] divide-y divide-line overflow-y-auto rounded-xl border border-line bg-card lg:sticky lg:top-20', isFetching && 'opacity-60')} aria-label={t('admin.nav.cases')}>
-                {items.map((c) => {
-                  const on = c.id === split.selected;
-                  return (
-                    <li key={c.id} data-row-id={c.id}>
-                      <button
-                        type="button"
-                        aria-current={on || undefined}
-                        onClick={() => split.select(c.id)}
-                        onDoubleClick={() => navigate(`/admin/cases/${c.id}`)}
-                        className={clsx(
-                          'block w-full px-4 py-3 text-left transition outline-none focus-visible:bg-primary/[0.06] focus-visible:ring-2 focus-visible:ring-focus/40 focus-visible:ring-inset',
-                          on ? 'bg-primary/[0.06] shadow-[inset_3px_0_0_var(--color-brand-600)]' : 'hover:bg-sunken',
-                        )}
-                      >
-                        <span className="flex items-start justify-between gap-2">
-                          <span className="min-w-0">
-                            <span className="block code-id text-xs font-medium text-link whitespace-nowrap">{c.number}</span>
-                            <span className="block truncate text-sm font-semibold text-ink">{fullName(c.client)}</span>
-                            <span className="block truncate text-xs text-muted">{c.profession}</span>
-                          </span>
-                          <StatusBadge status={c.status} />
-                        </span>
-                        <span className="mt-1.5 flex flex-wrap items-center gap-1.5">
-                          <DaysInStatus c={c} />
-                          <span className="truncate text-[11px] text-muted">{c.assignedStaff ? fullName(c.assignedStaff) : t('admin.cases.unassigned')}</span>
-                        </span>
-                      </button>
-                    </li>
-                  );
-                })}
-              </ul>
-              {split.selected ? (
-                <div className="lg:sticky lg:top-20 lg:flex lg:max-h-[calc(100dvh-6rem)] lg:flex-col">
-                  <CaseSplitPanel key={split.selected} id={split.selected} row={selectedRow} onClose={() => split.select(null)} />
-                </div>
-              ) : (
-                <div className="grid min-h-64 place-items-center rounded-xl border border-dashed border-line bg-card p-8 text-center">
-                  <div>
-                    <Columns2 className="mx-auto size-8 text-subtle" aria-hidden />
-                    <p className="mt-2 text-sm font-semibold text-ink">{t('ux.split.empty')}</p>
-                    <p className="mt-1 text-xs text-muted">{t('ux.split.emptyHint')}</p>
-                  </div>
-                </div>
-              )}
-            </div>
-          ) : (
-          <>
-          {/* Desktop table (columns follow the user's table settings: order, visibility, width) */}
+          {/* Desktop table: fixed column widths (resizable / reorderable per user), hover actions on the right */}
           <SettingsTable
             settings={table}
             rows={items}
             rowKey={(c) => c.id}
             className="hidden xl:block"
-            tableClassName="min-w-[1460px]"
+            tableClassName="table-fixed"
             bodyClassName={clsx('transition-opacity', isFetching && 'opacity-60')}
             caption={t('admin.nav.cases')}
             selection={sel.props}
             selectLabel={t('refPartners.selectRow')}
-            selectAllLabel={t('refPartners.selectAll')}
-            onRowClick={(c, e) => {
-              morphCaseRow(e, c.id);
-              navigate(`/admin/cases/${c.id}`);
-            }}
-            rowProps={(c) => ({ 'aria-current': c.id === split.selected || undefined })}
-            rowClassName={(c) => (c.id === split.selected ? 'bg-primary/[0.04] shadow-[inset_3px_0_0_var(--color-brand-600)]' : undefined)}
+            selectAllLabel={t('cl.row.selectAll')}
+            onRowClick={(c) => openDrawer(c.id)}
+            tableStyle={{ minWidth: tableWidth }}
+            rowProps={(c) => ({ 'aria-current': c.id === drawer.id || undefined })}
+            rowClassName={(c) =>
+              clsx(
+                'group',
+                c.id === drawer.id ? 'bg-primary/[0.06] shadow-[inset_3px_0_0_var(--color-brand-600)]' : c.id === selected && 'bg-primary/[0.03] shadow-[inset_3px_0_0_var(--color-line-strong)]',
+              )
+            }
             cells={{
-              number: (c) => (
-                <>
-                  <Link
-                    to={`/admin/cases/${c.id}`}
-                    className="code-id text-xs font-medium text-link hover:underline whitespace-nowrap"
-                    data-vt-part="title"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      morphCaseRow(e, c.id);
-                    }}
-                  >
-                    {c.number}
-                  </Link>
-                  <p className="mt-0.5 text-[11px] text-muted">{fmtDate(c.createdAt)}</p>
-                </>
-              ),
-              client: (c) => (
-                <>
-                  <p className="font-semibold whitespace-nowrap text-ink">{fullName(c.client)}</p>
-                  <p className="mt-0.5 flex flex-wrap gap-x-3 text-xs text-muted">
-                    <span className="inline-flex items-center gap-1">
-                      <Mail className="size-3" aria-hidden />
-                      {c.client.email}
+              case: (c) => (
+                <div className="min-w-0">
+                  <p className="flex items-baseline gap-2">
+                    <Link
+                      to={`/admin/cases/${c.id}`}
+                      className="code-id text-xs font-medium whitespace-nowrap text-link hover:underline"
+                      data-vt-part="title"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        morphCaseRow(e, c.id);
+                      }}
+                    >
+                      {c.number}
+                    </Link>
+                    <span className="truncate text-[11px] text-subtle" title={fmtDate(c.createdAt)}>
+                      {fmtDate(c.createdAt)}
                     </span>
-                    {c.client.phone && (
-                      <span className="inline-flex items-center gap-1">
-                        <Phone className="size-3" aria-hidden />
-                        {c.client.phone}
-                      </span>
-                    )}
                   </p>
-                </>
-              ),
-              profession: (c) => (
-                <>
-                  <p className="text-ink">{c.profession}</p>
-                  <p className="mt-0.5 text-xs text-muted">{c.visaCategory ? `${tr(c.visaCategory.title)} · ${c.visaCategory.visaLabel}` : '—'}</p>
-                </>
+                  <p className="mt-0.5 truncate font-semibold text-ink" title={fullName(c.client)}>
+                    {fullName(c.client)}
+                  </p>
+                  <p className="truncate text-xs text-muted" title={c.profession}>
+                    {c.profession}
+                  </p>
+                </div>
               ),
               status: (c) => (
-                <>
+                <div className="flex flex-col items-start gap-1.5">
                   <CaseStatusCell c={c} />
-                  <div className="mt-1.5 flex flex-col items-start gap-1">
-                    <DaysInStatus c={c} />
-                    <RowMeta c={c} />
-                  </div>
-                </>
+                  <DaysInStatus c={c} />
+                </div>
+              ),
+              nextStep: (c) => <NextStepChip step={c.nextStep} />,
+              staff: (c) => <CaseAssigneeCell c={c} />,
+              activity: (c) => <ActivityCell c={c} />,
+              appointment: (c) => <AppointmentCell at={c.appointmentAt} />,
+              updated: (c) => <span title={fmtDateTime(c.updatedAt)}>{fmtRelative(c.updatedAt)}</span>,
+              visa: (c) => <span className="line-clamp-2 text-xs text-ink/80">{c.visaCategory ? `${c.visaCategory.visaLabel} · ${tr(c.visaCategory.title)}` : '—'}</span>,
+              contact: (c) => (
+                <span className="flex min-w-0 flex-col gap-0.5 text-xs text-muted">
+                  <span className="inline-flex min-w-0 items-center gap-1">
+                    <Mail className="size-3 shrink-0" aria-hidden /> <span className="truncate">{c.client.email}</span>
+                  </span>
+                  {c.client.phone && (
+                    <span className="inline-flex items-center gap-1">
+                      <Phone className="size-3 shrink-0" aria-hidden /> {c.client.phone}
+                    </span>
+                  )}
+                </span>
               ),
               processing: (c) => <StageCell p={c.processing} />,
-              nextStep: (c) => <NextStepChip step={c.nextStep} />,
               ball: (c) => <BallChip ball={c.ballInCourt} />,
-              lastEvent: (c) => <LastEvent c={c} />,
-              staff: (c) => <CaseAssigneeCell c={c} />,
+              lastEvent: (c) =>
+                c.lastEvent ? (
+                  <span className="block text-xs" title={fmtDateTime(c.lastEvent.createdAt)}>
+                    <span className="font-medium text-ink/80">{eventLabel(c.lastEvent.type)}</span>
+                    <span className="block text-[11px] text-muted">
+                      {actorSideLabel(c.lastEvent.actor?.role)} · {fmtRelative(c.lastEvent.createdAt)}
+                    </span>
+                  </span>
+                ) : (
+                  <span className="text-xs text-muted">—</span>
+                ),
               partner: (c) => <CasePartnerCell c={c} />,
-              updated: (c) => <span title={fmtDate(c.updatedAt)}>{fmtRelative(c.updatedAt)}</span>,
+              created: (c) => <span title={fmtDateTime(c.createdAt)}>{fmtDate(c.createdAt)}</span>,
+              actions: (c) => <RowActions c={c} onPreview={() => openDrawer(c.id)} onMessage={() => openDrawer(c.id, true)} />,
             }}
           />
 
-          {/* Cards below xl (table needs ~1080px next to the sidebar) */}
-          <ul className={clsx('grid grid-cols-1 gap-3 md:grid-cols-2 xl:hidden', isFetching && 'opacity-60')}>
-            {items.map((c) => (
-              <li key={c.id} data-row-id={c.id} className={clsx(c.id === split.selected && 'rounded-xl ring-2 ring-focus/50')}>
-                <Link to={`/admin/cases/${c.id}`} onClick={(e) => morphCaseRow(e, c.id)} className="block h-full rounded-xl border border-line bg-card p-4 transition hover:border-line-strong active:bg-sunken">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0">
-                      <p className="code-id text-xs font-medium text-link whitespace-nowrap" data-vt-part="title">{c.number}</p>
-                      <p className="mt-0.5 truncate font-semibold text-ink">{fullName(c.client)}</p>
-                      <p className="truncate text-xs text-muted">{c.profession}</p>
-                    </div>
-                    <StatusBadge status={c.status} />
-                  </div>
-                  <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
-                    <DaysInStatus c={c} />
-                    {c.processing?.stage && <StageBadge stage={c.processing.stage} />}
-                    <RowMeta c={c} />
-                  </div>
-                  {c.nextStep && <NextStepChip step={c.nextStep} className="mt-2.5" />}
-                  {c.ballInCourt && (
-                    <div className="mt-2.5">
-                      <BallChip ball={c.ballInCourt} />
-                    </div>
-                  )}
-                  <div className="mt-2.5 border-t border-line pt-2.5">
-                    <LastEvent c={c} />
-                  </div>
-                  <div className="mt-2.5 flex items-center justify-between gap-2 text-[11px] text-muted">
-                    <span className="truncate">{c.assignedStaff ? fullName(c.assignedStaff) : t('admin.cases.unassigned')}</span>
-                    <CasePartnerCell c={c} empty="" />
-                    <span className="shrink-0">{fmtRelative(c.updatedAt)}</span>
-                  </div>
-                </Link>
-              </li>
-            ))}
-          </ul>
-          </>
-          )}
+          {/* Cards below xl: one column on phones, two from md */}
+          <div className="xl:hidden">
+            {items.length > 1 && (
+              <label className="mb-2 inline-flex min-h-9 items-center gap-2 px-1 text-xs text-muted">
+                <input type="checkbox" className="size-4 accent-primary" checked={sel.allOnPage} onChange={(e) => sel.props.togglePage(e.target.checked)} />
+                {t('cl.row.selectAll')}
+              </label>
+            )}
+            <ul className={clsx('grid grid-cols-1 gap-3 md:grid-cols-2', isFetching && 'opacity-60')} aria-label={t('admin.nav.cases')}>
+              {items.map((c) => (
+                <li key={c.id} data-row-id={c.id}>
+                  <CaseCard
+                    c={c}
+                    selected={sel.props.isSelected(c.id)}
+                    current={c.id === selected || c.id === drawer.id}
+                    onToggle={(on, shift) => sel.props.toggle(c.id, on, shift)}
+                    onOpen={() => openDrawer(c.id)}
+                  />
+                </li>
+              ))}
+            </ul>
+          </div>
 
-          {pages > 1 && (
-            <nav className="mt-6 flex flex-wrap items-center justify-between gap-3 text-sm" aria-label={t('admin.common.pagination')}>
-              <p className="text-xs text-muted">{t('admin.common.pageOf', { page, pages })}</p>
-              <div className="flex gap-1.5">
-                <button
-                  type="button"
-                  className="btn-secondary btn-sm"
-                  disabled={page <= 1}
-                  onClick={() => update({ page: page - 1 > 1 ? String(page - 1) : null })}
-                >
-                  <ChevronLeft className="size-3.5" /> {t('admin.common.prev')}
-                </button>
-                <button
-                  type="button"
-                  className="btn-secondary btn-sm"
-                  disabled={page >= pages}
-                  onClick={() => update({ page: String(page + 1) })}
-                >
-                  {t('admin.common.next')} <ChevronRight className="size-3.5" />
-                </button>
-              </div>
-            </nav>
-          )}
+          {pages > 1 && <Pagination className="mt-5" page={page} pages={pages} total={data.total} pageSize={data.pageSize} onChange={(p) => update({ page: p > 1 ? String(p) : null })} />}
+
+          <CasesBulkBar
+            sel={sel}
+            filters={filters}
+            total={data.total}
+            pageCount={items.length}
+            labelOf={(id) => items.find((c) => c.id === id)?.number ?? id}
+            invalidate={[['admin-cases'], ['admin-dashboard']]}
+            placement="bottom"
+            extraActions={!sel.allMatching ? <PartnerBulkControl ids={sel.picked} onDone={sel.clear} /> : undefined}
+          />
         </>
       )}
-      </>
-      )}
+
+      <CaseQuickDrawer
+        id={drawer.id}
+        row={drawerRow}
+        onClose={drawer.close}
+        autoFocusReply={focusReply}
+        onPrev={drawerIndex > 0 ? () => openDrawer(ids[drawerIndex - 1]) : undefined}
+        onNext={drawerIndex >= 0 && drawerIndex < ids.length - 1 ? () => openDrawer(ids[drawerIndex + 1]) : undefined}
+      />
     </div>
   );
 }

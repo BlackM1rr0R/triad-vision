@@ -23,8 +23,8 @@ import { getLicense } from '../../lib/license/index.js';
 
 /**
  * Admin navigation (mounted on /api/admin, STAFF+):
- *   GET  /me/nav                    { desk, defaultDesk, pins, recent, modules }  (bootstrap of the sidebar + Ctrl+K)
- *   PUT  /me/nav                    { desk?: Desk | null, pins?: string[] }        own desk / favourites
+ *   GET  /me/nav                    { desk, defaultDesk, pins, recent, modules, landing }  (bootstrap of the sidebar + Ctrl+K)
+ *   PUT  /me/nav                    { desk?: Desk | null, pins?: string[], landing?: Landing | null }  own desk / favourites / start page
  *   POST /me/nav/visit              { navId }                                       one page open (usage + recent)
  *   GET  /nav/desks                 staff with their desk                           ADMIN+
  *   PUT  /nav/desks/:userId         { desk: Desk | null }                           ADMIN+
@@ -36,11 +36,30 @@ export const adminNavRouter = Router();
 const navId = z.string().regex(NAV_ID_RE);
 const desk = z.enum(DESKS);
 
+/**
+ * Start page of /admin per staff member: "Bu günüm" (my day), the work queue or the dashboard. null = the role
+ * default (STAFF → queue, ADMIN+ → dashboard). Kept in a Setting row (no schema change for one small value).
+ */
+export const LANDINGS = ['myday', 'today', 'dashboard'] as const;
+export type Landing = (typeof LANDINGS)[number];
+const landingKey = (userId: string) => `staff-landing:${userId}`;
+const readLanding = async (userId: string): Promise<Landing | null> => {
+  const row = await prisma.setting.findUnique({ where: { key: landingKey(userId) } });
+  const v = (row?.value as { landing?: unknown } | null)?.landing;
+  return (LANDINGS as readonly unknown[]).includes(v) ? (v as Landing) : null;
+};
+const writeLanding = async (userId: string, landing: Landing | null) => {
+  const key = landingKey(userId);
+  if (landing === null) await prisma.setting.deleteMany({ where: { key } });
+  else await prisma.setting.upsert({ where: { key }, create: { key, value: { landing } }, update: { value: { landing } } });
+};
+
 const navView = async (userId: string, role: Parameters<typeof defaultDesk>[0]) => {
   const license = getLicense();
-  const [prefs, modules] = await Promise.all([
+  const [prefs, modules, landing] = await Promise.all([
     prisma.staffPreferences.findUnique({ where: { userId }, select: { desk: true, navPins: true, navRecent: true } }),
     getModules(),
+    readLanding(userId),
   ]);
   const fallback = defaultDesk(role);
   return {
@@ -49,6 +68,8 @@ const navView = async (userId: string, role: Parameters<typeof defaultDesk>[0]) 
     pins: toPins(prefs?.navPins),
     recent: toRecent(prefs?.navRecent),
     modules,
+    /** Own start page of /admin (null = role default). */
+    landing,
     /** White-label licence: plan modules (null = all) and the status for the admin banner (lib/license). */
     licensedModules: licensedModules(license),
     license: {
@@ -67,13 +88,17 @@ adminNavRouter.get('/me/nav', async (req, res) => {
 });
 
 adminNavRouter.put('/me/nav', async (req, res) => {
-  const body = parse(z.object({ desk: desk.nullable().optional(), pins: z.array(navId).max(PINS_MAX * 2).optional() }), req.body ?? {});
+  const body = parse(
+    z.object({ desk: desk.nullable().optional(), pins: z.array(navId).max(PINS_MAX * 2).optional(), landing: z.enum(LANDINGS).nullable().optional() }),
+    req.body ?? {},
+  );
   const data = {
     ...(body.desk !== undefined ? { desk: body.desk } : {}),
     ...(body.pins ? { navPins: toPins(body.pins) } : {}),
   };
   const userId = req.user!.id;
   await prisma.staffPreferences.upsert({ where: { userId }, create: { userId, ...data }, update: data });
+  if (body.landing !== undefined) await writeLanding(userId, body.landing);
   res.json(await navView(userId, req.user!.role));
 });
 

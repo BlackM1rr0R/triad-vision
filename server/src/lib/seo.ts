@@ -27,6 +27,7 @@ import { companyLogoOf } from './publicImages.js';
 import { DEFAULT_CITY_COSTS, matchCity } from './budget/cities.js';
 import type { FederalState } from './budget/params.js';
 import type { CityCost } from '@prisma/client';
+import { findJobLanding, jobLandingTexts, jobLandings, parseJobLandingPath } from './jobLandings.js';
 
 /*
  * SEO for a client-rendered SPA.
@@ -228,6 +229,8 @@ export interface SeoData {
     distribution?: { occupationCode: string | null; postalCode: string | null } | null;
     /** Cover + gallery photos ([{ url, alt? }], lib/vacancyImages.ts); optional for older fixtures. */
     images?: unknown;
+    /** Normalised profession (profession × city landing pages, lib/jobLandings.ts); optional for older fixtures. */
+    profession?: string | null;
   }[];
   settings: Record<string, unknown>;
   /** Approved, consented client ratings (≥ 3). Not emitted as structured data (self-serving reviews). */
@@ -320,6 +323,7 @@ const loadSeoData = async (): Promise<SeoData> => {
         minExperience: true,
         distribution: { select: { occupationCode: true, postalCode: true } }, // job feeds (lib/jobFeeds)
         images: true, // cover = first (lib/vacancyImages.ts)
+        profession: true, // profession × city landing pages (lib/jobLandings.ts)
       },
     }),
     prisma.setting.findMany({ where: { key: { in: ['contact', 'social', 'legal', 'analytics'] } } }),
@@ -1002,6 +1006,33 @@ export const resolvePage = (path: string, lng: SeoLocale, data: SeoData): Resolv
     };
   }
 
+  // Profession × city landing pages (lib/jobLandings.ts): generated from the live vacancies, same path in every language.
+  const jl = parseJobLandingPath(path);
+  if (jl) {
+    const landing = findJobLanding(liveJobs(data), jl.citySlug, jl.professionSlug);
+    if (!landing) return generic;
+    const texts = jobLandingTexts(landing, lng, jobRegion(landing.city));
+    return {
+      title: texts.title,
+      description: texts.description,
+      index: true,
+      image: null,
+      ogType: 'website',
+      crumbs: [home, { name: staticName('/jobs', lng), path: '/jobs' }, { name: texts.h1, path }],
+      jsonLd: [
+        {
+          '@context': 'https://schema.org',
+          '@type': 'ItemList',
+          name: texts.h1,
+          numberOfItems: landing.jobs.length,
+          // Each vacancy page carries its own JobPosting (Google: JobPosting only on the page of the single job).
+          itemListElement: landing.jobs.map((j, i) => ({ '@type': 'ListItem', position: i + 1, name: collapse(pick(j.title, lng)), url: pageUrl(`/jobs/${j.slug}`, lng) })),
+        },
+      ],
+      extraMeta: [],
+    };
+  }
+
   const m = /^\/(visas|services|news|jobs|events|guides)\/([^/]+)$/.exec(path);
   if (!m) return generic;
   const [, section, slug] = m;
@@ -1207,7 +1238,12 @@ export const routeMatches = (pattern: string, path: string) => {
 
 /** True for a path the SPA has a page for (the content slugs are not checked here). */
 export const isKnownRoute = (path: string) =>
-  path === '/' || !!STATIC_PAGES[path] || isPrivatePath(path) || SPA_ROUTES.some((r) => routeMatches(r, path)) || /^\/(visas|services|news|jobs|events|guides)\/[^/]+$/.test(path);
+  path === '/' ||
+  !!parseJobLandingPath(path) ||
+  !!STATIC_PAGES[path] ||
+  isPrivatePath(path) ||
+  SPA_ROUTES.some((r) => routeMatches(r, path)) ||
+  /^\/(visas|services|news|jobs|events|guides)\/[^/]+$/.test(path);
 
 /**
  * HTTP status of a page URL for the HTML shell (Caddy include /__seo/status, deploy/Caddyfile): 404 for
@@ -1217,6 +1253,11 @@ export const isKnownRoute = (path: string) =>
  */
 export const pageStatus = (rawPath: string, data: SeoData): 200 | 404 => {
   const { path } = requestTarget(rawPath, null);
+  // Profession × city landing page: only while it has live vacancies (no empty pages).
+  if (path.startsWith('/jobs/in/')) {
+    const jl = parseJobLandingPath(path);
+    return jl && findJobLanding(liveJobs(data), jl.citySlug, jl.professionSlug) ? 200 : 404;
+  }
   const m = /^\/(visas|services|news|jobs|events|guides|ebook|l)\/([^/]+)$/.exec(path);
   if (m) {
     const [, section, slug] = m;
@@ -1443,7 +1484,11 @@ export const sitemapUrls = (data: SeoData, group: SitemapGroup): SitemapUrl[] =>
         });
     }
     case 'jobs':
-      return jobs.flatMap((j) => allLanguages(`/jobs/${j.slug}`, j.updatedAt, { src: vacancyImagesOf(j.images)[0]?.url, title: (l) => collapse(pick(j.title, l)) }, j.title));
+      return [
+        ...jobs.flatMap((j) => allLanguages(`/jobs/${j.slug}`, j.updatedAt, { src: vacancyImagesOf(j.images)[0]?.url, title: (l) => collapse(pick(j.title, l)) }, j.title)),
+        // Profession × city landing pages (every language: their texts are generated in all six).
+        ...jobLandings(jobs).flatMap((l) => allLanguages(l.path, l.updatedAt)),
+      ];
     case 'events':
       return (data.events ?? []).flatMap((e) => allLanguages(`/events/${e.slug}`, e.updatedAt, undefined, e.title));
     case 'landing':

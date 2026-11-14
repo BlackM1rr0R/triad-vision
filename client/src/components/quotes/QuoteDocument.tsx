@@ -254,7 +254,7 @@ export const QuoteRespond = ({
         {t('quotePublic.validUntil')} {deDate(q.validUntil)} · {fmtEur(q.grossCents)}
       </p>
       {error && (
-        <p className="mt-3 flex items-center gap-2 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-800" role="alert">
+        <p className="mt-3 flex items-center gap-2 rounded-lg border border-danger-border bg-danger-bg px-3 py-2 text-sm text-danger-fg" role="alert">
           <AlertTriangle className="size-4 shrink-0" aria-hidden /> {error}
         </p>
       )}
@@ -333,7 +333,7 @@ const Banner = ({ tone, icon: Icon, title, children }: { tone: 'good' | 'warn' |
   <div
     className={clsx(
       'flex items-start gap-3 rounded-2xl border p-4 sm:p-5',
-      tone === 'good' ? 'border-emerald-200 bg-emerald-50 text-emerald-900' : tone === 'warn' ? 'border-amber-200 bg-amber-50 text-amber-900' : 'border-line bg-surface text-ink',
+      tone === 'good' ? 'border-success-border bg-success-bg text-success-fg' : tone === 'warn' ? 'border-warning-border bg-warning-bg text-warning-fg' : 'border-line bg-surface text-ink',
     )}
     role="status"
   >

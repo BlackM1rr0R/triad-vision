@@ -7,6 +7,7 @@ import { Wand2 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { Modal } from '@/components/admin/Modal';
 import { Spinner } from '@/components/ui/Spinner';
+import { PhoneInput, phoneInvalid } from '@/components/ui/PhoneInput';
 import type { AdminAgent } from '../types';
 import { TermsFields, type TermsValue } from './TermsFields';
 import { fromUnits, useAgentToastError } from './shared';
@@ -83,7 +84,7 @@ export const CreateAgentDialog = ({ open, onClose }: { open: boolean; onClose: (
           <button type="button" className="btn-secondary btn-sm" onClick={onClose}>
             {t('agents.common.cancel')}
           </button>
-          <button type="submit" form="agent-create-form" className="btn-primary btn-sm" disabled={create.isPending}>
+          <button type="submit" form="agent-create-form" className="btn-primary btn-sm" disabled={create.isPending || phoneInvalid(f.phone, { country: 'AZ' })}>
             {create.isPending && <Spinner className="size-4" />} {t('agents.admin.create.submit')}
           </button>
         </>
@@ -94,7 +95,12 @@ export const CreateAgentDialog = ({ open, onClose }: { open: boolean; onClose: (
           {input('firstName', t('agents.admin.create.firstName'), { required: true, maxLength: 80 })}
           {input('lastName', t('agents.admin.create.lastName'), { required: true, maxLength: 80 })}
           {input('email', t('agents.admin.create.email'), { required: true, type: 'email', maxLength: 200 })}
-          {input('phone', t('agents.admin.create.phone'), { type: 'tel', maxLength: 40 })}
+          <div>
+            <label className="label" htmlFor="agent-new-phone">
+              {t('agents.admin.create.phone')}
+            </label>
+            <PhoneInput id="agent-new-phone" country="AZ" value={f.phone} onChange={(phone) => setF((s) => ({ ...s, phone }))} />
+          </div>
           {input('region', t('agents.admin.create.region'), { maxLength: 120 })}
           {input('company', t('agents.admin.create.company'), { maxLength: 160 })}
           <div>

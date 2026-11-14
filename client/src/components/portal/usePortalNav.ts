@@ -30,8 +30,10 @@ export type NextKind =
   | 'SUBMIT_DOCS'
   | 'SIGN_CONTRACT'
   | 'ATTEND_APPOINTMENT'
+  | 'BOOK_INTERVIEW'
   | 'SIGN_DOCUMENTS'
   | 'CONFIRM_DATA'
+  | 'ANSWER_MESSAGE'
   | 'FILL_FORM'
   | 'CLIENT_TASK'
   | 'RECOGNITION_DOCS'
@@ -63,6 +65,8 @@ export interface NextStep {
   journey?: JourneyData | null;
   primary: NextAction | null;
   secondary: NextAction[];
+  /** Every further open action after the first three ("+N more"; older servers: absent). */
+  more?: NextAction[];
   waiting: { side: 'TEAM' | 'EMBASSY' | 'NONE'; expectedBy: string | null } | null;
   counts: { actions: number; unreadMessages: number; unreadNotifications: number; pendingSignatures: number; pendingLegal: number; openCheckIns: number; openInvoices?: number; hasBilling?: boolean };
 }

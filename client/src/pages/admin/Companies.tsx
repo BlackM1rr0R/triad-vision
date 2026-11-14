@@ -11,11 +11,12 @@ import type { CaseStatus, L10n } from '@/lib/types';
 import { registerCopy } from '@/i18n';
 import { pagesJobs } from '@/i18n/pagesJobs';
 import { Spinner } from '@/components/ui/Spinner';
+import { PhoneInput, phoneInvalid } from '@/components/ui/PhoneInput';
 import { Drawer } from '@/components/admin/Drawer';
 import { Modal } from '@/components/admin/Modal';
 import { StatusBadge } from '@/components/admin/StatusBadge';
 import { fmtDate, fullName } from '@/components/admin/labels';
-import { Chip, DefRow, EmptyState, ErrorBlock, LoadingBlock, PageHead, Panel } from '@/components/admin/ui';
+import { Chip, DefRow, EmptyState, ErrorBlock, ListSkeleton, LoadingBlock, PageHead, Panel } from '@/components/admin/ui';
 import { toastJobsError, useJobLabels } from '@/components/jobs/labels';
 import { COMPANY_STATUS_TONE, SECTORS, VACANCY_STATUS_TONE, type Company, type CompanyStatus, type VacancyStatus } from '@/components/jobs/types';
 import { SignaturesPanel } from '@/components/esign/CaseSignatures';
@@ -79,7 +80,20 @@ const formPayload = (f: CompanyForm, bank = false) => ({
   city: f.legal.city.trim(),
 });
 
-const CompanyFields = ({ f, setF, idPrefix, bank = 'hidden' }: { f: CompanyForm; setF: (f: CompanyForm) => void; idPrefix: string; bank?: 'edit' | 'locked' | 'hidden' }) => {
+/** `currentPhone`: the stored phone (a legacy value sent back unchanged is accepted). Employers are German: local numbers read as +49. */
+const CompanyFields = ({
+  f,
+  setF,
+  idPrefix,
+  bank = 'hidden',
+  currentPhone,
+}: {
+  f: CompanyForm;
+  setF: (f: CompanyForm) => void;
+  idPrefix: string;
+  bank?: 'edit' | 'locked' | 'hidden';
+  currentPhone?: string | null;
+}) => {
   const { t } = useTranslation();
   const L = useJobLabels();
   const input = (k: CompanyField, label: string, span = false, required = false) => (
@@ -105,7 +119,12 @@ const CompanyFields = ({ f, setF, idPrefix, bank = 'hidden' }: { f: CompanyForm;
           ))}
         </select>
       </div>
-      {input('phone', t('jobsArea.register.phone'))}
+      <div>
+        <label className="label" htmlFor={`${idPrefix}-phone`}>
+          {t('jobsArea.register.phone')}
+        </label>
+        <PhoneInput id={`${idPrefix}-phone`} country="DE" current={currentPhone} value={f.phone} onChange={(phone) => setF({ ...f, phone })} />
+      </div>
       {input('email', t('jobsArea.register.email'))}
       {input('contactName', t('jobsArea.register.contactName'))}
       {input('website', t('jobsArea.register.website'))}
@@ -189,7 +208,7 @@ const CreateCompanyModal = ({ open, onClose }: { open: boolean; onClose: () => v
           <button type="button" className="btn-secondary btn-sm" onClick={onClose}>
             {t('admin.common.cancel')}
           </button>
-          <button type="submit" form="create-company" className="btn-primary btn-sm" disabled={m.isPending || f.name.trim().length < 2 || f.legal.city.trim().length < 2}>
+          <button type="submit" form="create-company" className="btn-primary btn-sm" disabled={m.isPending || f.name.trim().length < 2 || f.legal.city.trim().length < 2 || phoneInvalid(f.phone, { country: 'DE' })}>
             {m.isPending && <Spinner className="size-3.5" />} {t('admin.common.create')}
           </button>
         </>
@@ -349,9 +368,9 @@ const CompanyDrawer = ({ id, onClose }: { id: string | null; onClose: () => void
                 }}
                 className="space-y-4"
               >
-                <CompanyFields f={f} setF={setF} idPrefix="cd" bank={isAdmin ? 'edit' : data.bankLocked ? 'locked' : 'hidden'} />
+                <CompanyFields f={f} setF={setF} idPrefix="cd" bank={isAdmin ? 'edit' : data.bankLocked ? 'locked' : 'hidden'} currentPhone={data.phone} />
                 <div className="flex justify-end">
-                  <button type="submit" className="btn-primary btn-sm" disabled={save.isPending}>
+                  <button type="submit" className="btn-primary btn-sm" disabled={save.isPending || phoneInvalid(f.phone, { country: 'DE', current: data.phone })}>
                     {save.isPending && <Spinner className="size-3.5" />} {t('admin.common.save')}
                   </button>
                 </div>
@@ -524,13 +543,33 @@ export default function AdminCompanies() {
       </div>
 
       {isLoading ? (
-        <LoadingBlock />
+        <ListSkeleton cols={6} />
       ) : error ? (
         <ErrorBlock error={error} onRetry={() => refetch()} />
       ) : !data?.items.length ? (
-        <div className="rounded-xl border border-line bg-card">
-          <EmptyState icon={Building2} title={t('jobsArea.admin.companies.empty')} />
-        </div>
+        status || search ? (
+          <EmptyState
+            framed
+            filtered
+            onClearFilters={() => {
+              setSearchInput('');
+              const next = new URLSearchParams(params);
+              for (const k of ['status', 'search', 'page']) next.delete(k);
+              setParams(next, { replace: true });
+            }}
+          />
+        ) : (
+          <EmptyState
+            framed
+            icon={Building2}
+            title={t('jobsArea.admin.companies.empty')}
+            action={
+              <button type="button" className="btn-primary btn-sm" onClick={() => setCreating(true)}>
+                <Plus className="size-3.5" /> {t('jobsArea.admin.companies.new')}
+              </button>
+            }
+          />
+        )
       ) : table.mode === 'table' ? (
         <SettingsTable
           settings={table}

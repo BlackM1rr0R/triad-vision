@@ -32,8 +32,10 @@ export type NextKind =
   | 'SUBMIT_DOCS'
   | 'SIGN_CONTRACT'
   | 'ATTEND_APPOINTMENT'
+  | 'BOOK_INTERVIEW'
   | 'SIGN_DOCUMENTS'
   | 'CONFIRM_DATA'
+  | 'ANSWER_MESSAGE'
   | 'FILL_FORM'
   | 'CLIENT_TASK'
   | 'RECOGNITION_DOCS'
@@ -68,8 +70,12 @@ export const KIND_RANK: Record<NextKind, number> = {
   SUBMIT_DOCS: 12,
   SIGN_CONTRACT: 13,
   ATTEND_APPOINTMENT: 14,
+  // An employer interview to book (open invite: pick a slot) or to confirm (proposed time).
+  BOOK_INTERVIEW: 14.5,
   SIGN_DOCUMENTS: 15,
   CONFIRM_DATA: 16,
+  // The team asked something in the case chat and the client has not answered yet.
+  ANSWER_MESSAGE: 16.5,
   FILL_FORM: 17,
   CLIENT_TASK: 18,
   // Recognition (Anerkennung): a document the client still has to send (certified translation, certificate …).
@@ -116,6 +122,10 @@ export interface NextStepFacts {
   invoices?: { id: string; number: string; openCents: number; dueAt: Date; overdue: boolean }[];
   /** Running recognition process with checklist items the client provides (lib/recognition): the first one names the card. */
   recognition?: { caseId: string; count: number; key: string; dueAt: Date | null } | null;
+  /** Employer interviews: open invites (the client picks the time) and proposed times to confirm. */
+  interviews?: { invites: number; proposed: Date[] } | null;
+  /** The newest message of the open case is a question from the team that the client has not answered. */
+  question?: { caseId: string; at: Date; snippet: string } | null;
 }
 
 const iso = (d: Date | null | undefined) => (d ? d.toISOString() : null);
@@ -166,6 +176,11 @@ export const collectActions = (f: NextStepFacts): NextAction[] => {
     }
     if (f.confirmation) add('CONFIRM_DATA', `/account/cases/${p.id}/confirm`, { count: f.confirmation.fields });
   }
+  if (f.interviews && f.interviews.invites + f.interviews.proposed.length > 0) {
+    const soonest = [...f.interviews.proposed].sort((a, b) => a.getTime() - b.getTime())[0] ?? null;
+    add('BOOK_INTERVIEW', '/account/interviews', { count: f.interviews.invites + f.interviews.proposed.length, dueAt: soonest, overdue: false });
+  }
+  if (f.question) add('ANSWER_MESSAGE', caseUrl(f.question.caseId, 'messages'), { overdue: false, detail: f.question.snippet || null });
   for (const form of f.forms) add('FILL_FORM', `/account/cases/${form.caseId}/forms/${form.id}`, { dueAt: form.dueAt, detail: form.title });
   if (f.signatures.length) {
     const one = f.signatures.length === 1 ? f.signatures[0] : null;
@@ -213,13 +228,15 @@ export const pickNextStep = (f: NextStepFacts) => {
   const actions = collectActions(f);
   const primary = actions[0] ?? null;
   const secondary = actions.slice(1, 3);
+  // Everything after the first three: the "+N more" list under the card.
+  const more = actions.slice(3);
   // Nothing for the client on an open case: say who has it and until when.
   const clientMove = !!primary && !SOFT.includes(primary.kind);
   const waiting =
     !clientMove && f.primary && f.ball && f.ball.side !== 'CLIENT'
       ? { side: f.ball.side, expectedBy: f.ball.eta?.expectedBy ?? null }
       : null;
-  return { primary, secondary, waiting, actionCount: actions.filter((a) => !SOFT.includes(a.kind)).length };
+  return { primary, secondary, more, waiting, actionCount: actions.filter((a) => !SOFT.includes(a.kind)).length };
 };
 
 // ─── Data ──────────────────────────────────────────────────────────────
@@ -263,7 +280,7 @@ export const loadNextStep = async (userId: string, now = new Date(), opts: { cas
   const approved = cases.find((c) => c.status === 'APPROVED' && !c.parentCaseId) ?? cases.find((c) => c.status === 'APPROVED') ?? null;
   const caseIds = cases.map((c) => c.id);
 
-  const [ball, requirements, conf, forms, signers, tasks, followUp, plan, checkIns, unreadMessages, unreadNotifications, invoices, billedCount] = await Promise.all([
+  const [ball, requirements, conf, forms, signers, tasks, followUp, plan, checkIns, unreadMessages, unreadNotifications, invoices, billedCount, interviewInvites, proposedInterviews, lastMessage, recognitionRow] = await Promise.all([
     open ? ballInCourtFor(open.id) : Promise.resolve(null),
     open
       ? prisma.documentRequirement.findMany({
@@ -290,6 +307,17 @@ export const loadNextStep = async (userId: string, now = new Date(), opts: { cas
     prisma.notification.count({ where: { userId, readAt: null } }),
     openInvoicesOf(userId),
     prisma.clientInvoice.count({ where: { clientId: userId, status: { not: 'DRAFT' } } }),
+    prisma.interviewInvite.count({ where: { candidateId: userId, status: 'OPEN' } }),
+    prisma.interview.findMany({ where: { candidateId: userId, status: 'PROPOSED', startsAt: { gt: now } }, orderBy: { startsAt: 'asc' }, select: { startsAt: true }, take: 10 }),
+    open ? prisma.caseMessage.findFirst({ where: { caseId: open.id }, orderBy: { createdAt: 'desc' }, select: { authorId: true, body: true, createdAt: true } }) : Promise.resolve(null),
+    // Recognition (Anerkennung) of the case the portal is about: an extra milestone on the journey when there is one.
+    primary
+      ? prisma.recognitionProcess.findFirst({
+          where: { caseId: primary.id, status: { not: 'WITHDRAWN' } },
+          orderBy: { createdAt: 'desc' },
+          select: { status: true, createdAt: true, submittedAt: true, decisionAt: true },
+        })
+      : Promise.resolve(null),
   ]);
 
   const arrived = (!!followUp && followUp.arrivedAt <= now) || plan?.status === 'COMPLETED';
@@ -338,6 +366,8 @@ export const loadNextStep = async (userId: string, now = new Date(), opts: { cas
     profilePercent: profileCompleteness(user).percent,
     invoices: invoices.map((i) => ({ id: i.id, number: i.number, openCents: i.grossCents - i.paidCents, dueAt: i.dueDate, overdue: i.status === 'OVERDUE' || isPastDue(i.dueDate, now) })),
     recognition,
+    interviews: { invites: interviewInvites, proposed: proposedInterviews.map((i) => i.startsAt) },
+    question: questionOf(lastMessage, userId, open?.id ?? null),
   };
   const { actionCount, ...picked } = pickNextStep(facts);
 
@@ -398,7 +428,15 @@ export const loadNextStep = async (userId: string, now = new Date(), opts: { cas
     arrivedAt: arrived ? iso(followUp?.arrivedAt ?? null) : null,
     onboarding: onboarding?.progress ?? null,
     journey: primary
-      ? buildJourney(user, primary, fc, { flight, arrived, arrivedAt: followUp?.arrivedAt ?? null, travelPlanned: !!plan && plan.status !== 'DRAFT', travelExpected, now })
+      ? buildJourney(user, primary, fc, {
+          flight,
+          arrived,
+          arrivedAt: followUp?.arrivedAt ?? null,
+          travelPlanned: !!plan && plan.status !== 'DRAFT',
+          travelExpected,
+          now,
+          recognition: recognitionRow,
+        })
       : null,
     ...picked,
     counts: {
@@ -416,6 +454,16 @@ export const loadNextStep = async (userId: string, now = new Date(), opts: { cas
 
 export type NextStepResponse = Awaited<ReturnType<typeof loadNextStep>>;
 
+/** Pure: the newest case message is a question from the team (contains "?") the client has not answered → the ANSWER_MESSAGE card. */
+export const questionOf = (last: { authorId: string; body: string; createdAt: Date } | null, userId: string, caseId: string | null) => {
+  if (!last || !caseId || last.authorId === userId || !last.body.includes('?')) return null;
+  const text = last.body.replace(/\s+/g, ' ').trim();
+  return { caseId, at: last.createdAt, snippet: text.length > 90 ? `${text.slice(0, 89).trimEnd()}…` : text };
+};
+
+/** Recognition statuses that end the procedure (lib/recognition). */
+const RECOGNITION_DONE = ['RECOGNISED', 'PARTIALLY_RECOGNISED', 'REJECTED'];
+
 /**
  * Data of the portal journey map: where the client starts (User.city / nationality, normalised like the
  * public origin map), where in Germany they go (employer / vacancy city) and the dated steps of the case
@@ -432,7 +480,16 @@ export const buildJourney = (
     vacancy: { city: string | null } | null;
   },
   fc: Forecast | null,
-  o: { flight: Date | null; arrived: boolean; arrivedAt: Date | null; travelPlanned: boolean; travelExpected?: { from: Date; to: Date } | null; now: Date },
+  o: {
+    flight: Date | null;
+    arrived: boolean;
+    arrivedAt: Date | null;
+    travelPlanned: boolean;
+    travelExpected?: { from: Date; to: Date } | null;
+    now: Date;
+    /** The case's recognition procedure (Anerkennung), when there is one (withdrawn ones are left out). */
+    recognition?: { status: string; createdAt: Date; submittedAt: Date | null; decisionAt: Date | null } | null;
+  },
 ) => {
   const origin = normaliseOrigin(user.city, user.nationality);
   const rawCity = user.city?.trim() || null;
@@ -462,5 +519,22 @@ export const buildJourney = (
       expectedTo: iso(o.travelExpected?.to ?? null),
     },
     arrival: { at: iso(o.arrivedAt), done: o.arrived },
+    // Only cases with a recognition procedure get the extra milestone (no step for every other visa route).
+    recognition: o.recognition
+      ? {
+          status: RECOGNITION_DONE.includes(o.recognition.status) ? ('done' as const) : ('current' as const),
+          outcome:
+            o.recognition.status === 'REJECTED'
+              ? ('REJECTED' as const)
+              : o.recognition.status === 'PARTIALLY_RECOGNISED'
+                ? ('PARTIAL' as const)
+                : o.recognition.status === 'RECOGNISED'
+                  ? ('RECOGNISED' as const)
+                  : null,
+          startedAt: iso(o.recognition.createdAt),
+          submittedAt: iso(o.recognition.submittedAt),
+          decisionAt: iso(o.recognition.decisionAt),
+        }
+      : null,
   };
 };

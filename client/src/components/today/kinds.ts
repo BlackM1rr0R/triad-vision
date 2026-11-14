@@ -29,7 +29,8 @@ import { pagesAccounting } from '@/i18n/pagesAccounting';
 import { pagesRecognition } from '@/i18n/pagesRecognition';
 import { pagesCaseProcessing } from '@/i18n/pagesCaseProcessing';
 import { pagesPartnerRecords } from '@/i18n/pagesPartnerRecords';
-import { ScrollText } from 'lucide-react';
+import { MessageCircleReply, ScrollText, Video } from 'lucide-react';
+import { pagesMyDay } from '@/i18n/pagesMyDay';
 
 registerCopy(pagesClientProcessToday); // client_task_overdue kind + office-visit notes (client process)
 registerCopy(pagesPostArrival); // embassy_review kind (four-eyes check of the embassy package)
@@ -38,6 +39,7 @@ registerCopy(pagesAccounting); // countersign kind (Triad Vision countersignatur
 registerCopy(pagesRecognition); // recognition_deadline / accelerated_deadline kinds + notes
 registerCopy(pagesCaseProcessing); // processing kind + note (team document workflow)
 registerCopy(pagesPartnerRecords); // partner_contract kind + notes (employer / partner contracts)
+registerCopy(pagesMyDay); // client_message / interview kinds + the "Bu günüm" page
 
 export const KIND_ICON: Record<WorkKind, LucideIcon> = {
   doc_review: FileCheck2,
@@ -66,6 +68,8 @@ export const KIND_ICON: Record<WorkKind, LucideIcon> = {
   accelerated_deadline: Rocket, // § 81a: embassy appointment / decision, fee, reply to the authority
   processing: ClipboardPen, // team document workflow: a colleague handed the case over (Schon geschrieben)
   partner_contract: ScrollText, // employer / partner contract: end date or notice deadline near
+  client_message: MessageCircleReply, // the client wrote last, no answer yet
+  interview: Video, // employer ↔ candidate interview
 };
 
 /** Icon tile colours per category (light + dark via the brand / status tokens used across the admin). */

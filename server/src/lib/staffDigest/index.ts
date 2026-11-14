@@ -49,7 +49,7 @@ export const setDigestEnabled = async (userId: string, enabled: boolean) => {
 
 // ─── Content ────────────────────────────────────────────────────────────
 
-const APPOINTMENT_KINDS = new Set<WorkKind>(['booking', 'appointment']);
+const APPOINTMENT_KINDS = new Set<WorkKind>(['booking', 'appointment', 'interview']);
 const NEW_KINDS = new Set<WorkKind>(['inquiry', 'application', 'employer_decision', 'candidate_request', 'processing', 'handover']);
 /** Mail has its own inbox; the digest does not repeat it. */
 const SKIP_KINDS = new Set<WorkKind>(['mail_unread', 'mail_triage']);

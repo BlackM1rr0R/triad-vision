@@ -77,6 +77,7 @@ import { adminTrainingRouter } from './training.js'; // internal training course
 import { adminShiftsRouter } from './shifts.js'; // team calendar: shifts, leave, handovers, coverage
 import { adminHandoverNotesRouter } from './handoverNotes.js'; // handover notes + checklists for absence handovers
 import { adminGuidesRouter } from './guides.js'; // topic guides (/guides) CMS, per-language versions
+import { adminSearchConsoleRouter } from './searchConsole.js'; // Google Search Console performance (ADMIN+, lib/searchConsole.ts)
 import { adminNavRouter } from './nav.js'; // role desks, favourites, recent pages, module toggles, page usage
 import { adminClientBillingRouter } from './clientBilling.js'; // client invoices, payments, payment plans
 import { adminCountersignRouter } from './countersign.js'; // Triad Vision countersignature of service contracts
@@ -256,6 +257,7 @@ adminRouter.use('/mailboxes', requireMinRole('ADMIN'), adminMailboxesRouter);
 adminRouter.use('/companies', adminCompaniesRouter);
 adminRouter.use('/employer-reports', adminEmployerReportsRouter); // monthly employer report: preview, regenerate, send
 adminRouter.use('/vacancies', adminVacanciesRouter);
+adminRouter.use('/search-console', requireMinRole('ADMIN'), adminSearchConsoleRouter); // Search performance: GSC queries / pages, 28 days, cached 6 h
 adminRouter.use('/job-feeds', requireMinRole('ADMIN'), adminJobFeedsRouter); // İş elanı kanalları (ADMIN+)
 adminRouter.use('/candidates', adminCandidatesRouter);
 adminRouter.use('/booking', adminBookingRouter);

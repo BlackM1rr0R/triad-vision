@@ -49,6 +49,7 @@ import './employerReports.js'; // monthly employer PDF report (1st of the month,
 import './recognition.js'; // Anerkennung + § 81a deadline reminders / escalation, signed Vollmacht pick-up
 import './license.js'; // white-label licence re-check (daily)
 import './course.js'; // pre-departure course: auto-enrollment + reminder after 7 days without progress
+import './imageCache.js'; // daily: resized public image cache (/api/img) kept under its size cap
 import './publicUploads.js'; // nightly: unreferenced public upload files (CMS, vacancy photos, logos) older than 7 days
 import './jobFeeds.js'; // BA Jobbörse HR-BA-XML upload (off until partner id + certificate are entered)
 import './partnerContracts.js'; // employer / partner contracts: lifecycle (active / expired / auto-renew) + expiry reminders; official-form extras → Company columns

@@ -455,6 +455,7 @@ const az = {
       INVALID_TRANSITION: 'Bu əməliyyat cari mərhələdə mümkün deyil. Səhifəni yeniləyin.',
       UPLOAD_NOT_ALLOWED: 'Bu mərhələdə sənəd yükləmək olmaz.',
       WRONG_PASSWORD: 'Cari şifrə yanlışdır.',
+      INVALID_PHONE: 'Telefon nömrəsini ölkə kodu ilə yazın, məsələn +994 50 123 45 67.',
       DELETE_NOT_ALLOWED: 'Bu faylı silmək mümkün deyil.',
       UNSUPPORTED_FILE_TYPE: 'Bu fayl növü qəbul edilmir.',
       FILE_TOO_LARGE: 'Fayl çox böyükdür (maks. 5 MB).',

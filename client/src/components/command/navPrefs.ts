@@ -28,8 +28,13 @@ export interface NavLicense {
   expiresAt: string | null;
 }
 
+/** Own start page of /admin (server: routes/admin/nav.ts LANDINGS); null / missing = role default. */
+export type StaffLanding = 'myday' | 'today' | 'dashboard';
+export const STAFF_LANDING_PATH: Record<StaffLanding, string> = { myday: '/admin/my-day', today: '/admin/today', dashboard: '/admin/dashboard' };
+
 export interface NavState {
   desk: Desk;
+  landing?: StaffLanding | null;
   defaultDesk: Desk;
   pins: string[];
   recent: RecentVisit[];
@@ -101,7 +106,7 @@ export const useStaffNav = () => {
   );
 
   const save = useMutation({
-    mutationFn: async (body: { desk?: Desk | null; pins?: string[] }) => (await api.put<NavState>('/admin/me/nav', body)).data,
+    mutationFn: async (body: { desk?: Desk | null; pins?: string[]; landing?: StaffLanding | null }) => (await api.put<NavState>('/admin/me/nav', body)).data,
     onSuccess: (server) => {
       qc.setQueryData(key, server);
       writeJson(navStateKey(userId), server);
@@ -149,6 +154,14 @@ export const useStaffNav = () => {
     [patch],
   );
 
+  const setLanding = useCallback(
+    (next: StaffLanding | null) => {
+      patch((s) => ({ ...s, landing: next }));
+      save.mutate({ landing: next });
+    },
+    [patch, save],
+  );
+
   const isModuleOn = useCallback((k: ModuleKey | undefined) => moduleOn(modules, k), [modules]);
 
   return {
@@ -162,6 +175,9 @@ export const useStaffNav = () => {
     loaded: !!data,
     licensedModules: data?.licensedModules ?? null,
     license: data?.license,
+    /** Own start page of /admin (null = role default). */
+    landing: data?.landing ?? null,
+    setLanding,
     setDesk,
     togglePin,
     recordVisit,

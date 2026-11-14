@@ -4,7 +4,7 @@ import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
 import type { LucideIcon } from 'lucide-react';
-import { ArrowRight, Briefcase, Building2, Clock, CornerDownLeft, File, Folder, FolderKanban, ListTodo, Loader2, Search, Star, User as UserIcon } from 'lucide-react';
+import { ArrowRight, Briefcase, Building2, Clock, CornerDownLeft, File, Folder, FolderKanban, Handshake, ListTodo, Loader2, MessageSquareText, Search, Star, User as UserIcon } from 'lucide-react';
 import { Modal } from '@/components/ui/Modal';
 import { StatusPill } from '@/components/ui/Badge';
 import { api } from '@/lib/api';
@@ -46,6 +46,21 @@ interface SearchResponse {
   vacancies: { id: string; title: L10n; status: string; city: string | null; companyName: string | null }[];
   files: { id: string; name: string; kind: 'FILE' | 'FOLDER'; mimeType: string | null; parentId: string | null; parentName: string | null }[];
   tasks: { id: string; key: string; title: string; status: string; priority: string; dueAt: string | null }[];
+  /** Referral partners (older servers may not send it). */
+  partners?: { id: string; name: string; companyName: string | null; city: string | null; active: boolean; code: string | null }[];
+  /** Client ↔ team case messages and team chat messages the user may read. */
+  messages?: {
+    id: string;
+    source: 'case' | 'chat';
+    snippet: string;
+    at: string;
+    author: string;
+    fromClient: boolean;
+    caseId: string | null;
+    caseNumber: string | null;
+    title: string;
+    channelId: string | null;
+  }[];
 }
 
 const MIN_CHARS = 2;
@@ -77,7 +92,7 @@ interface Entry {
   recent: RecentEntry;
 }
 
-const RESULT_TYPES = ['cases', 'users', 'companies', 'vacancies', 'files', 'tasks'] as const;
+const RESULT_TYPES = ['cases', 'users', 'companies', 'vacancies', 'files', 'tasks', 'partners', 'messages'] as const;
 const RESULT_ICON: Record<(typeof RESULT_TYPES)[number], LucideIcon> = {
   cases: FolderKanban,
   users: UserIcon,
@@ -85,6 +100,8 @@ const RESULT_ICON: Record<(typeof RESULT_TYPES)[number], LucideIcon> = {
   vacancies: Briefcase,
   files: File,
   tasks: ListTodo,
+  partners: Handshake,
+  messages: MessageSquareText,
 };
 const RECENT_ICON: Record<RecentKind, LucideIcon> = {
   nav: ArrowRight,
@@ -95,6 +112,8 @@ const RECENT_ICON: Record<RecentKind, LucideIcon> = {
   vacancy: Briefcase,
   file: File,
   task: ListTodo,
+  partner: Handshake,
+  message: MessageSquareText,
 };
 
 const GOTO_EMPTY_LIMIT = 200;
@@ -226,6 +245,19 @@ export default function CommandPalette({ open, onClose }: { open: boolean; onClo
           target ? `/workspace/drive/f/${encodeURIComponent(target)}` : '/workspace/drive',
           undefined,
           folder,
+        );
+      }
+      for (const p of data.partners ?? [])
+        add('partners', 'partner', p.id, p.name, [p.companyName, p.city, !p.active ? t('cmd.partnerInactive') : null].filter(Boolean).join(' · ') || undefined, `/admin/partners/${encodeURIComponent(p.id)}`);
+      for (const m of data.messages ?? []) {
+        const where = m.source === 'case' ? t('cmd.msgCase', { number: m.caseNumber ?? '' }) : t('cmd.msgChat');
+        add(
+          'messages',
+          'message',
+          m.id,
+          m.snippet || '—',
+          [m.title, where, m.author ? (m.fromClient ? `${m.author} (${t('cmd.fromClient')})` : m.author) : null].filter(Boolean).join(' · '),
+          m.source === 'case' && m.caseId ? `/admin/cases/${encodeURIComponent(m.caseId)}?tab=communication` : `/workspace/chat/${encodeURIComponent(m.channelId ?? '')}`,
         );
       }
       for (const k of data.tasks) add('tasks', 'task', k.id, `${k.key} · ${k.title}`, undefined, `${tasksBase}/${k.key}`, <StatusPill domain="task" status={k.status} label={t(`tasks.status.${k.status}`, { defaultValue: k.status })} size="sm" />);

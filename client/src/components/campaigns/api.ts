@@ -1,5 +1,5 @@
 import { AxiosError } from 'axios';
-import { useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import i18n from '@/i18n';
 import { api, errorCode } from '@/lib/api';
@@ -217,12 +217,17 @@ export interface Recipient {
   user: { firstName: string; lastName: string; email: string; role: Role };
 }
 
-export const useCampaigns = () =>
+export const CAMPAIGNS_PAGE_SIZE = 50;
+
+/** One page of the campaign list (newest first): `{ items, total, page, pages }`. */
+export const useCampaigns = (page = 1) =>
   useQuery({
-    queryKey: ['campaigns'],
-    queryFn: async () => (await api.get<{ items: CampaignListItem[] }>('/admin/campaigns')).data.items,
+    queryKey: ['campaigns', page],
+    queryFn: async () =>
+      (await api.get<{ items: CampaignListItem[]; total: number; page: number; pages: number }>('/admin/campaigns', { params: { page, pageSize: CAMPAIGNS_PAGE_SIZE } })).data,
+    placeholderData: keepPreviousData,
     // Running campaigns update their numbers while the page is open.
-    refetchInterval: (q) => ((q.state.data ?? []).some((c) => c.status === 'SENDING') ? 10_000 : false),
+    refetchInterval: (q) => ((q.state.data?.items ?? []).some((c) => c.status === 'SENDING') ? 10_000 : false),
   });
 
 export const useCampaign = (id: string | undefined) =>

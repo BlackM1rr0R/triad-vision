@@ -1,3 +1,4 @@
+import { useId, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
@@ -8,7 +9,9 @@ import {
   BookUser,
   CalendarCheck,
   CalendarClock,
+  CalendarPlus,
   CheckCircle2,
+  ChevronDown,
   ChevronRight,
   ClipboardList,
   Compass,
@@ -20,6 +23,7 @@ import {
   Landmark,
   ListChecks,
   MessageCircleHeart,
+  MessageCircleQuestion,
   PenLine,
   PlaneTakeoff,
   Rocket,
@@ -47,8 +51,10 @@ const KIND_ILLUSTRATION: Record<NextKind, ComponentType<IllustrationProps>> = {
   SUBMIT_DOCS: PassportUpload,
   SIGN_CONTRACT: Documents,
   ATTEND_APPOINTMENT: CalendarDay,
+  BOOK_INTERVIEW: CalendarDay,
   SIGN_DOCUMENTS: Documents,
   CONFIRM_DATA: Documents,
+  ANSWER_MESSAGE: Handshake,
   FILL_FORM: Documents,
   CLIENT_TASK: Documents,
   RECOGNITION_DOCS: PassportUpload,
@@ -69,8 +75,10 @@ export const KIND_ICON: Record<NextKind, LucideIcon> = {
   SUBMIT_DOCS: Send,
   SIGN_CONTRACT: PenLine,
   ATTEND_APPOINTMENT: CalendarCheck,
+  BOOK_INTERVIEW: CalendarPlus,
   SIGN_DOCUMENTS: FileSignature,
   CONFIRM_DATA: ShieldCheck,
+  ANSWER_MESSAGE: MessageCircleQuestion,
   FILL_FORM: ClipboardList,
   CLIENT_TASK: ListChecks,
   RECOGNITION_DOCS: GraduationCap,
@@ -127,9 +135,38 @@ const SecondaryRow = ({ a }: { a: NextAction }) => {
   );
 };
 
+/** "+N more": the open actions after the first three, folded away under one small toggle. */
+const MoreActions = ({ items }: { items: NextAction[] }) => {
+  const { t } = useTranslation();
+  const [open, setOpen] = useState(false);
+  const listId = useId();
+  if (!items.length) return null;
+  return (
+    <div className="border-t border-line px-2 pt-2 sm:px-3">
+      <button
+        type="button"
+        className="inline-flex min-h-10 items-center gap-1.5 rounded-lg px-1 text-sm font-semibold text-link outline-none hover:underline focus-visible:ring-2 focus-visible:ring-primary"
+        aria-expanded={open}
+        aria-controls={listId}
+        onClick={() => setOpen((v) => !v)}
+      >
+        {open ? t('pnav.next.lessLabel') : t('pnav.next.more', { count: items.length })}
+        <ChevronDown className={clsx('size-4 transition-transform motion-reduce:transition-none', open && 'rotate-180')} aria-hidden />
+        {!open && <span className="sr-only">{t('pnav.next.moreLabel', { count: items.length })}</span>}
+      </button>
+      <ul id={listId} hidden={!open} className="mt-1">
+        {items.map((s) => (
+          <SecondaryRow key={`${s.kind}-${s.to}`} a={s} />
+        ))}
+      </ul>
+    </div>
+  );
+};
+
 /**
- * Portal home hero: the single most important action now with one button straight to it, and up to
- * two smaller actions underneath. Without anything to do: who has the ball and until when.
+ * Portal home hero ("What we need from you"): the single most important action now with one button
+ * straight to it, up to two smaller actions underneath and a folded "+N more" list for the rest.
+ * Without anything to do: who has the ball and until when.
  */
 export function NextStepCard({ data, loading, caseLink, tour }: { data: NextStep | undefined; loading: boolean; caseLink?: string | null; tour?: string }) {
   const { t } = useTranslation();
@@ -203,7 +240,7 @@ export function NextStepCard({ data, loading, caseLink, tour }: { data: NextStep
           <div className="min-w-0 flex-1">
             <p className="type-overline inline-flex flex-wrap items-center gap-x-2 gap-y-1 text-ink">
               <span className={clsx('size-2 rounded-full', a.overdue ? 'bg-danger' : 'bg-highlight')} aria-hidden />
-              {t('pnav.next.eyebrow')}
+              {t('pnav.next.need')}
               {showDue && !a.overdue && <span className="font-semibold text-muted normal-case">· {t('pnav.next.due', { date: copy.day })}</span>}
             </p>
             <h2 id="next-step-title" className="mt-3 flex items-start gap-3 text-2xl font-semibold break-words text-ink sm:text-[2rem] sm:leading-tight" {...morph.part('title')}>
@@ -237,6 +274,7 @@ export function NextStepCard({ data, loading, caseLink, tour }: { data: NextStep
                 <SecondaryRow key={`${s.kind}-${s.to}`} a={s} />
               ))}
             </ul>
+            <MoreActions items={data.more ?? []} />
           </div>
         )}
       </div>

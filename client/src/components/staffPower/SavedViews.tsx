@@ -27,7 +27,7 @@ export const viewHref = (v: Pick<SavedView, 'id' | 'page' | 'params'>) => {
 };
 
 /** Applies the columns of the view named in ?sv= once it is known (a sidebar link carries only the URL). */
-const useApplyViewColumns = (views: SavedView[] | undefined, settings?: TableSettings) => {
+export const useApplyViewColumns = (views: SavedView[] | undefined, settings?: TableSettings) => {
   const [params] = useSearchParams();
   const sv = params.get('sv');
   const applied = useRef<string | null>(null);
@@ -40,7 +40,7 @@ const useApplyViewColumns = (views: SavedView[] | undefined, settings?: TableSet
   }, [sv, views, settings]);
 };
 
-const SaveViewDialog = ({ open, onClose, page, settings, edit }: { open: boolean; onClose: () => void; page: ViewPage; settings?: TableSettings; edit?: SavedView | null }) => {
+export const SaveViewDialog = ({ open, onClose, page, settings, edit }: { open: boolean; onClose: () => void; page: ViewPage; settings?: TableSettings; edit?: SavedView | null }) => {
   const { t } = useTranslation();
   const [params] = useSearchParams();
   const navigate = useNavigate();

@@ -9,6 +9,7 @@ import type { CaseStatus } from '@/lib/types';
 import { STATUS_TONE } from '@/lib/caseStatus';
 import { contentUrl, isSheet } from './api';
 import { endItemDrag, startItemDrag, useDropTarget, type PickedFile } from './dnd';
+import { useHoverPeek } from './QuickPreview'; // hover peek card for images / PDFs (mouse only)
 import { isProcessingStage, stageLabel } from '@/components/caseProcessing/api';
 import { ItemIcon, extLabel, fileTone } from './fileIcons';
 import { displayName, typeLabel } from './labels';
@@ -125,6 +126,7 @@ export const ItemsView = (p: ItemsViewProps) => {
   const [limit, setLimit] = useState(PAGE);
   const sentinel = useRef<HTMLDivElement>(null);
   const coarse = useRef(typeof window !== 'undefined' && window.matchMedia?.('(pointer: coarse)').matches);
+  const peek = useHoverPeek(p.mode !== 'trash');
 
   // Large folders render progressively: the next page appears when the end comes into view. The explorer
   // remounts this view per folder / view (key), so a refetch after an action keeps what is already shown.
@@ -206,6 +208,7 @@ export const ItemsView = (p: ItemsViewProps) => {
   };
 
   const dragStart = (e: React.DragEvent, item: DriveItem) => {
+    peek.cancel();
     const group = p.selected.has(item.id) ? p.items.filter((i) => p.selected.has(i.id)) : [item];
     if (!group.every(p.canDrag)) {
       e.preventDefault();
@@ -216,7 +219,7 @@ export const ItemsView = (p: ItemsViewProps) => {
   };
 
   const shown = p.items.slice(0, limit);
-  const common = { p, click, toggle, context, dragStart, t };
+  const common = { p, click, toggle, context, dragStart, t, hover: peek.enter, unhover: peek.leave };
 
   return (
     <div
@@ -226,8 +229,11 @@ export const ItemsView = (p: ItemsViewProps) => {
       aria-label={t('drive.title')}
       tabIndex={0}
       onKeyDown={(e) => {
+        peek.cancel();
         if (p.onKey(e, { columns: columns() })) e.preventDefault();
       }}
+      onScroll={peek.cancel}
+      onPointerDown={peek.cancel}
       onClick={() => p.onSelect(new Set(), null, null)}
       onContextMenu={(e) => {
         e.preventDefault();
@@ -248,6 +254,7 @@ export const ItemsView = (p: ItemsViewProps) => {
       {limit < p.items.length && <div ref={sentinel} className="h-10" />}
       {/* Room to right-click / drop below the last row. */}
       <div className="h-16" />
+      {peek.node}
     </div>
   );
 };
@@ -260,6 +267,9 @@ interface RowProps {
   context: (e: MouseEvent, item: DriveItem) => void;
   dragStart: (e: React.DragEvent, item: DriveItem) => void;
   t: ReturnType<typeof useTranslation>['t'];
+  /** Hover peek (QuickPreview): arm on pointer enter, disarm on leave. */
+  hover: (e: React.PointerEvent, item: DriveItem) => void;
+  unhover: () => void;
 }
 
 const useItemDrop = (item: DriveItem, p: ItemsViewProps) =>
@@ -270,7 +280,7 @@ const useItemDrop = (item: DriveItem, p: ItemsViewProps) =>
     onItems: p.onItems,
   });
 
-const Tile = memo(function Tile({ item, p, click, toggle, context, dragStart, t }: RowProps) {
+const Tile = memo(function Tile({ item, p, click, toggle, context, dragStart, t, hover, unhover }: RowProps) {
   const selected = p.selected.has(item.id);
   const focused = p.focusId === item.id;
   const drop = useItemDrop(item, p);
@@ -290,6 +300,8 @@ const Tile = memo(function Tile({ item, p, click, toggle, context, dragStart, t 
       onClick={(e) => click(e, item)}
       onDoubleClick={() => p.onOpen(item)}
       onContextMenu={(e) => context(e, item)}
+      onPointerEnter={(e) => hover(e, item)}
+      onPointerLeave={unhover}
       {...drop.handlers}
       className={clsx(
         'group relative flex cursor-default flex-col items-center rounded-xl border px-2 pt-3 pb-2.5 text-center transition-colors select-none',
@@ -413,7 +425,7 @@ const AT_XL_F = 'hidden @xl:flex';
 const AT_3XL_F = 'hidden @3xl:flex';
 const AT_5XL_F = 'hidden @5xl:flex';
 
-const ListTable = ({ shown, p, click, toggle, context, dragStart, t }: Omit<RowProps, 'item'> & { shown: DriveItem[] }) => (
+const ListTable = ({ shown, p, click, toggle, context, dragStart, t, hover, unhover }: Omit<RowProps, 'item'> & { shown: DriveItem[] }) => (
   <div role="table" className="@container min-w-0 text-sm">
     <div role="row" className={clsx('sticky top-0 z-10 grid gap-2 border-b border-line bg-card px-4 py-2 text-xs font-semibold text-muted', COLS[p.mode])}>
       <div className="flex min-w-0 items-center gap-2.5">
@@ -447,13 +459,13 @@ const ListTable = ({ shown, p, click, toggle, context, dragStart, t }: Omit<RowP
     </div>
     <div role="rowgroup" className="px-1.5 py-1">
       {shown.map((item) => (
-        <Row key={item.id} item={item} p={p} click={click} toggle={toggle} context={context} dragStart={dragStart} t={t} />
+        <Row key={item.id} item={item} p={p} click={click} toggle={toggle} context={context} dragStart={dragStart} t={t} hover={hover} unhover={unhover} />
       ))}
     </div>
   </div>
 );
 
-const Row = memo(function Row({ item, p, click, toggle, context, dragStart, t }: RowProps) {
+const Row = memo(function Row({ item, p, click, toggle, context, dragStart, t, hover, unhover }: RowProps) {
   const selected = p.selected.has(item.id);
   const focused = p.focusId === item.id;
   const drop = useItemDrop(item, p);
@@ -470,6 +482,8 @@ const Row = memo(function Row({ item, p, click, toggle, context, dragStart, t }:
       onClick={(e) => click(e, item)}
       onDoubleClick={() => p.onOpen(item)}
       onContextMenu={(e) => context(e, item)}
+      onPointerEnter={(e) => hover(e, item)}
+      onPointerLeave={unhover}
       {...drop.handlers}
       className={clsx(
         'grid cursor-default items-center gap-2 rounded-lg px-2.5 py-1.5 select-none',

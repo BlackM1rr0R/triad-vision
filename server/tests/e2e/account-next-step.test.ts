@@ -112,4 +112,43 @@ describe('GET /api/account/next-step', () => {
     expect(all.find((a: { kind: string }) => a.kind === 'RENEW_RESIDENCE')).toMatchObject({ to: `/account/cases/${c.id}?tab=messages` });
     expect(body.milestone).toMatchObject({ key: 'RESIDENCE_EXPIRY' });
   });
+
+  it('an unanswered team question, an interview to confirm, "+N more" and the recognition milestone', async () => {
+    const { agent, user } = await asClient();
+    const admin = await asAdmin();
+    const c = await createCaseVia(agent);
+
+    // The team asks a question: an action until the client answers.
+    expectStatus(await admin.agent.post(`/api/admin/cases/${c.id}/messages`).send({ body: 'Sürücülük vəsiqəniz var?' }), 201);
+    let body = await nextStep(agent);
+    let all = [body.primary, ...body.secondary, ...body.more];
+    expect(all.find((a: { kind: string }) => a.kind === 'ANSWER_MESSAGE')).toMatchObject({ to: `/account/cases/${c.id}?tab=messages`, detail: 'Sürücülük vəsiqəniz var?', overdue: false });
+    expectStatus(await agent.post(`/api/cases/${c.id}/messages`).send({ body: 'Bəli, B kateqoriyası' }), 201);
+    body = await nextStep(agent);
+    all = [body.primary, ...body.secondary, ...body.more];
+    expect(all.map((a: { kind: string }) => a.kind)).not.toContain('ANSWER_MESSAGE');
+
+    // A proposed interview time to confirm.
+    const startsAt = new Date(Date.now() + 3 * DAY);
+    await prisma.interview.create({ data: { candidateId: user.id, startsAt, endsAt: new Date(startsAt.getTime() + 3600_000), status: 'PROPOSED' } });
+    // Two more open items, so something lands in "+N more".
+    await prisma.clientTask.createMany({
+      data: [
+        { caseId: c.id, title: 'Diplom surəti', status: 'OPEN' },
+        { caseId: c.id, title: 'Arayış', status: 'OPEN' },
+      ],
+    });
+    body = await nextStep(agent);
+    all = [body.primary, ...body.secondary, ...body.more];
+    expect(all.find((a: { kind: string }) => a.kind === 'BOOK_INTERVIEW')).toMatchObject({ to: '/account/interviews', count: 1, dueAt: startsAt.toISOString() });
+    expect(body.secondary).toHaveLength(2);
+    expect(body.more.length).toBeGreaterThanOrEqual(1);
+    expect(1 + body.secondary.length + body.more.length).toBe(all.length);
+
+    // Recognition: no milestone without a procedure, a running one shows as "current".
+    expect(body.journey.recognition).toBeNull();
+    await prisma.recognitionProcess.create({ data: { caseId: c.id, clientId: user.id, profession: 'Koch', procedureType: 'IHK_FOSA', status: 'IN_REVIEW', submittedAt: new Date() } });
+    body = await nextStep(agent);
+    expect(body.journey.recognition).toMatchObject({ status: 'current', outcome: null });
+  });
 });

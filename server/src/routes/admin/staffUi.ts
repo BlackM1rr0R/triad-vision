@@ -19,6 +19,8 @@ import {
   readStaffUi,
   readTeamViews,
   readUserViews,
+  seedDefaultViews,
+  seededPages,
   tablePrefsSchema,
   viewInputSchema,
   viewPatchSchema,
@@ -35,7 +37,8 @@ import {
 /**
  * Staff power-user UI state (mounted on /api/admin, STAFF+), stored in Setting rows (lib/staffUi):
  *
- *   GET    /me/saved-views?page=cases        { views: [{ id, page, name, params, columns, shared, mine, pinned, ownerName }] }
+ *   GET    /me/saved-views?page=cases        { views: [{ id, page, name, params, columns, shared, mine, pinned, ownerName }], seeded: [page] }
+ *   POST   /me/saved-views/defaults          { page, restore? }  adds the page's default views once (restore: the missing ones again)
  *   POST   /me/saved-views                   { page, name, params, columns?, shared?, pinned? }
  *   PATCH  /me/saved-views/:id               { name?, params?, columns?, shared?, pinned? }   rename / share / pin
  *   DELETE /me/saved-views/:id
@@ -53,7 +56,15 @@ const pageQuery = z.object({ page: z.enum(VIEW_PAGES).optional() });
 
 adminStaffUiRouter.get('/me/saved-views', async (req, res) => {
   const { page } = parse(pageQuery, req.query);
-  res.json({ views: await viewsFor(req.user!.id, page) });
+  const [views, seeded] = await Promise.all([viewsFor(req.user!.id, page), seededPages(req.user!.id)]);
+  res.json({ views, seeded });
+});
+
+adminStaffUiRouter.post('/me/saved-views/defaults', async (req, res) => {
+  const body = parse(z.object({ page: z.enum(VIEW_PAGES), restore: z.boolean().default(false) }), req.body ?? {});
+  const user = await prisma.user.findUnique({ where: { id: req.user!.id }, select: { locale: true } });
+  const added = await seedDefaultViews(req.user!.id, body.page, user?.locale ?? 'az', body.restore);
+  res.json({ added, views: await viewsFor(req.user!.id, body.page) });
 });
 
 adminStaffUiRouter.post('/me/saved-views', async (req, res) => {

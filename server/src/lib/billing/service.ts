@@ -550,7 +550,7 @@ export const listQuery = z.object({
   currency: currencySchema.optional(),
 });
 
-export const listInvoices = async (q: z.infer<typeof listQuery>, take = 500) => {
+const listWhere = async (q: z.infer<typeof listQuery>): Promise<Prisma.ClientInvoiceWhereInput> => {
   const and: Prisma.ClientInvoiceWhereInput[] = [];
   if (q.status) and.push({ status: q.status });
   if (q.currency) and.push({ currency: q.currency });
@@ -567,8 +567,13 @@ export const listInvoices = async (q: z.infer<typeof listQuery>, take = 500) => 
     });
     and.push({ OR: [{ number: { contains: q.q } }, ...(users.length ? [{ clientId: { in: users.map((u) => u.id) } }] : [])] });
   }
-  const where: Prisma.ClientInvoiceWhereInput = { AND: and };
-  const invoices = await prisma.clientInvoice.findMany({ where, orderBy: [{ issueDate: 'desc' }, { createdAt: 'desc' }], take });
+  return { AND: and };
+};
+
+const LIST_ORDER: Prisma.ClientInvoiceOrderByWithRelationInput[] = [{ issueDate: 'desc' }, { createdAt: 'desc' }, { id: 'desc' }];
+
+/** Rows of the admin list with client name / e-mail and case number. */
+const listRows = async (invoices: ClientInvoice[]) => {
   const [clients, cases] = await Promise.all([
     prisma.user.findMany({ where: { id: { in: [...new Set(invoices.map((i) => i.clientId))] } }, select: { id: true, firstName: true, lastName: true, email: true } }),
     prisma.case.findMany({ where: { id: { in: [...new Set(invoices.map((i) => i.caseId).filter((x): x is string => !!x))] } }, select: { id: true, number: true } }),
@@ -579,7 +584,34 @@ export const listInvoices = async (q: z.infer<typeof listQuery>, take = 500) => 
     const c = cMap.get(i.clientId);
     return invoiceView(i, { clientName: c ? fullName(c) : '—', clientEmail: c?.email ?? '', caseNumber: i.caseId ? (caseMap.get(i.caseId) ?? null) : null });
   });
-  return { invoices: rows, totals: { ...totalsOf(invoices), count: invoices.length } };
+  return rows;
+};
+
+/** Every matching invoice, newest first (CSV export; `take` caps it). */
+export const listInvoices = async (q: z.infer<typeof listQuery>, take = 500) => {
+  const invoices = await prisma.clientInvoice.findMany({ where: await listWhere(q), orderBy: LIST_ORDER, take });
+  return { invoices: await listRows(invoices), totals: { ...totalsOf(invoices), count: invoices.length } };
+};
+
+/**
+ * One page of the admin list. The tiles (totals) cover every matching invoice, not just the page:
+ * they are computed from the four amount / status columns of all matches.
+ */
+export const listInvoicesPage = async (q: z.infer<typeof listQuery>, page: number, pageSize: number) => {
+  const where = await listWhere(q);
+  const [invoices, total, amounts] = await Promise.all([
+    prisma.clientInvoice.findMany({ where, orderBy: LIST_ORDER, skip: (page - 1) * pageSize, take: pageSize }),
+    prisma.clientInvoice.count({ where }),
+    prisma.clientInvoice.findMany({ where, select: { status: true, grossCents: true, paidCents: true, currency: true } }),
+  ]);
+  return {
+    invoices: await listRows(invoices),
+    totals: { ...totalsOf(amounts), count: total },
+    total,
+    page,
+    pageSize,
+    pages: Math.max(1, Math.ceil(total / pageSize)),
+  };
 };
 
 const csvCell = (v: string | number) => {

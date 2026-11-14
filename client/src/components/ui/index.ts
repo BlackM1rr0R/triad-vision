@@ -15,6 +15,7 @@ export { EmptyState, type EmptyStateProps } from './EmptyState';
 export { Skeleton, SkeletonText, SkeletonBlock, SkeletonList, SkeletonRows, SkeletonAvatar, SkeletonCard, SkeletonGrid, SkeletonStat, SkeletonStats, SkeletonTable, SkeletonHero } from './Skeleton';
 export { Field, Input, Select, Textarea, Checkbox, Radio, RadioGroup, useFieldControl, type FieldProps, type InputProps, type SelectProps, type TextareaProps, type RadioGroupProps } from './Field';
 export { PasswordInput, type PasswordInputProps } from './PasswordInput';
+export { PhoneInput, phoneInvalid, type PhoneInputProps } from './PhoneInput';
 export { Switch, type SwitchProps } from './Switch';
 export { Avatar, initialsOf, type AvatarProps, type AvatarSize } from './Avatar';
 export { StatTile, type StatTileProps, type StatDelta } from './StatTile';

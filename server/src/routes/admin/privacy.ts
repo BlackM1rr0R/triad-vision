@@ -9,11 +9,12 @@ import { deleteUserAccount, userDeletionPreview } from '../../lib/userDeletion.j
 import { CONSENT_TYPES } from '../../lib/privacy/consents.js';
 import { dataOverview, notifyRequestDecided, OPEN_STATUSES } from '../../lib/privacy/requests.js';
 import { eraseInquiries, exportInquiries } from '../../lib/privacy/inquiries.js';
+import { pageArgs, pageMeta, pageShape, splitPage } from '../../lib/paging.js';
 
 /**
  * Admin → Privacy requests (ADMIN+; executing a deletion is SUPER_ADMIN only).
  *
- *   GET  /requests?status=&type=&overdue=1&q=   list + counts
+ *   GET  /requests?status=&type=&overdue=1&q=&page=&pageSize=   list (paged: open first by deadline, then closed newest first) + counts
  *   GET  /requests/:id                           detail with the user's data overview (+ deletion preview)
  *   POST /requests/:id/status                    { status, decisionNote }
  *   POST /requests/:id/execute-deletion          { confirmEmail } → deleteUserAccount, request COMPLETED
@@ -53,6 +54,7 @@ adminPrivacyRouter.get('/requests', async (req, res) => {
       type: z.enum(TYPES).optional(),
       overdue: z.enum(['1', 'true']).optional(),
       q: z.string().trim().max(200).optional(),
+      ...pageShape(50),
     }),
     req.query,
   );
@@ -63,21 +65,25 @@ adminPrivacyRouter.get('/requests', async (req, res) => {
   if (q.overdue) Object.assign(where, { status: { in: [...OPEN_STATUSES] }, dueAt: { lt: now } });
   if (q.q) where.email = { contains: q.q.toLowerCase() };
 
-  const [items, byStatus, overdue, dueSoon] = await Promise.all([
-    prisma.privacyRequest.findMany({ where, orderBy: [{ dueAt: 'asc' }], take: 500, include: listInclude }),
+  // Open first (by deadline), then closed (newest first): two ordered queries, the page cut across both.
+  const openWhere: Prisma.PrivacyRequestWhereInput = { AND: [where, { status: { notIn: FINAL } }] };
+  const closedWhere: Prisma.PrivacyRequestWhereInput = { AND: [where, { status: { in: FINAL } }] };
+  const [openTotal, closedTotal, byStatus, overdue, dueSoon] = await Promise.all([
+    prisma.privacyRequest.count({ where: openWhere }),
+    prisma.privacyRequest.count({ where: closedWhere }),
     prisma.privacyRequest.groupBy({ by: ['status'], _count: { _all: true } }),
     prisma.privacyRequest.count({ where: { status: { in: [...OPEN_STATUSES] }, dueAt: { lt: now } } }),
     prisma.privacyRequest.count({ where: { status: { in: [...OPEN_STATUSES] }, dueAt: { gte: now, lt: new Date(now.getTime() + DUE_SOON_DAYS * DAY) } } }),
   ]);
-  // Open first (by deadline), then closed (newest first).
-  const sorted = [...items].sort((a, b) => {
-    const ao = FINAL.includes(a.status) ? 1 : 0;
-    const bo = FINAL.includes(b.status) ? 1 : 0;
-    if (ao !== bo) return ao - bo;
-    return ao ? b.createdAt.getTime() - a.createdAt.getTime() : a.dueAt.getTime() - b.dueAt.getTime();
-  });
+  const { skip, take } = pageArgs(q);
+  const part = splitPage(skip, take, openTotal);
+  const [open, closed] = await Promise.all([
+    part.first.take ? prisma.privacyRequest.findMany({ where: openWhere, orderBy: [{ dueAt: 'asc' }, { id: 'asc' }], ...part.first, include: listInclude }) : [],
+    part.second.take ? prisma.privacyRequest.findMany({ where: closedWhere, orderBy: [{ createdAt: 'desc' }, { id: 'desc' }], ...part.second, include: listInclude }) : [],
+  ]);
   res.json({
-    items: sorted.map((r) => withFlags(r, now)),
+    items: [...open, ...closed].map((r) => withFlags(r, now)),
+    ...pageMeta(q, openTotal + closedTotal),
     counts: {
       byStatus: Object.fromEntries(STATUSES.map((s) => [s, byStatus.find((b) => b.status === s)?._count._all ?? 0])),
       overdue,

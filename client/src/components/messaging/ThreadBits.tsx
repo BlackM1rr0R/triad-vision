@@ -61,7 +61,7 @@ export const ChannelBadge = ({ channel, onDark }: { channel?: string; onDark?: b
     <span
       className={clsx(
         'inline-flex items-center gap-1 rounded-full px-1.5 py-px text-[10px] font-semibold',
-        channel === 'whatsapp' ? (onDark ? 'bg-white/20 text-white' : 'bg-emerald-100 text-emerald-800') : onDark ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-700',
+        channel === 'whatsapp' ? (onDark ? 'bg-white/20 text-white' : 'bg-success-bg text-success-fg') : onDark ? 'bg-white/20 text-white' : 'bg-neutral-bg text-neutral-fg',
       )}
     >
       <Icon className="size-2.5" aria-hidden />
@@ -90,8 +90,8 @@ export const TypingIndicator = ({ name }: { name: string | null }) => {
 export const LiveDot = ({ connected }: { connected: boolean }) => {
   const { t } = useTranslation();
   return (
-    <span className={clsx('inline-flex items-center gap-1.5 text-[11px]', connected ? 'text-emerald-700' : 'text-muted')} title={connected ? t('messaging.chat.live') : t('messaging.chat.offline')}>
-      <span className={clsx('size-2 rounded-full', connected ? 'bg-emerald-500' : 'bg-slate-300')} aria-hidden />
+    <span className={clsx('inline-flex items-center gap-1.5 text-[11px]', connected ? 'text-success-fg' : 'text-muted')} title={connected ? t('messaging.chat.live') : t('messaging.chat.offline')}>
+      <span className={clsx('size-2 rounded-full', connected ? 'bg-success' : 'bg-line-strong')} aria-hidden />
       <span className="sr-only sm:not-sr-only">{connected ? t('messaging.chat.live') : t('messaging.chat.offline')}</span>
     </span>
   );

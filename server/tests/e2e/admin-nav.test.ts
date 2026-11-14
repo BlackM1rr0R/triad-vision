@@ -32,6 +32,20 @@ describe('GET/PUT /api/admin/me/nav', () => {
     expect(expectStatus(await staff.agent.get('/api/admin/me/nav'), 200).body.pins).toEqual(['cases', 'invoices', 'hub.finance']);
   });
 
+  it('keeps the own start page of /admin (null = role default), per user', async () => {
+    const staff = await asStaff();
+    expect(expectStatus(await staff.agent.get('/api/admin/me/nav'), 200).body.landing).toBeNull();
+    const saved = expectStatus(await staff.agent.put('/api/admin/me/nav').send({ landing: 'myday' }), 200).body;
+    expect(saved.landing).toBe('myday');
+    expect(expectStatus(await staff.agent.get('/api/admin/me/nav'), 200).body.landing).toBe('myday');
+    expect((await staff.agent.put('/api/admin/me/nav').send({ landing: 'billing' })).status).toBe(400);
+    // Another staff member keeps the default.
+    const other = await asStaff();
+    expect(expectStatus(await other.agent.get('/api/admin/me/nav'), 200).body.landing).toBeNull();
+    // The desk is untouched by a landing change, and null resets.
+    expect(expectStatus(await staff.agent.put('/api/admin/me/nav').send({ landing: null }), 200).body).toMatchObject({ landing: null, desk: 'MANAGER' });
+  });
+
   it('records page opens per user and day and keeps the recent list', async () => {
     const staff = await asStaff();
     expectStatus(await staff.agent.post('/api/admin/me/nav/visit').send({ navId: 'cases' }), 200);

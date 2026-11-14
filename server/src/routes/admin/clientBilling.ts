@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { prisma } from '../../db.js';
 import { notFound, parse } from '../../lib/http.js';
 import { audit } from '../../lib/audit.js';
+import { pageShape } from '../../lib/paging.js';
 import { requireMinRole } from '../../middleware/auth.js';
 import {
   cancelInvoice,
@@ -14,6 +15,7 @@ import {
   invoicesCsv,
   listInvoices,
   listQuery,
+  listInvoicesPage,
   pdfFileName,
   receiptNumber,
   recordPayment,
@@ -90,7 +92,8 @@ adminClientBillingRouter.put('/settings', admin, async (req, res) => {
 // ─── Lists ───────────────────────────────────────────────────────────
 
 adminClientBillingRouter.get('/invoices', admin, async (req, res) => {
-  res.json(await listInvoices(parse(listQuery, req.query)));
+  const { page, pageSize, ...filters } = parse(listQuery.extend(pageShape(50)), req.query);
+  res.json(await listInvoicesPage(filters, page, pageSize));
 });
 
 adminClientBillingRouter.get('/invoices.csv', admin, async (req, res) => {

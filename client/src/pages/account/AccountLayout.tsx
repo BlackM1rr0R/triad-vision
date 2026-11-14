@@ -25,6 +25,7 @@ import { pagesPortalNav } from '@/i18n/pagesPortalNav';
 import { pagesWaitingRoom } from '@/i18n/pagesWaitingRoom';
 import { FamilySwitcher } from '@/components/portal/FamilySwitcher'; // family member cases: "Mən" / spouse / child chips
 import { OfflineBadge } from '@/components/offline/OfflineBadge'; // "no internet — offline documents" strip
+import { ApprovedCelebration } from './portal/ApprovedCelebration'; // visa approved: one-time celebration screen
 
 registerCopy(pagesAccount);
 registerCopy(pagesSign);
@@ -234,6 +235,7 @@ export default function AccountLayout() {
         </div>
       </div>
       {isClient && <AiLauncher />}
+      {isClient && <ApprovedCelebration />}
       <BottomNavPortal />
       <TourHost />
     </div>

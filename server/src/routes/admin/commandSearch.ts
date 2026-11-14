@@ -8,13 +8,16 @@ import { allows } from '../../lib/drive/levels.js';
 import { caseVisibilityWhere, parseTaskRef, taskKey, type Actor } from '../../lib/tasks/core.js';
 
 /**
- * Staff command palette (Ctrl+K): one small query per entity type, run in parallel, top 5 each.
+ * Staff command palette (Ctrl+K): one small query per entity type, run in parallel, top 5 each
+ * (cases, people, companies, vacancies, drive, tasks, referral partners, messages).
  *
  *   GET /api/admin/command-search?q=…   (STAFF+, the admin router already requires it)
  *
  * Access follows the existing rules: every staff role sees every case and task (as in the admin lists),
  * drive files only when the drive engine grants at least VIEW, and the JSON goes through the global
- * masking middleware (a company's VAT id is "•••• 6789" for STAFF by default).
+ * masking middleware (a company's VAT id is "•••• 6789" for STAFF by default). Messages: client ↔ team case
+ * messages (every staff role sees every case) and team chat messages only in channels the user may read
+ * (member, or a public channel — the rule of GET /api/chat/search).
  * The query text is personal data (names, e-mails, phone numbers): it is never logged, and a failing
  * query is reported without the Prisma message (which would repeat the arguments).
  */
@@ -151,20 +154,114 @@ const searchTasks = async (actor: Actor, q: string) => {
   return rows.slice(0, PER_TYPE).map((t) => ({ id: t.id, key: taskKey(t.number), title: t.title, status: t.status, priority: t.priority, dueAt: t.dueAt }));
 };
 
+const searchPartners = async (q: string) =>
+  prisma.referralPartner.findMany({
+    where: {
+      OR: [
+        { name: { contains: q } },
+        { companyName: { contains: q } },
+        { contactPerson: { contains: q } },
+        { email: { contains: q } },
+        { code: { contains: q } },
+        { city: { contains: q } },
+      ],
+    },
+    select: { id: true, name: true, companyName: true, city: true, active: true, code: true },
+    orderBy: [{ active: 'desc' }, { updatedAt: 'desc' }],
+    take: PER_TYPE,
+  });
+
+/** ~110 characters of the message around the first match (single line). */
+export const snippetAround = (body: string, q: string, width = 110) => {
+  const flat = body.replace(/\s+/g, ' ').trim();
+  if (flat.length <= width) return flat;
+  const first = words(q)[0]?.toLowerCase() ?? '';
+  const at = first ? flat.toLowerCase().indexOf(first) : -1;
+  const start = at < 0 ? 0 : Math.max(0, Math.min(at - Math.floor(width / 3), flat.length - width));
+  return `${start > 0 ? '…' : ''}${flat.slice(start, start + width).trim()}${start + width < flat.length ? '…' : ''}`;
+};
+
+const MESSAGE_CANDIDATES = PER_TYPE;
+
+const searchMessages = async (actorId: string, q: string) => {
+  const terms = words(q);
+  const [caseRows, readable] = await Promise.all([
+    prisma.caseMessage.findMany({
+      where: { AND: terms.map((w) => ({ body: { contains: w } })) },
+      select: {
+        id: true,
+        body: true,
+        createdAt: true,
+        author: { select: { firstName: true, lastName: true, role: true } },
+        case: { select: { id: true, number: true, client: { select: { firstName: true, lastName: true } } } },
+      },
+      orderBy: { createdAt: 'desc' },
+      take: MESSAGE_CANDIDATES,
+    }),
+    prisma.chatChannel.findMany({
+      where: { OR: [{ members: { some: { userId: actorId } } }, { kind: 'PUBLIC', archivedAt: null }] },
+      select: { id: true, name: true, kind: true, members: { select: { user: { select: { id: true, firstName: true, lastName: true } } } } },
+    }),
+  ]);
+  const channels = new Map(readable.map((c) => [c.id, c]));
+  const chatRows = channels.size
+    ? await prisma.chatMessage.findMany({
+        where: { channelId: { in: [...channels.keys()] }, deletedAt: null, AND: terms.map((w) => ({ body: { contains: w } })) },
+        select: { id: true, body: true, createdAt: true, channelId: true, author: { select: { firstName: true, lastName: true } } },
+        orderBy: { createdAt: 'desc' },
+        take: MESSAGE_CANDIDATES,
+      })
+    : [];
+  const name = (u: { firstName: string; lastName: string } | null | undefined) => (u ? `${u.firstName} ${u.lastName}`.trim() : '');
+  const out = [
+    ...caseRows.map((m) => ({
+      id: m.id,
+      source: 'case' as const,
+      snippet: snippetAround(m.body, q),
+      at: m.createdAt,
+      author: name(m.author),
+      fromClient: m.author.role === 'CLIENT',
+      caseId: m.case.id,
+      caseNumber: m.case.number,
+      title: name(m.case.client),
+      channelId: null,
+    })),
+    ...chatRows.map((m) => {
+      const c = channels.get(m.channelId)!;
+      const peer = c.members.map((x) => x.user).find((u) => u.id !== actorId) ?? c.members[0]?.user;
+      return {
+        id: m.id,
+        source: 'chat' as const,
+        snippet: snippetAround(m.body, q),
+        at: m.createdAt,
+        author: name(m.author),
+        fromClient: false,
+        caseId: null,
+        caseNumber: null,
+        title: c.kind === 'DM' ? name(peer) : (c.name ?? ''),
+        channelId: c.id,
+      };
+    }),
+  ];
+  return out.sort((a, b) => b.at.getTime() - a.at.getTime()).slice(0, PER_TYPE);
+};
+
 adminCommandSearchRouter.get('/', searchLimiter, async (req, res) => {
   const { q } = parse(querySchema, req.query);
   const actor: Actor = { id: req.user!.id, role: req.user!.role };
   const ctx = new DriveAccessCtx(actor);
   try {
-    const [cases, users, companies, vacancies, files, tasks] = await Promise.all([
+    const [cases, users, companies, vacancies, files, tasks, partners, messages] = await Promise.all([
       searchCases(q),
       searchUsers(q),
       searchCompanies(q),
       searchVacancies(q),
       searchDrive(ctx, q),
       searchTasks(actor, q),
+      searchPartners(q),
+      searchMessages(actor.id, q),
     ]);
-    res.json({ q, cases, users, companies, vacancies, files, tasks });
+    res.json({ q, cases, users, companies, vacancies, files, tasks, partners, messages });
   } catch (err) {
     // No query text and no Prisma message (it echoes the arguments) in the log.
     const code = (err as { code?: string })?.code ?? (err as Error)?.name ?? 'Error';

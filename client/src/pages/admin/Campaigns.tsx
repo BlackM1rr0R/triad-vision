@@ -9,7 +9,9 @@ import { registerCopy } from '@/i18n';
 import { pagesCampaigns } from '@/i18n/pagesCampaigns';
 import { api } from '@/lib/api';
 import { usePageTitle } from '@/lib/usePageTitle';
-import { EmptyState, ErrorBlock, LoadingBlock, PageHead, Panel, StatTile } from '@/components/admin/ui';
+import { EmptyState, ErrorBlock, ListSkeleton, LoadingBlock, PageHead, Panel, StatTile } from '@/components/admin/ui';
+import { Pagination } from '@/components/ui/Pagination';
+import { SkeletonList, SkeletonRows } from '@/components/ui/Skeleton';
 import { fmtDateTime } from '@/components/admin/labels';
 import { Spinner } from '@/components/ui/Spinner';
 import { CampaignWizard } from '@/components/campaigns/CampaignWizard';
@@ -21,6 +23,7 @@ import {
   STATUS_TONE,
   useCampaign,
   useCampaigns,
+  CAMPAIGNS_PAGE_SIZE,
   useSegments,
   type Definition,
   type Recipient,
@@ -65,7 +68,8 @@ const pct = (n: number, of: number) => (of > 0 ? ` · ${Math.round((n / of) * 10
 const CampaignList = () => {
   const { t } = useTranslation();
   usePageTitle(t('campaigns.title'));
-  const q = useCampaigns();
+  const [page, setPage] = useState(1);
+  const q = useCampaigns(page);
   return (
     <div className="mx-auto max-w-7xl">
       <PageHead
@@ -83,16 +87,23 @@ const CampaignList = () => {
         }
       />
       {q.isLoading ? (
-        <LoadingBlock />
+        <ListSkeleton cols={6} />
       ) : q.error ? (
         <ErrorBlock error={q.error} onRetry={() => void q.refetch()} />
-      ) : !q.data?.length ? (
-        <Panel>
-          <EmptyState icon={Megaphone} title={t('campaigns.empty')}>
-            {t('campaigns.emptyText')}
-          </EmptyState>
-        </Panel>
+      ) : !q.data?.items.length ? (
+        <EmptyState
+          framed
+          icon={Megaphone}
+          title={t('campaigns.empty')}
+          text={t('campaigns.emptyText')}
+          action={
+            <Link to="/admin/campaigns/new" className="btn-primary btn-sm">
+              <Plus className="size-3.5" aria-hidden /> {t('campaigns.new')}
+            </Link>
+          }
+        />
       ) : (
+        <>
         <Panel bodyClassName="p-0">
           <div className="overflow-x-auto">
             <table className="w-full min-w-[56rem] text-left text-sm">
@@ -110,7 +121,7 @@ const CampaignList = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-line">
-                {q.data.map((c) => (
+                {q.data.items.map((c) => (
                   <tr key={c.id} className="hover:bg-surface/60">
                     <td className="px-4 py-3">
                       <Link to={`/admin/campaigns/${c.id}`} className="font-semibold text-ink hover:text-link hover:underline">
@@ -140,6 +151,8 @@ const CampaignList = () => {
           </div>
           <p className="border-t border-line px-4 py-2 text-[11px] text-muted">{t('campaigns.approxOpens')}</p>
         </Panel>
+        <Pagination className="mt-4" page={page} pages={q.data.pages} total={q.data.total} pageSize={CAMPAIGNS_PAGE_SIZE} onChange={setPage} />
+        </>
       )}
     </div>
   );
@@ -216,9 +229,15 @@ const RecipientTable = ({ campaignId, live }: { campaignId: string; live: boolea
         <input className="input min-w-0 flex-1 py-2 sm:max-w-xs" type="search" placeholder={d('search')} aria-label={d('search')} value={search} onChange={(e) => setSearch(e.target.value)} />
       </div>
       {data.isLoading ? (
-        <LoadingBlock className="min-h-40" />
+        <div role="status" aria-label={t('admin.common.loading')}>
+          <table className="w-full" aria-hidden>
+            <tbody className="divide-y divide-line">
+              <SkeletonRows rows={5} cols={6} />
+            </tbody>
+          </table>
+        </div>
       ) : !data.data?.items.length ? (
-        <p className="px-4 py-8 text-center text-sm text-muted">{d('noRecipients')}</p>
+        <EmptyState compact icon={Users} title={d('noRecipients')} />
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full min-w-[48rem] text-left text-sm">
@@ -402,13 +421,22 @@ const SegmentList = () => {
         }
       />
       {q.isLoading ? (
-        <LoadingBlock />
+        <Panel>
+          <SkeletonList count={5} />
+        </Panel>
       ) : q.error ? (
         <ErrorBlock error={q.error} onRetry={() => void q.refetch()} />
       ) : !q.data?.length ? (
-        <Panel>
-          <EmptyState icon={Filter} title={t('campaigns.segments.empty')} />
-        </Panel>
+        <EmptyState
+          framed
+          icon={Filter}
+          title={t('campaigns.segments.empty')}
+          action={
+            <Link to="/admin/campaigns/segments/new" className="btn-primary btn-sm">
+              <Plus className="size-3.5" aria-hidden /> {t('campaigns.segments.new')}
+            </Link>
+          }
+        />
       ) : (
         <Panel bodyClassName="p-0">
           <ul className="divide-y divide-line">

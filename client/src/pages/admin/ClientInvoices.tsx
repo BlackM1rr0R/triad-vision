@@ -8,7 +8,9 @@ import { AlertTriangle, CheckCircle2, Download, Euro, FileText, Landmark, Plus, 
 import { api } from '@/lib/api';
 import { registerCopy } from '@/i18n';
 import { pagesBilling } from '@/i18n/pagesBilling';
-import { Chip, EmptyState, ErrorBlock, LoadingBlock, PageHead, Panel, StatTile } from '@/components/admin/ui';
+import { Chip, EmptyState, ErrorBlock, ListSkeleton, LoadingBlock, PageHead, Panel, StatTile } from '@/components/admin/ui';
+import { Pagination } from '@/components/ui/Pagination';
+import { SkeletonStats } from '@/components/ui/Skeleton';
 import { Tabs } from '@/components/ui/Tabs';
 import { Spinner } from '@/components/ui/Spinner';
 import { fmtDate } from '@/components/admin/labels';
@@ -85,6 +87,8 @@ export default function AdminClientInvoices() {
   );
 }
 
+const PAGE_SIZE = 50;
+
 const List = ({ onEdit }: { onEdit: (i: ClientInvoice) => void }) => {
   const { t } = useTranslation();
   // Filters live in the URL (shareable, and saved views restore them).
@@ -132,17 +136,39 @@ const List = ({ onEdit }: { onEdit: (i: ClientInvoice) => void }) => {
   );
   const table = useTableSettings('clientInvoices', columnDefs);
   const filters = { status: status || undefined, overdue: overdue ? '1' : undefined, from: from || undefined, to: to || undefined, q: debounced || undefined };
+  const filtered = Object.values(filters).some(Boolean);
+  // Server paging (50 per page); a new filter starts again on page 1.
+  const [page, setPage] = useState(1);
+  const filterKey = JSON.stringify(filters);
+  useEffect(() => setPage(1), [filterKey]);
   const listQ = useQuery({
-    queryKey: [...BILLING_KEY, 'list', filters],
-    queryFn: async () => (await api.get<{ invoices: ClientInvoice[]; totals: BillingTotals & { count: number } }>('/admin/client-billing/invoices', { params: filters })).data,
+    queryKey: [...BILLING_KEY, 'list', filters, page],
+    queryFn: async () =>
+      (
+        await api.get<{ invoices: ClientInvoice[]; totals: BillingTotals & { count: number }; total: number; pages: number }>('/admin/client-billing/invoices', {
+          params: { ...filters, page, pageSize: PAGE_SIZE },
+        })
+      ).data,
     placeholderData: (prev) => prev,
   });
+  const clearFilters = () => {
+    setQ('');
+    setParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        for (const k of ['status', 'overdue', 'from', 'to', 'q']) next.delete(k);
+        return next;
+      },
+      { replace: true },
+    );
+  };
   const [action, setAction] = useState<InvoiceAction | null>(null);
   const totals = listQ.data?.totals;
   const csvHref = `/api/admin/client-billing/invoices.csv?${new URLSearchParams(Object.entries(filters).filter((e): e is [string, string] => !!e[1])).toString()}`;
 
   return (
     <>
+      {!totals && listQ.isLoading && <SkeletonStats count={4} className="mb-6 grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4" />}
       {totals && (
         <div className="mb-6 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
           <StatTile label={t('bill.admin.tiles.open')} value={fmtEurShort(totals.openCents, totals.currency)} hint={t('bill.admin.countHint', { count: totals.count })} icon={Euro} />
@@ -185,15 +211,15 @@ const List = ({ onEdit }: { onEdit: (i: ClientInvoice) => void }) => {
       </div>
 
       {listQ.isLoading ? (
-        <LoadingBlock />
+        <ListSkeleton cols={7} />
       ) : listQ.error ? (
         <ErrorBlock error={listQ.error} onRetry={() => listQ.refetch()} />
       ) : !listQ.data?.invoices.length ? (
-        <div className="rounded-xl border border-line bg-card">
-          <EmptyState icon={Receipt} title={t('bill.admin.empty')}>
-            {t('bill.admin.emptyText')}
-          </EmptyState>
-        </div>
+        filtered ? (
+          <EmptyState framed filtered onClearFilters={clearFilters} />
+        ) : (
+          <EmptyState framed icon={Receipt} title={t('bill.admin.empty')} text={t('bill.admin.emptyText')} />
+        )
       ) : (
         <>
         <SettingsTable
@@ -269,6 +295,7 @@ const List = ({ onEdit }: { onEdit: (i: ClientInvoice) => void }) => {
             </tbody>
           </table>
         </div>
+        <Pagination className="mt-4" page={page} pages={listQ.data.pages} total={listQ.data.total} pageSize={PAGE_SIZE} onChange={setPage} />
         </>
       )}
       <InvoiceActionDialogs action={action} onClose={() => setAction(null)} />

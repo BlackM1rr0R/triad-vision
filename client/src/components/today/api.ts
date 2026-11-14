@@ -31,7 +31,9 @@ export type WorkKind =
   | 'recognition_deadline' // Anerkennung deadline (components/recognition)
   | 'accelerated_deadline' // § 81a deadline (components/recognition)
   | 'processing' // team document workflow: a colleague sent "Schon geschrieben" (components/caseProcessing)
-  | 'partner_contract'; // employer / partner contract ending or at its notice deadline (components/partnerRecords)
+  | 'partner_contract' // employer / partner contract ending or at its notice deadline (components/partnerRecords)
+  | 'client_message' // the client wrote last in the case messages ("Bu günüm", components/today/myDay)
+  | 'interview'; // employer ↔ candidate interview today / this week
 export type WorkCategory = 'documents' | 'tasks' | 'mail' | 'signatures' | 'bookings' | 'leads' | 'other';
 export type WorkPriority = 'URGENT' | 'HIGH' | 'NORMAL';
 export type WorkBucket = 'overdue' | 'today' | 'week' | 'later';

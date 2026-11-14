@@ -12,13 +12,15 @@ import { usePageTitle } from '@/lib/usePageTitle';
  * Google review request links (lib/googleReview on the API):
  *   /r/review/:token          → the API counts the click and redirects to Google (/api/r/review/:token)
  *   /r/review/:token/optout   → "no more review requests" (one click, in the recipient's language)
- * Copy inline: the page is tiny and the client languages are az / de / en / ru (anything else → English).
+ * Copy inline: the page is tiny and the client languages are az / de / en / ru / tr / uk (anything else → English).
  */
 const COPY = {
   az: { title: 'Rəy xahişlərindən imtina', text: 'Bundan sonra sizə Google rəyi xahişi göndərməyəcəyik. Digər bildirişlərə təsir etmir.', confirm: 'İmtina edirəm', done: 'Hazırdır — artıq rəy xahişi almayacaqsınız.', already: 'Siz artıq imtina etmisiniz.', invalid: 'Link səhvdir və ya köhnəlib.', error: 'Alınmadı. Yenidən cəhd edin.', home: 'Ana səhifəyə', redirect: 'Google-a yönləndirilir…' },
   de: { title: 'Keine Bewertungsanfragen mehr', text: 'Wir senden Ihnen keine Bitte um eine Google-Bewertung mehr. Andere Benachrichtigungen bleiben unverändert.', confirm: 'Abmelden', done: 'Erledigt — Sie erhalten keine Bewertungsanfragen mehr.', already: 'Sie haben sich bereits abgemeldet.', invalid: 'Der Link ist falsch oder veraltet.', error: 'Das hat nicht geklappt. Bitte erneut versuchen.', home: 'Zur Startseite', redirect: 'Weiterleitung zu Google…' },
   en: { title: 'No more review requests', text: 'We will not ask you for a Google review again. Other notifications are not affected.', confirm: 'Opt out', done: 'Done — you will not get review requests any more.', already: 'You have already opted out.', invalid: 'The link is wrong or outdated.', error: 'That did not work. Please try again.', home: 'Home page', redirect: 'Redirecting to Google…' },
   ru: { title: 'Отказ от просьб об отзыве', text: 'Мы больше не будем просить вас оставить отзыв в Google. Другие уведомления не затрагиваются.', confirm: 'Отказаться', done: 'Готово — просьб об отзыве больше не будет.', already: 'Вы уже отказались.', invalid: 'Ссылка неверна или устарела.', error: 'Не получилось. Попробуйте ещё раз.', home: 'На главную', redirect: 'Переход в Google…' },
+  tr: { title: 'Yorum isteklerinden çıkış', text: 'Size artık Google yorumu isteği göndermeyeceğiz. Diğer bildirimler etkilenmez.', confirm: 'Çıkış yap', done: 'Tamam — artık yorum isteği almayacaksınız.', already: 'Zaten çıkış yaptınız.', invalid: 'Bağlantı hatalı veya süresi dolmuş.', error: 'Olmadı. Lütfen tekrar deneyin.', home: 'Ana sayfa', redirect: 'Google’a yönlendiriliyor…' },
+  uk: { title: 'Відмова від прохань про відгук', text: 'Ми більше не проситимемо вас залишити відгук у Google. Інші сповіщення це не зачіпає.', confirm: 'Відмовитися', done: 'Готово — прохань про відгук більше не буде.', already: 'Ви вже відмовилися.', invalid: 'Посилання хибне або застаріле.', error: 'Не вдалося. Спробуйте ще раз.', home: 'На головну', redirect: 'Перехід до Google…' },
 } as const;
 type Lang = keyof typeof COPY;
 const langOf = (l: string | undefined): Lang => ((l ?? '').slice(0, 2) in COPY ? ((l ?? '').slice(0, 2) as Lang) : 'en');

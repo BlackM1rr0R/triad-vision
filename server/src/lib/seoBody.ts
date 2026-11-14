@@ -6,6 +6,7 @@ import {
   guidesInLanguage,
   indexable,
   JOB_LABELS,
+  jobRegion,
   liveJobs,
   localizedPath,
   pick,
@@ -16,6 +17,7 @@ import {
 } from './seo.js';
 import { guidePath, renderGuide, type GuideRow } from './guides/service.js';
 import { compareContent } from './compare/visaCompare.js';
+import { findJobLanding, jobLandings, jobLandingTexts, landingOfJob, parseJobLandingPath, relatedLandings, type JobLanding } from './jobLandings.js';
 
 /*
  * Crawlable page body ("SSR-lite") for search engines and link previews that do not run JavaScript.
@@ -80,6 +82,16 @@ const JL: Record<SeoLocale, { salary: string; month: string; type: Record<string
   ru: { salary: 'Зарплата', month: '€ брутто в месяц', type: { FULL_TIME: 'Полная занятость', PART_TIME: 'Частичная занятость', SEASONAL: 'Сезонная работа', AUSBILDUNG: 'Ausbildung (профобучение)' }, more: 'Другие вакансии' },
   tr: { salary: 'Maaş', month: '€ brüt / ay', type: { FULL_TIME: 'Tam zamanlı', PART_TIME: 'Yarı zamanlı', SEASONAL: 'Sezonluk', AUSBILDUNG: 'Ausbildung (meslek eğitimi)' }, more: 'Diğer ilanlar' },
   uk: { salary: 'Зарплата', month: '€ брутто на місяць', type: { FULL_TIME: 'Повна зайнятість', PART_TIME: 'Часткова зайнятість', SEASONAL: 'Сезонна робота', AUSBILDUNG: 'Ausbildung (профнавчання)' }, more: 'Інші вакансії' },
+};
+
+/** Heading of the profession × city links on /jobs (lib/jobLandings.ts). */
+const LANDINGS_HEADING: Record<SeoLocale, string> = {
+  az: 'Peşə və şəhər üzrə vakansiyalar',
+  de: 'Stellen nach Beruf und Stadt',
+  en: 'Jobs by profession and city',
+  ru: 'Вакансии по профессиям и городам',
+  tr: 'Meslek ve şehre göre ilanlar',
+  uk: 'Вакансії за професіями та містами',
 };
 
 const LANGUAGE_NAMES: Record<SeoLocale, string> = { az: 'Azərbaycan', de: 'Deutsch', en: 'English', ru: 'Русский', tr: 'Türkçe', uk: 'Українська' };
@@ -175,8 +187,30 @@ export const renderBody = (rawPath: string, data: SeoData): string => {
       : '';
   };
 
+  // Profession × city landing pages (lib/jobLandings.ts) and the links to them.
+  const landingLinks = (items: JobLanding[]) => `<ul>${items.map((x) => `<li>${link(x.path, jobLandingTexts(x, lng, null).linkLabel)}</li>`).join('')}</ul>`;
+  const lp = parseJobLandingPath(path);
+  const landing = lp ? findJobLanding(jobs, lp.citySlug, lp.professionSlug) : null;
+
   const detail = /^\/(visas|services|news|jobs|events|guides)\/([^/]+)$/.exec(path);
-  if (detail) {
+  if (landing) {
+    const lt = jobLandingTexts(landing, lng, jobRegion(landing.city));
+    const jl = JL[lng];
+    const rel = relatedLandings(jobLandings(jobs), landing);
+    const jobItem = (j: (typeof jobs)[number]) => {
+      const amounts = [...new Set([j.salaryMin, j.salaryMax].filter((x): x is number => x != null))];
+      const facts = [amounts.length ? `${amounts.map((x) => x.toLocaleString('de-DE')).join(' – ')} ${jl.month}` : '', jl.type[j.employmentType] ?? ''].filter(Boolean);
+      return `<li>${link(`/jobs/${j.slug}`, collapse(pick(j.title, lng)))}${facts.length ? ` — ${e(facts.join(' · '))}` : ''}</li>`;
+    };
+    out.push(
+      `<h1>${e(lt.h1)}</h1>`,
+      ...lt.intro.map((x) => `<p>${e(x)}</p>`),
+      section(lt.labels.jobs, `<ul>${landing.jobs.map(jobItem).join('')}</ul>`),
+      rel.sameCity.length ? section(lt.labels.sameCity, landingLinks(rel.sameCity)) : '',
+      rel.sameProfession.length ? section(lt.labels.sameProfession, landingLinks(rel.sameProfession)) : '',
+      `<p>${link('/jobs', lt.labels.allJobs)} · ${link('/booking', t.cta)}</p>`,
+    );
+  } else if (detail) {
     const [, kind, slug] = detail;
     if (kind === 'visas') {
       const v = visas.find((x) => x.slug === slug)!;
@@ -224,13 +258,14 @@ export const renderBody = (rawPath: string, data: SeoData): string => {
       ].filter(Boolean);
       // Other open vacancies (same city first) and the visa types: crawl paths between detail pages.
       const others = jobs.filter((x) => x.slug !== j.slug).sort((a, b) => Number(b.city === j.city) - Number(a.city === j.city)).slice(0, 6);
+      const own = landingOfJob(jobs, j);
       out.push(
         `<article><h1>${e(collapse(pick(j.title, lng)))}${j.city ? ` — ${e(j.city)}` : ''}</h1>`,
         facts.length ? `<p>${facts.join(' · ')}</p>` : '',
         paragraphs(pick(j.description, lng)),
         section(JOB_LABELS[lng].requirements, list(pickList(j.requirements, lng))),
         section(JOB_LABELS[lng].benefits, list(pickList(j.benefits, lng))),
-        `<p>${link('/jobs', staticLabel('/jobs'))} · ${link('/booking', t.cta)}</p>`,
+        `<p>${link('/jobs', staticLabel('/jobs'))}${own ? ` · ${link(own.path, jobLandingTexts(own, lng, null).linkLabel)}` : ''} · ${link('/booking', t.cta)}</p>`,
         '</article>',
         others.length ? section(jl.more, `<ul>${others.map((x) => `<li>${link(`/jobs/${x.slug}`, collapse(pick(x.title, lng)))}${x.city ? ` — ${e(x.city)}` : ''}</li>`).join('')}</ul>`) : '',
         section(t.visas, visaList()),
@@ -331,9 +366,11 @@ export const renderBody = (rawPath: string, data: SeoData): string => {
       case '/news':
         out.push(postList(50), section(t.guides, guideList(guides)));
         break;
-      case '/jobs':
-        out.push(jobList(200), cta);
+      case '/jobs': {
+        const landings = jobLandings(jobs);
+        out.push(jobList(200), landings.length ? section(LANDINGS_HEADING[lng], landingLinks(landings.slice(0, 60))) : '', cta);
         break;
+      }
       case '/events':
         out.push(eventList(), cta);
         break;

@@ -86,6 +86,8 @@ export const config = {
   uploads: {
     privateDir: path.join(uploadsRoot, 'private'),
     publicDir: path.join(uploadsRoot, 'public'),
+    /** Derived files that can be re-created at any time (resized public images, lib/imageProxy.ts); not backed up. */
+    cacheDir: path.join(uploadsRoot, 'cache'),
     /** Client case documents (PDF, images, Word). */
     maxFileSize: int('UPLOAD_MAX_FILE_MB', 5) * 1024 * 1024,
   },

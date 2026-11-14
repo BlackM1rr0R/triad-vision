@@ -618,9 +618,13 @@
   .h-section {
     @apply font-display text-[length:var(--tv-type-h-section)] leading-[var(--tv-type-h-section-lh)] font-semibold tracking-[-0.02em];
   }
-  /* Horizontal snap carousel on phones, regular grid from sm up */
+  /* Horizontal snap carousel on phones, regular grid from sm up.
+     No start padding: the first card's snap position must be scrollLeft 0. With a 16 px start padding the rail
+     snapped itself 16 px to the right at layout (the same flush-left look, but a scroll before the first paint
+     stops Chrome from recording the LCP, so the home sections could not be server-rendered). The end padding
+     keeps the last card off the screen edge. */
   .mobile-rail {
-    @apply -mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-4 [scrollbar-width:none] sm:mx-0 sm:grid sm:overflow-visible sm:px-0 sm:pb-0 [&::-webkit-scrollbar]:hidden;
+    @apply -mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto pe-4 pb-4 [scrollbar-width:none] sm:mx-0 sm:grid sm:overflow-visible sm:pe-0 sm:pb-0 [&::-webkit-scrollbar]:hidden;
   }
   .mobile-rail > * {
     @apply w-[82%] shrink-0 snap-start sm:w-auto;

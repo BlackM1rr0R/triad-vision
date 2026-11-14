@@ -4,6 +4,7 @@
  */
 export const SYNONYMS: Record<string, string> = {
   today: 'bu gün, işlərim, today, my work, heute, meine arbeit, сегодня, мои дела, inbox, todo',
+  myDay: 'bu günüm, gündəm, plan, my day, agenda, mein tag, tagesplan, мой день, повестка, görüşlər, müsahibə',
   dashboard: 'panel, dashboard, übersicht, overview, home, start, обзор, главная, статистика',
   workspace: 'workspace, iş masası, arbeitsplatz, рабочее место, desk',
   cases: 'müraciət, iş, viza, case, application, visa, antrag, fall, vorgang, заявка, дело, виза',
@@ -67,6 +68,7 @@ export const SYNONYMS: Record<string, string> = {
   caseForms: 'anket, form, formular, fragebogen, анкета, форма',
   contractTemplates: 'müqavilə, şablon, contract, template, vertrag, vorlage, договор, шаблон',
   siteTools: 'kalkulyator, xəritə, calculator, map, rechner, karte, калькулятор, карта',
+  searchPerformance: 'axtarış, google, search console, seo, klik, sorğu, suchanfragen, klicks, impressionen, queries, clicks, impressions, поиск, запросы, клики, показы',
   cityCosts: 'şəhər xərcləri, kirayə, büdcə, stadtkosten, miete, budget, city costs, rent, расходы, аренда, бюджет',
   problemReports: 'problem, xəta, bug, fehler, meldung, ошибка, проблема',
   settings: 'ayar, settings, einstellungen, konfiguration, настройки',

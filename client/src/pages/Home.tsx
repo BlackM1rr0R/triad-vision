@@ -22,6 +22,7 @@ import { usePageTitle } from '@/lib/usePageTitle';
 import { CalculatorTeaser } from '@/components/growth/CalculatorTeaser';
 import { AUDIENCE_PATH, useAudience, type Audience } from '@/lib/audience';
 import { smoothScrollTo } from '@/lib/smoothScroll';
+import { isHydrating } from '@/lib/ssr';
 
 // Germany placement map: own chunk, renders nothing when hidden by the admin or empty.
 const PlacementMapSection = lazy(() => import('@/components/growth/PlacementMap').then((m) => ({ default: m.PlacementMapSection })));
@@ -78,14 +79,17 @@ const NeutralHome = () => (
 );
 
 /**
- * True one frame after the first paint. The sections below the hero are rendered then, as an interruptible
- * transition: the hero (the LCP element) no longer waits for the whole page to render in one long task.
- * Also on server-rendered pages (lib/ssr.ts): the sections' horizontal snap rails scroll themselves into place
- * at layout, and a scroll before the first paint stops Chrome from recording the LCP at all.
+ * Whether the sections below the hero are rendered. Server-rendered pages (lib/ssr.ts) contain the whole home:
+ * true from the start on the server and while the browser hydrates that markup (same tree, no mismatch). A
+ * client-only render (SPA navigation to the home page) renders them one frame after the first paint, as an
+ * interruptible transition, so the hero is not held back by the whole page rendering in one long task.
+ * (The snap rails of the sections no longer scroll themselves at layout — .mobile-rail in index.css — which
+ * used to stop Chrome from recording the LCP of a server-rendered home page.)
  */
 const useAfterFirstPaint = () => {
-  const [ready, setReady] = useState(false);
+  const [ready, setReady] = useState(isHydrating);
   useEffect(() => {
+    if (ready) return;
     let timer = 0;
     const frame = requestAnimationFrame(() => {
       timer = window.setTimeout(() => startTransition(() => setReady(true)));
@@ -94,6 +98,7 @@ const useAfterFirstPaint = () => {
       cancelAnimationFrame(frame);
       window.clearTimeout(timer);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- once, on mount
   }, []);
   return ready;
 };

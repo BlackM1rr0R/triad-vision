@@ -6,6 +6,7 @@ import helmet from 'helmet';
 import { config } from './config.js';
 import { csrfGuard, loadUser } from './middleware/auth.js';
 import { errorHandler, limiter, noStore, requestId } from './lib/http.js';
+import { imageProxyHandler } from './lib/imageProxy.js'; // /api/img: same-origin resized WebP of public photos
 import { auditsSettled } from './lib/audit.js';
 import { authRouter } from './routes/auth.js';
 import { casesRouter } from './routes/cases.js';
@@ -168,6 +169,10 @@ export const createApp = () => {
       },
     }),
   );
+
+  // Resized WebP copies of the public photos (CMS covers, heroes, stock photos), cached on disk and immutable:
+  // before the session / CSRF / no-store middlewares (anonymous, cacheable). lib/imageProxy.ts.
+  app.get('/api/img/:w/:file', limiter({ windowMs: 60 * 1000, limit: 300, skip: () => config.isTest }), imageProxyHandler);
 
   // Keep the raw body: webhook providers (WhatsApp/Meta) sign the exact bytes they sent.
   app.use(express.json({ limit: '3mb', verify: (req, _res, buf) => { (req as RequestWithRawBody).rawBody = buf; } }));

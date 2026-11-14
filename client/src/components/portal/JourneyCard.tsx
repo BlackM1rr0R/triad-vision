@@ -1,14 +1,14 @@
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
-import { Route } from 'lucide-react';
+import { ArrowRight, Route } from 'lucide-react';
 import { registerCopy } from '@/i18n';
 import { pagesJourneyMap } from '@/i18n/pagesJourneyMap';
 import { pagesJourney } from '@/i18n/pagesJourney';
 import type { NextStep } from './usePortalNav';
-import { buildMilestones, type Milestone } from './journey';
+import { buildMilestones, nextMilestone, type Milestone } from './journey';
 import { JourneyMap } from './JourneyMap';
-import { JourneyTimeline } from './JourneyTimeline';
+import { JourneyTimeline, useMilestoneDate } from './JourneyTimeline';
 
 registerCopy(pagesJourneyMap);
 registerCopy(pagesJourney);
@@ -22,6 +22,7 @@ export function JourneyCard({ next, className, tour }: { next: NextStep | undefi
   const { t, i18n } = useTranslation();
   const journey = next?.journey ?? null;
   const milestones = useMemo(() => (journey ? buildMilestones(journey) : []), [journey]);
+  const dateOf = useMilestoneDate();
   if (!journey || !next?.case) return null;
 
   const visaType = next.case.visaType;
@@ -33,6 +34,10 @@ export function JourneyCard({ next, className, tour }: { next: NextStep | undefi
   const stopped = journey.outcome === 'REJECTED' || journey.outcome === 'CANCELLED';
   const status = current ? t('jmap.currentIs', { step: labelOf(current) }) : stopped ? t('jmap.stopped') : milestones.every((m) => m.status === 'done') ? t('jmap.allDone') : '';
   const estimated = milestones.some((m) => m.dateKind === 'expected');
+  // "Now: Embassy · Appointment 3 May, 09:30 — Next: Decision · Expected 10 – 30 June"
+  const after = nextMilestone(milestones);
+  const currentWhen = current ? dateOf(current) : '';
+  const afterWhen = after ? dateOf(after) : '';
 
   return (
     <section className={clsx('card p-5 sm:p-7', className)} aria-labelledby="journey-map-title" data-tour={tour}>
@@ -63,6 +68,26 @@ export function JourneyCard({ next, className, tour }: { next: NextStep | undefi
         </div>
         <JourneyTimeline milestones={milestones} labelOf={labelOf} />
       </div>
+
+      {current && (
+        <div className="mt-5 flex flex-col gap-2 rounded-xl bg-sunken px-4 py-3 text-sm sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-3" aria-live="polite">
+          <p className="min-w-0">
+            <span className="text-muted">{t('jmap.nowLabel')}: </span>
+            <span className="font-semibold text-ink">{labelOf(current)}</span>
+            {currentWhen && <span className="text-muted"> · {currentWhen}</span>}
+          </p>
+          {after && (
+            <>
+              <ArrowRight className="hidden size-4 shrink-0 text-muted sm:block rtl:rotate-180" aria-hidden />
+              <p className="min-w-0">
+                <span className="text-muted">{t('jmap.nextLabel')}: </span>
+                <span className="font-semibold text-ink">{labelOf(after)}</span>
+                {afterWhen && <span className="text-muted"> · {afterWhen}</span>}
+              </p>
+            </>
+          )}
+        </div>
+      )}
 
       {estimated && <p className="mt-3 text-xs text-muted">{t('jmap.estimateNote')}</p>}
     </section>

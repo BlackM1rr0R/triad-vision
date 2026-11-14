@@ -2,11 +2,13 @@ import { useState, type ReactNode } from 'react';
 import { useQueryClient, type QueryKey } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
-import { CheckSquare, ClipboardPen, Download, ListChecks, MessageSquareText, UserCog, X } from 'lucide-react';
+import clsx from 'clsx';
+import { CheckSquare, ClipboardPen, Download, FileSpreadsheet, ListChecks, MessageSquareText, UserCog, X } from 'lucide-react';
 import { api } from '@/lib/api';
 import { registerCopy } from '@/i18n';
 import { pagesStaffPower } from '@/i18n/pagesStaffPower';
 import { pagesCaseProcessing } from '@/i18n/pagesCaseProcessing';
+import { pagesCasesList } from '@/i18n/pagesCasesList';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { fullName, inquiryStatusLabel, INQUIRY_STATUSES, statusLabel, toastError, type InquiryStatus } from '@/components/admin/labels';
@@ -18,6 +20,7 @@ import type { RowSelection } from './selection';
 
 registerCopy(pagesStaffPower);
 registerCopy(pagesCaseProcessing);
+registerCopy(pagesCasesList);
 
 /** Translated reason of a per-item failure (admin.errors.<CODE>, else sp.bulk.errors.<CODE>, else the code). */
 const useErrorText = () => {
@@ -60,13 +63,30 @@ const useBulkReport = () => {
   return { report, dialog };
 };
 
-/** Toolbar shown while rows are selected: count, "select all N matching", clear, then the page's actions. */
-export const BulkBarShell = ({ sel, pageCount, total, canSelectAll = true, children }: { sel: RowSelection; pageCount: number; total: number; canSelectAll?: boolean; children: ReactNode }) => {
+export type BulkBarPlacement = 'top' | 'bottom';
+
+/**
+ * Toolbar shown while rows are selected: count, "select all N matching", clear, then the page's actions.
+ * `top` (default) sticks under the header above the list; `bottom` (cases and inquiries lists, rendered after
+ * the list) floats at the bottom of the screen, scrolling sideways on phones.
+ */
+export const BulkBarShell = ({ sel, pageCount, total, canSelectAll = true, placement = 'top', children }: { sel: RowSelection; pageCount: number; total: number; canSelectAll?: boolean; placement?: BulkBarPlacement; children: ReactNode }) => {
   const { t } = useTranslation();
   if (!sel.count && !sel.allMatching) return null;
   const n = sel.allMatching ? Math.min(total, BULK_MAX) : sel.count;
-  return (
-    <div className="sticky top-[60px] z-30 mb-3 flex flex-wrap items-center gap-2 rounded-xl border border-line-strong bg-sunken px-3 py-2 text-sm shadow-[var(--tv-shadow-card)]" role="region" aria-label={t('sp.bulk.region')} data-tour="sp-bulkbar">
+  const bottom = placement === 'bottom';
+  const bar = (
+    <div
+      className={clsx(
+        'flex items-center gap-2 text-sm',
+        bottom
+          ? 'pointer-events-auto max-w-full overflow-x-auto rounded-2xl border border-line-strong bg-raised px-3 py-2 whitespace-nowrap shadow-[var(--tv-shadow-overlay)] [scrollbar-width:none] sm:flex-wrap sm:whitespace-normal'
+          : 'sticky top-[60px] z-30 mb-3 flex-wrap rounded-xl border border-line-strong bg-sunken px-3 py-2 shadow-[var(--tv-shadow-card)]',
+      )}
+      role="region"
+      aria-label={t('sp.bulk.region')}
+      data-tour="sp-bulkbar"
+    >
       <span className="inline-flex items-center gap-1.5 font-semibold text-ink" aria-live="polite">
         <CheckSquare className="size-4 text-link" aria-hidden />
         {sel.allMatching ? t('sp.select.allMatching', { count: n }) : t('sp.select.selected', { count: n })}
@@ -80,18 +100,27 @@ export const BulkBarShell = ({ sel, pageCount, total, canSelectAll = true, child
       <button type="button" className="inline-flex items-center gap-1 rounded-md px-1.5 py-1 text-xs text-muted hover:bg-line/60 hover:text-ink" onClick={sel.clear}>
         <X className="size-3.5" aria-hidden /> {t('sp.select.clear')}
       </button>
-      <span className="mx-1 hidden h-5 w-px bg-line sm:block" aria-hidden />
-      <div className="flex flex-wrap items-center gap-1.5">{children}</div>
+      <span className="mx-1 hidden h-5 w-px shrink-0 bg-line sm:block" aria-hidden />
+      <div className={clsx('flex items-center gap-1.5', bottom ? 'shrink-0 sm:flex-wrap' : 'flex-wrap')}>{children}</div>
+    </div>
+  );
+  if (!bottom) return bar;
+  return (
+    // Sticky to the bottom of the screen inside the page column (render it after the list): centred under the
+    // content whatever the sidebar width, never over the sidebar.
+    <div className="pointer-events-none sticky bottom-0 z-40 mt-3 flex justify-center pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+      {bar}
     </div>
   );
 };
 
-const BarButton = ({ icon: Icon, children, onClick, disabled }: { icon: typeof X; children: ReactNode; onClick: () => void; disabled?: boolean }) => (
+const BarButton = ({ icon: Icon, children, onClick, disabled, title }: { icon: typeof X; children: ReactNode; onClick: () => void; disabled?: boolean; title?: string }) => (
   <button
     type="button"
     onClick={onClick}
     disabled={disabled}
-    className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-line bg-card px-2.5 text-xs font-semibold whitespace-nowrap text-ink/85 transition hover:border-line-strong disabled:opacity-50"
+    title={title}
+    className="inline-flex min-h-9 shrink-0 items-center gap-1.5 rounded-lg border border-line bg-card px-2.5 text-xs font-semibold whitespace-nowrap text-ink/85 transition hover:border-line-strong disabled:opacity-50"
   >
     <Icon className="size-3.5" aria-hidden /> {children}
   </button>
@@ -181,9 +210,12 @@ export interface CasesBulkBarProps {
   labelOf: (id: string) => string;
   /** Query keys refreshed after a change. */
   invalidate: QueryKey[];
+  placement?: BulkBarPlacement;
+  /** More page actions at the end of the bar (e.g. the referral partner). */
+  extraActions?: ReactNode;
 }
 
-export const CasesBulkBar = ({ sel, filters, total, pageCount, labelOf, invalidate }: CasesBulkBarProps) => {
+export const CasesBulkBar = ({ sel, filters, total, pageCount, labelOf, invalidate, placement, extraActions }: CasesBulkBarProps) => {
   const { t } = useTranslation();
   const qc = useQueryClient();
   const { report, dialog } = useBulkReport();
@@ -291,16 +323,17 @@ export const CasesBulkBar = ({ sel, filters, total, pageCount, labelOf, invalida
     });
 
   const exportCsv = () => run(() => downloadCsv('/admin/bulk/cases/export', { selection }, 'cases.csv'));
+  const exportXlsx = () => run(() => downloadCsv('/admin/bulk/cases/export', { selection, format: 'xlsx' }, 'cases.xlsx'));
 
   const needs = action ? STATUS_NEEDS[action as keyof typeof STATUS_NEEDS] : undefined;
   return (
     <>
-      <BulkBarShell sel={sel} pageCount={pageCount} total={total}>
-        <BarButton icon={UserCog} onClick={() => setOpen('assign')} disabled={busy}>
-          {t('sp.bulk.assign')}
-        </BarButton>
+      <BulkBarShell sel={sel} pageCount={pageCount} total={total} placement={placement}>
         <BarButton icon={ListChecks} onClick={openStatus} disabled={busy}>
           {t('sp.bulk.status')}
+        </BarButton>
+        <BarButton icon={UserCog} onClick={() => setOpen('assign')} disabled={busy}>
+          {t('sp.bulk.assign')}
         </BarButton>
         <BarButton icon={ClipboardPen} onClick={() => setOpen('processing')} disabled={busy}>
           {t('sp.bulk.processing')}
@@ -308,11 +341,14 @@ export const CasesBulkBar = ({ sel, filters, total, pageCount, labelOf, invalida
         <BarButton icon={MessageSquareText} onClick={() => setOpen('message')} disabled={busy}>
           {t('sp.bulk.message')}
         </BarButton>
-        <BarButton icon={Download} onClick={exportCsv} disabled={busy}>
-          {t('sp.bulk.export')}
+        <BarButton icon={FileSpreadsheet} onClick={exportXlsx} disabled={busy} title={t('cl.bulk.excelHint')}>
+          {t('cl.bulk.excel')}
         </BarButton>
+        <BarButton icon={Download} onClick={exportCsv} disabled={busy}>
+          {t('cl.bulk.csv')}
+        </BarButton>
+        {extraActions}
       </BulkBarShell>
-
       <AssignDialog open={open === 'assign'} onClose={() => setOpen(null)} onApply={assign} busy={busy} count={n} />
 
       <Modal
@@ -449,7 +485,7 @@ export const CasesBulkBar = ({ sel, filters, total, pageCount, labelOf, invalida
 
 // ─── Inquiries ──────────────────────────────────────────────────────────
 
-export const InquiriesBulkBar = ({ sel, total, pageCount, labelOf, invalidate }: { sel: RowSelection; total: number; pageCount: number; labelOf: (id: string) => string; invalidate: QueryKey[] }) => {
+export const InquiriesBulkBar = ({ sel, total, pageCount, labelOf, invalidate, placement }: { sel: RowSelection; total: number; pageCount: number; labelOf: (id: string) => string; invalidate: QueryKey[]; placement?: BulkBarPlacement }) => {
   const { t } = useTranslation();
   const qc = useQueryClient();
   const { report, dialog } = useBulkReport();
@@ -517,7 +553,7 @@ export const InquiriesBulkBar = ({ sel, total, pageCount, labelOf, invalidate }:
     });
   return (
     <>
-      <BulkBarShell sel={sel} pageCount={pageCount} total={total} canSelectAll={false}>
+      <BulkBarShell sel={sel} pageCount={pageCount} total={total} canSelectAll={false} placement={placement}>
         <BarButton icon={UserCog} onClick={() => setOpen('assign')} disabled={busy}>
           {t('sp.bulk.assign')}
         </BarButton>
@@ -527,8 +563,11 @@ export const InquiriesBulkBar = ({ sel, total, pageCount, labelOf, invalidate }:
         <BarButton icon={MessageSquareText} onClick={() => setOpen('message')} disabled={busy}>
           {t('sp.bulk.email')}
         </BarButton>
+        <BarButton icon={FileSpreadsheet} onClick={() => void run(() => downloadCsv('/admin/bulk/inquiries/export', { ids, format: 'xlsx' }, 'inquiries.xlsx'))} disabled={busy} title={t('cl.bulk.excelHint')}>
+          {t('cl.bulk.excel')}
+        </BarButton>
         <BarButton icon={Download} onClick={() => void run(() => downloadCsv('/admin/bulk/inquiries/export', { ids }, 'inquiries.csv'))} disabled={busy}>
-          {t('sp.bulk.export')}
+          {t('cl.bulk.csv')}
         </BarButton>
       </BulkBarShell>
       <AssignDialog open={open === 'assign'} onClose={() => setOpen(null)} onApply={(staffId) => void assign(staffId)} busy={busy} count={ids.length} />

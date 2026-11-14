@@ -4,6 +4,8 @@ import type { Prisma, QuoteStatus } from '@prisma/client';
 import { prisma } from '../../db.js';
 import { HttpError, badRequest, conflict, notFound, parse } from '../../lib/http.js';
 import { audit } from '../../lib/audit.js';
+import { phoneInput } from '../../lib/phoneField.js';
+import { pageArgs, pageMeta, pageShape } from '../../lib/paging.js';
 import { metaOf } from '../../lib/esign/http.js';
 import { aiComplete } from '../../lib/ai/complete.js';
 import { employerAiStatus } from '../../lib/ai/features/employer/common.js';
@@ -267,7 +269,7 @@ adminQuotesRouter.post('/prospect', async (req, res) => {
       legalForm: body.legalForm ?? null,
       contactName: body.contactName ?? null,
       email: body.email ?? null,
-      phone: body.phone ?? null,
+      phone: phoneInput(body.phone, { country: 'DE' }) ?? null,
       city: body.city ?? null,
       address: body.address ?? null,
       status: 'PENDING',
@@ -344,6 +346,7 @@ adminQuotesRouter.get('/', async (req, res) => {
       from: day.optional(),
       to: day.optional(),
       q: z.string().trim().max(60).optional(),
+      ...pageShape(50),
     }),
     req.query,
   );
@@ -354,8 +357,9 @@ adminQuotesRouter.get('/', async (req, res) => {
     ...(q.q ? { OR: [{ number: { contains: q.q } }, { title: { contains: q.q } }, { company: { name: { contains: q.q } } }] } : {}),
   };
   const soon = new Date(Date.now() + 7 * DAY);
-  const [quotes, groups, expiringSoon] = await Promise.all([
-    prisma.quote.findMany({ where, include: withCreator, orderBy: [{ createdAt: 'desc' }], take: 500 }),
+  const [quotes, total, groups, expiringSoon] = await Promise.all([
+    prisma.quote.findMany({ where, include: withCreator, orderBy: [{ createdAt: 'desc' }, { id: 'desc' }], ...pageArgs(q) }),
+    prisma.quote.count({ where }),
     prisma.quote.groupBy({ by: ['status'], _sum: { grossCents: true }, _count: { _all: true } }),
     prisma.quote.count({ where: { status: { in: OPEN_STATUSES }, validUntil: { lte: soon } } }),
   ]);
@@ -366,6 +370,7 @@ adminQuotesRouter.get('/', async (req, res) => {
   const decided = won + count('DECLINED', 'EXPIRED');
   res.json({
     quotes: quotes.map(listView),
+    ...pageMeta(q, total),
     totals: {
       openCents: sum('SENT', 'VIEWED'),
       openCount: count('SENT', 'VIEWED'),

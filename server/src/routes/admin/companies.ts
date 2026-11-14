@@ -10,6 +10,7 @@ import { hasMinRole } from '../../middleware/auth.js';
 import { companyLogoOf, singleRasterImage, storePublicImage } from '../../lib/publicImages.js';
 import { cleanupRemovedImages } from '../../lib/publicImageRefs.js';
 import { audit } from '../../lib/audit.js';
+import { phoneInput } from '../../lib/phoneField.js';
 import { renderEmail, sendMail } from '../../lib/mailer.js';
 import { notifyCompanyStatus } from '../../lib/jobsNotifications.js';
 import { companyFields } from '../company.js';
@@ -231,6 +232,8 @@ adminCompaniesRouter.post('/', async (req, res) => {
   const company = await prisma.company.create({
     data: {
       ...body.company,
+      // Employers are German: a local "0…" number becomes +49….
+      phone: phoneInput(body.company.phone, { country: 'DE' }),
       status: body.status,
       contactName: body.company.contactName ?? (body.invite ? `${body.invite.firstName} ${body.invite.lastName}` : null),
       email: body.company.email ?? body.invite?.email ?? null,
@@ -255,6 +258,8 @@ adminCompaniesRouter.patch('/:id', async (req, res) => {
   const before = await prisma.company.findUnique({ where: { id: req.params.id } });
   if (!before) throw notFound('COMPANY_NOT_FOUND');
   if (!canSeeBank(req) && touchesBank(body, before)) throw forbidden('ADMIN_REQUIRED');
+  // An old phone value sent back unchanged is kept; a new one is normalised (+49 for local numbers).
+  if (body.phone !== undefined) body.phone = phoneInput(body.phone, { current: before.phone, country: 'DE' }) ?? undefined;
   const company = await prisma.company.update({ where: { id: before.id }, data: body });
   // What changed (before / after; bank data, tax number and note by name only) — shown in the partner-records timeline.
   const { fields, changes } = auditDiff(before as unknown as Record<string, unknown>, body as Record<string, unknown>);

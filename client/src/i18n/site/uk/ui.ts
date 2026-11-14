@@ -16,6 +16,14 @@ const copy: SiteCopy<(typeof uiCopy)['en']> = {
     sortDescending: 'За спаданням',
     progress: 'Поступ',
     uploadProgress: 'Хід завантаження',
+    empty: {
+      filteredTitle: 'За фільтрами нічого не знайдено',
+      filteredText: 'Змініть пошук або фільтри.',
+      clearFilters: 'Скинути фільтри',
+    },
+    phone: {
+      invalid: 'Вкажіть номер з кодом країни, наприклад +994 50 123 45 67.',
+    },
     // Confirmation dialogs appear on logged-in screens only: strings fall back to English.
     confirmDlg: {},
   },

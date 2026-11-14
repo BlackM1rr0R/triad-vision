@@ -1,27 +1,40 @@
 import { describe, expect, it } from 'vitest';
 import { anon, asAdmin } from '../helpers/api';
 import { prisma } from '../helpers/db';
-import { GUIDE_DRAFTS, seedGuideDrafts } from '../../prisma/seed/guideDrafts/index.js';
+import { GUIDE_DRAFTS, PUBLISHED_ON_CREATE, seedGuideDrafts } from '../../prisma/seed/guideDrafts/index.js';
 import { guidePlaceholders } from '../../src/lib/guides/placeholders.js';
 
 const pathOf = (d: (typeof GUIDE_DRAFTS)[number]) => `${d.locale === 'az' ? '' : `/${d.locale}`}/guides/${d.slug}`;
 
 describe('SEO guide drafts', () => {
-  it('are seeded unpublished, once, and stay invisible to the public site and crawlers', async () => {
+  it('are seeded unpublished, once, and stay invisible to the public site and crawlers (tr/uk: published)', async () => {
     expect(await seedGuideDrafts(prisma)).toBe(GUIDE_DRAFTS.length);
     expect(await seedGuideDrafts(prisma)).toBe(0);
-    expect(await prisma.guidePage.count({ where: { published: true } })).toBe(0);
-    expect(await prisma.guidePage.count({ where: { published: false } })).toBe(GUIDE_DRAFTS.length);
+    const live = GUIDE_DRAFTS.filter((d) => PUBLISHED_ON_CREATE.includes(d.locale));
+    const drafts = GUIDE_DRAFTS.filter((d) => !PUBLISHED_ON_CREATE.includes(d.locale));
+    expect(live).toHaveLength(10);
+    expect(await prisma.guidePage.count({ where: { published: true } })).toBe(live.length);
+    expect(await prisma.guidePage.count({ where: { published: false } })).toBe(drafts.length);
 
     const sitemap = (await anon().get('/sitemaps/guides.xml')).text;
     for (const lng of ['az', 'de', 'en', 'ru']) {
       expect((await anon().get('/api/guides').query({ lng })).body.items, lng).toEqual([]);
     }
-    for (const d of GUIDE_DRAFTS) {
+    for (const d of drafts) {
       const path = pathOf(d);
       expect(sitemap, path).not.toContain(d.slug);
       expect((await anon().get(`/api/guides/${d.slug}`).query({ lng: d.locale })).status, path).toBe(404);
       expect((await anon().get('/__seo/status').query({ path })).text, path).toBe('404');
+    }
+    for (const d of live) {
+      const path = pathOf(d);
+      expect(sitemap, path).toContain(d.slug);
+      const res = await anon().get(`/api/guides/${d.slug}`).query({ lng: d.locale });
+      expect(res.status, path).toBe(200);
+      // hreflang by key: the tr and uk versions of a key are alternates of each other.
+      const other = live.find((o) => o.key === d.key && o.locale !== d.locale)!;
+      expect(res.body.guide.alternates[other.locale], path).toContain(other.slug);
+      expect((await anon().get('/__seo/status').query({ path })).text, path).toBe('');
     }
   });
 

@@ -24,6 +24,7 @@ import {
   UserRound,
   Users,
   Contact,
+  LayoutDashboard,
 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { registerCopy } from '@/i18n';
@@ -45,12 +46,13 @@ import { ClientsTab } from './ClientsTab';
 import { CommissionsTab, DocumentsTab, PortalTab, VisasTab } from './OtherTabs';
 import { ContactsTab, ContractsTab, HistoryTab } from './RecordsTabs';
 import { PARTNER_STATS_KEY, type PartnerStats } from './types';
+import { DashboardTab } from './DashboardTab'; // "Panel": charts, refusal rate, quota, latest activity (registers its copy)
 
 registerCopy(pagesPartnerHub);
 
-const TABS = ['info', 'contracts', 'clients', 'commissions', 'visas', 'documents', 'contacts', 'history', 'portal'] as const;
+const TABS = ['dashboard', 'info', 'contracts', 'clients', 'commissions', 'visas', 'documents', 'contacts', 'history', 'portal'] as const;
 type TabKey = (typeof TABS)[number];
-const TAB_ICON = { info: Info, contracts: FileSignature, clients: Users, commissions: Coins, visas: Plane, documents: FolderOpen, contacts: Contact, history: History, portal: KeyRound } as const;
+const TAB_ICON = { dashboard: LayoutDashboard, info: Info, contracts: FileSignature, clients: Users, commissions: Coins, visas: Plane, documents: FolderOpen, contacts: Contact, history: History, portal: KeyRound } as const;
 const STAGE_TONE: Record<string, string> = { IN_PROGRESS: 'bg-info', WRITTEN: 'bg-warning', DONE: 'bg-success', REFUSED: 'bg-danger' };
 
 type Detail = { partner: Partner & PartnerOwnershipFields; cases: PartnerCase[]; ownedClients?: OwnedClient[] };
@@ -91,7 +93,7 @@ export const PartnerHub = ({ isAdmin }: { isAdmin: boolean }) => {
   const { t } = useTranslation();
   const { id = '' } = useParams();
   const navigate = useNavigate();
-  const [tab, setTab] = useTabParam<TabKey>('tab', TABS, 'info');
+  const [tab, setTab] = useTabParam<TabKey>('tab', TABS, 'dashboard');
   const [editing, setEditing] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const detail = useQuery({
@@ -220,6 +222,7 @@ export const PartnerHub = ({ isAdmin }: { isAdmin: boolean }) => {
         onChange={setTab}
       />
       <TabPanel idPrefix="partner-hub" tabKey={tab} className={clsx('min-w-0')}>
+        {tab === 'dashboard' && <DashboardTab partnerId={partner.id} onOpenHistory={() => setTab('history')} onEdit={isAdmin ? () => setEditing(true) : undefined} />}
         {tab === 'info' && <InfoTab partner={partner} canEdit={isAdmin} onEdit={() => setEditing(true)} />}
         {tab === 'contracts' && <ContractsTab partnerId={partner.id} legacy={stats?.legacyContract ?? null} onFillData={isAdmin ? () => setEditing(true) : () => setTab('info')} />}
         {tab === 'clients' && <ClientsTab cases={cases} ownedClients={owned} partner={partner} />}

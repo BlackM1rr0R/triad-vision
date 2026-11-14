@@ -1,7 +1,8 @@
 /**
  * Client journey milestones (portal home + case view): pure mapping of the `journey` block of
  * GET /api/account/next-step (server: lib/account/nextStep.ts → buildJourney) to six milestones
- *   documents → contract → embassy → decision → travel → arrival
+ *   documents → (recognition) → contract → embassy → decision → travel → arrival
+ * (recognition only for cases with a recognition procedure — the step does not apply to the others)
  * each done / current / upcoming (or skipped after a refusal / cancellation) with the date to show:
  * the real date of done steps, the booked Botschaft appointment, the booked flight, otherwise the
  * expected window (forecast steps; travel / arrival from the decision → arrival history).
@@ -28,9 +29,17 @@ export interface JourneyData {
   appointment?: { at: string | null; place: string | null } | null;
   travel: { at: string | null; planned: boolean; done: boolean; expectedFrom?: string | null; expectedTo?: string | null };
   arrival: { at: string | null; done: boolean };
+  /** Recognition procedure of the qualification (Anerkennung); null / absent = the step does not apply. */
+  recognition?: {
+    status: 'done' | 'current';
+    outcome: 'RECOGNISED' | 'PARTIAL' | 'REJECTED' | null;
+    startedAt: string | null;
+    submittedAt: string | null;
+    decisionAt: string | null;
+  } | null;
 }
 
-export const MILESTONE_KEYS = ['documents', 'contract', 'embassy', 'decision', 'travel', 'arrival'] as const;
+export const MILESTONE_KEYS = ['documents', 'recognition', 'contract', 'embassy', 'decision', 'travel', 'arrival'] as const;
 export type MilestoneKey = (typeof MILESTONE_KEYS)[number];
 export type MilestoneStatus = 'done' | 'current' | 'upcoming' | 'skipped';
 
@@ -42,7 +51,7 @@ export interface Milestone {
   /** Expected window (current / upcoming steps of the forecast). */
   from: string | null;
   to: string | null;
-  dateKind: 'done' | 'expected' | 'planned' | 'appointment' | null;
+  dateKind: 'done' | 'expected' | 'planned' | 'appointment' | 'submitted' | null;
   /** Place of the booked appointment (embassy milestone). */
   place?: string | null;
   /** The decision was a refusal. */
@@ -108,8 +117,18 @@ export const buildMilestones = (j: JourneyData): Milestone[] => {
     else arrival = { status: j.travel.done ? 'current' : 'upcoming', ...planned };
   }
 
+  // Recognition: only when the case has a procedure. A decided case drops a still-running one (no longer its step).
+  const r = j.recognition;
+  const recognition: Milestone | null =
+    !r || (r.status !== 'done' && j.outcome)
+      ? null
+      : r.status === 'done'
+        ? { key: 'recognition', status: 'done', date: r.decisionAt, from: null, to: null, dateKind: r.decisionAt ? 'done' : null, negative: r.outcome === 'REJECTED' || undefined }
+        : { key: 'recognition', status: 'current', date: r.submittedAt, from: null, to: null, dateKind: r.submittedAt ? 'submitted' : null };
+
   const list: Milestone[] = [
     { key: 'documents', ...documents },
+    ...(recognition ? [recognition] : []),
     { key: 'contract', ...contract },
     { key: 'embassy', ...embassy },
     { key: 'decision', ...decision, negative: j.outcome === 'REJECTED' || undefined },
@@ -128,17 +147,32 @@ export const buildMilestones = (j: JourneyData): Milestone[] => {
   });
 };
 
-/** Position (0..1 of the route length) of each milestone: home city at 0, German city at 1. */
+/** Position (0..1 of the route length) of each of the six usual milestones: home city at 0, German city at 1. */
 export const MILESTONE_POSITIONS = [0.1, 0.26, 0.42, 0.58, 0.76, 0.92] as const;
+
+/** Positions for `n` milestones (six: MILESTONE_POSITIONS; seven with recognition: spread evenly over the same span). */
+export const milestonePositions = (n: number): number[] => {
+  if (n === MILESTONE_POSITIONS.length) return [...MILESTONE_POSITIONS];
+  if (n <= 1) return [0.5];
+  return Array.from({ length: n }, (_, i) => Math.round((0.1 + (0.82 * i) / (n - 1)) * 1000) / 1000);
+};
 
 /** How far along the route the client is: the current milestone, else the last done one (1 = arrived). */
 export const routeProgress = (ms: Milestone[]): number => {
   if (ms.length && ms.every((m) => m.status === 'done')) return 1;
+  const pos = milestonePositions(ms.length);
   const cur = ms.findIndex((m) => m.status === 'current');
-  if (cur >= 0) return MILESTONE_POSITIONS[cur];
+  if (cur >= 0) return pos[cur];
   let last = -1;
   ms.forEach((m, i) => {
     if (m.status === 'done') last = i;
   });
-  return last >= 0 ? MILESTONE_POSITIONS[last] : 0;
+  return last >= 0 ? pos[last] : 0;
+};
+
+/** The step after the current one that still lies ahead (for "Next: …"); null when nothing is ahead. */
+export const nextMilestone = (ms: Milestone[]): Milestone | null => {
+  const cur = ms.findIndex((m) => m.status === 'current');
+  if (cur < 0) return null;
+  return ms.slice(cur + 1).find((m) => m.status === 'upcoming') ?? null;
 };

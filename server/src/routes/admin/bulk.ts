@@ -13,7 +13,8 @@ import { licenceCovers, matchCandidate } from '../../lib/matching.js';
 import { notifyApplicationStatus, notifyCandidateProposed } from '../../lib/jobsNotifications.js';
 import { emitWebhook } from '../../lib/ops/webhooks.js';
 import { BULK_MAX, CASE_BULK_ACTION_KEYS, commonCaseActions, renderTemplate, runBatched, summarize, toCsv, type BulkItemResult } from '../../lib/bulk/index.js';
-import { caseListQuery, caseListWhere } from './cases.js';
+import { caseListQuery, resolveCaseListWhere } from './cases.js';
+import { toXlsx, XLSX_MIME } from '../../lib/bulk/xlsx.js';
 import { inquiryListQuery, inquiryListWhere, inquiryOrderBy, notifyInquiryAssigneeBulk } from '../../lib/inquiries/index.js';
 import { candidateListQuery, candidateListWhere, candidateSelect, loadRankVacancy, RANK_LIMIT } from './candidates.js';
 
@@ -23,7 +24,7 @@ import { candidateListQuery, candidateListWhere, candidateSelect, loadRankVacanc
  * audit entry. A selection is either explicit ids or "all matching" the list filters (cases, candidates).
  *
  *   Cases       POST /cases/resolve | /cases/assign | /cases/restore-assign | /cases/status | /cases/processing
- *               POST /cases/message | /cases/export
+ *               POST /cases/message | /cases/export ({ format: 'csv' | 'xlsx' })
  *   Inquiries   POST /inquiries/status | /inquiries/restore-status | /inquiries/assign | /inquiries/restore-assign
  *               POST /inquiries/message | /inquiries/export
  *   Candidates  POST /candidates/resolve | /candidates/assign | /candidates/status | /candidates/message | /candidates/export
@@ -65,7 +66,7 @@ const resolveCases = async (req: Request, sel: z.infer<typeof caseSelection>) =>
     const byId = new Map(rows.map((r) => [r.id, r]));
     return { rows: sel.ids.map((x) => byId.get(x)).filter((r): r is { id: string; status: CaseStatus } => !!r), total: rows.length };
   }
-  const where = caseListWhere({ page: 1, ...sel.all! }, req.user!.id);
+  const where = await resolveCaseListWhere({ page: 1, ...sel.all! }, req.user!.id);
   const [rows, total] = await Promise.all([
     prisma.case.findMany({ where, orderBy: { updatedAt: 'desc' }, take: BULK_MAX, select: { id: true, status: true } }),
     prisma.case.count({ where }),
@@ -191,14 +192,24 @@ adminBulkRouter.post('/cases/message', async (req, res) => {
   res.json(await send(req, 'BULK_CASES_MESSAGED', results));
 });
 
-const csvResponse = (res: import('express').Response, name: string, csv: string) => {
+/** Export format of the bulk exports: CSV (default) or Excel. */
+const exportFormat = z.enum(['csv', 'xlsx']).default('csv');
+
+/** Sends the exported rows as CSV or as an .xlsx workbook. */
+const tableResponse = async (res: import('express').Response, name: string, format: 'csv' | 'xlsx', headers: string[], rows: unknown[][]) => {
+  const file = `${name}-${new Date().toISOString().slice(0, 10)}.${format}`;
+  res.setHeader('Content-Disposition', `attachment; filename="${file}"`);
+  if (format === 'xlsx') {
+    res.setHeader('Content-Type', XLSX_MIME);
+    res.send(await toXlsx(name, headers, rows));
+    return;
+  }
   res.setHeader('Content-Type', 'text/csv; charset=utf-8');
-  res.setHeader('Content-Disposition', `attachment; filename="${name}-${new Date().toISOString().slice(0, 10)}.csv"`);
-  res.send(csv);
+  res.send(toCsv(headers, rows));
 };
 
 adminBulkRouter.post('/cases/export', async (req, res) => {
-  const body = parse(z.object({ selection: caseSelection }), req.body ?? {});
+  const body = parse(z.object({ selection: caseSelection, format: exportFormat }), req.body ?? {});
   const { rows } = await resolveCases(req, body.selection);
   const cases = await prisma.case.findMany({
     where: { id: { in: rows.map((r) => r.id) } },
@@ -211,17 +222,16 @@ adminBulkRouter.post('/cases/export', async (req, res) => {
       partner: { select: { name: true } },
     },
   });
-  await audit(req, 'BULK_CASES_EXPORTED', undefined, { count: cases.length });
-  csvResponse(
+  await audit(req, 'BULK_CASES_EXPORTED', undefined, { count: cases.length, format: body.format });
+  await tableResponse(
     res,
     'cases',
-    toCsv(
+    body.format,
       ['number', 'client', 'email', 'phone', 'profession', 'visa', 'status', 'processing', 'staff', 'partner', 'created', 'updated'],
       cases.map((c) => [
         c.number, `${c.client.firstName} ${c.client.lastName}`, c.client.email, c.client.phone, c.profession, c.visaCategory?.visaLabel ?? c.visaType, c.status,
         c.processingStage ?? '', c.assignedStaff ? `${c.assignedStaff.firstName} ${c.assignedStaff.lastName}` : '', c.partner?.name ?? '', c.createdAt, c.updatedAt,
       ]),
-    ),
   );
 });
 
@@ -319,16 +329,15 @@ adminBulkRouter.post('/inquiries/message', async (req, res) => {
 });
 
 adminBulkRouter.post('/inquiries/export', async (req, res) => {
-  const body = parse(z.object({ ids }), req.body ?? {});
+  const body = parse(z.object({ ids, format: exportFormat }), req.body ?? {});
   const rows = await prisma.inquiry.findMany({ where: { id: { in: body.ids } }, orderBy: { createdAt: 'desc' } });
-  await audit(req, 'BULK_INQUIRIES_EXPORTED', undefined, { count: rows.length });
-  csvResponse(
+  await audit(req, 'BULK_INQUIRIES_EXPORTED', undefined, { count: rows.length, format: body.format });
+  await tableResponse(
     res,
     'inquiries',
-    toCsv(
+    body.format,
       ['created', 'kind', 'status', 'company', 'contact', 'email', 'phone', 'sector', 'workers', 'score', 'level', 'message'],
       rows.map((i) => [i.createdAt, i.kind, i.status, i.companyName, i.contactName, i.email, i.phone, i.sector, i.workersNeeded, i.score, i.scoreLevel, i.message]),
-    ),
   );
 });
 
@@ -448,7 +457,7 @@ adminBulkRouter.post('/candidates/message', async (req, res) => {
 });
 
 adminBulkRouter.post('/candidates/export', async (req, res) => {
-  const body = parse(z.object({ selection: candidateSelection }), req.body ?? {});
+  const body = parse(z.object({ selection: candidateSelection, format: exportFormat }), req.body ?? {});
   const { ids: userIds } = await resolveCandidates(body.selection);
   const users = await prisma.user.findMany({
     where: { id: { in: userIds } },
@@ -460,15 +469,14 @@ adminBulkRouter.post('/candidates/export', async (req, res) => {
     },
   });
   await audit(req, 'BULK_CANDIDATES_EXPORTED', undefined, { count: users.length });
-  csvResponse(
+  await tableResponse(
     res,
     'candidates',
-    toCsv(
+    body.format,
       ['name', 'email', 'phone', 'city', 'profession', 'german', 'experience', 'licence', 'education', 'verified', 'case', 'caseStatus', 'registered'],
       users.map((u) => [
         `${u.firstName} ${u.lastName}`, u.email, u.phone, u.city, u.profession, u.germanLevel, u.experienceYears, u.drivingLicence, u.education,
         u.emailVerifiedAt ? 'yes' : 'no', u.cases[0]?.number ?? '', u.cases[0]?.status ?? '', u.createdAt,
       ]),
-    ),
   );
 });

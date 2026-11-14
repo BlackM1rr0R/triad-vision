@@ -34,7 +34,7 @@ export const hubTabKey = (userId: string | undefined, hub: string) => `tv-admin-
 
 // ─── Recent palette entries ─────────────────────────────────────────────
 
-export type RecentKind = 'nav' | 'action' | 'case' | 'user' | 'company' | 'vacancy' | 'file' | 'task';
+export type RecentKind = 'nav' | 'action' | 'case' | 'user' | 'company' | 'vacancy' | 'file' | 'task' | 'partner' | 'message';
 
 export interface RecentEntry {
   /** Unique per target: `${kind}:${id}`. */

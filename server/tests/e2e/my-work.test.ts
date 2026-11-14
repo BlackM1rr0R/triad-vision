@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { anon, asAdmin, asClient, asStaff, asSuperAdmin } from '../helpers/api';
 import { prisma } from '../helpers/db';
 import { createClient, createStaff, uniq } from '../helpers/factories';
-import { clockFor, compareItems, type WorkItem } from '../../src/lib/myWork.js';
+import { clockFor, compareItems, unansweredThreads, type WorkItem } from '../../src/lib/myWork.js';
 import { snoozedDue } from '../../src/routes/admin/myWork.js';
 
 const HOUR = 60 * 60 * 1000;
@@ -379,6 +379,77 @@ describe('my work: expiry, privacy, security', () => {
     expect((await sup.agent.post(`/api${ack.endpoint}`).send({})).status).toBe(200);
     expect(ofKind(await fetchWork(sup.agent), 'security_alert')).toHaveLength(0);
     expect(su.counts.urgent).toBeGreaterThanOrEqual(2);
+  });
+});
+
+describe('my work: client messages and interviews ("Bu günüm")', () => {
+  it('lists my cases where the client wrote last, with the first unanswered message as the start of the wait', async () => {
+    const me = await asStaff();
+    const other = await asStaff();
+    const mine = await makeCase({ staffId: me.user.id, status: 'DOCUMENTS_PENDING' });
+    const answered = await makeCase({ staffId: me.user.id, status: 'DOCUMENTS_PENDING' });
+    const theirs = await makeCase({ staffId: other.user.id, status: 'DOCUMENTS_PENDING' });
+    const closed = await makeCase({ staffId: me.user.id, status: 'APPROVED' });
+    const msg = (caseId: string, authorId: string, body: string, at: Date) => prisma.caseMessage.create({ data: { caseId, authorId, body, createdAt: at } });
+    await msg(mine.id, me.user.id, 'Salam, pasportu yükləyin', ago(3 * DAY));
+    await msg(mine.id, mine.clientId, 'Yüklədim', ago(30 * HOUR));
+    await msg(mine.id, mine.clientId, 'Baxa bilərsiniz?', ago(2 * HOUR));
+    await msg(answered.id, answered.clientId, 'Sual var', ago(5 * HOUR));
+    await msg(answered.id, me.user.id, 'Cavab', ago(4 * HOUR));
+    await msg(theirs.id, theirs.clientId, 'Salam', ago(HOUR));
+    await msg(closed.id, closed.clientId, 'Təşəkkürlər', ago(HOUR));
+
+    const rows = ofKind(await fetchWork(me.agent), 'client_message');
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({
+      id: `client_message:${mine.id}`,
+      category: 'mail',
+      subtitle: 'Baxa bilərsiniz?',
+      note: { key: 'clientMessages', params: { count: 2 } },
+      overdue: true, // first unanswered message 30 h ago, one day to answer
+      link: `/admin/cases/${mine.id}?tab=communication`,
+      refs: expect.objectContaining({ caseId: mine.id }),
+    });
+    expect(rows[0].actions[0]).toMatchObject({ key: 'reply', type: 'link', primary: true });
+  });
+
+  it('finds unanswered threads in a newest-first message list', () => {
+    const t = (h: number) => new Date(Date.UTC(2030, 0, 1, h));
+    const out = unansweredThreads([
+      { caseId: 'a', createdAt: t(10), fromClient: true },
+      { caseId: 'b', createdAt: t(9), fromClient: false },
+      { caseId: 'a', createdAt: t(8), fromClient: true },
+      { caseId: 'b', createdAt: t(7), fromClient: true },
+      { caseId: 'a', createdAt: t(6), fromClient: false },
+      { caseId: 'a', createdAt: t(5), fromClient: true },
+    ]);
+    expect([...out.keys()]).toEqual(['a']);
+    expect(out.get('a')).toEqual({ since: t(8), count: 2 });
+  });
+
+  it('lists my interviews of the next 7 days that are still open (running ones too, not cancelled / past)', async () => {
+    const me = await asStaff();
+    const other = await asStaff();
+    const { user: cand } = await createClient({ firstName: 'Rəşad', lastName: 'Əliyev' });
+    const iv = (staffId: string | null, start: Date, minutes: number, status = 'CONFIRMED', meetingUrl: string | null = null) =>
+      prisma.interview.create({ data: { candidateId: cand.id, staffId, startsAt: start, endsAt: new Date(start.getTime() + minutes * 60_000), status: status as never, meetingUrl } });
+    const soon = await iv(me.user.id, ahead(HOUR), 30, 'CONFIRMED', 'https://meet.example.com/abc');
+    const running = await iv(me.user.id, ago(10 * 60_000), 60, 'PROPOSED');
+    await iv(me.user.id, ago(3 * HOUR), 60); // over
+    await iv(me.user.id, ahead(2 * HOUR), 30, 'CANCELLED');
+    await iv(me.user.id, ahead(9 * DAY), 30); // beyond the week
+    await iv(other.user.id, ahead(HOUR), 30);
+    const unassigned = await iv(null, ahead(3 * HOUR), 30);
+
+    const rows = ofKind(await fetchWork(me.agent), 'interview');
+    expect(rows.map((r) => r.id).sort()).toEqual([`interview:${soon.id}`, `interview:${running.id}`].sort());
+    const s = rows.find((r) => r.id === `interview:${soon.id}`)!;
+    expect(s).toMatchObject({ category: 'bookings', priority: 'URGENT', overdue: false, refs: expect.objectContaining({ startsAt: soon.startsAt.toISOString() }) });
+    expect(s.actions[0]).toMatchObject({ key: 'join', type: 'url', href: 'https://meet.example.com/abc' });
+    expect(rows.find((r) => r.id === `interview:${running.id}`)!.overdue).toBe(false);
+    // Admins also see interviews nobody runs yet.
+    const admin = await asAdmin();
+    expect(ofKind(await fetchWork(admin.agent), 'interview').map((r) => r.id)).toContain(`interview:${unassigned.id}`);
   });
 });
 

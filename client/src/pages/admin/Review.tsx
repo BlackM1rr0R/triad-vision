@@ -70,8 +70,8 @@ const Findings = ({ item }: { item: ReviewItem }) => {
 const HelpOverlay = ({ onClose }: { onClose: () => void }) => {
   const { t } = useTranslation();
   const keys: [string, string][] = [
-    ['J', t('sp.review.keys.next')],
-    ['K', t('sp.review.keys.prev')],
+    ['J / →', t('sp.review.keys.next')],
+    ['K / ←', t('sp.review.keys.prev')],
     ['A', t('sp.review.keys.approve')],
     ['R', t('sp.review.keys.reject')],
     ['S', t('sp.review.keys.skip')],
@@ -105,7 +105,7 @@ const HelpOverlay = ({ onClose }: { onClose: () => void }) => {
 /**
  * Fast document review (/admin/review): a full-screen queue of client uploads waiting for a decision. Left the
  * scan, right the requirement, client / case, upload AI findings, the case checklist and the actions.
- * J / K move, A approves, R rejects (reason picker + marks), S skips, Z takes the last decision back (10 s),
+ * J / K (or → / ←) move, A approves, R rejects (reason picker + marks), S skips, Z takes the last decision back (10 s),
  * ? shows the keys. Decisions are optimistic: the document leaves the queue at once, the request is sent when its
  * undo window ends (or when the page is left) and a failed request puts the document back.
  */
@@ -205,6 +205,9 @@ export default function Review() {
     [
       { id: 'next', keys: ['j'], labelKey: 'sp.review.keys.next', handler: () => setQueue((q) => step(q, 1)) },
       { id: 'prev', keys: ['k'], labelKey: 'sp.review.keys.prev', handler: () => setQueue((q) => step(q, -1)) },
+      // Arrows too (also right after a click on a button of the panel).
+      { id: 'nextArrow', keys: ['ArrowRight'], labelKey: 'sp.review.keys.next', handler: () => setQueue((q) => step(q, 1)), overInteractive: true },
+      { id: 'prevArrow', keys: ['ArrowLeft'], labelKey: 'sp.review.keys.prev', handler: () => setQueue((q) => step(q, -1)), overInteractive: true },
       { id: 'approve', keys: ['a'], labelKey: 'sp.review.keys.approve', handler: () => current && send(current, 'ACCEPTED') },
       { id: 'reject', keys: ['r'], labelKey: 'sp.review.keys.reject', handler: () => current && setRejecting(true) },
       { id: 'skip', keys: ['s'], labelKey: 'sp.review.keys.skip', handler: () => current && setQueue((q) => skip(q, current.id)) },
@@ -397,10 +400,10 @@ export default function Review() {
               <div className="flex items-center justify-between gap-2 text-xs">
                 <div className="flex items-center gap-1">
                   <button type="button" className="inline-flex min-h-9 items-center gap-1 rounded-lg px-2 text-muted hover:bg-sunken hover:text-ink" onClick={() => setQueue((q) => step(q, -1))} aria-label={t('sp.review.keys.prev')}>
-                    <ChevronLeft className="size-4" aria-hidden /> K
+                    <ChevronLeft className="size-4" aria-hidden /> K / ←
                   </button>
                   <button type="button" className="inline-flex min-h-9 items-center gap-1 rounded-lg px-2 text-muted hover:bg-sunken hover:text-ink" onClick={() => setQueue((q) => step(q, 1))} aria-label={t('sp.review.keys.next')}>
-                    J <ChevronRight className="size-4" aria-hidden />
+                    J / → <ChevronRight className="size-4" aria-hidden />
                   </button>
                 </div>
                 <button type="button" className="inline-flex min-h-9 items-center gap-1 rounded-lg px-2 font-semibold text-muted hover:bg-sunken hover:text-ink" onClick={() => setQueue((q) => skip(q, current.id))}>

@@ -28,6 +28,14 @@ const az = {
     range: '{{from}}–{{to}} / {{total}}',
     showPassword: 'Parolu göstər',
     hidePassword: 'Parolu gizlət',
+    empty: {
+      filteredTitle: 'Filtrlərə uyğun heç nə tapılmadı',
+      filteredText: 'Axtarışı və ya filtrləri dəyişin.',
+      clearFilters: 'Filtrləri təmizlə',
+    },
+    phone: {
+      invalid: 'Nömrəni ölkə kodu ilə yazın, məsələn +994 50 123 45 67.',
+    },
     confirmDlg: {
       title: 'Əminsiniz?',
       revokeLinkNamed: '“{{name}}” üçün link ləğv edilsin? Linki olan hər kəs girişi itirəcək.',
@@ -81,6 +89,14 @@ const de: Shape = {
     range: '{{from}}–{{to}} von {{total}}',
     showPassword: 'Passwort anzeigen',
     hidePassword: 'Passwort verbergen',
+    empty: {
+      filteredTitle: 'Nichts passt zu den Filtern',
+      filteredText: 'Ändern Sie die Suche oder die Filter.',
+      clearFilters: 'Filter zurücksetzen',
+    },
+    phone: {
+      invalid: 'Bitte die Nummer mit Ländervorwahl eingeben, z. B. +49 151 12345678.',
+    },
     confirmDlg: {
       title: 'Sind Sie sicher?',
       revokeLinkNamed: 'Link für „{{name}}“ widerrufen? Alle, die ihn haben, verlieren den Zugriff.',
@@ -132,6 +148,14 @@ const en: Shape = {
     range: '{{from}}–{{to}} of {{total}}',
     showPassword: 'Show password',
     hidePassword: 'Hide password',
+    empty: {
+      filteredTitle: 'Nothing matches the filters',
+      filteredText: 'Try another search or change the filters.',
+      clearFilters: 'Clear filters',
+    },
+    phone: {
+      invalid: 'Enter the number with the country code, e.g. +994 50 123 45 67.',
+    },
     confirmDlg: {
       title: 'Are you sure?',
       revokeLinkNamed: 'Revoke the link for “{{name}}”? Everyone who has it loses access.',
@@ -183,6 +207,14 @@ const ru: Shape = {
     range: '{{from}}–{{to}} из {{total}}',
     showPassword: 'Показать пароль',
     hidePassword: 'Скрыть пароль',
+    empty: {
+      filteredTitle: 'По фильтрам ничего не найдено',
+      filteredText: 'Измените поиск или фильтры.',
+      clearFilters: 'Сбросить фильтры',
+    },
+    phone: {
+      invalid: 'Укажите номер с кодом страны, например +994 50 123 45 67.',
+    },
     confirmDlg: {
       title: 'Вы уверены?',
       revokeLinkNamed: 'Отозвать ссылку для «{{name}}»? Все, у кого она есть, потеряют доступ.',
