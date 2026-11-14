@@ -150,7 +150,7 @@ export const Header = () => {
   ];
 
   const navText = 'text-ink hover:text-ink';
-  const itemClass = 'group relative flex h-10 items-center gap-1 rounded-lg px-2.5 text-[0.9rem] font-semibold whitespace-nowrap transition-colors 2xl:px-4';
+  const itemClass = 'group relative flex h-10 items-center gap-1 rounded-lg px-2 text-[0.9rem] font-semibold whitespace-nowrap transition-colors 2xl:px-4';
   const underline = (on: boolean) => (
     <span
       className={clsx(
@@ -225,7 +225,7 @@ export const Header = () => {
             scrolled && 'shadow-[var(--tv-shadow-card)]',
           )}
         >
-          <div className="container-x flex h-16 items-center justify-between gap-3 sm:h-[72px] xl:gap-6">
+          <div className="container-x flex h-16 items-center justify-between gap-3 sm:h-[72px] xl:gap-4 2xl:gap-6">
             <Logo shrink />
 
             <nav className="hidden xl:block" aria-label={t('a11y.mainNav')}>
