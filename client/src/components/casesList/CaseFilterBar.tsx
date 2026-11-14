@@ -105,8 +105,8 @@ export const CaseFilterBar = ({
 
   return (
     <div className="space-y-2.5">
-      <div className="flex flex-col gap-2 lg:flex-row lg:items-center">
-        <label className="relative min-w-0 lg:w-80 xl:w-96">
+      <div className="flex flex-col gap-2 lg:flex-row lg:flex-wrap lg:items-center">
+        <label className="relative min-w-0 lg:min-w-[20rem] lg:flex-1">
           <span className="sr-only">{t('admin.common.search')}</span>
           <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted" aria-hidden />
           <input
@@ -122,7 +122,7 @@ export const CaseFilterBar = ({
           </kbd>
         </label>
 
-        <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center">
+        <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center lg:order-last lg:w-full">
           <label className="min-w-0">
             <span className="sr-only">{t('cl.filters.status')}</span>
             <select aria-label={t('cl.filters.status')} className={clsx(filterSelectClass(!!statusValue), 'sm:w-48')} value={statusValue} onChange={(e) => setStatus(e.target.value)}>

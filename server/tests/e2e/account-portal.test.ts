@@ -204,10 +204,12 @@ describe('PATCH /api/auth/me profile fields', () => {
       about: 'Beynəlxalq daşımalarda təcrübə.',
     };
     const res = expectStatus(await agent.patch('/api/auth/me').send(profile), 200);
-    expect(res.body.user).toMatchObject(profile);
+    // The phone is stored normalized (lib/phone: spaces dropped, E.164).
+    const saved = { ...profile, phone: '+994500000000' };
+    expect(res.body.user).toMatchObject(saved);
 
     const me = (await agent.get('/api/auth/me')).body.user;
-    expect(me).toMatchObject({ ...profile, id: user.id });
+    expect(me).toMatchObject({ ...saved, id: user.id });
     const db = await prisma.user.findUniqueOrThrow({ where: { id: user.id } });
     expect(db.birthDate!.toISOString().slice(0, 10)).toBe(profile.birthDate);
 
