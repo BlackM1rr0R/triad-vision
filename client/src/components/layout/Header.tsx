@@ -140,6 +140,7 @@ export const Header = () => {
 
   const plain = [
     { to: '/visas', label: t('nav.visas') },
+    { to: '/jobs/germany', label: t('siteNav.germanyJobs') },
     { to: '/guides', label: t('nav.guides') },
     { to: '/contact', label: t('nav.contact') },
   ];

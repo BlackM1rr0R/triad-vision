@@ -4,6 +4,7 @@
 const az = {
   siteNav: {
     workers: 'İşçi kimi',
+    germanyJobs: 'Almaniyada iş',
     employers: 'İşəgötürən kimi',
     tools: 'Alətlər',
     book: 'Konsultasiya təyin et',
@@ -62,6 +63,7 @@ const az = {
 const de: typeof az = {
   siteNav: {
     workers: 'Für Fachkräfte',
+    germanyJobs: 'Jobs in Deutschland',
     employers: 'Für Arbeitgeber',
     tools: 'Tools',
     book: 'Beratung buchen',
@@ -120,6 +122,7 @@ const de: typeof az = {
 const en: typeof az = {
   siteNav: {
     workers: 'For workers',
+    germanyJobs: 'Jobs in Germany',
     employers: 'For employers',
     tools: 'Tools',
     book: 'Book a consultation',
@@ -178,6 +181,7 @@ const en: typeof az = {
 const ru: typeof az = {
   siteNav: {
     workers: 'Работникам',
+    germanyJobs: 'Работа в Германии',
     employers: 'Работодателям',
     tools: 'Инструменты',
     book: 'Записаться на консультацию',

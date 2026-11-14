@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
-import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
@@ -33,8 +33,10 @@ import { ApplyDialog, type ExternalListing } from '@/components/germanyJobs/Appl
 registerCopy(pagesJobs);
 registerCopy(pagesGermanyJobs);
 
-const BASE = '/jobs/germany';
-const RESULTS = `${BASE}/search`;
+/** Suggestions for the "type or pick" fields (German terms: the job sources are German). */
+const JOB_PICKS = ['LKW-Fahrer', 'Berufskraftfahrer', 'Pflegefachkraft', 'Altenpfleger', 'Koch', 'Elektriker', 'Elektroniker', 'Mechatroniker', 'Schweißer', 'Bauarbeiter', 'Maurer', 'Lagerarbeiter', 'Kommissionierer', 'Reinigungskraft', 'Hotelfachmann', 'Servicekraft', 'Bäcker', 'Metzger', 'Erzieher', 'Ingenieur', 'Softwareentwickler', 'IT-Administrator', 'Buchhalter', 'Zahnarzt', 'Arzt'];
+const AUSBILDUNG_PICKS = ['Pflegefachmann', 'Koch', 'Elektroniker', 'Mechatroniker', 'Kfz-Mechatroniker', 'Berufskraftfahrer', 'Hotelfachmann', 'Fachkraft für Lagerlogistik', 'Anlagenmechaniker', 'Industriemechaniker', 'Kaufmann im Einzelhandel', 'Bürokaufmann', 'Fachinformatiker', 'Bäcker', 'Friseur', 'Zahnmedizinische Fachangestellte', 'Medizinische Fachangestellte', 'Maurer', 'Tischler', 'Erzieher'];
+const CITY_PICKS = ['Berlin', 'Hamburg', 'München', 'Köln', 'Frankfurt am Main', 'Stuttgart', 'Düsseldorf', 'Leipzig', 'Dortmund', 'Essen', 'Bremen', 'Dresden', 'Hannover', 'Nürnberg', 'Duisburg', 'Bochum', 'Wuppertal', 'Bielefeld', 'Bonn', 'Münster', 'Mannheim', 'Karlsruhe', 'Augsburg', 'Wiesbaden', 'Mainz', 'Kiel', 'Rostock', 'Freiburg im Breisgau', 'Regensburg', 'Magdeburg'];
 const DATE_LOCALE = { az: 'az-Latn-AZ', de: 'de-DE', en: 'en-GB', ru: 'ru-RU' } as const;
 
 /**
@@ -79,9 +81,6 @@ export default function GermanyJobs() {
   usePageTitle(t('gj.eyebrow'));
   const L = useJobLabels();
   const { locale } = useL10n();
-  const navigate = useNavigate();
-  const { pathname } = useLocation();
-  const isResults = pathname.replace(/\/+$/, '').endsWith(RESULTS);
   const [params, setParams] = useSearchParams();
   const search = useMemo(() => searchFromParams(params), [params]);
   const [form, setForm] = useState<GermanyJobSearch>(search);
@@ -98,12 +97,12 @@ export default function GermanyJobs() {
     staleTime: 5 * 60 * 1000,
   });
   const enabled = config.data?.search === true;
-  const hasQuery = !!(search.q || search.where);
 
   const results = useQuery({
     queryKey: ['germany-jobs-search', search],
     queryFn: async () => (await api.get<GermanyJobResults>('/germany-jobs/search', { params: { ...search, lng: locale } })).data,
-    enabled: isResults && enabled && hasQuery,
+    // Opening the page lists the newest jobs / Ausbildung places right away (no query needed).
+    enabled,
     placeholderData: keepPreviousData,
     staleTime: 10 * 60 * 1000,
     retry: (n, err) => errorCode(err) !== 'FEATURE_DISABLED' && errorCode(err) !== 'UPSTREAM_BUSY' && n < 1,
@@ -116,9 +115,13 @@ export default function GermanyJobs() {
       window.open(baJobboerseUrl(form), '_blank', 'noopener');
       return;
     }
-    const qs = searchToParams({ ...form, page: 1 }).toString();
-    if (isResults) setParams(new URLSearchParams(qs));
-    else navigate(`${RESULTS}${qs ? `?${qs}` : ''}`);
+    setParams(searchToParams({ ...form, page: 1 }));
+  };
+
+  /** Toggles and selects search at once (the text fields wait for Enter / the button). */
+  const applyNow = (next: GermanyJobSearch) => {
+    setForm(next);
+    if (enabled) setParams(searchToParams({ ...next, page: 1 }));
   };
 
   const goPage = (page: number) => {
@@ -157,7 +160,7 @@ export default function GermanyJobs() {
                     form.type === v ? 'bg-card text-ink shadow-sm' : 'text-muted hover:text-ink',
                   )}
                 >
-                  <input type="radio" name="type" value={v} checked={form.type === v} onChange={() => setForm({ ...form, type: v })} className="sr-only" />
+                  <input type="radio" name="type" value={v} checked={form.type === v} onChange={() => applyNow({ ...form, type: v })} className="sr-only" />
                   {v === 'job' ? t('gj.form.typeJob') : t('gj.form.typeAusbildung')}
                 </label>
               ))}
@@ -165,16 +168,16 @@ export default function GermanyJobs() {
           </fieldset>
           <div className="sm:col-span-2">
             <label className="label" htmlFor="gj-q">{t('gj.form.what')}</label>
-            <input id="gj-q" type="search" maxLength={100} className={field} placeholder={t('gj.form.whatPlaceholder')} value={form.q} onChange={(e) => setForm({ ...form, q: e.target.value })} />
+            <input id="gj-q" type="search" list="gj-q-list" maxLength={100} className={field} placeholder={t('gj.form.whatPlaceholder')} value={form.q} onChange={(e) => setForm({ ...form, q: e.target.value })} />
           </div>
           <div>
             <label className="label" htmlFor="gj-where">{t('gj.form.where')}</label>
-            <input id="gj-where" maxLength={100} autoComplete="address-level2" className={field} placeholder={t('gj.form.wherePlaceholder')} value={form.where} onChange={(e) => setForm({ ...form, where: e.target.value })} />
+            <input id="gj-where" list="gj-where-list" maxLength={100} autoComplete="address-level2" className={field} placeholder={t('gj.form.wherePlaceholder')} value={form.where} onChange={(e) => setForm({ ...form, where: e.target.value })} />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="label" htmlFor="gj-radius">{t('gj.form.radius')}</label>
-              <select id="gj-radius" className={field} value={form.radius} onChange={(e) => setForm({ ...form, radius: Number(e.target.value) })}>
+              <select id="gj-radius" className={field} value={form.radius} onChange={(e) => applyNow({ ...form, radius: Number(e.target.value) })}>
                 {RADII.map((r) => (
                   <option key={r} value={r}>
                     {r === 0 ? t('gj.form.radiusPlace') : t('gj.form.radiusKm', { n: r })}
@@ -184,7 +187,7 @@ export default function GermanyJobs() {
             </div>
             <div>
               <label className="label" htmlFor="gj-time">{t('gj.form.time')}</label>
-              <select id="gj-time" className={field} value={form.time} onChange={(e) => setForm({ ...form, time: e.target.value as GermanyJobSearch['time'] })}>
+              <select id="gj-time" className={field} value={form.time} onChange={(e) => applyNow({ ...form, time: e.target.value as GermanyJobSearch['time'] })}>
                 <option value="any">{t('gj.form.timeAny')}</option>
                 <option value="full">{t('gj.form.timeFull')}</option>
                 <option value="part">{t('gj.form.timePart')}</option>
@@ -196,7 +199,7 @@ export default function GermanyJobs() {
               <legend className="sr-only">{t('gj.form.extra')}</legend>
               {(['remote', 'visa'] as const).map((k) => (
                 <label key={k} className="inline-flex min-h-10 items-center gap-2 text-sm text-ink">
-                  <input type="checkbox" className="size-5 accent-brand-600" checked={form[k]} onChange={(e) => setForm({ ...form, [k]: e.target.checked })} />
+                  <input type="checkbox" className="size-5 accent-brand-600" checked={form[k]} onChange={(e) => applyNow({ ...form, [k]: e.target.checked })} />
                   {t(`gj.form.${k}`)}
                 </label>
               ))}
@@ -214,10 +217,20 @@ export default function GermanyJobs() {
             </a>
           </div>
           {config.isSuccess && !enabled && <p className="text-sm text-muted sm:col-span-2">{t('gj.disabled')}</p>}
+          <datalist id="gj-q-list">
+            {(form.type === 'ausbildung' ? AUSBILDUNG_PICKS : JOB_PICKS).map((v) => (
+              <option key={v} value={v} />
+            ))}
+          </datalist>
+          <datalist id="gj-where-list">
+            {CITY_PICKS.map((v) => (
+              <option key={v} value={v} />
+            ))}
+          </datalist>
         </form>
       </PageHero>
 
-      {isResults && enabled && (
+      {enabled && (
         <section id="gj-results" className="section-sm scroll-mt-24 bg-sunken" aria-labelledby="gj-results-h">
           <div className="container-x">
             <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
@@ -243,11 +256,7 @@ export default function GermanyJobs() {
               </span>
             </p>
 
-            {!hasQuery ? (
-              <div className="card rounded-3xl">
-                <EmptyState illustration={<SearchEmpty />} text={t('gj.results.start')} />
-              </div>
-            ) : results.isLoading ? (
+            {results.isLoading ? (
               <SkeletonGrid count={6} lines={3} footer className="grid-cards cards-balanced grid-cols-1 [--cols:1] md:[--cols:2]" />
             ) : results.isError ? (
               <div className="card rounded-3xl">

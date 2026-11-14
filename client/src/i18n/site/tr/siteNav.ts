@@ -4,6 +4,7 @@ import type { SiteCopy } from '../types';
 const copy: SiteCopy<(typeof siteNavCopy)['en']> = {
   siteNav: {
     workers: 'Çalışanlar için',
+    germanyJobs: "Almanya'da iş",
     employers: 'İşverenler için',
     tools: 'Araçlar',
     book: 'Danışmanlık randevusu al',
