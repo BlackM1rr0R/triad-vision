@@ -5,9 +5,9 @@ export const blueCardGuide: GuideSeed = {
   pages: {
     az: {
       slug: 'almaniya-mavi-kart-blaue-karte',
-      title: "Almaniya Mavi Kart (Blaue Karte) 2026: maaş və şərtlər",
+      title: "Almaniya Mavi Kart 2026: minimum maaş və şərtlər",
       description:
-        "Almaniyada AB Mavi Kartı 2026: 50 700 və 45 934 avro maaş həddi, diplom tələbləri, Bakıda viza müraciəti, ailə və daimi yaşayış imkanları.",
+        "Mavi Kart 2026 üçün minimum maaş: 50 700 € və 45 934,20 € (İT, mühəndis, həkim, yeni məzun). Hədd necə hesablanır, tələblər, Bakıda viza, ailə.",
       body: `## AB Mavi Kartı nədir?
 
 AB Mavi Kartı (almanca *Blaue Karte EU*, Almaniya Yaşayış Qanununun § 18g maddəsi) ali təhsilli mütəxəssislər üçün nəzərdə tutulmuş yaşayış və iş icazəsidir. O, Almaniyada ixtisasınıza uyğun iş yerini Avropa İttifaqında güclü üstünlüklərlə birləşdirir: daimi yaşayış icazəsinə daha tez keçid, ailə üzvlərinin asan gətirilməsi və digər AB ölkələrində işləmək imkanı.
@@ -18,12 +18,28 @@ Azərbaycandan olan proqramçılar, mühəndislər, həkimlər və müəllimlər
 
 Əsas meyar əmək müqaviləsində göstərilən **ümumi (brüt) illik maaşdır**. Hədlər pensiya sığortası üzrə töhfə tavanına bağlıdır və hər il 1 yanvarda yenilənir; rəqəmləri Almaniya Federal Daxili İşlər Nazirliyi elan edir.
 
-| Kateqoriya | 2026 brüt illik maaş | Aylıq təxminən (12 maaş) |
-|---|---|---|
-| Standart hədd (töhfə tavanının 50 %-i) | 50 700 avro | 4 225 avro |
-| Kadr çatışmazlığı olan peşələr və yeni məzunlar (45,3 %) | 45 934,20 avro | təxminən 3 828 avro |
+| Kateqoriya | İllik brüt maaş 2026 | Aylıq (12 maaş) | Əmək agentliyinin razılığı |
+|---|---|---|---|
+| Standart hədd (bütün peşələr) | 50 700 € | 4 225 € | lazım deyil |
+| Kadr çatışmazlığı olan peşələr (İT, mühəndislik, tibb, müəllimlər və s.) | 45 934,20 € | təxminən 3 828 € | lazımdır |
+| Yeni məzunlar (diplom son 3 ildə) | 45 934,20 € | təxminən 3 828 € | lazımdır |
+| Diplomsuz İT mütəxəssisləri (son 7 ildə ən azı 3 il təcrübə) | 45 934,20 € | təxminən 3 828 € | lazımdır |
 
-Müqayisə üçün: 2025-ci ildə bu rəqəmlər 48 300 və 43 759,80 avro idi. Müqaviləniz növbəti ildən başlayırsa, cari hədləri [Make it in Germany](https://www.make-it-in-germany.com/en/visa-residence/types/eu-blue-card) saytında yoxlayın.
+### Minimum maaş necə hesablanır?
+
+Hər iki hədd pensiya sığortası üzrə illik töhfə tavanından (Beitragsbemessungsgrenze) hesablanır: standart hədd onun 50 %-i, aşağı hədd isə 45,3 %-idir (Yaşayış Qanununun § 18g maddəsinin 1-ci və 2-ci bəndləri). 2026-cı ildə tavan 101 400 € təşkil edir: 101 400 × 50 % = 50 700 € və 101 400 × 45,3 % = 45 934,20 €. Rəqəmləri Almaniya Daxili İşlər Nazirliyi 2 dekabr 2025-ci il tarixli bildirişlə Federal Bülletendə (Bundesanzeiger) elan edib.
+
+| İl | Pensiya sığortası tavanı | Standart hədd (50 %) | Aşağı hədd (45,3 %) |
+|---|---|---|---|
+| 2024 | 90 600 € | 45 300 € | 41 041,80 € |
+| 2025 | 96 600 € | 48 300 € | 43 759,80 € |
+| 2026 | 101 400 € | 50 700 € | 45 934,20 € |
+
+Tavan hər il artdığı üçün hədlər də artır; 2027-ci il üçün rəqəmlər 2026-cı ilin sonunda elan olunur. Müqaviləniz növbəti ildən başlayırsa, maaşı həddən bir qədər yuxarı razılaşdırın və rəqəmləri [Make it in Germany](https://www.make-it-in-germany.com/en/visa-residence/types/eu-blue-card) saytında yoxlayın.
+
+### Əlinizə nə qalır?
+
+İllik 50 700 € brüt maaşda (I vergi sinfi, uşaqsız, kilsə vergisi olmadan, tibbi sığortanın orta əlavə haqqı ilə) ayda təxminən 2 726 € xalis qalır, 45 934,20 €-da isə təxminən 2 513 €.
 
 > Təklifinizin 2026-cı il həddinə çatıb-çatmadığını bir dəqiqəyə [Mavi Kart yoxlamamızla](/blue-card-check) öyrənin. Vergilərdən və sosial ödənişlərdən sonra əlinizə nə qalacağını isə [xalis maaş kalkulyatoru](/salary-calculator) göstərir.
 
@@ -113,6 +129,10 @@ Tərcümə və təsdiq tələbləri dəyişə bilər, ona görə də səfirliyin
           a: "Standart hədd ildə 50 700 avro brütdür. Kadr çatışmazlığı olan peşələr və son 3 ildə məzun olanlar üçün hədd 45 934,20 avrodur; rəqəmlər hər il 1 yanvarda dəyişir.",
         },
         {
+          q: "Mavi Kartın maaş həddi necə hesablanır?",
+          a: "Pensiya sığortası üzrə illik töhfə tavanının 50 %-i (standart) və ya 45,3 %-i (aşağı hədd). 2026-cı ildə tavan 101 400 € olduğundan hədlər 50 700 € və 45 934,20 € təşkil edir.",
+        },
+        {
           q: "Diplomsuz Mavi Kart almaq olarmı?",
           a: "Yalnız İT mütəxəssisləri üçün: son 7 ildə ən azı 3 il müvafiq iş təcrübəsi diplomu əvəz edə bilər. Digər peşələrdə tanınmış və ya müqayisə edilə bilən ali təhsil diplomu vacibdir.",
         },
@@ -129,9 +149,9 @@ Tərcümə və təsdiq tələbləri dəyişə bilər, ona görə də səfirliyin
 
     de: {
       slug: 'blaue-karte-eu',
-      title: "Blaue Karte EU 2026: Gehalt, Voraussetzungen, Antrag",
+      title: "Blaue Karte EU 2026: Mindestgehalt, Gehaltsgrenze, Antrag",
       description:
-        "Blaue Karte EU 2026: Gehaltsgrenzen 50.700 € und 45.934,20 €, Voraussetzungen, Anerkennung, Antrag und Vorteile – für Fachkräfte und Arbeitgeber.",
+        "Mindestgehalt Blaue Karte 2026: 50.700 € bzw. 45.934,20 € für Engpassberufe, Einsteiger und IT ohne Abschluss – Berechnung, Voraussetzungen, Antrag.",
       body: `## Was ist die Blaue Karte EU?
 
 Die Blaue Karte EU (§ 18g Aufenthaltsgesetz) ist der Aufenthaltstitel für akademisch qualifizierte Fachkräfte aus Nicht-EU-Staaten. Sie verbindet eine qualifizierte Beschäftigung in Deutschland mit Vorteilen, die andere Titel nicht bieten: eine schnellere Niederlassungserlaubnis, einen erleichterten Familiennachzug und Mobilität innerhalb der EU.
@@ -142,12 +162,28 @@ Für Bewerberinnen und Bewerber aus Aserbaidschan, der Türkei und der Ukraine i
 
 Maßgeblich ist das im Arbeitsvertrag vereinbarte **Bruttojahresgehalt**. Die Grenzen hängen an der Beitragsbemessungsgrenze der gesetzlichen Rentenversicherung, ändern sich jedes Jahr zum 1. Januar und werden vom Bundesministerium des Innern bekannt gegeben.
 
-| Kategorie | Bruttojahresgehalt 2026 | ca. pro Monat (12 Gehälter) |
-|---|---|---|
-| Regelfall (50 % der Beitragsbemessungsgrenze) | 50.700 € | 4.225 € |
-| Engpassberufe und Berufseinsteiger (45,3 %) | 45.934,20 € | ca. 3.828 € |
+| Kategorie | Bruttojahresgehalt 2026 | pro Monat (12 Gehälter) | Zustimmung der Arbeitsagentur |
+|---|---|---|---|
+| Regelfall (alle Berufe) | 50.700 € | 4.225 € | nicht nötig |
+| Engpassberufe (IT, Ingenieurwesen, Medizin, Lehrkräfte u. a.) | 45.934,20 € | ca. 3.828 € | nötig |
+| Berufseinsteiger (Abschluss in den letzten 3 Jahren) | 45.934,20 € | ca. 3.828 € | nötig |
+| IT-Fachkräfte ohne Abschluss (mind. 3 Jahre Erfahrung in den letzten 7 Jahren) | 45.934,20 € | ca. 3.828 € | nötig |
 
-Zum Vergleich: 2025 lagen die Werte bei 48.300 € bzw. 43.759,80 €. Wer einen Vertrag mit Beginn im Folgejahr verhandelt, sollte die aktuellen Zahlen auf [Make it in Germany](https://www.make-it-in-germany.com/en/visa-residence/types/eu-blue-card) prüfen.
+### So wird das Mindestgehalt berechnet
+
+Beide Grenzen leiten sich aus der jährlichen Beitragsbemessungsgrenze der gesetzlichen Rentenversicherung ab: Der Regelfall beträgt 50 %, die abgesenkte Grenze 45,3 % davon (§ 18g Abs. 1 und 2 AufenthG). 2026 liegt die Beitragsbemessungsgrenze bei 101.400 €: 101.400 × 50 % = 50.700 € und 101.400 × 45,3 % = 45.934,20 €. Das Bundesministerium des Innern hat die Werte mit Bekanntmachung vom 2. Dezember 2025 im Bundesanzeiger veröffentlicht.
+
+| Jahr | Beitragsbemessungsgrenze RV | Regelfall (50 %) | abgesenkte Grenze (45,3 %) |
+|---|---|---|---|
+| 2024 | 90.600 € | 45.300 € | 41.041,80 € |
+| 2025 | 96.600 € | 48.300 € | 43.759,80 € |
+| 2026 | 101.400 € | 50.700 € | 45.934,20 € |
+
+Weil die Beitragsbemessungsgrenze jedes Jahr steigt, steigen auch die Gehaltsgrenzen; die Werte für 2027 werden Ende 2026 bekannt gegeben. Wer einen Vertrag mit Beginn im Folgejahr verhandelt, sollte etwas Puffer einplanen und die Zahlen auf [Make it in Germany](https://www.make-it-in-germany.com/en/visa-residence/types/eu-blue-card) prüfen.
+
+### Was bleibt netto?
+
+Bei 50.700 € brutto im Jahr (Steuerklasse I, ohne Kinder und Kirchensteuer, durchschnittlicher Zusatzbeitrag) bleiben etwa 2.726 € netto im Monat, bei 45.934,20 € etwa 2.513 €.
 
 > Mit unserem [Blue-Card-Check](/blue-card-check) sehen Sie in einer Minute, ob ein Angebot die Grenze 2026 erreicht. Was davon nach Steuern und Sozialabgaben übrig bleibt, zeigt der [Netto-Gehaltsrechner](/salary-calculator).
 
@@ -241,6 +277,10 @@ Klären Sie früh, ob die Stelle unter eine Engpass-Berufsgruppe fällt, und for
           a: "Im Regelfall 50.700 € brutto im Jahr, für Engpassberufe und Berufseinsteiger 45.934,20 €. Die Werte ändern sich jedes Jahr zum 1. Januar.",
         },
         {
+          q: "Wie wird das Mindestgehalt der Blauen Karte berechnet?",
+          a: "Es beträgt 50 % (Regelfall) bzw. 45,3 % (abgesenkte Grenze) der jährlichen Beitragsbemessungsgrenze der Rentenversicherung. 2026 liegt diese bei 101.400 €, daraus ergeben sich 50.700 € und 45.934,20 €.",
+        },
+        {
           q: "Gibt es die Blaue Karte auch ohne Hochschulabschluss?",
           a: "Nur für IT-Spezialisten mit mindestens drei Jahren einschlägiger Berufserfahrung in den letzten sieben Jahren. In allen anderen Berufen ist ein anerkannter oder vergleichbarer Abschluss Pflicht.",
         },
@@ -257,9 +297,9 @@ Klären Sie früh, ob die Stelle unter eine Engpass-Berufsgruppe fällt, und for
 
     en: {
       slug: 'eu-blue-card-germany',
-      title: "EU Blue Card Germany 2026: Salary, Requirements, Steps",
+      title: "EU Blue Card Germany 2026: Minimum Salary, Requirements",
       description:
-        "EU Blue Card Germany 2026: salary thresholds of €50,700 and €45,934.20, degree recognition, the visa process and benefits for you and your family.",
+        "EU Blue Card minimum salary 2026: €50,700, or €45,934.20 for shortage jobs, graduates and IT without a degree. How it is calculated, requirements, visa.",
       body: `## What is the EU Blue Card?
 
 The EU Blue Card (*Blaue Karte EU*, section 18g of the German Residence Act) is a residence permit for university-educated professionals from outside the EU. It links a qualified job in Germany with advantages no other work permit offers: a faster route to permanent residence, easier family reunification and mobility within the European Union.
@@ -270,12 +310,28 @@ For software developers, engineers, doctors and teachers from Azerbaijan, Türki
 
 What counts is the **gross annual salary** stated in your employment contract. The thresholds are tied to the contribution ceiling of the German statutory pension insurance. They change every 1 January, and the Federal Ministry of the Interior publishes the new figures.
 
-| Category | Gross annual salary 2026 | Approx. per month (12 salaries) |
-|---|---|---|
-| Standard threshold (50 % of the ceiling) | €50,700 | €4,225 |
-| Shortage occupations and new entrants (45.3 %) | €45,934.20 | approx. €3,828 |
+| Category | Gross annual salary 2026 | Per month (12 salaries) | Employment Agency approval |
+|---|---|---|---|
+| Standard (all occupations) | €50,700 | €4,225 | not needed |
+| Shortage occupations (IT, engineering, medicine, teaching and others) | €45,934.20 | approx. €3,828 | needed |
+| Recent graduates (degree within the last 3 years) | €45,934.20 | approx. €3,828 | needed |
+| IT specialists without a degree (at least 3 years’ experience in the last 7) | €45,934.20 | approx. €3,828 | needed |
 
-For comparison, the 2025 figures were €48,300 and €43,759.80. If your contract starts next year, check the current figures on [Make it in Germany](https://www.make-it-in-germany.com/en/visa-residence/types/eu-blue-card).
+### How the minimum salary is calculated
+
+Both thresholds derive from the annual contribution ceiling of the statutory pension insurance: the standard threshold is 50 % of it, the lower threshold 45.3 % (section 18g(1) and (2) of the Residence Act). In 2026 the ceiling is €101,400: €101,400 × 50 % = €50,700 and €101,400 × 45.3 % = €45,934.20. The Federal Ministry of the Interior published the figures in the Federal Gazette in its notice of 2 December 2025.
+
+| Year | Pension contribution ceiling | Standard (50 %) | Lower threshold (45.3 %) |
+|---|---|---|---|
+| 2024 | €90,600 | €45,300 | €41,041.80 |
+| 2025 | €96,600 | €48,300 | €43,759.80 |
+| 2026 | €101,400 | €50,700 | €45,934.20 |
+
+Because the ceiling rises every year, so do the thresholds; the 2027 figures are published at the end of 2026. If your contract starts next year, leave some room above the threshold and check the figures on [Make it in Germany](https://www.make-it-in-germany.com/en/visa-residence/types/eu-blue-card).
+
+### What is left net?
+
+On €50,700 gross a year (tax class I, no children, no church tax, average health insurance surcharge) about €2,726 net a month remains; on €45,934.20 about €2,513.
 
 > Use our [Blue Card salary check](/blue-card-check) to see in a minute whether your offer meets the 2026 threshold, then open the [net salary calculator](/salary-calculator) to see what you would take home after tax and social security.
 
@@ -365,6 +421,10 @@ Translation and legalisation rules differ between missions, so always use the cu
           a: "The standard threshold is €50,700 gross per year. For shortage occupations and recent graduates it is €45,934.20, and both figures change every 1 January.",
         },
         {
+          q: "How is the Blue Card salary threshold calculated?",
+          a: "It is 50 % (standard) or 45.3 % (lower threshold) of the annual pension contribution ceiling. In 2026 the ceiling is €101,400, which gives €50,700 and €45,934.20.",
+        },
+        {
           q: "Can I get a Blue Card without a university degree?",
           a: "Only as an IT specialist with at least three years of relevant experience in the last seven years. In all other professions a recognised or comparable degree is required.",
         },
@@ -381,9 +441,9 @@ Translation and legalisation rules differ between missions, so always use the cu
 
     ru: {
       slug: 'golubaya-karta-es-germaniya',
-      title: "Голубая карта ЕС в Германии 2026: зарплата и условия",
+      title: "Голубая карта ЕС 2026: минимальная зарплата и условия",
       description:
-        "Голубая карта ЕС в Германии в 2026 году: пороги зарплаты 50 700 € и 45 934,20 €, требования к диплому, порядок получения визы и права семьи.",
+        "Минимальная зарплата для Голубой карты 2026: 50 700 € или 45 934,20 € (дефицитные профессии, выпускники, ИТ). Как считается порог, условия, виза.",
       body: `## Что такое Голубая карта ЕС
 
 Голубая карта ЕС (*Blaue Karte EU*, § 18g Закона о пребывании иностранцев) — это вид на жительство для специалистов с высшим образованием из стран за пределами Евросоюза. Она сочетает квалифицированную работу в Германии с преимуществами, которых нет у других рабочих титулов: быстрый путь к бессрочному виду на жительство, упрощённое воссоединение семьи и мобильность внутри ЕС.
@@ -394,12 +454,28 @@ Translation and legalisation rules differ between missions, so always use the cu
 
 Учитывается **годовая зарплата брутто**, указанная в трудовом договоре. Пороги привязаны к предельной базе взносов в государственное пенсионное страхование, меняются каждый год 1 января и публикуются Федеральным министерством внутренних дел.
 
-| Категория | Годовая зарплата брутто 2026 | Примерно в месяц (12 выплат) |
-|---|---|---|
-| Стандартный порог (50 % предельной базы) | 50 700 € | 4 225 € |
-| Дефицитные профессии и молодые специалисты (45,3 %) | 45 934,20 € | около 3 828 € |
+| Категория | Годовая зарплата брутто 2026 | В месяц (12 выплат) | Согласие агентства по труду |
+|---|---|---|---|
+| Стандартный случай (все профессии) | 50 700 € | 4 225 € | не нужно |
+| Дефицитные профессии (ИТ, инженерия, медицина, преподавание и др.) | 45 934,20 € | около 3 828 € | нужно |
+| Молодые специалисты (диплом за последние 3 года) | 45 934,20 € | около 3 828 € | нужно |
+| ИТ-специалисты без диплома (не менее 3 лет опыта за последние 7 лет) | 45 934,20 € | около 3 828 € | нужно |
 
-Для сравнения: в 2025 году пороги составляли 48 300 € и 43 759,80 €. Если ваш договор начинается в следующем году, сверьте актуальные цифры на сайте [Make it in Germany](https://www.make-it-in-germany.com/en/visa-residence/types/eu-blue-card).
+### Как рассчитывается минимальная зарплата
+
+Оба порога выводятся из годовой предельной базы взносов в государственное пенсионное страхование: стандартный порог — 50 % от неё, пониженный — 45,3 % (§ 18g абз. 1 и 2 AufenthG). В 2026 году предельная база составляет 101 400 €: 101 400 × 50 % = 50 700 € и 101 400 × 45,3 % = 45 934,20 €. Министерство внутренних дел опубликовало эти значения в Федеральном вестнике уведомлением от 2 декабря 2025 года.
+
+| Год | Предельная база пенс. страхования | Стандартный порог (50 %) | Пониженный порог (45,3 %) |
+|---|---|---|---|
+| 2024 | 90 600 € | 45 300 € | 41 041,80 € |
+| 2025 | 96 600 € | 48 300 € | 43 759,80 € |
+| 2026 | 101 400 € | 50 700 € | 45 934,20 € |
+
+Поскольку предельная база растёт каждый год, растут и пороги; значения на 2027 год опубликуют в конце 2026 года. Если ваш договор начинается в следующем году, заложите запас и сверьте цифры на сайте [Make it in Germany](https://www.make-it-in-germany.com/en/visa-residence/types/eu-blue-card).
+
+### Сколько остаётся нетто?
+
+При 50 700 € брутто в год (I налоговый класс, без детей и церковного налога, средний дополнительный взнос в больничную кассу) остаётся около 2 726 € нетто в месяц, при 45 934,20 € — около 2 513 €.
 
 > За минуту проверьте, проходит ли ваше предложение по порогу 2026 года, с помощью нашего [калькулятора Голубой карты](/blue-card-check). А [калькулятор зарплаты нетто](/salary-calculator) покажет, сколько останется после налогов и социальных взносов.
 
@@ -489,6 +565,10 @@ Translation and legalisation rules differ between missions, so always use the cu
           a: "Стандартный порог — 50 700 € брутто в год. Для дефицитных профессий и выпускников последних трёх лет — 45 934,20 €; оба значения меняются каждый год 1 января.",
         },
         {
+          q: "Как рассчитывается порог зарплаты для Голубой карты?",
+          a: "Это 50 % (стандарт) или 45,3 % (пониженный порог) годовой предельной базы взносов в пенсионное страхование. В 2026 году она составляет 101 400 €, отсюда 50 700 € и 45 934,20 €.",
+        },
+        {
           q: "Можно ли получить Голубую карту без высшего образования?",
           a: "Только IT-специалистам с опытом работы по специальности не менее трёх лет за последние семь лет. В остальных профессиях нужен признанный или сопоставимый диплом.",
         },
@@ -505,9 +585,9 @@ Translation and legalisation rules differ between missions, so always use the cu
 
     tr: {
       slug: 'almanya-mavi-kart-blaue-karte',
-      title: "AB Mavi Kart Almanya 2026: Maaş Sınırı ve Şartlar",
+      title: "AB Mavi Kart Almanya 2026: Asgari Maaş ve Şartlar",
       description:
-        "Almanya AB Mavi Kart 2026: 50.700 € ve 45.934,20 € maaş sınırları, diploma denkliği, Türkiye’den vize başvurusu ve aile birleşimi avantajları.",
+        "Mavi Kart 2026 asgari maaşı: 50.700 € veya 45.934,20 € (açık meslekler, yeni mezunlar, BT). Sınır nasıl hesaplanır, şartlar, Türkiye’den vize.",
       body: `## AB Mavi Kart nedir?
 
 AB Mavi Kart (Almanca *Blaue Karte EU*, Alman İkamet Kanunu § 18g), AB dışından gelen üniversite mezunu uzmanlar için düzenlenen bir oturum ve çalışma iznidir. Almanya’da nitelikli bir işi, diğer çalışma izinlerinde bulunmayan avantajlarla birleştirir: süresiz oturuma daha hızlı geçiş, kolaylaştırılmış aile birleşimi ve Avrupa Birliği içinde hareketlilik.
@@ -518,12 +598,28 @@ Türkiye’den yazılım geliştiriciler, mühendisler, doktorlar ve öğretmenl
 
 Esas alınan, iş sözleşmesinde yazan **brüt yıllık maaştır**. Sınırlar, yasal emeklilik sigortasının prim tavanına bağlıdır, her yıl 1 Ocak’ta değişir ve Federal İçişleri Bakanlığı tarafından açıklanır.
 
-| Kategori | 2026 brüt yıllık maaş | Aylık yaklaşık (12 maaş) |
-|---|---|---|
-| Standart sınır (prim tavanının %50’si) | 50.700 € | 4.225 € |
-| Eleman açığı olan meslekler ve yeni mezunlar (%45,3) | 45.934,20 € | yaklaşık 3.828 € |
+| Kategori | 2026 brüt yıllık maaş | Aylık (12 maaş) | İş Ajansı onayı |
+|---|---|---|---|
+| Standart durum (tüm meslekler) | 50.700 € | 4.225 € | gerekmez |
+| Eleman açığı olan meslekler (BT, mühendislik, tıp, öğretmenlik vb.) | 45.934,20 € | yaklaşık 3.828 € | gerekir |
+| Yeni mezunlar (diploma son 3 yılda) | 45.934,20 € | yaklaşık 3.828 € | gerekir |
+| Diplomasız BT uzmanları (son 7 yılda en az 3 yıl deneyim) | 45.934,20 € | yaklaşık 3.828 € | gerekir |
 
-Karşılaştırma için: 2025’te bu tutarlar 48.300 € ve 43.759,80 € idi. Sözleşmeniz bir sonraki yıl başlıyorsa güncel rakamları [Make it in Germany](https://www.make-it-in-germany.com/en/visa-residence/types/eu-blue-card) sitesinden kontrol edin.
+### Asgari maaş nasıl hesaplanır?
+
+Her iki sınır da yasal emeklilik sigortasının yıllık prim tavanından türetilir: standart sınır bunun %50’si, düşük sınır %45,3’üdür (AufenthG § 18g fıkra 1 ve 2). 2026’da tavan 101.400 €’dur: 101.400 × %50 = 50.700 € ve 101.400 × %45,3 = 45.934,20 €. Federal İçişleri Bakanlığı bu değerleri 2 Aralık 2025 tarihli duyurusuyla Federal Resmî Gazete’de (Bundesanzeiger) yayımladı.
+
+| Yıl | Emeklilik prim tavanı | Standart sınır (%50) | Düşük sınır (%45,3) |
+|---|---|---|---|
+| 2024 | 90.600 € | 45.300 € | 41.041,80 € |
+| 2025 | 96.600 € | 48.300 € | 43.759,80 € |
+| 2026 | 101.400 € | 50.700 € | 45.934,20 € |
+
+Tavan her yıl yükseldiği için sınırlar da yükselir; 2027 değerleri 2026 sonunda açıklanır. Sözleşmeniz gelecek yıl başlıyorsa biraz pay bırakın ve rakamları [Make it in Germany](https://www.make-it-in-germany.com/en/visa-residence/types/eu-blue-card) sitesinden kontrol edin.
+
+### Elinize ne kalır?
+
+Yıllık 50.700 € brütte (I. vergi sınıfı, çocuksuz, kilise vergisi olmadan, ortalama ek sağlık primiyle) ayda yaklaşık 2.726 € net kalır; 45.934,20 €’da ise yaklaşık 2.513 €.
 
 > Teklifinizin 2026 sınırını karşılayıp karşılamadığını [Mavi Kart maaş kontrolümüzle](/blue-card-check) bir dakikada görün. Vergi ve sosyal kesintilerden sonra elinize ne geçeceğini ise [net maaş hesaplayıcı](/salary-calculator) gösterir.
 
@@ -613,6 +709,10 @@ Tercüme ve onay şartları temsilciliğe göre değişebilir; bu nedenle her za
           a: "Standart sınır yıllık 50.700 € brüttür. Eleman açığı olan meslekler ve son üç yılın mezunları için sınır 45.934,20 €’dur; her iki tutar da her yıl 1 Ocak’ta değişir.",
         },
         {
+          q: "Mavi Kart maaş sınırı nasıl hesaplanır?",
+          a: "Emeklilik sigortası yıllık prim tavanının %50’si (standart) veya %45,3’üdür (düşük sınır). 2026’da tavan 101.400 € olduğundan sınırlar 50.700 € ve 45.934,20 €’dur.",
+        },
+        {
           q: "Üniversite diploması olmadan Mavi Kart alınabilir mi?",
           a: "Yalnızca son yedi yılda en az üç yıllık ilgili deneyimi olan bilişim uzmanları için mümkündür. Diğer tüm mesleklerde tanınmış veya karşılaştırılabilir bir diploma gerekir.",
         },
@@ -629,9 +729,9 @@ Tercüme ve onay şartları temsilciliğe göre değişebilir; bu nedenle her za
 
     uk: {
       slug: 'blakytna-karta-yes-nimechchyna',
-      title: "Блакитна карта ЄС у Німеччині 2026: зарплата й умови",
+      title: "Блакитна карта ЄС 2026: мінімальна зарплата й умови",
       description:
-        "Блакитна карта ЄС у Німеччині 2026: пороги зарплати 50 700 € і 45 934,20 €, вимоги до диплома, як отримати візу, права родини та переваги карти.",
+        "Мінімальна зарплата для Блакитної карти 2026: 50 700 € або 45 934,20 € (дефіцитні професії, випускники, ІТ). Як рахують поріг, умови, віза.",
       body: `## Що таке Блакитна карта ЄС
 
 Блакитна карта ЄС (*Blaue Karte EU*, § 18g Закону про перебування іноземців) — це дозвіл на проживання для фахівців із вищою освітою з країн поза Євросоюзом. Вона поєднує кваліфіковану роботу в Німеччині з перевагами, яких не дають інші робочі дозволи: швидший шлях до постійного проживання, спрощене возз’єднання сім’ї та мобільність у межах ЄС.
@@ -642,12 +742,28 @@ Tercüme ve onay şartları temsilciliğe göre değişebilir; bu nedenle her za
 
 Береться до уваги **річна зарплата брутто**, зазначена в трудовому договорі. Пороги прив’язані до граничної межі внесків до державного пенсійного страхування, змінюються щороку 1 січня, а нові цифри оприлюднює Федеральне міністерство внутрішніх справ.
 
-| Категорія | Річна зарплата брутто 2026 | Приблизно на місяць (12 виплат) |
-|---|---|---|
-| Стандартний поріг (50 % граничної межі) | 50 700 € | 4 225 € |
-| Дефіцитні професії та молоді фахівці (45,3 %) | 45 934,20 € | близько 3 828 € |
+| Категорія | Річна зарплата брутто 2026 | На місяць (12 виплат) | Згода агентства з праці |
+|---|---|---|---|
+| Стандартний випадок (усі професії) | 50 700 € | 4 225 € | не потрібна |
+| Дефіцитні професії (ІТ, інженерія, медицина, викладання тощо) | 45 934,20 € | близько 3 828 € | потрібна |
+| Молоді фахівці (диплом за останні 3 роки) | 45 934,20 € | близько 3 828 € | потрібна |
+| ІТ-фахівці без диплома (щонайменше 3 роки досвіду за останні 7 років) | 45 934,20 € | близько 3 828 € | потрібна |
 
-Для порівняння: у 2025 році пороги становили 48 300 € і 43 759,80 €. Якщо ваш договір починається наступного року, перевірте актуальні цифри на сайті [Make it in Germany](https://www.make-it-in-germany.com/en/visa-residence/types/eu-blue-card).
+### Як розраховується мінімальна зарплата
+
+Обидва пороги виводять із річної граничної межі внесків до державного пенсійного страхування: стандартний поріг — 50 % від неї, знижений — 45,3 % (§ 18g абз. 1 і 2 AufenthG). У 2026 році гранична межа становить 101 400 €: 101 400 × 50 % = 50 700 € і 101 400 × 45,3 % = 45 934,20 €. Міністерство внутрішніх справ оприлюднило ці значення у Федеральному віснику повідомленням від 2 грудня 2025 року.
+
+| Рік | Гранична межа пенс. страхування | Стандартний поріг (50 %) | Знижений поріг (45,3 %) |
+|---|---|---|---|
+| 2024 | 90 600 € | 45 300 € | 41 041,80 € |
+| 2025 | 96 600 € | 48 300 € | 43 759,80 € |
+| 2026 | 101 400 € | 50 700 € | 45 934,20 € |
+
+Оскільки гранична межа зростає щороку, зростають і пороги; значення на 2027 рік оприлюднять наприкінці 2026 року. Якщо ваш договір починається наступного року, залиште запас і перевірте цифри на сайті [Make it in Germany](https://www.make-it-in-germany.com/en/visa-residence/types/eu-blue-card).
+
+### Скільки залишається нетто?
+
+За 50 700 € брутто на рік (I податковий клас, без дітей і церковного податку, середній додатковий внесок до лікарняної каси) залишається близько 2 726 € нетто на місяць, за 45 934,20 € — близько 2 513 €.
 
 > За хвилину перевірте, чи відповідає ваша пропозиція порогу 2026 року, за допомогою нашої [перевірки зарплати для Блакитної карти](/blue-card-check). А [калькулятор зарплати нетто](/salary-calculator) покаже, скільки залишиться після податків і соціальних внесків.
 
@@ -739,6 +855,10 @@ Tercüme ve onay şartları temsilciliğe göre değişebilir; bu nedenle her za
         {
           q: "Яка мінімальна зарплата для Блакитної карти у 2026 році?",
           a: "Стандартний поріг — 50 700 € брутто на рік. Для дефіцитних професій і випускників останніх трьох років — 45 934,20 €; обидва значення змінюються щороку 1 січня.",
+        },
+        {
+          q: "Як розраховується поріг зарплати для Блакитної карти?",
+          a: "Це 50 % (стандарт) або 45,3 % (знижений поріг) річної граничної межі внесків до пенсійного страхування. У 2026 році вона становить 101 400 €, звідси 50 700 € і 45 934,20 €.",
         },
         {
           q: "Чи можна отримати Блакитну карту без вищої освіти?",

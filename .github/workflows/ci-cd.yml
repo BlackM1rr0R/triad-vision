@@ -83,6 +83,8 @@ jobs:
           retention-days: 14
       - name: Caddyfile is valid
         run: docker run --rm -e SITE_DOMAIN=localhost -e ACME_EMAIL=ci@example.com -v "$PWD/deploy/Caddyfile:/etc/caddy/Caddyfile:ro" caddy:2-alpine caddy validate --config /etc/caddy/Caddyfile
+      - name: Caddy redirects (?lng=, /az, trailing slash, aliases)
+        run: sh deploy/caddy-redirects-test.sh
       - name: Mobile install
         working-directory: mobile
         run: npm ci

@@ -6,6 +6,7 @@ import { BudgetCalculator } from '@/components/budget/BudgetCalculator';
 import { registerCopy } from '@/i18n';
 import { pagesBudget } from '@/i18n/pagesBudget';
 import { usePageTitle } from '@/lib/usePageTitle';
+import { RelatedGuides } from '@/components/guides/RelatedGuides';
 
 registerCopy(pagesBudget);
 
@@ -23,6 +24,8 @@ export default function BudgetPage() {
           <BudgetCalculator callbackSource="contact" />
         </div>
       </section>
+      <RelatedGuides tool="/budget" />
+
       <PageCta
         icon={<Wallet className="size-7" aria-hidden />}
         title={t('budget.teaser.title')}

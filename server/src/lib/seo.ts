@@ -660,8 +660,30 @@ export const jobPostingLd = (job: SeoData['jobs'][number], lng: SeoLocale, url: 
 /** Pages shown under "Tools" in breadcrumbs: the tools hub's own pages (not the top-level sections it also links to). */
 const TOOL_CRUMB_PAGES = new Set(TOOL_GROUPS.flatMap((g) => g.paths).filter((p) => !['/guides', '/jobs', '/visas'].includes(p)));
 
-/** Interactive tools: WebApplication JSON-LD (free, runs in the browser). */
-const TOOL_PAGES = new Set(['/chancenkarte-calculator', '/blue-card-check', '/salary-calculator', '/calculator', '/cost-calculator', '/anerkennung', '/budget']);
+/**
+ * Interactive tools: WebApplication JSON-LD (free, runs in the browser). Only pages whose calculator / check is
+ * on the page itself (/cities: the cost-of-living calculator; /eligibility and /uygunluq-testi: the quizzes).
+ */
+export const TOOL_PAGES = new Set([
+  '/chancenkarte-calculator',
+  '/blue-card-check',
+  '/salary-calculator',
+  '/calculator',
+  '/cost-calculator',
+  '/anerkennung',
+  '/budget',
+  '/cities',
+  '/eligibility',
+  '/uygunluq-testi',
+]);
+
+/** schema.org applicationCategory of each tool (UtilitiesApplication for checks, FinanceApplication for money). */
+const TOOL_CATEGORY: Record<string, string> = {
+  '/salary-calculator': 'FinanceApplication',
+  '/cost-calculator': 'FinanceApplication',
+  '/budget': 'FinanceApplication',
+  '/cities': 'FinanceApplication',
+};
 
 const faqPageLd = (items: { q: string; a: string }[], lng: SeoLocale) =>
   items.length
@@ -896,10 +918,11 @@ export const resolvePage = (path: string, lng: SeoLocale, data: SeoData): Resolv
       resolved.jsonLd.push({
         '@context': 'https://schema.org',
         '@type': 'WebApplication',
+        '@id': `${url}#app`,
         name: textIn(page.name, lng),
         description: textIn(page.description, lng),
         url,
-        applicationCategory: 'UtilitiesApplication',
+        applicationCategory: TOOL_CATEGORY[path] ?? 'UtilitiesApplication',
         operatingSystem: 'Any',
         browserRequirements: 'Requires JavaScript',
         isAccessibleForFree: true,
@@ -1401,7 +1424,7 @@ export const escapeXml = (s: string) =>
   s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&apos;' })[c]!);
 
 /** Content release date of the hand-written static pages (bump when their text changes). */
-const STATIC_LASTMOD = new Date('2026-10-24T00:00:00.000Z');
+const STATIC_LASTMOD = new Date('2026-11-14T00:00:00.000Z'); // titles / descriptions reworked (GSC queries)
 
 const latest = (dates: Date[], fallback = STATIC_LASTMOD) =>
   dates.reduce((max, d) => (d.getTime() > max.getTime() ? d : max), fallback);

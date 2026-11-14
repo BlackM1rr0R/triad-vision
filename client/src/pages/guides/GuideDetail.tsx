@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { AlertTriangle, ArrowLeft, Calculator, Calendar, ChevronDown, Clock, Euro, ListChecks } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, Building2, Calculator, Calendar, ChevronDown, Clock, Euro, ListChecks, Wallet } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import clsx from 'clsx';
 import { PageHero, PageHeroSkeleton } from '@/components/layout/PageHero';
@@ -18,6 +18,7 @@ import { api } from '@/lib/api';
 import { useL10n } from '@/lib/l10n';
 import { navigateToUrl } from '@/lib/localeRouter';
 import { usePageTitle } from '@/lib/usePageTitle';
+import { guideTools, TOOL_LABEL_KEY, type GuideToolPath } from '@/lib/guideTools';
 import NotFound from '../NotFound';
 import { LeadMagnetBlock } from '@/components/growth/LeadMagnetBlock';
 
@@ -25,15 +26,15 @@ registerCopy(pagesSeo);
 
 const HERO_ART = <Learning className="w-full" />;
 
-/** Tools shown next to a guide (by guide key). */
-const TOOLS: Record<string, { to: string; key: 'ckCalc.title' | 'bcCheck.title' | 'nav.eligibility' | 'nav.anerkennung' | 'nav.salary'; icon: typeof Calculator }[]> = {
-  chancenkarte: [{ to: '/chancenkarte-calculator', key: 'ckCalc.title', icon: Calculator }],
-  'blue-card': [
-    { to: '/blue-card-check', key: 'bcCheck.title', icon: Euro },
-    { to: '/salary-calculator', key: 'nav.salary', icon: Calculator },
-  ],
-  anerkennung: [{ to: '/anerkennung', key: 'nav.anerkennung', icon: ListChecks }],
-  pflege: [{ to: '/anerkennung', key: 'nav.anerkennung', icon: ListChecks }],
+/** Icon of each tool linked next to a guide (which tools: lib/guideTools.ts, same map as the crawler HTML). */
+const TOOL_ICON: Record<GuideToolPath, typeof Calculator> = {
+  '/chancenkarte-calculator': Calculator,
+  '/blue-card-check': Euro,
+  '/salary-calculator': Calculator,
+  '/anerkennung': ListChecks,
+  '/cities': Building2,
+  '/cost-calculator': Wallet,
+  '/eligibility': ListChecks,
 };
 
 /** Body / sidebar placeholder with the same grid as the loaded guide, so nothing jumps when it arrives. */
@@ -104,7 +105,9 @@ export default function GuideDetail() {
   if (isError || !guide) return <NotFound />;
 
   const minutes = Math.max(1, Math.round(words(guide.html) / 200));
-  const tools = [...(TOOLS[guide.key] ?? []), { to: '/eligibility', key: 'nav.eligibility' as const, icon: ListChecks }];
+  const tools = guideTools(guide.key)
+    .filter((to): to is GuideToolPath => to in TOOL_LABEL_KEY)
+    .map((to) => ({ to, key: TOOL_LABEL_KEY[to], icon: TOOL_ICON[to] }));
 
   return (
     <>

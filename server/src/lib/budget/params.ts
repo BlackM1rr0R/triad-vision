@@ -15,7 +15,7 @@
  *  - Minijob limit 2026: 603 €/month (minimum wage 13.90 € × 130 / 3, §8 Abs. 1a SGB IV); Übergangsbereich
  *    603.01 – 2,000 € (§20 Abs. 2 SGB IV), employee base 2,000 / (2,000 − 603) × (gross − 603).
  *  - Sozialversicherungsrechengrößen-Verordnung 2026: BBG pension/unemployment 8,450 €/month,
- *    health/care 5,812.50 €/month.
+ *    health/care 5,812.50 €/month; Versicherungspflichtgrenze (JAEG, §6 Abs. 6 SGB V) 77,400 €/year.
  *  - BMG, average Zusatzbeitrag 2026 (§242a SGB V): 2.9 % (individual funds charge more or less).
  *  - Church tax 8 % (Bavaria, Baden-Württemberg) / 9 % (other states) of the income tax.
  *
@@ -85,6 +85,8 @@ export interface PayrollParams {
     careReductionMaxChildren: number;
     /** Höchstbetrag of health + care + unemployment inside the Vorsorgepauschale (§39b Abs. 2 S. 5 Nr. 3 e EStG). */
     vspCap: number;
+    /** Versicherungspflichtgrenze (Jahresarbeitsentgeltgrenze): above it private health insurance is possible. Shown on the salary page only. */
+    jaegYear: number;
   };
   /** Gross per month up to which the Übergangsbereich (Midijob, §20 Abs. 2 SGB IV) applies. */
   midijobUpTo: number;
@@ -171,6 +173,7 @@ export const BUDGET_PARAMS_2026: BudgetParams = {
       careReductionPerChild: 0.0025,
       careReductionMaxChildren: 4,
       vspCap: 1_900,
+      jaegYear: 77_400,
     },
     midijobUpTo: 2_000,
     minijobUpTo: 603,

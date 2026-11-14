@@ -197,29 +197,15 @@ autoconfig.{$SITE_DOMAIN}, autodiscover.{$SITE_DOMAIN} {
 	}
 
 	# Language URLs: Azerbaijani lives at the root, the other languages under /de/, /en/, /ru/, /tr/, /uk/.
-	# Old links with ?lng=xx (and /az/…) get a permanent redirect to that form, so every page has exactly one
-	# URL per language. Portals, token pages and files keep ?lng= (the mobile app opens them in its language).
-	@lngaz {
-		query lng=az
-		not path_regexp ^/((api|uploads|__seo|assets|og|sitemaps|admin|workspace|account|company|agent|partner|booking/manage|review|verify-email|login/2fa|reset-password|sign|angebot|share|q|survey|check-in|unsubscribe|kandidat|de|en|ru|tr|uk)(/|$)|.*[.][A-Za-z0-9]+$)
-	}
-	handle @lngaz {
-		route {
-			uri query -lng
-			redir {uri} permanent
-		}
-	}
-	@lngprefix {
-		expression `{query.lng} in ['de', 'en', 'ru', 'tr', 'uk']`
-		not path_regexp ^/((api|uploads|__seo|assets|og|sitemaps|admin|workspace|account|company|agent|partner|booking/manage|review|verify-email|login/2fa|reset-password|sign|angebot|share|q|survey|check-in|unsubscribe|kandidat|de|en|ru|tr|uk)(/|$)|.*[.][A-Za-z0-9]+$)
-	}
-	handle @lngprefix {
-		route {
-			vars lng {query.lng}
-			uri query -lng
-			redir * /{vars.lng}{uri} permanent
-		}
-	}
+	# Old links with ?lng=xx (and /az/…) get ONE permanent redirect to the clean URL, so every page has exactly one
+	# URL per language: ?lng=ru on a bare path → /ru/<path> (lng=az → the bare path), other query parameters kept,
+	# a trailing slash dropped in the same hop (/?lng=de → /de, not /de/). On an already prefixed path the prefix
+	# wins and the parameter is just removed (/de/jobs?lng=ru → /de/jobs); an unknown or empty value is removed
+	# too. The value is matched case-insensitively and may carry a region (ru-RU, de_DE). The redirect target never
+	# carries lng=, so it cannot loop. Private areas (the list mirrors PRIVATE_PREFIXES in
+	# server/src/lib/seoCatalogue.ts — tests/unit/seo.test.ts compares them), token pages and files keep ?lng=
+	# (the mobile app opens them in its language). deploy/caddy-redirects-test.sh checks all of this in CI.
+	# /az/… first (az lives at the root); a ?lng= it carries is handled on the next request.
 	@azprefix path /az /az/*
 	handle @azprefix {
 		route {
@@ -227,14 +213,50 @@ autoconfig.{$SITE_DOMAIN}, autodiscover.{$SITE_DOMAIN} {
 			redir {uri} permanent
 		}
 	}
+	@lnglegacy {
+		query lng=*
+		not path_regexp ^(/(de|en|ru|tr|uk))?/(api|uploads|__seo|__ssr|assets|og|sitemaps|feeds|admin|workspace|account|company|agent|partner|booking/manage|review|verify-email|confirm-email-change|login/2fa|reset-password|sign|angebot|share|q|survey|check-in|unsubscribe|kandidat|job-alert|r)(/|$)|[.][A-Za-z0-9]+$
+	}
+	handle @lnglegacy {
+		route {
+			# map is evaluated lazily (when {lng_prefix} is read): keep the value before the parameter is removed.
+			vars lng_raw {query.lng}
+			map {vars.lng_raw} {lng_prefix} {
+				~(?i)^de([-_,].*)?$ /de
+				~(?i)^en([-_,].*)?$ /en
+				~(?i)^ru([-_,].*)?$ /ru
+				~(?i)^tr([-_,].*)?$ /tr
+				~(?i)^uk([-_,].*)?$ /uk
+				default none
+			}
+			uri query -lng
+			@lngprefixed path_regexp lngprefixed ^(/(?:de|en|ru|tr|uk)(?:/.*?[^/])?)/*$
+			redir @lngprefixed {re.lngprefixed.1}{?query} permanent
+			@lngto {
+				not vars {lng_prefix} none
+				path_regexp lngto ^(.*?)/*$
+			}
+			redir @lngto {lng_prefix}{re.lngto.1}{?query} permanent
+			@lngbare path_regexp lngbare ^(/.*?)/*$
+			redir @lngbare {re.lngbare.1}{?query} permanent
+		}
+	}
 
-	# Old alias routes of the SPA (client-side <Navigate>): a permanent redirect, so crawlers see one URL.
+	# Old alias routes of the SPA (client-side <Navigate>): a permanent redirect, so crawlers see one URL. Inside
+	# handle blocks (a bare redir would run before every handle, i.e. before the ?lng= redirect above, and drop
+	# the language: /calculators?lng=de must end on /de/tools).
 	@aliasTools path_regexp aliasTools ^(/(?:de|en|ru|tr|uk))?/calculators$
-	redir @aliasTools {re.aliasTools.1}/tools permanent
+	handle @aliasTools {
+		redir {re.aliasTools.1}/tools{?query} permanent
+	}
 	@aliasWorkers path_regexp aliasWorkers ^(/(?:de|en|ru|tr|uk))?/(?:workers|candidates)$
-	redir @aliasWorkers {re.aliasWorkers.1}/for-workers permanent
+	handle @aliasWorkers {
+		redir {re.aliasWorkers.1}/for-workers{?query} permanent
+	}
 	@aliasEmployers path_regexp aliasEmployers ^(/(?:de|en|ru|tr|uk))?/employers$
-	redir @aliasEmployers {re.aliasEmployers.1}/for-employers permanent
+	handle @aliasEmployers {
+		redir {re.aliasEmployers.1}/for-employers{?query} permanent
+	}
 
 	# Single-page app: hashed assets are immutable, everything else falls back to index.html.
 	handle {

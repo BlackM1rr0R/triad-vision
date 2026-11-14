@@ -129,7 +129,7 @@ describe('GET /api/seo/head', () => {
 
   it('defaults to az with a bare canonical and ignores unknown languages', async () => {
     const res = await anon().get('/api/seo/head').query({ path: '/faq/', lng: 'fr' });
-    expect(res.text).toContain('<title data-seo>Tez-tez verilən suallar | Triad Vision</title>');
+    expect(res.text).toContain('<title data-seo>FAQ: Almaniyada iş və viza sualları | Triad Vision</title>');
     expect(res.text).toContain(`rel="canonical" href="${ORIGIN}/faq"`);
   });
 

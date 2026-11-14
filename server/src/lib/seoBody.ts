@@ -1,5 +1,6 @@
 import { cached } from './cache.js';
 import { SEO_LOCALES, SITE_NAME, STATIC_PAGES, textIn, TOOL_GROUPS, type SeoLocale, type ToolGroupKey } from './seoCatalogue.js';
+import { guideTools, orderGuidesForTool } from './seoLinks.js';
 import {
   collapse,
   escapeHtml as e,
@@ -34,6 +35,16 @@ type Labels = Record<
   'nav' | 'breadcrumb' | 'visas' | 'services' | 'guides' | 'news' | 'jobs' | 'events' | 'faq' | 'requirements' | 'documents' | 'features' | 'steps' | 'related' | 'contents' | 'updated' | 'cta' | 'eligibility' | 'languages' | 'phone' | 'email' | 'hours' | 'more',
   string
 >;
+
+/** Heading of the profession guides on /anerkennung. */
+const BY_PROFESSION: Record<SeoLocale, string> = {
+  az: 'Peşələr üzrə bələdçilər',
+  de: 'Ratgeber nach Beruf',
+  en: 'Guides by profession',
+  ru: 'Гиды по профессиям',
+  tr: 'Mesleğe göre rehberler',
+  uk: 'Посібники за професіями',
+};
 
 const L: Record<SeoLocale, Labels> = {
   az: {
@@ -293,6 +304,8 @@ export const renderBody = (rawPath: string, data: SeoData): string => {
         cta,
         '</article>',
         r.related.length ? section(t.related, `<ul>${r.related.map((x) => `<li><a href="${e(x.path)}">${e(x.title)}</a></li>`).join('')}</ul>`) : '',
+        // The tools of this guide (lib/seoLinks.ts; the page shows the same box).
+        section(staticLabel('/tools'), linkList(guideTools(g.key))),
       );
     }
   } else if (path.startsWith('/l/')) {
@@ -421,9 +434,24 @@ export const renderBody = (rawPath: string, data: SeoData): string => {
       case '/uygunluq-testi':
       case '/chancenkarte-calculator':
       case '/blue-card-check':
-      case '/anerkennung':
-        out.push(section(t.guides, guideList(guides)), cta);
+      case '/salary-calculator':
+      case '/cities':
+      case '/cost-calculator':
+      case '/budget':
+      case '/calculator':
+        // The guides of this tool first (lib/seoLinks.ts; the page shows them as "Related guides").
+        out.push(section(t.guides, guideList(orderGuidesForTool(path, guides))), cta);
         break;
+      case '/anerkennung': {
+        // Profession recognition guides first (anerkennung-koch, -arzt …, seed guideDrafts/professions), then the rest.
+        const byProfession = guides.filter((g) => g.key.startsWith('anerkennung-'));
+        out.push(
+          byProfession.length ? section(BY_PROFESSION[lng], guideList(byProfession)) : '',
+          section(t.guides, guideList(orderGuidesForTool(path, guides.filter((g) => !g.key.startsWith('anerkennung-'))))),
+          cta,
+        );
+        break;
+      }
       default:
         out.push(cta);
     }

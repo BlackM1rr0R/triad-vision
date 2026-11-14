@@ -12,7 +12,8 @@ import { Accordion } from '@/components/visa/Accordion';
 import { PageCta } from '@/components/visa/PageCta';
 import { useEuro } from '@/components/visa/utils';
 import { useSiteContent } from '@/lib/content';
-import { registerCopy } from '@/i18n';
+import { currentSiteLocale, registerCopy } from '@/i18n';
+import { FaqJsonLd } from '@/components/seo/FaqJsonLd';
 import { pagesVisa } from '@/i18n/pagesVisa';
 import { usePageTitle } from '@/lib/usePageTitle';
 
@@ -247,6 +248,7 @@ export default function Ausbildung() {
             <SectionHeading eyebrow={t('ausbildungPage.faq.eyebrow')} title={t('ausbildungPage.faq.title')} />
           </div>
           <Accordion items={faq} />
+          <FaqJsonLd items={faq} lng={currentSiteLocale()} />
         </div>
       </section>
 

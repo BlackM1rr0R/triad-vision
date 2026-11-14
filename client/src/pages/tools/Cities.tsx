@@ -9,10 +9,12 @@ import { PageCta } from '@/components/visa/PageCta';
 import { CityCard } from '@/components/cities/CityCard';
 import { CompareTable } from '@/components/cities/CompareTable';
 import { CostCalculator } from '@/components/cities/CostCalculator';
+import { CitiesArticle } from '@/components/cities/CitiesArticle';
 import { CITIES, DATA_YEAR, cityBySlug } from '@/lib/cities/data';
 import { registerCopy } from '@/i18n';
 import { pagesCities } from '@/i18n/pagesCities';
 import { usePageTitle } from '@/lib/usePageTitle';
+import { RelatedGuides } from '@/components/guides/RelatedGuides';
 
 registerCopy(pagesCities);
 
@@ -95,6 +97,9 @@ export default function CitiesGuide() {
         </div>
       </section>
 
+      {/* Intro, cost table, jobs by city, FAQ (server-rendered; figures from the same city data) */}
+      <CitiesArticle />
+
       <section id="compare" className="section scroll-mt-28 bg-sunken">
         <div className="container-x">
           <SectionHeading eyebrow={t('citiesPage.jump.compare')} title={t('citiesPage.compare.title')} subtitle={t('citiesPage.compare.hint')} />
@@ -109,6 +114,8 @@ export default function CitiesGuide() {
           <p className="mt-4 text-xs text-muted">{t('citiesPage.disclaimer')}</p>
         </div>
       </section>
+
+      <RelatedGuides tool="/cities" />
 
       <PageCta title={t('citiesPage.cta.title')} text={t('citiesPage.cta.text')} primary={{ to: '/booking', label: t('citiesPage.cta.button') }} />
     </>

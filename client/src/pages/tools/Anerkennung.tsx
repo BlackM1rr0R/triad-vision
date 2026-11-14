@@ -7,6 +7,7 @@ import {
   ArrowRight,
   Baby,
   BadgeCheck,
+  BookOpen,
   BrickWall,
   Building2,
   Bus,
@@ -46,12 +47,14 @@ import { SectionHeading } from '@/components/ui/SectionHeading';
 import { Accordion } from '@/components/visa/Accordion';
 import { PageCta } from '@/components/visa/PageCta';
 import { DocChecklist } from '@/components/tools/DocChecklist';
-import { registerCopy } from '@/i18n';
+import { currentSiteLocale, registerCopy } from '@/i18n';
+import { FaqJsonLd } from '@/components/seo/FaqJsonLd';
 import { pagesTools } from '@/i18n/pagesTools';
 import { useL10n } from '@/lib/l10n';
 import { smoothScrollTo } from '@/lib/smoothScroll';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { findProfession, LINKS, PROFESSIONS, type Profession, type ProfessionIcon } from '@/lib/anerkennung/data';
+import { PathLink, useGuides } from '@/components/guides/shared';
 
 registerCopy(pagesTools);
 
@@ -79,6 +82,33 @@ const ICONS: Record<ProfessionIcon, LucideIcon> = {
   hand: HandHeart,
   calc: Calculator,
   baby: Baby,
+};
+
+/**
+ * Long-form guides per profession (GuidePage keys, server/prisma/seed/guideDrafts/professions), in this order in the
+ * "by profession" block; nurses and truck drivers have their own guides. Picker profession id → guide key.
+ */
+const PROFESSION_GUIDE_KEYS = [
+  'anerkennung-koch',
+  'anerkennung-arzt',
+  'anerkennung-zahnarzt',
+  'pflege',
+  'anerkennung-ingenieur',
+  'anerkennung-architekt',
+  'anerkennung-elektroniker',
+  'anerkennung-buchhalter',
+  'anerkennung-oekonom',
+  'driver-jobs',
+] as const;
+const GUIDE_BY_PROFESSION: Record<string, (typeof PROFESSION_GUIDE_KEYS)[number]> = {
+  cook: 'anerkennung-koch',
+  doctor: 'anerkennung-arzt',
+  dentist: 'anerkennung-zahnarzt',
+  nurse: 'pflege',
+  engineer: 'anerkennung-ingenieur',
+  electrician: 'anerkennung-elektroniker',
+  accountant: 'anerkennung-buchhalter',
+  truck: 'driver-jobs',
 };
 
 const norm = (s: string) => s.toLocaleLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
@@ -264,6 +294,10 @@ export default function AnerkennungGuide() {
   };
 
   const faq = t('anerkPage.faq.items', { returnObjects: true }) as { q: string; a: string }[];
+  const { data: guides } = useGuides();
+  const professionGuides = PROFESSION_GUIDE_KEYS.flatMap((k) => guides?.filter((g) => g.key === k) ?? []);
+  const selectedGuideKey = selected ? GUIDE_BY_PROFESSION[selected.id] : undefined;
+  const selectedGuide = selectedGuideKey ? professionGuides.find((g) => g.key === selectedGuideKey) : undefined;
 
   return (
     <>
@@ -391,6 +425,11 @@ export default function AnerkennungGuide() {
                   </p>
                   <p className="mt-2 text-sm leading-relaxed text-muted">{t('anerkPage.tip.text')}</p>
                   <div className="mt-3 flex flex-wrap gap-x-4 gap-y-2 text-sm">
+                    {selectedGuide && (
+                      <PathLink path={selectedGuide.path} className="font-semibold text-link hover:underline">
+                        {t('anerkPage.guide.readGuide')}
+                      </PathLink>
+                    )}
                     <Link to="/account/translations" className="font-semibold text-link hover:underline">
                       {t('anerkPage.tip.translations')}
                     </Link>
@@ -411,6 +450,30 @@ export default function AnerkennungGuide() {
           )}
         </div>
       </section>
+
+      {/* Guides by profession (server-rendered with the guide list: visible to crawlers) */}
+      {professionGuides.length > 0 && (
+        <section className="section-sm">
+          <div className="container-x">
+            <SectionHeading eyebrow={t('anerkPage.byProfession.eyebrow')} title={t('anerkPage.byProfession.title')} subtitle={t('anerkPage.byProfession.subtitle')} />
+            <ul className="grid-cards sm:grid-cols-2 lg:grid-cols-3">
+              {professionGuides.map((g) => (
+                <li key={g.key}>
+                  <PathLink path={g.path} className="card card-interactive card-pad flex h-full gap-3">
+                    <span className="grid size-10 shrink-0 place-items-center rounded-xl chip-soft">
+                      <BookOpen className="size-5" aria-hidden />
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block font-display text-base font-semibold text-ink">{g.title}</span>
+                      <span className="mt-1 block text-sm leading-relaxed text-muted">{g.description}</span>
+                    </span>
+                  </PathLink>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </section>
+      )}
 
       {/* Official sources */}
       <section className="section-sm">
@@ -442,6 +505,7 @@ export default function AnerkennungGuide() {
             <SectionHeading eyebrow={t('anerkPage.faq.eyebrow')} title={t('anerkPage.faq.title')} />
           </div>
           <Accordion items={faq} />
+          <FaqJsonLd items={faq} lng={currentSiteLocale()} />
         </div>
       </section>
 

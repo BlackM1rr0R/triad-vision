@@ -113,6 +113,7 @@ const az = {
       facts: { authority: 'Səlahiyyətli qurum', duration: 'Müddət', fee: 'Rüsum', language: 'Alman dili' },
       noLanguage: 'Formal tələb yoxdur (işəgötürən adətən A2–B1 istəyir)',
       languageMin: 'ən azı {{level}}',
+      readGuide: 'Bu peşə üzrə tam bələdçi',
     },
     procedure: {
       licence: {
@@ -213,6 +214,11 @@ const az = {
         exam: 'Bilik imtahanı (Kenntnisprüfung)',
         examText: 'Əsas peşə mövzuları üzrə şifahi və praktik imtahan. Hazırlıq kursları var; imtahan təkrar verilə bilər.',
       },
+    },
+    byProfession: {
+      eyebrow: 'Peşələr üzrə bələdçilər',
+      title: 'Peşənizə görə ətraflı bələdçi',
+      subtitle: 'Aşpaz, memar, mühasib, həkim, mühəndis və digər peşələr üçün: hansı qurum, hansı sənədlər, nə qədər vaxt və xərc, sonra hansı viza.',
     },
     links: {
       title: 'Rəsmi mənbələr',
@@ -382,6 +388,7 @@ const de: Copy = {
       facts: { authority: 'Zuständige Stelle', duration: 'Dauer', fee: 'Gebühr', language: 'Deutsch' },
       noLanguage: 'Keine formale Vorgabe (Arbeitgeber erwarten meist A2–B1)',
       languageMin: 'mindestens {{level}}',
+      readGuide: 'Ausführlicher Ratgeber zu diesem Beruf',
     },
     procedure: {
       licence: {
@@ -482,6 +489,11 @@ const de: Copy = {
         exam: 'Kenntnisprüfung',
         examText: 'Mündliche und praktische Prüfung zu den wichtigsten Berufsinhalten. Es gibt Vorbereitungskurse; die Prüfung kann wiederholt werden.',
       },
+    },
+    byProfession: {
+      eyebrow: 'Ratgeber nach Beruf',
+      title: 'Ausführliche Ratgeber für Ihren Beruf',
+      subtitle: 'Koch, Architekt, Buchhalter, Ärztin, Ingenieur und mehr: zuständige Stelle, Unterlagen, Kosten, Dauer und das passende Visum.',
     },
     links: {
       title: 'Offizielle Quellen',
@@ -649,6 +661,7 @@ const en: Copy = {
       facts: { authority: 'Competent authority', duration: 'Duration', fee: 'Fee', language: 'German' },
       noLanguage: 'No formal requirement (employers usually expect A2–B1)',
       languageMin: 'at least {{level}}',
+      readGuide: 'Full guide for this profession',
     },
     procedure: {
       licence: {
@@ -749,6 +762,11 @@ const en: Copy = {
         exam: 'Knowledge exam (Kenntnisprüfung)',
         examText: 'An oral and practical exam on the key professional content. Preparation courses exist; the exam can be retaken.',
       },
+    },
+    byProfession: {
+      eyebrow: 'Guides by profession',
+      title: 'In-depth guides for your profession',
+      subtitle: 'Cook, architect, accountant, doctor, engineer and more: the competent body, documents, fees, timelines and the visa that follows.',
     },
     links: {
       title: 'Official sources',
@@ -916,6 +934,7 @@ const ru: Copy = {
       facts: { authority: 'Компетентный орган', duration: 'Срок', fee: 'Пошлина', language: 'Немецкий' },
       noLanguage: 'Формального требования нет (работодатели обычно ждут A2–B1)',
       languageMin: 'не ниже {{level}}',
+      readGuide: 'Полный гид по этой профессии',
     },
     procedure: {
       licence: {
@@ -1016,6 +1035,11 @@ const ru: Copy = {
         exam: 'Экзамен (Kenntnisprüfung)',
         examText: 'Устный и практический экзамен по ключевым темам профессии. Есть подготовительные курсы; экзамен можно пересдать.',
       },
+    },
+    byProfession: {
+      eyebrow: 'Гиды по профессиям',
+      title: 'Подробные гиды по вашей профессии',
+      subtitle: 'Повар, архитектор, бухгалтер, врач, инженер и другие: куда подавать, какие документы, сколько стоит и сколько длится, какая виза дальше.',
     },
     links: {
       title: 'Официальные источники',

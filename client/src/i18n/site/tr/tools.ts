@@ -114,6 +114,7 @@ const copy: SiteCopy<(typeof pagesTools)['en']> = {
       facts: { authority: 'Yetkili makam', duration: 'Süre', fee: 'Ücret', language: 'Almanca' },
       noLanguage: 'Resmî bir şart yok (işverenler genellikle A2–B1 bekler)',
       languageMin: 'en az {{level}}',
+      readGuide: 'Bu meslek için ayrıntılı rehber',
     },
     procedure: {
       licence: {
@@ -214,6 +215,11 @@ const copy: SiteCopy<(typeof pagesTools)['en']> = {
         exam: 'Bilgi sınavı (Kenntnisprüfung)',
         examText: 'Temel mesleki içerik üzerine sözlü ve uygulamalı bir sınav. Hazırlık kursları vardır; sınav tekrarlanabilir.',
       },
+    },
+    byProfession: {
+      eyebrow: 'Mesleğe göre rehberler',
+      title: 'Mesleğiniz için ayrıntılı rehberler',
+      subtitle: 'Aşçı, mimar, muhasebeci, doktor, mühendis ve daha fazlası: yetkili kurum, belgeler, ücretler, süreler ve ardından gelen vize.',
     },
     links: {
       title: 'Resmî kaynaklar',

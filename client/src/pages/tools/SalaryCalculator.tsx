@@ -7,6 +7,7 @@ import { PageHero } from '@/components/layout/PageHero';
 import { Reveal } from '@/components/motion';
 import { SectionHeading } from '@/components/ui/SectionHeading';
 import { PageCta } from '@/components/visa/PageCta';
+import { SalaryArticle } from '@/components/tools/SalaryArticle';
 import { SalaryBreakdown } from '@/components/tools/SalaryBreakdown';
 import { useMoney } from '@/components/tools/format';
 import { registerCopy } from '@/i18n';
@@ -24,6 +25,7 @@ import {
   type SalaryInput,
   type TaxClass,
 } from '@/lib/salary';
+import { RelatedGuides } from '@/components/guides/RelatedGuides';
 
 registerCopy(pagesTools);
 
@@ -332,6 +334,9 @@ export default function SalaryCalculator() {
         </div>
       </section>
 
+      {/* Explanatory article + FAQ (server-rendered; examples computed with the same engine) */}
+      <SalaryArticle />
+
       {/* Method + values */}
       <section className="section bg-sunken">
         <div className="container-x grid gap-8 lg:grid-cols-[1.4fr_1fr] lg:gap-12">
@@ -371,6 +376,8 @@ export default function SalaryCalculator() {
       </section>
 
       <div className="pt-16 sm:pt-20 lg:pt-28">
+        <RelatedGuides tool="/salary-calculator" />
+
         <PageCta
           icon={<Calculator className="size-7" />}
           title={t('salaryPage.cta.title')}

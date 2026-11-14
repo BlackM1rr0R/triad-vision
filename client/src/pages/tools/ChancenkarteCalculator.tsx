@@ -6,6 +6,9 @@ import clsx from 'clsx';
 import { PageHero } from '@/components/layout/PageHero';
 import { PageCta } from '@/components/visa/PageCta';
 import { PathLink, useGuidePath } from '@/components/guides/shared';
+import { ContentArticle, ContentTable, useContentLocale } from '@/components/seo/ContentArticle';
+import { CK_EXAMPLES, chancenkarteContent } from '@/lib/seoContent/chancenkarte';
+import { CONTENT_CHECKED, MONTH_YEAR } from '@/lib/seoContent/types';
 import { registerCopy } from '@/i18n';
 import { pagesSeo } from '@/i18n/pagesSeo';
 import { usePageTitle } from '@/lib/usePageTitle';
@@ -53,6 +56,24 @@ const Check = ({ checked, onChange, children }: { checked: boolean; onChange: (v
     <span>{children}</span>
   </label>
 );
+
+/** Points system explained + FAQ under the calculator; the examples are scored by the calculator itself. */
+const ChancenkarteArticle = () => {
+  const lng = useContentLocale();
+  const l = chancenkarteContent[lng].labels!;
+  const rows = CK_EXAMPLES.map(({ id, input }) => {
+    const r = scoreChancenkarte(input);
+    return [l[id], l[`${id}Text`], String(r.points), l[r.status]];
+  });
+  return (
+    <ContentArticle
+      content={chancenkarteContent}
+      vars={{ checked: MONTH_YEAR[lng](CONTENT_CHECKED.month, CONTENT_CHECKED.year) }}
+      slots={{ examples: <ContentTable head={[l.person, l.profile, l.points, l.result]} rows={rows} /> }}
+      className="section bg-sunken"
+    />
+  );
+};
 
 /** Chancenkarte points calculator (/chancenkarte-calculator). Runs entirely in the browser. */
 export default function ChancenkarteCalculator() {
@@ -220,6 +241,8 @@ export default function ChancenkarteCalculator() {
           </div>
         </div>
       </section>
+      <ChancenkarteArticle />
+      <div className="pt-16 sm:pt-20 lg:pt-28" />
       <PageCta
         title={t('guidesPage.ctaTitle')}
         text={t('guidesPage.ctaText')}

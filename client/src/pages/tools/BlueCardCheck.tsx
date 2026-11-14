@@ -6,6 +6,7 @@ import clsx from 'clsx';
 import { PageHero } from '@/components/layout/PageHero';
 import { PageCta } from '@/components/visa/PageCta';
 import { PathLink, useGuidePath } from '@/components/guides/shared';
+import { BlueCardArticle } from '@/components/tools/BlueCardArticle';
 import { currentSiteLocale, registerCopy } from '@/i18n';
 import { pagesSeo } from '@/i18n/pagesSeo';
 import { BLUE_CARD_GROUPS, checkBlueCard, euroFormat, useBlueCardThresholds, type BlueCardGroup as Group } from '@/lib/calculators/blueCard';
@@ -168,6 +169,8 @@ export default function BlueCardCheck() {
           </div>
         </div>
       </section>
+      <BlueCardArticle />
+      <div className="pt-16 sm:pt-20 lg:pt-28" />
       <PageCta
         title={t('guidesPage.ctaTitle')}
         text={t('guidesPage.ctaText')}

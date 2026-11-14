@@ -19,8 +19,9 @@ const defaultTitle = () => getBrand().name;
  * x-default) — the same rule the server applies, so raw and rendered tags always agree. The full path (with
  * the prefix) is sent; the server splits it.
  *
- * <title> stays owned by usePageTitle (pages know their localized title immediately); the fragment's title
- * only feeds og:title / twitter:title.
+ * <title>: on public pages the fragment's SEO title (the same as in the server HTML) is the document title;
+ * usePageTitle's page title only bridges the moment until the fragment of a new URL arrives, and titles the
+ * private areas.
  */
 
 /** Private areas (mirrors PRIVATE_PREFIXES in server/src/lib/seoCatalogue.ts and robots.txt). */
@@ -35,18 +36,35 @@ const keyFor = (pathname: string, _search: string) => {
 // The URL whose tags are in the document. If the server injected them (og:url present), the first page view
 // needs no request.
 let appliedKey: string | null = null;
+/**
+ * The SEO title (<title> of the head fragment: keyword-first, written for search results) of `appliedKey`.
+ * On public pages it wins over the page's own short title, so the rendered document (what Google indexes
+ * after running JavaScript) keeps the same <title> as the server HTML.
+ */
+let seoTitle: string | null = null;
 if (typeof document !== 'undefined' && document.head.querySelector('meta[data-seo][property="og:url"]')) {
   const { path, lng } = keyFor(location.pathname, location.search);
   appliedKey = `${path}?${lng}`;
+  seoTitle = document.head.querySelector('title[data-seo]')?.textContent?.trim() || null;
 }
+
+/** The SEO title for the current URL, when the head fragment of this URL is applied. */
+const currentSeoTitle = () => {
+  if (typeof location === 'undefined' || !seoTitle) return null;
+  const { path, lng } = keyFor(location.pathname, location.search);
+  return appliedKey === `${path}?${lng}` && !isPrivate(path) ? seoTitle : null;
+};
 let inflight: AbortController | null = null;
 const fragments = new Map<string, string>();
 
 const applyFragment = (html: string) => {
   const tpl = document.createElement('template');
   tpl.innerHTML = html;
-  // The title is managed by usePageTitle.
+  // The fragment's <title> becomes the document title (public pages: same title as the server HTML).
+  const title = tpl.content.querySelector('title')?.textContent?.trim() || null;
   tpl.content.querySelectorAll('title').forEach((t) => t.remove());
+  seoTitle = title;
+  if (title) document.title = title;
   document.head.querySelectorAll('[data-seo]:not(title)').forEach((el) => el.remove());
   document.head.append(tpl.content);
 };
@@ -67,9 +85,11 @@ export const syncSeoHead = (pathname: string, search: string) => {
   const key = `${path}?${lng}`;
   if (key === appliedKey) return;
   appliedKey = key;
+  seoTitle = null; // set again by the fragment of this URL
   inflight?.abort();
   inflight = null;
   if (isPrivate(path)) {
+    seoTitle = null;
     markPrivate();
     return;
   }
@@ -124,7 +144,9 @@ export const usePageTitle = (title?: string | null) => {
   useSeo();
   useEffect(() => {
     const previous = document.title;
-    document.title = title ? `${title} · ${defaultTitle()}` : defaultTitle();
+    // Public pages keep the SEO title of the head fragment once it is there (server HTML or fetched); the
+    // page's own title only bridges the moment until the fragment of a new URL arrives.
+    document.title = currentSeoTitle() ?? (title ? `${title} · ${defaultTitle()}` : defaultTitle());
     return () => {
       document.title = previous;
     };

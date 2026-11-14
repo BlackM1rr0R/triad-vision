@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { PrismaClient } from '@prisma/client';
-import { DRAFT_KEYS, GUIDE_DRAFTS, PUBLISHED_ON_CREATE, draftPlaceholders, seedGuideDrafts } from '../../prisma/seed/guideDrafts/index.js';
+import { DRAFT_KEYS, GUIDE_DRAFTS, PUBLISHED_ON_CREATE, PUBLISHED_ON_CREATE_KEYS, draftPlaceholders, seedGuideDrafts } from '../../prisma/seed/guideDrafts/index.js';
+import { PROFESSION_GUIDES, PROFESSION_KEYS, PROFESSION_LOCALES } from '../../prisma/seed/guideDrafts/professions/index.js';
 import { GUIDES } from '../../prisma/seed/guides/index.js';
 import { markdownToText, renderGuideMarkdown } from '../../src/lib/guides/markdown.js';
 import { PLACEHOLDER_RE, guidePlaceholders } from '../../src/lib/guides/placeholders.js';
@@ -48,8 +49,29 @@ describe('SEO guide drafts (content)', () => {
         'jobs-azerbaijan:az', 'jobs-azerbaijan:ru', 'jobs-azerbaijan:tr', 'jobs-azerbaijan:uk',
         'employer-azerbaijan:de', 'employer-azerbaijan:en',
         'employer-drivers:de', 'employer-nursing:de', 'employer-apprentices:de', 'fast-track-81a:de',
+        ...PROFESSION_KEYS.flatMap((k) => PROFESSION_LOCALES.map((l) => `${k}:${l}`)),
       ].sort(),
     );
+  });
+
+  it('has every profession recognition guide in az, ru, de and en, linked to /anerkennung and the general guide', () => {
+    expect(PROFESSION_GUIDES.map((g) => g.key)).toEqual([...PROFESSION_KEYS]);
+    expect(PROFESSION_KEYS).toEqual(
+      expect.arrayContaining(['anerkennung-koch', 'anerkennung-architekt', 'anerkennung-buchhalter', 'anerkennung-oekonom', 'anerkennung-zahnarzt', 'anerkennung-arzt', 'anerkennung-ingenieur', 'anerkennung-elektroniker']),
+    );
+    for (const g of PROFESSION_GUIDES) {
+      expect(Object.keys(g.pages).sort(), g.key).toEqual([...PROFESSION_LOCALES].sort());
+      for (const [locale, p] of Object.entries(g.pages)) {
+        const where = `${g.key} ${locale}`;
+        expect(p!.body, where).toContain('](/anerkennung)');
+        expect(p!.body, where).toContain('](guide:anerkennung)');
+        // Created published: no review placeholder may be left.
+        expect(p!.body, where).not.toMatch(/\[(?:YOXLA|PRÜFEN|ПРОВЕРИТЬ|CHECK)/);
+      }
+      // hreflang alternates are by key: one slug per language, all different.
+      const slugs = Object.values(g.pages).map((p) => p!.slug);
+      expect(new Set(slugs).size, g.key).toBe(slugs.length);
+    }
   });
 
   it('has unique slugs that do not collide with the published guides, SEO-sized titles and real content', () => {
@@ -87,12 +109,17 @@ describe('SEO guide drafts (content)', () => {
 });
 
 describe('seedGuideDrafts', () => {
-  it('creates unpublished rows (tr/uk translations of checked texts: published) and is idempotent', async () => {
+  it('creates unpublished rows (tr/uk translations and the profession guides: published) and is idempotent', async () => {
     const { prisma, rows } = fakePrisma();
     expect(await seedGuideDrafts(prisma)).toBe(GUIDE_DRAFTS.length);
     expect(rows).toHaveLength(GUIDE_DRAFTS.length);
-    for (const r of rows) expect(r.published, `${r.key} ${r.locale}`).toBe(PUBLISHED_ON_CREATE.includes(r.locale as never));
-    expect(rows.filter((r) => r.published).map((r) => r.locale).sort()).toEqual([...Array(5).fill('tr'), ...Array(5).fill('uk')]);
+    for (const r of rows) {
+      expect(r.published, `${r.key} ${r.locale}`).toBe(PUBLISHED_ON_CREATE.includes(r.locale as never) || PUBLISHED_ON_CREATE_KEYS.includes(r.key as never));
+    }
+    const professions = new Set<string>(PROFESSION_KEYS);
+    expect(rows.filter((r) => r.published && !professions.has(r.key)).map((r) => r.locale).sort()).toEqual([...Array(5).fill('tr'), ...Array(5).fill('uk')]);
+    expect(rows.filter((r) => professions.has(r.key)).every((r) => r.published)).toBe(true);
+    expect(rows.filter((r) => professions.has(r.key))).toHaveLength(PROFESSION_KEYS.length * PROFESSION_LOCALES.length);
     expect(await seedGuideDrafts(prisma)).toBe(0);
     expect(rows).toHaveLength(GUIDE_DRAFTS.length);
   });
